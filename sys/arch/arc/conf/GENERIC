@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 1996/09/15 09:46:07 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.6 1996/09/20 06:44:56 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -13,7 +13,6 @@ options		DST=0			# use daylight savings rules
 
 # Standard system options
 options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
 options		DEVPAGER		# device pager (mapped devices)
 
 options		DIAGNOSTIC		# extra kernel debugging checks

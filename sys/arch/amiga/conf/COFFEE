@@ -1,4 +1,4 @@
-#	$OpenBSD: COFFEE,v 1.5 1996/08/31 02:08:57 deraadt Exp $
+#	$OpenBSD: COFFEE,v 1.6 1996/09/20 06:44:53 deraadt Exp $
 #	$NetBSD: COFFEE,v 1.12 1995/10/09 02:08:35 chopps Exp $
 
 #
@@ -22,7 +22,6 @@ option		"M68020"	# support for 020/851
 option		FPCOPROC	# Support for MC6888[12] (Required)
 
 option		SWAPPAGER	# Pager for processes (Required)
-option		VNODEPAGER	# Pager for vnodes (Required)
 option		DEVPAGER	# Pager for devices (Required)
 
 #

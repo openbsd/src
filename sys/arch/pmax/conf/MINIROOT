@@ -33,7 +33,6 @@ options		DST=0			# use daylight savings rules
 
 # Standard system options
 options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
 options		DEVPAGER		# device pager (mapped devices)
 #options	DIAGNOSTIC		# extra kernel debugging checks
 options		DEBUG			# extra kernel debugging support

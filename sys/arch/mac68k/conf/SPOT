@@ -1,4 +1,4 @@
-#	$OpenBSD: SPOT,v 1.5 1996/08/31 02:09:24 deraadt Exp $
+#	$OpenBSD: SPOT,v 1.6 1996/09/20 06:45:13 deraadt Exp $
 #	$NetBSD: SPOT,v 1.11 1996/08/05 01:52:17 scottr Exp $
 #
 # SPOT
@@ -11,7 +11,7 @@ makeoptions CC="cc -m68030"
 options         MAXFDESCS=2048
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options		SWAPPAGER, DEVPAGER	# paging
 options		DIAGNOSTIC		# DEBUG for extra kernel debugging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb

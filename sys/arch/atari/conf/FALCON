@@ -38,7 +38,6 @@ options		CD9660		# ISO 9660 filesystem with Rock Ridge
 options		FIFO		# FIFO operations on vnodes
 
 options		SWAPPAGER	# Pager for swap device
-options		VNODEPAGER	# Pager for vnodes
 options		DEVPAGER	# Pager
 
 

@@ -7,7 +7,7 @@ machine		"pc532"
 maxusers	10			# estimated number of users
 options		TIMEZONE=0, DST=0	# time zone to read RTC in
 options		SWAPPAGER		# paging
-options		VNODEPAGER,DEVPAGER	# vnode and device node caching
+options		DEVPAGER		# device node caching
 #options	DDB			# kernel debugger; not working
 #options	DIAGNOSTIC		# internal consistency checking
 

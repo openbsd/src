@@ -1,4 +1,4 @@
-#	$OpenBSD: INSTALL,v 1.4 1996/08/31 02:09:00 deraadt Exp $
+#	$OpenBSD: INSTALL,v 1.5 1996/09/20 06:44:55 deraadt Exp $
 #	$NetBSD: INSTALL,v 1.2.2.1 1996/05/30 21:25:49 is Exp $
 
 #
@@ -33,7 +33,6 @@ option		DRACO
 #
 
 option		SWAPPAGER	# Pager for processes (Required)
-option		VNODEPAGER	# Pager for vnodes (Required)
 option		DEVPAGER	# Pager for devices (Required)
 
 #

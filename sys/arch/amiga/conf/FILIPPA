@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.9 1996/09/04 22:51:33 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.10 1996/09/20 06:44:55 deraadt Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -19,7 +19,6 @@ option		FPSP		# MC68040 floating point support
 option		FPCOPROC	# Support for MC6888[12] (Required)
 
 option		SWAPPAGER	# Pager for processes (Required)
-option		VNODEPAGER	# Pager for vnodes (Required)
 option		DEVPAGER	# Pager for devices (Required)
 
 #

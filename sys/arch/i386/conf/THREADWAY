@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.13 1996/08/31 02:09:18 deraadt Exp $
+#	$OpenBSD: THREADWAY,v 1.14 1996/09/20 06:45:10 deraadt Exp $
 #
 
 machine		i386
@@ -19,7 +19,6 @@ option		GPL_MATH_EMULATE
 option		ALWAYS_MATH_EMULATE
 
 option		SWAPPAGER
-option		VNODEPAGER
 option		DEVPAGER
 
 option		DDB

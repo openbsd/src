@@ -14,9 +14,8 @@ options		GENERIC
 # estimated number of users
 maxusers	2
 
-# paging of processes, and caching vnodes and devices; REQUIRED
+# paging of processes, and caching devices; REQUIRED
 options		SWAPPAGER
-options		VNODEPAGER
 options		DEVPAGER
 
 # networking options

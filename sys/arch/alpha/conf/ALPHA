@@ -1,4 +1,4 @@
-#	$OpenBSD: ALPHA,v 1.6 1996/07/29 20:01:22 niklas Exp $
+#	$OpenBSD: ALPHA,v 1.7 1996/09/20 06:44:49 deraadt Exp $
 #	$NetBSD: ALPHA,v 1.14.4.4 1996/06/13 19:21:59 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
@@ -20,7 +20,7 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 

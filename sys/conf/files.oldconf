@@ -1,4 +1,4 @@
-#	$OpenBSD: files.oldconf,v 1.13 1996/08/30 08:39:20 deraadt Exp $
+#	$OpenBSD: files.oldconf,v 1.14 1996/09/20 06:44:47 deraadt Exp $
 #	$NetBSD: files.oldconf,v 1.67.4.1 1996/05/29 23:14:10 cgd Exp $
 #
 adosfs/adlookup.c	optional adosfs
@@ -291,7 +291,7 @@ vm/vm_pager.c		standard
 vm/vm_swap.c		standard
 vm/vm_unix.c		standard
 vm/vm_user.c		standard
-vm/vnode_pager.c	optional vnodepager
+vm/vnode_pager.c	standard
 dev/ccd.c		optional ccd needs-count
 # XXX !! This should not be necessary!
 dev/audio.c		optional audio device-driver

@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.12 1996/09/14 18:36:15 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.13 1996/09/20 06:45:05 deraadt Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -24,7 +24,6 @@ option		DST=1		# daylight savings time used by RTC
 option		NTP		# High precision timekeeping support
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 #option		DDB		# in-kernel debugger

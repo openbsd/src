@@ -1,4 +1,4 @@
-#	$OpenBSD: HELIOS_PCMCIA,v 1.9 1996/07/31 18:35:17 deraadt Exp $
+#	$OpenBSD: HELIOS_PCMCIA,v 1.10 1996/09/20 06:45:06 deraadt Exp $
 #
 #	HELIOS_PCMCIA -- Eric Hvozda's notebook
 #
@@ -15,7 +15,6 @@ option		TIMEZONE=300	# time zone to adjust RTC time by
 option		DST=1		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DIAGNOSTIC	# internally consistency checks

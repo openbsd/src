@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME147,v 1.8 1996/08/31 02:09:25 deraadt Exp $
+#	$OpenBSD: MVME147,v 1.9 1996/09/20 06:45:14 deraadt Exp $
 
 machine		mvme68k m68k
 
@@ -26,7 +26,7 @@ option 	KTRACE
 option 	COMPAT_43
 option 	FIFO
 #option		MFS
-option		DEVPAGER, SWAPPAGER, VNODEPAGER
+option		DEVPAGER, SWAPPAGER
 #option		MSDOSFS
 
 option		COMPAT_SUNOS

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 1996/08/31 02:09:23 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.7 1996/09/20 06:45:13 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.6 1996/08/05 01:52:16 scottr Exp $
 
 # RAMDISK
@@ -14,7 +14,7 @@ options		RAMDISK_HOOKS
 options		MINIROOTSIZE=512	# 256K
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options		SWAPPAGER, DEVPAGER	# paging
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 1996/08/31 02:09:22 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.9 1996/09/20 06:45:11 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.38 1996/08/05 01:52:13 scottr Exp $
 #
 # GENERIC
@@ -10,7 +10,7 @@ maxusers	16
 options         MAXFDESCS=2048
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options		SWAPPAGER, DEVPAGER	# paging
 options		DIAGNOSTIC		# DEBUG for extra kernel debugging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb

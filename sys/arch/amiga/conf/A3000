@@ -40,7 +40,6 @@ options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes
 
 options		SWAPPAGER	# Pager for swap device
-options		VNODEPAGER	# Pager for vnodes
 options		DEVPAGER	# Pager
 
 #

@@ -1,4 +1,4 @@
-#	$OpenBSD: OCELOT,v 1.7 1996/08/31 02:09:22 deraadt Exp $
+#	$OpenBSD: OCELOT,v 1.8 1996/09/20 06:45:12 deraadt Exp $
 #	$NetBSD: OCELOT,v 1.11 1996/08/05 01:52:14 scottr Exp $
 #
 # OCELOT
@@ -8,7 +8,7 @@ include	"std.mac68k"
 maxusers	16
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options		SWAPPAGER, DEVPAGER	# paging
 options		DIAGNOSTIC		# DEBUG for extra kernel debugging
 
 # Filesystem options

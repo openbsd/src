@@ -1,4 +1,4 @@
-#	$OpenBSD: LAP,v 1.11 1996/08/31 02:09:15 deraadt Exp $
+#	$OpenBSD: LAP,v 1.12 1996/09/20 06:45:07 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -24,7 +24,6 @@ maxusers	10		# estimated number of users
 #option		DST=0		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pager.c,v 1.4 1996/08/02 00:06:05 niklas Exp $	*/
+/*	$OpenBSD: vm_pager.c,v 1.5 1996/09/20 06:44:49 deraadt Exp $	*/
 /*	$NetBSD: vm_pager.c,v 1.21 1996/03/16 23:15:25 christos Exp $	*/
 
 /* 
@@ -83,9 +83,7 @@
 extern struct pagerops swappagerops;
 #endif
 
-#ifdef VNODEPAGER
 extern struct pagerops vnodepagerops;
-#endif
 
 #ifdef DEVPAGER
 extern struct pagerops devicepagerops;
@@ -97,11 +95,7 @@ struct pagerops *pagertab[] = {
 #else
 	NULL,
 #endif
-#ifdef VNODEPAGER
 	&vnodepagerops,		/* PG_VNODE */
-#else
-	NULL,
-#endif
 #ifdef DEVPAGER
 	&devicepagerops,	/* PG_DEV */
 #else

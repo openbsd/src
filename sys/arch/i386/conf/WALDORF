@@ -20,7 +20,6 @@ option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger

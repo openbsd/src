@@ -28,7 +28,6 @@ option		FPCOPROC	# Support for MC6888[12] (Required)
 #
 
 option		SWAPPAGER	# Pager for processes (Required)
-option		VNODEPAGER	# Pager for vnodes (Required)
 option		DEVPAGER	# Pager for devices (Required)
 
 #

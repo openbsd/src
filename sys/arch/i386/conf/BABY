@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.8 1996/09/12 21:55:06 deraadt Exp $
+#	$OpenBSD: BABY,v 1.9 1996/09/20 06:45:04 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -23,7 +23,6 @@ option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger

@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.16 1996/08/31 02:09:18 deraadt Exp $
+#	$OpenBSD: TDR,v 1.17 1996/09/20 06:45:10 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -24,7 +24,6 @@ option		TIMEZONE=420	# time zone to adjust RTC time by
 option		DST=1		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger

@@ -1,4 +1,4 @@
-#	$OpenBSD: OPAL,v 1.2 1996/08/23 11:51:57 niklas Exp $
+#	$OpenBSD: OPAL,v 1.3 1996/09/20 06:44:52 deraadt Exp $
 #
 # OPAL, kernel for a DEC Multia at Applitron
 
@@ -14,7 +14,7 @@ option		TIMEZONE="-1*60"	# Minutes west of GMT (for param.c)
 option		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-option		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+option		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 option		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 option		KTRACE			# System call tracing support
 #option		DDB			# Kernel debugger (not yet supported)

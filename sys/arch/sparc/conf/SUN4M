@@ -10,7 +10,7 @@ option		SUN4M
 option		TIMEZONE=0, DST=0
 
 # Standard system options
-option		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+option		SWAPPAGER, DEVPAGER	# paging
 #option		DEBUG, DIAGNOSTIC	# extra kernel debugging
 option		KTRACE			# system call tracing support
 #option		KGDB			# support for kernel gdb

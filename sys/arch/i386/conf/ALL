@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.8 1996/09/04 21:20:44 deraadt Exp $
+#	$OpenBSD: ALL,v 1.9 1996/09/20 06:45:04 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -26,7 +26,6 @@ option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger

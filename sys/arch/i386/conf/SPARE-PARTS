@@ -1,7 +1,7 @@
 #
 #	SPARE-PARTS: spare-parts.teeny.org, the teeny gateway to the world.
 #
-#	$OpenBSD: SPARE-PARTS,v 1.5 1996/09/16 10:10:46 downsj Exp $
+#	$OpenBSD: SPARE-PARTS,v 1.6 1996/09/20 06:45:09 deraadt Exp $
 #
 
 machine		i386
@@ -14,7 +14,6 @@ option		TIMEZONE=480
 option		DST=0
 
 option		SWAPPAGER
-option		VNODEPAGER
 option		DEVPAGER
 
 #option		DDB

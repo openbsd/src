@@ -1,4 +1,4 @@
-#	$OpenBSD: NOSY,v 1.3 1996/07/29 20:01:26 niklas Exp $
+#	$OpenBSD: NOSY,v 1.4 1996/09/20 06:44:51 deraadt Exp $
 #	$NetBSD: NOSY,v 1.5.4.2 1996/06/13 19:22:15 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
@@ -16,7 +16,7 @@ options		TIMEZONE="8*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 

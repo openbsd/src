@@ -1,4 +1,4 @@
-#	$OpenBSD: BUNNY,v 1.5 1996/07/29 20:01:23 niklas Exp $
+#	$OpenBSD: BUNNY,v 1.6 1996/09/20 06:44:50 deraadt Exp $
 #	$NetBSD: BUNNY,v 1.5.4.1 1996/06/13 19:22:03 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
@@ -21,7 +21,7 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 

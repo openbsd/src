@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.39 1996/08/30 08:39:19 deraadt Exp $
+#	$OpenBSD: files,v 1.40 1996/09/20 06:44:46 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -405,4 +405,4 @@ file vm/vm_pager.c
 file vm/vm_swap.c
 file vm/vm_unix.c
 file vm/vm_user.c
-file vm/vnode_pager.c			vnodepager
+file vm/vnode_pager.c

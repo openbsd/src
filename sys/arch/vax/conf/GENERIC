@@ -19,7 +19,7 @@ options         GENERIC
 maxusers	8
 
 # Paging system, we always have them all.
-options		SWAPPAGER, DEVPAGER, VNODEPAGER
+options		SWAPPAGER, DEVPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
 options		DDB

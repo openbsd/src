@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.3 1996/08/31 02:09:29 deraadt Exp $
+#	$Id: GENERIC,v 1.4 1996/09/20 06:45:16 deraadt Exp $
 #
 # This configuration file contains all possible options
 #
@@ -17,7 +17,6 @@ options		TIMEZONE=300, DST=1
 options		"M88000"	# support for 88K
 
 options		SWAPPAGER	# Pager for processes (Required)
-options		VNODEPAGER	# Pager for vnodes (Required)
 options		DEVPAGER	# Pager for devices (Required)
 
 #

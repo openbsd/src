@@ -20,7 +20,6 @@ maxusers	8
 
 # Standard system options
 options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
 options		DEVPAGER		# device pager (mapped devices)
 options         "COMPAT_43"             # compatibility with 4.3BSD interfaces
 options         "COMPAT_44"             # compatibility with 4.4BSD binaries

@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.10 1996/08/31 17:35:37 deraadt Exp $
+#	$OpenBSD: INST,v 1.11 1996/09/20 06:45:06 deraadt Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #       Install kernels no longer support X.
@@ -23,7 +23,6 @@ option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 #makeoptions	DEBUG="-g"	# compile full symbol table

@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.12 1996/08/31 02:09:16 deraadt Exp $
+#	$OpenBSD: NETTAN,v 1.13 1996/09/20 06:45:08 deraadt Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -19,7 +19,6 @@ option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
-option		VNODEPAGER	# mmap() of files
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger

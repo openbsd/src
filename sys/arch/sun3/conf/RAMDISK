@@ -17,7 +17,7 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	2
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options		SWAPPAGER			# paging
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
 #options 	DDB
 

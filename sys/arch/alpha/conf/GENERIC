@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 1996/07/29 20:01:23 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.8 1996/09/20 06:44:50 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.15.4.3 1996/06/13 19:22:07 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -20,7 +20,7 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
