@@ -1,3 +1,4 @@
+/*	$OpenBSD: hilinfo.c,v 1.3 2002/02/19 19:51:54 miod Exp $	*/
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
  * the Center for Software Science at the University of Utah (CSS).
@@ -19,19 +20,20 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: hilinfo.c 1.3 94/04/04$
- *	$Id: hilinfo.c,v 1.2 1997/01/15 23:43:58 millert Exp $
  */
 
+#include <errno.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <dev/hilioctl.h>
 
-int aflg = 0;
-int tflg = 1;
-char *pname;
-char *dname, *tname();
+int getinfo(char *);
+void printall(void);
+char *tname(void);
+void usage(void);
+
 struct _hilbuf11 hi;
 struct _hilbuf16 sc;
 
@@ -48,75 +50,77 @@ struct hil_info {
 	0x00,	0x00,	"unknown",
 };
 
+int
 main(argc, argv)
 	char **argv;
 {
-	extern int optind, optopt;
-	extern char *optarg;
-	register int c;
-	int multi;
+	int aflg, tflg;
+	int c;
+	char *dname;
 
-	pname = argv[0];
-	while ((c = getopt(argc, argv, "at")) != -1)
+	aflg = tflg = 0;
+	while ((c = getopt(argc, argv, "at")) != -1) {
 		switch (c) {
-		/* everything */
 		case 'a':
+			if (tflg != 0)
+				usage();
 			aflg++;
-			tflg = 0;
 			break;
-		/* type */
 		case 't':
+			if (aflg != 0)
+				usage();
 			tflg++;
-			aflg = 0;
 			break;
-		/* bogon */
 		case '?':
+		default:
 			usage();
 		}
-	if (optind == argc)
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
 		usage();
-	multi = (argc - optind) - 1;
-	while (optind < argc) {
-		dname = argv[optind];
-		if (multi)
+	while (argc-- != 0) {
+		dname = *argv++;
+		if (getinfo(dname)) {
 			printf("%s: ", dname);
-		if (getinfo()) {
 			if (aflg)
 				printall();
-			else if (tflg)
+			else
 				printf("%s\n", tname());
 		}
-		optind++;
 	}
 	exit(0);
 }
 
-getinfo()
+int
+getinfo(dname)
+	char *dname;
 {
 	int f;
-	extern int errno;
 
 	f = open(dname, 0);
-	if (f < 0 || ioctl(f, HILIOCID, &hi) < 0) {
-		if (tflg)
-			printf(errno == EBUSY ? "busy\n" : "none\n");
-		else {
-			printf("error\n");
-			perror(dname);
-		}
-		close(f);
-		return(0);
+	if (f < 0) {
+		warn("open(%s)", dname);
+		return 0;
 	}
-	(void) ioctl(f, HILIOCSC, &sc);
+	if (ioctl(f, HILIOCID, &hi) < 0 || ioctl(f, HILIOCSC, &sc) < 0) {
+		warn("ioctl(%s)", dname);
+		close(f);
+		return 0;
+	}
+
 	close(f);
-	return(1);
+	return 1;
 }
 
+void
 printall()
 {
-	register int i;
+	int i;
 
-	printf("%s: %s, info: ", dname, tname());
+	printf("%s, info: ", tname());
 	for (i = 0; i < 11; i++)
 		printf("%2.2x", hi.string[i]);
 	if (strcmp(tname(), "id-module") == 0) {
@@ -130,7 +134,7 @@ printall()
 char *
 tname()
 {
-	register struct hil_info *hp;
+	struct hil_info *hp;
 
 	for (hp = info; hp->hil_lo; hp++)
 		if (hi.string[0] >= hp->hil_lo && hi.string[0] <= hp->hil_hi)
@@ -140,8 +144,11 @@ tname()
 	return(hp->hil_name);
 }
 
+void
 usage()
 {
-	fprintf(stderr, "usage: %s [-at] device\n", pname);
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-at] device\n", __progname);
 	exit(1);
 }
