@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.9 2001/06/27 04:29:19 art Exp $ */
+/*	$OpenBSD: mmu.h,v 1.10 2001/08/07 23:57:58 miod Exp $ */
 /*
  * Ashura Project
  */
@@ -31,7 +31,7 @@ typedef struct cmmu_apr {
 			g:1,		/* global (cache control) */
 			ci:1,		/* cache inhibit */
 			rsvC:5,		/* reserved */
-			te:1;		/* transration enable */
+			te:1;		/* translation enable */
 } cmmu_apr_t;
 
 typedef union apr_template {
