@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.71 2003/01/28 10:40:21 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.72 2003/02/08 15:39:06 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -111,6 +111,11 @@ Evaluation of
 .Pa anchor
 rules from the main ruleset is described in
 .Xr pf.conf 5 .
+.Bd -literal -offset indent
+Example:
+Show all filter rules inside anchor foo
+.Ic # pfctl -a foo -s rules
+.Ed
 .It Fl A
 Load only the queue rules present in the rule file.
 Other rules and options are ignored.
@@ -199,8 +204,8 @@ connection).
 .It Fl s Ar Anchors
 Show the currently loaded anchors.
 If
-.Fl a
-is specified, the named rulesets currently loaded in the specified
+.Fl a Ar anchor
+is specified as well, the named rulesets currently loaded in the specified
 anchor are shown instead.
 .It Fl s Ar state
 Show the contents of the state table.
