@@ -179,7 +179,60 @@ static int get_digest_rec(request_rec *r, digest_header_rec * response)
     key = ap_palloc(r->pool, l);
     value = ap_palloc(r->pool, l);
 
-    /* There's probably a better way to do this, but for the time being... */
+    /* There's probably a better way to do this, but for the time being... 
+     *
+     * Right now the parsing is very 'slack'. Actual rules from RFC 2617 are:
+     *
+     * Authorization     = "Digest" digest-response
+     * digest-response   = 1#( username | realm | nonce | digest-uri |
+     * 				response | [ cnonce ] | [ algorithm ] |
+     *                    	[opaque] | [message-qop] | [nonce-count] |
+     *				[auth-param] )			(see note 4)
+     * username           = "username" "=" username-value
+     *   username-value   = quoted-string
+     * digest-uri         = "uri" "=" digest-uri-value
+     *   digest-uri-value = request-uri         
+     * message-qop      = "qop" "=" qop-value
+     *   qop-options       = "qop" "=" <"> 1#qop-value <">      (see note 3)
+     *   qop-value         = "auth" | "auth-int" | token
+     * cnonce           = "cnonce" "=" cnonce-value
+     *    cnonce-value     = nonce-value
+     * nonce-count      = "nc" "=" nc-value
+     *    nc-value         = 8LHEX
+     * response           = "response" "=" response-digest
+     *   response-digest  = <"> *LHEX <">
+     *     LHEX           = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
+     *                      "8" | "9" | "a" | "b" | "c" | "d" | "e" | "f"
+     * 
+     * Current Discrepancies:
+     *   quoted-string	 	section 2.2 of RFC 2068
+     *   --> We also acccept unquoted strings or strings
+     *       like foo" bar". And take a space, comma or EOL as
+     *       the terminator in that case.
+     *
+     *   request-uri		section 5.1 of RFC 2068
+     *   --> We currently also accept any quoted string - and
+     *       ignore those quotes.
+     *
+     *   response/entity-digest
+     *   --> We ignore the presense of the " if any.
+     *
+     * Note: * - not yet for  CHARSET_EBCDIC XXXX
+     *
+     * Note: There is an inherent problem with the request URI; as it should
+     *       be used unquoted - yet may contain a ',' - which is used as
+     *       a terminator:       
+     *       Authorization: Digest username="dirkx", realm="DAV", nonce="1031662894",
+     *       uri=/mary,+dirkx,+peter+and+mary.ics, response="99a6275793be28c31a5b6e4467fa4c79",
+     *       algorithm=MD5
+     *
+     * Note3: Taken from section 3.2.1 - as this is not actually defined in section 3.2.2 
+     *       which deals with the Authorization Request Header.
+     *
+     * Note4: The 'comma separated' list concept is refered to in the RFC
+     *       but whitespace eating and other such things are assumed to be
+     *       as per MIME/RFC2068 spec.
+     */
 
 #define D_KEY 0
 #define D_VALUE 1
@@ -201,13 +254,26 @@ static int get_digest_rec(request_rec *r, digest_header_rec * response)
 	    break;
 
 	case D_VALUE:
+#ifdef CHARSET_EBCDIC
+	    /* This is *wrong* - a request URI may be unquoted and yet
+             * contain non alpha/num chars. (Though gets terminated by 
+             * a ',' - which in fact may be in the URI - so I guess 
+             * 2069 should be updated to suggest strongly to quote).
+             */
 	    if (ap_isalnum(auth_line[0])) {
 		value[vv] = auth_line[0];
 		vv++;
-	    }
-	    else if (auth_line[0] == '\"') {
+	    } else
+#endif
+	    if (auth_line[0] == '\"') {
 		s = D_STRING;
 	    }
+#ifndef CHARSET_EBCDIC
+	    else if ((auth_line[0] != ',') && (auth_line[0] != ' ') && (auth_line[0] != '\0')) {
+		value[vv] = auth_line[0];
+		vv++;
+	    }
+#endif
 	    else {
 		value[vv] = '\0';
 

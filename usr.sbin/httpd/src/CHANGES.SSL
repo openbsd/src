@@ -23,6 +23,22 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.11 (24-Jun-2002 to 04-Oct-2002)
+   
+   *) Upgraded to Apache 1.3.27.
+
+   *) Fixed internal error handling for CRL verification.
+
+   *) Initialize OpenSSL ENGINE before initializing OpenSSL
+      to workaround problems with the PRNG.
+
+   *) Also find "openssl" executable in "sbin" directories.
+
+   *) Honor specified number of maximum bytes on SSLRandomSeed
+      if reading from EGD.
+
+   *) Fixed generation of SSL_CLIENT_CERT_CHAIN_[0-9] variables.
+
   Changes with mod_ssl 2.8.10 (19-Jun-2002 to 24-Jun-2002)
 
    *) Fixed off-by-one buffer overflow bug in the compatibility

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth_db.c,v 1.9 2002/08/15 16:06:11 henning Exp $ */
+/*	$OpenBSD: mod_auth_db.c,v 1.10 2002/10/07 20:23:06 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -107,6 +107,9 @@
 #if (DB_VERSION_MAJOR == 3)
 #define DB3
 #endif
+#if (DB_VERSION_MAJOR == 4)
+#define DB4
+#endif
 #endif
 
 typedef struct {
@@ -171,7 +174,7 @@ static char *get_db_pw(request_rec *r, char *user, const char *auth_dbpwfile)
 
     ap_server_strip_chroot(auth_dbpwfile, 1);
 
-#if defined(DB3)
+#if defined(DB3) || defined(DB4)
     if (   db_create(&f, NULL, 0) != 0 
         || f->open(f, auth_dbpwfile, NULL, DB_HASH, DB_RDONLY, 0664) != 0) {
 #elif defined(DB2)
@@ -184,7 +187,7 @@ static char *get_db_pw(request_rec *r, char *user, const char *auth_dbpwfile)
 	return NULL;
     }
 
-#if defined(DB2) || defined(DB3)
+#if defined(DB2) || defined(DB3) || defined(DB4)
     if (!((f->get) (f, NULL, &q, &d, 0))) {
 #else
     if (!((f->get) (f, &q, &d, 0))) {
@@ -194,7 +197,7 @@ static char *get_db_pw(request_rec *r, char *user, const char *auth_dbpwfile)
 	pw[d.size] = '\0';	/* Terminate the string */
     }
 
-#if defined(DB2) || defined(DB3)
+#if defined(DB2) || defined(DB3) || defined(DB4)
     (f->close) (f, 0);
 #else
     (f->close) (f);

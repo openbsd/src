@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.25 2002/09/09 14:21:18 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.26 2002/10/07 20:23:06 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -395,6 +395,7 @@ static int my_child_num;
 #ifdef TPF
 int tpf_child = 0;
 char tpf_server_name[INETD_SERVNAME_LENGTH+1];
+char tpf_mutex_key[TPF_MUTEX_KEY_SIZE];
 #endif /* TPF */
 
 scoreboard *ap_scoreboard_image = NULL;
@@ -408,6 +409,11 @@ static int version_locked = 0;
 
 /* Global, alas, so http_core can talk to us */
 enum server_token_type ap_server_tokens = SrvTk_FULL;
+
+/* Also global, for http_core and http_protocol */
+API_VAR_EXPORT int ap_protocol_req_check = 1;
+
+API_VAR_EXPORT int ap_change_shmem_uid = 0;
 
 /*
  * This routine is called when the pconf pool is vacuumed.  It resets the
@@ -780,9 +786,8 @@ accept_mutex_methods_s accept_mutex_pthread_s = {
 #include <sys/sem.h>
 
 #ifdef NEED_UNION_SEMUN
-/* it makes no sense, but this isn't defined on solaris */
 union semun {
-    long val;
+    int val;
     struct semid_ds *buf;
     ushort *array;
 };
@@ -1113,7 +1118,7 @@ static int tpf_core_held;
 static void accept_mutex_cleanup_tpfcore(void *foo)
 {
     if(tpf_core_held)
-        coruc(RESOURCE_KEY);
+        deqc(tpf_mutex_key, QUAL_S);
 }
 
 #define accept_mutex_init_tpfcore(x)
@@ -1126,14 +1131,14 @@ static void accept_mutex_child_init_tpfcore(pool *p)
 
 static void accept_mutex_on_tpfcore(void)
 {
-    corhc(RESOURCE_KEY);
+    enqc(tpf_mutex_key, ENQ_WAIT, 0, QUAL_S);
     tpf_core_held = 1;
     ap_check_signals();
 }
 
 static void accept_mutex_off_tpfcore(void)
 {
-    coruc(RESOURCE_KEY);
+    deqc(tpf_mutex_key, QUAL_S);
     tpf_core_held = 0;
     ap_check_signals();
 }
@@ -2377,7 +2382,9 @@ static void setup_shared_mem(pool *p)
 	 * We exit below, after we try to remove the segment
 	 */
     }
-    else {			/* only worry about permissions if we attached the segment */
+    /* only worry about permissions if we attached the segment
+       and we want/need to change the uid/gid */
+    else if (ap_change_shmem_uid) {
 	if (shmctl(shmid, IPC_STAT, &shmbuf) != 0) {
 	    ap_log_error(APLOG_MARK, APLOG_ERR, server_conf,
 		"shmctl() could not stat segment #%d", shmid);
@@ -4164,6 +4171,7 @@ static void show_compile_settings(void)
 	printf(" -D PIPE_BUF=%ld\n",(long)PIPE_BUF);
 #endif
 #endif
+    printf(" -D HARD_SERVER_LIMIT=%ld\n",(long)HARD_SERVER_LIMIT);
 #ifdef MULTITHREAD
     printf(" -D MULTITHREAD\n");
 #endif
@@ -5634,6 +5642,7 @@ int REALMAIN(int argc, char *argv[])
         memcpy(tpf_server_name, input_parms.parent.servname,
                INETD_SERVNAME_LENGTH);
         tpf_server_name[INETD_SERVNAME_LENGTH + 1] = '\0';
+        sprintf(tpf_mutex_key, "%.*x", TPF_MUTEX_KEY_SIZE - 1, getpid());
         ap_open_logs(server_conf, plog);
         ap_tpf_zinet_checks(ap_standalone, tpf_server_name, server_conf);
         ap_tpf_save_argv(argc, argv);    /* save argv parms for children */
@@ -7452,7 +7461,7 @@ int REALMAIN(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVlLz:Z:wiuStThk:n:W:")) != -1) {
 #else /* !WIN32 */
-    while ((c = getopt(argc, argv, "D:C:c:Xd:fF:vVlLesStTh")) != -1) {
+    while ((c = getopt(argc, argv, "D:C:c:Xd:Ff:vVlLesStTh")) != -1) {
 #endif
         char **new;
 	switch (c) {

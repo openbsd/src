@@ -1068,37 +1068,45 @@ struct psprintf_data {
 #endif
 };
 
+#define AP_PSPRINTF_MIN_SIZE 32  /* Minimum size of allowable avail block */
+
 static int psprintf_flush(ap_vformatter_buff *vbuff)
 {
     struct psprintf_data *ps = (struct psprintf_data *)vbuff;
 #ifdef ALLOC_USE_MALLOC
-    int size;
+    int cur_len, size;
     char *ptr;
 
-    size = (char *)ps->vbuff.curpos - ps->base;
+    cur_len = (char *)ps->vbuff.curpos - ps->base;
+    size = cur_len << 1;
+    if (size < AP_PSPRINTF_MIN_SIZE)
+        size = AP_PSPRINTF_MIN_SIZE;
 #if defined(EAPI) && defined(EAPI_MM)
     if (ps->block->h.is_shm)
-        ptr = ap_mm_realloc(ps->base, 2*size);
+        ptr = ap_mm_realloc(ps->base, size);
     else
 #endif
-    ptr = realloc(ps->base, 2*size);
+    ptr = realloc(ps->base, size);
     if (ptr == NULL) {
 	fputs("Ouch!  Out of memory!\n", stderr);
 	exit(1);
     }
     ps->base = ptr;
-    ps->vbuff.curpos = ptr + size;
-    ps->vbuff.endpos = ptr + 2*size - 1;
+    ps->vbuff.curpos = ptr + cur_len;
+    ps->vbuff.endpos = ptr + size - 1;
     return 0;
 #else
     union block_hdr *blok;
     union block_hdr *nblok;
-    size_t cur_len;
+    size_t cur_len, size;
     char *strp;
 
     blok = ps->blok;
     strp = ps->vbuff.curpos;
     cur_len = strp - blok->h.first_avail;
+    size = cur_len << 1;
+    if (size < AP_PSPRINTF_MIN_SIZE)
+        size = AP_PSPRINTF_MIN_SIZE;
 
     /* must try another blok */
 #if defined(EAPI) && defined(EAPI_MM)
@@ -1107,9 +1115,9 @@ static int psprintf_flush(ap_vformatter_buff *vbuff)
 #endif
     (void) ap_acquire_mutex(alloc_mutex);
 #if defined(EAPI) && defined(EAPI_MM)
-    nblok = new_block(2 * cur_len, blok->h.is_shm);
+    nblok = new_block(size, blok->h.is_shm);
 #else
-    nblok = new_block(2 * cur_len);
+    nblok = new_block(size);
 #endif
     (void) ap_release_mutex(alloc_mutex);
 #if defined(EAPI) && defined(EAPI_MM)
@@ -1196,6 +1204,8 @@ API_EXPORT(char *) ap_pvsprintf(pool *p, const char *fmt, va_list ap)
     ps.vbuff.endpos = ps.blok->h.endp - 1;	/* save one for NUL */
     ps.got_a_new_block = 0;
 
+    if (ps.blok->h.first_avail == ps.blok->h.endp)
+        psprintf_flush(&ps.vbuff);		/* ensure room for NUL */
     ap_vformatter(psprintf_flush, &ps.vbuff, fmt, ap);
 
     strp = ps.vbuff.curpos;

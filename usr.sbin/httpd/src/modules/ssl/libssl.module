@@ -331,6 +331,11 @@ ConfigStart
                 SSL_BINDIR='$(SSL_BASE)/bin'
                 break;
             fi
+            if [ -f "$SSL_BASE/sbin/$name" ]; then
+                SSL_PROGRAM="$SSL_BASE/sbin/$name"
+                SSL_BINDIR='$(SSL_BASE)/sbin'
+                break;
+            fi
             if [ -f "$SSL_BASE/apps/$name" ]; then
                 SSL_PROGRAM="$SSL_BASE/apps/$name"
                 SSL_BINDIR='$(SSL_BASE)/apps'

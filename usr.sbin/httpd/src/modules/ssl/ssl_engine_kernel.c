@@ -1582,6 +1582,7 @@ int ssl_callback_SSLVerify_CRL(
     int i, n, rc;
     char *cp;
     char *cp2;
+    ASN1_TIME *t;
 
     /*
      * Unless a revocation store for CRLs was created we
@@ -1671,14 +1672,13 @@ int ssl_callback_SSLVerify_CRL(
         /*
          * Check date of CRL to make sure it's not expired
          */
-        i = X509_cmp_current_time(X509_CRL_get_nextUpdate(crl));
-        if (i == 0) {
+        if ((t = X509_CRL_get_nextUpdate(crl)) == NULL) {
             ssl_log(s, SSL_LOG_WARN, "Found CRL has invalid nextUpdate field");
             X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD);
             X509_OBJECT_free_contents(&obj);
             return FALSE;
         }
-        if (i < 0) {
+        if (X509_cmp_current_time(t) < 0) {
             ssl_log(s, SSL_LOG_WARN,
                     "Found CRL is expired - "
                     "revoking all certificates until you get updated CRL");

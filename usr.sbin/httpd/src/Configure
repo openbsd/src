@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.20 2002/07/19 21:31:15 henning Exp $
+# $OpenBSD: Configure,v 1.21 2002/10/07 20:23:06 henning Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -630,6 +630,12 @@ case "$PLAT" in
     *-unixware7)
 	OS='UnixWare 7'
 	CFLAGS="$CFLAGS -DUW=700"
+	LIBS="$LIBS -lsocket -lnsl -lcrypt -lgen -lresolv"
+	DBM_LIB=""
+	;;
+    *-OpenUNIX)
+	OS='OpenUNIX'
+	CFLAGS="$CFLAGS -DUW=800"
 	LIBS="$LIBS -lsocket -lnsl -lcrypt -lgen -lresolv"
 	DBM_LIB=""
 	;;
@@ -1269,6 +1275,16 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_SHLIB="-Bdynamic -G"
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
 	    LDFLAGS_SHLIB_EXPORT="-Wl,-Bexport"
+	    ;;
+	*-OpenUNIX*)
+	    case $CC in
+		*/gcc|gcc ) CFLAGS_SHLIB="-fpic" ;;
+		*/cc|cc   ) CFLAGS_SHLIB="-KPIC" ;;
+	    esac
+	    LDFLAGS_SHLIB="-Bdynamic -G"
+	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
+	    LDFLAGS_SHLIB_EXPORT="-Wl,-Bexport"
+	    LD_SHLIB=$CC
 	    ;;
 	 *-sco5*)
 	     case $CC in
@@ -2005,7 +2021,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=26
+	V=1 R=3 P=27
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi

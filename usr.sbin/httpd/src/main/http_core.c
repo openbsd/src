@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.13 2002/10/04 11:29:52 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.14 2002/10/07 20:23:06 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1044,7 +1044,7 @@ API_EXPORT (file_type_e) ap_get_win32_interpreter(const  request_rec *r,
     if ((buffer[0] == '#') && (buffer[1] == '!')) {
         /* Assuming file is a script since it starts with a shebang */
         fileType = eFileTypeSCRIPT;
-        for (i = 2; i < sizeof(buffer); i++) {
+        for (i = 2; i < (sizeof(buffer) - 1); i++) {
             if ((buffer[i] == '\r')
                 || (buffer[i] == '\n')) {
                 break;
@@ -2829,6 +2829,30 @@ static const char *set_bs2000_account(cmd_parms *cmd, void *dummy, char *name)
 }
 #endif /*_OSD_POSIX*/
 
+static const char *set_protocol_req_check(cmd_parms *cmd,
+                                              core_dir_config *d, int arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_protocol_req_check = arg != 0;
+    return NULL;
+}
+
+static const char *set_change_shmem_uid(cmd_parms *cmd,
+                                              core_dir_config *d, int arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_change_shmem_uid = arg != 0;
+    return NULL;
+}
+
 /*
  * Handle a request to include the server's OS platform in the Server
  * response header field (the ServerTokens directive).  Unfortunately
@@ -2836,7 +2860,6 @@ static const char *set_bs2000_account(cmd_parms *cmd, void *dummy, char *name)
  * http_main so it can insert the information in the right place in the
  * string.
  */
-
 static const char *set_serv_tokens(cmd_parms *cmd, void *dummy, char *arg) 
 {
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -3462,6 +3485,10 @@ static const command_rec core_cmds[] = {
   (void*)XtOffsetOf(core_dir_config, limit_req_body),
   OR_ALL, TAKE1,
   "Limit (in bytes) on maximum size of request message body" },
+{ "ProtocolReqCheck", set_protocol_req_check, NULL, RSRC_CONF, FLAG,
+  "Enable strict checking of Protocol type in requests" },
+{ "ShmemUIDisUser", set_change_shmem_uid, NULL, RSRC_CONF, FLAG,
+  "Enable the setting of SysV shared memory scoreboard uid/gid to User/Group" },
 { "AcceptMutex", set_accept_mutex, NULL, RSRC_CONF, TAKE1,
   "Serialized Accept Mutex; the methods " 
 #ifdef HAVE_USLOCK_SERIALIZED_ACCEPT
@@ -3864,7 +3891,8 @@ static int default_handler(request_rec *r)
 
     if (r->method_number == M_INVALID) {
 	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-		    "Invalid method in request %s", r->the_request);
+		    "Invalid method in request %s",
+		    ap_escape_logitem(r->pool, r->the_request));
 	return NOT_IMPLEMENTED;
     }
     if (r->method_number == M_OPTIONS) {

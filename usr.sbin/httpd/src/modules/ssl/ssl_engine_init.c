@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.19 2002/07/19 21:31:16 henning Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.20 2002/10/07 20:23:06 henning Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -239,11 +239,17 @@ void ssl_init_Module(server_rec *s, pool *p)
 #ifdef SHARED_MODULE
     ssl_log(s, SSL_LOG_INFO, "Init: %snitializing %s library",
             mc->nInitCount == 1 ? "I" : "Rei", SSL_LIBRARY_NAME);
+#ifdef SSL_EXPERIMENTAL_ENGINE
+    ssl_init_Engine(s, p);
+#endif
     ssl_init_SSLLibrary();
 #else
     if (mc->nInitCount <= 2) {
         ssl_log(s, SSL_LOG_INFO, "Init: %snitializing %s library",
                 mc->nInitCount == 1 ? "I" : "Rei", SSL_LIBRARY_NAME);
+#ifdef SSL_EXPERIMENTAL_ENGINE
+        ssl_init_Engine(s, p);
+#endif
         ssl_init_SSLLibrary();
     }
 #endif

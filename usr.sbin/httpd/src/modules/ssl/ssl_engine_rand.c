@@ -126,7 +126,11 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                  * seed in contents provided by the external
                  * Entropy Gathering Daemon (EGD)
                  */
+#if SSL_LIBRARY_VERSION >= 0x00906000
+                if ((n = RAND_egd_bytes(pRandSeed->cpPath, pRandSeed->nBytes)) == -1)
+#else
                 if ((n = RAND_egd(pRandSeed->cpPath)) == -1)
+#endif
                     continue;
                 nDone += n;
             }
