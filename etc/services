@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.14 1997/09/30 18:46:47 kstailey Exp $
+#	$OpenBSD: services,v 1.15 1997/11/04 20:43:01 kstailey Exp $
 #
 # Network services, Internet style
 #
@@ -58,6 +58,8 @@ supdup		95/tcp
 # 100 - reserved
 hostnames	101/tcp		hostname	# usually from sri-nic
 iso-tsap	102/tcp		tsap		# part of ISODE.
+x400		103/tcp			# ISO E-mail
+x400-snd	104/tcp
 csnet-ns	105/tcp		cso-ns	# also used by CSO name server
 csnet-ns	105/udp		cso-ns
 rtelnet		107/tcp		# Remote Telnet
@@ -66,14 +68,16 @@ pop2		109/tcp		postoffice	# POP version 2
 pop2		109/udp
 pop3		110/tcp		# POP version 3
 pop3		110/udp
-sunrpc		111/tcp
-sunrpc		111/udp
+sunrpc		111/tcp		portmap rpcbind
+sunrpc		111/udp		portmap rpcbind
 auth		113/tcp		authentication tap ident
 sftp		115/tcp
 uucp-path	117/tcp
 nntp		119/tcp		readnews untp	# USENET News Transfer Protocol
 ntp		123/tcp
 ntp		123/udp				# Network Time Protocol
+loc-srv		135/tcp				# NCS local location broker
+loc-srv		135/udp
 netbios-ns	137/tcp				# NETBIOS Name Service
 netbios-ns	137/udp
 netbios-dgm	138/tcp				# NETBIOS Datagram Service
@@ -82,6 +86,7 @@ netbios-ssn	139/tcp				# NETBIOS session service
 netbios-ssn	139/udp
 imap2		143/tcp				# Interim Mail Access Proto v2
 imap2		143/udp
+bftp		152/tcp				# Background File Transfer Proto
 snmp		161/udp				# Simple Net Mgmt Proto
 snmp-trap	162/udp		snmptrap	# Traps for SNMP
 cmip-man	163/tcp				# ISO mgmt over IP (CMOT)
@@ -133,6 +138,7 @@ printer		515/tcp		spooler		# line printer spooler
 talk		517/udp
 ntalk		518/udp
 route		520/udp		router routed	# RIP
+efs		521/tcp				# extended file name server
 timed		525/udp		timeserver
 tempo		526/tcp		newdate
 courier		530/tcp		rpc
@@ -141,9 +147,6 @@ netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
-#
-webster		765/tcp				# Network dictionary
-webster		765/udp
 #
 # From ``Assigned Numbers'':
 #
@@ -191,6 +194,8 @@ cddb		888/tcp			# Audio CD Database
 supfiledbg	1127/tcp		# SUP debugging
 radius		1645/udp		# radius authentication
 radacct		1646/udp		# radius accounting
+webster		2627/tcp		# Network dictionary
+webster		2627/udp
 icb		7326/tcp		# Internet Citizen's Band
 #
 # Appletalk
