@@ -254,7 +254,7 @@ make_tempname (filename, isdir)
   if (isdir)
     {
 #ifdef HAVE_MKDTEMP
-      if (mkdtemp (tmpname) != (char *) NULL)
+      if (mkdtemp (tmpname) == (char *) NULL)
 #else
       mktemp (tmpname);
 #if defined (_WIN32) && !defined (__CYGWIN32__)
