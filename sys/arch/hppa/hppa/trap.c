@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 1999/04/20 20:58:01 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 1999/05/03 16:33:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -34,8 +34,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/acct.h>
+#include <sys/signal.h>
 
 #include <vm/vm.h>
 #include <uvm/uvm.h>
@@ -90,6 +95,46 @@ void pmap_hptdump __P((void));
 void cpu_intr __P((u_int32_t t, struct trapframe *frame));
 void syscall __P((struct trapframe *frame, int *args));
 
+static __inline void
+userret (struct proc *p, register_t pc, u_quad_t oticks)
+{
+	int sig;
+	/* take pending signals */
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
+
+	p->p_priority = p->p_usrpri;
+	if (want_resched) {
+		register int s;
+		/*
+		 * Since we are curproc, a clock interrupt could
+		 * change our priority without changing run queues
+		 * (the running process is not kept on a run queue).
+		 * If this happened after we setrunqueue ourselves but
+		 * before we switch()'ed, we might not be on the queue
+		 * indicated by our priority.
+		 */
+		s = splstatclock();
+		setrunqueue(p);
+		p->p_stats->p_ru.ru_nivcsw++;
+		mi_switch();
+		splx(s);
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
+
+	/*
+	 * If profiling, charge recent system time to the trapped pc.
+	 */
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+	}
+
+	curpriority = p->p_priority;
+}
+
 void
 trap(type, frame)
 	int type;
@@ -109,12 +154,12 @@ trap(type, frame)
 		type |= T_USER;
 		p->p_md.md_regs = frame;
 	}
-
+#ifdef DEBUG
 	if ((type & ~T_USER) != T_INTERRUPT)
 		printf("trap: %d, %s for %x:%x at %x:%x\n",
 		       type, trap_type[type & ~T_USER], space, va,
 		       frame->tf_iisq_head, frame->tf_iioq_head);
-
+#endif
 	switch (type) {
 	case T_NONEXIST:
 	case T_NONEXIST|T_USER:
@@ -144,36 +189,90 @@ trap(type, frame)
 			cpu_intr(t, frame);
 		return;
 
+#ifdef DIAGNOSTIC
+	case T_IBREAK:
 	case T_HPMC:
+	case T_TLB_DIRTY:
+		panic ("trap: impossible \'%s\' (%d)",
+			trap_type[type & ~T_USER], type);
+		break;
+#endif
+
 	case T_POWERFAIL:
+		break;
+
 	case T_LPMC:
 		break;
 
-	case T_IBREAK:
+	case T_PAGEREF:
+		break;
+
 	case T_DBREAK:
 		if (kdb_trap (type, 0, frame))
 			return;
 		break;
 
+	case T_EXCEPTION:	/* co-proc assist trap */
+		break;
+
+	case T_OVERFLOW:
+	case T_CONDITION:
+		break;
+
+	case T_ILLEGAL:
+	case T_PRIV_OP:
+	case T_PRIV_REG:
+	case T_HIGHERPL:
+	case T_LOWERPL:
+	case T_TAKENBR:
+		break;
+
+	case T_IPROT:	case T_IPROT | T_USER:
+	case T_DPROT:	case T_DPROT | T_USER:
+	case T_ITLBMISS:
+	case T_ITLBMISS | T_USER:
+	case T_ITLBMISSNA:
+	case T_ITLBMISSNA | T_USER:
 	case T_DTLBMISS:
+	case T_DTLBMISS | T_USER:
+	case T_DTLBMISSNA:
+	case T_DTLBMISSNA | T_USER:
 		va = trunc_page(va);
 		opcode = frame->tf_iir;
+		map = &p->p_vmspace->vm_map;
 
-#ifdef DDB
-		Debugger();
-#endif
 		ret = uvm_fault(map, va, FAULT_TYPE(opcode), FALSE);
-		if (ret == KERN_SUCCESS)
-			break;
-		panic("trap: vm_fault(%p, %x, %d, %d): %d",
-		      map, va, FAULT_TYPE(opcode), 0, ret);
+		if (ret != KERN_SUCCESS)
+			panic ("trap: uvm_fault(%p, %x, %d, %d): %d",
+			       map, va, FAULT_TYPE(opcode), 0, ret);
 		break;
-	default:
-		/* pmap_hptdump(); */
-#ifdef DDB
-		Debugger();
+
+#ifdef HP7100_CPU
+	case T_DATACC:   case T_DATACC   | T_USER:
+	case T_DATAPID:  case T_DATAPID  | T_USER:
+	case T_DATALIGN: case T_DATALIGN | T_USER:
+		if (0 /* T-chip */) {
+			break;
+		}
+		/* FALLTHROUGH to unimplemented */
 #endif
+	case T_EMULATION:
+	case T_EMULATION | T_USER:
+	default:
+		panic ("trap: unimplemented \'%s\' (%d)",
+			trap_type[type & ~T_USER], type);
 	}
+}
+
+void
+child_return(p)
+	struct proc *p;
+{
+	userret(p, p->p_md.md_regs->tf_iioq_head, 0);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+#endif
 }
 
 /*
@@ -252,6 +351,7 @@ syscall(frame, args)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
+	userret(p, p->p_md.md_regs->tf_rp, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
