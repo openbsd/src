@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.17 1998/09/17 21:08:13 jason Exp $
+#	$OpenBSD: Makefile.sparc,v 1.18 1999/05/30 08:34:27 deraadt Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -37,7 +37,7 @@ S!=	cd ../../../..; pwd
 SPARC=	$S/arch/sparc
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dsparc
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
