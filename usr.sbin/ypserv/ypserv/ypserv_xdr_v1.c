@@ -3,10 +3,10 @@
  * It was generated using rpcgen.
  */
 
-#include "yp.h"
+#include <rpcsvc/yp.h>
 #include "ypv1.h"
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.3 2002/01/01 21:15:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.4 2003/02/13 05:54:39 maja Exp $";
 #endif /* not lint */
 
 bool_t
