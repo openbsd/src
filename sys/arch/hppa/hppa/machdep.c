@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2004/05/05 02:18:43 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.130 2004/05/13 15:09:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -247,15 +247,15 @@ const struct hppa_cpu_typed {
 	  0, desidhash_l, ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8000_CPU
-	{ "PCXU",  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXU",  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU,
 	  4, desidhash_g, ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8200_CPU
-	{ "PCXU+", hpcxu2,HPPA_CPU_PCXUP, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXU+", hpcxu2,HPPA_CPU_PCXUP, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU,
 	  4, desidhash_g, ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8500_CPU
-	{ "PCXW",  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXW",  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU,
 	  4, desidhash_g, ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 	{ "", 0 }
