@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.2 1996/03/27 19:33:15 niklas Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.3 1996/12/12 11:24:08 robin Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.2 1996/03/27 19:33:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.3 1996/12/12 11:24:08 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,8 @@ static char rcsid[] = "$OpenBSD: utilities.c,v 1.2 1996/03/27 19:33:15 niklas Ex
 #include <arpa/telnet.h>
 #include <sys/types.h>
 #include <sys/time.h>
-
+#include <sys/socket.h>
+#include <unistd.h>
 #include <ctype.h>
 
 #include "general.h"
@@ -142,7 +143,6 @@ Dump(direction, buffer, length)
 #   define min(x,y)	((x<y)? x:y)
     unsigned char *pThis;
     int offset;
-    extern pettydump;
 
     offset = 0;
 
@@ -304,7 +304,6 @@ printsub(direction, pointer, length)
     int		  length;	/* length of suboption data */
 {
     register int i;
-    char buf[512];
     extern int want_status_response;
 
     if (showoptions || direction == 0 ||
@@ -757,7 +756,6 @@ printsub(direction, pointer, length)
 			    break;
 
 			default:
-			def_case:
 			    if (isprint(pointer[i]) && pointer[i] != '"') {
 				if (noquote) {
 				    putc('"', NetTrace);
