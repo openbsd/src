@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.7 2002/04/01 01:31:40 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.8 2002/04/05 03:13:01 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -49,22 +49,22 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -u /dev/rd0a /
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 
-	# get the terminal type
-	_forceloop=""
-	while [ "X$_forceloop" = X"" ]; do
-		echo "Supported terminals are: $TERMS"
-		eval `tset -s -m ":?$TERM"`
-		if [ "X$TERM" != X"unknown" ]; then
-			_forceloop="done"
-		fi
-	done
-	export TERM
-
-	EDITOR=""
-	export EDITOR
+#	# get the terminal type
+#	_forceloop=""
+#	while [ "X$_forceloop" = X"" ]; do
+#		echo "Supported terminals are: $TERMS"
+#		eval `tset -s -m ":?$TERM"`
+#		if [ "X$TERM" != X"unknown" ]; then
+#			_forceloop="done"
+#		fi
+#	done
+#	export TERM
+#
+#	EDITOR=""
+#	export EDITOR
 
 	# Installing or upgrading?
 	_forceloop=""
