@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.61 2001/06/05 10:43:56 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.62 2001/06/05 10:51:27 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2921,13 +2921,13 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
 	  /* Set the section if it doesn't already exist. */
 	  af = conf_begin ();
-	  if (!conf_get_str (srcid, "ID-type"))
+	  if (!conf_get_str (dstid, "ID-type"))
 	    {
-	      if (conf_set (af, srcid, "ID-type",
+	      if (conf_set (af, dstid, "ID-type",
 			    afamily == AF_INET ? "IPV4_ADDR" : "IPV6_ADDR",
 			    1, 0)
-		  || conf_set (af, srcid, "Refcount", "1", 1, 0)
-		  || conf_set (af, srcid, "Address", (char *)(dstident + 1),
+		  || conf_set (af, dstid, "Refcount", "1", 1, 0)
+		  || conf_set (af, dstid, "Address", (char *)(dstident + 1),
 			       1, 0))
 		{
 		  conf_end (af, 0);
