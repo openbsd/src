@@ -1,4 +1,4 @@
-#	$OpenBSD: crt0.s,v 1.6 1999/08/20 14:11:36 niklas Exp $
+#	$OpenBSD: crt0.s,v 1.7 2000/06/28 04:56:44 rahnds Exp $
 	
 	.section ".data"
 	.comm	environ, 4
@@ -46,7 +46,6 @@ no_slash_found:
 	lis	26, environ@HA
 	stw	15, environ@L(26)
 
-	.globl __init
 call_main:	
 #ifdef MCRT0
 	lis	3, _mcleanup@ha
@@ -58,7 +57,10 @@ call_main:
 	addi	4, 4, _etext@l
 	bl monstartup
 #endif
+#ifndef SCRT0
+	.globl __init
 	bl __init
+#endif
 	# recover those saved registers
 	mr 3, 13
 	mr 4, 14

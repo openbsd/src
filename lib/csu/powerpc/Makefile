@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 2000/06/13 04:07:03 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/06/28 04:56:44 rahnds Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 CFLAGS=		-DLIBC_SCCS
-OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o 
+OBJS=		crt0.o gcrt0.o scrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o 
 CLEANFILES+=	core a.out
 
 all: ${OBJS}
@@ -14,6 +14,11 @@ crt0.o: crt0.s
 
 gcrt0.o: crt0.s
 	${CPP} -DMCRT0 ${.ALLSRC} | ${AS} -o $@
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+scrt0.o: crt0.s
+	${CPP} -DSCRT0 ${.ALLSRC} | ${AS} -o $@
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
