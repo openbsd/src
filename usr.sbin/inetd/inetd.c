@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.3 1996/05/13 16:00:08 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.4 1996/06/12 07:23:26 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.3 1996/05/13 16:00:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.4 1996/06/12 07:23:26 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -740,10 +740,21 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (turnon(sep->se_fd, SO_REUSEADDR) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_REUSEADDR): %m");
 #undef turnon
-	if (isrpcservice(sep))
-		r = bindresvport(sep->se_fd, &sep->se_ctrladdr,
-		    sep->se_ctrladdr_size);
-	else
+	if (isrpcservice(sep)) {
+		struct passwd *pwd;
+
+		/*
+		 * for RPC services, attempt to use a reserved port
+		 * if they are going to be running as root.
+		 */
+		if (sep->se_user && (pwd = getpwnam(sep->se_user)) &&
+		    pwd->pw_uid == 0)
+			r = bindresvport(sep->se_fd, &sep->se_ctrladdr,
+			    sep->se_ctrladdr_size);
+		else
+			r = bind(sep->se_fd, &sep->se_ctrladdr,
+			    sep->se_ctrladdr_size);
+	} else
 		r = bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size);
 	if (r < 0) {
 		syslog(LOG_ERR, "%s/%s: bind: %m",
