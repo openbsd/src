@@ -1,19 +1,26 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.1.1.1 1995/10/18 08:38:00 deraadt Exp $
+#	$Id: ttys,v 1.2 1996/07/13 11:13:10 deraadt Exp $
 #
 # name	getty				type	status		comments
 #
 console	"/usr/libexec/getty Pc"		pc3	off secure
 ttyv0	"/usr/libexec/getty Pc"		pc3	on secure
-tty00	"/usr/libexec/getty std.9600"	unknown off secure
-tty01	"/usr/libexec/getty std.9600"	unknown off secure
-tty02	"/usr/libexec/getty std.9600"	unknown off secure
-tty03	"/usr/libexec/getty std.9600"	unknown off secure
-tty04	"/usr/libexec/getty std.9600"	unknown off secure
-tty05	"/usr/libexec/getty std.9600"	unknown off secure
-tty06	"/usr/libexec/getty std.9600"	unknown off secure
-tty07	"/usr/libexec/getty std.9600"	unknown off secure
+ttyv1	"/usr/libexec/getty Pc"		vt220	on secure
+ttyv2	"/usr/libexec/getty Pc"		vt220	on secure
+ttyv3	"/usr/libexec/getty Pc"		vt220	off secure
+ttyv4	"/usr/libexec/getty Pc"		vt220	off secure
+ttyv5	"/usr/libexec/getty Pc"		vt220	off secure
+ttyv6	"/usr/libexec/getty Pc"		vt220	off secure
+ttyv7	"/usr/libexec/getty Pc"		vt220	off secure
+tty00	"/usr/libexec/getty std.9600"	unknown on secure
+tty01	"/usr/libexec/getty std.9600"	unknown off
+tty02	"/usr/libexec/getty std.9600"	unknown off
+tty03	"/usr/libexec/getty std.9600"	unknown off
+tty04	"/usr/libexec/getty std.9600"	unknown off
+tty05	"/usr/libexec/getty std.9600"	unknown off
+tty06	"/usr/libexec/getty std.9600"	unknown off
+tty07	"/usr/libexec/getty std.9600"	unknown off
 ttyp0	none				network
 ttyp1	none				network
 ttyp2	none				network
