@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.4 1996/08/27 14:47:01 shawn Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.5 1997/06/05 03:20:47 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -437,11 +437,6 @@ sendit(p, s, mp, flags, retsize)
 	auio.uio_resid = 0;
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
-#if 0
-		/* cannot happen; iov_len is unsigned */
-		if (iov->iov_len < 0)
-			return (EINVAL);
-#endif
 		if ((auio.uio_resid += iov->iov_len) < 0)
 			return (EINVAL);
 	}
@@ -632,11 +627,6 @@ recvit(p, s, mp, namelenp, retsize)
 	auio.uio_resid = 0;
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
-#if 0
-		/* cannot happen iov_len is unsigned */
-		if (iov->iov_len < 0)
-			return (EINVAL);
-#endif
 		if ((auio.uio_resid += iov->iov_len) < 0)
 			return (EINVAL);
 	}
