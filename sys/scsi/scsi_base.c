@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.60 2004/05/17 23:57:51 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.61 2004/05/28 23:50:14 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -703,96 +703,77 @@ scsi_interpret_sense(xs)
 		if (error != EJUSTRETURN)
 			return error;		/* error >= 0  better ? */
 	}
-	/* otherwise use the default */
+
+	/* Default sense interpretation. */
 	serr = sense->error_code & SSD_ERRCODE;
-	skey = sense->flags & SSD_KEY;
-	switch (serr) {
-		/*
-		 * If it's code 70, use the extended stuff and interpret the key
-		 */
-	case 0x71:		/* delayed error */
-		sc_print_addr(sc_link);
-		printf(" DEFERRED ERROR, key = 0x%x\n", skey);
-		/* FALLTHROUGH */
-	case 0x70:
-		switch (skey) {
-		case SKEY_NO_SENSE:
-		case SKEY_RECOVERED_ERROR:
-			if (xs->resid == xs->datalen)
-				xs->resid = 0;	/* not short read */
-			/* FALLTHROUGH */
-		case SKEY_EQUAL:
-			error = 0;
-			break;
-		case SKEY_NOT_READY:
-			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-				sc_link->flags &= ~SDEV_MEDIA_LOADED;
-			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
-				return 0;
-			if (xs->retries && sense->add_sense_code == 0x04 &&
-			    sense->add_sense_code_qual == 0x01) {
-				xs->error = XS_BUSY;	/* ie. sense_retry */
-				return ERESTART;
-			}
-			if (xs->retries && !(sc_link->flags & SDEV_REMOVABLE)) {
-				delay(1000000);
-				return ERESTART;
-			}
-			error = EIO;
-			break;
-		case SKEY_ILLEGAL_REQUEST:
-			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
-				return 0;
-			error = EINVAL;
-			break;
-		case SKEY_UNIT_ATTENTION:
-			if (sense->add_sense_code == 0x29)
-				return (ERESTART); /* device or bus reset */
-			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-				sc_link->flags &= ~SDEV_MEDIA_LOADED;
-			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
-			    /* XXX Should reupload any transient state. */
-			    (sc_link->flags & SDEV_REMOVABLE) == 0)
-				return ERESTART;
-			error = EIO;
-			break;
-		case SKEY_WRITE_PROTECT:
-			error = EROFS;
-			break;
-		case SKEY_BLANK_CHECK:
-			error = 0;
-			break;
-		case SKEY_ABORTED_COMMAND:
-			error = ERESTART;
-			break;
-		case SKEY_VOLUME_OVERFLOW:
-			error = ENOSPC;
-			break;
-		default:
-			error = EIO;
-			break;
-		}
-
-		if (skey && (xs->flags & SCSI_SILENT) == 0)
-			scsi_print_sense(xs);
-
-		return error;
+	if (serr != 0x70 && serr != 0x71)
+		skey = 0xff;	/* Invalid value, since key is 4 bit value. */
+	else
+		skey = sense->flags & SSD_KEY;
 
 	/*
-	 * Not code 70, just report it
+	 * Interpret the key/asc/ascq information where appropriate.
 	 */
-	default:
-		sc_print_addr(sc_link);
-		printf("Sense Error Code %d", serr);
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
-			struct scsi_sense_data_unextended *usense =
-			    (struct scsi_sense_data_unextended *)sense;
-			printf(" at block no. %d (decimal)",
-			    _3btol(usense->block));
+	error = 0;
+	switch (skey) {
+	case SKEY_NO_SENSE:
+	case SKEY_RECOVERED_ERROR:
+		if (xs->resid == xs->datalen)
+			xs->resid = 0;	/* not short read */
+		break;
+	case SKEY_BLANK_CHECK:
+	case SKEY_EQUAL:
+		break;
+	case SKEY_NOT_READY:
+		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
+			sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+			return 0;
+		if (xs->retries && sense->add_sense_code == 0x04 &&
+		    sense->add_sense_code_qual == 0x01) {
+			xs->error = XS_BUSY;	/* ie. sense_retry */
+			return ERESTART;
 		}
-		printf("\n");
-		return EIO;
+		if (xs->retries && !(sc_link->flags & SDEV_REMOVABLE)) {
+			delay(1000000);
+			return ERESTART;
+		}
+		error = EIO;
+		break;
+	case SKEY_ILLEGAL_REQUEST:
+		if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
+			return 0;
+		error = EINVAL;
+		break;
+	case SKEY_UNIT_ATTENTION:
+		if (sense->add_sense_code == 0x29)
+			return (ERESTART); /* device or bus reset */
+		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
+			sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
+		    /* XXX Should reupload any transient state. */
+		    (sc_link->flags & SDEV_REMOVABLE) == 0)
+			return ERESTART;
+		error = EIO;
+		break;
+	case SKEY_WRITE_PROTECT:
+		error = EROFS;
+		break;
+	case SKEY_ABORTED_COMMAND:
+		error = ERESTART;
+		break;
+	case SKEY_VOLUME_OVERFLOW:
+		error = ENOSPC;
+		break;
+	default:
+		error = EIO;
+		break;
 	}
+
+	if (skey && (xs->flags & SCSI_SILENT) == 0)
+		scsi_print_sense(xs);
+
+	return error;
 }
 
 /*
@@ -1426,13 +1407,26 @@ scsi_print_sense(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_sense_data *sense = &xs->sense;
+	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 	int32_t info;
 	char *sbs;
 
 	sc_print_addr(xs->sc_link);
 
 	/* XXX For error 0x71, current opcode is not the relevant one. */
-	printf("Check Condition on opcode 0x%x\n", xs->cmd->opcode);
+	printf("%sCheck Condition (error %#x) on opcode 0x%x\n",
+	    (serr == 0x71) ? "DEFERRED " : "", serr, xs->cmd->opcode);
+
+	if (serr != 0x70 && serr != 0x71) {	
+		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
+			struct scsi_sense_data_unextended *usense =
+			    (struct scsi_sense_data_unextended *)sense;
+			printf("   AT BLOCK #: %d (decimal)",
+			    _3btol(usense->block));
+		}
+		return;
+	}
+
 	printf("    SENSE KEY: %s\n", scsi_decode_sense(sense,
 	    DECODE_SENSE_KEY));
 

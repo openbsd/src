@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.38 2004/05/17 23:57:51 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.39 2004/05/28 23:50:15 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1807,12 +1807,28 @@ int
 st_interpret_sense(xs)
 	struct scsi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
 	struct scsi_sense_data *sense = &xs->sense;
-	struct buf *bp = xs->bp;
+	struct scsi_link *sc_link = xs->sc_link;
 	struct st_softc *st = sc_link->device_softc;
-	u_int8_t key;
+	struct buf *bp = xs->bp;
+	u_int8_t serr = sense->error_code & SSD_ERRCODE;
+	u_int8_t skey = sense->flags & SSD_KEY;
 	int32_t info;
+
+	if (((sense->flags & SDEV_OPEN) == 0) ||
+	    (serr != 0x70 && serr != 0x71))
+		return (EJUSTRETURN); /* let the generic code handle it */
+
+	switch (skey) {
+	case SKEY_NO_SENSE:
+	case SKEY_RECOVERED_ERROR:
+	case SKEY_MEDIUM_ERROR:
+	case SKEY_VOLUME_OVERFLOW:
+	case SKEY_BLANK_CHECK:
+		break;
+	default:
+		return (EJUSTRETURN);
+	}
 
 	/*
 	 * Get the sense fields and work out what code
@@ -1821,8 +1837,6 @@ st_interpret_sense(xs)
 		info = _4btol(sense->info);
 	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
-	if ((sense->error_code & SSD_ERRCODE) != 0x70)
-		return EJUSTRETURN; /* let the generic code handle it */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {
@@ -1901,17 +1915,15 @@ st_interpret_sense(xs)
 			xs->resid = info;
 			if (bp)
 				bp->b_resid = info;
-			return 0;
+			return (0);
 		}
 	}
-	key = sense->flags & SSD_KEY;
 
-	if (key == 0x8) {
+	if (skey == SKEY_BLANK_CHECK) {
 		/*
-		 * This quirk code helps the drive read the
-		 * first tape block, regardless of format.  That
-		 * is required for these drives to return proper
-		 * MODE SENSE information.
+		 * This quirk code helps the drive read the first tape block,
+		 * regardless of format.  That is required for these drives to
+		 * return proper MODE SENSE information.
 		 */
 		if ((st->quirks & ST_Q_SENSE_HELP) &&
 		    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
@@ -1924,10 +1936,11 @@ st_interpret_sense(xs)
 				bp->b_resid = xs->resid;
 				/* return an EOF */
 			}
-			return 0;
+			return (0);
 		}
 	}
-	return EJUSTRETURN;
+
+	return (EJUSTRETURN);
 }
 
 /*
