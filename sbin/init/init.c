@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.28 2002/07/03 22:32:32 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.29 2002/10/10 23:27:54 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.28 2002/07/03 22:32:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.29 2002/10/10 23:27:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 	/*
 	 * Should never reach here.
 	 */
-	return 1;
+	return (1);
 }
 
 /*
@@ -538,7 +538,7 @@ single_user(void)
 		pp = getpwnam("root");
 		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp &&
 		    *pp->pw_passwd) {
-			write(2, banner, sizeof banner - 1);
+			write(STDERR_FILENO, banner, sizeof banner - 1);
 			for (;;) {
 				clear = getpass("Password:");
 				if (clear == 0 || *clear == '\0')
@@ -814,9 +814,9 @@ find_session(pid_t pid)
 	key.data = &pid;
 	key.size = sizeof pid;
 	if ((*session_db->get)(session_db, &key, &data, 0) != 0)
-		return 0;
+		return (0);
 	memcpy(&ret, data.data, sizeof(ret));
-	return ret;
+	return (ret);
 }
 
 /*
@@ -831,10 +831,10 @@ construct_argv(char *command)
 	static const char separators[] = " \t";
 
 	if ((argv[argc++] = strtok(command, separators)) == 0)
-		return 0;
+		return (0);
 	while ((argv[argc++] = strtok(NULL, separators)))
 		continue;
-	return argv;
+	return (argv);
 }
 
 /*
@@ -866,7 +866,7 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	if ((typ->ty_status & TTY_ON) == 0 ||
 	    typ->ty_name == 0 ||
 	    typ->ty_getty == 0)
-		return 0;
+		return (0);
 
 	sp = (session_t *) malloc(sizeof (session_t));
 	memset(sp, 0, sizeof *sp);
@@ -891,7 +891,7 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 		sp->se_prev = sprev;
 	}
 
-	return sp;
+	return (sp);
 }
 
 /*
@@ -1019,7 +1019,7 @@ start_getty(session_t *sp)
 
 	if (new) {
 		if (pipe(p) == -1)
-			return -1;
+			return (-1);
 	}
 
 	/*
@@ -1027,7 +1027,7 @@ start_getty(session_t *sp)
 	 */
 	if ((pid = fork()) == -1) {
 		emergency("can't fork for getty on port %s: %m", sp->se_device);
-		return -1;
+		return (-1);
 	}
 
 	if (pid) {
@@ -1037,7 +1037,7 @@ start_getty(session_t *sp)
 			close(p[1]);
 			if (read(p[0], &c, 1) != 1) {
 				close(p[0]);
-				return -1;
+				return (-1);
 			}
 			close(p[0]);
 			if (c == '1')
@@ -1045,7 +1045,7 @@ start_getty(session_t *sp)
 			else
 				sp->se_flags |= SE_SHUTDOWN;
 		}
-		return pid;
+		return (pid);
 	}
 	if (new) {
 		int fd;
