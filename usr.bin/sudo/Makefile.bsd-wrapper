@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/11/18 17:09:31 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/11/18 19:09:13 millert Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
@@ -52,7 +52,8 @@ maninstall:
 
 install: maninstall
 	${MAKE} ${XCFLAGS} prefix=${DESTDIR}/usr sysconfdir=${DESTDIR}/etc \
-		bindir=${DESTDIR}/usr/bin install-binaries
+		bindir=${DESTDIR}/usr/bin INSTALL="${INSTALL} ${INSTALL_COPY}" \
+		install-binaries
 
 clean cleandir:
 	 -@test -e Makefile && ${MAKE} distclean
