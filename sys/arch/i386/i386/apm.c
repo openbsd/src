@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.54 2002/06/19 02:43:40 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.55 2002/12/18 22:53:06 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -307,7 +307,7 @@ apm_power_print (sc, regs)
 				printf(", charging");
 			if (BATT_REM_VALID(regs)) {
 				int life = BATT_REMAINING(regs);
-				if (sc->sc_flags & APM_BEBATT)
+				if (apm_flags & APM_BEBATT)
 					life = swap16(life);
 				printf(", estimated %d:%02d hours",
 				    life / 60, life % 60);
@@ -1086,7 +1086,7 @@ apmioctl(dev, cmd, data, flag, p)
 					powerp->battery_state = APM_BATT_UNKNOWN;
 				if (BATT_REM_VALID(&regs)) {
 					powerp->minutes_left = BATT_REMAINING(&regs);
-					if (sc->sc_flags & APM_BEBATT)
+					if (apm_flags & APM_BEBATT)
 						powerp->minutes_left =
 						    swap16(powerp->minutes_left);
 				}
