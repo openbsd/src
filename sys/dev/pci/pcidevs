@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.218 2000/02/11 05:59:58 mickey Exp $
+	$OpenBSD: pcidevs,v 1.219 2000/02/18 11:16:43 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -242,7 +242,7 @@ vendor DATAEXPERT	0x10c9	Dataexpert
 vendor FUJITSU		0x10ca	Fujitsu
 vendor OMRON		0x10cb	Omron
 vendor MENTOR		0x10cc	Mentor ARC
-vendor ADVSYS		0x10cd	Advanced System Products
+vendor ADVSYS		0x10cd	Advansys
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
 vendor FUJITSU2		0x10d0	Fujitsu (2nd ID)
