@@ -188,7 +188,7 @@ pppattach()
 	sc->sc_if.if_name = "ppp";
 	sc->sc_if.if_unit = i++;
 	sc->sc_if.if_mtu = PPP_MTU;
-	sc->sc_if.if_flags = IFF_POINTOPOINT;
+	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	sc->sc_if.if_type = IFT_PPP;
 	sc->sc_if.if_hdrlen = PPP_HDRLEN;
 	sc->sc_if.if_ioctl = pppsioctl;
@@ -521,6 +521,19 @@ pppsioctl(ifp, cmd, data)
     case SIOCGIFMTU:
 	ifr->ifr_mtu = sc->sc_if.if_mtu;
 	break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		switch (ifr->ifr_addr.sa_family) {
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
+		default:
+			error = EAFNOSUPPORT;
+			break;
+		}
+		break;
 
     case SIOCGPPPSTATS:
 	psp = &((struct ifpppstatsreq *) data)->stats;
