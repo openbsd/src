@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 1998/12/05 17:31:21 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 1998/12/13 06:36:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -43,10 +43,6 @@ typedef u_long bus_size_t;
 typedef u_long bus_space_tag_t;
 typedef u_long bus_space_handle_t;
 
-#define	HPPA_BUS_TAG_SET_BYTE(tag)	((tag) & (~1))
-#define	HPPA_BUS_TAG_SET_WORD(tag,off)	((tag) | (1) | ((off) << 1))
-#define	HPPA_BUS_TAG_PROTO(tag)		((tag) & 1)
-#define	HPPA_BUS_TAG_OFFSET(tag)	(((tag) >> 1) & 3)
 #define	HPPA_BUS_TAG_SET_BASE(tag,base)	\
 		((((tag) & 0x00000fff)) | ((base) & 0xfffff000))
 #define	HPPA_BUS_TAG_BASE(tag)		((tag) & 0xfffff000)
@@ -58,17 +54,16 @@ typedef u_long bus_space_handle_t;
 
 /* no extent handlng for now
    we won't have overlaps from PDC anyway */
-static __inline int bus_space_map (bus_space_tag_t t, bus_addr_t addr,
-				   bus_size_t size, int cacheable,
-				   bus_space_handle_t *bshp)
+static __inline int
+bus_space_map (bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+	       int cacheable, bus_space_handle_t *bshp)
 {
 	*bshp = addr + HPPA_BUS_TAG_BASE(t);
 	return 0;
 }
 
-static __inline void bus_space_unmap (bus_space_tag_t t,
-				      bus_space_handle_t bsh,
-				      bus_size_t size)
+static __inline void
+bus_space_unmap (bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* nothing to do */
 }
@@ -83,44 +78,19 @@ int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 
-static __inline u_int8_t
-bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, int o)
-{		
-	if (HPPA_BUS_TAG_PROTO(t))
-		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
-
-	return *((volatile u_int8_t *)(h + o));
-}
-
-static __inline u_int16_t
-bus_space_read_2(bus_space_tag_t t, bus_space_handle_t h, int o)
-{		
-	if (HPPA_BUS_TAG_PROTO(t))
-		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
-
-	return *((volatile u_int16_t *)(h + o));
-}
-
-static __inline u_int32_t
-bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, int o)
-{		
-	if (HPPA_BUS_TAG_PROTO(t))
-		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
-
-	return *((volatile u_int32_t *)(h + o));
-}
-
-#if 0
-#define	bus_space_read_8(t, h, o)
-#endif
+#define	bus_space_read_1(t, h, o)	\
+	((void)(t), (*((volatile u_int8_t *)((h) + (o)))))
+#define	bus_space_read_2(t, h, o)	\
+	((void)(t), (*((volatile u_int16_t *)((h) + (o)))))
+#define	bus_space_read_4(t, h, o)	\
+	((void)(t), (*((volatile u_int32_t *)((h) + (o)))))
+#define	bus_space_read_8(t, h, o)	\
+	((void)(t), (*((volatile u_int64_t *)((h) + (o)))))
 
 static __inline void
 bus_space_read_multi_1(bus_space_tag_t t, bus_space_handle_t h,
 		       bus_size_t o, u_int8_t *a, size_t c)
 {
-	if (HPPA_BUS_TAG_PROTO(t))
-		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
-
 	h += o;
 	while (c--)
 		*(a++) = *((volatile u_int8_t *)h)++;
@@ -130,9 +100,6 @@ static __inline void
 bus_space_read_multi_2(bus_space_tag_t t, bus_space_handle_t h,
 		       bus_size_t o, u_int16_t *a, size_t c)
 {
-	if (HPPA_BUS_TAG_PROTO(t))
-		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
-
 	h += o;
 	while (c--)
 		*(a++) = *((volatile u_int16_t *)h)++;
@@ -142,9 +109,6 @@ static __inline void
 bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 		       bus_size_t o, u_int32_t *a, size_t c)
 {
-	if (HPPA_BUS_TAG_PROTO(t))
-		o = (o << 2) | HPPA_BUS_TAG_OFFSET(t);
-
 	h += o;
 	while (c--)
 		*(a++) = *((volatile u_int32_t *)h)++;
@@ -158,10 +122,8 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
     bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
 #define	bus_space_read_raw_multi_4(t, h, o, a, c) \
     bus_space_read_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
-
-#if 0
-#define	bus_space_read_raw_multi_8
-#endif
+#define	bus_space_read_raw_multi_8(t, h, o, a, c) \
+    bus_space_read_multi_8((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
 
 #if 0
 #define	bus_space_read_region_1(t, h, o, a, c) do {		\
@@ -177,31 +139,23 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 #define	bus_space_read_region_8
 #endif
 
-#if 0
 #define	bus_space_read_raw_region_2(t, h, o, a, c) \
     bus_space_read_region_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
 #define	bus_space_read_raw_region_4(t, h, o, a, c) \
     bus_space_read_region_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+#define	bus_space_read_raw_region_8(t, h, o, a, c) \
+    bus_space_read_region_8((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
 
-#define	bus_space_read_raw_region_8
-#endif
-
-#define	bus_space_write_1(t, h, o, v)					\
-	*((volatile u_int8_t *)(h + ((HPPA_BUS_TAG_PROTO(t))?		\
-		((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o)))) = (u_int8_t)v
-
-#define	bus_space_write_2(t, h, o, v)					\
-	*((volatile u_int16_t *)(h + ((HPPA_BUS_TAG_PROTO(t))?		\
-		((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o)))) = (u_int16_t)v
-
-#define	bus_space_write_4(t, h, o, v)					\
-	*((volatile u_int32_t *)(h + ((HPPA_BUS_TAG_PROTO(t))?		\
-		((o) << 2) | HPPA_BUS_TAG_OFFSET(t):(o)))) = (u_int32_t)v
+#define	bus_space_write_1(t, h, o, v)	\
+	((void)(t), *((volatile u_int8_t *)((h) + (o))) = (v))
+#define	bus_space_write_2(t, h, o, v)	\
+	((void)(t), *((volatile u_int16_t *)((h) + (o))) = (v))
+#define	bus_space_write_4(t, h, o, v)	\
+	((void)(t), *((volatile u_int32_t *)((h) + (o))) = (v))
+#define	bus_space_write_8(t, h, o, v)	\
+	((void)(t), *((volatile u_int64_t *)((h) + (o))) = (v))
 
 #if 0
-#define	bus_space_write_8
-#endif
-
 #define	bus_space_write_multi_1(t, h, o, a, c) do {		\
 } while (0)
 
@@ -211,7 +165,6 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 #define bus_space_write_multi_4(t, h, o, a, c) do {		\
 } while (0)
 
-#if 0
 #define	bus_space_write_multi_8(t, h, o, a, c)
 #endif
 
@@ -219,10 +172,8 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
     bus_space_write_multi_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
 #define	bus_space_write_raw_multi_4(t, h, o, a, c) \
     bus_space_write_multi_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
-
-#if 0
-#define	bus_space_write_raw_multi_8
-#endif
+#define	bus_space_write_raw_multi_8(t, h, o, a, c) \
+    bus_space_write_multi_8((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
 
 #if 0
 #define	bus_space_write_region_1(t, h, o, a, c) do {		\
@@ -241,10 +192,8 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
     bus_space_write_region_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
 #define	bus_space_write_raw_region_4(t, h, o, a, c) \
     bus_space_write_region_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
-
-#if 0
-#define	bus_space_write_raw_region_8
-#endif
+#define	bus_space_write_raw_region_8(t, h, o, a, c) \
+    bus_space_write_region_8((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
 
 #if 0
 #define	bus_space_set_multi_1(t, h, o, v, c) do {		\
