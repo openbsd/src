@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.18 2001/05/08 22:09:51 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.19 2001/05/13 23:39:54 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -106,6 +106,8 @@ struct hifn_dma {
 	u_char	command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
 	u_char	result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
 
+	u_int64_t	test_src, test_dst;
+
 	/*
 	 *  Our current positions for insertion and removal from the desriptor
 	 *  rings. 
@@ -134,6 +136,7 @@ struct hifn_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct hifn_dma *sc_dma;
+	bus_dmamap_t sc_dmamap;
 	int32_t sc_cid;
 	int sc_maxses;
 	int sc_ramsize;
@@ -416,5 +419,7 @@ typedef struct hifn_mac_command {
 #ifndef HIFN_POLL_SCALAR
 #define HIFN_POLL_SCALAR	0x0
 #endif
+
+#define HIFN_MAX_SEGLEN 0xfffc
 
 #endif /* __HIFN_H__ */
