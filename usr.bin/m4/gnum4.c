@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.12 2001/09/18 13:52:58 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.13 2001/09/27 12:35:20 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -337,7 +337,12 @@ do_subst(string, re, replace, pm)
 	const char *last_match = NULL;
 
 	while ((error = regexec(re, string, re->re_nsub+1, pm, flags)) == 0) {
-		flags = REG_NOTBOL;
+		if (pm[0].rm_eo != 0) {
+			if (string[pm[0].rm_eo-1] == '\n')
+				flags = 0;
+			else
+				flags = REG_NOTBOL;
+		}
 
 		/* NULL length matches are special... We use the `vi-mode' 
 		 * rule: don't allow a NULL-match at the last match
@@ -348,7 +353,10 @@ do_subst(string, re, replace, pm)
 			if (*string == '\0')
 				return;
 			addchar(*string);
-			string++;
+			if (*string++ == '\n')
+				flags = 0;
+			else
+				flags = REG_NOTBOL;
 			continue;
 		}
 		last_match = string + pm[0].rm_so;
