@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.24 2004/01/28 17:24:38 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.25 2004/01/30 23:24:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
     struct peer *peer_l)
 {
 	struct peer		*p;
+
+	/* preserve cmd line opts */
+	conf->opts = xconf->opts;
 
 	if (!conf->as) {
 		log_warnx("configuration error: AS not given");
