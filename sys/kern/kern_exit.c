@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.51 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.52 2004/07/22 15:42:11 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/sched.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
+#include <sys/mutex.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -308,6 +309,16 @@ exit1(p, rv)
 }
 
 /*
+ * Locking of this proclist is special; it's accessed in a
+ * critical section of process exit, and thus locking it can't
+ * modify interrupt state.  We use a simple spin lock for this
+ * proclist.  Processes on this proclist are also on zombproc;
+ * we use the p_hash member to linkup to deadproc.
+ */
+struct mutex deadproc_mutex = MUTEX_INITIALIZER(IPL_NONE);
+struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
+
+/*
  * We are called from cpu_exit() once it is safe to schedule the
  * dead process's resources to be freed.
  *
@@ -315,18 +326,17 @@ exit1(p, rv)
  * called from a critical section in machine-dependent code, so
  * we should refrain from changing any interrupt state.
  *
- * We lock the deadproc list (a spin lock), place the proc on that
- * list (using the p_hash member), and wake up the reaper.
+ * We lock the deadproc list, place the proc on that list (using
+ * the p_hash member), and wake up the reaper.
  */
 void
-exit2(p)
-	struct proc *p;
+exit2(struct proc *p)
 {
 	int s;
 
-	SIMPLE_LOCK(&deadproc_slock);
+	mtx_enter(&deadproc_mutex);
 	LIST_INSERT_HEAD(&deadproc, p, p_hash);
-	SIMPLE_UNLOCK(&deadproc_slock);
+	mtx_leave(&deadproc_mutex);
 
 	wakeup(&deadproc);
 
@@ -346,18 +356,18 @@ reaper(void)
 	KERNEL_PROC_UNLOCK(curproc);
 
 	for (;;) {
-		SIMPLE_LOCK(&deadproc_slock);
+		mtx_enter(&deadproc_mutex);
 		p = LIST_FIRST(&deadproc);
 		if (p == NULL) {
 			/* No work for us; go to sleep until someone exits. */
-			SIMPLE_UNLOCK(&deadproc_slock);
+			mtx_leave(&deadproc_mutex);
 			(void) tsleep(&deadproc, PVM, "reaper", 0);
 			continue;
 		}
 
 		/* Remove us from the deadproc list. */
 		LIST_REMOVE(p, p_hash);
-		SIMPLE_UNLOCK(&deadproc_slock);
+		mtx_leave(&deadproc_mutex);
 		KERNEL_PROC_LOCK(curproc);
 
 		/*
@@ -386,8 +396,7 @@ reaper(void)
 			/* Noone will wait for us. Just zap the process now */
 			proc_zap(p);
 		}
-		/* XXXNJW where should this be with respect to 
-		 * the wakeup() above? */
+
 		KERNEL_PROC_UNLOCK(curproc);
 	}
 }

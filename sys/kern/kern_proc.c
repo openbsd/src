@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.19 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.20 2004/07/22 15:42:11 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -78,16 +78,6 @@ struct pool pgrp_pool;
 struct pool session_pool;
 struct pool pcred_pool;
 
-/*
- * Locking of this proclist is special; it's accessed in a
- * critical section of process exit, and thus locking it can't
- * modify interrupt state.  We use a simple spin lock for this
- * proclist.  Processes on this proclist are also on zombproc;
- * we use the p_hash member to linkup to deadproc.
- */
-struct SIMPLELOCK deadproc_slock;
-struct proclist deadproc;		/* dead, but not yet undead */
-
 static void orphanpg(struct pgrp *);
 #ifdef DEBUG
 void pgrpdump(void);
@@ -102,9 +92,6 @@ procinit()
 
 	LIST_INIT(&allproc);
 	LIST_INIT(&zombproc);
-
-	LIST_INIT(&deadproc);
-	SIMPLE_LOCK_INIT(&deadproc_slock);
 
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);

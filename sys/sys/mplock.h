@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.3 2004/06/20 17:46:11 pedro Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.4 2004/07/22 15:42:11 art Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -164,8 +164,5 @@ __mp_lock_held(struct __mp_lock *lock) {
 }
 
 extern struct __mp_lock kernel_lock;
-
-/* XXX Should really be in proc.h but then __mp_lock is not defined. */
-extern struct SIMPLELOCK deadproc_slock;
 
 #endif /* !_MPLOCK_H */
