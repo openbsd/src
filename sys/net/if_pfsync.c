@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.13 2003/12/28 17:18:58 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.14 2003/12/31 11:18:25 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -149,6 +149,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 {
 	struct pf_state	*st = NULL;
 	struct pf_rule *r = NULL;
+	struct pfi_kif	*kif;
 	u_long secs;
 
 	if (sp->creatorid == 0 && pf_status.debug >= PF_DEBUG_MISC) {
@@ -156,6 +157,15 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 		    "id: %016llx creatorid: %08x\n",
 		    betoh64(sp->id), ntohl(sp->creatorid));
 		return (EINVAL);
+	}
+
+	kif = pfi_lookup_create(sp->ifname);
+	if (kif == NULL) {
+		if (pf_status.debug >= PF_DEBUG_MISC)
+			printf("pfsync_insert_net_state: "
+			    "unknown interface: %s\n", sp->ifname);
+		/* skip this state */
+		return (0);
 	}
 
 	/*
@@ -166,8 +176,10 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 	if (!r->max_states || r->states < r->max_states)
 		st = pool_get(&pf_state_pl, PR_NOWAIT);
-	if (st == NULL)
+	if (st == NULL) {
+		pfi_maybe_destroy(kif);
 		return (ENOMEM);
+	}
 	bzero(st, sizeof(*st));
 
 	st->rule.ptr = r;
@@ -201,7 +213,8 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	else
 		st->expire = ntohl(sp->expire) + secs;
 
-	if (pf_insert_state(st)) {
+	if (pf_insert_state(kif, st)) {
+		pfi_maybe_destroy(kif);
 		pool_put(&pf_state_pl, st);
 		return (EINVAL);
 	}
@@ -291,7 +304,7 @@ pfsync_input(struct mbuf *m, ...)
 		cp = (void *)((char *)mp->m_data + iplen + PFSYNC_HDRLEN);
 		creatorid = cp->creatorid;
 
-		RB_FOREACH(st, pf_state_tree_ext_gwy, &tree_ext_gwy) {
+		RB_FOREACH(st, pf_state_tree_id, &tree_id) {
 			if (st->creatorid == creatorid)
 				st->timeout = PFTM_PURGE;
 		}
@@ -337,7 +350,7 @@ pfsync_input(struct mbuf *m, ...)
 			key.id = sp->id;
 			key.creatorid = sp->creatorid;
 
-			st = pf_find_state(&key, PF_ID);
+			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				/* insert the update */
 				if (pfsync_insert_net_state(sp)) 
@@ -368,7 +381,7 @@ pfsync_input(struct mbuf *m, ...)
 			key.id = sp->id;
 			key.creatorid = sp->creatorid;
 
-			st = pf_find_state(&key, PF_ID);
+			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
@@ -399,7 +412,7 @@ pfsync_input(struct mbuf *m, ...)
 			key.id = up->id;
 			key.creatorid = up->creatorid;
 
-			st = pf_find_state(&key, PF_ID);
+			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				/* We don't have this state. Ask for it. */
 				pfsync_request_update(up, &src);
@@ -434,7 +447,7 @@ pfsync_input(struct mbuf *m, ...)
 			key.id = dp->id;
 			key.creatorid = dp->creatorid;
 
-			st = pf_find_state(&key, PF_ID);
+			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
@@ -471,7 +484,7 @@ pfsync_input(struct mbuf *m, ...)
 			key.id = rup->id;
 			key.creatorid = rup->creatorid;
 
-			st = pf_find_state(&key, PF_ID);
+			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
@@ -685,7 +698,6 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 	return (m);
 }
 
-
 int
 pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 {
@@ -770,6 +782,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		sp->id = st->id;
 		sp->creatorid = st->creatorid;
 
+		strlcpy(sp->ifname, st->u.s.kif->pfik_name, sizeof(sp->ifname));
 		pf_state_host_hton(&st->lan, &sp->lan);
 		pf_state_host_hton(&st->gwy, &sp->gwy);
 		pf_state_host_hton(&st->ext, &sp->ext);

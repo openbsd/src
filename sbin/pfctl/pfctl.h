@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.28 2003/11/06 15:01:30 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.29 2003/12/31 11:18:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,8 +33,8 @@
 #ifndef _PFCTL_H_
 #define _PFCTL_H_
 
-enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS, PFRB_TRANS,
-	PFRB_MAX };
+enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS,
+	PFRB_IFACES, PFRB_TRANS, PFRB_MAX };
 struct pfr_buffer {
 	int	 pfrb_type;	/* type of content, see enum above */
 	int	 pfrb_size;	/* number of objects in buffer */
@@ -75,6 +75,8 @@ int	 pfr_buf_grow(struct pfr_buffer *, int);
 int	 pfr_buf_load(struct pfr_buffer *, char *, int,
 	    int (*)(struct pfr_buffer *, char *, int));
 char	*pfr_strerror(int);
+int      pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
+int      pfi_clr_istats(const char *, int *, int);
 
 int	 pfctl_clear_tables(const char *, const char *, int);
 int	 pfctl_show_tables(const char *, const char *, int);
@@ -82,6 +84,7 @@ int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 	    const char *, const char *, int);
 int	 pfctl_show_altq(int, int, int);
 void	 warn_namespace_collision(const char *);
+int	 pfctl_show_ifaces(int);
 
 #ifndef DEFAULT_PRIORITY
 #define DEFAULT_PRIORITY	1

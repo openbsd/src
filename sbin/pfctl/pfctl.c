@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.196 2003/12/19 16:12:43 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.197 2003/12/31 11:18:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,7 +165,8 @@ static const char *clearopt_list[] = {
 
 static const char *showopt_list[] = {
 	"nat", "queue", "rules", "Anchors", "Sources", "state", "info",
-	"labels", "timeouts", "memory", "Tables", "ospf", "all", NULL
+	"Interfaces", "labels", "timeouts", "memory", "Tables", "ospf",
+	"all", NULL
 };
 
 static const char *tblcmdopt_list[] = {
@@ -1332,14 +1333,15 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			return (-1);
 		}
 		mnr = pa.nr;
-		if (!(opts & PF_OPT_QUIET))
-			printf("%u anchors:\n", mnr);
 		for (nr = 0; nr < mnr; ++nr) {
 			pa.nr = nr;
 			if (ioctl(dev, DIOCGETANCHOR, &pa)) {
 				warn("DIOCGETANCHOR");
 				return (-1);
 			}
+			if (!(opts & PF_OPT_VERBOSE) && 
+			    !strcmp(pa.name, PF_RESERVED_ANCHOR))
+				continue;
 			printf("  %s\n", pa.name);
 		}
 	} else {
@@ -1356,8 +1358,6 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			return (-1);
 		}
 		mnr = pr.nr;
-		if (!(opts & PF_OPT_QUIET))
-			printf("%u rulesets in anchor %s:\n", mnr, anchorname);
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr))
@@ -1504,14 +1504,8 @@ main(int argc, char *argv[])
 		if (ch == 'l') {
 			loadopt |= PFCTL_FLAG_TABLE;
 			tblcmdopt = NULL;
-		} else {
+		} else
 			mode = strchr("acdfkrz", ch) ? O_RDWR : O_RDONLY;
-			if (opts & PF_OPT_NOACTION) {
-				dev = open("/dev/pf", mode);
-				if (dev >= 0)
-					opts |= PF_OPT_DUMMYACTION;
-			}
-		}
 	} else if (argc != optind) {
 		warnx("unknown command line argument: %s ...", argv[optind]);
 		usage();
@@ -1555,6 +1549,9 @@ main(int argc, char *argv[])
 			err(1, "/dev/pf");
 		altqsupport = pfctl_test_altqsupport(dev, opts);
 	} else {
+		dev = open("/dev/pf", O_RDONLY);
+		if (dev >= 0)
+			opts |= PF_OPT_DUMMYACTION;
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
 		clearopt = showopt = debugopt = NULL;
@@ -1617,6 +1614,7 @@ main(int argc, char *argv[])
 			pfctl_show_limits(dev);
 			pfctl_show_tables(anchorname, rulesetname, opts);
 			pfctl_show_fingerprints(opts);
+			pfctl_show_ifaces(opts);
 			break;
 		case 'T':
 			pfctl_show_tables(anchorname, rulesetname, opts);
@@ -1624,6 +1622,9 @@ main(int argc, char *argv[])
 		case 'o':
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_fingerprints(opts);
+			break;
+		case 'I':
+			pfctl_show_ifaces(opts);
 			break;
 		}
 	}

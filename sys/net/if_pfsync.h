@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.7 2003/12/28 17:18:58 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.8 2003/12/31 11:18:25 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -57,6 +57,7 @@ struct pfsync_state_peer {
 
 struct pfsync_state {
 	u_int64_t	 id;
+	char		 ifname[IFNAMSIZ];
 	struct pfsync_state_host lan;
 	struct pfsync_state_host gwy;
 	struct pfsync_state_host ext;
@@ -143,7 +144,7 @@ struct pfsync_softc {
 
 struct pfsync_header {
 	u_int8_t version;
-#define	PFSYNC_VERSION	1
+#define	PFSYNC_VERSION	2
 	u_int8_t af;
 	u_int8_t action;
 #define	PFSYNC_ACT_CLR		0	/* clear all states */

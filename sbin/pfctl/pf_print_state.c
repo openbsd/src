@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.36 2003/12/27 19:37:43 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.37 2003/12/31 11:18:24 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -52,7 +52,22 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 {
 	switch(addr->type) {
 	case PF_ADDR_DYNIFTL:
-		printf("(%s)", addr->v.ifname);
+		printf("(%s", addr->v.ifname);
+		if (addr->iflags & PFI_AFLAG_NETWORK)
+			printf(":network");
+		if (addr->iflags & PFI_AFLAG_BROADCAST)
+			printf(":broadcast");
+		if (addr->iflags & PFI_AFLAG_PEER)
+			printf(":peer");
+		if (addr->iflags & PFI_AFLAG_NOALIAS)
+			printf(":0");
+		if (verbose) {
+			if (addr->p.dyncnt <= 0)
+				printf(":*");
+			else
+				printf(":%d", addr->p.dyncnt);
+		}
+		printf(")");
 		break;
 	case PF_ADDR_TABLE:
 		if (verbose)
@@ -179,6 +194,7 @@ print_state(struct pf_state *s, int opts)
 		src = &s->dst;
 		dst = &s->src;
 	}
+	printf("%s ", s->u.ifname);
 	if ((p = getprotobynumber(s->proto)) != NULL)
 		printf("%s ", p->p_name);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.185 2003/12/19 16:12:43 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.186 2003/12/31 11:18:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -782,6 +782,8 @@ print_rule(struct pf_rule *r, int verbose)
 		opts = 1;
 	if (r->rule_flag & PFRULE_SRCTRACK)
 		opts = 1;
+	if (r->rule_flag & (PFRULE_IFBOUND | PFRULE_GRBOUND))
+		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
 			opts = 1;
@@ -817,6 +819,18 @@ print_rule(struct pf_rule *r, int verbose)
 			if (!opts)
 				printf(", ");
 			printf("max-src-nodes %u", r->max_src_nodes);
+			opts = 0;
+		}
+		if (r->rule_flag & PFRULE_IFBOUND) {
+			if (!opts)
+				printf(", ");
+			printf("if-bound");
+			opts = 0;
+		}
+		if (r->rule_flag & PFRULE_GRBOUND) {
+			if (!opts)
+				printf(", ");
+			printf("group-bound");
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)
@@ -986,6 +1000,8 @@ ifa_load(void)
 {
 	struct ifaddrs		*ifap, *ifa;
 	struct node_host	*n = NULL, *h = NULL;
+	struct pfr_buffer	 b;
+	struct pfi_if		*p;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "getifaddrs");
@@ -1026,6 +1042,10 @@ ifa_load(void)
 				memcpy(&n->bcast, &((struct sockaddr_in *)
 				    ifa->ifa_broadaddr)->sin_addr.s_addr,
 				    sizeof(struct in_addr));
+			if (ifa->ifa_dstaddr != NULL)
+				memcpy(&n->peer, &((struct sockaddr_in *)
+				    ifa->ifa_dstaddr)->sin_addr.s_addr,
+				    sizeof(struct in_addr));
 		} else if (n->af == AF_INET6) {
 			memcpy(&n->addr.v.a.addr, &((struct sockaddr_in6 *)
 			    ifa->ifa_addr)->sin6_addr.s6_addr,
@@ -1036,6 +1056,10 @@ ifa_load(void)
 			if (ifa->ifa_broadaddr != NULL)
 				memcpy(&n->bcast, &((struct sockaddr_in6 *)
 				    ifa->ifa_broadaddr)->sin6_addr.s6_addr,
+				    sizeof(struct in6_addr));
+			if(ifa->ifa_dstaddr != NULL)
+				 memcpy(&n->peer, &((struct sockaddr_in6 *)
+				    ifa->ifa_dstaddr)->sin6_addr.s6_addr,
 				    sizeof(struct in6_addr));
 			n->ifindex = ((struct sockaddr_in6 *)
 			    ifa->ifa_addr)->sin6_scope_id;
@@ -1051,15 +1075,58 @@ ifa_load(void)
 			h->tail = n;
 		}
 	}
+
+	/* add interface groups, including clonable and dynamic stuff */
+	bzero(&b, sizeof(b));
+	b.pfrb_type = PFRB_IFACES;
+	for (;;) {
+		if (pfr_buf_grow(&b, b.pfrb_size))
+			err(1, "ifa_load: pfr_buf_grow");
+		b.pfrb_size = b.pfrb_msize;
+		if (pfi_get_ifaces(NULL, b.pfrb_caddr, &b.pfrb_size,
+		    PFI_FLAG_GROUP))
+			err(1, "ifa_load: pfi_get_ifaces");
+		if (b.pfrb_size <= b.pfrb_msize)
+			break;
+	}
+	PFRB_FOREACH(p, &b) {
+		n = calloc(1, sizeof(struct node_host));
+		if (n == NULL)
+			err(1, "address: calloc");
+		n->af = AF_LINK;
+		n->ifa_flags = PF_IFA_FLAG_GROUP;
+		if (p->pfif_flags & PFI_IFLAG_DYNAMIC)
+			n->ifa_flags |= PF_IFA_FLAG_DYNAMIC;
+		if (p->pfif_flags & PFI_IFLAG_CLONABLE)
+			n->ifa_flags |= PF_IFA_FLAG_CLONABLE;
+		if (!strcmp(p->pfif_name, "lo"))
+			n->ifa_flags |= IFF_LOOPBACK;
+		if ((n->ifname = strdup(p->pfif_name)) == NULL)
+			err(1, "ifa_load: strdup");
+		n->next = NULL;
+		n->tail = n;
+		if (h == NULL)
+			h = n;
+		else {
+			h->tail->next = n;
+			h->tail = n;
+		}
+	}
+		
 	iftab = h;
 	freeifaddrs(ifap);
 }
 
 struct node_host *
-ifa_exists(const char *ifa_name)
+ifa_exists(const char *ifa_name, int group_ok)
 {
 	struct node_host	*n;
+	char			*p, buf[IFNAMSIZ];
+	int			 group;
 
+	group = !isdigit(ifa_name[strlen(ifa_name) - 1]);
+	if (group && !group_ok)
+		return (NULL);
 	if (iftab == NULL)
 		ifa_load();
 
@@ -1067,14 +1134,28 @@ ifa_exists(const char *ifa_name)
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
 			return (n);
 	}
+	if (!group) {
+		/* look for clonable and/or dynamic interface */
+		strlcpy(buf, ifa_name, sizeof(buf));
+		for (p = buf + strlen(buf) - 1; p > buf && isdigit(*p); p--)
+			*p = '\0';
+		for (n = iftab; n != NULL; n = n->next)
+			if (n->af == AF_LINK &&
+			    !strncmp(n->ifname, buf, IFNAMSIZ))
+				break;
+		if (n != NULL && n->ifa_flags &
+		    (PF_IFA_FLAG_DYNAMIC | PF_IFA_FLAG_CLONABLE)) 
+			return (n); 	/* XXX */
+	}
 	return (NULL);
 }
 
 struct node_host *
-ifa_lookup(const char *ifa_name, enum pfctl_iflookup_mode mode)
+ifa_lookup(const char *ifa_name, int flags)
 {
 	struct node_host	*p = NULL, *h = NULL, *n = NULL;
-	int			 return_all = 0;
+	int			 return_all = 0, got4 = 0, got6 = 0;
+	const char		 *last_if = NULL;
 
 	if (!strncmp(ifa_name, "self", IFNAMSIZ))
 		return_all = 1;
@@ -1084,23 +1165,44 @@ ifa_lookup(const char *ifa_name, enum pfctl_iflookup_mode mode)
 
 	for (p = iftab; p; p = p->next) {
 		if (!((p->af == AF_INET || p->af == AF_INET6) &&
-		    (!strncmp(p->ifname, ifa_name, IFNAMSIZ) || return_all)))
+		    (!strncmp(p->ifname, ifa_name, strlen(ifa_name)) ||
+		    return_all)))
 			continue;
-		if (mode == PFCTL_IFLOOKUP_BCAST && p->af != AF_INET)
+		if ((flags & PFI_AFLAG_BROADCAST) && p->af != AF_INET)
 			continue;
-		if (mode == PFCTL_IFLOOKUP_NET && p->ifindex > 0)
+		if ((flags & PFI_AFLAG_BROADCAST) &&
+		    !(p->ifa_flags & IFF_BROADCAST))
 			continue;
+		if ((flags & PFI_AFLAG_PEER) &&
+		    !(p->ifa_flags & IFF_POINTOPOINT))
+			continue;
+		if ((flags & PFI_AFLAG_NETWORK) && p->ifindex > 0)
+			continue;
+		if (last_if == NULL || strcmp(last_if, p->ifname))
+			got4 = got6 = 0;
+		last_if = p->ifname;
+		if ((flags & PFI_AFLAG_NOALIAS) && p->af == AF_INET && got4)
+			continue;
+		if ((flags & PFI_AFLAG_NOALIAS) && p->af == AF_INET6 && got6)
+			continue;
+		if (p->af == AF_INET)
+			got4 = 1;
+		else
+			got6 = 1;
 		n = calloc(1, sizeof(struct node_host));
 		if (n == NULL)
 			err(1, "address: calloc");
 		n->af = p->af;
-		if (mode == PFCTL_IFLOOKUP_BCAST)
+		if (flags & PFI_AFLAG_BROADCAST)
 			memcpy(&n->addr.v.a.addr, &p->bcast,
+			    sizeof(struct pf_addr));
+		else if (flags & PFI_AFLAG_PEER)
+			memcpy(&n->addr.v.a.addr, &p->peer,
 			    sizeof(struct pf_addr));
 		else
 			memcpy(&n->addr.v.a.addr, &p->addr.v.a.addr,
 			    sizeof(struct pf_addr));
-		if (mode == PFCTL_IFLOOKUP_NET)
+		if (flags & PFI_AFLAG_NETWORK)
 			set_ipmask(n, unmask(&p->addr.v.a.mask, n->af));
 		else {
 			if (n->af == AF_INET) {
@@ -1124,9 +1226,6 @@ ifa_lookup(const char *ifa_name, enum pfctl_iflookup_mode mode)
 			h->tail->next = n;
 			h->tail = n;
 		}
-	}
-	if (h == NULL && mode == PFCTL_IFLOOKUP_HOST) {
-		fprintf(stderr, "no IP address found for %s\n", ifa_name);
 	}
 	return (h);
 }
@@ -1185,29 +1284,35 @@ host_if(const char *s, int mask)
 {
 	struct node_host	*n, *h = NULL;
 	char			*p, *ps;
-	int			 mode = PFCTL_IFLOOKUP_HOST;
+	int			 flags = 0;
 
-	if ((p = strrchr(s, ':')) != NULL &&
-	    (!strcmp(p+1, "network") || !strcmp(p+1, "broadcast"))) {
+	if ((ps = strdup(s)) == NULL)
+		err(1, "host_if: strdup");
+	while ((p = strrchr(ps, ':')) != NULL) {
 		if (!strcmp(p+1, "network"))
-			mode = PFCTL_IFLOOKUP_NET;
-		if (!strcmp(p+1, "broadcast"))
-			mode = PFCTL_IFLOOKUP_BCAST;
-		if (mask > -1) {
-			fprintf(stderr, "network or broadcast lookup, but "
-			    "extra netmask given\n");
+			flags |= PFI_AFLAG_NETWORK;
+		else if (!strcmp(p+1, "broadcast"))
+			flags |= PFI_AFLAG_BROADCAST;
+		else if (!strcmp(p+1, "peer"))
+			flags |= PFI_AFLAG_PEER;
+		else if (!strcmp(p+1, "0"))
+			flags |= PFI_AFLAG_NOALIAS;
+		else
 			return (NULL);
-		}
-		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			err(1, "host: malloc");
-		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
-	} else
-		if ((ps = strdup(s)) == NULL)
-			err(1, "host_if: strdup");
-
-	if (ifa_exists(ps) || !strncmp(ps, "self", IFNAMSIZ)) {
+		*p = '\0';
+	}
+	if (flags & (flags - 1) & PFI_AFLAG_MODEMASK) { /* Yep! */
+		fprintf(stderr, "illegal combination of interface modifiers\n");
+		return (NULL);
+	}
+	if ((flags & (PFI_AFLAG_NETWORK|PFI_AFLAG_BROADCAST)) && mask > -1) {
+		fprintf(stderr, "network or broadcast lookup, but "
+		    "extra netmask given\n");
+		return (NULL);
+	}
+	if (ifa_exists(ps, 1) || !strncmp(ps, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
-		h = ifa_lookup(ps, mode);
+		h = ifa_lookup(ps, flags);
 		for (n = h; n != NULL && mask > -1; n = n->next)
 			set_ipmask(n, mask);
 	}
@@ -1274,12 +1379,20 @@ host_dns(const char *s, int v4mask, int v6mask)
 {
 	struct addrinfo		 hints, *res0, *res;
 	struct node_host	*n, *h = NULL;
-	int			 error;
+	int			 error, noalias = 0;
+	int			 got4 = 0, got6 = 0;
+	char			*p, *ps;
 
+	if ((ps = strdup(s)) == NULL)
+		err(1, "host_if: strdup");
+	if ((p = strrchr(ps, ':')) != NULL && !strcmp(p, ":0")) {
+		noalias = 1;
+		*p = '\0';
+	}
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
-	error = getaddrinfo(s, NULL, &hints, &res0);
+	error = getaddrinfo(ps, NULL, &hints, &res0);
 	if (error)
 		return (h);
 
@@ -1287,6 +1400,17 @@ host_dns(const char *s, int v4mask, int v6mask)
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
 			continue;
+		if (noalias) {
+			if (res->ai_family == AF_INET) {
+				if (got4)
+					continue;
+				got4 = 1;
+			} else {
+				if (got6)
+					continue;
+				got6 = 1;
+			}
+		}
 		n = calloc(1, sizeof(struct node_host));
 		if (n == NULL)
 			err(1, "host_dns: calloc");
@@ -1318,6 +1442,7 @@ host_dns(const char *s, int v4mask, int v6mask)
 		}
 	}
 	freeaddrinfo(res0);
+	free(ps);
 
 	return (h);
 }

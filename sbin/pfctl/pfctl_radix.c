@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.22 2003/09/26 21:44:09 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.23 2003/12/31 11:18:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -454,12 +454,40 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	return (0);
 }
 
+/* interface management code */
+
+int
+pfi_get_ifaces(const char *filter, struct pfi_if *buf, int *size, int flags)
+{
+	struct pfioc_iface io;
+
+	if (size == NULL || *size < 0 || (*size && buf == NULL)) {
+		errno = EINVAL;
+		return (-1);
+	}
+	bzero(&io, sizeof io);
+	io.pfiio_flags = flags;
+	if (filter != NULL)
+		if (strlcpy(io.pfiio_name, filter, sizeof(io.pfiio_name))
+		     > sizeof(io.pfiio_name)) {
+			errno = EINVAL;
+			return (-1);
+		}
+	io.pfiio_buffer = buf;
+	io.pfiio_esize = sizeof(*buf);
+	io.pfiio_size = *size;
+	if (ioctl(dev, DIOCIGETIFACES, &io))
+		return (-1);
+	*size = io.pfiio_size;
+	return (0);
+}
+
 /* buffer management code */
 
 size_t buf_esize[PFRB_MAX] = { 0,
 	sizeof(struct pfr_table), sizeof(struct pfr_tstats),
 	sizeof(struct pfr_addr), sizeof(struct pfr_astats),
-	sizeof(struct pfioc_trans_e)
+	sizeof(struct pfi_if), sizeof(struct pfioc_trans_e)
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.76 2003/12/18 20:13:23 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.77 2003/12/31 11:18:25 cedric Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -807,7 +807,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 }
 
 int
-pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
+pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason)
 {
 	struct mbuf		*m = *m0;
 	struct pf_rule		*r;
@@ -824,7 +824,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->kif != NULL &&
+		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -987,13 +988,13 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
  no_mem:
 	REASON_SET(reason, PFRES_MEMORY);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 
  drop:
 	REASON_SET(reason, PFRES_NORM);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 
  bad:
@@ -1005,14 +1006,15 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	REASON_SET(reason, PFRES_FRAG);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 
 	return (PF_DROP);
 }
 
 #ifdef INET6
 int
-pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
+pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
+    u_short *reason)
 {
 	struct mbuf		*m = *m0;
 	struct pf_rule		*r;
@@ -1032,7 +1034,8 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->kif != NULL &&
+		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -1166,25 +1169,25 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
  shortpkt:
 	REASON_SET(reason, PFRES_SHORT);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 
  drop:
 	REASON_SET(reason, PFRES_NORM);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 
  badfrag:
 	REASON_SET(reason, PFRES_FRAG);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 }
 #endif
 
 int
-pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
+pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
     int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_rule	*r, *rm = NULL;
@@ -1197,7 +1200,8 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->kif != NULL &&
+		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -1290,7 +1294,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
  tcp_drop:
 	REASON_SET(&reason, PFRES_NORM);
 	if (rm != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r, NULL, NULL);
+		PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, r, NULL, NULL);
 	return (PF_DROP);
 }
 

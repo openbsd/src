@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.104 2003/12/16 16:43:32 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.105 2003/12/31 11:18:24 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -231,7 +231,7 @@ Show the filter parameters specified by
 .Ar modifier
 (may be abbreviated):
 .Pp
-.Bl -tag -width xxxxxxxxxxxx -compact
+.Bl -tag -width xxxxxxxxxxxxx -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
 .It Fl s Ar queue
@@ -286,6 +286,11 @@ Can be used in combination with
 to list the fingerprints in a
 .Xr pf.os 5
 file.
+.It Fl s Ar Interfaces
+Show the list of interfaces and interface drivers available to PF.
+When used together with a double
+.Fl v ,
+interface statistics are also shown.
 .It Fl s Ar all
 Show all of the above.
 .El

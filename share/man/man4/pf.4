@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.42 2003/12/15 05:18:40 jmc Exp $
+.\"	$OpenBSD: pf.4,v 1.43 2003/12/31 11:18:25 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -676,6 +676,66 @@ After the ioctl call
 will be set to the length of the buffer actually used.
 .It Dv DIOCCLRSRCNODES Fa "struct pfioc_table"
 Clear the tree of source tracking nodes.
+
+
+.It Dv DIOCIGETIFACES Fa "struct pfioc_iface"
+Gets the list of interfaces and interface drivers known to PF.
+All the IOCTLs that manipulate interfaces
+use the same structure described below:
+.Bd -literal
+struct pfioc_iface {
+        char                     pfiio_name[IFNAMSIZ];
+        void                    *pfiio_buffer;
+        int                      pfiio_esize;
+        int                      pfiio_size;
+        int                      pfiio_nzero;
+        int                      pfiio_flags;
+};
+
+#define PFI_FLAG_GROUP     0x0001  /* gets groups of interfaces */
+#define PFI_FLAG_INSTANCE  0x0002  /* gets single interfaces */
+#define PFI_FLAG_ALLMASK   0x0003
+.Ed
+.Pp
+If not empty, pfiio_name can be used to restrict the search to a specific
+interface or driver.
+pfiio_buffer[pfiio_size] is the user-supplied buffer for returning the data.
+On entry, pfiio_size represents the number of pfi_if entries that can fit
+into the buffer.
+The kernel will replace this value by the real number of entries it wants
+to return.
+pfiio_esize should be set to sizeof(struct pfi_if).
+pfiio_flags should be set to PFI_FLAG_GROUP, PFI_FLAG_INSTANCE or both to tell
+the kernel to return group of interfaces (drivers, like "fxp"), real interface
+instances (like "fxp1") or both. The data is returned in the pfi_if structure
+described below:
+.Bd -literal
+struct pfi_if {
+        char                             pfif_name[IFNAMSIZ];
+        u_int64_t                        pfif_packets[2][2][2];
+        u_int64_t                        pfif_bytes[2][2][2];
+        u_int64_t                        pfif_addcnt;
+        u_int64_t                        pfif_delcnt;
+        long                             pfif_tzero;
+        int                              pfif_states;
+        int                              pfif_rules;
+        int                              pfif_flags;
+};
+
+#define PFI_IFLAG_GROUP         0x0001  /* group of interfaces */
+#define PFI_IFLAG_INSTANCE      0x0002  /* single instance */
+#define PFI_IFLAG_CLONABLE      0x0010  /* clonable group */
+#define PFI_IFLAG_DYNAMIC       0x0020  /* dynamic group */
+#define PFI_IFLAG_ATTACHED      0x0040  /* interface attached */
+#define PFI_IFLAG_REFERENCED    0x0080  /* referenced by rules */
+.Ed
+.It Dv DIOCICLRISTATS Fa "struct pfioc_iface"
+Clear the statistics counters of one or more interfaces.
+pfiio_name and pfrio_flags can be used to select which interfaces need to
+be cleared. The filtering process is the same than for
+.Dv DIOCIGETIFACES .
+pfiio_nzero will be set by the kernel to the number of interfaces and drivers
+that have been cleared.
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.432 2003/12/30 16:59:38 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.433 2003/12/31 11:18:24 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -69,6 +69,7 @@ static u_int16_t	 returnicmp6default =
 			    (ICMP6_DST_UNREACH << 8) | ICMP6_DST_UNREACH_NOPORT;
 static int		 blockpolicy = PFRULE_DROP;
 static int		 require_order = 1;
+static int		 default_statelock;
 
 enum {
 	PFCTL_STATE_NONE,
@@ -116,7 +117,7 @@ struct node_icmp {
 
 enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
 	  PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_NODES,
-	  PF_STATE_OPT_TIMEOUT };
+	  PF_STATE_OPT_STATELOCK, PF_STATE_OPT_TIMEOUT };
 
 struct node_state_opt {
 	int			 type;
@@ -125,6 +126,7 @@ struct node_state_opt {
 		u_int32_t	 max_src_states;
 		u_int32_t	 max_src_nodes;
 		u_int8_t	 src_track;
+		u_int32_t	 statelock;
 		struct {
 			int		number;
 			u_int32_t	seconds;
@@ -236,6 +238,7 @@ struct node_hfsc_opts	hfsc_opts;
 
 int	yyerror(const char *, ...);
 int	disallow_table(struct node_host *, const char *);
+int	disallow_alias(struct node_host *, const char *);
 int	rule_consistent(struct pf_rule *);
 int	filter_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_rule *);
@@ -376,6 +379,10 @@ typedef struct {
 		}						\
 	} while (0)
 
+#define DYNIF_MULTIADDR(addr) ((addr).type == PF_ADDR_DYNIFTL && \
+	(!((addr).iflags & PFI_AFLAG_NOALIAS) ||		 \
+	!isdigit((addr).v.ifname[strlen((addr).v.ifname)-1])))
+
 %}
 
 %token	PASS BLOCK SCRUB RETURN IN OS OUT LOG LOGALL QUICK ON FROM TO FLAGS
@@ -392,14 +399,14 @@ typedef struct {
 %token	QUEUE PRIORITY QLIMIT
 %token	LOAD
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
-%token	TAGGED TAG
+%token	TAGGED TAG IFBOUND GRBOUND FLOATING STATEPOLICY
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno natpass
 %type	<v.i>			no dir log af fragcache sourcetrack
-%type	<v.i>			unaryop
+%type	<v.i>			unaryop statelock
 %type	<v.b>			action nataction flags flag blockspec
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
@@ -470,7 +477,7 @@ option		: SET OPTIMIZATION STRING		{
 		| SET LOGINTERFACE STRING		{
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
-			if ((ifa_exists($3) == NULL) && strcmp($3, "none")) {
+			if ((ifa_exists($3, 0) == NULL) && strcmp($3, "none")) {
 				yyerror("interface %s doesn't exist", $3);
 				YYERROR;
 			}
@@ -518,6 +525,22 @@ option		: SET OPTIMIZATION STRING		{
 				yyerror("error loading fingerprints %s", $3);
 				YYERROR;
 			}
+		}
+		| SET STATEPOLICY statelock {
+			if (pf->opts & PF_OPT_VERBOSE)
+				switch($3) {
+				case 0:
+					printf("set state-policy floating\n");
+					break;
+				case PFRULE_IFBOUND:
+					printf("set state-policy if-bound\n");
+					break;
+				case PFRULE_GRBOUND:
+					printf("set state-policy "
+					    "group-bound\n");
+					break;
+				}
+			default_statelock = $3;
 		}
 		| SET DEBUG STRING {
 			if (check_rulestate(PFCTL_STATE_OPTION))
@@ -706,13 +729,6 @@ scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 				YYERROR;
 			}
 
-			if ($4) {
-				if ($4->not) {
-					yyerror("scrub rules do not support "
-					    "'! <if>'");
-					YYERROR;
-				}
-			}
 			r.af = $5;
 			if ($8.nodf)
 				r.rule_flag |= PFRULE_NODF;
@@ -844,7 +860,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					YYERROR;
 				}
 				j->not = 1;
-				h = ifa_lookup(j->ifname, PFCTL_IFLOOKUP_NET);
+				h = ifa_lookup(j->ifname, PFI_AFLAG_NETWORK);
 
 				if (h != NULL)
 					expand_rule(&r, j, NULL, NULL, NULL, h,
@@ -860,8 +876,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					r.af = $4;
 					if (rule_label(&r, $5.label))
 						YYERROR;
-					h = ifa_lookup(i->ifname,
-					    PFCTL_IFLOOKUP_HOST);
+					h = ifa_lookup(i->ifname, 0);
 					expand_rule(&r, NULL, NULL, NULL, NULL,
 					    h, NULL, NULL, NULL, NULL, NULL,
 					    NULL);
@@ -1361,6 +1376,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			struct node_state_opt	*o;
 			struct node_proto	*proto;
 			int			 srctrack = 0;
+			int			 statelock = 0;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -1499,6 +1515,15 @@ pfrule		: action dir logquick interface route af proto fromto
 					    o->data.max_src_nodes;
 					r.rule_flag |= PFRULE_SRCTRACK;
 					break;
+				case PF_STATE_OPT_STATELOCK:
+                                        if (statelock) {
+                                                yyerror("state locking option: "
+                                                    "multiple definitons");
+                                                YYERROR;
+                                        }
+                                        statelock = 1;
+                                        r.rule_flag |= o->data.statelock;
+					break;
 				case PF_STATE_OPT_TIMEOUT:
 					if (r.timeout[o->data.timeout.number]) {
 						yyerror("state timeout %s "
@@ -1513,6 +1538,8 @@ pfrule		: action dir logquick interface route af proto fromto
 				o = o->next;
 				free(p);
 			}
+			if (r.keep_state && !statelock)
+				r.rule_flag |= default_statelock;
 
 			if ($9.fragment)
 				r.rule_flag |= PFRULE_FRAGMENT;
@@ -1543,13 +1570,20 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
 				    PF_POOL_NONE && ($5.host->next != NULL ||
-				    $5.host->addr.type == PF_ADDR_TABLE))
-					r.rpool.opts = PF_POOL_ROUNDROBIN;
+				    $5.host->addr.type == PF_ADDR_TABLE ||
+				    DYNIF_MULTIADDR($5.host->addr))) 
+					r.rpool.opts |= PF_POOL_ROUNDROBIN;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
 				    disallow_table($5.host, "tables are only "
 				    "supported in round-robin routing pools"))
-						YYERROR;
+					YYERROR;
+				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_ROUNDROBIN &&
+				    disallow_alias($5.host, "interface (%s) "
+				    "is only supported in round-robin "
+				    "routing pools"))
+					YYERROR;
 				if ($5.host->next != NULL) {
 					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
@@ -1771,7 +1805,7 @@ if_item_not	: not if_item			{ $$ = $2; $$->not = $1; }
 if_item		: STRING			{
 			struct node_host	*n;
 
-			if ((n = ifa_exists($1)) == NULL) {
+			if ((n = ifa_exists($1, 1)) == NULL) {
 				yyerror("unknown interface %s", $1);
 				YYERROR;
 			}
@@ -2005,7 +2039,31 @@ number		: STRING			{
 		;
 
 dynaddr		: '(' STRING ')'		{
-			if (ifa_exists($2) == NULL) {
+			int	 flags = 0;
+			char	*p;
+
+			while ((p = strrchr($2, ':')) != NULL) {
+				if (!strcmp(p+1, "network"))
+					flags |= PFI_AFLAG_NETWORK;
+				else if (!strcmp(p+1, "broadcast"))
+					flags |= PFI_AFLAG_BROADCAST;
+				else if (!strcmp(p+1, "peer"))
+					flags |= PFI_AFLAG_PEER;
+				else if (!strcmp(p+1, "0"))
+					flags |= PFI_AFLAG_NOALIAS;
+				else {
+					yyerror("interface %s has bad modifier",
+					    $2);
+					YYERROR;
+				}
+				*p = '\0';
+			}
+			if (flags & (flags - 1) & PFI_AFLAG_MODEMASK) {
+				yyerror("illegal combination of "
+				    "interface modifiers");
+				YYERROR;
+			}
+			if (ifa_exists($2, 1) == NULL && strcmp($2, "self")) {
 				yyerror("interface %s does not exist", $2);
 				YYERROR;
 			}
@@ -2015,6 +2073,7 @@ dynaddr		: '(' STRING ')'		{
 			$$->af = 0;
 			set_ipmask($$, 128);
 			$$->addr.type = PF_ADDR_DYNIFTL;
+			$$->addr.iflags = flags;
 			if (strlcpy($$->addr.v.ifname, $2,
 			    sizeof($$->addr.v.ifname)) >=
 			    sizeof($$->addr.v.ifname)) {
@@ -2466,6 +2525,17 @@ sourcetrack	: SOURCETRACK {
 		}
 		;
 
+statelock	: IFBOUND {
+			$$ = PFRULE_IFBOUND;
+		}
+		| GRBOUND {
+			$$ = PFRULE_GRBOUND;
+		}
+		| FLOATING {
+			$$ = 0;
+		}
+		;
+
 keep		: KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
 			$$.options = $3;
@@ -2533,6 +2603,15 @@ state_opt_item	: MAXIMUM number		{
 				err(1, "state_opt_item: calloc");
 			$$->type = PF_STATE_OPT_SRCTRACK;
 			$$->data.src_track = $1;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| statelock {
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_STATELOCK;
+			$$->data.statelock = $1;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -2869,13 +2948,21 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 				r.rpool.opts = $8.type;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
 				    PF_POOL_NONE && ($7->host->next != NULL ||
-				    $7->host->addr.type == PF_ADDR_TABLE))
+				    $7->host->addr.type == PF_ADDR_TABLE ||
+				    DYNIF_MULTIADDR($7->host->addr)))
 					r.rpool.opts = PF_POOL_ROUNDROBIN;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
 				    disallow_table($7->host, "tables are only "
-				    "supported in round-robin redirction pools"))
-						YYERROR;
+				    "supported in round-robin redirection "
+				    "pools"))
+					YYERROR;
+				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_ROUNDROBIN &&
+				    disallow_alias($7->host, "interface (%s) "
+				    "is only supported in round-robin "
+				    "redirection pools"))
+					YYERROR; 
 				if ($7->host->next != NULL) {
 					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
@@ -2883,15 +2970,6 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 						    "valid for multiple "
 						    "redirection addresses");
 						YYERROR;
-					}
-				} else {
-					if ((r.af == AF_INET &&
-					    unmask(&$7->host->addr.v.a.mask,
-					    r.af) == 32) ||
-					    (r.af == AF_INET6 &&
-					    unmask(&$7->host->addr.v.a.mask,
-					    r.af) == 128)) {
-						r.rpool.opts = PF_POOL_NONE;
 					}
 				}
 			}
@@ -2979,8 +3057,16 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 			if ($8 != NULL && disallow_table($8, "invalid use of "
 			    "table <%s> as the source address of a binat rule"))
 				YYERROR;
+			if ($8 != NULL && disallow_alias($8, "invalid use of "
+			    "interface (%s) as the source address of a binat "
+			    "rule"))
+				YYERROR;
 			if ($12 != NULL && $12->host != NULL && disallow_table(
 			    $12->host, "invalid use of table <%s> as the "
+			    "redirect address of a binat rule"))
+				YYERROR;
+			if ($12 != NULL && $12->host != NULL && disallow_alias(
+			    $12->host, "invalid use of interface (%s) as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
 
@@ -3072,14 +3158,12 @@ tag		: /* empty */		{ $$ = NULL; }
 		;
 
 route_host	: STRING			{
-			struct node_host	*n;
-
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
 			if (($$->ifname = strdup($1)) == NULL)
 				err(1, "routeto: strdup");
-			if ((n = ifa_exists($$->ifname)) == NULL) {
+			if (ifa_exists($$->ifname, 0) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
 				YYERROR;
@@ -3089,12 +3173,10 @@ route_host	: STRING			{
 			$$->tail = $$;
 		}
 		| '(' STRING host ')'		{
-			struct node_host	*n;
-
 			$$ = $3;
 			if (($$->ifname = strdup($2)) == NULL)
 				err(1, "routeto: strdup");
-			if ((n = ifa_exists($$->ifname)) == NULL) {
+			if (ifa_exists($$->ifname, 0) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
 				YYERROR;
@@ -3235,6 +3317,17 @@ disallow_table(struct node_host *h, const char *fmt)
 }
 
 int
+disallow_alias(struct node_host *h, const char *fmt)
+{
+	for (; h != NULL; h = h->next)
+		if (DYNIF_MULTIADDR(h->addr)) {
+			yyerror(fmt, h->addr.v.tblname);
+			return (1);
+		}
+	return (0);
+}
+
+int
 rule_consistent(struct pf_rule *r)
 {
 	int	problems = 0;
@@ -3297,12 +3390,6 @@ filter_consistent(struct pf_rule *r)
 		yyerror("allow-opts can only be specified for pass rules");
 		problems++;
 	}
-	if (!r->af && (r->src.addr.type == PF_ADDR_DYNIFTL ||
-	    r->dst.addr.type == PF_ADDR_DYNIFTL)) {
-		yyerror("dynamic addresses require address family "
-		    "(inet/inet6)");
-		problems++;
-	}
 	if (r->rule_flag & PFRULE_FRAGMENT && (r->src.port_op ||
 	    r->dst.port_op || r->flagset || r->type || r->code)) {
 		yyerror("fragments can be filtered only on IP header fields");
@@ -3327,27 +3414,13 @@ filter_consistent(struct pf_rule *r)
 int
 nat_consistent(struct pf_rule *r)
 {
-	int			 problems = 0;
-	struct pf_pooladdr	*pa;
-
-	if (!r->af) {
-		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-			if (pa->addr.type == PF_ADDR_DYNIFTL) {
-				yyerror("dynamic addresses require "
-				    "address family (inet/inet6)");
-				problems++;
-				break;
-			}
-		}
-	}
-	return (-problems);
+	return (0);	/* yeah! */
 }
 
 int
 rdr_consistent(struct pf_rule *r)
 {
 	int			 problems = 0;
-	struct pf_pooladdr	*pa;
 
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP) {
 		if (r->src.port_op) {
@@ -3367,23 +3440,6 @@ rdr_consistent(struct pf_rule *r)
 	    r->dst.port_op != PF_OP_EQ && r->dst.port_op != PF_OP_RRG) {
 		yyerror("invalid port operator for rdr destination port");
 		problems++;
-	}
-	if (!r->af) {
-		if (r->src.addr.type == PF_ADDR_DYNIFTL ||
-		    r->dst.addr.type == PF_ADDR_DYNIFTL) {
-			yyerror("dynamic addresses require address family "
-			    "(inet/inet6)");
-			problems++;
-		} else {
-			TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-				if (pa->addr.type == PF_ADDR_DYNIFTL) {
-					yyerror("dynamic addresses require "
-					    "address family (inet/inet6)");
-					problems++;
-					break;
-				}
-			}
-		}
 	}
 	return (-problems);
 }
@@ -4085,15 +4141,18 @@ lookup(char *s)
 		{ "file",		FILENAME},
 		{ "fingerprints",	FINGERPRINTS},
 		{ "flags",		FLAGS},
+		{ "floating",		FLOATING},
 		{ "for",		FOR},
 		{ "fragment",		FRAGMENT},
 		{ "from",		FROM},
 		{ "global",		GLOBAL},
 		{ "group",		GROUP},
+		{ "group-bound",	GRBOUND},
 		{ "hfsc",		HFSC},
 		{ "hostid",		HOSTID},
 		{ "icmp-type",		ICMPTYPE},
 		{ "icmp6-type",		ICMP6TYPE},
+		{ "if-bound",		IFBOUND},
 		{ "in",			IN},
 		{ "inet",		INET},
 		{ "inet6",		INET6},
@@ -4149,6 +4208,7 @@ lookup(char *s)
 		{ "source-hash",	SOURCEHASH},
 		{ "source-track",	SOURCETRACK},
 		{ "state",		STATE},
+		{ "state-policy",	STATEPOLICY},
 		{ "static-port",	STATICPORT},
 		{ "sticky-address",	STICKYADDRESS},
 		{ "synproxy",		SYNPROXY},
@@ -4554,9 +4614,10 @@ invalid_redirect(struct node_host *nh, sa_family_t af)
 	if (!af) {
 		struct node_host *n;
 
-		/* only tables are ok without an address family */
+		/* tables and dyniftl are ok without an address family */
 		for (n = nh; n != NULL; n = n->next) {
-			if (n->addr.type != PF_ADDR_TABLE) {
+			if (n->addr.type != PF_ADDR_TABLE &&
+			    n->addr.type != PF_ADDR_DYNIFTL) {
 				yyerror("address family not given and "
 				    "translation address expands to multiple "
 				    "address families");

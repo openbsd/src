@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.286 2003/12/15 05:17:20 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.287 2003/12/31 11:18:25 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -422,6 +422,24 @@ and all other packets are silently dropped.
 For example:
 .Bd -literal -offset indent
 set block-policy return
+.Ed
+.It Ar set state-policy
+The
+.Ar state-policy
+option sets the default behaviour for states:
+.Pp
+.Bl -tag -width group-bound -compact
+.It Ar if-bound
+States are bound to interface.
+.It Ar group-bound
+States are bound to interface group (i.e. ppp)
+.It Ar floating
+States can match packets on any interfaces (the default).
+.El
+.Pp
+For example:
+.Bd -literal -offset indent
+set state-policy if-bound
 .Ed
 .It Ar set require-order
 By default
@@ -1153,6 +1171,8 @@ is skipped.
 .It Ar on <interface>
 This rule applies only to packets coming in on, or going out through, this
 particular interface.
+It is also possible to simply give the interface driver name, like ppp or fxp,
+to make the rule match packets flowing through a group of interfaces.
 .It Ar <af>
 This rule applies only to packets of this address family.
 Supported values are
@@ -1197,14 +1217,24 @@ Interface names can have modifiers appended:
 Translates to the network(s) attached to the interface.
 .It Ar :broadcast
 Translates to the interface's broadcast address(es).
+.It Ar :peer
+Translatee to the point to point interface's peer address(es).
+.It Ar :0
+Do not include interface aliases.
 .El
+.Pp
+Host names may also have the
+.Ar :0
+option appended to restrict the name resolution to the first of each
+v4 and v6 address found.
 .Pp
 Host name resolution and interface to address translation are done at
 ruleset load-time.
 When the address of an interface (or host name) changes (under DHCP or PPP,
 for instance), the ruleset must be reloaded for the change to be reflected
 in the kernel.
-Surrounding the interface name in parentheses changes this behaviour.
+Surrounding the interface name (and optional modifiers) in parentheses
+changes this behaviour.
 When the interface name is surrounded by parentheses, the rule is
 automatically updated whenever the interface changes its address.
 The ruleset does not need to be reloaded.
@@ -1625,6 +1655,37 @@ Only outgoing connections and incoming connections to port 25 are allowed.
 The initial packet of each connection has the SYN
 flag set, will be passed and creates state.
 All further packets of these connections are passed if they match a state.
+.Pp
+By default, packets coming in and out of any interface can match a state,
+but it is also possible to change that behaviour by assigning states to a
+single interface or a group of interfaces.
+.Pp
+The default policy is specified by the
+.Ar state-policy
+global option, but this can be adjusted on a per-rule basis by adding one
+of the
+.Ar if-bound ,
+.Ar group-bound 
+or
+.Ar floating
+keyword to the
+.Ar keep state
+option.
+For example, if a rule is defined as a rule as:
+.Bd -literal -offset indent
+pass out on ppp from any to 10.12/16 keep state (group-locked)
+.Ed
+.Pp
+A state created on ppp0 would match packets an all PPP interfaces,
+but not packets flowing through fxp0 or any other interface.
+.Pp
+Keeping rules
+.Ar floating
+is the more flexible option when the firewall is in a dynamic routing
+environment.
+However, this has some security implications since a state created by one
+trusted network could allow potentially hostile packets coming in from other
+interfaces.
 .Pp
 Specifying
 .Ar flags S/SA
@@ -2350,6 +2411,8 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "limit" ( limit-item | "{" limit-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
+		 [ "state-policy" ( "if-bound" | "group-bound" |
+                 "floating" ) ]
                  [ "require-order" ( "yes" | "no" ) ]
                  [ "fingerprints" filename ] |
                  [ "debug" ( "none" | "urgent" | "misc" | "loud" ) ] )
@@ -2483,7 +2546,8 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
 state-opts     = state-opt [ [ "," ] state-opts ]
 state-opt      = ( "max" number | "no-sync" | timeout |
                  "source-track" [ ( "rule" | "global" ) ] |
-		 "max-src-nodes" number | "max-src-states" number)
+		 "max-src-nodes" number | "max-src-states" number |
+                 "if-bound" | "group-bound" | "floating" )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
                  "fragment drop-ovl" ]

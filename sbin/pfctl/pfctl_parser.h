@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.71 2003/12/15 07:11:30 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.72 2003/12/31 11:18:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -73,12 +73,6 @@ struct pfctl {
 	const char *ruleset;
 };
 
-enum pfctl_iflookup_mode {
-	PFCTL_IFLOOKUP_HOST,
-	PFCTL_IFLOOKUP_NET,
-	PFCTL_IFLOOKUP_BCAST
-};
-
 struct node_if {
 	char			 ifname[IFNAMSIZ];
 	u_int8_t		 not;
@@ -90,6 +84,7 @@ struct node_if {
 struct node_host {
 	struct pf_addr_wrap	 addr;
 	struct pf_addr		 bcast;
+	struct pf_addr		 peer;
 	sa_family_t		 af;
 	u_int8_t		 not;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
@@ -98,6 +93,10 @@ struct node_host {
 	struct node_host	*next;
 	struct node_host	*tail;
 };
+/* special flags used by ifa_exists */
+#define PF_IFA_FLAG_GROUP	0x10000
+#define PF_IFA_FLAG_DYNAMIC	0x20000
+#define PF_IFA_FLAG_CLONABLE	0x40000
 
 struct node_os {
 	char			*os;
@@ -220,8 +219,8 @@ extern const struct pf_timeout pf_timeouts[];
 void			 set_ipmask(struct node_host *, u_int8_t);
 int			 check_netmask(struct node_host *, sa_family_t);
 void			 ifa_load(void);
-struct node_host	*ifa_exists(const char *);
-struct node_host	*ifa_lookup(const char *, enum pfctl_iflookup_mode);
+struct node_host	*ifa_exists(const char *, int);
+struct node_host	*ifa_lookup(const char *, int);
 struct node_host	*host(const char *);
 
 int			 append_addr(struct pfr_buffer *, char *, int);

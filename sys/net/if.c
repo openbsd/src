@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.79 2003/12/16 20:33:24 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.80 2003/12/31 11:18:25 cedric Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include "bpfilter.h"
 #include "bridge.h"
 #include "carp.h"
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +109,10 @@
 
 #if NCARP > 0
 #include <netinet/ip_carp.h>
+#endif
+
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 void	if_attachsetup(struct ifnet *);
@@ -244,6 +249,9 @@ if_attachsetup(ifp)
 
 	if (domains)
 		if_attachdomain1(ifp);
+#if NPF > 0
+	pfi_attach_ifnet(ifp);
+#endif
 }
 
 /*
@@ -433,6 +441,10 @@ if_detach(ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_init = if_detached_init;
 	ifp->if_watchdog = if_detached_watchdog;
+
+#if NPF > 0
+	pfi_detach_ifnet(ifp);
+#endif
 
 #if NBRIDGE > 0
 	/* Remove the interface from any bridge it is part of.  */
@@ -688,9 +700,11 @@ void
 if_clone_attach(ifc)
 	struct if_clone *ifc;
 {
-
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
+#if NPF > 0
+	pfi_attach_clone(ifc);
+#endif
 }
 
 /*
