@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.16 1997/11/13 06:23:05 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.17 1997/11/14 21:22:52 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -332,7 +332,7 @@ svr4_sys_mmap(p, v, retval)
 {
 	struct svr4_sys_mmap_args	*uap = v;
 	struct sys_mmap_args	 mm;
-	caddr_t 		 rp;
+	void			*rp;
 #define _MAP_NEW	0x80000000
 	/*
          * Verify the arguments.
@@ -350,7 +350,7 @@ svr4_sys_mmap(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (caddr_t) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
