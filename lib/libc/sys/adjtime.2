@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adjtime.2,v 1.6 1999/05/23 14:10:50 aaron Exp $
+.\"	$OpenBSD: adjtime.2,v 1.7 1999/06/06 19:15:04 deraadt Exp $
 .\"	$NetBSD: adjtime.2,v 1.5 1995/10/12 15:40:44 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -93,7 +93,7 @@ case an error code is stored in the global variable
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
-An argument points outside the process's allocated address space.
+Either of the arguments point outside the process's allocated address space.
 .It Bq Er EPERM
 The process's effective user ID is not that of the super-user.
 .El
