@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.92 1998/10/09 00:15:34 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.93 1998/10/10 03:55:05 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -825,6 +825,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Netelligent 10/100 TX",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_Nunknown,
+	    0,
+	    "Compaq",
+	    "Netelligent unknown",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T,
 	    0,
 	    "Compaq",
@@ -837,22 +843,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Integrated NetFlex 3/P",
 	},
 	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntPL100TX,
-	    0,
-	    "Compaq",
-	    "ProLiant Integrated Netelligent 10/100 TX",
-	},
-	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DPNet100TX,
 	    0,
 	    "Compaq",
 	    "Dual Port Netelligent 10/100 TX",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntPL100TX,
+	    0,
+	    "Compaq",
+	    "ProLiant Integrated Netelligent 10/100 TX",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DP4000,
 	    0,
 	    "Compaq",
 	    "Deskpro 4000 5233MMX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T2,
+	    0,
+	    "Compaq",
+	    "Netelligent 10 T/2 PCI UTP/Coax",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10_TX_UTP,
+	    0,
+	    "Compaq",
+	    "Netelligent 10/100 TX UTP",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P,
@@ -1657,6 +1675,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Oak Technology",
 	    "OTI107",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
+	    0,
+	    "Olicom",
+	    "OC2183",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
+	    0,
+	    "Olicom",
+	    "OC2325",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
+	    0,
+	    "Olicom",
+	    "OC2326",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.92 1998/10/09 00:15:34 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.93 1998/10/10 03:55:05 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -721,11 +721,14 @@
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX4	0x4000		/* Triflex Host-PCI Bridge */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_Nunknown	0xae33		/* Netelligent unknown */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
-#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
+#define	PCI_PRODUCT_COMPAQ_N10T2	0xb012		/* Netelligent 10 T/2 PCI UTP/Coax */
+#define	PCI_PRODUCT_COMPAQ_N10_TX_UTP	0xb030		/* Netelligent 10/100 TX UTP */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 
@@ -947,6 +950,11 @@
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
+
+/* Olicom */
+#define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* OC2183 */
+#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* OC2325 */
+#define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* OC2326 */
 
 /* Opti products */
 #define	PCI_PRODUCT_OPTI_82C557	0xc557		/* 82C557 Host Bridge */
