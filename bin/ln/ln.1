@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.17 2002/02/11 18:43:51 mpech Exp $
+.\"	$OpenBSD: ln.1,v 1.18 2002/04/29 17:38:38 millert Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -49,7 +49,7 @@
 .Ar source_file
 .Op Ar target_file
 .Nm ln
-.Op Fl fs
+.Op Fl fhns
 .Ar source_file ...
 .Op Ar target_dir
 .Sh DESCRIPTION
@@ -74,7 +74,7 @@ Unlink any already existing file, permitting the link to occur.
 If the target is a symlink to a directory, do not descend into it.
 .It Fl n
 An alias for
-.Fn h
+.Fl h
 for compatibility with other operating systems.
 .It Fl s
 Create a symbolic link.
