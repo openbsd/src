@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.268 2001/06/27 05:46:14 art Exp $
+#	$OpenBSD: GENERIC,v 1.269 2001/06/29 06:12:03 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -433,6 +433,11 @@ joy*	at isapnp?
 hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
 ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
 #ises*	at pci? dev ? function ?	# Pijnenburg PCC-ISES
+
+# I2O
+iop*	at pci? dev ? function ?	# I2O
+ioprbs*	at iop? tid ?			# Random block storage
+scsibus* at ioprbs?
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
