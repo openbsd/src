@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.8 2003/05/12 09:00:31 tdeval Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ macobio_match(parent, cf, aux)
 		case PCI_PRODUCT_APPLE_HEATHROW:
 		case PCI_PRODUCT_APPLE_PADDINGTON:
 		case PCI_PRODUCT_APPLE_KEYLARGO:
+		case PCI_PRODUCT_APPLE_INTREPID:
 		case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 			return 1;
 		}
@@ -141,6 +142,7 @@ macobio_attach(parent, self, aux)
 		}
 		break;
 	case PCI_PRODUCT_APPLE_KEYLARGO:
+	case PCI_PRODUCT_APPLE_INTREPID:
 	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
@@ -287,7 +289,8 @@ macobio_modem_power(int enable)
 {
 	u_int32_t val;
 	struct macobio_softc *sc = macobio_cd.cd_devs[0];
-	if (PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
+	if (PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_APPLE_KEYLARGO ||
+	    PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_APPLE_INTREPID) {
 		val = in32rb(sc->obiomem + 0x40);
 		if (enable)
 			val = val & ~((u_int32_t)1<<25);
