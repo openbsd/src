@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.60 2002/01/21 20:12:00 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.61 2002/02/12 18:01:02 kjell Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -138,6 +138,7 @@ Different cipher types may require different sized keys.
 .It Em Cipher	Key Length
 .It Li DES Ta "56 bits"
 .It Li 3DES Ta "168 bits"
+.It Li AES Ta "Variable (128 bits recommended)"
 .It Li BLF Ta "Variable (160 bits recommended)"
 .It Li CAST Ta "Variable (128 bits maximum and recommended)"
 .It Li SKIPJACK Ta "80 bits"
@@ -291,23 +292,27 @@ rules for a tunnel which uses encryption (the ESP IPsec protocol) and
 .Xr photurisd 8
 on security gateway A might look like this:
 .Bd -literal
+gatewA = "192.168.1.254/32"
+gatewB = "192.168.2.1/32"
+netA = "10.0.50.0/24"
+netB = "10.0.99.0/24"
+
+# default deny
 # ne0 is the only interface going to the outside.
-block in log on ne0 from any to any
-block out log on ne0 from any to any
-block in log on enc0 from any to any
-block out log on enc0 from any to any
+block in log on { enc0, ne0 } all
+block out log on { enc0, ne0 } all
 
 # Passing in encrypted traffic from security gateways
-pass in proto esp from gatewB/32 to gatewA/32
-pass out proto esp from gatewA/32 to gatewB/32
+pass in proto esp from $gatewB to $gatewA
+pass out proto esp from $gatewA to $gatewB
 
 # Passing in traffic from the designated subnets.
-pass in on enc0 from netB/netBmask to netA/netAmask
-pass out on enc0 from netA/netAmask to netB/netBmask
+pass in on enc0 from $netB to $netA
+pass out on enc0 from $netA to $netB
 
 # Passing in Photuris traffic from the security gateways
-pass in on ne0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
-pass out on ne0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
+pass in on ne0 proto udp from $gatewB port = 468 to $gatewA port = 468
+pass out on ne0 proto udp from $gatewA port = 468 to $gatewB port = 468
 .Ed
 .Pp
 If there are no other
@@ -436,38 +441,26 @@ Create the ipsec flows on machine B:
     -require -in -src 192.168.2.1
 .Ed
 .It
-Configure the firewall rules on machine A:
+Configure the firewall rules on machine A
+using the previously defined ruleset:
 .Bd -literal
-# ne0 is the only interface going to the outside.
-block in log on ne0 from any to any
-block out log on ne0 from any to any
-block in log on enc0 from any to any
-block out log on enc0 from any to any
+gatewA = "192.168.1.254/32"
+gatewB = "192.168.2.1/32"
+netA = "10.0.50.0/24"
+netB = "10.0.99.0/24"
 
-# Passing in encrypted traffic from security gateways
-pass in proto esp from 192.168.2.1/32 to 192.168.1.254/32
-pass out proto esp from 192.168.1.254/32 to 192.168.2.1/32
-
-# Passing in traffic from the designated subnets.
-pass in quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
-pass out quick on enc0 from 10.0.50.0/24 to 10.0.99.0/24 
+(rest of ruleset)
 .Ed
 .It
-Configure the firewall rules on machine B:
+Configure the firewall rules on machine B, modifying the
+definitions as appropriate:
 .Bd -literal
-# ne0 is the only interface going to the outside.
-block in log on ne0 from any to any
-block out log on ne0 from any to any
-block in log on enc0 from any to any
-block out log on enc0 from any to any
+gatewB = "192.168.1.254/32"
+gatewA = "192.168.2.1/32"
+netB = "10.0.50.0/24"
+netA = "10.0.99.0/24"
 
-# Passing in encrypted traffic from security gateways
-pass in proto esp from 192.168.1.254/32 to 192.168.2.1/32
-pass out proto esp from 192.168.2.1/32 to 192.168.1.254/32
-
-# Passing in traffic from the designated subnets.
-pass in quick on enc0 from 10.0.50.0/24 to 10.0.99.0/24
-pass out quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
+(rest of ruleset)
 .Ed
 .El
 .Ss Automated keying
