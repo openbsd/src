@@ -1,412 +1,397 @@
+.\"	$OpenBSD: bootptab.5,v 1.8 2003/05/29 18:31:53 jmc Exp $
+.\"
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.7 2003/01/18 23:40:58 deraadt Exp $
-.\"
-.TH BOOTPTAB 5 "October 31, 1991" "Carnegie Mellon University"
-.UC 6
-
-.SH NAME
-bootptab \- Internet Bootstrap Protocol server database
-.SH DESCRIPTION
+.Dd October 31, 1991
+.Dt BOOTPTAB 5
+.Os
+.Sh NAME
+.Nm bootptab
+.Nd Internet Bootstrap Protocol server database
+.Sh DESCRIPTION
 The
-.I bootptab
+.Nm bootptab
 file is the configuration database file for
-.IR bootpd ,
+.Xr bootpd 8 ,
 the Internet Bootstrap Protocol server.
 Its format is similar to that of
-.IR termcap (5)
+.Xr termcap 5
 in which two-character case-sensitive tag symbols are used to
-represent host parameters.  These parameter declarations are separated by
-colons (:), with a general format of:
-.PP
-.I "	hostname:tg=value:tg=value:tg=value:"
-.PP
+represent host parameters.
+These parameter declarations are separated by colons (:),
+with a general format of:
+.Pp
+.Dl hostname:tg=value:tg=value:tg=value:
+.Pp
 where
-.I hostname
+.Ar hostname
 is the actual name of a bootp client (or a "dummy entry"), and
-.I tg
-is a two-character tag symbol.  Replies are returned to clients
-only if an entry with the client's Ethernet or IP address exists
-in the
-.I booptab
-file.  Dummy entries have an invalid hostname
-(one with a "." as the first character) and are used to provide
-default values used by other entries via the
-.B tc=.dummy-entry
-mechanism.  Most tags must be followed by an equal sign
-and a value as above.  Some may also appear in a boolean form with no
-value (i.e.,
-.RI : tg :).
+.Ar tg
+is a two-character tag symbol.
+Replies are returned to clients only if an entry with the client's Ethernet
+or IP address exists in the
+.Nm booptab
+file.
+Dummy entries have an invalid hostname
+(one with a "." as the first character)
+and are used to provide default values used by other entries via the
+.Ar tc=.dummy-entry
+mechanism.
+Most tags must be followed by an equal sign and a value, as above.
+Some may also appear in a boolean form with no value (i.e.,
+.Pf : Ns Ar tg Ns : ) .
 The currently recognized tags are:
-.PP
-.br
-	bf	Bootfile
-.br
-	bs	Bootfile size in 512-octet blocks
-.br
-	cs	Cookie server address list
-.br
-	df	Merit dump file
-.br
-	dn	Domain name
-.br
-	ds	Domain name server address list
-.br
-	ef	Extension file
-.br
-	gw	Gateway address list
-.br
-	ha	Host hardware address
-.br
-	hd	Bootfile home directory
-.br
-	hn	Send client's hostname to client
-.br
-	ht	Host hardware type (see Assigned Numbers RFC)
-.br
-	im	Impress server address list
-.br
-	ip	Host IP address
-.br
-	lg	Log server address list
-.br
-	lp	LPR server address list
-.br
-	ns	IEN-116 name server address list
-.br
-	nt	NTP (time) Server (RFC 1129)
-.br
-	ra	Reply address override
-.br
-	rl	Resource location protocol server address list
-.br
-	rp	Root path to mount as root
-.br
-	sa	TFTP server address client should use
-.br
-	sm	Host subnet mask
-.br
-	sw	Swap server address
-.br
-	tc	Table continuation (points to similar "template" 
-.br
-		host entry)
-.br
-	td	TFTP root directory used by "secure" TFTP 
-.br
-		servers
-.br
-	to	Time offset in seconds from UTC
-.br
-	ts	Time server address list
-.br
-	vm	Vendor magic cookie selector
-.br
-	yd	YP (NIS) domain name
-.br
-	ys	YP (NIS) server address
-
-.PP
+.Pp
+.Bd -literal -offset indent
+bf	Bootfile
+bs	Bootfile size in 512-octet blocks
+cs	Cookie server address list
+df	Merit dump file
+dn	Domain name
+ds	Domain name server address list
+ef	Extension file
+gw	Gateway address list
+ha	Host hardware address
+hd	Bootfile home directory
+hn	Send client's hostname to client
+ht	Host hardware type (see Assigned Numbers RFC)
+im	Impress server address list
+ip	Host IP address
+lg	Log server address list
+lp	LPR server address list
+ns	IEN-116 name server address list
+nt	NTP (time) Server (RFC 1129)
+ra	Reply address override
+rl	Resource location protocol server address list
+rp	Root path to mount as root
+sa	TFTP server address client should use
+sm	Host subnet mask
+sw	Swap server address
+tc	Table continuation (points to similar "template" host entry)
+td	TFTP root directory used by "secure" TFTP servers
+to	Time offset in seconds from UTC
+ts	Time server address list
+vm	Vendor magic cookie selector
+yd	YP (NIS) domain name
+ys	YP (NIS) server address
+.Ed
+.Pp
 There is also a generic tag,
-.RI T n ,
+.Pf T Ns Ar n ,
 where
-.I n
-is an RFC1084 vendor field tag number.  Thus it is possible to immediately
-take advantage of future extensions to RFC1084 without being forced to modify
-.I bootpd
-first.  Generic data may be represented as either a stream of hexadecimal
-numbers or as a quoted string of ASCII characters.  The length of the generic
-data is automatically determined and inserted into the proper field(s) of the
-RFC1084-style bootp reply.
-.PP
+.Ar n
+is an RFC 1084 vendor field tag number.
+Thus it is possible to immediately take advantage of future extensions
+to RFC 1084 without being forced to modify
+.Xr bootpd 8
+first.
+Generic data may be represented as either a stream of hexadecimal
+numbers or as a quoted string of ASCII characters.
+The length of the generic data is automatically determined and inserted into
+the proper field(s) of the RFC 1084-style bootp reply.
+.Pp
 The following tags take a whitespace-separated list of IP addresses:
-.BR cs ,
-.BR ds ,
-.BR gw ,
-.BR im ,
-.BR lg ,
-.BR lp ,
-.BR ns ,
-.BR nt ,
-.BR ra ,
-.BR rl ,
+.Ar cs ,
+.Ar ds ,
+.Ar gw ,
+.Ar im ,
+.Ar lg ,
+.Ar lp ,
+.Ar ns ,
+.Ar nt ,
+.Ar ra ,
+.Ar rl ,
 and
-.BR ts .
+.Ar ts .
 The
-.BR ip ,
-.BR sa ,
-.BR sw ,
-.BR sm ,
+.Ar ip ,
+.Ar sa ,
+.Ar sw ,
+.Ar sm ,
 and
-.B ys
+.Ar ys
 tags each take a single IP address.
 All IP addresses are specified in standard Internet "dot" notation
 and may use decimal, octal, or hexadecimal numbers
 (octal numbers begin with 0, hexadecimal numbers begin with '0x' or '0X').
 Any IP addresses may alternatively be specified as a hostname, causing
-.I bootpd
-to lookup the IP address for that host name using gethostbyname(3).
+.Xr bootpd 8
+to look up the IP address for that host name using
+.Xr gethostbyname 3 .
 If the
-.B ip
+.Ar ip
 tag is not specified,
-.I bootpd
+.Xr bootpd 8
 will determine the IP address using the entry name as the host name.
 (Dummy entries use an invalid host name to avoid automatic IP lookup.)
-.PP
+.Pp
 The
-.B ht
+.Ar ht
 tag specifies the hardware type code as either an unsigned decimal, octal, or
 hexadecimal integer or one of the following symbolic names:
-.B ethernet
+.Em ethernet
 or
-.B ether
+.Em ether
 for 10Mb Ethernet,
-.B ethernet3
+.Em ethernet3
 or
-.B ether3
+.Em ether3
 for 3Mb experimental Ethernet,
-.BR ieee802 ,
-.BR tr ,
+.Em ieee802 ,
+.Em tr ,
 or
-.B token-ring
+.Em token-ring
 for IEEE 802 networks,
-.B pronet
+.Em pronet
 for Proteon ProNET Token Ring, or
-.BR chaos ,
-.BR arcnet ,
+.Em chaos ,
+.Em arcnet ,
 or
-.B ax.25
+.Em ax.25
 for Chaos, ARCNET, and AX.25 Amateur Radio networks, respectively.
 The
-.B ha
+.Ar ha
 tag takes a hardware address which may be specified as a host name
-or in numeric form.  Note that the numeric form
-.I must
+or in numeric form.
+Note that the numeric form
+.Em must
 be specified in hexadecimal; optional periods and/or a leading '0x' may be
-included for readability.  The
-.B ha
+included for readability.
+The
+.Ar ha
 tag must be preceded by the
-.B ht
+.Ar ht
 tag (either explicitly or implicitly; see
-.B tc
+.Ar tc
 below).
 If the hardware address is not specified and the type is specified
 as either "ethernet" or "ieee802", then
-.I bootpd
-will try to determine the hardware address using ether_hostton(3).
-.PP
+.Xr bootpd 8
+will try to determine the hardware address using
+.Xr ether_hostton 3 .
+.Pp
 The hostname, home directory, and bootfile are ASCII strings which may be
-optionally surrounded by double quotes (").  The client's request and the
-values of the
-.B hd
+optionally surrounded by double quotes (").
+The client's request and the values of the
+.Ar hd
 and
-.B bf
+.Ar bf
 symbols determine how the server fills in the bootfile field of the bootp
 reply packet.
-.PP
+.Pp
 If the
-.B bf
+.Ar bf
 option is specified, its value is copied into the reply packet.
 Otherwise, the name supplied in the client request is used.
 If the
-.B hd
-option is specified, its value is prepended to the
-boot file in the reply packet, otherwise the path
-supplied in the client request is used.
+.Ar hd
+option is specified, its value is prepended to the boot file in the reply
+packet, otherwise the path supplied in the client request is used.
 The existence of the boot file is NOT verified by
-.I bootpd
+.Xr bootpd 8
 because the boot file may be on some other machine.
-.PP
+.Pp
 The
-.B bs
-option specified the size of the boot file.
+.Ar bs
+option specifies the size of the boot file.
 It can be written as
-.BR bs =auto
+.Ar bs =auto
 which causes
-.I bootpd
+.Xr bootpd 8
 to determine the boot file size automatically.
-.PP
+.Pp
 Some newer versions of
-.I tftpd
-provide a security feature to change their root directory using
-the
-.IR chroot (2)
+.Xr tftpd 8
+provide a security feature to change their root directory using the
+.Xr chroot 2
 system call.
 The
-.B td
+.Ar td
 tag may be used to inform
-.I bootpd
+.Xr bootpd 8
 of this special root directory used by
-.IR tftpd .
-(One may alternatively use the
-.I bootpd
-"-c chdir" option.)
+.Xr tftpd 8 .
+(One may alternatively use the bootpd
+.Qq -c chdir
+option.)
 The
-.B hd
+.Ar hd
 tag is actually relative to the root directory specified by the
-.B td
+.Ar td
 tag.
 For example, if the real absolute path to your BOOTP client bootfile is
-/tftpboot/bootfiles/bootimage, and
-.IR tftpd
-uses /tftpboot as its "secure" directory, then specify the following in
-.IR bootptab :
-.PP
-.br
-	:td=/tftpboot:hd=/bootfiles:bf=bootimage:
-.PP
-If your bootfiles are located directly in /tftpboot, use:
-.PP
-.br
-	:td=/tftpboot:hd=/:bf=bootimage:
-.PP
+.Pa /tftpboot/bootfiles/bootimage ,
+and
+.Xr tftpd 8
+uses
+.Pa /tftpboot
+as its "secure" directory, then specify the following in
+.Nm bootptab :
+.Pp
+.Dl :td=/tftpboot:hd=/bootfiles:bf=bootimage:
+.Pp
+If your bootfiles are located directly in
+.Pa /tftpboot ,
+use:
+.Pp
+.Dl :td=/tftpboot:hd=/:bf=bootimage:
+.Pp
 The
-.B sa
+.Ar sa
 tag may be used to specify the IP address of the particular TFTP server
-you wish the client to use.  In the absence of this tag,
-.I bootpd
+you wish the client to use.
+In the absence of this tag,
+.Xr bootpd 8
 will tell the client to perform TFTP to the same machine
-.I bootpd
+.Xr bootpd 8
 is running on.
-.PP
+.Pp
 The time offset
-.B to
+.Ar to
 may be either a signed decimal integer specifying the client's
 time zone offset in seconds from UTC, or the keyword
-.B auto
-which uses the server's time zone offset.  Specifying the
-.B to
+.Ar auto
+which uses the server's time zone offset.
+Specifying the
+.Ar to
 symbol as a boolean has the same effect as specifying
-.B auto
+.Ar auto
 as its value.
-.PP
+.Pp
 The bootfile size
-.B bs
+.Ar bs
 may be either a decimal, octal, or hexadecimal integer specifying the size of
 the bootfile in 512-octet blocks, or the keyword
-.B auto
+.Ar auto
 which causes the server to automatically calculate the bootfile size at each
-request.  As with the time offset, specifying the
-.B bs
+request.
+As with the time offset, specifying the
+.Ar bs
 symbol as a boolean has the same effect as specifying
-.B auto
+.Ar auto
 as its value.
-.PP
+.Pp
 The vendor magic cookie selector (the
-.B vm
+.Ar vm
 tag) may take one of the following keywords:
-.B auto
+.Ar auto
 (indicating that vendor information is determined by the client's request),
-.B rfc1048
+.Ar rfc1048
 or
-.B rfc1084
-(which always forces an RFC1084-style reply), or
-.B cmu
+.Ar rfc1084
+(which always forces an RFC 1084-style reply), or
+.Ar cmu
 (which always forces a CMU-style reply).
-.PP
+.Pp
 The
-.B hn
-tag is strictly a boolean tag; it does not take the usual equals-sign and
-value.  Its presence indicates that the hostname should be sent to RFC1084
-clients.
-.I Bootpd
+.Ar hn
+tag is strictly a boolean tag; it does not take the usual equals sign and
+value.
+Its presence indicates that the hostname should be sent to RFC 1084 clients.
+.Xr bootpd 8
 attempts to send the entire hostname as it is specified in the configuration
 file; if this will not fit into the reply packet, the name is shortened to
 just the host field (up to the first period, if present) and then tried.
 In no case is an arbitrarily truncated hostname sent (if nothing reasonable
 will fit, nothing is sent).
-.PP
+.Pp
 Often, many host entries share common values for certain tags (such as name
-servers, etc.).  Rather than repeatedly specifying these tags, a full
-specification can be listed for one host entry and shared by others via the
-.B tc
+servers, etc.).
+Rather than repeatedly specifying these tags, a full specification can be
+listed for one host entry and shared by others via the
+.Ar tc
 (table continuation) mechanism.
 Often, the template entry is a dummy host which doesn't actually exist and
-never sends bootp requests.  This feature is similar to the
-.B tc
+never sends bootp requests.
+This feature is similar to the
+.Ar tc
 feature of
-.IR termcap (5)
-for similar terminals.  Note that
-.I bootpd
+.Xr termcap 5
+for similar terminals.
+Note that
+.Xr bootpd 8
 allows the
-.B tc
+.Ar tc
 tag symbol to appear anywhere in the host entry, unlike
-.I termcap
-which requires it to be the last tag.  Information explicitly specified for a
-host always overrides information implied by a
-.B tc
-tag symbol, regardless of its location within the entry.  The
-value of the
-.B tc
+.Xr termcap 5
+which requires it to be the last tag.
+Information explicitly specified for a host always overrides information
+implied by a
+.Ar tc
+tag symbol, regardless of its location within the entry.
+The value of the
+.Ar tc
 tag may be the hostname or IP address of any host entry
 previously listed in the configuration file.
-.PP
+.Pp
 Sometimes it is necessary to delete a specific tag after it has been inferred
 via
-.BR tc .
+.Ar tc .
 This can be done using the construction
-.IB tag @
+.Ar tag @
 which removes the effect of
-.I tag
+.Ar tag
 as in
-.IR termcap (5).
+.Xr termcap 5 .
 For example, to completely undo an IEN-116 name server specification, use
-":ns@:" at an appropriate place in the configuration entry.  After removal
-with
-.BR @ ,
+.Qq :ns@:
+at an appropriate place in the configuration entry.
+After removal with
+.Ar @ ,
 a tag is eligible to be set again through the
-.B tc
+.Ar tc
 mechanism.
-.PP
+.Pp
 Blank lines and lines beginning with "#" are ignored in the configuration
-file.  Host entries are separated from one another by newlines; a single host
+file.
+Host entries are separated from one another by newlines; a single host
 entry may be extended over multiple lines if the lines end with a backslash
-(\\).  It is also acceptable for lines to be longer than 80 characters.  Tags
-may appear in any order, with the following exceptions:  the hostname must be
-the very first field in an entry, and the hardware type must precede the
-hardware address.
-.PP
+(\\).
+It is also acceptable for lines to be longer than 80 characters.
+Tags may appear in any order, with the following exceptions:
+the hostname must be the very first field in an entry,
+and the hardware type must precede the hardware address.
+.Pp
 An example
-.I /etc/bootptab
+.Pa /etc/bootptab
 file follows:
-.PP
-.nf
-	# Sample bootptab file (domain=andrew.cmu.edu)
+.Pp
+.Bd -literal -offset indent
+# Sample bootptab file (domain=andrew.cmu.edu)
 
-	.default:\\
-		:hd=/usr/boot:bf=null:\\
-		:ds=netserver, lancaster:\\
-		:ns=pcs2, pcs1:\\
-		:ts=pcs2, pcs1:\\
-		:sm=255.255.255.0:\\
-		:gw=gw.cs.cmu.edu:\\
-		:hn:to=-18000:
+\&.default:\\
+	:hd=/usr/boot:bf=null:\\
+	:ds=netserver, lancaster:\\
+	:ns=pcs2, pcs1:\\
+	:ts=pcs2, pcs1:\\
+	:sm=255.255.255.0:\\
+	:gw=gw.cs.cmu.edu:\\
+	:hn:to=-18000:
 
-	carnegie:ht=6:ha=7FF8100000AF:tc=.default:
-	baldwin:ht=1:ha=0800200159C3:tc=.default:
-	wylie:ht=1:ha=00DD00CADF00:tc=.default:
-	arnold:ht=1:ha=0800200102AD:tc=.default:
-	bairdford:ht=1:ha=08002B02A2F9:tc=.default:
-	bakerstown:ht=1:ha=08002B0287C8:tc=.default:
+carnegie:ht=6:ha=7FF8100000AF:tc=.default:
+baldwin:ht=1:ha=0800200159C3:tc=.default:
+wylie:ht=1:ha=00DD00CADF00:tc=.default:
+arnold:ht=1:ha=0800200102AD:tc=.default:
+bairdford:ht=1:ha=08002B02A2F9:tc=.default:
+bakerstown:ht=1:ha=08002B0287C8:tc=.default:
 
-	# Special domain name server and option tags for next host
-	butlerjct:ha=08002001560D:ds=128.2.13.42:\\
-		:T37=0x12345927AD3BCF:\\
-		:T99="Special ASCII string":\\
-		:tc=.default:
+# Special domain name server and option tags for next host
+butlerjct:ha=08002001560D:ds=128.2.13.42:\\
+	:T37=0x12345927AD3BCF:\\
+	:T99="Special ASCII string":\\
+	:tc=.default:
 
-	gastonville:ht=6:ha=7FFF81000A47:tc=.default:
-	hahntown:ht=6:ha=7FFF81000434:tc=.default:
-	hickman:ht=6:ha=7FFF810001BA:tc=.default:
-	lowber:ht=1:ha=00DD00CAF000:tc=.default:
-	mtoliver:ht=1:ha=00DD00FE1600:tc=.default:
-
-.fi
-.SH FILES
+gastonville:ht=6:ha=7FFF81000A47:tc=.default:
+hahntown:ht=6:ha=7FFF81000434:tc=.default:
+hickman:ht=6:ha=7FFF810001BA:tc=.default:
+lowber:ht=1:ha=00DD00CAF000:tc=.default:
+mtoliver:ht=1:ha=00DD00FE1600:tc=.default:
+.Ed
+.Sh FILES
 /etc/bootptab
-
-.SH "SEE ALSO"
-.br
-bootpd(8), tftpd(8),
-.br
-DARPA Internet Request For Comments RFC951, RFC1048, RFC1084, Assigned Numbers
+.Sh SEE ALSO
+.Xr bootpd 8 ,
+.Xr tftpd 8
+.Pp
+DARPA Internet Request For Comments RFC 951, RFC 1048, RFC 1084,
+Assigned Numbers
