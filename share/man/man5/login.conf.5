@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.5 2000/11/27 05:59:49 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.6 2001/05/29 21:35:44 millert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd February 23, 1995
@@ -45,11 +45,17 @@
 The
 .Nm
 file describes the various attributes of login classes.
-A login class determines session resource limits and environment setup.
-It is used by various programs in the system to set up a user's login
-environment and to enforce local policy and restrictions.
-At a future date, the login class will also determine what styles of
-authentication are available to a user.
+A login class determines what styles of authentication are available
+as well as session resource limits and environment setup.
+While designed primarily for the
+.Xr login 8
+program,
+it is also used by other programs, e.g.,
+.Xr ftpd 8 ,
+to determine what means of authentication are available.
+It is also used by programs, e.g.,
+.Xr rexecd 8 ,
+which need to set up a user environment.
 .Pp
 A special record,
 .Dq default ,
@@ -70,6 +76,42 @@ The types are described after the capability table.
 .Bl -column alwaysuseklogin programxx xusrxbinxbin
 .Sy Name	Type	Default	Description
 .\"
+.It alwaysuseklogin Ta bool Ta Dv false Ta
+Always check the 
+.Pa .klogin 
+file for kerberos style authentication.
+Normally this file is only checked if a non-null kerberos instance
+is provided (e.g.,
+.Li user.root ) .
+.\"
+.sp
+.It approve Ta program Ta "" Ta
+Default program to approve login.
+.\"
+.sp
+.It approve- Ns Ar service Ta program Ta "" Ta
+Program to approve login for
+.Ar service .
+.\"
+.sp
+.It auth Ta list Ta Dv passwd Ta
+Allowed authentication styles.
+The first value is the default styles.
+.\"
+.sp
+.It auth- Ns Ar type Ta list Ta "" Ta
+Allowed authentication styles for the authentication type
+.Ar type .
+.\"
+.sp
+.It classify Ta program Ta "" Ta
+Classify type of login.
+.\"
+.sp
+.It copyright Ta file Ta "" Ta
+File containing additional copyright information.
+.\"
+.sp
 .It coredumpsize Ta size Ta "" Ta
 Maximum coredump size limit.
 .\"
@@ -130,6 +172,14 @@ and the login session will be terminated.
 .sp
 .It openfiles Ta number Ta "" Ta
 Maximum number of open files per process.
+.\"
+.sp
+.It password-dead Ta time Ta Dv 0 Ta
+Length of time a password may be expired but not quite dead yet.
+When set (for both the client and remote server machine when doing
+remote authentication), a user is allowed to log in just one more
+time after their password (but not account) has expired.  This allows
+a grace period for updating their password.
 .\"
 .sp
 .It password-warn Ta time Ta Dv 2w Ta
@@ -272,10 +322,486 @@ For example, to indicate 1 and 1/2 hours, the following string could be used:
 .Li 1h30m .
 .El
 .\"
+.Sh AUTHENTICATION
+.Pp
+\*(oSuses BSD Authentication, which is made up of a variety of
+authentication styles. The authentication styles currently provided are:
+.Bl -tag -width kerberosxx
+.\"
+.It Li activ
+Authenticate using an ActivCard token.  See
+.Xr login_activ 8 .
+.\"
+.It Li auth
+Authenticate using the remote authentication protocol.
+Normally linked to another authentication type.  See
+.Xr login_auth 8 .
+.\"
+.It Li chpass
+Change user's password.  See
+.Xr login_chpass 8 .
+.\"
+.It Li crypto
+Authenticate using a CRYPTOCard token.  See
+.Xr login_crypto 8 .
+.\"
+.It Li kerberos
+Request a password and use it to request a ticket from the kerberos server.
+See
+.Xr kerberos 1 .
+.\"
+.It Li krb-or-pwd
+Request a password and first try the
+.Li kerberos
+authentication style and if that fails use the same password with the
+.Li passwd
+authentication style.
+See
+.Xr kerberos 1 .
+.\"
+.It Li lchpass
+Change user's local password.  See
+.Xr login_chpass 8 .
+.\"
+.It Li passwd
+Request a password and check it against the password in the master.passwd file.
+.\"
+.It Li radius
+Normally linked to another authentication type, contact the radius server
+to do authentication.  See
+.Xr login_radius 8 .
+.\"
+.It Li rchpass
+Change user's rpasswd password.  See
+.Xr login_rchpass 8 .
+.\"
+.It Li reject
+Request a password and reject any request.  See
+.Xr login_reject 8 .
+.\"
+.It Li rpasswd
+Request a password and check it against the password in the rpasswd.db file.
+.\"
+.It Li skey
+Send a challenge and request a response, checking it
+with S/Key\(tm authentication.  See
+.Xr skey 1 .
+.\"
+.It Li snk
+Authenticate using a SecureNet Key token.  See
+.Xr login_snk 8 .
+.\"
+.It Li token
+Authenticate using a generic X9.9 token.  See
+.Xr login_token 8 .
+.El
+.Pp
+Local authentication styles may be added by creating the login script
+for the style (see below).  To prevent collisions with future official BSD
+Authentication style names all local style names should start with a dash (-).
+Current plans are for all official BSD Authentication style names to begin
+with a lower case alphabetic character.
+For example, if you have a new style you refer to as
+.Li slick
+then you should create an authentication script named
+.Pa /usr/libexec/auth/login_-slick
+using the style name
+.Li -slick .
+When logging in via the
+.Xr login 8
+program, the syntax
+.Ar user Ns Li :-slick
+would be used.
+.Pp
+Authentication requires several pieces of information:
+.Bl -tag -width kerberosxx
+.\"
+.It Ar class
+The login class being used.
+.It Ar service
+The type of service requesting authentication.
+The service type is used to determine what information the authentication
+program can provide to the user and what information the user can provide
+to the authentication program.
+.Pp
+The service type
+.Li login
+is appropriate for most situations.
+Two other service types,
+.Li challenge
+and
+.Li response ,
+are provided for use by programs like
+.Xr ftpd 8
+and
+.Xr radiusd 8 .
+If no service type is specified,
+.Li login
+is used.
+.It Ar style
+The authentication style being used.
+.It Ar type
+The authentication type,
+used to determine the available authentication styles.
+.It Ar username
+The name of the user to authenticate.
+The name may contain an instance, e.g.
+.Dq user.root ,
+as used by Kerberos authentication.
+If the authentication style being used does not support such instances,
+the request will fail.
+.El
+.Pp
+The program requesting authentication must specify a username and an
+authentication style.
+(For example,
+.Xr login 8
+requests a username from the user.
+Users may enter usernames of the form
+.Dq user:style
+to optionally specify the authentication style.)
+The requesting program may also specify the type of authentication
+that will be done.
+Most programs will only have a single type, if any at all, i.e.
+.Xr ftpd 8
+will always request the
+.Li ftp
+type authentication, and
+.Xr su 1
+will always request the
+.Li su
+type authentication.
+The
+.Xr login 8
+utility is special in that it may select an authentication type based
+on information found in the
+.Pa /etc/ttys
+file for the appropriate tty (see
+.Xr ttys 5 ).
+.Pp
+The class to be used is normally determined by the
+.Li class
+field in the password file (see
+.Xr passwd 5 ).
+.Pp
+The class is used to look up a corresponding entry in the
+.Pa login.conf
+file.
+If an authentication type is defined and a value for
+.Li auth- Ns Ar type
+exists in that entry,
+it will be used as a list of potential authentication styles.
+If an authentication type is not defined, or
+.Li auth- Ns Ar type
+is not specified for the class,
+the value of
+.Li auth
+is used as the list of available authentication styles.
+.Pp
+If the user did not specify an authentication style the first style
+in the list of available styles is used.
+If the user did specify an authentication style and the style is in the
+list of available styles it will be used, otherwise the request is
+rejected.
+.Pp
+For any given style, the program
+.Pa /usr/libexec/auth/login_ Ns Va style
+is used to perform the authentication.
+The synopsis of this program is:
+.sp
+.ti +.5i
+.Li /usr/libexec/auth/login_ Ns Va style
+.Op Fl v Va name=value
+.Op Fl s Va service
+.Va username class
+.sp
+The
+.Fl v
+option is used to specify arbitrary information to the authentication
+programs.  Any number of
+.Fl v
+options may be used.
+The
+.Xr login 8
+program provides the following through the
+.Fl v
+option:
+.Bl -tag -width remote_addrxxx
+.It Li auth_type
+The type of authentication to use.
+.It Li fqdn
+The hostname provided to login by the
+.Fl h
+option.
+.It Li hostname
+The name
+.Xr login 8
+will place in the utmp file
+for the remote hostname.
+.It Li local_addr
+The local ip address given to
+.Xr login 8
+by the 
+.Fl L
+option.
+.It Li remote_addr
+The remote ip address given to
+.Xr login 8
+by the 
+.Fl R
+option.
+.It Li style
+The style of authentication used for this user
+(see approval scripts below).
+.El
+.Pp
+The
+.Xr su 1
+program provides the following through the
+.Fl v
+option:
+.Bl -tag -width remote_addrxxx
+.It Li wheel
+Set to either
+.Dq yes
+or
+.Dq no
+to indicate if the user is in group wheel when they are trying to become root.
+Some authentication types require the user to be in group wheel when using
+the
+.Xr su 1
+program to become super user.
+.El 
+.Pp
+When the authentication program is executed,
+the environment will only contain the values
+.Ev PATH=/bin:/usr/bin
+and
+.Ev SHELL=/bin/sh .
+File descriptor 3 will be open for reading and writing.
+The authentication program should write one or more of the following
+strings to this file descriptor:
+.Bl -tag -width authorize
+.\"
+.It Li authorize
+The user has been authorized.
+.\"
+.It Li authorize secure
+The user has been authorized and root should be allowed to
+login even if this is not a secure terminal.  This should only be
+sent by authentication styles that are secure over insecure lines.
+.\"
+.It Li reject
+Authorization is rejected.
+This overrides any indication that the user was authorized (though
+one would question the wisdom in sending both a
+.Va reject
+and an
+.Va authorize
+command).
+.\"
+.It Li reject challenge
+Authorization was rejected and a challenge has been made available
+via the value
+.Li challenge .
+.\"
+.It Li reject silent
+Authorization is rejected, but no error messages should be generated.
+.\"
+.It Li remove Va file
+If the login session fails for any reason, remove
+.Va file
+before termination (a kerberos ticket file, for example).
+.\"
+.It Li setenv Va name Va value
+If the login session succeeds, the environment variable
+.Va name
+should be set to the specified
+.Va value .
+.\"
+.It Li unsetenv Va name
+If the login session succeeds, the environment variable
+.Va name
+should be removed.
+.\"
+.It Li value Va name Va value
+Set the internal variable
+.Va name
+to the specified
+.Va value .
+The
+.Va value
+should only contain printable characters.
+Several \e sequences may be used to introduce non printing characters.
+These are:
+.Bl -tag -width indent
+.It Li \en
+A newline
+.It Li \er
+A carriage return
+.It Li \et
+A tab
+.It Li \e Ns Va xxx
+The character represented by the octal value
+.Va xxx .
+The value may be one, two, or three octal digits.
+.It Li \e Ns Va c
+The string is replaced by the value of
+.Va c .
+This allows quoting an initial space or the \\ character itself.
+.El
+.Pp
+The following values are currently defined:
+.Bl -tag -width indent
+.It Li challenge
+See section on challenges below.
+.It Li errormsg
+If set, the value is the reason authentication failed.  The calling
+program may choose to display this when rejecting the user, but
+display is not required.
+.El
+.El
+.Pp
+In order for authentication to be successful,
+the authentication program must exit with a value of 0 as well
+as provide an
+.Li authorize
+or
+.Li "authorize root"
+statement on file descriptor 3.
+.Pp
+An authentication program must not assume it will be called as root,
+nor must it assume it will not be called as root.  If it needs special
+permissions to access files it should be setuid or setgid to the
+appropriate user/group.  See
+.Xr chmod 1 .
+.Sh CHALLENGES
+When an authentication program is called with a service of
+.Li challenge
+it should do one of three things:
+.Pp
+If this style of authentication supports challenge response
+it should set the internal variable
+.Li challenge
+to be the appropriate challenge for the user.  This is done
+by the
+.Li value
+command listed above.
+The program should also issue a
+.Li reject challenge
+and then exit with a 0 status.
+See the section on responses below.
+.Pp
+If this style of authentication does not support challenge response,
+but does support the
+.Li response
+service (described below) it should issue
+.Li reject silent
+and then exit with a 0 status.
+.Pp
+If this style of authentication does not support the
+.Li response
+service it should simply fail, complaining about an unknown service type.
+It should exit with a non-zero status.
+.Sh RESPONSES
+When an authentication program is called with a service of 
+.Li response ,
+and this style supports this mode of authentication,
+it should read two null terminated strings from file descriptor 3.
+The first string is a challenge that was issued to the user
+(obtained from the
+.Li challenge
+service above).
+The second string is the response the user gave (i.e., the password).
+If the response is correct for the specified challenge, the authentication
+should be accepted, else it should be rejected.
+It is possible for the challenge to be any empty string, which implies
+the calling program did first obtain a challenge prior to getting a
+response from the user.
+Not all authentication styles support empty challenges.
+.Sh APPROVAL
+.Pp
+An approval program has the synopsis of:
+.sp
+.ti +.5i
+.Va approve
+.Op Fl v Ar name=value
+.Va username class service
+.Pp
+Just as with an authentication program, file descriptor 3 will be
+open for writing when the approval program is executed.
+The
+.Fl v
+option is the same as in the authentication program.
+Unlike an authentication program,
+the approval program need not explicitly send an
+.Li authorize
+or
+.Li "authorize root"
+statement,
+it only need exit with a value of 0 or non-zero.
+An exit value of 0 is equivalent to an
+.Li authorize
+statement, and non-zero to a
+.Li reject
+statement.
+This allows for simple programs which have no information to provide
+other than approval or denial.
+.Sh CLASSIFICATION
+.Pp
+A classify program has the synopsis of:
+.sp
+.ti +.5i
+.Va classify
+.Op Fl v Ar name=value
+.Op Fl f
+.Op user
+.Pp
+See
+.Xr login 8
+for a description of the
+.Fl f ,
+option.
+The
+.Fl v
+option is the same as for the authentication programs.
+The
+.Va user
+is the username passed to
+.Xr login 8
+login, if any.
+.Pp
+The typical job of the classify program is to determine what authentication
+type should actually be used, presumably based on the remote IP address.
+It might also re-specify the hostname to be included in the
+.Xr utmp 5
+file, reject the login attempt out right,
+or even print an additional login banner (e.g.,
+.Pa /etc/issue ) .
+.Pp
+The classify entry is only valid for the
+.Li default
+class as it is used prior to knowing who the user is.
+The classify script may pass environment variables or other commands
+back to
+.Xr login 8
+on file descriptor 3, just as an authentication program does.
+The two variables
+.Nm AUTH_TYPE
+and
+.Nm REMOTE_NAME
+are used to specify a new authentication type (the type must have the
+form
+.Li auth- Ns Ar type )
+and override the
+.Fl h
+option to login, respectively.
 .Sh SEE ALSO
 .Xr login 1 ,
+.Xr authenticate 3 ,
+.Xr bsd_auth 3 ,
 .Xr getcap 3 ,
 .Xr login_cap 3 ,
-.Xr passwd 5 ,
+.Xr passwd 3 ,
 .Xr ttys 5 ,
 .Xr ftpd 8
