@@ -335,6 +335,8 @@ void RMD160Update(context, data, nbytes)
 
 	if (context->buflen > 0) {
 		ofs = 64 - context->buflen;
+		if ( ofs > nbytes )
+			ofs = nbytes;
 		(void)memcpy(context->bbuffer + context->buflen, data, ofs);
 #if BYTE_ORDER == LITTLE_ENDIAN
 		(void)memcpy(X, context->bbuffer, sizeof(X));

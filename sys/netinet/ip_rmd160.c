@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_rmd160.c,v 1.3 1998/03/23 15:17:47 janjaap Exp $       */
+/*       $OpenBSD: ip_rmd160.c,v 1.4 1998/06/02 16:12:40 janjaap Exp $       */
 /********************************************************************\
  *
  *      FILE:     rmd160.c
@@ -336,6 +336,8 @@ void RMD160Update(context, data, nbytes)
 
 	if (context->buflen > 0) {
 		ofs = 64 - context->buflen;
+		if ( ofs > nbytes )
+		  ofs = nbytes;
 		bcopy(data, context->bbuffer + context->buflen, ofs);
 #if BYTE_ORDER == LITTLE_ENDIAN
 		bcopy(context->bbuffer, X, sizeof(X));
