@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.9 1999/10/06 02:30:43 aaron Exp $
+.\"	$OpenBSD: err.3,v 1.10 2000/06/29 16:13:59 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,7 @@ information string and exit:
 if ((p = malloc(size)) == NULL)
 	err(1, NULL);
 if ((fd = open(file_name, O_RDONLY, 0)) == -1)
-	err(1, file_name);
+	err(1, "%s", file_name);
 .Ed
 .Pp
 Display an error message and exit:
