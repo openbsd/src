@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.64 2004/04/02 19:08:58 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.65 2004/05/23 19:37:24 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -184,10 +184,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	/* Allocate new proc. */
 	p2 = pool_get(&proc_pool, PR_WAITOK);
 
-	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_exitsig = exitsig;
-	p2->p_forw = p2->p_back = NULL;
-
 	/*
 	 * Make a proc table entry for the new process.
 	 * Start by zeroing the section of proc that is zero-initialized,
@@ -197,6 +193,8 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
 	bcopy(&p1->p_startcopy, &p2->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+	p2->p_stat = SIDL;			/* protect against others */
+	p2->p_exitsig = exitsig;
 
 	/*
 	 * Initialize the timeouts.
@@ -371,8 +369,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * Return child pid to parent process,
 	 * marking us as parent via retval[1].
 	 */
-	retval[0] = p2->p_pid;
-	retval[1] = 0;
+	if (retval != NULL) {
+		retval[0] = p2->p_pid;
+		retval[1] = 0;
+	}
 	return (0);
 }
 

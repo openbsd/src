@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.106 2004/04/19 22:52:33 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.107 2004/05/23 19:37:24 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -525,7 +525,6 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int err;
 	int cpuspeed;
 	static int perflevel = 100;
-	int operflevel;
 
 	/* all sysctl names at this level except sensors are terminal */
 	if (name[0] != HW_SENSORS && namelen != 1)
@@ -577,17 +576,17 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_SETPERF:
 		if (!cpu_setperf)
 			return (EOPNOTSUPP);
-		operflevel = perflevel;
 		err = sysctl_int(oldp, oldlenp, newp, newlen, &perflevel);
 		if (err)
 			return err;
-		if (perflevel == operflevel)
-			return (0);
 		if (perflevel > 100)
 			perflevel = 100;
 		if (perflevel < 0)
 			perflevel = 0;
-		return (cpu_setperf(perflevel));
+		if (newp)
+			return (cpu_setperf(perflevel));
+		else
+			return (0);
 	default:
 		return (EOPNOTSUPP);
 	}

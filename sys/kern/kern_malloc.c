@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.56 2003/12/28 16:35:46 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.57 2004/05/23 19:37:24 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
+#include <ddb/db_output.h>
 
 static struct vm_map_intrsafe kmem_map_store;
 struct vm_map *kmem_map = NULL;
