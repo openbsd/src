@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.123 2004/07/28 17:15:12 tholo Exp $
+.\"	$OpenBSD: sysctl.8,v 1.124 2005/03/29 20:18:40 uwe Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -333,9 +333,9 @@ privilege can change the value.
 .It machdep.unaligned_print	integer	yes (alpha only)
 .It machdep.unaligned_fix	integer	yes (alpha only)
 .It machdep.unaligned_sigbus	integer	yes (alpha only)
-.It machdep.apmwarn	integer	yes (i386 only)
+.It machdep.apmwarn	integer	yes (i386/zaurus)
 .It machdep.apmhalt	integer	yes (i386 only)
-.It machdep.kbdreset	integer	yes (i386 only)
+.It machdep.kbdreset	integer	yes (i386/zaurus)
 .It machdep.userldt	integer	yes (i386 only)
 .It machdep.osxsfr	integer	no (i386 only)
 .It machdep.sse	integer	no (i386 only)
