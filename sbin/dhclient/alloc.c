@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.4 2004/02/07 11:35:59 henning Exp $	*/
 
 /* Memory allocation... */
 
@@ -52,7 +52,7 @@ dmalloc(int size, char *name)
 
 	if (!foo)
 		warn("No memory for %s.", name);
-	return foo;
+	return (foo);
 }
 
 void
@@ -70,8 +70,8 @@ new_packet(char *name)
 {
 	struct packet *rval;
 
-	rval = (struct packet *)dmalloc(sizeof(struct packet), name);
-	return rval;
+	rval = dmalloc(sizeof(struct packet), name);
+	return (rval);
 }
 
 struct dhcp_packet *
@@ -79,9 +79,8 @@ new_dhcp_packet(char *name)
 {
 	struct dhcp_packet *rval;
 
-	rval = (struct dhcp_packet *)dmalloc(sizeof(struct dhcp_packet),
-	    name);
-	return rval;
+	rval = dmalloc(sizeof(struct dhcp_packet), name);
+	return (rval);
 }
 
 struct tree *
@@ -89,7 +88,7 @@ new_tree(char *name)
 {
 	struct tree *rval = dmalloc(sizeof(struct tree), name);
 
-	return rval;
+	return (rval);
 }
 
 struct string_list *
@@ -100,7 +99,7 @@ new_string_list(size_t size, char * name)
 	rval = dmalloc(sizeof(struct string_list) + size, name);
 	if (rval != NULL)
 		rval->string = ((char *)rval) + sizeof(struct string_list);
-	return rval;
+	return (rval);
 }
 
 struct tree_cache *free_tree_caches;
@@ -118,7 +117,7 @@ new_tree_cache(char *name)
 		if (!rval)
 			error("unable to allocate tree cache for %s.", name);
 	}
-	return rval;
+	return (rval);
 }
 
 struct hash_table *
@@ -126,13 +125,13 @@ new_hash_table(int count, char *name)
 {
 	struct hash_table *rval;
 
-	rval = dmalloc(sizeof (struct hash_table) -
+	rval = dmalloc(sizeof(struct hash_table) -
 	    (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *)) +
 	    (count * sizeof(struct hash_bucket *)), name);
 	if (rval == NULL)
-		return NULL;
+		return (NULL);
 	rval->hash_count = count;
-	return rval;
+	return (rval);
 }
 
 struct hash_bucket *
@@ -140,7 +139,7 @@ new_hash_bucket(char *name)
 {
 	struct hash_bucket *rval = dmalloc(sizeof(struct hash_bucket), name);
 
-	return rval;
+	return (rval);
 }
 
 struct lease *
@@ -148,7 +147,7 @@ new_leases(int n, char *name)
 {
 	struct lease *rval = dmalloc(n * sizeof(struct lease), name);
 
-	return rval;
+	return (rval);
 }
 
 struct lease *
@@ -156,7 +155,7 @@ new_lease(char *name)
 {
 	struct lease *rval = dmalloc(sizeof(struct lease), name);
 
-	return rval;
+	return (rval);
 }
 
 struct subnet *
@@ -164,7 +163,7 @@ new_subnet(char *name)
 {
 	struct subnet *rval = dmalloc(sizeof(struct subnet), name);
 
-	return rval;
+	return (rval);
 }
 
 struct class *
@@ -172,7 +171,7 @@ new_class(char *name)
 {
 	struct class *rval = dmalloc(sizeof(struct class), name);
 
-	return rval;
+	return (rval);
 }
 
 struct shared_network *
@@ -181,16 +180,15 @@ new_shared_network(char *name)
 	struct shared_network *rval =
 	    dmalloc(sizeof(struct shared_network), name);
 
-	return rval;
+	return (rval);
 }
 
 struct group *
 new_group(char *name)
 {
-	struct group *rval =
-	    dmalloc(sizeof(struct group), name);
+	struct group *rval = dmalloc(sizeof(struct group), name);
 
-	return rval;
+	return (rval);
 }
 
 struct protocol *
@@ -198,7 +196,7 @@ new_protocol(char *name)
 {
 	struct protocol *rval = dmalloc(sizeof(struct protocol), name);
 
-	return rval;
+	return (rval);
 }
 
 struct lease_state *free_lease_states;
@@ -213,26 +211,26 @@ new_lease_state(char *name)
 		free_lease_states =
 		    (struct lease_state *)(free_lease_states->next);
 	} else
-		rval = dmalloc(sizeof (struct lease_state), name);
-	return rval;
+		rval = dmalloc(sizeof(struct lease_state), name);
+	return (rval);
 }
 
 struct domain_search_list *
 new_domain_search_list(char *name)
 {
 	struct domain_search_list *rval =
-	    dmalloc(sizeof (struct domain_search_list), name);
+	    dmalloc(sizeof(struct domain_search_list), name);
 
-	return rval;
+	return (rval);
 }
 
 struct name_server *
 new_name_server(char *name)
 {
 	struct name_server *rval =
-	    dmalloc(sizeof (struct name_server), name);
+	    dmalloc(sizeof(struct name_server), name);
 
-	return rval;
+	return (rval);
 }
 
 void

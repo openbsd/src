@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.5 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.6 2004/02/07 11:35:59 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -47,11 +47,12 @@ struct client_config top_level_config;
 
 char client_script_name[] = "/sbin/dhclient-script";
 
-/* client-conf-file :== client-declarations EOF
-   client-declarations :== <nil>
-			 | client-declaration
-			 | client-declarations client-declaration */
-
+/*
+ * client-conf-file :== client-declarations EOF
+ * client-declarations :== <nil>
+ *			 | client-declaration
+ *			 | client-declarations client-declaration
+ */
 int
 read_client_conf(void)
 {
@@ -67,7 +68,7 @@ read_client_conf(void)
 	initialize_universes();
 
 	/* Initialize the top level client configuration. */
-	memset(&top_level_config, 0, sizeof top_level_config);
+	memset(&top_level_config, 0, sizeof(top_level_config));
 
 	/* Set some defaults... */
 	top_level_config.timeout = 60;
@@ -105,15 +106,17 @@ read_client_conf(void)
 		fclose(cfile);
 	}
 
-	/* Set up state and config structures for clients that don't
-	   have per-interface configuration declarations. */
+	/*
+	 * Set up state and config structures for clients that don't
+	 * have per-interface configuration declarations.
+	 */
 	config = NULL;
 	for (ip = interfaces; ip; ip = ip->next) {
 		if (!ip->client) {
 			ip->client = malloc(sizeof(struct client_state));
 			if (!ip->client)
 				error("no memory for client state.");
-			memset(ip->client, 0, sizeof *(ip->client));
+			memset(ip->client, 0, sizeof(*(ip->client)));
 		}
 		if (!ip->client->config) {
 			if (!config) {
@@ -130,10 +133,11 @@ read_client_conf(void)
 	return (!warnings_occurred);
 }
 
-/* lease-file :== client-lease-statements EOF
-   client-lease-statements :== <nil>
-		     | client-lease-statements LEASE client-lease-statement */
-
+/*
+ * lease-file :== client-lease-statements EOF
+ * client-lease-statements :== <nil>
+ *		     | client-lease-statements LEASE client-lease-statement
+ */
 void
 read_client_leases(void)
 {
@@ -161,24 +165,25 @@ read_client_leases(void)
 	} while (1);
 }
 
-/* client-declaration :== 
-	SEND option-decl |
-	DEFAULT option-decl |
-	SUPERSEDE option-decl |
-	PREPEND option-decl |
-	APPEND option-decl |
-	hardware-declaration |
-	REQUEST option-list |
-	REQUIRE option-list |
-	TIMEOUT number |
-	RETRY number |
-	REBOOT number |
-	SELECT_TIMEOUT number |
-	SCRIPT string |
-	interface-declaration |
-	LEASE client-lease-statement |
-	ALIAS client-lease-statement */
-
+/*
+ * client-declaration :==
+ *	SEND option-decl |
+ *	DEFAULT option-decl |
+ *	SUPERSEDE option-decl |
+ *	PREPEND option-decl |
+ *	APPEND option-decl |
+ *	hardware-declaration |
+ *	REQUEST option-list |
+ *	REQUIRE option-list |
+ *	TIMEOUT number |
+ *	RETRY number |
+ *	REBOOT number |
+ *	SELECT_TIMEOUT number |
+ *	SCRIPT string |
+ *	interface-declaration |
+ *	LEASE client-lease-statement |
+ *	ALIAS client-lease-statement
+ */
 void
 parse_client_statement(FILE *cfile, struct interface_info *ip,
     struct client_config *config)
@@ -212,7 +217,6 @@ parse_client_statement(FILE *cfile, struct interface_info *ip,
 		if (option)
 			config->default_actions[option->code] = ACTION_PREPEND;
 		return;
-
 	case MEDIA:
 		parse_string_list(cfile, &config->media, 1);
 		return;
@@ -304,7 +308,7 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 				skip_to_semi(cfile);
 				return (0);
 			}
-			token = peek_token (&val, cfile);
+			token = peek_token(&val, cfile);
 			if (token == COLON)
 				token = next_token(&val, cfile);
 		} while (token == COLON);
@@ -326,9 +330,10 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 	return (len);
 }
 
-/* option-list :== option_name |
-   		   option_list COMMA option_name */
-
+/*
+ * option-list :== option_name |
+ *		   option_list COMMA option_name
+ */
 int
 parse_option_list(FILE *cfile, u_int8_t *list)
 {
@@ -369,9 +374,10 @@ parse_option_list(FILE *cfile, u_int8_t *list)
 	return (ix);
 }
 
-/* interface-declaration :==
-   	INTERFACE string LBRACE client-declarations RBRACE */
-
+/*
+ * interface-declaration :==
+ *	INTERFACE string LBRACE client-declarations RBRACE
+ */
 void
 parse_interface_declaration(FILE *cfile, struct client_config *outer_config)
 {
@@ -424,23 +430,25 @@ interface_or_dummy(char *name)
 
 	/* Find the interface (if any) that matches the name. */
 	for (ip = interfaces; ip; ip = ip->next)
-		if (!strcmp (ip->name, name))
+		if (!strcmp(ip->name, name))
 			break;
 
 	/* If it's not a real interface, see if it's on the dummy list. */
 	if (!ip)
 		for (ip = dummy_interfaces; ip; ip = ip->next)
-			if (!strcmp (ip->name, name))
+			if (!strcmp(ip->name, name))
 				break;
 
-	/* If we didn't find an interface, make a dummy interface as
-	   a placeholder. */
+	/*
+	 * If we didn't find an interface, make a dummy interface as a
+	 * placeholder.
+	 */
 	if (!ip) {
-		ip = malloc(sizeof *ip);
+		ip = malloc(sizeof(*ip));
 		if (!ip)
 			error("Insufficient memory to record interface %s",
 			    name);
-		memset(ip, 0, sizeof *ip);
+		memset(ip, 0, sizeof(*ip));
 		strlcpy(ip->name, name, IFNAMSIZ);
 		ip->next = dummy_interfaces;
 		dummy_interfaces = ip;
@@ -451,10 +459,10 @@ interface_or_dummy(char *name)
 void
 make_client_state(struct interface_info *ip)
 {
-	ip->client = malloc(sizeof *(ip->client));
+	ip->client = malloc(sizeof(*(ip->client)));
 	if (!ip->client)
 		error("no memory for state on %s\n", ip->name);
-	memset(ip->client, 0, sizeof *(ip->client));
+	memset(ip->client, 0, sizeof(*(ip->client)));
 }
 
 void
@@ -463,19 +471,19 @@ make_client_config(struct interface_info *ip, struct client_config *config)
 	ip->client->config = malloc(sizeof(struct client_config));
 	if (!ip->client->config)
 		error("no memory for config for %s\n", ip->name);
-	memset(ip->client->config, 0, sizeof *(ip->client->config));
-	memcpy(ip->client->config, config, sizeof *config);
+	memset(ip->client->config, 0, sizeof(*(ip->client->config)));
+	memcpy(ip->client->config, config, sizeof(*config));
 }
 
-/* client-lease-statement :==
-	RBRACE client-lease-declarations LBRACE
-
-	client-lease-declarations :==
-		<nil> |
-		client-lease-declaration |
-		client-lease-declarations client-lease-declaration */
-
-
+/*
+ * client-lease-statement :==
+ *	RBRACE client-lease-declarations LBRACE
+ *
+ *	client-lease-declarations :==
+ *		<nil> |
+ *		client-lease-declaration |
+ *		client-lease-declarations client-lease-declaration
+ */
 void
 parse_client_lease_statement(FILE *cfile, int is_static)
 {
@@ -494,7 +502,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	lease = malloc(sizeof(struct client_lease));
 	if (!lease)
 		error("no memory for lease.\n");
-	memset(lease, 0, sizeof *lease);
+	memset(lease, 0, sizeof(*lease));
 	lease->is_static = is_static;
 
 	ip = NULL;
@@ -512,7 +520,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	token = next_token(&val, cfile);
 
 	/* If the lease declaration didn't include an interface
-	   declaration that we recognized, it's of no use to us. */
+	 * declaration that we recognized, it's of no use to us.
+	 */
 	if (!ip) {
 		free_client_lease(lease);
 		return;
@@ -528,10 +537,12 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		return;
 	}
 
-	/* The new lease may supersede a lease that's not the
-	   active lease but is still on the lease list, so scan the
-	   lease list looking for a lease with the same address, and
-	   if we find it, toss it. */
+	/*
+	 * The new lease may supersede a lease that's not the active
+	 * lease but is still on the lease list, so scan the lease list
+	 * looking for a lease with the same address, and if we find it,
+	 * toss it.
+	 */
 	pl = NULL;
 	for (lp = ip->client->leases; lp; lp = lp->next) {
 		if (lp->address.len == lease->address.len &&
@@ -546,25 +557,30 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		}
 	}
 
-	/* If this is a preloaded lease, just put it on the list of recorded
-	   leases - don't make it the active lease. */
+	/*
+	 * If this is a preloaded lease, just put it on the list of
+	 * recorded leases - don't make it the active lease.
+	 */
 	if (is_static) {
 		lease->next = ip->client->leases;
 		ip->client->leases = lease;
 		return;
 	}
 
-	/* The last lease in the lease file on a particular interface is
-	   the active lease for that interface.    Of course, we don't know
-	   what the last lease in the file is until we've parsed the whole
-	   file, so at this point, we assume that the lease we just parsed
-	   is the active lease for its interface.   If there's already
-	   an active lease for the interface, and this lease is for the same
-	   ip address, then we just toss the old active lease and replace
-	   it with this one.   If this lease is for a different address,
-	   then if the old active lease has expired, we dump it; if not,
-	   we put it on the list of leases for this interface which are
-	   still valid but no longer active. */
+	/*
+	 * The last lease in the lease file on a particular interface is
+	 * the active lease for that interface.    Of course, we don't
+	 * know what the last lease in the file is until we've parsed
+	 * the whole file, so at this point, we assume that the lease we
+	 * just parsed is the active lease for its interface.   If
+	 * there's already an active lease for the interface, and this
+	 * lease is for the same ip address, then we just toss the old
+	 * active lease and replace it with this one.   If this lease is
+	 * for a different address, then if the old active lease has
+	 * expired, we dump it; if not, we put it on the list of leases
+	 * for this interface which are still valid but no longer
+	 * active.
+	 */
 	if (ip->client->active) {
 		if (ip->client->active->expiry < cur_time)
 			free_client_lease(ip->client->active);
@@ -580,20 +596,21 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	}
 	ip->client->active = lease;
 
-	/* phew. */
+	/* Phew. */
 }
 
-/* client-lease-declaration :==
-	BOOTP |
-	INTERFACE string |
-	FIXED_ADDR ip_address |
-	FILENAME string |
-	SERVER_NAME string |
-	OPTION option-decl |
-	RENEW time-decl |
-	REBIND time-decl |
-	EXPIRE time-decl */
-
+/*
+ * client-lease-declaration :==
+ *	BOOTP |
+ *	INTERFACE string |
+ *	FIXED_ADDR ip_address |
+ *	FILENAME string |
+ *	SERVER_NAME string |
+ *	OPTION option-decl |
+ *	RENEW time-decl |
+ *	REBIND time-decl |
+ *	EXPIRE time-decl
+ */
 void
 parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
     struct interface_info **ipp)
@@ -602,7 +619,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	char			*val;
 	struct interface_info	*ip;
 
-	switch (next_token (&val, cfile)) {
+	switch (next_token(&val, cfile)) {
 	case BOOTP:
 		lease->is_bootp = 1;
 		break;
@@ -680,14 +697,14 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	if (asprintf(&vendor, "%s", val) == -1)
 		error("no memory for vendor information.");
 
-	token = peek_token (&val, cfile);
+	token = peek_token(&val, cfile);
 	if (token == DOT) {
 		/* Go ahead and take the DOT token... */
 		token = next_token(&val, cfile);
 
 		/* The next token should be an identifier... */
 		token = next_token(&val, cfile);
-		if (!is_identifier (token)) {
+		if (!is_identifier(token)) {
 			parse_warn("expecting identifier after '.'");
 			if (token != SEMI)
 				skip_to_semi(cfile);
@@ -738,7 +755,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			switch (*fmt) {
 			case 'X':
 				len = parse_X(cfile, &hunkbuf[hunkix],
-				    sizeof hunkbuf - hunkix);
+				    sizeof(hunkbuf) - hunkix);
 				hunkix += len;
 				break;
 			case 't': /* Text string... */
@@ -749,7 +766,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 					return (NULL);
 				}
 				len = strlen(val);
-				if (hunkix + len + 1 > sizeof hunkbuf) {
+				if (hunkix + len + 1 > sizeof(hunkbuf)) {
 					parse_warn("option data buffer %s",
 					    "overflow");
 					skip_to_semi(cfile);
@@ -760,12 +777,12 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				hunkix += len;
 				break;
 			case 'I': /* IP address. */
-				if (!parse_ip_addr (cfile, &ip_addr))
+				if (!parse_ip_addr(cfile, &ip_addr))
 					return (NULL);
 				len = ip_addr.len;
 				dp = ip_addr.iabuf;
 alloc:
-				if (hunkix + len > sizeof hunkbuf) {
+				if (hunkix + len > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
@@ -819,7 +836,7 @@ bad_flag:
 				    !strcasecmp(val, "on"))
 					buf[0] = 1;
 				else if (!strcasecmp(val, "false") ||
-				    !strcasecmp (val, "off"))
+				    !strcasecmp(val, "off"))
 					buf[0] = 0;
 				else {
 					parse_warn("expecting boolean.");
@@ -905,7 +922,7 @@ parse_reject_statement(FILE *cfile, struct client_config *config)
 	struct iaddrlist	*list;
 
 	do {
-		if (!parse_ip_addr (cfile, &addr)) {
+		if (!parse_ip_addr(cfile, &addr)) {
 			parse_warn("expecting IP address.");
 			skip_to_semi(cfile);
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.4 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.5 2004/02/07 11:35:59 henning Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -40,9 +40,10 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <ctype.h>
+
 #include "dhcpd.h"
 #include "dhctoken.h"
-#include <ctype.h>
 
 int lexline;
 int lexchar;
@@ -86,7 +87,7 @@ new_parse(char *name)
 static int
 get_char(FILE *cfile)
 {
-	int	c = getc (cfile);
+	int c = getc(cfile);
 	if (!ugflag) {
 		if (c == EOL) {
 			if (cur_line == line1) {
@@ -108,7 +109,7 @@ get_char(FILE *cfile)
 		}
 	} else
 		ugflag = 0;
-	return c;
+	return (c);
 }
 
 static int
@@ -123,7 +124,7 @@ get_token(FILE *cfile)
 		p = lpos;
 		u = ugflag;
 
-		c = get_char (cfile);
+		c = get_char(cfile);
 
 		if (!(c == '\n' && eol_token) && isascii(c) && isspace(c))
 			continue;
@@ -157,7 +158,7 @@ get_token(FILE *cfile)
 			break;
 		}
 	} while (1);
-	return ttok;
+	return (ttok);
 }
 
 int
@@ -241,11 +242,13 @@ read_string(FILE *cfile)
 		else
 			tokbuf[i] = c;
 	}
-	/* Normally, I'd feel guilty about this, but we're talking about
-	   strings that'll fit in a DHCP packet here... */
+	/*
+	 * Normally, I'd feel guilty about this, but we're talking about
+	 * strings that'll fit in a DHCP packet here...
+	 */
 	if (i == sizeof(tokbuf)) {
 		parse_warn("string constant larger than internal buffer");
-		--i;
+		i--;
 	}
 	tokbuf[i] = 0;
 	tval = tokbuf;
@@ -271,7 +274,7 @@ read_number(int c, FILE *cfile)
 	}
 	if (i == sizeof(tokbuf)) {
 		parse_warn("numeric token larger than internal buffer");
-		--i;
+		i--;
 	}
 	tokbuf[i] = 0;
 	tval = tokbuf;
@@ -299,7 +302,7 @@ read_num_or_name(int c, FILE *cfile)
 	}
 	if (i == sizeof(tokbuf)) {
 		parse_warn("token larger than internal buffer");
-		--i;
+		i--;
 	}
 	tokbuf[i] = 0;
 	tval = tokbuf;
@@ -311,7 +314,7 @@ static int
 intern(char *atom, int dfv)
 {
 	if (!isascii(atom[0]))
-		return dfv;
+		return (dfv);
 
 	switch (tolower(atom[0])) {
 	case 'a':
@@ -414,7 +417,7 @@ intern(char *atom, int dfv)
 	case 'm':
 		if (!strcasecmp(atom + 1, "ax-lease-time"))
 			return (MAX_LEASE_TIME);
-		if (!strncasecmp (atom + 1, "edi", 3)) {
+		if (!strncasecmp(atom + 1, "edi", 3)) {
 			if (!strcasecmp(atom + 4, "a"))
 				return (MEDIA);
 			if (!strcasecmp(atom + 4, "um"))
@@ -495,7 +498,7 @@ intern(char *atom, int dfv)
 			return (TOKEN_RING);
 		break;
 	case 'u':
-		if (!strncasecmp (atom + 1, "se", 2)) {
+		if (!strncasecmp(atom + 1, "se", 2)) {
 			if (!strcasecmp(atom + 3, "r-class"))
 				return (USER_CLASS);
 			if (!strcasecmp(atom + 3, "-host-decl-names"))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.4 2004/02/07 11:35:59 henning Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -43,16 +43,17 @@
 #include "dhcpd.h"
 #include <sys/ioctl.h>
 #include <sys/uio.h>
-#include <net/bpf.h>
 
+#include <net/bpf.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>
 
-/* Reinitializes the specified interface after an address change.   This
-   is not required for packet-filter APIs. */
-
+/*
+ * Reinitializes the specified interface after an address change.   This
+ * is not required for packet-filter APIs.
+ */
 void
 if_reinitialize_send(struct interface_info *info)
 {
@@ -63,10 +64,11 @@ if_reinitialize_receive(struct interface_info *info)
 {
 }
 
-/* Called by get_interface_list for each interface that's discovered.
-   Opens a packet filter for each interface and adds it to the select
-   mask. */
-
+/*
+ * Called by get_interface_list for each interface that's discovered.
+ * Opens a packet filter for each interface and adds it to the select
+ * mask.
+ */
 int
 if_register_bpf(struct interface_info *info)
 {
@@ -103,9 +105,10 @@ if_register_bpf(struct interface_info *info)
 void
 if_register_send(struct interface_info *info)
 {
-	/* If we're using the bpf API for sending and receiving,
-	   we don't need to register this interface twice. */
-
+	/*
+	 * If we're using the bpf API for sending and receiving, we
+	 * don't need to register this interface twice.
+	 */
 	info->wfdesc = info->rfdesc;
 
 	if (!quiet_interface_discovery)
@@ -119,11 +122,13 @@ if_register_send(struct interface_info *info)
 		    info->shared_network->name : ""));
 }
 
-/* Packet filter program...
-   XXX Changes to the filter program may require changes to the constant
-   offsets used in if_register_send to patch the BPF program! XXX */
-
-struct bpf_insn dhcp_bpf_filter [] = {
+/*
+ * Packet filter program...
+ *
+ * XXX: Changes to the filter program may require changes to the
+ * constant offsets used in if_register_send to patch the BPF program!
+ */
+struct bpf_insn dhcp_bpf_filter[] = {
 	/* Make sure this is an IP packet... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
@@ -152,7 +157,7 @@ struct bpf_insn dhcp_bpf_filter [] = {
 
 int dhcp_bpf_filter_len = sizeof(dhcp_bpf_filter) / sizeof(struct bpf_insn);
 
-struct bpf_insn dhcp_bpf_tr_filter [] = {
+struct bpf_insn dhcp_bpf_tr_filter[] = {
         /* accept all token ring packets due to variable length header */
         /* if we want to get clever, insert the program here */
 
@@ -164,7 +169,7 @@ struct bpf_insn dhcp_bpf_tr_filter [] = {
 };
 
 int dhcp_bpf_tr_filter_len =
-    (sizeof(dhcp_bpf_tr_filter) / sizeof(struct bpf_insn));
+    sizeof(dhcp_bpf_tr_filter) / sizeof(struct bpf_insn);
 
 void
 if_register_receive(struct interface_info *info)
@@ -184,9 +189,11 @@ if_register_receive(struct interface_info *info)
 	    v.bv_minor < BPF_MINOR_VERSION)
 		error("Kernel BPF version out of range - recompile dhcpd!");
 
-	/* Set immediate mode so that reads return as soon as a packet
-	   comes in, rather than waiting for the input buffer to fill with
-	   packets. */
+	/*
+	 * Set immediate mode so that reads return as soon as a packet
+	 * comes in, rather than waiting for the input buffer to fill
+	 * with packets.
+	 */
 	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) < 0)
 		error("Can't set immediate mode on bpf device: %m");
 
@@ -205,9 +212,11 @@ if_register_receive(struct interface_info *info)
 	p.bf_len = dhcp_bpf_filter_len;
 	p.bf_insns = dhcp_bpf_filter;
 
-        /* Patch the server port into the BPF  program...
-	   XXX changes to filter program may require changes
-	   to the insn number(s) used below! XXX */
+	/* Patch the server port into the BPF program...
+	 *
+	 * XXX: changes to filter program may require changes to the
+	 * insn number(s) used below!
+	 */
 	dhcp_bpf_filter[8].k = ntohs(local_port);
 
 	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
@@ -222,7 +231,6 @@ if_register_receive(struct interface_info *info)
 		    (info->shared_network ?
 		    info->shared_network->name : ""));
 }
-
 
 ssize_t
 send_packet(struct interface_info *interface, struct packet *packet,
@@ -252,7 +260,7 @@ send_packet(struct interface_info *interface, struct packet *packet,
 	result = writev(interface->wfdesc, iov, 2);
 	if (result < 0)
 		warn("send_packet: %m");
-	return result;
+	return (result);
 }
 
 ssize_t
@@ -263,14 +271,16 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 	int		offset = 0;
 	struct bpf_hdr	hdr;
 
-	/* All this complexity is because BPF doesn't guarantee
-	   that only one packet will be returned at a time.   We're
-	   getting what we deserve, though - this is a terrible abuse
-	   of the BPF interface. Sigh. */
+	/*
+	 * All this complexity is because BPF doesn't guarantee that
+	 * only one packet will be returned at a time.  We're getting
+	 * what we deserve, though - this is a terrible abuse of the BPF
+	 * interface.  Sigh.
+	 */
 
 	/* Process packets until we get one we can return or until we've
-	   done a read and gotten nothing we can return... */
-
+	 * done a read and gotten nothing we can return...
+	 */
 	do {
 		/* If the buffer is empty, fill it. */
 		if (interface->rbuf_offset == interface->rbuf_len) {
@@ -282,28 +292,36 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 			interface->rbuf_len = length;
 		}
 
-		/* If there isn't room for a whole bpf header, something went
-		   wrong, but we'll ignore it and hope it goes away... XXX */
-		if (interface->rbuf_len - interface->rbuf_offset < sizeof hdr) {
+		/*
+		 * If there isn't room for a whole bpf header, something
+		 * went wrong, but we'll ignore it and hope it goes
+		 * away... XXX
+		 */
+		if (interface->rbuf_len - interface->rbuf_offset <
+		    sizeof(hdr)) {
 			interface->rbuf_offset = interface->rbuf_len;
 			continue;
 		}
 
 		/* Copy out a bpf header... */
-		memcpy(&hdr, &interface->rbuf [interface->rbuf_offset],
+		memcpy(&hdr, &interface->rbuf[interface->rbuf_offset],
 		    sizeof(hdr));
 
-		/* If the bpf header plus data doesn't fit in what's left
-		   of the buffer, stick head in sand yet again... */
+		/*
+		 * If the bpf header plus data doesn't fit in what's
+		 * left of the buffer, stick head in sand yet again...
+		 */
 		if (interface->rbuf_offset + hdr.bh_hdrlen + hdr.bh_caplen >
 		    interface->rbuf_len) {
 			interface->rbuf_offset = interface->rbuf_len;
 			continue;
 		}
 
-		/* If the captured data wasn't the whole packet, or if
-		   the packet won't fit in the input buffer, all we
-		   can do is drop it. */
+		/*
+		 * If the captured data wasn't the whole packet, or if
+		 * the packet won't fit in the input buffer, all we can
+		 * do is drop it.
+		 */
 		if (hdr.bh_caplen != hdr.bh_datalen) {
 			interface->rbuf_offset += hdr.bh_hdrlen = hdr.bh_caplen;
 			continue;
@@ -313,12 +331,14 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		interface->rbuf_offset += hdr.bh_hdrlen;
 
 		/* Decode the physical header... */
-		offset = decode_hw_header (interface,
+		offset = decode_hw_header(interface,
 		    interface->rbuf, interface->rbuf_offset, hfrom);
 
-		/* If a physical layer checksum failed (dunno of any
-		   physical layer that supports this, but WTH), skip this
-		   packet. */
+		/*
+		 * If a physical layer checksum failed (dunno of any
+		 * physical layer that supports this, but WTH), skip
+		 * this packet.
+		 */
 		if (offset < 0) {
 			interface->rbuf_offset += hdr.bh_caplen;
 			continue;
@@ -327,7 +347,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		hdr.bh_caplen -= offset;
 
 		/* Decode the IP and UDP headers... */
-		offset = decode_udp_ip_header (interface, interface->rbuf,
+		offset = decode_udp_ip_header(interface, interface->rbuf,
 		    interface->rbuf_offset, from, NULL, hdr.bh_caplen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
@@ -338,9 +358,11 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		interface->rbuf_offset += offset;
 		hdr.bh_caplen -= offset;
 
-		/* If there's not enough room to stash the packet data,
-		   we have to skip it (this shouldn't happen in real
-		   life, though). */
+		/*
+		 * If there's not enough room to stash the packet data,
+		 * we have to skip it (this shouldn't happen in real
+		 * life, though).
+		 */
 		if (hdr.bh_caplen > len) {
 			interface->rbuf_offset += hdr.bh_caplen;
 			continue;
@@ -350,7 +372,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		memcpy(buf, interface->rbuf + interface->rbuf_offset,
 			hdr.bh_caplen);
 		interface->rbuf_offset += hdr.bh_caplen;
-		return hdr.bh_caplen;
+		return (hdr.bh_caplen);
 	} while (!length);
 	return (0);
 }

@@ -1,7 +1,9 @@
-/*	$OpenBSD: convert.c,v 1.4 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: convert.c,v 1.5 2004/02/07 11:35:59 henning Exp $	*/
 
-/* Safe copying of option values into and out of the option buffer, which
-   can't be assumed to be aligned. */
+/*
+ * Safe copying of option values into and out of the option buffer,
+ * which can't be assumed to be aligned.
+ */
 
 /*
  * Copyright (c) 1995, 1996 The Internet Software Consortium.
@@ -46,7 +48,7 @@
 u_int32_t
 getULong(unsigned char *buf)
 {
-	u_int32_t	ibuf;
+	u_int32_t ibuf;
 
 	memcpy(&ibuf, buf, sizeof(ibuf));
 	return (ntohl(ibuf));
@@ -55,7 +57,7 @@ getULong(unsigned char *buf)
 int32_t
 getLong(unsigned char *(buf))
 {
-	int32_t	ibuf;
+	int32_t ibuf;
 
 	memcpy(&ibuf, buf, sizeof(ibuf));
 	return (ntohl(ibuf));
@@ -64,7 +66,7 @@ getLong(unsigned char *(buf))
 u_int16_t
 getUShort(unsigned char *buf)
 {
-	u_int16_t	ibuf;
+	u_int16_t ibuf;
 
 	memcpy(&ibuf, buf, sizeof(ibuf));
 	return (ntohs(ibuf));
@@ -73,25 +75,24 @@ getUShort(unsigned char *buf)
 int16_t
 getShort(unsigned char *buf)
 {
-	int16_t	ibuf;
+	int16_t ibuf;
 
 	memcpy(&ibuf, buf, sizeof(ibuf));
-
 	return (ntohs(ibuf));
 }
 
 void
 putULong(unsigned char *obuf, u_int32_t val)
 {
-	u_int32_t	tmp = htonl(val);
+	u_int32_t tmp = htonl(val);
 
-	memcpy(obuf, &tmp, sizeof tmp);
+	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
 void
 putLong(unsigned char *obuf, int32_t val)
 {
-	int32_t	tmp = htonl(val);
+	int32_t tmp = htonl(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
@@ -99,7 +100,7 @@ putLong(unsigned char *obuf, int32_t val)
 void
 putUShort(unsigned char *obuf, unsigned int val)
 {
-	u_int16_t	tmp = htons(val);
+	u_int16_t tmp = htons(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
@@ -107,8 +108,7 @@ putUShort(unsigned char *obuf, unsigned int val)
 void
 putShort(unsigned char *obuf, int val)
 {
-	int16_t	tmp = htons(val);
+	int16_t tmp = htons(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
-
