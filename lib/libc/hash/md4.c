@@ -1,4 +1,4 @@
-/*	$OpenBSD: md4.c,v 1.1 2004/04/28 16:54:00 millert Exp $	*/
+/*	$OpenBSD: md4.c,v 1.2 2004/04/28 20:24:59 millert Exp $	*/
 
 /*
  * This code implements the MD4 message-digest algorithm.
@@ -19,7 +19,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: md4.c,v 1.1 2004/04/28 16:54:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: md4.c,v 1.2 2004/04/28 20:24:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -182,7 +182,7 @@ MD4Final(unsigned char digest[MD4_DIGEST_LENGTH], MD4_CTX *ctx)
 	MD4Transform(ctx->state, ctx->buffer);
 	htole32_4(ctx->state);
 	memcpy(digest, ctx->state, MD4_DIGEST_LENGTH);
-	memset(ctx, 0, sizeof(ctx));        /* In case it's sensitive */
+	memset(ctx, 0, sizeof(*ctx));	/* in case it's sensitive */
 }
 
 
