@@ -1,5 +1,5 @@
-.\"	$OpenBSD: xargs.1,v 1.11 2003/06/03 02:56:24 millert Exp $
-.\"	$NetBSD: xargs.1,v 1.6 1994/11/14 06:51:40 jtc Exp $
+.\"	$OpenBSD: xargs.1,v 1.12 2003/06/12 01:09:23 millert Exp $
+.\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,32 +34,39 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd May 7, 2001
 .Dt XARGS 1
 .Os
 .Sh NAME
 .Nm xargs
 .Nd "construct argument list(s) and execute utility"
 .Sh SYNOPSIS
-.Nm xargs
-.Op Fl 0
-.Op Fl t
-.Oo Op Fl x
-.Fl n Ar number
+.Nm
+.Op Fl 0opt
+.Op Fl E Ar eofstr
+.Oo
+.Fl I Ar replstr
+.Op Fl R Ar replacements
 .Oc
+.Op Fl J Ar replstr
+.Op Fl L Ar number
+.Oo
+.Fl n Ar number
+.Op Fl x
+.Oc
+.Op Fl P Ar maxjobs
 .Op Fl s Ar size
-.Op Ar utility Op Ar arguments ...
+.Op Ar utility Op Ar argument ...
 .Sh DESCRIPTION
 The
 .Nm
-utility reads space, tab, newline, and end-of-file delimited arguments
+utility reads space, tab, newline, and end-of-file delimited strings
 from the standard input and executes the specified
 .Ar utility
-with them as
+with the strings as
 arguments.
 .Pp
-The utility and any arguments specified on the command line are given
-to the
+Any arguments specified on the command line are given to the
 .Ar utility
 upon each invocation, followed by some number of the arguments read
 from standard input.
@@ -82,7 +89,7 @@ Any single character, including newlines, may be escaped by a backslash.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 0
-Changes
+Change
 .Nm
 to expect NUL
 .Pq Ql \e0
@@ -91,9 +98,84 @@ This is expected to be used in concert with the
 .Fl print0
 function in
 .Xr find 1 .
+.It Fl E Ar eofstr
+Use
+.Ar eofstr
+as a logical EOF marker.
+.It Fl I Ar replstr
+Execute
+.Ar utility
+for each input line, replacing one or more occurrences of
+.Ar replstr
+in up to
+.Ar replacements
+(or 5 if no
+.Fl R
+flag is specified) arguments to
+.Ar utility
+with the entire line of input.
+The resulting arguments, after replacement is done, will not be allowed to grow
+beyond 255 bytes; this is implemented by concatenating as much of the argument
+containing
+.Ar replstr
+as possible, to the constructed arguments to
+.Ar utility ,
+up to 255 bytes.
+The 255 byte limit does not apply to arguments to
+.Ar utility
+which do not contain
+.Ar replstr ,
+and furthermore, no replacement will be done on
+.Ar utility
+itself.
+Implies
+.Fl x .
+.It Fl J Ar replstr
+If this option is specified,
+.Nm
+will use the data read from standard input to replace the first occurrence of
+.Ar replstr
+instead of appending that data after all other arguments.
+This option will not effect how many arguments will be read from input
+.Pq Fl n ,
+or the size of the command(s)
+.Nm
+will generate
+.Pq Fl s .
+The option just moves where those arguments will be placed in the command(s)
+that are executed.
+The
+.Ar replstr
+must show up as a distinct
+.Ar argument
+to
+.Nm xargs .
+It will not be recognized if, for instance, it is in the middle of a
+quoted string.
+Furthermore, only the first occurrence of the
+.Ar replstr
+will be replaced.
+For example, the following command will copy the list of files and
+directories which start with an uppercase letter in the current
+directory to
+.Pa destdir :
+.Pp
+.Dl /bin/ls -1d [A-Z]* | xargs -J % cp -rp % destdir
+.It Fl L Ar number
+Call
+.Ar utility
+for every
+.Ar number
+of lines read.
+If EOF is reached and fewer than
+.Ar number
+lines have been read then
+.Ar utility
+will be called with the available lines.
 .It Fl n Ar number
 Set the maximum number of arguments taken from standard input for each
-invocation of the utility.
+invocation of
+.Ar utility .
 An invocation of
 .Ar utility
 will use less than
@@ -109,12 +191,44 @@ arguments remaining for the last invocation of
 The current default value for
 .Ar number
 is 5000.
-.It Fl s Ar size
-Set the maximum number of bytes for the command-line length provided to
-.Ar utility .
-The sum of the length of the utility name and the arguments passed to
+.It Fl o
+Reopen stdin as
+.Pa /dev/tty
+in the child process before executing the command.
+This is useful if you want
+.Nm
+to run an interactive application.
+.It Fl P Ar maxprocs
+Parallel mode: run at most
+.Ar maxprocs
+invocations of
 .Ar utility
-(including null terminators) will be less than or equal to this number.
+at once.
+.It Fl p
+Echo each command to be executed and ask the user whether it should be
+executed.
+An affirmative response,
+.Ql y
+in the POSIX locale,
+causes the command to be executed, any other response causes it to be
+skipped.
+No commands are executed if the process is not attached to a terminal.
+.It Fl R Ar replacements
+Specify the maximum number of arguments that
+.Fl I
+will do replacement in.
+If
+.Ar replacements
+is negative, the number of arguments in which to replace is unbounded.
+.It Fl s Ar size
+Set the maximum number of bytes for the command line length provided to
+.Ar utility .
+The sum of the length of the utility name, the arguments passed to
+.Ar utility
+(including
+.Dv NUL
+terminators) and the current environment will be less than or equal to
+this number.
 The current default value for
 .Ar size
 is
@@ -128,7 +242,7 @@ Force
 .Nm
 to terminate immediately if a command line containing
 .Ar number
-arguments will not fit in the specified (or default) command-line length.
+arguments will not fit in the specified (or default) command line length.
 .El
 .Pp
 If no
@@ -146,9 +260,13 @@ The
 utility exits immediately (without processing any further input) if a
 command line cannot be assembled,
 .Ar utility
-cannot be invoked, an invocation of the utility is terminated by a signal,
-or an invocation of the utility exits with a value of 255.
-.Pp
+cannot be invoked, an invocation of
+.Ar utility
+is terminated by a signal,
+or an invocation of
+.Ar utility
+exits with a value of 255.
+.Sh DIAGNOSTICS
 .Nm
 exits with one of the following values:
 .Pp
@@ -172,7 +290,7 @@ was killed or stopped by a signal.
 .It 126
 The
 .Ar utility
-was found but could not be invoked.
+was found but could not be executed.
 .It 127
 The
 .Ar utility
@@ -182,13 +300,33 @@ Some other error occurred.
 .El
 .Sh SEE ALSO
 .Xr echo 1 ,
-.Xr find 1
+.Xr find 1 ,
+.Xr execvp 3
 .Sh STANDARDS
 The
 .Nm
 utility is expected to be
 .St -p1003.2
 compliant.
-.Sh HISTORY
-The meaning of 123, 124, and 125 exit values were taken from GNU
+The
+.Fl J , o , P
+and
+.Fl R
+options are non-standard
+extensions which may not be available on other operating systems.
+.Pp
+The meanings of the 123, 124, and 125 exit values were taken from
+.Tn GNU
 .Nm xargs .
+.Sh HISTORY
+The
+.Nm
+command appeared in PWB UNIX.
+.Sh BUGS
+If
+.Ar utility
+attempts to invoke another command such that the number of arguments or the
+size of the environment is increased, it risks
+.Xr execvp 3
+failing with
+.Er E2BIG .
