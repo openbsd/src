@@ -15,6 +15,7 @@
 ./usr/include/sparc/autoconf.h
 ./usr/include/sparc/bppioctl.h
 ./usr/include/sparc/bsd_openprom.h
+./usr/include/sparc/bus.h
 ./usr/include/sparc/cdefs.h
 ./usr/include/sparc/conf.h
 ./usr/include/sparc/cpu.h

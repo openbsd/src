@@ -1316,6 +1316,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bppioctl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bsd_openprom.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bus.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/cdefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/conf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/cpu.ph
