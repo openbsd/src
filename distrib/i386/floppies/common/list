@@ -1,4 +1,4 @@
-#	$Id: list,v 1.2 1997/04/14 10:56:22 deraadt Exp $
+#	$Id: list,v 1.3 1997/04/17 01:59:58 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -56,8 +56,10 @@ SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/strings
 SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/sbin/bad144
+SYMLINK	/bin/cat		usr/sbin/chat
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
+SYMLINK	/bin/cat		usr/sbin/pppd
 SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices
@@ -76,6 +78,8 @@ COPY	${DESTDIR}/etc/protocols	etc/protocols
 COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+
+COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
 
 # and the common installation tools
 COPY	${TOPDIR}/common/dot.commonutils	.commonutils
