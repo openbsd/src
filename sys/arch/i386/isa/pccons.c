@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.17 1996/06/16 13:39:32 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.18 1996/06/16 13:41:34 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -93,7 +93,9 @@ static u_char lock_state = 0x00,	/* all off */
 static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 	       old_cursor_shape = 0xffff;
 static keymap_t	scan_codes[KB_NUM_KEYS];/* keyboard translation table */
+#ifdef XSERVER
 int pc_xmode = 0;
+#endif
 
 #define	PCUNIT(x)	(minor(x))
 
@@ -139,8 +141,10 @@ static unsigned int addr_6845 = MONO_BASE;
 void pcinit __P((void));
 char *sget __P((void));
 void sput __P((u_char *, int));
+#ifdef XSERVER
 void pc_xmode_on __P((void));
 void pc_xmode_off __P((void));
+#endif
 
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
@@ -149,7 +153,9 @@ char	partab[];
 
 int kbd_cmd __P((u_char, u_char));
 void set_cursor_shape __P((void));
+#ifdef XSERVER
 void get_cursor_shape __P((void));
+#endif
 void do_async_update __P((void *));
 void async_update __P((void));
 
@@ -306,6 +312,7 @@ set_cursor_shape()
 	old_cursor_shape = cursor_shape;
 }
 
+#ifdef XSERVER
 void
 get_cursor_shape()
 {
@@ -328,6 +335,7 @@ get_cursor_shape()
 	else
 		cursor_shape &= 0x1f1f;
 }
+#endif /* XSERVER */
 
 void
 do_async_update(v)
@@ -356,8 +364,10 @@ do_async_update(v)
 		}
 	}
 
+#ifdef XSERVER
 	if (pc_xmode > 0)
 		return;
+#endif
 
 	pos = crtat - Crtat;
 	if (pos != old_pos) {
@@ -642,6 +652,7 @@ pcioctl(dev, cmd, data, flag, p)
 		return error;
 
 	switch (cmd) {
+#ifdef XSERVER
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
 		return 0;
@@ -660,6 +671,7 @@ pcioctl(dev, cmd, data, flag, p)
 		else
 			sysbeep(BEEP_FREQ, BEEP_TIME);
 		return 0;
+#endif /* XSERVER */
 	case CONSOLE_SET_TYPEMATIC_RATE: {
  		u_char	rate;
 
@@ -803,8 +815,10 @@ pccngetc(dev)
 {
 	register char *cp;
 
+#ifdef XSERVER
 	if (pc_xmode > 0)
 		return 0;
+#endif
 
 	do {
 		/* wait for byte */
@@ -993,8 +1007,10 @@ sput(cp, n)
 {
 	u_char c, scroll = 0;
 
+#ifdef XSERVER
 	if (pc_xmode > 0)
 		return;
+#endif
 
 	if (crtat == 0)
 		pcinit();
@@ -1535,6 +1551,7 @@ top:
 		goto loop;
 	}
 
+#ifdef XSERVER
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
@@ -1588,6 +1605,7 @@ top:
 		}
 		return capchar;
 	}
+#endif /* XSERVER */
 
 	switch (dt) {
 	case KBR_EXTENDED:
@@ -1752,6 +1770,7 @@ pcmmap(dev, offset, nprot)
 	return i386_btop(0xa0000 + offset);
 }
 
+#ifdef XSERVER
 void
 pc_xmode_on()
 {
@@ -1794,3 +1813,4 @@ pc_xmode_off()
 	fp = curproc->p_md.md_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
 }
+#endif /* XSERVER */
