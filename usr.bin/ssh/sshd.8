@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.13 1999/10/12 18:11:54 markus Exp $
+.\" $Id: sshd.8,v 1.14 1999/10/12 19:36:40 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -262,7 +262,7 @@ Specifies the file containing the private host key (default
 .Pa /etc/ssh_host_key ) .
 Note that
 .Nm
-does not start if the private host key file is group/world-accessible.
+does not start if this file is group/world-accessible.
 .It Cm IgnoreRhosts
 Specifies that rhosts and shosts files will not be used in
 authentication.
@@ -614,6 +614,9 @@ This file should be writable by root only, but it is recommended
 Contains the private part of the host key.
 This file should only be owned by root, readable only by root, and not
 accessible to others.
+Note that
+.Nm
+does not start if this file is group/world-accessible.
 .It Pa /etc/ssh_host_key.pub
 Contains the public part of the host key.
 This file should be world-readable but writable only by
