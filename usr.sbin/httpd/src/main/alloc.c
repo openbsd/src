@@ -1034,7 +1034,7 @@ API_EXPORT_NONSTD(char *) ap_pstrcat(pool *a,...)
     va_start(adummy, a);
 
     while ((argp = va_arg(adummy, char *)) != NULL) {
-	strcpy(cp, argp);
+	strlcpy(cp, argp, len + 1);
 	cp += strlen(argp);
     }
 
