@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.6 1995/04/12 15:35:04 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.7 1996/01/28 12:09:34 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,6 @@
 #include "mbuf.h"
 #include "vax/include/pte.h"
 #include "uda.h"
-#include "uba.h"
 #include "reboot.h"
 #include "conf.h"
 #include "vax/include/macros.h"
@@ -150,7 +149,6 @@ setroot()
 #else
                 return;
 #endif
-#if NUBA > 0
         } else {
                 register struct uba_device *ubap;
 
@@ -167,7 +165,6 @@ setroot()
                         return;
                 mindev = ubap->ui_unit;
 		printf("mindev %x, majdev %x\n",mindev,majdev);
-#endif
         }
         mindev = (mindev << PARTITIONSHIFT) + part;
         orootdev = rootdev;
