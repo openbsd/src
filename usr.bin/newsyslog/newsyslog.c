@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.28 1999/11/09 03:03:27 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.29 1999/11/09 03:28:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.28 1999/11/09 03:03:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.29 1999/11/09 03:28:41 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -165,7 +165,7 @@ main(argc, argv)
         p = q = parse_file(&listlen);
 	signal(SIGCHLD, child_killer);
 
-	pidfiles = calloc(sizeof(pid_t), listlen + 1);
+	pidfiles = calloc(sizeof(char *), listlen + 1);
 	if (pidfiles == NULL)
 		err(1, "calloc");
 
