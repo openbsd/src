@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.168 2004/06/02 18:55:08 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.169 2004/08/21 07:13:55 mickey Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1635,8 +1635,12 @@ next:
 			pciide_unmap_compat_intr(pa, cp, channel, interface);
 			bus_space_unmap(cp->wdc_channel.cmd_iot,
 			    cp->wdc_channel.cmd_ioh, cmdsize);
-			bus_space_unmap(cp->wdc_channel.ctl_iot,
-			    cp->wdc_channel.ctl_ioh, ctlsize);
+			if (interface & PCIIDE_INTERFACE_PCI(channel))
+				bus_space_unmap(cp->wdc_channel.ctl_iot,
+				    cp->ctl_baseioh, ctlsize);
+			else
+				bus_space_unmap(cp->wdc_channel.ctl_iot,
+				    cp->wdc_channel.ctl_ioh, ctlsize);
 		}
 		if (cp->hw_ok) {
 			cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
