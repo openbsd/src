@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.12 2003/06/12 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.13 2004/07/21 17:25:57 millert Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.12 2003/06/12 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.13 2004/07/21 17:25:57 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -337,8 +337,8 @@ doskip(const char *fname, int statok)
 		}
 	}
 	if (S_ISREG(sb.st_mode)) {
-		if (fseek(stdin, skip, SEEK_SET))
-			err(1, "fseek %s", fname);
+		if (fseeko(stdin, skip, SEEK_SET))
+			err(1, "fseeko %s", fname);
 		address += skip;
 		skip = 0;
 	} else {
