@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.10 2000/10/16 01:02:00 mjacob Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.11 2000/12/06 01:07:23 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -75,6 +75,14 @@ struct isposinfo {
 	struct scsi_xfer	*wqf, *wqt;
 	struct timeout rqt;
 };
+#define	MUST_POLL(isp)	\
+	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
+
+/*
+ * Locking macros...
+ */
+#define	ISP_LOCK		isp_lock
+#define	ISP_UNLOCK		isp_unlock
 
 /*
  * Required Macros/Defines
@@ -90,6 +98,12 @@ struct isposinfo {
 #define	SNPRINTF		snprintf
 #define	STRNCAT			strncat
 #define	USEC_DELAY(x)		delay(x)
+#define	USEC_SLEEP(isp, x)		\
+	if (!MUST_POLL(isp))		\
+		ISP_UNLOCK(isp);	\
+	delay(x);			\
+	if (!MUST_POLL(isp))		\
+		ISP_LOCK(isp)
 
 #define	NANOTIME_T		struct timeval
 #define	GET_NANOTIME		microtime
@@ -234,14 +248,6 @@ static void isp_wait_complete __P((struct ispsoftc *));
  * Driver wide data...
  */
 
-/*
- * Locking macros...
- */
-#define	ISP_LOCK		isp_lock
-#define	ISP_UNLOCK		isp_unlock
-#define	ISP_ILOCK(x)		isp_lock(x); isp->isp_osinfo.onintstack++
-#define	ISP_IUNLOCK(x)		isp->isp_osinfo.onintstack--; isp_unlock(x)
-
 /*              
  * Platform private flags                                               
  */
@@ -328,7 +334,7 @@ static inline void
 isp_wait_complete(isp)
 	struct ispsoftc *isp;
 {
-	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
+	if (MUST_POLL(isp)) {
 		int usecs = 0;
 		while (usecs < 2 * 1000000) {
 			(void) isp_intr(isp);
