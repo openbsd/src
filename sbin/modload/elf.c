@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.1 2002/01/08 21:28:38 ericj Exp $	*/
+/*	$OpenBSD: elf.c,v 1.2 2002/01/08 21:58:36 ericj Exp $	*/
 /*	$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $	*/
 
 /*
@@ -131,13 +131,13 @@ read_sections(int fd, Elf_Ehdr *ehdr, char *shstrtab, struct elf_section **head)
 
 /* get the symbol table sections and free the rest of them */
 static void
-get_symtab(struct elf_section **symtab)
+get_symtab(struct elf_section **stab)
 {
 	struct elf_section *head, *cur, *prev;
 
 	head = NULL;
 	prev = NULL;
-	cur = *symtab;
+	cur = *stab;
 	while (cur) {
 		if ((cur->type == SHT_SYMTAB) || (cur->type == SHT_DYNSYM)) {
 			if (head == NULL) {
@@ -159,7 +159,7 @@ get_symtab(struct elf_section **symtab)
 	if (prev) {
 		prev->next = NULL;
 	}
-	*symtab = head;
+	*stab = head;
 }
 
 /* free a list of section headers */
@@ -259,7 +259,7 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	ssize_t off = 0;
 	size_t data_hole = 0;
 	char *shstrtab, *strtab;
-	struct elf_section *head, *s, *symtab;
+	struct elf_section *head, *s, *stab;
 	
 	if (read_elf_header(fd, &ehdr) < 0)
 		return -1;
@@ -301,11 +301,11 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 
 	/* get symbol table sections */
 	get_symtab(&head);
-	symtab = head;
+	stab = head;
 	resrvp->sym_symsize = 0;
-	while (symtab) {
-		resrvp->sym_symsize += symtab->size;
-		symtab = symtab->next;
+	while (stab) {
+		resrvp->sym_symsize += stab->size;
+		stab = stab->next;
 	}
 	resrvp->sym_size = resrvp->sym_symsize + *strtablen;
 	free_sections(head);
