@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.10 2001/09/05 00:29:20 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.11 2002/06/21 06:16:44 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.10 2001/09/05 00:29:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.11 2002/06/21 06:16:44 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.10 2001/09/05 00:29:20 deraadt Exp $";
 #include <unistd.h>
 
 #define A_LONG_TIME 10000000
+
+volatile sig_atomic_t gotwinch = 0;
 
 /*
  * The routine to do the actual talking
@@ -94,6 +96,10 @@ talk()
 		wait.tv_sec = A_LONG_TIME;
 		wait.tv_usec = 0;
 		nb = select(maxfd + 1, &read_set, 0, 0, &wait);
+		if (gotwinch) {
+			resize_display();
+			gotwinch = 0;
+		}
 		if (nb <= 0) {
 			if (errno == EINTR) {
 				read_set = read_template;

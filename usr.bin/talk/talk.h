@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.h,v 1.8 2002/06/20 19:25:55 millert Exp $	*/
+/*	$OpenBSD: talk.h,v 1.9 2002/06/21 06:16:44 millert Exp $	*/
 /*	$NetBSD: talk.h,v 1.3 1994/12/09 02:14:27 jtc Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <netinet/in.h>
 #include <protocols/talkd.h>
 #include <curses.h>
+#include <signal.h>
 #include <string.h>
 #include <err.h>
 
@@ -50,6 +51,7 @@ extern	int invitation_waiting;
 extern	int high_print;
 
 extern	bool smooth_scroll;
+extern	volatile sig_atomic_t gotwinch;
 
 extern	char *current_state;
 extern	int current_line;
@@ -91,6 +93,8 @@ void	re_invite(int);
 void	send_delete(void);
 void	set_edit_chars(void);
 void	sig_sent(int);
+void	sig_winch(int);
 void	start_msgs(void);
 void	talk(void);
 void	xscroll(xwin_t *, int);
+void	resize_display(void);

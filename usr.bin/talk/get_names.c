@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.10 2002/06/20 19:25:55 millert Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.11 2002/06/21 06:16:44 millert Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_names.c,v 1.10 2002/06/20 19:25:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: get_names.c,v 1.11 2002/06/21 06:16:44 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -82,7 +82,7 @@ get_names(argc, argv)
 				"       talk [-Hs] user@hostname [ttyname]\n");
 		exit(1);
 	}
-	if (!isatty(0))
+	if (!isatty(STDIN_FILENO))
 		errx(1, "standard input must be a tty, not a pipe or a file");
 
 	if ((my_name = getlogin()) == NULL) {

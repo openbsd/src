@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.7 1999/03/03 20:43:30 millert Exp $	*/
+/*	$OpenBSD: invite.c,v 1.8 2002/06/21 06:16:44 millert Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: invite.c,v 1.7 1999/03/03 20:43:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: invite.c,v 1.8 2002/06/21 06:16:44 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
 #include <arpa/inet.h>
 #include <sys/time.h>
-#include <signal.h>
 #include <netdb.h>
 #include <errno.h>
 #include <setjmp.h>
