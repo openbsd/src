@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.h,v 1.2 1999/10/01 14:09:45 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.7 1999/09/30 13:40:38 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.3 2000/01/31 08:19:13 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.9 2000/01/31 05:50:59 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -87,6 +87,7 @@ extern int (*lc_RSA_public_decrypt) (int, unsigned char *, unsigned char *,
 extern int (*lc_RSA_size) (RSA *);
 extern void (*lc_SSLeay_add_all_algorithms) (void);
 extern int (*lc_X509_NAME_cmp) (X509_NAME *, X509_NAME *);
+extern void (*lc_X509_OBJECT_free_contents) (X509_OBJECT *);
 extern void (*lc_X509_STORE_CTX_cleanup) (X509_STORE_CTX *);
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
 extern void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
@@ -96,6 +97,7 @@ extern void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
 				       STACK *);
 #endif
 extern int (*lc_X509_STORE_add_cert) (X509_STORE *, X509 *);
+extern void (*lc_X509_STORE_free) (X509_STORE *);
 extern X509_STORE *(*lc_X509_STORE_new) (void);
 extern X509 *(*lc_X509_dup) (X509 *);
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
@@ -103,6 +105,8 @@ extern X509 *(*lc_X509_find_by_subject) (STACK_OF (X509) *, X509_NAME *);
 #else
 extern X509 *(*lc_X509_find_by_subject) (STACK *, X509_NAME *);
 #endif
+extern int (*lc_X509_STORE_get_by_subject) (X509_STORE_CTX *, int,
+					    X509_NAME *, X509_OBJECT *);
 extern void (*lc_X509_free) (X509 *);
 extern X509_EXTENSION *(*lc_X509_get_ext) (X509 *, int);
 extern int (*lc_X509_get_ext_by_NID) (X509 *, int, int);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.c,v 1.2 1999/10/01 14:09:04 niklas Exp $	*/
-/*	$EOM: libcrypto.c,v 1.7 1999/09/30 13:40:38 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.3 2000/01/31 08:19:13 niklas Exp $	*/
+/*	$EOM: libcrypto.c,v 1.9 2000/01/31 05:50:59 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -70,6 +70,7 @@ int (*lc_RSA_size) (RSA *);
 void (*lc_SSLeay_add_all_algorithms) (void);
 int (*lc_X509_NAME_cmp) (X509_NAME *, X509_NAME *);
 void (*lc_X509_STORE_CTX_cleanup) (X509_STORE_CTX *);
+void (*lc_X509_OBJECT_free_contents) (X509_OBJECT *);
 
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
 void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
@@ -81,6 +82,7 @@ void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
 
 int (*lc_X509_STORE_add_cert) (X509_STORE *, X509 *);
 X509_STORE *(*lc_X509_STORE_new) (void);
+void (*lc_X509_STORE_free) (X509_STORE *);
 X509 *(*lc_X509_dup) (X509 *);
 void (*lc_X509_free) (X509 *);
 X509_EXTENSION *(*lc_X509_get_ext) (X509 *, int);
@@ -111,6 +113,9 @@ X509 *(*lc_X509_find_by_subject) (STACK_OF (X509) *, X509_NAME *);
 X509 *(*lc_X509_find_by_subject) (STACK *, X509_NAME *);
 #endif
 
+int (*lc_X509_STORE_get_by_subject) (X509_STORE_CTX *, int, X509_NAME *,
+				     X509_OBJECT *);
+
 #define SYMENTRY(x) { SYM, SYM (x), (void **)&lc_ ## x }
 
 static struct dynload_script libcrypto_script[] = {
@@ -137,6 +142,7 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (X509_STORE_CTX_init),
   SYMENTRY (X509_STORE_add_cert),
   SYMENTRY (X509_STORE_new),
+  SYMENTRY (X509_STORE_free),
   SYMENTRY (X509_dup),
   SYMENTRY (X509_find_by_subject),
   SYMENTRY (X509_free),
@@ -148,6 +154,8 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (X509_new),
   SYMENTRY (X509_verify),
   SYMENTRY (X509_verify_cert),
+  SYMENTRY (X509_STORE_get_by_subject),
+  SYMENTRY (X509_OBJECT_free_contents),
   SYMENTRY (d2i_RSAPrivateKey),
   SYMENTRY (d2i_RSAPublicKey),
   SYMENTRY (d2i_X509),
