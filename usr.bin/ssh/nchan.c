@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.11 2000/03/28 20:31:27 markus Exp $");
+RCSID("$Id: nchan.c,v 1.12 2000/03/28 20:34:14 markus Exp $");
 
 #include "ssh.h"
 
@@ -72,7 +72,6 @@ chan_rcvd_oclose(Channel *c)
 		error("protocol error: chan_rcvd_oclose %d for istate %d", c->self, c->istate);
 		return;
 	}
-	chan_delete_if_full_closed(c);
 }
 void
 chan_read_failed(Channel *c)
@@ -120,7 +119,6 @@ chan_rcvd_ieof(Channel *c)
 	case CHAN_OUTPUT_WAIT_IEOF:
 		debug("channel %d: OUTPUT_WAIT_IEOF -> OUTPUT_CLOSED [rvcd IEOF]", c->self);
 		c->ostate = CHAN_OUTPUT_CLOSED;
-		chan_delete_if_full_closed(c);
 		break;
 	default:
 		error("protocol error: chan_rcvd_ieof %d for ostate %d", c->self, c->ostate);
@@ -140,7 +138,6 @@ chan_write_failed(Channel *c)
 		debug("channel %d: OUTPUT_WAIT_DRAIN -> OUTPUT_CLOSED [write failed]", c->self);
 		chan_send_oclose(c);
 		c->ostate = CHAN_OUTPUT_CLOSED;
-		chan_delete_if_full_closed(c);
 		break;
 	default:
 		error("internal error: chan_write_failed %d for ostate %d", c->self, c->ostate);
@@ -159,7 +156,6 @@ chan_obuf_empty(Channel *c)
 		debug("channel %d: OUTPUT_WAIT_DRAIN -> OUTPUT_CLOSED [obuf empty, send OCLOSE]", c->self);
 		chan_send_oclose(c);
 		c->ostate = CHAN_OUTPUT_CLOSED;
-		chan_delete_if_full_closed(c);
 		break;
 	default:
 		error("internal error: chan_obuf_empty %d for ostate %d", c->self, c->ostate);
