@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.19 2003/07/10 16:51:12 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.20 2003/07/10 17:02:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -190,7 +190,7 @@ read_patterns(char *fn)
 	int nl;
 
 	if ((f = fopen(fn, "r")) == NULL)
-		err(1, "%s", fn);
+		err(2, "%s", fn);
 	nl = 0;
 	while ((line = fgetln(f, &len)) != NULL) {
 		if (*line == '\n') {
@@ -205,7 +205,7 @@ read_patterns(char *fn)
 		add_pattern(line, len);
 	}
 	if (ferror(f))
-		err(1, "%s", fn);
+		err(2, "%s", fn);
 	fclose(f);
 }
 
@@ -426,7 +426,7 @@ main(int argc, char *argv[])
 			if ((c = regcomp(&r_pattern[i], pattern[i], cflags))) {
 				regerror(c, &r_pattern[i], re_error,
 				    RE_ERROR_BUF);
-				errx(1, "%s", re_error);
+				errx(2, "%s", re_error);
 			}
 		}
 	}

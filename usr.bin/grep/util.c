@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2003/07/06 19:16:45 avsm Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2003/07/10 17:02:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -71,13 +71,13 @@ grep_tree(char **argv)
 	fts_flags |= FTS_NOSTAT | FTS_NOCHDIR;
 
 	if (!(fts = fts_open(argv, fts_flags, NULL)))
-		err(1, NULL);
+		err(2, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DNR:
 			break;
 		case FTS_ERR:
-			errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
+			errx(2, "%s: %s", p->fts_path, strerror(p->fts_errno));
 			break;
 		case FTS_DP:
 			break;
@@ -445,7 +445,7 @@ grep_malloc(size_t size)
 	void	*ptr;
 
 	if ((ptr = malloc(size)) == NULL)
-		err(1, "malloc");
+		err(2, "malloc");
 	return ptr;
 }
 
@@ -453,7 +453,7 @@ void *
 grep_realloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
-		err(1, "realloc");
+		err(2, "realloc");
 	return ptr;
 }
 
@@ -463,7 +463,7 @@ grep_strdup(const char *str)
 	unsigned char *ptr;
 
 	if ((ptr = (unsigned char *)strdup(str)) == NULL)
-		err(1, "strdup");
+		err(2, "strdup");
 	return ptr;
 }
 

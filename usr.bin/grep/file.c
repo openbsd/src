@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.3 2003/06/22 22:38:50 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.4 2003/07/10 17:02:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -68,9 +68,9 @@ gzfgetln(gzFile *f, size_t *len)
 
 			gzerrstr = gzerror(f, &gzerr);
 			if (gzerr == Z_ERRNO)
-				err(1, "%s", fname);
+				err(2, "%s", fname);
 			else
-				errx(1, "%s: %s", fname, gzerrstr);
+				errx(2, "%s: %s", fname, gzerrstr);
 		}
 		if (c == '\n')
 			break;
@@ -162,7 +162,7 @@ grep_bin_file(file_t *f)
 #endif
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
 
@@ -180,7 +180,7 @@ grep_tell(file_t *f)
 #endif
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
 
@@ -198,7 +198,7 @@ grep_fgetln(file_t *f, size_t *l)
 #endif
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
 
@@ -219,6 +219,6 @@ grep_close(file_t *f)
 #endif
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
