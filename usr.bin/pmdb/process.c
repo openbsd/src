@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.3 2002/03/19 07:26:58 fgsch Exp $	*/
+/*	$OpenBSD: process.c,v 1.4 2002/06/09 02:44:13 todd Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
@@ -53,18 +55,32 @@ process_load(struct pstate *ps)
 		return (0);
 	}
 
-	switch (ps->ps_pid = fork()) {
-	case 0:
-		if (ptrace(PT_TRACE_ME, getpid(), NULL, 0) != 0)
-			err(1, "ptrace(PT_TRACE_ME)");
-		execvp(*ps->ps_argv, ps->ps_argv);
-		err(1, "exec");
-		/* NOTREACHED */
-	case -1:
-		err(1, "fork");
-		/* NOTREACHED */
-	default:
-		break;
+	if (stat(ps->ps_argv[0], &(ps->exec_stat)) < 0)
+		err(1, "stat()");
+
+	if (ps->ps_pid != 0) {
+		/* attach to an already running process */
+		if (ptrace(PT_ATTACH, ps->ps_pid, (caddr_t) 0, 0) < 0)
+			err(1, "failed to ptrace process");
+		ps->ps_state = STOPPED;
+		ps->ps_flags |= PSF_ATCH;
+	}
+	else {
+		switch (ps->ps_pid = fork()) {
+		case 0:
+			if (ptrace(PT_TRACE_ME, getpid(), NULL, 0) != 0)
+				err(1, "ptrace(PT_TRACE_ME)");
+			execvp(*ps->ps_argv, ps->ps_argv);
+			err(1, "exec");
+			/* NOTREACHED */
+		case -1:
+			err(1, "fork");
+			/* NOTREACHED */
+		default:
+			break;
+		}
+
+		ps->ps_state = LOADED;
 	}
 
 	if ((ps->ps_flags & PSF_SYMBOLS) == 0) {
@@ -75,7 +91,6 @@ process_load(struct pstate *ps)
 	if (wait(&status) == 0)
 		err(1, "wait");
 
-	ps->ps_state = LOADED;
 	return 0;
 }
 

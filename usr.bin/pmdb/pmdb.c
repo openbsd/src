@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.7 2002/06/05 18:02:27 fgsch Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.8 2002/06/09 02:44:13 todd Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -81,7 +81,7 @@ usage()
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-c core] <program> args\n", __progname);
+	fprintf(stderr, "Usage: %s [-c core] [-p pid] <program> args\n", __progname);
 	exit(1);
 }
 
@@ -92,19 +92,26 @@ main(int argc, char **argv)
 	int i, c;
 	int status;
 	void *cm;
-	char *pmenv, *core;
+	char *pmenv, *core, *perr;
 	int level;
+	pid_t pid;
 
 	if (argc < 2) {
 		usage();
 	}
 
 	core = NULL;
+	pid = 0;
 
-	while ((c = getopt(argc, argv, "c:")) != -1) {
+	while((c = getopt(argc, argv, "c:p:")) != -1) {
 		switch(c) {
 			case 'c':
 				core = optarg;
+				break;
+			case 'p':
+				pid = (pid_t) strtol(optarg, &perr, 10);
+				if(*perr != '\0')
+					errx(1, "invalid PID");
 				break;
 			case '?':
 			default:
@@ -126,7 +133,7 @@ main(int argc, char **argv)
 	asprintf(&pmenv, "%d", level);
 	setenv("IN_PMDB", pmenv, 1);
 
-	ps.ps_pid = 0;
+	ps.ps_pid = pid;
 	ps.ps_state = NONE;
 	ps.ps_argc = argc;
 	ps.ps_argv = argv;
@@ -308,10 +315,16 @@ cmd_quit(int argc, char **argv, void *arg)
 {
 	struct pstate *ps = arg;
 
-	ps->ps_flags |= PSF_KILL;
+	if ((ps->ps_flags & PSF_ATCH)) {
+		if ((ps->ps_flags & PSF_ATCH) &&
+		    ptrace(PT_DETACH, ps->ps_pid, NULL, 0) < 0)
+			err(1, "ptrace(PT_DETACH)");
+	} else {
+		ps->ps_flags |= PSF_KILL;
 
-	if (process_kill(ps))
-		return 1;
+		if (process_kill(ps))
+			return 1;
+	}
 
 	ps->ps_state = TERMINATED;
 	return 1;
