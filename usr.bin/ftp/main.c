@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1997/01/07 22:03:39 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1997/01/09 11:22:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/01/07 22:03:39 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 1997/01/09 11:22:16 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,9 @@ main(argc, argv)
 				goto bail;
 			}
 			if (!strncmp(host, "http://", sizeof("http://") - 1)) {
-				http_fetch(host);
+				ret = http_fetch(host);
+				argc--;
+				argv++;
 				goto bail;
 			}
 			if (strncmp(host, "ftp://", sizeof("ftp://") - 1) ==
