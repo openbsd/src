@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.272 2002/12/18 14:41:37 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.273 2002/12/18 16:03:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -174,7 +174,7 @@ void			 pf_send_reset(int, struct tcphdr *,
 			    struct pf_rule *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
 			    sa_family_t, struct pf_rule *);
-struct pf_rule 		*pf_match_translation(int, struct ifnet *, u_int8_t,
+struct pf_rule		*pf_match_translation(int, struct ifnet *, u_int8_t,
 			    struct pf_addr *, u_int16_t, struct pf_addr *,
 			    u_int16_t, sa_family_t, int);
 struct pf_rule		*pf_get_translation(int, struct ifnet *, u_int8_t,
