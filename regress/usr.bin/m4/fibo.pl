@@ -1,4 +1,6 @@
 #! /usr/bin/perl
+#	$OpenBSD: fibo.pl,v 1.2 2001/01/29 02:05:59 niklas Exp $
+
 my $n=shift;
 
 $fibo[0] = 'a';

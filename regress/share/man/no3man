@@ -1,4 +1,6 @@
 #!/usr/bin/perl -w
+#	$OpenBSD: no3man,v 1.2 2001/01/29 02:05:49 niklas Exp $
+
 #
 # no3man - identify which library calls aren't mannable
 # tchrist@perl.com

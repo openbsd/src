@@ -1,3 +1,4 @@
+/*	$OpenBSD: dotest.c,v 1.2 2001/01/29 02:05:53 niklas Exp $	*/
 /*	$NetBSD: dotest.c,v 1.2 1998/01/09 08:03:54 perry Exp $	*/
 
 #include <stdio.h>

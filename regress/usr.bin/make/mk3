@@ -1,2 +1,4 @@
+#	$OpenBSD: mk3,v 1.2 2001/01/29 02:06:00 niklas Exp $
+
 # Check that appending Makefiles work
 A=3

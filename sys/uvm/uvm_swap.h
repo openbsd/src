@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_swap.h,v 1.5 2001/01/29 02:07:49 niklas Exp $	*/
 /*	$NetBSD: uvm_swap.h,v 1.3 1998/02/07 11:09:48 mrg Exp $	*/
 
 /*

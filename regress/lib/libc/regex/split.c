@@ -1,3 +1,4 @@
+/*	$OpenBSD: split.c,v 1.2 2001/01/29 02:05:44 niklas Exp $	*/
 /*	$NetBSD: split.c,v 1.2 1995/04/20 22:39:57 cgd Exp $	*/
 
 #include <stdio.h>

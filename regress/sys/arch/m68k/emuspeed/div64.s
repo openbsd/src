@@ -1,3 +1,5 @@
+/*	$OpenBSD: div64.s,v 1.2 2001/01/29 02:05:53 niklas Exp $	*/
+
 /*
  * stack:
  * + 8: count

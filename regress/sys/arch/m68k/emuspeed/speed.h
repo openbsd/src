@@ -1,3 +1,4 @@
+/*	$OpenBSD: speed.h,v 1.2 2001/01/29 02:05:54 niklas Exp $	*/
 /*	$NetBSD: speed.h,v 1.2 1998/01/09 08:03:57 perry Exp $	*/
 
 #include <sys/cdefs.h>

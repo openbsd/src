@@ -1,3 +1,5 @@
+/*	$OpenBSD: mul64.s,v 1.2 2001/01/29 02:05:54 niklas Exp $	*/
+
 /*
  * stack:
  * + 8: count

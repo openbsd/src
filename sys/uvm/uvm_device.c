@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_device.c,v 1.6 2001/01/29 02:07:43 niklas Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.16 1999/04/08 10:26:21 drochner Exp $	*/
 
 /*

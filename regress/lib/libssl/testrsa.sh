@@ -1,4 +1,6 @@
 #!/bin/sh
+#	$OpenBSD: testrsa.sh,v 1.4 2001/01/29 02:05:48 niklas Exp $
+
 
 #Test RSA certificate generation of openssl
 

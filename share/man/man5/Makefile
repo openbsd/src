@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.16 2001/01/29 02:11:13 niklas Exp $
 #	$NetBSD: Makefile,v 1.14 1995/05/11 23:13:15 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
 

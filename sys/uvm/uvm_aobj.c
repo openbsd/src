@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_aobj.c,v 1.7 2001/01/29 02:07:43 niklas Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.20 1999/05/25 00:09:00 thorpej Exp $	*/
 
 /*

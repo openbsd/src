@@ -1,3 +1,5 @@
+#	$OpenBSD: mk1,v 1.2 2001/01/29 02:05:59 niklas Exp $
+
 # invoke with make -r -e
 # if it does NOT return the MACHINE_ARCH, it's buggy
 

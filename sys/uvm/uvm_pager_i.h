@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_pager_i.h,v 1.5 2001/01/29 02:07:48 niklas Exp $	*/
 /*	$NetBSD: uvm_pager_i.h,v 1.7 1999/03/25 18:48:55 mrg Exp $	*/
 
 /*

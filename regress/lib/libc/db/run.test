@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$OpenBSD: run.test,v 1.3 2001/01/29 02:05:41 niklas Exp $
 #	$NetBSD: run.test,v 1.8 1996/05/03 21:57:51 cgd Exp $
 #	@(#)run.test	8.10 (Berkeley) 7/26/94
 #

@@ -1,3 +1,5 @@
+/*	$OpenBSD: uvm_swap_encrypt.h,v 1.5 2001/01/29 02:07:50 niklas Exp $	*/
+
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.

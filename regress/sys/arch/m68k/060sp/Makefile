@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 2001/01/29 02:05:52 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1998/06/16 19:06:31 is Exp $
 
 NOMAN=notyet

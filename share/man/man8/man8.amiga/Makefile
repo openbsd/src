@@ -1,4 +1,4 @@
-#	 @(#)Makefile	5.1 (Berkeley) 3/22/91
+#	$OpenBSD: Makefile,v 1.3 2001/01/29 02:11:15 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1995/09/06 21:36:32 jtc Exp $
 
 MAN=	MAKEDEV.8 boot_amiga.8

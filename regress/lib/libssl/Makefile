@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 2001/01/29 02:05:46 niklas Exp $
+
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 

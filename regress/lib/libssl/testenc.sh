@@ -1,4 +1,6 @@
 #!/bin/sh
+#	$OpenBSD: testenc.sh,v 1.5 2001/01/29 02:05:48 niklas Exp $
+
 
 testsrc=$2/openssl.cnf
 test=$1/p

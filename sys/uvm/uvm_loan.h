@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_loan.h,v 1.5 2001/01/29 02:07:45 niklas Exp $	*/
 /*	$NetBSD: uvm_loan.h,v 1.6 1999/03/25 18:48:52 mrg Exp $	*/
 
 /*

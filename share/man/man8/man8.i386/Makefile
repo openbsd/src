@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.1 (Berkeley) 3/22/91
+#	$OpenBSD: Makefile,v 1.5 2001/01/29 02:11:16 niklas Exp $
 #	$NetBSD: Makefile,v 1.5 1995/09/06 21:36:35 jtc Exp $
 
 MAN=	MAKEDEV.8 boot_i386.8

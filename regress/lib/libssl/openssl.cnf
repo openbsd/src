@@ -1,3 +1,5 @@
+#	$OpenBSD: openssl.cnf,v 1.2 2001/01/29 02:05:46 niklas Exp $
+
 #
 # SSLeay example configuration file.
 # This is mostly being used for generation of certificate requests.

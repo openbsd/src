@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_extern.h,v 1.8 2001/01/29 02:07:43 niklas Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.27 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*

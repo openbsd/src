@@ -1,3 +1,4 @@
+/*	$OpenBSD: jmptest.c,v 1.4 2001/01/29 02:05:45 niklas Exp $	*/
 /*	$NetBSD: jmptest.c,v 1.2 1995/01/01 20:55:35 jtc Exp $	*/
 
 /*

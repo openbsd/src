@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_km.h,v 1.5 2001/01/29 02:07:45 niklas Exp $	*/
 /*	$NetBSD: uvm_km.h,v 1.8 1999/05/25 20:30:09 thorpej Exp $	*/
 
 /*
