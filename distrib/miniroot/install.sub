@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.313 2003/07/10 14:12:54 krw Exp $
+#	$OpenBSD: install.sub,v 1.314 2003/07/10 15:03:19 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -874,7 +874,7 @@ ftp_error () {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt
+	local _url_type=$1 _file_list _url_base _oifs _prompt _home
 
 	donetconfig
 
@@ -978,9 +978,10 @@ install_url() {
 	# Build up the base url since it is so nasty...
 	_url_base=$_url_type://
 	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
+		[[ $_ftp_server_dir == /* || $_ftp_server_dir == ~* ]] || _home="~/"
 		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_ftp_server_password")@
 	fi
-	eval _url_base=$_url_base\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+	eval _url_base=$_url_base\$_${_url_type}_server_ip/$_home\$_${_url_type}_server_dir
 
 	# Get list of files from the server.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
