@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.10 2001/02/17 07:35:36 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.11 2001/02/17 07:52:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -890,7 +890,6 @@ vr_attach(parent, self, aux)
 	void *aux;
 {
 	int			s, i;
-	u_char			eaddr[ETHER_ADDR_LEN];
 	u_int32_t		command;
 	struct vr_softc		*sc = (struct vr_softc *)self;
 	struct pci_attach_args 	*pa = aux;
@@ -1008,12 +1007,11 @@ vr_attach(parent, self, aux)
 	VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
 	DELAY(1000);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
+		sc->arpcom.ac_enaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
 
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->vr_ldata_ptr = malloc(sizeof(struct vr_list_data) + 8,

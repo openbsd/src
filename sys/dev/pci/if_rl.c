@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.23 2001/02/03 05:46:17 mickey Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.24 2001/02/17 07:52:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1259,7 +1259,6 @@ rl_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	bus_addr_t iobase;
 	bus_size_t iosize;
@@ -1329,8 +1328,7 @@ rl_attach(parent, self, aux)
 
 	rl_reset(sc);
 
-	rl_read_eeprom(sc, (caddr_t)&enaddr, RL_EE_EADDR, 3, 0);
-	bcopy(enaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	rl_read_eeprom(sc, (caddr_t)sc->arpcom.ac_enaddr, RL_EE_EADDR, 3, 0);
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, 1, 0);
