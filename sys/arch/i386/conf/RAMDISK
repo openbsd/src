@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.119 2003/05/31 23:58:43 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.120 2003/06/01 13:04:03 miod Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -192,12 +192,14 @@ ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
 ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 #eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef*	at isapnp?				# 3C515 PnP ethernet
 #ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 #ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
+ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 #fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
@@ -205,6 +207,7 @@ ep*	at isapnp?				# 3C509 PnP ethernet cards
 le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
+ep0	at pci? dev ? function ?		# 3C59x ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x ethernet cards
 ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
