@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.35 1998/01/07 11:03:31 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.36 1998/03/17 15:59:46 pefo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -237,7 +237,7 @@
 #include <dev/pci/ncrreg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#ifndef __alpha__
+#if !defined(__alpha__) && !defined(__mips__)
 #define DELAY(x)	delay(x)
 #endif
 #include <scsi/scsi_all.h>
@@ -259,6 +259,10 @@
 #else
 #define bootverbose	0
 #endif
+#endif
+
+#if !defined(NCR_KVATOPHYS)
+#define NCR_KVATOPHYS(sc, va) vtophys(va)
 #endif
 
 #if defined(__OpenBSD__) && defined(__alpha__)
@@ -1010,6 +1014,9 @@ struct ccb {
 
 	u_char			scsi_smsg [8];
 	u_char			scsi_smsg2[8];
+#if defined(__mips__)
+	u_char			local_sense[sizeof(struct scsi_sense_data)];
+#endif
 
 	/*
 	**	Lock this ccb.
@@ -1420,7 +1427,7 @@ static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(ncb_p np, ncrcmd *src, ncrcmd *dst, int len);
 static  void    ncr_script_fill (struct script * scr, struct scripth *scrh);
-static	int	ncr_scatter	(struct dsb* phys, vm_offset_t vaddr,
+static	int	ncr_scatter	(ncb_p np, struct dsb* phys, vm_offset_t vaddr,
 				 vm_size_t datalen);
 static	void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
 static	void	ncr_getsync	(ncb_p np, u_char sfac, u_char *fakp,
@@ -1461,7 +1468,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.35 1998/01/07 11:03:31 deraadt Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.36 1998/03/17 15:59:46 pefo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3360,7 +3367,7 @@ static void ncr_script_copy_and_bind (ncb_p np, ncrcmd *src, ncrcmd *dst, int le
 					new = (old & ~RELOC_MASK) + np->p_scripth;
 					break;
 				case RELOC_SOFTC:
-					new = (old & ~RELOC_MASK) + vtophys(np);
+					new = (old & ~RELOC_MASK) + NCR_KVATOPHYS(np, np);
 					break;
 				case RELOC_KVAR:
 					if (((old & ~RELOC_MASK) <
@@ -3368,7 +3375,7 @@ static void ncr_script_copy_and_bind (ncb_p np, ncrcmd *src, ncrcmd *dst, int le
 					    ((old & ~RELOC_MASK) >
 					     SCRIPT_KVAR_LAST))
 						panic("ncr KVAR out of range");
-					new = vtophys((void *)script_kvars[old &
+					new = NCR_KVATOPHYS(np, (void *)script_kvars[old &
 					    ~RELOC_MASK]);
 					break;
 				case 0:
@@ -3654,10 +3661,19 @@ ncr_attach(parent, self, aux)
 	int	i;
 	u_char rev = pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
 
+#if defined(__mips__)
+	pci_sync_cache(pc, (vm_offset_t)np, sizeof (struct ncb));
+	np = (struct ncb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np));
+#endif /*__mips__*/
+
 	np->sc_st = memt;
 	np->sc_pc = pc;
 	np->ccb = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_WAITOK);
 	if (!np->ccb) return;
+#if defined(__mips__)
+	pci_sync_cache(pc, (vm_offset_t)np->ccb, sizeof (struct ccb));
+	np->ccb = (struct ccb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np->ccb));
+#endif /* __mips__ */
 	bzero (np->ccb, sizeof (*np->ccb));
 
 	/*
@@ -3734,6 +3750,10 @@ static	void ncr_attach (pcici_t config_id, int unit)
 
 	np->ccb = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_WAITOK);
 	if (!np->ccb) return;
+#if defined(__mips__)
+	pci_sync_cache(pc, (vm_offset_t)np->ccb, sizeof (struct ccb));
+	np->ccb = (struct ccb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np->ccb));
+#endif /* __mips__ */
 	bzero (np->ccb, sizeof (*np->ccb));
 
 	np->unit = unit;
@@ -3815,7 +3835,12 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	}
 
 	np->maxwide	= np->features & FE_WIDE ? 1 : 0;
+#if defined(__mips__) /* XXX FIXME - This is gross XXX */
+	np->clock_khz	= 66000;
+	np->clock_khz	= 48000;
+#else
 	np->clock_khz	= np->features & FE_CLK80 ? 80000 : 40000;
+#endif /*__mips__*/
 	if	(np->features & FE_QUAD)	np->multiplier = 4;
 	else if	(np->features & FE_DBLR)	np->multiplier = 2;
 	else					np->multiplier = 1;
@@ -3967,6 +3992,10 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	} else {
 		np->script  = (struct script *)
 			malloc (sizeof (struct script), M_DEVBUF, M_WAITOK);
+#if defined(__mips__)
+	pci_sync_cache(pc, (vm_offset_t)np->script, sizeof (struct script));
+	np->script = (struct script *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np->script));
+#endif /*__mips__*/
 	}
 
 #ifdef __FreeBSD__
@@ -3979,6 +4008,10 @@ static	void ncr_attach (pcici_t config_id, int unit)
 		{
 		np->scripth = (struct scripth *)
 			malloc (sizeof (struct scripth), M_DEVBUF, M_WAITOK);
+#if defined(__mips__)
+		pci_sync_cache(pc, (vm_offset_t)np->scripth, sizeof (struct scripth));
+		np->scripth = (struct scripth *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np->scripth));
+#endif /*__mips__*/
 	}
 
 #ifdef SCSI_NCR_PCI_CONFIG_FIXUP
@@ -4034,8 +4067,8 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	ncr_script_fill (&script0, &scripth0);
 
 	if (np->script)
-		np->p_script = vtophys(np->script);
-	np->p_scripth	= vtophys(np->scripth);
+		np->p_script = NCR_KVATOPHYS(np, np->script);
+	np->p_scripth	= NCR_KVATOPHYS(np, np->scripth);
 
 	ncr_script_copy_and_bind (np, (ncrcmd *) &script0,
 			(ncrcmd *) np->script, sizeof(struct script));
@@ -4043,7 +4076,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	ncr_script_copy_and_bind (np, (ncrcmd *) &scripth0,
 		(ncrcmd *) np->scripth, sizeof(struct scripth));
 
-	np->ccb->p_ccb	= vtophys (np->ccb);
+	np->ccb->p_ccb	= NCR_KVATOPHYS (np, np->ccb);
 
 	/*
 	**    Patch the script for LED support.
@@ -4375,6 +4408,14 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
+#if defined(__mips__)
+	if (xp->data && xp->datalen) {
+		pci_sync_cache(np->sc_pc, (vm_offset_t)xp->data, xp->datalen);
+	} 
+	pci_sync_cache(np->sc_pc, (vm_offset_t)xp->cmd, xp->cmdlen);
+	pci_sync_cache(np->sc_pc, (vm_offset_t)&xp->sense, sizeof(struct scsi_sense_data));
+#endif /* __mips__ */
+
 	oldspl = splbio();
 
 	if (!(cp=ncr_get_ccb (np, flags, xp->sc_link->target,
@@ -4593,7 +4634,7 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	segments = ncr_scatter (&cp->phys, (vm_offset_t) xp->data,
+	segments = ncr_scatter (np, &cp->phys, (vm_offset_t) xp->data,
 					(vm_size_t) xp->datalen);
 
 	if (segments < 0) {
@@ -4660,7 +4701,7 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	/*
 	**	command
 	*/
-	cp->phys.cmd.addr		= SCR_BO(vtophys (cmd));
+	cp->phys.cmd.addr		= SCR_BO(NCR_KVATOPHYS (np, cmd));
 	cp->phys.cmd.size		= SCR_BO(xp->cmdlen);
 	/*
 	**	sense command
@@ -4678,7 +4719,11 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	/*
 	**	sense data
 	*/
-	cp->phys.sense.addr		= SCR_BO(vtophys (&cp->xfer->sense));
+#if defined(__mips__)
+	cp->phys.sense.addr		= SCR_BO(NCR_KVATOPHYS (np, &cp->local_sense));
+#else
+	cp->phys.sense.addr		= SCR_BO(NCR_KVATOPHYS (np, &cp->xfer->sense));
+#endif
 	cp->phys.sense.size		= SCR_BO(sizeof(struct scsi_sense_data));
 	/*
 	**	status
@@ -4858,6 +4903,18 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	tp = &np->target[xp->sc_link->target];
 	lp = tp->lp[xp->sc_link->lun];
 
+#if defined(__mips__)
+	/*
+	**	Move sense data back to request struct.
+	*/
+	{
+		int i;
+		u_char *p = (u_char *)&xp->sense;
+		for(i = 0; i < sizeof(struct scsi_sense_data); i++) {
+			*p++ = cp->local_sense[i];
+		}
+	}
+#endif
 	/*
 	**	We donnot queue more than 1 ccb per target
 	**	with negotiation at any time. If this ccb was
@@ -6315,11 +6372,11 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	**	and the address at which to continue.
 	*/
 
-	if (dsp == vtophys (&cp->patch[2])) {
+	if (dsp == NCR_KVATOPHYS (np, &cp->patch[2])) {
 		vdsp_base = cp;
 		vdsp_off = offsetof(struct ccb, patch[0]);
 		nxtdsp = READSCRIPT_OFF(vdsp_base, vdsp_off + 3*4);
-	} else if (dsp == vtophys (&cp->patch[6])) {
+	} else if (dsp == NCR_KVATOPHYS (np, &cp->patch[6])) {
 		vdsp_base = cp;
 		vdsp_off = offsetof(struct ccb, patch[4]);
 		nxtdsp = READSCRIPT_OFF(vdsp_base, vdsp_off + 3*4);
@@ -6399,7 +6456,7 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	*/
 
 	newcmd = cp->patch;
-	if (cp->phys.header.savep == SCR_BO(vtophys (newcmd))) newcmd+=4;
+	if (cp->phys.header.savep == SCR_BO(NCR_KVATOPHYS (np, newcmd))) newcmd+=4;
 
 	/*
 	**	fillin the commands
@@ -6424,7 +6481,7 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	**	and restart script processor at dispatcher.
 	*/
 	np->profile.num_break++;
-	OUTL (nc_temp, vtophys (newcmd));
+	OUTL (nc_temp, NCR_KVATOPHYS (np, newcmd));
 	if ((cmd & 7) == 0)
 		OUTL (nc_dsp, NCB_SCRIPT_PHYS (np, dispatch));
 	else
@@ -7158,10 +7215,10 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 
 		tp->getscr[0] =
 			(np->features & FE_PFEN)? SCR_BO(SCR_COPY(1)) : SCR_BO(SCR_COPY_F(1));
-		tp->getscr[1] = SCR_BO(vtophys (&tp->sval));
+		tp->getscr[1] = SCR_BO(NCR_KVATOPHYS (np, &tp->sval));
 		tp->getscr[2] = SCR_BO(np->paddr + offsetof (struct ncr_reg, nc_sxfer));
 		tp->getscr[3] = tp->getscr[0];
-		tp->getscr[4] = SCR_BO(vtophys (&tp->wval));
+		tp->getscr[4] = SCR_BO(NCR_KVATOPHYS (np, &tp->wval));
 		tp->getscr[5] = SCR_BO(np->paddr + offsetof (struct ncr_reg, nc_scntl3));
 
 		assert (( (offsetof(struct ncr_reg, nc_sxfer) ^
@@ -7174,7 +7231,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 
 		tp->jump_lcb.l_cmd   = SCR_BO((SCR_JUMP));
 		tp->jump_lcb.l_paddr = SCR_BO(NCB_SCRIPTH_PHYS (np, abort));
-		np->jump_tcb.l_paddr = SCR_BO(vtophys (&tp->jump_tcb));
+		np->jump_tcb.l_paddr = SCR_BO(NCR_KVATOPHYS (np, &tp->jump_tcb));
 
 		tp->usrtags = SCSI_NCR_DFLT_TAGS;
 		ncr_setmaxtags (tp, tp->usrtags);
@@ -7190,6 +7247,11 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		*/
 		lp = (lcb_p) malloc (sizeof (struct lcb), M_DEVBUF, M_NOWAIT);
 		if (!lp) return;
+
+#if defined(__mips__)
+		pci_sync_cache(np->sc_pc, (vm_offset_t)lp, sizeof (struct lcb));
+		lp = (struct lcb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, lp));
+#endif /* __mips__ */
 
 		/*
 		**	Initialize it
@@ -7209,7 +7271,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		/*
 		**   Chain into LUN list
 		*/
-		tp->jump_lcb.l_paddr = SCR_BO(vtophys (&lp->jump_lcb));
+		tp->jump_lcb.l_paddr = SCR_BO(NCR_KVATOPHYS (np, &lp->jump_lcb));
 		tp->lp[lun] = lp;
 
 	}
@@ -7233,6 +7295,11 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 	if (!cp)
 		return;
 
+#if defined(__mips__)
+	pci_sync_cache(np->sc_pc, (vm_offset_t)cp, sizeof (struct ccb));
+	cp = (struct ccb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, cp));
+#endif /* __mips__ */
+
 	if (DEBUG_FLAGS & DEBUG_ALLOC) {
 		printf ("new ccb @%p.\n", cp);
 	}
@@ -7252,7 +7319,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 	**	Fill in physical addresses
 	*/
 
-	cp->p_ccb	     = vtophys (cp);
+	cp->p_ccb	     = NCR_KVATOPHYS (np, cp);
 
 	/*
 	**	Chain into reselect list
@@ -7350,7 +7417,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 */
 
 static	int	ncr_scatter
-	(struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
+	(ncb_p np, struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
 {
 	u_long	paddr, pnext;
 
@@ -7363,7 +7430,7 @@ static	int	ncr_scatter
 	bzero (&phys->data, sizeof (phys->data));
 	if (!datalen) return (0);
 
-	paddr = vtophys (vaddr);
+	paddr = NCR_KVATOPHYS (np, vaddr);
 
 	/*
 	**	insert extra break points at a distance of chunk.
@@ -7421,7 +7488,7 @@ static	int	ncr_scatter
 			vaddr   += size;
 			csize   -= size;
 			datalen -= size;
-			paddr    = vtophys (vaddr);
+			paddr    = NCR_KVATOPHYS (np, vaddr);
 		};
 
 		if(DEBUG_FLAGS & DEBUG_SCATTER)
@@ -7504,6 +7571,9 @@ static int ncr_snooptest (struct ncb* np)
 	**	Set memory and register.
 	*/
 	ncr_cache = host_wr;
+#if defined(__mips__)
+	pci_sync_cache(np->sc_pc, (vm_offset_t)&ncr_cache, sizeof (ncr_cache));
+#endif /* __mips__ */
 	OUTL (nc_temp, SCR_BO(ncr_wr));
 	/*
 	**	Start script (exchange values)
