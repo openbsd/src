@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.11 2001/02/20 19:39:33 mickey Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.12 2001/05/03 00:28:17 drahn Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ struct gmac_softc {
 #else
 	struct ethercom sc_ethercom;
 #define sc_if sc_ethercom.ec_if
-	char sc_laddr[6];
+	u_int8_t sc_laddr[6];
 #endif
 	vaddr_t sc_reg;
 	bus_space_handle_t gm_bush;
@@ -716,9 +716,9 @@ gmac_init_mac(sc)
 {
 	int i, tb;
 #ifdef __NetBSD__
-	char *laddr = sc->sc_laddr;
+	u_int8_t *laddr = sc->sc_laddr;
 #else /* !__NetBSD__ */
-	char *laddr = sc->sc_enaddr;
+	u_int8_t *laddr = sc->sc_enaddr;
 #endif
 
 	__asm ("mftb %0" : "=r"(tb));
