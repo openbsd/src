@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.7 2001/06/26 03:50:54 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.8 2001/06/26 13:02:39 ian Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -121,15 +121,15 @@ Show filter statistics
 .El
 .El
 .Sh FILES
-.Bl -tag -width /etc/nat.rules -compact
-.It Pa /etc/pf.rules
+.Bl -tag -width /etc/pf.filter -compact
+.It Pa /etc/filter
 packet filter rules file
-.It Pa /etc/nat.rules
+.It Pa /etc/pf.nat
 rules for Network Address Translation
 .Sh SEE ALSO
 .Xr pf 4 , 
-.Xr pf.rules 5 ,
-.Xr nat.rules 5 .
+.Xr pf.filter 5 ,
+.Xr pf.nat 5 .
 .Sh COMPATIBILITY
 This mechanism is largely compatible with the previous
 IP Filter mechanism, which was removed from
