@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.18 1998/04/27 02:02:49 gene Exp $
+#	$OpenBSD: files.mac68k,v 1.19 1998/05/08 22:17:04 gene Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -64,6 +64,11 @@ file	arch/mac68k/dev/if_sn.c		sn
 file	arch/mac68k/dev/if_sn_obio.c	sn_obio
 file	arch/mac68k/dev/if_sn_nubus.c	sn_nubus
 
+device	mc: ifnet, ether
+attach	mc at obio_norm with mc_obio
+file	arch/mac68k/dev/if_mc.c
+file	arch/mac68k/dev/if_mc_obio.c
+
 include "scsi/files.scsi"
 
 # Option 1 for ncr5380 support
@@ -114,6 +119,7 @@ file	arch/mac68k/mac68k/pmap.c
 file	arch/mac68k/mac68k/pmap_bootstrap.c
 file	arch/mac68k/mac68k/pram.c
 file	arch/mac68k/mac68k/pramasm.s
+file	arch/mac68k/mac68k/psc.c
 file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
