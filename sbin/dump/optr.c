@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.15 1997/07/25 19:13:03 mickey Exp $	*/
+/*	$OpenBSD: optr.c,v 1.16 1997/08/05 23:17:11 angelos Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.15 1997/07/25 19:13:03 mickey Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.16 1997/08/05 23:17:11 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,8 @@ char lastmsg[BUFSIZ];
 void
 alarmcatch()
 {
+	int save_errno = errno;
+
 	if (notify == 0) {
 		if (timeout == 0)
 			(void) fprintf(stderr,
@@ -164,6 +166,7 @@ alarmcatch()
 	signal(SIGALRM, alarmcatch);
 	(void) alarm(120);
 	timeout = 1;
+	errno = save_errno;
 }
 
 /*

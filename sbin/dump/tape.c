@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.4 1997/07/05 05:35:58 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.5 1997/08/05 23:17:12 angelos Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.4 1997/07/05 05:35:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.5 1997/08/05 23:17:12 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,6 +279,7 @@ statussig(notused)
 {
 	time_t	tnow, deltat;
 	char	msgbuf[128];
+	int save_errno = errno;
 
 	if (blockswritten < 500)
 		return;
@@ -291,6 +292,7 @@ statussig(notused)
 	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
 	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
+	errno = save_errno;
 }
 
 static void
