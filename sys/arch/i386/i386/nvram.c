@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.2 2004/10/12 16:17:14 naddy Exp $ */
+/*	$OpenBSD: nvram.c,v 1.3 2004/11/11 08:28:28 jcs Exp $ */
 
 /*
  * Copyright (c) 2004 Joshua Stein <jcs@openbsd.org>
@@ -52,7 +52,6 @@ int nvramread(dev_t dev, struct uio *uio, int flags);
 int nvram_csum_valid(void);
 int nvram_get_byte(int byteno);
 
-static int nvram_opened;
 static int nvram_initialized;
 
 void
@@ -65,9 +64,7 @@ nvramattach(int num)
 #ifdef NVRAM_DEBUG
 		printf("nvram: initialized\n");
 #endif
-
 		nvram_initialized = 1;
-		nvram_opened = 0;
 	} else
 		printf("nvram: invalid checksum\n");
 }
@@ -80,13 +77,8 @@ nvramopen(dev_t dev, int flag, int mode, struct proc *p)
 	if ((minor(dev) != 0) || (!nvram_initialized))
 		return (ENXIO);
 
-	if (nvram_opened)
-		return (EBUSY);
-
 	if ((flag & FWRITE))
 		return (EPERM);
-
-	nvram_opened = 1;
 
 	return (0);
 }
@@ -94,8 +86,6 @@ nvramopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 nvramclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	nvram_opened = 0;
-
 	return (0);
 }
 

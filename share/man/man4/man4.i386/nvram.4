@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nvram.4,v 1.1 2004/10/03 21:28:34 jcs Exp $
+.\"	$OpenBSD: nvram.4,v 1.2 2004/11/11 08:28:28 jcs Exp $
 .\"
 .\" Copyright 2004 Joshua Stein <jcs@openbsd.org>
 .\" All rights reserved.
@@ -42,17 +42,6 @@ This data is provided as a seekable character device,
 Checksums of the NVRAM contents are calculated over bytes 2 to 31 and stored
 in byte 32.
 A valid checksum is required for the driver to initialize.
-.Pp
-Only one process may have this device open at any given time;
-.Xr open 2
-and
-.Xr close 2
-are used to lock and relinquish it.
-An attempt to
-.Fn open
-when another process has the device locked will return \-1 with an
-.Er EBUSY
-error indication.
 .Sh FILES
 .Bl -tag -width /dev/nvram
 .It Pa /dev/nvram
