@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.1 2004/01/31 22:09:35 miod Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.2 2004/02/28 02:33:28 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Mark Kettenis.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -64,7 +64,7 @@ main(void)
 		 */
 
 #if defined(__x86_64__)
-		regs.regs[tRIP] |= 0x07;
+		regs.r_rip |= 0x07;
 #elif defined(__m68k__)
 		regs.r_pc |= 0x03;
 #elif defined(__hppa__)
