@@ -1657,15 +1657,6 @@
 ./usr/share/lkm/vfs/README
 ./usr/share/lkm/vfs/module/Makefile
 ./usr/share/lkm/vfs/module/kernfsmod.c
-./usr/share/gnu/config.guess
-./usr/share/gnu/config.sub
-./usr/share/gnu/configure
-./usr/share/gnu/install-sh
-./usr/share/gnu/mkdirs.sh
-./usr/share/gnu/move-if-change
-./usr/share/gnu/ltconfig
-./usr/share/gnu/ltmain.sh
-./usr/share/gnu/config.if
 ./usr/share/man/cat1/ar.0
 ./usr/share/man/cat1/as.0
 ./usr/share/man/cat1/asa.0
