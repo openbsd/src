@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.4 2004/07/28 01:53:28 jfb Exp $	*/
+/*	$OpenBSD: client.c,v 1.5 2004/07/28 11:18:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -232,8 +232,8 @@ cvs_client_sendreq(u_int rid, const char *arg, int resp)
 		return (-1);
 	}
 
-	snprintf(cvs_client_buf, sizeof(cvs_client_buf), "%s %s\n", reqp,
-	    (arg == NULL) ? "" : arg);
+	snprintf(cvs_client_buf, sizeof(cvs_client_buf), "%s%s%s\n", reqp,
+	    (arg == NULL) ? "" : " ", (arg == NULL) ? "" : arg);
 
 	rbp = cvs_client_buf;
 
