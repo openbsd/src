@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.9 2001/01/08 07:14:42 pjanzen Exp $	*/
+/*	$OpenBSD: indent.c,v 1.10 2001/06/25 04:58:31 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -47,7 +47,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.9 2001/01/08 07:14:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.10 2001/06/25 04:58:31 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -114,7 +114,7 @@ main(argc, argv)
     tokenbuf = (char *) malloc(bufsize);
     if (combuf == NULL || labbuf == NULL || codebuf == NULL ||
         tokenbuf == NULL)
-	    errx(1, "out of memory");
+	    err(1, NULL);
     l_com = combuf + bufsize - 5;
     l_lab = labbuf + bufsize - 5;
     l_code = codebuf + bufsize - 5;
@@ -130,7 +130,7 @@ main(argc, argv)
 
     in_buffer = (char *) malloc(10);
     if (in_buffer == NULL)
-	    errx(1, "out of memory");
+	    err(1, NULL);
     in_buffer_limit = in_buffer + 8;
     buf_ptr = buf_end = in_buffer;
     line_no = 1;

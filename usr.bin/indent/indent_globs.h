@@ -1,4 +1,4 @@
-/* *	$OpenBSD: indent_globs.h,v 1.5 2001/01/08 07:14:42 pjanzen Exp $*/
+/* *	$OpenBSD: indent_globs.h,v 1.6 2001/06/25 04:58:31 pjanzen Exp $*/
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -60,7 +60,7 @@ FILE       *output;		/* the output file */
 	    register int nsize = l_code-s_code+400; \
 	    codebuf = (char *) realloc(codebuf, nsize); \
 	    if (codebuf == NULL) \
-		    errx(1, "out of memory"); \
+		    err(1, NULL); \
 	    e_code = codebuf + (e_code-s_code) + 1; \
 	    l_code = codebuf + nsize - 5; \
 	    s_code = codebuf + 1; \
@@ -70,7 +70,7 @@ FILE       *output;		/* the output file */
 	    register int nsize = l_com-s_com+400; \
 	    combuf = (char *) realloc(combuf, nsize); \
 	    if (combuf == NULL) \
-		    errx(1, "out of memory"); \
+		    err(1, NULL); \
 	    e_com = combuf + (e_com-s_com) + 1; \
 	    l_com = combuf + nsize - 5; \
 	    s_com = combuf + 1; \
@@ -80,7 +80,7 @@ FILE       *output;		/* the output file */
 	    register int nsize = l_lab-s_lab+400; \
 	    labbuf = (char *) realloc(labbuf, nsize); \
 	    if (labbuf == NULL) \
-		    errx(1, "out of memory"); \
+		    err(1, NULL); \
 	    e_lab = labbuf + (e_lab-s_lab) + 1; \
 	    l_lab = labbuf + nsize - 5; \
 	    s_lab = labbuf + 1; \
@@ -90,7 +90,7 @@ FILE       *output;		/* the output file */
 	    register int nsize = l_token-s_token+400; \
 	    tokenbuf = (char *) realloc(tokenbuf, nsize); \
 	    if (tokenbuf == NULL) \
-		    errx(1, "out of memory"); \
+		    err(1, NULL); \
 	    e_token = tokenbuf + (e_token-s_token) + 1; \
 	    l_token = tokenbuf + nsize - 5; \
 	    s_token = tokenbuf + 1; \
