@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.46 2004/06/20 17:51:55 avsm Exp $	*/
+/*	$OpenBSD: interface.h,v 1.47 2004/09/16 11:29:51 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.46 2004/06/20 17:51:55 avsm Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.47 2004/09/16 11:29:51 markus Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -58,6 +58,7 @@ extern int packettype;		/* as specified by -T */
 #define PT_RTCP		5	/* Real-Time Applications control protocol */
 #define PT_CNFP		6	/* Cisco NetFlow protocol */
 #define PT_VRRP		7	/* Virtual Router Redundancy protocol */
+#define PT_TCP		8	/* TCP */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
