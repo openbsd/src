@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.3 2000/12/05 16:43:41 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.4 2001/02/19 11:34:12 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.37 2000/06/10 18:44:44 sommerfeld Exp $	*/
 
 /*-
@@ -58,6 +58,9 @@
  */
 #define __predict_false(X) ((X) != 0)
 #define SIMPLELOCK_INITIALIZER { SLOCK_UNLOCKED }
+#ifdef LOCKDEBUG
+#define simple_lock_freecheck(a, s) do { /* nothing */ } while (0)
+#endif
 
 /*
  * Pool resource management utility.
