@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.6 1999/03/22 00:29:15 pjanzen Exp $	*/
+/*	$OpenBSD: answer.c,v 1.7 1999/12/12 15:07:03 d Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -40,7 +40,7 @@ answer_first()
 {
 	struct sockaddr		sockstruct;
 	int			newsock;
-	int			socklen;
+	socklen_t		socklen;
 	int			flags;
 	struct request_info	ri;
 	struct spawn *sp;
@@ -95,8 +95,8 @@ answer_first()
 	if (sp->fd >= Num_fds)
 		Num_fds = sp->fd + 1;
 
-	/* Initialise the spawn state */
-	sp->state = 0;
+	sp->reading_msg = 0;
+	sp->inlen = 0;
 
 	/* Add to the spawning list */
 	if ((sp->next = Spawn) != NULL)
@@ -114,47 +114,17 @@ answer_next(sp)
 	u_int32_t		version;
 	FILE			*conn;
 	int			len;
+	char 			teamstr[] = "[x]";
 
-	switch (sp->state) {
-	case 0: 
-		len = read(sp->fd, &sp->uid, sizeof sp->uid);
-		break;
-	case 1:
-		len = read(sp->fd, sp->name, NAMELEN);
-		sp->name[NAMELEN] = '\0';
-		break;
-	case 2:
-		len = read(sp->fd, &sp->team, sizeof sp->team);
-		break;
-	case 3:
-		len = read(sp->fd, &sp->enter_status, sizeof sp->enter_status);
-		break;
-	case 4:	
-		len = read(sp->fd, sp->ttyname, NAMELEN);
-		break;
-	case 5:
-		len = read(sp->fd, &sp->mode, sizeof sp->mode);
-		break;
- 	case 7:
-		len = sp->msglen = read(sp->fd, &sp->msg, sizeof sp->msg - 1);
-		break;
-	default:
-		log(LOG_ERR, "impossible state %d", sp->state);
-		goto close_it;
-	}
-
-	if (len < 0) {
-		log(LOG_WARNING, "read");
-		goto close_it;
-	}
-	if (len == 0) {
-		logx(LOG_WARNING, "lost connection to new client");
-		goto close_it;
-	}
-
-	if (sp->state == 7) {
-		/* Received message: */
-		char teamstr[] = "[?]";
+	if (sp->reading_msg) {
+		/* Receive a message from a player */
+		len = read(sp->fd, sp->msg + sp->msglen, 
+		    sizeof sp->msg - sp->msglen);
+		if (len < 0)
+			goto error;
+		sp->msglen += len;
+		if (len && sp->msglen < sizeof sp->msg)
+			return FALSE;
 
 		teamstr[1] = sp->team;
 		outyx(ALL_PLAYERS, HEIGHT, 0, "%s%s: %.*s",
@@ -169,11 +139,29 @@ answer_next(sp)
 		goto close_it;
 	}
 
-	sp->state++;
-	if (sp->state != 6) {
-		/* More to come: */
+	/* Fill the buffer */
+	len = read(sp->fd, sp->inbuf + sp->inlen, 
+	    sizeof sp->inbuf - sp->inlen);
+	if (len <= 0)
+		goto error;
+	sp->inlen += len;
+	if (sp->inlen < sizeof sp->inbuf)
 		return FALSE;
-	}
+
+	/* Extract values from the buffer */
+	cp1 = sp->inbuf;
+	memcpy(&sp->uid, cp1, sizeof (u_int32_t));
+	cp1+= sizeof(u_int32_t);
+	memcpy(sp->name, cp1, NAMELEN);
+	cp1+= NAMELEN;
+	memcpy(&sp->team, cp1, sizeof (u_int8_t));
+	cp1+= sizeof(u_int8_t);
+	memcpy(&sp->enter_status, cp1, sizeof (u_int32_t));
+	cp1+= sizeof(u_int32_t);
+	memcpy(sp->ttyname, cp1, NAMELEN);
+	cp1+= NAMELEN;
+	memcpy(&sp->mode, cp1, sizeof (u_int32_t));
+	cp1+= sizeof(u_int32_t);
 
 	/* Convert data from network byte order: */
 	sp->uid = ntohl(sp->uid);
@@ -185,18 +173,24 @@ answer_next(sp)
 	 * since we use control characters for cursor control
 	 * between driver and player processes
 	 */
+	sp->name[NAMELEN] = '\0';
 	for (cp1 = cp2 = sp->name; *cp1 != '\0'; cp1++)
 		if (isprint(*cp1) || *cp1 == ' ')
 			*cp2++ = *cp1;
 	*cp2 = '\0';
+
+	/* Make sure team name is valid */
+	if (sp->team < '1' || sp->team > '9')
+		sp->team = ' ';
 
 	/* Tell the other end this server's hunt driver version: */
 	version = htonl((u_int32_t) HUNT_VERSION);
 	(void) write(sp->fd, &version, sizeof version);
 
 	if (sp->mode == C_MESSAGE) {
-		/* The connection is solely for a message: */
-		sp->state = 7;
+		/* The clients only wants to send a message: */
+		sp->msglen = 0;
+		sp->reading_msg = 1;
 		return FALSE;
 	}
 
@@ -237,10 +231,6 @@ answer_next(sp)
 	pp->p_death[0] = '\0';
 	pp->p_fd = sp->fd;
 
-	/* Remove from the spawn list. (fd remains in read set) */
-	*sp->prevnext = sp->next;
-	if (sp->next) sp->next->prevnext = sp->prevnext;
-
 	/* No idea where the player starts: */
 	pp->p_y = 0;
 	pp->p_x = 0;
@@ -251,8 +241,14 @@ answer_next(sp)
 	else
 		stplayer(pp, sp->enter_status);
 
-	/* And, they're off! */
+	/* And, they're off! Caller should remove and free sp. */
 	return TRUE;
+
+error:
+	if (len < 0) 
+		log(LOG_WARNING, "read");
+	else
+		logx(LOG_WARNING, "lost connection to new client");
 
 close_it:
 	/* Destroy the spawn */
@@ -531,6 +527,7 @@ answer_info(fp)
 			bf = "?";
 		}
 		fprintf(fp, "fd %d: state %d, from %s:%d\n",
-			sp->fd, sp->state, bf, sa->sin_port);
+			sp->fd, sp->inlen + (sp->reading_msg ? sp->msglen : 0),
+			bf, sa->sin_port);
 	}
 }
