@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.53 2003/06/17 21:24:25 miod Exp $
+dnl	$OpenBSD: hardware,v 1.54 2003/06/23 09:36:39 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -111,15 +111,15 @@ Supported devices {:-include-:}:
 	  + Parallax XVideo and PowerVideo (tvtwo) - 24-bit color,
 	    accelerated (but the driver does not support hardware
 	    acceleration)
-	  + Power9000 (p9k) framebuffer found in Tadpole SPARCbook 3 (8 bit
-	    accelerated)
-	  + Power9100 (pnozz) framebuffer found in Tadpole SPARCbook 3GS, 3GX,
-	    3TX and 3XP (8, 16 or 32-bit accelerated)
 	  + Southland Media Systems MGX and MGXPlus (mgx) - 24-bit color,
 	    accelerated (currently only supported in 8-bit unaccelerated mode)
 	  + TCX - 8/24-bit color
 	  + Vigra VS10, VS11 and VS12 framebuffers (8-bit color, selectable
 	    VGA-compatible modes and connector)
+	  + Weitek Power9000 (pninek) framebuffer found in Tadpole SPARCbook 3
+	    (8 bit accelerated)
+	  + Weitek Power9100 (pnozz) framebuffer found in Tadpole SPARCbook
+	    3GS, 3GX, 3TX and 3XP (8, 16 or 32-bit accelerated)
 	  + ZX (aka Leo) - 8/24-bit color, overlay planes, double-buffered,
 	    3-D acceleration
 	- 4/200 on-board bwtwo
@@ -161,6 +161,58 @@ Supported devices {:-include-:}:
     * SMD and other disk controllers:
 	- Xylogics 7053 VME SMD disk controller (xd)
 	- Xylogics 450/451 VME SMD disk controller (xy)
+
+    * PC Cards (PCMCIA):
+	- PCMCIA Controllers:
+	  + Sun SBus PCMCIA bridge (stp)
+	  + Tadpole PCMCIA controller (tslot)
+	- Wireless ethernet adapters (wi)
+	  + Compact Flash Adapters (will show up as PCMCIA adapters)
+	      Buffalo AirStation CF
+	      ELSA XI800 CF
+	  + PCMCIA Adapters
+	      3Com AirConnect 3CRWE737A PCMCIA
+	      ACTIONTEC HWC01170 PCMCIA
+	      Addtron AWP-100 PCMCIA
+	      Agere Orinoco PCMCIA
+	      BUFFALO AirStation PCMCIA
+	      Cabletron RoamAbout PCMCIA
+	      Compaq Agency NC5004 PCMCIA
+	      Contec FLEXLAN/FX-DS110-PCC PCMCIA
+	      Corega PCC-11 PCMCIA
+	      Corega PCCA-11 PCMCIA
+	      Corega PCCB-11 PCMCIA
+	      Corega CGWLPCIA11 PCMCIA
+	      Dlink DWL650 PCMCIA
+	      ELSA XI300 PCMCIA
+	      ELSA XI325 PCMCIA
+	      ELSA XI325H PCMCIA
+	      EMTAC A2424i PCMCIA
+	      Ericsson Wireless LAN CARD C11 PCMCIA
+	      Gemtek WL-311 PCMCIA
+	      Hawking Technology WE110P PCMCIA
+	      I-O DATA WN-B11/PCM PCMCIA
+	      Intel PRO/Wireless 2011 PCMCIA
+	      Intersil Prism II PCMCIA
+	      Linksys Instant Wireless WPC11 PCMCIA
+	      Linksys Instant Wireless WPC11 2.5 PCMCIA
+	      Linksys Instant Wireless WPC11 3.0 PCMCIA
+	      Lucent WaveLAN PCMCIA
+	      NANOSPEED ROOT-RZ2000 PCMCIA
+	      NEC CMZ-RT-WP PCMCIA
+	      Netgear MA401 PCMCIA
+	      Netgear MA401RA PCMCIA
+	      Nokia C020 Wireless LAN PCMCIA
+	      Nokia C110/C111 Wireless LAN PCMCIA
+	      NTT-ME 11Mbps Wireless LAN PCMCIA
+	      Proxim Harmony PCMCIA
+	      Proxim RangeLAN-DS PCMCIA
+	      Samsung MagicLAN SWL-2000N PCMCIA
+	      SMC 2632 EZ Connect PCMCIA
+	      Symbol Spectrum24 PCMCIA
+	      TDK LAK-CD011WL PCMCIA
+	      US Robotics 2410 PCMCIA
+	      US Robotics 2445 PCMCIA
 
     * Miscellaneous:
 	- SBus Expansion Subsystem (SUNW,xbox) (xbox)
@@ -208,7 +260,6 @@ Hardware the we do NOT currently support, but get many questions about:
 	The FAS-only card is not supported. The HME+FAS card only supports
 	the HME part of the card.
     * SBus FDDI cards
-    * Tadpole PCMCIA bridge
 
 The supplied GENERIC kernel is the best attempt at a configuration that
 works on the widest range of machinery (sun4, sun4c, and sun4m).
