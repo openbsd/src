@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.18 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.19 2003/06/18 23:37:36 pvalchev Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.18 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.19 2003/06/18 23:37:36 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -604,9 +604,7 @@ char *
 off_name(file)
 	char	*file;
 {
-	char	*new;
-
-	new = copy(file, "-o");
+	return (copy(file, "-o"));
 }
 
 /*
