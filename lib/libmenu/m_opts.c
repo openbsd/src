@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_opts.c,v 1.4 1998/07/24 16:39:10 millert Exp $	*/
+/*	$OpenBSD: m_opts.c,v 1.5 1999/02/24 06:37:12 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_opts.c,v 1.8 1998/02/11 12:13:49 tom Exp $")
+MODULE_ID("$From: m_opts.c,v 1.10 1999/02/18 16:12:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu
@@ -56,6 +56,8 @@ MODULE_ID("$From: m_opts.c,v 1.8 1998/02/11 12:13:49 tom Exp $")
 +--------------------------------------------------------------------------*/
 int set_menu_opts(MENU * menu, Menu_Options opts)
 {
+  opts &= ALL_MENU_OPTS;
+
   if (opts & ~ALL_MENU_OPTS)
     RETURN(E_BAD_ARGUMENT);
 
@@ -114,6 +116,7 @@ int menu_opts_off(MENU *menu, Menu_Options  opts)
   MENU *cmenu = menu; /* use a copy because set_menu_opts must detect
                          NULL menu itself to adjust its behaviour */
 
+  opts &= ALL_MENU_OPTS;
   if (opts & ~ALL_MENU_OPTS)
     RETURN(E_BAD_ARGUMENT);
   else
@@ -142,6 +145,7 @@ int menu_opts_on(MENU * menu, Menu_Options opts)
   MENU *cmenu = menu; /* use a copy because set_menu_opts must detect
                          NULL menu itself to adjust its behaviour */
 
+  opts &= ALL_MENU_OPTS;
   if (opts & ~ALL_MENU_OPTS)
     RETURN(E_BAD_ARGUMENT);
   else

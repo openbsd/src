@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_item_opt.c,v 1.4 1998/07/24 16:39:02 millert Exp $	*/
+/*	$OpenBSD: m_item_opt.c,v 1.5 1999/02/24 06:37:12 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_item_opt.c,v 1.6 1998/02/11 12:13:49 tom Exp $")
+MODULE_ID("$From: m_item_opt.c,v 1.8 1999/02/18 16:12:15 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -54,6 +54,8 @@ MODULE_ID("$From: m_item_opt.c,v 1.6 1998/02/11 12:13:49 tom Exp $")
 +--------------------------------------------------------------------------*/
 int set_item_opts(ITEM *item, Item_Options opts)
 { 
+  opts &= ALL_ITEM_OPTS;
+
   if (opts & ~ALL_ITEM_OPTS)
     RETURN(E_BAD_ARGUMENT);
   
@@ -100,7 +102,7 @@ int item_opts_off(ITEM *item, Item_Options  opts)
   else
     {
       Normalize_Item(citem);
-      opts = citem->opt & ~opts;
+      opts = citem->opt & ~(opts & ALL_ITEM_OPTS);
       return set_item_opts( item, opts );
     }
 }
@@ -119,6 +121,7 @@ int item_opts_on(ITEM *item, Item_Options opts)
   ITEM *citem = item; /* use a copy because set_item_opts must detect
                          NULL item itself to adjust its behaviour */
   
+  opts &= ALL_ITEM_OPTS;
   if (opts & ~ALL_ITEM_OPTS)
     RETURN(E_BAD_ARGUMENT);
   else

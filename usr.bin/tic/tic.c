@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.5 1999/01/24 19:33:51 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.6 1999/02/24 06:38:23 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.41 1999/01/24 02:55:48 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.45 1999/02/19 10:40:00 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -52,6 +52,9 @@ static	FILE	*log_fp;
 static	FILE	*tmp_fp;
 static	bool	showsummary = FALSE;
 static	const char *to_remove;
+
+static	void	(*save_check_termtype)(TERMTYPE *);
+static	void	check_termtype(TERMTYPE *tt);
 
 static	const	char usage_string[] = "[-h] [-v[n]] [-e names] [-CILNRTcfrsw1] source-file\n";
 
@@ -488,6 +491,12 @@ bool	check_only = FALSE;
 	debug_level = (v_opt > 0) ? v_opt : (v_opt == 0);
 	_nc_tracing = (1 << debug_level) - 1;
 
+	if (_nc_tracing)
+	{
+		save_check_termtype = _nc_check_termtype;
+		_nc_check_termtype = check_termtype;
+	}
+
 #ifndef HAVE_BIG_CORE
 	/*
 	 * Aaargh! immedhook seriously hoses us!
@@ -683,4 +692,104 @@ bool	check_only = FALSE;
 	}
 	cleanup();
 	return(EXIT_SUCCESS);
+}
+
+/*
+ * This bit of legerdemain turns all the terminfo variable names into
+ * references to locations in the arrays Booleans, Numbers, and Strings ---
+ * precisely what's needed (see comp_parse.c).
+ */
+
+#undef CUR
+#define CUR tp->
+
+/* other sanity-checks (things that we don't want in the normal
+ * logic that reads a terminfo entry)
+ */
+static void check_termtype(TERMTYPE *tp)
+{
+	bool conflict = FALSE;
+	unsigned j, k;
+	char  fkeys[STRCOUNT];
+
+	/*
+	 * A terminal entry may contain more than one keycode assigned to
+	 * a given string (e.g., KEY_END and KEY_LL).  But curses will only
+	 * return one (the last one assigned).
+	 */
+	memset(fkeys, 0, sizeof(fkeys));
+	for (j = 0; _nc_tinfo_fkeys[j].code; j++) {
+	    char *a = tp->Strings[_nc_tinfo_fkeys[j].offset];
+	    bool first = TRUE;
+	    if (!VALID_STRING(a))
+		continue;
+	    for (k = j+1; _nc_tinfo_fkeys[k].code; k++) {
+		char *b = tp->Strings[_nc_tinfo_fkeys[k].offset];
+		if (!VALID_STRING(b)
+		 || fkeys[k])
+		    continue;
+		if (!strcmp(a,b)) {
+		    fkeys[j] = 1;
+		    fkeys[k] = 1;
+		    if (first) {
+			if (!conflict) {
+			    _nc_warning("Conflicting key definitions (using the last)");
+			    conflict = TRUE;
+			}
+			fprintf(stderr, "... %s is the same as %s",
+				keyname(_nc_tinfo_fkeys[j].code),
+				keyname(_nc_tinfo_fkeys[k].code));
+			first = FALSE;
+		    } else {
+			fprintf(stderr, ", %s",
+				keyname(_nc_tinfo_fkeys[k].code));
+		    }
+		}
+	    }
+	    if (!first)
+		fprintf(stderr, "\n");
+	}
+
+	/*
+	 * Quick check for color.  We could also check if the ANSI versus
+	 * non-ANSI strings are misused.
+	 */
+	if ((max_colors > 0) != (max_pairs > 0)
+	 || (max_colors > max_pairs))
+		_nc_warning("inconsistent values for max_colors and max_pairs");
+
+	PAIRED(set_foreground,                  set_background)
+	PAIRED(set_a_foreground,                set_a_background)
+
+	/*
+	 * These may be mismatched because the terminal description relies on
+	 * restoring the cursor visibility by resetting it.
+	 */
+	ANDMISSING(cursor_invisible,            cursor_normal)
+	ANDMISSING(cursor_visible,              cursor_normal)
+
+	/*
+	 * From XSI & O'Reilly, we gather that sc/rc are required if csr is
+	 * given, because the cursor position after the scrolling operation is
+	 * performed is undefined.
+	 */
+	ANDMISSING(change_scroll_region,	save_cursor)
+	ANDMISSING(change_scroll_region,	restore_cursor)
+
+	/*
+	 * Some standard applications (e.g., vi) and some non-curses
+	 * applications (e.g., jove) get confused if we have both ich/ich1 and
+	 * smir/rmir.  Let's be nice and warn about that, too, even though
+	 * ncurses handles it.
+	 */
+	if ((PRESENT(enter_insert_mode) || PRESENT(exit_insert_mode))
+	 && (PRESENT(insert_character)  || PRESENT(parm_ich))) {
+	   _nc_warning("non-curses applications may be confused by ich/ich1 with smir/rmir");
+	}
+
+	/*
+	 * Finally, do the non-verbose checks
+	 */
+	if (save_check_termtype != 0)
+	    save_check_termtype(tp);
 }
