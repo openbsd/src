@@ -91,7 +91,6 @@
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
-./etc/rtadvd.conf
 ./etc/security
 ./etc/services
 ./etc/shells
