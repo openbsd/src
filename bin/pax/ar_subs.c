@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.10 1997/07/24 23:19:17 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.11 1997/07/25 18:58:24 mickey Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.10 1997/07/24 23:19:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.11 1997/07/25 18:58:24 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ u_long flcnt;				/* number of files processed */
  *	(no pattern matches all).
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 list(void)
 #else
@@ -161,7 +161,7 @@ list()
  *	pattern(s) (no patterns extracts all members)
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 extract(void)
 #else
@@ -372,7 +372,7 @@ extract()
  *	previously written archive.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static void
 wr_archive(register ARCHD *arcn, int is_app)
 #else
@@ -582,7 +582,7 @@ wr_archive(arcn, is_app)
  *	over write existing files that it creates.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 append(void)
 #else
@@ -723,7 +723,7 @@ append()
  *	write a new archive
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 archive(void)
 #else
@@ -754,7 +754,7 @@ archive()
  *	(except the files are forced to be under the destination directory).
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 copy(void)
 #else
@@ -1006,7 +1006,7 @@ copy()
  *	the specs for rd_wrbuf() for more details)
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 next_head(register ARCHD *arcn)
 #else
@@ -1152,7 +1152,7 @@ next_head(arcn)
  *	0 if archive found -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 get_arc(void)
 #else

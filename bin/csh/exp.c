@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.2 1996/06/23 14:19:20 deraadt Exp $	*/
+/*	$OpenBSD: exp.c,v 1.3 1997/07/25 18:58:05 mickey Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: exp.c,v 1.2 1996/06/23 14:19:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exp.c,v 1.3 1997/07/25 18:58:05 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: exp.c,v 1.2 1996/06/23 14:19:20 deraadt Exp $";
 #ifndef SHORT_STRINGS
 #include <string.h>
 #endif /* SHORT_STRINGS */
-#if __STDC__
+#ifdef __STDC__
 # include <stdarg.h>
 #else
 # include <varargs.h>

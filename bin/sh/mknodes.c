@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknodes.c,v 1.4 1996/10/20 00:54:54 millert Exp $	*/
+/*	$OpenBSD: mknodes.c,v 1.5 1997/07/25 18:58:43 mickey Exp $	*/
 /*	$NetBSD: mknodes.c,v 1.11 1995/05/11 21:29:36 christos Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mknodes.c,v 1.4 1996/10/20 00:54:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: mknodes.c,v 1.5 1997/07/25 18:58:43 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: mknodes.c,v 1.4 1996/10/20 00:54:54 millert Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -442,7 +442,7 @@ readline()
 
 
 static void
-#if __STDC__
+#ifdef __STDC__
 error(const char *msg, ...)
 #else
 error(va_alist)
@@ -450,7 +450,7 @@ error(va_alist)
 #endif
 {
 	va_list va;
-#if __STDC__
+#ifdef __STDC__
 	va_start(va, msg);
 #else
 	char *msg;

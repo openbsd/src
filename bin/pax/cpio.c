@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.4 1997/07/23 19:15:56 kstailey Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.5 1997/07/25 18:58:28 mickey Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.4 1997/07/23 19:15:56 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cpio.c,v 1.5 1997/07/25 18:58:28 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static int swp_head;		/* binary cpio header byte swap */
  *      0 if ok -1 otherwise (the return values of lnk_start())
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_strd(void)
 #else
@@ -100,7 +100,7 @@ cpio_strd()
  *	0 if a valid trailer, -1 if not a valid trailer, 
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_trail(register ARCHD *arcn)
 #else
@@ -124,7 +124,7 @@ cpio_trail(arcn)
  *	0
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 com_rd(register ARCHD *arcn)
 #else
@@ -179,7 +179,7 @@ com_rd(arcn)
  *	result of the write of the trailer from the cpio specific write func
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_endwr(void)
 #else
@@ -207,7 +207,7 @@ cpio_endwr()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 rd_nm(register ARCHD *arcn, int nsz)
 #else
@@ -244,7 +244,7 @@ rd_nm(arcn, nsz)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 rd_ln_nm(register ARCHD *arcn)
 #else
@@ -301,7 +301,7 @@ rd_ln_nm(arcn)
  *      0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_id(char *blk, int size)
 #else
@@ -325,7 +325,7 @@ cpio_id(blk, size)
  *	0 if a valid header, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_rd(register ARCHD *arcn, register char *buf)
 #else
@@ -408,7 +408,7 @@ cpio_rd(arcn, buf)
  *      size of trailer header in this format
  */
 
-#if __STDC__
+#ifdef __STDC__
 off_t
 cpio_endrd(void)
 #else
@@ -426,7 +426,7 @@ cpio_endrd()
  *	0 if ok, -1 otherwise (what dev_start() returns)
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_stwr(void)
 #else
@@ -446,7 +446,7 @@ cpio_stwr()
  *	data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cpio_wr(register ARCHD *arcn)
 #else
@@ -582,7 +582,7 @@ cpio_wr(arcn)
  *      0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 vcpio_id(char *blk, int size)
 #else
@@ -606,7 +606,7 @@ vcpio_id(blk, size)
  *      0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 crc_id(char *blk, int size)
 #else
@@ -629,7 +629,7 @@ crc_id(blk, size)
  *      0 if ok -1 otherwise (the return values of lnk_start())
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 crc_strd(void)
 #else
@@ -649,7 +649,7 @@ crc_strd()
  *	0 if a valid header, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 vcpio_rd(register ARCHD *arcn, register char *buf)
 #else
@@ -755,7 +755,7 @@ vcpio_rd(arcn, buf)
  *      size of trailer header in this format
  */
 
-#if __STDC__
+#ifdef __STDC__
 off_t
 vcpio_endrd(void)
 #else
@@ -774,7 +774,7 @@ vcpio_endrd()
  *	0 if ok, -1 otherwise (what dev_start() returns)
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 crc_stwr(void)
 #else
@@ -795,7 +795,7 @@ crc_stwr()
  *	NO data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 vcpio_wr(register ARCHD *arcn)
 #else
@@ -958,7 +958,7 @@ vcpio_wr(arcn)
  *      0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 bcpio_id(char *blk, int size)
 #else
@@ -993,7 +993,7 @@ bcpio_id(blk, size)
  *	0 if a valid header, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 bcpio_rd(register ARCHD *arcn, register char *buf)
 #else
@@ -1097,7 +1097,7 @@ bcpio_rd(arcn, buf)
  *      size of trailer header in this format
  */
 
-#if __STDC__
+#ifdef __STDC__
 off_t
 bcpio_endrd(void)
 #else
@@ -1120,7 +1120,7 @@ bcpio_endrd()
  *	data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 bcpio_wr(register ARCHD *arcn)
 #else

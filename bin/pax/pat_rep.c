@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.9 1997/06/04 00:15:17 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.10 1997/07/25 18:58:34 mickey Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.9 1997/06/04 00:15:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.10 1997/07/25 18:58:34 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ static int resub __P((regex_t *, regmatch_t *, char *, char *, char *));
  *	the list of replacement patterns; -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 rep_add(register char *str)
 #else
@@ -232,7 +232,7 @@ rep_add(str)
  *	0 if the pattern was added to the list, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 pat_add(char *str, char *chdname)
 #else
@@ -284,7 +284,7 @@ pat_add(str, chdname)
  *	a selected archive member.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 pat_chk(void)
 #else
@@ -326,7 +326,7 @@ pat_chk()
  *	match, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 pat_sel(register ARCHD *arcn)
 #else
@@ -451,7 +451,7 @@ pat_sel(arcn)
  *	looking for more members)
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 pat_match(register ARCHD *arcn)
 #else
@@ -529,7 +529,7 @@ pat_match(arcn)
  *	Note: *pend may be changed to show where the prefix ends.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 fn_match(register char *pattern, register char *string, char **pend)
 #else
@@ -660,7 +660,7 @@ range_match(pattern, test)
  *	0 continue to  process file, 1 skip this file, -1 pax is finished 
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 mod_name(register ARCHD *arcn)
 #else
@@ -759,7 +759,7 @@ mod_name(arcn)
  *	0 process this file, 1 skip this file, -1 we need to exit pax
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 tty_rename(register ARCHD *arcn)
 #else
@@ -831,7 +831,7 @@ tty_rename(arcn)
  *	0 if ok, -1 if failure (name too long)
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 set_dest(register ARCHD *arcn, char *dest_dir, int dir_len)
 #else
@@ -866,7 +866,7 @@ set_dest(arcn, dest_dir, dir_len)
  *	0 if ok, -1 if the final name is too long
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
 #else
@@ -938,7 +938,7 @@ fix_path(or_name, or_len, dir_name, dir_len)
  *	ended up empty)
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 rep_name(char *name, int *nlen, int prnt)
 #else
@@ -1112,7 +1112,7 @@ rep_name(name, nlen, prnt)
  *	-1 if error, or the number of characters added to the destination.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 resub(regexp *prog, char *src, char *dest, register char *destend)
 #else
@@ -1170,7 +1170,7 @@ resub(prog, src, dest, destend)
  *	-1 if error, or the number of characters added to the destination.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 resub(regex_t *rp, register regmatch_t *pm, char *src, char *dest,
 	register char *destend)

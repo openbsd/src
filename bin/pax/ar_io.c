@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.15 1997/07/23 19:15:53 kstailey Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.16 1997/07/25 18:58:21 mickey Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.15 1997/07/23 19:15:53 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.16 1997/07/25 18:58:21 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ static void ar_start_gzip __P((int));
  *	-1 on failure, 0 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_open(char *name)
 #else
@@ -308,7 +308,7 @@ ar_open(name)
  * ar_close()
  *	closes archive device, increments volume number, and prints i/o summary
  */
-#if __STDC__
+#ifdef __STDC__
 void
 ar_close(void)
 #else
@@ -426,7 +426,7 @@ ar_close()
  *	other side of the pipe from getting a SIGPIPE (pax will stop
  *	reading an archive once a format dependent trailer is detected).
  */
-#if __STDC__
+#ifdef __STDC__
 void
 ar_drain(void)
 #else
@@ -463,7 +463,7 @@ ar_drain()
  *	0 if all ready to write, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_set_wr(void)
 #else
@@ -506,7 +506,7 @@ ar_set_wr()
  *	0 if we can append, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_app_ok(void)
 #else
@@ -535,7 +535,7 @@ ar_app_ok()
  *	Number of bytes in buffer. 0 for end of file, -1 for a read error.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_read(register char *buf, register int cnt)
 #else
@@ -625,7 +625,7 @@ ar_read(buf, cnt)
  *	error in the archive occured.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_write(register char *buf, register int bsz)
 #else
@@ -750,7 +750,7 @@ ar_write(buf, bsz)
  *	0 when ok to try i/o again, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_rdsync(void)
 #else
@@ -841,7 +841,7 @@ ar_rdsync()
  *	partial move (the amount moved is in skipped)
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_fow(off_t sksz, off_t *skipped)
 #else
@@ -907,7 +907,7 @@ ar_fow(sksz, skipped)
  *	0 if moved the requested distance, -1 on complete failure
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_rev(off_t sksz)
 #else
@@ -1045,7 +1045,7 @@ ar_rev(sksz)
  *	physical block size if ok (ok > 0), -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 get_phys(void)
 #else
@@ -1163,7 +1163,7 @@ get_phys()
  *	0 when ready to continue, -1 when all done
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ar_next(void)
 #else

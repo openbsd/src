@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.11 1997/06/06 16:03:13 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.12 1997/07/25 18:58:29 mickey Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.11 1997/06/06 16:03:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.12 1997/07/25 18:58:29 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ mk_link __P((register char *,register struct stat *,register char *, int));
  *	file descriptor or -1 for failure
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 file_creat(register ARCHD *arcn)
 #else
@@ -143,7 +143,7 @@ file_creat(arcn)
  *	0 for success, -1 for failure
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 file_close(register ARCHD *arcn, int fd)
 #else
@@ -190,7 +190,7 @@ file_close(arcn, fd)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 lnk_creat(register ARCHD *arcn)
 #else
@@ -230,7 +230,7 @@ lnk_creat(arcn)
  *	0 if cross_lnk() ok, -1 for fatal flaw (like linking to self).
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 cross_lnk(register ARCHD *arcn)
 #else
@@ -260,7 +260,7 @@ cross_lnk(arcn)
  *	0 skip it file exists (-k) or may be the same as source file
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 chk_same(register ARCHD *arcn)
 #else
@@ -303,7 +303,7 @@ chk_same(arcn)
  *	allowed option). -1 an error occurred.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 mk_link(register char *to, register struct stat *to_sb, register char *from,
 	int ign)
@@ -385,7 +385,7 @@ mk_link(to, to_sb, from, ign)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 node_creat(register ARCHD *arcn)
 #else
@@ -555,7 +555,7 @@ node_creat(arcn)
  *	1 we found a directory and we were going to create a directory.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 unlnk_exist(register char *name, register int type)
 #else
@@ -613,7 +613,7 @@ unlnk_exist(name, type)
  *	0 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 chk_path( register char *name, uid_t st_uid, gid_t st_gid)
 #else
@@ -705,7 +705,7 @@ chk_path(name, st_uid, st_gid)
  *	not set request.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 #else
@@ -752,7 +752,7 @@ set_ftime(fnm, mtime, atime, frc)
  *	0 when set, -1 on failure
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 set_ids(char *fnm, uid_t uid, gid_t gid)
 #else
@@ -784,7 +784,7 @@ set_ids(fnm, uid, gid)
  *	0 when set, -1 on failure
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 set_lids(char *fnm, uid_t uid, gid_t gid)
 #else
@@ -814,7 +814,7 @@ set_lids(fnm, uid, gid)
  *	Set file access mode
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 set_pmode(char *fnm, mode_t mode)
 #else
@@ -878,7 +878,7 @@ set_pmode(fnm, mode)
  *	number of bytes written, -1 on write (or lseek) error.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 file_write(int fd, char *str, register int cnt, int *rem, int *isempt, int sz,
 	char *name)
@@ -971,7 +971,7 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
  *	write the last BYTE with a zero (back up one byte and write a zero).
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 file_flush(int fd, char *fname, int isempt)
 #else
@@ -1010,7 +1010,7 @@ file_flush(fd, fname, isempt)
  *	reset access time (tflag) do so (the times are stored in arcn).
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 rdfile_close(register ARCHD *arcn, register int *fd)
 #else
@@ -1047,7 +1047,7 @@ rdfile_close(arcn, fd)
  *	0 if was able to calculate the crc, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 set_crc(register ARCHD *arcn, register int fd)
 #else

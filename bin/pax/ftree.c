@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.6 1997/07/24 23:19:19 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.7 1997/07/25 18:58:30 mickey Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.6 1997/07/24 23:19:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.7 1997/07/25 18:58:30 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static int ftree_arg __P((void));
  *	0 if there is at least one valid file arg to process, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ftree_start(void)
 #else
@@ -154,7 +154,7 @@ ftree_start()
  *	0 if added to the linked list, -1 if failed
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ftree_add(register char *str, int chflg)
 #else
@@ -206,7 +206,7 @@ ftree_add(str, chflg)
  *	-n and -d processing.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 ftree_sel(register ARCHD *arcn)
 #else
@@ -245,7 +245,7 @@ ftree_sel(arcn)
  *	have a selected member (reference count still 0)
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 ftree_chk(void)
 #else
@@ -287,7 +287,7 @@ ftree_chk()
  *	stdin).
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 ftree_arg(void)
 #else
@@ -366,7 +366,7 @@ ftree_arg()
  *	0 when contents of arcn have been set with the next file, -1 when done.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 next_file(register ARCHD *arcn)
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.7 1997/07/23 19:16:00 kstailey Exp $	*/
+/*	$OpenBSD: tables.c,v 1.8 1997/07/25 18:58:37 mickey Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.7 1997/07/23 19:16:00 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.8 1997/07/25 18:58:37 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ static DEVT *chk_dev __P((dev_t, int));
  *	0 if created, -1 if failure
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 lnk_start(void)
 #else
@@ -138,7 +138,7 @@ lnk_start()
  *	if found returns 1; if not found returns 0; -1 on error
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 chk_lnk(register ARCHD *arcn)
 #else
@@ -231,7 +231,7 @@ chk_lnk(arcn)
  *	we do not want to accidently point another file at it later on.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 purg_lnk(register ARCHD *arcn)
 #else
@@ -291,7 +291,7 @@ purg_lnk(arcn)
  *	write phase
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 lnk_end(void)
 #else
@@ -356,7 +356,7 @@ lnk_end()
  *	0 if the table and file was created ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ftime_start(void)
 #else
@@ -401,7 +401,7 @@ ftime_start()
  *	-1 on error
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 chk_ftime(register ARCHD *arcn)
 #else
@@ -526,7 +526,7 @@ chk_ftime(arcn)
  *	0 if successful, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 name_start(void)
 #else
@@ -552,7 +552,7 @@ name_start()
  *	0 if added, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 add_name(register char *oname, int onamelen, char *nname)
 #else
@@ -628,7 +628,7 @@ add_name(oname, onamelen, nname)
  *	new name (oname is the link to name)
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 sub_name(register char *oname, int *onamelen, size_t onamesize)
 #else
@@ -720,7 +720,7 @@ sub_name(oname, onamelen, onamesize)
  *	0 if successful, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 dev_start(void)
 #else
@@ -747,7 +747,7 @@ dev_start()
  *	0 if added ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 add_dev(register ARCHD *arcn)
 #else
@@ -774,7 +774,7 @@ add_dev(arcn)
  *	is returned (indicates an error).
  */
 
-#if __STDC__
+#ifdef __STDC__
 static DEVT *
 chk_dev(dev_t dev, int add)
 #else
@@ -839,7 +839,7 @@ chk_dev(dev, add)
  *	0 if all ok, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 map_dev(register ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 #else
@@ -989,7 +989,7 @@ map_dev(arcn, dev_mask, ino_mask)
  *	0 is created ok, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 atdir_start(void)
 #else
@@ -1014,7 +1014,7 @@ atdir_start()
  *	entries are for directories READ by pax
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 atdir_end(void)
 #else
@@ -1050,7 +1050,7 @@ atdir_end()
  *	and chained by inode number. This is for directories READ by pax
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 #else
@@ -1122,7 +1122,7 @@ add_atdir(fname, dev, ino, mtime, atime)
  *	0 if found, -1 if not found.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 #else
@@ -1206,7 +1206,7 @@ get_atdir(dev, ino, mtime, atime)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 dir_start(void)
 #else
@@ -1246,7 +1246,7 @@ dir_start()
  *	pax spec)
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
 #else
@@ -1296,7 +1296,7 @@ add_dir(name, nlen, psb, frc_mode)
  *	by pax
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 proc_dir(void)
 #else
@@ -1364,7 +1364,7 @@ proc_dir()
  *	the hash value of the string MOD (%) the table size.
  */
 
-#if __STDC__
+#ifdef __STDC__
 u_int
 st_hash(char *name, int len, int tabsz)
 #else

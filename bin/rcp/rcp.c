@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.13 1997/07/23 19:19:33 kstailey Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.14 1997/07/25 18:58:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -851,7 +851,7 @@ usage()
 	exit(1);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -859,7 +859,7 @@ usage()
 
 #ifdef KERBEROS
 void
-#if __STDC__
+#ifdef __STDC__
 oldw(const char *fmt, ...)
 #else
 oldw(fmt, va_alist)
@@ -872,7 +872,7 @@ oldw(fmt, va_alist)
 
 	if (krb_get_lrealm(realm, 1) != KSUCCESS)
 		return;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -885,7 +885,7 @@ oldw(fmt, va_alist)
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 run_err(const char *fmt, ...)
 #else
 run_err(fmt, va_alist)
@@ -895,7 +895,7 @@ run_err(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.6 1997/06/18 18:48:25 kstailey Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.7 1997/07/25 18:58:31 mickey Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.6 1997/06/18 18:48:25 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.7 1997/07/25 18:58:31 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.6 1997/06/18 18:48:25 kstailey E
  *	list the members of an archive in ls format
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 ls_list(register ARCHD *arcn, time_t now, FILE *fp)
 #else
@@ -170,7 +170,7 @@ ls_list(arcn, now, fp)
  * 	print a short summary of file to tty.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 ls_tty(register ARCHD *arcn)
 #else
@@ -214,7 +214,7 @@ ls_tty(arcn)
  *	doing a strncpy(), a strlen(), and then a possible memset())
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 l_strncpy(register char *dest, register char *src, int len)
 #else
@@ -248,7 +248,7 @@ l_strncpy(dest, src, len)
  *	unsigned long value
  */
 
-#if __STDC__
+#ifdef __STDC__
 u_long
 asc_ul(register char *str, int len, register int base)
 #else
@@ -299,7 +299,7 @@ asc_ul(str, len, base)
  *	NOTE: the string created is NOT TERMINATED.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 ul_asc(u_long val, register char *str, register int len, register int base)
 #else
@@ -362,7 +362,7 @@ ul_asc(val, str, len, base)
  *	u_quad_t value
  */
 
-#if __STDC__
+#ifdef __STDC__
 u_quad_t
 asc_uqd(register char *str, int len, register int base)
 #else
@@ -413,7 +413,7 @@ asc_uqd(str, len, base)
  *	NOTE: the string created is NOT TERMINATED.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 uqd_asc(u_quad_t val, register char *str, register int len, register int base)
 #else

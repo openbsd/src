@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.3 1996/10/20 00:54:45 millert Exp $	*/
+/*	$OpenBSD: error.c,v 1.4 1997/07/25 18:58:42 mickey Exp $	*/
 /*	$NetBSD: error.c,v 1.14 1995/05/11 21:28:51 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.3 1996/10/20 00:54:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.4 1997/07/25 18:58:42 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,7 @@ exverror(cond, msg, ap)
 }
 
 
-#if __STDC__
+#ifdef __STDC__
 void
 error(char *msg, ...)
 #else
@@ -158,11 +158,11 @@ error(va_alist)
 	va_dcl
 #endif
 {
-#if !__STDC__
+#ifndef __STDC__
 	char *msg;
 #endif
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);
@@ -173,7 +173,7 @@ error(va_alist)
 }
 
 
-#if __STDC__
+#ifdef __STDC__
 void
 exerror(int cond, char *msg, ...)
 #else
@@ -182,12 +182,12 @@ exerror(va_alist)
 	va_dcl
 #endif
 {
-#if !__STDC__
+#ifndef __STDC__
 	int cond;
 	char *msg;
 #endif
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.3 1996/12/14 12:17:40 mickey Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.4 1997/07/25 18:57:57 mickey Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
 
 /*-
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: alloc.c,v 1.3 1996/12/14 12:17:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: alloc.c,v 1.4 1997/07/25 18:57:57 mickey Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#if __STDC__
+#ifdef __STDC__
 # include <stdarg.h>
 #else
 # include <varargs.h>

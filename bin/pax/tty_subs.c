@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.4 1997/07/23 19:16:00 kstailey Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.5 1997/07/25 18:58:39 mickey Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.4 1997/07/23 19:16:00 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.5 1997/07/25 18:58:39 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.4 1997/07/23 19:16:00 kstailey E
 #include <string.h>
 #include "pax.h"
 #include "extern.h"
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -78,7 +78,7 @@ static FILE *ttyinf = NULL;		/* input pointing at control tty */
  *	open fails, future ops that require user input will get an EOF
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 tty_init(void)
 #else
@@ -110,7 +110,7 @@ tty_init()
  *	if there is no controlling terminal, just return.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 tty_prnt(char *fmt, ...)
 #else
@@ -121,7 +121,7 @@ tty_prnt(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#	if __STDC__
+#	ifdef __STDC__
 	va_start(ap, fmt);
 #	else
 	va_start(ap);
@@ -141,7 +141,7 @@ tty_prnt(fmt, va_alist)
  *	0 if data was read, -1 otherwise.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 tty_read(char *str, int len)
 #else
@@ -171,7 +171,7 @@ tty_read(str, len)
  *	will be non-zero.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 paxwarn(int set, char *fmt, ...)
 #else
@@ -183,7 +183,7 @@ paxwarn(set, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#	if __STDC__
+#	ifdef __STDC__
 	va_start(ap, fmt);
 #	else
 	va_start(ap);
@@ -210,7 +210,7 @@ paxwarn(set, fmt, va_alist)
  *	will be non-zero.
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 syswarn(int set, int errnum, char *fmt, ...)
 #else
@@ -223,7 +223,7 @@ syswarn(set, errnum, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#	if __STDC__
+#	ifdef __STDC__
 	va_start(ap, fmt);
 #	else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.5 1997/06/03 11:03:03 deraadt Exp $	*/
+/*	$OpenBSD: cache.c,v 1.6 1997/07/25 18:58:27 mickey Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.5 1997/06/03 11:03:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cache.c,v 1.6 1997/07/25 18:58:27 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static GIDC **grptb = NULL;	/* group name to gid cache */
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 uidtb_start(void)
 #else
@@ -110,7 +110,7 @@ uidtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 gidtb_start(void)
 #else
@@ -139,7 +139,7 @@ gidtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 usrtb_start(void)
 #else
@@ -168,7 +168,7 @@ usrtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 grptb_start(void)
 #else
@@ -198,7 +198,7 @@ grptb_start()
  *	Pointer to stored name (or a empty string)
  */
 
-#if __STDC__
+#ifdef __STDC__
 char *
 name_uid(uid_t uid, int frc)
 #else
@@ -276,7 +276,7 @@ name_uid(uid, frc)
  *	Pointer to stored name (or a empty string)
  */
 
-#if __STDC__
+#ifdef __STDC__
 char *
 name_gid(gid_t gid, int frc)
 #else
@@ -353,7 +353,7 @@ name_gid(gid, frc)
  *	the uid (if any) for a user name, or a -1 if no match can be found
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 uid_name(char *name, uid_t *uid)
 #else
@@ -423,7 +423,7 @@ uid_name(name, uid)
  *	the gid (if any) for a group name, or a -1 if no match can be found
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 gid_name(char *name, gid_t *gid)
 #else

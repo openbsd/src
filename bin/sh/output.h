@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.h,v 1.2 1996/06/23 14:21:30 deraadt Exp $	*/
+/*	$OpenBSD: output.h,v 1.3 1997/07/25 18:58:44 mickey Exp $	*/
 /*	$NetBSD: output.h,v 1.11 1995/05/11 21:29:53 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 
 #ifndef OUTPUT_INCL
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>

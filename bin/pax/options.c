@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.28 1997/07/23 19:15:57 kstailey Exp $	*/
+/*	$OpenBSD: options.c,v 1.29 1997/07/25 18:58:32 mickey Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.28 1997/07/23 19:15:57 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.29 1997/07/25 18:58:32 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ int ford[] = {5, 4, 3, 2, 1, 0, -1 };
  *	parser
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 options(register int argc, register char **argv)
 #else
@@ -182,7 +182,7 @@ options(argc, argv)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
-#if __STDC__
+#ifdef __STDC__
 static void
 pax_options(register int argc, register char **argv)
 #else
@@ -589,7 +589,7 @@ pax_options(argc, argv)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
-#if __STDC__
+#ifdef __STDC__
 static void
 tar_options(register int argc, register char **argv)
 #else
@@ -908,7 +908,7 @@ mkpath(path)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
-#if __STDC__
+#ifdef __STDC__
 static void
 cpio_options(register int argc, register char **argv)
 #else
@@ -1171,7 +1171,7 @@ cpio_options(argc, argv)
  *	print out those invalid flag sets found to the user
  */
 
-#if __STDC__
+#ifdef __STDC__
 static void
 printflg(unsigned int flg)
 #else
@@ -1198,7 +1198,7 @@ printflg(flg)
  *	by the user
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 c_frmt(const void *a, const void *b)
 #else
@@ -1219,7 +1219,7 @@ c_frmt(a, b)
  *	pointer to next OPLIST entry or NULL (end of list).
  */
 
-#if __STDC__
+#ifdef __STDC__
 OPLIST *
 opt_next(void)
 #else
@@ -1240,7 +1240,7 @@ opt_next()
  *	when the format does not support options.
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 bad_opt(void)
 #else
@@ -1271,7 +1271,7 @@ bad_opt()
  *	0 if format in name=value format, -1 if -o is passed junk
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 opt_add(register char *str)
 #else
@@ -1346,7 +1346,7 @@ opt_add(str)
  *	0 for an error, a positive value o.w.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static off_t
 str_offt(char *val)
 #else
@@ -1421,7 +1421,7 @@ str_offt(val)
  *	0
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 no_op(void)
 #else
@@ -1437,7 +1437,7 @@ no_op()
  *	print the usage summary to the user
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 pax_usage(void)
 #else
@@ -1476,7 +1476,7 @@ pax_usage()
  *	print the usage summary to the user
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 tar_usage(void)
 #else
@@ -1496,7 +1496,7 @@ tar_usage()
  *	print the usage summary to the user
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 cpio_usage(void)
 #else

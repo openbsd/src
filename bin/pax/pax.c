@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.9 1997/07/24 23:19:21 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.10 1997/07/25 18:58:35 mickey Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.9 1997/07/24 23:19:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.10 1997/07/25 18:58:35 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  * Return: 0 if ok, 1 otherwise
  */
 
-#if __STDC__
+#ifdef __STDC__
 int
 main(int argc, char **argv)
 #else
@@ -286,7 +286,7 @@ main(argc, argv)
  *	never....
  */
 
-#if __STDC__
+#ifdef __STDC__
 void
 sig_cleanup(int which_sig)
 #else
@@ -319,7 +319,7 @@ sig_cleanup(which_sig)
  *	when dealing with a medium to large sized archives.
  */
 
-#if __STDC__
+#ifdef __STDC__
 static int
 gen_init(void)
 #else
