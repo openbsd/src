@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.5 1996/04/21 22:19:18 deraadt Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.6 1997/03/21 00:41:17 niklas Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /* 
@@ -40,11 +40,11 @@
 #include <ddb/db_var.h>
 
 struct db_variable db_vars[] = {
-	{ "radix",	&db_radix, FCN_NULL },
-	{ "maxoff",	(int *)&db_maxoff, FCN_NULL },
-	{ "maxwidth",	&db_max_width, FCN_NULL },
-	{ "tabstops",	&db_tab_stop_width, FCN_NULL },
-	{ "lines",	&db_max_line, FCN_NULL },
+	{ "radix",	(long *)&db_radix, FCN_NULL },
+	{ "maxoff",	(long *)&db_maxoff, FCN_NULL },
+	{ "maxwidth",	(long *)&db_max_width, FCN_NULL },
+	{ "tabstops",	(long *)&db_tab_stop_width, FCN_NULL },
+	{ "lines",	(long *)&db_max_line, FCN_NULL },
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 

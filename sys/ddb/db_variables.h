@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.h,v 1.4 1996/04/21 22:19:19 deraadt Exp $	*/
+/*	$OpenBSD: db_variables.h,v 1.5 1997/03/21 00:41:19 niklas Exp $	*/
 /*	$NetBSD: db_variables.h,v 1.5 1996/02/05 01:57:21 christos Exp $	*/
 
 /* 
@@ -38,7 +38,7 @@
  */
 struct db_variable {
 	char	*name;		/* Name of variable */
-	int	*valuep;	/* value of variable */
+	long	*valuep;	/* value of variable */
 				/* function to call when reading/writing */
 	int	(*fcn) __P((struct db_variable *, db_expr_t *, int));
 #define DB_VAR_GET	0
