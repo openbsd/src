@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.24 2003/08/26 17:55:01 fgsch Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.25 2003/08/27 14:40:56 fgsch Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1783,12 +1783,15 @@ x_expand(c)
 
 	x_goto(xbuf + start);
 	x_delete(end - start, FALSE);
-	for (i = 0; i < nwords; i++)
-		if (x_ins(words[i]) < 0 || (i < nwords - 1 && x_ins(space) < 0))
+	for (i = 0; i < nwords;) {
+		if (x_escape(words[i], strlen(words[i]), x_emacs_putbuf) < 0 ||
+		    (++i < nwords && x_ins(space) < 0))
 		{
 			x_e_putc(BEL);
 			return KSTD;
 		}
+	}
+	x_adjust();
 
 	return KSTD;
 }
