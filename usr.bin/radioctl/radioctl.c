@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
+/* $OpenBSD: radioctl.c,v 1.6 2002/01/01 22:03:49 deraadt Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -187,7 +187,7 @@ static void
 usage(void)
 {
 	printf("Usage: %s [-f file] [-a] [-n] [-w name=value] [name]\n",
-		__progname);
+	    __progname);
 }
 
 static void
@@ -289,7 +289,7 @@ change_value(const struct opt_t o)
 		break;
 	}
 
-	if ( unsupported )
+	if (unsupported)
 		warn_unsupported(o.option);
 }
 
@@ -502,7 +502,7 @@ print_vars(int silent)
 {
 	show_int_val(ri.volume, varname[OPTION_VOLUME], "", silent);
 	show_float_val((float)ri.freq / 1000., varname[OPTION_FREQUENCY],
-			"MHz", silent);
+	    "MHz", silent);
 	show_char_val(ri.mute ? onchar : offchar, varname[OPTION_MUTE], silent);
 
 	if (ri.caps & RADIO_CAPS_REFERENCE_FREQ)
