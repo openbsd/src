@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.3 2003/12/17 19:26:26 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.4 2003/12/18 18:56:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1276,6 +1276,7 @@ session_dispatch_imsg(int fd, int idx)
 				if (p->conf.reconf_action == RECONF_NONE)
 					p->conf.reconf_action = RECONF_DELETE;
 			free(nconf);
+			nconf = NULL;
 			pending_reconf = 0;
 			logit(LOG_INFO, "SE reconfigured");
 			break;
