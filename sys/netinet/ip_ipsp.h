@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.12 1997/07/14 08:46:38 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.13 1997/07/15 23:11:10 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -154,38 +154,10 @@ extern unsigned char ipseczeroes[];
 /*
  * Names for IPsec sysctl objects
  */
-#define IPSECCTL_ENCAP			28
-#define IPSECCTL_MAXID			29
+#define IPSECCTL_ENCAP			0
+#define IPSECCTL_MAXID			1
 
 #define CTL_IPSEC_NAMES {\
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
 	{ "encap", CTLTYPE_NODE }, \
 }
 

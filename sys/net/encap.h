@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.8 1997/07/14 08:46:40 provos Exp $	*/
+/*	$OpenBSD: encap.h,v 1.9 1997/07/15 23:11:09 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -231,7 +231,7 @@ struct encap_msghdr
 	    u_int16_t	   Dport;	/* Destination port, if applicable */
 	    u_int8_t       Protocol;	/* Transport mode for which protocol */
 	    u_int8_t 	   Sproto;	/* IPsec protocol */
-	    u_int8_t       Foo[2];	/* Alignment */
+	    u_int16_t	   Flags;
 	} Ena;
 
 	/* For general use: (in)validate, delete (chain), reserve */
@@ -245,11 +245,18 @@ struct encap_msghdr
     } Eu;
 };
 
-#define ENCAP_MSG_FIXED_LEN    (2 * sizeof(u_int32_t))
+#define ENABLE_FLAG_REPLACE    	1
+#define ENABLE_FLAG_LOCAL      	2
 
-#define NOTIFY_SOFT_EXPIRE     0	/* Soft expiration of SA */
-#define NOTIFY_HARD_EXPIRE     1	/* Hard expiration of SA */
-#define NOTIFY_REQUEST_SA      2	/* Establish an SA */
+#define ENCAP_MSG_FIXED_LEN    	(2 * sizeof(u_int32_t))
+
+#define NOTIFY_SOFT_EXPIRE     	0	/* Soft expiration of SA */
+#define NOTIFY_HARD_EXPIRE     	1	/* Hard expiration of SA */
+#define NOTIFY_REQUEST_SA      	2	/* Establish an SA */
+
+#define NOTIFY_SATYPE_CONF	0	/* SA should do encryption */
+#define NOTIFY_SATYPE_AUTH	1	/* SA should do authentication */
+#define NOTIFY_SATYPE_TUNNEL	2	/* SA should use tunneling */
 
 #define em_ena_spi	  Eu.Ena.Spi
 #define em_ena_dst	  Eu.Ena.Dst
@@ -261,6 +268,7 @@ struct encap_msghdr
 #define em_ena_dport	  Eu.Ena.Dport
 #define em_ena_protocol   Eu.Ena.Protocol
 #define em_ena_sproto	  Eu.Ena.Sproto
+#define em_ena_flags	  Eu.Ena.Flags
 
 #define em_gen_spi        Eu.Gen.Spi
 #define em_gen_dst        Eu.Gen.Dst

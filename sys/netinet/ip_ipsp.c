@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.13 1997/07/11 23:37:58 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.14 1997/07/15 23:11:10 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -235,6 +235,8 @@ put_flow(struct flow *flow, struct tdb *tdb)
 {
     flow->flow_next = tdb->tdb_flow;
     flow->flow_prev = (struct flow *) NULL;
+
+    tdb->tdb_flow = flow;
 
     flow->flow_sa = tdb;
 

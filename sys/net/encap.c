@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.9 1997/07/14 08:46:39 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.10 1997/07/15 23:11:08 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -164,12 +164,13 @@ va_dcl
 {
 #define SENDERR(e) do { error = e; goto flush;} while (0)
     struct sockaddr_encap encapdst, encapgw, encapnetmask;
+    struct in_addr alts, altm;
     int len, emlen, error = 0;
+    struct flow *flow, *flow2;
     struct encap_msghdr *emp;
     struct tdb *tdbp, *tdbp2;
     caddr_t buffer = 0;
     struct socket *so;
-    struct flow *flow;
     u_int32_t spi;
     va_list ap;
 
@@ -454,9 +455,41 @@ va_dcl
 	    if (flow != (struct flow *) NULL)
 	      SENDERR(EEXIST);
 
+	    /* Check for 0.0.0.0/255.255.255.255 if the flow is local */
+	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+	    {
+		alts.s_addr = INADDR_ANY;
+		altm.s_addr = INADDR_BROADCAST;
+		flow2 = find_flow(alts, altm, emp->em_ena_idst,
+				  emp->em_ena_idmask, emp->em_ena_protocol,
+				  emp->em_ena_sport, emp->em_ena_dport, tdbp);
+		if (flow2 != (struct flow *) NULL)
+		  SENDERR(EEXIST);
+	    }
+
 	    flow = get_flow();
 	    if (flow == (struct flow *) NULL)
 	      SENDERR(ENOBUFS);
+
+	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+	    {
+	    	flow2 = get_flow();
+	    	if (flow2 == (struct flow *) NULL)
+	    	{
+		    FREE(flow, M_TDB);
+		    SENDERR(ENOBUFS);
+	    	}
+
+		flow2->flow_src.s_addr = INADDR_ANY;
+		flow2->flow_dst.s_addr = emp->em_ena_idst.s_addr;
+	    	flow2->flow_srcmask.s_addr = INADDR_BROADCAST;
+	    	flow2->flow_dstmask.s_addr = emp->em_ena_idmask.s_addr;
+	    	flow2->flow_proto = emp->em_ena_protocol;
+	    	flow2->flow_sport = emp->em_ena_sport;
+	    	flow2->flow_dport = emp->em_ena_dport;
+
+	    	put_flow(flow2, tdbp);
+	    }
 
 	    flow->flow_src.s_addr = emp->em_ena_isrc.s_addr;
 	    flow->flow_dst.s_addr = emp->em_ena_idst.s_addr;
@@ -501,6 +534,14 @@ va_dcl
 	      	  encapnetmask.sen_dport = 0xffff;
 	    }
 
+	    /* If this is set, delete any old route for this flow */
+	    if (emp->em_ena_flags & ENABLE_FLAG_REPLACE)
+	      rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
+			(struct sockaddr *) &encapgw,
+			(struct sockaddr *) &encapnetmask,
+			RTF_UP | RTF_GATEWAY | RTF_STATIC,
+			(struct rtentry **) 0);
+
 	    /* Add the entry in the routing table */
 	    error = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
 			      (struct sockaddr *) &encapgw,
@@ -511,7 +552,45 @@ va_dcl
 	    if (error)
 	    {
 		delete_flow(flow, tdbp);
+		if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+		  delete_flow(flow2, tdbp);
 		SENDERR(error);
+	    }
+
+	    /* If this is a "local" packet flow */
+	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+	    {
+		encapdst.sen_ip_src.s_addr = INADDR_ANY;
+		encapnetmask.sen_ip_src.s_addr = INADDR_BROADCAST;
+
+		if (emp->em_ena_flags & ENABLE_FLAG_REPLACE)
+		  rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
+			    (struct sockaddr *) &encapgw,
+			    (struct sockaddr *) &encapnetmask,
+			    RTF_UP | RTF_GATEWAY | RTF_STATIC,
+			    (struct rtentry **) 0);
+
+		error = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
+				  (struct sockaddr *) &encapgw,
+				  (struct sockaddr *) &encapnetmask,
+				  RTF_UP | RTF_GATEWAY | RTF_STATIC,
+				  (struct rtentry **) 0);
+
+	    	if (error)
+	    	{
+		    encapdst.sen_ip_src.s_addr = emp->em_ena_isrc.s_addr;
+		    encapnetmask.sen_ip_src.s_addr = emp->em_ena_ismask.s_addr;
+
+		    rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
+			      (struct sockaddr *) &encapgw,
+			      (struct sockaddr *) &encapnetmask,
+			      RTF_UP | RTF_GATEWAY | RTF_STATIC,
+			      (struct rtentry **) 0);
+
+		    delete_flow(flow, tdbp);
+		    delete_flow(flow2, tdbp);
+		    SENDERR(error);
+	    	}
 	    }
 
 	    error = 0;
@@ -532,6 +611,18 @@ va_dcl
 			     emp->em_ena_dport, tdbp);
 	    if (flow == (struct flow *) NULL)
 	      SENDERR(ENOENT);
+
+	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+	    {
+		alts.s_addr = INADDR_ANY;
+		altm.s_addr = INADDR_BROADCAST;
+
+		flow2 = find_flow(alts, altm, emp->em_ena_idst,
+				  emp->em_ena_idmask, emp->em_ena_protocol,
+				  emp->em_ena_sport, emp->em_ena_dport, tdbp);
+		if (flow2 == (struct flow *) NULL)
+		  SENDERR(ENOENT);
+	    }
 
             /* Setup the encap fields */
             encapdst.sen_len = SENT_IP4_LEN;
@@ -566,7 +657,7 @@ va_dcl
                   encapnetmask.sen_dport = 0xffff;
             }
 
-            /* Add the entry in the routing table */
+            /* Delete the entry */
             error = rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
 			      (struct sockaddr *) &encapgw,
 			      (struct sockaddr *) &encapnetmask,
@@ -574,6 +665,27 @@ va_dcl
                               (struct rtentry **) 0);
 
 	    delete_flow(flow, tdbp);
+
+	    if (error)
+	      SENDERR(error);
+
+	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+	    {
+
+		encapdst.sen_ip_src.s_addr = INADDR_ANY;
+		encapnetmask.sen_ip_src.s_addr = INADDR_BROADCAST;
+
+		error = rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
+				  (struct sockaddr *) &encapgw,
+				  (struct sockaddr *) &encapnetmask,
+				  RTF_UP | RTF_GATEWAY | RTF_STATIC,
+				  (struct rtentry **) 0);
+
+		delete_flow(flow2, tdbp);
+
+		if (error)
+		  SENDERR(error);
+	    }
 
 	    break;
 
