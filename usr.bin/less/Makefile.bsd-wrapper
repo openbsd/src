@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 1997/07/29 03:37:04 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 1997/08/01 20:12:30 kstailey Exp $
 
 #
 # less config
@@ -44,22 +44,21 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 .FORCE: .IGNORE
 
 .ifdef GLOBAL_AUTOCONF_CACHE
-config: .FORCE
-	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
-		--cache-file=${GLOBAL_AUTOCONF_CACHE}
-
-config.status:
-	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
-		--cache-file=${GLOBAL_AUTOCONF_CACHE}
+CF=     --cache-file=${GLOBAL_AUTOCONF_CACHE}
 .else
-config: .FORCE
-	-rm -f config.cache
-	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
-
-config.status:
-	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
+CF=
 .endif
 
+config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
+        -rm -f config.cache
+.endif
+        INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+                /bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
+
+config.status:
+        INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+                /bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
 
 gnu_build:
 	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} datadir=${DATADIR} \
