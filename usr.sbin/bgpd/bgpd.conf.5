@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.2 2003/12/24 11:38:56 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.3 2003/12/24 13:49:21 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -129,6 +129,8 @@ daemon should listen on.
 .Bd -literal -offset indent
 listen on 127.0.0.1
 .Ed
+.It Ar no fib-update
+Do not update the Forward Information Base aka the kernel routing table.
 .El
 .Sh NEIGHBORS AND GROUPS
 .Ar bgpd
