@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.2 1997/09/21 10:45:57 niklas Exp $	*/
+/*	$OpenBSD: time.h,v 1.3 1998/02/08 18:50:05 deraadt Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct tm *gmtime __P((const time_t *));
 struct tm *localtime __P((const time_t *));
 time_t mktime __P((struct tm *));
 size_t strftime __P((char *, size_t, const char *, const struct tm *));
+char *strptime __P((const char *, const char *, struct tm *));
 time_t time __P((time_t *));
 
 #if !defined(_ANSI_SOURCE)
