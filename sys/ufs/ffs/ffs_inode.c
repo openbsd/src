@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.11 1998/12/01 23:32:52 art Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.12 1999/02/26 03:56:30 art Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -49,6 +49,10 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -208,7 +212,11 @@ ffs_truncate(v)
 	if ((error = getinoquota(oip)) != 0)
 		return (error);
 #endif
+#if defined(UVM)
+	uvm_vnp_setsize(ovp, length);
+#else
 	vnode_pager_setsize(ovp, (u_long)length);
+#endif
 	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 	if (DOINGSOFTDEP(ovp)) {
 		if (length > 0) {
@@ -255,8 +263,13 @@ ffs_truncate(v)
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
+#if defined(UVM)
+		uvm_vnp_setsize(ovp, length);
+		(void) uvm_vnp_uncache(ovp);
+#else
 		vnode_pager_setsize(ovp, (u_long)length);
 		(void) vnode_pager_uncache(ovp);
+#endif
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -264,7 +277,11 @@ ffs_truncate(v)
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, &ts, &ts, 1));
 	}
+#if defined(UVM)
+	uvm_vnp_setsize(ovp, length);
+#else
 	vnode_pager_setsize(ovp, (u_long)length);
+#endif
 
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -287,7 +304,11 @@ ffs_truncate(v)
 			return (error);
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
+#if defined(UVM)
+		(void) uvm_vnp_uncache(ovp);
+#else
 		(void) vnode_pager_uncache(ovp);
+#endif
 		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.8 1998/11/12 04:30:02 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.9 1999/02/26 03:56:30 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -51,6 +51,10 @@
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
