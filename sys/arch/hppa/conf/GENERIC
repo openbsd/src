@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2004/08/14 05:09:46 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.55 2004/08/19 00:38:13 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -138,6 +138,8 @@ scsibus* at ahc?
 #siop*	at mainbus? irq 3		# NCR 53C720 (Fast/Wide Diff)
 siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
 scsibus* at siop?
+#ahd*	at pci? dev ? function ?	# Adaptec 79?? SCSI controllers
+#scsibus* at ahd?
 
 #em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 #ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
