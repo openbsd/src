@@ -1,85 +1,70 @@
-.\"	$OpenBSD: mtd.4,v 1.3 2003/08/20 18:45:44 mickey Exp $
-.\"	$NetBSD: mtd.4,v 1.3 2003/06/26 10:27:25 wiz Exp $
+.\" $OpenBSD: mtd.4,v 1.4 2003/09/25 22:09:03 mickey Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
 .\" All rights reserved.
-.\"
-.\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Peter Bex <Peter.Bex@student.kun.nl>.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\"    notice unmodified, this list of conditions, and the following
+.\"    disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"        This product includes software developed by the NetBSD
-.\"        Foundation, Inc. and its contributors.
-.\" 4. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-.\" POSSIBILITY OF SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
-.Dd November 8, 2002
+.Dd August 31, 2003
 .Dt MTD 4
 .Os
 .Sh NAME
 .Nm mtd
-.Nd Driver for Myson Technologies MTD803 3-in-1 Fast Ethernet board
+.Nd "Myson Technology MTD800/MTD803/MTD891 Ethernet driver"
 .Sh SYNOPSIS
-.Cd "mtd* at pci?"
+.Cd "mtd* at pci? dev ? function ?"
 .Cd "mtdphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports the MTD803 PCI Ethernet chip.
+driver provides support for Myson MTD800/MTD803 Fast Ethernet and
+MTD891 Gigabit Ethernet chips.
 .Pp
 Supported models include:
 .Pp
 .Bl -bullet -compact
 .It
-Safeway Lancard SW-10/100 PCI (model 117204).
+Safeway Lancard SW-10/100 PCI (model 117204)
 .It
 Surecom EP-320X-S
-.\" Please note that some cards sold under this name are supported by
-.\" .Xr rtk 4
-.\" instead.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr mii 4 ,
 .Xr mtdphy 4 ,
 .Xr pci 4 ,
-.\" .Xr rtk 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
-driver appeared in
+driver first appeared in
 .Ox 3.4 .
 .Sh AUTHORS
-.An Peter Bex Aq Peter.Bex@student.kun.nl
+The
+.Nm
+driver was written by
+.An Oleg Safiullin <form@pdp11.org.ru>
 .Sh BUGS
-This driver has not been tested on any architecture besides i386.
-It does not handle DMA cache flushes at all, so it will very likely
-not work on other architectures that require this.
-.Pp
-Power management is missing.
-.Pp
-A cardbus variant is rumored to exist, but support for it has not been
-added to the driver yet.
+The
+.Nm
+driver does not support Power Management.
