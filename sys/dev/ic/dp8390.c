@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.17 2001/07/09 17:22:12 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.18 2001/08/18 16:50:03 aaron Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -221,6 +221,9 @@ dp8390_stop(sc)
 	while (((NIC_GET(regt, regh,
 	    ED_P0_ISR) & ED_ISR_RST) == 0) && --n)
 		;
+
+	if (sc->stop_card != NULL)
+		(*sc->stop_card)(sc);
 }
 
 /*

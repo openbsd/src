@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.53 2001/08/18 16:19:01 aaron Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.54 2001/08/18 16:50:03 aaron Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -648,6 +648,7 @@ again:
 		dsc->sc_mediachange = ax88190_mediachange;
 		dsc->sc_mediastatus = ax88190_mediastatus;
 		dsc->init_card = ax88190_init_card;
+		dsc->stop_card = ax88190_stop_card;
 		dsc->sc_media_init = ax88190_media_init;
 		dsc->sc_media_fini = ax88190_media_fini;
 
@@ -674,6 +675,7 @@ again:
 		dsc->sc_mediachange = dl10019_mediachange;
 		dsc->sc_mediastatus = dl10019_mediastatus;
 		dsc->init_card = dl10019_init_card;
+		dsc->stop_card = dl10019_stop_card;
 		dsc->sc_media_init = dl10019_media_init;
 		dsc->sc_media_fini = dl10019_media_fini;
 	}
