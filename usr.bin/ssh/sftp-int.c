@@ -25,7 +25,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.65 2003/11/21 11:57:03 djm Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.66 2004/01/13 09:25:05 djm Exp $");
 
 #include <glob.h>
 
@@ -42,6 +42,9 @@ RCSID("$OpenBSD: sftp-int.c,v 1.65 2003/11/21 11:57:03 djm Exp $");
 
 /* File to read commands from */
 extern FILE *infile;
+
+/* Are we in batchfile mode? */
+extern int batchmode;
 
 /* Size of buffer used when copying files */
 extern size_t copy_buffer_len;
@@ -1169,14 +1172,16 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 		if (fgets(cmd, sizeof(cmd), infile) == NULL) {
 			printf("\n");
 			break;
-		} else if (infile != stdin) /* Bluff typing */
+		}
+
+		if (batchmode) /* Echo command */
 			printf("%s", cmd);
 
 		cp = strrchr(cmd, '\n');
 		if (cp)
 			*cp = '\0';
 
-		err = parse_dispatch_command(conn, cmd, &pwd, infile != stdin);
+		err = parse_dispatch_command(conn, cmd, &pwd, batchmode);
 		if (err != 0)
 			break;
 	}

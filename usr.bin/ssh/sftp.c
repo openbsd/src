@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.38 2003/10/08 08:27:36 jmc Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.39 2004/01/13 09:25:05 djm Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -37,7 +37,8 @@ RCSID("$OpenBSD: sftp.c,v 1.38 2003/10/08 08:27:36 jmc Exp $");
 #include "sftp-client.h"
 #include "sftp-int.h"
 
-FILE* infile;
+FILE* infile = stdin;
+int batchmode = 0;
 size_t copy_buffer_len = 32768;
 size_t num_requests = 16;
 static pid_t sshpid = -1;
@@ -134,7 +135,6 @@ main(int argc, char **argv)
 	addargs(&args, "-oForwardAgent no");
 	addargs(&args, "-oClearAllForwardings yes");
 	ll = SYSLOG_LEVEL_INFO;
-	infile = stdin;		/* Read from STDIN unless changed by -b */
 
 	while ((ch = getopt(argc, argv, "1hvCo:s:S:b:B:F:P:R:")) != -1) {
 		switch (ch) {
@@ -164,13 +164,15 @@ main(int argc, char **argv)
 			ssh_program = optarg;
 			break;
 		case 'b':
-			if (infile == stdin) {
-				infile = fopen(optarg, "r");
-				if (infile == NULL)
-					fatal("%s (%s).", strerror(errno), optarg);
-			} else
-				fatal("Filename already specified.");
+			if (batchmode)
+				fatal("Batch file already specified.");
+
+			/* Allow "-" as stdin */
+			if (strcmp(optarg, "-") != 0 && 
+			   (infile = fopen(optarg, "r")) == NULL)
+				fatal("%s (%s).", strerror(errno), optarg);
 			showprogress = 0;
+			batchmode = 1;
 			break;
 		case 'P':
 			sftp_direct = optarg;
@@ -234,13 +236,15 @@ main(int argc, char **argv)
 		    sftp_server : "sftp"));
 		args.list[0] = ssh_program;
 
-		fprintf(stderr, "Connecting to %s...\n", host);
+		if (!batchmode)
+			fprintf(stderr, "Connecting to %s...\n", host);
 		connect_to_server(ssh_program, args.list, &in, &out);
 	} else {
 		args.list = NULL;
 		addargs(&args, "sftp-server");
 
-		fprintf(stderr, "Attaching to %s...\n", sftp_direct);
+		if (!batchmode)
+			fprintf(stderr, "Attaching to %s...\n", sftp_direct);
 		connect_to_server(sftp_direct, args.list, &in, &out);
 	}
 
@@ -248,7 +252,7 @@ main(int argc, char **argv)
 
 	close(in);
 	close(out);
-	if (infile != stdin)
+	if (batchmode)
 		fclose(infile);
 
 	while (waitpid(sshpid, NULL, 0) == -1)
