@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.24 2002/12/22 18:29:56 grange Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.25 2002/12/23 09:36:59 grange Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -75,11 +75,11 @@ struct valinfo {
 	const char *string;
 };
 
-int	main(int, char *[]);
-void	usage(void);
-void	ata_command(struct atareq *);
-void	print_bitinfo(const char *, u_int, struct bitinfo *);
-int	strtoval(const char *, struct valinfo *);
+int  main(int, char *[]);
+__dead void usage(void);
+void ata_command(struct atareq *);
+void print_bitinfo(const char *, u_int, struct bitinfo *);
+int  strtoval(const char *, struct valinfo *);
 const char *valtostr(int, struct valinfo *);
 
 int	fd;				/* file descriptor for device */
@@ -378,8 +378,8 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
-usage(void)
+__dead void
+usage()
 {
 
 	fprintf(stderr, "usage: %s <device> <command> [arg [...]]\n",
@@ -395,9 +395,7 @@ ata_command(struct atareq *req)
 {
 	int error;
 
-	error = ioctl(fd, ATAIOCCOMMAND, req);
-
-	if (error == -1)
+	if ((error = ioctl(fd, ATAIOCCOMMAND, req)) == -1)
 		err(1, "ATAIOCCOMMAND failed");
 
 	switch (req->retsts) {
@@ -405,23 +403,18 @@ ata_command(struct atareq *req)
 	case ATACMD_OK:
 		return;
 	case ATACMD_TIMEOUT:
-		fprintf(stderr, "ATA command timed out\n");
-		exit(1);
+		errx(1, "ATA command timed out");
 	case ATACMD_DF:
-		fprintf(stderr, "ATA device returned a Device Fault\n");
-		exit(1);
+		errx(1, "ATA device returned a Device Fault");
 	case ATACMD_ERROR:
 		if (req->error & WDCE_ABRT)
-			fprintf(stderr, "ATA device returned Aborted "
-			    "Command\n");
+			errx(1, "ATA device returned Aborted Command");
 		else
-			fprintf(stderr, "ATA device returned error register "
-			    "%0x\n", req->error);
-		exit(1);
+			errx(1, "ATA device returned error register %0x",
+			    req->error);
 	default:
-		fprintf(stderr, "ATAIOCCOMMAND returned unknown result code "
-		    "%d\n", req->retsts);
-		exit(1);
+		errx(1, "ATAIOCCOMMAND returned unknown result code %d",
+		    req->retsts);
 	}
 }
 
@@ -447,8 +440,8 @@ strtoval(const char *str, struct valinfo *vinfo)
 {
 	for (; vinfo->string != NULL; vinfo++)
 		if (strcmp(str, vinfo->string) == 0)
-			return vinfo->value;
-	return -1;
+			return (vinfo->value);
+	return (-1);
 }
 
 /*
@@ -461,29 +454,44 @@ valtostr(int val, struct valinfo *vinfo)
 {
 	for (; vinfo->string != NULL; vinfo++)
 		if (val == vinfo->value)
-			return vinfo->string;
-	return NULL;
+			return (vinfo->string);
+	return (NULL);
 }
 
 /*
  * DEVICE COMMANDS
+ */
+
+/*
+ * device dump:
+ *
+ * extract issued ATA requests from the log buffer
  */
 void
 device_dump(int argc, char *argv[])
 {
 	unsigned char buf[131072];
 	int error;
-	atagettrace_t agt = { sizeof(buf), &buf, 0 };
+	atagettrace_t agt;
 
-	error = ioctl(fd, ATAIOGETTRACE, &agt);
-	if (error == -1) {
+	if (argc != 1)
+		goto usage;
+
+	memset(&agt, 0, sizeof(agt));
+	agt.buf_size = sizeof(buf);
+	agt.buf = buf;
+
+	if ((error = ioctl(fd, ATAIOGETTRACE, &agt)) == -1)
 		err(1, "ATAIOGETTRACE failed");
-	}
 
 	write(1, agt.buf, agt.bytes_copied);
 	fprintf(stderr, "%d bytes written\n", agt.bytes_copied);
 
 	return;
+
+usage:
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
+	exit(1);
 }
 
 /*
@@ -574,7 +582,7 @@ device_identify(int argc, char *argv[])
 	print_bitinfo("\t%s\n", inqbuf->atap_capabilities1, ata_caps);
 
 	if (inqbuf->atap_ata_major != 0 && inqbuf->atap_ata_major != 0xffff) {
-		printf("Device supports following standards:\n");
+		printf("Device supports the following standards:\n");
 		print_bitinfo("%s ", inqbuf->atap_ata_major, ata_vers);
 		printf("\n");
 	}
@@ -661,13 +669,14 @@ device_sec_setpass(int argc, char *argv[])
 		pwd.ctrl |= SEC_PASSWORD_MASTER;
 	else
 		goto usage;
-	if (argc == 3)
+	if (argc == 3) {
 		if (strcmp(argv[2], "high") == 0)
 			pwd.ctrl |= SEC_LEVEL_HIGH;
 		else if (strcmp(argv[2], "maximum") == 0)
 			pwd.ctrl |= SEC_LEVEL_MAX;
 		else
 			goto usage;
+	}
 
 	/*
 	 * Issue IDENTIFY command to obtain master password
@@ -710,6 +719,7 @@ usage:
 	fprintf(stderr, "usage: %s <device> %s user high | maximum\n",
 	    __progname, argv[0]);
 	fprintf(stderr, "usage: %s <device> %s master\n", __progname, argv[0]);
+	exit(1);
 }
 
 /*
@@ -751,6 +761,7 @@ device_sec_unlock(int argc, char *argv[])
 usage:
 	fprintf(stderr, "usage: %s <device> %s user | master\n", __progname,
 	    argv[0]);
+	exit(1);
 }
 
 /*
@@ -806,6 +817,7 @@ device_sec_erase(int argc, char *argv[])
 usage:
 	fprintf(stderr, "usage: %s <device> %s user | master [enhanced]\n",
 	    __progname, argv[0]);
+	exit(1);
 }
 
 /*
@@ -829,6 +841,7 @@ device_sec_freeze(int argc, char *argv[])
 	return;
 usage:
 	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
+	exit(1);
 }
 
 /*
@@ -870,12 +883,13 @@ device_sec_disablepass(int argc, char *argv[])
 usage:
 	fprintf(stderr, "usage: %s <device> %s user | master\n", __progname,
 	    argv[0]);
+	exit(1);
 }
 
 char *
 sec_getpass(int ident, int confirm)
 {
-	char *pass;
+	char *pass, buf[33];
 
 	if ((pass = getpass(ident ? "Master password:" :
 	    "User password:")) == NULL)
@@ -883,20 +897,15 @@ sec_getpass(int ident, int confirm)
 	if (strlen(pass) > 32)
 		errx(1, "password too long");
 	if (confirm) {
-		char *pass2;
-
-		pass2 = strdup(pass);
-		if (pass2 == NULL)
-			err(1, "strdup()");
+		strlcpy(buf, pass, sizeof(buf));
 		if ((pass = getpass(ident ? "Retype master password:" :
 		    "Retype user password:")) == NULL)
 			err(1, "getpass()");
-		if (strcmp(pass, pass2) != 0)
+		if (strcmp(pass, buf) != 0)
 			errx(1, "password mismatch");
-		free(pass2);
 	}
 
-	return pass;
+	return (pass);
 }
 
 /*
@@ -974,11 +983,9 @@ device_smart_status(int argc, char *argv[])
 	if (req.cylinder == 0xc24f)
 		printf("No SMART threshold exceeded\n");
 	else if (req.cylinder == 0x2cf4) {
-		fprintf(stderr,"SMART threshold exceeded!\n");
-		exit(2);
+		errx(2, "SMART threshold exceeded!");
 	} else {
-		fprintf(stderr, "Unknown response %02x!\n", req.cylinder);
-		exit(1);
+		errx(1, "Unknown response %02x!", req.cylinder);
 	}
 
 	return;
@@ -1074,10 +1081,8 @@ device_smart_read(int argc, char *argv[])
 
 	ata_command(&req);
 
-	if (smart_cksum((u_int8_t *)&data, sizeof(data)) != 0) {
-		fprintf(stderr, "Checksum mismatch\n");
-		exit(1);
-	}
+	if (smart_cksum((u_int8_t *)&data, sizeof(data)) != 0)
+		errx(1, "Checksum mismatch");
 
 	printf("Off-line data collection:\n");
 	printf("    status: %s\n",
@@ -1155,10 +1160,8 @@ device_smart_readlog(int argc, char *argv[])
 		struct smart_log_sum *data = (struct smart_log_sum *)inbuf;
 		int i, n, nerr;
 
-		if (smart_cksum(inbuf, sizeof(inbuf)) != 0) {
-			fprintf(stderr, "Checksum mismatch\n");
-			exit(1);
-		}
+		if (smart_cksum(inbuf, sizeof(inbuf)) != 0)
+			errx(1, "Checksum mismatch");
 
 		if (data->index == 0) {
 			printf("No log entries\n");
@@ -1181,16 +1184,14 @@ device_smart_readlog(int argc, char *argv[])
 			smart_print_errdata(&data->errdata[i--]);
 			if (i == -1)
 				i = 4;
-		} while (++n < (nerr > 5 ? 5 :  nerr));
+		} while (++n < (nerr > 5 ? 5 : nerr));
 	} else if (strcmp(argv[1], "comp") == 0) {
 		struct smart_log_comp *data = (struct smart_log_comp *)inbuf;
 		u_int8_t *newbuf;
 		int i, n, nerr, nsect;
 
-		if (smart_cksum(inbuf, sizeof(inbuf)) != 0) {
-			fprintf(stderr, "Checksum mismatch\n");
-			exit(1);
-		}
+		if (smart_cksum(inbuf, sizeof(inbuf)) != 0)
+			errx(1, "Checksum mismatch");
 
 		if (data->index == 0) {
 			printf("No log entries\n");
@@ -1238,10 +1239,8 @@ device_smart_readlog(int argc, char *argv[])
 		struct smart_log_self *data = (struct smart_log_self *)inbuf;
 		int i, n;
 
-		if (smart_cksum(inbuf, sizeof(inbuf)) != 0) {
-			fprintf(stderr, "Checksum mismatch\n");
-			exit(1);
-		}
+		if (smart_cksum(inbuf, sizeof(inbuf)) != 0)
+			errx(1, "Checksum mismatch");
 
 		if (data->index == 0) {
 			printf("No log entries\n");
@@ -1335,7 +1334,7 @@ smart_cksum(u_int8_t *data, int len)
 	for (i = 0; i < len; i++)
 		sum += data[i];
 
-	return sum;
+	return (sum);
 }
 
 /*
@@ -1438,11 +1437,9 @@ device_acoustic(int argc, char *argv[])
 
 	acoustic = strtoul(argv[1], &end, 0);
 
-	if (*end != '\0' || acoustic > 126) {
-		fprintf(stderr, "Invalid acoustic management value: \"%s\" "
-		    "(valid values range from 0 to 126)\n", argv[1]);
-		exit(1);
-	}
+	if (*end != '\0' || acoustic > 126)
+		errx(1, "Invalid acoustic management value: \"%s\" "
+		    "(valid values range from 0 to 126)", argv[1]);
 
 	memset(&req, 0, sizeof(req));
 
@@ -1479,12 +1476,9 @@ device_apm(int argc, char *argv[])
 
 	power = strtoul(argv[1], &end, 0);
 
-	if (*end != '\0' || power > 253) {
-		fprintf(stderr, "Invalid advanced power management value: "
-		    "\"%s\" (valid values range from 0 to 253)\n",
-		    argv[1]);
-		exit(1);
-	}
+	if (*end != '\0' || power > 253)
+		errx(1, "Invalid advanced power management value: "
+		    "\"%s\" (valid values range from 0 to 253)", argv[1]);
 
 	memset(&req, 0, sizeof(req));
 
@@ -1548,8 +1542,7 @@ device_feature(int argc, char *argv[])
 	return;
 
 usage:
-	fprintf(stderr, "usage: %s <device> %s\n", __progname,
-	    argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -1569,16 +1562,12 @@ device_setidle(int argc, char *argv[])
 
 	idle = strtoul(argv[1], &end, 0);
 
-	if (*end != '\0' || idle > 19800) {
-		fprintf(stderr, "Invalid idle time: \"%s\" "
-		    "(valid values range from 1 to 19800)\n", argv[1]);
-		exit(1);
-	}
+	if (*end != '\0' || idle > 19800)
+		errx(1, "Invalid idle time: \"%s\" "
+		    "(valid values range from 1 to 19800)", argv[1]);
 
-	if (idle != 0 && idle < 5) {
-		fprintf(stderr, "Idle timer must be at least 5 seconds\n");
-		exit(1);
-	}
+	if (idle != 0 && idle < 5)
+		errx(1, "Idle timer must be at least 5 seconds");
 
 	memset(&req, 0, sizeof(req));
 
