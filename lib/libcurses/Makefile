@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.16 1997/11/28 23:02:29 millert Exp $
+#	$OpenBSD: Makefile,v 1.17 1997/11/28 23:05:05 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
-#TRACE=-DTRACE
+#CURSESTRACE=-DTRACE
 
 LIB=    curses
 SRCS=	hardscroll.c hashmap.c lib_acs.c lib_addch.c lib_addstr.c \
@@ -17,10 +17,10 @@ SRCS=	hardscroll.c hashmap.c lib_acs.c lib_addch.c lib_addstr.c \
 	lib_touch.c lib_tstp.c lib_twait.c lib_vidattr.c lib_window.c \
 	resizeterm.c unctrl.c wresize.c
 SRCS+=	expanded.c lib_gen.c lib_keyname.c
-.ifdef ${TRACE}
+.if defined(${CURSESTRACE})
 SRCS+=	lib_trace.c lib_traceatr.c lib_tracechr.c lib_tracedmp.c lib_tracemse.c
 .endif
-CFLAGS+= -I. -I${.CURDIR} -DTERMIOS -DEXTERN_TERMINFO ${TRACE}
+CFLAGS+= -I. -I${.CURDIR} -DTERMIOS -DEXTERN_TERMINFO ${CURSESTRACE}
 LDADD+=  -ltermlib
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
