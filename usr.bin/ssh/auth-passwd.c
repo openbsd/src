@@ -15,7 +15,7 @@ the password is valid for the user.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-passwd.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $");
+RCSID("$Id: auth-passwd.c,v 1.4 1999/09/29 22:22:16 dugsong Exp $");
 
 #ifdef HAVE_SCO_ETC_SHADOW
 # include <sys/security.h>
@@ -63,6 +63,7 @@ int auth_password(const char *server_user, const char *password)
   struct passwd *pw;
   char *encrypted_password;
   char correct_passwd[200];
+  char *saved_pw_name, *saved_pw_passwd;
 
   if (*password == '\0' && options.permit_empty_passwd == 0)
   {
@@ -75,6 +76,9 @@ int auth_password(const char *server_user, const char *password)
   if (!pw)
     return 0;
 
+  saved_pw_name = xstrdup(pw->pw_name);
+  saved_pw_passwd = xstrdup(pw->pw_passwd);
+  
 #if defined(KRB4)
   /* Support for Kerberos v4 authentication - Dug Song <dugsong@UMICH.EDU> */
   if (options.kerberos_authentication)
@@ -227,18 +231,18 @@ int auth_password(const char *server_user, const char *password)
 #endif /* HAVE_SECURID */
 
   /* Save the encrypted password. */
-  strlcpy(correct_passwd, pw->pw_passwd, sizeof(correct_passwd));
+  strlcpy(correct_passwd, saved_pw_passwd, sizeof(correct_passwd));
 
 #ifdef HAVE_OSF1_C2_SECURITY
-    osf1c2_getprpwent(correct_passwd, pw->pw_name, sizeof(correct_passwd));
+    osf1c2_getprpwent(correct_passwd, saved_pw_name, sizeof(correct_passwd));
 #else /* HAVE_OSF1_C2_SECURITY */
   /* If we have shadow passwords, lookup the real encrypted password from
      the shadow file, and replace the saved encrypted password with the
      real encrypted password. */
 #ifdef HAVE_SCO_ETC_SHADOW
   {
-    struct pr_passwd *pr = getprpwnam(pw->pw_name);
-    pr = getprpwnam(pw->pw_name);
+    struct pr_passwd *pr = getprpwnam(saved_pw_name);
+    pr = getprpwnam(saved_pw_name);
     if (pr)
       strlcpy(correct_passwd, pr->ufld.fd_encrypt, sizeof(correct_passwd));
     endprpwent();
@@ -246,7 +250,7 @@ int auth_password(const char *server_user, const char *password)
 #else /* HAVE_SCO_ETC_SHADOW */
 #ifdef HAVE_ETC_SHADOW
   {
-    struct spwd *sp = getspnam(pw->pw_name);
+    struct spwd *sp = getspnam(saved_pw_name);
     if (sp)
       strlcpy(correct_passwd, sp->sp_pwdp, sizeof(correct_passwd));
     endspent();
@@ -254,7 +258,7 @@ int auth_password(const char *server_user, const char *password)
 #else /* HAVE_ETC_SHADOW */
 #ifdef HAVE_ETC_SECURITY_PASSWD_ADJUNCT
   {
-    struct passwd_adjunct *sp = getpwanam(pw->pw_name);
+    struct passwd_adjunct *sp = getpwanam(saved_pw_name);
     if (sp)
       strnlpy(correct_passwd, sp->pwa_passwd, sizeof(correct_passwd));
     endpwaent();
@@ -308,6 +312,9 @@ int auth_password(const char *server_user, const char *password)
       return 1; /* The user has no password and an empty password was tried. */
     }
 
+  xfree(saved_pw_name);
+  xfree(saved_pw_passwd);
+  
   /* Encrypt the candidate password using the proper salt. */
 #ifdef HAVE_OSF1_C2_SECURITY
   encrypted_password = (char *)osf1c2crypt(password,
