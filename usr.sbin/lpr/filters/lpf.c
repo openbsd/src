@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpf.c,v 1.8 2002/06/09 03:56:29 millert Exp $	*/
+/*	$OpenBSD: lpf.c,v 1.9 2003/03/27 16:36:02 millert Exp $	*/
 /*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lpf.c,v 1.8 2002/06/09 03:56:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpf.c,v 1.9 2003/03/27 16:36:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 	int done, linedone, maxrep, ch;
 	char *limit;
 
-	while ((ch = getopt(argc, argv, "chr:i:l:n:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "crh:i:l:n:w:")) != -1) {
 		switch (ch) {
 		case 'n':
 			name = optarg;
