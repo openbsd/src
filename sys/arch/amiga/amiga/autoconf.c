@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 1997/09/18 13:39:32 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 1997/10/07 10:58:42 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.56 1997/08/31 16:33:13 is Exp $	*/
 
 /*
@@ -115,6 +115,12 @@ configure()
 	swapconf();
 #ifdef DEBUG_KERNEL_START
 	printf("survived swap device search\n");
+#endif
+	dumpconf();
+	if (dumplo < 0)
+		dumplo = 0;
+#ifdef DEBUG_KERNEL_START
+	printf("survived dump device search\n");
 #endif
 	cold = 0;
 }
@@ -305,7 +311,7 @@ swapconf()
 	u_int maj;
 	int nb;
 
-	for (swp = swdevt; swp->sw_dev > 0; swp++) {
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		maj = major(swp->sw_dev);
 
 		if (maj > nblkdev)
@@ -321,10 +327,6 @@ swapconf()
 		}
 		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 	}
-	dumpconf();
-	if (dumplo < 0)
-		dumplo = 0;
-
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */
