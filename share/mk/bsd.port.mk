@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.25 1998/02/19 20:41:02 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.26 1998/03/27 03:30:43 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -115,6 +115,10 @@ OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 # MTREE_FILE	- The name of the mtree file (default: /etc/mtree/BSD.x11.dist
 #				  if USE_IMAKE or USE_X11 is set, /etc/mtree/BSD.local.dist
 #				  otherwise.)
+# COMES_WITH	- The first version that a port was made part of the
+#				  standard OpenBSD distribution.  If the current OpenBSD
+#				  version is >= this version then a notice will be
+#				  displayed instead the port being generated.
 #
 # NO_BUILD		- Use a dummy (do-nothing) build target.
 # NO_CONFIGURE	- Use a dummy (do-nothing) configure target.
@@ -271,7 +275,19 @@ OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
-.if defined(ONLY_FOR_ARCHS)
+# Get the operating system type
+OPSYS!=	uname -s
+
+.if defined(COMES_WITH)
+OS_VER!=	uname -r
+.if ( ${OS_VER} >= ${COMES_WITH} )
+__NOT_NEEDED!= basename ${.CURDIR}
+.endif
+.endif
+.if defined(__NOT_NEEDED)
+fetch fetch-list extract patch clean clean-depends configure build install reinstall package describe checkpatch checksum makesum all:
+	@echo "${__NOT_NEEDED} comes with ${OPSYS} as of release ${COMES_WITH}
+.elif defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
 .if ${MACHINE} == "${__ARCH}"
 __ARCH_OK=	1
@@ -291,9 +307,6 @@ fetch fetch-list extract patch clean clean-depends configure build install reins
 
 # Get the architecture
 ARCH!=	uname -m
-
-# Get the operating system type
-OPSYS!=	uname -s
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
