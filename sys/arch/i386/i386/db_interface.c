@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2002/02/18 23:26:18 mickey Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -119,8 +119,8 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
-	regs->tf_es     = ddb_regs.tf_es;
-	regs->tf_ds     = ddb_regs.tf_ds;
+	regs->tf_es     = ddb_regs.tf_es & 0xffff;
+	regs->tf_ds     = ddb_regs.tf_ds & 0xffff;
 	regs->tf_edi    = ddb_regs.tf_edi;
 	regs->tf_esi    = ddb_regs.tf_esi;
 	regs->tf_ebp    = ddb_regs.tf_ebp;
@@ -129,12 +129,12 @@ kdb_trap(type, code, regs)
 	regs->tf_ecx    = ddb_regs.tf_ecx;
 	regs->tf_eax    = ddb_regs.tf_eax;
 	regs->tf_eip    = ddb_regs.tf_eip;
-	regs->tf_cs     = ddb_regs.tf_cs;
+	regs->tf_cs     = ddb_regs.tf_cs & 0xffff;
 	regs->tf_eflags = ddb_regs.tf_eflags;
 	if (!KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/* ring transit - saved esp and ss valid */
 		regs->tf_esp    = ddb_regs.tf_esp;
-		regs->tf_ss     = ddb_regs.tf_ss;
+		regs->tf_ss     = ddb_regs.tf_ss & 0xffff;
 	}
 
 	return (1);
