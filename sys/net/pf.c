@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.130 2001/08/19 19:08:35 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.131 2001/08/19 19:46:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1840,7 +1840,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (rm != NULL) {
 		rm->packets++;
-		rm->bytes += h->ip_len - off - (th->th_off << 2);
+		rm->bytes += h->ip_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -1931,7 +1931,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->creation = pftv.tv_sec;
 		s->expire = pftv.tv_sec + 60;
 		s->packets = 1;
-		s->bytes = len;
+		s->bytes = h->ip_len;
 		pf_insert_state(s);
 	}
 
@@ -2022,7 +2022,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (rm != NULL) {
 		rm->packets++;
-		rm->bytes += h->ip_len - off - sizeof(*uh);
+		rm->bytes += h->ip_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2104,7 +2104,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->creation = pftv.tv_sec;
 		s->expire = pftv.tv_sec + 30;
 		s->packets = 1;
-		s->bytes = len;
+		s->bytes = h->ip_len;
 		pf_insert_state(s);
 	}
 
@@ -2166,7 +2166,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (rm != NULL) {
 		rm->packets++;
-		rm->bytes +=  h->ip_len - off - ICMP_MINLEN;
+		rm->bytes +=  h->ip_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2222,7 +2222,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->creation = pftv.tv_sec;
 		s->expire = pftv.tv_sec + 20;
 		s->packets = 1;
-		s->bytes = len;
+		s->bytes = h->ip_len;
 		pf_insert_state(s);
 	}
 
@@ -2366,7 +2366,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	    /* Acking not more than one window forward */
 
 		(*state)->packets++;
-		(*state)->bytes += len;
+		(*state)->bytes += h->ip_len;
 
 		/* update max window */
 		if (src->max_win < win)
@@ -2431,7 +2431,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 */
 
 		(*state)->packets++;
-		(*state)->bytes += len;
+		(*state)->bytes += h->ip_len;
 
 		/* update max window */
 		if (src->max_win < win)
@@ -2492,7 +2492,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	}
 	if ((*state)->rule != NULL) {
 		(*state)->rule->packets++;
-		(*state)->rule->bytes += len;
+		(*state)->rule->bytes += h->ip_len;
 	}
 	return (PF_PASS);
 }
@@ -2501,7 +2501,6 @@ int
 pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
     struct mbuf *m, int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
-	u_int16_t len = h->ip_len - off - sizeof(*uh);
 	struct pf_state_peer *src, *dst;
 	struct pf_tree_key key;
 
@@ -2527,7 +2526,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	}
 
 	(*state)->packets++;
-	(*state)->bytes += len;
+	(*state)->bytes += h->ip_len;
 
 	/* update states */
 	if (src->state < 1)
@@ -2556,7 +2555,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	if ((*state)->rule != NULL) {
 		(*state)->rule->packets++;
-		(*state)->rule->bytes += len;
+		(*state)->rule->bytes += h->ip_len;
 	}
 	return (PF_PASS);
 }
@@ -2565,8 +2564,6 @@ int
 pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
     struct mbuf *m, int ipoff, int off, struct ip *h, struct icmp *ih)
 {
-	u_int16_t len = h->ip_len - off - sizeof(*ih);
-
 	if (ih->icmp_type != ICMP_UNREACH &&
 	    ih->icmp_type != ICMP_SOURCEQUENCH &&
 	    ih->icmp_type != ICMP_REDIRECT &&
@@ -2593,7 +2590,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			return (PF_DROP);
 
 		(*state)->packets++;
-		(*state)->bytes += len;
+		(*state)->bytes += h->ip_len;
 		(*state)->expire = pftv.tv_sec + 10;
 
 		/* translate source/destination address, if needed */
@@ -2940,7 +2937,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule;
 			if (r != NULL) {
 				r->packets++;
-				r->bytes += h->ip_len - off - sizeof(ih);
+				r->bytes += h->ip_len;
 			}
 			log = s->log;
 		} else if (s == NULL)
