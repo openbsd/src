@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.30 2004/09/15 19:14:11 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.31 2004/09/15 19:21:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -354,7 +354,7 @@ ntp_adjtime(void)
 
 	if (offset_cnt > 0) {
 		offset_median /= offset_cnt;
-		imsg_compose(ibuf_main, IMSG_ADJTIME, 0,
+		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 		    &offset_median, sizeof(offset_median));
 
 		conf->status.reftime = gettime();
@@ -371,5 +371,5 @@ ntp_host_dns(char *name, u_int32_t peerid)
 	u_int16_t	dlen;
 
 	dlen = strlen(name) + 1;
-	imsg_compose(ibuf_main, IMSG_HOST_DNS, peerid, name, dlen);
+	imsg_compose(ibuf_main, IMSG_HOST_DNS, peerid, 0, name, dlen);
 }

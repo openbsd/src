@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.1 2004/05/31 13:46:16 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.2 2004/09/15 19:21:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,11 +24,6 @@
 #include <unistd.h>
 
 #include "ntpd.h"
-
-int		 imsg_compose_core(struct imsgbuf *, int, u_int32_t, void *,
-		     u_int16_t, pid_t);
-struct buf	*imsg_create_core(struct imsgbuf *, int, u_int32_t, u_int16_t,
-		     pid_t);
 
 void
 imsg_init(struct imsgbuf *ibuf, int fd)
@@ -97,47 +92,19 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 }
 
 int
-imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
-    u_int16_t dlen)
-{
-	return (imsg_compose_core(ibuf, type, peerid, data, dlen, ibuf->pid));
-}
-
-int
-imsg_compose_pid(struct imsgbuf *ibuf, int type, pid_t pid, void *data,
-    u_int16_t datalen)
-{
-	return (imsg_compose_core(ibuf, type, 0, data, datalen, pid));
-}
-
-int
-imsg_compose_core(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
-    u_int16_t datalen, pid_t pid)
+imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, pid_t pid,
+    void *data, u_int16_t datalen)
 {
 	struct buf	*wbuf;
-	struct imsg_hdr	 hdr;
 	int		 n;
 
-	hdr.len = datalen + IMSG_HEADER_SIZE;
-	hdr.type = type;
-	hdr.peerid = peerid;
-	hdr.pid = pid;
-	wbuf = buf_open(hdr.len);
-	if (wbuf == NULL) {
-		log_warn("imsg_compose: buf_open");
+	if ((wbuf = imsg_create(ibuf, type, peerid, datalen, pid)) == NULL)
+		return (-1);
+
+	if (imsg_add(wbuf, data, datalen) == -1) {
+		free(wbuf);
 		return (-1);
 	}
-	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1) {
-		log_warnx("imsg_compose: buf_add error");
-		buf_free(wbuf);
-		return (-1);
-	}
-	if (datalen)
-		if (buf_add(wbuf, data, datalen) == -1) {
-			log_warnx("imsg_compose: buf_add error");
-			buf_free(wbuf);
-			return (-1);
-		}
 
 	if ((n = buf_close(&ibuf->w, wbuf)) < 0) {
 			log_warnx("imsg_compose: buf_add error");
@@ -148,23 +115,18 @@ imsg_compose_core(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 }
 
 struct buf *
-imsg_create(struct imsgbuf *ibuf, int type, u_int32_t peerid, u_int16_t dlen)
-{
-	return (imsg_create_core(ibuf, type, peerid, dlen, ibuf->pid));
-}
-
-struct buf *
-imsg_create_pid(struct imsgbuf *ibuf, int type, pid_t pid, u_int16_t datalen)
-{
-	return (imsg_create_core(ibuf, type, 0, datalen, pid));
-}
-
-struct buf *
-imsg_create_core(struct imsgbuf *ibuf, int type, u_int32_t peerid,
-    u_int16_t datalen, pid_t pid)
+imsg_create(struct imsgbuf *ibuf, int type, u_int32_t peerid,
+    pid_t pid, u_int16_t datalen)
 {
 	struct buf	*wbuf;
 	struct imsg_hdr	 hdr;
+
+	if (datalen > MAX_IMSGSIZE - IMSG_HEADER_SIZE) {
+		log_warnx("imsg_create: len %u > MAX_IMSGSIZE; "
+		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
+		    type, peerid);
+		return (NULL);
+	}
 
 	hdr.len = datalen + IMSG_HEADER_SIZE;
 	hdr.type = type;
