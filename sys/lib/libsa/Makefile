@@ -12,7 +12,7 @@ CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
 
 # stand routines
 SRCS+=	alloc.c bcopy.c memcpy.c exit.c exec.c getfile.c gets.c globals.c \
-	printf.c strerror.c
+	printf.c strerror.c strcmp.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
