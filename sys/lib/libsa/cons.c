@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.8 1997/08/12 21:28:39 mickey Exp $	*/
+/*	$OpenBSD: cons.c,v 1.9 1997/08/13 14:18:09 niklas Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,6 +72,33 @@ cninit()
 	 * Turn on console
 	 */
 	(*cp->cn_init)(cp);
+}
+
+int
+cnset(dev)
+	dev_t dev;
+{
+	struct consdev *cp;
+
+	/*
+	 * Look for the specified console device and use it.
+	 */
+	for (cp = constab; cp->cn_probe; cp++) {
+		if (major(cp->cn_dev) == major(dev)) {
+			/* short-circuit noop */
+			if (cp == cn_tab && cp->cn_dev == dev)
+				return (0);
+			if (cp->cn_pri > CN_DEAD) {
+				cn_tab = cp;
+				cp->cn_dev = dev;
+				/* Turn it on.  */
+				(cp->cn_init)(cp);
+				return (0);
+			}
+			break;
+		}
+	}
+	return (1);
 }
 
 int

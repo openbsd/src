@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.28 1997/08/12 21:28:39 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.29 1997/08/13 14:18:10 niklas Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -179,9 +179,10 @@ ssize_t	null_write __P((struct open_file *f, void *buf,
 off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
 int	null_readdir __P((struct open_file *f, char *name));
-int	cons_probe __P((void));
 char	*ttyname __P((int)); /* match userland decl, but ignore !0 */
+dev_t	ttydev __P((char *));
 void	cninit __P((void));
+int	cnset __P((dev_t));
 void	cnputc __P((int));
 int	cngetc __P((void));
 int	cnischar __P((void));
