@@ -1,4 +1,4 @@
-/* $OpenBSD: in6.c,v 1.12 2000/02/04 18:13:35 itojun Exp $ */
+/* $OpenBSD: in6.c,v 1.13 2000/02/07 06:05:06 itojun Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -92,7 +92,7 @@
 #include <netinet/if_ether.h>
 
 #include <netinet6/nd6.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/mld6_var.h>
 #include <netinet6/ip6_mroute.h>
@@ -193,7 +193,7 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * loopback address.
 	 */
 	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
-		nrt->rt_ifa->ifa_refcnt--;
+		IFAFREE(nrt->rt_ifa);
 		ifa->ifa_refcnt++;
 		nrt->rt_ifa = ifa;
 	}
@@ -388,8 +388,6 @@ in6_len2mask(mask, len)
 		mask->s6_addr8[i] = (0xff00 >> (len % 8)) & 0xff;
 }
 
-int	in6_interfaces;		/* number of external internet interfaces */
-
 #define ifa2ia6(ifa)	((struct in6_ifaddr *)(ifa))
 #define ia62ifa(ia6)	((struct ifaddr *)(ia6))
 
@@ -540,12 +538,11 @@ in6_control(so, cmd, data, ifp, p)
 				oia->ia_next = ia;
 			} else
 				in6_ifaddr = ia;
+			ia->ia_ifa.ifa_refcnt++;
 
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
 				(struct ifaddr *)ia, ifa_list);
-
-			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-				in6_interfaces++;	/*XXX*/
+			oia->ia_next = ia;
 		}
 
 		if (cmd == SIOCAIFADDR_IN6) {
