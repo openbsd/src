@@ -1,0 +1,4 @@
+no nat on lo0 from 10.0.1.0/24 tag regress
+   nat on lo0 from 10.0.0.0/8 -> lo0
+block out on lo0 tagged regress
+
