@@ -107,6 +107,7 @@
 ./etc/sshd_config
 ./etc/ssl/openssl.cnf
 ./etc/ssl/x509v3.cnf
+./etc/sudoers
 ./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys
@@ -465,4 +466,3 @@
 ./var/www/icons/uuencoded.gif
 ./var/www/icons/world1.gif
 ./var/www/icons/world2.gif
-./etc/sudoers
