@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.54 2005/03/03 09:38:07 itojun Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.55 2005/03/03 09:49:22 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1664,6 +1664,11 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(25, ("%s: atu_txeof status=%d\n", USBDEVNAME(sc->atu_dev),
 	    status));
 
+	if (c->atu_mbuf != NULL) {
+		m_freem(c->atu_mbuf);
+		c->atu_mbuf = NULL;
+	}
+
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
@@ -1681,9 +1686,6 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		ifp->if_oerrors++;
 	else
 		ifp->if_opackets++;
-
-	m_freem(c->atu_mbuf);
-	c->atu_mbuf = NULL;
 
 	s = splnet();
 	SLIST_INSERT_HEAD(&sc->atu_cdata.atu_tx_free, c, atu_list);
@@ -1712,7 +1714,6 @@ int
 atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
     struct atu_chain *c, struct mbuf *m)
 {
-	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	int			len;
 	struct atu_tx_hdr	*h;
 	usbd_status		err;
@@ -1721,8 +1722,10 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
 
 	/* Don't try to send when we're shutting down the driver */
-	if (sc->sc_state != ATU_S_OK)
+	if (sc->sc_state != ATU_S_OK) {
+		m_freem(m);
 		return(EIO);
+	}
 
 	/*
 	 * Copy the mbuf data into a contiguous buffer, leaving
@@ -1753,7 +1756,10 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	c->atu_in_xfer = 1;
 	err = usbd_transfer(c->atu_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		atu_stop(ifp, 0);
+		DPRINTFN(25, ("%s: atu_tx_start: err=%d\n",
+		    USBDEVNAME(sc->atu_dev), err));
+		c->atu_mbuf = NULL;
+		m_freem(m);
 		return(EIO);
 	}
 
@@ -2207,7 +2213,7 @@ atu_watchdog(struct ifnet *ifp)
 		}
 	}
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		atu_start(ifp);
 	splx(s);
 
