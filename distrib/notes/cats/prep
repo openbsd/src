@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.2 2004/02/08 23:12:14 miod Exp $
+dnl	$OpenBSD: prep,v 1.3 2004/02/13 11:00:24 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of ABLE Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -9,33 +9,52 @@ A complete documentation on the ABLE firmware is available from Simtec at
 the following URL:
   http://www.simtec.co.uk/products/SWABLE/files/able-doc-allset/
 
+
+** Note!
+    You will need ABLE version 1.89 or better in order to be able
+    to boot OpenBSD/MACHINE. Firmware updates are available from
+    Simtec at the following URL:
+      http://www.simtec.co.uk/products/EB110ATX/resources.html
+
+
 For convenience, a few ABLE commands are described below:
 
-boot (hd0)bsd
-	boot the ELF file 'bsd' from the disk partition identified
-	by firmware as hd0.
+	boot (hd0)bsd
+		loads and boots the ELF file 'bsd' from the disk partition
+		identified by firmware as hd0.
 
-nvset variable value
-	sets a firmware environment variable.
+	nvset variable value
+		sets a firmware environment variable.
 
-nvsave
-	saves all variable changes to non-volatile memory.
+	nvsave
+		saves all variable changes to non-volatile memory.
 
-nvclear
-	restores environment variables defaults.
+	nvclear
+		restores environment variables defaults.
 
 The following environment variables control the system startup:
 
-boot.auto
-	when set to "true" (which is its default value), the system will
-	attempt to execute the command set in the "boot.cmd" variable
-	after "boot.timeout" seconds.
-boot.cmd
-	command used to auto-boot, such as "boot (hd0)bsd" to boot the
-	bsd kernel from the first hard disk drive.
-boot.timeout
-	delay until the system boots, in seconds
+	boot.auto
+		when set to "true" (which is its default value), the
+		system will attempt to execute the command set in the
+		"boot.cmd" variable after "boot.timeout" seconds, unless
+		the boot process is interrupted by a keypress.
 
-dnl XXX arguments to kernel
+	boot.cmd
+		command used to auto-boot, such as "boot (hd0)bsd" to
+		boot the bsd kernel from the first hard disk partition.
+
+	boot.timeout
+		delay until the system boots, in seconds.
+
+Arguments to the kernel are not passed on the commandline. You can check
+and modify these arguments with the following commands:
+
+	showargs
+		displays the current arguments string.
+
+	setargs value
+		sets the arguments string.
+
 dnl
 dnl XXX bootable partitions
