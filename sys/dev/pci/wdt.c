@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.2 2001/02/03 06:17:56 mickey Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.3 2001/02/03 06:19:13 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -555,7 +555,7 @@ wdt_shutdown (void *arg)
  *
  *	Put the process into an infinite loop in which:
  *
- *	  - The process sleeps, waiting for a wakeup() from the timeout()
+ *	  - The process sleeps, waiting for a wakeup() from the tsleep()
  *	    handler.
  *	  - When awakened, the process reloads the watchdog counter and
  *	    repeats the loop.
