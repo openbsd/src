@@ -1,0 +1,2 @@
+dnl	$OpenBSD: whatis,v 1.1 2004/02/08 00:35:14 drahn Exp $
+For MACHINE, OpenBSD OSREV adds support for CATS StrongARM systems.

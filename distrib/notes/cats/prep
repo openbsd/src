@@ -1,0 +1,19 @@
+dnl	$OpenBSD: prep,v 1.1 2004/02/08 00:35:14 drahn Exp $
+To be able to boot the OpenBSD/MACHINE installation program, you will
+need to acquire some limited knowledge of ABLE Firmware, the low-level
+process that controls the microprocessor after hardware initialization
+and diagnostics are performed but before control is handed to the
+operating system.
+
+Important ABLE Firmware command examples:
+
+boot (hd0)bsd
+	boot the ELF file 'bsd' from the disk partition idenfied
+	by firmware as hd0.
+
+
+XXX autoboot 
+
+XXX arguments to kernel
+
+XXX bootable partitions
