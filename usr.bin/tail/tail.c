@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.8 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: tail.c,v 1.9 2003/04/08 00:04:06 dhartmei Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.8 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: tail.c,v 1.9 2003/04/08 00:04:06 dhartmei Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -244,7 +244,7 @@ obsolete(argv)
 
 			/* Malloc space for dash, new option and argument. */
 			len = strlen(*argv);
-			if ((start = p = malloc(len + 3)) == NULL)
+			if ((start = p = malloc(len + 4)) == NULL)
 				err(1, NULL);
 			*p++ = '-';
 
@@ -278,7 +278,7 @@ obsolete(argv)
 				errx(1, "illegal option -- %s", *argv);
 			}
 			*p++ = *argv[0];
-			(void)strcpy(p, ap);
+			(void)strlcpy(p, ap, start + len + 4 - p);
 			*argv = start;
 			continue;
 
