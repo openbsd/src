@@ -1,32 +1,32 @@
 # test modulate state
 
-block	       out log on kue0		 all
-block	       in  log on kue0		 all
+block	       out log on tun0		 all
+block	       in  log on tun0		 all
 
-block return-rst  out log on kue0 proto tcp all
-block return-rst  in  log on kue0 proto tcp all
-block return-icmp out log on kue0 proto udp all
-block return-icmp in  log on kue0 proto udp all
+block return-rst  out log on tun0 proto tcp all
+block return-rst  in  log on tun0 proto tcp all
+block return-icmp out log on tun0 proto udp all
+block return-icmp in  log on tun0 proto udp all
 
-block out log quick on kue0 from ! 157.161.48.183 to any
+block out log quick on tun0 from ! 157.161.48.183 to any
 
-block in quick on kue0 from any to 255.255.255.255
+block in quick on tun0 from any to 255.255.255.255
 
-block in log quick on kue0 from 10.0.0.0/8		to any
-block in log quick on kue0 from 172.16.0.0/12	to any
-block in log quick on kue0 from 192.168.0.0/16	to any
-block in log quick on kue0 from 255.255.255.255/32 to any
+block in log quick on tun0 from 10.0.0.0/8		to any
+block in log quick on tun0 from 172.16.0.0/12	to any
+block in log quick on tun0 from 192.168.0.0/16	to any
+block in log quick on tun0 from 255.255.255.255/32 to any
 
-pass out on kue0 inet proto icmp all icmp-type 8 code 0 keep state
-pass in  on kue0 inet proto icmp all icmp-type 8 code 0 keep state
+pass out on tun0 inet proto icmp all icmp-type 8 code 0 keep state
+pass in  on tun0 inet proto icmp all icmp-type 8 code 0 keep state
 
-pass out on kue0 proto udp all keep state
+pass out on tun0 proto udp all keep state
 
-pass in on kue0 proto udp from any to any port = domain keep state
+pass in on tun0 proto udp from any to any port = domain keep state
 
-pass out on kue0 proto tcp all modulate state
+pass out on tun0 proto tcp all modulate state
 
-pass in on kue0 proto tcp from any to any port = ssh    modulate state
-pass in on kue0 proto tcp from any to any port = smtp   modulate state
-pass in on kue0 proto tcp from any to any port = domain modulate state
-pass in on kue0 proto tcp from any to any port = auth   modulate state
+pass in on tun0 proto tcp from any to any port = ssh    modulate state
+pass in on tun0 proto tcp from any to any port = smtp   modulate state
+pass in on tun0 proto tcp from any to any port = domain modulate state
+pass in on tun0 proto tcp from any to any port = auth   modulate state
