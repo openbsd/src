@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.3,v 1.9 2003/06/02 11:24:14 jmc Exp $
+.\"	$OpenBSD: sectok.3,v 1.10 2003/07/08 12:04:37 jmc Exp $
 .\"
 .\" Jim Rees <rees@umich.edu>
 .\" CITI Smartcard development <smartcards@umich.edu>
@@ -129,8 +129,7 @@ using default protocol parameters even if the card ATR is illegal.
 .Pp
 .Fn sectok_apdu
 sends an APDU to the card with optional IN and OUT data.
-.Pp
-.Bl -tag -literal -width Ds
+.Bl -tag -width Ds
 .It Fa cla
 application class
 .It Fa ins
