@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.10 1996/11/03 23:24:12 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.11 1996/11/04 18:13:38 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -592,11 +592,11 @@ test(file)
 	register int fd;
 	register char *cp;
 
-	if (access(file, 4) < 0) {
-		printf("%s: cannot access %s\n", name, file);
+	if ((fd = open(file, O_RDONLY)) < 0) {
+		printf("%s: cannot open %s\n", name, file);
 		goto bad;
 	}
-	if (stat(file, &statb) < 0) {
+	if (fstat(fd, &statb) < 0) {
 		printf("%s: cannot stat %s\n", name, file);
 		goto bad;
 	}
@@ -608,10 +608,6 @@ test(file)
 		printf("%s: %s is an empty file\n", name, file);
 		goto bad;
  	}
-	if ((fd = open(file, O_RDONLY)) < 0) {
-		printf("%s: cannot open %s\n", name, file);
-		goto bad;
-	}
 	if (read(fd, &execb, sizeof(execb)) == sizeof(execb) &&
 	    !N_BADMAG(execb)) {
 			printf("%s: %s is an executable program and is unprintable",
