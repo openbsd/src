@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.1 2000/04/26 19:00:57 chris Exp $
+.\" $OpenBSD: vlan.4,v 1.2 2000/04/26 22:30:21 chris Exp $
 .\"
 .Dd 09 January 2000
 .Dt VLAN 4
@@ -24,11 +24,12 @@ bits for the priority field (not used in this implementation), 1 bit for
 the canonical field (always 0), and 12 bits for the vlan identifier.  Following
 the vlan header is the actual ether type for the packet and length information.
 .Pp
-The 802.1Q header specifies the virtual LAN
-and thus allows an ethernet switch or other 802.1Q compliant
-network devices to be aware of which device the packet was intended for.
-This driver allows OpenBSD to group packets logically with separate
-interfaces.
+The 802.1Q header specifies the virtual LAN number,
+and thus allows an ethernet switch (or other 802.1Q compliant
+network devices) to be aware of which LAN the packet is part of, and
+in the case of a switch, which port(s) the packet can go to.
+This driver allows OpenBSD to separate packets logically with separate
+virtual ethernet network interfaces.
 .El
 .Pp
 The network interfaces are named
@@ -74,23 +75,26 @@ The 802.1Q specification allows for operation over FDDI and Token Ring
 as well as Ethernet.  
 This driver only supports such operation with ethernet devices.
 .Pp
-Some ethernet chips (notably the Intel 82558/82559) automatically
+Some ethernet chips (notably the Intel 82558 and 82559) automatically
 discard frames that are larger then 1500 bytes.  All ethernet
-chips sporting this feature should allow for it to be turned off.
-Optimally, upon loading, the chip's OpenBSD driver would do this.
-A temporary kludge is to set the MTU for each machine behind each VLAN to
-1496 or less.  Refer to the hardware manual for your ethernet chip to determine
+chips sporting this sort of feature should allow for it to be turned off.
+Optimally, upon loading, the chip's driver would do this (The 
+.Xr fxp 4
+driver currently does for the Intel 82558/82559 chips.)
+Refer to the hardware manual for your ethernet chip to determine
 if it has this feature, and if so, for information on how to turn it off.
-A symptom of this problem is that small packets (ICMP)
-but packets which are >MTU size are dropped, thus causing
-bulk TCP transfers to hang.
+A symptom of this problem is that small frames pass through the VLAN
+(such as a frame carrying an ICMP packet), but frames which are at MTU size
+are dropped.  When these frames are dropped, the TCP session will hang.
+A temporary kludge is to set the MTU for each machine behind each VLAN to
+1496 or less.
 .Pp
 Some ethernet chips support 802.1Q tagging/untagging in hardware, but
-do not have the appropriate hooks in their driver to pass the packet
+do not have the appropriate hooks in their driver to pass the frame
 directly to if_vlan.  The PCI device driver if_ti is able to do this,
 use it as a reference.
 .Pp
-This driver could be extended to support the Cisco ISL VLAN protocol,
+This driver could be the basis for support of the Cisco ISL VLAN protocol,
 detailed at http://www.cisco.com/warp/public/741/4.html.  Unfortunately,
 public reimplementation of this protocol is currently prevented by patent
 (at least in the USA).
