@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.6 1999/05/06 02:29:56 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.7 2001/05/16 23:57:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -70,7 +70,7 @@
 /*
  * This is the ending of the begin
  */
-ENTRY(begin)
+ENTRY(begin,0)
 
 	blr	%r0,%r5			; Get address of 'boff' into 'r5',
 	ldo	begin-boff(%r5),%r5	;   and subtract to get 'begin'.
@@ -145,7 +145,7 @@ start
 /*
  * rtt - restart the box
  */
-ENTRY(_rtt)
+LEAF_ENTRY(_rtt)
 	ldil    L%LBCAST_ADDR, %r25
 	ldi     CMD_RESET, %r26
 	stw     %r26,R%iomod_command(%r25)
