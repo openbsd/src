@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.34 2005/03/13 21:47:04 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.35 2005/03/13 22:07:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -247,14 +247,8 @@ rcs_open(const char *path, int flags, ...)
 	}
 	memset(rfp, 0, sizeof(*rfp));
 
-	if ((rfp->rf_branch = rcsnum_alloc()) == NULL) {
-		free(rfp);
-		return (NULL);
-	}
-
 	if ((rfp->rf_path = strdup(path)) == NULL) {
 		cvs_log(LP_ERRNO, "failed to duplicate RCS file path");
-		rcsnum_free(rfp->rf_branch);
 		free(rfp);
 		return (NULL);
 	}
@@ -366,6 +360,12 @@ rcs_write(RCSFILE *rfp)
 		numbuf[0] = '\0';
 
 	fprintf(fp, "head\t%s;\n", numbuf);
+
+	if (rfp->rf_branch != NULL) {
+		rcsnum_tostr(rfp->rf_branch, numbuf, sizeof(numbuf));
+		fprintf(fp, "branch\t%s;\n", numbuf);
+	}
+
 	fputs("access", fp);
 	TAILQ_FOREACH(ap, &(rfp->rf_access), ra_list) {
 		fprintf(fp, "\n\t%s", ap->ra_name);
@@ -431,6 +431,41 @@ rcs_write(RCSFILE *rfp)
 	fclose(fp);
 
 	rfp->rf_flags |= RCS_SYNCED;
+
+	return (0);
+}
+
+/*
+ * rcs_branch_get()
+ *
+ * Retrieve the default branch number for the RCS file <file>.
+ * Returns the number on success.  If NULL is returned, then there is no
+ * default branch for this file.
+ */
+const RCSNUM*
+rcs_branch_get(RCSFILE *file)
+{
+	return (file->rf_branch);
+}
+
+/*
+ * rcs_branch_set()
+ *
+ * Set the default branch for the RCS file <file> to <bnum>.
+ * Returns 0 on success, -1 on failure.
+ */
+int
+rcs_branch_set(RCSFILE *file, const RCSNUM *bnum)
+{
+	if ((file->rf_branch == NULL) &&
+	    ((file->rf_branch = rcsnum_alloc()) == NULL))
+		return (-1);
+
+	if (rcsnum_cpy(bnum, file->rf_branch, 0) < 0) {
+		rcsnum_free(file->rf_branch);
+		file->rf_branch = NULL;
+		return (-1);
+	}
 
 	return (0);
 }
@@ -1279,8 +1314,14 @@ rcs_parse_admin(RCSFILE *rfp)
 				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_head);
 			} else if (tok == RCS_TOK_BRANCH) {
-				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
-				    rfp->rf_branch);
+				if (rfp->rf_branch == NULL) {
+					rfp->rf_branch = rcsnum_alloc();
+					if (rfp->rf_branch == NULL)
+						return (-1);
+				}
+				if (rcsnum_aton(RCS_TOKSTR(rfp), NULL,
+				    rfp->rf_branch) < 0)
+					return (-1);
 			} else if (tok == RCS_TOK_COMMENT) {
 				rfp->rf_comment = strdup(RCS_TOKSTR(rfp));
 				if (rfp->rf_comment == NULL) {
