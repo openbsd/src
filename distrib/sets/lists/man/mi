@@ -1710,7 +1710,6 @@
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kauthd.0
-./usr/share/man/cat8/kbd.0
 ./usr/share/man/cat8/kdb_destroy.0
 ./usr/share/man/cat8/kdb_edit.0
 ./usr/share/man/cat8/kdb_init.0
@@ -2167,3 +2166,10 @@
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/sun3
 ./usr/share/man/ps9/vax
+./usr/share/man/cat8/alpha/kbd.0
+./usr/share/man/cat8/hppa/kbd.0
+./usr/share/man/cat8/i386/kbd.0
+./usr/share/man/cat8/macppc/kbd.0
+./usr/share/man/cat8/sparc/kbd.0
+./usr/share/man/cat8/sparc64/kbd.0
+./usr/share/man/cat8/vax/kbd.0
