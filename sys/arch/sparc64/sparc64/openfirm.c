@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.9 2004/01/07 20:44:56 pvalchev Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.10 2004/08/08 20:11:32 miod Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -662,7 +662,6 @@ OF_poweroff()
 	args.nargs = 0;
 	args.nreturns = 0;
 	openfirmware(&args);
-	panic("OF_poweroff failed");
 }
 
 void
