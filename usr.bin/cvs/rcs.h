@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.16 2005/03/13 22:07:49 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.17 2005/04/06 19:12:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,8 +41,13 @@
 #define RCSDIR         "RCS"
 #define RCS_FILE_EXT   ",v"
 
-#define RCS_HEAD_INIT  "1.1"
+#define RCS_HEAD_BRANCH  "HEAD"
+#define RCS_HEAD_INIT    "1.1"
+#define RCS_HEAD_REV     ((RCSNUM *)(-1))
 
+
+#define RCS_STATE_EXP    "Exp"
+#define RCS_STATE_DEAD   "dead"
 
 /* lock types */
 #define RCS_LOCK_LOOSE    0
@@ -68,6 +73,8 @@
 
 #define RCSNUM_MAXNUM  USHRT_MAX
 #define RCSNUM_MAXLEN  64
+
+#define RCSNUM_ISBRANCH(n)    (((n)->rn_len % 2) == 0)
 
 
 /* file flags */
@@ -110,6 +117,7 @@ struct rcs_sym {
 };
 
 struct rcs_lock {
+	char     *rl_name;
 	RCSNUM   *rl_num;
 
 	TAILQ_ENTRY(rcs_lock) rl_list;
@@ -161,7 +169,6 @@ typedef struct rcs_file {
 	TAILQ_HEAD(rcs_slist, rcs_sym)    rf_symbols;
 	TAILQ_HEAD(rcs_llist, rcs_lock)   rf_locks;
 
-
 	void   *rf_pdata;
 } RCSFILE;
 
@@ -181,6 +188,8 @@ int           rcs_sym_remove    (RCSFILE *, const char *);
 RCSNUM*       rcs_sym_getrev    (RCSFILE *, const char *);
 int           rcs_lock_getmode  (RCSFILE *);
 int           rcs_lock_setmode  (RCSFILE *, int);
+int           rcs_lock_add      (RCSFILE *, const char *, RCSNUM *);
+int           rcs_lock_remove   (RCSFILE *, const RCSNUM *);
 BUF*          rcs_getrev        (RCSFILE *, RCSNUM *);
 BUF*          rcs_gethead       (RCSFILE *);
 RCSNUM*       rcs_getrevbydate  (RCSFILE *, struct tm *);
@@ -190,6 +199,7 @@ const char*   rcs_comment_get   (RCSFILE *);
 int           rcs_comment_set   (RCSFILE *, const char *);
 int           rcs_kwexp_set     (RCSFILE *, int);
 int           rcs_kwexp_get     (RCSFILE *);
+RCSNUM*       rcs_tag_resolve   (RCSFILE *, const char *);
 const char*   rcs_errstr        (int);
 
 int       rcs_kflag_get    (const char *);

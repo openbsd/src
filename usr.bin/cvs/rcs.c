@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.39 2005/04/06 18:51:29 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.40 2005/04/06 19:12:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -687,6 +687,78 @@ rcs_lock_setmode(RCSFILE *file, int mode)
 }
 
 /*
+ * rcs_lock_add()
+ *
+ * Add an RCS lock for the user <user> on revision <rev>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
+{
+	struct rcs_lock *lkp;
+
+	/* first look for duplication */
+	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
+		if (strcmp(lkp->rl_name, user) == 0) {
+			rcs_errno = RCS_ERR_DUPENT;
+			return (-1);
+		}
+	}
+
+	lkp = (struct rcs_lock *)malloc(sizeof(*lkp));
+	if (lkp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate RCS lock");
+		return (-1);
+	}
+
+	lkp->rl_name = cvs_strdup(user);
+	if (lkp->rl_name == NULL) {
+		cvs_log(LP_ERRNO, "failed to duplicate user name");
+		free(lkp);
+		return (-1);
+	}
+
+	TAILQ_INSERT_TAIL(&(file->rf_locks), lkp, rl_list);
+
+	/* not synced anymore */
+	file->rf_flags &= ~RCS_SYNCED;
+	return (0);
+
+
+}
+
+
+/*
+ * rcs_lock_remove()
+ *
+ * Remove the RCS lock on revision <rev>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_lock_remove(RCSFILE *file, const RCSNUM *rev) 
+{
+	struct rcs_lock *lkp;
+
+	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list)
+		if (rcsnum_cmp(lkp->rl_num, rev, 0) == 0)
+			break;
+
+	if (lkp == NULL) {
+		rcs_errno = RCS_ERR_NOENT;
+		return (-1);
+	}
+
+	TAILQ_REMOVE(&(file->rf_locks), lkp, rl_list);
+	rcsnum_free(lkp->rl_num);
+	cvs_strfree(lkp->rl_name);
+	free(lkp);
+
+	/* not synced anymore */
+	file->rf_flags &= ~RCS_SYNCED;
+	return (0);
+}
+
+/*
  * rcs_desc_get()
  *
  * Retrieve the description for the RCS file <file>.
@@ -751,6 +823,25 @@ rcs_comment_set(RCSFILE *file, const char *comment)
 
 	return (0);
 }
+
+/*
+ * rcs_tag_resolve()
+ *
+ * Retrieve the revision number corresponding to the tag <tag> for the RCS
+ * file <file>.
+ */
+RCSNUM*
+rcs_tag_resolve(RCSFILE *file, const char *tag)
+{
+	RCSNUM *num;
+
+	if ((num = rcsnum_parse(tag)) == NULL) {
+		num = rcs_sym_getrev(file, tag);
+	}
+
+	return (num);
+}
+
 
 /*
  * rcs_patch()
