@@ -36,6 +36,7 @@
  */
 /*
  * Copyright (c) 1993 Analog Devices Inc. All rights reserved
+ * (http://www.analog.com, mike.long@analog.com)
  */
 
 /* parent driver is primarily responsible for checking this */
