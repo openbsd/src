@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.2 2001/12/05 05:38:28 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.3 2002/01/04 01:13:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -50,12 +50,17 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rcons/raster.h>
 
+#define	CGSIX_ROM_OFFSET	0x000000
 #define	CGSIX_BT_OFFSET		0x200000
 #define	CGSIX_BT_SIZE		(sizeof(u_int32_t) * 4)
+#define	CGSIX_DHC_OFFSET	0x240000
+#define	CGSIX_ALT_OFFSET	0x280000
 #define	CGSIX_FHC_OFFSET	0x300000
 #define	CGSIX_FHC_SIZE		(sizeof(u_int32_t) * 1)
 #define	CGSIX_THC_OFFSET	0x301000
 #define	CGSIX_THC_SIZE		(sizeof(u_int32_t) * 640)
+#define	CGSIX_FBC_OFFSET	0x700000
+#define	CGSIX_TEC_OFFSET	0x701000
 #define	CGSIX_VID_OFFSET	0x800000
 #define	CGSIX_VID_SIZE		(1024 * 1024)
 
@@ -63,6 +68,8 @@ struct cgsix_softc {
 	struct device sc_dev;
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
+	bus_addr_t sc_paddr;
+	bus_type_t sc_btype;
 	bus_space_handle_t sc_bt_regs;
 	bus_space_handle_t sc_fhc_regs;
 	bus_space_handle_t sc_thc_regs;
@@ -71,6 +78,21 @@ struct cgsix_softc {
 	int sc_width, sc_height, sc_depth, sc_linebytes;
 	struct rcons sc_rcons;
 	struct raster sc_raster;
+};
+
+#define	CG6_USER_FBC	0x70000000
+#define	CG6_USER_TEC	0x70001000
+#define	CG6_USER_BTREGS	0x70002000
+#define	CG6_USER_FHC	0x70004000
+#define	CG6_USER_THC	0x70005000
+#define	CG6_USER_ROM	0x70006000
+#define	CG6_USER_RAM	0x70016000
+#define	CG6_USER_DHC	0x80000000
+
+struct mmo {
+	u_long	mo_uaddr;		/* user (virtual address */
+	u_long	mo_size;		/* size, or 0 for video ram size */
+	u_long	mo_physoff;		/* offset from sc_physadr */
 };
 
 struct wsdisplay_emulops cgsix_emulops = {
@@ -155,6 +177,8 @@ cgsixattach(parent, self, aux)
 	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_btype = (bus_type_t)sa->sa_slot;
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
@@ -353,17 +377,54 @@ cgsix_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 paddr_t
-cgsix_mmap(v, offset, prot)
+cgsix_mmap(v, off, prot)
 	void *v;
-	off_t offset;
+	off_t off;
 	int prot;
 {
-#if 0
 	struct cgsix_softc *sc = v;
-#endif
+	struct mmo *mo;
+	u_int u, sz;
 
-	if (offset & PGOFSET)
+	static struct mmo mmo[] = {
+		{ CG6_USER_RAM, 0, CGSIX_VID_OFFSET },
+		{ CG6_USER_FBC, 1, CGSIX_FBC_OFFSET },
+		{ CG6_USER_TEC, 1, CGSIX_TEC_OFFSET },
+		{ CG6_USER_BTREGS, 8192 /* XXX */, CGSIX_BT_OFFSET },
+		{ CG6_USER_FHC, 1, CGSIX_FHC_OFFSET },
+		{ CG6_USER_THC, 1, CGSIX_THC_OFFSET },
+		{ CG6_USER_ROM, 1, CGSIX_ROM_OFFSET },
+		{ CG6_USER_DHC, 1, CGSIX_DHC_OFFSET },
+	};
+#define	NMMO	(sizeof(mmo) / sizeof(*mmo))
+
+	if (off & PGOFSET)
 		return (-1);
+
+	/*
+	 * Entries with size 0 map video RAM (i.e., the size in fb data).
+	 *
+	 * Since we work in pages, the fact that the map offset table's
+	 * sizes are sometimes bizarre (e.g., 1) is effectively ignored:
+	 * one byte is as good as one page.
+	 */
+	for (mo = mmo; mo < &mmo[NMMO]; mo++) {
+		if ((u_long)off < mo->mo_uaddr)
+			continue;
+		u = off - mo->mo_uaddr;
+		sz = mo->mo_size ? mo->mo_size :
+		    sc->sc_linebytes * sc->sc_height;
+		if (u < sz) {
+			bus_space_handle_t bh;
+
+			if (bus_space_mmap(sc->sc_bustag, sc->sc_btype,
+			    sc->sc_paddr + u + mo->mo_physoff,
+			    BUS_SPACE_MAP_LINEAR, &bh))
+				return (-1);
+			return ((paddr_t)bh);
+		}
+	}
+
 	return (-1);
 }
 
