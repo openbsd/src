@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.8 1998/09/09 22:06:57 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.9 1998/09/11 03:23:15 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.10 1998/09/06 14:58:46 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.11 1998/09/08 23:42:10 wpaul Exp $
  */
 
 /*
@@ -164,9 +164,27 @@
  * driver will use memory mapped I/O, which may be faster but which
  * might not work on some devices.
  */
-#if defined(__i386__)
 #define XL_USEIOSPACE
-#endif
+
+/*
+ * This #define controls the behavior of autonegotiation during the
+ * bootstrap phase. It's possible to have the driver initiate an
+ * autonegotiation session and then set a timeout which will cause the
+ * autoneg results to be polled later, usually once the kernel has
+ * finished booting. This is clever and all, but it can have bad side
+ * effects in some cases, particularly where NFS is involved. For
+ * example, if we're booting diskless with an NFS rootfs, the network
+ * interface has to be up and running before we hit the mountroot()
+ * code, otherwise mounting the rootfs will fail and we'll probably
+ * panic.
+ *
+ * Consequently, the 'backgrounded' autoneg behavior is turned off
+ * by default and we actually sit and wait 5 seconds for autonegotiation
+ * to complete before proceeding with the other device probes. If you
+ * choose to use the other behavior, you can uncomment this #define and
+ * recompile.
+ */
+/* #define XL_BACKGROUND_AUTONEG */
 
 #if defined(__FreeBSD__)
 #include <pci/if_xlreg.h>
@@ -176,7 +194,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.10 1998/09/06 14:58:46 wpaul Exp $";
+	"$FreeBSD: if_xl.c,v 1.11 1998/09/08 23:42:10 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -864,7 +882,7 @@ static void xl_autoneg_mii(sc, flag, verbose)
 		 * is really bad manners.
 	 	 */
 		xl_autoneg_xmit(sc);
-		DELAY(3000000);
+		DELAY(5000000);
 		break;
 	case XL_FLAG_SCHEDDELAY:
 		/*
@@ -1055,6 +1073,20 @@ static void xl_setmode_mii(sc, media)
 {
 	u_int16_t		bmcr;
 	u_int32_t		icfg;
+	struct ifnet		*ifp;
+
+	ifp = &sc->arpcom.ac_if;
+
+	/*
+	 * If an autoneg session is in progress, stop it.
+	 */
+	if (sc->xl_autoneg) {
+		printf("xl%d: canceling autoneg session\n", sc->xl_unit);
+		ifp->if_timer = sc->xl_autoneg = sc->xl_want_auto = 0;
+		bmcr = xl_phy_readreg(sc, PHY_BMCR);
+		bmcr &= ~PHY_BMCR_AUTONEGENBL;
+		xl_phy_writereg(sc, PHY_BMCR, bmcr);
+	}
 
 	printf("xl%d: selecting MII, ", sc->xl_unit);
 
@@ -1672,12 +1704,20 @@ xl_attach(config_id, unit)
 		break;
 	case XL_XCVR_AUTO:
 		media = IFM_ETHER|IFM_AUTO;
+#ifdef XL_BACKGROUND_AUTONEG
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
+#else
+		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
+#endif
 		break;
 	case XL_XCVR_100BTX:
 	case XL_XCVR_MII:
 		media = sc->ifmedia.ifm_media;
+#ifdef XL_BACKGROUND_AUTONEG
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
+#else
+		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
+#endif
 		break;
 	case XL_XCVR_100BFX:
 		media = IFM_ETHER|IFM_100_FX;
@@ -1685,6 +1725,11 @@ xl_attach(config_id, unit)
 	default:
 		printf("xl%d: unknown XCVR type: %d\n", sc->xl_unit,
 							sc->xl_xcvr);
+		/*
+		 * This will probably be wrong, but it prevents
+	 	 * the ifmedia code from panicking.
+		 */
+		media = IFM_ETHER|IFM_10_T;
 		break;
 	}
 
@@ -1987,7 +2032,8 @@ static void xl_txeof(sc)
 			xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
 
 	} else {
-		if (CSR_READ_4(sc, XL_DMACTL) & XL_DMACTL_DOWN_STALLED) {
+		if (CSR_READ_4(sc, XL_DMACTL) & XL_DMACTL_DOWN_STALLED ||
+			!CSR_READ_4(sc, XL_DOWNLIST_PTR)) {
 			CSR_WRITE_4(sc, XL_DOWNLIST_PTR,
 				vtophys(sc->xl_cdata.xl_tx_head->xl_ptr));
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_DOWN_UNSTALL);
@@ -2271,6 +2317,22 @@ static void xl_start(ifp)
 	if (sc->xl_autoneg) {
 		sc->xl_tx_pend = 1;
 		return;
+	}
+
+	/*
+	 * If the OACTIVE flag is set, make sure the transmitter
+	 * isn't wedged. Call the txeoc handler to make sure the
+	 * transmitter is enabled and then call the txeof handler
+	 * to see if any descriptors can be reclaimed and reload
+	 * the downlist pointer register if necessary. If after
+	 * that the OACTIVE flag is still set, return, otherwise
+ 	 * proceed and queue up some more frames.
+	 */
+	if (ifp->if_flags & IFF_OACTIVE) {
+		xl_txeoc(sc);
+		xl_txeof(sc);
+		if (ifp->if_flags & IFF_OACTIVE)
+			return;
 	}
 
 	/*
@@ -3207,12 +3269,20 @@ xl_attach(parent, self, aux)
 		break;
 	case XL_XCVR_AUTO:
 		media = IFM_ETHER|IFM_AUTO;
+#ifdef XL_BACKGROUND_AUTONEG
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
+#else
+		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
+#endif
 		break;
 	case XL_XCVR_100BTX:
 	case XL_XCVR_MII:
 		media = sc->ifmedia.ifm_media;
+#ifdef XL_BACKGROUND_AUTONEG
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
+#else
+		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
+#endif
 		break;
 	case XL_XCVR_100BFX:
 		media = IFM_ETHER|IFM_100_FX;
@@ -3220,6 +3290,11 @@ xl_attach(parent, self, aux)
 	default:
 		printf("xl%d: unknown XCVR type: %d\n", sc->xl_unit,
 							sc->xl_xcvr);
+		/*
+		 * This will probably be wrong, but it prevents
+		 * the ifmedia code from panicking.
+		 */
+		media = IFM_ETHER | IFM_10_T;
 		break;
 	}
 
