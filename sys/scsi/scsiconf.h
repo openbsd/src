@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.33 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.34 2002/05/27 23:42:40 tdeval Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -97,8 +97,8 @@ extern int scsi_autoconf;
 
 /*
  * These entrypoints are called by the high-end drivers to get services from
- * whatever low-end drivers they are attached to each adapter type has one of
- * these statically allocated.
+ * whatever low-end drivers they are attached to.  Each adapter type has one
+ * of these statically allocated.
  */
 struct scsi_adapter {
 	int		(*scsi_cmd)(struct scsi_xfer *);
@@ -211,11 +211,11 @@ struct scsi_inquiry_pattern {
 
 /*
  * One of these is allocated and filled in for each scsi bus.
- * it holds pointers to allow the scsi bus to get to the driver
- * That is running each LUN on the bus
- * it also has a template entry which is the prototype struct
- * supplied by the adapter driver, this is used to initialise
- * the others, before they have the rest of the fields filled in
+ * It holds pointers to allow the scsi bus to get to the driver
+ * that is running each LUN on the bus.
+ * It also has a template entry which is the prototype struct
+ * supplied by the adapter driver.  This is used to initialise
+ * the others, before they have the rest of the fields filled in.
  */
 struct scsibus_softc {
 	struct device sc_dev;
@@ -235,7 +235,7 @@ struct scsibus_attach_args {
 };
 
 /*
- * Each scsi transaction is fully described by one of these structures
+ * Each scsi transaction is fully described by one of these structures.
  * It includes information about the source of the command and also the
  * device and adapter for which the command is destined.
  * (via the scsi_link structure)
@@ -289,7 +289,7 @@ struct scsi_xfer {
 #define	SCSI_PRIVATE	0xf0000	/* private to each HBA flags */
 
 /*
- * Escape op codes.  This provides an extensible setup for operations
+ * Escape op-codes.  This provides an extensible setup for operations
  * that are not scsi commands.  They are intended for modal operations.
  */
 
