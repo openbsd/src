@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.268 2002/10/31 00:30:31 krw Exp $
+#	$OpenBSD: install.sub,v 1.269 2002/11/01 01:08:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -816,11 +816,10 @@ enable_network() {
 	return 0
 }
 
-# Do globbing on the selection and parse +/-, sets the global
+# Do globbing on the selection and parse +/-. Update the global
 # GET_FILES appropriately.
 glob_selection() {
-	local _selection=$1 _src=$2
-	local _action _nomatch _f
+	local _selection=$1 _action _f
 
 	# Change +/- into add/remove, but ignore bare '+' or '-'
 	_action=addel
@@ -841,21 +840,10 @@ glob_selection() {
 		eval "case $_f in
 		$_selection)
 			GET_FILES=\`$_action $_f \$GET_FILES\`
-			_nomatch=false
 			;;
 		esac"
 	done
 	set +o noglob
-
-	if $_nomatch; then
-		cat << __EOT
-The file
-
-    '${_src}/${_selection}'
-
-does not exist. Check to make sure you entered the name properly.
-__EOT
-	fi
 }
 
 # Set global SETS to either
@@ -944,7 +932,7 @@ __EOT
 
 		[ "$resp" = "done" ] && break
 
-		glob_selection "$resp" "$_src"
+		glob_selection "$resp"
 	done
 }
 
