@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.7 2000/03/29 20:54:59 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.8 2000/03/29 21:03:11 jason Exp $	*/
 
 /*
  *  Invertex AEON / Hi/fn 7751 driver
@@ -272,7 +272,6 @@ typedef struct hifn_command {
  *                              behaviour was requested.
  *
  *************************************************************************/
-int hifn_crypto __P((hifn_command_t *command));
 
 /*
  * Convert back and forth from 'sid' to 'card' and 'session'

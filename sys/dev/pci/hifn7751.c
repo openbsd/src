@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.17 2000/03/29 20:54:59 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.18 2000/03/29 21:03:11 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -93,6 +93,7 @@ int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_command *));
 void	hifn_timeout __P((void *));
 void	hifn_print_stats __P((struct hifn_softc *));
+int hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
 
 int
 hifn_probe(parent, match, aux)
@@ -1003,24 +1004,15 @@ hifn_mbuf(m, np, pp, lp, maxp, nicep)
 }
 
 int 
-hifn_crypto(struct hifn_command *cmd)
+hifn_crypto(sc, cmd)
+	struct hifn_softc *sc;
+	struct hifn_command *cmd;
 {
 	u_int32_t cmdlen;
-	static u_int32_t current_device = 0;
-	struct	hifn_softc *sc;
-	struct	hifn_dma *dma;
+	struct	hifn_dma *dma = sc->sc_dma;
 	struct	hifn_command_buf_data cmd_buf_data;
 	int	cmdi, srci, dsti, resi, nicealign = 0;
 	int     error, s, i;
-
-	/* Pick the hifn board to send the data to.  Right now we use a round
-	 * robin approach. */
-	sc = hifn_cd.cd_devs[current_device];
-	current_device++;
-	if (current_device == hifn_cd.cd_ndevs ||
-	    hifn_cd.cd_devs[current_device] == NULL)
-		current_device = 0;
-	dma = sc->sc_dma;
 
 	if (cmd->src_npa == 0 && cmd->src_m)
 		cmd->src_l = hifn_mbuf(cmd->src_m, &cmd->src_npa,
@@ -1410,7 +1402,7 @@ hifn_process(crp)
 	cmd->private_data = (u_long)crp;
 	cmd->dest_ready_callback = hifn_callback;
 
-	if (hifn_crypto(cmd) == 0)
+	if (hifn_crypto(sc, cmd) == 0)
 		return (0);
 
 errout:
