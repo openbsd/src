@@ -1,5 +1,5 @@
 #
-# $OpenBSD: isp.s,v 1.4 2003/11/07 10:36:08 miod Exp $
+# $OpenBSD: isp.s,v 1.5 2004/01/09 21:16:06 deraadt Exp $
 # $NetBSD: isp.s,v 1.2 1996/05/15 19:48:48 is Exp $
 #
 
@@ -2934,7 +2934,7 @@ cr_cas2:
 #			    (external to package)			#
 #	_isp_cas_terminate(): create access error stack frame on fault	#
 #			      (external and internal to package)	#
-#	_isp_cas_inrange(): checks whether instr addess is within range	#
+#	_isp_cas_inrange(): checks whether instr addr is within range	#
 #			    of core cas/cas2emulation code		#
 #			    (external to package)			#
 #									#
@@ -3825,7 +3825,7 @@ CAS2W2_FILLER:
 #	(3) Save current DFC/SFC (ASSUMED TO BE EQUAL!!!); Then set	#
 #	    SFC/DFC according to whether exception occurred in user or	#
 #	    supervisor mode.						#
-#	(4) Use "plpaw" instruction to pre-load ATC with efective	#
+#	(4) Use "plpaw" instruction to pre-load ATC with effective	#
 #	    address page(s). THIS SHOULD NOT FAULT!!! The relevant	#
 # 	    page(s) should have been made resident prior to entering 	#
 #	    this routine.						#
@@ -3846,7 +3846,7 @@ CAS2W2_FILLER:
 #	    assert LOCKE* for the final write operation.		#
 #	(13)Exit.							#
 # 									#
-# 	The algorithm is actually implemented slightly diferently	#
+# 	The algorithm is actually implemented slightly differently	#
 # depending on the size of the operation and the misalignment of the	#
 # operand. A misaligned operand must be written in aligned chunks or	#
 # else the BUSCR register control gets confused.			#

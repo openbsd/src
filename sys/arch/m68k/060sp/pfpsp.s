@@ -1,5 +1,5 @@
 #
-# $OpenBSD: pfpsp.s,v 1.5 2003/12/16 01:08:50 deraadt Exp $
+# $OpenBSD: pfpsp.s,v 1.6 2004/01/09 21:16:06 deraadt Exp $
 # $NetBSD: pfpsp.s,v 1.2 1996/05/15 19:49:12 is Exp $
 #
 
@@ -5876,7 +5876,7 @@ denorm_set_stky:
 	rts
 
 #									#
-# dnrm_lp(): normalize exponent/mantissa to specified threshhold	#
+# dnrm_lp(): normalize exponent/mantissa to specified threshold		#
 #									#
 # INPUT:								#
 #	%a0	   : points to the operand to be denormalized		#
@@ -6280,7 +6280,7 @@ sgl_done:
 add_ext:
 	addq.l		&1,FTEMP_LO(%a0)	# add 1 to l-bit
 	bcc.b		xcc_clr			# test for carry out
-	addq.l		&1,FTEMP_HI(%a0)	# propogate carry
+	addq.l		&1,FTEMP_HI(%a0)	# propagate carry
 	bcc.b		xcc_clr
 	roxr.w		FTEMP_HI(%a0)		# mant is 0 so restore v-bit
 	roxr.w		FTEMP_HI+2(%a0)		# mant is 0 so restore v-bit
@@ -6300,7 +6300,7 @@ add_ext_done:
 add_dbl:
 	add.l		&ad_1_dbl, FTEMP_LO(%a0) # add 1 to lsb
 	bcc.b		dcc_clr			# no carry
-	addq.l		&0x1, FTEMP_HI(%a0)	# propogate carry
+	addq.l		&0x1, FTEMP_HI(%a0)	# propagate carry
 	bcc.b		dcc_clr			# no carry
 
 	roxr.w		FTEMP_HI(%a0)		# mant is 0 so restore v-bit
@@ -6808,7 +6808,7 @@ is_qnan_s:
 # 	_round() - round denormalized number according to rnd prec	#
 #									#
 # INPUT ***************************************************************	#
-#	a0 = pointer to extended precison operand			#
+#	a0 = pointer to extended precision operand			#
 #	d0 = scale factor						#
 #	d1 = rounding precision/mode					#
 #									#
@@ -6819,7 +6819,7 @@ is_qnan_s:
 # ALGORITHM ***********************************************************	#
 # 	Convert the input operand to "internal format" which means the	#
 # exponent is extended to 16 bits and the sign is stored in the unused	#
-# portion of the extended precison operand. Denormalize the number	#
+# portion of the extended precision operand. Denormalize the number	#
 # according to the scale factor passed in d0. Then, round the 		#
 # denormalized result.							#
 # 	Set the FPSR_exc bits as appropriate but return the cc bits in	#
@@ -7788,7 +7788,7 @@ dst_get_dupper:
 	swap		%d0			# d0 now in upper word
 	lsl.l		&0x4,%d0		# d0 in proper place for dbl prec exp
 	tst.b		FTEMP_EX(%a0)		# test sign
-	bpl.b		dst_get_dman		# if postive, go process mantissa
+	bpl.b		dst_get_dman		# if positive, go process mantissa
 	bset		&0x1f,%d0		# if negative, set sign
 dst_get_dman:
 	mov.l		FTEMP_HI(%a0),%d1	# get ms mantissa
@@ -9039,7 +9039,7 @@ fdiv_unfl_ena_cont:
 	mov.l		%d1,%d2			# make a copy
 	andi.l		&0x7fff,%d1		# strip sign
 	andi.w		&0x8000,%d2		# keep old sign
-	sub.l		%d0,%d1			# add scale factoer
+	sub.l		%d0,%d1			# add scale factor
 	addi.l		&0x6000,%d1		# add bias
 	andi.w		&0x7fff,%d1
 	or.w		%d2,%d1			# concat old sign,new exp
@@ -12095,7 +12095,7 @@ fsqrt_dbl:
 	blt.w		fsqrt_sd_ovfl		# yes; go handle overflow
 	bra.w		fsqrt_sd_normal		# no; ho handle normalized op
 
-# we're on the line here and the distinguising characteristic is whether
+# we're on the line here and the distinguishing characteristic is whether
 # the exponent is 3fff or 3ffe. if it's 3ffe, then it's a safe number
 # elsewise fall through to underflow.
 fsqrt_sd_may_unfl:
@@ -12914,7 +12914,7 @@ store_fpreg_7:
 # 	FP_SRC(a6) = packed operand now as a binary FP number		#
 #									#
 # ALGORITHM ***********************************************************	#
-#	Get the correct <ea> whihc is the value on the exception stack 	#
+#	Get the correct <ea> which is the value on the exception stack 	#
 # frame w/ maybe a correction factor if the <ea> is -(an) or (an)+.	#
 # Then, fetch the operand from memory. If the fetch fails, exit		#
 # through facc_in_x().							#
@@ -13167,14 +13167,14 @@ m_sign:
 #
 #  1. Branch on the sign of the adjusted exponent.
 #  2p.(positive exp)
-#   2. Check M16 and the digits in lwords 2 and 3 in decending order.
+#   2. Check M16 and the digits in lwords 2 and 3 in descending order.
 #   3. Add one for each zero encountered until a non-zero digit.
 #   4. Subtract the count from the exp.
 #   5. Check if the exp has crossed zero in #3 above; make the exp abs
 #	   and set SE.
 #	6. Multiply the mantissa by 10**count.
 #  2n.(negative exp)
-#   2. Check the digits in lwords 3 and 2 in decending order.
+#   2. Check the digits in lwords 3 and 2 in descending order.
 #   3. Add one for each zero encountered until a non-zero digit.
 #   4. Add the count to the exp.
 #   5. Check if the exp has crossed zero in #3 above; clear SE.
@@ -14579,7 +14579,7 @@ end_bstr:
 # made out of the current exception stack frame. 			#
 #	So, we first call restore() which makes sure that any updated	#
 # -(an)+ register gets returned to its pre-exception value and then	#
-# we change the stack to an acess error stack frame.			#
+# we change the stack to an access error stack frame.			#
 #									#
 #########################################################################
 
