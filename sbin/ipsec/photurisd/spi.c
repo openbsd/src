@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.2 1997/07/19 12:07:56 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.3 1997/07/23 12:28:54 provos Exp $";
 #endif
 
 #define _SPI_C_
@@ -64,7 +64,7 @@ time_t
 getspilifetime(struct stateob *st)
 {
      /* XXX - destination depend lifetimes */
-     return spi_lifetime;
+     return st->spi_lifetime;
 }
 
 int
@@ -169,6 +169,24 @@ make_spi(struct stateob *st, char *local_address,
      return 0;
 }
 
+int
+spi_set_tunnel(struct stateob *st, struct spiob *spi)
+{
+     if (st->flags & IPSEC_OPT_TUNNEL) {
+	  spi->flags |= SPI_TUNNEL;
+	  spi->isrc = st->isrc;
+	  spi->ismask = st->ismask;
+	  spi->idst = st->idst;
+	  spi->idmask = st->idmask;
+     } else {
+	  spi->isrc = inet_addr(spi->local_address);
+	  spi->ismask = inet_addr("255.255.255.255");
+	  spi->idst = inet_addr(spi->address);
+	  spi->idmask = inet_addr("255.255.255.255");
+     }
+     return 1;
+}
+
 
 int
 spi_insert(struct spiob *ob)
@@ -268,8 +286,8 @@ spi_find_attrib(char *address, u_int8_t *attrib, u_int16_t attribsize)
 
 /* 
  * find the spi ob with matching address
- * Alas this is tweaked, for owner = 1 compare with local_address
- * and for owner = 0 compare with address.
+ * Alas this is tweaked, for SPI_OWNER compare with local_address
+ * and for user compare with address.
  */
 
 struct spiob *
@@ -277,7 +295,7 @@ spi_find(char *address, u_int8_t *spi)
 {
      struct spiob *tmp = spiob;
      while(tmp!=NULL) {
-          if ((address == NULL || (tmp->owner ? 
+          if ((address == NULL || (tmp->flags & SPI_OWNER ? 
 	      !strcmp(address, tmp->local_address) :
 	      !strcmp(address, tmp->address))) &&
 	     !bcmp(spi, tmp->SPI, SPI_SIZE))
@@ -316,7 +334,8 @@ spi_expire(void)
      tm = time(NULL);
      while (tmp != NULL) {
 	  if (tmp->lifetime == -1 || 
-	      tmp->lifetime + (tmp->owner ? CLEANUP_TIMEOUT : 0) > tm) {
+	      tmp->lifetime + (tmp->flags & SPI_OWNER ? 
+			       CLEANUP_TIMEOUT : 0) > tm) {
 	       tmp = tmp->next;
 	       continue;
 	  }
@@ -324,7 +343,8 @@ spi_expire(void)
 	  {
 	       int i = BUFFER_SIZE;
 	       bin2hex(buffer, &i, tmp->SPI, 4);
-	       printf("Expiring %s spi %s to %s\n", tmp->owner ? "Owner" : "User",
+	       printf("Expiring %s spi %s to %s\n", 
+		      tmp->flags & SPI_OWNER ? "Owner" : "User",
 		      buffer, tmp->address);
 	  }
 #endif

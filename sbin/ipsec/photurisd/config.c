@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.2 1997/07/22 11:18:21 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.3 1997/07/23 12:28:46 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: config.c,v 1.2 1997/07/22 11:18:21 provos Exp $";
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <time.h>
 #include <pwd.h>
 #include <gmp.h>
@@ -438,6 +439,7 @@ void
 startup_parse(struct stateob *st, char *p2)
 {
      char *p, *p3;
+     struct hostent *hp;
 
      while((p=strsep(&p2, " ")) != NULL) {
 	  if ((p3 = strchr(p, '=')) == NULL) {
@@ -449,15 +451,32 @@ startup_parse(struct stateob *st, char *p2)
 	       continue;
 	  }
 	  if (!strncmp(p, OPT_DST, strlen(OPT_DST))) {
-	       if (inet_addr(p3) == -1) {
-		    log_error(0, "invalid destination IP address: %s", p3);
+	       hp = NULL;
+	       if (inet_addr(p3) == -1 && (hp = gethostbyname(p3)) == NULL) {
+		    log_error(1, "invalid destination address: %s", p3);
 		    continue;
 	       }
-	       strncpy(st->address, p3, 15);
+	       if (hp == NULL) 
+		    strncpy(st->address, p3, 15);
+	       else {
+		    struct sockaddr_in sin;
+		    bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
+		    strncpy(st->address, inet_ntoa(sin.sin_addr), 15);
+	       }
 	       st->address[15] = '\0';
 	  } else if (!strncmp(p, OPT_PORT, strlen(OPT_PORT))) {
 	       if ((st->port = atoi(p3)) == 0) {
 		    log_error(0, "invalid port number: %s", p3);
+		    continue;
+	       }
+	  } else if (!strncmp(p, CONFIG_EX_LIFETIME, strlen(CONFIG_EX_LIFETIME))) {
+	       if ((st->exchange_lifetime = atol(p3)) == 0) {
+		    log_error(0, "invalid exchange lifetime: %s", p3);
+		    continue;
+	       }
+	  } else if (!strncmp(p, CONFIG_SPI_LIFETIME, strlen(CONFIG_SPI_LIFETIME))) {
+	       if ((st->spi_lifetime = atol(p3)) == 0) {
+		    log_error(0, "invalid spi lifetime: %s", p3);
 		    continue;
 	       }
 	  } else if (!strncmp(p, OPT_USER, strlen(OPT_USER))) {
@@ -468,6 +487,8 @@ startup_parse(struct stateob *st, char *p2)
 	       }
 	       if ((pwd = getpwnam(st->user)) == NULL) {
 		    log_error(1, "getpwnam() in startup_parse()");
+		    free(st->user);
+	            st->user = NULL;
 		    continue;
 	       }
 	  } else if (!strncmp(p, OPT_OPTIONS, strlen(OPT_OPTIONS))) {
@@ -601,7 +622,7 @@ init_startup(void)
 
 #ifndef DEBUG
 void
-reconfig(int sig, siginfo_t *sip, struct sigcontext *scp)
+reconfig(int sig)
 {
      log_error(0, "Reconfiguring on SIGHUP");
 

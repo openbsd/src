@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: compute_secrets.c,v 1.1.1.1 1997/07/18 22:48:48 provos Exp $"; 
+static char rcsid[] = "$Id: compute_secrets.c,v 1.2 1997/07/23 12:28:46 provos Exp $"; 
 #endif 
 
 #define _SECRETS_C_
@@ -147,14 +147,16 @@ make_session_keys(struct stateob *st, struct spiob *spi)
      for (i = 0; i<attribsize; i += attributes[i+1] + 2) {
 	  if (attributes[i] != AT_AH_ATTRIB && 
 	      attributes[i] != AT_ESP_ATTRIB) {
-	       bits = compute_session_key(st, p, attributes+i, spi->owner, 
+	       bits = compute_session_key(st, p, attributes+i, 
+					  spi->flags & SPI_OWNER, 
 					  &count);
 	       if (bits == -1)
 		    return -1;
 #ifdef DEBUG
 	       {    int d = BUFFER_SIZE;
 		    printf("%s session key for AT %d: ", 
-			   spi->owner ? "Owner" : "User", (int)attributes[i]);
+			   spi->flags & SPI_OWNER ? 
+			   "Owner" : "User", (int)attributes[i]);
 		    bin2hex(buffer, &d, p, 
 			    bits & 7 ? (bits >> 3) + 1 : bits >> 3);
 		    printf("0x%s\n", buffer);

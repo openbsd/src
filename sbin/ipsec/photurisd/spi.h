@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: spi.h,v 1.2 1997/07/19 12:07:58 provos Exp $ */
+/* $Id: spi.h,v 1.3 1997/07/23 12:28:55 provos Exp $ */
 /*
  * spi.h: 
  * security paramter index creation.
@@ -48,12 +48,17 @@
 
 #define SPI_LIFETIME   1800            /* 30 minutes default lifetime */
 
+#define SPI_OWNER      1
+#define SPI_NOTIFY     2
+#define SPI_TUNNEL     4
+
 struct spiob {
      struct spiob *next;            /* Linked list */
      char *address;
      char *local_address;
-     int owner;
-     int notify;                       /* Created due to kernel notify */
+     in_addr_t isrc, ismask;
+     in_addr_t idst, idmask;
+     int flags;
      u_int8_t SPI[SPI_SIZE];           /* SPI */ 
      u_int8_t icookie[COOKIE_SIZE];    /* Initator cookie */
      u_int8_t *attributes;             /* SPI attributes */
@@ -68,6 +73,7 @@ EXTERN int make_spi(struct stateob *st, char *local_address,
 		    u_int8_t *SPI, time_t *lifetime, 
 		    u_int8_t **attributes, u_int16_t *attribsize);
 
+EXTERN int spi_set_tunnel(struct stateob *st, struct spiob *spi);
 EXTERN int spi_insert(struct spiob *);
 EXTERN int spi_unlink(struct spiob *);
 EXTERN struct spiob *spi_new(char *, u_int8_t *);

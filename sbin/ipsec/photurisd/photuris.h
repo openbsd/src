@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: photuris.h,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $ */
+/* $Id: photuris.h,v 1.2 1997/07/23 12:28:52 provos Exp $ */
 /*
  * photuris.h:
  * general header file
@@ -62,6 +62,8 @@ EXTERN int retrans_timeout;
 EXTERN int exchange_timeout;
 EXTERN int exchange_lifetime;
 EXTERN int spi_lifetime;
+
+EXTERN int daemon_mode;
 
 /* Infos about our interfaces */
 EXTERN char **addresses;

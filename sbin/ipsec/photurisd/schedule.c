@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: schedule.c,v 1.2 1997/07/22 11:18:24 provos Exp $";
+static char rcsid[] = "$Id: schedule.c,v 1.3 1997/07/23 12:28:54 provos Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -223,8 +223,17 @@ schedule_process(int sock)
 	       break;
 	  case TIMEOUT:
 	       st = state_find_cookies(NULL, tmp->cookie, NULL);
-	       if (st == NULL || st->retries >= max_retries) {
+	       if (st == NULL) {
 		    remove = 1;
+		    break;
+	       } else if (st->retries >= max_retries) {
+		    remove = 1;
+		    if (st->phase == COOKIE_REQUEST)
+			 log_error(0, "no anwser for cookie request to %s:%d",
+				   st->address, st->port);
+		    else
+			 log_error(0, "exchange terminated, phase %d to %s:%d",
+				   st->phase, st->address, st->port);
 		    break;
 	       }
 
@@ -321,7 +330,7 @@ schedule_process(int sock)
 		    break;
 	       }
 	       bcopy(st->icookie, nspi->icookie, COOKIE_SIZE);
-	       nspi->owner = 1;
+	       nspi->flags |= SPI_OWNER;
 	       nspi->attribsize = st->oSPIattribsize;
 	       nspi->attributes = calloc(nspi->attribsize, sizeof(u_int8_t));
 	       if (nspi->attributes == NULL) {

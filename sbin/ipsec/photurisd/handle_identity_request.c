@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_request.c,v 1.2 1997/07/19 12:07:45 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_request.c,v 1.3 1997/07/23 12:28:48 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -256,7 +256,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 		  return -1;
 	     }
              bcopy(st->icookie, spi->icookie, COOKIE_SIZE); 
-	     spi->owner = 1;
+	     spi->flags |= SPI_OWNER;
              spi->attribsize = st->oSPIattribsize; 
              spi->attributes = calloc(spi->attribsize, sizeof(u_int8_t)); 
              if (spi->attributes == NULL) { 
@@ -301,13 +301,15 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     /* Make session keys for User */
 	     make_session_keys(st, spi);
 
+	     spi_set_tunnel(st, spi);
+
 	     spi_insert(spi);
 #ifdef IPSEC
 	     kernel_insert_spi(spi);
 #endif
 	}
 
-	st->lifetime = exchange_lifetime + time(NULL) + random() % 20;
+	st->lifetime = st->exchange_lifetime + time(NULL) + random() % 20;
 
 	st->retries = 0;
 	st->phase = SPI_UPDATE;

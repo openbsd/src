@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.2 1997/07/23 12:28:53 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -113,6 +113,8 @@ void main(int argc, char **argv)
      int primes = 1, ignore = 0;
      char *dir = PHOTURIS_DIR;
 
+     daemon_mode = 0;
+
      while ((ch = getopt(argc, argv, "fid:")) != -1)
 	  switch((char)ch) {
 	  case 'f':
@@ -165,6 +167,7 @@ void main(int argc, char **argv)
      init_signals();
      if (fork())
 	  exit(0);
+     daemon_mode = 1;
 #endif
 
      server();

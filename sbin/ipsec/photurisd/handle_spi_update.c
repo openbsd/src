@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_update.c,v 1.2 1997/07/19 12:07:50 provos Exp $";
+static char rcsid[] = "$Id: handle_spi_update.c,v 1.3 1997/07/23 12:28:50 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -174,6 +174,8 @@ handle_spi_update(u_char *packet, int size, char *address,
 	spi->attribsize = attribsize;
 	bcopy(st->icookie, spi->icookie, COOKIE_SIZE);
 	spi->lifetime = time(NULL) + lifetime;
+
+	spi_set_tunnel(st, spi);
 
 	make_session_keys(st, spi);
 

@@ -30,24 +30,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ERRLOG_H_
+#define _ERRLOG_H_
+
+#undef EXTERN
 #ifdef _ERRLOG_C_
+#define EXTERN
+#else
+#define EXTERN extern
+#endif
 
 #if __STDC__
-void crit_error __P((int, char *, ...));
-void log_error __P((int, char *, ...));
+EXTERN void crit_error __P((int, char *, ...));
+EXTERN void log_error __P((int, char *, ...));
 #else
-void crit_error(); 
-void log_error(); 
+EXTERN void crit_error();
+EXTERN void log_error();
 #endif
 
-#else
-
-#if __STDC__
-extern void crit_error __P((int, char *, ...));
-extern void log_error __P((int, char *, ...));
-#else
-extern void crit_error();
-extern void log_error();
-#endif
-
-#endif
+#endif /* _ERRLOG_H_ */

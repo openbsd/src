@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.2 1997/07/23 12:28:51 provos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -134,7 +134,8 @@ kernel_reserve_spi(char *srcaddress)
      return em->em_gen_spi;
 }
 int
-kernel_md5(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret)
+kernel_md5(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret,
+	   int tunnel)
 {
      struct encap_msghdr *em;
      struct ah_old_xencap *xd;
@@ -153,6 +154,12 @@ kernel_md5(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret)
 			(spi[2]<<8) + spi[3]);
      em->em_src.s_addr = inet_addr(srcaddress);
      em->em_dst.s_addr = inet_addr(dstaddress);
+
+     if (tunnel) {
+	  em->em_osrc.s_addr = inet_addr(srcaddress);
+	  em->em_odst.s_addr = inet_addr(dstaddress);
+     }
+
      em->em_alg = XF_OLD_AH;
      em->em_sproto = IPPROTO_AH;
 
@@ -170,38 +177,45 @@ kernel_md5(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret)
 }
 
 int
-kernel_des(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret)
+kernel_des(char *srcaddress, char *dstaddress, u_int8_t *spi, u_int8_t *secret,
+	   int tunnel)
 {
-	struct encap_msghdr *em;
-	struct esp_old_xencap *xd;
+     struct encap_msghdr *em;
+     struct esp_old_xencap *xd;
 
-	bzero(buffer, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + 4 + 8);
+     bzero(buffer, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + 4 + 8);
 
-	em = (struct encap_msghdr *)buffer;
+     em = (struct encap_msghdr *)buffer;
 	
-	em->em_msglen = EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + 4 + 8;
-	em->em_version = PFENCAP_VERSION_1;
-	em->em_type = EMT_SETSPI;
-	em->em_spi = htonl((spi[0]<<24) + (spi[1]<<16) + 
-			   (spi[2]<<8) + spi[3]);
-	em->em_src.s_addr = inet_addr(srcaddress);
-	em->em_dst.s_addr = inet_addr(dstaddress);
-	em->em_alg = XF_OLD_ESP;
-	em->em_sproto = IPPROTO_ESP;
-
-	xd = (struct esp_old_xencap *)(em->em_dat);
-
-	xd->edx_enc_algorithm = ALG_ENC_DES;
-	xd->edx_ivlen = 4;
-	xd->edx_keylen = 8;
-
-	bcopy(spi, xd->edx_data, 4);
-	bcopy(secret, xd->edx_data + 8, 8);
+     em->em_msglen = EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + 4 + 8;
+     em->em_version = PFENCAP_VERSION_1;
+     em->em_type = EMT_SETSPI;
+     em->em_spi = htonl((spi[0]<<24) + (spi[1]<<16) + 
+			(spi[2]<<8) + spi[3]);
+     em->em_src.s_addr = inet_addr(srcaddress);
+     em->em_dst.s_addr = inet_addr(dstaddress);
 	
-	if (!kernel_xf_set(em))
-	     return -1;
+     if (tunnel) {
+	  em->em_osrc.s_addr = inet_addr(srcaddress);
+	  em->em_odst.s_addr = inet_addr(dstaddress);
+     }
 
-	return 8;
+     em->em_alg = XF_OLD_ESP;
+     em->em_sproto = IPPROTO_ESP;
+
+     xd = (struct esp_old_xencap *)(em->em_dat);
+
+     xd->edx_enc_algorithm = ALG_ENC_DES;
+     xd->edx_ivlen = 4;
+     xd->edx_keylen = 8;
+
+     bcopy(spi, xd->edx_data, 4);
+     bcopy(secret, xd->edx_data + 8, 8);
+     
+     if (!kernel_xf_set(em))
+	  return -1;
+     
+     return 8;
 }
 
 /* Group an ESP SPI with an AH SPI */
@@ -238,7 +252,8 @@ kernel_group_spi(char *address, u_int8_t *spi)
 }
 
 int
-kernel_enable_spi(char *isrc, char *ismask, char *idst, char *idmask, 
+kernel_enable_spi(in_addr_t isrc, in_addr_t ismask, 
+		  in_addr_t idst, in_addr_t idmask, 
 		  char *address, u_int8_t *spi, int proto, int flags)
 {
      struct encap_msghdr *em;
@@ -254,10 +269,10 @@ kernel_enable_spi(char *isrc, char *ismask, char *idst, char *idmask,
      em->em_version = PFENCAP_VERSION_1;
      em->em_type = EMT_ENABLESPI;
 
-     em->em_ena_isrc.s_addr = inet_addr(isrc);
-     em->em_ena_ismask.s_addr = inet_addr(ismask);
-     em->em_ena_idst.s_addr = inet_addr(idst);
-     em->em_ena_idmask.s_addr = inet_addr(idmask);
+     em->em_ena_isrc.s_addr = isrc;
+     em->em_ena_ismask.s_addr = ismask;
+     em->em_ena_idst.s_addr = idst;
+     em->em_ena_idmask.s_addr = idmask;
 
      em->em_ena_dst.s_addr = inet_addr(address);
      em->em_ena_spi = htonl(SPI);
@@ -271,7 +286,8 @@ kernel_enable_spi(char *isrc, char *ismask, char *idst, char *idmask,
 }
 
 int
-kernel_disable_spi(char *isrc, char *ismask, char *idst, char *idmask, 
+kernel_disable_spi(in_addr_t isrc, in_addr_t ismask, 
+		   in_addr_t idst, in_addr_t idmask, 
 		   char *address, u_int8_t *spi, int proto, int flags)
 {
      struct encap_msghdr *em;
@@ -287,10 +303,10 @@ kernel_disable_spi(char *isrc, char *ismask, char *idst, char *idmask,
      em->em_version = PFENCAP_VERSION_1;
      em->em_type = EMT_DISABLESPI;
 
-     em->em_ena_isrc.s_addr = inet_addr(isrc);
-     em->em_ena_ismask.s_addr = inet_addr(ismask);
-     em->em_ena_idst.s_addr = inet_addr(idst);
-     em->em_ena_idmask.s_addr = inet_addr(idmask);
+     em->em_ena_isrc.s_addr = isrc;
+     em->em_ena_ismask.s_addr = ismask;
+     em->em_ena_idst.s_addr = idst;
+     em->em_ena_idmask.s_addr = idmask;
 
      em->em_ena_dst.s_addr = inet_addr(address);
      em->em_ena_spi = htonl(SPI);
@@ -346,9 +362,9 @@ kernel_insert_spi(struct spiob *SPI)
 	  case AT_ESP_ATTRIB:
 	       break;
 	  case AT_MD5_KDP:
-	       offset = kernel_md5(SPI->local_address, SPI->owner ? 
+	       offset = kernel_md5(SPI->local_address, SPI->flags & SPI_OWNER ? 
 				   SPI->local_address : SPI->address,
-				   spi, secrets);
+				   spi, secrets, SPI->flags & SPI_TUNNEL);
 	       if (offset == -1)
 		    return -1;
 	       secrets += offset; 
@@ -357,9 +373,9 @@ kernel_insert_spi(struct spiob *SPI)
 		    proto = IPPROTO_AH;
 	       break;
 	  case AT_DES_CBC:
-	       offset = kernel_des(SPI->local_address, SPI->owner ? 
+	       offset = kernel_des(SPI->local_address, SPI->flags & SPI_OWNER ? 
 				   SPI->local_address : SPI->address,
-				   spi, secrets);
+				   spi, secrets, SPI->flags & SPI_TUNNEL);
 	       if (offset == -1)
 		    return -1;
 	       secrets += offset;
@@ -375,14 +391,14 @@ kernel_insert_spi(struct spiob *SPI)
      }
 
      /* Group the SPIs for User */
-     if (!SPI->owner && i > 1) {
+     if (!(SPI->flags & SPI_OWNER) && i > 1) {
 	  if (kernel_group_spi(SPI->address, spi) == -1)
 	       log_error(0, "kernel_group_spi() in kernel_insert_spi()");
      }
      
-     if (!SPI->owner && !SPI->notify) {
-	  if (kernel_enable_spi(SPI->local_address, "255.255.255.255",
-				SPI->address, "255.255.255.255",
+     if (!(SPI->flags & SPI_OWNER) && !(SPI->flags & SPI_NOTIFY)) {
+	  if (kernel_enable_spi(SPI->isrc, SPI->ismask,
+				SPI->idst, SPI->idmask,
 				SPI->address, spi, proto, 
 				ENABLE_FLAG_REPLACE|ENABLE_FLAG_LOCAL) == -1)
 	       log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
@@ -403,7 +419,7 @@ kernel_unlink_spi(struct spiob *ospi)
      u_int32_t spi;
      u_int8_t SPI[SPI_SIZE], *p;
 
-     if (!ospi->owner)
+     if (!(ospi->flags & SPI_OWNER))
 	  p = ospi->address;
        else
 	  p = ospi->local_address;
@@ -424,9 +440,9 @@ kernel_unlink_spi(struct spiob *ospi)
 	  case AT_MD5_KDP:
 	       if (!proto) {
 		    proto = IPPROTO_AH;
-		    if (!ospi->owner &&
-			kernel_disable_spi(ospi->local_address, "255.255.255.255",
-					   ospi->address, "255.255.255.255",
+		    if (!(ospi->flags & SPI_OWNER) &&
+			kernel_disable_spi(ospi->isrc, ospi->ismask,
+					   ospi->idst, ospi->idmask,
 					   ospi->address, ospi->SPI, proto,
 					   ENABLE_FLAG_LOCAL) == -1)
 			 log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
@@ -438,9 +454,9 @@ kernel_unlink_spi(struct spiob *ospi)
 	  case AT_DES_CBC:
 	       if (!proto) {
 		    proto = IPPROTO_ESP;
-		    if (!ospi->owner && 
-			kernel_disable_spi(ospi->local_address, "255.255.255.255",
-					   ospi->address, "255.255.255.255",
+		    if (!(ospi->flags & SPI_OWNER) && 
+			kernel_disable_spi(ospi->isrc, ospi->ismask,
+					   ospi->idst, ospi->idmask,
 					   ospi->address, ospi->SPI, proto,
 					   ENABLE_FLAG_LOCAL) == -1)
 			 log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");

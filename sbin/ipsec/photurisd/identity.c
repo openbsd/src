@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: identity.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: identity.c,v 1.2 1997/07/23 12:28:50 provos Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -110,6 +110,8 @@ init_identities(char *name, struct identity *root)
 	  while(isspace(*p))  /* Get rid of leading spaces */
 	       p++;
 	  if(*p == '#')       /* Ignore comments */
+	       continue;
+	  if(!strlen(p))
 	       continue;
 
 	  if (!strncmp(p, IDENT_LOCAL, strlen(IDENT_LOCAL))) {

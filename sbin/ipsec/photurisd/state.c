@@ -99,6 +99,9 @@ state_new(void)
      mpz_init(p->modulus);
      mpz_init(p->generator);
   
+     p->exchange_lifetime = exchange_lifetime;
+     p->spi_lifetime = spi_lifetime;
+
      return p;
 }
 

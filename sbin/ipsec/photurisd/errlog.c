@@ -31,11 +31,15 @@
  */
 
 /*
- * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/errlog.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $
+ * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/errlog.c,v 1.2 1997/07/23 12:28:47 provos Exp $
  *
  * $Author: provos $
  *
  * $Log: errlog.c,v $
+ * Revision 1.2  1997/07/23 12:28:47  provos
+ * tunnel,lifetimes,hostname via startkey/startup
+ * errors to stderr before daemon, to syslog afterwards
+ *
  * Revision 1.1.1.1  1997/07/18 22:48:49  provos
  * initial import of the photuris keymanagement daemon
  *
@@ -45,7 +49,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: errlog.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: errlog.c,v 1.2 1997/07/23 12:28:47 provos Exp $";
 #endif
 
 #define _ERRLOG_C_
@@ -61,6 +65,7 @@ static char rcsid[] = "$Id: errlog.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $"
 #include <syslog.h>
 #include <sys/types.h>
 #include <errno.h>
+#include "photuris.h"
 #include "buffer.h"
 #include "errlog.h"
 
@@ -132,35 +137,26 @@ void
 _log_error(int flag, char *fmt, va_list ap)
 {
      char *buffer = calloc(LOG_SIZE, sizeof(char));
-#ifdef __SWR
-     FILE f;
-#endif
+
      if(buffer == NULL)
 	  return;
 
-#ifdef DEBUG
-     sprintf(buffer, "%s: ", (flag ? "Error" : "Warning"));
-#else
-     buffer[0] = '\0';
-#endif
+     if (!daemon_mode)
+	  sprintf(buffer, "%s: ", (flag ? "Error" : "Warning"));
+     else
+	  buffer[0] = '\0';
 
-#ifdef __SWR
-     f._flags = __SWR | __SSTR;
-     f._bf._base = f._p = buffer + strlen(buffer);
-     f._bf._size = f._w = LOG_SIZE-1-strlen(buffer);
-     vfprintf(&f, fmt, ap);
-#else
-     vsprintf(buffer+strlen(buffer), fmt, ap);
-#endif
+     vsnprintf(buffer+strlen(buffer), LOG_SIZE-1, fmt, ap);
      buffer[LOG_SIZE-1] = '\0';
-#ifdef DEBUG
-     fprintf(stderr, buffer);
-     if (flag)
-	  fprintf(stderr, " : %s", sys_errlist[errno]);
-     fprintf(stderr, ".\n");
-#else
-     syslog(LOG_WARNING, buffer);
-#endif
+
+     if (daemon_mode)
+	  syslog(LOG_WARNING, buffer);
+     else {
+	  fprintf(stderr, buffer);
+	  if (flag)
+	       fprintf(stderr, " : %s", sys_errlist[errno]);
+	  fprintf(stderr, ".\n");
+     }
      free(buffer);
 
 }
