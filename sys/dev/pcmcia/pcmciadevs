@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.54 2001/03/29 01:35:56 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.55 2001/03/31 14:27:09 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -359,3 +359,4 @@ product NTT_ME WLAN		{ "NTT-ME", "11Mbps&spWireless&spLAN&spPC&spCard", NULL, NU
 product SMC 2632W		{ "SMC", "SMC2632W", "Version&sp01.02", NULL }
 product NANOSPEED PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version&sp01.02", NULL }
 product CABLETRON ROAMABOUT	{ "Cabletron", "RoamAbout&sp802.11&spDS", "Version&sp01.01", NULL }
+product GVC NIC2000P		{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
