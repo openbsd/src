@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.4 2002/01/07 06:13:30 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -69,7 +69,7 @@ dnl
 dnl Final step is to add an entry to the 'all' entry below. For a short
 dnl example:
 dnl
-dnl   _mkdev(all,{-all-},{-dnl
+dnl   _mkdev({-all-},{-all-},{-dnl
 dnl   _dl({-std-},{-std-},{-sca-},{-sca0 sca1 sca2 sca3-})-})dnl
 dnl
 dnl would expand to:
@@ -92,7 +92,8 @@ dnl
 _mkdev(loc,local,{-test -s $T.local && sh $T.local-})dnl
 dnl
 __devtitle(make,Device "make" file.  Valid arguments)dnl
-__devitem(all,{-all-},{-makes all known devices{-,-} including local devices.
+__devitem({-all-},{-all-},
+{-makes all known devices{-,-} including local devices.
 {-#-}		Tries to make the ``standard'' number of each type.-})dnl
 dnl
 dnl 'all' is special.  The 'D'evice 'L'ist (or _dl) macro checks to see if
@@ -114,14 +115,21 @@ _dl({-std-},{-std-},
 {-ccd-},{-ccd0 ccd1 ccd2 ccd3-},
 {-wd-},{-wd0 wd1 wd2 wd3-},
 {-raid-},{-raid0 raid1 raid2 raid3-},
+{-ofdisk-},{-ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4-},
+{-xy-},{-xy0 xy1 xy2 xy3 xy4-},
+{-xd-},{-xd0 xd1 xd2 xd3 xd4-},
+{-hd-},{-hd0 hd1 hd2 hd3 hd4-},
+{-rz-},{-rz0 rz1 rz2 rz3 rz4-},
+{-rd-},{-rd0-},
+{-flo-},{-fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H-},
+{-flo-},{-fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H-},
 {-bpf-},{-bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9-},
 {-tun-},{-tun0 tun1 tun2 tun3-},
 {-altq-},{-altq-},
 {-pf-},{-pf-},
 {-cry-},{-crypto-},
-{-tty-},{-ttyh0 ttyh1-},
-{-flo-},{-fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H-},
-{-flo-},{-fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H-},
+{-apm-},{-apm-},
+{-tth-},{-ttyh0 ttyh1-},
 {-ttyB-},{-ttyB0 ttyB1-},
 {-tty0-},{-tty00 tty01 tty02 tty03-},
 {-tzs-},{-ttya ttyb ttyc ttyd-},
@@ -579,7 +587,7 @@ divert(0)dnl
 #
 show_vers()dnl <-- now that all files are included, show versions
 #
-#	$OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp $
+#	$Open{--}BSD$
 dnl
 divert(2)dnl
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
