@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.50 2004/01/25 14:43:34 jmc Exp $
+.\"	$OpenBSD: doc-syms,v 1.51 2004/01/25 14:54:59 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -355,22 +355,10 @@
 .		ds b1 \&\\*(tNISO/IEC \\*(aa9945-1:1996\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .	\}
-.\" old
-.       if "\\*(A\\n(aP"-p1003.1-01" \{\
-.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-2001\\*(sV
-.		as b1 (``\\*(tN\\*(Px\\*(aa'')
-.       \}
-.\" new
 .       if "\\*(A\\n(aP"-p1003.1-2001" \{\
 .		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-2001\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
-.\" old
-.       if "\\*(A\\n(aP"-p1003.1-03" \{\
-.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-2003\\*(sV
-.		as b1 (``\\*(tN\\*(Px\\*(aa'')
-.       \}
-.\" new
 .       if "\\*(A\\n(aP"-p1003.1-2003" \{\
 .		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-2003\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
@@ -391,7 +379,6 @@
 .		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1c-1995\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .	\}
-.\" new
 .       if "\\*(A\\n(aP"-p1003.1g-2000" \{\
 .		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1g-2000\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
