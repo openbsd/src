@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1997/07/30 13:26:12 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 1997/09/05 07:17:18 kstailey Exp $
 
 MAN=	man/ci.1 man/co.1 man/ident.1 man/merge.1 man/rcs.1 man/rcsclean.1 \
         man/rcsdiff.1 man/rcsfile.5 man/rcsfreeze.1 man/rcsintro.1 \
@@ -15,25 +15,21 @@ all:	config.status rcsfile.5
 .include <bsd.own.mk>
 
 .ifdef GLOBAL_AUTOCONF_CACHE
-config: .FORCE
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr \
-		--cache-file=${GLOBAL_AUTOCONF_CACHE}
-
-config.status:
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr \
-		--cache-file=${GLOBAL_AUTOCONF_CACHE}
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
 .else
+CF=
+.endif
+
 config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
+.endif
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr
+	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr ${CF}
 
 config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr
-.endif
+	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr ${CF}
 
 rcsfile.5:
 	(cd man ; ${MAKE} ${GNUCFLAGS} rcsfile.5)
