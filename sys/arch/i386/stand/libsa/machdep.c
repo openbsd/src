@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1997/10/06 17:36:43 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1997/10/12 21:14:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -71,7 +71,6 @@ int bootdev;
 #define CKPT(c) /* c */
 #endif
 
-#ifdef BOOT_APM
 static __inline u_int
 apm_check()
 {
@@ -96,7 +95,8 @@ apm_check()
 }
 
 static __inline int
-apm_disconnect() {
+apm_disconnect()
+{
 	register u_int16_t rv;
 	__asm __volatile(DOINT(0x15) "\n\t"
 			 "setc %b0"
@@ -132,7 +132,6 @@ apm_connect()
 #endif
 	return (f & 0xff)? f >> 8 : 0;
 }
-#endif
 
 void
 machdep()
@@ -146,7 +145,6 @@ machdep()
 	memprobe();   CKPT('4');
 #endif
 
-#ifdef BOOT_APM
 	if ((BIOS_vars.bios_apm_detail = apm_check())) {
 
 		printf("apm0");
@@ -167,6 +165,6 @@ machdep()
 #endif
 		putchar('\n');
 	}
-#endif
+
 	CKPT('9');
 }
