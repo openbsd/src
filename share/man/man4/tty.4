@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.5 1997/04/04 01:47:29 deraadt Exp $
+.\"	$OpenBSD: tty.4,v 1.6 1998/02/16 20:31:59 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -293,7 +293,7 @@ The current system does not allocate a controlling terminal to
 a process on an
 .Fn open
 call: there is a specific ioctl called
-.Dv TIOSCTTY
+.Dv TIOCSCTTY
 to make a terminal the controlling
 terminal.
 In addition, a program can
