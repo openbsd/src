@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.75 2004/07/15 11:24:46 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.76 2004/07/15 14:35:34 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -99,7 +99,7 @@
 30	STD		{ int sys_accept(int s, struct sockaddr *name, \
 			    socklen_t *anamelen); }
 31	STD		{ int sys_getpeername(int fdes, struct sockaddr *asa, \
-			    int *alen); }
+			    socklen_t *alen); }
 32	STD		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    socklen_t *alen); }
 33	STD		{ int sys_access(const char *path, int flags); }
@@ -545,14 +545,14 @@
 			    const char *attrname); }
 275	STD		{ int sys_extattr_set_file(const char *path, \
 			    int attrnamespace, const char *attrname, \
-			    void *data, size_t nbytes); }
+			    const void *data, size_t nbytes); }
 276	STD		{ ssize_t sys_extattr_get_file(const char *path, \
 			    int attrnamespace, const char *attrname, \
 			    void *data, size_t nbytes); }
 277	STD		{ int sys_extattr_delete_file(const char *path, \
 			    int attrnamespace, const char *attrname); }
 278	STD		{ int sys_extattr_set_fd(int fd, int attrnamespace, \
-			    const char *attrname, void *data, \
+			    const char *attrname, const void *data, \
 			    size_t nbytes); }
 279	STD		{ ssize_t sys_extattr_get_fd(int fd, \
 			    int attrnamespace, const char *attrname, \
