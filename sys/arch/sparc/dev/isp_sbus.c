@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.8 1999/07/09 21:34:45 art Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.9 1999/11/22 12:53:23 mjacob Exp $	*/
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -53,9 +53,16 @@ static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
 static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
 static int isp_sbus_mbxdma __P((struct ispsoftc *));
 static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
-	ispreq_t *, u_int8_t *, u_int8_t));
+	ispreq_t *, u_int16_t *, u_int16_t));
 static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsi_xfer *,
 	u_int32_t));
+
+#ifndef	ISP_1000_RISC_CODE
+#define	ISP_1000_RISC_CODE	NULL
+#endif
+#ifndef	ISP_CODE_ORG
+#define	ISP_CODE_ORG	0x1000
+#endif
 
 static struct ispmdvec mdvec = {
 	isp_sbus_rd_reg,
@@ -66,12 +73,8 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	ISP_RISC_CODE,
-	ISP_CODE_LENGTH,
-	ISP_CODE_ORG,
-	ISP_CODE_VERSION,
-	BIU_BURST_ENABLE,
-	0
+	ISP_1000_RISC_CODE, 0, ISP_CODE_ORG, 0,
+	BIU_BURST_ENABLE
 };
 
 struct isp_sbussoftc {
@@ -82,8 +85,8 @@ struct isp_sbussoftc {
 	int		sbus_node;
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
-	vaddr_t		sbus_kdma_allocs[MAXISPREQUEST];
 	int16_t		sbus_poff[_NREG_BLKS];
+	vaddr_t	 	*sbus_kdma_allocs;
 };
 
 
@@ -252,7 +255,11 @@ static int
 isp_sbus_mbxdma(isp)
 	struct ispsoftc *isp;
 {
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	size_t len;
+
+	if (isp->isp_rquest_dma)	/* been here before? */
+		return (0);
 
 	/*
 	 * NOTE: Since most Sun machines aren't I/O coherent,
@@ -260,30 +267,52 @@ isp_sbus_mbxdma(isp)
 	 * to be uncached.
 	 */
 
+	len = isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T);
+	isp->isp_xflist = (ISP_SCSI_XFER_T **) malloc(len, M_DEVBUF, M_WAITOK);
+	if (isp->isp_xflist == NULL) {
+		printf("%s: cannot malloc xflist array\n", isp->isp_name);
+		return (1);
+	}
+	bzero(isp->isp_xflist, len);
+	len = isp->isp_maxcmds * sizeof (vaddr_t);
+	sbc->sbus_kdma_allocs = (vaddr_t *) malloc(len, M_DEVBUF, M_WAITOK);
+	if (sbc->sbus_kdma_allocs == NULL) {
+		printf("%s: cannot malloc sbus_kdma_allocs\n", isp->isp_name);
+		return (1);
+	}
+	bzero(sbc->sbus_kdma_allocs, len);
+
 	/*
 	 * Allocate and map the request queue.
 	 */
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
 	isp->isp_rquest = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
-	if (isp->isp_rquest == 0)
+	if (isp->isp_rquest == 0) {
+		printf("%s: cannot allocate request queue\n", isp->isp_name);
 		return (1);
-	isp->isp_rquest_dma = (u_int32_t)kdvma_mapin((caddr_t)isp->isp_rquest,
-	    len, 0);
-	if (isp->isp_rquest_dma == 0)
+	}
+	isp->isp_rquest_dma = (u_int32_t)
+	    kdvma_mapin((caddr_t)isp->isp_rquest, len, 0);
+	if (isp->isp_rquest_dma == 0) {
+		printf("%s: could not mapin request queue\n", isp->isp_name);
 		return (1);
+	}
 
 	/*
 	 * Allocate and map the result queue.
 	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
 	isp->isp_result = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
-	if (isp->isp_result == 0)
+	if (isp->isp_result == 0) {
+		printf("%s: cannot allocate result queue\n", isp->isp_name);
 		return (1);
-	isp->isp_result_dma = (u_int32_t)kdvma_mapin((caddr_t)isp->isp_result,
-	    len, 0);
-	if (isp->isp_result_dma == 0)
+	}
+	isp->isp_result_dma = (u_int32_t)
+	    kdvma_mapin((caddr_t)isp->isp_result, len, 0);
+	if (isp->isp_result_dma == 0) {
+		printf("%s: could not mapin result queue\n", isp->isp_name);
 		return (1);
-
+	}
 	return (0);
 }
 
@@ -296,8 +325,8 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	struct ispsoftc *isp;
 	struct scsi_xfer *xs;
 	ispreq_t *rq;
-	u_int8_t *iptrp;
-	u_int8_t optr;
+	u_int16_t *iptrp;
+	u_int16_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	vaddr_t kdvma;
@@ -305,15 +334,10 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
-		return (CMD_QUEUED);
+		goto mbxsync;
 	}
+	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
 
-	if (rq->req_handle > RQUEST_QUEUE_LEN ||
-	    rq->req_handle < 1) {
-		panic("%s: bad handle (%d) in isp_sbus_dmasetup\n",
-			isp->isp_name, rq->req_handle);
-		/* NOTREACHED */
-	}
 	if (CPU_ISSUN4M) {
 		kdvma = (vaddr_t)
 			kdvma_mapin((caddr_t)xs->data, xs->datalen, dosleep);
@@ -338,6 +362,9 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	rq->req_dataseg[0].ds_count = xs->datalen;
 	rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
 	rq->req_seg_count = 1;
+
+mbxsync:
+	ISP_SWIZZLE_REQUEST(isp, rq);
 	return (CMD_QUEUED);
 }
 
@@ -353,17 +380,13 @@ isp_sbus_dmateardown(isp, xs, handle)
 	if (xs->flags & SCSI_DATA_IN) {
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
 	}
-	if (handle >= RQUEST_QUEUE_LEN) {
-		panic("%s: bad handle (%d) in isp_sbus_dmateardown\n",
-			isp->isp_name, handle);
-		/* NOTREACHED */
-	}
-	if (sbc->sbus_kdma_allocs[handle] == (vaddr_t) 0) {
+	assert(handle != 0 && handle <= isp->isp_maxcmds);
+	if (sbc->sbus_kdma_allocs[handle - 1] == (vaddr_t) 0) {
 		panic("%s: kdma handle not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	kdvma = sbc->sbus_kdma_allocs[handle];
-	sbc->sbus_kdma_allocs[handle] = (vaddr_t) 0;
+	kdvma = sbc->sbus_kdma_allocs[handle - 1];
+	sbc->sbus_kdma_allocs[handle - 1] = (vaddr_t) 0;
 	if (CPU_ISSUN4M) {
 		dvma_mapout(kdvma, (vaddr_t) xs->data, xs->datalen);
 	}
