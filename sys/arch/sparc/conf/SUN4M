@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.48 2003/03/09 02:30:45 miod Exp $
+#	$OpenBSD: SUN4M,v 1.49 2003/05/13 17:24:10 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -34,10 +34,10 @@ iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
 audioamd0 at obio0				# sun4m
-audioamd0 at sbus0 slot ? offset ?		# sun4m
+audioamd0 at sbus0				# sun4m
 audio*	at audioamd?
 
-audiocs0 at sbus0 slot ? offset ?		# sun4m
+audiocs0 at sbus0				# sun4m
 audio*	at audiocs?
 
 auxreg0	at obio0				# sun4m
@@ -67,17 +67,17 @@ zskbd* at zs? channel ?
 wskbd* at zskbd? console ?
 
 # Magma serial/parallel port devices
-magma*	at sbus? slot ? offset ?			# magma serial cards
+magma*	at sbus?					# magma serial cards
 mtty*	at magma?
 mbpp*	at magma?
 
 # SUNW,spif serial/parallel port devices
-spif*	at sbus? slot ? offset ?			# spif serial cards
+spif*	at sbus?					# spif serial cards
 stty*	at spif?
 sbpp*	at spif?
 
 # SUNW,xbox SBus Expansion Subsystem
-xbox*	at sbus? slot ? offset ?			# SBus Expansion box
+xbox*	at sbus?					# SBus Expansion box
 sbus*	at xbox?
 
 #
@@ -93,54 +93,54 @@ sbus*	at xbox?
 
 # sun4c or sun4m SCSI - an NCR53c94 or equivalent behind
 # specialized DMA glue
-dma0	at sbus0 slot ? offset ?			# on-board SCSI
+dma0	at sbus0					# on-board SCSI
 esp0	at dma0 flags 0xff0f				# sun4m
 
 # FSBE/S SCSI - an NCR53c94 or equivalent behind
-dma*	at sbus? slot ? offset ?			# SBus SCSI
-esp*	at sbus? slot ? offset ? flags 0xff0f		# two flavours
+dma*	at sbus?					# SBus SCSI
+esp*	at sbus? flags 0xff0f				# two flavours
 esp*	at dma? flags 0xff0f				# depending on model
 
 #sun4c, sun4m
-isp*	at sbus? slot ? offset ?
+isp*	at sbus?
 
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue
-ledma0	at sbus0 slot ? offset ?			# sun4m on-board
+ledma0	at sbus0					# sun4m on-board
 le0	at ledma0					#
 
 # Additional SBus LANCE devices - glued on by lebuffer
-lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
-lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
+lebuffer0	at sbus0				# sun4m SBus
+lebuffer*	at sbus?				# sun4m SBus
 le0	at lebuffer0					#
 le*	at lebuffer?					#
 
 # HappyMeal ethernet
-hme*	at sbus? slot ? offset ?
+hme*	at sbus?
 # Media Independent Interface (mii) drivers (required by hme)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 # Quad-ethernet glue device, and sub-devices
-qec*	at sbus? slot ? offset ?
+qec*	at sbus?
 qe*	at qec?
 be*	at qec?
 
 # Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 # systems.
-bwtwo*	at sbus? slot ? offset ?		# sun4c and sun4m
+bwtwo*	at sbus?				# sun4c and sun4m
 wsdisplay* at bwtwo?
 
 # Sun "cgthree" Sbus color framebuffer.
-cgthree* at sbus? slot ? offset ?
+cgthree* at sbus?
 wsdisplay* at cgthree?
 
 # Sun "cgsix" accelerated color framebuffer.
-cgsix*	at sbus? slot ? offset ?
+cgsix*	at sbus?
 wsdisplay* at cgsix?
 
 # Sun "tcx" accelerated color framebuffer.
-tcx*	at sbus? slot ? offset ? flags 0x0000
+tcx*	at sbus? flags 0x0000
 wsdisplay* at tcx?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
@@ -149,27 +149,27 @@ cgfourteen1 at obio0 addr 0x90000000 flags 0x0000	# sun4m
 wsdisplay* at cgfourteen?
 
 # Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
-cgtwelve*	at sbus? slot ? offset ? flags 0x0000
+cgtwelve*	at sbus? flags 0x0000
 wsdisplay* at cgtwelve?
 
 # Sun "leo" (ZX) accelerated 24-bit framebuffer.
-zx*	at sbus? slot ? offset ?
+zx*	at sbus?
 wsdisplay* at zx?
 
 # Vigra VS10 or VS12 framebuffer.
-vigra*	at sbus? slot ? offset ?
+vigra*	at sbus?
 wsdisplay* at vigra?
 
 # Weitek p9100 found on Tadpole 3GS/3GX
-pnozz0	at sbus? slot ? offset ?
+pnozz0	at sbus?
 wsdisplay* at pnozz?
 
 # Parallax XVideo and PowerVideo
-tvtwo* at sbus? slot ? offset ?
+tvtwo* at sbus?
 wsdisplay* at tvtwo?
 
 # Fujitsu AG-10e framebuffer.
-agten* at sbus? slot ? offset ?
+agten* at sbus?
 wsdisplay* at agten?
 
 # Microcontroller found on Tadpole
