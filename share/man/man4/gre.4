@@ -1,0 +1,223 @@
+.\" $OpenBSD: gre.4,v 1.1 2000/01/07 22:28:03 angelos Exp $
+.\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
+.\"
+.\" Copyright 1998 (c) The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Heiko W.Rupp <hwr@pilhuhn.de>
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"     This product includes software developed by the NetBSD
+.\"	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of the The NetBSD Foundation nor the names of its 
+.\"    contributors may be used to endorse or promote products derived 
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
+.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+.\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd 13 September 1998
+.Dt GRE 4
+.Os
+.Sh NAME
+.Nm gre
+.Nd encapsulating network device
+.Sh SYNOPSIS
+.Cd pseudo-device gre Op Ar count
+.Sh NOTE
+.Tn GRE
+and
+.Tn MobileIP
+is enabled with the following
+.Xr sysctl 3
+variables in
+.Pa /etc/sysctl.conf :
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
+.It net.inet.gre.allow
+Allow GRE packets in and out of the system.
+.It net.inet.mobileip.allow
+Allow MobileIP packets in and out of the system.
+.El
+.Pp
+.Sh DESCRIPTION
+The
+.Nm gre
+network interface is a pseudo device that allows to encapsulate datagrams
+into IP. These encapsulated datagrams are routed to a destination host,
+where they are decapsulated and further routed to their final destination.
+The so called ``tunnel'' appears to the inner datagrams like one hop.
+.Pp
+This driver currently supports the following modes of operation:
+.Bl -tag -width abc
+.It GRE encapsulation (IP protocol number 47). 
+Encapsulated datagrams are
+prepended by a outer datagram and a GRE header. The GRE header specifies
+the type of the encapsulated datagram and thus allows for tunneling other
+protocols than IP like e.g. AppleTalk (not yet supported). GRE mode is
+also the default tunnel mode on Cisco routers. This is also the default
+mode of operation of the 
+.Sy gre Ns Ar X
+interfaces.
+.It MOBILE encapsulation (IP protocol number 55). 
+Datagrams are 
+encapsulated into IP, but with a shorter encapsulation. The original
+IP header is modified and the modifications are inserted between the
+so modified header and the original payload. Like IPIP only for IP in IP
+encapsulation.
+.El
+.Pp
+The network interfaces are named
+.Sy gre Ns Ar 0 ,
+.Sy gre Ns Ar 1 
+and so on, as many as have given on the 
+.Sy pseudo-device
+line in the system config file. Each interface supports a number of
+.Xr ioctl 2 Ns s,
+such as:
+.Bl -tag -width aaa
+.It GRESADDRS: 
+Set the IP address of the local tunnel end.
+.It GRESADDRD: 
+Set the IP address of the remote tunnel end.
+.It GREGADDRS: 
+Query the IP address that is set for the local tunnel end.
+.It GREGADDRD: 
+Query the IP address that is set for the remote tunnel end.
+.It GRESPROTO: 
+Set the operation mode to the specified IP protocol value. The
+protocol is passed to the interface in (struct ifreq)->ifr_flags.
+The operation mode can also
+be given as 
+.Bl -tag -width bbb
+.It link0
+IPPROTO_GRE
+.It link2
+IPPROTO_MOBILE
+.El
+.Pp
+to
+.Xr ifconfig 8 .
+As the linkN flags are not mutually exclusive, modes must be set by applying
+positive and negative flags as e.g. 
+.Xr ifconfig 8
+link0 -link1 -link2
+.It GREGPROTO: 
+Query operation mode.
+.El
+.Pp
+Note that the IP addresses of the tunnel endpoints may be the same as the
+ones defined with 
+.Xr ifconfig 8
+for the interface (as if IP is encapsulated), but need not be, as e.g. when 
+encapsulating AppleTalk.
+.Pp
+.Sh EXAMPLE
+Configuration example:
+.Bd -literal
+
+
+Host X-- Host A  ----------------tunnel---------- cisco D------Host E
+          \\                                          |
+           \\                                        /
+             +------Host B----------Host C----------+
+
+.Ed
+   On host A (NetBSD):
+
+   # route add default B
+   # ifconfig greN  A D netmask 0xffffffff linkX up
+   # greconfig -i greN -s A -d D
+   # route add E D
+
+   On Host D (Cisco):
+
+   Interface TunnelX 	
+    ip unnumbered D   ! e.g. address from Ethernet interface
+    tunnel source D   ! e.g. address from Ethernet interface
+    tunnel destination A
+   ip route C <some interface and mask>
+   ip route A mask C
+   ip route X mask tunnelX
+
+   OR
+
+   On Host D (NetBSD):
+
+   # route add default C
+   # ifconfig greN D A 
+.Pp
+If all goes well, you should see packets flowing ;-)
+.Pp
+If you want to reach Host A over the tunnel (from the Cisco D), then 
+you have to have an alias on Host A for e.g. the Ethernet interface like:
+     ifconfig <etherif> alias Y
+ and on the cisco
+     ip route Y mask tunnelX
+.Sh NOTE
+For correct operation, the
+.Nm
+device needs a route to the destination, that is less specific than the
+one over the tunnel.
+(Basically, there needs to be a route to the decapsulating host that
+does not run over the tunnel, as this would be a loop ..)
+.Pp
+In order to 
+.Xr ifconfig 8
+to actually mark the interface as up, the keyword ``up'' must be given
+last on its command line.
+.Pp
+The kernel must be set to forward datagrams by either option
+``GATEWAY'' in the kernel config file or by issuing the appropriate 
+option to
+.Xr sysctl 8 .
+.Sh SEE ALSO
+.Xr netintro 4 ,
+.Xr ip 4 ,
+.Xr atalk 4 ,
+.Xr inet 4 ,
+.Xr ifconfig 8 ,
+.Xr greconfig 8 ,
+.Xr options 4 ,
+.Xr protocols 5 ,
+.Xr sysctl 8
+.Pp
+A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
+.Pp
+A description of MOBILE encapsulation can be found in RFC 2004.
+.Sh BUGS
+The compute_route() code in if_gre.c toggles the last bit of the
+IP-address to provoke the search for a less specific route than the
+one directly over the tunnel to prevent loops. This is possibly not
+the best solution.
+.Pp
+To avoid the address munging described above, turn on the link1 flag
+on the ifconfig command line.  This implies that the GRE packet
+destination (set via greconfig -d) and the ifconfig remote host are
+not the same IP addresses, and that the GRE destination does not route
+over the greX interface itself.
+.Pp
+GRE RFC not yet fully implemented (no GRE options), no other protocols
+yet than IP over IP.
+
+.Pp
+.Sh AUTHOR
+Heiko W.Rupp <hwr@pilhuhn.de>
