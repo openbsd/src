@@ -339,16 +339,19 @@ PASSWD[[:blank:]]*:	{
 			    return(COMMENT);
 			}			/* return comments */
 
-<GOTRUNAS,GOTDEFS,GOTCMND,STARTDEFS,INDEFS><<EOF>> {
-			    BEGIN INITIAL;
-			    LEXTRACE("EOF ");
-			    return(ERROR);
-			}	/* premature EOF */
-
 <*>.			{
 			    LEXTRACE("ERROR ");
 			    return(ERROR);
 			}	/* parse error */
+
+<*><<EOF>>		{
+			    if (YY_START != INITIAL) {
+			    	BEGIN INITIAL;
+				LEXTRACE("ERROR ");
+				return(ERROR);
+			    }
+			    yyterminate();
+			}
 
 %%
 static void
