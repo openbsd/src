@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2000/03/09 00:08:07 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/12/09 23:43:11 millert Exp $
 #	$NetBSD: Makefile,v 1.6 1995/04/23 07:58:41 cgd Exp $
 
 PROG=	grep
-SRCS=	dfa.c grep.c getopt.c getopt1.c kwset.c obstack.c regex.c savedir.c \
-	search.c stpcpy.c
+SRCS=	dfa.c grep.c kwset.c obstack.c regex.c savedir.c search.c stpcpy.c
 CFLAGS+=-I${.CURDIR} -DVERSION=\"2.4.1\" -DPACKAGE=\"grep\" -DGREP \
 	-DSTDC_HEADERS  -DHAVE_MEMCHR -DHAVE_MEMMOVE -DHAVE_MEMCPY \
 	-DHAVE_DIRENT_H -DHAVE_UNISTD_H -DHAVE_STRERROR \

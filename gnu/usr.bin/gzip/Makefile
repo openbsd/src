@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.12 1999/02/25 04:24:28 millert Exp $
+#	$OpenBSD: Makefile,v 1.13 2002/12/09 23:46:38 millert Exp $
 #	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
-	crypt.c lzw.c unlzw.c unlzh.c unpack.c getopt.c
+	crypt.c lzw.c unlzw.c unlzh.c unpack.c
 MAN=	gzexe.1 gzip.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 CFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1
 
