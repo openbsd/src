@@ -35,8 +35,8 @@
 ./usr/lib/lib45.so.1.0
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libasn1.so.2.0
-./usr/lib/libc.so.28.6
-./usr/lib/libc_r.so.6.6
+./usr/lib/libc.so.28.7
+./usr/lib/libc_r.so.6.7
 ./usr/lib/libcrypto.so.8.0
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
