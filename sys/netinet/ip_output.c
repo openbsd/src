@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.11 1997/03/02 07:59:40 tholo Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.12 1997/06/16 06:32:51 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -168,12 +168,12 @@ ip_output(m0, va_alist)
 		}
 
 		switch (ip->ip_p) {
-		case IPPROTO_TCP:
+		case IPPROTO_UDP:
 			udp = (struct udphdr *) (mtod(m, u_char *) + hlen);
 			dst->sen_sport = ntohs(udp->uh_sport);
 			dst->sen_dport = ntohs(udp->uh_dport);
 			break;
-		case IPPROTO_UDP:
+		case IPPROTO_TCP:
 			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
 			dst->sen_sport = ntohs(tcp->th_sport);
 			dst->sen_dport = ntohs(tcp->th_dport);
