@@ -1324,7 +1324,7 @@ do {									\
 
 #ifndef	STARTFILE_OPENBSD_SPEC
 #define	STARTFILE_OPENBSD_SPEC "\
-%{!shared: %{pg:gcrt1.o%s} %{!pg:%{p:gcrt1.o%s} %{!p:crt1.o%s}}} \
+%{!shared: %{pg:gcrt0.o%s} %{!pg:%{p:gcrt0.o%s} %{!p:crt0.o%s}}} \
 %{mnewlib: ecrti.o%s} \
 %{!mnewlib: %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}}"
 #endif
