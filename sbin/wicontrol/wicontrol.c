@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.14 2001/06/04 14:59:50 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.15 2001/06/07 18:58:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	From: wicontrol.c,v 1.6 1999/05/22 16:12:49 wpaul Exp $
+ *	$FreeBSD: wicontrol.c,v 1.6 1999/05/22 16:12:49 wpaul Exp $
  */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@
 #include <netinet/if_ether.h>
 
 #include <dev/ic/if_wi_ieee.h>
+#include <dev/ic/if_wireg.h>
 #endif
 
 #include <stdio.h>
@@ -66,7 +67,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.14 2001/06/04 14:59:50 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.15 2001/06/07 18:58:39 millert Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -82,9 +83,12 @@ static void wi_printhex		__P((struct wi_req *));
 static void wi_dumpinfo		__P((char *));
 static void wi_setkeys		__P((char *, int, char *));
 static void wi_printkeys	__P((struct wi_req *));
-static void usage		__P((char *));
+static void wi_printcardid	__P((struct wi_req *, int));
+static void wi_dumpstats	__P((char *));
+static void usage		__P((void));
 
-static void wi_getval(iface, wreq)
+static void
+wi_getval(iface, wreq)
 	char			*iface;
 	struct wi_req		*wreq;
 {
@@ -105,11 +109,10 @@ static void wi_getval(iface, wreq)
 		err(1, "SIOCGWAVELAN");
 
 	close(s);
-
-	return;
 }
 
-static void wi_setval(iface, wreq)
+static void
+wi_setval(iface, wreq)
 	char			*iface;
 	struct wi_req		*wreq;
 {
@@ -130,11 +133,10 @@ static void wi_setval(iface, wreq)
 		err(1, "SIOCSWAVELAN");
 
 	close(s);
-
-	return;
 }
 
-void wi_printstr(wreq)
+void
+wi_printstr(wreq)
 	struct wi_req		*wreq;
 {
 	char			*ptr;
@@ -147,8 +149,10 @@ void wi_printstr(wreq)
 				ptr[i] = ' ';
 		}
 	} else {
+		int len = letoh16(wreq->wi_val[0]);
+
 		ptr = (char *)&wreq->wi_val[1];
-		for (i = 0; i < wreq->wi_val[0]; i++) {
+		for (i = 0; i < len; i++) {
 			if (ptr[i] == '\0')
 				ptr[i] = ' ';
 		}
@@ -156,11 +160,10 @@ void wi_printstr(wreq)
 
 	ptr[i] = '\0';
 	printf("[ %s ]", ptr);
-
-	return;
 }
 
-void wi_setstr(iface, code, str)
+void
+wi_setstr(iface, code, str)
 	char			*iface;
 	int			code;
 	char			*str;
@@ -177,15 +180,14 @@ void wi_setstr(iface, code, str)
 
 	wreq.wi_type = code;
 	wreq.wi_len = 18;
-	wreq.wi_val[0] = strlen(str);
+	wreq.wi_val[0] = htole16(strlen(str));
 	bcopy(str, (char *)&wreq.wi_val[1], strlen(str));
 
 	wi_setval(iface, &wreq);
-
-	return;
 }
 
-void wi_setbytes(iface, code, bytes, len)
+void
+wi_setbytes(iface, code, bytes, len)
 	char			*iface;
 	int			code;
 	char			*bytes;
@@ -200,11 +202,10 @@ void wi_setbytes(iface, code, bytes, len)
 	bcopy(bytes, (char *)&wreq.wi_val[0], len);
 
 	wi_setval(iface, &wreq);
-
-	return;
 }
 
-void wi_setword(iface, code, word)
+void
+wi_setword(iface, code, word)
 	char			*iface;
 	int			code;
 	char                    *word;
@@ -216,14 +217,13 @@ void wi_setword(iface, code, word)
 
 	wreq.wi_type = code;
 	wreq.wi_len = 2;
-	wreq.wi_val[0] = value;
+	wreq.wi_val[0] = htole16(value);
 
 	wi_setval(iface, &wreq);
-
-	return;
 }
 
-void wi_sethex(iface, code, str)
+void
+wi_sethex(iface, code, str)
 	char			*iface;
 	int			code;
 	char			*str;
@@ -239,11 +239,10 @@ void wi_sethex(iface, code, str)
 		errx(1, "badly formatted address");
 
 	wi_setbytes(iface, code, (char *)addr, ETHER_ADDR_LEN);
-
-	return;
 }
 
-static int wi_hex2int(c)
+static int
+wi_hex2int(c)
         char                    c;
 {
         if (c >= '0' && c <= '9')
@@ -256,7 +255,8 @@ static int wi_hex2int(c)
 	return (0); 
 }
 
-static void wi_str2key(s, k)
+static void
+wi_str2key(s, k)
         char                    *s;
         struct wi_key           *k;
 {
@@ -272,17 +272,16 @@ static void wi_str2key(s, k)
                         *p++ = (wi_hex2int(s[i]) << 4) + wi_hex2int(s[i + 1]);
                         n++;
                 }
-                k->wi_keylen = n;
+                k->wi_keylen = htole16(n);
         } else {
                 /* No, just copy it in. */
                 bcopy(s, k->wi_keydat, strlen(s));
-                k->wi_keylen = strlen(s);
+                k->wi_keylen = htole16(strlen(s));
         }
-
-        return;
 }
 
-static void wi_setkeys(iface, idx, key)
+static void
+wi_setkeys(iface, idx, key)
         char                    *iface;
         int                     idx;
         char                    *key;
@@ -296,7 +295,7 @@ static void wi_setkeys(iface, idx, key)
         wreq.wi_type = WI_RID_WEP_AVAIL;
 
         wi_getval(iface, &wreq);
-        if (wreq.wi_val[0] == 0)
+        if (letoh16(wreq.wi_val[0]) == 0)
                 err(1, "no WEP option available on this card");
 
         bzero((char *)&wreq, sizeof(wreq));
@@ -325,11 +324,10 @@ static void wi_setkeys(iface, idx, key)
         wreq.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
         wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
         wi_setval(iface, &wreq);
-
-        return;
 }
 
-static void wi_printkeys(wreq)
+static void
+wi_printkeys(wreq)
         struct wi_req           *wreq;
 {
         int                     i, j, bn;
@@ -342,8 +340,8 @@ static void wi_printkeys(wreq)
 	for (i = 0, bn = 0; i < 4; i++, bn = 0) {
                 k = &keys->wi_keys[i];
                 ptr = (char *)k->wi_keydat;
-                for (j = 0; j < k->wi_keylen; j++) {
-		        if (!isprint(ptr[j])) {
+		for (j = 0; j < letoh16(k->wi_keylen); j++) {
+		        if (!isprint((unsigned char)ptr[j])) {
 			        bn = 1;
 				break;
 			}
@@ -351,7 +349,7 @@ static void wi_printkeys(wreq)
 
 		if (bn)	{
 		        printf("[ 0x");
-		        for (j = 0; j < k->wi_keylen; j++)
+		        for (j = 0; j < letoh16(k->wi_keylen); j++)
 			      printf("%02x", ((unsigned char *) ptr)[j]);
 			printf(" ]");
 		} else {
@@ -359,35 +357,80 @@ static void wi_printkeys(wreq)
 			printf("[ %s ]", ptr);
 		}
         }
+}
 
-        return;
-};
+void
+wi_printcardid(wreq, chip_id)
+	struct wi_req *wreq;
+	int chip_id;
+{
+	char *chip_name;
 
-void wi_printwords(wreq)
+	if (wreq->wi_len < 4)
+		return;
+
+	/* Copied from wi_get_id() in if_wi.c */
+	switch (chip_id) {
+	case WI_NIC_EVB2:
+		chip_name = "PRISM I HFA3841(EVB2)";
+		break;
+	case WI_NIC_HWB3763:
+		chip_name = "PRISM II HWB3763 rev.B";
+		break;
+	case WI_NIC_HWB3163:
+		chip_name = "PRISM II HWB3163 rev.A";
+		break;
+	case WI_NIC_HWB3163B:
+		chip_name = "PRISM II HWB3163 rev.B";
+		break;
+	case WI_NIC_EVB3:
+		chip_name = "PRISM II  HFA3842(EVB3)";
+		break;
+	case WI_NIC_HWB1153:
+		chip_name = "PRISM I HFA1153";
+		break;
+	case WI_NIC_P2_SST:
+		chip_name = "PRISM II HWB3163 SST-flash";
+		break;
+	case WI_NIC_PRISM2_5:
+		chip_name = "PRISM 2.5 ISL3873";
+		break;
+	case 1:
+		chip_name = "Lucent";
+		break;
+	default:
+		asprintf(&chip_name, "Unknown (%d)", chip_id);
+		break;
+	}
+	printf("[ %s, Firmware %i.%i variant %i ]", chip_name,
+	    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
+	    letoh16(wreq->wi_val[1]));
+}
+
+void
+wi_printwords(wreq)
 	struct wi_req		*wreq;
 {
 	int			i;
 
 	printf("[ ");
 	for (i = 0; i < wreq->wi_len - 1; i++)
-		printf("%d ", wreq->wi_val[i]);
+		printf("%d ", letoh16(wreq->wi_val[i]));
 	printf("]");
-
-	return;
 }
 
-void wi_printbool(wreq)
+void
+wi_printbool(wreq)
 	struct wi_req		*wreq;
 {
-	if (wreq->wi_val[0])
+	if (letoh16(wreq->wi_val[0]))
 		printf("[ On ]");
 	else
 		printf("[ Off ]");
-
-	return;
 }
 
-void wi_printhex(wreq)
+void
+wi_printhex(wreq)
 	struct wi_req		*wreq;
 {
 	int			i;
@@ -403,7 +446,6 @@ void wi_printhex(wreq)
 	}
 
 	printf(" ]");
-	return;
 }
 
 #define WI_STRING		0x01
@@ -411,6 +453,7 @@ void wi_printhex(wreq)
 #define WI_WORDS		0x03
 #define WI_HEXBYTES		0x04
 #define WI_KEYSTRUCT            0x05
+#define WI_CARDINFO             0x06
 
 struct wi_table {
 	int			wi_code;
@@ -434,35 +477,48 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_MAC_NODE, WI_HEXBYTES, "MAC address:\t\t\t\t"},
 	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t"},
 	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t"},
+	{ WI_RID_MAX_DATALEN, WI_WORDS, "Maximum data length:\t\t\t"},
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t"},
 	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t" },
+	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t"},
+	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1:firm,3:disable):\t\t"},
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t" },
 	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t" },
+	{ WI_RID_STA_IDENTITY, WI_CARDINFO, "Card info:\t\t\t\t" },
 	{ 0, NULL }
 };
 
 static struct wi_table wi_crypt_table[] = {
         { WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
+        { WI_RID_AUTH_CNTL, WI_WORDS,
+	  "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
         { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
         { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
         { 0, NULL }
 };
 
-static void wi_dumpinfo(iface)
+static void
+wi_dumpinfo(iface)
 	char			*iface;
 {
 	struct wi_req		wreq;
-	int			i, has_wep;
+	int			i, has_wep, chip_id;
 	struct wi_table		*w;
 
+	/* Get chip ID. */
 	bzero((char *)&wreq, sizeof(wreq));
-
-	wreq.wi_len = WI_MAX_DATALEN;
-	wreq.wi_type = WI_RID_WEP_AVAIL;
-
+	wreq.wi_type = WI_RID_CARD_ID;
+	wreq.wi_len = 5;
 	wi_getval(iface, &wreq);
-	has_wep = wreq.wi_val[0];
+	chip_id = letoh16(wreq.wi_val[0]);
+
+	/* Check for WEP support. */
+	bzero((char *)&wreq, sizeof(wreq));
+	wreq.wi_type = WI_RID_WEP_AVAIL;
+	wreq.wi_len = 2;
+	wi_getval(iface, &wreq);
+	has_wep = letoh16(wreq.wi_val[0]);
 
 	w = wi_table;
 
@@ -487,6 +543,9 @@ static void wi_dumpinfo(iface)
 		case WI_HEXBYTES:
 			wi_printhex(&wreq);
 			break;
+		case WI_CARDINFO:
+			wi_printcardid(&wreq, chip_id);
+			break;
 		default:
 			break;
 		}	
@@ -509,7 +568,8 @@ static void wi_dumpinfo(iface)
 				break;
 			case WI_WORDS:
 				if (wreq.wi_type == WI_RID_TX_CRYPT_KEY)
-					wreq.wi_val[0]++;
+					wreq.wi_val[0] =
+					   htole16(letoh16(wreq.wi_val[0]) + 1);
 				wi_printwords(&wreq);
 				break;
 			case WI_BOOL:
@@ -527,11 +587,10 @@ static void wi_dumpinfo(iface)
 			printf("\n");
 		}
 	}
-
-	return;
 }
 
-static void wi_dumpstats(iface)
+static void
+wi_dumpstats(iface)
 	char			*iface;
 {
 	struct wi_req		wreq;
@@ -545,6 +604,7 @@ static void wi_dumpstats(iface)
 
 	c = (struct wi_counters *)&wreq.wi_val;
 
+	/* XXX native byte order */
 	printf("Transmitted unicast frames:\t\t%d\n",
 	    c->wi_tx_unicast_frames);
 	printf("Transmitted multicast frames:\t\t%d\n",
@@ -585,20 +645,21 @@ static void wi_dumpstats(iface)
 	    c->wi_rx_msg_in_msg_frags);
 	printf("Received message bad fragments:\t\t%d\n",
 	    c->wi_rx_msg_in_bad_msg_frags);
-
-	return;
 }
 
-static void usage(p)
-	char			*p;
+static void
+usage()
 {
+	extern char *__progname;
+
 	fprintf(stderr,
-	    "usage: wicontrol interface "
+	    "usage: %s interface "
 	    "[-o] [-t tx rate] [-n network name] [-s station name]\n"
 	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
-	    "       [-f frequency] [-P 0|1] [-S max sleep duration]\n");
+	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
+	    "       [-A 0|1 ] [-R 1|3]\n", __progname);
 	exit(1);
 }
 
@@ -610,33 +671,37 @@ struct wi_func {
 };
 
 static struct wi_func wi_opt[] = {
-        { 'k', wi_setkeys, 0, NULL },
-        { 'c', wi_setword, WI_RID_CREATE_IBSS, NULL },
-        { 'd', wi_setword, WI_RID_MAX_DATALEN, NULL },
-        { 'f', wi_setword, WI_RID_OWN_CHNL, NULL },
-        { 'p', wi_setword, WI_RID_PORTTYPE, NULL },
-        { 'r', wi_setword, WI_RID_RTS_THRESH, NULL },
-        { 't', wi_setword, WI_RID_TX_RATE, NULL },
-        { 'n', wi_setstr, WI_RID_DESIRED_SSID, NULL },
-        { 's', wi_setstr, WI_RID_NODENAME, NULL },
-        { 'm', wi_sethex, WI_RID_MAC_NODE, NULL },
-        { 'q', wi_setstr, WI_RID_OWN_SSID, NULL },
-        { 'T', wi_setword, WI_RID_TX_CRYPT_KEY, NULL },
-        { 'S', wi_setword, WI_RID_MAX_SLEEP, NULL },
-        { 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
-        { 'e', wi_setword, WI_RID_ENCRYPTION, NULL },
 	{ 'a', wi_setword, WI_RID_SYSTEM_SCALE, NULL },
+	{ 'c', wi_setword, WI_RID_CREATE_IBSS, NULL },
+	{ 'd', wi_setword, WI_RID_MAX_DATALEN, NULL },
+	{ 'e', wi_setword, WI_RID_ENCRYPTION, NULL },
+	{ 'f', wi_setword, WI_RID_OWN_CHNL, NULL },
+	{ 'k', wi_setkeys, 0, NULL },
+	{ 'm', wi_sethex, WI_RID_MAC_NODE, NULL },
+	{ 'n', wi_setstr, WI_RID_DESIRED_SSID, NULL },
+	{ 'p', wi_setword, WI_RID_PORTTYPE, NULL },
+	{ 'q', wi_setstr, WI_RID_OWN_SSID, NULL },
+	{ 'r', wi_setword, WI_RID_RTS_THRESH, NULL },
+	{ 's', wi_setstr, WI_RID_NODENAME, NULL },
+	{ 't', wi_setword, WI_RID_TX_RATE, NULL },
+	{ 'A', wi_setword, WI_RID_AUTH_CNTL, NULL },
+	{ 'M', wi_setword, WI_RID_MICROWAVE_OVEN, NULL },
+	{ 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
+	{ 'R', wi_setword, WI_RID_ROAMING_MODE, NULL },
+	{ 'S', wi_setword, WI_RID_MAX_SLEEP, NULL },
+	{ 'T', wi_setword, WI_RID_TX_CRYPT_KEY, NULL },
 
-        /* These options will never be command line options which is why
-          they are not 'quoted' */
-        { 1, wi_setkeys, 0, NULL }, /* Dummy option for key 0 */
-        { 2, wi_setkeys, 1, NULL }, /* key 1 */
-        { 3, wi_setkeys, 2, NULL }, /* key 2 */
-        { 4, wi_setkeys, 3, NULL }, /* key 3 */
-        { 0, NULL, 0, NULL }
+	/* These options will never be command line options which is why
+	   they are not 'quoted' */
+	{ 1, wi_setkeys, 0, NULL }, /* Dummy option for key 0 */
+	{ 2, wi_setkeys, 1, NULL }, /* key 1 */
+	{ 3, wi_setkeys, 2, NULL }, /* key 2 */
+	{ 4, wi_setkeys, 3, NULL }, /* key 3 */
+	{ 0, NULL, 0, NULL }
 };
 
-int main(argc, argv)
+int
+main(argc, argv)
 	int			argc;
 	char			*argv[];
 {
@@ -651,7 +716,7 @@ int main(argc, argv)
 	}
 
 	while((ch = getopt(argc, argv,
-	    "hoc:d:f:p:r:q:t:n:s:i:m:P:S:T:e:k:v:a:")) != -1) {
+	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:v:A:M:S:P:R:T:")) != -1) {
 	        for (p = 0; ch && wi_opt[p].key; p++)
 		        if (ch == wi_opt[p].key) {
 			        wi_opt[p].optarg = optarg;
@@ -682,13 +747,13 @@ int main(argc, argv)
 		       	break;
 		case 'h':
 		default:
-		        usage(argv[0]);
+		        usage();
 			break;
 		}
 	}
 
 	if (iface == NULL)
-		usage(argv[0]);
+		usage();
 
 	for (p = 0; wi_opt[p].key; p++)
 	        if (wi_opt[p].optarg != NULL)
@@ -701,5 +766,5 @@ int main(argc, argv)
 	if (dumpinfo && !dumpstats)
 	        wi_dumpinfo(iface);
 
-	return (0);
+	exit(0);
 }
