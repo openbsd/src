@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2001/07/18 00:41:48 mickey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2001/07/18 01:08:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -685,13 +685,16 @@ yylex(void)
 	if (isdigit(c)) {
 		yylval.number = 0;
 		do {
-			yylval.number *= 10;
-			yylval.number += c - '0';
+			u_int64_t n = (u_int64_t)yylval.number * 10 + c - '0';
+			if (n > 0xffffffff)
+				errx(1, "line %d: number is too large",
+				    lineno);
+			yylval.number = (u_int32_t)n;
 		} while ((c = getc(fin)) != EOF && isdigit(c));
 		ungetc(c, fin);
 		if (debug > 1)
 			fprintf(stderr, "number: %d\n", yylval.number);
-		return NUMBER;
+		return (NUMBER);
 	}
 
 #define allowed_in_string(x) \
