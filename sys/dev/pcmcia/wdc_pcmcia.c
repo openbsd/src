@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.9 2000/04/24 19:43:36 niklas Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.10 2001/01/29 00:20:17 csapuntz Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -378,6 +378,7 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
+	wdc_print_current_modes(&sc->wdc_channel);
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 	return;
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.24 2001/01/23 08:50:28 aaron Exp $     */
+/*      $OpenBSD: wdc.c,v 1.25 2001/01/29 00:20:16 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1367,6 +1367,9 @@ void
 wdc_print_caps(drvp)
 	struct ata_drive_datas *drvp;
 {
+	/* This is actually a lie until we fix the _probe_caps
+	   algorithm. Don't print out lies */
+#if 0
  	printf("%s: can use ", drvp->drive_name);
 
 	if (drvp->drive_flags & DRIVE_CAP32) {
@@ -1385,6 +1388,30 @@ wdc_print_caps(drvp)
 	}
 			
 	printf("\n");
+#endif
+}
+
+void
+wdc_print_current_modes(chp)
+	struct channel_softc *chp;
+{
+	int drive;
+	struct ata_drive_datas *drvp;
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		printf("%s(%s:%d:%d): using PIO mode %d",
+		    drvp->drive_name,
+		    chp->wdc->sc_dev.dv_xname,
+		    chp->channel, drive, drvp->PIO_mode);
+		if (drvp->drive_flags & DRIVE_DMA)
+			printf(", DMA mode %d", drvp->DMA_mode);
+		if (drvp->drive_flags & DRIVE_UDMA)
+			printf(", Ultra-DMA mode %d", drvp->UDMA_mode);
+		printf("\n");
+	}
 }
 
 /*
