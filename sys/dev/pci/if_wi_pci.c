@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.17 2002/03/27 22:01:16 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.18 2002/03/30 21:57:40 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,14 +86,6 @@
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wivar.h>
 
-#define WI_PCI_CBMA		0x10
-#define WI_PCI_PLX_LOMEM	0x10	/* PLX chip membase */
-#define WI_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
-#define WI_PCI_TMD_IO		0x14	/* TMD chip iobase */
-#define WI_PCI_TMD_PRISM_IO	0x18	/* Prism chip iobase behind the TMD */
-#define WI_PCI_LOMEM		0x18	/* ISA membase */
-#define WI_PCI_LOIO		0x1C	/* ISA iobase */
-
 /* Values for pp_type */
 #define WI_PCI_PRISM		0x01	/* Intersil Mini-PCI */
 #define WI_PCI_PLX		0x02	/* PLX 905x dumb bridge */
@@ -160,10 +152,13 @@ wi_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	const struct wi_pci_product *pp;
 	pci_intr_handle_t ih;
-	bus_space_handle_t ioh, memh;
+	bus_space_handle_t localh, ioh, memh;
+	bus_space_tag_t localt;
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_space_tag_t memt = pa->pa_memt;
+	bus_size_t localsize, memsize;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	u_int32_t command;
 	pcireg_t csr;
 	const char *intrstr;
 
@@ -171,14 +166,19 @@ wi_pci_attach(parent, self, aux)
 	/* Map memory and I/O registers. */
 	switch (pp->pp_type) {
 	case WI_PCI_PLX:
-		if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-		    &memt, &memh, NULL, NULL, 0) != 0) {
+		if (pci_mapreg_map(pa, WI_PCI_PLX_MEMRES, PCI_MAPREG_TYPE_MEM, 0,
+		    &memt, &memh, NULL, &memsize, 0) != 0) {
 			printf(": can't map mem space\n");
 			return;
 		}
-		if (pci_mapreg_map(pa, WI_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+		if (pci_mapreg_map(pa, WI_PCI_PLX_IORES, PCI_MAPREG_TYPE_IO, 0,
 		    &iot, &ioh, NULL, NULL, 0) != 0) {
 			printf(": can't map I/O space\n");
+			return;
+		}
+		if (pci_mapreg_map(pa, WI_PCI_PLX_LOCALRES, PCI_MAPREG_TYPE_IO, 0,
+		    &localt, &localh, NULL, &localsize, 0) != 0) {
+			printf(": can't map PLX I/O space\n");
 			return;
 		}
 		break;
@@ -188,20 +188,17 @@ wi_pci_attach(parent, self, aux)
 			printf(": can't map mem space\n");
 			return;
 		}
-
-		memt = iot;
-		memh = ioh;
 		sc->sc_pci = 1;
 		break;
 	case WI_PCI_TMD:
-		if (pci_mapreg_map(pa, WI_PCI_TMD_IO, PCI_MAPREG_TYPE_IO,
-		    0, &memt, &memh, NULL, NULL, 0) != 0) {
+		if (pci_mapreg_map(pa, WI_PCI_TMD_LOCALRES, PCI_MAPREG_TYPE_IO,
+		    0, &localt, &localh, NULL, &localsize, 0) != 0) {
 			printf(": can't map TMD I/O space\n");
 			return;
 		}
-		if (pci_mapreg_map(pa, WI_PCI_TMD_PRISM_IO, PCI_MAPREG_TYPE_IO,
+		if (pci_mapreg_map(pa, WI_PCI_TMD_IORES, PCI_MAPREG_TYPE_IO,
 		    0, &iot, &ioh, NULL, NULL, 0) != 0) {
-			printf(": can't map Prism2 I/O space\n");
+			printf(": can't map I/O space\n");
 			return;
 		}
 		break;
@@ -239,11 +236,23 @@ wi_pci_attach(parent, self, aux)
 	switch (pp->pp_type) {
 	case WI_PCI_PLX:
 		/*
+		 * Tell the PLX chip to enable interrupts.  In most cases
+		 * the serial EEPROM has done this for us but some cards
+		 * appear not to.
+		 */
+		command = bus_space_read_4(localt, localh, WI_PLX_INTCSR);
+		command |= WI_PLX_INTEN;
+		bus_space_write_4(localt, localh, WI_PLX_INTCSR, command);
+
+		/*
 		 * Setup the PLX chip for level interrupts and config index 1
-		 * XXX - should really reset the PLX chip too.
 		 */
 		bus_space_write_1(memt, memh,
 		    WI_PLX_COR_OFFSET, WI_PLX_COR_VALUE);
+
+		/* Unmap registers we no longer need access to. */
+		bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(memt, memh, memsize);
 
 		wi_attach(sc, 1);
 		break;
@@ -256,11 +265,14 @@ wi_pci_attach(parent, self, aux)
 		wi_attach(sc, 0);
 		break;
 	case WI_PCI_TMD:
-		bus_space_write_1(memt, memh, 0, WI_TMD_COR_VALUE);
+		bus_space_write_1(localt, localh, 0, WI_TMD_COR_VALUE);
 		/* XXX - correct delay? */
 		DELAY(100*1000); /* 100 m sec */
-		if (bus_space_read_1(memt, memh, 0) != WI_TMD_COR_VALUE)
+		if (bus_space_read_1(localt, localh, 0) != WI_TMD_COR_VALUE)
 			printf(": unable to initialize TMD7160 ");
+
+		/* Unmap registers we no longer need access to. */
+		bus_space_unmap(localt, localh, localsize);
 
 		wi_attach(sc, 1);
 		break;

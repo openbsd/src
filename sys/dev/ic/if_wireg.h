@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.15 2002/03/28 20:49:39 mickey Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.16 2002/03/30 21:57:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -146,7 +146,7 @@
  */
 
 /*
- * Size of Hermes I/O space.
+ * Size of Hermes & Prism2 I/O space.
  */
 #define WI_IOSIZ		0x40
 
@@ -271,9 +271,16 @@
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
 
-#define WI_PLX_COR_OFFSET	0x3E0
-#define WI_PLX_COR_VALUE	0x41
+#define WI_PCI_PLX_LOCALRES	0x14	/* PLX chip's local registers */
+#define WI_PCI_PLX_MEMRES	0x18	/* Prism attribute memory (PLX) */
+#define WI_PCI_PLX_IORES	0x1C	/* Prism I/O space (PLX) */
+#define WI_PLX_INTCSR		0x4C	/* PLX Interrupt CSR */
+#define WI_PLX_INTEN		0x40	/* Interrupt Enable bit */
+#define WI_PLX_COR_OFFSET	0x3E0	/* COR attribute offset of Prism2 */
+#define WI_PLX_COR_VALUE	0x41	/* Enable with irq in level trigger */
 
+#define WI_PCI_TMD_LOCALRES	0x14	/* TMD chip's local registers */
+#define WI_PCI_TMD_IORES	0x18	/* Prism I/O space (TMD) */
 #define WI_TMD_COR_VALUE	0x45
 
 /*
@@ -282,6 +289,7 @@
  * has doubled.
  * About WI_PCI_COR: In this Register, only soft-reset bit implement; Bit(7).
  */
+#define WI_PCI_CBMA		0x10
 #define WI_PCI_COR		0x4C
 #define WI_PCI_HCR		0x5C
 #define WI_PCI_MASTER0_ADDRH	0x80
