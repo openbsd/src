@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.27 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.28 2004/05/27 19:15:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.27 2003/07/29 18:39:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.28 2004/05/27 19:15:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -181,8 +181,8 @@ doit(struct sockaddr_in *sinp)
 			return;
 		}
 	} while (user[0] == '\0');
-	/* truncate username to 8 characters */
-	user[8] = '\0';
+	user[MAXLOGNAME] = '\0';
+
 	pw = getpwnam(user);
 	if (pw == NULL) {
 		printf("Password: ");
