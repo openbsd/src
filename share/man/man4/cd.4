@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.13 2003/12/02 06:06:26 jmc Exp $
+.\"	$OpenBSD: cd.4,v 1.14 2004/03/20 22:05:55 miod Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -57,7 +57,9 @@ and
 As the SCSI adapter is probed during boot, the SCSI bus is scanned for devices.
 Any devices found which answer as
 .Dq Read-only
-type devices will be
+and
+.Dq removable
+CD-ROM or WORM devices will be
 .Dq attached
 to the
 .Nm
