@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.4 1998/07/05 09:25:53 deraadt Exp $	*/
+/*	$OpenBSD: be.c,v 1.5 1998/07/11 05:47:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -115,19 +115,15 @@ beattach(parent, self, aux)
 	struct besoftc *sc = (struct besoftc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct confargs *ca = aux;
-	int pri;
-
-	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
+	int pri;
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
 		return;
 	}
 	pri = ca->ca_ra.ra_intr[0].int_pri;
-	printf(" pri %d", pri);
 	sc->sc_rev = getpropint(ca->ca_ra.ra_node, "board-version", -1);
-	printf(": rev %x", sc->sc_rev);
 
 	sc->sc_cr = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct be_cregs));
 	sc->sc_br = mapiodev(&ca->ca_ra.ra_reg[1], 0, sizeof(struct be_bregs));
@@ -164,9 +160,13 @@ beattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	printf(" pri %d: rev %x address %s\n", pri, sc->sc_rev,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+#if NBPFILTER > 0
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
-	printf("\n");
+#endif
 }
 
 /*
