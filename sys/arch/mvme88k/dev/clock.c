@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.36 2004/08/02 14:36:07 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.37 2004/08/24 07:42:04 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -235,8 +235,8 @@ sbc_initclock(void)
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
-		tick = 1000000 / hz;
 	}
+	tick = 1000000 / hz;
 
 	/* profclock */
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CTL) = 0;
@@ -293,7 +293,7 @@ sbc_initstatclock(void)
 	/* statclock */
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
 	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
-	    pcc2_timer_us2lim(tick);
+	    pcc2_timer_us2lim(statint);
 	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
@@ -328,7 +328,7 @@ sbc_statintr(void *eframe)
 
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
 	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
-	    pcc2_timer_us2lim(tick);
+	    pcc2_timer_us2lim(newint);
 	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
 	    stat_reset;
@@ -378,8 +378,8 @@ m188_initclock(void)
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
-		tick = 1000000 / hz;
 	}
+	tick = 1000000 / hz;
 	m188_timer_init(tick);
 }
 
@@ -535,14 +535,11 @@ read_cio(int reg)
  */
 
 void
-m188_cio_init(unsigned p)
+m188_cio_init(unsigned period)
 {
 	volatile int i;
-	short period;
 
 	CIO_LOCK;
-
-	period = p & 0xffff;
 
 	/* Initialize 8536 CTC */
 
