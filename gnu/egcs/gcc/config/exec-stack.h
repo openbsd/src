@@ -23,6 +23,7 @@ Boston, MA 02111-1307, USA.  */
   emit_library_call(gen_rtx_SYMBOL_REF (Pmode, "__enable_execute_stack"), \
 		    0, VOIDmode, 1, memory_address (SImode, (TRAMP)), Pmode)
 
+#undef TRANSFER_FROM_TRAMPOLINE
 #define TRANSFER_FROM_TRAMPOLINE					\
 extern void __enable_execute_stack (void *);				\
 void									\
