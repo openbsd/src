@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.3 1997/02/24 14:06:42 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.4 1997/02/28 02:55:33 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -33,6 +33,8 @@ struct tdb				/* tunnel descriptor block */
 	struct tdb	*tdb_onext;	/* next in output */
 	struct tdb	*tdb_inext;	/* next in input (prev!) */
 	u_long		tdb_spi;	/* SPI to use */
+	u_long		tdb_flags;	/* Flags related to this TDB */
+#define TDBF_UNIQUE	0x0001
 	struct in_addr	tdb_dst;	/* dest address for this SPI */
 	struct ifnet	*tdb_rcvif;	/* related rcv encap interface */
 	struct xformsw	*tdb_xform;	/* transformation to use */
