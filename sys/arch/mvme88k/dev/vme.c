@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.31 2004/04/16 06:06:46 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.32 2004/04/16 06:20:24 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -422,32 +422,38 @@ vme2chip_init(sc)
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
 
-	ctl = vme2->vme2_masterctl;
+	/*
+	 * Display the VMEChip2 decoder status.
+	 */
 	printf("%s: using BUG parameters\n", sc->sc_dev.dv_xname);
-	/* setup a A32D16 space */
-	printf("%s: 1phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
-	       sc->sc_dev.dv_xname,
-	       vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
-	       vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
+	ctl = vme2->vme2_gcsrctl;
+	if (ctl & VME2_GCSRCTL_MDEN1) {
+		printf("%s: 1phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    sc->sc_dev.dv_xname,
+		    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
+		    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
+	}
+	if (ctl & VME2_GCSRCTL_MDEN2) {
+		printf("%s: 2phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    sc->sc_dev.dv_xname,
+		    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
+		    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
+	}
+	if (ctl & VME2_GCSRCTL_MDEN3) {
+		printf("%s: 3phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    sc->sc_dev.dv_xname,
+		    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000,
+		    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000);
+	}
+	if (ctl & VME2_GCSRCTL_MDEN4) {
+		printf("%s: 4phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    sc->sc_dev.dv_xname,
+		    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
+		    (vme2->vme2_master4 << 16) + (vme2->vme2_master4mod << 16),
+		    (vme2->vme2_master4 & 0xffff0000) +
+		      (vme2->vme2_master4mod & 0xffff0000));
+	}
 
-	/* setup a A32D32 space */
-	printf("%s: 2phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
-	       sc->sc_dev.dv_xname,
-	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
-	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
-
-	/* setup a A24D16 space */
-	printf("%s: 3phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
-	       sc->sc_dev.dv_xname,
-	       vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000,
-	       vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000);
-
-	/* setup a XXXXXX space */
-	printf("%s: 4phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
-	       sc->sc_dev.dv_xname,
-	       vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
-	       (vme2->vme2_master4 << 16) + (vme2->vme2_master4mod << 16),
-	       (vme2->vme2_master4 & 0xffff0000) + (vme2->vme2_master4mod & 0xffff0000));
 	/*
 	 * Map the VME irq levels to the cpu levels 1:1.
 	 * This is rather inflexible, but much easier.
@@ -457,10 +463,6 @@ vme2chip_init(sc)
 	    (4 << VME2_IRQL4_VME4SHIFT) | (3 << VME2_IRQL4_VME3SHIFT) |
 	    (2 << VME2_IRQL4_VME2SHIFT) | (1 << VME2_IRQL4_VME1SHIFT);
 	printf("%s: vme to cpu irq level 1:1\n",sc->sc_dev.dv_xname);
-	/*
-	printf("%s: vme2_irql4 = 0x%08x\n",	sc->sc_dev.dv_xname,
-	    vme2->vme2_irql4);
-	*/
 
 	/* Enable the reset switch */
 	vme2->vme2_tctl |= VME2_TCTL_RSWE;
@@ -500,33 +502,11 @@ void
 vmesyscon_init(sc)
 	struct vmesoftc *sc;
 {
-#ifdef TODO
-	struct sysconreg *syscon = (struct sysconreg *)sc->sc_vaddr;
-	u_long ctl;
-
-	/* turn off SYSFAIL LED */
-	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
-
-	ctl = vme2->vme2_masterctl;
-	printf("%s: using BUG parameters\n", sc->sc_dev.dv_xname);
-	printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x master\n",
-	       sc->sc_dev.dv_xname,
-	       vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
-	       vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
-	printf("%s: 2phys 0x%08x-0x%08x to VME 0x%08x-0x%08x slave\n",
-	       sc->sc_dev.dv_xname,
-	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
-	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
-
 	/*
-	 * pseudo driver, abort interrupt handler
+	 * Nothing to do - though we ought to check the settings and
+	 * print them.  Abort button vector has already been setup in
+	 * sysconattach().
 	 */
-	sc->sc_abih.ih_fn = sysconabort;
-	sc->sc_abih.ih_arg = 0;
-	sc->sc_abih.ih_wantframe = 1;
-	sc->sc_abih.ih_ipl = IPL_NMI;
-	intr_establish(110, &sc->sc_abih);
-#endif /* TODO */
 }
 #endif /* NSYSCON */
 
