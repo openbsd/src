@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.10 1997/04/07 12:56:45 briggs Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.11 1997/04/27 19:28:39 briggs Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -451,12 +451,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_count -= dcount;
 		pending_5380_data += dcount;
 		}
-		/*
-		 * OK.  No bus error occurred above.  Clear the nofault flag
-		 * so we no longer short-circuit bus errors.
-		 */
-		nofault = (int *) 0;
-
 	} else {
 		int	resid;
 
@@ -511,17 +505,17 @@ extern	int			*nofault, mac68k_buserr_addr;
 
 		PID("write complete");
 
-		/*
-		 * OK.  No bus error occurred above.  Clear the nofault flag
-		 * so we no longer short-circuit bus errors.
-		 */
-		nofault = (int *) 0;
-
 		drq = (volatile u_int8_t *) ncr_5380_with_drq;
 		tmp_data = *drq;
 
 		PID("read a byte to force a phase change");
 	}
+
+	/*
+	 * OK.  No bus error occurred above.  Clear the nofault flag
+	 * so we no longer short-circuit bus errors.
+	 */
+	nofault = (int *) 0;
 
 	PID("end drq");
 	return;
