@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.41 2002/12/19 01:52:09 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.42 2002/12/30 23:04:42 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.41 2002/12/19 01:52:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.42 2002/12/30 23:04:42 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -73,8 +73,8 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.41 2002/12/19 01:52:09 deraadt Exp 
 static int	url_get(const char *, const char *, const char *);
 void		aborthttp(int);
 void		abortfile(int);
-char    	hextochar(const char *);
-char   		*urldecode(const char *);
+char		hextochar(const char *);
+char		*urldecode(const char *);
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
@@ -190,7 +190,7 @@ url_get(origline, proxyenv, outfile)
 		}
 		*--path = '/';			/* add / back to real path */
 		path = strchr(host, '/');	/* remove trailing / on host */
-		if (! EMPTYSTRING(path))
+		if (!EMPTYSTRING(path))
 			*path++ = '\0';
 		path = line;
 	}
@@ -227,14 +227,14 @@ url_get(origline, proxyenv, outfile)
 			goto cleanup_url_get;
 		}
 		oldintr = signal(SIGINT, abortfile);
-	
+
 		bytes = 0;
 		hashbytes = mark;
 		progressmeter(-1);
 
 		if ((buf = malloc(4096)) == NULL)
 			errx(1, "Can't allocate memory for transfer buffer\n");
-	
+
 		/* Finally, suck down the file. */
 		i = 0;
 		while ((len = read(s, buf, 4096)) > 0) {
@@ -269,7 +269,7 @@ url_get(origline, proxyenv, outfile)
 		if (verbose)
 			fputs("Successfully retrieved file.\n", ttyout);
 		(void)signal(SIGINT, oldintr);
-	
+
 		rval = 0;
 		goto cleanup_url_get;
 	}
@@ -377,18 +377,22 @@ again:
 			 * send them the port number.
 			 */
 			if (port && strcmp(port, "80") != 0)
-				fprintf(fin, "GET /%s HTTP/1.0\r\nHost: [%s]:%s\r\n%s\r\n\r\n", 
+				fprintf(fin,
+				    "GET /%s HTTP/1.0\r\nHost: [%s]:%s\r\n%s\r\n\r\n",
 				    path, h, port, HTTP_USER_AGENT);
 			else
-				fprintf(fin, "GET /%s HTTP/1.0\r\nHost: [%s]\r\n%s\r\n\r\n", 
+				fprintf(fin,
+				    "GET /%s HTTP/1.0\r\nHost: [%s]\r\n%s\r\n\r\n",
 				    path, h, HTTP_USER_AGENT);
 			free(h);
 		} else {
 			if (port && strcmp(port, "80") != 0)
-				fprintf(fin, "GET /%s HTTP/1.0\r\nHost: %s:%s\r\n%s\r\n\r\n", 
+				fprintf(fin,
+				    "GET /%s HTTP/1.0\r\nHost: %s:%s\r\n%s\r\n\r\n",
 				    path, host, port, HTTP_USER_AGENT);
 			else
-				fprintf(fin, "GET /%s HTTP/1.0\r\nHost: %s\r\n%s\r\n\r\n", 
+				fprintf(fin,
+				    "GET /%s HTTP/1.0\r\nHost: %s\r\n%s\r\n\r\n",
 				    path, host, HTTP_USER_AGENT);
 		}
 	}
@@ -681,11 +685,11 @@ auto_fetch(argc, argv, outfile)
 				host = passend + 1;
 				*userend = *passend = '\0';
 				passagain = strchr(host, '@');
-				if (strchr(pass, '@') != NULL || 
+				if (strchr(pass, '@') != NULL ||
 				    (passagain != NULL && passagain < dir)) {
 					warnx(at_encoding_warning);
 					goto bad_ftp_url;
-				}	
+				}
 
 				if (EMPTYSTRING(user) || EMPTYSTRING(pass)) {
 bad_ftp_url:
@@ -754,7 +758,7 @@ bad_ftp_url:
 		/*
 		 * Extract the file and (if present) directory name.
 		 */
-		if (! EMPTYSTRING(dir)) {
+		if (!EMPTYSTRING(dir)) {
 			cp = strrchr(dir, '/');
 			if (cp != NULL) {
 				*cp++ = '\0';
@@ -765,7 +769,8 @@ bad_ftp_url:
 			}
 		}
 		if (debug)
-			fprintf(ttyout, "user %s:%s host %s port %s dir %s file %s\n",
+			fprintf(ttyout,
+			    "user %s:%s host %s port %s dir %s file %s\n",
 			    user, pass, host, portnum, dir, file);
 
 		/*
@@ -781,7 +786,7 @@ bad_ftp_url:
 			xargv[1] = host;
 			xargv[2] = NULL;
 			xargc = 2;
-			if (! EMPTYSTRING(portnum)) {
+			if (!EMPTYSTRING(portnum)) {
 				xargv[2] = portnum;
 				xargv[3] = NULL;
 				xargc = 3;
@@ -807,28 +812,28 @@ bad_ftp_url:
 		xargv[1] = "/";
 		xargv[2] = NULL;
 		cd(2, xargv);
-		if (! dirchange) {
+		if (!dirchange) {
 			rval = argpos + 1;
 			continue;
 		}
 
 		dirhasglob = filehasglob = 0;
 		if (doglob) {
-			if (! EMPTYSTRING(dir) &&
+			if (!EMPTYSTRING(dir) &&
 			    strpbrk(dir, "*?[]{}") != NULL)
 				dirhasglob = 1;
-			if (! EMPTYSTRING(file) &&
+			if (!EMPTYSTRING(file) &&
 			    strpbrk(file, "*?[]{}") != NULL)
 				filehasglob = 1;
 		}
 
 		/* Change directories, if necessary. */
-		if (! EMPTYSTRING(dir) && !dirhasglob) {
+		if (!EMPTYSTRING(dir) && !dirhasglob) {
 			xargv[0] = "cd";
 			xargv[1] = dir;
 			xargv[2] = NULL;
 			cd(2, xargv);
-			if (! dirchange) {
+			if (!dirchange) {
 				rval = argpos + 1;
 				continue;
 			}
@@ -878,14 +883,14 @@ bad_ftp_url:
 }
 
 char *
-urldecode(str) 
+urldecode(str)
         const char *str;
 {
         char *ret;
         char c;
         int i, reallen;
 
-        if (str == NULL) 
+        if (str == NULL)
                 return NULL;
         if ((ret = malloc(strlen(str)+1)) == NULL)
                 err(1, "Can't allocate memory for URL decoding");
