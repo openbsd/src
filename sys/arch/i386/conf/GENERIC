@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.377 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.378 2004/09/16 10:37:21 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -69,6 +69,8 @@ gpio*	at gscpcib?
 elansc*	at pci?			# AMD Elan SC520 System Controller
 gpio*	at elansc?
 geodesc* at pci?		# Geode SC1100/SCx200 IAOC
+#piixpm* at pci?		# Intel PIIX PM
+#gscpm*	at pci?			# NS Geode SC1100 SMI/ACPI module
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
