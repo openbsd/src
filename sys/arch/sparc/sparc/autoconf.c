@@ -1698,7 +1698,7 @@ romgetcursoraddr(rowp, colp)
 	 * and in some newer proms.  They are local in version 2.9.  The
 	 * correct cutoff point is unknown, as yet; we use 2.9 here.
 	 */
-	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020007)
 		sprintf(buf,
 		    "' line# >body >user %lx ! ' column# >body >user %lx !",
 		    (u_long)rowp, (u_long)colp);
@@ -1708,6 +1708,8 @@ romgetcursoraddr(rowp, colp)
 		    (u_long)rowp, (u_long)colp);
 	*rowp = *colp = NULL;
 	rominterpret(buf);
+	if (*rowp == *colp && *rowp != NULL)
+		panic("romgetcursor prom version");
 	return (*rowp == NULL || *colp == NULL);
 }
 #endif
