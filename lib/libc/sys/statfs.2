@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.13 2000/03/24 19:07:49 millert Exp $
+.\"	$OpenBSD: statfs.2,v 1.14 2002/01/15 18:47:26 millert Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -60,7 +60,7 @@ structure defined as follows:
 typedef struct { int32_t val[2]; } fsid_t;
 
 #define MFSNAMELEN   16 /* length of fs type name, including NUL */
-#define MNAMELEN     32	/* length of buffer for returned name */
+#define MNAMELEN     90	/* length of buffer for returned name */
 
 struct statfs {
     u_int32_t  f_flags;       /* copy of mount flags */
