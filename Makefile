@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.94 2003/10/05 00:18:02 mickey Exp $
+#	$OpenBSD: Makefile,v 1.95 2003/12/14 10:02:57 matthieu Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -76,10 +76,6 @@ build:
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
 	cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
-.if (${KERBEROS5:L} == "yes")
-	cd ${.CURDIR}/kerberosV/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 exec ${SUDO} ${MAKE} install
-.endif
 	${MAKE} depend && ${MAKE} && exec ${SUDO} ${MAKE} install
 
 .if !defined(TARGET)
@@ -314,13 +310,6 @@ cross-lib:	${CROSSGCC}
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR=\"${NO_CROSS} libocurses/PSD.doc\" \
 	        ${MAKE} depend all install)
-.if (${KERBEROS5:L} == "yes")
-	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
-	export MACHINE MACHINE_ARCH; \
-	cd kerberosV/lib; \
-	eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} depend all install
-.endif
 
 cross-bin:	${CROSSOBJ}
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
