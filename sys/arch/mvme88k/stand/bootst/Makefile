@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.2 1998/08/18 04:21:23 smurph Exp $
+#	     $Id: Makefile,v 1.3 1998/08/22 09:25:07 smurph Exp $
 
 RELOC=0x3F0000 
 
@@ -13,15 +13,15 @@ CLEANFILES+=stboot bootst bootst.bug
 #.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 #.PATH: ${S}/lib/libsa
 
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libz/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/wrtvid/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libz/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/wrtvid/Makefile.inc"
 
 SRCS=   bootst.c bcopy.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} libgcc.a
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
