@@ -1,8 +1,8 @@
-dnl	$OpenBSD: prep,v 1.17 2003/09/06 22:22:43 miod Exp $
+dnl	$OpenBSD: prep,v 1.18 2004/03/17 09:25:09 jmc Exp $
 Most MACHINE machines don't generally need any specific preparation.
 
-On series 400, you will wish to configure the prom as ``HP-UX compatible''
-before installing OpenBSD. To do so, at the prom prompt, enter ``CF'',
+On series 400, you will wish to configure the PROM as ``HP-UX compatible''
+before installing OpenBSD. To do so, at the PROM prompt, enter ``CF'',
 then ``2'' (Boot Mode Selection), then ``2'' (HP-UX Compatible).  Choose
 to make this setting Permanent with ``P'', then validate your changes with
 ``E''.  Your machine will restart in HP-UX mode.

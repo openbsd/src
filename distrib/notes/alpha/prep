@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.20 2003/09/06 22:22:42 miod Exp $
+dnl	$OpenBSD: prep,v 1.21 2004/03/17 09:25:09 jmc Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -6,7 +6,7 @@ with the SRM firmware.
 
 Switching your MACHINE to SRM console:
     Recent machines (such as the Miata and later models) have enough flash
-    rom space to carry both the AlphaBIOS and the SRM console.
+    ROM space to carry both the AlphaBIOS and the SRM console.
     To switch to SRM from AlphaBIOS, do the following:
     - enter the AlphaBIOS setup upon startup
       (F2 key, or ^B from serial console)
@@ -21,7 +21,7 @@ Switching your MACHINE to SRM console:
     flash, and you will have to upgrade your firmware.
 
     You can get replacement firmware either from a firmware update CD-ROM
-    or via ftp from
+    or via FTP from
 	ftp://ftp.digital.com/pub/DEC/Alpha/firmware/
     Please refer to
 	http://ftp.digital.com/pub/DEC/Alpha/firmware/readme.html
@@ -42,13 +42,13 @@ Using the SRM console:
     information to boot OpenBSD/MACHINE.
 
     To see a list of devices connected to your alpha, you can
-    use the "show device" command.  For booting the devices you
+    use the "show device" command.  For booting, the devices you
     are interested in are "dva0" (the floppy drive) and
     "dka*" (the disk drives).
 
     You can set ROM variables by saying "set VARIABLE VALUE".
     Some variables you will want to set:
-	auto_action	Determines what happens when you turn power on,
+	auto_action	Determines what happens when you turn the power on,
 			halt, or crash your machine.  Valid values
 			{:-include-:} "halt", "boot", and "restart".
 			Most users will want to set this to "boot".
@@ -61,7 +61,7 @@ Using the SRM console:
 	boot_osflags	Flags to pass to the kernel.
 			IMPORTANT! For multiuser boot, this needs to be
 			set to "a".
-    To see a list of all variables on your machine use the "show"
+    To see a list of all variables on your machine, use the "show"
     command with no arguments.
 
     You can bypass the boot_file and boot_osflags values from the command
@@ -79,7 +79,7 @@ SRM console boot device restrictions:
     The built-in disk controllers on your MACHINE will always be supported,
     however on IDE-based machines, such as the EB164, 164SX and 164LX, as
     well as the low-end Personal Workstation (non-u models), you can plug
-    an SCSI controller, and boot from it if it is recognized.
+    in a SCSI controller, and boot from it if it is recognized.
 
     Recent SRM releases for these machines will be able to boot from the
     following controllers:
@@ -128,4 +128,4 @@ OpenBSD/MACHINE console device restrictions:
     use display && keyboard console'', then you need to use a serial
     console.
     If your machine was not listed in the list above, please report this
-    on <alpha@OpenBSD.org>.
+    to <alpha@OpenBSD.org>.

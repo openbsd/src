@@ -1,10 +1,10 @@
-dnl	$OpenBSD: install,v 1.26 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.27 2004/03/17 09:25:09 jmc Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
 disks, but may be incomplete.  Geometry may be calculated from an HP-UX
 `/etc/disktab' entry, but note that HP-UX geometry is based on
-1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
+1024-byte sectors, while OpenBSD's is based on 512-byte sectors.
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
 SCSI devices (such as Zip(tm) disk).  Note that loading from HP-IB or SCSI
@@ -23,7 +23,7 @@ configuration, you may or may not see any messages on the console while this
 happens.
 
 Please note that booting from CD-ROM may not be supported by all models of
-MACHINE.  You will also need a CD-ROM drive which uses 512 byte blocks;
+MACHINE.  You will also need a CD-ROM drive which uses 512-byte blocks;
 anything which shipped with an MACHINE or is known to boot a SPARC or black
 NeXTStation should work.  Modern CD-ROM drives jumpered to use 512-byte
 blocks should work as well.
@@ -39,7 +39,7 @@ either have another OpenBSD system on the network, or something else
 capable of running the rbootd(8) program.  Source code may be found
 under usr.sbin/rbootd in the OpenBSD source tree, but requires the
 Berkeley Packet Filter (bpf) in order to function.  It may be possible to
-use HP-UX, but is not recommended (or documented here).  For more
+use HP-UX, but it is not recommended (or documented here).  For more
 information on diskless booting under OpenBSD, see the diskless(8)
 manual page.
 
@@ -50,7 +50,7 @@ and place in it an entry like the following:
 
 	08:00:09:04:AA:33	SYS_UBOOT	# thunder-egg
 
-The first column is the ethernet address of the client's network interface.
+The first column is the Ethernet address of the client's network interface.
 The second column is the program to send to the client, and anything after
 the `#' is a comment.  Once you have rbootd running, copy the SYS_UBOOT
 program to the /usr/mdec/rbootd directory on your server.  If this
@@ -78,7 +78,7 @@ You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
 press the space bar.  Shortly after, you should see a menu of possible boot
 options appear.  Select the option corresponding to SYS_UBOOT.
 SYS_UBOOT will then load and prompt you for a kernel name.  NFS file
-names should not have a leading '/' prepended to them, simply use `bsd.rd'.
+names should not have a leading '/' prepended to them; simply use `bsd.rd'.
 
 
 Installing using the CD-ROM or netboot procedure:
@@ -108,7 +108,7 @@ OpenBSDBootMsgs
 	graphics display, just hit return to select the default (hp300h).
 	If you are using an ASCII terminal, it should either be an HP
 	or vt100 compatible terminal; nothing else is supported.  (If
-	your terminal type is xterm, just use vt100).
+	your terminal type is xterm, just use vt100.)
 	
 OpenBSDInstallPart3({:- or "hd0" for HPIB/CS80 drives-:})
 

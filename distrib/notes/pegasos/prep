@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.6 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: prep,v 1.7 2004/03/17 09:25:10 jmc Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -18,7 +18,7 @@ boot net:ofwboot /bsd.rd (on Pegasos I)
 boot net ofwboot /bsd.rd (on Pegasos II)
 		(netboot from a pre-configured bootp/tftp/nfs
 		server containing the "ofwboot" and "bsd.rd"
-		files at the root directory of the tftp server)
+		files at the root directory of the TFTP server)
 
 boot /dev/pci/ide/disk@0,0:3,ofwboot /bsd /bsd
 		(After installation, boot /bsd from the primary
@@ -66,13 +66,13 @@ on the boot line or in the boot-device variable, since it is the
 default.
 
 Sharing a disk with MorphOS:
-It is not currently possible to share a disk with MorphOS, Amiga labeled
+It is not currently possible to share a disk with MorphOS; Amiga labeled
 disks are recognized, but can't be modified to define new partitions at the
 moment.
 
 OpenBSD/MACHINE is capable of booting from a dedicated disk using a
-MBR partitioned disk, CD containing an ISO image or a firmware supported
-ethernet card.
+MBR partitioned disk, a CD containing an ISO image, or a firmware supported
+Ethernet card.
 
 For dedicated disks, the MACHINE port boots off a boot program in
 the FFS 'a' filesystem. This is set up by the install program

@@ -1,6 +1,6 @@
-dnl	$OpenBSD: whatis,v 1.6 2003/06/21 01:06:00 miod Exp $
+dnl	$OpenBSD: whatis,v 1.7 2004/03/17 09:25:10 jmc Exp $
 OpenBSD/MACHINE OSREV was written under contract for Willowglen Singapore
 for an embedded application.  Theo de Raadt, Dale Rahn, Chuck Cranor,
 and Steve Murphree were involved in working on this port which runs on
-the MVME147, MVME162, MVME167, MVME177 and perhaps other models also.
+the MVME147, MVME162, MVME167, MVME177, and perhaps other models also.
 

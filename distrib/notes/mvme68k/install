@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.25 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.26 2004/03/17 09:25:10 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -26,7 +26,7 @@ to "go back" for some reason.
 
 After taking care of all that, the system should be brought down gracefully
 using the shutdown(8) and/or halt(8) commands, which will eventually go
-bakc to the ``BUG>'' prompt (it may be necessary to send a break if the
+back to the ``BUG>'' prompt (it may be necessary to send a break if the
 system is completely halted).
 
 
@@ -201,7 +201,7 @@ to the short description above for details.
 Second, using a terminal emulator able to read files from the local machine
 and send their contents over the serial link, such as cu(1) and tip(1) - both
 being available on OpenBSD - the MACHINE workstation should be put in
-S-Records receive mode, with the LO command at the BUG prompr:
+S-Records receive mode, with the LO command at the BUG prompt:
 
     147-Bug> LO
 
@@ -293,7 +293,7 @@ program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". If you are booting from S-Records, it
 will look for a filename composed of the machine's IP address, followed by
 the machine's architecture, separated by a period (for example, a MACHINE
-board which has been assigned IP address 130.115.144.11, will make an TFTP
+board which has been assigned IP address 130.115.144.11 will make a TFTP
 request for `8273900B.MACHINE'); if you are booting from the NBO command,
 you can specify the filename which will be looked for.
 

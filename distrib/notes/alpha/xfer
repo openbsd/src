@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.25 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: xfer,v 1.26 2004/03/17 09:25:09 jmc Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -35,7 +35,7 @@ If you neither have a floppy drive nor a CD-ROM drive on your alpha:
 	disk which will confuse the install script.  To fix this
 	you need to ask for a shell (answer "s" to the first question)
 	when booting your disk and do "dd if=/dev/zero of=/dev/rsd0c
-	count=20" assuming your booted from sd0.  After doing this you will
+	count=20", assuming you booted from sd0.  After doing this you will
 	not be able to boot that disk again unless you complete
 	the install.  You can now enter "install" and start the
 	actual install process.

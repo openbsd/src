@@ -1,9 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.145 2004/03/16 08:25:00 jmc Exp $
-OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
+dnl	$OpenBSD: hardware,v 1.146 2004/03/17 09:25:09 jmc Exp $
+OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
 current products.  The cases where problems may be encountered are
-typically older proprietary PC's, laptops or specialized server boxes
+typically older proprietary PCs, laptops, or specialized server boxes
 that rely on a custom BIOS to paper over implementation differences.
 
 OpenBSD does not currently support multiple processors (SMP), but will
@@ -58,7 +58,7 @@ Supported hardware {:-include-:}:
 	Entropy Sources
 		Interrupt latency collection from many devices
 		Intel 82802 random number generator found on i810, i815,
-		i820, i840, i850 and i860 based systems.
+		i820, i840, i850, and i860 based systems.
 	Disk Controllers
 		Floppy controllers.
 		ISA MFM, ESDI, IDE, and RLL hard disk controllers.
@@ -100,11 +100,11 @@ Supported hardware {:-include-:}:
 		Adaptec AIC-7770-based boards, including the Adaptec
 		    AHA-274x and AHA-284x families) [C]
 		Adaptec AHA-[23]94x[W] cards and some on-board PCI designs
-		    using the AIC7870 and AIC7880 chips. [C]
+		    using the AIC7870 and AIC7880 chips [C]
 		Adaptec AHA-[23]94xU[2W] cards and some on-board PCI designs
 		    using the AIC789[01], AIC7895, AIC789[67] chips [C]
 		Adaptec AIC-789[29] chips and products like the
-		    AHA-29160 based upon it which do 160MB/sec SCSI. [C]
+		    AHA-29160 based upon it which do 160MB/sec SCSI [C]
 		    (However, the 7899G card is currently not supported with
 		     more than one device attached)
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
@@ -882,7 +882,7 @@ IsoLan, NE2100, and DEPCA
 Intel EtherExpress PRO/10
 		ex0	0x320	5
 
-PCI ethernet boards need to have an interrupt, either assigned in your
+PCI Ethernet boards need to have an interrupt, either assigned in your
 PCI BIOS, or autoconfigured.
 
 Hardware not listed in the above table doesn't need any specific
@@ -947,8 +947,8 @@ Special care for PCI BIOS:
 	Sometimes specifications are unclear about interfaces and/or data
 	validation.
 	These all cause our driver for PCI BIOS to misbehave in more or
-	less fatal ways, such as panics on pcibios0 configuration or pci
-	device attachments, or unconfigured pci devices due to irq and/or
+	less fatal ways, such as panics on pcibios0 configuration or PCI
+	device attachments, or unconfigured PCI devices due to IRQ and/or
 	I/O address misconfiguration.
 
 	Fast workaround
@@ -970,12 +970,12 @@ Special care for PCI BIOS:
 	UKC> quit
 
 	This will disable the pcibios0 attachment.
-	Sometimes, especially when hangs occur on particular pci device
-	attachments, moving pci cards into a different slot helps.
+	Sometimes, especially when hangs occur on particular PCI device
+	attachments, moving PCI cards into a different slot helps.
 
 	Fixing for good
 
 	Try to gather dmesg output from the failing configuration, for
-	example by using a serial console (see boot(8)) and send it to
+	example by using a serial console (see boot(8)), and send it to
 	<mickey@OpenBSD.org> along with descriptions of your hardware setup.
 	Alternatively, dig in the code and fix problems.

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.53 2004/03/16 08:24:59 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.54 2004/03/17 09:25:09 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -133,7 +133,7 @@ define({:-OpenBSDetc-:},
 		 system from scratch, but should NOT be used if you are
 		 upgrading. (If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
-		 configuration files by hand, see the section named "Upgrading
+		 configuration files by hand; see the section named "Upgrading
 		 a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
 dnl
 dnl
@@ -211,7 +211,7 @@ define({:-OpenBSDfloppydesc-:},
 {:-Bootable installation/upgrade floppy image$3:
 
 	The $1 floppy image$3 can be copied to a floppy using rawrite.exe,
-	ntrw.exe or `dd', as described later in this document.
+	ntrw.exe, or `dd', as described later in this document.
 	$2 floppy image is a bootable install floppy which can be used
 	both to install and to upgrade OpenBSD to the current version.
 	It is also useful for maintenance and disaster recovery.-:})dnl
@@ -329,7 +329,7 @@ define({:-OpenBSDInstallPart4-:},
 	is usually in partition 'b'.$1
 
 	It is recommended that you create separate partitions for /usr,
-	/tmp and /var, and if you have room for it, one for /home.  In
+	/tmp, and /var, and if you have room for it, one for /home.  In
 	doing this, remember to skip 'c', leaving it as type "unused".
 	For help in the disk label editor, enter '?' or 'M' to view the
 	manual page (see the info on the ``-E'' flag).-:})dnl
@@ -375,7 +375,7 @@ define({:-OpenBSDInstallNet-:},
 	Next the system will give you a list of network interfaces you can
 	configure.  For each network interface you select to configure, it
 	will ask for the IP address to use, the symbolic host name to use,
-	the netmask to use and any interface-specific flags to set. The
+	the netmask to use, and any interface-specific flags to set. The
 	interface-specific flags are usually used to determine which media
 	the network card is to use.  Typically no media flags are required
 	as autodetection normally works, but you will be prompted with a
@@ -383,7 +383,7 @@ define({:-OpenBSDInstallNet-:},
 	any.  In doubt, do not enter any media flags; or you can refer to
 	the manual page for your interface for the appropriate flags.
 
-	After all network interfaces have been configured the install pro-
+	After all network interfaces have been configured, the install pro-
 	gram will ask for a default route and IP address of the primary
 	name server to use.  You will also be presented with an opportunity
 	to edit the host table.
@@ -407,44 +407,44 @@ define({:-OpenBSDFTPInstall-:},
 		pieces of information.  Don't be daunted by this list;
 		the defaults are sufficient for most people.
 		    1) Proxy server URL if you are using a URL-based
-		       ftp proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       FTP proxy (squid, CERN FTP, Apache 1.2 or higher).
 		       You need to {:-define-:} a proxy if you are behind a
-		       firewall that blocks outgoing ftp (assuming you
+		       firewall that blocks outgoing FTP (assuming you
 		       have a proxy available to use).
-		    2) Do you need to use active mode ftp?  By default,
+		    2) Do you need to use active mode FTP?  By default,
 		       ftp will attempt to use passive mode and fall
 		       back to an active connection if the server does
 		       not support passive mode.  You only need to enable
-		       this option if you are connecting to a buggy ftp
-		       daemon that implements passive ftp incorrectly.
+		       this option if you are connecting to a buggy FTP
+		       daemon that implements passive FTP incorrectly.
 		       Note that you will not be asked about active
-		       ftp if you are using a proxy.
+		       FTP if you are using a proxy.
 		    3) The IP address (or hostname if you enabled
-		       DNS earlier in the install) of an ftp server
+		       DNS earlier in the install) of an FTP server
 		       carrying the OpenBSD OSREV distribution.
 		       If you don't know, just hit return when
 		       asked if you want to see a list of such hosts.
-		    4) The ftp directory holding the distribution sets.
+		    4) The FTP directory holding the distribution sets.
 		       The default value of pub/OpenBSD/OSREV/MACHINE
 		       is almost always correct.
-		    5) The login and password for the ftp account.
+		    5) The login and password for the FTP account.
 		       You will only be asked for a password for
-		       non-anonymous ftp.
+		       non-anonymous FTP.
 
 		For instructions on how to complete the installation via
-		ftp, see the section named "Common URL installations" below.-:})dnl
+		FTP, see the section named "Common URL installations" below.-:})dnl
 dnl
 define({:-OpenBSDHTTPInstall-:},
 {:-	To install via HTTP:
 		To begin an HTTP install you will need the following
 		pieces of information:
 		    1) Proxy server URL if you are using a URL-based
-		       http proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       HTTP proxy (squid, CERN FTP, Apache 1.2 or higher).
 		       You need to {:-define-:} a proxy if you are behind a
-		       firewall that blocks outgoing http connections
+		       firewall that blocks outgoing HTTP connections
 		       (assuming you have a proxy available to use).
 		    2) The IP address (or hostname if you enabled
-		       DNS earlier in the install) of an http server
+		       DNS earlier in the install) of an HTTP server
 		       carrying the OpenBSD OSREV distribution.
 		       If you don't know, just hit return when
 		       asked if you want to see a list of such hosts.
@@ -452,10 +452,10 @@ define({:-OpenBSDHTTPInstall-:},
 		       There is no standard location for this;
 		       You should use the directory specified
 		       along with the server in the list of official
-		       http mirror sites that you received in step 3.
+		       HTTP mirror sites that you received in step 3.
 
 		For instructions on how to complete the installation via
-		http, see the section named "Common URL installations" below.-:})dnl
+		HTTP, see the section named "Common URL installations" below.-:})dnl
 dnl
 dnl For arches where you can create a boot tape, $1 can be set as the
 dnl file index of the first set, after the boot files.
@@ -501,8 +501,8 @@ define({:-OpenBSDCDROMInstall-:},
 		file system installations" below.-:})dnl
 dnl
 define({:-OpenBSDNFSInstall-:},
-{:-	To install from a NFS mounted directory:
-		When installing from a NFS-mounted directory, you must
+{:-	To install from an NFS mounted directory:
+		When installing from an NFS-mounted directory, you must
 		have completed network configuration above, and also
 		set up the exported file system on the NFS server in
 		advance.
@@ -544,9 +544,9 @@ define({:-OpenBSDDISKInstall-:},
 {:-	To install from a local disk partition:
 		When installing from a local disk partition, you will
 		first have to identify which disk holds the distribution
-		sets.  This is normally $1"sdN" where N is a number
+		sets.  This is normally $1"sdN", where N is a number
 		0 through 9.  Next you will have to identify the partition
-		within that disk that holds the distribution, this is a
+		within that disk that holds the distribution; this is a
 		single letter between 'a' and 'p'.
 
 		You will also have to identify the type of file system
@@ -560,7 +560,7 @@ define({:-OpenBSDDISKInstall-:},
 		with a '/'.
 
 		For instructions on how to complete the installation from
-		the a local disk partition, see the next section.-:})dnl
+		a local disk partition, see the next section.-:})dnl
 dnl
 dnl For arches where you can install from NFS, $1 should be set to "NFS",
 dnl otherwise there should be no parameter.
@@ -617,7 +617,7 @@ define({:-OpenBSDCommonURL-:},
 	When all the selected distribution sets has been extracted, you
 	will be allowed to select which time zone your system will be
 	using, all the device nodes needed by the installed system will
-	be created for you and the file systems will be unmounted.  For
+	be created for you, and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
 	at least the "base{:--:}OSrev", "etc{:--:}OSrev", and "bsd" distribution sets.-:})dnl
 dnl
@@ -714,7 +714,7 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	images. If you can access the distribution from the CD-ROM under
 	DOS, you will find the bootable disks in the OSREV/MACHINE
 	directory. Otherwise, you will have to download them from one of
-	the OpenBSD ftp or http mirror sites, using an ftp client or a web
+	the OpenBSD FTP or HTTP mirror sites, using an FTP client or a web
 	browser. In either case, take care to do "binary" transfers, since
 	these are images files and any DOS cr/lf translations or control/z
 	EOF interpretations will result in corrupted transfers.
@@ -723,7 +723,7 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	copy of the rawrite.exe utility and its documentation.  This
 	program is needed to correctly copy the bootable filesystem
 	image to the floppy, since it's an image of a unix partition
-	containing a ffs filesystem, not a MSDOS format diskette.
+	containing an ffs filesystem, not an MSDOS format diskette.
 
 	Once you have installed rawrite.exe, just run it and specify the
 	name of the bootable image, such as "floppy{:--:}OSrev.fs" and the name of
@@ -938,7 +938,7 @@ and then tailor it for your server operating system before running it.  Note
 that MAKEDEV is written specifically for ksh, and may not work on any other
 bourne shell.
 
-There will be error messages about unknown user and groups. These errors are
+There will be error messages about unknown users and groups. These errors are
 inconsequential for the purpose of installing OpenBSD. However, you may
-want to correct them if you plan to the diskless setup regularly. In that
+want to correct them if you plan to use the diskless setup regularly. In that
 case, you may re-run MAKEDEV on your OpenBSD machine once it has booted.-:})dnl

@@ -1,5 +1,5 @@
-dnl	$OpenBSD: mirrors,v 1.50 2004/03/04 08:31:00 david Exp $
-This is a list of currently known ftp servers as the time of the OSREV release.
+dnl	$OpenBSD: mirrors,v 1.51 2004/03/17 09:25:09 jmc Exp $
+This is a list of currently known FTP servers at the time of the OSREV release.
 For a more recent list, please refer to http://www.OpenBSD.org/ftp.html
 
 Main server in Canada:
@@ -145,7 +145,7 @@ USA:
     ftp://mirror.cs.wisc.edu/pub/mirrors/OpenBSD (Madison, WI)
 
 
-As well, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/OSREV/ftplist
+Additionally, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/OSREV/ftplist
 contains a list which is continually updated.  If you wish to become a
 distribution site for OpenBSD, contact <www@OpenBSD.org>.
 

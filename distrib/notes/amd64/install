@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.3 2004/03/08 22:31:28 miod Exp $
+dnl	$OpenBSD: install,v 1.4 2004/03/17 09:25:09 jmc Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with another operating system,
@@ -45,7 +45,7 @@ dnl Replace the following paragraph...
         wish to do an "(I)nstall".  Enter 'I' for a fresh install.
 
 	You will be presented with a welcome message and asked if
-        you really wish to install.  Assuming you answered yes, the
+        you really wish to install.  Assuming you answered 'yes', the
 	install program will then tell you which disks of that type
 	it can install on, and ask you which it should use.
 	The name of the disk is typically "sd0" for SCSI drives or
@@ -63,7 +63,7 @@ dnl once upgrades are available
 
 	If fdisk is being invoked on your behalf, it will start by
 	displaying the current partitions defined and then allow you
-	to modify this information, add new partitions and change
+	to modify this information, add new partitions, and change
 	which partition to boot from by default.  If you make a mistake,
 	you will be allowed to repeat this procedure as necessary to
 	correct this.  Note that you should make OpenBSD be the active

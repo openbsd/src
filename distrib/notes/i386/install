@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.35 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: install,v 1.36 2004/03/17 09:25:09 jmc Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -51,7 +51,7 @@ OpenBSDInstallPart3({:- or "wd0" for IDE/RLL/ESDI/ST506 drives-:})
 
 	If fdisk is being invoked on your behalf, it will start by
 	displaying the current partitions defined and then allow you
-	to modify this information, add new partitions and change
+	to modify this information, add new partitions, and change
 	which partition to boot from by default.  If you make a mistake,
 	you will be allowed to repeat this procedure as necessary to
 	correct this.  Note that you should make OpenBSD be the active

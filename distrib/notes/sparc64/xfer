@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.20 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: xfer,v 1.21 2004/03/17 09:25:10 jmc Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -36,11 +36,11 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	partition.
 
 	Using the "b" partition allows you to boot without overwriting
-	any useful parts of the disk, you can also use another partition,
+	any useful parts of the disk; you can also use another partition,
 	but don't used the "a" or "c" partition without understanding
-	the disklabel issues described below under "incompatible systems".
+	the disk label issues described below under "incompatible systems".
 
-	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
+	This requires that you be running SunOS, Solaris, OpenBSD, or NetBSD,
 	which have a compatible view of SunOS disk labels and partitions.
 
 	Use the dd(1) utility to copy the file to the hard drive.
@@ -58,7 +58,7 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	don't care about the hard disk contents, you can also install the
 	bootable image starting at the beginning of the disk. This lets
 	you prepare a bootable hard-drive even if don't have a working
-	operating system on your machine, but it important to understand
+	operating system on your machine, but it is important to understand
 	that the bootable image installed this way includes a "disk label"
 	which can wipe out any pre-existing disklabels or partitioning for
 	the drive.

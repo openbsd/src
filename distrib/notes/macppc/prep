@@ -1,12 +1,12 @@
-dnl	$OpenBSD: prep,v 1.9 2004/03/15 08:37:25 xsa Exp $
+dnl	$OpenBSD: prep,v 1.10 2004/03/17 09:25:09 jmc Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
 and diagnostics are performed but before control is handed to the
 operating system.
 
-To access Open Firmware you should simultaneously hold down the
-Command, Option, O and F keys immediately upon booting.  You will
+To access Open Firmware, you should simultaneously hold down the
+Command, Option, O, and F keys immediately upon booting.  You will
 be presented with information and a ">" prompt that will look something
 like this (example taken from a Power Macintosh G4):
 
@@ -43,10 +43,10 @@ shut-down	(halt the machine; shutdown)
 printenv	(print current machine variables)
 setenv		(set a machine variable)
 devalias	(list device aliases; useful for locating other
-		devices in the machine such as hard drives etc)
+		devices in the machine such as hard drives, etc)
 
-As seen above, device aliases typically take the form of "ide", "cd"
-etc.  To boot to an alternative device you may substitute them
+As seen above, device aliases typically take the form of "ide", "cd",
+etc.  To boot to an alternative device, you may substitute them
 with entries from this list (example devices taken from a Power
 Macintosh G4):
 
@@ -54,7 +54,7 @@ ultra0 = hd = master device, primary ATA bus (factory-installed drive)
 ultra1 =      slave device, primary ATA bus
 ide0   = cd = master device, secondary ATA bus (CD/DVD drive)
 ide1   =      slave device, secondary ATA bus (Zip drive, if installed)
-enet   =      motherboard ethernet device
+enet   =      motherboard Ethernet device
 
 
 Other Open Firmware command examples:
@@ -76,8 +76,8 @@ words		(show methods of items at current location in the device
 		device tree)
 
 
-To reset a Power Macintosh to the factory-configure Open Firmware settings,
-simultaneously hold down the Command, Option, P, R keys immediately upon
+To reset a Power Macintosh to the factory-configured Open Firmware settings,
+simultaneously hold down the Command, Option, P, and R keys immediately upon
 booting.  Typically the machine will then attempt to load Mac OS, if
 available.
 
@@ -99,12 +99,12 @@ copied into the first HFS(+) partition. It is not necessary to specify
 '/bsd' on the boot line or in the boot-device variable, since it is the
 default.
 
-To boot in Mac OS with this setup (works on most supported machines)
+To boot in Mac OS with this setup (works on most supported machines),
 press and hold down the Alt/Option key during reboot, and select which
 (Mac OS/Mac OS X) partition to boot in the graphical boot selector
 presented. Note that OpenBSD does not currently show up in this boot
 selector except for the installation CD-ROM. This works on most machines
-this has been tested with, but does not work on a Rev C (333MHz) iMac,
+this has been tested with, but does not work on a Rev C (333MHz) iMac;
 perhaps this feature was added to the Openfirmware ROM after that
 machine.
 
@@ -112,14 +112,14 @@ machine.
 Sharing a disk with Mac OS:
 
 OpenBSD/MACHINE is capable of booting either from a dedicated disk using
-a MBR partitioned disk or sharing a disk with Mac OS.
+an MBR partitioned disk or sharing a disk with Mac OS.
 
 If the disk is to be shared between Mac OS and OpenBSD, it is necessary
 to reformat and install the Mac OS partitions first, using "Drive Setup",
 leaving space on the disk as an "Unused" partition.
-If the disk was previously partitioned, it is possible to reuse a Partition
-for OpenBSD, as long as it is not the first Partition on the disk.
-The bootloader is expected to be found in that first (HFS) Partition.
+If the disk was previously partitioned, it is possible to reuse a partition
+for OpenBSD, as long as it is not the first partition on the disk.
+The bootloader is expected to be found in that first (HFS) partition.
 
 For dedicated disks, MACHINE port boots off a boot program in
 an MSDOS filesystem. This is set up by the install program

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.25 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.26 2004/03/17 09:25:09 jmc Exp $
 OpenBSDInstallPrelude
 
 The installation can be broken down into four basic steps:
@@ -15,7 +15,7 @@ you for the SCSI ID of the drive that you are installing upon.  Once
 this is selected, it will present a list of the partitions on that disk.
 Select the partition on which you wish to build a filesystem and click
 on the "Format" button.  You will now be asked for a bunch of parameters
-for the hard drive and the filesystem.  Usually, you can just take the
+for the hard drive and the filesystem.  Usually, you can just accept the
 defaults.  Note that although this dialog only has the "OK" button, you are
 not committed, yet.  Once you get the values you want, press the "OK"
 button. A dialog will be presented at this point with two options: "Format"
@@ -51,10 +51,10 @@ If you are installing onto a single root partition, proceed to the
 	Just before it printed, "Mounting partition 'A' as /," it printed
 	lines like:
 		sd1 at scsi ID 5.
-	This means that the device for scsi ID 5 is sd1.  The partitions
+	This means that the device for SCSI ID 5 is sd1.  The partitions
 	are signified by a trailing letter.  For instance, sd1a would be
-	the root partition of the second scsi disk in the chain, and sd0g
-	would be the first usr partition on the first scsi disk.  It is
+	the root partition of the second SCSI disk in the chain, and sd0g
+	would be the first usr partition on the first SCSI disk.  It is
 	important to emphasize that device numbers after the 'sd' do not
 	correspond to SCSI IDs of disks but rather to logical disks.  The
 	lowest SCSI ID will always be sd0 proceeded by increasing ID
@@ -72,7 +72,7 @@ If you are installing onto a single root partition, proceed to the
 		* Mount the filesystems you wish with the command:
 			mount device path
 		  For example, if you wish to mount the second partition from
-		  the first scsi disk, sd0, on /usr, you would type:
+		  the first SCSI disk, sd0, on /usr, you would type:
 			mount /dev/sd0b /usr
 
 		* Type "quit" to exit the minishell after you have mounted
@@ -128,19 +128,20 @@ the root password using the passwd(1) command.
 
 To set up basic networking, you will need to create or edit the following
 files, all of which are in the /etc directory:
-	myname		the computers name (with a fully-qualified domain name).
+	myname		the computer's name (with a fully-qualified
+			domain name).
 	mygate		the IP address of the default gateway.
-	hostname.if	Configuration of the host adapter (actual name will
-			be something like hostname.sn0 or hostname.ae0, see
-			your dmesg for your adapter name).
-	resolv.conf	Name server configuration.
+	hostname.if	configuration of the host adapter (the actual name
+			will be something like hostname.sn0 or hostname.ae0;
+			see your dmesg for your adapter name).
+	resolv.conf	name server configuration.
 	hosts		names and IP addresses of this machine and others on
 			the network.
 	dhclient.conf	dhcp client information.
 
 Once these files are configured, your system will be very much like any
 other OpenBSD system.  'mygate' and 'myname' are just single-line text
-files, for info on the others, see hostname.if(5), resolv.conf(5), hosts(5)
+files; for info on the others, see hostname.if(5), resolv.conf(5), hosts(5),
 and dhclient.conf(5) in the OpenBSD man pages.
 
 

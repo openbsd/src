@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.15 2002/12/30 11:13:01 miod Exp $
+dnl	$OpenBSD: install,v 1.16 2004/03/17 09:25:10 jmc Exp $
 OpenBSDInstallPrelude
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -23,12 +23,12 @@ on diskless booting can be found in the OpenBSD diskless(8) manual page.
 When you turn on your VAX, it will run an extensive and model specific set
 of self-diagnostic ROM routines. When it is done, you should see a >>>
 prompt (also called the chevron prompt) on the console.  Typing "show dev"
-or "show ethernet" to get the VAX ethernet device's MAC address usually
+or "show ethernet" to get the VAX Ethernet device's MAC address usually
 works; also try "TEST 50" on MicroVAXen 2000 and 3100.
 
 You will need to create an /etc/ethers file on the bootserver.  This file
-will be used by rarpd to answer rarp (ethernet address->IP address) requests.
-The format of this file is the ethernet address followed by the machine
+will be used by rarpd to answer rarp (Ethernet address->IP address) requests.
+The format of this file is the Ethernet address followed by the machine
 name or address.  Here is an example:
 
 	08:00:2b:24:72:00		quickvax
@@ -40,10 +40,10 @@ entry in /etc/hosts.
 Then start rarpd (or configure /etc/rc.conf to always start rarpd).
 
 Copy boot.mop into /tftpboot/mop/1a2b3c4d5e6f.SYS, where "1a2b3c4d5e6f"
-represents the six octets of your ethernet address.  For example, the
+represents the six octets of your Ethernet address.  For example, the
 filename for the machine described above would be "08002b247200.SYS".
 Note that all non alphanumeric characters must be stripped and the
-mac portion must be lower case, the extension upper.  Start mopd by
+MAC portion must be lower case, the extension upper.  Start mopd by
 typing "mopd -a", if you've not configured it to run by default.
 
 Next you need to export a directory for your new machine to mount over
@@ -68,7 +68,7 @@ or by running it manually.
 
 You are now ready to mopboot your MACHINE.
 
-Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the
+Typing "B <DEVICE>", where <DEVICE> is your VAX's Ethernet device, at the
 chevron prompt should then load the OpenBSD booter.
 
 
@@ -96,7 +96,7 @@ OpenBSDBootMsgs
 dnl uncomment once display console is available
 dnl	If you are installing from a serial console you should choose
 dnl	the terminal type from amongst those listed.
-dnl	(If your terminal type is xterm, just use vt100).
+dnl	(If your terminal type is xterm, just use vt100.)
 	Just hit return to select the default (vt100).
 
 OpenBSDInstallPart3

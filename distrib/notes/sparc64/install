@@ -1,14 +1,14 @@
-dnl	$OpenBSD: install,v 1.33 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.34 2004/03/17 09:25:10 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD installation
 dnl XXX change back if more than one floppy again.
-dnl cdrom, or an installation floppy.
-cdrom, or the installation floppy.
+dnl CD-ROM, or an installation floppy.
+CD-ROM, or the installation floppy.
 
-If your machine is hooked up to a network and you can find a server to
-arrange for a diskless setup, which is a convenient way to install on a
+If your machine is hooked up to a network, try and find a server to
+arrange for a diskless setup. This is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (See ``Installing using a diskless setup'' below.)
@@ -19,9 +19,9 @@ Solaris'' below.
 
 On Blade100 systems you must use a serial console if you want to install or
 upgrade using the network. There is currently a problem that causes the
-system to crash if you attempt an ftp or http install while the keyboard
-and a monitor are attached. Simply unplug the keyboard, connect the serial
-port to the system you will use as the console and reboot. There is no
+system to crash if you attempt an FTP or HTTP install while the keyboard
+and monitor are attached. Simply unplug the keyboard, connect the serial
+port to the system you will use as the console, and reboot. There is no
 problem with normal operation over the network once the install or upgrade
 is complete. 
 
@@ -34,7 +34,7 @@ does not necessarily wipe out all the partitions on the hard disk, errors
 during the install process can have unforeseen consequences and you will
 probably render the system unbootable if you start, but do not complete
 the installation.  Having the installation media for the prior installation,
-be it a Solaris or OpenBSD CD-ROM or OpenBSD install diskettes is good
+be it a Solaris or OpenBSD CD-ROM or OpenBSD install diskettes, is good
 insurance if you want to be able to "go back" for some reason.
 
 After taking care of all that, bring your system down gracefully using
@@ -48,7 +48,7 @@ Booting from Floppy Disk installation media:
 
 This will cause the kernel contained in the floppy to be booted.
 Please note that PCI systems are not able to boot from floppy; also,
-Ultra 1, 1E and 2 systems might need a firmware update to be able to boot
+Ultra 1, 1E, and 2 systems might need a firmware update to be able to boot
 from floppy; refer to the ``Updating your firmware'' section earlier in
 this document for details.
 
@@ -59,7 +59,7 @@ dnl No args! not a typo
 	ok boot cdrom
 
 If the boot is successful, you will get a loader version message,
-executable sizes and then the Kernel copyright and device probe
+executable sizes, and then the kernel copyright and device probe
 messages.  Boot failure modes are typically a lot of CD-ROM drive
 activity, but no messages or complaints about magic numbers,
 checksums or formats.
@@ -91,7 +91,7 @@ does not use swap, it doesn't matter.
 Installing using a diskless setup:
 
 First, you must set up a diskless client configuration on a server. If
-you are using a OpenBSD system as the boot-server, have a look at the
+you are using an OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
@@ -134,7 +134,7 @@ OpenBSDBootMsgs
 	installing from a keyboard/monitor console, the default of
 	"sun" is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).
+	(If your terminal type is xterm, just use vt100.)
 
 OpenBSDInstallPart3({:- or "wd0" for IDE drives-:})
 
@@ -160,7 +160,7 @@ OpenBSDCommonURL
 
 After completing an installation:
 
-Now try a reboot.  (If needed, swap your scsi id's first).
+Now try a reboot.  (If needed, swap your SCSI IDs first).
 
 The UltraSPARC OpenFirmware will normally load the kernel from the device
 and filename as instructed by the ``boot-device'' and ``boot-file''
@@ -201,7 +201,7 @@ All these pieces, except gunzip, are supplied in the OpenBSD/MACHINE
 distribution.
 
 You need to format and partition the disk using Solaris (since
-OpenBSD/MACHINE uses Sun compatible disk labels.)  Give yourself adequate
+OpenBSD/MACHINE uses Sun compatible disk labels).  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     solaris# prtvtoc -s /dev/rdsk/c0t1d0s2
@@ -216,7 +216,7 @@ partition sizes.  Here is an example layout:
            6      4    00     936000   3229271   4165270   /usr
 
 Use Solaris to newfs the partitions which will have filesystems on them.
-(OpenBSD's filesystem format is almost identical to Solaris).
+(OpenBSD's filesystem format is almost identical to Solaris.)
 
     solaris# newfs /dev/rdsk/c0t1d0s0
     [... lots of output]
@@ -251,7 +251,7 @@ The installboot man page says to do something like this:
     solaris# sync; sync
     solaris# /usr/sbin/installboot /mnt/bootblk /dev/rdsk/c0t1d0s0
 
-You can now extract the provided "*.tgz files onto your disk.
+You can now extract the provided "*.tgz" files onto your disk.
 
     solaris# ls -FC
     base{:--:}OSrev.tgz     etc{:--:}OSrev.tgz      misc{:--:}OSrev.tgz     xserv{:--:}OSrev.tgz
@@ -293,7 +293,7 @@ Your UltraSPARC expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
 the machine's IP address. For example, a machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B'.
+address 130.115.144.11 will make a TFTP request for `8273900B'.
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
@@ -318,7 +318,7 @@ kernel which is then read into memory.
 
 You will want export the miniroot{:--:}OSrev.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
-that partition or use tar to copy the contents to a more convenient spot.
+that partition, or use tar to copy the contents to a more convenient spot.
 
 Alternatively you can build a bootable partition from the distribution sets
 as follows:

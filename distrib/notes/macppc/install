@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.21 2004/03/17 09:25:09 jmc Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -17,7 +17,7 @@ and reinstalled under Mac OS.
 OpenBSDInstallPart2
 
 	At this time, the system can be installed from the supplied
-	CD-ROM boot image, by network loading the bootloader or loading
+	CD-ROM boot image, by network loading the bootloader, or loading
 	the bootloader and kernel from an HFS partition.
 
 	Once the bootloader is installed on the local hard drive, the
@@ -31,7 +31,7 @@ OpenBSDInstallPart2
 	during reboot and selecting the Mac OS Disk icon.
 
 	(Refer to "Preparing your System for OpenBSD Installation" above
-	 for information on how to access and boot from Open Firmware)
+	 for information on how to access and boot from Open Firmware.)
 
 OpenBSDBootMsgs
 
@@ -40,7 +40,7 @@ OpenBSDBootMsgs
 
 OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 
-	Next you will have to edit or create a disklabel for the disk
+	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing
 	partitions defined (for any operating system), and a disk label
 	is not found, you will first be given an opportunity to run
@@ -100,7 +100,7 @@ OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 
 	If fdisk is being invoked, it will start by
 	displaying the current partitions defined and then allow you
-	to modify this information, add new partitions and change
+	to modify this information, add new partitions, and change
 	which partition to boot from by default.  If you make a mistake,
 	you will be allowed to repeat this procedure as necessary to
 	correct this.  Note that you should make OpenBSD be the active
@@ -116,7 +116,7 @@ OpenBSDInstallPart4({:-If you have DOS or Linux
 	spare partition where OpenBSD can be installed.  No low disk
 	boundaries exist on MACHINE. MACHINE is unable to install the
 	bootloader into the HFS(+) partition to boot OpenBSD so it is
-	necessary copy 'ofwboot' from the installation media into
+	necessary to copy 'ofwboot' from the installation media into
 	the first HFS(+) partition using Mac OS or Mac OS X.
 
 	If the disk is partitioned using MBR, the bootloader is

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2004/03/08 22:29:42 miod Exp $
+dnl	$OpenBSD: hardware,v 1.5 2004/03/17 09:25:09 jmc Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -34,7 +34,7 @@ Supported devices {:-include-:}:
 		     more than one device attached)
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 		    controllers including the ABP940U[AW],
-		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160
+		    ASB3940U[AW]-00, ASB3940U2W-00, and ASB3950U160
 		AMD Am53c974 PCscsi-PCI SCSI controllers, including:
 		    Tekram DC-390
 		Initio INIC-940 and INIC-950 based PCI SCSI host

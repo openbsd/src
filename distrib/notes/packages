@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.34 2004/03/01 11:56:35 miod Exp $
+dnl	$OpenBSD: packages,v 1.35 2004/03/17 09:25:09 jmc Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -59,14 +59,14 @@ Installing applications from the ftp.OpenBSD.org package collection:
 
 		http://www.OpenBSD.org/ftp.html
 
-	for a list of current ftp mirror sites.
+	for a list of current FTP mirror sites.
 
 	Installation of a package is very easy.
 	1) become the superuser (root)
 	2) use the ``pkg_add'' command to install the software
 
 	``pkg_add'' is smart enough to know how to download the software
-	from the OpenBSD ftp server.  Example:
+	from the OpenBSD FTP server.  Example:
 
     $ su
     Password: <enter your root password>
@@ -1185,7 +1185,7 @@ Installing applications from the ftp.OpenBSD.org package collection:
 
 	Note: these packages may not exist for all architectures; other
 	packages may be added.  Some packages are only available via
-	ftp.
+	FTP.
 
 Installing applications from the CD-ROM ports collection:
 
@@ -1196,7 +1196,7 @@ Installing applications from the CD-ROM ports collection:
 	Creating an application from sources can require a lot of
 	disk space, sometimes 50 megabytes or more.  The first step is
 	to determine which of your disks has enough room.  Once you've
-	made this determination read the file PORTS located on the
+	made this determination, read the file PORTS located on the
 	CD-ROM which contains the ports tree.
 
 	To build an application you must:
@@ -1278,7 +1278,7 @@ Installing other applications:
 	manual page for more information about this.-:})
 -:})dnl
 
-	If you can't find an existing port try to make your own and
+	If you can't find an existing port, try to make your own and
 	feed it back to OpenBSD.  That's how our ports collection grows.
 	Some details can be found at http://www.OpenBSD.org/porting.html
 	with more help coming from the mailing list, <ports@OpenBSD.org>.

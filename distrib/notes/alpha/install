@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.23 2004/03/16 08:24:59 jmc Exp $
+dnl	$OpenBSD: install,v 1.24 2004/03/17 09:25:09 jmc Exp $
 OpenBSDInstallPrelude
 
 dnl XXX document mopbooting from the SRM console.
@@ -31,7 +31,7 @@ Booting from CD-ROM installation media:
 	with DKA for a SCSI CD-ROM drive).  If your drive shows up with
 	a drive number with trailing zeros, you will want to ignore them
 	(unless it is DKA0).  For example, if your CD-ROM drive is listed
-	as DKA600, you want to use dka6 (device ID's are case
+	as DKA600, you want to use dka6 (device IDs are case
 	insensitive).
 
 	On all MACHINE computers but the TURBOchannel DEC 3000 series,
@@ -65,7 +65,7 @@ OpenBSDBootMsgs
 	installing from a non-serial console, the default of "vt220"
 	is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220).
+	(If your terminal type is xterm, just use vt220.)
 
 OpenBSDInstallPart3({:- or "wd0" for IDE drives-:})
 

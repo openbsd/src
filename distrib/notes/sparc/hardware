@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.60 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.61 2004/03/17 09:25:10 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -169,7 +169,7 @@ Supported devices {:-include-:}:
 	- PCMCIA Controllers:
 	  + Sun SBus PCMCIA bridge (stp)
 	  + Tadpole PCMCIA controller (tslot)
-	- Wireless ethernet adapters (wi)
+	- Wireless Ethernet adapters (wi)
 	  + Compact Flash Adapters (will show up as PCMCIA adapters)
 	      Buffalo AirStation CF
 	      ELSA XI800 CF
@@ -216,7 +216,7 @@ Supported devices {:-include-:}:
 	      TDK LAK-CD011WL PCMCIA
 	      US Robotics 2410 PCMCIA
 	      US Robotics 2445 PCMCIA
-	- NE2000-based ethernet Adapters
+	- NE2000-based Ethernet Adapters
 	    Accton EN2212, EN2216
 	    Allied Telesis LA-PCM
 	    AmbiCom AMB8002T
@@ -279,7 +279,7 @@ Supported devices {:-include-:}:
 OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 	- Sun 4/400
 		Lacking support for the I/O cache, and related
-		ethernet problems.
+		Ethernet problems.
 	- sun4d -- SPARCcenter 2000, SPARCserver 1000
 		XDBus and multiprocessor support issues.
 	- sun4u (Ultrasparcs)

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.39 2004/03/16 08:24:59 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.40 2004/03/17 09:25:09 jmc Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -10,7 +10,7 @@ Supported hardware:
     chipset (only one processor on the DS20 will be used)
 	  Supported devices:
 		Built-in serial and parallel ports.
-		Built-in DEC21143 ethernet.
+		Built-in DEC21143 Ethernet.
 		Built-in ISP SCSI.
 		Built-in IDE controller.
 		Built-in USB should work, but has not been thoroughly
@@ -24,7 +24,7 @@ Supported hardware:
     API UP1000 machines and other EV6 machines using the Irongate chipset
 	  Supported devices:
 		Built-in serial and parallel ports.
-		Built-in DEC21040 ethernet.
+		Built-in DEC21040 Ethernet.
 		Built-in IDE controller works, though there may be stability
 		  issues.
 	  Unsupported devices:
@@ -38,7 +38,7 @@ Supported hardware:
 	trying to install OpenBSD on them.
 	  Supported devices:
 		Built-in serial and parallel ports.
-		Built-in DEC21043 ethernet.
+		Built-in DEC21043 Ethernet.
 		Built-in ISP SCSI, when present (i.e. on ``au'' models).
 		Built-in IDE controller.
 		Most PCI devices (see below).
@@ -67,7 +67,7 @@ Supported hardware:
     AlphaServer 800, 1000 and 1000A
 	  Supported devices:
 		Built-in serial and parallel ports.
-		Built-in DEC21040 ethernet.
+		Built-in DEC21040 Ethernet.
 		Built-in ISP SCSI.
 		PCI graphics card (TGA or VGA compatible).
 		Most PCI devices (see below).
@@ -81,7 +81,7 @@ dnl uncomment when support is back on track
 dnl    AlphaStation 500 and 600
 dnl	  Supported devices:
 dnl		Built-in serial and parallel ports.
-dnl		Built-in DEC21040 ethernet.
+dnl		Built-in DEC21040 Ethernet.
 dnl		Built-in ISP SCSI.
 dnl		PCI graphics card (TGA or VGA compatible).
 dnl		Most PCI devices (see below).
@@ -94,7 +94,7 @@ dnl
     AlphaStation 200, 250, 255 and 400
 	  Supported devices:
 		Built-in serial and parallel ports.
-		Built-in DEC21040 ethernet.
+		Built-in DEC21040 Ethernet.
 		Built-in ISP SCSI.
 		PCI graphics card (TGA or VGA compatible).
 		Most PCI devices (see below).
@@ -107,9 +107,9 @@ dnl
     AXPpci based machines (including ``Noname'', UDB, Multia)
 	  Supported devices:
 		Built-in serial and parallel ports.
-		Built-in DEC21040 ethernet.
+		Built-in DEC21040 Ethernet.
 		Built-in 53C810 SCSI (siop).
-		Built-in IDE controller. (though, will not boot from ide)
+		Built-in IDE controller. (will not boot from IDE, though)
 		PCI graphics card (TGA or VGA compatible).
 		Most PCI devices (see below).
 		Some ISA devices (see below).
@@ -120,9 +120,9 @@ dnl
     DEC 3000 models 300{,L,X,LX}
           Supported devices:
 		Built-in serial ports.
-		Built-in LANCE ethernet.
+		Built-in LANCE Ethernet.
 		Built-in SCSI (53C94).
-		TURBOchannel LANCE ethernet cards (PMAD-A).
+		TURBOchannel LANCE Ethernet cards (PMAD-A).
 		TURBOchannel SCSI (53C94) (PMAZ-A).
 		TURBOchannel DEFTA FDDI cards (PMAF-FA).
 	  Unsupported devices:
@@ -133,9 +133,9 @@ dnl
     DEC 3000 models 400,500,500X,600,700,800,900
 	  Supported devices:
 		Built-in serial ports.
-		Built-in LANCE ethernet.
+		Built-in LANCE Ethernet.
 		Built-in SCSI (53C94 or 53CF94-2).
-		TURBOchannel LANCE ethernet cards (PMAD-A).
+		TURBOchannel LANCE Ethernet cards (PMAD-A).
 		TURBOchannel SCSI (53C94) (PMAZ-A).
 		TURBOchannel DEFTA FDDI cards (PMAF-FA).
 	  Unsupported devices:
@@ -156,7 +156,7 @@ dnl	  be disguised AlphaStation machines
 	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus based)
 	EB64+ based systems
 	Samsung 164BX/UX (no SRM)
-	Multiprocessor alpha systems
+	Multiprocessor Alpha systems
 	VME Alpha systems
 
 Supported Peripherals:

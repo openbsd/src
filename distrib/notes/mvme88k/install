@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.16 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.17 2004/03/17 09:25:10 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -38,7 +38,7 @@ to "go back" for some reason.
 
 After taking care of all that, the system should be brought down gracefully
 using the shutdown(8) and/or halt(8) commands, which will eventually go
-bakc to the ``BUG>'' prompt (it may be necessary to send a break if the
+back to the ``BUG>'' prompt (it may be necessary to send a break if the
 system is completely halted).
 
 
@@ -86,12 +86,12 @@ Booting from Network:
 OpenBSD/MACHINE can boot off any network card supported by the BUG, even
 if the card itself is not supported by OpenBSD. Two network boot loaders
 are provided: one for Sun-compatible diskless setup (bootparams and NFS
-root), and a simpler version limited to tftp support.
+root), and a simpler version limited to TFTP support.
 
 The Sun-compatible network bootloader currently only supports the MVME187
-on-board interface, and will not be able to boot from any other ethernet
+on-board interface, and will not be able to boot from any other Ethernet
 controller. The tftp bootloader does not have this limitation and will boot
-from any BUG-supported ethernet controller.
+from any BUG-supported Ethernet controller.
 
 If you plan to use the Sun-compatible bootloader, "netboot", it will be
 necessary to set up a complete diskless client configuration on a server. If
@@ -104,11 +104,11 @@ SunOS systems, add_client(8) and the Sun System/Networks administrators
 guide constitute a good start; on Solaris systems, share(1M) is a good
 starting point as well).
 
-Using the tftp-compatible bootloader, "tftpboot", only requires a tftp
+Using the TFTP-compatible bootloader, "tftpboot", only requires a TFTP
 server to be installed on the network, with both the tftpboot file and
 the kernel image (usually bsd.rd) available from it.
 
-The list of BUG-supported ethernet controllers is available with the
+The list of BUG-supported Ethernet controllers is available with the
 "NIOT;A" command. For example:
 
     187-Bug> NIOT;A
@@ -187,7 +187,7 @@ from the server with the NBO command:
 
     187-Bug> NBO 00 00
 
-or if you know the IP address for the MACHINE and the tftp server,
+or if you know the IP address for the MACHINE and the TFTP server,
 you can directly provide the boot loader's filename and the kernel name
 on the commandline:
 

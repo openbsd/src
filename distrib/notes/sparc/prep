@@ -15,24 +15,24 @@ this table:
     6		sd6
 
 Unlike SunOS and the OpenBOOT ROM, a generic OpenBSD kernel numbers
-scsi drives sequentially as it finds them.  The drive with the
-lowest scsi-id will be called sd0, the next one sd1, etc.
+SCSI drives sequentially as it finds them.  The drive with the
+lowest SCSI-ID will be called sd0, the next one sd1, etc.
 
 To ease the installation process, two OpenBSD kernels are provided in
 the installation sets.  The default OpenBSD kernel (bsd) is set up
 to use the OpenBSD mapping, while a special kernel (bsd.scsi3) is
-set up to match the Sun mapping above by hard-wiring scsi-id#3 to sd0
-and scsi-id#0 to sd3. The remaining drives will be dynamically mapped
+set up to match the Sun mapping above by hard-wiring SCSI-ID#3 to sd0
+and SCSI-ID#0 to sd3. The remaining drives will be dynamically mapped
 to other sd* numbers.
 
 This is mostly a non-issue if you have only one drive on your system,
 but can get confusing if you have multiple drives.  If you plan
-to eliminate SunOS altogether it may be best to correct the scsi-id's
+to eliminate SunOS altogether it may be best to correct the SCSI-IDs
 of your drives, while if you plan to leave SunOS installed, it may
-be better to install OpenBSD on a drive with scsi-id 1 or 0.
+be better to install OpenBSD on a drive with SCSI-ID 1 or 0.
 
 Older OpenBoot proms (versions 1.x) provide an environment variable,
-sd-targets, that controls the drive<->scsi-id mapping, you can change
+sd-targets, that controls the drive<->SCSI-ID mapping; you can change
 this to reflect the natural ordering or just set the boot related
 variables to boot from the correct drive, whatever the numbering. Its
 default-value is ``31204567'', which means unit 0 and 3 are exchanged.
@@ -41,7 +41,7 @@ To revert to the ``normal'' behaviour, enter the following command:
     ok setenv sd-targets 01234567
 
 NOTE: if you elect to build a custom kernel you may want to "hardwire"
-the scsi-id's to sd0->scsi-id 0 or your desired scheme, this helps
+the SCSI-IDs to sd0->SCSI-ID 0 or your desired scheme, this helps
 prevent accidents if you change the SCSI bus configuration or a drive
 is down.
 
@@ -68,7 +68,7 @@ Make sure that the ROM security modes are disabled:
 
 
 Please note that while OpenBSD and SunOS have a reasonable degree of
-compatibility between disk labels and filesystems there are some problems
+compatibility between disk labels and filesystems, there are some problems
 to watch out for during initial installation or when trying to maintain
 both OpenBSD and SunOS environments on the same system.
 
@@ -100,7 +100,7 @@ OpenBSD partitions.
 
 OpenBSD and Sun BSD bootblocks are similar in concept, though implemented
 differently.  The OpenBSD bootblocks are architecture independent and also
-understand the extended disklabels with 16 partitions.  You can use SunOS
+understand the extended disk labels with 16 partitions.  You can use SunOS
 bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and SunOS bootblocks with SunOS installboot.
 

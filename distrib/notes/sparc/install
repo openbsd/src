@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.60 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.61 2004/03/17 09:25:10 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -7,8 +7,8 @@ be booted off your local disk's swap partition. The normal way is to
 use the OpenBSD CD-ROM, or the bootable CD-ROM mini image, or an
 installation floppy, or an installation tape, depending on your hardware.
 
-If your Sparc is hooked up to a network and you can find a server to
-arrange for a diskless setup, which is a convenient way to install on a
+If your Sparc is hooked up to a network, try and find a server to
+arrange for a diskless setup. This is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (See ``Installing using a diskless setup'' below.)
@@ -27,13 +27,13 @@ does not necessarily wipe out all the partitions on the hard disk, errors
 during the install process can have unforeseen consequences and you will
 probably render the system unbootable if you start, but do not complete
 the installation.  Having the installation media for the prior installation,
-be it a SunOS or OpenBSD CD-ROM or OpenBSD install diskettes is good
+be it a SunOS or OpenBSD CD-ROM or OpenBSD install diskettes, is good
 insurance if you want to be able to "go back" for some reason.
 
 After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
 prompt.  Sun PROM monitor commands and setup differ considerably depending
-on the system architecture and age, you may needed to reference the PROM
+on the system architecture and age; you may needed to reference the PROM
 monitor manual for your system for details.
 
 There are four main cases:
@@ -58,7 +58,7 @@ enter the "n" command to enter the "new command mode".  You can set this
 as the default by doing a "setenv sunmon-compat? false" command, followed
 by a "reset" command.
 
-Note that OpenBoot Proms also do the Sun SCSI-ID shuffle for disks, this
+Note that OpenBoot Proms also do the Sun SCSI-ID shuffle for disks; this
 is described elsewhere in some detail.  For the purposes of this section,
 drive 0 refers to the internal or first SCSI drive, which usually has a
 SCSI-ID of 3.
@@ -80,7 +80,7 @@ Booting from CD-ROM installation media:
 	ok boot cdrom OSREV/MACHINE/bsd.rd	# for version 2 OpenBOOT ROMs
 
 If the boot is successful, you will get a loader version message,
-executable sizes and then the kernel copyright and device probe
+executable sizes, and then the kernel copyright and device probe
 messages.  Boot failure modes are typically a lot of CD-ROM drive
 activity, but no messages or complaints about magic numbers,
 checksums or formats.
@@ -103,7 +103,7 @@ Boot the miniroot by typing the appropriate command at the PROM:
 
 If you've loaded the miniroot onto some other disk than the default
 drive 0, modify the boot specifier accordingly, keeping in mind the
-drive vs. scsi-id shuffling and partition a=0, b=1...
+drive vs. SCSI-ID shuffling and partition a=0, b=1...
 
         > b sd(0,10,1)bsd       # example - scsi target 2 on sun4 monitors*
 	ok boot sd(0,3,1)bsd	# example - scsi target 0 on v1 OpenBOOT ROM
@@ -127,7 +127,7 @@ Boot the miniroot by typing the appropriate command at the PROM:
 					# that won't take tape:n syntax.
 	
 The above instructions assume your tape drive is the default tape drive
-using SCSI id 4. If your drive uses id 5, modify the boot command
+using SCSI ID 4. If your drive uses ID 5, modify the boot command
 accordingly:
 
 	> b st(,28,1)		# example - 2nd tape drive on sun4 monitors
@@ -142,7 +142,7 @@ accordingly:
 Installing using a diskless setup:
 
 First, you must set up a diskless client configuration on a server. If
-you are using a OpenBSD system as the boot-server, have a look at the
+you are using an OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
@@ -185,7 +185,7 @@ OpenBSDBootMsgs
 	installing from a keyboard/monitor console, the default of
 	"sun" is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).
+	(If your terminal type is xterm, just use vt100.)
 
 OpenBSDInstallPart3
 
@@ -211,7 +211,7 @@ OpenBSDCommonURL
 
 After completing an installation:
 
-Now try a reboot.  (If needed, swap your scsi id's first).
+Now try a reboot.  (If needed, swap your SCSI IDs first.)
 The Sun monitor normally tries to load a file called "vmunix".
 On OpenBOOT ROM systems you can change it to load OpenBSD instead using
 the following commands:
@@ -256,7 +256,7 @@ least the following pieces:
     (e.g. sun4m or sun4c)
   - an OpenBSD kernel, most likely "/bsd"
 
-All these pieces, except "/boot" and the GNU utilities are supplied in
+All these pieces, except "/boot" and the GNU utilities, are supplied in
 the OpenBSD/MACHINE distribution.
 
 You need to format and partition the disk using SunOS (since
@@ -307,7 +307,7 @@ The installboot man page says to do something like this:
     sunos# sync; sync
     sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd2a
 
-You can now extract the provided "*.tgz files onto your disk.
+You can now extract the provided "*.tgz" files onto your disk.
 
     sunos# ls -FC
     base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
@@ -346,11 +346,11 @@ also need at least the following pieces:
   for ufs filesystem, such as /usr/platform/`uname -i`/lib/fs/ufs/bootblk
 - an OpenBSD kernel, most likely "/bsd"
 
-All these pieces, except the boot block and the GNU utilities are supplied
+All these pieces, except the boot block and the GNU utilities, are supplied
 in the OpenBSD/MACHINE distribution.
 
 You need to format and partition the disk using Solaris (since
-OpenBSD/MACHINE uses Sun compatible disk labels.)  Give yourself adequate
+OpenBSD/MACHINE uses Sun compatible disk labels).  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     solaris# prtvtoc -s /dev/rdsk/c0t1d0s2
@@ -365,7 +365,7 @@ partition sizes.  Here is an example layout:
            6      4    00     936000   3229271   4165270   /usr
 
 Use Solaris to newfs the partitions which will have filesystems on them.
-(OpenBSD's filesystem format is almost identical to Solaris).
+(OpenBSD's filesystem format is almost identical to Solaris.)
 
     solaris# newfs /dev/rdsk/c0t1d0s0
     [... lots of output]
@@ -400,7 +400,7 @@ The installboot man page says to do something like this:
     solaris# sync; sync
     solaris# /usr/sbin/installboot /mnt/bootblk /dev/rdsk/c0t1d0s0
 
-You can now extract the provided "*.tgz files onto your disk.
+You can now extract the provided "*.tgz" files onto your disk.
 
     solaris# ls -FC
     base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
@@ -443,7 +443,7 @@ program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
 the machine's IP address followed by the machine's architecture, separated
 by a period. For example, a sun4c machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
+address 130.115.144.11, will make a TFTP request for `8273900B.SUN4C'.
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
@@ -485,7 +485,7 @@ kernel which is then read into memory.
 
 You will want export the miniroot{:--:}OSrev.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
-that partition or use tar to copy the contents to a more convenient spot.
+that partition, or use tar to copy the contents to a more convenient spot.
 
 Alternatively you can build a bootable partition from the distribution sets
 as follows:

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.38 2004/03/16 08:24:59 jmc Exp $
+dnl	$OpenBSD: INSTALL,v 1.39 2004/03/17 09:25:08 jmc Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -106,7 +106,7 @@ access to source code so that you can recompile pieces of the system.
 
 A few methods are provided.  If you have an OpenBSD CD-ROM, the source code
 is provided.  Otherwise, you can get the pieces over the Internet using
-ANONCVS, CTM or FTP.  For more information, see
+ANONCVS, CTM, or FTP.  For more information, see
 
 	http://www.OpenBSD.org/anoncvs.html
 	http://www.OpenBSD.org/ctm.html

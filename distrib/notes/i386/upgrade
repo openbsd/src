@@ -1,16 +1,16 @@
-dnl	$OpenBSD: upgrade,v 1.22 2003/11/10 22:11:35 espie Exp $
+dnl	$OpenBSD: upgrade,v 1.23 2004/03/17 09:25:09 jmc Exp $
 dnl OpenBSDUpgrade({:-the CD-ROM or an installation floppy as you would do for
 dnl a new installation-:})
 Due to the change from a.out to ELF binary format in OpenBSD OSREV,
 upgrades can be a complex, delicate process. The best solution, whenever
-possible, is to backup your data and reinstall from scratch.
+possible, is to back up your data and reinstall from scratch.
 
 The second best solution is to remove all ports, third party programs and
 libraries installed on your system; upgrade; and then add ELF versions of
 the removed files.
 
 In all cases, once you start the upgrade you MUST complete it. If the
-upgrade process fails or is abandoned before it completes you will almost
+upgrade process fails, or is abandoned before it completes, you will almost
 certainly be left with a non-functional system.
 
 Finally, you cannot use the bsd.rd kernel to upgrade the system. The
@@ -29,7 +29,7 @@ OSREV system while preserving the functioning of a.out binaries are:
   for proper operation of older binaries.
 
 Before you start the upgrade process, the a.out emulation area needs to be
-set up. It needs to be put inside a /emul/a.out hierarchy. This directory can,
+set up. It needs to be put inside an /emul/a.out hierarchy. This directory can,
 however, be a symbolic link, should the available space in the root partition
 not be enough.
 

@@ -1,9 +1,9 @@
-dnl	$OpenBSD: contents,v 1.26 2003/09/09 22:29:05 miod Exp $
+dnl	$OpenBSD: contents,v 1.27 2004/03/17 09:25:10 jmc Exp $
 TopPart
 
 OpenBSDminiroot
 				It can be copied to the swap partition of
-				an existing OpenBSD, Solaris, NetBSD or Linux
+				an existing OpenBSD, Solaris, NetBSD, or Linux
 				installation to allow installing or upgrading
 				to OpenBSD OSREV.
 

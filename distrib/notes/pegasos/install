@@ -1,8 +1,8 @@
-dnl	$OpenBSD: install,v 1.6 2004/02/07 14:28:32 miod Exp $
+dnl	$OpenBSD: install,v 1.7 2004/03/17 09:25:10 jmc Exp $
 OpenBSDInstallShortPrelude
 
-Currently only MBR partitioning is supported, RDB support may be added
-later, although RDB partitions are recognized.
+Currently only MBR partitioning is supported; RDB support may be added
+later, though RDB partitions are recognized.
 
 
 OpenBSDInstallPart2
@@ -11,7 +11,7 @@ OpenBSDInstallPart2
 	CD boot image, by network loading the bootloader or loading
 	the bootloader and kernel from a MorphOS(?) partition.
 
-	OpenBSD can be booted directly from the FFS filesystem.
+	OpenBSD can be booted directly from an FFS filesystem.
 	An MSDOS partition is not required.
 
 	
@@ -22,7 +22,7 @@ OpenBSDBootMsgs
 
 OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 
-	Next you will have to edit or create a disklabel for the disk
+	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing
 	partitions defined (for any operating system), and a disk label
 	is not found, you will first be given an opportunity to run
@@ -30,7 +30,7 @@ OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 
 	If fdisk is being invoked, it will start by displaying the
 	current partitions defined and then allow you to modify this
-	information, add new partitions and change which partition to
+	information, add new partitions, and change which partition to
 	boot from by default.  If you make a mistake, you will be
 	allowed to repeat this procedure as necessary to correct this.
 dnl XXX is this true?
@@ -43,7 +43,7 @@ OpenBSDInstallPart4({:-If you have MorphOS
 
 	If the disk is partitioned using MBR, the bootloader is
 	automatically installed. However because fdisk is not LBA
-	knowledgeable it may be necessary to run the 'b' command in
+	knowledgeable, it may be necessary to run the 'b' command in
 	disklabel to allow OpenBSD to use the entire disk.
 
 	Note that all OpenBSD partitions in the disk label must have an

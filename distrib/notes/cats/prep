@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.6 2004/03/09 11:53:28 miod Exp $
+dnl	$OpenBSD: prep,v 1.7 2004/03/17 09:25:09 jmc Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of ABLE Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -9,7 +9,7 @@ A complete documentation on the ABLE firmware is available from Simtec at
 the following URL:
   http://www.simtec.co.uk/products/SWABLE/files/able-doc-allset/
 
-The board should be configured with jumpers LK12, LK13 and LK14 jumpers
+The board should be configured with jumpers LK12, LK13, and LK14
 set to the 1-2 position. However, most boards have been factory shipped
 with those jumpers incorrectly set to the 2-3 position. These jumpers are
 located as a block of three jumpers, near the processor and the serial
@@ -37,7 +37,7 @@ For convenience, a few ABLE commands are described below:
 		saves all variable changes to non-volatile memory.
 
 	nvclear
-		restores environment variables defaults.
+		restores environment variables' defaults.
 
 The following environment variables control the system startup:
 

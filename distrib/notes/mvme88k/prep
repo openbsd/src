@@ -1,8 +1,8 @@
-dnl	$OpenBSD: prep,v 1.3 2003/09/06 23:34:01 miod Exp $
+dnl	$OpenBSD: prep,v 1.4 2004/03/17 09:25:10 jmc Exp $
 Before installing OpenBSD on your machine, you will want to check your
 machine's NVRAM settings, from the BUG.
 
-The BUG provides a simple syntax reminder for every command, as well as
+The BUG provides a simple syntax reminder for every command, as well as a
 description of the commands; if you need help, just use
 
     187-Bug> HE
@@ -20,7 +20,7 @@ with the SD command:
      187-Diag> SD
      187-Bug>
 
-The defaults settings are usually suitable for OpenBSD; make sure the
+The default settings are usually suitable for OpenBSD; make sure the
 environment is configured in BUG mode. You can check and change this with
 the ENV command. Ideally, the first two items of the ENV data will be as
 follows:
@@ -33,7 +33,7 @@ in order to boot directly into the BUG, without executing the complete
 selftest sequence. Do not forget, after changing the ENV parameters, to
 save the changes in NVRAM as suggested by the ENV command itself.
 
-If the board has a built-in ethernet controller, its address must be correct;
+If the board has a built-in Ethernet controller, its address must be correct;
 the LSAD command allows the address to be edited.
 
 OpenBSD/MACHINE will not run correctly if the clock is stopped (power-saving

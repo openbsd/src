@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2004/03/15 08:37:25 xsa Exp $
+dnl	$OpenBSD: hardware,v 1.19 2004/03/17 09:25:09 jmc Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 6MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 100MB partition by installing just the minimum sets.
@@ -40,7 +40,7 @@ Supported devices on all of the above systems {:-include-:}:
 	ADB keyboards and mice
 	Ethernet cards based on the Natl. Semiconductor 8390
 		(Asante, Apple, and a few others)
-	Some ethernet cards based on the SONIC chip including internal
+	Some Ethernet cards based on the SONIC chip including internal
 		Ethernet on many of Apple's non-AV Quadras/Centrises and
 		PowerBook 500 series.
 	
@@ -63,7 +63,7 @@ What isn't supported, but often asked about:
 		itself contains a major bug which is presently being worked
 		on.  However, machines such as the Centris 605 don't work
 		right now.
-	LCPDS ethernet cards.
-	Apple Communication Slot (CS) ethernet cards.
-	Quadra/Centris AV series' onboard MACE ethernet.
+	LCPDS Ethernet cards.
+	Apple Communication Slot (CS) Ethernet cards.
+	Quadra/Centris AV series' onboard MACE Ethernet.
 	Floppy drive.

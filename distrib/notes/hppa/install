@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.7 2004/03/17 06:37:25 mickey Exp $
+dnl	$OpenBSD: install,v 1.8 2004/03/17 09:25:09 jmc Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -33,9 +33,9 @@ The first level is a short menu:
 
 	Select from menu:
 
-In this case, you will need to setup rbootd on the server. Start by creating
+In this case, you will need to set up rbootd on the server. Start by creating
 an /etc/rbootd.conf file on the bootserver. The format of this file is the
-ethernet address followed by the LIF filename. Here is an example:
+Ethernet address followed by the LIF filename. Here is an example:
 
 	08:00:09:70:c4:11		lif{:--:}OSrev.fs
 
@@ -98,7 +98,7 @@ OpenBSDBootMsgs
 	installing from a non-serial console, the default of "vt100"
 	is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).
+	(If your terminal type is xterm, just use vt100.)
 	
 OpenBSDInstallPart3
 
