@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.16 1997/07/26 19:42:46 millert Exp $
+ * $Id: skeylogin.c,v 1.17 1997/07/26 19:48:19 millert Exp $
  */
 
 #include <sys/param.h>
@@ -430,7 +430,8 @@ skey_authenticate(username)
 			*(p = pbuf) = '.';
 		else
 			for (p = pbuf; *p && isalnum(*p); p++)
-				;
+				if (isalpha(*p) && isupper(*p))
+					*p = tolower(*p);
 		if (*p)
 			strncpy(p, "asjd", 4 - (pbuf - p));
 		p = &pbuf[4];
