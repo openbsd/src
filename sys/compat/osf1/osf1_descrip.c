@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_descrip.c,v 1.4 2001/05/14 11:04:05 art Exp $ */
+/* $OpenBSD: osf1_descrip.c,v 1.5 2001/05/14 12:11:54 art Exp $ */
 /* $NetBSD: osf1_descrip.c,v 1.5 1999/06/26 01:24:41 cgd Exp $ */
 
 /*
@@ -252,7 +252,7 @@ osf1_sys_fstat(p, v, retval)
 	switch (fp->f_type) {
 
 	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		error = vn_statfile(fp, &ub, p);
 		break;
 
 	case DTYPE_SOCKET:

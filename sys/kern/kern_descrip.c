@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.25 2001/05/14 11:04:04 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.26 2001/05/14 12:11:52 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ sys_fstat(p, v, retval)
 	switch (fp->f_type) {
 
 	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		error = vn_statfile(fp, &ub, p);
 		break;
 
 	case DTYPE_SOCKET:

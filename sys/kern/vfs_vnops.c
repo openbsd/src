@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.28 2001/03/01 20:54:34 provos Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.29 2001/05/14 12:11:53 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -342,7 +342,21 @@ vn_write(fp, poff, uio, cred)
 }
 
 /*
- * File table vnode stat routine.
+ * File table wrapper for vn_stat
+ */
+int
+vn_statfile(fp, sb, p)
+	struct file *fp;
+	struct stat *sb;
+	struct proc *p;
+{
+	struct vnode *vp = (struct vnode *)fp->f_data;
+
+	return vn_stat(vp, sb, p);
+}
+
+/*
+ * vnode stat routine.
  */
 int
 vn_stat(vp, sb, p)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.12 2001/05/14 11:04:04 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.13 2001/05/14 12:11:53 art Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ compat_43_sys_fstat(p, v, retval)
 	switch (fp->f_type) {
 
 	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		error = vn_statfile(fp, &ub, p);
 		break;
 
 	case DTYPE_SOCKET:
