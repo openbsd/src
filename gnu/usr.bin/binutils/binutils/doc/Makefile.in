@@ -122,7 +122,7 @@ bfdincludedir = @bfdincludedir@
 bfdlibdir = @bfdlibdir@
 l = @l@
 
-AUTOMAKE_OPTIONS = cygnus
+AUTOMAKE_OPTIONS = cygnus no-installman
 
 # What version of the manual you want; "all" includes everything
 CONFIG = all
@@ -375,20 +375,19 @@ install-info: install-info-am
 install-exec-am:
 install-exec: install-exec-am
 
-install-data-am: install-man
+install-data-am:
 install-data: install-data-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
-uninstall-am: uninstall-man
+uninstall-am:
 uninstall: uninstall-am
-all-am: Makefile $(MANS)
+all-am: Makefile
 all-redirect: all-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs:
-	$(mkinstalldirs)  $(DESTDIR)$(mandir)/man1
 
 
 mostlyclean-generic:
