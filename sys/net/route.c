@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.24 2001/01/29 06:33:06 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.25 2001/07/20 18:46:50 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -344,7 +344,9 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	 * we have a routing loop, perhaps as a result of an interface
 	 * going down recently.
 	 */
-#define	equal(a1, a2) (bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
+#define	equal(a1, a2) \
+	((a1)->sa_len == (a2)->sa_len && \
+	 bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
 	if (!(flags & RTF_DONE) && rt &&
 	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
