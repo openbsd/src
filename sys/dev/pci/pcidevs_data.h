@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.117 1999/02/08 18:17:20 millert Exp 
+ *	OpenBSD: pcidevs,v 1.118 1999/02/16 04:15:20 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1615,6 +1615,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intergraph",
 	    "Powerstorm 4D50T",
+	},
+	{
+	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
+	    0,
+	    "Invertex",
+	    "AEON",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
@@ -5760,6 +5766,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NVidia/SGS-Thomson",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_INVERTEX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Invertex",
 	    NULL,
 	},
 	{
