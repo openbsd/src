@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.11 2000/08/14 02:50:04 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.12 2000/10/06 10:58:19 art Exp $	*/
 /*	$KAME: ping6.c,v 1.74 2000/08/14 02:48:14 itojun Exp $	*/
 
 /*
@@ -280,7 +280,8 @@ main(argc, argv)
 	struct sockaddr_in6 from;
 	struct timeval timeout;
 	struct addrinfo hints;
-	fd_set fdset;
+	fd_set *fdmaskp;
+	int fdmasks;
 	register int cc, i;
 	int ch, fromlen, hold, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
@@ -924,9 +925,10 @@ main(argc, argv)
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
 	}
 
-	FD_ZERO(&fdset);
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 10000;
+	fdmasks = howmany(s+1, NFDBITS);
+	if ((fdmaskp = malloc(fdmasks)) == NULL)
+		err(1, "malloc");
+
 	for (;;) {
 		struct msghdr m;
 		struct cmsghdr *cm;
@@ -935,8 +937,11 @@ main(argc, argv)
 
 		if (options & F_FLOOD) {
 			pinger();
-			FD_SET(s, &fdset);
-			if (select(s + 1, &fdset, NULL, NULL, &timeout) < 1)
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 10000;
+			memset(fdmaskp, 0, fdmasks);
+			FD_SET(s, fdmaskp);
+			if (select(s + 1, fdmaskp, NULL, NULL, &timeout) < 1)
 				continue;
 		}
 		fromlen = sizeof(from);
