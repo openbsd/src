@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.32 2002/02/15 01:59:26 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.33 2002/02/15 20:55:26 nordin Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -774,19 +774,19 @@ tvtohz(struct timeval *tv)
 
 	/*
 	 * If the number of usecs in the whole seconds part of the time
-	 * difference fits in a long, then the total number of usecs will
+	 * fits in a long, then the total number of usecs will
 	 * fit in an unsigned long.  Compute the total and convert it to
 	 * ticks, rounding up and adding 1 to allow for the current tick
 	 * to expire.  Rounding also depends on unsigned long arithmetic
 	 * to avoid overflow.
 	 *
 	 * Otherwise, if the number of ticks in the whole seconds part of
-	 * the time difference fits in a long, then convert the parts to
+	 * the time fits in a long, then convert the parts to
 	 * ticks separately and add, using similar rounding methods and
 	 * overflow avoidance.  This method would work in the previous
 	 * case but it is slightly slower and assumes that hz is integral.
 	 *
-	 * Otherwise, round the time difference down to the maximum
+	 * Otherwise, round the time down to the maximum
 	 * representable value.
 	 *
 	 * If ints have 32 bits, then the maximum value for any timeout in
