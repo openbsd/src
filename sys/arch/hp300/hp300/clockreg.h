@@ -1,4 +1,4 @@
-/*	$OpenBSD: clockreg.h,v 1.2 1997/01/12 15:13:13 downsj Exp $	*/
+/*	$OpenBSD: clockreg.h,v 1.3 2003/02/11 19:20:26 mickey Exp $	*/
 /*	$NetBSD: clockreg.h,v 1.5 1994/10/26 07:25:26 cgd Exp $	*/
 
 /*
@@ -91,10 +91,10 @@ struct clkreg {
 #define CLK_INT3	0x04	/* interrupt flag for timer 3 (SR only) */
 #define	CLK_INTR	0x80	/* composite interrupt flag (SR only) */
 
-#define CLK_RESOLUTION	4	/* 4 usec resolution (250Khz) */
+#define CLK_RESOLUTION	4	/* 4 usec resolution (250KHz) */
 #define	CLK_INTERVAL	2500	/* 10msec interval at 250KHz */
 #ifdef NOTDEF
-#define CLK_INTERVAL	5000	/* 20msec interval at 250Khz */
+#define CLK_INTERVAL	5000	/* 20msec interval at 250KHz */
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.2 2003/02/02 01:50:30 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.3 2003/02/11 19:20:27 mickey Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1855,7 +1855,7 @@ osiop_update_xfer_mode(sc, target)
 }
 
 /*
- * This is based on the Progressive Peripherals 33Mhz Zeus driver and will
+ * This is based on the Progressive Peripherals 33MHz Zeus driver and will
  * not be correct for other 53c710 boards.
  *
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.12 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: spif.c,v 1.13 2003/02/11 19:20:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -203,7 +203,7 @@ spifattach(parent, self, aux)
 	sc->sc_regs->stc.gscr1 = 0;
 	sc->sc_regs->stc.gscr2 = 0;
 	sc->sc_regs->stc.gscr3 = 0;
-	printf(": rev %x chiprev %x osc %sMhz stcpri %d ppcpri %d softpri %d\n",
+	printf(": rev %x chiprev %x osc %sMHz stcpri %d ppcpri %d softpri %d\n",
 	    sc->sc_rev, sc->sc_rev2, clockfreq(sc->sc_osc),
 	    stcpri, ppcpri, IPL_TTY);
 

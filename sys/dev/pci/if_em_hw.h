@@ -951,7 +951,7 @@ struct em_hw {
 #define E1000_STATUS_SPEED_1000 0x00000080      /* Speed 1000Mb/s */
 #define E1000_STATUS_ASDV       0x00000300      /* Auto speed detect value */
 #define E1000_STATUS_MTXCKOK    0x00000400      /* MTX clock running OK */
-#define E1000_STATUS_PCI66      0x00000800      /* In 66Mhz slot */
+#define E1000_STATUS_PCI66      0x00000800      /* In 66MHz slot */
 #define E1000_STATUS_BUS64      0x00001000      /* In 64 bit slot */
 #define E1000_STATUS_PCIX_MODE  0x00002000      /* PCI-X mode */
 #define E1000_STATUS_PCIX_SPEED 0x0000C000      /* PCI-X bus speed */

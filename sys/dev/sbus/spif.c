@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.4 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.5 2003/02/11 19:20:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -275,7 +275,7 @@ spifattach(parent, self, aux)
 	STC_WRITE(sc, STC_GSCR2, 0);
 	STC_WRITE(sc, STC_GSCR3, 0);
 
-	printf(": rev %x chiprev %x osc %sMhz\n",
+	printf(": rev %x chiprev %x osc %sMHz\n",
 	    sc->sc_rev, sc->sc_rev2, clockfreq(sc->sc_osc));
 
 	(void)config_found(self, sttymatch, NULL);

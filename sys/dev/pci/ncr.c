@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.65 2003/01/05 22:41:35 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.66 2003/02/11 19:20:27 mickey Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.65 2003/01/05 22:41:35 deraadt Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.66 2003/02/11 19:20:27 mickey Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7818,13 +7818,13 @@ static u_long ncr_lookup(char * id)
 **	Note: we have to return the correct value.
 **	THERE IS NO SAVE DEFAULT VALUE.
 **
-**	Most NCR/SYMBIOS boards are delivered with a 40 Mhz clock.
+**	Most NCR/SYMBIOS boards are delivered with a 40 MHz clock.
 **	53C860 and 53C875 rev. 1 support fast20 transfers but
 **	do not have a clock doubler and so are provided with a
 **	80 MHz clock. All other fast20 boards incorporate a doubler
 **	and so should be delivered with a 40 MHz clock.
-**	The future fast40 chips (895/895) use a 40 Mhz base clock
-**	and provide a clock quadrupler (160 Mhz). The code below
+**	The future fast40 chips (895/895) use a 40 MHz base clock
+**	and provide a clock quadrupler (160 MHz). The code below
 **	tries to deal as cleverly as possible with all this stuff.
 **
 **----------------------------------------------------------
@@ -7931,9 +7931,9 @@ static void ncr_getclock (ncb_p np, u_char multiplier)
 			  printf ("\tNCR clock is %uKHz, %uKHz\n", f1, f2);
 			if (f1 > f2) f1 = f2;	/* trust lower result	*/
 			if (f1 > 45000) {
-				scntl3 = 5;	/* >45Mhz: assume 80MHz	*/
+				scntl3 = 5;	/* >45MHz: assume 80MHz	*/
 			} else {
-				scntl3 = 3;	/* <45Mhz: assume 40MHz	*/
+				scntl3 = 3;	/* <45MHz: assume 40MHz	*/
 			}
 		}
 		else if ((scntl3 & 7) == 5)

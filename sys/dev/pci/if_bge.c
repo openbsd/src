@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.18 2003/01/15 06:31:24 art Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.19 2003/02/11 19:20:27 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -55,7 +55,7 @@
  * into the driver.
  *
  * The BCM5700 supports the PCI v2.2 and PCI-X v1.0 standards, and will
- * function in a 32-bit/64-bit 33/66Mhz bus, or a 64-bit/133Mhz bus.
+ * function in a 32-bit/64-bit 33/66MHz bus, or a 64-bit/133MHz bus.
  *
  * The BCM5701 is a single-chip solution incorporating both the BCM5700
  * MAC and a BCM5401 10/100/1000 PHY. Unlike the BCM5700, the BCM5701
@@ -1035,7 +1035,7 @@ bge_chipinit(sc)
 	    BGE_PCI_READ_BNDRY_1024);
 #endif
 
-	/* Set the timer prescaler (always 66Mhz) */
+	/* Set the timer prescaler (always 66MHz) */
 	CSR_WRITE_4(sc, BGE_MISC_CFG, 65 << 1/*BGE_32BITTIME_66MHZ*/);
 
 	return(0);

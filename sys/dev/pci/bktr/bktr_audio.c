@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.2 2003/01/04 22:36:12 deraadt Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.3 2003/02/11 19:20:28 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -596,7 +596,7 @@ void msp_autodetect( bktr_ptr_t bktr ) {
   }
 
 
-  /* uncomment the following line to enable the MSP34xx 1Khz Tone Generator */
+  /* uncomment the following line to enable the MSP34xx 1KHz Tone Generator */
   /* turn your speaker volume down low before trying this */
   /* msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0014, 0x7f40); */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.25 2003/01/13 16:04:38 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.26 2003/02/11 19:20:26 mickey Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ struct cfdriver psycho_cd = {
  *
  * "psycho" and "psycho+" is a dual UPA to PCI bridge.  It sits on the UPA bus
  * and manages two PCI buses.  "psycho" has two 64-bit 33MHz buses, while
- * "psycho+" controls both a 64-bit 33Mhz and a 64-bit 66Mhz PCI bus.  You
+ * "psycho+" controls both a 64-bit 33MHz and a 64-bit 66MHz PCI bus.  You
  * will usually find a "psycho+" since I don't think the original "psycho"
  * ever shipped, and if it did it would be in the U30.  
  *

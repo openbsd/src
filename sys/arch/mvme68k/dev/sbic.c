@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.11 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: sbic.c,v 1.12 2003/02/11 19:20:26 mickey Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -2621,7 +2621,7 @@ sbictoscsiperiod(dev, a)
     /*
      * cycle = DIV / (2 * CLK)
      * DIV = FS + 2
-     * best we can do is 200ns at 20Mhz, 2 cycles
+     * best we can do is 200ns at 20MHz, 2 cycles
      */
 
     GET_SBIC_myid(dev->sc_sbicp, fs);

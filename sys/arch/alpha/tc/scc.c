@@ -1,4 +1,4 @@
-/* $OpenBSD: scc.c,v 1.16 2002/05/27 20:07:06 deraadt Exp $ */
+/* $OpenBSD: scc.c,v 1.17 2003/02/11 19:20:25 mickey Exp $ */
 /* $NetBSD: scc.c,v 1.58 2002/03/17 19:40:27 atatat Exp $ */
 
 /*
@@ -138,7 +138,7 @@ struct scc_softc {
  *	BRGconstant =	---------------------------  -  2
  *			2 * BaudRate * ClockDivider
  *
- * Speed selections with Pclk=7.3728Mhz, clock x16
+ * Speed selections with Pclk=7.3728MHz, clock x16
  */
 struct speedtab sccspeedtab[] = {
 	{ 0,		0,	},

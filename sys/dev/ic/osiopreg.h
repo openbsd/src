@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopreg.h,v 1.1 2003/01/08 02:11:38 krw Exp $	*/
+/*	$OpenBSD: osiopreg.h,v 1.2 2003/02/11 19:20:27 mickey Exp $	*/
 /*	$NetBSD: osiopreg.h,v 1.1 2001/04/30 04:47:51 tsutsui Exp $	*/
 
 /*
@@ -367,10 +367,10 @@
 /* DMA control register (dcntl) */
 
 #define OSIOP_DCNTL_CF_MASK	0xc0	/* Clock frequency dividers: */
-#define  OSIOP_DCNTL_CF_2	0x00	/*  0 --> 37.51..50.00 Mhz, div=2 */
-#define  OSIOP_DCNTL_CF_1_5	0x40	/*  1 --> 25.01..37.50 Mhz, div=1.5 */
-#define  OSIOP_DCNTL_CF_1	0x80	/*  2 --> 16.67..25.00 Mhz, div=1 */
-#define  OSIOP_DCNTL_CF_3	0xc0	/*  3 --> 50.01..66.67 Mhz, div=3 */
+#define  OSIOP_DCNTL_CF_2	0x00	/*  0 --> 37.51..50.00 MHz, div=2 */
+#define  OSIOP_DCNTL_CF_1_5	0x40	/*  1 --> 25.01..37.50 MHz, div=1.5 */
+#define  OSIOP_DCNTL_CF_1	0x80	/*  2 --> 16.67..25.00 MHz, div=1 */
+#define  OSIOP_DCNTL_CF_3	0xc0	/*  3 --> 50.01..66.67 MHz, div=3 */
 #define OSIOP_DCNTL_EA		0x20	/* Enable ACK */
 #define OSIOP_DCNTL_SSM		0x10	/* Single step mode */
 #define OSIOP_DCNTL_LLM		0x08	/* Enable SCSI Low-level mode */

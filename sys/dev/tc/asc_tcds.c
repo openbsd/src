@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tcds.c,v 1.1 2002/05/02 22:56:06 miod Exp $ */
+/* $OpenBSD: asc_tcds.c,v 1.2 2003/02/11 19:20:28 mickey Exp $ */
 /* $NetBSD: asc_tcds.c,v 1.5 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -177,7 +177,7 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_id = tcdsdev->tcdsda_id;
 	sc->sc_freq = tcdsdev->tcdsda_freq;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	tcds_intr_establish(parent, tcdsdev->tcdsda_chip, ncr53c9x_intr, sc);

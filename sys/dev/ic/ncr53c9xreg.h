@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xreg.h,v 1.6 2001/09/27 04:01:42 jason Exp $	*/
+/*	$OpenBSD: ncr53c9xreg.h,v 1.7 2003/02/11 19:20:27 mickey Exp $	*/
 /*	$NetBSD: ncr53c9xreg.h,v 1.4 1997/05/17 20:56:55 pk Exp $	*/
 
 /*
@@ -122,14 +122,14 @@
 #define  NCRCFG1_BUSID	0x07		/*	Bus ID			*/
 
 #define	NCR_CCF		0x09		/* WO -	Clock Conversion Factor	*/
-					/*	0 = 35.01 - 40Mhz	*/
+					/*	0 = 35.01 - 40MHz	*/
 					/*	NEVER SET TO 1		*/
-					/*	2 = 10Mhz		*/
-					/*	3 = 10.01 - 15Mhz	*/
-					/*	4 = 15.01 - 20Mhz	*/
-					/*	5 = 20.01 - 25Mhz	*/
-					/*	6 = 25.01 - 30Mhz	*/
-					/*	7 = 30.01 - 35Mhz	*/
+					/*	2 = 10MHz		*/
+					/*	3 = 10.01 - 15MHz	*/
+					/*	4 = 15.01 - 20MHz	*/
+					/*	5 = 20.01 - 25MHz	*/
+					/*	6 = 25.01 - 30MHz	*/
+					/*	7 = 30.01 - 35MHz	*/
 
 #define	NCR_TEST	0x0a		/* WO - Test (Chip Test Only)	*/
 
@@ -151,7 +151,7 @@
 #define  NCRCFG3_QTE	0x08		/*	Queue Tag Enable	*/
 #define  NCRCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
 #define  NCRCFG3_FSCSI	0x02		/*	Fast SCSI		*/
-#define  NCRCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
+#define  NCRCFG3_FCLK	0x01		/*	Fast Clock (>25MHz)	*/
 
 /*
  * For some unknown reason, the ESP406/FAS408 looks like every
@@ -167,7 +167,7 @@
 #define  NCRESPCFG3_CDB		0x20	/*	CDB 10-bytes OK		*/
 #define  NCRESPCFG3_FSCSI	0x10	/*	Fast SCSI		*/
 #define	 NCRESPCFG3_SRESB	0x08	/*	Save Residual Byte	*/
-#define  NCRESPCFG3_FCLK	0x04	/*	Fast Clock (>25Mhz)	*/
+#define  NCRESPCFG3_FCLK	0x04	/*	Fast Clock (>25MHz)	*/
 #define	 NCRESPCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
 #define	 NCRESPCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
 
@@ -177,7 +177,7 @@
 #define  NCRF9XCFG3_QTE		0x40	/*	Queue Tag Enable	*/
 #define  NCRF9XCFG3_CDB		0x20	/*	CDB 10-bytes OK		*/
 #define  NCRF9XCFG3_FSCSI	0x10	/*	Fast SCSI		*/
-#define  NCRF9XCFG3_FCLK	0x08	/*	Fast Clock (>25Mhz)	*/
+#define  NCRF9XCFG3_FCLK	0x08	/*	Fast Clock (>25MHz)	*/
 #define  NCRF9XCFG3_SRESB	0x04	/*	Save Residual Byte	*/
 #define  NCRF9XCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
 #define  NCRF9XCFG3_T8M		0x01	/*	Threshold 8 Mode	*/

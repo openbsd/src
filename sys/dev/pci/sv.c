@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.14 2002/06/11 06:04:17 nordin Exp $ */
+/*      $OpenBSD: sv.c,v 1.15 2003/02/11 19:20:28 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -761,7 +761,7 @@ sv_set_params(addr, setmode, usemode, p, r)
 
 	     with the constraint that:
 
-	     80 MhZ < (m + 2) / (n + 2) * f_ref <= 150Mhz
+	     80 MhZ < (m + 2) / (n + 2) * f_ref <= 150MHz
 	     and n, m >= 1
 	  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.24 2002/11/30 01:11:46 fgsch Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.25 2003/02/11 19:20:28 mickey Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -589,8 +589,8 @@ const struct puc_device_description puc_devices[] = {
 	 * VScom PCI 400H and 800H. Uses 4/8 16950 UART, behind a PCI chips
 	 * that offers 4 com port on PCI device 0 (both 400H and 800H)
 	 * and 4 on PCI device 1 (800H only). PCI device 0 has
-	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 Mhz crystal
-	 * instead of the standart 1.8432Mhz.
+	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 MHz crystal
+	 * instead of the standart 1.8432MHz.
 	 * There's a version with a jumper for selecting the crystal frequency,
 	 * defaults to 8x as used here. The jumperless version uses 8x, too.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.6 2001/06/23 22:03:12 fgsch Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.7 2003/02/11 19:20:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -151,7 +151,7 @@
 #define SK_CSR_SW_IRQ_CLEAR		0x0040
 #define SK_CSR_SW_IRQ_SET		0x0080
 #define SK_CSR_SLOTSIZE			0x0100 /* 1 == 64 bits, 0 == 32 */
-#define SK_CSR_BUSCLOCK			0x0200 /* 1 == 33/66 Mhz, = 33 */
+#define SK_CSR_BUSCLOCK			0x0200 /* 1 == 33/66 MHz, = 33 */
 
 /* SK_LED register */
 #define SK_LED_GREEN_OFF		0x01

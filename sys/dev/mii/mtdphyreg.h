@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphyreg.h,v 1.1 1998/12/28 03:37:55 jason Exp $	*/
+/*	$OpenBSD: mtdphyreg.h,v 1.2 2003/02/11 19:20:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -64,8 +64,8 @@
 #define	PCR_TODIS		0x2000	/* Descrambler Time Out Disable */
 #define	PCR_RPTR		0x1000	/* Enable Repeater mode */
 #define	PCR_ENCSEL		0x0800	/* PMD ENCSEL pin control */
-#define	PCR_20MENB		0x0100	/* 20Mhz output enable */
-#define	PCR_25MDIS		0x0080	/* 25Mhz output disable */
+#define	PCR_20MENB		0x0100	/* 20MHz output enable */
+#define	PCR_25MDIS		0x0080	/* 25MHz output disable */
 #define	PCR_FGLNKTX		0x0040	/* Force link status good */
 #define	PCR_FCONNT		0x0020	/* Bypass disconnect function */
 #define	PCR_TXOFF		0x0010	/* Turn off TX */

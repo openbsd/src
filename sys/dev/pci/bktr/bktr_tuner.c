@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.2 2002/04/30 23:18:38 mickey Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.3 2003/02/11 19:20:28 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -718,17 +718,17 @@ void    select_tuner( bktr_ptr_t bktr, int tuner_type ) {
  * Tuner Notes:
  * Programming the tuner properly is quite complicated.
  * Here are some notes, based on a FM1246 data sheet for a PAL-I tuner.
- * The tuner (front end) covers 45.75 Mhz - 855.25 Mhz and an FM band of
- * 87.5 Mhz to 108.0 Mhz.
+ * The tuner (front end) covers 45.75 MHz - 855.25 MHz and an FM band of
+ * 87.5 MHz to 108.0 MHz.
  *
  * RF and IF.  RF = radio frequencies, it is the transmitted signal.
  *             IF is the Intermediate Frequency (the offset from the base
  *             signal where the video, color,  audio and NICAM signals are.
  *
- * Eg, Picture at 38.9 Mhz, Colour at 34.47 MHz, sound at 32.9 MHz
- * NICAM at 32.348 Mhz.
+ * Eg, Picture at 38.9 MHz, Colour at 34.47 MHz, sound at 32.9 MHz
+ * NICAM at 32.348 MHz.
  * Strangely enough, there is an IF (intermediate frequency) for
- * FM Radio which is 10.7 Mhz.
+ * FM Radio which is 10.7 MHz.
  *
  * The tuner also works in Bands. Philips bands are
  * FM radio band 87.50 to 108.00 MHz

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwmcode.h,v 1.2 2002/03/14 01:26:57 millert Exp $ */
+/*	$OpenBSD: adwmcode.h,v 1.3 2003/02/11 19:20:27 mickey Exp $ */
 /*      $NetBSD: adwmcode.h,v 1.5 2000/05/27 18:24:51 dante Exp $        */
 
 /*
@@ -127,11 +127,11 @@ struct adw_mcode {
 					 * 4-bit speed  SDTR speed name
 					 * ===========  ===============
 					 * 0000b (0x0)  SDTR disabled
-					 * 0001b (0x1)  5 Mhz
-					 * 0010b (0x2)  10 Mhz
-					 * 0011b (0x3)  20 Mhz (Ultra)
-					 * 0100b (0x4)  40 Mhz (LVD/Ultra2)
-					 * 0101b (0x5)  80 Mhz (LVD2/Ultra3)
+					 * 0001b (0x1)  5 MHz
+					 * 0010b (0x2)  10 MHz
+					 * 0011b (0x3)  20 MHz (Ultra)
+					 * 0100b (0x4)  40 MHz (LVD/Ultra2)
+					 * 0101b (0x5)  80 MHz (LVD2/Ultra3)
 					 * 0110b (0x6)  Undefined
 					 * ...
 					 * 1111b (0xF)  Undefined

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshreg.h,v 1.2 2001/03/07 23:57:47 miod Exp $	*/
+/*	$OpenBSD: sshreg.h,v 1.3 2003/02/11 19:20:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -323,10 +323,10 @@ typedef volatile ssh_regmap_t *ssh_regmap_p;
 /* DMA control register (dcntl) */
 
 #define	SSH_DCNTL_CF_MASK	0xc0	/* Clock frequency dividers:
-						0 --> 37.51..50.00 Mhz, div=2
-						1 --> 25.01..37.50 Mhz, div=1.5
-						2 --> 16.67..25.00 Mhz, div=1
-						3 --> 50.01..66.67 Mhz, div=3
+						0 --> 37.51..50.00 MHz, div=2
+						1 --> 25.01..37.50 MHz, div=1.5
+						2 --> 16.67..25.00 MHz, div=1
+						3 --> 50.01..66.67 MHz, div=3
 					 */
 #define	SSH_DCNTL_EA		0x20	/* Enable ack */
 #define	SSH_DCNTL_SSM		0x10	/* Single step mode */

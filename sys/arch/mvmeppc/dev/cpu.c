@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2002/06/08 15:49:52 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.5 2003/02/11 19:20:26 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -145,9 +145,9 @@ cpuattach(parent, dev, aux)
 	}
 
 	if (clock_freq != 0) {
-		/* Openfirmware stores clock in HZ, not Mhz */
+		/* Openfirmware stores clock in HZ, not MHz */
 		clock_freq /= 1000000;
-		printf(": %d Mhz", clock_freq);
+		printf(": %d MHz", clock_freq);
 
 	}
 #endif

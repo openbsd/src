@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.26 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.27 2003/02/11 19:20:27 mickey Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1338,7 +1338,7 @@ ad1848_set_speed(sc, argp)
 {
     /*
      * The sampling speed is encoded in the least significant nible of I8. The
-     * LSB selects the clock source (0=24.576 MHz, 1=16.9344 Mhz) and other
+     * LSB selects the clock source (0=24.576 MHz, 1=16.9344 MHz) and other
      * three bits select the divisor (indirectly):
      *
      * The available speeds are in the following table. Keep the speeds in

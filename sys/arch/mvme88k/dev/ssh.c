@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.12 2002/03/14 01:26:39 millert Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.13 2003/02/11 19:20:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -108,7 +108,7 @@ int ssh_init_wait = SCSI_INIT_WAIT;
 
 #ifdef DEBUG_SYNC
 /*
- * sync period transfer lookup - only valid for 66Mhz clock
+ * sync period transfer lookup - only valid for 66MHz clock
  */
 static struct {
 	unsigned char p;	/* period from sync request message */
@@ -1786,7 +1786,7 @@ sshintr (sc)
 }
 
 /*
- * This is based on the Progressive Peripherals 33Mhz Zeus driver and will
+ * This is based on the Progressive Peripherals 33MHz Zeus driver and will
  * not be correct for other 53c710 boards.
  * XXX fix this - nivas
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pasreg.h,v 1.2 1997/11/07 08:07:06 niklas Exp $	*/
+/*	$OpenBSD: pasreg.h,v 1.3 2003/02/11 19:20:27 mickey Exp $	*/
 /*	$NetBSD: pasreg.h,v 1.2 1995/03/15 18:45:58 brezak Exp $	*/
 
 /* Port addresses and bit fields for the Media Vision Pro AudioSpectrum
@@ -51,8 +51,8 @@
 
 #define SYSTEM_CONFIGURATION_1		0x8388		/* R W	Control								*/
 	#define S_C_1_PCS_ENABLE	0x01		/* R W  PC speaker	1=enable, 0=disable PC speaker emulation	*/
-	#define S_C_1_PCM_CLOCK_SELECT	0x02		/* R W  PCM		1=14.31818Mhz/12, 0=28.224Mhz master clock	*/ 
-	#define S_C_1_FM_EMULATE_CLOCK	0x04		/* R W  FM		1=use 28.224Mhz/2, 0=use 14.31818Mhz clock	*/
+	#define S_C_1_PCM_CLOCK_SELECT	0x02		/* R W  PCM		1=14.31818MHz/12, 0=28.224MHz master clock	*/ 
+	#define S_C_1_FM_EMULATE_CLOCK	0x04		/* R W  FM		1=use 28.224MHz/2, 0=use 14.31818MHz clock	*/
 	#define S_C_1_PCS_STEREO	0x10 		/* R W  PC speaker	1=enable PC speaker stereo effect, 0=disable	*/
 	#define S_C_1_PCS_REALSOUND	0x20		/* R W  PC speaker	1=enable RealSound enhancement, 0=disable	*/
 	#define S_C_1_FORCE_EXT_RESET	0x40		/* R W  Control		Force external reset				*/
@@ -61,7 +61,7 @@
 	#define S_C_2_PCM_OVERSAMPLING	0x03		/* R W  PCM		00=0x, 01=2x, 10=4x, 11=reserved		*/
 	#define S_C_2_PCM_16_BIT	0x04		/* R W	PCM		1=16-bit, 0=8-bit samples			*/
 #define SYSTEM_CONFIGURATION_3		0x838A		/* R W	Control								*/
-	#define S_C_3_PCM_CLOCK_SELECT	0x02		/* R W	PCM		1=use 1.008Mhz clock for PCM, 0=don't		*/
+	#define S_C_3_PCM_CLOCK_SELECT	0x02		/* R W	PCM		1=use 1.008MHz clock for PCM, 0=don't		*/
 #define SYSTEM_CONFIGURATION_4		0x838B		/* R W  Control		CD-ROM interface controls			*/
 
 #define IO_CONFIGURATION_1		0xF388		/* R W	Control								*/

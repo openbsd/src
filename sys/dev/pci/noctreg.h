@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctreg.h,v 1.6 2002/07/16 22:44:31 jason Exp $	*/
+/*	$OpenBSD: noctreg.h,v 1.7 2003/02/11 19:20:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -311,7 +311,7 @@ union noct_pkh_cmd {
 
 /* NOCT_EA_SDRAM_CFG */
 #define	EASDRC_8KREFRESH	0x00000080	/* 8K refreshes/64ms */
-#define	EASDRC_FREQ		0x0000003f	/* in Mhz */
+#define	EASDRC_FREQ		0x0000003f	/* in MHz */
 
 /* NOCT_RNG_CTL */
 #define	RNGCTL_RNG_ENA		0x80000000	/* rng enable */

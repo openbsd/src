@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.9 2003/01/21 19:55:13 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.10 2003/02/11 19:20:28 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1005,7 +1005,7 @@ video_open( bktr_ptr_t bktr )
 	OUTB(bktr, BKTR_BDELAY, format_params[bktr->format_params].bdelay);
 	frame_rate    = format_params[bktr->format_params].frame_rate;
 
-	/* enable PLL mode using 28Mhz crystal for PAL/SECAM users */
+	/* enable PLL mode using 28MHz crystal for PAL/SECAM users */
 	if (bktr->xtal_pll_mode == BT848_USE_PLL) {
 		OUTB(bktr, BKTR_TGCTRL, 0);
 		OUTB(bktr, BKTR_PLL_F_LO, 0xf9);
