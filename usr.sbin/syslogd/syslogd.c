@@ -203,7 +203,7 @@ char   *ttymsg __P((struct iovec *, int, char *, int));
 void	usage __P((void));
 void	wallmsg __P((struct filed *, struct iovec *));
 
-#define MAXFUNIX	20
+#define MAXFUNIX	21
 
 int nfunix = 1;
 char *funixn[MAXFUNIX] = { _PATH_LOG };
