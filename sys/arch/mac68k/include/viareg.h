@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.7 1997/11/30 06:10:37 gene Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.8 2001/05/08 17:30:40 aaron Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ extern int VIA2;
 #define vDirA_ADBState	0x30
 
 #ifdef _KERNEL
-void	VIA_initialize   __P((void));
+void	via_init __P((void));
 int	rbv_vidstatus    __P((void));
 void	via_shutdown __P((void));
 void	via_set_modem __P((int));

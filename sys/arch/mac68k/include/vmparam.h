@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2001/05/05 20:56:41 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.6 2001/05/08 17:30:40 aaron Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.8 1996/11/15 14:21:00 briggs Exp $	*/
 
 /*
@@ -107,13 +107,13 @@
 #define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(64*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
@@ -176,21 +176,49 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)(USRSTACK))
-#define VM_MAX_ADDRESS		((vm_offset_t)(0-(UPAGES*NBPG)))
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0-NBPG))
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)(USRSTACK))
+#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*NBPG)))
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
-
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
+
+/* Use new VM page bootstrap interface. */
+#define MACHINE_NEW_NONCONTIG
+
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * Most mac68k systems have only 1 physical memory segment, but some have 2.
+ *
+ * On the systems that have multiple segments, specifically the IIsi and   
+ * IIci, the optimal configuration is to put the higher-density SIMMs in
+ * bank B.  This is because the on-board video uses main memory in bank A
+ * for the framebuffer, and a memory controller prevents access during   
+ * video refresh cycles.  Even if both banks contain the same amount of
+ * RAM, a minimum of ~320KB will be subtracted from the amount in bank A
+ * for the framebuffer (if on-board video is in use).
+ */
+#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+#define	VM_PHYSSEG_NOADD
+   
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;         /* pv table for this seg */
+	char *attrs;                    /* page attributes for this seg */
+};
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)

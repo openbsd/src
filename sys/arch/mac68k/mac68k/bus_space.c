@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus_space.c,v 1.4 1999/09/03 18:01:11 art Exp $	*/
-/*	$NetBSD: bus_space.c,v 1.2 1998/04/24 05:27:24 scottr Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.5 2001/05/08 17:30:40 aaron Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,10 +42,6 @@
  * Implementation of bus_space mapping for mac68k.
  */
 
-#if 0
-#include "opt_uvm.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
@@ -75,7 +71,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	u_long pa, endpa;
+	paddr_t pa, endpa;
 	int error;
 
 	/*
@@ -164,7 +160,8 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
-	vm_offset_t va;
+	vaddr_t va;
+	pt_entry_t *pte;
 
 	pa = m68k_trunc_page(bpa);
 	endpa = m68k_round_page((bpa + size) - 1);
@@ -187,8 +184,12 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
-		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
-			pmap_changebit(pa, PG_CI, TRUE);
+		pte = kvtopte(va);
+		if ((flags & BUS_SPACE_MAP_CACHEABLE))
+			*pte &= ~PG_CI;
+		else
+			*pte |= PG_CI;
+		pmap_update();
 	}
  
 	return 0;
@@ -200,7 +201,7 @@ bus_space_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	vm_offset_t	va, endva;
+	vaddr_t va, endva;
 	bus_addr_t bpa;
 
 	va = m68k_trunc_page(bsh);

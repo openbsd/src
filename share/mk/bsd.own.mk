@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.43 2001/05/05 15:20:28 millert Exp $
+#	$OpenBSD: bsd.own.mk,v 1.44 2001/05/08 17:30:42 aaron Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -9,7 +9,7 @@
 .endif
 
 # XXX - This is temporary until everyone uses UVM
-.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "vax") || (${MACHINE} == "amiga") || (${MACHINE} == "hp300") || (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "m88k")
+.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "vax") || (${MACHINE} == "amiga") || (${MACHINE} == "hp300") || (${MACHINE} == "mac68k") || (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "m88k")
 UVM?=		yes
 .else
 UVM?=		no

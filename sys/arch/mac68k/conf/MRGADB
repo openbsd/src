@@ -1,7 +1,7 @@
-#	$OpenBSD: GENERIC,v 1.27 2001/05/08 17:30:39 aaron Exp $
-#	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
+#	$OpenBSD: MRGADB,v 1.4 2001/05/08 17:30:39 aaron Exp $
 #
-# GENERIC - an all-in-one kernel for the mac68k
+# MRGADB - generic kernel with the optional "mrg" adb driver by default
+#
 
 machine	mac68k m68k
 include "conf/GENERIC"
@@ -17,7 +17,7 @@ option		COMPAT_SUNOS	# SunOS m68k binary compatiblity
 option		ZS_CONSOLE_ABORT
 option		DISABLE_EXT_CACHE # Don't use IIci external cache
 option		DISABLE_ADB_WITH_SERIAL_CONSOLE
-#option		MRG_ADB		  # Use ROM-based ADB driver
+option		MRG_ADB		  # Use ROM-based ADB driver
 
 option		UVM		# use the UVM virtual memory system
 

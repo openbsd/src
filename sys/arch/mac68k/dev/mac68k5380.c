@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.13 1999/01/11 05:11:34 millert Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.14 2001/05/08 17:30:40 aaron Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ do_ncr5380_drq_intr(p)
 	void	*p;
 {
 #if USE_PDMA
-extern	int			*nofault, mac68k_buserr_addr;
+extern	int			*nofault, m68k_fault_addr;
 	label_t			faultbuf;
 	register int		count;
 	volatile u_int32_t	*long_drq;
@@ -381,7 +381,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 	if (setjmp((label_t *) nofault)) {
 		PID("drq berr");
 		nofault = (int *) 0;
-		count = (  (u_long) mac68k_buserr_addr
+		count = (  (u_long) m68k_fault_addr
 			 - (u_long) ncr_5380_with_drq);
 		if ((count < 0) || (count > pending_5380_count)) {
 			printf("pdma %s: cnt = %d (0x%x) (pending cnt %ld)\n",
@@ -393,7 +393,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_data += count;
 		pending_5380_count -= count;
 
-		mac68k_buserr_addr = 0;
+		m68k_fault_addr = 0;
 
 		PID("end drq early");
 

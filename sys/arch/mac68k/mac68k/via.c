@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.15 1998/05/03 07:16:53 gene Exp $	*/
+/*	$OpenBSD: via.c,v 1.16 2001/05/08 17:30:41 aaron Exp $	*/
 /*	$NetBSD: via.c,v 1.58 1997/03/04 04:11:52 scottr Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ void *slotptab[7] = {
 };
 
 void
-VIA_initialize()
+via_init()
 {
 	/* Initialize VIA1 */
 	/* set all timers to 0 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.8 1999/04/24 06:39:40 downsj Exp $	*/
-/*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.9 2001/05/08 17:30:40 aaron Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 1999/07/21 03:18:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -78,7 +78,7 @@
 #ifndef	_MAC68K_PMAP_H_
 #define	_MAC68K_PMAP_H_
 
-#include <machine/pcb.h>
+#include <machine/cpu.h>
 #include <machine/pte.h>
 
 #if defined(M68040)
@@ -96,7 +96,6 @@
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	st_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stchanged;	/* ST changed */
 	int			pm_stfree;	/* 040: free lev2 blocks */
 	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
@@ -127,14 +126,11 @@ typedef struct pmap	*pmap_t;
 /*
  * Macros for speed
  */
-#define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
-	if ((pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = m68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
-		if (iscurproc) \
-			loadustp((pcbp)->pcb_ustp); \
-		(pmapp)->pm_stchanged = FALSE; \
-	}
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+#define	PMAP_ACTIVATE(pmap, loadhw)					\
+{									\
+	if ((loadhw))							\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));		\
+}
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -143,7 +139,7 @@ typedef struct pmap	*pmap_t;
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -172,15 +168,16 @@ struct pv_page {
 };
 
 #ifdef	_KERNEL
-struct pmap	kernel_pmap_store;
+extern struct pmap	kernel_pmap_store;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+#define	active_user_pmap(pm)	\
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern struct pv_entry *pv_table;	/* array of entries, one per page */
-
-#define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
@@ -188,31 +185,13 @@ extern struct pv_entry *pv_table;	/* array of entries, one per page */
 extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 
-__BEGIN_DECLS
 /* pmap.c */
-void	mac68k_set_pte __P((vm_offset_t va, vm_offset_t pge));
-void	pmap_remove_mapping  __P((pmap_t, vm_offset_t, pt_entry_t *, int));
-boolean_t	pmap_testbit __P((vm_offset_t, int));
-void	pmap_changebit       __P((vm_offset_t, int, boolean_t));
-void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
-vm_offset_t   pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
-void	pmap_pvdump          __P((vm_offset_t));
-void	pmap_check_wiring    __P((char *, vm_offset_t));
-void	pmap_collect_pv __P((void));
-void	pmap_activate __P((register pmap_t, struct pcb *));
-void	pmap_deactivate __P((register pmap_t, struct pcb *));
+vm_offset_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+void mac68k_set_pte __P((vm_offset_t va, vm_offset_t pge));
 
-/* pmap_bootstrap.c */
-void	pmap_bootstrap __P((vm_offset_t, register vm_offset_t));
-void	bootstrap_mac68k __P((int));
-
-/* locore.s */
-void	loadustp __P((vm_offset_t));
-void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
-void	DCFP __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
-__END_DECLS
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
 
 #endif	/* _KERNEL */
 
