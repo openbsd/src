@@ -115,8 +115,8 @@ A: The Sun console can't handle the 'al' capability of the termcap
 Q: I don't have a version of ctags (or I have ctags, but it doesn't tag
    nearly enough things)!
 A: There's a version of ctags available on the 4.4BSD-Lite distributions,
-   as well as the FreeBSD, NetBSD, Linux and GNU distributions.  Or, you
-   might want to try Exuberant Ctags:
+   as well as the OpenBSD, FreeBSD, NetBSD, Linux and GNU distributions.
+   Or, you might want to try Exuberant Ctags:
 
 	Title:		Exuberant Ctags
 	Version:	1.3
