@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.29 2003/06/03 02:56:13 millert Exp $
+.\"	$OpenBSD: netstat.1,v 1.30 2003/06/05 20:01:35 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -58,10 +58,6 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm netstat
-.Op Fl p Ar protocol
-.Op Fl i
-.Op Fl I Ar Interface
-.Nm netstat
 .Op Fl s
 .Op Fl f Ar address_family
 .Op Fl i
@@ -85,8 +81,8 @@ interval specified,
 will continuously display the information regarding packet
 traffic on the configured network interfaces.
 The fourth form displays statistics about the named protocol.
-The fifth and sixth forms display per interface statistics for
-the specified protocol or address family.
+The fifth form displays per interface statistics for
+the specified address family.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -139,19 +135,15 @@ Show information about the specified
 used with a
 .Ar wait
 interval as described below.
+.br
 .Pp
 If the
 .Fl f Ar address_family
 option (with the
 .Fl s
-option) or the
-.Fl p Ar protocol
-option is present, show per-interface statistics on the given interface
-for the specified
-.Ar address_family
-or
-.Ar protocol ,
-respectively.
+option) is present, show per-interface
+statistics on the given interface for the specified
+.Ar address_family .
 .It Fl i
 Show the state of interfaces which have been auto-configured
 (interfaces statically configured into a system but not
@@ -168,14 +160,9 @@ If the
 .Fl f Ar address_family
 option (with the
 .Fl s
-option) or the
-.Fl p Ar protocol
-option is present, show per-interface statistics on all interfaces
+option) is present, show per-interface statistics on all interfaces
 for the specified
-.Ar address_family
-or
-.Ar protocol ,
-respectively.
+.Ar address_family .
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the running kernel.
