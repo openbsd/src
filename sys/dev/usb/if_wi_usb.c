@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.9 2004/03/15 16:10:07 drahn Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.10 2004/03/16 05:51:55 tedu Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -370,7 +370,7 @@ USB_DETACH(wi_usb)
 
 		sc->wi_thread_info->status |= WI_DYING;
 		if (sc->wi_thread_info->idle)
-			wakeup (sc->wi_thread_info);
+			wakeup(sc->wi_thread_info);
 	}
 
 	if (!sc->wi_usb_attached) {
@@ -661,6 +661,7 @@ wi_read_record_usb(struct wi_softc *wsc, struct wi_ltv_gen *ltv)
 	if (rnd_len > WI_USB_BUFSZ) {
 		printf("read_record buf size err %x %x\n", 
 		    rnd_len, WI_USB_BUFSZ);
+		wi_usb_tx_unlock(sc);
 		return EIO;
 	}
 
@@ -874,6 +875,7 @@ wi_write_record_usb(struct wi_softc *wsc, struct wi_ltv_gen *ltv)
 	if (rnd_len > WI_USB_BUFSZ) {
 		printf("write_record buf size err %x %x\n", 
 		    rnd_len, WI_USB_BUFSZ);
+		wi_usb_tx_unlock(sc);
 		return EIO;
 	}
 
@@ -1697,7 +1699,7 @@ wi_start_usb(struct ifnet *ifp)
 	} else {
 		sc->wi_thread_info->status |= WI_START;
 		if (sc->wi_thread_info->idle)
-			wakeup (sc->wi_thread_info);
+			wakeup(sc->wi_thread_info);
 	}
 
 	splx(s);
@@ -1740,7 +1742,7 @@ wi_inquire_usb(void *xsc)
 	sc->wi_thread_info->status |= WI_INQUIRE;
 
 	if (sc->wi_thread_info->idle)
-		wakeup (sc->wi_thread_info);
+		wakeup(sc->wi_thread_info);
 	splx(s);
 }
 
@@ -1767,7 +1769,7 @@ wi_watchdog_usb(struct ifnet *ifp)
 	sc->wi_thread_info->status |= WI_WATCHDOG;
 
 	if (sc->wi_thread_info->idle)
-		wakeup (sc->wi_thread_info);
+		wakeup(sc->wi_thread_info);
 	splx(s);
 }
 
