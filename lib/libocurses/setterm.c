@@ -31,7 +31,7 @@
 static char sccsid[] = "@(#)setterm.c	8.7 (Berkeley) 7/27/94";
 #endif /* not lint */
 
-#include <sys/ioctl.h>		/* TIOCGWINSZ on old systems. */
+#include <sys/ioctl.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -84,7 +84,7 @@ setterm(type)
 	static char genbuf[1024];
 	static char __ttytype[1024];
 	register int unknown;
-	struct winsize win;
+	struct ttysize win;
 	char *p;
 
 #ifdef DEBUG
@@ -102,11 +102,11 @@ setterm(type)
 	__CTRACE("setterm: tty = %s\n", type);
 #endif
 
-	/* Try TIOCGWINSZ, and, if it fails, the termcap entry. */
-	if (ioctl(STDERR_FILENO, TIOCGWINSZ, &win) != -1 &&
-	    win.ws_row != 0 && win.ws_col != 0) {
-		LINES = win.ws_row;
-		COLS = win.ws_col;
+	/* Try TIOCGSIZE, and, if it fails, the termcap entry. */
+	if (ioctl(STDERR_FILENO, TIOCGSIZE, &win) != -1 &&
+	    win.ts_lines != 0 && win.ts_cols != 0) {
+		LINES = win.ts_lines;
+		COLS = win.ts_cols;
 	}  else {
 		LINES = tgetnum("li");
 		COLS = tgetnum("co");
