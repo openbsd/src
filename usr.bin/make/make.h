@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.8 1997/04/01 07:28:19 millert Exp $	*/
+/*	$OpenBSD: make.h,v 1.9 1997/04/28 01:52:39 millert Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -112,7 +112,6 @@
  */
 typedef struct GNode {
     char            *name;     	/* The target's name */
-    char            *uname;    	/* The unexpanded name of a .USE node */
     char    	    *path;     	/* The full pathname of the file */
     int             type;      	/* Its type (see the OP flags, below) */
     int		    order;	/* Its wait weight */
@@ -378,7 +377,6 @@ extern int debug;
 
 int Make_TimeStamp __P((GNode *, GNode *));
 Boolean Make_OODate __P((GNode *));
-Lst Make_ExpandUse __P((Lst));
 int Make_HandleUse __P((GNode *, GNode *));
 void Make_Update __P((GNode *));
 void Make_DoAllVar __P((GNode *));
