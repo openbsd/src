@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.4 1996/03/25 21:17:36 tholo Exp $	*/
+/*	$OpenBSD: strftime.c,v 1.5 1996/06/10 06:19:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.4 1996/03/25 21:17:36 tholo Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.5 1996/06/10 06:19:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -220,7 +220,11 @@ _fmt(format, t)
 				 
 				int week = MON_WEEK(t);
 
-				if (((t->tm_yday + 7 - (t->tm_wday + 1)) % 7) >= 4) {
+				int days = (((t)->tm_yday + 7 - \
+                                ((t)->tm_wday ? (t)->tm_wday - 1 : 6)) % 7);
+
+
+				if (days >= 4) {
 					week++;
 				} else if (week == 0) {
 					week = 53;
