@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.c,v 1.8 1999/07/15 02:10:32 brian Exp $
+ *	$Id: exec.c,v 1.9 1999/08/17 15:00:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -117,7 +117,7 @@ exec_Create(struct physical *p)
       log_Printf(LogPHASE, "Unable to create pipe for line exec: %s\n",
 	         strerror(errno));
     else {
-      int stat, argc;
+      int stat, argc, i;
       pid_t pid, realpid;
       char *argv[MAXARGS];
 
@@ -149,17 +149,19 @@ exec_Create(struct physical *p)
               _exit(127);
           }
 
-          fids[1] = fcntl(fids[1], F_DUPFD, 3);
+          log_Printf(LogDEBUG, "Exec'ing ``%s''\n", p->name.base);
+
           dup2(fids[1], STDIN_FILENO);
           dup2(fids[1], STDOUT_FILENO);
           dup2(fids[1], STDERR_FILENO);
+          for (i = getdtablesize(); i > STDERR_FILENO; i--)
+            fcntl(i, F_SETFD, 1);
 
-          log_Printf(LogDEBUG, "Exec'ing ``%s''\n", p->name.base);
           argc = MakeArgs(p->name.base, argv, VECSIZE(argv));
           command_Expand(argv, argc, (char const *const *)argv,
                          p->dl->bundle, 0, realpid);
           execvp(*argv, argv);
-          fprintf(stderr, "execvp failed: %s: %s\r\n", *argv, strerror(errno));
+          printf("execvp failed: %s: %s\r\n", *argv, strerror(errno));
           _exit(127);
           break;
 
