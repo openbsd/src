@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.60 2002/01/24 22:36:41 kjell Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.61 2002/02/08 04:30:51 brad Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1401,11 +1401,11 @@ make package will work as follows:
 .Pp
 .Bl -bullet -compact
 .It
-Run make package SUBPACKAGE= PACKAGING=,
+Run env SUBPACKAGE= PACKAGING= make package,
 .It
-Run make package SUBPACKAGE=-lib PACKAGING=-lib,
+Run env SUBPACKAGE=-lib PACKAGING=-lib make package,
 .It
-Run make package SUBPACKAGE=-server PACKAGING=-server,
+Run env SUBPACKAGE=-server PACKAGING=-server make package,
 .El
 .Pp
 The port's Makefile can test the value of SUBPACKAGE to specialize
