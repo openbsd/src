@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.15 2004/02/17 16:25:16 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.16 2004/02/17 22:41:40 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,14 +122,10 @@ msgbuf_init(struct msgbuf *msgbuf)
 void
 msgbuf_clear(struct msgbuf *msgbuf)
 {
-	struct buf	*buf, *next;
+	struct buf	*buf;
 
-	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL; buf = next) {
-		next = TAILQ_NEXT(buf, entries);
+	while ((buf = TAILQ_FIRST(&msgbuf->bufs)) != NULL)
 		buf_dequeue(msgbuf, buf);
-	}
-	msgbuf->queued = 0;
-	msgbuf->sock = -1;
 }
 
 int
