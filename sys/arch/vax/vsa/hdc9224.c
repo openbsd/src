@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.3 1997/09/10 12:08:36 maja Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.4 1997/09/20 13:54:23 maja Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -88,7 +88,7 @@ static int keepLock = 0;
  * some definitions 
  */
 #define CTLRNAME  "hdc"
-#define UNITNAME  "rd"
+#define UNITNAME  "hd"
 #define HDC_PRI	  LOG_INFO
 
 /* Bits in minor device */ 
@@ -104,7 +104,7 @@ static int keepLock = 0;
  * on-disk geometry block 
  */
 #define _aP	__attribute__ ((packed))	/* force byte-alignment */
-struct rdgeom {
+struct hdgeom {
   char mbz[10];		/* 10 bytes of zero */
   long xbn_count _aP;	/* number of XBNs */
   long dbn_count _aP;	/* number of DBNs */
@@ -139,11 +139,11 @@ struct rdgeom {
 /*
  * Software status
  */
-struct	rdsoftc {
+struct	hdsoftc {
 	struct device	sc_dev;		/* must be here! (pseudo-OOP:) */
 	struct disk	sc_dk;		/* disklabel etc. */
-	struct rdgeom	sc_xbn;		/* on-disk geometry information */
-	struct rdparams {
+	struct hdgeom	sc_xbn;		/* on-disk geometry information */
+	struct hdparams {
 		u_short cylinders;	/* number of cylinders */
 		u_char	heads;		/* number of heads (tracks) */
 		u_char	sectors;	/* number of sectors/track */
@@ -190,19 +190,19 @@ struct	cfattach hdc_ca = {
 	sizeof(struct hdcsoftc), hdcmatch, hdcattach
 };
 
-int	rdmatch __P((struct device *parent, void *cfdata, void *aux));
-void	rdattach __P((struct device *parent, struct device *self, void *aux));
-int	rdprint __P((void *aux, const char *name));
-void	rdstrategy __P((struct buf *bp));
+int	hdmatch __P((struct device *parent, void *cfdata, void *aux));
+void	hdattach __P((struct device *parent, struct device *self, void *aux));
+int	hdprint __P((void *aux, const char *name));
+void	hdstrategy __P((struct buf *bp));
 
-struct	cfdriver rd_cd = {
-	NULL, "rd", DV_DISK
+struct	cfdriver hd_cd = {
+	NULL, "hd", DV_DISK
 };
-struct	cfattach rd_ca = {
-	sizeof(struct rdsoftc), rdmatch, rdattach
+struct	cfattach hd_ca = {
+	sizeof(struct hdsoftc), hdmatch, hdattach
 };
 
-struct dkdriver rddkdriver = { rdstrategy };
+struct dkdriver hddkdriver = { hdstrategy };
 
 /*
  * prototypes for (almost) all the internal routines
@@ -211,10 +211,10 @@ int hdc_reset	__P((struct hdcsoftc *sc));
 int hdc_select	__P((struct hdcsoftc *sc, int drive));
 int hdc_command __P((struct hdcsoftc *sc, int cmd));
 
-int hdc_getdata	 __P((struct hdcsoftc *hdc, struct rdsoftc *rd, int drive));
-int hdc_getlabel __P((struct hdcsoftc *hdc, struct rdsoftc *rd, int drive));
+int hdc_getdata	 __P((struct hdcsoftc *hdc, struct hdsoftc *hd, int drive));
+int hdc_getlabel __P((struct hdcsoftc *hdc, struct hdsoftc *hd, int drive));
 
-void rdgetlabel __P((struct rdsoftc *sc));
+void hdgetlabel __P((struct hdsoftc *sc));
 
 /*
  * new-config's hdcmatch() is similiar to old-config's hdcprobe(), 
@@ -256,13 +256,13 @@ struct hdc_attach_args {
 };
 
 int
-rdprint(aux, name)
+hdprint(aux, name)
 	void *aux;
 	const char *name;
 {
 	struct hdc_attach_args *ha = aux;
 
-	trace(("rdprint(%d, %s)\n", ha->ha_drive, name));
+	trace(("hdprint(%d, %s)\n", ha->ha_drive, name));
 
 	if (!name)
 		printf (" drive %d", ha->ha_drive);
@@ -312,7 +312,7 @@ hdcattach(parent, self, aux)
 	 * now probe for all possible disks
 	 */
 	for (ha.ha_drive=0; ha.ha_drive<3; ha.ha_drive++)
-		(void)config_found(self, (void*)&ha, rdprint);
+		(void)config_found(self, (void*)&ha, hdprint);
 
 #ifdef notyet
 	/*
@@ -324,10 +324,10 @@ hdcattach(parent, self, aux)
 }
 
 /*
- * rdmatch() probes for the existence of a RD-type disk/floppy
+ * hdmatch() probes for the existence of a RD-type disk/floppy
  */
 int
-rdmatch(parent, match, aux)
+hdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -337,7 +337,7 @@ rdmatch(parent, match, aux)
 	int drive = ha->ha_drive;
 	int res;
 
-	trace(("rdmatch(%d, %d)\n", cf->cf_unit, drive));
+	trace(("hdmatch(%d, %d)\n", cf->cf_unit, drive));
 
 	if (cf->cf_unit != ha->ha_drive)
 		return (0);
@@ -349,7 +349,7 @@ rdmatch(parent, match, aux)
 		res = hdc_select(hdc, drive);
 		break;
 	default:
-		printf ("rdmatch: invalid unit-number %d\n", drive);
+		printf ("hdmatch: invalid unit-number %d\n", drive);
 		return (0);
 	}
 
@@ -362,42 +362,42 @@ rdmatch(parent, match, aux)
 }
 
 void
-rdattach(parent, self, aux)
+hdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct hdcsoftc *hdc = (void*)parent;
-	struct rdsoftc *rd = (void*)self;
+	struct hdsoftc *hd = (void*)self;
 	struct hdc_attach_args *ha = aux;
-	struct rdparams *rp = &rd->sc_param;
+	struct hdparams *hp = &hd->sc_param;
 
-	trace(("rdattach(%d)\n", ha->ha_drive));
+	trace(("hdattach(%d)\n", ha->ha_drive));
 
-	rd->sc_drive = ha->ha_drive;
+	hd->sc_drive = ha->ha_drive;
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	rd->sc_dk.dk_driver = &rddkdriver;
-	rd->sc_dk.dk_name = rd->sc_dev.dv_xname;
-	disk_attach(&rd->sc_dk);
+	hd->sc_dk.dk_driver = &hddkdriver;
+	hd->sc_dk.dk_name = hd->sc_dev.dv_xname;
+	disk_attach(&hd->sc_dk);
 	/*
 	 * if it's not a floppy then evaluate the on-disk geometry.
 	 * if neccessary correct the label...
 	 */
-	printf("\n%s: ", rd->sc_dev.dv_xname);
-	if (rd->sc_drive == 2) {
+	printf("\n%s: ", hd->sc_dev.dv_xname);
+	if (hd->sc_drive == 2) {
 		printf("floppy (RX33)\n");
 	}
 	else {
-		hdc_getdata(hdc, rd, rd->sc_drive);
+		hdc_getdata(hdc, hd, hd->sc_drive);
 		printf("%s, %d MB, %d LBN, %d cyl, %d head, %d sect/track\n",
-		       rp->diskname, rp->diskblks/2048, rp->disklbns, 
-		       rp->cylinders, rp->heads, rp->sectors);
+		       hp->diskname, hp->diskblks/2048, hp->disklbns, 
+		       hp->cylinders, hp->heads, hp->sectors);
 	}
 	/*
 	 * Know where we booted from.
 	 */
-	if ((B_TYPE(bootdev) == BDEV_RD) && (rd->sc_drive == B_UNIT(bootdev)))
+	if ((B_TYPE(bootdev) == BDEV_RD) && (hd->sc_drive == B_UNIT(bootdev)))
 		booted_from = self;
 }
 
@@ -406,15 +406,15 @@ rdattach(parent, self, aux)
  * thus this routine waits for the transfer to complete.
  */
 void
-rdstrategy(bp)
+hdstrategy(bp)
 	struct buf *bp;
 {
-	struct rdsoftc *rd = rd_cd.cd_devs[HDCUNIT(bp->b_dev)];
-	struct hdcsoftc *hdc = (void *)rd->sc_dev.dv_parent;
+	struct hdsoftc *hd = hd_cd.cd_devs[HDCUNIT(bp->b_dev)];
+	struct hdcsoftc *hdc = (void *)hd->sc_dev.dv_parent;
 	struct partition *p;
 	int blkno, i, s;
 
-	trace (("rdstrategy(#%d/%d)\n", bp->b_blkno, bp->b_bcount));
+	trace (("hdstrategy(#%d/%d)\n", bp->b_blkno, bp->b_bcount));
 
 	/* XXX		should make some checks... */
 
@@ -425,16 +425,16 @@ rdstrategy(bp)
 		goto done;
 	
 	/*
-	 * what follows now should not be here but in rdstart...
+	 * what follows now should not be here but in hdstart...
 	 */
 	/*------------------------------*/
-	blkno = bp->b_blkno / (rd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	p = &rd->sc_dk.dk_label->d_partitions[HDCPART(bp->b_dev)];
+	blkno = bp->b_blkno / (hd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	p = &hd->sc_dk.dk_label->d_partitions[HDCPART(bp->b_dev)];
 	blkno += p->p_offset;
 
 	/* nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize); */
 
-	if (hdc_strategy(hdc, rd, HDCUNIT(bp->b_dev), 
+	if (hdc_strategy(hdc, hd, HDCUNIT(bp->b_dev), 
 			 ((bp->b_flags & B_READ) ? F_READ : F_WRITE),
 			 blkno, bp->b_bcount, bp->b_data) == 0)
 		goto done;
@@ -450,9 +450,9 @@ done:
 }
 
 int
-hdc_strategy(hdc, rd, unit, func, dblk, size, buf)
+hdc_strategy(hdc, hd, unit, func, dblk, size, buf)
 	struct hdcsoftc *hdc;
-	struct rdsoftc *rd;
+	struct hdsoftc *hd;
 	int unit;
 	int func;
 	int dblk;
@@ -460,7 +460,7 @@ hdc_strategy(hdc, rd, unit, func, dblk, size, buf)
 	char *buf;
 {
 	struct hdc9224_UDCreg *p = &hdc->sc_creg;
-	struct disklabel *lp = rd->sc_dk.dk_label;
+	struct disklabel *lp = hd->sc_dk.dk_label;
 	int sect, head, cyl;
 	int scount;
 	int cmd, res = 0;
@@ -593,7 +593,7 @@ char hdc_iobuf[17*512];		/* we won't need more */
  */
 int
 hdc_printgeom(p)
-	struct rdgeom *p;
+	struct hdgeom *p;
 {
 	char dname[8];
 	hdc_mid2str(p->media_id, dname);
@@ -635,19 +635,19 @@ hdc_mid2str(media_id, name)
 }
 
 int
-hdc_getdata(hdc, rd, unit)
+hdc_getdata(hdc, hd, unit)
 	struct hdcsoftc *hdc;
-	struct rdsoftc *rd;
+	struct hdsoftc *hd;
 	int unit;
 {
-	struct disklabel *lp = rd->sc_dk.dk_label;
-	struct rdparams *rp = &rd->sc_param;
+	struct disklabel *lp = hd->sc_dk.dk_label;
+	struct hdparams *hp = &hd->sc_param;
 	int res;
 
 	trace (("hdc_getdata(%d)\n", unit));
 
-	bzero(rd->sc_dk.dk_label, sizeof(struct disklabel));
-	bzero(rd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(hd->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(hd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	if (unit == 2) {
 		lp->d_secsize = DEV_BSIZE;
@@ -659,36 +659,36 @@ hdc_getdata(hdc, rd, unit)
 		return (0);
 	}
 
-	res = hdc_strategy(hdc, rd, unit, F_READ, -1, 4096, hdc_iobuf);
-	bcopy (hdc_iobuf, &rd->sc_xbn, sizeof(struct rdgeom));
+	res = hdc_strategy(hdc, hd, unit, F_READ, -1, 4096, hdc_iobuf);
+	bcopy (hdc_iobuf, &hd->sc_xbn, sizeof(struct hdgeom));
 #ifdef DEBUG
-	hdc_printgeom(&rd->sc_xbn);
+	hdc_printgeom(&hd->sc_xbn);
 #endif
 	lp->d_secsize = DEV_BSIZE;
-	lp->d_ntracks = rd->sc_xbn.ntracks;
-	lp->d_nsectors = rd->sc_xbn.nspt;
-	lp->d_ncylinders = rd->sc_xbn.ncylinders;
+	lp->d_ntracks = hd->sc_xbn.ntracks;
+	lp->d_nsectors = hd->sc_xbn.nspt;
+	lp->d_ncylinders = hd->sc_xbn.ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	rp->cylinders = rd->sc_xbn.ncylinders;
-	rp->heads = rd->sc_xbn.ntracks;
-	rp->sectors = rd->sc_xbn.nspt;
-	rp->diskblks = rp->cylinders * rp->heads * rp->sectors;
-	rp->disklbns = rd->sc_xbn.lbn_count;
-	rp->blksize = DEV_BSIZE;
-	rp->diskbytes = rp->disklbns * rp->blksize;
-	hdc_mid2str(rd->sc_xbn.media_id, rp->diskname);
+	hp->cylinders = hd->sc_xbn.ncylinders;
+	hp->heads = hd->sc_xbn.ntracks;
+	hp->sectors = hd->sc_xbn.nspt;
+	hp->diskblks = hp->cylinders * hp->heads * hp->sectors;
+	hp->disklbns = hd->sc_xbn.lbn_count;
+	hp->blksize = DEV_BSIZE;
+	hp->diskbytes = hp->disklbns * hp->blksize;
+	hdc_mid2str(hd->sc_xbn.media_id, hp->diskname);
 
 	return (0);
 }
 
 int
-hdc_getlabel(hdc, rd, unit)
+hdc_getlabel(hdc, hd, unit)
 	struct hdcsoftc *hdc;
-	struct rdsoftc *rd;
+	struct hdsoftc *hd;
 	int unit;
 {
-	struct disklabel *lp = rd->sc_dk.dk_label;
+	struct disklabel *lp = hd->sc_dk.dk_label;
 	struct disklabel *xp = (void*)(hdc_iobuf + 64);
 	int res;
 
@@ -698,7 +698,7 @@ hdc_getlabel(hdc, rd, unit)
 			  printf ("%d-->%d\n", xp->x, lp->x);	\
 			  xp->x = lp->x;			\
 			}
-	res = hdc_strategy(hdc, rd, unit, F_READ, 0, DEV_BSIZE, hdc_iobuf);
+	res = hdc_strategy(hdc, hd, unit, F_READ, 0, DEV_BSIZE, hdc_iobuf);
 	LBL_CHECK(d_secsize);
 	LBL_CHECK(d_ntracks);
 	LBL_CHECK(d_nsectors);
@@ -717,7 +717,7 @@ hdcsize(dev)
 {
 	int unit = HDCUNIT(dev);
 	int part = HDCPART(dev);
-	struct rdsoftc *rd = rd_cd.cd_devs[unit];
+	struct hdsoftc *hd = hd_cd.cd_devs[unit];
 	int size;
 
 	trace (("hdcsize(%x == %d/%d)\n", dev, unit, part));
@@ -725,11 +725,11 @@ hdcsize(dev)
 	if (hdcopen(dev, 0, S_IFBLK) != 0)
 		return (-1);
 #if 0
-	if (rd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	if (hd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 #endif
-		size = rd->sc_dk.dk_label->d_partitions[part].p_size;
+		size = hd->sc_dk.dk_label->d_partitions[part].p_size;
 	if (hdcclose(dev, 0, S_IFBLK) != 0)
 		return (-1);
 	debug (("hdcsize: size=%d\n", size));
@@ -748,26 +748,26 @@ hdcopen (dev, flag, fmt)
 	int unit = HDCUNIT(dev);
 	int part = HDCPART(dev);
 	struct hdcsoftc *hdc;
-	struct rdsoftc *rd;
+	struct hdsoftc *hd;
 	int res, error;
 
 	trace (("hdcopen(0x%x = %d/%d)\n", dev, unit, part));
 
-	if (unit >= rd_cd.cd_ndevs) {
+	if (unit >= hd_cd.cd_ndevs) {
 		printf ("hdcopen: invalid unit %d\n", unit);
 		return ENXIO;
 	}
-	rd = rd_cd.cd_devs[unit];
-	if (!rd) {
-		printf("hdcopen: null-pointer in rdsoftc.\n");
+	hd = hd_cd.cd_devs[unit];
+	if (!hd) {
+		printf("hdcopen: null-pointer in hdsoftc.\n");
 		return (ENXIO);
 	}
-	hdc = (void *)rd->sc_dev.dv_parent;
+	hdc = (void *)hd->sc_dev.dv_parent;
 	
 	/* XXX here's much more to do! XXX */
 
-	hdc_getdata (hdc, rd, unit);
-	hdc_getlabel (hdc, rd, unit);
+	hdc_getdata (hdc, hd, unit);
+	hdc_getlabel (hdc, hd, unit);
 
 	return (0);
 }
@@ -792,7 +792,7 @@ hdcstrategy(bp)
 	register struct buf *bp;
 {
 	trace (("hdcstrategy()\n"));
-	rdstrategy(bp);
+	hdstrategy(bp);
 	debug (("hdcstrategy done.\n"));
 }
 
@@ -807,8 +807,8 @@ hdcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct rdsoftc *rd = rd_cd.cd_devs[HDCUNIT(dev)];
-	struct hdcsoftc *hdc = (void *)rd->sc_dev.dv_parent;
+	struct hdsoftc *hd = hd_cd.cd_devs[HDCUNIT(dev)];
+	struct hdcsoftc *hdc = (void *)hd->sc_dev.dv_parent;
 	int error;
 
 	trace (("hdcioctl(%x, %x)\n", dev, cmd));
@@ -820,13 +820,13 @@ hdcioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		*(struct disklabel *)data = *(rd->sc_dk.dk_label);
+		*(struct disklabel *)data = *(hd->sc_dk.dk_label);
 		return (0);
 
 	case DIOCGPART:
-		((struct partinfo *)data)->disklab = rd->sc_dk.dk_label;
+		((struct partinfo *)data)->disklab = hd->sc_dk.dk_label;
 		((struct partinfo *)data)->part =
-		  &rd->sc_dk.dk_label->d_partitions[HDCPART(dev)];
+		  &hd->sc_dk.dk_label->d_partitions[HDCPART(dev)];
 		return (0);
 
 	case DIOCWDINFO:
@@ -839,13 +839,13 @@ hdcioctl(dev, cmd, data, flag, p)
 			return error;
 		sd->flags |= SDF_LABELLING;
 */
-		error = setdisklabel(rd->sc_dk.dk_label,
-		     (struct disklabel *)data, 0, rd->sc_dk.dk_cpulabel);
+		error = setdisklabel(hd->sc_dk.dk_label,
+		     (struct disklabel *)data, 0, hd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(HDCLABELDEV(dev),
-					rdstrategy, rd->sc_dk.dk_label,
-					rd->sc_dk.dk_cpulabel);
+					hdstrategy, hd->sc_dk.dk_label,
+					hd->sc_dk.dk_cpulabel);
 		}
 /* XXX
 		sd->flags &= ~SDF_LABELLING;
@@ -1087,7 +1087,7 @@ hdc_rxselect(sc, unit)
 }
 
 int
-hdc_rdselect(sc, unit)
+hdc_hdselect(sc, unit)
 	struct hdcsoftc *sc;
 	int unit;
 {
@@ -1134,7 +1134,7 @@ hdc_select(sc, unit)
 	switch (unit) {
 	case 0:
 	case 1:
-		error = hdc_rdselect(sc, unit);
+		error = hdc_hdselect(sc, unit);
 		break;
 	case 2:
 		error = hdc_rxselect(sc, unit);
