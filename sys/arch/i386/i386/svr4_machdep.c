@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.11 1997/02/05 15:50:18 deraadt Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.12 1997/04/01 20:13:27 deraadt Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -277,7 +277,7 @@ svr4_getsiginfo(si, sig, code, type, addr)
 		break;
 	case SIGFPE:
 		switch (type) {
-		case T_ARITHTRAP:
+		case FPE_INTOVF:
 			si->svr4_si_code = SVR4_FPE_INTOVF;
 			si->svr4_si_trap = SVR4_T_DIVIDE;
 			break;
