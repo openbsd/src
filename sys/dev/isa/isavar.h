@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.24 1997/12/25 09:22:44 downsj Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.25 1997/12/25 12:06:49 downsj Exp $	*/
 /*	$NetBSD: isavar.h,v 1.24 1996/10/21 22:41:11 thorpej Exp $	*/
 /*	$NetBSD: isapnpvar.h,v 1.5.4.2 1997/10/29 00:40:49 thorpej Exp $	*/
 
@@ -282,7 +282,19 @@ struct isa_softc {
 	 * via isa_attach_args.
 	 */
 	bus_space_handle_t   sc_delaybah;
+
+	int8_t sc_drq;		/* DRQ usage tracking */
 };
+
+/*
+ * Macros for sc_drq access.
+ */
+#define isa_drq_alloc(_sc, _drq)	\
+	(((struct isa_softc *)(_sc))->sc_drq |= (1 << (_drq)))
+#define isa_drq_free(_sc, _drq)		\
+	(((struct isa_softc *)(_sc))->sc_drq &= ~(1 << (_drq)))
+#define isa_drq_isfree(_sc, _drq)	\
+	!((((struct isa_softc *)(_sc))->sc_drq << (_drq)) & 1)
 
 #define		cf_iobase		cf_loc[0]
 #define		cf_iosize		cf_loc[1]

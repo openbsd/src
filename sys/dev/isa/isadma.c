@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.15 1997/12/21 14:41:23 downsj Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.16 1997/12/25 12:06:47 downsj Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
@@ -126,20 +126,6 @@ isadma_release(chan)
 		isadma_abort(chan);
 
 	di->inuse = 0;
-}
-
-int
-isadma_isdrqfree(chan)
-	int chan;
-{
-	struct dma_info *di;
-#ifdef DIAGNOSTIC
-	if (chan < 0 || chan > 7)
-		panic("isadma_release: channel out of range");
-#endif
-	di = dma_info + chan;
-
-	return (di->inuse);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.13 1997/12/25 09:22:38 downsj Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.14 1997/12/25 12:06:48 downsj Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ isapnp_alloc_drq(isa, i)
 	}
 
 	for (b = 0; b < 16; b++)
-		if ((i->bits & (1 << b)) && isadma_isdrqfree(b)) {
+		if ((i->bits & (1 << b)) && isa_drq_isfree(isa, b)) {
 			i->num = b;
 			return 0;
 		}
