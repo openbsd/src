@@ -42,7 +42,7 @@ void panic __P((char *));
 int ttwait __P((void));
 
 /*
- * This function gets called once, to set up the terminal
+ * This function gets called once, to set up the terminal.
  * On systems w/o TCSASOFT we turn off off flow control,
  * which isn't really the right thing to do.
  */
@@ -91,6 +91,7 @@ ttraw()
 		ewprintf("ttopen can't tcsetattr");
 		return(FALSE);
 	}
+	return(TRUE);
 }
 
 /*
