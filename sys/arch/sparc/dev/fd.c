@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.16 1997/05/11 22:37:34 grr Exp $	*/
+/*	$OpenBSD: fd.c,v 1.17 1997/05/30 08:27:49 grr Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -1692,6 +1692,12 @@ fd_do_eject()
 	auxregbisc(AUXIO_FEJ, AUXIO_FDS);
 }
 
+/*
+ * The mountroot_hook is called once the root and swap device have been
+ * established.  NULL implies that we may have been the boot device but
+ * haven't been elected for the root device.
+ */
+
 /* ARGSUSED */
 void
 fd_mountroot_hook(dev)
@@ -1700,12 +1706,15 @@ fd_mountroot_hook(dev)
 	int c;
 
 	fd_do_eject();
-	printf("Insert filesystem floppy and press return.");
-	for (;;) {
-		c = cngetc();
-		if ((c == '\r') || (c == '\n')) {
-			printf("\n");
-			return;
+
+	if (dev) {
+		printf("Insert filesystem floppy and press return.");
+		for (;;) {
+			c = cngetc();
+			if ((c == '\r') || (c == '\n')) {
+				printf("\n");
+				return;
+			}
 		}
 	}
 }

@@ -1908,7 +1908,7 @@ setroot()
 #endif
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	bootdv = bp == NULL ? NULL : bp->dev;
+	bootdv = (bp == NULL) ? NULL : bp->dev;
 
 	/*
 	 * If `swap generic' and we couldn't determine boot device,
@@ -2079,7 +2079,10 @@ gotroot:
 	for (mrhp = mrh_list.lh_first; mrhp != NULL;
 	     mrhp = mrhp->mr_link.le_next)
 		if (mrhp->mr_device == bootdv) {
-			(*mrhp->mr_func)(bootdv);
+			if (findblkmajor(mrhp->mr_device) == major(rootdev)) 
+				(*mrhp->mr_func)(bootdv);
+			else
+				(*mrhp->mr_func)(NULL);
 			break;
 		}
 
