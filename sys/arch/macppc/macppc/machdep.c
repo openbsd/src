@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2002/01/07 05:31:27 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1158,10 +1158,10 @@ bus_space_unmap(t, bsh, size)
 	off = bsh - sva;
 	len = size+off;
 
+	/* do not free memory which was stolen from the vm system */
 	if (ppc_malloc_ok &&
 	  ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS)) )
 	{
-		/* do not free memory which was stolen from the vm system */
 		uvm_km_free(phys_map, sva, len);
 	}
 #if 0
@@ -1177,6 +1177,8 @@ bus_space_unmap(t, bsh, size)
 	pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
 	pmap_update(pmap_kernel());
 }
+
+vm_offset_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
 
 int
 bus_mem_add_mapping(bpa, size, cacheable, bshp)
@@ -1205,9 +1207,12 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 		/* need to steal vm space before kernel vm is initialized */
 		alloc_size = round_page(size);
-		ppc_kvm_size -= alloc_size;
 
-		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
+		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
+		ppc_kvm_stolen += alloc_size;
+		if (ppc_kvm_stolen > SEGMENT_LENGTH) {
+			panic("ppc_kvm_stolen, out of space");
+		}
 	} else {
 		vaddr = uvm_km_valloc_wait(phys_map, len);
 	}
