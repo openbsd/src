@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.20 2004/11/19 23:14:27 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.21 2004/11/21 04:55:36 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1559,13 +1559,14 @@ atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 USB_ATTACH(atu)
 {
 	USB_ATTACH_START(atu, sc, uaa);
+	struct ieee80211com		*ic = &sc->sc_ic;
+	struct ifnet			*ifp = &ic->ic_if;
 	char				devinfo[1024];
-	struct ifnet			*ifp;
 	usbd_status			err;
 	usbd_device_handle		dev = uaa->device;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
-	int				i, s;
+	int				i;
 	u_int8_t			mode;
 	struct atu_type		*t;
 	struct atu_fw			fw;
@@ -1608,8 +1609,6 @@ USB_ATTACH(atu)
 		t++;
 	}
 
-	s = splnet();
-
 	/*
 	 * Check in the interface descriptor if we're in DFU mode
 	 * If we're in DFU mode, we upload the external firmware
@@ -1628,13 +1627,10 @@ USB_ATTACH(atu)
 
 		/* upload internal firmware */
 		err = atu_upload_internal_firmware(sc);
-		if (err) {
-			splx(s);
+		if (err)
 			USB_ATTACH_ERROR_RETURN;
-		}
 
 		DPRINTFN(10, ("%s: done...\n", USBDEVNAME(sc->atu_dev)));
-		splx(s);
 		USB_ATTACH_NEED_RESET;
 	}
 
@@ -1644,10 +1640,8 @@ USB_ATTACH(atu)
 	DPRINTF(("%s: starting external firmware download\n",
 	    USBDEVNAME(sc->atu_dev)));
 	err = atu_upload_external_firmware(sc);
-	if (err) {
-		splx(s);
+	if (err)
 		USB_ATTACH_ERROR_RETURN;
-	}
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -1657,7 +1651,6 @@ USB_ATTACH(atu)
 			    uaa->iface->idesc->bNumEndpoints));
 			DPRINTF(("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->atu_dev), i));
-			splx(s);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -1674,7 +1667,6 @@ USB_ATTACH(atu)
 	if (err) {
 		DPRINTF(("%s: could not get card cfg!\n",
 		    USBDEVNAME(sc->atu_dev)));
-		splx(s);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -1695,9 +1687,6 @@ USB_ATTACH(atu)
 	/* Show the world our MAC address */
 	printf("%s: address %s\n", USBDEVNAME(sc->atu_dev),
 	    ether_sprintf(sc->atu_mac_addr));
-
-	bcopy(sc->atu_mac_addr,
-	    (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	for (i=0; i<ATU_AVG_TIME; i++)
 		sc->atu_signalarr[i] = 0;
@@ -1721,77 +1710,57 @@ USB_ATTACH(atu)
 	SLIST_INIT(&sc->atu_cdata.atu_tx_free);
 	SLIST_INIT(&sc->atu_cdata.atu_mgmt_free);
 
-	ifp = &sc->arpcom.ac_if;
+	ic->ic_softc = sc;
+	ic->ic_phytype = IEEE80211_T_DS;
+	ic->ic_opmode = IEEE80211_M_STA;
+	ic->ic_state = IEEE80211_S_INIT;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT | IEEE80211_C_WEP;
+	bcopy(sc->atu_mac_addr, &ic->ic_myaddr, IEEE80211_ADDR_LEN);
+
+	i = 0;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 2;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 4;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 11;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 22;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = i;
+
+	for (i = 1; i <= 14; i++) {
+		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B;
+		ic->ic_channels[i].ic_freq = ieee80211_ieee2mhz(i,
+		    ic->ic_channels[i].ic_flags);
+	}
+
+	ic->ic_ibss_chan = &ic->ic_channels[0];
+
 	ifp->if_softc = sc;
-	strncpy(ifp->if_xname, USBDEVNAME(sc->atu_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, USBDEVNAME(sc->atu_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = atu_ioctl;
 	ifp->if_start = atu_start;
 	ifp->if_watchdog = atu_watchdog;
-	ifp->if_baudrate = 10000000;
 	ifp->if_mtu = ATU_DEFAULT_MTU;
-
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/*
-	 * Call MI attach routine.
-	 */
+	/* Call MI attach routine. */
 	if_attach(ifp);
-	Ether_ifattach(ifp, sc->atu_mac_addr);
+	ieee80211_ifattach(ifp);
+
+	/* setup ifmedia interface */
+	ieee80211_media_init(ifp, atu_media_change, atu_media_status);
 
 	sc->atu_dying = 0;
 
-	/* setup ifmedia interface */
-	ifmedia_init(&sc->atu_media, 0, atu_media_change,
-	    atu_media_status);
-
-#define ADD(s, o)       ifmedia_add(&sc->atu_media, \
-	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
-
-	ADD(IFM_AUTO, 0);
-	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
-
-	/*
-	 * TODO:
-	 * add a list of supported rates here.
-	 * (can't do that as long as we only support 'auto fallback'
-	 *
-	for (i = 0; i < nrate; i++) {
-		r = ic->ic_sup_rates[i];
-		mword = ieee80211_rate2media(r, IEEE80211_T_DS);
-		if (mword == 0)
-			continue;
-		printf("%s%d%sMbps", (i != 0 ? " " : ""),
-		    (r & IEEE80211_RATE_VAL) / 2, ((r & 0x1) != 0 ? ".5" : ""));
-		ADD(mword, 0);
-		if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
-			ADD(mword, IFM_IEEE80211_HOSTAP);
-		if (ic->ic_flags & IEEE80211_F_HASIBSS)
-			ADD(mword, IFM_IEEE80211_ADHOC);
-		ADD(mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-	}
-	printf("\n");
-	*/
-
-	ADD(11, 0);
-	ADD(11, IFM_IEEE80211_ADHOC);
-
-	ifmedia_set(&sc->atu_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0,
-	    0));
-#undef ADD
-
-	splx(s);
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
 USB_DETACH(atu)
 {
 	USB_DETACH_START(atu, sc);
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 
 	atu_stop(sc);
 
-	ether_ifdetach(ifp);
+	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL)
@@ -2258,12 +2227,11 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
  * the higher level protocols.
  */
 void
-atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	struct mbuf		*m;
 	u_int32_t		total_len;
 	int			s;
@@ -2424,7 +2392,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	    2 * ETHER_ADDR_LEN - 4;
 
 	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = &sc->arpcom.ac_if;
+	m->m_pkthdr.rcvif = ifp;
 
 	/* Adjust mbuf for headers */
 	offset = sizeof(struct at76c503_rx_buffer) +
@@ -2464,17 +2432,14 @@ done:
 void
 atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct atu_softc	*sc;
-	struct atu_chain	*c;
-	struct ifnet		*ifp;
+	struct atu_chain	*c = (struct atu_chain *)priv;
+	struct atu_softc	*sc = c->atu_sc;
+	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	usbd_status		err;
 	int s;
 
-	c = priv;
-	sc = c->atu_sc;
 	s = splusb();
 
-	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 	c->atu_in_xfer = 0;
 
@@ -2715,9 +2680,10 @@ void
 atu_init(void *xsc)
 {
 	struct atu_softc	*sc = xsc;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	struct atu_chain	*c;
+	struct ieee80211com	*ic = &sc->sc_ic;
+	struct ifnet		*ifp = &ic->ic_if;
 	struct atu_cdata	*cd = &sc->atu_cdata;
+	struct atu_chain	*c;
 	usbd_status		err;
 	int			i, s;
 
@@ -2782,8 +2748,7 @@ atu_init(void *xsc)
 		usbd_transfer(c->atu_xfer);
 	}
 
-	bcopy((char *)&sc->arpcom.ac_enaddr, sc->atu_mac_addr,
-	    ETHER_ADDR_LEN);
+	//bcopy(&ic->ic_myaddr, sc->atu_mac_addr, ETHER_ADDR_LEN);
 	DPRINTFN(10, ("%s: starting up using MAC=%s\n",
 	    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_mac_addr)));
 
@@ -2968,7 +2933,7 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
 			break;
 #endif /* INET */
 		}
@@ -3286,11 +3251,6 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 #endif
 
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		err = ifmedia_ioctl(ifp, ifr, &sc->atu_media, command);
-		break;
-
 	case SIOCGWAVELAN:
 		DPRINTFN(15, ("%s: ioctl: get wavelan\n",
 		    USBDEVNAME(sc->atu_dev)));
@@ -3324,9 +3284,8 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	default:
-		DPRINTFN(15, ("%s: ioctl: default\n",
-		    USBDEVNAME(sc->atu_dev)));
-		err = ether_ioctl(ifp, &sc->arpcom, command, data);
+		DPRINTFN(15, ("%s: default\n", USBDEVNAME(sc->atu_dev)));
+		err = ieee80211_ioctl(ifp, command, data);
 		break;
 	}
 
@@ -3382,12 +3341,11 @@ void
 atu_stop(struct atu_softc *sc)
 {
 	usbd_status		err;
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	struct atu_cdata	*cd;
 	int s;
 
 	s = splnet();
-	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 
 	/* there must be a better way to clean up the mgmt task... */
