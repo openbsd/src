@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.25 2002/02/23 00:03:14 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.26 2002/02/23 00:05:14 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -942,7 +942,8 @@ pool_do_put(struct pool *pp, void *v)
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
-		if (pp->pr_npages > pp->pr_maxpages) {
+		if (pp->pr_npages > pp->pr_maxpages ||
+		    (pp->pr_alloc->pa_flags & PA_WANT)) {
 			pr_rmpage(pp, ph, NULL);
 		} else {
 			TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
