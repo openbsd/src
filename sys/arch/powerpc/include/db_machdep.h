@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2001/08/15 13:36:45 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.14 2001/08/19 19:06:46 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -36,8 +36,6 @@
 #include <sys/types.h>
 #include <vm/vm_param.h>
 #include <machine/trap.h>
-
-#define DB_MACHINE_COMMANDS
 
 /*
  * We use Elf64 symbols in DDB.
