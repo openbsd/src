@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.426 2004/02/20 19:22:03 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.427 2004/02/24 06:53:30 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -598,8 +598,8 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		(*sn)->ruletype = rule->action;
 		if ((*sn)->rule.ptr != NULL)
 			(*sn)->rule.ptr->src_nodes++;
-		 pf_status.scounters[SCNT_SRC_NODE_INSERT]++;
-		 pf_status.src_nodes++;
+		pf_status.scounters[SCNT_SRC_NODE_INSERT]++;
+		pf_status.src_nodes++;
 	} else {
 		if (rule->max_src_states &&
 		    (*sn)->states >= rule->max_src_states)
