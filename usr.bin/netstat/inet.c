@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.88 2004/09/09 10:30:23 otto Exp $	*/
+/*	$OpenBSD: inet.c,v 1.89 2004/11/17 01:09:45 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.88 2004/09/09 10:30:23 otto Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.89 2004/11/17 01:09:45 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -892,6 +892,7 @@ carp_stats(u_long off, char *name)
 	p(carps_ipackets, "\t%llu packet%s received (IPv4)\n");
 	p(carps_ipackets6, "\t%llu packet%s received (IPv6)\n");
 	p(carps_badif, "\t\t%llu packet%s discarded for bad interface\n");
+	p(carps_badttl, "\t\t%llu packet%s discarded for wrong TTL\n");
 	p(carps_hdrops, "\t\t%llu packet%s shorter than header\n");
 	p(carps_badsum, "\t\t%llu discarded for bad checksum%s\n");
 	p(carps_badver,	"\t\t%llu discarded packet%s with a bad version\n");
@@ -901,6 +902,7 @@ carp_stats(u_long off, char *name)
 	p2(carps_badaddrs, "\t\t%llu discarded because of a bad address list\n");
 	p(carps_opackets, "\t%llu packet%s sent (IPv4)\n");
 	p(carps_opackets6, "\t%llu packet%s sent (IPv6)\n");
+	p2(carps_onomem, "\t\t%llu send failed due to mbuf memory error\n");
 #undef p
 #undef p2
 }
