@@ -1,4 +1,4 @@
-#	$OpenBSD: files.ofw,v 1.2 1997/11/07 08:07:19 niklas Exp $
+#	$OpenBSD: files.ofw,v 1.3 1998/08/22 18:00:32 rahnds Exp $
 
 #
 # First cut on Openfirmware interface
@@ -36,5 +36,5 @@ attach	ofbus at openfirm
 file	dev/ofw/ofbus.c			openfirm
 
 device	ofroot: openfirm
-attach	ofroot at root
+attach	ofroot at mainbus, root
 
