@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.13 2004/09/07 22:43:07 henning Exp $ */
+/*	$OpenBSD: server.c,v 1.14 2004/10/13 12:22:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -140,7 +140,7 @@ server_dispatch(int fd, struct ntpd_conf *conf)
 	if (version > 3)
 		reply.refid = reply.xmttime.fraction;
 	else
-		reply.refid = 0;	/* XXX */
+		reply.refid = conf->status.refid;
 
 	ntp_sendmsg(fd, (struct sockaddr *)&fsa, &reply, size, 0);
 	return (0);

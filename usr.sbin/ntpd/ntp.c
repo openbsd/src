@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.35 2004/10/13 09:20:41 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.36 2004/10/13 12:22:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -385,6 +385,10 @@ ntp_adjtime(void)
 
 		conf->status.reftime = gettime();
 		conf->status.leap = LI_NOWARNING;		/* XXX */
+
+		if (peers[offset_cnt / 2]->addr->ss.ss_family == AF_INET)
+			conf->status.refid = ((struct sockaddr_in *)
+			    &peers[offset_cnt / 2]->addr->ss)->sin_addr.s_addr;
 	}
 
 	free(peers);
