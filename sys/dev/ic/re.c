@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.1 2005/01/14 01:08:11 pvalchev Exp $	*/
+/*	$OpenBSD: re.c,v 1.2 2005/01/14 01:32:45 pvalchev Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -146,29 +146,14 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 /*#define RE_CSUM_OFFLOAD */
 
 #include <dev/ic/rtl81x9reg.h>
 
-struct re_pci_softc {
-	struct rl_softc sc_rl;
-
-	void *sc_ih;
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_pcitag;
-};
-
 int redebug = 0;
 #define DPRINTF(x)	if (redebug) printf x
 
-const struct pci_matchid re_devices[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
-	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGLAPCIGT },
-};
-
-int re_probe		(struct device *, void *, void *);
 void re_attach_common	(struct rl_softc *);
 
 int re_encap		(struct rl_softc *, struct mbuf *, int *);
@@ -726,17 +711,6 @@ done:
 	DPRINTF(("leaving re_diag\n"));
 
 	return (error);
-}
-
-/*
- * Probe for a RealTek 8139C+/8169/8110 chip. Check the PCI vendor and device
- * IDs against our list and return a device name if we find a match.
- */
-int
-re_probe(struct device *parent, void *match, void *aux)
-{
-	return (pci_matchbyid((struct pci_attach_args *)aux, re_devices,
-	    sizeof(re_devices)/sizeof(re_devices[0])));
 }
 
 int
