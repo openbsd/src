@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2004/08/24 15:23:19 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.13 2004/08/30 11:52:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@ int
 host(const char *s, struct ntp_addr **hn)
 {
 	struct ntp_addr	*h = NULL;
-	int		 cnt = 1;
 
 	if (!strcmp(s, "*"))
 		if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
@@ -54,12 +53,9 @@ host(const char *s, struct ntp_addr **hn)
 	if (h == NULL)
 		h = host_v6(s);
 
-	/* Hostname? */
 	if (h == NULL)
-		cnt = host_dns(s, &h);
-
-	*hn = h;
-	return (cnt);
+		return (0);
+	return (1);
 }
 
 struct ntp_addr	*
