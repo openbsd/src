@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.75 2002/05/20 03:33:11 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.76 2002/05/20 06:13:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -464,11 +464,11 @@ pmap_bootstrap(vstart)
 
 	mtctl(addr, CR_VTOP);
 	hppa_vtop = addr;
-	bzero((void *)addr, (hppa_sid_max + 1) * 4);
-	fdcache(HPPA_SID_KERNEL, addr, (hppa_sid_max + 1) * 4);
-	DPRINTF(PDB_INIT, ("vtop: 0x%x @ 0x%x\n",
-	    (hppa_sid_max + 1) * 4, addr));
-	addr += (hppa_sid_max + 1) * 4;
+	size = hppa_round_page((hppa_sid_max + 1) * 4);
+	bzero((void *)addr, size);
+	fdcache(HPPA_SID_KERNEL, addr, size);
+	DPRINTF(PDB_INIT, ("vtop: 0x%x @ 0x%x\n", size, addr));
+	addr += size;
 	pmap_sdir_set(HPPA_SID_KERNEL, kpm->pm_pdir);
 
 	ie_mem = (u_int *)addr;
