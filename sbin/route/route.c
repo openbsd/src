@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.5 1996/08/02 15:39:28 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.6 1996/08/05 11:53:41 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.5 1996/08/02 15:39:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.6 1996/08/05 11:53:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ routename(sa)
 	struct sockaddr *sa;
 {
 	register char *cp;
-	static char line[50];
+	static char line[MAXHOSTNAMELEN];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
