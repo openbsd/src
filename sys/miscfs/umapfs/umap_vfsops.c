@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.26 2004/05/20 18:32:38 tedu Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.27 2004/05/28 15:41:41 mpech Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ umapfs_unmount(mp, mntflags, p)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (rootvp->v_usecount > 1 && !(flags && FORCECLOSE))
+	if (rootvp->v_usecount > 1 && !(flags & FORCECLOSE))
 		return (EBUSY);
 	if ((error = vflush(mp, rootvp, flags)) != 0)
 		return (error);
