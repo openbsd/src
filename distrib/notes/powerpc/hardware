@@ -8,7 +8,7 @@ Has been tested on iMac Revs A-C as well as on iMac DV(+) machines, several
 Power Macintosh G4 systems (single and dual processor), as well as the
 G4 Cube. For portables, PowerBook G3, PowerBook G4 have been tested,
 iBook minimally tested.  Note that power saving features on portables
-are very limited, no power managment features are available, suspend/sleep
+are very limited, no power management features are available, suspend/sleep
 is not supported.
 
 
@@ -27,7 +27,7 @@ Supported devices {:-include-:}:
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			Znyx ZX34X
 		Onboard Older iMac 10-100Mbs (bm) Ethernet. 
-		Onboard G4/Powerbook/Newer iMac (gm) ethernet.
+		Onboard G4/PowerBook/Newer iMac (gm) ethernet.
 
 	Tape drives:
 		SCSI Tape drives

@@ -6,13 +6,13 @@ shouldn't be too much trouble.
 Before you begin, you should decide if OpenBSD is to be installed
 on the whole disk or share the disk with MacOS.
 
-For standalone (No MacOS installed) or dedicated disks, the MBR
-installation method should be chosen and no additional prep is necessary
+For stand-alone (No MacOS installed) or dedicated disks, the MBR
+installation method should be chosen and no additional prep is necessary.
 
 If it is to shared the disk with MacOS a partition must be preallocated
-by the MacOS partition editor and MacOS installed to the proper parition.
-This expects that the HFS parition will be the first parition on
-the disk, and then the OpenBSD parition will follow.
+by the MacOS partition editor and MacOS installed to the proper partition.
+This expects that the HFS partition will be the first partition on
+the disk, and then the OpenBSD partition will follow.
 This may require the disk be reformatted and reinstalled under MacOS
 using the "Drive Setup" application.
 
@@ -74,16 +74,16 @@ process again from scratch.
 	OpenBSD is being installed on.  If there are any existing
 	partitions defined (for any operating system), and a disk label
 	is not found, you will first be given an opportunity to run
-	fdisk (MBR paritioned disk) or pdisk (HFS paritioned disk)
+	fdisk (MBR partitioned disk) or pdisk (HFS partitioned disk)
 	and create an OpenBSD partition.
 
 	If pdisk is being invoked, It will issue a prompt which will
-	allow one to delete the Unused parition, then using the "C"
-	command create a new parition. It is necessary to display
-	the parition table, either before deleting the free parition
+	allow one to delete the Unused partition, then using the "C"
+	command create a new partition. It is necessary to display
+	the partition table, either before deleting the free partition
 	or after, to know the start and size of the partition.
 
-	An example Parition map:The parition map may look like the following
+	An example Partition map:The partition map may look like the following
 	Before editing the table, it looks like:
 
 	 #:                type name             length   base    ( size )
@@ -113,9 +113,9 @@ process again from scratch.
 	10:           Apple_HFS untitled 2      4120589 @ 2143854 (  2.0G)
 	11:             OpenBSD OpenBSD         6330517 @ 6264443 (  3.0G)
 
-	This will likely be different based on the number of paritions
+	This will likely be different based on the number of partitions
 	created on the disk by the Apple partition editor.
-	It is _VERY_ important to not change the start or sizes of paritions
+	It is _VERY_ important to not change the start or sizes of partitions
 	other than the ones that are to be used by OpenBSD, including
 	the Apple_Driver.* and Apple_partition_map.
 
@@ -132,7 +132,7 @@ process again from scratch.
 	<output is in the after example above>
 	---
 
-	After the parition is deleted, if the parition is printed,
+	After the partition is deleted, if the partition is printed,
 	it will show up as:
 	...
 	11:          Apple_Free Extra           6330517 @ 6264443 (  3.0G)
@@ -202,7 +202,7 @@ process again from scratch.
 	will ask for the IP address to use, the symbolic host name to use,
 	the netmask to use and any interface-specific flags to set.  The
 	interface-specific flags are usually used to determine which media
-	the network card is to use. Supply the apropriate media options
+	the network card is to use. Supply the appropriate media options
 	as suggested, Typically no media flags are required as autodetect
 	normally works.
 

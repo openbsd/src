@@ -4,9 +4,9 @@ disk using a MBR partitioned disk or sharing a disk with MacOS.
 If the disk is to be shared between MacOS and OpenBSD, it is necessary
 to reformat and install the MacOS partitions first, using "Drive Setup",
 leaving space on the disk as an "Unused" partition.
-If the disk was previously paritioned, it is possible to reuse a parition
-for OpenBSD, as long as it is not the first parition on the disk.
-The bootloader is expected to be found in that first (HFS) parition.
+If the disk was previously partitioned, it is possible to reuse a Pariti on
+for OpenBSD, as long as it is not the first Pariti on on the disk.
+The bootloader is expected to be found in that first (HFS) Pariti on.
 
 For dedicated disks, MACHINE port boots off a boot program in
 an MSDOS filesystem. This is now set up by the install program
