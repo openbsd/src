@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.8 2000/01/03 23:22:45 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.9 2001/02/04 14:23:28 pjanzen Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@ static char copyright[] =
  * Tetris (or however it is spelled).
  */
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
 

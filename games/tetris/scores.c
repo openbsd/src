@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.4 2000/01/21 05:33:19 pjanzen Exp $	*/
+/*	$OpenBSD: scores.c,v 1.5 2001/02/04 14:23:27 pjanzen Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <time.h>
 #include <term.h>
 #include <unistd.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -222,9 +223,8 @@ savescore(level)
 static char *
 thisuser()
 {
-	register const char *p;
-	register struct passwd *pw;
-	register size_t l;
+	const char *p;
+	struct passwd *pw;
 	static char u[sizeof(scores[0].hs_name)];
 
 	if (u[0])
@@ -237,11 +237,7 @@ thisuser()
 		else
 			p = "  ???";
 	}
-	l = strlen(p);
-	if (l >= sizeof(u))
-		l = sizeof(u) - 1;
-	memcpy(u, p, l);
-	u[l] = '\0';
+	strlcpy(u, p, sizeof(u));
 	return (u);
 }
 
@@ -366,7 +362,7 @@ showscores(level)
 
 	if (!gotscores)
 		getscores((FILE **)NULL);
-	(void)printf("\n\t\t\t    Tetris High Scores\n");
+	(void)printf("\n\t\t    Tetris High Scores\n");
 
 	/*
 	 * If level == 0, the person has not played a game but just asked for
@@ -393,7 +389,7 @@ showscores(level)
 	 * Page each screenful of scores.
 	 */
 	for (i = 0, sp = scores; i < nscores; sp += n) {
-		n = 40;
+		n = 20;
 		if (i + n > nscores)
 			n = nscores - i;
 		printem(level, i + 1, sp, n, me);
@@ -414,63 +410,48 @@ showscores(level)
 static void
 printem(level, offset, hs, n, me)
 	int level, offset;
-	register struct highscore *hs;
-	register int n;
+	struct highscore *hs;
+	int n;
 	const char *me;
 {
-	register struct highscore *sp;
-	int nrows, row, col, item, i, highlight;
+	struct highscore *sp;
+	int row, highlight, i;
 	char buf[100];
-#define	TITLE "Rank  Score   Name      (points/level)"
+#define	TITLE "Rank  Score   Name                          (points/level)"
+#define	TITL2 "=========================================================="
 
-	/*
-	 * This makes a nice two-column sort with headers, but it's a bit
-	 * convoluted...
-	 */
-	printf("%s  %s\n", TITLE, n > 1 ? TITLE : "");
+	printf("%s\n%s\n", TITLE, TITL2);
 
 	highlight = 0;
-	nrows = (n + 1) / 2;
 
-	for (row = 0; row < nrows; row++) {
-		for (col = 0; col < 2; col++) {
-			item = col * nrows + row;
-			if (item >= n) {
-				/*
-				 * Can only occur on trailing columns.
-				 */
-				(void)putchar('\n');
-				continue;
-			}
-			sp = &hs[item];
-			(void)sprintf(buf,
-			    "%3d%c %6d  %-11s (%6d on %d)",
-			    item + offset, sp->hs_time ? '*' : ' ',
-			    sp->hs_score * sp->hs_level,
-			    sp->hs_name, sp->hs_score, sp->hs_level);
-			/*
-			 * Highlight if appropriate.  This works because
-			 * we only get one score per level.
-			 */
-			if (me != NULL &&
-			    sp->hs_level == level &&
-			    sp->hs_score == score &&
-			    strcmp(sp->hs_name, me) == 0) {
-				putpad(SOstr);
-				highlight = 1;
-			}
-			(void)printf("%s", buf);
-			if (highlight) {
-				putpad(SEstr);
-				highlight = 0;
-			}
-
-			/* fill in spaces so column 1 lines up */
-			if (col == 0)
-				for (i = 40 - strlen(buf); --i >= 0;)
-					(void)putchar(' ');
-			else /* col == 1 */
-				(void)putchar('\n');
+	for (row = 0; row < n; row++) {
+		sp = &hs[row];
+		(void)snprintf(buf, 100,
+		    "%3d%c %6d  %-31s (%6d on %d)\n",
+		    row + offset, sp->hs_time ? '*' : ' ',
+		    sp->hs_score * sp->hs_level,
+		    sp->hs_name, sp->hs_score, sp->hs_level);
+		/* Print leaders every three lines */
+		if ((row + 1) % 3 == 0) {
+			for (i = 0; i < 100; i++)
+				if (buf[i] == ' ')
+					buf[i] = '_';
+		}
+		/*
+		 * Highlight if appropriate.  This works because
+		 * we only get one score per level.
+		 */
+		if (me != NULL &&
+		    sp->hs_level == level &&
+		    sp->hs_score == score &&
+		    strcmp(sp->hs_name, me) == 0) {
+			putpad(SOstr);
+			highlight = 1;
+		}
+		(void)printf("%s", buf);
+		if (highlight) {
+			putpad(SEstr);
+			highlight = 0;
 		}
 	}
 }

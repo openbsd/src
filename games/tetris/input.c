@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.4 1999/03/22 07:38:24 pjanzen Exp $	*/
+/*	$OpenBSD: input.c,v 1.5 2001/02/04 14:23:27 pjanzen Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -93,7 +93,7 @@ rwait(tvp)
 		endtv = *tvp;
 		s = &endtv;
 	} else
-		s = 0;
+		s = NULL;
 again:
 	i = 1;
 	switch (select(1, (fd_set *)&i, (fd_set *)0, (fd_set *)0, s)) {
