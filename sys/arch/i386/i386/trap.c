@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 1997/02/03 17:35:09 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 1997/02/04 02:16:51 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -333,7 +333,7 @@ trap(frame)
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTOVF, (caddr_t)rcr2());
 		goto out;
 	case T_DIVIDE|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTDIV, (caddr_t)rcr2());
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, (caddr_t)rcr2());
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
