@@ -276,7 +276,6 @@ zsattach(parent, dev, aux)
 	cs[1].cs_sc = sc;
 	zslist = cs;
 
-	cs->cs_ttyp = tp = ttymalloc();
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
@@ -284,7 +283,9 @@ zsattach(parent, dev, aux)
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
-		cs->cs_ttyp = tp = ctp;
+		tp = ctp;
+	else
+		tp = ttymalloc();
 	cs->cs_ttyp = tp;
 #ifdef KGDB
 	if (ctp == NULL)
@@ -306,7 +307,7 @@ zsattach(parent, dev, aux)
 	    M_DEVBUF, M_NOWAIT);
 	unit++;
 	cs++;
-	cs->cs_ttyp = tp = ttymalloc();
+
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
@@ -314,7 +315,11 @@ zsattach(parent, dev, aux)
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
-		cs->cs_ttyp = tp = ctp;
+		tp = ctp;
+	else
+		tp = ttymalloc();
+	cs->cs_ttyp = tp;
+
 #ifdef KGDB
 	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
@@ -821,7 +826,7 @@ zsrint(cs, zc)
 	register struct zs_chanstate *cs;
 	register volatile struct zschan *zc;
 {
-	register int c;
+	register u_int c;
 
 	c = zc->zc_data;
 	ZS_DELAY();
@@ -903,7 +908,7 @@ zssint(cs, zc)
 	register struct zs_chanstate *cs;
 	register volatile struct zschan *zc;
 {
-	register int rr0;
+	register u_int rr0;
 
 	rr0 = zc->zc_csr;
 	ZS_DELAY();
@@ -1225,11 +1230,11 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 	case TIOCMGET:
 		/* XXX: fixme */
-		zs_modem(cs, *(int *)data & (TIOCM_DTR|TIOCM_RTS));
+		*(int *)data = TIOCM_CAR | TIOCM_CTS | TIOCM_DTR | TIOCM_RTS;
 		return (0);
 	case TIOCMSET:
 		/* XXX: fixme */
-		*(int *)data = TIOCM_CAR | TIOCM_CTS | TIOCM_DTR | TIOCM_RTS;
+		zs_modem(cs, *(int *)data & (TIOCM_DTR|TIOCM_RTS));
 		return (0);
 	case TIOCMBIS:
 	case TIOCMBIC:
