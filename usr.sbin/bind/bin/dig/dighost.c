@@ -300,8 +300,7 @@ make_server(const char *servname) {
 	if (srv == NULL)
 		fatal("Memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
-	strncpy(srv->servername, servname, MXNAME);
-	srv->servername[MXNAME-1] = 0;
+	strlcpy(srv->servername, servname, MXNAME);
 	ISC_LINK_INIT(srv, link);
 	return (srv);
 }
@@ -410,9 +409,8 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
 
 	looknew = make_empty_lookup();
 	INSIST(looknew != NULL);
-	strncpy(looknew->textname, lookold->textname, MXNAME);
-	strncpy(looknew->cmdline, lookold->cmdline, MXNAME);
-	looknew->textname[MXNAME-1] = 0;
+	strlcpy(looknew->textname, lookold->textname, MXNAME);
+	strlcpy(looknew->cmdline, lookold->cmdline, MXNAME);
 	looknew->rdtype = lookold->rdtype;
 	looknew->qrdtype = lookold->qrdtype;
 	looknew->rdclass = lookold->rdclass;
@@ -562,8 +560,7 @@ make_searchlist_entry(char *domain) {
 	if (search == NULL)
 		fatal("Memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
-	strncpy(search->origin, domain, MXNAME);
-	search->origin[MXNAME-1] = 0;
+	strlcpy(search->origin, domain, MXNAME);
 	ISC_LINK_INIT(search, link);
 	return (search);
 }

@@ -182,8 +182,7 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	ifp->mgr = NULL;
 	ifp->generation = mgr->generation;
 	ifp->addr = *addr;
-	strncpy(ifp->name, name, sizeof(ifp->name));
-	ifp->name[sizeof(ifp->name)-1] = '\0';
+	strlcpy(ifp->name, name, sizeof(ifp->name));
 	ifp->clientmgr = NULL;
 
 	result = isc_mutex_init(&ifp->lock);

@@ -107,7 +107,7 @@ totext_in_a6(ARGS_TOTEXT) {
 	prefixlen = sr.base[0];
 	INSIST(prefixlen <= 128);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u", prefixlen);
+	snprintf(buf, sizeof(buf), "%u", prefixlen);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 

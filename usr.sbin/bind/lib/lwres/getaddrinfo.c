@@ -248,8 +248,7 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 		 */
 		ntmp[0] = '\0';
 		if (strchr(hostname, '%') != NULL) {
-			strncpy(ntmp, hostname, sizeof(ntmp) - 1);
-			ntmp[sizeof(ntmp) - 1] = '\0';
+			strlcpy(ntmp, hostname, sizeof(ntmp));
 			p = strchr(ntmp, '%');
 			ep = NULL;
 
@@ -603,7 +602,7 @@ get_local(const char *name, int socktype, struct addrinfo **res) {
 		return (EAI_MEMORY);
 
 	sun = SUN(ai->ai_addr);
-	strncpy(sun->sun_path, name, sizeof(sun->sun_path));
+	strlcpy(sun->sun_path, name, sizeof(sun->sun_path));
 
 	ai->ai_socktype = socktype;
 	/*

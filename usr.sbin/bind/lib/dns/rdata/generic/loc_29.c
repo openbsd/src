@@ -454,19 +454,25 @@ totext_loc(ARGS_TOTEXT) {
 	/* version = sr.base[0]; */
 	size = sr.base[1];
 	if ((size&0x0f)> 1)
-		sprintf(sbuf, "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
+		snprintf(sbuf, sizeof(sbuf),
+			 "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
 	else
-		sprintf(sbuf, "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
+		snprintf(sbuf, sizeof(sbuf),
+			 "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
 	hp = sr.base[2];
 	if ((hp&0x0f)> 1)
-		sprintf(hbuf, "%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
+		snprintf(hbuf, sizeof(hbuf),
+			 "%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
 	else
-		sprintf(hbuf, "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
+		snprintf(hbuf, sizeof(hbuf),
+			 "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
 	vp = sr.base[3];
 	if ((vp&0x0f)> 1)
-		sprintf(vbuf, "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
+		snprintf(vbuf, sizeof(vbuf),
+			 "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
 	else
-		sprintf(vbuf, "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
+		snprintf(vbuf, sizeof(vbuf),
+			 "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
 	isc_region_consume(&sr, 4);
 
 	latitude = uint32_fromregion(&sr);
@@ -513,7 +519,8 @@ totext_loc(ARGS_TOTEXT) {
 		altitude -= 10000000;
 	}
 
-	sprintf(buf, "%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
+	snprintf(buf, sizeof(buf),
+		"%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
 		d1, m1, s1, fs1, north ? "N" : "S",
 		d2, m2, s2, fs2, east ? "E" : "W",
 		below ? "-" : "", altitude/100, altitude % 100,

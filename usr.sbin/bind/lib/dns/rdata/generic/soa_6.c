@@ -117,7 +117,7 @@ totext_soa(ARGS_TOTEXT) {
 		unsigned int numlen;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
-		numlen = sprintf(buf, "%lu", num);
+		numlen = snprintf(buf, sizeof(buf), "%lu", num);
 		INSIST(numlen > 0 && numlen < sizeof "2147483647");
 		RETERR(str_totext(buf, target));
 		if (multiline && comment) {

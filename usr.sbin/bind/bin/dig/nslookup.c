@@ -518,8 +518,7 @@ testclass(char *typetext) {
 
 static void
 safecpy(char *dest, char *src, int size) {
-	strncpy(dest, src, size);
-	dest[size-1] = 0;
+	strlcpy(dest, src, size);
 }
 	
 

@@ -153,7 +153,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu ", n);
+	snprintf(buf, sizeof(buf), "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -161,7 +161,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu ", n);
+	snprintf(buf, sizeof(buf), "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -169,7 +169,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu ", n);
+	snprintf(buf, sizeof(buf), "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -180,7 +180,7 @@ totext_tkey(ARGS_TOTEXT) {
 	if (dns_tsigrcode_totext((dns_rcode_t)n, target) == ISC_R_SUCCESS)
 		RETERR(str_totext(" ", target));
 	else {
-		sprintf(buf, "%lu ", n);
+		snprintf(buf, sizeof(buf), "%lu ", n);
 		RETERR(str_totext(buf, target));
 	}
 
@@ -189,7 +189,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", n);
+	snprintf(buf, sizeof(buf), "%lu", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -214,7 +214,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", n);
+	snprintf(buf, sizeof(buf), "%lu", n);
 	RETERR(str_totext(buf, target));
 
 	/*

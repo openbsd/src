@@ -1250,7 +1250,7 @@ isc__mem_strdup(isc_mem_t *mctx, const char *s FLARG) {
 	ns = isc__mem_allocate(mctx, len + 1 FLARG_PASS);
 
 	if (ns != NULL)
-		strncpy(ns, s, len + 1);
+		strlcpy(ns, s, len + 1);
 
 	return (ns);
 }
@@ -1383,8 +1383,7 @@ isc_mempool_setname(isc_mempool_t *mpctx, const char *name) {
 	if (mpctx->lock != NULL)
 		LOCK(mpctx->lock);
 
-	strncpy(mpctx->name, name, sizeof(mpctx->name) - 1);
-	mpctx->name[sizeof(mpctx->name) - 1] = '\0';
+	strlcpy(mpctx->name, name, sizeof(mpctx->name));
 
 	if (mpctx->lock != NULL)
 		UNLOCK(mpctx->lock);

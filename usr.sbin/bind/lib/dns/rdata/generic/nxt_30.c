@@ -117,7 +117,8 @@ totext_nxt(ARGS_TOTEXT) {
 								      target));
 					} else {
 						char buf[sizeof "65535"];
-						sprintf(buf, "%u", t);
+						snprintf(buf, sizeof(buf),
+							 "%u", t);
 						RETERR(str_totext(buf,
 								  target));
 					}

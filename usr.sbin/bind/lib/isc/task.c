@@ -697,7 +697,7 @@ isc_task_setname(isc_task_t *task, const char *name, void *tag) {
 #ifdef ISC_TASK_NAMES
 	LOCK(&task->lock);
 	memset(task->name, 0, sizeof(task->name));
-	strncpy(task->name, name, sizeof(task->name) - 1);
+	strlcpy(task->name, name, sizeof(task->name));
 	task->tag = tag;
 	UNLOCK(&task->lock);
 #else

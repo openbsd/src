@@ -67,7 +67,7 @@ totext_opt(ARGS_TOTEXT) {
 		isc_region_consume(&r, 2);
 		length = uint16_fromregion(&r);
 		isc_region_consume(&r, 2);
-		sprintf(buf, "%u %u", option, length);
+		snprintf(buf, sizeof(buf), "%u %u", option, length);
 		RETERR(str_totext(buf, target));
 		INSIST(r.length >= length);
 		if (length > 0) {

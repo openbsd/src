@@ -145,8 +145,7 @@ isc_file_template(const char *path, const char *templet, char *buf,
 		if ((s - path + 1 + strlen(templet) + 1) > buflen)
 			return (ISC_R_NOSPACE);
 
-		strncpy(buf, path, s - path + 1);
-		buf[s - path + 1] = '\0';
+		strlcpy(buf, path, buflen);
 		strlcat(buf, templet, buflen);
 	} else {
 		if ((strlen(templet) + 1) > buflen)

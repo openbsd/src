@@ -131,8 +131,7 @@ lwres_getrrsetbyname(const char *hostname, unsigned int rdclass,
 		result = ERRSET_NOMEMORY;
 		goto fail;
 	}
-	strncpy(rrset->rri_name, response->realname, response->realnamelen);
-	rrset->rri_name[response->realnamelen] = 0;
+	strlcpy(rrset->rri_name, response->realname, response->realnamelen + 1);
 
 	if ((response->flags & LWRDATA_VALIDATED) != 0)
 		rrset->rri_flags |= RRSET_VALIDATED;

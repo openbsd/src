@@ -103,8 +103,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		 * Lowercase the service string as some getservbyname() are
 		 * case sensitive and the database is usually in lowercase.
 		 */
-		strncpy(service, token.value.as_pointer, sizeof(service));
-		service[sizeof(service)-1] = '\0';
+		strlcpy(service, token.value.as_pointer, sizeof(service));
 		for (i = strlen(service) - 1; i >= 0; i--)
 			if (isupper(service[i]&0xff))
 				service[i] = tolower(service[i]);
@@ -153,7 +152,7 @@ totext_in_wks(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 4);
 
 	proto = uint8_fromregion(&sr);
-	sprintf(buf, "%u", proto);
+	snprintf(buf, sizeof(buf), "%u", proto);
 	RETERR(str_totext(" ", target));
 	RETERR(str_totext(buf, target));
 	isc_region_consume(&sr, 1);
@@ -162,7 +161,7 @@ totext_in_wks(ARGS_TOTEXT) {
 		if (sr.base[i] != 0)
 			for (j = 0 ; j < 8 ; j++)
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
-					sprintf(buf, "%u", i * 8 + j);
+					snprintf(buf, sizeof(buf), "%u", i * 8 + j);
 					RETERR(str_totext(" ", target));
 					RETERR(str_totext(buf, target));
 				}
