@@ -9,6 +9,7 @@ YACC=	yacc
 
 LFLAGS+= -I
 LDADD=	-lm -ly -ll
+DPADD=	${LIBM} ${LIBY} ${LIBL}
 
 CFLAGS+= -I ${.CURDIR}/obj -I ${.CURDIR} -g
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm86.c,v 1.3 1996/04/18 19:18:13 niklas Exp $	*/
-/*	$NetBSD: vm86.c,v 1.8 1996/04/11 10:07:17 mycroft Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.4 1996/04/21 22:16:42 deraadt Exp $	*/
+/*	$NetBSD: vm86.c,v 1.9 1996/04/12 05:57:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,9 +74,10 @@
 
 static void fast_intxx __P((struct proc *, int));
 
-#define	CS(tf)		(*(u_short *)&tf->tf_cs)
+#define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
+#define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
+
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
-#define	SS(tf)		(*(u_short *)&tf->tf_ss)
 #define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
 
@@ -383,10 +384,11 @@ i386_vm86(p, args, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vm86_kern vm86s;
-	int err;
+	int error;
 
-	if (err = copyin(args, &vm86s, sizeof(vm86s)))
-		return err;
+	error = copyin(args, &vm86s, sizeof(vm86s));
+	if (error)
+		return (error);
 
 	pcb->vm86_userp = (void *)args;
 
@@ -398,18 +400,19 @@ i386_vm86(p, args, retval)
 	case VCPU_086:
 	case VCPU_186:
 	case VCPU_286:
-		pcb->vm86_flagmask = 0;
-		break;
-	case VCPU_386:
-		pcb->vm86_flagmask = PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_486:
-		pcb->vm86_flagmask = PSL_AC|PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_586:
-	default:
 		pcb->vm86_flagmask = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
 		break;
+	case VCPU_386:
+		pcb->vm86_flagmask = PSL_ID|PSL_AC;
+		break;
+	case VCPU_486:
+		pcb->vm86_flagmask = PSL_ID;
+		break;
+	case VCPU_586:
+		pcb->vm86_flagmask = 0;
+		break;
+	default:
+		return (EINVAL);
 	}
 
 #define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.vmsc.sc_##reg

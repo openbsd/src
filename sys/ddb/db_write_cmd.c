@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_write_cmd.c,v 1.3 1996/03/11 11:16:33 mickey Exp $	*/
+/*	$OpenBSD: db_write_cmd.c,v 1.4 1996/04/21 22:19:27 deraadt Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.6 1996/02/05 01:57:25 christos Exp $	*/
 
 /* 
  * Mach Operating System

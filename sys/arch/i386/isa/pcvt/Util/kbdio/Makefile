@@ -8,6 +8,7 @@ YFLAGS+= -v	# verbose
 LFLAGS+= -I
 
 LDADD=	-lm -ly -ll
+DPADD=	${LIBM} ${LIBY} ${LIBL}
 
 NOMAN=
 NOSHARED=	no shared linkage

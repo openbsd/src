@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ether.c,v 1.4 1996/03/03 22:30:24 niklas Exp $	*/
-/*	$NetBSD: if_ether.c,v 1.28 1996/02/13 23:40:59 christos Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.5 1996/04/21 22:28:58 deraadt Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.29 1996/03/30 21:53:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -842,7 +842,7 @@ db_print_llinfo(li)
 	if (li == 0)
 		return;
 	la = (struct llinfo_arp *)li;
-	db_printf("  la_rt=0x%x la_hold=0x%x, la_asked=0x%x\n",
+	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
 			  la->la_rt, la->la_hold, la->la_asked);
 }
 /*
@@ -856,9 +856,9 @@ db_show_radix_node(rn, w)
 {
 	struct rtentry *rt = (struct rtentry *)rn;
 
-	db_printf("rtentry=0x%x", rt);
+	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%d use=%d expire=%d\n",
+	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%ld\n",
 			  rt->rt_flags, rt->rt_refcnt,
 			  rt->rt_use, rt->rt_expire);
 
@@ -866,7 +866,7 @@ db_show_radix_node(rn, w)
 	db_printf(" mask="); db_print_sa(rt_mask(rt));
 	db_printf(" gw="); db_print_sa(rt->rt_gateway);
 
-	db_printf(" ifp=0x%lx ", rt->rt_ifp);
+	db_printf(" ifp=%p ", rt->rt_ifp);
 	if (rt->rt_ifp)
 		db_printf("(%s%d)",
 				  rt->rt_ifp->if_name,
@@ -874,12 +874,12 @@ db_show_radix_node(rn, w)
 	else
 		db_printf("(NULL)");
 
-	db_printf(" ifa=0x%lx\n", rt->rt_ifa);
+	db_printf(" ifa=%p\n", rt->rt_ifa);
 	db_print_ifa(rt->rt_ifa);
 
 	db_printf(" genmask="); db_print_sa(rt->rt_genmask);
 
-	db_printf(" gwroute=0x%x llinfo=0x%x\n",
+	db_printf(" gwroute=%p llinfo=%p\n",
 			  rt->rt_gwroute, rt->rt_llinfo);
 	db_print_llinfo(rt->rt_llinfo);
 

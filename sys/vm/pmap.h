@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1995/03/26 20:39:07 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -86,6 +86,7 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 
 #include <machine/pmap.h>
 
+#ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
@@ -132,6 +133,7 @@ vm_offset_t	 pmap_steal_memory __P(());
 void		 pmap_virtual_space __P(());
 #endif
 __END_DECLS
-#endif
+#endif	/* kernel*/
+#endif  /* PMAP_EXCLUDE_DECLS */
 
 #endif /* _PMAP_VM_ */

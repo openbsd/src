@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_ioctl.c,v 1.4 1996/04/17 05:24:17 mickey Exp $	 */
-/*	$NetBSD: svr4_ioctl.c,v 1.15 1996/03/30 22:37:57 christos Exp $	 */
+/*	$OpenBSD: svr4_ioctl.c,v 1.5 1996/04/21 22:18:20 deraadt Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.16 1996/04/11 12:54:41 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -93,6 +93,8 @@ svr4_sys_ioctl(p, v, retval)
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
+	int (*fun) __P((struct file *, struct proc *, register_t *,
+			int, u_long, caddr_t));
 #ifdef DEBUG_SVR4
 	char		 dir[4];
 	char		 c;
@@ -115,23 +117,29 @@ svr4_sys_ioctl(p, v, retval)
 		return EBADF;
 
 	switch (cmd & 0xff00) {
-	case SVR4_tIOC:
-		return svr4_ttoldioctl(fp, cmd, SCARG(uap, data), p, retval);
+  	case SVR4_tIOC:
+		fun = svr4_ttold_ioctl;
+		break;
 
 	case SVR4_TIOC:
-		return svr4_termioctl(fp, cmd, SCARG(uap, data), p, retval);
+		fun = svr4_term_ioctl;
+		break;
 
 	case SVR4_STR:
-		return svr4_streamioctl(fp, cmd, SCARG(uap, data), p, retval);
+		fun = svr4_stream_ioctl;
+		break;
 
 	case SVR4_FIOC:
-		return svr4_filioctl(fp, cmd, SCARG(uap, data), p, retval);
+		fun = svr4_fil_ioctl;
+		break;
 
 	case SVR4_SIOC:
-		return svr4_sockioctl(fp, cmd, SCARG(uap, data), p, retval);
+		fun = svr4_sock_ioctl;
+		break;
 
 	default:
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
 		return 0;	/* XXX: really ENOSYS */
 	}
+	return (*fun)(fp, p, retval, SCARG(uap, fd), cmd, SCARG(uap, data));
 }

@@ -1,4 +1,5 @@
-/*	$NetBSD: otgsc.c,v 1.9 1995/09/16 16:11:24 chopps Exp $	*/
+/*	$OpenBSD: otgsc.c,v 1.2 1996/04/21 22:15:40 deraadt Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.10 1996/03/17 01:17:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,7 +50,7 @@
 
 int otgscprint __P((void *auxp, char *));
 void otgscattach __P((struct device *, struct device *, void *));
-int otgscmatch __P((struct device *, struct cfdata *, void *));
+int otgscmatch __P((struct device *, void *, void *));
 
 int otgsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -79,18 +80,21 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-struct cfdriver otgsccd = {
-	NULL, "otgsc", (cfmatch_t)otgscmatch, otgscattach, 
-	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+struct cfattach otgsc_ca = {
+	sizeof(struct sci_softc), otgscmatch, otgscattach
+};
+
+struct cfdriver otgsc_cd = {
+	NULL, "otgsc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are my Hacker's SCSI board we are here.
  */
 int
-otgscmatch(pdp, cdp, auxp)
+otgscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	struct zbus_args *zap;
 

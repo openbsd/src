@@ -1,5 +1,5 @@
-/*	$OpenBSD: termios.h,v 1.2 1996/03/03 12:12:26 niklas Exp $	*/
-/*	$NetBSD: termios.h,v 1.13 1995/04/22 13:03:10 cgd Exp $	*/
+/*	$OpenBSD: termios.h,v 1.3 1996/04/21 22:32:05 deraadt Exp $	*/
+/*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -39,12 +39,12 @@
 #ifndef _SYS_TERMIOS_H_
 #define _SYS_TERMIOS_H_
 
-/* 
- * Special Control Characters 
+/*
+ * Special Control Characters
  *
  * Index into c_cc[] character array.
  *
- *	Name	     Subscript	Enabled by 
+ *	Name	     Subscript	Enabled by
  */
 #define	VEOF		0	/* ICANON */
 #define	VEOL		1	/* ICANON */
@@ -54,7 +54,7 @@
 #define	VERASE		3	/* ICANON */
 #ifndef _POSIX_SOURCE
 #define VWERASE 	4	/* ICANON */
-#endif 
+#endif
 #define VKILL		5	/* ICANON */
 #ifndef _POSIX_SOURCE
 #define	VREPRINT 	6	/* ICANON */
@@ -141,7 +141,7 @@
 #endif
 
 
-/* 
+/*
  * "Local" flags - dumping ground for other state
  *
  * Warning: some flags in this structure begin with
@@ -189,7 +189,7 @@ struct termios {
 	int		c_ospeed;	/* output speed */
 };
 
-/* 
+/*
  * Commands passed to tcsetattr() for setting the termios structure.
  */
 #define	TCSANOW		0		/* make change immediate */

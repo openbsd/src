@@ -1,4 +1,5 @@
-/*	$NetBSD: ahsc.c,v 1.10 1995/09/04 13:04:40 chopps Exp $	*/
+/*	$OpenBSD: ahsc.c,v 1.2 1996/04/21 22:14:57 deraadt Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.11 1996/03/17 01:17:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,7 +54,7 @@
 
 int ahscprint __P((void *auxp, char *));
 void ahscattach __P((struct device *, struct device *, void *));
-int ahscmatch __P((struct device *, struct cfdata *, void *));
+int ahscmatch __P((struct device *, void *, void *));
 
 void ahsc_enintr __P((struct sbic_softc *));
 void ahsc_dmastop __P((struct sbic_softc *));
@@ -80,19 +81,23 @@ struct scsi_device ahsc_scsidev = {
 int	ahsc_dmadebug = 0;
 #endif
 
-struct cfdriver ahsccd = {
-	NULL, "ahsc", (cfmatch_t)ahscmatch, ahscattach, 
-	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
+struct cfattach ahsc_ca = {
+	sizeof(struct sbic_softc), ahscmatch, ahscattach
+};
+
+struct cfdriver ahsc_cd = {
+	NULL, "ahsc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are an A3000 we are here.
  */
 int
-ahscmatch(pdp, cdp, auxp)
+ahscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	char *mbusstr;
 
 	mbusstr = auxp;
@@ -322,8 +327,8 @@ ahsc_dump()
 {
 	int i;
 
-	for (i = 0; i < ahsccd.cd_ndevs; ++i)
-		if (ahsccd.cd_devs[i])
-			sbic_dump(ahsccd.cd_devs[i]);
+	for (i = 0; i < ahsc_cd.cd_ndevs; ++i)
+		if (ahsc_cd.cd_devs[i])
+			sbic_dump(ahsc_cd.cd_devs[i]);
 }
 #endif

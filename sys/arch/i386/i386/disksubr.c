@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.2 1996/04/18 19:18:07 niklas Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.19 1996/03/09 20:52:59 ghudson Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.3 1996/04/21 22:16:25 deraadt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 1996/04/03 08:18:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -223,6 +223,7 @@ done:
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -279,6 +280,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)();

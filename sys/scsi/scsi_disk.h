@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.8 1995/10/15 23:32:02 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.9 1996/03/19 03:07:02 mycroft Exp $	*/
 
 /*
  * SCSI interface description
@@ -57,56 +57,47 @@
 #define _SCSI_SCSI_DISK_H 1
 
 struct scsi_reassign_blocks {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[3];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 struct scsi_rw {
-	u_char	opcode;
-	u_char	addr_2;		/* Most significant */
+	u_int8_t opcode;
+	u_int8_t addr[3];
 #define	SRW_TOPADDR	0x1F	/* only 5 bits here */
-	u_char	addr_1;
-	u_char	addr_0;		/* least significant */
-	u_char	length;
-	u_char	control;
+	u_int8_t length;
+	u_int8_t control;
 };
 
 struct scsi_rw_big {
-	u_char	opcode;
-	u_char	byte2;
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SRWB_RELADDR	0x01
-	u_char	addr_3;		/* Most significant */
-	u_char	addr_2;
-	u_char	addr_1;
-	u_char	addr_0;		/* least significant */
-	u_char	reserved;
-	u_char	length2;
-	u_char	length1;
-	u_char	control;
+	u_int8_t addr[4];
+	u_int8_t reserved;
+	u_int8_t length[2];
+	u_int8_t control;
 };
 
 struct scsi_read_capacity {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	addr_3;	/* Most Significant */
-	u_char	addr_2;
-	u_char	addr_1;
-	u_char	addr_0;	/* Least Significant */
-	u_char	unused[3];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t addr[4];
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 struct scsi_start_stop {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	how;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t how;
 #define	SSS_STOP		0x00
 #define	SSS_START		0x01
 #define	SSS_LOEJ		0x02
-	u_char	control;
+	u_int8_t control;
 };
 
 
@@ -128,89 +119,60 @@ struct scsi_start_stop {
 
 
 struct scsi_read_cap_data {
-	u_char	addr_3;	/* Most significant */
-	u_char	addr_2;
-	u_char	addr_1;
-	u_char	addr_0;	/* Least significant */
-	u_char	length_3;	/* Most significant */
-	u_char	length_2;
-	u_char	length_1;
-	u_char	length_0;	/* Least significant */
+	u_int8_t addr[4];
+	u_int8_t length[4];
 };
 
 struct scsi_reassign_blocks_data {
-	u_char	reserved[2];
-	u_char	length_msb;
-	u_char	length_lsb;
+	u_int8_t reserved[2];
+	u_int8_t length[2];
 	struct {
-		u_char	dlbaddr_3;	/* defect logical block address (MSB) */
-		u_char	dlbaddr_2;
-		u_char	dlbaddr_1;
-		u_char	dlbaddr_0;	/* defect logical block address (LSB) */
+		u_int8_t dlbaddr[4];
 	} defect_descriptor[1];
 };
 
-union disk_pages { /* this is the structure copied from osf */
-	struct page_disk_format {
-	   u_char pg_code;	/* page code (should be 3)	      */
+union disk_pages {
 #define	DISK_PGCODE	0x3F	/* only 6 bits valid */
-	   u_char pg_length;	/* page length (should be 0x16)	      */
-	   u_char trk_z_1;	/* tracks per zone (MSB)	      */
-	   u_char trk_z_0;	/* tracks per zone (LSB)	      */
-	   u_char alt_sec_1;	/* alternate sectors per zone (MSB)   */
-	   u_char alt_sec_0;	/* alternate sectors per zone (LSB)   */
-	   u_char alt_trk_z_1;	/* alternate tracks per zone (MSB)    */
-	   u_char alt_trk_z_0;	/* alternate tracks per zone (LSB)    */
-	   u_char alt_trk_v_1;	/* alternate tracks per volume (MSB)  */
-	   u_char alt_trk_v_0;	/* alternate tracks per volume (LSB)  */
-	   u_char ph_sec_t_1;	/* physical sectors per track (MSB)   */
-	   u_char ph_sec_t_0;	/* physical sectors per track (LSB)   */
-	   u_char bytes_s_1;	/* bytes per sector (MSB)	      */
-	   u_char bytes_s_0;	/* bytes per sector (LSB)	      */
-	   u_char interleave_1;/* interleave (MSB)		      */
-	   u_char interleave_0;/* interleave (LSB)		      */
-	   u_char trk_skew_1;	/* track skew factor (MSB)	      */
-	   u_char trk_skew_0;	/* track skew factor (LSB)	      */
-	   u_char cyl_skew_1;	/* cylinder skew (MSB)		      */
-	   u_char cyl_skew_0;	/* cylinder skew (LSB)		      */
-	   u_char flags;	/* various */
-#define		DISK_FMT_SURF	0x10
-#define		DISK_FMT_RMB	0x20
-#define		DISK_FMT_HSEC	0x40
-#define		DISK_FMT_SSEC	0x80
-	   u_char reserved2;
-	   u_char reserved3;
+	struct page_disk_format {
+		u_int8_t pg_code;	/* page code (should be 3) */
+		u_int8_t pg_length;	/* page length (should be 0x16) */
+		u_int8_t trk_z[2];	/* tracks per zone */
+		u_int8_t alt_sec[2];	/* alternate sectors per zone */
+		u_int8_t alt_trk_z[2];	/* alternate tracks per zone */
+		u_int8_t alt_trk_v[2];	/* alternate tracks per volume */
+		u_int8_t ph_sec_t[2];	/* physical sectors per track */
+		u_int8_t bytes_s[2];	/* bytes per sector */
+		u_int8_t interleave[2];	/* interleave */
+		u_int8_t trk_skew[2];	/* track skew factor */
+		u_int8_t cyl_skew[2];	/* cylinder skew */
+		u_int8_t flags;		/* various */
+#define	DISK_FMT_SURF	0x10
+#define	DISK_FMT_RMB	0x20
+#define	DISK_FMT_HSEC	0x40
+#define	DISK_FMT_SSEC	0x80
+		u_int8_t reserved2;
+		u_int8_t reserved3;
 	} disk_format;
 	struct page_rigid_geometry {
-	   u_char pg_code;	/* page code (should be 4)	      */
-	   u_char pg_length;	/* page length (should be 0x16)	      */
-	   u_char ncyl_2;	/* number of cylinders (MSB)	      */
-	   u_char ncyl_1;	/* number of cylinders 		      */
-	   u_char ncyl_0;	/* number of cylinders (LSB)	      */
-	   u_char nheads;	/* number of heads 		      */
-	   u_char st_cyl_wp_2;	/* starting cyl., write precomp (MSB) */
-	   u_char st_cyl_wp_1;	/* starting cyl., write precomp	      */
-	   u_char st_cyl_wp_0;	/* starting cyl., write precomp (LSB) */
-	   u_char st_cyl_rwc_2;/* starting cyl., red. write cur (MSB)*/
-	   u_char st_cyl_rwc_1;/* starting cyl., red. write cur      */
-	   u_char st_cyl_rwc_0;/* starting cyl., red. write cur (LSB)*/
-	   u_char driv_step_1;	/* drive step rate (MSB)	      */
-	   u_char driv_step_0;	/* drive step rate (LSB)	      */
-	   u_char land_zone_2;	/* landing zone cylinder (MSB)	      */
-	   u_char land_zone_1;	/* landing zone cylinder 	      */
-	   u_char land_zone_0;	/* landing zone cylinder (LSB)	      */
-	   u_char sp_sync_ctl;	/* spindle synch control              */
+		u_int8_t pg_code;	/* page code (should be 4) */
+		u_int8_t pg_length;	/* page length (should be 0x16)	*/
+		u_int8_t ncyl[3];	/* number of cylinders */
+		u_int8_t nheads;	/* number of heads */
+		u_int8_t st_cyl_wp[3];	/* starting cyl., write precomp */
+		u_int8_t st_cyl_rwc[3];	/* starting cyl., red. write cur */
+		u_int8_t driv_step[2];	/* drive step rate */
+		u_int8_t land_zone[3];	/* landing zone cylinder */
+		u_int8_t sp_sync_ctl;	/* spindle synch control */
 #define SPINDLE_SYNCH_MASK	0x03	/* mask of valid bits */
 #define SPINDLE_SYNCH_NONE	0x00	/* synch disabled or not supported */
 #define SPINDLE_SYNCH_SLAVE	0x01	/* disk is a slave */
 #define SPINDLE_SYNCH_MASTER	0x02	/* disk is a master */
 #define SPINDLE_SYNCH_MCONTROL	0x03	/* disk is a master control */
-	   u_char rot_offset;	/* rotational offset (for spindle synch) */
-	   u_char reserved1;
-	   u_char rpm_1;	/* media rotation speed (MSB)         */
-	   u_char rpm_0;	/* media rotation speed (LSB)         */
-	   u_char reserved2;
-	   u_char reserved3;
+		u_int8_t rot_offset;	/* rotational offset (for spindle synch) */
+		u_int8_t reserved1;
+		u_int8_t rpm[2];	/* media rotation speed */
+		u_int8_t reserved2;
+		u_int8_t reserved3;
     	} rigid_geometry;
 };
 

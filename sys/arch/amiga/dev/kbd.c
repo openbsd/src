@@ -1,4 +1,5 @@
-/*	$NetBSD: kbd.c,v 1.15 1995/05/07 15:37:11 chopps Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.2 1996/04/21 22:15:33 deraadt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.17 1996/03/17 05:58:50 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -61,20 +62,25 @@ struct kbd_softc {
 };
 struct kbd_softc kbd_softc;
 
+int kbdmatch __P((struct device *, void *, void *));
 void kbdattach __P((struct device *, struct device *, void *));
-int kbdmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfdriver kbdcd = {
-	NULL, "kbd", (cfmatch_t)kbdmatch, kbdattach, DV_DULL,
-	sizeof(struct device), NULL, 0 };
+struct cfattach kbd_ca = {
+	sizeof(struct device), kbdmatch, kbdattach
+};
+
+struct cfdriver kbd_cd = {
+	NULL, "kbd", DV_DULL, NULL, 0
+};
 
 /*ARGSUSED*/
 int
-kbdmatch(pdp, cfp, auxp)
+kbdmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname((char *)auxp, "kbd"))
 		return(1);
 	return(0);

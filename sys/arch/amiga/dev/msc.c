@@ -1,4 +1,5 @@
-/*	$NetBSD: msc.c,v 1.3 1996/02/02 18:05:44 mycroft Exp $ */
+/*	$OpenBSD: msc.c,v 1.3 1996/04/21 22:15:39 deraadt Exp $ */
+/*	$NetBSD: msc.c,v 1.5 1996/03/17 05:58:54 mhitch Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -162,16 +163,19 @@ struct   speedtab *mscspeedtab;
 int mscmctl __P((dev_t dev, int bits, int howto));
 void mscmint __P((register void *data));
 
-int mscmatch __P((struct device *, struct cfdata *, void *));
+int mscmatch __P((struct device *, void *, void *));
 void mscattach __P((struct device *, struct device *, void *));
 
 #define	SWFLAGS(dev)	(msc->openflags | (MSCDIALIN(dev) ? 0 : TIOCFLAG_SOFTCAR))
 #define	DEBUG_MSC	0
 #define	DEBUG_CD	0
 
-struct cfdriver msccd = {
-	NULL, "msc", (cfmatch_t) mscmatch, mscattach, DV_TTY,
-	sizeof(struct device), NULL, 0
+struct cfattach msc_ca = {
+	sizeof(struct device), mscmatch, mscattach
+};
+
+struct cfdriver msc_cd = {
+	NULL, "msc",DV_TTY, NULL, 0
 };
 
 #if DEBUG_MSC
@@ -199,11 +203,11 @@ bugi(msc, string)
 #endif
 
 int
-mscmatch(pdp, cdp, auxp)
+mscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;

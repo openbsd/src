@@ -1,5 +1,5 @@
-/*	$OpenBSD: systm.h,v 1.3 1996/04/18 21:41:14 niklas Exp $	*/
-/*	$NetBSD: systm.h,v 1.43 1996/03/14 18:59:12 christos Exp $	*/
+/*	$OpenBSD: systm.h,v 1.4 1996/04/21 22:32:04 deraadt Exp $	*/
+/*	$NetBSD: systm.h,v 1.48 1996/04/09 20:55:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -53,7 +53,7 @@
  *	raw disks of mounted filesystems, /dev/mem, and /dev/kmem are
  *	read-only.
  *    2	highly secure mode - same as (1) plus raw disks are always
- *	read-only whether mounted or not. This level precludes tampering 
+ *	read-only whether mounted or not. This level precludes tampering
  *	with filesystems by unmounting them, but also inhibits running
  *	newfs while the system is secured.
  *
@@ -120,24 +120,32 @@ extern	void	_remque	__P((void *));
 int	nullop __P((void *));
 int	enodev __P((void));
 int	enosys __P((void));
-int	lkmenodev __P((dev_t, int, int, struct proc *));
 int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
+
+int	lkmenodev __P((void));
+
 int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
-#ifdef __GNUC__
-volatile void	panic __P((const char *, ...));
+void	panic __P((const char *, ...))
+#ifdef __KPRINTF_ATTRIBUTE__
+    __kprintf_attribute__((__noreturn__,__format__(__kprintf__,1,2)));
 #else
-void	panic __P((const char *, ...));
+    __attribute__((__noreturn__));
 #endif
+void	printf __P((const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+void	uprintf __P((const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+int	sprintf __P((char *buf, const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+void	ttyprintf __P((struct tty *, const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+
 void	tablefull __P((const char *));
-void	printf __P((const char *, ...));
-void	uprintf __P((const char *, ...));
-int	sprintf __P((char *buf, const char *, ...));
-void	ttyprintf __P((struct tty *, const char *, ...));
 
 void	bcopy __P((const void *from, void *to, size_t len));
 void	ovbcopy __P((const void *from, void *to, size_t len));
@@ -194,6 +202,10 @@ int	uiomove __P((caddr_t, int, struct uio *));
 
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
+
+#ifdef GPROF
+void	kmstartup __P((void));
+#endif
 
 #include <lib/libkern/libkern.h>
 

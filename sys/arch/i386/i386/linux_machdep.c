@@ -1,5 +1,5 @@
-/*	$OpenBSD: linux_machdep.c,v 1.5 1996/04/18 19:18:09 niklas Exp $	*/
-/*	$NetBSD: linux_machdep.c,v 1.26 1996/04/11 07:47:45 mycroft Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.6 1996/04/21 22:16:28 deraadt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.27 1996/04/12 08:44:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -136,7 +136,6 @@ linux_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 		frame.sf_sc.sc_eflags = get_vflags(p);
-		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
 	{
@@ -177,6 +176,7 @@ linux_sendsig(catcher, sig, mask, code)
 	tf->tf_eip = (int)(((char *)PS_STRINGS) -
 	     (linux_esigcode - linux_sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }

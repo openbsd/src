@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_output.c,v 1.4 1996/03/11 11:16:15 mickey Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.5 1996/04/21 22:19:05 deraadt Exp $	*/
+/*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -205,9 +206,7 @@ void
 db_printf(const char *fmt, ...)
 #else
 db_printf(fmt, va_alist)
-/*###207 [cc] warning: type of `va_alist' defaults to `int'%%%*/
 	const char *fmt;
-/*###208 [cc] parse error before `va_dcl'%%%*/
 	va_dcl
 #endif
 {
@@ -344,6 +343,10 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 				width = -width;
 			}
 			goto reswitch;
+		case ':':
+			p = va_arg(ap, char *);
+			db_printf_guts (p, va_arg(ap, va_list));
+			break;
 		case 'c':
 			db_putchar(va_arg(ap, int));
 			break;
@@ -386,6 +389,12 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'o':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 8;
+			goto number;
+		case 'p':
+			db_putchar ('0');
+			db_putchar ('x');
+			ul = (u_long) va_arg(ap, void *);
+			base = 16;
 			goto number;
 		case 'u':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
@@ -442,4 +451,3 @@ number:			p = (char *)db_ksprintn(ul, base, &tmp);
 		}
 	}
 }
-

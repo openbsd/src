@@ -1,5 +1,5 @@
-/*	$OpenBSD: com.c,v 1.10 1996/04/18 23:47:32 niklas Exp $	*/
-/*	$NetBSD: com.c,v 1.75 1996/03/10 09:01:24 cgd Exp $	*/
+/*	$OpenBSD: com.c,v 1.11 1996/04/21 22:23:15 deraadt Exp $	*/
+/*	$NetBSD: com.c,v 1.79 1996/04/15 18:54:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -57,7 +57,11 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -68,6 +72,8 @@
 #include <dev/ic/hayespreg.h>
 #endif
 #define	com_lcr	com_cfcr
+
+#include "com.h"
 
 #define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
@@ -109,11 +115,9 @@ struct com_softc {
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
-int comprobe __P((struct device *, void *, void *));
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_io_handle_t hayespioh, struct com_softc *sc));
 #endif
-void comattach __P((struct device *, struct device *, void *));
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
 void comdiag __P((void *));
@@ -122,11 +126,30 @@ void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
-int cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
+/*
+ * XXX the following two cfattach structs should be different, and possibly
+ * XXX elsewhere.
+ */
+int comprobe __P((struct device *, void *, void *));
+void comattach __P((struct device *, struct device *, void *));
 
-struct cfdriver comcd = {
-	NULL, "com", comprobe, comattach, DV_TTY, sizeof(struct com_softc)
+#if NCOM_ISA
+struct cfattach com_isa_ca = {
+	sizeof(struct com_softc), comprobe, comattach
 };
+#endif
+
+#if NCOM_COMMULTI
+struct cfattach com_commulti_ca = {
+	sizeof(struct com_softc), comprobe, comattach
+};
+#endif
+
+struct cfdriver com_cd = {
+	NULL, "com", DV_TTY
+};
+
+int cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
 
 #ifdef COMCONSOLE
 int	comdefaultrate = CONSPEED;		/* XXX why set default? */
@@ -138,6 +161,7 @@ int	comconsinit;
 int	comconsattached;
 bus_chipset_tag_t comconsbc;
 bus_io_handle_t comconsioh;
+tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
 int	comsopen = 0;
@@ -157,7 +181,7 @@ extern int kgdb_debug_init;
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
-#include "pcmciabus.h"
+/*#include "pcmciabus.h"*/
 #if NPCMCIABUS >0                       
 /* additional setup needed for pcmcia devices */
 #include <dev/pcmcia/pcmciabus.h>
@@ -327,13 +351,22 @@ comprobe(parent, match, aux)
 	int iobase, needioh;
 	int rv = 1;
 
+	/*
+	 * XXX should be broken out into functions for isa probe and
+	 * XXX for commulti probe, with a helper function that contains
+	 * XXX most of the interesting stuff.
+	 */
+#if NCOM_ISA
 	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
 		struct isa_attach_args *ia = aux;
 
 		bc = ia->ia_bc;
 		iobase = ia->ia_iobase;
 		needioh = 1;
-	} else {
+	} else
+#endif
+#if NCOM_COMMULTI
+	if (1) {
 		struct commulti_attach_args *ca = aux;
  
 		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
@@ -343,7 +376,9 @@ comprobe(parent, match, aux)
 		iobase = ca->ca_iobase;
 		ioh = ca->ca_ioh;
 		needioh = 0;
-	}
+	} else
+#endif
+		return(0);			/* This cannot happen */
 
 	/* if it's in use as console, it's there. */
 	if (iobase == comconsaddr && !comconsattached)
@@ -358,12 +393,14 @@ comprobe(parent, match, aux)
 		bus_io_unmap(bc, ioh, COM_NPORTS);
 
 out:
+#if NCOM_ISA
 	if (rv && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
 		struct isa_attach_args *ia = aux;
 
 		ia->ia_iosize = COM_NPORTS;
 		ia->ia_msize = 0;
 	}
+#endif
 	return (rv);
 }
 
@@ -383,8 +420,14 @@ comattach(parent, self, aux)
 	int	*hayespp;
 #endif
 
+	/*
+	 * XXX should be broken out into functions for isa attach and
+	 * XXX for commulti attach, with a helper function that contains
+	 * XXX most of the interesting stuff.
+	 */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
+#if NCOM_ISA
 	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
 		struct isa_attach_args *ia = aux;
 
@@ -399,7 +442,10 @@ comattach(parent, self, aux)
 		} else
 	                ioh = comconsioh;
 		irq = ia->ia_irq;
-	} else {
+	} else
+#endif
+#if NCOM_COMMULTI
+	if (1) {
 		struct commulti_attach_args *ca = aux;
 
 		/*
@@ -412,7 +458,9 @@ comattach(parent, self, aux)
 
 		if (ca->ca_noien)
 			sc->sc_hwflags |= COM_HW_NOIEN;
-	}
+	} else
+#endif
+		panic("comattach: impossible");
 
 	sc->sc_bc = bc;
 	sc->sc_ioh = ioh;
@@ -473,9 +521,18 @@ comattach(parent, self, aux)
 	bus_io_write_1(bc, ioh, com_ier, 0);
 	bus_io_write_1(bc, ioh, com_mcr, 0);
 
-	if (irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(irq, IST_EDGE, IPL_TTY,
-		    comintr, sc, sc->sc_dev.dv_xname);
+	if (irq != IRQUNK) {
+#if NCOM_ISA
+		if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
+			struct isa_attach_args *ia = aux;
+
+			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+			    IST_EDGE, IPL_TTY, comintr, sc,
+			    sc->sc_dev.dv_xname);
+		} else
+#endif
+			panic("comattach: IRQ but can't have one");
+	}
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
@@ -516,9 +573,9 @@ comopen(dev, flag, mode, p)
 	int s;
 	int error = 0;
  
-	if (unit >= comcd.cd_ndevs)
+	if (unit >= com_cd.cd_ndevs)
 		return ENXIO;
-	sc = comcd.cd_devs[unit];
+	sc = com_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -535,7 +592,10 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = TTYDEF_CFLAG;
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			tp->t_cflag = comconscflag;
+		else
+			tp->t_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))
@@ -644,7 +704,7 @@ comclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = comcd.cd_devs[unit];
+	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
@@ -684,7 +744,7 @@ comread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -696,7 +756,7 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -706,7 +766,7 @@ struct tty *
 comtty(dev)
 	dev_t dev;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -734,7 +794,7 @@ comioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = comcd.cd_devs[unit];
+	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
@@ -846,7 +906,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int ospeed = comspeed(t->c_ospeed);
@@ -985,7 +1045,7 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int s;
@@ -1106,8 +1166,8 @@ compoll(arg)
 	comevents = 0;
 	splx(s);
 
-	for (unit = 0; unit < comcd.cd_ndevs; unit++) {
-		sc = comcd.cd_devs[unit];
+	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
+		sc = com_cd.cd_devs[unit];
 		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
 			continue;
 

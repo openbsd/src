@@ -1,8 +1,9 @@
-/*	$OpenBSD: advfsops.c,v 1.4 1996/02/26 14:18:20 niklas Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.5 1996/04/21 22:14:39 deraadt Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.14.2.1 1995/11/10 16:05:16 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1996 Matthias Scheler
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,6 +62,7 @@ int adosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+int adosfs_loadbitmap __P((struct adosfsmount *));
 
 int
 adosfs_mount(mp, path, data, ndp, p)
@@ -155,6 +157,7 @@ adosfs_mountfs(devvp, mp, p)
 	struct disklabel dl;
 	struct partition *parp;
 	struct adosfsmount *amp;
+	struct buf *bp;
 	struct vnode *rvp;
 	int error, part, i;
 
@@ -187,13 +190,33 @@ adosfs_mountfs(devvp, mp, p)
 	amp = malloc(sizeof(struct adosfsmount), M_ADOSFSMNT, M_WAITOK);
 	bzero((char *)amp, (u_long)sizeof(struct adosfsmount));
 	amp->mp = mp;
-	amp->startb = parp->p_offset;
-	amp->endb = parp->p_offset + parp->p_size;
-	amp->bsize = dl.d_secsize;
+	if (dl.d_type == DTYPE_FLOPPY) {
+		amp->bsize = dl.d_secsize;
+		amp->secsperblk = 1;
+	}
+	else {
+		amp->bsize = parp->p_fsize * parp->p_frag;
+		amp->secsperblk = parp->p_frag;
+	}
+	amp->rootb = (parp->p_size / amp->secsperblk - 1 + parp->p_cpg) >> 1;
+	amp->numblks = parp->p_size / amp->secsperblk - parp->p_cpg;
+
+	bp = NULL;
+	if ((error = bread(devvp, (daddr_t)BBOFF,
+			   amp->bsize, NOCRED, &bp)) != 0)
+		goto fail;
+
+	amp->dostype = adoswordn(bp, 0);
+	brelse(bp);
+
+	if (amp->dostype < 0x444f5300 || amp->dostype > 0x444f5305) {
+		error = EINVAL;
+		goto fail;
+	}
+
 	amp->nwords = amp->bsize >> 2;
+	amp->dbsize = amp->bsize - (IS_FFS(amp) ? 0 : OFS_DATA_OFFSET);
 	amp->devvp = devvp;
-/*	amp->rootb = (parp->p_size - 1 + 2) >> 1;*/
-	amp->rootb = (parp->p_size - 1 + parp->p_cpg) >> 1;
 	
 	mp->mnt_data = (qaddr_t)amp;
         mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
@@ -212,12 +235,26 @@ adosfs_mountfs(devvp, mp, p)
 	 */
 	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		goto fail;
+	/* allocate and load bitmap, set free space */
+	amp->bitmap = malloc(((amp->numblks + 31) / 32) * sizeof(*amp->bitmap),
+	    M_ADOSFSBITMAP, M_WAITOK);
+	if (amp->bitmap)
+		adosfs_loadbitmap(amp);
+	if (mp->mnt_flag & MNT_RDONLY && amp->bitmap) {
+		/*
+		 * Don't need the bitmap any more if it's read-only.
+		 */
+		free(amp->bitmap, M_ADOSFSBITMAP);
+		amp->bitmap = NULL;
+	}
 	vput(rvp);
 
 	return(0);
 
 fail:
 	(void) VOP_CLOSE(devvp, FREAD, NOCRED, p);
+	if (amp && amp->bitmap)
+		free(amp->bitmap, M_ADOSFSBITMAP);
 	if (amp)
 		free(amp, M_ADOSFSMNT);
 	return (error);
@@ -251,6 +288,8 @@ adosfs_unmount(mp, mntflags, p)
 	amp->devvp->v_specflags &= ~SI_MOUNTEDON;
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED, p);
 	vrele(amp->devvp);
+	if (amp->bitmap)
+		free(amp->bitmap, M_ADOSFSBITMAP);
 	free(amp, M_ADOSFSMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -267,6 +306,7 @@ adosfs_root(mp, vpp)
 
 	if ((error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp)) != 0)
 		return (error);
+	/* XXX verify it's a root block? */
 	*vpp = nvp;
 	return (0);
 }
@@ -282,10 +322,10 @@ adosfs_statfs(mp, sbp, p)
 	amp = VFSTOADOSFS(mp);
 	sbp->f_type = 0;
 	sbp->f_bsize = amp->bsize;
-	sbp->f_iosize = amp->bsize;
-	sbp->f_blocks = 2;		/* XXX */
-	sbp->f_bfree = 0;		/* none */
-	sbp->f_bavail = 0;		/* none */
+	sbp->f_iosize = amp->dbsize;
+	sbp->f_blocks = amp->numblks;
+	sbp->f_bfree = amp->freeblks;
+	sbp->f_bavail = amp->freeblks;
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
 	if (sbp != &mp->mnt_stat) {
@@ -311,7 +351,7 @@ adosfs_vget(mp, an, vpp)
 	struct anode *ap;
 	struct buf *bp;
 	char *nam, *tmp;
-	int namlen, error, tmplen;
+	int namlen, error;
 
 	error = 0;
 	amp = VFSTOADOSFS(mp);
@@ -338,7 +378,8 @@ adosfs_vget(mp, an, vpp)
 	ap->nwords = amp->nwords;
 	adosfs_ainshash(amp, ap);
 
-	if ((error = bread(amp->devvp, an, amp->bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(amp->devvp, an * amp->secsperblk,
+			   amp->bsize, NOCRED, &bp)) != 0) {
 		vput(vp);
 		return (error);
 	}
@@ -358,15 +399,10 @@ adosfs_vget(mp, an, vpp)
 		ap->created.ticks = adoswordn(bp, ap->nwords - 5);
 		break;
 	case ALDIR:
-		vp->v_type = VDIR;
-		break;
 	case ADIR:
 		vp->v_type = VDIR;
 		break;
 	case ALFILE:
-		vp->v_type = VREG;
-		ap->fsize = adoswordn(bp, ap->nwords - 47);
-		break;
 	case AFILE:
 		vp->v_type = VREG;
 		ap->fsize = adoswordn(bp, ap->nwords - 47);
@@ -378,9 +414,9 @@ adosfs_vget(mp, an, vpp)
 		 * from: "part:dir/file" to: "/part/dir/file"
 		 */
 		nam = bp->b_data + (6 * sizeof(long));
-		tmplen = namlen = *(u_char *)nam++;
+		namlen = strlen(nam);
 		tmp = nam;
-		while (tmplen-- && *tmp != ':')
+		while (*tmp && *tmp != ':')
 			tmp++;
 		if (*tmp == 0) {
 			ap->slinkto = malloc(namlen + 1, M_ANODE, M_WAITOK);
@@ -403,6 +439,28 @@ adosfs_vget(mp, an, vpp)
 		vput(vp);
 		return (EINVAL);
 	}
+
+	/*
+	 * Get appropriate data from this block;  hard link needs
+	 * to get other data from the "real" block.
+	 */
+
+	/*
+	 * copy in name (from original block)
+	 */
+	nam = bp->b_data + (ap->nwords - 20) * sizeof(long);
+	namlen = *(u_char *)nam++;
+	if (namlen > 30) {
+#ifdef DIAGNOSTIC
+		printf("adosfs: aget: name length too long blk %d\n", an);
+#endif
+		brelse(bp);
+		vput(vp);
+		return (EINVAL);
+	}
+	bcopy(nam, ap->name, namlen);
+	ap->name[namlen] = 0;
+
 	/* 
 	 * if dir alloc hash table and copy it in 
 	 */
@@ -429,17 +487,29 @@ adosfs_vget(mp, an, vpp)
 	 * setup last indirect block cache.
 	 */
 	ap->lastlindblk = 0;
-	if (ap->type == AFILE) 
+	if (ap->type == AFILE)  {
 		ap->lastindblk = ap->block;
-	else if (ap->type == ALFILE)
+		if (adoswordn(bp, ap->nwords - 10))
+			ap->linkto = ap->block;
+	} else if (ap->type == ALFILE) {
 		ap->lastindblk = ap->linkto;
+		brelse(bp);
+		bp = NULL;
+		error = bread(amp->devvp, ap->linkto * amp->secsperblk,
+		    amp->bsize, NOCRED, &bp);
+		ap->fsize = adoswordn(bp, ap->nwords - 47);
+		/*
+		 * Should ap->block be set to the real file header block?
+		 */
+		ap->block = ap->linkto;
+	}
 
 	if (ap->type == AROOT) {
-		ap->adprot = 0;
+		ap->adprot = 15;
 		ap->uid = amp->uid;
 		ap->gid = amp->gid;
 	} else {
-		ap->adprot = adoswordn(bp, ap->nwords - 48);
+		ap->adprot = adoswordn(bp, ap->nwords - 48) ^ 15;
 		/*
 		 * Get uid/gid from extensions in file header
 		 * (really need to know if this is a muFS partition)
@@ -466,25 +536,87 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	/*
-	 * copy in name
-	 */
-	nam = bp->b_data + (ap->nwords - 20) * sizeof(long);
-	namlen = *(u_char *)nam++;
-	if (namlen > 30) {
-#ifdef DIAGNOSTIC
-		printf("adosfs: aget: name length too long blk %d\n", an);
-#endif
-		brelse(bp);
-		vput(vp);
-		return (EINVAL);
-	}
-	bcopy(nam, ap->name, namlen);
-	ap->name[namlen] = 0;
-
 	*vpp = vp;		/* return vp */
 	brelse(bp);		/* release buffer */
 	return (0);
+}
+
+/*
+ * Load the bitmap into memory, and count the number of available
+ * blocks.
+ * The bitmap will be released if the filesystem is read-only;  it's
+ * only needed to find the free space.
+ */
+int
+adosfs_loadbitmap(amp)
+	struct adosfsmount *amp;
+{
+	struct buf *bp, *mapbp;
+	u_long bn;
+	int blkix, endix, mapix;
+	int bmsize;
+	int error;
+
+	bp = mapbp = NULL;
+	bn = amp->rootb;
+	if ((error = bread(amp->devvp, bn * amp->secsperblk, amp->bsize,
+	    NOCRED, &bp)) != 0)
+		return (error);
+	blkix = amp->nwords - 49;
+	endix = amp->nwords - 24;
+	mapix = 0;
+	bmsize = (amp->numblks + 31) / 32;
+	while (mapix < bmsize) {
+		int n;
+		u_long bits;
+
+		if (adoswordn(bp, blkix) == 0)
+			break;
+		if (mapbp != NULL)
+			brelse(mapbp);
+		if ((error = bread(amp->devvp,
+		    adoswordn(bp, blkix) * amp->secsperblk, amp->bsize,
+		     NOCRED, &mapbp)) != 0)
+			break;
+		if (adoscksum(mapbp, amp->nwords)) {
+#ifdef DIAGNOSTIC
+			printf("adosfs: loadbitmap - cksum of blk %d failed\n",
+			    adoswordn(bp, blkix));
+#endif
+			/* XXX Force read-only?  Set free space 0? */
+			break;
+		}
+		n = 1;
+		while (n < amp->nwords && mapix < bmsize) {
+			amp->bitmap[mapix++] = bits = adoswordn(mapbp, n);
+			++n;
+			if (mapix == bmsize && amp->numblks & 31)
+				bits &= ~(0xffffffff << (amp->numblks & 31));
+			while (bits) {
+				if (bits & 1)
+					++amp->freeblks;
+				bits >>= 1;
+			}
+		}
+		++blkix;
+		if (mapix < bmsize && blkix == endix) {
+			bn = adoswordn(bp, blkix);
+			brelse(bp);
+			if ((error = bread(amp->devvp, bn * amp->secsperblk,
+			    amp->bsize, NOCRED, &bp)) != 0)
+				break;
+			/*
+			 * Why is there no checksum on these blocks?
+			 */
+			blkix = 0;
+			endix = amp->nwords - 1;
+		}
+	}
+	if (bp)
+		brelse(bp);
+	if (mapbp)
+		brelse(mapbp);
+	return (error);
 }
 
 

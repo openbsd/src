@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.h,v 1.2 1996/03/03 12:12:32 niklas Exp $	*/
-/*	$NetBSD: tty.h,v 1.29 1996/02/09 18:25:44 christos Exp $	*/
+/*	$OpenBSD: tty.h,v 1.3 1996/04/21 22:32:12 deraadt Exp $	*/
+/*	$NetBSD: tty.h,v 1.30 1996/04/09 20:55:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -50,7 +50,7 @@
  * exactly the same behaviour as in true clists.
  * if c_cq is NULL, the ring buffer has no TTY_QUOTE functionality
  * (but, saves memory and cpu time)
- * 
+ *
  * *DON'T* play with c_cs, c_ce, c_cq, or c_cl outside tty_subr.c!!!
  */
 struct clist {

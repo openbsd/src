@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_subr2.c,v 1.2 1996/03/04 10:36:32 mickey Exp $	*/
-/*	$NetBSD: tp_subr2.c,v 1.9 1996/02/13 22:12:04 christos Exp $	*/
+/*	$OpenBSD: tp_subr2.c,v 1.3 1996/04/21 22:29:59 deraadt Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.11 1996/03/26 22:27:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -124,9 +124,6 @@ SOFTWARE.
 #if 0
 static void copyQOSparms __P((struct tp_conn_param *, struct tp_conn_param *));
 #endif
-#if 0
-static void pk_flowcontrol __P((struct pklcd *, int, int));
-#endif
 
 /*
  * NAME: 	tp_local_credit()
@@ -155,7 +152,7 @@ tp_local_credit(tpcb)
 	LOCAL_CREDIT(tpcb);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CREDIT]) {
-		printf("ref 0x%x lcdt 0x%x l_tpdusize 0x%x decbit 0x%x\n",
+		printf("ref 0x%x lcdt 0x%x l_tpdusize 0x%x decbit 0x%x cong_win 0x%lx\n",
 		       tpcb->tp_lref,
 		       tpcb->tp_lcredit,
 		       tpcb->tp_l_tpdusize,
@@ -195,7 +192,7 @@ tp_protocol_error(e, tpcb)
 	struct tp_event *e;
 	struct tp_pcb  *tpcb;
 {
-	printf("TP PROTOCOL ERROR! tpcb 0x%x event 0x%x, state 0x%x\n",
+	printf("TP PROTOCOL ERROR! tpcb %p event 0x%x, state 0x%x\n",
 	       tpcb, e->ev_number, tpcb->tp_state);
 #ifdef TPPT
 	if (tp_traceflags[D_DRIVER]) {
@@ -390,9 +387,9 @@ tp_quench(ipcb, cmd)
 	struct tp_pcb  *tpcb = (struct tp_pcb *) ipcb;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_QUENCH]) {
-		printf("tp_quench tpcb 0x%x ref 0x%x sufx 0x%x\n",
+		printf("tp_quench tpcb %p ref 0x%x sufx 0x%x\n",
 		       tpcb, tpcb->tp_lref, *(u_short *) (tpcb->tp_lsuffix));
-		printf("cong_win 0x%x decbit 0x%x \n",
+		printf("cong_win 0x%lx decbit 0x%x \n",
 		       tpcb->tp_cong_win, tpcb->tp_decbit);
 	}
 #endif
@@ -673,7 +670,7 @@ tp_route_to(m, tpcb, channel)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-		printf("tp_route_to( m x%x, channel 0x%x, tpcb 0x%x netserv 0x%x)\n",
+		printf("tp_route_to( m %p, channel %p, tpcb %p netserv 0x%x)\n",
 		       m, channel, tpcb, tpcb->tp_netservice);
 		printf("m->mlen x%x, m->m_data:\n", m->m_len);
 		dump_buf(mtod(m, caddr_t), m->m_len);
@@ -763,8 +760,7 @@ done:
 	return error;
 }
 
-#if 0
-static
+#ifndef CCITT
 void
 pk_flowcontrol(lcp, foo, bar)
 	struct pklcd *lcp;
@@ -908,7 +904,7 @@ Dump_buf(buf, len)
 {
 	int             i, j;
 #define Buf ((u_char *)buf)
-	printf("Dump buf 0x%x len 0x%x\n", buf, len);
+	printf("Dump buf %p len 0x%x\n", buf, len);
 	for (i = 0; i < len; i += MAX_COLUMNS) {
 		printf("+%d:\t", i);
 		for (j = 0; j < MAX_COLUMNS; j++) {

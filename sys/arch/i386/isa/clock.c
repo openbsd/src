@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 1995/12/24 02:30:07 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.37 1996/04/11 22:15:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -106,6 +106,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/spkrreg.h>
 
 void spinwait __P((int));
+void findcpuspeed __P((void));
 
 #ifdef I586_CPU
 int pentium_mhz;
@@ -287,6 +288,8 @@ sysbeep(pitch, period)
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
 #define FIRST_GUESS	0x2000
+
+void
 findcpuspeed()
 {
 	int i;
@@ -328,7 +331,8 @@ cpu_initclocks()
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
 	 */
-	(void)isa_intr_establish(0, IST_PULSE, IPL_CLOCK, clockintr, 0, "clock");
+	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
+	    0, "clock");
 }
 
 void

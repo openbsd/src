@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_input.c,v 1.3 1996/03/11 11:16:09 mickey Exp $	*/
+/*	$OpenBSD: db_input.c,v 1.4 1996/04/21 22:19:01 deraadt Exp $	*/
+/*	$NetBSD: db_input.c,v 1.7 1996/02/05 01:57:02 christos Exp $	*/
 
 /* 
  * Mach Operating System

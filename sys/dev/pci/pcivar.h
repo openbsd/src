@@ -1,7 +1,8 @@
-/*	$OpenBSD: pcivar.h,v 1.6 1996/04/18 23:48:08 niklas Exp $	*/
-/*	$NetBSD: pcivar.h,v 1.8 1995/06/18 01:26:50 cgd Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.7 1996/04/21 22:25:51 deraadt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.15 1996/03/28 02:16:23 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,30 +39,29 @@
  *
  * This file describes types and functions which are used for PCI
  * configuration.  Some of this information is machine-specific, and is
- * separated into pci_machdep.h.
+ * provided by pci_machdep.h.
  */
 
 #include <machine/bus.h>
+#include <dev/pci/pcireg.h>
 
+/*
+ * Structures and definitions needed by the machine-dependent header.
+ */
+typedef u_int32_t pcireg_t;		/* configuration space register XXX */
+struct pcibus_attach_args;
+
+/*
+ * Machine-dependent definitions.
+ */
 #if (alpha + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
-
 #if alpha
 #include <alpha/pci/pci_machdep.h>
 #endif
-
 #if i386
 #include <i386/pci/pci_machdep.h>
-#endif
-
-/*
- * The maximum number of devices on a PCI bus is 32.  However, some
- * PCI chipsets (e.g. chipsets that implement 'Configuration Mechanism #2'
- * on the i386) can't deal with that many, so let pci_machdep.h override it.
- */
-#ifndef PCI_MAX_DEVICE_NUMBER
-#define	PCI_MAX_DEVICE_NUMBER	32
 #endif
 
 /*
@@ -70,20 +70,42 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 struct pcibus_attach_args {
 	char		*pba_busname;	/* XXX should be common */
 	bus_chipset_tag_t pba_bc;	/* XXX should be common */
+	pci_chipset_tag_t pba_pc;
 
 	int		pba_bus;	/* PCI bus number */
+
+	/*
+	 * Interrupt swizzling information.  These fields
+	 * are only used by secondary busses.
+	 */
+	u_int		pba_intrswiz;	/* how to swizzle pins */
+	pcitag_t	pba_intrtag;	/* intr. appears to come from here */
 };
 
 /*
  * PCI device attach arguments.
  */
 struct pci_attach_args {
-	bus_chipset_tag_t pa_bc;	/* bus chipset tag */
+	bus_chipset_tag_t pa_bc;
+	pci_chipset_tag_t pa_pc;
 
-	int		pa_device;
-	int		pa_function;
+	u_int		pa_device;
+	u_int		pa_function;
 	pcitag_t	pa_tag;
 	pcireg_t	pa_id, pa_class;
+
+	/*
+	 * Interrupt information.
+	 *
+	 * "Intrline" is used on systems whose firmware puts
+	 * the right routing data into the line register in
+	 * configuration space.  The rest are used on systems
+	 * that do not.
+	 */
+	u_int		pa_intrswiz;	/* how to swizzle pins if ppb */
+	pcitag_t	pa_intrtag;	/* intr. appears to come from here */
+	pci_intr_pin_t	pa_intrpin;	/* intr. appears on this pin */
+	pci_intr_line_t	pa_intrline;	/* intr. routing information */
 };
 
 /*
@@ -101,11 +123,18 @@ struct pci_attach_args {
 #define	pcicf_function		cf_loc[1]
 #define	PCI_UNK_FUNCTION	-1		/* wildcarded 'function' */
 
-pcireg_t pci_conf_read __P((pcitag_t, int));
-void	 pci_conf_write __P((pcitag_t, int, pcireg_t));
-void	 pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
-pcitag_t pci_make_tag __P((int, int, int));
-void	*pci_map_int __P((pcitag_t, int, int (*)(void *), void *, char *));
-int	 pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
+/*
+ * Configuration space access and utility functions.  (Note that most,
+ * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
+ */
+int	pci_io_find __P((pci_chipset_tag_t, pcitag_t, int, bus_io_addr_t *,
+	    bus_io_size_t *));
+int	pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, bus_mem_addr_t *,
+	    bus_mem_size_t *, int *));
+
+/*
+ * Helper functions for autoconfiguration.
+ */
+void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */

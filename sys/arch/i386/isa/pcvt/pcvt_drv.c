@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.9 1996/04/18 17:48:28 niklas Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.10 1996/04/21 22:17:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -341,8 +341,8 @@ pcattach(struct isa_device *dev)
 #if PCVT_NETBSD > 9
 
 #if PCVT_NETBSD > 101
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
-	    (void *)0, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, pcintr, (void *)0, sc->sc_dev.dv_xname);
 
 #if PCVT_NETBSD > 110
 	/*
@@ -350,9 +350,9 @@ pcattach(struct isa_device *dev)
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, ia->ia_ic, NULL) != NULL)
 		/* will break when no more children */ ;
-#endif /* PVCT_NETBSD > 110 */
+#endif /* PCVT_NETBSD > 110 */
 #else /* PCVT_NETBSD > 100 */
 	vthand.ih_fun = pcrint;
 	vthand.ih_arg = 0;
@@ -1235,8 +1235,12 @@ pccncheckc(Dev_t dev)
 void
 pccnpollc(Dev_t dev, int on)
 {
+#if PCVT_NETBSD > 110
+	struct vt_softc *sc = NULL;	/* XXX not used */
+#else	
 #if PCVT_NETBSD > 101
 	struct vt_softc *sc = vtcd.cd_devs[0];	/* XXX */
+#endif
 #endif
 
 	kbd_polling = on;

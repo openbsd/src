@@ -1,5 +1,5 @@
-/*	$OpenBSD: pss.c,v 1.7 1996/03/20 01:00:59 mickey Exp $ */
-/*	$NetBSD: pss.c,v 1.11 1995/12/24 02:31:45 mycroft Exp $ */
+/*	$OpenBSD: pss.c,v 1.8 1996/04/21 22:24:26 deraadt Exp $ */
+/*	$NetBSD: pss.c,v 1.13 1996/04/11 22:29:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -238,20 +238,36 @@ static u_char wss_dma_bits[4] = {1, 2, 0, 3};
 #define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
 #endif
 
-struct cfdriver psscd = {
-	NULL, "pss", pssprobe, pssattach, DV_DULL, sizeof(struct pss_softc), 1
+struct cfattach pss_ca = {
+	sizeof(struct pss_softc), pssprobe, pssattach
 };
 
-struct cfdriver spcd = {
-	NULL, "sp", spprobe, spattach, DV_DULL, sizeof(struct ad1848_softc)
+struct cfdriver pss_cd = {
+	NULL, "pss", DV_DULL, 1
 };
 
-struct cfdriver mpucd = {
-	NULL, "mpu", mpuprobe, mpuattach, DV_DULL, sizeof(struct mpu_softc)
+struct cfattach sp_ca = {
+	sizeof(struct ad1848_softc), spprobe, spattach
 };
 
-struct cfdriver pcdcd = {
-	NULL, "pcd", pcdprobe, pcdattach, DV_DULL, sizeof(struct cd_softc)
+struct cfdriver sp_cd = {
+	NULL, "sp", DV_DULL
+};
+
+struct cfattach mpu_ca = {
+	sizeof(struct mpu_softc), mpuprobe, mpuattach
+};
+
+struct cfdriver mpu_cd = {
+	NULL, "mpu", DV_DULL
+};
+
+struct cfattach pcd_ca = {
+	sizeof(struct cd_softc), pcdprobe, pcdattach
+};
+
+struct cfdriver pcd_cd = {
+	NULL, "pcd", DV_DULL
 };
 
 struct audio_device pss_device = {
@@ -1005,13 +1021,13 @@ pssattach(parent, self, aux)
 #endif
 
     /* Setup interrupt handler for PSS */
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, pssintr,
-	sc, sc->sc_dev.dv_xname);
+    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
+	pssintr, sc, sc->sc_dev.dv_xname);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
     
-    (void)config_found(self, NULL, NULL);
+    (void)config_found(self, ia->ia_ic, NULL);		/* XXX */
 
     sc->out_port = PSS_MASTER_VOL;
 
@@ -1031,6 +1047,7 @@ spattach(parent, self, aux)
 {
     struct ad1848_softc *sc = (struct ad1848_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    isa_chipset_tag_t ic = aux;				/* XXX */
     int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
@@ -1040,8 +1057,8 @@ spattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, IST_EDGE, IPL_AUDIO, ad1848_intr,
-	sc, sc->sc_dev.dv_xname);
+    sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
+	ad1848_intr, sc, sc->sc_dev.dv_xname);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d drq %d",
@@ -1060,6 +1077,7 @@ mpuattach(parent, self, aux)
 {
     struct mpu_softc *sc = (struct mpu_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    isa_chipset_tag_t ic = aux;				/* XXX */
     int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
@@ -1068,8 +1086,8 @@ mpuattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, IST_EDGE, IPL_AUDIO, mpuintr,
-	sc, sc->sc_dev.dv_xname);
+    sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
+        mpuintr, sc, sc->sc_dev.dv_xname);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d\n",
@@ -1145,10 +1163,10 @@ spopen(dev, flags)
     struct ad1848_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= spcd.cd_ndevs)
+    if (unit >= sp_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = spcd.cd_devs[unit];
+    sc = sp_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

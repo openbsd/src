@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_prf.c,v 1.3 1996/04/19 16:09:03 niklas Exp $	*/
-/*	$NetBSD: subr_prf.c,v 1.22 1996/03/14 19:01:11 christos Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.4 1996/04/21 22:27:19 deraadt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.24 1996/03/30 22:25:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -55,6 +55,7 @@
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -96,10 +97,6 @@ const char *panicstr;
  * and then reboots.  If we are called twice, then we avoid trying to sync
  * the disks as this often leads to recursive panics.
  */
-#ifdef __GNUC__
-volatile void boot(int flags);	/* boot() does not return */
-volatile			/* panic() does not return */
-#endif
 void
 #ifdef __STDC__
 panic(const char *fmt, ...)
@@ -111,7 +108,6 @@ panic(fmt, va_alist)
 {
 	int bootopt;
 	va_list ap;
-	static const char fm[] = "panic: %r\n";
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
 	if (panicstr)
@@ -120,7 +116,7 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	printf(fm, fmt, ap);
+	printf("panic: %:\n", fmt, ap);
 	va_end(ap);
 
 #ifdef KGDB
@@ -360,14 +356,14 @@ printf(fmt, va_alist)
  *
  *	reg=3<BITTWO,BITONE>
  *
- * The format %r passes an additional format string and argument list
+ * The format %: passes an additional format string and argument list
  * recursively.  Its usage is:
  *
  * fn(char *fmt, ...)
  * {
  *	va_list ap;
  *	va_start(ap, fmt);
- *	printf("prefix: %r: suffix\n", fmt, ap);
+ *	printf("prefix: %: suffix\n", fmt, ap);
  *	va_end(ap);
  * }
  *
@@ -437,7 +433,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'c':
 			putchar(va_arg(ap, int), flags, tp);
 			break;
-		case 'r':
+		case ':':
 			p = va_arg(ap, char *);
 			kprintf(p, flags, tp, va_arg(ap, va_list));
 			break;

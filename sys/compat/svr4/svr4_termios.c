@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_termios.c,v 1.5 1996/04/19 09:38:59 niklas Exp $	 */
-/*	$NetBSD: svr4_termios.c,v 1.8 1996/03/30 22:38:23 christos Exp $	 */
+/*	$OpenBSD: svr4_termios.c,v 1.6 1996/04/21 22:18:38 deraadt Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.9 1996/04/11 12:53:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -467,12 +467,13 @@ svr4_termios_to_termio(ts, t)
 }
 
 int
-svr4_termioctl(fp, cmd, data, p, retval)
+svr4_term_ioctl(fp, p, retval, fd, cmd, data)
 	struct file *fp;
-	u_long cmd;
-	caddr_t data;
 	struct proc *p;
 	register_t *retval;
+	int fd;
+	u_long cmd;
+	caddr_t data;
 {
 	struct termios 		bt;
 	struct svr4_termios	st;
@@ -596,7 +597,6 @@ svr4_termioctl(fp, cmd, data, p, retval)
 		}
 
 	default:
-		DPRINTF(("Unknown svr4 termios %lx\n", cmd));
-		return ENOSYS;
+		return svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, data);
 	}
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: types.h,v 1.7 1996/04/18 21:41:17 niklas Exp $	*/
-/*	$NetBSD: types.h,v 1.25 1996/03/15 19:54:53 jtc Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 1996/04/21 22:32:15 deraadt Exp $	*/
+/*	$NetBSD: types.h,v 1.26 1996/04/09 20:55:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -90,7 +90,7 @@ typedef	int	boolean_t;
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
- * long arguments will be promoted to off_t if the program fails to 
+ * long arguments will be promoted to off_t if the program fails to
  * include that header or explicitly cast them to off_t.
  */
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ttydefaults.h,v 1.3 1996/03/03 12:12:35 niklas Exp $	*/
-/*	$NetBSD: ttydefaults.h,v 1.7 1994/06/29 06:45:57 cgd Exp $	*/
+/*	$OpenBSD: ttydefaults.h,v 1.4 1996/04/21 22:32:13 deraadt Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.8 1996/04/09 20:55:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -91,7 +91,7 @@
  */
 #ifdef TTYDEFCHARS
 cc_t	ttydefchars[NCCS] = {
-	CEOF,	CEOL,	CEOL,	CERASE, CWERASE, CKILL, CREPRINT, 
+	CEOF,	CEOL,	CEOL,	CERASE, CWERASE, CKILL, CREPRINT,
 	_POSIX_VDISABLE, CINTR,	CQUIT,	CSUSP,	CDSUSP,	CSTART,	CSTOP,	CLNEXT,
 	CDISCARD, CMIN,	CTIME,  CSTATUS, _POSIX_VDISABLE
 };

@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_examine.c,v 1.3 1996/03/11 11:16:05 mickey Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.4 1996/04/21 22:18:59 deraadt Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -107,7 +108,7 @@ db_examine(addr, fmt, count)
 				width = 12;
 				break;
 			case 'a':	/* address */
-				db_printf("= 0x%x\n", addr);
+				db_printf("= 0x%lx\n", addr);
 				break;
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);

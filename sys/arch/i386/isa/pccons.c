@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccons.c,v 1.7 1996/04/18 17:12:18 niklas Exp $	*/
-/*	$NetBSD: pccons.c,v 1.92 1996/03/16 06:08:46 thorpej Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.8 1996/04/21 22:17:01 deraadt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.96 1996/04/11 22:15:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -124,8 +124,12 @@ int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 
-struct cfdriver pccd = {
-	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct pc_softc)
+struct cfattach pc_ca = {
+	sizeof(struct pc_softc), pcprobe, pcattach
+};
+
+struct cfdriver pc_cd = {
+	NULL, "pc", DV_TTY
 };
 
 #define	COL		80
@@ -151,6 +155,8 @@ static unsigned int addr_6845 = MONO_BASE;
 
 char *sget __P((void));
 void sput __P((u_char *, int));
+void pc_xmode_on __P((void));
+void pc_xmode_off __P((void));
 
 void	pcstart();
 int	pcparam();
@@ -476,15 +482,15 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, pcintr, sc, sc->sc_dev.dv_xname);
 
 	/*
 	 * Look for children of the keyboard controller.
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, ia->ia_ic, NULL) != NULL)	/* XXX */
 		/* will break when no more children */ ;
 }
 
@@ -498,9 +504,9 @@ pcopen(dev, flag, mode, p)
 	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pccd.cd_ndevs)
+	if (unit >= pc_cd.cd_ndevs)
 		return ENXIO;
-	sc = pccd.cd_devs[unit];
+	sc = pc_cd.cd_devs[unit];
 	if (sc == 0)
 		return ENXIO;
 
@@ -535,7 +541,7 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -552,7 +558,7 @@ pcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -564,7 +570,7 @@ pcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -574,7 +580,7 @@ struct tty *
 pctty(dev)
 	dev_t dev;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -617,7 +623,7 @@ pcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -762,6 +768,7 @@ pccnputc(dev, c)
 }
 
 /* ARGSUSED */
+int
 pccngetc(dev)
 	dev_t dev;
 {
@@ -800,8 +807,8 @@ pccnpollc(dev, on)
 		 * interrupts.
 		 */
 		unit = PCUNIT(dev);
-		if (pccd.cd_ndevs > unit) {
-			sc = pccd.cd_devs[unit];
+		if (pc_cd.cd_ndevs > unit) {
+			sc = pc_cd.cd_devs[unit];
 			if (sc != 0) {
 				s = spltty();
 				pcintr(sc);
@@ -1640,6 +1647,7 @@ pcmmap(dev, offset, nprot)
 	return i386_btop(0xa0000 + offset);
 }
 
+void
 pc_xmode_on()
 {
 	struct trapframe *fp;
@@ -1661,6 +1669,7 @@ pc_xmode_on()
 #endif
 }
 
+void
 pc_xmode_off()
 {
 	struct trapframe *fp;

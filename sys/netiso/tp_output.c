@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_output.c,v 1.2 1996/03/04 10:36:13 mickey Exp $	*/
-/*	$NetBSD: tp_output.c,v 1.11 1996/02/13 22:11:25 christos Exp $	*/
+/*	$OpenBSD: tp_output.c,v 1.3 1996/04/21 22:29:52 deraadt Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.12 1996/03/16 23:13:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -406,7 +406,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
 		printf(
-		       "tp_ctloutput so 0x%x cmd 0x%x optname 0x%x, mp 0x%x *mp 0x%x tpcb 0x%x\n",
+		       "tp_ctloutput so %p cmd 0x%x optname 0x%x, mp %p *mp %p tpcb %p\n",
 		       so, cmd, optname, mp, mp ? *mp : 0, tpcb);
 	}
 #endif
@@ -548,7 +548,8 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			(*mp)->m_len = tpcb->tp_lsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
-				printf("val_len 0x%x (*mp)->m_len 0x%x\n", val_len, (*mp));
+				printf("val_len 0x%x (*mp)->m_len %p\n",
+				    val_len, (*mp));
 				error = EINVAL;
 			} else {
 				bcopy(value, (caddr_t) tpcb->tp_lsuffix, val_len);
@@ -564,7 +565,8 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			(*mp)->m_len = tpcb->tp_fsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
-				printf("val_len 0x%x (*mp)->m_len 0x%x\n", val_len, (*mp));
+				printf("val_len 0x%x (*mp)->m_len %p\n",
+				    val_len, (*mp));
 				error = EINVAL;
 			} else {
 				bcopy(value, (caddr_t) tpcb->tp_fsuffix, val_len);
@@ -576,7 +578,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	case TPOPT_FLAGS:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("%s TPOPT_FLAGS value 0x%x *value 0x%x, flags 0x%x \n",
+			printf("%s TPOPT_FLAGS value %p *value 0x%x, flags 0x%x \n",
 			       cmd == PRCO_GETOPT ? "GET" : "SET",
 			       value,
 			       *value,
@@ -602,13 +604,13 @@ tp_ctloutput(cmd, so, level, optname, mp)
 		 */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_SETPARAMS]) {
-			printf("TPOPT_PARAMS value 0x%x, cmd %s \n", value,
+			printf("TPOPT_PARAMS value %p, cmd %s \n", value,
 			       cmd == PRCO_GETOPT ? "GET" : "SET");
 		}
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("TPOPT_PARAMS value 0x%x, cmd %s \n", value,
+			printf("TPOPT_PARAMS value %p, cmd %s \n", value,
 			       cmd == PRCO_GETOPT ? "GET" : "SET");
 		}
 #endif
@@ -675,7 +677,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
 			printf("%s\n", optname == TPOPT_DISC_DATA ? "DISC data" : "CONN data");
-			printf("m_len 0x%x, vallen 0x%x so_snd.cc 0x%x\n",
+			printf("m_len 0x%x, vallen 0x%x so_snd.cc 0x%lx\n",
 			       (*mp)->m_len, val_len, so->so_snd.sb_cc);
 			dump_mbuf(so->so_snd.sb_mb, "tp_ctloutput: sosnd ");
 		}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: wt.c,v 1.7 1996/04/18 23:47:52 niklas Exp $	*/
-/*	$NetBSD: wt.c,v 1.29 1996/03/01 04:08:40 mycroft Exp $	*/
+/*	$OpenBSD: wt.c,v 1.8 1996/04/21 22:24:52 deraadt Exp $	*/
+/*	$NetBSD: wt.c,v 1.31 1996/04/11 22:30:49 cgd Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -168,8 +168,12 @@ int wtprobe __P((struct device *, void *, void *));
 void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((void *sc));
 
-struct cfdriver wtcd = {
-	NULL, "wt", wtprobe, wtattach, DV_TAPE, sizeof(struct wt_softc)
+struct cfattach wt_ca = {
+	sizeof(struct wt_softc), wtprobe, wtattach
+};
+
+struct cfdriver wt_cd = {
+	NULL, "wt", DV_TAPE
 };
 
 /*
@@ -250,8 +254,8 @@ wtattach(parent, self, aux)
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wtintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, wtintr, sc, sc->sc_dev.dv_xname);
 }
 
 int
@@ -287,9 +291,9 @@ wtopen(dev, flag)
 	struct wt_softc *sc;
 	int error;
 
-	if (unit >= wtcd.cd_ndevs)
+	if (unit >= wt_cd.cd_ndevs)
 		return ENXIO;
-	sc = wtcd.cd_devs[unit];
+	sc = wt_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -372,7 +376,7 @@ wtclose(dev)
 	dev_t dev;
 {
 	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wtcd.cd_devs[unit];
+	struct wt_softc *sc = wt_cd.cd_devs[unit];
 
 	/* If rewind is pending, do nothing */
 	if (sc->flags & TPREW)
@@ -426,7 +430,7 @@ wtioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wtcd.cd_devs[unit];
+	struct wt_softc *sc = wt_cd.cd_devs[unit];
 	int error, count, op;
 
 	switch (cmd) {
@@ -526,7 +530,7 @@ wtstrategy(bp)
 	struct buf *bp;
 {
 	int unit = minor(bp->b_dev) & T_UNIT;
-	struct wt_softc *sc = wtcd.cd_devs[unit];
+	struct wt_softc *sc = wt_cd.cd_devs[unit];
 	int s;
 
 	bp->b_resid = bp->b_bcount;

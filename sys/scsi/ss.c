@@ -1,5 +1,5 @@
-/*	$OpenBSD: ss.c,v 1.2 1996/04/19 16:10:19 niklas Exp $	*/
-/*	$NetBSD: ss.c,v 1.7 1996/03/05 00:15:18 thorpej Exp $	*/
+/*	$OpenBSD: ss.c,v 1.3 1996/04/21 22:31:12 deraadt Exp $	*/
+/*	$NetBSD: ss.c,v 1.9 1996/03/30 21:47:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -42,7 +42,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include <sys/conf.h>		/* for cdevsw */
+#include <sys/conf.h>
 #include <sys/scanio.h>
 
 #include <scsi/scsi_all.h>
@@ -67,12 +67,17 @@
 int ssmatch __P((struct device *, void *, void *));
 void ssattach __P((struct device *, struct device *, void *));
 
-struct cfdriver sscd = {
-	NULL, "ss", ssmatch, ssattach, DV_DULL, sizeof(struct ss_softc)
+struct cfattach ss_ca = {
+	sizeof(struct ss_softc), ssmatch, ssattach
+};
+
+struct cfdriver ss_cd = {
+	NULL, "ss", DV_DULL
 };
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
+void	ssminphys __P((struct buf *));
 
 struct scsi_device ss_switch = {
 	NULL,
@@ -150,8 +155,6 @@ ssattach(parent, self, aux)
 	ss->buf_queue.b_active = 0;
 	ss->buf_queue.b_actf = 0;
 	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
-
-	printf("\n");
 }
 
 /*
@@ -171,9 +174,9 @@ ssopen(dev, flag, mode, p)
 	struct scsi_link *sc_link;
 
 	unit = SSUNIT(dev);
-	if (unit >= sscd.cd_ndevs)
+	if (unit >= ss_cd.cd_ndevs)
 		return (ENXIO);
-	ss = sscd.cd_devs[unit];
+	ss = ss_cd.cd_devs[unit];
 	if (!ss)
 		return (ENXIO);
 
@@ -181,7 +184,7 @@ ssopen(dev, flag, mode, p)
 	sc_link = ss->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
-	    unit, sscd.cd_ndevs));
+	    unit, ss_cd.cd_ndevs));
 
 	if (sc_link->flags & SDEV_OPEN) {
 		printf("%s: already open\n", ss->sc_dev.dv_xname);
@@ -224,10 +227,13 @@ bad:
  * occurence of an open device
  */
 int
-ssclose(dev)
+ssclose(dev, flag, mode, p)
 	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
-	struct ss_softc *ss = sscd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;
 
 	SC_DEBUG(ss->sc_link, SDEV_DB1, ("closing\n"));
@@ -259,7 +265,7 @@ void
 ssminphys(bp)
 	struct buf *bp;
 {
-	register struct ss_softc *ss = sscd.cd_devs[SSUNIT(bp->b_dev)];
+	register struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 
 	(ss->sc_link->adapter->scsi_minphys)(bp);
 
@@ -284,7 +290,7 @@ ssread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ss_softc *ss = sscd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;
 
 	/* if the scanner has not yet been started, do it now */
@@ -309,7 +315,7 @@ void
 ssstrategy(bp)
 	struct buf *bp;
 {
-	struct ss_softc *ss = sscd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 	struct buf *dp;
 	int s;
 
@@ -347,7 +353,6 @@ ssstrategy(bp)
 
 	splx(s);
 	return;
-bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/*
@@ -425,9 +430,8 @@ ssioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ss_softc *ss = sscd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
-	int unit;
 	struct scan_io *sio;
 
 	switch (cmd) {

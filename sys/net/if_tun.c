@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.5 1996/03/03 21:07:11 niklas Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.6 1996/04/21 22:28:35 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.22 1996/02/13 22:00:26 christos Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 
@@ -69,7 +70,6 @@
 #endif
 
 #include <net/if_tun.h>
-#include <net/net_conf.h>
 
 #ifdef	TUN_DEBUG
 int	tundebug = TUN_DEBUG;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd.c,v 1.6 1996/04/19 16:10:17 niklas Exp $	*/
-/*	$NetBSD: sd.c,v 1.88 1996/03/05 00:15:15 thorpej Exp $	*/
+/*	$OpenBSD: sd.c,v 1.7 1996/04/21 22:31:10 deraadt Exp $	*/
+/*	$NetBSD: sd.c,v 1.95 1996/03/30 21:45:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -63,13 +63,13 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_conf.h>
 
-#define	SDOUTSTANDING	2
+#define	SDOUTSTANDING	4
 #define	SDRETRIES	4
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
@@ -107,12 +107,15 @@ void	sdminphys __P((struct buf *));
 void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 int	sddone __P((struct scsi_xfer *, int));
-u_long	sd_size __P((struct sd_softc *, int));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_get_parms __P((struct sd_softc *, int));
 
-struct cfdriver sdcd = {
-	NULL, "sd", sdmatch, sdattach, DV_DISK, sizeof(struct sd_softc)
+struct cfattach sd_ca = {
+	sizeof(struct sd_softc), sdmatch, sdattach
+};
+
+struct cfdriver sd_cd = {
+	NULL, "sd", DV_DISK
 };
 
 struct dkdriver sddkdriver = { sdstrategy };
@@ -181,8 +184,7 @@ sdattach(parent, self, aux)
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
 
-	sd->sc_dk.dk_driver = &sddkdriver;
-#if !defined(i386) || defined(NEWCONFIG)
+#if !defined(i386)
 	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
 #endif
 
@@ -204,7 +206,7 @@ sdattach(parent, self, aux)
 	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf("drive offline\n");
 	else
-	        printf("%dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize);
 }
@@ -260,9 +262,9 @@ sdopen(dev, flag, fmt, p)
 	int error;
 
 	unit = SDUNIT(dev);
-	if (unit >= sdcd.cd_ndevs)
+	if (unit >= sd_cd.cd_ndevs)
 		return ENXIO;
-	sd = sdcd.cd_devs[unit];
+	sd = sd_cd.cd_devs[unit];
 	if (!sd)
 		return ENXIO;
 
@@ -270,7 +272,7 @@ sdopen(dev, flag, fmt, p)
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sdcd.cd_ndevs, part));
+	    sd_cd.cd_ndevs, part));
 
 	if ((error = sdlock(sd)) != 0)
 		return error;
@@ -375,7 +377,7 @@ sdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	int part = SDPART(dev);
 	int error;
 
@@ -413,7 +415,7 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	int s;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
@@ -566,9 +568,7 @@ sdstart(v)
 			bzero(&cmd_small, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    READ_COMMAND : WRITE_COMMAND;
-			cmd_small.addr_2 = (blkno >> 16) & 0x1f;
-			cmd_small.addr_1 = (blkno >> 8) & 0xff;
-			cmd_small.addr_0 = blkno & 0xff;
+			_lto3b(blkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsi_generic *)&cmd_small;
@@ -579,12 +579,8 @@ sdstart(v)
 			bzero(&cmd_big, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
-			cmd_big.addr_3 = (blkno >> 24) & 0xff;
-			cmd_big.addr_2 = (blkno >> 16) & 0xff;
-			cmd_big.addr_1 = (blkno >> 8) & 0xff;
-			cmd_big.addr_0 = blkno & 0xff;
-			cmd_big.length2 = (nblks >> 8) & 0xff;
-			cmd_big.length1 = nblks & 0xff;
+			_lto4b(blkno, cmd_big.addr);
+			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsi_generic *)&cmd_big;
 		}
@@ -621,7 +617,7 @@ void
 sdminphys(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	long max;
 
 	/*
@@ -677,7 +673,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	int error;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
@@ -736,7 +732,7 @@ sdioctl(dev, cmd, addr, flag, p)
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
 
 	case DIOCEJECT:
-		return ((sd->sc_link->flags & SDEV_REMOVABLE == 0) ? ENOTTY :
+		return ((sd->sc_link->flags & SDEV_REMOVABLE) == 0 ? ENOTTY :
 		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 
 	default:
@@ -803,46 +799,12 @@ sdgetdisklabel(sd)
 }
 
 /*
- * Find out from the device what it's capacity is
- */
-u_long
-sd_size(sd, flags)
-	struct sd_softc *sd;
-	int flags;
-{
-	struct scsi_read_cap_data rdcap;
-	struct scsi_read_capacity scsi_cmd;
-	u_long size;
-
-	/*
-	 * make up a scsi command and ask the scsi driver to do
-	 * it for you.
-	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_CAPACITY;
-
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks
-	 */
-	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), SDRETRIES,
-	    2000, NULL, flags | SCSI_DATA_IN) != 0)
-		return 0;
-
-	size = (rdcap.addr_3 << 24) + (rdcap.addr_2 << 16) +
-	    (rdcap.addr_1 << 8) + rdcap.addr_0 + 1;
-
-	return size;
-}
-
-/*
  * Tell the device to map out a defective block
  */
 int
-sd_reassign_blocks(sd, block)
+sd_reassign_blocks(sd, blkno)
 	struct sd_softc *sd;
-	u_long block;
+	u_long blkno;
 {
 	struct scsi_reassign_blocks scsi_cmd;
 	struct scsi_reassign_blocks_data rbdata;
@@ -851,19 +813,13 @@ sd_reassign_blocks(sd, block)
 	bzero(&rbdata, sizeof(rbdata));
 	scsi_cmd.opcode = REASSIGN_BLOCKS;
 
-	rbdata.length_msb = 0;
-	rbdata.length_lsb = sizeof(rbdata.defect_descriptor[0]);
-	rbdata.defect_descriptor[0].dlbaddr_3 = (block >> 24) & 0xff;
-	rbdata.defect_descriptor[0].dlbaddr_2 = (block >> 16) & 0xff;
-	rbdata.defect_descriptor[0].dlbaddr_1 = (block >> 8) & 0xff;
-	rbdata.defect_descriptor[0].dlbaddr_0 = block & 0xff;
+	_lto2b(sizeof(rbdata.defect_descriptor[0]), rbdata.length);
+	_lto4b(blkno, rbdata.defect_descriptor[0].dlbaddr);
 
 	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)&rbdata, sizeof(rbdata), SDRETRIES,
 	    5000, NULL, SCSI_DATA_OUT);
 }
-
-#define b2tol(a)	(((unsigned)(a##_1) << 8) + (unsigned)a##_0 )
 
 /*
  * Get the scsi driver to send a full inquiry to the * device and use the
@@ -905,7 +861,7 @@ sd_get_parms(sd, flags)
 		 * this depends on which controller (e.g. 1542C is
 		 * different. but we have to put SOMETHING here..)
 		 */
-		sectors = sd_size(sd, flags);
+		sectors = scsi_size(sd->sc_link, flags);
 		dp->heads = 64;
 		dp->sectors = 32;
 		dp->cyls = sectors / (64 * 32);
@@ -914,11 +870,11 @@ sd_get_parms(sd, flags)
 	} else {
 		SC_DEBUG(sd->sc_link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2),
+		    _3btol(scsi_sense.pages.rigid_geometry.ncyl),
 		    scsi_sense.pages.rigid_geometry.nheads,
-		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
-		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
-		    b2tol(scsi_sense.pages.rigid_geometry.land_zone)));
+		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
+		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
+		    _2btol(scsi_sense.pages.rigid_geometry.land_zone)));
 
 		/*
 		 * KLUDGE!! (for zone recorded disks)
@@ -927,8 +883,7 @@ sd_get_parms(sd, flags)
 		 * can lead to wasted space! THINK ABOUT THIS !
 		 */
 		dp->heads = scsi_sense.pages.rigid_geometry.nheads;
-		dp->cyls =
-		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2);
+		dp->cyls = _3btol(scsi_sense.pages.rigid_geometry.ncyl);
 		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 
 		if (dp->heads == 0 || dp->cyls == 0) {
@@ -940,7 +895,7 @@ sd_get_parms(sd, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = sd_size(sd, flags);
+		sectors = scsi_size(sd->sc_link, flags);
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
@@ -959,7 +914,7 @@ sdsize(dev)
 
 	if (sdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
-	sd = sdcd.cd_devs[SDUNIT(dev)];
+	sd = sd_cd.cd_devs[SDUNIT(dev)];
 	part = SDPART(dev);
 	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -1009,11 +964,11 @@ sddump(dev, blkno, va, size)
 	part = SDPART(dev);
 
 	/* Check for acceptable drive number. */
-	if (unit >= sdcd.cd_ndevs || (sd = sdcd.cd_devs[unit]) == NULL)
+	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return ENXIO;
 
 	/* Make sure it was initialized. */
-	if (sd->sc_link->flags & SDEV_MEDIA_LOADED != SDEV_MEDIA_LOADED)
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
 		return ENXIO;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
@@ -1044,12 +999,8 @@ sddump(dev, blkno, va, size)
 		 */
 		bzero(&cmd, sizeof(cmd));
 		cmd.opcode = WRITE_BIG;
-		cmd.addr_3 = (blkno >> 24) & 0xff;
-		cmd.addr_2 = (blkno >> 16) & 0xff;
-		cmd.addr_1 = (blkno >> 8) & 0xff;
-		cmd.addr_0 = blkno & 0xff;
-		cmd.length2 = (nwrt >> 8) & 0xff;
-		cmd.length1 = nwrt & 0xff;
+		_lto4b(blkno, cmd.addr);
+		_lto2b(nwrt, cmd.length);
 		/*
 		 * Fill out the scsi_xfer structure
 		 *    Note: we cannot sleep as we may be an interrupt

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.6 1995/12/24 03:03:55 mycroft Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.7 1996/04/15 14:01:25 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -105,7 +105,7 @@ arc_output(ifp, m0, dst, rt0)
 	int			tfrags, sflag, fsflag, rsflag;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
-		senderr(ENETDOWN);
+		return(ENETDOWN); /* m, m1 aren't initialized yet */
 
 	error = newencoding = 0;
 	ac = (struct arccom *)ifp;

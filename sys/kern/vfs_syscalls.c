@@ -1,5 +1,5 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.5 1996/04/17 05:09:14 mickey Exp $	*/
-/*	$NetBSD: vfs_syscalls.c,v 1.68 1996/02/09 19:01:05 christos Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.6 1996/04/21 22:27:39 deraadt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.70 1996/03/22 06:51:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -894,6 +894,9 @@ sys_mkfifo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifndef FIFO
+	return (EOPNOTSUPP);
+#else
 	register struct sys_mkfifo_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
@@ -902,9 +905,6 @@ sys_mkfifo(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-#ifndef FIFO
-	return (EOPNOTSUPP);
-#else
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1090,8 +1090,8 @@ sys_unlink(p, v, retval)
 		goto out;
 	}
 
-	if (vp->v_flag & VTEXT)
-		(void)vnode_pager_uncache(vp);
+	(void)vnode_pager_uncache(vp);
+
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);

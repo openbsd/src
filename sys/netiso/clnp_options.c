@@ -1,5 +1,5 @@
-/*	$OpenBSD: clnp_options.c,v 1.2 1996/03/04 10:34:55 mickey Exp $	*/
-/*	$NetBSD: clnp_options.c,v 1.6 1996/02/13 22:08:32 christos Exp $	*/
+/*	$OpenBSD: clnp_options.c,v 1.3 1996/04/21 22:29:15 deraadt Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.7 1996/04/13 01:34:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -172,8 +172,8 @@ clnp_dooptions(options, oidx, ifp, isoa)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OPTIONS]) {
-			printf("clnp_dooptions: record route: option x%x for %d bytes\n",
-			       (unsigned int) opt, oidx->cni_recrt_len);
+			printf("clnp_dooptions: record route: option %p for %d bytes\n",
+			       opt, oidx->cni_recrt_len);
 			printf("\tfree slot offset x%x\n", off);
 			printf("clnp_dooptions: recording %s\n", clnp_iso_addrp(isoa));
 			printf("clnp_dooptions: option dump:\n");
@@ -194,9 +194,8 @@ clnp_dooptions(options, oidx, ifp, isoa)
 			} else {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_OPTIONS]) {
-					printf("clnp_dooptions: new addr at x%x for %d\n",
-					       (unsigned int) rec_start,
-					       new_addrlen);
+					printf("clnp_dooptions: new addr at %p for %d\n",
+					       rec_start, new_addrlen);
 				}
 #endif
 

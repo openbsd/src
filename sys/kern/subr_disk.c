@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.16 1996/02/09 18:59:56 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -215,7 +215,8 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 	int sn;
 
 	if (pri != LOG_PRINTF) {
-		log(pri, "");
+		static const char fmt[] = "";
+		log(pri, fmt);
 		pr = addlog;
 	} else
 		pr = printf;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ns_pcb.c,v 1.2 1996/03/04 08:20:29 niklas Exp $	*/
-/*	$NetBSD: ns_pcb.c,v 1.9 1996/02/13 22:14:02 christos Exp $	*/
+/*	$OpenBSD: ns_pcb.c,v 1.3 1996/04/21 22:30:11 deraadt Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.10 1996/03/27 14:44:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -312,7 +312,6 @@ ns_pcbnotify(dst, errno, notify, param)
 	splx(s);
 }
 
-#ifdef notdef
 /*
  * After a routing change, flush old routing
  * and allocate a (hopefully) better one.
@@ -331,7 +330,6 @@ ns_rtchange(nsp)
 	}
 	/* SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
 }
-#endif
 
 struct nspcb *
 ns_pcblookup(faddr, lport, wildp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.24 1994/10/18 06:42:28 cgd Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -217,7 +217,7 @@ swap_pager_init()
 			swap_pager_maxcluster = dbtob(bsize);
 #ifdef DEBUG
 		if (swpagerdebug & SDB_INIT)
-			printf("swpg_init: ix %d, size %x, bsize %x\n",
+			printf("swpg_init: ix %d, size %lx, bsize %x\n",
 			       i, swtab[i].st_osize, swtab[i].st_bsize);
 #endif
 		if (bsize >= maxbsize)
@@ -247,7 +247,7 @@ swap_pager_alloc(handle, size, prot, foff)
 
 #ifdef DEBUG
 	if (swpagerdebug & (SDB_FOLLOW|SDB_ALLOC))
-		printf("swpg_alloc(%x, %x, %x)\n", handle, size, prot);
+		printf("swpg_alloc(%p, %lx, %x)\n", handle, size, prot);
 #endif
 	/*
 	 * If this is a "named" anonymous region, look it up and
@@ -482,14 +482,14 @@ swap_pager_haspage(pager, offset)
 
 #ifdef DEBUG
 	if (swpagerdebug & (SDB_FOLLOW|SDB_ALLOCBLK))
-		printf("swpg_haspage(%x, %x) ", pager, offset);
+		printf("swpg_haspage(%p, %x) ", pager, offset);
 #endif
 	swp = (sw_pager_t) pager->pg_data;
 	ix = offset / dbtob(swp->sw_bsize);
 	if (swp->sw_blocks == NULL || ix >= swp->sw_nblocks) {
 #ifdef DEBUG
 		if (swpagerdebug & (SDB_FAIL|SDB_FOLLOW|SDB_ALLOCBLK))
-			printf("swpg_haspage: %x bad offset %x, ix %x\n",
+			printf("swpg_haspage: %p bad offset %lx, ix %x\n",
 			       swp->sw_blocks, offset, ix);
 #endif
 		return(FALSE);
@@ -522,7 +522,7 @@ swap_pager_cluster(pager, offset, loffset, hoffset)
 
 #ifdef DEBUG
 	if (swpagerdebug & (SDB_FOLLOW|SDB_CLUSTER))
-		printf("swpg_cluster(%x, %x) ", pager, offset);
+		printf("swpg_cluster(%p, %lx) ", pager, offset);
 #endif
 	swp = (sw_pager_t) pager->pg_data;
 	bsize = dbtob(swp->sw_bsize);
@@ -541,7 +541,7 @@ swap_pager_cluster(pager, offset, loffset, hoffset)
 	*hoffset = hoff;
 #ifdef DEBUG
 	if (swpagerdebug & (SDB_FOLLOW|SDB_CLUSTER))
-		printf("returns [%x-%x]\n", loff, hoff);
+		printf("returns [%lx-%lx]\n", loff, hoff);
 #endif
 }
 
@@ -726,11 +726,11 @@ swap_pager_io(swp, mlist, npages, flags)
 			       bp, swp, swp->sw_poip);
 		if ((swpagerdebug & SDB_ALLOCBLK) &&
 		    (swb->swb_mask & mask) != mask)
-			printf("swpg_io: %x write %d pages at %x+%x\n",
+			printf("swpg_io: %p write %d pages at %x+%lx\n",
 			       swp->sw_blocks, npages, swb->swb_block,
 			       atop(off));
 		if (swpagerdebug & SDB_CLUSTER)
-			printf("swpg_io: off=%x, npg=%x, mask=%x, bmask=%x\n",
+			printf("swpg_io: off=%lx, npg=%x, mask=%x, bmask=%x\n",
 			       off, npages, mask, swb->swb_mask);
 #endif
 		swb->swb_mask |= mask;
@@ -776,7 +776,7 @@ swap_pager_io(swp, mlist, npages, flags)
 	 */
 #ifdef DEBUG
 	if (swpagerdebug & SDB_IO)
-		printf("swpg_io: IO start: bp %x, db %x, va %x, pa %x\n",
+		printf("swpg_io: IO start: bp %p, db %lx, va %lx, pa %lx\n",
 		       bp, swb->swb_block+btodb(off), kva, VM_PAGE_TO_PHYS(m));
 #endif
 	VOP_STRATEGY(bp);
@@ -909,7 +909,7 @@ swap_pager_clean(rw)
 			 * after awhile.
 			 */
 			if (spc->spc_flags & SPC_ERROR) {
-				printf("%s: clean of page %x failed\n",
+				printf("%s: clean of page %lx failed\n",
 				       "swap_pager_clean",
 				       VM_PAGE_TO_PHYS(m));
 				m->flags |= PG_LAUNDRY;

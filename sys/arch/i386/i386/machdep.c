@@ -1,8 +1,8 @@
-/*	$OpenBSD: machdep.c,v 1.12 1996/04/18 19:18:11 niklas Exp $	*/
-/*	$NetBSD: machdep.c,v 1.194 1996/03/08 20:19:48 cgd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1996/04/21 22:16:31 deraadt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197 1996/04/12 08:44:40 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -136,6 +136,7 @@ extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
 
+void identifycpu __P((void));
 caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
 void cpu_reset __P((void));
@@ -567,7 +568,6 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 		frame.sf_sc.sc_eflags = get_vflags(p);
-		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
 	{
@@ -607,6 +607,7 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -683,6 +684,12 @@ sys_sigreturn(p, v, retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
+
+	if (context.sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	if (context.sc_onstack & 01)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;

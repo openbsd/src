@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_subr.c,v 1.2 1996/03/04 10:36:29 mickey Exp $	*/
-/*	$NetBSD: tp_subr.c,v 1.7 1996/02/13 22:11:59 christos Exp $	*/
+/*	$OpenBSD: tp_subr.c,v 1.3 1996/04/21 22:29:57 deraadt Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.8 1996/03/16 23:14:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -222,7 +222,7 @@ tp_rtt_rtv(tpcb)
 		    tpcb->tp_peer_acktime, 128 /* XXX */ );
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_RTT]) {
-		printf("%s tpcb 0x%x, elapsed %d, delta %d, rtt %d, rtv %d, old %d\n",
+		printf("%s tpcb %p, elapsed %d, delta %d, rtt %d, rtv %d, old %d\n",
 		       "tp_rtt_rtv:", tpcb, elapsed, delta, tpcb->tp_rtt, tpcb->tp_rtv, old);
 	}
 #endif
@@ -262,7 +262,7 @@ tp_goodack(tpcb, cdt, seq, subseq)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ACKRECV]) {
-		printf("goodack tpcb 0x%x seq 0x%x cdt %d una 0x%x new 0x%x nxt 0x%x\n",
+		printf("goodack tpcb %p seq 0x%x cdt %d una 0x%x new 0x%x nxt 0x%x\n",
 		       tpcb, seq, cdt, tpcb->tp_snduna, tpcb->tp_sndnew, tpcb->tp_sndnxt);
 	}
 #endif
@@ -286,7 +286,7 @@ tp_goodack(tpcb, cdt, seq, subseq)
 	discard_the_ack:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ACKRECV]) {
-				printf("goodack discard : tpcb 0x%x subseq %d r_subseq %d\n",
+				printf("goodack discard : tpcb %p subseq %d r_subseq %d\n",
 				       tpcb, subseq, tpcb->tp_r_subseq);
 			}
 #endif
@@ -311,7 +311,7 @@ tp_goodack(tpcb, cdt, seq, subseq)
 				tpcb->tp_cong_win / tpcb->tp_l_tpdusize) / 2;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKRECV]) {
-					printf("%s tpcb 0x%x seq 0x%x rttseq 0x%x onxt 0x%x\n",
+					printf("%s tpcb %p seq 0x%x rttseq 0x%x onxt 0x%x\n",
 					       "goodack dupacks:", tpcb, seq, tpcb->tp_rttseq, onxt);
 				}
 #endif
@@ -422,7 +422,7 @@ tp_goodack(tpcb, cdt, seq, subseq)
 done:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ACKRECV]) {
-		printf("goodack returns 0x%x, cdt 0x%x ocdt 0x%x cwin 0x%x\n",
+		printf("goodack returns 0x%x, cdt 0x%x ocdt 0x%x cwin 0x%lx\n",
 		       bang, cdt, old_fcredit, tpcb->tp_cong_win);
 	}
 #endif
@@ -456,7 +456,7 @@ tp_sbdrop(tpcb, seq)
 		sbdroprecord(sb);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ACKRECV]) {
-		printf("tp_sbdroping %d pkts %d bytes on %x at 0x%x\n",
+		printf("tp_sbdroping %d pkts %ld bytes on %p at 0x%x\n",
 		       oldi, oldcc - sb->sb_cc, tpcb, seq);
 	}
 #endif
@@ -517,7 +517,7 @@ tp_send(tpcb)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DATA]) {
-		printf("tp_send enter tpcb 0x%x nxt 0x%x win %d high 0x%x\n",
+		printf("tp_send enter tpcb %p nxt 0x%x win %d high 0x%x\n",
 		       tpcb, tpcb->tp_sndnxt, cong_win, highseq);
 	}
 #endif
@@ -577,7 +577,7 @@ tp_send(tpcb)
 
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_DATA]) {
-			printf("tp_sending tpcb 0x%x nxt 0x%x\n",
+			printf("tp_sending tpcb %p nxt 0x%x\n",
 			       tpcb, tpcb->tp_sndnxt);
 		}
 #endif
@@ -971,7 +971,7 @@ tp_rsyflush(tpcb)
 				m_freem(*mp);
 			}
 		if (tpcb->tp_rsycnt) {
-			printf("tp_rsyflush %x\n", tpcb);
+			printf("tp_rsyflush %p\n", tpcb);
 			tpcb->tp_rsycnt = 0;
 		}
 	}
@@ -1022,13 +1022,13 @@ tpsbcheck(tpcb, i)
 				mbcnt += m->m_ext.ext_size;
 		}
 		if (len != pktlen) {
-			printf("test %d; len %d != pktlen %d on mbuf 0x%x\n",
+			printf("test %d; len %d != pktlen %d on mbuf %p\n",
 			       i, len, pktlen, n);
 			panic("tpsbcheck short");
 		}
 	}
 	if (len != sb->sb_cc || mbcnt != sb->sb_mbcnt) {
-		printf("test %d: cc %d != %d || mbcnt %d != %d\n", i, len, sb->sb_cc,
+		printf("test %d: cc %d != %ld || mbcnt %d != %ld\n", i, len, sb->sb_cc,
 		       mbcnt, sb->sb_mbcnt);
 		panic("tpsbcheck");
 	}

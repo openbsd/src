@@ -1,5 +1,5 @@
-/*	$OpenBSD: isavar.h,v 1.7 1996/04/18 23:47:43 niklas Exp $	*/
-/*	$NetBSD: isavar.h,v 1.20 1996/03/16 02:00:43 cgd Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.8 1996/04/21 22:24:16 deraadt Exp $	*/
+/*	$NetBSD: isavar.h,v 1.21 1996/04/11 22:20:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -47,19 +47,36 @@
 #include <sys/queue.h>
 #include <machine/bus.h>
 
+/* 
+ * Structures and definitions needed by the machine-dependent header.
+ */
+struct isabus_attach_args;
+
+#if (alpha + i386 != 1)
+ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+#if alpha
+#include <alpha/isa/isa_machdep.h>
+#endif
+#if i386
+#include <i386/isa/isa_machdep.h>
+#endif
+
 /*
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
 	char	*iba_busname;			/* XXX should be common */
 	bus_chipset_tag_t iba_bc;		/* XXX should be common */
+	isa_chipset_tag_t iba_ic;
 };
 
 /*
  * ISA driver attach arguments
  */
 struct isa_attach_args {
-	bus_chipset_tag_t ia_bc;	/* bus chipset tag */
+	bus_chipset_tag_t ia_bc;
+	isa_chipset_tag_t ia_ic;
 
 	int	ia_iobase;		/* base i/o address */
 	int	ia_iosize;		/* span of ports used */
@@ -92,7 +109,8 @@ struct isa_softc {
 	TAILQ_HEAD(, isadev)
 		sc_subdevs;		/* list of all children */
 
-	bus_chipset_tag_t sc_bc;	/* bus chipset tag */
+	bus_chipset_tag_t sc_bc;
+	isa_chipset_tag_t sc_ic;
 };
 
 #define		cf_iobase		cf_loc[0]
@@ -120,9 +138,6 @@ struct isa_softc {
 
 /* ISA interrupt sharing types */
 void	isascan __P((struct device *parent, void *match));
-void	*isa_intr_establish __P((int intr, int type, int level,
-	    int (*ih_fun)(void *), void *ih_arg, char *));
-void	isa_intr_disestablish __P((void *handler));
 char	*isa_intr_typename __P((int type));
 
 #ifdef NEWCONFIG

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ed.c,v 1.17 1995/12/24 02:29:57 mycroft Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.3 1996/04/21 22:15:25 deraadt Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.19 1996/03/21 21:00:21 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -95,8 +96,8 @@ struct ed_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 };
 
-int edmatch __P((struct device *, void *, void *));
-void edattach __P((struct device *, struct device *, void *));
+int ed_zbus_match __P((struct device *, void *, void *));
+void ed_zbus_attach __P((struct device *, struct device *, void *));
 int edintr __P((struct ed_softc *));
 int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
 void ed_start __P((struct ifnet *));
@@ -115,8 +116,12 @@ static inline void ed_xmit __P((struct ed_softc *));
 static inline caddr_t ed_ring_copy __P((/* struct ed_softc *, caddr_t, caddr_t,
 					u_short */));
 
-struct cfdriver edcd = {
-	NULL, "ed", edmatch, edattach, DV_IFNET, sizeof(struct ed_softc)
+struct cfattach ed_zbus_ca = {
+	sizeof(struct ed_softc), ed_zbus_match, ed_zbus_attach
+};
+
+struct cfdriver ed_cd = {
+	NULL, "ed", DV_IFNET
 };
 
 #define	ETHER_MIN_LEN	64
@@ -176,7 +181,7 @@ word_copy(a, b, len)
 }
 
 int
-edmatch(parent, match, aux)
+ed_zbus_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -190,7 +195,7 @@ edmatch(parent, match, aux)
 }
 
 void
-edattach(parent, self, aux)
+ed_zbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -234,6 +239,14 @@ edattach(parent, self, aux)
 	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	/*
+	 * Interupts must be inactive when reading the prom, as the interupt
+	 * line is shared with one of its address lines.
+	 */
+
+	NIC_PUT(sc, ED_P0_IMR, 0x00); /* disable ints */
+	NIC_PUT(sc, ED_P0_ISR, 0xff); /* clear ints */
+
+	/*
 	 * read the ethernet address from the board
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -244,7 +257,7 @@ edattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = edcd.cd_name;
+	ifp->if_name = ed_cd.cd_name;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
 	ifp->if_watchdog = ed_watchdog;
@@ -312,7 +325,7 @@ void
 ed_watchdog(unit)
 	short unit;
 {
-	struct ed_softc *sc = edcd.cd_devs[unit];
+	struct ed_softc *sc = ed_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -486,7 +499,7 @@ void
 ed_start(ifp)
 	struct ifnet *ifp;
 {
-	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int len;
@@ -845,7 +858,7 @@ ed_ioctl(ifp, command, data)
 	u_long command;
 	caddr_t data;
 {
-	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

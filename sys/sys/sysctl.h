@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysctl.h,v 1.4 1996/04/18 21:41:13 niklas Exp $	*/
-/*	$NetBSD: sysctl.h,v 1.14 1996/03/12 00:22:43 jonathan Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.5 1996/04/21 22:31:59 deraadt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,7 +65,7 @@
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
- * for that subsystem. Each name is either a node with further 
+ * for that subsystem. Each name is either a node with further
  * levels defined below it, or it is a leaf of some particular
  * type given below. Each sysctl level defines a set of name/type
  * pairs to be used by sysctl(1) in manipulating the subsystem.
@@ -169,7 +169,7 @@ struct ctlname {
 	{ "timex", CTLTYPE_STRUCT }, \
 }
 
-/* 
+/*
  * KERN_PROC subtypes
  */
 #define KERN_PROC_ALL		0	/* everything */
@@ -180,7 +180,7 @@ struct ctlname {
 #define	KERN_PROC_UID		5	/* by effective uid */
 #define	KERN_PROC_RUID		6	/* by real uid */
 
-/* 
+/*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
 struct kinfo_proc {
@@ -351,6 +351,9 @@ int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_vnode __P((char *, size_t *));
 int sysctl_ntptime __P((char *, size_t *));
+#ifdef GPROF
+int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
+#endif
 
 void fill_eproc __P((struct proc *, struct eproc *));
 
@@ -370,7 +373,6 @@ int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
-
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 

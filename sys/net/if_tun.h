@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.2 1996/02/20 14:34:01 mickey Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.3 1996/04/21 22:28:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>

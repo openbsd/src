@@ -1,4 +1,5 @@
-/*	$NetBSD: par.c,v 1.11 1994/12/01 17:25:33 chopps Exp $	*/
+/*	$OpenBSD: par.c,v 1.2 1996/04/21 22:15:41 deraadt Exp $	*/
+/*	$NetBSD: par.c,v 1.12 1996/03/17 01:17:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -89,19 +90,24 @@ void parstart __P((void *));
 void parintr __P((void *));
 
 void parattach __P((struct device *, struct device *, void *));
-int parmatch __P((struct device *, struct cfdata *, void *));
+int parmatch __P((struct device *, void *, void *));
 
-struct cfdriver parcd = {
-	NULL, "par", (cfmatch_t)parmatch, parattach, DV_DULL,
-	sizeof(struct device), NULL, 0 };
+struct cfattach par_ca = {
+	sizeof(struct device), parmatch, parattach
+};
+
+struct cfdriver par_cd = {
+	NULL, "par", DV_DULL, NULL, 0
+};
 
 /*ARGSUSED*/
 int
-parmatch(pdp, cfp, auxp)
+parmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname((char *)auxp, "par") && cfp->cf_unit == 0)
 		return(1);
 	return(0);

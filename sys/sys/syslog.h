@@ -1,5 +1,5 @@
-/*	$OpenBSD: syslog.h,v 1.2 1996/03/03 12:12:24 niklas Exp $	*/
-/*	$NetBSD: syslog.h,v 1.10 1996/02/09 18:25:40 christos Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.3 1996/04/21 22:32:01 deraadt Exp $	*/
+/*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -183,15 +183,18 @@ __BEGIN_DECLS
 void	closelog __P((void));
 void	openlog __P((const char *, int, int));
 int	setlogmask __P((int));
-void	syslog __P((int, const char *, ...));
+void	syslog __P((int, const char *, ...))
+    __attribute__((__format__(__printf__,2,3)));
 void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
 __END_DECLS
 
 #else /* !_KERNEL */
 
 void	logpri __P((int));
-void	log __P((int, const char *, ...));
-void	addlog __P((const char *, ...));
+void	log __P((int, const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+void	addlog __P((const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	logwakeup __P((void));
 
 #endif /* !_KERNEL */

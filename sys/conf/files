@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.14 1996/04/19 16:08:25 niklas Exp $
+#	$OpenBSD: files,v 1.15 1996/04/21 22:18:51 deraadt Exp $
 #	$NetBSD: files,v 1.82 1996/03/19 01:02:35 paulus Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -93,8 +93,8 @@ file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
 file kern/exec_aout.c
 file kern/exec_conf.c
-file kern/exec_ecoff.c			compat_ultrix compat_osf1 exec_ecoff
-file kern/exec_elf.c			compat_svr4 compat_linux
+file kern/exec_ecoff.c			compat_ultrix | compat_osf1 | exec_ecoff
+file kern/exec_elf.c			compat_svr4 | compat_linux
 file kern/exec_script.c
 file kern/exec_subr.c
 file kern/init_main.c
@@ -131,7 +131,7 @@ file kern/sys_generic.c
 file kern/sys_process.c
 file kern/sys_socket.c
 file kern/syscalls.c			syscall_debug
-file kern/sysv_ipc.c			sysvshm sysvsem sysvmsg
+file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
 file kern/sysv_msg.c			sysvmsg
 file kern/sysv_sem.c			sysvsem
 file kern/sysv_shm.c			sysvshm
@@ -193,10 +193,10 @@ file msdosfs/msdosfs_lookup.c		msdosfs
 file msdosfs/msdosfs_vfsops.c		msdosfs
 file msdosfs/msdosfs_vnops.c		msdosfs
 file net/bpf.c				bpfilter		needs-count
-file net/bpf_filter.c			bpfilter ppp
+file net/bpf_filter.c			bpfilter | ppp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
-file net/if_ethersubr.c			ether fddi		needs-flag
+file net/if_ethersubr.c			ether | fddi		needs-flag
 file net/if_fddisubr.c			fddi
 file net/if_loop.c			loop			needs-count
 file net/if_sl.c			sl			needs-count
@@ -211,7 +211,7 @@ file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
-file net/slcompress.c			sl ppp
+file net/slcompress.c			sl | ppp
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
@@ -226,7 +226,7 @@ file netccitt/llc_timer.c		llc
 file netccitt/pk_acct.c			ccitt
 file netccitt/pk_debug.c		ccitt
 file netccitt/pk_input.c		ccitt
-file netccitt/pk_llcsubr.c		llc hdlc
+file netccitt/pk_llcsubr.c		llc | hdlc
 file netccitt/pk_output.c		ccitt
 file netccitt/pk_subr.c			ccitt
 file netccitt/pk_timer.c		ccitt
@@ -272,24 +272,24 @@ file netiso/iso_chksum.c		iso
 file netiso/iso_pcb.c			iso
 file netiso/iso_proto.c			iso
 file netiso/iso_snpac.c			iso
-file netiso/tp_astring.c		iso tpip
+file netiso/tp_astring.c		iso | tpip
 file netiso/tp_cons.c			iso
-file netiso/tp_driver.c			iso tpip
-file netiso/tp_emit.c			iso tpip
-file netiso/tp_inet.c			iso tpip
-file netiso/tp_input.c			iso tpip
+file netiso/tp_driver.c			iso | tpip
+file netiso/tp_emit.c			iso | tpip
+file netiso/tp_inet.c			iso | tpip
+file netiso/tp_input.c			iso | tpip
 file netiso/tp_iso.c			iso
-file netiso/tp_meas.c			iso tpip
-file netiso/tp_output.c			iso tpip
-file netiso/tp_pcb.c			iso tpip
-file netiso/tp_subr.c			iso tpip
-file netiso/tp_subr2.c			iso tpip
-file netiso/tp_timer.c			iso tpip
-file netiso/tp_trace.c			iso tpip
-file netiso/tp_usrreq.c			iso tpip
-file netiso/tuba_subr.c			iso tuba
-file netiso/tuba_table.c		iso tuba
-file netiso/tuba_usrreq.c		iso tuba
+file netiso/tp_meas.c			iso | tpip
+file netiso/tp_output.c			iso | tpip
+file netiso/tp_pcb.c			iso | tpip
+file netiso/tp_subr.c			iso | tpip
+file netiso/tp_subr2.c			iso | tpip
+file netiso/tp_timer.c			iso | tpip
+file netiso/tp_trace.c			iso | tpip
+file netiso/tp_usrreq.c			iso | tpip
+file netiso/tuba_subr.c			iso | tuba
+file netiso/tuba_table.c		iso | tuba
+file netiso/tuba_usrreq.c		iso | tuba
 file netns/idp_usrreq.c			ns
 file netns/ns.c				ns
 file netns/ns_error.c			ns
@@ -316,21 +316,21 @@ file nfs/krpc_subr.c			nfsclient
 file nfs/nfs_bio.c			nfsclient
 file nfs/nfs_boot.c			nfsclient
 file nfs/nfs_node.c			nfsclient
-file nfs/nfs_nqlease.c			nfsserver nfsclient
+file nfs/nfs_nqlease.c			nfsserver | nfsclient
 file nfs/nfs_serv.c			nfsserver
-file nfs/nfs_socket.c			nfsserver nfsclient
+file nfs/nfs_socket.c			nfsserver | nfsclient
 file nfs/nfs_srvcache.c			nfsserver
-file nfs/nfs_subs.c			nfsserver nfsclient
-file nfs/nfs_syscalls.c			nfsserver nfsclient
+file nfs/nfs_subs.c			nfsserver | nfsclient
+file nfs/nfs_syscalls.c			nfsserver | nfsclient
 file nfs/nfs_vfsops.c			nfsclient
 file nfs/nfs_vnops.c			nfsclient
-file ufs/ffs/ffs_alloc.c		ffs mfs
-file ufs/ffs/ffs_balloc.c		ffs mfs
-file ufs/ffs/ffs_inode.c		ffs mfs
-file ufs/ffs/ffs_subr.c			ffs mfs
-file ufs/ffs/ffs_tables.c		ffs mfs
-file ufs/ffs/ffs_vfsops.c		ffs mfs
-file ufs/ffs/ffs_vnops.c		ffs mfs
+file ufs/ffs/ffs_alloc.c		ffs | mfs
+file ufs/ffs/ffs_balloc.c		ffs | mfs
+file ufs/ffs/ffs_inode.c		ffs | mfs
+file ufs/ffs/ffs_subr.c			ffs | mfs
+file ufs/ffs/ffs_tables.c		ffs | mfs
+file ufs/ffs/ffs_vfsops.c		ffs | mfs
+file ufs/ffs/ffs_vnops.c		ffs | mfs
 file ufs/lfs/lfs_alloc.c		lfs
 file ufs/lfs/lfs_bio.c			lfs
 file ufs/lfs/lfs_balloc.c		lfs
@@ -344,13 +344,13 @@ file ufs/lfs/lfs_vfsops.c		lfs
 file ufs/lfs/lfs_vnops.c		lfs
 file ufs/mfs/mfs_vfsops.c		mfs
 file ufs/mfs/mfs_vnops.c		mfs
-file ufs/ufs/ufs_bmap.c			ffs lfs mfs
-file ufs/ufs/ufs_ihash.c		ffs lfs mfs
-file ufs/ufs/ufs_inode.c		ffs lfs mfs
-file ufs/ufs/ufs_lookup.c		ffs lfs mfs
-file ufs/ufs/ufs_quota.c		ffs lfs mfs
-file ufs/ufs/ufs_vfsops.c		ffs lfs mfs
-file ufs/ufs/ufs_vnops.c		ffs lfs mfs
+file ufs/ufs/ufs_bmap.c			ffs | lfs | mfs
+file ufs/ufs/ufs_ihash.c		ffs | lfs | mfs
+file ufs/ufs/ufs_inode.c		ffs | lfs | mfs
+file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs
+file ufs/ufs/ufs_quota.c		ffs | lfs | mfs
+file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs
+file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs
 file vm/device_pager.c			devpager
 file vm/kern_lock.c
 file vm/swap_pager.c			swappager

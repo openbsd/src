@@ -1,4 +1,5 @@
-/*	$NetBSD: gtsc.c,v 1.13 1995/09/04 13:04:43 chopps Exp $	*/
+/*	$OpenBSD: gtsc.c,v 1.2 1996/04/21 22:15:17 deraadt Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.14 1996/03/17 01:17:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,7 +54,7 @@
 #include <amiga/dev/gvpbusvar.h>
 
 void gtscattach __P((struct device *, struct device *, void *));
-int gtscmatch __P((struct device *, struct cfdata *, void *));
+int gtscmatch __P((struct device *, void *, void *));
 int gtscprint __P((void *auxp, char *));
 
 void gtsc_enintr __P((struct sbic_softc *));
@@ -85,16 +86,20 @@ int gtsc_clock_override = 0;
 int gtsc_debug = 0;
 #endif
 
-struct cfdriver gtsccd = {
-	NULL, "gtsc", (cfmatch_t)gtscmatch, gtscattach, 
-	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
+struct cfattach gtsc_ca = {
+	sizeof(struct sbic_softc), gtscmatch, gtscattach
+};
+
+struct cfdriver gtsc_cd = {
+	NULL, "gtsc", DV_DULL, NULL, 0
+};
 
 int
-gtscmatch(pdp, cdp, auxp)
+gtscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct gvpbus_args *gap;
 
 	gap = auxp;
@@ -364,8 +369,8 @@ gtsc_dump()
 {
 	int i;
 
-	for (i = 0; i < gtsccd.cd_ndevs; ++i)
-		if (gtsccd.cd_devs[i])
-			sbic_dump(gtsccd.cd_devs[i]);
+	for (i = 0; i < gtsc_cd.cd_ndevs; ++i)
+		if (gtsc_cd.cd_devs[i])
+			sbic_dump(gtsc_cd.cd_devs[i]);
 }
 #endif

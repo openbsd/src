@@ -1,8 +1,8 @@
-/*	$OpenBSD: kern_conf.h,v 1.2 1996/04/19 16:08:52 niklas Exp $	*/
-/*	$NetBSD: kern_conf.h,v 1.2 1996/03/14 19:01:08 christos Exp $	*/
+/*	$OpenBSD: svr4_socket.h,v 1.1 1996/04/21 22:18:25 deraadt Exp $	*/
+/*	$NetBSD: svr4_socket.h,v 1.1 1996/04/11 12:43:31 christos Exp $	*/
 
 /*
- * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
+ * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,26 +30,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/conf.h>
+#ifndef _SVR4_SOCKET_H_
+#define _SVR4_SOCKET_H_
 
-cdev_decl(filedesc);
+struct sockaddr_un;
+struct proc;
+struct file;
 
-cdev_decl(log);
+struct sockaddr_un *svr4_find_socket __P((struct proc *, struct file *,
+    dev_t, ino_t));
+void svr4_delete_socket __P((struct proc *, struct file *));
+int svr4_add_socket __P((struct proc *, const char *, struct stat *));
 
-#ifndef LKM
-# define	NLKM	0
-# define	lkmenodev	enodev
-#else
-# define	NLKM	1
-#endif
-cdev_decl(lkm);
-
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-
-cdev_decl(ctty);
+#endif /* _SVR4_SOCKET_H_ */

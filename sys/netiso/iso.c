@@ -1,5 +1,5 @@
-/*	$OpenBSD: iso.c,v 1.2 1996/03/04 10:35:26 mickey Exp $	*/
-/*	$NetBSD: iso.c,v 1.13 1996/02/13 22:09:54 christos Exp $	*/
+/*	$OpenBSD: iso.c,v 1.3 1996/04/21 22:29:25 deraadt Exp $	*/
+/*	$NetBSD: iso.c,v 1.14 1996/04/13 01:34:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -858,8 +858,8 @@ iso_nlctloutput(cmd, optname, pcb, m)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_nlctloutput: cmd %x, opt %x, pcb %x, m %x\n",
-		       cmd, optname, (unsigned int) pcb, (unsigned int) m);
+		printf("iso_nlctloutput: cmd %x, opt %x, pcb %p, m %p\n",
+		       cmd, optname, pcb, m);
 	}
 #endif
 

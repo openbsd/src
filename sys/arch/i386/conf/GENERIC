@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.7 1996/04/18 18:55:33 niklas Exp $
-#	$NetBSD: GENERIC,v 1.36 1996/03/16 06:09:03 thorpej Exp $
+#	$OpenBSD: GENERIC,v 1.8 1996/04/21 22:16:06 deraadt Exp $
+#	$NetBSD: GENERIC,v 1.40 1996/03/30 23:57:09 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -42,6 +42,7 @@ options		SYSVSHM		# System V-like memory sharing
 options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_11	# NetBSD 1.1,
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
@@ -142,6 +143,9 @@ uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 scsibus* at uha?
+wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+wds1	at isa? port 0x358 irq 11 drq 5
+scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -179,7 +183,10 @@ sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
-#spkr0	at isa? port 0x61
+#spkr0	at pckbd? port 0x61
+
+# Joystick driver. Probe is a little strange; add only if you have one.
+#joy0	at isa? port 0x201
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

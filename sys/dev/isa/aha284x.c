@@ -1,4 +1,4 @@
-/*	$NetBSD: aha284x.c,v 1.2 1996/01/13 02:06:30 thorpej Exp $	*/
+/*	$NetBSD: aha284x.c,v 1.4 1996/04/11 22:28:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Graff.  All rights reserved.
@@ -47,13 +47,12 @@
 static int ahe_probe __P((struct device *, void *, void *));
 static void ahe_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver ahecd = {
-        NULL,          /* devices found */
-	"ahe",         /* device name */
-	ahe_probe,     /* match routine */
-	ahe_attach,    /* attach routine */
-	DV_DULL,       /* device class */
-        sizeof(struct ahc_softc),  /* size of private dev data */
+struct cfattach ahe_ca = {
+	sizeof(struct ahc_softc), ahe_probe, ahe_attach
+};
+
+struct cfdriver ahe_cd = {
+        NULL, "ahe", DV_DULL
 };
 
 /*
@@ -179,8 +178,8 @@ ahe_attach(parent, self, aux)
 #ifdef NEWCONFIG
         isa_establish(&ahc->sc_id, &ahc->sc_dev);
 #endif
-        ahc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-					ahcintr, ahc, ahc->sc_dev.dv_xname);
+        ahc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+            IPL_BIO, ahcintr, ahc, ahc->sc_dev.dv_xname);
 
 	/*
 	 * attach the devices on the bus

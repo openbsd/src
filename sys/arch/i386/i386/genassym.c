@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.46 1996/02/02 19:42:43 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.48 1996/03/28 23:44:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,32 +68,15 @@
 #include <i386/isa/isa_machdep.h>
 #endif
 
+#include <stdio.h>
+#include <stddef.h>
+
+int
 main()
 {
-	struct proc *p = 0;
-	struct vmmeter *vm = 0;
-	struct pcb *pcb = 0;
-	struct trapframe *tf = 0;
-	struct sigframe *sigf = 0;
-	struct sigcontext *sc = 0;
-	struct uprof *uprof = 0;
-#if NISA > 0
-	struct intrhand *ih = 0;
-#endif
-#ifdef COMPAT_SVR4
-	struct svr4_sigframe *svr4_sigf = 0;
-	struct svr4_ucontext *svr4_uc = 0;
-#endif
-#ifdef COMPAT_LINUX
-	struct linux_sigframe *linux_sigf = 0;
-	struct linux_sigcontext *linux_sc = 0;
-#endif
-#ifdef COMPAT_FREEBSD
-	struct freebsd_sigframe *freebsd_sigf = 0;
-	struct freebsd_sigcontext *freebsd_sc = 0;
-#endif
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
+#define	off(N,S,M)	def(N, (int)offsetof(S, M))
 
 	def("SRUN", SRUN);
 
@@ -102,70 +85,70 @@ main()
 	def("NKPDE", NKPDE);
 	def("APTDPTDI", APTDPTDI);
 
-	def("VM_MAXUSER_ADDRESS", VM_MAXUSER_ADDRESS);
+	def("VM_MAXUSER_ADDRESS", (int)VM_MAXUSER_ADDRESS);
 
-	def("P_ADDR", &p->p_addr);
-	def("P_BACK", &p->p_back);
-	def("P_FORW", &p->p_forw);
-	def("P_PRIORITY", &p->p_priority);
-	def("P_STAT", &p->p_stat);
-	def("P_WCHAN", &p->p_wchan);
-	def("P_VMSPACE", &p->p_vmspace);
-	def("P_FLAG", &p->p_flag);
+	off("P_ADDR", struct proc, p_addr);
+	off("P_BACK", struct proc, p_back);
+	off("P_FORW", struct proc, p_forw);
+	off("P_PRIORITY", struct proc, p_priority);
+	off("P_STAT", struct proc, p_stat);
+	off("P_WCHAN", struct proc, p_wchan);
+	off("P_VMSPACE", struct proc, p_vmspace);
+	off("P_FLAG", struct proc, p_flag);
 
 	def("P_SYSTEM", P_SYSTEM);
 
-	def("V_TRAP", &vm->v_trap);
-	def("V_INTR", &vm->v_intr);
+	off("V_TRAP", struct vmmeter, v_trap);
+	off("V_INTR", struct vmmeter, v_intr);
 
-	def("PCB_CR3", &pcb->pcb_cr3);
-	def("PCB_EBP", &pcb->pcb_ebp);
-	def("PCB_ESP", &pcb->pcb_esp);
-	def("PCB_FS", &pcb->pcb_fs);
-	def("PCB_GS", &pcb->pcb_gs);
-	def("PCB_CR0", &pcb->pcb_cr0);
-	def("PCB_LDT_SEL", &pcb->pcb_ldt_sel);
-	def("PCB_TSS_SEL", &pcb->pcb_tss_sel);
-	def("PCB_ONFAULT", &pcb->pcb_onfault);
+	off("PCB_CR3", struct pcb, pcb_cr3);
+	off("PCB_EBP", struct pcb, pcb_ebp);
+	off("PCB_ESP", struct pcb, pcb_esp);
+	off("PCB_FS", struct pcb, pcb_fs);
+	off("PCB_GS", struct pcb, pcb_gs);
+	off("PCB_CR0", struct pcb, pcb_cr0);
+	off("PCB_LDT_SEL", struct pcb, pcb_ldt_sel);
+	off("PCB_TSS_SEL", struct pcb, pcb_tss_sel);
+	off("PCB_ONFAULT", struct pcb, pcb_onfault);
 
-	def("TF_CS", &tf->tf_cs);
-	def("TF_TRAPNO", &tf->tf_trapno);
-	def("TF_EFLAGS", &tf->tf_eflags);
+	off("TF_CS", struct trapframe, tf_cs);
+	off("TF_TRAPNO", struct trapframe, tf_trapno);
+	off("TF_EFLAGS", struct trapframe, tf_eflags);
 
 	def("FRAMESIZE", sizeof(struct trapframe));
 
-	def("SIGF_HANDLER", &sigf->sf_handler);
-	def("SIGF_SC", &sigf->sf_sc);
-	def("SC_FS", &sc->sc_fs);
-	def("SC_GS", &sc->sc_gs);
-	def("SC_EFLAGS", &sc->sc_eflags);
+	off("SIGF_HANDLER", struct sigframe, sf_handler);
+	off("SIGF_SC", struct sigframe, sf_sc);
+	off("SC_FS", struct sigcontext, sc_fs);
+	off("SC_GS", struct sigcontext, sc_gs);
+	off("SC_EFLAGS", struct sigcontext, sc_eflags);
 
 #ifdef COMPAT_SVR4
-	def("SVR4_SIGF_HANDLER", &svr4_sigf->sf_handler);
-	def("SVR4_SIGF_UC", &svr4_sigf->sf_uc);
-	def("SVR4_UC_FS", &svr4_uc->uc_mcontext.greg[SVR4_X86_FS]);
-	def("SVR4_UC_GS", &svr4_uc->uc_mcontext.greg[SVR4_X86_GS]);
-	def("SVR4_UC_EFLAGS", &svr4_uc->uc_mcontext.greg[SVR4_X86_EFL]);
+	off("SVR4_SIGF_HANDLER", struct svr4_sigframe, sf_handler);
+	off("SVR4_SIGF_UC", struct svr4_sigframe, sf_uc);
+	off("SVR4_UC_FS", struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_FS]);
+	off("SVR4_UC_GS", struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_GS]);
+	off("SVR4_UC_EFLAGS", struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_EFL]);
 #endif
 
 #ifdef COMPAT_LINUX
-	def("LINUX_SIGF_HANDLER", &linux_sigf->sf_handler);
-	def("LINUX_SIGF_SC", &linux_sigf->sf_sc);
-	def("LINUX_SC_FS", &linux_sc->sc_fs);
-	def("LINUX_SC_GS", &linux_sc->sc_gs);
-	def("LINUX_SC_EFLAGS", &linux_sc->sc_eflags);
+	off("LINUX_SIGF_HANDLER", struct linux_sigframe, sf_handler);
+	off("LINUX_SIGF_SC", struct linux_sigframe, sf_sc);
+	off("LINUX_SC_FS", struct linux_sigcontext, sc_fs);
+	off("LINUX_SC_GS", struct linux_sigcontext, sc_gs);
+	off("LINUX_SC_EFLAGS", struct linux_sigcontext, sc_eflags);
 #endif
 
 #ifdef COMPAT_FREEBSD
-	def("FREEBSD_SIGF_HANDLER", &freebsd_sigf->sf_handler);
-	def("FREEBSD_SIGF_SC", &freebsd_sigf->sf_sc);
+	off("FREEBSD_SIGF_HANDLER", struct freebsd_sigframe, sf_handler);
+	off("FREEBSD_SIGF_SC", struct freebsd_sigframe, sf_sc);
 #endif
 
 #if NISA > 0
-	def("IH_FUN", &ih->ih_fun);
-	def("IH_ARG", &ih->ih_arg);
-	def("IH_COUNT", &ih->ih_count);
-	def("IH_NEXT", &ih->ih_next);
+	off("IH_FUN", struct intrhand, ih_fun);
+	off("IH_ARG", struct intrhand, ih_arg);
+	off("IH_COUNT", struct intrhand, ih_count);
+	off("IH_NEXT", struct intrhand, ih_next);
 #endif
 
 	exit(0);

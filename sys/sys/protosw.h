@@ -1,5 +1,5 @@
-/*	$OpenBSD: protosw.h,v 1.2 1996/03/03 12:12:08 niklas Exp $	*/
-/*	$NetBSD: protosw.h,v 1.9 1996/02/13 21:08:55 christos Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.3 1996/04/21 22:31:54 deraadt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -88,7 +88,7 @@ struct protosw {
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
 			__P((void));
-		    
+
 	void	(*pr_fasttimo)		/* fast timeout (200ms) */
 			__P((void));
 	void	(*pr_slowtimo)		/* slow timeout (500ms) */

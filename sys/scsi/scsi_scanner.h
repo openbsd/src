@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_scanner.h,v 1.2 1996/04/19 16:10:13 niklas Exp $	*/
+/*	$OpenBSD: scsi_scanner.h,v 1.3 1996/04/21 22:31:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -49,62 +49,62 @@
 struct scsi_rw_scanner {
 #define	READ			0x08
 #define WRITE			0x0a
-	u_char	opcode;
-	u_char	byte2;
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SRW_FIXED		0x01
-	u_char	len[3];
-	u_char	control;
+	u_int8_t len[3];
+	u_int8_t control;
 };
 
 struct scsi_start_stop {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char  how;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t how;
 #define	SSS_STOP		0x00
 #define	SSS_START		0x01
 #define	SSS_LOEJ		0x02
-	u_char	control;
+	u_int8_t control;
 };
 
 struct scsi_set_window {
 #define SET_WINDOW		0x24 /* set params of image area and windows */
 #define GET_WINDOW		0x25
-	u_char	opcode;
-	u_char	byte2;
-	u_char	reserved[4];
-	u_char  len[3];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved[4];
+	u_int8_t len[3];
+	u_int8_t control;
 };
 
 struct scsi_window_header {
-	u_char	reserved[6];
-	u_char  len[2];		    /* MSB-LSB */
+	u_int8_t reserved[6];
+	u_int8_t len[2];
 };
 
 struct scsi_window_data {
-	u_char	window_id;	    /* must be zero */
-	u_char	res1:7;
-	u_char	auto_bit:1;
-	u_char	x_res[2];
-	u_char	y_res[2];
-	u_char	x_org[4];
-	u_char	y_org[4];
-	u_char	width[4];
-	u_char	length[4];
-	u_char	brightness;
-	u_char	threshold;
-	u_char	contrast;
-	u_char	image_comp;	    /* image composition (data type) */
-	u_char	bits_per_pixel;
-	u_char	halftone_pattern[2];
-	u_char	rif:1;		    /* reverse image format (mono negative) */
-	u_char  res2:4;
-	u_char	pad_type:3;
-	u_char	bit_ordering[2];
-	u_char	compression_type;
-	u_char	compression_arg;
-	u_char	res3[6];
+	u_int8_t window_id;	    /* must be zero */
+	u_int8_t res1:7;
+	u_int8_t auto_bit:1;
+	u_int8_t x_res[2];
+	u_int8_t y_res[2];
+	u_int8_t x_org[4];
+	u_int8_t y_org[4];
+	u_int8_t width[4];
+	u_int8_t length[4];
+	u_int8_t brightness;
+	u_int8_t threshold;
+	u_int8_t contrast;
+	u_int8_t image_comp;	    /* image composition (data type) */
+	u_int8_t bits_per_pixel;
+	u_int8_t halftone_pattern[2];
+	u_int8_t rif:1;		    /* reverse image format (mono negative) */
+	u_int8_t res2:4;
+	u_int8_t pad_type:3;
+	u_int8_t bit_ordering[2];
+	u_int8_t compression_type;
+	u_int8_t compression_arg;
+	u_int8_t res3[6];
 };
 
 /* mustek scsi commands */

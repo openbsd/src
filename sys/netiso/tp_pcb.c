@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_pcb.c,v 1.2 1996/03/04 10:36:18 mickey Exp $	*/
-/*	$NetBSD: tp_pcb.c,v 1.12 1996/02/13 22:11:39 christos Exp $	*/
+/*	$OpenBSD: tp_pcb.c,v 1.3 1996/04/21 22:29:55 deraadt Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.13 1996/03/16 23:13:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -465,7 +465,7 @@ tp_freeref(n)
 	tpcb = r->tpr_pcb;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {
-		printf("tp_freeref called for ref %d pcb %x maxrefopen %d\n",
+		printf("tp_freeref called for ref %d pcb %p maxrefopen %d\n",
 		       n, tpcb, tp_refinfo.tpr_maxopen);
 	}
 #endif
@@ -479,7 +479,7 @@ tp_freeref(n)
 		return;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tp_freeref: CLEARING tpr_pcb 0x%x\n", tpcb);
+		printf("tp_freeref: CLEARING tpr_pcb %p\n", tpcb);
 	}
 #endif
 	r->tpr_pcb = (struct tp_pcb *) 0;
@@ -622,7 +622,7 @@ tp_attach(so, protocol)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tp_attach:dom 0x%x so 0x%x ", dom, so);
+		printf("tp_attach:dom 0x%x so %p ", dom, so);
 	}
 #endif
 #ifdef TPPT
@@ -702,7 +702,7 @@ tp_attach(so, protocol)
 bad4:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("BAD4 in tp_attach, so 0x%x\n", so);
+		printf("BAD4 in tp_attach, so %p\n", so);
 	}
 #endif
 	tp_freeref(tpcb->tp_lref);
@@ -710,7 +710,7 @@ bad4:
 bad3:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("BAD3 in tp_attach, so 0x%x\n", so);
+		printf("BAD3 in tp_attach, so %p\n", so);
 	}
 #endif
 
@@ -719,7 +719,7 @@ bad3:
 bad2:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("BAD2 in tp_attach, so 0x%x\n", so);
+		printf("BAD2 in tp_attach, so %p\n", so);
 	}
 #endif
 	so->so_pcb = 0;
@@ -727,7 +727,7 @@ bad2:
 	/* bad: */
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("BAD in tp_attach, so 0x%x\n", so);
+		printf("BAD in tp_attach, so %p\n", so);
 	}
 #endif
 	return error;
@@ -764,7 +764,7 @@ tp_detach(tpcb)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tp_detach(tpcb 0x%x, so 0x%x)\n",
+		printf("tp_detach(tpcb %p, so %p)\n",
 		       tpcb, so);
 	}
 #endif
@@ -777,9 +777,9 @@ tp_detach(tpcb)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-		printf("so_snd at 0x%x so_rcv at 0x%x\n", &so->so_snd, &so->so_rcv);
+		printf("so_snd at %p so_rcv at %p\n", &so->so_snd, &so->so_rcv);
 		dump_mbuf(so->so_snd.sb_mb, "so_snd at detach ");
-		printf("about to call LL detach, nlproto 0x%x, nl_detach 0x%x\n",
+		printf("about to call LL detach, nlproto %p, nl_detach %p\n",
 		       tpcb->tp_nlproto, tpcb->tp_nlproto->nlp_pcbdetach);
 	}
 #endif
@@ -793,7 +793,7 @@ tp_detach(tpcb)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("reassembly info cnt %d rsyq 0x%x\n",
+		printf("reassembly info cnt %d rsyq %p\n",
 		       tpcb->tp_rsycnt, tpcb->tp_rsyq);
 	}
 #endif
@@ -808,9 +808,9 @@ tp_detach(tpcb)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("calling (...nlproto->...)(0x%x, so 0x%x)\n",
+		printf("calling (...nlproto->...)(%p, so %p)\n",
 		       tpcb->tp_npcb, so);
-		printf("so 0x%x so_head 0x%x,  qlen %d q0len %d qlimit %d\n",
+		printf("so %p so_head %p,  qlen %d q0len %d qlimit %d\n",
 		       so, so->so_head,
 		       so->so_q0len, so->so_qlen, so->so_qlimit);
 	}
@@ -872,7 +872,7 @@ tp_detach(tpcb)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("end of detach, NOT single, tpcb 0x%x\n", tpcb);
+		printf("end of detach, NOT single, tpcb %p\n", tpcb);
 	}
 #endif
 	/* free((caddr_t)tpcb, M_PCB); WHere to put this ? */

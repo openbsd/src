@@ -189,8 +189,6 @@ char *argv[];
 		fprintf(stderr,"Operating System     = %s\t", p);
 		fprintf(stderr,"OS Release Id        = %u\n", pcvtinfo.opsysrel);
 		fprintf(stderr,"PCVT_NSCREENS        = %u\t\t", pcvtinfo.nscreens);
-		fprintf(stderr,"PCVT_UPDATEFAST      = %u\n", pcvtinfo.updatefast);
-		fprintf(stderr,"PCVT_UPDATESLOW      = %u\t\t", pcvtinfo.updateslow);
 		fprintf(stderr,"PCVT_SYSBEEPF        = %u\n", pcvtinfo.sysbeepf);
 		fprintf(stderr,"PCVT_PCBURST         = %u\t\t", pcvtinfo.pcburst);
 		fprintf(stderr,"PCVT_KBD_FIFO_SZ     = %u\n\n", pcvtinfo.kbd_fifo_sz);
@@ -281,8 +279,6 @@ char *argv[];
 	{
 		fprintf(stderr,"BSD Version      = %u\n", pcvtinfo.opsys);
 		fprintf(stderr,"PCVT_NSCREENS    = %u\n", pcvtinfo.nscreens);
-		fprintf(stderr,"PCVT_UPDATEFAST  = %u\n", pcvtinfo.updatefast);
-		fprintf(stderr,"PCVT_UPDATESLOW  = %u\n", pcvtinfo.updateslow);
 		fprintf(stderr,"PCVT_SYSBEEPF    = %u\n", pcvtinfo.sysbeepf);
 		fprintf(stderr,"Compile options  = 0x%08X\n", pcvtinfo.compile_opts);
 	}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.4 1996/04/18 21:40:49 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.4 1996/02/16 17:25:46 gwr Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1996/04/21 22:31:35 deraadt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1996/03/16 23:12:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -43,7 +43,8 @@ struct disk;
 __BEGIN_DECLS
 
 void	consinit __P((void));
-void	boot __P((int));
+void	boot __P((int))
+    __attribute__((__noreturn__));
 void	pagemove __P((caddr_t, caddr_t, size_t));
 /* delay() is declared in <machine/param.h> */
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));

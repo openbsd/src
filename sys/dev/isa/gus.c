@@ -1,5 +1,5 @@
-/*	$OpenBSD: gus.c,v 1.8 1996/04/18 23:47:34 niklas Exp $	*/
-/*	$NetBSD: gus.c,v 1.10 1996/03/01 04:08:31 mycroft Exp $	*/
+/*	$OpenBSD: gus.c,v 1.9 1996/04/21 22:23:28 deraadt Exp $	*/
+/*	$NetBSD: gus.c,v 1.13 1996/04/11 22:28:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ics2101var.h>
 #include <dev/isa/ad1848var.h>
+#include <dev/isa/cs4231var.h>
 #include "gusreg.h"
 
 #ifdef AUDIO_DEBUG
@@ -458,8 +459,12 @@ STATIC void	gusics_cd_mute __P((struct ics2101_softc *, int));
 int	gusprobe __P((struct device *, void *, void *));
 void	gusattach __P((struct device *, struct device *, void *));
 
-struct cfdriver guscd = {
-	NULL, "gus", gusprobe, gusattach, DV_DULL, sizeof(struct gus_softc)
+struct cfattach gus_ca = {
+	sizeof(struct gus_softc), gusprobe, gusattach,
+};
+
+struct cfdriver gus_cd = {
+	NULL, "gus", DV_DULL
 };
 
 
@@ -927,8 +932,8 @@ gusattach(parent, self, aux)
 	/* XXX we shouldn't have to use splgus == splclock, nor should
 	 * we use IPL_CLOCK.
 	 */
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, gusintr,
-	    sc /* sc->sc_gusdsp */, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_AUDIO, gusintr, sc /* sc->sc_gusdsp */, sc->sc_dev.dv_xname);
 
 	/*
 	 * Set some default values
@@ -974,9 +979,9 @@ gusopen(dev, flags)
 
 	DPRINTF(("gusopen() called\n"));
 
-	if (unit >= guscd.cd_ndevs)
+	if (unit >= gus_cd.cd_ndevs)
 		return ENXIO;
-	sc = guscd.cd_devs[unit];
+	sc = gus_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 

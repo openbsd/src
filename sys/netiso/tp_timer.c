@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_timer.c,v 1.2 1996/03/04 10:36:34 mickey Exp $	*/
-/*	$NetBSD: tp_timer.c,v 1.7 1996/02/13 22:12:10 christos Exp $	*/
+/*	$OpenBSD: tp_timer.c,v 1.3 1996/04/21 22:30:02 deraadt Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.8 1996/03/16 23:14:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -130,7 +130,7 @@ tp_etimeout(tpcb, fun, ticks)
 	register u_int *callp;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {
-		printf("etimeout pcb 0x%x state 0x%x\n", tpcb, tpcb->tp_state);
+		printf("etimeout pcb %p state 0x%x\n", tpcb, tpcb->tp_state);
 	}
 #endif
 #ifdef TPPT
@@ -209,7 +209,7 @@ tp_slowtimo()
 				E.ev_number = t;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TIMER]) {
-					printf("tp_slowtimo: pcb 0x%x t %d\n",
+					printf("tp_slowtimo: pcb %p t %d\n",
 					       tpcb, t);
 				}
 #endif
@@ -254,7 +254,7 @@ tp_data_retrans(tpcb)
 		 */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ACKRECV]) {
-			printf("tp_data_retrans: 0 window tpcb 0x%x una 0x%x\n",
+			printf("tp_data_retrans: 0 window tpcb %p una 0x%x\n",
 			       tpcb, tpcb->tp_snduna);
 		}
 #endif
@@ -374,7 +374,7 @@ tp_cuntimeout(tpcb, which)
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {
-		printf("tp_cuntimeout(0x%x, %d) active %d\n",
+		printf("tp_cuntimeout(%p, %d) active %d\n",
 		       tpcb, which, tpcb->tp_timer[which]);
 	}
 #endif

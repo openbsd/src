@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc.c,v 1.2 1996/04/18 23:48:22 niklas Exp $	*/
-/*	$NetBSD: tc.c,v 1.10 1996/03/05 23:15:07 cgd Exp $	*/
+/*	$OpenBSD: tc.c,v 1.3 1996/04/21 22:26:28 deraadt Exp $	*/
+/*	$NetBSD: tc.c,v 1.13 1996/04/09 20:50:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,11 +29,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
+
+#include <machine/autoconf.h>
 
 struct tc_softc {
 	struct	device sc_dv;
@@ -50,8 +53,14 @@ struct tc_softc {
 /* Definition of the driver for autoconfig. */
 int	tcmatch __P((struct device *, void *, void *));
 void	tcattach __P((struct device *, struct device *, void *));
-struct cfdriver tccd =
-    { NULL, "tc", tcmatch, tcattach, DV_DULL, sizeof (struct tc_softc) };
+
+struct cfattach tc_ca = {
+	sizeof(struct tc_softc), tcmatch, tcattach
+};
+
+struct cfdriver tc_cd = {
+	NULL, "tc", DV_DULL
+};
 
 int	tcprint __P((void *, char *));
 int	tcsubmatch __P((struct device *, void *, void *));
@@ -87,7 +96,6 @@ tcattach(parent, self, aux)
 	const struct tc_builtin *builtin;
 	struct tc_slotdesc *slot;
 	tc_addr_t tcaddr;
-	void *match;
 	int i;
 
 	printf("%s MHz clock\n",
@@ -214,7 +222,7 @@ tcsubmatch(parent, match, aux)
 	    (cf->tccf_offset != d->ta_offset))
 		return 0;
 
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 

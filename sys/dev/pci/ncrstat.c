@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrstat.c,v 1.6 1995/01/27 05:44:31 cgd Exp $	*/
+/*	$NetBSD: ncrstat.c,v 1.7 1996/03/17 00:55:36 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -92,7 +92,7 @@ struct nlist nl[] = {
 	{ "_ncr_version" },
 #ifdef __NetBSD__
 #define	N_NCRCD	1
-	{ "_ncrcd" },
+	{ "_ncr_cd" },
 #else
 #define	N_NCRP	1
 	{ "_ncrp" },
@@ -114,7 +114,7 @@ u_long	ccb_base;
 
 u_long  ncr_unit;
 #ifdef __NetBSD__
-struct	cfdriver ncrcd;
+struct	cfdriver ncr_cd;
 #else
 u_long	ncr_units;
 #endif
@@ -224,20 +224,20 @@ void open_kvm(int flags)
 
 	if (!KVM_READ (
 		nl[N_NCRCD].n_value,
-		&ncrcd,
-		sizeof (ncrcd))) {
+		&ncr_cd,
+		sizeof (ncr_cd))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
 		exit (1);
 	};
 
-	if (ncr_unit >= ncrcd.cd_ndevs){
+	if (ncr_unit >= ncr_cd.cd_ndevs){
 		fprintf (stderr, "%s: bad unit number (valid range: 0-%d).\n",
-			prog, ncrcd.cd_ndevs-1);
+			prog, ncr_cd.cd_ndevs-1);
 		exit (1);
 	};
 
 	if (!KVM_READ (
-		ncrcd.cd_devs+4*ncr_unit,
+		ncr_cd.cd_devs+4*ncr_unit,
 		&ncr_base,
 		sizeof (ncr_base))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);

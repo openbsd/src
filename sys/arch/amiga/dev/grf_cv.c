@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cv.c,v 1.6 1996/03/30 22:18:15 niklas Exp $	*/
-/*	$NetBSD: grf_cv.c,v 1.9 1996/03/06 16:40:16 is Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.7 1996/04/21 22:15:11 deraadt Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.11 1996/03/17 05:58:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -64,7 +64,7 @@
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	grfcvmatch  __P((struct device *, struct cfdata *, void *));
+int	grfcvmatch  __P((struct device *, void *, void *));
 void	grfcvattach __P((struct device *, struct device *, void *));
 int	grfcvprint  __P((void *, char *));
 
@@ -228,9 +228,12 @@ long cv_memclk = 45000000;
 #endif
 
 /* standard driver stuff */
-struct cfdriver grfcvcd = {
-	NULL, "grfcv", (cfmatch_t)grfcvmatch, grfcvattach,
-	DV_DULL, sizeof(struct grf_softc), NULL, 0
+struct cfattach grfcv_ca = {
+	sizeof(struct grf_softc), grfcvmatch, grfcvattach
+};
+
+struct cfdriver grfcv_cd = {
+	NULL, "grfcv", DV_DULL, NULL, 0
 };
 static struct cfdata *cfdata;
 
@@ -270,11 +273,11 @@ cv_has_4mb(fb)
 }
 
 int
-grfcvmatch(pdp, cfp, auxp)
+grfcvmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
 	struct zbus_args *zap;
 	static int cvcons_unit = -1;
 

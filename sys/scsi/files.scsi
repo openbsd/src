@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsi,v 1.2 1996/02/18 20:32:40 mycroft Exp $
+#	$NetBSD: files.scsi,v 1.3 1996/03/17 00:59:45 thorpej Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that usee it must provide
@@ -9,22 +9,35 @@ file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi
 
-device	scsibus at scsi {target = -1, lun = -1}
+device	scsibus {target = -1, lun = -1}
+attach	scsibus at scsi
 
-device	cd at scsibus: disk
+device	cd: disk
+attach	cd at scsibus
 file	scsi/cd.c			cd needs-flag
-device	ch at scsibus: disk
+
+device	ch: disk
+attach	ch at scsibus
 file	scsi/ch.c			ch needs-flag
-device	sd at scsibus: disk
+
+device	sd: disk
+attach	sd at scsibus
 file	scsi/sd.c			sd needs-flag
-device	st at scsibus: tape
+
+device	st: tape
+attach	st at scsibus
 file	scsi/st.c			st needs-flag
-device	ss at scsibus: tape
+
+device	ss: tape
+attach	ss at scsibus
 file	scsi/ss.c			ss needs-flag
 file	scsi/ss_mustek.c		ss
 file	scsi/ss_scanjet.c		ss
-device	su at scsibus: disk
-file	scsi/su.c			su needs-flag
-device	uk at scsibus: disk
-file	scsi/uk.c			uk needs-flag
 
+device	su: disk
+attach	su at scsibus
+file	scsi/su.c			su needs-flag
+
+device	uk: disk
+attach	uk at scsibus
+file	scsi/uk.c			uk needs-flag

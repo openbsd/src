@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_cc.c,v 1.17 1995/02/16 21:57:34 chopps Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.2 1996/04/21 22:15:09 deraadt Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.18 1996/03/17 01:17:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -54,14 +55,18 @@
 #include <amiga/dev/viewioctl.h>
 
 
-int grfccmatch __P((struct device *, struct cfdata *, void *));
+int grfccmatch __P((struct device *, void *, void *));
 int grfccprint __P((void *, char *));
 void grfccattach __P((struct device *, struct device *, void *));
 void grf_cc_on __P((struct grf_softc *));
 
-struct cfdriver grfcccd = {
-	NULL, "grfcc", (cfmatch_t)grfccmatch, grfccattach, 
-	DV_DULL, sizeof(struct grf_softc), NULL, 0 };
+struct cfattach grfcc_ca = {
+	sizeof(struct grf_softc), grfccmatch, grfccattach
+};
+
+struct cfdriver grfcc_cd = {
+	NULL, "grfcc", DV_DULL, NULL, 0
+};
 
 /* 
  * only used in console init
@@ -73,11 +78,11 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int 
-grfccmatch(pdp, cfp, auxp)
+grfccmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
 	static int ccconunit = -1;
 	char *mainbus_name = auxp;
 

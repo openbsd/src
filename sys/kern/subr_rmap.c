@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_rmap.c,v 1.2 1996/03/03 17:20:02 niklas Exp $	*/
-/*	$NetBSD: subr_rmap.c,v 1.10 1996/02/04 02:16:49 christos Exp $	*/
+/*	$OpenBSD: subr_rmap.c,v 1.3 1996/04/21 22:27:23 deraadt Exp $	*/
+/*	$NetBSD: subr_rmap.c,v 1.11 1996/03/16 23:17:11 christos Exp $	*/
 
 /*
  * Copyright (C) 1992, 1994 Wolfgang Solfrank.
@@ -208,12 +208,12 @@ rmfree(mp, size, addr)
 		 */
 		if (fp->m_size > size) {
 			/* range to free is smaller, so drop that */
-			printf("rmfree: map '%s' loses space (%d)\n",
+			printf("rmfree: map '%s' loses space (%ld)\n",
 			       mp->m_name, size);
 			return;
 		} else {
 			/* drop the smallest slot in the list */
-			printf("rmfree: map '%s' loses space (%d)\n",
+			printf("rmfree: map '%s' loses space (%ld)\n",
 			       mp->m_name, fp->m_size);
 			ovbcopy(fp + 1, fp,
 				(char *)(mp->m_limit - 1) - (char *)fp);

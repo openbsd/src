@@ -1,5 +1,5 @@
-/*	$OpenBSD: tprintf.h,v 1.2 1996/03/03 12:12:30 niklas Exp $	*/
-/*	$NetBSD: tprintf.h,v 1.6 1994/06/29 06:45:49 cgd Exp $	*/
+/*	$OpenBSD: tprintf.h,v 1.3 1996/04/21 22:32:10 deraadt Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.10 1996/04/09 20:55:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,4 +41,5 @@ typedef struct session *tpr_t;
 tpr_t	tprintf_open __P((struct proc *));
 void	tprintf_close __P((tpr_t));
 
-void	tprintf __P((tpr_t, const char *fmt, ...));
+void	tprintf __P((tpr_t, const char *fmt, ...))
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));

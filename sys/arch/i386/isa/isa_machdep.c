@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa_machdep.c,v 1.11 1996/04/19 05:41:52 mickey Exp $	*/
-/*	$NetBSD: isa_machdep.c,v 1.11 1996/02/28 01:49:35 cgd Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.12 1996/04/21 22:16:54 deraadt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.12 1996/04/11 22:11:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -220,7 +220,8 @@ fakeintr(arg)
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-isa_intr_establish(irq, type, level, ih_fun, ih_arg, ih_what)
+isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
+	isa_chipset_tag_t ic;
 	int irq;
 	int type;
 	int level;
@@ -290,7 +291,8 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg, ih_what)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(arg)
+isa_intr_disestablish(ic, arg)
+	isa_chipset_tag_t ic;
 	void *arg;
 {
 	struct intrhand *ih = arg;
@@ -316,6 +318,15 @@ isa_intr_disestablish(arg)
 
 	if (intrhand[irq] == NULL)
 		intrtype[irq] = IST_NONE;
+}
+
+void
+isa_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
+
+	/* Nothing to do. */
 }
 
 /*

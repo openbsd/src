@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.1 1996/04/18 23:47:11 niklas Exp $
+$OpenBSD: eisadevs,v 1.2 1996/04/21 22:20:29 deraadt Exp $
 /*	$NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp $	*/
 
 /*
@@ -37,6 +37,7 @@ $OpenBSD: eisadevs,v 1.1 1996/04/18 23:47:11 niklas Exp $
  */
 
 vendor ADP		Adaptec
+vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor TCM		3Com
@@ -46,22 +47,26 @@ vendor TCM		3Com
  */
 
 /* Adaptec products */
-product ADP 0000	AHA-1740
-product ADP 0001	AHA-1740A
-product ADP 0002	AHA-1742A
-product ADP 0400	AHA-1744
-product ADP 7770	AIC-7770 (on motherboard)
-product ADP 7771	AHA-274x
-product ADP 7756	AHA-284x (BIOS enabled)
-product ADP 7757	AHA-284x (BIOS disabled)
+product ADP 0000	AHA-1740 SCSI
+product ADP 0001	AHA-1740A SCSI
+product ADP 0002	AHA-1742A SCSI
+product ADP 0400	AHA-1744 SCSI
+product ADP 7770	AIC-7770 SCSI (on motherboard)
+product ADP 7771	AHA-274x SCSI
+product ADP 7756	AHA-284x SCSI (BIOS enabled)
+product ADP 7757	AHA-284x SCSI (BIOS disabled)
+
+/* AMI products */
+product AMI 4801	Series 48 SCSI
 
 /* BusLogic products */
-/* XXX */
+product BUS 4201	Bt74xB SCSI
+product BUS 4202	Bt74xC SCSI
 
 /* Digital Equipment products */
-product DEC 4250	DE425
+product DEC 4250	DE425 Ethernet
 /* ??? DEC DEFEA */
 
 /* 3Com products */
-product TCM 5092	3C579-TP
-product TCM 5093	3C579
+product TCM 5092	3C579-TP Ethernet
+product TCM 5093	3C579 Ethernet

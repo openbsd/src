@@ -1,30 +1,36 @@
-#	$OpenBSD: files.pci,v 1.3 1996/04/18 23:47:55 niklas Exp $
-#	$NetBSD: files.pci,v 1.12 1996/03/04 03:29:19 cgd Exp $
+#	$OpenBSD: files.pci,v 1.4 1996/04/21 22:25:06 deraadt Exp $
+#	$NetBSD: files.pci,v 1.13 1996/03/17 00:55:24 thorpej Exp $
 #
-# Config file and device description for machine-independent PCI code.
+# Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-device	pci at pcibus {[dev = -1], [function = -1]}
+device	pci {[dev = -1], [function = -1]}
+attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_subr.c		pci
 
 # Adaptec 7870 chips
-device	ahc at pci: scsi, aic7xxx
+device	ahc: scsi, aic7xxx
+attach	ahc at pci
 file	dev/pci/aic7870.c		ahc
 
 # Ethernet driver for DC21040-based boards
-device	de at pci: ether, ifnet
+device	de: ether, ifnet
+attach	de at pci
 file	dev/pci/if_de.c			de
 
 # Digital DEFPA PCI FDDI Controller
-device	fpa at pci: pdq, fddi, ifnet
+device	fpa: pdq, fddi, ifnet
+attach	fpa at pci
 file	dev/pci/if_fpa.c		fpa
 
 # NCR 53c8xx SCSI chips
-device	ncr at pci: scsi
+device	ncr: scsi
+attach	ncr at pci
 file	dev/pci/ncr.c			ncr
 
 # PCI-PCI bridge chips
-device	ppb at pci: pcibus
+device	ppb: pcibus
+attach	ppb at pci
 file	dev/pci/ppb.c			ppb

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cons.c,v 1.6 1996/04/18 04:05:39 mickey Exp $	*/
-/*	$NetBSD: cons.c,v 1.29 1996/02/04 02:04:08 christos Exp $	*/
+/*	$OpenBSD: cons.c,v 1.7 1996/04/21 22:19:48 deraadt Exp $	*/
+/*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,7 +158,7 @@ cnstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return (0);
 }
  
 int

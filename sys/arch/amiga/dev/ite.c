@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.4 1996/03/30 22:18:20 niklas Exp $  */
-/*	$NetBSD: ite.c,v 1.36 1996/03/16 08:19:43 mhitch Exp $	*/
+/*	$OpenBSD: ite.c,v 1.5 1996/04/21 22:15:30 deraadt Exp $  */
+/*	$NetBSD: ite.c,v 1.38 1996/03/17 05:58:48 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,21 +115,24 @@ static void ite_sifilter __P((void *, void *));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
-int itematch __P((struct device *, struct cfdata *, void *));
+int itematch __P((struct device *, void *, void *));
 static void iteprecheckwrap __P((struct ite_softc *));
 static void itecheckwrap __P((struct ite_softc *));
 
+struct cfattach ite_ca = {
+	sizeof(struct ite_softc), itematch, iteattach
+};
 
-struct cfdriver itecd = {
-	NULL, "ite", (cfmatch_t)itematch, iteattach, DV_DULL,
-	sizeof(struct ite_softc), NULL, 0 };
+struct cfdriver ite_cd = {
+	NULL, "ite", DV_DULL, NULL, 0
+};
 
 int
-itematch(pdp, cdp, auxp)
+itematch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct grf_softc *gp;
 	int maj;
 	
@@ -212,7 +215,7 @@ getitesp(dev)
 	dev_t dev;
 {
 	if (amiga_realconfig && con_itesoftc.grf == NULL)
-		return(itecd.cd_devs[ITEUNIT(dev)]);
+		return(ite_cd.cd_devs[ITEUNIT(dev)]);
 
 	if (con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");

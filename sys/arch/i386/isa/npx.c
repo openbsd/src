@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.53 1996/01/07 02:00:31 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.55 1996/04/11 22:15:22 cgd Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -115,8 +115,12 @@ struct npx_softc {
 int npxprobe __P((struct device *, void *, void *));
 void npxattach __P((struct device *, struct device *, void *));
 
-struct cfdriver npxcd = {
-	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct npx_softc)
+struct cfattach npx_ca = {
+	sizeof(struct npx_softc), npxprobe, npxattach
+};
+
+struct cfdriver npx_cd = {
+	NULL, "npx", DV_DULL
 };
 
 enum npx_type {
@@ -325,8 +329,8 @@ npxattach(parent, self, aux)
 	case NPX_INTERRUPT:
 		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
-		    npxintr, 0, sc->sc_dev.dv_xname);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+		    IST_EDGE, IPL_NONE, npxintr, 0, sc->sc_dev.dv_xname);
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");

@@ -1,13 +1,15 @@
-#	$OpenBSD: files.eisa,v 1.2 1996/04/18 23:47:14 niklas Exp $
-#	$NetBSD: files.eisa,v 1.6 1996/03/04 03:29:12 cgd Exp $
+#	$OpenBSD: files.eisa,v 1.3 1996/04/21 22:20:50 deraadt Exp $
+#	$NetBSD: files.eisa,v 1.7 1996/03/17 00:47:21 thorpej Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-device	eisa at eisabus {[slot = -1]}
+device	eisa {[slot = -1]}
+attach	eisa at eisabus
 file	dev/eisa/eisa.c			eisa	needs-flag
 
 # Adaptec AHA-174x EISA SCSI Host Adapter family
-device	ahb at eisa: scsi
+device	ahb: scsi
+attach	ahb at eisa
 file	dev/eisa/aha1742.c		ahb

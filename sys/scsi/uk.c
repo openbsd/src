@@ -1,5 +1,5 @@
-/*	$OpenBSD: uk.c,v 1.2 1996/04/19 16:10:30 niklas Exp $	*/
-/*	$NetBSD: uk.c,v 1.14 1996/03/05 00:15:33 thorpej Exp $	*/
+/*	$OpenBSD: uk.c,v 1.3 1996/04/21 22:31:23 deraadt Exp $	*/
+/*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -55,8 +55,12 @@ struct uk_softc {
 int ukmatch __P((struct device *, void *, void *));
 void ukattach __P((struct device *, struct device *, void *));
 
-struct cfdriver ukcd = {
-	NULL, "uk", ukmatch, ukattach, DV_DULL, sizeof(struct uk_softc)
+struct cfattach uk_ca = {
+	sizeof(struct uk_softc), ukmatch, ukattach
+};
+
+struct cfdriver uk_cd = {
+	NULL, "uk", DV_DULL
 };
 
 /*
@@ -117,16 +121,16 @@ ukopen(dev)
 	struct scsi_link *sc_link;
 
 	unit = UKUNIT(dev);
-	if (unit >= ukcd.cd_ndevs)
+	if (unit >= uk_cd.cd_ndevs)
 		return ENXIO;
-	uk = ukcd.cd_devs[unit];
+	uk = uk_cd.cd_devs[unit];
 	if (!uk)
 		return ENXIO;
 		
 	sc_link = uk->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit, ukcd.cd_ndevs));
+	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit, uk_cd.cd_ndevs));
 
 	/*
 	 * Only allow one at a time
@@ -150,7 +154,7 @@ int
 ukclose(dev)
 	dev_t dev;
 {
-	struct uk_softc *uk = ukcd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
 	uk->sc_link->flags &= ~SDEV_OPEN;
@@ -170,7 +174,7 @@ ukioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct uk_softc *uk = ukcd.cd_devs[UKUNIT(dev)];
+	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
 }

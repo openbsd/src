@@ -1,4 +1,5 @@
-/*	$NetBSD: mlhsc.c,v 1.8 1995/02/12 19:19:18 chopps Exp $	*/
+/*	$OpenBSD: mlhsc.c,v 1.2 1996/04/21 22:15:38 deraadt Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.9 1996/03/17 01:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,7 +50,7 @@
 
 int mlhscprint __P((void *auxp, char *));
 void mlhscattach __P((struct device *, struct device *, void *));
-int mlhscmatch __P((struct device *, struct cfdata *, void *));
+int mlhscmatch __P((struct device *, void *, void *));
 
 int mlhsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -78,18 +79,21 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-struct cfdriver mlhsccd = {
-	NULL, "mlhsc", (cfmatch_t)mlhscmatch, mlhscattach, 
-	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+struct cfattach mlhsc_ca = {
+	sizeof(struct sci_softc), mlhscmatch, mlhscattach
+};
+
+struct cfdriver mlhsc_cd = {
+	NULL, "mlhsc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are my Hacker's SCSI board we are here.
  */
 int
-mlhscmatch(pdp, cdp, auxp)
+mlhscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	struct zbus_args *zap;
 

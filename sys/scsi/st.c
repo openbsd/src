@@ -1,5 +1,5 @@
-/*	$OpenBSD: st.c,v 1.9 1996/04/19 16:10:28 niklas Exp $	*/
-/*	$NetBSD: st.c,v 1.62 1996/03/05 00:15:23 thorpej Exp $	*/
+/*	$OpenBSD: st.c,v 1.10 1996/04/21 22:31:20 deraadt Exp $	*/
+/*	$NetBSD: st.c,v 1.65 1996/03/30 21:45:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,11 +66,11 @@
 #include <sys/user.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_tape.h>
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_conf.h>
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512
@@ -281,8 +281,12 @@ int	st_interpret_sense __P((struct scsi_xfer *));
 int	st_touch_tape __P((struct st_softc *));
 int	st_erase __P((struct st_softc *, int full, int flags));
 
-struct cfdriver stcd = {
-	NULL, "st", stmatch, stattach, DV_TAPE, sizeof(struct st_softc)
+struct cfattach st_ca = {
+	sizeof(struct st_softc), stmatch, stattach
+};
+
+struct cfdriver st_cd = {
+	NULL, "st", DV_TAPE
 };
 
 struct scsi_device st_switch = {
@@ -468,9 +472,9 @@ stopen(dev, flags, mode, p)
 	struct scsi_link *sc_link;
 
 	unit = STUNIT(dev);
-	if (unit >= stcd.cd_ndevs)
+	if (unit >= st_cd.cd_ndevs)
 		return ENXIO;
-	st = stcd.cd_devs[unit];
+	st = st_cd.cd_devs[unit];
 	if (!st)
 		return ENXIO;
 
@@ -479,7 +483,7 @@ stopen(dev, flags, mode, p)
 	sc_link = st->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
-	    unit, stcd.cd_ndevs));
+	    unit, st_cd.cd_ndevs));
 
 	/*
 	 * Only allow one at a time
@@ -554,7 +558,7 @@ stclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
@@ -597,7 +601,7 @@ st_mount_tape(dev, flags)
 	unit = STUNIT(dev);
 	mode = STMODE(dev);
 	dsty = STDSTY(dev);
-	st = stcd.cd_devs[unit];
+	st = st_cd.cd_devs[unit];
 	sc_link = st->sc_link;
 
 	if (st->flags & ST_MOUNTED)
@@ -820,7 +824,7 @@ void
 ststrategy(bp)
 	struct buf *bp;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
 	struct buf *dp;
 	int s;
 
@@ -1009,9 +1013,9 @@ ststart(v)
 		 */
 		if (st->flags & ST_FIXEDBLOCKS) {
 			cmd.byte2 |= SRW_FIXED;
-			lto3b(bp->b_bcount / st->blksize, cmd.len);
+			_lto3b(bp->b_bcount / st->blksize, cmd.len);
 		} else
-			lto3b(bp->b_bcount, cmd.len);
+			_lto3b(bp->b_bcount, cmd.len);
 
 		/*
 		 * go ask the adapter to do all this for us
@@ -1029,7 +1033,7 @@ stread(dev, uio, iomode)
 	struct uio *uio;
 	int iomode;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_READ,
 		       st->sc_link->adapter->scsi_minphys, uio));
@@ -1041,7 +1045,7 @@ stwrite(dev, uio, iomode)
 	struct uio *uio;
 	int iomode;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
 		       st->sc_link->adapter->scsi_minphys, uio));
@@ -1074,7 +1078,7 @@ stioctl(dev, cmd, arg, flag, p)
 	flags = 0;		/* give error messages, act on errors etc. */
 	unit = STUNIT(dev);
 	dsty = STDSTY(dev);
-	st = stcd.cd_devs[unit];
+	st = st_cd.cd_devs[unit];
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
@@ -1258,20 +1262,14 @@ st_read(st, buf, size, flags)
 	cmd.opcode = READ;
 	if (st->flags & ST_FIXEDBLOCKS) {
 		cmd.byte2 |= SRW_FIXED;
-		lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
+		_lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
 		    cmd.len);
 	} else
-		lto3b(size, cmd.len);
+		_lto3b(size, cmd.len);
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_IN);
 }
-
-#ifdef	__STDC__
-#define b2tol(a)	(((unsigned)(a##_1) << 8) + (unsigned)a##_0)
-#else
-#define b2tol(a)	(((unsigned)(a/**/_1) << 8) + (unsigned)a/**/_0)
-#endif
 
 /*
  * Ask the drive what it's min and max blk sizes are.
@@ -1308,8 +1306,8 @@ st_read_block_limits(st, flags)
 	if (error)
 		return error;
 
-	st->blkmin = b2tol(block_limits.min_length);
-	st->blkmax = _3btol(&block_limits.max_length_2);
+	st->blkmin = _2btol(block_limits.min_length);
+	st->blkmax = _3btol(block_limits.max_length);
 
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
@@ -1417,7 +1415,7 @@ st_mode_select(st, flags)
 	else
 		scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
 	if (st->flags & ST_FIXEDBLOCKS)
-		lto3b(st->blksize, scsi_select.blk_desc.blklen);
+		_lto3b(st->blksize, scsi_select.blk_desc.blklen);
 	if (st->page_0_size)
 		bcopy(st->sense_data, scsi_select.sense_data, st->page_0_size);
 
@@ -1535,7 +1533,7 @@ st_space(st, number, what, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = SPACE;
 	cmd.byte2 = what;
-	lto3b(number, cmd.number);
+	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, 0, 900000, NULL, flags);
@@ -1574,7 +1572,7 @@ st_write_filemarks(st, number, flags)
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE_FILEMARKS;
-	lto3b(number, cmd.number);
+	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, 0, 100000, NULL, flags);
@@ -1690,26 +1688,25 @@ st_interpret_sense(xs)
 	/*
 	 * Get the sense fields and work out what code
 	 */
-	if (sense->error_code & SSD_ERRCODE_VALID) {
-		bcopy(sense->extended_info, &info, sizeof info);
-		info = ntohl(info);
-	} else
+	if (sense->error_code & SSD_ERRCODE_VALID)
+		info = _4btol(sense->info);
+	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
-		if (sense->extended_flags & SSD_EOM) {
+		if (sense->flags & SSD_EOM) {
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
-		if (sense->extended_flags & SSD_FILEMARK) {
+		if (sense->flags & SSD_FILEMARK) {
 			st->flags |= ST_AT_FILEMARK;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
-		if (sense->extended_flags & SSD_ILI) {
+		if (sense->flags & SSD_ILI) {
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
@@ -1743,14 +1740,14 @@ st_interpret_sense(xs)
 		}
 	} else {		/* must be variable mode */
 		xs->resid = xs->datalen;	/* to be sure */
-		if (sense->extended_flags & SSD_EOM)
+		if (sense->flags & SSD_EOM)
 			return EIO;
-		if (sense->extended_flags & SSD_FILEMARK) {
+		if (sense->flags & SSD_FILEMARK) {
 			if (bp)
 				bp->b_resid = bp->b_bcount;
 			return 0;
 		}
-		if (sense->extended_flags & SSD_ILI) {
+		if (sense->flags & SSD_ILI) {
 			if (info < 0) {
 				/*
 				 * the record was bigger than the read
@@ -1766,7 +1763,7 @@ st_interpret_sense(xs)
 				bp->b_resid = info;
 		}
 	}
-	key = sense->extended_flags & SSD_KEY;
+	key = sense->flags & SSD_KEY;
 
 	if (key == 0x8) {
 		/*

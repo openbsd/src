@@ -1,5 +1,5 @@
-/*	$OpenBSD: eisavar.h,v 1.3 1996/04/18 23:47:13 niklas Exp $	*/
-/*	$NetBSD: eisavar.h,v 1.4 1996/03/08 20:25:22 cgd Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.4 1996/04/21 22:20:45 deraadt Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.9 1996/04/12 06:34:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -32,22 +32,39 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __DEV_EISA_EISAVAR_H__
-#define	__DEV_EISA_EISAVAR_H__
+#ifndef _DEV_EISA_EISAVAR_H_
+#define	_DEV_EISA_EISAVAR_H_
 
 /*
  * Definitions for EISA autoconfiguration.
  *
- * This file describes types, constants, and functions which are used
- * for EISA autoconfiguration.
+ * This file describes types and functions which are used for EISA
+ * configuration.  Some of this information is machine-specific, and is
+ * separated into eisa_machdep.h.
  */
 
 #include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
+/* 
+ * Structures and definitions needed by the machine-dependent header.
+ */
+struct eisabus_attach_args;
+
+/*
+ * Machine-dependent definitions.
+ */
+#if (alpha + i386 != 1)
+ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+#if alpha
+#include <alpha/eisa/eisa_machdep.h>
+#endif
+#if i386
+#include <i386/eisa/eisa_machdep.h>
+#endif
 
 typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
-
 
 /*
  * EISA bus attach arguments.
@@ -55,14 +72,15 @@ typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
 struct eisabus_attach_args {
 	char		*eba_busname;		/* XXX should be common */
 	bus_chipset_tag_t eba_bc;		/* XXX should be common */
+	eisa_chipset_tag_t eba_ec;
 };
-
 
 /*
  * EISA device attach arguments.
  */
 struct eisa_attach_args {
 	bus_chipset_tag_t ea_bc;
+	eisa_chipset_tag_t ea_ec;
 
 	eisa_slot_t	ea_slot;
 	u_int8_t	ea_vid[EISA_NVIDREGS];
@@ -70,37 +88,10 @@ struct eisa_attach_args {
 	char		ea_idstring[EISA_IDSTRINGLEN];
 };
 
-
 /*
- * Easy to remember names for EISA device locators.
+ * Locators for EISA devices, as specified to config.
  */
+#define	eisacf_slot		cf_loc[0]
+#define	EISA_UNKNOWN_SLOT	-1		/* wildcarded 'slot' */
 
-#define	eisacf_slot		cf_loc[0]		/* slot */
-
-
-/*
- * EISA device locator values that mean "unknown" or "unspecified."
- * Note that not all are supplied by 'config' and should be filled
- * in by the device if appropriate.
- */
-
-#define	EISA_UNKNOWN_SLOT	((eisa_slot_t)-1)
-
-/*
- * The EISA bus cfdriver, so that subdevices can more easily tell
- * what bus they're on.
- */
-
-extern struct cfdriver eisacd;
-
-/*
- * XXX interrupt attachment, etc., is done by using the ISA interfaces.
- * XXX THIS SHOULD CHANGE.
- */
-
-#include <dev/isa/isavar.h>
-
-#define	eisa_intr_establish	isa_intr_establish		/* XXX */
-#define	eisa_intr_disestablish	isa_intr_disestablish		/* XXX */
-
-#endif /* !__DEV_EISA_EISAVAR_H__ */
+#endif /* _DEV_EISA_EISAVAR_H_ */

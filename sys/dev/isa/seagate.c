@@ -303,8 +303,12 @@ int	seaprobe __P((struct device *, void *, void *));
 void	seaattach __P((struct device *, struct device *, void *));
 int	seaprint __P((void *, char *));
 
-struct cfdriver seacd = {
-	NULL, "sea", seaprobe, seaattach, DV_DULL, sizeof(struct sea_softc)
+struct cfattach sea_ca = {
+	sizeof(struct sea_softc), seaprobe, seaattach
+};
+
+struct cfdriver sea_cd = {
+	NULL, "sea", DV_DULL
 };
 
 #ifdef SEA_DEBUGQUEUE
@@ -438,8 +442,8 @@ seaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sea->sc_id, &sea->sc_deV);
 #endif
-	sea->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, seaintr,
-	    sea, sc->sc_dev.dv_xname);
+	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, seaintr, sea, sea->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -685,8 +689,8 @@ sea_main()
 	 */
 loop:
 	done = 1;
-	for (unit = 0; unit < seacd.cd_ndevs; unit++) {
-		sea = seacd.cd_devs[unit];
+	for (unit = 0; unit < sea_cd.cd_ndevs; unit++) {
+		sea = sea_cd.cd_devs[unit];
 		if (!sea)
 			continue;
 		s = splbio();

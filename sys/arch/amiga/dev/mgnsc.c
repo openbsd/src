@@ -1,5 +1,5 @@
-/*	$OpenBSD: mgnsc.c,v 1.4 1996/03/30 22:18:22 niklas Exp $	*/
-/*	$NetBSD: mgnsc.c,v 1.16 1996/03/15 22:11:12 mhitch Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.5 1996/04/21 22:15:36 deraadt Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.17 1996/03/17 01:17:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -54,7 +54,7 @@
 
 int mgnscprint __P((void *auxp, char *));
 void mgnscattach __P((struct device *, struct device *, void *));
-int mgnscmatch __P((struct device *, struct cfdata *, void *));
+int mgnscmatch __P((struct device *, void *, void *));
 int siopintr __P((struct siop_softc *));
 int mgnsc_dmaintr __P((struct siop_softc *));
 
@@ -76,19 +76,23 @@ struct scsi_device mgnsc_scsidev = {
 #ifdef DEBUG
 #endif
 
-struct cfdriver mgnsccd = {
-	NULL, "mgnsc", (cfmatch_t)mgnscmatch, mgnscattach, 
-	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+struct cfattach mgnsc_ca = {
+	sizeof(struct siop_softc), mgnscmatch, mgnscattach
+};
+
+struct cfdriver mgnsc_cd = {
+	NULL, "mgnsc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are a CSA Magnum 40 SCSI
  */
 int
-mgnscmatch(pdp, cdp, auxp)
+mgnscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -204,8 +208,8 @@ mgnsc_dump()
 {
 	int i;
 
-	for (i = 0; i < mgnsccd.cd_ndevs; ++i)
-		if (mgnsccd.cd_devs[i])
-			siop_dump(mgnsccd.cd_devs[i]);
+	for (i = 0; i < mgnsc_cd.cd_ndevs; ++i)
+		if (mgnsc_cd.cd_devs[i])
+			siop_dump(mgnsc_cd.cd_devs[i]);
 }
 #endif

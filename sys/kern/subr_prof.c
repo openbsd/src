@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_prof.c,v 1.3 1996/03/03 17:20:01 niklas Exp $	*/
-/*	$NetBSD: subr_prof.c,v 1.10 1996/02/09 19:00:06 christos Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.4 1996/04/21 22:27:21 deraadt Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.11 1996/03/17 02:44:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -71,7 +71,7 @@ kmstartup()
 	p->lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
-	printf("Profiling kernel, textsize=%d [%p..%p]\n",
+	printf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
 	       p->textsize, p->lowpc, p->highpc);
 	p->kcountsize = p->textsize / HISTFRACTION;
 	p->hashfraction = HASHFRACTION;
@@ -99,7 +99,8 @@ kmstartup()
 /*
  * Return kernel profiling information.
  */
-sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
+int
+sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
 	u_int namelen;
 	void *oldp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.22 1996/01/10 18:21:52 hpeyerl Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.24 1996/04/11 22:29:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -117,8 +117,12 @@ struct eg_softc {
 int egprobe __P((struct device *, void *, void *));
 void egattach __P((struct device *, struct device *, void *));
 
-struct cfdriver egcd = {
-	NULL, "eg", egprobe, egattach, DV_IFNET, sizeof(struct eg_softc)
+struct cfattach eg_ca = {
+	sizeof(struct eg_softc), egprobe, egattach
+};
+
+struct cfdriver eg_cd = {
+	NULL, "eg", DV_IFNET
 };
 
 int egintr __P((void *));
@@ -398,7 +402,7 @@ egattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = egcd.cd_name;
+	ifp->if_name = eg_cd.cd_name;
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
@@ -412,8 +416,8 @@ egattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, egintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, egintr, sc, sc->sc_dev.dv_xname);
 }
 
 void
@@ -490,7 +494,7 @@ void
 egstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct eg_softc *sc = egcd.cd_devs[ifp->if_unit];
+	register struct eg_softc *sc = eg_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int len;
@@ -729,7 +733,7 @@ egioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct eg_softc *sc = egcd.cd_devs[ifp->if_unit];
+	struct eg_softc *sc = eg_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -826,7 +830,7 @@ void
 egwatchdog(unit)
 	int     unit;
 {
-	struct eg_softc *sc = egcd.cd_devs[unit];
+	struct eg_softc *sc = eg_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_timod.h,v 1.3 1995/01/10 00:04:11 christos Exp $	 */
+/*	$OpenBSD: svr4_timod.h,v 1.2 1996/04/21 22:18:39 deraadt Exp $	*/
+/*	$NetBSD: svr4_timod.h,v 1.4 1996/04/11 12:52:03 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -45,6 +46,7 @@
 #define SVR4_TI_BIND_REQUEST		0x06
 #define SVR4_TI_SENDTO_REQUEST		0x08
 
+#define SVR4_TI_ACCEPT_REPLY		0x0b
 #define SVR4_TI_CONNECT_REPLY		0x0c
 #define SVR4_TI_INFO_REPLY		0x10
 #define SVR4_TI_BIND_REPLY		0x11

@@ -1,5 +1,5 @@
-/*	$OpenBSD: esis.c,v 1.2 1996/03/04 10:35:15 mickey Exp $	*/
-/*	$NetBSD: esis.c,v 1.12 1996/02/13 22:09:23 christos Exp $	*/
+/*	$OpenBSD: esis.c,v 1.3 1996/04/21 22:29:21 deraadt Exp $	*/
+/*	$NetBSD: esis.c,v 1.13 1996/04/13 01:34:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -346,10 +346,9 @@ esis_rdoutput(inbound_shp, inbound_m, inbound_oidx, rd_dstnsap, rt)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISOUTPUT]) {
 		printf(
-		"esis_rdoutput: ifp x%x (%s%d), ht %d, m x%x, oidx x%x\n",
-		       (unsigned int) ifp, ifp->if_name, ifp->if_unit,
-		       esis_holding_time,
-		       (unsigned int) inbound_m, (unsigned int) inbound_oidx);
+		"esis_rdoutput: ifp %p (%s%d), ht %d, m %p, oidx %p\n",
+		       ifp, ifp->if_name, ifp->if_unit, esis_holding_time,
+		       inbound_m, inbound_oidx);
 		printf("\tdestination: %s\n", clnp_iso_addrp(rd_dstnsap));
 		printf("\tredirected toward:%s\n", clnp_iso_addrp(rd_gwnsap));
 	}
@@ -872,8 +871,8 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISOUTPUT]) {
 		int             i;
-		printf("esis_shoutput: ifp x%x (%s%d), %s, ht %d, to: [%d] ",
-		       (unsigned int) ifp, ifp->if_name, ifp->if_unit,
+		printf("esis_shoutput: ifp %p (%s%d), %s, ht %d, to: [%d] ",
+		       ifp, ifp->if_name, ifp->if_unit,
 		       type == ESIS_ESH ? "esh" : "ish",
 		       ht, sn_len);
 		for (i = 0; i < sn_len; i++)
@@ -970,10 +969,8 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 		m->m_len += 4;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ESISOUTPUT]) {
-			printf("m0 0x%x, m 0x%x, data 0x%x, len %d, cp 0x%x\n",
-			       (unsigned int) m0, (unsigned int) m,
-			       (unsigned int) m->m_data, m->m_len,
-			       (unsigned int) cp);
+			printf("m0 %p, m %p, data %p, len %d, cp %p\n",
+			       m0, m, m->m_data, m->m_len, cp);
 		}
 #endif
 	}
@@ -1025,9 +1022,8 @@ isis_input(m0, va_alist)
 	if (argo_debug[D_ISISINPUT]) {
 		int             i;
 
-		printf("isis_input: pkt on ifp x%x (%s%d): from:",
-		       (unsigned int) ifp,
-		       ifp->if_name, ifp->if_unit);
+		printf("isis_input: pkt on ifp %p (%s%d): from:",
+		       ifp, ifp->if_name, ifp->if_unit);
 		for (i = 0; i < 6; i++)
 			printf("%x%c", shp->snh_shost[i] & 0xff,
 			       (i < 5) ? ':' : ' ');
@@ -1056,8 +1052,7 @@ isis_input(m0, va_alist)
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ISISINPUT]) {
 					printf(
-				    "Error in sbappenaddr, mm = 0x%x\n",
-				    (unsigned int) mm);
+				    "Error in sbappenaddr, mm = %p\n", mm);
 				}
 #endif
 				m_freem(mm);
@@ -1108,8 +1103,8 @@ isis_output(m, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISISOUTPUT]) {
 		u_char *cp = (u_char *) LLADDR(sdl), *cplim = cp + sn_len;
-		printf("isis_output: ifp 0x%x (%s%d), to: ",
-		       (unsigned int) ifp, ifp->if_name, ifp->if_unit);
+		printf("isis_output: ifp %p (%s%d), to: ",
+		       ifp, ifp->if_name, ifp->if_unit);
 		while (cp < cplim) {
 			printf("%x", *cp++);
 			printf("%c", (cp < cplim) ? ':' : ' ');

@@ -1,5 +1,5 @@
-/*	$OpenBSD: zbus.c,v 1.3 1996/03/30 22:18:25 niklas Exp $	*/
-/*	$NetBSD: zbus.c,v 1.15 1996/03/06 20:13:32 is Exp $	*/
+/*	$OpenBSD: zbus.c,v 1.4 1996/04/21 22:15:50 deraadt Exp $	*/
+/*	$NetBSD: zbus.c,v 1.17 1996/03/28 18:41:49 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -126,7 +126,9 @@ static struct aconfdata aconftab[] = {
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
-	{ "qn",		2011,	2 }	/* QuickNet Ethernet */
+	{ "qn",		2011,	2 },	/* QuickNet Ethernet */
+	/* ??? */
+	{ "empsc",	2171,	21 }	/* Emplant SCSI */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -153,7 +155,7 @@ static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
 void zbusattach __P((struct device *, struct device *, void *));
 int zbusprint __P((void *, char *));
-int zbusmatch __P((struct device *, struct cfdata *,void *));
+int zbusmatch __P((struct device *, void *, void *));
 caddr_t zbusmap __P((caddr_t, u_int));
 static char *aconflookup __P((int, int));
 
@@ -177,20 +179,25 @@ aconflookup(mid, pid)
 /* 
  * mainbus driver 
  */
-struct cfdriver zbuscd = {
-	NULL, "zbus", (cfmatch_t)zbusmatch, zbusattach, 
-	DV_DULL, sizeof(struct device), NULL, 0
+
+struct cfattach zbus_ca = {
+	sizeof(struct device), zbusmatch, zbusattach
+};
+
+struct cfdriver zbus_cd = {
+	NULL, "zbus", DV_DULL, NULL, 0
 };
 
 static struct cfdata *early_cfdata;
 
 /*ARGSUSED*/
 int
-zbusmatch(pdp, cfp, auxp)
+zbusmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname(auxp, "zbus") == 0)
 		return(0);
 	if (amiga_realconfig == 0)
@@ -286,11 +293,11 @@ zbusprint(auxp, pnp)
 }
 
 /*
- * this function is used to map Zorro physical I/O addresses into kernel virtual
- * addresses. We don't keep track which address we map where, we don't NEED
- * to know this. We made sure in amiga_init.c (by scanning all available Zorro
- * devices) to have enough kva-space available, so there is no extra range
- * check done here.
+ * this function is used to map Zorro physical I/O addresses into kernel
+ * virtual addresses. We don't keep track which address we map where, we don't
+ * NEED to know this. We made sure in amiga_init.c (by scanning all available
+ * Zorro devices) to have enough kva-space available, so there is no extra
+ * range check done here.
  */
 caddr_t
 zbusmap (pa, size)

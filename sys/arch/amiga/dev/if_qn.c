@@ -1,4 +1,5 @@
-/*	$NetBSD: if_qn.c,v 1.3 1995/12/24 02:30:02 mycroft Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.4 1996/04/21 22:15:29 deraadt Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.4 1996/03/17 01:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -171,8 +172,12 @@ static	void qn_flush __P((struct qn_softc *));
 static	void qn_dump __P((struct qn_softc *));
 #endif
 
-struct cfdriver qncd = {
-	NULL, "qn", qnmatch, qnattach, DV_IFNET, sizeof(struct qn_softc)
+struct cfattach qn_ca = {
+	sizeof(struct qn_softc), qnmatch, qnattach
+};
+
+struct cfdriver qn_cd = {
+	NULL, "qn", DV_IFNET
 };
 
 
@@ -237,7 +242,7 @@ qnattach(parent, self, aux)
 	qnstop(sc);
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = qncd.cd_name;
+	ifp->if_name = qn_cd.cd_name;
 	ifp->if_ioctl = qnioctl;
 	ifp->if_watchdog = qnwatchdog;
 	ifp->if_output = ether_output;
@@ -319,7 +324,7 @@ void
 qnwatchdog(unit)
 	int unit;
 {
-	struct qn_softc *sc = qncd.cd_devs[unit];
+	struct qn_softc *sc = qn_cd.cd_devs[unit];
 
 	log(LOG_INFO, "qn: device timeout (watchdog)\n");
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -402,7 +407,7 @@ void
 qnstart(ifp)
 	struct ifnet *ifp;
 {
-	struct qn_softc *sc = qncd.cd_devs[ifp->if_unit];
+	struct qn_softc *sc = qn_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m;
 	u_short len;
 	int timout = 60000;
@@ -859,7 +864,7 @@ qnioctl(ifp, command, data)
 	u_long command;
 	caddr_t data;
 {
-	struct qn_softc *sc = qncd.cd_devs[ifp->if_unit];
+	struct qn_softc *sc = qn_cd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 #if 0
 	struct ifreg *ifr = (struct ifreg *)data;

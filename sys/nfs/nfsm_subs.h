@@ -1,4 +1,3 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.5 1996/04/17 04:50:38 mickey Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -169,7 +168,7 @@
 				nfsm_adv(NFSX_V3FATTR); \
 		} \
 		if (f) \
-			nfsm_loadattr((v), (struct vattr *)NULL); \
+			nfsm_loadattr((v), (struct vattr *)0); \
 		}
 
 #define nfsm_getfh(f, s, v3) \
@@ -199,7 +198,7 @@
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (((f) = fxdr_unsigned(int, *tl)) != 0) { \
 			if ((t1 = nfs_loadattrcache(&ttvp, &md, &dpos, \
-				(struct vattr *)NULL)) != 0) { \
+				(struct vattr *)0)) != 0) { \
 				error = t1; \
 				(f) = 0; \
 				m_freem(mrep); \

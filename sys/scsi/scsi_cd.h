@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_cd.h,v 1.5 1994/12/28 19:42:58 mycroft Exp $	*/
+/*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -31,117 +31,111 @@
 
 struct scsi_read_capacity_cd {
 	u_int8_t opcode;
-	u_char	byte2;
-	u_char	addr_3;	/* Most Significant */
-	u_char	addr_2;
-	u_char	addr_1;
-	u_char	addr_0;	/* Least Significant */
-	u_char	unused[3];
-	u_char	control;
+	u_int8_t byte2;
+	u_int8_t addr[4];
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 struct scsi_pause {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[6];
-	u_char	resume;
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[6];
+	u_int8_t resume;
+	u_int8_t control;
 };
 #define	PA_PAUSE	1
 #define PA_RESUME	0
 
 struct scsi_play_msf {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused;
-	u_char	start_m;
-	u_char	start_s;
-	u_char	start_f;
-	u_char	end_m;
-	u_char	end_s;
-	u_char	end_f;
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused;
+	u_int8_t start_m;
+	u_int8_t start_s;
+	u_int8_t start_f;
+	u_int8_t end_m;
+	u_int8_t end_s;
+	u_int8_t end_f;
+	u_int8_t control;
 };
 
 struct scsi_play_track {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	start_track;
-	u_char	start_index;
-	u_char	unused1;
-	u_char	end_track;
-	u_char	end_index;
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t start_track;
+	u_int8_t start_index;
+	u_int8_t unused1;
+	u_int8_t end_track;
+	u_int8_t end_index;
+	u_int8_t control;
 };
 
 struct scsi_play {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	blk_addr[4];
-	u_char	unused;
-	u_char	xfer_len[2];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t blk_addr[4];
+	u_int8_t unused;
+	u_int8_t xfer_len[2];
+	u_int8_t control;
 };
 
 struct scsi_play_big {
-	u_char	opcode;
-	u_char	byte2;	/* same as above */
-	u_char	blk_addr[4];
-	u_char	xfer_len[4];
-	u_char	unused;
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;	/* same as above */
+	u_int8_t blk_addr[4];
+	u_int8_t xfer_len[4];
+	u_int8_t unused;
+	u_int8_t control;
 };
 
 struct scsi_play_rel_big {
-	u_char	opcode;
-	u_char	byte2;	/* same as above */
-	u_char	blk_addr[4];
-	u_char	xfer_len[4];
-	u_char	track;
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;	/* same as above */
+	u_int8_t blk_addr[4];
+	u_int8_t xfer_len[4];
+	u_int8_t track;
+	u_int8_t control;
 };
 
 struct scsi_read_header {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	blk_addr[4];
-	u_char	unused;
-	u_char	data_len[2];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t blk_addr[4];
+	u_int8_t unused;
+	u_int8_t data_len[2];
+	u_int8_t control;
 };
 
 struct scsi_read_subchannel {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	byte3;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t byte3;
 #define	SRS_SUBQ	0x40
-	u_char	subchan_format;
-	u_char	unused[2];
-	u_char	track;
-	u_char	data_len[2];
-	u_char	control;
+	u_int8_t subchan_format;
+	u_int8_t unused[2];
+	u_int8_t track;
+	u_int8_t data_len[2];
+	u_int8_t control;
 };
 
 struct scsi_read_toc {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[4];
-	u_char	from_track;
-	u_char	data_len[2];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[4];
+	u_int8_t from_track;
+	u_int8_t data_len[2];
+	u_int8_t control;
 };
 ;
 
 struct scsi_read_cd_capacity {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	addr_3;	/* Most Significant */
-	u_char	addr_2;
-	u_char	addr_1;
-	u_char	addr_0;	/* Least Significant */
-	u_char	unused[3];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t addr[4];
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 /*
@@ -162,33 +156,27 @@ struct scsi_read_cd_capacity {
 
 
 struct scsi_read_cd_cap_data {
-	u_char	addr_3;	/* Most significant */
-	u_char	addr_2;
-	u_char	addr_1;
-	u_char	addr_0;	/* Least significant */
-	u_char	length_3;	/* Most significant */
-	u_char	length_2;
-	u_char	length_1;
-	u_char	length_0;	/* Least significant */
+	u_int8_t addr[4];
+	u_int8_t length[4];
 };
 
 union cd_pages {
 	struct audio_page {
-		u_char	page_code;
+		u_int8_t page_code;
 #define	CD_PAGE_CODE	0x3F
 #define	AUDIO_PAGE	0x0e
 #define	CD_PAGE_PS	0x80
-		u_char	param_len;
-		u_char	flags;
+		u_int8_t param_len;
+		u_int8_t flags;
 #define		CD_PA_SOTC	0x02
 #define		CD_PA_IMMED	0x04
-		u_char	unused[2];
-		u_char	format_lba;
+		u_int8_t unused[2];
+		u_int8_t format_lba;
 #define		CD_PA_FORMAT_LBA	0x0F
 #define		CD_PA_APR_VALID	0x80
-		u_char	lb_per_sec[2];
+		u_int8_t lb_per_sec[2];
 		struct	port_control {
-			u_char	channels;
+			u_int8_t channels;
 #define	CHANNEL 0x0F
 #define	CHANNEL_0 1
 #define	CHANNEL_1 2
@@ -196,7 +184,7 @@ union cd_pages {
 #define	CHANNEL_3 8
 #define	LEFT_CHANNEL	CHANNEL_0
 #define	RIGHT_CHANNEL	CHANNEL_1
-			u_char	volume;
+			u_int8_t volume;
 		} port[4];
 #define	LEFT_PORT	0
 #define	RIGHT_PORT	1

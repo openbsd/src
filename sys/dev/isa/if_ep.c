@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ep.c,v 1.10 1996/04/18 23:47:40 niklas Exp $       */
-/*	$NetBSD: if_ep.c,v 1.87 1996/02/19 20:18:40 christos Exp $	*/
+/*	$OpenBSD: if_ep.c,v 1.11 1996/04/21 22:23:52 deraadt Exp $       */
+/*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pcmciabus.h"
+/*#include "pcmciabus.h"*/
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -119,8 +119,17 @@ struct ep_softc {
 static int epprobe __P((struct device *, void *, void *));
 static void epattach __P((struct device *, struct device *, void *));
 
-struct cfdriver epcd = {
-	NULL, "ep", epprobe, epattach, DV_IFNET, sizeof(struct ep_softc)
+/* XXX the following two structs should be different. */
+struct cfattach ep_isa_ca = {
+	sizeof(struct ep_softc), epprobe, epattach
+};
+
+struct cfattach ep_pci_ca = {
+	sizeof(struct ep_softc), epprobe, epattach
+};
+
+struct cfdriver ep_cd = {
+	NULL, "ep", DV_IFNET
 };
 
 int epintr __P((void *));
@@ -326,9 +335,9 @@ epprobe(parent, match, aux)
 	int k, k2;
 
 #if NPCI > 0
-	extern struct cfdriver pcicd;
+	extern struct cfdriver pci_cd;
 
-	if (parent->dv_cfdata->cf_driver == &pcicd) {
+	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 		if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM)
@@ -497,7 +506,7 @@ epconfig(sc, conn)
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = epcd.cd_name;
+	ifp->if_name = ep_cd.cd_name;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
 	ifp->if_watchdog = epwatchdog;
@@ -523,9 +532,9 @@ epattach(parent, self, aux)
 	struct ep_softc *sc = (void *)self;
 	u_short conn = 0;
 #if NPCI > 0
-	extern struct cfdriver pcicd;
+	extern struct cfdriver pci_cd;
 
-	if (parent->dv_cfdata->cf_driver == &pcicd) {
+	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
 		int iobase;
 		u_short i;
@@ -536,7 +545,7 @@ epattach(parent, self, aux)
 		}
 		sc->bustype = EP_BUS_PCI;
 		sc->ep_iobase = iobase; /* & 0xfffffff0 */
-		i = pci_conf_read(pa->pa_tag, PCI_CONN);
+		i = pci_conf_read(pa->pa_bc, pa->pa_tag, PCI_CONN);
 
 		/*
 		 * Bits 13,12,9 of the isa adapter are the same as bits 
@@ -565,16 +574,15 @@ epattach(parent, self, aux)
 
 
 #if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pcicd) {
+	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
 
-		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       pci_conf_read(pa->pa_tag,
+		pci_conf_write(pa->pa_bc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+			       pci_conf_read(pa->pa_bc, pa->pa_tag,
 					     PCI_COMMAND_STATUS_REG) |
 			       PCI_COMMAND_MASTER_ENABLE);
 
-		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, epintr, sc,
-					sc->sc_dev.dv_xname);
+		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, epintr, sc);
 		if (sc->sc_ih == NULL) {
 			printf("%s: couldn't map interrupt\n",
 			       sc->sc_dev.dv_xname);
@@ -586,8 +594,8 @@ epattach(parent, self, aux)
 #endif
 	{
 		struct isa_attach_args *ia = aux;
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-		    epintr, sc, sc->sc_dev.dv_xname);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+		    IST_EDGE, IPL_NET, epintr, sc, sc->sc_dev.dv_xname);
 	}
 }
 
@@ -721,7 +729,7 @@ void
 epstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
+	register struct ep_softc *sc = ep_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m, *m0;
 	int sh, len, pad;
 
@@ -1205,7 +1213,7 @@ epioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
+	struct ep_softc *sc = ep_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -1315,7 +1323,7 @@ void
 epwatchdog(unit)
 	int unit;
 {
-	struct ep_softc *sc = epcd.cd_devs[unit];
+	struct ep_softc *sc = ep_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;

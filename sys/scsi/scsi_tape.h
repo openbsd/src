@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.6 1994/12/28 19:43:08 mycroft Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.8 1996/03/19 03:07:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -60,97 +60,93 @@
 #define	READ			0x08
 #define WRITE			0x0a
 struct scsi_rw_tape {
-	u_char	opcode;
-	u_char	byte2;
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SRW_FIXED		0x01
-	u_char	len[3];
-	u_char	control;
+	u_int8_t len[3];
+	u_int8_t control;
 };
 
 #define	SPACE			0x11
 struct scsi_space {
-	u_char	opcode;
-	u_char	byte2;
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SS_CODE			0x03
 #define SP_BLKS			0x00
 #define SP_FILEMARKS		0x01
 #define SP_SEQ_FILEMARKS	0x02
 #define	SP_EOM			0x03
-	u_char	number[3];
-	u_char	control;
+	u_int8_t number[3];
+	u_int8_t control;
 };
 
 #define	WRITE_FILEMARKS		0x10
 struct scsi_write_filemarks {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	number[3];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t number[3];
+	u_int8_t control;
 };
 
 #define REWIND			0x01
 struct scsi_rewind {
-	u_char	opcode;
-	u_char	byte2;
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SR_IMMED		0x01
-	u_char	unused[3];
-	u_char	control;
+	u_int8_t unused[3];
+	u_int8_t control;
+};
+
+#define LOAD			0x1b
+struct scsi_load {
+	u_int8_t opcode;
+	u_int8_t byte2;
+#define	SL_IMMED		0x01
+	u_int8_t unused[2];
+	u_int8_t how;
+#define LD_UNLOAD		0x00
+#define LD_LOAD			0x01
+#define LD_RETENSION		0x02
+	u_int8_t control;
 };
 
 #define	ERASE			0x19
 struct scsi_erase {
-	u_char	opcode;
-	u_char	byte2;
-#define	SE_LONG			0x01	/* some units do not allow short erase */
+	u_int8_t opcode;
+	u_int8_t byte2;
+#define	SE_LONG			0x01
 #define	SE_IMMED		0x02
-	u_char	unused[3];
-	u_char	control;
-} erase;
-
-#define LOAD			0x1b
-struct scsi_load {
-	u_char	opcode;
-	u_char	byte2;
-#define	SL_IMMED		0x01
-	u_char	unused[2];
-	u_char	how;
-#define LD_UNLOAD		0x00
-#define LD_LOAD			0x01
-#define LD_RETENSION		0x02
-	u_char	control;
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 #define	READ_BLOCK_LIMITS	0x05
 struct scsi_block_limits {
-	u_char	opcode;
-	u_char	byte2;
-	u_char	unused[3];
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 struct scsi_block_limits_data {
-	u_char	reserved;
-	u_char	max_length_2;	/* Most significant */
-	u_char	max_length_1;
-	u_char	max_length_0;	/* Least significant */
-	u_char	min_length_1;	/* Most significant */
-	u_char	min_length_0;	/* Least significant */
+	u_int8_t reserved;
+	u_int8_t max_length[3];	/* Most significant */
+	u_int8_t min_length[2];	/* Most significant */
 };
 
 /* See SCSI-II spec 9.3.3.1 */
 struct scsi_tape_dev_conf_page {
-	u_char	pagecode;	/* 0x10 */
-	u_char	pagelength;	/* 0x0e */
-	u_char	byte2;
+	u_int8_t pagecode;	/* 0x10 */
+	u_int8_t pagelength;	/* 0x0e */
+	u_int8_t byte2;
 #define	SMT_CAP			0x40	/* change active partition */
 #define	SMT_CAF			0x20	/* change active format */
 #define	SMT_AFMASK		0x1f	/* active format mask */
-	u_char	active_partition;
-	u_char	wb_full_ratio;
-	u_char	rb_empty_ratio;
-	u_char	wrdelay_time_1;		/* MSB */
-	u_char	wrdelay_time_0;		/* LSB */
-	u_char	byte8;
+	u_int8_t active_partition;
+	u_int8_t wb_full_ratio;
+	u_int8_t rb_empty_ratio;
+	u_int8_t wrdelay_time[2];
+	u_int8_t byte8;
 #define	SMT_DBR			0x80	/* data buffer recovery */
 #define	SMT_BIS			0x40	/* block identifiers supported */
 #define	SMT_RSMK		0x20	/* report setmarks */
@@ -158,18 +154,16 @@ struct scsi_tape_dev_conf_page {
 #define SMT_SOCF_MASK		0xc0	/* stop on consecutive formats */
 #define	SMT_RBO			0x20	/* recover buffer order */
 #define	SMT_REW			0x10	/* report early warning */
-	u_char	gap_size;
-	u_char	byte10;
+	u_int8_t gap_size;
+	u_int8_t byte10;
 #define	SMT_EODDEFINED		0xe0	/* EOD defined */
 #define	SMT_EEG			0x10	/* enable EOD generation */
 #define	SMT_SEW			0x80	/* synchronize at early warning */
-	u_char	ew_bufsize_2;		/* MSB */
-	u_char	ew_bufsize_1;		/* ... */
-	u_char	ew_bufsize_0;		/* LSB */
-	u_char	sel_comp_alg;
+	u_int8_t ew_bufsize[3];
+	u_int8_t sel_comp_alg;
 #define	SMT_COMP_NONE		0x00
 #define	SMT_COMP_DEFAULT	0x01
-	u_char	reserved;
+	u_int8_t reserved;
 };
 
 /* defines for the device specific byte in the mode select/sense header */
@@ -182,11 +176,11 @@ struct scsi_tape_dev_conf_page {
 
 /* A special for the CIPHER ST150S(old drive) */
 struct block_desc_cipher {
-	u_char	density;
-	u_char	nblocks[3];
-	u_char	reserved;
-	u_char	blklen[3];
-	u_char  other;
+	u_int8_t density;
+	u_int8_t nblocks[3];
+	u_int8_t reserved;
+	u_int8_t blklen[3];
+	u_int8_t other;
 #define ST150_SEC		0x01	/* soft error count */
 #define	SR150_AUI		0x02	/* autoload inhibit */
 };

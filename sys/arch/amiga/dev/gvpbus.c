@@ -1,4 +1,5 @@
-/*	$NetBSD: gvpbus.c,v 1.9 1995/08/18 15:27:54 chopps Exp $	*/
+/*	$OpenBSD: gvpbus.c,v 1.2 1996/04/21 22:15:18 deraadt Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.10 1996/03/17 01:17:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,21 +37,25 @@
 #include <amiga/dev/gvpbusvar.h>
 
 void gvpbusattach __P((struct device *, struct device *, void *));
-int gvpbusmatch __P((struct device *, struct cfdata *, void *));
+int gvpbusmatch __P((struct device *, void *, void *));
 int gvpbusprint __P((void *auxp, char *));
 
 extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
-struct cfdriver gvpbuscd = {
-	NULL, "gvpbus", (cfmatch_t)gvpbusmatch, gvpbusattach, 
-	DV_DULL, sizeof(struct device), NULL, 0 };
+struct cfattach gvpbus_ca = {
+	sizeof(struct device), gvpbusmatch, gvpbusattach
+};
+
+struct cfdriver gvpbus_cd = {
+	NULL, "gvpbus", DV_DULL, NULL, 0
+};
 
 int
-gvpbusmatch(pdp, cdp, auxp)
+gvpbusmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;

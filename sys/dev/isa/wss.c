@@ -1,5 +1,5 @@
-/*	$OpenBSD: wss.c,v 1.7 1996/03/20 01:01:06 mickey Exp $	*/
-/*	$NetBSD: wss.c,v 1.9 1996/02/16 08:18:36 mycroft Exp $	*/
+/*	$OpenBSD: wss.c,v 1.8 1996/04/21 22:24:49 deraadt Exp $	*/
+/*	$NetBSD: wss.c,v 1.11 1996/04/11 22:30:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -165,8 +165,12 @@ struct audio_hw_if wss_hw_if = {
 int	wssprobe __P((struct device *, void *, void *));
 void	wssattach __P((struct device *, struct device *, void *));
 
-struct cfdriver wsscd = {
-	NULL, "wss", wssprobe, wssattach, DV_DULL, sizeof(struct wss_softc)
+struct cfattach wss_ca = {
+	sizeof(struct wss_softc), wssprobe, wssattach
+};
+
+struct cfdriver wss_cd = {
+	NULL, "wss", DV_DULL
 };
 
 /*
@@ -250,8 +254,8 @@ wssattach(parent, self, aux)
 #ifdef NEWCONFIG
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, ad1848_intr,
-				   &sc->sc_ad1848, sc->sc_dev.dv_xname);
+    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
+        ad1848_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
 
     ad1848_attach(&sc->sc_ad1848);
     
@@ -306,10 +310,10 @@ wssopen(dev, flags)
     struct wss_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= wsscd.cd_ndevs)
+    if (unit >= wss_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = wsscd.cd_devs[unit];
+    sc = wss_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pas.c,v 1.8 1996/04/18 23:47:44 niklas Exp $	*/
-/*	$NetBSD: pas.c,v 1.13 1996/03/01 04:08:43 mycroft Exp $	*/
+/*	$OpenBSD: pas.c,v 1.9 1996/04/21 22:24:23 deraadt Exp $	*/
+/*	$NetBSD: pas.c,v 1.15 1996/04/11 22:29:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -250,8 +250,12 @@ pasconf(int model, int sbbase, int sbirq, int sbdrq)
 int	pasprobe __P((struct device *, void *, void *));
 void	pasattach __P((struct device *, struct device *, void *));
 
-struct cfdriver pascd = {
-	NULL, "pas", pasprobe, pasattach, DV_DULL, sizeof(struct pas_softc)
+struct cfattach pas_ca = {
+	sizeof(struct pas_softc), pasprobe, pasattach
+};
+
+struct cfdriver pas_cd = {
+	NULL, "pas", DV_DULL
 };
 
 /*
@@ -431,8 +435,8 @@ pasattach(parent, self, aux)
 	int err;
 	
 	sc->sc_iobase = iobase;
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO,
-				       sbdsp_intr, &sc->sc_sbdsp, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp, sc->sc_dev.dv_xname);
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);
 	
@@ -453,10 +457,10 @@ pasopen(dev, flags)
     struct pas_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= pascd.cd_ndevs)
+    if (unit >= pas_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = pascd.cd_devs[unit];
+    sc = pas_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_break.c,v 1.3 1996/03/11 11:15:58 mickey Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.4 1996/04/21 22:18:55 deraadt Exp $	*/
+/*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -250,7 +251,7 @@ db_list_breakpoints()
 	     bkpt != 0;
 	     bkpt = bkpt->link)
 	{
-	    db_printf("%s%8x %5d    ",
+	    db_printf("%s%p %5d    ",
 		      db_map_current(bkpt->map) ? "*" : " ",
 		      bkpt->map, bkpt->init_count);
 	    db_printsym(bkpt->address, DB_STGY_PROC);

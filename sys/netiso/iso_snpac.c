@@ -1,5 +1,5 @@
-/*	$OpenBSD: iso_snpac.c,v 1.2 1996/03/04 10:35:39 mickey Exp $	*/
-/*	$NetBSD: iso_snpac.c,v 1.11 1996/02/13 22:10:25 christos Exp $	*/
+/*	$OpenBSD: iso_snpac.c,v 1.3 1996/04/21 22:29:32 deraadt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.12 1996/04/13 01:35:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -175,8 +175,7 @@ llc_rtrequest(req, rt, sa)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("llc_rtrequest(%d, %x, %x)\n", req, 
-			(unsigned int) rt, (unsigned int) sa);
+		printf("llc_rtrequest(%d, %p, %p)\n", req, rt, sa);
 	}
 #endif
 	if (rt->rt_flags & RTF_GATEWAY)
@@ -414,17 +413,15 @@ snpac_add(ifp, nsap, snpa, type, ht, nsellength)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("snpac_add(%x, %x, %x, %x, %x, %x)\n",
-		       (unsigned int) ifp,
-		       (unsigned int) nsap,
-		       (unsigned int) snpa, type, ht, nsellength);
+		printf("snpac_add(%p, %p, %p, %x, %x, %x)\n",
+		       ifp, nsap, snpa, type, ht, nsellength);
 	}
 #endif
 	zap_isoaddr(dst, nsap);
 	rt = rtalloc1(sisotosa(&dst), 0);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("snpac_add: rtalloc1 returns %x\n", (unsigned int) rt);
+		printf("snpac_add: rtalloc1 returns %p\n", rt);
 	}
 #endif
 	if (rt == 0) {

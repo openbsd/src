@@ -1,5 +1,5 @@
-/*    $OpenBSD: amiga_init.c,v 1.6 1996/03/24 15:59:41 niklas Exp $	*/
-/*    $NetBSD: amiga_init.c,v 1.35 1996/02/24 07:43:14 chopps Exp $   */
+/*	$OpenBSD: amiga_init.c,v 1.7 1996/04/21 22:14:47 deraadt Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.36 1996/03/19 11:12:10 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.11 1996/04/18 19:18:06 niklas Exp $	*/
-/*	$NetBSD: conf.c,v 1.71 1996/03/14 21:27:33 christos Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 1996/04/21 22:16:23 deraadt Exp $	*/
+/*	$NetBSD: conf.c,v 1.74 1996/03/30 07:30:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -69,6 +69,9 @@ bdev_decl(vnd);
 bdev_decl(scd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "rd.h"
+bdev_decl(rd);
+/* no cdev for rd */
 
 struct bdevsw	bdevsw[] =
 {
@@ -91,6 +94,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
+	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -112,25 +116,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
-/* open, close, ioctl, select -- XXX should be a generic device */
-#define cdev_ocis_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
-        (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, read, ioctl */
-#define cdev_joy_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
-		 
 /* open, close, read, ioctl */
 #define cdev_ss_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
+#define cdev_joy_init cdev_ss_init
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -169,8 +161,6 @@ cdev_decl(ch);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "pcmciabus.h"
-cdev_decl(pcmciabus);
 #include "spkr.h"
 cdev_decl(spkr);
 #ifdef LKM
@@ -236,8 +226,8 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
-	cdev_joy_init(NJOY,joy),	/* 25: Game adapter */
-	cdev_ocis_init(NPCMCIABUS,pcmciabus), /* 26: PCMCIA Bus */
+	cdev_notdef(),			/* 25 */
+	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
@@ -280,6 +270,7 @@ dev_t	swapdev = makedev(1, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -290,6 +281,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -355,6 +347,7 @@ static int chrtoblktbl[] = {
 /*
  * Convert a character device number to a block device number.
  */
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {

@@ -1,3 +1,4 @@
+/*	$OpenBSD: spkr.c,v 1.6 1996/04/21 22:17:04 deraadt Exp $ */
 /*	$NetBSD: spkr.c,v 1.22 1996/03/18 01:26:12 jtk Exp $	*/
 
 /*
@@ -38,8 +39,12 @@ struct spkr_softc {
 	struct device sc_dev;
 };
 
-struct cfdriver spkrcd = {
-	NULL, "spkr", spkrprobe, spkrattach, DV_TTY, sizeof(struct spkr_softc)
+struct cfattach spkr_ca = {
+	sizeof(struct spkr_softc), spkrprobe, spkrattach
+};
+
+struct cfdriver spkr_cd = {
+	NULL, "spkr", DV_TTY
 };
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************
@@ -433,6 +438,7 @@ int spkrprobe (parent, match, aux)
 	if (cf->cf_loc[1] != PITAUX_PORT)
 		return (0);
 
+	ia->ia_iosize = 1;
 	return (1);
 }
 
@@ -480,7 +486,7 @@ struct uio *uio;
 		dev, uio->uio_resid);
 #endif /* DEBUG */
 
-    if (minor(dev) != 0)
+    if (minor(dev) != 0 || !spkr_attached)
 	return(ENXIO);
     else
     {

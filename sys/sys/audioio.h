@@ -1,5 +1,5 @@
-/*	$OpenBSD: audioio.h,v 1.4 1996/04/18 21:40:43 niklas Exp $	*/
-/*	$NetBSD: audioio.h,v 1.5 1996/03/11 05:12:28 scottr Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.5 1996/04/21 22:31:28 deraadt Exp $	*/
+/*	$NetBSD: audioio.h,v 1.6 1996/04/09 20:55:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -133,7 +133,7 @@ typedef struct audio_encoding {
 #define AUDIO_SETFD	_IOWR('A', 30, int)
 #define AUDIO_PERROR	_IOR('A', 31, int)
 
-/* 
+/*
  * Mixer device
  */
 #define AUDIO_MIN_GAIN	0

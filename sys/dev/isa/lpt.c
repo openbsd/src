@@ -1,5 +1,5 @@
-/*	$OpenBSD: lpt.c,v 1.8 1996/04/18 23:47:43 niklas Exp $ */
-/*	$NetBSD: lpt.c,v 1.32 1996/03/08 22:17:58 cgd Exp $	*/
+/*	$OpenBSD: lpt.c,v 1.9 1996/04/21 22:24:18 deraadt Exp $ */
+/*	$NetBSD: lpt.c,v 1.37 1996/04/11 22:29:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -65,7 +65,11 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -112,8 +116,12 @@ int lptprobe __P((struct device *, void *, void *));
 void lptattach __P((struct device *, struct device *, void *));
 int lptintr __P((void *));
 
-struct cfdriver lptcd = {
-	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
+struct cfattach lpt_ca = {
+	sizeof(struct lpt_softc), lptprobe, lptattach
+};
+
+struct cfdriver lpt_cd = {
+	NULL, "lpt", DV_TTY
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
@@ -128,15 +136,19 @@ static int not_ready __P((u_char, struct lpt_softc *));
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
+int	lpt_port_test __P((bus_chipset_tag_t, bus_io_handle_t, bus_io_addr_t,
+	    bus_io_size_t, u_char, u_char));
+
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 int
-lpt_port_test(ioh, off, data, mask, base)
+lpt_port_test(bc, ioh, base, off, data, mask)
+	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	size_t off;
+	bus_io_addr_t base;
+	bus_io_size_t off;
 	u_char data, mask;
-	u_long base;
 {
 	int timeout;
 	u_char temp;
@@ -202,22 +214,22 @@ lptprobe(parent, match, aux)
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
@@ -261,8 +273,8 @@ lptattach(parent, self, aux)
 	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
-		    lptintr, sc, sc->sc_dev.dv_xname);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+		    IPL_TTY, lptintr, sc, sc->sc_dev.dv_xname);
 }
 
 /*
@@ -282,9 +294,9 @@ lptopen(dev, flag)
 	int error;
 	int spin;
 
-	if (unit >= lptcd.cd_ndevs)
+	if (unit >= lpt_cd.cd_ndevs)
 		return ENXIO;
-	sc = lptcd.cd_devs[unit];
+	sc = lpt_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -386,12 +398,13 @@ lptwakeup(arg)
 /*
  * Close the device, and free the local line buffer.
  */
+int
 lptclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
 	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lptcd.cd_devs[unit];
+	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 
@@ -476,11 +489,12 @@ pushbytes(sc)
  * Copy a line from user space to a local buffer, then call putc to get the
  * chars moved to the output queue.
  */
+int
 lptwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	struct lpt_softc *sc = lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_interface.c,v 1.4 1996/04/18 19:18:06 niklas Exp $	*/
-/*	$NetBSD: db_interface.c,v 1.20 1996/03/15 00:07:18 chuck Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 1996/04/21 22:16:24 deraadt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.21 1996/03/30 07:57:16 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,12 +42,30 @@
 #include <machine/db_machdep.h>
 
 extern label_t	*db_recover;
+extern char *trap_type[];
+extern int trap_types;
 
 int	db_active = 0;
 
 /*
+ * Print trap reason.
+ */
+void
+kdbprinttrap(type, code)
+	int type, code;
+{
+	db_printf("kernel: ");
+	if (type >= trap_types || type < 0)
+		db_printf("type %d", type);
+	else
+		db_printf("%s", trap_type[type]);
+	db_printf(" trap, code=%x\n", code);
+}
+
+/*
  *  kdb_trap - field a TRACE or BPT trap
  */
+int
 kdb_trap(type, code, regs)
 	int type, code;
 	register db_regs_t *regs;
@@ -110,23 +128,6 @@ kdb_trap(type, code, regs)
 	}
 
 	return (1);
-}
-
-extern char *trap_type[];
-extern int trap_types;
-
-/*
- * Print trap reason.
- */
-kdbprinttrap(type, code)
-	int type, code;
-{
-	db_printf("kernel: ");
-	if (type >= trap_types || type < 0)
-		db_printf("type %d", type);
-	else
-		db_printf("%s", trap_type[type]);
-	db_printf(" trap, code=%x\n", code);
 }
 
 /*

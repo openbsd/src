@@ -1,5 +1,5 @@
-/*	$OpenBSD: wait.h,v 1.3 1996/03/03 12:12:49 niklas Exp $	*/
-/*	$NetBSD: wait.h,v 1.10 1995/10/19 08:14:18 jtc Exp $	*/
+/*	$OpenBSD: wait.h,v 1.4 1996/04/21 22:32:21 deraadt Exp $	*/
+/*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -105,13 +105,13 @@ union wait {
 	 * Terminated process status.
 	 */
 	struct {
-#if BYTE_ORDER == LITTLE_ENDIAN 
+#if BYTE_ORDER == LITTLE_ENDIAN
 		unsigned int	w_Termsig:7,	/* termination signal */
 				w_Coredump:1,	/* core dump indicator */
 				w_Retcode:8,	/* exit code if w_termsig==0 */
 				w_Filler:16;	/* upper bits filler */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 		unsigned int	w_Filler:16,	/* upper bits filler */
 				w_Retcode:8,	/* exit code if w_termsig==0 */
 				w_Coredump:1,	/* core dump indicator */
@@ -124,12 +124,12 @@ union wait {
 	 * with the WUNTRACED option bit.
 	 */
 	struct {
-#if BYTE_ORDER == LITTLE_ENDIAN 
+#if BYTE_ORDER == LITTLE_ENDIAN
 		unsigned int	w_Stopval:8,	/* == W_STOPPED if stopped */
 				w_Stopsig:8,	/* signal that stopped us */
 				w_Filler:16;	/* upper bits filler */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 		unsigned int	w_Filler:16,	/* upper bits filler */
 				w_Stopsig:8,	/* signal that stopped us */
 				w_Stopval:8;	/* == W_STOPPED if stopped */

@@ -1,7 +1,5 @@
-/*	$NetBSD: locore.s,v 1.143 1996/02/02 02:36:40 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.144 1996/04/03 05:48:35 mycroft Exp $	*/
 
-#undef DIAGNOSTIC
-#define DIAGNOSTIC
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.

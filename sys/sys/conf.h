@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.6 1996/04/18 21:40:47 niklas Exp $	*/
-/*	$NetBSD: conf.h,v 1.31 1996/03/14 18:59:07 christos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.7 1996/04/21 22:31:34 deraadt Exp $	*/
+/*	$NetBSD: conf.h,v 1.32 1996/03/30 21:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,8 +41,6 @@
  *	@(#)conf.h	8.3 (Berkeley) 1/21/94
  */
 
-#ifndef _SYS_CONF_H_
-#define _SYS_CONF_H_
 /*
  * Definitions of device driver entry switches
  */
@@ -359,6 +357,62 @@ extern struct swdevt swdevt[];
 int	chrtoblk __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));
-#endif
 
-#endif /* _SYS_CONF_ */
+cdev_decl(filedesc);
+
+cdev_decl(log);
+
+#ifndef LKM
+# define	NLKM	0
+# define	lkmenodev	enodev
+#else
+# define	NLKM	1
+#endif
+cdev_decl(lkm);
+
+#define	ptstty		ptytty
+#define	ptsioctl	ptyioctl
+cdev_decl(pts);
+
+#define	ptctty		ptytty
+#define	ptcioctl	ptyioctl
+cdev_decl(ptc);
+
+cdev_decl(ctty);
+
+cdev_decl(audio);
+
+cdev_decl(cn);
+
+bdev_decl(vnd);
+cdev_decl(vnd);
+
+bdev_decl(ccd);
+cdev_decl(ccd);
+
+cdev_decl(ch);
+
+bdev_decl(ss);
+cdev_decl(ss);
+
+bdev_decl(sd);
+cdev_decl(sd);
+
+bdev_decl(st);
+cdev_decl(st);
+
+bdev_decl(cd);
+cdev_decl(cd);
+
+cdev_decl(bpf);
+
+cdev_decl(tun);
+
+#ifdef COMPAT_SVR4
+# define NSVR4_NET	1
+#else
+# define NSVR4_NET	0
+#endif
+cdev_decl(svr4_net);
+
+#endif

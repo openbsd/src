@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_usrreq.c,v 1.2 1996/03/04 10:36:45 mickey Exp $	*/
-/*	$NetBSD: tp_usrreq.c,v 1.8 1996/02/13 22:12:27 christos Exp $	*/
+/*	$OpenBSD: tp_usrreq.c,v 1.3 1996/04/21 22:30:04 deraadt Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.9 1996/03/16 23:14:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -121,7 +121,7 @@ dump_mbuf(n, str)
 		nextrecord = n->m_act;
 		printf("RECORD:\n");
 		while (n) {
-			printf("%x : Len %x Data %x A %x Nx %x Tp %x\n",
+			printf("%p : Len %x Data %p A %p Nx %p Tp %x\n",
 			       n, n->m_len, n->m_data, n->m_act, n->m_next, n->m_type);
 #ifdef notdef
 			{
@@ -404,7 +404,7 @@ tp_usrreq(so, req, m, nam, controlp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
-		printf("usrreq(0x%x,%d,0x%x,0x%x,0x%x)\n", so, req, m, nam, outflags);
+		printf("usrreq(%p,%d,%p,%p,%p)\n", so, req, m, nam, outflags);
 		if (so->so_error)
 			printf("WARNING!!! so->so_error is 0x%x\n", so->so_error);
 	}
@@ -508,7 +508,7 @@ tp_usrreq(so, req, m, nam, controlp)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("PRU_CONNECT: so *SHORT_LSUFXP(tpcb) 0x%x lsuflen 0x%x, class 0x%x",
+			printf("PRU_CONNECT: so %p *SHORT_LSUFXP(tpcb) 0x%x lsuflen 0x%x, class 0x%x",
 			       tpcb->tp_sock, *SHORT_LSUFXP(tpcb), tpcb->tp_lsuffixlen,
 			       tpcb->tp_class);
 		}
@@ -525,7 +525,7 @@ tp_usrreq(so, req, m, nam, controlp)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("isop 0x%x isop->isop_socket offset 12 :\n", tpcb->tp_npcb);
+			printf("isop %p isop->isop_socket offset 12 :\n", tpcb->tp_npcb);
 			dump_buf(tpcb->tp_npcb, 16);
 		}
 #endif
@@ -534,9 +534,9 @@ tp_usrreq(so, req, m, nam, controlp)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
 			printf(
-			       "PRU_CONNECT after tpcb 0x%x so 0x%x npcb 0x%x flags 0x%x\n",
+			       "PRU_CONNECT after tpcb %p so %p npcb %p flags 0x%x\n",
 			       tpcb, so, tpcb->tp_npcb, tpcb->tp_flags);
-			printf("isop 0x%x isop->isop_socket offset 12 :\n", tpcb->tp_npcb);
+			printf("isop %p isop->isop_socket offset 12 :\n", tpcb->tp_npcb);
 			dump_buf(tpcb->tp_npcb, 16);
 		}
 #endif
@@ -607,7 +607,7 @@ tp_usrreq(so, req, m, nam, controlp)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("RCVD: cc %d space %d hiwat %d\n",
+			printf("RCVD: cc %ld space %ld hiwat %ld\n",
 			       so->so_rcv.sb_cc, sbspace(&so->so_rcv),
 			       so->so_rcv.sb_hiwat);
 		}
@@ -687,7 +687,7 @@ tp_usrreq(so, req, m, nam, controlp)
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_SYSCALL]) {
 				printf(
-				       "PRU_SEND: eot %d before sbappend 0x%x len 0x%x to sb @ 0x%x\n",
+				       "PRU_SEND: eot %ld before sbappend %p len 0x%x to sb @ %p\n",
 				       eotsdu, m, totlen, sb);
 				dump_mbuf(sb->sb_mb, "so_snd.sb_mb");
 				dump_mbuf(m, "m : to be added");
@@ -696,7 +696,7 @@ tp_usrreq(so, req, m, nam, controlp)
 			tp_packetize(tpcb, m, eotsdu);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_SYSCALL]) {
-				printf("PRU_SEND: eot %d after sbappend 0x%x\n", eotsdu, m);
+				printf("PRU_SEND: eot %ld after sbappend %p\n", eotsdu, m);
 				dump_mbuf(sb->sb_mb, "so_snd.sb_mb");
 			}
 #endif
@@ -705,7 +705,7 @@ tp_usrreq(so, req, m, nam, controlp)
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_SYSCALL]) {
 				printf("PRU_SEND: after driver error 0x%x \n", error);
-				printf("so_snd 0x%x cc 0t%d mbcnt 0t%d\n",
+				printf("so_snd %p cc 0t%ld mbcnt 0t%ld\n",
 				       sb, sb->sb_cc, sb->sb_mbcnt);
 				dump_mbuf(sb->sb_mb, "so_snd.sb_mb after driver");
 			}
@@ -742,7 +742,7 @@ tp_usrreq(so, req, m, nam, controlp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
-		printf("%s, so 0x%x, tpcb 0x%x, error %d, state %d\n",
+		printf("%s, so %p, tpcb %p, error %d, state %d\n",
 		       "returning from tp_usrreq", so, tpcb, error,
 		       tpcb ? tpcb->tp_state : 0);
 	}
@@ -784,7 +784,7 @@ tp_confirm(tpcb)
 	struct tp_event E;
 	if (tpcb->tp_state == TP_CONFIRMING)
 		return DoEvent(T_ACPT_req);
-	printf("Tp confirm called when not confirming; tpcb 0x%x, state 0x%x\n",
+	printf("Tp confirm called when not confirming; tpcb %p, state 0x%x\n",
 	       tpcb, tpcb->tp_state);
 	return 0;
 }

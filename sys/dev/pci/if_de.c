@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_de.c,v 1.5 1996/04/18 23:47:56 niklas Exp $       */
-/*    $NetBSD: if_de.c,v 1.13 1996/03/14 03:04:17 cgd Exp $       */
+/*    $OpenBSD: if_de.c,v 1.6 1996/04/21 22:25:13 deraadt Exp $       */
+/*    $NetBSD: if_de.c,v 1.17 1996/04/01 19:37:54 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -109,12 +109,12 @@
 
 #if defined(__NetBSD__)
 #include <machine/bus.h>
+#ifdef __alpha__
+#include <machine/intr.h>
+#endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
-#ifdef __i386__	/* XXX -- fix later -- cgd */
-#include <i386/isa/isa_machdep.h>
-#endif
 #endif /* __NetBSD__ */
 
 /*
@@ -141,9 +141,6 @@ typedef struct {
 } tulip_ringinfo_t;
 
 #ifdef TULIP_IOMAPPED
-#ifndef __NetBSD__
-#else
-#endif
 
 #define	TULIP_EISA_CSRSIZE	16
 #define	TULIP_PCI_CSRSIZE	8
@@ -317,7 +314,8 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
-    bus_chipset_tag_t tulip_bc;		/* bus chipset tag */
+    bus_chipset_tag_t tulip_bc;
+    pci_chipset_tag_t tulip_pc;
 #ifdef TULIP_IOMAPPED
     bus_io_handle_t tulip_ioh;		/* I/O region handle */
 #else
@@ -385,8 +383,9 @@ extern struct cfdriver decd;
 #if defined(__NetBSD__)
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
-extern struct cfdriver decd;
-#define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) decd.cd_devs[unit])
+extern struct cfattach de_ca;
+extern struct cfdriver de_cd;
+#define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #endif
 
 #ifndef TULIP_BURSTSIZE
@@ -416,6 +415,10 @@ static ifnet_ret_t tulip_start(struct ifnet *ifp);
 static void tulip_rx_intr(tulip_softc_t *sc);
 static void tulip_addr_filter(tulip_softc_t *sc);
 
+#if defined(__NetBSD__) && defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#define vtophys(va)     (vtophys(va) | 0x40000000)
+#endif
 
 static int
 tulip_dc21040_media_probe(
@@ -670,7 +673,7 @@ tulip_dc21140_de500_media_probe(
     if ((TULIP_READ_CSR(sc, csr_gp) &
 	(TULIP_GP_DE500_NOTOK_100|TULIP_GP_DE500_NOTOK_10)) !=
 	(TULIP_GP_DE500_NOTOK_100|TULIP_GP_DE500_NOTOK_10))
-	return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) != 0;
+	return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) == 0;
     TULIP_WRITE_CSR(sc, csr_gp,
 	TULIP_GP_DE500_HALFDUPLEX|TULIP_GP_DE500_FORCE_100);
     TULIP_WRITE_CSR(sc, csr_command,
@@ -679,7 +682,7 @@ tulip_dc21140_de500_media_probe(
     TULIP_WRITE_CSR(sc, csr_command,
 	TULIP_READ_CSR(sc, csr_command) & ~TULIP_CMD_TXTHRSHLDCTL);
     DELAY(1000000);
-    return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) != 0;
+    return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) == 0;
 }
 
 static void
@@ -1189,10 +1192,10 @@ tulip_rx_intr(
 #error BIG_PACKET is incompatible with TULIP_COPY_RXDATA
 #endif
 		    if (ms == me)
-			bcopy(mtod(m, caddr_t) + sizeof(struct ether_header),
+/*XXX?*/		bcopy(mtod(ms, caddr_t) + sizeof(struct ether_header),
 			      mtod(m0, caddr_t), total_len);
 		    else
-			m_copydata(m, 0, total_len, mtod(m0, caddr_t));
+/*XXX?*/		m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
 		    m0->m_len = m0->m_pkthdr.len = total_len;
 		    m0->m_pkthdr.rcvif = ifp;
 		    ether_input(ifp, &eh, m0);
@@ -2406,8 +2409,12 @@ tulip_pci_probe(
 
 static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
-struct cfdriver decd = {
-    0, "de", tulip_pci_probe, tulip_pci_attach, DV_IFNET, sizeof(tulip_softc_t)
+struct cfattach de_ca = {
+    sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
+};
+
+struct cfdriver de_cd = {
+    0, "de", DV_IFNET
 };
 
 #endif /* __NetBSD__ */
@@ -2428,10 +2435,20 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
+    bus_chipset_tag_t bc = pa->pa_bc;
+    pci_chipset_tag_t pc = pa->pa_pc;
+#if defined(TULIP_IOMAPPED)
+    bus_io_addr_t iobase;
+    bus_io_size_t iosize;
+#else
+    bus_mem_addr_t membase;
+    bus_mem_size_t memsize;
+#endif
     int unit = sc->tulip_dev.dv_unit;
+    const char *intrstr = NULL;
 #endif
     int retval, idx, revinfo, id;
-#if !defined(TULIP_IOMAPPED) && !defined(__bsdi__)
+#if !defined(TULIP_IOMAPPED) && !defined(__bsdi__) && !defined(__NetBSD__)
     vm_offset_t pa_csrs;
 #endif
     unsigned csrsize = TULIP_PCI_CSRSIZE;
@@ -2464,7 +2481,7 @@ tulip_pci_attach(
     }
 #endif
 #if defined(__NetBSD__)
-    revinfo = pci_conf_read(pa->pa_tag, PCI_CFRV) & 0xFF;
+    revinfo = pci_conf_read(pc, pa->pa_tag, PCI_CFRV) & 0xFF;
     id = pa->pa_id;
 #endif
 
@@ -2546,11 +2563,17 @@ tulip_pci_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
-    sc->tulip_bc = pa->pa_bc;
+    sc->tulip_bc = bc;
+    sc->tulip_pc = pc;
 #if defined(TULIP_IOMAPPED)
-    retval = pci_map_io(pa->pa_tag, PCI_CBIO, &sc->tulip_ioh);
+    retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize);
+    if (!retval)
+	retval = bus_io_map(bc, iobase, iosize, &sc->tulip_ioh);
 #else
-    retval = pci_map_mem(pa->pa_tag, PCI_CBMA, &sc->tulip_memh, &pa_csrs);
+    retval = pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &membase, &memsize,
+	NULL);
+    if (!retval)
+	retval = bus_mem_map(bc, membase, memsize, 0, &sc->tulip_memh);
 #endif
     csr_base = 0;
     if (retval) {
@@ -2587,21 +2610,27 @@ tulip_pci_attach(
 			   bit longer anyways) */
 #if defined(__NetBSD__)
 	if (sc->tulip_boardsw->bd_type != TULIP_DC21040_ZX314_SLAVE) {
-	    sc->tulip_ih = pci_map_int(pa->pa_tag, IPL_NET, tulip_intr, sc,
-				       sc->tulip_dev.dv_xname);
-	    if (sc->tulip_ih == NULL) {
-		printf("%s%d: couldn't map interrupt\n",
-		       sc->tulip_name, sc->tulip_unit);
+	    pci_intr_handle_t intrhandle;
+
+	    if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+		pa->pa_intrline, &intrhandle)) {
+		printf(": couldn't map interrupt\n", self->dv_xname);
 		return;
 	    }
-#if defined(__i386__)
-	    /* gross but netbsd won't print the irq otherwise */
-	    printf(" irq %d", ((struct intrhand *) sc->tulip_ih)->ih_irq);
-#endif
+	    intrstr = pci_intr_string(pc, intrhandle);
+	    sc->tulip_ih = pci_intr_establish(pc, intrhandle, IPL_NET,
+		tulip_intr, sc, self->dv_xname);
+	    if (sc->tulip_ih == NULL) {
+		printf(": couldn't establish interrupt", self->dv_xname);
+                if (intrstr != NULL)
+                        printf(" at %s", intrstr);
+                printf("\n");
+		return;
+	    }
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_pci_shutdown, sc);
 	if (sc->tulip_ats == NULL)
-	    printf("%s%d: warning: couldn't establish shutdown hook\n",
+	    printf("\n%s%d: warning: couldn't establish shutdown hook",
 		   sc->tulip_name, sc->tulip_unit);
 #endif
 #if defined(__FreeBSD__)
@@ -2628,6 +2657,10 @@ tulip_pci_attach(
 #endif
 	tulip_reset(sc);
 	tulip_attach(sc);
+#if defined(__NetBSD__)
+	if (intrstr != NULL)
+	    printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+#endif
     }
 }
 #endif /* NDE > 0 */

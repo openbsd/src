@@ -1,4 +1,5 @@
-/*	$NetBSD: ivsc.c,v 1.12 1995/08/18 15:28:00 chopps Exp $	*/
+/*	$OpenBSD: ivsc.c,v 1.2 1996/04/21 22:15:32 deraadt Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.14 1996/03/28 19:23:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,7 +51,7 @@
 
 int ivscprint __P((void *auxp, char *));
 void ivscattach __P((struct device *, struct device *, void *));
-int ivscmatch __P((struct device *, struct cfdata *, void *));
+int ivscmatch __P((struct device *, void *, void *));
 
 int ivsc_intr __P((struct sci_softc *));
 int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
@@ -82,18 +83,21 @@ extern int sci_data_wait;
 
 int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
-struct cfdriver ivsccd = {
-	NULL, "ivsc", (cfmatch_t)ivscmatch, ivscattach, 
-	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+struct cfattach ivsc_ca = {
+	sizeof(struct sci_softc), ivscmatch, ivscattach
+};
+
+struct cfdriver ivsc_cd = {
+	NULL, "ivsc", DV_DULL, NULL, 0
+};
 
 /*
  * if this is an IVS board
  */
 int
-ivscmatch(pdp, cdp, auxp)
+ivscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	struct zbus_args *zap;
 
@@ -324,4 +328,6 @@ ivsc_intr(dev)
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
 		return(0);
 	stat = *dev->sci_iack;
+	/* XXXX is: something is missing here, at least a: */
+	return(1);
 }

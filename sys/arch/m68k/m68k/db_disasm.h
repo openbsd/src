@@ -1,4 +1,5 @@
-/*	$NetBSD: db_disasm.h,v 1.3 1994/10/26 07:51:05 cgd Exp $	*/
+/*	$OpenBSD: db_disasm.h,v 1.2 1996/04/21 22:17:47 deraadt Exp $	*/
+/*	$NetBSD: db_disasm.h,v 1.4 1996/04/01 01:38:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -425,3 +426,7 @@ typedef struct dis_buffer dis_buffer_t;
 #define PRINT_DREG(dbuf, reg) addstr(dbuf, dregs[reg])
 #define PRINT_AREG(dbuf, reg) addstr(dbuf, aregs[reg])
 
+vm_offset_t	db_disasm __P((vm_offset_t loc, boolean_t moto_syntax));
+void	get_modregstr_moto __P((dis_buffer_t *dbuf, int bit, int mod, int sz, int dd));
+void	get_modregstr_mit __P((dis_buffer_t *dbuf, int bit, int mod, int sz, int dd));
+u_long	get_areg_val __P((int reg));

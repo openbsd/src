@@ -1,5 +1,5 @@
-#	$OpenBSD: files.isa,v 1.7 1996/04/18 23:47:33 niklas Exp $
-#	$NetBSD: files.isa,v 1.12 1996/03/04 03:29:16 cgd Exp $
+#	$OpenBSD: files.isa,v 1.8 1996/04/21 22:23:23 deraadt Exp $
+#	$NetBSD: files.isa,v 1.17 1996/03/29 20:53:30 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -9,11 +9,10 @@
 # devices:
 #	mcd, scd, wd, wt
 
-define	isa {[port = -1], [size = 0],
-		  [iomem = -1], [iosiz = 0],
-		  [irq = -1], [drq = -1]}
-
-device	isa at isabus: isa
+device	isa {[port = -1], [size = 0],
+	     [iomem = -1], [iosiz = 0],
+	     [irq = -1], [drq = -1]}
+attach	isa at isabus
 file	dev/isa/isa.c			isa needs-flag
 
 # ISA DMA controller
@@ -28,7 +27,8 @@ file	dev/isa/isadma.c		isadma needs-flag
 
 define	pcicbus {[iomem = -1], [iosiz = 0]}
 
-device	pcic at isa: pcicbus
+device	pcic: pcicbus
+attach	pcic at isa
 file	dev/isa/pcmcia_pcic.c		pcic
 
 file	dev/isa/pcmcia_isa.c		pcmcia
@@ -47,15 +47,18 @@ include "../../../dev/pcmcia/files.pcmcia"
 define	commulti {[slave = -1]}
 
 # AST 4-port board
-device	ast at isa: commulti
+device	ast: commulti
+attach	ast at isa
 file	dev/isa/ast.c			ast
 
 # BOCA 8-port board
-device	boca at isa: commulti
+device	boca: commulti
+attach	boca at isa
 file	dev/isa/boca.c			boca
 
 # IBM RT PC 4-port board
-device	rtfps at isa: commulti
+device	rtfps: commulti
+attach	rtfps at isa
 file	dev/isa/rtfps.c			rtfps
 
 #
@@ -63,16 +66,20 @@ file	dev/isa/rtfps.c			rtfps
 #
 
 # 8250/16[45]50-based "com" ports
-device	com at isa, commulti: tty
-file	dev/isa/com.c			com needs-flag
+device	com: tty
+attach	com at isa with com_isa
+attach	com at commulti with com_commulti
+file	dev/isa/com.c			com & (com_isa | com_commulti) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 # XXX currently broken
-device	cy at isa: tty
+device	cy: tty
+attach	cy at isa
 file	dev/isa/cy.c			cy needs-count
 
 # PC parallel ports (XXX what chip?)
-device	lpt at isa
+device	lpt
+attach	lpt at isa
 file	dev/isa/lpt.c			lpt needs-flag
 
 #
@@ -80,53 +87,64 @@ file	dev/isa/lpt.c			lpt needs-flag
 #
 
 # Adaptec AHA-154x family
-device	aha at isa: scsi, isadma
-file	dev/isa/aha1542.c		aha
+device	aha: scsi, isadma
+attach	aha at isa
+file	dev/isa/aha.c			aha
 
 # Adapctec AIC-6[32]60 ICs
-device	aic at isa: scsi, isadma
+device	aic: scsi, isadma
+attach	aic at isa
 file	dev/isa/aic6360.c		aic
 
 # Adaptec 7770-based EISA, VLB, etc. controllers
-device	ahe at isa: scsi, aic7xxx
+device	ahe: scsi, aic7xxx
+attach	ahe at isa
 file	dev/isa/aha284x.c		ahe
 
 # BusLogic BT-74x EISA family (XXX; should be EISA.  it's special)
-device	bt at isa: scsi, isadma
-file	dev/isa/bt742a.c		bt
+device	bt: scsi, isadma
+attach	bt at isa
+file	dev/isa/bt.c			bt
 
 # Seagate ST0[12] ICs
-device	sea at isa: scsi, isadma
+device	sea: scsi, isadma
+attach	sea at isa
 file	dev/isa/seagate.c		sea
 
 # UltraStor UHA-[13]4f boards
-device	uha at isa: scsi, isadma
+device	uha: scsi, isadma
+attach	uha at isa
 file	dev/isa/ultra14f.c		uha
 
-# Western Digital WD7000 boards (XXX incomplete description)
-# XXX not yet working
-device	wds at isa: scsi, isadma
-file	dev/isa/wd7000.c		wds
+# Western Digital WD7000 and Future Domain TMC-7000 boards
+device	wds: scsi, isadma
+attach	wds at isa
+file	dev/isa/wds.c			wds
 
 #
 # Other ISA disk controllers
 #
 
 # Mitsumi CD-ROM controllers
-device	mcd at isa: disk
+device	mcd: disk
+attach	mcd at isa
 file	dev/isa/mcd.c			mcd needs-flag
 
 # Sony CDU-3[13]A CD-ROM drives
-device	scd at isa: disk
+device	scd: disk
+attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers
-device	wdc at isa {drive = -1}
-device	wd at wdc: disk, isadma
+device	wdc {drive = -1}
+attach	wdc at isa
+device	wd: disk, isadma
+attach	wd at wdc
 file	dev/isa/wd.c			wdc needs-flag
 
 # Wangtek- and Archive-compatible tape controller boards
-device	wt at isa: tape, isadma
+device	wt: tape, isadma
+attach	wt at isa
 file	dev/isa/wt.c			wt needs-flag
 
 #
@@ -140,45 +158,55 @@ file	dev/isa/elink.c			elink
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with amiga if_ed.c
-#device	ed at isa, pcmcia: ether, ifnet
-#file	dev/isa/if_ed.c			ed needs-flag
+device	ed: ether, ifnet
+attach	ed at isa
+file	dev/isa/if_ed.c			ed needs-flag
 
 # 3Com 3C505
-device	eg at isa: ether, ifnet
+device	eg: ether, ifnet
+attach	eg at isa
 file	dev/isa/if_eg.c			eg
 
 # 3Com 3C501
-device	el at isa: ether, ifnet
+device	el: ether, ifnet
+attach	el at isa
 file	dev/isa/if_el.c			el
 
 # 3Com 3C5x9, 3c59x (EtherLink III) family
-device	ep at isa, pci: ether, ifnet, elink
+device	ep: ether, ifnet, elink
+attach	ep at isa with ep_isa
+attach	ep at pci with ep_pci
 file	dev/isa/if_ep.c			ep needs-flag
 
 # Fujitsu MB8696[05]-based boards
 # (Allied Telesis AT1700)
-device	fe at isa: ether, ifnet
+device	fe: ether, ifnet
+attach	fe at isa
 file	dev/isa/if_fe.c			fe
 
 # HP Lan Ethernet controllers
 # XXX currently broken
-#device hp at isa: ether, ifnet
+#device hp: ether, ifnet
+#attach	hp at isa
 #file	dev/isa/if_hp.c			hp
 
 # Intel i82586-based boards
 # (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
-device	ie at isa: ether, ifnet, elink
+device	ie: ether, ifnet, elink
+attach	ie at isa
 file	dev/isa/if_ie.c			ie
 
 # XXX ???
 # XXX NOT IN TREE?
-#device	ix at isa: ether, ifnet
+#device	ix: ether, ifnet
+#attach	ix at isa
 #file	dev/isa/if_ix.c			ix
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # XXX conflicts with alpha if_le.c
-#device	le at isa: ether, ifnet, isadma
+#device	le: ether, ifnet, isadma
+#attach	le at isa with le_isa
 #file	dev/isa/if_le.c			le
 
 #
@@ -190,11 +218,13 @@ define	sbdsp
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb at isa: audio, isadma, sbdsp, mulaw
+device	sb: audio, isadma, sbdsp, mulaw
+attach	sb at isa
 file	dev/isa/sb.c			sb needs-flag
 
 # ProAudio Spectrum
-device	pas at isa: audio, isadma, sbdsp, mulaw
+device	pas: audio, isadma, sbdsp, mulaw
+attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
@@ -207,18 +237,22 @@ file	dev/isa/ics2101.c		ics2101
 
 
 # Audio systems based on Echo Speech Corp. ESC61[45] ASICs
-device	pss at isa {[port = -1], [size = 0],
-		    [iomem = -1], [iosiz = 0],
-		    [irq = -1], [drq = -1]}
-device	sp at pss: audio, isadma, ad1848
+device	pss {[port = -1], [size = 0],
+	     [iomem = -1], [iosiz = 0],
+	     [irq = -1], [drq = -1]}
+attach	pss at isa
+device	sp: audio, isadma, ad1848
+attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss at isa: audio, isadma, ad1848
+device	wss: audio, isadma, ad1848
+attach	wss at isa
 file	dev/isa/wss.c			wss needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
-device	gus at isa: audio, isadma, ics2101, ad1848, mulaw
+device	gus: audio, isadma, ics2101, ad1848, mulaw
+attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag

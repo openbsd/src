@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysv_shm.c,v 1.3 1996/03/03 17:20:08 niklas Exp $	*/
-/*	$NetBSD: sysv_shm.c,v 1.36 1996/02/09 19:00:29 christos Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.4 1996/04/21 22:27:26 deraadt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -353,7 +353,7 @@ shmget_existing(p, uap, mode, segnum, retval)
 		return error;
 	if (SCARG(uap, size) && SCARG(uap, size) > shmseg->shm_segsz)
 		return EINVAL;
-	if (SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL) ==
+	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
 	    (IPC_CREAT | IPC_EXCL))
 		return EEXIST;
 	*retval = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);

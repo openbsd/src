@@ -1,3 +1,5 @@
+/*	$OpenBSD: bzsc.c,v 1.2 1996/04/21 22:15:00 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  * Copyright (c) 1994 Christian E. Hopps
@@ -57,7 +59,7 @@
 
 int  bzscprint  __P((void *auxp, char *));
 void bzscattach __P((struct device *, struct device *, void *));
-int  bzscmatch  __P((struct device *, struct cfdata *, void *));
+int  bzscmatch  __P((struct device *, void *, void *));
 
 struct scsi_adapter bzsc_scsiswitch = {
 	sfas_scsicmd,
@@ -73,10 +75,13 @@ struct scsi_device bzsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
+struct cfattach bzsc_ca = {
+	sizeof(struct bzsc_softc), bzscmatch, bzscattach
+};
 
-struct cfdriver bzsccd = {
-	NULL, "bzsc", (cfmatch_t)bzscmatch, bzscattach, 
-	DV_DULL, sizeof(struct bzsc_softc), NULL, 0 };
+struct cfdriver bzsc_cd = {
+	NULL, "bzsc", DV_DULL, NULL, 0
+};
 
 int bzsc_intr		__P((struct sfas_softc *dev));
 int bzsc_setup_dma	__P((struct sfas_softc *sc, void *ptr, int len,
@@ -89,7 +94,7 @@ void bzsc_led_dummy	__P((struct sfas_softc *sc));
 /*
  * if we are an Advanced Systems & Software FastlaneZ3
  */
-int bzscmatch(struct device *pdp, struct cfdata *cdp,	void *auxp)
+int bzscmatch(struct device *pdp, void *match,	void *auxp)
 {
   struct zbus_args *zap;
 

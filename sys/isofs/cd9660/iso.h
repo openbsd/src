@@ -1,5 +1,5 @@
-/*	$OpenBSD: iso.h,v 1.2 1996/02/29 10:12:30 niklas Exp $	*/
-/*	$NetBSD: iso.h,v 1.10 1996/02/09 21:32:11 christos Exp $	*/
+/*	$OpenBSD: iso.h,v 1.3 1996/04/21 22:26:41 deraadt Exp $	*/
+/*	$NetBSD: iso.h,v 1.11 1996/03/16 20:25:42 ws Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -244,7 +244,7 @@ static __inline int
 isonum_723(u_char *p)
 #else
 isonum_723(p)
-	u_char *p
+	u_char *p;
 #endif
 {
 	return *(u_int16t *)p;
@@ -270,7 +270,7 @@ static __inline int
 isonum_723(u_char *p)
 #else
 isonum_723(p)
-	u_char *p
+	u_char *p;
 #endif
 {
 	return *(u_int16t *)(p + 2);

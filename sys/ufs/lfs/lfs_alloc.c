@@ -1,5 +1,5 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.3 1996/03/19 21:10:51 mickey Exp $	*/
-/*	$NetBSD: lfs_alloc.c,v 1.3 1996/02/09 22:28:47 christos Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.4 1996/04/21 22:32:39 deraadt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -167,7 +167,10 @@ lfs_vcreate(mp, ino, vpp)
 	extern int (**lfs_vnodeop_p) __P((void *));
 	struct inode *ip;
 	struct ufsmount *ump;
-	int error, i;
+	int error;
+#ifdef QUOTA
+	int i;
+#endif
 
 	/* Create the vnode. */
 	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) != 0) {

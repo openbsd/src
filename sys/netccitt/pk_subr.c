@@ -1,5 +1,5 @@
-/*	$OpenBSD: pk_subr.c,v 1.2 1996/03/04 07:36:44 niklas Exp $	*/
-/*	$NetBSD: pk_subr.c,v 1.11 1996/02/13 22:05:34 christos Exp $	*/
+/*	$OpenBSD: pk_subr.c,v 1.3 1996/04/21 22:28:53 deraadt Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.12 1996/03/30 21:54:33 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -1153,7 +1153,6 @@ pk_message(lcn, xcp, fmt, va_alist)
 #endif
 {
 	va_list         ap;
-	static const char *rec = "%r\n";
 
 	if (lcn)
 		if (!PQEMPTY)
@@ -1166,7 +1165,7 @@ pk_message(lcn, xcp, fmt, va_alist)
 		printf("X.25: ");
 
 	va_start(ap, fmt);
-	printf(rec, fmt, ap);
+	printf("%:\n", fmt, ap);
 	va_end(ap);
 }
 
@@ -1184,7 +1183,7 @@ pk_fragment(lcp, m0, qbit, mbit, wait)
 
 	if (m == 0)
 		return 0;
-	if (m->m_flags & M_PKTHDR == 0)
+	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("pk_fragment");
 	totlen = m->m_pkthdr.len;
 	m->m_act = 0;

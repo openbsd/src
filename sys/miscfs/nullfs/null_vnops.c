@@ -1,5 +1,5 @@
-/*	$OpenBSD: null_vnops.c,v 1.2 1996/02/27 07:58:04 niklas Exp $	*/
-/*	$NetBSD: null_vnops.c,v 1.5 1996/02/09 22:40:34 christos Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.3 1996/04/21 22:28:16 deraadt Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.6 1996/04/13 01:34:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -397,8 +397,8 @@ null_print(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	printf ("\ttag VT_NULLFS, vp=%x, lowervp=%x\n", (unsigned int) vp,
-		(unsigned int) NULLVPTOLOWERVP(vp));
+	printf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp,
+	    NULLVPTOLOWERVP(vp));
 	return (0);
 }
 

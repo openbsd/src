@@ -1,5 +1,5 @@
-/*	$OpenBSD: ssvar.h,v 1.2 1996/04/19 16:10:26 niklas Exp $	*/
-/*	$NetBSD: ssvar.h,v 1.1 1996/02/18 20:32:50 mycroft Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.3 1996/04/21 22:31:18 deraadt Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -40,15 +40,19 @@
  * Register NULL for a function if you want to try the real SCSI code
  * (with quirks table)
  */
+struct ss_softc;
+struct scan_io;
+
 struct ss_special {
-	int	(*set_params)();
-	int	(*trigger_scanner)();
-	int	(*get_params)();
-	void	(*minphys)(); /* some scanners only send line-multiples */
-	int	(*read)();
-	int	(*rewind_scanner)();
-	int	(*load_adf)();
-	int	(*unload_adf)();
+	int	(*set_params) __P((struct ss_softc *, struct scan_io *));
+	int	(*trigger_scanner) __P((struct ss_softc *));
+	int	(*get_params) __P((struct ss_softc *));
+	/* some scanners only send line-multiples */
+	void	(*minphys) __P((struct ss_softc *, struct buf *));
+	int	(*read) __P((struct ss_softc *, struct buf *));
+	int	(*rewind_scanner) __P((struct ss_softc *));
+	int	(*load_adf) __P((struct ss_softc *));
+	int	(*unload_adf) __P((struct ss_softc *));
 };
 
 /*

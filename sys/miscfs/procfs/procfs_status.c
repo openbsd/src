@@ -1,4 +1,5 @@
-/*	$NetBSD: procfs_status.c,v 1.10 1995/06/01 22:44:28 jtc Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.2 1996/04/21 22:28:18 deraadt Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -104,7 +105,7 @@ procfs_dostatus(curp, p, pfs, uio)
 		ps += sprintf(ps, "noflags");
 
 	if (p->p_flag & P_INMEM)
-		ps += sprintf(ps, " %d,%d",
+		ps += sprintf(ps, " %ld,%ld",
 			p->p_stats->p_start.tv_sec,
 			p->p_stats->p_start.tv_usec);
 	else
@@ -114,7 +115,7 @@ procfs_dostatus(curp, p, pfs, uio)
 		struct timeval ut, st;
 
 		calcru(p, &ut, &st, (void *) 0);
-		ps += sprintf(ps, " %d,%d %d,%d",
+		ps += sprintf(ps, " %ld,%ld %ld,%ld",
 			ut.tv_sec,
 			ut.tv_usec,
 			st.tv_sec,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 1995/12/24 01:08:02 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 1996/03/29 00:23:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,6 +93,7 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
+void	delay __P((int));
 
 #ifdef I586_CPU
 /*

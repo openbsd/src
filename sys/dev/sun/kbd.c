@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.2 1996/04/18 23:48:15 niklas Exp $	*/
-/*	$NetBSD: kbd.c,v 1.4 1996/02/29 19:32:14 gwr Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.3 1996/04/21 22:26:10 deraadt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.7 1996/04/10 21:44:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,9 +191,12 @@ struct zsops zsops_kbd;
 static int	kbd_match(struct device *, void *, void *);
 static void	kbd_attach(struct device *, struct device *, void *);
 
-struct cfdriver kbdcd = {
-	NULL, "kbd", kbd_match, kbd_attach,
-	DV_DULL, sizeof(struct kbd_softc), NULL,
+struct cfattach kbd_ca = {
+	sizeof(struct kbd_softc), kbd_match, kbd_attach
+};
+
+struct cfdriver kbd_cd = {
+	NULL, "kbd", DV_DULL
 };
 
 
@@ -295,9 +298,9 @@ kbdopen(dev, flags, mode, p)
 	int error, s, unit;
 
 	unit = minor(dev);
-	if (unit >= kbdcd.cd_ndevs)
+	if (unit >= kbd_cd.cd_ndevs)
 		return (ENXIO);
-	k = kbdcd.cd_devs[unit];
+	k = kbd_cd.cd_devs[unit];
 	if (k == NULL)
 		return (ENXIO);
 
@@ -334,7 +337,7 @@ kbdclose(dev, flags, mode, p)
 {
 	struct kbd_softc *k;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	k->k_evmode = 0;
 	ev_fini(&k->k_events);
 	k->k_events.ev_io = NULL;
@@ -349,7 +352,7 @@ kbdread(dev, uio, flags)
 {
 	struct kbd_softc *k;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	return (ev_read(&k->k_events, uio, flags));
 }
 
@@ -372,15 +375,21 @@ kbdselect(dev, rw, p)
 {
 	struct kbd_softc *k;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	return (ev_select(&k->k_events, rw, p));
 }
 
-static int kbd_oldkeymap __P((struct kbd_state *ks,
-	u_long cmd, struct okiockey *okio));
 
+static int kbd_ioccmd(struct kbd_softc *k, int *data);
 static int kbd_iockeymap __P((struct kbd_state *ks,
 	u_long cmd, struct kiockeymap *kio));
+
+static int kbd_iocsled(struct kbd_softc *k, int *data);
+
+#ifdef	KIOCGETKEY
+static int kbd_oldkeymap __P((struct kbd_state *ks,
+	u_long cmd, struct okiockey *okio));
+#endif
 
 int
 kbdioctl(dev, cmd, data, flag, p)
@@ -395,7 +404,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	int *ip;
 	int error = 0;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	ks = &k->k_state;
 
 	switch (cmd) {
@@ -429,14 +438,7 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case KIOCCMD:	/* Send a command to the keyboard */
-		/*
-		 * ``unimplemented commands are ignored'' (blech)
-		 * so cannot check return value from kbd_docmd
-		 */
-		error = kbd_drain_tx(k);
-		if (error == 0) {
-			(void) kbd_docmd(k, *(int *)data);
-		}
+		error = kbd_ioccmd(k, (int *)data);
 		break;
 
 	case KIOCTYPE:	/* Get keyboard type */
@@ -454,8 +456,7 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case KIOCSLED:
-		error = kbd_drain_tx(k);
-		kbd_set_leds(k, *(int *)data);
+		error = kbd_iocsled(k, (int *)data);
 		break;
 
 	case KIOCGLED:
@@ -487,7 +488,7 @@ kbdioctl(dev, cmd, data, flag, p)
 /*
  * Get/Set keymap entry
  */
-int
+static int
 kbd_iockeymap(ks, cmd, kio)
 	struct kbd_state *ks;
 	u_long cmd;
@@ -571,6 +572,76 @@ kbd_oldkeymap(ks, cmd, kio)
 	return (error);
 }
 #endif	/* KIOCGETKEY */
+
+
+/*
+ * keyboard command ioctl
+ * ``unimplemented commands are ignored'' (blech)
+ */
+static int
+kbd_ioccmd(k, data)
+	struct kbd_softc *k;
+	int *data;
+{
+	struct kbd_state *ks = &k->k_state;
+	int cmd, error, s;
+
+	cmd = *data;
+	switch (cmd) {
+
+	case KBD_CMD_BELL:
+	case KBD_CMD_NOBELL:
+		/* Supported by type 2, 3, and 4 keyboards */
+		break;
+
+	case KBD_CMD_CLICK:
+	case KBD_CMD_NOCLICK:
+		/* Unsupported by type 2 keyboards */
+		if (ks->kbd_id <= KB_SUN2)
+			return (0);
+		ks->kbd_click = (cmd == KBD_CMD_CLICK);
+		break;
+
+	default:
+		return (0);
+	}
+
+	s = spltty();
+
+	error = kbd_drain_tx(k);
+	if (error == 0) {
+		kbd_output(k, cmd);
+		kbd_start_tx(k);
+	}
+
+	splx(s);
+
+	return (error);
+}
+
+/*
+ * Set LEDs ioctl.
+ */
+static int
+kbd_iocsled(k, data)
+	struct kbd_softc *k;
+	int *data;
+{
+	struct kbd_state *ks = &k->k_state;
+	int leds, error, s;
+
+	leds = *data;
+
+	s = spltty();
+	error = kbd_drain_tx(k);
+	if (error == 0) {
+		kbd_set_leds(k, leds);
+	}
+	splx(s);
+
+	return (error);
+}
+
 
 /****************************************************************
  * middle layers:
@@ -686,8 +757,7 @@ kbd_input_funckey(k, keysym)
 
 /*
  * This is called by kbd_input_raw() or by kb_repeat()
- * to deliver ASCII input.  Called at splsoftclock()
- * XXX: Raise to spltty before calling kd_input() ?
+ * to deliver ASCII input.  Called at spltty().
  */
 void
 kbd_input_keysym(k, keysym)
@@ -748,23 +818,25 @@ kbd_input_keysym(k, keysym)
 
 /*
  * This is the autorepeat timeout function.
- * (called at splsoftclock)
+ * Called at splsoftclock().
  */
 void
 kbd_repeat(void *arg)
 {
 	struct kbd_softc *k = (struct kbd_softc *)arg;
+	int s = spltty();
 
 	if (k->k_repeating && k->k_repeatsym >= 0) {
 		kbd_input_keysym(k, k->k_repeatsym);
 		timeout(kbd_repeat, k, k->k_repeat_step);
 	}
+	splx(s);
 }
 
 /*
  * Called by our kbd_softint() routine on input,
  * which passes the raw hardware scan codes.
- * Note: this is called at splsoftclock()
+ * Called at spltty()
  */
 void
 kbd_input_raw(k, c)
@@ -879,7 +951,7 @@ kbd_input_raw(k, c)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static int
+static void
 kbd_rxint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -890,11 +962,12 @@ kbd_rxint(cs)
 	k = cs->cs_private;
 	put = k->k_rbput;
 
-	/* Read the input data ASAP. */
-	c = zs_read_data(cs);
-
-	/* Save the status register too. */
+	/*
+	 * First read the status, because reading the received char
+	 * destroys the status of this char.
+	 */
 	rr1 = zs_read_reg(cs, 1);
+	c = zs_read_data(cs);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
@@ -935,29 +1008,24 @@ kbd_rxint(cs)
 
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
-	return(1);
 }
 
 
-static int
+static void
 kbd_txint(cs)
 	register struct zs_chanstate *cs;
 {
 	register struct kbd_softc *k;
-	register int count, rval;
 
 	k = cs->cs_private;
-
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
-
 	k->k_intr_flags |= INTR_TX_EMPTY;
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
-	return (1);
 }
 
 
-static int
+static void
 kbd_stint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -966,7 +1034,7 @@ kbd_stint(cs)
 
 	k = cs->cs_private;
 
-	rr0 = zs_read_csr(cs);
+	cs->cs_rr0_new = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 #if 0
@@ -980,14 +1048,13 @@ kbd_stint(cs)
 	k->k_intr_flags |= INTR_ST_CHECK;
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
-	return (1);
 }
 
 /*
  * Get input from the recieve ring and pass it on.
  * Note: this is called at splsoftclock()
  */
-static int
+static void
 kbd_softint(cs)
 	struct zs_chanstate *cs;
 {
@@ -1003,7 +1070,9 @@ kbd_softint(cs)
 	s = splzs();
 	intr_flags = k->k_intr_flags;
 	k->k_intr_flags = 0;
-	splx(s);
+
+	/* Now lower to spltty for the rest. */
+	(void) spltty();
 
 	/*
 	 * Copy data from the receive ring to the event layer.
@@ -1057,9 +1126,10 @@ kbd_softint(cs)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
 		    k->k_dev.dv_xname);
+		cs->cs_rr0 = cs->cs_rr0_new;
 	}
 
-	return (1);
+	splx(s);
 }
 
 struct zsops zsops_kbd = {
@@ -1076,6 +1146,7 @@ struct zsops zsops_kbd = {
 /*
  * Initialization to be done at first open.
  * This is called from kbdopen or kdopen (in kd.c)
+ * Called with user context.
  */
 int
 kbd_iopen(unit)
@@ -1085,9 +1156,9 @@ kbd_iopen(unit)
 	struct kbd_state *ks;
 	int error, s;
 
-	if (unit >= kbdcd.cd_ndevs)
+	if (unit >= kbd_cd.cd_ndevs)
 		return (ENXIO);
-	k = kbdcd.cd_devs[unit];
+	k = kbd_cd.cd_devs[unit];
 	if (k == NULL)
 		return (ENXIO);
 	ks = &k->k_state;
@@ -1144,6 +1215,9 @@ out:
 	return error;
 }
 
+/*
+ * Called by kbd_input_raw, at spltty()
+ */
 void
 kbd_was_reset(k)
 	struct kbd_softc *k;
@@ -1165,14 +1239,20 @@ kbd_was_reset(k)
 
 	case KB_SUN3:
 		/* Type 3 keyboards come up with keyclick on */
-		if (!ks->kbd_click)
-			(void) kbd_docmd(k, KBD_CMD_NOCLICK);
+		if (!ks->kbd_click) {
+			/* turn off the click */
+			kbd_output(k, KBD_CMD_NOCLICK);
+			kbd_start_tx(k);
+		}
 		break;
 
 	case KB_SUN4:
 		/* Type 4 keyboards come up with keyclick off */
-		if (ks->kbd_click)
-			(void) kbd_docmd(k, KBD_CMD_CLICK);
+		if (ks->kbd_click) {
+			/* turn on the click */
+			kbd_output(k, KBD_CMD_CLICK);
+			kbd_start_tx(k);
+		}
 		break;
 	}
 
@@ -1180,6 +1260,9 @@ kbd_was_reset(k)
 	ks->kbd_leds = 0;
 }
 
+/*
+ * Called by kbd_input_raw, at spltty()
+ */
 void
 kbd_new_layout(k)
 	struct kbd_softc *k;
@@ -1198,28 +1281,28 @@ kbd_new_layout(k)
 
 /*
  * Wait for output to finish.
- * Called with user context.
+ * Called at spltty().  Has user context.
  */
 int
 kbd_drain_tx(k)
 	struct kbd_softc *k;
 {
-	int error, s;
+	int error;
 
 	error = 0;
-	s = spltty();
+
 	while (k->k_txflags & K_TXBUSY) {
 		k->k_txflags |= K_TXWANT;
 		error = tsleep((caddr_t)&k->k_txflags,
 					   PZERO | PCATCH, "kbdout", 0);
 	}
-	splx(s);
+
 	return (error);
 }
 
 /*
- * Send out a byte to the keyboard (i.e. reset)
- * Called with user context.
+ * Enqueue some output for the keyboard
+ * Called at spltty().
  */
 void
 kbd_output(k, c)
@@ -1227,9 +1310,8 @@ kbd_output(k, c)
 	int c;	/* the data */
 {
 	struct zs_chanstate *cs = k->k_cs;
-	int put, s;
+	int put;
 
-	s = spltty();
 	put = k->k_tbput;
 	k->k_tbuf[put] = (u_char)c;
 	put = (put + 1) & KBD_TX_RING_MASK;
@@ -1242,10 +1324,12 @@ kbd_output(k, c)
 		/* OK, really increment. */
 		k->k_tbput = put;
 	}
-
-	splx(s);
 }
 
+/*
+ * Start the sending data from the output queue
+ * Called at spltty().
+ */
 void
 kbd_start_tx(k)
     struct kbd_softc *k;
@@ -1254,9 +1338,8 @@ kbd_start_tx(k)
 	int get, s;
 	u_char c;
 
-	s = spltty();
 	if (k->k_txflags & K_TXBUSY)
-		goto out;
+		return;
 
 	/* Is there anything to send? */
 	get = k->k_tbget;
@@ -1266,7 +1349,7 @@ kbd_start_tx(k)
 			k->k_txflags &= ~K_TXWANT;
 			wakeup((caddr_t)&k->k_txflags);
 		}
-		goto out;
+		return;
 	}
 
 	/* Have something to send. */
@@ -1276,41 +1359,41 @@ kbd_start_tx(k)
 	k->k_txflags |= K_TXBUSY;
 
 	/* Need splzs to avoid interruption of the delay. */
-	(void) splzs();
+	s = splzs();
 	zs_write_data(cs, c);
-
-out:
 	splx(s);
 }
 
-
+/*
+ * Called at spltty by:
+ * kbd_update_leds, kbd_iocsled
+ */
 void
 kbd_set_leds(k, new_leds)
 	struct kbd_softc *k;
 	int new_leds;
 {
 	struct kbd_state *ks = &k->k_state;
-	int s;
-
-	s = spltty();
 
 	/* Don't send unless state changes. */
 	if (ks->kbd_leds == new_leds)
-		goto out;
+		return;
+
 	ks->kbd_leds = new_leds;
 
 	/* Only type 4 and later has LEDs anyway. */
 	if (ks->kbd_id < 4)
-		goto out;
+		return;
 
 	kbd_output(k, KBD_CMD_SETLED);
 	kbd_output(k, new_leds);
 	kbd_start_tx(k);
-
-out:
-	splx(s);
 }
 
+/*
+ * Called at spltty by:
+ * kbd_input_keysym
+ */
 void
 kbd_update_leds(k)
     struct kbd_softc *k;
@@ -1327,48 +1410,4 @@ kbd_update_leds(k)
 		leds |= LED_NUM_LOCK;
 
 	kbd_set_leds(k, leds);
-}
-
-
-/*
- * Execute a keyboard command; return 0 on success.
- */
-int
-kbd_docmd(k, cmd)
-	struct kbd_softc *k;
-	int cmd;
-{
-	struct kbd_state *ks = &k->k_state;
-	int error, s;
-
-	switch (cmd) {
-
-	case KBD_CMD_BELL:
-	case KBD_CMD_NOBELL:
-		/* Supported by type 2, 3, and 4 keyboards */
-		break;
-
-	case KBD_CMD_CLICK:
-		/* Unsupported by type 2 keyboards */
-		if (ks->kbd_id != KB_SUN2) {
-			ks->kbd_click = 1;
-			break;
-		}
-		return (EINVAL);
-
-	case KBD_CMD_NOCLICK:
-		/* Unsupported by type 2 keyboards */
-		if (ks->kbd_id != KB_SUN2) {
-			ks->kbd_click = 0;
-			break;
-		}
-		return (EINVAL);
-
-	default:
-		return (EINVAL);	/* ENOTTY? EOPNOTSUPP? */
-	}
-
-	kbd_output(k, cmd);
-	kbd_start_tx(k);
-	return (0);
 }

@@ -1,4 +1,5 @@
-/*	$NetBSD: wstsc.c,v 1.9 1995/08/18 15:28:17 chopps Exp $	*/
+/*	$OpenBSD: wstsc.c,v 1.2 1996/04/21 22:15:48 deraadt Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.10 1996/03/17 01:17:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,7 +50,7 @@
 
 int wstscprint __P((void *auxp, char *));
 void wstscattach __P((struct device *, struct device *, void *));
-int wstscmatch __P((struct device *, struct cfdata *, void *));
+int wstscmatch __P((struct device *, void *, void *));
 
 int wstsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -85,19 +86,23 @@ extern int sci_data_wait;
 
 int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
-struct cfdriver wstsccd = {
-	NULL, "wstsc", (cfmatch_t)wstscmatch, wstscattach, 
-	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+struct cfattach wstsc_ca = {
+	sizeof(struct sci_softc), wstscmatch, wstscattach
+};
+
+struct cfdriver wstsc_cd = {
+	NULL, "wstsc", DV_DULL, NULL, 0
+};
 
 /*
  * if this a Supra WordSync board
  */
 int
-wstscmatch(pdp, cdp, auxp)
+wstscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;

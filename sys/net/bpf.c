@@ -1,5 +1,5 @@
-/*	$OpenBSD: bpf.c,v 1.2 1996/03/03 21:07:00 niklas Exp $	*/
-/*	$NetBSD: bpf.c,v 1.24 1996/02/13 21:59:53 christos Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.3 1996/04/21 22:28:27 deraadt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.25 1996/03/30 21:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -52,6 +52,7 @@
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/map.h>
+#include <sys/conf.h>
 
 #include <sys/file.h>
 #if defined(sparc) && BSD < 199103
@@ -66,7 +67,6 @@
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#include <net/net_conf.h>
 
 #include <sys/errno.h>
 

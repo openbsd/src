@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.20 1995/12/24 02:30:19 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.22 1996/04/11 22:15:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -68,8 +68,12 @@ int mmsprobe __P((struct device *, void *, void *));
 void mmsattach __P((struct device *, struct device *, void *));
 int mmsintr __P((void *));
 
-struct cfdriver mmscd = {
-	NULL, "mms", mmsprobe, mmsattach, DV_TTY, sizeof(struct mms_softc)
+struct cfattach mms_ca = {
+	sizeof(struct mms_softc), mmsprobe, mmsattach
+};
+
+struct cfdriver mms_cd = {
+	NULL, "mms", DV_TTY
 };
 
 #define	MMSUNIT(dev)	(minor(dev))
@@ -109,8 +113,8 @@ mmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_PULSE, IPL_TTY, mmsintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE,
+	    IPL_TTY, mmsintr, sc, sc->sc_dev.dv_xname);
 }
 
 int
@@ -121,9 +125,9 @@ mmsopen(dev, flag)
 	int unit = MMSUNIT(dev);
 	struct mms_softc *sc;
 
-	if (unit >= mmscd.cd_ndevs)
+	if (unit >= mms_cd.cd_ndevs)
 		return ENXIO;
-	sc = mmscd.cd_devs[unit];
+	sc = mms_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -149,7 +153,7 @@ mmsclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 
 	/* Disable interrupts. */
 	outb(sc->sc_iobase + MMS_ADDR, 0x87);
@@ -167,7 +171,7 @@ mmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 	int s;
 	int error;
 	size_t length;
@@ -215,7 +219,7 @@ mmsioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -327,7 +331,7 @@ mmsselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 	int s;
 	int ret;
 

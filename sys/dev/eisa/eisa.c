@@ -1,5 +1,5 @@
-/*	$OpenBSD: eisa.c,v 1.1 1996/04/18 23:47:10 niklas Exp $	*/
-/*	$NetBSD: eisa.c,v 1.7 1996/03/14 04:02:58 cgd Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.2 1996/04/21 22:20:23 deraadt Exp $	*/
+/*	$NetBSD: eisa.c,v 1.11 1996/04/09 22:46:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -52,8 +52,12 @@
 int	eisamatch __P((struct device *, void *, void *));
 void	eisaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver eisacd = {
-        NULL, "eisa", eisamatch, eisaattach, DV_DULL, sizeof(struct device)
+struct cfattach eisa_ca = {
+	sizeof(struct device), eisamatch, eisaattach
+};
+
+struct cfdriver eisa_cd = {
+	NULL, "eisa", DV_DULL
 };
 
 int	eisasubmatch __P((struct device *, void *, void *));
@@ -62,8 +66,8 @@ void	eisa_devinfo __P((const char *, char *));
 
 int
 eisamatch(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+	struct device *parent;
+	void *match, *aux;
 {
 	struct cfdata *cf = match;
 	struct eisabus_attach_args *eba = aux;
@@ -73,7 +77,7 @@ eisamatch(parent, match, aux)
 
 	/* XXX check other indicators */
 
-        return (1);
+	return (1);
 }
 
 int
@@ -103,21 +107,24 @@ eisasubmatch(parent, match, aux)
 	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&
 	    cf->eisacf_slot != ea->ea_slot)
 		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 void
 eisaattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_chipset_tag_t bc;
-	int slot;
+	eisa_chipset_tag_t ec;
+	int slot, maxnslots;
 
+	eisa_attach_hook(parent, self, eba);
 	printf("\n");
 
 	bc = eba->eba_bc;
+	ec = eba->eba_ec;
 
 	/*
 	 * Search for and attach subdevices.
@@ -125,14 +132,15 @@ eisaattach(parent, self, aux)
 	 * Slot 0 is the "motherboard" slot, and the code attaching
 	 * the EISA bus should have already attached an ISA bus there.
 	 */
-	for (slot = 1; slot < EISA_MAX_SLOT; slot++) {
+	maxnslots = eisa_maxslots(ec);
+	for (slot = 1; slot < maxnslots; slot++) {
 		struct eisa_attach_args ea;
-		struct cfdata *cf;
 		u_int slotaddr;
 		bus_io_handle_t slotioh;
 		int i;
 
 		ea.ea_bc = bc;
+		ea.ea_ec = ec;
 		ea.ea_slot = slot;
 		slotaddr = EISA_SLOT_ADDR(slot);
 
@@ -142,7 +150,8 @@ eisaattach(parent, self, aux)
 		 * about it.
 		 */
 		if (bus_io_map(bc, slotaddr, EISA_SLOT_SIZE, &slotioh)) {
-			printf("%s: can't map I/O space for slot %d\n", slot);
+			printf("%s: can't map I/O space for slot %d\n",
+			    self->dv_xname, slot);
 			continue;
 		}
 
@@ -195,14 +204,14 @@ eisaattach(parent, self, aux)
 }
 
 #ifdef EISAVERBOSE
-/*      
+/*
  * Descriptions of of known vendors and devices ("products").
- */     
+ */
 struct eisa_knowndev {
 	int	flags;
 	const char *id, *name;
-};      
-#define EISA_KNOWNDEV_NOPROD     0x01            /* match on vendor only */
+};
+#define EISA_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/eisa/eisadevs_data.h>
 #endif /* EISAVERBOSE */

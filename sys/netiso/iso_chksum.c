@@ -1,5 +1,5 @@
-/*	$OpenBSD: iso_chksum.c,v 1.2 1996/03/04 10:35:30 mickey Exp $	*/
-/*	$NetBSD: iso_chksum.c,v 1.6 1996/02/13 22:10:01 christos Exp $	*/
+/*	$OpenBSD: iso_chksum.c,v 1.3 1996/04/21 22:29:27 deraadt Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.7 1996/04/13 01:34:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -124,8 +124,8 @@ iso_check_csum(m, len)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("iso_check_csum: m x%x, l x%x, m->m_len x%x\n",
-		       (unsigned int) m, l, m->m_len);
+		printf("iso_check_csum: m %p, l x%x, m->m_len x%x\n",
+		       m, l, m->m_len);
 	}
 #endif
 
@@ -143,8 +143,8 @@ iso_check_csum(m, len)
 				printf("iso_check_csum: new mbuf\n");
 				if (l - i < m->m_len)
 					printf(
-		       "bad mbuf chain in check csum l 0x%x i 0x%x m_data 0x%x",
-					       l, i, (unsigned int) m->m_data);
+		       "bad mbuf chain in check csum l 0x%x i 0x%x m_data %p",
+					       l, i, m->m_data);
 			}
 #endif
 			ASSERT(m != NULL);
@@ -200,8 +200,8 @@ iso_gen_csum(m, n, l)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("enter gen csum m 0x%x n 0x%x l 0x%x\n", 
-		       (unsigned int) m, n - 1, l);
+		printf("enter gen csum m %p n 0x%x l 0x%x\n", 
+		       m, n - 1, l);
 	}
 #endif
 
@@ -218,10 +218,8 @@ iso_gen_csum(m, n, l)
 				xloc = loc + mtod(m, u_char *);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_CHKSUM]) {
-					printf(
-				"1: zeroing xloc 0x%x loc 0x%x\n",
-					(unsigned int) xloc,
-					(unsigned int) loc);
+					printf("1: zeroing xloc %p loc %p\n",
+					    xloc, loc);
 				}
 #endif
 				*xloc = (u_char) 0;
@@ -234,8 +232,8 @@ iso_gen_csum(m, n, l)
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_CHKSUM]) {
 						printf(
-					"2: zeroing yloc 0x%x loc 0x%x\n",
-					(unsigned int) yloc, loc);
+					"2: zeroing yloc %p loc 0x%x\n",
+					yloc, loc);
 					}
 #endif
 					*yloc = (u_char) 0;
@@ -245,8 +243,7 @@ iso_gen_csum(m, n, l)
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_CHKSUM]) {
 						printf(
-					    "3: zeroing yloc 0x%x \n",
-					    (unsigned int) yloc);
+					    "3: zeroing yloc %p \n", yloc);
 					}
 #endif
 					*yloc = (u_char) 0;
@@ -264,8 +261,7 @@ iso_gen_csum(m, n, l)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("gen csum final xloc 0x%x yloc 0x%x\n",
-			(unsigned int) xloc, (unsigned int) yloc);
+		printf("gen csum final xloc %p yloc %p\n", xloc, yloc);
 	}
 #endif
 
@@ -340,12 +336,11 @@ m_compress(in, out)
 	while (in) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("m_compress in 0x%x *out 0x%x\n", 
-			       (unsigned int) in, (unsigned int) *out);
-			printf("m_compress in: len 0x%x, off 0x%x\n",
-				in->m_len, (unsigned int) in->m_data);
-			printf("m_compress *out: len 0x%x, off 0x%x\n",
-				(*out)->m_len, (unsigned int) (*out)->m_data);
+			printf("m_compress in %p *out %p\n", in, *out);
+			printf("m_compress in: len 0x%x, off %p\n",
+				in->m_len, in->m_data);
+			printf("m_compress *out: len 0x%x, off %p\n",
+				(*out)->m_len, (*out)->m_data);
 		}
 #endif
 		if (in->m_flags & M_EXT) {

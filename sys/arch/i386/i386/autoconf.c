@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1996/04/18 19:18:05 niklas Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.18 1996/03/04 03:26:18 cgd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1996/04/21 22:16:22 deraadt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1996/03/29 01:15:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,10 @@
 
 void	swapconf __P((void));
 void	setroot __P((void));
+
+void	setroot __P((void));
+void	swapconf __P((void));
+void	dumpconf __P((void));
 
 /*
  * The following several variables are related to

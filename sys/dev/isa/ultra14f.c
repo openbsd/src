@@ -1,5 +1,5 @@
-/*	$OpenBSD: ultra14f.c,v 1.12 1996/04/18 23:47:50 niklas Exp $	*/
-/*	$NetBSD: ultra14f.c,v 1.62 1996/02/24 05:27:49 mycroft Exp $	*/
+/*	$OpenBSD: ultra14f.c,v 1.13 1996/04/21 22:24:36 deraadt Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.64 1996/04/11 22:30:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -328,8 +328,12 @@ int	uhaprobe __P((struct device *, void *, void *));
 void	uhaattach __P((struct device *, struct device *, void *));
 int	uhaprint __P((void *, char *));
 
-struct cfdriver uhacd = {
-	NULL, "uha", uhaprobe, uhaattach, DV_DULL, sizeof(struct uha_softc)
+struct cfattach uha_ca = {
+	sizeof(struct uha_softc), uhaprobe, uhaattach
+};
+
+struct cfdriver uha_cd = {
+	NULL, "uha", DV_DULL
 };
 
 /*
@@ -608,8 +612,8 @@ uhaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
-	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-	    uha->intr, uha, uha->sc_dev.dv_xname);
+	uha->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, uha->intr, uha, uha->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present

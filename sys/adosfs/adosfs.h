@@ -1,8 +1,9 @@
-/*	$OpenBSD: adosfs.h,v 1.3 1996/02/26 14:18:18 niklas Exp $	*/
-/*	$NetBSD: adosfs.h,v 1.9 1996/02/09 19:06:39 christos Exp $	*/
+/*	$OpenBSD: adosfs.h,v 1.4 1996/04/21 22:14:36 deraadt Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.10 1996/04/05 05:06:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1996 Matthias Scheler
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,10 +79,10 @@ struct anode {
 	int flags;		/* misc flags */ 
 	char *slinkto;		/* name of file or dir */
 };
-#define VTOA(vp)	((struct anode *)(vp)->v_data)
-#define ATOV(ap)	((ap)->vp)
-#define ANODETABSZ(ap)	(((ap)->nwords - 56) * sizeof(long))
-#define ANODETABENT(ap)	((ap)->nwords - 56)
+#define VTOA(vp)		((struct anode *)(vp)->v_data)
+#define ATOV(ap)		((ap)->vp)
+#define ANODETABSZ(ap)		(((ap)->nwords - 56) * sizeof(long))
+#define ANODETABENT(ap)		((ap)->nwords - 56)
 #define ANODENDATBLKENT(ap)	((ap)->nwords - 56)
 
 /*
@@ -92,24 +93,34 @@ struct anode {
 struct adosfsmount {
 	LIST_HEAD(anodechain, anode) anodetab[ANODEHASHSZ];
 	struct mount *mp;	/* owner mount */
+	u_long dostype;		/* type of volume */
 	u_long rootb;		/* root block number */
-	u_long startb;		/* start block */
-	u_long endb;		/* one block past last */
+	u_long secsperblk;	/* sectors per block */
 	u_long bsize;		/* size of blocks */
 	u_long nwords;		/* size of blocks in long words */
+	u_long dbsize;		/* data bytes per block */
 	uid_t  uid;		/* uid of mounting user */
 	gid_t  gid;		/* gid of mounting user */
 	u_long mask;		/* mode mask */
 	struct vnode *devvp;	/* blk device mounted on */
 	struct vnode *rootvp;	/* out root vnode */
 	struct netexport export;
+	u_long *bitmap;		/* allocation bitmap */
+	u_long numblks;		/* number of usable blocks */
+	u_long freeblks;	/* number of free blocks */
 };
 #define VFSTOADOSFS(mp) ((struct adosfsmount *)(mp)->mnt_data)
+
+#define IS_FFS(amp)	((amp)->dostype & 1)
+#define IS_INTER(amp)	(((amp)->dostype & 7) > 1)
 
 /*
  * AmigaDOS block stuff.
  */
+#define BBOFF		(0)
+
 #define BPT_SHORT	(2)
+#define BPT_DATA	(8)
 #define BPT_LIST	(16)
 
 #define BST_RDIR	(1)
@@ -119,12 +130,19 @@ struct adosfsmount {
 #define BST_FILE	(-3L)
 #define BST_LFILE	(-4L)
 
+#define	OFS_DATA_OFFSET	(24)
+
 /*
  * utility protos
  */
+#ifndef m68k
 long adoswordn __P((struct buf *, int));
+#else
+#define adoswordn(bp,wn) (*((long *)(bp)->b_data + (wn)))
+#endif
+
 long adoscksum __P((struct buf *, long));
-int adoshash __P((const char *, int, int));
+int adoshash __P((const u_char *, int, int, int));
 int adunixprot __P((int));
 int adosfs_getblktype __P((struct adosfsmount *, struct buf *));
 

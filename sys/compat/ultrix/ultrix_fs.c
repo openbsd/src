@@ -1,5 +1,5 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.2 1996/04/18 21:21:49 niklas Exp $	*/
-/*	$NetBSD: ultrix_fs.c,v 1.3 1996/02/19 15:41:39 pk Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.3 1996/04/21 22:18:45 deraadt Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -167,10 +167,13 @@ make_ultrix_mntent(sp, tem)
 		tem->ufsd_fstype = ULTRIX_FSTYPE_ULTRIX;
 
 	tem->ufsd_gtot = sp->f_files;		/* total "gnodes" */
-	tem->ufsd_gfree = sp->f_ffree;		/* free "gnodes"/
+	tem->ufsd_gfree = sp->f_ffree;		/* free "gnodes" */
 	tem->ufsd_btot = sp->f_blocks;		/* total 1k blocks */
-	/*tem->ufsd_bfree = sp->f_bfree;	/* free 1k blocks */
-	/*tem->ufsd_bfree = sp->f_bavail;	/* free 1k blocks */
+#ifdef needsmorethought	/* XXX */
+	/* tem->ufsd_bfree = sp->f_bfree; */	/* free 1k blocks */
+	/* tem->ufsd_bfree = sp->f_bavail; */	/* free 1k blocks */
+#endif
+
 	tem->ufsd_bfreen = sp->f_bavail;	/* blocks available to users */
 	tem->ufsd_pgthresh = 0;			/* not relevant */
 	tem->ufsd_uid = 0;			/* XXX kept where ?*/
@@ -220,7 +223,8 @@ ultrix_sys_getmnt(p, v, retval)
 		 * provided.
 		 */
 		MALLOC(path, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
-		if (error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL))
+		if ((error = copyinstr(SCARG(uap, path), path,
+				       MAXPATHLEN, NULL)) != 0)
 			goto bad;
 		maxcount = 1;
 	} else {
@@ -229,9 +233,8 @@ ultrix_sys_getmnt(p, v, retval)
 		 * Find out how many mount list entries to skip, and skip
 		 * them.
 		 */
-		if (error =
-		    copyin((caddr_t)SCARG(uap, start), &start,
-					  sizeof(*SCARG(uap, start))))
+		if ((error = copyin((caddr_t)SCARG(uap, start), &start,
+				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
 		for (skip = start, mp = mountlist.cqh_first;
 		    mp != (void*)&mountlist && skip-- > 0; mp = nmp)
@@ -259,8 +262,8 @@ ultrix_sys_getmnt(p, v, retval)
 			if (path == NULL ||
 			    strcmp(path, sp->f_mntonname) == 0) {
 				make_ultrix_mntent(sp, &tem);
-				if (error =
-				    copyout((caddr_t)&tem, sfsp, sizeof(tem)))
+				if ((error = copyout((caddr_t)&tem, sfsp,
+						     sizeof(tem))) != 0)
 					goto bad;
 				sfsp++;
 				count++;
@@ -357,7 +360,8 @@ ultrix_sys_mount(p, v, retval)
 
 	/* Copy string-ified version of mount type back out to user space */
 	SCARG(&nuap, type) = (char *)usp;
-	if (error = copyout(fstype, SCARG(&nuap, type), strlen(fstype)+1)) {
+	if ((error = copyout(fstype, SCARG(&nuap, type),
+			    strlen(fstype)+1)) != 0) {
 		return (error);
 	}
 	usp += strlen(fstype)+1;
@@ -370,13 +374,13 @@ ultrix_sys_mount(p, v, retval)
 	if (otype == ULTRIX_FSTYPE_ULTRIX) {
 		/* attempt to mount a native, rather than 4.2bsd, ffs */
 		struct ufs_args ua;
-		struct nameidata nd;
 
 		ua.fspec = SCARG(uap, special);
 		bzero(&ua.export, sizeof(ua.export));
 		SCARG(&nuap, data) = usp;
 	
-		if (error = copyout(&ua, SCARG(&nuap, data), sizeof ua)) {
+		if ((error = copyout(&ua, SCARG(&nuap, data),
+				     sizeof ua)) !=0) {
 			return(error);
 		}
 		/*
@@ -385,8 +389,8 @@ ultrix_sys_mount(p, v, retval)
 		 * and if so, set MNT_UPDATE so we can mount / read-write.
 		 */
 		fsname[0] = 0;
-		if (error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
-				      sizeof fsname, (u_int*)0))
+		if ((error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
+				      sizeof fsname, (u_int*)0)) != 0)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {
 			SCARG(&nuap, flags) |= MNT_UPDATE;
@@ -401,7 +405,7 @@ ultrix_sys_mount(p, v, retval)
 
 		bzero(&osa, sizeof(osa));
 		bzero(&una, sizeof(una));
-		if (error = copyin(SCARG(uap, data), &una, sizeof una)) {
+		if ((error = copyin(SCARG(uap, data), &una, sizeof una)) !=0) {
 			return (error);
 		}
 		/*
@@ -409,7 +413,7 @@ ultrix_sys_mount(p, v, retval)
 		 * address of the server passes, so do backwards
 		 * compatibility on 4.3style sockaddrs here.
 		 */
-		if (error = copyin(una.addr, &osa, sizeof osa)) {
+		if ((error = copyin(una.addr, &osa, sizeof osa)) != 0) {
 			printf("ultrix_mount: nfs copyin osa\n");
 			return (error);
 		}
@@ -433,9 +437,9 @@ ultrix_sys_mount(p, v, retval)
 		na.timeo = una.timeo;
 		na.retrans = una.retrans;
 		na.hostname = una.hostname;
-		if (error = copyout(sap, na.addr, sizeof (*sap) ))
+		if ((error = copyout(sap, na.addr, sizeof (*sap) )) != 0)
 			return (error);
-		if (error = copyout(&na, SCARG(&nuap, data), sizeof na))
+		if ((error = copyout(&na, SCARG(&nuap, data), sizeof na)) != 0)
 			return (error);
 	}
 	return (sys_mount(p, &nuap, retval));

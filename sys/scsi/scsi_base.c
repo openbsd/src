@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi_base.c,v 1.6 1996/02/29 13:12:22 niklas Exp $	*/
-/*	$NetBSD: scsi_base.c,v 1.33 1996/02/14 21:47:14 christos Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.7 1996/04/21 22:30:50 deraadt Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.34 1996/03/19 03:06:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -195,7 +195,6 @@ scsi_size(sc_link, flags)
 {
 	struct scsi_read_cap_data rdcap;
 	struct scsi_read_capacity scsi_cmd;
-	u_long size;
 
 	/*
 	 * make up a scsi command and ask the scsi driver to do
@@ -214,13 +213,9 @@ scsi_size(sc_link, flags)
 		sc_print_addr(sc_link);
 		printf("could not get size\n");
 		return 0;
-	} else {
-		size = rdcap.addr_0 + 1;
-		size += rdcap.addr_1 << 8;
-		size += rdcap.addr_2 << 16;
-		size += rdcap.addr_3 << 24;
 	}
-	return size;
+
+	return _4btol(rdcap.addr) + 1;
 }
 
 /*
@@ -626,20 +621,20 @@ scsi_interpret_sense(xs)
 		    sense->error_code & SSD_ERRCODE,
 		    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
 		printf("seg%x key%x ili%x eom%x fmark%x\n",
-		    sense->extended_segment,
-		    sense->extended_flags & SSD_KEY,
-		    sense->extended_flags & SSD_ILI ? 1 : 0,
-		    sense->extended_flags & SSD_EOM ? 1 : 0,
-		    sense->extended_flags & SSD_FILEMARK ? 1 : 0);
+		    sense->segment,
+		    sense->flags & SSD_KEY,
+		    sense->flags & SSD_ILI ? 1 : 0,
+		    sense->flags & SSD_EOM ? 1 : 0,
+		    sense->flags & SSD_FILEMARK ? 1 : 0);
 		printf("info: %x %x %x %x followed by %d extra bytes\n",
-		    sense->extended_info[0],
-		    sense->extended_info[1],
-		    sense->extended_info[2],
-		    sense->extended_info[3],
-		    sense->extended_extra_len);
+		    sense->info[0],
+		    sense->info[1],
+		    sense->info[2],
+		    sense->info[3],
+		    sense->extra_len);
 		printf("extra: ");
-		for (count = 0; count < sense->extended_extra_len; count++)
-			printf("%x ", sense->extended_extra_bytes[count]);
+		for (count = 0; count < sense->extra_len; count++)
+			printf("%x ", sense->extra_bytes[count]);
 		printf("\n");
 	}
 #endif	/*SCSIDEBUG */
@@ -661,15 +656,14 @@ scsi_interpret_sense(xs)
 		 */
 	case 0x71:		/* delayed error */
 		sc_print_addr(sc_link);
-		key = sense->extended_flags & SSD_KEY;
+		key = sense->flags & SSD_KEY;
 		printf(" DELAYED ERROR, key = 0x%x\n", key);
 	case 0x70:
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
-			bcopy(sense->extended_info, &info, sizeof info);
-			info = ntohl(info);
-		} else
+		if ((sense->error_code & SSD_ERRCODE_VALID) != 0)
+			info = _4btol(sense->info);
+		else
 			info = 0;
-		key = sense->extended_flags & SSD_KEY;
+		key = sense->flags & SSD_KEY;
 
 		switch (key) {
 		case 0x0:	/* NO SENSE */
@@ -749,11 +743,11 @@ scsi_interpret_sense(xs)
 					printf(", info = %d (decimal)", info);
 				}
 			}
-			if (sense->extended_extra_len != 0) {
+			if (sense->extra_len != 0) {
 				int n;
 				printf(", data =");
-				for (n = 0; n < sense->extended_extra_len; n++)
-					printf(" %02x", sense->extended_extra_bytes[n]);
+				for (n = 0; n < sense->extra_len; n++)
+					printf(" %02x", sense->extra_bytes[n]);
 			}
 			printf("\n");
 		}
@@ -767,10 +761,10 @@ scsi_interpret_sense(xs)
 		printf("error code %d",
 		    sense->error_code & SSD_ERRCODE);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
+			struct scsi_sense_data_unextended *usense =
+			    (struct scsi_sense_data_unextended *)sense;
 			printf(" at block no. %d (decimal)",
-			    (sense->XXX_unextended_blockhi << 16) +
-			    (sense->XXX_unextended_blockmed << 8) +
-			    (sense->XXX_unextended_blocklow));
+			    _3btol(usense->block));
 		}
 		printf("\n");
 		return EIO;
@@ -781,36 +775,6 @@ scsi_interpret_sense(xs)
  * Utility routines often used in SCSI stuff
  */
 
-/*
- * convert a physical address to 3 bytes, 
- * MSB at the lowest address,
- * LSB at the highest.
- */
-void
-lto3b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
-{
-
-	*bytes++ = (val >> 16) & 0xff;
-	*bytes++ = (val >> 8) & 0xff;
-	*bytes = val & 0xff;
-}
-
-/*
- * The reverse of lto3b
- */
-u_int32_t
-_3btol(bytes)
-	u_int8_t *bytes;
-{
-	u_int32_t rc;
-
-	rc = (*bytes++ << 16);
-	rc += (*bytes++ << 8);
-	rc += *bytes;
-	return (rc);
-}
 
 /*
  * Print out the scsi_link structure's address info.

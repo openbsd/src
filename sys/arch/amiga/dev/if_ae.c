@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.3 1996/02/26 21:11:40 niklas Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.5 1996/02/24 07:47:36 chopps Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.4 1996/04/21 22:15:21 deraadt Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.6 1996/03/17 01:17:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -150,8 +150,12 @@ struct	mbuf *aeget __P((struct ae_softc *,u_char *, int));
 int	aeioctl __P((struct ifnet *, u_long, caddr_t));
 void	aesetladrf __P((struct arpcom *, u_int16_t *));
 
-struct cfdriver aecd = {
-	NULL, "ae", aematch, aeattach, DV_IFNET, sizeof(struct ae_softc)
+struct cfattach ae_ca = {
+	sizeof(struct ae_softc), aematch, aeattach
+};
+
+struct cfdriver ae_cd = {
+	NULL, "ae", DV_IFNET
 };
 
 int
@@ -229,7 +233,7 @@ aeattach(parent, self, aux)
 	splx (s);
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = aecd.cd_name;
+	ifp->if_name = ae_cd.cd_name;
 	ifp->if_ioctl = aeioctl;
 	ifp->if_watchdog = aewatchdog;
 	ifp->if_output = ether_output;
@@ -254,7 +258,7 @@ void
 aewatchdog(unit)
 	short unit;
 {
-	struct ae_softc *sc = aecd.cd_devs[unit];
+	struct ae_softc *sc = ae_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -439,7 +443,7 @@ void
 aestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
+	register struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
 	register int bix;
 	register struct aetmd *tmd;
 	register struct mbuf *m;
@@ -949,7 +953,7 @@ aeioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

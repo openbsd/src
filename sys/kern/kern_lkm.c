@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_lkm.c,v 1.2 1996/03/03 17:19:47 niklas Exp $	*/
-/*	$NetBSD: kern_lkm.c,v 1.28 1996/02/09 18:59:38 christos Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.3 1996/04/21 22:27:01 deraadt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,8 +54,7 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_conf.h>
+#include <sys/conf.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
@@ -241,8 +240,8 @@ lkmioctl(dev, cmd, data, flag, p)
 		resrvp->addr = curp->area; /* ret kernel addr */
 
 #ifdef DEBUG
-		printf("LKM: LMRESERV (actual   = 0x%08x)\n", curp->area);
-		printf("LKM: LMRESERV (adjusted = 0x%08x)\n",
+		printf("LKM: LMRESERV (actual   = 0x%08lx)\n", curp->area);
+		printf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
 			trunc_page(curp->area));
 #endif	/* DEBUG */
 		lkm_state = LKMS_RESERVED;
@@ -274,7 +273,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
-			printf("LKM: LMLOADBUF (loading @ %d of %d, i = %d)\n",
+			printf("LKM: LMLOADBUF (loading @ %ld of %ld, i = %d)\n",
 			curp->offset, curp->size, i);
 #endif	/* DEBUG */
 		} else {
@@ -494,10 +493,7 @@ sys_lkmnosys(p, v, retval)
  * Place holder for device switch slots reserved for loadable modules.
  */
 int
-lkmenodev(dev, oflags, devtype, p)
-	dev_t dev;
-	int oflags, devtype;
-	struct proc *p;
+lkmenodev()
 {
 
 	return (enodev());
@@ -701,7 +697,8 @@ _lkm_dev(lkmtp, cmd)
 				 * Search the table looking for a slot...
 				 */
 				for (i = 0; i < nblkdev; i++)
-					if (bdevsw[i].d_open == lkmenodev)
+					if (bdevsw[i].d_open == 
+					    (dev_type_open((*))) lkmenodev)
 						break;		/* found it! */
 				/* out of allocable slots? */
 				if (i == nblkdev) {
@@ -731,7 +728,8 @@ _lkm_dev(lkmtp, cmd)
 				 * Search the table looking for a slot...
 				 */
 				for (i = 0; i < nchrdev; i++)
-					if (cdevsw[i].d_open == lkmenodev)
+					if (cdevsw[i].d_open ==
+					    (dev_type_open((*))) lkmenodev)
 						break;		/* found it! */
 				/* out of allocable slots? */
 				if (i == nchrdev) {

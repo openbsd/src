@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_descrip.c,v 1.4 1996/04/19 16:08:53 niklas Exp $	*/
-/*	$NetBSD: kern_descrip.c,v 1.40 1996/03/14 19:01:10 christos Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.5 1996/04/21 22:26:59 deraadt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -57,13 +57,12 @@
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/conf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-
-#include <kern/kern_conf.h>
 
 /*
  * Descriptor management.
@@ -245,7 +244,7 @@ sys_fcntl(p, v, retval)
 			return (0);
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, (int)TIOCGPGRP, (caddr_t)retval, p);
+			(fp, TIOCGPGRP, (caddr_t)retval, p);
 		*retval = -*retval;
 		return (error);
 
@@ -264,7 +263,7 @@ sys_fcntl(p, v, retval)
 			SCARG(uap, arg) = (void *)(long)p1->p_pgrp->pg_id;
 		}
 		return ((*fp->f_ops->fo_ioctl)
-			(fp, (int)TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
+			(fp, TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
 
 	case F_SETLKW:
 		flg |= F_WAIT;

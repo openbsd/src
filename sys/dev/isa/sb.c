@@ -1,5 +1,5 @@
-/*	$OpenBSD: sb.c,v 1.8 1996/04/18 23:47:46 niklas Exp $	*/
-/*	$NetBSD: sb.c,v 1.32 1996/03/16 04:00:09 jtk Exp $	*/
+/*	$OpenBSD: sb.c,v 1.9 1996/04/21 22:24:30 deraadt Exp $	*/
+/*	$NetBSD: sb.c,v 1.34 1996/04/11 22:30:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -75,8 +75,18 @@ struct sb_softc {
 int	sbprobe __P((struct device *, void *, void *));
 void	sbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver sbcd = {
-	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sbdsp_softc)
+struct cfattach sb_ca = {
+	sizeof(struct sbdsp_softc), sbprobe, sbattach
+};
+
+struct cfdriver sb_cd = {
+	NULL, "sb", DV_DULL
+};
+
+struct audio_device sb_device = {
+	"SoundBlaster",
+	"x",
+	"sb"
 };
 
 int	sbopen __P((dev_t, int));
@@ -264,8 +274,8 @@ sbattach(parent, self, aux)
 	register int iobase = ia->ia_iobase;
 	int err;
 	
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO,
-				       sbdsp_intr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_AUDIO, sbdsp_intr, sc, sc->sc_dev.dv_xname);
 
 	sbdsp_attach(sc);
 
@@ -285,10 +295,10 @@ sbopen(dev, flags)
     struct sbdsp_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= sbcd.cd_ndevs)
+    if (unit >= sb_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = sbcd.cd_devs[unit];
+    sc = sb_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

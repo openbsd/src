@@ -1,5 +1,5 @@
-/*	$OpenBSD: ms.c,v 1.2 1996/04/18 23:48:18 niklas Exp $	*/
-/*	$NetBSD: ms.c,v 1.3 1996/02/19 04:36:15 gwr Exp $	*/
+/*	$OpenBSD: ms.c,v 1.3 1996/04/21 22:26:13 deraadt Exp $	*/
+/*	$NetBSD: ms.c,v 1.5 1996/04/10 21:45:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,9 +143,12 @@ struct zsops zsops_ms;
 static int	ms_match(struct device *, void *, void *);
 static void	ms_attach(struct device *, struct device *, void *);
 
-struct cfdriver mscd = {
-	NULL, "ms", ms_match, ms_attach,
-	DV_DULL, sizeof(struct ms_softc), NULL,
+struct cfattach ms_ca = {
+	sizeof(struct ms_softc), ms_match, ms_attach
+};
+
+struct cfdriver ms_cd = {
+	NULL, "ms", DV_DULL
 };
 
 
@@ -224,9 +227,9 @@ msopen(dev, flags, mode, p)
 	int error, s, unit;
 
 	unit = minor(dev);
-	if (unit >= mscd.cd_ndevs)
+	if (unit >= ms_cd.cd_ndevs)
 		return (ENXIO);
-	ms = mscd.cd_devs[unit];
+	ms = ms_cd.cd_devs[unit];
 	if (ms == NULL)
 		return (ENXIO);
 
@@ -248,7 +251,7 @@ msclose(dev, flags, mode, p)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 	ms->ms_ready = 0;		/* stop accepting events */
 	ev_fini(&ms->ms_events);
 
@@ -264,7 +267,7 @@ msread(dev, uio, flags)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 	return (ev_read(&ms->ms_events, uio, flags));
 }
 
@@ -289,7 +292,7 @@ msioctl(dev, cmd, data, flag, p)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
 
@@ -326,7 +329,7 @@ msselect(dev, rw, p)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 	return (ev_select(&ms->ms_events, rw, p));
 }
 
@@ -476,7 +479,7 @@ out:
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static int
+static void
 ms_rxint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -487,11 +490,12 @@ ms_rxint(cs)
 	ms = cs->cs_private;
 	put = ms->ms_rbput;
 
-	/* Read the input data ASAP. */
-	c = zs_read_data(cs);
-
-	/* Save the status register too. */
+	/*
+	 * First read the status, because reading the received char
+	 * destroys the status of this char.
+	 */
 	rr1 = zs_read_reg(cs, 1);
+	c = zs_read_data(cs);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
@@ -514,29 +518,24 @@ ms_rxint(cs)
 
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
-	return(1);
 }
 
 
-static int
+static void
 ms_txint(cs)
 	register struct zs_chanstate *cs;
 {
 	register struct ms_softc *ms;
-	register int count, rval;
 
 	ms = cs->cs_private;
-
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
-
 	ms->ms_intr_flags |= INTR_TX_EMPTY;
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
-	return (1);
 }
 
 
-static int
+static void
 ms_stint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -545,17 +544,16 @@ ms_stint(cs)
 
 	ms = cs->cs_private;
 
-	rr0 = zs_read_csr(cs);
+	cs->cs_rr0_new = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 	ms->ms_intr_flags |= INTR_ST_CHECK;
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
-	return (1);
 }
 
 
-static int
+static void
 ms_softint(cs)
 	struct zs_chanstate *cs;
 {
@@ -571,7 +569,9 @@ ms_softint(cs)
 	s = splzs();
 	intr_flags = ms->ms_intr_flags;
 	ms->ms_intr_flags = 0;
-	splx(s);
+
+	/* Now lower to spltty for the rest. */
+	(void) spltty();
 
 	/*
 	 * Copy data from the receive ring to the event layer.
@@ -615,9 +615,10 @@ ms_softint(cs)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
 		    ms->ms_dev.dv_xname);
+		cs->cs_rr0 = cs->cs_rr0_new;
 	}
 
-	return (1);
+	splx(s);
 }
 
 struct zsops zsops_ms = {

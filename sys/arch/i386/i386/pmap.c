@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.7 1996/04/18 04:04:54 mickey Exp $	*/
-/*	$NetBSD: pmap.c,v 1.34 1995/12/09 07:39:02 mycroft Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 1996/04/21 22:16:33 deraadt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1996/04/03 08:21:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -183,6 +183,7 @@ int		pv_nfree;
 
 void	i386_protection_init __P((void));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+void i386_protection_init __P((void));
 
 #if BSDVM_COMPAT
 #include <sys/msgbuf.h>

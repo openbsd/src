@@ -1,5 +1,5 @@
-/*	$OpenBSD: afsc.c,v 1.3 1996/03/30 22:18:12 niklas Exp $	*/
-/*	$NetBSD: afsc.c,v 1.11 1996/03/15 22:11:09 mhitch Exp $	*/
+/*	$OpenBSD: afsc.c,v 1.4 1996/04/21 22:14:56 deraadt Exp $	*/
+/*	$NetBSD: afsc.c,v 1.13 1996/03/18 04:58:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -53,7 +53,7 @@
 
 int afscprint __P((void *auxp, char *));
 void afscattach __P((struct device *, struct device *, void *));
-int afscmatch __P((struct device *, struct cfdata *, void *));
+int afscmatch __P((struct device *, void *, void *));
 int siopintr __P((struct siop_softc *));
 int afsc_dmaintr __P((struct siop_softc *));
 
@@ -75,22 +75,31 @@ struct scsi_device afsc_scsidev = {
 #ifdef DEBUG
 #endif
 
-struct cfdriver afsccd = {
-	NULL, "afsc", (cfmatch_t)afscmatch, afscattach, 
-	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
-struct cfdriver aftsccd = {
-	NULL, "aftsc", (cfmatch_t)afscmatch, afscattach, 
-	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+struct cfattach afsc_ca = {
+	sizeof(struct siop_softc), afscmatch, afscattach
+};
+
+struct cfdriver afsc_cd = {
+	NULL, "afsc", DV_DULL, NULL, 0
+};
+
+struct cfattach aftsc_ca = {
+	sizeof(struct siop_softc), afscmatch, afscattach
+};
+
+struct cfdriver aftsc_cd = {
+	NULL, "aftsc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are a Commodore Amiga A4091 or possibly an A4000T
  */
 int
-afscmatch(pdp, cdp, auxp)
+afscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 	u_long temp, scratch;
@@ -205,8 +214,8 @@ afsc_dump()
 {
 	int i;
 
-	for (i = 0; i < afsccd.cd_ndevs; ++i)
-		if (afsccd.cd_devs[i])
-			siop_dump(afsccd.cd_devs[i]);
+	for (i = 0; i < afsc_cd.cd_ndevs; ++i)
+		if (afsc_cd.cd_devs[i])
+			siop_dump(afsc_cd.cd_devs[i]);
 }
 #endif

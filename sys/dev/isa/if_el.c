@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_el.c,v 1.6 1996/03/20 01:00:48 mickey Exp $       */
-/*    $NetBSD: if_el.c,v 1.34 1995/12/24 02:31:25 mycroft Exp $       */
+/*    $OpenBSD: if_el.c,v 1.7 1996/04/21 22:23:48 deraadt Exp $       */
+/*	$NetBSD: if_el.c,v 1.36 1996/04/11 22:29:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -97,9 +97,12 @@ static inline void el_hardreset __P((struct el_softc *));
 int elprobe __P((struct device *, void *, void *));
 void elattach __P((struct device *, struct device *, void *));
 
-/* isa_driver structure for autoconf */
-struct cfdriver elcd = {
-	NULL, "el", elprobe, elattach, DV_IFNET, sizeof(struct el_softc)
+struct cfattach el_ca = {
+	sizeof(struct el_softc), elprobe, elattach
+};
+
+struct cfdriver el_cd = {
+	NULL, "el", DV_IFNET
 };
 
 /*
@@ -186,7 +189,7 @@ elattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = elcd.cd_name;
+	ifp->if_name = el_cd.cd_name;
 	ifp->if_start = elstart;
 	ifp->if_ioctl = elioctl;
 	ifp->if_watchdog = elwatchdog;
@@ -206,8 +209,8 @@ elattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, elintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, elintr, sc, sc->sc_dev.dv_xname);
 
 	dprintf(("elattach() finished.\n"));
 }
@@ -304,7 +307,7 @@ void
 elstart(ifp)
 	struct ifnet *ifp;
 {
-	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
+	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
 	int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
 	int s, i, off, retries;
@@ -616,7 +619,7 @@ elioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
+	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -700,7 +703,7 @@ void
 elwatchdog(unit)
 	int unit;
 {
-	struct el_softc *sc = elcd.cd_devs[unit];
+	struct el_softc *sc = el_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

@@ -1,8 +1,9 @@
-/*	$OpenBSD: adlookup.c,v 1.3 1996/02/26 14:18:17 niklas Exp $	*/
-/*	$NetBSD: adlookup.c,v 1.12 1996/02/13 17:05:47 christos Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.4 1996/04/21 22:14:33 deraadt Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.13 1996/04/05 05:06:07 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1996 Matthias Scheler
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,7 +76,7 @@ adosfs_lookup(v)
 	struct anode *adp;	/* anode of search dir */
 	struct ucred *ucp;	/* lookup credentials */
 	u_long bn, plen, hval;
-	char *pelt;
+	u_char *pelt;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -91,7 +92,7 @@ adosfs_lookup(v)
 	last = flags & ISLASTCN;
 	lockp = flags & LOCKPARENT;
 	wantp = flags & (LOCKPARENT | WANTPARENT);
-	pelt = cnp->cn_nameptr;
+	pelt = (u_char *)cnp->cn_nameptr;
 	plen = cnp->cn_namelen;
 	nocache = 0;
 	
@@ -186,7 +187,7 @@ adosfs_lookup(v)
 	 * then walk the chain. if chain has not been fully
 	 * walked before, track the count in `tabi'
 	 */
-	hval = adoshash(pelt, plen, adp->ntabent);
+	hval = adoshash(pelt, plen, adp->ntabent, IS_INTER(adp->amp));
 	bn = adp->tab[hval];
 	i = min(adp->tabi[hval], 0);
 	while (bn != 0) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 1996/04/17 05:19:00 mickey Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.58 1996/02/05 02:00:35 christos Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 1996/04/21 22:16:43 deraadt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 1996/04/03 08:24:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -259,6 +259,7 @@ cpu_coredump(p, vp, cred, chdr)
 	return 0;
 }
 
+#if 0
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
@@ -276,6 +277,7 @@ setredzone(pte, vaddr)
    used by sched (that has physical memory mapped 1:1 at bottom)
    and take the dump while still in mapped mode */
 }
+#endif
 
 /*
  * Move pages from one kernel virtual address to another.

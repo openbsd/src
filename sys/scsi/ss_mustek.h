@@ -1,5 +1,5 @@
-/*	$OpenBSD: ss_mustek.h,v 1.2 1996/04/19 16:10:22 niklas Exp $	*/
-/*	$NetBSD: ss_mustek.h,v 1.1 1996/02/18 20:32:48 mycroft Exp $	*/
+/*	$OpenBSD: ss_mustek.h,v 1.3 1996/04/21 22:31:15 deraadt Exp $	*/
+/*	$NetBSD: ss_mustek.h,v 1.2 1996/03/19 03:08:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -71,104 +71,66 @@
  */
 
 struct mustek_set_window_cmd {
-	u_char	opcode;			/* 0x04 */
-	u_char	reserved[3];
-	u_char	length;			/* in bytes */
-	u_char	control;
+	u_int8_t opcode;		/* 0x04 */
+	u_int8_t reserved[3];
+	u_int8_t length;		/* in bytes */
+	u_int8_t control;
+};
+
+struct mustek_window {
+	u_int8_t header;		/* unit-defines also apply */
+	u_int8_t tl_x[2];		/* LSB */
+	u_int8_t tl_y[2];
+	u_int8_t br_x[2];
+	u_int8_t br_y[2];
 };
 
 struct mustek_set_window_data {
 #define MUSTEK_LINEART_BACKGROUND	0x00
 #define MUSTEK_HALFTONE_BACKGROUND	0x01
-	u_char	frame_header;		/* unit-defines also apply */
-	u_char	frame_tl_x_0;
-	u_char	frame_tl_x_1;
-	u_char	frame_tl_y_0;
-	u_char	frame_tl_y_1;
-	u_char	frame_br_x_0;
-	u_char	frame_br_x_1;
-	u_char	frame_br_y_0;
-	u_char	frame_br_y_1;
+	struct	mustek_window frame;
 #if MUSTEK_WINDOWS >= 1
 #define MUSTEK_WINDOW_MASK	0x80
-	u_char	window1_header;		/* unit-defines also apply */
-	u_char	window1_tl_x_0;
-	u_char	window1_tl_x_1;
-	u_char	window1_tl_y_0;
-	u_char	window1_tl_y_1;
-	u_char	window1_br_x_0;
-	u_char	window1_br_x_1;
-	u_char	window1_br_y_0;
-	u_char	window1_br_y_1;
+	struct	mustek_window window1;
 #endif
 #if MUSTEK_WINDOWS >= 2
-	u_char	window2_header;
-	u_char	window2_tl_x_0;
-	u_char	window2_tl_x_1;
-	u_char	window2_tl_y_0;
-	u_char	window2_tl_y_1;
-	u_char	window2_br_x_0;
-	u_char	window2_br_x_1;
-	u_char	window2_br_y_0;
-	u_char	window2_br_y_1;
+	struct	mustek_window window2;
 #endif
 #if MUSTEK_WINDOWS >= 3
-	u_char	window3_header;
-	u_char	window3_tl_x_0;
-	u_char	window3_tl_x_1;
-	u_char	window3_tl_y_0;
-	u_char	window3_tl_y_1;
-	u_char	window3_br_x_0;
-	u_char	window3_br_x_1;
-	u_char	window3_br_y_0;
-	u_char	window3_br_y_1;
+	struct	mustek_window window3;
 #endif
-#if MUSTEK_WINDOWS == 4
-	u_char	window4_header;
-	u_char	window4_tl_x_0;
-	u_char	window4_tl_x_1;
-	u_char	window4_tl_y_0;
-	u_char	window4_tl_y_1;
-	u_char	window4_br_x_0;
-	u_char	window4_br_x_1;
-	u_char	window4_br_y_0;
-	u_char	window4_br_y_1;
+#if MUSTEK_WINDOWS >= 4
+	struct	mustek_window window4;
 #endif
 };
 
 struct mustek_read_cmd {
-	u_char	opcode;			/* 0x08 */
-	u_char	reserved;
-	u_char	length_2;		/* number of LINES to be read (MSB) */
-	u_char	length_1;		/* number of LINES to be read */
-	u_char	length_0;		/* number of LINES to be read (LSB) */
-	u_char	control;
+	u_int8_t opcode;		/* 0x08 */
+	u_int8_t reserved;
+	u_int8_t length[3];
+	u_int8_t control;
 };
 
 struct mustek_get_status_cmd {
-	u_char	opcode;			/* 0x0f */
-	u_char	reserved[3];
-	u_char	length;			/* 0x06 */
-	u_char	control;
+	u_int8_t opcode;		/* 0x0f */
+	u_int8_t reserved[3];
+	u_int8_t length;		/* 0x06 */
+	u_int8_t control;
 };
 
 struct mustek_get_status_data {
 #define MUSTEK_READY 0
 #define MUSTEK_BUSY  -1	
-	u_char	ready_busy;		/* 0 = ready */
-	u_char	bytes_per_line_0;	/* LSB */
-	u_char	bytes_per_line_1;	/* MSB */
-	u_char	lines_0;		/* LSB */
-	u_char	lines_1;
-	u_char	lines_2;		/* MSB */
+	u_int8_t ready_busy;		/* 0 = ready */
+	u_int8_t bytes_per_line[2];	/* LSB */
+	u_int8_t lines[3];		/* LSB */
 };
 
 struct mustek_mode_select_cmd {
-	u_char	opcode;			/* 0x15 */
-	u_char	reserved[2];
-	u_char	length_1;		/* MSB */
-	u_char	length_0;		/* LSB */
-	u_char	control;
+	u_int8_t opcode;		/* 0x15 */
+	u_int8_t reserved[2];
+	u_int8_t length[2];
+	u_int8_t control;
 };
 
 /*
@@ -188,20 +150,19 @@ struct mustek_mode_select_data {
 #define MUSTEK_MODE_MASK		0x83
 #define MUSTEK_HT_PATTERN_BUILTIN	0x00
 #define MUSTEK_HT_PATTERN_DOWNLOADED	0x10
-	u_char	mode;
-	u_char	resolution;
-	u_char	brightness;
-	u_char	contrast;
-	u_char	grain;			/* 0 = 8x8, .....  5 = 2x2  */
-	u_char	velocity;		/* 0 = fast, ...., 4 = slow */
-	u_char	reserved[2];
-	u_char	paperlength_0;		/* LSB */
-	u_char	paperlength_1;		/* MSB */
+	u_int8_t mode;
+	u_int8_t resolution;
+	u_int8_t brightness;
+	u_int8_t contrast;
+	u_int8_t grain;			/* 0 = 8x8, .....  5 = 2x2  */
+	u_int8_t velocity;		/* 0 = fast, ...., 4 = slow */
+	u_int8_t reserved[2];
+	u_int8_t paperlength[2];	/* LSB */
 };
 
 struct mustek_start_scan_cmd {
-	u_char	opcode;			/* 0x1b */
-	u_char	reserved[3];
+	u_int8_t opcode;		/* 0x1b */
+	u_int8_t reserved[3];
 #define MUSTEK_SCAN_STOP	0x00
 #define MUSTEK_SCAN_START	0x01
 #define MUSTEK_GRAY_FILTER	0x00
@@ -212,8 +173,8 @@ struct mustek_start_scan_cmd {
 #define MUSTEK_BIT_MODE		0x00
 #define MUSTEK_RES_STEP_1	0x00
 #define MUSTEK_RES_STEP_10	0x80
-	u_char	mode;
-	u_char	control;
+	u_int8_t mode;
+	u_int8_t control;
 };
 
 #endif /* _SS_MUSTEK_H_ */

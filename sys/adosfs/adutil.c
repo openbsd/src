@@ -1,8 +1,9 @@
-/*	$OpenBSD: adutil.c,v 1.3 1996/02/26 14:18:19 niklas Exp $	*/
-/*	$NetBSD: adutil.c,v 1.8 1996/02/09 19:06:41 christos Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.4 1996/04/21 22:14:38 deraadt Exp $	*/
+/*	$NetBSD: adutil.c,v 1.9 1996/04/05 05:06:10 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1996 Matthias Scheler
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +46,7 @@
  * look for anode in the mount's hash table, return locked.
  */
 #define AHASH(an) ((an) & (ANODEHASHSZ - 1))
-static int toupper __P((int));
+static int CapitalChar __P((int, int));
 
 struct vnode * 
 adosfs_ahashget(mp, an)
@@ -99,7 +100,8 @@ adosfs_getblktype(amp, bp)
 {
 	if (adoscksum(bp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: cksum of blk %d failed\n", bp->b_blkno);
+		printf("adosfs: aget: cksum of blk %d failed\n",
+		       bp->b_blkno / amp->secsperblk);
 #endif
 		return (-1);
 	}
@@ -109,7 +111,8 @@ adosfs_getblktype(amp, bp)
 	 */
 	if (adoswordn(bp, 0) != BPT_SHORT) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: bad primary type blk %d\n", bp->b_blkno);
+		printf("adosfs: aget: bad primary type blk %d\n",
+		       bp->b_blkno / amp->secsperblk);
 #endif
 		return (-1);
 	}
@@ -136,22 +139,24 @@ adunixprot(adprot)
 	int adprot;
 {
 	if (adprot & 0xc000ee00) {
-		adprot = ((adprot & 0xee00) | (~adprot & 0x000e)) >> 1;
-		return (((adprot & 0x7) << 6) | ((adprot & 0x700) >> 5) |
-			(adprot >> 12));
+		adprot = (adprot & 0xee0e) >> 1;
+		return (((adprot & 0x7) << 6) |
+			((adprot & 0x700) >> 5) |
+			((adprot & 0x7000) >> 12));
 	}
 	else {
-		adprot = (~adprot >> 1) & 0x7;
+		adprot = (adprot >> 1) & 0x7;
 		return((adprot << 6) | (adprot << 3) | adprot);
 	}
 }
 
 static int
-toupper(ch)
-	int ch;
+CapitalChar(ch, inter)
+	int ch, inter;
 {
-	if (ch >= 'a' && ch <= 'z')
-		return(ch & ~(0x20));
+	if ((ch >= 'a' && ch <= 'z') || 
+	    (inter && ch >= 0xe0 && ch <= 0xfe && ch != 0xf7))
+		return(ch - ('a' - 'A'));
 	return(ch);
 }
 
@@ -171,15 +176,15 @@ adoscksum(bp, n)
 }
 
 int
-adoshash(nam, namlen, nelt)
-	const char *nam;
-	int namlen, nelt;
+adoshash(nam, namlen, nelt, inter)
+	const u_char *nam;
+	int namlen, nelt, inter;
 {
 	int val;
 
 	val = namlen;
 	while (namlen--)
-		val = ((val * 13) + toupper(*nam++)) & 0x7ff;
+		val = ((val * 13) + CapitalChar(*nam++, inter)) & 0x7ff;
 	return(val % nelt);
 }
 
@@ -205,6 +210,7 @@ tvtods(tvp, dsp)
 }
 #endif
 
+#ifndef m68k
 long
 adoswordn(bp, wn)
 	struct buf *bp;
@@ -215,3 +221,4 @@ adoswordn(bp, wn)
 	 */
 	return(ntohl(*((long *)bp->b_data + wn)));
 }
+#endif

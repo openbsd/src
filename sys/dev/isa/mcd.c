@@ -1,5 +1,5 @@
-/*	$OpenBSD: mcd.c,v 1.8 1996/03/20 01:00:56 mickey Exp $ */
-/*	$NetBSD: mcd.c,v 1.45 1996/01/30 18:28:05 thorpej Exp $ */
+/*	$OpenBSD: mcd.c,v 1.9 1996/04/21 22:24:21 deraadt Exp $ */
+/*	$NetBSD: mcd.c,v 1.47 1996/04/11 22:29:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -178,8 +178,12 @@ int mcd_setlock __P((struct mcd_softc *, int));
 int mcdprobe __P((struct device *, void *, void *));
 void mcdattach __P((struct device *, struct device *, void *));
 
-struct cfdriver mcdcd = {
-	NULL, "mcd", mcdprobe, mcdattach, DV_DISK, sizeof(struct mcd_softc)
+struct cfattach mcd_ca = {
+	sizeof(struct mcd_softc), mcdprobe, mcdattach
+};
+
+struct cfdriver mcd_cd = {
+	NULL, "mcd", DV_DISK
 };
 
 void mcdgetdisklabel __P((struct mcd_softc *));
@@ -228,8 +232,8 @@ mcdattach(parent, self, aux)
 
 	mcd_soft_reset(sc);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, mcdintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, mcdintr, sc, sc->sc_dev.dv_xname);
 }
 
 /*
@@ -279,9 +283,9 @@ mcdopen(dev, flag, fmt, p)
 	struct mcd_softc *sc;
 
 	unit = MCDUNIT(dev);
-	if (unit >= mcdcd.cd_ndevs)
+	if (unit >= mcd_cd.cd_ndevs)
 		return ENXIO;
-	sc = mcdcd.cd_devs[unit];
+	sc = mcd_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -379,7 +383,7 @@ mcdclose(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
 {
-	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(dev)];
+	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
 	int part = MCDPART(dev);
 	int error;
 	
@@ -415,7 +419,7 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(bp->b_dev)];
+	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(bp->b_dev)];
 	int s;
 	
 	/* Test validity. */
@@ -548,7 +552,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(dev)];
+	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
 	int error;
 	
 	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);

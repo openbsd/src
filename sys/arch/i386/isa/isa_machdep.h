@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4 1995/05/04 19:39:46 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.5 1996/04/11 22:10:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,14 @@
  */
 
 /*
+ * Various pieces of the i386 port want to include this file without
+ * or in spite of using isavar.h, and should be fixed.
+ */
+
+#ifndef _I386_ISA_MACHDEP_H_			/* XXX */
+#define _I386_ISA_MACHDEP_H_			/* XXX */
+
+/*
  * XXX THIS FILE IS A MESS.  copyright: berkeley's probably.
  * contents from isavar.h and isareg.h, mostly the latter.
  * perhaps charles's?
@@ -46,7 +54,27 @@
  * copyright from berkeley's isa.h which is now dev/isa/isareg.h.
  */
 
+/*
+ * Types provided to machine-independent ISA code.
+ */
+typedef void *isa_chipset_tag_t;
 
+struct device;			/* XXX */
+struct isabus_attach_args;	/* XXX */
+
+/*
+ * Functions provided to machine-independent ISA code.
+ */
+void	isa_attach_hook __P((struct device *, struct device *,
+	    struct isabus_attach_args *));
+void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg, char *ih_what));
+void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+
+/*
+ * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
+ * BY PORTABLE CODE.
+ */
 /*
  * XXX Various seemingly PC-specific constants, some of which may be
  * unnecessary anyway.
@@ -142,3 +170,5 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
  * Miscellanous functions.
  */
 void sysbeep __P((int, int));		/* beep with the system speaker */
+
+#endif /* _I386_ISA_MACHDEP_H_ XXX */

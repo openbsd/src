@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_input.c,v 1.2 1996/03/04 10:36:02 mickey Exp $	*/
-/*	$NetBSD: tp_input.c,v 1.8 1996/02/13 22:11:08 christos Exp $	*/
+/*	$OpenBSD: tp_input.c,v 1.3 1996/04/21 22:29:47 deraadt Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.9 1996/03/16 23:13:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -130,7 +130,7 @@ tp_inputprep(m)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_inputprep: m 0x%x\n", m);
+		printf("tp_inputprep: m %p\n", m);
 	}
 #endif
 
@@ -181,7 +181,7 @@ tp_inputprep(m)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
 		printf(
-		       " at end: m 0x%x hdr->tpdu_li 0x%x m_len 0x%x\n", m,
+		       " at end: m %p hdr->tpdu_li 0x%x m_len 0x%x\n", m,
 		       hdrlen, m->m_len);
 	}
 #endif
@@ -296,7 +296,7 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_NEWSOCK]) {
-		printf("tp_newsocket(channel 0x%x)  after sonewconn so 0x%x \n",
+		printf("tp_newsocket(channel %p)  after sonewconn so %p \n",
 		       cons_channel, so);
 		dump_addr(fname);
 		{
@@ -304,10 +304,10 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 
 			head = so->so_head;
 			t = so;
-			printf("so 0x%x so_head 0x%x so_q0 0x%x, q0len %d\n",
+			printf("so %p so_head %p so_q0 %p, q0len %d\n",
 			       t, t->so_head, t->so_q0, t->so_q0len);
 			while ((t = t->so_q0) && t != so && t != head)
-				printf("so 0x%x so_head 0x%x so_q0 0x%x, q0len %d\n",
+				printf("so %p so_head %p so_q0 %p, q0len %d\n",
 				       t, t->so_head, t->so_q0, t->so_q0len);
 		}
 	}
@@ -379,7 +379,7 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("tp_route_to FAILED! detaching tpcb 0x%x, so 0x%x\n",
+			printf("tp_route_to FAILED! detaching tpcb %p, so %p\n",
 			       tpcb, so);
 		}
 #endif
@@ -389,7 +389,7 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 ok:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_newsocket returning so 0x%x, sototpcb(so) 0x%x\n",
+		printf("tp_newsocket returning so %p, sototpcb(so) %p\n",
 		       so, sototpcb(so));
 	}
 #endif
@@ -478,7 +478,7 @@ again:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_input(0x%x, ... 0x%x)\n", m, cons_channel);
+		printf("tp_input(%p, ... %p)\n", m, cons_channel);
 	}
 #endif
 
@@ -535,8 +535,8 @@ again:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("input: dutype 0x%x cons_channel 0x%x dref 0x%x\n", dutype,
-		       cons_channel, dref);
+		printf("input: dutype 0x%x cons_channel %p dref 0x%x\n",
+		    dutype, cons_channel, dref);
 		printf("input: dref 0x%x sref 0x%x\n", dref, sref);
 	}
 #endif
@@ -550,7 +550,7 @@ again:
 
 #ifdef ARGO_DEBUG
 	if ((dutype < TP_MIN_TPDUTYPE) || (dutype > TP_MAX_TPDUTYPE)) {
-		printf("BAD dutype! 0x%x, channel 0x%x dref 0x%x\n",
+		printf("BAD dutype! 0x%x, channel %p dref 0x%x\n",
 		       dutype, cons_channel, dref);
 		dump_buf(m, sizeof(struct mbuf));
 
@@ -813,7 +813,7 @@ again:
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("HAVE A TPCB 1: 0x%x\n", tpcb);
+			printf("HAVE A TPCB 1: %p\n", tpcb);
 		}
 #endif
 #ifdef ARGO_DEBUG
@@ -870,7 +870,7 @@ again:
 			)
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-			printf("CR: after CRCCCHECKS: tpcb 0x%x, flags 0x%x\n",
+			printf("CR: after CRCCCHECKS: tpcb %p, flags 0x%x\n",
 			       tpcb, tpcb->tp_flags);
 		}
 #endif
@@ -887,7 +887,7 @@ again:
 			 */
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("abt to call tp_newsocket(0x%x, 0x%x, 0x%x, 0x%x)\n",
+				printf("abt to call tp_newsocket(%p, %p, %p, %p)\n",
 				       so, laddr, faddr, cons_channel);
 			}
 #endif
@@ -1044,7 +1044,7 @@ again:
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("HAVE A TPCB 2: 0x%x\n", tpcb);
+			printf("HAVE A TPCB 2: %p\n", tpcb);
 		}
 #endif
 
@@ -1054,8 +1054,8 @@ again:
 		      ts_inv_dref, respond,
 		      (1 + 2 + (caddr_t) & hdr->_tpduf - (caddr_t) hdr))
 #ifdef ARGO_DEBUG
-			if (argo_debug[D_TPINPUT]) {
-			printf("state of dref %d ok, tpcb 0x%x\n", dref, tpcb);
+		if (argo_debug[D_TPINPUT]) {
+			printf("state of dref %d ok, tpcb %p\n", dref, tpcb);
 		}
 #endif
 		/*
@@ -1580,7 +1580,7 @@ again:
 
 		default:
 			printf(
-			       "ERROR in tp_input! hdr->tpdu_type 0x%x takes_data 0x%x m 0x%x\n",
+			       "ERROR in tp_input! hdr->tpdu_type 0x%x takes_data 0x%x m %p\n",
 			       hdr->tpdu_type, takes_data, m);
 			break;
 		}
@@ -1594,9 +1594,9 @@ again:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_input: before driver, state 0x%x event 0x%x m 0x%x",
+		printf("tp_input: before driver, state 0x%x event 0x%x m %p",
 		       tpcb->tp_state, e.ev_number, m);
-		printf(" e.e_data 0x%x\n", e.TPDU_ATTR(DT).e_data);
+		printf(" e.e_data %p\n", e.TPDU_ATTR(DT).e_data);
 		printf("takes_data 0x%x m_len 0x%x, tpdu_len 0x%x\n",
 		       takes_data, (m == MNULL) ? 0 : m->m_len, tpdu_len);
 	}
@@ -1622,7 +1622,7 @@ again:
 						 * dutypes */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("after driver, restoring m to 0x%x, takes_data 0x%x\n",
+			printf("after driver, restoring m to %p, takes_data 0x%x\n",
 			       m, takes_data);
 		}
 #endif
@@ -1647,7 +1647,7 @@ again:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
 				hdr = mtod(m, struct tpdu *);
-				printf("tp_input @ separate: hdr 0x%x size %d m 0x%x\n",
+				printf("tp_input @ separate: hdr %p size %d m %p\n",
 				       hdr, (int) hdr->tpdu_li + 1, m);
 				dump_mbuf(m, "tp_input after driver, at separate");
 			}
@@ -1660,13 +1660,13 @@ again:
 	if (m != MNULL) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("tp_input : m_freem(0x%x)\n", m);
+			printf("tp_input : m_freem(%p)\n", m);
 		}
 #endif
 		m_freem(m);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("tp_input : after m_freem 0x%x\n", m);
+			printf("tp_input : after m_freem %p\n", m);
 		}
 #endif
 	}

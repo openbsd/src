@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa.c,v 1.5 1996/04/18 23:47:41 niklas Exp $	*/
-/*	$NetBSD: isa.c,v 1.78 1996/03/08 20:36:21 cgd Exp $	*/
+/*	$OpenBSD: isa.c,v 1.6 1996/04/21 22:24:12 deraadt Exp $	*/
+/*	$NetBSD: isa.c,v 1.80 1996/04/11 22:25:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -36,6 +36,9 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#ifndef i386							/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -43,8 +46,12 @@
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver isacd = {
-	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
+struct cfattach isa_ca = {
+	sizeof(struct isa_softc), isamatch, isaattach
+};
+
+struct cfdriver isa_cd = {
+	NULL, "isa", DV_DULL, 1
 };
 
 int
@@ -71,9 +78,11 @@ isaattach(parent, self, aux)
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
 
+	isa_attach_hook(parent, self, iba);
 	printf("\n");
 
 	sc->sc_bc = iba->iba_bc;
+	sc->sc_ic = iba->iba_ic;
 
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_scan(isascan, self);
@@ -115,6 +124,7 @@ isascan(parent, match)
 		panic("clone devices not supported on ISA bus");
 
 	ia.ia_bc = sc->sc_bc;
+	ia.ia_ic = sc->sc_ic;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
 	ia.ia_maddr = cf->cf_loc[2];
@@ -122,7 +132,7 @@ isascan(parent, match)
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 
-	if ((*cf->cf_driver->cd_match)(parent, dev, &ia) > 0)
+	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
 		config_attach(parent, dev, &ia, isaprint);
 	else
 		free(dev, M_DEVBUF);

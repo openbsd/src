@@ -1,5 +1,5 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.2 1996/02/27 07:53:43 niklas Exp $	*/
-/*	$NetBSD: fifo_vnops.c,v 1.17 1996/02/09 22:40:16 christos Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.3 1996/04/21 22:28:10 deraadt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -470,7 +470,7 @@ fifo_printinfo(vp)
 {
 	register struct fifoinfo *fip = vp->v_fifoinfo;
 
-	printf(", fifo with %d readers and %d writers",
+	printf(", fifo with %ld readers and %ld writers",
 		fip->fi_readers, fip->fi_writers);
 }
 

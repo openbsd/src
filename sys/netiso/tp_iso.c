@@ -1,5 +1,5 @@
-/*	$OpenBSD: tp_iso.c,v 1.2 1996/03/04 10:36:07 mickey Exp $	*/
-/*	$NetBSD: tp_iso.c,v 1.7 1996/02/13 22:11:15 christos Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.3 1996/04/21 22:29:50 deraadt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -360,7 +360,7 @@ tpclnp_mtu(v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tpclnp_mtu(tpcb)\n", tpcb);
+		printf("tpclnp_mtu(tpcb %p)\n", tpcb);
 	}
 #endif
 	tpcb->tp_routep = &(isop->isop_route.ro_rt);
@@ -466,7 +466,7 @@ tpclnp_output_dg(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("tpclnp_output_dg  datalen 0x%x m0 0x%x\n", datalen, m0);
+		printf("tpclnp_output_dg  datalen 0x%x m0 %p\n", datalen, m0);
 	}
 #endif
 
@@ -539,7 +539,7 @@ tpclnp_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tpclnp_input: m 0x%x clnp_len 0x%x\n", m, clnp_len);
+		printf("tpclnp_input: m %p clnp_len 0x%x\n", m, clnp_len);
 		dump_mbuf(m, "at tpclnp_input");
 	}
 #endif
@@ -581,7 +581,7 @@ tpclnp_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("calling %sinput : src 0x%x, dst 0x%x, src addr:\n",
+		printf("calling %sinput : src %p, dst %p, src addr:\n",
 		       (input == tp_input ? "tp_" : "clts_"), src, dst);
 		dump_isoaddr(src);
 		printf(" dst addr:\n");
@@ -754,7 +754,7 @@ tpiso_abort(isop)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tpiso_abort 0x%x\n", isop);
+		printf("tpiso_abort %p\n", isop);
 	}
 #endif
 	e.ev_number = ER_TPDU;

@@ -1,4 +1,5 @@
-/*	$NetBSD: mfc.c,v 1.8.2.1 1995/10/20 11:01:12 chopps Exp $ */
+/*	$OpenBSD: mfc.c,v 1.5 1996/04/21 22:15:34 deraadt Exp $ */
+/*	$NetBSD: mfc.c,v 1.11 1996/03/17 05:58:52 mhitch Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -180,32 +181,44 @@ struct mfc_args {
 
 int mfcprint __P((void *auxp, char *));
 void mfcattach __P((struct device *, struct device *, void *));
-int mfcmatch __P((struct device *, struct cfdata *, void *));
+int mfcmatch __P((struct device *, void *, void *));
 #if NMFCS > 0
 void mfcsattach __P((struct device *, struct device *, void *));
-int mfcsmatch __P((struct device *, struct cfdata *, void *));
+int mfcsmatch __P((struct device *, void *, void *));
 #endif
 #if NMFCP > 0
 void mfcpattach __P((struct device *, struct device *, void *));
-int mfcpmatch __P((struct device *, struct cfdata *, void *));
+int mfcpmatch __P((struct device *, void *, void *));
 #endif
 int mfcintr __P((struct mfc_softc *));
 void mfcsmint __P((register int unit));
 
-struct cfdriver mfccd = {
-	NULL, "mfc", (cfmatch_t) mfcmatch, mfcattach,
-	DV_DULL, sizeof(struct mfc_softc), NULL, 0 };
+struct cfattach mfc_ca = {
+	sizeof(struct mfc_softc), mfcmatch, mfcattach
+};
+
+struct cfdriver mfc_cd = {
+	NULL, "mfc", DV_DULL, NULL, 0
+};
 
 #if NMFCS > 0
-struct cfdriver mfcscd = {
-	NULL, "mfcs", (cfmatch_t) mfcsmatch, mfcsattach,
-	DV_TTY, sizeof(struct mfcs_softc), NULL, 0 };
+struct cfattach mfcs_ca = {
+	sizeof(struct mfcs_softc), mfcsmatch, mfcsattach
+};
+
+struct cfdriver mfcs_cd = {
+	NULL, "mfcs", DV_TTY, NULL, 0
+};
 #endif
 
 #if NMFCP > 0
-struct cfdriver mfcpcd = {
-	NULL, "mfcp", (cfmatch_t) mfcpmatch, mfcpattach,
-	DV_DULL, sizeof(struct mfcp_softc), NULL, 0 };
+struct cfattach mfcp_ca = {
+	sizeof(struct mfcp_softc, mfcpmatch, mfcpattach
+};
+
+struct cfdriver mfcp_cd = {
+	NULL, "mfcp", DV_DULL, NULL, 0
+};
 #endif
 
 int	mfcsstart(), mfcsparam(), mfcshwiflow();
@@ -299,11 +312,11 @@ struct speedtab mfcs2speedtab2[] = {
  * if we are an bsc/Alf Data MultFaceCard (I, II, and III)
  */
 int
-mfcmatch(pdp, cdp, auxp)
+mfcmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -384,11 +397,11 @@ mfcattach(pdp, dp, auxp)
  *
  */
 int
-mfcsmatch(pdp, cdp, auxp)
+mfcsmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct mfc_args *ma;
 
 	ma = auxp;
@@ -459,9 +472,9 @@ mfcsopen(dev, flag, mode, p)
 	error = 0;
 	unit = dev & 0x1f;
 
-	if (unit >= mfcscd.cd_ndevs || (mfcs_active & (1 << unit)) == 0)
+	if (unit >= mfcs_cd.cd_ndevs || (mfcs_active & (1 << unit)) == 0)
 		return (ENXIO);
-	sc = mfcscd.cd_devs[unit];
+	sc = mfcs_cd.cd_devs[unit];
 
 	s = spltty();
 
@@ -554,7 +567,7 @@ mfcsclose(dev, flag, mode, p)
 {
 	struct tty *tp;
 	int unit;
-	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	unit = dev & 31;
@@ -596,7 +609,7 @@ mfcsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
 	if (tp == NULL)
 		return(ENXIO);
@@ -609,7 +622,7 @@ mfcswrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
 
 	if (tp == NULL)
@@ -621,7 +634,7 @@ struct tty *
 mfcstty(dev)
 	dev_t dev;
 {
-	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 
 	return (sc->sc_tty);
 }
@@ -635,7 +648,7 @@ mfcsioctl(dev, cmd, data, flag, p)
 	register struct tty *tp;
 	register int unit = dev & 31;
 	register int error;
-	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 
 	tp = sc->sc_tty;
 	if (!tp)
@@ -707,7 +720,7 @@ mfcsparam(tp, t)
 	struct termios *t;
 {
 	int cfcr, cflag, unit, ospeed;
-	struct mfcs_softc *sc = mfcscd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	cflag = t->c_cflag;
@@ -775,7 +788,7 @@ int mfcshwiflow(tp, flag)
         struct tty *tp;
         int flag;
 {
-	struct mfcs_softc *sc = mfcscd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	int unit = tp->t_dev & 1;
 
         if (flag)
@@ -790,7 +803,7 @@ mfcsstart(tp)
 	struct tty *tp;
 {
 	int cc, s, unit;
-	struct mfcs_softc *sc = mfcscd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
@@ -871,7 +884,7 @@ mfcsmctl(dev, bits, how)
 {
 	int unit, s;
 	u_char ub;
-	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 
 	unit = dev & 1;
 
@@ -947,7 +960,7 @@ mfcintr (scc)
 		return (0);
 	unit = scc->sc_dev.dv_unit * 2;
 	if (istat & 0x02) {		/* channel A receive interrupt */
-		sc = mfcscd.cd_devs[unit];
+		sc = mfcs_cd.cd_devs[unit];
 		while (1) {
 			c = regs->du_sra << 8;
 			if ((c & 0x0100) == 0)
@@ -968,7 +981,7 @@ mfcintr (scc)
 		}
 	}
 	if (istat & 0x20) {		/* channel B receive interrupt */
-		sc = mfcscd.cd_devs[unit + 1];
+		sc = mfcs_cd.cd_devs[unit + 1];
 		while (1) {
 			c = regs->du_srb << 8;
 			if ((c & 0x0100) == 0)
@@ -989,7 +1002,7 @@ mfcintr (scc)
 		}
 	}
 	if (istat & 0x01) {		/* channel A transmit interrupt */
-		sc = mfcscd.cd_devs[unit];
+		sc = mfcs_cd.cd_devs[unit];
 		tp = sc->sc_tty;
 		if (sc->ptr == sc->end) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
@@ -1010,7 +1023,7 @@ mfcintr (scc)
 			regs->du_tba = *sc->ptr++;
 	}
 	if (istat & 0x10) {		/* channel B transmit interrupt */
-		sc = mfcscd.cd_devs[unit + 1];
+		sc = mfcs_cd.cd_devs[unit + 1];
 		tp = sc->sc_tty;
 		if (sc->ptr == sc->end) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
@@ -1042,7 +1055,7 @@ mfcsxintr(unit)
 	int unit;
 {
 	int s1, s2, ovfl;
-	struct mfcs_softc *sc = mfcscd.cd_devs[unit];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 
 	/*
@@ -1086,7 +1099,7 @@ int
 mfcseint(unit, stat)
 	int unit, stat;
 {
-	struct mfcs_softc *sc = mfcscd.cd_devs[unit];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
 	struct tty *tp;
 	u_char ch;
 	int c;
@@ -1114,7 +1127,7 @@ mfcseint(unit, stat)
 
 	if (stat & 0x1000)
 		log(LOG_WARNING, "%s: fifo overflow\n",
-		    ((struct mfcs_softc *)mfcscd.cd_devs[unit])->sc_dev.dv_xname);
+		    ((struct mfcs_softc *)mfcs_cd.cd_devs[unit])->sc_dev.dv_xname);
 
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
@@ -1130,7 +1143,7 @@ mfcsmint(unit)
 	int unit;
 {
 	struct tty *tp;
-	struct mfcs_softc *sc = mfcscd.cd_devs[unit];
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
 	u_char stat, last, istat;
 
 	tp = sc->sc_tty;

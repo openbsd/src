@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16 1996/01/04 17:43:23 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.18 1996/03/18 01:39:47 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -129,6 +129,8 @@
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -145,7 +147,8 @@
 #include <pmax/pmax/pmaxtype.h>
 
 
-#define	readback(a)	{ register int foo; foo = (a); }
+/*#define	readback(a)	{ register int foo; wbflush(); foo = (a); }*/
+#define	readback(a)	{ register int foo;  foo = (a); }
 extern int pmax_boardtype;
 
 /*
@@ -273,38 +276,38 @@ static int asc_disconnect();		/* process an expected disconnect */
  */
 script_t asc_scripts[] = {
 	/* start data in */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_DATAI),	/*  0 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_DATAI),	/*  0 */
 		asc_dma_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_STATUS),			/*  1 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_STATUS),			/*  1 */
 		asc_last_dma_in, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 
 	/* continue data in after a chunk is finished */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAI),			/*  2 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAI),			/*  2 */
 		asc_dma_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
 
 	/* start data out */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_DATAO),	/*  3 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_DATAO),	/*  3 */
 		asc_dma_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_STATUS),			/*  4 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_STATUS),			/*  4 */
 		asc_last_dma_out, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 
 	/* continue data out after a chunk is finished */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAO),			/*  5 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAO),			/*  5 */
 		asc_dma_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
 
 	/* simple command with no data transfer */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_STATUS),	/*  6 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_STATUS),	/*  6 */
 		script_nop, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 
 	/* get status and finish command */
-	{SCRIPT_MATCH(ASC_INT_FC, ASC_PHASE_MSG_IN),			/*  7 */
+	{SCRIPT_MATCH(ASC_INT_FC, SCSI_PHASE_MSG_IN),			/*  7 */
 		asc_get_status, ASC_CMD_MSG_ACPT,
 		&asc_scripts[SCRIPT_DONE]},
 	{SCRIPT_MATCH(ASC_INT_DISC, 0),					/*  8 */
@@ -312,61 +315,61 @@ script_t asc_scripts[] = {
 		&asc_scripts[SCRIPT_DONE]},
 
 	/* message in */
-	{SCRIPT_MATCH(ASC_INT_FC, ASC_PHASE_MSG_IN),			/*  9 */
+	{SCRIPT_MATCH(ASC_INT_FC, SCSI_PHASE_MSG_IN),			/*  9 */
 		asc_msg_in, ASC_CMD_MSG_ACPT,
 		&asc_scripts[SCRIPT_MSG_IN + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_MSG_IN),			/* 10 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_MSG_IN),			/* 10 */
 		script_nop, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_MSG_IN]},
 
 	/* send synchonous negotiation reply */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_MSG_OUT),			/* 11 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_MSG_OUT),			/* 11 */
 		asc_replysync, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_REPLY_SYNC]},
 
 	/* try to negotiate synchonous transfer parameters */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_MSG_OUT),	/* 12 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_MSG_OUT),	/* 12 */
 		asc_sendsync, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_TRY_SYNC + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_MSG_IN),			/* 13 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_MSG_IN),			/* 13 */
 		script_nop, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_MSG_IN]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_COMMAND),			/* 14 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_COMMAND),			/* 14 */
 		script_nop, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_RESUME_NO_DATA]},
 
 	/* handle a disconnect */
-	{SCRIPT_MATCH(ASC_INT_DISC, ASC_PHASE_DATAO),			/* 15 */
+	{SCRIPT_MATCH(ASC_INT_DISC, SCSI_PHASE_DATAO),			/* 15 */
 		asc_disconnect, ASC_CMD_ENABLE_SEL,
 		&asc_scripts[SCRIPT_RESEL]},
 
 	/* reselect sequence: this is just a placeholder so match fails */
-	{SCRIPT_MATCH(0, ASC_PHASE_MSG_IN),				/* 16 */
+	{SCRIPT_MATCH(0, SCSI_PHASE_MSG_IN),				/* 16 */
 		script_nop, ASC_CMD_MSG_ACPT,
 		&asc_scripts[SCRIPT_RESEL]},
 
 	/* resume data in after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAI),			/* 17 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAI),			/* 17 */
 		asc_resume_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
 
 	/* resume partial DMA data in after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAI),			/* 18 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAI),			/* 18 */
 		asc_resume_dma_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
 
 	/* resume data out after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAO),			/* 19 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAO),			/* 19 */
 		asc_resume_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
 
 	/* resume partial DMA data out after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAO),			/* 20 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAO),			/* 20 */
 		asc_resume_dma_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
 
 	/* resume after a message when there is no more data */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_STATUS),			/* 21 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_STATUS),			/* 21 */
 		script_nop, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 };
@@ -446,7 +449,7 @@ typedef struct asc_softc *asc_softc_t;
 #define	ASCDMA_WRITE	2
 static void tb_dma_start(), tb_dma_end(), asic_dma_start(), asic_dma_end();
 extern u_long asc_iomem;
-extern u_long asic_base;
+
 
 /*
  * Autoconfiguration data for config.
@@ -455,10 +458,15 @@ int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	ascattach __P((struct device *parent, struct device *self, void *aux));
 int	ascprint(void*, char*);
 
-extern struct cfdriver asccd;
-struct cfdriver asccd = {
-	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct asc_softc)
+struct cfattach asc_ca = {
+	sizeof(struct asc_softc), ascmatch, ascattach
 };
+
+extern struct cfdriver asc_cd;
+struct cfdriver asc_cd = {
+	NULL, "as", DV_DULL
+};
+
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
@@ -498,18 +506,21 @@ ascmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	void *sccaddr;
+	void *ascaddr;
 
-	if (!BUS_MATCHNAME(ca, "asc") && !BUS_MATCHNAME(ca, "PMAZ-AA "))
+	/*if (parent->dv_cfdata->cf_driver == &ioasic_cd) */
+	if (!TC_BUS_MATCHNAME(ca, "asc") && !TC_BUS_MATCHNAME(ca, "PMAZ-AA "))
 		return (0);
 
-	sccaddr = BUS_CVTADDR(ca);
+	ascaddr = (void*)ca->ca_addr;
 
-	if (badaddr(sccaddr + ASC_OFFSET_53C94, 4))
+	if (badaddr(ascaddr + ASC_OFFSET_53C94, 4))
 		return (0);
 
 	return (1);
 }
+
+extern struct cfdriver ioasic_cd; /* XXX */
 
 void
 ascattach(parent, self, aux)
@@ -526,7 +537,7 @@ ascattach(parent, self, aux)
 	void *ascaddr;
 	int unit;
 
-	ascaddr = (void *)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
@@ -539,25 +550,20 @@ ascattach(parent, self, aux)
 	 * (1) how to do dma
 	 * (2) timing based on turbochannel frequency
 	 */
-	switch (pmax_boardtype) {
-	case DS_3MIN:
-	case DS_MAXINE:
-	case DS_3MAXPLUS:
-	    if (unit == 0) {
+
+	if (asc->sc_dev.dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		asc->buff = (u_char *)MACH_PHYS_TO_UNCACHED(asc_iomem);
 		bufsiz = 8192;
-		*((volatile int *)ASIC_REG_SCSI_DMAPTR(asic_base)) = -1;
-		*((volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base)) = -1;
-		*((volatile int *)ASIC_REG_SCSI_SCR(asic_base)) = 0;
+		*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
+		*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
+		*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 		asc->dma_start = asic_dma_start;
 		asc->dma_end = asic_dma_end;
-		break;
-	    }
+	} else
+	{
 	    /*
 	     * Fall through for turbochannel option.
 	     */
-	case DS_3MAX:
-	default:
 	    asc->dmar = (volatile int *)(ascaddr + ASC_OFFSET_DMAR);
 	    asc->buff = (u_char *)(ascaddr + ASC_OFFSET_RAM);
 	    bufsiz = PER_TGT_DMA_SIZE;
@@ -639,6 +645,7 @@ ascattach(parent, self, aux)
 
 	/* tie pseudo-slot to device */
 	BUS_INTR_ESTABLISH(ca, asc_intr, asc);
+
 	printf(": target %d\n", id);
 
 
@@ -690,7 +697,7 @@ asc_start(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
 	register struct pmax_scsi_device *sdp = scsicmd->sd;
-	register asc_softc_t asc = asccd.cd_devs[sdp->sd_ctlr];
+	register asc_softc_t asc = asc_cd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();
@@ -979,18 +986,18 @@ again:
 
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
-		case ASC_PHASE_DATAI:
-		case ASC_PHASE_DATAO:
+		case SCSI_PHASE_DATAI:
+		case SCSI_PHASE_DATAO:
 			ASC_TC_GET(regs, len);
 			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 			printf("asc_intr: data overrun: buflen %d dmalen %d tc %d fifo %d\n",
 				state->buflen, state->dmalen, len, fifo);
 			goto abort;
 
-		case ASC_PHASE_MSG_IN:
+		case SCSI_PHASE_MSG_IN:
 			break;
 
-		case ASC_PHASE_MSG_OUT:
+		case SCSI_PHASE_MSG_OUT:
 			/*
 			 * Check for parity error.
 			 * Hardware will automatically set ATN
@@ -1008,7 +1015,7 @@ again:
 			readback(regs->asc_cmd);
 			goto done;
 
-		case ASC_PHASE_STATUS:
+		case SCSI_PHASE_STATUS:
 			/* probably an error in the SCSI command */
 			asc->script = &asc_scripts[SCRIPT_GET_STATUS];
 			regs->asc_cmd = ASC_CMD_I_COMPLETE;
@@ -1176,7 +1183,7 @@ again:
 			/*
 			 * Disconnects can happen normally when the
 			 * command is complete with the phase being
-			 * either ASC_PHASE_DATAO or ASC_PHASE_MSG_IN.
+			 * either SCSI_PHASE_DATAO or SCSI_PHASE_MSG_IN.
 			 * The SCRIPT_MATCH() only checks for one phase
 			 * so we can wind up here.
 			 * Perform the appropriate operation, then proceed.
@@ -1955,7 +1962,7 @@ asc_msg_in(asc, status, ss, ir)
 		status = asc_wait(regs, ASC_CSR_INT);
 		ir = regs->asc_intr;
 		/* some just break out here, some dont */
-		if (ASC_PHASE(status) == ASC_PHASE_MSG_OUT) {
+		if (ASC_PHASE(status) == SCSI_PHASE_MSG_OUT) {
 			regs->asc_fifo = SCSI_ABORT;
 			regs->asc_cmd = ASC_CMD_XFER_INFO;
 			readback(regs->asc_cmd);
@@ -2079,12 +2086,12 @@ asic_dma_start(asc, state, cp, flag)
 	int flag;
 {
 	register volatile u_int *ssr = (volatile u_int *)
-		ASIC_REG_CSR(asic_base);
+		IOASIC_REG_CSR(ioasic_base);
 	u_int phys, nphys;
 
 	/* stop DMA engine first */
-	*ssr &= ~ASIC_CSR_DMAEN_SCSI;
-	*((volatile int *)ASIC_REG_SCSI_SCR(asic_base)) = 0;
+	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 
 	phys = MACH_CACHED_TO_PHYS(cp);
 	cp = (caddr_t)pmax_trunc_page(cp + NBPG);
@@ -2093,14 +2100,14 @@ asic_dma_start(asc, state, cp, flag)
 	asc->dma_next = cp;
 	asc->dma_xfer = state->dmalen - (nphys - phys);
 
-	*(volatile int *)ASIC_REG_SCSI_DMAPTR(asic_base) =
-		ASIC_DMA_ADDR(phys);
-	*(volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base) =
-		ASIC_DMA_ADDR(nphys);
+	*(volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base) =
+		IOASIC_DMA_ADDR(phys);
+	*(volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base) =
+		IOASIC_DMA_ADDR(nphys);
 	if (flag == ASCDMA_READ)
-		*ssr |= ASIC_CSR_SCSI_DIR | ASIC_CSR_DMAEN_SCSI;
+		*ssr |= IOASIC_CSR_SCSI_DIR | IOASIC_CSR_DMAEN_SCSI;
 	else
-		*ssr = (*ssr & ~ASIC_CSR_SCSI_DIR) | ASIC_CSR_DMAEN_SCSI;
+		*ssr = (*ssr & ~IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
 	MachEmptyWriteBuffer();
 }
 
@@ -2111,34 +2118,34 @@ asic_dma_end(asc, state, flag)
 	int flag;
 {
 	register volatile u_int *ssr = (volatile u_int *)
-		ASIC_REG_CSR(asic_base);
+		IOASIC_REG_CSR(ioasic_base);
 	register volatile u_int *dmap = (volatile u_int *)
-		ASIC_REG_SCSI_DMAPTR(asic_base);
+		IOASIC_REG_SCSI_DMAPTR(ioasic_base);
 	register u_short *to;
 	register int w;
 	int nb;
 
-	*ssr &= ~ASIC_CSR_DMAEN_SCSI;
+	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	to = (u_short *)MACH_PHYS_TO_CACHED(*dmap >> 3);
 	*dmap = -1;
-	*((volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base)) = -1;
+	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
 	MachEmptyWriteBuffer();
 
 	if (flag == ASCDMA_READ) {
 		MachFlushDCache(MACH_PHYS_TO_CACHED(
 		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
-		if (nb = *((int *)ASIC_REG_SCSI_SCR(asic_base))) {
+		if (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) {
 			/* pick up last upto6 bytes, sigh. */
 	
 			/* Last byte really xferred is.. */
-			w = *(int *)ASIC_REG_SCSI_SDR0(asic_base);
+			w = *(int *)IOASIC_REG_SCSI_SDR0(ioasic_base);
 			*to++ = w;
 			if (--nb > 0) {
 				w >>= 16;
 				*to++ = w;
 			}
 			if (--nb > 0) {
-				w = *(int *)ASIC_REG_SCSI_SDR1(asic_base);
+				w = *(int *)IOASIC_REG_SCSI_SDR1(ioasic_base);
 				*to++ = w;
 			}
 		}
@@ -2152,20 +2159,20 @@ asic_dma_end(asc, state, flag)
 void
 asc_dma_intr()
 {
-	asc_softc_t asc =  &asccd.cd_devs[0]; /*XXX*/
+	asc_softc_t asc =  &asc_cd.cd_devs[0]; /*XXX*/
 	u_int next_phys;
 
 	asc->dma_xfer -= NBPG;
 	if (asc->dma_xfer <= -NBPG) {
 		volatile u_int *ssr = (volatile u_int *)
-			ASIC_REG_CSR(asic_base);
-		*ssr &= ~ASIC_CSR_DMAEN_SCSI;
+			IOASIC_REG_CSR(ioasic_base);
+		*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	} else {
 		asc->dma_next += NBPG;
 		next_phys = MACH_CACHED_TO_PHYS(asc->dma_next);
 	}
-	*(volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base) =
-		ASIC_DMA_ADDR(next_phys);
+	*(volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base) =
+		IOASIC_DMA_ADDR(next_phys);
 	MachEmptyWriteBuffer();
 }
 #endif /*notdef*/

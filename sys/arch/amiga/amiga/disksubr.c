@@ -1,4 +1,5 @@
-/*	$NetBSD: disksubr.c,v 1.21 1996/01/07 22:01:44 thorpej Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.3 1996/04/21 22:14:50 deraadt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 1996/04/05 04:50:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -311,13 +312,30 @@ readdisklabel(dev, strat, lp, clp)
 			pp = &lp->d_partitions[lp->d_npartitions];
 			break;
 		}
+		if (lp->d_npartitions <= (pp - lp->d_partitions))
+			lp->d_npartitions = (pp - lp->d_partitions) + 1;
+
+#ifdef DIAGNOSTIC
+		if (lp->d_secpercyl != (pbp->e.secpertrk * pbp->e.numheads)) {
+			if (pbp->partname[0] < sizeof(pbp->partname))
+				pbp->partname[pbp->partname[0] + 1] = 0;
+			else
+				pbp->partname[sizeof(pbp->partname) - 1] = 0;
+			printf("Partition '%s' geometry %d/%d differs",
+			    pbp->partname + 1, pbp->e.numheads,
+			    pbp->e.secpertrk);
+			printf(" from RDB %d/%d\n", lp->d_ntracks,
+			    lp->d_nsectors);
+		}
+#endif
 		/*
 		 * insert sort in increasing offset order
 		 */
 		while ((pp - lp->d_partitions) > RAW_PART + 1) {
 			daddr_t boff;
 			
-			boff = pbp->e.lowcyl * lp->d_secpercyl;
+			boff = pbp->e.lowcyl * pbp->e.secpertrk
+			    * pbp->e.numheads;
 			if (boff > (pp - 1)->p_offset)
 				break;
 			*pp = *(pp - 1);	/* struct copy */
@@ -344,29 +362,28 @@ readdisklabel(dev, strat, lp, clp)
 			nopname = 0;
 		}
 
-		if (lp->d_npartitions <= i)
-			lp->d_npartitions = i + 1;
-
 		pp->p_size = (pbp->e.highcyl - pbp->e.lowcyl + 1)
-		    * lp->d_secpercyl;
-		pp->p_offset = pbp->e.lowcyl * lp->d_secpercyl;
+		    * pbp->e.secpertrk * pbp->e.numheads;
+		pp->p_offset = pbp->e.lowcyl * pbp->e.secpertrk
+		    * pbp->e.numheads;
 		pp->p_fstype = adt.fstype;
-		if (pbp->e.tabsize > 22 && ISFSARCH_NETBSD(adt)) {
-			pp->p_fsize = pbp->e.fsize;
-			pp->p_frag = pbp->e.frag;	
-			pp->p_cpg = pbp->e.cpg;
-		} else {
-			pp->p_fsize = 1024;
-			pp->p_frag = 8;	
-			pp->p_cpg = 0;
-		}
 		if (adt.archtype == ADT_AMIGADOS) {
 			/*
 			 * Save reserved blocks at begin in cpg and
 			 *  adjust size by reserved blocks at end
 			 */
+			pp->p_fsize = 512;
+			pp->p_frag = pbp->e.secperblk;
 			pp->p_cpg = pbp->e.resvblocks;
 			pp->p_size -= pbp->e.prefac;
+		} else if (pbp->e.tabsize > 22 && ISFSARCH_NETBSD(adt)) {
+			pp->p_fsize = pbp->e.fsize;
+			pp->p_frag = pbp->e.frag;
+			pp->p_cpg = pbp->e.cpg;
+		} else {
+			pp->p_fsize = 1024;
+			pp->p_frag = 8;
+			pp->p_cpg = 0;
 		}
 
 		/*
@@ -543,9 +560,15 @@ getadostype(dostype)
 		return(adt);
 	case DOST_MUFS:
 		/* check for 'muFS'? */
-	case DOST_DOS:
 		adt.archtype = ADT_AMIGADOS;
 		adt.fstype = FS_ADOS;
+		return(adt);
+	case DOST_DOS:
+		adt.archtype = ADT_AMIGADOS;
+                if (b1 > 5)
+			adt.fstype = FS_UNUSED;
+		else
+			adt.fstype = FS_ADOS;
 		return(adt);
 	case DOST_AMIX:
 		adt.archtype = ADT_AMIX;

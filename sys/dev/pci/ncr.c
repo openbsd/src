@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr.c,v 1.6 1996/04/18 23:47:59 niklas Exp $	*/
-/*	$NetBSD: ncr.c,v 1.29 1996/03/14 05:21:20 cgd Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.7 1996/04/21 22:25:22 deraadt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.33 1996/04/03 08:44:15 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -195,10 +195,15 @@ extern PRINT_ADDR();
 #else
 #include <sys/device.h>
 #include <machine/bus.h>
+#ifdef __alpha__
+#include <machine/intr.h>
+#endif
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#ifndef __alpha__
 #define DELAY(x)	delay(x)
+#endif
 #endif /* __NetBSD__ */
 
 #include <scsi/scsi_all.h>
@@ -207,6 +212,10 @@ extern PRINT_ADDR();
 #include <machine/clock.h>
 #endif /* __NetBSD__ */
 
+#if defined(__NetBSD__) && defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#define	vtophys(va)	(vtophys(va) | 0x40000000)
+#endif
 
 /*==========================================================
 **
@@ -991,6 +1000,7 @@ struct ncb {
 	struct device sc_dev;
 	void *sc_ih;
 	bus_chipset_tag_t sc_bc;
+	pci_chipset_tag_t sc_pc;
 #ifdef NCR_IOMAPPED
 	bus_io_handle_t sc_ioh;
 #else /* !NCR_IOMAPPED */
@@ -1320,7 +1330,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.29 1996/03/14 05:21:20 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.33 1996/04/03 08:44:15 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -1357,8 +1367,12 @@ int ncr_cache; /* to be aligned _NOT_ static */
 
 #ifdef __NetBSD__
 
-struct	cfdriver ncrcd = {
-	NULL, "ncr", ncr_probe, ncr_attach, DV_DULL, sizeof(struct ncb)
+struct	cfattach ncr_ca = {
+	sizeof(struct ncb), ncr_probe, ncr_attach
+};
+
+struct	cfdriver ncr_cd = {
+	NULL, "ncr", DV_DULL
 };
 
 #else /* !__NetBSD__ */
@@ -3326,8 +3340,14 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 #ifdef __NetBSD__
 
 int
-ncr_print()
+ncr_print(aux, name)
+	void *aux;
+	char *name;
 {
+
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 void
@@ -3336,7 +3356,12 @@ ncr_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	int retval;
+	bus_chipset_tag_t bc = pa->pa_bc;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	bus_mem_size_t memsize;
+	int retval, cacheable;
+	pci_intr_handle_t intrhandle;
+	const char *intrstr;
 	ncb_p np = (void *)self;
 
 	printf(": NCR ");
@@ -3362,21 +3387,49 @@ ncr_attach(parent, self, aux)
 	}
 	printf(" SCSI\n");
 
+	np->sc_bc = bc;
+	np->sc_pc = pc;
+
 	/*
 	**	Try to map the controller chip to
 	**	virtual and physical memory.
 	*/
 
-	retval = pci_map_mem(pa->pa_tag, 0x14, (vm_offset_t *)&np->sc_memh,
-	    &np->paddr);
-	if (retval)
+	retval = pci_mem_find(pc, pa->pa_tag, 0x14, &np->paddr,
+	    &memsize, &cacheable);
+	if (retval) {
+		printf("%s: couldn't find memory region\n", self->dv_xname);
 		return;
+	}
 
-	np->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ncr_intr, np,
-	    np->sc_dev.dv_xname);
-	if (np->sc_ih == NULL)
+	/* Map the memory.  Note that we never want it to be cacheable. */
+	retval = bus_mem_map(pa->pa_bc, np->paddr, memsize, 0, &np->sc_memh);
+	if (retval) {
+		printf("%s: couldn't map memory region\n", self->dv_xname);
 		return;
+	}
 
+	/*
+	**	Set up the controller chip's interrupt.
+	*/
+	retval = pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+	    pa->pa_intrline, &intrhandle);
+	if (retval) {
+		printf("%s: couldn't map interrupt\n", self->dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pc, intrhandle);
+	np->sc_ih = pci_intr_establish(pc, intrhandle, IPL_BIO,
+	    ncr_intr, np, self->dv_xname);
+	if (np->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt", self->dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	if (intrstr != NULL)
+		printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
 #else /* !__NetBSD__ */
 

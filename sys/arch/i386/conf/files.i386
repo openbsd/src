@@ -1,5 +1,5 @@
-#	$OpenBSD: files.i386,v 1.10 1996/04/19 07:33:39 mickey Exp $
-#	$NetBSD: files.i386,v 1.66 1996/03/16 06:09:16 thorpej Exp $
+#	$OpenBSD: files.i386,v 1.11 1996/04/21 22:16:15 deraadt Exp $
+#	$NetBSD: files.i386,v 1.72 1996/04/09 22:59:03 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -41,11 +41,18 @@ major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
 
+# RAM Disk for install floppy
+pseudo-device rd
+file dev/ramdisk.c			rd needs-flag
+file arch/i386/i386/rd_root.c		ramdisk_hooks
+major	{rd = 17}
+
 #
 # System bus types
 #
 
-device mainbus at root: isabus, eisabus, pcibus
+device	mainbus: isabus, eisabus, pcibus
+attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
 #device	mca at root {...}
@@ -58,6 +65,7 @@ file	arch/i386/i386/mainbus.c	mainbus
 
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
+file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI or ISA+PCMCIA drivers
@@ -79,19 +87,22 @@ file	arch/i386/isa/isa_machdep.c	isabus
 file	arch/i386/isa/clock.c		isabus
 
 # Numeric Processing Extension; Math Co-processor
-device	npx at isa
+device	npx
+attach	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
-define	pckbd { [irq = -1], [port = -1] }
+define pckbd { [irq = -1], [port = -1] }
 
 # PC console support a la "pccons"
-device	pc at isa: tty, pckbd
+device	pc: tty, pckbd
+attach	pc at isa
 file	arch/i386/isa/pccons.c		pc needs-flag
 
 # PC console support a la "pcvt"
-device	vt at isa: tty, pckbd
+device	vt: tty, pckbd
+attach	vt at isa
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
@@ -100,44 +111,48 @@ file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
-device	lms at isa
+device	lms
+attach	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
-device	mms at isa
+device	mms
+attach	mms at isa
 file	arch/i386/isa/mms.c		mms needs-flag
-device	pms at pckbd
+device	pms
+attach	pms at pckbd
 file	arch/i386/isa/pms.c		pms needs-flag
 
 # Floppy disk controller
-device	fdc at isa {drive = -1}
-device	fd at fdc: disk, isadma
+device	fdc {drive = -1}
+attach	fdc at isa
+device	fd: disk, isadma
+attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 
 # PC speaker
-device	spkr at pckbd: tty
+device	spkr: tty
+attach	spkr at pckbd
 file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # XXX conflicts with other ports; can't be in files.isa
-device	le at isa, pci: ether, ifnet, isadma
+device	le: ether, ifnet
+attach	le at isa with le_isa: isadma
+attach	le at pci with le_pci
 file	dev/isa/if_le.c			le
 
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-device	ed at isa: ether, ifnet
-file	dev/isa/if_ed.c			ed needs-flag
-
 # Game adapter (joystick)
-device	joy at isa
-file	arch/i386/isa/joy.c			joy needs-flag
+device	joy
+attach	joy at isa
+file	arch/i386/isa/joy.c		joy needs-flag
 
 #
 # EISA-only drivers
 #
 
 include "../../../dev/eisa/files.eisa"
+file	arch/i386/eisa/eisa_machdep.c	eisa
 
 #
 # Compatibility modules

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.1 1996/01/24 01:07:24 gwr Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.2 1996/04/10 21:44:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,10 +50,10 @@
  * Function vector - per channel
  */
 struct zsops {
-	int	(*zsop_rxint)();	/* receive char available */
-	int	(*zsop_stint)();	/* external/status */
-	int	(*zsop_txint)();	/* xmit buffer empty */
-	int	(*zsop_softint)();	/* process software interrupt */
+	void	(*zsop_rxint)();	/* receive char available */
+	void	(*zsop_stint)();	/* external/status */
+	void	(*zsop_txint)();	/* xmit buffer empty */
+	void	(*zsop_softint)();	/* process software interrupt */
 };
 
 extern struct zsops zsops_null;
@@ -93,9 +93,9 @@ struct zs_chanstate {
 
 	u_char	cs_heldchange;		/* change pending (creg != preg) */
 	u_char	cs_rr0;			/* last rr0 processed */
+	u_char	cs_rr0_new; 	/* rr0 saved in status interrupt. */
 
 	char	cs_softreq;		/* need soft interrupt call */
-	char	cs__spare;
 };
 
 struct zsc_softc {

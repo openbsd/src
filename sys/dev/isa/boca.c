@@ -1,5 +1,5 @@
-/*	$OpenBSD: boca.c,v 1.7 1996/04/18 23:47:30 niklas Exp $ */
-/*	$NetBSD: boca.c,v 1.9 1996/03/10 09:01:22 cgd Exp $	*/
+/*	$OpenBSD: boca.c,v 1.8 1996/04/21 22:22:52 deraadt Exp $ */
+/*	$NetBSD: boca.c,v 1.13 1996/04/15 18:55:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,13 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -61,8 +67,12 @@ int bocaprobe();
 void bocaattach();
 int bocaintr __P((void *));
 
-struct cfdriver bocacd = {
-	NULL, "boca", bocaprobe, bocaattach, DV_TTY, sizeof(struct boca_softc)
+struct cfattach boca_ca = {
+	sizeof(struct boca_softc), bocaprobe, bocaattach,
+};
+
+struct cfdriver boca_cd = {
+	NULL, "boca", DV_TTY
 };
 
 int
@@ -158,20 +168,13 @@ bocaattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		/* mimic config_found(), but with special functionality */
-		if ((match = config_search(NULL, self, &ca)) != NULL) {
-			subunit = match->cf_unit; /* can change if unit == * */
-			config_attach(self, match, &ca, bocaprint);
-			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+		sc->sc_slaves[i] = config_found(self, &ca, bocaprint);
+		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
-		} else {
-			bocaprint(&ca, self->dv_xname);
-			printf(" not configured\n");
-		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, bocaintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, bocaintr, sc, sc->sc_dev.dv_xname);
 }
 
 int

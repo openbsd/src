@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.1 1995/12/20 00:50:42 cgd Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.2 1996/03/17 21:37:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -48,7 +48,7 @@ struct ioasicdev_attach_args {
  * The IOASIC (bus) cfdriver, so that subdevices can more
  * easily tell what bus they're on.
  */
-extern struct cfdriver ioasiccd;
+extern struct cfdriver ioasic_cd;
 
 
 /*

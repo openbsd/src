@@ -1,5 +1,5 @@
-/*	$OpenBSD: am7990.c,v 1.4 1996/04/18 23:47:17 niklas Exp $	*/
-/*	$NetBSD: am7990.c,v 1.11 1996/03/14 19:05:07 christos Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.5 1996/04/21 22:21:15 deraadt Exp $	*/
+/*	$NetBSD: am7990.c,v 1.16 1996/04/09 15:21:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -74,6 +74,10 @@ void xmit_print __P((struct le_softc *, int));
 
 #define	ifp	(&sc->sc_arpcom.ac_if)
 
+#ifndef	ETHER_CMP
+#define	ETHER_CMP(a, b) bcmp((a), (b), ETHER_ADDR_LEN)
+#endif
+
 void
 leconfig(sc)
 	struct le_softc *sc;
@@ -123,8 +127,8 @@ leconfig(sc)
 		panic("leconfig: weird memory size");
 	}
 
-	printf(": address %s\n%s: %d receive buffers, %d transmit buffers\n",
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	mem = 0;
@@ -420,8 +424,7 @@ leread(sc, boff, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
+		    ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) {
 			m_freem(m);
 			return;
 		}
@@ -430,10 +433,15 @@ leread(sc, boff, len)
 #endif
 
 #ifdef LANCE_REVC_BUG
-	if (bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-		    sizeof(eh->ether_dhost)) != 0 &&
-	    bcmp(eh->ether_dhost, etherbroadcastaddr,
-		    sizeof(eh->ether_dhost)) != 0) {
+	/*
+	 * The old LANCE (Rev. C) chips have a bug which causes
+	 * garbage to be inserted in front of the received packet.
+	 * The work-around is to ignore packets with an invalid
+	 * destination address (garbage will usually not match).
+	 * Of course, this precludes multicast support...
+	 */
+	if (ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr) &&
+	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr)) {
 		m_freem(m);
 		return;
 	}
@@ -483,7 +491,7 @@ lerint(sc)
 				printf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
-		} else if (rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP) !=
+		} else if ((rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
@@ -503,8 +511,12 @@ lerint(sc)
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("sc->sc_last_rd = %x, rmd = %x\n",
-			    sc->sc_last_rd, rmd);
+			printf("sc->sc_last_rd = %x, rmd: "
+			       "ladr %04x, hadr %02x, flags %02x, "
+			       "bcnt %04x, mcnt %04x\n",
+				sc->sc_last_rd,
+				rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits,
+				rmd.rmd2, rmd.rmd3);
 #endif
 
 		if (++bix == sc->sc_nrbuf)
@@ -529,7 +541,11 @@ letint(sc)
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("trans tmd = %x\n", tmd);
+			printf("trans tmd: "
+			       "ladr %04x, hadr %02x, flags %02x, "
+			       "bcnt %04x, mcnt %04x\n",
+				tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
+				tmd.tmd2, tmd.tmd3);
 #endif
 
 		(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, bix),
@@ -877,9 +893,10 @@ recv_print(sc, no)
 	    rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits, rmd.rmd2, rmd.rmd3);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_RBUFADDR(sc, no), sizeof(eh));
-		printf("%s: dst %s", ether_sprintf(eh.ether_dhost));
+		printf("%s: dst %s", sc->sc_dev.dv_xname,
+			ether_sprintf(eh.ether_dhost));
 		printf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
-		    ntohs(eh.ether_type));
+			ntohs(eh.ether_type));
 	}
 }
 
@@ -902,7 +919,8 @@ xmit_print(sc, no)
 	    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits, tmd.tmd2, tmd.tmd3);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_TBUFADDR(sc, no), sizeof(eh));
-		printf("%s: dst %s", ether_sprintf(eh.ether_dhost));
+		printf("%s: dst %s", sc->sc_dev.dv_xname,
+			ether_sprintf(eh.ether_dhost));
 		printf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
 		    ntohs(eh.ether_type));
 	}
@@ -938,8 +956,7 @@ lesetladrf(ac, af)
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo)) != 0) {
+		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1058,7 +1075,6 @@ copytobuf_gap2(sc, fromv, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 	register caddr_t from = fromv;
 	register volatile u_int16_t *bptr;
-	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -1088,7 +1104,6 @@ copyfrombuf_gap2(sc, tov, boff, len)
 	register caddr_t to = tov;
 	register volatile u_int16_t *bptr;
 	register u_int16_t tmp;
-	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */

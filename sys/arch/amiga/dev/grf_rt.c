@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_rt.c,v 1.23 1996/01/28 19:19:12 chopps Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.3 1996/04/21 22:15:15 deraadt Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.24 1996/03/17 01:17:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -763,11 +764,15 @@ int rt_mode __P((struct grf_softc *, int, void *, int , int));
 
 void grfrtattach __P((struct device *, struct device *, void *));
 int grfrtprint __P((void *, char *));
-int grfrtmatch __P((struct device *, struct cfdata *, void *));
+int grfrtmatch __P((struct device *, void *, void *));
+
+struct cfattach grfrt_ca = {
+	sizeof(struct grf_softc), grfrtmatch, grfrtattach
+};
  
-struct cfdriver grfrtcd = {
-	NULL, "grfrt", (cfmatch_t)grfrtmatch, grfrtattach, 
-	DV_DULL, sizeof(struct grf_softc), NULL, 0 };
+struct cfdriver grfrt_cd = {
+	NULL, "grfrt", DV_DULL, NULL, 0
+};
 
 /*
  * only used in console init
@@ -779,11 +784,11 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int 
-grfrtmatch(pdp, cfp, auxp)
+grfrtmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
 #ifdef RETINACONSOLE
 	static int rtconunit = -1;
 #endif

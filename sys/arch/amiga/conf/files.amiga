@@ -1,54 +1,65 @@
-#	$OpenBSD: files.amiga,v 1.8 1996/03/30 22:18:10 niklas Exp $
-#	$NetBSD: files.amiga,v 1.36 1996/03/02 14:00:32 veego Exp $
+#	$OpenBSD: files.amiga,v 1.9 1996/04/21 22:14:53 deraadt Exp $
+#	$NetBSD: files.amiga,v 1.41 1996/03/28 18:41:55 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
 
-device	mainbus at root {}
+device	mainbus {}
+attach	mainbus at root
 
-device	cpu at mainbus
+device	cpu
+attach	cpu at mainbus
 
 # zorro II expansion bus.
-device	zbus at mainbus {}
+device	zbus {}
+attach	zbus at mainbus
 file	arch/amiga/dev/zbus.c		zbus
 
 define	event {}
 file	arch/amiga/dev/event.c		event
 
-device	clock at mainbus
+device	clock
+attach	clock at mainbus
 file	arch/amiga/dev/clock.c
 
 # keyboard
-device	kbd at mainbus: event
+device	kbd: event
+attach	kbd at mainbus
 file	arch/amiga/dev/kbd.c		kbd needs-flag
 
 # serial port
-device	ser at mainbus:	tty
+device	ser: tty
+attach	ser at mainbus
 file	arch/amiga/dev/ser.c		ser needs-count
 
 # parellel port
-device	par at mainbus
+device	par
+attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
 # mouse
 pseudo-device	mouse
 file	arch/amiga/dev/ms.c		mouse needs-count
 
-device	fdc at mainbus { unit = -1 }
+device	fdc { unit = -1 }
+attach	fdc at mainbus
 
-device	fd at fdc
+device	fd
+attach	fd at fdc
 file	arch/amiga/dev/fd.c		fd needs-flag
 major	{fd = 2}
 
 # graphic devices
 define	grfbus {}
 
-device	grf at grfbus {}
+device	grf {}
+attach	grf at grfbus
 file	arch/amiga/dev/grf.c		grf needs-count
 
-device	ite at grf
+device	ite
+attach	ite at grf
 file	arch/amiga/dev/ite.c		ite needs-flag
 file	arch/amiga/dev/kbdmap.c		ite
 file	arch/amiga/dev/kf_8x8.c		ite
@@ -56,75 +67,92 @@ file	arch/amiga/dev/kf_8x11.c	kfont_8x11
 file	arch/amiga/dev/kf_custom.c	kfont_custom
 
 # custom chips grf
-device	grfcc at mainbus: grfbus
+device	grfcc: grfbus
+attach	grfcc at mainbus
 file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
-file	arch/amiga/dev/ite_cc.c		grfcc ite
+file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
 pseudo-device	view
-file	arch/amiga/dev/view.c		view grfcc needs-count
-file	arch/amiga/dev/grfabs.c		grfcc view
-file	arch/amiga/dev/grfabs_cc.c	grfcc view
-file	arch/amiga/dev/grfabs_ccglb.c	grfcc view
+file	arch/amiga/dev/view.c		view | grfcc needs-count
+file	arch/amiga/dev/grfabs.c		grfcc | view
+file	arch/amiga/dev/grfabs_cc.c	grfcc | view
+file	arch/amiga/dev/grfabs_ccglb.c	grfcc | view
 
 # retina grf
-device	grfrt at zbus: grfbus
+device	grfrt: grfbus
+attach	grfrt at zbus
 file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
-file	arch/amiga/dev/ite_rt.c		grfrt ite
+file	arch/amiga/dev/ite_rt.c		grfrt & ite
 
 # cirrus grf
-device	grfcl at zbus: grfbus
+device	grfcl: grfbus
+attach	grfcl at zbus
 file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
-file	arch/amiga/dev/ite_cl.c		grfcl ite
+file	arch/amiga/dev/ite_cl.c		grfcl & ite
 
 # CyberVison 64 grf
-device	grfcv at zbus: grfbus
+device	grfcv: grfbus
+attach	grfcv at zbus
 file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
-file	arch/amiga/dev/ite_cv.c		grfcv ite
+file	arch/amiga/dev/ite_cv.c		grfcv & ite
 
 # A2410 grf
-device	grful at zbus: grfbus
+device	grful: grfbus
+attach	grful at zbus
 file	arch/amiga/dev/grf_ul.c		grful needs-flag
-file    arch/amiga/dev/ite_ul.c		grful ite
-file    arch/amiga/dev/grf_ultms.g	grful
+file	arch/amiga/dev/ite_ul.c		grful & ite
+file	arch/amiga/dev/grf_ultms.g	grful
 
 # retina ZIII grf
-device	grfrh at zbus: grfbus
+device	grfrh: grfbus
+attach	grfrh at zbus
 file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
-file	arch/amiga/dev/ite_rh.c		grfrh ite
+file	arch/amiga/dev/ite_rh.c		grfrh & ite
   
 # handle gvp's odd autoconf info..
-device	gvpbus at zbus {}
+device	gvpbus {}
+attach	gvpbus at zbus
 file	arch/amiga/dev/gvpbus.c		gvpbus
 
-device	le at zbus:	ifnet, ether
-file	arch/amiga/dev/if_le.c		le needs-flag
+device	le:	ifnet, ether
+attach	le at zbus with le_zbus
+file	arch/amiga/dev/if_le.c		le_zbus needs-flag
 
-device	ed at zbus:	ifnet, ether
-file	arch/amiga/dev/if_ed.c		ed needs-flag
+device	ed:	ifnet, ether
+attach	ed at zbus with ed_zbus
+file	arch/amiga/dev/if_ed.c		ed_zbus needs-flag
 
 # C=/Ameristar A2060 / 560
-device	bah at zbus: ifnet, arc
-file	arch/amiga/dev/if_bah.c		bah needs-flag
+device	bah: ifnet, arc
+attach	bah at zbus with bah_zbus
+file	arch/amiga/dev/if_bah.c		bah_zbus needs-flag
 
-device	es at zbus:	ifnet, ether
+device	es:	ifnet, ether
+attach	es at zbus
 file	arch/amiga/dev/if_es.c		es needs-flag
 
-device	qn at zbus:	ifnet, ether
+device	qn:	ifnet, ether
+attach	qn at zbus
 file	arch/amiga/dev/if_qn.c		qn needs-flag
 
-device	ae at zbus:	ifnet, ether
+device	ae:	ifnet, ether
+attach	ae at zbus
 file	arch/amiga/dev/if_ae.c		ae needs-count
 
 # A2232 msc serial ports
-device	msc at zbus:	tty
+device	msc:	tty
+attach	msc at zbus
 file	arch/amiga/dev/msc.c		msc needs-count
 
 # bsc/Alf Data MultiFaceCard
-device	mfc at zbus { unit = -1 }
+device	mfc { unit = -1 }
+attach	mfc at zbus
 
-device	mfcs at mfc
-device	mfcp at mfc
-file	arch/amiga/dev/mfc.c		mfcs mfcp needs-count
+device	mfcs
+attach	mfcs at mfc
+device	mfcp
+attach	mfcp at mfc
+file	arch/amiga/dev/mfc.c		mfcs | mfcp needs-count
 
 include "../../../scsi/files.scsi"
 
@@ -133,15 +161,18 @@ define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
 # C= A2091
-device atzsc at zbus: scsi, sbic
+device atzsc: scsi, sbic
+attach atzsc at zbus
 file	arch/amiga/dev/atzsc.c		atzsc needs-flag
 
 # GVP series II
-device	gtsc at gvpbus: scsi, sbic
+device	gtsc: scsi, sbic
+attach	gtsc at gvpbus
 file	arch/amiga/dev/gtsc.c		gtsc needs-flag
 
 # Amiga 3000 internal
-device	ahsc at mainbus: scsi, sbic
+device	ahsc: scsi, sbic
+attach	ahsc at mainbus
 file	arch/amiga/dev/ahsc.c		ahsc needs-flag
 
 # ncr 57c710 controllers
@@ -149,56 +180,73 @@ define	siop
 file	arch/amiga/dev/siop.c		siop
 
 # PPI Zeus
-device	zssc at zbus: scsi, siop
+device	zssc: scsi, siop
+attach	zssc at zbus
 file	arch/amiga/dev/zssc.c		zssc needs-flag
 
 # CSA Magnum
-device	mgnsc at zbus: scsi, siop
+device	mgnsc: scsi, siop
+attach	mgnsc at zbus
 file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 
 # MacroSystems Warp Engine
-device	wesc at zbus: scsi, siop
+device	wesc: scsi, siop
+attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
 
 # C= A4091
-device	afsc at zbus: scsi, siop
-device	aftsc at mainbus: scsi, siop
-file	arch/amiga/dev/afsc.c		afsc aftsc needs-flag
+device	afsc: scsi, siop
+attach	afsc at zbus
+device	aftsc: scsi, siop
+attach	aftsc at mainbus
+file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
 
 # ncr 5380 controllers
 define	sci
 file	arch/amiga/dev/sci.c		sci
 
 # Supra Wordsync II
-device	wstsc at zbus: scsi, sci
+device	wstsc: scsi, sci
+attach	wstsc at zbus
 file	arch/amiga/dev/wstsc.c		wstsc needs-flag
 
 # IVS 
-device	ivsc at zbus: scsi, sci
+device	ivsc: scsi, sci
+attach	ivsc at zbus
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
 
 # CSA twelve gauge.
-device	otgsc at zbus: scsi, sci
+device	otgsc: scsi, sci
+attach	otgsc at zbus
 file	arch/amiga/dev/otgsc.c		otgsc needs-flag
 
 # MLH
-device	mlhsc at zbus: scsi, sci
+device	mlhsc: scsi, sci
+attach	mlhsc at zbus
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
+
+# Emplant
+device	empsc: scsi, sci
+attach	empsc at zbus
+file	arch/amiga/dev/empsc.c		empsc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
 define	sfas
 file	arch/amiga/dev/sfas.c		sfas
 
 # FastlaneZ3
-device	flsc at zbus: scsi, sfas
+device	flsc: scsi, sfas
+attach	flsc at zbus
 file	arch/amiga/dev/flsc.c		flsc needs-flag
 
 # Blizzard1230
-device	bzsc at zbus: scsi, sfas
+device	bzsc: scsi, sfas
+attach	bzsc at zbus
 file	arch/amiga/dev/bzsc.c		bzsc needs-flag
 
 # Amiga 4000/1200 IDE masquerading as SCSI
-device	idesc at mainbus: scsi
+device	idesc: scsi
+attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
 
 #
@@ -233,8 +281,8 @@ device	isaed at isa: ifnet, ether
 file	arch/amiga/isa/if_isaed.c	isaed
 
 # list of standard files...
-file	dev/cons.c			ite ser
-file	dev/cninit.c			ite ser
+file	dev/cons.c			ite | ser
+file	dev/cninit.c			ite | ser
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
 file	arch/amiga/amiga/cia.c

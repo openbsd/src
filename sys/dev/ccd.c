@@ -1,5 +1,5 @@
-/*	$OpenBSD: ccd.c,v 1.9 1996/04/19 07:43:47 mickey Exp $	*/
-/*	$NetBSD: ccd.c,v 1.29 1996/03/07 15:00:11 christos Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.10 1996/04/21 22:19:44 deraadt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.31 1996/03/30 23:05:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <dev/ccdvar.h>
 
@@ -747,7 +748,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf("ccdbuffer(%p, %p, %d, %p, %d)\n",
+		printf("ccdbuffer(%p, %p, %d, %p, %ld)\n",
 		       cs, bp, bn, addr, bcount);
 #endif
 	/*
@@ -834,7 +835,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf(" dev %x(u%d): cbp %p bn %d addr %p bcnt %d\n",
+		printf(" dev %x(u%d): cbp %p bn %d addr %p bcnt %ld\n",
 		       ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->cb_buf.b_blkno,
 		       cbp->cb_buf.b_data, cbp->cb_buf.b_bcount);
 #endif
@@ -898,9 +899,9 @@ ccdiodone(vbp)
 		if (cbp->cb_flags & CBF_MIRROR)
 			printf("ccdiodone: mirror component\n");
 		else
-			printf("ccdiodone: bp %p bcount %d resid %d\n",
+			printf("ccdiodone: bp %p bcount %ld resid %ld\n",
 			       bp, bp->b_bcount, bp->b_resid);
-		printf(" dev %x(u%d), cbp %p bn %d addr %p bcnt %d\n",
+		printf(" dev %x(u%d), cbp %p bn %d addr %p bcnt %ld\n",
 		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 		       cbp->cb_buf.b_bcount);

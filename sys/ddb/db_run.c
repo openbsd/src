@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_run.c,v 1.3 1996/03/11 11:16:20 mickey Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.4 1996/04/21 22:19:10 deraadt Exp $	*/
+/*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
  * Mach Operating System

@@ -1,4 +1,5 @@
-/*	$NetBSD: ser.c,v 1.27.2.1 1995/10/20 11:01:14 chopps Exp $	*/
+/*	$OpenBSD: ser.c,v 1.3 1996/04/21 22:15:45 deraadt Exp $	*/
+/*	$NetBSD: ser.c,v 1.30 1996/03/17 05:58:58 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -65,16 +66,20 @@
 #if NSER > 0
 
 void serattach __P((struct device *, struct device *, void *));
-int sermatch __P((struct device *, struct cfdata *, void *));
+int sermatch __P((struct device *, void *, void *));
 
 struct ser_softc {
 	struct device dev;
 	struct tty *ser_tty;
 };
 
-struct cfdriver sercd = {
-	NULL, "ser", (cfmatch_t)sermatch, serattach, DV_TTY,
-	sizeof(struct ser_softc), NULL, 0 };
+struct cfattach ser_ca = {
+	sizeof(struct ser_softc), sermatch, serattach
+};
+
+struct cfdriver ser_cd = {
+	NULL, "ser", DV_TTY, NULL, 0
+};
 
 #ifndef SEROBUF_SIZE
 #define SEROBUF_SIZE 32
@@ -174,11 +179,12 @@ long	sermintcount[16];
 void	sermint __P((register int unit));
 
 int
-sermatch(pdp, cfp, auxp)
+sermatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname("ser", (char *)auxp) == 0 || cfp->cf_unit != 0)
 		return(0);
 	if (serconsole != 0 && amiga_realconfig == 0)
@@ -253,7 +259,7 @@ seropen(dev, flag, mode, p)
 	if (ser_tty[unit]) 
 		tp = ser_tty[unit];
 	else
-		tp = ((struct ser_softc *)sercd.cd_devs[unit])->ser_tty =
+		tp = ((struct ser_softc *)ser_cd.cd_devs[unit])->ser_tty =
 		    ser_tty[unit] =  ttymalloc();
 
 	tp->t_oproc = (void (*) (struct tty *)) serstart;

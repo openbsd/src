@@ -1,5 +1,5 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.2 1996/03/03 17:20:25 niklas Exp $	*/
-/*	$NetBSD: vfs_cluster.c,v 1.10 1996/02/09 19:00:56 christos Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.3 1996/04/21 22:27:34 deraadt Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.11 1996/03/16 23:17:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -297,7 +297,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 
 #ifdef DIAGNOSTIC
 	if (size != vp->v_mount->mnt_stat.f_iosize)
-		panic("cluster_rbuild: size %d != filesize %d\n",
+		panic("cluster_rbuild: size %ld != filesize %ld\n",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
 	if (size * (lbn + run + 1) > filesize)
@@ -624,7 +624,7 @@ cluster_wbuild(vp, last_bp, size, start_lbn, len, lbn)
 
 #ifdef DIAGNOSTIC
 	if (size != vp->v_mount->mnt_stat.f_iosize)
-		panic("cluster_wbuild: size %d != filesize %d\n",
+		panic("cluster_wbuild: size %ld != filesize %ld\n",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
 redo:
@@ -707,7 +707,7 @@ redo:
 
 		/* Move memory from children to parent */
 		if (tbp->b_blkno != (bp->b_blkno + btodb(bp->b_bufsize))) {
-			printf("Clustered Block: %d addr %x bufsize: %d\n",
+			printf("Clustered Block: %d addr %x bufsize: %ld\n",
 			    bp->b_lblkno, bp->b_blkno, bp->b_bufsize);
 			printf("Child Block: %d addr: %x\n", tbp->b_lblkno,
 			    tbp->b_blkno);

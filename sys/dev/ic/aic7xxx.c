@@ -1,5 +1,5 @@
-/*	$OpenBSD: aic7xxx.c,v 1.3 1996/04/18 23:47:15 niklas Exp $	*/
-/*	$NetBSD: aic7xxx.c,v 1.3 1996/02/25 22:56:30 cgd Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.4 1996/04/21 22:21:03 deraadt Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.5 1996/03/29 00:24:58 mycroft Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -63,13 +63,12 @@ void    ahcminphys __P((struct buf *));
 int	ahc_poll __P((struct ahc_softc *, struct scsi_xfer *, int));
 
 /* Different debugging levels */
+#ifdef AHC_DEBUG
 #define AHC_SHOWMISC 0x0001
 #define AHC_SHOWCMDS 0x0002
 #define AHC_SHOWSCBS 0x0004
-/*#define AHC_DEBUG /**/
 int     ahc_debug = AHC_SHOWMISC;
-
-/*#define AHC_MORE_DEBUG /**/
+#endif
 
 #ifdef AHC_MORE_DEBUG
 #define DEBUGLEVEL  -1
@@ -629,7 +628,6 @@ ahc_scsirate(offset, period, ahc, target)
 	struct ahc_softc *ahc;
 	int target;
 {
-	u_char scsirate;
 	int i;
 
 	for (i = 0; i < ahc_num_syncrates; i++) {
@@ -652,9 +650,15 @@ ahc_scsirate(offset, period, ahc, target)
 #endif /* AHC_DEBUG */
 }
 
-ahcprint()
+int
+ahcprint(aux, name)
+	void *aux;
+	char *name;
 {
 
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*
@@ -768,7 +772,7 @@ ahcintr(ahc)
 			break;
 		case NO_IDENT:
 			panic("%s: No IDENTIFY message from reconnecting "
-			      "target %d at seqaddr = 0x%lx "
+			      "target %d at seqaddr = 0x%x "
 			      "SAVED_TCL == 0x%x\n",
 			    ahc->sc_dev.dv_xname,
 			    (inb(SELID + iobase) >> 4) & 0xf,
@@ -847,7 +851,7 @@ ahcintr(ahc)
 				 */
 #ifdef AHC_DEBUG
 				if (ahc_debug & AHC_SHOWMISC)
-				    printf("Sending SDTR!!\n");
+					printf("Sending SDTR!!\n");
 #endif
 				outb(HA_RETURN_1 + iobase, SEND_SDTR);
 			}
@@ -1018,7 +1022,6 @@ ahcintr(ahc)
 
 				if (xs->error == XS_NOERROR &&
 				    scb->flags != SCB_CHKSENSE) {
-					u_char flags;
 					u_char head;
 					u_char tail;
 					struct ahc_dma_seg *sg = scb->ahc_dma;
@@ -1389,7 +1392,6 @@ ahc_init(ahc)
 	    ahc->sc_dev.dv_xname, sizeof(struct ahc_scb), SCB_DOWN_SIZE,
 	    sizeof(struct ahc_dma_seg));
 #endif /* AHC_DEBUG */
-	/*printf("%s: reading board settings\n", ahc->sc_dev.dv_xname);/**/
 	
 	/* Save the IRQ type before we do a chip reset */
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.4 1996/04/18 23:47:58 niklas Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.5 1996/04/21 22:25:19 deraadt Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.7 1996/03/17 00:55:30 thorpej Exp $	*/
 
 /*-
@@ -389,7 +389,7 @@ pdq_pci_attach(
 
     sc->sc_ih.ih_fun = pdq_pci_ifintr;
     sc->sc_ih.ih_arg = (void *)sc;
-    intr_establish(ia->ia_irq, &sc->sc_ih, DV_NET);
+    intr_establish(ia->ia_irq, &sc->sc_ih, DV_NET, sc->sc_dv.dv_xname);
 
     sc->sc_ats.func = (void (*)(void *)) pdq_hwreset;
     sc->sc_ats.arg = (void *) sc->sc_pdq;

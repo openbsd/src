@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_eon.c,v 1.2 1996/03/04 10:35:24 mickey Exp $	*/
-/*	$NetBSD: if_eon.c,v 1.12 1996/02/13 22:09:50 christos Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.3 1996/04/21 22:29:23 deraadt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.13 1996/04/13 01:34:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -251,9 +251,9 @@ eoniphdr(hdr, loc, ro, class, zero)
 	mhead.m_next = 0;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonoutput : gen csum (0x%x, offset %d, datalen %d)\n",
-		       (unsigned int) &mhead,
-		       _offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr));
+		printf("eonoutput : gen csum (%p, offset %d, datalen %d)\n",
+		       &mhead, _offsetof(struct eon_hdr, eonh_csum),
+		       sizeof(struct eon_hdr));
 	}
 #endif
 	iso_gen_csum(&mhead,
@@ -469,9 +469,8 @@ eoninput(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eoninput() 0x%x m_data 0x%x m_len 0x%x dequeued\n",
-		       (unsigned int) m, 
-		       (unsigned int) (m ? m->m_data : 0), m ? m->m_len : 0);
+		printf("eoninput() %p m_data %p m_len 0x%x dequeued\n",
+		       m, (m ? m->m_data : 0), m ? m->m_len : 0);
 	}
 #endif
 
@@ -568,9 +567,8 @@ eoninput(m, va_alist)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_EON]) {
 			printf(
-			       "0x%x enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data 0x%x\n",
-			       (unsigned int) m, m->m_len, m->m_type,
-			       (unsigned int) m->m_data);
+			       "%p enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data %p\n",
+			       m, m->m_len, m->m_type, m->m_data);
 			dump_buf(mtod(m, caddr_t), m->m_len);
 		}
 #endif

@@ -1,4 +1,5 @@
-/*	$NetBSD: idesc.c,v 1.15 1996/01/07 22:01:53 thorpej Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.3 1996/04/21 22:15:20 deraadt Exp $	*/
+/*	$NetBSD: idesc.c,v 1.18 1996/03/24 04:12:27 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -238,7 +239,7 @@ int ide_scsicmd __P((struct scsi_xfer *));
 
 int idescprint __P((void *auxp, char *));
 void idescattach __P((struct device *, struct device *, void *));
-int idescmatch __P((struct device *, struct cfdata *, void *));
+int idescmatch __P((struct device *, void *, void *));
 
 int  ideicmd __P((struct idec_softc *, int, void *, int, void *, int));
 int  idego __P((struct idec_softc *, struct scsi_xfer *));
@@ -266,9 +267,13 @@ struct scsi_device idesc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-struct cfdriver idesccd = {
-	NULL, "idesc", (cfmatch_t)idescmatch, idescattach, 
-	DV_DULL, sizeof(struct idec_softc), NULL, 0 };
+struct cfattach idesc_ca = {
+	sizeof(struct idec_softc), idescmatch, idescattach
+};
+
+struct cfdriver idesc_cd = {
+	NULL, "idesc", DV_DULL, NULL, 0
+};
 
 struct {
 	short	ide_err;
@@ -319,10 +324,9 @@ int ide_debug = 0;
  * if we are an A4000 we are here.
  */
 int
-idescmatch(pdp, cdp, auxp)
+idescmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	char *mbusstr;
 
@@ -923,12 +927,8 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 			mdsnbuf->blk_desc.blklen[1] = 512 >> 8;
 			mdsnbuf->pages.rigid_geometry.pg_code = 4;
 			mdsnbuf->pages.rigid_geometry.pg_length = 16;
-			mdsnbuf->pages.rigid_geometry.ncyl_2 =
-			    ide->sc_params.idep_fixedcyl >> 16;
-			mdsnbuf->pages.rigid_geometry.ncyl_1 =
-			    ide->sc_params.idep_fixedcyl >> 8;
-			mdsnbuf->pages.rigid_geometry.ncyl_0 =
-			    ide->sc_params.idep_fixedcyl;
+			_lto3b(ide->sc_params.idep_fixedcyl,
+			    mdsnbuf->pages.rigid_geometry.ncyl);
 			mdsnbuf->pages.rigid_geometry.nheads =
 			    ide->sc_params.idep_heads;
 			dev->sc_stat[0] = 0;
@@ -1090,7 +1090,7 @@ idesc_intr(dev)
 	int i;
 
 #if 0
-	if (idesccd.cd_ndevs == 0 || (dev = idesccd.cd_devs[0]) == NULL)
+	if (idesc_cd.cd_ndevs == 0 || (dev = idesc_cd.cd_devs[0]) == NULL)
 		return (0);
 #endif
 	regs = dev->sc_cregs;

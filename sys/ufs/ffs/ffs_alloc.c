@@ -1,5 +1,5 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.2 1996/02/27 07:27:34 niklas Exp $	*/
-/*	$NetBSD: ffs_alloc.c,v 1.9 1996/02/09 22:22:18 christos Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.3 1996/04/21 22:32:28 deraadt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.10 1996/03/17 02:16:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1223,7 +1223,7 @@ ffs_blkfree(ip, bno, size)
 
 	fs = ip->i_fs;
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		printf("dev = 0x%x, bsize = %d, size = %d, fs = %s\n",
+		printf("dev = 0x%x, bsize = %d, size = %ld, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("blkfree: bad size");
 	}

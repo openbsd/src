@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.1 1996/04/18 23:47:10 niklas Exp $
-#	$NetBSD: devlist2h.awk,v 1.1 1996/02/26 23:46:20 cgd Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 1996/04/21 22:20:18 deraadt Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 1996/04/09 20:07:16 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -91,7 +91,7 @@ $1 == "product" {
 	products[nproducts, 1] = $2;		# vendor name
 	products[nproducts, 2] = $3;		# product id
 	printf("#define\tEISA_PRODUCT_%s%s\t\"", products[nproducts, 1],
-            products[nproducts, 2]) > hfile
+	    products[nproducts, 2]) > hfile
 
 	i = vendorindex[products[nproducts, 1]]; j = 2;
 	needspace = 0;

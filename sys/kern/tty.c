@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.c,v 1.3 1996/03/03 17:20:09 niklas Exp $	*/
-/*	$NetBSD: tty.c,v 1.66 1996/02/09 19:00:38 christos Exp $	*/
+/*	$OpenBSD: tty.c,v 1.4 1996/04/21 22:27:28 deraadt Exp $	*/
+/*	$NetBSD: tty.c,v 1.68 1996/03/29 01:55:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1879,7 +1879,7 @@ ttyinfo(tp)
 			utime.tv_sec += 1;
 			utime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%d.%02du ", utime.tv_sec,
+		ttyprintf(tp, "%ld.%02ldu ", utime.tv_sec,
 		    utime.tv_usec / 10000);
 
 		/* Round up and print system time. */
@@ -1888,13 +1888,13 @@ ttyinfo(tp)
 			stime.tv_sec += 1;
 			stime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%d.%02ds ", stime.tv_sec,
+		ttyprintf(tp, "%ld.%02lds ", stime.tv_sec,
 		    stime.tv_usec / 10000);
 
-#define	pgtok(a)	(((a) * NBPG) / 1024)
+#define	pgtok(a)	(((u_long) ((a) * NBPG) / 1024))
 		/* Print percentage cpu, resident set size. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		ttyprintf(tp, "%d%% %dk\n",
+		ttyprintf(tp, "%d%% %ldk\n",
 		    tmp / 100,
 		    pick->p_stat == SIDL || pick->p_stat == SZOMB ? 0 :
 #ifdef pmap_resident_count

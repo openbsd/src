@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_variables.h,v 1.3 1996/03/11 11:16:30 mickey Exp $	*/
+/*	$OpenBSD: db_variables.h,v 1.4 1996/04/21 22:19:19 deraadt Exp $	*/
+/*	$NetBSD: db_variables.h,v 1.5 1996/02/05 01:57:21 christos Exp $	*/
 
 /* 
  * Mach Operating System

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ppp_tty.c,v 1.2 1996/03/03 21:07:12 niklas Exp $	*/
-/*	$NetBSD: ppp_tty.c,v 1.4 1996/02/13 22:00:30 christos Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.3 1996/04/21 22:28:42 deraadt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.5 1996/03/15 02:28:10 paulus Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
@@ -105,6 +105,7 @@
 #include <net/slcompress.h>
 #endif
 
+#include <net/bpf.h>
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
@@ -227,7 +228,7 @@ pppclose(tp, flag)
     int s;
 
     s = spltty();
-    ttywflush(tp);
+    ttyflush(tp, FREAD|FWRITE);
     tp->t_line = 0;
     sc = (struct ppp_softc *) tp->t_sc;
     if (sc != NULL) {
@@ -571,7 +572,7 @@ pppstart(tp)
 	     * the line may have been idle for some time.
 	     */
 	    if (CCOUNT(&tp->t_outq) == 0) {
-		++sc->sc_bytessent;
+		++sc->sc_stats.ppp_obytes;
 		(void) putc(PPP_FLAG, &tp->t_outq);
 	    }
 
@@ -598,7 +599,7 @@ pppstart(tp)
 		    ndone = n - b_to_q(start, n, &tp->t_outq);
 		    len -= ndone;
 		    start += ndone;
-		    sc->sc_bytessent += ndone;
+		    sc->sc_stats.ppp_obytes += ndone;
 
 		    if (ndone < n)
 			break;	/* packet doesn't fit */
@@ -615,7 +616,7 @@ pppstart(tp)
 			(void) unputc(&tp->t_outq);
 			break;
 		    }
-		    sc->sc_bytessent += 2;
+		    sc->sc_stats.ppp_obytes += 2;
 		    start++;
 		    len--;
 		}
@@ -662,7 +663,7 @@ pppstart(tp)
 			    unputc(&tp->t_outq);
 			break;
 		    }
-		sc->sc_bytessent += q - endseq;
+		sc->sc_stats.ppp_obytes += q - endseq;
 	    }
 
 	    if (!done) {
@@ -677,8 +678,6 @@ pppstart(tp)
 	    m = m2;
 	    if (m == NULL) {
 		/* Finished a packet */
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes = sc->sc_bytessent;
 		break;
 	    }
 	    sc->sc_outfcs = pppfcs(sc->sc_outfcs, mtod(m, u_char *), m->m_len);
@@ -780,7 +779,7 @@ pppinput(c, tp)
 
     s = spltty();		/* should be unnecessary */
     ++tk_nin;
-    ++sc->sc_bytesrcvd;
+    ++sc->sc_stats.ppp_ibytes;
 
     if (c & TTY_FE) {
 	/* framing error or overrun on this char - abort packet */
@@ -790,6 +789,25 @@ pppinput(c, tp)
     }
 
     c &= 0xff;
+
+    /*
+     * Handle software flow control of output.
+     */
+    if (tp->t_iflag & IXON) {
+	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
+	    if ((tp->t_state & TS_TTSTOP) == 0) {
+		tp->t_state |= TS_TTSTOP;
+		(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
+	    }
+	    return 0;
+	}
+	if (c == tp->t_cc[VSTART] && tp->t_cc[VSTART] != _POSIX_VDISABLE) {
+	    tp->t_state &= ~TS_TTSTOP;
+	    if (tp->t_oproc != NULL)
+		(*tp->t_oproc)(tp);
+	    return 0;
+	}
+    }
 
     if (c & 0x80)
 	sc->sc_flags |= SC_RCV_B7_1;
@@ -806,7 +824,6 @@ pppinput(c, tp)
     if (c == PPP_FLAG) {
 	ilen = sc->sc_ilen;
 	sc->sc_ilen = 0;
-	sc->sc_if.if_ibytes = sc->sc_bytesrcvd;
 
 	if (sc->sc_rawin_count > 0) 
 	    ppplogchar(sc, -1);
@@ -823,6 +840,7 @@ pppinput(c, tp)
 		    printf("ppp%d: bad fcs %x\n", sc->sc_if.if_unit,
 			   sc->sc_fcs);
 		sc->sc_if.if_ierrors++;
+		sc->sc_stats.ppp_ierrors++;
 	    } else
 		sc->sc_flags &= ~(SC_FLUSH | SC_ESCAPED);
 	    splx(s);
@@ -834,6 +852,7 @@ pppinput(c, tp)
 		if (sc->sc_flags & SC_DEBUG)
 		    printf("ppp%d: too short (%d)\n", sc->sc_if.if_unit, ilen);
 		sc->sc_if.if_ierrors++;
+		sc->sc_stats.ppp_ierrors++;
 		sc->sc_flags |= SC_PKTLOST;
 	    }
 	    splx(s);
@@ -975,6 +994,7 @@ pppinput(c, tp)
  flush:
     if (!(sc->sc_flags & SC_FLUSH)) {
 	sc->sc_if.if_ierrors++;
+	sc->sc_stats.ppp_ierrors++;
 	sc->sc_flags |= SC_FLUSH;
 	if (sc->sc_flags & SC_LOG_FLUSH)
 	    ppplogchar(sc, c);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.4 1996/04/18 23:47:19 niklas Exp $	*/
-/*	$NetBSD: ncr5380sbc.c,v 1.8 1996/03/07 15:00:17 christos Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.5 1996/04/21 22:21:21 deraadt Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.9 1996/03/18 23:09:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2330,8 +2330,25 @@ do_actions:
 	if (act_flags & ACT_DISCONNECT) {
 		/*
 		 * The device has dropped BSY (or will soon).
-		 * Return and let ncr5380_sched() do its thing.
+		 * We have to wait here for BSY to drop, otherwise
+		 * the next command may decide we need a bus reset.
 		 */
+		timo = ncr5380_wait_nrq_timo;	/* XXX */
+		for (;;) {
+			if (!SCI_BUSY(sc))
+				goto busfree;
+			if (--timo <= 0)
+				break;
+			delay(2);
+		}
+		/* Device is sitting on the bus! */
+		printf("%s: SCSI job did not finish, resetting...\n",
+			   sc->sc_dev.dv_xname);
+		ncr5380_reset_scsibus(sc);
+	busfree:
+		NCR_TRACE("machine: discon, waited %d\n",
+			ncr5380_wait_nrq_timo - timo);
+
 		*sc->sci_icmd = 0;
 		*sc->sci_mode = 0;
 		*sc->sci_tcmd = PHASE_INVALID;

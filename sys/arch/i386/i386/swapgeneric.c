@@ -1,5 +1,5 @@
-/*	$OpenBSD: swapgeneric.c,v 1.3 1996/04/18 19:18:12 niklas Exp $	*/
-/*	$NetBSD: swapgeneric.c,v 1.9 1994/11/04 09:57:52 mycroft Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.4 1996/04/21 22:16:39 deraadt Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.11 1996/04/03 09:15:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,8 +55,6 @@
 #include "cd.h"
 #include "mcd.h"
 
-void	gets __P((char *));
-
 /*
  * Generic configuration;  all in one
  */
@@ -72,19 +70,19 @@ long	dumplo;
 int	dmmin, dmmax, dmtext;
 
 #if NWDC > 0
-extern	struct cfdriver wdcd;
+extern	struct cfdriver wd_cd;
 #endif
 #if NFDC > 0
-extern	struct cfdriver fdcd;
+extern	struct cfdriver fd_cd;
 #endif
 #if NSD > 0
-extern	struct cfdriver sdcd;
+extern	struct cfdriver sd_cd;
 #endif
 #if NCD > 0
-extern	struct cfdriver cdcd;
+extern	struct cfdriver cd_cd;
 #endif
 #if NMCD > 0
-extern	struct cfdriver mcdcd;
+extern	struct cfdriver mcd_cd;
 #endif
 
 struct	genericconf {
@@ -93,25 +91,27 @@ struct	genericconf {
 	dev_t gc_major;
 } genericconf[] = {
 #if NWDC > 0
-	{ &wdcd,  "wd",  0 },
+	{ &wd_cd,  "wd",  0 },
 #endif
 #if NSD > 0
-	{ &sdcd,  "sd",  4 },
+	{ &sd_cd,  "sd",  4 },
 #endif
 #if NCD > 0
-	{ &cdcd,  "cd",  6 },
+	{ &cd_cd,  "cd",  6 },
 #endif
 #if NMCD > 0
-	{ &mcdcd, "mcd", 7 },
+	{ &mcd_cd, "mcd", 7 },
 #endif
 #if NFDC > 0
-	{ &fdcd,  "fd",  2 },
+	{ &fd_cd,  "fd",  2 },
 #endif
 	{ 0 }
 };
 
 extern int ffs_mountroot();
 int (*mountroot)() = ffs_mountroot;
+
+void	gets __P((char *));
 
 void
 setconf()

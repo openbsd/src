@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.51 1996/02/09 19:01:01 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.52 1996/03/16 23:17:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1187,7 +1187,7 @@ vprint(label, vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("type %s, usecount %d, writecount %d, refcount %d,",
+	printf("type %s, usecount %d, writecount %d, refcount %ld,",
 		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 		vp->v_holdcnt);
 	buf[0] = '\0';

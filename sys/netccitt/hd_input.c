@@ -1,5 +1,5 @@
-/*	$OpenBSD: hd_input.c,v 1.2 1996/03/04 07:36:22 niklas Exp $	*/
-/*	$NetBSD: hd_input.c,v 1.8 1996/02/13 22:04:27 christos Exp $	*/
+/*	$OpenBSD: hd_input.c,v 1.3 1996/04/21 22:28:52 deraadt Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.9 1996/04/13 01:34:16 cgd Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -106,8 +106,7 @@ hdintr()
 				if (hdp->hd_ifp == ifp)
 					break;
 			if (hdp == 0) {
-				printf("hdintr: unknown interface %x\n", 
-				       (unsigned int) ifp);
+				printf("hdintr: unknown interface %p\n", ifp);
 				m_freem(m);
 				continue;
 			}

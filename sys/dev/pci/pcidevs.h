@@ -473,6 +473,9 @@
 #define	PCI_PRODUCT_OLDNCR_820	0x0002		/* 53c820 */
 #define	PCI_PRODUCT_OLDNCR_825	0x0003		/* 53c825 */
 #define	PCI_PRODUCT_OLDNCR_815	0x0004		/* 53c815 */
+#define	PCI_PRODUCT_OLDNCR_810AP	0x0005		/* 53c810AP */
+#define	PCI_PRODUCT_OLDNCR_860	0x0006		/* 53c860 */
+#define	PCI_PRODUCT_OLDNCR_875	0x000f		/* 53c875 */
 /* do the NCR chips use the new ID, as well? */
 
 /* Number Nine products */

@@ -1,4 +1,5 @@
-/*	$NetBSD: clock.c,v 1.10 1995/02/20 00:53:42 chopps Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 1996/04/21 22:15:01 deraadt Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1996/03/17 05:58:30 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,19 +94,23 @@ struct clockframe hardclock_frame;
  * periods where N is the value loaded into the counter.
  */
 
-int clockmatch __P((struct device *, struct cfdata *, void *));
+int clockmatch __P((struct device *, void *, void *));
 void clockattach __P((struct device *, struct device *, void *));
 
-struct cfdriver clockcd = {
-	NULL, "clock", (cfmatch_t)clockmatch, clockattach, 
-	DV_DULL, sizeof(struct device), NULL, 0 };
+struct cfattach clock_ca = {
+	sizeof(struct device), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL, NULL, 0 };
 
 int
-clockmatch(pdp, cfp, auxp)
+clockmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname("clock", auxp))
 		return(1);
 	return(0);

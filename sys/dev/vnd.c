@@ -1,5 +1,5 @@
-/*	$OpenBSD: vnd.c,v 1.5 1996/03/02 00:29:25 niklas Exp $	*/
-/*	$NetBSD: vnd.c,v 1.24 1996/02/10 00:11:44 christos Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.6 1996/04/21 22:19:59 deraadt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,11 +74,11 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/stat.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/uio.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -125,10 +125,6 @@ struct vnd_softc {
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
-
-/* {b,c}devsw[] function prototypes XXX: move them to dev_conf.h */
-bdev_decl(vnd);
-cdev_decl(vnd);
 
 /* called by main() at boot time */
 void	vndattach __P((int));
@@ -394,7 +390,7 @@ vndstart(vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %x\n",
+		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %lx\n",
 		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
@@ -419,7 +415,7 @@ vndiodone(bp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %x\n",
+		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
 		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 #endif

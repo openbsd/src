@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_interface.h,v 1.2 1996/03/11 11:16:10 mickey Exp $	*/
-/*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp &	*/
+/*	$OpenBSD: db_interface.h,v 1.3 1996/04/21 22:19:02 deraadt Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.

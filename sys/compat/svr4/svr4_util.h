@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_util.h,v 1.7 1995/06/24 20:29:31 christos Exp $	 */
+/*	$OpenBSD: svr4_util.h,v 1.2 1996/04/21 22:18:41 deraadt Exp $	*/
+/*	$NetBSD: svr4_util.h,v 1.8 1996/04/11 12:41:25 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +34,7 @@
 #include <compat/common/compat_util.h>
 
 #ifdef DEBUG_SVR4
-#define DPRINTF(a)	printf a;
+#define DPRINTF(a)	uprintf a;
 #else
 #define DPRINTF(a)
 #endif

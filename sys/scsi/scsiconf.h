@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.28 1996/02/18 20:32:45 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.29 1996/03/19 03:07:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -289,8 +289,156 @@ void show_mem __P((u_char *, int));
 int scsi_probe_busses __P((int, int, int));
 void scsi_strvis __P((u_char *, u_char *, int));
 
+static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes));
+static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes));
+static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes));
+static __inline u_int32_t _2btol __P((u_int8_t *bytes));
+static __inline u_int32_t _3btol __P((u_int8_t *bytes));
+static __inline u_int32_t _4btol __P((u_int8_t *bytes));
 
-void lto3b __P((u_int32_t val, u_int8_t *bytes));
-u_int32_t _3btol __P((u_int8_t *bytes));
+static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes));
+static __inline void _lto3l __P((u_int32_t val, u_int8_t *bytes));
+static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes));
+static __inline u_int32_t _2ltol __P((u_int8_t *bytes));
+static __inline u_int32_t _3ltol __P((u_int8_t *bytes));
+static __inline u_int32_t _4ltol __P((u_int8_t *bytes));
+
+static __inline void
+_lto2b(val, bytes)
+	u_int32_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = (val >> 8) & 0xff;
+	bytes[1] = val & 0xff;
+}
+
+static __inline void
+_lto3b(val, bytes)
+	u_int32_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = (val >> 16) & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = val & 0xff;
+}
+
+static __inline void
+_lto4b(val, bytes)
+	u_int32_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = (val >> 24) & 0xff;
+	bytes[1] = (val >> 16) & 0xff;
+	bytes[2] = (val >> 8) & 0xff;
+	bytes[3] = val & 0xff;
+}
+
+static __inline u_int32_t
+_2btol(bytes)
+	u_int8_t *bytes;
+{
+	register u_int32_t rv;
+
+	rv = (bytes[0] << 8) |
+	     bytes[1];
+	return (rv);
+}
+
+static __inline u_int32_t
+_3btol(bytes)
+	u_int8_t *bytes;
+{
+	register u_int32_t rv;
+
+	rv = (bytes[0] << 16) |
+	     (bytes[1] << 8) |
+	     bytes[2];
+	return (rv);
+}
+
+static __inline u_int32_t
+_4btol(bytes)
+	u_int8_t *bytes;
+{
+	register u_int32_t rv;
+
+	rv = (bytes[0] << 24) |
+	     (bytes[1] << 16) |
+	     (bytes[2] << 8) |
+	     bytes[3];
+	return (rv);
+}
+
+static __inline void
+_lto2l(val, bytes)
+	u_int32_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+}
+
+static __inline void
+_lto3l(val, bytes)
+	u_int32_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = (val >> 16) & 0xff;
+}
+
+static __inline void
+_lto4l(val, bytes)
+	u_int32_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = (val >> 16) & 0xff;
+	bytes[3] = (val >> 24) & 0xff;
+}
+
+static __inline u_int32_t
+_2ltol(bytes)
+	u_int8_t *bytes;
+{
+	register u_int32_t rv;
+
+	rv = bytes[0] |
+	     (bytes[1] << 8);
+	return (rv);
+}
+
+static __inline u_int32_t
+_3ltol(bytes)
+	u_int8_t *bytes;
+{
+	register u_int32_t rv;
+
+	rv = bytes[0] |
+	     (bytes[1] << 8) |
+	     (bytes[2] << 16);
+	return (rv);
+}
+
+static __inline u_int32_t
+_4ltol(bytes)
+	u_int8_t *bytes;
+{
+	register u_int32_t rv;
+
+	rv = bytes[0] |
+	     (bytes[1] << 8) |
+	     (bytes[2] << 16) |
+	     (bytes[3] << 24);
+	return (rv);
+}
 
 #endif /* SCSI_SCSICONF_H */

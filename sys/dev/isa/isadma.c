@@ -1,5 +1,5 @@
-/*	$OpenBSD: isadma.c,v 1.3 1996/04/18 23:47:41 niklas Exp $	*/
-/*	$NetBSD: isadma.c,v 1.17 1996/03/01 04:35:27 mycroft Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.4 1996/04/21 22:24:14 deraadt Exp $	*/
+/*	$NetBSD: isadma.c,v 1.18 1996/03/31 20:51:43 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,8 +28,9 @@ static struct dma_info dma_info[8];
 static u_int8_t dma_finished;
 
 /* high byte of address is stored in this port for i-th dma channel */
-static int dmapageport[8] = {
-	0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a
+static int dmapageport[2][4] = {
+	{0x87, 0x83, 0x81, 0x82},
+	{0x8f, 0x8b, 0x89, 0x8a}
 };
 
 static u_int8_t dmamode[4] = {
@@ -123,7 +124,7 @@ isadma_start(addr, nbytes, chan, flags)
 
 		/* send start address */
 		waport = DMA1_CHN(chan);
-		outb(dmapageport[chan], di->phys[0].addr>>16);
+		outb(dmapageport[0][chan], di->phys[0].addr>>16);
 		outb(waport, di->phys[0].addr);
 		outb(waport, di->phys[0].addr>>8);
 
@@ -144,7 +145,7 @@ isadma_start(addr, nbytes, chan, flags)
 
 		/* send start address */
 		waport = DMA2_CHN(chan & 3);
-		outb(dmapageport[chan], di->phys[0].addr>>16);
+		outb(dmapageport[1][chan], di->phys[0].addr>>16);
 		outb(waport, di->phys[0].addr>>1);
 		outb(waport, di->phys[0].addr>>9);
 

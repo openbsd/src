@@ -1,5 +1,5 @@
-/*	$OpenBSD: slcompress.c,v 1.3 1996/03/03 21:07:22 niklas Exp $	*/
-/*	$NetBSD: slcompress.c,v 1.14 1996/02/13 22:00:55 christos Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.4 1996/04/21 22:28:46 deraadt Exp $	*/
+/*	$NetBSD: slcompress.c,v 1.15 1996/03/15 02:28:12 paulus Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -75,9 +75,14 @@ sl_compress_init(comp, max_state)
 	register u_int i;
 	register struct cstate *tstate = comp->tstate;
 
-	if (max_state == -1)
+	if (max_state == -1) {
 		max_state = MAX_STATES - 1;
 	bzero((char *)comp, sizeof(*comp));
+	} else {
+		/* Don't reset statistics */
+		bzero((char *)comp->tstate, sizeof(comp->tstate));
+		bzero((char *)comp->rstate, sizeof(comp->rstate));
+	}
 	for (i = max_state; i > 0; --i) {
 		tstate[i].cs_id = i;
 		tstate[i].cs_next = &tstate[i - 1];

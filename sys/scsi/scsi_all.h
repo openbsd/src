@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.6 1994/12/28 19:42:54 mycroft Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.7 1996/03/19 03:06:10 mycroft Exp $	*/
 
 /*
  * SCSI general  interface description
@@ -229,58 +229,33 @@ struct scsi_inquiry_data {
 	u_int8_t extra[8];
 };
 
-/*
- * This looks bad, and it is.  However it fixes padding problems
- * caused by using unions.  This *needs* to be an array, if this code
- * is to work on any architecture.
- */
-struct	scsi_sense_data {
-/* 1*/	u_int8_t error_code;		/* same bits as new version */
-#define XXX_unextended_blockhi	extended_segment
-#define XXX_unextended_blockmed	extended_flags
-#define XXX_unextended_blocklow	extended_info[0]
-/* 2*/	u_int8_t extended_segment;
-/* 3*/	u_int8_t extended_flags;	/* same bits as new version */
-/* 7*/	u_int8_t extended_info[4];
-/* 8*/	u_int8_t extended_extra_len;
-	/*
-	 * allocate enough room to hold new stuff
-	 * (by increasing 16 to 24 below)
-	 */
-/*32*/	u_int8_t extended_extra_bytes[24];
-};	/* total of 32 bytes */
+struct scsi_sense_data_unextended {
+/* 1*/	u_int8_t error_code;
+/* 4*/	u_int8_t block[3];
+};
 
-struct	scsi_sense_data_new {
+struct scsi_sense_data {
 /* 1*/	u_int8_t error_code;
 #define	SSD_ERRCODE		0x7F
 #define	SSD_ERRCODE_VALID	0x80
-	union {
-		struct {	/* this is deprecated, the standard says "DON'T"*/
-/* 2*/			u_int8_t blockhi;
-/* 3*/			u_int8_t blockmed;
-/* 4*/			u_int8_t blocklow;
-		} unextended;
-		struct {
-/* 2*/			u_int8_t segment;
-/* 3*/			u_int8_t flags;
+/* 2*/	u_int8_t segment;
+/* 3*/	u_int8_t flags;
 #define	SSD_KEY		0x0F
 #define	SSD_ILI		0x20
 #define	SSD_EOM		0x40
 #define	SSD_FILEMARK	0x80
-/* 7*/			u_int8_t info[4];
-/* 8*/			u_int8_t extra_len;
-/*12*/			u_int8_t cmd_spec_info[4];
-/*13*/			u_int8_t add_sense_code;
-/*14*/			u_int8_t add_sense_code_qual;
-/*15*/			u_int8_t fru;
-/*16*/			u_int8_t sense_key_spec_1;
-#define	SSD_SCS_VALID		0x80
-/*17*/			u_int8_t sense_key_spec_2;
-/*18*/			u_int8_t sense_key_spec_3;
-/*32*/			u_int8_t extra_bytes[14];
-		} extended;
-	} ext;
-}; /* total of 32 bytes */
+/* 7*/	u_int8_t info[4];
+/* 8*/	u_int8_t extra_len;
+/*12*/	u_int8_t cmd_spec_info[4];
+/*13*/	u_int8_t add_sense_code;
+/*14*/	u_int8_t add_sense_code_qual;
+/*15*/	u_int8_t fru;
+/*16*/	u_int8_t sense_key_spec_1;
+#define	SSD_SCS_VALID	0x80
+/*17*/	u_int8_t sense_key_spec_2;
+/*18*/	u_int8_t sense_key_spec_3;
+/*32*/	u_int8_t extra_bytes[14];
+};
 
 struct scsi_blk_desc {
 	u_int8_t density;

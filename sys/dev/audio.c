@@ -1,5 +1,5 @@
-/*	$OpenBSD: audio.c,v 1.6 1996/04/18 23:46:55 niklas Exp $	*/
-/*	$NetBSD: audio.c,v 1.22 1996/03/14 19:08:32 christos Exp $	*/
+/*	$OpenBSD: audio.c,v 1.7 1996/04/21 22:19:38 deraadt Exp $	*/
+/*	$NetBSD: audio.c,v 1.24 1996/03/30 22:51:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -78,6 +78,7 @@
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <sys/audioio.h>
 #include <dev/audiovar.h>
@@ -85,10 +86,6 @@
 
 #ifdef AUDIO_DEBUG
 #include <machine/stdarg.h>
-#ifndef TOLOG
-#define TOLOG	0x04
-#endif
-void kprintf __P((const char *fmt, int flags, struct tty *tp, va_list ap));
 
 void
 #ifdef __STDC__
@@ -101,7 +98,7 @@ Dprintf(fmt, va_alist)
 	va_list ap;
 
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, ap);
+	log(LOG_DEBUG, "%:", fmt, ap);
 	va_end(ap);
 }
 
@@ -152,12 +149,6 @@ void	audio_alloc_auzero __P((struct audio_softc *, int));
 void	audio_printsc __P((struct audio_softc *));
 void	audioattach __P((int));
 int	audio_hardware_attach __P((struct audio_hw_if *, void *));
-int	audioopen __P((dev_t, int, int, struct proc *));
-int	audioclose __P((dev_t, int, int, struct proc *));
-int	audioread __P((dev_t, struct uio *, int));
-int	audiowrite __P((dev_t, struct uio *, int));
-int	audioioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	audioselect __P((dev_t, int, struct proc *));
 void	audio_init_ring __P((struct audio_buffer *, int));
 void	audio_initbufs __P((struct audio_softc *));
 static __inline int audio_sleep_timo __P((int *, char *, int));
@@ -171,7 +162,7 @@ void
 audio_printsc(sc)
 	struct audio_softc *sc;
 {
-	printf("hwhandle %x hw_if %x ", sc->hw_hdl, sc->hw_if);
+	printf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
 	printf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
 	printf("rchan %x wchan %x ", sc->sc_rchan, sc->sc_wchan);
 	printf("rring blk %x pring nblk %x\n", sc->rr.nblk, sc->pr.nblk);
@@ -396,7 +387,7 @@ audiowrite(dev, uio, ioflag)
 int
 audioioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -1002,7 +993,7 @@ audio_write(dev, uio, ioflag)
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 1) {
 		    int left = cb->ep - tp;
-		    Dprintf("audio_write: cc=%d tp=0x%x bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
+		    Dprintf("audio_write: cc=%d tp=%p bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
 		}
 #endif		
 #ifdef DIAGNOSTIC
@@ -1011,7 +1002,7 @@ audio_write(dev, uio, ioflag)
       
 		/* check for an overwrite. Should never happen */
 		if ((tp + towrite) > cb->ep) {
-			DPRINTF(("audio_write: overwrite tp=0x%x towrite=%d ep=0x%x bs=%d\n",
+			DPRINTF(("audio_write: overwrite tp=%p towrite=%d ep=0x%x bs=%d\n",
 			         tp, towrite, cb->ep, blocksize));
 			printf("audio_write: overwrite tp=%p towrite=%d ep=%p\n",
 			         tp, towrite, cb->ep);
@@ -1038,7 +1029,7 @@ audio_write(dev, uio, ioflag)
 		}
 		if (error) {
 #ifdef AUDIO_DEBUG
-		        printf("audio_write:(1) uiomove failed %d; cc=%d tp=0x%x bs=%d\n", error, cc, tp, blocksize);
+		        printf("audio_write:(1) uiomove failed %d; cc=%d tp=%p bs=%d\n", error, cc, tp, blocksize);
 #endif
 			break;
 		}		    
@@ -1241,7 +1232,7 @@ audiostartr(sc)
 {
 	int error;
     
-    	DPRINTF(("audiostartr: tp=0x%x\n", sc->rr.tp));
+    	DPRINTF(("audiostartr: tp=%p\n", sc->rr.tp));
 
 	error = sc->hw_if->start_input(sc->hw_hdl, sc->rr.tp, sc->sc_blksize,
 	    			       audio_rint, (void *)sc);
@@ -1417,7 +1408,7 @@ audio_rint(v)
 	    	if (++cb->nblk < cb->maxblk) {
 #ifdef AUDIO_DEBUG
 		    	if (audiodebug > 1)
-				Dprintf("audio_rint: tp=0x%x cc=%d\n", tp, cc);
+				Dprintf("audio_rint: tp=%p cc=%d\n", tp, cc);
 #endif
 			error = hw->start_input(sc->hw_hdl, tp, cc,
 						audio_rint, (void *)sc);

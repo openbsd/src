@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci.c,v 1.1 1996/04/18 23:48:02 niklas Exp $	*/
-/*	$NetBSD: pci.c,v 1.15 1996/03/14 04:03:01 cgd Exp $	*/
+/*	$OpenBSD: pci.c,v 1.2 1996/04/21 22:25:34 deraadt Exp $	*/
+/*	$NetBSD: pci.c,v 1.18 1996/03/27 04:08:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,8 +45,12 @@
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
-struct cfdriver pcicd = {
-	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct device)
+struct cfattach pci_ca = {
+	sizeof(struct device), pcimatch, pciattach
+};
+
+struct cfdriver pci_cd = {
+	NULL, "pci", DV_DULL
 };
 
 int	pciprint __P((void *, char *));
@@ -86,38 +90,69 @@ pciattach(parent, self, aux)
 {
 	struct pcibus_attach_args *pba = aux;
 	bus_chipset_tag_t bc;
-	int device, function, nfunctions;
+	pci_chipset_tag_t pc;
+	int bus, device, maxndevs, function, nfunctions;
 
-	pci_md_attach_hook(parent, self, pba);
+	pci_attach_hook(parent, self, pba);
 	printf("\n");
 
-	for (device = 0; device < PCI_MAX_DEVICE_NUMBER; device++) {
+	bc = pba->pba_bc;
+	pc = pba->pba_pc;
+	bus = pba->pba_bus;
+	maxndevs = pci_bus_maxdevs(pc, bus);
+
+	for (device = 0; device < maxndevs; device++) {
 		pcitag_t tag;
-		pcireg_t id, class;
+		pcireg_t id, class, intr, bhlcr;
 		struct pci_attach_args pa;
 		struct cfdata *cf;
-		int supported;
+		int supported, pin;
 
-		tag = pci_make_tag(pba->pba_bus, device, 0);
-		id = pci_conf_read(tag, PCI_ID_REG);
+		tag = pci_make_tag(pc, bus, device, 0);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
 		if (id == 0 || id == 0xffffffff)
 			continue;
 
-		nfunctions = 1;				/* XXX */
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
 		for (function = 0; function < nfunctions; function++) {
-			tag = pci_make_tag(pba->pba_bus, device, function);
-			id = pci_conf_read(tag, PCI_ID_REG);
+			tag = pci_make_tag(pc, bus, device, function);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
 			if (id == 0 || id == 0xffffffff)
 				continue;
-			class = pci_conf_read(tag, PCI_CLASS_REG);
+			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
-			pa.pa_bc = pba->pba_bc;
+			pa.pa_bc = bc;
+			pa.pa_pc = pc;
 			pa.pa_device = device;
 			pa.pa_function = function;
 			pa.pa_tag = tag;
 			pa.pa_id = id;
 			pa.pa_class = class;
+
+			if (bus == 0) {
+				pa.pa_intrswiz = 0;
+				pa.pa_intrtag = tag;
+			} else {
+				pa.pa_intrswiz = pba->pba_intrswiz + device;
+				pa.pa_intrtag = pba->pba_intrtag;
+			}
+			pin = PCI_INTERRUPT_PIN(intr);
+			if (pin == PCI_INTERRUPT_PIN_NONE) {
+				/* no interrupt */
+				pa.pa_intrpin = 0;
+			} else {
+				/*
+				 * swizzle it based on the number of
+				 * busses we're behind and our device
+				 * number.
+				 */
+				pa.pa_intrpin =			/* XXX */
+				    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
+			}
+			pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
 
 			config_found_sm(self, &pa, pciprint, pcisubmatch);
 		}
@@ -154,5 +189,106 @@ pcisubmatch(parent, match, aux)
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
 		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
+}
+
+int
+pci_io_find(pc, pcitag, reg, iobasep, iosizep)
+	pci_chipset_tag_t pc;
+	pcitag_t pcitag;
+	int reg;
+	bus_io_addr_t *iobasep;
+	bus_io_size_t *iosizep;
+{
+	pcireg_t addrdata, sizedata;
+	int s;
+
+	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
+		panic("pci_io_find: bad request");
+
+	/* XXX?
+	 * Section 6.2.5.1, `Address Maps', tells us that:
+	 *
+	 * 1) The builtin software should have already mapped the device in a
+	 * reasonable way.
+	 *
+	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
+	 * n bits of the address to 0.  As recommended, we write all 1s and see
+	 * what we get back.
+	 */
+	addrdata = pci_conf_read(pc, pcitag, reg);
+
+	s = splhigh();
+	pci_conf_write(pc, pcitag, reg, 0xffffffff);
+	sizedata = pci_conf_read(pc, pcitag, reg);
+	pci_conf_write(pc, pcitag, reg, addrdata);
+	splx(s);
+
+	if (PCI_MAPREG_TYPE(addrdata) != PCI_MAPREG_TYPE_IO)
+		panic("pci_io_find: not an I/O region");
+
+	if (iobasep != NULL)
+		*iobasep = PCI_MAPREG_IO_ADDR(addrdata);
+	if (iosizep != NULL)
+		*iosizep = ~PCI_MAPREG_IO_ADDR(sizedata) + 1;
+
+	return (0);
+}
+
+int
+pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
+	pci_chipset_tag_t pc;
+	pcitag_t pcitag;
+	int reg;
+	bus_mem_addr_t *membasep;
+	bus_mem_size_t *memsizep;
+	int *cacheablep;
+{
+	pcireg_t addrdata, sizedata;
+	int s;
+
+	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
+		panic("pci_find_mem: bad request");
+
+	/*
+	 * Section 6.2.5.1, `Address Maps', tells us that:
+	 *
+	 * 1) The builtin software should have already mapped the device in a
+	 * reasonable way.
+	 *
+	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
+	 * n bits of the address to 0.  As recommended, we write all 1s and see
+	 * what we get back.
+	 */
+	addrdata = pci_conf_read(pc, pcitag, reg);
+
+	s = splhigh();
+	pci_conf_write(pc, pcitag, reg, 0xffffffff);
+	sizedata = pci_conf_read(pc, pcitag, reg);
+	pci_conf_write(pc, pcitag, reg, addrdata);
+	splx(s);
+
+	if (PCI_MAPREG_TYPE(addrdata) == PCI_MAPREG_TYPE_IO)
+		panic("pci_find_mem: I/O region");
+
+	switch (PCI_MAPREG_MEM_TYPE(addrdata)) {
+	case PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+		break;
+	case PCI_MAPREG_MEM_TYPE_64BIT:
+/* XXX */	printf("pci_find_mem: 64-bit region\n");
+/* XXX */	return (1);
+	default:
+		printf("pci_find_mem: reserved region type\n");
+		return (1);
+	}
+
+	if (membasep != NULL)
+		*membasep = PCI_MAPREG_MEM_ADDR(addrdata);	/* PCI addr */
+	if (memsizep != NULL)
+		*memsizep = ~PCI_MAPREG_MEM_ADDR(sizedata) + 1;
+	if (cacheablep != NULL)
+		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
+
+	return 0;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ramdisk.c,v 1.4 1996/04/18 23:47:04 niklas Exp $	*/
-/*	$NetBSD: ramdisk.c,v 1.5 1996/03/07 10:26:29 leo Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.5 1996/04/21 22:19:53 deraadt Exp $	*/
+/*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -47,10 +47,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -75,14 +79,9 @@ extern vm_offset_t	 kmem_alloc __P((vm_map_t, vm_size_t));
  *
  * XXX Assumption: 16 RAM-disks are enough!
  */
+#define RD_MAX_UNITS	0x10
 #define RD_IS_CTRL(unit) (unit & 0x10)
 #define RD_UNIT(unit)    (unit &  0xF)
-
-/*
- * XXX -  This is just for a sanity check.  Only
- * applies to kernel-space RAM disk allocations.
- */
-#define RD_KMEM_MAX_SIZE	0x100000	/* 1MB */
 
 /* autoconfig stuff... */
 
@@ -101,32 +100,67 @@ struct rd_softc {
 #define RD_ISOPEN	0x01
 #define RD_SERVED	0x02
 
-static int  rd_match (struct device *, void *self, void *);
-static void rd_attach(struct device *, struct device *self, void *);
+void rdattach __P((int));
+static void rd_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver rdcd = {
-	NULL, "rd", rd_match, rd_attach,
-	DV_DULL, sizeof(struct rd_softc), NULL, 0 };
+/*
+ * Some ports (like i386) use a swapgeneric that wants to
+ * snoop around in this rd_cd structure.  It is preserved
+ * (for now) to remain compatible with such practice.
+ * XXX - that practice is questionable...
+ */
+struct cfdriver rd_cd = {
+	NULL, "rd", DV_DULL, NULL, 0
+};
 
 void rdstrategy __P((struct buf *bp));
-
 struct dkdriver rddkdriver = { rdstrategy };
 
-static int
-rd_match(parent, self, aux)
-	struct device	*parent;
-	void	*self;
-	void	*aux;
+static int   ramdisk_ndevs;
+static void *ramdisk_devs[RD_MAX_UNITS];
+
+/*
+ * This is called if we are configured as a pseudo-device
+ */
+void
+rdattach(n)
+	int n;
 {
-#ifdef	RAMDISK_HOOKS
-	/*
-	 * This external function allows for a machine dependent
-	 * match function.
-	 */
-	return (rd_match_hook(parent, self, aux));
-#else
-	return(1);
+	struct rd_softc *sc;
+	int i;
+
+#ifdef	DIAGNOSTIC
+	if (ramdisk_ndevs) {
+		printf("ramdisk: multiple attach calls?\n");
+		return;
+	}
 #endif
+
+	/* XXX:  Are we supposed to provide a default? */
+	if (n <= 1)
+		n = 1;
+	if (n > RD_MAX_UNITS)
+		n = RD_MAX_UNITS;
+	ramdisk_ndevs = n;
+
+	/* XXX: Fake-up rd_cd (see above) */
+	rd_cd.cd_ndevs = ramdisk_ndevs;
+	rd_cd.cd_devs  = ramdisk_devs;
+
+	/* Attach as if by autoconfig. */
+	for (i = 0; i < n; i++) {
+
+		sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
+		if (!sc) {
+			printf("ramdisk: malloc for attach failed!\n");
+			return;
+		}
+		bzero((caddr_t)sc, sizeof(*sc));
+		ramdisk_devs[i] = sc;
+		sc->sc_dev.dv_unit = i;
+		sprintf(sc->sc_dev.dv_xname, "rd%d", i);
+		rd_attach(NULL, &sc->sc_dev, NULL);
+	}
 }
 
 static void
@@ -145,12 +179,10 @@ rd_attach(parent, self, aux)
 	 */
 	rd_attach_hook(sc->sc_dev.dv_unit, &sc->sc_rd);
 #endif
-	printf("\n");
 
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
 	sc->sc_dkdev.dk_driver = &rddkdriver;
 	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dkdev);
@@ -167,6 +199,16 @@ static int rd_server_loop __P((struct rd_softc *sc));
 static int rd_ioctl_server __P((struct rd_softc *sc,
 		struct rd_conf *urd, struct proc *proc));
 #endif
+static int rd_ioctl_kalloc __P((struct rd_softc *sc,
+		struct rd_conf *urd, struct proc *proc));
+
+dev_type_open(rdopen);
+dev_type_close(rdclose);
+dev_type_read(rdread);
+dev_type_write(rdwrite);
+dev_type_ioctl(rdioctl);
+dev_type_size(rdsize);
+dev_type_dump(rddump);
 
 int rddump(dev, blkno, va, size)
 	dev_t dev;
@@ -184,9 +226,9 @@ int rdsize(dev_t dev)
 
 	/* Disallow control units. */
 	unit = minor(dev);
-	if (unit >= rdcd.cd_ndevs)
+	if (unit >= ramdisk_ndevs)
 		return 0;
-	sc = rdcd.cd_devs[unit];
+	sc = ramdisk_devs[unit];
 	if (sc == NULL)
 		return 0;
 
@@ -196,7 +238,8 @@ int rdsize(dev_t dev)
 	return (sc->sc_size >> DEV_BSHIFT);
 }
 
-int rdopen(dev, flag, fmt, proc)
+int
+rdopen(dev, flag, fmt, proc)
 	dev_t   dev;
 	int     flag, fmt;
 	struct proc *proc;
@@ -206,9 +249,9 @@ int rdopen(dev, flag, fmt, proc)
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
-	if (unit >= rdcd.cd_ndevs)
+	if (unit >= ramdisk_ndevs)
 		return ENXIO;
-	sc = rdcd.cd_devs[unit];
+	sc = ramdisk_devs[unit];
 	if (sc == NULL)
 		return ENXIO;
 
@@ -236,7 +279,8 @@ int rdopen(dev, flag, fmt, proc)
 	return 0;
 }
 
-int rdclose(dev, flag, fmt, proc)
+int
+rdclose(dev, flag, fmt, proc)
 	dev_t   dev;
 	int     flag, fmt;
 	struct proc *proc;
@@ -246,7 +290,7 @@ int rdclose(dev, flag, fmt, proc)
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
-	sc = rdcd.cd_devs[unit];
+	sc = ramdisk_devs[unit];
 
 	if (RD_IS_CTRL(md))
 		return 0;
@@ -258,17 +302,19 @@ int rdclose(dev, flag, fmt, proc)
 }
 
 int
-rdread(dev, uio)
+rdread(dev, uio, flags)
 	dev_t		dev;
 	struct uio	*uio;
+	int		flags;
 {
 	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rdwrite(dev, uio)
+rdwrite(dev, uio, flags)
 	dev_t		dev;
 	struct uio	*uio;
+	int		flags;
 {
 	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
@@ -288,7 +334,7 @@ rdstrategy(bp)
 
 	md = minor(bp->b_dev);
 	unit = RD_UNIT(md);
-	sc = rdcd.cd_devs[unit];
+	sc = ramdisk_devs[unit];
 
 	switch (sc->sc_type) {
 #if RAMDISK_SERVER
@@ -350,7 +396,7 @@ rdioctl(dev, cmd, data, flag, proc)
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
-	sc = rdcd.cd_devs[unit];
+	sc = ramdisk_devs[unit];
 
 	/* If this is not the control device, punt! */
 	if (RD_IS_CTRL(md) == 0)
@@ -385,7 +431,7 @@ rdioctl(dev, cmd, data, flag, proc)
  * Handle ioctl RD_SETCONF for (sc_type == RD_KMEM_ALLOCATED)
  * Just allocate some kernel memory and return.
  */
-int
+static int
 rd_ioctl_kalloc(sc, urd, proc)
 	struct rd_softc *sc;
 	struct rd_conf *urd;
@@ -396,8 +442,6 @@ rd_ioctl_kalloc(sc, urd, proc)
 
 	/* Sanity check the size. */
 	size = urd->rd_size;
-	if (size > RD_KMEM_MAX_SIZE)
-		return EINVAL;
 	addr = kmem_alloc(kernel_map, size);
 	if (!addr)
 		return ENOMEM;
@@ -415,7 +459,7 @@ rd_ioctl_kalloc(sc, urd, proc)
  * Handle ioctl RD_SETCONF for (sc_type == RD_UMEM_SERVER)
  * Set config, then become the I/O server for this unit.
  */
-int
+static int
 rd_ioctl_server(sc, urd, proc)
 	struct rd_softc *sc;
 	struct rd_conf *urd;

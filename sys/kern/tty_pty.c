@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.32 1996/02/09 19:00:41 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.33 1996/03/30 22:24:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,9 +52,8 @@
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/uio.h>
+#include <sys/conf.h>
 
-#undef NPTY	/* XXX */
-#include <kern/kern_conf.h>
 
 
 #if NPTY == 1

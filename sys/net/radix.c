@@ -1,5 +1,5 @@
-/*	$OpenBSD: radix.c,v 1.2 1996/03/03 21:07:14 niklas Exp $	*/
-/*	$NetBSD: radix.c,v 1.10 1996/02/13 22:00:32 christos Exp $	*/
+/*	$OpenBSD: radix.c,v 1.3 1996/04/21 22:28:43 deraadt Exp $	*/
+/*	$NetBSD: radix.c,v 1.11 1996/03/16 23:55:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -777,7 +777,7 @@ on1:
 					m = mm;
 				}
 			if (m)
-				log(LOG_ERR, "%s %x at %x\n",
+				log(LOG_ERR, "%s %p at %p\n",
 					    "rn_delete: Orphaned Mask", m, x);
 		}
 	}

@@ -267,6 +267,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "53c815",
 	},
 	{
+	    PCI_VENDOR_OLDNCR, PCI_PRODUCT_OLDNCR_810AP,
+	    0,
+	    "NCR",
+	    "53c810AP",
+	},
+	{
+	    PCI_VENDOR_OLDNCR, PCI_PRODUCT_OLDNCR_860,
+	    0,
+	    "NCR",
+	    "53c860",
+	},
+	{
+	    PCI_VENDOR_OLDNCR, PCI_PRODUCT_OLDNCR_875,
+	    0,
+	    "NCR",
+	    "53c875",
+	},
+	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_IMAG128,
 	    0,
 	    "Number 9 Computer Company",

@@ -1,5 +1,5 @@
-/*	$OpenBSD: aha1742.c,v 1.4 1996/04/18 23:47:09 niklas Exp $	*/
-/*	$NetBSD: aha1742.c,v 1.57 1996/03/08 22:03:26 cgd Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.5 1996/04/21 22:20:12 deraadt Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.59 1996/04/09 22:47:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -263,12 +263,12 @@ struct ahb_ecb {
 
 struct ahb_softc {
 	struct device sc_dev;
-	struct isadev sc_id;
-	void *sc_ih;
 	bus_chipset_tag_t sc_bc;
-	bus_io_handle_t sc_ioh;
+	eisa_chipset_tag_t sc_ec;
 
+	bus_io_handle_t sc_ioh;
 	int sc_irq;
+	void *sc_ih;
 
 	struct ahb_ecb *immed_ecb;	/* an outstanding immediete command */
 	struct ahb_ecb *ecbhash[ECB_HASH_SIZE];
@@ -320,8 +320,12 @@ struct scsi_device ahb_dev = {
 int	ahbmatch __P((struct device *, void *, void *));
 void	ahbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver ahbcd = {
-	NULL, "ahb", ahbmatch, ahbattach, DV_DULL, sizeof(struct ahb_softc)
+struct cfattach ahb_ca = {
+	sizeof(struct ahb_softc), ahbmatch, ahbattach
+};
+
+struct cfdriver ahb_cd = {
+	NULL, "ahb", DV_DULL
 };
 
 /*
@@ -466,9 +470,13 @@ ahbattach(parent, self, aux)
 	struct ahb_softc *ahb = (void *)self;
 	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
-	char *model;
+	eisa_chipset_tag_t ec = ea->ea_ec;
+	eisa_intr_handle_t ih;
+	const char *model, *intrstr;
 
 	ahb->sc_bc = bc;
+	ahb->sc_ec = ec;
+
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
 		panic("ahbattach: could not map I/O addresses");
 	ahb->sc_ioh = ioh;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.4 1996/04/19 16:08:43 niklas Exp $	*/
-/*	$NetBSD: cd9660_vnops.c,v 1.31 1996/03/08 18:13:07 scottr Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.5 1996/04/21 22:26:38 deraadt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.32 1996/03/16 20:25:40 ws Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -398,7 +398,7 @@ iso_uiodir(idp,dp,off)
 		--idp->ncookies;
 	}
 
-	if ((error = uiomove((caddr_t) dp,dp->d_reclen,idp->uio)) != 0)
+	if ((error = uiomove((caddr_t)dp, dp->d_reclen, idp->uio)) != 0)
 		return (error);
 	idp->uio_off = off;
 	return (0);
@@ -416,7 +416,7 @@ iso_shipdir(idp)
 	cl = idp->current.d_namlen;
 	cname = idp->current.d_name;
 
-	if ((assoc = (cl > 1)) && *cname == ASSOCCHAR) {
+	if ((assoc = cl > 1 && *cname == ASSOCCHAR)) {
 		cl--;
 		cname++;
 	}
@@ -730,7 +730,7 @@ cd9660_link(v)
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
-		struct componentname *a_cnp; 
+		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
@@ -756,7 +756,7 @@ cd9660_symlink(v)
 }
 
 /*
- * Ufs abort op, called after namei() when a CREATE/DELETE isn't actually
+ * cd9660 abort op, called after namei() when a CREATE/DELETE isn't actually
  * done. If a buffer has been saved in anticipation of a CREATE, delete it.
  */
 int
@@ -840,8 +840,8 @@ cd9660_unlock(v)
 	struct proc *p = curproc;	/* XXX */
 
 	if ((ip->i_flag & IN_LOCKED) == 0) {
-		vprint("ufs_unlock: unlocked inode", ap->a_vp);
-		panic("ufs_unlock NOT LOCKED");
+		vprint("cd9660_unlock: unlocked inode", ap->a_vp);
+		panic("cd9660_unlock NOT LOCKED");
 	}
 	if (p && p->p_pid != ip->i_lockholder && p->p_pid > -1 &&
 	    ip->i_lockholder > -1/* && lockcount++ < 100*/)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ast.c,v 1.7 1996/04/18 23:47:29 niklas Exp $	*/
-/*	$NetBSD: ast.c,v 1.22 1996/03/10 09:01:20 cgd Exp $	*/
+/*	$OpenBSD: ast.c,v 1.8 1996/04/21 22:22:48 deraadt Exp $	*/
+/*	$NetBSD: ast.c,v 1.26 1996/04/15 18:55:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,13 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -61,8 +67,12 @@ int astprobe();
 void astattach();
 int astintr __P((void *));
 
-struct cfdriver astcd = {
-	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
+struct cfattach ast_ca = {
+	sizeof(struct ast_softc), astprobe, astattach
+};
+
+struct cfdriver ast_cd = {
+	NULL, "ast", DV_TTY
 };
 
 int
@@ -163,20 +173,13 @@ astattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		/* mimic config_found(), but with special functionality */
-		if ((match = config_search(NULL, self, &ca)) != NULL) {
-			subunit = match->cf_unit; /* can change if unit == * */
-			config_attach(self, match, &ca, astprint);
-			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+		sc->sc_slaves[i] = config_found(self, &ca, astprint);
+		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
-		} else {
-			astprint(&ca, self->dv_xname);
-			printf(" not configured\n");
-		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, astintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, astintr, sc, sc->sc_dev.dv_xname);
 }
 
 int

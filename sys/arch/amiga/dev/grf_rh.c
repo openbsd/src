@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rh.c,v 1.3 1996/03/30 22:18:18 niklas Exp $	*/
-/*	$NetBSD: grf_rh.c,v 1.11 1996/03/06 20:13:28 is Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.4 1996/04/21 22:15:13 deraadt Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.13 1996/03/17 05:58:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1418,21 +1418,24 @@ static struct MonDef *current_mon;
 int  rh_mode     __P((struct grf_softc *, int, void *, int, int));
 void grfrhattach __P((struct device *, struct device *, void *));
 int  grfrhprint  __P((void *, char *));
-int  grfrhmatch  __P((struct device *, struct cfdata *, void *));
+int  grfrhmatch  __P((struct device *, void *, void *));
 
-struct cfdriver grfrhcd = {
-	NULL, "grfrh", (cfmatch_t)grfrhmatch, grfrhattach,
-	DV_DULL, sizeof(struct grf_softc), NULL, 0
+struct cfattach grfrh_ca = {
+	sizeof(struct grf_softc), grfrhmatch, grfrhattach
+};
+
+struct cfdriver grfrh_cd = {
+	NULL, "grfrh", DV_DULL, NULL, 0
 };
 
 static struct cfdata *cfdata;
 
 int
-grfrhmatch(pdp, cfp, auxp)
+grfrhmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
 #ifdef RETINACONSOLE
 	static int rhconunit = -1;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.2 1995/07/04 15:30:39 briggs Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.3 1996/03/15 02:28:06 paulus Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
  *
@@ -66,11 +66,7 @@ struct ppp_softc {
 	struct	mbuf *sc_togo;		/* output packet ready to go */
 	struct	mbuf *sc_npqueue;	/* output packets not to be sent yet */
 	struct	mbuf **sc_npqtail;	/* ptr to last next ptr in npqueue */
-#ifdef	VJC
-	struct	slcompress sc_comp; 	/* vjc control buffer */
-#endif
-	u_int	sc_bytessent;		/* count of octets sent */
-	u_int	sc_bytesrcvd;		/* count of octets received */
+	struct	pppstat sc_stats;	/* count of bytes/pkts sent/rcvd */
 	caddr_t	sc_bpf;			/* hook for BPF */
 	enum	NPmode sc_npmode[NUM_NP]; /* what to do with each NP */
 	struct	compressor *sc_xcomp;	/* transmit compressor */
@@ -79,6 +75,11 @@ struct ppp_softc {
 	void	*sc_rc_state;		/* receive decompressor state */
 	time_t	sc_last_sent;		/* time (secs) last NP pkt sent */
 	time_t	sc_last_recv;		/* time (secs) last NP pkt rcvd */
+	struct	bpf_program sc_pass_filt;   /* filter for packets to pass */
+	struct	bpf_program sc_active_filt; /* filter for "non-idle" packets */
+#ifdef	VJC
+	struct	slcompress *sc_comp; 	/* vjc control buffer */
+#endif
 	
 	/* Device-dependent part for async lines. */
 	ext_accm sc_asyncmap;		/* async control character map */

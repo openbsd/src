@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.5 1996/03/19 21:10:47 mickey Exp $	*/
-/*	$NetBSD: disklabel.h,v 1.38 1996/02/09 18:25:05 christos Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 1996/04/21 22:31:42 deraadt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.39 1996/04/09 20:55:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -78,7 +78,7 @@ struct disklabel {
 	u_int16_t d_subtype;		/* controller/d_type specific */
 	char	  d_typename[16];	/* type name, e.g. "eagle" */
 
-	/* 
+	/*
 	 * d_packname contains the pack identifier and is returned when
 	 * the disklabel is read off the disk or in-core copy.
 	 * d_boot0 and d_boot1 are the (optional) names of the
@@ -87,12 +87,12 @@ struct disklabel {
 	 * getdiskbyname(3) to retrieve the values from /etc/disktab.
 	 */
 	union {
-		char	un_d_packname[16];	/* pack identifier */ 
+		char	un_d_packname[16];	/* pack identifier */
 		struct {
 			char *un_d_boot0;	/* primary bootstrap name */
 			char *un_d_boot1;	/* secondary bootstrap name */
-		} un_b; 
-	} d_un; 
+		} un_b;
+	} d_un;
 #define d_packname	d_un.un_d_packname
 #define d_boot0		d_un.un_b.un_d_boot0
 #define d_boot1		d_un.un_b.un_d_boot1

@@ -1,5 +1,5 @@
-/*	$OpenBSD: clnp_output.c,v 1.2 1996/03/04 10:34:57 mickey Exp $	*/
-/*	$NetBSD: clnp_output.c,v 1.8 1996/02/13 22:08:39 christos Exp $	*/
+/*	$OpenBSD: clnp_output.c,v 1.3 1996/04/21 22:29:16 deraadt Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.9 1996/04/13 01:34:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -224,9 +224,8 @@ clnp_output(m0, va_alist)
 	if (argo_debug[D_OUTPUT]) {
 		printf("clnp_output: to %s", clnp_iso_addrp(dst));
 		printf(" from %s of %d bytes\n", clnp_iso_addrp(src), datalen);
-		printf("\toptions x%x, flags x%x, isop_clnpcache x%x\n",
-		       (unsigned int) isop->isop_options, flags, 
-		       (unsigned int) isop->isop_clnpcache);
+		printf("\toptions %p, flags x%x, isop_clnpcache %p\n",
+		       isop->isop_options, flags, isop->isop_clnpcache);
 	}
 #endif
 
@@ -238,19 +237,18 @@ clnp_output(m0, va_alist)
 	 */
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OUTPUT]) {
-		printf("clnp_output: ck cache: clcp %x\n", (unsigned int) clcp);
+		printf("clnp_output: ck cache: clcp %p\n", clcp);
 		if (clcp != NULL) {
 			printf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
-			printf("\tisop_opts x%x, clc_opts x%x\n",
-			       (unsigned int) isop->isop_options,
-			       (unsigned int) clcp->clc_options);
+			printf("\tisop_opts %p, clc_opts %p\n",
+			       isop->isop_options, clcp->clc_options);
 			if (isop->isop_route.ro_rt)
-				printf("\tro_rt x%x, rt_flags x%x\n",
-				       (unsigned int) isop->isop_route.ro_rt,
+				printf("\tro_rt %p, rt_flags x%x\n",
+				       isop->isop_route.ro_rt,
 				       isop->isop_route.ro_rt->rt_flags);
 			printf("\tflags x%x, clc_flags x%x\n", flags,
 			       clcp->clc_flags);
-			printf("\tclc_hdr x%x\n", (unsigned int) clcp->clc_hdr);
+			printf("\tclc_hdr %p\n", clcp->clc_hdr);
 		}
 	}
 #endif
@@ -336,8 +334,8 @@ clnp_output(m0, va_alist)
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_OUTPUT]) {
 						printf(
-				    "clnp_output: freeing old clc_hdr 0x%x\n",
-					       (unsigned int) clcp->clc_hdr);
+				    "clnp_output: freeing old clc_hdr %p\n",
+					       clcp->clc_hdr);
 					}
 #endif
 					m_free(clcp->clc_hdr);
@@ -351,8 +349,7 @@ clnp_output(m0, va_alist)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OUTPUT]) {
-			printf("clnp_output: NEW clcp x%x\n", 
-			       (unsigned int) clcp);
+			printf("clnp_output: NEW clcp %p\n", clcp);
 		}
 #endif
 		bzero((caddr_t) clcp, sizeof(struct clnp_cache));

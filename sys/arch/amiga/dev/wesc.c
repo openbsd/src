@@ -1,5 +1,5 @@
-/*	$OpenBSD: wesc.c,v 1.2 1996/03/30 22:18:24 niklas Exp $	*/
-/*	$NetBSD: wesc.c,v 1.11 1996/03/15 22:11:19 mhitch Exp $	*/
+/*	$OpenBSD: wesc.c,v 1.3 1996/04/21 22:15:47 deraadt Exp $	*/
+/*	$NetBSD: wesc.c,v 1.12 1996/03/17 01:17:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -53,7 +53,7 @@
 
 int wescprint __P((void *auxp, char *));
 void wescattach __P((struct device *, struct device *, void *));
-int wescmatch __P((struct device *, struct cfdata *, void *));
+int wescmatch __P((struct device *, void *, void *));
 int wesc_dmaintr __P((struct siop_softc *));
 
 struct scsi_adapter wesc_scsiswitch = {
@@ -74,19 +74,23 @@ struct scsi_device wesc_scsidev = {
 #ifdef DEBUG
 #endif
 
-struct cfdriver wesccd = {
-	NULL, "wesc", (cfmatch_t)wescmatch, wescattach, 
-	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+struct cfattach wesc_ca = {
+	sizeof(struct siop_softc), wescmatch, wescattach
+};
+
+struct cfdriver wesc_cd = {
+	NULL, "wesc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are an MacroSystemsUS Warp Engine
  */
 int
-wescmatch(pdp, cdp, auxp)
+wescmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -181,8 +185,8 @@ wesc_dump()
 {
 	int i;
 
-	for (i = 0; i < wesccd.cd_ndevs; ++i)
-		if (wesccd.cd_devs[i])
-			siop_dump(wesccd.cd_devs[i]);
+	for (i = 0; i < wesc_cd.cd_ndevs; ++i)
+		if (wesc_cd.cd_devs[i])
+			siop_dump(wesc_cd.cd_devs[i]);
 }
 #endif

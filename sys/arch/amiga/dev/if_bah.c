@@ -1,4 +1,5 @@
-/*	$NetBSD: if_bah.c,v 1.14 1995/12/27 07:51:40 chopps Exp $ */
+/*	$OpenBSD: if_bah.c,v 1.4 1996/04/21 22:15:23 deraadt Exp $ */
+/*	$NetBSD: if_bah.c,v 1.16 1996/03/20 13:28:50 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -40,6 +41,12 @@
 #define BAHRETRANSMIT /**/
 /* #define BAHTIMINGS */
 /* #define BAH_DEBUG 3 */
+
+/* zeroth version of M68060 support */
+
+#if defined(M68060) && defined(BAHASMCOPY)
+#undef BAHASMCOPY
+#endif
 
 #include "bpfilter.h"
 
@@ -169,8 +176,8 @@ struct bah_softc {
 #endif
 };
 
-int	bahmatch __P((struct device *, void *, void *));
-void	bahattach __P((struct device *, struct device *, void *));
+int	bah_zbus_match __P((struct device *, void *, void *));
+void	bah_zbus_attach __P((struct device *, struct device *, void *));
 void	bah_init __P((struct bah_softc *));
 void	bah_reset __P((struct bah_softc *));
 void	bah_stop __P((struct bah_softc *));
@@ -187,12 +194,16 @@ void	callstart __P((void *vsc, void *dummy));
 int	clkread();
 #endif
 
-struct cfdriver bahcd = {
-	NULL, "bah", bahmatch, bahattach, DV_IFNET, sizeof(struct bah_softc)
+struct cfattach bah_zbus_ca = {
+	sizeof(struct bah_softc), bah_zbus_match, bah_zbus_attach
+};
+
+struct cfdriver bah_cd = {
+	NULL, "bah", DV_IFNET
 };
 
 int
-bahmatch(parent, match, aux)
+bah_zbus_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -205,7 +216,7 @@ bahmatch(parent, match, aux)
 }
 
 void
-bahattach(parent, self, aux)
+bah_zbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -263,7 +274,7 @@ bahattach(parent, self, aux)
 	bah_stop(sc); 
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = bahcd.cd_name;
+	ifp->if_name = bah_cd.cd_name;
 	ifp->if_output = arc_output;
 	ifp->if_start = bah_start;
 	ifp->if_ioctl = bah_ioctl;
@@ -530,7 +541,7 @@ bah_start(ifp)
 	u_long copystart, lencopy, perbyte;
 #endif
 
-	sc = bahcd.cd_devs[ifp->if_unit];
+	sc = bah_cd.cd_devs[ifp->if_unit];
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 3)
 	printf("%s: start(0x%x)\n", sc->sc_dev.dv_xname, ifp);
@@ -878,6 +889,8 @@ cleanup:
 	if (head != NULL)
 		m_freem(head);
 
+	/* mark buffer as invalid by source id 0 */
+	sc->sc_base->buffers[buffer*512*2] = 0;
 	s = splnet();
 
 	if (--sc->sc_rx_fillcount == 2 - 1) {
@@ -1070,13 +1083,23 @@ bahintr(sc)
 	if (maskedisr & ARC_RI) {
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
-		printf("%s: intr: hard rint, act %ld 2:%ld 3:%ld\n",
-		    sc->sc_dev.dv_xname,
-		    sc->sc_rx_act, sc->sc_bufstat[2], sc->sc_bufstat[3]);
+		printf("%s: intr: hard rint, act %ld\n",
+		    sc->sc_dev.dv_xname, sc->sc_rx_act);
 #endif
 	
 		buffer = sc->sc_rx_act;
-		if (++sc->sc_rx_fillcount > 1) {
+		/* look if buffer is marked invalid: */
+		if (sc->sc_base->buffers[buffer*512*2] == 0) {
+	/* invalid marked buffer (or illegally configured sender) */
+			log(LOG_WARNING, 
+			    "%s: spurious RX interrupt or sender 0 (ignored)\n",
+			    sc->sc_dev.dv_xname);
+			/*
+			 * restart receiver on same buffer.
+			 */
+			sc->sc_base->command = ARC_RXBC(buffer);
+
+		} else if (++sc->sc_rx_fillcount > 1) {
 			sc->sc_intmask &= ~ARC_RI;
 			sc->sc_base->status = sc->sc_intmask;
 		} else {
@@ -1128,7 +1151,7 @@ bah_ioctl(ifp, command, data)
 	int s, error;
 
 	error = 0;
-	sc = bahcd.cd_devs[ifp->if_unit];
+	sc = bah_cd.cd_devs[ifp->if_unit];
 	ifa = (struct ifaddr *)data;
 	s = splnet();
 
@@ -1191,7 +1214,7 @@ bah_ioctl(ifp, command, data)
  * and the int handler will have to decide not to retransmit (in case
  * retransmission is implemented).
  *
- * This one assumes being called inside splnet(), and that imp >= ipl2
+ * This one assumes being called inside splnet(), and that net >= ipl2
  */
 
 void
@@ -1201,7 +1224,7 @@ int unit;
 	struct bah_softc *sc;
 	struct ifnet *ifp;
 
-	sc = bahcd.cd_devs[unit];
+	sc = bah_cd.cd_devs[unit];
 	ifp = &(sc->sc_arccom.ac_if);
 
 	sc->sc_base->command = ARC_TXDIS;

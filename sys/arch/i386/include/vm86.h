@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm86.h,v 1.3 1996/04/18 19:21:42 niklas Exp $	*/
-/*	$NetBSD: vm86.h,v 1.4 1996/04/11 10:07:25 mycroft Exp $	*/
+/*	$OpenBSD: vm86.h,v 1.4 1996/04/21 22:16:48 deraadt Exp $	*/
+/*	$NetBSD: vm86.h,v 1.5 1996/04/12 05:57:45 mycroft Exp $	*/
 
 #define	VM86_USE_VIF
 
@@ -48,6 +48,9 @@
 #define		VM86_INTx	1
 #define		VM86_SIGNAL	2
 #define		VM86_UNKNOWN	3
+
+#define	VM86_SETDIRECT	(~PSL_USERSTATIC)
+#define	VM86_GETDIRECT	(VM86_SETDIRECT|PSL_MBO|PSL_MBZ)
 
 #define	VM86_SETDIRECT	(~PSL_USERSTATIC)
 #define	VM86_GETDIRECT	(VM86_SETDIRECT|PSL_MBO|PSL_MBZ)
@@ -124,7 +127,8 @@ set_vflags(p, flags)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	SETFLAGS(pcb->vm86_eflags, flags, pcb->vm86_flagmask | ~VM86_GETDIRECT);
+	flags &= ~pcb->vm86_flagmask;
+	SETFLAGS(pcb->vm86_eflags, flags, ~VM86_GETDIRECT);
 	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT);
 #ifndef VM86_USE_VIF
 	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
@@ -142,7 +146,7 @@ get_vflags(p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	int flags = 0;
 
-	SETFLAGS(flags, pcb->vm86_eflags, pcb->vm86_flagmask | ~VM86_GETDIRECT);
+	SETFLAGS(flags, pcb->vm86_eflags, ~VM86_GETDIRECT);
 	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT);
 	return (flags);
 }
@@ -155,7 +159,8 @@ set_vflags_short(p, flags)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	SETFLAGS(pcb->vm86_eflags, flags, (pcb->vm86_flagmask | ~VM86_GETDIRECT) & 0xffff);
+	flags &= ~pcb->vm86_flagmask;
+	SETFLAGS(pcb->vm86_eflags, flags, ~VM86_GETDIRECT & 0xffff);
 	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT & 0xffff);
 #ifndef VM86_USE_VIF
 	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
@@ -171,7 +176,7 @@ get_vflags_short(p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	int flags = 0;
 
-	SETFLAGS(flags, pcb->vm86_eflags, (pcb->vm86_flagmask | ~VM86_GETDIRECT) & 0xffff);
+	SETFLAGS(flags, pcb->vm86_eflags, ~VM86_GETDIRECT & 0xffff);
 	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT & 0xffff);
 	return (flags);
 }

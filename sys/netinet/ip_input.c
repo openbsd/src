@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip_input.c,v 1.10 1996/03/09 21:30:22 dm Exp $	*/
-/*	$NetBSD: ip_input.c,v 1.28 1996/02/13 23:42:37 christos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.11 1996/04/21 22:29:00 deraadt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -966,7 +966,7 @@ ip_srcroute()
 	*(mtod(m, struct in_addr *)) = *p--;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf(" hops %lx", ntohl(mtod(m, struct in_addr *)->s_addr));
+		printf(" hops %x", ntohl(mtod(m, struct in_addr *)->s_addr));
 #endif
 
 	/*
@@ -986,7 +986,7 @@ ip_srcroute()
 	while (p >= ip_srcrt.route) {
 #ifdef DIAGNOSTIC
 		if (ipprintfs)
-			printf(" %lx", ntohl(q->s_addr));
+			printf(" %x", ntohl(q->s_addr));
 #endif
 		*q++ = *p--;
 	}
@@ -996,7 +996,7 @@ ip_srcroute()
 	*q = ip_srcrt.dst;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf(" %lx\n", ntohl(q->s_addr));
+		printf(" %x\n", ntohl(q->s_addr));
 #endif
 	return (m);
 }

@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_ie.c,v 1.6 1996/03/20 01:00:52 mickey Exp $       */
-/*    $NetBSD: if_ie.c,v 1.45 1995/12/24 02:31:33 mycroft Exp $       */
+/*    $OpenBSD: if_ie.c,v 1.7 1996/04/21 22:24:03 deraadt Exp $       */
+/*	$NetBSD: if_ie.c,v 1.47 1996/04/11 22:29:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -310,8 +310,12 @@ int in_ietint = 0;
 int ieprobe __P((struct device *, void *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
-struct cfdriver iecd = {
-	NULL, "ie", ieprobe, ieattach, DV_IFNET, sizeof(struct ie_softc)
+struct cfattach ie_ca = {
+	sizeof(struct ie_softc), ieprobe, ieattach
+};
+
+struct cfdriver ie_cd = {
+	NULL, "ie", DV_IFNET
 };
 
 #define MK_24(base, ptr) ((caddr_t)((u_long)ptr - (u_long)base))
@@ -757,7 +761,7 @@ ieattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = iecd.cd_name;
+	ifp->if_name = ie_cd.cd_name;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -777,8 +781,8 @@ ieattach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, ieintr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, ieintr, sc, sc->sc_dev.dv_xname);
 }
 
 /*
@@ -789,7 +793,7 @@ void
 iewatchdog(unit)
 	int unit;
 {
-	struct ie_softc *sc = iecd.cd_devs[unit];
+	struct ie_softc *sc = ie_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1441,7 +1445,7 @@ void
 iestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
@@ -2111,7 +2115,7 @@ ieioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

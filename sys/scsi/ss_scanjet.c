@@ -1,5 +1,5 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.2 1996/04/19 16:10:24 niklas Exp $	*/
-/*	$NetBSD: ss_scanjet.c,v 1.1 1996/02/18 20:32:49 mycroft Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.3 1996/04/21 22:31:17 deraadt Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.3 1996/03/30 21:47:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -87,23 +87,27 @@ scanjet_attach(ss, sa)
 	struct ss_softc *ss;
 	struct scsibus_attach_args *sa;
 {
+#ifdef SCSIDEBUG
 	struct scsi_link *sc_link = sa->sa_sc_link;
+#endif
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
+
+	printf("\n%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model (which determines nothing yet) */
 
 	if (!bcmp(sa->sa_inqbuf->product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
-		printf(": HP ScanJet IIc\n");
+		printf("HP ScanJet IIc\n");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
-		printf(": HP ScanJet IIcx\n");
+		printf("HP ScanJet IIcx\n");
 	}
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_attach: scanner_type = %d\n",
+	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
 	    ss->sio.scan_scanner_type));
 
 	/* now install special handlers */
@@ -118,8 +122,8 @@ scanjet_attach(ss, sa)
 	ss->sio.scan_y_resolution	= 100;
 	ss->sio.scan_x_origin		= 0;
 	ss->sio.scan_y_origin		= 0;
-	ss->sio.scan_brightness		= 100;
-	ss->sio.scan_contrast		= 100;
+	ss->sio.scan_brightness		= 128;
+	ss->sio.scan_contrast		= 128;
 	ss->sio.scan_quality		= 100;
 	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
@@ -144,9 +148,9 @@ scanjet_set_params(ss, sio)
 	struct ss_softc *ss;
 	struct scan_io *sio;
 {
+#if 0
 	int error;
 
-#if 0
 	/*
 	 * if the scanner is triggered, then rewind it
 	 */
@@ -200,7 +204,9 @@ scanjet_trigger_scanner(ss)
 	struct ss_softc *ss;
 {
 	char escape_codes[20];
+#ifdef SCSIDEBUG
 	struct scsi_link *sc_link = ss->sc_link;
+#endif
 	int error;
 
 	scanjet_compute_sizes(ss);
@@ -241,7 +247,7 @@ scanjet_read(ss, bp)
 	 * Handle "fixed-block-mode" tape drives by using the
 	 * block count instead of the length.
 	 */
-	lto3b(bp->b_bcount, cmd.len);
+	_lto3b(bp->b_bcount, cmd.len);
 
 	/*
 	 * go ask the adapter to do all this for us
@@ -279,7 +285,7 @@ scanjet_write(ss, buf, size, flags)
 		return (0);
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
-	lto3b(size, cmd.len);
+	_lto3b(size, cmd.len);
 	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_OUT));
@@ -311,13 +317,13 @@ scanjet_set_window(ss)
 
 	p = escape_codes;
 
-	sprintf(p, "\033*f%dP", ss->sio.scan_width / 4);
+	sprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
 	p += strlen(p);
-	sprintf(p, "\033*f%dQ", ss->sio.scan_height / 4);
+	sprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
 	p += strlen(p);
-	sprintf(p, "\033*f%dX", ss->sio.scan_x_origin / 4);
+	sprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
 	p += strlen(p);
-	sprintf(p, "\033*f%dY", ss->sio.scan_y_origin / 4);
+	sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
 	p += strlen(p);
 	sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
 	p += strlen(p);
@@ -375,6 +381,7 @@ void
 scanjet_compute_sizes(ss)
 	struct ss_softc *ss;
 {
+	int r = 0;		/* round up by r 1/1200" */
 
 	/*
 	 * Deal with the fact that the HP ScanJet IIc uses 1/300" not 1/1200"
@@ -390,22 +397,24 @@ scanjet_compute_sizes(ss)
 		ss->sio.scan_bits_per_pixel = 1;
 		break;
 	case SIM_GRAYSCALE:
+		r = 600;
 		ss->sio.scan_bits_per_pixel = 8;
 		break;
 	case SIM_COLOR:
+		r = 600;
 		ss->sio.scan_bits_per_pixel = 24;
 		break;
 	}
 
 	ss->sio.scan_pixels_per_line =
-	    (ss->sio.scan_width * ss->sio.scan_x_resolution) / 1200;
+		(ss->sio.scan_width * ss->sio.scan_x_resolution + r) / 1200;
 	if (ss->sio.scan_bits_per_pixel == 1)
 		/* pad to byte boundary: */
 		ss->sio.scan_pixels_per_line =
 		    (ss->sio.scan_pixels_per_line + 7) & 0xfffffff8;
 
 	ss->sio.scan_lines =
-	    (ss->sio.scan_height * ss->sio.scan_y_resolution) / 1200;
+	    (ss->sio.scan_height * ss->sio.scan_y_resolution + r) / 1200;
 	ss->sio.scan_window_size = ss->sio.scan_lines *
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
 }

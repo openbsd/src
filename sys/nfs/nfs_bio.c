@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.5 1996/04/17 04:50:24 mickey Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.6 1996/04/21 22:30:18 deraadt Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25 1996/02/29 20:26:16 fvdl Exp $	*/
 
 /*
@@ -181,9 +181,9 @@ nfs_bioread(vp, uio, ioflag, cred)
 		|| ((vp->v_flag & VROOT) && vp->v_type == VLNK)) {
 		switch (vp->v_type) {
 		case VREG:
-			return nfs_readrpc(vp, uio, cred);
+			return (nfs_readrpc(vp, uio, cred));
 		case VLNK:
-			return nfs_readlinkrpc(vp, uio, cred);
+			return (nfs_readlinkrpc(vp, uio, cred));
 		case VDIR:
 			break;
 		default:
@@ -191,7 +191,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 				vp->v_type);
 		};
 	    }
-	    baddr = NULL;
+	    baddr = (caddr_t)0;
 	    switch (vp->v_type) {
 	    case VREG:
 		nfsstats.biocache_reads++;
@@ -592,7 +592,7 @@ again:
 			}
 		} else if ((n + on) == biosize &&
 			(nmp->nm_flag & NFSMNT_NQNFS) == 0) {
-			bp->b_proc = (struct proc *)NULL;
+			bp->b_proc = (struct proc *)0;
 			bp->b_flags |= B_ASYNC;
 			(void)nfs_writebp(bp, 0);
 		} else {
@@ -621,9 +621,9 @@ nfs_getcacheblk(vp, bn, size, p)
 
 	if (nmp->nm_flag & NFSMNT_INT) {
 		bp = getblk(vp, bn, size, PCATCH, 0);
-		while (bp == NULL) {
-			if (nfs_sigintr(nmp, (struct nfsreq *)NULL, p))
-				return ((struct buf *)NULL);
+		while (bp == (struct buf *)0) {
+			if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
+				return ((struct buf *)0);
 			bp = getblk(vp, bn, size, 0, 2 * hz);
 		}
 	} else
@@ -663,7 +663,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 		np->n_flag |= NFLUSHWANT;
 		error = tsleep((caddr_t)&np->n_flag, PRIBIO + 2, "nfsvinval",
 			slptimeo);
-		if (error && intrflg && nfs_sigintr(nmp, (struct nfsreq *)NULL, p))
+		if (error && intrflg && nfs_sigintr(nmp, (struct nfsreq *)0, p))
 			return (EINTR);
 	}
 
@@ -673,7 +673,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	np->n_flag |= NFLUSHINPROG;
 	error = vinvalbuf(vp, flags, cred, p, slpflag, 0);
 	while (error) {
-		if (intrflg && nfs_sigintr(nmp, (struct nfsreq *)NULL, p)) {
+		if (intrflg && nfs_sigintr(nmp, (struct nfsreq *)0, p)) {
 			np->n_flag &= ~NFLUSHINPROG;
 			if (np->n_flag & NFLUSHWANT) {
 				np->n_flag &= ~NFLUSHWANT;
@@ -721,7 +721,7 @@ nfs_asyncio(bp, cred)
 		}
 	
 		TAILQ_INSERT_TAIL(&nfs_bufq, bp, b_freelist);
-		nfs_iodwant[i] = (struct proc *)NULL;
+		nfs_iodwant[i] = (struct proc *)0;
 		wakeup((caddr_t)&nfs_iodwant[i]);
 		return (0);
 	    }
@@ -840,7 +840,7 @@ nfs_doio(bp, cr, p)
 		}
 		break;
 	    case VLNK:
-		uiop->uio_offset = (off_t)NULL;
+		uiop->uio_offset = (off_t)0;
 		nfsstats.readlink_bios++;
 		error = nfs_readlinkrpc(vp, uiop, cr);
 		break;

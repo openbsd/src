@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.14 1995/05/31 20:41:44 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993

@@ -1,8 +1,9 @@
-/*	$OpenBSD: advnops.c,v 1.3 1996/02/26 14:18:21 niklas Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.4 1996/04/21 22:14:40 deraadt Exp $	*/
 /*	$NetBSD: advnops.c,v 1.22 1995/08/18 15:14:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1996 Matthias Scheler
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -207,18 +208,20 @@ adosfs_getattr(v)
 		/* 
 		 * XXX actually we can track this if we were to walk the list
 		 * of links if it exists.
+		 * XXX for now, just set nlink to 2 if this is a hard link
+		 * to a file, or a file with a hard link.
 		 */
-		vap->va_nlink = 1;
+		vap->va_nlink = 1 + (ap->linkto != 0);
 		/*
 		 * round up to nearest blocks add number of file list 
 		 * blocks needed and mutiply by number of bytes per block.
 		 */
-		fblks = howmany(ap->fsize, amp->bsize);
+		fblks = howmany(ap->fsize, amp->dbsize);
 		fblks += howmany(fblks, ANODENDATBLKENT(ap));
-		vap->va_bytes = fblks * amp->bsize;
+		vap->va_bytes = fblks * amp->dbsize;
 		vap->va_size = ap->fsize;
 
-		vap->va_blocksize = amp->bsize;
+		vap->va_blocksize = amp->dbsize;
 	}
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");
@@ -281,9 +284,9 @@ adosfs_read(v)
 	do {
 		/*
 		 * we are only supporting ADosFFS currently
-		 * (which have data blocks of 512 bytes)
+		 * (which have data blocks without headers)
 		 */
-		size = amp->bsize;
+		size = amp->dbsize;
 		lbn = uio->uio_offset / size;
 		on = uio->uio_offset % size;
 		n = min((u_int)(size - on), uio->uio_resid);
@@ -300,9 +303,29 @@ adosfs_read(v)
 		 * but not much as ados makes little attempt to 
 		 * make things contigous
 		 */
-		error = bread(sp->a_vp, lbn, size, NOCRED, &bp);
+		error = bread(sp->a_vp, lbn * amp->secsperblk,
+			      amp->bsize, NOCRED, &bp);
 		sp->a_vp->v_lastr = lbn;
-		n = min(n, (u_int)size - bp->b_resid);
+
+		if (!IS_FFS(amp)) {
+			if (bp->b_resid > 0)
+				error = EIO; /* OFS needs the complete block */
+			else if (adoswordn(bp, 0) != BPT_DATA) {
+#ifdef DIAGNOSTIC
+				printf("adosfs: bad primary type blk %d\n",
+				       bp->b_blkno / amp->secsperblk);
+#endif
+				error=EINVAL;
+			}
+			else if ( adoscksum(bp, ap->nwords)) {
+#ifdef DIAGNOSTIC
+				printf("adosfs: blk %d failed cksum.\n",
+				       bp->b_blkno / amp->secsperblk);
+#endif
+				error=EINVAL;
+			}
+		}
+
 		if (error) {
 			brelse(bp);
 			goto reterr;
@@ -310,7 +333,9 @@ adosfs_read(v)
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d+%d-%d+%d", lbn, on, lbn, n);
 #endif
-		error = uiomove(bp->b_un.b_addr + on, (int)n, uio);
+		n = min(n, (u_int)size - bp->b_resid);
+		error = uiomove(bp->b_un.b_addr + on +
+				amp->bsize - amp->dbsize, (int)n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 reterr:
@@ -569,10 +594,10 @@ adosfs_bmap(v)
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	bn = sp->a_bn;
+	ap = VTOA(sp->a_vp);
+	bn = sp->a_bn / ap->amp->secsperblk;
 	bnp = sp->a_bnp;
 	error = 0;
-	ap = VTOA(sp->a_vp);
 
 	if (sp->a_vpp != NULL)
 		*sp->a_vpp = ap->amp->devvp;
@@ -623,8 +648,8 @@ adosfs_bmap(v)
 			error = EINVAL;
 			goto reterr;
 		}
-		error = bread(ap->amp->devvp, nb, ap->amp->bsize,
-			      NOCRED, &flbp);
+		error = bread(ap->amp->devvp, nb * ap->amp->secsperblk,
+			      ap->amp->bsize, NOCRED, &flbp);
 		if (error)
 			goto reterr;
 		if (adoscksum(flbp, ap->nwords)) {
@@ -652,11 +677,11 @@ adosfs_bmap(v)
 	flblkoff = bn % ANODENDATBLKENT(ap);
 	if (flblkoff < adoswordn(flbp, 2 /* ADBI_NBLKTABENT */)) {
 		flblkoff = (ap->nwords - 51) - flblkoff;
-		*bnp = adoswordn(flbp, flblkoff);
+		*bnp = adoswordn(flbp, flblkoff) * ap->amp->secsperblk;
 	} else {
 #ifdef DIAGNOSTIC
 		printf("flblk offset %d too large in lblk %d blk %d\n", 
-		    flblkoff, bn, flbp->b_blkno);
+		    flblkoff, bn / ap->amp->secsperblk , flbp->b_blkno);
 #endif
 		error = EINVAL;
 	}

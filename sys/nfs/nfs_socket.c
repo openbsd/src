@@ -1,5 +1,5 @@
-/*	$OpenBSD: nfs_socket.c,v 1.5 1996/04/17 04:50:29 mickey Exp $	*/
-/*	$NetBSD: nfs_socket.c,v 1.26 1996/02/25 17:47:26 fvdl Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.6 1996/04/21 22:30:26 deraadt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -154,7 +154,7 @@ nfs_connect(nmp, rep)
 	struct mbuf *m;
 	u_int16_t tport;
 
-	nmp->nm_so = (struct socket *)NULL;
+	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so, nmp->nm_sotype, 
 		nmp->nm_soproto);
@@ -323,7 +323,7 @@ nfs_disconnect(nmp)
 
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
-		nmp->nm_so = (struct socket *)NULL;
+		nmp->nm_so = (struct socket *)0;
 		soshutdown(so, 2);
 		soclose(so);
 	}
@@ -367,7 +367,7 @@ nfs_send(so, nam, top, rep)
 	} else
 		soflags = so->so_proto->pr_flags;
 	if ((soflags & PR_CONNREQUIRED) || (so->so_state & SS_ISCONNECTED))
-		sendnam = (struct mbuf *)NULL;
+		sendnam = (struct mbuf *)0;
 	else
 		sendnam = nam;
 	if (so->so_type == SOCK_SEQPACKET)
@@ -375,8 +375,8 @@ nfs_send(so, nam, top, rep)
 	else
 		flags = 0;
 
-	error = sosend(so, sendnam, (struct uio *)NULL, top,
-		(struct mbuf *)NULL, flags);
+	error = sosend(so, sendnam, (struct uio *)0, top,
+		(struct mbuf *)0, flags);
 	if (error) {
 		if (rep) {
 			log(LOG_INFO, "nfs send error %d for server %s\n",error,
@@ -430,8 +430,8 @@ nfs_receive(rep, aname, mp)
 	/*
 	 * Set up arguments for soreceive()
 	 */
-	*mp = (struct mbuf *)NULL;
-	*aname = (struct mbuf *)NULL;
+	*mp = (struct mbuf *)0;
+	*aname = (struct mbuf *)0;
 	sotype = rep->r_nmp->nm_sotype;
 
 	/*
@@ -495,8 +495,8 @@ tryagain:
 			auio.uio_procp = p;
 			do {
 			   rcvflg = MSG_WAITALL;
-			   error = soreceive(so, (struct mbuf **)NULL, &auio,
-			   (struct mbuf **)NULL, (struct mbuf **)NULL, &rcvflg);
+			   error = soreceive(so, (struct mbuf **)0, &auio,
+				(struct mbuf **)0, (struct mbuf **)0, &rcvflg);
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -528,8 +528,8 @@ tryagain:
 			auio.uio_resid = len;
 			do {
 			    rcvflg = MSG_WAITALL;
-			    error =  soreceive(so, (struct mbuf **)NULL,
-				&auio, mp, (struct mbuf **)NULL, &rcvflg);
+			    error =  soreceive(so, (struct mbuf **)0,
+				&auio, mp, (struct mbuf **)0, &rcvflg);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
@@ -552,7 +552,7 @@ tryagain:
 			auio.uio_procp = p;
 			do {
 			    rcvflg = 0;
-			    error =  soreceive(so, (struct mbuf **)NULL,
+			    error =  soreceive(so, (struct mbuf **)0,
 				&auio, mp, &control, &rcvflg);
 			    if (control)
 				m_freem(control);
@@ -571,7 +571,7 @@ tryagain:
 errout:
 		if (error && error != EINTR && error != ERESTART) {
 			m_freem(*mp);
-			*mp = (struct mbuf *)NULL;
+			*mp = (struct mbuf *)0;
 			if (error != EPIPE)
 				log(LOG_INFO,
 				    "receive error %d from nfs server %s\n",
@@ -587,7 +587,7 @@ errout:
 		if ((so = rep->r_nmp->nm_so) == NULL)
 			return (EACCES);
 		if (so->so_state & SS_ISCONNECTED)
-			getnam = (struct mbuf **)NULL;
+			getnam = (struct mbuf **)0;
 		else
 			getnam = aname;
 		auio.uio_resid = len = 1000000;
@@ -595,7 +595,7 @@ errout:
 		do {
 			rcvflg = 0;
 			error =  soreceive(so, getnam, &auio, mp,
-				(struct mbuf **)NULL, &rcvflg);
+				(struct mbuf **)0, &rcvflg);
 			if (error == EWOULDBLOCK &&
 			    (rep->r_flags & R_SOFTTERM))
 				return (EINTR);
@@ -604,7 +604,7 @@ errout:
 	}
 	if (error) {
 		m_freem(*mp);
-		*mp = (struct mbuf *)NULL;
+		*mp = (struct mbuf *)0;
 	}
 	/*
 	 * Search for any mbufs that are not a multiple of 4 bytes long
@@ -836,7 +836,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	 * Get the RPC header with authorization.
 	 */
 kerbauth:
-	verf_str = auth_str = (char *)NULL;
+	verf_str = auth_str = (char *)0;
 	if (nmp->nm_flag & NFSMNT_KERB) {
 		verf_str = nickv;
 		verf_len = sizeof (nickv);
@@ -972,7 +972,7 @@ tryagain:
 		else if ((nmp->nm_flag & NFSMNT_KERB) && *tl++ == rpc_autherr) {
 			if (!failed_auth) {
 				failed_auth++;
-				mheadend->m_next = (struct mbuf *)NULL;
+				mheadend->m_next = (struct mbuf *)0;
 				m_freem(mrep);
 				m_freem(rep->r_mreq);
 				goto kerbauth;
@@ -1236,12 +1236,12 @@ nfs_timer(arg)
 	register struct socket *so;
 	register struct nfsmount *nmp;
 	register int timeo;
-	register struct nfssvc_sock *slp;
-#ifdef NFSSERVER
-	static long lasttime = 0;
-#endif
 	int s, error;
+#ifdef NFSSERVER
+	register struct nfssvc_sock *slp;
+	static long lasttime = 0;
 	u_quad_t cur_usec;
+#endif
 
 	s = splsoftnet();
 	for (rep = nfs_reqq.tqh_first; rep != 0; rep = rep->r_chain.tqe_next) {
@@ -1301,10 +1301,10 @@ nfs_timer(arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 			if ((nmp->nm_flag & NFSMNT_NOCONN) == 0)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			        (struct mbuf *)NULL, (struct mbuf *)NULL);
+			    (struct mbuf *)0, (struct mbuf *)0);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			        nmp->nm_nam, (struct mbuf *)NULL);
+			    nmp->nm_nam, (struct mbuf *)0);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error))
 					so->so_error = 0;
@@ -1352,7 +1352,7 @@ nfs_timer(arg)
 	}
 #endif /* NFSSERVER */
 	splx(s);
-	timeout(nfs_timer, NULL, nfs_ticks);
+	timeout(nfs_timer, (void *)0, nfs_ticks);
 }
 
 /*
@@ -1396,7 +1396,7 @@ nfs_sndlock(flagp, rep)
 		if (rep->r_nmp->nm_flag & NFSMNT_INT)
 			slpflag = PCATCH;
 	} else
-		p = (struct proc *)NULL;
+		p = (struct proc *)0;
 	while (*flagp & NFSMNT_SNDLOCK) {
 		if (nfs_sigintr(rep->r_nmp, rep, p))
 			return (EINTR);
@@ -1899,9 +1899,8 @@ nfsrv_rcv(so, arg, waitflag)
 		 */
 		auio.uio_resid = 1000000000;
 		flags = MSG_DONTWAIT;
-		error = soreceive(so, &nam, &auio, &mp,
-			(struct mbuf **)NULL, &flags);
-		if (error || mp == NULL) {
+		error = soreceive(so, &nam, &auio, &mp, (struct mbuf **)0, &flags);
+		if (error || mp == (struct mbuf *)0) {
 			if (error == EWOULDBLOCK)
 				slp->ns_flag |= SLP_NEEDQ;
 			else
@@ -1935,7 +1934,7 @@ nfsrv_rcv(so, arg, waitflag)
 			auio.uio_resid = 1000000000;
 			flags = MSG_DONTWAIT;
 			error = soreceive(so, &nam, &auio, &mp,
-				(struct mbuf **)NULL, &flags);
+						(struct mbuf **)0, &flags);
 			if (mp) {
 				nfs_realign(mp, 10 * NFSX_UNSIGNED);
 				if (nam) {
@@ -1948,7 +1947,7 @@ nfsrv_rcv(so, arg, waitflag)
 				else
 					slp->ns_rec = m;
 				slp->ns_recend = m;
-				m->m_nextpkt = (struct mbuf *)NULL;
+				m->m_nextpkt = (struct mbuf *)0;
 			}
 			if (error) {
 				if ((so->so_proto->pr_flags & PR_CONNREQUIRED)
@@ -2030,12 +2029,12 @@ nfsrv_getstream(slp, waitflag)
 	     */
 	    if (slp->ns_cc == slp->ns_reclen) {
 		recm = slp->ns_raw;
-		slp->ns_raw = slp->ns_rawend = (struct mbuf *)NULL;
+		slp->ns_raw = slp->ns_rawend = (struct mbuf *)0;
 		slp->ns_cc = slp->ns_reclen = 0;
 	    } else if (slp->ns_cc > slp->ns_reclen) {
 		len = 0;
 		m = slp->ns_raw;
-		om = (struct mbuf *)NULL;
+		om = (struct mbuf *)0;
 		while (len < slp->ns_reclen) {
 			if ((len + m->m_len) > slp->ns_reclen) {
 				m2 = m_copym(m, 0, slp->ns_reclen - len,
@@ -2058,7 +2057,7 @@ nfsrv_getstream(slp, waitflag)
 				len += m->m_len;
 				m = m->m_next;
 				recm = slp->ns_raw;
-				om->m_next = (struct mbuf *)NULL;
+				om->m_next = (struct mbuf *)0;
 			} else {
 				om = m;
 				len += m->m_len;
@@ -2087,7 +2086,7 @@ nfsrv_getstream(slp, waitflag)
 		else
 		    slp->ns_rec = slp->ns_frag;
 		slp->ns_recend = slp->ns_frag;
-		slp->ns_frag = (struct mbuf *)NULL;
+		slp->ns_frag = (struct mbuf *)0;
 	    }
 	}
 }
@@ -2107,13 +2106,13 @@ nfsrv_dorec(slp, nfsd, ndp)
 
 	*ndp = NULL;
 	if ((slp->ns_flag & SLP_VALID) == 0 ||
-	    (m = slp->ns_rec) == NULL)
+	    (m = slp->ns_rec) == (struct mbuf *)0)
 		return (ENOBUFS);
 	slp->ns_rec = m->m_nextpkt;
 	if (slp->ns_rec)
-		m->m_nextpkt = (struct mbuf *)NULL;
+		m->m_nextpkt = (struct mbuf *)0;
 	else
-		slp->ns_recend = (struct mbuf *)NULL;
+		slp->ns_recend = (struct mbuf *)0;
 	if (m->m_type == MT_SONAME) {
 		nam = m;
 		m = m->m_next;

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_le.c,v 1.16 1995/12/27 07:09:37 chopps Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.3 1996/04/21 22:15:28 deraadt Exp $	*/
+/*	$NetBSD: if_le.c,v 1.17 1996/03/17 01:17:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -69,15 +70,19 @@
 /* offsets for:	   ID,   REGS,    MEM */
 int	lestd[] = { 0, 0x4000, 0x8000 };
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
-int lematch __P((struct device *, void *, void *));
-void leattach __P((struct device *, struct device *, void *));
+int le_zbus_match __P((struct device *, void *, void *));
+void le_zbus_attach __P((struct device *, struct device *, void *));
 int leintr __P((void *));
 
-struct cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc)
+struct cfattach le_zbus_ca = {
+	sizeof(struct le_softc), le_zbus_match, le_zbus_attach
+};
+
+struct cfdriver le_cd = {
+	NULL, "le", DV_IFNET
 };
 
 integrate void
@@ -105,7 +110,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch(parent, match, aux)
+le_zbus_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -123,7 +128,7 @@ lematch(parent, match, aux)
 }
 
 void
-leattach(parent, self, aux)
+le_zbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -177,7 +182,7 @@ leattach(parent, self, aux)
 	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8) & 0xff;
 	sc->sc_arpcom.ac_enaddr[5] = (ser      ) & 0xff;
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 	sc->sc_isr.isr_intr = leintr;

@@ -42,22 +42,26 @@
  */
 
 /* Adaptec products */
-#define	EISA_PRODUCT_ADP0000	"Adaptec AHA-1740"
-#define	EISA_PRODUCT_ADP0001	"Adaptec AHA-1740A"
-#define	EISA_PRODUCT_ADP0002	"Adaptec AHA-1742A"
-#define	EISA_PRODUCT_ADP0400	"Adaptec AHA-1744"
-#define	EISA_PRODUCT_ADP7770	"Adaptec AIC-7770 (on motherboard)"
-#define	EISA_PRODUCT_ADP7771	"Adaptec AHA-274x"
-#define	EISA_PRODUCT_ADP7756	"Adaptec AHA-284x (BIOS enabled)"
-#define	EISA_PRODUCT_ADP7757	"Adaptec AHA-284x (BIOS disabled)"
+#define	EISA_PRODUCT_ADP0000	"Adaptec AHA-1740 SCSI"
+#define	EISA_PRODUCT_ADP0001	"Adaptec AHA-1740A SCSI"
+#define	EISA_PRODUCT_ADP0002	"Adaptec AHA-1742A SCSI"
+#define	EISA_PRODUCT_ADP0400	"Adaptec AHA-1744 SCSI"
+#define	EISA_PRODUCT_ADP7770	"Adaptec AIC-7770 SCSI (on motherboard)"
+#define	EISA_PRODUCT_ADP7771	"Adaptec AHA-274x SCSI"
+#define	EISA_PRODUCT_ADP7756	"Adaptec AHA-284x SCSI (BIOS enabled)"
+#define	EISA_PRODUCT_ADP7757	"Adaptec AHA-284x SCSI (BIOS disabled)"
+
+/* AMI products */
+#define	EISA_PRODUCT_AMI4801	"AMI Series 48 SCSI"
 
 /* BusLogic products */
-/* XXX */
+#define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
+#define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
 
 /* Digital Equipment products */
-#define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425"
+#define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425 Ethernet"
 /* ??? DEC DEFEA */
 
 /* 3Com products */
-#define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP"
-#define	EISA_PRODUCT_TCM5093	"3Com 3C579"
+#define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
+#define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"

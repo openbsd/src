@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.3 1996/04/19 16:09:01 niklas Exp $	*/
-/*	$NetBSD: subr_autoconf.c,v 1.18 1996/02/27 21:45:46 cgd Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.4 1996/04/21 22:27:13 deraadt Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,20 @@ struct matchinfo {
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
 
+struct devicelist alldevs;		/* list of all devices */
+struct evcntlist allevents;		/* list of all event counters */
+
+/*
+ * Initialize autoconfiguration data structures.
+ */
+void
+config_init()
+{
+
+	TAILQ_INIT(&alldevs);
+	TAILQ_INIT(&allevents);
+}
+
 /*
  * Apply the matching function and choose the best.  This is used
  * a few times and we want to keep the code small.
@@ -98,11 +112,11 @@ mapply(m, cf)
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
-	        if (cf->cf_driver->cd_match == NULL) {
+	        if (cf->cf_attach->ca_match == NULL) {
 			panic("mapply: no match function for '%s' device\n",
 			    cf->cf_driver->cd_name);
 		}
-		pri = (*cf->cf_driver->cd_match)(m->parent, match, m->aux);
+		pri = (*cf->cf_attach->ca_match)(m->parent, match, m->aux);
 	}
 
 	if (pri > m->pri) {
@@ -237,7 +251,7 @@ static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
  * functions) and attach it, and return true.  If the device was
  * not configured, call the given `print' function and return 0.
  */
-int
+struct device *
 config_found_sm(parent, aux, print, submatch)
 	struct device *parent;
 	void *aux;
@@ -246,32 +260,27 @@ config_found_sm(parent, aux, print, submatch)
 {
 	void *match;
 
-	if ((match = config_search(submatch, parent, aux)) != NULL) {
-		config_attach(parent, match, aux, print);
-		return (1);
-	}
+	if ((match = config_search(submatch, parent, aux)) != NULL)
+		return (config_attach(parent, match, aux, print));
 	if (print)
 		printf(msgs[(*print)(aux, parent->dv_xname)]);
-	return (0);
+	return (NULL);
 }
 
 /*
  * As above, but for root devices.
  */
-int
+struct device *
 config_rootfound(rootname, aux)
 	char *rootname;
 	void *aux;
 {
 	void *match;
 
-	if ((match = config_rootsearch((cfmatch_t)NULL, rootname, aux))
-	    != NULL) {
-		config_attach(ROOT, match, aux, (cfprint_t)NULL);
-		return (1);
-	}
+	if ((match = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
+		return (config_attach(ROOT, match, aux, (cfprint_t)NULL));
 	printf("root device %s not configured\n", rootname);
-	return (0);
+	return (NULL);
 }
 
 /* just like sprintf(buf, "%d") except that it works from the end */
@@ -293,7 +302,7 @@ number(ep, n)
 /*
  * Attach a found device.  Allocates memory for device variables.
  */
-void
+struct device *
 config_attach(parent, match, aux, print)
 	register struct device *parent;
 	void *match;
@@ -303,7 +312,7 @@ config_attach(parent, match, aux, print)
 	register struct cfdata *cf;
 	register struct device *dev;
 	register struct cfdriver *cd;
-	static struct device **nextp = &alldevs;
+	register struct cfattach *ca;
 
 	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
 		dev = match;
@@ -314,6 +323,7 @@ config_attach(parent, match, aux, print)
 	}
 
 	cd = cf->cf_driver;
+	ca = cf->cf_attach;
 	cd->cd_devs[cf->cf_unit] = dev;
 
 	if (cf->cf_fstate == FSTATE_STAR)
@@ -321,8 +331,7 @@ config_attach(parent, match, aux, print)
 	else
 		cf->cf_fstate = FSTATE_FOUND;
 
-	*nextp = dev;			/* link up */
-	nextp = &dev->dv_next;
+	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
 
 	if (parent == ROOT)
 		printf("%s (root)", dev->dv_xname);
@@ -334,13 +343,18 @@ config_attach(parent, match, aux, print)
 
 	/*
 	 * Before attaching, clobber any unfound devices that are
-	 * otherwise identical.
+	 * otherwise identical, or bump the unit number on all starred
+	 * cfdata for this device.
 	 */
 	for (cf = cfdata; cf->cf_driver; cf++)
-		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit &&
-		    cf->cf_fstate == FSTATE_NOTFOUND)
-			cf->cf_fstate = FSTATE_FOUND;
-	(*cd->cd_attach)(parent, dev, aux);
+		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit) {
+			if (cf->cf_fstate == FSTATE_NOTFOUND)
+				cf->cf_fstate = FSTATE_FOUND;
+			if (cf->cf_fstate == FSTATE_STAR)
+				cf->cf_unit++;
+		}
+	(*ca->ca_attach)(parent, dev, aux);
+	return (dev);
 }
 
 struct device *
@@ -350,12 +364,14 @@ config_make_softc(parent, cf)
 {
 	register struct device *dev;
 	register struct cfdriver *cd;
+	register struct cfattach *ca;
 	register size_t lname, lunit;
 	register char *xunit;
 	char num[10];
 
 	cd = cf->cf_driver;
-	if (cd->cd_devsize < sizeof(struct device))
+	ca = cf->cf_attach;
+	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_make_softc");
 
 	/* compute length of name and decimal expansion of unit number */
@@ -366,10 +382,10 @@ config_make_softc(parent, cf)
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(cd->cd_devsize, M_DEVBUF, M_NOWAIT);
+	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
-	bzero(dev, cd->cd_devsize);
+	bzero(dev, ca->ca_devsize);
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_unit = cf->cf_unit;
@@ -420,7 +436,6 @@ evcnt_attach(dev, name, ev)
 	const char *name;
 	struct evcnt *ev;
 {
-	static struct evcnt **nextp = &allevents;
 
 #ifdef DIAGNOSTIC
 	if (strlen(name) >= sizeof(ev->ev_name))
@@ -430,6 +445,5 @@ evcnt_attach(dev, name, ev)
 	ev->ev_dev = dev;
 	/* ev->ev_count = 0; */
 	strcpy(ev->ev_name, name);
-	*nextp = ev;
-	nextp = &ev->ev_next;
+	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.6 1996/03/19 21:09:23 mickey Exp $	*/
-/*	$NetBSD: trap.c,v 1.92 1996/01/08 13:51:38 mycroft Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1996/04/21 22:16:40 deraadt Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 1996/04/15 00:20:32 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -413,8 +413,11 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, T_PAGEFLT);
+		trapsignal(p, (rv == KERN_PROTECTION_FAILURE
+#ifdef COMPAT_LINUX
+		    && p->p_emul != &emul_linux_aout && p->p_emul != &emul_linux_elf
+#endif
+		    ) ? SIGBUS : SIGSEGV, T_PAGEFLT);
 		break;
 	}
 
@@ -428,7 +431,6 @@ trap(frame)
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
 	trace:
-		frame.tf_eflags &= ~PSL_T;
 		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 

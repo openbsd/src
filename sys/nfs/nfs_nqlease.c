@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.5 1996/04/17 04:50:26 mickey Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.6 1996/04/21 22:30:20 deraadt Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 	tlp = vp->v_lease;
 	if ((flags & ND_CHECK) == 0)
 		nfsstats.srvnqnfs_getleases++;
-	if (tlp == NULL) {
+	if (tlp == 0) {
 		/*
 		 * Find the lease by searching the hash list.
 		 */
@@ -205,9 +205,9 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 			}
 	} else
 		lp = tlp;
-	if (lp != NULL) {
+	if (lp != 0) {
 		if ((lp->lc_flag & LC_NONCACHABLE) ||
-		    (lp->lc_morehosts == NULL &&
+		    (lp->lc_morehosts == (struct nqm *)0 &&
 		     nqsrv_cmpnam(slp, nam, &lp->lc_host)))
 			goto doreply;
 		if ((flags & ND_READ) && (lp->lc_flag & LC_WRITE) == 0) {
@@ -327,7 +327,7 @@ nqnfs_vop_lease_check(v)
 	u_quad_t frev;
 
 	(void) nqsrv_getlease(ap->a_vp, &duration, ND_CHECK | ap->a_flag,
-	    NQLOCALSLP, ap->a_p, (struct mbuf *)NULL, &cache, &frev, ap->a_cred);
+	    NQLOCALSLP, ap->a_p, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 	return (0);
 }
 
@@ -373,7 +373,7 @@ nqsrv_instimeq(lp, duration)
 	newexpiry = time.tv_sec + duration + nqsrv_clockskew;
 	if (lp->lc_expiry == newexpiry)
 		return;
-	if (lp->lc_timer.cqe_next != NULL)
+	if (lp->lc_timer.cqe_next != 0)
 		CIRCLEQ_REMOVE(&nqtimerhead, lp, lc_timer);
 	lp->lc_expiry = newexpiry;
 
@@ -479,7 +479,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				nam2 = lph->lph_nam;
 				so = nfs_cltpsock->ns_so;
 			} else if (lph->lph_slp->ns_flag & SLP_VALID) {
-				nam2 = (struct mbuf *)NULL;
+				nam2 = (struct mbuf *)0;
 				so = lph->lph_slp->ns_so;
 			} else
 				goto nextone;
@@ -487,8 +487,8 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED)
 				solockp = &lph->lph_slp->ns_solock;
 			else
-				solockp = (int *)NULL;
-			nfsm_reqhead((struct vnode *)NULL, NQNFSPROC_EVICTED,
+				solockp = (int *)0;
+			nfsm_reqhead((struct vnode *)0, NQNFSPROC_EVICTED,
 				NFSX_V3FH);
 			nfsm_build(cp, caddr_t, NFSX_V3FH);
 			bzero(cp, NFSX_V3FH);
@@ -507,8 +507,8 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			}
 			m = nfsm_rpchead(cred, (NFSMNT_NFSV3 | NFSMNT_NQNFS),
 				NQNFSPROC_EVICTED,
-				RPCAUTH_UNIX, 5 * NFSX_UNSIGNED, NULL,
-				0, NULL, mreq, siz, &mheadend, &xid);
+				RPCAUTH_UNIX, 5 * NFSX_UNSIGNED, (char *)0,
+				0, (char *)0, mreq, siz, &mheadend, &xid);
 			/*
 			 * For stream protocols, prepend a Sun RPC
 			 * Record Mark.
@@ -526,7 +526,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				if (solockp)
 					*solockp |= NFSMNT_SNDLOCK;
 				(void) nfs_send(so, nam2, m,
-						(struct nfsreq *)NULL);
+						(struct nfsreq *)0);
 				if (solockp)
 					nfs_sndunlock(solockp);
 			}
@@ -639,10 +639,10 @@ nqnfs_serverd()
 			 * recycled and has another valid lease reference,
 			 * which is dereferenced prematurely.
 			 */
-			lp->lc_vp->v_lease = (struct nqlease *)NULL;
+			lp->lc_vp->v_lease = (struct nqlease *)0;
 			lph = &lp->lc_host;
 			lphnext = lp->lc_morehosts;
-			olphnext = (struct nqm *)NULL;
+			olphnext = (struct nqm *)0;
 			len = 1;
 			i = 0;
 			ok = 1;
@@ -654,7 +654,7 @@ nqnfs_serverd()
 				if (++i == len) {
 					if (olphnext) {
 						free((caddr_t)olphnext, M_NQMHOST);
-						olphnext = (struct nqm *)NULL;
+						olphnext = (struct nqm *)0;
 					}
 					if (lphnext) {
 						olphnext = lphnext;
@@ -750,7 +750,7 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	register struct nqlease *lp;
 	register struct nqhost *lph;
-	struct nqlease *tlp = NULL;
+	struct nqlease *tlp = (struct nqlease *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	register u_int32_t *tl;
@@ -777,7 +777,7 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 			tlp = lp;
 			break;
 		}
-	if (tlp != NULL) {
+	if (tlp != 0) {
 		lp = tlp;
 		len = 1;
 		i = 0;
@@ -851,7 +851,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	if (reqtime > time.tv_sec) {
 		fxdr_hyper(tl, &frev);
 		nqnfs_clientlease(nmp, np, rwflag, cachable, reqtime, frev);
-		nfsm_loadattr(vp, (struct vattr *)NULL);
+		nfsm_loadattr(vp, (struct vattr *)0);
 	} else
 		error = NQNFS_EXPIRED;
 	nfsm_reqdone;
@@ -889,8 +889,8 @@ nqnfs_vacated(vp, cred)
 		m = m->m_next;
 	}
 	m = nfsm_rpchead(cred, nmp->nm_flag, NQNFSPROC_VACATED,
-		RPCAUTH_UNIX, 5 * NFSX_UNSIGNED, NULL,
-		0, NULL, mreq, i, &mheadend, &xid);
+		RPCAUTH_UNIX, 5 * NFSX_UNSIGNED, (char *)0,
+		0, (char *)0, mreq, i, &mheadend, &xid);
 	if (nmp->nm_sotype == SOCK_STREAM) {
 		M_PREPEND(m, NFSX_UNSIGNED, M_WAIT);
 		*mtod(m, u_int32_t *) = htonl(0x80000000 | (m->m_pkthdr.len -
@@ -899,7 +899,7 @@ nqnfs_vacated(vp, cred)
 	myrep.r_flags = 0;
 	myrep.r_nmp = nmp;
 	if (nmp->nm_soflags & PR_CONNREQUIRED)
-		(void) nfs_sndlock(&nmp->nm_flag, (struct nfsreq *)NULL);
+		(void) nfs_sndlock(&nmp->nm_flag, (struct nfsreq *)0);
 	(void) nfs_send(nmp->nm_so, nmp->nm_nam, m, &myrep);
 	if (nmp->nm_soflags & PR_CONNREQUIRED)
 		nfs_sndunlock(&nmp->nm_flag);
@@ -926,7 +926,7 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	struct nfssvc_sock *slp;
 	struct nfsrv_descript ndesc;
 	register struct nfsrv_descript *nfsd = &ndesc;
-	struct mbuf **mrq = NULL, *mb, *mreq;
+	struct mbuf **mrq = (struct mbuf **)0, *mb, *mreq;
 	int error = 0, cache = 0;
 	char *cp2, *bpos;
 	u_quad_t frev;
@@ -1032,8 +1032,8 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		    nmp->nm_so->so_rcv.sb_cc > 0) {
 		    myrep.r_flags = R_GETONEREP;
 		    myrep.r_nmp = nmp;
-		    myrep.r_mrep = (struct mbuf *)NULL;
-		    myrep.r_procp = (struct proc *)NULL;
+		    myrep.r_mrep = (struct mbuf *)0;
+		    myrep.r_procp = (struct proc *)0;
 		    (void) nfs_reply(&myrep);
 		}
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtfps.c,v 1.7 1996/04/18 23:47:45 niklas Exp $       */
-/*	$NetBSD: rtfps.c,v 1.17 1996/03/10 09:01:28 cgd Exp $	*/
+/*	$OpenBSD: rtfps.c,v 1.8 1996/04/21 22:24:28 deraadt Exp $       */
+/*	$NetBSD: rtfps.c,v 1.21 1996/04/15 18:55:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,13 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -63,8 +69,12 @@ int rtfpsprobe();
 void rtfpsattach();
 int rtfpsintr __P((void *));
 
-struct cfdriver rtfpscd = {
-	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc)
+struct cfattach rtfps_ca = {
+	sizeof(struct rtfps_softc), rtfpsprobe, rtfpsattach
+};
+
+struct cfdriver rtfps_cd = {
+	NULL, "rtfps", DV_TTY
 };
 
 int
@@ -176,20 +186,13 @@ rtfpsattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		/* mimic config_found(), but with special functionality */
-		if ((match = config_search(NULL, self, &ca)) != NULL) {
-			subunit = match->cf_unit; /* can change if unit == * */
-			config_attach(self, match, &ca, rtfpsprint);
-			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+		sc->sc_slaves[i] = config_found(self, &ca, rtfpsprint);
+		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
-		} else {
-			rtfpsprint(&ca, self->dv_xname);
-			printf(" not configured\n");
-		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY,
-	    rtfpsintr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, rtfpsintr, sc, sc->sc_dev.dv_xname);
 }
 
 int

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.4 1996/03/30 22:18:27 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.26 1996/03/15 19:47:48 is Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1996/04/21 22:15:55 deraadt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 1996/03/30 16:22:55 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,6 +175,21 @@ int machineid, mmutype, fputype;
 #define	IC40_ENABLE	0x00008000	/* enable instruction cache */
 #define DC40_ENABLE	0x80000000	/* enable data cache */
 
+/* additional fields in the 68060 cache control register */
+
+#define DC60_NAD	0x40000000	/* no allocate mode, data cache */
+#define DC60_ESB	0x20000000	/* enable store buffer */
+#define DC60_DPI	0x10000000	/* disable CPUSH invalidation */
+#define DC60_FOC	0x08000000	/* four kB data cache mode (else 8) */
+
+#define IC60_EBC	0x00800000	/* enable branch cache */
+#define IC60_CABC	0x00400000	/* clear all branch cache entries */
+#define IC60_CUBC	0x00200000	/* clear user branch cache entries */
+
+#define IC60_NAI	0x00004000	/* no allocate mode, instr. cache */
+#define IC60_FIC	0x00002000	/* four kB instr. cache (else 8) */
+
+
 #define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	CACHE_OFF	(DC_CLR|IC_CLR)
 #define	CACHE_CLR	(CACHE_ON)
@@ -184,6 +199,9 @@ int machineid, mmutype, fputype;
 /* 68040 cache control */
 #define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
 #define	CACHE40_OFF	0x00000000
+
+#define CACHE60_ON	(CACHE40_ON |IC60_CABC|IC60_EBC|DC60_ESB)
+#define CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
 /*
  * CTL_MACHDEP definitions.

@@ -1,5 +1,5 @@
-#	$OpenBSD: TDR,v 1.5 1996/04/18 18:55:37 niklas Exp $
-#	$NetBSD: TDR,v 1.62 1996/03/16 06:09:12 thorpej Exp $
+#	$OpenBSD: TDR,v 1.6 1996/04/21 22:16:14 deraadt Exp $
+#	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
 #
@@ -40,6 +40,7 @@ options		KTRACE		# system call tracing, a la ktrace(1)
 options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_11	# NetBSD 1.1,
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
@@ -161,7 +162,7 @@ ep2	at isa? port ? irq ?
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? port 0x61
+#spkr0	at pckbd? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 16		# packet filter

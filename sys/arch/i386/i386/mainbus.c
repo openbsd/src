@@ -1,5 +1,5 @@
-/*	$OpenBSD: mainbus.c,v 1.1 1996/04/18 19:18:11 niklas Exp $	*/
-/*	$NetBSD: mainbus.c,v 1.4 1996/03/14 02:37:28 cgd Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 1996/04/21 22:16:32 deraadt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 1996/04/11 22:13:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,24 +37,25 @@
 
 #include <machine/bus.h>
 
-#if 0 /* XXX eisavar.h includes isavar.h, which is not idempotent */
 #include <dev/isa/isavar.h>
-#endif
 #include <dev/eisa/eisavar.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/isa/isareg.h>
+#include <dev/isa/isareg.h>		/* for ISA_HOLE_VADDR */
 #include <i386/isa/isa_machdep.h>
-#include <i386/eisa/eisa_machdep.h>
 
 #include "pci.h"
 
 int	mainbus_match __P((struct device *, void *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver mainbuscd =
-    { NULL, "mainbus", mainbus_match, mainbus_attach,
-      DV_DULL, sizeof(struct device) };
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mainbus_match, mainbus_attach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
+};
 
 int	mainbus_print __P((void *, char *));
 
@@ -89,6 +90,20 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+	if (1 /* XXX ISA NOT YET SEEN */) {
+		mba.mba_iba.iba_busname = "isa";
+		mba.mba_iba.iba_bc = NULL;
+		mba.mba_iba.iba_ic = NULL;
+		config_found(self, &mba.mba_iba, mainbus_print);
+	}
+
+	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
+		mba.mba_eba.eba_busname = "eisa";
+		mba.mba_eba.eba_bc = NULL;
+		mba.mba_eba.eba_ec = NULL;
+		config_found(self, &mba.mba_eba, mainbus_print);
+	}
+
 	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
@@ -104,17 +119,6 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
-	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
-		mba.mba_eba.eba_busname = "eisa";
-		mba.mba_eba.eba_bc = NULL;
-		config_found(self, &mba.mba_eba, mainbus_print);
-	}
-
-	if (1 /* XXX ISA NOT YET SEEN */) {
-		mba.mba_iba.iba_busname = "isa";
-		mba.mba_iba.iba_bc = NULL;
-		config_found(self, &mba.mba_iba, mainbus_print);
-	}
 }
 
 int

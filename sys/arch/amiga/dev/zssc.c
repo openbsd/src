@@ -1,5 +1,5 @@
-/*	$OpenBSD: zssc.c,v 1.4 1996/03/30 22:18:25 niklas Exp $	*/
-/*	$NetBSD: zssc.c,v 1.14 1996/03/15 22:11:22 mhitch Exp $	*/
+/*	$OpenBSD: zssc.c,v 1.5 1996/04/21 22:15:51 deraadt Exp $	*/
+/*	$NetBSD: zssc.c,v 1.15 1996/03/17 01:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -52,7 +52,7 @@
 
 int zsscprint __P((void *auxp, char *));
 void zsscattach __P((struct device *, struct device *, void *));
-int zsscmatch __P((struct device *, struct cfdata *, void *));
+int zsscmatch __P((struct device *, void *, void *));
 int siopintr __P((struct siop_softc *));
 int zssc_dmaintr __P((struct siop_softc *));
 
@@ -74,19 +74,23 @@ struct scsi_device zssc_scsidev = {
 #ifdef DEBUG
 #endif
 
-struct cfdriver zssccd = {
-	NULL, "zssc", (cfmatch_t)zsscmatch, zsscattach, 
-	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+struct cfattach zssc_ca = {
+	sizeof(struct siop_softc), zsscmatch, zsscattach
+};
+
+struct cfdriver zssc_cd = {
+	NULL, "zssc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are a PPI Zeus
  */
 int
-zsscmatch(pdp, cdp, auxp)
+zsscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -205,8 +209,8 @@ zssc_dump()
 {
 	int i;
 
-	for (i = 0; i < zssccd.cd_ndevs; ++i)
-		if (zssccd.cd_devs[i])
-			siop_dump(zssccd.cd_devs[i]);
+	for (i = 0; i < zssc_cd.cd_ndevs; ++i)
+		if (zssc_cd.cd_devs[i])
+			siop_dump(zssc_cd.cd_devs[i]);
 }
 #endif

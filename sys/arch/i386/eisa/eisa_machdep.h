@@ -1,5 +1,5 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.1 1996/04/18 18:56:27 niklas Exp $	*/
-/*	$NetBSD: eisa_machdep.h,v 1.1 1996/03/04 03:26:14 cgd Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.2 1996/04/21 22:16:19 deraadt Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.2 1996/04/09 23:00:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,9 +32,33 @@
  */
 
 /*
- * The "EISA" signature is in the BIOS of EISA systems.  We use it
- * to determine whether or not we have an EISA bus.
+ * Machine-specific definitions for EISA autoconfiguration.
+ */
+
+/*
+ * i386-specific EISA definitions.
+ * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 #define	EISA_ID			"EISA"
 #define	EISA_ID_LEN		(sizeof(EISA_ID) - 1)
 #define	EISA_ID_PADDR		0xfffd9
+
+/*
+ * Types provided to machine-independent EISA code.
+ */
+typedef void *eisa_chipset_tag_t;
+typedef int eisa_intr_handle_t;
+
+/*
+ * Functions provided to machine-independent EISA code.
+ */
+void		eisa_attach_hook __P((struct device *, struct device *,
+		    struct eisabus_attach_args *));
+int		eisa_maxslots __P((eisa_chipset_tag_t));
+int		eisa_intr_map __P((eisa_chipset_tag_t, u_int,
+		    eisa_intr_handle_t *));
+const char	*eisa_intr_string __P((eisa_chipset_tag_t, eisa_intr_handle_t));
+void		*eisa_intr_establish __P((eisa_chipset_tag_t,
+		    eisa_intr_handle_t, int, int, int (*)(void *), void *,
+		    char *));
+void		eisa_intr_disestablish __P((eisa_chipset_tag_t, void *));

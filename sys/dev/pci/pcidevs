@@ -1,5 +1,6 @@
-$OpenBSD: pcidevs,v 1.6 1996/04/18 23:48:04 niklas Exp $
-/*	$NetBSD: pcidevs,v 1.6 1996/02/19 20:08:25 christos Exp $	*/
+$OpenBSD: pcidevs,v 1.7 1996/04/21 22:25:38 deraadt Exp $
+/*	$NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp $ */
+
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -468,6 +469,9 @@ product OLDNCR 810	0x0001	53c810
 product OLDNCR 820	0x0002	53c820
 product OLDNCR 825	0x0003	53c825
 product OLDNCR 815	0x0004	53c815
+product OLDNCR 810AP	0x0005	53c810AP
+product OLDNCR 860	0x0006	53c860
+product OLDNCR 875	0x000f	53c875
 /* do the NCR chips use the new ID, as well? */
 
 /* Number Nine products */

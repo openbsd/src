@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.8 1996/04/19 16:08:50 niklas Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.9 1996/04/21 22:26:53 deraadt Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.31 1996/03/15 07:56:00 mycroft Exp $	*/
 
 /*-
@@ -353,6 +353,7 @@ hardclock(frame)
 	extern long timedelta;
 #ifdef NTP
 	register int time_update;
+	struct timeval newtime;
 	register int ltemp;
 #endif
 
@@ -417,6 +418,8 @@ hardclock(frame)
 			tickfixcnt = 0;
 		}
 	}
+#else
+	newtime = time;
 #endif /* !NTP */
 	/* Imprecise 4bsd adjtime() handling */
 	if (timedelta != 0) {
@@ -475,10 +478,10 @@ hardclock(frame)
 		clock_offset.tv_sec--;
 		clock_offset.tv_usec += 1000000;
 	}
-	time.tv_usec += clock_cpu;
+	newtime.tv_usec += clock_cpu;
 	clock_cpu = 0;
 #else
-	time.tv_usec += time_update;
+	newtime.tv_usec += time_update;
 #endif /* HIGHBALL */
 
 	/*
@@ -493,9 +496,9 @@ hardclock(frame)
 	 * maximum frequency offset is a tad less than) +-512 ppm. On a
 	 * 64-bit machine, you shouldn't need to ask.
 	 */
-	if (time.tv_usec >= 1000000) {
-		time.tv_usec -= 1000000;
-		time.tv_sec++;
+	if (newtime.tv_usec >= 1000000) {
+		newtime.tv_usec -= 1000000;
+		newtime.tv_sec++;
 		time_maxerror += time_tolerance >> SHIFT_USEC;
 
 		/*
@@ -516,15 +519,15 @@ hardclock(frame)
 			break;
 
 		case TIME_INS:
-			if (time.tv_sec % 86400 == 0) {
-				time.tv_sec--;
+			if (newtime.tv_sec % 86400 == 0) {
+				newtime.tv_sec--;
 				time_state = TIME_OOP;
 			}
 			break;
 
 		case TIME_DEL:
-			if ((time.tv_sec + 1) % 86400 == 0) {
-				time.tv_sec++;
+			if ((newtime.tv_sec + 1) % 86400 == 0) {
+				newtime.tv_sec++;
 				time_state = TIME_WAIT;
 			}
 			break;
@@ -640,9 +643,9 @@ hardclock(frame)
 		if (clock_count > CLOCK_INTERVAL) {
 			clock_count = 0;
 			microtime(&clock_ext);
-			delta.tv_sec = clock_ext.tv_sec - time.tv_sec;
+			delta.tv_sec = clock_ext.tv_sec - newtime.tv_sec;
 			delta.tv_usec = clock_ext.tv_usec -
-			    time.tv_usec;
+			    newtime.tv_usec;
 			if (delta.tv_usec < 0)
 				delta.tv_sec--;
 			if (delta.tv_usec >= 500000) {
@@ -657,7 +660,7 @@ hardclock(frame)
 			    delta.tv_usec > MAXPHASE) ||
 			    delta.tv_sec < -1 || (delta.tv_sec == -1 &&
 			    delta.tv_usec < -MAXPHASE)) {
-				time = clock_ext;
+				newtime = clock_ext;
 				delta.tv_sec = 0;
 				delta.tv_usec = 0;
 			}
@@ -669,6 +672,12 @@ hardclock(frame)
 		}
 #endif /* EXT_CLOCK */
 	}
+
+#ifdef CPU_CLOCKUPDATE
+	CPU_CLOCKUPDATE(&time, &newtime);
+#else
+	time = newtime;
+#endif
 
 #endif /* NTP */
 
