@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.6 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.7 2003/11/26 00:31:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: proc_compare.c,v 1.6 2003/06/03 02:56:22 millert Exp $";
+static char *rcsid = "$OpenBSD: proc_compare.c,v 1.7 2003/11/26 00:31:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,7 @@ static char *rcsid = "$OpenBSD: proc_compare.c,v 1.6 2003/06/03 02:56:22 millert
 #define BOTH    3
 
 int
-proc_compare(p1, p2)
-	struct proc *p1, *p2;
+proc_compare(struct proc *p1, struct proc *p2)
 {
 	if (p1 == NULL)
 		return (1);

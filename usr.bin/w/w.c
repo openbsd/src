@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.39 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: w.c,v 1.40 2003/11/26 00:31:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.39 2003/06/03 02:56:22 millert Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.40 2003/11/26 00:31:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -392,12 +392,8 @@ pr_header(time_t *nowp, int nusers)
 
 	/*
 	 * Print time of day.
-	 *
-	 * SCCS forces the string manipulation below, as it replaces
-	 * %, M, and % in a character string with the file name.
 	 */
-	(void)strftime(buf, sizeof(buf) - 1,
-	    __CONCAT("%l:%","M%p"), localtime(nowp));
+	(void)strftime(buf, sizeof(buf) - 1, "%l:%M%p", localtime(nowp));
 	buf[sizeof(buf) - 1] = '\0';
 	(void)printf("%s ", buf);
 

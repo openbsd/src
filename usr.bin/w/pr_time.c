@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_time.c,v 1.11 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: pr_time.c,v 1.12 2003/11/26 00:31:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-static char *rcsid = "$OpenBSD: pr_time.c,v 1.11 2003/06/03 02:56:22 millert Exp $";
+static char *rcsid = "$OpenBSD: pr_time.c,v 1.12 2003/11/26 00:31:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,18 +49,14 @@ static char *rcsid = "$OpenBSD: pr_time.c,v 1.11 2003/06/03 02:56:22 millert Exp
 /*
  * pr_attime --
  *	Print the time since the user logged in. 
- *
- *	Note: SCCS forces the bizarre string manipulation, things like
- *	8.2 get replaced in the source code.
  */
 void
-pr_attime(started, now)
-	time_t *started, *now;
+pr_attime(time_t *started, time_t *now)
 {
 	static char buf[256];
 	struct tm *tp;
 	time_t diff;
-	char fmt[20];
+	const char *fmt;
 	int  today;
 
 	today = localtime(now)->tm_yday;
@@ -69,19 +65,19 @@ pr_attime(started, now)
 
 	/* If more than a week, use day-month-year. */
 	if (diff > SECSPERDAY * DAYSPERWEEK)
-		(void)strlcpy(fmt, "%d%b%y", sizeof fmt);
+		fmt = "%d%b%y";
 
 	/* If not today, use day-hour-am/pm. */
 	else if (tp->tm_yday  != today ) {
-		(void)strlcpy(fmt, __CONCAT("%a%", "I%p"), sizeof fmt);
+		fmt = "%a%I%p";
 	}
 
 	/* Default is hh:mm{am,pm}. */
 	else {
-		(void)strlcpy(fmt, __CONCAT("%l:%", "M%p"), sizeof fmt);
+		fmt = "%l:%M%p";
 	}
 
-	(void)strftime(buf, sizeof(buf) -1, fmt, tp);
+	(void)strftime(buf, sizeof buf -1, fmt, tp);
 	buf[sizeof buf - 1] = '\0';
 	(void)printf("%s", buf);
 }
@@ -91,8 +87,7 @@ pr_attime(started, now)
  *	Display the idle time.
  */
 void
-pr_idle(idle)
-	time_t idle;
+pr_idle(time_t idle)
 {
 	int days = idle / SECSPERDAY;
 
