@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvisor.c,v 1.15 2003/05/17 17:13:14 nate Exp $	*/
-/*	$NetBSD: uvisor.c,v 1.20 2003/04/11 01:30:10 simonb Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.16 2003/08/05 14:51:18 jcs Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,10 +115,21 @@ struct uvisor_connection_info {
  * Unknown PalmOS stuff.
  */
 #define UVISOR_GET_PALM_INFORMATION		0x04
-#define UVISOR_GET_PALM_INFORMATION_LEN		0x14
+#define UVISOR_GET_PALM_INFORMATION_LEN		0x44
 
+struct uvisor_palm_connection_info {
+	uByte	num_ports;
+	uByte	endpoint_numbers_different;
+	uWord	reserved1;
+	struct {
+		uDWord	port_function_id;
+		uByte	port;
+		uByte	end_point_info;
+		uWord	reserved;
+	} connections[UVISOR_MAX_CONN];
+};
 
-#define UVISORIBUFSIZE 1024
+#define UVISORIBUFSIZE 64
 #define UVISOROBUFSIZE 1024
 
 struct uvisor_softc {
@@ -135,7 +146,8 @@ struct uvisor_softc {
 };
 
 Static usbd_status uvisor_init(struct uvisor_softc *,
-			       struct uvisor_connection_info *);
+			       struct uvisor_connection_info *,
+			       struct uvisor_palm_connection_info *);
 
 Static void uvisor_close(void *, int);
 
@@ -155,9 +167,10 @@ struct uvisor_type {
 	struct usb_devno	uv_dev;
 	u_int16_t		uv_flags;
 #define PALM4	0x0001
+#define VISOR	0x0002
 };
 static const struct uvisor_type uvisor_devs[] = {
-	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, 0 },
+	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, VISOR },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M500 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M505 }, PALM4 },
@@ -169,7 +182,9 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_TUNGSTEN_T }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_ZIRE }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40 }, PALM4 },
-	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_41 }, 0 },
+	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_41 }, PALM4 },
+	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_S360 }, PALM4 },
+	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_NX60 }, PALM4 },
 /*	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_25 }, PALM4 },*/
 };
 #define uvisor_lookup(v, p) ((struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
@@ -197,6 +212,7 @@ USB_ATTACH(uvisor)
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	struct uvisor_connection_info coninfo;
+	struct uvisor_palm_connection_info palmconinfo;
 	usb_endpoint_descriptor_t *ed;
 	char devinfo[1024];
 	char *devname = USBDEVNAME(sc->sc_dev);
@@ -227,6 +243,12 @@ USB_ATTACH(uvisor)
 
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
 
+	if ((sc->sc_flags & (VISOR | PALM4)) == 0) {
+		printf("%s: init failed, device type is neither visor nor palm\n", 
+		    USBDEVNAME(sc->sc_dev));
+		goto bad;
+	}
+
 	id = usbd_get_interface_descriptor(iface);
 
 	sc->sc_udev = dev;
@@ -241,7 +263,7 @@ USB_ATTACH(uvisor)
 	uca.methods = &uvisor_methods;
 	uca.arg = sc;
 
-	err = uvisor_init(sc, &coninfo);
+	err = uvisor_init(sc, &coninfo, &palmconinfo);
 	if (err) {
 		printf("%s: init failed, %s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
@@ -251,53 +273,83 @@ USB_ATTACH(uvisor)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
-	sc->sc_numcon = UGETW(coninfo.num_ports);
-	if (sc->sc_numcon > UVISOR_MAX_CONN)
-		sc->sc_numcon = UVISOR_MAX_CONN;
+	if (sc->sc_flags & VISOR) {
+		sc->sc_numcon = UGETW(coninfo.num_ports);
+		if (sc->sc_numcon > UVISOR_MAX_CONN)
+			sc->sc_numcon = UVISOR_MAX_CONN;
 
-	/* Attach a ucom for each connection. */
-	for (i = 0; i < sc->sc_numcon; ++i) {
-		switch (coninfo.connections[i].port_function_id) {
-		case UVISOR_FUNCTION_GENERIC:
-			uca.info = "Generic";
-			break;
-		case UVISOR_FUNCTION_DEBUGGER:
-			uca.info = "Debugger";
-			break;
-		case UVISOR_FUNCTION_HOTSYNC:
-			uca.info = "HotSync";
-			break;
-		case UVISOR_FUNCTION_REMOTE_FILE_SYS:
-			uca.info = "Remote File System";
-			break;
-		default:
-			uca.info = "unknown";
-			break;
-		}
-		port = coninfo.connections[i].port;
-		uca.portno = port;
-		uca.bulkin = port | UE_DIR_IN;
-		uca.bulkout = port | UE_DIR_OUT;
-		/* Verify that endpoints exist. */
-		for (hasin = hasout = j = 0; j < id->bNumEndpoints; j++) {
-			ed = usbd_interface2endpoint_descriptor(iface, j);
-			if (ed == NULL)
+		/* Attach a ucom for each connection. */
+		for (i = 0; i < sc->sc_numcon; ++i) {
+			switch (coninfo.connections[i].port_function_id) {
+			case UVISOR_FUNCTION_GENERIC:
+				uca.info = "Generic";
 				break;
-			if (UE_GET_ADDR(ed->bEndpointAddress) == port &&
-			    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-				if (UE_GET_DIR(ed->bEndpointAddress)
-				    == UE_DIR_IN)
-					hasin++;
-				else
-					hasout++;
+			case UVISOR_FUNCTION_DEBUGGER:
+				uca.info = "Debugger";
+				break;
+			case UVISOR_FUNCTION_HOTSYNC:
+				uca.info = "HotSync";
+				break;
+			case UVISOR_FUNCTION_REMOTE_FILE_SYS:
+				uca.info = "Remote File System";
+				break;
+			default:
+				uca.info = "unknown";
+				break;
 			}
+			port = coninfo.connections[i].port;
+			uca.portno = port;
+			uca.bulkin = port | UE_DIR_IN;
+			uca.bulkout = port | UE_DIR_OUT;
+			/* Verify that endpoints exist. */
+			hasin = 0;
+			hasout = 0;
+			for (j = 0; j < id->bNumEndpoints; j++) {
+				ed = usbd_interface2endpoint_descriptor(iface, j);
+				if (ed == NULL)
+					break;
+				if (UE_GET_ADDR(ed->bEndpointAddress) == port &&
+				    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+					if (UE_GET_DIR(ed->bEndpointAddress)
+					    == UE_DIR_IN)
+						hasin++;
+					else
+						hasout++;
+				}
+			}
+			if (hasin == 1 && hasout == 1)
+				sc->sc_subdevs[i] = config_found_sm(self, &uca,
+				    ucomprint, ucomsubmatch);
+			else
+				printf("%s: no proper endpoints for port %d (%d,%d)\n",
+				    USBDEVNAME(sc->sc_dev), port, hasin, hasout);
 		}
-		if (hasin == 1 && hasout == 1)
+	} else {
+		sc->sc_numcon = palmconinfo.num_ports;
+		if (sc->sc_numcon > UVISOR_MAX_CONN)
+			sc->sc_numcon = UVISOR_MAX_CONN;
+
+		/* Attach a ucom for each connection. */
+		for (i = 0; i < sc->sc_numcon; ++i) {
+			/*
+			 * XXX this should copy out 4-char string from the
+			 * XXX port_function_id, but where would the string go?
+			 * XXX uca.info is a const char *, not an array.
+			 */
+			uca.info = "sync";
+			uca.portno = i;
+			if (palmconinfo.endpoint_numbers_different) {
+				port = palmconinfo.connections[i].end_point_info;
+				uca.bulkin = (port >> 4) | UE_DIR_IN;
+				uca.bulkout = (port & 0xf) | UE_DIR_OUT;
+			} else {
+				port = palmconinfo.connections[i].port;
+				uca.bulkin = port | UE_DIR_IN;
+				uca.bulkout = port | UE_DIR_OUT;
+			}
 			sc->sc_subdevs[i] = config_found_sm(self, &uca,
 			    ucomprint, ucomsubmatch);
-		else
-			printf("%s: no proper endpoints for port %d (%d,%d)\n",
-			    USBDEVNAME(sc->sc_dev), port, hasin, hasout);
+		}
 	}
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -353,41 +405,36 @@ uvisor_detach(device_ptr_t self, int flags)
 }
 
 usbd_status
-uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci)
+uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
+    struct uvisor_palm_connection_info *cpi)
 {
 	usbd_status err;
 	usb_device_request_t req;
 	int actlen;
 	uWord avail;
-	char buffer[256];
 
-	DPRINTF(("uvisor_init: getting connection info\n"));
-	req.bmRequestType = UT_READ_VENDOR_ENDPOINT;
-	req.bRequest = UVISOR_GET_CONNECTION_INFORMATION;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
-	err = usbd_do_request_flags(sc->sc_udev, &req, ci,
-		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
-	if (err)
-		return (err);
-
-	if (sc->sc_flags & PALM4) {
-		/* Palm OS 4.0 Hack */
+	if (sc->sc_flags & VISOR) {
+		DPRINTF(("uvisor_init: getting Visor connection info\n"));
 		req.bmRequestType = UT_READ_VENDOR_ENDPOINT;
-		req.bRequest = UVISOR_GET_PALM_INFORMATION;
+		req.bRequest = UVISOR_GET_CONNECTION_INFORMATION;
 		USETW(req.wValue, 0);
 		USETW(req.wIndex, 0);
-		USETW(req.wLength, UVISOR_GET_PALM_INFORMATION_LEN);
-		err = usbd_do_request(sc->sc_udev, &req, buffer);
+		USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
+		err = usbd_do_request_flags(sc->sc_udev, &req, ci,
+		    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 		if (err)
 			return (err);
+	}
+
+	if (sc->sc_flags & PALM4) {
+		DPRINTF(("uvisor_init: getting Palm connection info\n"));
 		req.bmRequestType = UT_READ_VENDOR_ENDPOINT;
 		req.bRequest = UVISOR_GET_PALM_INFORMATION;
 		USETW(req.wValue, 0);
 		USETW(req.wIndex, 0);
 		USETW(req.wLength, UVISOR_GET_PALM_INFORMATION_LEN);
-		err = usbd_do_request(sc->sc_udev, &req, buffer);
+		err = usbd_do_request_flags(sc->sc_udev, &req, cpi,
+		    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 		if (err)
 			return (err);
 	}
