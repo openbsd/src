@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.6 1996/05/27 08:20:11 tholo Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.7 1996/06/03 04:01:15 mickey Exp $
 #	from @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -59,6 +59,10 @@ realinstall:
 .if defined(LKM)
 	install ${COPY} -o ${LKMOWN} -g ${LKMGRP} -m ${LKMMODE} \
 	    ${COMBINED} ${DESTDIR}${LKMDIR}/${LKM}.o
+.if exists(${.CURDIR}/${POSTINSTALL})
+	install -c -o ${LKMOWN} -g ${LKMGRP} -m 555 ${.CURDIR}/${POSTINSTALL} \
+	    ${DESTDIR}${LKMDIR}
+.endif
 .endif
 .endif
 
