@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.28 2001/08/06 10:42:26 mpech Exp $
+.\" $OpenBSD: keynote.3,v 1.29 2001/08/16 17:58:06 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -31,8 +31,8 @@
 .Fd #include <sys/types.h>
 .Fd #include <regex.h>
 .Fd #include <keynote.h>
+.Pp
 .Bd -literal
-
 struct environment
 {
     char               *env_name;
@@ -62,8 +62,7 @@ struct keynote_keylist
     struct keynote_keylist *key_next;
 };
 .Ed
-.Ft int
-.Fd keynote_errno ;
+.Vt extern int keynote_errno;
 .Ft int
 .Fn kn_init "void"
 .Ft int
@@ -119,12 +118,12 @@ struct keynote_keylist
 .Fd Link options: -lkeynote -lm -lcrypto
 .Sh DESCRIPTION
 For more details on
-.Nm KeyNote ,
+.Nm keynote ,
 see RFC 2704.
 .Pp
 .Va keynote_errno
-contains an error code if some library call failed. Failed calls
-return \-1 (if their return value is integer), or
+contains an error code if some library call failed.
+Failed calls return \-1 (if their return value is integer), or
 .Dv NULL
 (if their return value is a pointer) and set
 .Va keynote_errno .
@@ -140,40 +139,44 @@ One of the arguments referred to a nonexistent structure or entry.
 .Pp
 If no errors were encountered,
 .Va keynote_errno
-will be set to 0. This variable should be reset to 0 if an error was
-encountered, prior to calling other library routines.
+will be set to 0.
+This variable should be reset to 0 if an error was encountered,
+prior to calling other library routines.
 .Pp
 The main interface to
-.Nm KeyNote
-is centered around the concept of a session. A session describes a
-collection of policies, assertions, action authorizers, return values,
-and action attributes that the
-.Nm KeyNote
-system uses to evaluate a query. Information is not shared between
-sessions. Policies, credentials, action authorizers, and action
+.Nm
+is centered around the concept of a session.
+A session describes a collection of policies, assertions, action
+authorizers, return values, and action attributes that the
+.Nm
+system uses to evaluate a query.
+Information is not shared between sessions.
+Policies, credentials, action authorizers, and action
 attributes can be added or deleted at any point during the lifetime of
-a session. Furthermore, an application can discover which assertions
-failed to be evaluated, and in what way, during a query.
+a session.
+Furthermore, an application can discover which assertions failed to be
+evaluated, and in what way, during a query.
 .Pp
 For those applications that only need to do a simple query, there
 exists a single call that takes as arguments all the necessary
-information and performs all the necessary steps. This is essentially
-a wrapper that calls the session API functions as necessary.
+information and performs all the necessary steps.
+This is essentially a wrapper that calls the session API functions as
+necessary.
 .Pp
 Finally, there exist functions for doing ASCII to hexadecimal and
 Base64 encoding (and vice versa), for encoding/decoding keys between
 ASCII and binary formats, and for signing and verifying assertions.
 .Pp
 The description of all
-.Nm KeyNote
+.Nm
 library functions follows.
 .Pp
 .Fn kn_init
 creates a new
-.Nm KeyNote
-session, and performs any necessary initializations. On success, this
-function returns the new session ID, which is used by all subsequent
-calls with a
+.Nm
+session, and performs any necessary initializations.
+On success, this function returns the new session ID, which is used by
+all subsequent calls with a
 .Fa sessid
 argument.
 On failure, it returns \-1 and sets
@@ -222,8 +225,8 @@ removes the assertion identified by
 .Fa assertid
 from the session identified by
 .Fa sessid .
-On success, this function returns 0. On failure, it returns \-1 and
-sets
+On success, this function returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND .
@@ -246,50 +249,53 @@ specified are formed by or'ing the following values:
 In this case,
 .Fa value
 is a pointer to a function that takes as argument a string and returns
-a string. This is used to implement callbacks for getting action
-attribute values. The argument passed to such a callback function is a
-string identifying the action attribute whose value is requested, and
-should return a pointer to string containing that value (this pointer
-will not be freed by the library), the empty string if the value was
-not found, or a
+a string.
+This is used to implement callbacks for getting action attribute values.
+The argument passed to such a callback function is a string identifying
+the action attribute whose value is requested, and should return a pointer
+to string containing that value (this pointer will not be freed by the
+library), the empty string if the value was not found, or a
 .Dv NULL
 to indicate an error (and may set
 .Va keynote_errno
-appropriately). Prior to first use (currently, at the time the
-attribute is added to the session environment), such functions are
-called with
+appropriately).
+Prior to first use (currently, at the time the attribute is added to the
+session environment), such functions are called with
 .Dv KEYNOTE_CALLBACK_INITIALIZE
-as the argument (defined in keynote.h) so that they can
-perform any special initializations. Furthermore, when the
-session is deleted, all such functions will be called with
+as the argument (defined in keynote.h) so that they can perform any special
+initializations.
+Furthermore, when the session is deleted, all such functions will be called
+with
 .Dv KEYNOTE_CALLBACK_CLEANUP
-to perform any special cleanup (such as free any allocated memory). A
-function may be called with either of these arguments more than once,
-if it has been defined as the callback function for more than one
-attribute.
+to perform any special cleanup (such as free any allocated memory).
+A function may be called with either of these arguments more than once,
+if it has been defined as the callback function for more than one attribute.
 .It ENVIRONMENT_FLAG_REGEX
 In this case,
 .Fa name
 is a regular expression that may match more than one attribute.
-In case of conflict between a regular expression and a ``simple''
-attribute, the latter will be given priority. In case of conflict
-between two regular expression attributes, the one added later will be
-given priority. A callback function should never change the current
-.Nm KeyNote
+In case of conflict between a regular expression and a 
+.Dq simple
+attribute, the latter will be given priority.
+In case of conflict between two regular expression attributes, the one added
+later will be given priority.
+A callback function should never change the current 
+.Nm
 session, start/invoke/operate on another session, or call one of the
 session-API functions.
 .El
 .Pp
 The combination of the two flags may be used to specify callback
 functions that handle large sets of attributes (even to the extent of
-having one callback function handling all attribute references). This
-is particularly useful when the action attribute set is particularly
+having one callback function handling all attribute references).
+This is particularly useful when the action attribute set is particularly
 large.
 .Pp
 On success,
 .Xr kn_add_action 3
 returns 0. On failure, it returns \-1 and sets
-.Va keynote_errno to
+.Va keynote_errno
+to
 .Er ERROR_NOTFOUND
 if the session was not found,
 .Er ERROR_SYNTAX
@@ -309,14 +315,16 @@ from the environment of session
 Notice that if more than one instances of
 .Fa name
 exist, only the one added last will be deleted.
-On success, this function returns 0. On failure, it returns \-1 and
+On success, this function returns 0.
+On failure, it returns \-1 and
 .Va keynote_errno
 is set to
 .Er ERROR_NOTFOUND
 if the session or the attribute were not found, or
 .Er ERROR_SYNTAX
-if the name was invalid. If the attribute value was a callback, that
-function will be called with the define
+if the name was invalid.
+If the attribute value was a callback, that function will be called with
+the define
 .Dv KEYNOTE_CALLBACK_CLEANUP
 as the argument.
 .Pp
@@ -325,8 +333,9 @@ adds the principal pointed to by
 .Fa principal
 to the action authorizers list of session
 .Fa sessid .
-The principal is typically an ASCII-encoded key. On success, this
-function will return 0. On failure, it returns \-1 and sets
+The principal is typically an ASCII-encoded key.
+On success, this function will return 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -341,7 +350,8 @@ removes
 .Fa principal
 from the action authorizer list of session
 .Fa sessid .
-On success, this function returns 0. On failure, it returns \-1 and sets
+On success, this function returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -352,8 +362,8 @@ evaluates the request based on the assertions, action attributes, and
 action authorizers added to session
 .Fa sessid .
 .Fa returnvalues
-is an ordered array of strings that contain the return values. The
-lowest-ordered return value is contained in
+is an ordered array of strings that contain the return values.
+The lowest-ordered return value is contained in
 .Fa returnvalues[0] ,
 and the highest-ordered value is
 .Fa returnvalues[numvalues - 1] .
@@ -365,14 +375,16 @@ the
 .Fa returnvalues
 from the previous call to
 .Xr kn_do_query 3
-will be used. The programmer SHOULD NOT free
+will be used.
+The programmer SHOULD NOT free
 .Fa returnvalues
 after the call to
 .Xr kn_do_query 3
 if this feature is used, as the array is not replicated internally.
 On success, this function returns an index into the
 .Fa returnvalues
-array. On failure, it returns \-1 and sets
+array.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -389,13 +401,13 @@ returns the assertion ID of the
 .Fa num'th
 assertion (starting from zero) in session
 .Fa sessid
-that was somehow invalid during evaluation. This function is typically
-called after
+that was somehow invalid during evaluation.
+This function is typically called after
 .Xr kn_do_query 3
 is used to evaluate a request.
 .Fa type
-specifies the type of failure the application is interested in. It can
-be set to:
+specifies the type of failure the application is interested in.
+It can be set to:
 .Bl -tag -width KEYNOTE_ERROR_SIGNATURE -offset indent
 .It KEYNOTE_ERROR_ANY
 to indicate interest in any error.
@@ -407,11 +419,11 @@ for memory-related problems.
 if the assertion could not be cryptographically verified.
 .El
 .Pp
-These values are defined in keynote.h. An application can then delete
-the offending assertion using
+These values are defined in keynote.h.
+An application can then delete the offending assertion using
 .Xr kn_remove_assertion 3 .
-For example, to remove all assertion whose signature failed, an
-application could do something like:
+For example, to remove all assertion whose signature failed, an application
+could do something like:
 .Bd -literal
   while ((assertid = kn_get_failed(sessid, KEYNOTE_ERROR_SIGNATURE, 0)
          != -1)
@@ -420,8 +432,9 @@ application could do something like:
 .Pp
 On success,
 .Xr kn_get_failed 3
-returns an assertion ID. On failure, or when no assertion matching the
-given criteria is found, it returns \-1 and set
+returns an assertion ID.
+On failure, or when no assertion matching the given criteria is found,
+it returns \-1 and set
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND .
@@ -435,8 +448,9 @@ It returns 0 on success.
 closes session
 .Fa sessid
 and frees all related resources, deleting action attributes, action
-authorizers, and assertions. On success, this function returns 0. On
-failure, it returns \-1 and sets
+authorizers, and assertions.
+On success, this function returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -474,8 +488,8 @@ Note that if there were no assertions found in
 .Fa array ,
 a valid pointer will be returned, but
 .Fa numassertions
-will contain the value zero on return. The returned pointer should be
-freed by the programmer.
+will contain the value zero on return.
+The returned pointer should be freed by the programmer.
 .Pp
 .Fn kn_keycompare
 compares
@@ -560,18 +574,19 @@ arguments to
 .Xr kn_add_assertion 3
 respectively.
 .Fa env_regex
-is not used. On success, this function returns an index in
+is not used.
+On success, this function returns an index in
 .Fa returnvalues
-indicating the returned value to the query. On failure, it returns \-1
-and sets
+indicating the returned value to the query.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to the same values as
 .Xr kn_do_query 3 ,
 or to
 .Er ERROR_MEMORY
 if a trusted or untrusted assertion could not be added to the session due
-to lack of memory resources. Syntax errors in assertions will not be reported
-by
+to lack of memory resources.
+Syntax errors in assertions will not be reported by
 .Fn kn_query .
 .Pp
 .Fn kn_encode_base64
@@ -586,8 +601,10 @@ which is of length
 The actual length of the encoding stored in
 .Fa dst
 is returned.
-.Fa dst should be long enough to also contain the trailing
-string terminator. If
+.Fa dst
+should be long enough to also contain the trailing
+string terminator.
+If
 .Fa srclen
 is not a multiple of 4, or
 .Fa dst
@@ -604,8 +621,8 @@ and stores the result in
 .Fa dst ,
 which is of length
 .Fa dstlen .
-The actual length of the decoded data is returned on success. On
-failure, this function returns \-1 and sets
+The actual length of the decoded data is returned on success.
+On failure, this function returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_SYNTAX ,
@@ -627,8 +644,9 @@ Thus, this function should be used as follows:
   kn_encode_hex(src, &dst, srclen);
 .Ed
 .Pp
-The length of the allocated buffer will be (2 * srclen + 1). On
-success, this function returns 0. On failure, it returns \-1 and sets
+The length of the allocated buffer will be (2 * srclen + 1).
+On success, this function returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -642,11 +660,12 @@ was
 .Fn kn_decode_hex
 decodes the ASCII hex-encoded string in
 .Fa src
-and stores the result in a memory chunk allocated by the function. A
-pointer to that memory is stored in
+and stores the result in a memory chunk allocated by the function.
+A pointer to that memory is stored in
 .Fa dst .
-The length of the allocated memory will be (strlen(src) / 2). On
-success, this function returns 0. On failure, it returns \-1 and sets
+The length of the allocated memory will be (strlen(src) / 2).
+On success, this function returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -661,23 +680,24 @@ or the length of
 is not even.
 .Pp
 .Fn kn_encode_key
-ASCII-encodes a cryptographic key. The binary representation of the
-key is contained in
+ASCII-encodes a cryptographic key.
+The binary representation of the key is contained in
 .Fa dc .
 The field
 .Fa dec_key
 in that structure is a pointer to some cryptographic algorithm
-dependent information describing the key. In this implementation, this
-pointer should be a
+dependent information describing the key.
+In this implementation, this pointer should be a
 .Fa DSA *
 or
 .Fa RSA *
 for DSA or RSA keys respectively, as used in the SSL library, or a
 .Fa keynote_binary *
 for cryptographic keys whose algorithm
-.Nm KeyNote
+.Nm
 does not know about but the application wishes to include in the
-action authorizers (and thus need to be canonicalized). The field
+action authorizers (and thus need to be canonicalized).
+The field
 .Fa dec_algorithm
 describes the cryptographic algorithm, and may be one of
 .Dv KEYNOTE_ALGORITHM_DSA ,
@@ -687,8 +707,8 @@ or
 in this implementation.
 .Pp
 .Fa iencoding
-describes how the key should be binary-encoded. This implementation
-supports
+describes how the key should be binary-encoded.
+This implementation supports
 .Dv INTERNAL_ENC_PKCS1
 for RSA keys,
 .Dv INTERNAL_ENC_ASN1
@@ -696,8 +716,8 @@ for DSA keys, and
 .Dv INTERNAL_ENC_NONE
 for BINARY keys.
 .Fa encoding
-describes what ASCII encoding should be applied to the key. Valid
-values are
+describes what ASCII encoding should be applied to the key.
+Valid values are
 .Dv ENCODING_HEX
 and
 .Dv ENCODING_BASE64 ,
@@ -707,12 +727,12 @@ is one of
 .Dv KEYNOTE_PUBLIC_KEY
 or
 .Dv KEYNOTE_PRIVATE_KEY
-to indicate whether the key is public or private. Private keys have
-the string
+to indicate whether the key is public or private.
+Private keys have the string
 .Dv KEYNOTE_PRIVATE_KEY_PREFIX
-(defined in keynote.h) prefixed to the algorithm name. On success,
-this function returns a string containing the encoded key. On failure,
-it returns
+(defined in keynote.h) prefixed to the algorithm name.
+On success, this function returns a string containing the encoded key.
+On failure, it returns
 .Dv NULL
 and sets
 .Va keynote_errno
@@ -737,8 +757,8 @@ describing the algorithm (see
 .Xr kn_encode_key 3 ) ,
 and
 .Fa dec_key
-pointing to an algorithm-dependent structure. In this implementation,
-this is an SSLeay/OpenSSL-defined
+pointing to an algorithm-dependent structure.
+In this implementation, this is an SSLeay/OpenSSL-defined
 .Fa DSA *
 for DSA keys,
 .Fa RSA *
@@ -750,8 +770,9 @@ takes the values
 .Dv KEYNOTE_PUBLIC_KEY
 or
 .Dv KEYNOTE_PRIVATE_KEY
-to specify a public or private key, where applicable. On success, this
-function returns 0. On failure, it returns \-1 and sets
+to specify a public or private key, where applicable.
+On success, this function returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -769,9 +790,9 @@ using the ASCII-encoded cryptographic key contained in
 The type of signature to be produced is described by the string
 .Fa algorithm .
 Possible values for this string are
-.Dv SIG_RSA_SHA1_HEX
+.Dv SIG_RSA_SHA1_HEX ,
 .Dv SIG_RSA_SHA1_BASE64 ,
-.Dv SIG_RSA_MD5_HEX ,
+.Dv SIG_RSA_MD5_HEX
 and
 .Dv SIG_RSA_MD5_HEX
 for RSA keys,
@@ -779,14 +800,16 @@ for RSA keys,
 and
 .Dv SIG_DSA_SHA1_BASE64
 for DSA keys,
-.Dv SIG_X509_SHA1_HEX ,
+.Dv SIG_X509_SHA1_HEX
 and
 .Dv SIG_X509_SHA1_BASE64
-for X509-based keys.  No other cryptographic signatures are currently
-supported by this implementation. If
+for X509-based keys.
+No other cryptographic signatures are currently
+supported by this implementation.
+If
 .Fa vflag
-is set to 1, then the generated signature will also be verified. On
-success, this function returns a string containing the ASCII-encoded
+is set to 1, then the generated signature will also be verified.
+On success, this function returns a string containing the ASCII-encoded
 signature, without modifying the
 .Fa assertion .
 On failure, it returns
@@ -832,7 +855,8 @@ frees a cryptographic key.
 .Fn kn_get_string
 parses the argument, treating it as a
 .Xr keynote 4
-(quoted) string. This is useful for parsing key files.
+(quoted) string.
+This is useful for parsing key files.
 .Sh FILES
 .Bl -tag -width libkeynote.a -compact
 .It Pa keynote.h
@@ -842,21 +866,35 @@ parses the argument, treating it as a
 .Xr keynote 1 ,
 .Xr keynote 4 ,
 .Xr keynote 5
-.Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System, Version 2''
-M. Blaze, J. Feigenbaum, A. D. Keromytis,
-Internet Drafts, RFC 2704.
-.It ``Decentralized Trust Management''
-M. Blaze, J. Feigenbaum, J. Lacy,
-1996 IEEE Conference on Privacy and Security
-.It ``Compliance-Checking in the PolicyMaker Trust Management System''
-M. Blaze, J. Feigenbaum, M. Strauss,
-1998 Financial Crypto Conference
-.It Web Page
-http://www.cis.upenn.edu/~keynote
-.El
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A A. D. Keromytis
+.%T "The KeyNote Trust-Management System, Version 2"
+.%N RFC 2704
+.%D 1999
+.Re
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A J. Lacy
+.%T Decentralized Trust Management
+.%J IEEE Conference on Privacy and Security
+.%D 1996
+.Re
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A M. Strauss
+.%T Compliance-Checking in the PolicyMaker Trust Management System
+.%J Financial Crypto Conference
+.%D 1998
+.Re
 .Sh AUTHORS
-Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+Angelos D. Keromytis
+.Aq angelos@dsl.cis.upenn.edu
+.Sh WEB PAGE
+.Pa http://www.cis.upenn.edu/~keynote
 .Sh DIAGNOSTICS
 The return values of all the functions have been given along with the
 function description above.

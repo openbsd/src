@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.18 2001/08/06 10:42:26 mpech Exp $
+.\" $OpenBSD: keynote.1,v 1.19 2001/08/16 17:58:06 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -37,7 +37,6 @@ operations
 .Ar PrivateKeyFile
 .Op print-offset
 .Op print-length
-
 .Nm keynote sign
 .Op Fl v
 .Ar AlgorithmName
@@ -45,10 +44,8 @@ operations
 .Ar PrivateKeyFile
 .Op print-offset
 .Op print-length
-
 .Nm keynote sigver
 .Op AssertionFile
-
 .Nm keynote verify
 .Op Fl h
 .Op Fl e Ar file
@@ -66,26 +63,29 @@ see RFC 2704.
 .Fa KeySize ,
 (in bits) for the algorithm specified by
 .Fa AlgorithmName .
-Typical keysizes are 512, 1024, or 2048 (bits). The minimum key size
-for DSA keys is 512 (bits). Supported
+Typical keysizes are 512, 1024, or 2048 (bits).
+The minimum key size for DSA keys is 512 (bits).
+Supported
 .Fa AlgorithmName
 identifiers are:
-.Bl -tag -width indent
-.It ``dsa-hex:''
-.It ``dsa-base64:''
-.It ``rsa-hex:''
-.It ``rsa-base64:''
-.It ``x509-hex:''
-.It ``x509-base64:''
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Dq dsa-hex:
+.It Dq dsa-base64:
+.It Dq rsa-hex:
+.It Dq rsa-base64:
+.It Dq x509-hex:
+.It Dq x509-base64:
 .El
 .Pp
-Notice that the trailing colon is required. The resulting public key is
-stored in file
+Notice that the trailing colon is required.
+The resulting public key is stored in file
 .Fa PublicKeyFile .
 Similarly, the resulting private key is stored in file
 .Fa PrivateKeyFile .
-Either of the filenames can be specified to be ``-'', in which
-case the corresponding key(s) will be printed in standard output.
+Either of the filenames can be specified to be
+.Dq \- ,
+in which case the corresponding key(s) will be printed in standard output.
 .Pp
 The optional parameters
 .Fa print-offset
@@ -102,7 +102,8 @@ for the first line and has to be longer (by at least 2) than
 .Fa print-length
 also accounts for the line-continuation character (backslash) at
 the end of each line, and the doublequotes at the beginning and end
-of the key encoding.  Default values are 12 and 50 respectively.
+of the key encoding.
+Default values are 12 and 50 respectively.
 .Sh ASSERTION SIGNING
 "keynote sign" reads the assertion contained in
 .Fa AssertionFile
@@ -111,26 +112,29 @@ and generates a signature specified by
 using the private key stored in
 .Fa PrivateKeyFile .
 The private key is expected to be of the form output by
-"keynote keygen".  The private key algorithm and the
+.Qq keynote keygen .
+The private key algorithm and the
 .Fa AlgorithmName
-specified as an argument are expected to match. There is no requirement
-for the internal or ASCII encodings to match.  Valid
+specified as an argument are expected to match.
+There is no requirement for the internal or ASCII encodings to match.
+Valid
 .Fa AlgorithmName
 identifiers are:
-.Bl -tag -width indent
-.It ``sig-dsa-sha1-hex:''
-.It ``sig-dsa-sha1-base64:''
-.It ``sig-rsa-sha1-hex:''
-.It ``sig-rsa-sha1-base64:''
-.It ``sig-rsa-md5-hex:''
-.It ``sig-rsa-md5-base64:''
-.It ``sig-x509-sha1-hex:''
-.It ``sig-x509-sha1-base64:''
+.Pp
+.Bl -tag -width indent -compact
+.It Dq sig-dsa-sha1-hex:
+.It Dq sig-dsa-sha1-base64:
+.It Dq sig-rsa-sha1-hex:
+.It Dq sig-rsa-sha1-base64:
+.It Dq sig-rsa-md5-hex:
+.It Dq sig-rsa-md5-base64:
+.It Dq sig-x509-sha1-hex:
+.It Dq sig-x509-sha1-base64:
 .El
 .Pp
 Notice that the trailing colon is required.
-The resulting signature is printed in standard output. This can then
-be added (via cut-and-paste or some script) at the end of the
+The resulting signature is printed in standard output.
+This can then be added (via cut-and-paste or some script) at the end of the
 assertion, in the
 .Fa Signature
 field.
@@ -155,8 +159,9 @@ string.
 .Pp
 If the
 .Fl v
-flag is provided, "keynote sign" will also verify the newly-created
-signature using the
+flag is provided, 
+.Qq keynote sign
+will also verify the newly-created signature using the
 .Fa Authorizer
 field key.
 .Pp
@@ -175,22 +180,24 @@ for the first line and has to be longer (by at least 2) than
 .Fa print-length
 also accounts for the line-continuation character (backslash) at
 the end of each line, and the doublequotes at the beginning and end
-of the signature encoding.  Default values are 12 and 50 respectively.
+of the signature encoding.
+Default values are 12 and 50 respectively.
 .Sh SIGNATURE VERIFICATION
-"keynote sigver" reads the assertions contained in
+.Qq keynote sigver
+reads the assertions contained in
 .Fa AssertionFile
 and verifies the public-key signatures on all of them.
-.Pp
 .Sh QUERY TOOL
 For each operand that names a
 .A file ,
-"keynote verify" reads the file and parses the assertions contained
-therein (one assertion per file).
+.Qq keynote verify
+reads the file and parses the assertions contained therein (one assertion
+per file).
 .Pp
 Files given with the
 .Fl l
 flag are assumed to contain trusted assertions (no signature
-verification is performed, and the
+verification is performed), and the
 .Fa Authorizer
 field can contain non-key principals.
 There should be at least one assertion with the
@@ -237,29 +244,46 @@ and least one of each
 .Fl l ,
 and
 .Fl k
-flags should be given per invocation. If no flags are given,
-"keynote verify" prints the usage message and exits with error code \-1.
+flags should be given per invocation.
+If no flags are given,
+.Qq keynote verify
+prints the usage message and exits with error code \-1.
 .Pp
-"keynote verify" exits with code \-1 if there was an error, and 0 on success.
+.Qq keynote verify
+exits with code \-1 if there was an error, and 0 on success.
 .Sh SEE ALSO
 .Xr keynote 3 ,
 .Xr keynote 4 ,
 .Xr keynote 5
-.Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System, Version 2''
-M. Blaze, J. Feigenbaum, A. D. Keromytis,
-Internet Drafts, RFC 2704.
-.It ``Decentralized Trust Management''
-M. Blaze, J. Feigenbaum, J. Lacy,
-1996 IEEE Conference on Privacy and Security
-.It ``Compliance-Checking in the PolicyMaker Trust Management System''
-M. Blaze, J. Feigenbaum, M. Strauss,
-1998 Financial Crypto Conference
-.El
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A A. D. Keromytis
+.%T "The KeyNote Trust-Management System, Version 2"
+.%N RFC 2704
+.%D 1999
+.Re
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A J. Lacy
+.%T Decentralized Trust Management
+.%J IEEE Conference on Privacy and Security
+.%D 1996
+.Re
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A M. Strauss
+.%T Compliance-Checking in the PolicyMaker Trust Management System
+.%J Financial Crypto Conference
+.%D 1998
+.Re
 .Sh AUTHORS
-Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+Angelos D. Keromytis
+.Aq angelos@dsl.cis.upenn.edu
 .Sh WEB PAGE
-http://www.cis.upenn.edu/~keynote
+.Pa http://www.cis.upenn.edu/~keynote
 .Sh BUGS
 None that we know of.
 If you find any, please report them at
