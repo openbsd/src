@@ -15,7 +15,7 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\" 
-.\" $Id: cron.8,v 1.2 1997/12/22 08:10:40 deraadt Exp $
+.\" $Id: cron.8,v 1.3 1999/03/10 02:43:11 pjanzen Exp $
 .\" 
 .TH CRON 8 "20 December 1993"
 .UC 4
@@ -56,8 +56,8 @@ command updates the modtime of the spool directory whenever it changes a
 crontab.
 .PP
 Special considerations exist when the clock is changed by less than 3
-hours, for example at the beginning and end of daylight savings
-time. If the time has moved forwards, those jobs which would have
+hours, for example at the beginning and end of Daylight Saving
+Time. If the time has moved forwards, those jobs which would have
 run in the time that was skipped will be run soon after the change. 
 Conversely, if the time has moved backwards by less than 3 hours,
 those jobs that fall into the repeated time will not be run.

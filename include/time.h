@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.4 1998/11/20 11:18:26 d Exp $	*/
+/*	$OpenBSD: time.h,v 1.5 1999/03/10 02:43:10 pjanzen Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct tm {
 	int	tm_year;	/* years since 1900 */
 	int	tm_wday;	/* days since Sunday [0-6] */
 	int	tm_yday;	/* days since January 1 [0-365] */
-	int	tm_isdst;	/* Daylight Savings Time flag */
+	int	tm_isdst;	/* Daylight Saving Time flag */
 	long	tm_gmtoff;	/* offset from CUT in seconds */
 	char	*tm_zone;	/* timezone abbreviation */
 };
