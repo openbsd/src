@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.6 1996/04/25 11:04:08 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.7 1996/06/06 12:00:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -347,14 +347,17 @@ editit(tmpfile)
 	}
 	if (pid == 0) {
 		register char *ed;
+		char *p;
 
 		sigsetmask(omask);
 		setgid(getgid());
 		setuid(getuid());
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = _PATH_VI;
-		execlp(ed, ed, tmpfile, 0);
-		perror(ed);
+		p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfile) + 1);
+		sprintf(p, "%s %s", ed, tmpfile);
+		if (system(p) == -1)
+			perror(ed);
 		exit(1);
 	}
 	waitpid(pid, &stat, 0);
