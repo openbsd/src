@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- perl -*-
 #
-# $OpenBSD: rmuser.perl,v 1.1 1996/12/08 13:57:09 downsj Exp $
+# $OpenBSD: rmuser.perl,v 1.2 1999/07/11 21:58:14 espie Exp $
 #
 # Copyright 1995, 1996 Guy Helmer, Madison, South Dakota 57042.
 # All rights reserved.
@@ -232,7 +232,7 @@ sub get_login_name {
 	print "Enter login name for user to remove: ";
 	$login_name = <>;
 	chop $login_name;
-	if (!($login_name =~ /[A-Za-z0-9_]/)) {
+	if (!($login_name =~ /^\w+$/)) {
 	    print STDERR "Sorry, login name must contain alphanumeric characters only.\n";
 	} elsif (length($login_name) > 16 || length($login_name) == 0) {
 	    print STDERR "Sorry, login name must be 16 characters or less.\n";
