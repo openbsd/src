@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.3 1996/12/13 21:26:39 michaels Exp $	*/
+/*	$OpenBSD: uio.h,v 1.4 1998/05/11 08:00:46 deraadt Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -39,12 +39,8 @@
 #ifndef _SYS_UIO_H_
 #define	_SYS_UIO_H_
 
-/*
- * XXX
- * iov_base should be a void *.
- */
 struct iovec {
-	char	*iov_base;	/* Base address. */
+	void	*iov_base;	/* Base address. */
 	size_t	 iov_len;	/* Length. */
 };
 
