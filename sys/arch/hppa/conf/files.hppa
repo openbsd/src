@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.48 2003/08/20 21:44:03 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.49 2003/09/29 19:23:02 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -32,8 +32,8 @@ include "dev/i2o/files.i2o"
 #
 # MI ATAPI drivers
 #
-#include "dev/atapiscsi/files.atapiscsi"
-#include "dev/ata/files.ata"
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
 
 #
 # ISA Bus support
@@ -50,6 +50,16 @@ include "dev/eisa/files.eisa"
 # PCI Bus support
 #
 include "dev/pci/files.pci"
+
+#
+# CardBus support
+#
+include	"dev/cardbus/files.cardbus"
+
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"
 
 #
 # HIL Human Interface Loop devices

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.52 2003/09/26 00:10:40 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.53 2003/09/29 19:23:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -74,7 +74,7 @@ extern struct extent *hppa_ex;
 extern struct pdc_btlb pdc_btlb;
 
 int
-mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
+mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	static u_int32_t bmm[0x4000/32];
@@ -83,7 +83,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 
 #ifdef BTLBDEBUG
 	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
-	    bpa, size, cachable? "" : "non", bshp);
+	    bpa, size, flags? "" : "non", bshp);
 #endif
 
 	if ((bank = vm_physseg_find(atop(bpa), &off)) >= 0)
@@ -98,9 +98,9 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 	 * all mappings are equal mappings.
 	 */
 #ifdef DEBUG
-	if (cachable) {
+	if (flags & BUS_SPACE_MAP_CACHEABLE) {
 		printf("WARNING: mapping I/O space cachable\n");
-		cachable = 0;
+		flags &= ~BUS_SPACE_MAP_CACHEABLE;
 	}
 #endif
 
@@ -165,14 +165,15 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 
 int
 mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
-    int cachable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
 	int error;
 
-	if ((error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT)))
+	if (!(flags & BUS_SPACE_MAP_NOEXTENT) &&
+	    (error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT)))
 		return (error);
 
-	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
+	if ((error = mbus_add_mapping(bpa, size, flags, bshp))) {
 		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
 			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
@@ -210,7 +211,7 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 
 int
 mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
-	 bus_size_t align, bus_size_t boundary, int cachable,
+	 bus_size_t align, bus_size_t boundary, int flags,
 	 bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	u_long bpa;
@@ -223,7 +224,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	    align, 0, boundary, EX_NOWAIT, &bpa)))
 		return (error);
 
-	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
+	if ((error = mbus_add_mapping(bpa, size, flags, bshp))) {
 		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
 			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
@@ -741,6 +742,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 		return (EINVAL);
 
 	seg = 0;
+	lastaddr = 0;
 	error = _bus_dmamap_load_buffer(NULL, map, addr, size, p, flags,
 	    &lastaddr, &seg, 1);
 	if (error == 0) {
@@ -772,6 +774,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0, int flags)
 	first = 1;
 	seg = 0;
 	error = 0;
+	lastaddr = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		/* XXX as we later can only flush by pa -- flush now */
 		fdcache(HPPA_SID_KERNEL, (vaddr_t)m->m_data, m->m_len);
@@ -821,6 +824,7 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio, int flags)
 	first = 1;
 	seg = 0;
 	error = 0;
+	lastaddr = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
 		 * Now at the first iovec to load.  Load each iovec

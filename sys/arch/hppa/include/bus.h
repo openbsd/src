@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.20 2003/03/29 00:58:50 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.21 2003/09/29 19:23:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -48,7 +48,7 @@ struct hppa_bus_space_tag {
 	void *hbt_cookie;
 
 	int  (*hbt_map)(void *v, bus_addr_t addr, bus_size_t size,
-			     int cacheable, bus_space_handle_t *bshp);
+			     int flags, bus_space_handle_t *bshp);
 	void (*hbt_unmap)(void *v, bus_space_handle_t bsh,
 			       bus_size_t size);
 	int  (*hbt_subregion)(void *v, bus_space_handle_t bsh,
@@ -56,7 +56,7 @@ struct hppa_bus_space_tag {
 				   bus_space_handle_t *nbshp);
 	int  (*hbt_alloc)(void *v, bus_addr_t rstart, bus_addr_t rend,
 			       bus_size_t size, bus_size_t align,
-			       bus_size_t boundary, int cacheable,
+			       bus_size_t boundary, int flags,
 			       bus_addr_t *addrp, bus_space_handle_t *bshp);
 	void (*hbt_free)(void *, bus_space_handle_t, bus_size_t);
 	void (*hbt_barrier)(void *v, bus_space_handle_t h,
@@ -171,6 +171,7 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	BUS_SPACE_MAP_LINEAR		0x0002
 #define	BUS_SPACE_MAP_READONLY		0x0004
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
+#define	BUS_SPACE_MAP_NOEXTENT		0x8000	/* no extent ops */
 
 /* bus access routines */
 

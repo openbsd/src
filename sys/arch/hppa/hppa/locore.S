@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.113 2003/09/26 00:07:05 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.114 2003/09/29 19:23:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1999,6 +1999,45 @@ $gsc_share
 	b	$gsc_intr_loop
 	copy	r9, r1
 EXIT(gsc_intr)
+
+	.export	dino_intr, entry
+LEAF_ENTRY(dino_intr)
+	ldw	8-32(r1), r9	/* arg: ioreg */
+	mtctl	r1, tr7
+	ldw	12(r9), r16	/* irr0 */
+
+	ldw	12-32(r1), r1	/* next: sub-intr_table */
+$dino_intr_loop
+	comb,=,n r0, r16, $intr_cont
+	mfctl	tr7, r1
+$dino_ffs
+	addi	32, r1, r1
+	bb,>=	r16, 31, $dino_ffs
+	shd	r0, r16, 1, r16
+
+	copy	r1, r9
+$dino_share
+	mfctl	sar, r25
+	ldb	1-32(r1), r17
+	mtsar	r17
+	vdepi	1, 1, r24
+	mtsar	r25
+
+	ldb	0-32(r1), r17
+	ldil	L%intrcnt, r25
+	ldo	R%intrcnt(r25), r25
+	sh2add	r17, r25, r25
+	ldw	0(r25), r17
+	addi	1, r17, r17
+	stw	r17, 0(r25)
+
+	ldw	16-32(r1), r17
+	comb,<>,n r0, r17, $dino_share
+	ldo	32(r17), r1
+
+	b	$dino_intr_loop
+	copy	r9, r1
+EXIT(dino_intr)
 
 	.export	TLABEL(ibrk), entry
 ENTRY(TLABEL(ibrk),0)
