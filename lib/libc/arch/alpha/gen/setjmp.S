@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.4 2002/01/04 13:51:20 art Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.5 2004/01/15 13:39:38 deraadt Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.2 1996/10/17 03:08:06 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.4 2002/01/04 13:51:20 art Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.5 2004/01/15 13:39:38 deraadt Exp $"
 #endif
 
 /*
@@ -71,10 +71,10 @@ LEAF(setjmp, 1)
 	CALL(sigblock)				/* see what's blocked */
 	stq	v0, (1 * 8)(s0)			/* and remember it in sc_mask */
 
-	lda	sp, -16(sp)			/* sizeof struct sigaltstack */
+	lda	sp, -16(sp)			/* sizeof struct osigaltstack */
 	mov	zero, a0
 	mov	sp, a1
-	CALL(sigaltstack)
+	CALL(osigaltstack)
 	ldl	t0, 12(sp)
 	lda	sp, 16(sp)
 	ldq	ra, ((26 + 4) * 8)(s0)		/* restore return address */
