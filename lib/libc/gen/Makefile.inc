@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 1999/11/17 05:22:38 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2000/03/23 22:22:00 d Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -60,7 +60,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
-	directory.3 telldir.3
+	directory.3 telldir.3 directory.3 readdir_r.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 exect.3 \
@@ -77,7 +77,8 @@ MLINKS+=getdomainname.3 setdomainname.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 	getfsent.3 getfstype.3 getfsent.3 setfsent.3
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
-	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 getgrent.3 setgrfile.3
+	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 getgrent.3 setgrfile.3 \
+	getgrent.3 getgrgid_r.3 getgrent.3 getgrnam_r.3
 MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 	getnetgrent.3 setnetgrent.3
