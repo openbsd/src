@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.23 2003/03/13 22:17:04 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.24 2003/05/02 20:31:42 nino Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.23 2003/03/13 22:17:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.24 2003/05/02 20:31:42 nino Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,11 +83,6 @@ static char rcsid[] = "$OpenBSD: cp.c,v 1.23 2003/03/13 22:17:04 millert Exp $";
 #include <unistd.h>
 
 #include "extern.h"
-
-#define	STRIP_TRAILING_SLASH(p) {					\
-	while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
-		*--(p).p_end = '\0';					\
-}
 
 #define	fts_dne(_x)	(_x->fts_pointer != NULL)
 
