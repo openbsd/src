@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.30 2002/03/30 23:00:01 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.31 2002/04/05 16:34:38 jason Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -388,7 +388,9 @@ wskbd_attach(parent, self, aux)
 		wskbd_update_layout(sc->id, ap->keymap->layout);
 	}
 
+#if NWSDISPLAY > 0
 	timeout_set(&sc->sc_repeat_ch, wskbd_repeat, sc);
+#endif
 
 	sc->id->t_sc = sc;
 
