@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.13 2001/05/16 21:24:01 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.14 2001/09/05 23:41:45 art Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -230,15 +230,19 @@
 111	NOARGS		{ int sys_sigsuspend(int mask); }
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
+#ifdef MSG_COMPAT
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
 			    struct omsghdr *msg, int flags); } orecvmsg
+#else
+113	OBSOL		orecvmsg
+#endif
+#ifdef MSG_COMPAT
 114	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
 			    int flags); } osendmsg
-#ifdef TRACE
-115	NOARGS		{ int sys_vtrace(int request, int value); }
 #else
-115	OBSOL		vtrace
+114	OBSOL		orecvmsg
 #endif
+115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
@@ -253,9 +257,13 @@
 			    const struct timezone *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
+#ifdef MSG_COMPAT
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
 			    size_t len, int flags, caddr_t from, \
 			    int *fromlenaddr); } orecvfrom
+#else
+125	OBSOL		orecvfrom
+#endif
 126	NOARGS		{ int compat_43_sys_setreuid(int ruid, int euid); } \
 			    osetreuid
 127	NOARGS		{ int compat_43_sys_setregid(int rgid, int egid); } \
@@ -547,7 +555,7 @@
 273	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
 274	STD		{ int netbsd_sys_lchmod(const char *path, \
-			    mode_t mode); }
+			    netbsd_mode_t mode); }
 275	NOARGS		{ int sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 276	STD		{ int netbsd_sys_lutimes(const char *path, \
@@ -602,3 +610,11 @@
 296	STD		{ int netbsd_sys___getcwd(char *bufp, size_t length); }
 297	UNIMPL
 ;297	STD		{ int netbsd_sys_fchroot(int fd); }
+298	UNIMPL
+299	UNIMPL
+300	UNIMPL
+301	UNIMPL
+302	UNIMPL
+303	UNIMPL
+304	UNIMPL
+305	STD		{ int sys_issetugid(void); }
