@@ -202,6 +202,7 @@ login(host)
 	char *user, *pass, *acct;
 	int n, aflag = 0;
 	char anonpass[MAXHOSTNAMELEN+2+32];
+	char hostname[MAXHOSTNAMELEN];
 
 	user = pass = acct = 0;
 	if (ruserpass(host, &user, &pass, &acct) < 0) {
@@ -212,7 +213,8 @@ login(host)
 		user = getlogin();
 		strncpy(anonpass, user, 32);
 		strcat(anonpass, "@");
-		gethostname(&anonpass[strlen(anonpass)-1], MAXHOSTNAMELEN);
+		gethostname(hostname, sizeof hostname);
+		strcat(anonpass, hostname);
 		pass = anonpass;
 		user = "anonymous";
 	}
