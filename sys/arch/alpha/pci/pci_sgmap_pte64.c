@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_sgmap_pte64.c,v 1.2 2000/11/08 20:59:25 ericj Exp $ */
+/* $OpenBSD: pci_sgmap_pte64.c,v 1.3 2001/03/21 17:26:39 art Exp $ */
 /* $NetBSD: pci_sgmap_pte64.c,v 1.4 2000/06/29 08:58:49 mrg Exp $ */
 
 /*-
@@ -52,4 +52,4 @@
 
 #include <alpha/pci/pci_sgmap_pte64.h>
 
-#include <alpha/common/sgmap_typedep.c>
+#include <alpha/dev/sgmap_typedep.c>

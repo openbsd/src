@@ -1,5 +1,5 @@
-/* $OpenBSD: sgmapvar.h,v 1.2 2000/11/08 21:27:12 ericj Exp $ */
-/* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
+/* $OpenBSD: sgmap_typedep.h,v 1.1 2001/03/21 17:26:38 art Exp $ */
+/* $NetBSD: sgmap_typedep.h,v 1.4 1998/06/04 01:22:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,59 +38,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_ALPHA_COMMON_SGMAPVAR_H
-#define	_ALPHA_COMMON_SGMAPVAR_H
+#undef __C
+#undef __S
 
-#include <sys/extent.h>
-#include <machine/bus.h>
+#define	__C(A,B)	__CONCAT(A,B)
+#define	__S(S)		__STRING(S)
 
-/*
- * Bits n:13 of the DMA address are the index of the PTE into
- * the SGMAP page table.
- */
-#define	SGMAP_ADDR_PTEIDX_SHIFT	13
+extern	SGMAP_PTE_TYPE	__C(SGMAP_TYPE,_prefetch_spill_page_pte);
 
-/*
- * An Alpha SGMAP's state information.  Nothing in the sgmap requires
- * locking[*], with the exception of the extent map.  Locking of the
- * extent map is handled within the extent manager itself.
- *
- * [*] While the page table is a `global' resource, access to it is
- * controlled by the extent map; once a region has been allocated from
- * the map, that region is effectively `locked'.
- */
-struct alpha_sgmap {
-	struct extent *aps_ex;		/* extent map to manage sgva space */
-	void	*aps_pt;		/* page table */
-	bus_addr_t aps_ptpa;		/* page table physical address */
-	bus_addr_t aps_sgvabase;	/* base of the sgva space */
-	bus_size_t aps_sgvasize;	/* size of the sgva space */
-	bus_addr_t aps_wbase;		/* base of the dma window */
-};
-
-/*
- * Log entry, used for debugging SGMAPs.
- */
-struct sgmap_log_entry {
-	int	sl_op;			/* op; 1 = load, 0 = unload */
-	struct alpha_sgmap *sl_sgmap;	/* sgmap for entry */
-	void	*sl_origbuf;		/* original buffer */
-	u_long	sl_pgoffset;		/* page offset of buffer start */
-	u_long	sl_origlen;		/* length of transfer */
-	u_long	sl_sgva;		/* sgva of transfer */
-	u_long	sl_dmaaddr;		/* dma address */
-	int	sl_ptecnt;		/* pte count */
-};
-
-extern	vaddr_t alpha_sgmap_prefetch_spill_page_va;
-extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
-
-void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
-	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *,
-	    bus_size_t));
-
-int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
-	    struct alpha_sgmap *, int));
-void	alpha_sgmap_free __P((bus_dmamap_t, struct alpha_sgmap *));
-
-#endif	/* _ALPHA_COMMON_SGMAPVAR_H */
+void	__C(SGMAP_TYPE,_init_spill_page_pte) __P((void));
+int	__C(SGMAP_TYPE,_load) __P((bus_dma_tag_t, bus_dmamap_t,
+	    void *, bus_size_t, struct proc *, int, struct alpha_sgmap *));
+int	__C(SGMAP_TYPE,_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int, struct alpha_sgmap *));
+int	__C(SGMAP_TYPE,_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int, struct alpha_sgmap *));
+int	__C(SGMAP_TYPE,_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int, struct alpha_sgmap *));
+void	__C(SGMAP_TYPE,_unload) __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct alpha_sgmap *));

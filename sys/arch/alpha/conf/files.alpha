@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.45 2001/03/18 04:39:07 nate Exp $
+#	$OpenBSD: files.alpha,v 1.46 2001/03/21 17:26:38 art Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -14,7 +14,7 @@ file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa | dec_6600 | dec_550
 
 define	alpha_sgmap
-file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
+file	arch/alpha/dev/sgmap_common.c alpha_sgmap | dec_3000_500
 
 #
 # Bus-independent devices
@@ -262,7 +262,7 @@ file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
-file	arch/alpha/common/bus_dma.c
+file	arch/alpha/dev/bus_dma.c
 file	dev/clock_subr.c
 file	dev/cons.c
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.2 2000/11/08 21:27:10 ericj Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.1 2001/03/21 17:26:38 art Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -49,7 +49,7 @@
 
 #include <machine/bus.h>
 
-#include <alpha/common/sgmapvar.h>
+#include <alpha/dev/sgmapvar.h>
 
 /*
  * Some systems will prefetch the next page during a memory -> device DMA.

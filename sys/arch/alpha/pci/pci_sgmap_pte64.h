@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_sgmap_pte64.h,v 1.2 2000/11/08 20:59:25 ericj Exp $ */
+/* $OpenBSD: pci_sgmap_pte64.h,v 1.3 2001/03/21 17:26:39 art Exp $ */
 /* $NetBSD: pci_sgmap_pte64.h,v 1.2 1997/06/06 23:59:29 thorpej Exp $ */
 
 /*-
@@ -54,5 +54,5 @@
 #define SGPTE_PGADDR_SHIFT      12
 #define SGPTE_VALID             0x0000000000000001UL
 
-#include <alpha/common/sgmapvar.h>
-#include <alpha/common/sgmap_typedep.h>
+#include <alpha/dev/sgmapvar.h>
+#include <alpha/dev/sgmap_typedep.h>
