@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.17 2002/08/24 21:15:37 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.18 2002/08/24 21:21:55 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -178,7 +178,6 @@
 07/10	John Calvin born, 1509
 07/11	John Quincy Adams born, 1767
 07/12	Henry David Thoreau born, 1817
-08/12	Thomas Mann's Death, 1955
 07/15	Clement Clarke Moore born, 1779, author of "A Visit from
 		Saint Nicholas"
 07/18	Brian Auger is born in London, 1939
@@ -191,6 +190,7 @@
 08/03	Lenny Bruce dies of a morphine overdose, 1966
 08/06	Edsger Wybe Dijkstra died after a long struggle with cancer, 2002
 08/08	Dustin Hoffman born in Los Angeles, 1937
+08/12	Thomas Mann's Death, 1955
 08/13	Annie Oakley born, 1860
 08/13	Fidel Castro born, 1926/w7
 08/15	Louis Victor de Broglie born, 1892, physicist
