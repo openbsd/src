@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.15 2004/01/14 20:52:52 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.16 2004/04/14 22:33:28 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -169,7 +169,6 @@ syscon_scan(parent, child, args)
 }
 
 void
-
 sysconattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
@@ -186,7 +185,7 @@ sysconattach(parent, self, args)
 	sc->sc_syscon = &syscon_reg;
 	sys_syscon = sc->sc_syscon;
 
-	printf(": rev %d\n", 1);
+	printf("\n");
 
 	/*
 	 * pseudo driver, abort interrupt handler
@@ -195,17 +194,20 @@ sysconattach(parent, self, args)
 	sc->sc_abih.ih_arg = 0;
 	sc->sc_abih.ih_wantframe = 1;
 	sc->sc_abih.ih_ipl = IPL_ABORT;
+
 	sc->sc_acih.ih_fn = sysconacfail;
 	sc->sc_acih.ih_arg = 0;
-	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_acih.ih_wantframe = 1;
 	sc->sc_acih.ih_ipl = IPL_ABORT;
+
 	sc->sc_sfih.ih_fn = sysconsysfail;
 	sc->sc_sfih.ih_arg = 0;
-	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_sfih.ih_wantframe = 1;
 	sc->sc_sfih.ih_ipl = IPL_ABORT;
+
 	sc->sc_m188ih.ih_fn = sysconm188;
 	sc->sc_m188ih.ih_arg = 0;
-	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_m188ih.ih_wantframe = 1;
 	sc->sc_m188ih.ih_ipl = IPL_ABORT;
 
 	intr_establish(SYSCV_ABRT, &sc->sc_abih);
@@ -258,4 +260,3 @@ sysconm188(eframe)
 	printf("MVME188 interrupting?\n");
 	return (1);
 }
-
