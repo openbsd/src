@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1998/09/20 23:36:51 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 2001/01/17 00:27:21 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1998/09/20 23:36:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2001/01/17 00:27:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ notify()
 void
 next_play()
 {
-	player = ++player % num_play;
+	player = (player + 1) % num_play;
 	cur_p = &play[player];
 	num_doub = 0;
 }
