@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.5 2002/05/22 09:09:32 deraadt Exp $	*/
+/*	$OpenBSD: probe.c,v 1.6 2002/05/31 09:53:26 deraadt Exp $	*/
 /*	$KAME: probe.c,v 1.10 2000/08/13 06:14:59 itojun Exp $	*/
 
 /*
@@ -62,14 +62,13 @@ static struct iovec sndiov[2];
 static int probesock;
 static void sendprobe(struct in6_addr *addr, int ifindex);
 
-
 int
 probe_init()
 {
 	int scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-		CMSG_SPACE(sizeof(int));
+	    CMSG_SPACE(sizeof(int));
 	static u_char *sndcmsgbuf = NULL;
-	
+
 	if (sndcmsgbuf == NULL &&
 	    (sndcmsgbuf = (u_char *)malloc(scmsglen)) == NULL) {
 		warnmsg(LOG_ERR, __FUNCTION__, "malloc failed");
@@ -93,19 +92,18 @@ probe_init()
 	sndmhdr.msg_iovlen = 1;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
 	sndmhdr.msg_controllen = scmsglen;
-
 	return(0);
 }
 
 /*
- * Probe if each router in the default router list is still alive. 
+ * Probe if each router in the default router list is still alive.
  */
 void
 defrouter_probe(int ifindex)
 {
+	u_char ntopbuf[INET6_ADDRSTRLEN];
 	struct in6_drlist dr;
 	int s, i;
-	u_char ntopbuf[INET6_ADDRSTRLEN];
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "socket: %s", strerror(errno));
@@ -115,39 +113,39 @@ defrouter_probe(int ifindex)
 	strlcpy(dr.ifname, "lo0", sizeof dr.ifname); /* dummy interface */
 	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "ioctl(SIOCGDRLST_IN6): %s",
-		       strerror(errno));
+		    strerror(errno));
 		goto closeandend;
 	}
 
-	for(i = 0; dr.defrouter[i].if_index && i < PRLSTSIZ; i++) {
+	for (i = 0; dr.defrouter[i].if_index && i < PRLSTSIZ; i++) {
 		if (ifindex && dr.defrouter[i].if_index == ifindex) {
 			/* sanity check */
 			if (!IN6_IS_ADDR_LINKLOCAL(&dr.defrouter[i].rtaddr)) {
 				warnmsg(LOG_ERR, __FUNCTION__,
-					"default router list contains a "
-					"non-linklocal address(%s)",
-				       inet_ntop(AF_INET6,
-						 &dr.defrouter[i].rtaddr,
-						 ntopbuf, INET6_ADDRSTRLEN));
+				    "default router list contains a "
+				    "non-linklocal address(%s)",
+				    inet_ntop(AF_INET6,
+				    &dr.defrouter[i].rtaddr,
+				    ntopbuf, INET6_ADDRSTRLEN));
 				continue; /* ignore the address */
 			}
 			sendprobe(&dr.defrouter[i].rtaddr,
-				  dr.defrouter[i].if_index);
+			    dr.defrouter[i].if_index);
 		}
 	}
 
-  closeandend:
+closeandend:
 	close(s);
-	return;
 }
 
 static void
 sendprobe(struct in6_addr *addr, int ifindex)
 {
+	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	struct sockaddr_in6 sa6_probe;
 	struct in6_pktinfo *pi;
 	struct cmsghdr *cm;
-	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];;
+	int hoplimit = 1;
 
 	bzero(&sa6_probe, sizeof(sa6_probe));
 	sa6_probe.sin6_family = AF_INET6;
@@ -168,23 +166,17 @@ sendprobe(struct in6_addr *addr, int ifindex)
 	pi->ipi6_ifindex = ifindex;
 
 	/* specify the hop limit of the packet for safety */
-	{
-		int hoplimit = 1;
-
-		cm = CMSG_NXTHDR(&sndmhdr, cm);
-		cm->cmsg_level = IPPROTO_IPV6;
-		cm->cmsg_type = IPV6_HOPLIMIT;
-		cm->cmsg_len = CMSG_LEN(sizeof(int));
-		memcpy(CMSG_DATA(cm), &hoplimit, sizeof(int));
-	}
+	cm = CMSG_NXTHDR(&sndmhdr, cm);
+	cm->cmsg_level = IPPROTO_IPV6;
+	cm->cmsg_type = IPV6_HOPLIMIT;
+	cm->cmsg_len = CMSG_LEN(sizeof(int));
+	memcpy(CMSG_DATA(cm), &hoplimit, sizeof(int));
 
 	warnmsg(LOG_DEBUG, __FUNCTION__, "probe a router %s on %s",
-	       inet_ntop(AF_INET6, addr, ntopbuf, INET6_ADDRSTRLEN),
-	       if_indextoname(ifindex, ifnamebuf));
+	    inet_ntop(AF_INET6, addr, ntopbuf, INET6_ADDRSTRLEN),
+	    if_indextoname(ifindex, ifnamebuf));
 
 	if (sendmsg(probesock, &sndmhdr, 0))
 		warnmsg(LOG_ERR, __FUNCTION__, "sendmsg on %s: %s",
-			if_indextoname(ifindex, ifnamebuf), strerror(errno));
-
-	return;
+		    if_indextoname(ifindex, ifnamebuf), strerror(errno));
 }

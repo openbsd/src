@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.18 2002/03/25 20:46:49 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.19 2002/05/31 09:53:26 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -78,12 +78,10 @@ static int fflag = 0;
 /* a <= b */
 #define TIMEVAL_LEQ(a, b) (((a).tv_sec < (b).tv_sec) ||\
 			   (((a).tv_sec == (b).tv_sec) &&\
- 			    ((a).tv_usec <= (b).tv_usec)))
+			    ((a).tv_usec <= (b).tv_usec)))
 
 /* a == b */
 #define TIMEVAL_EQ(a, b) (((a).tv_sec==(b).tv_sec) && ((a).tv_usec==(b).tv_usec))
-
-int main(int argc, char *argv[]);
 
 /* static variables and functions */
 static int mobile_node = 0;
@@ -110,15 +108,13 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int s, maxfd, ch;
+	int s, maxfd, ch, once = 0, i;
+	struct timeval *timeout;
+	char *argv0, *opts;
+	fd_set fdset;
 #if 0
 	int rtsock;
 #endif
-	int once = 0;
-	struct timeval *timeout;
-	fd_set fdset;
-	char *argv0;
-	char *opts;
 
 	/*
 	 * Initialization
@@ -162,8 +158,6 @@ main(argc, argv)
 	argv += optind;
 
 	if (aflag) {
-		int i;
-
 		if (argc != 0) {
 			usage(argv0);
 			/*NOTREACHED*/
@@ -189,6 +183,7 @@ main(argc, argv)
 		log_upto = LOG_NOTICE;
 	if (!fflag) {
 		char *ident;
+
 		ident = strrchr(argv0, '/');
 		if (!ident)
 			ident = argv0;
@@ -270,8 +265,8 @@ main(argc, argv)
 	if (!once) {
 		if (pidfile(NULL) < 0) {
 			warnmsg(LOG_ERR, __FUNCTION__,
-				"failed to open a pid log file: %s",
-				strerror(errno));
+			    "failed to open a pid log file: %s",
+			    strerror(errno));
 		}
 	}
 
@@ -281,14 +276,14 @@ main(argc, argv)
 	FD_SET(rtsock, &fdset);
 #endif
 	while (1) {		/* main loop */
-		int e;
 		fd_set select_fd = fdset;
+		int e;
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
 			rtsold_dump_file(dumpfilename);
 		}
-			
+
 		timeout = rtsol_check_timer();
 
 		if (once) {
@@ -310,7 +305,7 @@ main(argc, argv)
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
-				       strerror(errno));
+				    strerror(errno));
 			}
 			continue;
 		}
@@ -337,12 +332,12 @@ ifconfig(char *ifname)
 
 	if ((sdl = if_nametosdl(ifname)) == NULL) {
 		warnmsg(LOG_ERR, __FUNCTION__,
-		       "failed to get link layer information for %s", ifname);
+		    "failed to get link layer information for %s", ifname);
 		return(-1);
 	}
 	if (find_ifinfo(sdl->sdl_index)) {
 		warnmsg(LOG_ERR, __FUNCTION__,
-			"interface %s was already configured", ifname);
+		    "interface %s was already configured", ifname);
 		free(sdl);
 		return(-1);
 	}
@@ -393,7 +388,7 @@ ifconfig(char *ifname)
 
 	return(0);
 
-  bad:
+bad:
 	free(ifinfo->sdl);
 	free(ifinfo);
 	return(-1);
@@ -421,7 +416,6 @@ ifreconfig(char *ifname)
 		free(ifi->rs_data);
 	free(ifi->sdl);
 	free(ifi);
-
 	return rv;
 }
 #endif
@@ -434,21 +428,20 @@ find_ifinfo(int ifindex)
 	for (ifi = iflist; ifi; ifi = ifi->next)
 		if (ifi->sdl->sdl_index == ifindex)
 			return(ifi);
-
 	return(NULL);
 }
 
 static int
 make_packet(struct ifinfo *ifinfo)
 {
-	char *buf;
-	struct nd_router_solicit *rs;
 	size_t packlen = sizeof(struct nd_router_solicit), lladdroptlen = 0;
+	struct nd_router_solicit *rs;
+	char *buf;
 
 	if ((lladdroptlen = lladdropt_length(ifinfo->sdl)) == 0) {
 		warnmsg(LOG_INFO, __FUNCTION__,
-			"link-layer address option has null length"
-		       " on %s. Treat as not included.", ifinfo->ifname);
+		    "link-layer address option has null length"
+		    " on %s. Treat as not included.", ifinfo->ifname);
 	}
 	packlen += lladdroptlen;
 	ifinfo->rs_datalen = packlen;
@@ -456,7 +449,7 @@ make_packet(struct ifinfo *ifinfo)
 	/* allocate buffer */
 	if ((buf = malloc(packlen)) == NULL) {
 		warnmsg(LOG_ERR, __FUNCTION__,
-			"memory allocation failed for %s", ifinfo->ifname);
+		    "memory allocation failed for %s", ifinfo->ifname);
 		return(-1);
 	}
 	ifinfo->rs_data = buf;
@@ -492,9 +485,9 @@ rtsol_check_timer()
 		if (TIMEVAL_LEQ(ifinfo->expire, now)) {
 			if (dflag > 1)
 				warnmsg(LOG_DEBUG, __FUNCTION__,
-					"timer expiration on %s, "
-				       "state = %d", ifinfo->ifname,
-				       ifinfo->state);
+				    "timer expiration on %s, "
+				    "state = %d", ifinfo->ifname,
+				    ifinfo->state);
 
 			switch (ifinfo->state) {
 			case IFS_DOWN:
@@ -513,24 +506,22 @@ rtsol_check_timer()
 				int oldstatus = ifinfo->active;
 				int probe = 0;
 
-				ifinfo->active =
-					interface_status(ifinfo);
+				ifinfo->active = interface_status(ifinfo);
 
 				if (oldstatus != ifinfo->active) {
 					warnmsg(LOG_DEBUG, __FUNCTION__,
-						"%s status is changed"
-						" from %d to %d",
-						ifinfo->ifname,
-						oldstatus, ifinfo->active);
+					    "%s status is changed"
+					    " from %d to %d",
+					    ifinfo->ifname,
+					    oldstatus, ifinfo->active);
 					probe = 1;
 					ifinfo->state = IFS_DELAY;
-				}
-				else if (ifinfo->probeinterval &&
-					 (ifinfo->probetimer -=
-					  ifinfo->timer.tv_sec) <= 0) {
+				} else if (ifinfo->probeinterval &&
+				    (ifinfo->probetimer -=
+				    ifinfo->timer.tv_sec) <= 0) {
 					/* probe timer expired */
 					ifinfo->probetimer =
-						ifinfo->probeinterval;
+					    ifinfo->probeinterval;
 					probe = 1;
 					ifinfo->state = IFS_PROBE;
 				}
@@ -548,9 +539,8 @@ rtsol_check_timer()
 					sendpacket(ifinfo);
 				else {
 					warnmsg(LOG_INFO, __FUNCTION__,
-						"No answer "
-						"after sending %d RSs",
-						ifinfo->probes);
+					    "No answer after sending %d RSs",
+					    ifinfo->probes);
 					ifinfo->probes = 0;
 					ifinfo->state = IFS_IDLE;
 				}
@@ -566,8 +556,7 @@ rtsol_check_timer()
 	if (TIMEVAL_EQ(rtsol_timer, tm_max)) {
 		warnmsg(LOG_DEBUG, __FUNCTION__, "there is no timer");
 		return(NULL);
-	}
-	else if (TIMEVAL_LT(rtsol_timer, now))
+	} else if (TIMEVAL_LT(rtsol_timer, now))
 		/* this may occur when the interval is too small */
 		returnval.tv_sec = returnval.tv_usec = 0;
 	else
@@ -575,7 +564,7 @@ rtsol_check_timer()
 
 	if (dflag > 1)
 		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %ld:%08ld",
-			(long)returnval.tv_sec, (long)returnval.tv_usec);
+		    (long)returnval.tv_sec, (long)returnval.tv_usec);
 
 	return(&returnval);
 }
@@ -596,16 +585,14 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 		if (++ifinfo->dadcount > DADRETRY) {
 			ifinfo->dadcount = 0;
 			ifinfo->timer.tv_sec = PROBE_INTERVAL;
-		}
-		else
+		} else
 			ifinfo->timer.tv_sec = 1;
 		break;
 	case IFS_IDLE:
 		if (mobile_node) {
-			/* XXX should be configurable */ 
+			/* XXX should be configurable */
 			ifinfo->timer.tv_sec = 3;
-		}
-		else
+		} else
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
@@ -633,8 +620,8 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 		break;
 	default:
 		warnmsg(LOG_ERR, __FUNCTION__,
-			"illegal interface state(%d) on %s",
-			ifinfo->state, ifinfo->ifname);
+		    "illegal interface state(%d) on %s",
+		    ifinfo->state, ifinfo->ifname);
 		return;
 	}
 
@@ -642,17 +629,16 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 	if (TIMEVAL_EQ(ifinfo->timer, tm_max)) {
 		ifinfo->expire = tm_max;
 		warnmsg(LOG_DEBUG, __FUNCTION__,
-			"stop timer for %s", ifinfo->ifname);
-	}
-	else {
+		    "stop timer for %s", ifinfo->ifname);
+	} else {
 		gettimeofday(&now, NULL);
 		TIMEVAL_ADD(&now, &ifinfo->timer, &ifinfo->expire);
 
 		if (dflag > 1)
 			warnmsg(LOG_DEBUG, __FUNCTION__,
-				"set timer for %s to %d:%d", ifinfo->ifname,
-			       (int)ifinfo->timer.tv_sec,
-			       (int)ifinfo->timer.tv_usec);
+			    "set timer for %s to %d:%d", ifinfo->ifname,
+			    (int)ifinfo->timer.tv_sec,
+			    (int)ifinfo->timer.tv_usec);
 	}
 
 #undef MILLION
@@ -670,8 +656,7 @@ TIMEVAL_ADD(struct timeval *a, struct timeval *b, struct timeval *result)
 	if ((l = a->tv_usec + b->tv_usec) < MILLION) {
 		result->tv_usec = l;
 		result->tv_sec = a->tv_sec + b->tv_sec;
-	}
-	else {
+	} else {
 		result->tv_usec = l - MILLION;
 		result->tv_sec = a->tv_sec + b->tv_sec + 1;
 	}
@@ -689,8 +674,7 @@ TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
 	if ((l = a->tv_usec - b->tv_usec) >= 0) {
 		result->tv_usec = l;
 		result->tv_sec = a->tv_sec - b->tv_sec;
-	}
-	else {
+	} else {
 		result->tv_usec = MILLION + l;
 		result->tv_sec = a->tv_sec - b->tv_sec - 1;
 	}

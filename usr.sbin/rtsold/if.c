@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.10 2002/02/17 19:42:39 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.11 2002/05/31 09:53:26 deraadt Exp $	*/
 /*	$KAME: if.c,v 1.15 2001/05/22 06:04:17 jinmei Exp $	*/
 
 /*
@@ -101,15 +101,14 @@ interface_up(char *name)
 
 	if (ioctl(ifsock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		warnmsg(LOG_WARNING, __FUNCTION__, "ioctl(SIOCGIFFLAGS): %s",
-		       strerror(errno));
+		    strerror(errno));
 		return(-1);
 	}
 	if (!(ifr.ifr_flags & IFF_UP)) {
 		ifr.ifr_flags |= IFF_UP;
-		if (ioctl(ifsock, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
+		if (ioctl(ifsock, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
 			warnmsg(LOG_ERR, __FUNCTION__,
-				"ioctl(SIOCSIFFLAGS): %s", strerror(errno));
-		}
+			    "ioctl(SIOCSIFFLAGS): %s", strerror(errno));
 		return(-1);
 	}
 
@@ -118,23 +117,22 @@ interface_up(char *name)
 	llflag = get_llflag(name);
 	if (llflag < 0) {
 		warnmsg(LOG_WARNING, __FUNCTION__,
-			"get_llflag() failed, anyway I'll try");
+		    "get_llflag() failed, anyway I'll try");
 		return 0;
 	}
 
 	if (!(llflag & IN6_IFF_NOTREADY)) {
-		warnmsg(LOG_DEBUG, __FUNCTION__,
-			"%s is ready", name);
+		warnmsg(LOG_DEBUG, __FUNCTION__, "%s is ready", name);
 		return(0);
 	} else {
 		if (llflag & IN6_IFF_TENTATIVE) {
 			warnmsg(LOG_DEBUG, __FUNCTION__, "%s is tentative",
-			       name);
+			    name);
 			return IFS_TENTATIVE;
 		}
 		if (llflag & IN6_IFF_DUPLICATED)
 			warnmsg(LOG_DEBUG, __FUNCTION__, "%s is duplicated",
-			       name);
+			    name);
 		return -1;
 	}
 }
@@ -145,13 +143,13 @@ interface_status(struct ifinfo *ifinfo)
 	char *ifname = ifinfo->ifname;
 	struct ifreq ifr;
 	struct ifmediareq ifmr;
-	
+
 	/* get interface flags */
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "ioctl(SIOCGIFFLAGS) on %s: %s",
-		       ifname, strerror(errno));
+		    ifname, strerror(errno));
 		return(-1);
 	}
 	/*
@@ -171,8 +169,8 @@ interface_status(struct ifinfo *ifinfo)
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
 		if (errno != EINVAL) {
 			warnmsg(LOG_DEBUG, __FUNCTION__,
-				"ioctl(SIOCGIFMEDIA) on %s: %s",
-			       ifname, strerror(errno));
+			    "ioctl(SIOCGIFMEDIA) on %s: %s",
+			    ifname, strerror(errno));
 			return(-1);
 		}
 		/*
@@ -184,15 +182,15 @@ interface_status(struct ifinfo *ifinfo)
 	}
 
 	if (ifmr.ifm_status & IFM_AVALID) {
-		switch(ifmr.ifm_active & IFM_NMASK) {
-		 case IFM_ETHER:
-			 if (ifmr.ifm_status & IFM_ACTIVE)
-				 goto active;
-			 else
-				 goto inactive;
-			 break;
-		 default:
-			 goto inactive;
+		switch (ifmr.ifm_active & IFM_NMASK) {
+		case IFM_ETHER:
+			if (ifmr.ifm_status & IFM_ACTIVE)
+				goto active;
+			else
+				goto inactive;
+			break;
+		default:
+			goto inactive;
 		}
 	}
 
@@ -208,21 +206,20 @@ interface_status(struct ifinfo *ifinfo)
 
 #define NEXT_SA(ap) (ap) = (struct sockaddr *) \
 	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
-						 sizeof(u_long)) :\
-			  			 sizeof(u_long)))
+	sizeof(u_long)) : sizeof(u_long)))
 #define ROUNDUP8(a) (1 + (((a) - 1) | 7))
 
 int
 lladdropt_length(struct sockaddr_dl *sdl)
 {
-	switch(sdl->sdl_type) {
-	 case IFT_ETHER:
+	switch (sdl->sdl_type) {
+	case IFT_ETHER:
 #ifdef IFT_IEEE80211
 	case IFT_IEEE80211:
 #endif
-		 return(ROUNDUP8(ETHER_ADDR_LEN + 2));
-	 default:
-		 return(0);
+		return(ROUNDUP8(ETHER_ADDR_LEN + 2));
+	default:
+		return(0);
 	}
 }
 
@@ -233,19 +230,19 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 
 	ndopt->nd_opt_type = ND_OPT_SOURCE_LINKADDR; /* fixed */
 
-	switch(sdl->sdl_type) {
-	 case IFT_ETHER:
+	switch (sdl->sdl_type) {
+	case IFT_ETHER:
 #ifdef IFT_IEEE80211
 	case IFT_IEEE80211:
 #endif
-		 ndopt->nd_opt_len = (ROUNDUP8(ETHER_ADDR_LEN + 2)) >> 3;
-		 addr = (char *)(ndopt + 1);
-		 memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
-		 break;
-	 default:
-		 warnmsg(LOG_ERR, __FUNCTION__,
-			 "unsupported link type(%d)", sdl->sdl_type);
-		 exit(1);
+		ndopt->nd_opt_len = (ROUNDUP8(ETHER_ADDR_LEN + 2)) >> 3;
+		addr = (char *)(ndopt + 1);
+		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
+		break;
+	default:
+		warnmsg(LOG_ERR, __FUNCTION__,
+		    "unsupported link type(%d)", sdl->sdl_type);
+		exit(1);
 	}
 
 	return;
@@ -343,8 +340,8 @@ get_llflag(const char *name)
 	}
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (strlen(ifa->ifa_name) != strlen(name)
-		 || strncmp(ifa->ifa_name, name, strlen(name)) != 0)
+		if (strlen(ifa->ifa_name) != strlen(name) ||
+		    strncmp(ifa->ifa_name, name, strlen(name)) != 0)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -401,12 +398,11 @@ get_llflag(const char *name)
 
 	/* Look for this interface in the list */
 	ifr_end = (struct ifreq *) (ifconf.ifc_buf + ifconf.ifc_len);
-	for (ifr = ifconf.ifc_req;
-	     ifr < ifr_end;
-	     ifr = (struct ifreq *) ((char *) &ifr->ifr_addr
+	for (ifr = ifconf.ifc_req; ifr < ifr_end;
+	    ifr = (struct ifreq *) ((char *) &ifr->ifr_addr
 				    + ifr->ifr_addr.sa_len)) {
-		if (strlen(ifr->ifr_name) != strlen(name)
-		 || strncmp(ifr->ifr_name, name, strlen(name)) != 0)
+		if (strlen(ifr->ifr_name) != strlen(name) ||
+		    strncmp(ifr->ifr_name, name, strlen(name)) != 0)
 			continue;
 		if (ifr->ifr_addr.sa_family != AF_INET6)
 			continue;
@@ -455,13 +451,12 @@ static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {
 	int i;
-	
+
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
 			NEXT_SA(sa);
-		}
-		else
+		} else
 			rti_info[i] = NULL;
 	}
 }
