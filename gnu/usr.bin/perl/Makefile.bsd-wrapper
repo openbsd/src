@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.47 2002/04/21 22:46:33 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.48 2002/04/30 18:38:58 espie Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -327,7 +327,7 @@ ${page}.cat${sect}: ${file}
 	    ${NROFF} -man >${.TARGET}
 ${page}.ps${sect}: ${file}
 	${POD2MAN} --section=${sect} --official ${.ALLSRC}|\
-	    ${NROFF} -man -ps >${.TARGET}
+	    ${NROFF} -man -Tps >${.TARGET}
 .endfor
 
 LIB=	perl
