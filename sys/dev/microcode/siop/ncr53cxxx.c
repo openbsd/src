@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53cxxx.c,v 1.4 2003/04/06 18:54:20 ho Exp $ */
+/*	$OpenBSD: ncr53cxxx.c,v 1.5 2003/06/27 20:38:49 krw Exp $ */
 /*	$NetBSD: ncr53cxxx.c,v 1.10 2002/04/21 22:40:10 bouyer Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ void parse ()
 		    	    	*s++ = *p++;
 		    	}
 		    	*s = 0;
-			len = strlen (name) + 1;
+			len = strlen (string) + 1;
 		    	tokens[ntokens].name = malloc (len);
 		    	strlcpy (tokens[ntokens].name, string, len);
 		    	tokens[ntokens].type = 0;
