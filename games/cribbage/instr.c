@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.c,v 1.7 1999/06/10 22:58:19 pjanzen Exp $	*/
+/*	$OpenBSD: instr.c,v 1.8 2001/07/09 07:04:28 deraadt Exp $	*/
 /*	$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: instr.c,v 1.7 1999/06/10 22:58:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: instr.c,v 1.8 2001/07/09 07:04:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ instructions()
 		}
 		if (dup2(fd, 0) == -1)
 			err(1, "dup2");
-		execl(_PATH_BSHELL, "sh", "-c", pager, NULL);
+		execl(_PATH_BSHELL, "sh", "-c", pager, (char *)NULL);
 		err(1, "exec sh -c %s", pager);
 		/* NOTREACHED */
 	default:

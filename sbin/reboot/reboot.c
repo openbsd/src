@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.19 2001/06/04 14:59:49 mickey Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.20 2001/07/09 07:04:46 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.19 2001/06/04 14:59:49 mickey Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.20 2001/07/09 07:04:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ main(argc, argv)
 			t.c_oflag |= (ONLCR | OPOST);
 			tcsetattr(0, TCSANOW, &t);
 
-			execl(_PATH_BSHELL, "sh", _PATH_RC, "shutdown", NULL);
+			execl(_PATH_BSHELL, "sh", _PATH_RC, "shutdown", (char *)NULL);
 			_exit(1);
 		default:
 			waitpid(pid, NULL, 0);

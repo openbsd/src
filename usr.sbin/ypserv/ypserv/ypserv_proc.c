@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.15 1998/01/08 22:36:48 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.16 2001/07/09 07:05:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.15 1998/01/08 22:36:48 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.16 2001/07/09 07:05:06 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -311,7 +311,7 @@ ypproc_xfr_2_svc(argp, rqstp)
 	}
 	if (pid == 0) {
 		execl(ypxfr_proc, "ypxfr", "-d", argp->map_parms.domain,
-		    "-C",tid, prog, ipadd, port, argp->map_parms.map, NULL);
+		    "-C",tid, prog, ipadd, port, argp->map_parms.map, (char *)NULL);
 		_exit(1);
 	}
 	
@@ -932,7 +932,7 @@ bail:
 	}
 	if (pid == 0) {
 		execl(yppush_proc, "yppush", "-d", argp->yppush_req_domain,
-		      argp->yppush_req_map, NULL);
+		      argp->yppush_req_map, (char *)NULL);
 		_exit(1);
 	}
 	
@@ -980,7 +980,7 @@ bail:
 	}
 	if (pid == 0) {
 		execl(ypxfr_proc, "ypxfr", "-d", argp->yppull_req_domain,
-		      argp->yppull_req_map, NULL);
+		      argp->yppull_req_map, (char *)NULL);
 		_exit(1);
 	}
 	
@@ -1030,7 +1030,7 @@ bail:
 	}
 	if (pid == 0) {
 		execl(ypxfr_proc, "ypxfr", "-d", argp->ypget_req_domain, "-h",
-		      argp->ypget_req_owner, argp->yppush_req_map, NULL);
+		      argp->ypget_req_owner, argp->yppush_req_map, (char *)NULL);
 		_exit(1);
 	}
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_sock_2.c,v 1.5 2000/01/06 06:58:34 d Exp $	*/
+/*	$OpenBSD: test_sock_2.c,v 1.6 2001/07/09 07:04:40 deraadt Exp $	*/
 /* ==== test_sock_1.c =========================================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
  *
@@ -96,7 +96,7 @@ sock_accept(arg)
 	CHECKe(pid = fork());
 	switch(pid) {
 	case 0:
-		execl("test_sock_2a", "test_sock_2a", "fork okay", NULL);
+		execl("test_sock_2a", "test_sock_2a", "fork okay", (char *)NULL);
 		DIE(errno, "execl");
 	default:
 		break;

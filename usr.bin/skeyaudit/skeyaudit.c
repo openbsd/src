@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.10 2000/09/20 21:53:49 pjanzen Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.11 2001/07/09 07:04:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -202,7 +202,7 @@ runsendmail(pw, pidp)
 			_exit(127);
 		}
 
-		execl(_PATH_SENDMAIL, "sendmail", "-t", NULL);
+		execl(_PATH_SENDMAIL, "sendmail", "-t", (char *)NULL);
 		warn("cannot run \"%s -t\"", _PATH_SENDMAIL);
 		_exit(127);
 	}

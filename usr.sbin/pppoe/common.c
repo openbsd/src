@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.4 2001/04/24 05:04:51 jason Exp $	*/
+/*	$OpenBSD: common.c,v 1.5 2001/07/09 07:05:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -116,7 +116,7 @@ runppp(bpffd, sysname)
 	if (closeit)
 		close(fds);
 
-	execlp(PPP_PROG, "ppp", "-direct", sysname, NULL);
+	execlp(PPP_PROG, "ppp", "-direct", sysname, (char *)NULL);
 	perror("execlp");
 	syslog(LOG_INFO, "%s exec failed: %m", PPP_PROG);
 	_exit(1);

@@ -321,6 +321,6 @@ main(int argc, char **argv)
     ret = doit (port, service);
     closelog();
     if (ret == 0 && regpag_str != NULL)
-        ret = execl(regpag_str, "regpag", "-t", krb5_tkfile, "-r", NULL);
+        ret = execl(regpag_str, "regpag", "-t", krb5_tkfile, "-r", (char *)NULL);
     return ret;
 }

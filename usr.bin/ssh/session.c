@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.98 2001/07/02 13:59:15 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.99 2001/07/09 07:04:53 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1124,7 +1124,7 @@ do_child(Session *s, const char *command)
 			/* Launch login(1). */
 
 			execl("/usr/bin/login", "login", "-h", hostname,
-			     "-p", "-f", "--", pw->pw_name, NULL);
+			     "-p", "-f", "--", pw->pw_name, (char *)NULL);
 
 			/* Login couldn't be executed, die. */
 

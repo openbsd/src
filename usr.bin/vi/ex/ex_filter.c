@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.3 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.4 2001/07/09 07:04:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -143,7 +143,7 @@ err:		if (input[0] != -1)
 		else
 			++name;
 
-		execl(O_STR(sp, O_SHELL), name, "-c", cmd, NULL);
+		execl(O_STR(sp, O_SHELL), name, "-c", cmd, (char *)NULL);
 		msgq_str(sp, M_SYSERR, O_STR(sp, O_SHELL), "execl: %s");
 		_exit (127);
 		/* NOTREACHED */

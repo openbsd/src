@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.20 2000/04/21 21:50:00 millert Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.21 2001/07/09 07:04:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -45,7 +45,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.20 2000/04/21 21:50:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.21 2001/07/09 07:04:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ main(argc, argv)
 
 	/* Support -H flag for backwards compat */
 	if (holdme) {
-		execl(_PATH_LOCKSPOOL, "lockspool", NULL);
+		execl(_PATH_LOCKSPOOL, "lockspool", (char *)NULL);
 		err(FATAL, "execl: lockspool: %s", strerror(errno));
 	} else {
 		if (!*argv)

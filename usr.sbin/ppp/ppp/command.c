@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.63 2001/07/09 00:08:54 brian Exp $
+ * $OpenBSD: command.c,v 1.64 2001/07/09 07:05:03 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -558,7 +558,7 @@ ShellCommand(struct cmdargs const *arg, int bg)
       if (arg->prompt)
         printf("ppp: Pausing until %s finishes\n", shell);
       prompt_TtyOldMode(arg->prompt);
-      execl(shell, shell, NULL);
+      execl(shell, shell, (char *)NULL);
     }
 
     log_Printf(LogWARN, "exec() of %s failed: %s\n",

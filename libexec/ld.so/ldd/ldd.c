@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.6 2001/06/13 19:43:21 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.7 2001/07/09 07:04:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -143,7 +143,7 @@ doit(char *name)
 	case -1:
 		err(1, "fork");
 	case 0:
-		execl(name, name, NULL);
+		execl(name, name, (char *)NULL);
 		perror(name);
 		_exit(1);
 	default:

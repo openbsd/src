@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.15 2001/07/07 01:10:42 mickey Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.16 2001/07/09 07:05:00 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -522,7 +522,7 @@ do_etc_file(const char *file)
 		return;
 	case 0:
 		/* We are the child. */
-		execl(file, prog, NULL);
+		execl(file, prog, (char *)NULL);
 		_exit(1);
 		/* NOTREACHED */
 	default:

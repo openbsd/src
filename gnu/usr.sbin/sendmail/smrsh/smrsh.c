@@ -371,7 +371,7 @@ main(argc, argv)
 #ifdef DEBUG
 	printf("%s\n", newcmdbuf);
 #endif /* DEBUG */
-	(void) execle("/bin/sh", "/bin/sh", "-c", newcmdbuf, NULL, newenv);
+	(void) execle("/bin/sh", "/bin/sh", "-c", newcmdbuf, (char *)NULL, newenv);
 	save_errno = errno;
 #ifndef DEBUG
 	syslog(LOG_CRIT, "Cannot exec /bin/sh: %m");

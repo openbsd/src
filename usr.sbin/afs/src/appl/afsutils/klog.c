@@ -56,7 +56,7 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: klog.c,v 1.1 2000/09/11 14:40:33 art Exp $");
+RCSID("$Id: klog.c,v 1.2 2001/07/09 07:04:59 deraadt Exp $");
 
 #include "appl_locl.h"
 #include "klog.h"
@@ -787,7 +787,7 @@ main(int argc, char **argv)
 	    shell = pwd->pw_shell;
 	}
 
-	execl(shell, shell, NULL);
+	execl(shell, shell, (char *)NULL);
 
 	/* the AFS token is useless if the shell exec fails, because it
 	   is in a PAG that will soon go away. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.7 2001/04/17 21:44:38 espie Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.8 2001/07/09 07:04:36 deraadt Exp $	*/
 /*	$NetBSD: ldd.c,v 1.12 1995/10/09 00:14:41 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -163,7 +163,7 @@ char	*argv[];
 			}
 			break;
 		case 0:
-			rval |= execl(*argv, *argv, NULL) != 0;
+			rval |= execl(*argv, *argv, (char *)NULL) != 0;
 			perror(*argv);
 			_exit(1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.8 2000/12/24 11:22:54 aaron Exp $	*/
+/*	$OpenBSD: apply.c,v 1.9 2001/07/09 07:04:47 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.8 2000/12/24 11:22:54 aaron Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.9 2001/07/09 07:04:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ system(command)
 		err(1, "fork");
 	case 0:				/* child */
 		(void)sigsetmask(omask);
-		execl(shell, name, "-c", command, NULL);
+		execl(shell, name, "-c", command, (char *)NULL);
 		err(1, "%s", shell);
 	}
 	intsave = signal(SIGINT, SIG_IGN);

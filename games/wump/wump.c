@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.15 2001/05/02 23:28:31 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.16 2001/07/09 07:04:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.15 2001/05/02 23:28:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.16 2001/07/09 07:04:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -915,7 +915,7 @@ puff of greasy black smoke! (poof)\n");
 	case 0: /* child */
 		if (dup2(fd, 0) == -1)
 			err(1, "dup2");
-		(void)execl(_PATH_BSHELL, "sh", "-c", pager, NULL);
+		(void)execl(_PATH_BSHELL, "sh", "-c", pager, (char *)NULL);
 		err(1, "exec sh -c %s", pager);
 		/* NOT REACHED */
 	case -1:

@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.4 2000/06/30 16:00:23 millert Exp $
+ * $OpenBSD: learn.c,v 1.5 2001/07/09 07:04:48 deraadt Exp $
  */
 
 /****************************************************************
@@ -469,8 +469,8 @@ makpipe()
 		close(0);
 		dup(f[0]);
 		close(f[0]);
-		execl ("/bin/sh", "sh", "-i", 0);
-		execl ("/usr/bin/sh", "sh", "-i", 0);
+		execl ("/bin/sh", "sh", "-i", (char *)NULL);
+		execl ("/usr/bin/sh", "sh", "-i", (char *)NULL);
 		write(2,"Exec error\n",11);
 	}
 	close(f[0]);
@@ -496,7 +496,7 @@ maktee()
 		close(out);
 		dup(in);
 		close(in);
-		execl (tee, "lrntee", 0);
+		execl (tee, "lrntee", (char *)NULL);
 		fprintf(stderr, "Tee exec failed\n");
 		exit(1);
 	}
@@ -699,7 +699,7 @@ int system(const char *s)
 	if ((pid = fork()) == 0) {
 		signal(SIGINT, SIG_DFL);
 		signal(SIGQUIT, SIG_DFL);
-		execl("/bin/sh", "sh", "-c", s, 0);
+		execl("/bin/sh", "sh", "-c", s, (char *)NULL);
 		_exit(127);
 	}
 	while ((w = wait(&status)) != pid && w != -1)
@@ -1029,8 +1029,8 @@ int n;
 	chdir("..");
 	if ( (pid=fork()) ==0) {
 		signal(SIGHUP, SIG_IGN);
-		execl("/bin/rm", "rm", "-r", playdir, 0);
-		execl("/usr/bin/rm", "rm", "-r", playdir, 0);
+		execl("/bin/rm", "rm", "-r", playdir, (char *)NULL);
+		execl("/usr/bin/rm", "rm", "-r", playdir, (char *)NULL);
 		fprintf(stderr, "Can't find 'rm' command.\n");
 		exit(0);
 	}

@@ -141,7 +141,7 @@ main(argc, argv)
         "FILE:/opt/dcelocal/var/security/creds/dcecred_%8.8x", 
         pag);
       esetenv("KRB5CCNAME",ccname,1);
-      execl("/bin/csh","csh",0);
+      execl("/bin/csh","csh",(char *)NULL);
     }
     else {
       fprintf(stderr," Not a good pag value\n");

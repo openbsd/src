@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.5 2001/01/29 01:58:42 niklas Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.6 2001/07/09 07:04:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -406,7 +406,7 @@ err:		if (to_cs[0] != -1)
 #define	CSCOPE_CMD_FMT		"cd '%s' && exec cscope -dl -f %s"
 		(void)snprintf(cmd, sizeof(cmd),
 		    CSCOPE_CMD_FMT, csc->dname, dbname);
-		(void)execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
+		(void)execl(_PATH_BSHELL, "sh", "-c", cmd, (char *)NULL);
 		msgq_str(sp, M_SYSERR, cmd, "execl: %s");
 		_exit (127);
 		/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.21 2001/01/19 17:57:37 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.22 2001/07/09 07:04:45 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.21 2001/01/19 17:57:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.22 2001/07/09 07:04:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1416,7 +1416,7 @@ nice_death()
 			sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
 
 			execl(_PATH_BSHELL, "sh", _PATH_RUNCOM, "shutdown",
-			    NULL);
+			    (char *)NULL);
 			stall("can't exec %s for %s %s: %m", _PATH_BSHELL,
 			    _PATH_RUNCOM, "shutdown");
 			_exit(1);

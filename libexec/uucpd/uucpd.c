@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.18 2001/01/28 19:34:35 niklas Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.19 2001/07/09 07:04:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.18 2001/01/28 19:34:35 niklas Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.19 2001/07/09 07:04:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -227,7 +227,7 @@ struct sockaddr_in *sinp;
 		return;
 	}
 	chdir(pw->pw_dir);
-	execl(_PATH_UUCICO, "uucico", (char *)0);
+	execl(_PATH_UUCICO, "uucico", (char *)NULL);
 	perror("uucico server: execl");
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.22 2001/06/22 15:27:20 lebel Exp $ */
+/*	$OpenBSD: printjob.c,v 1.23 2001/07/09 07:05:02 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -569,7 +569,7 @@ print(format, file)
 			for (n = 3, nofile = sysconf(_SC_OPEN_MAX); n < nofile; n++)
 				(void) close(n);
 			execl(_PATH_PR, "pr", width, length,
-			    "-h", *title ? title : " ", 0);
+			    "-h", *title ? title : " ", (char *)NULL);
 			syslog(LOG_ERR, "cannot execl %s", _PATH_PR);
 			exit(2);
 		}
@@ -1052,7 +1052,7 @@ sendmail(user, bombed)
 			cp++;
 		else
 			cp = _PATH_SENDMAIL;
-		execl(_PATH_SENDMAIL, cp, "-t", 0);
+		execl(_PATH_SENDMAIL, cp, "-t", (char *)NULL);
 		exit(0);
 	} else if (s > 0) {				/* parent */
 		dup2(p[1], 1);
@@ -1288,7 +1288,7 @@ openpr()
 				cp = OF;
 			else
 				cp++;
-			execl(OF, cp, width, length, 0);
+			execl(OF, cp, width, length, (char *)NULL);
 			syslog(LOG_ERR, "%s: %s: %m", printer, OF);
 			exit(1);
 		}

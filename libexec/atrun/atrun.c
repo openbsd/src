@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.13 2001/05/29 21:37:16 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.14 2001/07/09 07:04:41 deraadt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -71,7 +71,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.13 2001/05/29 21:37:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.14 2001/07/09 07:04:41 deraadt Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -320,7 +320,7 @@ run_file(filename, uid, gid)
 		if (queue > 'b')
 			(void) setpriority(PRIO_PROCESS, 0, queue - 'b');
 
-		if (execle(_PATH_BSHELL, "sh", NULL, nenvp) != 0)
+		if (execle(_PATH_BSHELL, "sh", (char *)NULL, nenvp) != 0)
 			perr("Exec failed for /bin/sh");
 
 		PRIV_END
@@ -357,7 +357,7 @@ run_file(filename, uid, gid)
 			chdir("/");
 
 		execl(_PATH_SENDMAIL, "sendmail", "-F", "Atrun Service",
-		    "-odi", "-oem", "-t", (char *) NULL);
+		    "-odi", "-oem", "-t", (char *)NULL);
 		perr("Exec failed for mail command");
 
 		PRIV_END

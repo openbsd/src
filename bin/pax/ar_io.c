@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.22 2001/05/26 00:32:20 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.23 2001/07/09 07:04:26 deraadt Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.22 2001/05/26 00:32:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.23 2001/07/09 07:04:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1350,7 +1350,7 @@ ar_start_gzip(int fd, const char *gzip_program, int wr)
 		}
 		close(fds[0]);
 		close(fds[1]);
-		if (execlp(gzip_program, gzip_program, gzip_flags, NULL) < 0)
+		if (execlp(gzip_program, gzip_program, gzip_flags, (char *)NULL) < 0)
 			err(1, "could not exec");
 		/* NOTREACHED */
 	}

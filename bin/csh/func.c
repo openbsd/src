@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.10 2001/06/25 04:41:25 art Exp $       */
+/*    $OpenBSD: func.c,v 1.11 2001/07/09 07:02:08 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.10 2001/06/25 04:41:25 art Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.11 2001/07/09 07:02:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ dologin(v, t)
     islogin();
     rechist();
     (void) signal(SIGTERM, parterm);
-    (void) execl(_PATH_LOGIN, "login", short2str(v[1]), NULL);
+    (void) execl(_PATH_LOGIN, "login", short2str(v[1]), (char *)NULL);
     untty();
     xexit(1);
 }

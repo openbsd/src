@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.26 2001/06/23 23:09:31 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.27 2001/07/09 07:04:58 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.26 2001/06/23 23:09:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.27 2001/07/09 07:04:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -561,7 +561,7 @@ strip(to_name)
 		(void)unlink(to_name);
 		errx(EX_TEMPFAIL, "forks: %s", strerror(serrno));
 	case 0:
-		execl(path_strip, "strip", to_name, NULL);
+		execl(path_strip, "strip", to_name, (char *)NULL);
 		warn("%s", path_strip);
 		_exit(EX_OSERR);
 	default:

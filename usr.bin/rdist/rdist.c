@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.7 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.8 2001/07/09 07:04:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.7 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: rdist.c,v 1.8 2001/07/09 07:04:51 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -143,7 +143,7 @@ main(argc, argv, envp)
 			"Old rdist (-Server) requested; running %s", 
 			_PATH_OLDRDIST);
 		(void) execl(_PATH_OLDRDIST, xbasename(_PATH_OLDRDIST), 
-			     "-Server", NULL);
+			     "-Server", (char *)NULL);
 		fatalerr("Exec old rdist failed: %s: %s.", 
 			 _PATH_OLDRDIST, SYSERR);
 #else	/* !_PATH_OLDRDIST */

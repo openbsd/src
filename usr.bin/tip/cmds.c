@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.8 2000/04/20 06:19:33 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.9 2001/07/09 07:04:55 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.8 2000/04/20 06:19:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 2001/07/09 07:04:55 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -594,7 +594,7 @@ shell()
 		else
 			cp++;
 		shell_uid();
-		execl(value(SHELL), cp, 0);
+		execl(value(SHELL), cp, (char *)NULL);
 		printf("\r\ncan't execl!\r\n");
 		exit(1);
 	}
@@ -690,7 +690,7 @@ execute(s)
 	else
 		cp++;
 	shell_uid();
-	execl(value(SHELL), cp, "-c", s, 0);
+	execl(value(SHELL), cp, "-c", s, (char *)NULL);
 }
 
 int
@@ -862,7 +862,7 @@ expand(name)
 		close(pivec[1]);
 		close(2);
 		shell_uid();
-		execl(Shell, Shell, "-c", cmdbuf, 0);
+		execl(Shell, Shell, "-c", cmdbuf, (char *)NULL);
 		_exit(1);
 	}
 	if (pid == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.7 2001/01/29 01:58:41 niklas Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.8 2001/07/09 07:04:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -691,7 +691,7 @@ err:		if (ifp != NULL)
 		 * XXX
 		 * Assume that all shells have -c.
 		 */
-		execl(sh_path, sh, "-c", bp, NULL);
+		execl(sh_path, sh, "-c", bp, (char *)NULL);
 		msgq_str(sp, M_SYSERR, sh_path, "118|Error: execl: %s");
 		_exit(127);
 	default:			/* Parent. */

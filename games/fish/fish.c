@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.8 2000/04/08 12:22:39 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.9 2001/07/09 07:04:29 deraadt Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.8 2000/04/08 12:22:39 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.9 2001/07/09 07:04:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -505,7 +505,7 @@ instructions()
 			}
 			if (dup2(fd, 0) == -1)
 				err(1, "dup2");
-			(void)execl(_PATH_BSHELL, "sh", "-c", pager, NULL);
+			(void)execl(_PATH_BSHELL, "sh", "-c", pager, (char *)NULL);
 			err(1, "exec sh -c %s", pager);
 			/* NOT REACHED */
 		case -1:

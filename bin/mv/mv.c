@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.17 2001/01/08 16:12:57 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.18 2001/07/09 07:04:26 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.17 2001/01/08 16:12:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.18 2001/07/09 07:04:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -366,7 +366,7 @@ copy(from, to)
 	pid_t pid;
 
 	if ((pid = vfork()) == 0) {
-		execl(_PATH_CP, "mv", "-PRp", from, to, NULL);
+		execl(_PATH_CP, "mv", "-PRp", from, to, (char *)NULL);
 		warn("%s", _PATH_CP);
 		_exit(1);
 	}
@@ -384,7 +384,7 @@ copy(from, to)
 		return (1);
 	}
 	if (!(pid = vfork())) {
-		execl(_PATH_RM, "mv", "-rf", from, NULL);
+		execl(_PATH_RM, "mv", "-rf", from, (char *)NULL);
 		warn("%s", _PATH_RM);
 		_exit(1);
 	}

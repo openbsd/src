@@ -258,7 +258,7 @@ int ssl_util_ppopen_child(void *cmd, child_info *pinfo)
     spawnl(P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
 #else
     /* Standard Unix */
-    execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, NULL);
+    execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
 #endif
     return (child_pid);
 }

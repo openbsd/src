@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.24 2001/01/02 18:22:32 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.25 2001/07/09 07:04:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.24 2001/01/02 18:22:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.25 2001/07/09 07:04:40 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -295,10 +295,10 @@ pw_mkdb(username)
 		if (pw_lck) {
 			if (username)
 				execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", "-d",
-				    pw_dir, "-u", username, pw_lck, NULL);
+				    pw_dir, "-u", username, pw_lck, (char *)NULL);
 			else
 				execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", "-d",
-				    pw_dir, pw_lck, NULL);
+				    pw_dir, pw_lck, (char *)NULL);
 		}
 		_exit(1);
 	}

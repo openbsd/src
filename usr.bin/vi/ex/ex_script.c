@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.5 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.6 2001/07/09 07:04:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -185,7 +185,7 @@ err:		if (sc->sh_master != -1)
 			sh = sh_path;
 		else
 			++sh;
-		execl(sh_path, sh, "-i", NULL);
+		execl(sh_path, sh, "-i", (char *)NULL);
 		msgq_str(sp, M_SYSERR, sh_path, "execl: %s");
 		_exit(127);
 	default:			/* Parent. */

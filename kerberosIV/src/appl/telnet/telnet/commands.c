@@ -1307,9 +1307,9 @@ shell(int argc, char **argv)
 	    else
 		shellname++;
 	    if (argc > 1)
-		execl(shellp, shellname, "-c", &saveline[1], 0);
+		execl(shellp, shellname, "-c", &saveline[1], (char *)NULL);
 	    else
-		execl(shellp, shellname, 0);
+		execl(shellp, shellname, (char *)NULL);
 	    perror("Execl");
 	    _exit(1);
 	}

@@ -836,7 +836,7 @@ doit (int do_kerberos, int check_rhosts)
 #endif /* KRB5 */
     }
 #endif /* KRB4 */
-    execle (pwd->pw_shell, pwd->pw_shell, "-c", cmd, NULL, env);
+    execle (pwd->pw_shell, pwd->pw_shell, "-c", cmd, (char *)NULL, env);
     err(1, "exec %s", pwd->pw_shell);
 }
 

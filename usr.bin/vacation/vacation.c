@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.13 2000/08/05 21:53:30 pjanzen Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.14 2001/07/09 07:04:56 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.13 2000/08/05 21:53:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.14 2001/07/09 07:04:56 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -470,7 +470,7 @@ sendmessage(myname)
 		close(pvect[1]);
 		close(fileno(mfp));
 		execl(_PATH_SENDMAIL, "sendmail", "-f", myname, "--",
-		    from, NULL);
+		    from, (char *)NULL);
 		syslog(LOG_ERR, "can't exec %s: %m", _PATH_SENDMAIL);
 		_exit(1);
 	}

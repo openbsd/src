@@ -1369,9 +1369,9 @@ shell_escape (arg, from_tty)
   if ((pid = fork()) == 0)
     {
       if (!arg)
-	execl (user_shell, p, 0);
+	execl (user_shell, p, (char *)NULL);
       else
-	execl (user_shell, p, "-c", arg, 0);
+	execl (user_shell, p, "-c", arg, (char *)NULL);
 
       fprintf_unfiltered (gdb_stderr, "Cannot execute %s: %s\n", user_shell,
 			  safe_strerror (errno));

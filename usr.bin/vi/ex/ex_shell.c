@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shell.c,v 1.6 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_shell.c,v 1.7 2001/07/09 07:04:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -128,7 +128,7 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 			name = O_STR(sp, O_SHELL);
 		else
 			++name;
-		execl(O_STR(sp, O_SHELL), name, "-c", cmd, NULL);
+		execl(O_STR(sp, O_SHELL), name, "-c", cmd, (char *)NULL);
 		msgq_str(sp, M_SYSERR, O_STR(sp, O_SHELL), "execl: %s");
 		_exit(127);
 		/* NOTREACHED */

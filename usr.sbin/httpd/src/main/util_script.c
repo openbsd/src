@@ -1252,12 +1252,12 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 
 	if (shellcmd) {
 	    execle(SUEXEC_BIN, SUEXEC_BIN, execuser, grpname, argv0,
-		   NULL, env);
+		   (char *)NULL, env);
 	}
 
 	else if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
 	    execle(SUEXEC_BIN, SUEXEC_BIN, execuser, grpname, argv0,
-		   NULL, env);
+		   (char *)NULL, env);
 	}
 
 	else {
@@ -1269,11 +1269,11 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
     }
     else {
         if (shellcmd) {
-	    execle(SHELL_PATH, SHELL_PATH, "-c", argv0, NULL, env);
+	    execle(SHELL_PATH, SHELL_PATH, "-c", argv0, (char *)NULL, env);
 	}
 
 	else if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
-	    execle(r->filename, argv0, NULL, env);
+	    execle(r->filename, argv0, (char *)NULL, env);
 	}
 
 	else {

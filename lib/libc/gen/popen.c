@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: popen.c,v 1.9 1997/09/11 18:51:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.10 2001/07/09 07:04:39 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ popen(program, type)
 				(void)close(pdes[0]);
 			}
 		}
-		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
+		execl(_PATH_BSHELL, "sh", "-c", program, (char *)NULL);
 		_exit(127);
 		/* NOTREACHED */
 	    }

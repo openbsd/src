@@ -3377,10 +3377,10 @@ static int rewritemap_program_child(void *cmd, child_info *pinfo)
    // Need something here!!! Spawn????
 #elif defined(OS2)
     /* IBM OS/2 */
-    execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
+    execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, (char *)NULL);
 #else
     /* Standard Unix */
-    execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, NULL);
+    execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
 #endif
     return(child_pid);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 1999/08/17 09:13:12 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2001/07/09 07:04:30 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ md_shell(shell)
  *		uid = getuid();
  *		setuid(uid);
  */
-		execl(shell, shell, 0);
+		execl(shell, shell, (char *)NULL);
 	}
 	wait(&w);
 }

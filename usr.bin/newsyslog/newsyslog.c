@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.36 2001/03/01 20:34:10 aaron Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.37 2001/07/09 07:04:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.36 2001/03/01 20:34:10 aaron Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.37 2001/07/09 07:04:50 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -724,7 +724,7 @@ compress_log(log)
 	if (pid < 0) {
 		err(1, "fork");
 	} else if (!pid) {
-		(void)execl(COMPRESS, base, "-f", tmp, 0);
+		(void)execl(COMPRESS, base, "-f", tmp, (char *)NULL);
 		warn(COMPRESS);
 		_exit(1);
 	}

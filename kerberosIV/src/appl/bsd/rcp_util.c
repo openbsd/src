@@ -86,7 +86,7 @@ susystem(char *s, int userid)
 	if(do_osfc2_magic(userid))
 	    exit(1);
 	setuid(userid);
-	execl(_PATH_BSHELL, "sh", "-c", s, NULL);
+	execl(_PATH_BSHELL, "sh", "-c", s, (char *)NULL);
 	_exit(127);
     }
     istat = signal(SIGINT, SIG_IGN);

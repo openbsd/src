@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.25 2001/07/07 18:26:15 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.26 2001/07/09 07:04:46 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ linkcmd(kernel, entry, outfile, address, object)
 
 	if (pid == 0) {
 		execl(_PATH_LD, "ld", LDSYMTABLE, kernel, "-e", entrybuf, "-o",
-		    outfile, LDTEXTSTART, addrbuf, object, NULL);
+		    outfile, LDTEXTSTART, addrbuf, object, (char *)NULL);
 		exit(128 + errno);
 	}
 
@@ -494,7 +494,7 @@ main(argc, argv)
 
 		cleanup();
 
-		execl(post, post, id, type, offset, 0);
+		execl(post, post, id, type, offset, (char *)NULL);
 		err(16, "can't exec `%s'", post);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.14 2001/01/11 19:26:01 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.15 2001/07/09 07:04:52 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.14 2001/01/11 19:26:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.15 2001/07/09 07:04:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -246,7 +246,7 @@ doshell()
 	(void)close(master);
 	(void)fclose(fscript);
 	login_tty(slave);
-	execl(shell, shell, "-i", NULL);
+	execl(shell, shell, "-i", (char *)NULL);
 	perror(shell);
 	fail();
 }

@@ -326,7 +326,7 @@ UDIConnect(Config, Session)
 		       arg0,
 		       soc_con[cnt].domain_string,
 		       soc_con[cnt].tip_string,
-		       NULL);
+		       (char *)NULL);
 	        _exit(1);
 	      }
 

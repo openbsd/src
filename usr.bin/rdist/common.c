@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.10 2000/11/10 15:33:12 provos Exp $	*/
+/*	$OpenBSD: common.c,v 1.11 2001/07/09 07:04:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.10 2000/11/10 15:33:12 provos Exp $";
+"$OpenBSD: common.c,v 1.11 2001/07/09 07:04:51 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -836,7 +836,7 @@ void runcommand(cmd)
 		(void) dup(fd[PIPE_WRITE]);
 		(void) close(fd[PIPE_READ]);
 		(void) close(fd[PIPE_WRITE]);
-		(void) execl(_PATH_BSHELL, "sh", "-c", cmd, 0);
+		(void) execl(_PATH_BSHELL, "sh", "-c", cmd, (char *)NULL);
 		_exit(127);
 	}
 	(void) close(fd[PIPE_WRITE]);
