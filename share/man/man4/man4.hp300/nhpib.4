@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nhpib.4,v 1.1 2003/03/16 20:12:51 miod Exp $
+.\"	$OpenBSD: nhpib.4,v 1.2 2003/05/17 21:31:56 jmc Exp $
 .\"     $NetBSD: hpib.4,v 1.2 2002/01/15 01:35:44 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,13 +40,13 @@
 .Os
 .Sh NAME
 .Nm hpib
-.Nd Built-in and 98625 HP-IB interfaces
+.Nd built-in and 98625 HP-IB interfaces
 .Sh SYNOPSIS
 .Cd "nhpib*	at dio? scode ?"
 .Cd "hpibbus*	at nhpib?"
 .Cd "fhpib*	at dio? scode ?"
 .Cd "hpibbus*	at fhpib?"
-.Cd ""
+.Pp
 .Cd "hd*  at hpibbus? slave ? punit ?   " Pq "disks"
 .Cd "ct*  at hpibbus? slave ? punit ?   " Pq "cartridge tapes"
 .Cd "mt*  at hpibbus? slave ? punit ?   " Pq "9-track tapes"
@@ -56,7 +56,7 @@ The
 .Nm
 driver supports the built-in and 98625 HP-IB interfaces.
 .Sh SEE ALSO
-.Xr ct 4 ,
+.Xr \&ct 4 ,
 .Xr dio 4 ,
 .Xr hd 4 ,
 .Xr intro 4 ,
