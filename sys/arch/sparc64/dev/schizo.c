@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.9 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.10 2003/02/22 19:54:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -176,12 +176,6 @@ schizo_init(struct schizo_softc *sc, int busa)
 	printf(": bus %c %d to %d\n", busa ? 'A' : 'B',
 	    busranges[0], busranges[1]);
 
-	schizo_init_iommu(sc, pbm);
-
-	match = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
-	    (busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH));
-	pbm->sp_confpaddr = match & ~0x8000000000000000UL;
-
 	pbm->sp_regt = sc->sc_bust;
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
 	    busa ? offsetof(struct schizo_regs, pbm_a) :
@@ -190,6 +184,12 @@ schizo_init(struct schizo_softc *sc, int busa)
 	    &pbm->sp_regh)) {
 		panic("schizo: unable to create PBM handle");
 	}
+
+	schizo_init_iommu(sc, pbm);
+
+	match = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
+	    (busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH));
+	pbm->sp_confpaddr = match & ~0x8000000000000000UL;
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
 	pbm->sp_iot = schizo_alloc_io_tag(pbm);
@@ -225,21 +225,28 @@ void
 schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 {
 	struct iommu_state *is = &pbm->sp_is;
+	vaddr_t va;
 	char *name;
 
+	va = (vaddr_t)pbm->sp_flush[0x40];
+
 	is->is_bustag = pbm->sp_regt;
-	
+
 	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
 	    offsetof(struct schizo_pbm_regs, iommu),
 	    sizeof(struct iommureg), &is->is_iommu)) {
 		panic("schizo: unable to create iommu handle");
 	} 
 
+	is->is_sb[0] = &pbm->sp_sb;
 	is->is_sb[0]->sb_bustag = is->is_bustag;
+	is->is_sb[0]->sb_flush = (void *)(va & ~0x3f);
+
 	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
 	    offsetof(struct schizo_pbm_regs, strbuf),
 	    sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb)) {
 		panic("schizo: unable to create streaming buffer handle");
+		is->is_sb[0]->sb_flush = 0;
 	} 
 
 #if 1
@@ -256,6 +263,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
 
 	iommu_init(name, is, 128 * 1024, 0xc0000000);
+	iommu_reset(is);
 }
 
 int

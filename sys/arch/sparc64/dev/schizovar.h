@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizovar.h,v 1.3 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: schizovar.h,v 1.4 2003/02/22 19:54:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -53,7 +53,7 @@ struct schizo_pbm {
 	bus_addr_t		sp_confpaddr;
 	struct iommu_state	sp_is;
 	struct strbuf_ctl	sp_sb;
-	char			pp_flush[0x80];
+	char			sp_flush[0x80];
 };
 
 struct schizo_softc {
