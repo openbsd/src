@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: docmd.c,v 1.1 1996/02/03 12:11:55 dm Exp $";
+static char *rcsid = "$Id: docmd.c,v 1.2 1996/06/26 03:42:13 deraadt Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -139,12 +139,17 @@ doarrow(filev, files, rhost, cmds)
 	if (nflag)
 		printf("updating host %s\n", rhost);
 	else {
+		int fd;
+
 		if (setjmp(env))
 			goto done;
 		signal(SIGPIPE, lostconn);
 		if (!makeconn(rhost))
 			return;
-		if ((lfp = fopen(tempfile, "w")) == NULL) {
+		if ((fd = open(tempfile, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
+		    (lfp = fdopen(fd, "w")) == NULL) {
+			if (fd != -1)
+				close(fd);
 			fatal("cannot open %s\n", tempfile);
 			exit(1);
 		}
@@ -367,7 +372,12 @@ dodcolon(filev, files, stamp, cmds)
 	if (nflag || (options & VERIFY))
 		tfp = NULL;
 	else {
-		if ((tfp = fopen(tempfile, "w")) == NULL) {
+		int fd;
+
+		if ((fd = open(tempfile, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
+		    (tfp = fdopen(fd, "w")) == NULL) {
+			if (fd != -1)
+				close(fd);
 			error("%s: %s\n", stamp, strerror(errno));
 			return;
 		}
