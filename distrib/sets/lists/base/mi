@@ -1313,6 +1313,7 @@
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
+./usr/sbin/popa3d
 ./usr/sbin/portmap
 ./usr/sbin/ppp
 ./usr/sbin/pppctl
@@ -2601,6 +2602,7 @@
 ./var/db
 ./var/db/ns
 ./var/db/pkg
+./var/empty
 ./var/games
 ./var/games/hackdir
 ./var/games/hackdir/save

@@ -1742,6 +1742,7 @@
 ./usr/share/man/cat8/photurisd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
+./usr/share/man/cat8/popa3d.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/ppp.0
 ./usr/share/man/cat8/pppctl.0
