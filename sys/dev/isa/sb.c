@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.19 1999/01/24 15:58:54 mickey Exp $	*/
+/*	$OpenBSD: sb.c,v 1.20 1999/07/20 16:36:05 deraadt Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ sbattach(sc)
 	sc->sc_hasmpu = 0;
 	if (ISSB16CLASS(sc) && sc->sc_mpu_sc.iobase != 0) {
 		sc->sc_mpu_sc.iot = sc->sc_iot;
-		if (mpu401_find(&sc->sc_mpu_sc)) {
+		if (mpu_find(&sc->sc_mpu_sc)) {
 			sc->sc_hasmpu = 1;
 			mhw = &sb_mpu401_hw_if;
 		}
@@ -326,7 +326,7 @@ sb_mpu401_open(addr, flags, iintr, ointr, arg)
 	void (*ointr)__P((void *));
 	void *arg;
 {
-	return mpu401_open(SBMPU(addr), flags, iintr, ointr, arg);
+	return mpu_open(SBMPU(addr), flags, iintr, ointr, arg);
 }
 
 int
@@ -334,14 +334,14 @@ sb_mpu401_output(addr, d)
 	void *addr;
 	int d;
 {
-	return mpu401_output(SBMPU(addr), d);
+	return mpu_output(SBMPU(addr), d);
 }
 
 void
 sb_mpu401_close(addr)
 	void *addr;
 {
-	mpu401_close(SBMPU(addr));
+	mpu_close(SBMPU(addr));
 }
 
 void

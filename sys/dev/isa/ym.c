@@ -1,9 +1,9 @@
-/* $OpenBSD: ym.c,v 1.5 1999/01/24 15:58:54 mickey Exp $ */
+/* $OpenBSD: ym.c,v 1.6 1999/07/20 16:36:05 deraadt Exp $ */
 
 
 /*
  * Copyright (c) 1998 Constantine Sapuntzakis. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include "midi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -51,13 +52,14 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
 #include <dev/ic/opl3sa3.h>
+#include <dev/isa/mpu401var.h>
 #include <dev/isa/ymvar.h>
 
-
-int	ym_getdev __P((void *, struct audio_device *));
-int	ym_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	ym_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	ym_query_devinfo __P((void *, mixer_devinfo_t *));
+int ym_getdev __P((void *, struct audio_device *));
+int ym_mixer_set_port __P((void *, mixer_ctrl_t *));
+int ym_mixer_get_port __P((void *, mixer_ctrl_t *));
+int ym_query_devinfo __P((void *, mixer_devinfo_t *));
+int ym_intr __P((void *));
 
 static void ym_mute __P((struct ym_softc *, int, int));
 static void ym_set_master_gain __P((struct ym_softc *, struct ad1848_volume *));
@@ -96,7 +98,7 @@ struct audio_hw_if ym_hw_if = {
 
 
 struct cfdriver ym_cd = {
-        NULL, "ym", DV_DULL
+	NULL, "ym", DV_DULL
 };
 
 struct audio_device ym_device = {
@@ -108,82 +110,126 @@ struct audio_device ym_device = {
 static __inline int ym_read __P((struct ym_softc *, int));
 static __inline void ym_write __P((struct ym_softc *, int, int));
 
+#if NMIDI > 0
+int	ym_mpu401_open __P((void *, int, void (*iintr) __P((void *, int)),
+	    void (*ointr) __P((void *)), void *arg));
+void	ym_mpu401_close __P((void *));
+int	ym_mpu401_output __P((void *, int));
+void	ym_mpu401_getinfo __P((void *, struct midi_info *));
+
+struct midi_hw_if ym_mpu401_hw_if = {
+	ym_mpu401_open,
+	ym_mpu401_close,
+	ym_mpu401_output,
+	ym_mpu401_getinfo,
+	0,		/* ioctl */
+};
+#endif
+
+int
+ym_intr(v)
+	void   *v;
+{
+	struct ym_softc *sc = v;
+
+#if NMIDI > 0
+	if ( /* XXX && */ sc->sc_hasmpu)
+		mpu_intr(&sc->sc_mpu_sc);
+#endif
+	return ad1848_intr(v);
+}
+
 void
 ym_attach(sc)
-    struct ym_softc *sc;
+	struct ym_softc *sc;
 
 {
-  struct ad1848_volume vol_mid = {220, 220};
-  struct ad1848_volume vol_0   = {0, 0};
-  
-  sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq, IST_EDGE, IPL_AUDIO,
-			    ad1848_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
+	struct ad1848_volume vol_mid = {220, 220};
+	struct ad1848_volume vol_0 = {0, 0};
+#if NMIDI > 0
+	struct midi_hw_if *mhw = &ym_mpu401_hw_if;
+#endif
 
-  ad1848_attach(&sc->sc_ad1848);
-  printf("\n");
-  sc->sc_ad1848.parent = sc;
+	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq, IST_EDGE,
+	    IPL_AUDIO, ym_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
 
-  /* Establish chip in well known mode */
-  ym_set_master_gain(sc, &vol_mid);
-  ym_set_mic_gain(sc, &vol_0);
-  sc->master_mute = 0;
-  ym_mute(sc, SA3_LCH, sc->master_mute);
-  ym_mute(sc, SA3_RCH, sc->master_mute);
+	ad1848_attach(&sc->sc_ad1848);
+	printf("\n");
+	sc->sc_ad1848.parent = sc;
 
-  sc->mic_mute = 1;
-  ym_mute(sc, SA3_MIC, sc->mic_mute);
+	/* Establish chip in well known mode */
+	ym_set_master_gain(sc, &vol_mid);
+	ym_set_mic_gain(sc, &vol_0);
+	sc->master_mute = 0;
+	ym_mute(sc, SA3_LCH, sc->master_mute);
+	ym_mute(sc, SA3_RCH, sc->master_mute);
 
-  audio_attach_mi(&ym_hw_if, &sc->sc_ad1848, &sc->sc_dev);
+	sc->mic_mute = 1;
+	ym_mute(sc, SA3_MIC, sc->mic_mute);
+
+#if NMIDI > 0
+	sc->sc_hasmpu = 0;
+	if (sc->sc_mpu_sc.iobase) {
+		sc->sc_mpu_sc.iot = sc->sc_iot;
+		if (mpu_find(&sc->sc_mpu_sc)) {
+			sc->sc_hasmpu = 1;
+			mhw = &ym_mpu401_hw_if;
+		}
+	}
+	midi_attach_mi(mhw, sc, &sc->sc_dev);
+#endif
+
+	audio_attach_mi(&ym_hw_if, &sc->sc_ad1848, &sc->sc_dev);
 }
 
 static __inline int
 ym_read(sc, reg)
-    struct ym_softc *sc;
-    int reg;
+	struct ym_softc *sc;
+	int     reg;
 {
-  bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, 0x1d);
-  bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, (reg & 0xff));
-  return (bus_space_read_1(sc->sc_iot, sc->sc_controlioh, 1));
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, 0x1d);
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, (reg & 0xff));
+	return (bus_space_read_1(sc->sc_iot, sc->sc_controlioh, 1));
 }
 
 static __inline void
 ym_write(sc, reg, data)
-    struct ym_softc *sc;
-    int reg;
-    int data;
+	struct ym_softc *sc;
+	int     reg;
+	int     data;
 {
-  bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, 0x1d);
-  bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, (reg & 0xff));
-  bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 1, (data & 0xff));
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, 0x1d);
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, (reg & 0xff));
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 1, (data & 0xff));
 }
 
 
 
 int
 ym_getdev(addr, retp)
-    void *addr;
-    struct audio_device *retp;
+	void   *addr;
+	struct audio_device *retp;
 {
-    *retp = ym_device;
-    return 0;
+	*retp = ym_device;
+	return 0;
 }
 
 
 static ad1848_devmap_t mappings[] = {
-{ YM_MIDI_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
-{ YM_CD_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
-{ YM_DAC_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
-{ YM_LINE_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL },
-{ YM_SPEAKER_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
-{ YM_MONITOR_LVL, AD1848_KIND_LVL, AD1848_MONITOR_CHANNEL },
-{ YM_MIDI_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
-{ YM_CD_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
-{ YM_DAC_MUTE, AD1848_KIND_MUTE, AD1848_DAC_CHANNEL },
-{ YM_LINE_MUTE, AD1848_KIND_MUTE, AD1848_LINE_CHANNEL },
-{ YM_SPEAKER_MUTE, AD1848_KIND_MUTE, AD1848_MONO_CHANNEL },
-{ YM_MONITOR_MUTE, AD1848_KIND_MUTE, AD1848_MONITOR_CHANNEL },
-{ YM_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
-{ YM_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1}
+	{ YM_MIDI_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
+	{ YM_CD_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
+	{ YM_DAC_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
+	{ YM_LINE_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL },
+	{ YM_SPEAKER_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
+	{ YM_MONITOR_LVL, AD1848_KIND_LVL, AD1848_MONITOR_CHANNEL },
+	{ YM_MIDI_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
+	{ YM_CD_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
+	{ YM_DAC_MUTE, AD1848_KIND_MUTE, AD1848_DAC_CHANNEL },
+	{ YM_LINE_MUTE, AD1848_KIND_MUTE, AD1848_LINE_CHANNEL },
+	{ YM_SPEAKER_MUTE, AD1848_KIND_MUTE, AD1848_MONO_CHANNEL },
+	{ YM_MONITOR_MUTE, AD1848_KIND_MUTE, AD1848_MONITOR_CHANNEL },
+	{ YM_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
+	{ YM_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1 }
 };
 
 static int nummap = sizeof(mappings) / sizeof(mappings[0]);
@@ -191,282 +237,319 @@ static int nummap = sizeof(mappings) / sizeof(mappings[0]);
 
 static void
 ym_mute(sc, left_reg, mute)
-  struct ym_softc *sc;
-  int left_reg;
-  int mute;
-
+	struct ym_softc *sc;
+	int     left_reg;
+	int     mute;
 {
-  u_char reg;
+	u_char  reg;
 
-  if (mute) {
-    reg = ym_read(sc, left_reg);
-    ym_write (sc, left_reg, reg | 0x80);
-  } else {
-    reg = ym_read(sc, left_reg);
-    ym_write (sc, left_reg, reg & ~0x80);
-  }
+	if (mute) {
+		reg = ym_read(sc, left_reg);
+		ym_write(sc, left_reg, reg | 0x80);
+	} else {
+		reg = ym_read(sc, left_reg);
+		ym_write(sc, left_reg, reg & ~0x80);
+	}
 }
 
 #define MIC_ATTEN_BITS 0x1f
 #define MASTER_ATTEN_BITS 0x0f
 
-
 static void
 ym_set_master_gain(sc, vol)
-  struct ym_softc *sc;
-  struct ad1848_volume *vol;
+	struct ym_softc *sc;
+	struct ad1848_volume *vol;
 {
-  u_char reg;
-  u_int  atten;
+	u_char  reg;
+	u_int   atten;
 
-  sc->master_gain = *vol;
+	sc->master_gain = *vol;
 
-  atten = ((AUDIO_MAX_GAIN - vol->left) * MASTER_ATTEN_BITS)/AUDIO_MAX_GAIN;
+	atten = ((AUDIO_MAX_GAIN - vol->left) * MASTER_ATTEN_BITS) / AUDIO_MAX_GAIN;
 
-  reg = ym_read(sc, SA3_LCH);
+	reg = ym_read(sc, SA3_LCH);
 
-  reg &= ~(MASTER_ATTEN_BITS);
-  reg |= atten;
+	reg &= ~(MASTER_ATTEN_BITS);
+	reg |= atten;
 
-  ym_write (sc, SA3_LCH, reg);
+	ym_write(sc, SA3_LCH, reg);
 
-  atten = ((AUDIO_MAX_GAIN - vol->right) * MASTER_ATTEN_BITS)/AUDIO_MAX_GAIN;
+	atten = ((AUDIO_MAX_GAIN - vol->right) * MASTER_ATTEN_BITS) / AUDIO_MAX_GAIN;
 
-  reg = ym_read(sc, SA3_RCH) & ~(MASTER_ATTEN_BITS);
-  reg |= atten;
+	reg = ym_read(sc, SA3_RCH) & ~(MASTER_ATTEN_BITS);
+	reg |= atten;
 
-  ym_write (sc, SA3_RCH, reg);
+	ym_write(sc, SA3_RCH, reg);
 }
 
 static void
 ym_set_mic_gain(sc, vol)
-  struct ym_softc *sc;
-  struct ad1848_volume *vol;
+	struct ym_softc *sc;
+	struct ad1848_volume *vol;
 {
-  u_char reg;
-  u_int  atten;
+	u_char  reg;
+	u_int   atten;
 
-  sc->mic_gain = *vol;
+	sc->mic_gain = *vol;
 
-  atten = ((AUDIO_MAX_GAIN - vol->left) * MIC_ATTEN_BITS)/AUDIO_MAX_GAIN;
+	atten = ((AUDIO_MAX_GAIN - vol->left) * MIC_ATTEN_BITS) / AUDIO_MAX_GAIN;
 
-  reg = ym_read(sc, SA3_MIC) & ~(MIC_ATTEN_BITS);
-  reg |= atten;
+	reg = ym_read(sc, SA3_MIC) & ~(MIC_ATTEN_BITS);
+	reg |= atten;
 
-  ym_write (sc, SA3_MIC, reg);
+	ym_write(sc, SA3_MIC, reg);
 }
 
 int
 ym_mixer_set_port(addr, cp)
-    void *addr;
-    mixer_ctrl_t *cp;
+	void   *addr;
+	mixer_ctrl_t *cp;
 {
-    struct ad1848_softc *ac = addr;
-    struct ym_softc *sc = ac->parent;
-    struct ad1848_volume vol;
-    int error = ad1848_mixer_set_port(ac, mappings, nummap, cp);
-    
-    if (error != ENXIO)
-      return (error);
+	struct ad1848_softc *ac = addr;
+	struct ym_softc *sc = ac->parent;
+	struct ad1848_volume vol;
+	int     error = ad1848_mixer_set_port(ac, mappings, nummap, cp);
 
-    error = 0;
+	if (error != ENXIO)
+		return (error);
 
-    switch (cp->dev) {
-    case YM_OUTPUT_LVL:
-      ad1848_to_vol(cp, &vol);
-      ym_set_master_gain(sc, &vol);
-      break;
+	error = 0;
 
-    case YM_OUTPUT_MUTE:
-      sc->master_mute = (cp->un.ord != 0);
-      ym_mute(sc, SA3_LCH, sc->master_mute);
-      ym_mute(sc, SA3_RCH, sc->master_mute);
-      break;
+	switch (cp->dev) {
+	case YM_OUTPUT_LVL:
+		ad1848_to_vol(cp, &vol);
+		ym_set_master_gain(sc, &vol);
+		break;
 
-    case YM_MIC_LVL:
-      if (cp->un.value.num_channels != 1)
-	error = EINVAL;
+	case YM_OUTPUT_MUTE:
+		sc->master_mute = (cp->un.ord != 0);
+		ym_mute(sc, SA3_LCH, sc->master_mute);
+		ym_mute(sc, SA3_RCH, sc->master_mute);
+		break;
 
-      ad1848_to_vol(cp, &vol);
-      ym_set_mic_gain(sc, &vol);      
-      break;
+	case YM_MIC_LVL:
+		if (cp->un.value.num_channels != 1)
+			error = EINVAL;
 
-    case YM_MIC_MUTE:
-      sc->mic_mute = (cp->un.ord != 0);
-      ym_mute(sc, SA3_MIC, sc->mic_mute);
-      break;
+		ad1848_to_vol(cp, &vol);
+		ym_set_mic_gain(sc, &vol);
+		break;
 
-    default:
-	    return ENXIO;
-	    /*NOTREACHED*/
-    }
-    
-    return (error);
+	case YM_MIC_MUTE:
+		sc->mic_mute = (cp->un.ord != 0);
+		ym_mute(sc, SA3_MIC, sc->mic_mute);
+		break;
+
+	default:
+		return ENXIO;
+		/* NOTREACHED */
+	}
+
+	return (error);
 }
 
 int
 ym_mixer_get_port(addr, cp)
-    void *addr;
-    mixer_ctrl_t *cp;
+	void   *addr;
+	mixer_ctrl_t *cp;
 {
-    struct ad1848_softc *ac = addr;
-    struct ym_softc *sc = ac->parent;
+	struct ad1848_softc *ac = addr;
+	struct ym_softc *sc = ac->parent;
 
-    int error = ad1848_mixer_get_port(ac, mappings, nummap, cp);
+	int     error = ad1848_mixer_get_port(ac, mappings, nummap, cp);
 
-    if (error != ENXIO)
-      return (error);
+	if (error != ENXIO)
+		return (error);
 
-    error = 0;
+	error = 0;
 
-    switch (cp->dev) {
-    case YM_OUTPUT_LVL:
-      ad1848_from_vol(cp, &sc->master_gain);
-      break;
+	switch (cp->dev) {
+	case YM_OUTPUT_LVL:
+		ad1848_from_vol(cp, &sc->master_gain);
+		break;
 
-    case YM_OUTPUT_MUTE:
-      cp->un.ord = sc->master_mute;
-      break;
+	case YM_OUTPUT_MUTE:
+		cp->un.ord = sc->master_mute;
+		break;
 
-    case YM_MIC_LVL:
-      if (cp->un.value.num_channels != 1)
-	error = EINVAL;
+	case YM_MIC_LVL:
+		if (cp->un.value.num_channels != 1)
+			error = EINVAL;
 
-      ad1848_from_vol(cp, &sc->mic_gain);
-      break;
+		ad1848_from_vol(cp, &sc->mic_gain);
+		break;
 
-    case YM_MIC_MUTE:
-      cp->un.ord = sc->mic_mute;
-      break;
+	case YM_MIC_MUTE:
+		cp->un.ord = sc->mic_mute;
+		break;
 
-    default:
-	error = ENXIO;
-	break;
-    }
+	default:
+		error = ENXIO;
+		break;
+	}
 
-    return(error);
+	return (error);
 }
 
-static char *mixer_classes[] = { AudioCinputs, AudioCrecord, AudioCoutputs,
-				 AudioCmonitor };
+static char *mixer_classes[] = {AudioCinputs, AudioCrecord, AudioCoutputs,
+AudioCmonitor};
 
 int
 ym_query_devinfo(addr, dip)
-    void *addr;
-    mixer_devinfo_t *dip;
+	void   *addr;
+	mixer_devinfo_t *dip;
 {
-  static char *mixer_port_names[] = { AudioNmidi, AudioNcd, AudioNdac,
-				       AudioNline, AudioNspeaker, 
-				       AudioNmicrophone, 
-                                       AudioNmonitor};
+	static char *mixer_port_names[] = {AudioNmidi, AudioNcd, AudioNdac,
+		AudioNline, AudioNspeaker,
+		AudioNmicrophone,
+	AudioNmonitor};
 
-    dip->next = dip->prev = AUDIO_MIXER_LAST;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
 
-    switch(dip->index) {
-    case YM_INPUT_CLASS:			/* input class descriptor */
-    case YM_OUTPUT_CLASS:
-    case YM_MONITOR_CLASS:
-    case YM_RECORD_CLASS:
-	dip->type = AUDIO_MIXER_CLASS;
-	dip->mixer_class = dip->index;
-	strcpy(dip->label.name, 
-	       mixer_classes[dip->index - YM_INPUT_CLASS]);
-	break;
+	switch (dip->index) {
+	case YM_INPUT_CLASS:	/* input class descriptor */
+	case YM_OUTPUT_CLASS:
+	case YM_MONITOR_CLASS:
+	case YM_RECORD_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = dip->index;
+		strcpy(dip->label.name,
+		    mixer_classes[dip->index - YM_INPUT_CLASS]);
+		break;
 
-    case YM_MIDI_LVL:
-    case YM_CD_LVL:
-    case YM_DAC_LVL:
-    case YM_LINE_LVL: 
-    case YM_SPEAKER_LVL:
-    case YM_MIC_LVL:
-    case YM_MONITOR_LVL:
-	dip->type = AUDIO_MIXER_VALUE;
-	if (dip->index == YM_MONITOR_LVL)
-	  dip->mixer_class = YM_MONITOR_CLASS;
-	else
-	  dip->mixer_class = YM_INPUT_CLASS;
+	case YM_MIDI_LVL:
+	case YM_CD_LVL:
+	case YM_DAC_LVL:
+	case YM_LINE_LVL:
+	case YM_SPEAKER_LVL:
+	case YM_MIC_LVL:
+	case YM_MONITOR_LVL:
+		dip->type = AUDIO_MIXER_VALUE;
+		if (dip->index == YM_MONITOR_LVL)
+			dip->mixer_class = YM_MONITOR_CLASS;
+		else
+			dip->mixer_class = YM_INPUT_CLASS;
 
-	dip->next = dip->index + 7;
+		dip->next = dip->index + 7;
 
-	strcpy(dip->label.name,mixer_port_names[dip->index - YM_MIDI_LVL]);
+		strcpy(dip->label.name, mixer_port_names[dip->index - YM_MIDI_LVL]);
 
-	if (dip->index == YM_SPEAKER_LVL ||
-	    dip->index == YM_MIC_LVL)
-	  dip->un.v.num_channels = 1;
-	else
-	  dip->un.v.num_channels = 2;
+		if (dip->index == YM_SPEAKER_LVL ||
+		    dip->index == YM_MIC_LVL)
+			dip->un.v.num_channels = 1;
+		else
+			dip->un.v.num_channels = 2;
 
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case YM_MIDI_MUTE:
-    case YM_CD_MUTE:
-    case YM_DAC_MUTE:
-    case YM_LINE_MUTE:
-    case YM_SPEAKER_MUTE:
-    case YM_MIC_MUTE:
-    case YM_MONITOR_MUTE:
-	if (dip->index == YM_MONITOR_MUTE)
-	  dip->mixer_class = YM_MONITOR_CLASS;
-	else
-	  dip->mixer_class = YM_INPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = dip->index - 7;
+	case YM_MIDI_MUTE:
+	case YM_CD_MUTE:
+	case YM_DAC_MUTE:
+	case YM_LINE_MUTE:
+	case YM_SPEAKER_MUTE:
+	case YM_MIC_MUTE:
+	case YM_MONITOR_MUTE:
+		if (dip->index == YM_MONITOR_MUTE)
+			dip->mixer_class = YM_MONITOR_CLASS;
+		else
+			dip->mixer_class = YM_INPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = dip->index - 7;
 mute:
-	strcpy(dip->label.name, AudioNmute);
-	dip->un.e.num_mem = 2;
-	strcpy(dip->un.e.member[0].label.name, AudioNoff);
-	dip->un.e.member[0].ord = 0;
-	strcpy(dip->un.e.member[1].label.name, AudioNon);
-	dip->un.e.member[1].ord = 1;
-	break;
+		strcpy(dip->label.name, AudioNmute);
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
+		break;
 
 
-    case YM_OUTPUT_LVL:
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = YM_OUTPUT_CLASS;
-	dip->next = YM_OUTPUT_MUTE;
-	strcpy(dip->label.name, AudioNmaster);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case YM_OUTPUT_LVL:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = YM_OUTPUT_CLASS;
+		dip->next = YM_OUTPUT_MUTE;
+		strcpy(dip->label.name, AudioNmaster);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case YM_OUTPUT_MUTE:
-	dip->mixer_class = YM_OUTPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = YM_OUTPUT_LVL;
-	goto mute;
-      
-    case YM_REC_LVL:	/* record level */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = YM_RECORD_CLASS;
-	dip->next = YM_RECORD_SOURCE;
-	strcpy(dip->label.name, AudioNrecord);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
-	
+	case YM_OUTPUT_MUTE:
+		dip->mixer_class = YM_OUTPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = YM_OUTPUT_LVL;
+		goto mute;
 
-    case YM_RECORD_SOURCE:
-	dip->mixer_class = YM_RECORD_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = YM_REC_LVL;
-	strcpy(dip->label.name, AudioNsource);
-	dip->un.e.num_mem = 4;
-	strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
-	dip->un.e.member[0].ord = MIC_IN_PORT;
-	strcpy(dip->un.e.member[1].label.name, AudioNline);
-	dip->un.e.member[1].ord = LINE_IN_PORT;
-	strcpy(dip->un.e.member[2].label.name, AudioNdac);
-	dip->un.e.member[2].ord = DAC_IN_PORT;
-	strcpy(dip->un.e.member[3].label.name, AudioNcd);
-	dip->un.e.member[3].ord = AUX1_IN_PORT;
-	break;
+	case YM_REC_LVL:	/* record level */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = YM_RECORD_CLASS;
+		dip->next = YM_RECORD_SOURCE;
+		strcpy(dip->label.name, AudioNrecord);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    default:
-	return ENXIO;
-	/*NOTREACHED*/
-    }
 
-    return 0;
+	case YM_RECORD_SOURCE:
+		dip->mixer_class = YM_RECORD_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = YM_REC_LVL;
+		strcpy(dip->label.name, AudioNsource);
+		dip->un.e.num_mem = 4;
+		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		dip->un.e.member[0].ord = MIC_IN_PORT;
+		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		dip->un.e.member[1].ord = LINE_IN_PORT;
+		strcpy(dip->un.e.member[2].label.name, AudioNdac);
+		dip->un.e.member[2].ord = DAC_IN_PORT;
+		strcpy(dip->un.e.member[3].label.name, AudioNcd);
+		dip->un.e.member[3].ord = AUX1_IN_PORT;
+		break;
+
+	default:
+		return ENXIO;
+		/* NOTREACHED */
+	}
+
+	return 0;
 }
+#if NMIDI > 0
+
+#define YMMPU(a) (&((struct ym_softc *)addr)->sc_mpu_sc)
+
+int
+ym_mpu401_open(addr, flags, iintr, ointr, arg)
+	void   *addr;
+	int     flags;
+	void    (*iintr) __P((void *, int));
+	void    (*ointr) __P((void *));
+	void   *arg;
+{
+	return mpu_open(YMMPU(addr), flags, iintr, ointr, arg);
+}
+
+int
+ym_mpu401_output(addr, d)
+	void   *addr;
+	int     d;
+{
+	return mpu_output(YMMPU(addr), d);
+}
+
+void
+ym_mpu401_close(addr)
+	void   *addr;
+{
+	mpu_close(YMMPU(addr));
+}
+
+void
+ym_mpu401_getinfo(addr, mi)
+	void   *addr;
+	struct midi_info *mi;
+{
+	mi->name = "YM MPU-401 UART";
+	mi->props = 0;
+}
+#endif

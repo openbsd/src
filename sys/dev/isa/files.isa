@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.55 1999/07/18 21:25:18 csapuntz Exp $
+#	$OpenBSD: files.isa,v 1.56 1999/07/20 16:36:05 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -236,15 +236,15 @@ file	dev/isa/if_sm_isa.c		sm_isa
 #
 
 # MPU401 MIDI UART compatibles
-define	mpu401
-file	dev/isa/mpu401.c		mpu401 & midi
+define	mpu
+file	dev/isa/mpu401.c		mpu & midi
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
 define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isa_dma, sbdsp, mulaw, opti, auconv, mpu401, midibus
+device	sb: audio, isa_dma, sbdsp, mulaw, opti, auconv, mpu, midibus
 file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa

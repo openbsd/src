@@ -1,4 +1,4 @@
-/*	$OpenBSD: ymvar.h,v 1.2 1998/06/02 14:49:10 csapuntz Exp $	*/
+/*	$OpenBSD: ymvar.h,v 1.3 1999/07/20 16:36:06 deraadt Exp $	*/
 /*	$NetBSD: wssvar.h,v 1.1 1998/01/19 22:18:25 augustss Exp $	*/
 
 /*
@@ -75,6 +75,10 @@ struct ym_softc {
 
         int  master_mute, mic_mute;
         struct ad1848_volume mic_gain, master_gain;
+#if NMIDI > 0
+	int	sc_hasmpu;
+	struct	mpu_softc sc_mpu_sc;	/* MPU401 Uart state */
+#endif
 };
 
 void    ym_attach __P((struct ym_softc *));

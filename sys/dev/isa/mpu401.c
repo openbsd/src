@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401.c,v 1.1 1999/01/02 00:02:42 niklas Exp $	*/
+/*	$OpenBSD: mpu401.c,v 1.2 1999/07/20 16:36:05 deraadt Exp $	*/
 /*	$NetBSD: mpu401.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -83,29 +83,39 @@ int	mpu401debug = 0;
 
 #define MPU_GETSTATUS(iot, ioh) (bus_space_read_1(iot, ioh, MPU_STATUS))
 
-int	mpu401_reset(struct mpu401_softc *);
-static	__inline int mpu401_waitready(struct mpu401_softc *);
-void	mpu401_readinput(struct mpu401_softc *);
+int	mpu_reset(struct mpu_softc *);
+static	__inline int mpu_waitready(struct mpu_softc *);
+void	mpu_readinput(struct mpu_softc *);
+
+struct midi_hw_if mpu_midi_hw_if = {
+	mpu_open,
+	mpu_close,
+	mpu_output,
+	mpu_getinfo,
+	0,                      /* ioctl */
+};
 
 int
-mpu401_find(sc)
-	struct mpu401_softc *sc;
+mpu_find(v)
+	void *v;
 {
+	struct mpu_softc *sc = v;
+
 	if (MPU_GETSTATUS(sc->iot, sc->ioh) == 0xff) {
-		DPRINTF(("mpu401_find: No status\n"));
+		DPRINTF(("mpu_find: No status\n"));
 		goto bad;
 	}
 	sc->open = 0;
 	sc->intr = 0;
-	if (mpu401_reset(sc) == 0)
+	if (mpu_reset(sc) == 0)
 		return 1;
 bad:
 	return 0;
 }
 
 static __inline int
-mpu401_waitready(sc)
-	struct mpu401_softc *sc;
+mpu_waitready(sc)
+	struct mpu_softc *sc;
 {
 	int i;
 
@@ -118,16 +128,16 @@ mpu401_waitready(sc)
 }
 
 int
-mpu401_reset(sc)
-	struct mpu401_softc *sc;
+mpu_reset(sc)
+	struct mpu_softc *sc;
 {
 	bus_space_tag_t iot = sc->iot;
 	bus_space_handle_t ioh = sc->ioh;
 	int i;
 	int s;
 
-	if (mpu401_waitready(sc)) {
-		DPRINTF(("mpu401_reset: not ready\n"));
+	if (mpu_waitready(sc)) {
+		DPRINTF(("mpu_reset: not ready\n"));
 		return EIO;
 	}
 	s = splaudio();		/* Don't let the interrupt get our ACK. */
@@ -140,23 +150,25 @@ mpu401_reset(sc)
 		}
 	}
 	splx(s);
-	DPRINTF(("mpu401_reset: No ACK\n"));
+	DPRINTF(("mpu_reset: No ACK\n"));
 	return EIO;
 }
 
 int
-mpu401_open(sc, flags, iintr, ointr, arg)
-	struct mpu401_softc *sc;
+mpu_open(v, flags, iintr, ointr, arg)
+	void *v;
 	int flags;
 	void (*iintr)__P((void *, int));
 	void (*ointr)__P((void *));
 	void *arg;
 {
-        DPRINTF(("mpu401_open: sc=%p\n", sc));
+	struct mpu_softc *sc = v;
+
+        DPRINTF(("mpu_open: sc=%p\n", sc));
 
 	if (sc->open)
 		return EBUSY;
-	if (mpu401_reset(sc) != 0)
+	if (mpu_reset(sc) != 0)
 		return EIO;
 
 	bus_space_write_1(sc->iot, sc->ioh, MPU_COMMAND, MPU_UART_MODE);
@@ -167,19 +179,21 @@ mpu401_open(sc, flags, iintr, ointr, arg)
 }
 
 void
-mpu401_close(sc)
-	struct mpu401_softc *sc;
+mpu_close(v)
+	void *v;
 {
-        DPRINTF(("mpu401_close: sc=%p\n", sc));
+	struct mpu_softc *sc = v;
+
+        DPRINTF(("mpu_close: sc=%p\n", sc));
 
 	sc->open = 0;
 	sc->intr = 0;
-	mpu401_reset(sc); /* exit UART mode */
+	mpu_reset(sc); /* exit UART mode */
 }
 
 void
-mpu401_readinput(sc)
-	struct mpu401_softc *sc;
+mpu_readinput(sc)
+	struct mpu_softc *sc;
 {
 	bus_space_tag_t iot = sc->iot;
 	bus_space_handle_t ioh = sc->ioh;
@@ -187,27 +201,28 @@ mpu401_readinput(sc)
 
 	while(!(MPU_GETSTATUS(iot, ioh) & MPU_INPUT_EMPTY)) {
 		data = bus_space_read_1(iot, ioh, MPU_DATA);
-		DPRINTFN(3, ("mpu401_rea: sc=%p 0x%02x\n", sc, data));
+		DPRINTFN(3, ("mpu_rea: sc=%p 0x%02x\n", sc, data));
 		if (sc->intr)
 			sc->intr(sc->arg, data);
 	}
 }
 
 int
-mpu401_output(sc, d)
-	struct mpu401_softc *sc;
+mpu_output(v, d)
+	void *v;
 	int d;
 {
+	struct mpu_softc *sc = v;
 	int s;
 
-	DPRINTFN(3, ("mpu401_output: sc=%p 0x%02x\n", sc, d));
+	DPRINTFN(3, ("mpu_output: sc=%p 0x%02x\n", sc, d));
 	if (!(MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_INPUT_EMPTY)) {
 		s = splaudio();
-		mpu401_readinput(sc);
+		mpu_readinput(sc);
 		splx(s);
 	}
-	if (mpu401_waitready(sc)) {
-		DPRINTF(("mpu401_output: not ready\n"));
+	if (mpu_waitready(sc)) {
+		DPRINTF(("mpu_output: not ready\n"));
 		return EIO;
 	}
 	bus_space_write_1(sc->iot, sc->ioh, MPU_DATA, d);
@@ -215,12 +230,24 @@ mpu401_output(sc, d)
 }
 
 void
-mpu401_intr(sc)
-	struct mpu401_softc *sc;
+mpu_getinfo(addr, mi)
+	void *addr;
+	struct midi_info *mi;
 {
+	mi->name = "MPU-401 MIDI UART";
+	mi->props = 0;
+}
+
+int
+mpu_intr(v)
+	void *v;
+{
+	struct mpu_softc *sc = v;
+
 	if (MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_INPUT_EMPTY) {
-		DPRINTF(("mpu401_intr: no data\n"));
-		return;
+		DPRINTF(("mpu_intr: no data\n"));
+		return 0;
 	}
-	mpu401_readinput(sc);
+	mpu_readinput(sc);
+	return 1;
 }

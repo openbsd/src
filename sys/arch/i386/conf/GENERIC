@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.112 1999/07/11 16:27:56 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.113 1999/07/20 16:36:06 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -225,6 +225,7 @@ wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
 ym*	at isapnp?
+mpu*	at isapnp?
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
