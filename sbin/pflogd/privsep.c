@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.1 2003/10/22 18:51:55 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.2 2003/10/22 19:21:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -45,7 +45,7 @@ enum cmd_types {
 };
 
 static int priv_fd = -1;
-static pid_t child_pid;
+static pid_t child_pid = -1;
 
 volatile sig_atomic_t gotsig_chld = 0;
 
@@ -213,7 +213,8 @@ priv_open_log(void)
 static void
 sig_pass_to_chld(int sig)
 {
-	kill(child_pid, sig);
+	if (child_pid != -1)
+		kill(child_pid, sig);
 }
 
 /* if parent gets a SIGCHLD, it will exit */
