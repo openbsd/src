@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 2001/12/07 18:45:33 mpech Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 2002/05/22 00:33:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.3 2001/12/07 18:45:33 mpech Exp $";
+static char rcsid[] = "$Id: print.c,v 1.4 2002/05/22 00:33:39 deraadt Exp $";
 #endif /* not lint */
 
 /* debug print routines */
@@ -63,7 +63,7 @@ print_request(cp, mp)
 	char tbuf[80], *tp;
 	
 	if (mp->type > NTYPES) {
-		(void)sprintf(tbuf, "type %d", mp->type);
+		(void)snprintf(tbuf, sizeof tbuf, "type %d", mp->type);
 		tp = tbuf;
 	} else
 		tp = types[mp->type];
@@ -79,12 +79,12 @@ print_response(cp, rp)
 	char tbuf[80], *tp, abuf[80], *ap;
 	
 	if (rp->type > NTYPES) {
-		(void)sprintf(tbuf, "type %d", rp->type);
+		(void)snprintf(tbuf, sizeof tbuf, "type %d", rp->type);
 		tp = tbuf;
 	} else
 		tp = types[rp->type];
 	if (rp->answer > NANSWERS) {
-		(void)sprintf(abuf, "answer %d", rp->answer);
+		(void)snprintf(abuf, sizeof abuf, "answer %d", rp->answer);
 		ap = abuf;
 	} else
 		ap = answers[rp->answer];
