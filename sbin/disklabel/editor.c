@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.6 1997/10/02 06:56:19 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.7 1997/10/02 16:38:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.6 1997/10/02 06:56:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.7 1997/10/02 16:38:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,6 +95,7 @@ editor(lp, f)
 	freeblocks = label.d_secperunit;
 	for (i = 0; i < label.d_npartitions; i++)
 		if (label.d_partitions[i].p_fstype != FS_UNUSED &&
+		    label.d_partitions[i].p_fstype != FS_BOOT &&
 		    label.d_partitions[i].p_size > 0)
 			freeblocks -= label.d_partitions[i].p_size;
 
@@ -515,9 +516,11 @@ editor_modify(lp, freep, p)
 	}
 
 	/* Did they disable/enable the partition? */
-	if (pp->p_fstype == FS_UNUSED && origpart.p_fstype != FS_UNUSED)
+	if ((pp->p_fstype == FS_UNUSED || pp->p_fstype == FS_BOOT) &&
+	    origpart.p_fstype != FS_UNUSED && origpart.p_fstype != FS_BOOT)
 		*freep += origpart.p_size;
-	else if (pp->p_fstype != FS_UNUSED && origpart.p_fstype == FS_UNUSED) {
+	else if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
+	    (origpart.p_fstype == FS_UNUSED || origpart.p_fstype == FS_BOOT)) {
 		if (pp->p_size > *freep) {
 			fprintf(stderr,
 			    "Warning, need %u blocks but there are only %u "
@@ -565,7 +568,7 @@ getoff2:
 			continue;
 		}
 
-		if (pp->p_fstype == FS_UNUSED) {
+		if (pp->p_fstype == FS_UNUSED || pp->p_fstype == FS_BOOT) {
 			pp->p_size = ui;	/* don't care what's free */
 			break;
 		} else {
@@ -674,6 +677,7 @@ editor_delete(lp, freep, p)
 	else {
 		/* Update free block count. */
 		if (lp->d_partitions[c].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[c].p_fstype != FS_BOOT &&
 		    lp->d_partitions[c].p_size != 0)
 			*freep += lp->d_partitions[c].p_size;
 
@@ -730,6 +734,7 @@ next_offset(lp)
 	/* How many "real" partitions do we have? */
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			npartitions++;
 	}
@@ -739,6 +744,7 @@ next_offset(lp)
 		errx(4, "out of memory");
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			spp[npartitions++] = &lp->d_partitions[i];
 	}
@@ -789,15 +795,14 @@ editor_change(lp, freep, p)
 		    'a' + lp->d_npartitions - 1);
 		return;
 	} else if (partno >= lp->d_npartitions ||
-	    (lp->d_partitions[partno].p_fstype ==
-	    FS_UNUSED && lp->d_partitions[partno].p_size == 0)) {
+	    lp->d_partitions[partno].p_size == 0) {
 		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
 		return;
 	}
 
 	printf("Partition %c is currently %u sectors in size (%u free).\n",
 	    partno + 'a', lp->d_partitions[partno].p_size, *freep);
-	/* XXX - make maxsize lp->d_secperunit if FS_UNUSED? */
+	/* XXX - make maxsize lp->d_secperunit if FS_UNUSED/FS_BOOT? */
 	newsize = getuint(lp, partno, "new size", "Size of the partition.  "
 	    "You may also say +/- amount for a relative change.",
 	    lp->d_partitions[partno].p_size,
@@ -809,7 +814,8 @@ editor_change(lp, freep, p)
 	} else if (newsize == lp->d_partitions[partno].p_size)
 		return;
 
-	if (lp->d_partitions[partno].p_fstype != FS_UNUSED) {
+	if (lp->d_partitions[partno].p_fstype != FS_UNUSED &&
+	    lp->d_partitions[partno].p_fstype != FS_BOOT) {
 		if (newsize > lp->d_partitions[partno].p_size) {
 			if (newsize - lp->d_partitions[partno].p_size > *freep) {
 				fprintf(stderr,
@@ -849,6 +855,7 @@ make_contiguous(lp)
 	/* How many "real" partitions do we have? */
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			npartitions++;
 	}
@@ -861,6 +868,7 @@ make_contiguous(lp)
 		errx(4, "out of memory");
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			spp[npartitions++] = &lp->d_partitions[i];
 	}
@@ -1065,6 +1073,7 @@ has_overlap(lp, freep, resolve)
 	/* How many "real" partitions do we have? */
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			npartitions++;
 	}
@@ -1078,6 +1087,7 @@ has_overlap(lp, freep, resolve)
 
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			spp[npartitions++] = &lp->d_partitions[i];
 	}
