@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.41 2005/04/01 09:49:01 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.42 2005/04/01 10:27:08 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -715,7 +715,6 @@ ral_alloc_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring, int count)
 
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
-			m_freem(data->m);
 			printf("%s: could not allocate rx mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
