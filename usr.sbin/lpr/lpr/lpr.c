@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.7 1996/07/04 06:06:51 tholo Exp $ */
+/*	$OpenBSD: lpr.c,v 1.8 1996/08/13 17:51:39 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ main(argc, argv)
 	/*
 	 * Check to make sure queuing is enabled if userid is not root.
 	 */
-	(void) sprintf(buf, "%s/%s", SD, LO);
+	(void) snprintf(buf, sizeof(buf), "%s/%s", SD, LO);
 	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
 		fatal2("Printer queue is disabled");
 	/*
@@ -347,7 +347,8 @@ main(argc, argv)
 			continue;	/* file unreasonable */
 
 		if (sflag && (cp = linked(arg)) != NULL) {
-			(void) sprintf(buf, "%d %d", statb.st_dev, statb.st_ino);
+			(void) snprintf(buf, sizeof(buf), "%d %d", statb.st_dev,
+					statb.st_ino);
 			card('S', buf);
 			if (format == 'p')
 				card('T', title ? title : arg);
@@ -697,7 +698,7 @@ mktemps()
 	char buf[BUFSIZ];
 	char *lmktemp();
 
-	(void) sprintf(buf, "%s/.seq", SD);
+	(void) snprintf(buf, sizeof(buf), "%s/.seq", SD);
 	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0) {
 		printf("%s: cannot create %s\n", name, buf);
@@ -723,7 +724,7 @@ mktemps()
 	inchar = strlen(SD) + 3;
 	n = (n + 1) % 1000;
 	(void) lseek(fd, (off_t)0, 0);
-	sprintf(buf, "%03d\n", n);
+	snprintf(buf, sizeof(buf), "%03d\n", n);
 	(void) write(fd, buf, strlen(buf));
 	(void) close(fd);	/* unlocks as well */
 }
