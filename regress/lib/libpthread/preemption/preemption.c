@@ -1,4 +1,4 @@
-/*	$OpenBSD: preemption.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: preemption.c,v 1.3 2003/01/26 22:05:12 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -31,15 +31,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
-
-/* ==== test_pthread_cond.c =========================================
- * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
- *
- * Description : Test pthread_cond(). Run this after test_create()
- *
- *  1.23 94/05/04 proven
- *      -Started coding this file.
- */
 
 #include <pthread.h>
 #include <stdio.h>
