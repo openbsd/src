@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.6 2003/04/25 12:43:10 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.7 2003/04/30 12:11:44 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -3476,7 +3476,7 @@ unencrypted private keys.
 .It Fl nooct
 This option generates RSA private keys in a broken format that some software
 uses.
-Specifically the private key should be enclosed in a OCTET STRING,
+Specifically the private key should be enclosed in an OCTET STRING,
 but some software just includes the structure itself without the
 surrounding OCTET STRING.
 .It Fl embed
