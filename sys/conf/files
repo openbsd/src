@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.280 2003/09/26 00:19:23 mickey Exp $
+#	$OpenBSD: files,v 1.281 2003/10/01 21:41:05 itojun Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -903,6 +903,7 @@ file netinet6/in6_proto.c		inet6
 file netinet6/dest6.c			inet6
 file netinet6/frag6.c			inet6
 file netinet6/icmp6.c			inet6
+file netinet6/ip6_id.c			inet6
 file netinet6/ip6_input.c		inet6
 file netinet6/ip6_forward.c		inet6
 file netinet6/ip6_mroute.c		inet6

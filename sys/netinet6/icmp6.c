@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.74 2003/08/07 09:11:24 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.75 2003/10/01 21:41:05 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1060,7 +1060,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 		}
 #endif
 		icmp6src.sin6_flowinfo =
-			(eip6->ip6_flow & IPV6_FLOWLABEL_MASK);
+		    (eip6->ip6_flow & IPV6_FLOWLABEL_MASK);
 
 		if (finaldst == NULL)
 			finaldst = &eip6->ip6_dst;

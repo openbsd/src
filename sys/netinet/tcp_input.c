@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.132 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.133 2003/10/01 21:41:05 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -829,8 +829,6 @@ findpcb:
 			  if ((inp->inp_flags & INP_IPV6) != 0) {
 			    inp->inp_ipv6.ip6_hlim =
 			      oldinpcb->inp_ipv6.ip6_hlim;
-			    inp->inp_ipv6.ip6_flow =
-			      oldinpcb->inp_ipv6.ip6_flow;
 			  }
 			}
 #else /* INET6 */
@@ -1189,8 +1187,8 @@ findpcb:
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
 			sin6->sin6_addr = ip6->ip6_src;
 			sin6->sin6_port = th->th_sport;
-			sin6->sin6_flowinfo = htonl(0x0fffffff) &
-				inp->inp_ipv6.ip6_flow;
+			sin6->sin6_flowinfo =
+			    ip6->ip6_flow & IPV6_FLOWINFO_MASK;
 			laddr6 = inp->inp_laddr6;
 			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
 				inp->inp_laddr6 = ip6->ip6_dst;

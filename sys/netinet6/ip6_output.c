@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.77 2003/10/01 21:35:50 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.78 2003/10/01 21:41:05 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -817,7 +817,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	} else {
 		struct mbuf **mnext, *m_frgpart;
 		struct ip6_frag *ip6f;
-		u_int32_t id = htonl(ip6_id++);
+		u_int32_t id = htonl(ip6_randomid());
 		u_char nextproto;
 
 		/*

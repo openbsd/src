@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.36 2003/09/28 23:17:45 cloder Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.37 2003/10/01 21:41:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -285,11 +285,6 @@ in6_pcbbind(inp, nam)
 				return EADDRINUSE;
 		}
 		inp->inp_laddr6 = sin6->sin6_addr;
-
-		if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-			inp->inp_ipv6.ip6_flow = htonl(0x60000000) |
-			    (sin6->sin6_flowinfo & htonl(0x0fffffff));
-		}
 	}
 
 	if (lport == 0) {
@@ -408,6 +403,10 @@ portloop:
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
 
+#if 0
+	inp->inp_flowinfo = 0;	/* XXX */
+#endif
+
 	return 0;
 }
 
@@ -522,11 +521,10 @@ in6_pcbconnect(inp, nam)
 	}
 	inp->inp_faddr6 = sin6->sin6_addr;
 	inp->inp_fport = sin6->sin6_port;
-	/*
-	 * xxx kazu flowlabel is necessary for connect?
-	 * but if this line is missing, the garbage value remains.
-	 */
-	inp->inp_ipv6.ip6_flow = sin6->sin6_flowinfo;
+	inp->inp_flowinfo &= ~IPV6_FLOWLABEL_MASK;
+	if (ip6_auto_flowlabel)
+		inp->inp_flowinfo |=
+		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 	in_pcbrehash(inp);
 	return (0);
 }

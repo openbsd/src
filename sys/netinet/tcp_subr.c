@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.68 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.69 2003/10/01 21:41:05 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ tcp_template(tp)
 			ip6->ip6_src = inp->inp_laddr6;
 			ip6->ip6_dst = inp->inp_faddr6;
 			ip6->ip6_flow = htonl(0x60000000) |
-			    (inp->inp_ipv6.ip6_flow & htonl(0x0fffffff));
+			    (inp->inp_flowinfo & IPV6_FLOWLABEL_MASK);
 
 			ip6->ip6_nxt = IPPROTO_TCP;
 			ip6->ip6_plen = htons(sizeof(struct tcphdr)); /*XXX*/

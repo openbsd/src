@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.20 2003/08/14 19:00:13 jason Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.21 2003/10/01 21:41:05 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -173,9 +173,6 @@ rip6_input(mp, offp, proto)
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
-#if 0 /* XXX inbound flowlabel */
-	rip6src.sin6_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
-#endif
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
