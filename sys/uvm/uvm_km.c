@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.40 2004/05/31 22:53:49 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.41 2004/06/09 20:17:23 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -814,8 +814,8 @@ uvm_km_valloc_wait(map, size)
 }
 
 /* Sanity; must specify both or none. */
-#if (defined(PMAP_MAP_POOLPAGE) || defined(PMAP_UNMAP_POOLPAGE)) && \
-    (!defined(PMAP_MAP_POOLPAGE) || !defined(PMAP_UNMAP_POOLPAGE))
+#if (defined(pmap_map_direct) || defined(pmap_unmap_direct)) && \
+    (!defined(pmap_map_direct) || !defined(pmap_unmap_direct))
 #error Must specify MAP and UNMAP together.
 #endif
 
@@ -832,7 +832,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	struct uvm_object *obj;
 	boolean_t waitok;
 {
-#if defined(PMAP_MAP_POOLPAGE)
+#if defined(pmap_map_direct)
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -845,7 +845,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 		} else
 			return (0);
 	}
-	va = PMAP_MAP_POOLPAGE(pg);
+	va = pmap_map_direct(pg);
 	if (__predict_false(va == 0))
 		uvm_pagefree(pg);
 	return (va);
@@ -867,7 +867,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, waitok ? 0 : UVM_KMF_NOWAIT);
 	splx(s);
 	return (va);
-#endif /* PMAP_MAP_POOLPAGE */
+#endif /* pmap_map_direct */
 }
 
 /*
@@ -882,8 +882,8 @@ uvm_km_free_poolpage1(map, addr)
 	vm_map_t map;
 	vaddr_t addr;
 {
-#if defined(PMAP_UNMAP_POOLPAGE)
-	uvm_pagefree(PMAP_UNMAP_POOLPAGE(addr));
+#if defined(pmap_unmap_direct)
+	uvm_pagefree(pmap_unmap_direct(addr));
 #else
 	int s;
 
@@ -900,11 +900,39 @@ uvm_km_free_poolpage1(map, addr)
 	s = splvm();
 	uvm_km_free(map, addr, PAGE_SIZE);
 	splx(s);
-#endif /* PMAP_UNMAP_POOLPAGE */
+#endif /* pmap_unmap_direct */
 }
 
+#if defined(pmap_map_direct)
 /*
- * uvm_km_page allocator
+ * uvm_km_page allocator, pmap_map_direct arch
+ * On architectures with machine memory direct mapped into a portion
+ * of KVM, we have very little work to do.  Just get a physical page,
+ * and find and return its VA.  We use the poolpage functions for this.
+ */
+void
+uvm_km_page_init(void)
+{
+	/* nothing */
+}
+
+void *
+uvm_km_getpage(boolean_t waitok)
+{
+
+	return ((void *)uvm_km_alloc_poolpage1(NULL, NULL, waitok));
+}
+
+void
+uvm_km_putpage(void *v)
+{
+
+	uvm_km_free_poolpage1(NULL, (vaddr_t)v);
+}
+
+#else
+/*
+ * uvm_km_page allocator, non pmap_map_direct archs
  * This is a special allocator that uses a reserve of free pages
  * to fulfill requests.  It is fast and interrupt safe, but can only
  * return page sized regions.  Its primary use is as a backend for pool.
@@ -937,23 +965,7 @@ uvm_km_page_init(void)
 
 
 	for (i = 0; i < uvm_km_pages_lowat * 4; i++) {
-#if defined(PMAP_MAP_POOLPAGE)
-		struct vm_page *pg;
-		vaddr_t va;
-
-		pg = uvm_pagealloc(NULL, 0, NULL, 0);
-		if (__predict_false(pg == NULL))
-			break;
-
-		va = PMAP_MAP_POOLPAGE(pg);
-		if (__predict_false(va == 0)) {
-			uvm_pagefree(pg);
-			break;
-		}
-		page = (void *)va;
-#else
 		page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
-#endif
 		page->next = uvm_km_pages_head;
 		uvm_km_pages_head = page;
 	}
@@ -985,22 +997,7 @@ uvm_km_thread(void *arg)
 			tsleep(&uvm_km_pages_head, PVM, "kmalloc", 0);
 		want = 16;
 		for (i = 0; i < want; i++) {
-#if defined(PMAP_MAP_POOLPAGE)
-			struct vm_page *pg;
-			vaddr_t va;
-	
-			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
-			if (__predict_false(pg == NULL))
-				break;
-			va = PMAP_MAP_POOLPAGE(pg);
-			if (__predict_false(va == 0)) {
-				uvm_pagefree(pg);
-				break;
-			}
-			page = (void *)va;
-#else
 			page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
-#endif
 			if (i == 0)
 				head = tail = page;
 			page->next = head;
@@ -1056,3 +1053,4 @@ uvm_km_putpage(void *v)
 	uvm_km_pages_free++;
 	splx(s);
 }
+#endif

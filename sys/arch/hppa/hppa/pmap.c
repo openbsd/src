@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.111 2004/05/27 21:04:07 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.112 2004/06/09 20:17:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -98,34 +98,6 @@ struct simplelock pvalloc_lock;
 int 		pmap_initialized;
 
 u_int	hppa_prot[8];
-
-/*
- * workaround until the uvm_km_getpage can be used this early.
- */
-void *hppa_pool_page_alloc(struct pool *, int);
-void hppa_pool_page_free(struct pool *, void *);
-
-void *
-hppa_pool_page_alloc(struct pool *pp, int flags)
-{
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
-
-	return ((void *)uvm_km_alloc_poolpage1(kmem_map, uvmexp.kmem_object,
-	    waitok)); 
-}
-
-void
-hppa_pool_page_free(struct pool *pp, void *v)
-{
-
-	uvm_km_free_poolpage1(kmem_map, (vaddr_t)v);
-}
-
-struct pool_allocator hppa_pool_allocator = {
-	hppa_pool_page_alloc, hppa_pool_page_free, 0,
-};
-
-
 
 #define	pmap_sid(pmap, va) \
 	(((va & 0xc0000000) != 0xc0000000)? pmap->pmap_space : HPPA_SID_KERNEL)
@@ -616,7 +588,7 @@ pmap_init()
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
-	    &hppa_pool_allocator);
+	    NULL);
 
 	pmap_initialized = 1;
 
