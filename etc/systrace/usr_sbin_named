@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_named,v 1.4 2003/02/09 22:40:24 djm Exp $
+# $OpenBSD: usr_sbin_named,v 1.5 2004/05/13 04:50:04 sturm Exp $
 #
 # Policy for named that uses named user and chroots to /var/named
 # This policy works for the default configuration of named.
@@ -13,6 +13,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-chdir: filename eq "/" then permit
 	native-chroot: filename eq "/var/named" then permit
 	native-close: permit
+	native-closefrom: permit
 	native-connect: sockaddr eq "/dev/log" then permit
 	native-connect: sockaddr match "inet-*" then permit
 	native-dup2: permit
@@ -25,18 +26,16 @@ Policy: /usr/sbin/named, Emulation: native
 	native-fsread: filename eq "/etc/group" then permit
 	native-fsread: filename eq "/etc/named.conf" then permit
 	native-fsread: filename eq "/etc/named.keys" then permit
+	native-fsread: filename eq "/etc/pwd.db" then permit
 	native-fsread: filename eq "/etc/rndc.key" then permit
-	native-fsread: filename eq "/etc/spwd.db" then permit
-	native-fsread: filename eq "/master" then permit
-	native-fsread: filename match "/master/*" then permit
-	native-fsread: filename eq "/slave" then permit
-	native-fsread: filename match "/slave/*" then permit
-	native-fsread: filename eq "/standard" then permit
-	native-fsread: filename match "/standard/*" then permit
-	native-fsread: filename match "/usr/lib/*" then permit
+	native-fsread: filename eq "/etc/spwd.db" then deny[eperm]
+	native-fsread: filename match "/master" then permit
+	native-fsread: filename match "/slave" then permit
+	native-fsread: filename match "/standard" then permit
+	native-fsread: filename match "/usr/lib" then permit
 	native-fsread: filename eq "/usr/libexec/ld.so" then permit
-	native-fsread: filename match "/usr/share/nls/*" then permit
-	native-fsread: filename match "/usr/share/zoneinfo/*" then permit
+	native-fsread: filename match "/usr/share/nls" then permit
+	native-fsread: filename match "/usr/share/zoneinfo" then permit
 	native-fsread: filename eq "/var/run/ld.so.hints" then permit
 	native-fsread: filename eq "/var/run/named.pid" then permit
 	native-fstat: permit
@@ -48,6 +47,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-fswrite: filename match "/var/tmp/*" then permit
 	native-fsync: permit
 	native-getpid: permit
+	native-getppid: permit
 	native-getrlimit: permit
 	native-getsockname: permit
 	native-getsockopt: permit
@@ -60,6 +60,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-lseek: permit
 	native-mmap: permit
 	native-mprotect: permit
+	native-mquery: permit
 	native-munmap: permit
 	native-nanosleep: permit
 	native-pread: permit
@@ -69,6 +70,8 @@ Policy: /usr/sbin/named, Emulation: native
 	native-select: permit
 	native-sendmsg: permit
 	native-sendto: true then permit
+	native-setegid: gid eq "70" then permit
+	native-seteuid: uid eq "70" and uname eq "named" then permit
 	native-setgid: gid eq "70" then permit
 	native-setgroups: permit
 	native-setrlimit: permit
@@ -79,5 +82,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-sigprocmask: permit
 	native-sigreturn: permit
 	native-socket: permit
+	native-socketpair: permit
 	native-utimes: permit
+	native-wait4: permit
 	native-write: permit

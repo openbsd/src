@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_lpd,v 1.4 2003/03/28 21:32:30 jmc Exp $
+# $OpenBSD: usr_sbin_lpd,v 1.5 2004/05/13 04:50:04 sturm Exp $
 #
 # Policy for lpd.
 # This policy works for the default configuration of lpd.
@@ -27,17 +27,18 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-fsread: filename eq "/etc/malloc.conf" then permit
 	native-fsread: filename eq "/etc/printcap" then permit
 	native-fsread: filename eq "/etc/printcap.db" then permit
+	native-fsread: filename eq "/etc/pwd.db" then permit
 	native-fsread: filename eq "/etc/resolv.conf" then permit
 	native-fsread: filename eq "/etc/services" then permit
-	native-fsread: filename eq "/etc/spwd.db" then permit
+	native-fsread: filename eq "/etc/spwd.db" then deny[eperm]
 	native-fsread: filename eq "/usr/libexec/ld.so" then permit
 	native-fsread: filename eq "/var/run/ld.so.hints" then permit
 	native-fsread: filename eq "<non-existent filename>" then deny[enoent]
-	native-fsread: filename match "/usr/lib/*" then permit
-	native-fsread: filename match "/usr/share/nls/*" then permit
-	native-fsread: filename match "/usr/share/zoneinfo/*" then permit
-	native-fsread: filename match "/var/spool/lpd/*" then permit
-	native-fsread: filename match "/var/spool/output/*" then permit
+	native-fsread: filename match "/usr/lib" then permit
+	native-fsread: filename match "/usr/share/nls" then permit
+	native-fsread: filename match "/usr/share/zoneinfo" then permit
+	native-fsread: filename match "/var/spool/lpd" then permit
+	native-fsread: filename match "/var/spool/output" then permit
 	native-fstat: permit
 	native-fstatfs: permit
 	native-fswrite: filename eq "/dev/console" then permit
@@ -61,6 +62,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-lseek: permit
 	native-mmap: permit
 	native-mprotect: permit
+	native-mquery: permit
 	native-munmap: permit
 	native-nanosleep: permit
 	native-pread: permit
