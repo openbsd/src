@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.67 2001/06/23 06:03:13 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.68 2001/06/23 07:14:32 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -949,7 +949,8 @@ udp_output(m, va_alist)
 		ro = &inp->inp_route;
 		if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP)) {
 			ifp = ro->ro_rt->rt_ifp;
-			if (ifp->if_capabilities & IFCAP_CSUM_UDPv4) {
+			if ((ifp->if_capabilities & IFCAP_CSUM_UDPv4) &&
+			    ifp->if_bridge == NULL) {
 				m->m_pkthdr.csum |= M_UDPV4_CSUM_OUT;
 				udpstat.udps_outhwcsum++;
 				ui->ui_sum = in_cksum(m,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.40 2001/06/23 06:03:12 angelos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.41 2001/06/23 07:14:32 angelos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -958,7 +958,8 @@ send:
 		ro = &tp->t_inpcb->inp_route;
 		if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP)) {
 			ifp = ro->ro_rt->rt_ifp;
-			if (ifp->if_capabilities & IFCAP_CSUM_TCPv4) {
+			if ((ifp->if_capabilities & IFCAP_CSUM_TCPv4) &&
+			    ifp->if_bridge == NULL) {
 				m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
 				tcpstat.tcps_outhwcsum++;
 				th->th_sum = in_cksum(m, (int)hdrlen);
