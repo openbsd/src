@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.16 1998/12/21 06:22:58 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.17 1998/12/22 22:47:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.16 1998/10/22 16:46:26 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.21 1998/12/14 06:32:57 dillon Exp $
  */
 
 /*
@@ -194,8 +194,8 @@
 #endif
 
 #if !defined(lint) && !defined(__OpenBSD__)
-static char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.16 1998/10/22 16:46:26 wpaul Exp $";
+static const char rcsid[] =
+	"$FreeBSD: if_xl.c,v 1.21 1998/12/14 06:32:57 dillon Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -245,7 +245,7 @@ static struct xl_type xl_phys[] = {
 
 #if defined(__FreeBSD__)
 static unsigned long xl_count = 0;
-static char *xl_probe		__P((pcici_t, pcidi_t));
+static const char *xl_probe	__P((pcici_t, pcidi_t));
 static void xl_attach		__P((pcici_t, int));
 static void xl_intr		__P((void *));
 static void xl_shutdown		__P((int, void *));
@@ -270,7 +270,7 @@ static int xl_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static void xl_init		__P((void *));
 static void xl_stop		__P((struct xl_softc *));
 static void xl_watchdog		__P((struct ifnet *));
-static u_int8_t xl_calchash	__P((u_int8_t *));
+static u_int8_t xl_calchash	__P((caddr_t));
 static void xl_mediacheck	__P((struct xl_softc *));
 static void xl_autoneg_mii	__P((struct xl_softc *, int, int));
 static void xl_setmode_mii	__P((struct xl_softc *, int));
@@ -288,7 +288,7 @@ static void xl_mii_send		__P((struct xl_softc *, u_int32_t, int));
 static int xl_mii_readreg	__P((struct xl_softc *, struct xl_mii_frame *));
 static int xl_mii_writereg	__P((struct xl_softc *, struct xl_mii_frame *));
 static u_int16_t xl_phy_readreg	__P((struct xl_softc *, int));
-static void xl_phy_writereg	__P((struct xl_softc *, u_int16_t, u_int16_t));
+static void xl_phy_writereg	__P((struct xl_softc *, int, int));
 
 static void xl_setmulti		__P((struct xl_softc *));
 static void xl_setmulti_hash	__P((struct xl_softc *));
@@ -559,8 +559,8 @@ static u_int16_t xl_phy_readreg(sc, reg)
 
 static void xl_phy_writereg(sc, reg, data)
 	struct xl_softc		*sc;
-	u_int16_t		reg;
-	u_int16_t		data;
+	int			reg;
+	int			data;
 {
 	struct xl_mii_frame	frame;
 
@@ -649,7 +649,7 @@ static int xl_read_eeprom(sc, dest, off, cnt, swap)
  * On older cards, the upper 2 bits will be ignored. Grrrr....
  */
 static u_int8_t xl_calchash(addr)
-	u_int8_t		*addr;
+	caddr_t			addr;
 {
 	u_int32_t		crc, carry;
 	int			i, j;
@@ -1272,7 +1272,7 @@ static void xl_reset(sc)
  * Probe for a 3Com Etherlink XL chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
  */
-static char *
+static const char *
 xl_probe(config_id, device_id)
 	pcici_t			config_id;
 	pcidi_t			device_id;
@@ -2045,8 +2045,6 @@ static void xl_txeof(sc)
 
 		cur_tx->xl_next = sc->xl_cdata.xl_tx_free;
 		sc->xl_cdata.xl_tx_free = cur_tx;
-		if (!cur_tx->xl_ptr->xl_next);
-			break;
 	}
 
 	if (sc->xl_cdata.xl_tx_head == NULL) {
@@ -2401,6 +2399,12 @@ static void xl_start(ifp)
 
 #endif
 	}
+
+	/*
+	 * If there are no packets queued, bail.
+	 */
+	if (cur_tx == NULL)
+		return;
 
 	/*
 	 * Place the request for the upload interrupt
