@@ -187,7 +187,11 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #endif /* NAMED_BIND */
 
 #ifndef PIPELINING
-# define PIPELINING	1	/* SMTP PIPELINING */
+# ifdef __vax__
+#  define PIPELINING	0	/* SMTP PIPELINING */
+# else
+#  define PIPELINING	1	/* SMTP PIPELINING */
+# endif /* __vax__ */
 #endif /* PIPELINING */
 
 /**********************************************************************
