@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.5 2002/10/07 05:39:48 drahn Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.6 2002/10/17 02:47:05 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -276,7 +276,7 @@ pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
 		return (0);
 	
 	start = (type == PCI_MAPREG_TYPE_MEM ? sc->sc_membus_space.bus_base
-		: sc->sc_iobus_space.bus_base);
+	    : PCIADDR_PORT_START);
 	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
 		PCIBIOS_PRINTV(("No available resources. fixup failed\n"));
 		return (1);
