@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1996/10/24 03:46:05 tholo Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1997/06/30 23:54:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1996/10/24 03:46:05 tholo Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1997/06/30 23:54:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ brace_subst(orig, store, path, len)
 	register char ch, *p;
 
 	plen = strlen(path);
-	for (p = *store; ch = *orig; ++orig)
+	for (p = *store; (ch = *orig); ++orig)
 		if (ch == '{' && orig[1] == '}') {
 			while ((p - *store) + plen > len)
 				if (!(*store = realloc(*store, len *= 2)))
@@ -125,7 +125,7 @@ emalloc(len)
 {
 	void *p;
 
-	if (p = malloc(len))
+	if ((p = malloc(len)))
 		return (p);
 	err(1, NULL);
 }
