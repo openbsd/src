@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.37 2003/09/06 22:11:19 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.38 2004/03/16 08:24:59 jmc Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -10,7 +10,7 @@ OpenBSD is a fully functional, multi-platform UN*X-like Operating
 System based on Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite.
 There are several operating systems in this family, but OpenBSD
 differentiates itself by putting security and correctness first.  The
-OpenBSD team strives to achieve what is called 'a secure by default'
+OpenBSD team strives to achieve what is called a 'secure by default'
 status.  This means that an OpenBSD user should feel safe that their
 newly installed machine will not be compromised.  This 'secure by
 default' goal is achieved by taking a proactive stance on security.
@@ -46,7 +46,7 @@ Because OpenBSD is from Canada, the export of Cryptography pieces
 the US.  Because of this, take care NOT to get the distribution from
 an FTP server in the US if you are outside of Canada and the US.)
 
-A comprehensive list of the improvewents brought by the OSREV release
+A comprehensive list of the improvements brought by the OSREV release
 is available on the web at http://www.OpenBSD.org/OSrev.html.
 
 includeit(whatis)dnl

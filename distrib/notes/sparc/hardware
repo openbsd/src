@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.59 2004/02/29 21:56:43 miod Exp $
+dnl	$OpenBSD: hardware,v 1.60 2004/03/16 08:25:00 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -18,7 +18,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- ELC: SS2-performance built into a B&W monitor
 
     * sun4m:
-	- 600MP: The original Sun4m machine. This is a mbus machine with
+	- 600MP: The original Sun4m machine. This is an mbus machine with
 	  SBus and VME busses.
 	- LC: 50MHz MicroSPARC-1 based machines (aka Classic)
 	- LX: LC with a few more devices
@@ -287,7 +287,7 @@ OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 	- clones that are significantly different from the Sun systems
 		(e.g. K-Bus based Solbourne)
 
-Hardware the we do NOT currently support, but get many questions about:
+Hardware that we do NOT currently support, but get many questions about:
     * Serial Cards:
         - VME mti 16-port serial card
         - VME alm2 16-port serial card

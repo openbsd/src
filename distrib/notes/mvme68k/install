@@ -1,12 +1,12 @@
-dnl	$OpenBSD: install,v 1.24 2004/02/09 13:32:47 todd Exp $
+dnl	$OpenBSD: install,v 1.25 2004/03/16 08:25:00 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that can
 be booted from tape.
 
-Alternatively, if the MACHINE is hooked up in a network, it is possible
-to setup another machine as a server for diskless setup, which is a
+Alternatively, if the MACHINE is hooked up to a network, it is possible
+to set up another machine as a server for diskless setup, which is a
 convenient way to install on a machine whose disk does not currently
 hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
@@ -79,7 +79,7 @@ even if its controller is not supported by OpenBSD.
 
 Installing using a diskless setup:
 
-First, a diskless client configuration should be setup on a server. If
+First, a diskless client configuration should be set up on a server. If
 the boot server is an OpenBSD system, the diskless(8) manual page will
 provide detailed information on the process.
 
@@ -123,7 +123,7 @@ If the BUG does not support the NIOT command (most MVME147 don't), then
 it has no support for netbooting, and you'll have to use S-Records,
 described later in this document.
 
-Before netbooting, enter "NIOT" and fill the parametrs. Be sure to provide
+Before netbooting, enter "NIOT" and fill the parameters. Be sure to provide
 the correct values for Controller LUN and Device LUN (as listed in the
 "NIOT;A" output); also the "Boot File Load Address" and "Boot File
 Execution Address" need to be set to 006F0000. The "Boot File Name" must
@@ -174,9 +174,9 @@ will prevent the OpenBSD kernel from probing the built-in SCSI controller
     167-Bug> IOI;C
     167-Bug> IOI
 
-This can take up to a couple of minutes, depending how many SCSI controllers
-are found in the machine. Once the BUG prompt is back, you can safely
-netboot:
+This can take up to a couple of minutes, depending on how many SCSI
+controllers are found in the machine. Once the BUG prompt is back, you can
+safely netboot:
 	
     167-Bug> NBO 00 00
 
@@ -195,7 +195,7 @@ MVME147 don't), the alternative is to boot from S-Records.
 
 Booting from S-Records:
 
-First, a diskless client configuration should be setup on a server. Refer
+First, a diskless client configuration should be set up on a server. Refer
 to the short description above for details.
 
 Second, using a terminal emulator able to read files from the local machine
@@ -205,7 +205,7 @@ S-Records receive mode, with the LO command at the BUG prompr:
 
     147-Bug> LO
 
-If this command prints an error messages and returns to the BUG prompt
+If this command prints an error message and returns to the BUG prompt
 immediately, it might be necessary to switch directories, using the SD
 command, before retrying.
 
@@ -222,7 +222,7 @@ S-Records boot loader. This is a very crude bootloader which will attempt
 to fetch a secondary boot program via TFTP requests, like the NBO command.
 
 This will cause the kernel provided by the diskless setup to be booted.
-After the initial probe messages you'll asked to start the install
+After the initial probe messages you'll be asked to start the install
 or upgrade procedure.
 
 
@@ -307,7 +307,7 @@ After the boot program has been loaded into memory and given control by
 the BUG, it starts locating the machine's remote root directory through
 the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
 on the local net. The answer to this request (if it comes in) contains
-the client's name. This name is used in next step, a BOOTPARAM GETFILE
+the client's name. This name is used in the next step, a BOOTPARAM GETFILE
 request -- sent to the server that responded to the WHOAMI request --
 requesting the name and address of the machine that will serve the client's
 root directory, as well as the path of the client's root on that server.

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2004/02/07 14:28:32 miod Exp $
+dnl	$OpenBSD: prep,v 1.6 2004/03/16 08:25:00 jmc Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -71,7 +71,7 @@ disks are recognized, but can't be modified to define new partitions at the
 moment.
 
 OpenBSD/MACHINE is capable of booting from a dedicated disk using a
-MBR partitioned disk, CD containing a ISO image or a firmware supported
+MBR partitioned disk, CD containing an ISO image or a firmware supported
 ethernet card.
 
 For dedicated disks, the MACHINE port boots off a boot program in

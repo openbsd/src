@@ -1,9 +1,9 @@
-dnl	$OpenBSD: prep,v 1.6 2003/09/06 23:34:00 miod Exp $
+dnl	$OpenBSD: prep,v 1.7 2004/03/16 08:25:00 jmc Exp $
 Before installing OpenBSD on your machine, you will want to check your
 machine's NVRAM settings, from the BUG.
 
 The BUG provides a simple syntax reminder for every command, as well as
-description of the commands; if you need help, just use
+a description of the commands; if you need help, just use
 
     167-Bug> HE
 

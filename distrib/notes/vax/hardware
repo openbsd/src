@@ -42,5 +42,5 @@ At the moment, the only supported console is a serial console.
 
 Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
 or tapes on one of the supported controllers, disks and tapes accessed
-through an appropriate QBUS MSCP controller, or a NFS root and swap.
+through an appropriate QBUS MSCP controller, or an NFS root and swap.
 Please see below for details.

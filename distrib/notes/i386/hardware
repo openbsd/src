@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.144 2004/03/15 22:24:58 grange Exp $
+dnl	$OpenBSD: hardware,v 1.145 2004/03/16 08:25:00 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -764,7 +764,7 @@ Supported hardware {:-include-:}:
 
 Drivers for hardware marked with [G] are only included in the GENERIC
 kernels, but are NOT included on the various distribution floppies
-(including the cd-rom boot image).
+(including the CD-ROM boot image).
 Drivers for hardware marked with [A] are not included in floppy A.
 Drivers for hardware marked with [B] are not included in floppy B.
 Drivers for hardware marked with [C] are not included in floppy C.
@@ -930,8 +930,8 @@ Special care for SMC Elite Ultra:
 	'default' location the kernel is expecting it, you may also use
 	the 'change' command in the UKC system to modify where the kernel
 	will look for it.  Typing 'change we1' will allow you to modify
-	those settings.  Note that running the card at an i/o port of
-	anything other then 0x300 at this point is not recommended, and is
+	those settings.  Note that running the card at an I/O port of
+	anything other than 0x300 at this point is not recommended, and is
 	beyond the scope of this document-- by doing so you risk other
 	device probes wreaking the havoc we are trying to avoid.
 

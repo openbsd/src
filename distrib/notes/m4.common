@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.52 2004/03/08 22:32:06 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.53 2004/03/16 08:24:59 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -368,7 +368,7 @@ define({:-OpenBSDInstallNet-:},
 	configuration used by the system after the installation is complete.
 
 	If you select to configure the network, the install program will
-	ask you for a name of your system and the DNS domain name to use.
+	ask you for the name of your system and the DNS domain name to use.
 	Note that the host name should be without the domain part, and that
 	the domain name should NOT {:-include-:} the host name part.
 
@@ -383,7 +383,7 @@ define({:-OpenBSDInstallNet-:},
 	any.  In doubt, do not enter any media flags; or you can refer to
 	the manual page for your interface for the appropriate flags.
 
-	After all network interfaces has been configured the install pro-
+	After all network interfaces have been configured the install pro-
 	gram will ask for a default route and IP address of the primary
 	name server to use.  You will also be presented with an opportunity
 	to edit the host table.
@@ -551,7 +551,7 @@ define({:-OpenBSDDISKInstall-:},
 
 		You will also have to identify the type of file system
 		residing in the partition identified.  Currently, you can
-		$2{:--:}install from partitions that has been formatted as the
+		$2{:--:}install from partitions that have been formatted as the
 		Berkeley fast file system (ffs)$3.
 
 		You will also have to provide the relative path to the

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.19 2003/03/24 11:33:57 miod Exp $
+dnl	$OpenBSD: xfer,v 1.20 2004/03/16 08:25:00 jmc Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -8,7 +8,7 @@ Installation is supported from several media types, including:
 	HTTP
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you may be
-able boot from it, or from the supplied bootable CD-ROM mini image. If you
+able to boot from it, or from the supplied bootable CD-ROM mini image. If you
 can boot from the CD-ROM, you are home free and can proceed to the
 installation steps.  If not, you will need to do some setup work to prepare
 a bootable image, either a floppy, hard drive, or compatible net boot

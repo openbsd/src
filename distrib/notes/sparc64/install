@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.32 2004/02/09 13:32:52 todd Exp $
+dnl	$OpenBSD: install,v 1.33 2004/03/16 08:25:00 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -7,11 +7,11 @@ dnl XXX change back if more than one floppy again.
 dnl cdrom, or an installation floppy.
 cdrom, or the installation floppy.
 
-If your machine is hooked up in a network and you can find a server to
+If your machine is hooked up to a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
-use afterwards.  (see ``Installing using a diskless setup'' below).
+use afterwards.  (See ``Installing using a diskless setup'' below.)
 
 It is also possible to install OpenBSD "manually" from a running Solaris
 system, using the system tools, as well as gunzip; see ``Installing from
@@ -83,14 +83,14 @@ which device it has been booted from.  In this case, it will ask you
 for the root and swap devices.  Answer the device and partition you
 booted from as the root partition (likely sd0b or wd0b); you might
 want to rely on the boot messages to find the correct device name
-(see below).  When the kernel asks your for the swap device, just
+(see below).  When the kernel asks you for the swap device, just
 validate the suggested device name; since the installation procedure
 does not use swap, it doesn't matter.
 
 
 Installing using a diskless setup:
 
-First, you must setup a diskless client configuration on a server. If
+First, you must set up a diskless client configuration on a server. If
 you are using a OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
@@ -132,7 +132,7 @@ OpenBSDBootMsgs
 
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
-	"sun" if correct.  If you are installing from a serial console
+	"sun" is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).
 
@@ -268,7 +268,7 @@ The GNU gunzip program is not distributed as part of Solaris, but may be
 present in your /usr/local/bin.  If not, you will need to obtain it from a
 GNU archive and install before proceeding.
 
-After the files have been extracted, setup /mnt/etc/fstab to match
+After the files have been extracted, set up /mnt/etc/fstab to match
 your actual disk layout.  (Minus the "/mnt" component of each path, of
 course :-)
 
@@ -305,7 +305,7 @@ After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through
 the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
 on the local net. The answer to this request (if it comes in) contains
-the client's name. This name is used in next step, a BOOTPARAM GETFILE
+the client's name. This name is used in the next step, a BOOTPARAM GETFILE
 request -- sent to the server that responded to the WHOAMI request --
 requesting the name and address of the machine that will serve the client's
 root directory, as well as the path of the client's root on that server.

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.5 2004/01/20 17:48:37 miod Exp $
+dnl	$OpenBSD: install,v 1.6 2004/03/16 08:25:00 jmc Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -50,7 +50,7 @@ center (unless you are using a serial console). There is only one interactive
 mode, with a BOOT_ADMIN> prompt, which provides both boot settings and
 commands.
 
-In this case, you will need to setup either bootpd or dhcpd on the server.
+In this case, you will need to set up either bootpd or dhcpd on the server.
 Assuming a bootp setup, start by editing the /etc/bootptab on the bootserver,
 and declare an information block. Here is an example:
 

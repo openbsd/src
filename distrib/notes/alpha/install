@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2004/03/16 08:24:59 jmc Exp $
 OpenBSDInstallPrelude
 
 dnl XXX document mopbooting from the SRM console.
@@ -19,8 +19,8 @@ Booting from Floppy Disk installation media:
 	than a minute.  If some action doesn't eventually happen,
 	or the spinning cursor has stopped and nothing further has
 	happened, or the machine spontaneously reboots, then either
-	either you have a bad boot floppy (in which case you should
-	try another) or your alpha is not currently supported by OpenBSD.
+	you have a bad boot floppy (in which case you should try
+	another) or your alpha is not currently supported by OpenBSD.
 
 Booting from CD-ROM installation media:
 

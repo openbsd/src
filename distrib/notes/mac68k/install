@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.24 2004/03/15 08:37:25 xsa Exp $
+dnl	$OpenBSD: install,v 1.25 2004/03/16 08:25:00 jmc Exp $
 OpenBSDInstallPrelude
 
 The installation can be broken down into four basic steps:
@@ -139,7 +139,7 @@ files, all of which are in the /etc directory:
 	dhclient.conf	dhcp client information.
 
 Once these files are configured, your system will be very much like any
-other OpenBSD system.  'mygate' and 'myname' are just single-line  text
+other OpenBSD system.  'mygate' and 'myname' are just single-line text
 files, for info on the others, see hostname.if(5), resolv.conf(5), hosts(5)
 and dhclient.conf(5) in the OpenBSD man pages.
 

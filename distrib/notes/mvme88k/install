@@ -1,12 +1,12 @@
-dnl	$OpenBSD: install,v 1.15 2004/02/09 13:32:50 todd Exp $
+dnl	$OpenBSD: install,v 1.16 2004/03/16 08:25:00 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that can
 be booted from tape.
 
-Alternatively, if the MACHINE is hooked up in a network, it is possible
-to setup another machine as a server for diskless setup, which is a
+Alternatively, if the MACHINE is hooked up to a network, it is possible
+to set up another machine as a server for diskless setup, which is a
 convenient way to install on a machine whose disk does not currently
 hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
@@ -94,7 +94,7 @@ controller. The tftp bootloader does not have this limitation and will boot
 from any BUG-supported ethernet controller.
 
 If you plan to use the Sun-compatible bootloader, "netboot", it will be
-necessary to setup a complete diskless client configuration on a server. If
+necessary to set up a complete diskless client configuration on a server. If
 the boot server is an OpenBSD system, the diskless(8) manual page will
 provide detailed information on the process.
 
@@ -277,7 +277,7 @@ After the boot program has been loaded into memory and given control by
 the BUG, it starts locating the machine's remote root directory through
 the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
 on the local net. The answer to this request (if it comes in) contains
-the client's name. This name is used in next step, a BOOTPARAM GETFILE
+the client's name. This name is used in the next step, a BOOTPARAM GETFILE
 request -- sent to the server that responded to the WHOAMI request --
 requesting the name and address of the machine that will serve the client's
 root directory, as well as the path of the client's root on that server.
