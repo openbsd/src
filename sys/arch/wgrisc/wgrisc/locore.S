@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: locore.S,v 1.1.1.1 1997/02/06 16:02:45 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 1997/05/11 16:26:07 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.1.1.1 1997/02/06 16:02:45 pefo Exp $
+ *	$Id: locore.S,v 1.2 1997/05/11 16:26:07 pefo Exp $
  */
 
 /*
@@ -68,6 +68,7 @@
 #include <machine/cpu.h>
 #include <machine/regnum.h>
 #include <machine/pte.h>
+#include <wgrisc/riscbus/riscbus.h>
 
 #include "assym.h"
 
@@ -77,6 +78,9 @@
  * Amount to take off of the stack for the benefit of the debugger.
  */
 #define START_FRAME	((4 * 4) + 4 + 4)
+
+	.globl  _C_LABEL(kernel_start)
+	_C_LABEL(kernel_start) = start
 
 	.globl	start
 start:
@@ -719,12 +723,32 @@ LEAF(idle)
 	mtc0	t0, COP_0_STATUS_REG		# enable all interrupts
 	sw	zero, curproc			# set curproc NULL for stats
 1:
+#ifdef ROTATING_LED
+	lbu	t4, led_sw
+	nop
+	or	t4, 0x40
+	sb	t4, RISC_LEDS
+#endif
+	mfc0	v1, COP_0_PRID
 	lw	t0, whichqs			# look for non-empty queue
+	li	v1, 0xff00
+	bne	t0, zero, sw1
+	and	v0, v1
+	li	v1, (MIPS_R3000 << 8)
+	bne	v1, v0, 1b
+#if 0
+	mfc0	v1, COP_0_CFG
+#else
 	nop
-	beq	t0, zero, 1b
+#endif
+	li	v0, 0x02000000			# XXX assume halt for now.
+	or	v1, v0, v1
+	b	1b
+#if 0
+	mtc0	v1, COP_0_CFG
+#else
 	nop
-	b	sw1
-	mtc0	zero, COP_0_STATUS_REG	# Disable all interrupts
+#endif
 END(idle)
 
 /*
@@ -753,16 +777,30 @@ NON_LEAF(cpu_switch, STAND_FRAME_SIZE, ra)
 	addu	t2, t2, 1
 	sw	t2, cnt+V_SWTCH
 	beq	t1, zero, idle			# if none, idle
-	mtc0	zero, COP_0_STATUS_REG	# Disable all interrupts
 sw1:
+	mtc0	zero, COP_0_STATUS_REG		# Disable all interrupts
+#ifdef ROTATING_LED
+	lbu	t4, led_sw
 	nop					# wait for intrs disabled
+	srl	t5, t4, 5			# instructions below is part
+	sll	t4, t4, 1			# if the delay!
+	or	t4, t5
+	and	t4, 0x3f
+	sb	t4, led_sw
+	sb	t4, RISC_LEDS
+#else
 	nop
 	nop
 	nop
+	nop
+	nop
+#endif
+
 	lw	t0, whichqs			# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
 	beq	t0, zero, idle			# if none, idle
 	move	t3, t0				# t3 = saved whichqs
+
 1:
 	addu	t2, t2, 1
 	and	t1, t0, 1			# bit set?
@@ -4469,6 +4507,8 @@ END(cpu_getregs)
 	.globl eintrcnt
 	.globl intrnames
 	.globl eintrnames
+led_sw:
+	.byte	1
 intrnames:
 	.asciiz	"softclock"
 	.asciiz	"softnet"

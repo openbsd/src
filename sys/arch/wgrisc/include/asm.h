@@ -1,4 +1,4 @@
-/*      $OpenBSD: asm.h,v 1.1.1.1 1997/02/06 16:02:44 pefo Exp $	*/
+/*      $OpenBSD: asm.h,v 1.2 1997/05/11 16:26:00 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,9 @@
 
 #include <machine/regdef.h>
 
+#ifndef ABICALLS
 #define	ABICALLS	.abicalls
+#endif
 
 #if defined(ABICALLS) && !defined(_KERNEL)
 	ABICALLS

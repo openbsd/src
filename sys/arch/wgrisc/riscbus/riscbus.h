@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscbus.h,v 1.1.1.1 1997/02/06 16:02:44 pefo Exp $ */
+/*	$OpenBSD: riscbus.h,v 1.2 1997/05/11 16:26:03 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -104,6 +104,7 @@
 #define	R3715_DMA_INT0		0x00000020
 #define	R3715_DMA_INT1		0x00000040
 
+#ifndef _LOCORE
 /*
  *  Interrupt vector descriptor for device on risc bus.
  */
@@ -115,4 +116,5 @@ struct riscbus_int_desc {
 };
 
 int	riscbus_intrnull __P((void *));
+#endif	/* _LOCORE */
 #endif	/* RISCBUS_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.1.1.1 1997/02/06 16:02:44 pefo Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.2 1997/05/11 16:25:59 pefo Exp $	*/
 /*	$NetBSD: ansi.h,v 1.5 1994/10/26 21:09:33 cgd Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
 #define	_BSD_TIME_T_	long			/* time() */
 #define	_BSD_VA_LIST_	char *			/* va_list */
+#define	_BSD_CLOCKID_T_	int
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural

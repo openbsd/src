@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 1997/02/23 21:59:32 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 1997/05/11 16:26:04 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.2 1997/02/23 21:59:32 pefo Exp $
+ *      $Id: autoconf.c,v 1.3 1997/05/11 16:26:04 pefo Exp $
  */
 
 /*
@@ -64,6 +64,14 @@
 
 struct  device *parsedisk __P((char *, int, int, dev_t *));
 void    setroot __P((void));
+void	configure __P((void));
+void	swapconf __P((void));
+extern void	dumpconf __P((void));
+static int findblkmajor __P((struct device *));
+static struct device * getdisk __P((char *, int, int, dev_t *));
+struct device * getdevunit __P((char *, int));
+void makebootdev __P((char *cp));
+int getpno __P((char **));
 
 /*
  * The following several variables are related to
@@ -79,9 +87,10 @@ struct device *bootdv = NULL;
  *  Configure all devices found that we know about.
  *  This is done at boot time.
  */
+void
 configure()
 {
-	(void)splhigh();	/* To be really shure.. */
+	(void)splhigh();	/* To be really sure.. */
 	if(config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 	(void)spl0();
@@ -94,6 +103,7 @@ configure()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -122,8 +132,8 @@ static	struct nam2blk {
 	int  maj;
 } nam2blk[] = {
 	{ "sd",	0 },	/* 0 = sd */
-	{ "fd", 7 },	/* 7 = floppy  (ick!)*/
-	{ "flash", 10 }	/* 10 = Flash memory disk */
+	{ "fd", 7 },	/* 7 = floppy  (probably never...)*/
+	{ "flash", 10 } /* 10 = Flash memory disk */
 };
 
 static int
@@ -171,13 +181,13 @@ parsedisk(str, len, defpart, devp)
 {
 	register struct device *dv;
 	register char *cp, c;
-	int majdev, mindev, part;
+	int majdev, part;
 
 	if (len == 0)
 		return (NULL);
 	cp = str + len - 1;
 	c = *cp;
-	if (c >= 'a' && c <= 'h') {
+	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
 		part = c - 'a';
 		*cp = '\0';
 	} else
@@ -189,8 +199,7 @@ parsedisk(str, len, defpart, devp)
 			majdev = findblkmajor(dv);
 			if (majdev < 0)
 				panic("parsedisk");
-			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
-			*devp = makedev(majdev, mindev);
+			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
 			break;
 		}
 #ifdef NFSCLIENT
@@ -224,9 +233,6 @@ setroot()
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 #endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void));
-#endif
 
 	/* Lookup boot device from boot if not set by configuration */
 	if(bootdv == NULL) {
@@ -242,7 +248,7 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			 printf("root device ");
+			printf("root device ");
 			if (bootdv != NULL)
 				 printf("(default %s%c)",
 					bootdv->dv_xname,
@@ -290,9 +296,8 @@ setroot()
 					nswapdev = NODEV;
 					break;
 				case DV_DISK:
-					nswapdev = makedev(major(nrootdev),
-					    (minor(nrootdev) & ~ PARTITIONMASK)
-| 1);
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
 					break;
 				case DV_TAPE:
 				case DV_TTY:
@@ -359,15 +364,14 @@ gotswap:
 		nfsbootdevname = bootdv->dv_xname;
 		return;
 #endif
-#if defined(FFS)
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
-		printf("root on %s%c\n", bootdv->dv_xname,
-		    (mindev & PARTITIONMASK) + 'a');
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+		printf("root on %s%c\n", bootdv->dv_xname, part + 'a');
 		break;
-#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
@@ -376,11 +380,10 @@ gotswap:
 	/*
 	 * XXX: What is this doing?
 	 */
-	mindev &= ~PARTITIONMASK;
 	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		    unit == DISKUNIT(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
@@ -426,24 +429,36 @@ getdevunit(name, unit)
 	return dev;
 }
 
+struct devmap {
+	char *attachment;
+	char *dev;
+};
+
 /*
  * Look at the string 'cp' and decode the boot device.
- * Boot names look like: scsi()disk(n)rdisk()partition(1)\bsd
- * (beware for empty scsi id's...)
+ * Boot names look like: sd(0,0,0)/bsd
  */
 void
 makebootdev(cp)
 	char *cp;
 {
-	int	unit, part, ctrl;
+	int	unit = 0, part = 0, ctrl = 0;
 
-	bootdev[0] = *cp;
-	ctrl = getpno(&cp);
-	if(*cp++ == ')') {
-		bootdev[1] = *cp;
-		unit = getpno(&cp);
+	bootdev[0] = *cp++;
+	bootdev[1] = *cp++;
+	if(*cp == '(') {
+		ctrl = getpno(&cp);
+		if(*cp == ',') {
+			unit = getpno(&cp);
+			if(*cp == ',') {
+				part = getpno(&cp);
+			}
+		}
+		sprintf(&bootdev[2], "%d%c", ctrl*16 + unit, part + 'a');
 	}
-	sprintf(&bootdev[2], "%d", ctrl*16 + unit);
+	else {
+		sprintf(bootdev, "unknown");
+	}
 }
 getpno(cp)
 	char **cp;
@@ -451,14 +466,10 @@ getpno(cp)
 	int val = 0;
 	char *cx = *cp;
 
-	while(*cx && *cx != '(')
+	cx++;
+	while(*cx && *cx != ')' && *cx != ',') {
+		val = val * 10 + *cx - '0';
 		cx++;
-	if(*cx == '(') {
-		cx++;
-		while(*cx && *cx != ')') {
-			val = val * 10 + *cx - '0';
-			cx++;
-		}
 	}
 	*cp = cx;
 	return val;
