@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.38 2003/08/15 00:28:05 espie Exp $
+.\" $OpenBSD: ports.7,v 1.39 2003/08/15 00:32:33 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -117,6 +117,16 @@ Individual ports are controlled through a few documented targets.
 Some of these targets work recursively through subdirectories, so that
 someone can, for examples, install all of the net
 ports.
+.Pp
+The variable
+.Ev SKIPDIR
+can hold a set of package directories to avoid during recursion.
+These are always specified relative to the root of the ports tree, 
+and can contain a flavor or subpackage part
+.Po
+see
+.Xr packages-specs 7
+.Pc .
 .Pp
 In case of failure in a subdirectory, the shell fragment held in
 .Ev REPORT_PROBLEM
