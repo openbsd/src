@@ -4,7 +4,7 @@ read, and decide what can you do to make your "snakes" happy!
 ### resources:
 * sources repo;
 * http://www.openbsd.org/hppa.html - supported hardware list
-* http://hppa.fries.net/ - technical resources for developers
+* http://hppa.lucifier.net/ - technical resources for developers
 * mailto:hppa@openbsd.org
 
 
@@ -12,7 +12,7 @@ read, and decide what can you do to make your "snakes" happy!
 
 hardware and installation notes (distrib/notes/hppa/*):	fries@
 * wip, will flesh out as development progresses
-* For now have rbootd running on the server, boot.lif from hppa.fries.net,
+* For now have rbootd running on the server, boot.lif from hppa.lucifier.net,
     and then:
          <esc> on bootup, a to get to BOOT_ADMIN prompt, and finally,
          BOOT_ADMIN> boot lan isl
@@ -57,7 +57,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.20 2002/07/25 04:53:24 mickey Exp $
+$OpenBSD: TODO,v 1.21 2002/07/31 20:21:52 todd Exp $
 
 --
 	paranoic mickey
