@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.8 2000/11/15 20:17:38 aaron Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.9 2000/11/19 03:28:53 aaron Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -119,8 +119,7 @@ vga_pci_attach(parent, self, aux)
 	sc->sc_pcitag = pa->pa_tag;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	printf("\n");
 
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 			  WSDISPLAY_TYPE_PCIVGA);
