@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.39 2000/06/30 18:17:58 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.40 2000/08/03 07:34:41 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.39 2000/06/30 18:17:58 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.40 2000/08/03 07:34:41 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1440,7 +1440,7 @@ phys_status(force)
 		ifrp = (struct ifreq *) &in6_ifr;
 	}
 #else /* INET6 */
-	ifrp = ifr;
+	ifrp = &ifr;
 	srccmd = SIOCGIFPSRCADDR;
 	dstcmd = SIOCGIFPDSTADDR;
 #endif /* INET6 */
