@@ -8,8 +8,7 @@ LDADD=	-lcrypto -lutil -lz
 DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh-agent.1
 
-SRCS=	ssh-agent.c log-client.c rsa.c buffer.c \
-	xmalloc.c bufaux.c authfd.c authfile.c \
-	mpaux.c crc32.c match.c cipher.c compress.c
+SRCS=	ssh-agent.c log-client.c rsa.c buffer.c xmalloc.c bufaux.c \
+	authfd.c authfile.c mpaux.c cipher.c
 
 .include <bsd.prog.mk>
