@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.41 2001/02/04 15:32:26 stevesk Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.42 2001/02/06 22:26:17 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -757,8 +757,10 @@ int
 userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 {
 	Key *k;
-	int i, ret, try_next;
+	int i, ret, try_next, success = 0;
 	struct stat st;
+	char *passphrase;
+	char prompt[300];
 
 	if (stat(filename, &st) != 0) {
 		debug("key does not exist: %s", filename);
@@ -768,9 +770,10 @@ userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 
 	k = key_new(KEY_UNSPEC);
 	if (!load_private_key(filename, "", k, NULL)) {
-		int success = 0;
-		char *passphrase;
-		char prompt[300];
+		if (options.batch_mode) {
+			key_free(k);
+			return 0;
+		}
 		snprintf(prompt, sizeof prompt,
 		     "Enter passphrase for key '%.100s': ", filename);
 		for (i = 0; i < options.number_of_password_prompts; i++) {
