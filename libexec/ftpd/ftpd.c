@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.87 2001/01/07 07:38:34 angelos Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.88 2001/01/09 05:07:01 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1979,13 +1979,16 @@ replydirname(name, message)
 	p = npath;
 	ep = &npath[sizeof(npath) - 1];
 	while (*name) {
-		if (*name == '"' && ep - p >= 2) {
+		if (*name == '"') {
+			if (ep - p < 2)
+				break;
 			*p++ = *name++;
 			*p++ = '"';
-		} else if (ep - p >= 1)
+		} else {
+			if (ep - p < 1)
+				break;
 			*p++ = *name++;
-		else
-			break;
+		}
 	}
 	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);
