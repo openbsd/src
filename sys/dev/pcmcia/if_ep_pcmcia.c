@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.29 2002/07/01 13:31:06 fgsch Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.30 2003/07/08 20:17:05 mickey Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -105,7 +105,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

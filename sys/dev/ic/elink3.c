@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.59 2002/06/09 02:52:44 fgsch Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.60 2003/07/08 20:17:05 mickey Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
