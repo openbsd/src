@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.38 2002/04/22 12:52:39 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.39 2002/04/29 06:26:50 pvalchev Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ conf_parse_line (int trans, char *line, size_t sz)
 	return;
       }
 
-  /* Other non-empty lines are wierd.  */
+  /* Other non-empty lines are weird.  */
   i = strspn (line, " \t");
   if (line[i])
     log_print ("conf_parse_line: %d: syntax error", ln);

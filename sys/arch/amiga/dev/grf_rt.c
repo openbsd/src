@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rt.c,v 1.12 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.13 2002/04/29 06:26:50 pvalchev Exp $	*/
 /*	$NetBSD: grf_rt.c,v 1.35 1997/07/29 17:52:09 veego Exp $	*/
 
 /*
@@ -927,7 +927,7 @@ rt_getvmode (gp, vm)
 	 * the horizontal timings are in units of longwords. Hence, I get the
 	 * pixels by multiplication with 32 and division by the depth.
 	 * The text modes, apparently marked by depth == 4, are even more
-	 * wierd.  According to a comment above, they are computed from a
+	 * weird.  According to a comment above, they are computed from a
 	 * depth==8 mode (thats for us: * 32 / 8) by applying another factor of
 	 * 4 / font width.  Reverse applying the latter formula most of the
 	 * constants cancel themselves and we are left with a nice (* font

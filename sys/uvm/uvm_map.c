@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.45 2002/03/14 03:16:13 millert Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.46 2002/04/29 06:26:51 pvalchev Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -2979,7 +2979,7 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			default:
-				panic("uvm_map_clean: wierd flags");
+				panic("uvm_map_clean: weird flags");
 			}
 		}
 		amap_unlock(amap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.15 2002/02/16 21:27:21 millert Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.16 2002/04/29 06:26:50 pvalchev Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.15 2002/02/16 21:27:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.16 2002/04/29 06:26:50 pvalchev Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -655,7 +655,7 @@ crypt(key, setting)
 		/*
 		 * Double check that we weren't given a short setting.
 		 * If we were, the above code will probably have created
-		 * wierd values for count and salt, but we don't really care.
+		 * weird values for count and salt, but we don't really care.
 		 * Just make sure the output string doesn't have an extra
 		 * NUL in it.
 		 */

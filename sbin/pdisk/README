@@ -99,7 +99,7 @@ At least one CDROM I have seen doesn't even contain a partition map at all,
 but is simply an HFS volume.
 Bootable CD-ROMs have even stranger partition maps since two are laid down:
 one at 2K offsets and one at 512-byte offsets.  If you notice that these
-overlap then you begin to get an idea of how wierd these maps can be.
+overlap then you begin to get an idea of how weird these maps can be.
 
 The documentation in Inside Macintosh is only partially correct.
 The boot-arguments field was left out.  A/UX used the boot arguments field

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_subr2.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_subr2.c,v 1.5 2002/04/29 06:26:51 pvalchev Exp $	*/
 /*	$NetBSD: tp_subr2.c,v 1.11 1996/03/26 22:27:01 christos Exp $	*/
 
 /*-
@@ -814,7 +814,7 @@ tp0_stash(tpcb, e)
 	}
 #endif
 	if (tpcb->tp_netservice != ISO_CONS)
-		printf("tp0_stash: tp running over something wierd\n");
+		printf("tp0_stash: tp running over something weird\n");
 	else {
 		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		pk_flowcontrol(lcp, sbspace(sb) <= 0, 1);
@@ -827,7 +827,7 @@ tp0_openflow(tpcb)
 {
 	register struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 	if (tpcb->tp_netservice != ISO_CONS)
-		printf("tp0_openflow: tp running over something wierd\n");
+		printf("tp0_openflow: tp running over something weird\n");
 	else {
 		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		if (lcp->lcd_rxrnr_condition)

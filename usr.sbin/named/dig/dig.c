@@ -1,10 +1,10 @@
-/*	$OpenBSD: dig.c,v 1.5 1998/08/30 03:39:18 deraadt Exp $	*/
+/*	$OpenBSD: dig.c,v 1.6 2002/04/29 06:26:50 pvalchev Exp $	*/
 
 #ifndef lint
 #if 0
 static char rcsid[] = "$From: dig.c,v 8.8 1996/05/21 07:32:40 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: dig.c,v 1.5 1998/08/30 03:39:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dig.c,v 1.6 2002/04/29 06:26:50 pvalchev Exp $";
 #endif
 #endif
 
@@ -557,7 +557,7 @@ main(argc, argv)
  * try to resolve domain-name (if so, save and turn off print 
  * options, this domain-query is not the one we want. Restore
  * user options when done.
- * Things get a bit wierd since we need to use resolver to be
+ * Things get a bit weird since we need to use resolver to be
  * able to "put the resolver to work".
  */
 

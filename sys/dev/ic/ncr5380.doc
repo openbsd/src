@@ -30,7 +30,7 @@ following:
 sci_*: pointers to the 5380 registers.  All accesses are done through
   these pointers.  This indirection allows the driver to work with
   boards that map the 5380 on even addresses only or do other
-  wierdnesses.
+  weirdnesses.
 
 int (*sc_pio_out)(sc, phase, datalen, data)
 int (*sc_pio_in)(sc, phase, datalen, data)
