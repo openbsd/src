@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.120 2001/11/29 21:55:31 nate Exp $
+#	$OpenBSD: files.pci,v 1.121 2001/12/05 10:31:44 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -393,14 +393,14 @@ attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
 
 # Guillemot Maxi Radio FM 2000 Radio Card
-device	mr: radio, pci
+device	mr: radio
 attach	mr at pci
-file	dev/pci/maxiradio.c		mr	needs-flag
+file	dev/pci/maxiradio.c		mr
 
 # MediaForte SoundForte SF64-PCR Radio card
-device	sf4r: radio, pci, tea5757
+device	sf4r: radio, tea5757
 attach	sf4r at pci
-file	dev/pci/sf64pcr.c		sf4r	needs-flag
+file	dev/pci/sf64pcr.c		sf4r
 
 # National Semiconductor DP83820/DP83821 based GigE
 device	nge: ether, ifnet, mii, ifmedia, mii_phy
