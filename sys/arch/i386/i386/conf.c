@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.93 2002/06/18 12:50:55 nate Exp $	*/
+/*	$OpenBSD: conf.c,v 1.94 2002/06/18 23:16:50 fgsch Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -203,6 +203,8 @@ cdev_decl(uscanner);
 #include "cz.h"
 cdev_decl(cztty);
 #include "radio.h"
+cdev_decl(gpr);
+#include "gpr.h"
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -329,6 +331,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
  	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
+	cdev_ch_init(NGPR,gpr)		/* 80: GPR400 SmartCard reader */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
