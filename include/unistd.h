@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.17 1998/02/10 02:19:47 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.18 1998/02/10 02:44:38 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@
 __BEGIN_DECLS
 __dead void	 _exit __P((int)) __attribute__((noreturn));
 int	 access __P((const char *, int));
-unsigned alarm __P((unsigned));
+unsigned int alarm __P((unsigned int));
 int	 chdir __P((const char *));
 int	 chown __P((const char *, uid_t, gid_t));
 int	 close __P((int));
@@ -92,7 +92,7 @@ int	 setgid __P((gid_t));
 int	 setpgid __P((pid_t, pid_t));
 pid_t	 setsid __P((void));
 int	 setuid __P((uid_t));
-unsigned sleep __P((unsigned));
+unsigned int sleep __P((unsigned int));
 long	 sysconf __P((int));
 pid_t	 tcgetpgrp __P((int));
 int	 tcsetpgrp __P((int, pid_t));
