@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.76 2003/06/04 07:31:16 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.77 2003/06/10 12:21:29 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ ipsec_finalize_exchange (struct message *msg)
 		  /* Initiator is source, responder is destination.  */
 		  if (ipsec_set_network (ie->id_ci, ie->id_cr, isa))
 		    {
-		      log_error ("ipsec_finalize_exchange: "
+		      log_print ("ipsec_finalize_exchange: "
 				 "ipsec_set_network failed");
 		      return;
 		    }
@@ -341,7 +341,7 @@ ipsec_finalize_exchange (struct message *msg)
 		  /* Responder is source, initiator is destination.  */
 		  if (ipsec_set_network (ie->id_cr, ie->id_ci, isa))
 		    {
-		      log_error ("ipsec_finalize_exchange: "
+		      log_print ("ipsec_finalize_exchange: "
 				 "ipsec_set_network failed");
 		      return;
 		    }
@@ -414,6 +414,7 @@ static int
 ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 {
   int id;
+  char *v;
 
   /* Set source address/mask.  */
   id = GET_ISAKMP_ID_TYPE (src_id);
@@ -424,7 +425,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->src_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->src_net)
-	return -1;
+	goto memfail;
       isa->src_net->sa_family = AF_INET;
 #ifndef USE_OLD_SOCKADDR
       isa->src_net->sa_len = sizeof (struct sockaddr_in);
@@ -433,7 +434,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->src_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->src_mask)
-	return -1;
+	goto memfail;
       isa->src_mask->sa_family = AF_INET;
 #ifndef USE_OLD_SOCKADDR
       isa->src_mask->sa_len = sizeof (struct sockaddr_in);
@@ -445,7 +446,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->src_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->src_net)
-	return -1;
+	goto memfail;
       isa->src_net->sa_family = AF_INET6;
 #ifndef USE_OLD_SOCKADDR
       isa->src_net->sa_len = sizeof (struct sockaddr_in6);
@@ -454,12 +455,23 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->src_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->src_mask)
-	return -1;
+	goto memfail;
       isa->src_mask->sa_family = AF_INET6;
 #ifndef USE_OLD_SOCKADDR
       isa->src_mask->sa_len = sizeof (struct sockaddr_in6);
 #endif
       break;
+
+    case IPSEC_ID_IPV4_RANGE:
+    case IPSEC_ID_IPV6_RANGE:
+    case IPSEC_ID_DER_ASN1_DN:
+    case IPSEC_ID_DER_ASN1_GN:
+    case IPSEC_ID_KEY_ID:
+    default:
+      v = constant_lookup (ipsec_id_cst, id);
+      log_print ("ipsec_set_network: ID type %d (%s) not supported",
+		 id, v ? v : "<unknown>");
+      return -1;
     }
 
   /* Net */
@@ -494,7 +506,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->dst_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->dst_net)
-	return -1;
+	goto memfail;
       isa->dst_net->sa_family = AF_INET;
 #ifndef USE_OLD_SOCKADDR
       isa->dst_net->sa_len = sizeof (struct sockaddr_in);
@@ -503,7 +515,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->dst_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->dst_mask)
-	return -1;
+	goto memfail;
       isa->dst_mask->sa_family = AF_INET;
 #ifndef USE_OLD_SOCKADDR
       isa->dst_mask->sa_len = sizeof (struct sockaddr_in);
@@ -515,7 +527,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->dst_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->dst_net)
-	return -1;
+	goto memfail;
       isa->dst_net->sa_family = AF_INET6;
 #ifndef USE_OLD_SOCKADDR
       isa->dst_net->sa_len = sizeof (struct sockaddr_in6);
@@ -524,7 +536,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->dst_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->dst_mask)
-	return -1;
+	goto memfail;
       isa->dst_mask->sa_family = AF_INET6;
 #ifndef USE_OLD_SOCKADDR
       isa->dst_mask->sa_len = sizeof (struct sockaddr_in6);
@@ -557,6 +569,10 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
   memcpy (&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	  IPSEC_ID_PORT_LEN);
   return 0;
+
+ memfail:
+  log_error ("ipsec_set_network: calloc () failed");
+  return -1;
 }
 
 /* Free the DOI-specific exchange data pointed to by VIE.  */
