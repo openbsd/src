@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.13 2001/03/30 11:09:00 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.14 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.67 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -58,8 +58,6 @@
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /* IPSEC_IPV6FWD */
-
-#include <net/net_osdep.h>
 
 struct	route_in6 ip6_forward_rt;
 
@@ -127,7 +125,7 @@ ip6_forward(m, srcrt)
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif));
+			    m->m_pkthdr.rcvif->if_xname);
 		}
 		m_freem(m);
 		return;
@@ -351,7 +349,7 @@ ip6_forward(m, srcrt)
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif), if_name(rt->rt_ifp));
+			    m->m_pkthdr.rcvif->if_xname, rt->rt_ifp->if_xname);
 		}
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
@@ -445,8 +443,8 @@ ip6_forward(m, srcrt)
 			       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
 			       ip6_sprintf(&ip6->ip6_src),
 			       ip6_sprintf(&ip6->ip6_dst),
-			       ip6->ip6_nxt, if_name(m->m_pkthdr.rcvif),
-			       if_name(rt->rt_ifp));
+			       ip6->ip6_nxt, m->m_pkthdr.rcvif->if_xname,
+			       rt->rt_ifp->if_xname);
 		}
 
 		/* we can just use rcvif in forwarding. */

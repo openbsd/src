@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.10 2001/04/04 06:22:57 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.11 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
-
-#include <net/net_osdep.h>
 
 #define SDL(s)	((struct sockaddr_dl *)s)
 
@@ -123,7 +121,7 @@ nd6_rs_input(m, off, icmp6len)
 		nd6log((LOG_ERR,
 		    "nd6_rs_input: invalid hlim (%d) from %s to %s on %s\n",
 		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		    ip6_sprintf(&ip6->ip6_dst), ifp->if_xname));
 		goto bad;
 	}
 
@@ -211,7 +209,7 @@ nd6_ra_input(m, off, icmp6len)
 		nd6log((LOG_ERR,
 		    "nd6_ra_input: invalid hlim (%d) from %s to %s on %s\n",
 		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		    ip6_sprintf(&ip6->ip6_dst), ifp->if_xname));
 		goto bad;
 	}
 
@@ -470,8 +468,7 @@ defrouter_addifreq(ifp)
 	if ((ifa = ifaof_ifpforaddr((struct sockaddr *)&def, ifp)) == NULL) {
 		nd6log((LOG_ERR,	/* better error? */
 		    "defrouter_addifreq: failed to find an ifaddr "
-		    "to install a route to interface %s\n",
-		    if_name(ifp)));
+		    "to install a route to interface %s\n", ifp->if_xname));
 		return;
 	}
 
@@ -484,7 +481,7 @@ defrouter_addifreq(ifp)
 		nd6log((LOG_ERR,
 		    "defrouter_addifreq: failed to install a route to "
 		    "interface %s (errno = %d)\n",
-		    if_name(ifp), error));
+		    ifp->if_xname, error));
 	}
 }
 
@@ -1238,7 +1235,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 	/* prefixlen + ifidlen must be equal to 128 */
 	if (prefixlen != in6_mask2len(&ib->ia_prefixmask.sin6_addr)) {
 		nd6log((LOG_ERR, "in6_ifadd: wrong prefixlen for %s"
-			"(prefix=%d ifid=%d)\n", if_name(ifp),
+			"(prefix=%d ifid=%d)\n", ifp->if_xname,
 			prefixlen,
 			128 - in6_mask2len(&ib->ia_prefixmask.sin6_addr)));
 		return NULL;
@@ -1319,7 +1316,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		    "in6_ifadd: failed to add an interface route "
 		    "for %s/%d on %s, errno = %d\n",
 		    ip6_sprintf(&ia->ia_addr.sin6_addr), prefixlen,
-		    if_name(ifp), error));
+		    ifp->if_xname, error));
 	}
 	else
 		ia->ia_flags |= IFA_ROUTE;

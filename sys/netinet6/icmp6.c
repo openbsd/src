@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.42 2001/06/01 06:08:22 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.43 2001/06/09 06:43:37 angelos Exp $	*/
 /*	$KAME: icmp6.c,v 1.212 2001/06/01 05:35:52 jinmei Exp $	*/
 
 /*
@@ -98,8 +98,6 @@
 #undef IPSEC
 
 #include "faith.h"
-
-#include <net/net_osdep.h>
 
 /* inpcb members */
 #define in6pcb		inpcb
@@ -2747,11 +2745,11 @@ fail:
 		m_freem(m0);
 }
 
-#ifdef HAVE_NRL_INPCB
+/* NRL PCB */
 #define sotoin6pcb	sotoinpcb
 #define in6pcb		inpcb
 #define in6p_icmp6filt	inp_icmp6filt
-#endif
+
 /*
  * ICMPv6 socket option processing.
  */
@@ -2833,11 +2831,11 @@ icmp6_ctloutput(op, so, level, optname, mp)
 
 	return(error);
 }
-#ifdef HAVE_NRL_INPCB
+
+/* NRL PCB */
 #undef sotoin6pcb
 #undef in6pcb
 #undef in6p_icmp6filt
-#endif
 
 /*
  * Perform rate limit check.

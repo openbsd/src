@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.28 2001/05/25 22:08:24 itojun Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.29 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -106,8 +106,6 @@
 #if NGIF > 0
 #include <netinet6/in6_gif.h>
 #endif
-
-#include <net/net_osdep.h>
 
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.

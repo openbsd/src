@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.40 2001/05/30 12:31:09 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.41 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -102,8 +102,6 @@ extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 #endif /* IPSEC */
-
-#include <net/net_osdep.h>
 
 struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;

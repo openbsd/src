@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.3 2001/02/16 08:19:32 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.4 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -96,8 +96,6 @@
 #undef IPSEC
 
 #include "faith.h"
-
-#include <net/net_osdep.h>
 
 /*
  * UDP protocol inplementation.

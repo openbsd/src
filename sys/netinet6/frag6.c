@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.10 2001/05/17 18:11:26 itojun Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.11 2001/06/09 06:43:37 angelos Exp $	*/
 /*	$KAME: frag6.c,v 1.31 2001/05/17 13:45:34 jinmei Exp $	*/
 
 /*
@@ -52,8 +52,6 @@
 #include <netinet/icmp6.h>
 
 #include <dev/rndvar.h>
-
-#include <net/net_osdep.h>
 
 /*
  * Define it to get a correct behavior on per-interface statistics.

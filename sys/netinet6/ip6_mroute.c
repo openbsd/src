@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.15 2001/03/25 09:25:08 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.16 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -77,8 +77,6 @@
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>
 #include <netinet6/pim6_var.h>
-
-#include <net/net_osdep.h>
 
 #define M_HASCL(m) ((m)->m_flags & M_EXT)
 
@@ -971,7 +969,7 @@ ip6_mforward(ip6, ifp, m)
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif));
+			    m->m_pkthdr.rcvif->if_xname);
 		}
 		return 0;
 	}
@@ -1516,7 +1514,7 @@ phyint_send(ip6, mifp, m)
 			log(LOG_DEBUG,
 			    "phyint_send: packet too big on %s o %s g %s"
 			    " size %d(discarded)\n",
-			    if_name(ifp),
+			    ifp->if_xname,
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    mb_copy->m_pkthdr.len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.27 2001/05/16 12:53:36 ho Exp $	*/
+/*	$OpenBSD: in6.c,v 1.28 2001/06/09 06:43:37 angelos Exp $	*/
 /*	$KAME: in6.c,v 1.176 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -93,8 +93,6 @@
 #include <netinet6/mld6_var.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/in6_ifattach.h>
-
-#include <net/net_osdep.h>
 
 /* backward compatibility for a while... */
 #define COMPAT_IN6IFIOCTL

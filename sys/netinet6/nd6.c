@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.33 2001/05/29 01:08:15 angelos Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.34 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
 
 /*
@@ -70,8 +70,6 @@
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
 #include <netinet/icmp6.h>
-
-#include <net/net_osdep.h>
 
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
@@ -730,7 +728,7 @@ nd6_lookup(addr6, create, ifp)
 	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
 		if (create) {
 			log(LOG_DEBUG, "nd6_lookup: failed to lookup %s (if = %s)\n",
-			    ip6_sprintf(addr6), ifp ? if_name(ifp) : "unspec");
+			    ip6_sprintf(addr6), ifp ? ifp->if_xname : "unspec");
 			/* xxx more logs... kazu */
 		}
 		return(0);
@@ -1116,7 +1114,7 @@ nd6_rtrequest(req, rt, info)
 			    gate->sa_len < sizeof(null_sdl)) {
 				log(LOG_DEBUG,
 				    "nd6_rtrequest: bad gateway value: %s\n",
-				    if_name(ifp));
+				    ifp->if_xname);
 				break;
 			}
 			SDL(gate)->sdl_type = ifp->if_type;

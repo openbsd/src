@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.16 2001/02/23 08:01:15 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.17 2001/06/09 06:43:38 angelos Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
-
-#include <net/net_osdep.h>
 
 #include <dev/rndvar.h>
 
@@ -118,7 +116,7 @@ nd6_ns_input(m, off, icmp6len)
 		nd6log((LOG_ERR,
 		    "nd6_ns_input: invalid hlim (%d) from %s to %s on %s\n",
 		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		    ip6_sprintf(&ip6->ip6_dst), ifp->if_xname));
 		goto bad;
 	}
 
@@ -542,7 +540,7 @@ nd6_na_input(m, off, icmp6len)
 		nd6log((LOG_ERR,
 		    "nd6_na_input: invalid hlim (%d) from %s to %s on %s\n",
 		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		    ip6_sprintf(&ip6->ip6_dst), ifp->if_xname));
 		goto bad;
 	}
 
@@ -1028,7 +1026,7 @@ nd6_dad_start(ifa, tick)
 			"nd6_dad_start: called with non-tentative address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		return;
 	}
 	if (ia->ia6_flags & IN6_IFF_ANYCAST) {
@@ -1053,14 +1051,14 @@ nd6_dad_start(ifa, tick)
 		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		return;
 	}
 	bzero(dp, sizeof(*dp));
 	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
-	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
+	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
 	    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 
 	/*
@@ -1141,21 +1139,21 @@ nd6_dad_timer(ifa)
 		log(LOG_ERR, "nd6_dad_timer: called with duplicated address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		goto done;
 	}
 	if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
 		log(LOG_ERR, "nd6_dad_timer: called with non-tentative address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		goto done;
 	}
 
 	/* timeouted with IFF_{RUNNING,UP} check */
 	if (dp->dad_ns_tcount > dad_maxtry) {
 		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
-			if_name(ifa->ifa_ifp)));
+			ifa->ifa_ifp->if_xname));
 
 		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 		free(dp, M_IP6NDP);
@@ -1206,7 +1204,7 @@ nd6_dad_timer(ifa)
 				log(LOG_INFO, "DAD questionable for %s(%s): "
 					"network card loops back multicast?\n",
 					ip6_sprintf(&ia->ia_addr.sin6_addr),
-					if_name(ifa->ifa_ifp));
+					ifa->ifa_ifp->if_xname);
 				/* XXX consider it a duplicate or not? */
 				/* duplicate++; */
 			} else {
@@ -1232,7 +1230,7 @@ nd6_dad_timer(ifa)
 
 			nd6log((LOG_DEBUG,
 			    "%s: DAD complete for %s - no duplicates found\n",
-			    if_name(ifa->ifa_ifp),
+			    ifa->ifa_ifp->if_xname,
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
@@ -1260,7 +1258,7 @@ nd6_dad_duplicated(ifa)
 	}
 
 	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: %d NS, "
-	    "%d NA\n", if_name(ifa->ifa_ifp),
+	    "%d NA\n", ifa->ifa_ifp->if_xname,
 	    ip6_sprintf(&ia->ia_addr.sin6_addr),
 	    dp->dad_ns_icount, dp->dad_na_icount);
 
@@ -1271,9 +1269,9 @@ nd6_dad_duplicated(ifa)
 	nd6_dad_stoptimer(dp);
 
 	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
-	    if_name(ifa->ifa_ifp), ip6_sprintf(&ia->ia_addr.sin6_addr));
+	    ifa->ifa_ifp->if_xname, ip6_sprintf(&ia->ia_addr.sin6_addr));
 	log(LOG_ERR, "%s: manual intervention required\n",
-	    if_name(ifa->ifa_ifp));
+	    ifa->ifa_ifp->if_xname);
 
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 	free(dp, M_IP6NDP);
@@ -1292,13 +1290,13 @@ nd6_dad_ns_output(dp, ifa)
 	dp->dad_ns_tcount++;
 	if ((ifp->if_flags & IFF_UP) == 0) {
 #if 0
-		printf("%s: interface down?\n", if_name(ifp));
+		printf("%s: interface down?\n", ifp->if_xname);
 #endif
 		return;
 	}
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 #if 0
-		printf("%s: interface not running?\n", if_name(ifp));
+		printf("%s: interface not running?\n", ifp->if_xname);
 #endif
 		return;
 	}
@@ -1337,7 +1335,7 @@ nd6_dad_ns_input(ifa)
 		nd6log((LOG_INFO,
 		    "nd6_dad_ns_input: ignoring DAD NS packet for "
 		    "address %s(%s)\n", ip6_sprintf(taddr6),
-		    if_name(ifa->ifa_ifp)));
+		    ifa->ifa_ifp->if_xname));
 		return;
 	}
 
