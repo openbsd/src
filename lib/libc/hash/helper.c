@@ -1,4 +1,6 @@
-/* rmd160hl.c
+/*	$OpenBSD: helper.c,v 1.1 2004/04/26 19:38:12 millert Exp $	*/
+
+/*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
  * <phk@login.dkuug.dk> wrote this file.  As long as you retain this notice you
@@ -8,32 +10,33 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160hl.c,v 1.5 2003/05/09 16:46:31 millert Exp $";
+static const char rcsid[] = "$OpenBSD: helper.c,v 1.1 2004/04/26 19:38:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
 #include <errno.h>
 #include <fcntl.h>
-#include <rmd160.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <hashinc>
+
 /* ARGSUSED */
 char *
-RMD160End(RMD160_CTX *ctx, char *buf)
+HASHEnd(HASH_CTX *ctx, char buf[HASH_DIGEST_STRING_LENGTH])
 {
     int i;
-    u_char digest[20];
-    static const char hex[]="0123456789abcdef";
+    u_char digest[HASH_DIGEST_LENGTH];
+    static const char hex[] = "0123456789abcdef";
 
-    if (buf == NULL && (buf = malloc(41)) == NULL)
+    if (buf == NULL && (buf = malloc(HASH_DIGEST_STRING_LENGTH)) == NULL)
 	return(NULL);
 
-    RMD160Final(digest, ctx);
-    for (i = 0; i < 20; i++) {
+    HASHFinal(digest,ctx);
+    for (i = 0; i < HASH_DIGEST_LENGTH; i++) {
 	buf[i + i] = hex[digest[i] >> 4];
 	buf[i + i + 1] = hex[digest[i] & 0x0f];
     }
@@ -43,32 +46,32 @@ RMD160End(RMD160_CTX *ctx, char *buf)
 }
 
 char *
-RMD160File (char *filename, char *buf)
+HASHFile(char *filename, char buf[HASH_DIGEST_STRING_LENGTH])
 {
     u_char buffer[BUFSIZ];
-    RMD160_CTX ctx;
+    HASH_CTX ctx;
     int fd, num, oerrno;
 
-    RMD160Init(&ctx);
+    HASHInit(&ctx);
 
     if ((fd = open(filename, O_RDONLY)) < 0)
 	return(0);
 
     while ((num = read(fd, buffer, sizeof(buffer))) > 0)
-	RMD160Update(&ctx, buffer, num);
+	HASHUpdate(&ctx, buffer, num);
 
     oerrno = errno;
     close(fd);
     errno = oerrno;
-    return(num < 0 ? 0 : RMD160End(&ctx, buf));
+    return(num < 0 ? 0 : HASHEnd(&ctx, buf));
 }
 
 char *
-RMD160Data (const u_char *data, size_t len, char *buf)
+HASHData(const u_char *data, size_t len, char buf[HASH_DIGEST_STRING_LENGTH])
 {
-    RMD160_CTX ctx;
+    HASH_CTX ctx;
 
-    RMD160Init(&ctx);
-    RMD160Update(&ctx, data, len);
-    return(RMD160End(&ctx, buf));
+    HASHInit(&ctx);
+    HASHUpdate(&ctx, data, len);
+    return(HASHEnd(&ctx, buf));
 }

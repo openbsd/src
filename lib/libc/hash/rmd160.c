@@ -32,7 +32,7 @@
 #include <rmd160.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160.c,v 1.13 2003/12/14 11:22:35 markus Exp $";
+static char rcsid[] = "$OpenBSD: rmd160.c,v 1.14 2004/04/26 19:38:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define PUT_64BIT_LE(cp, value) do {                                    \
@@ -86,7 +86,7 @@ static char rcsid[] = "$OpenBSD: rmd160.c,v 1.13 2003/12/14 11:22:35 markus Exp 
 
 #define X(i)	x[i]
 
-static u_char PADDING[64] = {
+static u_char PADDING[RMD160_BLOCK_LENGTH] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -108,8 +108,8 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
 {
 	u_int32_t have, off, need;
 
-	have = (ctx->count/8) % 64;
-	need = 64 - have;
+	have = (ctx->count / 8) % RMD160_BLOCK_LENGTH;
+	need = RMD160_BLOCK_LENGTH - have;
 	ctx->count += 8 * len;
 	off = 0;
 
@@ -121,9 +121,9 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
 			have = 0;
 		}
 		/* now the buffer is empty */
-		while (off + 64 <= len) {
+		while (off + RMD160_BLOCK_LENGTH <= len) {
 			RMD160Transform(ctx->state, input+off);
-			off += 64;
+			off += RMD160_BLOCK_LENGTH;
 		}
 	}
 	if (off < len)
@@ -131,7 +131,7 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
 }
 
 void
-RMD160Final(u_char digest[20], RMD160_CTX *ctx)
+RMD160Final(u_char digest[RMD160_DIGEST_LENGTH], RMD160_CTX *ctx)
 {
 	int i;
 	u_char size[8];
@@ -140,12 +140,12 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 	PUT_64BIT_LE(size, ctx->count);
 
 	/*
-	 * pad to 64 byte blocks, at least one byte from PADDING plus 8 bytes
-	 * for the size
+	 * pad to RMD160_BLOCK_LENGTH byte blocks, at least one byte from
+	 * PADDING plus 8 bytes for the size
 	 */
-	padlen = 64 - ((ctx->count/8) % 64);
+	padlen = RMD160_BLOCK_LENGTH - ((ctx->count / 8) % RMD160_BLOCK_LENGTH);
 	if (padlen < 1 + 8)
-		padlen += 64;
+		padlen += RMD160_BLOCK_LENGTH;
 	RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	RMD160Update(ctx, size, 8);
 
@@ -157,12 +157,12 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 }
 
 void
-RMD160Transform(u_int32_t state[5], const u_char block[64])
+RMD160Transform(u_int32_t state[5], const u_char block[RMD160_BLOCK_LENGTH])
 {
 	u_int32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	memcpy(x, block, 64);
+	memcpy(x, block, RMD160_BLOCK_LENGTH);
 #else
 	int i;
 

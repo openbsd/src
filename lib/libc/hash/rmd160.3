@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.20 2003/06/25 19:33:34 deraadt Exp $
+.\"	$OpenBSD: rmd160.3,v 1.21 2004/04/26 19:38:12 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -35,17 +35,17 @@
 .Ft void
 .Fn RMD160Init "RMD160_CTX *context"
 .Ft void
-.Fn RMD160Update "RMD160_CTX *context" "const u_char *data" "u_int32_t nbytes"
+.Fn RMD160Update "RMD160_CTX *context" "const u_int8_t *data" "u_int32_t nbytes"
 .Ft void
-.Fn RMD160Final "u_char digest[20]" "RMD160_CTX *context"
+.Fn RMD160Final "u_int8_t digest[RMD160_DIGEST_LENGTH]" "RMD160_CTX *context"
 .Ft void
-.Fn RMD160Transform "u_int32_t state[5]" "const u_char block[64]"
+.Fn RMD160Transform "u_int32_t state[5]" "const u_int8_t block[RMD160_BLOCK_LENGTH]"
 .Ft "char *"
-.Fn RMD160End "RMD160_CTX *context" "char *buf"
+.Fn RMD160End "RMD160_CTX *context" "char buf[RMD160_DIGEST_STRING_LENGTH]"
 .Ft "char *"
-.Fn RMD160File "char *filename" "char *buf"
+.Fn RMD160File "char *filename" "char buf[RMD160_DIGEST_STRING_LENGTH]"
 .Ft "char *"
-.Fn RMD160Data "const u_char *data" "size_t len" "char *buf"
+.Fn RMD160Data "const u_int8_t *data" "size_t len" "char buf[RMD160_DIGEST_STRING_LENGTH]"
 .Sh DESCRIPTION
 The RMD160 functions implement the 160-bit RIPE message digest hash algorithm
 (RMD-160).
@@ -147,19 +147,19 @@ The follow code fragment will calculate the digest for
 the string "abc" which is ``0x8eb208f7e05d987a9b044a8e98c6b087f15a0bfc''.
 .Bd -literal -offset indent
 RMD160_CTX rmd;
-u_char results[20];
+u_int8_t results[RMD160_DIGEST_LENGTH];
 char *buf;
 int n;
 
 buf = "abc";
 n = strlen(buf);
 RMD160Init(&rmd);
-RMD160Update(&rmd, (u_char *)buf, n);
+RMD160Update(&rmd, (u_int8_t *)buf, n);
 RMD160Final(results, &rmd);
 
 /* Print the digest as one long hex value */
 printf("0x");
-for (n = 0; n < 20; n++)
+for (n = 0; n < RMD160_DIGEST_LENGTH; n++)
 	printf("%02x", results[n]);
 putchar('\en');
 .Ed
@@ -167,7 +167,7 @@ putchar('\en');
 Alternately, the helper functions could be used in the following way:
 .Bd -literal -offset indent
 RMD160_CTX rmd;
-u_char output[41];
+u_int8_t output[RMD160_DIGEST_STRING_LENGTH];
 char *buf = "abc";
 
 printf("0x%s\en", RMD160Data(buf, strlen(buf), output));

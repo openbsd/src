@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.13 2004/03/31 23:41:53 brad Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.14 2004/04/26 19:38:12 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,7 +15,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.13 2004/03/31 23:41:53 brad Exp $";
+static char rcsid[] = "$OpenBSD: sha1.c,v 1.14 2004/04/26 19:38:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: sha1.c,v 1.13 2004/03/31 23:41:53 brad Exp $";
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
 void
-SHA1Transform(u_int32_t state[5], const u_char buffer[64])
+SHA1Transform(u_int32_t state[5], const u_char buffer[SHA1_BLOCK_LENGTH])
 {
     u_int32_t a, b, c, d, e;
     typedef union {
@@ -62,9 +62,9 @@ SHA1Transform(u_int32_t state[5], const u_char buffer[64])
     CHAR64LONG16 *block;
 
 #ifdef SHA1HANDSOFF
-    u_char workspace[64];
+    u_char workspace[SHA1_BLOCK_LENGTH];
     block = (CHAR64LONG16 *)workspace;
-    (void)memcpy(block, buffer, 64);
+    (void)memcpy(block, buffer, SHA1_BLOCK_LENGTH);
 #else
     block = (CHAR64LONG16 *)buffer;
 #endif
@@ -156,7 +156,7 @@ SHA1Update(SHA1_CTX *context, const u_char *data, u_int len)
  * Add padding and return the message digest.
  */
 void
-SHA1Final(u_char digest[20], SHA1_CTX *context)
+SHA1Final(u_char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 {
     u_int i;
     u_char finalcount[8];
@@ -171,7 +171,7 @@ SHA1Final(u_char digest[20], SHA1_CTX *context)
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
     if (digest) {
-	for (i = 0; i < 20; i++)
+	for (i = 0; i < SHA1_DIGEST_LENGTH; i++)
 	    digest[i] = (u_char)
 		((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }

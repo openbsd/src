@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.16 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.17 2004/04/26 19:38:12 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -9,34 +9,36 @@
 #ifndef _SHA1_H
 #define _SHA1_H
 
+#define	SHA1_BLOCK_LENGTH		64
+#define	SHA1_DIGEST_LENGTH		20
+#define	SHA1_DIGEST_STRING_LENGTH	(SHA1_DIGEST_LENGTH * 2 + 1)
+
 typedef struct {
     u_int32_t state[5];
     u_int32_t count[2];
-    unsigned char buffer[64];
+    u_int8_t buffer[SHA1_BLOCK_LENGTH];
 } SHA1_CTX;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void SHA1Transform(u_int32_t [5], const unsigned char [64])
+void SHA1Transform(u_int32_t [5], const u_int8_t [SHA1_BLOCK_LENGTH])
 		__attribute__((__bounded__(__minbytes__,1,5)))
-		__attribute__((__bounded__(__minbytes__,2,64)));
+		__attribute__((__bounded__(__minbytes__,2,SHA1_BLOCK_LENGTH)));
 void SHA1Init(SHA1_CTX *);
-void SHA1Update(SHA1_CTX *, const unsigned char *, unsigned int)
+void SHA1Update(SHA1_CTX *, const u_int8_t *, unsigned int)
 		__attribute__((__bounded__(__string__,2,3)));
-void SHA1Final(unsigned char [20], SHA1_CTX *)
-		__attribute__((__bounded__(__minbytes__,1,20)));
-char *SHA1End(SHA1_CTX *, char *)
-		__attribute__((__bounded__(__minbytes__,2,41)));
-char *SHA1File(char *, char *)
-		__attribute__((__bounded__(__minbytes__,2,41)));
-char *SHA1Data(const unsigned char *, size_t, char *)
+void SHA1Final(u_int8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *)
+		__attribute__((__bounded__(__minbytes__,1,SHA1_DIGEST_LENGTH)));
+char *SHA1End(SHA1_CTX *, char [SHA1_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH)));
+char *SHA1File(char *, char [SHA1_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH)));
+char *SHA1Data(const u_int8_t *, size_t, char [SHA1_DIGEST_STRING_LENGTH])
 		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,3,41)));
+		__attribute__((__bounded__(__minbytes__,3,SHA1_DIGEST_STRING_LENGTH)));
 __END_DECLS
 
-#define SHA1_DIGESTSIZE       20
-#define SHA1_BLOCKSIZE        64
 #define HTONDIGEST(x) do {                                              \
         x[0] = htonl(x[0]);                                             \
         x[1] = htonl(x[1]);                                             \

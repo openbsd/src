@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.12 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.13 2004/04/26 19:38:12 millert Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,31 +25,35 @@
 #ifndef  _RMD160_H
 #define  _RMD160_H
 
+#define	RMD160_BLOCK_LENGTH		64
+#define	RMD160_DIGEST_LENGTH		20
+#define	RMD160_DIGEST_STRING_LENGTH	(RMD160_DIGEST_LENGTH * 2 + 1)
+
 /* RMD160 context. */
 typedef struct RMD160Context {
-	u_int32_t state[5];		/* state */
-	u_int64_t count;		/* number of bits, modulo 2^64 */
-	unsigned char buffer[64];	/* input buffer */
+	u_int32_t state[5];			/* state */
+	u_int64_t count;			/* number of bits, mod 2^64 */
+	u_int8_t buffer[RMD160_BLOCK_LENGTH];	/* input buffer */
 } RMD160_CTX;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	 RMD160Init(RMD160_CTX *);
-void	 RMD160Transform(u_int32_t [5], const unsigned char [64])
+void	 RMD160Transform(u_int32_t [5], const u_int8_t [RMD160_BLOCK_LENGTH])
 		__attribute__((__bounded__(__minbytes__,1,5)))
-		__attribute__((__bounded__(__minbytes__,2,64)));
-void	 RMD160Update(RMD160_CTX *, const unsigned char *, u_int32_t)
+		__attribute__((__bounded__(__minbytes__,2,RMD160_BLOCK_LENGTH)));
+void	 RMD160Update(RMD160_CTX *, const u_int8_t *, u_int32_t)
 		__attribute__((__bounded__(__string__,2,3)));
-void	 RMD160Final(unsigned char [20], RMD160_CTX *)
-		__attribute__((__bounded__(__minbytes__,1,20)));
-char	*RMD160End(RMD160_CTX *, char *)
-		__attribute__((__bounded__(__minbytes__,2,41)));
-char	*RMD160File(char *, char *)
-		__attribute__((__bounded__(__minbytes__,2,41)));
-char	*RMD160Data(const unsigned char *, size_t, char *)
+void	 RMD160Final(u_int8_t [RMD160_DIGEST_LENGTH], RMD160_CTX *)
+		__attribute__((__bounded__(__minbytes__,1,RMD160_DIGEST_LENGTH)));
+char	*RMD160End(RMD160_CTX *, char [RMD160_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
+char	*RMD160File(char *, char [RMD160_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
+char	*RMD160Data(const u_int8_t *, size_t, char [RMD160_DIGEST_STRING_LENGTH])
 		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,3,41)));
+		__attribute__((__bounded__(__minbytes__,3,RMD160_DIGEST_STRING_LENGTH)));
 __END_DECLS
 
 #endif  /* _RMD160_H */
