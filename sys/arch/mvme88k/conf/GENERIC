@@ -1,6 +1,6 @@
-#	$OpenBSD: GENERIC,v 1.33 2003/08/01 07:43:01 miod Exp $
+#	$OpenBSD: GENERIC,v 1.34 2003/10/11 22:06:48 miod Exp $
 
-machine		mvme88k 
+machine		mvme88k
 
 include "../../../conf/GENERIC"
 
@@ -10,10 +10,9 @@ option		MVME197		# support for 197
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
 #option		DEBUG		# print debugging statements
-#option		EH_DEBUG	# debugging code for exception handlers
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
-option		ERRATA__XXX_USR	
+option		ERRATA__XXX_USR
 
 maxusers	64
 
@@ -25,18 +24,13 @@ config		bsd		swap generic
 
 mainbus0 at root
 
-# ------------------------------ mainbus devices ------------------------
 bugtty0 at mainbus0
-pcctwo0 at mainbus0 addr 0xfff00000
-syscon0 at mainbus0 addr 0xfff00000
-bussw0  at mainbus0 addr 0xfff00000
 
-# ------------------------------ bussw devices --------------------------
-pcctwo0 at bussw0 offset 0x42000
-
-# ------------------------------ pcctwo devices -------------------------
+# MVME1x7 devices
+pcctwo0 at mainbus0 addr 0xfff00000		# MVME187
+bussw0  at mainbus0 addr 0xfff00000		# MVME197
+pcctwo0 at bussw0 offset 0x42000		# MVME197
 clock0	at pcctwo0 ipl 5
-sclock0	at pcctwo0 ipl 5
 nvram0	at pcctwo0 offset 0xc0000
 vme0	at pcctwo0 offset 0x40000
 ie0	at pcctwo0 offset 0x46000 ipl 1
@@ -46,18 +40,16 @@ cl0	at pcctwo0 offset 0x45000 ipl 3
 memc0	at pcctwo0 offset 0x43000
 memc1	at pcctwo0 offset 0x43100
 
-# ------------------------------ syscon0 devices ------------------------
+# MVME188 devices
+syscon0 at mainbus0 addr 0xfff00000		# MVME188
 clock0	at syscon0 ipl 5
-sclock0	at syscon0 ipl 5
 nvram0	at syscon0 offset 0x80000
 dart0	at syscon0 offset 0x82000 ipl 3
 vme0	at syscon0 offset 0x85000
 
-# ------------------------------ vme0 devices --------------------------
 vmes0	at vme0
 vmel0	at vme0
 
-# ------------------------------ vmes0 devices -------------------------
 vx0	at vmes0 addr 0xff780000 ipl 3 len 0x10000
 vx1	at vmes0 addr 0xff790000 ipl 3 len 0x10000
 vx2	at vmes0 addr 0xff7a0000 ipl 3 len 0x10000
@@ -72,13 +64,12 @@ vs3	at vmes0 addr 0xffff5800 ipl 2 len 0x800
 vs4	at vmes0 addr 0xffff7000 ipl 2 len 0x800
 vs5	at vmes0 addr 0xffff7800 ipl 2 len 0x800
 
-# ------------------------------- vs0 devices --------------------------
 scsibus* at vs?
-
-# ------------------------------ ssh0 devices --------------------------
 scsibus* at ssh?
 
-# ------------------------------ scsibus0 devices ----------------------
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?

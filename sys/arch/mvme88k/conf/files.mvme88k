@@ -1,5 +1,5 @@
-#	$OpenBSD: files.mvme88k,v 1.20 2003/01/14 03:20:12 miod Exp $
-#	
+#	$OpenBSD: files.mvme88k,v 1.21 2003/10/11 22:06:48 miod Exp $
+#
 maxpartitions 16
 
 device 	mainbus { [addr = -1 ] }
@@ -29,10 +29,6 @@ file	arch/mvme88k/dev/syscon.c			syscon needs-count
 device clock
 attach clock at pcctwo, syscon
 file	arch/mvme88k/dev/clock.c			clock
-
-device sclock
-attach sclock at pcctwo, syscon
-file	arch/mvme88k/dev/sclock.c			sclock
 
 device memc
 attach memc at pcctwo

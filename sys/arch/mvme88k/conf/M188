@@ -1,4 +1,4 @@
-#	$OpenBSD: M188,v 1.16 2001/12/22 18:22:38 smurph Exp $
+#	$OpenBSD: M188,v 1.17 2003/10/11 22:06:48 miod Exp $
 
 machine mvme88k
 
@@ -11,7 +11,7 @@ option		BUGMAP		# use Bug Rom VME Mappings
 #option		EH_DEBUG	# debugging code for exception handlers
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
-option		ERRATA__XXX_USR	
+option		ERRATA__XXX_USR
 
 maxusers 64
 
@@ -26,7 +26,6 @@ syscon0 at mainbus0 addr 0xfff00000
 
 # ------------------------------ syscon0 devices ------------------------
 clock0	at syscon0 ipl 5
-sclock0	at syscon0 ipl 5
 nvram0	at syscon0 offset 0x80000
 dart0	at syscon0 offset 0x82000 ipl 3
 vme0	at syscon0 offset 0x85000
