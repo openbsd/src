@@ -122,6 +122,9 @@ _thread_exit(const char *fname, int lineno, const char *string)
 	/* Write the string to the standard error file descriptor: */
 	_thread_sys_write(2, s, strlen(s));
 
+	/* Write a dump of the current thread status: */
+	_thread_dump_info();
+
 	/* Force this process to exit: */
 	_exit(1);
 }
