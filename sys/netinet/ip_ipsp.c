@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.87 2000/06/01 05:08:42 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.88 2000/06/01 05:33:08 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1112,6 +1112,13 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
     int s;
 
+    /* If it's still referenced, go on */
+    if (tdbp->tdb_ref-- > 0)
+    {
+	tdbp->tdb_flags |= TDBF_INVALID;
+	return;
+    }
+
     /* When deleting the bypass tdb, skip the hash table code. */
     if (tdbp == tdb_bypass && tdbp != NULL)
     {
@@ -1295,14 +1302,8 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     if (tdbp == tdb_bypass)
       tdb_bypass = NULL;
 
-    /* Don't always delete TDBs as they may be referenced by something else */
-    if (--tdbp->tdb_ref <= 0)
-    {
-      	FREE(tdbp, M_TDB);
-    	tdb_count--;
-    }
-    else
-      tdbp->tdb_flags |= TDBF_INVALID;
+    FREE(tdbp, M_TDB);
+    tdb_count--;
 
     if (delchain && tdbpn)
       tdb_delete(tdbpn, delchain, expflags);
@@ -1311,7 +1312,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 }
 
 /*
- * Run once, from system boot.
+ * Initialize a TDB structure.
  */
 int
 tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
