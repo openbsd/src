@@ -31,8 +31,11 @@ enum m68k_regnum
 {
   M68K_D0_REGNUM = 0,
   M68K_D1_REGNUM = 1,
+  M68K_D2_REGNUM = 2,
+  M68K_D7_REGNUM = 7,
   M68K_A0_REGNUM = 8,
   M68K_A1_REGNUM = 9,
+  M68K_A2_REGNUM = 10,
   M68K_FP_REGNUM = 14,		/* Address of executing stack frame.  */
   M68K_SP_REGNUM = 15,		/* Address of top of stack.  */
   M68K_PS_REGNUM = 16,		/* Processor status.  */
