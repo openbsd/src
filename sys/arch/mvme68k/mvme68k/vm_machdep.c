@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/06/26 21:35:43 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/06/27 04:19:17 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,9 +57,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -141,11 +139,7 @@ cpu_exit(p)
 {
 
 	(void) splimp();
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -304,11 +298,7 @@ vmapbuf(bp, siz)
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
-#if defined(UVM)
 	kva = uvm_km_valloc_wait(phys_map, ctob(npf));
-#else
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
@@ -338,11 +328,7 @@ vunmapbuf(bp, siz)
 	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
-#else
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

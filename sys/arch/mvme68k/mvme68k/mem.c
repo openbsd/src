@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.13 2001/06/26 21:35:42 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.14 2001/06/27 04:19:17 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -83,9 +83,7 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 extern u_int lowram;
 static caddr_t devzeropage;
@@ -181,15 +179,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			if (v < NBPG)
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);

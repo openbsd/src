@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2001/06/26 21:35:41 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2001/06/27 04:19:17 art Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -83,9 +83,7 @@ include <machine/prom.h>
 include <machine/pte.h>
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 define	__XXX_BUG_FODDER	0
 
@@ -131,11 +129,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM	
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 # trap types (should just include trap.h?)
 define	T_BUSERR		T_BUSERR

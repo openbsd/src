@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.25 2001/06/26 21:35:41 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.26 2001/06/27 04:19:17 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -554,11 +554,7 @@ Lenab1:
  */
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-#if defined(UVM)
 	jbsr	_C_LABEL(uvm_setpagesize) | select software page size
-#else
-	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -1122,11 +1118,7 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(intrcnt)+0
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
