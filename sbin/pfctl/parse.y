@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2002/05/12 00:54:56 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2002/05/12 15:02:52 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -671,6 +671,10 @@ uid_item	: uid				{
 			$$->next = NULL;
 		}
 		| PORTUNARY uid			{
+			if ($2 == UID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
+				yyerror("user unknown requires operator = or !=");
+				YYERROR;
+			}
 			$$ = malloc(sizeof(struct node_uid));
 			if ($$ == NULL)
 				err(1, "uid_item: malloc");
@@ -680,6 +684,10 @@ uid_item	: uid				{
 			$$->next = NULL;
 		}
 		| uid PORTBINARY uid		{
+			if ($1 == UID_MAX || $3 == UID_MAX) {
+				yyerror("user unknown requires operator = or !=");
+				YYERROR;
+			}
 			$$ = malloc(sizeof(struct node_uid));
 			if ($$ == NULL)
 				err(1, "uid_item: malloc");
@@ -731,6 +739,10 @@ gid_item	: gid				{
 			$$->next = NULL;
 		}
 		| PORTUNARY gid			{
+			if ($2 == GID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
+				yyerror("group unknown requires operator = or !=");
+				YYERROR;
+			}
 			$$ = malloc(sizeof(struct node_gid));
 			if ($$ == NULL)
 				err(1, "gid_item: malloc");
@@ -740,6 +752,10 @@ gid_item	: gid				{
 			$$->next = NULL;
 		}
 		| gid PORTBINARY gid		{
+			if ($1 == GID_MAX || $3 == GID_MAX) {
+				yyerror("group unknown requires operator = or !=");
+				YYERROR;
+			}
 			$$ = malloc(sizeof(struct node_gid));
 			if ($$ == NULL)
 				err(1, "gid_item: malloc");

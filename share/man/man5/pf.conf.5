@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.45 2002/05/12 00:54:56 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.46 2002/05/12 15:02:52 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -281,24 +281,35 @@ listens on the destination port.
 For forwarded connections, where the firewall isn't a connection endpoint,
 the user and group are
 .Em unknown .
+.Pp
 All packets, both outgoing and incoming, of one connection are associated
-with the same user.
+with the same user and group.
 Only TCP and UDP packets can be associated with users, for other protocols
 these parameters are ignored.
+.Pp
 User and group refer to the effective (as opposed to the real) IDs, in
 case the socket is created by a setuid/setgid process.
 Note that user and group IDs are stored when a socket is created;
 when a process creates a listening socket as root (for instance, because
 it wants to bind to a privileged port) and subsequently sets another
 user ID (to drop privileges), the socket's uid remains root.
+.Pp
 User and group IDs can be specified as either numbers or names, the
 syntax is similar to the one for ports.
 The value
 .Em unknown
 matches packets of forwarded connections.
-Example:
+.Em unknown
+can only be used with operators = and !=, other constructs
+like 'user >= unknown' are invalid.
+Forwarded packets with unknown user and group ID match only rules
+that explicitely compare against
+.Em unknown
+with operator = or !=, for instance 'user >= 0' does not match
+forwarded packets.
+The following example allows only selected users to open outgoing
+connections:
 .Bd -literal
-    # allow only specific users to open outgoing connections
     block out proto { tcp, udp } all
     pass  out proto { tcp, udp } all user { < 1000, dhartmei } keep state
 .Ed
