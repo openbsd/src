@@ -37,11 +37,6 @@
 >20	lelong		4		quad,
 >16	lelong		>0		%d Hz
 
-# Bytes 0-3 of AIFF, AIFF-C, & 8SVX audio files are "FORM"
-8	string		AIFF		AIFF audio data
-8	string		AIFC		AIFF-C audio data
-8	string		8SVX		IFF/8SVX audio data
-
 # Creative Labs AUDIO stuff
 0	string	MThd			Standard MIDI data
 >9 	byte	>0			(format %d)

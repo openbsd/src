@@ -45,101 +45,101 @@
 0	belong 		0x02100106	HPPA-RISC1.1 relocatable object
 0	belong 		0x02100107	HPPA-RISC1.1 executable
 >(144)	belong		0x054ef630	dynamically linked
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x02100108	HPPA-RISC1.1 shared executable
 >(144)	belong		0x054ef630	dynamically linked
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x0210010b	HPPA-RISC1.1 demand-load executable
 >(144)	belong		0x054ef630	dynamically linked
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x0210010e	HPPA-RISC1.1 shared library
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x0210010d	HPPA-RISC1.1 dynamic load library
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 #### 800
 0	belong 		0x020b0106	HP s800 relocatable object
 
 0	belong 		0x020b0107	HP s800 executable
 >(144)	belong		0x054ef630	dynamically linked
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x020b0108	HP s800 shared executable
 >(144)	belong		0x054ef630	dynamically linked
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x020b010b	HP s800 demand-load executable
 >(144)	belong		0x054ef630	dynamically linked
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x020b010e	HP s800 shared library
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong 		0x020b010d	HP s800 dynamic load library
->96	belong		>0		-not stripped
+>96	belong		>0		- not stripped
 
 0	belong		0x213c6172	archive file
->68	belong 		0x020b0619	-HP s800 relocatable library
+>68	belong 		0x020b0619	- HP s800 relocatable library
 
 #### 500
 0	long		0x02080106	HP s500 relocatable executable
->16	long		>0		-version %ld
+>16	long		>0		- version %ld
 
 0	long		0x02080107	HP s500 executable
->16	long		>0		-version %ld
+>16	long		>0		- version %ld
 
 0	long		0x02080108	HP s500 pure executable
->16	long		>0		-version %ld
+>16	long		>0		- version %ld
 
 #### 200
 0	belong 		0x020c0108	HP s200 pure executable
->4	beshort		>0		-version %ld
+>4	beshort		>0		- version %ld
 >8	belong		&0x80000000	save fp regs
 >8	belong		&0x40000000	dynamically linked
 >8	belong		&0x20000000	debuggable
 >36	belong		>0		not stripped
 
 0	belong		0x020c0107	HP s200 executable
->4	beshort		>0		-version %ld
+>4	beshort		>0		- version %ld
 >8	belong		&0x80000000	save fp regs
 >8	belong		&0x40000000	dynamically linked
 >8	belong		&0x20000000	debuggable
 >36	belong		>0		not stripped
 
 0	belong		0x020c010b	HP s200 demand-load executable
->4	beshort		>0		-version %ld
+>4	beshort		>0		- version %ld
 >8	belong		&0x80000000	save fp regs
 >8	belong		&0x40000000	dynamically linked
 >8	belong		&0x20000000	debuggable
 >36	belong		>0		not stripped
 
 0	belong		0x020c0106	HP s200 relocatable executable
->4	beshort		>0		-version %ld
->6	beshort		>0		-highwater %d
+>4	beshort		>0		- version %ld
+>6	beshort		>0		- highwater %d
 >8	belong		&0x80000000	save fp regs
 >8	belong		&0x20000000	debuggable
 >8	belong		&0x10000000	PIC
 
 0	belong 		0x020a0108	HP s200 (2.x release) pure executable
->4	beshort		>0		-version %ld
+>4	beshort		>0		- version %ld
 >36	belong		>0		not stripped
 
 0	belong		0x020a0107	HP s200 (2.x release) executable
->4	beshort		>0		-version %ld
+>4	beshort		>0		- version %ld
 >36	belong		>0		not stripped
 
 0	belong		0x020c010e	HP s200 shared library
->4	beshort		>0		-version %ld
->6	beshort		>0		-highwater %d
+>4	beshort		>0		- version %ld
+>6	beshort		>0		- highwater %d
 >36	belong		>0		not stripped
 
 0	belong		0x020c010d	HP s200 dynamic load library
->4	beshort		>0		-version %ld
->6	beshort		>0		-highwater %d
+>4	beshort		>0		- version %ld
+>6	beshort		>0		- highwater %d
 >36	belong		>0		not stripped
 
 #### MISC
@@ -151,7 +151,7 @@
 0	long		0x015821a6	HP core file
 
 0	long		0x4da7eee8	HP-WINDOWS font
->8	byte		>0		-version %ld
+>8	byte		>0		- version %ld
 0	string		Bitmapfile	HP Bitmapfile
 
 0	string		IMGfile	CIS 	compimg HP Bitmapfile

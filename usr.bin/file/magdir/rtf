@@ -8,5 +8,5 @@
 >5	byte		x		version %c,
 >6	string		\\ansi		ANSI
 >6	string		\\mac		Apple Macintosh
->6	string		\\pc		IBM PC code page 437
->6	string		\\pca		IBM PC code page 850
+>6	string		\\pc		IBM PC, code page 437
+>6	string		\\pca		IBM PS/2, code page 850

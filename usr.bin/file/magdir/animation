@@ -16,8 +16,8 @@
 >10	leshort		x			height=%d pixels,
 >12	leshort		x			depth=%d,
 >16	leshort		x			ticks/frame=%d
-# newer FLI or FLC format
-4	leshort		0xAF12			newer FLI or FLC file
+# FLC animation format
+4	leshort		0xAF12			FLC file
 >6	leshort		x			- %d frames
 >8	leshort		x			width=%d pixels,
 >10	leshort		x			height=%d pixels,

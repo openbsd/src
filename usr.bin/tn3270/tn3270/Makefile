@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:46:23 deraadt Exp $
+#	$Id: Makefile,v 1.2 1995/12/14 03:31:40 deraadt Exp $
 
 .include "../../Makefile.inc"
 
@@ -29,16 +29,20 @@ DEPSRCS += tn3270.c utilities.c
 PROG = tn3270
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | \
+	${MAKE} -r -s -f - xxx | grep mkastosc
 
 MKASTODS!=cd $(.CURDIR)/../tools/mkastods; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastods\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastods\n" | \
+	${MAKE} -r -s -f - xxx | grep mkastods
 
 MKDSTOAS!=cd $(.CURDIR)/../tools/mkdstoas; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkdstoas\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkdstoas\n" | \
+	${MAKE} -r -s -f - xxx | grep mkdstoas
 
 MKHITS!=cd $(.CURDIR)/../tools/mkhits; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkhits\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkhits\n" | \
+	${MAKE} -r -s -f - xxx | grep mkhits
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out

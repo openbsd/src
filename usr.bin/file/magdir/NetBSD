@@ -1,5 +1,6 @@
+
 #------------------------------------------------------------------------------
-# mirage:  file(1) magic for NetBSD executables
+# netbsd:  file(1) magic for NetBSD objects
 #
 # All new-style magic numbers are in network byte order.
 #
@@ -7,6 +8,8 @@
 >16	lelong			>0		not stripped
 0	lelong			000000314	BSDI demand paged executable
 >16	lelong			>0		not stripped
+>32	byte			0x6a		(uses shared libs)
+
 
 0	lelong			000000407	NetBSD little-endian object file
 >16	lelong			>0		not stripped

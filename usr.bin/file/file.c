@@ -26,7 +26,7 @@
  */
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: file.c,v 1.1.1.1 1995/10/18 08:45:09 deraadt Exp $";
+	"@(#)$Id: file.c,v 1.2 1995/12/14 03:30:03 deraadt Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -51,9 +51,9 @@ static char *moduleid =
 #include "file.h"
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-vczL] [-f namefile] [-m magicfile] file...\n"
+# define USAGE  "Usage: %s [-vczL] [-f namefile] [-m magicfiles] file...\n"
 #else
-# define USAGE  "Usage: %s [-vcz] [-f namefile] [-m magicfile] file...\n"
+# define USAGE  "Usage: %s [-vcz] [-f namefile] [-m magicfiles] file...\n"
 #endif
 
 #ifndef MAGIC

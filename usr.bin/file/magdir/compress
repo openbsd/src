@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------------
 # compress:  file(1) magic for pure-compression formats (no archives)
 #
-# compress, gzip, pack, compact, huf, squeeze, crunch, freeze, yabba, whap, etc.
+# compress, gzip, pack, compact, huf, squeeze, crunch, freeze, yabba, etc.
 #
 # Formats for various forms of compressed data
 # Formats for "compress" proper have been moved into "compress.c",
@@ -13,14 +13,14 @@
 >2	byte&0x80	>0		block compressed
 >2	byte&0x1f	x		%d bits
 
-# gzip (GNU zip, not to be confused with [Info-ZIP/PKWARE] zip archiver)
+# gzip (GNU zip, not to be confused with Info-ZIP or PKWARE zip archiver)
 0       string          \037\213        gzip compressed data
->2      byte            <8              - reserved method,
->2      byte            8               - deflate method,
->3	byte		&0x01		ascii,
+>2      byte            <8              \b, reserved method,
+>2      byte            8               \b, deflated,
+>3	byte		&0x01		ASCII,
 >3	byte		&0x02		continuation,
 >3	byte		&0x04		extra field,
->3	byte		&0x08		original file name,
+>3	byte		&0x08		original filename,
 >3	byte		&0x10		comment,
 >3	byte		&0x20		encrypted,
 >4	ledate		x		last modified: %s,
@@ -36,23 +36,22 @@
 >9	byte		=0x0A		os: Tops/20
 >9	byte		=0x0B		os: Win/32
 
-# According to gzip.h, this is the correct byte order for packed data.
-#
+# packed data, Huffman (minimum redundancy) codes on a byte-by-byte basis
 0	string		\037\036	packed data
->2	belong		>1		%d characters originally
->2	belong		=1		%d character originally
+>2	belong		>1		\b, %d characters originally
+>2	belong		=1		\b, %d character originally
 #
-# This magic number is byte-order-independent.
-# Are there two types of old packed data?  One big endian, one little endian?
-#
-#0	beshort		017437		old packed data, big endian
-#0	leshort		017437		old packed data, little endian
+# This magic number is byte-order-independent.  XXX - Does that mean this
+# is big-endian, little-endian, either, or that you can't tell?
+# this short is valid for SunOS
 0	short		017437		old packed data
 
 # XXX - why *two* entries for "compacted data", one of which is
 # byte-order independent, and one of which is byte-order dependent?
 #
 0	short		0x1fff		compacted data
+# This string is valid for SunOS (BE) and a matching "short" is listed
+# in the Ultrix (LE) magic file.
 0	string		\377\037	compacted data
 0	short		0145405		huf output
 
@@ -65,19 +64,18 @@
 0	leshort		0x76FE		crunched data (CP/M, DOS)
 
 # Freeze
-0	string		\037\237	Frozen file 2.1
-0	string		\037\236	Frozen file 1.0 (or gzip 0.5)
+0	string		\037\237	frozen file 2.1
+0	string		\037\236	frozen file 1.0 (or gzip 0.5)
 
-# lzh?
-0	string		\037\240	LZH compressed data
+# SCO compress -H (LZH)
+0	string		\037\240	SCO compress -H (LZH) data
 
 # European GSM 06.10 is a provisional standard for full-rate speech
 # transcoding, prI-ETS 300 036, which uses RPE/LTP (residual pulse
 # excitation/long term prediction) coding at 13 kbit/s.
 #
-# WEAK - There's only a magic nibble (4 bits); but that nibble repeats
-# every 33 bytes.  This magic is NOT suited for use, but maybe we can
-# use it someday.
+# There's only a magic nibble (4 bits); that nibble repeats every 33
+# bytes.  This isn't suited for use, but maybe we can use it someday.
 #
 # This will cause very short GSM files to be declared as data and
 # mismatches to be declared as data too!

@@ -20,12 +20,17 @@
 >17	string		3.0		 (3.0)
 >17	string		2.0		 (2.0)
 >17	string		1.0		 (1.x)
-0	string		\<MakerScreenFon	FrameMaker Font file
+0	string		\<MakerScreenFont	FrameMaker Font file
 >17	string		1.01		 (%s)
 0	string		\<MML		FrameMaker MML file
-0	string		\<Book		FrameMaker Book file
+0	string		\<BookFile	FrameMaker Book file
 >10	string		3.0		 (3.0
 >10	string		2.0		 (2.0
 >10	string		1.0		 (1.0
 >13	byte		x		  %c)
-0	string		\<Maker Intermediate Print File	FrameMaker IPL file
+# XXX - this book entry should be verified, if you find one, uncomment this
+#0	string		\<Book\ 	FrameMaker Book (ASCII) file
+#>6	string		3.0		 (3.0)
+#>6	string		2.0		 (2.0)
+#>6	string		1.0		 (1.0)
+0	string		\<Maker	Intermediate Print File	FrameMaker IPL file

@@ -1,16 +1,25 @@
 #define	FILE_VERSION_MAJOR	3
-#define	patchlevel		18
+#define	patchlevel		19
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * $Id: patchlevel.h,v 1.1.1.1 1995/10/18 08:45:09 deraadt Exp $
+ * $Id: patchlevel.h,v 1.2 1995/12/14 03:30:04 deraadt Exp $
  *
  * $Log: patchlevel.h,v $
- * Revision 1.1.1.1  1995/10/18 08:45:09  deraadt
- * initial import of NetBSD tree
+ * Revision 1.2  1995/12/14 03:30:04  deraadt
+ * update from netbsd
  *
- * Revision 1.4  1995/05/21 00:13:31  christos
- * Updated to file-3.18
+ * Revision 1.5  1995/10/27 23:33:21  christos
+ * Update to file-3.19.
+ * - Magic fixes
+ * - MAGIC environment variable processing
+ * - Better LEGAL.NOTICE
+ * - -m magic : separated list of magic files processing
+ *
+ * Revision 1.19  1995/10/27  23:14:46  christos
+ * Ability to parse colon separated list of magic files
+ * New LEGAL.NOTICE
+ * Various magic file changes
  *
  * Revision 1.18  1995/05/20  22:09:21  christos
  * Passed incorrect argument to eatsize().

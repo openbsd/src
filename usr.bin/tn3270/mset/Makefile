@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:46:22 deraadt Exp $
+#	$Id: Makefile,v 1.2 1995/12/14 03:31:38 deraadt Exp $
 
 .include "../../Makefile.inc"
 
@@ -16,7 +16,8 @@ DEPSRCS += astosc.OUT map3270.c mset.c
 PROG = mset
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | \
+	${MAKE} -r -s -f - xxx | grep mkastosc
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out

@@ -3,6 +3,9 @@
 # msdos:  file(1) magic for MS-DOS files
 #
 
+# .BAT files (Daniel Quinlan, quinlan@yggdrasil.com)
+0	string	@echo\ off	MS-DOS batch file text
+
 # .EXE formats (Greg Roelofs, newt@uchicago.edu)
 #
 0	string	MZ		MS-DOS executable (EXE)

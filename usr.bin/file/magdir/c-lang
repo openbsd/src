@@ -4,8 +4,8 @@
 #
 
 # XPM icons (Greg Roelofs, newt@uchicago.edu)
-# ideally should go into "images", but entries below would tag XPM as C source
-0	string		/*\ XPM		X pixmap image data
+# if you uncomment "/*" for C/REXX below, also uncomment this entry
+#0	string		/*\ XPM\ */	X pixmap image data
 
 # this first will upset you if you're a PL/1 shop...
 # in which case rm it; ascmagic will catch real C programs

@@ -1,5 +1,5 @@
 .TH FILE 1 "Copyright but distributable"
-.\" $Id: file.1,v 1.1.1.1 1995/10/18 08:45:08 deraadt Exp $
+.\" $Id: file.1,v 1.2 1995/12/14 03:30:02 deraadt Exp $
 .SH NAME
 file
 \- determine file type
@@ -13,7 +13,7 @@ file
 namefile ]
 [
 .B \-m 
-magicfile ]
+magicfiles ]
 file ...
 .SH DESCRIPTION
 .I File
@@ -100,8 +100,9 @@ labelled as `ascii text' or `data'.
 .B \-v
 Print the version of the program and exit.
 .TP 8
-.B \-m file
-Specify an alternate file of magic numbers.
+.B \-m list
+Specify an alternate list of files containing magic numbers.
+This can be a single file, or a colon-separated list of files.
 .TP 8
 .B \-z
 Try to look inside compressed files.
@@ -129,6 +130,10 @@ option causes symlinks to be followed, as the like-named option in
 .SH FILES
 .I /etc/magic
 \- default list of magic numbers
+.SH ENVIRONMENT
+The environment variable
+.B MAGIC
+can be used to set the default magic number files.
 .SH SEE ALSO
 .IR magic (5)
 \- description of magic file format.

@@ -15,3 +15,4 @@
 0	string		Xref:		news text
 0	string		From:		news or mail text
 0	string		Article 	saved news text
+0	string		BABYL		Emacs RMAIL text

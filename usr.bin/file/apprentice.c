@@ -29,11 +29,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include "file.h"
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: apprentice.c,v 1.1.1.1 1995/10/18 08:45:08 deraadt Exp $";
+	"@(#)$Id: apprentice.c,v 1.2 1995/12/14 03:30:01 deraadt Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -50,39 +51,70 @@ static void eatsize	__P((char **));
 
 static int maxmagic = 0;
 
+static int apprentice_1	__P((char *, int));
 
 int
 apprentice(fn, check)
-char *fn;			/* name of magic file */
+char *fn;			/* list of magic files */
 int check;			/* non-zero? checking-only run. */
 {
-	FILE *f;
-	char line[BUFSIZ+1];
-	int errs = 0;
-
-	f = fopen(fn, "r");
-	if (f==NULL) {
-		(void) fprintf(stderr, "%s: can't read magic file %s\n",
-		progname, fn);
-		if (check)
-			return -1;
-		else
-			exit(1);
-	}
+	char *p, *mfn;
+	int file_err, errs = -1;
 
         maxmagic = MAXMAGIS;
-	if ((magic = (struct magic *) calloc(sizeof(struct magic), maxmagic))
-	    == NULL) {
+	magic = (struct magic *) calloc(sizeof(struct magic), maxmagic);
+	mfn = malloc(strlen(fn)+1);
+	if (magic == NULL || mfn == NULL) {
 		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
 		if (check)
 			return -1;
 		else
 			exit(1);
 	}
+	fn = strcpy(mfn, fn);
   
+	while (fn) {
+		p = strchr(fn, ':');
+		if (p)
+			*p++ = '\0';
+		file_err = apprentice_1(fn, check);
+		if (file_err > errs)
+			errs = file_err;
+		fn = p;
+	}
+	if (errs == -1)
+		(void) fprintf(stderr, "%s: couldn't find any magic files!\n",
+			       progname);
+	if (!check && errs)
+		exit(1);
+
+	free(mfn);
+	return errs;
+}
+
+static int
+apprentice_1(fn, check)
+char *fn;			/* name of magic file */
+int check;			/* non-zero? checking-only run. */
+{
+	static const char hdr[] =
+		"cont\toffset\ttype\topcode\tmask\tvalue\tdesc";
+	FILE *f;
+	char line[BUFSIZ+1];
+	int errs = 0;
+
+	f = fopen(fn, "r");
+	if (f==NULL) {
+		if (errno != ENOENT)
+			(void) fprintf(stderr,
+			"%s: can't read magic file %s (%s)\n", 
+			progname, fn, strerror(errno));
+		return -1;
+	}
+
 	/* parse it */
 	if (check)	/* print silly verbose header for USG compat. */
-		(void) printf("cont\toffset\ttype\topcode\tmask\tvalue\tdesc\n");
+		(void) printf("%s\n", hdr);
 
 	for (lineno = 1;fgets(line, BUFSIZ, f) != NULL; lineno++) {
 		if (line[0]=='#')	/* comment, do not parse */
@@ -91,11 +123,11 @@ int check;			/* non-zero? checking-only run. */
 			continue;
 		line[strlen(line)-1] = '\0'; /* delete newline */
 		if (parse(line, &nmagic, check) != 0)
-			++errs;
+			errs = 1;
 	}
 
 	(void) fclose(f);
-	return errs ? -1 : 0;
+	return errs;
 }
 
 /*
