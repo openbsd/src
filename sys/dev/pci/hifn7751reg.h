@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.3 1999/02/24 06:09:45 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.4 1999/12/15 00:30:45 jason Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -125,6 +125,7 @@ struct aeon_softc {
 
 	bus_space_handle_t	sc_sh0, sc_sh1;
 	bus_space_tag_t		sc_st0, sc_st1;
+	bus_dma_tag_t		sc_dmat;
 
 	struct aeon_dma *sc_dma;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.4 1999/12/06 07:29:56 art Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.5 1999/12/15 00:30:44 jason Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -115,6 +115,10 @@ aeon_attach(parent, self, aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	u_int32_t cmd;
+	bus_dma_segment_t seg;
+	bus_dmamap_t dmamap;
+	int rseg;
+	caddr_t kva;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
@@ -150,13 +154,35 @@ aeon_attach(parent, self, aux)
 	sc->sc_st1 = pa->pa_memt;
 	printf(" mem %x %x", sc->sc_sh0, sc->sc_sh1);
 
-#if defined(UVM)
-	sc->sc_dma = (struct aeon_dma *)uvm_pagealloc_contig(sizeof(*sc->sc_dma),
-	    0x100000, 0xffffffff, PAGE_SIZE);
-#else
-	sc->sc_dma = (struct aeon_dma *)vm_page_alloc_contig(sizeof(*sc->sc_dma),
-	    0x100000, 0xffffffff, PAGE_SIZE);
-#endif
+	sc->sc_dmat = pa->pa_dmat;
+        if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
+            &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+                printf(": can't alloc dma buffer\n", sc->sc_dv.dv_xname);
+                return;
+        }
+        if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
+            BUS_DMA_NOWAIT)) {
+                printf(": can't map dma buffers (%d bytes)\n",
+                    sc->sc_dv.dv_xname, sizeof(*sc->sc_dma));
+                bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+                return;
+        }
+        if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
+            sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
+                printf(": can't create dma map\n", sc->sc_dv.dv_xname);
+                bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
+                bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+                return;
+        }
+        if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
+            NULL, BUS_DMA_NOWAIT)) {
+                printf(": can't load dma map\n", sc->sc_dv.dv_xname);
+                bus_dmamap_destroy(sc->sc_dmat, dmamap);
+                bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
+                bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+                return;
+        }
+        sc->sc_dma = (struct aeon_dma *)kva;
 	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
 
 	aeon_reset_board(sc);
