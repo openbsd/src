@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.78 2002/08/03 20:23:00 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.79 2002/08/03 20:56:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2394,8 +2394,6 @@ ENTRY(remrunqueue,0)
 	ldw	R%whichqs(t2), t3
 
 #ifdef DIAGNOSTIC
-	ldb	P_STAT(arg0), t1
-	comib,=,n SRUN, t1, Lremrunqueue_panic
 	bvb,<,n	t3, remrunqueue_ok
 
 Lremrunqueue_panic
@@ -2503,14 +2501,11 @@ link_ok
 	stw	t2, P_BACK(arg0)
 	stw	r0, P_BACK(arg1)
 
-	comb,<> arg0, t2, sw_qnempty
-	nop
-
 	vdepi	0, 1, t3
+	sub,<>	t2, arg0, r0
 	stw	t3, R%whichqs(t1)
 
 	/* don't need &whichqs (t1) starting here */
-sw_qnempty
 	ldil	L%want_resched, t3
 	stw	r0, R%want_resched(t3)
 
@@ -2623,30 +2618,6 @@ switch_return
 	mtctl	arg3, eiem
 
 EXIT(cpu_switch)
-
-/*
- * switch_exit(struct proc *p)
- * restore proc0 context and go into cpu_switch to select the next runable
- * process.
- */
-	.import	kernel_map, data
-	.import	uvmspace_free, code
-	.import	uvm_km_free, code
-ENTRY(switch_exit,0)
-
-	/* arg0 -- oldproc */
-	.import exit2, code
-	ldil	L%exit2, t2
-	ldo	R%exit2(t2), t2
-	.call
-	blr	%r0, rp
-	bv,n	%r0(t2)
-	nop
-
-	.call
-	b	switch_search
-	copy	r0, arg2	/* no old proc */
-EXIT(switch_exit)
 
 ENTRY(switch_trampoline,0)
 	.call

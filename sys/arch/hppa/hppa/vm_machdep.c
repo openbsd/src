@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2002/06/09 02:50:29 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2002/08/03 20:56:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -261,14 +261,13 @@ cpu_exit(p)
 	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
 
-	uvmexp.swtch++;
-
-	splhigh();
-	curproc = NULL;
 	if (fpu_curpcb == tf->tf_cr30)
 		fpu_curpcb = 0;
 
-	switch_exit(p);
+	exit2(p);
+	cpu_switch(p);
+
+	/* switch_exit(p); */
 }
 
 void
