@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.8 1998/05/13 06:50:14 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.9 1998/05/17 19:13:44 deraadt Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.8 1998/05/13 06:50:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.9 1998/05/17 19:13:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1008,23 +1008,24 @@ dokill(v, t)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
-	    if (v[0][1] == 's' && (Isspace(v[0][2]) || v[0][2] == '\0'))
+	    if (v[0][1] == 's' && (Isspace(v[0][2]) || v[0][2] == '\0')) {
 		v++;
-	    else
-		(*v)++;
+		name = short2str(&v[0][0]);
+	    } else {
+		name = short2str(&v[0][1]);
+	    }
 
 	    if (v[0] == NULL || v[1] == NULL) {
 		stderror(ERR_NAME | ERR_TOOFEW);
 		return;
 	    }
 
-	    name = short2str(&v[0][0]);
 	    for (signum = 1; signum < NSIG; signum++)
 		if (!strcasecmp(sys_signame[signum], name))
 		    break;
 
 	    if (signum == NSIG) {
-		if (v[0][0] == '0')
+		if (name[0] == '0')
 		    signum = 0;
 		else {
 		    setname(vis_str(&v[0][0]));
