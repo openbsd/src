@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2002/05/11 00:20:18 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2003/02/09 19:31:50 espie Exp $
 
 .if (${MACHINE_ARCH} == "mips")
 NOPIC=
@@ -172,56 +172,56 @@ cstrmain.o: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) -DC \
 		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    	$(.CURDIR)/sinst.cc -o cstrmain.o'
+	    	$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DC \
 	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    $(.CURDIR)/sinst.cc -o cstrmain.o.o
-	@$(LD) -x -r cstrmain.o.o -o cstrmain.o
-	@rm -f cstrmain.o.o
+	    $(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 cstrmain.go: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) -g -DC \
 		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    	$(.CURDIR)/sinst.cc -o cstrmain.go'
+	    	$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -g -DC \
 	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    $(.CURDIR)/sinst.cc -o cstrmain.go.o
-	@$(LD) -X -r cstrmain.go.o -o cstrmain.go
-	@rm -f cstrmain.go.o
+	    $(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 cstrmain.po: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) -p -DC \
 		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    	$(.CURDIR)/sinst.cc -o cstrmain.po'
+	    	$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p -DC \
 	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    $(.CURDIR)/sinst.cc -o cstrmain.po.o
-	@$(LD) -X -r cstrmain.po.o -o cstrmain.po
-	@rm -f cstrmain.po.o
+	    $(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 cstrmain.so: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DC \
 		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    	$(.CURDIR)/sinst.cc -o cstrmain.so'
+	    	$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DC \
 	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
-	    $(.CURDIR)/sinst.cc -o cstrmain.so.o
-	@$(LD) -x -r cstrmain.so.o -o cstrmain.so
-	@rm -f cstrmain.so.o
+	    $(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 	
 cstrio.o: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.o'
+		$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.o.o
-	@$(LD) -x -r cstrio.o.o -o cstrio.o
-	@rm -f cstrio.o.o
+		$(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 cstrio.go: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
@@ -230,42 +230,42 @@ cstrio.go: sinst.cc $(STD_DIR)/bastring.h \
 		$(.CURDIR)/sinst.cc -o cstrio.go'
 	@$(COMPILE.cc) -g -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.go.o
-	@$(LD) -X -r cstrio.go.o -o cstrio.go
-	@rm -f cstrio.go.o
+		$(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 cstrio.po: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) -p -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.po'
+		$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.po.o
-	@$(LD) -X -r cstrio.po.o -o cstrio.po
-	@rm -f cstrio.po.o
+		$(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 cstrio.so: sinst.cc $(STD_DIR)/bastring.h \
 		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC  -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.so'
+		$(.CURDIR)/sinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DC \
 		`for N in $(STRIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/sinst.cc -o cstrio.so.o
-	@$(LD) -x -r cstrio.so.o -o cstrio.so
-	@rm -f cstrio.so.o
+		$(.CURDIR)/sinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomplex.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.o'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.o.o
-	@$(LD) -x -r fcomplex.o.o -o fcomplex.o
-	@rm -f fcomplex.o.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomplex.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
@@ -274,252 +274,252 @@ fcomplex.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(.CURDIR)/cinst.cc -o fcomplex.go'
 	@$(COMPILE.cc) -g  -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.go.o
-	@$(LD) -X -r fcomplex.go.o -o fcomplex.go
-	@rm -f fcomplex.go.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomplex.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -p -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.po'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p  -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.po.o
-	@$(LD) -X -r fcomplex.po.o -o fcomplex.po
-	@rm -f fcomplex.po.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomplex.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.so'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomplex.so.o
-	@$(LD) -x -r fcomplex.so.o -o fcomplex.so
-	@rm -f fcomplex.so.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 
 fcomio.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.o'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.o.o
-	@$(LD) -x -r fcomio.o.o -o fcomio.o
-	@rm -f fcomio.o.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomio.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -g -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.go'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -g -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.go.o
-	@$(LD) -X -r fcomio.go.o -o fcomio.go
-	@rm -f fcomio.go.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomio.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -p -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.po'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.po.o
-	@$(LD) -X -r fcomio.po.o -o fcomio.po
-	@rm -f fcomio.po.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 fcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.so'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o fcomio.so.o
-	@$(LD) -x -r fcomio.so.o -o fcomio.so
-	@rm -f fcomio.so.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomplex.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.o'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.o.o
-	@$(LD) -x -r dcomplex.o.o -o dcomplex.o
-	@rm -f dcomplex.o.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomplex.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -g -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.go'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -g  -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.go.o
-	@$(LD) -X -r dcomplex.go.o -o dcomplex.go
-	@rm -f dcomplex.go.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomplex.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -p -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.po'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p  -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.po.o
-	@$(LD) -X -r dcomplex.po.o -o dcomplex.po
-	@rm -f dcomplex.po.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomplex.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.so'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomplex.so.o
-	@$(LD) -x -r dcomplex.so.o -o dcomplex.so
-	@rm -f dcomplex.so.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomio.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.o'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.o.o
-	@$(LD) -x -r dcomio.o.o -o dcomio.o
-	@rm -f dcomio.o.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomio.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -g -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.go'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -g -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.go.o
-	@$(LD) -X -r dcomio.go.o -o dcomio.go
-	@rm -f dcomio.go.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomio.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -p -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.po'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.po.o
-	@$(LD) -X -r dcomio.po.o -o dcomio.po
-	@rm -f dcomio.po.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 dcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.so'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o dcomio.so.o
-	@$(LD) -x -r dcomio.so.o -o dcomio.so
-	@rm -f dcomio.so.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomplex.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.o'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.o.o
-	@$(LD) -x -r ldcomplex.o.o -o ldcomplex.o
-	@rm -f ldcomplex.o.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomplex.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -g -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.go'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -g  -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.go.o
-	@$(LD) -X -r ldcomplex.go.o -o ldcomplex.go
-	@rm -f ldcomplex.go.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomplex.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -p -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.po'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p  -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.po.o
-	@$(LD) -X -r ldcomplex.po.o -o ldcomplex.po
-	@rm -f ldcomplex.po.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomplex.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.so'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
 		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomplex.so.o
-	@$(LD) -x -r ldcomplex.so.o -o ldcomplex.so
-	@rm -f ldcomplex.so.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomio.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.o'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.o.o
-	@$(LD) -x -r ldcomio.o.o -o ldcomio.o
-	@rm -f ldcomio.o.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomio.go: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -g -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.go'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -g -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.go.o
-	@$(LD) -X -r ldcomio.go.o -o ldcomio.go
-	@rm -f ldcomio.go.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomio.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) -p -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.po'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) -p -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.po.o
-	@$(LD) -X -r ldcomio.po.o -o ldcomio.po
-	@rm -f ldcomio.po.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 ldcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
 	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.so'
+		$(.CURDIR)/cinst.cc -o ${.TARGET}'
 	@$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
 		`for N in $(COMIO); do echo " -D$${N}"; done` \
-		$(.CURDIR)/cinst.cc -o ldcomio.so.o
-	@$(LD) -x -r ldcomio.so.o -o ldcomio.so
-	@rm -f ldcomio.so.o
+		$(.CURDIR)/cinst.cc -o ${.TARGET}.o
+	@$(LD) -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .if defined(DESTDIR)
 CPPFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
