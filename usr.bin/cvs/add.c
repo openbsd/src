@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.3 2004/08/13 12:59:28 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.4 2004/08/13 13:27:52 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -56,7 +56,7 @@ int  cvs_add_file (CVSFILE *, void *);
 int
 cvs_add(int argc, char **argv)
 {
-	int i, ch, ret;
+	int i, ch;
 	char *kflag, *msg;
 	struct cvsroot *root;
 
