@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.50 2002/05/24 09:24:36 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.51 2002/05/24 09:33:29 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -2057,6 +2057,7 @@ wdc_ioctl_strategy(bp)
 	struct wdc_ioctl *wi;
 	struct wdc_command wdc_c;
 	int error = 0;
+	int s;
 
 	wi = wdc_ioctl_find(bp);
 	if (wi == NULL) {
@@ -2141,12 +2142,16 @@ wdc_ioctl_strategy(bp)
 	}
 
 	bp->b_error = 0;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	return;
 bad:
 	bp->b_flags |= B_ERROR;
 	bp->b_error = error;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 int
