@@ -1,5 +1,5 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.5 2000/06/23 02:14:39 mickey Exp $	*/
-/*	$NetBSD: ext2fs_bmap.c,v 1.1 1997/06/11 09:33:46 bouyer Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.6 2001/09/18 00:22:31 art Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -57,9 +57,10 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
+static int ext2fs_bmaparray __P((struct vnode *, ufs_daddr_t, ufs_daddr_t *,
 								struct indir *, int *, int *));
 
 /*
@@ -108,19 +109,19 @@ ext2fs_bmap(v)
 int
 ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	register daddr_t bn;
-	daddr_t *bnp;
+	ufs_daddr_t bn;
+	ufs_daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
-	daddr_t daddr;
+	ufs_daddr_t daddr;
 	long metalbn;
 	int error, maxrun = 0, num;
 
@@ -151,22 +152,29 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	num = *nump;
 	if (num == 0) {
-		*bnp = blkptrtodb(ump, ip->i_e2fs_blocks[bn]);
+		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-				is_sequential(ump, ip->i_e2fs_blocks[bn - 1],
-							  ip->i_e2fs_blocks[bn]);
+				is_sequential(ump, fs2h32(ip->i_e2fs_blocks[bn - 1]),
+							  fs2h32(ip->i_e2fs_blocks[bn]));
 				++bn, ++*runp);
 		return (0);
 	}
 
 
 	/* Get disk address out of indirect block array */
-	daddr = ip->i_e2fs_blocks[NDADDR + xap->in_off];
+	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
+
+#ifdef DIAGNOSTIC
+    if (num > NIADDR + 1 || num < 1) {
+		printf("ext2fs_bmaparray: num=%d\n", num);
+		panic("ext2fs_bmaparray: num");
+	}
+#endif
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/* 
 		 * Exit the loop if there is no disk address assigned yet and
@@ -204,12 +212,12 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			}
 		}
 
-		daddr = ((daddr_t *)bp->b_data)[xap->in_off];
+		daddr = fs2h32(((ufs_daddr_t *)bp->b_data)[xap->in_off]);
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 				bn < MNINDIR(ump) && *runp < maxrun &&
-				is_sequential(ump, ((daddr_t *)bp->b_data)[bn - 1],
-				((daddr_t *)bp->b_data)[bn]);
+				is_sequential(ump, ((ufs_daddr_t *)bp->b_data)[bn - 1],
+				((ufs_daddr_t *)bp->b_data)[bn]);
 				++bn, ++*runp);
 	}
 	if (bp)
