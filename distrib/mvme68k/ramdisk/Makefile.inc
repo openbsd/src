@@ -12,6 +12,7 @@ MOUNT_POINT?=	${TOP}/${BASE}/fs
 LISTS=		${.CURDIR}/list
 CRUNCHCONF?=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
+RAWLABEL=	
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
