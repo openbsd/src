@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.18 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.19 2003/04/28 21:40:40 jason Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -359,7 +359,7 @@ cgthree_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNCG3;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
