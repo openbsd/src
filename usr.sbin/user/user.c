@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.8 2000/04/24 23:11:14 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.9 2000/04/26 06:27:57 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -927,45 +927,45 @@ void
 usermgmt_usage(char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
-		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] "
-		    "[-f inactive] [-g group] [-r lowuid..highuid] [-s shell]"
-		    "\n", prog);
-		(void) fprintf(stderr, "Usage: %s [-G group] [-b basedir] "
-		    "[-c comment] [-d homedir] [-e expiry] [-f inactive]\n"
-		    "\t[-g group] [-k skeletondir] [-m] [-o] [-p password] "
-		    "[-r lowuid..highuid] [-s shell]\n\t[-u uid] [-v] user\n",
+		(void) fprintf(stderr, "usage: %s -D [-b basedir] [-e expiry] "
+		    "[-f inactive] [-g group]\n\t\t[-r lowuid..highuid] "
+		    "[-s shell]\n", prog);
+		(void) fprintf(stderr, "usage: %s [-G group] [-b basedir] "
+		    "[-c comment] [-d homedir] [-e expiry]\n\t\t[-f inactive] "
+		    "[-g group] [-k skeletondir] [-m] [-o]\n\t\t[-p password] "
+		    "[-r lowuid..highuid] [-s shell] [-u uid]\n\t\t[-v] user\n",
 		    prog);
 	} else if (strcmp(prog, "usermod") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-G group] [-c comment] "
-		    "[-d homedir] [-e expire] [-f inactive] [-g group] "
-		    "[-l newname] [-m] [-o] [-p password] [-s shell] [-u uid] "
-		    "[-v] user\n", prog);
+		(void) fprintf(stderr, "usage: %s [-G group] [-c comment] "
+		    "[-d homedir] [-e expire] [-f inactive]\n\t\t[-g group] "
+		    "[-l newname] [-m] [-o] [-p password]\n\t\t[-s shell] "
+		    "[-u uid] [-v] user\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
-		(void) fprintf(stderr, "Usage: %s -D [-p preserve]\n", prog);
-		(void) fprintf(stderr, "Usage: %s [-p preserve] [-r] [-v] "
+		(void) fprintf(stderr, "usage: %s -D [-p preserve]\n", prog);
+		(void) fprintf(stderr, "usage: %s [-p preserve] [-r] [-v] "
 		    "user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-e] [-v] user\n", prog);
+		(void) fprintf(stderr, "usage: %s [-e] [-v] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-v] group\n",
+		(void) fprintf(stderr, "usage: %s [-g gid] [-o] [-v] group\n",
 		    prog);
 	} else if (strcmp(prog, "groupdel") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-v] group\n", prog);
+		(void) fprintf(stderr, "usage: %s [-v] group\n", prog);
 	} else if (strcmp(prog, "groupmod") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-n newname] "
+		(void) fprintf(stderr, "usage: %s [-g gid] [-o] [-n newname] "
 		    "[-v] group\n", prog);
 	} else if (strcmp(prog, "user") == 0 || strcmp(prog, "group") == 0) {
-		(void) fprintf(stderr, "Usage: %s ( add | del | mod "
+		(void) fprintf(stderr, "usage: %s [ add | del | mod "
 #ifdef EXTENSIONS
 		"| info "
 #endif
-		") ...\n",
+		"] ...\n",
 		    prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "groupinfo") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-e] [-v] group\n", prog);
+		(void) fprintf(stderr, "usage: %s [-e] [-v] group\n", prog);
 #endif
 	}
 	exit(EXIT_FAILURE);
