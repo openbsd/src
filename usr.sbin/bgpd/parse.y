@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2004/05/08 20:56:10 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.110 2004/05/08 20:58:00 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1565,7 +1565,7 @@ str2key(char *s, char *dest, size_t max_len)
 	unsigned	i;
 	char		t[3];
 
-	if (strlen(s) / 2 >= max_len) {
+	if (strlen(s) / 2 > max_len) {
 		yyerror("key too long");
 		return (-1);
 	}
