@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.59 1999/08/20 17:00:37 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.60 1999/09/04 03:28:04 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -659,6 +659,42 @@ magma*)
 bpp*)
 	unit=`expr $i : 'bpp\(.*\)'`
 	mknod bpp${unit} c 104 `add $unit 0`
+	;;
+
+fga*)
+	unit=`expr $i : 'fga\(.*\)'`
+	if [ "$unit" != 0 ]; then
+		echo "bad unit $unit for $i"
+		exit 127
+	fi
+	rm -f fga$unit
+	mknod fga$unit c 98 $unit
+	chmod 600 fga$unit
+	chown root.wheel fga$unit
+	;;
+
+scf*)
+	unit=`expr $i : 'scf\(.*\)'`
+	if [ "$unit" != 0 ]; then
+		echo "bad unit $unit for $i"
+		exit 127
+	fi
+	rm -f scf$unit
+	mknod scf$unit c 107 $unit
+	chmod 600 scf$unit
+	chown root.wheel scf$unit
+	;;
+
+flash*)
+	unit=`expr $i : 'flash\(.*\)'`
+	if [ "$unit" != 0 ]; then
+		echo "bad unit $unit for $i"
+		exit 127
+	fi
+	rm -f flash$unit
+	mknod flash$unit c 108 $unit
+	chmod 600 flash$unit
+	chown root.wheel flash$unit
 	;;
 
 random|srandom|urandom|prandom|arandom)
