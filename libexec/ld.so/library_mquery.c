@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.1 2003/04/17 03:40:45 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.2 2003/04/18 12:38:39 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -464,14 +464,6 @@ retry:
 		}
 
 		ld->start = (void *)(LOFF + ld->moff);
-		if (ld->start == 0) {
-			/* we dont want the first > MAXDSIZ address
-			 * we want the first available address 
-			 * skip the first 16 pages for page 0, 
-			 * possible sigtramp and some exe.
-			 */
-			ld->start = (void *)(long)(_dl_pagesz * 16);
-		}
 
 		/*
 		 * Magic here.
