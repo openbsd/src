@@ -1,0 +1,8 @@
+# invalid CBQ priority
+
+ext_if = lo0
+
+altq on $ext_if bandwidth 512Kb tbrsize 33224 cbq queue { q_ext_std }
+queue q_ext_std priority 9 cbq(default)
+
+pass in all

@@ -1,0 +1,6 @@
+# invalid PRIQ priority
+
+ext_if = lo0
+
+altq on $ext_if bandwidth 512Kb tbrsize 33224 priq queue { q_ext_std }
+queue q_ext_std priority 16 priq(default)

@@ -1,0 +1,5 @@
+pfctl: priority out of range: max 15
+stdin:6: errors in queue definition
+ext_if = "lo0"
+altq on lo0 priq bandwidth 512Kb tbrsize 33224 queue { q_ext_std }
+queue  priority 0 
