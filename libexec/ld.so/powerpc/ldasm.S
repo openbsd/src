@@ -1,0 +1,156 @@
+/*	$OpenBSD: ldasm.S,v 1.1.1.1 2000/06/13 03:40:35 rahnds Exp $ */
+
+/*
+ * Copyright (c) 1999 Dale Rahn
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed under OpenBSD by
+ *	Dale Rahn.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+/*
+ * #ifdef blrl_never_causes_illegal_access
+ * background for the else of this define
+ * On the machine this code is being written, on a large portion
+ * of the tims this code is executed the blrl instruct causes an
+ * illegal instruction, hopefully by touching the page with a load
+ * will prevent the execute access from faulting.
+ */
+
+#define AUX_entry 9
+
+#include <machine/asm.h>
+
+ENTRY(_dl_start)		
+	mr	19, 1
+	stwu	1, (-16 -((AUX_entry+1)*4))(1)	# Some space.
+
+	mflr	27		/* save off old link register */
+	stw	27, 4(19)	/* save in normal location */
+
+	# squirrel away the arguments for main
+	mr 20, 3	#argc
+	mr 21, 4	#argv
+	mr 22, 5	#envp
+	mr 23, 6	# ???
+
+	.local	.L___offset_sym
+	.type .L___offset_sym,@function
+	bl 	1f
+.L___offset_sym:
+	# this instruction never gets executed but can be used
+	# to find the virtual address where the page is loaded.
+	bl _GLOBAL_OFFSET_TABLE_@local-4
+	bl _DYNAMIC@local
+1:
+	mflr	5		# this stores where we are (+4)
+	lwz	18, 0(5)	# load the instruction at offset_sym
+				# it contains an offset to the location
+				# of the GOT.
+
+	rlwinm 18,18,0,8,30	# mask off the offset portion of the instr.
+
+	/*
+	 * these adds effectively calculates the value the
+	 * bl _GLOBAL_OFFSET_TABLE_@local-4
+	 * operation that would be below would calulate.
+	 */
+	add	28, 18, 5
+
+	li 	0, 0
+	dcbf	5, 18
+	sync
+	isync
+	icbi	5, 18		# make certain that the got table addr is
+				# not in the icache
+
+	sync
+	isync
+
+	addi	28, 28, 4
+	mr 	29, 28
+
+	lwz	30, 0(28)	# this loads the first entry of the GOT
+				# thus forcing it to be paged in when
+				# we jump to it below.
+
+
+	# calculate where we want to be (via the got)
+	bl _GLOBAL_OFFSET_TABLE_@local-4
+	mflr 28
+
+
+	lwz 	4, .L___offset_sym@got(28)
+	mr 	6, 4		# make copy of register for debugging
+
+	/* This cheats and calculates the address of _DYNAMIC
+	 * the same way that the GLOBAL_OFFSET_TABLE was calcuated
+	 */
+	lwz     18, 4(5)
+	rlwinm 18,18,0,8,30	# mask off the offset portion of the instr.
+	add	8, 18, 5	# address of _DYNAMIC (arg6 for _dl_boot)
+	addi	18, 8, 4	# correction.
+
+	sub	4, 5, 4		# calculate offset (arg1 for _dl_boot)
+	mr	17, 4
+
+
+	mr	3, 19		# Get stack pointer (arg0 for _dl_boot).
+	mr	4, 17		# loff
+	mr	5, 20		# argc
+	mr	6, 21		# argv
+	mr	7, 22		# envp
+	mr	8, 18		# dynamicp
+	addi	9, 1, 8		# dl_data
+
+	bl	_dl_boot_bind@local
+
+	mr	3, 21		# argv
+	mr	4, 22		# envp
+	mr	5, 17		# loff
+	mr	6, 18		# dynamicp
+	addi	7, 1, 8		# dl_data
+
+	bl	_dl_boot@local
+
+	mtctr 3 		# put return value into ctr to execute
+
+	# get back the squirreled away the arguments for main
+	mr 3, 20
+	mr 4, 21
+	mr 5, 22
+	mr 6, 23
+
+
+	mtlr 27
+	lwz	1, 0(1)		# Restore stack pointer.
+	bctr 			# Go execute the 'real' program.
+
+	.globl	_dl_rt_resolve
+	.data
+_dl_rt_resolve:
+	.long	0
