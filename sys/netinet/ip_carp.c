@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.36 2004/03/05 12:25:56 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.37 2004/03/10 21:36:47 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -567,7 +567,7 @@ carp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	if (name[0] == 0 || name[0] >= CARPCTL_MAXID)
+	if (name[0] <= 0 || name[0] >= CARPCTL_MAXID)
 		return (ENOPROTOOPT);
 
 	return sysctl_int(oldp, oldlenp, newp, newlen, &carp_opts[name[0]]);
