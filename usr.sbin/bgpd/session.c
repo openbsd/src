@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.112 2004/02/17 15:47:24 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.113 2004/02/17 15:53:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -926,10 +926,12 @@ session_open(struct peer *p)
 				log_peer_warn(&p->conf, "Write error");
 			buf_free(buf);
 			bgp_fsm(p, EVNT_CON_FATAL);
+			return;
 		}
 	} else {
 		buf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
 	}
 
 	p->stats.msg_sent_open++;
