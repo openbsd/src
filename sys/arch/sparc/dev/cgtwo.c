@@ -402,5 +402,5 @@ cgtwommap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	return ((int)sc->sc_phys + off + PMAP_VME16 + PMAP_NC);
+	return ((int)sc->sc_phys + off + PMAP_VME32 + PMAP_NC);
 }
