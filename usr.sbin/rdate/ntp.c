@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.22 2004/06/17 18:09:33 alexander Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.23 2004/07/14 20:11:16 henning Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -374,11 +374,6 @@ retry:
 	if (data->stratum < NTP_STRATUM_MIN ||
 	    data->stratum > NTP_STRATUM_MAX) {
 		warnx("Invalid stratum received, packet rejected");
-		return 1;
-	}
-
-	if (data->status == STATUS_ALARM) {
-		warnx("Server clock not synchronized, packet rejected");
 		return 1;
 	}
 
