@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.3 1996/09/23 09:38:32 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.4 2000/03/23 15:23:51 aaron Exp $	*/
 /*	$NetBSD: table.c,v 1.3 1995/03/26 04:55:34 glass Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: table.c,v 1.3 1996/09/23 09:38:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: table.c,v 1.4 2000/03/23 15:23:51 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ ENTRY list[] = {
 	{ "full name",		p_gecos,  0,   9, e2,   },
 	{ "office phone",	p_gecos,  0,  12, e2,   },
 	{ "home phone",		p_gecos,  0,  10, e2,   },
-	{ "location",		p_gecos,  0,   8, e2,   },
+	{ "office location",	p_gecos,  0,  15, e2,   },
 	{ "home directory",	p_hdir,   1,  14, e1,   },
 	{ "shell",		p_shell,  0,   5, e1,   },
 	{ NULL, 0, },
