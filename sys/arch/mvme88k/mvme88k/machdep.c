@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.134 2004/02/11 20:41:08 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.135 2004/02/19 15:33:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -916,13 +916,8 @@ sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 	/*
 	 * Build the argument list for the signal handler.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.14 2003/08/01 18:37:28 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.15 2004/02/19 15:33:51 miod Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -246,14 +246,9 @@ sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
 		free((caddr_t)kfp, M_TEMP);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
