@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.2 2004/02/17 11:18:03 miod Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -213,7 +213,6 @@ __devitem(ut, ut*, UNIBUS TU45 emulations (e.g. 9700))dnl
 __devtitle(dis, Disks)dnl
 dnl REMOVE __devitem(rz, rz*, SCSI disks)dnl
 __devitem(sd, {-sd*-}, {-SCSI disks, includes flopticals-})dnl
-__devitem(hd, {-hd*-}, HP300 HP-IB disks)dnl
 __devitem(cd, {-cd*-}, SCSI cdrom drives)dnl
 __devitem(acd, acd*, ATAPI cdrom drives)dnl
 _mkdev(cd, cd*, {-dodisk2 cd $U major_cd_b major_cd_c $U 0{--}ifstep(cd)-})dnl
@@ -288,7 +287,6 @@ __devitem(up, up*, {-Other UNIBUS devices-})dnl
 __devitem(rb, rb*, {-730 IDC w/ RB80 and/or RB02-})dnl
 __devitem(rx, rx*, {-RX02 floppy disks-})dnl
 __devitem(rl, rl*, {-UNIBUS RL02-})dnl
-__devitem(hd, hd*, {-HDC9224 disks-})dnl
 dnl
 dnl For normal disk devices, add a disk_q entry; anything else define like
 dnl the rest (such as vnd above).

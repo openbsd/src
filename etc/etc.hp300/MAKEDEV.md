@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.17 2004/02/16 19:01:01 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.18 2004/02/17 11:18:06 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -18,6 +18,7 @@ dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl *** hp300 specific device scripts/descriptions
 dnl
+__devitem(hd, {-hd*-}, HP300 HP-IB disks)dnl
 _mkdev(st_hp300, ct*|mt*|st*,
 {-case $i in
 	ct*) name=ct blk=major_ct_b chr=major_ct_c;;

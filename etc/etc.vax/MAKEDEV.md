@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.16 2004/02/16 19:01:02 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.17 2004/02/17 11:18:08 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -19,6 +19,7 @@ dnl
 dnl
 dnl *** vax specific definitions
 dnl
+__devitem(hd, hd*, {-HDC9224 disks-})dnl
 __devitem(dhu, dhu*, UNIBUS DHU11)dnl
 __devitem(dmz, dmz*, UNIBUS DMZ32)dnl
 __devitem(dmf, dmf*, UNIBUS DMF32)dnl
