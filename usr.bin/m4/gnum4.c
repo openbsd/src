@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.10 2001/09/16 21:08:55 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.11 2001/09/18 13:42:37 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -336,23 +336,26 @@ do_subst(string, re, replace, pm)
 	regmatch_t *pm;
 {
 	int error;
-	regoff_t last_match = -1;
+	int flags = 0;
+	const char *last_match = NULL;
 
-	while ((error = regexec(re, string, re->re_nsub+1, pm, 0)) == 0) {
+	while ((error = regexec(re, string, re->re_nsub+1, pm, flags)) == 0) {
+		flags = REG_NOTBOL;
 
 		/* NULL length matches are special... We use the `vi-mode' 
 		 * rule: don't allow a NULL-match at the last match
 		 * position. 
 		 */
-		if (pm[0].rm_so == pm[0].rm_eo && pm[0].rm_so == last_match) {
+		if (pm[0].rm_so == pm[0].rm_eo && 
+		    string + pm[0].rm_so == last_match) {
 			if (*string == '\0')
 				return;
 			addchar(*string);
 			string++;
 			continue;
 		}
-		last_match = pm[0].rm_so;
-		addchars(string, last_match);
+		last_match = string + pm[0].rm_so;
+		addchars(string, pm[0].rm_so);
 		add_replace(string, re, replace, pm);
 		string += pm[0].rm_eo;
 	}
@@ -444,7 +447,7 @@ dopatsubst(argv, argc)
 		return;
 	}
 	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
-	    REG_EXTENDED);
+	    REG_NEWLINE | REG_EXTENDED);
 	if (error != 0)
 		exit_regerror(error, &re);
 	
