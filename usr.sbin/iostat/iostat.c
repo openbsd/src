@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.21 2004/08/08 00:19:16 pedro Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.22 2005/04/01 03:32:47 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -196,7 +196,8 @@ main(int argc, char *argv[])
 			break;
 		select(0, NULL, NULL, NULL, &tv);
 		dkreadstats();
-		if (last.dk_ndrive != cur.dk_ndrive) wantheader = 1;
+		if (last.dk_ndrive != cur.dk_ndrive)
+			wantheader = 1;
 	}
 	exit(0);
 }
@@ -309,7 +310,7 @@ disk_stats2(double etime)
 
 		/* average time busy in disk activity. */
 		atime = (double)cur.dk_time[dn].tv_sec +
-			((double)cur.dk_time[dn].tv_usec / (double)1000000);
+		    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 		(void)printf(" %4.2f ", atime / etime);
 	}
 }
