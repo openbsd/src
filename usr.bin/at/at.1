@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.8 1998/11/04 22:36:40 aaron Exp $
+.\" $OpenBSD: at.1,v 1.9 1999/03/21 04:04:41 alex Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -81,6 +81,11 @@ or giving a date of the form
 .Ar MM/DD/YY
 or
 .Ar DD.MM.YY .
+The year may be given as two digits or four digits.
+If the year is given as two digits, it is taken to occur as soon as
+possible in the future, which may be in the next century --
+unless it's last year, in which case it's considered to be
+a typo.
 The specification of a date must follow the specification of
 the time of day.
 You can also give times like

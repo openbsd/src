@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.7 1998/07/10 07:07:04 deraadt Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.8 1999/03/21 04:04:42 alex Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <err.h>
@@ -150,7 +151,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: parsetime.c,v 1.7 1998/07/10 07:07:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: parsetime.c,v 1.8 1999/03/21 04:04:42 alex Exp $";
 #endif
 
 /* Local functions */
@@ -443,10 +444,20 @@ assign_date(tm, mday, mon, year)
 	int mday, mon, year;
 {
 	if (year > 99) {
-	    if (year > 1899)
-		    year -= 1900;
+	    if (year >= TM_YEAR_BASE)
+		    year -= TM_YEAR_BASE;
 	    else
 		    panic("garbled time");
+	} else if (year != -1) {
+		/*
+		 * check if the specified year is in the next century.
+		 * allow for one year of user error as many people will
+		 * enter n - 1 at the start of year n.
+		 */
+		if (year < tm->tm_year % 100 - 1)
+			year += 100;
+		/* adjust for the year 2000 and beyond */
+		year += tm->tm_year - (tm->tm_year % 100);
 	}
 
 	if (year < 0 &&
@@ -556,7 +567,7 @@ month(tm)
 			}
 		} else if (tlen == 6 || tlen == 8) {
 			if (tlen == 8) {
-				year = (mon % 10000) - 1900;
+				year = (mon % 10000) - TM_YEAR_BASE;
 				mon /= 10000;
 			} else {
 				year = mon % 100;
