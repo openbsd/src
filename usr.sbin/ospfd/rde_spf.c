@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.8 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.9 2005/03/23 20:15:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -43,7 +43,6 @@ void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
 		     struct in_addr, struct in_addr, u_int8_t, u_int8_t);
 void		 rt_invalidate(void);
 int		 linked(struct vertex *, struct vertex *);
-u_int8_t	 mask2prefixlen(in_addr_t);
 
 void
 spf_dump(struct area *area)

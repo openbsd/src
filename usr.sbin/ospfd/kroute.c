@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.8 2005/03/23 11:30:21 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.9 2005/03/23 20:15:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -88,8 +88,6 @@ struct kroute_node	*kroute_match(in_addr_t);
 
 int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
-u_int8_t	mask2prefixlen(in_addr_t);
-in_addr_t	prefixlen2mask(u_int8_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
@@ -542,14 +540,10 @@ kroute_match(in_addr_t key)
 {
 	int			 i;
 	struct kroute_node	*kr;
-	in_addr_t		 ina;
-
-	ina = ntohl(key);
 
 	/* we will never match the default route */
 	for (i = 32; i > 0; i--)
-		if ((kr =
-		    kroute_find(htonl(ina & prefixlen2mask(i)), i)) != NULL)
+		if ((kr = kroute_find(key & prefixlen2mask(i), i)) != NULL)
 			return (kr);
 
 	/* if we don't have a match yet, try to find a default route */
@@ -612,7 +606,7 @@ prefixlen2mask(u_int8_t prefixlen)
 	if (prefixlen == 0)
 		return (0);
 
-	return (0xffffffff << (32 - prefixlen));
+	return (htonl(0xffffffff << (32 - prefixlen)));
 }
 
 #define	ROUNDUP(a, size)	\
@@ -730,7 +724,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 
 	r.mask.sin_len = sizeof(r.mask);
 	r.mask.sin_family = AF_INET;
-	r.mask.sin_addr.s_addr = htonl(prefixlen2mask(kroute->prefixlen));
+	r.mask.sin_addr.s_addr = prefixlen2mask(kroute->prefixlen);
 
 retry:
 	if (write(fd, &r, sizeof(r)) == -1) {
