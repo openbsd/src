@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.31 2004/12/05 00:16:14 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.32 2004/12/05 01:10:56 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1090,58 +1090,30 @@ USB_MATCH(atu)
 int
 atu_media_change(struct ifnet *ifp)
 {
-	struct atu_softc	*sc;
-	struct ifmedia_entry	*ime;
+	struct atu_softc	*sc = ifp->if_softc;
+	int			err;
 
-	sc = ifp->if_softc;
-	ime = sc->atu_media.ifm_cur;
+	DPRINTFN(10, ("%s: atu_media_change\n", USBDEVNAME(sc->atu_dev)));
 
-	/* TODO: fully implement - see if_wi.c @ 1189 */
-
-	DPRINTFN(10, ("%s: subtype=%d %d\n", USBDEVNAME(sc->atu_dev),
-	    IFM_SUBTYPE(ime->ifm_media), ime->ifm_media));
-
-	if ((ime->ifm_media & IFM_IEEE80211_ADHOC) &&
-	    (sc->atu_mode != AD_HOC_MODE)) {
-		DPRINTFN(10, ("%s: mode changed to adhoc\n",
-		    USBDEVNAME(sc->atu_dev)));
-		sc->atu_mode = AD_HOC_MODE;
-		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
+	err = ieee80211_media_change(ifp);
+	if (err == ENETRESET) {
+		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
+		    (IFF_RUNNING|IFF_UP))
+			atu_init(ifp);
+		err = 0;
 	}
 
-	if ((!(ime->ifm_media & IFM_IEEE80211_ADHOC)) &&
-	    (sc->atu_mode != INFRASTRUCTURE_MODE)) {
-		DPRINTFN(10, ("%s: mode changed to infra\n",
-		    USBDEVNAME(sc->atu_dev)));
-		sc->atu_mode = INFRASTRUCTURE_MODE;
-		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
-	}
-
-	DPRINTFN(10, ("%s: media_change...\n", USBDEVNAME(sc->atu_dev)));
-	return 0;
+	return (err);
 }
 
 void
 atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 {
-	struct atu_softc	*sc;
+	struct atu_softc	*sc = ifp->if_softc;
 
-	sc = ifp->if_softc;
-
-	/* TODO: fully implement */
-
-	req->ifm_status = IFM_AVALID;
-	req->ifm_active = IFM_IEEE80211;
-
-	if (sc->atu_mgmt_flags & ATU_NETWORK_OK)
-		req->ifm_status |= IFM_ACTIVE;
-
-	/* req->ifm_active |= ieee80211_rate2media(2*11, IEEE80211_T_DS); */
-
-	if (sc->atu_mode == AD_HOC_MODE) {
-		req->ifm_active |= IFM_IEEE80211_ADHOC;
-	}
 	DPRINTFN(10, ("%s: atu_media_status\n", USBDEVNAME(sc->atu_dev)));
+
+	ieee80211_media_status(ifp, req);
 }
 
 int
@@ -2273,9 +2245,18 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	}
 
+	if (err == ENETRESET) {
+		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
+		    (IFF_RUNNING|IFF_UP)) {
+			DPRINTF(("%s: atu_ioctl(): netreset\n",
+			    USBDEVNAME(sc->atu_dev)));
+			atu_init(ifp);
+		}
+		err = 0;
+	}
+
 	splx(s);
 
-	/* XXX need to check if we need a config change */
 	return (err);
 
 	switch (command) {
