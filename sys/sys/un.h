@@ -1,4 +1,4 @@
-/*	$OpenBSD: un.h,v 1.2 1996/03/03 12:12:39 niklas Exp $	*/
+/*	$OpenBSD: un.h,v 1.3 1998/03/05 19:47:52 marc Exp $	*/
 /*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  *	@(#)un.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SYS_UN_H_
+#define	_SYS_UN_H_
+
 /*
  * Definitions for UNIX IPC domain.
  */
@@ -70,3 +73,4 @@ void 	unp_dispose __P((struct mbuf *));
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif /* _KERNEL */
+#endif /* !_SYS_UN_H_ */
