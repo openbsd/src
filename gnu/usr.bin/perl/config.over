@@ -3,7 +3,7 @@
 #
 
 # We use a different architecture name than the default
-archname="`uname -m`-${osname}"
+archname="`arch |cut -f2 -d.`-${osname}"
 myarchname="$archname"
 
 # Use correct paths for a distribution
