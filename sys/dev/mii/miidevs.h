@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.41 2003/10/05 02:32:16 krw Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.42 2003/10/05 03:28:34 krw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.38 2003/10/05 02:30:18 krw Exp 
+ *	OpenBSD: miidevs,v 1.39 2003/10/05 03:24:24 krw Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -62,7 +62,6 @@
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
-#define	MII_OUI_REALTEK	0x000020	/* RealTek Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
@@ -91,9 +90,6 @@
 
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x006040	/* Davicom Semiconductor */
-
-/* This is the oui of the gigE PHY in the RealTek 81695/8110S chips */
-#define	MII_OUI_xxREALTEK	0x000732	/*  */
 
 /* Contrived vendor for dcphy */
 #define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
@@ -229,12 +225,6 @@
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_QUALSEMI_QS6612	0x0000
 #define	MII_STR_QUALSEMI_QS6612	"QS6612 10/100 media interface"
-
-/* RealTek Semiconductor PHYs */
-#define	MII_MODEL_REALTEK_RTL8201L	0x0020
-#define	MII_STR_REALTEK_RTL8201L	"Realtek 10/100 media interface"
-#define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
-#define	MII_STR_xxREALTEK_RTL8169S	"Realtek 10/100/1000 media interface"
 
 /* Seeq PHYs */
 #define	MII_MODEL_xxSEEQ_80220	0x0003
