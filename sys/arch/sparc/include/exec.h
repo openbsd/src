@@ -61,7 +61,12 @@ struct relocation_info_sparc {
 #define	ELF_TARG_DATA	ELFDATA2MSB
 #define	ELF_TARG_MACH	EM_SPARC
 
-#define	DO_AOUT			/* support a.out */
-#define	DO_ELF			/* support ELF */
+#define	_NLIST_DO_AOUT
+#define	_NLIST_DO_ELF
+
+#define _KERN_DO_AOUT
+#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
+#define _KERN_DO_ELF
+#endif
 
 #endif  /* _SPARC_EXEC_H_ */

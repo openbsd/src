@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.6 1996/06/07 19:38:58 pefo Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.7 1996/12/23 02:42:42 deraadt Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -33,35 +33,13 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
-
-#undef EXEC_SCRIPT			/* XXX */
-#define EXEC_SCRIPT			/* XXX */
-#undef EXEC_AOUT			/* XXX */
-#define EXEC_AOUT			/* XXX */
-
-#if defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)
-#undef EXEC_ECOFF
-#define EXEC_ECOFF
-#endif
-
-#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)
-#undef EXEC_ELF
-#define EXEC_ELF
-#endif
-
-#ifdef EXEC_SCRIPT
 #include <sys/exec_script.h>
-#endif
 
-#if defined(NATIVE_EXEC_AOUT) || defined(EXEC_AOUT)
-/*#include <sys/exec_aout.h> -- automatically pulled in */
-#endif
-
-#if defined(NATIVE_EXEC_ECOFF) || defined(EXEC_ECOFF)
+#if defined(_KERN_DO_ECOFF)
 #include <sys/exec_ecoff.h>
 #endif
 
-#if defined(NATIVE_EXEC_ELF) || defined(EXEC_ELF)
+#if defined(_KERN_DO_ELF)
 #include <sys/exec_elf.h>
 #endif
 
@@ -93,16 +71,14 @@ struct execsw execsw[] = {
 	{ 0, NULL, },
 	{ 0, NULL, },
 #endif
-#ifdef EXEC_SCRIPT
 	{ MAXINTERP, exec_script_makecmds, },		/* shell scripts */
-#endif
-#ifdef EXEC_AOUT
+#ifdef _KERN_DO_AOUT
 	{ sizeof(struct exec), exec_aout_makecmds, },	/* a.out binaries */
 #endif
-#ifdef EXEC_ECOFF
+#ifdef _KERN_DO_ECOFF
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
-#if defined(NATIVE_EXEC_ELF) || defined(EXEC_ELF)
+#ifdef _KERN_DO_ELF
 	{ sizeof(Elf32_Ehdr), exec_elf_makecmds, },	/* elf binaries */
 #endif
 #ifdef COMPAT_LINUX
@@ -113,7 +89,7 @@ struct execsw execsw[] = {
 	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, },	/* x.out binaries */
 #endif
 #ifdef COMPAT_FREEBSD
-	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* a.out */
+	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* freebsd */
 #endif
 #ifdef COMPAT_HPUX
 	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, },	/* HP-UX a.out */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 1996/12/23 02:42:26 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.5 1994/10/26 21:09:39 cgd Exp $	*/
 
 /*-
@@ -48,10 +48,9 @@
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_MIPS
 
-/*
- *  This is what we want nlist(3) to handle.
- */
-#define DO_AOUT			/* support a.out */
-#define DO_ELF			/* support ELF */
-#define DO_ECOFF		/* support ECOFF */
+#define _NLIST_DO_AOUT
+#define _NLIST_DO_ELF
+#define _NLIST_DO_ECOFF
 
+#define _KERN_DO_ECOFF
+#define _KERN_DO_ELF

@@ -50,7 +50,12 @@ struct relocation_info_m68k {
 #define ELF_TARG_DATA		ELFDATA2MSB
 #define ELF_TARG_MACH		EM_68K
 
-#define DO_AOUT			/* support a.out */
-#define DO_ELF			/* support ELF */
+#define _NLIST_DO_AOUT
+#define _NLIST_DO_ELF
+
+#define _KERN_DO_AOUT
+#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
+#define _KERN_DO_ELF
+#endif
 
 #endif  /* _MACHINE_EXEC_H_ */

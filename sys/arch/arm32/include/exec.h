@@ -60,6 +60,8 @@ struct relocation_info_arm6 {
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_ARM
 
-#define DO_AOUT			/* support a.out */
+#define _NLIST_DO_AOUT
+
+#define _KERN_DO_AOUT
 
 #endif	/* _ARM_EXEC_H_ */

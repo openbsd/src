@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.16 1996/10/27 20:34:37 etheisen Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.17 1996/12/23 02:42:22 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,18 +47,18 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.16 1996/10/27 20:34:37 etheisen Exp
 #include <unistd.h>
 #include <a.out.h>		/* pulls in nlist.h */
 
-#ifdef DO_ELF
+#ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
 #include <olf_abi.h>
 #endif
 
-#ifdef DO_ECOFF
+#ifdef _NLIST_DO_ECOFF
 #include <sys/exec_ecoff.h>
 #endif
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
-#ifdef DO_AOUT
+#ifdef _NLIST_DO_AOUT
 int
 __aout_fdnlist(fd, list)
 	register int fd;
@@ -143,9 +143,9 @@ __aout_fdnlist(fd, list)
 	munmap(strtab, strsize);
 	return (nent);
 }
-#endif /* DO_AOUT */
+#endif /* _NLIST_DO_AOUT */
 
-#ifdef DO_ECOFF
+#ifdef _NLIST_DO_ECOFF
 #define check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)
 #define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
@@ -246,9 +246,9 @@ unmap:
 out:
 	return (rv);
 }
-#endif /* DO_ECOFF */
+#endif /* _NLIST_DO_ECOFF */
 
-#ifdef DO_ELF
+#ifdef _NLIST_DO_ELF
 /*
  * __elf_is_okay__ - Determine if ehdr really
  * is ELF and valid for the target platform.
@@ -436,19 +436,19 @@ __elf_fdnlist(fd, list)
 
 	return (nent);
 }
-#endif /* DO_ELF */
+#endif /* _NLIST_DO_ELF */
 
 
 static struct nlist_handlers {
 	int	(*fn) __P((int fd, struct nlist *list));
 } nlist_fn[] = {
-#ifdef DO_AOUT
+#ifdef _NLIST_DO_AOUT
 	{ __aout_fdnlist },
 #endif
-#ifdef DO_ELF
+#ifdef _NLIST_DO_ELF
 	{ __elf_fdnlist },
 #endif
-#ifdef DO_ECOFF
+#ifdef _NLIST_DO_ECOFF
 	{ __ecoff_fdnlist },
 #endif
 };

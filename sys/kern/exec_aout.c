@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.2 1996/03/03 17:19:36 niklas Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.3 1996/12/23 02:42:41 deraadt Exp $	*/
 /*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
+
+#if defined(_KERN_DO_AOUT)
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.
@@ -143,7 +145,7 @@ exec_aout_prep_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 /*
@@ -181,7 +183,7 @@ exec_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 /*
@@ -224,49 +226,7 @@ exec_aout_prep_omagic(p, epp)
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
-/*
- * exec_aout_setup_stack(): Set up the stack segment for an a.out
- * executable.
- *
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
- *
- * This function returns an int for uniformity with other (future) formats'
- * stack setup functions.  They might have errors to return.
- */
-
-int
-exec_aout_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
-}
+#endif /* _KERN_DO_AOUT */

@@ -51,7 +51,12 @@ struct relocation_info_i386 {
 #define ELF_TARG_MACH		EM_386 /* XXX - EM_486 is currently unused
                                           by all OSs/compilers/linkers */
 
-#define DO_AOUT			/* support a.out */
-#define DO_ELF			/* support ELF */
+#define _NLIST_DO_AOUT
+#define _NLIST_DO_ELF
+
+#define _KERN_DO_AOUT
+#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || !defined(_KERNEL)
+#define _KERN_DO_ELF
+#endif
 
 #endif  /* _I386_EXEC_H_ */

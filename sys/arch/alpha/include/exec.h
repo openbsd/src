@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 1996/07/29 22:58:42 niklas Exp $	*/
+/*	$OpenBSD: exec.h,v 1.4 1996/12/23 02:42:24 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -40,7 +40,10 @@
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_ALPHA
 
-#define DO_AOUT			/* support a.out */
-#define DO_ECOFF		/* support ECOFF */
+#define _NLIST_DO_AOUT
+#define _NLIST_DO_ECOFF
+
+#define _KERN_DO_AOUT
+#define _KERN_DO_ECOFF
 
 #endif /* !_ALPHA_EXEC_H_ */

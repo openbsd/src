@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.4 1996/05/29 03:05:00 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.5 1996/12/23 02:42:30 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.8 1996/05/05 06:17:40 briggs Exp $	*/
 
 /*-
@@ -59,7 +59,12 @@ struct relocation_info_mac68k {
 #define ELF_TARG_DATA		ELFDATA2MSB
 #define ELF_TARG_MACH		EM_68K
 
-#define DO_AOUT			/* support a.out */
-#define DO_ELF			/* support ELF */
+#define _NLIST_DO_AOUT
+#define _NLIST_DO_ELF
+
+#define _KERN_DO_AOUT
+#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
+#define _KERN_DO_ELF
+#endif
 
 #endif /* _EXEC_MACHINE_ */

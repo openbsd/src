@@ -46,4 +46,8 @@ struct relocation_info_vax {
 };
 #define relocation_info	relocation_info_vax
 
+#define _NLIST_DO_AOUT
+
+#define _KERN_DO_AOUT
+
 #endif  /* _VAX_EXEC_H_ */

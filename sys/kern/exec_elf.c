@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.18 1996/11/24 18:31:25 etheisen Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.19 1996/12/23 02:42:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -40,19 +40,15 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+
+#if defined(_KERN_DO_ELF)
+
 #include <sys/exec_elf.h>
 #include <sys/exec_olf.h>
 #include <sys/file.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
-
-#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)	/*XXX should be */
-#undef EXEC_ELF						/*XXX defined in */
-#define EXEC_ELF					/*XXX machine/exec.h */
-#endif							/*XXX instead ? */
-
-#if defined(NATIVE_EXEC_ELF) || defined(EXEC_ELF)
 
 #include <sys/mman.h>
 #include <vm/vm.h>
@@ -616,7 +612,7 @@ exec_elf_makecmds(p, epp)
 
 	free((char *) ph, M_TEMP);
 	epp->ep_vp->v_flag |= VTEXT;
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 
 bad:
 	free((char *) ph, M_TEMP);
@@ -708,4 +704,4 @@ exec_elf_fixup(p, epp)
 	free((char *) interp, M_TEMP);
 	return error;
 }
-#endif /* NATIVE_EXEC_ELF || EXEC_ELF */
+#endif /* _KERN_DO_ELF */

@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.1.1.1 1996/12/21 20:35:54 rahnds Exp $
+ *	$Id: exec.h,v 1.2 1996/12/23 02:42:35 deraadt Exp $
  */
 
 #ifndef _PPC_EXEC_H_
@@ -51,11 +51,9 @@ struct relocation_info_powerpc {
 #define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_PPC
 
-/*
- *  This is what we want nlist(3) to handle.
- */
-#define DO_AOUT                 /* support a.out */
-#define DO_ELF                  /* support ELF */
+#define _NLIST_DO_AOUT
+#define _NLIST_DO_ELF
 
+#define _KERN_DO_ELF
 
 #endif  /* _PPC_EXEC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.3 1996/05/22 12:05:19 deraadt Exp $	*/
+/*	$OpenBSD: exec_ecoff.c,v 1.4 1996/12/23 02:42:42 deraadt Exp $	*/
 /*	$NetBSD: exec_ecoff.c,v 1.8 1996/05/19 20:36:06 jonathan Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
+
+#if defined(_KERN_DO_ECOFF)
 
 #include <sys/exec_ecoff.h>
 
@@ -97,49 +99,6 @@ exec_ecoff_makecmds(p, epp)
 }
 
 /*
- * exec_ecoff_setup_stack(): Set up the stack segment for an ecoff
- * executable.
- *
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
- *
- * This function returns an int for uniformity with other (future) formats'
- * stack setup functions.  They might have errors to return.
- */
-int
-exec_ecoff_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
-}
-
-/*
  * exec_ecoff_prep_omagic(): Prepare a ECOFF OMAGIC binary's exec package
  */
 int
@@ -168,7 +127,7 @@ exec_ecoff_prep_omagic(p, epp)
 		    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 	
-	return exec_ecoff_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 /*
@@ -205,7 +164,7 @@ exec_ecoff_prep_nmagic(p, epp)
 		    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_ecoff_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 /*
@@ -261,5 +220,7 @@ exec_ecoff_prep_zmagic(p, epp)
 	    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_ecoff_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
+
+#endif /* _KERN_DO_ECOFF */
