@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.8 2000/09/16 21:48:46 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.9 2000/09/16 21:50:56 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2642,17 +2642,11 @@ xl_detach(sc)
 
 	/* Detach all PHYs */
 	if (sc->xl_hasmii)
-	  mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
