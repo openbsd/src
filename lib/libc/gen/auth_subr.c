@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.7 2002/01/14 16:50:18 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.8 2002/02/05 07:51:52 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -157,7 +157,8 @@ void
 auth_clean(auth_session_t *as)
 {
 	struct rmfiles *rm;
-        struct authdata *data;
+	struct authopts *opt;
+	struct authdata *data;
 
 	as->state = 0;
 
@@ -171,6 +172,14 @@ auth_clean(auth_session_t *as)
 		unlink(rm->file);
 		free(rm);
 	}
+
+	/*
+	 * Clean out the opt list
+	 */
+        while ((opt = as->optlist) != NULL) {
+                as->optlist = opt->next;
+                free(opt);
+        }
 
 	/*
 	 * Clean out data
@@ -241,6 +250,12 @@ auth_close(auth_session_t *as)
 			memset(as->data->ptr, 0, as->data->len);
 		as->data = data->next;
 		free(data);
+	}
+
+	if (as->pwd != NULL) {
+		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
+		free(as->pwd);
+		as->pwd = NULL;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.6 2001/10/26 19:44:38 markus Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.7 2002/02/05 07:51:52 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -112,37 +112,45 @@ _auth_checknologin(login_cap_t *lc, int print)
 {
 	struct stat sb;
 	char *nologin;
+       int mustfree;
+
+       if (login_getcapbool(lc, "ignorenologin", 0))
+               return (0);
 
 	/*
 	 * If we fail to get the nologin file due to a database error,
 	 * assume there should have been one...
 	 */
-	if ((nologin = login_getcapstr(lc, "nologin", "", NULL)) == NULL) {
-		if (print) {
-			printf("Logins are not allowed at this time.\n");
-			fflush(stdout);
-		}
-		return (-1);
-	}
-	if (*nologin && stat(nologin, &sb) >= 0) {
-		if (print && auth_cat(nologin) == 0) {
-			printf("Logins are not allowed at this time.\n");
-			fflush(stdout);
-		}
-		return (-1);
+       nologin = login_getcapstr(lc, "nologin", "", NULL);
+       mustfree = nologin && *nologin != '\0';
+       if (nologin == NULL)
+               goto print_nologin;
+
+       /* First try the nologin file specified in login.conf. */
+       if (*nologin != '\0' && stat(nologin, &sb) == 0)
+               goto print_nologin;
+       if (mustfree)
+               free(nologin);
+
+       /* If that doesn't exist try _PATH_NOLOGIN. */
+       if (stat(_PATH_NOLOGIN, &sb) == 0) {
+               nologin = _PATH_NOLOGIN;
+               goto print_nologin;
 	}
 
-	if (login_getcapbool(lc, "ignorenologin", 0))
-		return(0);
+       /* Couldn't stat any nologin files, must be OK to login. */
+       return (0);
 
-	if (stat(_PATH_NOLOGIN, &sb) >= 0) {
-		if (print && auth_cat(_PATH_NOLOGIN) == 0) {
-			printf("Logins are not allowed at this time.\n");
+print_nologin:
+       if (print) {
+               if (!nologin || *nologin == '\0' || auth_cat(nologin) == 0) {
+                       puts("Logins are not allowed at this time.");
 			fflush(stdout);
 		}
-		return (-1);
 	}
-	return(0);
+       if (mustfree)
+               free(nologin);
+       return (-1);
 }
 
 int
