@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.27 1997/05/16 00:51:09 millert Exp $
+#	$OpenBSD: install.sub,v 1.28 1997/05/16 02:00:22 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -612,7 +612,7 @@ install_url() {
 	     "files will be retrieved iteratively via ftp(1).\n"
 	    
 	# Proxy the connections?
-	eval echo -n "${_url_type} proxy IP? [\$${_url_type}_proxy]\ "
+	eval echo -n "${_url_type} proxy URL? [\$${_url_type}_proxy]\ "
 	eval getresp "\$${_url_type}_proxy"
 	if [ "X$resp" != "X" ]; then
 		eval ${_url_type}_proxy=$resp
@@ -637,7 +637,7 @@ install_url() {
 	case "$resp" in
 	n*|N*) ;;
 	*)
-		ftp ${_ftp_passive} -V -a ftp://ftp.usa.openbsd.org/pub/OpenBSD/`echo ${VERSION} | sed 's/\(.\)\(.\)/\1.\2/'`/${_url_type}list | cat
+		ftp ${_ftp_passive} -V -a ftp://ftp.usa.openbsd.org/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist | grep "^${_url_type}:"
 		;;
 	esac
 
