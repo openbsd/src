@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.8 1996/08/30 02:20:57 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.9 1996/09/02 21:28:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.8 1996/08/30 02:20:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.9 1996/09/02 21:28:04 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -213,6 +213,8 @@ main(argc, argv)
 		(void)fprintf(stderr, "rsh: shell/tcp: unknown service.\n");
 		exit(1);
 	}
+
+	(void) unsetenv("RSH");		/* no tricks with rcmd(3) */
 
 #ifdef KERBEROS
 try_connect:
