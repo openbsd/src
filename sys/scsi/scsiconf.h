@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.17 1999/07/18 22:49:41 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.18 1999/07/20 06:21:59 csapuntz Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -150,15 +150,20 @@ struct scsi_link {
 #define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
 #define	SDEV_DBX		0x00f0	/* debuging flags (scsi_debug.h) */
 #define SDEV_EJECTING		0x0100	/* eject on device close */
-	u_int8_t quirks;		/* per-device oddities */
-#define	SDEV_AUTOSAVE		0x01	/* do implicit SAVEDATAPOINTER on disconnect */
-#define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
-#define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
-#define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
-#define	SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
-#define	SDEV_NOSTARTUNIT	0x20	/* do not issue start unit requests in sd.c */
-#define	SDEV_NOTAGS		0x40	/* lies about having tagged queueing */
-#define SDEV_NOSENSE            0x80    /* No request sense - ATAPI */
+#define SDEV_ATAPI              0x0200  /* device is ATAPI */
+	u_int16_t quirks;		/* per-device oddities */
+#define	SDEV_AUTOSAVE	      0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
+#define	SDEV_NOSYNCWIDE	      0x0002	/* does not grok SDTR or WDTR */
+#define	SDEV_NOLUNS	      0x0004	/* does not grok LUNs */
+#define	SDEV_FORCELUNS	      0x0008	/* prehistoric drive/ctlr groks LUNs */
+#define	SDEV_NOMODESENSE      0x0010	/* removable media/optical drives */
+#define	SDEV_NOSTARTUNIT      0x0020	/* do not issue start unit requests in sd.c */
+#define	SDEV_NOTAGS	      0x0040	/* lies about having tagged queueing */
+#define ADEV_NOSENSE          0x0080    /* No request sense - ATAPI */
+#define ADEV_LITTLETOC        0x0100    /* little-endian TOC - ATAPI */
+#define ADEV_NOCAPACITY       0x0200
+#define ADEV_NOTUR            0x0400
+#define ADEV_NODOORLOCK       0x0800
 
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.scsi,v 1.5 1996/10/31 01:09:21 niklas Exp $
+#	$OpenBSD: files.scsi,v 1.6 1999/07/20 06:21:59 csapuntz Exp $
 #	$NetBSD: files.scsi,v 1.4 1996/05/16 04:01:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
@@ -8,6 +8,7 @@
 file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi
+file    scsi/atapi_base.c               scsi
 
 device	scsibus {target = -1, lun = -1}
 attach	scsibus at scsi
@@ -15,6 +16,8 @@ attach	scsibus at scsi
 device	cd: disk
 attach	cd at scsibus
 file	scsi/cd.c			cd needs-flag
+file    scsi/cd_scsi.c
+file    scsi/cd_atapi.c
 
 device	ch: disk
 attach	ch at scsibus

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.2 1999/07/19 00:32:44 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.3 1999/07/20 06:21:58 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -197,6 +197,7 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_adapterlink.adapter = &atapiscsi_switch;
 	as->sc_adapterlink.device = &atapiscsi_dev;
 	as->sc_adapterlink.openings = 1;
+	as->sc_adapterlink.flags = SDEV_ATAPI;
 	as->sc_wdc->channels[as->sc_channel]->ch_as = as;
 
 	for (drive = 0; drive < 2 ; drive++ ) {
@@ -782,7 +783,7 @@ again:
 				sc_xfer->error = XS_SHORTSENSE;
 				ATAPI_TO_SCSI_SENSE(&sc_xfer->sense, chp->ch_error);
 				if ((sc_xfer->sc_link->quirks &
-				    SDEV_NOSENSE) == 0) {
+				    ADEV_NOSENSE) == 0) {
 					/*
 					 * let the driver issue a
 					 * 'request sense'

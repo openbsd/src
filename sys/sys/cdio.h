@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.6 1998/08/21 22:08:12 deraadt Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.7 1999/07/20 06:21:59 csapuntz Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -13,7 +13,7 @@ union msf_lba {
 		u_char second;
 		u_char frame;
 	} msf;
-	int	lba;
+	u_int32_t lba;
 	u_char	addr[4];
 };
 
@@ -129,6 +129,7 @@ struct cd_sub_channel_track_info {
 struct cd_sub_channel_info {
 	struct cd_sub_channel_header header;
 	union {
+		struct cd_sub_channel_q_data q_data;
 		struct cd_sub_channel_position_data position;
 		struct cd_sub_channel_media_catalog media_catalog;
 		struct cd_sub_channel_track_info track_info;
@@ -181,7 +182,11 @@ struct ioc_read_toc_entry {
 	u_short	data_len;
 	struct	cd_toc_entry *data;
 };
+#define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
 #define CDIOREADTOCENTRYS _IOWR('c', 5, struct ioc_read_toc_entry)
+
+/* read LBA start of a given session; 0=last, others not yet supported */
+#define CDIOREADMSADDR _IOWR('c', 6, int)
 
 struct	ioc_patch {
 	u_char	patch[4];	/* one for each channel */
@@ -208,7 +213,8 @@ struct	ioc_vol {
 #define	CDIOCEJECT	_IO('c', 24)
 #define	CDIOCALLOW	_IO('c', 25)
 #define	CDIOCPREVENT	_IO('c', 26)
-#define CDIOCSETCDDA	_IOW('c', 27, int)	/* (re)set CDDA reading mode */
+#define	CDIOCCLOSE	_IO('c', 27)
+#define CDIOCSETCDDA	_IOW('c', 28, int)	/* (re)set CDDA reading mode */
 
 struct ioc_play_msf {
 	u_char	start_m;
@@ -219,5 +225,14 @@ struct ioc_play_msf {
 	u_char	end_f;
 };
 #define	CDIOCPLAYMSF	_IOW('c', 25, struct ioc_play_msf)
+
+struct ioc_load_unload {
+	u_char options;
+#define	CD_LU_ABORT	0x1	/* NOTE: These are the same as the ATAPI */
+#define	CD_LU_UNLOAD	0x2	/* op values for the LOAD_UNLOAD command */
+#define	CD_LU_LOAD	0x3
+	u_char slot;
+};
+#define		CDIOCLOADUNLOAD	_IOW('c', 26, struct ioc_load_unload)
 
 #endif /* !_SYS_CDIO_H_ */
