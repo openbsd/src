@@ -68,6 +68,7 @@
 #endif
 
 #include <sparc/dev/bwtworeg.h>
+#include <sparc/dev/pfourreg.h>
 #include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
@@ -118,16 +119,15 @@ bwtwomatch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4 && cf->cf_unit != 0)
-		return (0);
-#endif
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
-
+#ifdef SUN4
+	if (ca->ca_bustype == BUS_PFOUR &&
+	    PFOUR_ID(ra->ra_pfour) == PFOUR_ID_BW)
+		return (1);
+#endif
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
 
@@ -144,7 +144,6 @@ bwtwoattach(parent, self, args)
 	register int node = ca->ca_ra.ra_node, ramsize;
 	register struct bwtwo_all *p;
 	int isconsole;
-	int sbus = 1;
 	char *nam;
 
 	sc->sc_fb.fb_driver = &bwtwofbdriver;
@@ -152,12 +151,21 @@ bwtwoattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2BW;
 
 	switch (ca->ca_bustype) {
+#if defined(SUN4)
+	case BUS_PFOUR:
+		node = 0;
+		pfour_reset();
+		pfour_videosize(ca->ca_ra.ra_pfour,
+		    &sc->sc_fb.fb_type.fb_width,
+		    &sc->sc_fb.fb_type.fb_height);
+		sc->sc_fb.fb_linebytes = sc->sc_fb.fb_type.fb_width / 8;
+		nam = "bwtwo";
+		break;  
 	case BUS_OBIO:
-	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
+		node = 0;
 		nam = "bwtwo";
 		break;
+#endif
 
 	case BUS_SBUS:
 #if defined(SUN4C) || defined(SUN4M)
@@ -165,7 +173,6 @@ bwtwoattach(parent, self, args)
 #endif
 		break;
 	}
-
 
 	sc->sc_fb.fb_type.fb_depth = 1;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
@@ -184,7 +191,7 @@ bwtwoattach(parent, self, args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == EE_CONS_BW)
+		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_BW)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;
@@ -203,10 +210,11 @@ bwtwoattach(parent, self, args)
 	p = (struct bwtwo_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen (on sun4c), but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize, ca->ca_bustype);
+		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize,
+		    ca->ca_bustype);
 	}
-	sc->sc_reg = (volatile struct bwtworeg *)
-	    mapiodev((caddr_t)&p->ba_reg, sizeof(p->ba_reg), ca->ca_bustype);
+	sc->sc_reg = (volatile struct bwtworeg *)mapiodev((caddr_t)&p->ba_reg,
+	    sizeof(p->ba_reg), ca->ca_bustype);
 	sc->sc_phys = p->ba_ram;
 
 	/* Insure video is enabled */
@@ -220,7 +228,7 @@ bwtwoattach(parent, self, args)
 	} else
 		printf("\n");
 #if defined(SUN4C) || defined(SUN4M)
-	if (sbus)
+	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif
 	/*
