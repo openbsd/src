@@ -1,4 +1,5 @@
 /*	$NetBSD: ka750.h,v 1.7 1996/07/20 17:58:17 ragge Exp $	*/
+/*	$OpenBSD: ka750.h,v 1.6 1997/05/28 23:14:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -44,7 +45,7 @@
 
 /* 11/750 specific prototypes */
 void	ka750_conf __P((struct device *, struct device *, void *));
-void	ka750_memenable __P((struct sbi_attach_args *, struct device *));
+void	ka750_memenable __P((struct device *, struct device *, void *));
 void	ka750_memerr __P((void));
 int	ka750_mchk __P((caddr_t));
 void	ka750_steal_pages __P((void));
