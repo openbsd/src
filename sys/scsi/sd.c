@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.43 2000/04/18 05:53:17 csapuntz Exp $	*/
+/*	$OpenBSD: sd.c,v 1.44 2000/09/20 00:58:03 mickey Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -82,7 +82,9 @@
 
 #include <sys/vnode.h>
 
+#ifndef	SDOUTSTANDING
 #define	SDOUTSTANDING	4
+#endif
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define SDMINOR(unit, part)             DISKMINOR(unit, part)
