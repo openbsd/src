@@ -1,7 +1,7 @@
-/*	$OpenBSD: nftw.c,v 1.2 2003/07/21 21:15:32 millert Exp $	*/
+/*	$OpenBSD: nftw.c,v 1.3 2004/07/06 15:51:17 millert Exp $	*/
 
 /*
- * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: nftw.c,v 1.2 2003/07/21 21:15:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nftw.c,v 1.3 2004/07/06 15:51:17 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -35,11 +35,11 @@ int
 nftw(const char *path, int (*fn)(const char *, const struct stat *, int,
      struct FTW *), int nfds, int ftwflags)
 {
-	const char *paths[2];
+	char * const paths[2] = { (char *)path, NULL };
 	struct FTW ftw;
 	FTSENT *cur;
 	FTS *ftsp;
-	int ftsflags, fnflag, error, postorder, sverrno;
+	int error = 0, ftsflags, fnflag, postorder, sverrno;
 
 	/* XXX - nfds is currently unused */
 	if (nfds < 1 || nfds > OPEN_MAX) {
@@ -54,13 +54,12 @@ nftw(const char *path, int (*fn)(const char *, const struct stat *, int,
 		ftsflags |= FTS_XDEV;
 	if (ftwflags & FTW_PHYS)
 		ftsflags |= FTS_PHYSICAL;
+	else
+		ftsflags |= FTS_LOGICAL;
 	postorder = (ftwflags & FTW_DEPTH) != 0;
-	paths[0] = path;
-	paths[1] = NULL;
-	ftsp = fts_open((char * const *)paths, ftsflags, NULL);
+	ftsp = fts_open(paths, ftsflags, NULL);
 	if (ftsp == NULL)
 		return (-1);
-	error = 0;
 	while ((cur = fts_read(ftsp)) != NULL) {
 		switch (cur->fts_info) {
 		case FTS_D:
