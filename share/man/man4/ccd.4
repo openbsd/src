@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.16 2004/01/23 23:08:46 jmc Exp $
+.\"	$OpenBSD: ccd.4,v 1.17 2004/03/20 21:58:41 miod Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -130,7 +130,10 @@ If just one (or more) of the disks in a
 fails, the entire
 file system will be lost.
 .Sh FILES
-/dev/{,r}ccd* - ccd device special files.
+.Bl -tag -width tenletters+five -compact
+.It Pa /dev/{,r}ccd*
+ccd device special files
+.El
 .Sh SEE ALSO
 .Xr MAKEDEV 8 ,
 .Xr ccdconfig 8 ,
