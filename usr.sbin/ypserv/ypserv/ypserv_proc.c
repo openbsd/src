@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.12 1997/04/12 16:38:06 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.13 1997/06/02 19:50:42 dm Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.12 1997/04/12 16:38:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.13 1997/06/02 19:50:42 dm Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -471,7 +471,7 @@ ypproc_order_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
+	if (strchr(argp->domain, '/'))
 		goto bail;
 	YPLOG( "order_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -485,6 +485,8 @@ bail:
 
 	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
 		res.stat = YP_YPERR;
+	} else if (strchr(argp->map, '/')) {
+		res.stat = YP_NOMAP;
 	} else {
 		res = ypdb_get_order(argp->domain,argp->map);
 	}
