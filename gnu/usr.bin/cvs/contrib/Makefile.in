@@ -63,6 +63,7 @@ oldincludedir = /usr/include
 
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
+pkglibexecdir = $(libexecdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
 
 top_builddir = ..
@@ -112,7 +113,8 @@ _am_quote = @_am_quote@
 includeopt = @includeopt@
 install_sh = @install_sh@
 
-contribdir = $(pkgdatadir)/contrib
+contribdatadir   = $(pkgdatadir)/contrib
+contribscriptdir = $(pkglibexecdir)/contrib
 
 contrib_SCRIPTS = \
 	clmerge \
@@ -211,15 +213,15 @@ sccs2rcs: $(top_builddir)/config.status sccs2rcs.in
 	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= CONFIG_LINKS= $(SHELL) ./config.status
 install-contribSCRIPTS: $(contrib_SCRIPTS)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(contribdir)
+	$(mkinstalldirs) $(DESTDIR)$(contribscriptdir)
 	@list='$(contrib_SCRIPTS)'; for p in $$list; do \
 	  f="`echo $$p|sed '$(transform)'`"; \
 	  if test -f $$p; then \
-	    echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(contribdir)/$$f"; \
-	    $(INSTALL_SCRIPT) $$p $(DESTDIR)$(contribdir)/$$f; \
+	    echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(contribscriptdir)/$$f"; \
+	    $(INSTALL_SCRIPT) $$p $(DESTDIR)$(contribscriptdir)/$$f; \
 	  elif test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(contribdir)/$$f"; \
-	    $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(contribdir)/$$f; \
+	    echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(contribscriptdir)/$$f"; \
+	    $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(contribscriptdir)/$$f; \
 	  else :; fi; \
 	done
 
@@ -227,25 +229,25 @@ uninstall-contribSCRIPTS:
 	@$(NORMAL_UNINSTALL)
 	@list='$(contrib_SCRIPTS)'; for p in $$list; do \
 	  f="`echo $$p|sed '$(transform)'`"; \
-	  echo " rm -f $(DESTDIR)$(contribdir)/$$f"; \
-	  rm -f $(DESTDIR)$(contribdir)/$$f; \
+	  echo " rm -f $(DESTDIR)$(contribscriptdir)/$$f"; \
+	  rm -f $(DESTDIR)$(contribscriptdir)/$$f; \
 	done
 install-contribDATA: $(contrib_DATA)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(contribdir)
+	$(mkinstalldirs) $(DESTDIR)$(contribdatadir)
 	@list='$(contrib_DATA)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(contribdir)/$$f"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(contribdir)/$$f; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(contribdatadir)/$$f"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(contribdatadir)/$$f; \
 	done
 
 uninstall-contribDATA:
 	@$(NORMAL_UNINSTALL)
 	@list='$(contrib_DATA)'; for p in $$list; do \
 	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $(DESTDIR)$(contribdir)/$$f"; \
-	  rm -f $(DESTDIR)$(contribdir)/$$f; \
+	  echo " rm -f $(DESTDIR)$(contribdatadir)/$$f"; \
+	  rm -f $(DESTDIR)$(contribdatadir)/$$f; \
 	done
 tags: TAGS
 TAGS:
@@ -273,7 +275,7 @@ check: check-am
 all-am: Makefile $(SCRIPTS) $(DATA)
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(contribdir) $(DESTDIR)$(contribdir)
+	$(mkinstalldirs) $(DESTDIR)$(contribscriptdir) $(DESTDIR)$(contribdatadir)
 
 install: install-am
 install-exec: install-exec-am
@@ -354,7 +356,7 @@ uninstall-am: uninstall-contribDATA uninstall-contribSCRIPTS \
 # we'd rather have a link here rather than two copies of a script
 install-data-local:
 	# FIXME - this path should be determined dynamically from bindir
-	# & contribdir
+	# & contribscriptdir
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(bin_LINKS)'; for p in $$list; do \

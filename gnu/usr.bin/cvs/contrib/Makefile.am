@@ -25,7 +25,8 @@
 #
 # CONTRIB_FILES = README intro.doc cvscheck.man
 
-contribdir = $(pkgdatadir)/contrib
+contribscriptdir = $(pkglibexecdir)/contrib
+contribdatadir   = $(pkgdatadir)/contrib
 
 contrib_SCRIPTS = \
 	clmerge \
