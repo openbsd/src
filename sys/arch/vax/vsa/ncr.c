@@ -1,3 +1,4 @@
+/*	$OpenBSD: ncr.c,v 1.2 1997/05/28 23:35:51 niklas Exp $	*/
 /*	$NetBSD: ncr.c,v 1.5 1996/10/13 03:36:14 christos Exp $	*/
 
 /* #define DEBUG	/* */
@@ -385,7 +386,9 @@ si_attach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
+#ifndef __OpenBSD__
 	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+#endif
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = ca->ca_idval;
 	ncr_sc->sc_link.adapter = &si_ops;
