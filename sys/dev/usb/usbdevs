@@ -1,6 +1,5 @@
-	$OpenBSD: usbdevs,v 1.7 1999/10/06 12:52:18 fgsch Exp $	
+$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $
 
-/* $NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp $ */
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,6 +65,7 @@ vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
+vendor ALTEC		0x04d2	Altec Lansing
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
 vendor BROTHER		0x04f9	Brother Industries Corp.
@@ -77,6 +77,8 @@ vendor AKS		0x0529	Fast Security AG
 vendor ANCHOR		0x0547	Anchor Chips Inc.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
+vendor MUSTEK		0x055f	Mustek Systems Inc.
+vendor TELEX		0x0562	Telex Communications Inc.
 vendor PERACOM		0x0565	Peracom Networks Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
@@ -94,7 +96,12 @@ vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
+vendor MIDIMAN		0x0763	Midiman
+vendor SANDISK		0x0781	SanDisk Corp
+vendor SIIG		0x07cc	SIIG
+vendor HANDSPRING	0x082d	Handspring Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
+vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -114,6 +121,7 @@ product NEC HUB_B		0x55ab	hub
 
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
+product KODAK DC240		0x0120	Digital Science DC240
 
 /* CATC products */
 product CATC ANDROMEDA		0x1237	Andromeda hub
@@ -154,6 +162,7 @@ product BTC BTC7932		0x6782	Keyboard with mouse port
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
+product PHILIPS DSS150		0x0471	DSS XXX Digital Speaker System
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
@@ -179,6 +188,9 @@ product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Konica Corp. Products */
 product KONICA CAMERA		0x0720	Digital Color Camera
+
+/* Altec Lansing products */
+product	ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
@@ -211,6 +223,12 @@ product VISION VC6452V002	0x0002	VC6452V002 Camera
 product ATEN UC1284		0x2001	Parallel printer adapter
 product ATEN UC10T		0x2002	Ethernet adapter
 
+/* Mustek products */
+product MUSTEK MDC800		0xa800	MDC-800 digital camera
+
+/* Telex Communications products */
+product TELEX MIC1		0x0001	Enhanced USB Microphone
+
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
 
@@ -238,6 +256,7 @@ product OMNIVISION OV511	0x0511	OV511 Camera
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
+product INSYSTEM ISD110		0x0200  IDE adapter
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
@@ -271,11 +290,27 @@ product ENTREGA 1S25		0x0003	1S25 serial connector
 product ENTREGA 4S		0x0004	4S serial connector
 product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
+product ENTREGA EZUSB		0x8000	EZ-USB
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
+
+/* Midiman products */
+product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
+
+/* SanDisk products */
+product	SANDISK IMAGEMATE	0x0001	USB ImageMate
+
+/* SIIG products */
+product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
+
+/* Handspring Inc. */
+product	HANDSPRING VISOR	0x0100	Handspring Visor
 
 /* ActiveWire Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
+
+/* Motorola products */
+product	MOTOROLA MC141555	0x1555	MC141555 hub controller
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
