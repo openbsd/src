@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.99 2002/06/30 13:04:35 itojun Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.100 2002/07/01 22:24:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1904,32 +1904,37 @@ bridge_rtfind(sc, baconf)
 	struct bridge_softc *sc;
 	struct ifbaconf *baconf;
 {
-	int i, error = 0;
+	int i, error = 0, onlycnt = 0;
 	u_int32_t cnt = 0;
 	struct bridge_rtnode *n;
 	struct ifbareq bareq;
 
-	if (sc->sc_rts == NULL || baconf->ifbac_len == 0)
+	if (sc->sc_rts == NULL)
 		goto done;
+
+	if (baconf->ifbac_len == 0)
+		onlycnt = 1;
 
 	for (i = 0, cnt = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		LIST_FOREACH(n, &sc->sc_rts[i], brt_next) {
-			if (baconf->ifbac_len < sizeof(struct ifbareq))
-				goto done;
-			bcopy(sc->sc_if.if_xname, bareq.ifba_name,
-			    sizeof(bareq.ifba_name));
-			bcopy(n->brt_if->if_xname, bareq.ifba_ifsname,
-			    sizeof(bareq.ifba_ifsname));
-			bcopy(&n->brt_addr, &bareq.ifba_dst,
-			    sizeof(bareq.ifba_dst));
-			bareq.ifba_age = n->brt_age;
-			bareq.ifba_flags = n->brt_flags;
-			error = copyout((caddr_t)&bareq,
-			    (caddr_t)(baconf->ifbac_req + cnt), sizeof(bareq));
-			if (error)
-				goto done;
+			if (!onlycnt) {
+				if (baconf->ifbac_len < sizeof(struct ifbareq))
+					goto done;
+				bcopy(sc->sc_if.if_xname, bareq.ifba_name,
+				    sizeof(bareq.ifba_name));
+				bcopy(n->brt_if->if_xname, bareq.ifba_ifsname,
+				    sizeof(bareq.ifba_ifsname));
+				bcopy(&n->brt_addr, &bareq.ifba_dst,
+				    sizeof(bareq.ifba_dst));
+				bareq.ifba_age = n->brt_age;
+				bareq.ifba_flags = n->brt_flags;
+				error = copyout((caddr_t)&bareq,
+				    (caddr_t)(baconf->ifbac_req + cnt), sizeof(bareq));
+				if (error)
+					goto done;
+				baconf->ifbac_len -= sizeof(struct ifbareq);
+			}
 			cnt++;
-			baconf->ifbac_len -= sizeof(struct ifbareq);
 		}
 	}
 done:
