@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1999/10/26 15:13:53 art Exp $
+#	$OpenBSD: Makefile,v 1.10 1999/10/28 12:09:32 art Exp $
 
 PROG=	systat
 
