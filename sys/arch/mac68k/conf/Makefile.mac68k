@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.mac68k,v 1.13 1997/04/18 17:29:50 gene Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.14 1997/04/23 00:57:15 gene Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
-# Makefile for NetBSD
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -128,7 +128,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h genassym.o \
+	    genassym
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -167,7 +168,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o pmap.o trap.o: Makefile
