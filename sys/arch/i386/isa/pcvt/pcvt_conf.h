@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.6 1996/08/27 09:04:55 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.7 1996/10/04 07:08:02 downsj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -91,6 +91,11 @@
 
 #ifdef NetBSD1_2
 #define PCVT_NETBSD (120 + (NetBSD1_2 - 1))
+#endif
+
+#ifdef OpenBSD2_0
+/* XXX drunk fix later */
+#define PCVT_NETBSD 120
 #endif
 
 #endif
