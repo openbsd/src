@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.19 1997/03/08 16:17:03 briggs Exp $	*/
+/*	$OpenBSD: locore.s,v 1.20 1997/03/12 13:34:23 briggs Exp $	*/
 /*	$NetBSD: locore.s,v 1.74 1997/02/02 08:17:46 thorpej Exp $	*/
 
 /*
@@ -2176,10 +2176,3 @@ _mac68k_vrsrc_vec:
 	.word	0, 0, 0, 0, 0, 0
 _mac68k_buserr_addr:
 	.long	0
-	.globl	_SONICSPACE, _SONICSPACE_size
-_SONICSPACE:
-	.space	108123
-/* size is figured out in if_sn.c.
-   This should be dynamically allocated at some point. */
-_SONICSPACE_size:
-	.long	108123
