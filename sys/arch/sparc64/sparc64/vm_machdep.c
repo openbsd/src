@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 2001/09/19 20:50:58 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -226,10 +226,12 @@ char cpu_forkname[] = "cpu_fork()";
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
 	struct pcb *opcb = &p1->p_addr->u_pcb;
 	struct pcb *npcb = &p2->p_addr->u_pcb;
@@ -321,8 +323,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
 	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)child_return;	/* Function to call */
-	rp->rw_local[1] = (long)p2;		/* and its argument */
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
 
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
@@ -342,31 +344,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	       (long)(tf2->tf_out[6]));
 	Debugger();
 #endif
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcb;
-	struct rwindow *rp;
-
-	pcb = &p->p_addr->u_pcb;
-
-	rp = (struct rwindow *)((u_long)pcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)pc;             /* Function to call */
-	rp->rw_local[1] = (long)arg;            /* and its argument */
-
-	/*
-	 * Frob PCB:
-	 *      - arrange to return to proc_trampoline() from cpu_switch()
-	 *      - point it at the stack frame constructed above
-	 *      - make it run in a clear set of register windows
-	 */
-	pcb->pcb_pc = (long)proc_trampoline - 8;
-	pcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
 /*

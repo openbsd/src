@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2001/07/13 19:55:41 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2001/11/06 18:41:09 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -229,9 +229,6 @@ int	kvtop __P((caddr_t));
 /* vm86.c */
 void	vm86_gpfault __P((struct proc *, int));
 #endif /* VM86 */
-
-/* trap.c */
-void	child_return __P((struct proc *, struct trapframe));
 
 #ifdef GENERIC
 /* swapgeneric.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2001/09/14 09:12:21 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ int  nodb_trap __P((int type, struct frame *));
 int astpending;
 int want_resched;
 
-static void userret __P((struct proc *, struct frame *, u_quad_t));
+void userret __P((struct proc *, struct frame *, u_quad_t));
 
 char	*trap_type[] = {
 	"Bus error",
@@ -147,7 +147,7 @@ int mmupid = -1;
  * trap and syscall both need the following work done before
  * returning to user mode.
  */
-static void
+void
 userret(p, fp, oticks)
 	register struct proc *p;
 	register struct frame *fp;
@@ -744,32 +744,6 @@ syscall(code, frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
-#endif
-}
-
-/*
- * Set up return-value registers as fork() libc stub expects,
- * and do normal return-to-user-mode stuff.
- */
-void
-child_return(p)
-	void *p;
-{
-	struct frame *f;
-
-	f = (struct frame *)((struct proc *)p)->p_md.md_regs;
-	f->f_regs[D0] = 0;
-	f->f_sr &= ~PSL_C;
-	f->f_format = FMT0;
-
-	/*
-	 * Old ticks (3rd arg) is zero so we will charge the child
-	 * for any clock ticks that might happen before this point.
-	 */
-	userret((struct proc *)p, f, 0);
-#ifdef KTRACE
-	if (KTRPOINT((struct proc *)p, KTR_SYSRET))
-		ktrsysret(((struct proc *)p), SYS_fork, 0, 0);
 #endif
 }
 

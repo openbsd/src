@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.24 2001/09/19 20:50:55 mickey Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.25 2001/11/06 18:41:09 art Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -134,18 +134,19 @@ cpu_exit(p)
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * p1 is the process being forked;
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2, stack, stacksize, func, arg)
+	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
 	struct user *up = p2->p_addr;
 
@@ -224,51 +225,17 @@ cpu_fork(p1, p2, stack, stacksize)
 		 * Arrange for continuation at child_return(), which
 		 * will return to exception_return().  Note that the child
 		 * process doesn't stay in the kernel for long!
-		 * 
-		 * This is an inlined version of cpu_set_kpc.
 		 */
 		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)p2tf;	
-		up->u_pcb.pcb_context[0] =
-		    (u_int64_t)child_return;		/* s0: pc */
+		up->u_pcb.pcb_context[0] = (u_int64_t)func;
 		up->u_pcb.pcb_context[1] =
 		    (u_int64_t)exception_return;	/* s1: ra */
-		up->u_pcb.pcb_context[2] =
-		    (u_int64_t)p2;			/* s2: arg */
+		up->u_pcb.pcb_context[2] = (u_int64_t)arg;
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
 	}
 }
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with argument, the current process's process pointer.
- *
- * Note that it's assumed that when the named process returns,
- * exception_return() should be invoked, to return to user mode.
- *
- * (Note that cpu_fork(), above, uses an open-coded version of this.)
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcbp;
-
-	pcbp = &p->p_addr->u_pcb;
-	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
-	pcbp->pcb_context[1] =
-	    (u_int64_t)exception_return;	/* s1 - return address */
-	pcbp->pcb_context[2] = (u_int64_t)arg;	/* s2 - arg */
-	pcbp->pcb_context[7] =
-	    (u_int64_t)switch_trampoline;	/* ra - assembly magic */
-}
-
 /*
  * Finish a swapin operation.
  * We neded to update the cached PTEs for the user area in the

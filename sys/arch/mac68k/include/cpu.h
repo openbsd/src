@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2001/08/20 19:49:03 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2001/11/06 18:41:09 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -317,9 +317,6 @@ int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	proc_trampoline __P((void));
 void	loadustp __P((int));
-
-/* trap.c */
-void    child_return __P((struct proc *, struct frame));
 
 /* vm_machdep.c */
 void	physaccess __P((caddr_t, caddr_t, register int, register int));

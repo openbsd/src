@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.35 2001/09/23 02:51:36 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.36 2001/11/06 18:41:10 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -89,7 +89,8 @@ int badpaddr __P((caddr_t, int));
  */
 
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+	void (*func)(void *), void *arg)
 {
 	struct switchframe *p2sf;
 	int cpu;
@@ -136,7 +137,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 
 	ksfp = (struct ksigframe *)p2->p_addr->u_pcb.kernel_state.pcb_sp - 1;
 
-	ksfp->func = child_return;
+	ksfp->func = func;
+	ksfp->arg = arg;
 	ksfp->proc = p2;
 
 	/*
@@ -149,24 +151,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 
 	p2->p_addr->u_pcb.kernel_state.pcb_sp = (u_int)ksfp;
 	p2->p_addr->u_pcb.kernel_state.pcb_pc = (u_int)proc_trampoline;
-}
-
-void
-cpu_set_kpc(struct proc *p, void (*func)(void *), void *arg)
-{
-	/*
-	 * override func pointer in ksigframe with func.
-	 */
-
-	struct ksigframe {
-		void (*func)(void *);
-		void *arg;
-	} *ksfp;
-
-	ksfp = (struct ksigframe *)p->p_addr->u_pcb.kernel_state.pcb_sp;
-
-	ksfp->func = func;
-	ksfp->arg = arg;
 }
 
 /*

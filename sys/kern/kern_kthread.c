@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.14 2001/08/08 02:37:40 millert Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.15 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -84,14 +84,11 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 	 * parent to wait for.
 	 */
 	error = fork1(&proc0, 0,
-	    FORK_SHAREVM|FORK_NOZOMBIE|FORK_SIGHAND, NULL, 0, rv);
+	    FORK_SHAREVM|FORK_NOZOMBIE|FORK_SIGHAND, NULL, 0, func, arg, rv);
 	if (error)
 		return (error);
 
 	p2 = pfind(rv[0]);
-
-	/* Arrange for it to start at the specified function. */
-	cpu_set_kpc(p2, func, arg);
 
 	/*
 	 * Mark it as a system process and not a candidate for

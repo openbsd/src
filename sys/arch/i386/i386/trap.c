@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2001/09/20 11:57:18 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2001/11/06 18:41:09 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -753,15 +753,16 @@ syscall(frame)
 }
 
 void
-child_return(p, frame)
-	struct proc *p;
-	struct trapframe frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = (struct proc *)arg;
+	struct trapframe *tf = p->p_md.md_regs;
 
-	frame.tf_eax = 0;
-	frame.tf_eflags &= ~PSL_C;
+	tf->tf_eax = 0;
+	tf->tf_eflags &= ~PSL_C;
 
-	userret(p, frame.tf_eip, 0);
+	userret(p, tf->tf_eip, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

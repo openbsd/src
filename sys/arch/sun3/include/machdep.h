@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.15 2001/08/25 11:37:26 espie Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.16 2001/11/06 18:41:10 art Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -83,8 +83,6 @@ void	cache_flush_segment(vm_offset_t sgva);
 void	cache_flush_context(void);
 
 int 	cachectl __P((int req, caddr_t addr, int len));
-
-void	child_return __P((void *));
 
 void	cninit __P((void));
 

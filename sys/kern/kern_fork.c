@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.45 2001/11/06 13:36:52 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.46 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ sys_fork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, NULL, NULL, retval));
 }
 
 /*ARGSUSED*/
@@ -89,7 +89,8 @@ sys_vfork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, SIGCHLD, FORK_VFORK|FORK_PPWAIT, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, FORK_VFORK|FORK_PPWAIT, NULL, 0, NULL,
+	    NULL, retval));
 }
 
 int
@@ -130,16 +131,18 @@ sys_rfork(p, v, retval)
 	if (rforkflags & RFMEM)
 		flags |= FORK_VMNOSTACK;
 
-	return (fork1(p, SIGCHLD, flags, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval));
 }
 
 int
-fork1(p1, exitsig, flags, stack, stacksize, retval)
-	register struct proc *p1;
+fork1(p1, exitsig, flags, stack, stacksize, func, arg, retval)
+	struct proc *p1;
 	int exitsig;
 	int flags;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 	register_t *retval;
 {
 	struct proc *p2;
@@ -360,7 +363,7 @@ again:
 	 * different path later.
 	 */
 	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
-	    stacksize);
+	    stacksize, func ? func : child_return, arg ? arg : p2);
 
 	vm = p2->p_vmspace;
 

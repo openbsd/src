@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2001/09/29 21:26:33 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.31 2001/11/06 18:41:10 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,14 +69,16 @@
  */
 
 void
-cpu_fork(p1, p2, stack, stacksize)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2, stack, stacksize, func, arg)
+	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
@@ -95,7 +97,7 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
-	 * through return_to_user().  Note the inline version of cpu_set_kpc().
+	 * through return_to_user().
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -109,19 +111,9 @@ cpu_fork(p1, p2, stack, stacksize)
 	
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
-	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[6] = (int)func;		/* A2 */
+	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	p->p_addr->u_pcb.pcb_regs[6] = (int)pc;		/* A2 */
-	p->p_addr->u_pcb.pcb_regs[7] = (int)arg;	/* A3 */
 }
 
 /*

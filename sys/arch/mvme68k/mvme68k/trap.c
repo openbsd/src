@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2001/09/14 09:15:19 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.36 2001/11/06 18:41:10 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -169,14 +169,14 @@ u_char next_sir;
 
 int  writeback __P((struct frame *fp, int docachepush));
 
-static inline void userret __P((struct proc *p, struct frame *fp,
+void userret __P((struct proc *p, struct frame *fp,
 										  u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 /*
  * trap and syscall both need the following work done before returning
  * to user mode.
  */
-static inline void
+void
 userret(p, fp, oticks, faultaddr, fromtrap)
 	register struct proc *p;
 	register struct frame *fp;
@@ -1101,23 +1101,6 @@ bad:
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
-#endif
-}
-
-void
-child_return(p, frame)
-	struct proc *p;
-	struct frame frame;
-{
-
-	frame.f_regs[D0] = 0;
-	frame.f_sr &= ~PSL_C;
-	frame.f_format = FMT0;
-
-	userret(p, &frame, 0, (u_int)0, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 

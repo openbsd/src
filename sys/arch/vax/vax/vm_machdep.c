@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/11/06 02:49:23 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -91,8 +91,7 @@ pagemove(from, to, size)
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * p1 is the process being forked;
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
@@ -107,10 +106,12 @@ pagemove(from, to, size)
  * forking.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
 	struct pte *pt;
 	struct pcb *nyproc;

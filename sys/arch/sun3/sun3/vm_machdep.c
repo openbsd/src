@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
@@ -72,15 +72,22 @@
  * than the parent.  Returns 1 in the child process, 0 in the parent.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2, stack, stacksize, func, arg)
+	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	register struct pcb *p1pcb = &p1->p_addr->u_pcb;
-	register struct pcb *p2pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *p2tf;
-	register struct switchframe *p2sf;
+	struct pcb *p1pcb = &p1->p_addr->u_pcb;
+	struct pcb *p2pcb = &p2->p_addr->u_pcb;
+	struct trapframe *p2tf;
+	struct switchframe *p2sf;
+	struct ksigframe {
+		struct switchframe sf;
+		void (*func) (void *);
+		void *arg;
+	} *ksfp;
 
 	/*
 	 * Before copying the PCB from the current process,
@@ -130,53 +137,9 @@ cpu_fork(p1, p2, stack, stacksize)
 	p2sf->sf_pc = (u_int)proc_do_uret;
 	p2pcb->pcb_regs[11] = (int)p2sf;		/* SSP */
 
-	/*
-	 * This will "push a call" to an arbitrary kernel function
-	 * onto the stack of p2, very much like signal delivery.
-	 * When p2 runs, it will find itself in child_return().
-	 */
-	cpu_set_kpc(p2, child_return, p2);
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue in the
- * named function, as if that function were called with one argument,
- * the current process's process pointer.
- *
- * Note that it's assumed that when the named process returns,
- * rei() should be invoked, to return to user mode.  That is
- * accomplished by having cpu_fork set the initial frame with a
- * return address pointing to proc_do_uret() which does the rte.
- *
- * The design allows this function to be implemented as a general
- * "kernel sendsig" utility, that can "push" a call to a kernel
- * function onto any other process kernel stack, in a way very
- * similar to how signal delivery works on a user stack.  When
- * the named process is switched to, it will call the function
- * we "pushed" and then proc_trampoline will pop the args that
- * were pushed here and return to where it would have returned
- * before we "pushed" this call.
- */
-void
-cpu_set_kpc(prc, func, arg)
-	struct proc *prc;
-	void (*func) (void *);
-	void *arg;
-{
-	struct pcb *pcbp;
-	struct ksigframe {
-		struct switchframe sf;
-		void (*func) (void *);
-		void *arg;
-	} *ksfp;
-
-	pcbp = &prc->p_addr->u_pcb;
-
 	/* Push a ksig frame onto the kernel stack. */
-	ksfp = (struct ksigframe *)pcbp->pcb_regs[11] - 1;
-	pcbp->pcb_regs[11] = (int)ksfp;
+	ksfp = (struct ksigframe *)p2pcb->pcb_regs[11] - 1;
+	p2pcb->pcb_regs[11] = (int)ksfp;
 
 	/* Now fill it in for proc_trampoline. */
 	ksfp->sf.sf_pc = (u_int)proc_trampoline;

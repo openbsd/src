@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/11/06 18:41:09 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -181,13 +181,15 @@ cpu_swapout(p)
 }
 
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	register struct pcb *pcbp;
-	register struct trapframe *tf;
+	struct pcb *pcbp;
+	struct trapframe *tf;
 	register_t sp, osp;
 
 #ifdef DIAGNOSTIC
@@ -247,30 +249,13 @@ cpu_fork(p1, p2, stack, stacksize)
 	osp = sp;
 	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
 	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(child_return);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)p2;
+	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
 	*(register_t*)(sp + HPPA_FRAME_CRP) =
 		(register_t)switch_trampoline;
 	tf->tf_sp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-	register_t sp = tf->tf_sp;
-
-	/*
-	 * Overwrite normally stashed there &child_return(p)
-	 */
-	*HPPA_FRAME_CARG(1, sp) = (register_t)pc;
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)sp, HPPA_FRAME_SIZE);
 }
 
 void

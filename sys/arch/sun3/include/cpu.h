@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2001/09/28 20:40:20 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
@@ -156,9 +156,6 @@ struct pcb;
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
-
-/* trap.c */
-void	child_return __P((void *));
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2001/09/21 02:11:58 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -76,12 +76,13 @@ void savectx __P((struct pcb *));
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	void child_return __P((struct proc *, struct frame)); /* XXX */
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
@@ -111,34 +112,9 @@ cpu_fork(p1, p2, stack, stacksize)
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
 
-	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
-	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[6] = (int)func;		/* A2 */
+	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}
-
-/*
- * cpu_set_kpc
- *	Arrange for in-kernel execution of a process to continue at the
- * named PC as if the code at that address had been called as a function
- * with one argument--the named process's process pointer.
- *
- * Note that it's assumed that whne the named process returns, rei()
- * should be invoked to return to user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcbp;
-	struct switchframe *sf;
-
-	pcbp = &p->p_addr->u_pcb;
-	sf = (struct switchframe *)pcbp->pcb_regs[11];
-	sf->sf_pc = (u_int)proc_trampoline;
-	pcbp->pcb_regs[6] = (int)pc;	/* A2 */
-	pcbp->pcb_regs[7] = (int)p;	/* A3 */
 }
 
 void	switch_exit __P((struct proc *));

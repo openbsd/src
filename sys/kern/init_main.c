@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.80 2001/11/06 13:36:52 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.81 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -400,10 +400,8 @@ main(framep)
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 
 	/* Create process 1 (init(8)). */
-	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, rval))
+	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, start_init, NULL, rval))
 		panic("fork init");
-	initproc = pfind(rval[0]);
-	cpu_set_kpc(initproc, start_init, initproc);
 
 	/* Create process 2, the pageout daemon kernel thread. */
 	if (kthread_create(uvm_pageout, NULL, NULL, "pagedaemon"))
@@ -486,6 +484,8 @@ start_init(arg)
 	register_t retval[2];
 	char flags[4], *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1 = NULL;
+
+	initproc = p;
 
 	/*
 	 * Now in process 1.

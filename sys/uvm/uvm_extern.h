@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.27 2001/11/06 13:36:52 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.28 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.48 2000/08/12 22:41:55 thorpej Exp $	*/
 
 /*
@@ -426,17 +426,6 @@ struct core;
 
 #ifdef _KERNEL
 
-/* vm_machdep.c */
-void		vmapbuf __P((struct buf *, vsize_t));
-void		vunmapbuf __P((struct buf *, vsize_t));
-void		pagemove __P((caddr_t, caddr_t, size_t));
-#ifndef	cpu_swapin
-void		cpu_swapin __P((struct proc *));
-#endif
-#ifndef	cpu_swapout
-void		cpu_swapout __P((struct proc *));
-#endif
-
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
 void			uao_detach __P((struct uvm_object *));
@@ -454,7 +443,7 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
-			    void *, size_t));
+			    void *, size_t, void (*)(void *), void *));
 void			uvm_exit __P((struct proc *));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
@@ -581,7 +570,8 @@ void		swstrategy __P((struct buf *));
 void		vmapbuf __P((struct buf *, vsize_t));
 void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
-void		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
+void		cpu_fork __P((struct proc *, struct proc *, void *, size_t,
+			void (*)(void *), void *));
 #ifndef	cpu_swapin
 void		cpu_swapin __P((struct proc *));
 #endif

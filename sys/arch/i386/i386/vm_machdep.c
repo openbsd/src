@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2001/09/21 02:11:57 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.31 2001/11/06 18:41:09 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -83,14 +83,16 @@ void	setredzone __P((u_short *, caddr_t));
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2, stack, stacksize, func, arg)
+	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 
 #if NNPX > 0
 	/*
@@ -127,7 +129,7 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().  Note the inline version of cpu_set_kpc().
+	 * through rei().
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -140,24 +142,10 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
-	sf->sf_esi = (int)child_return;
-	sf->sf_ebx = (int)p2;
-	sf->sf_eip = (int)proc_trampoline;
-	pcb->pcb_esp = (int)sf;
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf =
-	    (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
-
-	sf->sf_esi = (int)pc;
+	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
+	pcb->pcb_esp = (int)sf;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.14 2001/11/04 23:12:46 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.15 2001/11/06 18:41:09 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -114,7 +114,6 @@ int	alpha_pa_access(u_long);
 void	ast(struct trapframe *);
 int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);
-void	child_return(void *);
 u_int64_t console_restart(struct trapframe *);
 void	do_sir(void);
 void	dumpconf(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2001/09/04 15:19:16 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -292,7 +292,6 @@ void	remrq __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));
-void	child_return __P((struct proc *));
 /* amd7930intr.s */
 void	amd7930_trap __P((void));
 /* cons.c */

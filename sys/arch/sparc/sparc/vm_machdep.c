@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.33 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -387,15 +387,17 @@ vunmapbuf(bp, sz)
  * the first element in struct user.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2, stack, stacksize, func, arg)
+	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	register struct pcb *opcb = &p1->p_addr->u_pcb;
-	register struct pcb *npcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf2;
-	register struct rwindow *rp;
+	struct pcb *opcb = &p1->p_addr->u_pcb;
+	struct pcb *npcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf2;
+	struct rwindow *rp;
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of
@@ -464,53 +466,14 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_int)npcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (int)child_return;	/* Function to call */
-	rp->rw_local[1] = (int)p2;		/* and its argument */
+	rp->rw_local[0] = (int)func;		/* Function to call */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
 
 	npcb->pcb_pc = (int)proc_trampoline - 8;
 	npcb->pcb_sp = (int)rp;
 	npcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
 	npcb->pcb_wim = 1;		/* Fence at window #1 */
 
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the current process's process pointer as an argument.
- *
- * Note that it's assumed that when the named process returns,
- * we immediately return to user mode.
- *
- * (Note that cpu_fork(), above, uses an open-coded version of this.)
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcb;
-	struct rwindow *rp;
-
-	pcb = &p->p_addr->u_pcb;
-
-	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (int)pc;		/* Function to call */
-	rp->rw_local[1] = (int)arg;		/* and its argument */
-
-	/*
-	 * Frob PCB:
-	 *	- arrange to return to proc_trampoline() from cpu_switch()
-	 *	- point it at the stack frame constructed above
-	 *	- make it run in a clear set of register windows
-	 */
-	pcb->pcb_pc = (int)proc_trampoline - 8;
-	pcb->pcb_sp = (int)rp;
-	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
-	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
 
 /*

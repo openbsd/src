@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.1 1997/07/06 07:46:28 downsj Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.2 2001/11/06 18:41:09 art Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -38,7 +38,37 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/syscall.h>
+#include <sys/ktrace.h>
+
+#include <machine/frame.h>
+#include <machine/reg.h>
 
 /* the following is used externally (sysctl_hw) */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+void    userret __P((struct proc *, int, u_quad_t));	/* XXX */
+/*
+ * Process the tail end of a fork() for the child
+ *
+ * XXX - this is probably the wrong file.
+ */
+void
+child_return(arg)
+	void *arg;
+{
+	struct proc *p = (struct proc *)arg;
+	struct frame *f = (struct frame *)p->p_md.md_regs;
+
+	f->f_regs[D0] = 0;
+	f->f_sr &= ~PSL_C;	/* carry bit */
+	f->f_format = FMT0;
+
+	userret(p, f->f_pc, p->p_sticks);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, SYS_fork, 0, 0);
+#endif
+}
 

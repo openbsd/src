@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2001/09/21 17:33:15 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -50,17 +50,18 @@
  * Finish a fork operation, with process p2 nearly set up.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
 	extern void fork_trampoline __P((void));
-	extern void child_return __P((struct proc *));
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 
 	if (p1 == fpuproc)
@@ -100,8 +101,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	 */
 	stktop2 -= 16;
 	cf = (struct callframe *)stktop2;
-	cf->r31 = (register_t)child_return;
-	cf->r30 = (register_t)p2;
+	cf->r31 = (register_t)func;
+	cf->r30 = (register_t)arg;
 	
 	/*
 	 * Below that, we allocate the switch frame:
@@ -113,23 +114,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 	pcb->pcb_sp = (int)stktop2;
 	pcb->pcb_spl = 0;
-}
-
-/*
- * Set initial pc of process forked by above.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
-	struct callframe *cf = (struct callframe *)sf->sp;
-	
-	cf->r30 = (register_t)arg;
-	cf->r31 = (register_t)pc;
-	cf++->lr = (register_t)pc;
 }
 
 void

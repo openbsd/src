@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2001/09/01 15:49:06 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2001/11/06 18:41:10 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -35,8 +35,6 @@
 #define	_MACHINE_CPU_H_
 
 #include <powerpc/cpu.h>
-
-void	child_return __P((struct proc *));
 
 #define	CACHELINESIZE	32			/* For now		XXX */
 

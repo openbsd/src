@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.31 2001/09/21 02:11:57 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.32 2001/11/06 18:41:09 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -72,12 +72,13 @@
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func)(void *);
+	void *arg;
 {
-	void child_return __P((struct proc *, struct frame));
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
@@ -98,7 +99,7 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
-	 * through child_return().  Note the in-line cpu_set_kpc().
+	 * through child_return().
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -112,27 +113,9 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
-	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[6] = (int)func;		/* A2 */
+	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}
-
-/*
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the supplied argument.
- *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user code.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	p->p_addr->u_pcb.pcb_regs[6] = (int)pc;		/* A2 */
-	p->p_addr->u_pcb.pcb_regs[7] = (int)arg;	/* A3 */
 }
 
 /*
