@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.4 2000/05/27 21:41:50 art Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.5 2000/05/27 21:48:37 art Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -181,7 +181,11 @@ sendsig(catcher, sig, mask, code, type, val)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
+#if defined(UVM)
+	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#else
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#endif
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): useracc failed on sig %d\n",
@@ -331,9 +335,15 @@ sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
+#if defined(UVM)
+	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+		return (EINVAL);
+#else
 	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
+#endif
 	scp = &tsigc;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
 		return (EINVAL);
