@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 1997/07/23 04:31:59 denny Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 1997/08/04 21:45:47 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2336,7 +2336,7 @@ mac68k_set_io_offsets(base)
 	default:
 	case MACH_CLASSH:
 	case MACH_CLASSIIfx:
-		panic("Unknown/unsupported machine class.");
+		panic("Mac IIfx machine class:unsupported machine class.");
 		break;
 	}
 	Via2Base = Via1Base + 0x2000 * VIA2;
