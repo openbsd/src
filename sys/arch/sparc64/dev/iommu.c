@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.16 2002/03/26 18:13:11 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.17 2002/05/13 19:43:48 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -518,14 +518,22 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	if ((boundary = (map->dm_segs[0]._ds_boundary)) == 0)
 		boundary = map->_dm_boundary;
 	align = max(map->dm_segs[0]._ds_align, NBPG);
+
+	if (flags & BUS_DMA_24BIT) {
+		sgstart = max(is->is_dvmamap->ex_start, 0xff000000);
+		sgend = min(is->is_dvmamap->ex_end, 0xffffffff);
+	} else {
+		sgstart = is->is_dvmamap->ex_start;
+		sgend = is->is_dvmamap->ex_end;
+	}
 	s = splhigh();
 	/* 
 	 * If our segment size is larger than the boundary we need to 
 	 * split the transfer up int little pieces ourselves.
 	 */
-	err = extent_alloc(is->is_dvmamap, sgsize, align, 0,
-		(sgsize > boundary) ? 0 : boundary, 
-		EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
+	err = extent_alloc_subregion(is->is_dvmamap, sgstart, sgend,
+	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
+	    EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
 	splx(s);
 
 #ifdef DEBUG
@@ -735,15 +743,21 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	}
 	sgsize = round_page(sgsize);
 
+	if (flags & BUS_DMA_24BIT) {
+		sgstart = max(is->is_dvmamap->ex_start, 0xff000000);
+		sgend = min(is->is_dvmamap->ex_end, 0xffffffff);
+	} else {
+		sgstart = is->is_dvmamap->ex_start;
+		sgend = is->is_dvmamap->ex_end;
+	}
 	s = splhigh();
 	/* 
 	 * If our segment size is larger than the boundary we need to 
 	 * split the transfer up into little pieces ourselves.
 	 */
-	err = extent_alloc(is->is_dvmamap, sgsize, align, 0,
-		(sgsize > boundary) ? 0 : boundary,
-		((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT) |
-		EX_BOUNDZERO, (u_long *)&dvmaddr);
+	err = extent_alloc_subregion(is->is_dvmamap, sgstart, sgend,
+	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
+	    EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
 	splx(s);
 
 	if (err != 0)
