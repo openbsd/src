@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.12 2001/12/20 17:48:25 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.13 2002/01/28 21:42:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -134,6 +134,7 @@ static const struct wi_pci_product {
 	{ PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P, 1 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A, 1 },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301, 1 },
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11, 1 },
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, 0 },
 	{ 0, 0 }
 };
