@@ -39,7 +39,7 @@
 #endif
 
 #ifndef	DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* default data size */
+#define	DFLDSIZ		(32*1024*1024)		/* default data size */
 #endif
 
 #ifndef	MAXDSIZ
