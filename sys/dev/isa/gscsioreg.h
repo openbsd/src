@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsioreg.h,v 1.1 2004/05/23 17:41:09 grange Exp $	*/
+/*	$OpenBSD: gscsioreg.h,v 1.2 2004/11/17 16:53:05 mickey Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -19,9 +19,6 @@
  * National Semiconductor Geode SC1100 Super I/O register definitions.
  */
 
-/* Possible index-data register pair base addresses */
-#define GSCSIO_IOBASE1	0x2e
-#define GSCSIO_IOBASE2	0x15c
 #define GSCSIO_IOSIZE	2	/* I/O space size */
 
 /* Index-data register pair */

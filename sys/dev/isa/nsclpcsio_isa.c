@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.4 2004/06/05 14:47:59 grange Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.5 2004/11/17 16:53:05 mickey Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -53,9 +53,6 @@
 #else
 #define DPRINTF(x)
 #endif
-
-#define SIO_BADDR0	0x2e
-#define SIO_BADDR1	0x4e
 
 #define SIO_REG_SID	0x20	/* Super I/O ID */
 #define SIO_SID_PC87366	0xE9 	/* PC87366 is identified by 0xE9.*/
@@ -218,7 +215,6 @@ struct timeout  nsclpcsio_timeout;
 
 static u_int8_t	nsread(bus_space_tag_t, bus_space_handle_t, int);
 static void	nswrite(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
-static int	nscheck(bus_space_tag_t, int);
 
 void	nsclpcsio_gpio_init(struct nsclpcsio_softc *);
 int	nsclpcsio_gpio_pin_read(void *, int);
@@ -245,43 +241,35 @@ nswrite(bus_space_tag_t iot, bus_space_handle_t ioh, int idx, u_int8_t data)
 	bus_space_write_1(iot, ioh, 1, data);
 }
 
-static int
-nscheck(bus_space_tag_t iot, int base)
-{
-	bus_space_handle_t ioh;
-	int rv = 0;
-
-	if (bus_space_map(iot, base, 2, 0, &ioh))
-		return (0);
-	if (nsread(iot, ioh, SIO_REG_SID) == SIO_SID_PC87366)
-		rv = 1;
-	bus_space_unmap(iot, ioh, 2);
-	return (rv);
-}
-
 int
 nsclpcsio_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int iobase;
+	int rv = 0;
 
-	/* PC87366 has two possible locations depending on wiring */
-	iobase = SIO_BADDR0;
-	if (nscheck(ia->ia_iot, iobase))
-		goto found;
-	iobase = SIO_BADDR1;
-	if (nscheck(ia->ia_iot, iobase))
-		goto found;
-	return (0);
+	iot = ia->ia_iot;
+	iobase = ia->ipa_io[0].base;
+	if (bus_space_map(iot, iobase, 2, 0, &ioh))
+		return (0);
 
-found:
-	ia->ipa_nio = 1;
-	ia->ipa_io[0].base = iobase;
-	ia->ipa_io[0].length = 2;
-	ia->ipa_nmem = 0;
-	ia->ipa_nirq = 0;
-	ia->ipa_ndrq = 0;
-	return (1);
+	if (nsread(iot, ioh, SIO_REG_SID) == SIO_SID_PC87366)
+		rv = 1;
+
+	bus_space_unmap(iot, ioh, 2);
+
+	if (rv) {
+		ia->ipa_nio = 1;
+		ia->ipa_io[0].length = 2;
+
+		ia->ipa_nmem = 0;
+		ia->ipa_nirq = 0;
+		ia->ipa_ndrq = 0;
+	}
+
+	return (rv);
 }
 
 void

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.386 2004/11/17 14:14:21 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.387 2004/11/17 16:53:05 mickey Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -76,9 +76,11 @@ geodesc* at pci?		# Geode SC1100/SCx200 IAOC
 lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
-nsclpcsio* at isa?			# NS PC87366 LPC Super I/O
+nsclpcsio* at isa? port 0x2e		# NS PC87366 LPC Super I/O
+nsclpcsio* at isa? port 0x4e
 gpio*	at nsclpcsio?
-gscsio*	at isa?				# NS Geode SC1100 Super I/O
+gscsio*	at isa?	port 0x2e		# NS Geode SC1100 Super I/O
+gscsio*	at isa?	port 0x15c
 iic0	at gscsio?			# ACCESS.bus 1
 iic1	at gscsio?			# ACCESS.bus 2
 lmtemp0	at iic1 addr 0x48		# NS LM75/LM77 temperature sensor

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.2 2004/06/05 18:34:04 grange Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.3 2004/11/17 16:53:05 mickey Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -112,45 +112,32 @@ idxwrite(bus_space_tag_t iot, bus_space_handle_t ioh, int idx, u_int8_t data)
 	bus_space_write_1(iot, ioh, GSCSIO_DAT, data);
 }
 
-static int
-ioprobe(bus_space_tag_t iot, int base)
+int
+gscsio_probe(struct device *parent, void *match, void *aux)
 {
+	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	int iobase;
 	int rv = 0;
 
-	if (bus_space_map(iot, base, GSCSIO_IOSIZE, 0, &ioh))
+	iot = ia->ia_iot;
+	iobase = ia->ipa_io[0].base;
+	if (bus_space_map(iot, iobase, GSCSIO_IOSIZE, 0, &ioh))
 		return (0);
 	if (idxread(iot, ioh, GSCSIO_ID) == GSCSIO_ID_SC1100)
 		rv = 1;
 	bus_space_unmap(iot, ioh, GSCSIO_IOSIZE);
 
+	if (rv) {
+		ia->ipa_nio = 1;
+		ia->ipa_io[0].length = GSCSIO_IOSIZE;
+		ia->ipa_nmem = 0;
+		ia->ipa_nirq = 0;
+		ia->ipa_ndrq = 0;
+	}
+
 	return (rv);
-}
-
-int
-gscsio_probe(struct device *parent, void *match, void *aux)
-{
-	struct isa_attach_args *ia = aux;
-	int iobase;
-
-	iobase = GSCSIO_IOBASE1;
-	if (ioprobe(ia->ia_iot, iobase))
-		goto found;
-	iobase = GSCSIO_IOBASE2;
-	if (ioprobe(ia->ia_iot, iobase))
-		goto found;
-
-	return (0);
-
-found:
-	ia->ipa_nio = 1;
-	ia->ipa_io[0].base = iobase;
-	ia->ipa_io[0].length = GSCSIO_IOSIZE;
-	ia->ipa_nmem = 0;
-	ia->ipa_nirq = 0;
-	ia->ipa_ndrq = 0;
-
-	return (1);
 }
 
 void
