@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 1998/12/29 21:32:34 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.2 1999/02/17 03:19:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -84,18 +84,28 @@ cpuattach(parent, self, aux)
 {
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
 	/* register struct cpu_softc *sc = (struct cpu_softc *)self; */
-	/* register struct confargs *ca = aux; */
+	register struct confargs *ca = aux;
 	struct pdc_cache pdc_cache PDC_ALIGNMENT;
 	struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 	u_int mhz;
 	int pdcerr;
+	char *p;
+
+	/* this is finally from "HP-UX Multiprocessing rev 1.3" paper
+	 * identifying PA revisions! */
+	switch (ca->ca_type.iodc_sv_model) {
+	case  0:  p = "1.0";	break;
+	case  4:  p = "1.1";	break;
+	case  8:  p = "2.0";	break;
+	default:  p = "?.?";	break;
+	}
 
 	mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
-	printf(": %d", mhz / 100);
+	printf(": PA%s %d", mhz / 100);
 	if (mhz % 100 > 9)
-		printf("%02d MHz", mhz % 100);
+		printf(".%02d", mhz % 100);
 
-	printf("%s: ", self->dv_xname);
+	printf(" MHz clock\n%s: ", self->dv_xname);
 
 	/*
 	 * get cache parameters from the PDC
@@ -107,9 +117,9 @@ cpuattach(parent, self, aux)
 #endif
 	} else {
 		if (pdc_cache.dc_conf.cc_sh)
-			printf(", %uK cache", pdc_cache.dc_size / 1024);
+			printf("%uK cache", pdc_cache.dc_size / 1024);
 		else
-			printf(", %uK/%uK D/I caches",
+			printf("%uK/%uK D/I caches",
 			       pdc_cache.dc_size / 1024,
 			       pdc_cache.ic_size / 1024);
 		if (pdc_cache.dt_conf.tc_sh)
@@ -135,18 +145,4 @@ cpuattach(parent, self, aux)
 	}
 
 	printf("\n");
-}
-
-/*
- * retrive CPU #N HPA value
- */
-hppa_hpa_t
-cpu_gethpa(n)
-	int n;
-{
-	register struct cpu_softc *sc;
-
-	sc = cpu_cd.cd_devs[0];
-
-	return sc->sc_hpa;
 }
