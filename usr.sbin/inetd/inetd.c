@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.99 2002/06/07 07:37:41 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.100 2002/06/21 06:20:28 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.99 2002/06/07 07:37:41 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.100 2002/06/21 06:20:28 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -146,10 +146,6 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.99 2002/06/07 07:37:41 itojun Exp $
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#ifndef RLIMIT_NOFILE
-#define RLIMIT_NOFILE	RLIMIT_OFILE
-#endif
-
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -195,11 +191,9 @@ sigset_t emptymask;
 
 /* Reserve some descriptors, 3 stdio + at least: 1 log, 1 conf. file */
 #define FD_MARGIN	(8)
-typeof(((struct rlimit *)0)->rlim_cur)	rlim_ofile_cur = OPEN_MAX;
+typeof(((struct rlimit *)0)->rlim_cur)	rlim_nofile_cur = OPEN_MAX;
 
-#ifdef RLIMIT_NOFILE
-struct rlimit	rlim_ofile;
-#endif
+struct rlimit	rlim_nofile;
 
 struct	servtab {
 	char	*se_hostaddr;		/* host address to listen on */
@@ -403,15 +397,13 @@ main(argc, argv)
 	openlog(progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	logpid();
 
-#ifdef RLIMIT_NOFILE
-	if (getrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0) {
+	if (getrlimit(RLIMIT_NOFILE, &rlim_nofile) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
 	} else {
-		rlim_ofile_cur = rlim_ofile.rlim_cur;
-		if (rlim_ofile_cur == RLIM_INFINITY)	/* ! */
-			rlim_ofile_cur = OPEN_MAX;
+		rlim_nofile_cur = rlim_nofile.rlim_cur;
+		if (rlim_nofile_cur == RLIM_INFINITY)	/* ! */
+			rlim_nofile_cur = OPEN_MAX;
 	}
-#endif
 
 	sigemptyset(&emptymask);
 	sigemptyset(&blockmask);
@@ -1028,7 +1020,7 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	nsock++;
 	if (sep->se_fd > maxsock) {
 		maxsock = sep->se_fd;
-		if (maxsock > rlim_ofile_cur - FD_MARGIN)
+		if (maxsock > rlim_nofile_cur - FD_MARGIN)
 			bump_nofile();
 	}
 }
@@ -1578,7 +1570,7 @@ dupconfig(sep)
 		exit(1);
 	}
 
-	memset((char *)newtab, 0, sizeof(struct servtab));
+	memset(newtab, 0, sizeof(struct servtab));
 
 	newtab->se_service = sep->se_service ? newstr(sep->se_service) : NULL;
 	newtab->se_socktype = sep->se_socktype;
@@ -1635,8 +1627,6 @@ logpid()
 int
 bump_nofile()
 {
-#ifdef RLIMIT_NOFILE
-
 #define FD_CHUNK	32
 
 	struct rlimit rl;
@@ -1647,7 +1637,7 @@ bump_nofile()
 	}
 	rl.rlim_cur = MIN(rl.rlim_max, rl.rlim_cur + FD_CHUNK);
 	rl.rlim_cur = MIN(FD_SETSIZE, rl.rlim_cur + FD_CHUNK);
-	if (rl.rlim_cur <= rlim_ofile_cur) {
+	if (rl.rlim_cur <= rlim_nofile_cur) {
 		syslog(LOG_ERR,
 		    "bump_nofile: cannot extend file limit, max = %d",
 		    (int)rl.rlim_cur);
@@ -1659,13 +1649,8 @@ bump_nofile()
 		return -1;
 	}
 
-	rlim_ofile_cur = rl.rlim_cur;
+	rlim_nofile_cur = rl.rlim_cur;
 	return 0;
-
-#else
-	syslog(LOG_ERR, "bump_nofile: cannot extend file limit");
-	return -1;
-#endif
 }
 
 /*
@@ -1897,9 +1882,9 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 	char buffer[256];
 	time_t time(), clock;
 	struct sockaddr_storage ss;
-	int size;
+	socklen_t size;
 
-	clock = time((time_t *) 0);
+	clock = time(NULL);
 
 	size = sizeof(ss);
 	if (recvfrom(s, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss,
@@ -2053,7 +2038,7 @@ spawn(sep, ctrl)
 					pwd->pw_gid = grp->gr_gid;
 					tmpint |= LOGIN_SETGROUP;
 				}
-				if (setusercontext(0, pwd, pwd->pw_uid,
+				if (setusercontext(NULL, pwd, pwd->pw_uid,
 				    tmpint) < 0)
 					syslog(LOG_ERR,
 					    "%s/%s: setusercontext: %m",
@@ -2062,12 +2047,14 @@ spawn(sep, ctrl)
 			if (debug)
 				fprintf(stderr, "%ld execl %s\n",
 				    (long)getpid(), sep->se_server);
-			dup2(ctrl, 0);
-			close(ctrl);
-			dup2(0, 1);
-			dup2(0, 2);
+			if (ctrl != STDIN_FILENO) {
+				dup2(ctrl, STDIN_FILENO);
+				close(ctrl);
+			}
+			dup2(STDIN_FILENO, STDOUT_FILENO);
+			dup2(STDIN_FILENO, STDERR_FILENO);
 			closelog();
-			for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
+			for (tmpint = rlim_nofile_cur-1; --tmpint > 2; )
 				(void)close(tmpint);
 			sigaction(SIGPIPE, &sapipe, NULL);
 			execv(sep->se_server, sep->se_argv);
