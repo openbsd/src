@@ -1,10 +1,10 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.70 2004/02/13 23:34:13 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
-{-#-} Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
+{-#-} Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
 {-#-}
 {-#-} Permission to use, copy, modify, and distribute this software for any
 {-#-} purpose with or without fee is hereby granted, provided that the above
