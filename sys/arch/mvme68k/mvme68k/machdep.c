@@ -1,4 +1,4 @@
-/*	$Id: machdep.c,v 1.4 1995/11/28 01:24:40 deraadt Exp $ */
+/*	$Id: machdep.c,v 1.5 1995/11/29 17:02:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -415,6 +415,17 @@ setregs(p, pack, stack, retval)
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+#endif
+#ifdef COMPAT_SUNOS
+	/*
+	 * SunOS' ld.so does self-modifying code without knowing
+	 * about the 040's cache purging needs.  So we need to uncache
+	 * writeable executable pages.
+	 */
+	if (p->p_emul == &emul_sunos)
+		p->p_md.md_flags |= MDP_UNCACHE_WX;
+	else
+		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
 #endif
 #ifdef COMPAT_HPUX
 	p->p_md.md_flags &= ~MDP_HPUXMMAP;

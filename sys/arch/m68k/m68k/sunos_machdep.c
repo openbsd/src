@@ -88,21 +88,6 @@ struct sunos_sigframe {
 };
 
 /*
- * SunOS' ld.so does self-modifying code without knowing about the 040's
- * cache purging needs.  So we need to uncache writeable executable pages.
- */
-void
-sunos_setregs(p, pack, stack, retval)
-	register struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
-{
-	setregs(p, pack, stack, retval);
-	p->p_md.md_flags |= MDP_UNCACHE_WX;
-}
-
-/*
  * much simpler sendsig() for SunOS processes, as SunOS does the whole
  * context-saving in usermode. For now, no hardware information (ie.
  * frames for buserror etc) is saved. This could be fatal, so I take 
