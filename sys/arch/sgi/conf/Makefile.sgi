@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.4 2004/08/23 14:26:24 pefo Exp $
+#	$OpenBSD: Makefile.sgi,v 1.5 2004/09/09 22:11:39 pefo Exp $
 
 # Makefile for OpenBSD
 #
@@ -29,7 +29,6 @@ CPP?=	cpp
 LD?=	ld ${ENDIAN}
 STRIP?=	strip
 TOUCH?=	touch
-ISALEV?=-mips3 -mlong64 -fno-builtin
 CPP+=${ENDIAN}
 CC+=${ENDIAN}
 AS+=${ENDIAN}
@@ -48,9 +47,9 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__sgi__
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls ${ISALEV} \
-		${COPTS}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -mno-abicalls ${ISALEV} -D_LOCORE
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls ${ABI} \
+		${COPTS} -msoft-float -fno-builtin
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -mno-abicalls ${ABI} -D_LOCORE
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

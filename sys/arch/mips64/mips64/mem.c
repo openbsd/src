@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2004/08/11 15:13:58 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2004/09/09 22:11:38 pefo Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = iov->iov_len;
 			if (v + c > ctob(physmem))
 				return (EFAULT);
-			v += KSEG0_BASE;
+			v = (vaddr_t)PHYS_TO_KSEG0(v);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

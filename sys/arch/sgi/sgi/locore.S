@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: locore.S,v 1.4 2004/09/09 22:11:39 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,8 +40,6 @@
 
 	.set	noreorder		# Noreorder is default style!
 
-#define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
-
 	.globl	idle_stack	# idle stack just below kernel.
 idle_stack:
 
@@ -55,8 +53,8 @@ start:
 /*
  * Initialize stack and call machine startup.
  */
-	la	sp, start - FRAMESZ(CF_SZ)
-	la	gp, _gp
+	LA	sp, start - FRAMESZ(CF_SZ)
+	LA	gp, _gp
 	jal	mips_init			# mips_init(argc, argv, envp)
 	sw	zero, CF_RA_OFFS(sp)		# Zero out old ra for debugger
 

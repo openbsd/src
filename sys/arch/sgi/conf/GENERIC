@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2004/08/11 15:13:21 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2004/09/09 22:11:39 pefo Exp $
 #
 
 machine		sgi mips64
@@ -8,14 +8,11 @@ include "../../../conf/GENERIC"
 maxusers	32
 
 # Make options
-#makeoption	ISALEV="-mips3 -mlong64 -fno-builtin"
-makeoption	ISALEV="-mips2 -D_MIPS_ISA=_MIPS_ISA_MIPS2"
-makeoption	ENDIAN="-EB"
+#makeoption	ABI="-mabi=64"
+#makeoption	ENDIAN="-EB"
 
 # MD options
 option		ARCBIOS		# We use arcbios for FW comminication.
-#option		COMPAT_O32	# Mips o32 ABI compat
-#option		DB_ELFSIZE=32
 
 #option		APERTURE
 

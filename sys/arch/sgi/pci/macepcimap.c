@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcimap.c,v 1.2 2004/08/11 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: macepcimap.c,v 1.3 2004/09/09 22:11:39 pefo Exp $ */
 /*	$NetBSD: pci_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $	*/
 
 /*
@@ -62,6 +62,11 @@ void pciaddr_print_devid(pci_chipset_tag_t, pcitag_t);
 
 unsigned int ioaddr_base = 0x1000;
 unsigned int memaddr_base = 0x80100000;
+
+#ifdef DEBUG
+int pcibiosverbose = 1;
+#endif
+
 
 void
 pciaddr_remap(pci_chipset_tag_t pc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2004/08/15 18:35:12 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 2004/09/09 22:11:38 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1362,12 +1362,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	pv = pa_to_pvh(src);
 	if (pv->pv_flags & PV_CACHED &&
-		   (sf = ((pv->pv_va ^ (int)s) & CpuCacheAliasMask) != 0)) {
+		   (sf = ((pv->pv_va ^ (long)s) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 	pv = pa_to_pvh(dst);
 	if (pv->pv_flags & PV_CACHED &&
-		   (df = ((pv->pv_va ^ (int)d) & CpuCacheAliasMask) != 0)) {
+		   (df = ((pv->pv_va ^ (long)d) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 

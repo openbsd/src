@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.4 2004/08/15 18:35:58 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -78,10 +78,10 @@ LEAF(MipsSwitchFPState)
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
 	li	t3, ~SR_COP_1_BIT
-	lw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
-	sw	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 	and	t2, t2, t3			# clear COP_1 enable bit
-	sw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
 /*
  * Save the floating point registers.
  */
@@ -122,7 +122,7 @@ LEAF(MipsSwitchFPState)
 /*
  *  Restore the floating point registers.
  */
-	lw	t0, U_PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
+	REG_L	t0, U_PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
 	ldc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a1)
 	ldc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a1)
 	ldc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a1)
@@ -182,10 +182,10 @@ LEAF(MipsSwitchFPState16)
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
 	li	t3, ~SR_COP_1_BIT
-	lw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
-	sw	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 	and	t2, t2, t3			# clear COP_1 enable bit
-	sw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
 /*
  * Save the floating point registers.
  */
@@ -226,7 +226,7 @@ LEAF(MipsSwitchFPState16)
 /*
  *  Restore the floating point registers.
  */
-	lw	t0, U_PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
+	REG_L	t0, U_PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
 	lwc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a1)
 	lwc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a1)
 	lwc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a1)
@@ -288,7 +288,7 @@ END(MipsSwitchFPState16)
  *----------------------------------------------------------------------------
  */
 LEAF(MipsSaveCurFPState)
-	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
+	PTR_L	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
 	li	t0, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
@@ -298,13 +298,13 @@ LEAF(MipsSaveCurFPState)
  * First read out the status register to make sure that all FP operations
  * have completed.
  */
-	lw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
 	li	t3, ~SR_COP_1_BIT
 	and	t2, t2, t3			# clear COP_1 enable bit
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
-	sw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
-	sw	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 /*
  * Save the floating point registers.
  */
@@ -348,7 +348,7 @@ LEAF(MipsSaveCurFPState)
 END(MipsSaveCurFPState)
 
 LEAF(MipsSaveCurFPState16)
-	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
+	PTR_L	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
 	li	t0, SR_COP_1_BIT	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
@@ -358,13 +358,13 @@ LEAF(MipsSaveCurFPState16)
  * First read out the status register to make sure that all FP operations
  * have completed.
  */
-	lw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
 	li	t3, ~SR_COP_1_BIT
 	and	t2, t2, t3			# clear COP_1 enable bit
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
-	sw	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
-	sw	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 /*
  * Save the floating point registers.
  */

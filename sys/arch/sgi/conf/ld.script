@@ -1,11 +1,11 @@
-OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradlittlemips",
-	      "elf32-tradbigmips")
+OUTPUT_FORMAT("elf64-tradbigmips", "elf64-tradlittlemips",
+	      "elf64-tradbigmips")
 OUTPUT_ARCH(mips)
 ENTRY(_start)
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  . = 0x80100000 + SIZEOF_HEADERS;
+  . = 0xffffffff80100000 + SIZEOF_HEADERS;
   .text      :
   {
     _ftext = . ;

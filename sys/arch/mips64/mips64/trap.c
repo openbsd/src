@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 2004/08/10 20:28:13 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2004/09/09 22:11:38 pefo Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -165,7 +165,7 @@ trap(trapframe)
 	struct proc *p = curproc;
 	u_quad_t sticks;
 	vm_prot_t ftype;
-	extern unsigned onfault_table[];
+	extern vaddr_t onfault_table[];
 	int typ = 0;
 	union sigval sv;
 
@@ -313,6 +313,7 @@ trap(trapframe)
 #if defined(VMFAULT_TRACE)
 		printf("vm_fault(%p (pmap %p), %p (%p), %x, %d) -> %x at pc %p\n",
 		    map, &vm->vm_map.pmap, va, trapframe->badvaddr, ftype, FALSE, rv, trapframe->pc);
+printf("sp %p\n", trapframe->sp);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -427,9 +428,8 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 					args.i[4] = locr0->a5;
 					args.i[5] = locr0->a6;
 					args.i[6] = locr0->a7;
-					i = copyin((void *)(locr0->sp +
-					    7 * sizeof(register_t)), &args.i[7],
-					    sizeof(register_t));
+					i = copyin((void *)locr0->sp,
+					    &args.i[7], sizeof(register_t));
 				}
 			}
 			break;
@@ -475,8 +475,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 				args.i[4] = locr0->a5;
 				args.i[5] = locr0->a6;
 				args.i[6] = locr0->a7;
-				i = copyin((void *)(locr0->sp +
-				    7 * sizeof(register_t)), &args.i[7],
+				i = copyin((void *)locr0->sp, &args.i[7],
 				    sizeof(register_t));
 			}
 			break;
@@ -603,7 +602,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		iov.iov_len = sizeof(int);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(int)va;
+		uio.uio_offset = (off_t)(long)va;
 		uio.uio_resid = sizeof(int);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_WRITE;
@@ -1169,8 +1168,8 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || sp < 0xffffffff80000000) {
-		(*printfn)("SP 0x%x: not in kernel\n", sp);
+	if (sp & 3 || sp < KSEG0_BASE) {
+		(*printfn)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
 		goto done;
@@ -1201,8 +1200,8 @@ loop:
 		Between((unsigned)a, pc, (unsigned)b)
 
 	/* check for bad PC */
-	if (pc & 3 || pc < 0xffffffff80000000 || pc >= (unsigned)edata) {
-		(*printfn)("PC 0x%x: not in kernel\n", pc);
+	if (pc & 3 || pc < KSEG0_BASE || pc >= (unsigned)edata) {
+		(*printfn)("PC %p: not in kernel\n", pc);
 		ra = 0;
 		goto done;
 	}

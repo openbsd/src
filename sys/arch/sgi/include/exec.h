@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.6 2004/08/11 09:55:41 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.7 2004/09/09 22:11:39 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -35,11 +35,22 @@
  *  Define what exec "formats" we should handle.
  */
 #define NATIVE_EXEC_ELF
+#define NATIVE_ELFSIZE 64
 #define	EXEC_SCRIPT
 
-#define ARCH_ELFSIZE		32
+/*
+ *  If included from sys/exec.h define kernels ELF format.
+ */
+#ifdef __LP64__
+#define	ARCH_ELFSIZE 64
+#define DB_ELFSIZE 64
+#define ELF_TARG_CLASS  ELFCLASS64
+#else
+#define	ARCH_ELFSIZE 32
+#define DB_ELFSIZE 32
+#define ELF_TARG_CLASS  ELFCLASS32
+#endif
 
-#define	ELF_TARG_CLASS		ELFCLASS32
 #if defined(__MIPSEB__)
 #define ELF_TARG_DATA		ELFDATA2MSB
 #else
@@ -49,9 +60,13 @@
 
 #define _NLIST_DO_ELF
 
-#define _KERN_DO_ELF
 #if defined(_LP64)
 #define _KERN_DO_ELF64
+#if defined(COMPAT_O32)
+#define _KERN_DO_ELF
+#endif
+#else
+#define _KERN_DO_ELF
 #endif
 
 /* Information taken from MIPS ABI supplemental */
@@ -164,6 +179,10 @@ typedef struct {
 #define	R_MIPS_PC16	10	/* PC relative 16 bit */
 #define	R_MIPS_CALL16	11	/* 16 bit GOT entry for function */
 #define	R_MIPS_GPREL32	12	/* GP relative 32 bit */
+
+#define	R_MIPS_64	18
+
+#define	R_MIPS_REL32_64	((R_MIPS_64 << 8) | R_MIPS_REL32)
 
 
 #endif /* !_MIPS_EXEC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.5 2004/08/15 12:08:24 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.6 2004/09/09 22:11:38 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -270,7 +270,7 @@ bios_get_system_type()
 	cf = (arc_config_t *)Bios_GetChild(NULL);
 	if (cf) {
 		for (i = 0; i < KNOWNSYSTEMS; i++) {
-			if (strcmp(sys_types[i].sys_name, cf->id) != 0)
+			if (strcmp(sys_types[i].sys_name, (char *)(long)cf->id) != 0)
 				continue;
 			if (sys_types[i].sys_vend &&
 			    strncmp(sys_types[i].sys_vend, sid->vendor, 8) != 0)
@@ -281,7 +281,7 @@ bios_get_system_type()
 
 	bios_putstring("UNIDENTIFIED SYSTEM `");
 	if (cf)
-		bios_putstring(cf->id);
+		bios_putstring((char *)(long)cf->id);
 	else
 		bios_putstring("????????");
 	bios_putstring("' VENDOR `");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.5 2004/08/11 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: macebus.c,v 1.6 2004/09/09 22:11:39 pefo Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -322,7 +322,11 @@ mace_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 u_int64_t
 mace_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
+#ifdef __LP64__
+	return *(volatile u_int64_t *)(h + o);
+#else
 	return lp32_read8((u_int64_t *)(h + o));
+#endif
 }
 
 void
@@ -346,7 +350,11 @@ mace_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v)
 void
 mace_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 {
+#ifdef __LP64__
+	*(volatile u_int64_t *)(h + o) = v;
+#else
 	lp32_write8((u_int64_t *)(h + o), v);
+#endif
 }
 
 int
@@ -725,7 +733,7 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 	}
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_MISC_REG, mask);
 
-	if (maceticks++ > 100*15) {
+	if (maceticks++ > 100*5) {
 		maceticks = 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -60,8 +60,8 @@
 onfault_table:
 	PTR_VAL	0		# invalid index number
 	PTR_VAL	baderr
-	PTR_VAL	copyerr
-	PTR_VAL	copyerr
+	PTR_VAL	_copyerr
+	PTR_VAL	_copyerr
 #if defined(DDB) || defined(DEBUG)
 	PTR_VAL	kt_ddberr
 #else
@@ -155,8 +155,10 @@ LEAF(copystr)
 	move	v0, zero
 END(copystr)
 
+#ifndef __LP64__
 /*
  *  Read 64 bits from bus in non LP64 mode.
+ *  XXX ints should be disabled!
  */
 LEAF(lp32_read8)
 #if defined(__MIPSEB__)
@@ -172,6 +174,7 @@ END(lp32_read8)
 
 /*
  *  Write 64 bits to bus in non LP64 mode.
+ *  XXX ints should be disabled!
  */
 LEAF(lp32_write8)
 #if defined(__MIPSEB__)
@@ -188,6 +191,7 @@ LEAF(lp32_write8)
 	jr	ra
 	sd	a2, 0(a0)
 END(lp32_write8)
+#endif
 
 /*
  * fillw(pat, addr, count)
@@ -345,7 +349,7 @@ NON_LEAF(copyinstr, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
-	blt	a0, zero, copyerr	# make sure address is in user space
+	blt	a0, zero, _copyerr	# make sure address is in user space
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	copystr
@@ -373,7 +377,7 @@ NON_LEAF(copyoutstr, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
-	blt	a1, zero, copyerr	# make sure address is in user space
+	blt	a1, zero, _copyerr	# make sure address is in user space
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	copystr
@@ -398,7 +402,7 @@ NON_LEAF(copyin, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
-	blt	a0, zero, copyerr	# make sure address is in user space
+	blt	a0, zero, _copyerr	# make sure address is in user space
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	bcopy
@@ -423,7 +427,7 @@ NON_LEAF(copyout, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
-	blt	a1, zero, copyerr	# make sure address is in user space
+	blt	a1, zero, _copyerr	# make sure address is in user space
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	bcopy
@@ -437,14 +441,13 @@ NON_LEAF(copyout, FRAMESZ(CF_SZ), ra)
 	move	v0, zero
 END(copyout)
 
-LEAF(copyerr)
+_copyerr:
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
 	sw	zero, U_PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	li	v0, EFAULT		# return error
-END(copyerr)
 
 /*
  *  kcopy is a wrapper around bcopy that catches bad memory references.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: context.S,v 1.4 2004/09/09 22:11:38 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,12 +59,12 @@ LEAF(savectx)
 	REG_S	s7, U_PCB_CONTEXT+7*REGSZ(a0)
 	REG_S	sp, U_PCB_CONTEXT+8*REGSZ(a0)
 	REG_S	s8, U_PCB_CONTEXT+9*REGSZ(a0)
-	PTR_S	ra, U_PCB_CONTEXT+10*REGSZ(a0)
+	REG_S	ra, U_PCB_CONTEXT+10*REGSZ(a0)
 	REG_S	v0, U_PCB_CONTEXT+11*REGSZ(a0)
 	cfc0	t1, COP_0_ICR
 	lw	t0, cpl
-	sw	t1, U_PCB_CONTEXT+12*REGSZ(a0)	# save status register
-	sw	t0, U_PCB_CONTEXT+13*REGSZ(a0)
+	REG_S	t1, U_PCB_CONTEXT+12*REGSZ(a0)	# save status register
+	REG_S	t0, U_PCB_CONTEXT+13*REGSZ(a0)
 	j	ra
 	move	v0, zero
 END(savectx)
@@ -225,9 +225,9 @@ END(switch_exit)
  */
 NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	PTR_L	t3, curprocpaddr
-	PTR_S	sp, U_PCB_CONTEXT+8*REGSZ(t3)	# save old sp
+	REG_S	sp, U_PCB_CONTEXT+8*REGSZ(t3)	# save old sp
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
-	PTR_S	ra, CF_RA_OFFS(sp)
+	REG_S	ra, CF_RA_OFFS(sp)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	lw	t0, cpl
 	sw	t0, U_PCB_CONTEXT+13*REGSZ(t3)
@@ -241,7 +241,7 @@ NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	REG_S	s6, U_PCB_CONTEXT+6*REGSZ(t3)
 	REG_S	s7, U_PCB_CONTEXT+7*REGSZ(t3)
 	REG_S	s8, U_PCB_CONTEXT+9*REGSZ(t3)
-	PTR_S	ra, U_PCB_CONTEXT+10*REGSZ(t3)
+	REG_S	ra, U_PCB_CONTEXT+10*REGSZ(t3)
 	mfc0	t0, COP_0_STATUS_REG
 	cfc0	t1, COP_0_ICR
 	REG_S	t0, U_PCB_CONTEXT+11*REGSZ(t3)
@@ -336,14 +336,14 @@ sw1:
 ctx1:
 	mtc0	zero, COP_0_TLB_INDEX
 	dmtc0	v0, COP_0_TLB_HI
-	lw	t4, 0(t1)
-	lw	t5, 4(t1)
-	dsll	t4, t4, 34
-	dsrl	t4, t4, 34
-	dsll	t5, t5, 34
-	dsrl	t5, t5, 34
-	dmtc0	t4, COP_0_TLB_LO0
-	dmtc0	t5, COP_0_TLB_LO1
+	lw	ta4, 0(t1)
+	lw	ta5, 4(t1)
+	dsll	ta4, ta4, 34
+	dsrl	ta4, ta4, 34
+	dsll	ta5, ta5, 34
+	dsrl	ta5, ta5, 34
+	dmtc0	ta4, COP_0_TLB_LO0
+	dmtc0	ta5, COP_0_TLB_LO1
 	nop
 	PTR_ADDU v0, 2*NBPG
 	nop
@@ -352,14 +352,14 @@ ctx1:
 
 #if (UPAGES != 2)
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
-	lw	t4, 8(t1)
-	lw	t5, 12(t1)
-	dsll	t4, t4, 34
-	dsrl	t4, t4, 34
+	lw	ta4, 8(t1)
+	lw	ta5, 12(t1)
+	dsll	ta4, ta4, 34
+	dsrl	ta4, ta4, 34
 	tlbp
 	nop
-	dsll	t5, t5, 34
-	dsrl	t5, t5, 34
+	dsll	ta5, ta5, 34
+	dsrl	ta5, ta5, 34
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
 	bltz	t0, ctx2			# not in tlb
@@ -380,8 +380,8 @@ ctx1:
 ctx2:
 	mtc0	t2, COP_0_TLB_INDEX
 	dmtc0	v0, COP_0_TLB_HI
-	dmtc0	t4, COP_0_TLB_LO0
-	dmtc0	t5, COP_0_TLB_LO1
+	dmtc0	ta4, COP_0_TLB_LO0
+	dmtc0	ta5, COP_0_TLB_LO1
 	nop
 	nop
 	nop
@@ -398,7 +398,7 @@ ctx3:
 /*
  * Restore registers and return.
  */
-	lw	a0, U_PCB_CONTEXT+13*REGSZ(t3)
+	REG_L	a0, U_PCB_CONTEXT+13*REGSZ(t3)
 	REG_L	s0, U_PCB_CONTEXT+0*REGSZ(t3)
 	REG_L	s1, U_PCB_CONTEXT+1*REGSZ(t3)
 	REG_L	s2, U_PCB_CONTEXT+2*REGSZ(t3)
@@ -414,9 +414,9 @@ ctx3:
 	jal	hw_setintrmask
 	nop
 #endif
-	PTR_L	ra, U_PCB_CONTEXT+10*REGSZ(t3)
-	lw	v0, U_PCB_CONTEXT+11*REGSZ(t3)
-	lw	v1, U_PCB_CONTEXT+12*REGSZ(t3)
+	REG_L	ra, U_PCB_CONTEXT+10*REGSZ(t3)
+	REG_L	v0, U_PCB_CONTEXT+11*REGSZ(t3)
+	REG_L	v1, U_PCB_CONTEXT+12*REGSZ(t3)
 #ifndef IMASK_EXTERNAL
 	ctc0	v1, COP_0_ICR		# XXX RM7000
 #endif

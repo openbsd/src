@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -162,7 +162,7 @@
  *	primary cache associativity.
  *
  * Allocation:
- *	t4, t5 t6 used to hold I and D set size and Alias mask.
+ *	ta4, ta5 ta6 used to hold I and D set size and Alias mask.
  *
  *----------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ LEAF(Mips5k_ConfigCache)
 	srl	t1, v0, 9			# Get I cache size.
 	and	t1, 3
 	li	t2, 4096
-	sllv	t4, t2, t1			# t4 = Initial I set size.
+	sllv	ta4, t2, t1			# ta4 = Initial I set size.
 
 	and	t2, v0, 0x20
 	srl	t2, t2, 1			# Get I cache line size.
@@ -184,15 +184,15 @@ LEAF(Mips5k_ConfigCache)
 	srl	t1, v0, 6			# Get D cache size.
 	and	t1, 3
 	li	t2, 4096			# Fixed page size.
-	sllv	t5, t2, t1
+	sllv	ta5, t2, t1
 
 	and	t2, v0, 0x10
 	addu	t2, t2, 16			# Get D cache line size.
 	sw	t2, CpuPrimaryDataCacheLSize
 
 	li	t2, CTYPE_2WAY			# Assume two way cache
-	li	t6, 0				# Secondary size 0.
-	li	t7, 0				# Tertiary size 0.
+	li	ta6, 0				# Secondary size 0.
+	li	ta7, 0				# Tertiary size 0.
 
 	and	v1, 0xff00			# Recognize CPU's with
 	li	t1, (MIPS_R4600 << 8)		# N way L1 caches only.
@@ -217,7 +217,7 @@ LEAF(Mips5k_ConfigCache)
 Conf5K:					# R5000 type, check for L2 cache
 	and	t1, v0, CF_5_SC
 	bnez	t1, ConfResult			# not enabled
-	li	t6, 0				# set size to 0.
+	li	ta6, 0				# set size to 0.
 
 	li	t3, CF_5_SS
 	and	t1, t3, v0
@@ -227,15 +227,15 @@ Conf5K:					# R5000 type, check for L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	li	t3, CF_5_SE			# Set SE in conf
 	or	v0, t3				# Update config register
-	li	t6, 512*1024			# 512k per 'click'.
-	sll	t6, t1
+	li	ta6, 512*1024			# 512k per 'click'.
+	sll	ta6, t1
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
-	la	t0, KSEG0_BASE
-	addu	t1, t0, t6
+	LA	t0, KSEG0_BASE
+	PTR_ADDU t1, t0, ta6
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
-	addu	t0, 128*32
+	PTR_ADDU t0, 128*32
 	bne	t0, t1, 1b
 	nop
 
@@ -247,7 +247,7 @@ Conf5K:					# R5000 type, check for L2 cache
 Conf52K:					# R5200 type, check for L2 cache
 	and	t1, v0, CF_52_SC
 	bnez	t1, ConfResult			# not present
-	li	t6, 0				# set size to 0.
+	li	ta6, 0				# set size to 0.
 
 	li	t3, CF_52_SS
 	and	t1, t3, v0
@@ -257,16 +257,16 @@ Conf52K:					# R5200 type, check for L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	li	t3, CF_5_SE			# Set SE in conf
 	or	v0, t3				# Update config register
-	li	t6, 512*1024			# 512k per 'click'.
+	li	ta6, 512*1024			# 512k per 'click'.
 	lw	t3, CpuExternalCacheOn		# Check if disabled
 	bnez	t3, ConfResult			# No use it.
-	sll	t6, t1
+	sll	ta6, t1
 
 	and	t2, ~CTYPE_HAS_XL2
 	li	t1, ~CF_52_SE			# Clear SE in conf
 	and	v0, t1				# Update config register
 	b	ConfResult
-	li	t6, 0				# L2 cache disabled
+	li	ta6, 0				# L2 cache disabled
 
 
 #---- RM7K -----------------------------
@@ -274,11 +274,11 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	li	t2, CTYPE_4WAY			# 4-way cache
 	and	t1, v0, CF_7_TC
 	bnez	t1, Conf7KL2			# No L3 cache if set
-	li	t7, 0				# Set size = 0
+	li	ta7, 0				# Set size = 0
 
-	lw	t7, CpuTertiaryCacheSize
+	lw	ta7, CpuTertiaryCacheSize
 	and	t2, ~CTYPE_HAS_XL3
-	beqz	t7, Conf7KL2			# No L3 cache present
+	beqz	ta7, Conf7KL2			# No L3 cache present
 	nop
 
 	or	t2, CTYPE_HAS_XL3
@@ -289,25 +289,25 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	and	v0, ~CF_7_TE			# Clear TE in conf
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 	NOP10
-	li	t7, 0				# L3 cache disabled
+	li	ta7, 0				# L3 cache disabled
 
 Conf7KL2:
 	and	t1, v0, CF_7_SC			# check for L2 cache
 	bnez	t1, ConfResult
-	li	t6, 0				# No L2?
+	li	ta6, 0				# No L2?
 
 	or	t2, CTYPE_HAS_IL2		# L2 is on chip
 	lw	t3, CpuOnboardCacheOn		# Check if disabled
 	bnez	t3, ConfResult			# No, use it
-	li	t6, 256*1024			# size = 256k
+	li	ta6, 256*1024			# size = 256k
 
 /* Sync on chip L2 */
 
-	li	a0, 0x80000000
-	li	a1, 0x80040000
+	LA	a0, KSEG0_BASE
+	LA	a1, KSEG0_BASE+0x00040000
 10:
 	cache	IndexWBInvalidate_S, 0(a0)
-	addu	a0, 32
+	PTR_ADDU a0, 32
 	bne	a0, a1, 10b
 	nop
 
@@ -317,11 +317,11 @@ Conf7KL2:
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 	NOP10
 	b	ConfResult
-	li	t6, 0				# L2 cache disabled
+	li	ta6, 0				# L2 cache disabled
 
 /*
- * Get here with t2 = Cache type, t4 = L1 I size, t5 = L1 D size.
- * t6 = secondary size, t7 = tertiary size.
+ * Get here with t2 = Cache type, ta4 = L1 I size, ta5 = L1 D size.
+ * ta6 = secondary size, ta7 = tertiary size.
  */
 ConfResult:
 	sw	v0, CpuConfigRegister
@@ -332,21 +332,21 @@ ConfResult:
 	sw	t2, CpuNWayCache
 	srl	t2, 1				# get div shift for set size.
 
-	sw	t6, CpuSecondaryCacheSize
-	sw	t7, CpuTertiaryCacheSize
+	sw	ta6, CpuSecondaryCacheSize
+	sw	ta7, CpuTertiaryCacheSize
 
-	addu	t1, t4, -1			# Use icache for alias mask
+	addu	t1, ta4, -1			# Use icache for alias mask
 	srl	t1, t2				# Some cpus have different
 	and	t1, ~(NBPG - 1)			# i and d cache sizes...
 	sw	t1, CpuCacheAliasMask
 
-	sw	t4, CpuPrimaryInstCacheSize	# store cache size.
-	srl	t4, t2				# calculate set size.
-	sw	t4, CpuPrimaryInstSetSize
+	sw	ta4, CpuPrimaryInstCacheSize	# store cache size.
+	srl	ta4, t2				# calculate set size.
+	sw	ta4, CpuPrimaryInstSetSize
 
-	sw	t5, CpuPrimaryDataCacheSize	# store cache size.
-	srl	t5, t2				# calculate set size.
-	sw	t5, CpuPrimaryDataSetSize
+	sw	ta5, CpuPrimaryDataCacheSize	# store cache size.
+	srl	ta5, t2				# calculate set size.
+	sw	ta5, CpuPrimaryDataSetSize
 
 	and	v0, 0xfffffff8
 	or	v0, 0x00000003			# set cachable writeback kseg0
@@ -424,11 +424,11 @@ LEAF(Mips5k_SyncCache)
 
 3:
 	LA	t3, KSEG0_BASE
-	lw	t4, CpuSecondaryCacheSize
+	lw	ta4, CpuSecondaryCacheSize
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
-	PTR_SUBU t4, 32				# Fixed cache line size.
-	bgtz	t4, 10b
+	PTR_SUBU ta4, 32				# Fixed cache line size.
+	bgtz	ta4, 10b
 	PTR_ADDU t3, 32
 
 /* Do off chip L2 if present */
@@ -440,11 +440,11 @@ LEAF(Mips5k_SyncCache)
 
 	mtc0    zero, COP_0_TAG_LO
 	LA	t3, KSEG0_BASE
-	lw	t4, CpuSecondaryCacheSize
+	lw	ta4, CpuSecondaryCacheSize
 21:
 	cache	InvalidateSecondaryPage, 0(t3)
-	PTR_SUBU t4, 4096			# Fixed cache page size.
-	bgtz	t4, 21b
+	PTR_SUBU ta4, 4096			# Fixed cache page size.
+	bgtz	ta4, 21b
 	PTR_ADDU t3, 4096
 
 /* Do off chip L3 if present */
@@ -456,11 +456,11 @@ LEAF(Mips5k_SyncCache)
 
 	mtc0    zero, COP_0_TAG_LO
 	LA	t3, KSEG0_BASE
-	lw	t4, CpuTertiaryCacheSize
+	lw	ta4, CpuTertiaryCacheSize
 31:
 	cache	InvalidatePage_T, 0(t3)
-	PTR_SUBU t4, 4096			# Fixed cache page size.
-	bgtz	t4, 31b
+	PTR_SUBU ta4, 4096			# Fixed cache page size.
+	bgtz	ta4, 31b
 	PTR_ADDU t3, 4096
 
 99:
@@ -898,24 +898,31 @@ END(Mips5k_HitInvalidateSCache)
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(Mips5k_IOSyncDCache, FRAMESZ(CF_SZ), ra)
+NON_LEAF(Mips5k_IOSyncDCache, FRAMESZ(CF_SZ+2*REGSZ), ra)
 
-	PTR_SUBU sp, FRAMESZ(CF_SZ)
-	PTR_S	ra, CF_RA_OFFS(sp)
-	REG_S	a0, FRAMESZ(CF_SZ)(sp)		# save args
+	PTR_SUBU sp, FRAMESZ(CF_SZ+2*REGSZ)
+	PTR_S	ra, CF_RA_OFFS+2*REGSZ(sp)
+	REG_S	a0, CF_ARGSZ(sp)		# save args
 	beqz	a2, SyncRD			# Sync PREREAD
-	REG_S	a1, FRAMESZ(CF_SZ)+REGSZ(sp)
+	REG_S	a1, CF_ARGSZ+REGSZ(sp)
 	addiu	a2, 1
 	bnez	a2, SyncRDWB			# Sync PREWRITE+PREREAD
 	nop
 
 	lw	t0, CpuCacheType		# Sync PREWRITE
 	and	t0, CTYPE_HAS_IL2		# Have internal L2?
-	beqzl	t0, Mips5k_HitSyncDCache	# No flush L1.
-	PTR_ADDU sp, FRAMESZ(CF_SZ)
+	bnez	t0, SyncSC			# Yes
+	nop
+	jal	 Mips5k_HitSyncDCache		# No flush L1.
+	nop
+	b	SyncDone
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)
 
-	b	Mips5k_HitSyncSCache		# Do internal L2 cache
+SyncSC:
+	jal	Mips5k_HitSyncSCache		# Do internal L2 cache
 	nop					# L1 done in parallel
+	b	SyncDone
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)
 
 SyncRD:
 	and	t0, a0, 31			# check if invalidate possible
@@ -936,14 +943,14 @@ SyncRD:
 	nop
 
 	b	SyncRDXL2
-	PTR_L	ra, CF_RA_OFFS(sp)		# External L2 if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)	# External L2 if present
 
 SyncRDL2:
 	jal	Mips5k_HitInvalidateSCache	# Internal L2 cache
 	nop					# L1 done in parallel
 
 	b	SyncRDL3
-	PTR_L	ra, CF_RA_OFFS(sp)		# L3 invalidate if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)		# L3 invalidate if present
 
 /*
  *  Sync for unaligned read or write-read.
@@ -958,21 +965,21 @@ SyncRDWB:
 	nop
 
 	b	SyncRDXL2
-	PTR_L	ra, CF_RA_OFFS(sp)		# External L2 if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)		# External L2 if present
 
 SyncRDWBL2:
 	jal	Mips5k_HitSyncSCache		# Internal L2 cache
 	nop					# L1 done in parallel
 
 	b	SyncRDL3
-	PTR_L	ra, CF_RA_OFFS(sp)		# L3 invalidate if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)		# L3 invalidate if present
 
 SyncRDXL2:
 	lw	t0, CpuCacheType
 	and	t0, CTYPE_HAS_XL2		# Have external L2?
 	beqz	t0, SyncRDL3			# Nope.
-	REG_L	a0, FRAMESZ(CF_SZ)(sp)
-	REG_L	a1, FRAMESZ(CF_SZ)+REGSZ(sp)
+	REG_L	a0, CF_ARGSZ(sp)
+	REG_L	a1, CF_ARGSZ+REGSZ(sp)
 	and	a2, a0, 4095			# align on page size
 	PTR_SUBU a0, a2
 	PTR_ADDU a1, a2
@@ -988,8 +995,8 @@ SyncRDL3:
 	lw	t0, CpuCacheType
 	and	t0, CTYPE_HAS_XL3		# Have L3?
 	beqz	t0, SyncDone			# Nope.
-	REG_L	a0, FRAMESZ(CF_SZ)(sp)
-	REG_L	a1, FRAMESZ(CF_SZ)+REGSZ(sp)
+	REG_L	a0, CF_ARGSZ(sp)
+	REG_L	a1, CF_ARGSZ+REGSZ(sp)
 	and	a2, a0, 4095			# align on page size
 	PTR_SUBU a0, a2
 	PTR_ADDU a1, a2
@@ -1003,5 +1010,5 @@ SyncRDL3:
 
 SyncDone:
 	j	ra
-	PTR_ADDU sp, FRAMESZ(CF_SZ)
+	PTR_ADDU sp, FRAMESZ(CF_SZ+2*REGSZ)
 END(Mips5k_IOSyncDCache)

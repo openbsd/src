@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.4 2004/08/10 20:28:13 deraadt Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -238,7 +238,7 @@ loop:
 	stksize = 0;
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || sp < 0xffffffff80000000) {
+	if (sp & 3 || sp < KSEG0_BASE) {
 		(*pr)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -265,8 +265,8 @@ loop:
 
 
 	/* check for bad PC */
-	if (pc & 3 || pc < 0xffffffff80000000 || pc >= (unsigned)edata) {
-		(*pr)("PC 0x%x: not in kernel\n", pc);
+	if (pc & 3 || pc < KSEG0_BASE || pc >= (unsigned)edata) {
+		(*pr)("PC 0x%p: not in kernel\n", pc);
 		ra = 0;
 		goto done;
 	}

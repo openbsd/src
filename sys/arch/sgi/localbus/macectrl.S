@@ -1,4 +1,4 @@
-/*	$OpenBSD: macectrl.S,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: macectrl.S,v 1.3 2004/09/09 22:11:39 pefo Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -52,4 +52,4 @@ END(hw_setintrmask)
 
 	.data
 	.globl	hwmask_addr
-hwmask_addr: .long 0
+hwmask_addr: PTR_VAL 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 2004/09/09 10:25:52 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.10 2004/09/09 22:11:39 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -188,8 +188,8 @@ mips_init(int argc, int32_t *argv)
 	ssym = (char *)(long)*(int *)end;
 	esym = (char *)(long)*((int *)end + 1);
 	ekern = esym;
-	if (((int)ssym - (int)end) < 0 ||
-	    ((int)ssym - (int)end) > 0x1000 ||
+	if (((long)ssym - (long)end) < 0 ||
+	    ((long)ssym - (long)end) > 0x1000 ||
 	    ssym[0] != ELFMAG0 || ssym[1] != ELFMAG1 ||
 	    ssym[2] != ELFMAG2 || ssym[3] != ELFMAG3 ) {
 		ssym = NULL;
@@ -401,7 +401,7 @@ mips_init(int argc, int32_t *argv)
 	 * Copy down exception vector code. If code is to large
 	 * copy down trampolines instead of doing a panic.
 	 */
-	if (e_tlb_miss - tlb_miss > 0x100) {
+	if (e_tlb_miss - tlb_miss > 0x80) {
 		bcopy(tlb_miss_tramp, (char *)TLB_MISS_EXC_VEC,
 		    e_tlb_miss_tramp - tlb_miss_tramp);
 		bcopy(xtlb_miss_tramp, (char *)XTLB_MISS_EXC_VEC,
@@ -506,7 +506,7 @@ dobootopts(int argc, int32_t *argv)
 
 	/* XXX Should this be done differently, eg env vs. args? */
 	for (i = 1; i < argc; i++) {
-		cp = (char *)argv[i];
+		cp = (char *)(long)argv[i];
 		if (cp != NULL && strncmp(cp, "OSLoadOptions=", 14) == 0) {
 			if (strcmp(&cp[14], "auto") == 0)
 					boothowto &= ~(RB_SINGLE|RB_ASKNAME);
@@ -701,16 +701,18 @@ setregs(p, pack, stack, retval)
 	}
 #endif
 
-#if !defined(_LP64)
+#if !defined(__LP64__)
 	p->p_md.md_flags |= MDP_O32;
+#else
+	p->p_md.md_flags &= ~MDP_O32;
 #endif
 
 	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
 	p->p_md.md_regs->sp = stack;
 	p->p_md.md_regs->pc = pack->ep_entry & ~3;
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
-#if 0
-	p->p_md.md_regs->sr = SR_FR_32|SR_KSU_USER|SR_UX|SR_EXL|SR_INT_ENAB;
+#if defined(__LP64__)
+	p->p_md.md_regs->sr = SR_FR_32|SR_XX|SR_KSU_USER|SR_UX|SR_EXL|SR_INT_ENAB;
 #else
 	p->p_md.md_regs->sr = SR_KSU_USER|SR_XX|SR_EXL|SR_INT_ENAB;
 #endif

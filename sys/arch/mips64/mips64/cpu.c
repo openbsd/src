@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2004/08/11 15:13:58 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.7 2004/09/09 22:11:38 pefo Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -195,7 +195,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	printf("cpu%d: Alias mask 0x%x\n", cpuno, CpuCacheAliasMask);
 	printf("cpu%d: Config Register %x\n", cpuno, CpuConfigRegister);
 	printf("cpu%d: Cache type %x\n", cpuno, CpuCacheType);
-	if (fpu_id.cpu[cpuno].cp_imp == MIPS_RM7000) {
+	if (sys_config.cpu[cpuno].fptype == MIPS_RM7000) {
 		u_int tmp = CpuConfigRegister;
 
 		printf("cpu%d: ", cpuno);

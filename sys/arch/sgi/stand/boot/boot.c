@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2004/08/23 14:22:40 pefo Exp $ */
+/*	$OpenBSD: boot.c,v 1.2 2004/09/09 22:11:39 pefo Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -38,12 +38,17 @@
 void gets(char *);
 ssize_t read(int, void *, size_t);
 int close(int);
-void pmon_write(int, char *, int);
-void pmon_synccache(void);
 
-int main(int, char **, char **);
-int loadfile(char *);
-int loadsymtab(int fd, Elf32_Ehdr *eh, int flags);
+int main(int, char **);
+void dobootopts(int, char **);
+Elf32_Addr loadfile(char *);
+Elf32_Addr loadfile32(int, Elf32_Ehdr *);
+Elf32_Addr loadfile64(int, Elf64_Ehdr *);
+int loadsymtab(int, Elf32_Ehdr *, int);
+
+enum { AUTO_NONE, AUTO_YES, AUTO_NO, AUTO_DEBUG } bootauto = AUTO_NONE;
+char *OSLoadPartition = NULL;
+char *OSLoadFilename = NULL;
 
 unsigned long tablebase;
 
@@ -72,95 +77,144 @@ gettable (int size, char *name, int flags)
 /*
  */
 int
-main(argc, argv, envp)
+main(argc, argv)
 	int argc;
 	char **argv;
-	char **envp;
 {
-	char *cp;
-	int   i, ask, entry;
 	char  line[1024];
+	char *cp;
+	int   i;
+	Elf32_Addr entry;
 
-	ask = 0;
-
-	cp = Bios_GetEnvironmentVariable("OSLoadPartition");
-	if (cp != NULL) {
-		strncpy(line, cp, sizeof(line));
+	dobootopts(argc, argv);
+	if (OSLoadPartition != NULL) {
+		strlcpy(line, OSLoadPartition, sizeof(line));
 		i = strlen(line);
-		cp = Bios_GetEnvironmentVariable("OSLoadFilename");
-		if (cp != NULL)
-			strncpy(&line[i], cp, sizeof(line) - i -1);
-		else
-			ask = 1;
+		if (OSLoadFilename != NULL)
+			strlcpy(&line[i], OSLoadFilename, sizeof(line) - i -1);
 	} else
-		ask = 1;
+		strlcpy("invalid argument setup", line, sizeof(line));
 
 	printf("\nOpenBSD/sgi Arcbios boot\n");
 
 	for (entry = 0; entry < argc; entry++)
 		printf("arg %d: %s\n", entry, argv[entry]);
 
-	while (1) {
-		do {
-			printf("Boot: ");
-			if (ask) {
-				gets(line);
-			}
-			else
-				printf("%s\n", line);
-		} while(ask && line[0] == '\0');
+	printf("Boot: %s\n", line);
 
-		entry = loadfile(line);
-		if (entry != -1) {
-			((void (*)())entry)(argc, argv);
-		}
-		ask = 1;
+	entry = loadfile(line);
+	if (entry != NULL) {
+		printf("start at 0x%x\n", entry);
+		((void (*)())entry)(argc, argv);
 	}
-	return(0);
+	printf("Boot FAILED!\n                ");
+	Bios_Restart();
+}
+
+/*
+ *  Decode boot options.
+ */
+void
+dobootopts(int argc, char **argv)
+{
+	char *cp;
+	int i;
+
+	/* XXX Should this be done differently, eg env vs. args? */
+	for (i = 1; i < argc; i++) {
+		cp = argv[i];
+		if (cp == NULL)
+			continue;
+
+		if (strncmp(cp, "OSLoadOptions=", 14) == 0) {
+			if (strcmp(&cp[14], "auto") == 0)
+					bootauto = AUTO_YES;
+			else if (strcmp(&cp[14], "single") == 0)
+					bootauto = AUTO_NO;
+			else if (strcmp(&cp[14], "debug") == 0)
+					bootauto = AUTO_DEBUG;
+		}
+		else if (strncmp(cp, "OSLoadPartition=", 16) == 0)
+			OSLoadPartition = &cp[16];
+		else if (strncmp(cp, "OSLoadFilename=", 15) == 0)
+			OSLoadFilename = &cp[15];
+	}
+	/* If "OSLoadOptions=" is missing, see if any arg was given */
+	if (bootauto == AUTO_NONE && *argv[1] == '/')
+		OSLoadFilename = argv[1];
 }
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
-int
+Elf32_Addr
 loadfile(fname)
 	register char *fname;
 {
+	union {
+		Elf32_Ehdr eh32;
+		Elf64_Ehdr eh64;
+	} eh;
 	int fd, i;
-	Elf32_Ehdr eh;
-	Elf32_Phdr *ph;
+	Elf32_Addr entry;
 	char *errs = 0;
-	char buf[4096];
 
 	if ((fd = oopen(fname, 0)) < 0) {
-		errs="open err: %s\n";
-		goto err;
+		printf("can't open file %s\n", fname);
+		return NULL;
 	}
 
-	/* read the elf header */
-	if(oread(fd, (char *)&eh, sizeof(eh)) != sizeof(eh)) {
-		goto serr;
+	/* read the ELF header and check that it IS an ELF header */
+	if (oread(fd, (char *)&eh, sizeof(eh)) != sizeof(eh)) {
+		printf("error: ELF header read error\n");
+		return NULL;
 	}
+	if (!IS_ELF(eh.eh32)) {
+		printf("not an elf file\n");
+		return NULL;
+	}
+
+	/* Determine CLASS */
+	if (eh.eh32.e_ident[EI_CLASS] == ELFCLASS32)
+		entry = loadfile32(fd, (void *)&eh);
+	else if (eh.eh32.e_ident[EI_CLASS] == ELFCLASS64)
+		entry = loadfile64(fd, (void *)&eh);
+	else {
+		printf("unknown ELF class\n");
+		return NULL;
+	}
+	return entry;
+}
+
+Elf32_Addr
+loadfile32(int fd, Elf32_Ehdr *eh)
+{
+	char buf[4096];
+	Elf32_Phdr *ph;
+	int i;
 
 	ph = (Elf32_Phdr *) buf;
-	olseek(fd, eh.e_phoff, 0);
-	if(oread(fd, (char *)ph, 4096) != 4096) {
-		goto serr;
+	olseek(fd, eh->e_phoff, 0);
+	if (oread(fd, (char *)ph, 4096) != 4096) {
+		printf("unexpected EOF\n");
+		return NULL;
 	}
 
 	tablebase = 0;
+	printf("Loading ELF32 file\n");
 
-	for(i = 0; i < eh.e_phnum; i++, ph++) {
-		if(ph->p_type == PT_LOAD) {
+	for (i = 0; i < eh->e_phnum; i++, ph++) {
+		if (ph->p_type == PT_LOAD) {
 			olseek(fd, ph->p_offset, 0);
-			printf("0x%x:0x%x, ",ph->p_paddr, ph->p_filesz);
-			if(oread(fd, (char *)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
-				goto serr;
+			printf("0x%x:0x%x, ",(long)ph->p_paddr, (long)ph->p_filesz);
+			if (oread(fd, (char *)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
+				printf("unexpected EOF\n");
+				return NULL;
 			}
 			if(ph->p_memsz > ph->p_filesz) {
 				printf("Zero 0x%x:0x%x, ",
-					ph->p_paddr + ph->p_filesz,
-					ph->p_memsz - ph->p_filesz);
+					(long)(ph->p_paddr + ph->p_filesz),
+					(long)(ph->p_memsz - ph->p_filesz));
 				bzero((void *)(ph->p_paddr + ph->p_filesz),
 					ph->p_memsz - ph->p_filesz);
 			}
@@ -169,16 +223,55 @@ loadfile(fname)
 			}
 		}
 	}
-	printf("start at 0x%x\n", eh.e_entry);
-	memset(tablebase, 0, 4096);
-	loadsymtab(fd, &eh, 0);
-	return(eh.e_entry);
-serr:
-	errs = "%s sz err\n";
-err:
-	printf(errs, fname);
-	return (-1);
+	memset((void *)tablebase, 0, 4096);
+	loadsymtab(fd, eh, 0);
+	return(eh->e_entry);
 }
+
+Elf32_Addr
+loadfile64(int fd, Elf64_Ehdr *eh)
+{
+	char buf[4096];
+	Elf64_Phdr *ph;
+	int i;
+
+	ph = (Elf64_Phdr *) buf;
+	olseek(fd, eh->e_phoff, 0);
+	if (oread(fd, (char *)ph, 4096) != 4096) {
+		printf("unexpected EOF\n");
+		return NULL;
+	}
+
+	tablebase = 0;
+	printf("Loading ELF64 file\n");
+
+	for (i = 0; i < eh->e_phnum; i++, ph++) {
+		if (ph->p_type == PT_LOAD) {
+			olseek(fd, ph->p_offset, 0);
+			printf("0x%x:0x%x, ",ph->p_paddr, ph->p_filesz);
+			if (oread(fd, (char *)(long)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
+				printf("unexpected EOF\n");
+				return NULL;
+			}
+			if(ph->p_memsz > ph->p_filesz) {
+				printf("Zero 0x%x:0x%x, ",
+					ph->p_paddr + ph->p_filesz,
+					ph->p_memsz - ph->p_filesz);
+				bzero((void *)(long)(ph->p_paddr + ph->p_filesz),
+					ph->p_memsz - ph->p_filesz);
+			}
+			if((ph->p_paddr + ph->p_memsz) > tablebase) {
+				tablebase = ph->p_paddr + ph->p_memsz;
+			}
+		}
+	}
+	memset((void *)tablebase, 0, 4096);
+//	loadsymtab(fd, &eh, 0);
+	return(eh->e_entry);
+}
+
+
+
 int
 loadsymtab(int fd, Elf32_Ehdr *eh, int flags)
 {
