@@ -28,10 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.c,v 1.44 2003/01/05 22:41:35 deraadt Exp $
+ * $Id: aic7xxx.c,v 1.45 2003/03/21 14:58:06 drahn Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.80 2001/12/16 17:38:30 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.44 2003/01/05 22:41:35 deraadt Exp $
+ * $OpenBSD: aic7xxx.c,v 1.45 2003/03/21 14:58:06 drahn Exp $
  */
 
 #ifdef __OpenBSD__
@@ -558,8 +558,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				scb->flags |= SCB_AUTO_NEGOTIATE;
 			}
 			hscb->cdb_len = sizeof(*sc);
-			hscb->dataptr = ahc_htole32(sg->addr); 
-			hscb->datacnt = ahc_htole32(sg->len);
+			hscb->dataptr = sg->addr; 
+			hscb->datacnt = sg->len;
 			hscb->sgptr = scb->sg_list_phys | SG_FULL_RESID;
 			hscb->sgptr = ahc_htole32(hscb->sgptr);
 			scb->sg_count = 1;
