@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.26 2004/09/25 02:33:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.27 2004/09/25 06:35:50 brad Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -812,7 +812,7 @@ error:
  * Find all arguments when a positional parameter is encountered.  Returns a
  * table, indexed by argument number, of pointers to each arguments.  The
  * initial argument table should be an array of STATIC_ARG_TBL_SIZE entries.
- * It will be replaces with a mmap-ed one if it overflows (malloc cannot be
+ * It will be replaced with a mmap-ed one if it overflows (malloc cannot be
  * used since we are attempting to make snprintf thread safe, and alloca is
  * problematic since we have nested functions..)
  */
