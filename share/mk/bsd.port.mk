@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.49 1998/11/17 07:14:16 form Exp $
+#	$OpenBSD: bsd.port.mk,v 1.50 1998/11/19 04:20:09 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -21,7 +21,7 @@
 # contact information on the person(s) to contact if you have questions/
 # suggestions about that specific port.  By default (if no MAINTAINER
 # is listed), a port is maintained by the subscribers of the ports@freebsd.org
-# mailing list (OpenBSD: ports@openbsd.org), and any correspondece
+# mailing list (OpenBSD: ports@openbsd.org), and any correspondence
 # should be directed there.  
 #
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
@@ -114,8 +114,10 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # EXTRACT_ONLY	- If defined, a subset of ${DISTFILES} you want to
 #			  	  actually extract.
 # PATCHDIR 		- A directory containing any additional patches you made
-#				  to port this software to FreeBSD (default:
+#				  to port this software to OpenBSD (default:
 #				  ${.CURDIR}/patches)
+# PATCH_LIST	- list of patches to apply, can include wildcards (default:
+#                 patch-*)
 # SCRIPTDIR 	- A directory containing any auxiliary scripts
 #				  (default: ${.CURDIR}/scripts)
 # FILESDIR 		- A directory containing any miscellaneous additional files.
@@ -310,6 +312,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  the same file.
 # checksum		- Use files/md5 to ensure that your distfiles are valid.
 # makesum		- Generate files/md5 (only do this for your own ports!).
+# addsum		- update files/md5 in a non-destructive way (own ports only!)
 # readme		- Create a README.html file describing the category or package
 # mirror-distfiles	- Mirror the distfile(s) if they are freely redistributable
 #				  Setting MIRROR_DISTFILE to "no" in the package Makefile
@@ -381,6 +384,8 @@ PATCHDIR?=		${.CURDIR}/patches.${ARCH}
 .else
 PATCHDIR?=		${.CURDIR}/patches
 .endif
+
+PATCH_LIST?=    patch-*
 
 .if exists(${.CURDIR}/scripts.${ARCH}-${OPSYS})
 SCRIPTDIR?=		${.CURDIR}/scripts.${ARCH}-${OPSYS}
@@ -668,6 +673,7 @@ GZIP?=		-9
 GZIP_CMD?=	/usr/bin/gzip -nf ${GZIP}
 LDCONFIG?=	[ ! -x /sbin/ldconfig ] || /sbin/ldconfig
 LN?=		/bin/ln
+M4?=		/usr/bin/m4
 MKDIR?=		/bin/mkdir -p
 MV?=		/bin/mv
 READLINK?=	/usr/bin/readlink
@@ -1064,6 +1070,8 @@ checksum: fetch
 	@${DO_NADA}
 makesum:
 	@${DO_NADA}
+addsum:
+	@${DO_NADA}
 .endif
 
 # Disable patch
@@ -1231,27 +1239,27 @@ do-patch:
 	  done)
 .endif
 	@if [ -d ${PATCHDIR} ]; then \
-		if [ "`echo ${PATCHDIR}/patch-*`" = "${PATCHDIR}/patch-*" ]; then \
-			${ECHO_MSG} "===>   Ignoring empty patch directory"; \
-			if [ -d ${PATCHDIR}/CVS ]; then \
-				${ECHO_MSG} "===>   Perhaps you forgot the -P flag to cvs co or update?"; \
-			fi; \
-		else \
-			${ECHO_MSG} "===>  Applying ${OPSYS} patches for ${PKGNAME}" ; \
-			for i in ${PATCHDIR}/patch-*; do \
-				case $$i in \
-					*.orig|*.rej|*~) \
-						${ECHO_MSG} "===>   Ignoring patchfile $$i" ; \
-						;; \
-					*) \
+		for i in ${PATCHDIR}/${PATCH_LIST}; do \
+			case $$i in \
+				*.orig|*.rej|*~) \
+					${ECHO_MSG} "===>   Ignoring patchfile $$i" ; \
+					;; \
+				*) \
+				    if [ -e $$i ]; then \
 						if [ ${PATCH_DEBUG_TMP} = yes ]; then \
 							${ECHO_MSG} "===>   Applying ${OPSYS} patch $$i" ; \
 						fi; \
 						${PATCH} ${PATCH_ARGS} < $$i; \
-						;; \
-				esac; \
-			done; \
-		fi; \
+					else \
+						${ECHO_MSG} "===>   Can't find patch matching $$i"; \
+						if [ -d ${PATCHDIR}/CVS -a "$$i" = \
+							"${PATCHDIR}/patch-*" ]; then \
+								${ECHO_MSG} "===>   Perhaps you forgot the -P flag to cvs co or update?"; \
+						fi; \
+					fi; \
+					;; \
+			esac; \
+		done; \
 	fi
 .endif
 
@@ -1663,6 +1671,26 @@ makesum: fetch
 	@for file in ${_IGNOREFILES}; do \
 		${ECHO} "MD5 ($$file) = IGNORE" >> ${MD5_FILE}; \
 	done
+.endif
+
+.if !target(addsum)
+addsum: fetch
+	@${MKDIR} ${FILESDIR}
+	@touch ${MD5_FILE}
+	@(cd ${DISTDIR}; \
+	 for file in ${_CKSUMFILES}; do \
+		${MD5} $$file >> ${MD5_FILE}; \
+	 done)
+	@for file in ${_IGNOREFILES}; do \
+		${ECHO} "MD5 ($$file) = IGNORE" >> ${MD5_FILE}; \
+	done
+	@sort -u ${MD5_FILE} >${MD5_FILE}.new
+	@${MV} -f ${MD5_FILE}.new ${MD5_FILE}
+	@if [ `${SED} -e 's/\=.*$$//' ${MD5_FILE} | uniq -d | wc -l` -ne 0 ]; then \
+		${ECHO} "Inconsistent checksum in ${MD5_FILE}"; \
+	else \
+		${ECHO} "${MD5_FILE} updated okay, don't forget to remove cruft"; \
+	fi
 .endif
 
 .if !target(checksum)
