@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.8 2000/04/26 15:44:18 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.9 2000/04/29 20:40:04 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -26,9 +26,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+require 5.6.0;
+
 use strict;
 use File::Find;
-use IO::File;
+use File::Temp qw/tempfile/;
+use File::Compare;
 use Getopt::Std;
 
 my ($picky, $testmode);
@@ -37,25 +40,38 @@ my ($picky, $testmode);
 #
 #   write $list to file named $file, removing duplicate entries.
 #   Change $file mode/owners to expected values
+#   Write to temporary file first, and do the copy only if changes happened.
 #
 sub write_uniques
 {
     my $list = shift;
     my $f = shift;
-    my ($out, $last);
     local $_;
 
-    $out = new IO::File $f, "w" or die "$0: Can't open $f";
+    my ($out, $tempname);
+    ($out, $tempname) = tempfile() or die "$0: Can't open temporary file";
 
     my @sorted = sort @$list;
+    my $last;
 
     while ($_ = shift @sorted) {
 	print $out $_, "\n" unless defined $last and $_ eq $last;
 	$last = $_;
     }
     close $out;
-    chmod 0444, $f;
-    chown 0, (getgrnam 'bin')[2], $f;
+    if (compare($tempname, $f) == 0) {
+    	unlink($tempname);
+    } else {
+    	use File::Copy;
+
+	if (move($tempname, $f)) {
+	    chmod 0444, $f;
+	    chown 0, (getgrnam 'bin')[2], $f;
+	} else {
+	    print STDERR "$0: Can't create $f ($!), temporary result is in $tempname\n";
+	    exit 1;
+	}
+    }
 }
 
 sub found
@@ -388,10 +404,13 @@ sub scan_manpages
     for (@$list) {
 	my ($file, $subjects);
 	if (m/\.(?:Z|gz)$/) {
-	    $file = new IO::File "gzip -fdc $_|";
+	    unless (open $file, '-|', "gzip -fdc $_") {
+	    	warn "$0: Can't decompress $_\n";
+		next;
+	    }
 	    $_ = $`;
 	} else {
-	    unless ($file = new IO::File $_) {
+	    unless (open $file, '<', $_) {
 	    	warn "$0: Can't read $_\n";
 		next;
 	    }
@@ -450,22 +469,21 @@ if (defined $opts{'d'}) {
     chdir $mandir;
 
     my $whatis = "$mandir/whatis.db";
-    my $old = new IO::File $whatis or 
+    open(my $old, '<', $whatis) or
 	die "$0 $whatis to merge with";
     my $subjects = scan_manpages(\@ARGV);
     while (<$old>) {
 	chomp;
 	push(@$subjects, $_);
     }
-    close $old;
+    close($old);
     write_uniques($subjects, $whatis);
     exit 0;
 }
 if ($#ARGV == -1) {
     local $_;
     @ARGV=();
-    my $conf;
-    $conf = new IO::File '/etc/man.conf' or 
+    open(my $conf, '<', '/etc/man.conf') or 
 	die "$0: Can't open /etc/man.conf";
     while (<$conf>) {
 	chomp;
