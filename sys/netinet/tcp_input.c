@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.31 1999/02/09 22:58:24 hugh Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.32 1999/02/15 02:39:02 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2344,6 +2344,10 @@ tcp_sack_option(tp, th, cp, optlen)
 		if (tp->snd_holes == 0) { /* first hole */
 			tp->snd_holes = (struct sackhole *)
 			    malloc(sizeof(struct sackhole), M_PCB, M_NOWAIT);
+			if (tp->snd_holes == NULL) {
+				/* ENOBUFS, so ignore SACKed block for now*/
+				continue;  
+			}
 			cur = tp->snd_holes;
 			cur->start = th->th_ack;
 			cur->end = sack.start;
@@ -2435,6 +2439,10 @@ tcp_sack_option(tp, th, cp, optlen)
 				 * ACKs some data in middle of a hole; need to 
 				 * split current hole
 				 */
+				temp = (struct sackhole *)malloc(sizeof(*temp),
+				    M_PCB,M_NOWAIT);
+				if (temp == NULL) 
+					continue; /* ENOBUFS */
 #if defined(TCP_SACK) && defined(TCP_FACK)
 				if (SEQ_GT(cur->rxmit, sack.end)) 
 					tp->retran_data -= 
@@ -2445,8 +2453,6 @@ tcp_sack_option(tp, th, cp, optlen)
 					    tcp_seq_subtract(cur->rxmit, 
 					    sack.start);
 #endif /* TCP_FACK */
-				temp = (struct sackhole *)malloc(sizeof(*temp),
-				    M_PCB,M_NOWAIT);
 				temp->next = cur->next;
 				temp->start = sack.end;
 				temp->end = cur->end;
@@ -2472,6 +2478,8 @@ tcp_sack_option(tp, th, cp, optlen)
 			 */
 			temp = (struct sackhole *) malloc(sizeof(*temp),
 			    M_PCB, M_NOWAIT);
+			if (temp == NULL) 
+				continue; /* ENOBUFS */
 			temp->start = tp->rcv_lastsack;
 			temp->end = sack.start;
 			temp->dups = min(tcprexmtthresh, 
@@ -2487,9 +2495,8 @@ tcp_sack_option(tp, th, cp, optlen)
 	}
 #if defined(TCP_SACK) && defined(TCP_FACK)
 	/* 
-	 * Update retran_data, snd_fack, and snd_awnd.  Go through the list of 
+	 * Update retran_data and snd_awnd.  Go through the list of 
 	 * holes.   Increment retran_data by (hole->rxmit - hole->start).
-	 * snd_fack gets the highest value of hole->end. 
 	 */
 	tp->retran_data = 0;
 	cur = tp->snd_holes;
