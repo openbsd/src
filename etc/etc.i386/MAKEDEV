@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.96 2001/06/04 17:59:48 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.97 2001/06/21 13:24:02 nate Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,7 @@
 # Terminal ports:
 #	tty*	PC COM ports
 #	ttyc*	Cyclades serial ports
+#	ttyZ*	Cyclades-Ze serial ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -339,6 +340,16 @@ ttyc*)
 	mknod cuac$unit c 38 $(( $unit + 128 ))
 	chown uucp.dialer ttyc$unit cuac$unit
 	chmod 660 ttyc$unit cuac$unit
+	;;
+
+ttyZ*)
+	major=71
+	minor=$unit
+	rm -f ttyZ$minor cuaZ$minor
+	mknod ttyZ$minor c $major $(($minor  ))
+	mknod cuaZ$minor c $major $(($minor + 128 ))
+	chown uucp.wheel ttyZ$minor cuaZ$minor
+	chmod 600 ttyZ$minor cuaZ$minor
 	;;
 
 fd)
