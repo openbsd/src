@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.42 2002/01/23 00:39:48 art Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.43 2002/01/23 01:33:07 art Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -615,7 +615,7 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 	if (ipsec_policy_pool_initialized == 0) {
 		ipsec_policy_pool_initialized = 1;
 		pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy),
-		    0, 0, PR_FREEHEADER, "ipsec policy", NULL);
+		    0, 0, 0, "ipsec policy", NULL);
 	}
 
 	ipon = pool_get(&ipsec_policy_pool, 0);
@@ -707,7 +707,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	if (ipsec_acquire_pool_initialized == 0) {
 		ipsec_acquire_pool_initialized = 1;
 		pool_init(&ipsec_acquire_pool, sizeof(struct ipsec_acquire),
-		    0, 0, PR_FREEHEADER, "ipsec acquire", NULL);
+		    0, 0, 0, "ipsec acquire", NULL);
 	}
 
 	ipa = pool_get(&ipsec_acquire_pool, 0);

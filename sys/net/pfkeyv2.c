@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.78 2002/01/23 00:39:48 art Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.79 2002/01/23 01:33:07 art Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1543,7 +1543,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		{
 		    ipsec_policy_pool_initialized = 1;
 		    pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy),
-			      0, 0, PR_FREEHEADER, "ipsec policy", NULL);
+			      0, 0, 0, "ipsec policy", NULL);
 		}
 
 		/* Allocate policy entry */
