@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.2 2004/01/31 15:13:03 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.3 2004/02/04 09:47:10 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -288,7 +288,9 @@ parent_open_bpf(int fd, int *bpfd)
 		errx(1, "Invalid interface size specified");
 	*bpfd = pcap_live(device, snaplen, promisc);
 	if (*bpfd < 0)
-		logmsg(LOG_NOTICE, "[priv]: failed to open bpf");
+		logmsg(LOG_NOTICE,
+		    "[priv]: failed to open bpf device for %s: %s",
+		    device, strerror(errno));
 	send_fd(fd, *bpfd);
 	/* do not close bpfd until filter is set */
 }
