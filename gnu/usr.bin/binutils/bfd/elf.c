@@ -862,11 +862,6 @@ bfd_section_from_shdr (abfd, shindex)
 	if (! bfd_section_from_shdr (abfd, hdr->sh_info))
 	  return false;
 
-/*XXX Why is sh_info sometimes (-static linked) zero? */
-        if(hdr->sh_info == 0)
-          return true;
-/*XXX*/
-
 	target_sect = bfd_section_from_elf_index (abfd, hdr->sh_info);
 	if (target_sect == NULL)
 	  return false;
