@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.12 1998/07/03 16:43:56 csapuntz Exp $	*/
+/*	$OpenBSD: cp.c,v 1.13 1999/05/06 17:19:45 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.12 1998/07/03 16:43:56 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.13 1999/05/06 17:19:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static char rcsid[] = "$OpenBSD: cp.c,v 1.12 1998/07/03 16:43:56 csapuntz Exp $"
 PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
-int Rflag, iflag, pflag, rflag;
+int Rflag, fflag, iflag, pflag, rflag;
 int myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -129,10 +129,12 @@ main(argc, argv)
 			Rflag = 1;
 			break;
 		case 'f':
+			fflag = 1;
 			iflag = 0;
 			break;
 		case 'i':
 			iflag = isatty(fileno(stdin));
+			fflag = 0;
 			break;
 		case 'p':
 			pflag = 1;

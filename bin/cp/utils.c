@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.13 1998/09/26 21:53:16 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.14 1999/05/06 17:19:47 millert Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.13 1998/09/26 21:53:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.14 1999/05/06 17:19:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,13 @@ copy_file(entp, dne)
 	fs = entp->fts_statp;
 
 	/*
+	 * In -f (force) mode, we always unlink the destination first
+	 * if it exists.  Note that -i and -f are mututally exclusive.
+	 */
+	if (!dne && fflag)
+		(void)unlink(to.p_path);
+
+	/*
 	 * If the file exists and we're interactive, verify with the user.
 	 * If the file DNE, set the mode to be the from file, minus setuid
 	 * bits, modified by the umask; arguably wrong, but it makes copying
@@ -85,7 +92,7 @@ copy_file(entp, dne)
 	 * other choice is 666 or'ed with the execute bits on the from file
 	 * modified by the umask.)
 	 */
-	if (!dne) {
+	if (!dne && !fflag) {
 		if (iflag) {
 			(void)fprintf(stderr, "overwrite %s? ", to.p_path);
 			checkch = ch = getchar();
