@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc,v 1.11 2001/07/15 13:10:49 assar Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.12 2001/07/18 23:56:32 mickey Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -42,7 +42,8 @@ PPC=	$S/arch/powerpc
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 		-Dpowerpc
-CWARNFLAGS=	-Werror -Wreturn-type
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100074 -e start
