@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.8 1997/11/06 05:58:26 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.9 1997/11/07 16:51:21 csapuntz Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -44,6 +44,10 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ffs/ffs_extern.h>
+#endif
+
+#ifdef EXT2FS
+#include <ufs/ext2fs/ext2fs_extern.h>
 #endif
 
 #ifdef CD9660
@@ -158,6 +162,9 @@ static struct vfsconf vfsconflist[] = {
         { &mfs_vfsops, "mfs", 3, 0, MNT_LOCAL, mfs_mountroot, NULL },
 #endif
 
+#ifdef EXT2FS
+	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, ext2fs_mountroot, NULL },
+#endif
         /* ISO9660 (aka CDROM) Filesystem */
 #ifdef CD9660
         { &cd9660_vfsops, "cd9660", 14, 0, MNT_LOCAL, cd9660_mountroot, NULL },
