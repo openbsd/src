@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.18 1999/11/10 23:36:44 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.19 1999/11/11 22:58:38 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -317,8 +317,7 @@ int auth_rhosts(struct passwd *pw, const char *client_user,
    its host key.  Returns true if authentication succeeds. */
 int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
 		    unsigned int bits, BIGNUM *client_host_key_e,
-		    BIGNUM *client_host_key_n, int ignore_rhosts,
-		    int strict_modes);
+		    BIGNUM *client_host_key_n);
 
 /* Tries to authenticate the user using password.  Returns true if
    authentication succeeds. */

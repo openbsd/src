@@ -10,6 +10,8 @@ PermitRootLogin yes
 #
 # Don't read ~/.rhosts and ~/.shosts files
 IgnoreRhosts yes
+# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+#IgnoreUserKnownHosts yes
 StrictModes yes
 X11Forwarding no
 X11DisplayOffset 10

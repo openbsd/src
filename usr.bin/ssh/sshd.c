@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.49 1999/11/11 15:23:14 markus Exp $");
+RCSID("$Id: sshd.c,v 1.50 1999/11/11 22:58:39 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1254,11 +1254,8 @@ do_authentication(char *user, int privileged_port)
 	    packet_integrity_check(plen, (4 + ulen) + 4 + elen + nlen, type);
 	  }
 
-	  /* Try to authenticate using /etc/hosts.equiv and .rhosts. */
 	  if (auth_rhosts_rsa(pw, client_user,
-			      client_host_key_bits, client_host_key_e,
-			      client_host_key_n, options.ignore_rhosts,
-			      options.strict_modes))
+			      client_host_key_bits, client_host_key_e, client_host_key_n))
 	    {
 	      /* Authentication accepted. */
 	      authenticated = 1;
