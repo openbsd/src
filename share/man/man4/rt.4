@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rt.4,v 1.5 2002/01/23 19:17:13 mickey Exp $
+.\"	$OpenBSD: rt.4,v 1.6 2002/08/28 21:24:20 mickey Exp $
 .\"	$RuOBSD: rt.4,v 1.3 2001/10/26 05:38:43 form Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -33,14 +33,14 @@
 .Sh SYNOPSIS
 .Cd "rt*   at isa? port 0x20c"
 .Cd "rt*   at isa? port 0x30c"
-.Cd "rt*   at isa? port 0x284"
-.Cd "rt*   at isa? port 0x384"
+.Cd "rt*   at isapnp?"
 .Cd "radio* at rt?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the AIMS Lab Radiotrack FM radio tuners and
-compatible RadioReveal RA300 and SoundForte RadioX SF16-FMI FM radio tuners.
+compatible - RadioReveal RA300 FM radio tuners and tuners at
+SoundForte RadioX SF16-FMI (Creative ViBRA16C PnP).
 .Pp
 The Radiotrack is a stereo FM tuner that allows to tune in the range
 87.5 - 108.0 MHz, report signal status on the current frequency, and
@@ -54,14 +54,15 @@ The Radiotrack cards take only one I/O port.
 The I/O port is set by the driver to the value specified in
 the configuration file and must be either 0x20c or 0x30c.
 .Sh BUGS
-Support for the SF16-FMI cards is rather ugly, volume control is not working
-and the driver can not correctly determine signal state.
+Support for the SF16-FMI cards is rather ugly, the driver can not
+determine signal state and force audio output to mono.
 .Pp
 It is impossible to determine the frequency tuned into.
 Thus, the driver will report an internally stored value even if it is not
 correct (e.g. tunning was done through the direct I/O access).
 .Sh SEE ALSO
 .Xr isa 4 ,
+.Xr isapnp 4 ,
 .Xr radio 4 ,
 .Xr radio 9
 .Sh AUTHORS
