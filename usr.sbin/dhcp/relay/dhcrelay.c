@@ -146,7 +146,7 @@ int main (argc, argv)
 				}
 			}
 			if (iap) {
-				sp = (struct server_list *)malloc (sizeof *sp);
+				sp = calloc(1, sizeof *sp);
 				if (!sp)
 					error ("no memory for server.\n");
 				sp -> next = servers;
@@ -186,7 +186,6 @@ int main (argc, argv)
 
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp -> next) {
-		memset(&sp->to, 0, sizeof(sp->to));
 		sp -> to.sin_port = local_port;
 		sp -> to.sin_family = AF_INET;
 		sp -> to.sin_len = sizeof sp -> to;
