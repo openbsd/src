@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.7 (Berkeley) 9/30/90
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:48:22 deraadt Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$NetBSD: Makefile,v 1.6 1996/01/02 17:30:27 perry Exp $
 
 PROG=	syslogd
 SRCS=	syslogd.c ttymsg.c

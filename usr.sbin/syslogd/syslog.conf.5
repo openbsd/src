@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)syslog.conf.5	5.3 (Berkeley) 5/10/91
-.\"	$Id: syslog.conf.5,v 1.1.1.1 1995/10/18 08:48:22 deraadt Exp $
+.\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
+.\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd May 10, 1991
+.Dd June 9, 1993
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -225,6 +225,8 @@ the level of ``err'' or higher, not at the level of ``crit'' or higher.
 .Xr syslogd 8
 .Sh HISTORY
 The
-.Nm syslog.conf
-file format is
-.Ud .
+.Nm
+file appeared in
+.Bx 4.3 ,
+along with
+.Xr syslogd 8 .
