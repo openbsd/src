@@ -100,8 +100,12 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc(int);
+#ifndef	pmap_activate
 void		 pmap_activate(struct proc *);
+#endif
+#ifndef	pmap_deactivate
 void		 pmap_deactivate(struct proc *);
+#endif
 void		 pmap_unwire(pmap_t, vaddr_t);
 
 #if !defined(pmap_clear_modify)
