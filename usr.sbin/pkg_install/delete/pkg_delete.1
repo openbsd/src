@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.15 2003/03/07 06:30:38 david Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.16 2003/08/01 08:56:01 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl vDdnf
+.Op Fl vDdnfq
 .Op Fl p Ar prefix
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
@@ -77,6 +77,8 @@ the package.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
+.It Fl q
+Delete package quickly, do not bother checking md5s before removing files.
 .El
 .Sh TECHNICAL DETAILS
 .Nm

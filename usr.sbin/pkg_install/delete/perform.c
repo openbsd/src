@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.14 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.15 2003/08/01 08:56:01 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: perform.c,v 1.14 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: perform.c,v 1.15 2003/08/01 08:56:01 espie Exp $";
 #endif
 
 /*
@@ -221,7 +221,7 @@ try_again:
     }
     if (!Fake) {
 	/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
-	if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
+	if (delete_package(FALSE, CleanDirs, CheckMD5, &Plist) == FAIL)
 	    pwarnx(
 	"couldn't entirely delete package (perhaps the packing list is\n"
 	"incorrectly specified?)");

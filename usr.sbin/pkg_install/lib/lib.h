@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.12 2003/04/04 08:56:01 avsm Exp $ */
+/* $OpenBSD: lib.h,v 1.13 2003/08/01 08:56:01 espie Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -200,7 +200,7 @@ void		delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
 void		write_plist(package_t *, FILE *);
 void		read_plist(package_t *, FILE *);
 int		plist_cmd(char *, char **);
-int		delete_package(Boolean, Boolean, package_t *);
+int		delete_package(Boolean, Boolean, Boolean, package_t *);
 
 /* For all */
 int		pkg_perform(char **);
