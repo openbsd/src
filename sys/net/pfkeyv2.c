@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.95 2004/11/29 21:42:20 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.96 2004/12/10 18:50:51 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1822,6 +1822,11 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	if (ipo->ipo_dstid)
 		i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
 
+	if (ipo->ipo_local_cred)
+		i += sizeof(struct sadb_x_cred) + PADUP(ipo->ipo_local_cred->ref_len);
+
+	if (ipo->ipo_local_auth)
+		i += sizeof(struct sadb_x_cred) + PADUP(ipo->ipo_local_auth->ref_len);
 
 	/* Allocate */
 	if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
@@ -2040,7 +2045,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		sadb_comb++;
 	}
 
-    /* Send the ACQUIRE message to all compliant registered listeners. */
+	/* Send the ACQUIRE message to all compliant registered listeners. */
 	if ((rval = pfkeyv2_sendmessage(headers,
 	    PFKEYV2_SENDMESSAGE_REGISTERED, NULL, smsg->sadb_msg_satype, 0))
 	    != 0)
