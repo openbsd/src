@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.5 2003/06/06 09:47:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -233,7 +233,10 @@ aarpwhohas( ac, sat )
 	bcopy((caddr_t)atmulticastaddr, (caddr_t)eh->ether_dhost,
 		sizeof( eh->ether_dhost ));
 	eh->ether_type = htons(AT_LLC_SIZE + sizeof(struct ether_aarp));
-	M_PREPEND( m, AT_LLC_SIZE, M_WAIT );
+	M_PREPEND( m, AT_LLC_SIZE, M_DONTWAIT );
+	if (!m)
+	    return;
+
 	llc = mtod( m, struct llc *);
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 	llc->llc_control = LLC_UI;
@@ -660,7 +663,10 @@ aarpprobe( arg )
 		sizeof( eh->ether_dhost ));
 	eh->ether_type = htons( AT_LLC_SIZE +
 		sizeof( struct ether_aarp ));
-	M_PREPEND( m, AT_LLC_SIZE, M_WAIT );
+	M_PREPEND( m, AT_LLC_SIZE, M_DONTWAIT );
+	if (!m)
+	    return;
+
 	llc = mtod( m, struct llc *);
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 	llc->llc_control = LLC_UI;
