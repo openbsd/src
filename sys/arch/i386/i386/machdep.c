@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 1997/01/16 19:57:17 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 1997/01/27 01:16:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -625,6 +625,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_handler = catcher;
+	frame.sf_sip = NULL;
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -661,6 +662,20 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_esp = tf->tf_esp;
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
+	if (psp->ps_siginfo & sigmask(sig)) {
+		frame.sf_sip = &fp->sf_si;
+		initsiginfo(frame.sf_sip, sig);
+		fixsiginfo(frame.sf_sip, sig, code, (caddr_t)rcr2());
+		if (sig == SIGSEGV) {
+			/* try to be more specific about read or write */
+			if (tf->tf_err & PGEX_W)
+				frame.sf_si.si_code = SEGV_ACCERR;
+			else
+				frame.sf_si.si_code = SEGV_MAPERR;
+		}
+	}
+
+	/* XXX don't copyout siginfo if not needed? */
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -764,6 +779,75 @@ sys_sigreturn(p, v, retval)
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
+}
+
+void
+fixsiginfo(si, sig, code, addr)
+	siginfo_t *si;
+	int sig;
+	u_long code;
+	caddr_t addr;
+{
+	si->si_addr = addr;
+
+	switch (code) {
+	case T_PRIVINFLT:
+		si->si_code = ILL_PRVOPC;
+		si->si_trapno = T_PRIVINFLT;
+		break;
+	case T_BPTFLT:
+		si->si_code = TRAP_BRKPT;
+		si->si_trapno = T_BPTFLT;
+		break;
+	case T_ARITHTRAP:
+		si->si_code = FPE_INTOVF;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_PROTFLT:
+		si->si_code = SEGV_ACCERR;
+		si->si_trapno = T_PROTFLT;
+		break;
+	case T_TRCTRAP:
+		si->si_code = TRAP_TRACE;
+		si->si_trapno = T_TRCTRAP;
+		break;
+	case T_PAGEFLT:
+		si->si_code = SEGV_ACCERR;
+		si->si_trapno = T_PAGEFLT;
+		break;
+	case T_ALIGNFLT:
+		si->si_code = BUS_ADRALN;
+		si->si_trapno = T_ALIGNFLT;
+		break;
+	case T_DIVIDE:
+		si->si_code = FPE_FLTDIV;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_OFLOW:
+		si->si_code = FPE_FLTOVF;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_BOUND:
+		si->si_code = FPE_FLTSUB;
+		si->si_trapno = T_BOUND;
+		break;
+	case T_DNA:
+		si->si_code = FPE_FLTINV;
+		si->si_trapno = T_DNA;
+		break;
+	case T_FPOPFLT:
+		si->si_code = FPE_FLTINV;
+		si->si_trapno = T_FPOPFLT;
+		break;
+	case T_SEGNPFLT:
+		si->si_code = SEGV_MAPERR;
+		si->si_trapno = T_SEGNPFLT;
+		break;
+	case T_STKFLT:
+		si->si_code = ILL_BADSTK;
+		si->si_trapno = T_STKFLT;
+		break;
+	}
 }
 
 int	waittime = -1;
@@ -929,7 +1013,7 @@ dumpsys()
 	}
 
 #if 0	/* XXX this doesn't work.  grr. */
-        /* toss any characters present prior to dump */
+	/* toss any characters present prior to dump */
 	while (sget() != NULL); /*syscons and pccons differ */
 #endif
 
