@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.4 1997/12/12 09:04:17 deraadt Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.5 1997/12/15 10:13:03 deraadt Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ route_output(m, va_alist)
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
 			if (ifpaddr && (ifa = ifa_ifwithnet(ifpaddr)) &&
-			    (ifp = ifa->ifa_ifp))
+			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate))
 				ifa = ifaof_ifpforaddr(ifaaddr ? ifaaddr : gate,
 							ifp);
 			else if ((ifaaddr && (ifa = ifa_ifwithaddr(ifaaddr))) ||
