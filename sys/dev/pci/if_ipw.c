@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.20 2004/11/03 17:07:10 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.21 2004/11/03 17:10:03 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -305,9 +305,7 @@ ipw_detach(struct device* self, int flags)
 
 	ipw_stop(ifp, 1);
 	ipw_dmamem_stop(sc);
-
-	if (sc->flags & IPW_FLAG_FW_CACHED)
-		ipw_free_firmware(sc);
+	ipw_free_firmware(sc);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -1748,8 +1746,7 @@ ipw_cache_firmware(struct ipw_softc *sc, void *data)
 	u_char *p = data;
 	int error;
 
-	if (sc->flags & IPW_FLAG_FW_CACHED)
-		ipw_free_firmware(sc);
+	ipw_free_firmware(sc);
 
 	if ((error = copyin(data, &hdr, sizeof hdr)) != 0)
 		goto fail1;
@@ -1792,6 +1789,9 @@ fail1:	return error;
 void
 ipw_free_firmware(struct ipw_softc *sc)
 {
+	if (!(sc->flags & IPW_FLAG_FW_CACHED))
+		return;
+
 	free(sc->fw.main, M_DEVBUF);
 	free(sc->fw.ucode, M_DEVBUF);
 
