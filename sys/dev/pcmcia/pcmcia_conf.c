@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_conf.c,v 1.3 1996/05/03 07:59:41 deraadt Exp $	*/
+/*	$Id: pcmcia_conf.c,v 1.4 1996/08/31 18:01:02 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -35,7 +35,11 @@
  * This file is shared between user and kernel space, so be careful with the
  * coding conventions.
  */
+#ifdef _KERNEL
+#include <sys/errno.h>
+#else
 #include <errno.h>
+#endif
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
