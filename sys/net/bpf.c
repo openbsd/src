@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.51 2004/06/22 04:58:27 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.52 2004/09/12 09:35:50 claudio Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -945,7 +945,7 @@ bpf_setif(d, ifr)
 	struct bpf_d *d;
 	struct ifreq *ifr;
 {
-	struct bpf_if *bp;
+	struct bpf_if *bp, *candidate = NULL;
 	int s, error;
 
 	/*
@@ -959,6 +959,13 @@ bpf_setif(d, ifr)
 			continue;
 		/*
 		 * We found the requested interface.
+		 */
+		if (candidate == NULL || candidate->bif_dlt > bp->bif_dlt)
+			candidate = bp;
+	}
+
+	if (candidate != NULL) {
+		/*
 		 * Allocate the packet buffers if we need to.
 		 * If we're already attached to requested interface,
 		 * just flush the buffer.
@@ -969,14 +976,14 @@ bpf_setif(d, ifr)
 				return (error);
 		}
 		s = splimp();
-		if (bp != d->bd_bif) {
+		if (candidate != d->bd_bif) {
 			if (d->bd_bif)
 				/*
 				 * Detach if attached to something else.
 				 */
 				bpf_detachd(d);
 
-			bpf_attachd(d, bp);
+			bpf_attachd(d, candidate);
 		}
 		bpf_reset_d(d);
 		splx(s);
