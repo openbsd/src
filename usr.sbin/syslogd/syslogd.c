@@ -519,6 +519,7 @@ logmsg(pri, msg, from, flags)
 		if (f->f_file >= 0) {
 			fprintlog(f, flags, msg);
 			(void)close(f->f_file);
+			f->f_file = -1;
 		}
 		(void)sigsetmask(omask);
 		return;
@@ -647,7 +648,10 @@ fprintlog(f, flags, msg)
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != l) {
 			int e = errno;
-			(void)close(f->f_file);
+			if (f->f_file >= 0) {
+				(void)close(f->f_file);
+				f->f_file = -1;
+			}
 			f->f_type = F_UNUSED;
 			errno = e;
 			logerror("sendto");
@@ -688,6 +692,7 @@ fprintlog(f, flags, msg)
 					goto again;
 			} else {
 				f->f_type = F_UNUSED;
+				f->f_file = -1;
 				errno = e;
 				logerror(f->f_un.f_fname);
 			}
@@ -1091,7 +1096,7 @@ cfline(line, f)
 	case '/':
 		(void)strcpy(f->f_un.f_fname, p);
 		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
-			f->f_file = F_UNUSED;
+			f->f_type = F_UNUSED;
 			logerror(p);
 			break;
 		}
