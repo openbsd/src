@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.187 2003/12/31 22:14:41 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.188 2004/01/22 13:32:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1326,20 +1326,27 @@ host_v4(const char *s, int mask)
 {
 	struct node_host	*h = NULL;
 	struct in_addr		 ina;
-	int			 bits;
+	int			 bits = -1;
 
 	memset(&ina, 0, sizeof(struct in_addr));
-	if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) > -1) {
-		h = calloc(1, sizeof(struct node_host));
-		if (h == NULL)
-			err(1, "address: calloc");
-		h->ifname = NULL;
-		h->af = AF_INET;
-		h->addr.v.a.addr.addr32[0] = ina.s_addr;
-		set_ipmask(h, bits);
-		h->next = NULL;
-		h->tail = h;
+	if (strrchr(s, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+			return (NULL);
+	} else {
+		if (inet_pton(AF_INET, s, &ina) != 1)
+			return (NULL);
 	}
+
+	h = calloc(1, sizeof(struct node_host));
+	if (h == NULL)
+		err(1, "address: calloc");
+	h->ifname = NULL;
+	h->af = AF_INET;
+	h->addr.v.a.addr.addr32[0] = ina.s_addr;
+	if (bits != -1)
+		set_ipmask(h, bits);
+	h->next = NULL;
+	h->tail = h;
 
 	return (h);
 }
