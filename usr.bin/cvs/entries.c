@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.8 2004/07/30 17:37:13 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.9 2004/08/03 14:48:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -225,6 +225,31 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
 		return (-1);
 
 	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
+	ef->cef_flags &= ~CVS_ENTF_SYNC;
+
+	return (0);
+}
+
+
+/*
+ * cvs_ent_remove()
+ *
+ * Remove an entry from the Entries file <ef>.  The entry's name is given
+ * by <name>.
+ */
+
+int
+cvs_ent_remove(CVSENTRIES *ef, const char *name)
+{
+	struct cvs_ent *ent;
+
+	ent = cvs_ent_get(ef, name);
+	if (ent == NULL)
+		return (-1);
+
+	TAILQ_REMOVE(&(ef->cef_ent), ent, ce_list);
+	cvs_ent_free(ent);
+
 	ef->cef_flags &= ~CVS_ENTF_SYNC;
 
 	return (0);
