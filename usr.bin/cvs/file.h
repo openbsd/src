@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.8 2004/08/06 20:12:15 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.9 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -30,10 +30,16 @@
 #include <sys/param.h>
 
 #include <dirent.h>
+#include <search.h>
 
 struct cvs_file;
 struct cvs_dir;
 struct cvs_entries;
+
+
+#define CVS_FILE_MAXDEPTH     32
+#define CVS_FILE_NBUCKETS     256
+
 
 
 #define CF_STAT     0x01  /* obsolete */
@@ -68,23 +74,30 @@ struct cvs_entries;
 #define CVS_FST_CONFLICT  5
 #define CVS_FST_PATCHED   6
 
+ 
+struct cvs_fname {
+	char  *cf_name;
+	u_int  cf_ref;
+	SLIST_ENTRY(cvs_fname) cf_list;
+};
+
 
 TAILQ_HEAD(cvs_flist, cvs_file);
 
 
 typedef struct cvs_file {
-	char            *cf_path;
-	struct cvs_file *cf_parent;  /* parent directory (NULL if none) */
-	char            *cf_name;
-	mode_t           cf_mode;
-	time_t           cf_mtime;
-	u_int16_t        cf_cvstat;  /* cvs status of the file */
-	u_int16_t        cf_type;    /* uses values from dirent.h */
-	struct cvs_dir  *cf_ddat;    /* only for directories */
+	struct cvs_file  *cf_parent;  /* parent directory (NULL if none) */
+	struct cvs_fname *cf_name;
+	mode_t            cf_mode;
+	time_t            cf_mtime;
+	u_int16_t         cf_cvstat;  /* cvs status of the file */
+	u_int16_t         cf_type;    /* uses values from dirent.h */
+	struct cvs_dir   *cf_ddat;    /* only for directories */
 
 	TAILQ_ENTRY(cvs_file)  cf_list;
 } CVSFILE;
 
+#define CVS_FILE_NAME(cf)   (cf->cf_name->cf_name)
 
 
 #define CVS_DIRF_STATIC    0x01
@@ -92,12 +105,12 @@ typedef struct cvs_file {
 
 
 struct cvs_dir {
-	u_int               cd_flags;
 	struct cvsroot     *cd_root;
 	char               *cd_repo;
 	struct cvs_entries *cd_ent;
 	struct cvs_flist    cd_files;
-	u_int               cd_nfiles;
+	u_int16_t           cd_nfiles;
+	u_int16_t           cd_flags;
 };
 
 
@@ -116,13 +129,14 @@ struct cvs_dir {
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
-CVSFILE* cvs_file_create  (const char *, u_int, mode_t);
 CVSFILE* cvs_file_get     (const char *, int);
 CVSFILE* cvs_file_getspec (char **, int, int);
+CVSFILE* cvs_file_create  (CVSFILE *, const char *, u_int, mode_t);
 CVSFILE* cvs_file_find    (CVSFILE *, const char *);
 int      cvs_file_attach  (CVSFILE *, CVSFILE *);
+char*    cvs_file_getpath (CVSFILE *, char *, size_t);
 int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
-void     cvs_file_free    (struct cvs_file *);
+void     cvs_file_free    (CVSFILE *);
 
 
 #endif /* FILE_H */

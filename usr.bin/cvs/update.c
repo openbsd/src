@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.8 2004/08/27 15:55:31 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.9 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -119,15 +119,18 @@ cvs_update(int argc, char **argv)
 int
 cvs_update_file(CVSFILE *cf, void *arg)
 {
-	char *dir, *repo, rcspath[MAXPATHLEN];
+	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
 
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 			root = cf->cf_parent->cf_ddat->cd_root;
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
 		}
 		else {
 			root = cf->cf_ddat->cd_root;
@@ -146,23 +149,21 @@ cvs_update_file(CVSFILE *cf, void *arg)
 
 	rf = NULL;
 	if (cf->cf_parent != NULL) {
-		dir = cf->cf_parent->cf_path;
 		repo = cf->cf_parent->cf_ddat->cd_repo;
 	}
 	else {
-		dir = ".";
 		repo = NULL;
 	}
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		if (root->cr_method == CVS_METHOD_LOCAL)
-			cvs_printf("? %s\n", cf->cf_path);
+			cvs_printf("? %s\n", fpath);
 		else
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, CVS_FILE_NAME(cf));
 		return (0);
 	}
 
-	entp = cvs_ent_getent(cf->cf_path);
+	entp = cvs_ent_getent(fpath);
 	if (entp == NULL)
 		return (-1);
 
@@ -175,12 +176,12 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		switch (cf->cf_cvstat) {
 		case CVS_FST_UPTODATE:
-			cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_UNCHANGED, CVS_FILE_NAME(cf));
 			break;
 		case CVS_FST_ADDED:
 		case CVS_FST_MODIFIED:
-			cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
-			cvs_sendfile(root, cf->cf_path);
+			cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cf));
+			cvs_sendfile(root, fpath);
 			break;
 		default:
 			return (-1);
@@ -191,7 +192,7 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	}
 
 	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, cf->cf_path, RCS_FILE_EXT);
+	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
 
 	rf = rcs_open(rcspath, RCS_MODE_READ);
 	if (rf == NULL) {

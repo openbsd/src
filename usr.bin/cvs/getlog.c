@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.6 2004/11/18 15:54:17 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.7 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -126,15 +126,18 @@ cvs_getlog(int argc, char **argv)
 static int
 cvs_getlog_file(CVSFILE *cf, void *arg)
 {
-	char *dir, *repo, rcspath[MAXPATHLEN];
+	char *repo, fpath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
 
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 			root = cf->cf_parent->cf_ddat->cd_root;
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
 		}
 		else {
 			root = cf->cf_ddat->cd_root;
@@ -153,23 +156,22 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 
 	rf = NULL;
 	if (cf->cf_parent != NULL) {
-		dir = cf->cf_parent->cf_path;
 		repo = cf->cf_parent->cf_ddat->cd_repo;
 	}
 	else {
-		dir = ".";
 		repo = NULL;
 	}
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		if (root->cr_method == CVS_METHOD_LOCAL)
-			cvs_printf("? %s\n", cf->cf_path);
+			cvs_printf("? %s\n", fpath);
 		else
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
 		return (0);
 	}
 
-	entp = cvs_ent_getent(cf->cf_path);
+	entp = cvs_ent_getent(fpath);
 	if (entp == NULL)
 		return (-1);
 
@@ -182,11 +184,12 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		switch (cf->cf_cvstat) {
 		case CVS_FST_UPTODATE:
-			cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_UNCHANGED, CVS_FILE_NAME(cf));
 			break;
 		case CVS_FST_ADDED:
 		case CVS_FST_MODIFIED:
-			cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_ISMODIFIED,
+			    CVS_FILE_NAME(cf));
 			break;
 		default:
 			return (-1);
@@ -196,10 +199,10 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, cf->cf_path, RCS_FILE_EXT);
+	snprintf(fpath, sizeof(fpath), "%s/%s/%s%s",
+	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
 
-	rf = rcs_open(rcspath, RCS_MODE_READ);
+	rf = rcs_open(fpath, RCS_MODE_READ);
 	if (rf == NULL) {
 		cvs_ent_free(entp);
 		return (-1);

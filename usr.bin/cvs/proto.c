@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.27 2004/11/16 21:03:43 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.28 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -177,6 +177,8 @@ static int   cvs_server_logon = 0;
 static FILE *cvs_server_inlog = NULL;
 static FILE *cvs_server_outlog = NULL;
 
+static pid_t cvs_subproc_pid;
+
 
 /*
  * cvs_connect()
@@ -194,7 +196,6 @@ int
 cvs_connect(struct cvsroot *root)
 {
 	int argc, infd[2], outfd[2], errfd[2];
-	pid_t pid;
 	char *argv[16], *cvs_server_cmd, *vresp;
 
 	if (pipe(infd) == -1) {
@@ -221,12 +222,12 @@ cvs_connect(struct cvsroot *root)
 		return (-1);
 	}
 
-	pid = fork();
-	if (pid == -1) {
+	cvs_subproc_pid = fork();
+	if (cvs_subproc_pid == -1) {
 		cvs_log(LP_ERRNO, "failed to fork for cvs server connection");
 		return (-1);
 	}
-	if (pid == 0) {
+	else if (cvs_subproc_pid == 0) {
 		if ((dup2(infd[0], STDIN_FILENO) == -1) ||
 		    (dup2(outfd[1], STDOUT_FILENO) == -1)) {
 			cvs_log(LP_ERRNO,
@@ -960,16 +961,18 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 int
 cvs_senddir(struct cvsroot *root, CVSFILE *dir) 
 {
-	char buf[MAXPATHLEN];
+	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
 
 	if (dir->cf_ddat->cd_repo == NULL)
-		strlcpy(buf, root->cr_dir, sizeof(buf));
+		strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
 	else
-		snprintf(buf, sizeof(buf), "%s/%s", root->cr_dir,
+		snprintf(rbuf, sizeof(rbuf), "%s/%s", root->cr_dir,
 		    dir->cf_ddat->cd_repo);
 
-	if ((cvs_sendreq(root, CVS_REQ_DIRECTORY, dir->cf_path) < 0) ||
-	    (cvs_sendln(root, buf) < 0))
+	cvs_file_getpath(dir, lbuf, sizeof(lbuf));
+
+	if ((cvs_sendreq(root, CVS_REQ_DIRECTORY, lbuf) < 0) ||
+	    (cvs_sendln(root, rbuf) < 0))
 		return (-1);
 
 	return (0);

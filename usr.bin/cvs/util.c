@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2004/11/10 22:27:31 krapht Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,6 @@
 #include <sys/wait.h>
 
 #include <md5.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -468,26 +467,28 @@ cvs_freeargv(char **argv, int argc)
  */
 
 int
-cvs_mkadmin(struct cvs_file *cdir, mode_t mode)
+cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 {
-	char path[MAXPATHLEN];
+	char dpath[MAXPATHLEN], path[MAXPATHLEN];
 	FILE *fp;
 	CVSENTRIES *ef;
 	struct stat st;
 	struct cvsroot *root;
 
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_CVSDIR, cdir->cf_path);
+	cvs_file_getpath(cdir, dpath, sizeof(dpath));
+
+	snprintf(path, sizeof(path), "%s/" CVS_PATH_CVSDIR, dpath);
 	if ((mkdir(path, mode) == -1) && (errno != EEXIST)) {
 		cvs_log(LP_ERRNO, "failed to create directory %s", path);
 		return (-1);
 	}
 
 	/* just create an empty Entries file */
-	ef = cvs_ent_open(cdir->cf_path, O_WRONLY);
+	ef = cvs_ent_open(dpath, O_WRONLY);
 	(void)cvs_ent_close(ef);
 
 	root = cdir->cf_ddat->cd_root;
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, cdir->cf_path);
+	snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, dpath);
 	if ((root != NULL) && (stat(path, &st) != 0) && (errno == ENOENT)) {
 		fp = fopen(path, "w");
 		if (fp == NULL) {
@@ -513,7 +514,7 @@ cvs_mkadmin(struct cvs_file *cdir, mode_t mode)
 		(void)fclose(fp);
 	}
 
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_REPOSITORY, cdir->cf_path);
+	snprintf(path, sizeof(path), "%s/" CVS_PATH_REPOSITORY, dpath);
 	if ((stat(path, &st) != 0) && (errno == ENOENT) &&
 	    (cdir->cf_ddat->cd_repo != NULL)) {
 		fp = fopen(path, "w");
@@ -544,11 +545,12 @@ cvs_exec(int argc, char **argv, int fds[3])
 		return (-1);
 	} else if (pid == 0) {
 		execvp(argv[0], argv);
-		err(1, "failed to exec %s", argv[0]);
+		cvs_log(LP_ERRNO, "failed to exec %s", argv[0]);
+		exit(1);
 	}
 
 	if (waitpid(pid, &ret, 0) == -1)
-		warn("failed to waitpid");
+		cvs_log(LP_ERRNO, "failed to waitpid");
 
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.7 2004/08/12 18:37:27 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.8 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -244,7 +244,7 @@ static char *preadline(int, size_t, off_t);
 
 extern int cvs_client;
 
-static int aflag, bflag, dflag, iflag, tflag, Tflag, wflag;
+static int aflag, bflag, dflag, iflag, Nflag, tflag, Tflag, wflag;
 static int context, status;
 static int format = D_NORMAL;
 static struct stat stb1, stb2;
@@ -361,7 +361,7 @@ cvs_diff(int argc, char **argv)
 	memset(&darg, 0, sizeof(darg));
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
-	while ((ch = getopt(argc, argv, "cD:lir:u")) != -1) {
+	while ((ch = getopt(argc, argv, "cD:liN:r:u")) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -386,6 +386,10 @@ cvs_diff(int argc, char **argv)
 		case 'i':
 			strlcat(diffargs, " -i", sizeof(diffargs));
 			iflag = 1;
+			break;
+		case 'N':
+			strlcat(diffargs, " -N", sizeof(diffargs));
+			Nflag = 1;
 			break;
 		case 'r':
 			if ((darg.rev1 == NULL) && (darg.date1 == NULL))
@@ -475,7 +479,8 @@ cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
 int
 cvs_diff_file(struct cvs_file *cfp, void *arg)
 {
-	char *dir, *repo, rcspath[MAXPATHLEN], buf[64];
+	char *dir, *repo, buf[64];
+	char fpath[MAXPATHLEN], dfpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	BUF *b1, *b2;
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
@@ -488,7 +493,8 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 	if (cfp->cf_type == DT_DIR) {
 		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
 			root = cfp->cf_parent->cf_ddat->cd_root;
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cfp));
 		}
 		else {
 			root = cfp->cf_ddat->cd_root;
@@ -505,10 +511,10 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 	}
 
 	rf = NULL;
-	diff_file = cfp->cf_path;
+	diff_file = cvs_file_getpath(cfp, fpath, sizeof(fpath));
 
 	if (cfp->cf_parent != NULL) {
-		dir = cfp->cf_parent->cf_path;
+		dir = cvs_file_getpath(cfp->cf_parent, dfpath, sizeof(dfpath));
 		root = cfp->cf_parent->cf_ddat->cd_root;
 		repo = cfp->cf_parent->cf_ddat->cd_repo;
 	}
@@ -522,7 +528,8 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (root->cr_method == CVS_METHOD_LOCAL)
 			cvs_log(LP_WARN, "I know nothing about %s", diff_file);
 		else
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cfp));
 		return (0);
 	}
 
@@ -539,14 +546,15 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 
 	if (cfp->cf_cvstat == CVS_FST_UPTODATE) {
 		if (root->cr_method != CVS_METHOD_LOCAL)
-			cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
+			cvs_sendreq(root, CVS_REQ_UNCHANGED,
+			    CVS_FILE_NAME(cfp));
 		cvs_ent_free(entp);
 		return (0);
 	}
 
 	/* at this point, the file is modified */
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
+		cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp));
 		cvs_sendfile(root, diff_file);
 	}
 	else {

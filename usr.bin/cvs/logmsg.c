@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.1 2004/11/12 17:49:11 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.2 2004/11/26 16:23:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -36,8 +36,10 @@
 #include "cvs.h"
 #include "log.h"
 #include "buf.h"
+#include "proto.h"
 
 
+#define CVS_LOGMSG_TERMWIDTH  80
 #define CVS_LOGMSG_BIGMSG     32000
 #define CVS_LOGMSG_FTMPL      "/tmp/cvsXXXXXXXXXX"
 #define CVS_LOGMSG_LOGPREFIX  "CVS:"
@@ -251,4 +253,26 @@ cvs_logmsg_get(const char *dir)
 		cvs_log(LP_ERRNO, "failed to unlink log file %s", path);
 
 	return (msg);
+}
+
+
+/*
+ * cvs_logmsg_send()
+ *
+ */
+
+int
+cvs_logmsg_send(struct cvsroot *root, const char *msg)
+{
+	const char *mp, *np;
+
+	for (np = msg;; np = strchr(np, '\n')) {
+		if (np == NULL)
+			break;
+
+		if (cvs_sendarg(root, np, (np == msg) ? 0 : 1) < 0)
+			return (-1);
+	}
+
+	return (0);
 }
