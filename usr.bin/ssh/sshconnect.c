@@ -5,12 +5,10 @@
  * Created: Sat Mar 18 22:15:47 1995 ylo
  * Code to connect to a remote host, and to perform the client side of the
  * login (authentication) dialog.
- *
- * SSH2 support added by Markus Friedl.
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.69 2000/04/19 07:05:50 deraadt Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.70 2000/04/26 20:56:30 markus Exp $");
 
 #include <openssl/bn.h>
 #include "xmalloc.h"
@@ -38,15 +36,17 @@ RCSID("$OpenBSD: sshconnect.c,v 1.69 2000/04/19 07:05:50 deraadt Exp $");
 #include "key.h"
 #include "dsa.h"
 #include "hostfile.h"
+#include "authfile.h"
 
 /* Session id for the current session. */
 unsigned char session_id[16];
+unsigned int supported_authentications = 0;
 
-/* authentications supported by server */
-unsigned int supported_authentications;
+unsigned char *session_id2 = NULL;
+int session_id2_len = 0;
 
-static char *client_version_string = NULL;
-static char *server_version_string = NULL;
+char *client_version_string = NULL;
+char *server_version_string = NULL;
 
 extern Options options;
 extern char *__progname;
@@ -316,6 +316,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	return 1;
 }
 
+
 /*
  * Checks if the user has an authentication agent, and if so, tries to
  * authenticate using the agent.
@@ -467,16 +468,16 @@ int
 try_rsa_authentication(const char *authfile)
 {
 	BIGNUM *challenge;
-	RSA *private_key;
-	RSA *public_key;
+	Key *public;
+	Key *private;
 	char *passphrase, *comment;
 	int type, i;
 	int plen, clen;
 
 	/* Try to load identification for the authentication key. */
-	public_key = RSA_new();
-	if (!load_public_key(authfile, public_key, &comment)) {
-		RSA_free(public_key);
+	public = key_new(KEY_RSA);
+	if (!load_public_key(authfile, public, &comment)) {
+		key_free(public);
 		/* Could not load it.  Fail. */
 		return 0;
 	}
@@ -484,12 +485,12 @@ try_rsa_authentication(const char *authfile)
 
 	/* Tell the server that we are willing to authenticate using this key. */
 	packet_start(SSH_CMSG_AUTH_RSA);
-	packet_put_bignum(public_key->n);
+	packet_put_bignum(public->rsa->n);
 	packet_send();
 	packet_write_wait();
 
 	/* We no longer need the public key. */
-	RSA_free(public_key);
+	key_free(public);
 
 	/* Wait for server's response. */
 	type = packet_read(&plen);
@@ -515,12 +516,12 @@ try_rsa_authentication(const char *authfile)
 
 	debug("Received RSA challenge from server.");
 
-	private_key = RSA_new();
+	private = key_new(KEY_RSA);
 	/*
 	 * Load the private key.  Try first with empty passphrase; if it
 	 * fails, ask for a passphrase.
 	 */
-	if (!load_private_key(authfile, "", private_key, NULL)) {
+	if (!load_private_key(authfile, "", private, NULL)) {
 		char buf[300];
 		snprintf(buf, sizeof buf, "Enter passphrase for RSA key '%.100s': ",
 		    comment);
@@ -533,7 +534,7 @@ try_rsa_authentication(const char *authfile)
 		}
 
 		/* Load the authentication file using the pasphrase. */
-		if (!load_private_key(authfile, passphrase, private_key, NULL)) {
+		if (!load_private_key(authfile, passphrase, private, NULL)) {
 			memset(passphrase, 0, strlen(passphrase));
 			xfree(passphrase);
 			error("Bad passphrase.");
@@ -558,10 +559,10 @@ try_rsa_authentication(const char *authfile)
 	xfree(comment);
 
 	/* Compute and send a response to the challenge. */
-	respond_to_rsa_challenge(challenge, private_key);
+	respond_to_rsa_challenge(challenge, private->rsa);
 
 	/* Destroy the private key. */
-	RSA_free(private_key);
+	key_free(private);
 
 	/* We no longer need the challenge. */
 	BN_clear_free(challenge);
@@ -963,6 +964,7 @@ try_password_authentication(char *prompt)
 	return 0;
 }
 
+
 char *
 chop(char *s)
 {
@@ -1060,7 +1062,8 @@ ssh_exchange_identification()
 		fatal("Protocol major versions differ: %d vs. %d",
 		    (options.protocol & SSH_PROTO_2) ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 		    remote_major);
-
+	if (compat20)
+		packet_set_ssh2_format();
 	/* Send our own protocol version identification. */
 	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
@@ -1122,7 +1125,8 @@ read_yes_or_no(const char *prompt, int defval)
  */
 
 void
-check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
+check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
+	const char *user_hostfile, const char *system_hostfile)
 {
 	Key *file_key;
 	char *ip = NULL;
@@ -1140,6 +1144,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 	 * essentially disables host authentication for localhost; however,
 	 * this is probably not a real problem.
 	 */
+	/**  hostaddr == 0! */
 	switch (hostaddr->sa_family) {
 	case AF_INET:
 		local = (ntohl(((struct sockaddr_in *)hostaddr)->sin_addr.s_addr) >> 24) == IN_LOOPBACKNET;
@@ -1180,19 +1185,19 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 	 * Check if the host key is present in the user\'s list of known
 	 * hosts or in the systemwide list.
 	 */
-	host_status = check_host_in_hostfile(options.user_hostfile, host, host_key, file_key);
+	host_status = check_host_in_hostfile(user_hostfile, host, host_key, file_key);
 	if (host_status == HOST_NEW)
-		host_status = check_host_in_hostfile(options.system_hostfile, host, host_key, file_key);
+		host_status = check_host_in_hostfile(system_hostfile, host, host_key, file_key);
 	/*
 	 * Also perform check for the ip address, skip the check if we are
 	 * localhost or the hostname was an ip address to begin with
 	 */
 	if (options.check_host_ip && !local && strcmp(host, ip)) {
 		Key *ip_key = key_new(host_key->type);
-		ip_status = check_host_in_hostfile(options.user_hostfile, ip, host_key, ip_key);
+		ip_status = check_host_in_hostfile(user_hostfile, ip, host_key, ip_key);
 
 		if (ip_status == HOST_NEW)
-			ip_status = check_host_in_hostfile(options.system_hostfile, ip, host_key, ip_key);
+			ip_status = check_host_in_hostfile(system_hostfile, ip, host_key, ip_key);
 		if (host_status == HOST_CHANGED &&
 		    (ip_status != HOST_CHANGED || !key_equal(ip_key, file_key)))
 			host_ip_differ = 1;
@@ -1209,9 +1214,9 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 		debug("Host '%.200s' is known and matches the host key.", host);
 		if (options.check_host_ip) {
 			if (ip_status == HOST_NEW) {
-				if (!add_host_to_hostfile(options.user_hostfile, ip, host_key))
+				if (!add_host_to_hostfile(user_hostfile, ip, host_key))
 					log("Failed to add the host key for IP address '%.30s' to the list of known hosts (%.30s).",
-					    ip, options.user_hostfile);
+					    ip, user_hostfile);
 				else
 					log("Warning: Permanently added host key for IP address '%.30s' to the list of known hosts.",
 					    ip);
@@ -1245,9 +1250,9 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 			hostp = host;
 
 		/* If not in strict mode, add the key automatically to the local known_hosts file. */
-		if (!add_host_to_hostfile(options.user_hostfile, hostp, host_key))
+		if (!add_host_to_hostfile(user_hostfile, hostp, host_key))
 			log("Failed to add the host to the list of known hosts (%.500s).",
-			    options.user_hostfile);
+			    user_hostfile);
 		else
 			log("Warning: Permanently added '%.200s' to the list of known hosts.",
 			    hostp);
@@ -1279,7 +1284,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 		error("It is also possible that the host key has just been changed.");
 		error("Please contact your system administrator.");
 		error("Add correct host key in %.100s to get rid of this message.",
-		      options.user_hostfile);
+		      user_hostfile);
 
 		/*
 		 * If strict host key checking is in use, the user will have
@@ -1313,18 +1318,11 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 	if (options.check_host_ip)
 		xfree(ip);
 }
-void
-check_rsa_host_key(char *host, struct sockaddr *hostaddr, RSA *host_key)
-{
-	Key k;
-	k.type = KEY_RSA;
-	k.rsa = host_key;
-	check_host_key(host, hostaddr, &k);
-}
 
 /*
  * SSH2 key exchange
  */
+
 void
 ssh_kex2(char *host, struct sockaddr *hostaddr)
 {
@@ -1435,11 +1433,12 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 
 	/* key, cert */
 	server_host_key_blob = packet_get_string(&sbloblen);
-	server_host_key = dsa_serverkey_from_blob(server_host_key_blob, sbloblen);
+	server_host_key = dsa_key_from_blob(server_host_key_blob, sbloblen);
 	if (server_host_key == NULL)
 		fatal("cannot decode server_host_key_blob");
 
-	check_host_key(host, hostaddr, server_host_key);
+	check_host_key(host, hostaddr, server_host_key,
+	    options.user_hostfile2, options.system_hostfile2);
 
 	/* DH paramter f, server public DH key */
 	dh_server_pub = BN_new();
@@ -1498,7 +1497,8 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 		fprintf(stderr, "%02x", (hash[i])&0xff);
 	fprintf(stderr, "\n");
 #endif
-	dsa_verify(server_host_key, (unsigned char *)signature, slen, hash, 20);
+	if (dsa_verify(server_host_key, (unsigned char *)signature, slen, hash, 20) != 1)
+		fatal("dsa_verify failed for server_host_key");
 	key_free(server_host_key);
 
 	kex_derive_keys(kex, hash, shared_secret);
@@ -1506,6 +1506,11 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 
 	/* have keys, free DH */
 	DH_free(dh);
+
+	/* save session id */
+	session_id2_len = 20;
+	session_id2 = xmalloc(session_id2_len);
+	memcpy(session_id2, hash, session_id2_len);
 
 	debug("Wait SSH2_MSG_NEWKEYS.");
 	packet_read_expect(&payload_len, SSH2_MSG_NEWKEYS);
@@ -1530,19 +1535,103 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 /*
  * Authenticate user
  */
+int
+ssh2_try_passwd(const char *server_user, const char *host, const char *service)
+{
+	char prompt[80];
+	char *password;
+
+	snprintf(prompt, sizeof(prompt), "%.30s@%.40s's password: ",
+	    server_user, host);
+	password = read_passphrase(prompt, 0);
+	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+	packet_put_cstring(server_user);
+	packet_put_cstring(service);
+	packet_put_cstring("password");
+	packet_put_char(0);
+	packet_put_cstring(password);
+	memset(password, 0, strlen(password));
+	xfree(password);
+	packet_send();
+	packet_write_wait();
+	return 1;
+}
+
+int
+ssh2_try_pubkey(char *filename,
+    const char *server_user, const char *host, const char *service)
+{
+	Buffer b;
+	Key *k;
+	unsigned char *blob, *signature;
+	int bloblen, slen;
+
+	debug("try pubkey: %s", filename);
+
+	k = key_new(KEY_DSA);
+	if (!load_private_key(filename, "", k, NULL)) {
+		int success = 0;
+		char *passphrase;
+		char prompt[300];
+                snprintf(prompt, sizeof prompt,
+		     "Enter passphrase for DSA key '%.100s': ",
+                     filename);
+		passphrase = read_passphrase(prompt, 0);
+		success = load_private_key(filename, passphrase, k, NULL);
+		memset(passphrase, 0, strlen(passphrase));
+		xfree(passphrase);
+		if (!success)
+			return 0;
+	}
+	dsa_make_key_blob(k, &blob, &bloblen);
+
+	/* data to be signed */
+	buffer_init(&b);
+	buffer_append(&b, session_id2, session_id2_len);
+	buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
+	buffer_put_cstring(&b, server_user);
+	buffer_put_cstring(&b, service);
+	buffer_put_cstring(&b, "publickey");
+	buffer_put_char(&b, 1);
+	buffer_put_cstring(&b, KEX_DSS); 
+	buffer_put_string(&b, blob, bloblen);
+
+	/* generate signature */
+	dsa_sign(k, &signature, &slen, buffer_ptr(&b), buffer_len(&b));
+	key_free(k);
+#ifdef DEBUG_DSS
+	buffer_dump(&b);
+#endif
+	/* append signature */
+	buffer_put_string(&b, signature, slen);
+	xfree(signature);
+
+	/* skip session id and packet type */
+	if (buffer_len(&b) < session_id2_len + 1)
+		fatal("ssh2_try_pubkey: internal error");
+	buffer_consume(&b, session_id2_len + 1);
+
+	/* put remaining data from buffer into packet */
+	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+	packet_put_raw(buffer_ptr(&b), buffer_len(&b));
+	buffer_free(&b);
+
+	/* send */
+	packet_send();
+	packet_write_wait();
+	return 1;
+}
+
 void
-ssh_userauth2(int host_key_valid, RSA *own_host_key,
-    uid_t original_real_uid, char *host)
+ssh_userauth2(const char *server_user, char *host)
 {
 	int type;
 	int plen;
+	int sent;
 	unsigned int dlen;
 	int partial;
-	struct passwd *pw;
-	char prompt[80];
-	char *server_user, *local_user;
+	int i = 0;
 	char *auths;
-	char *password;
 	char *service = "ssh-connection";		/* service name */
 
 	debug("send SSH2_MSG_SERVICE_REQUEST");
@@ -1566,14 +1655,6 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 	packet_done();
 	debug("got SSH2_MSG_SERVICE_ACCEPT");
 
-	/*XX COMMONCODE: */
-	/* Get local user name.  Use it as server user if no user name was given. */
-	pw = getpwuid(original_real_uid);
-	if (!pw)
-		fatal("User id %d not found from user database.", original_real_uid);
-	local_user = xstrdup(pw->pw_name);
-	server_user = options.user ? options.user : local_user;
-
 	/* INITIAL request for auth */
 	packet_start(SSH2_MSG_USERAUTH_REQUEST);
 	packet_put_cstring(server_user);
@@ -1583,6 +1664,7 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 	packet_write_wait();
 
 	for (;;) {
+		sent = 0;
 		type = packet_read(&plen);
 		if (type == SSH2_MSG_USERAUTH_SUCCESS)
 			break;
@@ -1595,23 +1677,25 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 		packet_done();
 		if (partial)
 			debug("partial success");
-		if (strstr(auths, "password") == NULL)
-			fatal("passwd auth not supported: %s", auths);
+		if (strstr(auths, "publickey") != NULL) {
+			while (i < options.num_identity_files2) {
+				sent = ssh2_try_pubkey(
+				    options.identity_files2[i++],
+				    server_user, host, service);
+				if (sent)
+					break;
+			}
+		}
+		if (!sent) {
+			if (strstr(auths, "password") != NULL) {
+				sent = ssh2_try_passwd(server_user, host, service);
+			} else {
+				fatal("passwd auth not supported: %s", auths);
+			}
+			if (!sent)
+				fatal("no more auths: %s", auths);
+		}
 		xfree(auths);
-		/* try passwd */
-		snprintf(prompt, sizeof(prompt), "%.30s@%.40s's password: ",
-		    server_user, host);
-		password = read_passphrase(prompt, 0);
-		packet_start(SSH2_MSG_USERAUTH_REQUEST);
-		packet_put_cstring(server_user);
-		packet_put_cstring(service);
-		packet_put_cstring("password");
-		packet_put_char(0);
-		packet_put_cstring(password);
-		memset(password, 0, strlen(password));
-		xfree(password);
-		packet_send();
-		packet_write_wait();
 	}
 	packet_done();
 	debug("ssh-userauth2 successfull");
@@ -1627,6 +1711,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	BIGNUM *key;
 	RSA *host_key;
 	RSA *public_key;
+	Key k;
 	int bits, rbits;
 	int ssh_cipher_default = SSH_CIPHER_3DES;
 	unsigned char session_key[SSH_SESSION_KEY_LENGTH];
@@ -1691,8 +1776,10 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	packet_integrity_check(payload_len,
 			       8 + 4 + sum_len + 0 + 4 + 0 + 0 + 4 + 4 + 4,
 			       SSH_SMSG_PUBLIC_KEY);
-
-	check_rsa_host_key(host, hostaddr, host_key);
+	k.type = KEY_RSA;
+	k.rsa = host_key;
+	check_host_key(host, hostaddr, &k,
+	    options.user_hostfile, options.system_hostfile);
 
 	client_flags = SSH_PROTOFLAG_SCREEN_NUMBER | SSH_PROTOFLAG_HOST_IN_FWD_OPEN;
 
@@ -1819,20 +1906,17 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
  * Authenticate user
  */
 void
-ssh_userauth(int host_key_valid, RSA *own_host_key,
-    uid_t original_real_uid, char *host)
+ssh_userauth(
+    const char* local_user,
+    const char* server_user,
+    char *host,
+    int host_key_valid, RSA *own_host_key)
 {
 	int i, type;
 	int payload_len;
-	struct passwd *pw;
-	const char *server_user, *local_user;
 
-	/* Get local user name.  Use it as server user if no user name was given. */
-	pw = getpwuid(original_real_uid);
-	if (!pw)
-		fatal("User id %d not found from user database.", original_real_uid);
-	local_user = xstrdup(pw->pw_name);
-	server_user = options.user ? options.user : local_user;
+	if (supported_authentications == 0)
+		fatal("ssh_userauth: server supports no auth methods");
 
 	/* Send the name of the user to log in as on the server. */
 	packet_start(SSH_CMSG_USER);
@@ -1951,6 +2035,7 @@ ssh_userauth(int host_key_valid, RSA *own_host_key,
 	fatal("Permission denied.");
 	/* NOTREACHED */
 }
+
 /*
  * Starts a dialog with the server, and authenticates the current user on the
  * server.  This does not need any extra privileges.  The basic connection
@@ -1962,7 +2047,16 @@ void
 ssh_login(int host_key_valid, RSA *own_host_key, const char *orighost,
     struct sockaddr *hostaddr, uid_t original_real_uid)
 {
+	struct passwd *pw;
 	char *host, *cp;
+	char *server_user, *local_user;
+
+	/* Get local user name.  Use it as server user if no user name was given. */
+	pw = getpwuid(original_real_uid);
+	if (!pw)
+		fatal("User id %d not found from user database.", original_real_uid);
+	local_user = xstrdup(pw->pw_name);
+	server_user = options.user ? options.user : local_user;
 
 	/* Convert the user-supplied hostname into all lowercase. */
 	host = xstrdup(orighost);
@@ -1980,12 +2074,9 @@ ssh_login(int host_key_valid, RSA *own_host_key, const char *orighost,
 	/* authenticate user */
 	if (compat20) {
 		ssh_kex2(host, hostaddr);
-		ssh_userauth2(host_key_valid, own_host_key, original_real_uid, host);
+		ssh_userauth2(server_user, host);
 	} else {
-		supported_authentications = 0;
 		ssh_kex(host, hostaddr);
-		if (supported_authentications == 0)
-			fatal("supported_authentications == 0.");
-		ssh_userauth(host_key_valid, own_host_key, original_real_uid, host);
+		ssh_userauth(local_user, server_user, host, host_key_valid, own_host_key);
 	}
 }

@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: readconf.h,v 1.15 2000/04/14 10:30:32 markus Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.16 2000/04/26 20:56:29 markus Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -73,9 +73,13 @@ typedef struct {
 
 	char   *system_hostfile;/* Path for /etc/ssh_known_hosts. */
 	char   *user_hostfile;	/* Path for $HOME/.ssh/known_hosts. */
+	char   *system_hostfile2;
+	char   *user_hostfile2;
 
 	int     num_identity_files;	/* Number of files for RSA identities. */
+	int     num_identity_files2;	/* DSA identities. */
 	char   *identity_files[SSH_MAX_IDENTITY_FILES];
+	char   *identity_files2[SSH_MAX_IDENTITY_FILES];
 
 	/* Local TCP/IP forward requests. */
 	int     num_local_forwards;
