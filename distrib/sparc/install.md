@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 1997/10/25 09:44:51 todd Exp $
+#	$OpenBSD: install.md,v 1.16 1997/10/27 04:59:11 todd Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -143,7 +143,8 @@ md_installboot() {
 		
 	echo "Installing boot block..."
 	cp ${_prefix}/boot /mnt/boot
-	${_prefix}/installboot -v /mnt/boot ${_prefix}/bootxx ${_rawdev}
+	sync; sync; sync
+	installboot -v /mnt/boot ${_prefix}/bootxx ${_rawdev}
 }
 
 md_native_fstype() {
