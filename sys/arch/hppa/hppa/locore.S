@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.66 2002/05/14 02:16:27 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.67 2002/05/20 02:26:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1347,6 +1347,8 @@ $itlb_t
 $itlbna_t
 	TLB_STATS_PRE(itlb)
 	TLB_PULL(0)
+	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
+	depi	0, 30, 15, r25
 	mfsp	sr1, r16
 	mtsp	r8, sr1
 	iitlba	r17,(sr1, r9)
@@ -1433,6 +1435,8 @@ $itlb_l
 $itlbna_l
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0)
+	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
+	depi	0, 30, 15, r25
 	IITLBAF(17)
 	IITLBPF(25)
 	TLB_STATS_AFT(itlb)
