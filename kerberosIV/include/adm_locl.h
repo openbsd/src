@@ -1,4 +1,4 @@
-/*	$Id: adm_locl.h,v 1.2 1997/06/29 10:48:34 provos Exp $	*/
+/*	$Id: adm_locl.h,v 1.3 1997/12/17 10:25:41 art Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -19,9 +19,6 @@
 
 #ifndef __adm_locl_h
 #define __adm_locl_h
-
-#define TRUE 1
-#define FALSE 0
 
 #include <sys/cdefs.h>
 #include <kerberosIV/site.h>
@@ -46,9 +43,7 @@
 #include <des.h>
 #include <kerberosIV/krb.h>
 #include <kerberosIV/krb_db.h>
+#include <kerberosIV/kadm.h>
 #include "kdc.h"
-
-/* Utils */
-long maketime __P((struct tm *, int));
 
 #endif /*  __adm_locl_h */
