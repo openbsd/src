@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 1997/05/21 01:16:47 deraadt Exp $
+#	$OpenBSD: list,v 1.4 1997/05/25 22:56:40 grr Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -41,7 +41,7 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
-COPY	${ARCHDIR}/../miniroot/dot.profile	.profile
+COPY	${ARCHDIR}/../ramdisk/dot.profile	.profile
 COPY	${ARCHDIR}/../install.md	install.md
 COPY	${DESTDIR}/usr/mdec/boot	boot
 SPECIAL sync; ${DESTDIR}/usr/mdec/binstall -v ffs ${TARGDIR}

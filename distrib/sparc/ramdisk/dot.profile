@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.3 1997/05/24 10:46:21 johns Exp $
+#	$OpenBSD: dot.profile,v 1.4 1997/05/25 22:56:41 grr Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -57,7 +57,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount kernfs and re-mount the boot media (perhaps r/w)
 	mount_kernfs /kern /kern
-	mount_ffs -o update /kern/rootdev /
+	mount_ffs -o update /dev/rd0a /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
