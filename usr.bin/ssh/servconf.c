@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.16 1999/10/14 20:17:24 markus Exp $");
+RCSID("$Id: servconf.c,v 1.17 1999/10/17 20:48:07 dugsong Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -58,9 +58,6 @@ void initialize_server_options(ServerOptions *options)
 #endif
   options->permit_empty_passwd = -1;
   options->use_login = -1;
-  options->silent_deny = -1;
-  options->num_allow_hosts = 0;
-  options->num_deny_hosts = 0;
   options->num_allow_users = 0;
   options->num_deny_users = 0;
   options->num_allow_groups = 0;
@@ -140,8 +137,6 @@ void fill_default_server_options(ServerOptions *options)
     options->permit_empty_passwd = 1;
   if (options->use_login == -1)
     options->use_login = 0;
-  if (options->silent_deny == -1)
-    options->silent_deny = 0;
 }
 
 #define WHITESPACE " \t\r\n"
@@ -161,10 +156,10 @@ typedef enum
 #ifdef SKEY
   sSkeyAuthentication,
 #endif
-  sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
+  sPasswordAuthentication, sListenAddress,
   sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
   sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
-  sUseLogin, sSilentDeny, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups
+  sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups
 
 } ServerOpCodes;
 
@@ -200,9 +195,7 @@ static struct
 #ifdef SKEY
   { "skeyauthentication", sSkeyAuthentication },
 #endif
-  { "allowhosts", sAllowHosts },
   { "checkmail", sCheckMail },
-  { "denyhosts", sDenyHosts },
   { "listenaddress", sListenAddress },
   { "printmotd", sPrintMotd },
   { "ignorerhosts", sIgnoreRhosts },
@@ -211,7 +204,6 @@ static struct
   { "strictmodes", sStrictModes },
   { "permitemptypasswords", sEmptyPasswd },
   { "uselogin", sUseLogin },
-  { "silentdeny", sSilentDeny },
   { "randomseed", sRandomSeedFile },
   { "keepalive", sKeepAlives },
   { "allowusers", sAllowUsers },
@@ -486,10 +478,6 @@ void read_server_config(ServerOptions *options, const char *filename)
           intptr = &options->use_login;
           goto parse_flag;
 
-        case sSilentDeny:
-          intptr = &options->silent_deny;
-          goto parse_flag;
-
 	case sLogFacility:
 	  cp = strtok(NULL, WHITESPACE);
 	  if (!cp)
@@ -511,32 +499,6 @@ void read_server_config(ServerOptions *options, const char *filename)
 	    options->log_facility = log_facilities[i].facility;
 	  break;
 	  
-	case sAllowHosts:
-	  while ((cp = strtok(NULL, WHITESPACE)))
-	    {
-	      if (options->num_allow_hosts >= MAX_ALLOW_HOSTS)
-		{
-		  fprintf(stderr, "%s line %d: too many allow hosts.\n",
-			  filename, linenum);
-		  exit(1);
-		}
-	      options->allow_hosts[options->num_allow_hosts++] = xstrdup(cp);
-	    }
-	  break;
-
-	case sDenyHosts:
-	  while ((cp = strtok(NULL, WHITESPACE)))
-	    {
-	      if (options->num_deny_hosts >= MAX_DENY_HOSTS)
-		{
-		  fprintf(stderr, "%s line %d: too many deny hosts.\n",
-			  filename, linenum);
-		  exit(1);
-		}
-	      options->deny_hosts[options->num_deny_hosts++] = xstrdup(cp);
-	    }
-	  break;
-
 	case sAllowUsers:
 	  while ((cp = strtok(NULL, WHITESPACE)))
 	    {

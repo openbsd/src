@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.36 1999/10/17 20:43:31 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.37 1999/10/17 20:48:07 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -528,24 +528,6 @@ main(int ac, char **av)
 	      continue;
 	    }
 
-#ifdef LIBWRAP
-	  {
-	    struct request_info req;
-	    request_init(&req, RQ_DAEMON, av0, RQ_FILE, newsock, NULL);
-	    fromhost(&req);
-	    if (!hosts_access(&req)) 
-	      {
-		error("Connection from %.500s refused by tcp_wrappers.",
-		      eval_client(&req));
-		shutdown(newsock, SHUT_RDWR);
-		close(newsock);
-		continue;
-	      }
-	    /* if from inet: refuse(&req); */
-	    log("connect from %.500s", eval_client(&req));
-	  }
-#endif /* LIBWRAP */
-
 	  /* Got connection.  Fork a child to handle it, unless we are in
 	     debugging mode. */
 	  if (debug_flag)
@@ -619,30 +601,27 @@ main(int ac, char **av)
      have a key. */
   packet_set_connection(sock_in, sock_out);
 
+  /* Check whether logins are denied from this host. */
+#ifdef LIBWRAP
+  {
+    struct request_info req;
+
+    request_init(&req, RQ_DAEMON, av0, RQ_FILE, sock_in, NULL);
+    fromhost(&req);
+
+    if (!hosts_access(&req)) {
+      close(sock_in);
+      close(sock_out);
+      refuse(&req);
+    }
+    log("Connection from %.500s port %d",
+	eval_client(&req), get_remote_port());
+  }
+#else
   /* Log the connection. */
   log("Connection from %.100s port %d", 
       get_remote_ipaddr(), get_remote_port());
-
-  /* Check whether logins are denied from this host. */
-  if (options.num_deny_hosts > 0)
-    {
-      const char *hostname = get_canonical_hostname();
-      const char *ipaddr = get_remote_ipaddr();
-      int i;
-      for (i = 0; i < options.num_deny_hosts; i++)
-	if (match_pattern(hostname, options.deny_hosts[i]) ||
-	    match_pattern(ipaddr, options.deny_hosts[i]))
-	  {
-	    if(!options.silent_deny){
-	      log("Connection from %.200s denied.\n", hostname);
-	      hostname = "You are not allowed to connect.  Go away!\r\n";
-	      write(sock_out, hostname, strlen(hostname));
-	    }
-	    close(sock_in);
-	    close(sock_out);
-	    exit(0);
-	  }
-    }
+#endif /* LIBWRAP */
 
   /* We don\'t want to listen forever unless the other side successfully
      authenticates itself.  So we set up an alarm which is cleared after
@@ -714,30 +693,6 @@ main(int ac, char **av)
         no_agent_forwarding_flag = 1;
     }
   }
-
-  /* Check whether logins are permitted from this host. */
-  if (options.num_allow_hosts > 0)
-    {
-      const char *hostname = get_canonical_hostname();
-      const char *ipaddr = get_remote_ipaddr();
-      int i;
-      for (i = 0; i < options.num_allow_hosts; i++)
-	if (match_pattern(hostname, options.allow_hosts[i]) ||
-	    match_pattern(ipaddr, options.allow_hosts[i]))
-	  break;
-      if (i >= options.num_allow_hosts)
-	{
-	  if(!options.silent_deny){
-	    log("Connection from %.200s not allowed.\n", hostname);
-	    packet_disconnect("Sorry, you are not allowed to connect.");
-	  }else{
-            close(sock_in);
-            close(sock_out);
-	    exit(0);
-	  }
-	  /*NOTREACHED*/
-	}
-    }
 
   packet_set_nonblocking();
   
@@ -2071,7 +2026,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 	      const char *display, const char *auth_proto, 
 	      const char *auth_data, const char *ttyname)
 {
-  const char *shell, *cp;
+  const char *shell, *cp = NULL;
   char buf[256];
   FILE *f;
   unsigned int envsize, i;

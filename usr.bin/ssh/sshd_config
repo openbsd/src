@@ -42,6 +42,3 @@ PermitEmptyPasswords no
 
 #CheckMail yes
 #UseLogin no
-
-# AllowHosts *.our.com friend.other.com
-# DenyHosts lowsecurity.theirs.com *.evil.org evil.org
