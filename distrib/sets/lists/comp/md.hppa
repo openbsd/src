@@ -1,12 +1,7 @@
 ./usr/bin/addr2line
 ./usr/bin/gasp
-./usr/bin/gdb
 ./usr/bin/objcopy
-./usr/bin/objdump
 ./usr/bin/readelf
-./usr/include/bfd.h
-./usr/include/bfdlink.h
-./usr/include/dlfcn.h
 ./usr/include/hppa
 ./usr/include/hppa/ansi.h
 ./usr/include/hppa/asm.h
@@ -56,7 +51,6 @@
 ./usr/include/hppa/varargs.h
 ./usr/include/hppa/vmparam.h
 ./usr/include/ieeefp.h
-./usr/include/link.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
@@ -75,10 +69,6 @@
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.4/2.95.3/include/syslimits.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.4/2.95.3/include/typeinfo
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.4/2.95.3/libgcc.a
-./usr/lib/libbfd.a
-./usr/lib/libmmalloc.a
-./usr/lib/libopcodes.a
-./usr/lib/libreadline.a
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/hppaobsd.x
 ./usr/libdata/ldscripts/hppaobsd.xbn
@@ -87,6 +77,4 @@
 ./usr/libdata/ldscripts/hppaobsd.xs
 ./usr/libdata/ldscripts/hppaobsd.xu
 ./usr/libdata/ldscripts/hppaobsd.xz
-./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/objdump.0

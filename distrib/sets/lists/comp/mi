@@ -13,12 +13,14 @@
 ./usr/bin/g77
 ./usr/bin/gcc
 ./usr/bin/gcov
+./usr/bin/gdb
 ./usr/bin/gprof
 ./usr/bin/ld
 ./usr/bin/lex
 ./usr/bin/lint
 ./usr/bin/lorder
 ./usr/bin/mkstr
+./usr/bin/objdump
 ./usr/bin/pmdb
 ./usr/bin/protoize
 ./usr/bin/ranlib
@@ -49,6 +51,8 @@
 ./usr/include/arpa/telnet.h
 ./usr/include/arpa/tftp.h
 ./usr/include/assert.h
+./usr/include/bfd.h
+./usr/include/bfdlink.h
 ./usr/include/bitstring.h
 ./usr/include/blf.h
 ./usr/include/bm.h
@@ -717,6 +721,7 @@
 ./usr/include/dev/wsfont/wsfont.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
+./usr/include/dlfcn.h
 ./usr/include/elf_abi.h
 ./usr/include/err.h
 ./usr/include/errno.h
@@ -942,6 +947,7 @@
 ./usr/include/langinfo.h
 ./usr/include/libgen.h
 ./usr/include/limits.h
+./usr/include/link.h
 ./usr/include/link_aout.h
 ./usr/include/link_elf.h
 ./usr/include/locale.h
@@ -1639,6 +1645,7 @@
 ./usr/lib/gcrt0.o
 ./usr/lib/libasn1.a
 ./usr/lib/libasn1_p.a
+./usr/lib/libbfd.a
 ./usr/lib/libbfd.la
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
@@ -1690,12 +1697,14 @@
 ./usr/lib/libm_p.a
 ./usr/lib/libmenu.a
 ./usr/lib/libmenu_p.a
+./usr/lib/libmmalloc.a
 ./usr/lib/libncurses.a
 ./usr/lib/libncurses_p.a
 ./usr/lib/libobjc.a
 ./usr/lib/libobjc_p.a
 ./usr/lib/libocurses.a
 ./usr/lib/libocurses_p.a
+./usr/lib/libopcodes.a
 ./usr/lib/libopcodes.la
 ./usr/lib/libossaudio.a
 ./usr/lib/libossaudio_p.a
@@ -1709,6 +1718,7 @@
 ./usr/lib/libperl_p.a
 ./usr/lib/libpthread.a
 ./usr/lib/libpthread_p.a
+./usr/lib/libreadline.a
 ./usr/lib/libreadline_p.a
 ./usr/lib/libresolv.a
 ./usr/lib/libresolv_p.a
@@ -1774,12 +1784,14 @@
 ./usr/share/man/cat1/gcc-local.0
 ./usr/share/man/cat1/gcc.0
 ./usr/share/man/cat1/gcov.0
+./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ld.0
 ./usr/share/man/cat1/lex.0
 ./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/lorder.0
 ./usr/share/man/cat1/mkstr.0
+./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat1/pmdb.0
 ./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/ranlib.0

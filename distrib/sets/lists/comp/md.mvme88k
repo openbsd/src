@@ -1,10 +1,4 @@
-./usr/bin/gdb
-./usr/bin/objdump
-./usr/include/bfd.h
-./usr/include/bfdlink.h
-./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
-./usr/include/link.h
 ./usr/include/mvme88k
 ./usr/include/mvme88k/ansi.h
 ./usr/include/mvme88k/asm.h
@@ -76,10 +70,4 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/include/syslimits.h
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/include/typeinfo
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/libgcc.a
-./usr/lib/libbfd.a
-./usr/lib/libmmalloc.a
-./usr/lib/libopcodes.a
-./usr/lib/libreadline.a
 ./usr/lib/scrt0.o
-./usr/share/man/cat1/gdb.0
-./usr/share/man/cat1/objdump.0
