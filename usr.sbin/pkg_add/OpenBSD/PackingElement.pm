@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.34 2004/10/05 10:01:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.35 2004/10/05 10:06:14 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -67,11 +67,7 @@ sub category() { 'items' }
 sub new
 {
 	my ($class, $args) = @_;
-	if ($args =~ m|/+$| and defined $class->dirclass()) {
-		bless { name => $` }, $class->dirclass();
-	} else {
-		bless { name => $args }, $class;
-	}
+	bless { name => $args }, $class;
 }
 
 sub clone
@@ -82,8 +78,6 @@ sub clone
 	bless \%h, ref($object);
 }
 	
-
-sub dirclass() { undef }
 
 sub destate
 {
@@ -217,6 +211,18 @@ package OpenBSD::PackingElement::FileObject;
 our @ISA=qw(OpenBSD::PackingElement::Object);
 
 sub NoDuplicateNames() { 1 }
+
+sub dirclass() { undef }
+
+sub new
+{
+	my ($class, $args) = @_;
+	if ($args =~ m|/+$| and defined $class->dirclass()) {
+		bless { name => $` }, $class->dirclass();
+	} else {
+		bless { name => $args }, $class;
+	}
+}
 
 # exec/unexec and friends
 package OpenBSD::PackingElement::Action;
