@@ -143,7 +143,6 @@ send_to_kdc(KTEXT pkt, KTEXT rpkt, const char *realm)
 	char **addr_list;
 	int j;
 	int n_addrs;
-	struct host *tmp;
 
 	if (k_host->proto == PROTO_HTTP && proxy != NULL) {
 	    n_addrs = 1;

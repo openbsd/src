@@ -43,6 +43,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <utime.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

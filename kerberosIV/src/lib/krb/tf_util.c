@@ -769,8 +769,6 @@ out:
 int
 tf_store_addr (const char *realm, struct in_addr *addr)
 {
-  CREDENTIALS c;
-  krb_principal princ;
   int ret;
   des_cblock s = { 0, 0, 0, 0, 0, 0, 0, 0 };
   KTEXT_ST t;
