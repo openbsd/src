@@ -44,10 +44,10 @@ options		"HILVID=1"
 options		PROFTIMER,"PRF_INTERVAL=500"
 #options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
 
-config		netbsd root on sd0 swap on sd0b and sd1b
-#config		vgnetbsd root on sd0 swap on sd0b and sd1b and sd2b
-#config		rdnetbsd root on rd0 swap on rd0b and rd1b
-#config		gennetbsd swap generic
+config		bsd root on sd0 swap on sd0b and sd1b
+#config		vgbsd root on sd0 swap on sd0b and sd1b and sd2b
+#config		rdbsd root on rd0 swap on rd0b and rd1b
+#config		genbsd swap generic
 
 master		hpib0	at scode7
 master		hpib1	at scode?

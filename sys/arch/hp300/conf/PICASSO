@@ -36,10 +36,10 @@ options		"NKMEMCLUSTERS=256"
 options		"HILVID=1"
 options		PROFTIMER,"PRF_INTERVAL=500"
 
-config		netbsd root on sd0 swap on sd0d
-config		vgnetbsd root on sd0 swap on sd0d and sd1d and sd2d
-config		rdnetbsd root on rd0 swap on rd0b and rd1b
-config		gennetbsd swap generic
+config		bsd root on sd0 swap on sd0d
+config		vgbsd root on sd0 swap on sd0d and sd1d and sd2d
+config		rdbsd root on rd0 swap on rd0b and rd1b
+config		genbsd swap generic
 
 master		hpib0	at scode7
 master		hpib1	at scode?

@@ -33,7 +33,7 @@ options		KTRACE
 # DIAGNOSTIC: compile in lots of debugging and consistancy checking code.
 options		DIAGNOSTIC
 
-config		netbsd swap generic
+config		bsd swap generic
 
 master		hpib0	at scode7
 master		hpib1	at scode?

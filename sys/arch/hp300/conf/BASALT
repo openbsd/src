@@ -52,7 +52,7 @@ options		COMPAT_HPUX	# HP-UX binary compatibility
 options		DDB		# Kernel Dynamic Debugger
 
 options		GENERIC
-config		netbsd swap generic
+config		bsd swap generic
 
 master		hpib0	at scode7
 disk		rd0	at hpib? slave ?

@@ -60,7 +60,7 @@ options	COMPAT_HPUX		# HP-UX binary compatibility
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger
 
-config		netbsd swap nfs
+config		bsd swap nfs
 
 device		dca0	at scode9 flags 1
 device		dca1	at scode? flags 1
