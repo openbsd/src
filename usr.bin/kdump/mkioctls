@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.8 2002/11/26 13:45:17 mickey Exp $
+#	$OpenBSD: mkioctls,v 1.9 2002/11/26 18:26:04 mickey Exp $
 
 #
 # Copyright (c) 1994
@@ -54,6 +54,7 @@ BEGIN {
 	print "#include <sys/audioio.h>"
 	print "#include <sys/cdio.h>"
 	print "#include <sys/chio.h>"
+	print "#include <sys/dkbad.h>"
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
 	print "#include <sys/midiio.h>"
