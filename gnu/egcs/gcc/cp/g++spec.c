@@ -122,6 +122,10 @@ lang_specific_driver (fn, in_argc, in_argv, in_added_libraries)
 	    {
 	      library = 0;
 	    }
+	  else if (strcmp (argv[i], "-shared") == 0)
+	    {
+	      library = 0;
+	    }
 	  else if (strcmp (argv[i], "-lm") == 0
 		   || strcmp (argv[i], "-lmath") == 0
 		   || strcmp (argv[i], MATH_LIBRARY) == 0
