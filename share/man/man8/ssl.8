@@ -1,4 +1,16 @@
-raries (libssl and libcrypto) implement the
+.Dd March 15, 1999
+.Dt SSL 8
+.Os
+.Sh NAME
+.Nm ssl
+.Nd details for libssl and libcrypto
+.Sh DESCRIPTION
+This document describes some of the issues relating to the use of
+the OpenSSL libssl and libcrypto libraries. This document
+is intended as an overview of what the libraries do, what uses them,
+and the slightly unorthodox way of upgrading the library.
+.Pp
+The SSL libraries (libssl and libcrypto) implement the
 .Ar SSL version 2 ,
 .Ar SSL version 3 ,
 and
@@ -87,7 +99,7 @@ algorithm, you can enable the full function of the
 libraries by updating the shared libraries on your system,
 using a command like:
 .Bd -literal -offset xxx
-# pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/libssl-1.1.tgz
+# pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/i386/libssl26.tar.gz
 .Ed
 .Pp
 (Obviously, replace
@@ -199,4 +211,44 @@ to allow for DSA keys.
 You can also sign the key yourself, using the command:
 .Bd -literal -offset indent
 # openssl x509 -req -days 365 -in /etc/ssl/private/server.csr \\
-  -signkey 
+  -signkey /etc/ssl/private/server.key -out /etc/ssl/server.crt
+.Ed
+.Pp
+With
+.Pa /etc/ssl/server.crt
+and
+.Pa /etc/ssl/private/server.key
+in place, you should be able to start
+.Xr httpd 8
+with the
+.Ar -DSSL
+flag, enabling
+.Ar https
+transactions with your machine on port 443.
+.Sh BUGS
+.Pp
+.Nm openssl
+and
+.Nm libssl
+have nearly nonexistent documentation.
+Most documentation consists of examples and README files in
+the sources.  Mail beck@openbsd.org to assist or
+encourage him to finish the job.
+.Pp
+The world needs more
+.Ar DSA
+capable
+.Ar SSL
+and 
+.Ar SSH
+services, 
+.Pp
+Patents can be renewed.
+.Sh SEE ALSO
+.Xr httpd 8 ,
+.Xr ssh 1 ,
+.Xr sshd 1 ,
+.Xr rc 8
+.Sh HISTORY
+This document first appeared in
+.Ox 2.5 .
