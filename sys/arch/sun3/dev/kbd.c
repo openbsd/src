@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.4 1997/08/19 23:09:35 kstailey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.5 2000/07/02 17:50:26 miod Exp $	*/
 /*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
 
 /*
@@ -816,7 +816,11 @@ kbd_input_keysym(k, keysym)
 		break;
 
 	case KEYSYM_SPECIAL:
-		if (keysym == KEYSYM_NOP)
+		/* 
+		 * Unrecognized keys from type 4 or 5 keyboards generate
+		 * KEYSYM_HOLE
+		 */
+		if (keysym == KEYSYM_NOP || keysym == KEYSYM_HOLE)
 			break;
 		/* fall through */
 	default:
