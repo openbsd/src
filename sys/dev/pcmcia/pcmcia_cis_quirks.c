@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.5 2001/05/24 04:09:47 angelos Exp $	*/
+/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.6 2004/01/24 23:13:55 deraadt Exp $	*/
 /*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
@@ -130,6 +130,26 @@ static struct pcmcia_config_entry pcmcia_megahertz_xjem1144_func1_cfe0 = {
 	0,			/* maxtwins */
 };
 
+static struct pcmcia_function pcmcia_sierra_a555_func1 = {
+	1,			/* function number */
+	PCMCIA_FUNCTION_SERIAL,
+	0x24,			/* last cfe number */
+	0x700,			/* ccr_base */
+	0x73,			/* ccr_mask */
+};
+
+static struct pcmcia_config_entry pcmcia_sierra_a555_func1_cfe0 = {
+	0x20,			/* cfe number */
+	PCMCIA_CFE_IO8 | PCMCIA_CFE_IRQLEVEL, PCMCIA_IFTYPE_IO,
+	1,			/* num_iospace */
+	0,			/* iomask */
+	{ { 0x0008, 0x3f8 } },	/* iospace */
+	0x3fbc,			/* irqmask */
+	0,			/* num_memspace */
+	{ },			/* memspace */
+	0,			/* maxtwins */
+};
+
 static struct pcmcia_function pcmcia_sveclancard_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
@@ -171,6 +191,9 @@ static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  PCMCIA_CIS_INVALID, 
 	  &pcmcia_megahertz_xjem1144_func1,
 	  &pcmcia_megahertz_xjem1144_func1_cfe0 },
+	{ PCMCIA_VENDOR_SIERRA, PCMCIA_PRODUCT_SIERRA_A555,
+	  PCMCIA_CIS_INVALID, 
+	  &pcmcia_sierra_a555_func1, &pcmcia_sierra_a555_func1_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_SVEC_LANCARD,
 	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },

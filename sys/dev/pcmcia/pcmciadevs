@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.107 2003/11/17 19:47:43 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.108 2004/01/24 23:13:55 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -62,6 +62,7 @@ vendor GREYCELL			0x0143	Grey Cell
 vendor LINKSYS			0x0149	Linksys
 vendor NETGEAR			0x0149	Netgear
 vendor SIEMENS			0x02ac	Siemens
+vendor SIERRA			0x0192	Sierra
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
@@ -318,6 +319,9 @@ product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 
 /* Siemens */
 product SIEMENS SS1021		0x0002 Siemens SpeedStream 1021
+
+/* Sierra */
+product SIERRA	A555		0xa555 A555
 
 /* Socket Communications */
 product SOCKET EA_ETHER		0x0000 Socket Communications EA
