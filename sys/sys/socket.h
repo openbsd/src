@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.24 1999/02/15 19:27:49 millert Exp $	*/
+/*	$OpenBSD: socket.h,v 1.25 1999/02/16 16:54:47 millert Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *, socklen_t *))
 ssize_t	recvmsg __P((int, struct msghdr *, int));
 ssize_t	send __P((int, const void *, size_t, int));
 ssize_t	sendto __P((int, const void *,
-	    size_t, int, const struct sockaddr *, int));
+	    size_t, int, const struct sockaddr *, socklen_t));
 ssize_t	sendmsg __P((int, const struct msghdr *, int));
 int	setsockopt __P((int, int, int, const void *, socklen_t));
 int	shutdown __P((int, int));
