@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.47 2004/06/23 05:16:35 marius Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.48 2004/06/24 21:00:10 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -831,8 +831,9 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (!strcmp("execve", name)) {
 		intercept_newimage(fd, pid, policynr,
 		    emulation, icpid->newname, icpid);
-		free(icpid->newname);
-		icpid->newname = NULL;
+		/* we might have detached by now */
+		if (intercept_findpid(pid) == NULL)
+			return;
 	}
 
  out:
@@ -851,6 +852,11 @@ intercept_newimage(int fd, pid_t pid, int policynr,
 		free(icpid->name);
 	if ((icpid->name = strdup(newname)) == NULL)
 		err(1, "%s:%d: strdup", __func__, __LINE__);
+
+	if (icpid->newname != NULL) {
+		free(icpid->newname);
+		icpid->newname = NULL;
+	}
 
 	if (intercept_newimagecb != NULL)
 		(*intercept_newimagecb)(fd, pid, policynr, emulation,
