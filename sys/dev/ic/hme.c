@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.23 2002/11/26 01:08:18 fgsch Exp $	*/
+/*	$OpenBSD: hme.c,v 1.24 2003/02/01 06:00:10 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -810,6 +810,11 @@ hme_eint(sc, status)
 	if (status & HME_SEB_STAT_DTIMEXP) {
 		ifp->if_oerrors++;
 		status &= ~HME_SEB_STAT_DTIMEXP;
+	}
+
+	if (status & HME_SEB_STAT_NORXD) {
+		ifp->if_ierrors++;
+		status &= ~HME_SEB_STAT_NORXD;
 	}
 
 	if (status == 0)
