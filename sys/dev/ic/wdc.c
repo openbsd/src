@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.32 2001/05/01 02:26:42 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.33 2001/06/05 22:03:25 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -2047,6 +2047,7 @@ wdc_ioctl(drvp, xfer, addr, flag)
 			wi->wi_bp.b_bcount = 0;
 			wi->wi_bp.b_dev = 0;
 			wi->wi_bp.b_proc = curproc;
+			LIST_INIT(&wi->wi_bp->b_dep);
 			wdc_ioctl_strategy(&wi->wi_bp);
 			error = wi->wi_bp.b_error;
 		}
