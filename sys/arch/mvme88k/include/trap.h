@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.8 2001/03/09 05:44:40 smurph Exp $ */
+/*	$OpenBSD: trap.h,v 1.9 2001/03/12 23:00:48 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -72,15 +72,13 @@
 #define T_INT		28	/* interrupt exception */
 #define T_USER		29	/* user mode fault */
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 void panictrap(int type, struct m88100_saved_state *frame);
 void test_trap2(int num, int m197);
 void test_trap(struct m88100_saved_state *frame);
 void error_fault(struct m88100_saved_state *frame);
 void error_reset(struct m88100_saved_state *frame);
 void child_return(struct proc *p);
-u_long allocate_sir(void (*proc)(), void *arg);
-void init_sir();
 unsigned ss_get_value(struct proc *p, unsigned addr, int size);
 int ss_put_value(struct proc *p, unsigned addr, unsigned value, int size);
 unsigned ss_branch_taken(unsigned inst, unsigned pc, 
@@ -101,7 +99,7 @@ void syscall(register_t code, struct m88100_saved_state *tf);
 void trap2(unsigned type, struct m88100_saved_state *frame);
 void m197_syscall(register_t code, struct m88100_saved_state *tf);
 #endif /* MVME197 */
-#endif /* ASSEMBLER */
+#endif /* _LOCORE */
 
 #endif __MACHINE_TRAP_H__
 
