@@ -8343,11 +8343,11 @@ pa_select_section (exp, reloc, align)
       && DECL_INITIAL (exp)
       && (DECL_INITIAL (exp) == error_mark_node
           || TREE_CONSTANT (DECL_INITIAL (exp)))
-      && !reloc)
+      && !(reloc && flag_pic))
     readonly_data_section ();
   else if (TREE_CODE_CLASS (TREE_CODE (exp)) == 'c'
 	   && !(TREE_CODE (exp) == STRING_CST && flag_writable_strings)
-	   && !reloc)
+	   && !(reloc && flag_pic))
     readonly_data_section ();
   else
     data_section ();
