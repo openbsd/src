@@ -1,5 +1,5 @@
-/*	$OpenBSD: ifconfig.c,v 1.54 2001/11/05 07:39:16 mpech Exp $	*/
-/*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
+/*	$OpenBSD: ifconfig.c,v 1.55 2001/11/13 18:08:21 mickey Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.54 2001/11/05 07:39:16 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.55 2001/11/13 18:08:21 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,34 +152,34 @@ int	clearaddr, s;
 int	newaddr = 0;
 int	nsellength = 1;
 int	af = AF_INET;
-int     dflag, mflag, lflag, uflag;
-int     reset_if_flags;
+int	dflag, mflag, lflag, uflag;
+int	reset_if_flags;
 int	explicit_prefix = 0;
 #ifdef INET6
 int	Lflag = 1;
 #endif
 
-void 	notealias __P((char *, int));
-void 	notrailers __P((char *, int));
-void 	setifaddr __P((char *, int));
-void 	setifdstaddr __P((char *, int));
-void 	setifflags __P((char *, int));
-void 	setifbroadaddr __P((char *));
-void 	setifipdst __P((char *));
-void 	setifmetric __P((char *));
+void	notealias __P((char *, int));
+void	notrailers __P((char *, int));
+void	setifaddr __P((char *, int));
+void	setifdstaddr __P((char *, int));
+void	setifflags __P((char *, int));
+void	setifbroadaddr __P((char *));
+void	setifipdst __P((char *));
+void	setifmetric __P((char *));
 void	setifmtu __P((char *, int));
 void	setifnwid __P((char *, int));
-void 	setifnetmask __P((char *));
+void	setifnetmask __P((char *));
 void	setifprefixlen __P((char *, int));
-void 	setnsellength __P((char *));
-void 	setsnpaoffset __P((char *));
+void	setnsellength __P((char *));
+void	setsnpaoffset __P((char *));
 void	setipxframetype __P((char *, int));
 void    setatrange __P((char *, int));
-void    setatphase __P((char *, int));  
+void    setatphase __P((char *, int));
 void    settunnel __P((char *, char *));
 void    deletetunnel __P((void));
 #ifdef INET6
-void 	setia6flags __P((char *, int));
+void	setia6flags __P((char *, int));
 void	setia6pltime __P((char *, int));
 void	setia6vltime __P((char *, int));
 void	setia6lifetime __P((char *, char *));
@@ -201,7 +201,7 @@ int	prefix __P((void *val, int));
  * Media stuff.  Whenever a media command is first performed, the
  * currently select media is grabbed for this interface.  If `media'
  * is given, the current media word is modifed.  `mediaopt' commands
- * only modify the set and clear words.  They then operate on the   
+ * only modify the set and clear words.  They then operate on the
  * current media word later.
  */
 int	media_current;
@@ -217,7 +217,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
 
 #define	NEXTARG		0xffffff
-#define NEXTARG2        0xfffffe
+#define NEXTARG2	0xfffffe
 
 const struct	cmd {
 	char	*c_name;
@@ -271,9 +271,9 @@ const struct	cmd {
 	{ "-vlandev",	1,		0,		unsetvlandev },
 #endif	/* INET_ONLY */
 	/* giftunnel is for backward compat */
-	{ "giftunnel",  NEXTARG2,       0,              settunnel } ,
-	{ "tunnel",  	NEXTARG2,       0,              settunnel } ,
-	{ "deletetunnel",  0,       	0,              deletetunnel } ,
+	{ "giftunnel",  NEXTARG2,	0,		settunnel } ,
+	{ "tunnel",	NEXTARG2,	0,		settunnel } ,
+	{ "deletetunnel",  0,   	0,		deletetunnel } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -287,16 +287,16 @@ const struct	cmd {
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
-	{ NULL, /*illegal*/0,		0,		NULL },	
+	{ NULL, /*illegal*/0,		0,		NULL },
 };
 
-void 	adjust_nsellength();
+void	adjust_nsellength();
 int	getinfo __P((struct ifreq *));
 void	getsock __P((int));
 void	printif __P((struct ifreq *, int));
-void 	printb __P((char *, unsigned short, char *));
-void 	status __P((int));
-void 	usage();
+void	printb __P((char *, unsigned short, char *));
+void	status __P((int));
+void	usage();
 char	*sec2str __P((time_t));
 
 const char *get_media_type_string __P((int));
@@ -314,23 +314,23 @@ void	init_current_media __P((void));
  * Maryland principally by James O'Toole and Chris Torek.
  */
 void	in_status __P((int));
-void 	in_getaddr __P((char *, int));
-void 	in_getprefix __P((char *, int));
+void	in_getaddr __P((char *, int));
+void	in_getprefix __P((char *, int));
 #ifdef INET6
 void	in6_fillscopeid __P((struct sockaddr_in6 *sin6));
 void	in6_alias __P((struct in6_ifreq *));
 void	in6_status __P((int));
-void 	in6_getaddr __P((char *, int));
-void 	in6_getprefix __P((char *, int));
+void	in6_getaddr __P((char *, int));
+void	in6_getprefix __P((char *, int));
 #endif
 void    at_status __P((int));
 void    at_getaddr __P((char *, int));
-void 	xns_status __P((int));
-void 	xns_getaddr __P((char *, int));
-void 	ipx_status __P((int));
-void 	ipx_getaddr __P((char *, int));
-void 	iso_status __P((int));
-void 	iso_getaddr __P((char *, int));
+void	xns_status __P((int));
+void	xns_getaddr __P((char *, int));
+void	ipx_status __P((int));
+void	ipx_getaddr __P((char *, int));
+void	iso_status __P((int));
+void	iso_getaddr __P((char *, int));
 void	ieee80211_status __P((void));
 
 /* Known address families */
@@ -377,7 +377,7 @@ main(argc, argv)
 	int ifaliases = 0;
 	int i;
 
-	if (argc < 2) 
+	if (argc < 2)
 		usage();
 	argc--, argv++;
 	if (!strcmp(*argv, "-a"))
@@ -453,7 +453,7 @@ main(argc, argv)
 				(*p->c_func)(argv[1]);
 				argc--, argv++;
 			} else if (p->c_parameter == NEXTARG2) {
-			        if ((argv[1] == NULL) ||
+				if ((argv[1] == NULL) ||
 				    (argv[2] == NULL))
 					errx(1, "'%s' requires 2 arguments",
 					    p->c_name);
@@ -479,7 +479,7 @@ main(argc, argv)
 		setifprefixlen("64", 0);
 		/* in6_getprefix("64", MASK) if MASK is available here... */
 	}
-  
+
 #ifndef INET_ONLY
 
 	switch (af) {
@@ -804,8 +804,8 @@ settunnel(src, dst)
 void
 deletetunnel()
 {
-        if (ioctl(s, SIOCDIFPHYADDR, &ifr) < 0)
-                warn("SIOCDIFPHYADDR");
+	if (ioctl(s, SIOCDIFPHYADDR, &ifr) < 0)
+		warn("SIOCDIFPHYADDR");
 }
 
 
@@ -887,7 +887,7 @@ setifflags(vname, value)
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&my_ifr) < 0)
 		err(1, "SIOCGIFFLAGS");
 	(void) strlcpy(my_ifr.ifr_name, name, sizeof(my_ifr.ifr_name));
- 	flags = my_ifr.ifr_flags;
+	flags = my_ifr.ifr_flags;
 
 	if (value < 0) {
 		value = -value;
@@ -1487,7 +1487,7 @@ in_status(force)
 	/*
 	 * We keep the interface address and reset it before each
 	 * ioctl() so we can get ifaliases information (as opposed
- 	 * to the primary interface netmask/dstaddr/broadaddr, if
+	 * to the primary interface netmask/dstaddr/broadaddr, if
 	 * the ifr_addr field is zero).
 	 */
 	memcpy(&sin2, &ifr.ifr_addr, sizeof(sin2));
@@ -1614,7 +1614,7 @@ in6_alias(creq)
 	} else {
 		sin6 = (struct sockaddr_in6 *)&ifr6.ifr_addr;
 		printf(" prefixlen %d", prefix(&sin6->sin6_addr,
-					       sizeof(struct in6_addr)));
+		    sizeof(struct in6_addr)));
 	}
 
 	(void) memset(&ifr6, 0, sizeof(ifr6));
@@ -1687,7 +1687,7 @@ at_status(force)
 {
 	struct sockaddr_at *sat, null_sat;
 	struct netrange *nr;
- 
+
 	getsock(AF_APPLETALK);
 	if (s < 0) {
 		if (errno == EPROTONOSUPPORT)
@@ -1713,7 +1713,7 @@ at_status(force)
 	printf("\tAppleTalk %d.%d range %d-%d phase %d",
 	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
 	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
-	if (flags & IFF_POINTOPOINT) {  
+	if (flags & IFF_POINTOPOINT) {
 		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    (void) memset(&ifr.ifr_addr, 0,
@@ -1782,7 +1782,19 @@ setipxframetype(vname, type)
 	char	*vname;
 	int	type;
 {
+	struct  sockaddr_ipx	*sipx;
+
 	ipx_type = type;
+	getsock(AF_IPX);
+	if (s < 0) {
+		if (errno == EPROTONOSUPPORT)
+			return;
+		err(1, "socket");
+	}
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	sipx = (struct sockaddr_ipx *)&addreq.ifra_addr;
+	sipx->sipx_type = ipx_type;
 }
 
 void
@@ -2088,7 +2100,7 @@ at_getaddr(addr, which)
 	u_int net, node;
 
 	sat->sat_family = AF_APPLETALK;
-	sat->sat_len = sizeof(*sat);    
+	sat->sat_len = sizeof(*sat);
 	if (which == MASK)
 		errx(1, "AppleTalk does not use netmasks");
 	if (sscanf(addr, "%u.%u", &net, &node) != 2 ||
@@ -2097,14 +2109,14 @@ at_getaddr(addr, which)
 	sat->sat_addr.s_net = htons(net);
 	sat->sat_addr.s_node = node;
 }
-	
+
 void
 setatrange(range, d)
 	char *range;
 	int d;
 {
 	u_short first = 123, last = 123;
-	
+
 	if (sscanf(range, "%hu-%hu", &first, &last) != 2 ||
 	    first == 0 || first > 0xffff ||
 	    last == 0 || last > 0xffff || first > last)
@@ -2112,7 +2124,7 @@ setatrange(range, d)
 	at_nr.nr_firstnet = htons(first);
 	at_nr.nr_lastnet = htons(last);
 }
- 
+
 void
 setatphase(phase, d)
 	char *phase;
@@ -2120,18 +2132,18 @@ setatphase(phase, d)
 {
 	if (!strcmp(phase, "1"))
 		at_nr.nr_phase = 1;
-	else if (!strcmp(phase, "2"))  
+	else if (!strcmp(phase, "2"))
 		at_nr.nr_phase = 2;
 	else
 		errx(1, "%s: illegal phase", phase);
 }
-	
+
 void
 checkatrange(sat)
 	struct sockaddr_at *sat;
 {
 	if (at_nr.nr_phase == 0)
-		at_nr.nr_phase = 2;     /* Default phase 2 */
+		at_nr.nr_phase = 2;	/* Default phase 2 */
 	if (at_nr.nr_firstnet == 0)	/* Default range of one */
 		at_nr.nr_firstnet = at_nr.nr_lastnet = sat->sat_addr.s_net;
 	printf("\tatalk %d.%d range %d-%d phase %d\n",
@@ -2284,8 +2296,8 @@ void vlan_status()
 
 	if (vreq.vlr_tag || (vreq.vlr_parent[0] != '\0'))
 		printf("\tvlan: %d parent interface: %s\n",
-		       vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
-	               "<none>" : vreq.vlr_parent);
+		    vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
+		    "<none>" : vreq.vlr_parent);
 
 	return;
 }
