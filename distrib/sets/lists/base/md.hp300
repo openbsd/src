@@ -26,7 +26,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.6
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.2
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.2/include
-./usr/lib/libacl.so.4.1
+./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.24.2
 ./usr/lib/libc_r.so.2.1
 ./usr/lib/libcrypto.so.2.0
@@ -37,10 +37,10 @@
 ./usr/lib/libform.so.1.1
 ./usr/lib/libg2c.so.5.24
 ./usr/lib/libiberty.so.3.0
-./usr/lib/libkadm.so.5.0
-./usr/lib/libkafs.so.5.1
-./usr/lib/libkdb.so.5.0
-./usr/lib/libkrb.so.7.0
+./usr/lib/libkadm.so.6.0
+./usr/lib/libkafs.so.6.0
+./usr/lib/libkdb.so.6.0
+./usr/lib/libkrb.so.8.0
 ./usr/lib/libkvm.so.5.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
@@ -522,7 +522,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/skey.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/skipjack.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stab.ph
@@ -691,3 +690,4 @@
 ./usr/sbin/hilinfo
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ifaddrs.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/skipjack.ph

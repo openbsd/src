@@ -482,7 +482,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/skey.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/skipjack.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/stab.ph
@@ -663,3 +662,4 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ifaddrs.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/skipjack.ph

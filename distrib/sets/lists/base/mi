@@ -265,7 +265,6 @@
 ./usr/bin/keynote
 ./usr/bin/kinit
 ./usr/bin/klist
-./usr/bin/ksrvtgt
 ./usr/bin/ktrace
 ./usr/bin/lam
 ./usr/bin/last
@@ -2677,3 +2676,7 @@
 ./usr/sbin/rip6query
 ./usr/sbin/usbdevs
 ./usr/sbin/traceroute6
+./usr/sbin/getencstat
+./usr/sbin/sesd
+./usr/sbin/setencstat
+./usr/sbin/setobjstat

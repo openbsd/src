@@ -127,7 +127,6 @@
 ./usr/share/info/info-stnd.info-1
 ./usr/share/info/info-stnd.info-2
 ./usr/share/info/info.info
-./usr/share/info/kth-krb.info
 ./usr/share/info/mmalloc.info
 ./usr/share/info/readline.info
 ./usr/share/info/stabs.info
@@ -297,13 +296,11 @@
 ./usr/share/man/cat1/kauth.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kdump.0
-./usr/share/man/cat1/kerberos.0
 ./usr/share/man/cat1/keynote.0
 ./usr/share/man/cat1/kill.0
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
 ./usr/share/man/cat1/ksh.0
-./usr/share/man/cat1/ksrvtgt.0
 ./usr/share/man/cat1/ktrace.0
 ./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
@@ -1192,8 +1189,6 @@
 ./usr/share/man/cat5/isakmpd.conf.0
 ./usr/share/man/cat5/isakmpd.policy.0
 ./usr/share/man/cat5/keynote.0
-./usr/share/man/cat5/krb.conf.0
-./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/magic.0
@@ -1646,3 +1641,8 @@
 ./usr/share/man/man4/powerpc
 ./usr/share/man/cat3/freeifaddrs.0
 ./usr/share/man/cat3/getifaddrs.0
+./usr/share/man/cat8/sesd.0
+./usr/share/man/cat8/setencstat.0
+./usr/share/man/cat8/setobjstat.0
+./usr/share/man/cat8/getencstat.0
+./usr/share/man/cat8/crash.0

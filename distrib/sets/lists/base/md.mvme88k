@@ -233,7 +233,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sha1.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/skey.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/soundcard.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/spinlock.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/stab.ph
@@ -401,3 +400,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/skipjack.ph
