@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.209 2002/05/19 22:31:28 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.210 2002/05/28 17:28:14 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5209,10 +5209,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 	struct route iproute;
 	struct route *ro;
 	struct sockaddr_in *dst;
-	struct ip *ip, *mhip;
+	struct ip *ip;
 	struct ifnet *ifp = r->rt_ifp;
 	int hlen;
-	int len, off, error = 0;
+	int error = 0;
 
 	if (r->rt == PF_DUPTO) {
 		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
@@ -5284,107 +5284,24 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 		ipstat.ips_cantfrag++;
 		goto bad;
 	}
-	len = (ifp->if_mtu - hlen) &~ 7;
-	if (len < 8) {
-		error = EMSGSIZE;
+
+	m1 = m0;
+	error = ip_fragment(m0, ifp);
+	if (error == EMSGSIZE)
 		goto bad;
-	}
-	/*
-	 * If we are doing fragmentation, we can't defer TCP/UDP
-	 * checksumming; compute the checksum and clear the flag.
-	 */
-	if (m0->m_pkthdr.csum & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
-		in_delayed_cksum(m0);
-		m0->m_pkthdr.csum &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
-	}
 
-	{
-	    int mhlen, firstlen = len;
-	    struct mbuf **mnext = &m0->m_nextpkt;
-
-	    /*
-	     * Loop through length of segment after first fragment,
-	     * make new header and copy data of each part and link onto chain.
-	     */
-	    m1 = m0;
-	    mhlen = sizeof (struct ip);
-	    for (off = hlen + len; off < (u_int16_t)ip->ip_len; off += len) {
-		    MGETHDR(m0, M_DONTWAIT, MT_HEADER);
-		    if (m0 == 0) {
-			    error = ENOBUFS;
-			    ipstat.ips_odropped++;
-			    goto sendorfree;
-		    }
-		    *mnext = m0;
-		    mnext = &m0->m_nextpkt;
-		    m0->m_data += max_linkhdr;
-		    mhip = mtod(m0, struct ip *);
-		    *mhip = *ip;
-		    /* we must inherit MCAST and BCAST flags */
-		    m0->m_flags |= m1->m_flags & (M_MCAST|M_BCAST);
-		    if (hlen > sizeof (struct ip)) {
-			    mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
-			    mhip->ip_hl = mhlen >> 2;
-		    }
-		    m0->m_len = mhlen;
-		    mhip->ip_off = ((off - hlen) >> 3) + (ip->ip_off & ~IP_MF);
-		    if (ip->ip_off & IP_MF)
-			    mhip->ip_off |= IP_MF;
-		    if (off + len >= (u_int16_t)ip->ip_len)
-			    len = (u_int16_t)ip->ip_len - off;
-		    else
-			    mhip->ip_off |= IP_MF;
-		    mhip->ip_len = htons((u_int16_t)(len + mhlen));
-		    m0->m_next = m_copy(m1, off, len);
-		    if (m0->m_next == 0) {
-			    error = ENOBUFS;/* ??? */
-			    ipstat.ips_odropped++;
-			    goto sendorfree;
-		    }
-		    m0->m_pkthdr.len = mhlen + len;
-		    m0->m_pkthdr.rcvif = (struct ifnet *)0;
-		    mhip->ip_off = htons((u_int16_t)mhip->ip_off);
-		    if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-			ifp->if_bridge == NULL) {
-			    m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
-			    ipstat.ips_outhwcsum++;
-		    } else {
-			    mhip->ip_sum = 0;
-			    mhip->ip_sum = in_cksum(m0, mhlen);
-		    }
-		    ipstat.ips_ofragments++;
-	    }
-	    /*
-	     * Update first fragment by trimming what's been copied out
-	     * and updating header, then send each fragment (in order).
-	     */
-	    m0 = m1;
-	    m_adj(m0, hlen + firstlen - (u_int16_t)ip->ip_len);
-	    m0->m_pkthdr.len = hlen + firstlen;
-	    ip->ip_len = htons((u_int16_t)m0->m_pkthdr.len);
-	    ip->ip_off = htons((u_int16_t)(ip->ip_off | IP_MF));
-	    if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		ifp->if_bridge == NULL) {
-		    m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
-		    ipstat.ips_outhwcsum++;
-	    } else {
-		    ip->ip_sum = 0;
-		    ip->ip_sum = in_cksum(m0, hlen);
-	    }
-sendorfree:
-	    for (m0 = m1; m0; m0 = m1) {
-		    m1 = m0->m_nextpkt;
-		    m0->m_nextpkt = 0;
-		    if (error == 0)
-			    error = (*ifp->if_output)(ifp, m0, sintosa(dst),
-				NULL);
-		    else
-			    m_freem(m0);
-	    }
-
-	    if (error == 0)
-		    ipstat.ips_fragmented++;
+	for (m0 = m1; m0; m0 = m1) {
+		m1 = m0->m_nextpkt;
+		m0->m_nextpkt = 0;
+		if (error == 0)
+			error = (*ifp->if_output)(ifp, m0, sintosa(dst),
+			    NULL);
+		else
+			m_freem(m0);
 	}
+	
+	if (error == 0)
+		ipstat.ips_fragmented++;
 
 done:
 	if (r->rt != PF_DUPTO)
