@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: rc.vpn,v 1.17 2002/12/05 12:50:03 markus Exp $
+#	$OpenBSD: rc.vpn,v 1.18 2003/01/20 12:25:45 markus Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -18,7 +18,7 @@
 # XXX The configuration parameters should be moved to another file.
 
 # Uncomment to debug (and not execute) commands
-#DEBUG=echo
+DEBUG=echo
 
 # Gateway adresses
 GW_LOCAL=192.168.254.254
@@ -86,6 +86,10 @@ fi
 # add the gateways
 LOCAL_NETWORKS="${GW_LOCAL}/32 ${LOCAL_NETWORKS}"
 REMOTE_NETWORKS="${GW_REMOTE}/32 ${REMOTE_NETWORKS}"
+# but allow ESP in the clear
+BYPASS="$DEBUG ${ipsecadm} flow -transport esp -src ${GW_LOCAL} -dst ${GW_REMOTE} -bypass"
+$BYPASS -out -addr ${GW_LOCAL}/32  ${GW_REMOTE}/32
+$BYPASS -in  -addr ${GW_REMOTE}/32 ${GW_LOCAL}/32
 
 FLOW="$DEBUG ${ipsecadm} flow -proto esp -src ${GW_LOCAL} -dst ${GW_REMOTE} -require"
 
