@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.95 2003/12/14 10:02:57 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.96 2004/01/05 01:33:40 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -181,7 +181,7 @@ BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
 		strings strip
 NEW_BINUTILS?=	Yes
 .else
-BINUTILS=	ar as ld nm ranlib objcopy objdump size strings strip
+BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
 NEW_BINUTILS?=	No
 .endif
 
@@ -239,15 +239,6 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/strip \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/strip
-	(cd ${.CURDIR}/usr.bin/size; \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
-	    MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
-	    NOMAN= depend all; \
-	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} NOMAN= install)
-	ln -sf ${CROSSDIR}/usr/bin/size \
-	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/size
 	(cd ${.CURDIR}/usr.bin/nm; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
@@ -256,6 +247,8 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/nm \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/nm
+	ln -sf ${CROSSDIR}/usr/bin/size \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/nm
 .endif
 	@for cmd in ${BINUTILS}; do \
