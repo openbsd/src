@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.38 1998/02/16 21:56:29 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.39 1998/03/25 19:44:50 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1810,6 +1810,11 @@ sys_utimes(p, v, retval)
                                sizeof (tv));
                 if (error)
                         return (error);
+		/* XXX workaround timeval matching the VFS constant VNOVAL */
+		if (tv[0].tv_sec == VNOVAL)
+			tv[0].tv_sec = VNOVAL - 1;
+		if (tv[1].tv_sec == VNOVAL)
+			tv[1].tv_sec = VNOVAL - 1;
         }
         NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
         if ((error = namei(&nd)) != 0)
@@ -1861,6 +1866,11 @@ sys_futimes(p, v, retval)
 			       sizeof (tv));
 		if (error)
 			return (error);
+		/* XXX workaround timeval matching the VFS constant VNOVAL */
+		if (tv[0].tv_sec == VNOVAL)
+			tv[0].tv_sec = VNOVAL - 1;
+		if (tv[1].tv_sec == VNOVAL)
+			tv[1].tv_sec = VNOVAL - 1;
 	}
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
