@@ -292,7 +292,7 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-device /sbus/esp/sd@0,0
 
 
-Congratulations, you have successfully installed OpenBSD 2.0.  When you
+Congratulations, you have successfully installed OpenBSD 2.1.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
