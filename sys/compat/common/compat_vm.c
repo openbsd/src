@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_vm.c,v 1.1 1999/05/22 21:22:33 weingart Exp $	*/
+/*	$OpenBSD: compat_vm.c,v 1.2 2003/04/29 19:52:30 miod Exp $	*/
 /*	$NetBSD: vm_12.c,v 1.8 1997/10/20 22:05:22 thorpej Exp $	*/
 
 /*
@@ -55,13 +55,13 @@ sys_swapon(p, v, retval)
 }
 
 int
-sys_omsync(p, v, retval)
+compat_25_sys_omsync(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_msync_args ua;
-	struct sys_omsync_args /* {
+	struct compat_25_sys_omsync_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
