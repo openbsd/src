@@ -1,7 +1,7 @@
-/*	$OpenBSD: vm86.h,v 1.5 1996/05/02 13:44:03 deraadt Exp $	*/
-/*	$NetBSD: vm86.h,v 1.6 1996/04/18 10:04:32 mycroft Exp $	*/
+/*	$OpenBSD: vm86.h,v 1.6 1996/05/07 07:22:11 deraadt Exp $	*/
+/*	$NetBSD: vm86.h,v 1.8 1996/05/03 19:26:32 christos Exp $	*/
 
-#define	VM86_USE_VIF
+#undef	VM86_USE_VIF
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@ struct vm86_struct {
 	unsigned char int21_byuser[32];	/* otherwise, handle directly */
 };
 
-#define BIOSSEG		0x0f000
-
 #define VCPU_086		0
 #define VCPU_186		1
 #define VCPU_286		2
@@ -89,8 +87,14 @@ struct vm86_struct {
 int i386_vm86 __P((struct proc *, char *, register_t *));
 void vm86_gpfault __P((struct proc *, int));
 void vm86_return __P((struct proc *, int));
+static __inline void clr_vif __P((struct proc *));
+static __inline void set_vif __P((struct proc *));
+static __inline void set_vflags __P((struct proc *, int));
+static __inline int get_vflags __P((struct proc *));
+static __inline void set_vflags_short __P((struct proc *, int));
+static __inline int get_vflags_short __P((struct proc *));
 
-static __inline__ void
+static __inline void
 clr_vif(p)
 	struct proc *p;
 {
@@ -103,7 +107,7 @@ clr_vif(p)
 #endif
 }
 
-static __inline__ void
+static __inline void
 set_vif(p)
 	struct proc *p;
 {
@@ -119,7 +123,7 @@ set_vif(p)
 		vm86_return(p, VM86_STI);
 }
 
-static __inline__ void
+static __inline void
 set_vflags(p, flags)
 	struct proc *p;
 	int flags;
@@ -138,7 +142,7 @@ set_vflags(p, flags)
 		vm86_return(p, VM86_STI);
 }
 
-static __inline__ int
+static __inline int
 get_vflags(p)
 	struct proc *p;
 {
@@ -151,7 +155,7 @@ get_vflags(p)
 	return (flags);
 }
 
-static __inline__ void
+static __inline void
 set_vflags_short(p, flags)
 	struct proc *p;
 	int flags;
@@ -168,7 +172,7 @@ set_vflags_short(p, flags)
 #endif
 }
 
-static __inline__ int
+static __inline int
 get_vflags_short(p)
 	struct proc *p;
 {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccons.c,v 1.11 1996/04/24 18:16:55 mickey Exp $	*/
-/*	$NetBSD: pccons.c,v 1.96 1996/04/11 22:15:25 cgd Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.12 1996/05/07 07:22:23 deraadt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.97 1996/05/03 19:15:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -46,7 +46,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -64,6 +63,7 @@
 #include <machine/pio.h>
 #include <machine/pc/display.h>
 #include <machine/pccons.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -140,19 +140,36 @@ void sput __P((u_char *, int));
 void pc_xmode_on __P((void));
 void pc_xmode_off __P((void));
 
-void	pcstart();
-int	pcparam();
+void	pcstart __P((struct tty *));
+int	pcparam __P((struct tty *, struct termios *));
+
 char	partab[];
 
-extern pcopen(dev_t, int, int, struct proc *);
+int kbd_cmd __P((u_char, u_char));
+void set_cursor_shape __P((void));
+void get_cursor_shape __P((void));
+void do_async_update __P((void *));
+void async_update __P((void));
+
+static __inline int kbd_wait_output __P((void));
+static __inline int kbd_wait_input __P((void));
+static __inline void kbd_flush_input __P((void));
+static u_char kbc_get8042cmd __P((void));
+static int kbc_put8042cmd __P((u_char));
+
+void pccnprobe __P((struct consdev *));
+void pccninit __P((struct consdev *));
+void pccnputc __P((dev_t, char));
+int pccngetc __P((dev_t));
+void pccnpollc __P((dev_t, int));
 
 #define	KBD_DELAY \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); }
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; }
 
-static inline int
+static __inline int
 kbd_wait_output()
 {
 	u_int i;
@@ -165,7 +182,7 @@ kbd_wait_output()
 	return 0;
 }
 
-static inline int
+static __inline int
 kbd_wait_input()
 {
 	u_int i;
@@ -178,7 +195,7 @@ kbd_wait_input()
 	return 0;
 }
 
-static inline void
+static __inline void
 kbd_flush_input()
 {
 	u_int i;
@@ -311,9 +328,10 @@ get_cursor_shape()
 }
 
 void
-do_async_update(poll)
-	u_char poll;
+do_async_update(v)
+	void *v;
 {
+	u_char poll = v ? 1 : 0;
 	int pos;
 	static int old_pos = -1;
 
@@ -359,7 +377,7 @@ async_update()
 	if (kernel || polling) {
 		if (async)
 			untimeout(do_async_update, NULL);
-		do_async_update(1);
+		do_async_update((void *)1);
 	} else {
 		if (async)
 			return;
@@ -462,7 +480,7 @@ pcattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 
 	printf(": %s\n", vs.color ? "color" : "mono");
-	do_async_update(1);
+	do_async_update((void *)1);
 	screen_restore(0);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
@@ -688,7 +706,7 @@ pcstart(tp)
 	struct tty *tp;
 {
 	struct clist *cl;
-	int s, len, n;
+	int s, len;
 	u_char buf[PCBURST];
 
 	s = spltty();
@@ -720,12 +738,12 @@ out:
 	splx(s);
 }
 
-void
+int
 pcstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return 0;
 }
 
 void
@@ -967,7 +985,7 @@ sput(cp, n)
 		else
 			vs.so_at = FG_YELLOW | BG_BLACK;
 
-		fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
+		fillw((vs.at << 8) | ' ', (caddr_t) crtat, vs.nchr - cursorat);
 	}
 
 	while (n--) {
@@ -1015,7 +1033,6 @@ sput(cp, n)
 			break;
 
 		default:
-		bypass:
 			switch (vs.state) {
 			case 0:
 				if (c == '\a')
@@ -1054,8 +1071,8 @@ sput(cp, n)
 					vs.cx = vs.cy = 0;
 					vs.state = VSS_EBRACE;
 				} else if (c == 'c') { /* Clear screen & home */
-					fillw((vs.at << 8) | ' ', Crtat,
-					    vs.nchr);
+					fillw((vs.at << 8) | ' ',
+					    (caddr_t) Crtat, vs.nchr);
 					crtat = Crtat;
 					vs.col = 0;
 					vs.state = 0;
@@ -1145,17 +1162,20 @@ sput(cp, n)
 					switch (vs.cx) {
 					case 0:
 						/* ... to end of display */
-						fillw((vs.at << 8) | ' ', crtat,
+						fillw((vs.at << 8) | ' ', 
+						    (caddr_t) crtat,
 						    Crtat + vs.nchr - crtat);
 						break;
 					case 1:
 						/* ... to next location */
-						fillw((vs.at << 8) | ' ', Crtat,
+						fillw((vs.at << 8) | ' ',
+						    (caddr_t) Crtat,
 						    crtat - Crtat + 1);
 						break;
 					case 2:
 						/* ... whole display */
-						fillw((vs.at << 8) | ' ', Crtat,
+						fillw((vs.at << 8) | ' ',
+						    (caddr_t) Crtat,
 						    vs.nchr);
 						break;
 					}
@@ -1165,19 +1185,21 @@ sput(cp, n)
 					switch (vs.cx) {
 					case 0:
 						/* ... current to EOL */
-						fillw((vs.at << 8) | ' ', crtat,
+						fillw((vs.at << 8) | ' ',
+						    (caddr_t) crtat,
 						    vs.ncol - vs.col);
 						break;
 					case 1:
 						/* ... beginning to next */
 						fillw((vs.at << 8) | ' ',
-						    crtat - vs.col,
+						    (caddr_t) (crtat - vs.col),
 						    vs.col + 1);
 						break;
 					case 2:
 						/* ... entire line */
 						fillw((vs.at << 8) | ' ',
-						    crtat - vs.col, vs.ncol);
+						    (caddr_t) (crtat - vs.col),
+						    vs.ncol);
 						break;
 					}
 					vs.state = 0;
@@ -1215,7 +1237,7 @@ sput(cp, n)
 						    crtAt, vs.ncol * (nrow -
 						    cx) * CHR);
 					fillw((vs.at << 8) | ' ',
-					    crtAt + vs.ncol * (nrow - cx),
+					    (caddr_t) (crtAt + vs.ncol * (nrow - cx)),
 					    vs.ncol * cx);
 					vs.state = 0;
 					break;
@@ -1231,9 +1253,11 @@ sput(cp, n)
 						    Crtat, vs.ncol * (vs.nrow -
 						    cx) * CHR);
 					fillw((vs.at << 8) | ' ',
-					    Crtat + vs.ncol * (vs.nrow - cx),
+					    (caddr_t) (Crtat + vs.ncol * (vs.nrow - cx)),
 					    vs.ncol * cx);
-					/* crtat -= vs.ncol * cx; /* XXX */
+#if 0
+					crtat -= vs.ncol * cx; /* XXX */
+#endif
 					vs.state = 0;
 					break;
 				}
@@ -1251,7 +1275,8 @@ sput(cp, n)
 						    crtAt + vs.ncol * cx,
 						    vs.ncol * (nrow - cx) *
 						    CHR);
-					fillw((vs.at << 8) | ' ', crtAt,
+					fillw((vs.at << 8) | ' ', 
+					    (caddr_t) crtAt,
 					    vs.ncol * cx);
 					vs.state = 0;
 					break;
@@ -1267,9 +1292,12 @@ sput(cp, n)
 						    Crtat + vs.ncol * cx,
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
-					fillw((vs.at << 8) | ' ', Crtat,
+					fillw((vs.at << 8) | ' ', 
+					    (caddr_t) Crtat,
 					    vs.ncol * cx);
-					/* crtat += vs.ncol * cx; /* XXX */
+#if 0
+					crtat += vs.ncol * cx; /* XXX */
+#endif
 					vs.state = 0;
 					break;
 				}
@@ -1339,7 +1367,8 @@ sput(cp, n)
 				bcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
-				    Crtat + vs.nchr - vs.ncol, vs.ncol);
+				    (caddr_t) (Crtat + vs.nchr - vs.ncol),
+				    vs.ncol);
 				crtat -= vs.ncol;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.55 1996/04/11 22:15:22 cgd Exp $	*/
+/*	$NetBSD: npx.c,v 1.56 1996/05/03 19:14:58 christos Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -104,7 +104,6 @@ int npxdna __P((struct proc *));
 void npxexit __P((void));
 int npxintr __P((void *));
 static int npxprobe1 __P((struct isa_attach_args *));
-void npxsave __P((void));
 static void npxsave1 __P((void));
 
 struct npx_softc {
@@ -338,6 +337,8 @@ npxattach(parent, self, aux)
 	case NPX_BROKEN:
 		printf(": error reporting broken; not using\n");
 		npx_type = NPX_NONE;
+		return;
+	case NPX_NONE:
 		return;
 	}
 

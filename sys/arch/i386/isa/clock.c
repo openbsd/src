@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 1996/04/11 22:15:13 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.38 1996/05/03 19:14:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -105,8 +105,22 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
-void spinwait __P((int));
-void findcpuspeed __P((void));
+void	spinwait __P((int));
+void	findcpuspeed __P((void));
+int	clockintr __P((void *));
+int	gettick __P((void));
+void	sysbeepstop __P((void *));
+void	sysbeep __P((int, int));
+void	rtcinit __P((void));
+int	rtcget __P((mc_todregs *));
+void	rtcput __P((mc_todregs *));
+static int yeartoday __P((int));
+int 	hexdectodec __P((int));
+int	dectohexdec __P((int));
+
+
+__inline u_int mc146818_read __P((void *, u_int));
+__inline void mc146818_write __P((void *, u_int, u_int));
 
 #ifdef I586_CPU
 int pentium_mhz;
@@ -152,8 +166,9 @@ startrtclock()
 	outb(IO_TIMER1, TIMER_DIV(hz) / 256);
 
 	/* Check diagnostic status */
-	if (s = mc146818_read(NULL, NVRAM_DIAG))	/* XXX softc */
-		printf("RTC BIOS diagnostic error %b\n", s, NVRAM_DIAG_BITS);
+	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
+		printf("RTC BIOS diagnostic error %b\n", (unsigned int) s, 
+		    NVRAM_DIAG_BITS);
 }
 
 int
@@ -287,7 +302,7 @@ sysbeep(pitch, period)
 
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
-#define FIRST_GUESS	0x2000
+#define FIRST_GUESS   0x2000
 
 void
 findcpuspeed()
@@ -355,7 +370,7 @@ rtcget(regs)
 {
 
 	rtcinit();
-	if (mc146818_read(NULL, MC_REGD) & MC_REGD_VRT == 0) /* XXX softc */
+	if ((mc146818_read(NULL, MC_REGD) & MC_REGD_VRT) == 0) /* XXX softc */
 		return (-1);
 	MC146818_GETTOD(NULL, regs);			/* XXX softc */
 	return (0);
@@ -382,18 +397,18 @@ yeartoday(year)
 
 int
 hexdectodec(n)
-	char n;
+	int n;
 {
 
 	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
-char
+int
 dectohexdec(n)
 	int n;
 {
 
-	return ((char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
+	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static int timeset;

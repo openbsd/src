@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144 1996/04/03 05:48:35 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1913,9 +1913,8 @@ ENTRY(switch_exit)
 	jmp	switch_search
 
 /*
- * savectx(struct pcb *pcb, int altreturn);
- * Update pcb, saving current processor state and arranging for alternate
- * return in cpu_switch() if altreturn is true.
+ * savectx(struct pcb *pcb);
+ * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = p->p_addr

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.27 1996/01/08 13:51:36 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -72,9 +72,18 @@
 
 extern vm_map_t kernel_map;
 
+#ifdef USER_LDT
+int i386_get_ldt __P((struct proc *, char *, register_t *));
+int i386_set_ldt __P((struct proc *, char *, register_t *));
+#endif
+int i386_iopl __P((struct proc *, char *, register_t *));
+int i386_get_ioperm __P((struct proc *, char *, register_t *));
+int i386_set_ioperm __P((struct proc *, char *, register_t *));
+
 #ifdef TRACE
 int	nvualarm;
 
+int
 sys_vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -160,7 +169,7 @@ i386_get_ldt(p, args, retval)
 	union descriptor *lp;
 	struct i386_get_ldt_args ua;
 
-	if (error = copyin(args, &ua, sizeof(ua)))
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 #ifdef	DEBUG
@@ -185,7 +194,8 @@ i386_get_ldt(p, args, retval)
 	lp += ua.start;
 	num = min(ua.num, nldt - ua.start);
 
-	if (error = copyout(lp, ua.desc, num * sizeof(union descriptor)))
+	error = copyout(lp, ua.desc, num * sizeof(union descriptor));
+	if (error)
 		return (error);
 
 	*retval = num;
@@ -205,7 +215,7 @@ i386_set_ldt(p, args, retval)
 	struct i386_set_ldt_args ua;
 	union descriptor desc;
 
-	if (error = copyin(args, &ua, sizeof(ua)))
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 #ifdef	DEBUG
@@ -258,10 +268,11 @@ i386_set_ldt(p, args, retval)
 		savectx(curpcb);
 	fsslot = IDXSEL(pcb->pcb_fs);
 	gsslot = IDXSEL(pcb->pcb_gs);
+	error = 0;
 
 	/* Check descriptors for access violations. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
-		if (error = copyin(&ua.desc[i], &desc, sizeof(desc)))
+		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
 			return (error);
 
 		switch (desc.sd.sd_type) {
@@ -315,7 +326,7 @@ i386_set_ldt(p, args, retval)
 
 	/* Now actually replace the descriptors. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
-		if (error = copyin(&ua.desc[i], &desc, sizeof(desc)))
+		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
 			goto out;
 
 		pcb->pcb_ldt[n] = desc;
@@ -339,10 +350,10 @@ i386_iopl(p, args, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return error;
 
-	if (error = copyin(args, &ua, sizeof(ua)))
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
 
 	if (ua.iopl)
@@ -363,7 +374,7 @@ i386_get_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct i386_get_ioperm_args ua;
 
-	if (error = copyin(args, &ua, sizeof(ua)))
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
@@ -379,10 +390,10 @@ i386_set_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return error;
 
-	if (error = copyin(args, &ua, sizeof(ua)))
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));

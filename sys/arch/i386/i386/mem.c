@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30 1995/10/11 04:19:46 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
@@ -54,6 +53,7 @@
 #include <sys/fcntl.h>
 
 #include <machine/cpu.h>
+#include <machine/conf.h>
 
 #include <vm/vm.h>
 
@@ -62,9 +62,10 @@ caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	switch (minor(dev)) {
@@ -87,9 +88,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -185,7 +187,6 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
-unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.5 1996/04/11 22:10:11 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6 1996/05/03 19:14:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
  */
 
 struct intrhand {
-	int	(*ih_fun)();
+	int	(*ih_fun) __P((void *));
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 1996/02/02 18:05:58 mycroft Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,6 +37,8 @@
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 
 /*
  * Size attributes
@@ -826,9 +828,9 @@ char *	db_index_reg_16[8] = {
 };
 
 char *	db_reg[3][8] = {
-	"%al",  "%cl",  "%dl",  "%bl",  "%ah",  "%ch",  "%dh",  "%bh",
-	"%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di",
-	"%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi"
+	{ "%al",  "%cl",  "%dl",  "%bl",  "%ah",  "%ch",  "%dh",  "%bh" },
+	{ "%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di" },
+	{ "%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi" }
 };
 
 char *	db_seg_reg[8] = {
@@ -854,6 +856,11 @@ int db_lengths[] = {
 		(loc) += (size); \
 	} while (0)
 
+
+db_addr_t db_read_address __P((db_addr_t, int, int, struct i_addr *));
+void db_print_address __P((char *, int, struct i_addr *));
+db_addr_t db_disasm_esc __P((db_addr_t, int, int, int, char *));
+
 /*
  * Read address at location and return updated location.
  */
@@ -864,7 +871,7 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 	int		regmodrm;
 	struct i_addr	*addrp;		/* out */
 {
-	int		mod, rm, sib, index, ss, disp;
+	int		mod, rm, sib, index, disp;
 
 	mod = f_mod(regmodrm);
 	rm  = f_rm(regmodrm);
@@ -1064,7 +1071,7 @@ db_disasm(loc, altfmt)
 	char *	i_name;
 	int	i_size;
 	int	i_mode;
-	int	regmodrm;
+	int	regmodrm = 0;
 	boolean_t	first;
 	int	displ;
 	int	prefix;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.8 1994/10/27 04:16:02 cgd Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -85,8 +85,10 @@ db_regs_t	ddb_regs;	/* register state */
 	((!(user) && DB_VALID_KERN_ADDR(addr)) ||		\
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
-boolean_t 	db_check_access(/* vm_offset_t, int, task_t */);
-boolean_t	db_phys_eq(/* task_t, vm_offset_t, task_t, vm_offset_t */);
+#if 0
+boolean_t 	db_check_access __P((vm_offset_t, int, task_t));
+boolean_t	db_phys_eq __P((task_t, vm_offset_t, task_t, vm_offset_t));
+#endif
 
 /* macros for printing OS server dependent task name */
 
@@ -95,10 +97,14 @@ boolean_t	db_phys_eq(/* task_t, vm_offset_t, task_t, vm_offset_t */);
 #define DB_TASK_NAME_LEN	23
 #define DB_NULL_TASK_NAME	"?                      "
 
+#if 0
 void		db_task_name(/* task_t */);
+#endif
 
 /* macro for checking if a thread has used floating-point */
 
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
+
+int kdb_trap __P((int, int, db_regs_t *));
 
 #endif	/* _I386_DB_MACHDEP_H_ */

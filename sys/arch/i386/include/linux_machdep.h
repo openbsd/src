@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.4 1995/08/27 20:57:18 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.5 1996/05/03 19:26:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -77,6 +77,7 @@ struct linux_sigframe {
 };
 
 void linux_sendsig __P((sig_t, int, int, u_long));
+dev_t linux_fakedev __P((dev_t));
 
 /*
  * Major device numbers of VT device on both Linux and NetBSD. Used in

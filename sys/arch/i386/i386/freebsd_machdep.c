@@ -1,5 +1,5 @@
-/*	$OpenBSD: freebsd_machdep.c,v 1.5 1996/05/02 13:41:14 deraadt Exp $	*/
-/*	$NetBSD: freebsd_machdep.c,v 1.9 1996/04/18 08:36:20 mycroft Exp $	*/
+/*	$OpenBSD: freebsd_machdep.c,v 1.6 1996/05/07 07:21:37 deraadt Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.10 1996/05/03 19:42:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -375,7 +375,7 @@ freebsd_ptrace_getregs(fregs, addr, datap)
 		return 0;
 	}
 #ifdef DIAGNOSTIC
-	printf("freebsd_ptrace_getregs: *(0x%08x)\n", offset);
+	printf("freebsd_ptrace_getregs: *(0x%08lx)\n", offset);
 #endif
 	return EFAULT;
 }
@@ -402,7 +402,7 @@ freebsd_ptrace_setregs(fregs, addr, data)
 		return 0;
 	}
 #ifdef DIAGNOSTIC
-	printf("freebsd_ptrace_setregs: *(0x%08x) = 0x%08x\n", offset, data);
+	printf("freebsd_ptrace_setregs: *(0x%08lx) = 0x%08x\n", offset, data);
 #endif
 	return EFAULT;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.27 1996/02/01 22:30:56 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.28 1996/05/03 19:26:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,6 +103,11 @@ volatile int cpl, ipending, astpending;
 int imask[5];
 
 extern void Xspllower __P((void));
+
+static __inline int splraise __P((int));
+static __inline int spllower __P((int));
+static __inline void splx __P((int));
+static __inline void softintr __P((int));
 
 /*
  * Add a mask to cpl, and return the old value of cpl.

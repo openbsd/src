@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.48 1996/03/28 23:44:04 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.49 1996/05/03 19:42:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -75,6 +75,8 @@
 
 #include <stdio.h>
 #include <stddef.h>
+
+int main __P((void));
 
 int
 main()

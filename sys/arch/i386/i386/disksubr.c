@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.3 1996/04/21 22:16:25 deraadt Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.20 1996/04/03 08:18:27 mycroft Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.4 1996/05/07 07:21:36 deraadt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -65,7 +65,7 @@ int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -229,7 +229,6 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
 	register i;
 	register struct partition *opp, *npp;
 
@@ -283,7 +282,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -341,7 +340,7 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
-	if (error = biowait(bp))
+	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));

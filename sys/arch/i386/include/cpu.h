@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 1996/03/29 00:23:28 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 1996/05/03 19:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,7 +141,62 @@ extern struct cpu_nameclass i386_cpus[];
 #ifdef I586_CPU
 extern int pentium_mhz;
 #endif
+
+/* autoconf.c */
+void	configure __P((void));
+
+/* machdep.c */
+void	delay __P((int));
+void	dumpconf __P((void));
+void	cpu_reset __P((void));
+
+/* locore.s */
+struct region_descriptor;
+void	lgdt __P((struct region_descriptor *));
+void	fillw __P((int, caddr_t, size_t));
+
+struct pcb;
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	proc_trampoline __P((void));
+
+/* clock.c */
+void	startrtclock __P((void));
+
+/* npx.c */
+void	npxdrop __P((void));
+void	npxsave __P((void));
+
+#ifdef MATH_EMULATE
+/* math_emulate.c */
+int	math_emulate __P((struct trapframe *));
 #endif
+
+#ifdef USER_LDT
+/* sys_machdep.h */
+void	i386_user_cleanup __P((struct pcb *));
+int	i386_get_ldt __P((struct proc *, char *, register_t *));
+int	i386_set_ldt __P((struct proc *, char *, register_t *));
+#endif
+
+/* isa_machdep.c */
+void	isa_defaultirq __P((void));
+int	isa_nmi __P((void));
+
+#ifdef VM86
+/* vm86.c */
+void	vm86_gpfault __P((struct proc *, int));
+#endif /* VM86 */
+
+/* trap.c */
+void	child_return __P((struct proc *, struct trapframe));
+
+#ifdef GENERIC
+/* swapgeneric.c */
+void	setconf __P((void));
+#endif /* GENERIC */
+
+#endif /* _KERNEL */
 
 /* 
  * CTL_MACHDEP definitions.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: fd.c,v 1.13 1996/04/21 22:16:52 deraadt Exp $	*/
-/*	$NetBSD: fd.c,v 1.87 1996/04/11 22:15:16 cgd Exp $	*/
+/*	$OpenBSD: fd.c,v 1.14 1996/05/07 07:22:16 deraadt Exp $	*/
+/*	$NetBSD: fd.c,v 1.88 1996/05/03 19:14:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -43,7 +43,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -57,6 +56,7 @@
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -107,6 +107,7 @@ struct fdc_softc {
 
 /* controller driver configuration */
 int fdcprobe __P((struct device *, void *, void *));
+int fdprint __P((void *, char *));
 #ifdef NEWCONFIG
 void fdcforceintr __P((void *));
 #endif
@@ -211,6 +212,7 @@ void fdcpseudointr __P((void *arg));
 int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
+__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
 int
 fdcprobe(parent, match, aux)
@@ -463,7 +465,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	}
 }
 
-inline struct fd_type *
+__inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
@@ -595,18 +597,20 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio)
+fdread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio)
+fdwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -621,7 +625,7 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if (fd = fdc->sc_drives.tqh_first)
+	if ((fd = fdc->sc_drives.tqh_first) != NULL)
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -704,9 +708,11 @@ out_fdc(iobase, x)
 }
 
 int
-Fdopen(dev, flags)
+fdopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
+	int mode;
+	struct proc *p;
 {
  	int unit;
 	struct fd_softc *fd;
@@ -734,9 +740,11 @@ Fdopen(dev, flags)
 }
 
 int
-fdclose(dev, flags)
+fdclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
+	int mode;
+	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
@@ -767,7 +775,6 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
-	int iobase = fdc->sc_iobase;
 
 	if (n == 0) {
 		out_fdc(fdc->sc_iobase, NE7CMD_SENSEI);
@@ -843,7 +850,7 @@ fdcintr(arg)
 	struct fd_softc *fd;
 	struct buf *bp;
 	int iobase = fdc->sc_iobase;
-	int read, head, trac, sec, i, s, nblks;
+	int read, head, sec, i, nblks;
 	struct fd_type *type;
 
 loop:
@@ -1171,11 +1178,12 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag)
+fdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel buffer;

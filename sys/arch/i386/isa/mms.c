@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.22 1996/04/11 22:15:20 cgd Exp $	*/
+/*	$NetBSD: mms.c,v 1.23 1996/05/03 20:11:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -39,6 +39,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -118,9 +119,11 @@ mmsattach(parent, self, aux)
 }
 
 int
-mmsopen(dev, flag)
+mmsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = MMSUNIT(dev);
 	struct mms_softc *sc;
@@ -149,9 +152,11 @@ mmsopen(dev, flag)
 }
 
 int
-mmsclose(dev, flag)
+mmsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 
@@ -173,7 +178,7 @@ mmsread(dev, uio, flag)
 {
 	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 	int s;
-	int error;
+	int error = 0;
 	size_t length;
 	u_char buffer[MMS_CHUNK];
 
@@ -186,7 +191,8 @@ mmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= MMS_ASLP;
-		if (error = tsleep((caddr_t)sc, PZERO | PCATCH, "mmsrea", 0)) {
+		error = tsleep((caddr_t)sc, PZERO | PCATCH, "mmsrea", 0);
+		if (error) {
 			sc->sc_state &= ~MMS_ASLP;
 			splx(s);
 			return error;
@@ -205,7 +211,7 @@ mmsread(dev, uio, flag)
 		(void) q_to_b(&sc->sc_q, buffer, length);
 
 		/* Copy the data to the user process. */
-		if (error = uiomove(buffer, length, uio))
+		if ((error = uiomove(buffer, length, uio)) != 0)
 			break;
 	}
 
@@ -213,11 +219,12 @@ mmsread(dev, uio, flag)
 }
 
 int
-mmsioctl(dev, cmd, addr, flag)
+mmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 	struct mouseinfo info;

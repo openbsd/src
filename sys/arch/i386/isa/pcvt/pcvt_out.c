@@ -76,6 +76,7 @@ static void check_scroll ( struct video_state *svsp );
 static void hp_entry ( U_char ch, struct video_state *svsp );
 static void wrfkl ( int num, u_char *string, struct video_state *svsp );
 static void writefkl ( int num, u_char *string, struct video_state *svsp );
+static __inline void write_char (struct	video_state *, u_short, u_short ch);
 
 
 /*---------------------------------------------------------------------------*
@@ -171,7 +172,7 @@ sput (u_char *s, U_char kernel, int len, int page)
     attrib = kernel ? kern_attr : svsp->c_attr;
 
     while (len-- > 0)
-    if (ch = (*(s++)))
+    if ((ch = (*(s++))) != 0)
     {
 	if(svsp->sevenbit)
 		ch &= 0x7f;

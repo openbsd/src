@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_interface.c,v 1.5 1996/04/21 22:16:24 deraadt Exp $	*/
-/*	$NetBSD: db_interface.c,v 1.21 1996/03/30 07:57:16 mycroft Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 1996/05/07 07:21:34 deraadt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,17 +35,28 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/systm.h> /* just for boothowto --eichin */
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <machine/db_machdep.h>
+
+#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
+
 
 extern label_t	*db_recover;
 extern char *trap_type[];
 extern int trap_types;
 
 int	db_active = 0;
+
+void kdbprinttrap __P((int, int));
 
 /*
  * Print trap reason.
@@ -68,7 +79,7 @@ kdbprinttrap(type, code)
 int
 kdb_trap(type, code, regs)
 	int type, code;
-	register db_regs_t *regs;
+	db_regs_t *regs;
 {
 	int s;
 
@@ -136,13 +147,13 @@ kdb_trap(type, code, regs)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*src;
 
 	src = (char *)addr;
-	while (--size >= 0)
+	while (size-- > 0)
 		*data++ = *src++;
 }
 
@@ -154,7 +165,7 @@ pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*dst;
@@ -184,7 +195,7 @@ db_write_bytes(addr, size, data)
 
 	dst = (char *)addr;
 
-	while (--size >= 0)
+	while (size-- > 0)
 		*dst++ = *data++;
 
 	if (ptep0) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.5 1996/05/02 13:41:20 deraadt Exp $	*/
-/*	$NetBSD: svr4_machdep.c,v 1.23 1996/04/18 08:36:31 mycroft Exp $	 */
+/*	$OpenBSD: svr4_machdep.c,v 1.6 1996/05/07 07:21:54 deraadt Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -138,7 +138,6 @@ svr4_setcontext(p, uc)
 	struct proc *p;
 	struct svr4_ucontext *uc;
 {
-	struct sigcontext *scp, context;
 	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
@@ -298,7 +297,7 @@ svr4_getsiginfo(si, sig, code, addr)
 		si->si_code = 0;
 		si->si_trap = 0;
 #ifdef DIAGNOSTIC
-		printf("sig %d code %d\n", sig, code);
+		printf("sig %d code %ld\n", sig, code);
 		panic("svr4_getsiginfo");
 #endif
 		break;
@@ -360,8 +359,10 @@ svr4_sendsig(catcher, sig, mask, code)
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
-	printf("sig = %d, sip %x, ucp = %x, handler = %x\n", 
+#ifdef DEBUG_SVR4
+	printf("sig = %d, sip %p, ucp = %p, handler = %p\n", 
 	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
+#endif
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -471,7 +472,7 @@ svr4_sys_sysarch(p, v, retval)
 #endif
 
 	default:
-		printf("svr4_sysarch(%d), a1 %x\n", SCARG(uap, op),
+		printf("svr4_sysarch(%d), a1 %p\n", SCARG(uap, op),
 		       SCARG(uap, a1));
 		return 0;
 	}

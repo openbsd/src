@@ -1,5 +1,5 @@
-/*	$OpenBSD: gdt.c,v 1.8 1996/04/29 14:12:48 hvozda Exp $	*/
-/*	$NetBSD: gdt.c,v 1.7 1996/02/27 22:45:01 jtc Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.9 1996/05/07 07:21:38 deraadt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,6 +60,15 @@ int gdt_flags;
 #define	GDT_LOCKED	0x1
 #define	GDT_WANTED	0x2
 
+static __inline void gdt_lock __P((void));
+static __inline void gdt_unlock __P((void));
+void gdt_compact __P((void));
+void gdt_init __P((void));
+void gdt_grow __P((void));
+void gdt_shrink __P((void));
+int gdt_get_slot __P((void));
+void gdt_put_slot __P((int));
+
 /*
  * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
  * waiting for memory.
@@ -69,7 +78,7 @@ int gdt_flags;
  * some time after the GDT is unlocked, so gdt_compact() could attempt to
  * reclaim it.
  */
-static inline void
+static __inline void
 gdt_lock()
 {
 
@@ -80,7 +89,7 @@ gdt_lock()
 	gdt_flags |= GDT_LOCKED;
 }
 
-static inline void
+static __inline void
 gdt_unlock()
 {
 

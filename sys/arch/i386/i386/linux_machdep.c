@@ -1,5 +1,5 @@
-/*	$OpenBSD: linux_machdep.c,v 1.7 1996/05/02 13:41:16 deraadt Exp $	*/
-/*	$NetBSD: linux_machdep.c,v 1.28 1996/04/18 08:36:22 mycroft Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.8 1996/05/07 07:21:42 deraadt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -58,6 +58,7 @@
 #include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
+#include <compat/linux/linux_ioctl.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -75,6 +76,14 @@
 #include "vt.h"
 #if NVT > 0
 #include <arch/i386/isa/pcvt/pcvt_ioctl.h>
+#endif
+
+#ifdef USER_LDT
+#include <machine/cpu.h>
+int linux_read_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
+    register_t *));
+int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
+    register_t *));
 #endif
 
 /*
@@ -285,10 +294,10 @@ linux_read_ldt(p, uap, retval)
 
 	parms = stackgap_alloc(&sg, sizeof(gl));
 
-	if (error = copyout(&gl, parms, sizeof(gl)))
+	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
 
-	if (error = i386_get_ldt(p, parms, retval))
+	if ((error = i386_get_ldt(p, parms, retval)) != 0)
 		return (error);
 
 	*retval *= sizeof(union descriptor);
@@ -325,7 +334,7 @@ linux_write_ldt(p, uap, retval)
 
 	if (SCARG(uap, bytecount) != sizeof(ldt_info))
 		return (EINVAL);
-	if (error = copyin(SCARG(uap, ptr), &ldt_info, sizeof(ldt_info)))
+	if ((error = copyin(SCARG(uap, ptr), &ldt_info, sizeof(ldt_info))) != 0)
 		return error;
 	if (ldt_info.contents == 3)
 		return (EINVAL);
@@ -354,12 +363,12 @@ linux_write_ldt(p, uap, retval)
 
 	parms = stackgap_alloc(&sg, sizeof(sl));
 
-	if (error = copyout(&sd, sl.desc, sizeof(sd)))
+	if ((error = copyout(&sd, sl.desc, sizeof(sd))) != 0)
 		return (error);
-	if (error = copyout(&sl, parms, sizeof(sl)))
+	if ((error = copyout(&sl, parms, sizeof(sl))) != 0)
 		return (error);
 
-	if (error = i386_set_ldt(p, parms, retval))
+	if ((error = i386_set_ldt(p, parms, retval)) != 0)
 		return (error);
 
 	*retval = 0;
@@ -424,15 +433,12 @@ linux_machdepioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	struct sys_ioctl_args bia, tmparg;
+	struct sys_ioctl_args bia;
 	u_long com;
 #if NVT > 0
-	int error, mode;
+	int error;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
-	u_int fd;
-	struct file *fp;
-	struct filedesc *fdp;
 #endif
 
 	SCARG(&bia, fd) = SCARG(uap, fd);
@@ -507,7 +513,7 @@ linux_machdepioctl(p, v, retval)
 		break;
 #endif
 	default:
-		printf("linux_machdepioctl: invalid ioctl %08x\n", com);
+		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
@@ -525,9 +531,11 @@ linux_sys_iopl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct linux_sys_iopl_args /* {
 		syscallarg(int) level;
 	} */ *uap = v;
+#endif
 	struct trapframe *fp = p->p_md.md_regs;
 
 	if (suser(p->p_ucred, &p->p_acflag) != 0)

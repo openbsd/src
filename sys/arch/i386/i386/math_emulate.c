@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_emulate.c,v 1.3 1996/03/19 21:09:19 mickey Exp $	*/
-/*	$NetBSD: math_emulate.c,v 1.16 1996/02/02 18:06:01 mycroft Exp $	*/
+/*	$OpenBSD: math_emulate.c,v 1.4 1996/05/07 07:21:48 deraadt Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.17 1996/05/03 19:42:17 christos Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -69,7 +69,9 @@ static temp_real_unaligned * __st(int i);
 	I387.twd = 0x0000;		\
 } while (0)
 
-math_emulate(struct trapframe *info)
+int
+math_emulate(info)
+	struct trapframe *info;
 {
 	u_short code;
 	temp_real tmp;
@@ -653,7 +655,7 @@ void get_short_int(temp_real * tmp,
 	addr = ea(info,code);
 	ti.a = (signed short) fusword((u_short *) addr);
 	ti.b = 0;
-	if (ti.sign = (ti.a < 0))
+	if ((ti.sign = (ti.a < 0)) != 0)
 		ti.a = - ti.a;
 	int_to_real(&ti,tmp);
 }
@@ -667,7 +669,7 @@ void get_long_int(temp_real * tmp,
 	addr = ea(info,code);
 	ti.a = fuword((u_long *) addr);
 	ti.b = 0;
-	if (ti.sign = (ti.a < 0))
+	if ((ti.sign = (ti.a < 0)) != 0)
 		ti.a = - ti.a;
 	int_to_real(&ti,tmp);
 }
@@ -681,7 +683,7 @@ void get_longlong_int(temp_real * tmp,
 	addr = ea(info,code);
 	ti.a = fuword((u_long *) addr);
 	ti.b = fuword((u_long *) addr + 1);
-	if (ti.sign = (ti.b < 0))
+	if ((ti.sign = (ti.b < 0)) != 0)
 		__asm__("notl %0 ; notl %1\n\t"
 			"addl $1,%0 ; adcl $0,%1"
 			:"=r" (ti.a),"=r" (ti.b)

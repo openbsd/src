@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.3 1996/04/27 22:18:16 niklas Exp $	*/
-/*	$NetBSD: bus.h,v 1.2 1996/04/05 23:59:37 thorpej Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 1996/05/07 07:22:03 deraadt Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1996/05/03 19:22:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -56,40 +56,40 @@ typedef u_long bus_io_handle_t;
 typedef caddr_t bus_mem_handle_t;
 
 #define bus_io_map(t, port, size, iohp)					\
-    (*iohp = port, 0)
+    ((void) t, *iohp = port, 0)
 #define bus_io_unmap(t, ioh, size)
 
-#define	bus_io_read_1(t, h, o)		inb((h) + (o))
-#define	bus_io_read_2(t, h, o)		inw((h) + (o))
-#define	bus_io_read_4(t, h, o)		inl((h) + (o))
+#define	bus_io_read_1(t, h, o)		((void) t, inb((h) + (o)))
+#define	bus_io_read_2(t, h, o)		((void) t, inw((h) + (o)))
+#define	bus_io_read_4(t, h, o)		((void) t, inl((h) + (o)))
 #if 0 /* Cause a link error for bus_io_read_8 */
 #define	bus_io_read_8(t, h, o)		!!! bus_io_read_8 unimplemented !!!
 #endif
 
 #define	bus_io_read_multi_1(t, h, o, a, c)	\
-					insb((h) + (o), (a), (c))
+					((void) t, insb((h) + (o), (a), (c)))
 #define	bus_io_read_multi_2(t, h, o, a, c)	\
-					insw((h) + (o), (a), (c))
+					((void) t, insw((h) + (o), (a), (c)))
 #define	bus_io_read_multi_4(t, h, o, a, c)	\
-					insl((h) + (o), (a), (c))
+					((void) t, insl((h) + (o), (a), (c)))
 #if 0 /* Cause a link error for bus_io_read_multi_8 */
 #define	bus_io_read_multi_8(t, h, o, a, c)	\
 				!!! bus_io_read_multi_8 unimplemented !!!
 #endif
 
-#define	bus_io_write_1(t, h, o, v)	outb((h) + (o), (v))
-#define	bus_io_write_2(t, h, o, v)	outw((h) + (o), (v))
-#define	bus_io_write_4(t, h, o, v)	outl((h) + (o), (v))
+#define	bus_io_write_1(t, h, o, v)	((void) t, outb((h) + (o), (v)))
+#define	bus_io_write_2(t, h, o, v)	((void) t, outw((h) + (o), (v)))
+#define	bus_io_write_4(t, h, o, v)	((void) t, outl((h) + (o), (v)))
 #if 0 /* Cause a link error for bus_io_write_8 */
 #define	bus_io_write_8(t, h, o, v)	!!! bus_io_write_8 unimplemented !!!
 #endif
 
 #define	bus_io_write_multi_1(t, h, o, a, c)	\
-					outsb((h) + (o), (a), (c))
+					((void) t, outsb((h) + (o), (a), (c)))
 #define	bus_io_write_multi_2(t, h, o, a, c)	\
-					outsw((h) + (o), (a), (c))
+					((void) t, outsw((h) + (o), (a), (c)))
 #define	bus_io_write_multi_4(t, h, o, a, c)	\
-					outsl((h) + (o), (a), (c))
+					((void) t, outsl((h) + (o), (a), (c)))
 #if 0 /* Cause a link error for bus_io_write_multi_8 */
 #define	bus_io_write_multi_8(t, h, o, a, c)	\
 				!!! bus_io_write_multi_8 unimplimented !!!
@@ -100,19 +100,19 @@ int	bus_mem_map __P((bus_chipset_tag_t t, bus_mem_addr_t bpa,
 void	bus_mem_unmap __P((bus_chipset_tag_t t, bus_mem_handle_t memh,
 	    bus_mem_size_t size));
 
-#define	bus_mem_read_1(t, h, o)		(*(volatile u_int8_t *)((h) + (o)))
-#define	bus_mem_read_2(t, h, o)		(*(volatile u_int16_t *)((h) + (o)))
-#define	bus_mem_read_4(t, h, o)		(*(volatile u_int32_t *)((h) + (o)))
-#define	bus_mem_read_8(t, h, o)		(*(volatile u_int64_t *)((h) + (o)))
+#define	bus_mem_read_1(t, h, o)	((void) t, (*(volatile u_int8_t *)((h) + (o))))
+#define	bus_mem_read_2(t, h, o)	((void) t, (*(volatile u_int16_t *)((h) + (o))))
+#define	bus_mem_read_4(t, h, o)	((void) t, (*(volatile u_int32_t *)((h) + (o))))
+#define	bus_mem_read_8(t, h, o)	((void) t, (*(volatile u_int64_t *)((h) + (o))))
 
 #define	bus_mem_write_1(t, h, o, v)					\
-    ((void)(*(volatile u_int8_t *)((h) + (o)) = (v)))
+    ((void) t, ((void)(*(volatile u_int8_t *)((h) + (o)) = (v))))
 #define	bus_mem_write_2(t, h, o, v)					\
-    ((void)(*(volatile u_int16_t *)((h) + (o)) = (v)))
+    ((void) t, ((void)(*(volatile u_int16_t *)((h) + (o)) = (v))))
 #define	bus_mem_write_4(t, h, o, v)					\
-    ((void)(*(volatile u_int32_t *)((h) + (o)) = (v)))
+    ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
 #define	bus_mem_write_8(t, h, o, v)					\
-    ((void)(*(volatile u_int64_t *)((h) + (o)) = (v)))
+    ((void) t, ((void)(*(volatile u_int64_t *)((h) + (o)) = (v))))
 
 /* These are extensions to the general NetBSD bus interface.  */
 #define bus_to_host_2(t, v) (v)

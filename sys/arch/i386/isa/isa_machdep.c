@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa_machdep.c,v 1.13 1996/04/22 20:03:07 hannken Exp $	*/
-/*	$NetBSD: isa_machdep.c,v 1.12 1996/04/11 22:11:32 cgd Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.14 1996/05/07 07:22:17 deraadt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13 1996/05/03 19:14:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -41,6 +41,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -58,9 +59,12 @@
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
-typedef (*vector)();
+typedef (*vector) __P((void));
 extern vector IDTVEC(intr)[], IDTVEC(fast)[];
 extern struct gate_descriptor idt[];
+void isa_strayintr __P((int));
+void intr_calculatemasks __P((void));
+int fakeintr __P((void *));
 
 /*
  * Fill in default interrupt table (in case of spuruious interrupt

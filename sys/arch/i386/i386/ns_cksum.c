@@ -1,5 +1,5 @@
-/*	$OpenBSD: ns_cksum.c,v 1.3 1996/03/19 21:09:21 mickey Exp $	*/
-/*	$NetBSD: ns_cksum.c,v 1.4 1996/02/02 18:06:03 mycroft Exp $	*/
+/*	$OpenBSD: ns_cksum.c,v 1.4 1996/05/07 07:21:50 deraadt Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.5 1996/05/03 19:42:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1988 Regents of the University of California.
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#include <netns/ns_var.h>
 
 /*
  * Checksum routine for Network Systems Protocol Packets (Big-Endian).

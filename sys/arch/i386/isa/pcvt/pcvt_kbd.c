@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.4 1996/04/18 17:48:33 niklas Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.5 1996/05/07 07:22:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -93,6 +93,11 @@ static void sfkey9(void), sfkey10(void), sfkey11(void), sfkey12(void);
 static void cfkey1(void), cfkey2(void),  cfkey3(void),  cfkey4(void);
 static void cfkey5(void), cfkey6(void),  cfkey7(void),  cfkey8(void);
 static void cfkey9(void), cfkey10(void), cfkey11(void), cfkey12(void);
+
+static inline int kbd_wait_output(void);
+static inline int kbd_wait_input(void);
+int kbd_response(void);
+
 
 static void	doreset ( void );
 static void	ovlinit ( int force );
@@ -714,7 +719,7 @@ xlatkey2ascii(U_short key)
 #endif
 	static Ovl_tbl	thisdef;
 	int		n;
-	void		(*fnc)();
+	void		(*fnc)(void);
 
 	if(key==0)			/* ignore the NON-KEY */
 		return 0;

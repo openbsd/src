@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.24 1996/04/11 22:15:18 cgd Exp $	*/
+/*	$NetBSD: lms.c,v 1.25 1996/05/03 20:12:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -39,6 +39,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/mouse.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -129,7 +130,6 @@ lmsattach(parent, self, aux)
 {
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 
 	printf("\n");
 
@@ -143,9 +143,11 @@ lmsattach(parent, self, aux)
 }
 
 int
-lmsopen(dev, flag)
+lmsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = LMSUNIT(dev);
 	struct lms_softc *sc;
@@ -173,9 +175,11 @@ lmsopen(dev, flag)
 }
 
 int
-lmsclose(dev, flag)
+lmsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 
@@ -197,7 +201,7 @@ lmsread(dev, uio, flag)
 {
 	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 	int s;
-	int error;
+	int error = 0;
 	size_t length;
 	u_char buffer[LMS_CHUNK];
 
@@ -210,7 +214,8 @@ lmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= LMS_ASLP;
-		if (error = tsleep((caddr_t)sc, PZERO | PCATCH, "lmsrea", 0)) {
+		error = tsleep((caddr_t)sc, PZERO | PCATCH, "lmsrea", 0);
+		if (error) {
 			sc->sc_state &= ~LMS_ASLP;
 			splx(s);
 			return error;
@@ -229,7 +234,7 @@ lmsread(dev, uio, flag)
 		(void) q_to_b(&sc->sc_q, buffer, length);
 
 		/* Copy the data to the user process. */
-		if (error = uiomove(buffer, length, uio))
+		if ((error = uiomove(buffer, length, uio)) != 0)
 			break;
 	}
 
@@ -237,11 +242,12 @@ lmsread(dev, uio, flag)
 }
 
 int
-lmsioctl(dev, cmd, addr, flag)
+lmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 	struct mouseinfo info;

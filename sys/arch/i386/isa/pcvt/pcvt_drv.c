@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.11 1996/04/24 18:16:57 mickey Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.12 1996/05/07 07:22:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -100,6 +100,7 @@ static		nrow;
 #endif
 
 static void vgapelinit(void);	/* read initial VGA DAC palette */
+int getchar(void);
 
 #if PCVT_FREEBSD > 205
 static struct kern_devconf kdc_vt[];
@@ -108,6 +109,17 @@ vt_registerdev(struct isa_device *id, const char *name);
 static char vt_description[];
 #define VT_DESCR_LEN 40
 #endif /* PCVT_FREEBSD > 205 */
+
+#if PCVT_NETBSD > 100
+void pccnpollc(Dev_t, int);
+#endif
+#if PCVT_NETBSD > 100
+int pcprobe(struct device *, void *, void *);
+#endif
+#if PCVT_NETBSD > 9
+void pcattach(struct device *, struct device *, void *);
+#endif
+
 
 #if PCVT_NETBSD > 100	/* NetBSD-current Feb 20 1995 */
 int
@@ -976,7 +988,7 @@ pcstart(register struct tty *tp)
 	 * expensive and we don't want our serial ports to overflow.
 	 */
 
-	while (len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST))
+	while ((len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST)) != 0)
 		sput(&buf[0], 0, len, minor(tp->t_dev));
 
 	s = spltty();
