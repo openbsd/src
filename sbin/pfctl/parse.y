@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.439 2004/02/10 17:48:08 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.440 2004/02/10 21:06:04 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -116,8 +116,8 @@ struct node_icmp {
 };
 
 enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
-	  PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_NODES,
-	  PF_STATE_OPT_STATELOCK, PF_STATE_OPT_TIMEOUT };
+	    PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_NODES,
+	    PF_STATE_OPT_STATELOCK, PF_STATE_OPT_TIMEOUT };
 
 struct node_state_opt {
 	int			 type;
@@ -293,8 +293,9 @@ void	 remove_invalid_hosts(struct node_host **, sa_family_t *);
 int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 
-TAILQ_HEAD(loadanchorshead, loadanchors)	 loadanchorshead =
-   TAILQ_HEAD_INITIALIZER(loadanchorshead);
+TAILQ_HEAD(loadanchorshead, loadanchors)
+    loadanchorshead = TAILQ_HEAD_INITIALIZER(loadanchorshead);
+
 struct loadanchors {
 	TAILQ_ENTRY(loadanchors)	 entries;
 	char				*anchorname;
@@ -758,7 +759,7 @@ scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 scrub_opts	:	{
 			bzero(&scrub_opts, sizeof scrub_opts);
 		}
-		  scrub_opts_l
+		    scrub_opts_l
 			{ $$ = scrub_opts; }
 		| /* empty */ {
 			bzero(&scrub_opts, sizeof scrub_opts);
@@ -899,7 +900,7 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		;
 
 antispoof_opts	:	{ bzero(&antispoof_opts, sizeof antispoof_opts); }
-		  antispoof_opts_l
+		    antispoof_opts_l
 			{ $$ = antispoof_opts; }
 		| /* empty */	{
 			bzero(&antispoof_opts, sizeof antispoof_opts);
@@ -954,7 +955,7 @@ table_opts	:	{
 			bzero(&table_opts, sizeof table_opts);
 			SIMPLEQ_INIT(&table_opts.init_nodes);
 		}
-		   table_opts_l
+		    table_opts_l
 			{ $$ = table_opts; }
 		| /* empty */
 			{
@@ -1085,7 +1086,7 @@ queue_opts	:	{
 			queue_opts.scheduler.qtype = ALTQT_NONE;
 			queue_opts.queue_bwspec.bw_percent = 100;
 		}
-		  queue_opts_l
+		    queue_opts_l
 			{ $$ = queue_opts; }
 		| /* empty */ {
 			bzero(&queue_opts, sizeof queue_opts);
@@ -1261,7 +1262,7 @@ hfsc_opts	:	{
 				bzero(&hfsc_opts,
 				    sizeof(struct node_hfsc_opts));
 			}
-		  hfscopts_list				{
+		    hfscopts_list				{
 			$$ = hfsc_opts;
 		}
 		;
@@ -1370,7 +1371,7 @@ qassign_item	: STRING			{
 		;
 
 pfrule		: action dir logquick interface route af proto fromto
-		  filter_opts
+		    filter_opts
 		{
 			struct pf_rule		 r;
 			struct node_state_opt	*o;
@@ -1444,7 +1445,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				if (($9.flags.b1 & parse_flags("S")) == 0 &&
 				    $8.src_os) {
 					yyerror("OS fingerprinting requires "
-					     "the SYN TCP flag (flags S/SA)");
+					    "the SYN TCP flag (flags S/SA)");
 					YYERROR;
 				}
 #endif
@@ -1619,7 +1620,7 @@ pfrule		: action dir logquick interface route af proto fromto
 		;
 
 filter_opts	:	{ bzero(&filter_opts, sizeof filter_opts); }
-		  filter_opts_l
+		    filter_opts_l
 			{ $$ = filter_opts; }
 		| /* empty */	{
 			bzero(&filter_opts, sizeof filter_opts);
@@ -2767,7 +2768,7 @@ hashkey		: /* empty */
 		;
 
 pool_opts	:	{ bzero(&pool_opts, sizeof pool_opts); }
-		   pool_opts_l
+		    pool_opts_l
 			{ $$ = pool_opts; }
 		| /* empty */	{
 			bzero(&pool_opts, sizeof pool_opts);
@@ -2923,14 +2924,17 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 					    $5.dst.port != NULL) {
 						r.rpool.proxy_port[1] =
 						    ntohs($7->rport.a) +
-						    (ntohs($5.dst.port->port[1]) -
-						    ntohs($5.dst.port->port[0]));
+						    (ntohs(
+						    $5.dst.port->port[1]) -
+						    ntohs(
+						    $5.dst.port->port[0]));
 					} else
 						r.rpool.proxy_port[1] =
 						    ntohs($7->rport.b);
 					break;
 				case PF_NAT:
-					r.rpool.proxy_port[1] = ntohs($7->rport.b);
+					r.rpool.proxy_port[1] =
+					    ntohs($7->rport.b);
 					if (!r.rpool.proxy_port[0] &&
 					    !r.rpool.proxy_port[1]) {
 						r.rpool.proxy_port[0] =
@@ -3008,7 +3012,7 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 		;
 
 binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
-		  redirection
+		    redirection
 		{
 			struct pf_rule		binat;
 			struct pf_pooladdr	*pa;
@@ -3585,7 +3589,7 @@ expand_label_addr(const char *name, char *label, size_t len, sa_family_t af,
 					if ((af == AF_INET && bits < 32) ||
 					    (af == AF_INET6 && bits < 128))
 						snprintf(tmp, sizeof(tmp),
-						   "%s/%d", a, bits);
+						    "%s/%d", a, bits);
 					else
 						snprintf(tmp, sizeof(tmp),
 						    "%s", a);
