@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.230 2003/05/10 00:45:43 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.231 2003/05/10 16:46:53 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1976,7 +1976,7 @@ line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule
                  | antispoof-rule | altq-rule | queue-rule | anchor-rule
                  | trans-anchors | load-anchors )
 
-option         = set ( [ timeout ( timeout | { timeout-list } ) ] |
+option         = set ( [ timeout ( timeout | '{' timeout-list '}' ) ] |
                  [ optimization [ default | normal
                  | high-latency | satellite
                  | aggressive | conservative ] ]
@@ -1992,33 +1992,33 @@ pf-rule        = action [ ( in | out ) ]
 
 filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
-                 ( keep | modulate ) state [ ( state-opts ) ] |
+                 ( keep | modulate ) state [ '(' state-opts ')' ] |
                  fragment | no-df | min-ttl number | max-mss number |
                  random-id | fragmentation | allow-opts | label string |
-                 queue ( string | ( string [ [ , ] string ] ) )
+                 queue '(' string | ( string [ [ ',' ] string ] ) ')'
 
 nat-rule       = [ no ] nat [ on ifspec ] [ af ] [ protospec ]
-                 hosts [ -> ( redirhost | { redirhost-list } )
-                 [ portspec ] ] [ pooltype ] [ static-port ]
+                 hosts [ '->' ( redirhost | '{' redirhost-list '}' )
+                 [ portspec ] [ pooltype ] [ static-port ] ]
 
 binat-rule     = [ no ] binat [ on interface-name ] [ af ]
                  [ proto ( proto-name | proto-number ) ]
-                 from address [ / mask-bits ] to ipspec
-                 [ -> address [ / mask-bits ] ]
+                 from address [ '/' mask-bits ] to ipspec
+                 [ '->' address [ '/' mask-bits ] ]
 
 rdr-rule       = [ no ] rdr [ on ifspec ] [ af ] [ protospec ]
-                 hosts [ -> ( redirhost | { redirhost-list } )
-                 [ portspec ] ] [ pooltype ]
+                 hosts [ '->' ( redirhost | '{' redirhost-list '}' )
+                 [ portspec ] [ pooltype ] ]
 
 antispoof-rule = antispoof [ log ] [ quick ]
-                 for ( interface-name | { interface-list } )
+                 for ( interface-name | '{' interface-list '}' )
                  [ af ] [ label ]
 
-table-rule     = table < tablename > [ tableopts-list ]
+table-rule     = table '<' tablename '>' [ tableopts-list ]
 tableopts-list = tableopts-list tableopts | tableopts
-tableopts      = persist | const | file "filename" | { [ tableaddr-list ] }
-tableaddr-list = tableaddr-list [ , ] tableaddr-spec | tableaddr-spec
-tableaddr-spec = [ ! ] tableaddr [ / mask-bits ]
+tableopts      = persist | const | file "filename" | '{' [ tableaddr-list ] '}'
+tableaddr-list = tableaddr-list [ ',' ] tableaddr-spec | tableaddr-spec
+tableaddr-spec = [ '!' ] tableaddr [ '/' mask-bits ]
 tableaddr      = hostname | ipv4-dotted-quad | ipv6-coloned-hex |
                  interface-name | self
 
@@ -2041,72 +2041,72 @@ queueopts      = [ bandwidth bandwidth-spec ] |
                  [ priority number ] | [ schedulers ] |
                  [ qlimit number ]
 schedulers     = ( cbq-def | priq-def | hfsc-def )
-bandwidth-spec = number ( b | Kb | Mb | Gb | % )
+bandwidth-spec = number ( b | Kb | Mb | Gb | '%' )
 
 action         = pass | block [ return ] | scrub
-return         = drop | return | return-rst [ ( ttl number ) ]
-                 | return-icmp [ ( icmpcode [, icmp6code ] ) ]
-                 | return-icmp6 [ ( icmp6code ) ]
+return         = drop | return | return-rst [ '(' ttl number ')' ]
+                 | return-icmp [ '(' icmpcode [',' icmp6code ] ')' ]
+                 | return-icmp6 [ '(' icmp6code ')' ]
 icmpcode       = ( icmp-code-name | icmp-code-number )
 icmp6code      = ( icmp6-code-name | icmp6-code-number )
 
-ifspec         = ( [ ! ] interface-name ) | { interface-list }
-interface-list = [ ! ] interface-name [ [ , ] interface-list ]
+ifspec         = ( [ '!' ] interface-name ) | '{' interface-list '}'
+interface-list = [ '!' ] interface-name [ [ ',' ] interface-list ]
 route          = fastroute |
                  ( route-to | reply-to | dup-to )
-                 ( routehost | { routehost-list } )
+                 ( routehost | '{' routehost-list '}' )
                  [ pooltype ]
 af             = inet | inet6
 
 protospec      = proto ( proto-name | proto-number |
-                 { proto-list } )
-proto-list     = ( proto-name | proto-number ) [ [ , ] proto-list ]
+                 '{' proto-list '}' )
+proto-list     = ( proto-name | proto-number ) [ [ ',' ] proto-list ]
 
 hosts          = all |
                  from ( any | no-route | self | host |
-                 { host-list } ) [ port ]
+                 '{' host-list '}' ) [ port ]
                  to   ( any | no-route | self | host |
-                 { host-list } ) [ port ]
+                 '{' host-list '}' ) [ port ]
 
-ipspec         = any | host | { host-list }
-host           = [ ! ] ( address [ / mask-bits ] | < table > )
-redirhost      = address [ / mask-bits ]
-routehost      = ( interface-name [ address [ / mask-bits ] ] )
-address        = ( interface-name | ( interface-name ) | host-name
+ipspec         = any | host | '{' host-list '}'
+host           = [ '!' ] ( address [ '/' mask-bits ] | '<' table '>' )
+redirhost      = address [ '/' mask-bits ]
+routehost      = ( interface-name [ address [ '/' mask-bits ] ] )
+address        = ( interface-name | '(' interface-name ')' | host-name
                  | ipv4-dotted-quad | ipv6-coloned-hex )
-host-list      = host [ [ , ] host-list ]
-redirhost-list = redirhost [ [,] redirhost-list ]
-routehost-list = routehost [ [,] routehost-list ]
+host-list      = host [ [ ',' ] host-list ]
+redirhost-list = redirhost [ [ ',' ] redirhost-list ]
+routehost-list = routehost [ [ ',' ] routehost-list ]
 
-port           = port ( unary-op | binary-op | { op-list } )
-portspec       = port ( number | name ) [ : ( * | number | name ) ]
-user           = user ( unary-op | binary-op | { op-list } )
+port           = port ( unary-op | binary-op | '{' op-list '}' )
+portspec       = port ( number | name ) [ ':' ( '*' | number | name ) ]
+user           = user ( unary-op | binary-op | '{' op-list '}' )
 group          = group ( unary-op | binary-op | { op-list } )
 
-unary-op       = [ = | != | < | <= | > | >= ]
+unary-op       = [ '=' | '!=' | '<' | '<=' | '>' | '>=' ]
                  ( name | number )
-binary-op      = number ( <> | >< | : ) number
-op-list        = ( unary-op | binary-op ) [ [ , ] op-list ]
+binary-op      = number ( '<>' | '><' | ':' ) number
+op-list        = ( unary-op | binary-op ) [ [ ',' ] op-list ]
 
-flags          = flags [ flag-set ] / flag-set
+flags          = flags [ flag-set ] '/' flag-set
 flag-set       = [ F ] [ S ] [ R ] [ P ] [ A ] [ U ] [ E ] [ W ]
 
 icmp-type      = icmp-type ( icmp-type-code | { icmp-list } )
 icmp6-type     = icmp6-type ( icmp-type-code | { icmp-list } )
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ code ( icmp-code-name | icmp-code-number ) ]
-icmp-list      = icmp-type-code [ [ , ] icmp-list ]
+icmp-list      = icmp-type-code [ [ ',' ] icmp-list ]
 
 tos            = tos ( lowdelay | throughput | reliability |
                  [ 0x ] number )
 
-state-opts     = state-opt [ [ , ] state-opts ]
+state-opts     = state-opt [ [ ',' ] state-opts ]
 state-opt      = ( max number ) | ( timeout seconds )
 
 fragmentation  = [ fragment reassemble | fragment crop
                  | fragment drop-ovl ]
 
-timeout-list   = timeout [ [ , ] timeout-list ]
+timeout-list   = timeout [ [ ',' ] timeout-list ]
 timeout        = ( tcp.first | tcp.opening | tcp.established
                  | tcp.closing | tcp.finwait | tcp.closed
                  | udp.first | udp.single | udp.multiple
@@ -2115,18 +2115,18 @@ timeout        = ( tcp.first | tcp.opening | tcp.established
                  seconds
 seconds        = number
 
-limit-list     = limit-item [ [ , ] limit-list ]
+limit-list     = limit-item [ [ ',' ] limit-list ]
 limit-item     = ( states | frags ) number
 
 pooltype       = ( bitmask | random
                  | source-hash [ ( hex-key | string-key ) ]
                  | round-robin )
 
-subqueue       = string | { queue-list }
-queue-list     = string [ [ , ] string ]
-cbq-def        = cbq [ ( cbq-opt [ [ , ] cbq-opt ] ) ]
-priq-def       = priq [ ( priq-opt [ [ , ] priq-opt ] ) ]
-hfsc-def       = hfsc [ ( hfsc-opt [ [ , ] hfsc-opt ] ) ]
+subqueue       = string | '{' queue-list '}'
+queue-list     = string [ [ ',' ] string ]
+cbq-def        = cbq [ '(' cbq-opt [ [ ',' ] cbq-opt ] ')' ]
+priq-def       = priq [ '(' priq-opt [ [ ',' ] priq-opt ] ')' ]
+hfsc-def       = hfsc [ '(' hfsc-opt [ [ ',' ] hfsc-opt ] ')' ]
 cbq-opt        = ( default | borrow | red | ecn | rio )
 priq-opt       = ( default | red | ecn | rio )
 hfsc-opt       = ( default | red | ecn | rio
@@ -2135,7 +2135,7 @@ linkshare-sc   = linkshare sc-spec
 realtime-sc    = realtime sc-spec
 upperlimit-sc  = upperlimit sc-spec
 sc-spec        = ( bandwidth-spec
-                 | ( bandwidth-spec number bandwidth-spec ) )
+                 | '(' bandwidth-spec number bandwidth-spec ')' )
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/protocols" -compact
