@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gus.4,v 1.8 1999/07/06 19:27:36 deraadt Exp $
+.\"	$OpenBSD: gus.4,v 1.9 1999/07/21 12:18:11 deraadt Exp $
 .\"	$NetBSD: gus.4,v 1.7 1997/10/08 21:59:55 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,6 +89,11 @@ The joystick and MIDI port interfaces are not supported.
 .Sh REFERENCES
 Gravis UltraSound Low-Level Toolkit, Revision 2.01, 20 May 1993,
 published by Advanced Gravis and Forte Technologies.
+.Pp
+If you wish to use
+.Xr wdc 4
+on the ISAPNP version of the card, and it comes up as DISABLED,
+Gravis has a PNPCFG.EXE program which re-enables it.
 .Sh HISTORY
 The
 .Nm
