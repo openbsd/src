@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2003/12/23 12:29:39 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2003/12/29 23:27:04 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -106,7 +106,7 @@ com3	at gsc0 offset 0x4060 irq 13
 
 lpt0	at gsc? irq 7			# both com and lpt are on WD16C552
 ie0	at gsc0 irq 8			# 82C596DX/CA ether
-ie1	at gsc1 irq 8
+#ie1	at gsc1 irq 8
 #ie*	at eisa? slot ?
 #ie*	at isa? port 0x360 iomem 0xd0000 irq 7
 #ie*	at isa? port 0x300 irq 10
@@ -132,6 +132,7 @@ ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 #option	BHADEBUG
 #bha*	at eisa? slot ?
+#bha*	at pci? dev ? function ?
 #scsibus* at bha?
 
 ppb*	at pci? dev ? function ?
