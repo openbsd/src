@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.11 1997/08/24 08:07:23 downsj Exp $	*/
+/*	$OpenBSD: tape.c,v 1.12 1998/02/10 20:20:03 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -221,6 +221,8 @@ setup()
 	dumpdate = spcl.c_date;
 	if (stat(".", &stbuf) < 0)
 		err(1, "cannot stat .");
+	if (stbuf.st_blksize > 0 && stbuf.st_blksize < TP_BSIZE )
+		fssize = TP_BSIZE;
 	if (stbuf.st_blksize >= TP_BSIZE && stbuf.st_blksize <= MAXBSIZE)
 		fssize = stbuf.st_blksize;
 	if (((fssize - 1) & fssize) != 0)
