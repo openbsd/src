@@ -61,7 +61,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: passwd.c,v 1.9 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: passwd.c,v 1.11 2002/01/17 15:56:15 millert Exp $";
 #endif /* lint */
 
 #define DESLEN			13
@@ -74,8 +74,8 @@ passwd_init(pw, promptp, auth)
     sudo_auth *auth;
 {
 #ifdef HAVE_SKEYACCESS
-    if (skeyaccess(pw->pw_name, user_tty, NULL, NULL) == 0)
-	return(AUTH_FATAL);
+    if (skeyaccess(pw, user_tty, NULL, NULL) == 0)
+	return(AUTH_FAILURE);
 #endif
     return(AUTH_SUCCESS);
 }

@@ -1491,4 +1491,13 @@ Sudo 1.6.4p2 released.
 465) If the mailer is being run as root, use a hard-coded environment
      that is not influenced in any way by the invoking user's environment.
 
+466) Fixed the call to skeyaccess().  Patch from Phillip E. Lobbes.
+
 Sudo 1.6.5 released.
+
+467) Visudo could access memory that was already freed.
+
+468) If the skey.access file denied use of plaintext passwords sudo
+     would exit instead of allowing the user to enter an S/Key.
+
+Sudo 1.6.5p1 released.
