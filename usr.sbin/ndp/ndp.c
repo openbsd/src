@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.29 2003/06/26 21:33:33 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.30 2003/09/26 15:51:43 avsm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ file(char *name)
 	args[4] = &arg[4][0];
 	retval = 0;
 	while (fgets(line, 100, fp) != NULL) {
-		i = sscanf(line, "%s %s %s %s %s", arg[0], arg[1], arg[2],
+		i = sscanf(line, "%49s %49s %49s %49s %49s", arg[0], arg[1], arg[2],
 		    arg[3], arg[4]);
 		if (i < 2) {
 			fprintf(stderr, "ndp: bad line: %s\n", line);
