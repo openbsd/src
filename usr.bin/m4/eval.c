@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.32 2001/09/18 14:10:55 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.33 2001/09/18 14:17:38 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.32 2001/09/18 14:10:55 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.33 2001/09/18 14:17:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -628,7 +628,19 @@ static void
 dump_one_def(p)
 	ndptr p;
 {
-	fprintf(stderr, "`%s'\t`%s'\n", p->name, p->defn);
+	char *real;
+
+	if (mimic_gnu) {
+		if ((p->type & TYPEMASK) == MACRTYPE)
+			fprintf(stderr, "%s:\t%s\n", p->name, p->defn);
+		else {
+			real = builtin_realname(p->type);
+			if (real == NULL)
+				real = null;
+			fprintf(stderr, "%s:\t<%s>\n", p->name, real);
+	    	}
+	} else
+		fprintf(stderr, "`%s'\t`%s'\n", p->name, p->defn);
 }
 
 /*
