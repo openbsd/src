@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.37 2000/01/09 01:42:25 jason Exp $
+#	$OpenBSD: NETTAN,v 1.38 2000/03/02 18:38:27 mickey Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,7 +6,7 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: NETTAN,v 1.37 2000/01/09 01:42:25 jason Exp $
+#	$OpenBSD: NETTAN,v 1.38 2000/03/02 18:38:27 mickey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -111,10 +111,6 @@ option		USER_LDT	# user-settable LDT; used by WINE
 option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#option		EXTMEM_SIZE=...	# size of extended memory
 #option		DUMMY_NOPS	# speed hack; recommended
 
 option		COMPAT_SVR4	# binary compatibility with SVR4

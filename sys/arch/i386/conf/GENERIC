@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.158 2000/02/11 18:47:17 jason Exp $
+#	$OpenBSD: GENERIC,v 1.159 2000/03/02 18:38:27 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -21,10 +21,6 @@ option		UVM		# use the UVM virtual memory system
 option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#option		EXTMEM_SIZE=...	# size of extended memory
 #option		DUMMY_NOPS	# speed hack; recommended
 
 option		COMPAT_SVR4	# binary compatibility with SVR4

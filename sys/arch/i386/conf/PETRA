@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.19 2000/01/09 01:42:26 jason Exp $
+#	$OpenBSD: PETRA,v 1.20 2000/03/02 18:38:27 mickey Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -10,7 +10,7 @@ machine		i386		# architecture, used by config; REQUIRED
 makeoptions	DEBUG="-g"	# make a bsd.gdb too
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: PETRA,v 1.19 2000/01/09 01:42:26 jason Exp $
+#	$OpenBSD: PETRA,v 1.20 2000/03/02 18:38:27 mickey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -109,10 +109,6 @@ option		USER_LDT	# user-settable LDT; used by WINE
 option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#option		EXTMEM_SIZE=130000	# size of extended memory
 option		BUFCACHEPERCENT=50	# how much for the buffer cache?
 #option		DUMMY_NOPS	# speed hack; recommended
 
