@@ -1,4 +1,4 @@
-/* $OpenBSD: common.c,v 1.2 1999/10/04 21:46:27 espie Exp $ */
+/* $OpenBSD: common.c,v 1.3 1999/10/07 16:30:32 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -72,53 +72,6 @@ read_header_and_diagnose(file, h, sign, filename)
 	}
 }
 
-struct reg_fd {
-	int fd;
-	pid_t pid;
-	struct reg_fd *next;
-};
-
-static struct reg_fd *first = NULL;
-
-void
-register_pipe(fd, pid)
-	int fd;
-	pid_t pid;
-{
-	struct reg_fd *n;
-
-	n = malloc(sizeof *n);
-	if (n) {
-		n->fd = fd;
-		n->pid = pid;
-		n->next = first;
-		first = n;
-	}
-}
-
-void
-close_dangling_pipes()
-{
-	while (first) {
-		close(first->fd);
-		first = first->next;
-	}
-}
-
-static struct reg_fd *
-retrieve_reg(fd)
-	int fd;
-{
-	struct reg_fd **i, *cur;
-
-	for (i = &first; *i ; i = &((*i)->next))
-		if ((*i)->fd == fd)
-			break;
-	cur = *i;
-	*i = cur->next;
-	return cur;
-}
-
 int 
 reap(pid)
 	pid_t pid;
@@ -130,24 +83,5 @@ reap(pid)
 		result = waitpid(pid, &pstat, 0);
 	} while (result == -1 && errno == EINTR);
 	return result == -1 ? -1 : pstat;
-}
-
-/* kill process and reap status
- */
-int 
-terminate_pipe(fd)
-	int fd;
-{
-	pid_t result;
-	int close_result;
-	struct reg_fd *cur;
-
-	cur = retrieve_reg(fd);
-	if (!cur)
-		return -1;
-	close_result = close(cur->fd);
-	result = reap(cur->pid);
-	free(cur);
-	return close_result == -1 ? -1 : result;
 }
 

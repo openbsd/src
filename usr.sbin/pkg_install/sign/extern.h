@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.2 1999/10/04 21:46:27 espie Exp $ */
+/* $OpenBSD: extern.h,v 1.3 1999/10/07 16:30:32 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -42,11 +42,6 @@ extern int read_header_and_diagnose __P((FILE *file, \
 	/*@out@*/struct mygzip_header *h, /*@null@*/struct signature **sign, \
 	const char *filename));
 extern int reap __P((pid_t pid));
-
-extern int terminate_pipe __P((int fd));
-extern void close_dangling_pipes __P((void));
-extern void register_pipe __P((int fd, pid_t pid));
-
 
 /* sign.c */
 extern int sign __P((/*@observer@*/const char *filename, int type, \

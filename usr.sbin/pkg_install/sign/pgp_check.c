@@ -1,4 +1,4 @@
-/* $OpenBSD: pgp_check.c,v 1.1 1999/10/04 21:46:29 espie Exp $ */
+/* $OpenBSD: pgp_check.c,v 1.2 1999/10/07 16:30:32 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -56,8 +56,6 @@ pgpcheck(fd, userid, envp)
 	pchar argv[6];
 	int argc = 0;
 
-	close_dangling_pipes();
-	setsid();
 	argv[argc++] = PGP;
 	argv[argc++] = "+batchmode";
 	argv[argc++] = "-f";
@@ -99,7 +97,6 @@ new_pgp_checker(h, sign, userid, envp, filename)
 {
 	struct pgp_checker *n;
 	int topgpcheck[2];
-	pid_t pgpid;
 
 	assert(sign->type == TAG_PGP);
 	n = malloc(sizeof *n);
@@ -122,7 +119,7 @@ new_pgp_checker(h, sign, userid, envp, filename)
 		free(n);
 		return NULL;
 	}
-	switch(pgpid = fork()) {
+	switch(n->id = fork()) {
 	case -1:
 		warn("Pgp checker process");
 		free(n);
@@ -138,7 +135,8 @@ new_pgp_checker(h, sign, userid, envp, filename)
 		break;
 	}
 	n->fdout = topgpcheck[1];
-	register_pipe(n->fdout, pgpid);
+		/* so that subsequent fork() won't duplicate it inadvertently */
+	(void)fcntl(n->fdout, F_SETFD, FD_CLOEXEC);	
 #ifdef DEBUG_DUMP
 	n->out = fopen("compare", "w");
 #endif
@@ -186,7 +184,9 @@ pgp_sign_ok(arg)
 #ifdef DEBUG_DUMP
 	fclose(n->out);
 #endif
-	if (terminate_pipe(n->fdout) != 0)
+	if (close(n->fdout) != 0)
+		status = PKG_SIGERROR;
+	if (reap(n->id) != 0)
 		status = PKG_BADSIG;
 	free(n);
 	return status;

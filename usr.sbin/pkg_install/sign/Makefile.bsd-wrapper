@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/09/27 21:40:03 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/10/07 16:30:32 espie Exp $
 
 PROG= pkg_sign
-SRCS= main.c sign.c  
+SRCS= main.c sign.c pgp_sign.c
 
 .if exists(${.CURDIR}/../lib/${__objdir})
 LDADD+=		-L${.CURDIR}/../lib/${__objdir} -linstall
