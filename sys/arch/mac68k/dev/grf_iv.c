@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.20 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.21 2004/12/03 06:40:13 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -109,8 +109,10 @@ grfiv_match(parent, vcf, aux)
 
 		sense = (bus_space_read_4(oa->oa_tag, bsh, 0x1C) & 7);
 
+#if 0	/* when using a non-Apple monitor with an adapter, sense is zero */
 		if (sense == 0)
 			found = 0;
+#endif
 
 		/* Set "Turbo SCSI" configuration to default */
 		bus_space_write_4(oa->oa_tag, bsh, 0x24, 0x1d1); /* ch0 */
