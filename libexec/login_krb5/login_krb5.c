@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.5 2001/06/25 05:23:13 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.6 2001/06/25 14:21:30 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -50,6 +50,12 @@
 #define MODE_CHALLENGE 1
 #define MODE_RESPONSE 2
 
+#define AUTH_OK 0
+#define AUTH_FAILED -1
+
+FILE *back = NULL;
+
+void
 krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...) 
 {
     va_list ap;
@@ -61,65 +67,17 @@ krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ..
 }
 
 int
-main(int argc, char **argv)
+krb5_login(char *username, char *password)
 {
-	int opt, mode;
-	FILE *back = NULL;
-	char *class, *username = NULL, *instance, *password, pw_prompt[256];
-	char *tmp_name;
-
+	int return_code = AUTH_FAILED;
+	char *instance, *tmp_name;
 	krb5_error_code ret;
 	krb5_context context;
 	krb5_ccache ccache;
 	krb5_principal princ;
 
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
-	setpriority(PRIO_PROCESS, 0, 0);
-
-	openlog(NULL, LOG_ODELAY, LOG_AUTH);
-
-	while((opt = getopt(argc, argv, "ds:v:")) != -1) {
-		switch(opt) {
-		case 'd':
-			back = stdout;
-			break;
-		case 's':	/* service */
-			if(strcmp(optarg, "login") == 0)
-				mode = MODE_LOGIN;
-			else if(strcmp(optarg, "challenge") == 0)
-				mode = MODE_CHALLENGE;
-			else if(strcmp(optarg, "response") == 0)
-				mode = MODE_RESPONSE;
-			else {
-				syslog(LOG_ERR, "%s: invalid service", optarg);
-				exit(1);
-			}
-			break;
-		case 'v':
-			/* silently ignore -v options */
-			break;
-		default:
-			syslog(LOG_ERR, "usage error1");
-			exit(1);
-		}
-	}
-	switch(argc - optind) {
-	case 2:
-		class = argv[optind + 1];
-	case 1:
-		username = argv[optind];
-		break;
-	default:
-		syslog(LOG_ERR, "usage error2");
-		exit(1);
-	}
-
-	if(back == NULL && (back = fdopen(3, "r+")) == NULL) {
-		syslog(LOG_ERR, "reopening back channel: %m");
-		exit(1);
-	}
-
+	if(strcmp(username, "root") == 0)
+		return AUTH_FAILED;
 
 	ret = krb5_init_context(&context);
 	if(ret != 0) {
@@ -146,9 +104,6 @@ main(int argc, char **argv)
 		instance = "";
 
 	krb5_unparse_name(context, princ, &tmp_name);
-	snprintf(pw_prompt, sizeof(pw_prompt), "%s's Password: ", tmp_name);
-
-	password = getpass(pw_prompt);
 
 	ret = krb5_verify_user_lrealm(context, princ, ccache, 
 				      password,
@@ -268,12 +223,12 @@ main(int argc, char **argv)
 				krb4_ticket_file);
 #endif
 
+		return_code = AUTH_OK;
 		break;
 	}
 	case KRB5KRB_AP_ERR_MODIFIED:
 		/* XXX syslog here? */
 	case KRB5KRB_AP_ERR_BAD_INTEGRITY:
-		fprintf(back, BI_REJECT "\n");
 		break;
 	default:
 		krb5_syslog(context, LOG_ERR, ret, "verify");
@@ -283,6 +238,70 @@ main(int argc, char **argv)
 	krb5_free_context(context);
 	krb5_free_principal(context, princ);
 	krb5_cc_close(context, ccache);
+
+	return return_code;
+}
+
+
+int
+main(int argc, char **argv)
+{
+	int opt, mode, ret;
+	char *username, *password;
+
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
+	setpriority(PRIO_PROCESS, 0, 0);
+
+	openlog(NULL, LOG_ODELAY, LOG_AUTH);
+
+	while((opt = getopt(argc, argv, "ds:v:")) != -1) {
+		switch(opt) {
+		case 'd':
+			back = stdout;
+			break;
+		case 's':	/* service */
+			if(strcmp(optarg, "login") == 0)
+				mode = MODE_LOGIN;
+			else if(strcmp(optarg, "challenge") == 0)
+				mode = MODE_CHALLENGE;
+			else if(strcmp(optarg, "response") == 0)
+				mode = MODE_RESPONSE;
+			else {
+				syslog(LOG_ERR, "%s: invalid service", optarg);
+				exit(1);
+			}
+			break;
+		case 'v':
+			/* silently ignore -v options */
+			break;
+		default:
+			syslog(LOG_ERR, "usage error1");
+			exit(1);
+		}
+	}
+	switch(argc - optind) {
+	case 2:
+		/* class = argv[optind + 1]; */
+	case 1:
+		username = argv[optind];
+		break;
+	default:
+		syslog(LOG_ERR, "usage error2");
+		exit(1);
+	}
+
+	if(back == NULL && (back = fdopen(3, "r+")) == NULL) {
+		syslog(LOG_ERR, "reopening back channel: %m");
+		exit(1);
+	}
+
+	password = getpass("Password:");
+
+	ret = krb5_login(username, password);
+
+	if(ret != AUTH_OK)
+		fprintf(back, BI_REJECT "\n");
 
 	closelog();
 
