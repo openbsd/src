@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.2 1998/07/04 20:20:58 deraadt Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.3 1998/07/05 06:50:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -29,15 +29,16 @@
 struct besoftc {
 	struct	device sc_dev;
 	struct	sbusdev sc_sd;		/* sbus device */
+	struct	arpcom sc_arpcom;
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	dma_softc *sc_dma;	/* pointer to my dma */
 
 	u_long	sc_laddr;		/* DMA address */
+	struct	qecregs *sc_qr;		/* QEC registers */
 	struct	be_bregs *sc_br;	/* registers */
 	struct	be_cregs *sc_cr;	/* registers */
 	struct	be_tregs *sc_tr;	/* registers */
 
-	struct	arpcom sc_arpcom;
 	void	*sc_mem;
 	int	sc_memsize;
 	long	sc_addr;

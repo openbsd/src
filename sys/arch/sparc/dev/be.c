@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.2 1998/07/04 20:20:57 deraadt Exp $	*/
+/*	$OpenBSD: be.c,v 1.3 1998/07/05 06:50:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -62,6 +62,7 @@
 #include <sparc/dev/dmavar.h>
 
 #include <sparc/dev/qecvar.h>
+#include <sparc/dev/qecreg.h>
 #include <sparc/dev/bereg.h>
 #include <sparc/dev/bevar.h>
 
@@ -72,8 +73,13 @@ void	beinit __P((struct besoftc *));
 void	bestart __P((struct ifnet *));
 void	bestop __P((struct besoftc *));
 void	bewatchdog __P((struct ifnet *));
-int	beintr __P((void *));
 int	beioctl __P((struct ifnet *, u_long, caddr_t));
+
+int	beintr __P((void *));
+int	betint __P((struct besoftc *));
+int	berint __P((struct besoftc *));
+int	beqint __P((struct besoftc *));
+int	beeint __P((struct besoftc *));
 
 struct cfdriver be_cd = {
 	NULL, "be", DV_IFNET
@@ -123,6 +129,7 @@ beattach(parent, self, aux)
 	sc->sc_cr = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct be_cregs));
 	sc->sc_br = mapiodev(&ca->ca_ra.ra_reg[1], 0, sizeof(struct be_bregs));
 	sc->sc_tr = mapiodev(&ca->ca_ra.ra_reg[2], 0, sizeof(struct be_tregs));
+	sc->sc_qr = qec->sc_regs;
 	bestop(sc);
 
 	sc->sc_mem = qec->sc_buffer;
@@ -246,17 +253,53 @@ int
 beintr(v)
 	void *v;
 {
-#if 0
+	int r = 0;
 	struct besoftc *sc = (struct besoftc *)v;
 	u_int32_t why;
 
-	why = be_read32(&greg->stat);
+#if 1
+	why = sc->sc_qr->stat;
 
-	if (why & GREG_STAT_TXALL)
-		be_tint(sc);
+	if (why & QEC_STAT_TX)
+		r |= betint(sc);
+	if (why & QEC_STAT_RX)
+		r |= berint(sc);
+	if (why & QEC_STAT_BM)
+		r |= beqint(sc);
+	if (why & QEC_STAT_ER)
+		r |= beeint(sc);
+	if (r)
+		printf("%s: intr: why=%08x\n", sc->sc_dev.dv_xname, why);
 
-	printf("%s: intr: why=%08x\n", sc->sc_dev.dv_xname, why);
 #endif
+	return (r);
+}
+
+int
+betint(sc)
+	struct besoftc *sc;
+{
+	return (0);
+}
+
+int
+berint(sc)
+	struct besoftc *sc;
+{
+	return (0);
+}
+
+int
+beqint(sc)
+	struct besoftc *sc;
+{
+	return (0);
+}
+
+int
+beeint(sc)
+	struct besoftc *sc;
+{
 	return (0);
 }
 
@@ -372,13 +415,15 @@ void
 beinit(sc)
 	struct besoftc *sc;
 {
-#if 0
-	u_int32_t c;
-	struct be_bregs *br = sc->sc_bregs;
-	struct be_cregs *cr = sc->sc_cregs;
-	struct be_tregs *tr = sc->sc_tregs;
 
 	bestop(sc);
+#if 0
+	sc->sc_qr->msize = sc->sc_memsize;
+	sc->sc_qr->rsize = sc->sc_memsize / 2;
+	sc->sc_qr->tsize = sc->sc_memsize / 2;
+	sc->sc_qr->psize = 2048;
+	/*sc->sc_qr->ctrl = QEC_CTRL_BMODE | QEC_CTRL_B32;*/
+
 	be_meminit(sc);
 
 	be_write32(&treg->int_mask, 0xffff);
