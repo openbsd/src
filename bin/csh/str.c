@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.7 2003/01/08 06:54:16 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.8 2003/04/08 01:46:53 deraadt Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.7 2003/01/08 06:54:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.8 2003/04/08 01:46:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,21 +252,6 @@ s_strncpy(dst, src, n)
 	}
     while (--n != 0)
 	;
-    return (sdst);
-}
-
-Char   *
-s_strcat(dst, src)
-    register Char *dst, *src;
-{
-    register short *sdst;
-
-    sdst = dst;
-    while (*dst++)
-	continue;
-    --dst;
-    while ((*dst++ = *src++) != '\0')
-	continue;
     return (sdst);
 }
 

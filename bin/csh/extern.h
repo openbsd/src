@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2003/01/08 06:54:16 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2003/04/08 01:46:53 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -318,7 +318,6 @@ void	showall(Char **, struct command *);
 #ifdef SHORT_STRINGS
 Char	 *s_strchr(Char *, int);
 Char	 *s_strrchr(Char *, int);
-Char	 *s_strcat(Char *, Char *);
 #ifdef NOTUSED
 Char	 *s_strncat(Char *, Char *, size_t);
 #endif
