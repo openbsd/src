@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.30 1999/03/04 03:57:29 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.31 1999/06/07 00:45:36 deraadt Exp $
 
 .include <bsd.own.mk>
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
-GNUCFLAGS=	CFLAGS="${CFLAGS}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
 CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile doc/CVSvn.texi \
                 doc/cvs.info doc/cvs.info-1 doc/cvs.info-2 doc/cvs.info-3 \
                 doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvs.info-7 \

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/12/05 19:43:46 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/06/07 00:45:37 deraadt Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.1
-GNUCFLAGS=	CFLAGS="${CFLAGS}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
 HTMLDIR=	/usr/share/doc/html
 HELPFILES=	keystrokes/bookmark_help.html keystrokes/cookie_help.html \
 		keystrokes/dired_help.html keystrokes/edit_help.html \
@@ -39,11 +39,13 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${GNUCFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	sh ${.CURDIR}/configure --prefix=/usr --libdir=/etc ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${GNUCFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	sh ${.CURDIR}/configure --prefix=/usr --libdir=/etc ${CF}
 

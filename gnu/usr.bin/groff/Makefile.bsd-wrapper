@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 1999/03/12 17:35:16 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 1999/06/07 00:45:37 deraadt Exp $
 
 #
 # groff config
@@ -9,8 +9,8 @@ FONTDIR=	/usr/share/groff_font
 INDEXDIR=	/usr/share/dict/papers
 COMMON_WORDS=	/usr/share/dict/eign
 
-GNUCFLAGS=	CFLAGS="${CFLAGS}"
-GNUCXXFLAGS=	CCFLAGS="${CXXFLAGS}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" 
+GNUCXXFLAGS=	CXX="${CXX}" CCFLAGS="${CXXFLAGS} ${COPTS}"
 
 CLEANFILES=	config.cache config.log pic/pic.cc eqn/eqn.cc \
 		refer/label.cc pic/pic.tab.h eqn/eqn.tab.h ${MANALL}
@@ -65,12 +65,14 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	${GNUCFLAGS} ${GNUCXXFLAGS} \
+INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
 		--mandir=${DATASUBDIR}/man ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${GNUCFLAGS} ${GNUCXXFLAGS} \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
 		--mandir=${DATASUBDIR}/man ${CF}
