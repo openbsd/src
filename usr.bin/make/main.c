@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.64 2004/04/07 13:11:36 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.65 2004/04/21 13:17:49 jmc Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -822,9 +822,9 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: make [-Beiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
+"usage: make [-BeiknPqrSst] [-D variable] [-d flags] [-f makefile]\n\
 	    [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
-	    [variable=value] [target ...]\n");
+	    [NAME=value] [target ...]\n");
 	exit(2);
 }
 

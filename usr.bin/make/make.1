@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.62 2004/03/13 22:57:09 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.63 2004/04/21 13:17:49 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -39,7 +39,7 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm make
-.Op Fl BPSeiknqrst
+.Op Fl BeiknPqrSst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
 .Op Fl f Ar makefile
@@ -1279,9 +1279,8 @@ directory
 .Xr regex 3 ,
 .Xr uname 3
 .Pp
-.Rs
-.%T Make \- A Tutorial
-.Re
+"Make \(em A Tutorial",
+.Pa /usr/share/doc/psd/12.make/ .
 .Sh STANDARDS
 .Nm
 mostly conforms to the Single Unix Specification, Version 2,
