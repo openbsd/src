@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.2 1998/03/10 04:50:49 millert Exp $
+.\"	$OpenBSD: fxp.4,v 1.3 1998/04/28 19:21:47 downsj Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 19, 1997
+.Dd April 28, 1998
 .Dt FXP 4
 .Os OpenBSD
 .Sh NAME
@@ -37,33 +37,51 @@ Intel EtherExpress Pro/100B ethernet device driver
 The
 .Nm
 driver provides support for the EtherExpress Pro/10 and Pro/100B PCI Fast Ethernet
-adapters based on the Intel i82557 ethernet chip.
+adapters based on the Intel i82557 and i82558 ethernet chip.
 .Pp
-The
-.Nm
-driver supports the following media types:
+.\" The
+.\" .Nm
+.\" driver supports the following media types:
+.\" .Pp
+.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.\" .It autoselect
+.\" Enable autoselection of the media type and options
+.\" .It 10baseT/UTP
+.\" Set 10Mbps operation
+.\" .It 100baseTX
+.\" Set 100Mbps (fast ethernet) operation
+.\" .El
+.\" .Pp
+.\" The
+.\" .Nm
+.\" driver supports the following media options:
+.\" .Pp
+.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.\" .It full-duplex
+.\" Set full duplex operation
+.\" .El
+.\" .Pp
+.\" Note that 100baseTX media type is only available on the Pro/100B. For further information
+.\" on configuring this device, see
+.\" .Xr ifconfig 8 .
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It autoselect
-Enable autoselection of the media type and options
-.It 10baseT/UTP
-Set 10Mbps operation
-.It 100baseTX
-Set 100Mbps (fast ethernet) operation
-.El
-.Pp
-The
-.Nm
-driver supports the following media options:
-.Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It full-duplex
-Set full duplex operation
-.El
-.Pp
-Note that 100baseTX media type is only available on the Pro/100B. For further information
-on configuring this device, see
+Media types and options are set by specifing link flags to
 .Xr ifconfig 8 .
+If none are specified, the ethernet card will perform auto-negotiation of
+link speed and options.
+.Pp
+.Bl -tag -width xxxxxxxxxxx
+.It link0
+Disable auto-negotiation.
+.It link1
+Enable 100Mbps operation.  (If unset, default to 10Mbps.)
+.It link2
+Enable full duplex operation.  (If unset, default to half duplex.)
+.El
+.Pp
+Note that 100baseTX media type is only available on the Pro/100B and i82558
+cards.
+.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "fxp%d: couldn't map memory"
