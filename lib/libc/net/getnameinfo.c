@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.20 2001/11/14 02:31:57 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.21 2001/11/15 04:56:15 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -38,8 +38,10 @@
  *   modified).  ipngwg rough consensus seems to follow RFC2553.
  * - What is "local" in NI_FQDN?
  * - NI_NAMEREQD and NI_NUMERICHOST conflict with each other.
- * - (KAME extension) NI_WITHSCOPEID when called with global address,
- *   and sin6_scope_id filled
+ * - (KAME extension) always attach textual scopeid (fe80::1%lo0), if
+ *   sin6_scope_id is filled - standardization status?
+ *   XXX breaks backward compat for code that expects no scopeid.
+ *   beware on merge.
  */
 
 #ifndef INET6
@@ -293,30 +295,24 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 		return EAI_MEMORY;
 	strcpy(host, numaddr);
 
-#ifdef NI_WITHSCOPEID
 	if (((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
-		if (flags & NI_WITHSCOPEID)
-		{
-			char scopebuf[MAXHOSTNAMELEN];
-			int scopelen;
+		char zonebuf[MAXHOSTNAMELEN];
+		int zonelen;
 
-			scopelen = ip6_sa2str(
-			    (const struct sockaddr_in6 *)(const void *)sa,
-			    scopebuf, sizeof(scopebuf), 0);
-			if (scopelen < 0)
-				return EAI_MEMORY;
-			if (scopelen + 1 + numaddrlen + 1 > hostlen)
-				return EAI_MEMORY;
-			/*
-			 * construct <numeric-addr><delim><scopeid>
-			 */
-			memcpy(host + numaddrlen + 1, scopebuf,
-			    (size_t)scopelen);
-			host[numaddrlen] = SCOPE_DELIMITER;
-			host[numaddrlen + 1 + scopelen] = '\0';
-		}
+		zonelen = ip6_sa2str(
+		    (const struct sockaddr_in6 *)(const void *)sa,
+		    zonebuf, sizeof(zonebuf), flags);
+		if (zonelen < 0)
+			return EAI_MEMORY;
+		if (zonelen + 1 + numaddrlen + 1 > hostlen)
+			return EAI_MEMORY;
+
+		/* construct <numeric-addr><delim><zoneid> */
+		memcpy(host + numaddrlen + 1, zonebuf,
+		    (size_t)zonelen);
+		host[numaddrlen] = SCOPE_DELIMITER;
+		host[numaddrlen + 1 + zonelen] = '\0';
 	}
-#endif /* NI_WITHSCOPEID */
 
 	return 0;
 }
