@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.84 2004/06/21 16:01:56 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.85 2004/07/07 09:16:20 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -729,7 +729,7 @@ message_validate_hash(struct message *msg, struct payload *p)
 		    "payload", payload_first(msg, ISAKMP_PAYLOAD_DELETE) ?
 		    "DELETE" : "NOTIFY");
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
-		    0, 1, 0);
+		    0, 1, 1);
 		free(comp_hash);
 		return -1;
 	}
