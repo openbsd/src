@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.1 2002/03/30 00:12:38 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.2 2002/03/30 02:07:52 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: wi.4,v 1.3 1999/05/22 16:12:43 wpaul Exp $
 .\"
-.Dd June 24, 2001
+.Dd March 29, 2002
 .Dt WI 4
 .Os
 .Sh NAME
@@ -53,6 +53,14 @@ The core of the WaveLAN/IEEE is the Lucent Hermes controller.
 All host/device interaction is via programmed I/O with the Hermes.
 The Hermes supports 802.11 and 802.3 frames, power management, BSS,
 WDS and ad-hoc operation modes.
+Cards based on the Intersil PRISM-II and PRISM-2.5 chips provide similar
+functionality.
+In addition to the features supported by the Hermes controller,
+the PRISM-II and PRISM-2.5 support a host-based access point mode which
+allows a card to act as a normal access point (with some assistance from the
+.Nm
+driver).
+The Hermes does not contain this functionality.
 .Pp
 The
 .Nm
@@ -89,13 +97,9 @@ with cards from other vendors.
 The standardized ad-hoc mode, also know as IBSS mode, is not
 supported by cards with very old firmware revisions.
 .Pp
-Additionally, cards based on the Intersil PRISM-II and PRISM-2.5 chips 
+Cards based on the Intersil PRISM-II and PRISM-2.5 chips also
 have a host-based access point mode which allows the card to
-act as a normal access point (with some assistance from the
-.Nm
-driver).
-This mode is not available on cards that uses the Hermes controller,
-such as those from Lucent.
+act as an access point (base station).
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
