@@ -17,7 +17,7 @@
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-.\" @(#) $Id: rarpd.8,v 1.7 1999/07/07 10:50:14 aaron Exp $
+.\" @(#) $Id: rarpd.8,v 1.8 1999/12/03 01:25:44 millert Exp $
 .\"
 .Dd October 26, 1990
 .Dt RARPD 8
@@ -79,11 +79,14 @@ Log all requests to
 .Xr syslog 3 .
 .El
 .Sh FILES
-.Bl -tag -width /etc/ethers -compact
+.Bl -tag -width /var/run/rarpd.pid -compact
 .It Pa /etc/ethers
 Ethernet host name data base
 .It Pa /etc/hosts
 host name data base
+.It Pa /var/run/rarpd.pid
+process id of
+.Nm
 .\" .It Pa /tftpboot
 .El
 .Sh SEE ALSO
