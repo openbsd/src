@@ -57,7 +57,6 @@
 #include "pty.h"
 #include "bpfilter.h"
 #include "tun.h"
-#include "random.h"
 #include "audio.h"
 #include "vnd.h"
 #include "ccd.h"
@@ -228,7 +227,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 116 */
 	cdev_lkm_dummy(),		/* 117 */
 	cdev_lkm_dummy(),		/* 118 */
-	cdev_random_init(NRANDOM,random),/* 119: random generator */
+	cdev_random_init(1,random),	/* 119: random generator */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

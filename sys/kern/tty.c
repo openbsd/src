@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.10 1996/08/29 07:46:35 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.11 1996/10/19 13:26:01 mickey Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -62,11 +62,7 @@
 #include <sys/namei.h>
 
 #include <vm/vm.h>
-
-#include "random.h"
-#if NRANDOM > 0
 #include <dev/rndvar.h>
-#endif
 
 static int ttnread __P((struct tty *));
 static void ttyblock __P((struct tty *));
@@ -235,9 +231,7 @@ ttyinput(c, tp)
 	register u_char *cc;
 	int i, error;
 
-#if NRANDOM > 0
 	add_tty_randomness(tp->t_dev, c);
-#endif
 	/*
 	 * If input is pending take it first.
 	 */

@@ -68,13 +68,8 @@
 #ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
 
-#include "random.h"
-#if NRANDOM > 0
 #include <dev/rndvar.h>
 #define	schednetisr(anisr)	\
 	{ netisr |= 1<<(anisr); add_net_randomness(anisr); setsoftnet(); }
-#else
-#define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
-#endif
 #endif
 #endif

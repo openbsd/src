@@ -245,7 +245,6 @@ cdev_decl(cpu);
 cdev_decl(iic);
 #include "rtc.h"
 cdev_decl(rtc);
-#include "random.h"
 cdev_decl(random);
 /* Temporary hack for ATAPI CDROM */
 cdev_decl(wcd);
@@ -297,7 +296,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 41: */
 	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
-	cdev_random_init(NRANDOM, random), /* 44: random data source */
+	cdev_random_init(1, random),	/* 44: random data source */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1996/10/05 15:47:50 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 1996/10/19 13:26:03 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
 
 /*-
@@ -110,7 +110,6 @@ dev_decl(filedesc,open);
 #endif
 #include "com.h"
 #include "lpt.h"
-#include "random.h"
 #include "uk.h"
 
 struct cdevsw	cdevsw[] =
@@ -150,7 +149,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
 	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
 	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
-	cdev_random_init(NRANDOM,random), /* 35: random data source */
+	cdev_random_init(1,random), /* 35: random data source */
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */

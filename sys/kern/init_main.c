@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.18 1996/09/21 11:06:08 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.19 1996/10/19 13:26:00 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -306,6 +306,7 @@ main(framep)
 #endif
 
 	/* Attach pseudo-devices. */
+	randomattach();
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);
 

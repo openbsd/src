@@ -119,6 +119,7 @@ dev_t	swapdev = makedev(4, 0);
 
 cdev_decl(cn);
 cdev_decl(sw);
+cdev_decl(random);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -281,6 +282,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 94 */
 	cdev_lkm_dummy(),		/* 95 */
 	cdev_lkm_dummy(),		/* 96 */
+	cdev_random_init(1,random),	/* 97 */
 	
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.10 1996/10/18 12:28:21 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.11 1996/10/19 13:25:58 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -230,8 +230,6 @@
  * Eastlake, Steve Crocker, and Jeff Schiller.
  */
 
-#include "random.h"
-#if NRANDOM > 0
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -330,9 +328,6 @@ static int	rnd_sleep = 0;
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-/* called by main() at boot time */
-void	randomattach __P((int num));
-
 static inline void add_entropy_word
 	__P((struct random_bucket *r, const u_int32_t input));
 static void add_timer_randomness __P((struct random_bucket *r,
@@ -398,14 +393,10 @@ arc4random (void)
 }
 
 void
-randomattach(num)
-	int	num;
+randomattach(void)
 {
 	int i;
 	struct timeval tv;
-
-	if (num > 1)
-		panic("no more than one random device");
 
 	random_state.add_ptr = 0;
 	random_state.entropy_count = 0;
@@ -872,4 +863,3 @@ randomioctl(dev, cmd, data, flag, p)
 	}
 	return ret;
 }
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 1996/08/29 09:25:59 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 1996/10/19 13:26:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -152,7 +152,6 @@ cdev_decl(tun);
 #define NLKM 0
 #endif
 cdev_decl(lkm);
-#include "random.h"
 cdev_decl(random);
 
 /* open, close, read, ioctl */
@@ -197,7 +196,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
 	cdev_gen_ipf(NIPF,ipl),         /* 29: IP filter log */
-	cdev_random_init(NRANDOM,random), /* 30: random data source */
+	cdev_random_init(1,random),	/* 30: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

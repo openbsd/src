@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1996/09/20 23:12:19 niklas Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 1996/10/19 13:26:04 mickey Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.6 1996/09/20 23:12:19 niklas Exp $
+ *      $Id: conf.c,v 1.7 1996/10/19 13:26:04 mickey Exp $
  */
 
 #include <sys/param.h>
@@ -115,6 +115,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 cdev_decl(cn);
 cdev_decl(sw);
 cdev_decl(ctty);
+cdev_decl(random);
 #define mmread mmrw
 #define mmwrite mmrw
 dev_type_read(mmrw);
@@ -144,8 +145,6 @@ cdev_decl(sd);
 cdev_decl(pc);
 cdev_decl(pms);
 cdev_decl(cd);
-#include "random.h"
-cdev_decl(random);
 #include "uk.h"
 cdev_decl(uk);
 cdev_decl(wd);
@@ -194,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 30: */
 	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
-	cdev_random_init(NRANDOM,random), /* 33: random data source */
+	cdev_random_init(1,random),	/* 33: random data source */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
