@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.17 2004/12/22 00:38:25 david Exp $
+.\"	$OpenBSD: cvs.1,v 1.18 2004/12/22 20:58:52 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -222,8 +222,24 @@ Create
 format diffs between releases.
 .It Ic release
 Indicate that a module is no longer in use.
-.It Ic remove
-Remove an entry from the repository.
+.It Xo Ic remove
+.Op Fl flR
+.Op Ar file ...
+.Xc
+The
+.Ic remove
+command is used to inform
+.Nm
+that
+.Ar file
+is scheduled to be removed from the repository.
+Files are not actually removed from the repository until the
+.Ic commit
+command has been run subsequently.
+.Pp
+Aliases:
+.Ic delete ,
+.Ic rm .
 .It Ic rlog
 Print out history information for a module.
 .It Ic rtag
