@@ -767,6 +767,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "768 USB",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_IDE,
+	    "8111 IDE",
+	},
+	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
 	    "MegaRAID",
 	},
