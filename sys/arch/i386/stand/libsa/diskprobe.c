@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.7 1997/10/25 02:07:10 weingart Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.8 1997/10/26 10:00:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,7 +41,7 @@
 #include "biosdev.h"
 #include "libsa.h"
 
-#define MAX_CKSUMLEN 32		/* Max amount of diskblocks used in cksum */
+#define MAX_CKSUMLEN MAXBSIZE / DEV_BSIZE	/* Max # of blks to cksum */
 
 /* Local Prototypes */
 static int disksum __P((int));
