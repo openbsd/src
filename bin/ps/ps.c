@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.8 1997/06/13 00:37:39 michaels Exp $	*/
+/*	$OpenBSD: ps.c,v 1.9 1997/08/04 05:37:05 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.8 1997/06/13 00:37:39 michaels Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.9 1997/08/04 05:37:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,6 @@ static char rcsid[] = "$OpenBSD: ps.c,v 1.8 1997/06/13 00:37:39 michaels Exp $";
 #include <limits.h>
 
 #include "ps.h"
-
-#ifdef P_PPWAIT
-#define NEWVM
-#endif
 
 KINFO *kinfo;
 struct varent *vhead, *vtail;
@@ -399,12 +395,8 @@ pscomp(a, b)
 	const void *a, *b;
 {
 	int i;
-#ifdef NEWVM
 #define VSIZE(k) (KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize + \
 		  KI_EPROC(k)->e_vm.vm_tsize)
-#else
-#define VSIZE(k) ((k)->ki_p->p_dsize + (k)->ki_p->p_ssize + (k)->ki_e->e_xsize)
-#endif
 
 	if (sortby == SORTCPU)
 		return (getpcpu((KINFO *)b) - getpcpu((KINFO *)a));

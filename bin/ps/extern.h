@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/23 14:20:48 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1997/08/04 05:37:03 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -77,9 +77,6 @@ void	 started __P((KINFO *, VARENT *));
 void	 state __P((KINFO *, VARENT *));
 void	 tdev __P((KINFO *, VARENT *));
 void	 tname __P((KINFO *, VARENT *));
-#ifndef NEWVM
-void	 trss __P((KINFO *, VARENT *));
-#endif
 void	 tsize __P((KINFO *, VARENT *));
 void	 ucomm __P((KINFO *, VARENT *));
 void	 uname __P((KINFO *, VARENT *));

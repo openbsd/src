@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.5 1997/08/01 09:48:44 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.6 1997/08/04 05:37:04 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.5 1997/08/01 09:48:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.6 1997/08/04 05:37:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,19 +48,9 @@ static char rcsid[] = "$OpenBSD: print.c,v 1.5 1997/08/01 09:48:44 deraadt Exp $
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#ifdef P_PPWAIT
-#define NEWVM
-#endif
-
-#ifdef NEWVM
 #include <sys/ucred.h>
 #include <sys/sysctl.h>
 #include <vm/vm.h>
-#else
-#include <machine/pte.h>
-#include <sys/vmparam.h>
-#include <sys/vm.h>
-#endif
 
 #include <err.h>
 #include <kvm.h>
@@ -183,11 +173,7 @@ logname(k, ve)
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM
-	(void)printf("%-*s", v->width, KI_PROC(k)->p_logname);
-#else
 	(void)printf("%-*s", v->width, KI_EPROC(k)->e_login);
-#endif
 }
 
 void
@@ -233,37 +219,19 @@ state(k, ve)
 	}
 	cp++;
 	if (flag & P_INMEM) {
-#ifndef NEWVM
-		if (p->p_rssize > p->p_maxrss)
-			*cp++ = '>';
-#endif
 	} else
 		*cp++ = 'W';
 	if (p->p_nice < NZERO)
 		*cp++ = '<';
 	else if (p->p_nice > NZERO)
 		*cp++ = 'N';
-#ifndef NEWVM
-	if (flag & SUANOM)
-		*cp++ = 'A';
-	else if (flag & SSEQL)
-		*cp++ = 'S';
-#endif
 	if (flag & P_TRACED)
 		*cp++ = 'X';
 	if (flag & P_WEXIT && p->p_stat != SZOMB)
 		*cp++ = 'E';
-#ifdef NEWVM
 	if (flag & P_PPWAIT)
-#else
-	if (flag & SVFORK)
-#endif
 		*cp++ = 'V';
-#ifdef NEWVM
 	if ((flag & P_SYSTEM) || p->p_holdcnt)
-#else
-	if (flag & (SSYS|SLOCK|SULOCK|SKEEP|SPHYSIO))
-#endif
 		*cp++ = 'L';
 	if (KI_EPROC(k)->e_flag & EPROC_SLEADER)
 		*cp++ = 's';
@@ -292,13 +260,8 @@ uname(k, ve)
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM
-	(void)printf("%-*s",
-	    (int)v->width, user_from_uid(KI_PROC(k)->p_uid, 0));
-#else
 	(void)printf("%-*s",
 	    (int)v->width, user_from_uid(KI_EPROC(k)->e_ucred.cr_uid, 0));
-#endif
 }
 
 void
@@ -309,13 +272,8 @@ runame(k, ve)
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM
-	(void)printf("%-*s",
-	    (int)v->width, user_from_uid(KI_PROC(k)->p_ruid, 0));
-#else
 	(void)printf("%-*s",
 	    (int)v->width, user_from_uid(KI_EPROC(k)->e_pcred.p_ruid, 0));
-#endif
 }
 
 void
@@ -460,13 +418,8 @@ vsize(k, ve)
 
 	v = ve->var;
 	(void)printf("%*d", v->width,
-#ifndef NEWVM
-	    pgtok(KI_PROC(k)->p_dsize +
-		KI_PROC(k)->p_ssize + KI_EPROC(k)->e_xsize));
-#else
 	    pgtok(KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize +
 		KI_EPROC(k)->e_vm.vm_tsize));
-#endif
 }
 
 void
@@ -477,14 +430,8 @@ rssize(k, ve)
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM
-	(void)printf("%*d", v->width,
-	    pgtok(KI_PROC(k)->p_rssize + (KI_EPROC(k)->e_xccount ?
-	    (KI_EPROC(k)->e_xrssize / KI_EPROC(k)->e_xccount) : 0)));
-#else
 	/* XXX don't have info about shared */
 	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_rssize));
-#endif
 }
 
 void
@@ -495,11 +442,7 @@ p_rssize(k, ve)		/* doesn't account for text */
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM
-	(void)printf("%*d", v->width, pgtok(KI_PROC(k)->p_rssize));
-#else
 	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_rssize));
-#endif
 }
 
 void
@@ -596,18 +539,10 @@ getpmem(k)
 	e = KI_EPROC(k);
 	if ((p->p_flag & P_INMEM) == 0)
 		return (0.0);
-#ifndef NEWVM
-	szptudot = USPACE/getpagesize() +
-	    clrnd(ctopt(p->p_dsize + p->p_ssize + e->e_xsize));
-	fracmem = ((float)p->p_rssize + szptudot)/CLSIZE/mempages;
-	if (p->p_textp && e->e_xccount)
-		fracmem += ((float)e->e_xrssize)/CLSIZE/e->e_xccount/mempages;
-#else
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
 	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
-#endif
 	return (100.0 * fracmem);
 }
 
@@ -642,11 +577,6 @@ maxrss(k, ve)
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM	/* not yet */
-	if (KI_PROC(k)->p_maxrss != (RLIM_INFINITY/getpagesize()))
-		(void)printf("%*d", v->width, pgtok(KI_PROC(k)->p_maxrss));
-	else
-#endif
 		(void)printf("%*s", v->width, "-");
 }
 
@@ -658,25 +588,8 @@ tsize(k, ve)
 	VAR *v;
 
 	v = ve->var;
-#ifndef NEWVM
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_xsize));
-#else
 	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_tsize));
-#endif
 }
-
-#ifndef NEWVM
-void
-trss(k, ve)
-	KINFO *k;
-	VARENT *ve;
-{
-	VAR *v;
-
-	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_xrssize));
-}
-#endif
 
 /*
  * Generic output routines.  Print fields from various prototype
