@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2004/11/30 17:04:23 otto Exp $	*/
+/*	$OpenBSD: engine.c,v 1.14 2005/01/03 19:51:14 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -36,7 +36,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.13 2004/11/30 17:04:23 otto Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.14 2005/01/03 19:51:14 otto Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -184,6 +184,8 @@ matcher(struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[],
 	for (;;) {
 		endp = fast(m, start, stop, gf, gl);
 		if (endp == NULL) {		/* a miss */
+			free(m->pmatch);
+			free(m->lastpos);
 			STATETEARDOWN(m);
 			return(REG_NOMATCH);
 		}
