@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.2 2004/05/23 18:12:37 grange Exp $
+# $OpenBSD: files.i2c,v 1.3 2004/05/24 12:46:44 grange Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 device	iic { addr, [size = -1] }
@@ -8,6 +8,10 @@ file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
 
 # Common module for bit-bang'ing an I2C bus
 file	dev/i2c/i2c_bitbang.c			i2c_bitbang
+
+#
+# I2C client devices
+#
 
 # National Semiconductor LM75/LM77 temperature sensor
 device	lmtemp
