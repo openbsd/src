@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.27 2003/01/15 06:31:24 art Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.28 2003/03/12 17:05:43 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -964,6 +964,7 @@ sk_attach(parent, self, aux)
 	ifp->if_start = sk_start;
 	ifp->if_watchdog = sk_watchdog;
 	ifp->if_baudrate = 1000000000;
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
