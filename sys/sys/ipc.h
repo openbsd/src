@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.9 2004/07/14 23:45:11 millert Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.10 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct ipc_perm {
 };
 
 #ifdef _KERNEL
-struct oipc_perm {
+struct ipc_perm23 {
 	unsigned short	cuid;	/* creator user id */
 	unsigned short	cgid;	/* creator group id */
 	unsigned short	uid;	/* user id */
@@ -103,11 +103,9 @@ struct ipc_perm35 {
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
 
 int ipcperm(struct ucred *, struct ipc_perm *, int);
-void ipc_n2o(struct ipc_perm *, struct oipc_perm *);
-void ipc_o2n(struct oipc_perm *, struct ipc_perm *);
-#endif /* _KERNEL */
 
-#ifndef _KERNEL
+#else /* !_KERNEL */
+
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

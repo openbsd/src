@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.45 2004/07/14 23:40:27 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.46 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -547,21 +547,6 @@ shminit(void)
 	shm_last_free = 0;
 	shm_nused = 0;
 	shm_committed = 0;
-}
-
-void
-shmid_n2o(struct shmid_ds *n, struct oshmid_ds *o)
-{
-
-	o->shm_segsz = n->shm_segsz;
-	o->shm_lpid = n->shm_lpid;
-	o->shm_cpid = n->shm_cpid;
-	o->shm_nattch = n->shm_nattch;
-	o->shm_atime = n->shm_atime;
-	o->shm_dtime = n->shm_dtime;
-	o->shm_ctime = n->shm_ctime;
-	o->shm_internal = n->shm_internal;
-	ipc_n2o(&n->shm_perm, &o->shm_perm);
 }
 
 /*

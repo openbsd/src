@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.17 2004/07/14 23:45:11 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.18 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -65,8 +65,8 @@ struct semid_ds {
 };
 
 #ifdef _KERNEL
-struct osemid_ds {
-	struct oipc_perm sem_perm;	/* operation permission struct */
+struct semid_ds23 {
+	struct ipc_perm23 sem_perm;	/* operation permission struct */
 	struct sem	*sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
 	time_t		sem_otime;	/* last operation time */
@@ -217,7 +217,6 @@ __END_DECLS
 #else
 void	seminit(void);
 void	semexit(struct proc *);
-void	semid_n2o(struct semid_ds *, struct osemid_ds *);
 int	sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
 int	semctl1(struct proc *, int, int, int, union semun *, register_t *,
 	    int (*)(const void *, void *, size_t),

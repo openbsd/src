@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.17 2004/07/14 23:40:27 millert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.18 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -132,28 +132,6 @@ msg_freehdr(msghdr)
 #endif
 	msghdr->msg_next = free_msghdrs;
 	free_msghdrs = msghdr;
-}
-
-void
-msqid_n2o(n, o)
-	struct msqid_ds *n;
-	struct omsqid_ds *o;
-{
-	o->msg_first = n->msg_first;
-	o->msg_last = n->msg_last;
-	o->msg_cbytes = n->msg_cbytes;
-	o->msg_qnum = n->msg_qnum;
-	o->msg_qbytes = n->msg_qbytes;
-	o->msg_lspid = n->msg_lspid;
-	o->msg_lrpid = n->msg_lrpid;
-	o->msg_stime = n->msg_stime;
-	o->msg_pad1 = n->msg_pad1;
-	o->msg_rtime = n->msg_rtime;
-	o->msg_pad2 = n->msg_pad2;
-	o->msg_ctime = n->msg_ctime;
-	o->msg_pad3 = n->msg_pad3;
-	bcopy(n->msg_pad4, o->msg_pad4, sizeof o->msg_pad4);
-	ipc_n2o(&n->msg_perm, &o->msg_perm);
 }
 
 int

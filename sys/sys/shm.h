@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.18 2004/07/14 23:45:11 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.19 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -109,12 +109,12 @@ struct shmid_ds {
 };
 
 #ifdef _KERNEL
-struct oshmid_ds {
-	struct oipc_perm shm_perm;	/* operation permission structure */
+struct shmid_ds23 {
+	struct ipc_perm23 shm_perm;	/* operation permission structure */
 	int		shm_segsz;	/* size of segment in bytes */
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
-	short		shm_nattch;	/* number of current attaches */
+	shmatt_t	shm_nattch;	/* number of current attaches */
 	time_t		shm_atime;	/* time of last shmat() */
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
@@ -167,7 +167,6 @@ struct vmspace;
 void	shminit(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
-void	shmid_n2o(struct shmid_ds *, struct oshmid_ds *);
 int	sysctl_sysvshm(int *, u_int, void *, size_t *, void *, size_t);
 int	sys_shmat1(struct proc *, void *, register_t *, int);
 int	shmctl1(struct proc *, int, int, caddr_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.12 2004/07/14 23:45:11 millert Exp $	*/
+/*	$OpenBSD: msg.h,v 1.13 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ struct msqid_ds {
 };
 
 #ifdef _KERNEL
-struct omsqid_ds {
-	struct oipc_perm msg_perm;	/* msg queue permission bits */
+struct msqid_ds23 {
+	struct ipc_perm23 msg_perm;	/* msg queue permission bits */
 	struct msg	*msg_first;	/* first message in the queue */
 	struct msg	*msg_last;	/* last message in the queue */
 	unsigned long	msg_cbytes;	/* number of bytes in use on the queue */
@@ -205,7 +205,6 @@ __END_DECLS
 struct proc;
 
 void	msginit(void);
-void	msqid_n2o(struct msqid_ds *, struct omsqid_ds *);
 int	msgctl1(struct proc *, int, int, caddr_t,
 	    int (*)(const void *, void *, size_t),
 	    int (*)(const void *, void *, size_t));

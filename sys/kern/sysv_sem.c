@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.31 2004/07/14 23:40:27 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.32 2004/07/15 11:24:46 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -225,19 +225,6 @@ semundo_clear(int semid, int semnum)
 			suptr = SLIST_NEXT(suptr, un_next);
 		}
 	}
-}
-
-void
-semid_n2o(struct semid_ds *n, struct osemid_ds *o)
-{
-	o->sem_base = n->sem_base;
-	o->sem_nsems = n->sem_nsems;
-	o->sem_otime = n->sem_otime;
-	o->sem_pad1 = n->sem_pad1;
-	o->sem_ctime = n->sem_ctime;
-	o->sem_pad2 = n->sem_pad2;
-	bcopy(n->sem_pad3, o->sem_pad3, sizeof o->sem_pad3);
-	ipc_n2o(&n->sem_perm, &o->sem_perm);
 }
 
 int
