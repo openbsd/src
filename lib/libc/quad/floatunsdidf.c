@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: floatunsdidf.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: floatunsdidf.c,v 1.5 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -42,8 +42,7 @@ static char rcsid[] = "$OpenBSD: floatunsdidf.c,v 1.4 2004/04/27 17:46:46 otto E
  * This is exactly like floatdidf.c except that negatives never occur.
  */
 double
-__floatunsdidf(x)
-	u_quad_t x;
+__floatunsdidf(u_quad_t x)
 {
 	double d;
 	union uu u;

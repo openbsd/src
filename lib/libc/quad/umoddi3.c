@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: umoddi3.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: umoddi3.c,v 1.4 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -41,8 +41,7 @@ static char rcsid[] = "$OpenBSD: umoddi3.c,v 1.3 2003/06/02 20:18:36 millert Exp
  * Return remainder after dividing two unsigned quads.
  */
 u_quad_t
-__umoddi3(a, b)
-	u_quad_t a, b;
+__umoddi3(u_quad_t a, u_quad_t b)
 {
 	u_quad_t r;
 

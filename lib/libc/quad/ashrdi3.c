@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ashrdi3.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: ashrdi3.c,v 1.5 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -41,9 +41,7 @@ static char rcsid[] = "$OpenBSD: ashrdi3.c,v 1.4 2004/04/27 17:46:46 otto Exp $"
  * Shift a (signed) quad value right (arithmetic shift right).
  */
 quad_t
-__ashrdi3(a, shift)
-	quad_t a;
-	qshift_t shift;
+__ashrdi3(quad_t a, qshift_t shift)
 {
 	union uu aa;
 

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: moddi3.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: moddi3.c,v 1.5 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -43,8 +43,7 @@ static char rcsid[] = "$OpenBSD: moddi3.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
  * XXX	we assume a % b < 0 iff a < 0, but this is actually machine-dependent.
  */
 quad_t
-__moddi3(a, b)
-	quad_t a, b;
+__moddi3(quad_t a, quad_t b)
 {
 	u_quad_t ua, ub, ur;
 	int neg = 0;

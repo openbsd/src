@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ucmpdi2.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: ucmpdi2.c,v 1.4 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -42,8 +42,7 @@ static char rcsid[] = "$OpenBSD: ucmpdi2.c,v 1.3 2003/06/02 20:18:36 millert Exp
  * Neither a nor b are considered signed.
  */
 int
-__ucmpdi2(a, b)
-	u_quad_t a, b;
+__ucmpdi2(u_quad_t a, u_quad_t b)
 {
 	union uu aa, bb;
 

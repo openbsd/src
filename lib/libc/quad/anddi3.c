@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: anddi3.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: anddi3.c,v 1.4 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -41,8 +41,7 @@ static char rcsid[] = "$OpenBSD: anddi3.c,v 1.3 2003/06/02 20:18:36 millert Exp 
  * Return a & b, in quad.
  */
 quad_t
-__anddi3(a, b)
-	quad_t a, b;
+__anddi3(quad_t a, quad_t b)
 {
 	union uu aa, bb;
 

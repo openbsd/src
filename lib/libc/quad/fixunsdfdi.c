@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fixunsdfdi.c,v 1.5 2004/04/27 17:46:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: fixunsdfdi.c,v 1.6 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -47,8 +47,7 @@ static char rcsid[] = "$OpenBSD: fixunsdfdi.c,v 1.5 2004/04/27 17:46:46 otto Exp
  * of range becomes UQUAD_MAX.
  */
 u_quad_t
-__fixunsdfdi(x)
-	double x;
+__fixunsdfdi(double x)
 {
 	union uu t;
 	unsigned int tmp;

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: qdivrem.c,v 1.5 2004/04/27 17:46:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: qdivrem.c,v 1.6 2004/10/17 17:49:21 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -65,8 +65,7 @@ static void shl __P((digit *p, int len, int sh));
  * leading zeros).
  */
 u_quad_t
-__qdivrem(uq, vq, arq)
-	u_quad_t uq, vq, *arq;
+__qdivrem(u_quad_t uq, u_quad_t vq, u_quad_t *arq)
 {
 	union uu tmp;
 	digit *u, *v, *q;
