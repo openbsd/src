@@ -81,10 +81,10 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/ctype.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/curses.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/db.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/dbm.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/des.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/dirent.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/disktab.ph
-./usr/lib/perl5/site_perl/powerpc-openbsd/dlfcn.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/elf_abi.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/err.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/errno.ph
@@ -107,7 +107,6 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/langinfo.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/libgen.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/limits.ph
-./usr/lib/perl5/site_perl/powerpc-openbsd/link.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/locale.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/machine
 ./usr/lib/perl5/site_perl/powerpc-openbsd/machine/ansi.ph
@@ -169,6 +168,7 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_atm.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_dl.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/net/if_fddi.ph
@@ -225,6 +225,7 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sha1.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/skey.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/soundcard.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/spinlock.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/stab.ph
@@ -296,6 +297,7 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/param.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/pipe.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/poll.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/sys/pool.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/proc.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/protosw.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/ptrace.ph
