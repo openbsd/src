@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.23 2004/07/10 23:12:57 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.24 2004/07/11 00:15:10 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -70,12 +70,24 @@ struct ntp_addr {
 	struct sockaddr_storage	 ss;
 };
 
+struct ntp_status {
+	u_int8_t	leap;
+	u_int8_t	stratum;
+	int8_t		precision;
+	double		rootdelay;
+	double		rootdispersion;
+	u_int32_t	refid;
+	double		reftime;
+	u_int8_t	poll;
+};
+
 struct ntp_offset {
-	u_int8_t	good;
-	double		offset;
-	double		delay;
-	double		error;
-	time_t		rcvd;
+	u_int8_t		good;
+	double			offset;
+	double			delay;
+	double			error;
+	time_t			rcvd;
+	struct ntp_status	status;
 };
 
 struct ntp_peer {

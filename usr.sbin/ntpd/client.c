@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.23 2004/07/10 19:16:06 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.24 2004/07/11 00:15:10 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,15 @@ client_dispatch(struct ntp_peer *p)
 	p->reply[p->shift].error = (T2 - T1) - (T3 - T4);
 	p->reply[p->shift].rcvd = time(NULL);
 	p->reply[p->shift].good = 1;
+
+	p->reply[p->shift].status.leap = (msg.status & LIMASK) >> 6;
+	p->reply[p->shift].status.stratum = msg.stratum;
+	p->reply[p->shift].status.precision = msg.precision;
+	p->reply[p->shift].status.rootdelay = sfp_to_d(msg.distance);
+	p->reply[p->shift].status.rootdispersion = sfp_to_d(msg.dispersion);
+	p->reply[p->shift].status.refid = htonl(msg.refid);
+	p->reply[p->shift].status.reftime = lfp_to_d(msg.reftime);
+	p->reply[p->shift].status.poll = msg.ppoll;
 
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
 		interval = INTERVAL_QUERY_PATHETIC;
