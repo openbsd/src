@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.17 2005/02/15 15:17:34 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.18 2005/02/22 22:33:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -46,12 +46,11 @@
 #include "log.h"
 #include "sock.h"
 #include "cvs.h"
+#include "repo.h"
 #include "cvsd.h"
 
 
 static void  cvsd_parent_loop (void);
-static void  cvsd_child_main  (void);
-static int   cvsd_privdrop    (void);
 static void  cvsd_report      (void);
 
 
@@ -59,8 +58,8 @@ extern char *__progname;
 
 
 int    cvsd_fg = 0;
-uid_t  cvsd_uid = -1;
-gid_t  cvsd_gid = -1;
+uid_t  cvsd_uid = 0;
+gid_t  cvsd_gid = 0;
 
 volatile sig_atomic_t cvsd_running = 1;
 volatile sig_atomic_t cvsd_restart = 0;
@@ -68,20 +67,21 @@ volatile sig_atomic_t cvsd_restart = 0;
 static char  *cvsd_user = NULL;
 static char  *cvsd_group = NULL;
 static char  *cvsd_root = NULL;
-static char  *cvsd_conffile = CVSD_CONF;
+static char  *cvsd_conffile = CVSD_PATH_CONF;
 static char  *cvsd_moddir = NULL;
 static int    cvsd_privfd = -1;
+
+static CVSREPO *cvsd_repo;
 
 
 static TAILQ_HEAD(,cvsd_child) cvsd_children;
 static volatile sig_atomic_t   cvsd_chnum = 0;
-static volatile sig_atomic_t   cvsd_chmin = CVSD_CHILD_DEFMIN;
 static volatile sig_atomic_t   cvsd_chmax = CVSD_CHILD_DEFMAX;
 static volatile sig_atomic_t   cvsd_sigchld = 0;
 static volatile sig_atomic_t   cvsd_siginfo = 0;
 
 
-void   usage         (void);
+void   usage	 (void);
 void   cvsd_sighdlr  (int);
 int    cvsd_msghdlr  (struct cvsd_child *, int);
 
@@ -141,12 +141,11 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	u_int i;
-	int ret, checkrepo;
+	int ret, repo_flags;
 	struct passwd *pwd;
 	struct group *grp;
 
-	checkrepo = 0;
+	repo_flags = 0;
 	cvsd_set(CVSD_SET_SOCK, CVSD_SOCK_PATH);
 	cvsd_set(CVSD_SET_USER, CVSD_USER);
 	cvsd_set(CVSD_SET_GROUP, CVSD_GROUP);
@@ -154,7 +153,7 @@ main(int argc, char **argv)
 	if (cvs_log_init(LD_STD|LD_SYSLOG, LF_PID) < 0)
 		err(1, "failed to initialize logging mechanism");
 
-	while ((ret = getopt(argc, argv, "a:c:dfhpr:s:v")) != -1) {
+	while ((ret = getopt(argc, argv, "c:dfg:hpr:s:u:v")) != -1) {
 		switch (ret) {
 		case 'c':
 			cvsd_conffile = optarg;
@@ -175,7 +174,7 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 			break;
 		case 'p':
-			checkrepo = 1;
+			repo_flags |= CVS_REPO_CHKPERM;
 			break;
 		case 'r':
 			cvsd_set(CVSD_SET_ROOT, optarg);
@@ -217,6 +216,9 @@ main(int argc, char **argv)
 	if (grp == NULL)
 		err(EX_NOUSER, "failed to get group `%s'", cvsd_group);
 
+	endpwent();
+	endgrent();
+
 	cvsd_uid = pwd->pw_uid;
 	cvsd_gid = grp->gr_gid;
 
@@ -232,6 +234,11 @@ main(int argc, char **argv)
 		exit(EX_OSERR);
 	}
 
+	if ((cvsd_repo = cvs_repo_load(cvsd_root, repo_flags)) == NULL) {
+		cvs_log(LP_ERR, "failed to load repository");
+		exit(EX_OSERR);
+	};
+
 	if (cvsd_sock_open() < 0) {
 		exit(1);
 	}
@@ -245,182 +252,44 @@ main(int argc, char **argv)
 		exit(EX_OSERR);
 	}
 
-	if (checkrepo && cvsd_checkperms("/") != 0) {
-		cvs_log(LP_ERR,
-		    "exiting due to permission errors on repository");
-		exit(1);
-	}
-
-	/* spawn the initial pool of children */
-	for (i = 0; i < (u_int)cvsd_chmin; i++)
-		if (cvsd_child_fork(NULL) < 0)
-			exit(EX_OSERR);
-
 	signal(SIGINFO, cvsd_sighdlr);
 	cvsd_parent_loop();
 
-	cvs_log(LP_NOTICE, "shutting down");
-	cvs_log_cleanup();
-
 	cvsd_sock_close();
 
+	cvs_repo_free(cvsd_repo);
+
+	cvs_log(LP_NOTICE, "shutting down");
+	cvs_log_cleanup();
 	return (0);
-}
-
-
-/*
- * cvsd_privdrop()
- *
- * Drop privileges.
- */
-int
-cvsd_privdrop(void)
-{
-	cvs_log(LP_INFO, "dropping privileges to %s[%d]:%s[%d]",
-	    cvsd_user, cvsd_uid, cvsd_group, cvsd_gid);
-	if (setgid(cvsd_gid) == -1) {
-		cvs_log(LP_ERRNO, "failed to drop group privileges to %s",
-		    CVSD_GROUP);
-		return (-1);
-	}
-
-	if (setuid(cvsd_uid) == -1) {
-		cvs_log(LP_ERRNO, "failed to drop user privileges to %s",
-		    CVSD_USER);
-		return (-1);
-	}
-
-	return (0);
-}
-
-
-/*
- * cvsd_checkperms()
- *
- * Check permissions on the CVS repository and log warnings for any
- * weird of loose permissions.
- * Returns the number of warnings on success, or -1 on failure.
- */
-int
-cvsd_checkperms(const char *path)
-{
-	int fd, nbwarn, ret;
-	mode_t fmode;
-	long base;
-	u_char *dp, *endp;
-	char buf[1024], spath[MAXPATHLEN];
-	struct stat st;
-	struct dirent *dep;
-
-	nbwarn = 0;
-
-	cvs_log(LP_DEBUG, "checking permissions on `%s'", path);
-
-	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
-		return (-1);
-	}
-
-	if (S_ISDIR(st.st_mode))
-		fmode = CVSD_DPERM;
-	else
-		fmode = CVSD_FPERM;
-
-	if (st.st_uid != cvsd_uid) {
-		cvs_log(LP_WARN, "owner of `%s' is not %s", path, CVSD_USER);
-		nbwarn++;
-	}
-
-	if (st.st_gid != cvsd_gid) {
-		cvs_log(LP_WARN, "group of `%s' is not %s", path, CVSD_GROUP);
-		nbwarn++;
-	}
-
-	if (st.st_mode & S_IWGRP) {
-		cvs_log(LP_WARN, "file `%s' is group-writable", path,
-		    fmode);
-		nbwarn++;
-	}
-
-	if (st.st_mode & S_IWOTH) {
-		cvs_log(LP_WARN, "file `%s' is world-writable", path,
-		    fmode);
-		nbwarn++;
-	}
-
-	if (S_ISDIR(st.st_mode)) {
-		fd = open(path, O_RDONLY, 0);
-		if (fd == -1) {
-			cvs_log(LP_ERRNO, "failed to open directory `%s'",
-			    path);
-			return (nbwarn);
-		}
-		/* recurse */
-		ret = getdirentries(fd, buf, sizeof(buf), &base);
-		if (ret == -1) {
-			cvs_log(LP_ERRNO,
-			    "failed to get directory entries for `%s'", path);
-			(void)close(fd);
-			return (nbwarn);
-		}
-
-		dp = buf;
-		endp = buf + ret;
-
-		while (dp < endp) {
-			dep = (struct dirent *)dp;
-			dp += dep->d_reclen;
-
-			if ((dep->d_namlen == 1) && (dep->d_name[0] == '.'))
-				continue;
-			if ((dep->d_namlen == 2) && (dep->d_name[0] == '.') &&
-			    (dep->d_name[1] == '.'))
-				continue;
-
-			/* skip the CVSROOT directory */
-			if (strcmp(dep->d_name, CVS_PATH_ROOT) == 0)
-				continue;
-
-			snprintf(spath, sizeof(spath), "%s/%s", path,
-			    dep->d_name);
-			ret = cvsd_checkperms(spath);
-			if (ret == -1)
-				nbwarn++;
-			else
-				nbwarn += ret;
-		}
-		(void)close(fd);
-	}
-
-
-	return (nbwarn);
 }
 
 
 /*
  * cvsd_child_fork()
  *
- * Fork a child process which chroots to the CVS repository's root directory.
- * If the <chpp> argument is not NULL, a reference to the newly created child
- * structure will be returned.
- * On success, returns 0 in the child process context, 1 in the parent's
- * context, or -1 on failure.
+ * Fork a child process which chroots to the CVS repository's root directory,
+ * drops all privileges, and then executes the cvsd-child process, which will
+ * handle the incoming CVS requests.
+ * On success, returns a pointer to the new child structure,
+ * or NULL on failure.
  */
-int
-cvsd_child_fork(struct cvsd_child **chpp)
+struct cvsd_child*
+cvsd_child_fork(int sock)
 {
-	int svec[2];
+	int argc, svec[2];
 	pid_t pid;
+	char *argv[16], ubuf[8], gbuf[8];
 	struct cvsd_child *chp;
 
 	if (cvsd_chnum == cvsd_chmax) {
 		cvs_log(LP_WARN, "child pool reached limit of processes");
-		return (-1);
+		return (NULL);
 	}
 
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, svec) == -1) {
 		cvs_log(LP_ERRNO, "failed to create socket pair");
-		return (-1);
+		return (NULL);
 	}
 
 	/*
@@ -429,7 +298,7 @@ cvsd_child_fork(struct cvsd_child **chpp)
 	 */
 	if (seteuid(0) == -1) {
 		cvs_log(LP_ERRNO, "failed to regain privileges");
-		return (-1);
+		return (NULL);
 	}
 
 	pid = fork();
@@ -437,43 +306,70 @@ cvsd_child_fork(struct cvsd_child **chpp)
 		cvs_log(LP_ERRNO, "failed to fork child");
 		(void)close(svec[0]);
 		(void)close(svec[1]);
-		return (-1);
+		return (NULL);
 	}
 
 	if (pid == 0) {
 		cvsd_privfd = svec[1];
 		(void)close(svec[0]);
 
-		cvsd_child_main();
-		/* NOTREACHED */
+		/*
+		 * Move the accepted socket to descriptor 3, where the child
+		 * expects it to be.  This could become troublesome if the
+		 * descriptor is already taken, but then again, the child
+		 * shouldn't have access to other descriptors except the
+		 * connection and its side of the socket pair it shares with
+		 * the parent.
+		 */
+		if (dup2(sock, CVSD_CHILD_SOCKFD) == -1) {
+			cvs_log(LP_ERRNO, "failed to dup child socket");
+			exit(EX_OSERR);
+		}
+		(void)close(sock);
+
+		argc = 0;
+		argv[argc++] = CVSD_PATH_CHILD;
+		argv[argc++] = "-r";
+		argv[argc++] = cvsd_root;
+		if (cvsd_uid != 0) {
+			snprintf(ubuf, sizeof(ubuf), "%d", cvsd_uid);
+			argv[argc++] = "-u";
+			argv[argc++] = ubuf;
+		}
+		if (cvsd_gid != 0) {
+			snprintf(gbuf, sizeof(gbuf), "%d", cvsd_gid);
+			argv[argc++] = "-g";
+			argv[argc++] = gbuf;
+		}
+		argv[argc] = NULL;
+
+		execv(CVSD_PATH_CHILD, argv);
+		err(1, "FUCK");
+		exit(EX_OSERR);
 	}
 
 	cvs_log(LP_INFO, "spawning child %d", pid);
 
-	if (seteuid(cvsd_uid) == -1) {
+	(void)close(svec[1]);
+
+	if (seteuid(cvsd_uid) == -1)
 		cvs_log(LP_ERRNO, "failed to redrop privs");
-		return (-1);
-	}
 
 	chp = (struct cvsd_child *)malloc(sizeof(*chp));
 	if (chp == NULL) {
+		/* XXX kill child */
 		cvs_log(LP_ERRNO, "failed to allocate child data");
-		return (-1);
+		return (NULL);
 	}
 
 	chp->ch_pid = pid;
 	chp->ch_sock = svec[0];
 	chp->ch_state = CVSD_ST_IDLE;
 
-	signal(SIGCHLD, SIG_IGN);
 	TAILQ_INSERT_TAIL(&cvsd_children, chp, ch_list);
 	cvsd_chnum++;
-	signal(SIGCHLD, cvsd_sighdlr);
 
-	if (chpp != NULL)
-		*chpp = chp;
-	(void)close(svec[1]);
-	return (1);
+	return (chp);
 }
 
 
@@ -482,8 +378,7 @@ cvsd_child_fork(struct cvsd_child **chpp)
  *
  * Wait for a child's status and perform the proper actions depending on it.
  * If the child has exited or has been terminated by a signal, it will be
- * removed from the list and new children will be created until the pool has
- * at least <cvsd_chmin> children in it.
+ * removed from the list.
  * Returns 0 on success, or -1 on failure.
  */
 int
@@ -522,38 +417,8 @@ cvsd_child_reap(void)
 		}
 	}
 
-	while (cvsd_chnum < cvsd_chmin)
-		cvsd_child_fork(NULL);
-
 	return (0);
 }
-
-
-/*
- * cvsd_child_get()
- *
- * Find a child process in idle state and return a pointer to the child's
- * structure.  If there are no available child processes, a new one will be
- * created unless the number of children has attained the maximum, in which
- * case NULL is returned.
- */
-struct cvsd_child*
-cvsd_child_get(void)
-{
-	struct cvsd_child *chp;
-
-	TAILQ_FOREACH(chp, &cvsd_children, ch_list)
-		if (chp->ch_state == CVSD_ST_IDLE)
-			return (chp);
-
-	/* no available child, attempt to fork a new one */
-	chp = NULL;
-	if ((cvsd_chnum < cvsd_chmax) && (cvsd_child_fork(&chp) < 0))
-		return (NULL);
-
-	return (chp);
-}
-
 
 
 /*
@@ -628,10 +493,10 @@ cvsd_parent_loop(void)
 			uid_t uid;
 			gid_t gid;
 
-			cfd = cvsd_sock_accept(pfd[0].fd);
-			if (cfd == -1)
-			chp = cvsd_child_get();
-			if (chp == NULL) {
+			if ((cfd = cvsd_sock_accept(pfd[0].fd)) == -1)
+				continue;
+
+			if ((chp = cvsd_child_fork(cfd)) == NULL) {
 				cvs_log(LP_ALERT,
 				    "request queue not implemented");
 				break;
@@ -665,78 +530,6 @@ cvsd_parent_loop(void)
 	TAILQ_FOREACH(chp, &cvsd_children, ch_list) {
 		(void)cvsd_sendmsg(chp->ch_sock, CVSD_MSG_SHUTDOWN, NULL, 0);
 	}
-}
-
-
-/*
- * cvsd_child_main()
- *
- */
-static void
-cvsd_child_main(void)
-{
-	int ret, timeout;
-	u_int mtype;
-	size_t mlen;
-	char mbuf[CVSD_MSG_MAXLEN];
-	struct pollfd pfd[1];
-	struct cvsd_sess *sessp;
-
-	cvs_log(LP_INFO, "changing root to %s", cvsd_root);
-	if (chroot(cvsd_root) == -1) {
-		cvs_log(LP_ERRNO, "failed to chroot to `%s'", cvsd_root);
-		exit(EX_OSERR);
-	}
-	(void)chdir("/");
-
-	if (cvsd_privdrop() < 0)
-		exit(EX_OSERR);
-
-	setproctitle("%s [child %d]", __progname, getpid());
-
-	pfd[0].fd = cvsd_privfd;
-	pfd[0].events = POLLIN;
-	timeout = INFTIM;
-	sessp = NULL;
-
-	while (cvsd_running) {
-		ret = poll(pfd, 1, timeout);
-		if (ret == -1) {
-			if (errno == EINTR)
-				continue;
-			cvs_log(LP_ERRNO, "poll error");
-			break;
-		} else if (ret == 0)
-			continue;
-
-		if (pfd[0].revents & (POLLERR|POLLNVAL)) {
-			cvs_log(LP_ERR, "poll error");
-			break;
-		}
-
-		mlen = sizeof(mbuf);
-		ret = cvsd_recvmsg(pfd[0].fd, &mtype, mbuf, &mlen);
-		if (ret == -1) {
-			continue;
-		} else if (ret == 0)
-			break;
-
-		switch (mtype) {
-		case CVSD_MSG_PASSFD:
-			sessp = cvsd_sess_alloc(*(int *)mbuf);
-			break;
-		case CVSD_MSG_SHUTDOWN:
-			cvsd_running = 0;
-			break;
-		default:
-			cvs_log(LP_ERR,
-			    "unexpected message type %u from parent", mtype);
-			break;
-		}
-
-	}
-
-	exit(0);
 }
 
 
@@ -887,10 +680,6 @@ cvsd_set(int what, ...)
 			free(cvsd_moddir);
 		cvsd_moddir = str;
 		break;
-	case CVSD_SET_CHMIN:
-		cvsd_chmin = va_arg(vap, int);
-		/* we should increase the number of children accordingly */
-		break;
 	case CVSD_SET_CHMAX:
 		cvsd_chmax = va_arg(vap, int);
 		/* we should decrease the number of children accordingly */
@@ -912,6 +701,8 @@ cvsd_set(int what, ...)
 
 /*
  * cvsd_report()
+ *
+ * Report about the current state of child processes on the repository.
  */
 static void
 cvsd_report(void)

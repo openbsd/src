@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.h,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: cvsd.h,v 1.8 2005/02/22 22:33:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,10 +42,12 @@
 
 #define CVSD_USER   "_cvsd"
 #define CVSD_GROUP  "_cvsd"
-#define CVSD_CONF   "/etc/cvsd.conf"
 
-#define CVSD_CHILD_DEFMIN    3
+#define CVSD_PATH_CONF    "/etc/cvsd.conf"
+#define CVSD_PATH_CHILD   "/usr/sbin/cvsd-child"
+
 #define CVSD_CHILD_DEFMAX    5
+#define CVSD_CHILD_SOCKFD    3
 
 
 #define CVSD_FPERM  (S_IRUSR | S_IWUSR)
@@ -105,37 +107,48 @@ struct cvsd_addr {
 	} ca_addr;
 };
 
-#define CVSD_SESS_LOCAL   0
-#define CVSD_SESS_REMOTE  1
-
-struct cvsd_sess {
-	int              cs_fd;
-	int              cs_type;
-	uid_t            cs_uid;     /* user ID of the session */
-	struct cvsd_addr cs_raddr;   /* remote address */
-};
-
 
 struct cvsd_child {
 	pid_t  ch_pid;
 	int    ch_sock;
 	u_int  ch_state;
 
-	struct cvsd_sess *ch_sess;
-
 	TAILQ_ENTRY(cvsd_child) ch_list;
 };
+
+
+/*
+ * The following structures are used to vehicle information to and from the
+ * cvsd-child process handling the cvs session.
+ */
+
+struct cvsd_req {
+	int  cr_op;		/* operation (see CVS_OP_* in cvs.h) */
+	int  cr_nfiles;
+};
+
+struct cvsd_resp {
+	int cr_code;
+};
+
+
+/* cvsd-child response codes */
+#define CVSD_RESP_OK      0
+#define CVSD_RESP_INVREQ  1	/* invalid request */
+#define CVSD_RESP_DENIED  2	/* access denied */
+#define CVSD_RESP_SYSERR  3	/* system error */
+#define CVSD_RESP_RDONLY  4	/* repository is read-only */
+#define CVSD_RESP_INVFILE 5	/* one or more files are unknown */
+#define CVSD_RESP_INVMOD  6
 
 
 extern uid_t    cvsd_uid;
 extern gid_t    cvsd_gid;
 
 
-int                cvsd_set        (int, ...);
-int                cvsd_checkperms (const char *);
-int                cvsd_child_fork (struct cvsd_child **);
-struct cvsd_child* cvsd_child_get  (void);
-int                cvsd_child_reap (void);
+int                 cvsd_set        (int, ...);
+struct cvsd_child*  cvsd_child_fork (int);
+int                 cvsd_child_reap (void);
 
 
 /* from conf.y */

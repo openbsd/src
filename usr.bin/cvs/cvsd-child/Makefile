@@ -1,12 +1,12 @@
-# $Id: Makefile,v 1.9 2005/02/22 22:33:01 jfb Exp $
+# $Id: Makefile,v 1.1 2005/02/22 22:33:01 jfb Exp $
 
 .PATH:	${.CURDIR}/..
 
-PROG=cvsd
-SRCS= cvsd.c buf.c conf.y log.c msg.c repo.c sock.c
+PROG=cvsd-child
+SRCS= child.c buf.c log.c msg.c rcs.c rcsnum.c
 
 BINDIR=/usr/sbin
-MAN=cvsd.8 cvsd.conf.5
+MAN=
 
 CFLAGS+= -Wall -I${.CURDIR}/..
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
