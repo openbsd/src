@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.7 2001/09/06 10:45:41 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.8 2001/09/10 22:40:21 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9227,7 +9227,7 @@ Lovbcopy:
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
 2:
-#if 1
+#if 0
 	! If it is big enough, use VIS instructions
 	bge	Lbcopy_block
 	 nop
@@ -10856,7 +10856,7 @@ Lbzero_internal:
 	sllx	%o1, 32, %o3
 	 or	%o1, %o3, %o1
 1:	
-#if 1
+#if 0
 	!! Now we are 64-bit aligned
 	cmp	%o2, 256		! Use block clear if len > 256
 	bge,pt	%xcc, Lbzero_block	! use block store insns
