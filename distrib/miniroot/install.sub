@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.131 1999/09/23 19:02:20 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.132 1999/09/23 21:33:43 aaron Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -402,7 +402,7 @@ __EOT
 	fi
 	echo	"$_DKDEVS"
 	echo
-	echo -n "Which disk is the root disk [${_defdsk}]? "
+	echo -n "Which disk is the root disk? [${_defdsk}] "
 	getresp "${_defdsk}"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
@@ -744,7 +744,7 @@ get_selection() {
 	done
 
 	# Get the name of the file.
-	echo -n "File name [$_next]? "
+	echo -n "File name? [$_next] "
 	getresp "$_next"
 }
 
@@ -1320,7 +1320,7 @@ esac
 _partition_range=`md_get_partition_range`
 resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
-	echo -n "CDROM partition to mount (normally \"c\")? [c] "
+	echo -n "CD-ROM partition to mount (normally \"c\")? [c] "
 	getresp "c"
 	case "$resp" in
 		$_partition_range)
@@ -1344,7 +1344,7 @@ ffs		Berkeley Fast Filesystem
 __EOT
 resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
-	echo -n "Which filesystem type (Official OpenBSD CDROM is cd9660)? [cd9660] "
+	echo -n "Which filesystem type (Official OpenBSD CD-ROM is cd9660)? [cd9660] "
 	getresp "cd9660"
 	case "$resp" in
 		cd9660|ffs)
@@ -1703,7 +1703,7 @@ if [ X$TZ = X ]; then
 	TZ=${TZ#/usr/share/zoneinfo/}
 fi
 while : ; do
-	echo -n	"What timezone are you in [\`?' for list] [$TZ]? "
+	echo -n	"What timezone are you in? [\`?' for list] [$TZ] "
 	getresp "$TZ"
 	case "$resp" in
 	"")
@@ -1965,7 +1965,7 @@ fi
 		_devs="$1 ${_devs}"
 		_mps="$2 ${_mps}"
 	done
-	echo -n "Umounting filesystems... "
+	echo -n "Unmounting filesystems... "
 	for _mp in ${_mps}; do
 		echo -n "${_mp} "
 		umount ${_mp}

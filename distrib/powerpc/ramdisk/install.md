@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 1999/09/03 18:55:35 deraadt Exp $
+#	$OpenBSD: install.md,v 1.13 1999/09/23 21:33:44 aaron Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ md_init_mbr() {
 		exit 0;;
 	*)
 		echo
-		echo "A MBR record with an OpenBSD usable partition table will now be copied"
+		echo "An MBR record with an OpenBSD usable partition table will now be copied"
 		echo "to your disk. Unless you have special requirements you will not need"
 		echo "to edit this MBR. After the MBR is copied an empty 1Mb MSDOS partition"
 		echo "will be created on the disk. You *MUST* setup the OpenBSD disklabel"
@@ -126,7 +126,7 @@ md_init_mbr() {
 		echo "You will have an opportunity to do this shortly."
 		echo
 		echo "You will probably see a few '...: no disk label' messages"
-		echo "It's completly normal. The disk has no label yet."
+		echo "It's completely normal. The disk has no label yet."
 		echo "This will take a minute or two..."
 		sleep 2
 		echo -n "Creating Master Boot Record (MBR)..."
@@ -144,14 +144,14 @@ md_checkfordisklabel() {
 	local rval
 
 	echo
-	echo "Power.4e systems need a MBR and MSDOS partition on the boot disk."
+	echo "Power.4e systems need an MBR and MSDOS partition on the boot disk."
 	echo "This is necessary because the OpenFirmware doesn't know about"
 	echo "OpenBSD, or how to boot the system from a BSD partition."
 	echo
 	echo "Install will put a boot program with the name 'ofwboot' "
 	echo "that you will configure OpenFirmware to use when booting OpenBSD."
 	echo
-	echo -n "Have you initialized a MSDOS partition using OpenFirmware? [n]"
+	echo -n "Have you initialized an MSDOS partition using OpenFirmware? [n]"
 	getresp "n"
 	case "$resp" in
 	n*|N*)
@@ -166,7 +166,7 @@ md_checkfordisklabel() {
 		echo "Also note that the boot partition must be included as partition"
 		echo "'i' in the OpenBSD disklabel."
 		echo
-		echo -n "Do You want to keep the current MSDOS partition setup? [y]"
+		echo -n "Do you want to keep the current MSDOS partition setup? [y]"
 		getresp "y"
 		case "$resp" in
 		n*|N*)
@@ -200,12 +200,12 @@ md_prep_fdisk()
 	echo
 	echo "This disk has not previously been used with OpenBSD. You may share"
 	echo "this disk with other operating systems. However, to be able to boot"
-	echo "the system you will need a small DOS partition in the begining of"
+	echo "the system you will need a small DOS partition in the beginning of"
 	echo "the disk to hold the kernel boot. OpenFirmware understands"
 	echo "how to read an MSDOS style format from the disk."
 	echo
 	echo "This DOS style partitioning has been taken care of if"
-	echo "you choosed to do that initialization earlier in the install."
+	echo "you chose to do that initialization earlier in the install."
 	echo
 	echo "WARNING: Wrong information in the BIOS partition table might"
 	echo "render the disk unusable."

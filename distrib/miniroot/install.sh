@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.60 1999/09/23 19:02:20 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.61 1999/09/23 21:33:43 aaron Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -549,7 +549,7 @@ if [ X"$libssl" != X1 ]; then
 	while [ X"${resp}" = X ]; do
 		echo
 		echo "The SSL libraries included with the CD do not contain RSA code"
-		echo "for licencing reasons.  Instead, enhanced SSL shared libraries"
+		echo "for licensing reasons.  Instead, enhanced SSL shared libraries"
 		echo "with RSA code are available on ftp and http sites.  If you do"
 		echo "not install the SSL+RSA libraries right now, they are easily"
 		echo "installed later."
