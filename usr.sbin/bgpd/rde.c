@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.78 2004/02/16 14:26:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.79 2004/02/17 19:12:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -344,7 +344,7 @@ int
 rde_update_dispatch(struct imsg *imsg)
 {
 	struct rde_peer		*peer;
-	u_char			*p;
+	u_char			*p, *emsg;
 	int			 pos;
 	u_int16_t		 len;
 	u_int16_t		 withdrawn_len;
@@ -409,8 +409,8 @@ rde_update_dispatch(struct imsg *imsg)
 	while (attrpath_len > 0) {
 		if ((pos = attr_parse(p, attrpath_len, &attrs,
 		    peer->conf.ebgp, conf->as)) < 0) {
-			rde_update_err(peer, ERR_UPDATE, subtype,
-			    attr_error(p, attrpath_len, &subtype, &size), size);
+			emsg = attr_error(p, attrpath_len, &subtype, &size);
+			rde_update_err(peer, ERR_UPDATE, subtype, emsg, size);
 			aspath_destroy(attrs.aspath);
 			attr_optfree(&attrs);
 			return (-1);
