@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.14 1997/04/19 17:19:53 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.15 1997/05/19 16:01:07 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@ void pc_xmode_on __P((void));
 void pc_xmode_off __P((void));
 static u_char kbc_get8042cmd __P((void));
 static int kbc_put8042cmd __P((u_char));
+int kbc_8042sysreset __P((void));
 int kbd_cmd __P((u_char, u_char));
 static __inline int kbd_wait_output __P((void));
 static __inline int kbd_wait_input __P((void));
@@ -286,6 +287,23 @@ kbd_flush_input()
 		}
 }
 
+
+
+/*
+ * Pass system reset command  to keyboard controller (8042).
+ */
+int
+kbc_8042sysreset()
+{
+
+	if (!kbd_wait_output())
+		return 0;
+	outb(kbd_cmdp, 0xd1);
+	if (!kbd_wait_output())
+		return 0;
+	outb(kbd_datap, 0);		/* ZAP */
+	return 1;
+}
 
 #if 1
 /*
