@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.13 2002/04/05 03:13:18 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.14 2002/04/21 17:09:28 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -43,14 +43,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
-	echo ''
 
-	echo 'Remounting /dev/rd0a as root...'
 	mount -u /dev/rd0a /
-
-	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
-	. /.instutils
 
 	# Installing or upgrading?
 	_forceloop=""
