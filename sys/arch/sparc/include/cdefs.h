@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.7 2002/02/14 04:23:33 fgsch Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.8 2002/08/11 12:13:16 art Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.3 1996/12/27 20:51:31 pk Exp $	*/
 
 /*
@@ -15,8 +15,14 @@
 #define _C_LABEL(x)	_STRING(_/**/x)
 #endif
 
-#ifdef __GNUC__
-#ifdef __STDC__
+#if defined(__GNUC__) && defined(__STDC__)
+#ifdef __ELF__
+#define __weak_alias(alias,sym)		\
+    __asm__(".weak " __STRING(alias) " ; " __STRING(alias) " = " __STRING(sym))
+#define __warn_references(sym,msg)	\
+    __asm__(".section .gnu.warning." __STRING(sym) " ; .ascii \"" msg "\" ; .text")
+
+#else
 #define __indr_reference(sym,alias)	\
 	__asm__(".stabs \"_" #alias "\",11,0,0,0");	\
 	__asm__(".stabs \"_" #sym "\",1,0,0,0")
@@ -25,16 +31,7 @@
 	__asm__(".stabs \"_" #sym "\",1,0,0,0")
 #define __weak_alias(alias,sym)		\
 	__asm__(".weak _" #alias "; _" #alias "= _" __STRING(sym))
-#else
-#define __indr_reference(sym,alias)	\
-	__asm__(".stabs \"_/**/alias\",11,0,0,0");	\
-	__asm__(".stabs \"_/**/sym\",1,0,0,0")
-#define __warn_references(sym,msg)	\
-	__asm__(".stabs msg,30,0,0,0");			\
-	__asm__(".stabs \"_/**/sym\",1,0,0,0")
-#define __weak_alias(alias,sym)		\
-	__asm__(".weak _/**/alias; _/**/alias = _/**/sym")
-#endif
+#endif /* __ELF__ */
 #else
 #define __indr_reference(sym,alias)
 #define __warn_references(sym,msg)

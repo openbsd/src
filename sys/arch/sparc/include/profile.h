@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.6 1998/11/20 20:31:08 deraadt Exp $	*/
+/*	$OpenBSD: profile.h,v 1.7 2002/08/11 12:13:16 art Exp $	*/
 /*	$NetBSD: profile.h,v 1.8 1997/02/01 20:56:40 mrg Exp $ */
 
 /*
@@ -45,28 +45,42 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
+/*
+ * Can't use _C_LABEL here.
+ */
+
+#ifdef __ELF__
+#define _MCOUNT_SYM "__mcount"
+#define _MCOUNT_ENTRY "_mcount"
+#else
+#define _MCOUNT_SYM "___mcount"
+#define _MCOUNT_ENTRY "mcount"
+#endif
+
 #ifdef PIC
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #define MCOUNT \
-	__asm__(".global mcount");\
-	__asm__("mcount:");\
+	__asm__(".global " _MCOUNT_ENTRY);\
+	__asm__(".text");\
+	__asm__(_MCOUNT_ENTRY ":");\
 	__asm__("add %o7, 8, %o1");\
 	__asm__("1: call 2f; nop; 2:");\
-	__asm__("add %o7,__mcount-1b, %o2");\
+	__asm__("add %o7," _MCOUNT_SYM "-1b, %o2");\
 	__asm__("ld [%o2], %o2");\
 	__asm__("jmpl %o2, %g0");\
 	__asm__("add %i7, 8, %o0");
 #else
 #define MCOUNT \
-	__asm__(".global mcount");\
-	__asm__("mcount:");\
+	__asm__(".global " _MCOUNT_ENTRY);\
+	__asm__(".text");\
+	__asm__(_MCOUNT_ENTRY ":");\
 	__asm__("add %i7, 8, %o0");\
-	__asm__("sethi %hi(__mcount), %o2");\
-	__asm__("jmpl %o2 + %lo(__mcount), %g0");\
+	__asm__("sethi %hi(" _MCOUNT_SYM "), %o2");\
+	__asm__("jmpl %o2 + %lo(" _MCOUNT_SYM "), %g0");\
 	__asm__("add %o7, 8, %o1");
 #endif
 
-#define	_MCOUNT_DECL	static void _mcount
+#define	_MCOUNT_DECL	static void __mcount
 
 #ifdef _KERNEL
 /*

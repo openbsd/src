@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 1997/08/08 08:26:02 downsj Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2002/08/11 12:13:16 art Exp $	*/
 /*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
 
 /*
@@ -45,12 +45,35 @@
 #ifndef _ASM_H_
 #define _ASM_H_
 
+#ifdef __ELF__
+#define _C_LABEL(name)		name
+#else
 #ifdef __STDC__
 #define _C_LABEL(name)		_ ## name
 #else
 #define _C_LABEL(name)		_/**/name
 #endif
+#endif
 #define	_ASM_LABEL(name)	name
+
+/*
+ * WEAK_ALIAS: create a weak alias (ELF only)
+ */
+#ifdef __ELF__
+#define WEAK_ALIAS(alias,sym)		\
+	.weak alias;			\
+	alias = sym
+#endif
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced
+ * (ELF only).
+ */
+#ifdef __ELF__
+#define WARN_REFERENCES(_sym,_msg)	\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#endif /* __ELF__ */
+
 
 #ifdef PIC
 /*
@@ -61,8 +84,8 @@
  */
 #define PIC_PROLOGUE(dest,tmp) \
 	mov %o7,tmp; 3: call 4f; nop; 4: \
-	sethi %hi(__GLOBAL_OFFSET_TABLE_-(3b-.)),dest; \
-	or dest,%lo(__GLOBAL_OFFSET_TABLE_-(3b-.)),dest; \
+	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
+	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	add dest,%o7,dest; mov tmp,%o7
 
 /*
