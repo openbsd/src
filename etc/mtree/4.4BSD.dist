@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.122 2002/03/31 18:38:56 brad Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.123 2002/04/24 22:19:19 espie Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -192,11 +192,6 @@ arpa		gname=bin uname=root mode=0755
 
 # ./usr/include/g++
 g++		gname=bin uname=root mode=0755
-
-# ./usr/include/g++/gen
-gen		gname=bin uname=root mode=0755
-# ./usr/include/g++/gen
-..
 
 # ./usr/include/g++/std
 std             gname=bin uname=root mode=0755
