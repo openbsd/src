@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.3 1999/09/10 18:03:46 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.4 1999/11/26 05:04:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -14,21 +14,24 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
+ *      This product includes software developed by Michael Shalayeff.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+
 
 #define MONGOOSE_DEBUG 9
 
@@ -66,11 +69,16 @@ struct mongoose_softc {
 	struct  device sc_dev;
 	void *sc_ih;
 
+	bus_space_tag_t sc_bt;
 	struct mongoose_regs *sc_regs;
-	u_int8_t *sc_intack;
+	bus_addr_t sc_iomap;
 
 	struct hppa_eisa_chipset sc_ec;
 	struct hppa_isa_chipset sc_ic;
+	struct hppa_bus_space_tag sc_eiot;
+	struct hppa_bus_space_tag sc_ememt;
+	struct hppa_bus_space_tag sc_iiot;
+	struct hppa_bus_space_tag sc_imemt;
 };
 
 union mongoose_attach_args {
@@ -90,19 +98,37 @@ struct cfdriver mongoose_cd = {
 	NULL, "mg", DV_DULL
 };
 
+/* IC guts */
 int mgprint __P((void *aux, const char *pnp));
-void	mongoose_eisa_attach_hook __P((struct device *, struct device *,
-				  struct eisabus_attach_args *));
-int	mongoose_intr_map __P((void *, u_int, eisa_intr_handle_t *));
-const char *mongoose_intr_string __P((void *, int));
-void	*mongoose_intr_establish __P((void *, int, int, int,
-				 int (*) __P((void *)), void *, char *));
-void	mongoose_intr_disestablish __P((void *, void *));
+void	mg_eisa_attach_hook __P((struct device *, struct device *,
+				 struct eisabus_attach_args *));
+int	mg_intr_map __P((void *, u_int, eisa_intr_handle_t *));
+const char *mg_intr_string __P((void *, int));
+void	*mg_intr_establish __P((void *, int, int, int,
+				int (*) __P((void *)), void *, char *));
+void	mg_intr_disestablish __P((void *, void *));
 
-void	mongoose_isa_attach_hook __P((struct device *, struct device *,
-				 struct isabus_attach_args *));
-int	mongoose_intr_check __P((void *, int, int));
-int	mongoose_intr __P((void *v));
+void	mg_isa_attach_hook __P((struct device *, struct device *,
+				struct isabus_attach_args *));
+int	mg_intr_check __P((void *, int, int));
+int	mg_intr __P((void *v));
+
+/* BUS guts */
+int  mg_eisa_iomap __P((void *v, bus_addr_t addr, bus_size_t size,
+			int cacheable, bus_space_handle_t *bshp));
+int  mg_eisa_memmap __P((void *v, bus_addr_t addr, bus_size_t size,
+			 int cacheable, bus_space_handle_t *bshp));
+void mg_eisa_memunmap __P((void *v, bus_space_handle_t bsh,
+			   bus_size_t size));
+
+int  mg_isa_iomap __P((void *v, bus_addr_t addr, bus_size_t size,
+		       int cacheable, bus_space_handle_t *bshp));
+int  mg_isa_memmap __P((void *v, bus_addr_t addr, bus_size_t size,
+			int cacheable, bus_space_handle_t *bshp));
+void mg_isa_memunmap __P((void *v, bus_space_handle_t bsh,
+			  bus_size_t size));
+
+/* TODO: DMA guts */
 
 int
 mgmatch(parent, cfdata, aux)   
@@ -139,15 +165,17 @@ mgattach(parent, self, aux)
 	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
 	union mongoose_attach_args ea;
 
+	sc->sc_bt = ca->ca_iot;
 	sc->sc_regs = (struct mongoose_regs *)(ca->ca_hpa + MONGOOSE_MONGOOSE);
+	sc->sc_iomap = ca->ca_hpa + MONGOOSE_IOMAP;
 
 	/* XXX should we reset the chip here? */
 
 	/* attach interrupt */
 	sc->sc_ih = cpu_intr_establish(IPL_HIGH, ca->ca_irq,
-				       mongoose_intr, sc, &sc->sc_dev);
+				       mg_intr, sc, &sc->sc_dev);
 
-	/* XXX determine HP eisa board id (how?) */
+	/* XXX determine eisa board id (how?) */
 	printf (": rev %d, %d MHz\n", sc->sc_regs->version,
 		(sc->sc_regs->clock? 33 : 25));
 	sc->sc_regs->liowait = 1;	/* disable isa wait states */
@@ -155,32 +183,52 @@ mgattach(parent, self, aux)
 
 	/* attach EISA */
 	sc->sc_ec.ec_v = sc;
-	sc->sc_ec.ec_attach_hook = mongoose_eisa_attach_hook;
-	sc->sc_ec.ec_intr_establish = mongoose_intr_establish;
-	sc->sc_ec.ec_intr_disestablish = mongoose_intr_disestablish;
-	sc->sc_ec.ec_intr_string = mongoose_intr_string;
-	sc->sc_ec.ec_intr_map = mongoose_intr_map;
+	sc->sc_ec.ec_attach_hook = mg_eisa_attach_hook;
+	sc->sc_ec.ec_intr_establish = mg_intr_establish;
+	sc->sc_ec.ec_intr_disestablish = mg_intr_disestablish;
+	sc->sc_ec.ec_intr_string = mg_intr_string;
+	sc->sc_ec.ec_intr_map = mg_intr_map;
+	/* inherit the bus tags for eisa from the mainbus */
+	sc->sc_eiot = *ca->ca_iot;
+	sc->sc_ememt = *ca->ca_iot;
+	sc->sc_eiot.hbt_cookie = sc->sc_ememt.hbt_cookie = sc;
+	sc->sc_eiot.hbt_map = mg_eisa_iomap;
+	sc->sc_ememt.hbt_map = mg_eisa_memmap;
+	sc->sc_ememt.hbt_unmap = mg_eisa_memunmap;
+	/* TODO: DMA tags */
+	/* attachment guts */
 	ea.mongoose_eisa.eba_busname = "eisa";
-	ea.mongoose_eisa.eba_iot = ea.mongoose_eisa.eba_memt =
-		HPPA_BUS_TAG_SET_BASE(ca->ca_iot,ca->ca_hpa); 
+	ea.mongoose_eisa.eba_iot = &sc->sc_eiot;
+	ea.mongoose_eisa.eba_memt = &sc->sc_ememt;
 	ea.mongoose_eisa.eba_dmat = NULL;
 	ea.mongoose_eisa.eba_ec = &sc->sc_ec;
 	config_found(self, &ea.mongoose_eisa, mgprint);
 
-	/* attach ISA */
+#if 0
+	/* TODO: attach ISA */
 	sc->sc_ic.ic_v = sc;
-	sc->sc_ic.ic_attach_hook = mongoose_isa_attach_hook;
-	sc->sc_ic.ic_intr_establish = mongoose_intr_establish;
-	sc->sc_ic.ic_intr_disestablish = mongoose_intr_disestablish;
-	sc->sc_ic.ic_intr_check = mongoose_intr_check;
+	sc->sc_ic.ic_attach_hook = mg_isa_attach_hook;
+	sc->sc_ic.ic_intr_establish = mg_intr_establish;
+	sc->sc_ic.ic_intr_disestablish = mg_intr_disestablish;
+	sc->sc_ic.ic_intr_check = mg_intr_check;
+	/* inherit the bus tags for eisa from the mainbus */
+	sc->sc_iiot = *ca->ca_iot;
+	sc->sc_imemt = *ca->ca_iot;
+	sc->sc_iiot.hbt_cookie = sc->sc_imemt.hbt_cookie = sc;
+	sc->sc_iiot.hbt_map = mg_isa_iomap;
+	sc->sc_imemt.hbt_map = mg_isa_memmap;
+	sc->sc_imemt.hbt_unmap = mg_isa_memunmap;
+	/* TODO: DMA tags */
+	/* attachment guts */
 	ea.mongoose_isa.iba_busname = "isa";
-	ea.mongoose_isa.iba_iot = ea.mongoose_isa.iba_memt =
-		HPPA_BUS_TAG_SET_BASE(ca->ca_iot, ca->ca_hpa); 
+	ea.mongoose_isa.iba_iot = &sc->sc_iiot;
+	ea.mongoose_isa.iba_memt = &sc->sc_imemt;
 #if NISADMA > 0
 	ea.mongoose_isa.iba_dmat = NULL;
 #endif
 	ea.mongoose_isa.iba_ic = &sc->sc_ic;
 	config_found(self, &ea.mongoose_isa, mgprint);
+#endif
 }
 
 int
@@ -197,7 +245,7 @@ mgprint(aux, pnp)
 }
 
 void
-mongoose_eisa_attach_hook(parent, self, mg)
+mg_eisa_attach_hook(parent, self, mg)
 	struct device *parent;
 	struct device *self;
 	struct eisabus_attach_args *mg;
@@ -205,7 +253,7 @@ mongoose_eisa_attach_hook(parent, self, mg)
 }
 
 int
-mongoose_intr_map(v, irq, ehp)
+mg_intr_map(v, irq, ehp)
 	void *v;
 	u_int irq;
 	eisa_intr_handle_t *ehp;
@@ -215,7 +263,7 @@ mongoose_intr_map(v, irq, ehp)
 }
 
 const char *
-mongoose_intr_string(v, irq)
+mg_intr_string(v, irq)
 	void *v;
 	int irq;
 {
@@ -226,7 +274,7 @@ mongoose_intr_string(v, irq)
 }
 
 void *
-mongoose_intr_establish(v, irq, type, level, fn, arg, name)
+mg_intr_establish(v, irq, type, level, fn, arg, name)
 	void *v;
 	int irq;
 	int type;
@@ -242,7 +290,7 @@ mongoose_intr_establish(v, irq, type, level, fn, arg, name)
 }
 
 void
-mongoose_intr_disestablish(v, cookie)
+mg_intr_disestablish(v, cookie)
 	void *v;
 	void *cookie;
 {
@@ -250,7 +298,7 @@ mongoose_intr_disestablish(v, cookie)
 }
 
 void
-mongoose_isa_attach_hook(parent, self, iba)
+mg_isa_attach_hook(parent, self, iba)
 	struct device *parent;
 	struct device *self;
 	struct isabus_attach_args *iba;
@@ -259,7 +307,7 @@ mongoose_isa_attach_hook(parent, self, iba)
 }
 
 int
-mongoose_intr_check(v, irq, type)
+mg_intr_check(v, irq, type)
 	void *v;
 	int irq;
 	int type;
@@ -268,9 +316,45 @@ mongoose_intr_check(v, irq, type)
 }
 
 int
-mongoose_intr(v)
+mg_intr(v)
 	void *v;
 {
 	return 0;
 }
+
+int
+mg_eisa_iomap(v, addr, size, cacheable, bshp)
+	void *v;
+	bus_addr_t addr;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	struct mongoose_softc *sc = v;
+
+	return (sc->sc_bt->hbt_map)(v, sc->sc_iomap + addr, size,
+				    cacheable, bshp);
+}
+
+int
+mg_eisa_memmap(v, addr, size, cacheable, bshp)
+	void *v;
+	bus_addr_t addr;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	/* TODO: eisa memory map */
+	return -1;
+}
+
+void
+mg_eisa_memunmap(v, bsh, size)
+	void *v;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	/* TODO: eisa memory unmap */
+}
+
 
