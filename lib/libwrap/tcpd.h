@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.1 1997/02/26 03:06:58 downsj Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.2 1997/03/04 08:59:24 downsj Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -201,6 +201,7 @@ extern int dry_run;			/* verification flag */
 __END_DECLS
 
 
+#ifdef _TCPD_PRIVATE
  /*
   * What follows is an attempt to unify varargs.h and stdarg.h. I'd rather
   * have this than #ifdefs all over the code.
@@ -217,5 +218,6 @@ __END_DECLS
 #define VASTART(ap,type,name)  {type name; va_start(ap); name = va_arg(ap, type)
 #define VAEND(ap)              va_end(ap);}
 #endif
+#endif	/* _TCPD_PRIVATE */
 
 #endif	/* _TCPD_H_ */
