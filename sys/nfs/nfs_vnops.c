@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.59 2004/04/26 18:57:36 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.60 2004/05/14 04:00:34 tedu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mbuf.h>
 #include <sys/conf.h>
 #include <sys/namei.h>
@@ -1205,7 +1206,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 			cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1335,7 +1336,7 @@ again:
 			cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1409,7 +1410,7 @@ nfs_remove(v)
 			error = 0;
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp);
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	np->n_attrstamp = 0;
 	vrele(dvp);
 	vrele(vp);
@@ -1615,7 +1616,7 @@ nfs_link(v)
 	int v3;
 
 	if (dvp->v_mount != vp->v_mount) {
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 		if (vp == dvp)
 			vrele(dvp);
 		else
@@ -1643,7 +1644,7 @@ nfs_link(v)
 		nfsm_wcc_data(dvp, wccflag);
 	}
 	nfsm_reqdone;
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!attrflag)
 		VTONFS(vp)->n_attrstamp = 0;
@@ -1712,7 +1713,7 @@ nfs_symlink(v)
 	nfsm_reqdone;
 	if (newvp)
 		vrele(newvp);
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1802,7 +1803,7 @@ nfs_mkdir(v)
 			vrele(newvp);
 	} else
 		*ap->a_vpp = newvp;
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vrele(dvp);
 	return (error);
 }
@@ -1833,7 +1834,7 @@ nfs_rmdir(v)
 	if (dvp == vp) {
 		vrele(dvp);
 		vrele(dvp);
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 		return (EINVAL);
 	}
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
@@ -1845,7 +1846,7 @@ nfs_rmdir(v)
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
 	nfsm_reqdone;
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.36 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.37 2004/05/14 04:00:34 tedu Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -68,6 +68,7 @@
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 #include <ufs/ufs/dir.h>
 
 #include <uvm/uvm_extern.h>
@@ -378,7 +379,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	vrele(nd.ni_startdir);
-	FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	vp = nd.ni_vp;
 	bzero((caddr_t)fhp, sizeof(nfh));
 	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
@@ -1328,7 +1329,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			vrele(nd.ni_startdir);
 			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 			if (!error) {
-				FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				if (exclusive_flag) {
 					exclusive_flag = 0;
 					VATTR_NULL(&va);
@@ -1345,7 +1346,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			if (va.va_type != VFIFO &&
 			    (error = suser_ucred(cred))) {
 				vrele(nd.ni_startdir);
-				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1356,7 +1357,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			    &va);
 			if (error) {
 				vrele(nd.ni_startdir);
-				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				nfsm_reply(0);
 				return (0);
 			}
@@ -1365,12 +1366,12 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			nd.ni_cnd.cn_proc = procp;
 			nd.ni_cnd.cn_cred = cred;
 			if ((error = lookup(&nd)) != 0) {
-				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				nfsm_reply(0);
 				return (0);
 			}
 			
-			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
 				vput(nd.ni_vp);
@@ -1381,7 +1382,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			}
 		} else {
 			vrele(nd.ni_startdir);
-			free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			error = ENXIO;
@@ -1389,7 +1390,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		vp = nd.ni_vp;
 	} else {
 		vrele(nd.ni_startdir);
-		free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		vp = nd.ni_vp;
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -1443,7 +1444,7 @@ nfsmout:
 		vrele(dirp);
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
@@ -1506,7 +1507,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		error = NFSERR_BADTYPE;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		vput(nd.ni_dvp);
@@ -1526,7 +1527,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	 */
 	if (nd.ni_vp) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		error = EEXIST;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		vput(nd.ni_dvp);
@@ -1537,12 +1538,12 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		vrele(nd.ni_startdir);
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 		if (!error)
-			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	} else {
 		if (va.va_type != VFIFO &&
 		    (error = suser_ucred(cred))) {
 			vrele(nd.ni_startdir);
-			free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1557,7 +1558,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nd.ni_cnd.cn_proc = procp;
 		nd.ni_cnd.cn_cred = procp->p_ucred;
 		error = lookup(&nd);
-		FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		if (error)
 			goto out;
 		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
@@ -1591,7 +1592,7 @@ nfsmout:
 		vrele(dirp);
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
@@ -1829,7 +1830,7 @@ out:
 			error = 0;
 	}
 	vrele(tond.ni_startdir);
-	FREE(tond.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, tond.ni_cnd.cn_pnbuf);
 out1:
 	if (fdirp) {
 		fdiraft_ret = VOP_GETATTR(fdirp, &fdiraft, cred, procp);
@@ -1840,7 +1841,7 @@ out1:
 		vrele(tdirp);
 	}
 	vrele(fromnd.ni_startdir);
-	FREE(fromnd.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, fromnd.ni_cnd.cn_pnbuf);
 	nfsm_reply(2 * NFSX_WCCDATA(v3));
 	if (v3) {
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
@@ -1855,11 +1856,11 @@ nfsmout:
 		vrele(tdirp);
 	if (tond.ni_cnd.cn_nameiop) {
 		vrele(tond.ni_startdir);
-		FREE(tond.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, tond.ni_cnd.cn_pnbuf);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
 		vrele(fromnd.ni_startdir);
-		FREE(fromnd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, fromnd.ni_cnd.cn_pnbuf);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);
@@ -2035,7 +2036,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	*(pathcp + len2) = '\0';
 	if (nd.ni_vp) {
 		vrele(nd.ni_startdir);
-		free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
@@ -2067,7 +2068,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		}
 	    } else
 		vrele(nd.ni_startdir);
-	    FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	}
 out:
 	if (pathcp)
@@ -2088,7 +2089,7 @@ out:
 nfsmout:
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
-		free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	}
 	if (dirp)
 		vrele(dirp);

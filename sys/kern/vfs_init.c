@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.16 2003/08/18 01:51:57 tedu Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.17 2004/05/14 04:00:33 tedu Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/systm.h>
 
 /*
@@ -230,6 +231,8 @@ vfs_op_init()
  */
 struct vattr va_null;
 
+struct pool namei_pool;
+
 /*
  * Initialize the vnode structures and initialize each file system type.
  */
@@ -239,6 +242,9 @@ vfsinit()
 	int i;
 	struct vfsconf *vfsconflist;
 	int vfsconflistlen;
+
+	pool_init(&namei_pool, MAXPATHLEN, 0, 0, 0, "namei",
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the vnode table

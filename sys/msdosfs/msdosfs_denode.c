@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.25 2004/05/12 21:04:15 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.26 2004/05/14 04:05:05 tedu Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-

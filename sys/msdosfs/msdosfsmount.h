@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.15 2004/05/12 21:04:15 tedu Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.16 2004/05/14 04:05:05 tedu Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-

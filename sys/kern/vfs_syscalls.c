@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.110 2004/05/10 22:36:21 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.111 2004/05/14 04:00:33 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/dirent.h>
 #include <sys/extattr.h>
 
@@ -1424,7 +1425,7 @@ sys_symlink(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-	MALLOC(path, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+	path = pool_get(&namei_pool, PR_WAITOK);
 	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
 	if (error)
 		goto out;
@@ -1446,7 +1447,7 @@ sys_symlink(p, v, retval)
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
 out:
-	FREE(path, M_NAMEI);
+	pool_put(&namei_pool, path);
 	return (error);
 }
 
@@ -2417,11 +2418,11 @@ out:
 		vrele(fvp);
 	}
 	vrele(tond.ni_startdir);
-	FREE(tond.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, tond.ni_cnd.cn_pnbuf);
 out1:
 	if (fromnd.ni_startdir)
 		vrele(fromnd.ni_startdir);
-	FREE(fromnd.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, fromnd.ni_cnd.cn_pnbuf);
 	if (error == -1)
 		return (0);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.23 2004/04/25 03:21:19 jolan Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.24 2004/05/14 04:00:33 tedu Exp $  */
 
 /*
  *    Portions of this code are:
@@ -44,6 +44,7 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/event.h>
 #include <miscfs/specfs/specdev.h>
 
@@ -140,7 +141,7 @@ vop_generic_abortop(v)
 	} */ *ap = v;
  
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, ap->a_cnp->cn_pnbuf);
 	return (0);
 }
 

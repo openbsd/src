@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.33 2004/03/02 05:52:24 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.34 2004/05/14 04:00:34 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -537,7 +537,7 @@ ext2fs_link(v)
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0, p);
@@ -1066,7 +1066,7 @@ bad:
 	} else
 		*ap->a_vpp = tvp;
 out:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1258,7 +1258,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 
 	if ((error = ext2fs_inode_alloc(pdir, mode, cnp->cn_cred, &tvp)) 
 	    != 0) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -1283,7 +1283,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 	if (error != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -1293,7 +1293,7 @@ bad:
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	free(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(dvp);
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;

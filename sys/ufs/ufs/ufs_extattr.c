@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extattr.c,v 1.4 2003/08/15 20:32:21 tedu Exp $ */
+/*	$OpenBSD: ufs_extattr.c,v 1.5 2004/05/14 04:00:34 tedu Exp $ */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 Robert N. M. Watson
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -276,7 +277,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, char *dirname,
 		cnp.cn_flags |= LOCKPARENT;
 	cnp.cn_proc = p;
 	cnp.cn_cred = p->p_ucred;
-	MALLOC(cnp.cn_pnbuf, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+	cnp.cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
 
 	cnp.cn_nameptr = cnp.cn_pnbuf;
 	error = copystr(dirname, cnp.cn_pnbuf, MAXPATHLEN,
@@ -285,7 +286,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, char *dirname,
 		if (lockparent == UE_GETDIR_LOCKPARENT_DONT) {
 			VOP_UNLOCK(start_dvp, 0, p);
 		}
-		FREE(cnp.cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp.cn_pnbuf);
 		printf("ufs_extattr_lookup: copystr failed\n");
 		return (error);
 	}
@@ -295,7 +296,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, char *dirname,
 	vargs.a_vpp = &target_vp;
 	vargs.a_cnp = &cnp;
 	error = ufs_lookup(&vargs);
-	FREE(cnp.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp.cn_pnbuf);
 
 	if (error) {
 		/*

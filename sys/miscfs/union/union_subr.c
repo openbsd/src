@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.16 2004/04/25 19:46:40 tedu Exp $ */
+/*	$OpenBSD: union_subr.c,v 1.17 2004/05/14 04:00:34 tedu Exp $ */
 /*	$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/queue.h>
@@ -799,7 +800,7 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	cn->cn_namelen = pathlen;
 	if ((cn->cn_namelen + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
-	cn->cn_pnbuf = malloc(cn->cn_namelen+1, M_NAMEI, M_WAITOK);
+	cn->cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
 	memcpy(cn->cn_pnbuf, path, cn->cn_namelen);
 	cn->cn_pnbuf[cn->cn_namelen] = '\0';
 
@@ -820,7 +821,7 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	if (!error)
 		vrele(dvp);
 	else {
-		free(cn->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cn->cn_pnbuf);
 		cn->cn_pnbuf = 0;
 	}
 
@@ -970,7 +971,7 @@ union_vn_create(vpp, un, p)
 	cn.cn_namelen = strlen(un->un_path);
 	if ((cn.cn_namelen + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
-	cn.cn_pnbuf = malloc(cn.cn_namelen+1, M_NAMEI, M_WAITOK);
+	cn.cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
 	memcpy(cn.cn_pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);

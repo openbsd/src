@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.26 2003/10/08 16:30:01 sturm Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.27 2004/05/14 04:00:33 tedu Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/mount.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/hash.h>
@@ -106,7 +107,7 @@ namei(ndp)
 	 * name into the buffer.
 	 */
 	if ((cnp->cn_flags & HASBUF) == 0)
-		MALLOC(cnp->cn_pnbuf, caddr_t, MAXPATHLEN, M_NAMEI, M_WAITOK);
+		cnp->cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
 	if (ndp->ni_segflg == UIO_SYSSPACE)
 		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
@@ -121,7 +122,7 @@ namei(ndp)
 		error = ENOENT;
 
 	if (error) {
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 		ndp->ni_vp = NULL;
 		return (error);
 	}
@@ -172,13 +173,13 @@ namei(ndp)
 	for (;;) {
 		if (!dp->v_mount) {
 			/* Give up if the directory is no longer mounted */
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (ENOENT);
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
 		if ((error = lookup(ndp)) != 0) {
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (error);
 		}
 		/*
@@ -186,7 +187,7 @@ namei(ndp)
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
-				FREE(cnp->cn_pnbuf, M_NAMEI);
+				pool_put(&namei_pool, cnp->cn_pnbuf);
 			else
 				cnp->cn_flags |= HASBUF;
 			return (0);
@@ -198,7 +199,7 @@ namei(ndp)
 			break;
 		}
 		if (ndp->ni_pathlen > 1)
-			MALLOC(cp, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+			cp = pool_get(&namei_pool, PR_WAITOK);
 		else
 			cp = cnp->cn_pnbuf;
 		aiov.iov_base = cp;
@@ -214,7 +215,7 @@ namei(ndp)
 		if (error) {
 badlink:
 			if (ndp->ni_pathlen > 1)
-				FREE(cp, M_NAMEI);
+				pool_put(&namei_pool, cp);
 			break;
 		}
 		linklen = MAXPATHLEN - auio.uio_resid;
@@ -224,7 +225,7 @@ badlink:
 		}
 		if (ndp->ni_pathlen > 1) {
 			bcopy(ndp->ni_next, cp + linklen, ndp->ni_pathlen);
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			pool_put(&namei_pool, cnp->cn_pnbuf);
 			cnp->cn_pnbuf = cp;
 		} else
 			cnp->cn_pnbuf[linklen] = '\0';
@@ -240,7 +241,7 @@ badlink:
 			VREF(dp);
 		}
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vrele(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	ndp->ni_vp = NULL;

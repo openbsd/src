@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.18 2003/05/03 21:14:59 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.19 2004/05/14 04:00:33 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/file.h>
@@ -245,7 +246,7 @@ check_shell:
 			vn_close(scriptvp, FREAD, p->p_ucred, p);
 
 		/* free the old pathname buffer */
-		FREE(oldpnbuf, M_NAMEI);
+		pool_put(&namei_pool, oldpnbuf);
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
@@ -278,7 +279,7 @@ fail:
 	} else
 		vn_close(scriptvp, FREAD, p->p_ucred, p);
 
-	FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, epp->ep_ndp->ni_cnd.cn_pnbuf);
 
 	/* free the fake arg list, because we're not returning it */
 	if ((tmpsap = shellargp) != NULL) {

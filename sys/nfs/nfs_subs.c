@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.43 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.44 2004/05/14 04:00:34 tedu Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/time.h>
 
 #include <uvm/uvm_extern.h>
@@ -1355,7 +1356,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	*retdirp = (struct vnode *)0;
-	MALLOC(cnp->cn_pnbuf, char *, len + 1, M_NAMEI, M_WAITOK);
+	cnp->cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
 	/*
 	 * Copy the name from the mbuf list to ndp->ni_pnbuf
 	 * and set the various ndp fields appropriately.
@@ -1442,7 +1443,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 		return (0);
 	}
 out:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	return (error);
 }
 

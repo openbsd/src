@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.12 2004/05/12 21:04:15 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.13 2004/05/14 04:05:05 tedu Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-

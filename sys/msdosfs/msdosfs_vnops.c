@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.44 2004/05/12 21:04:15 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.45 2004/05/14 04:05:05 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #include <sys/signalvar.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/dirent.h>		/* defines dirent structure */
 #include <sys/lockf.h>
 #include <sys/poll.h>
@@ -157,13 +158,13 @@ msdosfs_create(v)
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
 bad:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
 }
@@ -179,7 +180,7 @@ msdosfs_mknod(v)
 		struct vattr *a_vap;
 	} */ *ap = v;
 
-	FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, ap->a_cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (EINVAL);
 }
@@ -1292,7 +1293,7 @@ msdosfs_mkdir(v)
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
@@ -1300,7 +1301,7 @@ msdosfs_mkdir(v)
 bad:
 	clusterfree(pmp, newcluster, NULL);
 bad2:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.12 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: namei.h,v 1.13 2004/05/14 04:00:33 tedu Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ void cache_enter(struct vnode *, struct vnode *, struct componentname *);
 void nchinit(void);
 struct mount;
 void cache_purgevfs(struct mount *);
+
+extern struct pool namei_pool;
 
 #endif
 

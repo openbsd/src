@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.84 2004/03/12 09:32:55 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.85 2004/05/14 04:00:33 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -209,7 +210,7 @@ bad2:
 	 * close the vnode, free the pathname buf, and punt.
 	 */
 	vn_close(vp, FREAD, p->p_ucred, p);
-	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, ndp->ni_cnd.cn_pnbuf);
 	return (error);
 
 bad1:
@@ -217,7 +218,7 @@ bad1:
 	 * free the namei pathname buffer, and put the vnode
 	 * (which we don't yet have open).
 	 */
-	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, ndp->ni_cnd.cn_pnbuf);
 	vput(vp);
 	return (error);
 }
@@ -564,7 +565,7 @@ sys_execve(p, v, retval)
 
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 
 	/*
@@ -637,7 +638,7 @@ bad:
 		FREE(pack.ep_emul_arg, M_TEMP);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
@@ -657,7 +658,7 @@ exec_abort:
 		FREE(pack.ep_interp, M_TEMP);
 	if (pack.ep_emul_arg != NULL)
 		FREE(pack.ep_emul_arg, M_TEMP);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.29 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.30 2004/05/14 04:00:34 tedu Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/dirent.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
@@ -97,7 +98,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	struct proc *p;
 {
 #ifndef	ISODEVMAP
-	free(ndp->ni_pnbuf, M_NAMEI);
+	pool_put(i&namei_pool, ndp->ni_pnbuf);
 	vput(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	return (EINVAL);
@@ -113,7 +114,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	if (ip->i_mnt->iso_ftype != ISO_FTYPE_RRIP
 	    || vap->va_type != vp->v_type
 	    || (vap->va_type != VCHR && vap->va_type != VBLK)) {
-		free(ndp->ni_pnbuf, M_NAMEI);
+		pool_put(&namei_pool, ndp->ni_pnbuf);
 		vput(ndp->ni_dvp);
 		vput(ndp->ni_vp);
 		return (EINVAL);
@@ -795,7 +796,7 @@ cd9660_readlink(v)
 	    uio->uio_iov->iov_len >= MAXPATHLEN)
 		symname = uio->uio_iov->iov_base;
 	else
-		MALLOC(symname, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+		symname = pool_get(&namei_pool, PR_WAITOK);
 	
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
@@ -803,7 +804,7 @@ cd9660_readlink(v)
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
 		if (uio->uio_segflg != UIO_SYSSPACE ||
 		    uio->uio_iov->iov_len < MAXPATHLEN)
-			FREE(symname, M_NAMEI);
+			pool_put(&namei_pool, symname);
 		brelse(bp);
 		return (EINVAL);
 	}
@@ -818,7 +819,7 @@ cd9660_readlink(v)
 	if (uio->uio_segflg != UIO_SYSSPACE ||
 	    uio->uio_iov->iov_len < MAXPATHLEN) {
 		error = uiomove(symname, symlen, uio);
-		FREE(symname, M_NAMEI);
+		pool_put(&namei_pool, symname);
 		return (error);
 	}
 	uio->uio_resid -= symlen;

@@ -51,6 +51,8 @@
 #include <vm/vnode_pager.h>
 #endif
 
+#include <sys/pool.h>
+
 RCSID("$arla: xfs_vnodeops-bsd.c,v 1.123 2003/02/15 16:40:36 lha Exp $");
 
 /*
@@ -353,7 +355,7 @@ cleanup_cnp (struct componentname *cnp, int error)
 #elif defined(PNBUF_PUT)
 	PNBUF_PUT(cnp->cn_pnbuf);
 #else
-	FREE (cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 #endif
     }
 }
@@ -977,7 +979,7 @@ xfs_abortop (struct vop_abortop_args *ap)
 #elif defined(PNBUF_PUT)
 	PNBUF_PUT(cnp->cn_pnbuf);
 #else
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 #endif
     return 0;
 }
