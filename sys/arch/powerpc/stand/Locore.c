@@ -1,3 +1,4 @@
+/*	$OpenBSD: Locore.c,v 1.7 1999/11/09 06:30:15 rahnds Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -60,11 +61,41 @@ _start(vpd, res, openfirm, arg, argl)
 	syncicache((void *)RELOC, etext - (char *)RELOC);
 #endif
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
+#if 0
+	patch_dec_intr();
+#endif
 	setup();
 	main(arg, argl);
 	exit();
 }
 
+#if 0
+void handle_decr_intr();
+__asm (	"	.globl handle_decr_intr\n"
+	"	.type handle_decr_intr@function\n"
+	"handle_decr_intr:\n"
+	"	rfi\n");
+
+
+patch_dec_intr()
+{
+	int time;
+	unsigned int *decr_intr = (unsigned int *)0x900;
+	unsigned int br_instr;
+
+	/* this hack is to prevent unexected Decrementer Exceptions
+	 * when Apple openfirmware enables interrupts
+	 */
+	time = 0x40000000;
+	asm("mtdec %0" :: "r"(time));
+	/* we assume that handle_decr_intr is in the first 128 Meg */
+	br_instr = (18 << 23) | (unsigned int)handle_decr_intr;
+	*decr_intr = br_instr;
+
+
+
+}
+#endif
 __dead void
 _rtt()
 {
@@ -334,7 +365,10 @@ OF_claim(virt, size, align)
 		1,
 	};
 
+/*
 #ifdef	FIRMWORKSBUGS
+*/
+#if 0
 	/*
 	 * Bug with Firmworks OFW
 	 */
@@ -346,6 +380,9 @@ OF_claim(virt, size, align)
 	args.align = align;
 	if (openfirmware(&args) == -1)
 		return (void *)-1;
+	if (virt != 0) {
+		return virt;
+	}
 	return args.baseaddr;
 }
 
@@ -389,7 +426,7 @@ OF_milliseconds()
 	return args.ms;
 }
 
-#ifdef	__notyet__
+#ifdef __notyet__
 void
 OF_chain(virt, size, entry, arg, len)
 	void *virt;
@@ -431,11 +468,58 @@ OF_chain(virt, size, entry, arg, len)
 {
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going
-	 */
 	OF_release(virt, size);
+	 */
 	entry(0, 0, openfirmware, arg, len);
 }
 #endif
+
+int
+#ifdef	__STDC__
+OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
+#else
+OF_call_method(method, ihandle, nargs, nreturns, va_alist)
+	char *method;
+	int ihandle;
+	int nargs;
+	int nreturns;
+	va_dcl
+#endif
+{
+	va_list ap;
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		char *method;
+		int ihandle;
+		int args_n_results[12];
+	} args = {
+		"call-method",
+		2,
+		1,
+	};
+	int *ip, n;
+
+	if (nargs > 6)
+		return -1;
+	args.nargs = nargs + 2;
+	args.nreturns = nreturns + 1;
+	args.method = method;
+	args.ihandle = ihandle;
+	va_start(ap, nreturns);
+	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
+		*--ip = va_arg(ap, int);
+
+	if (openfirmware(&args) == -1)
+		return -1;
+	if (args.args_n_results[nargs])
+		return args.args_n_results[nargs];
+	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
+		*va_arg(ap, int *) = *--ip;
+	va_end(ap);
+	return 0;
+}
 
 static int stdin;
 static int stdout;
@@ -467,11 +551,11 @@ putchar(c)
 int
 getchar()
 {
-	unsigned char ch;
+	unsigned char ch = '\0';
 	int l;
 
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2)
+		if (l != -2 && l != 0)
 			return -1;
 	return ch;
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: netif_of.c,v 1.4 1999/11/09 06:30:15 rahnds Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
 
 /*
@@ -101,6 +102,8 @@ netif_open(machdep_hint)
 	
 	/* Put our ethernet address in io->myea */
 	OF_getprop(OF_instance_to_package(op->handle),
+		   "local-mac-address", io->myea, sizeof io->myea) == -1 &&
+	OF_getprop(OF_instance_to_package(op->handle),
 		   "mac-address", io->myea, sizeof io->myea);
 
 #ifdef	NETIF_DEBUG
@@ -176,6 +179,10 @@ netif_put(desc, pkt, len)
 #endif
 	}
 
+	if (op->dmabuf) {
+		bcopy(pkt, op->dmabuf, sendlen);
+		pkt = op->dmabuf;
+	}
 	rv = OF_write(op->handle, pkt, sendlen);
 
 #ifdef	NETIF_DEBUG
@@ -212,7 +219,8 @@ netif_get(desc, pkt, maxlen, timo)
 
 	do {
 		len = OF_read(op->handle, pkt, maxlen);
-	} while ((len == -2) && ((OF_milliseconds() - tick0) < tmo_ms));
+	} while ((len == -2 || len == 0) &&
+		 ((OF_milliseconds() - tick0) < tmo_ms));
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: received len=%d\n", len);

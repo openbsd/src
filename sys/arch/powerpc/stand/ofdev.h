@@ -1,3 +1,4 @@
+/*	$OpenBSD: ofdev.h,v 1.5 1999/11/09 06:30:15 rahnds Exp $	*/
 /*	$NetBSD: ofdev.h,v 1.1 1997/04/16 20:29:22 thorpej Exp $	*/
 
 /*
@@ -38,17 +39,14 @@ struct of_dev {
 	int type;
 	u_long partoff;
 	int bsize;
+	void *dmabuf;
 };
 
 /* Known types: */
 #define	OFDEV_NET	1
 #define	OFDEV_DISK	2
 
-#ifdef MAC
-#define DEFAULT_KERNEL  ":bsd"
-#else
 #define	DEFAULT_KERNEL	"/bsd"
-#endif
 
 extern char opened_name[];
 

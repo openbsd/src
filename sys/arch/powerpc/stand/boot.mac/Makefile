@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/05/29 04:15:56 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/11/09 06:30:15 rahnds Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 R=              ..
@@ -8,7 +8,7 @@ ENTRY=		_entry
 LOADADDR=	20000
 PROG=           boot.mac
 SRCS=           Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
-#CFLAGS+=       -DDEBUG -DNETIF_DEBUG
+CFLAGS+=       -DDEBUG -DNETIF_DEBUG
 CFLAGS+=	-DEXEC_ELF -DXCOFF_GLUE -DMAC
 NOMAN=
 INSTALL_STRIP=

@@ -1,3 +1,4 @@
+/*	$OpenBSD: boot.c,v 1.8 1999/11/09 06:30:15 rahnds Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -287,6 +288,8 @@ aout_exec(fd, hdr, entryp, esymp)
 }
 #endif /* POWERPC_BOOT_AOUT */
 
+#define LOAD_HDR 1
+#define LOAD_SYM 2
 #ifdef POWERPC_BOOT_ELF
 int
 elf_exec(fd, elf, entryp, esymp)
@@ -294,6 +297,7 @@ elf_exec(fd, elf, entryp, esymp)
 	Elf32_Ehdr *elf;
 	u_int32_t *entryp;
 	void **esymp;
+	
 {
 	Elf32_Shdr *shp;
 	Elf32_Off off;
@@ -301,6 +305,8 @@ elf_exec(fd, elf, entryp, esymp)
 	size_t size;
 	int i, first = 1;
 	int n;
+	u_int32_t maxp = 0; /*  correct type? */
+	int flags = LOAD_HDR| LOAD_SYM;
 
 	/*
 	 * Don't display load address for ELF; it's encoded in
@@ -326,6 +332,8 @@ elf_exec(fd, elf, entryp, esymp)
 		if (OF_claim((void *)phdr.p_vaddr, phdr.p_memsz, 0) ==
 		    (void *)-1)
 			panic("cannot claim memory");
+		maxp = maxp > (phdr.p_vaddr+ phdr.p_memsz) ?
+			maxp : (phdr.p_vaddr+ phdr.p_memsz);
 		if (read(fd, (void *)phdr.p_vaddr, phdr.p_filesz) !=
 		    phdr.p_filesz) {
 			printf("read segment: %s\n", strerror(errno));
@@ -337,89 +345,108 @@ elf_exec(fd, elf, entryp, esymp)
 		if (phdr.p_filesz < phdr.p_memsz) {
 			printf("+%lu@0x%lx", phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero(phdr.p_vaddr + phdr.p_filesz,
+			bzero((void *)(phdr.p_vaddr + phdr.p_filesz),
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
 	}
+	*esymp = 0; /* in case it is not set later */
 
+#if 0
+	/*
+	 * Copy the ELF and section headers.
+	 */
+	maxp = roundup(maxp, sizeof(long));
+	if (flags & (LOAD_HDR|COUNT_HDR)) {
+		if (OF_claim((void *)maxp, sizeof(Elf_Ehdr), 0) ==
+		    (void *)-1)
+			panic("cannot claim memory");
+		elfp = maxp;
+		maxp += sizeof(Elf_Ehdr);
+	}
+
+	if (flags & (LOAD_SYM|COUNT_SYM)) {
+		if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
+			WARN(("lseek section headers"));
+			return 1;
+		}
+		sz = elf->e_shnum * sizeof(Elf_Shdr);
+
+		if (OF_claim((void *)maxp, sizeof(Elf_Ehdr), 0) ==
+		    (void *)-1)
+			panic("cannot claim memory");
+		shpp = maxp;
+		maxp += roundup(sz, sizeof(long)); 
+
+		if (read(fd, shpp, sz) != sz) {
+			WARN(("read section headers"));
+			return 1;
+		}
+		/*
+		 * Now load the symbol sections themselves.  Make sure the
+		 * sections are aligned. Don't bother with string tables if
+		 * there are no symbol sections.
+		 */
+		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
+
+		for (havesyms = i = 0; i < elf->e_shnum; i++)
+			if (shpp[i].sh_type == Elf_sht_symtab)
+				havesyms = 1;
+
+		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+			if (shpp[i].sh_type == Elf_sht_symtab ||
+			    shpp[i].sh_type == Elf_sht_strtab) {
+				if (havesyms && (flags & LOAD_SYM)) {
+					PROGRESS(("%s%ld", first ? " [" : "+",
+					    (u_long)shpp[i].sh_size));
+					if (lseek(fd, shpp[i].sh_offset,
+					    SEEK_SET) == -1) {
+						WARN(("lseek symbols"));
+						FREE(shp, sz);
+						return 1;
+					}
+					if (READ(fd, maxp, shpp[i].sh_size) !=
+					    shpp[i].sh_size) {
+						WARN(("read symbols"));
+						return 1;
+					}
+				}
+				maxp += roundup(shpp[i].sh_size,
+				    sizeof(long));
+				shpp[i].sh_offset = off;
+				off += roundup(shpp[i].sh_size, sizeof(long));
+				first = 0;
+			}
+		}
+		if (flags & LOAD_SYM) {
+			BCOPY(shp, shpp, sz);
+
+			if (first == 0)
+				PROGRESS(("]"));
+		}
+	}
+
+	/*
+	 * Frob the copied ELF header to give information relative
+	 * to elfp.
+	 */
+	if (flags & LOAD_HDR) {
+		elf->e_phoff = 0;
+		elf->e_shoff = sizeof(Elf_Ehdr);
+		elf->e_phentsize = 0;
+		elf->e_phnum = 0;
+		BCOPY(elf, elfp, sizeof(*elf));
+	}
+#endif
 	printf(" \n");
 
-#if 0 /* I want to rethink this... --thorpej@netbsd.org */
-	/*
-	 * Compute the size of the symbol table.
-	 */
-	size = sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	shp = addr = alloc(elf->e_shnum * sizeof(Elf32_Shdr));
-	(void)lseek(fd, elf->e_shoff, SEEK_SET);
-	if (read(fd, addr, elf->e_shnum * sizeof(Elf32_Shdr)) !=
-	    elf->e_shnum * sizeof(Elf32_Shdr)) {
-		printf("read section headers: %s\n", strerror(errno));
-		return (1);
-	}
-	for (i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == Elf32_sht_null)
-			continue;
-		if (shp->sh_type != Elf32_sht_symtab
-		    && shp->sh_type != Elf32_sht_strtab) {
-			shp->sh_offset = 0; 
-			shp->sh_type = Elf32_sht_nobits;
-			continue;
-		}
-		size += shp->sh_size;
-	}
-	shp = addr;
-
-	/*
-	 * Reserve memory for the symbols.
-	 */
-	if ((addr = OF_claim(0, size, NBPG)) == (void *)-1)
-		panic("no space for symbol table");
-
-	/*
-	 * Copy the headers.
-	 */
-	elf->e_phoff = 0;
-	elf->e_shoff = sizeof(Elf32_Ehdr);
-	elf->e_phentsize = 0;
-	elf->e_phnum = 0;
-	bcopy(elf, addr, sizeof(Elf32_Ehdr));
-	bcopy(shp, addr + sizeof(Elf32_Ehdr), elf->e_shnum * sizeof(Elf32_Shdr));
-	free(shp, elf->e_shnum * sizeof(Elf32_Shdr));
-	*ssymp = addr;
-
-	/*
-	 * Now load the symbol sections themselves.
-	 */
-	shp = addr + sizeof(Elf32_Ehdr);
-	addr += sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	off = sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == Elf32_sht_symtab
-		    || shp->sh_type == Elf32_sht_strtab) {
-			if (first)
-				printf("symbols @ 0x%lx ", (u_long)addr);
-			printf("%s%d", first ? "" : "+", shp->sh_size);
-			(void)lseek(fd, shp->sh_offset, SEEK_SET);
-			if (read(fd, addr, shp->sh_size) != shp->sh_size) {
-				printf("read symbols: %s\n", strerror(errno));
-				return (1);
-			}
-			addr += shp->sh_size;
-			shp->sh_offset = off;
-			off += shp->sh_size;
-			first = 0;
-		}
-	}
-	*esymp = addr;
-#endif /* 0 */
 
 	*entryp = elf->e_entry;
 	return (0);
 }
 #endif /* POWERPC_BOOT_ELF */
 
-void
+int
 main()
 {
 	int chosen;
@@ -482,4 +509,5 @@ main()
 	(void)loadfile(fd, bootline);
 
 	_rtt();
+	return 0;
 }

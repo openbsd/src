@@ -1,3 +1,4 @@
+/*	$OpenBSD: alloc.c,v 1.6 1999/11/09 06:30:15 rahnds Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*

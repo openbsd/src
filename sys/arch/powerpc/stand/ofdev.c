@@ -1,3 +1,4 @@
+/*	$OpenBSD: ofdev.c,v 1.5 1999/11/09 06:30:15 rahnds Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -131,6 +132,10 @@ devclose(of)
 	
 	if (op->type == OFDEV_NET)
 		net_close(op);
+	if (op->dmabuf) {
+		OF_call_method("dma-free", op->handle, 2, 0,
+			op->dmabuf, MAXPHYS);
+	}
 	OF_close(op->handle);
 	op->handle = -1;
 }
@@ -289,6 +294,8 @@ devopen(of, name, file)
 		return ENXIO;
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
+	ofdev.dmabuf = NULL;
+	OF_call_method("dma-alloc", handle, 1, 1, MAXPHYS, &ofdev.dmabuf);
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
