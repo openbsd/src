@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/09/30 12:10:55 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1999/09/30 13:40:35 espie Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -52,7 +52,8 @@ QIO_OBJS=	$(IO_OBJS:S/^/$(IO_OBJDIR)\//g)
 
 LIBIBERTY_SRCS!=cat $(LIBIBERTY_OBJDIR)/needed-list && echo
 LIBIBERTY_OBJS=$(LIBIBERTY_SRCS:N*.h:S/.c$/.o/g)
-# XXX why does strerror.o need to be hardwired?
+# strerror.o does need to be hardwired, as it holds more functionality
+# than the standard strerror, so HAVE_STRERROR is not enough to disable it
 LIBIBERTY_OBJS+=strerror.o
 QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_OBJDIR)\//g)
 .endif
