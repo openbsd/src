@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2004/01/02 17:14:40 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2004/01/02 23:25:18 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1006,7 +1006,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 */
 
 	kernel_pmap->pm_apr =
-	    (atop(kmap) << PG_SHIFT) | CACHE_GLOBAL | CACHE_WT | APR_V;
+	    (atop(kmap) << PG_SHIFT) | CACHE_WT | CACHE_GLOBAL | APR_V;
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 		show_apr(kernel_pmap->pm_apr);
@@ -1099,25 +1099,26 @@ void
 pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t va;
+	vaddr_t srcva;
 	int spl;
-	int cpu = cpu_number();
-	pt_entry_t *pte;
+	int cpu;
+	pt_entry_t *srcpte;
 
 	CHECK_PAGE_ALIGN(pa, "pmap_zero_page");
 
-	va = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
-	pte = pmap_pte(kernel_pmap, va);
+	cpu = cpu_number();
+	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
+	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	SPLVM(spl);
-
-	cmmu_flush_tlb(cpu, TRUE, va, PAGE_SIZE);
-	*pte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_WT | CACHE_GLOBAL | PG_V | pa;
-
+	cmmu_flush_tlb(cpu, TRUE, srcva, PAGE_SIZE);
+	*srcpte = pa |
+	    m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_GLOBAL | PG_V;
 	SPLX(spl);
 
-	bzero((void *)va, PAGE_SIZE);
+	bzero((void *)srcva, PAGE_SIZE);
+	/* force the data out */
 	cmmu_flush_data_cache(cpu, pa, PAGE_SIZE);
 }
 
@@ -2428,30 +2429,37 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	vaddr_t dstva, srcva;
 	int spl;
-	pt_entry_t *dstpte, *srcpte;
+	pt_entry_t template, *dstpte, *srcpte;
 	int cpu = cpu_number();
 
 	CHECK_PAGE_ALIGN(src, "pmap_copy_page - src");
 	CHECK_PAGE_ALIGN(dst, "pmap_copy_page - dst");
 
+	template = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_GLOBAL | PG_V;
+
+	/*
+	 * Map source physical address.
+	 */
 	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
 	dstva = (vaddr_t)(phys_map_vaddr2 + (cpu << PAGE_SHIFT));
+
 	srcpte = pmap_pte(kernel_pmap, srcva);
 	dstpte = pmap_pte(kernel_pmap, dstva);
 
 	SPLVM(spl);
-
 	cmmu_flush_tlb(cpu, TRUE, srcva, PAGE_SIZE);
-	*srcpte = m88k_protection(kernel_pmap, VM_PROT_READ) |
-	    CACHE_WT | CACHE_GLOBAL | PG_V | src;
+	*srcpte = template | src;
 
+	/*
+	 * Map destination physical address.
+	 */
 	cmmu_flush_tlb(cpu, TRUE, dstva, PAGE_SIZE);
-	*dstpte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_WT | CACHE_GLOBAL | PG_V | dst;
-
+	*dstpte = template | dst;
 	SPLX(spl);
 
 	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
+	/* flush source, dest out of cache? */
 	cmmu_flush_data_cache(cpu, src, PAGE_SIZE);
 	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
 }
