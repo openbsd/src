@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.97 2004/05/30 20:59:57 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.98 2004/08/09 22:24:29 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1371,10 +1371,12 @@ comintr(arg)
  * Following are all routines needed for COM to act as console
  */
 
-#if defined(arc)
+#if defined(__sgi__)
 #undef CONADDR
-	extern int CONADDR;
+#undef COM_FREQ
+#include "machine/autoconf.h"
 #endif
+
 
 /*
  * The following functions are polled getc and putc routines, shared
@@ -1456,8 +1458,8 @@ comcnprobe(cp)
 	struct consdev *cp;  
 {
 	/* XXX NEEDS TO BE FIXED XXX */
-#if defined(arc)
-	bus_space_tag_t iot = &arc_bus_io;
+#if defined(__sgi__)
+	bus_space_tag_t iot = sys_config.cons_iot;
 #elif defined(hppa)
 	bus_space_tag_t iot = &hppa_bustag;
 #else
