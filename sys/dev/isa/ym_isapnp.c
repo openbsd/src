@@ -1,4 +1,4 @@
-/*	$OpenBSD: ym_isapnp.c,v 1.2 1998/06/02 14:49:09 csapuntz Exp $ */
+/*	$OpenBSD: ym_isapnp.c,v 1.3 1998/08/04 12:01:39 csapuntz Exp $ */
 
 
 /*
@@ -106,7 +106,7 @@ ym_isapnp_attach(parent, self, aux)
 
   sc->sc_controlioh = ia->ipa_io[4].h; 
 
-  sc->sc_ad1848.sc_iobase = ia->ipa_io[1].base + WSS_CODEC;
+  sc->sc_ad1848.sc_ioh = sc->sc_ioh;
   sc->sc_ad1848.sc_isa = parent->dv_parent;
   sc->sc_ad1848.sc_iot = sc->sc_iot;
   sc->sc_ad1848.sc_iooffs = WSS_CODEC;
