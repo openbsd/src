@@ -1,4 +1,4 @@
-/*	$OpenBSD: inventory.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: inventory.c,v 1.6 2002/07/26 19:52:03 pjanzen Exp $	*/
 /*	$NetBSD: inventory.c,v 1.3 1995/04/22 10:27:35 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: inventory.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: inventory.c,v 1.6 2002/07/26 19:52:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ id_com()
 		messagef(0, "Character you want help for (* for all):");
 
 		refresh();
-		ch = getchar();
+		ch = getch();
 
 		switch(ch) {
 		case LIST:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: message.c,v 1.9 2002/07/26 19:52:03 pjanzen Exp $	*/
 /*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: message.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: message.c,v 1.9 2002/07/26 19:52:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ rgetchar()
 	int ch;
 
 	for(;;) {
-		ch = getchar();
+		ch = getch();
 
 		switch(ch) {
 		case '\022':
