@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.15 2002/05/09 22:14:16 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.16 2002/05/22 16:39:39 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.15 2002/05/09 22:14:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.16 2002/05/22 16:39:39 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -270,26 +270,27 @@ set_cron_cwd()
  * note: main() calls us twice; once before forking, once after.
  *	we maintain static storage of the file pointer so that we
  *	can rewrite our PID into the PIDFILE after the fork.
- *
- * it would be great if fflush() disassociated the file buffer.
  */
 void
 acquire_daemonlock(closeflag)
 	int closeflag;
 {
-	static	FILE	*fp = NULL;
+	static int	fd = -1;
 	char		buf[3*MAX_FNAME];
 	char		pidfile[MAX_FNAME];
-	int		fd;
-	PID_T		otherpid;
+	long		otherpid;
+	ssize_t		num;
 
-	if (closeflag && fp) {
-		fclose(fp);
-		fp = NULL;
+	if (closeflag) {
+		/* close stashed fd for child so we don't leak it. */
+		if (fd != -1) {
+			close(fd);
+			fd = -1;
+		}
 		return;
 	}
 
-	if (!fp) {
+	if (fd == -1) {
 		if (!glue_strings(pidfile, sizeof pidfile, PIDDIR,
 		    PIDFILE, '/')) {
 			fprintf(stderr, "%s/%s: path too long\n",
@@ -297,41 +298,46 @@ acquire_daemonlock(closeflag)
 			log_it("CRON", getpid(), "DEATH", "path too long");
 			exit(ERROR_EXIT);
 		}
-		if ((-1 == (fd = open(pidfile, O_RDWR|O_CREAT, 0644))) ||
-		    (NULL == (fp = fdopen(fd, "r+")))) {
-			snprintf(buf, sizeof buf, "can't open or create %s: %s",
-				pidfile, strerror(errno));
-			fprintf(stderr, "%s: %s\n", ProgramName, buf);
-			log_it("CRON", getpid(), "DEATH", buf);
-			exit(ERROR_EXIT);
-		}
-
-		if (flock(fd, LOCK_EX|LOCK_NB) < OK) {
+		if ((fd = open(pidfile, O_RDWR|O_CREAT|O_EXLOCK|O_NONBLOCK,
+		    0644)) == -1) {
 			int save_errno = errno;
 
-			if (fscanf(fp, "%d", &otherpid) == 1)
+			if (errno != EWOULDBLOCK)  {
 				snprintf(buf, sizeof buf,
-				    "can't lock %s, otherpid may be %d: %s",
+				    "can't open or create %s: %s", pidfile,
+				    strerror(save_errno));
+				fprintf(stderr, "%s: %s\n", ProgramName, buf);
+				log_it("CRON", getpid(), "DEATH", buf);
+				exit(ERROR_EXIT);
+			}
+
+			/* couldn't lock the pid file, try to read existing. */
+			bzero(buf, sizeof(buf));
+			if ((fd = open(pidfile, O_RDONLY, 0)) >= 0 &&
+			    (num = read(fd, buf, sizeof(buf) - 1)) > 0 &&
+			    sscanf(buf, "%ld", &otherpid) == 1) {
+				snprintf(buf, sizeof buf,
+				    "can't lock %s, otherpid may be %ld: %s",
 				    pidfile, otherpid, strerror(save_errno));
-			else
+			} else {
 				snprintf(buf, sizeof buf,
 				    "can't lock %s, otherpid unknown: %s",
 				    pidfile, strerror(save_errno));
+			}
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
 			exit(ERROR_EXIT);
 		}
-
 		(void) fcntl(fd, F_SETFD, 1);
 	}
 
-	rewind(fp);
-	fprintf(fp, "%ld\n", (long)getpid());
-	fflush(fp);
-	(void) ftruncate(fileno(fp), ftell(fp));
+	snprintf(buf, sizeof(buf), "%ld\n", (long)getpid());
+	(void) lseek(fd, (off_t)0, SEEK_SET);
+	num = write(fd, buf, strlen(buf));
+	(void) ftruncate(fd, num);
 
-	/* abandon fd and fp even though the file is open. we need to
-	 * keep it open and locked, but we don't need the handles elsewhere.
+	/* abandon fd even though the file is open. we need to keep
+	 * it open and locked, but we don't need the handles elsewhere.
 	 */
 }
 
