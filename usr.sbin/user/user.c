@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.51 2003/06/10 21:00:37 millert Exp $ */
+/* $OpenBSD: user.c,v 1.52 2003/06/14 22:12:53 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1235,11 +1235,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
-#ifdef EXTENSIONS
-	if (!valid_class(up->u_class)) {
-		errx(EXIT_FAILURE, "No such login class `%s'", up->u_class);
-	}
-#endif
 	if ((pwp = getpwnam(login_name)) == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login_name);
 	}
@@ -1345,8 +1340,15 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		if (up->u_flags & F_SHELL)
 			pwp->pw_shell = up->u_shell;
 #ifdef EXTENSIONS
-		if (up->u_flags & F_CLASS)
+		if (up->u_flags & F_CLASS) {
+			if (!valid_class(up->u_class)) {
+				(void) close(ptmpfd);
+				pw_abort();
+				errx(EXIT_FAILURE,
+				    "No such login class `%s'", up->u_class);
+			}
 			pwp->pw_class = up->u_class;
+		}
 #endif
 	}
 	loginc = strlen(login_name);
