@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.5 1998/12/03 04:16:58 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.6 1998/12/22 05:33:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_tl.c,v 1.19 1998/10/31 17:23:48 wpaul Exp $
+ *	$FreeBSD: if_tl.c,v 1.23 1998/12/14 06:32:56 dillon Exp $
  */
 
 /*
@@ -248,7 +248,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$FreeBSD: if_tl.c,v 1.19 1998/10/31 17:23:48 wpaul Exp $";
+	"$FreeBSD: if_tl.c,v 1.23 1998/12/14 06:32:56 dillon Exp $";
 #endif
 
 #ifdef TL_DEBUG
@@ -352,7 +352,7 @@ static struct tl_type tl_phys[] = {
 #ifdef __FreeBSD__
 static unsigned long		tl_count;
 
-static char *tl_probe		__P((pcici_t, pcidi_t));
+static const char *tl_probe	__P((pcici_t, pcidi_t));
 static void tl_attach		__P((pcici_t, int));
 #else
 static int tl_probe	__P((struct device *, void *, void *));
@@ -392,9 +392,9 @@ static void tl_shutdown		__P((void *));
 static int tl_ifmedia_upd	__P((struct ifnet *));
 static void tl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static u_int8_t tl_eeprom_putbyte	__P((struct tl_softc *, u_int8_t));
+static u_int8_t tl_eeprom_putbyte	__P((struct tl_softc *, int));
 static u_int8_t	tl_eeprom_getbyte	__P((struct tl_softc *,
-						u_int8_t, u_int8_t *));
+						int, u_int8_t *));
 static int tl_read_eeprom	__P((struct tl_softc *, caddr_t, int, int));
 
 static void tl_mii_sync		__P((struct tl_softc *));
@@ -402,57 +402,57 @@ static void tl_mii_send		__P((struct tl_softc *, u_int32_t, int));
 static int tl_mii_readreg	__P((struct tl_softc *, struct tl_mii_frame *));
 static int tl_mii_writereg	__P((struct tl_softc *, struct tl_mii_frame *));
 static u_int16_t tl_phy_readreg	__P((struct tl_softc *, int));
-static void tl_phy_writereg	__P((struct tl_softc *, u_int16_t, u_int16_t));
+static void tl_phy_writereg	__P((struct tl_softc *, int, int));
 
 static void tl_autoneg		__P((struct tl_softc *, int, int));
 static void tl_setmode		__P((struct tl_softc *, int));
-static int tl_calchash		__P((unsigned char *));
+static int tl_calchash		__P((caddr_t));
 static void tl_setmulti		__P((struct tl_softc *));
-static void tl_setfilt		__P((struct tl_softc *, u_int8_t *, int));
+static void tl_setfilt		__P((struct tl_softc *, caddr_t, int));
 static void tl_softreset	__P((struct tl_softc *, int));
 static void tl_hardreset	__P((struct tl_softc *));
 static int tl_list_rx_init	__P((struct tl_softc *));
 static int tl_list_tx_init	__P((struct tl_softc *));
 
-static u_int8_t tl_dio_read8	__P((struct tl_softc *, u_int8_t));
-static u_int16_t tl_dio_read16	__P((struct tl_softc *, u_int8_t));
-static u_int32_t tl_dio_read32	__P((struct tl_softc *, u_int8_t));
-static void tl_dio_write8	__P((struct tl_softc *, u_int8_t, u_int8_t));
-static void tl_dio_write16	__P((struct tl_softc *, u_int8_t, u_int16_t));
-static void tl_dio_write32	__P((struct tl_softc *, u_int8_t, u_int32_t));
-static void tl_dio_setbit	__P((struct tl_softc *, u_int8_t, u_int8_t));
-static void tl_dio_clrbit	__P((struct tl_softc *, u_int8_t, u_int8_t));
-static void tl_dio_setbit16	__P((struct tl_softc *, u_int8_t, u_int16_t));
-static void tl_dio_clrbit16	__P((struct tl_softc *, u_int8_t, u_int16_t));
+static u_int8_t tl_dio_read8	__P((struct tl_softc *, int));
+static u_int16_t tl_dio_read16	__P((struct tl_softc *, int));
+static u_int32_t tl_dio_read32	__P((struct tl_softc *, int));
+static void tl_dio_write8	__P((struct tl_softc *, int, int));
+static void tl_dio_write16	__P((struct tl_softc *, int, int));
+static void tl_dio_write32	__P((struct tl_softc *, int, int));
+static void tl_dio_setbit	__P((struct tl_softc *, int, int));
+static void tl_dio_clrbit	__P((struct tl_softc *, int, int));
+static void tl_dio_setbit16	__P((struct tl_softc *, int, int));
+static void tl_dio_clrbit16	__P((struct tl_softc *, int, int));
 
 static u_int8_t tl_dio_read8(sc, reg)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
+	struct tl_softc		*sc;
+	int			reg;
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	return(CSR_READ_1(sc, TL_DIO_DATA + (reg & 3)));
 }
 
 static u_int16_t tl_dio_read16(sc, reg)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
+	struct tl_softc		*sc;
+	int			reg;
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	return(CSR_READ_2(sc, TL_DIO_DATA + (reg & 3)));
 }
 
 static u_int32_t tl_dio_read32(sc, reg)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
+	struct tl_softc		*sc;
+	int			reg;
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	return(CSR_READ_4(sc, TL_DIO_DATA + (reg & 3)));
 }
 
 static void tl_dio_write8(sc, reg, val)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int8_t			val;
+	struct tl_softc		*sc;
+	int			reg;
+	int			val;
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	CSR_WRITE_1(sc, TL_DIO_DATA + (reg & 3), val);
@@ -460,9 +460,9 @@ static void tl_dio_write8(sc, reg, val)
 }
 
 static void tl_dio_write16(sc, reg, val)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int16_t			val;
+	struct tl_softc		*sc;
+	int			reg;
+	int			val;
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	CSR_WRITE_2(sc, TL_DIO_DATA + (reg & 3), val);
@@ -470,9 +470,9 @@ static void tl_dio_write16(sc, reg, val)
 }
 
 static void tl_dio_write32(sc, reg, val)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int32_t			val;
+	struct tl_softc		*sc;
+	int			reg;
+	int			val;
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	CSR_WRITE_4(sc, TL_DIO_DATA + (reg & 3), val);
@@ -480,9 +480,9 @@ static void tl_dio_write32(sc, reg, val)
 }
 
 static void tl_dio_setbit(sc, reg, bit)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int8_t			bit;
+	struct tl_softc		*sc;
+	int			reg;
+	int			bit;
 {
 	u_int8_t			f;
 
@@ -495,9 +495,9 @@ static void tl_dio_setbit(sc, reg, bit)
 }
 
 static void tl_dio_clrbit(sc, reg, bit)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int8_t			bit;
+	struct tl_softc		*sc;
+	int			reg;
+	int			bit;
 {
 	u_int8_t			f;
 
@@ -510,9 +510,9 @@ static void tl_dio_clrbit(sc, reg, bit)
 }
 
 static void tl_dio_setbit16(sc, reg, bit)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int16_t			bit;
+	struct tl_softc		*sc;
+	int			reg;
+	int			bit;
 {
 	u_int16_t			f;
 
@@ -525,9 +525,9 @@ static void tl_dio_setbit16(sc, reg, bit)
 }
 
 static void tl_dio_clrbit16(sc, reg, bit)
-	struct tl_softc			*sc;
-	u_int8_t			reg;
-	u_int16_t			bit;
+	struct tl_softc		*sc;
+	int			reg;
+	int			bit;
 {
 	u_int16_t			f;
 
@@ -544,7 +544,7 @@ static void tl_dio_clrbit16(sc, reg, bit)
  */
 static u_int8_t tl_eeprom_putbyte(sc, byte)
 	struct tl_softc		*sc;
-	u_int8_t		byte;
+	int			byte;
 {
 	register int		i, ack = 0;
 
@@ -588,7 +588,7 @@ static u_int8_t tl_eeprom_putbyte(sc, byte)
  */
 static u_int8_t tl_eeprom_getbyte(sc, addr, dest)
 	struct tl_softc		*sc;
-	u_int8_t		addr;
+	int			addr;
 	u_int8_t		*dest;
 {
 	register int		i;
@@ -877,8 +877,8 @@ static u_int16_t tl_phy_readreg(sc, reg)
 
 static void tl_phy_writereg(sc, reg, data)
 	struct tl_softc		*sc;
-	u_int16_t		reg;
-	u_int16_t		data;
+	int			reg;
+	int			data;
 {
 	struct tl_mii_frame	frame;
 
@@ -1195,7 +1195,7 @@ static void tl_setmode(sc, media)
  * the folded 24-bit value is split into 6-bit portions and XOR'd.
  */
 static int tl_calchash(addr)
-	unsigned char		*addr;
+	caddr_t			addr;
 {
 	int			t;
 
@@ -1213,7 +1213,7 @@ static int tl_calchash(addr)
  */
 static void tl_setfilt(sc, addr, slot)
 	struct tl_softc		*sc;
-	u_int8_t		*addr;
+	caddr_t			addr;
 	int			slot;
 {
 	int			i;
@@ -1261,7 +1261,7 @@ static void tl_setmulti(sc)
 
 	/* First, zot all the existing filters. */
 	for (i = 1; i < 4; i++)
-		tl_setfilt(sc, dummy, i);
+		tl_setfilt(sc, (caddr_t)&dummy, i);
 	tl_dio_write32(sc, TL_HASH1, 0);
 	tl_dio_write32(sc, TL_HASH2, 0);
 
@@ -1442,7 +1442,7 @@ static void tl_softreset(sc, internal)
  * Probe for a ThunderLAN chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match.
  */
-static char *
+static const char *
 tl_probe(config_id, device_id)
 	pcici_t			config_id;
 	pcidi_t			device_id;
@@ -2217,7 +2217,7 @@ static int tl_intvec_adchk(xsc, type)
 
 	if (type)
 		printf("tl%d: adapter check: %x\n", sc->tl_unit,
-			CSR_READ_4(sc, TL_CH_PARM));
+			(unsigned int)CSR_READ_4(sc, TL_CH_PARM));
 #ifdef TL_DEBUG
 	evshow(sc);
 #endif
@@ -2551,6 +2551,12 @@ static void tl_start(ifp)
 	}
 
 	/*
+	 * If there are no packets queued, bail.
+	 */
+	if (cur_tx == NULL)
+		return;
+
+	/*
 	 * That's all we can stands, we can't stands no more.
 	 * If there are no other transfers pending, then issue the
 	 * TX GO command to the adapter to start things moving.
@@ -2632,7 +2638,7 @@ static void tl_init(xsc)
 		tl_dio_setbit(sc, TL_NETCMD, TL_CMD_NOBRX);
 
 	/* Init our MAC address */
-	tl_setfilt(sc, sc->arpcom.ac_enaddr, 0);
+	tl_setfilt(sc, (caddr_t)&sc->arpcom.ac_enaddr, 0);
 
 	/* Init multicast filter, if needed. */
 	tl_setmulti(sc);
