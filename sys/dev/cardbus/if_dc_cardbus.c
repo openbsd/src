@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.3 2000/10/27 18:48:27 nate Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.4 2001/03/25 06:12:28 csapuntz Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,6 +234,7 @@ dc_cardbus_activate(dev, act)
 			printf(": can\'t establish interrupt at %d\n",
 			    csc->sc_intrline);
 			Cardbus_function_disable(ct);
+			splx(s);
 			return -1;
 		} else
 			printf("%s: interrupting at %d",
