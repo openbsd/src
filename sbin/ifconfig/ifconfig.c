@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.112 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.113 2004/09/15 21:27:01 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.112 2004/08/08 19:04:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.113 2004/09/15 21:27:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = 0;
 int	af = AF_INET;
-int	dflag, mflag, lflag, uflag;
+int	mflag;
 int	explicit_prefix = 0;
 #ifdef INET6
 int	Lflag = 1;
@@ -844,6 +844,7 @@ settunnel(const char *src, const char *dst)
 	freeaddrinfo(dstres);
 }
 
+/* ARGSUSED */
 void
 deletetunnel(const char *ignored, int alsoignored)
 {
@@ -852,18 +853,21 @@ deletetunnel(const char *ignored, int alsoignored)
 }
 
 
+/* ARGSUSED */
 void
 setifnetmask(const char *addr, int ignored)
 {
 	(*afp->af_getaddr)(addr, MASK);
 }
 
+/* ARGSUSED */
 void
 setifbroadaddr(const char *addr, int ignored)
 {
 	(*afp->af_getaddr)(addr, DSTADDR);
 }
 
+/* ARGSUSED */
 void
 setifdesc(const char *val, int ignored)
 {
@@ -872,6 +876,7 @@ setifdesc(const char *val, int ignored)
 		warn("SIOCSIFDESCR");
 }
 
+/* ARGSUSED */
 void
 setifipdst(const char *addr, int ignored)
 {
@@ -917,6 +922,7 @@ setifdstaddr(const char *addr, int param)
  * of the ifreq structure, which may confuse other parts of ifconfig.
  * Make a private copy so we can avoid that.
  */
+/* ARGSUSED */
 void
 setifflags(const char *vname, int value)
 {
@@ -1022,6 +1028,7 @@ setia6eui64(const char *cmd, int val)
 }
 #endif /* INET6 */
 
+/* ARGSUSED */
 void
 setifmetric(const char *val, int ignored)
 {
@@ -1036,11 +1043,11 @@ setifmetric(const char *val, int ignored)
 		warn("SIOCSIFMETRIC");
 }
 
+/* ARGSUSED */
 void
 setifmtu(const char *val, int d)
 {
 	const char *errmsg = NULL;
-	char *ep = NULL;
 
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
@@ -1051,6 +1058,7 @@ setifmtu(const char *val, int d)
 		warn("SIOCSIFMTU");
 }
 
+/* ARGSUSED */
 void
 setifgroup(const char *group_name, int dummy)
 {
@@ -1065,6 +1073,7 @@ setifgroup(const char *group_name, int dummy)
 		err(1," SIOCAIFGROUP");
 }
 
+/* ARGSUSED */
 void
 unsetifgroup(const char *group_name, int dummy)
 {
@@ -1160,6 +1169,7 @@ print_string(const u_int8_t *buf, int len)
 	}
 }
 
+/* ARGSUSED */
 void
 setifnwid(const char *val, int d)
 {
@@ -1239,6 +1249,7 @@ setifnwkey(const char *val, int d)
 		warn("SIOCS80211NWKEY");
 }
 
+/* ARGSUSED */
 void
 setifpowersave(const char *val, int d)
 {
@@ -1255,12 +1266,12 @@ setifpowersave(const char *val, int d)
 		warn("SIOCS80211POWER");
 }
 
+/* ARGSUSED */
 void
 setifpowersavesleep(const char *val, int d)
 {
 	struct ieee80211_power power;
 	const char *errmsg = NULL;
-	int len;
 
 	(void)strlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, (caddr_t)&power) == -1) {
@@ -1331,7 +1342,7 @@ ieee80211_status(void)
 					nwkey_verbose = 1;
 				else if (nwkey.i_key[0].i_keylen >= 7 &&
 				    strncasecmp("persist",
-				    nwkey.i_key[0].i_keydat, 7) == 0)
+				    (char *)nwkey.i_key[0].i_keydat, 7) == 0)
 					nwkey_verbose = 1;
 			}
 			if (nwkey_verbose)
@@ -1417,6 +1428,7 @@ process_media_commands(void)
 		err(1, "SIOCSIFMEDIA");
 }
 
+/* ARGSUSED */
 void
 setmedia(const char *val, int d)
 {
@@ -1449,6 +1461,7 @@ setmedia(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+/* ARGSUSED */
 void
 setmediaopt(const char *val, int d)
 {
@@ -1468,6 +1481,7 @@ setmediaopt(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+/* ARGSUSED */
 void
 unsetmediaopt(const char *val, int d)
 {
@@ -1492,6 +1506,7 @@ unsetmediaopt(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+/* ARGSUSED */
 void
 setmediainst(const char *val, int d)
 {
@@ -1521,6 +1536,7 @@ setmediainst(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+/* ARGSUSED */
 void
 settimeslot(const char *val, int d)
 {
@@ -1530,12 +1546,12 @@ settimeslot(const char *val, int d)
 	unsigned long	ts_map = 0;
 	char	*ptr = (char*)val;
 	int		ts_flag = 0;
-	int		ts = 0, ts_start = 0, i;
+	int		ts = 0, ts_start = 0;
 
-	if (strcmp(val,"all") == 0){
+	if (strcmp(val,"all") == 0) {
 		ts_map = ALL_CHANNELS;
-	}else{
-		while(*ptr != '\0') {
+	} else {
+		while (*ptr != '\0') {
 			if (isdigit(*ptr)) {
 				ts = strtoul(ptr, &ptr, 10);
 				ts_flag |= SINGLE_CHANNEL;
@@ -1550,9 +1566,8 @@ settimeslot(const char *val, int d)
 				ptr++;
 			}
 		}
-		if (ts_flag){
+		if (ts_flag)
 			ts_map |= get_ts_map(ts_flag, ts_start, ts);
-		}
 	}
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&ts_map;
@@ -1703,6 +1718,7 @@ print_media_word(int ifmw, int print_type, int as_syntax)
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
+/* ARGSUSED */
 static void
 phys_status(int force)
 {
@@ -1884,6 +1900,7 @@ status(int link, struct sockaddr_dl *sdl)
 }
 
 
+/* ARGSUSED */
 void
 in_status(int force)
 {
@@ -1944,6 +1961,7 @@ in_status(int force)
 	putchar('\n');
 }
 
+/* ARGSUSED */
 void
 setifprefixlen(const char *addr, int d)
 {
@@ -2182,6 +2200,7 @@ xns_status(int force)
 	putchar('\n');
 }
 
+/* ARGSUSED */
 void
 setipxframetype(const char *vname, int type)
 {
@@ -2280,6 +2299,7 @@ in_getaddr(const char *s, int which)
 	}
 }
 
+/* ARGSUSED */
 void
 in_getprefix(const char *plen, int which)
 {
@@ -2450,6 +2470,7 @@ at_getaddr(const char *addr, int which)
 	sat->sat_addr.s_node = node;
 }
 
+/* ARGSUSED */
 void
 setatrange(const char *range, int d)
 {
@@ -2463,6 +2484,7 @@ setatrange(const char *range, int d)
 	at_nr.nr_lastnet = htons(last);
 }
 
+/* ARGSUSED */
 void
 setatphase(const char *phase, int d)
 {
@@ -2578,6 +2600,7 @@ vlan_status(void)
 		    "<none>" : vreq.vlr_parent);
 }
 
+/* ARGSUSED */
 void
 setvlantag(const char *val, int d)
 {
@@ -2602,6 +2625,7 @@ setvlantag(const char *val, int d)
 		err(1, "SIOCSETVLAN");
 }
 
+/* ARGSUSED */
 void
 setvlandev(const char *val, int d)
 {
@@ -2623,6 +2647,7 @@ setvlandev(const char *val, int d)
 		err(1, "SIOCSETVLAN");
 }
 
+/* ARGSUSED */
 void
 unsetvlandev(const char *val, int d)
 {
@@ -2709,6 +2734,7 @@ carp_status(void)
 	}
 }
 
+/* ARGSUSED */
 void
 setcarp_passwd(const char *val, int d)
 {
@@ -2721,12 +2747,13 @@ setcarp_passwd(const char *val, int d)
 		err(1, "SIOCGVH");
 
 	/* XXX Should hash the password into the key here, perhaps? */
-	strlcpy(carpr.carpr_key, val, CARP_KEY_LEN);
+	strlcpy((char *)carpr.carpr_key, val, CARP_KEY_LEN);
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
 }
 
+/* ARGSUSED */
 void
 setcarp_vhid(const char *val, int d)
 {
@@ -2750,6 +2777,7 @@ setcarp_vhid(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
+/* ARGSUSED */
 void
 setcarp_advskew(const char *val, int d)
 {
@@ -2773,6 +2801,7 @@ setcarp_advskew(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
+/* ARGSUSED */
 void
 setcarp_advbase(const char *val, int d)
 {
@@ -2796,6 +2825,7 @@ setcarp_advbase(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
+/* ARGSUSED */
 void
 setcarp_state(const char *val, int d)
 {
@@ -2819,6 +2849,7 @@ setcarp_state(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
+/* ARGSUSED */
 void
 setpfsync_syncif(const char *val, int d)
 {
@@ -2836,6 +2867,7 @@ setpfsync_syncif(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
+/* ARGSUSED */
 void
 unsetpfsync_syncif(const char *val, int d)
 {
@@ -2854,13 +2886,13 @@ unsetpfsync_syncif(const char *val, int d)
 }
 
 
+/* ARGSUSED */
 void
 setpfsync_syncpeer(const char *val, int d)
 {
 	struct pfsyncreq preq;
 	struct addrinfo hints, *peerres;
 	int ecode;
-	struct if_laddrreq req;
 
 	bzero((char *)&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
@@ -2886,6 +2918,7 @@ setpfsync_syncpeer(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
+/* ARGSUSED */
 void
 unsetpfsync_syncpeer(const char *val, int d)
 {
@@ -2903,6 +2936,7 @@ unsetpfsync_syncpeer(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
+/* ARGSUSED */
 void
 setpfsync_maxupd(const char *val, int d)
 {
