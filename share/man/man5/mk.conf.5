@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.1 2003/04/13 12:01:13 jmc Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.2 2003/04/13 14:12:35 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -236,7 +236,18 @@ to compiles.
 .Bq no
 .El
 .Sh FILES
-.Bl -tag -width /etc/mk.conf
+.Bl -tag -width XXXXXXXXXXXXXXX -compact
 .It /etc/mk.conf
 System make configuration file.
+.It /usr/share/mk/*
+System include make files.
 .El
+.Sh SEE ALSO
+.Xr make 1 ,
+.Xr bsd.port.mk 5 ,
+.Xr ports 7
+.Sh HISTORY
+The
+.Nm
+manual page first appeared in
+.Ox 3.4 .
