@@ -16,6 +16,7 @@ info pages type "info".
 
 Binary packages of emacs 20.2, bash 2.01.1, tcsh--6.07.02, and pine-3.96
 are available on most architectures. The files are in the directory
-        ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
+	ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
+or	CD2:/packages/   (ie. mount /dev/cd0a /mnt; cd /mnt/packages)
 Select your architecture and download the tarballs of your choice.  To
 install issue the command `pkg_add <pkg-name>' as root.
