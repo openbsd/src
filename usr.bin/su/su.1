@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.14 2002/02/17 23:59:20 millert Exp $
+.\"	$OpenBSD: su.1,v 1.15 2002/03/27 20:29:38 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ Specify an authentication type such as
 .Dq skey ,
 .Dq securid ,
 or
-.Dq kerberos .
+.Dq krb4 .
 .It Fl c
 Specify a login class.
 You may only override the default class if you're already root.
@@ -222,6 +222,9 @@ single word.
 .It Li "su -l foo"
 Pretend a login for user
 .Li foo .
+.Pp
+.It Li "su -a skey -l foo"
+Same as above, but use S/Key for authentication.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width LOGNAME
