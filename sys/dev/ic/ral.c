@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.34 2005/03/17 19:45:53 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.35 2005/03/17 19:51:29 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2301,7 +2301,7 @@ ral_enable_tsf_sync(struct ral_softc *sc)
 	RAL_WRITE(sc, RAL_CSR13, 0);
 
 	logcwmin = 5;
-	preload = (ic->ic_opmode == IEEE80211_M_IBSS) ? 1024 : 384;
+	preload = (ic->ic_opmode == IEEE80211_M_STA) ? 384 : 1024;
 	tmp = logcwmin << 16 | preload;
 	RAL_WRITE(sc, RAL_BCNCSR1, tmp);
 
