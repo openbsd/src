@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.24 2003/10/20 06:22:27 jmc Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.25 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ftree.c,v 1.24 2003/10/20 06:22:27 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: ftree.c,v 1.25 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,7 @@ ftree_arg(void)
 	 * keep looping until we get a valid file tree to process. Stop when we
 	 * reach the end of the list (or get an eof on stdin)
 	 */
-	for(;;) {
+	for (;;) {
 		if (fthead == NULL) {
 			/*
 			 * the user didn't supply any args, get the file trees
@@ -353,7 +353,7 @@ next_file(ARCHD *arcn)
 	/*
 	 * loop until we get a valid file to process
 	 */
-	for(;;) {
+	for (;;) {
 		if ((ftent = fts_read(ftsp)) == NULL) {
 			/*
 			 * out of files in this tree, go to next arg, if none
@@ -367,7 +367,7 @@ next_file(ARCHD *arcn)
 		/*
 		 * handle each type of fts_read() flag
 		 */
-		switch(ftent->fts_info) {
+		switch (ftent->fts_info) {
 		case FTS_D:
 		case FTS_DEFAULT:
 		case FTS_F:
@@ -432,7 +432,7 @@ next_file(ARCHD *arcn)
 		 * end in case we cut short a file tree traversal). However
 		 * there is no way to reset access times on symlinks.
 		 */
-		switch(S_IFMT & arcn->sb.st_mode) {
+		switch (S_IFMT & arcn->sb.st_mode) {
 		case S_IFDIR:
 			arcn->type = PAX_DIR;
 			if (!tflag)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.26 2004/01/20 14:08:45 otto Exp $	*/
+/*	$OpenBSD: pax.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pax.c,v 1.26 2004/01/20 14:08:45 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pax.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ main(int argc, char **argv)
 	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
 		tmpdir = _PATH_TMP;
 	tdlen = strlen(tmpdir);
-	while(tdlen > 0 && tmpdir[tdlen - 1] == '/')
+	while (tdlen > 0 && tmpdir[tdlen - 1] == '/')
 		tdlen--;
 	tempfile = malloc(tdlen + 1 + sizeof(_TFILE_BASE));
 	if (tempfile == NULL) {
@@ -272,7 +272,7 @@ main(int argc, char **argv)
 	/*
 	 * select a primary operation mode
 	 */
-	switch(act) {
+	switch (act) {
 	case EXTRACT:
 		extract();
 		break;

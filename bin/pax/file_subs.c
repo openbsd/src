@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.26 2004/03/30 16:14:22 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.26 2004/03/30 16:14:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ node_creat(ARCHD *arcn)
 	file_mode = arcn->sb.st_mode & FILEBITS;
 
 	for (;;) {
-		switch(arcn->type) {
+		switch (arcn->type) {
 		case PAX_DIR:
 			/*
 			 * If -h (or -L) was given in tar-mode, follow the
@@ -594,7 +594,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 	if (*spt == '/')
 		++spt;
 
-	for(;;) {
+	for (;;) {
 		/*
 		 * work forward from the first / and check each part of the path
 		 */
@@ -998,7 +998,7 @@ set_crc(ARCHD *arcn, int fd)
 	 * read all the bytes we think that there are in the file. If the user
 	 * is trying to archive an active file, forget this file.
 	 */
-	for(;;) {
+	for (;;) {
 		if ((res = read(fd, tbuf, size)) <= 0)
 			break;
 		cpcnt += res;

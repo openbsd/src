@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.16 2003/06/26 00:10:17 deraadt Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.17 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: cpio.c,v 1.16 2003/06/26 00:10:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cpio.c,v 1.17 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ com_rd(ARCHD *arcn)
 	arcn->skip = 0;
 	arcn->pat = NULL;
 	arcn->org_name = arcn->name;
-	switch(arcn->sb.st_mode & C_IFMT) {
+	switch (arcn->sb.st_mode & C_IFMT) {
 	case C_ISFIFO:
 		arcn->type = PAX_FIF;
 		break;
@@ -402,7 +402,7 @@ cpio_wr(ARCHD *arcn)
 	if ((arcn->type != PAX_BLK) && (arcn->type != PAX_CHR))
 		arcn->sb.st_rdev = 0;
 
-	switch(arcn->type) {
+	switch (arcn->type) {
 	case PAX_CTG:
 	case PAX_REG:
 	case PAX_HRG:
@@ -725,7 +725,7 @@ vcpio_wr(ARCHD *arcn)
 			goto out;
 	}
 
-	switch(arcn->type) {
+	switch (arcn->type) {
 	case PAX_CTG:
 	case PAX_REG:
 	case PAX_HRG:
@@ -1011,7 +1011,7 @@ bcpio_wr(ARCHD *arcn)
 		arcn->sb.st_rdev = 0;
 	hd = (HD_BCPIO *)hdblk;
 
-	switch(arcn->type) {
+	switch (arcn->type) {
 	case PAX_CTG:
 	case PAX_REG:
 	case PAX_HRG:

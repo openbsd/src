@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.19 2004/03/30 16:14:22 millert Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.20 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.19 2004/03/30 16:14:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.20 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -790,7 +790,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	/*
 	 * read the source file and copy to destination file until EOF
 	 */
-	for(;;) {
+	for (;;) {
 		if ((cnt = read(fd1, buf, blksz)) <= 0)
 			break;
 		if (no_hole)
@@ -846,7 +846,7 @@ buf_fill(void)
 	if (fini)
 		return(0);
 
-	for(;;) {
+	for (;;) {
 		/*
 		 * try to fill the buffer. on error the next archive volume is
 		 * opened and we try again.

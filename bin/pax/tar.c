@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.32 2004/03/30 16:14:23 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.33 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.32 2004/03/30 16:14:23 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.33 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ ul_oct(u_long val, char *str, int len, int term)
 	 * term selects the appropriate character(s) for the end of the string
 	 */
 	pt = str + len - 1;
-	switch(term) {
+	switch (term) {
 	case 3:
 		*pt-- = '\0';
 		break;
@@ -218,7 +218,7 @@ uqd_oct(u_quad_t val, char *str, int len, int term)
 	 * term selects the appropriate character(s) for the end of the string
 	 */
 	pt = str + len - 1;
-	switch(term) {
+	switch (term) {
 	case 3:
 		*pt-- = '\0';
 		break;
@@ -420,7 +420,7 @@ tar_rd(ARCHD *arcn, char *buf)
 	pt = &(arcn->name[arcn->nlen - 1]);
 	arcn->pad = 0;
 	arcn->skip = 0;
-	switch(hd->linkflag) {
+	switch (hd->linkflag) {
 	case SYMTYPE:
 		/*
 		 * symbolic link, need to get the link name and set the type in
@@ -523,7 +523,7 @@ tar_wr(ARCHD *arcn)
 	/*
 	 * check for those file system types which tar cannot store
 	 */
-	switch(arcn->type) {
+	switch (arcn->type) {
 	case PAX_DIR:
 		/*
 		 * user asked that dirs not be written to the archive
@@ -810,7 +810,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	/*
 	 * set the mode and PAX type according to the typeflag in the header
 	 */
-	switch(hd->typeflag) {
+	switch (hd->typeflag) {
 	case FIFOTYPE:
 		arcn->type = PAX_FIF;
 		arcn->sb.st_mode |= S_IFIFO;
@@ -960,7 +960,7 @@ ustar_wr(ARCHD *arcn)
 	/*
 	 * set the fields in the header that are type dependent
 	 */
-	switch(arcn->type) {
+	switch (arcn->type) {
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))

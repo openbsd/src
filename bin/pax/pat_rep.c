@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.25 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.26 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.25 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.26 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ rep_add(char *str)
 	 * set the options if any
 	 */
 	while (*pt2 != '\0') {
-		switch(*pt2) {
+		switch (*pt2) {
 		case 'g':
 		case 'G':
 			rep->flgs  |= GLOB;

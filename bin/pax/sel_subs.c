@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.17 2003/10/20 06:22:27 jmc Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.18 2004/04/16 22:50:23 deraadt Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: sel_subs.c,v 1.17 2003/10/20 06:22:27 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: sel_subs.c,v 1.18 2004/04/16 22:50:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -381,7 +381,7 @@ trng_add(char *str)
 	else {
 		pt->flgs = 0;
 		while (*flgpt != '\0') {
-			switch(*flgpt) {
+			switch (*flgpt) {
 			case 'M':
 			case 'm':
 				pt->flgs |= CMPMTME;
@@ -471,7 +471,7 @@ trng_match(ARCHD *arcn)
 	 */
 	pt = trhead;
 	while (pt != NULL) {
-		switch(pt->flgs & CMPBOTH) {
+		switch (pt->flgs & CMPBOTH) {
 		case CMPBOTH:
 			/*
 			 * user wants both mtime and ctime checked for this
