@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.3 2000/04/11 02:44:33 pjanzen Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.4 2000/06/26 22:43:44 art Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -211,6 +211,7 @@ sequenceropen(dev, flags, ifmt, p)
 	SEQ_QINIT(&sc->inq);
 	SEQ_QINIT(&sc->outq);
 	sc->lowat = SEQ_MAXQ / 2;
+	timeout_set(&sc->timo, seq_timeout, sc);
 
 	seq_reset(sc);
 
@@ -320,7 +321,7 @@ sequencerclose(dev, flags, ifmt, p)
 	seq_drain(sc);
 	s = splaudio();
 	if (sc->timeout) {
-		untimeout(seq_timeout, sc);
+		timeout_del(&sc->timo);
 		sc->timeout = 0;
 	}
 	splx(s);
@@ -894,7 +895,7 @@ seq_timer(sc, cmd, parm, b)
 			}
 #endif
 			sc->timeout = 1;
-			timeout(seq_timeout, sc, ticks);
+			timeout_add(&sc->timo, ticks);
 		}
 #ifdef SEQUENCER_DEBUG
 		else if (tick < 0)

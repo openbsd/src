@@ -1,4 +1,4 @@
-/*	$OpenBSD: midivar.h,v 1.1 1999/01/02 00:02:38 niklas Exp $	*/
+/*	$OpenBSD: midivar.h,v 1.2 2000/06/26 22:43:22 art Exp $	*/
 /*	$NetBSD: midivar.h,v 1.6 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #define MIDI_BUFSIZE 1024
 
 #include "sequencer.h"
+#include <sys/timeout.h>
 
 struct midi_buffer {
 	u_char	*inp;
@@ -71,6 +72,7 @@ struct midi_softc {
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
 	struct	proc *async;	/* process who wants audio SIGIO */
+	struct	timeout timeo;	/* timeout handle */
 
 	/* MIDI input state machine */
 	int	in_state;
