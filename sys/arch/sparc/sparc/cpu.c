@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.15 1998/10/09 13:10:46 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.16 1998/10/09 13:12:43 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -319,7 +319,8 @@ cache_print(sc)
 		printf("%s%dK external (%d b/l)", sep,
 		    ci->ec_totalsize/1024, ci->ec_linesize);
 	}
-	printf(" ");
+	if (sep)	/* printed at least one field.. */
+		printf(" ");
 }
 
 
