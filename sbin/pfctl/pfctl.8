@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.6 2001/06/26 00:16:55 ian Exp $
+.\" $OpenBSD: pfctl.8,v 1.7 2001/06/26 03:50:54 kjell Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -34,8 +34,14 @@
 .Nm pfctl
 .Nd control the packet filter and NAT subsystems
 .Sh SYNOPSIS
-.Nm pfctl
-.Ar commands
+.Nm 
+.Op Fl d
+.Op Fl e
+.Op Fl c Ar set
+.Op Fl l Ar interface
+.Op Fl n Ar file
+.Op Fl r Ar file
+.Op Fl s Ar set
 .Sh DESCRIPTION
 The
 .Nm
@@ -68,58 +74,54 @@ also requires
 .Li net.inet.ip.forwarding=1
 in the file
 .Pa /etc/sysctl.conf .
-The variables IPF and IPNAT in 
-.Pa /etc/rc.conf
-determine whether this mechanism will be started automatically
-when the system is booted.
+.\"The existance of the variables PF and NAT in 
+.\".Pa /etc/rc.conf
+.\"determine whether this mechanism will be started automatically
+.\"when the system is booted.
 .Pp
 The
 .Nm
 utility provides several commands:
-.Pp
-.Bl -tag -width "parse" -compact
-.It Cm start
-Start the packet filter
-.It Cm stop
-Stop the packet filter
-.It Cm show
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Disable the packet filter
+.It Fl e
+Enable the packet filter
+.It Fl c Ar set
+Clear one of the following sets:
+.Bl -tag -width "states" -compact
+.It Ar nat
+Clear the NAT rules
+.It Ar rules
+Clear the filter rules
+.It Ar states
+Clear the state table (NAT and filter)
+.El
+.It Fl l Ar interface
+Enable logging for interface named
+.Ar interface
+.It Fl n Ar file
+Load a NAT rules file
+.It Fl r Ar file
+Load a filter rules file into the filter
+.It Fl s Ar set
+Show filter parameters.
+.Ar set
+is one of the following:
 .Bl -tag -width "status" -compact
-.It Cm rules
-Show filter rules
-.It Cm nat
-Show NAT rules
-.It Cm states Op proto
-Show active states, optionally for a particular protocol
-.It Cm status
-Filter status
+.It Ar nat
+Show the currently loaded NAT rules
+.It Ar rules
+Show the currently loaded packet filter rules
+.It Ar states
+Show the contents of the state table
+.It Ar status
+Show filter statistics
 .El
-.It Cm clear
-.Bl -tag -width "rules" -compact
-.It Cm rules
-Clear filter rules
-.It Cm nat
-Clear NAT rules
 .El
-.It Cm parse
-.Bl -tag -width "wules" -compact
-.It Cm rules Pa filename
-Test the syntax of a rules file
-.It Cm nat Pa filename
-Test the syntax of a NAT file
-.El
-.It Cm load
-.Bl -tag -width "rules" -compact
-.It Cm rules Pa filename
-Load rules into the filter
-.It Cm nat
-Load rules into NAT
-.El
-.It Cm log Ar if
-Enable logging for an interface
-.El
-.Pp
 .Sh FILES
-.Bl -tag -width /etc/nat.rules
+.Bl -tag -width /etc/nat.rules -compact
 .It Pa /etc/pf.rules
 packet filter rules file
 .It Pa /etc/nat.rules
