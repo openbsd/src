@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.3 2004/03/08 21:57:11 miod Exp $
+dnl	$OpenBSD: hardware,v 1.4 2004/03/08 22:29:42 miod Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -57,7 +57,7 @@ Supported devices {:-include-:}:
 		    3Com 3c900/3c900B PCI adapters
 		    3Com 3c905/3c905B/3c905C PCI adapters
 		    3Com 3c980/3c980C server adapters
-		    3Com 3cSOHO apapter
+		    3Com 3cSOHO adapter
 		    3Com 3c900B-FL and 3c900B-FL/FX fiber optic
 			adapters
 		    3Com 3c555/3c556/3c556B MiniPCI adapters
