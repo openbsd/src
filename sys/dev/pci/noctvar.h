@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctvar.h,v 1.4 2002/06/28 18:31:29 jason Exp $	*/
+/*	$OpenBSD: noctvar.h,v 1.5 2002/07/16 03:59:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -50,6 +50,15 @@
 
 #define	NOCT_BN_CACHE_SIZE	((256) * (128 / 8))
 
+struct noct_workq {
+	SIMPLEQ_ENTRY(noct_workq)	q_next;
+	struct cryptop			*q_crp;
+	bus_dmamap_t			q_dmamap;
+	bus_dma_segment_t		q_dmaseg;
+	caddr_t				q_buf;
+	u_int8_t			q_macbuf[20];
+};
+
 struct noct_softc;
 
 struct noct_bnc_sw {
@@ -83,10 +92,13 @@ struct noct_softc {
 	struct noct_bnc_sw	sc_pkh_bnsw[NOCT_PKH_ENTRIES];
 
 	bus_dmamap_t sc_eamap;		/* ea buffer map */
-	struct timeout sc_eato;		/* debug */
-	int sc_eatick;			/* debug */
 	u_int32_t sc_eawp;		/* ea write pointer */
+	u_int32_t sc_earp;		/* ea read pointer */
 	struct noct_ea_cmd *sc_eacmd;	/* ea command buffers */
+
+	SIMPLEQ_HEAD(,noct_workq)	sc_inq;
+	SIMPLEQ_HEAD(,noct_workq)	sc_chipq;
+	SIMPLEQ_HEAD(,noct_workq)	sc_outq;
 };
 
 #define	NOCT_READ_4(sc,r) \
@@ -96,3 +108,11 @@ struct noct_softc {
 
 #define	NOCT_READ_8(sc,r) noct_read_8(sc, r)
 #define	NOCT_WRITE_8(sc,r,v) noct_write_8(sc, r, v)
+
+#define	NOCT_CARD(sid)		(((sid) & 0xf0000000) >> 28)
+#define	NOCT_SESSION(sid)	( (sid) & 0x0fffffff)
+#define	NOCT_SID(crd, sesn)	(((crd) << 28) | ((sesn) & 0x0fffffff))
+
+#define	NOCT_WAKEUP(sc)	wakeup(&(sc)->sc_eawp)
+#define	NOCT_SLEEP(sc)	tsleep(&(sc)->sc_eawp, PWAIT, "noctea", 0)
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.6 2002/06/28 18:34:13 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.7 2002/07/16 03:59:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -49,6 +49,7 @@
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/kthread.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -89,7 +90,12 @@ void noct_ea_enable(struct noct_softc *);
 void noct_ea_disable(struct noct_softc *);
 void noct_ea_init(struct noct_softc *);
 void noct_ea_intr(struct noct_softc *);
-void noct_ea_tick(void *);
+void noct_ea_create_thread(void *);
+void noct_ea_thread(void *);
+u_int32_t noct_ea_nfree(struct noct_softc *);
+int noct_newsession(u_int32_t *, struct cryptoini *);
+int noct_freesession(u_int64_t);
+int noct_process(struct cryptop *);
 
 u_int64_t noct_read_8(struct noct_softc *, u_int32_t);
 void noct_write_8(struct noct_softc *, u_int32_t, u_int64_t);
@@ -718,6 +724,17 @@ noct_rng_tick(vsc)
 	timeout_add(&sc->sc_rngto, sc->sc_rngtick);
 }
 
+u_int32_t
+noct_ea_nfree(sc)
+	struct noct_softc *sc;
+{
+	if (sc->sc_eawp == sc->sc_earp)
+		return (NOCT_EA_ENTRIES);
+	if (sc->sc_eawp < sc->sc_earp)
+		return (sc->sc_earp - sc->sc_eawp - 1);
+	return (sc->sc_earp + NOCT_EA_ENTRIES - sc->sc_eawp - 1);
+}
+
 void
 noct_ea_disable(sc)
 	struct noct_softc *sc;
@@ -762,6 +779,7 @@ noct_ea_enable(sc)
 	u_int64_t adr;
 
 	sc->sc_eawp = 0;
+	sc->sc_earp = 0;
 
 	adr = sc->sc_eamap->dm_segs[0].ds_addr;
 	NOCT_WRITE_4(sc, NOCT_EA_Q_BASE_HI, (adr >> 32) & 0xffffffff);
@@ -812,12 +830,15 @@ noct_ea_init(sc)
 	noct_ea_disable(sc);
 	noct_ea_enable(sc);
 
-	if (hz > 100)
-		sc->sc_eatick = hz/100;
-	else
-		sc->sc_eatick = 1;
-	timeout_set(&sc->sc_eato, noct_ea_tick, sc);
-	timeout_add(&sc->sc_eato, sc->sc_eatick);
+	SIMPLEQ_INIT(&sc->sc_inq);
+	SIMPLEQ_INIT(&sc->sc_chipq);
+	SIMPLEQ_INIT(&sc->sc_outq);
+
+	crypto_register(sc->sc_cid, CRYPTO_MD5, 0, 0,
+	    noct_newsession, noct_freesession, noct_process);
+	crypto_register(sc->sc_cid, CRYPTO_SHA1, 0, 0, NULL, NULL, NULL);
+
+	kthread_create_deferred(noct_ea_create_thread, sc);
 
 	return;
 
@@ -834,31 +855,218 @@ fail:
 }
 
 void
-noct_ea_tick(vsc)
+noct_ea_create_thread(vsc)
 	void *vsc;
 {
 	struct noct_softc *sc = vsc;
-	struct noct_ea_cmd *nop;
-	int s, i;
 
-	s = splnet();
-	nop = &sc->sc_eacmd[sc->sc_eawp];
-	for (i = 0; i < EA_CMD_WORDS; i++)
-		nop->buf[i] = 0;
-	nop->buf[0] = htole32(EA_0_SI);
-	nop->buf[1] = htole32(EA_OP_NOP);
-	if (++sc->sc_eawp == NOCT_EA_ENTRIES)
-		sc->sc_eawp = 0;
-	NOCT_WRITE_4(sc, NOCT_EA_Q_PTR, sc->sc_eawp);
-	splx(s);
-	timeout_add(&sc->sc_eato, sc->sc_eatick);
+	if (kthread_create(noct_ea_thread, sc, NULL,
+	    "%s", sc->sc_dv.dv_xname))
+		panic("%s: unable to create ea thread", sc->sc_dv.dv_xname);
+}
+
+void
+noct_ea_thread(vsc)
+	void *vsc;
+{
+	struct noct_softc *sc = vsc;
+	struct noct_workq *q;
+	struct cryptop *crp;
+	struct cryptodesc *crd;
+	u_int64_t adr;
+	int s, err, rseg, i;
+	u_int32_t wp, len;
+
+	for (;;) {
+		tsleep(&sc->sc_eawp, PWAIT, "noctea", 0);
+
+		/* Handle output queue */
+		s = splnet();
+		while (!SIMPLEQ_EMPTY(&sc->sc_outq)) {
+			q = SIMPLEQ_FIRST(&sc->sc_outq);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_outq, q, q_next);
+			crp = q->q_crp;
+			crd = crp->crp_desc;
+
+			if (crd->crd_alg == CRYPTO_MD5)
+				len = 16;
+			else if (crd->crd_alg == CRYPTO_SHA1)
+				len = 20;
+			else
+				len = 0;
+
+			if (len != 0) {
+				if (crp->crp_flags & CRYPTO_F_IMBUF)
+					m_copyback((struct mbuf *)crp->crp_buf,
+					    crd->crd_inject, len,
+					    q->q_macbuf);
+				else if (crp->crp_flags & CRYPTO_F_IOV)
+					bcopy(q->q_macbuf, crp->crp_mac, len);
+			}
+
+			splx(s);
+
+			bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
+			bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
+			bus_dmamem_unmap(sc->sc_dmat, q->q_buf, crd->crd_len);
+			bus_dmamem_free(sc->sc_dmat, &q->q_dmaseg, rseg);
+			crp->crp_etype = 0;
+			free(q, M_DEVBUF);
+			crypto_done(crp);
+			s = splnet();
+		}
+
+		/* Handle input queue */
+		s = splnet();
+		while (!SIMPLEQ_EMPTY(&sc->sc_inq)) {
+			q = SIMPLEQ_FIRST(&sc->sc_inq);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_inq, q, q_next);
+			splx(s);
+
+			crp = q->q_crp;
+			crd = crp->crp_desc;
+			if (crd->crd_next != NULL) {
+				crp->crp_etype = EOPNOTSUPP;
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if (crd->crd_alg != CRYPTO_MD5 &&
+			    crd->crd_alg != CRYPTO_SHA1) {
+				crp->crp_etype = EOPNOTSUPP;
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if (crd->crd_len > 0x4800) {
+				crp->crp_etype = EOPNOTSUPP;
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if ((err = bus_dmamem_alloc(sc->sc_dmat, crd->crd_len,
+			    PAGE_SIZE, 0, &q->q_dmaseg, 1, &rseg,
+			    BUS_DMA_WAITOK | BUS_DMA_STREAMING)) != 0) {
+				crp->crp_etype = err;
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if ((err = bus_dmamem_map(sc->sc_dmat, &q->q_dmaseg,
+			    rseg, crd->crd_len, (caddr_t *)&q->q_buf,
+			    BUS_DMA_WAITOK)) != 0) {
+				crp->crp_etype = err;
+				bus_dmamem_free(sc->sc_dmat,
+				    &q->q_dmaseg, rseg);
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if ((err = bus_dmamap_create(sc->sc_dmat, crd->crd_len,
+			    1, crd->crd_len, 0, BUS_DMA_WAITOK,
+			    &q->q_dmamap)) != 0) {
+				bus_dmamem_unmap(sc->sc_dmat,
+				    q->q_buf, crd->crd_len);
+				bus_dmamem_free(sc->sc_dmat,
+				    &q->q_dmaseg, rseg);
+				crp->crp_etype = err;
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if ((err = bus_dmamap_load_raw(sc->sc_dmat,
+			    q->q_dmamap, &q->q_dmaseg, rseg, crd->crd_len,
+			    BUS_DMA_WAITOK)) != 0) {
+				bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
+				bus_dmamem_unmap(sc->sc_dmat,
+				    q->q_buf, crd->crd_len);
+				bus_dmamem_free(sc->sc_dmat,
+				    &q->q_dmaseg, rseg);
+				crp->crp_etype = err;
+				crypto_done(crp);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crd->crd_skip, crd->crd_len, q->q_buf);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copydata((struct uio *)crp->crp_buf,
+				    crd->crd_skip, crd->crd_len, q->q_buf);
+			else {
+				/* XXX deal with this error. */
+			}
+
+			s = splnet();
+			if (noct_ea_nfree(sc) < 1) {
+				bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
+				bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
+				bus_dmamem_unmap(sc->sc_dmat,
+				    q->q_buf, crd->crd_len);
+				bus_dmamem_free(sc->sc_dmat,
+				    &q->q_dmaseg, rseg);
+				crp->crp_etype = ENOMEM;
+				crypto_done(crp);
+				splx(s);
+				free(q, M_DEVBUF);
+				goto next;
+			}
+			wp = sc->sc_eawp;
+			if (++sc->sc_eawp == NOCT_EA_ENTRIES)
+				sc->sc_eawp = 0;
+			for (i = 0; i < EA_CMD_WORDS; i++)
+				sc->sc_eacmd[wp].buf[i] = 0;
+			sc->sc_eacmd[wp].buf[0] = EA_0_SI;
+			switch (crd->crd_alg) {
+			case CRYPTO_MD5:
+				sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_MD5);
+				break;
+			case CRYPTO_SHA1:
+				sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_SHA1);
+				break;
+			}
+
+			/* Source, new buffer just allocated */
+			sc->sc_eacmd[wp].buf[1] |= htole32(crd->crd_len);
+			adr = q->q_dmamap->dm_segs[0].ds_addr;
+			sc->sc_eacmd[wp].buf[2] = htole32(adr >> 32);
+			sc->sc_eacmd[wp].buf[3] = htole32(adr & 0xffffffff);
+
+			/* Dest, hide it in the descriptor */
+			adr = sc->sc_eamap->dm_segs[0].ds_addr +
+			    (wp * sizeof(struct noct_ea_cmd)) +
+			    offsetof(struct noct_ea_cmd, buf[6]);
+			sc->sc_eacmd[wp].buf[4] = htole32(adr >> 32);
+			sc->sc_eacmd[wp].buf[5] = htole32(adr & 0xffffffff);
+
+			if (++wp == NOCT_EA_ENTRIES)
+				wp = 0;
+			NOCT_WRITE_4(sc, NOCT_EA_Q_PTR, wp);
+			sc->sc_eawp = wp;
+
+			SIMPLEQ_INSERT_TAIL(&sc->sc_chipq, q, q_next);
+			splx(s);
+
+next:
+			s = splnet();
+		}
+		splx(s);
+	}
 }
 
 void
 noct_ea_intr(sc)
 	struct noct_softc *sc;
 {
-	u_int32_t csr;
+	struct noct_workq *q;
+	u_int32_t csr, rp;
 
 	csr = NOCT_READ_4(sc, NOCT_EA_CSR);
 	NOCT_WRITE_4(sc, NOCT_EA_CSR, csr |
@@ -867,9 +1075,21 @@ noct_ea_intr(sc)
 	    EACSR_INTRNLLEN | EACSR_EXTRNLLEN | EACSR_DESBLOCK |
 	    EACSR_DESKEY | EACSR_ILL);
 
-	if (csr & EACSR_CMDCMPL) {
-		/* command completed... */
+	rp = (NOCT_READ_4(sc, NOCT_EA_Q_PTR) & EAQPTR_READ_M) >>
+	    EAQPTR_READ_S;
+	while (sc->sc_earp != rp) {
+		if (SIMPLEQ_EMPTY(&sc->sc_chipq))
+			panic("%s: empty chipq", sc->sc_dv.dv_xname);
+		q = SIMPLEQ_FIRST(&sc->sc_chipq);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_chipq, q, q_next);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_outq, q, q_next);
+		bcopy((u_int8_t *)&sc->sc_eacmd[sc->sc_earp].buf[6],
+		    q->q_macbuf, 20);
+		NOCT_WAKEUP(sc);
+		if (++sc->sc_earp == NOCT_EA_ENTRIES)
+			sc->sc_earp = 0;
 	}
+	sc->sc_earp = rp;
 
 	if (csr & EACSR_QALIGN)
 		printf("%s: ea bad queue alignment\n", sc->sc_dv.dv_xname);
@@ -1203,4 +1423,79 @@ out:
 	bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
 	krp->krp_status = err;
 	crypto_kdone(krp);
+}
+
+int
+noct_newsession(sidp, cri)
+	u_int32_t *sidp;
+	struct cryptoini *cri;
+{
+	struct noct_softc *sc;
+	int i;
+
+	for (i = 0; i < noct_cd.cd_ndevs; i++) {
+		sc = noct_cd.cd_devs[i];
+		if (sc == NULL || sc->sc_cid == (*sidp))
+			break;
+	}
+	if (sc == NULL)
+		return (EINVAL);
+
+	/* Can only handle single operations */
+	if (cri->cri_next != NULL)
+		return (EINVAL);
+
+	*sidp = NOCT_SID(sc->sc_dv.dv_unit, 0);
+	return (0);
+}
+
+int
+noct_freesession(tid)
+	u_int64_t tid;
+{
+	int card;
+	u_int32_t sid = ((u_int32_t)tid) & 0xffffffff;
+
+	card = NOCT_CARD(sid);
+	if (card >= noct_cd.cd_ndevs || noct_cd.cd_devs[card] == NULL)
+		return (EINVAL);
+	return (0);
+}
+
+int
+noct_process(crp)
+	struct cryptop *crp;
+{
+	struct noct_softc *sc;
+	struct noct_workq *q = NULL;
+	int card, err, s;
+
+	if (crp == NULL || crp->crp_callback == NULL)
+		return (EINVAL);
+
+	card = NOCT_CARD(crp->crp_sid);
+	if (card >= noct_cd.cd_ndevs || noct_cd.cd_devs[card] == NULL)
+		return (EINVAL);
+	sc = noct_cd.cd_devs[card];
+
+	q = (struct noct_workq *)malloc(sizeof(struct noct_workq),
+	    M_DEVBUF, M_NOWAIT);
+	if (q == NULL) {
+		err = ENOMEM;
+		goto errout;
+	}
+	q->q_crp = crp;
+
+	s = splnet();
+	SIMPLEQ_INSERT_TAIL(&sc->sc_inq, q, q_next);
+	splx(s);
+	NOCT_WAKEUP(sc);
+	return (0);
+
+errout:
+	if (q != NULL)
+		free(q, M_DEVBUF);
+	crp->crp_etype = err;
+	crypto_done(crp);
+	return (0);
 }
