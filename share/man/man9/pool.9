@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.7 2001/03/26 05:37:52 aaron Exp $
+.\"	$OpenBSD: pool.9,v 1.8 2001/05/27 08:03:57 angelos Exp $
 .\"	$NetBSD: pool.9,v 1.13 1999/04/03 14:50:21 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ If both
 .Dv PR_LIMITFAIL
 and
 .Dv PR_WAITOK
-is specified, and the pool has reached its hard limit,
+are specified, and the pool has reached its hard limit,
 .Fn pool_get
 will return
 .Dv NULL
