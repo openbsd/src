@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.8 2003/04/14 15:58:13 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.9 2003/05/12 20:33:31 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.8 2003/04/14 15:58:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.9 2003/05/12 20:33:31 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -235,6 +235,7 @@ run_job(atjob *job, char *atfile)
 	long nuid, ngid;
 	FILE *fp;
 	WAIT_T waiter;
+	size_t nread;
 	char *cp, *ep, mailto[MAX_UNAME], buf[BUFSIZ];
 	int fd, always_mail;
 	int output_pipe[2];
@@ -507,14 +508,17 @@ run_job(atjob *job, char *atfile)
 	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
 	    (long)getpid()))
 
-	fp = fdopen(output_pipe[READ_PIPE], "r");
-	if (always_mail || !feof(fp)) {
+	if ((fp = fdopen(output_pipe[READ_PIPE], "r")) == NULL) {
+		perror("fdopen");
+		(void) _exit(ERROR_EXIT);
+	}
+	nread = fread(buf, 1, sizeof(buf), fp);
+	if (nread != 0 || always_mail) {
 		FILE	*mail;
-		int	bytes = 0;
+		size_t	bytes = 0;
 		int	status = 0;
 		char	mailcmd[MAX_COMMAND];
 		char	hostname[MAXHOSTNAMELEN];
-		size_t	nread;
 
 		Debug(DPROC|DEXT, ("[%ld] got data from grandchild\n",
 		    (long)getpid()))
@@ -541,10 +545,10 @@ run_job(atjob *job, char *atfile)
 		fprintf(mail, "\nproduced the following output:\n\n");
 
 		/* Pipe the job's output to sendmail. */
-		while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) {
+		do {
 			bytes += nread;
 			fwrite(buf, nread, 1, mail);
-		}
+		} while ((nread = fread(buf, 1, sizeof(buf), fp)) != 0);
 
 		/*
 		 * If the mailer exits with non-zero exit status, log
@@ -553,9 +557,9 @@ run_job(atjob *job, char *atfile)
 		Debug(DPROC, ("[%ld] closing pipe to mail\n",
 		    (long)getpid()))
 		if ((status = cron_pclose(mail)) != 0) {
-			snprintf(buf, sizeof(buf), "mailed %d byte%s of output"
-			    " but got status 0x%04x\n",
-			    bytes, (bytes == 1) ? "" : "s", status);
+			snprintf(buf, sizeof(buf), "mailed %lu byte%s of output"
+			    " but got status 0x%04x\n", (unsigned long)bytes,
+			    (bytes == 1) ? "" : "s", status);
 			log_it(pw->pw_name, getpid(), "MAIL", buf);
 		}
 	}
