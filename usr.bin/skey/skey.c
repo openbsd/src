@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.8 1996/11/03 18:57:14 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.9 1996/11/22 03:24:36 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -40,9 +40,14 @@ main(argc, argv)
 	char	buf[33], *seed, *slash;
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
-	if (strncmp(argv[0], "otp-", 4) == 0) {
-		if (skey_set_algorithm(&argv[0][4]) == NULL)
-			errx(1, "Unknown hash algorithm %s", &argv[0][4]);
+	if ((slash = strrchr(argv[0], '/')))
+	    slash++;
+	else
+	    slash = argv[0];
+	if (strncmp(slash, "otp-", 4) == 0) {
+		slash += 4;
+		if (skey_set_algorithm(slash) == NULL)
+			errx(1, "Unknown hash algorithm %s", slash);
 	}
 
 	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
@@ -99,7 +104,7 @@ main(argc, argv)
 		}
 	} else {
 		if ((n = atoi(argv[i])) < 0) {
-			warnx("%s not positive", argv[i]);
+			warnx("%d not positive", n);
 			usage(argv[0]);
 		} else if (n > SKEY_MAX_SEQ) {
 			warnx("%d is larger than max (%d)", n, SKEY_MAX_SEQ);
