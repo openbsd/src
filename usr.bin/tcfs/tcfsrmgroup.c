@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrmgroup.c,v 1.4 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfsrmgroup.c,v 1.5 2000/06/19 20:54:12 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -30,7 +30,7 @@ Remove a TCFS group from the TCFS group database.
 int
 rmgroup_main (int argn, char *argv[])
 {
-	int index, val;
+	int val;
 	gid_t gid;
 	int have_gid = FALSE, be_verbose = FALSE;
 
