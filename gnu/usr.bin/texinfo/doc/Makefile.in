@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.4 2002/06/10 13:51:02 espie Exp $
+# $Id: Makefile.in,v 1.5 2002/06/11 10:01:13 espie Exp $
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -245,13 +245,13 @@ DVIPS = dvips
 .dvi.ps:
 	$(DVIPS) $< -o $@
 
-#install-info: install-info-am
+install-info: install-info-am
 install-info-am: $(INFO_DEPS)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(infodir)
 	@list='$(INFO_DEPS)'; \
 	for file in $$list; do \
-	  d=$(srcdir); \
+	  d=.; \
 	  for ifile in echo $$d/$$file $$d/$$file-[0-9] $$d/$$file-[0-9][0-9]; do \
 	    if test -f $$ifile; then \
 	      relfile=`expr "$$ifile" : "$$d/\(.*\)"`; \
