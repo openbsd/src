@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.49 2003/11/10 23:15:18 mickey Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.50 2003/12/31 22:15:28 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1253,7 +1253,6 @@ int     _thread_sys_fsync(int);
 int     _thread_sys_ftruncate(int, off_t);
 long	_thread_sys_fpathconf(int, int);
 pid_t	_thread_sys_getpid(void);
-int     _thread_sys_pause(void);
 int     _thread_sys_pipe(int *);
 int     _thread_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 off_t   _thread_sys_lseek(int, off_t, int);
