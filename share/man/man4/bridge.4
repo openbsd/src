@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.2 1999/02/27 07:55:26 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.3 1999/03/01 16:55:56 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 14, 1999
+.Dd February 26, 1999
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -61,40 +61,121 @@ They are defined in
 .Aq Pa sys/sockio.h .
 .Pp
 .Bl -tag -width SIOCBRDGIDX
-.It Dv SIOCBRDGIDX
-.Pq Li "struct ifbreq"
-Retrieve a member interface from a bridge by index number (zero based).
+.It Dv SIOCBRDGIFS
+.Pq Li "struct ifbifconf"
+Retrieve member interface list from a bridge.  This request takes an
+.Ar ifbifconf
+structure (see below) as a value-result parameter.
+The
+.Ar ifbic_len
+field should be initially set to the size of the buffer
+pointed to by
+.Ar ifbic_buf .
+On return it will contain the length, in bytes, of the configuration
+list.
+Alternatively, if the
+.Ar ifbic_len
+passed in is set to 0,
+SIOCBRDGIFS will set
+.Ar ifbic_len
+to the size that
+.Ar ifbic_buf
+needs to be to fit the entire configuration list,
+and will not fill in the other parameters.
+This is useful for determining the exact size that
+.Ar ifbic_buf
+needs to be in advance.
+.Pp
 The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ifbreq {
-	char ifbname[IFNAMSIZ]; /* bridge interface */
-	char ifsname[IFNAMSIZ]; /* member interface */
-	u_int32_t index;        /* interface index */
+	char ifbr_name[IFNAMSIZ];    /* bridge name */
+	char ifbr_ifsname[IFNAMSIZ]; /* member name */
+	u_int32_t ifbr_ifsflags;     /* member flags */
+};
+
+struct ifbifconf {
+	char ifbic_name[IFNAMSIZ]; /* bridge name */
+	u_int32_t       ifbic_len; /* buffer size */
+	union {
+		caddr_t ifbicu_buf; /* buffer */
+		struct  ifbreq *ifbicu_req;
+	} ifbic_ifbicu;
+#define ifbic_buf       ifbic_ifbicu.ifbicu_buf
+#define ifbic_req       ifbic_ifbicu.ifbicu_req
 };
 .Ed
-.Pp
-To get a list of interface members, set index to zero, and perform sucessive
-.Xr ioctl 2
-calls with increasing values of index.  When the call returns ENOENT,
-there are no more interface members.
 .It Dv SIOCBRDGADD
 .Pq Li "struct ifbreq"
-Add the interface named in ifsname to the bridge named in ifbname.
+Add the interface named in
+.Ar ifbr_ifsname
+to the bridge named in
+.Ar ifbr_name .
 .It Dv SIOCBRDGDEL
 .Pq Li "struct ifbreq"
-Delete the interface named in ifsname from the bridge named in ifbname.
-.It Dv SIOCBRDGRT
-.Pq Li "struct ifbrtreq"
-Retrieve a list of routes by index number (zero based).
+Delete the interface named in
+.Ar ifbr_ifsname
+from the bridge named in
+.Ar ifbr_name .
+.It Dv SIOCBRDGRTS
+.Pq Li "struct ifbaconf"
+Retrieve the address cache of the bridge named in
+.Ar ifbac_name .
+This request takes an
+.Ar ifbaconf
+structure (see below) as a value result parameter.
+The
+.Ar ifbac_len
+field should be initially set to the size of the buffer pointed to by
+.Ar ifbac_buf .
+On return, it will contain the length, in bytes, of the configuration list.
+Alternatively, if the
+.Ar ifbac_len
+passed in is set to 0, SIOCBRDGRTS will set it to the size that
+.Ar ifbac_buf
+needs to be to fit the entire configuration list and not fill in the other
+parameters.
+As with SIOCBRDGIFS, this is useful for determining the exact size that
+.Ar ifbac_buf
+needs to be in advance.
+.Pp
 The argument structure is defined as follows:
 .Bd -literal -offset indent
-struct ifbrtreq {
-	char ifbname[IFNAMSIZ]; /* bridge interface */
-	u_int32_t index;        /* iteration index */
-	struct ether_addr dst;  /* destination addr */
-	char ifsname[IFNAMSIZ]; /* destination ifs */   
-	u_int16_t age;          /* route age */
+struct ifbareq {
+	char ifba_name[IFNAMSIZ]; /* destination ifs */
+	u_int32_t ifba_age;         /* addr age */
+	struct ether_addr ifba_dst; /* dest addr */
 };
+
+struct ifbaconf {
+	char ifbac_name[IFNAMSIZ]; /* bridge name */
+	u_int32_t ifbac_len;       /* buffer size */
+	union {
+		caddr_t ifbacu_buf;     /* buffer */
+		struct ifbareq *ifbacu_req;
+	} ifbac_ifbacu;
+#define	ifbac_buf       ifbac_ifbacu.ifbacu_buf
+#define	ifbac_req       ifbac_ifbacu.ifbacu_req
+};
+.It Dv SIOCBRDGSCACHE
+.Pq Li "struct ifbcachereq"
+Set the maximum address cache size for the bridge named in
+.Ar ifbc_name
+to
+.Ar ifbc_size
+entries.
+.Pp
+The argument structure is as follows:
+.Bd -literal -offset indent
+struct ifbcachereq {
+	char ifbc_name[IFNAMSIZ]; /* bridge */
+	u_int32_t ifbc_size;      /* size */
+};
+.Ed
+.It Dv SIOCBRDGGCACHE
+.Pq Li "struct ifbcachereq"
+Retrieve the maximum size of the address cache for the bridge
+.Ar ifbc_name .
 .El
 .Sh ERRORS
 If the
@@ -108,9 +189,6 @@ For an add request, this means that the named interface is not configured
 into the system.
 For delete operation, it means that the named interface is not a member
 of the bridge.
-For an interface list or route list request, it means
-that there is no route or interface that corresponds to the given index
-number.
 .It Bq Eq ENOMEM
 Memory could not be allocated for an interface to be added to the bridge.
 .It Bq Eq EEXIST
@@ -124,6 +202,9 @@ The named interface is not ready for receiving packets.
 .It Bq Eq EPERM
 Super-user privilege is required to add and delete interfaces to and from
 bridges and to set the bridge interface flags.
+.It Bq Eq EFAULT
+The buffer used in a SIOCBRDGIFS or SIOCBRDGRTS request points outside
+of the process's allocated address space.
 .El
 .Sh SEE ALSO
 .Xr errno 2 ,
@@ -131,6 +212,13 @@ bridges and to set the bridge interface flags.
 .Xr ipf 4 ,
 .Xr netintro 4 ,
 .Xr brconfig 8
+.Sh HISTORY
+The
+.Xr brconfig 8
+command and the
+.Xr bridge 4
+kernel interface first appeared in
+.Ox 2.5 .
 .Sh AUTHOR
 The
 .Xr brconfig 8
@@ -142,10 +230,3 @@ at the University of North Carolina at Greensboro.
 .Sh BUGS
 There is currently no loop detection.  Care must be taken to make sure
 that loops are not created when a bridge is brought up.
-.Sh HISTORY
-The
-.Xr brconfig 8
-command and the
-.Xr bridge 4
-kernel interface first appeared in
-.Ox 2.5 .
