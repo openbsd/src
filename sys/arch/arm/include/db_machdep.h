@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2005/01/03 16:49:56 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2005/01/05 15:49:30 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ extern db_regs_t		ddb_regs;	/* register state */
 #define PC_ADVANCE(regs) ((regs)->tf_r15 += 4)
 #else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+#define	SET_PC_REGS(regs, value)	(regs)->tf_pc = (register_t)(value)
 #endif
 
 #define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
