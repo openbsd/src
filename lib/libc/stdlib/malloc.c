@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.62 2003/10/02 00:02:10 tedu Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.63 2003/10/15 21:37:01 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -177,7 +177,7 @@ static size_t	malloc_ninfo;
 static struct pgfree free_list;
 
 /* Abort(), user doesn't handle problems.  */
-static int malloc_abort;
+static int malloc_abort = 2;
 
 /* Are we trying to die ?  */
 static int suicide;
@@ -839,7 +839,7 @@ imalloc(size_t size)
     else
 	result =  malloc_pages(size);
 
-    if (malloc_abort && result == NULL)
+    if (malloc_abort == 1 && result == NULL)
 	wrterror("allocation failed\n");
 
     if (malloc_zero && result != NULL)
