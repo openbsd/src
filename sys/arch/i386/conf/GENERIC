@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.382 2004/10/20 12:56:45 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.383 2004/11/02 02:45:36 reyk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -420,6 +420,8 @@ hme*	at pci?				# Sun Happy Meal
 bce*	at pci?				# Broadcom BCM4401
 
 # Wireless network cards
+#ath*	at pci?				# Atheros AR5k (802.11a/b/g)
+#ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
 atw*	at pci?				# ADMtek ADM8211 (802.11)
 atw*	at cardbus?			# ADMtek ADM8211 (802.11)
 wi*	at pci?				# WaveLAN IEEE 802.11DS

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.7 2004/06/22 23:55:23 millert Exp $
+#	$OpenBSD: files.cardbus,v 1.8 2004/11/02 02:45:37 reyk Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -53,6 +53,12 @@ file	dev/cardbus/if_rl_cardbus.c		rl_cardbus
 #
 #attach	com at cardbus with com_cardbus
 #file	dev/cardbus/com_cardbus.c		com_cardbus
+
+#
+# Atheros AR5k
+#
+attach	ath at cardbus with ath_cardbus
+file	dev/cardbus/if_ath_cardbus.c		ath_cardbus
 
 #
 # ADMtek ADM8211
