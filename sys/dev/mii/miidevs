@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.8 1999/12/10 20:47:26 jason Exp $
+$OpenBSD: miidevs,v 1.9 2000/01/09 01:15:16 jason Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -75,6 +75,9 @@ oui xxLEVEL1			0x1e0400	Level 1
 /* Don't know what's going on here. */
 oui xxDAVICOM			0x006040	Davicom Semiconductor
 
+/* Contrived vendor for dcphy */
+oui xxDEC			0x040440	Digital Clone
+
 /*
  * List of known models.  Grouped by oui.
  */
@@ -85,6 +88,9 @@ model AMD 79C873phy		0x0036 Am79C873 internal PHY
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
+
+/* Contrived vendor/model for dcphy */
+model xxDEC xxDC		0x0001 DC
 
 /* Integrated Circuit Systems PHYs */
 model xxICS 1890		0x0002 ICS1890 10/100 media interface
