@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.34 2003/04/07 21:01:14 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.35 2003/04/09 20:05:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -358,7 +358,9 @@ const struct ac97_codecid {
 	{ 0x08,	0xff, 0, 0,	"STAC9708/11" },
 	{ 0x09,	0xff, 0, 0,	"STAC9721/23" },
 	{ 0x44,	0xff, 0, 0,	"STAC9744/45" },
+	{ 0x52,	0xff, 0, 0,	"STAC9752/53" },
 	{ 0x56,	0xff, 0, 0,	"STAC9756/57" },
+	{ 0x66,	0xff, 0, 0,	"STAC9766/67" },
 	{ 0x84,	0xff, 0, 0,	"STAC9784/85" },
 }, ac97_tt[] = {
 	{ 0x02,	0xff, 0, 0,	"TR28022" },
