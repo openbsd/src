@@ -635,6 +635,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/sbusvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/spifvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/stp4020reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun
@@ -1931,4 +1932,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/stp4020reg.ph

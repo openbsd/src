@@ -415,6 +415,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/5.6.1/auto/sdbm/extralibs.ld
 ./usr/libdata/perl5/powerpc-openbsd/5.6.1/ops.pm
 ./usr/libdata/perl5/powerpc-openbsd/5.6.1/re.pm
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/a.out.ph
@@ -1980,4 +1981,3 @@
 ./usr/sbin/apmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph

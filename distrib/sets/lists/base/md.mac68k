@@ -1,5 +1,3 @@
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph
-./sbin/kbd
 ./sbin/ldconfig
 ./sbin/pdisk
 ./usr/bin/c++filt
@@ -977,6 +975,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/sbusvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/spifvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun
