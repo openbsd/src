@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.82 2004/02/26 19:38:41 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.83 2004/02/29 14:17:51 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.82 2004/02/26 19:38:41 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.83 2004/02/29 14:17:51 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -312,6 +312,7 @@ tcp_stats(u_long off, char *name)
 	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
 	p2(tcps_closed, tcps_drops,
 	    "\t%u connection%s closed (including %u drop%s)\n");
+	p(tcps_conndrained, "\t%qd connection%s drained\n");
 	p(tcps_conndrops, "\t%u embryonic connection%s dropped\n");
 	p2(tcps_rttupdated, tcps_segstimed,
 	    "\t%u segment%s updated rtt (of %u attempt%s)\n");
