@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.14 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.15 2002/02/18 00:07:56 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -305,12 +305,12 @@ vsyslog_r(pri, data, fmt, ap)
 		return;
 
 	/*
-	 * Output the message to the console; don't worry about blocking,
-	 * if console blocks everything will.  Make sure the error reported
-	 * is the one from the syslogd failure.
+	 * Output the message to the console; try not to block
+	 * as a blocking console should not stop other processes.
+	 * Make sure the error reported is the one from the syslogd failure.
 	 */
 	if (data->log_stat & LOG_CONS &&
-	    (fd = open(_PATH_CONSOLE, O_WRONLY, 0)) >= 0) {
+	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0) {
 		struct iovec iov[2];
 		
 		p = strchr(tbuf, '>') + 1;
