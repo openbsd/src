@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.73 2004/10/29 01:10:43 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.74 2004/11/16 14:26:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2396,14 +2396,11 @@ dc_tick(xsc)
 	 * that time, packets will stay in the send queue, and once the
 	 * link comes up, they will be flushed out to the wire.
 	 */
-	if (!sc->dc_link) {
-		mii_pollstat(mii);
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			sc->dc_link++;
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				dc_start(ifp);
-		}
+	if (!sc->dc_link && mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		sc->dc_link++;
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	 	    dc_start(ifp);
 	}
 
 	if (sc->dc_flags & DC_21143_NWAY && !sc->dc_link)
