@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.22 1996/12/17 19:15:24 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.23 1996/12/17 19:19:33 tholo Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -693,7 +693,7 @@ ttyoutput(c, tp)
 	case CONTROL:
 		break;
 	case NEWLINE:
-		if (ISSET(tp->t_oflag, ONLRET))
+		if (ISSET(tp->t_oflag, ONLRET) || ISSET(tp->t_oflag, OCRNL))
 			col = 0;
 		break;
 	case RETURN:
