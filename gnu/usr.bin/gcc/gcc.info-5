@@ -1,0 +1,1027 @@
+This is Info file gcc.info, produced by Makeinfo-1.63 from the input
+file gcc.texi.
+
+   This file documents the use and the internals of the GNU compiler.
+
+   Published by the Free Software Foundation 59 Temple Place - Suite 330
+Boston, MA 02111-1307 USA
+
+   Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995 Free Software
+Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "GNU General Public License," "Funding for
+Free Software," and "Protect Your Freedom--Fight `Look And Feel'" are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the sections entitled "GNU General Public
+License," "Funding for Free Software," and "Protect Your Freedom--Fight
+`Look And Feel'", and this permission notice, may be included in
+translations approved by the Free Software Foundation instead of in the
+original English.
+
+
+File: gcc.info,  Node: MIPS Options,  Next: i386 Options,  Prev: RT Options,  Up: Submodel Options
+
+MIPS Options
+------------
+
+   These `-m' options are defined for the MIPS family of computers:
+
+`-mcpu=CPU TYPE'
+     Assume the defaults for the machine type CPU TYPE when scheduling
+     instructions.  The choices for CPU TYPE are `r2000', `r3000',
+     `r4000', `r4400', `r4600', and `r6000'.  While picking a specific
+     CPU TYPE will schedule things appropriately for that particular
+     chip, the compiler will not generate any code that does not meet
+     level 1 of the MIPS ISA (instruction set architecture) without the
+     `-mips2' or `-mips3' switches being used.
+
+`-mips1'
+     Issue instructions from level 1 of the MIPS ISA.  This is the
+     default.  `r3000' is the default CPU TYPE at this ISA level.
+
+`-mips2'
+     Issue instructions from level 2 of the MIPS ISA (branch likely,
+     square root instructions).  `r6000' is the default CPU TYPE at this
+     ISA level.
+
+`-mips3'
+     Issue instructions from level 3 of the MIPS ISA (64 bit
+     instructions).  `r4000' is the default CPU TYPE at this ISA level.
+     This option does not change the sizes of any of the C data types.
+
+`-mfp32'
+     Assume that 32 32-bit floating point registers are available.
+     This is the default.
+
+`-mfp64'
+     Assume that 32 64-bit floating point registers are available.
+     This is the default when the `-mips3' option is used.
+
+`-mgp32'
+     Assume that 32 32-bit general purpose registers are available.
+     This is the default.
+
+`-mgp64'
+     Assume that 32 64-bit general purpose registers are available.
+     This is the default when the `-mips3' option is used.
+
+`-mint64'
+     Types long, int, and pointer are 64 bits.  This works only if
+     `-mips3' is also specified.
+
+`-mlong64'
+     Types long and pointer are 64 bits, and type int is 32 bits.  This
+     works only if `-mips3' is also specified.
+
+`-mmips-as'
+     Generate code for the MIPS assembler, and invoke `mips-tfile' to
+     add normal debug information.  This is the default for all
+     platforms except for the OSF/1 reference platform, using the
+     OSF/rose object format.  If the either of the `-gstabs' or
+     `-gstabs+' switches are used, the `mips-tfile' program will
+     encapsulate the stabs within MIPS ECOFF.
+
+`-mgas'
+     Generate code for the GNU assembler.  This is the default on the
+     OSF/1 reference platform, using the OSF/rose object format.
+
+`-mrnames'
+`-mno-rnames'
+     The `-mrnames' switch says to output code using the MIPS software
+     names for the registers, instead of the hardware names (ie, A0
+     instead of $4).  The only known assembler that supports this option
+     is the Algorithmics assembler.
+
+`-mgpopt'
+`-mno-gpopt'
+     The `-mgpopt' switch says to write all of the data declarations
+     before the instructions in the text section, this allows the MIPS
+     assembler to generate one word memory references instead of using
+     two words for short global or static data items.  This is on by
+     default if optimization is selected.
+
+`-mstats'
+`-mno-stats'
+     For each non-inline function processed, the `-mstats' switch
+     causes the compiler to emit one line to the standard error file to
+     print statistics about the program (number of registers saved,
+     stack size, etc.).
+
+`-mmemcpy'
+`-mno-memcpy'
+     The `-mmemcpy' switch makes all block moves call the appropriate
+     string function (`memcpy' or `bcopy') instead of possibly
+     generating inline code.
+
+`-mmips-tfile'
+`-mno-mips-tfile'
+     The `-mno-mips-tfile' switch causes the compiler not postprocess
+     the object file with the `mips-tfile' program, after the MIPS
+     assembler has generated it to add debug support.  If `mips-tfile'
+     is not run, then no local variables will be available to the
+     debugger.  In addition, `stage2' and `stage3' objects will have
+     the temporary file names passed to the assembler embedded in the
+     object file, which means the objects will not compare the same.
+     The `-mno-mips-tfile' switch should only be used when there are
+     bugs in the `mips-tfile' program that prevents compilation.
+
+`-msoft-float'
+     Generate output containing library calls for floating point.
+     *Warning:* the requisite libraries are not part of GNU CC.
+     Normally the facilities of the machine's usual C compiler are
+     used, but this can't be done directly in cross-compilation.  You
+     must make your own arrangements to provide suitable library
+     functions for cross-compilation.
+
+`-mhard-float'
+     Generate output containing floating point instructions.  This is
+     the default if you use the unmodified sources.
+
+`-mabicalls'
+`-mno-abicalls'
+     Emit (or do not emit) the pseudo operations `.abicalls',
+     `.cpload', and `.cprestore' that some System V.4 ports use for
+     position independent code.
+
+`-mlong-calls'
+`-mno-long-calls'
+     Do all calls with the `JALR' instruction, which requires loading
+     up a function's address into a register before the call.  You need
+     to use this switch, if you call outside of the current 512
+     megabyte segment to functions that are not through pointers.
+
+`-mhalf-pic'
+`-mno-half-pic'
+     Put pointers to extern references into the data section and load
+     them up, rather than put the references in the text section.
+
+`-membedded-pic'
+`-mno-embedded-pic'
+     Generate PIC code suitable for some embedded systems.  All calls
+     are made using PC relative address, and all data is addressed
+     using the $gp register.  This requires GNU as and GNU ld which do
+     most of the work.
+
+`-membedded-data'
+`-mno-embedded-data'
+     Allocate variables to the read-only data section first if
+     possible, then next in the small data section if possible,
+     otherwise in data.  This gives slightly slower code than the
+     default, but reduces the amount of RAM required when executing,
+     and thus may be preferred for some embedded systems.
+
+`-msingle-float'
+`-mdouble-float'
+     The `-msingle-float' switch tells gcc to assume that the floating
+     point coprocessor only supports single precision operations, as on
+     the `r4650' chip.  The `-mdouble-float' switch permits gcc to use
+     double precision operations.  This is the default.
+
+`-mmad'
+`-mno-mad'
+     Permit use of the `mad', `madu' and `mul' instructions, as on the
+     `r4650' chip.
+
+`-m4650'
+     Turns on `-msingle-float', `-mmad', and, at least for now,
+     `-mcpu=r4650'.
+
+`-EL'
+     Compile code for the processor in little endian mode.  The
+     requisite libraries are assumed to exist.
+
+`-EB'
+     Compile code for the processor in big endian mode.  The requisite
+     libraries are assumed to exist.
+
+`-G NUM'
+     Put global and static items less than or equal to NUM bytes into
+     the small data or bss sections instead of the normal data or bss
+     section.  This allows the assembler to emit one word memory
+     reference instructions based on the global pointer (GP or $28),
+     instead of the normal two words used.  By default, NUM is 8 when
+     the MIPS assembler is used, and 0 when the GNU assembler is used.
+     The `-G NUM' switch is also passed to the assembler and linker.
+     All modules should be compiled with the same `-G NUM' value.
+
+`-nocpp'
+     Tell the MIPS assembler to not run it's preprocessor over user
+     assembler files (with a `.s' suffix) when assembling them.
+
+   These options are defined by the macro `TARGET_SWITCHES' in the
+machine description.  The default for the options is also defined by
+that macro, which enables you to change the defaults.
+
+
+File: gcc.info,  Node: i386 Options,  Next: HPPA Options,  Prev: MIPS Options,  Up: Submodel Options
+
+Intel 386 Options
+-----------------
+
+   These `-m' options are defined for the i386 family of computers:
+
+`-m486'
+`-m386'
+     Control whether or not code is optimized for a 486 instead of an
+     386.  Code generated for an 486 will run on a 386 and vice versa.
+
+`-mieee-fp'
+`-mno-ieee-fp'
+     Control whether or not the compiler uses IEEE floating point
+     comparisons.  These handle correctly the case where the result of a
+     comparison is unordered.
+
+`-msoft-float'
+     Generate output containing library calls for floating point.
+     *Warning:* the requisite libraries are not part of GNU CC.
+     Normally the facilities of the machine's usual C compiler are
+     used, but this can't be done directly in cross-compilation.  You
+     must make your own arrangements to provide suitable library
+     functions for cross-compilation.
+
+     On machines where a function returns floating point results in the
+     80387 register stack, some floating point opcodes may be emitted
+     even if `-msoft-float' is used.
+
+`-mno-fp-ret-in-387'
+     Do not use the FPU registers for return values of functions.
+
+     The usual calling convention has functions return values of types
+     `float' and `double' in an FPU register, even if there is no FPU.
+     The idea is that the operating system should emulate an FPU.
+
+     The option `-mno-fp-ret-in-387' causes such values to be returned
+     in ordinary CPU registers instead.
+
+`-mno-fancy-math-387'
+     Some 387 emulators do not support the `sin', `cos' and `sqrt'
+     instructions for the 387.  Specify this option to avoid generating
+     those instructions. This option is the default on FreeBSD.  As of
+     revision 2.6.1, these instructions are not generated unless you
+     also use the `-ffast-math' switch.
+
+`-malign-double'
+`-mno-align-double'
+     Control whether GNU CC aligns `double', `long double', and `long
+     long' variables on a two word boundary or a one word boundary.
+     Aligning `double' variables on a two word boundary will produce
+     code that runs somewhat faster on a `Pentium' at the expense of
+     more memory.
+
+     *Warning:* if you use the `-malign-double' switch, structures
+     containing the above types will be aligned differently than the
+     published application binary interface specifications for the 386.
+
+`-msvr3-shlib'
+`-mno-svr3-shlib'
+     Control whether GNU CC places uninitialized locals into `bss' or
+     `data'.  `-msvr3-shlib' places these locals into `bss'.  These
+     options are meaningful only on System V Release 3.
+
+`-mno-wide-multiply'
+`-mwide-multiply'
+     Control whether GNU CC uses the `mul' and `imul' that produce 64
+     bit results in `eax:edx' from 32 bit operands to do `long long'
+     multiplies and 32-bit division by constants.
+
+`-mrtd'
+     Use a different function-calling convention, in which functions
+     that take a fixed number of arguments return with the `ret' NUM
+     instruction, which pops their arguments while returning.  This
+     saves one instruction in the caller since there is no need to pop
+     the arguments there.
+
+     You can specify that an individual function is called with this
+     calling sequence with the function attribute `stdcall'.  You can
+     also override the `-mrtd' option by using the function attribute
+     `cdecl'. *Note Function Attributes::
+
+     *Warning:* this calling convention is incompatible with the one
+     normally used on Unix, so you cannot use it if you need to call
+     libraries compiled with the Unix compiler.
+
+     Also, you must provide function prototypes for all functions that
+     take variable numbers of arguments (including `printf'); otherwise
+     incorrect code will be generated for calls to those functions.
+
+     In addition, seriously incorrect code will result if you call a
+     function with too many arguments.  (Normally, extra arguments are
+     harmlessly ignored.)
+
+`-mreg-alloc=REGS'
+     Control the default allocation order of integer registers.  The
+     string REGS is a series of letters specifying a register.  The
+     supported letters are: `a' allocate EAX; `b' allocate EBX; `c'
+     allocate ECX; `d' allocate EDX; `S' allocate ESI; `D' allocate
+     EDI; `B' allocate EBP.
+
+`-mregparm=NUM'
+     Control how many registers are used to pass integer arguments.  By
+     default, no registers are used to pass arguments, and at most 3
+     registers can be used.  You can control this behavior for a
+     specific function by using the function attribute `regparm'.
+     *Note Function Attributes::
+
+     *Warning:* if you use this switch, and NUM is nonzero, then you
+     must build all modules with the same value, including any
+     libraries.  This includes the system libraries and startup modules.
+
+`-malign-loops=NUM'
+     Align loops to a 2 raised to a NUM byte boundary.  If
+     `-malign-loops' is not specified, the default is 2.
+
+`-malign-jumps=NUM'
+     Align instructions that are only jumped to to a 2 raised to a NUM
+     byte boundary.  If `-malign-jumps' is not specified, the default is
+     2 if optimizing for a 386, and 4 if optimizing for a 486.
+
+`-malign-functions=NUM'
+     Align the start of functions to a 2 raised to NUM byte boundary.
+     If `-malign-jumps' is not specified, the default is 2 if optimizing
+     for a 386, and 4 if optimizing for a 486.
+
+
+File: gcc.info,  Node: HPPA Options,  Next: Intel 960 Options,  Prev: i386 Options,  Up: Submodel Options
+
+HPPA Options
+------------
+
+   These `-m' options are defined for the HPPA family of computers:
+
+`-mpa-risc-1-0'
+     Generate code for a PA 1.0 processor.
+
+`-mpa-risc-1-1'
+     Generate code for a PA 1.1 processor.
+
+`-mjump-in-delay'
+     Fill delay slots of function calls with unconditional jump
+     instructions by modifying the return pointer for the function call
+     to be the target of the conditional jump.
+
+`-mmillicode-long-calls'
+     Generate code which assumes millicode routines can not be reached
+     by the standard millicode call sequence, linker-generated
+     long-calls, or linker-modified millicode calls.  In practice this
+     should only be needed for dynamicly linked executables with
+     extremely large SHLIB_INFO sections.
+
+`-mdisable-fpregs'
+     Prevent floating point registers from being used in any manner.
+     This is necessary for compiling kernels which perform lazy context
+     switching of floating point registers.  If you use this option and
+     attempt to perform floating point operations, the compiler will
+     abort.
+
+`-mdisable-indexing'
+     Prevent the compiler from using indexing address modes.  This
+     avoids some rather obscure problems when compiling MIG generated
+     code under MACH.
+
+`-mfast-indirect-calls'
+     Generate code which performs faster indirect calls.  Such code is
+     suitable for kernels and for static linking.  The fast indirect
+     call code will fail miserably if it's part of a dynamically linked
+     executable and in the presense of nested functions.
+
+`-mportable-runtime'
+     Use the portable calling conventions proposed by HP for ELF
+     systems.
+
+`-mgas'
+     Enable the use of assembler directives only GAS understands.
+
+`-mschedule=CPU TYPE'
+     Schedule code according to the constraints for the machine type
+     CPU TYPE.  The choices for CPU TYPE are `700' for 7N0 machines,
+     `7100' for 7N5 machines, and `7100' for 7N2 machines.  `700' is
+     the default for CPU TYPE.
+
+     Note the `7100LC' scheduling information is incomplete and using
+     `7100LC' often leads to bad schedules.  For now it's probably best
+     to use `7100' instead of `7100LC' for the 7N2 machines.
+
+`-msoft-float'
+     Generate output containing library calls for floating point.
+     *Warning:* the requisite libraries are not available for all HPPA
+     targets.  Normally the facilities of the machine's usual C
+     compiler are used, but this cannot be done directly in
+     cross-compilation.  You must make your own arrangements to provide
+     suitable library functions for cross-compilation.  The embedded
+     target `hppa1.1-*-pro' does provide software floating point
+     support.
+
+     `-msoft-float' changes the calling convention in the output file;
+     therefore, it is only useful if you compile *all* of a program with
+     this option.  In particular, you need to compile `libgcc.a', the
+     library that comes with GNU CC, with `-msoft-float' in order for
+     this to work.
+
+
+File: gcc.info,  Node: Intel 960 Options,  Next: DEC Alpha Options,  Prev: HPPA Options,  Up: Submodel Options
+
+Intel 960 Options
+-----------------
+
+   These `-m' options are defined for the Intel 960 implementations:
+
+`-mCPU TYPE'
+     Assume the defaults for the machine type CPU TYPE for some of the
+     other options, including instruction scheduling, floating point
+     support, and addressing modes.  The choices for CPU TYPE are `ka',
+     `kb', `mc', `ca', `cf', `sa', and `sb'.  The default is `kb'.
+
+`-mnumerics'
+`-msoft-float'
+     The `-mnumerics' option indicates that the processor does support
+     floating-point instructions.  The `-msoft-float' option indicates
+     that floating-point support should not be assumed.
+
+`-mleaf-procedures'
+`-mno-leaf-procedures'
+     Do (or do not) attempt to alter leaf procedures to be callable
+     with the `bal' instruction as well as `call'.  This will result in
+     more efficient code for explicit calls when the `bal' instruction
+     can be substituted by the assembler or linker, but less efficient
+     code in other cases, such as calls via function pointers, or using
+     a linker that doesn't support this optimization.
+
+`-mtail-call'
+`-mno-tail-call'
+     Do (or do not) make additional attempts (beyond those of the
+     machine-independent portions of the compiler) to optimize
+     tail-recursive calls into branches.  You may not want to do this
+     because the detection of cases where this is not valid is not
+     totally complete.  The default is `-mno-tail-call'.
+
+`-mcomplex-addr'
+`-mno-complex-addr'
+     Assume (or do not assume) that the use of a complex addressing
+     mode is a win on this implementation of the i960.  Complex
+     addressing modes may not be worthwhile on the K-series, but they
+     definitely are on the C-series.  The default is currently
+     `-mcomplex-addr' for all processors except the CB and CC.
+
+`-mcode-align'
+`-mno-code-align'
+     Align code to 8-byte boundaries for faster fetching (or don't
+     bother).  Currently turned on by default for C-series
+     implementations only.
+
+`-mic-compat'
+`-mic2.0-compat'
+`-mic3.0-compat'
+     Enable compatibility with iC960 v2.0 or v3.0.
+
+`-masm-compat'
+`-mintel-asm'
+     Enable compatibility with the iC960 assembler.
+
+`-mstrict-align'
+`-mno-strict-align'
+     Do not permit (do permit) unaligned accesses.
+
+`-mold-align'
+     Enable structure-alignment compatibility with Intel's gcc release
+     version 1.3 (based on gcc 1.37).  Currently this is buggy in that
+     `#pragma align 1' is always assumed as well, and cannot be turned
+     off.
+
+
+File: gcc.info,  Node: DEC Alpha Options,  Next: Clipper Options,  Prev: Intel 960 Options,  Up: Submodel Options
+
+DEC Alpha Options
+-----------------
+
+   These `-m' options are defined for the DEC Alpha implementations:
+
+`-mno-soft-float'
+`-msoft-float'
+     Use (do not use) the hardware floating-point instructions for
+     floating-point operations.  When `-msoft-float' is specified,
+     functions in `libgcc1.c' will be used to perform floating-point
+     operations.  Unless they are replaced by routines that emulate the
+     floating-point operations, or compiled in such a way as to call
+     such emulations routines, these routines will issue floating-point
+     operations.   If you are compiling for an Alpha without
+     floating-point operations, you must ensure that the library is
+     built so as not to call them.
+
+     Note that Alpha implementations without floating-point operations
+     are required to have floating-point registers.
+
+`-mfp-reg'
+`-mno-fp-regs'
+     Generate code that uses (does not use) the floating-point register
+     set.  `-mno-fp-regs' implies `-msoft-float'.  If the floating-point
+     register set is not used, floating point operands are passed in
+     integer registers as if they were integers and floating-point
+     results are passed in $0 instead of $f0.  This is a non-standard
+     calling sequence, so any function with a floating-point argument
+     or return value called by code compiled with `-mno-fp-regs' must
+     also be compiled with that option.
+
+     A typical use of this option is building a kernel that does not
+     use, and hence need not save and restore, any floating-point
+     registers.
+
+
+File: gcc.info,  Node: Clipper Options,  Next: H8/300 Options,  Prev: DEC Alpha Options,  Up: Submodel Options
+
+Clipper Options
+---------------
+
+   These `-m' options are defined for the Clipper implementations:
+
+`-mc300'
+     Produce code for a C300 Clipper processor. This is the default.
+
+`-mc400'
+     Produce code for a C400 Clipper processor i.e. use floating point
+     registers f8..f15.
+
+
+File: gcc.info,  Node: H8/300 Options,  Next: System V Options,  Prev: Clipper Options,  Up: Submodel Options
+
+H8/300 Options
+--------------
+
+   These `-m' options are defined for the H8/300 implementations:
+
+`-mrelax'
+     Shorten some address references at link time, when possible; uses
+     the linker option `-relax'.  *Note `ld' and the H8/300:
+     (ld.info)H8/300, for a fuller description.
+
+`-mh'
+     Generate code for the H8/300H.
+
+
+File: gcc.info,  Node: System V Options,  Prev: H8/300 Options,  Up: Submodel Options
+
+Options for System V
+--------------------
+
+   These additional options are available on System V Release 4 for
+compatibility with other compilers on those systems:
+
+`-Qy'
+     Identify the versions of each tool used by the compiler, in a
+     `.ident' assembler directive in the output.
+
+`-Qn'
+     Refrain from adding `.ident' directives to the output file (this is
+     the default).
+
+`-YP,DIRS'
+     Search the directories DIRS, and no others, for libraries
+     specified with `-l'.
+
+`-Ym,DIR'
+     Look in the directory DIR to find the M4 preprocessor.  The
+     assembler uses this option.
+
+
+File: gcc.info,  Node: Code Gen Options,  Next: Environment Variables,  Prev: Submodel Options,  Up: Invoking GCC
+
+Options for Code Generation Conventions
+=======================================
+
+   These machine-independent options control the interface conventions
+used in code generation.
+
+   Most of them have both positive and negative forms; the negative form
+of `-ffoo' would be `-fno-foo'.  In the table below, only one of the
+forms is listed--the one which is not the default.  You can figure out
+the other form by either removing `no-' or adding it.
+
+`-fpcc-struct-return'
+     Return "short" `struct' and `union' values in memory like longer
+     ones, rather than in registers.  This convention is less
+     efficient, but it has the advantage of allowing intercallability
+     between GNU CC-compiled files and files compiled with other
+     compilers.
+
+     The precise convention for returning structures in memory depends
+     on the target configuration macros.
+
+     Short structures and unions are those whose size and alignment
+     match that of some integer type.
+
+`-freg-struct-return'
+     Use the convention that `struct' and `union' values are returned
+     in registers when possible.  This is more efficient for small
+     structures than `-fpcc-struct-return'.
+
+     If you specify neither `-fpcc-struct-return' nor its contrary
+     `-freg-struct-return', GNU CC defaults to whichever convention is
+     standard for the target.  If there is no standard convention, GNU
+     CC defaults to `-fpcc-struct-return', except on targets where GNU
+     CC is the principal compiler.  In those cases, we can choose the
+     standard, and we chose the more efficient register return
+     alternative.
+
+`-fshort-enums'
+     Allocate to an `enum' type only as many bytes as it needs for the
+     declared range of possible values.  Specifically, the `enum' type
+     will be equivalent to the smallest integer type which has enough
+     room.
+
+`-fshort-double'
+     Use the same size for `double' as for `float'.
+
+`-fshared-data'
+     Requests that the data and non-`const' variables of this
+     compilation be shared data rather than private data.  The
+     distinction makes sense only on certain operating systems, where
+     shared data is shared between processes running the same program,
+     while private data exists in one copy per process.
+
+`-fno-common'
+     Allocate even uninitialized global variables in the bss section of
+     the object file, rather than generating them as common blocks.
+     This has the effect that if the same variable is declared (without
+     `extern') in two different compilations, you will get an error
+     when you link them.  The only reason this might be useful is if
+     you wish to verify that the program will work on other systems
+     which always work this way.
+
+`-fno-ident'
+     Ignore the `#ident' directive.
+
+`-fno-gnu-linker'
+     Do not output global initializations (such as C++ constructors and
+     destructors) in the form used by the GNU linker (on systems where
+     the GNU linker is the standard method of handling them).  Use this
+     option when you want to use a non-GNU linker, which also requires
+     using the `collect2' program to make sure the system linker
+     includes constructors and destructors.  (`collect2' is included in
+     the GNU CC distribution.)  For systems which *must* use
+     `collect2', the compiler driver `gcc' is configured to do this
+     automatically.
+
+`-finhibit-size-directive'
+     Don't output a `.size' assembler directive, or anything else that
+     would cause trouble if the function is split in the middle, and the
+     two halves are placed at locations far apart in memory.  This
+     option is used when compiling `crtstuff.c'; you should not need to
+     use it for anything else.
+
+`-fverbose-asm'
+     Put extra commentary information in the generated assembly code to
+     make it more readable.  This option is generally only of use to
+     those who actually need to read the generated assembly code
+     (perhaps while debugging the compiler itself).
+
+`-fvolatile'
+     Consider all memory references through pointers to be volatile.
+
+`-fvolatile-global'
+     Consider all memory references to extern and global data items to
+     be volatile.
+
+`-fpic'
+     Generate position-independent code (PIC) suitable for use in a
+     shared library, if supported for the target machine.  Such code
+     accesses all constant addresses through a global offset table
+     (GOT).  If the GOT size for the linked executable exceeds a
+     machine-specific maximum size, you get an error message from the
+     linker indicating that `-fpic' does not work; in that case,
+     recompile with `-fPIC' instead.  (These maximums are 16k on the
+     m88k, 8k on the Sparc, and 32k on the m68k and RS/6000.  The 386
+     has no such limit.)
+
+     Position-independent code requires special support, and therefore
+     works only on certain machines.  For the 386, GNU CC supports PIC
+     for System V but not for the Sun 386i.  Code generated for the IBM
+     RS/6000 is always position-independent.
+
+     The GNU assembler does not fully support PIC.  Currently, you must
+     use some other assembler in order for PIC to work.  We would
+     welcome volunteers to upgrade GAS to handle this; the first part
+     of the job is to figure out what the assembler must do differently.
+
+`-fPIC'
+     If supported for the target machine, emit position-independent
+     code, suitable for dynamic linking and avoiding any limit on the
+     size of the global offset table.  This option makes a difference
+     on the m68k, m88k and the Sparc.
+
+     Position-independent code requires special support, and therefore
+     works only on certain machines.
+
+`-ffixed-REG'
+     Treat the register named REG as a fixed register; generated code
+     should never refer to it (except perhaps as a stack pointer, frame
+     pointer or in some other fixed role).
+
+     REG must be the name of a register.  The register names accepted
+     are machine-specific and are defined in the `REGISTER_NAMES' macro
+     in the machine description macro file.
+
+     This flag does not have a negative form, because it specifies a
+     three-way choice.
+
+`-fcall-used-REG'
+     Treat the register named REG as an allocatable register that is
+     clobbered by function calls.  It may be allocated for temporaries
+     or variables that do not live across a call.  Functions compiled
+     this way will not save and restore the register REG.
+
+     Use of this flag for a register that has a fixed pervasive role in
+     the machine's execution model, such as the stack pointer or frame
+     pointer, will produce disastrous results.
+
+     This flag does not have a negative form, because it specifies a
+     three-way choice.
+
+`-fcall-saved-REG'
+     Treat the register named REG as an allocatable register saved by
+     functions.  It may be allocated even for temporaries or variables
+     that live across a call.  Functions compiled this way will save
+     and restore the register REG if they use it.
+
+     Use of this flag for a register that has a fixed pervasive role in
+     the machine's execution model, such as the stack pointer or frame
+     pointer, will produce disastrous results.
+
+     A different sort of disaster will result from the use of this flag
+     for a register in which function values may be returned.
+
+     This flag does not have a negative form, because it specifies a
+     three-way choice.
+
+`-fpack-struct'
+     Pack all structure members together without holes.  Usually you
+     would not want to use this option, since it makes the code
+     suboptimal, and the offsets of structure members won't agree with
+     system libraries.
+
+`+e0'
+`+e1'
+     Control whether virtual function definitions in classes are used to
+     generate code, or only to define interfaces for their callers.
+     (C++ only).
+
+     These options are provided for compatibility with `cfront' 1.x
+     usage; the recommended alternative GNU C++ usage is in flux.
+     *Note Declarations and Definitions in One Header: C++ Interface.
+
+     With `+e0', virtual function definitions in classes are declared
+     `extern'; the declaration is used only as an interface
+     specification, not to generate code for the virtual functions (in
+     this compilation).
+
+     With `+e1', G++ actually generates the code implementing virtual
+     functions defined in the code, and makes them publicly visible.
+
+
+File: gcc.info,  Node: Environment Variables,  Next: Running Protoize,  Prev: Code Gen Options,  Up: Invoking GCC
+
+Environment Variables Affecting GNU CC
+======================================
+
+   This section describes several environment variables that affect how
+GNU CC operates.  They work by specifying directories or prefixes to use
+when searching for various kinds of files.
+
+   Note that you can also specify places to search using options such as
+`-B', `-I' and `-L' (*note Directory Options::.).  These take
+precedence over places specified using environment variables, which in
+turn take precedence over those specified by the configuration of GNU
+CC.  *Note Driver::.
+
+`TMPDIR'
+     If `TMPDIR' is set, it specifies the directory to use for temporary
+     files.  GNU CC uses temporary files to hold the output of one
+     stage of compilation which is to be used as input to the next
+     stage: for example, the output of the preprocessor, which is the
+     input to the compiler proper.
+
+`GCC_EXEC_PREFIX'
+     If `GCC_EXEC_PREFIX' is set, it specifies a prefix to use in the
+     names of the subprograms executed by the compiler.  No slash is
+     added when this prefix is combined with the name of a subprogram,
+     but you can specify a prefix that ends with a slash if you wish.
+
+     If GNU CC cannot find the subprogram using the specified prefix, it
+     tries looking in the usual places for the subprogram.
+
+     The default value of `GCC_EXEC_PREFIX' is `PREFIX/lib/gcc-lib/'
+     where PREFIX is the value of `prefix' when you ran the `configure'
+     script.
+
+     Other prefixes specified with `-B' take precedence over this
+     prefix.
+
+     This prefix is also used for finding files such as `crt0.o' that
+     are used for linking.
+
+     In addition, the prefix is used in an unusual way in finding the
+     directories to search for header files.  For each of the standard
+     directories whose name normally begins with
+     `/usr/local/lib/gcc-lib' (more precisely, with the value of
+     `GCC_INCLUDE_DIR'), GNU CC tries replacing that beginning with the
+     specified prefix to produce an alternate directory name.  Thus,
+     with `-Bfoo/', GNU CC will search `foo/bar' where it would
+     normally search `/usr/local/lib/bar'.  These alternate directories
+     are searched first; the standard directories come next.
+
+`COMPILER_PATH'
+     The value of `COMPILER_PATH' is a colon-separated list of
+     directories, much like `PATH'.  GNU CC tries the directories thus
+     specified when searching for subprograms, if it can't find the
+     subprograms using `GCC_EXEC_PREFIX'.
+
+`LIBRARY_PATH'
+     The value of `LIBRARY_PATH' is a colon-separated list of
+     directories, much like `PATH'.  When configured as a native
+     compiler, GNU CC tries the directories thus specified when
+     searching for special linker files, if it can't find them using
+     `GCC_EXEC_PREFIX'.  Linking using GNU CC also uses these
+     directories when searching for ordinary libraries for the `-l'
+     option (but directories specified with `-L' come first).
+
+`C_INCLUDE_PATH'
+`CPLUS_INCLUDE_PATH'
+`OBJC_INCLUDE_PATH'
+     These environment variables pertain to particular languages.  Each
+     variable's value is a colon-separated list of directories, much
+     like `PATH'.  When GNU CC searches for header files, it tries the
+     directories listed in the variable for the language you are using,
+     after the directories specified with `-I' but before the standard
+     header file directories.
+
+`DEPENDENCIES_OUTPUT'
+     If this variable is set, its value specifies how to output
+     dependencies for Make based on the header files processed by the
+     compiler.  This output looks much like the output from the `-M'
+     option (*note Preprocessor Options::.), but it goes to a separate
+     file, and is in addition to the usual results of compilation.
+
+     The value of `DEPENDENCIES_OUTPUT' can be just a file name, in
+     which case the Make rules are written to that file, guessing the
+     target name from the source file name.  Or the value can have the
+     form `FILE TARGET', in which case the rules are written to file
+     FILE using TARGET as the target name.
+
+
+File: gcc.info,  Node: Running Protoize,  Prev: Environment Variables,  Up: Invoking GCC
+
+Running Protoize
+================
+
+   The program `protoize' is an optional part of GNU C.  You can use it
+to add prototypes to a program, thus converting the program to ANSI C
+in one respect.  The companion program `unprotoize' does the reverse:
+it removes argument types from any prototypes that are found.
+
+   When you run these programs, you must specify a set of source files
+as command line arguments.  The conversion programs start out by
+compiling these files to see what functions they define.  The
+information gathered about a file FOO is saved in a file named `FOO.X'.
+
+   After scanning comes actual conversion.  The specified files are all
+eligible to be converted; any files they include (whether sources or
+just headers) are eligible as well.
+
+   But not all the eligible files are converted.  By default,
+`protoize' and `unprotoize' convert only source and header files in the
+current directory.  You can specify additional directories whose files
+should be converted with the `-d DIRECTORY' option.  You can also
+specify particular files to exclude with the `-x FILE' option.  A file
+is converted if it is eligible, its directory name matches one of the
+specified directory names, and its name within the directory has not
+been excluded.
+
+   Basic conversion with `protoize' consists of rewriting most function
+definitions and function declarations to specify the types of the
+arguments.  The only ones not rewritten are those for varargs functions.
+
+   `protoize' optionally inserts prototype declarations at the
+beginning of the source file, to make them available for any calls that
+precede the function's definition.  Or it can insert prototype
+declarations with block scope in the blocks where undeclared functions
+are called.
+
+   Basic conversion with `unprotoize' consists of rewriting most
+function declarations to remove any argument types, and rewriting
+function definitions to the old-style pre-ANSI form.
+
+   Both conversion programs print a warning for any function
+declaration or definition that they can't convert.  You can suppress
+these warnings with `-q'.
+
+   The output from `protoize' or `unprotoize' replaces the original
+source file.  The original file is renamed to a name ending with
+`.save'.  If the `.save' file already exists, then the source file is
+simply discarded.
+
+   `protoize' and `unprotoize' both depend on GNU CC itself to scan the
+program and collect information about the functions it uses.  So
+neither of these programs will work until GNU CC is installed.
+
+   Here is a table of the options you can use with `protoize' and
+`unprotoize'.  Each option works with both programs unless otherwise
+stated.
+
+`-B DIRECTORY'
+     Look for the file `SYSCALLS.c.X' in DIRECTORY, instead of the
+     usual directory (normally `/usr/local/lib').  This file contains
+     prototype information about standard system functions.  This option
+     applies only to `protoize'.
+
+`-c COMPILATION-OPTIONS'
+     Use  COMPILATION-OPTIONS as the options when running `gcc' to
+     produce the `.X' files.  The special option `-aux-info' is always
+     passed in addition, to tell `gcc' to write a `.X' file.
+
+     Note that the compilation options must be given as a single
+     argument to `protoize' or `unprotoize'.  If you want to specify
+     several `gcc' options, you must quote the entire set of
+     compilation options to make them a single word in the shell.
+
+     There are certain `gcc' arguments that you cannot use, because they
+     would produce the wrong kind of output.  These include `-g', `-O',
+     `-c', `-S', and `-o' If you include these in the
+     COMPILATION-OPTIONS, they are ignored.
+
+`-C'
+     Rename files to end in `.C' instead of `.c'.  This is convenient
+     if you are converting a C program to C++.  This option applies
+     only to `protoize'.
+
+`-g'
+     Add explicit global declarations.  This means inserting explicit
+     declarations at the beginning of each source file for each function
+     that is called in the file and was not declared.  These
+     declarations precede the first function definition that contains a
+     call to an undeclared function.  This option applies only to
+     `protoize'.
+
+`-i STRING'
+     Indent old-style parameter declarations with the string STRING.
+     This option applies only to `protoize'.
+
+     `unprotoize' converts prototyped function definitions to old-style
+     function definitions, where the arguments are declared between the
+     argument list and the initial `{'.  By default, `unprotoize' uses
+     five spaces as the indentation.  If you want to indent with just
+     one space instead, use `-i " "'.
+
+`-k'
+     Keep the `.X' files.  Normally, they are deleted after conversion
+     is finished.
+
+`-l'
+     Add explicit local declarations.  `protoize' with `-l' inserts a
+     prototype declaration for each function in each block which calls
+     the function without any declaration.  This option applies only to
+     `protoize'.
+
+`-n'
+     Make no real changes.  This mode just prints information about the
+     conversions that would have been done without `-n'.
+
+`-N'
+     Make no `.save' files.  The original files are simply deleted.
+     Use this option with caution.
+
+`-p PROGRAM'
+     Use the program PROGRAM as the compiler.  Normally, the name `gcc'
+     is used.
+
+`-q'
+     Work quietly.  Most warnings are suppressed.
+
+`-v'
+     Print the version number, just like `-v' for `gcc'.
+
+   If you need special compiler options to compile one of your program's
+source files, then you should generate that file's `.X' file specially,
+by running `gcc' on that source file with the appropriate options and
+the option `-aux-info'.  Then run `protoize' on the entire set of
+files.  `protoize' will use the existing `.X' file because it is newer
+than the source file.  For example:
+
+     gcc -Dfoo=bar file1.c -aux-info
+     protoize *.c
+
+You need to include the special files along with the rest in the
+`protoize' command, even though their `.X' files already exist, because
+otherwise they won't get converted.
+
+   *Note Protoize Caveats::, for more information on how to use
+`protoize' successfully.
+

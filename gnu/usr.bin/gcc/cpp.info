@@ -1,0 +1,75 @@
+This is Info file cpp.info, produced by Makeinfo-1.63 from the input
+file cpp.texi.
+
+   This file documents the GNU C Preprocessor.
+
+   Copyright 1987, 1989, 1991, 1992, 1993, 1994, 1995 Free Software
+Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+Indirect:
+cpp.info-1: 790
+cpp.info-2: 50196
+cpp.info-3: 90181
+
+Tag Table:
+(Indirect)
+Node: Top790
+Node: Global Actions3362
+Node: Directives5882
+Node: Header Files7569
+Node: Header Uses8228
+Node: Include Syntax9720
+Node: Include Operation12862
+Node: Once-Only14724
+Node: Inheritance17149
+Node: Macros19711
+Node: Simple Macros20625
+Node: Argument Macros23613
+Node: Predefined29411
+Node: Standard Predefined29841
+Node: Nonstandard Predefined36978
+Node: Stringification40554
+Node: Concatenation43480
+Node: Undefining46753
+Node: Redefining47792
+Node: Macro Pitfalls49092
+Node: Misnesting50196
+Node: Macro Parentheses51210
+Node: Swallow Semicolon53087
+Node: Side Effects54987
+Node: Self-Reference56685
+Node: Argument Prescan58961
+Node: Cascaded Macros63963
+Node: Newlines in Args65108
+Node: Conditionals66453
+Node: Conditional Uses67805
+Node: Conditional Syntax69228
+Node: #if Directive69814
+Node: #else Directive72103
+Node: #elif Directive72770
+Node: Deleted Code74148
+Node: Conditionals-Macros75209
+Node: Assertions78894
+Node: #error Directive83129
+Node: Combining Sources84569
+Node: Other Directives87480
+Node: Output88942
+Node: Invocation90181
+Node: Concept Index102005
+Node: Index104809
+
+End Tag Table

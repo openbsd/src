@@ -1,0 +1,852 @@
+This is Info file gcc.info, produced by Makeinfo-1.63 from the input
+file gcc.texi.
+
+   This file documents the use and the internals of the GNU compiler.
+
+   Published by the Free Software Foundation 59 Temple Place - Suite 330
+Boston, MA 02111-1307 USA
+
+   Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995 Free Software
+Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "GNU General Public License," "Funding for
+Free Software," and "Protect Your Freedom--Fight `Look And Feel'" are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the sections entitled "GNU General Public
+License," "Funding for Free Software," and "Protect Your Freedom--Fight
+`Look And Feel'", and this permission notice, may be included in
+translations approved by the Free Software Foundation instead of in the
+original English.
+
+
+File: gcc.info,  Node: Cross-compilation,  Next: Misc,  Prev: Debugging Info,  Up: Target Macros
+
+Cross Compilation and Floating Point
+====================================
+
+   While all modern machines use 2's complement representation for
+integers, there are a variety of representations for floating point
+numbers.  This means that in a cross-compiler the representation of
+floating point numbers in the compiled program may be different from
+that used in the machine doing the compilation.
+
+   Because different representation systems may offer different amounts
+of range and precision, the cross compiler cannot safely use the host
+machine's floating point arithmetic.  Therefore, floating point
+constants must be represented in the target machine's format.  This
+means that the cross compiler cannot use `atof' to parse a floating
+point constant; it must have its own special routine to use instead.
+Also, constant folding must emulate the target machine's arithmetic (or
+must not be done at all).
+
+   The macros in the following table should be defined only if you are
+cross compiling between different floating point formats.
+
+   Otherwise, don't define them.  Then default definitions will be set
+up which use `double' as the data type, `==' to test for equality, etc.
+
+   You don't need to worry about how many times you use an operand of
+any of these macros.  The compiler never uses operands which have side
+effects.
+
+`REAL_VALUE_TYPE'
+     A macro for the C data type to be used to hold a floating point
+     value in the target machine's format.  Typically this would be a
+     `struct' containing an array of `int'.
+
+`REAL_VALUES_EQUAL (X, Y)'
+     A macro for a C expression which compares for equality the two
+     values, X and Y, both of type `REAL_VALUE_TYPE'.
+
+`REAL_VALUES_LESS (X, Y)'
+     A macro for a C expression which tests whether X is less than Y,
+     both values being of type `REAL_VALUE_TYPE' and interpreted as
+     floating point numbers in the target machine's representation.
+
+`REAL_VALUE_LDEXP (X, SCALE)'
+     A macro for a C expression which performs the standard library
+     function `ldexp', but using the target machine's floating point
+     representation.  Both X and the value of the expression have type
+     `REAL_VALUE_TYPE'.  The second argument, SCALE, is an integer.
+
+`REAL_VALUE_FIX (X)'
+     A macro whose definition is a C expression to convert the
+     target-machine floating point value X to a signed integer.  X has
+     type `REAL_VALUE_TYPE'.
+
+`REAL_VALUE_UNSIGNED_FIX (X)'
+     A macro whose definition is a C expression to convert the
+     target-machine floating point value X to an unsigned integer.  X
+     has type `REAL_VALUE_TYPE'.
+
+`REAL_VALUE_RNDZINT (X)'
+     A macro whose definition is a C expression to round the
+     target-machine floating point value X towards zero to an integer
+     value (but still as a floating point number).  X has type
+     `REAL_VALUE_TYPE', and so does the value.
+
+`REAL_VALUE_UNSIGNED_RNDZINT (X)'
+     A macro whose definition is a C expression to round the
+     target-machine floating point value X towards zero to an unsigned
+     integer value (but still represented as a floating point number).
+     X has type `REAL_VALUE_TYPE', and so does the value.
+
+`REAL_VALUE_ATOF (STRING, MODE)'
+     A macro for a C expression which converts STRING, an expression of
+     type `char *', into a floating point number in the target machine's
+     representation for mode MODE.  The value has type
+     `REAL_VALUE_TYPE'.
+
+`REAL_INFINITY'
+     Define this macro if infinity is a possible floating point value,
+     and therefore division by 0 is legitimate.
+
+`REAL_VALUE_ISINF (X)'
+     A macro for a C expression which determines whether X, a floating
+     point value, is infinity.  The value has type `int'.  By default,
+     this is defined to call `isinf'.
+
+`REAL_VALUE_ISNAN (X)'
+     A macro for a C expression which determines whether X, a floating
+     point value, is a "nan" (not-a-number).  The value has type `int'.
+     By default, this is defined to call `isnan'.
+
+   Define the following additional macros if you want to make floating
+point constant folding work while cross compiling.  If you don't define
+them, cross compilation is still possible, but constant folding will
+not happen for floating point values.
+
+`REAL_ARITHMETIC (OUTPUT, CODE, X, Y)'
+     A macro for a C statement which calculates an arithmetic operation
+     of the two floating point values X and Y, both of type
+     `REAL_VALUE_TYPE' in the target machine's representation, to
+     produce a result of the same type and representation which is
+     stored in OUTPUT (which will be a variable).
+
+     The operation to be performed is specified by CODE, a tree code
+     which will always be one of the following: `PLUS_EXPR',
+     `MINUS_EXPR', `MULT_EXPR', `RDIV_EXPR', `MAX_EXPR', `MIN_EXPR'.
+
+     The expansion of this macro is responsible for checking for
+     overflow.  If overflow happens, the macro expansion should execute
+     the statement `return 0;', which indicates the inability to
+     perform the arithmetic operation requested.
+
+`REAL_VALUE_NEGATE (X)'
+     A macro for a C expression which returns the negative of the
+     floating point value X.  Both X and the value of the expression
+     have type `REAL_VALUE_TYPE' and are in the target machine's
+     floating point representation.
+
+     There is no way for this macro to report overflow, since overflow
+     can't happen in the negation operation.
+
+`REAL_VALUE_TRUNCATE (MODE, X)'
+     A macro for a C expression which converts the floating point value
+     X to mode MODE.
+
+     Both X and the value of the expression are in the target machine's
+     floating point representation and have type `REAL_VALUE_TYPE'.
+     However, the value should have an appropriate bit pattern to be
+     output properly as a floating constant whose precision accords
+     with mode MODE.
+
+     There is no way for this macro to report overflow.
+
+`REAL_VALUE_TO_INT (LOW, HIGH, X)'
+     A macro for a C expression which converts a floating point value X
+     into a double-precision integer which is then stored into LOW and
+     HIGH, two variables of type INT.
+
+`REAL_VALUE_FROM_INT (X, LOW, HIGH)'
+     A macro for a C expression which converts a double-precision
+     integer found in LOW and HIGH, two variables of type INT, into a
+     floating point value which is then stored into X.
+
+
+File: gcc.info,  Node: Misc,  Prev: Cross-compilation,  Up: Target Macros
+
+Miscellaneous Parameters
+========================
+
+   Here are several miscellaneous parameters.
+
+`PREDICATE_CODES'
+     Define this if you have defined special-purpose predicates in the
+     file `MACHINE.c'.  This macro is called within an initializer of an
+     array of structures.  The first field in the structure is the name
+     of a predicate and the second field is an array of rtl codes.  For
+     each predicate, list all rtl codes that can be in expressions
+     matched by the predicate.  The list should have a trailing comma.
+     Here is an example of two entries in the list for a typical RISC
+     machine:
+
+          #define PREDICATE_CODES \
+            {"gen_reg_rtx_operand", {SUBREG, REG}},  \
+            {"reg_or_short_cint_operand", {SUBREG, REG, CONST_INT}},
+
+     Defining this macro does not affect the generated code (however,
+     incorrect definitions that omit an rtl code that may be matched by
+     the predicate can cause the compiler to malfunction).  Instead, it
+     allows the table built by `genrecog' to be more compact and
+     efficient, thus speeding up the compiler.  The most important
+     predicates to include in the list specified by this macro are
+     thoses used in the most insn patterns.
+
+`CASE_VECTOR_MODE'
+     An alias for a machine mode name.  This is the machine mode that
+     elements of a jump-table should have.
+
+`CASE_VECTOR_PC_RELATIVE'
+     Define this macro if jump-tables should contain relative addresses.
+
+`CASE_DROPS_THROUGH'
+     Define this if control falls through a `case' insn when the index
+     value is out of range.  This means the specified default-label is
+     actually ignored by the `case' insn proper.
+
+`CASE_VALUES_THRESHOLD'
+     Define this to be the smallest number of different values for
+     which it is best to use a jump-table instead of a tree of
+     conditional branches.  The default is four for machines with a
+     `casesi' instruction and five otherwise.  This is best for most
+     machines.
+
+`WORD_REGISTER_OPERATIONS'
+     Define this macro if operations between registers with integral
+     mode smaller than a word are always performed on the entire
+     register.  Most RISC machines have this property and most CISC
+     machines do not.
+
+`LOAD_EXTEND_OP (MODE)'
+     Define this macro to be a C expression indicating when insns that
+     read memory in MODE, an integral mode narrower than a word, set the
+     bits outside of MODE to be either the sign-extension or the
+     zero-extension of the data read.  Return `SIGN_EXTEND' for values
+     of MODE for which the insn sign-extends, `ZERO_EXTEND' for which
+     it zero-extends, and `NIL' for other modes.
+
+     This macro is not called with MODE non-integral or with a width
+     greater than or equal to `BITS_PER_WORD', so you may return any
+     value in this case.  Do not define this macro if it would always
+     return `NIL'.  On machines where this macro is defined, you will
+     normally define it as the constant `SIGN_EXTEND' or `ZERO_EXTEND'.
+
+`IMPLICIT_FIX_EXPR'
+     An alias for a tree code that should be used by default for
+     conversion of floating point values to fixed point.  Normally,
+     `FIX_ROUND_EXPR' is used.
+
+`FIXUNS_TRUNC_LIKE_FIX_TRUNC'
+     Define this macro if the same instructions that convert a floating
+     point number to a signed fixed point number also convert validly
+     to an unsigned one.
+
+`EASY_DIV_EXPR'
+     An alias for a tree code that is the easiest kind of division to
+     compile code for in the general case.  It may be `TRUNC_DIV_EXPR',
+     `FLOOR_DIV_EXPR', `CEIL_DIV_EXPR' or `ROUND_DIV_EXPR'.  These four
+     division operators differ in how they round the result to an
+     integer.  `EASY_DIV_EXPR' is used when it is permissible to use
+     any of those kinds of division and the choice should be made on
+     the basis of efficiency.
+
+`MOVE_MAX'
+     The maximum number of bytes that a single instruction can move
+     quickly from memory to memory.
+
+`MAX_MOVE_MAX'
+     The maximum number of bytes that a single instruction can move
+     quickly from memory to memory.  If this is undefined, the default
+     is `MOVE_MAX'.  Otherwise, it is the constant value that is the
+     largest value that `MOVE_MAX' can have at run-time.
+
+`SHIFT_COUNT_TRUNCATED'
+     A C expression that is nonzero if on this machine the number of
+     bits actually used for the count of a shift operation is equal to
+     the number of bits needed to represent the size of the object
+     being shifted.  When this macro is non-zero, the compiler will
+     assume that it is safe to omit a sign-extend, zero-extend, and
+     certain bitwise `and' instructions that truncates the count of a
+     shift operation.  On machines that have instructions that act on
+     bitfields at variable positions, which may include `bit test'
+     instructions, a nonzero `SHIFT_COUNT_TRUNCATED' also enables
+     deletion of truncations of the values that serve as arguments to
+     bitfield instructions.
+
+     If both types of instructions truncate the count (for shifts) and
+     position (for bitfield operations), or if no variable-position
+     bitfield instructions exist, you should define this macro.
+
+     However, on some machines, such as the 80386 and the 680x0,
+     truncation only applies to shift operations and not the (real or
+     pretended) bitfield operations.  Define `SHIFT_COUNT_TRUNCATED' to
+     be zero on such machines.  Instead, add patterns to the `md' file
+     that include the implied truncation of the shift instructions.
+
+     You need not define this macro if it would always have the value
+     of zero.
+
+`TRULY_NOOP_TRUNCATION (OUTPREC, INPREC)'
+     A C expression which is nonzero if on this machine it is safe to
+     "convert" an integer of INPREC bits to one of OUTPREC bits (where
+     OUTPREC is smaller than INPREC) by merely operating on it as if it
+     had only OUTPREC bits.
+
+     On many machines, this expression can be 1.
+
+     When `TRULY_NOOP_TRUNCATION' returns 1 for a pair of sizes for
+     modes for which `MODES_TIEABLE_P' is 0, suboptimal code can result.
+     If this is the case, making `TRULY_NOOP_TRUNCATION' return 0 in
+     such cases may improve things.
+
+`STORE_FLAG_VALUE'
+     A C expression describing the value returned by a comparison
+     operator with an integral mode and stored by a store-flag
+     instruction (`sCOND') when the condition is true.  This
+     description must apply to *all* the `sCOND' patterns and all the
+     comparison operators whose results have a `MODE_INT' mode.
+
+     A value of 1 or -1 means that the instruction implementing the
+     comparison operator returns exactly 1 or -1 when the comparison is
+     true and 0 when the comparison is false.  Otherwise, the value
+     indicates which bits of the result are guaranteed to be 1 when the
+     comparison is true.  This value is interpreted in the mode of the
+     comparison operation, which is given by the mode of the first
+     operand in the `sCOND' pattern.  Either the low bit or the sign
+     bit of `STORE_FLAG_VALUE' be on.  Presently, only those bits are
+     used by the compiler.
+
+     If `STORE_FLAG_VALUE' is neither 1 or -1, the compiler will
+     generate code that depends only on the specified bits.  It can also
+     replace comparison operators with equivalent operations if they
+     cause the required bits to be set, even if the remaining bits are
+     undefined.  For example, on a machine whose comparison operators
+     return an `SImode' value and where `STORE_FLAG_VALUE' is defined as
+     `0x80000000', saying that just the sign bit is relevant, the
+     expression
+
+          (ne:SI (and:SI X (const_int POWER-OF-2)) (const_int 0))
+
+     can be converted to
+
+          (ashift:SI X (const_int N))
+
+     where N is the appropriate shift count to move the bit being
+     tested into the sign bit.
+
+     There is no way to describe a machine that always sets the
+     low-order bit for a true value, but does not guarantee the value
+     of any other bits, but we do not know of any machine that has such
+     an instruction.  If you are trying to port GNU CC to such a
+     machine, include an instruction to perform a logical-and of the
+     result with 1 in the pattern for the comparison operators and let
+     us know (*note How to Report Bugs: Bug Reporting.).
+
+     Often, a machine will have multiple instructions that obtain a
+     value from a comparison (or the condition codes).  Here are rules
+     to guide the choice of value for `STORE_FLAG_VALUE', and hence the
+     instructions to be used:
+
+        * Use the shortest sequence that yields a valid definition for
+          `STORE_FLAG_VALUE'.  It is more efficient for the compiler to
+          "normalize" the value (convert it to, e.g., 1 or 0) than for
+          the comparison operators to do so because there may be
+          opportunities to combine the normalization with other
+          operations.
+
+        * For equal-length sequences, use a value of 1 or -1, with -1
+          being slightly preferred on machines with expensive jumps and
+          1 preferred on other machines.
+
+        * As a second choice, choose a value of `0x80000001' if
+          instructions exist that set both the sign and low-order bits
+          but do not define the others.
+
+        * Otherwise, use a value of `0x80000000'.
+
+     Many machines can produce both the value chosen for
+     `STORE_FLAG_VALUE' and its negation in the same number of
+     instructions.  On those machines, you should also define a pattern
+     for those cases, e.g., one matching
+
+          (set A (neg:M (ne:M B C)))
+
+     Some machines can also perform `and' or `plus' operations on
+     condition code values with less instructions than the corresponding
+     `sCOND' insn followed by `and' or `plus'.  On those machines,
+     define the appropriate patterns.  Use the names `incscc' and
+     `decscc', respectively, for the the patterns which perform `plus'
+     or `minus' operations on condition code values.  See `rs6000.md'
+     for some examples.  The GNU Superoptizer can be used to find such
+     instruction sequences on other machines.
+
+     You need not define `STORE_FLAG_VALUE' if the machine has no
+     store-flag instructions.
+
+`FLOAT_STORE_FLAG_VALUE'
+     A C expression that gives a non-zero floating point value that is
+     returned when comparison operators with floating-point results are
+     true.  Define this macro on machine that have comparison
+     operations that return floating-point values.  If there are no
+     such operations, do not define this macro.
+
+`Pmode'
+     An alias for the machine mode for pointers.  On most machines,
+     define this to be the integer mode corresponding to the width of a
+     hardware pointer; `SImode' on 32-bit machine or `DImode' on 64-bit
+     machines.  On some machines you must define this to be one of the
+     partial integer modes, such as `PSImode'.
+
+     The width of `Pmode' must be at least as large as the value of
+     `POINTER_SIZE'.  If it is not equal, you must define the macro
+     `POINTERS_EXTEND_UNSIGNED' to specify how pointers are extended to
+     `Pmode'.
+
+`FUNCTION_MODE'
+     An alias for the machine mode used for memory references to
+     functions being called, in `call' RTL expressions.  On most
+     machines this should be `QImode'.
+
+`INTEGRATE_THRESHOLD (DECL)'
+     A C expression for the maximum number of instructions above which
+     the function DECL should not be inlined.  DECL is a
+     `FUNCTION_DECL' node.
+
+     The default definition of this macro is 64 plus 8 times the number
+     of arguments that the function accepts.  Some people think a larger
+     threshold should be used on RISC machines.
+
+`SCCS_DIRECTIVE'
+     Define this if the preprocessor should ignore `#sccs' directives
+     and print no error message.
+
+`NO_IMPLICIT_EXTERN_C'
+     Define this macro if the system header files support C++ as well
+     as C.  This macro inhibits the usual method of using system header
+     files in C++, which is to pretend that the file's contents are
+     enclosed in `extern "C" {...}'.
+
+`HANDLE_PRAGMA (STREAM)'
+     Define this macro if you want to implement any pragmas.  If
+     defined, it should be a C statement to be executed when `#pragma'
+     is seen.  The argument STREAM is the stdio input stream from which
+     the source text can be read.
+
+     It is generally a bad idea to implement new uses of `#pragma'.  The
+     only reason to define this macro is for compatibility with other
+     compilers that do support `#pragma' for the sake of any user
+     programs which already use it.
+
+`VALID_MACHINE_DECL_ATTRIBUTE (DECL, ATTRIBUTES, IDENTIFIER, ARGS)'
+     If defined, a C expression whose value is nonzero if IDENTIFIER
+     with arguments ARGS is a valid machine specific attribute for DECL.
+     The attributes in ATTRIBUTES have previously been assigned to DECL.
+
+`VALID_MACHINE_TYPE_ATTRIBUTE (TYPE, ATTRIBUTES, IDENTIFIER, ARGS)'
+     If defined, a C expression whose value is nonzero if IDENTIFIER
+     with arguments ARGS is a valid machine specific attribute for TYPE.
+     The attributes in ATTRIBUTES have previously been assigned to TYPE.
+
+`COMP_TYPE_ATTRIBUTES (TYPE1, TYPE2)'
+     If defined, a C expression whose value is zero if the attributes on
+     TYPE1 and TYPE2 are incompatible, one if they are compatible, and
+     two if they are nearly compatible (which causes a warning to be
+     generated).
+
+`SET_DEFAULT_TYPE_ATTRIBUTES (TYPE)'
+     If defined, a C statement that assigns default attributes to newly
+     defined TYPE.
+
+`DOLLARS_IN_IDENTIFIERS'
+     Define this macro to control use of the character `$' in identifier
+     names.  The value should be 0, 1, or 2.  0 means `$' is not allowed
+     by default; 1 means it is allowed by default if `-traditional' is
+     used; 2 means it is allowed by default provided `-ansi' is not
+     used.  1 is the default; there is no need to define this macro in
+     that case.
+
+`NO_DOLLAR_IN_LABEL'
+     Define this macro if the assembler does not accept the character
+     `$' in label names.  By default constructors and destructors in
+     G++ have `$' in the identifiers.  If this macro is defined, `.' is
+     used instead.
+
+`NO_DOT_IN_LABEL'
+     Define this macro if the assembler does not accept the character
+     `.' in label names.  By default constructors and destructors in G++
+     have names that use `.'.  If this macro is defined, these names
+     are rewritten to avoid `.'.
+
+`DEFAULT_MAIN_RETURN'
+     Define this macro if the target system expects every program's
+     `main' function to return a standard "success" value by default
+     (if no other value is explicitly returned).
+
+     The definition should be a C statement (sans semicolon) to
+     generate the appropriate rtl instructions.  It is used only when
+     compiling the end of `main'.
+
+`HAVE_ATEXIT'
+     Define this if the target system supports the function `atexit'
+     from the ANSI C standard.  If this is not defined, and
+     `INIT_SECTION_ASM_OP' is not defined, a default `exit' function
+     will be provided to support C++.
+
+`EXIT_BODY'
+     Define this if your `exit' function needs to do something besides
+     calling an external function `_cleanup' before terminating with
+     `_exit'.  The `EXIT_BODY' macro is only needed if netiher
+     `HAVE_ATEXIT' nor `INIT_SECTION_ASM_OP' are defined.
+
+`INSN_SETS_ARE_DELAYED (INSN)'
+     Define this macro as a C expression that is nonzero if it is safe
+     for the delay slot scheduler to place instructions in the delay
+     slot of INSN, even if they appear to use a resource set or
+     clobbered in INSN.  INSN is always a `jump_insn' or an `insn'; GNU
+     CC knows that every `call_insn' has this behavior.  On machines
+     where some `insn' or `jump_insn' is really a function call and
+     hence has this behavior, you should define this macro.
+
+     You need not define this macro if it would always return zero.
+
+`INSN_REFERENCES_ARE_DELAYED (INSN)'
+     Define this macro as a C expression that is nonzero if it is safe
+     for the delay slot scheduler to place instructions in the delay
+     slot of INSN, even if they appear to set or clobber a resource
+     referenced in INSN.  INSN is always a `jump_insn' or an `insn'.
+     On machines where some `insn' or `jump_insn' is really a function
+     call and its operands are registers whose use is actually in the
+     subroutine it calls, you should define this macro.  Doing so
+     allows the delay slot scheduler to move instructions which copy
+     arguments into the argument registers into the delay slot of INSN.
+
+     You need not define this macro if it would always return zero.
+
+`MACHINE_DEPENDENT_REORG (INSN)'
+     In rare cases, correct code generation requires extra machine
+     dependent processing between the second jump optimization pass and
+     delayed branch scheduling.  On those machines, define this macro
+     as a C statement to act on the code starting at INSN.
+
+
+File: gcc.info,  Node: Config,  Next: Fragments,  Prev: Target Macros,  Up: Top
+
+The Configuration File
+**********************
+
+   The configuration file `xm-MACHINE.h' contains macro definitions
+that describe the machine and system on which the compiler is running,
+unlike the definitions in `MACHINE.h', which describe the machine for
+which the compiler is producing output.  Most of the values in
+`xm-MACHINE.h' are actually the same on all machines that GNU CC runs
+on, so large parts of all configuration files are identical.  But there
+are some macros that vary:
+
+`USG'
+     Define this macro if the host system is System V.
+
+`VMS'
+     Define this macro if the host system is VMS.
+
+`FATAL_EXIT_CODE'
+     A C expression for the status code to be returned when the compiler
+     exits after serious errors.
+
+`SUCCESS_EXIT_CODE'
+     A C expression for the status code to be returned when the compiler
+     exits without serious errors.
+
+`HOST_WORDS_BIG_ENDIAN'
+     Defined if the host machine stores words of multi-word values in
+     big-endian order.  (GNU CC does not depend on the host byte
+     ordering within a word.)
+
+`HOST_FLOAT_WORDS_BIG_ENDIAN'
+     Define this macro to be 1 if the host machine stores `DFmode',
+     `XFmode' or `TFmode' floating point numbers in memory with the
+     word containing the sign bit at the lowest address; otherwise,
+     define it to be zero.
+
+     This macro need not be defined if the ordering is the same as for
+     multi-word integers.
+
+`HOST_FLOAT_FORMAT'
+     A numeric code distinguishing the floating point format for the
+     host machine.  See `TARGET_FLOAT_FORMAT' in *Note Storage Layout::
+     for the alternatives and default.
+
+`HOST_BITS_PER_CHAR'
+     A C expression for the number of bits in `char' on the host
+     machine.
+
+`HOST_BITS_PER_SHORT'
+     A C expression for the number of bits in `short' on the host
+     machine.
+
+`HOST_BITS_PER_INT'
+     A C expression for the number of bits in `int' on the host machine.
+
+`HOST_BITS_PER_LONG'
+     A C expression for the number of bits in `long' on the host
+     machine.
+
+`ONLY_INT_FIELDS'
+     Define this macro to indicate that the host compiler only supports
+     `int' bit fields, rather than other integral types, including
+     `enum', as do most C compilers.
+
+`OBSTACK_CHUNK_SIZE'
+     A C expression for the size of ordinary obstack chunks.  If you
+     don't define this, a usually-reasonable default is used.
+
+`OBSTACK_CHUNK_ALLOC'
+     The function used to allocate obstack chunks.  If you don't define
+     this, `xmalloc' is used.
+
+`OBSTACK_CHUNK_FREE'
+     The function used to free obstack chunks.  If you don't define
+     this, `free' is used.
+
+`USE_C_ALLOCA'
+     Define this macro to indicate that the compiler is running with the
+     `alloca' implemented in C.  This version of `alloca' can be found
+     in the file `alloca.c'; to use it, you must also alter the
+     `Makefile' variable `ALLOCA'.  (This is done automatically for the
+     systems on which we know it is needed.)
+
+     If you do define this macro, you should probably do it as follows:
+
+          #ifndef __GNUC__
+          #define USE_C_ALLOCA
+          #else
+          #define alloca __builtin_alloca
+          #endif
+
+     so that when the compiler is compiled with GNU CC it uses the more
+     efficient built-in `alloca' function.
+
+`FUNCTION_CONVERSION_BUG'
+     Define this macro to indicate that the host compiler does not
+     properly handle converting a function value to a
+     pointer-to-function when it is used in an expression.
+
+`HAVE_VPRINTF'
+     Define this if the library function `vprintf' is available on your
+     system.
+
+`MULTIBYTE_CHARS'
+     Define this macro to enable support for multibyte characters in the
+     input to GNU CC.  This requires that the host system support the
+     ANSI C library functions for converting multibyte characters to
+     wide characters.
+
+`HAVE_PUTENV'
+     Define this if the library function `putenv' is available on your
+     system.
+
+`POSIX'
+     Define this if your system is POSIX.1 compliant.
+
+`NO_SYS_SIGLIST'
+     Define this if your system *does not* provide the variable
+     `sys_siglist'.
+
+`DONT_DECLARE_SYS_SIGLIST'
+     Define this if your system has the variable `sys_siglist', and
+     there is already a declaration of it in the system header files.
+
+`USE_PROTOTYPES'
+     Define this to be 1 if you know that the host compiler supports
+     prototypes, even if it doesn't define __STDC__, or define it to be
+     0 if you do not want any prototypes used in compiling GNU CC.  If
+     `USE_PROTOTYPES' is not defined, it will be determined
+     automatically whether your compiler supports prototypes by
+     checking if `__STDC__' is defined.
+
+`NO_MD_PROTOTYPES'
+     Define this if you wish suppression of prototypes generated from
+     the machine description file, but to use other prototypes within
+     GNU CC.  If `USE_PROTOTYPES' is defined to be 0, or the host
+     compiler does not support prototypes, this macro has no effect.
+
+`MD_CALL_PROTOTYPES'
+     Define this if you wish to generate prototypes for the `gen_call'
+     or `gen_call_value' functions generated from the machine
+     description file.  If `USE_PROTOTYPES' is defined to be 0, or the
+     host compiler does not support prototypes, or `NO_MD_PROTOTYPES'
+     is defined, this macro has no effect.  As soon as all of the
+     machine descriptions are modified to have the appropriate number
+     of arguments, this macro will be removed.
+
+     Some systems do provide this variable, but with a different name
+     such as `_sys_siglist'.  On these systems, you can define
+     `sys_siglist' as a macro which expands into the name actually
+     provided.
+
+`NO_STAB_H'
+     Define this if your system does not have the include file
+     `stab.h'.  If `USG' is defined, `NO_STAB_H' is assumed.
+
+`PATH_SEPARATOR'
+     Define this macro to be a C character constant representing the
+     character used to separate components in paths.  The default value
+     is.  the colon character
+
+`DIR_SEPARATOR'
+     If your system uses some character other than slash to separate
+     directory names within a file specification, define this macro to
+     be a C character constant specifying that character.  When GNU CC
+     displays file names, the character you specify will be used.  GNU
+     CC will test for both slash and the character you specify when
+     parsing filenames.
+
+`OBJECT_SUFFIX'
+     Define this macro to be a C string representing the suffix for
+     object files on your machine.  If you do not define this macro,
+     GNU CC will use `.o' as the suffix for object files.
+
+`EXECUTABLE_SUFFIX'
+     Define this macro to be a C string representing the suffix for
+     executable files on your machine.  If you do not define this
+     macro, GNU CC will use the null string as the suffix for object
+     files.
+
+`COLLECT_EXPORT_LIST'
+     If defined, `collect2' will scan the individual object files
+     specified on its command line and create an export list for the
+     linker.  Define this macro for systems like AIX, where the linker
+     discards object files that are not referenced from `main' and uses
+     export lists.
+
+   In addition, configuration files for system V define `bcopy',
+`bzero' and `bcmp' as aliases.  Some files define `alloca' as a macro
+when compiled with GNU CC, in order to take advantage of the benefit of
+GNU CC's built-in `alloca'.
+
+
+File: gcc.info,  Node: Fragments,  Next: Index,  Prev: Config,  Up: Top
+
+Makefile Fragments
+******************
+
+   When you configure GNU CC using the `configure' script (*note
+Installation::.), it will construct the file `Makefile' from the
+template file `Makefile.in'.  When it does this, it will incorporate
+makefile fragment files from the `config' directory, named `t-TARGET'
+and `x-HOST'.  If these files do not exist, it means nothing needs to
+be added for a given target or host.
+
+* Menu:
+
+* Target Fragment:: Writing the `t-TARGET' file.
+* Host Fragment::   Writing the `x-HOST' file.
+
+
+File: gcc.info,  Node: Target Fragment,  Next: Host Fragment,  Up: Fragments
+
+The Target Makefile Fragment
+============================
+
+   The target makefile fragment, `t-TARGET', defines special target
+dependent variables and targets used in the `Makefile':
+
+`LIBGCC1'
+     The rule to use to build `libgcc1.a'.  If your target does not
+     need to use the functions in `libgcc1.a', set this to empty.
+     *Note Interface::.
+
+`CROSS_LIBGCC1'
+     The rule to use to build `libgcc1.a' when building a cross
+     compiler.  If your target does not need to use the functions in
+     `libgcc1.a', set this to empty.  *Note Cross Runtime::.
+
+`LIBGCC2_CFLAGS'
+     Compiler flags to use when compiling `libgcc2.c'.
+
+`LIB2FUNCS_EXTRA'
+     A list of source file names to be compiled or assembled and
+     inserted into `libgcc.a'.
+
+`CRTSTUFF_T_CFLAGS'
+     Special flags used when compiling `crtstuff.c'.  *Note
+     Initialization::.
+
+`MULTILIB_OPTIONS'
+     For some targets, invoking GNU CC in different ways produces
+     objects that can not be linked together.  For example, for some
+     targets GNU CC produces both big and little endian code.  For
+     these targets, you must arrange for multiple versions of
+     `libgcc.a' to be compiled, one for each set of incompatible
+     options.  When GNU CC invokes the linker, it arranges to link in
+     the right version of `libgcc.a', based on the command line options
+     used.
+
+     The `MULTILIB_OPTIONS' macro lists the set of options for which
+     special versions of `libgcc.a' must be built.  Write options that
+     are mutually incompatible side by side, separated by a slash.
+     Write options that may be used together separated by a space.  The
+     build procedure will build all combinations of compatible options.
+
+     For example, if you set `MULTILIB_OPTIONS' to `m68000/m68020
+     msoft-float', `Makefile' will build special versions of `libgcc.a'
+     using the options `-m68000', `-m68020', `-msoft-float', `-m68000
+     -msoft-float', and `-m68020 -msoft-float'.
+
+`MULTILIB_DIRNAMES'
+     If `MULTILIB_OPTIONS' is used, this variable specifies the
+     directory names that should be used to hold the various libraries.
+     Write one element in `MULTILIB_DIRNAMES' for each element in
+     `MULTILIB_OPTIONS'.  If `MULTILIB_DIRNAMES' is not used, the
+     default value will be `MULTILIB_OPTIONS', with all slashes treated
+     as spaces.
+
+     For example, if `MULTILIB_OPTIONS' is `m68000/m68020 msoft-float',
+     then the default value of `MULTILIB_DIRNAMES' is `m68000 m68020
+     msoft-float'.  You may specify a different value if you desire a
+     different set of directory names.
+
+`MULTILIB_MATCHES'
+     Sometimes the same option may be written in two different ways.
+     If an option is listed in `MULTILIB_OPTIONS', GNU CC needs to know
+     about any synonyms.  In that case, set `MULTILIB_MATCHES' to a
+     list of items of the form `option=option' to describe all relevant
+     synonyms.  For example, `m68000=mc68000 m68020=mc68020'.
+
+
+File: gcc.info,  Node: Host Fragment,  Prev: Target Fragment,  Up: Fragments
+
+The Host Makefile Fragment
+==========================
+
+   The host makefile fragment, `x-HOST', defines special host dependent
+variables and targets used in the `Makefile':
+
+`CC'
+     The compiler to use when building the first stage.
+
+`CLIB'
+     Additional host libraries to link with.
+
+`OLDCC'
+     The compiler to use when building `libgcc1.a' for a native
+     compilation.
+
+`OLDAR'
+     The version of `ar' to use when building `libgcc1.a' for a native
+     compilation.
+
+`INSTALL'
+     The install program to use.
+

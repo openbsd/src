@@ -1,0 +1,1116 @@
+This is Info file gcc.info, produced by Makeinfo-1.63 from the input
+file gcc.texi.
+
+   This file documents the use and the internals of the GNU compiler.
+
+   Published by the Free Software Foundation 59 Temple Place - Suite 330
+Boston, MA 02111-1307 USA
+
+   Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995 Free Software
+Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "GNU General Public License," "Funding for
+Free Software," and "Protect Your Freedom--Fight `Look And Feel'" are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the sections entitled "GNU General Public
+License," "Funding for Free Software," and "Protect Your Freedom--Fight
+`Look And Feel'", and this permission notice, may be included in
+translations approved by the Free Software Foundation instead of in the
+original English.
+
+
+File: gcc.info,  Node: Library Calls,  Next: Addressing Modes,  Prev: Trampolines,  Up: Target Macros
+
+Implicit Calls to Library Routines
+==================================
+
+   Here is an explanation of implicit calls to library routines.
+
+`MULSI3_LIBCALL'
+     A C string constant giving the name of the function to call for
+     multiplication of one signed full-word by another.  If you do not
+     define this macro, the default name is used, which is `__mulsi3',
+     a function defined in `libgcc.a'.
+
+`DIVSI3_LIBCALL'
+     A C string constant giving the name of the function to call for
+     division of one signed full-word by another.  If you do not define
+     this macro, the default name is used, which is `__divsi3', a
+     function defined in `libgcc.a'.
+
+`UDIVSI3_LIBCALL'
+     A C string constant giving the name of the function to call for
+     division of one unsigned full-word by another.  If you do not
+     define this macro, the default name is used, which is `__udivsi3',
+     a function defined in `libgcc.a'.
+
+`MODSI3_LIBCALL'
+     A C string constant giving the name of the function to call for the
+     remainder in division of one signed full-word by another.  If you
+     do not define this macro, the default name is used, which is
+     `__modsi3', a function defined in `libgcc.a'.
+
+`UMODSI3_LIBCALL'
+     A C string constant giving the name of the function to call for the
+     remainder in division of one unsigned full-word by another.  If
+     you do not define this macro, the default name is used, which is
+     `__umodsi3', a function defined in `libgcc.a'.
+
+`MULDI3_LIBCALL'
+     A C string constant giving the name of the function to call for
+     multiplication of one signed double-word by another.  If you do not
+     define this macro, the default name is used, which is `__muldi3',
+     a function defined in `libgcc.a'.
+
+`DIVDI3_LIBCALL'
+     A C string constant giving the name of the function to call for
+     division of one signed double-word by another.  If you do not
+     define this macro, the default name is used, which is `__divdi3', a
+     function defined in `libgcc.a'.
+
+`UDIVDI3_LIBCALL'
+     A C string constant giving the name of the function to call for
+     division of one unsigned full-word by another.  If you do not
+     define this macro, the default name is used, which is `__udivdi3',
+     a function defined in `libgcc.a'.
+
+`MODDI3_LIBCALL'
+     A C string constant giving the name of the function to call for the
+     remainder in division of one signed double-word by another.  If
+     you do not define this macro, the default name is used, which is
+     `__moddi3', a function defined in `libgcc.a'.
+
+`UMODDI3_LIBCALL'
+     A C string constant giving the name of the function to call for the
+     remainder in division of one unsigned full-word by another.  If
+     you do not define this macro, the default name is used, which is
+     `__umoddi3', a function defined in `libgcc.a'.
+
+`INIT_TARGET_OPTABS'
+     Define this macro as a C statement that declares additional library
+     routines renames existing ones. `init_optabs' calls this macro
+     after initializing all the normal library routines.
+
+`TARGET_EDOM'
+     The value of `EDOM' on the target machine, as a C integer constant
+     expression.  If you don't define this macro, GNU CC does not
+     attempt to deposit the value of `EDOM' into `errno' directly.
+     Look in `/usr/include/errno.h' to find the value of `EDOM' on your
+     system.
+
+     If you do not define `TARGET_EDOM', then compiled code reports
+     domain errors by calling the library function and letting it
+     report the error.  If mathematical functions on your system use
+     `matherr' when there is an error, then you should leave
+     `TARGET_EDOM' undefined so that `matherr' is used normally.
+
+`GEN_ERRNO_RTX'
+     Define this macro as a C expression to create an rtl expression
+     that refers to the global "variable" `errno'.  (On certain systems,
+     `errno' may not actually be a variable.)  If you don't define this
+     macro, a reasonable default is used.
+
+`TARGET_MEM_FUNCTIONS'
+     Define this macro if GNU CC should generate calls to the System V
+     (and ANSI C) library functions `memcpy' and `memset' rather than
+     the BSD functions `bcopy' and `bzero'.
+
+`LIBGCC_NEEDS_DOUBLE'
+     Define this macro if only `float' arguments cannot be passed to
+     library routines (so they must be converted to `double').  This
+     macro affects both how library calls are generated and how the
+     library routines in `libgcc1.c' accept their arguments.  It is
+     useful on machines where floating and fixed point arguments are
+     passed differently, such as the i860.
+
+`FLOAT_ARG_TYPE'
+     Define this macro to override the type used by the library
+     routines to pick up arguments of type `float'.  (By default, they
+     use a union of `float' and `int'.)
+
+     The obvious choice would be `float'--but that won't work with
+     traditional C compilers that expect all arguments declared as
+     `float' to arrive as `double'.  To avoid this conversion, the
+     library routines ask for the value as some other type and then
+     treat it as a `float'.
+
+     On some systems, no other type will work for this.  For these
+     systems, you must use `LIBGCC_NEEDS_DOUBLE' instead, to force
+     conversion of the values `double' before they are passed.
+
+`FLOATIFY (PASSED-VALUE)'
+     Define this macro to override the way library routines redesignate
+     a `float' argument as a `float' instead of the type it was passed
+     as.  The default is an expression which takes the `float' field of
+     the union.
+
+`FLOAT_VALUE_TYPE'
+     Define this macro to override the type used by the library
+     routines to return values that ought to have type `float'.  (By
+     default, they use `int'.)
+
+     The obvious choice would be `float'--but that won't work with
+     traditional C compilers gratuitously convert values declared as
+     `float' into `double'.
+
+`INTIFY (FLOAT-VALUE)'
+     Define this macro to override the way the value of a
+     `float'-returning library routine should be packaged in order to
+     return it.  These functions are actually declared to return type
+     `FLOAT_VALUE_TYPE' (normally `int').
+
+     These values can't be returned as type `float' because traditional
+     C compilers would gratuitously convert the value to a `double'.
+
+     A local variable named `intify' is always available when the macro
+     `INTIFY' is used.  It is a union of a `float' field named `f' and
+     a field named `i' whose type is `FLOAT_VALUE_TYPE' or `int'.
+
+     If you don't define this macro, the default definition works by
+     copying the value through that union.
+
+`nongcc_SI_type'
+     Define this macro as the name of the data type corresponding to
+     `SImode' in the system's own C compiler.
+
+     You need not define this macro if that type is `long int', as it
+     usually is.
+
+`nongcc_word_type'
+     Define this macro as the name of the data type corresponding to the
+     word_mode in the system's own C compiler.
+
+     You need not define this macro if that type is `long int', as it
+     usually is.
+
+`perform_...'
+     Define these macros to supply explicit C statements to carry out
+     various arithmetic operations on types `float' and `double' in the
+     library routines in `libgcc1.c'.  See that file for a full list of
+     these macros and their arguments.
+
+     On most machines, you don't need to define any of these macros,
+     because the C compiler that comes with the system takes care of
+     doing them.
+
+`NEXT_OBJC_RUNTIME'
+     Define this macro to generate code for Objective C message sending
+     using the calling convention of the NeXT system.  This calling
+     convention involves passing the object, the selector and the
+     method arguments all at once to the method-lookup library function.
+
+     The default calling convention passes just the object and the
+     selector to the lookup function, which returns a pointer to the
+     method.
+
+
+File: gcc.info,  Node: Addressing Modes,  Next: Condition Code,  Prev: Library Calls,  Up: Target Macros
+
+Addressing Modes
+================
+
+   This is about addressing modes.
+
+`HAVE_POST_INCREMENT'
+     Define this macro if the machine supports post-increment
+     addressing.
+
+`HAVE_PRE_INCREMENT'
+`HAVE_POST_DECREMENT'
+`HAVE_PRE_DECREMENT'
+     Similar for other kinds of addressing.
+
+`CONSTANT_ADDRESS_P (X)'
+     A C expression that is 1 if the RTX X is a constant which is a
+     valid address.  On most machines, this can be defined as
+     `CONSTANT_P (X)', but a few machines are more restrictive in which
+     constant addresses are supported.
+
+     `CONSTANT_P' accepts integer-values expressions whose values are
+     not explicitly known, such as `symbol_ref', `label_ref', and
+     `high' expressions and `const' arithmetic expressions, in addition
+     to `const_int' and `const_double' expressions.
+
+`MAX_REGS_PER_ADDRESS'
+     A number, the maximum number of registers that can appear in a
+     valid memory address.  Note that it is up to you to specify a
+     value equal to the maximum number that `GO_IF_LEGITIMATE_ADDRESS'
+     would ever accept.
+
+`GO_IF_LEGITIMATE_ADDRESS (MODE, X, LABEL)'
+     A C compound statement with a conditional `goto LABEL;' executed
+     if X (an RTX) is a legitimate memory address on the target machine
+     for a memory operand of mode MODE.
+
+     It usually pays to define several simpler macros to serve as
+     subroutines for this one.  Otherwise it may be too complicated to
+     understand.
+
+     This macro must exist in two variants: a strict variant and a
+     non-strict one.  The strict variant is used in the reload pass.  It
+     must be defined so that any pseudo-register that has not been
+     allocated a hard register is considered a memory reference.  In
+     contexts where some kind of register is required, a pseudo-register
+     with no hard register must be rejected.
+
+     The non-strict variant is used in other passes.  It must be
+     defined to accept all pseudo-registers in every context where some
+     kind of register is required.
+
+     Compiler source files that want to use the strict variant of this
+     macro define the macro `REG_OK_STRICT'.  You should use an `#ifdef
+     REG_OK_STRICT' conditional to define the strict variant in that
+     case and the non-strict variant otherwise.
+
+     Subroutines to check for acceptable registers for various purposes
+     (one for base registers, one for index registers, and so on) are
+     typically among the subroutines used to define
+     `GO_IF_LEGITIMATE_ADDRESS'.  Then only these subroutine macros
+     need have two variants; the higher levels of macros may be the
+     same whether strict or not.
+
+     Normally, constant addresses which are the sum of a `symbol_ref'
+     and an integer are stored inside a `const' RTX to mark them as
+     constant.  Therefore, there is no need to recognize such sums
+     specifically as legitimate addresses.  Normally you would simply
+     recognize any `const' as legitimate.
+
+     Usually `PRINT_OPERAND_ADDRESS' is not prepared to handle constant
+     sums that are not marked with  `const'.  It assumes that a naked
+     `plus' indicates indexing.  If so, then you *must* reject such
+     naked constant sums as illegitimate addresses, so that none of
+     them will be given to `PRINT_OPERAND_ADDRESS'.
+
+     On some machines, whether a symbolic address is legitimate depends
+     on the section that the address refers to.  On these machines,
+     define the macro `ENCODE_SECTION_INFO' to store the information
+     into the `symbol_ref', and then check for it here.  When you see a
+     `const', you will have to look inside it to find the `symbol_ref'
+     in order to determine the section.  *Note Assembler Format::.
+
+     The best way to modify the name string is by adding text to the
+     beginning, with suitable punctuation to prevent any ambiguity.
+     Allocate the new name in `saveable_obstack'.  You will have to
+     modify `ASM_OUTPUT_LABELREF' to remove and decode the added text
+     and output the name accordingly, and define `STRIP_NAME_ENCODING'
+     to access the original name string.
+
+     You can check the information stored here into the `symbol_ref' in
+     the definitions of the macros `GO_IF_LEGITIMATE_ADDRESS' and
+     `PRINT_OPERAND_ADDRESS'.
+
+`REG_OK_FOR_BASE_P (X)'
+     A C expression that is nonzero if X (assumed to be a `reg' RTX) is
+     valid for use as a base register.  For hard registers, it should
+     always accept those which the hardware permits and reject the
+     others.  Whether the macro accepts or rejects pseudo registers
+     must be controlled by `REG_OK_STRICT' as described above.  This
+     usually requires two variant definitions, of which `REG_OK_STRICT'
+     controls the one actually used.
+
+`REG_OK_FOR_INDEX_P (X)'
+     A C expression that is nonzero if X (assumed to be a `reg' RTX) is
+     valid for use as an index register.
+
+     The difference between an index register and a base register is
+     that the index register may be scaled.  If an address involves the
+     sum of two registers, neither one of them scaled, then either one
+     may be labeled the "base" and the other the "index"; but whichever
+     labeling is used must fit the machine's constraints of which
+     registers may serve in each capacity.  The compiler will try both
+     labelings, looking for one that is valid, and will reload one or
+     both registers only if neither labeling works.
+
+`LEGITIMIZE_ADDRESS (X, OLDX, MODE, WIN)'
+     A C compound statement that attempts to replace X with a valid
+     memory address for an operand of mode MODE.  WIN will be a C
+     statement label elsewhere in the code; the macro definition may use
+
+          GO_IF_LEGITIMATE_ADDRESS (MODE, X, WIN);
+
+     to avoid further processing if the address has become legitimate.
+
+     X will always be the result of a call to `break_out_memory_refs',
+     and OLDX will be the operand that was given to that function to
+     produce X.
+
+     The code generated by this macro should not alter the substructure
+     of X.  If it transforms X into a more legitimate form, it should
+     assign X (which will always be a C variable) a new value.
+
+     It is not necessary for this macro to come up with a legitimate
+     address.  The compiler has standard ways of doing so in all cases.
+     In fact, it is safe for this macro to do nothing.  But often a
+     machine-dependent strategy can generate better code.
+
+`GO_IF_MODE_DEPENDENT_ADDRESS (ADDR, LABEL)'
+     A C statement or compound statement with a conditional `goto
+     LABEL;' executed if memory address X (an RTX) can have different
+     meanings depending on the machine mode of the memory reference it
+     is used for or if the address is valid for some modes but not
+     others.
+
+     Autoincrement and autodecrement addresses typically have
+     mode-dependent effects because the amount of the increment or
+     decrement is the size of the operand being addressed.  Some
+     machines have other mode-dependent addresses.  Many RISC machines
+     have no mode-dependent addresses.
+
+     You may assume that ADDR is a valid address for the machine.
+
+`LEGITIMATE_CONSTANT_P (X)'
+     A C expression that is nonzero if X is a legitimate constant for
+     an immediate operand on the target machine.  You can assume that X
+     satisfies `CONSTANT_P', so you need not check this.  In fact, `1'
+     is a suitable definition for this macro on machines where anything
+     `CONSTANT_P' is valid.
+
+
+File: gcc.info,  Node: Condition Code,  Next: Costs,  Prev: Addressing Modes,  Up: Target Macros
+
+Condition Code Status
+=====================
+
+   This describes the condition code status.
+
+   The file `conditions.h' defines a variable `cc_status' to describe
+how the condition code was computed (in case the interpretation of the
+condition code depends on the instruction that it was set by).  This
+variable contains the RTL expressions on which the condition code is
+currently based, and several standard flags.
+
+   Sometimes additional machine-specific flags must be defined in the
+machine description header file.  It can also add additional
+machine-specific information by defining `CC_STATUS_MDEP'.
+
+`CC_STATUS_MDEP'
+     C code for a data type which is used for declaring the `mdep'
+     component of `cc_status'.  It defaults to `int'.
+
+     This macro is not used on machines that do not use `cc0'.
+
+`CC_STATUS_MDEP_INIT'
+     A C expression to initialize the `mdep' field to "empty".  The
+     default definition does nothing, since most machines don't use the
+     field anyway.  If you want to use the field, you should probably
+     define this macro to initialize it.
+
+     This macro is not used on machines that do not use `cc0'.
+
+`NOTICE_UPDATE_CC (EXP, INSN)'
+     A C compound statement to set the components of `cc_status'
+     appropriately for an insn INSN whose body is EXP.  It is this
+     macro's responsibility to recognize insns that set the condition
+     code as a byproduct of other activity as well as those that
+     explicitly set `(cc0)'.
+
+     This macro is not used on machines that do not use `cc0'.
+
+     If there are insns that do not set the condition code but do alter
+     other machine registers, this macro must check to see whether they
+     invalidate the expressions that the condition code is recorded as
+     reflecting.  For example, on the 68000, insns that store in address
+     registers do not set the condition code, which means that usually
+     `NOTICE_UPDATE_CC' can leave `cc_status' unaltered for such insns.
+     But suppose that the previous insn set the condition code based
+     on location `a4@(102)' and the current insn stores a new value in
+     `a4'.  Although the condition code is not changed by this, it will
+     no longer be true that it reflects the contents of `a4@(102)'.
+     Therefore, `NOTICE_UPDATE_CC' must alter `cc_status' in this case
+     to say that nothing is known about the condition code value.
+
+     The definition of `NOTICE_UPDATE_CC' must be prepared to deal with
+     the results of peephole optimization: insns whose patterns are
+     `parallel' RTXs containing various `reg', `mem' or constants which
+     are just the operands.  The RTL structure of these insns is not
+     sufficient to indicate what the insns actually do.  What
+     `NOTICE_UPDATE_CC' should do when it sees one is just to run
+     `CC_STATUS_INIT'.
+
+     A possible definition of `NOTICE_UPDATE_CC' is to call a function
+     that looks at an attribute (*note Insn Attributes::.) named, for
+     example, `cc'.  This avoids having detailed information about
+     patterns in two places, the `md' file and in `NOTICE_UPDATE_CC'.
+
+`EXTRA_CC_MODES'
+     A list of names to be used for additional modes for condition code
+     values in registers (*note Jump Patterns::.).  These names are
+     added to `enum machine_mode' and all have class `MODE_CC'.  By
+     convention, they should start with `CC' and end with `mode'.
+
+     You should only define this macro if your machine does not use
+     `cc0' and only if additional modes are required.
+
+`EXTRA_CC_NAMES'
+     A list of C strings giving the names for the modes listed in
+     `EXTRA_CC_MODES'.  For example, the Sparc defines this macro and
+     `EXTRA_CC_MODES' as
+
+          #define EXTRA_CC_MODES CC_NOOVmode, CCFPmode, CCFPEmode
+          #define EXTRA_CC_NAMES "CC_NOOV", "CCFP", "CCFPE"
+
+     This macro is not required if `EXTRA_CC_MODES' is not defined.
+
+`SELECT_CC_MODE (OP, X, Y)'
+     Returns a mode from class `MODE_CC' to be used when comparison
+     operation code OP is applied to rtx X and Y.  For example, on the
+     Sparc, `SELECT_CC_MODE' is defined as (see *note Jump Patterns::.
+     for a description of the reason for this definition)
+
+          #define SELECT_CC_MODE(OP,X,Y) \
+            (GET_MODE_CLASS (GET_MODE (X)) == MODE_FLOAT          \
+             ? ((OP == EQ || OP == NE) ? CCFPmode : CCFPEmode)    \
+             : ((GET_CODE (X) == PLUS || GET_CODE (X) == MINUS    \
+                 || GET_CODE (X) == NEG) \
+                ? CC_NOOVmode : CCmode))
+
+     You need not define this macro if `EXTRA_CC_MODES' is not defined.
+
+`CANONICALIZE_COMPARISON (CODE, OP0, OP1)'
+     One some machines not all possible comparisons are defined, but
+     you can convert an invalid comparison into a valid one.  For
+     example, the Alpha does not have a `GT' comparison, but you can
+     use an `LT' comparison instead and swap the order of the operands.
+
+     On such machines, define this macro to be a C statement to do any
+     required conversions.  CODE is the initial comparison code and OP0
+     and OP1 are the left and right operands of the comparison,
+     respectively.  You should modify CODE, OP0, and OP1 as required.
+
+     GNU CC will not assume that the comparison resulting from this
+     macro is valid but will see if the resulting insn matches a
+     pattern in the `md' file.
+
+     You need not define this macro if it would never change the
+     comparison code or operands.
+
+`REVERSIBLE_CC_MODE (MODE)'
+     A C expression whose value is one if it is always safe to reverse a
+     comparison whose mode is MODE.  If `SELECT_CC_MODE' can ever
+     return MODE for a floating-point inequality comparison, then
+     `REVERSIBLE_CC_MODE (MODE)' must be zero.
+
+     You need not define this macro if it would always returns zero or
+     if the floating-point format is anything other than
+     `IEEE_FLOAT_FORMAT'.  For example, here is the definition used on
+     the Sparc, where floating-point inequality comparisons are always
+     given `CCFPEmode':
+
+          #define REVERSIBLE_CC_MODE(MODE)  ((MODE) != CCFPEmode)
+
+
+File: gcc.info,  Node: Costs,  Next: Sections,  Prev: Condition Code,  Up: Target Macros
+
+Describing Relative Costs of Operations
+=======================================
+
+   These macros let you describe the relative speed of various
+operations on the target machine.
+
+`CONST_COSTS (X, CODE, OUTER_CODE)'
+     A part of a C `switch' statement that describes the relative costs
+     of constant RTL expressions.  It must contain `case' labels for
+     expression codes `const_int', `const', `symbol_ref', `label_ref'
+     and `const_double'.  Each case must ultimately reach a `return'
+     statement to return the relative cost of the use of that kind of
+     constant value in an expression.  The cost may depend on the
+     precise value of the constant, which is available for examination
+     in X, and the rtx code of the expression in which it is contained,
+     found in OUTER_CODE.
+
+     CODE is the expression code--redundant, since it can be obtained
+     with `GET_CODE (X)'.
+
+`RTX_COSTS (X, CODE, OUTER_CODE)'
+     Like `CONST_COSTS' but applies to nonconstant RTL expressions.
+     This can be used, for example, to indicate how costly a multiply
+     instruction is.  In writing this macro, you can use the construct
+     `COSTS_N_INSNS (N)' to specify a cost equal to N fast
+     instructions.  OUTER_CODE is the code of the expression in which X
+     is contained.
+
+     This macro is optional; do not define it if the default cost
+     assumptions are adequate for the target machine.
+
+`ADDRESS_COST (ADDRESS)'
+     An expression giving the cost of an addressing mode that contains
+     ADDRESS.  If not defined, the cost is computed from the ADDRESS
+     expression and the `CONST_COSTS' values.
+
+     For most CISC machines, the default cost is a good approximation
+     of the true cost of the addressing mode.  However, on RISC
+     machines, all instructions normally have the same length and
+     execution time.  Hence all addresses will have equal costs.
+
+     In cases where more than one form of an address is known, the form
+     with the lowest cost will be used.  If multiple forms have the
+     same, lowest, cost, the one that is the most complex will be used.
+
+     For example, suppose an address that is equal to the sum of a
+     register and a constant is used twice in the same basic block.
+     When this macro is not defined, the address will be computed in a
+     register and memory references will be indirect through that
+     register.  On machines where the cost of the addressing mode
+     containing the sum is no higher than that of a simple indirect
+     reference, this will produce an additional instruction and
+     possibly require an additional register.  Proper specification of
+     this macro eliminates this overhead for such machines.
+
+     Similar use of this macro is made in strength reduction of loops.
+
+     ADDRESS need not be valid as an address.  In such a case, the cost
+     is not relevant and can be any value; invalid addresses need not be
+     assigned a different cost.
+
+     On machines where an address involving more than one register is as
+     cheap as an address computation involving only one register,
+     defining `ADDRESS_COST' to reflect this can cause two registers to
+     be live over a region of code where only one would have been if
+     `ADDRESS_COST' were not defined in that manner.  This effect should
+     be considered in the definition of this macro.  Equivalent costs
+     should probably only be given to addresses with different numbers
+     of registers on machines with lots of registers.
+
+     This macro will normally either not be defined or be defined as a
+     constant.
+
+`REGISTER_MOVE_COST (FROM, TO)'
+     A C expression for the cost of moving data from a register in class
+     FROM to one in class TO.  The classes are expressed using the
+     enumeration values such as `GENERAL_REGS'.  A value of 4 is the
+     default; other values are interpreted relative to that.
+
+     It is not required that the cost always equal 2 when FROM is the
+     same as TO; on some machines it is expensive to move between
+     registers if they are not general registers.
+
+     If reload sees an insn consisting of a single `set' between two
+     hard registers, and if `REGISTER_MOVE_COST' applied to their
+     classes returns a value of 2, reload does not check to ensure that
+     the constraints of the insn are met.  Setting a cost of other than
+     2 will allow reload to verify that the constraints are met.  You
+     should do this if the `movM' pattern's constraints do not allow
+     such copying.
+
+`MEMORY_MOVE_COST (M)'
+     A C expression for the cost of moving data of mode M between a
+     register and memory.  A value of 2 is the default; this cost is
+     relative to those in `REGISTER_MOVE_COST'.
+
+     If moving between registers and memory is more expensive than
+     between two registers, you should define this macro to express the
+     relative cost.
+
+`BRANCH_COST'
+     A C expression for the cost of a branch instruction.  A value of 1
+     is the default; other values are interpreted relative to that.
+
+   Here are additional macros which do not specify precise relative
+costs, but only that certain actions are more expensive than GNU CC
+would ordinarily expect.
+
+`SLOW_BYTE_ACCESS'
+     Define this macro as a C expression which is nonzero if accessing
+     less than a word of memory (i.e. a `char' or a `short') is no
+     faster than accessing a word of memory, i.e., if such access
+     require more than one instruction or if there is no difference in
+     cost between byte and (aligned) word loads.
+
+     When this macro is not defined, the compiler will access a field by
+     finding the smallest containing object; when it is defined, a
+     fullword load will be used if alignment permits.  Unless bytes
+     accesses are faster than word accesses, using word accesses is
+     preferable since it may eliminate subsequent memory access if
+     subsequent accesses occur to other fields in the same word of the
+     structure, but to different bytes.
+
+`SLOW_ZERO_EXTEND'
+     Define this macro if zero-extension (of a `char' or `short' to an
+     `int') can be done faster if the destination is a register that is
+     known to be zero.
+
+     If you define this macro, you must have instruction patterns that
+     recognize RTL structures like this:
+
+          (set (strict_low_part (subreg:QI (reg:SI ...) 0)) ...)
+
+     and likewise for `HImode'.
+
+`SLOW_UNALIGNED_ACCESS'
+     Define this macro to be the value 1 if unaligned accesses have a
+     cost many times greater than aligned accesses, for example if they
+     are emulated in a trap handler.
+
+     When this macro is non-zero, the compiler will act as if
+     `STRICT_ALIGNMENT' were non-zero when generating code for block
+     moves.  This can cause significantly more instructions to be
+     produced.  Therefore, do not set this macro non-zero if unaligned
+     accesses only add a cycle or two to the time for a memory access.
+
+     If the value of this macro is always zero, it need not be defined.
+
+`DONT_REDUCE_ADDR'
+     Define this macro to inhibit strength reduction of memory
+     addresses.  (On some machines, such strength reduction seems to do
+     harm rather than good.)
+
+`MOVE_RATIO'
+     The number of scalar move insns which should be generated instead
+     of a string move insn or a library call.  Increasing the value
+     will always make code faster, but eventually incurs high cost in
+     increased code size.
+
+     If you don't define this, a reasonable default is used.
+
+`NO_FUNCTION_CSE'
+     Define this macro if it is as good or better to call a constant
+     function address than to call an address kept in a register.
+
+`NO_RECURSIVE_FUNCTION_CSE'
+     Define this macro if it is as good or better for a function to call
+     itself with an explicit address than to call an address kept in a
+     register.
+
+`ADJUST_COST (INSN, LINK, DEP_INSN, COST)'
+     A C statement (sans semicolon) to update the integer variable COST
+     based on the relationship between INSN that is dependent on
+     DEP_INSN through the dependence LINK.  The default is to make no
+     adjustment to COST.  This can be used for example to specify to
+     the scheduler that an output- or anti-dependence does not incur
+     the same cost as a data-dependence.
+
+
+File: gcc.info,  Node: Sections,  Next: PIC,  Prev: Costs,  Up: Target Macros
+
+Dividing the Output into Sections (Texts, Data, ...)
+====================================================
+
+   An object file is divided into sections containing different types of
+data.  In the most common case, there are three sections: the "text
+section", which holds instructions and read-only data; the "data
+section", which holds initialized writable data; and the "bss section",
+which holds uninitialized data.  Some systems have other kinds of
+sections.
+
+   The compiler must tell the assembler when to switch sections.  These
+macros control what commands to output to tell the assembler this.  You
+can also define additional sections.
+
+`TEXT_SECTION_ASM_OP'
+     A C expression whose value is a string containing the assembler
+     operation that should precede instructions and read-only data.
+     Normally `".text"' is right.
+
+`DATA_SECTION_ASM_OP'
+     A C expression whose value is a string containing the assembler
+     operation to identify the following data as writable initialized
+     data.  Normally `".data"' is right.
+
+`SHARED_SECTION_ASM_OP'
+     if defined, a C expression whose value is a string containing the
+     assembler operation to identify the following data as shared data.
+     If not defined, `DATA_SECTION_ASM_OP' will be used.
+
+`INIT_SECTION_ASM_OP'
+     if defined, a C expression whose value is a string containing the
+     assembler operation to identify the following data as
+     initialization code.  If not defined, GNU CC will assume such a
+     section does not exist.
+
+`EXTRA_SECTIONS'
+     A list of names for sections other than the standard two, which are
+     `in_text' and `in_data'.  You need not define this macro on a
+     system with no other sections (that GCC needs to use).
+
+`EXTRA_SECTION_FUNCTIONS'
+     One or more functions to be defined in `varasm.c'.  These
+     functions should do jobs analogous to those of `text_section' and
+     `data_section', for your additional sections.  Do not define this
+     macro if you do not define `EXTRA_SECTIONS'.
+
+`READONLY_DATA_SECTION'
+     On most machines, read-only variables, constants, and jump tables
+     are placed in the text section.  If this is not the case on your
+     machine, this macro should be defined to be the name of a function
+     (either `data_section' or a function defined in `EXTRA_SECTIONS')
+     that switches to the section to be used for read-only items.
+
+     If these items should be placed in the text section, this macro
+     should not be defined.
+
+`SELECT_SECTION (EXP, RELOC)'
+     A C statement or statements to switch to the appropriate section
+     for output of EXP.  You can assume that EXP is either a `VAR_DECL'
+     node or a constant of some sort.  RELOC indicates whether the
+     initial value of EXP requires link-time relocations.  Select the
+     section by calling `text_section' or one of the alternatives for
+     other sections.
+
+     Do not define this macro if you put all read-only variables and
+     constants in the read-only data section (usually the text section).
+
+`SELECT_RTX_SECTION (MODE, RTX)'
+     A C statement or statements to switch to the appropriate section
+     for output of RTX in mode MODE.  You can assume that RTX is some
+     kind of constant in RTL.  The argument MODE is redundant except in
+     the case of a `const_int' rtx.  Select the section by calling
+     `text_section' or one of the alternatives for other sections.
+
+     Do not define this macro if you put all constants in the read-only
+     data section.
+
+`JUMP_TABLES_IN_TEXT_SECTION'
+     Define this macro if jump tables (for `tablejump' insns) should be
+     output in the text section, along with the assembler instructions.
+     Otherwise, the readonly data section is used.
+
+     This macro is irrelevant if there is no separate readonly data
+     section.
+
+`ENCODE_SECTION_INFO (DECL)'
+     Define this macro if references to a symbol must be treated
+     differently depending on something about the variable or function
+     named by the symbol (such as what section it is in).
+
+     The macro definition, if any, is executed immediately after the
+     rtl for DECL has been created and stored in `DECL_RTL (DECL)'.
+     The value of the rtl will be a `mem' whose address is a
+     `symbol_ref'.
+
+     The usual thing for this macro to do is to record a flag in the
+     `symbol_ref' (such as `SYMBOL_REF_FLAG') or to store a modified
+     name string in the `symbol_ref' (if one bit is not enough
+     information).
+
+`STRIP_NAME_ENCODING (VAR, SYM_NAME)'
+     Decode SYM_NAME and store the real name part in VAR, sans the
+     characters that encode section info.  Define this macro if
+     `ENCODE_SECTION_INFO' alters the symbol's name string.
+
+
+File: gcc.info,  Node: PIC,  Next: Assembler Format,  Prev: Sections,  Up: Target Macros
+
+Position Independent Code
+=========================
+
+   This section describes macros that help implement generation of
+position independent code.  Simply defining these macros is not enough
+to generate valid PIC; you must also add support to the macros
+`GO_IF_LEGITIMATE_ADDRESS' and `PRINT_OPERAND_ADDRESS', as well as
+`LEGITIMIZE_ADDRESS'.  You must modify the definition of `movsi' to do
+something appropriate when the source operand contains a symbolic
+address.  You may also need to alter the handling of switch statements
+so that they use relative addresses.
+
+`PIC_OFFSET_TABLE_REGNUM'
+     The register number of the register used to address a table of
+     static data addresses in memory.  In some cases this register is
+     defined by a processor's "application binary interface" (ABI).
+     When this macro is defined, RTL is generated for this register
+     once, as with the stack pointer and frame pointer registers.  If
+     this macro is not defined, it is up to the machine-dependent files
+     to allocate such a register (if necessary).
+
+`PIC_OFFSET_TABLE_REG_CALL_CLOBBERED'
+     Define this macro if the register defined by
+     `PIC_OFFSET_TABLE_REGNUM' is clobbered by calls.  Do not define
+     this macro if `PPIC_OFFSET_TABLE_REGNUM' is not defined.
+
+`FINALIZE_PIC'
+     By generating position-independent code, when two different
+     programs (A and B) share a common library (libC.a), the text of
+     the library can be shared whether or not the library is linked at
+     the same address for both programs.  In some of these
+     environments, position-independent code requires not only the use
+     of different addressing modes, but also special code to enable the
+     use of these addressing modes.
+
+     The `FINALIZE_PIC' macro serves as a hook to emit these special
+     codes once the function is being compiled into assembly code, but
+     not before.  (It is not done before, because in the case of
+     compiling an inline function, it would lead to multiple PIC
+     prologues being included in functions which used inline functions
+     and were compiled to assembly language.)
+
+`LEGITIMATE_PIC_OPERAND_P (X)'
+     A C expression that is nonzero if X is a legitimate immediate
+     operand on the target machine when generating position independent
+     code.  You can assume that X satisfies `CONSTANT_P', so you need
+     not check this.  You can also assume FLAG_PIC is true, so you need
+     not check it either.  You need not define this macro if all
+     constants (including `SYMBOL_REF') can be immediate operands when
+     generating position independent code.
+
+
+File: gcc.info,  Node: Assembler Format,  Next: Debugging Info,  Prev: PIC,  Up: Target Macros
+
+Defining the Output Assembler Language
+======================================
+
+   This section describes macros whose principal purpose is to describe
+how to write instructions in assembler language-rather than what the
+instructions do.
+
+* Menu:
+
+* File Framework::       Structural information for the assembler file.
+* Data Output::          Output of constants (numbers, strings, addresses).
+* Uninitialized Data::   Output of uninitialized variables.
+* Label Output::         Output and generation of labels.
+* Initialization::       General principles of initialization
+			   and termination routines.
+* Macros for Initialization::
+			 Specific macros that control the handling of
+			   initialization and termination routines.
+* Instruction Output::   Output of actual instructions.
+* Dispatch Tables::      Output of jump tables.
+* Alignment Output::     Pseudo ops for alignment and skipping data.
+
+
+File: gcc.info,  Node: File Framework,  Next: Data Output,  Up: Assembler Format
+
+The Overall Framework of an Assembler File
+------------------------------------------
+
+   This describes the overall framework of an assembler file.
+
+`ASM_FILE_START (STREAM)'
+     A C expression which outputs to the stdio stream STREAM some
+     appropriate text to go at the start of an assembler file.
+
+     Normally this macro is defined to output a line containing
+     `#NO_APP', which is a comment that has no effect on most
+     assemblers but tells the GNU assembler that it can save time by not
+     checking for certain assembler constructs.
+
+     On systems that use SDB, it is necessary to output certain
+     commands; see `attasm.h'.
+
+`ASM_FILE_END (STREAM)'
+     A C expression which outputs to the stdio stream STREAM some
+     appropriate text to go at the end of an assembler file.
+
+     If this macro is not defined, the default is to output nothing
+     special at the end of the file.  Most systems don't require any
+     definition.
+
+     On systems that use SDB, it is necessary to output certain
+     commands; see `attasm.h'.
+
+`ASM_IDENTIFY_GCC (FILE)'
+     A C statement to output assembler commands which will identify the
+     object file as having been compiled with GNU CC (or another GNU
+     compiler).
+
+     If you don't define this macro, the string `gcc_compiled.:' is
+     output.  This string is calculated to define a symbol which, on
+     BSD systems, will never be defined for any other reason.  GDB
+     checks for the presence of this symbol when reading the symbol
+     table of an executable.
+
+     On non-BSD systems, you must arrange communication with GDB in
+     some other fashion.  If GDB is not used on your system, you can
+     define this macro with an empty body.
+
+`ASM_COMMENT_START'
+     A C string constant describing how to begin a comment in the target
+     assembler language.  The compiler assumes that the comment will
+     end at the end of the line.
+
+`ASM_APP_ON'
+     A C string constant for text to be output before each `asm'
+     statement or group of consecutive ones.  Normally this is
+     `"#APP"', which is a comment that has no effect on most assemblers
+     but tells the GNU assembler that it must check the lines that
+     follow for all valid assembler constructs.
+
+`ASM_APP_OFF'
+     A C string constant for text to be output after each `asm'
+     statement or group of consecutive ones.  Normally this is
+     `"#NO_APP"', which tells the GNU assembler to resume making the
+     time-saving assumptions that are valid for ordinary compiler
+     output.
+
+`ASM_OUTPUT_SOURCE_FILENAME (STREAM, NAME)'
+     A C statement to output COFF information or DWARF debugging
+     information which indicates that filename NAME is the current
+     source file to the stdio stream STREAM.
+
+     This macro need not be defined if the standard form of output for
+     the file format in use is appropriate.
+
+`ASM_OUTPUT_SOURCE_LINE (STREAM, LINE)'
+     A C statement to output DBX or SDB debugging information before
+     code for line number LINE of the current source file to the stdio
+     stream STREAM.
+
+     This macro need not be defined if the standard form of debugging
+     information for the debugger in use is appropriate.
+
+`ASM_OUTPUT_IDENT (STREAM, STRING)'
+     A C statement to output something to the assembler file to handle a
+     `#ident' directive containing the text STRING.  If this macro is
+     not defined, nothing is output for a `#ident' directive.
+
+`ASM_OUTPUT_SECTION_NAME (STREAM, DECL, NAME)'
+     A C statement to output something to the assembler file to switch
+     to section NAME for object DECL which is either a `FUNCTION_DECL',
+     a `VAR_DECL' or `NULL_TREE'.  Some target formats do not support
+     arbitrary sections.  Do not define this macro in such cases.
+
+     At present this macro is only used to support section attributes.
+     When this macro is undefined, section attributes are disabled.
+
+`OBJC_PROLOGUE'
+     A C statement to output any assembler statements which are
+     required to precede any Objective C object definitions or message
+     sending.  The statement is executed only when compiling an
+     Objective C program.
+
+
+File: gcc.info,  Node: Data Output,  Next: Uninitialized Data,  Prev: File Framework,  Up: Assembler Format
+
+Output of Data
+--------------
+
+   This describes data output.
+
+`ASM_OUTPUT_LONG_DOUBLE (STREAM, VALUE)'
+`ASM_OUTPUT_DOUBLE (STREAM, VALUE)'
+`ASM_OUTPUT_FLOAT (STREAM, VALUE)'
+`ASM_OUTPUT_THREE_QUARTER_FLOAT (STREAM, VALUE)'
+`ASM_OUTPUT_SHORT_FLOAT (STREAM, VALUE)'
+`ASM_OUTPUT_BYTE_FLOAT (STREAM, VALUE)'
+     A C statement to output to the stdio stream STREAM an assembler
+     instruction to assemble a floating-point constant of `TFmode',
+     `DFmode', `SFmode', `TQFmode', `HFmode', or `QFmode',
+     respectively, whose value is VALUE.  VALUE will be a C expression
+     of type `REAL_VALUE_TYPE'.  Macros such as
+     `REAL_VALUE_TO_TARGET_DOUBLE' are useful for writing these
+     definitions.
+
+`ASM_OUTPUT_QUADRUPLE_INT (STREAM, EXP)'
+`ASM_OUTPUT_DOUBLE_INT (STREAM, EXP)'
+`ASM_OUTPUT_INT (STREAM, EXP)'
+`ASM_OUTPUT_SHORT (STREAM, EXP)'
+`ASM_OUTPUT_CHAR (STREAM, EXP)'
+     A C statement to output to the stdio stream STREAM an assembler
+     instruction to assemble an integer of 16, 8, 4, 2 or 1 bytes,
+     respectively, whose value is VALUE.  The argument EXP will be an
+     RTL expression which represents a constant value.  Use
+     `output_addr_const (STREAM, EXP)' to output this value as an
+     assembler expression.
+
+     For sizes larger than `UNITS_PER_WORD', if the action of a macro
+     would be identical to repeatedly calling the macro corresponding to
+     a size of `UNITS_PER_WORD', once for each word, you need not define
+     the macro.
+
+`ASM_OUTPUT_BYTE (STREAM, VALUE)'
+     A C statement to output to the stdio stream STREAM an assembler
+     instruction to assemble a single byte containing the number VALUE.
+
+`ASM_BYTE_OP'
+     A C string constant giving the pseudo-op to use for a sequence of
+     single-byte constants.  If this macro is not defined, the default
+     is `"byte"'.
+
+`ASM_OUTPUT_ASCII (STREAM, PTR, LEN)'
+     A C statement to output to the stdio stream STREAM an assembler
+     instruction to assemble a string constant containing the LEN bytes
+     at PTR.  PTR will be a C expression of type `char *' and LEN a C
+     expression of type `int'.
+
+     If the assembler has a `.ascii' pseudo-op as found in the Berkeley
+     Unix assembler, do not define the macro `ASM_OUTPUT_ASCII'.
+
+`ASM_OUTPUT_POOL_PROLOGUE (FILE FUNNAME FUNDECL SIZE)'
+     A C statement to output assembler commands to define the start of
+     the constant pool for a function.  FUNNAME is a string giving the
+     name of the function.  Should the return type of the function be
+     required, it can be obtained via FUNDECL.  SIZE is the size, in
+     bytes, of the constant pool that will be written immediately after
+     this call.
+
+     If no constant-pool prefix is required, the usual case, this macro
+     need not be defined.
+
+`ASM_OUTPUT_SPECIAL_POOL_ENTRY (FILE, X, MODE, ALIGN, LABELNO, JUMPTO)'
+     A C statement (with or without semicolon) to output a constant in
+     the constant pool, if it needs special treatment.  (This macro
+     need not do anything for RTL expressions that can be output
+     normally.)
+
+     The argument FILE is the standard I/O stream to output the
+     assembler code on.  X is the RTL expression for the constant to
+     output, and MODE is the machine mode (in case X is a `const_int').
+     ALIGN is the required alignment for the value X; you should
+     output an assembler directive to force this much alignment.
+
+     The argument LABELNO is a number to use in an internal label for
+     the address of this pool entry.  The definition of this macro is
+     responsible for outputting the label definition at the proper
+     place.  Here is how to do this:
+
+          ASM_OUTPUT_INTERNAL_LABEL (FILE, "LC", LABELNO);
+
+     When you output a pool entry specially, you should end with a
+     `goto' to the label JUMPTO.  This will prevent the same pool entry
+     from being output a second time in the usual manner.
+
+     You need not define this macro if it would do nothing.
+
+`IS_ASM_LOGICAL_LINE_SEPARATOR (C)'
+     Define this macro as a C expression which is nonzero if C is used
+     as a logical line separator by the assembler.
+
+     If you do not define this macro, the default is that only the
+     character `;' is treated as a logical line separator.
+
+`ASM_OPEN_PAREN'
+`ASM_CLOSE_PAREN'
+     These macros are defined as C string constant, describing the
+     syntax in the assembler for grouping arithmetic expressions.  The
+     following definitions are correct for most assemblers:
+
+          #define ASM_OPEN_PAREN "("
+          #define ASM_CLOSE_PAREN ")"
+
+   These macros are provided by `real.h' for writing the definitions of
+`ASM_OUTPUT_DOUBLE' and the like:
+
+`REAL_VALUE_TO_TARGET_SINGLE (X, L)'
+`REAL_VALUE_TO_TARGET_DOUBLE (X, L)'
+`REAL_VALUE_TO_TARGET_LONG_DOUBLE (X, L)'
+     These translate X, of type `REAL_VALUE_TYPE', to the target's
+     floating point representation, and store its bit pattern in the
+     array of `long int' whose address is L.  The number of elements in
+     the output array is determined by the size of the desired target
+     floating point data type: 32 bits of it go in each `long int' array
+     element.  Each array element holds 32 bits of the result, even if
+     `long int' is wider than 32 bits on the host machine.
+
+     The array element values are designed so that you can print them
+     out using `fprintf' in the order they should appear in the target
+     machine's memory.
+
+`REAL_VALUE_TO_DECIMAL (X, FORMAT, STRING)'
+     This macro converts X, of type `REAL_VALUE_TYPE', to a decimal
+     number and stores it as a string into STRING.  You must pass, as
+     STRING, the address of a long enough block of space to hold the
+     result.
+
+     The argument FORMAT is a `printf'-specification that serves as a
+     suggestion for how to format the output string.
+

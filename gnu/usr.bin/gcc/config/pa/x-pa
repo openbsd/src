@@ -1,0 +1,3 @@
+# BSD on the PA already has ANSI include files which are c++ compatible.
+INSTALL_HEADERS=
+STMP_FIXPROTO=
