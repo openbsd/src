@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.33 2000/03/17 10:25:22 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.34 2000/03/21 21:00:09 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -406,8 +406,8 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
     /* These are passed as-is to the callback */
     crp->crp_opaque1 = (caddr_t) tdb;
-    crp->crp_opaque2 = (caddr_t) skip;
-    crp->crp_opaque3 = (caddr_t) protoff;
+    (long) crp->crp_opaque2 = skip;
+    (long) crp->crp_opaque3 = protoff;
 
     /* Decryption descriptor */
     if (espx)
@@ -460,8 +460,8 @@ esp_input_cb(void *op)
     tdb = (struct tdb *) crp->crp_opaque1;
     esph = (struct auth_hash *) tdb->tdb_authalgxform;
     espx = (struct enc_xform *) tdb->tdb_encalgxform;
-    skip = (int) crp->crp_opaque2;
-    protoff = (int) crp->crp_opaque3;
+    skip = (long) crp->crp_opaque2;
+    protoff = (long) crp->crp_opaque3;
     m = (struct mbuf *) crp->crp_buf;
 
     tdb->tdb_ref--;

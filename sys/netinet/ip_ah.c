@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.35 2000/03/17 10:25:22 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.36 2000/03/21 21:00:09 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -616,8 +616,8 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
     /* These are passed as-is to the callback */
     crp->crp_opaque1 = (caddr_t) tdb;
-    crp->crp_opaque2 = (caddr_t) skip;
-    crp->crp_opaque3 = (caddr_t) protoff;
+    (long) crp->crp_opaque2 = skip;
+    (long) crp->crp_opaque3 = protoff;
 
     return crypto_dispatch(crp);
 }
@@ -640,8 +640,8 @@ ah_input_cb(void *op)
     crd = crp->crp_desc;
     tdb = (struct tdb *) crp->crp_opaque1;
     ahx = (struct auth_hash *) tdb->tdb_authalgxform;
-    skip = (int) crp->crp_opaque2;
-    protoff = (int) crp->crp_opaque3;
+    skip = (long) crp->crp_opaque2;
+    protoff = (long) crp->crp_opaque3;
     m = (struct mbuf *) crp->crp_buf;
 
     tdb->tdb_ref--;
@@ -1062,8 +1062,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     /* These are passed as-is to the callback */
     crp->crp_opaque1 = (caddr_t) tdb;
-    crp->crp_opaque2 = (caddr_t) skip;
-    crp->crp_opaque3 = (caddr_t) protoff;
+    (long) crp->crp_opaque2 = skip;
+    (long) crp->crp_opaque3 = protoff;
 
     return crypto_dispatch(crp);
 }
@@ -1081,8 +1081,8 @@ ah_output_cb(void *op)
 
     crp = (struct cryptop *) op;
     tdb = (struct tdb *) crp->crp_opaque1;
-    skip = (int) crp->crp_opaque2;
-    protoff = (int) crp->crp_opaque3;
+    skip = (long) crp->crp_opaque2;
+    protoff = (long) crp->crp_opaque3;
     m = (struct mbuf *) crp->crp_buf;
 
     tdb->tdb_ref--;
