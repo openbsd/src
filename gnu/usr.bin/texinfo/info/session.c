@@ -1,5 +1,5 @@
 /* session.c -- The user windowing interface to Info.
-   $Id: session.c,v 1.2 1999/01/11 16:38:09 espie Exp $
+   $Id: session.c,v 1.3 1999/11/22 05:13:39 deraadt Exp $
 
    Copyright (C) 1993, 96, 97 Free Software Foundation, Inc.
 
@@ -1912,6 +1912,8 @@ info_menu_or_ref_item (window, count, key, builder, ask_p)
                       which = closest;
                   }
 
+                if (which < 0)
+                  which = 0;
                 defentry = (REFERENCE *)xmalloc (sizeof (REFERENCE));
                 defentry->label = xstrdup (refs[which]->label);
                 defentry->filename = refs[which]->filename;
