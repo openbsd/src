@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.3 2004/11/14 11:58:43 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.4 2004/12/29 01:11:13 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -92,7 +92,7 @@ sub show
 	my $d;
 
 	if ($playfield) {
-	    my $stars = ($current * $playfield) / $total;
+	    my $stars = int (($current * $playfield) / $total + 0.5);
 	    my $percent = int (($current * 100)/$total + 0.5);
 	    $d = "$header|".'*'x$stars.' 'x($playfield-$stars)."| ".$percent."\%";
 	} else {
