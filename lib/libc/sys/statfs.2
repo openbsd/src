@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.15 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: statfs.2,v 1.16 2003/11/21 10:45:48 jmc Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -55,7 +55,7 @@ structure defined as follows:
 .Bd -literal
 typedef struct { int32_t val[2]; } fsid_t;
 
-#define MFSNAMELEN   16 /* length of fs type name, including NUL */
+#define MFSNAMELEN   16 /* length of fs type name, including nul */
 #define MNAMELEN     90	/* length of buffer for returned name */
 
 struct statfs {
@@ -71,7 +71,8 @@ struct statfs {
     uid_t      f_owner;       /* user that mounted the file system */
     u_int32_t  f_syncwrites;  /* count of sync writes since mount */
     u_int32_t  f_asyncwrites; /* count of async writes since mount */
-    u_int32_t  f_spare[4];    /* spare for later */
+    u_int32_t  f_ctime;       /* last mount [-u] time */
+    u_int32_t  f_spare[3];    /* spare for later */
     char       f_fstypename[MFSNAMELEN]; /* fs type name */
     char       f_mntonname[MNAMELEN];    /* directory on which mounted */
     char       f_mntfromname[MNAMELEN];  /* mounted file system */
