@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.30 2001/06/07 03:15:15 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.31 2001/06/07 04:23:35 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -122,7 +122,6 @@ static struct dynload_script libkeynote_script[] = {
 };
 #endif
 
-int keynote_sessid = -1;
 char **keynote_policy_asserts = NULL;
 int keynote_policy_asserts_num = 0;
 char **x509_policy_asserts = NULL;
@@ -1522,15 +1521,6 @@ policy_init (void)
     return;
 #endif
 
-  /* If there exists a session already, release all its resources.  */
-  if (keynote_sessid != -1)
-    LK (kn_close, (keynote_sessid));
-
-  /* Initialize a session.  */
-  keynote_sessid = LK (kn_init, ());
-  if (keynote_sessid == -1)
-    log_fatal ("policy_init: kn_init () failed");
-
   /* Get policy file from configuration.  */
   policy_file = conf_get_str ("General", "Policy-file");
   if (!policy_file)
@@ -1569,16 +1559,8 @@ policy_init (void)
   /* Begone!  */
   free (ptr);
 
-  /* Add each individual policy in the session.  */
-  for (fd = 0; fd < i; fd++)
-    {
-      if (LK (kn_add_assertion, (keynote_sessid, asserts[fd],
-				 strlen (asserts[fd]), ASSERT_FLAG_LOCAL))
-	  == -1)
-        log_print ("policy_init: "
-		   "kn_add_assertion (%d, %p, %d, ASSERT_FLAG_LOCAL) failed",
-                   keynote_sessid, asserts[fd], strlen (asserts[fd]));
-    }
+  if (asserts == (char **) NULL)
+    log_print ("policy_init: all policies flushed");
 
   /* Cleanup */
   if (keynote_policy_asserts)
@@ -1844,7 +1826,7 @@ int
 keynote_cert_get_key (void *scert, void *keyp)
 {
   struct keynote_keylist *kl;
-  int sid, num;
+  int sid, kid, num;
   char **foo;
 
   foo = LK (kn_read_asserts, ((char *)scert, strlen ((char *)scert), &num));
@@ -1854,7 +1836,18 @@ keynote_cert_get_key (void *scert, void *keyp)
       return 0;
     }
 
-  sid = LK (kn_add_assertion, (keynote_sessid, foo[num - 1],
+  kid = LK (kn_init, ());
+  if (kid == -1)
+    {
+      log_print ("keynote_cert_get_key: failed to initialize new policy "
+		 "session");
+      while (num--)
+	free (foo[num]);
+      free (foo);
+      return 0;
+    }
+
+  sid = LK (kn_add_assertion, (kid, foo[num - 1],
 			       strlen (foo[num - 1]), 0));
   while (num--)
     free (foo[num]);
@@ -1863,12 +1856,13 @@ keynote_cert_get_key (void *scert, void *keyp)
   if (sid == -1)
     {
       log_print ("keynote_cert_get_key: failed to add assertion");
+      LK (kn_close, (kid));
       return 0;
     }
 
   *(RSA **)keyp = NULL;
 
-  kl = LK (kn_get_licensees, (keynote_sessid, sid));
+  kl = LK (kn_get_licensees, (kid, sid));
   while (kl)
     {
       if (kl->key_alg == KEYNOTE_ALGORITHM_RSA)
@@ -1880,7 +1874,8 @@ keynote_cert_get_key (void *scert, void *keyp)
       kl = kl->key_next;
     }
 
-  LK (kn_remove_assertion, (keynote_sessid, sid));
+  LK (kn_remove_assertion, (kid, sid));
+  LK (kn_close, (kid));
   return *(RSA **)keyp == NULL ? 0 : 1;
 }
 
