@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.9 1998/04/25 04:41:29 millert Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.10 1998/07/09 19:09:59 csapuntz Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -160,7 +160,8 @@ void usage ()
 	printf ("\t-v       - verbose mode\n");
 	printf ("\t-s       - silent mode\n");
 	printf ("\t-f disc  - a block device name such as /dev/cd0c\n");
-	printf ("\tMUSIC_CD - shell variable with device name\n");
+	printf ("\tDISC - shell variable with device name\n");
+	printf ("\tCDROM - shell variable checked if DISC isn't sent\n");
 	printf ("Commands:\n");
 	help ();
 	exit (1);
@@ -455,17 +456,9 @@ int play (arg)
 
 	if (! arg || ! *arg) {
 		/* Play the whole disc */
-		if (msf)
-			return
-			  play_blocks (msf2lba (toc_buffer[0].addr.msf.minute,
-						toc_buffer[0].addr.msf.second,
-						toc_buffer[0].addr.msf.frame),
-				       msf2lba (toc_buffer[n].addr.msf.minute,
-						toc_buffer[n].addr.msf.second,
-						toc_buffer[n].addr.msf.frame));
-		else
-			return play_blocks (ntohl (toc_buffer[0].addr.lba),
-					    ntohl (toc_buffer[n].addr.lba));
+	        
+		return (play_track(h.starting_track, 1, 
+				   h.ending_track, 1));
 	}
 
 	if (strchr (arg, '#')) {
@@ -716,7 +709,7 @@ Try_Absolute_Timed_Addresses:
 		goto Clean_up;
 
 	if (end == 0)
-		end = n;
+		end = h.ending_track;
 	return (play_track (start, istart, end, iend));
 
 Clean_up:
