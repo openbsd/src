@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.8 2001/05/16 23:34:53 mickey Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.9 2001/10/28 18:58:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -75,7 +75,7 @@ int ac97_attach __P((struct ac97_host_if *));
 int ac97_set_rate __P((struct ac97_codec_if *, struct audio_params *, int));
 
 #define	AC97_REG_RESET			0x00
-#define	AC97_SOUND_ENHANCEMENT(reg)	(((reg) >> 10) & 0x1f)
+#define	AC97_CAPS_ENHANCEMENT(reg)	(((reg) >> 10) & 0x1f)
 #define	AC97_REG_MASTER_VOLUME		0x02
 #define	AC97_REG_HEADPHONE_VOLUME	0x04
 #define	AC97_REG_MASTER_VOLUME_MONO	0x06
@@ -124,6 +124,7 @@ int ac97_set_rate __P((struct ac97_codec_if *, struct audio_params *, int));
 #define	AC97_EXT_AUDIO_REV_MASK		0x0c00
 #define	AC97_EXT_AUDIO_ID		0xc000
 #define	AC97_EXT_AUDIO_BITS		"\020\01vra\02dra\03spdif\04vrm\05dsa0\06dsa1\07cdac\010sdac\011ldac\012amap\013rev0\014rev1\017id0\020id1"
+#define	AC97_SINGLERATE			48000
 #define	AC97_REG_FRONT_DAC_RATE		0x2c
 #define	AC97_REG_SURROUND_DAC_RATE	0x2e
 #define	AC97_REG_PCM_DAC_RATE		0x30

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.24 2001/10/24 16:30:05 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.25 2001/10/28 18:58:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -283,6 +283,7 @@ struct ac97_softc {
 	struct ac97_source_info source_info[2 * SOURCE_INFO_SIZE];
 	int num_source_info;
 	enum ac97_host_flags host_flags;
+	u_int16_t caps, ext_id;
 	u_int16_t shadow_reg[128];
 };
 
@@ -630,7 +631,7 @@ ac97_attach(host_if)
 	struct ac97_host_if *host_if;
 {
 	struct ac97_softc *as;
-	u_int16_t id1, id2, caps;
+	u_int16_t id1, id2;
 	u_int32_t id;
 	mixer_ctrl_t ctl;
 	int error, i;
@@ -661,7 +662,7 @@ ac97_attach(host_if)
 	ac97_setup_defaults(as);
 	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
 	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
-	ac97_read(as, AC97_REG_RESET, &caps);
+	ac97_read(as, AC97_REG_RESET, &as->caps);
 
 	id = (id1 << 16) | id2;
 	if (id) {
@@ -693,19 +694,21 @@ ac97_attach(host_if)
 	} else
 		printf("ac97: codec id not read\n");
 
-	if (caps) {
+	if (as->caps) {
 		printf("ac97: codec features ");
 		for (i = 0; i < 10; i++) {
-			if (caps & (1 << i))
+			if (as->caps & (1 << i))
 				printf("%s, ", ac97feature[i]);
 		}
-		printf("%s\n", ac97enhancement[AC97_SOUND_ENHANCEMENT(caps)]);
+		printf("%s\n",
+		    ac97enhancement[AC97_CAPS_ENHANCEMENT(as->caps)]);
 	}
 
-	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &caps);
-	if (caps)
-		DPRINTF(("ac97: ext id %b\n", caps, AC97_EXT_AUDIO_BITS));
-	if (caps & AC97_EXT_AUDIO_VRA)
+	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
+	if (as->ext_id)
+		DPRINTF(("ac97: ext id %b\n", as->ext_id,
+		    AC97_EXT_AUDIO_BITS));
+	if (as->ext_id & AC97_EXT_AUDIO_VRA)
 		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL,
 		    AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM);
 
@@ -948,12 +951,15 @@ ac97_set_rate(codec_if, p, mode)
 
 	DPRINTFN(5, ("set_rate(%lu) ", p->sample_rate));
 
+	if (!(as->ext_id & AC97_EXT_AUDIO_VRA)) {
+		p->sample_rate = AC97_SINGLERATE;
+		return (0);
+	}
+
 	if (p->sample_rate > 0xffff) {
 		if (mode != AUMODE_PLAY)
 			return (EINVAL);
-		if (ac97_read(as, AC97_REG_EXT_AUDIO_ID, &id))
-			return (EIO);
-		if (!(id & AC97_EXT_AUDIO_DRA))
+		if (!(as->ext_id & AC97_EXT_AUDIO_DRA))
 			return (EINVAL);
 		if (ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &id))
 			return (EIO);
