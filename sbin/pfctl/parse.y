@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.132 2002/07/21 21:28:06 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.133 2002/07/23 18:01:15 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -242,8 +242,6 @@ typedef struct {
 %type	<v.string>	label string
 %type	<v.keep_state>	keep
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
-%type	<v.timeout_spec>	timeout_spec timeout_list
-%type	<v.limit_spec>	limit_spec limit_list
 %%
 
 ruleset		: /* empty */
