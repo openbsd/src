@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcmd.c,v 1.5 1996/10/16 06:17:56 millert Exp $	*/
+/*	$OpenBSD: kcmd.c,v 1.6 1996/10/18 17:17:09 tholo Exp $	*/
 /*	$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-static char rcsid[] = "$OpenBSD: kcmd.c,v 1.5 1996/10/16 06:17:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: kcmd.c,v 1.6 1996/10/18 17:17:09 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,6 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 			goto bad;
 		}
 again:
-		s3 = accept(s2, (struct sockaddr *)&from, &len);
                 s3 = accept(s2, (struct sockaddr *)&from, &len);
 		/*
 		 * XXX careful for ftp bounce attacks. If discovered, shut them
