@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.h,v 1.9 1999/04/30 11:46:24 niklas Exp $	*/
-/*	$EOM: message.h,v 1.46 1999/04/29 10:51:30 niklas Exp $	*/
+/*	$OpenBSD: message.h,v 1.10 1999/05/01 22:58:03 niklas Exp $	*/
+/*	$EOM: message.h,v 1.47 1999/05/01 22:36:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -175,6 +175,7 @@ extern int message_register_post_send (struct message *,
 				       void (*) (struct message *));
 extern void message_post_send (struct message *);
 extern void message_send (struct message *);
+extern void message_send_delete (struct sa *);
 extern int message_send_info (struct message *);
 extern void message_send_notification (struct message *, struct sa *,
 				       u_int16_t, struct proto *, int);

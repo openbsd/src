@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.17 1999/04/30 11:46:06 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.89 1999/04/29 12:08:00 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.18 1999/05/01 22:58:02 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.90 1999/05/01 22:36:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -587,8 +587,7 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
 void
 sa_delete (struct sa *sa, int notify)
 {
-  /* XXX we do not send DELETE payloads just yet.  */
-
+  message_send_delete (sa);
   sa_free (sa);
 }
 

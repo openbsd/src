@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.17 1999/04/30 11:48:19 niklas Exp $	*/
-/*	$EOM: message.c,v 1.130 1999/04/29 21:43:14 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.18 1999/05/01 22:58:02 niklas Exp $	*/
+/*	$EOM: message.c,v 1.131 1999/05/01 22:36:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1207,7 +1207,7 @@ struct info_args {
     } n;
     struct {
       u_int16_t nspis;
-      u_int8_t **spi;
+      u_int8_t *spis;
     } d;
   } u;
 };
@@ -1244,6 +1244,40 @@ message_send_notification (struct message *msg, struct sa *isakmp_sa,
 			   msg->exchange
 			   ? msg->exchange->doi->id : ISAKMP_DOI_ISAKMP,
 			   0, &args, 0, 0);
+}
+
+/* Send a DELETE inside an informational exchange for each protocol in SA.  */
+void
+message_send_delete (struct sa *sa)
+{
+  struct info_args args;
+  struct proto *proto;
+  struct sa *isakmp_sa;
+  struct sockaddr *dst;
+  socklen_t dstlen;
+
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  isakmp_sa = sa_isakmp_lookup_by_peer (dst, dstlen);
+  if (!isakmp_sa)
+    {
+      /*
+       * XXX We ought to setup an ISAKMP SA with our peer here and send
+       * the DELETE over that one.
+       */
+      return;
+    }
+
+  args.discr = 'D';
+  args.doi = sa->doi->id;
+  args.u.d.nspis = 1;
+  for (proto = TAILQ_FIRST (&sa->protos); proto;
+       proto = TAILQ_NEXT (proto, link))
+    {
+      args.proto = proto->proto;
+      args.spi_sz = proto->spi_sz[1];
+      args.u.d.spis = proto->spi[1];
+      exchange_establish_p2 (isakmp_sa, ISAKMP_EXCH_INFO, 0, &args, 0 ,0);
+    }
 }
 
 /* Build the informational message into MSG.  */
@@ -1285,7 +1319,7 @@ message_send_info (struct message *msg)
       SET_ISAKMP_DELETE_PROTO (buf, args->proto);
       SET_ISAKMP_DELETE_SPI_SZ (buf, args->spi_sz);
       SET_ISAKMP_DELETE_NSPIS (buf, args->u.d.nspis);
-      memcpy (buf + ISAKMP_DELETE_SPI_OFF, args->u.d.spi,
+      memcpy (buf + ISAKMP_DELETE_SPI_OFF, args->u.d.spis,
 	      args->u.d.nspis * args->spi_sz);
       break;
     }
@@ -1657,6 +1691,10 @@ message_negotiate_sa (struct message *msg,
   return -1;
 }
 
+/*
+ * Add SA, proposal and transform payload(s) to MSG out of information
+ * found in the exchange MSG is part of..
+ */
 int
 message_add_sa_payload (struct message *msg)
 {

@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.10 1999/04/30 11:48:06 niklas Exp $
-$EOM: TO-DO,v 1.35 1999/04/30 11:37:43 niklas Exp $
+$OpenBSD: TO-DO,v 1.11 1999/05/01 22:58:02 niklas Exp $
+$EOM: TO-DO,v 1.36 1999/05/01 22:37:29 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -55,7 +55,7 @@ the program is far from ready in any area.
 
 * New group mode.
 
-* DELETE payload handling, and generation from ui.
+* DELETE payload handling, and generation from ui. [generation done]
 
 * Deal well with incoming informational exchanges. [done]
 
