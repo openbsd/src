@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.70 2004/10/11 13:10:25 espie Exp $
+# $OpenBSD: pkg_add,v 1.71 2004/10/11 13:29:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -224,6 +224,15 @@ sub install
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	print "You may wish to add ", $self->fullname(), " to /etc/man.conf\n";
+}
+
+package OpenBSD::PackingElement::Manpage;
+
+sub install
+{
+	my ($self, $state) = @_;
+	$self->SUPER::install($state);
+	$self->register_manpage($state) unless $state->{not};
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -679,11 +688,12 @@ sub do_script
 
 sub manpages_index
 {
-	my ($plist, $destdir) = @_;
-	return unless defined $plist->{state}->{mandirs};
+	my ($state) = @_;
+	return unless defined $state->{mandirs};
+	my $destdir = $state->{destdir};
 	require OpenBSD::Makewhatis;
 
-	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
+	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
 		if ($@) {
@@ -735,7 +745,6 @@ sub really_add($$)
 		last if $interrupted;
 	}
 
-	manpages_index($plist, $destdir);
 	$handle->close();
 
 	if (!$interrupted) {
@@ -839,6 +848,7 @@ while (my $pkg = shift @todo) {
 my $dielater = @_;
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
+manpages_index($state);
 ensure_ldconfig($opt_v) unless $opt_n;
 
 if ($state->{beverbose}) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.49 2004/10/11 13:10:25 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.50 2004/10/11 13:29:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -77,6 +77,10 @@ sub clone
 	bless \%h, ref($object);
 }
 	
+
+sub register_manpage
+{
+}
 
 sub destate
 {
@@ -381,10 +385,9 @@ our @ISA=qw(OpenBSD::PackingElement::FileBase);
 __PACKAGE__->setKeyword('man');
 sub keyword() { "man" }
 
-sub destate
+sub register_manpage
 {
 	my ($self, $state) = @_;
-	$self->SUPER::destate($state);
 	my $fname = $self->fullname();
 	if ($fname =~ m,^(.*/man)/(?:man|cat).*?/,) {
 		my $d = $1;
@@ -392,7 +395,7 @@ sub destate
 		$state->{mandirs}->{$d} = [] 
 		    unless defined $state->{mandirs}->{$d};
 		push(@{$state->{mandirs}->{$d}}, $fname);
-	}
+    	}
 }
 
 package OpenBSD::PackingElement::Lib;

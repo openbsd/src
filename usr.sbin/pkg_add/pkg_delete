@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.52 2004/10/11 13:10:25 espie Exp $
+# $OpenBSD: pkg_delete,v 1.53 2004/10/11 13:29:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -495,17 +495,19 @@ sub remove_packing_info
 
 sub manpages_unindex
 {
-	my ($plist, $destdir) = @_;
-	return unless defined $plist->{state}->{mandirs};
+	my ($state) = @_;
+	return unless defined $state->{mandirs};
+	my $destdir = $state->{destdir};
 	require OpenBSD::Makewhatis;
 
-	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
+	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
 		if ($@) {
 			print STDERR "Error in makewhatis: $@\n";
 		}
 	}
+	undef $state->{mandirs};
 }
 
 sub validate_plist($$)
@@ -550,7 +552,8 @@ sub delete_package
 	if ($plist->has(DEINSTALL)) {
 		$plist->get(DEINSTALL)->delete($state);
 	} 
-	manpages_unindex($plist, $state->{destdir});
+	$plist->visit('register_manpage', $state);
+	manpages_unindex($state);
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		$item->delete($state);
 	}
