@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.4 2000/09/03 21:01:50 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.5 2001/01/11 21:24:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -100,7 +100,9 @@ sti_sgc_probe(parent, match, aux)
 	} else
 		rom = PAGE0->pd_resv2[1];
 
+#ifdef STIDEBUG
 	printf ("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
+#endif
 
 	/* if it does not map, probably part of the lasi space */
 	if (rom != ca->ca_hpa &&
@@ -118,9 +120,11 @@ sti_sgc_probe(parent, match, aux)
 		}
 	}
 
+#ifdef STIDEBUG
 	printf("sti: ioh=%x, romh=%x\n", ioh, romh);
+#endif
 
-	devtype = bus_space_read_1(ca->ca_iot, ioh, 3);
+	devtype = bus_space_read_1(ca->ca_iot, romh, 3);
 
 #ifdef STIDEBUG
 	printf("sti: devtype=%d\n", devtype);
@@ -167,9 +171,6 @@ sti_sgc_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_devtype = bus_space_read_1(sc->iot, sc->ioh, 3);
-	printf ("sti: hpa=%x, rom=%x\n", ca->ca_hpa, addr);
-
 	/* if it does not map, probably part of the lasi space */
 	if (addr == ca->ca_hpa)
 		sc->romh = sc->ioh;
@@ -186,8 +187,11 @@ sti_sgc_attach(parent, self, aux)
 		}
 	}
 
+	sc->sc_devtype = bus_space_read_1(sc->iot, sc->romh, 3);
+#ifdef STIDEBUG
+	printf("sti: hpa=%x, rom=%x\n", ca->ca_hpa, addr);
 	printf("sti: ioh=%x, romh=%x\n", sc->ioh, sc->romh);
-
+#endif
 	sti_attach_common(sc);
 }
 
