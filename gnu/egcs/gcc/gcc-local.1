@@ -1,0 +1,108 @@
+.\" $OpenBSD: gcc-local.1,v 1.1 2002/11/24 00:58:17 espie Exp $
+.\"
+.\" Copyright (c) 2002 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd Nov. 23, 2002
+.Dt GCC-LOCAL 1
+.Os
+.Sh NAME
+.Nm gcc-local
+.Nd local modifications to gcc
+.Sh DESCRIPTION
+The
+.Nm gcc
+software comes with specific modifications for
+.Ox .
+.Bl -dash
+.It
+.Nm gcc
+does not search under 
+.Pa /usr/local
+for include files nor for libraries:
+as a system compiler, it only searches the system paths by default.
+.It
+On
+.Ox ,
+the 
+.Fl pthread
+option should be used to link threaded code, isolating the program from
+operating system details.
+.It
+On most architectures,
+trampoline code marks the smallest possible area around the trampoline stub 
+executable using 
+.Xr mprotect 2 ,
+since the stack area is by default non-executable.
+.It
+The 
+.Fl O2
+option does not include 
+.Fl fstrict-aliasing ,
+as this option causes issues on some legacy code.
+.Fl fstrict-aliasing
+is very unsafe with code that plays tricks with casts, bypassing the 
+already weak type system of C.
+.It
+.Nm gcc
+recognizes the extra format attribute syslog, to better match
+the definition of 
+.Xr syslog 2 ,
+and shut erroneous warnings when used with
+.Fl pedantic .
+.It
+.Nm gcc
+recognizes the extra attribute nonnull, which can be used to mark
+arguments that can't be 
+.Dv NULL .
+On the other hand, the printf format attribute does not imply nonnull
+for the format.
+This allows for correct format checking on the
+.Xr err 3
+function family.
+.It
+.Nm gcc
+recognizes the extra attribute sentinel, which can be used to mark varargs
+function that need a
+.Dv NULL
+pointer to mark argument termination, like
+.Xr execl 3 .
+This exposes latent bugs for 64 bit architectures,
+where a terminating 0 will expand to a 32 bit int, and not a full-fledged
+64 bits pointer.
+.It
+On some
+.Ox
+platforms, 
+.Nm gcc
+still uses 
+.Xr setjmp 3 /
+.Xr longjump 3 -
+style exceptions, and so needs extra fixes beyond the pure 2.95.3 release.
+.It
+On i386, the optimizer features an extra peephole which reduces the function
+prologues enough to allow for the ramdisk to fit on one floppy.
+.El
+.Sh SEE ALSO
+.Xr gcc 1 

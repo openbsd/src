@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2002/11/22 20:26:12 marc Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2002/11/24 00:58:16 espie Exp $
 
-MAN=		cccp.1 gcc.1 
+MAN=		cccp.1 gcc.1 gcc-local.1
 MLINKS+=	gcc.1 cc.1
 MLINKS+=	cccp.1 cpp.1
 
