@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.8 2001/05/16 19:40:05 mickey Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.9 2001/06/04 12:48:37 ho Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -47,6 +47,13 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
+
+#ifdef WSDISPLAY_DEBUG
+#define DPRINTF(x)	 if (wsdisplaydebug) printf x
+int	wsdisplaydebug = 0;
+#else
+#define DPRINTF(x)
+#endif
 
 struct usl_syncdata {
 	struct wsscreen *s_scr;
@@ -143,7 +150,7 @@ usl_sync_check(sd)
 {
 	if (sd->s_proc == pfind(sd->s_pid))
 		return (1);
-	printf("usl_sync_check: process %d died\n", sd->s_pid);
+	DPRINTF(("usl_sync_check: process %d died\n", sd->s_pid));
 	usl_sync_done(sd);
 	return (0);
 }
@@ -195,7 +202,7 @@ usl_detachack(sd, ack)
 	int ack;
 {
 	if (!(sd->s_flags & SF_DETACHPENDING)) {
-		printf("usl_detachack: not detaching\n");
+		DPRINTF(("usl_detachack: not detaching\n"));
 		return (EINVAL);
 	}
 
@@ -214,10 +221,10 @@ usl_detachtimeout(arg)
 {
 	struct usl_syncdata *sd = arg;
 
-	printf("usl_detachtimeout\n");
+	DPRINTF(("usl_detachtimeout\n"));
 
 	if (!(sd->s_flags & SF_DETACHPENDING)) {
-		printf("usl_detachtimeout: not detaching\n");
+		DPRINTF(("usl_detachtimeout: not detaching\n"));
 		return;
 	}
 
@@ -260,7 +267,7 @@ usl_attachack(sd, ack)
 	int ack;
 {
 	if (!(sd->s_flags & SF_ATTACHPENDING)) {
-		printf("usl_attachack: not attaching\n");
+		DPRINTF(("usl_attachack: not attaching\n"));
 		return (EINVAL);
 	}
 
@@ -279,10 +286,10 @@ usl_attachtimeout(arg)
 {
 	struct usl_syncdata *sd = arg;
 
-	printf("usl_attachtimeout\n");
+	DPRINTF(("usl_attachtimeout\n"));
 
 	if (!(sd->s_flags & SF_ATTACHPENDING)) {
-		printf("usl_attachtimeout: not attaching\n");
+		DPRINTF(("usl_attachtimeout: not attaching\n"));
 		return;
 	}
 
