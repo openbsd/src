@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.451 2001/10/05 17:44:27 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.452 2001/10/05 20:55:09 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1440,7 +1440,7 @@ product MATROX PRODUCTIVA_AGP	0x1001	MGA G100 AGP
 product MATROX MYSTIQUE		0x102b	MGA 1064SG
 
 /* Mitsubishi Electronics */
-product MITSUBISHIELEC		0x0304	GUI Accel
+product MITSUBISHIELEC GUI	0x0304	GUI Accel
 
 /* Motorola products */
 product MOT MPC106		0x0002	MPC106 Host-PCI
