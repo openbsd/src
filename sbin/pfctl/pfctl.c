@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.59 2002/04/01 15:06:21 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.60 2002/04/01 20:01:16 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -48,7 +48,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sysexits.h>
 
 #include "pfctl_parser.h"
 
@@ -181,7 +180,7 @@ usage(void)
 	fprintf(stderr, "[-l interface] [-m modifier] [-s modifier] ");
 	fprintf(stderr, "[-t modifier] [-x level]\n");
 
-	exit(EX_USAGE);
+	exit(1);
 }
 
 int
@@ -916,7 +915,7 @@ pfctl_clear_rule_counters(int dev, int opts)
 int
 main(int argc, char *argv[])
 {
-	int error = EX_OK;
+	int error = 0;
 	int dev = -1;
 	int ch;
 	int mode = O_RDONLY;
@@ -1025,7 +1024,7 @@ main(int argc, char *argv[])
 
 	if (opts & PF_OPT_DISABLE)
 		if (pfctl_disable(dev, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (clearopt != NULL) {
 		switch (*clearopt) {
@@ -1049,7 +1048,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			warnx("Unknown flush modifier '%s'", clearopt);
-			error = EX_USAGE;
+			error = 1;
 		}
 	}
 	if (state_killers)
@@ -1057,11 +1056,11 @@ main(int argc, char *argv[])
 
 	if (rulesopt != NULL)
 		if (pfctl_rules(dev, rulesopt, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (natopt != NULL)
 		if (pfctl_nat(dev, natopt, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (showopt != NULL) {
 		switch (*showopt) {
@@ -1088,29 +1087,29 @@ main(int argc, char *argv[])
 			break;
 		default:
 			warnx("Unknown show modifier '%s'", showopt);
-			error = EX_USAGE;
+			error = 1;
 		}
 	}
 
 	if (logopt != NULL)
 		if (pfctl_log(dev, logopt, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (hintopt != NULL)
 		if (pfctl_hint(dev, hintopt, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (timeoutopt != NULL)
 		if (pfctl_timeout(dev, timeoutopt, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (limitopt != NULL)
 		if (pfctl_limit(dev, limitopt, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (opts & PF_OPT_ENABLE)
 		if (pfctl_enable(dev, opts))
-			error = EX_USAGE;
+			error = 1;
 
 	if (debugopt != NULL) {
 		switch (*debugopt) {
@@ -1125,13 +1124,13 @@ main(int argc, char *argv[])
 			break;
 		default:
 			warnx("Unknown debug level '%s'", debugopt);
-			error = EX_USAGE;
+			error = 1;
 		}
 	}
 
 	if (opts & PF_OPT_CLRRULECTRS) {
 		if (pfctl_clear_rule_counters(dev, opts))
-			error = EX_USAGE;
+			error = 1;
 	}
 
 	close(dev);
