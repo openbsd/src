@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.13 2003/12/04 21:13:37 miod Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.14 2003/12/10 07:46:33 itojun Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -708,7 +708,7 @@ chainlength(pmp, start, count)
 	while (++idx <= max_idx) {
 		if (len >= count)
 			break;
-		if ((map = pmp->pm_inusemap[idx]) != NULL) {
+		if ((map = pmp->pm_inusemap[idx]) != 0) {
 			len +=  ffs(map) - 1;
 			break;
 		}
