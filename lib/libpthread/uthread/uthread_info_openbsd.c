@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_info_openbsd.c,v 1.1 1999/11/25 06:57:05 d Exp $
+ * $OpenBSD: uthread_info_openbsd.c,v 1.2 2000/01/06 07:18:01 d Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
@@ -42,6 +42,8 @@
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
+
+int _thread_dump_verbose = 0;
 
 struct s_thread_info {
 	enum pthread_state state;
@@ -93,11 +95,11 @@ truncname(const char *name, int maxlen)
 }
 
 static void
-_thread_dump_entry(pthread, fd)
+_thread_dump_entry(pthread, fd, verbose)
 	pthread_t pthread;
 	int fd;
+	int verbose;
 {
-	pthread_t	t;
 	const char	*state;
 	char		s[512];
 	char		location[30];
@@ -120,24 +122,27 @@ _thread_dump_entry(pthread, fd)
 	/* Output a record for the current thread: */
 	s[0] = 0;
 	snprintf(s, sizeof(s), 
-	    " %8p%c%-11s %2d %c%c%c%c%c%c%c %-8.8s %s\n",
+	    " %8p%c%-11s %2d %c%c%c%c%c%c %04x %-8.8s %s\n",
 	    (void *)pthread,
 	    (pthread == _thread_run)     ? '*' : ' ',
 	    state,
 	    pthread->active_priority,
 	    (pthread->flags & PTHREAD_FLAGS_PRIVATE)	  ? 'p' : '-',
-	    (pthread->flags & PTHREAD_EXITING)		  ? 'e' :
+	    (pthread->flags & PTHREAD_EXITING)		  ? 'E' :
 	    (pthread->flags & PTHREAD_FLAGS_CANCELED)	  ? 'C' :
 	    (pthread->flags & PTHREAD_FLAGS_CANCELPT)	  ? 'c' : '-',
 	    (pthread->flags & PTHREAD_FLAGS_TRACE)	  ? 't' : '-',
-	    (pthread->attr.flags & PTHREAD_DETACHED)      ? 'D' : '-',
-	    (pthread->attr.flags & PTHREAD_SCOPE_SYSTEM)  ? 'S' : '-',
-	    (pthread->attr.flags & PTHREAD_INHERIT_SCHED) ? 'I' : '-',
-	    (pthread->attr.flags & PTHREAD_NOFLOAT)       ? 'F' : '-',
+	    (pthread->attr.flags & PTHREAD_DETACHED)      ? 'd' : '-',
+	    (pthread->attr.flags & PTHREAD_INHERIT_SCHED) ? 'i' : '-',
+	    (pthread->attr.flags & PTHREAD_NOFLOAT)       ? '-' : 'f',
+	    ((int)pthread->sigmask),
 	    (pthread->name == NULL) ? "" : pthread->name,
-	    location
+	    (verbose) ? location : ""
 	);
 	_thread_sys_write(fd, s, strlen(s));
+
+	if (!verbose)
+		return;
 
 	/* Process according to thread state: */
 	switch (pthread->state) {
@@ -176,7 +181,7 @@ _thread_dump_entry(pthread, fd)
 			snprintf(s, sizeof(s), 
 			    "%s owner %p\n",
 			    info_lead,
-			    NULL /* (*pthread->data.mutex)->m_owner*/);
+			    pthread->data.mutex->m_owner);
 			_thread_sys_write(fd, s, strlen(s));
 		}
 		break;
@@ -189,7 +194,7 @@ _thread_dump_entry(pthread, fd)
 		break;
 	case PS_JOIN:
 		{
-			struct pthread *t, **last;
+			struct pthread *t, * volatile *last;
 			pthread_entry_t *e;
 
 			/* Find the end of the list: */
@@ -260,40 +265,54 @@ _thread_dump_info(void)
 	int             i;
 	pthread_t       pthread;
 	pq_list_t *	pq_list;
+	int		verbose;
+
+	verbose = _thread_dump_verbose;
+	if (getenv("PTHREAD_DEBUG") != NULL)
+		verbose = 1;
 
 	/* Open the controlling tty: */
 	fd = _thread_sys_open(_PATH_TTY, O_WRONLY | O_APPEND);
 	if (fd < 0)
 		return;
 
+	if (!verbose)  {
+		/* Display only a very brief list of threads */
+		TAILQ_FOREACH(pthread, &_thread_list, tle)
+			if ((pthread->flags & PTHREAD_FLAGS_PRIVATE) == 0)
+				_thread_dump_entry(pthread, fd, 0);
+		return;
+	}
+
 	/* Display a list of active threads: */
-	snprintf(s, sizeof s, " %8s%c%-11s %2s %7s %-8s %s\n", 
-	    "id", ' ',  "state", "pr", "flags", "name", "location");
+	snprintf(s, sizeof s, " %8s%c%-11s %2s %6s %4s %-8s %s\n", 
+	    "id", ' ',  "state", "pr", "flags", "sigm", "name", "location");
 	_thread_sys_write(fd, s, strlen(s));
 
 	writestring(fd, "active:\n");
+
 	TAILQ_FOREACH(pthread, &_thread_list, tle)
-		_thread_dump_entry(pthread, fd);
+		_thread_dump_entry(pthread, fd, 1);
 
 	writestring(fd, "ready:\n");
 	TAILQ_FOREACH (pq_list, &_readyq.pq_queue, pl_link)
 		TAILQ_FOREACH(pthread, &pq_list->pl_head, pqe)
-			_thread_dump_entry(pthread, fd);
+			_thread_dump_entry(pthread, fd, 0);
 
 	writestring(fd, "waiting:\n");
 	TAILQ_FOREACH (pthread, &_waitingq, pqe) 
-		_thread_dump_entry(pthread, fd);
+		_thread_dump_entry(pthread, fd, 0);
 
 	writestring(fd, "workq:\n");
 	TAILQ_FOREACH (pthread, &_workq, qe)
-		_thread_dump_entry(pthread, fd);
+		_thread_dump_entry(pthread, fd, 0);
 
 	writestring(fd, "dead:\n");
 	TAILQ_FOREACH(pthread, &_dead_list, dle)
-		_thread_dump_entry(pthread, fd);
+		_thread_dump_entry(pthread, fd, 1);
 
 	/* Output a header for file descriptors: */
-	snprintf(s, sizeof(s), "file descriptor table, size %d\n", 
+	snprintf(s, sizeof(s), "file descriptor table, size %d:\n", 
 	    _thread_dtablesize);
 	_thread_sys_write(fd, s, strlen(s));
 
