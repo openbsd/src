@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.h,v 1.5 2001/07/19 14:08:33 millert Exp $	*/
+/*	$OpenBSD: err.h,v 1.6 2001/07/19 15:06:22 espie Exp $	*/
 /*	$NetBSD: err.h,v 1.11 1994/10/26 00:55:52 cgd Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ void		vwarnx __P((const char *, _BSD_VA_LIST_))
 			__attribute__((__format__ (printf, 1, 0)));
 
 /*
- * The _* versios are for use in library functions so user-defined
+ * The _* versions are for use in library functions so user-defined
  * versions of err*,warn* do not get used.
  */
 __dead void	_err __P((int, const char *, ...))
