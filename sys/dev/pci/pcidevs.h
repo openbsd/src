@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.593 2003/02/05 20:45:08 jason Exp 
+ *		OpenBSD: pcidevs,v 1.594 2003/02/05 22:09:26 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1097,6 +1097,7 @@
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB */
 #define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent ASMC */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* PCI-ISA */
+#define	PCI_PRODUCT_COMPAQ_PCI_HOTPLUG	0xa0f7		/* PCI Hotplug controller */
 #define	PCI_PRODUCT_COMPAQ_OHCI	0xa0f8		/* USB OpenHost */
 #define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE3	0xae29		/* PCI-ISA */
