@@ -242,7 +242,14 @@ __extension__ (*({							\
 #define va_end(AP)	((void)0)
 
 /* Copy __gnuc_va_list into another variable of this type.  */
-#define __va_copy(dest, src) *(dest) = *(src)
+#define __va_copy(dest, src) \
+__extension__ ({ \
+        (dest) =  \
+           (struct __va_list_tag *)__builtin_alloca(sizeof(__gnuc_va_list)); \
+        *(dest) = *(src);\
+  })
+   
+
 
 #endif /* __VA_PPC_H__ */
 #endif /* defined (_STDARG_H) || defined (_VARARGS_H) */
