@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.38 2000/05/22 03:04:11 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.39 2000/06/30 18:17:58 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.38 2000/05/22 03:04:11 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.39 2000/06/30 18:17:58 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -767,24 +767,26 @@ gifsettunnel(src, dst)
 	char *src;
 	char *dst;
 {
-        struct addrinfo *srcres, *dstres;
+	struct addrinfo hints, *srcres, *dstres;
 	struct ifaliasreq addreq;
 	int ecode;
-
 #ifdef INET6
 	struct in6_aliasreq in6_addreq;
 #endif /* INET6 */
 
-	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = afp->af_af;
+
+	if ((ecode = getaddrinfo(src, NULL, &hints, &srcres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		     gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)
+	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		     gai_strerror(ecode));
 
 	if (srcres->ai_addr->sa_family != dstres->ai_addr->sa_family)
-	        errx(1,
+		errx(1,
 		     "source and destination address families do not match");
 
 	switch (srcres->ai_addr->sa_family)
