@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.8 2005/02/18 20:04:40 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.9 2005/02/19 09:42:14 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1782,11 +1782,28 @@ ral_watchdog(struct ifnet *ifp)
 int
 ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
+	struct ral_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa;
 	int s, error = 0;
 
 	s = splnet();
 	
 	switch (cmd) {
+	case SIOCSIFADDR:
+		ifa = (struct ifaddr *)data;
+		ifp->if_flags |= IFF_UP;
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
+			ral_init(ifp);
+			break;
+#endif
+		default:
+			ral_init(ifp);
+		}
+		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
