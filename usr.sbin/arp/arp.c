@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.16 2000/10/23 14:55:12 aaron Exp $ */
+/*	$OpenBSD: arp.c,v 1.17 2001/03/07 19:31:58 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -446,8 +446,8 @@ void
 ether_print(cp)
 	const u_char *cp;
 {
-	(void)printf("%x:%x:%x:%x:%x:%x", cp[0], cp[1], cp[2], cp[3], cp[4],
-	    cp[5]);
+	(void)printf("%02x:%02x:%02x:%02x:%02x:%02x",
+	    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 }
 
 void
