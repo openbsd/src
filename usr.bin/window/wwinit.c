@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwinit.c,v 1.7 1998/04/26 22:49:08 millert Exp $	*/
+/*	$OpenBSD: wwinit.c,v 1.8 1998/12/20 23:37:45 deraadt Exp $	*/
 /*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwinit.c,v 1.7 1998/04/26 22:49:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwinit.c,v 1.8 1998/12/20 23:37:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,10 +70,10 @@ wwinit()
 	sigaddset(&sigset, SIGTERM);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 
-	if (signal(SIGCHLD, wwchild) == BADSIG ||
-	    signal(SIGHUP, wwquit) == BADSIG ||
-	    signal(SIGTERM, wwquit) == BADSIG ||
-	    signal(SIGPIPE, SIG_IGN) == BADSIG) {
+	if (signal(SIGCHLD, wwchild) == SIG_ERR ||
+	    signal(SIGHUP, wwquit) == SIG_ERR ||
+	    signal(SIGTERM, wwquit) == SIG_ERR ||
+	    signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		wwerrno = WWE_SYS;
 		return -1;
 	}
@@ -323,7 +323,7 @@ wwinit()
 #endif
 
 	if (tt.tt_checkpoint)
-		if (signal(SIGALRM, wwalarm) == BADSIG) {
+		if (signal(SIGALRM, wwalarm) == SIG_ERR) {
 			wwerrno = WWE_SYS;
 			goto bad;
 		}
