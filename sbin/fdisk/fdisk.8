@@ -1,5 +1,32 @@
-.\"	$OpenBSD: fdisk.8,v 1.5 1996/09/27 15:27:15 deraadt Exp $
-.\"	$NetBSD: fdisk.8,v 1.8 1995/03/18 14:55:34 cgd Exp $
+.\"	$OpenBSD: fdisk.8,v 1.6 1997/09/29 22:58:20 weingart Exp $
+.\"
+.\" Copyright (c) 1997 Tobias Weingartner
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"    This product includes software developed by Tobias Weingartner.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -9,35 +36,36 @@
 .Nd DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl aium
-.Op f Ar mbrname
-.Op Ar device
-.Sh PROLOGUE
+.Op Fl ie
+.Op Fl f Ar mbrname
+.Op Fl c Ar cyls
+.Op Fl h Ar heads
+.Op Fl s Ar sects
+.Ar device
+.Sh DESCRIPTION
 In order for the BIOS to boot the kernel, certain conventions must be
-adhered to.
-Sector 0 of the disk must contain boot code, a MBR partition table,
-and a magic number.
-These MBR partitions (also known as BIOS partitions) can be used to
-break the disk up into several pieces.
-The BIOS loads sector 0 into memory, verifies the magic number, and
-begins executing the code at the first byte.
+adhered to.  Sector 0 of a bootable hard disk must contain boot code,
+a MBR partition table, and a magic number.  These MBR partitions (also
+known as BIOS partitions) can be used to break the disk up into several
+pieces.  The BIOS loads sector 0 of the boot disk into memory, verifies
+the magic number, and begins executing the code at the first byte.
 The normal DOS MBR boot code searches the MBR partition table for an
-`active' partition (indicated by a flag value of 0x80); if one is found,
-the boot block from that partition is loaded and replaces the original
-boot block.
+`active' partition (indicated by a `*' in the fist column), and if one
+is found, the boot block from that partition is loaded and executed in
+place of the original (MBR) boot block.
 .Pp
 The following options are available:
-.Bl -tag -width indent
-.It Fl a
-To change the active partition.
+.Bl -tag -width "-f mbrname"
 .It Fl i
-Initialize the MBR sector from other information.
-.It Fl u
-Update, or change, the MBR sector information.
-.It Fl m
-Force creation of a new MBR sector.
+Initialize the MBR sector.
+.It Fl e
+Edit existing MBR sectors.
 .It Fl f Ar mbrname
-Specifies an alternate MBR file.
+Specifies an alternate MBR template file.
+.It Fl c,h,s
+Specify an alternate BIOS geometry for
+.Nm
+to use.
 .El
 .Pp
 The DOS
@@ -50,131 +78,140 @@ program serves a similar purpose to the DOS program.
 When called with no special flags, it prints the MBR partition
 table of the specified device, ie.
 .Bd -literal
-    # fdisk wd0
-    Using device /dev/rwd0c:
-    Parameters extracted from in-core disklabel are:
-        cylinders=769 heads=15 sectors/track=33
-        sectors/cylinder=495 total=380655
-    Parameters to be used for BIOS calculations are:
-        cylinders=769 heads=15 sectors/track=33
-        sectors/cylinder=495 
-    Warning: BIOS sector numbers start at 1 (not 0)
-    MBR Partition 0: sysid 166=0xa6 (OpenBSD)
-        start 495, size 380160 (185 MB), flag 0x80
-        beg: cylinder    1, head   0, sector  1
-        end: cylinder  768, head  14, sector 33
-    MBR Partition 1: sysid 6=0x06 (Primary 'big' DOS (> 32MB))
-        start 380655, size 2475 (1 MB), flag 0x00
-        beg: cylinder  764, head   0, sector  1
-        end: cylinder  768, head  14, sector 33
-    MBR Partition 2: <UNUSED>
-    MBR Partition 3: sysid 165=0xa5 (386BSD/FreeBSD/NetBSD)
-        start 383130, size 224234 (109 MB), flag 0x00
-        beg: cylinder  769, head   0, sector  2
-        end: cylinder  197, head  14, sector 33
+    # fdisk fd0
+    Disk: fd0
+    Disk GEO: 80/2/18
+    Bios GEO: 80/2/18
+
+    Disk offset: 0
+    NT Serial#: 0
+    Signature: 0xAA55
+
+             Starting        Ending
+     #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+    ----------------------------------------------------------------------
+    *0: A6    0   0   1 -   79   1  18 [         0 -       2880] OpenBSD
+     1: 00    0   0   0 -    0   0   0 [         0 -          0] unused
+     2: A7    0   0   2 -   79   1  18 [         1 -       2879] NEXTSTEP
+     3: 00    0   0   0 -    0   0   0 [         0 -          0] unused
 .Ed
 .Pp
 This disk is divided into three partitions that happen to fill the disk.
-The second partition overlaps the end of the first.
-(Used for debugging purposes)
-.Bl -tag -width "cyl, sector and head"
-.It Em "sysid"
-is used to label the partition.
+Partition two overlaps partition one.  (Used for debugging purposes)
+.Bl -tag -width "start/size"
+.It Em "#"
+Number of partition table entry.  A '*' denotes the bootable partition.
+.It Em "id"
+System identifier.
 .oS
 reserves the
 magic number 166 decimal (A6 in hex).
 If no 166 partition is found, it will use an older 386BSD partition
-(with a magic number of 165).
-.It Em "start and size"
-fields provide the start address
-and size of a partition in sectors.
-.It Em "flag 0x80"
-specifies that this is the active partition.
-.It Em "cyl, sector and head"
-fields are used to specify the beginning address
-and end address for the partition.
+(with a magic number of 165 or A5 in hex).
+.It Em "cyl/hd/sec"
+These fields provide the starting and ending address of the partition
+in physical BIOS geometry
+.It Em "start/size"
+These fields provide the starting sector and size in sectors of the
+partition in linear block addresses.
 .It Em "Note:"
-these numbers are calculated using BIOS's understanding of the disk
-geometry and saved in the bootblock.
+Note that the sectors field is `1 based', and the start field is
+`0 based'.  The CHS values will need to be in the BIOS's geometry
+for the system to be able to boot and use the drive correctly.
 .El
 .Pp
-The flags
-.Fl i
-or
-.Fl u
-are used to indicate that the partition data is to be updated.
-In this mode,
-.Nm
-will enter a conversational mode.
-This mode is designed not to change any data unless you explicitly
-tell it to;
-.Nm
-selects defaults for its questions to guarantee that behavior.
-.Pp
-It displays each partition and asks if you want to edit it.
-If you reply affirmatively,
-it will step through each field showing the old value
-and asking for a new one.
-When you are done with a partition,
-.Nm
-will display the information again and ask if it is correct.
-.Nm
-will then procede to the next entry.
-.Pp
-Getting the
-.Em cyl, sector,
-and
-.Em head
-fields correct is tricky.
-So by default,
-they will be calculated for you;
-you can specify them if you choose.
-.Pp
-After all the partitions are processed,
-you are given the option to change the
-.Em active
-partition.
-To change only the
-.Em active
-partition, you can use the
-.Fl a
-flag instead.
-.Pp
-Finally,
-when the all the data for the first sector has been accumulated,
-.Nm
-will ask if you really want to rewrite sector 0.
-Only if you reply affirmatively to this question will
-.Nm
-write anything to the disk.
-.Pp
-The difference between the
-.Fl u
-flag and
-.Fl i
-flag is that
-the
-.Fl u
-flag just edits the fields as they appear on the disk, while the
-.Fl i
-flag is used to `initialize' sector 0.
 The
 .Fl i
-flag instructs
+flag is used to indicate that the partition data is to be initialized.
+In this mode,
 .Nm
-to start by making the first 3 partitions empty, setting the last partition
-to use the whole disk for
-.oS ,
-and marking the last partition active.
+will completely overwrite the primary MBR, and start with a fresh one using
+a default template, or one given by the
+.Fl f
+flag.  It will set up partition number 3 to be an
+.oS
+partition, that will start at cylinder 0, head 1, sector 1, and extend
+to the end of the disk.
+This mode is designed to initialize an MBR the very first time,
+or when it has been corrupted beyond repair.  It is almost equivelant
+to the DOS command `FDISK /MBR'.
+.Pp
+The flag
+.Fl e
+is used to modify a partition table using a interactive edit mode of the
+.Nm
+program.  This mode is designed to allow you to change any partition on the
+drive you choose, including extended partitions.  It is a very powerfull mode,
+but is safe as long as you do not execute the
+.Em write
+command, or answer in the negative (the default) when
+.Nm
+askes you about writing out changes.
+.Sh COMMAND MODE
+When you first enter this mode, you are presented with a prompt, that looks
+like so:
+.Em "fdisk: 0>" .
+This prompt has two important pieces of information for you.  It will tell
+you if the in memory copy of the boot block has been modified or not.  If it
+has been modified, the prompt will change to look like:
+.Em "fdisk:*0>" .
+The second piece of information pertains to the number given in the prompt.
+This number specifies the disk offset of the currently selected boot block
+you are editing.  This number could be something different that zero when
+you are editing extended partitions.  The list of commands and their
+explanations are given below.
+.Bl -tag -width "update"
+.It Em help
+This command gives you a list of commands that
+.Nm
+understands in the interactive edit mode.
+.It Em init
+This command initializes the currently selected, in memory copy, of the
+boot block.
+.It Em disk
+This command will display the current drive geometry that fdisk has
+probed.  You are given a chance to edit them if you wish.
+.It Em edit
+This command is used to edit a given table entry in the memory copy of
+the current boot block.  You may edit either in physical geometry mode,
+or in sector offsets and sizes.
+.It Em flag
+This command makes the given partition table entry bootable.  Only one
+entry can be marked bootable. If you wish to boot from an extended
+partition, you will need to mark the partition table entry for the
+extended partition as bootable.
+.It Em update
+This command will update the machine code in the memory copy of the
+currently selected boot block.
+.It Em select
+This command will select and load into memory the boot block pointed
+to by the extended partition table entry in the current boot block.
+.It Em print
+This command will print the currently selected in memory copy of the boot
+block and its MBR table to the terminal.
+.It Em write
+This will write the in memory copy of the boot block to disk.  You will
+be asked to confirm this operation.
+.It Em exit
+This will exit the current level of fdisk, either returning to the
+previously selected in memory copy of a boot block, or exit the
+program if there is none.
+.It Em quit
+Quit program without saving current changes.
+.El
+.Pp
 .Sh NOTES
 The automatic calculation of starting cylinder etc. uses
 a set of figures that represent what the BIOS thinks is the
 geometry of the drive.
-These figures are by default taken from the incore disklabel, but
+These figures are by default taken from the incore disklabel, or
+values that
+.Em /boot
+has passed to the kernel, but
 .Nm
-gives you an opportunity to change them.
+gives you an opportunity to change them if there is a need to.
 This allows the user to create a bootblock that can work with drives
-that use geometry translation under the BIOS.
+that use geometry translation under a potentially different BIOS.
 .Pp
 If you hand craft your disk layout,
 please make sure that the
@@ -186,12 +223,15 @@ Editing an existing partition is risky, and may cause you to
 lose all the data in that partition.
 .Pp
 You should run this program interactively once or twice to see how it works.
-This is completely safe as long as you answer the last question in the negative.
+This is completely safe as long as you answer the write questions in the
+negative.
 .Sh FILES
 .Pa /usr/mdec/mbr
-- the default MBR that can be written onto the disk
+- the default MBR template
 .Sh SEE ALSO
-.Xr disklabel 8
+.Xr disklabel 8 ,
+.Xr boot_i386 8
 .Sh BUGS
 There are subtleties that the program detects that are not explained in
-this manual page.
+this manual page.  Also, chances are that some of the subleties it should
+detect are being steamrolled.  Caveat Emperor.
