@@ -17,18 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#ifndef NM_OBSD_H
-#define NM_OBSD_H
-
 /* Get generic OpenBSD native definitions. */
 #include "nm-obsd.h"
 
-/* #define FLOAT_INFO	{ i386_float_info(); } */
-
-#define REGISTER_U_ADDR(addr, blockend, regno) \
-	(addr) = i386_register_u_addr ((blockend),(regno));
-
-extern int
-i386_register_u_addr PARAMS ((int, int));
-
-#endif /* NM_OBSD_H */
+#define FLOAT_INFO extern i386_float_info (); \
+						  i386_float_info ()

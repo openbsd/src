@@ -1,4 +1,6 @@
 # Host: PC532 running NetBSD
+XDEPFILES= ser-tcp.o
 XM_FILE= xm-nbsd.h
 NAT_FILE= nm-nbsd.h
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o ns32k-nat.o
+NAT_CLIBS= -lkvm
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o ns32k-nat.o

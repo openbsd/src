@@ -17,22 +17,32 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* This is the amount to subtract from u.u_ar0
-   to get the offset in the core file of the register values.  */
-
-#include <machine/vmparam.h>
-
-#define KERNEL_U_ADDR USRSTACK
-
-#define PTRACE_ARG3_TYPE char*
-
-#define FETCH_INFERIOR_REGISTERS
+/* "Support" the Net- and OpenBSD-specific "-k" option. */
+#define	ADDITIONAL_OPTIONS		{"k", no_argument, 0, 'k'},
+#define	ADDITIONAL_OPTION_CASES case 'k': \
+	fprintf_unfiltered (gdb_stderr, \
+"-k: obsolete option.  For kernel debugging, start gdb\n"	\
+"with just the kernel name as an argument (no core file)\n"	\
+"and then use the gdb command `target kcore COREFILE'.\n");	\
+	exit (1);
+/* End of "-k" stuff. */
 
 #define ATTACH_DETACH
 
+/* Use this instead of KERNEL_U_ADDR (See gdb/infptrace.c) */
+#define FETCH_INFERIOR_REGISTERS
+
+/* This enables functions needed by kcore-nbsd.c */
+#define FETCH_KCORE_REGISTERS
+
+#define PTRACE_ARG3_TYPE char*
+
 #include "solib.h"      /* Support for shared libraries. */
 
-/* make structure definitions match up with those expected in solib.c */
+#ifndef SVR4_SHARED_LIBS
+/* The Net- and OpenBSD link.h structure definitions have different names
+   than the SunOS version, but the structures are very similar,
+   so we can use solib.c by defining the SunOS names.  */
 #define link_object	sod
 #define lo_name		sod_name
 #define lo_library	sod_library
@@ -54,7 +64,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define link_dynamic_2	section_dispatch_table
 #define ld_loaded	sdt_loaded
 #define ld_need		sdt_sods
-#define ld_rules	sdt_filler1
+#define ld_rules	sdt_rules
 #define ld_got		sdt_got
 #define ld_plt		sdt_plt
 #define ld_rel		sdt_rel
@@ -84,3 +94,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ldd		d_debug
 #define ld_un		d_un
 #define ld_2		d_sdt
+
+#endif /* SVR4_SHARED_LIBS */

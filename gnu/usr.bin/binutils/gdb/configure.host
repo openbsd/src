@@ -157,6 +157,7 @@ sparc64-*-*)		gdb_host=sun4sol2 ;;
 tahoe-*-*)		gdb_host=tahoe ;;
 
 vax-*-bsd*)		gdb_host=vaxbsd ;;
+vax-*-openbsd*)		gdb_host=obsd ;;
 vax-*-ultrix2*)		gdb_host=vaxult2 ;;
 vax-*-ultrix*)		gdb_host=vaxult ;;
 

@@ -1,5 +1,6 @@
 # Host: Intel 386 running OpenBSD
-XDEPFILES= 
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o i386b-nat.o solib.o
+XDEPFILES= ser-tcp.o
 XM_FILE= xm-obsd.h
 NAT_FILE= nm-obsd.h
+NAT_CLIBS= -lkvm
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o i386nbsd-nat.o

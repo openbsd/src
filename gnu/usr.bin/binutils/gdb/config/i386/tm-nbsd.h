@@ -20,11 +20,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
-#include "i386/tm-i386bsd.h"
+#include "i386/tm-i386.h"
 #include "tm-nbsd.h"
 
+/* NetBSD supports only the first 16 regs. */
 #undef NUM_REGS
 #define NUM_REGS 16
+
+/* On NetBSD, sigtramp is above the user stack and immediately below
+   the user area. Using constants here allows for cross debugging. */
+#define SIGTRAMP_END(pc)	0xefbfe000	/* USRSTACK */
+#define SIGTRAMP_START(pc)	(SIGTRAMP_END(pc) - 64)
+
+/* Saved Pc.  Get it from sigcontext if within sigtramp.  */
+/* Offset to saved PC in sigcontext, from <sys/signal.h>.  */
+#define SIGCONTEXT_PC_OFFSET 44
 
 #define JB_ELEMENT_SIZE sizeof(int)	/* jmp_buf[_JBLEN] is array of ints */
 #define JB_PC	0			/* Setjmp()'s return PC saved here */

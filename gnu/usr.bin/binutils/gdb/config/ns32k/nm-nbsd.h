@@ -23,14 +23,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Get generic NetBSD native definitions. */
 #include "nm-nbsd.h"
 
-#if 0
-#define FLOAT_INFO	{ extern ns32k_float_info(); ns32k_float_info(); }
-#endif
-
-#define REGISTER_U_ADDR(addr, blockend, regno) \
-	(addr) = ns32k_register_u_addr ((blockend),(regno));
-
-extern int
-ns32k_register_u_addr PARAMS ((int, int));
-
 #endif /* NM_NBSD_H */

@@ -2,5 +2,5 @@
 XDEPFILES= ser-tcp.o
 XM_FILE= xm-obsd.h
 NAT_FILE= nm-obsd.h
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o sparc-nat.o solib.o
-HOST_IPC=-DBSD_IPC
+NAT_CLIBS= -lkvm
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o sparcnbsd-nat.o

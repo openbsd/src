@@ -1,6 +1,5 @@
-/* Native-dependent definitions for Sparc running OpenBSD, for GDB.
-   Copyright (C) 1986, 1987, 1989, 1992, 1995, 1996
-   Free Software Foundation, Inc.
+/* Macro definitions for Sparc running under NetBSD.
+   Copyright 1994 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -18,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* Get generic OpenBSD native definitions. */
-#include "nm-obsd.h"
+#ifndef TM_NBSD_H
+#define TM_NBSD_H
 
-/* Before storing, read all the registers. (see inftarg.c) */
-#define CHILD_PREPARE_TO_STORE() \
-    read_register_bytes (0, NULL, REGISTER_BYTES)
+#include "vax/tm-vax.h"
+#include "tm-nbsd.h"
+
+#endif /* TM_NBSD_H */
