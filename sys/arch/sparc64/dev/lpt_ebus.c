@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ebus.c,v 1.1 2002/03/14 20:15:00 jason Exp $	*/
+/*	$OpenBSD: lpt_ebus.c,v 1.2 2002/03/20 06:54:06 jason Exp $	*/
 /*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ lpt_ebus_attach(parent, self, aux)
 	for (i = 0; i < ea->ea_nintrs; i++)
 		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i],
 				   IPL_SERIAL, 0, lptintr, sc);
-	printf("\n");
 
 	lpt_attach_common(sc);
 }
