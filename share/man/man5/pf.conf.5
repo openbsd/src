@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.102 2002/11/04 14:30:21 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.103 2002/11/06 00:30:04 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -824,7 +824,7 @@ pass out quick on lo0 all
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
 the maximum transmission unit (MTU) of the network.
-In cases when it is necessary or more effecient to send such large packets,
+In cases when it is necessary or more efficient to send such large packets,
 the large packet will be fragmented into many smaller packets that will each 
 fit onto the wire.
 Unfortunately for a firewalling device, only the first logical fragment will
@@ -858,7 +858,7 @@ modifier.
 will track the fragments and cache a small range descriptor.
 Duplicate fragments are dropped and overlaps are cropped.
 Thus data will only occur once on the wire with ambiguities resolving to
-the first occurance.
+the first occurrence.
 Unlike the
 .Pa fragment reassemble
 modifier, fragments are not buffered, they are passed as soon as they
