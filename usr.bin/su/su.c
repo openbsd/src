@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.48 2002/11/08 23:20:19 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.49 2002/12/07 22:54:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.48 2002/11/08 23:20:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.49 2002/12/07 22:54:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,9 +181,8 @@ main(int argc, char **argv)
 		/* style may be specified as part of the username */
 		if ((p = strchr(user, ':')) != NULL) {
 			*p++ = '\0';
-			style = p;
-		} else
-			style = NULL;	/* XXX overrides -a flag */
+			style = p;	/* XXX overrides -a flag */
+		}
 		
 		/*
 		 * Clean and setup our current authentication session.
