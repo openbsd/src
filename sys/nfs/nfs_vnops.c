@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.58 2004/03/02 05:46:00 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.59 2004/04/26 18:57:36 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
+#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -3062,6 +3063,23 @@ nfsspec_access(v)
 
 	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
 	    ap->a_cred));
+}
+
+/* ARGSUSED */
+int
+nfs_poll(v)
+        void *v;
+{
+	struct vop_poll_args /* {
+		struct vnode *a_vp;
+		int  a_events;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	/*
+	 * We should really check to see if I/O is possible.
+	 */
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*

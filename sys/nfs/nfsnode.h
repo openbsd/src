@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.20 2004/03/02 05:46:00 tedu Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.21 2004/04/26 18:57:36 millert Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ int	nfsspec_write(void *);
 int	nfsfifo_read(void *);
 int	nfsfifo_write(void *);
 #define nfs_ioctl ((int (*)(void *))enoioctl)
-#define nfs_poll ((int (*)(void *))seltrue)
+int	nfs_poll(void *);
 #define nfs_revoke vop_generic_revoke
 int	nfs_fsync(void *);
 int	nfs_remove(void *);
