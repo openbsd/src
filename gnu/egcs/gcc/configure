@@ -5352,6 +5352,11 @@ for machine in $build $host $target; do
 		use_collect2=yes
 		tmake_file="t-libc-ok t-openbsd sparc/t-openbsd"
 		;;
+	sparc64-*-openbsd*)
+		tm_file=sparc/openbsd64.h
+		xm_file=sparc/xm-sp64.h
+		gas=yes gnu_ld=yes
+		;;
 	sparc-*-bsd*)
 		tm_file=sparc/bsd.h
 		;;
