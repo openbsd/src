@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.26 2001/08/05 09:36:38 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.27 2001/11/08 23:12:38 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -77,7 +77,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		/* See if all the algorithms are supported. */
 		for (cr = cri; cr; cr = cr->cri_next)
 			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0)
-			break;
+				break;
 
 		/* Ok, all algorithms are supported. */
 		if (cr == NULL)
