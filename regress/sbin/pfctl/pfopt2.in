@@ -12,7 +12,8 @@ set require-order yes
 scrub in all
 
 # QUEUEING, -A
-altq on $ext_if priq bandwidth 10Mb queue { pri-low pri-med pri-high }
+altq on $ext_if priq bandwidth 10Mb tbrsize 1824 \
+    queue { pri-low pri-med pri-high }
 queue pri-low priority 0
 queue pri-med priority 1 priq(default)
 queue pri-high priority 2
