@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2004/08/23 11:16:49 ho Exp $
+#	$OpenBSD: Makefile,v 1.58 2004/11/10 22:07:46 drahn Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -56,7 +56,7 @@ FEATURES+=	rawkey isakmp_cfg privsep nat_traversal dpd
 
 PROG=		isakmpd
 BINDIR?=	/sbin
-LDSTATIC?=	-static
+LDSTATIC?=	${STATIC}
 SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		cookie.c crypto.c dh.c doi.c exchange.c exchange_num.c \
 		field.c gmp_util.c hash.c if.c ike_auth.c ike_main_mode.c \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2002/10/25 02:25:43 itojun Exp $
+#	$OpenBSD: Makefile,v 1.8 2004/11/10 22:07:46 drahn Exp $
 
 PROG=	ping6
 MAN=	ping6.8
@@ -11,6 +11,6 @@ CPPFLAGS+= -DINET6 -DHAVE_POLL_H
 BINOWN=	root
 BINGRP=	bin
 BINMODE=4555
-LDSTATIC=-static
+LDSTATIC=${STATIC}
 
 .include <bsd.prog.mk>
