@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.4 1999/03/22 07:38:27 pjanzen Exp $	*/
+/*	$OpenBSD: screen.c,v 1.5 2001/02/13 11:46:01 pjanzen Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@ static void	stopset __P((int));
  * Capabilities from TERMCAP.
  */
 char	PC, *BC, *UP;		/* tgoto requires globals: ugh! */
-speed_t	ospeed;
 
 static char
 	*bcstr,			/* backspace char */
@@ -293,7 +292,6 @@ scr_set()
 	newtt.c_oflag &= ~OXTABS;
 	if (tcsetattr(0, TCSADRAIN, &newtt) < 0)
 		stop("tcsetattr() fails");
-	ospeed = cfgetospeed(&newtt);
 	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
 
 	/*
