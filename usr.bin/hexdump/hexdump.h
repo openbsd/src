@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.h,v 1.5 2002/02/16 21:27:47 millert Exp $	*/
+/*	$OpenBSD: hexdump.h,v 1.6 2002/04/08 15:59:05 millert Exp $	*/
 /*	$NetBSD: hexdump.h,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -106,3 +106,4 @@ void	 oldsyntax(int, char ***);
 void	 rewrite(FS *);
 int	 size(FS *);
 void	 usage(void);
+void	 oldusage(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.10 2002/02/16 21:27:47 millert Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.11 2002/04/08 15:59:05 millert Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.10 2002/02/16 21:27:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.11 2002/04/08 15:59:05 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -191,7 +191,7 @@ oldsyntax(argc, argvp)
 				warnx(
 "hexdump(1) compatibility doesn't support the -%c option%s\n",
 				    ch, ch == 's' ? "; see strings(1)." : ".");
-			usage();
+			oldusage();
 		}
 
 	if (!fshead) {
@@ -238,7 +238,7 @@ posixtypes(type_string)
 				add("2/8 \" %16.14e\" \"\\n\"");
 			} else if (*type_string == 'D')
 				/* long doubles vary in size */
-				usage();
+				oldusage();
 			else
 				add("2/8 \" %16.14e\" \"\\n\"");
 			break;
@@ -273,7 +273,7 @@ posixtypes(type_string)
 				default:
 					warnx("Bad type-size qualifier '%c'",
 					    *type_string);
-					usage();
+					oldusage();
 				}
 				type_string++;
 			} else if (isdigit(*type_string))
@@ -295,14 +295,24 @@ posixtypes(type_string)
 			default:
 				warnx("%d-byte integer formats are not "
 				    "supported", nbytes);
-				usage();
+				oldusage();
 			}
 			add(fmt[x][y]);
 			break;
 		default:
-			usage();
+			oldusage();
 		}
 	}
+}
+
+void
+oldusage()
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-j skip] "
+			"[-N length] [-t type_string] "
+			"[[+]offset[.][Bb]] [file ...]\n", __progname);
+	exit(1);
 }
 
 static void
