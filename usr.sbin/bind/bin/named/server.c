@@ -1956,7 +1956,7 @@ load_configuration(const char *filename, ns_server_t *server,
 			const char *randomdev = cfg_obj_asstring(obj);
 			result = isc_entropy_createfilesource(ns_g_entropy,
 							      randomdev);
-			if (result != ISC_R_SUCCESS)
+			if (result != ISC_R_SUCCESS && ns_g_chrootdir == NULL) {
 				isc_log_write(ns_g_lctx,
 					      NS_LOGCATEGORY_GENERAL,
 					      NS_LOGMODULE_SERVER,
@@ -1965,6 +1965,22 @@ load_configuration(const char *filename, ns_server_t *server,
 					      "%s: %s",
 					      randomdev,
 					      isc_result_totext(result));
+			}
+#ifdef PATH_RANDOMDEV
+			if (result != ISC_R_SUCCESS && ns_g_chrootdir != NULL) {
+				isc_log_write(ns_g_lctx,
+					      NS_LOGCATEGORY_GENERAL,
+					      NS_LOGMODULE_SERVER,
+					      ISC_LOG_INFO,
+					      "using pre-chroot entropy source "
+					      "%s",
+					      PATH_RANDOMDEV);
+		  		isc_entropy_detach(&ns_g_entropy);
+				isc_entropy_attach(ns_g_fallbackentropy,
+						   &ns_g_entropy);
+
+			}
+#endif
 		}
 	}
 
