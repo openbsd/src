@@ -79,7 +79,6 @@
 ./usr/include/readline/readline.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtend.o
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/SYSCALLS.c.X
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/cc1
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/cc1obj
@@ -89,7 +88,6 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/f771
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/ieee
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/ieee/libgcc.a
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/include
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/include/README
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/include/exception
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.95/include/fixed

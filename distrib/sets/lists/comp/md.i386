@@ -65,7 +65,6 @@
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/SYSCALLS.c.X
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/cc1
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/cc1obj
@@ -73,7 +72,6 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/collect2
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/cpp
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/f771
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/include
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/include/README
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/include/exception
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/include/float.h

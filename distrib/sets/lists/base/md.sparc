@@ -684,3 +684,5 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine/fgaio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine/scfio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.ph
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.5/2.95
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.5/2.95/include
