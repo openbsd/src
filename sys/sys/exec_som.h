@@ -1,5 +1,25 @@
-/*	$OpenBSD: exec_som.h,v 1.2 1998/07/14 15:26:34 mickey Exp $	*/
+/*	$OpenBSD: exec_som.h,v 1.3 1998/07/14 17:16:21 mickey Exp $	*/
 
+/*
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ * 
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ * 
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ * 
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  *  (c) Copyright 1991 HEWLETT-PACKARD COMPANY
  *
@@ -26,7 +46,7 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr: som.h 1.2 94/12/14$
+ * 	Utah $Hdr: exec.h 1.8 94/12/14$
  */
 
 /*
@@ -36,7 +56,9 @@
 #ifndef _SYS_EXEC_SOM_H_
 #define _SYS_EXEC_SOM_H_
 
-struct aux_id { 
+#include <machine/som.h>
+
+struct som_aux_id { 
 	u_int mandatory : 1;
 	u_int copy : 1;
 	u_int append : 1;
@@ -47,7 +69,7 @@ struct aux_id {
 };
 
 struct som_exec_auxhdr {
-	struct aux_id som_auxhdr;	/* som auxiliary header header  */
+	struct som_aux_id som_auxhdr;	/* som auxiliary header header  */
 	long exec_tsize;		/* text size in bytes           */
 	long exec_tmem;			/* offset of text in memory     */
 	long exec_tfile;		/* location of text in file     */
@@ -60,32 +82,25 @@ struct som_exec_auxhdr {
 	long exec_bfill;		/* bss initialization value     */
 };
 
-struct sys_clock { 
+struct som_sys_clock { 
 	u_int secs; 
 	u_int nanosecs; 
 };
 
 /*
- * system_id values
- */
-
-#define	MID_HP800	800	/* hp800 BSD binary */
-#define	MID_HPUX	0x20b	/* HP-UX or OSF SOM binary */
-
-/*
  * a_magic values
  */
 
-#define EXEC_MAGIC	0x0107		/* normal executable */
-#define SHARE_MAGIC	0x0108		/* shared executable */
-#define DEMAND_MAGIC	0x010B		/* demand-load executable */
+#define SOM_EXEC_MAGIC	0x0107		/* normal executable */
+#define SOM_SHARE_MAGIC	0x0108		/* shared executable */
+#define SOM_DEMAND_MAGIC 0x010B		/* demand-load executable */
 
 
-struct header {
+struct som_filehdr {
 	short int system_id;		/* magic number - system        */
 	short int a_magic;		/* magic number - file type     */
 	u_int version_id;		/* version id; format= YYMMDDHH */
-	struct sys_clock file_time;	/* system clock- zero if unused */
+	struct som_sys_clock file_time;	/* system clock- zero if unused */
 	u_int entry_space;		/* idx of space containing entry pt */
 	u_int entry_subspace;		/* idx of subspace for entry point  */
 	u_int entry_offset;		/* offset of entry point        */
@@ -121,9 +136,54 @@ struct header {
 	u_int checksum;
 };
 
-typedef struct {
-	struct header fhdr;
-	struct som_exec_auxhdr ehdr;
-} som_exec;
+/******************************************************************************
+*                                                                             *
+*       The symbol dictionary consists of a sequence of symbol blocks         *
+*  An entry into the symbol dictionary requires at least the                  *
+*  symbol_dictionary_record; The symbol_extension and argument_descriptor     *
+*  records are optional                                                       * 
+*                                                                             * 
+*******************************************************************************/
 
-#endif	/* _SYS_EXEC_SOM_H_
+struct som_symbol_dictionary_record {
+
+	u_int  symbol_type      : 8;
+	u_int  symbol_scope     : 4;
+	u_int  check_level      : 3;
+	u_int  must_qualify     : 1;
+	u_int  initially_frozen : 1;
+	u_int  memory_resident  : 1;
+	u_int  is_common        : 1;
+	u_int  dup_common       : 1;
+	u_int  xleast           : 2;
+	u_int  arg_reloc        :10;
+	union { char *n_name; u_int n_strx; } name, qualifier_name;
+	u_int  symbol_info;
+	u_int  symbol_value;
+};
+
+/*    The following is a list of the valid symbol types     */
+#define	ST_NULL		0
+#define	ST_ABSOLUTE	1
+#define	ST_DATA		2
+#define	ST_CODE		3
+#define	ST_PRI_PROG	4
+#define	ST_SEC_PROG	5
+#define	ST_ENTRY	6
+#define	ST_STORAGE	7
+#define	ST_STUB		8
+#define	ST_MODULE	9
+#define	ST_SYM_EXT	10
+#define	ST_ARG_EXT	11
+#define	ST_MILLICODE	12
+#define	ST_PLABEL	13
+
+/*    The following is a list of the valid symbol scopes    */
+
+#define	SS_UNSAT	0
+#define	SS_EXTERNAL	1
+#define	SS_GLOBAL	2  
+#define	SS_UNIVERSAL	3
+
+#endif	/* _SYS_EXEC_SOM_H_ */
+
