@@ -1,4 +1,4 @@
-.\" $OpenBSD: midiplay.1,v 1.1 1999/01/01 23:58:22 niklas Exp $
+.\" $OpenBSD: midiplay.1,v 1.2 1999/04/02 15:12:18 aaron Exp $
 .\" $NetBSD: midiplay.1,v 1.3 1998/08/13 18:26:36 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm midiplay
 .Nd play MIDI files
 .Sh SYNOPSIS
-.Nm
+.Nm midiplay
 .Op Fl d Ar devno
 .Op Fl f Ar file
 .Op Fl l
@@ -59,24 +59,24 @@ it will play the named files.
 The program accepts the following options:
 .Bl -tag -width Fl
 .It Fl d Ar devno
-specifies the number of the MIDI device used for output (as listed
+Specifies the number of the MIDI device used for output (as listed
 by the
 .Fl l
 flag).  The default is device 0.
 .It Fl f Ar file
-specifies the name of the sequencer device.
+Specifies the name of the sequencer device.
 .It Fl l
-list the possible devices without playing anything.
+List the possible devices without playing anything.
 .It Fl m
-show MIDI file meta events (copyright, lyrics, etc).
+Show MIDI file meta events (copyright, lyrics, etc).
 .It Fl q
-specifies that the MIDI file should not be played, justed parsed.
+Do not play the MIDI file, just parse it.
 .It Fl t Ar tempo
-specifies the tempo.  The default tempo is 100.
+Specifies the tempo.  Default is 100.
 .It Fl v
-be verbose.  If the flag is repeated the verbosity increases.
+Be verbose.  If the flag is repeated the verbosity increases.
 .It Fl x
-play a small sample sound.
+Play a small sample sound.
 .Sh FILES
 .Bl -tag -width /dev/music
 .It Pa /dev/music

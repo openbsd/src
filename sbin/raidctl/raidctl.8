@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.2 1999/02/16 21:51:39 niklas Exp $
+.\"	$OpenBSD: raidctl.8,v 1.3 1999/04/02 15:12:18 aaron Exp $
 .\"
 .\"     $NetBSD: raidctl.8,v 1.3 1999/02/04 14:50:31 oster Exp $
 .\"
@@ -69,26 +69,26 @@
 .Nm raidctl
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
-.Nm
+.Nm raidctl
 .Fl c Ar config_file Ar dev
-.Nm ""
+.Nm raidctl
 .Fl C Ar dev
-.Nm ""
+.Nm raidctl
 .Fl f Ar component Ar dev
-.Nm ""
+.Nm raidctl
 .Fl F Ar component Ar dev
-.Nm ""
+.Nm raidctl
 .Fl r Ar dev
-.Nm ""
+.Nm raidctl
 .Fl R Ar dev
-.Nm ""
+.Nm raidctl
 .Fl s Ar dev 
-.Nm ""
+.Nm raidctl
 .Fl u Ar dev
 .Sh DESCRIPTION
 .Nm
 is the user-land control program for
-.Xr raid 4 , Ns
+.Xr raid 4 ,
 the RAIDframe disk device.  
 .Nm 
 is primarily used to dynamically configure and unconfigure RAIDframe disk
@@ -112,7 +112,7 @@ A description of the contents of
 is given later.
 .It Fl C Ar dev
 Initiate a copyback of reconstructed data from a spare disk to 
-it's original disk.  This is performed after a component has failed, 
+its original disk.  This is performed after a component has failed, 
 and the failed drive has been reconstructed onto a spare drive.
 .It Fl f Ar component Ar dev
 This marks the specified 
@@ -122,12 +122,12 @@ component.
 .It Fl F Ar component Ar dev
 Fails the specified 
 .Ar component
-of the device, and immediately begin a reconstruction of the failed
+of the device, and immediately beginis a reconstruction of the failed
 disk onto an available hot spare.  This is the mechanism used to start
 the reconstruction process if a component does have a hardware failure.
 .It Fl r Ar dev
 Re-write the parity on the device.  This 
-.Ar MUST
+.Em must
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
 a system crash (and before a 
@@ -148,9 +148,13 @@ The device used by
 is specified by 
 .Ar dev .  
 .Ar dev
-may be either the full name of the device, e.g. /dev/rraid0d,
-for the i386 architecture, and /dev/rraid0c
-for all others, or just simply raid0 (for /dev/rraid0d).
+may be either the full name of the device (e.g.,
+.Pa /dev/rraid0d
+for the i386 architecture, and
+.Pa /dev/rraid0c
+for all others),
+or just simply raid0 (for
+.Pa /dev/rraid0d ) .
 .Pp
 The format of the configuration file is complex, and
 only an abbreviated treatment is given here.  In the configuration
@@ -160,11 +164,11 @@ indicates the beginning of a comment.
 .Pp
 There are 4 required sections of a configuration file, and 2
 optional components.  Each section begins with a 
-.Sq START , 
+.Dq START , 
 followed by
 the section name, and the confuration parameters associated with that
 section.  The first section is the 
-.Sq array
+.Dq array
 section, and it specifies
 the number of rows, columns, and spare disks in the RAID array.  For
 example: 
@@ -174,12 +178,12 @@ START array
 .Ed
 .Pp
 indicates an array with 1 row, 3 columns, and 0 spare disks.  Note
-that although multi-dimenstional arrays may be specified, they are 
-.Ar NOT
+that although multi-dimensional arrays may be specified, they are 
+.Em not
 supported in the driver.
 .Pp
 The second section, the 
-.Sq disks
+.Dq disks
 section, specifies the actual
 components of the device.  For example:
 .Bd -unfilled -offset indent
@@ -192,24 +196,23 @@ START disks
 specifies the three component disks to be used in the RAID device.  If
 any of the specified drives cannot be found when the RAID device is
 configured, then they will be marked as 
-.Sq failed , 
+.Dq failed , 
 and the system will
-operate in degraded mode.  Note that it is 
-.Ar imperative
+operate in degraded mode.  Note that it is
+.Em imperative
 that the order of the components in the configuration file does not
 change between configurations of a RAID device.  Changing the order
 of the components (at least at the time of this writing) will result in
 data loss.  
 .Pp
-The next section, which is the 
-.Sq spare
-section, is optional, and, if
-present, specifies the devices to be used as 
-.Sq hot spares
+The next section,
+.Dq spare ,
+is optional, and if present specifies the devices to be used as
+.Dq hot spares
 -- devices
 which are on-line, but are not actively used by the RAID driver unless
 one of the main components fail.  A simple 
-.Sq spare
+.Dq spare
 section might be:
 .Bd -unfilled -offset indent
 START spare 
@@ -218,11 +221,11 @@ START spare
 .Pp
 for a configuration with a single spare component.  If no spare drives
 are to be used in the configuration, then the 
-.Sq spare
-section may be ommitted.  
+.Dq spare
+section may be omitted.  
 .Pp
 The next section is the 
-.Sq layout
+.Dq layout
 section.  This section describes the
 general layout parameters for the RAID device, and provides such
 information as sectors per stripe unit, stripe units per parity unit,
@@ -235,7 +238,7 @@ START layout
 .Ed
 .Pp
 The sectors per stripe unit specifies, in blocks, the interleave
-factor; i.e. the number of contiguous sectors to be written to each
+factor; i.e., the number of contiguous sectors to be written to each
 component for a single stripe.  Appropriate selection of this value
 (32 in this example) is the subject of much research in RAID
 architectures.  The stripe units per parity unit and
@@ -265,7 +268,7 @@ those parity operations has not been tested with
 .Ox .
 .Pp
 The next required section is the 
-.Sq queue
+.Dq queue
 section.  This is most often
 specified as:
 .Bd -unfilled -offset indent
@@ -273,31 +276,29 @@ START queue
 fifo 1
 .Ed
 .Pp
-where the queueing method is specified as fifo (first-in, first-out),
-and the size of the per-component queue is limited to 1 requests.  A
+where the queuing method is specified as FIFO (first-in, first-out),
+and the size of the per-component queue is limited to 1 request.  A
 value of 1 is quite conservative here, and values of 100 or more may
 been used to increase the driver performance. 
 Other queuing methods may also be specified, but a discussion of them
 is beyond the scope of this document.
 .Pp
 The final section, the 
-.Sq debug section, is optional.  For more details
+.Dq debug
+section, is optional.  For more details
 on this the reader is referred to the RAIDframe documentation
 dissussed in the 
 .Sx HISTORY
 section.
-
 See
 .Sx EXAMPLES
 for a more complete configuration file example.
-
 .Sh EXAMPLES
-
 The examples in this section will focus on a RAID 5 configuration.
 Other RAID configurations will behave similarly.  It is highly
 recommended that before using the RAID driver for real filesystems
 that the system administrator(s) have used 
-.Ar all
+.Em all
 of the options for 
 .Nm ,
 and that they understand how the component reconstruction process
@@ -305,11 +306,11 @@ works.  While this example is not created as a tutorial, the steps
 shown here can be easily dupilicated using four equal-sized partitions
 from any number of disks (including all four from a single disk).  
 .Pp
-The primary uses of 
+The primary use of 
 .Nm
 is to configure and unconfigure
 .Xr raid 4 
-devices.  To configure the device, a configuration
+devices.  To configure a device, a configuration
 file which looks something like:
 .Bd -unfilled -offset indent
 START array
@@ -333,13 +334,19 @@ fifo 100
 .Ed
 .Pp
 is first created.  In short, this configuration file specifies a RAID
-5 configuration consisting of the disks /dev/sd1e, /dev/sd2e, and
-/dev/sd3e, with /dev/sd4e available as a 
-.Sq hot spare
+5 configuration consisting of the disks
+.Pa /dev/sd1e ,
+.Pa /dev/sd2e ,
+and
+.Pa /dev/sd3e ,
+with
+.Pa /dev/sd4e
+available as a 
+.Dq hot spare
 in case one of
 the three main drives should fail.  If the above configuration is in a
 file called 
-.Sq rfconfig , 
+.Pa rfconfig , 
 raid device 0 can be configured with: 
 .Bd -unfilled -offset indent
 raidctl -c rfconfig raid0
@@ -350,8 +357,10 @@ The above is equivalent to the following:
 raidctl -c rfconfig /dev/rraid0d
 .Ed
 .Pp
-on the i386 architecture.  On all other architectures, /dev/rraid0c
-is used in place of /dev/rraid0d.
+on the i386 architecture.  On all other architectures,
+.Pa /dev/rraid0c
+is used in place of
+.Pa /dev/rraid0d .
 .Pp
 To see how the device is doing, the following will show the status:
 .Bd -unfilled -offset indent
@@ -391,7 +400,7 @@ raidctl -f /dev/sd2e raid0
 .Ed
 .Pp
 The system will then be performing all operations in degraded mode,
-were missing data is re-computed from existing data and the parity.
+where missing data is re-computed from existing data and the parity.
 In this case, obtaining the status of raid0 will return:
 .Bd -unfilled -offset indent
 Components:
@@ -439,8 +448,9 @@ Spares:
            /dev/sd4e [0][0]: used_spare
 .Ed
 .Pp
-At this point there are at least two options.  First, if /dev/sd2e is
-known to be good (i.e. the failure was either caused by 
+At this point there are at least two options.  First, if
+.Pa /dev/sd2e
+is known to be good (i.e., the failure was either caused by 
 .Fl f
 or 
 .Fl F ,
@@ -448,8 +458,10 @@ or the failed disk was replaced), then a copyback of the data can
 be initiated with the 
 .Fl C
 option.  In this example, this would copy the entire contents of
-/dev/sd4e to /dev/sd2e.  Once the copyback procedure is complete, the
-status of the device would be:
+.Pa /dev/sd4e
+to
+.Pa /dev/sd2e .
+Once the copyback procedure is complete, the status of the device would be:
 .Bd -unfilled -offset indent
 Components:
            /dev/sd1e: optimal
@@ -461,8 +473,11 @@ Spares:
 .Pp
 and the system is back to normal operation.
 .Pp
-The second option after the reconstruction is to simply use /dev/sd4e
-in place of /dev/sd2e in the configuration file.  For example, the
+The second option after the reconstruction is to simply use
+.Pa /dev/sd4e
+in place of
+.Pa /dev/sd2e
+in the configuration file.  For example, the
 configuration file (in part) might now look like:
 .Bd -unfilled -offset indent
 START array
@@ -474,13 +489,16 @@ START drives
 /dev/sd3e
 .Ed
 .Pp
-This can be done as /dev/sd4e is completely interchangeable with
-/dev/sd2e at this point.  Note that extreme care must be taken when 
+This can be done as
+.Pa /dev/sd4e
+is completely interchangeable with
+.Pa /dev/sd2e
+at this point.  Note that extreme care must be taken when 
 changing the order of the drives in a configuration.  This is one of
 the few instances where the devices and/or their orderings can be
 changed without loss of data!  In general, the ordering of components
 in a configuration file should 
-.Ar never 
+.Em never 
 be changed.
 .Pp
 The final operation performed by 
@@ -499,11 +517,11 @@ data loss due to component failure.  However the loss of two
 components of a RAID 4 or 5 system, or the loss of a single component
 of a RAID 0 system will result in the entire filesystem being lost.
 RAID is 
-.Ar NOT
+.Em not
 a substitute for good backup practices.
 .Pp
 Recomputation of parity 
-.Ar MUST
+.Em must
 be performed whenever there is a chance that it may have been
 compromised.  This includes after system crashes, or before a RAID
 device has been used for the first time.  Failure to keep parity
@@ -516,12 +534,12 @@ is to use parity, but not keep the parity correct.  At least with RAID
 .Bl -tag -width /dev/XXrXraidX -compact
 .It Pa /dev/{,r}raid*
 .Nm
-device special files.
+device special files
 .El
 .Pp
 .Sh SEE ALSO
-.Xr raid 4 ,
 .Xr ccd 4 ,
+.Xr raid 4 ,
 .Xr rc 8
 .Sh HISTORY
 RAIDframe is a framework for rapid prototyping of RAID structures
