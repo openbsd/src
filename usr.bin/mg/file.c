@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.22 2002/07/25 16:37:54 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.23 2002/09/15 22:18:40 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -196,8 +196,11 @@ insertfile(char *fname, char *newname, int needinfo)
 	LINE	*lp1, *lp2;
 	LINE	*olp;			/* line we started at */
 	MGWIN	*wp;
-	int	 nbytes, s, nline, siz;
+	int	 nbytes, s, nline, siz, x = -1, x2;
 	int	 opos;			/* offset we started at */
+
+	if (needinfo)
+		x = undo_enable(FALSE);
 
 	lp1 = NULL;
 	if (line == NULL) {
@@ -226,6 +229,7 @@ insertfile(char *fname, char *newname, int needinfo)
 	opos = curwp->w_doto;
 
 	/* open a new line, at point, and start inserting after it */
+	x2 = undo_enable(FALSE);
 	(void)lnewline();
 	olp = lback(curwp->w_dotp);
 	if (olp == curbp->b_linep) {
@@ -233,6 +237,7 @@ insertfile(char *fname, char *newname, int needinfo)
 		(void)lnewline();
 		curwp->w_dotp = lback(curwp->w_dotp);
 	}
+	undo_enable(x2);
 
 	/* don't count fake lines at the end */
 	nline = 0;
@@ -346,6 +351,9 @@ out:		lp2 = NULL;
 			}
 		}
 	}
+	if (x != -1)
+		undo_enable(x);
+
 	/* return false if error */
 	return s != FIOERR;
 }

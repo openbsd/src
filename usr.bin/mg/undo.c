@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.13 2002/08/22 23:28:19 deraadt Exp $ */
+/* $OpenBSD: undo.c,v 1.14 2002/09/15 22:18:39 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -182,9 +182,9 @@ last_was_boundary()
 int
 undo_enable(int on)
 {
-	undo_disable_flag = on ? 0 : 1;
-
-	return (on);
+	int pon = undo_disable_flag;
+	undo_disable_flag = (on == TRUE) ? 0 : 1;
+	return (pon ? FALSE : TRUE);
 }
 
 int
