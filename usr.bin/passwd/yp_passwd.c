@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.14 2000/08/01 22:27:51 provos Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.15 2000/12/12 02:19:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.14 2000/08/01 22:27:51 provos Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.15 2000/12/12 02:19:59 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -64,10 +64,9 @@ extern	int pwd_gensalt __P(( char *, int, struct passwd *, char));
 extern	int pwd_check __P((struct passwd *, char *));
 extern	int pwd_gettries __P((struct passwd *));
 
-static char *getnewpasswd();
-static struct passwd *ypgetpwnam();
+char *ypgetnewpasswd __P((struct passwd *, char **));
+struct passwd *ypgetpwnam __P((char *));
 
-static uid_t uid;
 char *domain;
 
 static int
@@ -75,7 +74,7 @@ pw_error(name, err, eval)
 	char *name;
 	int err, eval;
 {
-	if(err) 
+	if (err) 
 		warn("%s", name);
 
 	warnx("YP passwd database unchanged.");
@@ -88,19 +87,18 @@ yp_passwd(username)
 {
 	char *master;
 	int r, rpcport, status;
+	uid_t uid;
 	struct yppasswd yppasswd;
 	struct passwd *pw;
 	struct timeval tv;
 	CLIENT *client;
-	
-	uid = getuid();
 
 	/*
 	 * Get local domain
 	 */
 	if ((r = yp_get_default_domain(&domain)) != 0) {
 		warnx("can't get local YP domain. Reason: %s", yperr_string(r));
-		exit(1);
+		return(1);
 	}
 
 	/*
@@ -110,7 +108,7 @@ yp_passwd(username)
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
 		warnx("can't find the master YP server. Reason: %s",
 		    yperr_string(r));
-		exit(1);
+		return(1);
 	}
 
 	/*
@@ -120,7 +118,7 @@ yp_passwd(username)
 	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
 		warnx("master YP server not running yppasswd daemon.");
 		warnx("Can't change password.");
-		exit(1);
+		return(1);
 	}
 
 	/*
@@ -128,22 +126,23 @@ yp_passwd(username)
 	 */
 	if (rpcport >= IPPORT_RESERVED) {
 		warnx("yppasswd daemon is on an invalid port.");
-		exit(1);
+		return(1);
 	}
 
 	/* Get user's login identity */
 	if (!(pw = ypgetpwnam(username))) {
 		warnx("unknown user %s.", username);
-		exit(1);
+		return(1);
 	}
 		
+	uid = getuid();
 	if (uid && uid != pw->pw_uid) {
 		warnx("you may only change your own password: %s", strerror(EACCES));
-		exit(1);
+		return(1);
 	}
 
 	/* prompt for new password */
-	yppasswd.newpw.pw_passwd = getnewpasswd(pw, &yppasswd.oldpass);
+	yppasswd.newpw.pw_passwd = ypgetnewpasswd(pw, &yppasswd.oldpass);
 
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	= pw->pw_name;
@@ -170,26 +169,25 @@ yp_passwd(username)
 	else if (status) {
 		printf("Couldn't change YP password.\n");
 		free(yppasswd.newpw.pw_passwd);
-		exit(1);
+		return(1);
 	}
 	printf("The YP password has been changed on %s, the master YP passwd server.\n",
 	    master);
 	free(yppasswd.newpw.pw_passwd);
-	exit(0);
+	return(0);
 }
 
-static char *
-getnewpasswd(pw, old_pass)
-	register struct passwd *pw;
+char *
+ypgetnewpasswd(pw, old_pass)
+	struct passwd *pw;
 	char **old_pass;
 {
 	static char buf[_PASSWORD_LEN+1];
-	register char *p, *t;
+	char *p;
 	int tries, pwd_tries;
-	char salt[_PASSWORD_LEN], *crypt(), *getpass();
+	char salt[_PASSWORD_LEN];
 	
 	printf("Changing YP password for %s.\n", pw->pw_name);
-
 	if (old_pass) {
 		*old_pass = NULL;
 	
@@ -233,7 +231,7 @@ getnewpasswd(pw, old_pass)
 }
 
 static char *
-pwskip(register char *p)
+pwskip(char *p)
 {
 	while (*p && *p != ':' && *p != '\n')
 		++p;
@@ -245,7 +243,7 @@ pwskip(register char *p)
 struct passwd *
 interpret(struct passwd *pwent, char *line)
 {
-	register char	*p = line;
+	char	*p = line;
 
 	pwent->pw_passwd = "*";
 	pwent->pw_uid = 0;
@@ -282,7 +280,7 @@ interpret(struct passwd *pwent, char *line)
 
 static char *__yplin;
 
-static struct passwd *
+struct passwd *
 ypgetpwnam(nam)
 	char *nam;
 {

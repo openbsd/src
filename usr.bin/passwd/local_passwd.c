@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.12 2000/11/26 01:29:43 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.13 2000/12/12 02:19:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.12 2000/11/26 01:29:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.13 2000/12/12 02:19:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,8 +56,9 @@ extern int pwd_check __P((struct passwd *, char *));
 extern int pwd_gettries __P((struct passwd *));
 
 int
-local_passwd(uname)
+local_passwd(uname, authenticated)
 	char *uname;
+	int authenticated;
 {
 	struct passwd *pw;
 	int pfd, tfd;
@@ -72,7 +73,7 @@ local_passwd(uname)
 		return(1);
 	}
 
-	uid = getuid();
+	uid = authenticated ? pw->pw_uid : getuid();
 	if (uid && uid != pw->pw_uid) {
 		warnx("login/uid mismatch, username argument required.");
 		return(1);
@@ -95,7 +96,7 @@ local_passwd(uname)
 	 * classes are implemented, go and get the "offset" value for this
 	 * class and reset the timer.
 	 */
-	pw->pw_passwd = getnewpasswd(pw);
+	pw->pw_passwd = getnewpasswd(pw, authenticated);
 	pw->pw_change = 0;
 	pw_copy(pfd, tfd, pw);
 
@@ -105,20 +106,22 @@ local_passwd(uname)
 }
 
 char *
-getnewpasswd(pw)
+getnewpasswd(pw, authenticated)
 	register struct passwd *pw;
+	int authenticated;
 {
-	register char *p, *t;
+	register char *p;
 	int tries, pwd_tries;
-	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN], *crypt(), *getpass();
+	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN];
 
-	(void)printf("Changing local password for %s.\n", pw->pw_name);
-
-	if (uid && pw->pw_passwd[0] &&
-	    strcmp(crypt(getpass("Old password:"), pw->pw_passwd),
-	    pw->pw_passwd)) {
-		errno = EACCES;
-		pw_error(NULL, 1, 1);
+	if (!authenticated) {
+		(void)printf("Changing local password for %s.\n", pw->pw_name);
+		if (uid && pw->pw_passwd[0] &&
+		    strcmp(crypt(getpass("Old password:"), pw->pw_passwd),
+		    pw->pw_passwd)) {
+			errno = EACCES;
+			pw_error(NULL, 1, 1);
+		}
 	}
 	
 	pwd_tries = pwd_gettries(pw);
@@ -137,13 +140,12 @@ getnewpasswd(pw)
 		if ((tries++ < pwd_tries || pwd_tries == 0) 
 		    && pwd_check(pw, p) == 0)
 			continue;
-		strncpy(buf, p, sizeof buf-1);
-		buf[sizeof buf-1] = '\0';
+		strlcpy(buf, p, sizeof(buf));
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	if( !pwd_gensalt( salt, _PASSWORD_LEN, pw, 'l' )) {
+	if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'l')) {
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}
