@@ -1,99 +1,181 @@
-.\"	$OpenBSD: tcpdmatch.8,v 1.1 1997/02/26 06:17:10 downsj Exp $
-.TH TCPDMATCH 8
-.SH NAME
+.\"	$OpenBSD: tcpdmatch.8,v 1.2 1997/06/24 02:12:26 downsj Exp $
+.\"
+.\" Copyright (c) 1997, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason Downs for the
+.\"      OpenBSD system.
+.\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd June 23, 1997
+.Dt TCPDMATCH 8
+.Os
+.Sh NAME
 tcpdmatch \- tcp wrapper oracle
-.SH SYNOPSYS
-tcpdmatch [-d] [-i inet_conf] daemon client
-.sp
-tcpdmatch [-d] [-i inet_conf] daemon[@server] [user@]client
-.SH DESCRIPTION
-.PP
-\fItcpdmatch\fR predicts how the tcp wrapper would handle a specific
-request for service.  Examples are given below.
-.PP
-The program examines the \fItcpd\fR access control tables (default
-\fI/etc/hosts.allow\fR and \fI/etc/hosts.deny\fR) and prints its
-conclusion.  For maximal accuracy, it extracts additional information
-from your \fIinetd\fR or \fItlid\fR network configuration file.
-.PP
-When \fItcpdmatch\fR finds a match in the access control tables, it
-identifies the matched rule. In addition, it displays the optional
+.Sh SYNOPSYS
+.Nm tcpdmatch
+.Op Fl d
+.Op Fl i Ar inet_conf
+.Ar daemon
+.Ar client
+.Pp
+.Nm tcpdmatch
+.Op Fl d
+.Op Fl i Ar inet_conf
+.Ar daemon Op Ar @server
+.Op Ar user@
+.Ar client
+.Sh DESCRIPTION
+.Nm tcpdmatch
+predicts how the tcp wrapper would handle a specific request for service.
+Examples are given below.
+.Pp
+The program examines the 
+.Xr tcpd 8
+access control tables (default
+.Pa /etc/hosts.allow
+and
+.Pa /etc/hosts.deny )
+and prints its conclusion.  For maximal accuracy, it extracts additional
+information from your
+.Xr inetd 8
+network configuration file.
+.Pp
+When
+.Nm tcpdmatch
+finds a match in the access control tables, it
+identifies the matched rule.  In addition, it displays the optional
 shell commands or options in a pretty-printed format; this makes it
 easier for you to spot any discrepancies between what you want and what
 the program understands.
-.SH ARGUMENTS
+.Sh ARGUMENTS
 The following two arguments are always required:
-.IP daemon
+.Pp
+.Bl -tag -width XXXXXX -compact
+.It Ar daemon
 A daemon process name. Typically, the last component of a daemon
 executable pathname.
-.IP client
+.It Ar client
 A host name or network address, or one of the `unknown' or `paranoid'
 wildcard patterns.
-.sp
-When a client host name is specified, \fItcpdmatch\fR gives a
-prediction for each address listed for that client.
-.sp
-When a client address is specified, \fItcpdmatch\fR predicts what
-\fItcpd\fR would do when client name lookup fails.
-.PP
-Optional information specified with the \fIdaemon@server\fR form:
-.IP server
+.El
+.Pp
+When a client host name is specified,
+.Nm tcpdmatch
+gives a prediction for each address listed for that client.
+.Pp
+When a client address is specified,
+.Nm tcpdmatch
+predicts what
+.Xr tcpd 8
+would do when client name lookup fails.
+.Pp
+Optional information specified with the
+.Ar daemon@server
+form:
+.Pp
+.Bl -tag -width XXXXXX -compact
+.It Ar server
 A host name or network address, or one of the `unknown' or `paranoid'
-wildcard patterns. The default server name is `unknown'.
-.PP
-Optional information specified with the \fIuser@client\fR form:
-.IP user
+wildcard patterns.  The default server name is `unknown'.
+.El
+.Pp
+Optional information specified with the
+.Ar user@client
+form:
+.Pp
+.Bl -tag -width XXXXXX -compact
+.It Ar user
 A client user identifier. Typically, a login name or a numeric userid.
 The default user name is `unknown'.
-.SH OPTIONS
-.IP -d
-Examine \fIhosts.allow\fR and \fIhosts.deny\fR files in the current
-directory instead of the default ones.
-.IP "-i inet_conf"
-Specify this option when \fItcpdmatch\fR is unable to find your
-\fIinetd.conf\fR or \fItlid.conf\fR network configuration file, or when
-you suspect that the program uses the wrong one.
-.SH EXAMPLES
-To predict how \fItcpd\fR would handle a telnet request from the local
-system:
-.sp
-.ti +5
-tcpdmatch in.telnetd localhost
-.PP
+.El
+.Sh OPTIONS
+.Bl -tag -width XXXXXXXXXXXX
+.It Fl d
+Examine
+.Pa hosts.allow
+and
+.Pa hosts.deny
+files in the current directory instead of the default ones.
+.It Fl i Ar inet_conf
+Specify this option when
+.Nm tcpdmatch
+is unable to find your
+.Pa inetd.conf
+network configuration file, or when you wish to test with a non-default one.
+.El
+.Sh EXAMPLES
+To predict how
+.Xr tcpd 8
+would handle a telnet request from the local system:
+.Pp
+.Bd -unfilled -offset indent
+tcpdmatch telnetd localhost
+.Ed
+.Pp
 The same request, pretending that hostname lookup failed:
-.sp
-.ti +5
-tcpdmatch in.telnetd 127.0.0.1
-.PP
-To predict what tcpd would do when the client name does not match the
-client address:
-.sp
-.ti +5
-tcpdmatch in.telnetd paranoid
-.PP
-On some systems, daemon names have no `in.' prefix, or \fItcpdmatch\fR
-may need some help to locate the inetd configuration file.
-.SH FILES
-.PP
-The default locations of the \fItcpd\fR access control tables are:
-.PP
-/etc/hosts.allow
-.br
-/etc/hosts.deny
-.SH SEE ALSO
-.na
-.nf
-tcpdchk(8), tcpd configuration checker
-hosts_access(5), format of the tcpd access control tables.
-hosts_options(5), format of the language extensions.
-inetd.conf(5), format of the inetd control file.
-tlid.conf(5), format of the tlid control file.
-.SH AUTHORS
-.na
-.nf
+.Pp
+.Bd -unfilled -offset indent
+tcpdmatch telnetd 127.0.0.1
+.Ed
+.Pp
+To predict what
+.Xr tcpd 8
+would do when the client name does not match the client address:
+.Pp
+.Bd -unfilled -offset indent
+tcpdmatch telnetd paranoid
+.Ed
+.\" .Pp
+.\" On some systems, daemon names have no `in.' prefix, or
+.\" .Nm tcpdmatch\
+.\" may need some help to locate the inetd configuration file.
+.Sh FILES
+.Pp
+The default locations of the
+.Xr tcpd 8
+access control tables are:
+.Pp
+.Bl -tag -width /etc/hosts.allow -compact
+.It Pa /etc/hosts.allow
+Access control table (allow list)
+.It Pa /etc/hosts.deny
+Access control table (deny list)
+.El
+.Sh SEE ALSO
+.Xr hosts_access 5 ,
+.Xr hosts_options 5 ,
+.Xr inetd.conf 5 ,
+.Xr tcpdchk 8 .
+.Sh AUTHOR
+.Bd -unfilled -offset indent
 Wietse Venema (wietse@wzv.win.tue.nl),
 Department of Mathematics and Computing Science,
 Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
+.Ed
 \" @(#) tcpdmatch.8 1.5 96/02/11 17:01:35
