@@ -1,5 +1,5 @@
 
-# $OpenBSD: Makefile,v 1.14 2002/12/31 16:22:25 miod Exp $
+# $OpenBSD: Makefile,v 1.15 2003/04/08 20:42:43 millert Exp $
 
 MAKEDEVARCHS+=alpha hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 vax
@@ -22,7 +22,7 @@ ${REGRESS_TARGETS}:
 	@exec ${SUDO} rm -rf test.${_T}.${.TARGET}
 	@exec mkdir -p -m 700 test.${_T}.${.TARGET}
 	@exec cp ${ETCSRCDIR}/etc.${.TARGET}/MAKEDEV test.${_T}.${.TARGET}
-	@exec ${SUDO} chown root.wheel test.${_T}.${.TARGET}
+	@exec ${SUDO} chown root:wheel test.${_T}.${.TARGET}
 	@cd test.${_T}.${.TARGET}; \
 	time ${SUDO} sh ./MAKEDEV ${_T} || true; \
 	time ${SUDO} sh ./MAKEDEV ${_T} || true; \

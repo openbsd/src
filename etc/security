@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.55 2002/12/30 13:59:54 millert Exp $
+#	$OpenBSD: security,v 1.56 2003/04/08 20:42:42 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -90,11 +90,11 @@ if [ -s $CUR ] ; then
 	else
 		cp -p $CUR $BACK
 		cp -p $MP $CUR
-		chown root.wheel $CUR
+		chown root:wheel $CUR
 	fi
 else
 	cp -p $MP $CUR
-	chown root.wheel $CUR
+	chown root:wheel $CUR
 fi
 
 # Check the group file syntax.
@@ -595,7 +595,7 @@ fi
 # Create the mtree tree specifications using:
 #
 #	mtree -cx -pDIR -kcksum,gid,mode,nlink,size,link,time,uid > DIR.secure
-#	chown root.wheel DIR.secure
+#	chown root:wheel DIR.secure
 #	chmod 600 DIR.secure
 #
 # Note, this is not complete protection against Trojan horsed binaries, as
@@ -648,11 +648,11 @@ if [ -s /etc/changelist ] ; then
 					cat $OUTPUT
 					cp -p $CUR $BACK
 					cp -p $file $CUR
-					chown root.wheel $CUR $BACK
+					chown root:wheel $CUR $BACK
 				fi
 			else
 				cp -p $file $CUR
-				chown root.wheel $CUR
+				chown root:wheel $CUR
 			fi
 		fi
 	done
@@ -670,12 +670,12 @@ if [ -s /etc/changelist ] ; then
 					echo "NEW: $MD5_NEW"
 					cp -p $CUR $BACK
 					echo $MD5_NEW > $CUR
-					chown root.wheel $CUR $BACK
+					chown root:wheel $CUR $BACK
 					chmod 600 $CUR
 				fi
 			else
 				echo $MD5_NEW > $CUR
-				chown root.wheel $CUR
+				chown root:wheel $CUR
 				chmod 600 $CUR
 			fi
 		fi

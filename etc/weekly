@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.12 2003/01/14 08:12:41 jakob Exp $
+#	$OpenBSD: weekly,v 1.13 2003/04/08 20:42:42 millert Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -23,7 +23,7 @@ if [ -f /var/db/locate.database ]; then
 		    nice -5 su -m nobody 2>/dev/null 1>$TMP
 		if [ -s "$TMP" ]; then
 			chmod 444 $TMP
-			chown root.wheel $TMP
+			chown root:wheel $TMP
 			mv -f $TMP /var/db/locate.database
 		else
 			echo "Not installing locate database; zero size"
