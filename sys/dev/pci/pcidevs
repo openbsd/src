@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.542 2002/09/03 20:04:14 jason Exp $
+	$OpenBSD: pcidevs,v 1.543 2002/09/09 17:35:00 gluk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1040,6 +1040,7 @@ product CMDTECH 649		0x0649	PCI0649
 product CMDTECH 650A		0x0650	PCI0650A
 product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
+product CMDTECH 680		0x0680	PCI0680
 
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX
