@@ -11,7 +11,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.22 1997/09/12 20:47:39 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.23 1998/02/24 20:52:48 millert Exp $
  */
 
 #include <sys/param.h>
@@ -120,19 +120,14 @@ skeylookup(mp, name)
 	char *cp, *ht = NULL;
 	struct stat statbuf;
 
-	/* See if _PATH_SKEYKEYS exists, and create it if not */
-	if (stat(_PATH_SKEYKEYS, &statbuf) == -1 && errno == ENOENT) {
-		mp->keyfile = fopen(_PATH_SKEYKEYS, "w+");
-		if (mp->keyfile)
+	/* Open _PATH_SKEYKEYS if it exists, else return an error */
+	if (stat(_PATH_SKEYKEYS, &statbuf) == 0 &&
+	    (mp->keyfile = fopen(_PATH_SKEYKEYS, "r+")) != NULL) {
+		if ((statbuf.st_mode & 0007777) != 0600)
 			fchmod(fileno(mp->keyfile), 0600);
 	} else {
-		/* Otherwise open normally for update */
-		mp->keyfile = fopen(_PATH_SKEYKEYS, "r+");
-		if (mp->keyfile && (statbuf.st_mode & 0007777) != 0600)
-			fchmod(fileno(mp->keyfile), 0600);
-	}
-	if (mp->keyfile == NULL)
 		return(-1);
+	}
 
 	/* Look up user name in database */
 	while (!feof(mp->keyfile)) {
@@ -192,20 +187,15 @@ skeygetnext(mp)
 	char *cp;
 	struct stat statbuf;
 
-	/* See if _PATH_SKEYKEYS exists, and create it if not */
+	/* Open _PATH_SKEYKEYS if it exists, else return an error */
 	if (mp->keyfile == NULL) {
-		if (stat(_PATH_SKEYKEYS, &statbuf) == -1 && errno == ENOENT) {
-			mp->keyfile = fopen(_PATH_SKEYKEYS, "w+");
-			if (mp->keyfile)
+		if (stat(_PATH_SKEYKEYS, &statbuf) == 0 &&
+		    (mp->keyfile = fopen(_PATH_SKEYKEYS, "r+")) != NULL) {
+			if ((statbuf.st_mode & 0007777) != 0600)
 				fchmod(fileno(mp->keyfile), 0600);
 		} else {
-			/* Otherwise open normally for update */
-			mp->keyfile = fopen(_PATH_SKEYKEYS, "r+");
-			if (mp->keyfile && (statbuf.st_mode & 0007777) != 0600)
-				fchmod(fileno(mp->keyfile), 0600);
-		}
-		if (mp->keyfile == NULL)
 			return(-1);
+		}
 	}
 
 	/* Look up next user in database */
