@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.73 2003/12/15 07:11:31 mcbride Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.74 2004/01/13 17:31:15 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -549,15 +549,20 @@ remove_stale_rulesets(void)
 	mnr = prs.nr;
 	nr = 0;
 	while (nr < mnr) {
-		char	*s;
+		char	*s, *t;
 		pid_t	 pid;
 
 		prs.nr = nr;
 		if (ioctl(dev, DIOCGETRULESET, &prs))
 			return (1);
 		errno = 0;
-		pid = strtoul(prs.name, &s, 10);
-		if (!prs.name[0] || errno || *s)
+		if ((t = strchr(prs.name, '(')) == NULL)
+			t = prs.name;
+		else
+			t++;
+		pid = strtoul(t, &s, 10);
+		if (!prs.name[0] || errno ||
+		    (*s && (t == prs.name || *s != ')')))
 			return (1);
 		if (kill(pid, 0) && errno != EPERM) {
 			int i;
