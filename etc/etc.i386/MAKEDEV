@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.58 1998/04/27 14:50:38 provos Exp $
+#	$OpenBSD: MAKEDEV,v 1.59 1998/07/23 17:45:40 mickey Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,8 @@
 #	*random	inkernel random number generator
 #	uk*	"unknown SCSI" devices
 #	ss*	SCSI scanners
+#	bktr0	video capturing
+#	tuner0	tuner device
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -113,7 +115,7 @@ all)
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
-	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr
+	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr bktr0 tuner0
 	sh MAKEDEV fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh MAKEDEV fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H 
 # MISSING:
@@ -454,7 +456,7 @@ lpt*|lpa*)
 	chown root.wheel $name$unit
 	;;
 
-bpf*|tun*)
+bpf*|tun[0-9]*)
 	unit=`expr $i : '...\(.*\)'`
 	case $i in
 	bpf*) name=bpf; chr=23;;
@@ -617,7 +619,23 @@ pctr)
 	chown root.wheel pctr
 	chmod 0644 pctr
 	;;
-	
+
+bktr*)
+	unit=`expr $i : 'bktr\(.*\)'`
+	rm -f bktr$unit
+	mknod bktr$unit c 49 $unit
+	chown root.wheel bktr$unit
+	chmod 0644 bktr$unit
+	;;
+
+tuner*)
+	unit=`expr $i : 'tuner\(.*\)'`
+	rm -f tuner$unit
+	mknod tuner$unit c 49 $((unit + 16))
+	chown root.wheel tuner$unit
+	chmod 0644 tuner$unit
+	;;
+
 local)
 	umask 0
 	test -s MAKEDEV.local && sh MAKEDEV.local
