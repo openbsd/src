@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2001/07/31 08:24:56 hugh Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2001/08/18 20:29:53 miod Exp $
 
 machine 	vax			# machine type
 
@@ -55,9 +55,6 @@ option		WSDISPLAY_DEFAULTSCREENS=8
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
 #option		COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
-option		COMPAT_12
-#option		COMPAT_13
-#option		COMPAT_14
 #option		COMPAT_ULTRIX
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2001/06/27 05:15:40 art Exp $
+#	$OpenBSD: GENERIC,v 1.27 2001/08/18 20:29:53 miod Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -37,9 +37,6 @@ option		WSDISPLAY_DEFAULTSCREENS=8
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
 #option		COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
-option		COMPAT_12
-#option		COMPAT_13
-#option		COMPAT_14
 #option		COMPAT_ULTRIX
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
