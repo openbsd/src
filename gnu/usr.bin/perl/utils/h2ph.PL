@@ -192,11 +192,11 @@ exit $Exit;
 sub expr {
     while ($_ ne '') {
 	s/^\&//;		# hack for things that take the address of
-	s/^(\s+)//		&& do {$new .= ' '; next;};
-	s/^(0x[0-9a-fA-F]+)//	&& do {$new .= $1; next;};
-	s/^(\d+)\s*[LlUu]*//	&& do {$new .= $1; next;};
-	s/^("(\\"|[^"])*")//	&& do {$new .= $1; next;};
-	s/^'((\\"|[^"])*)'//	&& do {
+	s/^(\s+)//			&& do {$new .= ' '; next;};
+	s/^(0x[0-9a-fA-F]+)\s*[LlUu]*//	&& do {$new .= $1; next;};
+	s/^(\d+)\s*[LlUu]*//		&& do {$new .= $1; next;};
+	s/^("(\\"|[^"])*")//		&& do {$new .= $1; next;};
+	s/^'((\\"|[^"])*)'//		&& do {
 	    if ($curargs{$1}) {
 		$new .= "ord('\$$1')";
 	    }
