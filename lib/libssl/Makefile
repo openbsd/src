@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile,v 1.10 2002/06/07 06:26:17 beck Exp $
+# $OpenBSD: Makefile,v 1.11 2002/08/30 10:24:16 markus Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -13,24 +13,95 @@ OPENSSLDIR=	/etc/ssl
 SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-${MACHINE_ARCH}
 
 MUNGEDFILES= \
-	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h \
-	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h \
-	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h \
-	${.OBJDIR}/${SSL_SRC}/Makefile.ssl \
 	${.OBJDIR}/${SSL_SRC}/Makefile \
-	${.OBJDIR}/${SSL_SRC}/apps/der_chop \
-	${.OBJDIR}/${SSL_SRC}/tools/c_rehash \
+	${.OBJDIR}/${SSL_SRC}/Makefile.ssl \
 	${.OBJDIR}/${SSL_SRC}/apps/CA.pl \
 	${.OBJDIR}/${SSL_SRC}/apps/CA.pl.bak \
-	${.OBJDIR}/des_random_key.pm \
+	${.OBJDIR}/${SSL_SRC}/apps/Makefile \
+	${.OBJDIR}/${SSL_SRC}/apps/der_chop \
+	${.OBJDIR}/${SSL_SRC}/crypto/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/aes/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/asn1/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/bf/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/bio/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/bn/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/buffer/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/cast/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/comp/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/conf/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/des/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/des/asm/perlasm \
+	${.OBJDIR}/${SSL_SRC}/crypto/dh/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/dsa/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/dso/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/ec/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/engine/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/err/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/evp/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/hmac/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/idea/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/krb5/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/lhash/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/md2/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/md4/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/md5/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/mdc2/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/objects/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h \
+	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h \
+	${.OBJDIR}/${SSL_SRC}/crypto/ocsp/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h \
+	${.OBJDIR}/${SSL_SRC}/crypto/pem/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/pkcs12/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/pkcs7/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/rand/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/rc2/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/rc4/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/rc5/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/ripemd/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/rsa/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/sha/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/stack/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/txt_db/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/ui/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/x509/Makefile \
+	${.OBJDIR}/${SSL_SRC}/crypto/x509v3/Makefile \
+	${.OBJDIR}/${SSL_SRC}/ssl/Makefile \
+	${.OBJDIR}/${SSL_SRC}/test/Makefile \
+	${.OBJDIR}/${SSL_SRC}/test/bftest.c \
+	${.OBJDIR}/${SSL_SRC}/test/bntest.c \
+	${.OBJDIR}/${SSL_SRC}/test/casttest.c \
+	${.OBJDIR}/${SSL_SRC}/test/destest.c \
+	${.OBJDIR}/${SSL_SRC}/test/dhtest.c \
+	${.OBJDIR}/${SSL_SRC}/test/dsatest.c \
+	${.OBJDIR}/${SSL_SRC}/test/ectest.c \
+	${.OBJDIR}/${SSL_SRC}/test/evp_test.c \
+	${.OBJDIR}/${SSL_SRC}/test/evptests.txt \
+	${.OBJDIR}/${SSL_SRC}/test/exptest.c \
+	${.OBJDIR}/${SSL_SRC}/test/hmactest.c \
+	${.OBJDIR}/${SSL_SRC}/test/ideatest.c \
+	${.OBJDIR}/${SSL_SRC}/test/md2test.c \
+	${.OBJDIR}/${SSL_SRC}/test/md5test.c \
+	${.OBJDIR}/${SSL_SRC}/test/mdc2test.c \
+	${.OBJDIR}/${SSL_SRC}/test/randtest.c \
+	${.OBJDIR}/${SSL_SRC}/test/rc2test.c \
+	${.OBJDIR}/${SSL_SRC}/test/rc4test.c \
+	${.OBJDIR}/${SSL_SRC}/test/rc5test.c \
+	${.OBJDIR}/${SSL_SRC}/test/rmdtest.c \
+	${.OBJDIR}/${SSL_SRC}/test/sha1test.c \
+	${.OBJDIR}/${SSL_SRC}/test/shatest.c \
+	${.OBJDIR}/${SSL_SRC}/test/ssltest.c \
+	${.OBJDIR}/${SSL_SRC}/tools/Makefile \
+	${.OBJDIR}/${SSL_SRC}/tools/c_rehash \
+	${.OBJDIR}/BUF_MEM_new.pm \
+	${.OBJDIR}/CRYPTO_set_locking_callback.pm \
 	${.OBJDIR}/HMAC.pm \
 	${.OBJDIR}/MD5.pm \
 	${.OBJDIR}/MDC2.pm \
-	${.OBJDIR}/SHA1.pm \
-	${.OBJDIR}/BUF_MEM_new.pm \
 	${.OBJDIR}/RC4.pm \
 	${.OBJDIR}/RIPEMD160.pm \
-	${.OBJDIR}/CRYPTO_set_locking_callback.pm
+	${.OBJDIR}/SHA1.pm \
+	${.OBJDIR}/des_random_key.pm
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -949,7 +1020,9 @@ ${.OBJDIR}/${SSL_SRC}/Makefile.org: ${.CURDIR}/${SSL_SRC}/Makefile.org
 .if ${.OBJDIR} == ${.CURDIR}
 clean: prereq
 	@cd ${.OBJDIR}/crypto && ${MAKE} clean
-	@cd ${.OBJDIR}/ssl && ${MAKE} clean && rm -f ${MUNGEDFILES}
+	@cd ${.OBJDIR}/ssl && ${MAKE} clean
+	@rm -f ${MUNGEDFILES}
+	@rm -rf ${.OBJDIR}/${SSL_SRC}/include
 .else 	
 clean:
 	@cd ${.OBJDIR} && find . \! -type d -print | xargs rm
