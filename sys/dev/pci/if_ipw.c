@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.10 2004/10/27 21:19:43 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.11 2004/10/27 21:20:30 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -105,6 +105,7 @@ int ipw_tx_init(struct ipw_softc *);
 void ipw_tx_stop(struct ipw_softc *);
 int ipw_rx_init(struct ipw_softc *);
 void ipw_rx_stop(struct ipw_softc *);
+void ipw_stop_master(struct ipw_softc *);
 void ipw_reset(struct ipw_softc *);
 int ipw_clock_sync(struct ipw_softc *);
 int ipw_load_ucode(struct ipw_softc *, u_char *, int);
@@ -115,7 +116,6 @@ int ipw_init(struct ifnet *);
 void ipw_stop(struct ifnet *, int);
 void ipw_read_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *, bus_size_t);
 void ipw_write_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *, bus_size_t);
-void ipw_zero_mem_4(struct ipw_softc *, bus_size_t, bus_size_t);
 
 static __inline u_int8_t MEM_READ_1(struct ipw_softc *sc, u_int32_t addr)
 {
@@ -415,7 +415,7 @@ ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 	 * ipw_newstate_intr().
 	 */
 	if (letoh32(cmd->type) != IPW_CMD_DISABLE)
-		wakeup(sc->cmd);
+		wakeup(sc);
 }
 
 void
@@ -728,7 +728,7 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 	DPRINTFN(2, ("TX!CMD!%u!%u!%u!%u\n", type, 0, 0, len));
 
 	/* Wait at most one second for command to complete */
-	return tsleep(sc->cmd, 0, "ipwcmd", hz);
+	return tsleep(sc, 0, "ipwcmd", hz);
 }
 
 int
@@ -1469,6 +1469,30 @@ ipw_rx_stop(struct ipw_softc *sc)
 }
 
 void
+ipw_stop_master(struct ipw_softc *sc)
+{
+	int ntries;
+
+	/* Disable interrupts */
+	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
+
+	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_STOP_MASTER);
+	for (ntries = 0; ntries < 5; ntries++) {
+		if (CSR_READ_4(sc, IPW_CSR_RST) & IPW_RST_MASTER_DISABLED)
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5)
+		printf("%s: timeout waiting for master\n",
+		    sc->sc_dev.dv_xname);
+
+	CSR_WRITE_4(sc, IPW_CSR_RST, CSR_READ_4(sc, IPW_CSR_RST) |
+	    IPW_RST_PRINCETON_RESET);
+
+	sc->flags &= ~IPW_FLAG_FW_INITED;
+}
+
+void
 ipw_reset(struct ipw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1535,6 +1559,9 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 {
 	int ntries;
 
+	MEM_WRITE_4(sc, 0x003000e0, 0x80000000);
+	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
+
 	MEM_WRITE_2(sc, 0x220000, 0x0703);
 	MEM_WRITE_2(sc, 0x220000, 0x0707);
 
@@ -1568,6 +1595,8 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 	if (ntries == 10)
 		return EIO;
 
+	MEM_WRITE_4(sc, 0x003000e0, 0);
+
 	return 0;
 }
 
@@ -1580,6 +1609,7 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 	u_char *p, *end;
 	u_int32_t dst;
 	u_int16_t len;
+	int error;
 
 	p = fw;
 	end = fw + size;
@@ -1596,6 +1626,26 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 		ipw_write_mem_1(sc, dst, p, len);
 		p += len;
 	}
+
+	CSR_WRITE_4(sc, IPW_CSR_IO, IPW_IO_GPIO1_ENABLE | IPW_IO_GPIO3_MASK |
+	    IPW_IO_LED_OFF);
+
+	/* Allow interrupts so we know when the firmware is inited */
+	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, IPW_INTR_MASK);
+
+	/* Tell the adapter to initialize the firmware */
+	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
+
+	/* Wait at most one second for firmware initialization to complete */
+	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
+		printf("%s: timeout waiting for firmware initialization to "
+		    "complete\n", sc->sc_dev.dv_xname);
+		return error;
+	}
+
+	CSR_WRITE_4(sc, IPW_CSR_IO, CSR_READ_4(sc, IPW_CSR_IO) |
+	    IPW_IO_GPIO1_MASK | IPW_IO_GPIO3_MASK);
+
 	return 0;
 }
 
@@ -1605,7 +1655,7 @@ ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ipw_fw_hdr hdr;
-	u_int32_t r, len, fw_size, uc_size;
+	u_int32_t len, fw_size, uc_size;
 	u_char *fw, *uc;
 	int error;
 
@@ -1642,33 +1692,12 @@ ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 		goto fail3;
 	}
 
-	MEM_WRITE_4(sc, 0x003000e0, 0x80000000);
-
-	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
-
 	if ((error = ipw_load_ucode(sc, uc, uc_size)) != 0) {
 		printf("%s: could not load microcode\n", sc->sc_dev.dv_xname);
 		goto fail3;
 	}
 
-	MEM_WRITE_4(sc, 0x003000e0, 0);
-
-	if ((error = ipw_clock_sync(sc)) != 0) {
-		printf("%s: clock synchronization failed\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	if ((error = ipw_load_firmware(sc, fw, fw_size))) {
-		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	ipw_zero_mem_4(sc, 0x0002f200, 196);
-	ipw_zero_mem_4(sc, 0x0002f610, 8);
-	ipw_zero_mem_4(sc, 0x0002fa00, 8);
-	ipw_zero_mem_4(sc, 0x0002fc00, 4);
-	ipw_zero_mem_4(sc, 0x0002ff80, 32);
+	ipw_stop_master(sc);
 
 	if ((error = ipw_rx_init(sc)) != 0) {
 		printf("%s: could not initialize rx queue\n",
@@ -1682,19 +1711,8 @@ ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 		goto fail3;
 	}
 
-	CSR_WRITE_4(sc, IPW_CSR_IO, IPW_IO_GPIO1_ENABLE | IPW_IO_GPIO3_MASK |
-	    IPW_IO_LED_OFF);
-
-	/* Allow interrupts so we know when the firmware is inited */
-	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, IPW_INTR_MASK);
-
-	/* Tell the adapter to initialize the firmware */
-	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
-
-	/* Wait at most one second for firmware initialization to complete */
-	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
-		printf("%s: timeout waiting for firmware initialization to "
-		    "complete\n", sc->sc_dev.dv_xname);
+	if ((error = ipw_load_firmware(sc, fw, fw_size))) {
+		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
 		goto fail3;
 	}
 
@@ -1703,9 +1721,6 @@ ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 
 	free(uc, M_DEVBUF);
 	free(fw, M_DEVBUF);
-
-	r = CSR_READ_4(sc, IPW_CSR_IO);
-	CSR_WRITE_4(sc, IPW_CSR_IO, r | IPW_IO_GPIO1_MASK | IPW_IO_GPIO3_MASK);
 
 	/* Retrieve information tables base addresses */
 	sc->table1_base = CSR_READ_4(sc, IPW_CSR_TABLE1_BASE);
@@ -1990,14 +2005,6 @@ ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
 		CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, offset & ~3);
 		CSR_WRITE_1(sc, IPW_CSR_INDIRECT_DATA + (offset & 3), *datap);
 	}
-}
-
-void
-ipw_zero_mem_4(struct ipw_softc *sc, bus_size_t offset, bus_size_t count)
-{
-	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, offset);
-	while (count-- > 0)
-		CSR_WRITE_4(sc, IPW_CSR_AUTOINC_DATA, 0);
 }
 
 struct cfdriver ipw_cd = {
