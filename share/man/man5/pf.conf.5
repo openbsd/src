@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.191 2003/03/03 22:12:24 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.192 2003/03/04 15:40:40 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -499,23 +499,59 @@ rules will be queued, while for
 .Ar block
 rules it specifies where any resulting ICMP or TCP RST
 packets should be queued.
+The
+.Ar scheduler
+defines the algorithm used to decide which packets get delayed, dropped, or
+sent out immediately.
+There are two
+.Ar schedulers
+currently supported.
+.Bl -tag -width proq
+.It Ar cbq
+Class Based Queueing.
+.Ar Queues
+attached to an interface build a tree, thus each
+.Ar queue
+can have further child
+.Ar queues .
+Each queue can have a
+.Ar priority
+and a
+.Ar bandwidth
+assigned.
+.Ar Priority
+mainly controls the time packets take to get sent out, while
+.Ar bandwidth
+has primarily effects on throughput.
+.It Ar priq
+Priority Queueing.
+.Ar Queues
+are flat attached to the interface, thus,
+.Ar queues
+cannot have further child
+.Ar queues .
+Each
+.Ar queue
+has a unique
+.Ar priority
+assigned, ranging from 0 to 7.
+Packets in the
+.Ar queue
+with the highest
+.Ar priority
+are processed first.
+.El
 .Pp
 The interfaces on which queueing should be activated are declared using
 the
 .Ar altq on
 declaration.
 The
-scheduler type is required.
-Currently
-.Ar cbq
-and
-.Ar priq
-are supported.
+.Ar scheduler
+type is required.
 The maximum rate for all queues on this interface is specified using the
 .Ar bandwidth
 directive; if not specified the interface's bandwidth is used.
-.Ar priq
-does not support bandwidth specification.
 The value must not exceed the interface bandwidth and can be specified
 in absolute and percentage values, where the latter is relative to the
 interface bandwidth.
@@ -542,14 +578,17 @@ Those four queues will be shown in a later example.
 .Pp
 Once interfaces are activated for queueing using the
 .Ar altq
-directive, a sequence (actually, a tree) of
+directive, a sequence of
 .Ar queue
 directives may be defined.
 The name associated with a
 .Ar queue
 must match a listed rule in the
 .Ar altq
-directive (e.g. mail) or in a parent
+directive (e.g. mail), or, for the
+.Ar cbq
+.Ar scheduler ,
+in a parent
 .Ar queue
 declaration.
 The maximum bitrate to be processed by this queue is established using the
@@ -559,26 +598,26 @@ This value must not exceed the value of the parent
 .Ar queue
 and can be specified as an absolute value or a percentage of the
 parent's bandwidth.
+.Ar priq
+does not support a bandwidth specification.
 Between queues a
 .Ar priority
 level can also be set.
-For
-.Ar cbq ,
-the range is 0..7 with a default of 1.
+The range is 0..7 with a default of 1.
 Queues with a higher priority level are preferred in the case of overload.
 The maximum number of packets in a queue can be limited using the
 .Ar qlimit
 keyword.
-The scheduler can get additional parameters with
-.Ar cbq Ns Li (\& Ar <parameters> No ) .
+The
+.Ar scheduler
+can get additional parameters with
+.Ar <scheduler> Ns Li (\& Ar <parameters> No ) .
 Parameters are as follows:
 .Pp
 .Bl -tag -width Fl
 .It Ar default
 Packets not matched by another queue are assigned to this one.
 Exactly one default queue is required.
-.It Ar borrow
-The queue can borrow bandwidth from the parent.
 .It Ar red
 Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
@@ -593,7 +632,18 @@ Enables ECN (Explicit Congestion Notification) on this queue.
 ECN implies RED.
 .El
 .Pp
-Furthermore, child queues can be specified as in an
+The
+.Ar cbq
+.Ar scheduler
+supports an additional option:
+.Bl -tag -width Fl
+.It Ar borrow
+The queue can borrow bandwidth from the parent.
+.El
+.Pp
+Furthermore, with
+.Ar cbq ,
+child queues can be specified as in an
 .Ar altq
 declaration, thus building a tree of queues using a part of
 their parent's bandwidth.
