@@ -814,13 +814,14 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 /* ARGSUSED */
-sigreturn(p, uap, retval)
+sys_sigreturn(p, v, retval)
 	struct proc *p;
-	struct sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sys_sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
 	register struct sigcontext *scp;
 	register struct frame *frame;
 	register int rf;
