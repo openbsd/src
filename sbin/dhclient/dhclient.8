@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.1 2004/01/18 01:26:20 deraadt Exp $
+.\" $OpenBSD: dhclient.8,v 1.2 2004/04/07 20:53:09 henning Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd October 1, 1999
+.Dd April 7, 2004
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -43,44 +43,39 @@
 .Nd Dynamic Host Configuration Protocol (DHCP) Client
 .Sh SYNOPSIS
 .Nm
-.Op Fl 1dqu
-.Op Fl p Ar port
-.Op Ar interface ...
+.Op Fl dqu
+.Op Fl c Ar file
+.Op Fl l Ar file
+.Ar interface
 .Sh DESCRIPTION
 The
 .Nm
 utility provides a means for configuring network interfaces using DHCP, BOOTP,
 or if these protocols fail, by statically assigning an address.
 .Pp
-The names of the network interfaces that
+The name of the network interface that
 .Nm
 should attempt to
-configure may be specified on the command line.
-If no interface names are given,
-.Nm
-will identify all network
-interfaces, eliminating non-broadcast interfaces if possible, and
-attempt to configure each one.
+configure must be specified on the command line.
 .Pp
 The options are as follows:
 .Bl -tag -width "-p port"
-.It Fl 1
-Forces
-.Nm
-to exit if it failed to configure an interface.
+.It Fl c Ar file
+Specify an alternate location,
+.Ar file ,
+for the configuration file.
 .It Fl d
 Forces
 .Nm
 to always run as a foreground process.
 By default,
 .Nm
-runs in the foreground until it has configured an interface, and then
+runs in the foreground until it has configured the interface, and then
 will revert to running in the background.
-.It Fl p Ar port
-Specifies the UDP
-.Ar port
-.Nm
-should listen on, instead of the default (68).
+.It Fl l Ar file
+Specify an alternate location,
+.Ar file ,
+for the leases file.
 .It Fl q
 Forces
 .Nm
@@ -115,34 +110,25 @@ In order to keep track of leases across system reboots and server
 restarts,
 .Nm
 keeps a list of leases it has been assigned in the
-.Pa /var/db/dhclient.leases
+.Pa /var/db/dhclient.leases.IFNAME
 file.
+.Qq IFNAME
+represents the network interface of the DHCP client
+.Pq e.g. em0 ,
+one for each interface.
 On startup, after reading the
-.Pa dhclient.conf
+.Xr dhclient.conf 5
 file,
 .Nm
 reads the leases file to refresh its memory about what leases it has been
 assigned.
-.Pp
-When a new lease is acquired, it is appended to the end of
-.Pa /var/db/dhclient.leases .
-In order to prevent the file from becoming arbitrarily large, from time to time
-.Nm
-creates a new
-.Pa dhclient.leases
-file from its in-core lease database.
-The old version of the file is retained under the name
-.Pa /var/db/dhclient.leases~
-until the next time
-.Nm
-rewrites the database.
 .Pp
 Old leases are kept around in case the DHCP server is unavailable when
 .Nm
 is first invoked (generally during the initial system boot
 process).
 In that event, old leases from the
-.Pa dhclient.leases
+.Pa dhclient.leases.IFNAME
 file which have not yet expired are tested, and if they are determined to
 be valid, they are used until either they expire or the DHCP server
 becomes available.
@@ -171,16 +157,11 @@ See
 .Xr bpf 4
 for more information.
 .Sh FILES
-.Bl -tag -width /var/db/dhclient.leases~ -compact
+.Bl -tag -width /var/db/dhclient.leases.IFNAME~ -compact
 .It Pa /etc/dhclient.conf
 DHCP client configuration file
-.It Pa /var/db/dhclient.leases
+.It Pa /var/db/dhclient.leases.IFNAME
 database of acquired leases
-.It Pa /var/db/dhclient.leases~
-backup of dhclient.leases
-.It Pa /var/run/dhclient.pid
-process ID of
-.Nm
 .El
 .Sh SEE ALSO
 .Xr dhclient.conf 5 ,
@@ -213,6 +194,6 @@ Consortium DHCP server uses.
 Much system-specific configuration code
 was moved into a shell script so that as support for more operating
 systems is added, it will not be necessary to port and maintain
-system-specific configuration code to these operating systems - instead,
+system-specific configuration code to these operating systems \- instead,
 the shell script can invoke the native tools to accomplish the same
 purpose.
