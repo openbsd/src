@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.28 1998/07/04 08:56:41 deraadt Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.29 2002/02/21 18:39:46 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -339,9 +339,6 @@ _block_table:
 	. = 0x1b8
 	.space	4, 0	/* NT registry offset from James C. Cortilier III */
 
- 	. = DOSPARTOFF
- 	.globl	_partitions
- 	/* throw in a partition in case we are block0 as well */
 	. = DOSPARTOFF
 	.globl	_partitions
 	/* throw in a partition in case we are block0 as well */
