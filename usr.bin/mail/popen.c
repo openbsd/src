@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.19 1998/08/15 23:17:24 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.20 1998/09/08 15:24:38 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.19 1998/08/15 23:17:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.20 1998/09/08 15:24:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,8 +221,8 @@ file_pid(fp)
  * Run a command without a shell, with optional arguments and splicing
  * of stdin and stdout.  The command name can be a sequence of words.
  * Signals must be handled by the caller.
- * "Mask" contains the signals to ignore in the new process.
- * SIGINT is enabled unless it's in the mask.
+ * "nset" contains the signals to ignore in the new process.
+ * SIGINT is enabled unless it's in "nset".
  */
 /*VARARGS4*/
 int
@@ -381,15 +381,15 @@ int
 wait_child(pid)
 	int pid;
 {
-	struct child *cp = findchild(pid, 0);
+	struct child *cp;
 	sigset_t nset, oset;
-
-	if (cp == NULL)
-		return(-1);
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
+
+	if ((cp = findchild(pid, 0)) == NULL)
+		return(-1);
 
 	while (!cp->done)
 		sigsuspend(&oset);
@@ -406,15 +406,15 @@ void
 free_child(pid)
 	int pid;
 {
-	struct child *cp = findchild(pid, 0);
+	struct child *cp;
 	sigset_t nset, oset;
-
-	if (cp == NULL)
-		return;
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
+
+	if ((cp = findchild(pid, 0)) == NULL)
+		return;
 
 	if (cp->done)
 		delchild(cp);
