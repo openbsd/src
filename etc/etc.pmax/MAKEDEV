@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.32 1999/09/19 10:09:56 maja Exp $
+#	$OpenBSD: MAKEDEV,v 1.33 1999/10/07 11:18:10 maja Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -124,6 +124,7 @@ raminst)
 	sh $this std
 	sh $this rz0 rz1 rz2 rz3 rz4 tz0 tz1 rd0 pty0
 	sh $this fb0 fb1 fb2
+	sh $this random
 	;;
 
 std)
