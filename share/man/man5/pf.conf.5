@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.158 2002/12/23 18:42:20 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.159 2002/12/24 21:28:46 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -93,7 +93,6 @@ For example,
 .Ed
 .Pp
 .Sh OPTIONS
-
 .Xr pf 4
 may be tuned for various situations with the
 .Pa set
@@ -103,9 +102,9 @@ command.
 .It Pa set timeout
 .Pp
 .Bl -tag -width interval -compact
-.It Em interval
+.It Pa interval
 Interval between purging expired states and fragments.
-.It Em frag
+.It Pa frag
 Seconds before an unassembled fragment is expired.
 .El
 .Pp
@@ -117,21 +116,21 @@ Tuning these values may improve the performance of the
 firewall at the risk of dropping valid idle connections.
 .Pp
 .Bl -tag -width xxxx -compact
-.It Em tcp.first
+.It Pa tcp.first
 The state after the first packet.
-.It Em tcp.opening
+.It Pa tcp.opening
 The state before the destination host ever sends a packet.
-.It Em tcp.established
+.It Pa tcp.established
 The fully established state.
-.It Em tcp.closing
+.It Pa tcp.closing
 The state after the first FIN has been sent.
-.It Em tcp.finwait
+.It Pa tcp.finwait
 The state after both FINs have been exchanged and the connection is closed.
 Some hosts (notably web servers on Solaris) send TCP packets even after closing
 the connection.
 Increasing tcp.finwait (and possibly tcp.closing) can prevent blocking of
 such packets.
-.It Em tcp.closed
+.It Pa tcp.closed
 The state after one endpoint sends a RST.
 .El
 .Pp
@@ -139,25 +138,25 @@ ICMP and UDP are handled in a fashion similar to TCP, but with a much more
 limited set of states:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Em udp.first
+.It Pa udp.first
 The state after the first packet.
-.It Em udp.single
+.It Pa udp.single
 The state if the source host sends more than one packet but the destination
 host has never sent one back.
-.It Em udp.multiple
+.It Pa udp.multiple
 The state if both hosts have sent packets.
-.It Em icmp.first
+.It Pa icmp.first
 The state after the first packet.
-.It Em icmp.error
+.It Pa icmp.error
 The state after an icmp error came back in response to an icmp packet.
 .El
 .Pp
 Other protocols are handled similarly to UDP:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Em other.first
-.It Em other.single
-.It Em other.multiple
+.It Pa other.first
+.It Pa other.single
+.It Pa other.multiple
 .El
 .Pp
 For example:
@@ -217,16 +216,16 @@ Optimize the engine for one of the following network environments:
 .It Pa normal
 A normal network environment.
 Suitable for almost all networks.
-.It Em high-latency
+.It Pa high-latency
 A high-latency environment (such as a satellite connection)
 .It Pa satellite
 Alias for
 .Pa high-latency
-.It Em aggressive
+.It Pa aggressive
 Aggressively expire connections.
 This can greatly reduce the memory usage of the firewall at the cost of
 dropping idle connections early.
-.It Em conservative
+.It Pa conservative
 Extremely conservative settings.
 Avoid dropping legitimate connections at the
 expense of greater memory utilization (possibly much greater on a busy
@@ -246,9 +245,9 @@ option sets the default behaviour for the packet
 action:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Em drop
+.It Pa drop
 Packet is silently dropped
-.It Em return
+.It Pa return
 a TCP RST is returned for blocked TCP packets, an ICMP UNREACHABLE is
 returned for blocked UDP packets, and all other packets are silently dropped.
 .El
@@ -421,22 +420,22 @@ The scheduler can get additional parameters with
 Parameters are as follows:
 .Pp
 .Bl -tag -width Fl
-.It Em default
+.It Pa default
 Packets not matched by another queue are assigned to this one.
 Exactly one default queue is required.
-.It Em borrow
+.It Pa borrow
 The queue can borrow bandwidth from the parent.
-.It Em control
+.It Pa control
 Control-class packets (RSVP, IGMP, ICMP) are assigned to this queue.
-.It Em red
+.It Pa red
 Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
 queue length.
-.It Em rio
+.It Pa rio
 Enables RIO on this queue. RIO is RED with IN/OUT, thus running
 RED two times more then RED would do.
 RIO is currently not supported in the GENERIC kernel.
-.It Em ecn
+.It Pa ecn
 Enables ECN (Explicit Congestion Notification) on this queue.
 ECN implies RED.
 .El
@@ -467,7 +466,7 @@ sessions get priority over bulk transfers like
 and
 .Xr sftp 1 Ns .
 The queues may then be referenced by filtering rules (see
-.Em Packet Filtering
+.Em PACKET FILTERING
 below).
 .Pp
 .Bd -literal
@@ -507,12 +506,12 @@ and correctly direct return traffic for that connection.
 .Pp
 Various types of translation are possible with pf:
 .Bl -tag -width xxxx
-.It Em binat
+.It Pa binat
 A
 .Pa binat
 rule specifies a bidirectional mapping between an external IP netblock
 and an internal IP netblock.
-.It Em nat
+.It Pa nat
 A
 .Pa nat
 rule specifies that IP addresses are to be changed as the packet
@@ -528,7 +527,7 @@ These netblocks are:
 172.16.0.0  - 172.31.255.255 (i.e., 172.16/12)
 192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
 .Ed
-.It Em rdr
+.It Pa rdr
 The packet is redirected to another destination and possibly a
 different port.
 .Pa rdr
@@ -607,7 +606,7 @@ The last matching rule decides what action is taken.
 The following actions can be used in the filter:
 .Pp
 .Bl -tag -width xxxx
-.It Em block
+.It Pa block
 The packet is blocked.
 There are a number of ways in which a
 .Pa block
@@ -619,25 +618,25 @@ explicit either globally, by setting the
 option, or on a per-rule basis with one of the following options:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Em  drop
+.It Pa  drop
 The packet is silently dropped.
-.It Em return-rst
+.It Pa return-rst
 This applies only to
 .Xr tcp 4
 packets, and issues a TCP RST which closes the
 connection.
-.It Em return-icmp
-.It Em return-icmp6
+.It Pa return-icmp
+.It Pa return-icmp6
 This causes ICMP messages to be returned for packets which match the rule.
 By default this is an ICMP UNREACHABLE message, however the this
 can be overridden by specifying a message as a code or number.
-.It Em return
+.It Pa return
 This causes a TCP RST to be returned for
 .Xr tcp 4
 packets, an ICMP UNREACHABLE for UDP packets,
 and silently drops all other packets.
 .El
-.It Em pass
+.It Pa pass
 The packet is passed.
 .El
 .Pp
@@ -647,11 +646,10 @@ If no rule matches the packet, the default action is
 To block everything by default and only pass packets
 that match explicit rules, one uses
 .Bd -literal
-    block in all
-    block out all
+    block all
 .Ed
 .Pp
-as the first two rules.
+as the first filter rule.
 .Sh PARAMETERS
 The rule parameters specify the packets to which a rule applies.
 A packet always comes in on or goes out through one interface.
@@ -669,7 +667,7 @@ If neither
 or
 .Pa out
 are specified, the rule will match packets in both directions.
-.It Em log
+.It Pa log
 In addition to the action specified, a log message is generated.
 All packets for that connection are logged, unless the `keep state'
 or `modulate state' options are specified, in which case only the
@@ -685,7 +683,7 @@ logging daemon which dumps the logged packets to the file
 in
 .Xr pcap 3
 binary format.
-.It Em log-all
+.It Pa log-all
 Used with
 .Sq keep state
 or
@@ -704,7 +702,7 @@ is skipped.
 .It Pa on No <interface>
 The rule applies only to packets coming in on or going out through this
 particular interface.
-.It <af>
+.It Pa <af>
 The rule applies only to packets of this address family.
 Supported values are inet and inet6.
 .It Pa proto No <protocol>
@@ -723,9 +721,9 @@ Addresses can be specified in CIDR notation (matching netblocks), as
 symbolic host names or interface names, or as any of the following keywords:
 .Pp
 .Bl -tag -width no-route -compact
-.It Em any
+.It Pa any
 Means any address.
-.It Em no-route
+.It Pa no-route
 Means any address which is not currently routable.
 .El
 .Pp
@@ -751,11 +749,11 @@ Ports and ranges of ports can be specified using these operators:
 >< and <> are binary operators (they take two arguments), and the range
 does not include the limits, for instance:
 .Bl -tag -width Fl
-.It Em port 2000 >< 2004
+.It Pa port 2000 >< 2004
 means
 .Sq all ports > 2000 and < 2004 ,
 hence ports 2001, 2002 and 2003.
-.It Em port 2000 <> 2004
+.It Pa port 2000 <> 2004
 means
 .Sq all ports < 2000 or > 2004 ,
 hence ports 1-1999 and 2005-65535.
@@ -824,18 +822,19 @@ out of set <b>.
 Flags not specified in <b> are ignored.
 The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
 .Bl -tag -width Fl
-.It Em flags S/S
+.It Pa flags S/S
 Flag SYN is set.
 The other flags are ignored.
-.It Em flags S/SA
+.It Pa flags S/SA
 Out of SYN and ACK, exactly SYN may be set.
 SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST do not.
 This is more restrictive than the previous example.
-.It Em flags /SFRA
+.It Pa flags /SFRA
 If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST and ACK must be unset.
 .El
-.It Pa icmp-type <type> code <code> and ipv6-icmp-type <type> code <code>
+.It Pa icmp-type <type> code <code>
+.It Pa ipv6-icmp-type <type> code <code>
 The rule only applies to ICMP or ICMPv6 packets with the specified type
 and code.
 This parameter is only valid for rules that cover protocols icmp or
@@ -865,19 +864,19 @@ shows per-rule statistics for rules that have labels.
 The following macros can be used in labels:
 .Pp
 .Bl -tag -width $srcaddr -compact -offset indent
-.It Em $if
+.It Pa $if
 the interface.
-.It Em $srcaddr
+.It Pa $srcaddr
 the source IP address.
-.It Em $dstaddr
+.It Pa $dstaddr
 the destination IP address.
-.It Em $srcport
+.It Pa $srcport
 the source port specification.
-.It Em $dstport
+.It Pa $dstport
 the destination port specification.
-.It Em $proto
+.It Pa $proto
 the protocol name.
-.It Em $nr
+.It Pa $nr
 the rule number.
 .El
 .Pp
@@ -968,16 +967,16 @@ subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
 address), a variety of different methods for assigning this address can be
 used:
 .Bl -tag -width xxxx
-.It Em bitmask
+.It Pa bitmask
 The
 .Pa bitmask
 option applies the network portion of the redirection address to the address
 to be modified (source with nat, destination with rdr).
-.It Em random
+.It Pa random
 The
 .Pa random
 option selects an address at random within the defined block of addresses.
-.It Em source-hash
+.It Pa source-hash
 The
 .Pa source-hash
 option uses a hash of the source address to determine the redirection address,
@@ -985,7 +984,7 @@ ensuring that the redirection address is always the same for a given source. An
 optional key can be specified after this keyword either in hex or as a string;
 by default pfctl randomly generates a key for source-hash every time the
 ruleset is reloaded.
-.It Em round-robin
+.It Pa round-robin
 The
 .Pa round-robin
 option loops through the redirection address(es).
@@ -1101,8 +1100,7 @@ only applicable to TCP connections.
 .Pp
 For instance:
 .Bd -literal
-    block out all
-    block in  all
+    block all
     pass out proto tcp from any to any                    modulate state
     pass in  proto tcp from any to any port 25 flags S/SA modulate state
 .Ed
@@ -1139,15 +1137,15 @@ and
 support the following options:
 .Pp
 .Bl -tag -width timeout_seconds -compact
-.It Em max number
+.It Pa max <number>
 Limits the number of concurrent states the rule may create.
 When this limit is reached, further packets matching the rule that would
 create state are dropped, until existing states time out.
-.It Em timeout seconds
+.It Pa <timeout> <seconds>
 Changes the timeout values used for states created by this rule.
 For a list of all valid timeout names, see
-.Xr pfctl 8 .
-.El
+.Pa OPTIONS
+above.
 .Pp
 Multiple options can be specified, separated by commas:
 .Bd -literal
@@ -1209,7 +1207,7 @@ to filter on things such as TCP ports or to perform NAT.
 Besides the use of
 .Pa scrub
 rules as described in
-.Pa TRAFFIC NORMALIZATION
+.Em TRAFFIC NORMALIZATION
 above, there are three options for handling fragments in the packet filter.
 .Pp
 The alternative is to filter individual fragments with filter rules.
@@ -1282,22 +1280,22 @@ attachment points
 using the following kinds
 of rules:
 .Bl -tag -width xxxx
-.It Em nat-anchor name
+.It Pa nat-anchor <name>
 Evaluates the
 .Pa nat
 rules of all named rulesets in the specified
 .Pa anchor .
-.It Em rdr-anchor name
+.It Pa rdr-anchor <name>
 Evaluates the
 .Pa rdr
 rules of all named rulesets in the specified
 .Pa anchor .
-.It Em binat-anchor name
+.It Pa binat-anchor <name>
 Evaluates the
 .Pa binat
 rules of all named rulesets in the specified
 .Pa anchor .
-.It Em anchor name
+.It Pa anchor <name>
 Evaluates the filter rules of all named rulesets in the specified
 .Pa anchor .
 .El
@@ -1311,7 +1309,7 @@ named rulesets attached to that
 .Pa anchor .
 .Pp
 Matching filter rules in named rulesets with the
-.Em quick
+.Pa quick
 option and matching translation rules are final and abort the
 evaluation of both the rules in the
 .Pa anchor
@@ -1337,7 +1335,7 @@ For example,
 .Bd -literal
     ext_if = "kue0"
     block on $ext_if all
-    anchor spews
+    anchor spam
     pass out on $ext_if all keep state
     pass in  on $ext_if proto tcp from any to $ext_if port smtp keep state
 .Ed
@@ -1345,13 +1343,13 @@ For example,
 blocks all packets on the external interface by default, then evaluates
 all rulesets in the
 .Pa anchor
-named "spews", and finally passes all outgoing connections and
+named "spam", and finally passes all outgoing connections and
 incoming connections to port 25.
 .Pp
 Then
 .Bd -literal
     # echo "block in quick from 1.2.3.4 to any" | \\
-	pfctl -a spews:manual -f -
+	pfctl -a spam:manual -f -
 .Ed
 .Pp
 loads a single ruleset containing a single rule into the
@@ -1370,29 +1368,29 @@ rule is only evaluated for matching packets.
 This allows conditional evaluation of named rulesets, like:
 .Bd -literal
     block on $ext_if all
-    anchor spews proto tcp from any to any port smtp
+    anchor spam proto tcp from any to any port smtp
     pass out on $ext_if all keep state
     pass in  on $ext_if proto tcp from any to $ext_if port smtp keep state
 .Ed
 .Pp
 The rules inside
 .Pa anchor
-spews are only evaluated for
+spam are only evaluated for
 .Pa tcp
 packets with destination port 25.
 Hence,
 .Bd -literal
     # echo "block in quick from 1.2.3.4 to any" | \\
-	pfctl -a spews:manual -f -
+	pfctl -a spam:manual -f -
 .Ed
 .Pp
 will only block connections from 1.2.3.4 to port 25.
 .Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
-which Apache Tomcat is running (say Tomcat is not run as root,
+which a daemon is running (say it is not run as root,
 therefore lacks permission to bind to port 80).
 .Bd -literal
-# map tomcat on 8080 to appear to be on 80
+# map daemon on 8080 to appear to be on 80
 rdr on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
 .Ed
 .Pp
