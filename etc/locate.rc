@@ -1,8 +1,8 @@
-#	$OpenBSD: locate.rc,v 1.1 1996/08/17 01:30:25 michaels Exp $
+#	$OpenBSD: locate.rc,v 1.2 1997/04/03 00:57:37 michaels Exp $
 #
 # /etc/locate.rc -  command script for updatedb(8)
 #
-# $Id: locate.rc,v 1.1 1996/08/17 01:30:25 michaels Exp $
+# $Id: locate.rc,v 1.2 1997/04/03 00:57:37 michaels Exp $
 
 # temp directory
 TMPDIR="/tmp"
@@ -21,4 +21,4 @@ PRUNEPATHS="/tmp /usr/tmp /var/tmp"
 # an empty database
 #
 # be carefully if you add 'nfs'
-FILESYSTEMS="local" 
+FILESYSTEMS="ffs ufs"
