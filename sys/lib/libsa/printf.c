@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.17 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.18 2003/05/20 19:23:01 jason Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -114,10 +114,9 @@ kdoprnt(put, fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	register char *p;
-	register int ch;
+	char *p;
 	unsigned long ul;
-	int lflag;
+	int ch, lflag;
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
@@ -133,7 +132,7 @@ reswitch:	switch (ch = *fmt++) {
 #ifndef	STRIPPED
 		case 'b':
 		{
-			register int set, n;
+			int set, n;
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
 			kprintn(put, ul, *p++);
