@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2002/01/01 23:00:52 art Exp $
-#	$NetBSD: Makefile,v 1.2 1995/04/20 22:40:40 cgd Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/02/18 11:35:09 art Exp $
 
 PROG=	sigsetjmptest
 SRCS=	jmptest.c
@@ -14,5 +13,7 @@ sigsetjmp-save: ${PROG}
 	./${PROG} save
 sigsetjmp-nosave: ${PROG}
 	./${PROG} nosave
+
+.PHONY: ${REGRESSTARGETS}
 
 .include <bsd.regress.mk>
