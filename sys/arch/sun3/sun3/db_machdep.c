@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.9 1997/01/16 08:08:39 kstailey Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.10 2001/04/29 19:02:45 miod Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.8 1996/11/20 18:57:27 gwr Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@
 
 static void db_mach_pagemap __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
-static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_reboot  __P((db_expr_t, int, db_expr_t, char *));
 
 static void pte_print __P((int));
@@ -112,8 +111,6 @@ db_mach_pagemap(addr, have_addr, count, modif)
 /*
  * Machine-specific ddb commands for the sun3:
  *    abort:	Drop into monitor via abort (allows continue)
- *    halt: 	Exit to monitor as in halt(8)
- *    reboot:	Reboot the machine as in reboot(8) XXX obsolete, use "boot" cmd
  *    pgmap:	Given addr, Print addr, segmap, pagemap, pte
  */
 
@@ -128,36 +125,8 @@ db_mach_abort(addr, have_addr, count, modif)
         sun3_mon_abort();
 }
 
-static void
-db_mach_halt(addr, have_addr, count, modif)
-        db_expr_t       addr;
-        int             have_addr;
-        db_expr_t       count;
-        char *          modif;
-{
-
-        sun3_mon_halt();
-}
-
-static void
-db_mach_reboot(addr, have_addr, count, modif)
-        db_expr_t       addr;
-        int             have_addr;
-        db_expr_t       count;
-        char *          modif;
-{
-
-#if 0 /* XXX */
-        sun3_mon_reboot("");
-#else
-	db_printf("`machine reboot' command is obsolete, use `boot' command\n");
-#endif
-}
-
 struct db_command db_machine_cmds[] = {
 	{ "abort",	db_mach_abort,	 0,		0 },
-	{ "halt",	db_mach_halt,	 0,		0 },
-	{ "reboot",	db_mach_reboot,	 0,		0 },
 	{ "pgmap",	db_mach_pagemap, CS_SET_DOT, 	0 },
 	{ (char *)0, }
 };
