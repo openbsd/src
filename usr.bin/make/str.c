@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: str.c,v 1.17 2001/05/03 13:41:11 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.18 2001/05/07 22:54:53 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 static char	sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: str.c,v 1.17 2001/05/03 13:41:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.18 2001/05/07 22:54:53 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -83,7 +83,8 @@ str_concati(s1, s2, e2, sep)
 	result[len1-1] = sep;
 
     /* copy second string plus EOS into place */
-    memcpy(result + len1, s2, len2 + 1);
+    memcpy(result + len1, s2, len2);
+    result[len1+len2] = '\0';
     return result;
 }
 
