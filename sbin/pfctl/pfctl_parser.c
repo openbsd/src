@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.30 2001/07/09 23:20:45 millert Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.31 2001/07/10 00:07:21 millert Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1035,6 +1035,22 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 		w = next_word(&l);
 	}
 
+	/* proto */
+	if (!strcmp(w, "proto")) {
+		w = next_word(&l);
+		if (!strcmp(w, "tcp"))
+			nat->proto = IPPROTO_TCP;
+		else if (!strcmp(w, "udp"))
+			nat->proto = IPPROTO_UDP;
+		else if (!strcmp(w, "icmp"))
+			nat->proto = IPPROTO_ICMP;
+		else {
+			error(n, "expected tcp/udp/icmp, got %s\n", w);
+			return (0);
+		}
+		w = next_word(&l);
+	}
+
 	/* source addr/mask */
 	if (strcmp(w, "from")) {
 		error(n, "expected from, got %s\n", w);
@@ -1095,22 +1111,6 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 	/* external addr */
 	nat->raddr = next_addr(&w);
 	w = next_word(&l);
-
-	/* proto */
-	if (!strcmp(w, "proto")) {
-		w = next_word(&l);
-		if (!strcmp(w, "tcp"))
-			nat->proto = IPPROTO_TCP;
-		else if (!strcmp(w, "udp"))
-			nat->proto = IPPROTO_UDP;
-		else if (!strcmp(w, "icmp"))
-			nat->proto = IPPROTO_ICMP;
-		else {
-			error(n, "expected tcp/udp/icmp, got %s\n", w);
-			return (0);
-		}
-		w = next_word(&l);
-	}
 
 	/* no further options expected */
 	while (*w) {
