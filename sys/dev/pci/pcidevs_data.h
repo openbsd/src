@@ -3363,6 +3363,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "TSB12LV23 FireWire",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
+	    "TSB12LV26 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
 	    "PCI1130 PCI-CardBus",
 	},
