@@ -292,7 +292,7 @@ allow more than one value to be given.
  \fBlease {\fR \fIlease-declaration\fR [ ... \fIlease-declaration ] \fB}\fR
 .PP
 The DHCP client may decide after some period of time (see \fBPROTOCOL
-TIMING\fR) decide that it is not going to succeed in contacting a
+TIMING\fR) that it is not going to succeed in contacting a
 server.   At that time, it consults its own database of old leases and
 tests each one that has not yet timed out by pinging the listed router
 for that lease to see if that lease could work.   It is possible to
@@ -389,7 +389,7 @@ automatically determine the type of network to which they are
 connected.  The media setup string is a system-dependent parameter
 which is passed to the dhcp client configuration script when
 initializing the interface.  On Unix and Unix-like systems, the
-argument is passed on the ifconfig command line when configuring te
+argument is passed on the ifconfig command line when configuring the
 interface.
 .PP
 The dhcp client automatically declares this parameter if it used a
