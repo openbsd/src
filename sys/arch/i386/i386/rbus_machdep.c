@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.1 2000/04/08 05:50:50 aaron Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.2 2000/09/05 17:55:54 nate Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -31,10 +31,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.1 2000/04/08 05:50:50 aaron Exp $ */
+/* $Id: rbus_machdep.c,v 1.2 2000/09/05 17:55:54 nate Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -52,6 +53,8 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/pci/pcivar.h>
+#include <arch/i386/pci/pcibios.h>
+#include <arch/i386/pci/pci_addr_fixup.h>
 
 
 
@@ -126,38 +129,119 @@ _bus_space_unmap(t, bsh, size, adrp)
 /**********************************************************************
  * rbus_tag_t rbus_fakeparent_mem(struct pci_attach_args *pa)
  *
- *   This function allocates a memory space from 1 GB to 1.25 GB.
+ *   This function makes an rbus tag for memory space.  This rbus tag
+ *   shares the all memory region of ex_iomem.
  **********************************************************************/
+#define RBUS_MEM_START	0x40000000
+#define RBUS_MEM_SIZE	0x00100000
+
 rbus_tag_t
 rbus_pccbb_parent_mem(pa)
      struct pci_attach_args *pa;
 {
-  bus_addr_t start =  0x40000000; /* 1 GB */
-  bus_size_t size =  0x08000000; /* 128 MB */
-  bus_space_handle_t memh;	/* fake */
+	bus_addr_t start;
+	bus_size_t size;
+	struct extent *ex;
 
-  start += pa->pa_function * size;
-  
-  bus_space_map(pa->pa_memt, start, size, 0, &memh);
+	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
+		struct extent_region *rp;
+		ex = pciaddr.extent_mem;
+		
+		/* This size is the maximum size that would be
+		   requested by a cardbus/pcmcia device */
+		size = RBUS_MEM_SIZE;
+		start = RBUS_MEM_START;
+		
+		/* Search the PCI I/O memory space extent for free
+		   space that will accomidate size.  Remember that the
+		   extent stores allocated space and we're searching
+		   for the gaps. */
+		rp = ex->ex_regions.lh_first;
 
-  return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
+		/* If we're at the end or the gap between this region
+		   and the next region big enough, then we're done */
+		while (rp && start + size > rp->er_start) {
+			bus_addr_t new_start;
+
+			new_start = (rp->er_end - 1 + size) & ~(size - 1);
+			if (new_start > start)
+				start = new_start;
+
+			rp = rp->er_link.le_next;
+		}
+	}
+	else {
+		extern struct extent *iomem_ex;
+		ex = iomem_ex;
+		start = ex->ex_start;
+		
+		/* XXX: unfortunately, iomem_ex cannot be used for the
+		 * dynamic bus_space allocatoin.  There are some
+		 * hidden memory (or some obstacles which do not
+		 * recognised by the kernel) in the region governed by
+		 * iomem_ex.  So I decide to use only very high
+		 * address region.
+		 *
+		 * if defined PCIBIOS_ADDR_FIXUP, PCI device using
+		 * area which do not recognised by the kernel are
+		 * already reserved.
+		 */
+		
+		if (start < RBUS_MEM_START) {
+			start = RBUS_MEM_START;	/* 1GB */
+		}
+		
+		size = ex->ex_end - start;
+	}
+
+	return rbus_new_root_share(pa->pa_memt, ex, start, size, 0);
 }
 
 
 /**********************************************************************
  * rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *pa)
  **********************************************************************/
+#define RBUS_IO_START	0x2000
+#define RBUS_IO_SIZE	0x1000
+
 rbus_tag_t
 rbus_pccbb_parent_io(pa)
      struct pci_attach_args *pa;
 {
-  bus_addr_t start =  0x2000;
-  bus_size_t size =  0x0800;
-  bus_space_handle_t ioh;
+	struct extent *ex;
+	bus_addr_t start;
+	bus_size_t size;
 
-  start += pa->pa_function * size;
+	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
+		struct extent_region *rp;
+		ex = pciaddr.extent_port;
+		size =  RBUS_IO_SIZE;
+		start = RBUS_IO_START;
+		
+		/* Search the PCI I/O port space extent for free space
+		   that will accomidate size.  Remember that the
+		   extent stores allocated space and we're searching
+		   for the gaps. */
+		rp = ex->ex_regions.lh_first;
 
-  bus_space_map(pa->pa_iot, start, size, 0, &ioh);
+		/* If we're at the end or the gap between this region
+		   and the next region big enough, then we're done */
+		while (rp && start + size > rp->er_start) {
+			bus_addr_t new_start;
 
-  return rbus_new_root_delegate(pa->pa_iot, start, size, 0);
+			new_start = (rp->er_end - 1 + size) & ~(size - 1);
+			if (new_start > start)
+				start = new_start;
+
+			rp = rp->er_link.le_next;
+		}
+	}
+	else {
+		extern struct extent *ioport_ex;
+		ex = ioport_ex;
+		start = RBUS_IO_START;
+		size =  RBUS_IO_START;
+	}
+
+	return rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
 }
