@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: auth.c,v 1.5 1999/02/06 03:22:31 brian Exp $
+ * $Id: auth.c,v 1.6 1999/02/18 00:50:44 brian Exp $
  *
  *	TODO:
  *		o Implement check against with registered IP addresses.
@@ -66,13 +66,16 @@
 #include "bundle.h"
 
 const char *
-Auth2Nam(u_short auth)
+Auth2Nam(u_short auth, u_char type)
 {
+  static char chap[10];
+
   switch (auth) {
   case PROTO_PAP:
     return "PAP";
   case PROTO_CHAP:
-    return "CHAP";
+    snprintf(chap, sizeof chap, "CHAP 0x%02x", type);
+    return chap;
   case 0:
     return "none";
   }
