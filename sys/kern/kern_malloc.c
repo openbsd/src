@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.22 2001/01/04 07:49:24 angelos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.23 2001/02/20 23:35:35 csapuntz Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -135,8 +135,11 @@ malloc(size, type, flags)
 #endif
 
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, type, flags, (void **)&va))
+	if (debug_malloc(size, type, flags, (void **)&va)) {
+		if ((flags & M_ZERO) && va != NULL)
+			bzero(va, size);
 		return ((void *) va);
+	}
 #endif
 
 	indx = BUCKETINDX(size);
@@ -309,6 +312,8 @@ out:
 out:
 #endif
 	splx(s);
+	if ((flags & M_ZERO) && va != NULL)
+		bzero(va, size);
 	return ((void *) va);
 }
 
