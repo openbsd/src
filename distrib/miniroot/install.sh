@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.21 1998/03/28 21:06:51 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.22 1998/03/28 21:40:45 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -16,7 +16,7 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #	This product includes software developed by Todd Miller and
-	Theo de Raadt
+#	Theo de Raadt
 # 4. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
 #
