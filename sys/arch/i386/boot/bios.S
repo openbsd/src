@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.12 1995/12/23 17:21:25 perry Exp $	*/
+/*	$NetBSD: bios.S,v 1.13 1996/01/06 22:15:29 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -120,7 +120,6 @@ ENTRY(putc)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
-	pushl	%ecx
 
 	movb	8(%ebp), %cl
 
@@ -142,7 +141,6 @@ ENTRY(putc)
 	data32
 	call	_C_LABEL(real_to_prot)
 
-	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -347,10 +345,8 @@ ENTRY(usleep)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
-	pushl	%ecx		# not clear if I need this.
-	pushl	%edx		# ...or this, but they are harmless. (perry)
 
-	movw	8(%ebp),  %dx
+	movw	8(%ebp), %dx
 	movw	10(%ebp), %cx
 
 	call	_C_LABEL(prot_to_real)
@@ -367,8 +363,6 @@ ENTRY(usleep)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
-	popl	%edx
-	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret
