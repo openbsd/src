@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.3 1995/12/16 22:20:23 tholo Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.4 1996/04/17 07:20:01 tholo Exp $";
 #endif /* not lint */
 
 /*
@@ -398,7 +398,7 @@ doit(fromp)
 				"rcmd", instance, &fromaddr,
 				&local_addr, kdata, "", schedule,
 				version);
-			des_set_key(kdata->session, schedule);
+			desrw_set_key(kdata->session, schedule);
 		} else
 #endif
 			rc = krb_recvauth(authopts, 0, ticket, "rcmd",
