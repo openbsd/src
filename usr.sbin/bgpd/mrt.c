@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.34 2004/07/07 21:15:18 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.35 2004/07/07 21:18:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -519,7 +519,7 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 			LIST_INSERT_HEAD(xconf, xm, entry);
 		} else {
 			/* MERGE */
-			if (strlcpy(MRT2MC(xm)->name, MRT2MC(xm)->name,
+			if (strlcpy(MRT2MC(xm)->name, MRT2MC(m)->name,
 			    sizeof(MRT2MC(xm)->name)) >=
 			    sizeof(MRT2MC(xm)->name))
 				fatalx("mrt_mergeconfig: strlcpy");
