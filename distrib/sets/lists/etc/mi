@@ -83,6 +83,7 @@
 ./etc/security
 ./etc/sendmail.cf
 ./etc/services
+./etc/dhclient.conf
 ./etc/shells
 ./etc/skeykeys
 ./etc/sliphome/slip.hosts
