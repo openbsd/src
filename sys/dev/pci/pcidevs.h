@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.287 2000/07/19 22:45:57 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.288 2000/07/20 23:05:15 ho Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -485,6 +485,7 @@
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
 #define	PCI_VENDOR_IRE	0x11d4		/* IRE */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran */
+#define	PCI_VENDOR_PIJNENBURG	0x11e3		/* Pijnenburg */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
@@ -1305,6 +1306,9 @@
 #define	PCI_PRODUCT_RCC_CMIC_HE	0x0011		/* CMIC_HE Host */
 /* product RCC UNKNOWN		0x0211	IDE */
 /* product RCC UNKNOWN		0x0220	USB */
+
+/* Pijnenburg */
+#define	PCI_PRODUCT_PIJNENBURG_PCC_ISES	0x0001		/* PCC-ISES */
 
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O */
