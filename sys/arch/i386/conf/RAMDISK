@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.109 2001/09/22 20:44:48 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.110 2001/10/10 23:43:43 millert Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -18,9 +18,6 @@ option		SMALL_KERNEL
 maxusers	4		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
 
 #makeoptions	DEBUG="-g"	# compile full symbol table
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2001/10/06 18:07:54 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2001/10/10 23:43:42 millert Exp $
 #
 # Ram disk kernel.
 #
@@ -24,9 +24,6 @@ maxusers	8
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
 
 option		DIAGNOSTIC	# internal consistency checks
 

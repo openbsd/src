@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.12 2001/05/17 00:57:54 pvalchev Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.13 2001/10/10 23:43:42 millert Exp $
 #
 # Diskless kernel config
 #
@@ -15,8 +15,6 @@ option	HP7200_CPU,HP7250_CPU		# PCXT, PCXT'
 #option	HP8000_CPU			# PCXU
 #option	HP8200_CPU			# PCXU2
 #option	HP8500_CPU			# PCXW
-
-option	SWAPPAGER, DEVPAGER
 
 option		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table

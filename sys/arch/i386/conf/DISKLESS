@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.37 2001/06/27 06:19:51 angelos Exp $
+#	$OpenBSD: DISKLESS,v 1.38 2001/10/10 23:43:43 millert Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -38,9 +38,6 @@ maxusers	32		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
 option		NTP		# hooks supporting the Network Time Protocol
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
 #option		DDB_SAFE_CONSOLE # allow break into ddb during boot

@@ -1,4 +1,4 @@
-#	$OpenBSD: VOX,v 1.3 2001/05/16 05:07:50 millert Exp $
+#	$OpenBSD: VOX,v 1.4 2001/10/10 23:43:42 millert Exp $
 #
 # simple VS2000 configuration file.
 #
@@ -13,10 +13,6 @@ option		"VAX410"	# VS 2000
 
 # Max users on system; this is just a hint
 maxusers	8
-
-# pagers
-option		SWAPPAGER
-option		DEVPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
 option		DDB

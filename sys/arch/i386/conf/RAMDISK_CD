@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.50 2001/10/08 03:56:25 nate Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.51 2001/10/10 23:43:43 millert Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -16,9 +16,6 @@ option		GPL_MATH_EMULATE	# floating point emulation
 maxusers	4		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
 
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
