@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.33 2002/05/16 17:54:34 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.34 2002/05/17 00:55:54 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -137,10 +137,13 @@ main(argc, argv)
 		usage(argv[0]);
 
 	/* Handle -C, -D, and -E */
-	if (enable)
-		enable_db(enable);
-	if (convert)
-		convert_db();
+	if (convert || enable) {
+		if (convert)
+			convert_db();
+		else
+			enable_db(enable);
+		exit(0);
+	}
 
 	/* Check for optional user string. */
 	if (argc == 1) {
@@ -438,7 +441,6 @@ enable_db(op)
 		if (chmod(_PATH_SKEYDIR, 0) != 0 && errno != ENOENT)
 			err(1, "can't chmod %s", _PATH_SKEYDIR);
 	}
-	exit(0);
 }
 
 #define _PATH_SKEYKEYS	"/etc/skeykeys"
@@ -457,10 +459,7 @@ convert_db(void)
 		err(1, "can't open %s", _PATH_SKEYKEYS);
 	if (flock(fileno(keyfile), LOCK_EX) != 0)
 		err(1, "can't lock %s", _PATH_SKEYKEYS);
-	if (mkdir(_PATH_SKEYDIR, 01730) != 0 && errno != EEXIST)
-		err(1, "can't mkdir %s", _PATH_SKEYDIR);
-	if (chmod(_PATH_SKEYDIR, 01730) != 0)
-		err(1, "can't chmod %s", _PATH_SKEYDIR);
+	enable_db(1);
 
 	/*
 	 * Loop over each entry in _PATH_SKEYKEYS, creating a file
@@ -511,7 +510,6 @@ convert_db(void)
 	printf("%s has been populated.  NOTE: %s has *not* been removed.\n"
 	    "It should be removed once you have verified that the new keys "
 	    "work.\n", _PATH_SKEYDIR, _PATH_SKEYKEYS);
-	exit(0);
 }
 
 #define TIMEOUT_MSG	"Timed out waiting for input.\n"
