@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/03/04 09:28:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/03/04 18:07:46 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -17,8 +17,7 @@ ${CDROM}:
 	    -A "OpenBSD ${OSREV} i386 bootonly CD" \
 	    -P "Copyright (c) 2003 Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD${OSREV} CD boot-only CD      " \
-            -V "OpenBSD3.3 CD 1 www.OpenBSD.org " \
+	    -V "OpenBSD${OSREV} CD boot-only CD " \
 	    -b ${OSREV}/i386/${CDFS} -c ${OSREV}/i386/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 
