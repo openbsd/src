@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.111 2001/06/26 18:34:40 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.112 2001/06/26 18:56:30 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -437,6 +437,8 @@ extern int ipsec_in_use;
 extern u_int64_t ipsec_last_added;
 extern int ipsec_require_pfs;
 extern int ipsec_expire_acquire;
+
+extern int ipsec_policy_pool_initialized;
 
 extern int ipsec_soft_allocations;
 extern int ipsec_exp_allocations;

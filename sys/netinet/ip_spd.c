@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.27 2001/06/26 18:34:40 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.28 2001/06/26 18:56:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -53,6 +53,9 @@
 #else
 #define	DPRINTF(x)
 #endif
+
+struct pool ipsec_policy_pool;
+int ipsec_policy_pool_initialized = 0;
 
 /*
  * Lookup at the SPD based on the headers contained on the mbuf. The second
@@ -581,7 +584,7 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	if (ipo->ipo_local_auth)
 		ipsp_reffree(ipo->ipo_local_cred);
 
-	FREE(ipo, M_IPSEC_POLICY);
+	pool_put(&ipsec_policy_pool, ipo);
 
 	ipsec_in_use--;
 
@@ -593,13 +596,19 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
  */
 struct ipsec_policy *
 ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
-		 union sockaddr_union *sdst, int type, int sproto)
+    union sockaddr_union *sdst, int type, int sproto)
 {
 	struct sockaddr_encap encapgw;
 	struct ipsec_policy *ipon;
 
-	MALLOC(ipon, struct ipsec_policy *, sizeof(struct ipsec_policy),
-	    M_IPSEC_POLICY, M_NOWAIT);
+	if (ipsec_policy_pool_initialized == 0) {
+		ipsec_policy_pool_initialized = 1;
+		pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy),
+		    0, 0, PR_FREEHEADER, "ipsec policy", 0, NULL, NULL,
+		    M_IPSEC_POLICY);
+	}
+
+	ipon = pool_get(&ipsec_policy_pool, 0);
 	if (ipon == NULL)
 		return NULL;
 
@@ -616,7 +625,7 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 	    RTF_UP | RTF_GATEWAY | RTF_STATIC,
 	    (struct rtentry **) 0) != 0) {
 	    DPRINTF(("ipsec_add_policy: failed to add policy\n"));
-	    FREE(ipon, M_IPSEC_POLICY);
+	    pool_put(&ipsec_policy_pool, ipon);
 	    return NULL;
 	}
 

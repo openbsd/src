@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.69 2001/06/26 18:34:41 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.70 2001/06/26 18:56:31 angelos Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -111,6 +111,8 @@ static struct sadb_alg aalgs[] =
 
 extern uint32_t sadb_exts_allowed_out[SADB_MAX+1];
 extern uint32_t sadb_exts_required_out[SADB_MAX+1];
+
+extern struct pool ipsec_policy_pool;
 
 /*
  * Wrapper around m_devget(); copy data from contiguous buffer to mbuf
@@ -1494,9 +1496,16 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    if (!exists)
 	    {
+		if (ipsec_policy_pool_initialized == 0)
+		{
+		    ipsec_policy_pool_initialized = 1;
+		    pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy),
+			      0, 0, PR_FREEHEADER, "ipsec policy", 0, NULL,
+			      NULL, M_IPSEC_POLICY);
+		}
+
 		/* Allocate policy entry */
-		MALLOC(ipo, struct ipsec_policy *, sizeof(struct ipsec_policy),
-		       M_IPSEC_POLICY, M_NOWAIT);
+		ipo = pool_get(&ipsec_policy_pool, 0);
 		if (ipo == NULL)
 		{
 		    splx(s);
@@ -1547,7 +1556,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		default:
                     if (!exists)
-		      FREE(ipo, M_IPSEC_POLICY);
+			pool_put(&ipsec_policy_pool, ipo);
                     else
 		      ipsec_delete_policy(ipo);
 
@@ -1607,7 +1616,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    if (exists)
 		      ipsec_delete_policy(ipo);
 		    else
-		      FREE(ipo, M_IPSEC_POLICY);
+		      pool_put(&ipsec_policy_pool, ipo);
 		    splx(s);
 		    rval = ENOBUFS;
 		    goto ret;
@@ -1636,7 +1645,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    {
 			if (ipo->ipo_dstid)
 			  ipsp_reffree(ipo->ipo_dstid);
-			FREE(ipo, M_IPSEC_POLICY);
+			pool_put(&ipsec_policy_pool, ipo);
 		    }
 
 		    splx(s);
@@ -1666,7 +1675,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		      ipsp_reffree(ipo->ipo_srcid);
 		    if (ipo->ipo_dstid)
 		      ipsp_reffree(ipo->ipo_dstid);
-		    FREE(ipo, M_IPSEC_POLICY); /* Free policy entry */
+		    pool_put(&ipsec_policy_pool, ipo);
 
 		    splx(s);
 		    goto ret;
