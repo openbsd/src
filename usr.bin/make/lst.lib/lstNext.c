@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstNext.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstNext.c,v 1.6 2000/06/17 14:34:10 espie Exp $	*/
 /*	$NetBSD: lstNext.c,v 1.5 1996/11/06 17:59:49 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstNext.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstNext.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstNext.c,v 1.6 2000/06/17 14:34:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,49 +73,45 @@ static char rcsid[] = "$OpenBSD: lstNext.c,v 1.5 1999/12/18 21:53:34 espie Exp $
  *-----------------------------------------------------------------------
  */
 LstNode
-Lst_Next (l)
+Lst_Next(l)
     Lst	    	  l;
 {
-    register ListNode	tln;
-    register List 	list = (List)l;
+    LstNode	tln;
 
-    if ((LstValid (l) == FALSE) ||
-	(list->isOpen == FALSE)) {
-	    return (NULL);
-    }
+    if (LstValid(l) == FALSE || l->isOpen == FALSE)
+	    return NULL;
 
-    list->prevPtr = list->curPtr;
+    l->prevPtr = l->curPtr;
 
-    if (list->curPtr == NULL) {
-	if (list->atEnd == Unknown) {
+    if (l->curPtr == NULL) {
+	if (l->atEnd == Unknown) {
 	    /*
 	     * If we're just starting out, atEnd will be Unknown.
 	     * Then we want to start this thing off in the right
 	     * direction -- at the start with atEnd being Middle.
 	     */
-	    list->curPtr = tln = list->firstPtr;
-	    list->atEnd = Middle;
+	    l->curPtr = tln = l->firstPtr;
+	    l->atEnd = Middle;
 	} else {
 	    tln = NULL;
-	    list->atEnd = Tail;
+	    l->atEnd = Tail;
 	}
     } else {
-	tln = list->curPtr->nextPtr;
-	list->curPtr = tln;
+	tln = l->curPtr->nextPtr;
+	l->curPtr = tln;
 
-	if (tln == list->firstPtr || tln == NULL) {
+	if (tln == l->firstPtr || tln == NULL)
 	    /*
 	     * If back at the front, then we've hit the end...
 	     */
-	    list->atEnd = Tail;
-	} else {
+	    l->atEnd = Tail;
+	else
 	    /*
 	     * Reset to Middle if gone past first.
 	     */
-	    list->atEnd = Middle;
-	}
+	    l->atEnd = Middle;
     }
 
-    return ((LstNode)tln);
+    return tln;
 }
 

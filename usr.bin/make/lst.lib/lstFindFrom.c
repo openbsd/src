@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstFindFrom.c,v 1.7 2000/06/10 01:41:07 espie Exp $	*/
+/*	$OpenBSD: lstFindFrom.c,v 1.8 2000/06/17 14:34:07 espie Exp $	*/
 /*	$NetBSD: lstFindFrom.c,v 1.6 1996/11/06 17:59:40 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstFindFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.7 2000/06/10 01:41:07 espie Exp $";
+static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.8 2000/06/17 14:34:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ Lst_FindFrom(ln, cProc, d)
     FindProc	cProc;
     void	*d;
 {
-    ListNode	tln;
+    LstNode	tln;
 
-    for (tln = (ListNode)ln; tln != NULL; tln = tln->nextPtr)
+    for (tln = ln; tln != NULL; tln = tln->nextPtr)
 	if ((*cProc)(tln->datum, d) == 0) 
-	    return (LstNode)tln;
+	    return tln;
     return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.8 2000/06/10 01:41:06 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.9 2000/06/17 14:34:05 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.8 2000/06/10 01:41:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.9 2000/06/17 14:34:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,41 +74,34 @@ Lst_Append(l, ln, d)
     LstNode	ln;	/* node after which to append the datum */
     void 	*d;	/* said datum */
 {
-    register List 	list;
-    register ListNode	lNode;
-    register ListNode	nLNode;
+    LstNode	nLNode;
 
-    if (LstValid (l) && (ln == NULL && LstIsEmpty (l))) {
+    if (LstValid(l) && (ln == NULL && LstIsEmpty(l))) {
 	goto ok;
     }
 
-    if (!LstValid (l) || LstIsEmpty (l)  || ! LstNodeValid (ln, l)) {
+    if (!LstValid(l) || LstIsEmpty(l)  || ! LstNodeValid(ln, l)) {
 	return;
     }
     ok:
 
-    list = (List)l;
-    lNode = (ListNode)ln;
-
-    PAlloc (nLNode, ListNode);
+    PAlloc(nLNode, LstNode);
     nLNode->datum = d;
     nLNode->useCount = nLNode->flags = 0;
 
-    if (lNode == NULL) {
+    if (ln == NULL) {
 	nLNode->nextPtr = nLNode->prevPtr = NULL;
-	list->firstPtr = list->lastPtr = nLNode;
+	l->firstPtr = l->lastPtr = nLNode;
     } else {
-	nLNode->prevPtr = lNode;
-	nLNode->nextPtr = lNode->nextPtr;
+	nLNode->prevPtr = ln;
+	nLNode->nextPtr = ln->nextPtr;
 
-	lNode->nextPtr = nLNode;
-	if (nLNode->nextPtr != NULL) {
+	ln->nextPtr = nLNode;
+	if (nLNode->nextPtr != NULL)
 	    nLNode->nextPtr->prevPtr = nLNode;
-	}
 
-	if (lNode == list->lastPtr) {
-	    list->lastPtr = nLNode;
-	}
+	if (ln == l->lastPtr)
+	    l->lastPtr = nLNode;
     }
 }
 

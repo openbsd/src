@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstSucc.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstSucc.c,v 1.6 2000/06/17 14:34:11 espie Exp $	*/
 /*	$NetBSD: lstSucc.c,v 1.5 1996/11/06 17:59:52 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.6 2000/06/17 14:34:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,20 +61,15 @@ static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.5 1999/12/18 21:53:34 espie Exp $
  *	The successor of the node, if it exists (note that on a circular
  *	list, if the node is the only one in the list, it is its own
  *	successor).
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 LstNode
-Lst_Succ (ln)
+Lst_Succ(ln)
     LstNode	ln;
 {
-    if (ln == NULL) {
-	return (NULL);
-    } else {
-	return ((LstNode) ((ListNode) ln)->nextPtr);
-    }
+    if (ln == NULL)
+	return NULL;
+    else
+	return ln->nextPtr;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInit.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.7 2000/06/17 14:34:08 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInit.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInit.c,v 1.7 2000/06/17 14:34:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,14 +68,14 @@ static char rcsid[] = "$OpenBSD: lstInit.c,v 1.6 1999/12/18 21:53:33 espie Exp $
 Lst
 Lst_Init()
 {
-    register List	nList;
+    register Lst	nList;
 
-    PAlloc (nList, List);
+    PAlloc(nList, Lst);
 
     nList->firstPtr = NULL;
     nList->lastPtr = NULL;
     nList->isOpen = FALSE;
     nList->atEnd = Unknown;
 
-    return ((Lst)nList);
+    return nList;
 }

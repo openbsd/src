@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstIsAtEnd.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstIsAtEnd.c,v 1.5 2000/06/17 14:34:09 espie Exp $	*/
 /*	$NetBSD: lstIsAtEnd.c,v 1.5 1996/11/06 17:59:45 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstIsAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.5 2000/06/17 14:34:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,19 +70,12 @@ static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.4 1998/12/05 00:06:32 espie Ex
  *	    while (!Lst_IsAtEnd (l)) {
  *	    	  ...
  *	    }
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 Boolean
-Lst_IsAtEnd (l)
+Lst_IsAtEnd(l)
     Lst	    l;
 {
-    register List list = (List) l;
-
-    return (!LstValid (l) || !list->isOpen ||
-	    (list->atEnd == Head) || (list->atEnd == Tail));
+    return !LstValid(l) || !l->isOpen || l->atEnd == Head || l->atEnd == Tail;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstClose.c,v 1.4 1998/12/05 00:06:31 espie Exp $	*/
+/*	$OpenBSD: lstClose.c,v 1.5 2000/06/17 14:34:06 espie Exp $	*/
 /*	$NetBSD: lstClose.c,v 1.5 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstClose.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstClose.c,v 1.4 1998/12/05 00:06:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstClose.c,v 1.5 2000/06/17 14:34:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,14 +71,12 @@ static char rcsid[] = "$OpenBSD: lstClose.c,v 1.4 1998/12/05 00:06:31 espie Exp 
  *-----------------------------------------------------------------------
  */
 void
-Lst_Close (l)
+Lst_Close(l)
     Lst	    l;	  	/* The list to close */
 {
-    register List 	list = (List) l;
-
     if (LstValid(l) == TRUE) {
-	list->isOpen = FALSE;
-	list->atEnd = Unknown;
+	l->isOpen = FALSE;
+	l->atEnd = Unknown;
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.7 2000/06/10 01:41:07 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.8 2000/06/17 14:34:08 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.7 2000/06/10 01:41:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.8 2000/06/17 14:34:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,9 @@ Lst_ForEachFrom(ln, proc, d)
     ForEachProc		proc;
     void		*d;
 {
-    ListNode		tln;
+    LstNode		tln;
 
-    for (tln = (ListNode)ln; tln != NULL; tln = tln->nextPtr)
+    for (tln = ln; tln != NULL; tln = tln->nextPtr)
     	(*proc)(tln->datum, d);
 }
 
@@ -80,8 +80,8 @@ Lst_Every(l, proc)
     Lst    	  	l;
     SimpleProc		proc;
 {
-    ListNode		tln;
+    LstNode		tln;
 
-    for (tln = (ListNode)Lst_First(l); tln != NULL; tln = tln->nextPtr)
+    for (tln = Lst_First(l); tln != NULL; tln = tln->nextPtr)
     	(*proc)(tln->datum);
 }

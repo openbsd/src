@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDestroy.c,v 1.7 2000/06/10 01:41:06 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.8 2000/06/17 14:34:07 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.7 2000/06/10 01:41:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.8 2000/06/17 14:34:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,34 +72,20 @@ Lst_Destroy(l, freeProc)
     Lst	    	  	l;
     SimpleProc		freeProc;
 {
-    register ListNode	ln;
-    register ListNode	tln = NULL;
-    register List 	list = (List)l;
+    LstNode	ln;
+    LstNode	tln;
 
-    if (l == NULL) {
-	/*
-	 * Note the check for l == (Lst)0 to catch uninitialized static Lst's.
-	 * Gross, but useful.
-	 */
+    if (l == NULL)
 	return;
-    }
-
-    /* To ease scanning */
-    if (list->lastPtr != NULL)
-	list->lastPtr->nextPtr = NULL;
-    else {
-	free(l);
-	return;
-    }
 
     if (freeProc) {
-	for (ln = list->firstPtr; ln != NULL; ln = tln) {
+	for (ln = l->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
-	     (*freeProc) (ln->datum);
+	     (*freeProc)(ln->datum);
 	     free(ln);
 	}
     } else {
-	for (ln = list->firstPtr; ln != NULL; ln = tln) {
+	for (ln = l->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
 	     free(ln);
 	}

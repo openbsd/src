@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstReplace.c,v 1.7 2000/06/10 01:41:07 espie Exp $	*/
+/*	$OpenBSD: lstReplace.c,v 1.8 2000/06/17 14:34:10 espie Exp $	*/
 /*	$NetBSD: lstReplace.c,v 1.5 1996/11/06 17:59:51 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstReplace.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstReplace.c,v 1.7 2000/06/10 01:41:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstReplace.c,v 1.8 2000/06/17 14:34:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,5 +68,5 @@ Lst_Replace(ln, d)
     void	*d;
 {
     if (ln != NULL) 
-	((ListNode)ln)->datum = d;
+	ln->datum = d;
 }

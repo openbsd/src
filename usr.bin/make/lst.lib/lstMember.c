@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstMember.c,v 1.6 2000/06/10 01:41:07 espie Exp $	*/
+/*	$OpenBSD: lstMember.c,v 1.7 2000/06/17 14:34:09 espie Exp $	*/
 /*	$NetBSD: lstMember.c,v 1.5 1996/11/06 17:59:48 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstMember.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstMember.c,v 1.6 2000/06/10 01:41:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstMember.c,v 1.7 2000/06/17 14:34:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,20 +57,10 @@ Lst_Member(l, d)
     Lst	    	  	l;
     void		*d;
 {
-    List    	  	list = (List) l;
-    register ListNode	lNode;
+    LstNode	lNode;
 
-    lNode = list->firstPtr;
-    if (lNode == NULL) {
-	return NULL;
-    }
-
-    do {
-	if (lNode->datum == d) {
-	    return (LstNode)lNode;
-	}
-	lNode = lNode->nextPtr;
-    } while (lNode != NULL && lNode != list->firstPtr);
-
+    for (lNode = l->firstPtr; lNode != NULL; lNode = lNode->nextPtr)
+	if (lNode->datum == d)
+	    return lNode;
     return NULL;
 }

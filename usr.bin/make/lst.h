@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.13 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.14 2000/06/17 14:34:04 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -54,12 +54,42 @@
 #include	<stdlib.h>
 #endif
 
+/* These data structures are PRIVATE !!!
+ * Here for efficiency, so that some functions can be recoded as inlines,
+ * and so that lst headers don't need dynamic allocation most of the time.  */
+typedef struct ListNode_ {
+	struct ListNode_    *prevPtr;   /* previous element in list */
+	struct ListNode_    *nextPtr;   /* next in list */
+	short	    	    useCount:8, /* Count of functions using the node.
+			    	         * node may not be deleted until count
+				         * goes to 0 */
+ 	    	    	    flags:8;    /* Node status flags */
+	void		    *datum;	/* datum associated with this element */
+} *LstNode;
+
+typedef enum {
+    Head, Middle, Tail, Unknown
+} Where;
+
+typedef struct	{
+	LstNode  	firstPtr; /* first node in list */
+	LstNode  	lastPtr;  /* last node in list */
+/*
+ * fields for sequential access
+ */
+	Where	  	atEnd;	  /* Where in the list the last access was */
+	Boolean	  	isOpen;	  /* true if list has been Lst_Open'ed */
+	LstNode  	curPtr;	  /* current node, if open. NULL if
+				   * *just* opened */
+	LstNode  	prevPtr;  /* Previous node, if open. Used by
+				   * Lst_Remove */
+} LIST;
+
+typedef LIST *Lst;
 /*
  * basic typedef. This is what the Lst_ functions handle
  */
 
-typedef	struct	Lst	*Lst;
-typedef	struct	LstNode	*LstNode;
 typedef int (*FindProc) __P((void *, void *));
 typedef void (*SimpleProc) __P((void *));
 typedef void (*ForEachProc) __P((void *, void *));

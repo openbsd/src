@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInt.h,v 1.9 2000/06/10 01:41:07 espie Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.10 2000/06/17 14:34:09 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -49,37 +49,11 @@
 #include	  "make.h"
 #include	  "lst.h"
 
-typedef struct ListNode {
-	struct ListNode	*prevPtr;   /* previous element in list */
-	struct ListNode	*nextPtr;   /* next in list */
-	short	    	useCount:8, /* Count of functions using the node.
-				     * node may not be deleted until count
-				     * goes to 0 */
- 	    	    	flags:8;    /* Node status flags */
-	void		*datum;	    /* datum associated with this element */
-} *ListNode;
 /*
  * Flags required for synchronization
  */
 #define LN_DELETED  	0x0001      /* List node should be removed when done */
 
-typedef enum {
-    Head, Middle, Tail, Unknown
-} Where;
-
-typedef struct	{
-	ListNode  	firstPtr; /* first node in list */
-	ListNode  	lastPtr;  /* last node in list */
-/*
- * fields for sequential access
- */
-	Where	  	atEnd;	  /* Where in the list the last access was */
-	Boolean	  	isOpen;	  /* true if list has been Lst_Open'ed */
-	ListNode  	curPtr;	  /* current node, if open. NULL if
-				   * *just* opened */
-	ListNode  	prevPtr;  /* Previous node, if open. Used by
-				   * Lst_Remove */
-} *List;
 
 /*
  * PAlloc (var, ptype) --
@@ -103,6 +77,6 @@ typedef struct	{
  * LstIsEmpty (l) --
  *	TRUE if the list l is empty.
  */
-#define LstIsEmpty(l)	(((List)l)->firstPtr == NULL)
+#define LstIsEmpty(l)	((l)->firstPtr == NULL)
 
 #endif /* _LSTINT_H_ */

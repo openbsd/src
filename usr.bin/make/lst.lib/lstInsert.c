@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInsert.c,v 1.8 2000/06/10 01:41:07 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.9 2000/06/17 14:34:09 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.8 2000/06/10 01:41:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.9 2000/06/17 14:34:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,42 +70,37 @@ Lst_Insert(l, ln, d)
     LstNode	  	ln;	/* node before which to insert d */
     void		*d;	/* datum to be inserted */
 {
-    register ListNode	nLNode;	/* new lnode for d */
-    register ListNode	lNode = (ListNode)ln;
-    register List 	list = (List)l;
+    LstNode	nLNode;	/* new lnode for d */
 
 
     /*
      * check validity of arguments
      */
-    if (LstValid (l) && (LstIsEmpty (l) && ln == NULL))
+    if (LstValid(l) && (LstIsEmpty(l) && ln == NULL))
 	goto ok;
 
-    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
+    if (!LstValid(l) || LstIsEmpty(l) || !LstNodeValid(ln, l))
 	return;
-    }
 
     ok:
-    PAlloc (nLNode, ListNode);
+    PAlloc(nLNode, LstNode);
 
     nLNode->datum = d;
     nLNode->useCount = nLNode->flags = 0;
 
     if (ln == NULL) {
 	nLNode->prevPtr = nLNode->nextPtr = NULL;
-	list->firstPtr = list->lastPtr = nLNode;
+	l->firstPtr = l->lastPtr = nLNode;
     } else {
-	nLNode->prevPtr = lNode->prevPtr;
-	nLNode->nextPtr = lNode;
+	nLNode->prevPtr = ln->prevPtr;
+	nLNode->nextPtr = ln;
 
-	if (nLNode->prevPtr != NULL) {
+	if (nLNode->prevPtr != NULL)
 	    nLNode->prevPtr->nextPtr = nLNode;
-	}
-	lNode->prevPtr = nLNode;
+	ln->prevPtr = nLNode;
 
-	if (lNode == list->firstPtr) {
-	    list->firstPtr = nLNode;
-	}
+	if (ln == l->firstPtr)
+	    l->firstPtr = nLNode;
     }
 }
 

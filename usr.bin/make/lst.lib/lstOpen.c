@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstOpen.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstOpen.c,v 1.6 2000/06/17 14:34:10 espie Exp $	*/
 /*	$NetBSD: lstOpen.c,v 1.5 1996/11/06 17:59:50 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstOpen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstOpen.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstOpen.c,v 1.6 2000/06/17 14:34:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,16 +73,15 @@ static char rcsid[] = "$OpenBSD: lstOpen.c,v 1.5 1999/12/18 21:53:34 espie Exp $
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_Open (l)
-	register Lst	l;
+Lst_Open(l)
+	Lst	l;
 {
-	if (LstValid (l) == FALSE) {
-		return (FAILURE);
-	}
-	((List) l)->isOpen = TRUE;
-	((List) l)->atEnd = LstIsEmpty (l) ? Head : Unknown;
-	((List) l)->curPtr = NULL;
+	if (LstValid(l) == FALSE)
+	    return FAILURE;
+	l->isOpen = TRUE;
+	l->atEnd = LstIsEmpty(l) ? Head : Unknown;
+	l->curPtr = NULL;
 
-	return (SUCCESS);
+	return SUCCESS;
 }
 
