@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.5 1999/03/12 02:40:42 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.6 1999/03/19 02:46:54 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -94,6 +94,8 @@ struct ifbreq {
 	u_int32_t ifbr_ifsflags;     /* member flags */
 };
 
+#define IFBIF_LEARNING 0x1 /* ifs can learn addrs */
+
 struct ifbifconf {
 	char ifbic_name[IFNAMSIZ]; /* bridge name */
 	u_int32_t       ifbic_len; /* buffer size */
@@ -116,6 +118,17 @@ to the bridge named in
 Delete the interface named in
 .Ar ifbr_ifsname
 from the bridge named in
+.Ar ifbr_name .
+.It Dv SIOCBRDGSIFFLGS
+.Pq Li "struct ifbreq"
+Set the bridge member interface flags for the interface named in
+.Ar ifbr_ifsname
+attached to the bridge
+.Ar ifbr_name .
+.It Dv SIOCBRDGGIFFLGS
+Retrieve the bridge member interface flags for the interface named in
+.Ar ifbr_ifsname
+attached to the bridge
 .Ar ifbr_name .
 .It Dv SIOCBRDGRTS
 .Pq Li "struct ifbaconf"

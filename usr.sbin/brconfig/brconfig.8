@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.7 1999/03/12 02:40:43 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.8 1999/03/19 02:46:55 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -51,6 +51,8 @@
 .Op Ar deladdr address
 .Op Ar flush
 .Op Ar flushall
+.Op Ar learn interface-name
+.Op Ar -learn interface-name
 .Op Ar link0
 .Op Ar link1
 .Op Ar -link0
@@ -115,6 +117,15 @@ Delete an address from the cache.
 Remove all dynamically learned addresses from the cache.
 .It Ar flushall
 Remove all addresses from the cache including static addresses.
+.It Ar learn interface
+Mark an interface so that the source address of packets received from
+.Cm interface
+are entered into the address cache.
+This is the default for interfaces added to the bridge.
+.It Ar -learn interface
+Mark an interface so that the source address of packets received from
+.Cm interface
+are not entered into the address cache.
 .It Ar link0
 Setting this flag stops all non-IP multicast packets from
 being forwarded by the bridge.

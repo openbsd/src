@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.6 1999/03/12 02:40:43 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.7 1999/03/19 02:46:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -280,6 +280,7 @@ bridge_ioctl(ifp, cmd, data)
 		}
 
 		p->ifp = ifs;
+		p->bif_flags = IFBIF_LEARNING;
 		LIST_INSERT_HEAD(&sc->sc_iflist, p, next);
 		ifs->if_bridge = (caddr_t)sc;
 		break;
@@ -309,6 +310,48 @@ bridge_ioctl(ifp, cmd, data)
 		break;
 	case SIOCBRDGIFS:
 		error = bridge_bifconf(sc, bifconf);
+		break;
+	case SIOCBRDGGIFFLGS:
+		ifs = ifunit(req->ifbr_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
+		if ((caddr_t)sc != ifs->if_bridge) {
+			error = ESRCH;
+			break;
+		}
+		p = LIST_FIRST(&sc->sc_iflist);
+		while (p != NULL && p->ifp != ifs) {
+			p = LIST_NEXT(p, next);
+		}
+		if (p == NULL) {
+			error = ESRCH;
+			break;
+		}
+		req->ifbr_ifsflags = p->bif_flags;
+		break;
+	case SIOCBRDGSIFFLGS:
+		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+			break;
+		ifs = ifunit(req->ifbr_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
+		if ((caddr_t)sc != ifs->if_bridge) {
+			error = ESRCH;
+			break;
+		}
+		p = LIST_FIRST(&sc->sc_iflist);
+		while (p != NULL && p->ifp != ifs) {
+			p = LIST_NEXT(p, next);
+		}
+		if (p == NULL) {
+			error = ESRCH;
+			break;
+		}
+		p->bif_flags = req->ifbr_ifsflags;
 		break;
 	case SIOCBRDGRTS:
 		if ((ifp->if_flags & IFF_RUNNING) == 0) {
@@ -643,6 +686,7 @@ bridge_input(ifp, eh, m)
 	struct arpcom *ac;
 	struct ether_addr *dst, *src;
 	struct ifnet *dst_if;
+	struct bridge_iflist *ifl;
 	int s;
 
 	/*
@@ -677,11 +721,21 @@ bridge_input(ifp, eh, m)
 	dst = (struct ether_addr *)&eh->ether_dhost[0];
 	src = (struct ether_addr *)&eh->ether_shost[0];
 
+	ifl = LIST_FIRST(&sc->sc_iflist);
+	while (ifl != NULL && ifl->ifp != ifp) {
+		ifl = LIST_NEXT(ifl, next);
+	}
+	if (ifl == NULL) {
+		splx(s);
+		return (m);
+	}
+
 	/*
-	 * If source address is not broadcast or multicast, record
-	 * it's address.
+	 * If interface is learning, and if source address is not broadcast
+	 * or multicast, record it's address.
 	 */
-	if ((eh->ether_shost[0] & 1) == 0 &&
+	if ((ifl->bif_flags & IFBIF_LEARNING) &&
+	    (eh->ether_shost[0] & 1) == 0 &&
 	    !(eh->ether_shost[0] == 0 && eh->ether_shost[1] == 0 &&
 	      eh->ether_shost[2] == 0 && eh->ether_shost[3] == 0 &&
 	      eh->ether_shost[4] == 0 && eh->ether_shost[5] == 0))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.7 1999/03/12 23:19:26 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.8 1999/03/19 02:46:55 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/param.h>
@@ -53,6 +54,8 @@ void usage(void);
 int main(int, char **);
 int bridge_setflag(int, char *, short);
 int bridge_clrflag(int, char *, short);
+int bridge_ifsetflag(int, char *, char *, u_int32_t);
+int bridge_ifclrflag(int, char *, char *, u_int32_t);
 int bridge_list(int, char *, char *);
 int bridge_addrs(int, char *, char *);
 int bridge_addaddr(int, char *, char *, char *);
@@ -74,6 +77,7 @@ void printb(char *, unsigned short, char *);
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFBABITS	"\020\1STATIC"
+#define	IFBIBITS	"\020\1LEARNING"
 
 void
 usage()
@@ -145,6 +149,28 @@ main(argc, argv)
 		}
 		else if (strcmp("down", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_UP);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("learn", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("learn requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_LEARNING);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("-learn", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-learn requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_LEARNING);
 			if (error)
 				return (error);
 		}
@@ -230,6 +256,59 @@ main(argc, argv)
 		}
 	}
 
+	return (0);
+}
+
+int
+bridge_ifsetflag(s, brdg, ifsname, flag)
+	int s;
+	char *brdg, *ifsname;
+	u_int32_t flag;
+{
+	struct ifbreq req;
+
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name) - 1);
+	req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
+	strncpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname) - 1);
+	req.ifbr_ifsname[sizeof(req.ifbr_ifsname) - 1] = '\0';
+	if (ioctl(s, SIOCBRDGGIFFLGS, (caddr_t)&req) < 0) {
+		warn("ioctl(SIOCBRDGGIFFLGS)");
+		return (EX_IOERR);
+	}
+
+	req.ifbr_ifsflags |= flag;
+
+	if (ioctl(s, SIOCBRDGSIFFLGS, (caddr_t)&req) < 0) {
+		warn("ioctl(SIOCBRDGSIFFLGS)");
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
+bridge_ifclrflag(s, brdg, ifsname, flag)
+	int s;
+	char *brdg, *ifsname;
+	u_int32_t flag;
+{
+	struct ifbreq req;
+
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name) - 1);
+	req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
+	strncpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname) - 1);
+	req.ifbr_ifsname[sizeof(req.ifbr_ifsname) - 1] = '\0';
+
+	if (ioctl(s, SIOCBRDGGIFFLGS, (caddr_t)&req) < 0) {
+		warn("ioctl(SIOCBRDGGIFFLGS)");
+		return (EX_IOERR);
+	}
+
+	req.ifbr_ifsflags &= ~flag;
+
+	if (ioctl(s, SIOCBRDGSIFFLGS, (caddr_t)&req) < 0) {
+		warn("ioctl(SIOCBRDGSIFFLGS)");
+		return (EX_IOERR);
+	}
 	return (0);
 }
 
@@ -408,7 +487,9 @@ bridge_list(s, brdg, delim)
 		reqp = bifc.ifbic_req + i;
 		bzero(buf, sizeof(buf));
 		strncpy(buf, reqp->ifbr_ifsname, sizeof(reqp->ifbr_ifsname));
-		printf("%s%s\n", delim, buf);
+		printf("%s%s ", delim, buf);
+		printb("flags", reqp->ifbr_ifsflags, IFBIBITS);
+		printf("\n");
 	}
 	free(bifc.ifbic_buf);
 	return (0);             /* NOTREACHED */
