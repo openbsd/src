@@ -1,13 +1,13 @@
 #
 #	SPARE-PARTS: spare-parts.teeny.org, the teeny gateway to the world.
 #
-#	$OpenBSD: SPARE-PARTS,v 1.6 1996/09/20 06:45:09 deraadt Exp $
+#	$OpenBSD: SPARE-PARTS,v 1.7 1996/10/04 07:29:21 downsj Exp $
 #
 
 machine		i386
 option		I386_CPU
 option		I486_CPU
-option		MATH_EMULATE
+option		GPL_MATH_EMULATE
 
 maxusers	8
 option		TIMEZONE=480
@@ -92,6 +92,7 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
 
 wdc0	at isa? port 0x1f0 irq 14
+option	WDC_ST11
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
