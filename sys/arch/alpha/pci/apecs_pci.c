@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_pci.c,v 1.6 1997/01/24 19:57:34 niklas Exp $	*/
+/*	$OpenBSD: apecs_pci.c,v 1.7 2001/02/16 08:23:39 jason Exp $	*/
 /*	$NetBSD: apecs_pci.c,v 1.10 1996/11/13 21:13:25 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>	/* badaddr() proto */
@@ -116,13 +117,11 @@ apecs_conf_read(cpv, tag, offset)
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
+	alpha_pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);
@@ -167,13 +166,11 @@ apecs_conf_write(cpv, tag, offset, data)
 	int s, secondary;
 	int32_t old_haxr2;					/* XXX */
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
+	alpha_pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);
@@ -187,7 +184,11 @@ apecs_conf_write(cpv, tag, offset, data)
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
 	    0x3 << 3);						/* XXX */
+
+	alpha_mb();
 	*datap = data;
+	alpha_mb();
+	alpha_mb();
 
 	if (secondary) {
 		alpha_mb();

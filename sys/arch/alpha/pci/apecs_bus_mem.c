@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_bus_mem.c,v 1.3 2001/02/06 19:26:39 art Exp $	*/
+/*	$OpenBSD: apecs_bus_mem.c,v 1.4 2001/02/16 08:23:38 jason Exp $	*/
 /*	$NetBSD: apecs_bus_mem.c,v 1.1 1996/11/25 03:42:11 cgd Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
 
 #include <machine/bus.h>

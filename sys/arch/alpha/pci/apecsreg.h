@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecsreg.h,v 1.5 2001/02/16 05:17:31 jason Exp $	*/
+/* $OpenBSD: apecsreg.h,v 1.6 2001/02/16 08:23:39 jason Exp $ */
 /* $NetBSD: apecsreg.h,v 1.5.2.2 1997/06/06 20:26:53 thorpej Exp $ */
 
 /*
@@ -35,7 +35,7 @@
  * Sheet'' (DEC order number EC-QAEMA-TE), pages 4-1 - 4-27, 10-21 - 10-38.
  */
 
-#define	REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
