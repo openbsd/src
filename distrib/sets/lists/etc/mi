@@ -144,6 +144,8 @@
 ./var/msgs/bounds
 ./var/named/named.boot
 ./var/named/namedb/localhost.rev
+./var/named/namedb/localhost.v6.rev
+./var/named/namedb/localhost.zone
 ./var/named/namedb/root.cache
 ./var/run/utmp
 ./var/www/cgi-bin/printenv

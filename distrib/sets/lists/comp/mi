@@ -154,6 +154,8 @@
 ./usr/include/dev/ic/awivar.h
 ./usr/include/dev/ic/ax88190reg.h
 ./usr/include/dev/ic/ax88190var.h
+./usr/include/dev/ic/bhareg.h
+./usr/include/dev/ic/bhavar.h
 ./usr/include/dev/ic/bt463reg.h
 ./usr/include/dev/ic/bt463var.h
 ./usr/include/dev/ic/bt485reg.h
@@ -284,7 +286,6 @@
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
 ./usr/include/dev/isa/ariareg.h
-./usr/include/dev/isa/btreg.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/egavar.h
 ./usr/include/dev/isa/elink.h
@@ -568,9 +569,10 @@
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/event_var.h
-./usr/include/dev/sun/kbd_ms_ttyvar.h
 ./usr/include/dev/sun/kbd_tables.h
 ./usr/include/dev/sun/kbd_xlate.h
+./usr/include/dev/sun/sunkbdreg.h
+./usr/include/dev/sun/sunkbdvar.h
 ./usr/include/dev/tc
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h

@@ -931,11 +931,11 @@
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/az.0
 ./usr/share/man/cat4/bge.0
+./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bmtphy.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/brgphy.0
 ./usr/share/man/cat4/bridge.0
-./usr/share/man/cat4/bt.0
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/cbb.0
@@ -964,6 +964,7 @@
 ./usr/share/man/cat4/eephy.0
 ./usr/share/man/cat4/ef.0
 ./usr/share/man/cat4/eg.0
+./usr/share/man/cat4/eisa.0
 ./usr/share/man/cat4/el.0
 ./usr/share/man/cat4/emu.0
 ./usr/share/man/cat4/enc.0
@@ -1216,6 +1217,7 @@
 ./usr/share/man/cat4/sparc64/be.0
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
+./usr/share/man/cat4/sparc64/comkbd.0
 ./usr/share/man/cat4/sparc64/esp.0
 ./usr/share/man/cat4/sparc64/gem.0
 ./usr/share/man/cat4/sparc64/hme.0
@@ -1232,6 +1234,8 @@
 ./usr/share/man/cat4/sparc64/sabtty.0
 ./usr/share/man/cat4/sparc64/spif.0
 ./usr/share/man/cat4/sparc64/zs.0
+./usr/share/man/cat4/sparc64/zskbd.0
+./usr/share/man/cat4/sparc64/zstty.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0

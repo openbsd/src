@@ -146,6 +146,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/awivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ax88190reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ax88190var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/bhareg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/bhavar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/bt463reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/bt463var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/bt485reg.ph
@@ -276,7 +278,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/ahareg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/ariareg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/btreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/cs4231var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/egavar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/elink.ph
@@ -560,9 +561,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/event_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/kbd_ms_ttyvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/kbd_tables.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/kbd_xlate.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/sunkbdreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun/sunkbdvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/if_levar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/ioasicvar.ph
