@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat.x,v 1.2 1997/08/19 07:54:50 niklas Exp $	*/
+/*	$OpenBSD: rstat.x,v 1.3 2003/06/19 10:10:19 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,8 +39,8 @@
 %/*
 % * Scale factor for scaled integers used to count load averages.
 % */
-%#define FSHIFT  8               /* bits to right of fixed binary point */
-%#define FSCALE  (1<<FSHIFT)
+%#define FSHIFT	8		/* bits to right of fixed binary point */
+%#define FSCALE	(1<<FSHIFT)
 %
 %#endif /* ndef FSCALE */
 
@@ -49,7 +49,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rstat.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rstat.x	2.2 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: rstat.x,v 1.2 1997/08/19 07:54:50 niklas Exp $";
+%static char rcsid[] = "$OpenBSD: rstat.x,v 1.3 2003/06/19 10:10:19 deraadt Exp $";
 %#endif /* not lint */
 
 #endif /* def RPC_HDR */
@@ -78,7 +78,7 @@ struct statstime {				/* RSTATVERS_TIME */
 	int if_oerrors;
 	int if_collisions;
 	unsigned int v_swtch;
-	int avenrun[3];         /* scaled by FSCALE */
+	int avenrun[3];		/* scaled by FSCALE */
 	rstat_timeval boottime;
 	rstat_timeval curtime;
 	int if_opackets;
