@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.6 2003/04/17 05:08:39 jmc Exp $
+.\"	$OpenBSD: microtime.9,v 1.7 2004/07/07 16:53:51 art Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,26 +39,90 @@
 .Dt MICROTIME 9
 .Os
 .Sh NAME
-.Nm microtime
-.Nd realtime system clock
+.Nm microtime ,
+.Nm getmicrotime ,
+.Nm microuptime ,
+.Nm getmicrouptime ,
+.Nm nanotime ,
+.Nm getnanotime ,
+.Nm nanouptime ,
+.Nm getnanouptime
+.Nm bintime ,
+.Nm getbintime ,
+.Nm binuptime ,
+.Nm getbinuptime
+.Nd system clock
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
 .Ft void
 .Fo "microtime"
 .Fa "struct timeval *tv"
 .Fc
+.Ft void
+.Fo "getmicrotime"
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo "microuptime"
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo "getmicrouptime"
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo "nanotime"
+.Fa "struct timespec *tv"
+.Fc
+.Ft void
+.Fo "getnanotime"
+.Fa "struct timespec *tv"
+.Fc
+.Ft void
+.Fo "nanouptime"
+.Fa "struct timespec *tv"
+.Fc
+.Ft void
+.Fo "getnanouptime"
+.Fa "struct timespec *tv"
+.Fc
+.Ft void
+.Fo "bintime"
+.Fa "struct bintime *tv"
+.Fc
+.Ft void
+.Fo "getbintime"
+.Fa "struct bintime *tv"
+.Fc
+.Ft void
+.Fo "binuptime"
+.Fa "struct bintime *tv"
+.Fc
+.Ft void
+.Fo "getbinuptime"
+.Fa "struct bintime *tv"
+.Fc
 .Sh DESCRIPTION
-.Fn microtime
-returns the current value of the system realtime clock in the structure
-pointed to by the argument
-.Fa tv .
-The system realtime clock is guaranteed to be monotonically increasing
-at all times.
-As such,
-all calls to
-.Fn microtime
-are guaranteed to return a system time greater than or equal to the
-system time returned in any previous calls.
+This family of functions return the system clock in various different formats.
+The functions with the "uptime" suffix return the monotonically increasing
+time since boot.
+The functions without "up" return UTC time.
+The various formats for the result are specified with:
+.Bl -tag -offset indent -width "micro"
+.It bin
+result in struct bintime containing seconds and 64-bit fractions of seconds.
+.It nano
+result in struct timespec containing seconds and nanoseconds
+.It micro
+result in struct timeval containing seconds and microseconds
+.El
+.Pp
+The functions with the "get" prefix return a less precise result, but much
+faster.
+They should be used where a precision of 10 msec is acceptable and where
+performance is critical.
+The functions without the "get" prefix return the best timestamp that can
+be produced in the given format.
 .Sh SEE ALSO
 .Xr settimeofday 2 ,
 .Xr hardclock 9 ,
@@ -66,13 +130,6 @@ system time returned in any previous calls.
 .Xr inittodr 9 ,
 .Xr time 9
 .Sh CODE REFERENCES
-The implementation of the
-.Fn microtime
-function is machine dependent,
-hence its location in the source code tree varies from architecture to
-architecture.
-.Sh BUGS
-Despite the guarantee that the system realtime clock will always be
-monotonically increasing,
-it is always possible for the system clock to be manually reset by the
-system administrator to any date.
+The implementation of these functions is partly machine dependent, but
+the bulk of the code is in the file
+.Pa sys/kern/kern_clock.c .
