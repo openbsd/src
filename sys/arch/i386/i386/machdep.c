@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.264 2004/01/29 02:14:52 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.265 2004/01/29 19:01:54 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -314,6 +314,7 @@ int allowaperture = 0;
 
 void	winchip_cpu_setup(const char *, int, int);
 void	amd_family5_setup(const char *, int, int);
+void	amd_family6_setup(const char *, int, int);
 void	cyrix3_cpu_setup(const char *, int, int);
 void	cyrix6x86_cpu_setup(const char *, int, int);
 void	natsem6x86_cpu_setup(const char *, int, int);
@@ -805,7 +806,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0,
 				"K7"		/* Default */
 			},
-			NULL
+			amd_family6_setup
 		},
 		/* Family 7 */
 		{
@@ -848,7 +849,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"AMD64"			/* DEFAULT */
 			},
-			NULL
+			amd_family6_setup
 		} }
 	},
 	{
@@ -1493,6 +1494,13 @@ cyrix3_cpu_setup(cpu_device, model, step)
 {
 #if defined(I686_CPU)
 	unsigned int val;
+#if !defined(SMALL_KERNEL)
+	extern void (*pagezero)(void *, size_t);
+	extern void i686_pagezero(void *, size_t);
+
+	pagezero = i686_pagezero;
+#endif
+
 
 	switch (model) {
 	case 6: /* C3 Samuel 1 */
@@ -1666,6 +1674,23 @@ amd_family5_setup(cpu_device, model, step)
 }
 
 void
+amd_family6_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+#if !defined(SMALL_KERNEL) && defined (I686_CPU)
+	extern void (*pagezero)(void *, size_t);
+	extern void sse2_pagezero(void *, size_t);
+	extern void i686_pagezero(void *, size_t);
+
+	if (cpu_feature & CPUID_SIMD2)
+		pagezero = sse2_pagezero;
+	else
+		pagezero = i686_pagezero;
+#endif
+}
+
+void
 intel686_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
@@ -1707,6 +1732,18 @@ intel686_cpu_setup(cpu_device, model, step)
 	} else if ((cpu_feature & (CPUID_ACPI | CPUID_TM)) ==
 	    (CPUID_ACPI | CPUID_TM))
 		p4tcc_init(model, step);
+
+	{
+	extern void (*pagezero)(void *, size_t);
+	extern void sse2_pagezero(void *, size_t);
+	extern void i686_pagezero(void *, size_t);
+
+	if (cpu_feature & CPUID_SIMD2)
+		pagezero = sse2_pagezero;
+	else
+		pagezero = i686_pagezero;
+	pagezero = bzero;
+	}
 #endif
 }
 

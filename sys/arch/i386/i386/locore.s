@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.75 2003/11/17 14:55:58 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.76 2004/01/29 19:01:53 tedu Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1972,3 +1972,70 @@ ENTRY(bzero)
 
 	popl	%edi
 	ret
+
+#if defined(I686_CPU) && !defined(SMALL_KERNEL)
+ENTRY(sse2_pagezero)
+	pushl	%ebx
+	movl	8(%esp),%ecx
+	movl	%ecx,%eax
+	addl	$4096,%eax
+	xor	%ebx,%ebx
+1:
+	movnti	%ebx,(%ecx)
+	addl	$4,%ecx
+	cmpl	%ecx,%eax
+	jne	1b
+	sfence
+	popl	%ebx
+	ret
+
+ENTRY(i686_pagezero)
+	pushl	%edi
+	pushl	%ebx
+
+	movl	12(%esp), %edi
+	movl	$1024, %ecx
+	cld
+
+	ALIGN_TEXT
+1:
+	xorl	%eax, %eax
+	repe
+	scasl
+	jnz	2f
+
+	popl	%ebx
+	popl	%edi
+	ret
+
+	ALIGN_TEXT
+
+2:
+	incl	%ecx
+	subl	$4, %edi
+
+	movl	%ecx, %edx
+	cmpl	$16, %ecx
+
+	jge	3f
+
+	movl	%edi, %ebx
+	andl	$0x3f, %ebx
+	shrl	%ebx
+	shrl	%ebx
+	movl	$16, %ecx
+	subl	%ebx, %ecx
+
+3:
+	subl	%ecx, %edx
+	rep
+	stosl
+
+	movl	%edx, %ecx
+	testl	%edx, %edx
+	jnz	1b
+
+	popl	%ebx
+	popl	%edi
+	ret
+#endif
