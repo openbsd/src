@@ -745,7 +745,7 @@
 ./usr/include/netinet/ip_fil_compat.h
 ./usr/include/netinet/ip_frag.h
 ./usr/include/netinet/ip_icmp.h
-./usr/include/netinet/ip_ip4.h
+./usr/include/netinet/ip_ipip.h
 ./usr/include/netinet/ip_ipsp.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_nat.h
