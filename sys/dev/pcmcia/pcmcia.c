@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: pcmcia.c,v 1.1 1996/01/15 00:05:03 hvozda Exp $
+ *      $Id: pcmcia.c,v 1.2 1996/01/26 21:27:31 hvozda Exp $
  */
 
 /* derived from scsiconf.c writte by Julian Elischer et al */
@@ -43,6 +43,10 @@
 #include <dev/pcmcia/pcmcia.h>
 #include <dev/pcmcia/pcmciabus.h>
 #include <dev/pcmcia/pcmcia_ioctl.h>
+
+#include "ed.h"
+#include "com.h"
+#include "ep.h"
 
 #ifdef IBM_WD
 #define PCMCIA_DEBUG
@@ -70,24 +74,24 @@ static int      ndeldevs = 0;
     build up the knowndevs struct.  Stefan may have ideas...
 */
 
-#ifdef PCMCIA_ED
+#if NED > 0
 extern struct pcmciadevs pcmcia_ed_devs[];
 #endif
-#ifdef PCMCIA_COM
+#if NCOM > 0
 extern struct pcmciadevs pcmcia_com_devs[];
 #endif
-#ifdef PCMCIA_EP
+#if NEP > 0
 extern struct pcmciadevs pcmcia_ep_devs[];
 #endif
 
 static struct pcmciadevs *knowndevs[] = {
-#ifdef PCMCIA_ED
+#if NED > 0
 	pcmcia_ed_devs,
 #endif
-#ifdef PCMCIA_COM
+#if NCOM > 0
 	pcmcia_com_devs,
 #endif
-#ifdef PCMCIA_EP
+#if NEP > 0
 	pcmcia_ep_devs,
 #endif
 	NULL

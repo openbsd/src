@@ -1,0 +1,83 @@
+#
+#	HELIOS_PCMCIA -- Eric Hvozda's notebook
+#
+
+machine		i386		# architecture, used by config; REQUIRED
+
+options		I486_CPU
+
+options		DUMMY_NOPS	# speed hack; recommended
+options		XSERVER,UCONSOLE
+options		MACHINE_NONCONTIG
+
+maxusers	64		# estimated number of users
+options		TIMEZONE=300	# time zone to adjust RTC time by
+options		DST=1		# daylight savings time used by RTC
+
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files
+options		DEVPAGER	# mmap() of devices
+
+options		DIAGNOSTIC	# internally consistency checks
+options		KTRACE		# system call tracing, a la ktrace(1)
+
+options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options		COMPAT_09	# NetBSD 0.9,
+options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_43	# and 4.3BSD
+
+options		LKM		# loadable kernel modules
+
+options		FFS		# UFS
+options		QUOTA		# UFS quotas
+options		MFS		# memory file system
+
+options		NFSCLIENT	# Network File System client
+options		NFSSERVER	# Network File System server
+
+options		MSDOSFS		# MS-DOS file system
+options		FDESC		# /dev/fd
+options		FIFO		# FIFOs; RECOMMENDED
+options		KERNFS		# /kern
+options		PROCFS		# /proc
+options		UNION		# union file system
+
+options		FDSCRIPTS	# secure setuid scripts
+#options	SETUIDSCRIPTS	# secure setuid scripts
+
+options		INET		# IP + ICMP + TCP + UDP
+
+config		bsd	root on wd0g swap on wd0b dumps on wd0b
+
+isa0	at root
+pci0	at root
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+
+pc0	at isa? port 0x60 irq 1		# generic PC console device
+
+pcic0	at isa? port 0x3E0 flags 0
+pcmciabus0 at isa? iomem 0xd4000 iosiz 4096
+com2	at pcmciabus? port 0x3e8 irq 12
+ed2	at pcmciabus? port 0x300 iomem 0xcc000 irq 10
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd0	at fdc? drive 0
+
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wd0	at wdc? drive 0
+
+sb0	at isa? port 0x240 irq 5 drq 1	# SoundBlaster
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+pseudo-device	sl	2		# CSLIP
+pseudo-device	ppp	2		# PPP
+
+pseudo-device	pty	64		# pseudo-terminals
+pseudo-device	vnd	4		# paging to files

@@ -127,7 +127,7 @@ file	dev/isa/elink.c			elink
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 device	ed at isa, pcmciabus: ether, ifnet
-file	dev/isa/if_ed.c			ed
+file	dev/isa/if_ed.c			ed needs-flag
 
 # 3Com 3C505
 device	eg at isa: ether, ifnet
@@ -139,7 +139,7 @@ file	dev/isa/if_el.c			el
 
 # 3Com 3C5x9, 3c59x (EtherLink III) family
 device	ep at isa, pci, pcmciabus: ether, ifnet, elink
-file	dev/isa/if_ep.c			ep
+file	dev/isa/if_ep.c			ep needs-flag
 
 # Fujitsu MB8696[05]-based boards
 # (Allied Telesis AT1700)
