@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.10 2004/09/20 10:29:57 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.11 2004/09/20 11:04:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -258,15 +258,19 @@ Conf52K:					# R5200 type, check for L2 cache
 	li	t3, CF_5_SE			# Set SE in conf
 	or	v0, t3				# Update config register
 	li	ta2, 512*1024			# 512k per 'click'.
-	lw	t3, CpuExternalCacheOn		# Check if disabled
-	bnez	t3, ConfResult			# No use it.
 	sll	ta2, t1
 
-	and	t2, ~CTYPE_HAS_XL2
-	li	t1, ~CF_52_SE			# Clear SE in conf
-	and	v0, t1				# Update config register
+	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
+	LA	t0, KSEG0_BASE
+	PTR_ADDU t1, t0, ta2
+1:
+	cache	InvalidateSecondaryPage, 0(t0)
+	PTR_ADDU t0, 128*32
+	bne	t0, t1, 1b
+	nop
+
 	b	ConfResult
-	li	ta2, 0				# L2 cache disabled
+	nop
 
 
 #---- RM7K -----------------------------
