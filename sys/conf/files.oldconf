@@ -1,5 +1,5 @@
-#	$OpenBSD: files.oldconf,v 1.10 1996/05/28 12:16:34 deraadt Exp $
-#	$NetBSD: files.oldconf,v 1.67 1996/03/19 04:40:54 scottr Exp $
+#	$OpenBSD: files.oldconf,v 1.11 1996/06/10 05:59:39 deraadt Exp $
+#	$NetBSD: files.oldconf,v 1.67.4.1 1996/05/29 23:14:10 cgd Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -141,13 +141,14 @@ net/ppp_tty.c		optional ppp
 net/ppp-deflate.c	optional ppp_deflate
 net/zlib.c		optional ppp_deflate
 net/if_sl.c		optional sl device-driver
+net/if_strip.c		optional strip device-driver
 net/if_tun.c		optional tun device-driver
 net/radix.c		standard
 net/raw_cb.c		standard
 net/raw_usrreq.c	standard
 net/route.c		standard
 net/rtsock.c		standard
-net/slcompress.c	optional sl or ppp
+net/slcompress.c	optional ppp or sl or strip
 netccitt/ccitt_proto.c	optional ccitt
 netccitt/hd_debug.c	optional hdlc
 netccitt/hd_input.c	optional hdlc
