@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.97 2002/05/06 20:53:05 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.98 2002/05/08 23:05:27 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -111,6 +111,7 @@ int	ubsec_kprocess_modexp(struct ubsec_softc *, struct cryptkop *);
 int	ubsec_kprocess_rsapriv(struct ubsec_softc *, struct cryptkop *);
 void	ubsec_kfree(struct ubsec_softc *, struct ubsec_q2 *);
 int	ubsec_kcopyin(struct crparam *, caddr_t, u_int, u_int *);
+int	ubsec_norm_sigbits(const u_int8_t *, u_int);
 
 /* DEBUG crap... */
 void ubsec_dump_pb(struct ubsec_pktbuf *);
@@ -313,9 +314,7 @@ skip_rng:
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, ubsec_kprocess);
-#if 0
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP_CRT, 0, ubsec_kprocess);
-#endif
 	}
 
 	printf("\n");
@@ -2007,7 +2006,51 @@ ubsec_kprocess_rsapriv(sc, krp)
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_rsapriv *ctx;
 	int err = 0, s;
-	u_int len;
+	u_int padlen, msglen;
+
+	msglen = ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_P].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_P].crp_nbits);
+	padlen = ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_Q].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_Q].crp_nbits);
+	if (msglen > padlen)
+		padlen = msglen;
+
+	if (padlen <= 256)
+		padlen = 256;
+	else if (padlen <= 384)
+		padlen = 384;
+	else if (padlen <= 512)
+		padlen = 512;
+	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && padlen <= 768)
+		padlen = 768;
+	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && padlen <= 1024)
+		padlen = 1024;
+	else {
+		err = E2BIG;
+		printf("bad pad.\n");
+		goto errout;
+	}
+
+	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_DP].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_DP].crp_nbits) > padlen) {
+		err = E2BIG;
+		printf("bad p\n");
+		goto errout;
+	}
+
+	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_DQ].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_DQ].crp_nbits) > padlen) {
+		err = E2BIG;
+		printf("bad q\n");
+		goto errout;
+	}
+
+	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_PINV].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_PINV].crp_nbits) > padlen) {
+		err = E2BIG;
+		printf("bad pinv\n");
+		goto errout;
+	}
 
 	rp = (struct ubsec_q2_rsapriv *)malloc(sizeof *rp, M_DEVBUF, M_NOWAIT);
 	if (rp == NULL)
@@ -2031,24 +2074,63 @@ ubsec_kprocess_rsapriv(sc, krp)
 	ctx = (struct ubsec_ctx_rsapriv *)rp->rpr_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof *ctx);
 
+	/* Copy in p */
+	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_P].crp_p,
+	    &ctx->rpr_buf[0 * (padlen / 8)],
+	    (krp->krp_param[UBS_RSAPRIV_PAR_P].crp_nbits + 7) / 8);
+
+	/* Copy in q */
+	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_Q].crp_p,
+	    &ctx->rpr_buf[1 * (padlen / 8)],
+	    (krp->krp_param[UBS_RSAPRIV_PAR_Q].crp_nbits + 7) / 8);
+
+	/* Copy in dp */
+	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_DP].crp_p,
+	    &ctx->rpr_buf[2 * (padlen / 8)],
+	    (krp->krp_param[UBS_RSAPRIV_PAR_DP].crp_nbits + 7) / 8);
+
+	/* Copy in dq */
+	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_DQ].crp_p,
+	    &ctx->rpr_buf[3 * (padlen / 8)],
+	    (krp->krp_param[UBS_RSAPRIV_PAR_DQ].crp_nbits + 7) / 8);
+
+	/* Copy in pinv */
+	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_PINV].crp_p,
+	    &ctx->rpr_buf[4 * (padlen / 8)],
+	    (krp->krp_param[UBS_RSAPRIV_PAR_PINV].crp_nbits + 7) / 8);
+
+	msglen = padlen * 2;
+
 	/* Copy in input message (aligned buffer/length). */
-	len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits + 31) / 8;
-	if (ubsec_dma_malloc(sc, len, &rp->rpr_msgin, 0)) {
+	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits) > msglen) {
+		/* Is this likely? */
+		printf("msginbuf...\n");
+		err = E2BIG;
+		goto errout;
+	}
+	if (ubsec_dma_malloc(sc, (msglen + 7) / 8, &rp->rpr_msgin, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(rp->rpr_msgin.dma_vaddr, len);
+	bzero(rp->rpr_msgin.dma_vaddr, (msglen + 7) / 8);
 	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_p,
 	    rp->rpr_msgin.dma_vaddr,
 	    (krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits + 7) / 8);
 
 	/* Prepare space for output message (aligned buffer/length). */
-	len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits + 31) / 8;
-	if (ubsec_dma_malloc(sc, len, &rp->rpr_msgout, 0)) {
+	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_p,
+	    krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits) < msglen) {
+		printf("msgoutbuf\n");
+		/* Is this likely? */
+		err = E2BIG;
+		goto errout;
+	}
+	if (ubsec_dma_malloc(sc, (msglen + 7) / 8, &rp->rpr_msgout, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(rp->rpr_msgout.dma_vaddr, len);
+	bzero(rp->rpr_msgout.dma_vaddr, (msglen + 7) / 8);
 
 	mcr->mcr_pkts = htole16(1);
 	mcr->mcr_flags = 0;
@@ -2057,24 +2139,37 @@ ubsec_kprocess_rsapriv(sc, krp)
 	mcr->mcr_ipktbuf.pb_next = 0;
 	mcr->mcr_ipktbuf.pb_len = htole32(rp->rpr_msgin.dma_size);
 	mcr->mcr_reserved = 0;
-	/* XXX mcr_pktlen, 0? */
+	mcr->mcr_pktlen = htole16(msglen);
 	mcr->mcr_opktbuf.pb_addr = htole32(rp->rpr_msgout.dma_paddr);
 	mcr->mcr_opktbuf.pb_next = 0;
 	mcr->mcr_opktbuf.pb_len = htole32(rp->rpr_msgout.dma_size);
 
-	/* XXX ctx->rpr_len = XXX; */
+#ifdef DIAGNOSTIC
+	if (rp->rpr_msgin.dma_paddr & 3 || rp->rpr_msgin.dma_size & 3) {
+		panic("%s: rsapriv: invalid msgin %p(0x%x)",
+		    sc->sc_dv.dv_xname, rp->rpr_msgin.dma_paddr,
+		    rp->rpr_msgin.dma_size);
+	}
+	if (rp->rpr_msgout.dma_paddr & 3 || rp->rpr_msgout.dma_size & 3) {
+		panic("%s: rsapriv: invalid msgout %p(0x%x)",
+		    sc->sc_dv.dv_xname, rp->rpr_msgout.dma_paddr,
+		    rp->rpr_msgout.dma_size);
+	}
+#endif
+
+	ctx->rpr_len = (sizeof(u_int16_t) * 4) + (5 * (padlen / 8));
 	ctx->rpr_op = htole16(UBS_CTXOP_RSAPRIV);
-	/* XXX ctx->rpr_q_len; */
-	/* XXX ctx->rpr_p_len; */
+	ctx->rpr_q_len = htole16(padlen);
+	ctx->rpr_p_len = htole16(padlen);
 
 	/*
 	 * ubsec_feed2 will sync mcr and ctx, we just need to sync
 	 * everything else.
 	 */
-	bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgout.dma_map,
-	    0, rp->rpr_msgout.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgin.dma_map,
 	    0, rp->rpr_msgin.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgout.dma_map,
+	    0, rp->rpr_msgout.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* Enqueue and we're done... */
 	s = splnet();
@@ -2186,3 +2281,30 @@ ubsec_dump_mcr(struct ubsec_mcr *mcr)
 	}
 	printf("END MCR\n");
 }
+
+/*
+ * Return the number of significant bits of a big number.
+ */
+int
+ubsec_norm_sigbits(p, pbits)
+	const u_int8_t *p;
+	u_int pbits;
+{
+	u_int plen = (pbits + 7) / 8;
+	int i, sig = plen * 8;
+	u_int8_t c;
+
+	for (i = plen - 1; i >= 0; i--) {
+		c = p[i];
+		if (c != 0) {
+			while ((c & 0x80) == 0) {
+				sig--;
+				c <<= 1;
+			}
+			break;
+		}
+		sig -= 8;
+	}
+	return (sig);
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.22 2002/05/06 20:53:05 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.23 2002/05/08 23:05:28 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -186,6 +186,6 @@ struct ubsec_ctx_rsapriv {
 	volatile u_int16_t	rpr_op;		/* rsaprivate, 0x04 */
 	volatile u_int16_t	rpr_q_len;	/* q (bits) */
 	volatile u_int16_t	rpr_p_len;	/* p (bits) */
-	volatile u_int8_t	rpr_buf[(5 * 512) / 8];	/* parameters: */
+	u_int8_t		rpr_buf[5 * 1024 / 8];	/* parameters: */
 						/* p, q, dp, dq, pinv */
 };
