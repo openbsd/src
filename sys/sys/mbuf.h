@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.38 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.39 2001/06/23 02:01:08 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	LIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
+	int	csum;			/* Hardware checksum info */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -141,6 +142,17 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define M_CONF		0x0400  /* packet was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* packet was authenticated (AH) */
+
+/* Checksumming flags */
+#define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
+#define M_TCPV4_CSUM_OUT	0x2002	/* TCP checksum needed */
+#define	M_UDPV4_CSUM_OUT	0x0004	/* UDP checksum needed */
+#define	M_IPV4_CSUM_IN_OK	0x0008	/* IPv4 checksum verified */
+#define	M_IPV4_CSUM_IN_BAD	0x0010	/* IPv4 checksum bad */
+#define	M_TCPV4_CSUM_IN_OK	0x0020	/* TCP/IPv4 checksum verified */
+#define	M_TCPV4_CSUM_IN_BAD	0x0040	/* TCP/IPv4 checksum bad */
+#define	M_UDPV4_CSUM_IN_OK	0x0080	/* UDP/IPv4 checksum verified */
+#define	M_UDPV4_CSUM_IN_BAD	0x0100	/* UDP/IPv4 checksum bad */
 
 /* KAME IPv6 */
 #define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
@@ -226,6 +238,7 @@ struct mbuf *_sk_mget(int, int);
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
 		LIST_INIT(&(m)->m_pkthdr.tags); \
+		(m)->m_pkthdr.csum = 0; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 } while (/* CONSTCOND */ 0)
