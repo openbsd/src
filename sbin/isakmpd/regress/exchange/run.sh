@@ -1,6 +1,6 @@
 #!/bin/sh
-#	$OpenBSD: run.sh,v 1.3 1998/12/21 01:02:33 niklas Exp $
-#	$EOM: run.sh,v 1.3 1998/08/03 21:06:00 niklas Exp $
+#	$OpenBSD: run.sh,v 1.4 1999/02/26 03:28:05 niklas Exp $
+#	$EOM: run.sh,v 1.4 1999/01/31 01:26:55 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 #
 
 #
-# This code was written under funding by Ericsson.
+# This code was written under funding by Ericsson Radio Systems.
 #
 
 # Defaults
