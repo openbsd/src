@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.15 1997/11/13 06:21:31 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.16 1997/11/13 06:23:05 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1285,6 +1285,18 @@ svr4_sys_acl(p, v, retval)
 	register_t *retval;
 {
 	return svr4_sys_facl(p, v, retval);	/* XXX: for now the same */
+}
+
+int
+svr4_sys_auditsys(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	/*
+	 * XXX: Big brother is *not* watching.
+	 */
+	return 0;
 }
 
 int
