@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2001/08/23 15:20:48 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2001/08/25 12:29:56 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -117,6 +117,7 @@ static	void mainbus_attach __P((struct device *, struct device *, void *));
 static	int getstr __P((char *, int));
 void	setroot __P((void));
 void	swapconf __P((void));
+void	diskconf __P((void));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
 static int findblkmajor __P((struct device *));
 
@@ -533,16 +534,23 @@ cpu_configure()
 
 	(void)spl0();
 
+	md_diskconf = diskconf;
+	cold = 0;
+}
+
+void
+diskconf(void)
+{
 	setroot();
 	swapconf();
-	cold = 0;
+	dumpconf();
 }
 
 void
 swapconf()
 {
-	register struct swdevt *swp;
-	register int nblks;
+	struct swdevt *swp;
+	int nblks;
 
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
@@ -553,7 +561,6 @@ swapconf()
 				swp->sw_nblks = nblks;
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
-	dumpconf();
 }
 
 void
@@ -655,7 +662,7 @@ gotswap:
 		rootdev = nrootdev;
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
-		/* swdevt[1].sw_dev = NODEV; */
+		swdevt[1].sw_dev = NODEV;
 
 	} else if (mountroot == NULL) {
 
@@ -750,7 +757,6 @@ gotroot:
 				(*mrhp->mr_func)(NULL);
 			break;
 		}
-
 }
 
 struct nam2blk {
