@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_xfs.8,v 1.1 1998/09/05 17:33:29 art Exp $
+.\"	$OpenBSD: mount_xfs.8,v 1.2 1998/09/05 20:00:05 art Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
@@ -45,7 +45,10 @@
 .Nd mount the xfs filesystem.
 .Sh SYNOPSIS
 .Nm mount_xfs
-.Op Fl a
+.Op Fl o Ar options
+.Ar char-device
+.Ar mount-point
+.Nm mount_afs
 .Op Fl o Ar options
 .Ar char-device
 .Ar mount-point
@@ -54,13 +57,15 @@ The
 .Nm mount_xfs
 command mounts one of the xfs character devices. The character device is used
 for comunication with a user-land cachemanager and fileprovider.
+The
+.Nm mount_afs
+name is a synonym to the mount_xfs command with the exception
+that it starts
+.Nm afsd
+the AFS cache-manager.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl a
-Do not start
-.Xr afsd
-when mounting
 .It Fl o
 Options are specified with a
 .Fl o
@@ -76,8 +81,10 @@ it could be used for other filesystems asweel.
 .\"
 .Sh SEE ALSO
 .Xr mount 8
-.Xr arlad 8
+.Xr afsd 8
 .Sh HISTORY
 The
 .Nm mount_xfs
+and
+.Nm mount_afs
 utility first appeared in OpenBSD 2.4.

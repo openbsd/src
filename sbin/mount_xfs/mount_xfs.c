@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xfs.c,v 1.1 1998/09/05 17:33:29 art Exp $	*/
+/*	$OpenBSD: mount_xfs.c,v 1.2 1998/09/05 20:00:05 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -62,7 +62,7 @@ static const struct mntopt mopts[] = {
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-a] [-o options] device path\n",
+	fprintf(stderr, "Usage: %s [-o options] device path\n",
 		__progname);
 	exit(1);
 }
@@ -74,21 +74,17 @@ main(int argc, char **argv)
 	int error;
 	int ch;
 	int mntflags = 0;
-#ifdef not_yet
-	int afsd = 1;
-#endif
+	int afsd = 0;
+
+	if (strstr(__progname, "mount_afs"))
+		afsd = 1;
 
 	optind = optreset = 1;
-	while ((ch = getopt(argc, argv, "ao:")) != -1)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
 			break;
-#ifdef not_yey
-		case 'a':
-			afsd = 0;
-			break;
-#endif
 		case '?':
 		default:
 			usage();
