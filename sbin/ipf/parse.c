@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.15 1997/06/24 05:37:35 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.16 1997/08/24 18:29:39 millert Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -461,7 +461,7 @@ char *tag;
 frdest_t *fdp;
 {
 	(void)printf("%s %s%s", tag, fdp->fd_ifname,
-		     (fdp->fd_ifp || (int)fdp->fd_ifp == -1) ? "" : "(!)");
+		     (fdp->fd_ifp || (long)fdp->fd_ifp == -1) ? "" : "(!)");
 	if (fdp->fd_ip.s_addr)
 		(void)printf(":%s", inet_ntoa(fdp->fd_ip));
 	putchar(' ');
@@ -1130,7 +1130,7 @@ struct	frentry	*fp;
 
 	if (*fp->fr_ifname) {
 		(void)printf("on %s%s ", fp->fr_ifname,
-			(fp->fr_ifa || (int)fp->fr_ifa == -1) ? "" : "(!)");
+			(fp->fr_ifa || (long)fp->fr_ifa == -1) ? "" : "(!)");
 		if (*fp->fr_dif.fd_ifname)
 			print_toif("dup-to", &fp->fr_dif);
 		if (*fp->fr_tif.fd_ifname)
