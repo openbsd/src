@@ -1,5 +1,5 @@
-/*	$OpenBSD: hash.c,v 1.3 1998/11/17 11:10:11 niklas Exp $	*/
-/*	$EOM: hash.c,v 1.7 1998/07/25 22:04:35 niklas Exp $	*/
+/*	$OpenBSD: hash.c,v 1.4 1999/02/26 03:40:25 niklas Exp $	*/
+/*	$EOM: hash.c,v 1.8 1999/02/25 11:38:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -38,6 +38,8 @@
 #include <string.h>
 #include <md5.h>
 #include <sha1.h>
+
+#include "sysdep.h"
 
 #include "hash.h"
 
