@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.13 1999/04/30 11:46:59 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.14 1999/06/05 22:54:42 niklas Exp $	*/
 /*	$EOM: udp.c,v 1.40 1999/04/29 18:46:54 niklas Exp $	*/
 
 /*
@@ -348,6 +348,8 @@ udp_create (char *name)
   dst.sin_port = port;
 
   addr_str = conf_get_str (name, "Local-address");
+  if (!addr_str)
+    addr_str = conf_get_str ("General", "Listen-on");
   if (!addr_str)
     return udp_clone ((struct udp_transport *)default_transport, &dst);
 
