@@ -1199,8 +1199,6 @@ static const lang_independent_options f_options[] =
    N_("Report on permanent memory allocation at end of run") },
   { "trapv", &flag_trapv, 1,
    N_("Trap for signed overflow in addition / subtraction / multiplication") },
-  { "no-stack-protector", &flag_propolice_protection, 0,
-   N_("Fake disable stack protection") },
   { "new-ra", &flag_new_regalloc, 1,
    N_("Use graph coloring register allocation.") },
   {"stack-protector", &flag_propolice_protection, 1,
