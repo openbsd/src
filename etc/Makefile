@@ -70,6 +70,16 @@ distribution: distrib-dirs
 		    ${DESTDIR}/etc/mtree; \
 		install -c -o root -g wheel -m 444 4.4BSD.dist \
 		    ${DESTDIR}/etc/mtree)
+	(cd ppp; \
+		install -c -o root -g wheel -m 644 chap-secrets \
+		    ${DESTDIR}/etc/ppp; \
+		install -c -o root -g wheel -m 644 options \
+		    ${DESTDIR}/etc/ppp; \
+		install -c -o root -g wheel -m 644 options.leaf \
+		    ${DESTDIR}/etc/ppp; \
+		install -c -o root -g wheel -m 644 pap-secrets \
+		    ${DESTDIR}/etc/ppp; \
+		    ${DESTDIR}/etc/ppp)
 	cd namedb; install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
 	    ${DESTDIR}/etc/namedb
 	/bin/rm -f ${DESTDIR}/etc/localtime
