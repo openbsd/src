@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.28 1997/07/18 06:49:26 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.29 1997/07/25 17:15:22 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2310,6 +2310,7 @@ ENTRY(apmcall)
 	movw	%cx,APMREG_CX(%esi)
 	movw	%dx,APMREG_DX(%esi)
 /* todo: do something with %edi? */
+	movl	$1, %eax
 	cmpl	$0,apmstatus
 	jne	1f
 	xorl	%eax,%eax
