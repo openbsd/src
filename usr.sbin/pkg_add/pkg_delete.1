@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.11 2004/11/14 11:58:43 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.12 2004/11/15 10:49:19 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -57,18 +57,17 @@ The options are as follows:
 Set
 .Ar pkg-destdir
 as the prefix to prepend to any object deleted.
-.It Fl I
-If scripts exist for a given package, do not execute them.
-.It Fl n
-Don't actually deinstall a package, just report the steps that
-would be taken if it were.
+.It Fl c
+Delete extra configuration file, mentioned as
+.Dl @extra file
+in the packing-list.
 .It Fl f Ar keys
 Force removal of the package.
 .Ar keys
 is a comma-separated list of keywords that state what failsafes
 should be waived.
 These include:
-.Bl -tag -width keyword
+.Bl -tag -width "dependenciesXX"
 .It Ar ambiguous
 delete all packages matching ambiguous package specifications.
 .It Ar dependencies
@@ -78,10 +77,11 @@ uninstall even if not running as root.
 .It Ar uninstalled
 proceed even if some package names don't resolve to installed package names.
 .El
-.It Fl c
-Delete extra configuration file, mentioned as
-.Dl @extra file
-in the packing-list.
+.It Fl I
+If scripts exist for a given package, do not execute them.
+.It Fl n
+Don't actually deinstall a package, just report the steps that
+would be taken if it were.
 .It Fl q
 Delete package quickly, do not bother checking md5s before removing files.
 .It Fl v
@@ -145,7 +145,6 @@ Passing the keyword
 .Ar DEINSTALL
 lets you potentially write only one program/script that handles all
 aspects of installation and deletion.
-.Pp
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
 .It Ev PKG_DBDIR
