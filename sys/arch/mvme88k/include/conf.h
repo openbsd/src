@@ -1,10 +1,10 @@
-/*	$OpenBSD: conf.h,v 1.1 2002/04/28 15:17:09 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2003/04/16 17:34:49 miod Exp $	*/
 /*
  * Copyright (c) 2002, Miodrag Vallat.
  * All rights reserved.
  *
  * Permission to redistribute, use, copy, and modify this software
- * without fee is hereby granted, provided that the following
+ * is hereby granted without fee, provided that the following
  * conditions are met:
  *
  * 1. This entire notice is included in all source code copies of any
