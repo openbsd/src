@@ -100,7 +100,7 @@ Transferring the miniroot filesystem:
 	single-user state processes are not using the swap partition.
 
 	On AmigaDOS, the command:
-		xstreamtodev -input=inst-11.fs -rdb-name=<swap partition>
+		xstreamtodev --input=inst-11.fs -rdb-name=<swap partition>
 	where <swap partition> is the name you gave to the NetBSD
 	partition to be used for swapping.  Use upgr-11.fs if you
 	are going to do an upgrade of an existing NetBSD system.  If

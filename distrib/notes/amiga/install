@@ -38,6 +38,13 @@ begin again from scratch.
 	'sd0*', where '0' is the device which contains the swap
 	partition you created during the hard disk preparation.
 
+	If the system should hang after entering the root device, try
+	again with
+
+		loadbsd -I ff -b netbsd
+
+	This disables synchronous transfer on all SCSI devices.
+
 	The system should continue to boot.  For now ignore WARNING:
 	messages about bad dates in clocks.  Eventually you will be
 	asked to enter the pathname of the shell, just hit return.
