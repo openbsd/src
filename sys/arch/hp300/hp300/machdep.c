@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 2005/01/14 22:39:27 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.99 2005/01/14 22:49:24 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -1061,7 +1061,8 @@ badbaddr(addr)
 static int innmihand;	/* simple mutex */
 
 /*
- * Level 7 interrupts can be caused by the keyboard or parity errors.
+ * Level 7 interrupts can be caused by HIL keyboards (in cooked mode only,
+ * but we run them in raw mode) or parity errors.
  */
 void
 nmihand(frame)
@@ -1073,26 +1074,14 @@ nmihand(frame)
 		return;
 	innmihand = 1;
 
-#if 0	/* XXX */
-	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
-	if (kbdnmi()) {
-#ifdef DDB
-		if (db_console) {
-			Debugger();
-		}
-#endif /* DDB */
-		goto nmihand_out;	/* no more work to do */
-	}
-#endif
-
-	if (parityerror(&frame))
+	if (parityerror(&frame)) {
+		innmihand = 0;
 		return;
+	}
+
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
-#if 0
-nmihand_out:
-#endif
 	innmihand = 0;
 }
 
