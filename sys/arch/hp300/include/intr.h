@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2004/09/29 07:35:54 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2004/09/30 16:22:59 millert Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/evcount.h>
 #include <sys/queue.h>
 
+#ifdef _KERNEL
 struct isr {
 	LIST_ENTRY(isr) isr_link;
 	int		(*isr_func)(void *);
@@ -53,7 +54,6 @@ struct isr {
 	struct evcount	isr_count;
 };
 
-#ifdef _KERNEL
 /*
  * spl functions; all but spl0 are done in-line
  */
