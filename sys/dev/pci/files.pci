@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.66 2000/03/26 22:38:20 mickey Exp $
+#	$OpenBSD: files.pci,v 1.67 2000/03/27 00:34:15 aaron Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -188,16 +188,6 @@ file	dev/pci/hifn7751.c		hifn
 device	wb: ether, ifnet, mii, ifmedia
 attach	wb at pci
 file	dev/pci/if_wb.c			wb
-
-# ASIX AX88140A ethernet
-device	ax: ether, ifnet, ifmedia
-attach	ax at pci
-file	dev/pci/if_ax.c			ax
-
-# ADMtek AL981/AN985 ethernet
-device	al: ether, ifnet, mii, ifmedia
-attach	al at pci
-file	dev/pci/if_al.c			al
 
 # Adaptec AIC-6915 "Starfire" ethernet
 device	sf: ether, ifnet, mii, ifmedia
