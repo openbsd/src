@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.4 1994/11/30 19:31:26 jtc Exp $
+.\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,7 +95,7 @@ format
 .It "if	str" Ta Dv NULL Ta No "name of text filter which does accounting"
 .It "lf	str" Ta Pa /dev/console Ta No "error logging file name"
 .It "lo	str" Ta Pa lock Ta No "name of lock file"
-.It "lp	str" Ta Pa /dev/lp Ta No "device name to open for output"
+.It "lp	str" Ta Pa /dev/lp Ta No "device name to open for output to local printer, or port@host for remote printer/printer on print server"
 .It "ms	str" Ta Dv NULL Ta No "list of terminal modes to set or clear"
 .It "mx	num	1000	maximum file size (in"
 .Dv BUFSIZ
@@ -133,11 +133,18 @@ style text files
 If the local line printer driver supports indentation, the daemon
 must understand how to invoke it.
 .Sh FILTERS
-The
+If a printer is specified via 
+.Sy lp
+(either local or remote),
+the
 .Xr lpd 8
 daemon creates a pipeline of
 .Em filters
 to process files for various printer types.
+The pipeline is not set up for remote printers specified via
+.Sy rm 
+unless the local host is the same as the remote printer host 
+given.
 The filters selected depend on the flags passed to
 .Xr lpr 1 .
 The pipeline set up is:
