@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.42 1999/07/25 04:38:26 csapuntz Exp $
+#	$OpenBSD: files.pci,v 1.43 1999/07/25 16:51:58 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -156,6 +156,11 @@ file	dev/pci/if_xl.c			xl
 device	tx: ether, ifnet, ifmedia
 attach	tx at pci
 file	dev/pci/if_tx.c			tx
+
+# Alteon Tigon I & II
+device	ti: ether, ifnet, ifmedia
+attach	ti at pci
+file	dev/pci/if_ti.c			ti
 
 # NE2000-compatible PCI Ethernet cards
 attach	ne at pci with ne_pci: rtl80x9
