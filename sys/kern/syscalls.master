@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.34 1999/02/15 21:28:23 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.35 1999/05/22 21:23:40 weingart Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -345,7 +345,7 @@
 179	UNIMPL
 180	UNIMPL
 
-; Syscalls 180-199 are used by/reserved for BSD
+; Syscalls 181-199 are used by/reserved for BSD
 181	STD		{ int sys_setgid(gid_t gid); }
 182	STD		{ int sys_setegid(gid_t egid); }
 183	STD		{ int sys_seteuid(uid_t euid); }
@@ -367,7 +367,7 @@
 190	STD		{ int sys_lstat(const char *path, struct stat *ub); }
 191	STD		{ long sys_pathconf(const char *path, int name); }
 192	STD		{ long sys_fpathconf(int fd, int name); }
-193	UNIMPL
+193	STD		{ int sys_swapctl(int cmd, const void *arg, int misc); }
 194	STD		{ int sys_getrlimit(int which, \
 			    struct rlimit *rlp); }
 195	STD		{ int sys_setrlimit(int which, \
@@ -473,6 +473,9 @@
 237	UNIMPL		timer_settime
 238	UNIMPL		timer_gettime
 239	UNIMPL		timer_getoverrun
+;
+; System calls 240-249 are reserved for other IEEE Std1003.1b syscalls
+;
 240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 241	UNIMPL
