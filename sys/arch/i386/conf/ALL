@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.10 1996/10/04 02:51:08 deraadt Exp $
+#	$OpenBSD: ALL,v 1.11 1996/10/24 23:25:03 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -9,7 +9,7 @@ machine		i386		# architecture, used by config; REQUIRED
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
-option		MATH_EMULATE	# floating point emulation
+option		GPL_MATH_EMULATE	# floating point emulation
 option		VM86		# Virtual 8086 emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.34 1996/10/04 02:51:12 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.35 1996/10/24 23:25:09 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -11,7 +11,7 @@ include "../../../conf/GENERIC"
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
-option		MATH_EMULATE	# floating point emulation
+option		GPL_MATH_EMULATE	# floating point emulation
 
 option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; used by WINE

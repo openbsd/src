@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.14 1996/10/17 19:36:41 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.15 1996/10/24 23:25:13 downsj Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -8,7 +8,7 @@ machine		i386		# architecture, used by config; REQUIRED
 #option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 #option		I586_CPU
-#option		MATH_EMULATE	# floating point emulation
+#option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommanded
 #option		XSERVER

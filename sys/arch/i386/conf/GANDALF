@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.14 1996/10/21 10:20:29 mickey Exp $
+#	$OpenBSD: GANDALF,v 1.15 1996/10/24 23:25:08 downsj Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -9,7 +9,7 @@ machine		i386		# architecture, used by config; REQUIRED
 #option		I386_CPU	# CPU classes; at least one is REQUIRED
 #option		I486_CPU
 option		I586_CPU
-#option		MATH_EMULATE	# floating point emulation
+#option		GPL_MATH_EMULATE	# floating point emulation
 
 option		PCIVERBOSE	# verbose PCI device information
 option		EISAVERBOSE	# verbose EISA device information

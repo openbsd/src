@@ -1,11 +1,11 @@
-#	$OpenBSD: BABY,v 1.11 1996/10/04 02:51:10 deraadt Exp $
+#	$OpenBSD: BABY,v 1.12 1996/10/24 23:25:05 downsj Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
-option		MATH_EMULATE	# floating point emulation
+option		GPL_MATH_EMULATE	# floating point emulation
 #option		VM86		# Virtual 8086 emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you

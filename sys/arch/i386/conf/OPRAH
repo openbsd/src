@@ -8,7 +8,7 @@ machine		i386		# architecture, used by config; REQUIRED
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
-option		MATH_EMULATE	# floating point emulation
+option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommended
 option		XSERVER

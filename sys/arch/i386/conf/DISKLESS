@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.14 1996/09/20 06:45:05 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.15 1996/10/24 23:25:06 downsj Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -11,7 +11,7 @@ machine		i386		# architecture, used by config; REQUIRED
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
-option		MATH_EMULATE	# floating point emulation
+option		GPL_MATH_EMULATE	# floating point emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value

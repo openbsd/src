@@ -1,4 +1,4 @@
-#	$OpenBSD: PCMCIA,v 1.8 1996/09/20 06:45:09 deraadt Exp $
+#	$OpenBSD: PCMCIA,v 1.9 1996/10/24 23:25:15 downsj Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -7,7 +7,7 @@ option		I586_CPU
 option		I486_CPU
 option		I386_CPU
 option		INSECURE
-option		MATH_EMULATE
+option		GPL_MATH_EMULATE
 
 option		DUMMY_NOPS	# speed hack; recommanded
 option		XSERVER
