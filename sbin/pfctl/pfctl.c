@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.207 2004/02/19 21:37:01 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.208 2004/02/25 10:09:40 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1732,12 +1732,14 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
 			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
-			pfctl_clear_altq(dev, opts);
-			pfctl_clear_states(dev, ifaceopt, opts);
-			pfctl_clear_src_nodes(dev, opts);
-			pfctl_clear_stats(dev, opts);
 			pfctl_clear_tables(anchorname, rulesetname, opts);
-			pfctl_clear_fingerprints(dev, opts);
+			if (!*anchorname && !*rulesetname) {
+				pfctl_clear_altq(dev, opts);
+				pfctl_clear_states(dev, ifaceopt, opts);
+				pfctl_clear_src_nodes(dev, opts);
+				pfctl_clear_stats(dev, opts);
+				pfctl_clear_fingerprints(dev, opts);
+			}
 			break;
 		case 'o':
 			pfctl_clear_fingerprints(dev, opts);
