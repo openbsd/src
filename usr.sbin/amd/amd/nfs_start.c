@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.11 2002/08/05 07:24:26 pvalchev Exp $
+ *	$Id: nfs_start.c,v 1.12 2002/09/10 05:43:47 deraadt Exp $
  */
 
 #include "am.h"
@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <setjmp.h>
+
 extern jmp_buf select_intr;
 extern int select_intr_valid;
 
@@ -60,7 +61,8 @@ extern void nfs_program_2();
 extern void amq_program_1();
 
 unsigned short nfs_port;
-SVCXPRT *nfsxprt;
+SVCXPRT *nfsxprt, *lnfsxprt;
+SVCXPRT *amqp, *lamqp;
 
 extern int fwd_sock;
 int max_fds = -1;
@@ -160,7 +162,6 @@ rpc_pending_now()
 {
 	struct timeval tvv;
 	int nsel;
-#ifdef FD_SET
 	fd_set *fdsp;
 	int fdsn;
 
@@ -169,12 +170,6 @@ rpc_pending_now()
 		return(0);
 	memset(fdsp, 0, fdsn);
 	FD_SET(fwd_sock, fdsp);
-#else
-	int *fdsp;
-	int readfds = (1 << fwd_sock);
-	fdsp = (int *)malloc(sizeof readfds);
-	memcpy(fdsp, &readfds, sizeof readfds);
-#endif /* FD_SET */
 
 	tvv.tv_sec = tvv.tv_usec = 0;
 	nsel = select(max_fds+1, fdsp, NULL, NULL, &tvv);
@@ -182,17 +177,10 @@ rpc_pending_now()
 		free(fdsp);
 		return(0);
 	}
-#ifdef FD_SET
 	if (FD_ISSET(fwd_sock, fdsp)) {
 		free(fdsp);
 		return(1);
 	}
-#else
-	if (readfds & (1 << fwd_sock)) {
-		free(fdsp);
-		return(1);
-	}
-#endif
 	free(fdsp);
 	return(0);
 }
@@ -247,14 +235,10 @@ run_rpc(void)
 		FD_SET(fwd_sock, fdsp);
 #endif
 #else
-#ifdef FD_SET
 		fd_set readfds;
 		FD_ZERO(&readfds);
 		readfds.fds_bits[0] = svc_fds;
 		FD_SET(fwd_sock, &readfds);
-#else
-		int readfds = svc_fds | (1 << fwd_sock);
-#endif /* FD_SET */
 #endif /* RPC_4 */
 
 #ifdef DEBUG
@@ -313,7 +297,6 @@ run_rpc(void)
 			/* Read all pending NFS responses at once to avoid
 			   having responses queue up as a consequence of
 			   retransmissions. */
-#ifdef FD_SET
 			if (FD_ISSET(fwd_sock, fdsp)) {
 				FD_CLR(fwd_sock, fdsp);
 				--nsel;
@@ -321,15 +304,6 @@ run_rpc(void)
 					fwd_reply();
 				} while (rpc_pending_now() > 0);
 			}
-#else
-			if (readfds & (1 << fwd_sock)) {
-				readfds &= ~(1 << fwd_sock);
-				--nsel;
-				do {
-					fwd_reply();
-				} while (rpc_pending_now() > 0);
-			}
-#endif
 
 			if (nsel) {
 				/*
@@ -343,11 +317,7 @@ run_rpc(void)
 				svc_getreqset(fdsp);
 #endif
 #else
-#ifdef FD_SET
 				svc_getreq(readfds.fds_bits[0]);
-#else
-				svc_getreq(readfds);
-#endif /* FD_SET */
 #endif /* RPC_4 */
 			}
 			break;
@@ -385,9 +355,12 @@ unregister_amq(void)
 int
 mount_automounter(pid_t ppid)
 {
-	int so = socket(AF_INET, SOCK_DGRAM, 0);
-	SVCXPRT *amqp;
-	int nmount;
+	struct sockaddr_in sin;
+	int so, so2, nmount;
+	int sinlen;
+	int on = 1;
+
+	so = socket(AF_INET, SOCK_DGRAM, 0);
 
 	if (so < 0 || bindnfs_port(so) < 0) {
 		perror("Can't create privileged nfs port");
@@ -395,7 +368,33 @@ mount_automounter(pid_t ppid)
 	}
 
 	if ((nfsxprt = svcudp_create(so)) == NULL ||
-			(amqp = svcudp_create(so)) == NULL) {
+	    (amqp = svcudp_create(so)) == NULL) {
+		plog(XLOG_FATAL, "cannot create rpc/udp service");
+		return 2;
+	}
+
+	sinlen = sizeof sin;
+	if (getsockname(so, (struct sockaddr *)&sin, &sinlen) == -1) {
+		perror("Can't get information on socket");
+		return 1;
+	}
+
+	so2 = socket(AF_INET, SOCK_DGRAM, 0);
+	if (so2 < 0) {
+		perror("Can't create 2nd socket");
+		return 1;
+	}
+
+	setsockopt(so2, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+
+	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	if (bind(so2, (struct sockaddr *)&sin, sizeof sin) == -1) {
+		perror("Can't bind 2nd socket");
+		return 1;
+	}
+
+	if ((lnfsxprt = svcudp_create(so2)) == NULL ||
+	    (lamqp = svcudp_create(so2)) == NULL) {
 		plog(XLOG_FATAL, "cannot create rpc/udp service");
 		return 2;
 	}
@@ -418,6 +417,8 @@ mount_automounter(pid_t ppid)
 	 */
 	if (so > max_fds)
 		max_fds = so;
+	if (so2 > max_fds)
+		max_fds = so2;
 	if (fwd_sock > max_fds)
 		max_fds = fwd_sock;
 

@@ -36,9 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_svc.c,v 1.4 2002/08/03 08:29:32 pvalchev Exp $
+ *	$Id: amq_svc.c,v 1.5 2002/09/10 05:43:50 deraadt Exp $
  *
  */
+
+#include <sys/types.h>
+#include <syslog.h>
 
 #include "am.h"
 #include "amq.h"
@@ -56,6 +59,17 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 	char *result;
 	bool_t (*xdr_argument)(), (*xdr_result)();
 	char *(*local)();
+	extern SVCXPRT *lamqp;
+
+	if (transp != lamqp) {
+		struct sockaddr_in *fromsin = svc_getcaller(transp);
+
+		syslog(LOG_WARNING,
+		    "non-local amq attempt (might be from %s)",
+		    inet_ntoa(fromsin->sin_addr));
+		svcerr_noproc(transp);
+		return;
+	}
 
 	switch (rqstp->rq_proc) {
 	case AMQPROC_NULL:
