@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.22 2001/06/29 00:27:48 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.23 2001/07/01 17:04:13 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -306,26 +306,26 @@ print_status(struct pf_status *s)
 	time_t t = time(NULL);
 	int i;
 
-	printf("Time: %u Since: %u Running: %u\n", t, s->since, s->running);
-	if (s->running) {
-		printf("Bytes In: %llu  Bytes Out: %llu\n", 
-		    s->bcounters[PF_IN], s->bcounters[PF_OUT]);
-		printf("Inbound Packets: Passed: %llu Dropped: %llu\n", 
-		    s->pcounters[PF_IN][PF_PASS], 
-		    s->pcounters[PF_IN][PF_DROP]);
-		printf("Outbound Packets: Passed: %llu Dropped: %llu\n", 
-		    s->pcounters[PF_OUT][PF_PASS], 
-		    s->pcounters[PF_OUT][PF_DROP]);
-		printf("States: %u\n", s->states);
-		printf("pf Counters\n");
-		for (i = 0; i < FCNT_MAX; i++)
-			printf("%30s %8lld\n", pf_fcounters[i],
-			    s->fcounters[i]);
-		printf("Counters\n");
-		for (i = 0; i < PFRES_MAX; i++)
-			printf("%30s %8lld\n", pf_reasons[i],
-			    s->counters[i]);
-	}
+	printf("Status: %s  Time: %u  Since: %u\n", 
+	       s->running ? "Enabled" : "Disabled",
+	       t, s->since);
+	printf("Bytes In: %llu  Bytes Out: %llu\n", 
+	       s->bcounters[PF_IN], s->bcounters[PF_OUT]);
+	printf("Inbound Packets: Passed: %llu  Dropped: %llu\n", 
+	       s->pcounters[PF_IN][PF_PASS], 
+	       s->pcounters[PF_IN][PF_DROP]);
+	printf("Outbound Packets: Passed: %llu  Dropped: %llu\n", 
+	       s->pcounters[PF_OUT][PF_PASS], 
+	       s->pcounters[PF_OUT][PF_DROP]);
+	printf("States: %u\n", s->states);
+	printf("pf Counters\n");
+	for (i = 0; i < FCNT_MAX; i++)
+		printf("%30s %8lld\n", pf_fcounters[i],
+		       s->fcounters[i]);
+	printf("Counters\n");
+	for (i = 0; i < PFRES_MAX; i++)
+		printf("%30s %8lld\n", pf_reasons[i],
+		       s->counters[i]);
 }
 
 void
