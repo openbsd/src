@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.4 2005/01/13 17:54:24 drahn Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.5 2005/01/16 17:50:09 drahn Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -178,12 +178,8 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	 * Calculate clock speed
 	 * This takes 2 secs at most.
 	 */
-#if 0
 	cpuclock = pxaip_measure_cpuclock(sc) / 1000;
-#else
-	cpuclock = 398108;
 
-#endif
 	printf(" CPU clock = %d.%03d MHz\n", cpuclock/1000, cpuclock%1000 );
 
 	/*
@@ -278,7 +274,7 @@ static inline uint32_t
 read_clock_counter(void)
 {
   uint32_t x;
-  __asm __volatile("mrc	p14, 0, %0, c1, c0, 0" : "=r" (x) );
+  __asm __volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x) );
 
   return x;
 }
@@ -297,9 +293,9 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 
 	irq = disable_interrupts(I32_bit|F32_bit);
 
-	__asm __volatile( "mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save) );
+	__asm __volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save) );
 	/* Enable clock counter */
-	__asm __volatile( "mcr p14, 0, %0, c0, c0, 0" : : "r" (0x0001) );
+	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (0x0001) );
 
 	rtc0 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR);
 	/* Wait for next second starts */
@@ -310,7 +306,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 		;		/* Wait for 1sec */
 	end = read_clock_counter();
 
-	__asm __volatile( "mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save) );
+	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save) );
 	restore_interrupts(irq);
 
 	bus_space_unmap(sc->sc_bust, ioh, PXA2X0_RTC_SIZE);
