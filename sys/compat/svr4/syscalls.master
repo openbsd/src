@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.29 2000/06/28 23:48:15 fgsch Exp $
+	$OpenBSD: syscalls.master,v 1.30 2000/08/23 19:31:35 fgsch Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -339,8 +339,10 @@
                             struct svr4_statvfs64 *fs); }
 220	UNIMPL		setrlimit64
 221	UNIMPL		getrlimit64
-222	UNIMPL		pread64
-223	UNIMPL		pwrite64
+222	STD		{ ssize_t svr4_sys_pread64(int fd, void *buf, \
+			    size_t nbyte, svr4_off64_t off); }
+223	STD		{ ssize_t svr4_sys_pwrite64(int fd, const void *buf, \
+			    size_t nbyte, svr4_off64_t off); }
 224 	STD		{ int svr4_sys_creat64(char *path, int mode); }
 225	STD		{ int svr4_sys_open64(char *path, int flags, \
 			    int mode); }

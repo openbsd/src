@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_util.h,v 1.2 1996/04/21 22:18:41 deraadt Exp $	*/
+/*	$OpenBSD: svr4_util.h,v 1.3 2000/08/23 19:31:34 fgsch Exp $	*/
 /*	$NetBSD: svr4_util.h,v 1.8 1996/04/11 12:41:25 christos Exp $	 */
 
 /*
@@ -43,5 +43,8 @@ extern const char svr4_emul_path[];
 
 #define SVR4_CHECK_ALT_EXIST(p, sgp, path) \
     CHECK_ALT_EXIST(p, sgp, svr4_emul_path, path)
+
+#define SVR4_CHECK_ALT_CREAT(p, sgp, path) \
+    CHECK_ALT_CREAT(p, sgp, svr4_emul_path, path)
 
 #endif /* !_SVR4_UTIL_H_ */
