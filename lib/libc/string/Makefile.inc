@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 1999/09/21 16:44:01 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 1999/11/09 11:20:41 art Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
@@ -128,3 +128,4 @@ MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
 MLINKS+=strcpy.3 strncpy.3
 MLINKS+=strlcpy.3 strlcat.3
+MLINKS+=strtok.3 strtok_r.3
