@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.3 2002/01/16 16:25:49 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.4 2002/01/16 18:04:42 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -257,6 +257,7 @@ struct wskbd_consops zskbd_consops = {
 
 #define	KC(n)	KS_KEYCODE(n)
 const keysym_t zskbd_keydesc_us[] = {
+    KC(0x01), KS_Cmd,
     KC(0x02),				KS_Cmd_BrightnessDown,
     KC(0x04),				KS_Cmd_BrightnessUp,
     KC(0x05),				KS_f1,
@@ -279,7 +280,7 @@ const keysym_t zskbd_keydesc_us[] = {
     KC(0x18),				KS_Left,
     KC(0x1b),				KS_Down,
     KC(0x1c),				KS_Right,
-    KC(0x1d), KS_Cmd_Debugger,		KS_Escape,
+    KC(0x1d),				KS_Escape,
     KC(0x1e),				KS_1,		KS_exclam,
     KC(0x1f),				KS_2,		KS_at,
     KC(0x20),				KS_3,		KS_numbersign,
@@ -320,8 +321,8 @@ const keysym_t zskbd_keydesc_us[] = {
     KC(0x46),				KS_KP_Prior,	KS_KP_9,
     KC(0x47),				KS_KP_Subtract,
     KC(0x4a),				KS_End,
-    KC(0x4c),	 KS_Cmd1,		KS_Control_L,
-    KC(0x4d),				KS_a,
+    KC(0x4c),				KS_Control_L,
+    KC(0x4d), KS_Cmd_Debugger,		KS_a,
     KC(0x4e),				KS_s,
     KC(0x4f),				KS_d,
     KC(0x50),				KS_f,
@@ -553,6 +554,11 @@ zskbd_attach(parent, self, aux)
 #define	SKBD_RSP_IDLE		0x7f	/* no keys down */
 #define	SKBD_RSP_LAYOUT		0xfe	/* layout follows */
 #define	SKBD_RSP_RESET		0xff	/* reset status follows */
+
+#define	SKBD_LED_NUMLOCK	0x01
+#define	SKBD_LED_COMPOSE	0x02
+#define	SKBD_LED_SCROLLLOCK	0x04
+#define	SKBD_LED_CAPSLOCK	0x08
 
 #define	SKBD_STATE_RESET	0
 #define	SKBD_STATE_LAYOUT	1
@@ -1129,9 +1135,9 @@ zs_hwiflow(zst)
  ****************************************************************/
 
 #define	integrate
-integrate void zskbd_rxsoft __P((struct zskbd_softc *, struct tty *));
+integrate void zskbd_rxsoft __P((struct zskbd_softc *));
 integrate void zskbd_txsoft __P((struct zskbd_softc *, struct tty *));
-integrate void zskbd_stsoft __P((struct zskbd_softc *, struct tty *));
+integrate void zskbd_stsoft __P((struct zskbd_softc *));
 /*
  * receiver ready interrupt.
  * called at splzs
@@ -1313,9 +1319,8 @@ zskbd_diag(arg)
 }
 
 integrate void
-zskbd_rxsoft(zst, tp)
+zskbd_rxsoft(zst)
 	struct zskbd_softc *zst;
-	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char *get, *end;
@@ -1404,9 +1409,8 @@ zskbd_txsoft(zst, tp)
 }
 
 integrate void
-zskbd_stsoft(zst, tp)
+zskbd_stsoft(zst)
 	struct zskbd_softc *zst;
-	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char rr0, delta;
@@ -1418,21 +1422,12 @@ zskbd_stsoft(zst, tp)
 	cs->cs_rr0_delta = 0;
 	splx(s);
 
-	if (ISSET(delta, cs->cs_rr0_dcd)) {
-		/*
-		 * Inform the tty layer that carrier detect changed.
-		 */
-		(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
-	}
-
 	if (ISSET(delta, cs->cs_rr0_cts)) {
 		/* Block or unblock output according to flow control. */
-		if (ISSET(rr0, cs->cs_rr0_cts)) {
+		if (ISSET(rr0, cs->cs_rr0_cts))
 			zst->zst_tx_stopped = 0;
-			(*linesw[tp->t_line].l_start)(tp);
-		} else {
+		else
 			zst->zst_tx_stopped = 1;
-		}
 	}
 }
 
@@ -1460,12 +1455,12 @@ zskbd_softint(cs)
 
 	if (zst->zst_rx_ready) {
 		zst->zst_rx_ready = 0;
-		zskbd_rxsoft(zst, tp);
+		zskbd_rxsoft(zst);
 	}
 
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
-		zskbd_stsoft(zst, tp);
+		zskbd_stsoft(zst);
 	}
 
 	if (zst->zst_tx_done) {
@@ -1492,13 +1487,23 @@ zskbd_enable(v, on)
 }
 
 void
-zskbd_set_leds(v, on)
+zskbd_set_leds(v, wled)
 	void *v;
-	int on;
+	int wled;
 {
 	struct zskbd_softc *zst = v;
+	u_int8_t sled = 0;
 
-	zst->zst_leds = on;
+	zst->zst_leds = wled;
+
+	if (wled & WSKBD_LED_CAPS)
+		sled |= SKBD_LED_CAPSLOCK;
+	if (wled & WSKBD_LED_NUM)
+		sled |= SKBD_LED_NUMLOCK;
+	if (wled & WSKBD_LED_SCROLL)
+		sled |= SKBD_LED_SCROLLLOCK;
+	if (wled & WSKBD_LED_COMPOSE)
+		sled |= SKBD_LED_COMPOSE;
 }
 
 int
