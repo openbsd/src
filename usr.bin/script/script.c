@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.20 2004/09/14 23:53:07 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.21 2004/10/10 03:59:04 mickey Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -56,16 +56,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.20 2004/09/14 23:53:07 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: script.c,v 1.21 2004/10/10 03:59:04 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,6 +111,7 @@ void handlesigwinch(int);
 int
 main(int argc, char *argv[])
 {
+	extern char *__progname;
 	struct sigaction sa;
 	struct termios rtt;
 	struct winsize win;
@@ -125,7 +126,7 @@ main(int argc, char *argv[])
 			aflg = 1;
 			break;
 		default:
-			(void)fprintf(stderr, "usage: script [-a] [file]\n");
+			fprintf(stderr, "usage: %s [-a] [file]\n", __progname);
 			exit(1);
 		}
 	argc -= optind;
@@ -161,13 +162,13 @@ main(int argc, char *argv[])
 
 	child = fork();
 	if (child < 0) {
-		perror("fork");
+		warn("fork");
 		fail();
 	}
 	if (child == 0) {
 		subchild = child = fork();
 		if (child < 0) {
-			perror("fork");
+			warn("fork");
 			fail();
 		}
 		if (child)
@@ -299,7 +300,7 @@ doshell(void)
 	(void)fclose(fscript);
 	login_tty(slave);
 	execl(shell, shell, "-i", (char *)NULL);
-	perror(shell);
+	warn("%s", shell);
 	fail();
 }
 
