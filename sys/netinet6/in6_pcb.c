@@ -1,4 +1,33 @@
-/*	$OpenBSD: in6_pcb.c,v 1.15 2000/06/13 10:12:01 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.16 2000/06/18 17:27:05 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
 %%% copyright-nrl-95
@@ -264,112 +293,123 @@ in6_pcbbind(inp, nam)
 	}
     }
 
-  if (lport == 0) {
-    /* This code block was derived from OpenBSD */
-    uint16_t first, last, old = 0;
-    int count;
-    int loopcount = 0;
-    struct in_addr fa, la;
-    u_int16_t *lastport;
+	if (lport == 0) {
+		error = in6_pcbsetport(&inp->inp_laddr6, inp);
+		if (error != 0)
+			return error;
+	} else
+		inp->inp_lport = lport;
 
-    lastport = &inp->inp_table->inpt_lastport;
+	in_pcbrehash(inp);
 
-    if (inp->inp_flags & INP_IPV6_MAPPED) {
-      la.s_addr = inp->inp_laddr6.s6_addr32[3];
-      fa.s_addr = 0;
-      wild &= ~INPLOOKUP_IPV6;
-    };
+	return 0;
+}
 
-    if (inp->inp_flags & INP_HIGHPORT) {
-      first = ipport_hifirstauto;	/* sysctl */
-      last = ipport_hilastauto;
-    } else if (inp->inp_flags & INP_LOWPORT) {
-      if ((error = suser(p->p_ucred, &p->p_acflag)))
-	return (EACCES);
+int
+in6_pcbsetport(laddr, inp)
+	struct in6_addr *laddr;
+	struct inpcb *inp;
+{
+	struct socket *so = inp->inp_socket;
+	struct inpcbtable *table = inp->inp_table;
+	u_int16_t first, last, old = 0;
+	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
+	u_int16_t lport = 0;
+	int count;
+	int loopcount = 0;
+	int wild = INPLOOKUP_IPV6;
+	struct proc *p = curproc;		/* XXX */
+	int error;
 
-      first = IPPORT_RESERVED-1; /* 1023 */
-      last = 600;		   /* not IPPORT_RESERVED/2 */
-    } else {
-      first = ipport_firstauto;	/* sysctl */
-      last  = ipport_lastauto;
-    }
+	/* XXX we no longer support IPv4 mapped address, so no tweaks here */
 
-    /*
-     * Simple check to ensure all ports are not used up causing
-     * a deadlock here.
-     *
-     * We split the two cases (up and down) so that the direction
-     * is not being tested on each round of the loop.
-     */
+	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
+	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
+	     (so->so_options & SO_ACCEPTCONN) == 0))
+		wild |= INPLOOKUP_WILDCARD;
+
+	if (inp->inp_flags & INP_HIGHPORT) {
+		first = ipport_hifirstauto;	/* sysctl */
+		last = ipport_hilastauto;
+	} else if (inp->inp_flags & INP_LOWPORT) {
+		if ((error = suser(p->p_ucred, &p->p_acflag)))
+			return (EACCES);
+		first = IPPORT_RESERVED-1; /* 1023 */
+		last = 600;		   /* not IPPORT_RESERVED/2 */
+	} else {
+		first = ipport_firstauto;	/* sysctl */
+		last  = ipport_lastauto;
+	}
+
+	/*
+	 * Simple check to ensure all ports are not used up causing
+	 * a deadlock here.
+	 *
+	 * We split the two cases (up and down) so that the direction
+	 * is not being tested on each round of the loop.
+	 */
 
 portloop:
-    if (first > last) {
-      /*
-       * counting down
-       */
-      if (loopcount == 0) {	/* only do this once. */
-	old = first;
-	first -= (arc4random() % (first - last));
-      }
-      count = first - last;
-      *lastport = first;		/* restart each time */
-      
-      do {
-	if (count-- <= 0) {	/* completely used? */
-	  if (loopcount == 0) {
-	    last = old;
-	    loopcount++;
-	    goto portloop;
-	  }
-	  return (EADDRNOTAVAIL);
-	}
-	--*lastport;
-	if (*lastport > first || *lastport < last)
-	  *lastport = first;
-	lport = htons(*lastport);
-      } while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
-	       ((wild & INPLOOKUP_IPV6) ?
-		in_pcblookup(head, (struct in_addr *)&zeroin6_addr, 0,
-			(struct in_addr *)&inp->inp_laddr6, lport, wild) :
-		in_pcblookup(head, (struct in_addr *)&fa, 0,
-			(struct in_addr *)&la, lport, wild)));
-    } else {
-      /*
-       * counting up
-       */
-      if (loopcount == 0) {	/* only do this once. */
-	old = first;
-	first += (arc4random() % (last - first));
-      }
-      count = last - first;
-      *lastport = first;		/* restart each time */
-      
-      do {
-	if (count-- <= 0) {	/* completely used? */
-	  if (loopcount == 0) {
-	    first = old;
-	    loopcount++;
-	    goto portloop;
-	  }
-	  return (EADDRNOTAVAIL);
-	}
-	++*lastport;
-	if (*lastport < first || *lastport > last)
-	  *lastport = first;
-	lport = htons(*lastport);
-      } while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
-	       ((wild & INPLOOKUP_IPV6) ?
-		in_pcblookup(head, (struct in_addr *)&zeroin6_addr, 0,
-			(struct in_addr *)&inp->inp_laddr6, lport, wild) :
-		in_pcblookup(head, (struct in_addr *)&fa, 0,
-			(struct in_addr *)&la, lport, wild)));
-    }
-  }
+	if (first > last) {
+		/*
+		 * counting down
+		 */
+		if (loopcount == 0) {	/* only do this once. */
+			old = first;
+			first -= (arc4random() % (first - last));
+		}
+		count = first - last;
+		*lastport = first;		/* restart each time */
 
-  inp->inp_lport = lport;
+		do {
+			if (count-- <= 0) {	/* completely used? */
+				if (loopcount == 0) {
+					last = old;
+					loopcount++;
+					goto portloop;
+				}
+				return (EADDRNOTAVAIL);
+			}
+			--*lastport;
+			if (*lastport > first || *lastport < last)
+				*lastport = first;
+			lport = htons(*lastport);
+		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
+		    in_pcblookup(table, &zeroin6_addr, 0,
+		    &inp->inp_laddr6, lport, wild));
+	} else {
+		/*
+		 * counting up
+		 */
+		if (loopcount == 0) {	/* only do this once. */
+			old = first;
+			first += (arc4random() % (last - first));
+		}
+		count = last - first;
+		*lastport = first;		/* restart each time */
 
-  /* XXX hash */
-  return 0;
+		do {
+			if (count-- <= 0) {	/* completely used? */
+				if (loopcount == 0) {
+					first = old;
+					loopcount++;
+					goto portloop;
+				}
+				return (EADDRNOTAVAIL);
+			}
+			++*lastport;
+			if (*lastport < first || *lastport > last)
+				*lastport = first;
+			lport = htons(*lastport);
+		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
+		    in_pcblookup(table, &zeroin6_addr, 0,
+		    &inp->inp_laddr6, lport, wild));
+	}
+
+	inp->inp_lport = lport;
+	in_pcbrehash(inp);
+
+	return 0;
 }
 
 /*----------------------------------------------------------------------
@@ -421,7 +461,7 @@ in6_pcbconnect(inp, nam)
 
 	/* KAME hack: embed scopeid */
 	if (in6_embedscope(&sin6->sin6_addr, sin6, inp, &ifp) != 0)
-	  return EINVAL;
+		return EINVAL;
 	/* this must be cleared for ifa_ifwithaddr() */
 	sin6->sin6_scope_id = 0;
 
@@ -541,12 +581,13 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
   
   /*
    * Redirects go to all references to the destination,
-   * and use in6_rtchange to invalidate the route cache.
-   * Dead host indications: also use in6_rtchange to invalidate
+   * and use in_rtchange to invalidate the route cache.
+   * Dead host indications: also use in_rtchange to invalidate
    * the cache, and deliver the error to all the sockets.
    * Otherwise, if we have knowledge of the local port and address,
    * deliver only to that socket.
    */
+
   if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD)
     {
       fport = 0;
@@ -561,44 +602,43 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
        inp != (struct inpcb *)&head->inpt_queue; inp = ninp)
     {
       ninp = inp->inp_queue.cqe_next;
+
 #ifdef INET6
-      if (!(inp->inp_flags & INP_IPV6))
-	  continue;
+      if ((inp->inp_flags & INP_IPV6) == 0)
+	continue;
 #endif
-      if (do_rtchange)
-	{
-	  /*
-	   * Since a non-connected PCB might have a cached route,
-	   * we always call in_rtchange without matching
-	   * the PCB to the src/dst pair.
-	   *
-	   * XXX: we assume in_rtchange does not free the PCB.
-	   */
-	  if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr, faddr))
+
+      if (do_rtchange) {
+	/*
+	 * Since a non-connected PCB might have a cached route,
+	 * we always call in_rtchange without matching
+	 * the PCB to the src/dst pair.
+	 *
+	 * XXX: we assume in_rtchange does not free the PCB.
+	 */
+	if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr, faddr)) {
 	    {
 	      in_rtchange(inp, errno);
 	    }
 
 	  if (notify == in_rtchange)
-	    {
-	      continue;		/* there's nothing to do any more */
-	    }
+		  continue;		/* there's nothing to do any more */
 	}
+      }
+
       if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) ||
 	  !inp->inp_socket ||
 	  (lport && inp->inp_lport != lport) ||
 	  (!IN6_IS_ADDR_UNSPECIFIED(&laddr) && !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &laddr)) ||
 	  (fport && inp->inp_fport != fport))
 	{
+	  inp = inp->inp_queue.cqe_next;
 	  continue;
 	}
-
       nmatch++;
 
       if (notify)
-	{
-	  (*notify)(inp, errno);
-	}
+	(*notify)(inp, errno);
     }
    return 0;
 }
@@ -623,6 +663,9 @@ in6_setsockaddr(inp, nam)
   sin6->sin6_len = sizeof(struct sockaddr_in6);
   sin6->sin6_port = inp->inp_lport;
   sin6->sin6_addr = inp->inp_laddr6;
+  /* KAME hack: recover scopeid */
+  (void)in6_recoverscope(sin6, &inp->inp_laddr6, NULL);
+
   return 0;
 }
 
@@ -647,5 +690,6 @@ in6_setpeeraddr(inp, nam)
   sin6->sin6_port = inp->inp_fport;
   sin6->sin6_addr = inp->inp_faddr6;
   sin6->sin6_flowinfo = inp->inp_fflowinfo;
+
   return 0;
 }
