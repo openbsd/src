@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendev.3,v 1.11 2002/02/25 22:19:45 pvalchev Exp $
+.\"	$OpenBSD: opendev.3,v 1.12 2002/02/26 07:28:51 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000, Todd C. Miller.  All rights reserved.
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -85,8 +85,8 @@ The
 return value and errors are the same as the return value and errors of
 .Xr open 2 .
 .Sh WARNINGS
-realpath points to internal static storage space that will be
-overwritten by subsequent calls.
+If realpath is not NULL, on return it will point to internal
+static storage space that will be overwritten by subsequent calls.
 .Sh SEE ALSO
 .Xr open 2 ,
 .Xr getrawpartition 3
