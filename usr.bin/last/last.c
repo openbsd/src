@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.16 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: last.c,v 1.17 2001/11/05 09:42:13 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.16 2001/07/18 17:17:39 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.17 2001/11/05 09:42:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -651,6 +651,7 @@ onintr(signo)
 {
 	char *ct;
 
+	/* XXX signal race */
 	ct = ctime(&buf[0].ut_time);
 	printf("\ninterrupted %10.10s %8.8s \n", ct, ct + 11);
 	if (signo == SIGINT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.17 2001/05/16 03:04:57 mickey Exp $	*/
+/*	$OpenBSD: pax.c,v 1.18 2001/11/05 09:38:52 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.17 2001/05/16 03:04:57 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.18 2001/11/05 09:38:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -323,6 +323,8 @@ sig_cleanup(which_sig)
 	int which_sig;
 #endif
 {
+	/* XXX signal races */
+
 	/*
 	 * restore modes and times for any dirs we may have created
 	 * or any dirs we may have read. Set vflag and vfpart so the user
