@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_output.c,v 1.4 2002/08/08 18:26:37 todd Exp $	*/
+/*	$OpenBSD: pk_output.c,v 1.5 2002/08/08 19:18:12 provos Exp $	*/
 /*	$NetBSD: pk_output.c,v 1.7 1996/02/13 22:05:30 christos Exp $	*/
 
 /*
@@ -212,7 +212,8 @@ nextpk(lcp)
 			return (NULL);
 
 		sb->sb_mb = m->m_nextpkt;
-		m->m_act = 0;
+		SB_EMPTY_FIXUP(sb);
+		m->m_nextpkt = 0;
 		for (n = m; n; n = n->m_next)
 			sbfree(sb, n);
 	}
