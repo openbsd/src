@@ -109,8 +109,7 @@ void add_password(char *user, FILE *f) {
             unlink(tn);
         exit(1);
     }
-    (void)srand((int)time((time_t *)NULL));
-    to64(&salt[0],rand(),2);
+    to64(&salt[0],arc4random(),2);
     cpw = crypt(pw,salt);
     free(pw);
     fprintf(f,"%s:%s\n",user,cpw);

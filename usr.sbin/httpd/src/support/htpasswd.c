@@ -214,8 +214,7 @@ static int mkrecord(char *user, char *record, size_t rlen, char *passwd,
 	break;
 
     case ALG_APMD5: 
-        (void) srand((int) time((time_t *) NULL));
-        ap_to64(&salt[0], rand(), 8);
+        ap_to64(&salt[0], arc4random(), 8);
         salt[8] = '\0';
 
 	ap_MD5Encode((const unsigned char *)pw, (const unsigned char *)salt,
@@ -229,8 +228,7 @@ static int mkrecord(char *user, char *record, size_t rlen, char *passwd,
 
     case ALG_CRYPT:
     default:
-        (void) srand((int) time((time_t *) NULL));
-        ap_to64(&salt[0], rand(), 8);
+        ap_to64(&salt[0], arc4random(), 8);
         salt[8] = '\0';
 
 	ap_cpystrn(cpw, (char *)crypt(pw, salt), sizeof(cpw) - 1);
