@@ -1,5 +1,5 @@
-/*	$OpenBSD: kerberos.c,v 1.1 1998/03/12 04:48:52 art Exp $	*/
-/* $Id: kerberos.c,v 1.1 1998/03/12 04:48:52 art Exp $ */
+/*	$OpenBSD: kerberos.c,v 1.2 2000/02/25 16:43:21 hin Exp $	*/
+/* $Id: kerberos.c,v 1.2 2000/02/25 16:43:21 hin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -609,16 +609,26 @@ pack_cred(CREDENTIALS *cred, unsigned char *buf)
 {
     unsigned char *p = buf;
     
-    p += krb_put_nir(cred->service, cred->instance, cred->realm, p);
+    memcpy (p, cred->service, ANAME_SZ);
+    p += ANAME_SZ;
+    memcpy (p, cred->instance, INST_SZ);
+    p += INST_SZ;
+    memcpy (p, cred->realm, REALM_SZ);
+    p += REALM_SZ;
     memcpy(p, cred->session, 8);
     p += 8;
     *p++ = cred->lifetime;
     *p++ = cred->kvno;
-    p += krb_put_int(cred->ticket_st.length, p, 4);
+    p += krb_put_int(cred->ticket_st.length, p, 4, 4);
     memcpy(p, cred->ticket_st.dat, cred->ticket_st.length);
     p += cred->ticket_st.length;
-    p += krb_put_int(cred->issue_date, p, 4);
-    p += krb_put_nir(cred->pname, cred->pinst, NULL, p);
+    p += krb_put_int(cred->issue_date, p, 4, 4);
+    strncpy (cred->pname, p, ANAME_SZ);
+    cred->pname[ANAME_SZ - 1] = '\0';
+    p += ANAME_SZ;
+    strncpy (cred->pinst, p, INST_SZ);
+    cred->pinst[INST_SZ - 1] = '\0';
+    p += INST_SZ;
     return p - buf;
 }
 
@@ -627,7 +637,16 @@ unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
 {
     unsigned char *p = buf;
 
-    p += krb_get_nir(p, cred->service, cred->instance, cred->realm);
+    strncpy (cred->service, p, ANAME_SZ);
+    cred->service[ANAME_SZ - 1] = '\0';
+    p += ANAME_SZ;
+    strncpy (cred->instance, p, INST_SZ);
+    cred->instance[INST_SZ - 1] = '\0';
+    p += INST_SZ;
+    strncpy (cred->realm, p, REALM_SZ);
+    cred->realm[REALM_SZ - 1] = '\0';
+    p += REALM_SZ;
+
     memcpy(cred->session, p, 8);
     p += 8;
     cred->lifetime = *p++;
