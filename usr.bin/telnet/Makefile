@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/03/27 19:32:55 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/09/05 09:10:00 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/28 21:03:49 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 PROG=	telnet
 
-CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
+CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -DSKEY -Dunix
 CFLAGS+=-DENV_HACK
 CFLAGS+=-I${.CURDIR}/../../lib
 LDADD+=	-ltermcap -ltelnet
