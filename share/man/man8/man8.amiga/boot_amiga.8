@@ -1,5 +1,5 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.12 2000/03/18 22:56:03 aaron Exp $
-.\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
+.\"	$OpenBSD: boot_amiga.8,v 1.1 2000/11/09 03:57:33 deraadt Exp $
+.\"	$NetBSD: boot_Amiga.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd July 1, 1995
-.Dt BOOT_MAC68K 8 mac68k
+.Dt BOOT_AMIGA 8 Amiga
 .Os
 .Sh NAME
 .Nm boot
@@ -50,7 +50,7 @@ system bootstrapping procedures
 .Ss Power fail and crash recovery
 Normally, the
 .Ox
-kernel on the mac68k architecture is booted from the native operating
+kernel on the Amiga architecture is booted from the native operating
 system by means of an application program.
 When the kernel takes over,
 it initializes itself and proceeds to boot the system.
@@ -72,23 +72,6 @@ during the next boot cycle).
 After the dump completes (successful
 or not), the system will attempt a reboot.
 .Pp
-On most mac68k machines with
-.Dq soft-power
-after the IIcx, the power
-switch can be physically rotated and locked in the
-.Dq on
-position.
-The native OS can be configured to automatically start the
-.Ox
-boot program.
-Additionally, the
-.Ox
-boot program can be configured to boot
-.Ox
-without intervention.
-When a system is so configured, it can crash
-or lose power and reboot back to a fully multi-user state without
-any intervention.
 .Pp
 .Ss The boot application
 The boot application runs in the native OS on the system.

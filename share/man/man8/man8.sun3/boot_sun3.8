@@ -1,5 +1,5 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.15 2000/04/15 02:15:17 aaron Exp $
-.\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
+.\"	$OpenBSD: boot_sun3.8,v 1.1 2000/11/09 03:57:35 deraadt Exp $
+.\"	$NetBSD: boot_sun3.8,v 1.1 1995/08/08 20:46:20 gwr Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,26 +35,25 @@
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd April 19, 1994
-.Dt BOOT_SPARC 8 sparc
+.Dt BOOT_SUN3 8 sun3
 .Os
 .Sh NAME
 .Nm boot
 .Nd
-.Tn sparc-specific
+.Tn sun3-specific
 system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed
-(as described in
-.Xr fsck 8 ) ,
+as described in
+.Xr fsck 8 .
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-System boot blocks are installed near the start of the boot disk
-using the procedure described in
-.Xr installboot 8 .
-The boot program attempts to load
+A disk-boot program
+.Pq Pa /usr/mdec/ufsboot
+will attempt to load
 .Pa bsd
 from partition
 .Dq a
@@ -62,6 +61,12 @@ of the boot device,
 which must currently be an
 .Dq sd
 disk.
+Alternatively, the network boot program
+.Pq Pa /usr/mdec/netboot
+will load
+.Pa bsd
+from the NFS root as determined by the procedure described in
+.Xr diskless 8 .
 .Pp
 The
 .Fl s
@@ -70,54 +75,14 @@ The
 .Fl a
 flag instructs the system to prompt for the location of the root filesystem
 and the primary swap partition.
+The
+.Fl d
+flag to the bootloader will bring the system up in debug mode.
+Here it waits for a kernel debugger connect; see
+.Xr ddb 8 .
 Other flags are currently ignored.
 .Pp
-The SPARC boot ROM comes in two flavours: an
-.Dq old-style
-ROM is used in
-sun4 machines, while a
-.Dq new-style
-ROM can be found on sun4c and sun4m models.
-The
-.Dq new-style
-SPARC boot ROM is a full-featured Forth system with emacs
-key bindings.
-It can be put in
-.Dq old-style
-user-interface compatibility
-mode (in which case it shows a simple
-.Dq \&>
-prompt), but this is essentially
-useless.
-However, by default the ROM runs in old-mode; to enter new-mode type
-.Dq n .
-The ROM then shows a Forth-style
-.Dq ok
-prompt.
-It is recommended to have the ROM always start in its native
-.Dq new-style
-mode.
-Utter the following
-incantation in new-mode to force the ROM to always start in new-mode:
-.Pp
-.Em \	ok
-setenv sunmon-compat? false
-.Pp
-The ROM will normally load the kernel from
-.Dq sd(0,0,0)bsd .
-To change the
-default so that
-.Ox
-will be loaded, type the following:
-.Pp
-.Em \	ok
-setenv boot-from sd(0,0,0)bsd
-.Pp
-If the
-.Xr sysctl 8
-variable
-.Ev ddb.console
-is enabled, at any time you can break back to the ROM by pressing the
+At any time you can break back to the ROM by pressing the
 .Dq L1
 and
 .Dq a
@@ -126,13 +91,20 @@ achieved by sending a
 .Dq break ) .
 If you do this accidentally you can continue whatever was in progress
 by typing
-.Dq go .
+.Dq c
+followed by the return key.
 .Sh FILES
-.Bl -tag -width /bsdxx -compact
+.Bl -tag -width /usr/mdec/installboot -compact
 .It Pa /bsd
 system code
-.It Pa /boot
-system bootstrap
+.It Pa /usr/mdec/bootxx
+first-level boot block for disks
+.It Pa /usr/mdec/netboot
+boot program for NFS (diskless) boot
+.It Pa /usr/mdec/ufsboot
+second-level boot program for UFS disks
+.It Pa /usr/mdec/installboot
+program to install bootxx on a disk
 .El
 .Sh SEE ALSO
 .Xr crash 8 ,
@@ -140,7 +112,6 @@ system bootstrap
 .Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
-.Xr installboot 8 ,
 .Xr rc 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8
