@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.37 1999/02/25 18:43:42 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.38 1999/02/25 20:14:40 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -374,22 +374,53 @@ esp_new_zeroize(struct tdb *tdbp)
 	tdbp->tdb_encalgxform->type == SADB_EALG_X_SKIPJACK)
       for (k = 0; k < 10; k++)
 	if (((u_int8_t **)tdbp->tdb_key)[k] != NULL)
-          FREE(((u_int8_t **)tdbp->tdb_key)[k], M_XDATA);
+	{
+	    bzero(((u_int8_t **)tdbp->tdb_key)[k], 0x100);
+            FREE(((u_int8_t **)tdbp->tdb_key)[k], M_XDATA);
+	}
 
     if (tdbp->tdb_key)
     {
+	if (tdbp->tdb_encalgxform)
+	  switch (tdbp->tdb_encalgxform->type)
+	  {
+	      case SADB_EALG_DESCBC:
+		  k = 128;
+		  break;
+
+	      case SADB_EALG_3DESCBC:
+		  k = 384;
+		  break;
+
+	      case SADB_EALG_X_BLF:
+		  k = sizeof(blf_ctx);
+		  break;
+
+	      case SADB_EALG_X_CAST:
+		  k = sizeof(cast_key);
+		  break;
+
+	      default:
+		  k = 0;
+	  }
+
+	bzero(tdbp->tdb_key, k);
 	FREE(tdbp->tdb_key, M_XDATA);
 	tdbp->tdb_key = NULL;
     }
 
     if (tdbp->tdb_ictx)
     {
+	if (tdbp->tdb_authalgxform)
+	  bzero(tdbp->tdb_ictx, tdbp->tdb_authalgxform->ctxsize);
 	FREE(tdbp->tdb_ictx, M_XDATA);
 	tdbp->tdb_ictx = NULL;
     }
 
     if (tdbp->tdb_octx)
     {
+	if (tdbp->tdb_authalgxform)
+	  bzero(tdbp->tdb_octx, tdbp->tdb_authalgxform->ctxsize);
 	FREE(tdbp->tdb_octx, M_XDATA);
 	tdbp->tdb_octx = NULL;
     }

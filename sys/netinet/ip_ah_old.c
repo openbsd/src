@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.20 1999/02/24 23:45:48 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.21 1999/02/25 20:14:38 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -159,12 +159,16 @@ ah_old_zeroize(struct tdb *tdbp)
 {
     if (tdbp->tdb_amxkey)
     {
+	bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 	FREE(tdbp->tdb_amxkey, M_XDATA);
 	tdbp->tdb_amxkey = NULL;
     }
     
     if (tdbp->tdb_ictx)
     {
+	if (tdbp->tdb_authalgxform)
+	  bzero(tdbp->tdb_ictx, tdbp->tdb_authalgxform->ctxsize);
+
     	FREE(tdbp->tdb_ictx, M_XDATA);
 	tdbp->tdb_ictx = NULL;
     }

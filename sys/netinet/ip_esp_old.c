@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.29 1999/02/24 23:45:50 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.30 1999/02/25 20:14:41 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -208,6 +208,18 @@ esp_old_zeroize(struct tdb *tdbp)
 {
     if (tdbp->tdb_key)
     {
+	if (tdbp->tdb_encalgxform)
+	  switch (tdbp->tdb_encalgxform->type)
+	  {
+	      case SADB_EALG_DESCBC:
+		  bzero(tdbp->tdb_key, 128);
+		  break;
+
+	      case SADB_EALG_3DESCBC:
+		  bzero(tdbp->tdb_key, 384);
+		  break;
+	  }
+
 	FREE(tdbp->tdb_key, M_XDATA);
 	tdbp->tdb_key = NULL;
     }

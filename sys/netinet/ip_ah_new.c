@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.23 1999/02/24 23:45:47 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.24 1999/02/25 20:14:36 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -181,12 +181,18 @@ ah_new_zeroize(struct tdb *tdbp)
 {
     if (tdbp->tdb_ictx)
     {
+	if (tdbp->tdb_authalgxform)
+	  bzero(tdbp->tdb_ictx, tdbp->tdb_authalgxform->ctxsize);
+
 	FREE(tdbp->tdb_ictx, M_XDATA);
 	tdbp->tdb_ictx = NULL;
     }
 
     if (tdbp->tdb_octx)
     {
+	if (tdbp->tdb_authalgxform)
+	  bzero(tdbp->tdb_octx, tdbp->tdb_authalgxform->ctxsize);
+
 	FREE(tdbp->tdb_octx, M_XDATA);
 	tdbp->tdb_octx = NULL;
     }
