@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.5 1996/12/24 02:40:53 deraadt Exp $
+.\"	$OpenBSD: restore.8,v 1.6 1997/04/16 04:07:39 millert Exp $
 .\"	$NetBSD: restore.8,v 1.11 1996/02/02 22:29:33 phil Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -41,32 +41,32 @@
 .Nm restore
 .Nd "restore files or file systems from backups made with dump"
 .Sh SYNOPSIS
-.Nm restore
+.Nm
 .Fl i
 .Op Fl chmvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm restore
+.Nm
 .Fl R
 .Op Fl cvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm restore
+.Nm
 .Fl r
 .Op Fl cvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm restore
+.Nm
 .Fl t
 .Op Fl chvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op file ...
-.Nm restore
+.Nm
 .Fl x
 .Op Fl chmvy
 .Op Fl b Ar blocksize
@@ -81,7 +81,7 @@ option syntax is implemented for backward compatibility, but
 is not documented here.)
 .Sh DESCRIPTION
 The
-.Nm restore
+.Nm
 command performs the inverse function of
 .Xr dump 8 .
 A full backup of a file system may be restored and
@@ -107,7 +107,7 @@ Exactly one of the following flags is required:
 .It Fl i
 This mode allows interactive restoration of files from a dump.
 After reading in the directory information from the dump,
-.Nm restore
+.Nm
 provides a shell like interface that allows the user to move
 around the directory tree selecting files to be extracted.
 The available commands are given below;
@@ -171,7 +171,7 @@ When set, the verbose flag causes the
 .Ic ls
 command to list the inode numbers of all entries.
 It also causes
-.Nm restore
+.Nm
 to print out information about each file as it is extracted.
 .El
 .It Fl R
@@ -208,7 +208,7 @@ restore rf /dev/rst8
 .Ed
 .Pp
 Note that 
-.Nm restore
+.Nm
 leaves a file 
 .Pa restoresymtable
 in the root directory to pass information between incremental
@@ -265,11 +265,11 @@ The number of kilobytes per dump record.
 If the
 .Fl b
 option is not specified,
-.Nm restore
+.Nm
 tries to determine the block size dynamically.
 .It Fl c
 Normally,
-.Nm restore
+.Nm
 will try to determine dynamically whether the dump was made from an
 old (pre-4.4) or new format file sytem.  The
 .Fl c
@@ -281,7 +281,7 @@ Read the backup from
 .Ar file
 may be a special device file
 like
-.Pa /dev/rmt12
+.Pa /dev/rst0
 (a tape drive),
 .Pa /dev/rsd1c
 (a disk drive),
@@ -293,7 +293,7 @@ If the name of the file is of the form
 .Dq host:file ,
 or
 .Dq user@host:file ,
-.Nm restore
+.Nm
 reads from the named file on the remote host using
 .Xr rmt 8 .
 .Pp
@@ -314,7 +314,7 @@ on a multi-file tape.
 File numbering starts at 1.
 .It Fl v
 Normally
-.Nm restore
+.Nm
 does its work silently.
 The
 .Fl v
@@ -331,18 +331,18 @@ If
 .Fl y
 has been specified, or the user responds
 .Ql y ,
-.Nm restore
+.Nm
 will attempt to continue the restore.
 .Pp
 If a backup was made using more than one tape volume,
-.Nm restore
+.Nm
 will notify the user when it is time to mount the next volume.
 If the
 .Fl x
 or
 .Fl i
 flag has been specified,
-.Nm restore
+.Nm
 will also ask which volume the user wishes to mount.
 The fastest way to extract a few files is to
 start with the last volume, and work towards the first volume.
@@ -390,13 +390,13 @@ though files may not be found on the tape.
 .Pp
 .It resync restore, skipped <num> blocks
 After a dump read error, 
-.Nm restore
+.Nm
 may have to resynchronize itself.
 This message lists the number of blocks that were skipped over.
 .El
 .Sh FILES
 .Bl -tag -width "./restoresymtable" -compact
-.It Pa /dev/rmt8
+.It Pa /dev/rst0
 the default tape drive
 .It Pa /dev/rst*
 Raw SCSI tape interface
@@ -418,11 +418,13 @@ can get confused when doing incremental restores from
 dumps that were made on active file systems.
 .Pp
 A level zero dump must be done after a full restore.
-Because restore runs in user code,
+Because
+.Nm
+runs in user code,
 it has no control over inode allocation;
 thus a full dump must be done to get a new set of directories
 reflecting the new inode numbering,
-even though the contents of the files is unchanged.
+even though the content of the files is unchanged.
 .Pp
 The temporary files
 .Pa /tmp/rstdir*
@@ -447,6 +449,6 @@ have two different dumps started at the same time, and separate
 operations shouldn't conflict with each other.
 .Sh HISTORY
 The
-.Nm restore
+.Nm
 command appeared in
 .Bx 4.2 .

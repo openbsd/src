@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.7 1997/01/27 09:33:08 downsj Exp $	*/
+/*	$OpenBSD: tape.c,v 1.8 1997/04/16 04:07:40 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $";
 #include <protocols/dumprestore.h>
 
 #include <errno.h>
+#include <paths.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,7 +66,6 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $";
 
 #include "restore.h"
 #include "extern.h"
-#include "pathnames.h"
 
 static long	fssize = MAXBSIZE;
 static int	mt = -1;
