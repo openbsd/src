@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.5 1997/04/23 08:08:28 grr Exp $	*/
+/*	$OpenBSD: pr.c,v 1.6 1999/05/23 17:37:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.5 1997/04/23 08:08:28 grr Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.6 1999/05/23 17:37:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1078,7 +1078,7 @@ inln(inf, buf, lim, cnt, cps, trnc, mor)
 {
     register int col;
     register int gap = ingap;
-    register int ch = EOF;
+    register int ch = -1;
     register char *ptbuf;
     register int chk = (int)inchar;
 
@@ -1757,7 +1757,7 @@ setup(argc, argv)
 	}
     } else
 	err = stderr;
-    while ((c = egetopt(argc, argv, "#adfFmrte?h:i?l:n?o:s?w:")) != EOF) {
+    while ((c = egetopt(argc, argv, "#adfFmrte?h:i?l:n?o:s?w:")) != -1) {
 	switch (c) {
 	case '+':
 	    if ((pgnm = atoi(eoptarg)) < 1) {

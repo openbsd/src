@@ -1,4 +1,4 @@
-/*	$OpenBSD: egetopt.c,v 1.2 1996/06/26 05:37:52 deraadt Exp $	*/
+/*	$OpenBSD: egetopt.c,v 1.3 1999/05/23 17:37:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: egetopt.c,v 1.2 1996/06/26 05:37:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: egetopt.c,v 1.3 1999/05/23 17:37:41 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -93,7 +93,7 @@ egetopt(nargc, nargv, ostr)
 		if ((eoptind >= nargc) ||
 		    ((*(place = nargv[eoptind]) != '-') && (*place != '+'))) {
 			place = EMSG;
-			return (EOF);
+			return (-1);
 		}
 
 		delim = (int)*place;
@@ -103,7 +103,7 @@ egetopt(nargc, nargv, ostr)
 			 */
 			++eoptind;
 			place = EMSG;
-			return (EOF);
+			return (-1);
 		}
 	}
 
@@ -117,7 +117,7 @@ egetopt(nargc, nargv, ostr)
 		 * assume it means EOF when by itself.
 		 */
 		if ((eoptopt == (int)'-') && !*place)
-			return (EOF);
+			return (-1);
 		if (strchr(ostr, '#') && (isdigit(eoptopt) ||
 		    (((eoptopt == (int)'-') || (eoptopt == (int)'+')) &&
 		      isdigit(*place)))) {
