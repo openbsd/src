@@ -125,7 +125,7 @@
  * This needs to be declared statically so the signal handler can
  * access it.
  */
-static char *tempfilename;
+static char tempfilename[MAX_STRING_LEN];
 /*
  * If our platform knows about the tmpnam() external buffer size, create
  * a buffer to pass in.  This is needed in a threaded environment, or
@@ -285,7 +285,7 @@ static int usage(void)
 static void interrupted(void)
 {
     fprintf(stderr, "Interrupted.\n");
-    if (tempfilename != NULL) {
+    if (tempfilename[0] != '\0') {
 	unlink(tempfilename);
     }
     exit(ERR_INTERRUPTED);
@@ -377,8 +377,8 @@ int main(int argc, char *argv[])
     int noninteractive = 0;
     int i;
     int args_left = 2;
+    int tfd;
 
-    tempfilename = NULL;
     signal(SIGINT, (void (*)(int)) interrupted);
 
     /*
@@ -565,21 +565,12 @@ int main(int argc, char *argv[])
      * to add or update.  Let's do it..
      */
     errno = 0;
-    tempfilename = tmpnam(tname_buf);
-    if ((tempfilename == NULL) || (*tempfilename == '\0')) {
-	fprintf(stderr, "%s: unable to generate temporary filename\n",
-		argv[0]);
-	if (errno == 0) {
-	    errno = ENOENT;
-	}
-	perror("tmpnam");
-	exit(ERR_FILEPERM);
-    }
-    ftemp = fopen(tempfilename, "w+");
-    if (ftemp == NULL) {
+    strcpy(tempfilename, "/tmp/htpasswd-XXXXXX");
+    tfd = mkstemp(tempfilename);
+    if (tfd == -1 || (ftemp = fdopen(tfd, "w+")) == NULL) {
 	fprintf(stderr, "%s: unable to create temporary file '%s'\n", argv[0],
 		tempfilename);
-	perror("fopen");
+	perror("open");
 	exit(ERR_FILEPERM);
     }
     /*

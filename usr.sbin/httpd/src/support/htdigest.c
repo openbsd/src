@@ -94,7 +94,7 @@
 
 #define MAX_STRING_LEN 256
 
-char *tn;
+static char tn[MAX_STRING_LEN];
 
 
 static void getword(char *word, char *line, char stop)
@@ -157,7 +157,7 @@ static void add_password(char *user, char *realm, FILE *f)
     ap_getpass("Re-type new password: ", pwv, sizeof(pwv));
     if (strcmp(pwin, pwv) != 0) {
 	fprintf(stderr, "They don't match, sorry.\n");
-	if (tn) {
+	if (tn[0] != '\0') {
 	    unlink(tn);
 	}
 	exit(1);
@@ -188,7 +188,7 @@ static void usage(void)
 static void interrupted(void)
 {
     fprintf(stderr, "Interrupted.\n");
-    if (tn)
+    if (tn[0] != '\0')
 	unlink(tn);
     exit(1);
 }
@@ -216,8 +216,8 @@ int main(int argc, char *argv[])
     char x[MAX_STRING_LEN];
     char command[MAX_STRING_LEN];
     int found;
+    int tfd;
 
-    tn = NULL;
     signal(SIGINT, (void (*)(int)) interrupted);
     if (argc == 5) {
 	if (strcmp(argv[1], "-c"))
@@ -241,9 +241,10 @@ int main(int argc, char *argv[])
     else if (argc != 4)
 	usage();
 
-    tn = tmpnam(NULL);
-    if (!(tfp = fopen(tn, "w"))) {
-	fprintf(stderr, "Could not open temp file.\n");
+    strcpy(tn, "/tmp/htdigest-XXXXXX");
+    tfd = mkstemp(tn);
+    if (tfd == -1 || (tfp = fdopen(tfd, "w")) == NULL) {
+	fprintf(stderr, "Could not create temp file.\n");
 	exit(1);
     }
 
