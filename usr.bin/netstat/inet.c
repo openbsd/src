@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.72 2003/11/02 10:23:58 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.73 2003/11/07 23:38:48 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.72 2003/11/02 10:23:58 markus Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.73 2003/11/07 23:38:48 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -872,6 +872,7 @@ carp_stats(u_long off, char *name)
 
 	p(carps_ipackets, "\t%u packet%s received (IPv4)\n");
 	p(carps_ipackets6, "\t%u packet%s received (IPv6)\n");
+	p(carps_badif, "\t\t%u packet%s discarded for bad interface\n");
 	p(carps_hdrops, "\t\t%u packet%s shorter than header\n");
 	p(carps_badsum, "\t\t%u discarded for bad checksum%s\n");
 	p(carps_badver,	"\t\t%u discarded packet%s with a bad version\n");

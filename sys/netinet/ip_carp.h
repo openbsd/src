@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.2 2003/10/31 09:00:32 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.3 2003/11/07 23:38:48 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -65,6 +65,7 @@ struct carp_header {
 struct carpstats {
 	u_long	carps_ipackets;		/* total input packets, IPv4 */
 	u_long	carps_ipackets6;	/* total input packets, IPv6 */
+	u_long	carps_badif;		/* wrong interface */
 	u_long	carps_badttl;		/* TTL is not CARP_DFLTTL */
 	u_long	carps_hdrops;		/* packets shorter than header */
 	u_long	carps_badsum;		/* bad checksum */

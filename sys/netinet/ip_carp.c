@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.24 2003/11/07 22:04:46 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.25 2003/11/07 23:38:48 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -284,6 +284,15 @@ carp_input(struct mbuf *m, ...)
 		return;
 	}
 
+	/* check if received on a valid carp interface */
+	if (m->m_pkthdr.rcvif->if_carp == NULL) {
+		carpstats.carps_badif++;
+		CARP_LOG("packet received on non-carp interface: %s",
+		    m->m_pkthdr.rcvif->if_xname);
+		m_freem(m);
+		return;
+	}
+
 	/* verify that the IP TTL is 255.  */
 	if (ip->ip_ttl != CARP_DFLTTL) {
 		carpstats.carps_badttl++;
@@ -356,6 +365,15 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	carpstats.carps_ipackets6++;
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
+		m_freem(m);
+		return (IPPROTO_DONE);
+	}
+
+	/* check if received on a valid carp interface */
+	if (m->m_pkthdr.rcvif->if_carp == NULL) {
+		carpstats.carps_badif++;
+		CARP_LOG("packet received on non-carp interface: %s",
+		    m->m_pkthdr.rcvif->if_xname);
 		m_freem(m);
 		return (IPPROTO_DONE);
 	}
