@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.4 2002/07/13 22:48:03 mickey Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.5 2003/01/05 01:24:53 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -370,7 +370,7 @@ writeEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data )
  * and so do newer Bt878 based cards.
  */
 int
-readEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data )
+readEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data)
 {
 	int	x;
 	int	addr;
@@ -476,9 +476,9 @@ static int locate_tuner_address( bktr_ptr_t bktr) {
  * range 0xa0 to 0xae.
  */
 static int locate_eeprom_address( bktr_ptr_t bktr) {
-  if (i2cRead( bktr, 0xa0) != ABSENT) return 0xa0;
-  if (i2cRead( bktr, 0xac) != ABSENT) return 0xac;
-  if (i2cRead( bktr, 0xae) != ABSENT) return 0xae;
+  if (i2cRead(bktr, 0xa0) != ABSENT) return 0xa0;
+  if (i2cRead(bktr, 0xac) != ABSENT) return 0xac;
+  if (i2cRead(bktr, 0xae) != ABSENT) return 0xae;
   return -1; /* no eeprom found */
 }
 
@@ -535,7 +535,6 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
 #define PCI_VENDOR_FLYVIDEO	0x1851
 #define PCI_VENDOR_FLYVIDEO_2	0x1852
 #define PCI_VENDOR_PINNACLE_ALT	0xBD11	/* this is swapped w/ prod id */
-
 
 void
 probeCard( bktr_ptr_t bktr, int verbose, int unit )
@@ -606,7 +605,8 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		bktr->card.eepromAddr = eeprom_i2c_address;
 		bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
 
-	        readEEProm(bktr, 0, 256, (u_char *) &eeprom );
+	        if (readEEProm(bktr, 0, 256, eeprom) && bootverbose)
+			printf("%s: error reading EEPROM\n", bktr_name(bktr));
                 byte_252 = (unsigned int)eeprom[252];
                 byte_253 = (unsigned int)eeprom[253];
                 byte_254 = (unsigned int)eeprom[254];
@@ -615,7 +615,7 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                 subsystem_id        = (byte_252 << 8) | byte_253;
                 subsystem_vendor_id = (byte_254 << 8) | byte_255;
 
-	        if ( bootverbose ) 
+	        if (bootverbose) 
 	            printf("%s: subsystem 0x%04x 0x%04x\n", bktr_name(bktr),
 			   subsystem_vendor_id, subsystem_id);
 
@@ -655,15 +655,22 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT) {
+                if (subsystem_vendor_id == PCI_VENDOR_LEADTEK) {
                     bktr->card = cards[ (card = CARD_LEADTEK) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-		if (subsystem_vendor_id == PCI_VENDOR_PINNACLE_ALT) {
+		if (subsystem_vendor_id == PCI_VENDOR_PINNACLE) {
                     bktr->card = cards[ (card = CARD_MIRO) ];
+		    bktr->card.eepromAddr = eeprom_i2c_address;
+		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+                    goto checkTuner;
+                }
+
+		if (subsystem_vendor_id == PCI_VENDOR_TERRATEC) {
+                    bktr->card = cards[ (card = CARD_TERRATVPLUS) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
@@ -671,14 +678,12 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 
                 /* Vendor is unknown. We will use the standard probe code */
 		/* which may not give best results */
-                printf("%s: Warning - card vendor 0x%04x (model 0x%04x) unknown.\n",
-		       bktr_name(bktr), subsystem_vendor_id, subsystem_id);
-            }
-	    else
-	    {
-                printf("%s: Card has no configuration EEPROM. Cannot determine card make.\n",
-		       bktr_name(bktr));
-	    }
+                printf("%s: Warning "
+		    "- card vendor 0x%04x (model 0x%04x) unknown.\n",
+		    bktr_name(bktr), subsystem_vendor_id, subsystem_id);
+            } else
+                printf("%s: Card has no configuration EEPROM. "
+		    "Cannot determine card make.\n", bktr_name(bktr));
 	} /* end of bt878/bt879 card detection code */
 
 	/* If we get to this point, we must have a Bt848/848A/849A card */
@@ -708,7 +713,7 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		    bktr->card = cards[ (card = CARD_UNKNOWN) ];
 		    bktr->card.eepromAddr = PFC8582_WADDR;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
-	            readEEProm(bktr, 0, 128, (u_char *) &eeprom );
+	            readEEProm(bktr, 0, 128, eeprom );
 
 		    /* For Hauppauge, check the EEPROM begins with 0x84 */
 		    if (eeprom[0] == 0x84) {
@@ -907,7 +912,7 @@ checkTuner:
 		unsigned char tuner_code;
 		unsigned char no_audio_mux;
 
-		readEEProm(bktr, 0, 128, (u_char *) &eeprom );
+		readEEProm(bktr, 0, 128, eeprom);
 
 	        /* LOCATE THE EEPROM DATA BLOCKS */
 	        block_1 = &eeprom[0];
@@ -1039,7 +1044,7 @@ checkTuner:
 
 
 		/* Extract information from the EEPROM data */
-	    	readEEProm(bktr, 0, 128, (u_char *) &eeprom );
+	    	readEEProm(bktr, 0, 128, eeprom);
 
 		tuner_make   = (eeprom[0x41] & 0x7);
 		tuner_tv_fm  = (eeprom[0x41] & 0x18) >> 3;

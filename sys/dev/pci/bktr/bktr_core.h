@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.h,v 1.1 2001/03/28 03:27:09 fgsch Exp $	*/
+/*	$OpenBSD: bktr_core.h,v 1.2 2003/01/05 01:24:53 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp $ */
 
 /*
@@ -64,7 +64,7 @@ void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
  *   For /dev/bktr[n] use memory address of bktr structure
  *   For /dev/vbi[n] use memory address of bktr structure + 1
  *                   this is ok as the bktr structure is > 1 byte
- */                 
+ */
 #define BKTR_SLEEP  ((caddr_t)bktr    )
 #define VBI_SLEEP   ((caddr_t)bktr + 1)
 
@@ -74,12 +74,12 @@ const char *bktr_name(bktr_ptr_t bktr);
 
 /* Prototypes for attatch and interrupt functions */
 void	common_bktr_attach( bktr_ptr_t bktr, int unit,
-			u_long pci_id, u_int rev ); 
+			u_long pci_id, u_int rev );
 int	common_bktr_intr( void *arg );
 
 
 /* Prototypes for open, close, read, mmap and ioctl calls */
-int	video_open( bktr_ptr_t bktr ); 
+int	video_open( bktr_ptr_t bktr );
 int	video_close( bktr_ptr_t bktr );
 int	video_read( bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio );
 int	video_ioctl( bktr_ptr_t bktr, int unit,

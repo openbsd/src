@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.13 2002/07/13 16:25:36 mickey Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.14 2003/01/05 01:24:53 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -163,7 +163,7 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 
 #define BKTR_DEBUG
 #ifdef BKTR_DEBUG
-int bktr_debug = 0;
+int bktr_debug = 1;
 #define DPR(x)	(bktr_debug ? printf x : 0)
 #else
 #define DPR(x)
@@ -285,7 +285,7 @@ bktr_probe( device_t dev )
 			device_set_desc(dev, "BrookTree 879");
 			return 0;
 		}
-	};
+	}
 
         return ENXIO;
 }
@@ -1389,6 +1389,15 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	unit = bktr->bktr_dev.dv_unit;
         bktr->dmat = pa->pa_dmat;
 
+	/* Enabled Bus Master
+	   XXX: check if all old DMA is stopped first (e.g. after warm
+	   boot) */
+	fun = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	DPR((" fun=%b", fun, PCI_COMMAND_STATUS_BITS));
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    fun | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE |
+	    PCI_COMMAND_BACKTOBACK_ENABLE);
+
 #ifndef __OpenBSD__
 	printf("\n");
 #endif
@@ -1396,13 +1405,11 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * map memory
 	 */
-	retval = pci_mapreg_map(pa, PCI_MAPREG_START,
-				PCI_MAPREG_TYPE_MEM
-				| PCI_MAPREG_MEM_TYPE_32BIT, 0,
-				&bktr->memt, &bktr->memh, NULL,
-				&bktr->obmemsz, 0);
-	DPR(("pci_mapreg_map: memt %x, memh %x, size %x\n",
-	     bktr->memt, (u_int)bktr->memh, (u_int)bktr->obmemsz));
+	retval = pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM |
+	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &bktr->memt, &bktr->memh, NULL,
+	    &bktr->obmemsz, 0);
+	DPR(("pci_mapreg_map: memt %lx, memh %lx, size %x\n",
+	     bktr->memt, bktr->memh, bktr->obmemsz));
 	if (retval) {
 		printf("%s: couldn't map memory\n", bktr_name(bktr));
 		return;
@@ -1451,7 +1458,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
  * you have more than four, then 16 would probably be a better value.
  */
 #ifndef BROOKTREE_DEF_LATENCY_VALUE
-#define BROOKTREE_DEF_LATENCY_VALUE	10
+#define BROOKTREE_DEF_LATENCY_VALUE	0x10
 #endif
 	latency = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_LATENCY_TIMER);
 	latency = (latency >> 8) & 0xff;
@@ -1467,16 +1474,9 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 
-	/* Enabled Bus Master
-	   XXX: check if all old DMA is stopped first (e.g. after warm
-	   boot) */
-	fun = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       fun | PCI_COMMAND_MASTER_ENABLE);
-
 	/* read the pci id and determine the card type */
 	fun = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
-        rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0x000000ff;
+        rev = PCI_REVISION(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG));
 
 	common_bktr_attach(bktr, unit, fun, rev);
 

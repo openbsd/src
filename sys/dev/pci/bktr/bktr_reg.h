@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_reg.h,v 1.5 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: bktr_reg.h,v 1.6 2003/01/05 01:24:53 mickey Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp $
  *
@@ -310,6 +310,11 @@ struct bt848_registers {
 #define BT848_INT_HSYNC			(1<<2)
 #define BT848_INT_VSYNC			(1<<1)
 #define BT848_INT_FMTCHG		(1<<0)
+#define	BT848_INT_BITS \
+    ("\020\01FMTCHG\02VSYNC\03HSYNC\04OFLOW\05HLOCK\06VPRES\07RSV0"\
+     "\010RSV1\011I2CDONE\012GPINT\014RISCI\015FBUS\016FTRGT\017FDSR"\
+     "\020PPERR\021RIPERR\022PABORT\023OCERR\024SCERR"\
+     "\030MYSTERYBIT\031FIELD\032RACK\034RISC_EN")
     int		:32;		/* 108, 109,10a,10b */
     BTWORD (gpio_dma_ctl);	/* 10c, 10d,10e,10f */
 #define BT848_DMA_CTL_PL23TP4		(0<<6)	/* planar1 trigger 4 */
@@ -476,12 +481,42 @@ struct bktr_i2c_softc {
  * with the right type of endianness.
  */
 #if defined(__NetBSD__) || defined(__OpenBSD__) || ( defined(__FreeBSD__) && (__FreeBSD_version >=300000) )
-#define INB(bktr,offset)	bus_space_read_1((bktr)->memt,(bktr)->memh,(offset))
-#define INW(bktr,offset)	bus_space_read_2((bktr)->memt,(bktr)->memh,(offset))
-#define INL(bktr,offset)	bus_space_read_4((bktr)->memt,(bktr)->memh,(offset))
-#define OUTB(bktr,offset,value) bus_space_write_1((bktr)->memt,(bktr)->memh,(offset),(value))
-#define OUTW(bktr,offset,value) bus_space_write_2((bktr)->memt,(bktr)->memh,(offset),(value))
-#define OUTL(bktr,offset,value) bus_space_write_4((bktr)->memt,(bktr)->memh,(offset),(value))
+#define INB(sc,o)	(({					\
+	u_int8_t __v;						\
+	__v = bus_space_read_1((sc)->memt, (sc)->memh, (o));	\
+	bus_space_barrier((sc)->memt, (sc)->memh, (o), 1,	\
+	    BUS_SPACE_BARRIER_READ);				\
+	(__v);							\
+}))
+#define INW(sc,o)	(({					\
+	u_int16_t __v;						\
+	__v = bus_space_read_2((sc)->memt, (sc)->memh, (o));	\
+	bus_space_barrier((sc)->memt, (sc)->memh, (o), 4,	\
+	    BUS_SPACE_BARRIER_READ);				\
+	(__v);							\
+}))
+#define INL(sc,o)	(({					\
+	u_int32_t __v;						\
+	__v = bus_space_read_4((sc)->memt, (sc)->memh, (o));	\
+	bus_space_barrier((sc)->memt, (sc)->memh, (o), 4,	\
+	    BUS_SPACE_BARRIER_READ);				\
+	(__v);							\
+}))
+#define OUTB(sc,o,v)	do {					\
+	bus_space_write_1((sc)->memt, (sc)->memh, (o), (v));	\
+	bus_space_barrier((sc)->memt, (sc)->memh, (o), 1,	\
+	    BUS_SPACE_BARRIER_WRITE);				\
+} while (0)
+#define OUTW(sc,o,v)	do {					\
+	bus_space_write_2((sc)->memt, (sc)->memh, (o), (v));	\
+	bus_space_barrier((sc)->memt, (sc)->memh, (o), 2,	\
+	    BUS_SPACE_BARRIER_WRITE);				\
+} while (0)
+#define OUTL(sc,o,v) do {					\
+	bus_space_write_4((sc)->memt, (sc)->memh, (o), (v));	\
+	bus_space_barrier((sc)->memt, (sc)->memh, (o), 4,	\
+	    BUS_SPACE_BARRIER_WRITE);				\
+} while (0)
 #else
 #define INB(bktr,offset)	*(volatile unsigned char *)((int)((bktr)->memh)+(offset))
 #define INW(bktr,offset)	*(volatile unsigned short *)((int)((bktr)->memh)+(offset))
