@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 1997/01/22 11:13:53 niklas Exp $
+#	$OpenBSD: Makefile,v 1.38 1997/01/23 03:41:24 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -168,7 +168,7 @@ hcx9-distribution:
 distrib-dirs:
 	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}
 	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
-	if [ ! -f ${DESTDIR}/usr/src ]; then \
+	if [ ! -d ${DESTDIR}/usr/src ]; then \
 		${INSTALL} -d -o root -g wsrc -m 775 ${DESTDIR}/usr/src; \
 	fi
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
