@@ -221,6 +221,8 @@ cl_pfmap(sp, stype, from, flen, to, tlen)
 
 	nlen = snprintf(keyname,
 	    sizeof(keyname), "function key %d", atoi(from + 1));
+	if (nlen >= sizeof(keyname))
+		nlen = sizeof(keyname) - 1;
 	return (seq_set(sp, keyname, nlen,
 	    p, strlen(p), to, tlen, stype, SEQ_NOOVERWRITE | SEQ_SCREEN));
 }

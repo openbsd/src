@@ -102,6 +102,8 @@ v_at(sp, vp)
 	 */
 	if (F_ISSET(vp, VC_C1SET)) {
 		len = snprintf(nbuf, sizeof(nbuf), "%lu", vp->count);
+		if (len >= sizeof(nbuf))
+			len = sizeof(nbuf) - 1;
 		if (v_event_push(sp, NULL, nbuf, len, 0))
 			return (1);
 	}

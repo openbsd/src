@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.15 1998/02/17 00:07:51 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.16 1998/06/23 22:40:30 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.15 1998/02/17 00:07:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.16 1998/06/23 22:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,6 +257,8 @@ treescan(pname, ino, todo)
 	 * skipping over "." and ".."
 	 */
 	namelen = snprintf(locname, sizeof(locname), "%s/", pname);
+	if (namelen >= sizeof(locname))
+		namelen = sizeof(locname) - 1;
 	rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 	dp = rst_readdir(dirp); /* "." */
 	if (dp != NULL && strcmp(dp->d_name, ".") == 0)

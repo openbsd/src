@@ -204,6 +204,8 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 		if (lval == 0 && ntype == fmt[SDEC])
 			ntype = fmt[DEC];
 		nlen = snprintf(nbuf, sizeof(nbuf), ntype, lval);
+		if (nlen >= sizeof(nbuf))
+			nlen = sizeof(nbuf) - 1;
 	} else {
 		if ((nret = nget_uslong(&ulval, t, NULL, base)) != NUM_OK)
 			goto err;
@@ -226,6 +228,8 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 			wlen -= 2;
 
 		nlen = snprintf(nbuf, sizeof(nbuf), ntype, wlen, ulval);
+		if (nlen >= sizeof(nbuf))
+			nlen = sizeof(nbuf) - 1;
 	}
 
 	/* Build the new line. */

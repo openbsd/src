@@ -488,14 +488,20 @@ api_opts_set(sp, name, str_value, num_value, bool_value)
 	case OPT_1BOOL:
 		GET_SPACE_RET(sp, bp, blen, 64);
 		a.len = snprintf(bp, 64, "%s%s", bool_value ? "" : "no", name);
+		if (a.len > 63)
+			a.len = 63;
 		break;
 	case OPT_NUM:
 		GET_SPACE_RET(sp, bp, blen, 64);
 		a.len = snprintf(bp, 64, "%s=%lu", name, num_value);
+		if (a.len > 63)
+			a.len = 63;
 		break;
 	case OPT_STR:
 		GET_SPACE_RET(sp, bp, blen, 1024);
 		a.len = snprintf(bp, 1024, "%s=%s", name, str_value);
+		if (a.len > 63)
+			a.len = 63;
 		break;
 	}
 	a.bp = bp;

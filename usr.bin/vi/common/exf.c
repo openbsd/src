@@ -482,6 +482,8 @@ file_spath(sp, frp, sbp, existsp)
 				*p = '\0';
 				len = snprintf(path,
 				    sizeof(path), "%s/%s", t, name);
+				if (len >= sizeof(path))
+					len = sizeof(path) - 1;
 				*p = savech;
 				if (!stat(path, sbp)) {
 					found = 1;
@@ -941,12 +943,16 @@ file_write(sp, fm, tm, name, flags)
 		msgstr = msg_cat(sp,
 		    "256|%s: new file: %lu lines, %lu characters", NULL);
 		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
+		if (len >= sizeof(buf))
+			len = sizeof(buf) - 1;
 		break;
 	case OLDFILE:
 		msgstr = msg_cat(sp, LF_ISSET(FS_APPEND) ?
 		    "315|%s: appended: %lu lines, %lu characters" :
 		    "257|%s: %lu lines, %lu characters", NULL);
 		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
+		if (len >= sizeof(buf))
+			len = sizeof(buf) - 1;
 		break;
 	default:
 		abort();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: global.c,v 1.3 1998/03/12 04:53:11 art Exp $	*/
+/*	$OpenBSD: global.c,v 1.4 1998/06/23 22:40:29 millert Exp $	*/
 /*	$NetBSD: global.c,v 1.6 1996/02/28 20:38:14 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$NetBSD: global.c,v 1.6 1996/02/28 20:38:14 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: global.c,v 1.3 1998/03/12 04:53:11 art Exp $";
+static char rcsid[] = "$OpenBSD: global.c,v 1.4 1998/06/23 22:40:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,8 @@ output_data (const char *format, ...)
                    remaining,
                    format,
                    args);
+  if (ret >= remaining)
+	ret = remaining - 1;
   nfrontp += ret;
   va_end(args);
   return ret;

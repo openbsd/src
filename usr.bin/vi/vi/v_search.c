@@ -255,6 +255,8 @@ v_exaddr(sp, vp, dir)
 		/* Push line number so get correct z display. */
 		tlen = snprintf(buf,
 		    sizeof(buf), "%lu", (u_long)vp->m_stop.lno);
+		if (tlen >= sizeof(buf))
+			tlen = sizeof(buf) - 1;
 		if (v_event_push(sp, NULL, buf, tlen, CH_NOMAP | CH_QUOTED))
 			return (1);
 		 
@@ -336,6 +338,8 @@ v_searchw(sp, vp)
 	len = VIP(sp)->klen + sizeof(RE_WSTART) + sizeof(RE_WSTOP);
 	GET_SPACE_RET(sp, bp, blen, len);
 	len = snprintf(bp, blen, "%s%s%s", RE_WSTART, VIP(sp)->keyw, RE_WSTOP);
+	if (len >= blen)
+		len = blen - 1;
 
 	rval = v_search(sp, vp, bp, len, SEARCH_SET, FORWARD);
 

@@ -651,6 +651,8 @@ fprintlog(f, flags, msg)
 		v->iov_len = snprintf(greetings, sizeof(greetings),
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
 		    f->f_prevhost, ctime(&now));
+		if (v->iov_len >= sizeof(greetings))
+			v->iov_len = sizeof(greetings) - 1;
 		v++;
 		v->iov_base = "";
 		v->iov_len = 0;

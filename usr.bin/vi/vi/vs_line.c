@@ -140,6 +140,8 @@ vs_line(sp, smp, yp, xp)
 			if ((!dne || smp->lno == 1) && skip_cols == 0) {
 				nlen = snprintf(cbuf,
 				    sizeof(cbuf), O_NUMBER_FMT, smp->lno);
+				if (nlen >= sizeof(cbuf))
+					nlen = sizeof(cbuf) - 1;
 				(void)gp->scr_addstr(sp, cbuf, nlen);
 			}
 		}
@@ -507,6 +509,8 @@ vs_number(sp)
 
 		(void)gp->scr_move(sp, smp - HMAP, 0);
 		len = snprintf(nbuf, sizeof(nbuf), O_NUMBER_FMT, smp->lno);
+		if (len >= sizeof(nbuf))
+			len = sizeof(nbuf) - 1;
 		(void)gp->scr_addstr(sp, nbuf, len);
 	}
 	(void)gp->scr_move(sp, oldy, oldx);

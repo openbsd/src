@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.6 1998/01/31 23:08:49 millert Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.7 1998/06/23 22:40:31 millert Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.6 1998/01/31 23:08:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.7 1998/06/23 22:40:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -537,6 +537,8 @@ printlist(name, basename)
 		entries = 0;
 		listp = list;
 		namelen = snprintf(locname, sizeof(locname), "%s/", name);
+		if (namelen >= sizeof(locname))
+			namelen = sizeof(locname) - 1;
 		while ((dp = rst_readdir(dirp))) {
 			if (dp == NULL)
 				break;
