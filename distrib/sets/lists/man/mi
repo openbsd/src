@@ -885,16 +885,14 @@
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/aic.0
 ./usr/share/man/cat4/alpha
-./usr/share/man/cat4/alpha/com.0
-./usr/share/man/cat4/alpha/esp.0
+./usr/share/man/cat4/alpha/asc.0
+./usr/share/man/cat4/alpha/autoconf.0
 ./usr/share/man/cat4/alpha/intro.0
 ./usr/share/man/cat4/alpha/kmem.0
 ./usr/share/man/cat4/alpha/le.0
 ./usr/share/man/cat4/alpha/mem.0
-./usr/share/man/cat4/alpha/pms.0
 ./usr/share/man/cat4/alpha/scc.0
 ./usr/share/man/cat4/alpha/tga.0
-./usr/share/man/cat4/alpha/wd.0
 ./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amiga
@@ -1016,6 +1014,7 @@
 ./usr/share/man/cat4/hp300/mem.0
 ./usr/share/man/cat4/hp300/ppi.0
 ./usr/share/man/cat4/hp300/rb.0
+./usr/share/man/cat4/hp300/sd.0
 ./usr/share/man/cat4/hp300/tc.0
 ./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/hsq.0
