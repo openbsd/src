@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/06/26 05:44:38 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/01/14 04:47:08 tholo Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,12 +47,12 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/06/26 05:44:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/01/14 04:47:08 tholo Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/file.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <signal.h>
 #include "defs.h"
