@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_readv.c,v 1.5 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_readv.c,v 1.6 2004/01/01 08:19:33 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -49,6 +49,9 @@ readv(int fd, const struct iovec * iov, int iovcnt)
 	ssize_t	ret;
 	int	type;
 
+	/* This is a cancellation point: */
+	_thread_enter_cancellation_point();
+
 	/* Lock the file descriptor for read: */
 	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
 		/* Get the read/write mode type: */
@@ -90,6 +93,10 @@ readv(int fd, const struct iovec * iov, int iovcnt)
 		}
 		_FD_UNLOCK(fd, FD_READ);
 	}
+
+	/* No longer in a cancellation point: */
+	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

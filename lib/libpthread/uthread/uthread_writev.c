@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.7 2003/12/22 21:28:47 brad Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.8 2004/01/01 08:19:33 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -57,6 +57,9 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 	ssize_t	ret;
 	struct iovec liov[20];
 	struct iovec *p_iov = liov;
+
+	/* This is a cancellation point: */
+	_thread_enter_cancellation_point();
 
 	/* Check if the array size exceeds to compiled in size: */
 	if (iovcnt > (int) (sizeof(liov) / sizeof(struct iovec))) {
@@ -214,6 +217,9 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 	/* If memory was allocated for the array, free it: */
 	if (p_iov != liov)
 		free(p_iov);
+
+	/* No longer in a cancellation point: */
+	_thread_leave_cancellation_point();
 
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.9 2003/11/03 20:27:48 marc Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.10 2004/01/01 08:19:33 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -61,7 +61,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	struct pthread_poll_data data;
 	fd_mask		mask, rmask, wmask, emask;
 
-	/* this is a cancellation point per IEEE Std 1003.1-2001 */
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	if (numfds > _thread_dtablesize) {
@@ -221,6 +221,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	}
 
 done:
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	return (ret);
