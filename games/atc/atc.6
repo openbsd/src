@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atc.6,v 1.14 2003/09/02 18:14:18 jmc Exp $
+.\"	$OpenBSD: atc.6,v 1.15 2004/01/02 14:45:50 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,6 @@ The speed
 .Pq update time
 and frequency of the planes depend on the
 difficulty of the chosen arena.
-.Pp
 .Bl -tag -width "-g gamex"
 .It Fl f Ar game
 Play the named game.
@@ -403,7 +402,6 @@ command.
 It allows the controller to instruct a plane to do an action
 when the plane reaches a particular beacon
 .Pq or other objects in future versions .
-.Pp
 .Bd -ragged -offset indent
 .Bl -tag -width indent -compact
 .It Sy a/@
@@ -479,6 +477,13 @@ Planes flying at an altitude of 0 crash if they are not over an airport.
 .It
 Planes waiting at airports can only be told to take off
 .Pq climb in altitude .
+.It
+Pressing return
+.Pq that is, entering an empty command
+will perform the next update immediately.
+This allows the player to
+.Dq fast forward
+the game clock if nothing interesting is happening.
 .El
 .Sh "NEW GAMES"
 The
@@ -510,7 +515,6 @@ indicating the height of the play field.
 The second part of the field description files describes the locations
 of the exits, the beacons, the airports and the lines.
 The syntax is as follows:
-.Pp
 .Bd -ragged -offset indent
 .Bl -tag -width "airport:" -compact
 .It beacon :
