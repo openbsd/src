@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.9 1998/11/11 00:26:00 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.10 1998/11/16 06:20:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -156,9 +156,9 @@ qecattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
 
-	printf(": %dK memory %d %s",
+	printf(": %dK memory %d channel%s",
 	    sc->sc_bufsiz / 1024, sc->sc_nchannels,
-	    (sc->sc_nchannels == 1) ? "channel" : "channels");
+	    (sc->sc_nchannels == 1) ? "" : "s");
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
 
