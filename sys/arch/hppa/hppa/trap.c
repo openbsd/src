@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2000/11/10 18:15:38 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2001/01/22 21:15:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -232,7 +232,6 @@ ddb_regs = *frame;
 		/* these just can't make it to the trap() ever */
 	case T_HPMC:      case T_HPMC | T_USER:
 	case T_EMULATION: case T_EMULATION | T_USER:
-	case T_TLB_DIRTY: case T_TLB_DIRTY | T_USER:
 #endif
 	case T_IBREAK:
 	case T_DATALIGN:
@@ -303,11 +302,12 @@ ddb_regs = *frame;
 
 	case T_DPROT:
 	case T_IPROT:
-	case T_DATACC:   	case T_DATACC   | T_USER:
-	case T_ITLBMISS:	case T_ITLBMISS | T_USER:
-	case T_DTLBMISS:	case T_DTLBMISS | T_USER:
-	case T_ITLBMISSNA:	case T_ITLBMISSNA | T_USER:
-	case T_DTLBMISSNA:	case T_DTLBMISSNA | T_USER:
+	case T_DATACC:   	case T_USER | T_DATACC:
+	case T_ITLBMISS:	case T_USER | T_ITLBMISS:
+	case T_DTLBMISS:	case T_USER | T_DTLBMISS:
+	case T_ITLBMISSNA:	case T_USER | T_ITLBMISSNA:
+	case T_DTLBMISSNA:	case T_USER | T_DTLBMISSNA:
+	case T_TLB_DIRTY:	case T_USER | T_TLB_DIRTY:
 		va = trunc_page(va);
 		vm = p->p_vmspace;
 
