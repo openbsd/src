@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.19 2003/05/12 22:03:22 pvalchev Exp $	*/
+/*	$OpenBSD: file.c,v 1.20 2003/06/01 15:53:43 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.19 2003/05/12 22:03:22 pvalchev Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.20 2003/06/01 15:53:43 deraadt Exp $";
 #endif
 
 /*
@@ -521,7 +521,7 @@ copy_file(char *dir, char *fname, char *to)
 	snprintf(cmd, FILENAME_MAX, "cp -p -r %s %s", fname, to);
     else
 	snprintf(cmd, FILENAME_MAX, "cp -p -r %s/%s %s", dir, fname, to);
-    if (vsystem(cmd)) {
+    if (vsystem("%s", cmd)) {
 	cleanup(0);
 	errx(2, "could not perform '%s'", cmd);
     }
@@ -536,7 +536,7 @@ move_file(char *dir, char *fname, char *to)
 	snprintf(cmd, FILENAME_MAX, "mv %s %s", fname, to);
     else
 	snprintf(cmd, FILENAME_MAX, "mv %s/%s %s", dir, fname, to);
-    if (vsystem(cmd)) {
+    if (vsystem("%s", cmd)) {
 	cleanup(0);
 	errx(2, "could not perform '%s'", cmd);
     }

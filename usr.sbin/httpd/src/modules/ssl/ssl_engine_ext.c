@@ -524,7 +524,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb, char *peer)
 #endif
         errmsg = ap_psprintf(r->pool, "SSL proxy connect failed (%s): peer %s: %s",
                              cpVHostID, peer, ERR_reason_error_string(ERR_get_error()));
-        ssl_log(r->server, SSL_LOG_ERROR, errmsg);
+        ssl_log(r->server, SSL_LOG_ERROR, "%s", errmsg);
         SSL_free(ssl);
         ap_ctx_set(fb->ctx, "ssl", NULL);
         return errmsg;

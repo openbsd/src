@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.38 2003/05/15 14:52:12 itojun Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.39 2003/06/01 15:53:43 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.38 2003/05/15 14:52:12 itojun Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.39 2003/06/01 15:53:43 deraadt Exp $";
 #endif
 
 
@@ -551,7 +551,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 	ep = (struct ether_header *) pkt;
 	ea = (struct ether_addr *) &ep->ether_shost;
 
-	debug(ether_ntoa(ea));
+	debug("%s", ether_ntoa(ea));
 	if (ether_ntohost(ename, ea) != 0) {
 		debug("ether_ntohost failed");
 		return;

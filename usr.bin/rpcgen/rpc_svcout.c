@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.15 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.16 2003/06/01 15:53:36 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -306,7 +306,7 @@ write_real_program(def)
 				fprintf(fout, "(");
 				/* arg name */
 				if (proc->arg_num > 1)
-					fprintf(fout, proc->args.argname);
+					fprintf(fout, "%s", proc->args.argname);
 				else
 					ptype(proc->args.decls->decl.prefix,
 					    proc->args.decls->decl.type, 0);

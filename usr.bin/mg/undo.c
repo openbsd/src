@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.16 2003/05/20 03:08:55 cloder Exp $ */
+/* $OpenBSD: undo.c,v 1.17 2003/06/01 15:53:34 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -403,7 +403,7 @@ undo_dump(void)
 		}
 		snprintf(tmp, sizeof tmp, " [%d]", rec->region.r_size);
 		strlcat(buf, tmp, sizeof buf);
-		addlinef(bp, buf);
+		addlinef(bp, "%s", buf);
 	}
 	return (TRUE);
 }

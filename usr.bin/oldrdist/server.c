@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.22 2003/04/06 17:57:45 ho Exp $	*/
+/*	$OpenBSD: server.c,v 1.23 2003/06/01 15:53:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.22 2003/04/06 17:57:45 ho Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.23 2003/06/01 15:53:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -216,7 +216,7 @@ server()
 			continue;
 
 		case 'L':  /* Log. save message in log file */
-			log(lfp, cp);
+			log(lfp, "%s", cp);
 			continue;
 #endif
 
