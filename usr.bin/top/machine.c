@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.13 1998/09/20 06:19:14 niklas Exp $	*/
+/*	$OpenBSD: machine.c,v 1.14 1998/11/28 02:37:35 kstailey Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -983,9 +983,11 @@ int *total;
 	for (i = 0; i < nswdev; i++) {
 		int xsize, xfree;
 
-		xsize = sw[i].sw_nblks;
-		xfree = perdev[i];
-		*total += xsize;
+		if (sw[i].sw_flags & SW_FREED) {
+			xsize = sw[i].sw_nblks;
+			xfree = perdev[i];
+			*total += xsize;
+		}
 	}
 
 	/* 
