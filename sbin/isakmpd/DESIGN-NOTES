@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.6 1999/02/26 03:29:40 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.38 1999/02/25 11:21:54 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.7 1999/03/24 14:59:03 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.39 1999/03/08 00:39:27 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -193,22 +193,14 @@ In order to control the daemon you send commands through a FIFO called
 isakmpd.fifo.  The commands are one-letter codes followed by arguments.
 For now, only three commands are planned:
 
-c	"old" connect	Establish a SA with a peer
-C	connect		Establish a named SA with a peer
+c	connect		Establish a named SA with a peer
 d	delete		Delete a SA
 D	debug		Toggle some debug flag
 r	report		Report status information of the daemon
 
 For example you can do:
 
-c udp 127.0.0.1:555 0 0
-
-to get an ISAKMP SA established with the ISAKMP implementation listening
-on UDP port 555 at the local host.  The SA will be established with an
-identity protection (exchange type 2) exchange and use the IPSEC DOI (DOI 1).
-Another way to do it is via names from the config file:
-
-C ISAKMP-peer
+c ISAKMP-peer
 
 In order to delete an SA you use the 'd' command.  However this is not yet
 supported.
