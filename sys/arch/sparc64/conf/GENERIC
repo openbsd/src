@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2002/03/29 21:31:32 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.57 2002/04/04 23:16:21 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -28,8 +28,6 @@ pci*	at psycho?				# Ultra 5
 pci*	at ppb?
 ppb*	at pci? dev ? function ?
 ebus*	at pci?
-
-uperf*	at psycho?
 
 # PCI Ethernet
 hme*	at pci? dev ? function ?
@@ -98,6 +96,8 @@ audio*		at audioce?
 # parallel ports
 lpt*	at ebus?
 
+# performance counters
+uperf*	at ebus?
 uperf*	at sbus? slot ? offset ?
 
 zs*	at sbus? slot ? offset ?

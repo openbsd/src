@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.31 2002/03/14 20:15:00 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.32 2002/04/04 23:16:21 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -37,15 +37,11 @@ file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
-define psycho {}
 device psycho: pcibus
 attach psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho
-
-attach	uperf at psycho with uperf_psycho
-file	arch/sparc64/dev/uperf_psycho.c		uperf_psycho needs-flag
 
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci
@@ -60,6 +56,9 @@ file	arch/sparc64/dev/iommu.c		sbus | psycho
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
+
+attach	uperf at ebus with uperf_ebus
+file	arch/sparc64/dev/uperf_ebus.c		uperf_ebus
 
 device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus

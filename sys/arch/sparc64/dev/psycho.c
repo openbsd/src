@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.17 2002/04/04 17:03:00 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.18 2002/04/04 23:16:22 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -33,8 +33,6 @@
  * Support for `psycho' and `psycho+' UPA to PCI bridge and 
  * UltraSPARC IIi and IIe `sabre' PCI controllers.
  */
-
-#include "uperf_psycho.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -411,17 +409,6 @@ psycho_attach(parent, self, aux)
 	 * arrive here, start up the IOMMU and get a config space tag.
 	 */
 	if (osc == NULL) {
-#if NUPERF_PSYCHO > 0
-		if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
-			struct uperf_psycho_attach_args upaa;
-
-			upaa.upaa_name = "uperf";
-			upaa.upaa_regs = &sc->sc_regs->psy_pm;
-
-			(void)config_found(self, &upaa, psycho_print);
-		}
-#endif
-
 		/*
 		 * Establish handlers for interesting interrupts....
 		 *
