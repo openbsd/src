@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.9 1998/09/14 03:54:35 rahnds Exp $	*/
+/*	$OpenBSD: part.c,v 1.10 1998/09/18 02:36:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -81,10 +81,10 @@ static struct part_type {
 	{ 0x83, "Linux files*", "Linux filesystem"},
 	{ 0x93, "Amoeba file*", "Amoeba filesystem"},
 	{ 0x94, "Amoeba BBT  ", "Amoeba bad block table"},
-	{ 0xA5, "FreeBSD",	"FreeBSD"},
+	{ 0xA5, "FreeBSD     ",	"FreeBSD"},
 	{ 0xA6, "OpenBSD     ", "OpenBSD"},
 	{ 0xA7, "NEXTSTEP    ", "NEXTSTEP"},
-	{ 0xA9, "NetBSD",	"NetBSD"},
+	{ 0xA9, "NetBSD      ",	"NetBSD"},
 	{ 0xB7, "BSDI filesy*", "BSDI BSD/386 filesystem"},
 	{ 0xB8, "BSDI swap   ", "BSDI BSD/386 swap"},
 	{ 0xDB, "CPM/C.DOS/C*", "Concurrent CPM or C.DOS or CTOS"},
