@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.21 2001/09/24 23:42:25 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.22 2001/09/25 07:01:39 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -177,7 +177,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 *  With the first on the list and then do whatever gets
 	 *  added along the tour.
 	 */
-
 	dynobj = _dl_objects;
 	while (dynobj) {
 		DL_DEB(("examining: '%s'\n", dynobj->load_name));
@@ -202,7 +201,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 * Now add the dynamic loader itself last in the object list
 	 * so we can use the _dl_ code when serving dl.... calls.
 	 */
-
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
 	dyn_obj = _dl_add_object(us, dynp, 0, OBJTYPE_LDR, dl_data[AUX_base], loff);
 	dyn_obj->status |= STAT_RELOC_DONE;
@@ -323,16 +321,20 @@ _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 	while(*stack++ != NULL) {};
 
 	/*
+	 * Zero out dl_data.
+	 */
+	for (n = 0; n < AUX_entry; n++)
+		dl_data[n] = 0;
+
+	/*
 	 * Dig out auxiliary data set up by exec call. Move all known
 	 * tags to an indexed local table for easy access.
 	 */
-
-	auxstack = (AuxInfo *)stack;
-	while (auxstack->au_id != AUX_null) {
-		if (auxstack->au_id <= AUX_entry) {
-			dl_data[auxstack->au_id] = auxstack->au_v;
-		}
-		auxstack++;
+	for (auxstack = (AuxInfo *)stack; auxstack->au_id != AUX_null;
+	    auxstack++) {
+		if (auxstack->au_id > AUX_entry)
+			continue;
+		dl_data[auxstack->au_id] = auxstack->au_v;
 	}
 #ifdef __sparc64__
 	loff = dl_data[AUX_base];
