@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.21 2004/12/06 10:38:19 mpf Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.22 2004/12/13 23:51:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -672,8 +672,8 @@ pfi_clr_istats(const char *name, int *nzero, int flags)
 	int		 n = 0, s;
 	long		 tzero = time_second;
 
-	s = splsoftnet();
 	ACCEPT_FLAGS(PFI_FLAG_GROUP|PFI_FLAG_INSTANCE);
+	s = splsoftnet();
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		if (pfi_skip_if(name, p, flags))
 			continue;
