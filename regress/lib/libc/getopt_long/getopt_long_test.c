@@ -75,6 +75,7 @@ main(int argc, char **argv)
 		case '1':
 		case '9':
 		case 'h':
+		case 'b':
 			if (idx != -1) {
 				if (goggles == 42)
 					printf("option %s, arg %s\n",
