@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2003/01/24 07:28:22 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 2003/01/28 07:43:29 jakob Exp $
 
 .include <bsd.own.mk>
+
+.if ${MACHINE_ARCH:Msparc64}
+CFLAGS+=	-fno-stack-protector
+.endif
 
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
 CONFIGURE_OPTS=	--prefix=/usr \
