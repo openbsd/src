@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.2 2004/07/30 01:49:21 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.3 2004/08/13 12:59:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -38,6 +38,13 @@
 #include "proto.h"
 
 
+extern char *__progname;
+
+
+
+int  cvs_add_file (CVSFILE *, void *);
+
+
 
 /*
  * cvs_add()
@@ -49,7 +56,7 @@
 int
 cvs_add(int argc, char **argv)
 {
-	int ch, i, ret;
+	int i, ch, ret;
 	char *kflag, *msg;
 	struct cvsroot *root;
 
@@ -71,23 +78,57 @@ cvs_add(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
+	if (argc == 0)
 		return (EX_USAGE);
+
+	cvs_files = cvs_file_getspec(argv, argc, 0);
+	if (cvs_files == NULL)
+		return (EX_DATAERR);
+
+	cvs_file_examine(cvs_files, cvs_add_file, NULL);
+
+	root = CVS_DIR_ROOT(cvs_files);
+
+	for (i = 0; i < argc; i++)
+		cvs_sendarg(root, argv[i], 0);
+	if (cvs_sendreq(root, CVS_REQ_ADD, NULL) < 0)
+		return (-1);
+
+	return (0);
+}
+
+
+int
+cvs_add_file(CVSFILE *cf, void *arg)
+{
+	struct cvsroot *root;
+
+	if (cf->cf_type == DT_DIR) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		}
+		else {
+			root = cf->cf_ddat->cd_root;
+			if ((cf->cf_parent == NULL) ||
+			    (root != cf->cf_parent->cf_ddat->cd_root)) {
+				cvs_connect(root);
+			}
+
+			cvs_senddir(root, cf);
+		}
+
+		return (0);
 	}
 
-	root = NULL;
+	root = CVS_DIR_ROOT(cf);
 
-	for (i = 0; i < argc; i++) {
-		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, argv[i]);
-		if (ret < 0)
-			return (EX_DATAERR);
+	cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+
+	if (cvs_cmdop == CVS_OP_SERVER) {
+		cvs_log(LP_INFO, "scheduling file `%s' for addition",
+		    cf->cf_name);
+		cvs_log(LP_INFO, "use `%s commit' to add this file permanently",
+		    __progname);
 	}
-
-	for (i = 0; i < argc; i++) {
-		ret = cvs_sendreq(root, CVS_REQ_ARGUMENT, argv[i]);
-	}
-
-	ret = cvs_sendreq(root, CVS_REQ_ADD, NULL);
 
 	return (0);
 }
