@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.60 2004/01/14 13:38:21 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.61 2004/01/15 17:04:59 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -939,7 +939,7 @@ send:
 				    optlen;
 				ippseudo.ippseudo_len = htons(ippseudo.ippseudo_len);
 				MD5Update(&ctx, (char *)&ippseudo,
-					sizeof(struct ippseudo));
+				    sizeof(struct ippseudo));
 			}
 			break;
 #endif /* INET */
@@ -976,7 +976,7 @@ send:
 		}
 
 		if (len && m_apply(m, hdrlen, len, tcp_signature_apply,
-				(caddr_t)&ctx))
+		    (caddr_t)&ctx))
 			return (EINVAL);
 
 		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
