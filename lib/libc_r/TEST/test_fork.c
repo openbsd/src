@@ -1,10 +1,8 @@
-/* ==== test_fork.c ============================================================
+/*	$OpenBSD: test_fork.c,v 1.7 2000/01/06 06:54:28 d Exp $	*/
+/*
  * Copyright (c) 1994 by Chris Provenzano, proven@athena.mit.edu
  *
- * Description : Test fork() and dup2() calls.
- *
- *  1.00 94/04/29 proven
- *      -Started coding this file.
+ * Test the fork system call.
  */
 
 #include <pthread.h>
@@ -17,43 +15,26 @@
 #include <sys/wait.h>
 #include "test.h"
 
+
 void *
 sleeper(void *arg)
 {
 
 	pthread_set_name_np(pthread_self(), "slpr");
-	sleep(2);
+	sleep(4);
 	PANIC("sleeper timed out");
 }
 
-static pid_t parent_pid;
-
-static void
-sigchld(sig)
-	int sig;
-{
-	int status;
-
-	/* we should have got a SIGCHLD */
-	ASSERT(sig == SIGCHLD);
-	/* We should be the parent */
-	ASSERT(getpid() == parent_pid);
-	/* wait for any child */
-	CHECKe(wait(&status));
-	/* the child should have called exit(0) */
-	ASSERT(WIFEXITED(status));
-	ASSERT(WEXITSTATUS(status) == 0);
-	printf("parent ok\n");
-	SUCCEED;
-}
 
 int
 main()
 {
 	int flags;
-	pid_t pid;
 	pthread_t sleeper_thread;
 	void *result;
+	int status;
+	pid_t parent_pid;
+	pid_t child_pid;
 
 	parent_pid = getpid();
 
@@ -66,13 +47,10 @@ main()
 	CHECKr(pthread_create(&sleeper_thread, NULL, sleeper, NULL));
 	sleep(1);
 
-	CHECKe(signal(SIGCHLD, sigchld));
-
 	printf("forking from pid %d\n", getpid());
 
-	CHECKe(pid = fork());
-	switch(pid) {
-	case 0:
+	CHECKe(child_pid = fork());
+	if (child_pid == 0) {
 		/* child: */
 		printf("child = pid %d\n", getpid());
 		/* Our pid should change */
@@ -82,15 +60,19 @@ main()
 		printf("child ok\n");
 		_exit(0);
 		PANIC("child _exit");
-	default:
-		/* parent: */
-		printf("parent = pid %d\n", getpid());
-		/* Our pid should stay the same */
-		ASSERT(getpid() == parent_pid);
-		/* Our sleeper thread should still be around */
-		CHECKr(pthread_join(sleeper_thread, &result));
-		/* wait for the SIGCHLD from the child */
-		CHECKe(pause());
-		PANIC("pause");
 	}
+
+	/* parent: */
+	printf("parent = pid %d\n", getpid());
+	/* Our pid should stay the same */
+	ASSERT(getpid() == parent_pid);
+	/* wait for the child */
+	ASSERTe(wait(&status), == child_pid);
+	/* the child should have called exit(0) */
+	ASSERT(WIFEXITED(status));
+	ASSERT(WEXITSTATUS(status) == 0);
+	/* Our sleeper thread should still be around */
+	CHECKr(pthread_detach(sleeper_thread));
+	printf("parent ok\n");
+	SUCCEED;
 }
