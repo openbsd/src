@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.11 1997/11/06 01:25:47 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.12 1997/11/30 18:50:18 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -82,6 +82,18 @@ typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
 typedef	u_int32_t	useconds_t;	/* microseconds */
+typedef	int32_t		suseconds_t;	/* microseconds (signed) */
+
+/*
+ * XPG4.2 states that inclusion of <netinet/in.h> must pull these
+ * in and that inclusion of <sys/socket.h> must pull in sa_family_t.
+ * We put there here because there are other headers that require
+ * these types and <sys/socket.h> and <netinet/in.h> will indirectly
+ * include <sys/types.h>.  Thus we are compliant without too many hoops.
+ */
+typedef u_int32_t	in_addr_t;	/* base type for internet address */
+typedef u_int16_t	in_port_t;	/* IP port type */
+typedef u_int8_t	sa_family_t;	/* sockaddr address family type */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that

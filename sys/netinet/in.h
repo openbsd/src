@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.10 1997/07/28 15:22:30 millert Exp $	*/
+/*	$OpenBSD: in.h,v 1.11 1997/11/30 18:50:19 millert Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -193,11 +193,11 @@ struct in_addr {
  * Socket address, internet style.
  */
 struct sockaddr_in {
-	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
-	struct	  in_addr sin_addr;
-	int8_t	  sin_zero[8];
+	u_int8_t    sin_len;
+	sa_family_t sin_family;
+	in_port_t   sin_port;
+	struct	    in_addr sin_addr;
+	int8_t	    sin_zero[8];
 };
 
 /*

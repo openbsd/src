@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.18 1997/11/16 19:57:39 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.19 1997/11/30 18:50:17 millert Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -135,9 +135,9 @@ struct	linger {
  * addresses.
  */
 struct sockaddr {
-	u_char	sa_len;			/* total length */
-	u_char	sa_family;		/* address family */
-	char	sa_data[14];		/* actually longer; address value */
+	u_int8_t    sa_len;		/* total length */
+	sa_family_t sa_family;		/* address family */
+	char	    sa_data[14];	/* actually longer; address value */
 };
 
 /*
