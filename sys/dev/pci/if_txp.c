@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.18 2001/04/15 21:03:21 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.19 2001/04/15 21:17:53 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -534,7 +534,7 @@ txp_intr(vsc)
 	/* mask all interrupts */
 	WRITE_REG(sc, TXP_IMR, TXP_INT_RESERVED | TXP_INT_SELF |
 	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
-	    TXP_INT_A2H_3 | TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0 |
+	    TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0 |
 	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
 	    TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |  TXP_INT_LATCH);
 
@@ -553,7 +553,7 @@ txp_intr(vsc)
 	}
 
 	/* unmask all interrupts */
-	WRITE_REG(sc, TXP_IMR, 0);
+	WRITE_REG(sc, TXP_IMR, TXP_INT_A2H_3);
 
 	txp_start(&sc->sc_arpcom.ac_if);
 
@@ -1089,10 +1089,10 @@ txp_init(sc)
 
 	WRITE_REG(sc, TXP_IER, TXP_INT_RESERVED | TXP_INT_SELF |
 	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
-	    TXP_INT_A2H_3 | TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0 |
+	    TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0 |
 	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
 	    TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |  TXP_INT_LATCH);
-	WRITE_REG(sc, TXP_IMR, 0);
+	WRITE_REG(sc, TXP_IMR, TXP_INT_A2H_3);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
