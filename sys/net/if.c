@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.58 2002/06/08 11:53:29 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.59 2002/06/08 12:02:09 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -243,9 +243,12 @@ void
 if_attachdomain()
 {
 	struct ifnet *ifp;
+	int s;
 
+	s = splnet();
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 		if_attachdomain1(ifp);
+	splx(s);
 }
 
 void
