@@ -1,5 +1,5 @@
-/* $OpenBSD: machdep.c,v 1.24 2000/06/08 22:25:23 niklas Exp $ */
-/* $NetBSD: machdep.c,v 1.96 2000/03/19 14:56:53 ragge Exp $	 */
+/* $OpenBSD: machdep.c,v 1.25 2000/10/10 18:25:00 bjc Exp $ */
+/* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -124,6 +124,21 @@
 
 caddr_t allocsys __P((caddr_t));
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
+#ifdef	NBUF
+int nbuf = NBUF;
+#else
+int nbuf = 0;
+#endif
+#ifdef	BUFPAGES
+int bufpages = BUFPAGES;
+#else
+int bufpages = 0;
+#endif
+
 extern int *chrtoblktbl;
 extern int virtual_avail, virtual_end;
 /*
@@ -143,6 +158,7 @@ static	struct map iomap[IOMAPSZ];
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;
@@ -199,7 +215,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+			UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
 
 	minaddr = (vm_offset_t) buffers;
@@ -210,7 +226,7 @@ cpu_startup()
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	/* now allocate RAM for buffers */
-	for (i = 0 ; i < nbuf ; i++) {
+	for (i = 0; i < nbuf; i++) {
 		vm_offset_t curbuf;
 		vm_size_t curbufsize;
 		struct vm_page *pg;
@@ -244,6 +260,13 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
+	/*
+	 * Allocate a submap for physio.  This map effectively limits the
+	 * number of processes doing physio at any one time.
+	 */
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
+
     mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
         M_MBUF, M_NOWAIT);
     bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
@@ -253,7 +276,7 @@ cpu_startup()
 	timeout_init();
 
 	printf("avail memory = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d of memory\n", nbuf, bufpages * CLBYTES);
+	printf("using %d buffers containing %d bytes of memory\n", nbuf, bufpages * CLBYTES);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -404,6 +427,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	unsigned	cursp;
 	int	onstack;
 
+#if 0
+printf("sendsig: signal %x  catcher %x\n", sig, catcher);
+#endif
 	syscf = p->p_addr->u_pcb.framep;
 
 	onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
@@ -727,54 +753,52 @@ vax_unmap_physmem(addr, size)
  * much and fill it with zeroes, and then call allocsys() again with the
  * correct base virtual address.
  */
+#define VALLOC(name, type, num) v = (caddr_t)(((name) = (type *)v) + (num))
+
 caddr_t
 allocsys(v)
     register caddr_t v;
 {
-#define valloc(name, type, num) v = (caddr_t)(((name) = (type *)v) + (num))
 
 #ifdef REAL_CLISTS
-    valloc(cfree, struct cblock, nclist);
+    VALLOC(cfree, struct cblock, nclist);
 #endif
-    valloc(timeouts, struct timeout, ntimeout);
+    VALLOC(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
-    valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+    VALLOC(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
 #ifdef SYSVSEM
-    valloc(sema, struct semid_ds, seminfo.semmni);
-    valloc(sem, struct sem, seminfo.semmns);
+    VALLOC(sema, struct semid_ds, seminfo.semmni);
+    VALLOC(sem, struct sem, seminfo.semmns);
 
     /* This is pretty disgusting! */
-    valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+    VALLOC(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
 #endif
 #ifdef SYSVMSG
-    valloc(msgpool, char, msginfo.msgmax);
-    valloc(msgmaps, struct msgmap, msginfo.msgseg);
-    valloc(msghdrs, struct msg, msginfo.msgtql);
-    valloc(msqids, struct msqid_ds, msginfo.msgmni);
+    VALLOC(msgpool, char, msginfo.msgmax);
+    VALLOC(msgmaps, struct msgmap, msginfo.msgseg);
+    VALLOC(msghdrs, struct msg, msginfo.msgtql);
+    VALLOC(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
-    /*
-     * Determine how many buffers to allocate (enough to
-     * hold 5% of total physical memory, but at least 16).
-     * Allocate 1/2 as many swap buffer headers as file i/o buffers.
-     */
-    if (bufpages == 0)
-        bufpages = (physmem / ((100/BUFCACHEPERCENT) / CLSIZE));
-    if (nbuf == 0) {
-        nbuf = bufpages;
-        if (nbuf < 16)
-            nbuf = 16;
-    }
-    if (nbuf > 200)
-        nbuf = 200; /* or we run out of PMEGS */
+	/*
+	 * Determine how many buffers to allocate.  We make sure we allocate
+	 * at least 16 buffers.  	 
+	 */
+	if (bufpages == 0) {
+	    if (physmem < btoc(2 * 1024 * 1024))
+	        bufpages = physmem / (10 * CLSIZE);
+	    else
+	        bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+	            ((100 / BUFCACHEPERCENT) * CLSIZE);
+	}
+    if (nbuf == 0) 
+        nbuf = bufpages < 16 ? 16 : bufpages;
+
     /* Restrict to at most 70% filled kvm */
     if (nbuf * MAXBSIZE >
-        (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
-        nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+        (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+        nbuf = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
             MAXBSIZE * 7 / 10;
 
     /* More buffer pages than fits into the buffers is senseless.  */
@@ -787,7 +811,7 @@ allocsys(v)
         if (nswbuf > 256)
             nswbuf = 256;       /* sanity */
     }
-    valloc(buf, struct buf, nbuf);
+    VALLOC(buf, struct buf, nbuf);
     return (v);
 }
 
