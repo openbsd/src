@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2var.h,v 1.2 1999/06/23 04:48:49 d Exp $	*/
+/*	$OpenBSD: rl2var.h,v 1.3 1999/07/14 03:54:38 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -10,51 +10,55 @@
  * from the interrupt handler to other kernel threads.
  */
 struct rl2_mbox {
-	void *		mb_buf;		/* caller's buffer */
-	size_t		mb_len;		/* buffer size */
-	size_t		mb_actlen;	/* actual message size */
-	volatile u_int8_t mb_state;	/* mailbox state */
+	void *		mb_buf;		/* Message buffer */
+	size_t		mb_len;		/* Message buffer size */
+	size_t		mb_actlen;	/* Actual message size */
+	u_int8_t	mb_state;	/* Mailbox state */
 #define RL2MBOX_VOID		0
 #define RL2MBOX_EMPTY		1
 #define RL2MBOX_FILLING		2
 #define RL2MBOX_FILLED		3
 };
 
-#define RL2_NMBOX	0x7c		/* = maximum sequence number */
+#define RL2_NMBOX	0x7c			/* Same as max msg seq number */
 
 /* Soft state */
 struct rl2_softc {
-	struct device sc_dev;
-	void *sc_ih;			/* interrupt handler */
-	struct arpcom sc_arpcom;	/* Ethernet common part */
-	bus_space_tag_t sc_iot;		/* bus cookie */
-	bus_space_handle_t sc_ioh;	/* bus i/o handle */
+	struct		device sc_dev;
+	void		*sc_ih;			/* Interrupt handler */
+	struct		arpcom sc_arpcom;	/* Ethernet common part */
+	bus_space_tag_t	sc_iot;			/* Bus cookie */
+	bus_space_handle_t sc_ioh;		/* Bus i/o handle */
 
-	u_int8_t sc_width;		/* bus transfer width */
-	u_int8_t sc_irq;		/* irq for card */
+	u_int8_t	sc_width;		/* Bus transfer width */
+	u_int8_t	sc_irq;			/* IRQ for card */
 
-	u_int16_t sc_cardtype;		/* set from the 'flags' directive */
+	u_int16_t	sc_cardtype;		/* Set from config flags */
 #define RL2_CTYPE_OEM		0x01
 #define RL2_CTYPE_UISA		0x02
 #define RL2_CTYPE_ONE_PIECE	0x04
 
-	u_int8_t sc_intsel;		/* copy of INTSEL */
-	u_int8_t sc_status;		/* copy of STATUS */
-	u_int8_t sc_control;		/* copy of CONTROL */
+	u_int8_t	sc_intsel;		/* Copy of INTSEL */
+	u_int8_t	sc_status;		/* Copy of STATUS */
+	u_int8_t	sc_control;		/* Copy of CONTROL */
 #ifdef RL2DEBUG_REG
-	u_int8_t dbg_oreg[8];		/* last value written to registers */
+	u_int8_t	dbg_oreg[8];		/* Last reg value written */
 #endif
 
-	u_int8_t sc_pktseq;		/* card message seq no */
-	u_int8_t sc_txseq;		/* tx packet seq no */
+	u_int8_t	sc_pktseq;		/* Card message seq no */
+	u_int8_t	sc_txseq;		/* Tx packet seq no */
 
-	u_int16_t sc_state;
-#define RL2_STATE_SYNC		0x0001	/* card is synchronised */
+	u_int16_t	sc_state;		/* Soft state. */
+#define RL2_STATE_SYNC		0x0001	/* Card is synchronised */
+#define RL2_STATE_NEEDINIT	0x0002	/* Card needs reset+init */
+#define RL2_STATE_PROMISC	0x0004	/* Receive all packets */
 
-	struct rl2_mbox sc_mbox[0x80];	/* per-message mailboxes */
-	struct rl2_param sc_param;	/* user-configurable parameters */
-	u_int8_t  sc_promisc;		/* receive all packets */
+	struct		rl2_mbox sc_mbox[0x80];	/* Per-message mailboxes */
+	struct		rl2_param sc_param;	/* User controlled parameters */
 };
+
+#define rl2_need_reset(sc) \
+	(sc)->sc_state |= RL2_STATE_NEEDINIT
 
 /* Structure used to hold partial read state for rl2_rx_pdata() */
 struct rl2_pdata {
