@@ -871,7 +871,10 @@ parseopts()
 
 	    if (!strncmp(buf, "tag=", 4)) {
 		char *RCS_citag = strdup(buf+4);
-		setenv("RCSLOCALID", RCS_citag, 1);
+		char *what = malloc(sizeof("RCSLOCALID")+1+strlen(RCS_citag));
+		
+		sprintf(what, "RCSLOCALID=%s", RCS_citag);
+		putenv(what);
 	    } else if (!strncmp(buf, "umask=", 6)) {
 		mode_t mode;
 
