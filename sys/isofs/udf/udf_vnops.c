@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.2 2005/03/30 00:30:51 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.3 2005/03/30 00:37:13 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -474,7 +474,7 @@ udf_read(void *v)
  * Unicode to the encoding that the kernel/user expects.  Return the length
  * of the translated string.
  */
-static int
+int
 udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
 {
 	unicode_t *transname;
