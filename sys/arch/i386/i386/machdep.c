@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2000/02/22 19:27:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.126 2000/03/02 00:15:00 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2063,7 +2063,10 @@ init386(first_avail)
 	printf("physload: ");
 #endif
 	for (i = 0; i < ndumpmem; i++) {
-		register int32_t a, e, lim;
+		int32_t a, e;
+#ifdef UVM
+		int32_t lim;
+#endif
 
 		a = dumpmem[i].start;
 		e = dumpmem[i].end;
