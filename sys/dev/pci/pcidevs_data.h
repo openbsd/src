@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.760 2004/09/20 17:27:52 grange Exp 
+ *	OpenBSD: pcidevs,v 1.761 2004/09/20 18:50:05 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2621,6 +2621,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_DIVA,
 	    "Diva Serial Multiport",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_ELROY,
+	    "Elroy Ropes-PCI",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FXE,

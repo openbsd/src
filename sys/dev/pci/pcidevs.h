@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.760 2004/09/20 17:27:52 grange Exp 
+ *	OpenBSD: pcidevs,v 1.761 2004/09/20 18:50:05 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1090,6 +1090,7 @@
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
 #define	PCI_PRODUCT_HP_J2585B	0x1031		/* J2585B */
 #define	PCI_PRODUCT_HP_DIVA	0x1048		/* Diva Serial Multiport */
+#define	PCI_PRODUCT_HP_ELROY	0x1054		/* Elroy Ropes-PCI */
 #define	PCI_PRODUCT_HP_VISUALIZE_FXE	0x108b		/* Visualize FXe */
 #define	PCI_PRODUCT_HP_TOPTOOLS	0x10c1		/* TopTools Communications Port */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
