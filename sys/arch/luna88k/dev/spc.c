@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.2 2004/07/27 12:36:32 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.3 2004/08/06 18:54:57 miod Exp $ */
 /* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -67,7 +68,7 @@ struct cfdriver spc_cd = {
 
 struct scsi_adapter spc_switch = {
 	spc_scsi_cmd,
-        spc_minphys,		/* no max at this level; handled by DMA code */
+        minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
