@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.23 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.24 2003/06/17 12:56:49 jfb Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -46,7 +46,7 @@
 .Ft struct cryptop *
 .Fn crypto_getreq "int"
 .Ft void
-.Fn crypto_freereq "void"
+.Fn crypto_freereq "struct cryptop *"
 .Bd -literal
 
 #define EALG_MAX_BLOCK_LEN      16
@@ -79,7 +79,7 @@ struct cryptop {
 	caddr_t            crp_buf;
 	caddr_t            crp_opaque;
 	struct cryptodesc *crp_desc;
-	int              (*crp_callback) (struct cryptop *);
+	int              (*crp_callback)(struct cryptop *);
 	struct cryptop    *crp_next;
 	caddr_t            crp_mac;
 };
@@ -96,16 +96,12 @@ struct cryptkop {
         u_int              krp_status;     /* return status */
         u_short            krp_iparams;    /* # of input parameters */
         u_short            krp_oparams;    /* # of output parameters */
-        u_int              krp_pad1;
-        struct crparam     krp_param[CRK_MAXPARAM];
-        struct crparam     krp_kvp[CRK_MAXPARAM];
-
-        u_int32_t          krp_hid;
+	u_int32_t	   krp_hid;
+        struct crparam     krp_param[CRK_MAXPARAM];	  /* kvm */
         int               (*krp_callback)(struct cryptkop *);
         struct cryptkop   *krp_next;
 };
 .Ed
-.br
 .Sh DESCRIPTION
 .Nm
 is a framework for drivers of cryptographic hardware to register with
