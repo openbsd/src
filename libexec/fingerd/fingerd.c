@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.17 1999/11/15 01:03:27 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.18 2000/07/07 03:48:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.17 1999/11/15 01:03:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.18 2000/07/07 03:48:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,9 +81,8 @@ main(argc, argv)
 	register FILE *fp;
 	register int ch, ac = 2;
 	int p[2], logging, secure, user_required, short_list;
-	size_t linesiz;
 #define	ENTRIES	50
-	char **ap, *av[ENTRIES + 1], **comp, *line, *prog, *lp, *hname;
+	char **ap, *av[ENTRIES + 1], **comp, line[8192], *lp, *prog, *hname;
 	char hostbuf[MAXHOSTNAMELEN];
 
 	prog = _PATH_FINGER;
@@ -136,33 +135,16 @@ main(argc, argv)
 		hname = hostbuf;
 	}
 
-	if ((lp = fgetln(stdin, &linesiz)) == NULL) {
+	if (fgets(line, sizeof(line), stdin) == NULL) {
 		if (logging)
 			syslog(LOG_NOTICE, "query from %s: %s", hname,
 			    feof(stdin) ? "EOF" : strerror(errno));
 		exit(1);
 	}
-	if ((line = malloc(linesiz + 1)) == NULL)
-		err("Out of memory");
-	memcpy(line, lp, linesiz);
-	line[linesiz] = '\0';
 
-	if (logging) {
-		char *tline;
-
-		if ((tline = strdup(line)) == NULL)
-			err("Out of memory");
-		/* Replace NULL, \r and \n with ' ' */
-		for (ch = 0; ch < linesiz; ch++) {
-			if (tline[ch] == '\0' || tline[ch] == '\r' ||
-			    tline[ch] == '\n')
-				tline[ch] = ' ';
-		}
-		for (lp = tline + linesiz - 1; lp >= tline && *lp == ' '; lp--)
-			*lp = '\0';
-		syslog(LOG_NOTICE, "query from %s: `%s'", hname, tline);
-		free(tline);
-	}
+	if (logging)
+		syslog(LOG_NOTICE, "query from %s: `%.*s'", hname,
+		    strcspn(line, "\r\n"), line);
 
 	/*
 	 * Note: we assume that finger(1) will treat "--" as end of
