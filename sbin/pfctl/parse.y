@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2002/06/07 22:53:45 pb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.77 2002/06/07 23:06:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1652,14 +1652,14 @@ expand_label_addr(const char *name, char *label, u_int8_t af,
 			char a[48];
 			int bits;
 
-			if (inet_ntop(af, &host->addr.addr, a, 
+			if (inet_ntop(af, &host->addr.addr, a,
 			    sizeof(a)) == NULL)
 				strlcat(a, "?", sizeof(a));
 			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
 			bits = unmask(&host->mask, af);
 			a[0] = 0;
-			if ((af == AF_INET && bits < 32) || 
-			    (af == AF_INET6 && bits < 128)) 
+			if ((af == AF_INET && bits < 32) ||
+			    (af == AF_INET6 && bits < 128))
 				snprintf(a, sizeof(a), "/%u", bits);
 			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
 		}
@@ -1677,30 +1677,30 @@ expand_label_port(const char *name, char *label, u_int8_t af,
 	char a1[6], a2[6], op[13];
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0; 
+		tmp[0] = 0;
 
 		strlcat(tmp, label, p-label+1);
 
 		snprintf(a1, sizeof(a1), "%u", ntohs(port->port[0]));
 		snprintf(a2, sizeof(a2), "%u", ntohs(port->port[1]));
 		if (!port->op)
-		    op[0] = 0;
+			op[0] = 0;
 		else if (port->op == PF_OP_IRG)
-		    snprintf(op, sizeof(op), "%s><%s", a1, a2);
+			snprintf(op, sizeof(op), "%s><%s", a1, a2);
 		else if (port->op == PF_OP_XRG)
-		    snprintf(op, sizeof(op), "%s<>%s", a1, a2);
+			snprintf(op, sizeof(op), "%s<>%s", a1, a2);
 		else if (port->op == PF_OP_EQ)
-		    snprintf(op, sizeof(op), "%s", a1);
+			snprintf(op, sizeof(op), "%s", a1);
 		else if (port->op == PF_OP_NE)
-		    snprintf(op, sizeof(op), "!=%s", a1);
+			snprintf(op, sizeof(op), "!=%s", a1);
 		else if (port->op == PF_OP_LT)
-		    snprintf(op, sizeof(op), "<%s", a1);
+			snprintf(op, sizeof(op), "<%s", a1);
 		else if (port->op == PF_OP_LE)
-		    snprintf(op, sizeof(op), "<=%s", a1);
+			snprintf(op, sizeof(op), "<=%s", a1);
 		else if (port->op == PF_OP_GT)
-		    snprintf(op, sizeof(op), ">%s", a1);
+			snprintf(op, sizeof(op), ">%s", a1);
 		else if (port->op == PF_OP_GE)
-		    snprintf(op, sizeof(op), ">=%s", a1);
+			snprintf(op, sizeof(op), ">=%s", a1);
 		strlcat(tmp, op, PF_RULE_LABEL_SIZE);
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
 		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
@@ -1758,11 +1758,11 @@ expand_rule(struct pf_rule *r,
 		    (src_host->af && dst_host->af &&
 		    src_host->af != dst_host->af) ||
 		    (src_host->ifindex && dst_host->ifindex &&
-		     src_host->ifindex != dst_host->ifindex) ||
+		    src_host->ifindex != dst_host->ifindex) ||
 		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
-		     src_host->ifindex != if_nametoindex(interface->ifname)) ||
+		    src_host->ifindex != if_nametoindex(interface->ifname)) ||
 		    (dst_host->ifindex && if_nametoindex(interface->ifname) &&
-		     dst_host->ifindex != if_nametoindex(interface->ifname)))
+		    dst_host->ifindex != if_nametoindex(interface->ifname)))
 			continue;
 		if (!r->af && src_host->af)
 			r->af = src_host->af;
@@ -1775,9 +1775,9 @@ expand_rule(struct pf_rule *r,
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
 		else
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
-			
+
 		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
-		expand_label(r->label, r->af, src_host, src_port, 
+		expand_label(r->label, r->af, src_host, src_port,
 		    dst_host, dst_port);
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
