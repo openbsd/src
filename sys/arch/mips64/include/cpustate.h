@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpustate.h,v 1.4 2004/09/09 22:21:41 pefo Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.5 2004/09/10 10:38:51 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -60,7 +60,7 @@
 	SAVE_REG($12, T4, frame, bo)		;\
 	SAVE_REG($13, T5, frame, bo)		;\
 	SAVE_REG($14, T6, frame, bo)		;\
-	SAVE_REG($15 T7, frame, bo)		;\
+	SAVE_REG($15, T7, frame, bo)		;\
 	SAVE_REG(t8, T8, frame, bo)		;\
 	SAVE_REG(t9, T9, frame, bo)		;\
 	SAVE_REG(gp, GP, frame, bo)		;\
