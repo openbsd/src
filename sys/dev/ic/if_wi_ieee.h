@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.10 2002/06/25 02:03:02 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.11 2002/09/10 08:21:35 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -36,8 +36,6 @@
 
 #ifndef _IF_WI_IEEE_H
 #define _IF_WI_IEEE_H
-
-#pragma pack(1)
 
 /*
  * This header defines a simple command interface to the FreeBSD
@@ -709,7 +707,5 @@ struct wi_scan_p2_hdr {
 #define WI_RID_CCA_TIME		0xFDC4 /* clear chan assess time */
 #define WI_RID_MAC_PROC_DELAY	0xFDC5 /* MAC processing delay time */
 #define WI_RID_DATA_RATES	0xFDC6 /* supported data rates */
-
-#pragma pack()
 
 #endif

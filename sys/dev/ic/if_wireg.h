@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.26 2002/08/13 03:49:51 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.27 2002/09/10 08:21:35 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -33,8 +33,6 @@
  *
  *	From: if_wireg.h,v 1.8.2.2 2001/08/25 00:48:25 nsayer Exp $
  */
-
-#pragma pack(1)
 
 #define WI_TIMEOUT	50000	/* 10x XXX just a guess at a good value.  */
 
@@ -613,4 +611,3 @@ struct wi_frame {
 #define WI_SNAPHDR_LEN		0x6
 #define WI_FCS_LEN		0x4
 
-#pragma pack()
