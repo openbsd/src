@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.71 2004/09/28 18:46:12 jason Exp $
+dnl	$OpenBSD: hardware,v 1.72 2004/09/28 18:53:33 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -10,6 +10,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 		Sun Fire V120
 		Enterprise 220R
 		Enterprise 250
+		Enterprise 420R
 		Enterprise 450
 		Enterprise 4500/5500
 		Netra T1 100/105
@@ -19,8 +20,8 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 		Ultra 10
 		Ultra 30
 		Ultra 60
+		Ultra 80
 dnl XXX uncomment machine entries as they become supported
-dnl		Ultra 80 / Enterprise 420R
 dnl		Ultra 450
 dnl		Enterprise 3000
 dnl		Sun Blade 1000
