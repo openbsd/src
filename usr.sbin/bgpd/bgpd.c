@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.87 2004/03/12 16:21:34 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.88 2004/03/16 12:06:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, csock, i, j, n, nfds, timeout;
+	int			 ch, i, j, n, nfds, timeout;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -191,9 +191,6 @@ main(int argc, char *argv[])
 	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl");
 
-	if ((csock = control_init()) == -1)
-		fatalx("control socket setup failed");
-
 	/* fork children */
 	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
 	    pipe_m2r, pipe_s2r);
@@ -213,7 +210,6 @@ main(int argc, char *argv[])
 	close(pipe_m2r[1]);
 	close(pipe_s2r[0]);
 	close(pipe_s2r[1]);
-	close(csock);
 
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
