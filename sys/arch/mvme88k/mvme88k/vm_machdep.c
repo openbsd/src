@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/06/08 08:09:16 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/06/27 04:29:22 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -60,9 +60,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
@@ -183,11 +181,7 @@ cpu_exit(struct proc *p)
 
 	(void) splimp();
 
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -264,11 +258,7 @@ vmapbuf(bp, len)
 	 * when the address gets a new mapping.
 	 */
 
-#if defined(UVM)
 	kva = uvm_km_valloc_wait(phys_map, len);
-#else
-	kva = kmem_alloc_wait(phys_map, len);
-#endif
 	
 	/*
 	 * Flush the TLB for the range [kva, kva + off]. Strictly speaking,
@@ -309,11 +299,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data & PGOFSET;
 	len = round_page(off + len);
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
-#else
-	kmem_free_wakeup(phys_map, addr, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.14 2001/05/20 05:53:09 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.15 2001/06/27 04:29:19 art Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1221,7 +1221,6 @@ ENTRY(copyoutstr)
 /*word 0	*/ /* to separate from routine below */
 /*######################################################################*/
 
-#if defined(UVM)
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
@@ -1548,7 +1547,6 @@ kcfault:
 	or	r2,   r0,   EFAULT	/* return fault */
 	br     kcdone
 #endif /* 0 */
-#endif /* UVM */
 
 /*
  * Gcc 2 generates calls to memcpy for bcopies of unknown size. memcpy

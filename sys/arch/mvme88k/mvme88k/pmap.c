@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2001/06/16 22:31:50 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2001/06/27 04:29:20 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -58,9 +58,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>			/* vm/vm_kern.h */
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/asm_macro.h>
 #include <machine/assert.h>
@@ -1412,11 +1410,7 @@ pmap_init(void)
 #endif
 
 	s = round_page(s);
-#if defined(UVM)
 	addr = (vaddr_t)uvm_km_zalloc(kernel_map, s);
-#else
-	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
-#endif
 
 	pv_head_table =  (pv_entry_t)addr;
 	addr += PV_TABLE_SIZE(npages);
@@ -1624,26 +1618,10 @@ pmap_pinit(pmap_t p)
 	}
 #endif
 
-#if defined(UVM)
 	segdt = (sdt_entry_t *)uvm_km_zalloc(kernel_map, s);
-#else
-	segdt = (sdt_entry_t *)kmem_alloc(kernel_map, s);
-#endif
 	if (segdt == NULL)
 		panic("pmap_create: kmem_alloc failure");
 
-#if !defined(UVM)
-	/* uvm_km_zalloc gives zeroed memory */
-	/* use pmap zero page to zero it out */
-	addr = (vm_offset_t)segdt;
-	for (i=0; i<atop(s); i++) {
-		paddr_t pa;
-
-		pmap_extract(kernel_pmap, addr, &pa);
-		pmap_zero_page(pa);
-		addr += PAGE_SIZE;
-	}
-#endif
 	
 	/*
 	 * Initialize pointer to segment table both virtual and physical.
@@ -1782,12 +1760,7 @@ pmap_free_tables(pmap_t pmap)
 	/*
 	 * Freeing both *actual* and *shadow* segment tables
 	 */
-#if defined(UVM)
 	uvm_km_free(kernel_map, (vm_offset_t)sdttbl, 2*SDT_SIZE);
-#else
-	kmem_free(kernel_map, (vm_offset_t)sdttbl, 2*SDT_SIZE);
-#endif
-
 } /* pmap_free_tables() */
 
 void
@@ -2583,11 +2556,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 	}
 
 	/* XXX */
-#if defined(UVM)
 	pdt_vaddr = uvm_km_zalloc(kernel_map, PAGE_SIZE);
-#else
-	pdt_vaddr = kmem_alloc (kernel_map, PAGE_SIZE);
-#endif
 	pmap_extract(kernel_pmap, pdt_vaddr, &pdt_paddr);
 
 #ifdef MVME188
@@ -2608,11 +2577,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 		 */
 		PMAP_UNLOCK(map, spl);
 		/* XXX */
-#if defined(UVM)
 		uvm_km_free(kernel_map, pdt_vaddr, PAGE_SIZE);
-#else
-		kmem_free (kernel_map, pdt_vaddr, PAGE_SIZE);
-#endif
 
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_EXP)

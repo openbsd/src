@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2001/05/05 20:56:47 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2001/06/27 04:29:21 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -48,9 +48,7 @@
 #include <sys/param.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>			/* kernel_map */
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
@@ -227,11 +225,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 		last_trap[2] = last_trap[3];
 		last_trap[3] = type;
 	}
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)
 		p = &proc0;
 
@@ -419,11 +413,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 		}
 		if ((frame->dpfsr >> 16 & 0x7) == 0x4	     /* seg fault  */
 		    || (frame->dpfsr >> 16 & 0x7) == 0x5) {  /* page fault */
-#if defined(UVM)
 			result = uvm_fault(map, va, 0, ftype);
-#else
-			result = vm_fault(map, va, ftype, FALSE); 
-#endif
 			if (result == KERN_SUCCESS) {
 			/*
 			 * We could resolve the fault. Call
@@ -507,11 +497,7 @@ outtahere:
 		/* Call vm_fault() to resolve non-bus error faults */
 		if ((frame->ipfsr >> 16 & 0x7) != 0x3 &&
 		    (frame->dpfsr >> 16 & 0x7) != 0x3) {
-#if defined(UVM)
 			result = uvm_fault(map, va, 0, ftype);
-#else
-			result = vm_fault(map, va, ftype, FALSE); 
-#endif
 			frame->ipfsr = frame->dpfsr = 0;
 		}
 
@@ -668,11 +654,7 @@ outtahere:
 		break;
 
 	case T_ASTFLT+T_USER:
-#if defined(UVM)
 		uvmexp.softs++;
-#else
-		cnt.v_soft++;
-#endif
 		want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
@@ -728,11 +710,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 	extern unsigned guarded_access_end;
 	extern unsigned guarded_access_bad;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 
 	if ((p = curproc) == NULL)
 		p = &proc0;
@@ -996,11 +974,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 		if (type == T_DATAFLT) {
 			if ((frame->dsr & CMMU_DSR_SI)	      /* seg fault  */
 			    || (frame->dsr & CMMU_DSR_PI)) { /* page fault */
-#if defined(UVM)
 				result = uvm_fault(map, va, 0, ftype);
-#else
-				result = vm_fault(map, va, ftype, FALSE); 
-#endif
 				if (result == KERN_SUCCESS) {
 					return;
 				}
@@ -1008,11 +982,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 		} else {
 			if ((frame->isr & CMMU_ISR_SI)	      /* seg fault  */
 			    || (frame->isr & CMMU_ISR_PI)) { /* page fault */
-#if defined(UVM)
 				result = uvm_fault(map, va, 0, ftype);
-#else
-				result = vm_fault(map, va, ftype, FALSE); 
-#endif
 				if (result == KERN_SUCCESS) {
 					return;
 				}
@@ -1057,11 +1027,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 		if (type == T_DATAFLT+T_USER) {
 			if ((frame->dsr & CMMU_DSR_SI)	      /* seg fault  */
 			    || (frame->dsr & CMMU_DSR_PI)) { /* page fault */
-#if defined(UVM)
 				result = uvm_fault(map, va, 0, ftype);
-#else
-				result = vm_fault(map, va, ftype, FALSE); 
-#endif
 				if (result == KERN_SUCCESS) {
 					return;
 				}
@@ -1069,11 +1035,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 		} else {
 			if ((frame->isr & CMMU_ISR_SI)	      /* seg fault  */
 			    || (frame->isr & CMMU_ISR_PI)) { /* page fault */
-#if defined(UVM)
 				result = uvm_fault(map, va, 0, ftype);
-#else
-				result = vm_fault(map, va, ftype, FALSE); 
-#endif
 				if (result == KERN_SUCCESS) {
 					return;
 				}
@@ -1204,11 +1166,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 		break;
 
 	case T_ASTFLT+T_USER:
-#if defined(UVM)
 		uvmexp.softs++;
-#else
-		cnt.v_soft++;
-#endif
 		want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
@@ -1298,11 +1256,7 @@ syscall(register_t code, struct m88100_saved_state *tf)
 	u_quad_t sticks;
 	extern struct pcb *curpcb;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 
 	p = curproc;
 
@@ -1460,11 +1414,7 @@ m197_syscall(register_t code, struct m88100_saved_state *tf)
 	u_quad_t sticks;
 	extern struct pcb *curpcb;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 
 	p = curproc;
 

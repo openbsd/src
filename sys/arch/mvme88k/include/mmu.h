@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.8 2001/06/14 21:30:40 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.9 2001/06/27 04:29:19 art Exp $ */
 /*
  * Ashura Project
  */
@@ -182,11 +182,7 @@ typedef union batc_template {
 #define LOG2_PDT_SIZE			(PDT_BITS + 2)
 #define LOG2_PDT_TABLE_GROUP_SIZE	(PAGE_SHIFT - LOG2_PDT_SIZE)
 #define PDT_TABLE_GROUP_SIZE		(1 << LOG2_PDT_TABLE_GROUP_SIZE)
-#if defined(UVM)
 #define PT_FREE(tbl)	uvm_km_free(kernel_map, (vaddr_t)tbl, PAGE_SIZE)
-#else
-#define PT_FREE(tbl)	kmem_free(kernel_map, (vm_offset_t)tbl, PAGE_SIZE)
-#endif
 
 
 /*
