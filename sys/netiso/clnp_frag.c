@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_frag.c,v 1.7 2004/06/20 21:09:02 tholo Exp $	*/
+/*	$OpenBSD: clnp_frag.c,v 1.8 2004/06/20 21:33:00 tholo Exp $	*/
 /*	$NetBSD: clnp_frag.c,v 1.8 1996/04/13 01:34:23 cgd Exp $	*/
 
 /*-
@@ -875,7 +875,7 @@ static int      troll_cnt;
 float
 troll_random()
 {
-	long            t = random() % 100;
+	long            t = arc4random() % 100;
 
 	return ((float) t / (float) 100);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.18 2004/06/20 21:09:02 tholo Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.19 2004/06/20 21:33:00 tholo Exp $	*/
 
 /*-
  *
@@ -97,7 +97,7 @@ ipx_init()
 	ipx_broadnet = * (union ipx_net *) allones;
 	ipx_broadhost = * (union ipx_host *) allones;
 
-	ipx_pexseq = random();
+	ipx_pexseq = arc4random();
 	ipxintrq.ifq_maxlen = ipxqmaxlen;
 
 	ipx_netmask.sipx_len = 6;
