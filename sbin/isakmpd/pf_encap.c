@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.14 1999/05/01 22:57:38 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.65 1999/05/01 21:08:42 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.15 1999/05/02 19:16:12 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.69 1999/05/02 12:50:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -153,6 +153,11 @@ pf_encap_expire (struct encap_msghdr *emsg)
   if (emsg->em_not_type == NOTIFY_HARD_EXPIRE)
     {
       /*
+       * XXX This should not be necessary anymore due to the 
+       *     connection abstraction.
+       */
+#if 0
+      /*
        * If the expired SA is something we know how to renegotiate, and it
        * has not already been replaced.  Establish routes that requests SAs
        * from us on use.
@@ -163,6 +168,7 @@ pf_encap_expire (struct encap_msghdr *emsg)
 	 * a new negotiation, considering it might fail.
 	 */
 	pf_encap_connection_check (sa->name);
+#endif
 
       /* Remove the old SA, it isn't useful anymore.  */
       sa_free (sa);
@@ -790,8 +796,12 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 		  sizeof *rtmsg + 2 * ROUNDUP (SENT_IP4_LEN)
 		  + ROUNDUP (SENT_IPSP_LEN));
   if (!rtmsg)
-    /* XXX Log?  */
-    goto fail;
+    {
+      log_error ("pf_encap_route: calloc (1, %d) failed",
+		 sizeof *rtmsg + 2 * ROUNDUP (SENT_IP4_LEN)
+		 + ROUNDUP (SENT_IPSP_LEN));
+      goto fail;
+    }
 
   s = socket (PF_ROUTE, SOCK_RAW, AF_UNSPEC);
   if (s == -1)
@@ -894,10 +904,11 @@ pf_encap_connection_check (char *conn)
   struct in_addr laddr, lmask, raddr, rmask, gwaddr;
   int lid, rid, err;
 
-  if (sa_lookup_by_name (conn, 2))
+  if (sa_lookup_by_name (conn, 2) || exchange_lookup_by_name (conn, 2))
     {
       log_debug (LOG_SYSDEP, 70,
-		 "pf_key_v2_connection_check: SA for %s exists", conn);
+		 "pf_encap_connection_check: SA or exchange for %s exists", 
+		 conn);
       return;
     }
 
