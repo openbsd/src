@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.93 2005/02/08 17:42:49 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.94 2005/02/16 12:35:10 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -4508,8 +4508,17 @@ in an interactive session, controlled by the
 and
 .Ic vi
 options (at most one of these can be set at once).
-If none of these options are enabled, the shell simply reads lines using the
-normal
+The default is
+.Ic emacs .
+Editing modes can be set explicitly using the
+.Ic set
+built-in, or implicitly via the
+.Ev EDITOR
+and
+.Ev VISUAL
+environment variables.
+If none of these options are enabled,
+the shell simply reads lines using the normal
 .Xr tty 4
 driver.
 If the
