@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.2 2004/04/27 17:52:21 otto Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.3 2004/05/09 03:22:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -39,13 +39,12 @@ extern char *__progname;
 int
 main(int argc, char **argv)
 {
-	struct addrinfo hints, *ail, *aif, *laddr, *faddr;
-	struct tcp_ident_mapping tir;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_DROP };
-	int gaierr;
+	struct addrinfo hints, *ail, *aif, *laddr, *faddr;
 	char fhbuf[NI_MAXHOST], fsbuf[NI_MAXSERV];
 	char lhbuf[NI_MAXHOST], lsbuf[NI_MAXSERV];
-	int rval = 0;
+	struct tcp_ident_mapping tir;
+	int gaierr, rval = 0;
 
 	if (argc != 5) {
 		fprintf(stderr, "usage: %s laddr lport faddr fport\n",
@@ -97,6 +96,5 @@ main(int argc, char **argv)
 	}
 	freeaddrinfo(laddr);
 	freeaddrinfo(faddr);
-
 	exit(rval);
 }
