@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.10 2002/07/19 02:38:40 deraadt Exp $
+#	$Id: ypinit.sh,v 1.11 2002/08/30 20:07:24 hugh Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -279,7 +279,7 @@ do
 	then
 		HOST_LIST="${HOST}"
 		echo ""
-		echo "At this point, we have to construct a list of this domains YP servers."
+		echo "At this point, we have to construct a list of this domain's YP servers."
 		echo "${HOST} is already known as master server."
 		echo "Please continue to add any slave servers, one per line. When you are"
 		echo "done with the list, type a <control D>."
