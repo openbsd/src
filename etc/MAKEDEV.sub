@@ -1,6 +1,6 @@
-dnl	$OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp $
+dnl	$OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp $
 dnl
-dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
+dnl Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -74,8 +74,8 @@ dnl store a version string for 'this' file
 dnl
 dnl vers ( uniqueidstring, versionstring, subdir )
 dnl
-dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp $-})
-dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp $-}, etc.MACHINE)
+dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp $-})
+dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp $-}, etc.MACHINE)
 dnl
 dnl if subdir is defined, prepend it to the filename in the version string
 dnl
@@ -86,7 +86,7 @@ define({-vers-},
 dnl
 dnl Version info for this file:
 dnl
-vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp $-})dnl
+vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp $-})dnl
 dnl
 dnl
 define({-_addsubdir-},
