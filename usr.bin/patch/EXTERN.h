@@ -1,4 +1,4 @@
-/*	$OpenBSD: EXTERN.h,v 1.2 1996/06/10 11:21:23 niklas Exp $ */
+/* $OpenBSD: EXTERN.h,v 1.3 2003/07/21 14:00:41 deraadt Exp $ */
 
 #ifdef EXT
 #undef EXT

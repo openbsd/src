@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.13 2003/07/18 02:00:09 deraadt Exp $ */
+/* $OpenBSD: common.h,v 1.14 2003/07/21 14:00:41 deraadt Exp $ */
 
 #define DEBUGGING
 
@@ -34,8 +34,8 @@
 #define TRUE (1)
 #define FALSE (0)
 
-#define MAXHUNKSIZE 100000		/* is this enough lines? */
-#define INITHUNKMAX 125			/* initial dynamic allocation size */
+#define MAXHUNKSIZE 100000	/* is this enough lines? */
+#define INITHUNKMAX 125		/* initial dynamic allocation size */
 #define MAXLINELEN 8192
 #define BUFFERSIZE 1024
 
@@ -66,54 +66,54 @@
 
 /* typedefs */
 
-typedef char bool;
-typedef long LINENUM;			/* must be signed */
-typedef unsigned MEM;			/* what to feed malloc */
+typedef char    bool;
+typedef long    LINENUM;	/* must be signed */
+typedef unsigned MEM;		/* what to feed malloc */
 
 /* globals */
 
-EXT int Argc;				/* guess */
-EXT char **Argv;
-EXT int Argc_last;			/* for restarting plan_b */
-EXT char **Argv_last;
+EXT int         Argc;		/* guess */
+EXT char      **Argv;
+EXT int         Argc_last;	/* for restarting plan_b */
+EXT char      **Argv_last;
 
-EXT struct stat filestat;		/* file statistics area */
+EXT struct stat filestat;	/* file statistics area */
 EXT int filemode INIT(0644);
 
-EXT char buf[MAXLINELEN];		/* general purpose buffer */
-EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
-EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
+EXT char        buf[MAXLINELEN];/* general purpose buffer */
+EXT FILE       *ofp INIT(Nullfp);	/* output file pointer */
+EXT FILE       *rejfp INIT(Nullfp);	/* reject file pointer */
 
-EXT int myuid;				/* cache getuid return value */
+EXT int         myuid;		/* cache getuid return value */
 
 EXT bool using_plan_a INIT(TRUE);	/* try to keep everything in memory */
-EXT bool out_of_mem INIT(FALSE);	/* ran out of memory in plan a */
+EXT bool out_of_mem INIT(FALSE);/* ran out of memory in plan a */
 
 #define MAXFILEC 2
-EXT int filec INIT(0);			/* how many file arguments? */
-EXT char *filearg[MAXFILEC];
+EXT int filec   INIT(0);	/* how many file arguments? */
+EXT char       *filearg[MAXFILEC];
 EXT bool ok_to_create_file INIT(FALSE);
-EXT char *bestguess INIT(Nullch);	/* guess at correct filename */
+EXT char       *bestguess INIT(Nullch);	/* guess at correct filename */
 
-EXT char *outname INIT(Nullch);
-EXT char rejname[128];
+EXT char       *outname INIT(Nullch);
+EXT char        rejname[128];
 
-EXT char *origprae INIT(Nullch);
+EXT char       *origprae INIT(Nullch);
 
-EXT char *TMPOUTNAME;
-EXT char *TMPINNAME;
-EXT char *TMPREJNAME;
-EXT char *TMPPATNAME;
+EXT char       *TMPOUTNAME;
+EXT char       *TMPINNAME;
+EXT char       *TMPREJNAME;
+EXT char       *TMPPATNAME;
 EXT bool toutkeep INIT(FALSE);
 EXT bool trejkeep INIT(FALSE);
 
 EXT LINENUM last_offset INIT(0);
 #ifdef DEBUGGING
-EXT int debug INIT(0);
+EXT int debug   INIT(0);
 #endif
 EXT LINENUM maxfuzz INIT(2);
-EXT bool force INIT(FALSE);
-EXT bool batch INIT(FALSE);
+EXT bool force  INIT(FALSE);
+EXT bool batch  INIT(FALSE);
 EXT bool verbose INIT(TRUE);
 EXT bool reverse INIT(FALSE);
 EXT bool noreverse INIT(FALSE);
@@ -128,13 +128,13 @@ EXT bool canonicalize INIT(FALSE);
 #define UNI_DIFF 5
 EXT int diff_type INIT(0);
 
-EXT bool do_defines INIT(FALSE);	/* patch using ifdef, ifndef, etc. */
-EXT char if_defined[128];		/* #ifdef xyzzy */
-EXT char not_defined[128];		/* #ifndef xyzzy */
-EXT char else_defined[] INIT("#else\n");/* #else */
-EXT char end_defined[128];		/* #endif xyzzy */
+EXT bool do_defines INIT(FALSE);/* patch using ifdef, ifndef, etc. */
+EXT char        if_defined[128];/* #ifdef xyzzy */
+EXT char        not_defined[128];	/* #ifndef xyzzy */
+EXT char        else_defined[] INIT("#else\n");	/* #else */
+EXT char        end_defined[128];	/* #endif xyzzy */
 
-EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
+EXT char       *revision INIT(Nullch);	/* prerequisite revision, if any */
 
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
