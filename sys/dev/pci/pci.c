@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.27 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: pci.c,v 1.28 2002/03/27 15:10:44 jason Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -474,9 +474,10 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		switch(io->pi_width) {
 		case 4:
 			/* Make sure the register is properly aligned */
-			if (io->pi_reg & 0x3) 
+			if (io->pi_reg & 0x3)
 				return EINVAL;
 			pci_conf_write(pc, tag, io->pi_reg, io->pi_data);
+			error = 0;
 			break;
 		default:
 			error = ENODEV;
