@@ -446,6 +446,9 @@ case "${target}" in
   m68k-*-netbsd*)
     noconfigdirs="$noconfigdirs gdb"
     ;;
+  m68k-*-openbsd*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
   m68k-apollo-*)
     noconfigdirs="$noconfigdirs ld binutils gprof"
     ;;

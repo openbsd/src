@@ -25,7 +25,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include   <_G_config.h>
 
-#if defined(__bsdi__) || defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 #define _begx begx
 #define _begy begy
 #define _maxx maxx

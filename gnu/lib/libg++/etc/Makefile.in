@@ -43,8 +43,8 @@ DVIFILES = configure.dvi standards.dvi cfg-paper.dvi
 
 all:
 
-install:  $(srcdir)/configure.man
-	$(INSTALL_DATA) $(srcdir)/configure.man $(man1dir)/configure.1
+install:  $(srcdir)/configure.1
+	$(INSTALL_DATA) $(srcdir)/configure.1 $(man1dir)/configure.1
 
 uninstall:
 	cd $(infodir) && rm -f configure.info* standards.info* cfg-paper.info*

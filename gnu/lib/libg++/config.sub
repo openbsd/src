@@ -461,6 +461,10 @@ case $basic_machine in
 		basic_machine=i386-unknown		# CYGNUS LOCAL
 		os=-netbsd
 		;;
+	openbsd386)
+		basic_machine=i386-unknown		# CYGNUS LOCAL
+		os=-openbsd
+		;;
 	news | news700 | news800 | news900)
 		basic_machine=m68k-sony
 		os=-newsos
@@ -809,7 +813,7 @@ case $os in
 	      | -amigados* | -msdos* | -moss* | -newsos* | -unicos* | -aos* \
 	      | -nindy* | -vxworks* | -ebmon* | -hms* | -mvs* | -clix* \
 	      | -riscos* | -linux* | -uniplus* | -iris* | -rtu* | -xenix* \
-	      | -hiux* | -386bsd* | -netbsd* | -freebsd* | -riscix*  | -lites* \
+	      | -hiux* | -386bsd* | -netbsd* | -openbsd* | -freebsd* | -riscix*  | -lites* \
 	      | -lynxos* | -bosx* | -nextstep* | -cxux* | -aout* | -elf* \
 	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta | -udi | -eabi*)
 		;;
