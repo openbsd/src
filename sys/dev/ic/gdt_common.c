@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.27 2003/12/16 09:27:45 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.28 2004/04/12 05:33:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -58,7 +58,7 @@ int gdt_maxcmds = GDT_MAXCMDS;
 #endif
 
 #define GDT_DRIVER_VERSION 1
-#define GDT_DRIVER_SUBVERSION 1
+#define GDT_DRIVER_SUBVERSION 2
 
 int	gdt_async_event(struct gdt_softc *, int);
 void	gdt_chain(struct gdt_softc *);
@@ -175,19 +175,6 @@ gdt_attach(gdt)
 		return (1);
 	}
 
-	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_MOUNT, 0xffff, 1,
-	    0)) {
-		printf("cache service mount error %d\n",
-		    gdt->sc_status);
-		return (1);
-	}
-
-	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_INIT, GDT_LINUX_OS, 0,
-	    0)) {
-		printf("cache service post-mount initialization error %d\n",
-		    gdt->sc_status);
-		return (1);
-	}
 	cdev_cnt = (u_int16_t)gdt->sc_info;
 
 	/* Detect number of busses */
