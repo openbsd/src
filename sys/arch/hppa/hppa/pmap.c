@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 1999/12/12 17:45:23 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2000/01/17 04:49:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -429,7 +429,7 @@ pmap_free_pv(struct pv_entry *pv)
  *	insert specified mapping into pa->va translation list,
  *	where pv specifies the list head (for particular pa)
  */
-static __inline void
+static __inline struct pv_entry *
 pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
     struct pv_entry *pv)
 {	
@@ -437,7 +437,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 	int s;
 
 	if (!pmap_initialized)
-		return;
+		return NULL;
 
 #ifdef DEBUG
 	if (pv == NULL)
@@ -488,6 +488,8 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 	pmap_enter_va(pv->pv_space, va, pv);
 
 	splx(s);
+
+	return pv;
 }
 
 /*
@@ -1020,10 +1022,11 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: new mapping\n");
 #endif
-		pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv);
+		pv = pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv);
 		pmap->pmap_stats.resident_count++;
-	}
-	else {
+
+	} else {
+
 		/* see if we are remapping the page to another PA */
 		if (ppv->pv_tlbpage != tlbpage) {
 #ifdef PMAPDEBUG
@@ -1033,7 +1036,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 #endif
 			/* update tlbprot to avoid extra subsequent fault */
 			pmap_remove_pv(pmap, va, ppv);
-			pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv);
+			pv = pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv);
 		} else {
 			/* We are just changing the protection.  */
 #ifdef PMAPDEBUG
@@ -1042,17 +1045,14 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 				    ppv->pv_tlbprot, TLB_BITS,
 				    tlbprot, TLB_BITS);
 #endif
+			pv = ppv;
+			ppv->pv_tlbprot = (tlbprot & ~TLB_PID_MASK) |
+			    (ppv->pv_tlbprot & ~(TLB_AR_MASK|TLB_PID_MASK));
 		}
-		pv = ppv;
 
 		/* Flush the current TLB entry to force a fault and reload */
 		pmap_clear_pv(pa, NULL);
 	}
-
-	/*
-	 * Determine the protection information for this mapping.
-	 */
-	/* XXX tlbprot |= (pv->pv_tlbprot & ~(TLB_AR_MASK|TLB_PID_MASK)); */
 
 	/*
 	 * Add in software bits and adjust statistics
