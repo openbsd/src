@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.103 2004/03/02 19:29:01 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.104 2004/03/02 19:45:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -454,7 +454,8 @@ const char	*log_addr(const struct bgpd_addr *);
 int	 cmdline_symset(char *);
 
 /* config.c */
-int	 check_file_secrecy(int fd, const char *fname);
+int	 check_file_secrecy(int, const char *);
+int	 host(const char *, struct bgpd_addr *, u_int8_t *);
 
 /* imsg.c */
 void	 imsg_init(struct imsgbuf *, int);

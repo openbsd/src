@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.29 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.30 2004/03/02 19:45:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <ifaddrs.h>
+#include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,6 +34,8 @@
 void			*sconf;
 
 u_int32_t	get_bgpid(void);
+int		host_v4(const char *, struct bgpd_addr *, u_int8_t *);
+int		host_v6(const char *, struct bgpd_addr *);
 
 int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
@@ -112,6 +115,90 @@ check_file_secrecy(int fd, const char *fname)
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
 		log_warnx("%s: group/world readable/writeable", fname);
 		return (-1);
+	}
+
+	return (0);
+}
+
+int
+host(const char *s, struct bgpd_addr *h, u_int8_t *len)
+{
+	int			 done = 0;
+	int			 mask;
+	char			*p, *q, *ps;
+
+	if ((p = strrchr(s, '/')) != NULL) {
+		mask = strtol(p+1, &q, 0);
+		if (!q || *q || mask > 128 || q == (p+1)) {
+			log_warnx("invalid netmask");
+			return (0);
+		}
+		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
+			fatal("host: malloc");
+		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
+	} else {
+		if ((ps = strdup(s)) == NULL)
+			fatal("host: strdup");
+		mask = 128;
+	}
+
+	bzero(h, sizeof(struct bgpd_addr));
+
+	/* IPv4 address? */
+	if (!done)
+		done = host_v4(s, h, len);
+
+	/* IPv6 address? */
+	if (!done) {
+		done = host_v6(ps, h);
+		*len = mask;
+	}
+
+	free(ps);
+
+	return (done);
+}
+
+int
+host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
+{
+	struct in_addr		 ina;
+	int			 bits = 32;
+
+	memset(&ina, 0, sizeof(struct in_addr));
+	if (strrchr(s, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+			return (0);
+	} else {
+		if (inet_pton(AF_INET, s, &ina) != 1)
+			return (0);
+	}
+
+	h->af = AF_INET;
+	h->v4.s_addr = ina.s_addr;
+	*len = bits;
+
+	return (1);
+}
+
+int
+host_v6(const char *s, struct bgpd_addr *h)
+{
+	struct addrinfo		 hints, *res;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, "0", &hints, &res) == 0) {
+		h->af = AF_INET6;
+		memcpy(&h->v6,
+		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+		    sizeof(h->v6));
+		h->scope_id =
+		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
+
+		return (1);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2004/03/01 22:58:12 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.68 2004/03/02 19:45:04 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,6 +91,10 @@ typedef struct {
 		struct filter_peers	 filter_peers;
 		struct filter_match	 filter_match;
 		struct filter_set	 filter_set;
+		struct {
+			struct bgpd_addr	prefix;
+			u_int8_t		len;
+		}			prefix;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -114,6 +118,7 @@ typedef struct {
 %type	<v.number>		number asnumber optnumber yesno inout
 %type	<v.string>		string
 %type	<v.addr>		address
+%type	<v.prefix>		prefix
 %type	<v.u8>			action quick direction
 %type	<v.filter_peers>	filter_peer
 %type	<v.filter_match>	filter_match prefixlenop
@@ -227,18 +232,19 @@ conf_main	: AS asnumber		{
 			else
 				YYERROR;
 		}
-		| NETWORK address '/' number filter_set	{
+		| NETWORK prefix filter_set	{
 			struct network	*n;
 
-			if ((n = calloc(1, sizeof(struct network))) == NULL)
-				fatal("new_network");
-			memcpy(&n->net.prefix, &$2, sizeof(n->net.prefix));
-			if ($4 > 32) {
-				yyerror("invalid netmask");
+			if ($2.prefix.af != AF_INET) {
+				yyerror("king bula sez: AF_INET only for now");
 				YYERROR;
 			}
-			n->net.prefixlen = $4;
-			memcpy(&n->net.attrset, &$5,
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			memcpy(&n->net.prefix, &$2.prefix,
+			    sizeof(n->net.prefix));
+			n->net.prefixlen = $2.len;
+			memcpy(&n->net.attrset, &$3,
 			    sizeof(n->net.attrset));
 
 			TAILQ_INSERT_TAIL(netconf, n, network_l);
@@ -271,19 +277,38 @@ inout		: IN		{ $$ = 1; }
 		;
 
 address		: STRING		{
-			int	n;
+			u_int8_t	len;
 
-			bzero(&$$, sizeof($$));
-			$$.af = AF_INET;
-			if ((n = inet_pton(AF_INET, $1, &$$.v4)) == -1) {
-				yyerror("inet_pton: %s", strerror(errno));
-				YYERROR;
-			}
-			if (n == 0) {
+			if (!host($1, &$$, &len)) {
 				yyerror("could not parse address spec \"%s\"",
 				     $1);
 				YYERROR;
 			}
+
+			if (($$.af == AF_INET && len != 32) ||
+			    ($$.af == AF_INET6 && len != 128)) {
+				/* unreachable */
+				yyerror("got prefixlen %u, expected %u",
+				    len, $$.af == AF_INET ? 32 : 128);
+				YYERROR;
+			}
+		}
+		;
+
+prefix		: STRING '/' number	{
+			char	*s;
+
+			if (asprintf(&s, "%s/%u", $1, $3) == -1)
+				fatal(NULL);
+				
+			if (!host(s, &$$.prefix, &$$.len)) {
+				free(s);
+				yyerror("could not parse address \"%s/%s\"",
+				     $1, $3);
+				YYERROR;
+			}
+
+			free(s);
 		}
 		;
 
@@ -300,7 +325,10 @@ optnumber	: /* empty */		{ $$ = 0; }
 
 neighbor	: {	curpeer = new_peer(); }
 		    NEIGHBOR address optnl '{' optnl {
-			curpeer->conf.remote_addr.af = AF_INET;
+			if ($3.af != AF_INET) {
+				yyerror("king bula sez: IPv4 transport only");
+				YYERROR;
+			}
 			memcpy(&curpeer->conf.remote_addr, &$3,
 			    sizeof(curpeer->conf.remote_addr));
 			if (get_id(curpeer)) {
@@ -467,6 +495,11 @@ filterrule	: action quick direction filter_peer filter_match filter_set
 		{
 			struct filter_rule	r;
 
+			if ($5.prefix.addr.af && $5.prefix.addr.af != AF_INET) {
+				yyerror("king bula sez: AF_INET only for now");
+				YYERROR;
+			}
+
 			bzero(&r, sizeof(r));
 			r.action = $1;
 			r.quick = $2;
@@ -523,30 +556,31 @@ filter_peer	: ANY		{ $$.peerid = $$.groupid = 0; }
 		;
 
 filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
-		| PREFIX address '/' number	{
+		| PREFIX prefix			{
 			bzero(&$$, sizeof($$));
-			memcpy(&$$.prefix.addr, &$2, sizeof($$.prefix.addr));
-			if ($4 > 32) {
-				yyerror("prefixlength must be <= 32");
-				YYERROR;
-			}
-			$$.prefix.len = $4;
+			memcpy(&$$.prefix.addr, &$2.prefix,
+			    sizeof($$.prefix.addr));
+			$$.prefix.len = $2.len;
 		}
-		| PREFIX address '/' number PREFIXLEN prefixlenop	{
+		| PREFIX prefix PREFIXLEN prefixlenop	{
 			bzero(&$$, sizeof($$));
-			memcpy(&$$.prefix.addr, &$2, sizeof($$.prefix.addr));
-			if ($4 > 32) {
-				yyerror("prefixlength must be <= 32");
-				YYERROR;
-			}
-			$$.prefix.len = $4;
-			$$.prefixlen = $6.prefixlen;
-			$$.prefixlen.af = AF_INET;
-			if ($$.prefixlen.len_max > 32 ||
-			    $$.prefixlen.len_min > 32) {
-				yyerror("prefixlength must be <= 32");
-				YYERROR;
-			}
+			memcpy(&$$.prefix.addr, &$2.prefix,
+			    sizeof($$.prefix.addr));
+			$$.prefix.len = $2.len;
+			$$.prefixlen = $4.prefixlen;
+			$$.prefixlen.af = $2.prefix.af;
+			if ($$.prefixlen.af == AF_INET)
+				if ($$.prefixlen.len_max > 32 ||
+				    $$.prefixlen.len_min > 32) {
+					yyerror("prefixlen must be <= 32");
+					YYERROR;
+				}
+			if ($$.prefixlen.af == AF_INET6)
+				if ($$.prefixlen.len_max > 128 ||
+				    $$.prefixlen.len_min > 128) {
+					yyerror("prefixlen must be <= 128");
+					YYERROR;
+				}
 		}
 		| PREFIXLEN prefixlenop		{
 			bzero(&$$, sizeof($$));
