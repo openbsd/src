@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.15 2000/06/28 17:48:10 aaron Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.16 2000/06/30 22:33:07 aaron Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -672,13 +672,21 @@ pcic_poll_intr(arg)
 	void *arg;
 {
 	struct pcic_softc *sc = arg;
-	int i;
+	int i, s;
+
+	/*
+	 * Since we're polling, we aren't in interrupt context, so block any
+	 * actual interrupts coming from the pcic.
+	 */
+	s = spltty();
 
 	for (i = 0; i < PCIC_NSLOTS; i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_intr_socket(&sc->handle[i]);
 
 	timeout_add(&sc->poll_timeout, hz / 2);
+
+	splx(s);
 }
 
 int
