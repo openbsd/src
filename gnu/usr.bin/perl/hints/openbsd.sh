@@ -25,23 +25,26 @@ d_setruid=$undef
 
 #
 # Not all platforms support dynamic loading...
+# For the case of "$openbsd_distribution", the hints file
+# needs to know whether we are using dynamic loading so that
+# it can set the libperl name appropriately.
+# Allow command line overrides.
 #
-case "`arch -s`-${osvers}" in
-alpha-2.[0-8]|mips-*|vax-*|powerpc-2.[0-7]|m88k-*)
-	usedl=$undef
+ARCH=`arch | sed 's/^OpenBSD.//'`
+case "${ARCH}-${osvers}" in
+alpha-2.[0-8]|mips-2.[0-8]|powerpc-2.[0-7]|m88k-*|vax-*)
+	test -z "$usedl" && usedl=$undef
 	;;
 *)
-	usedl=$define
-	d_dlopen=$define
-	d_dlerror=$define
-	# we use -fPIC here because -fpic is *NOT* enough for some of the
+	test -z "$usedl" && usedl=$define
+	# We use -fPIC here because -fpic is *NOT* enough for some of the
 	# extensions like Tk on some OpenBSD platforms (ie: sparc)
 	cccdlflags="-DPIC -fPIC $cccdlflags"
 	case "$osvers" in
 	[01].*|2.[0-7]|2.[0-7].*)
 		lddlflags="-Bshareable $lddlflags"
 		;;
-	2.[8-9]) # for 2.8
+	2.[8-9]|3.0)
 		ld=${cc:-cc}
 		lddlflags="-shared -fPIC $lddlflags"
 		;;
@@ -51,6 +54,11 @@ alpha-2.[0-8]|mips-*|vax-*|powerpc-2.[0-7]|m88k-*)
 		libswanted=`echo $libswanted | sed 's/ dl / /'`
 		;;
 	esac
+
+	# We need to force ld to export symbols on ELF platforms.
+	# Without this, dlopen() is crippled.
+	ELF=`${cc:-cc} -dM -E - </dev/null | grep __ELF__`
+	test -n "$ELF" && ldflags="-Wl,-E $ldflags"
 	;;
 esac
 
@@ -73,7 +81,7 @@ d_suidsafe=$define
 
 # cc is gcc so we can do better than -O
 # Allow a command-line override, such as -Doptimize=-g
-case `arch -s` in
+case ${ARCH} in
 m88k)
    optimize='-O0'
    ;;
@@ -90,7 +98,9 @@ $define|true|[yY]*)
 	# any openbsd version dependencies with pthreads?
 	ccflags="-pthread $ccflags"
 	ldflags="-pthread $ldflags"
+	# Add -lpthread.  Also change from -lc to -lc_r
 	libswanted="$libswanted pthread"
+	libswanted=`echo " $libswanted "| sed -e 's/ c / c_r /' -e 's/^ //' -e 's/ $//'`
 	# This is strange.
 	usevfork="$undef"
 esac
