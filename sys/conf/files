@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.289 2004/02/13 20:39:31 mickey Exp $
+#	$OpenBSD: files,v 1.290 2004/03/06 03:23:19 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -157,6 +157,13 @@ file	dev/ic/ami.c		ami
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_openbsd.c		isp
+
+# LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
+#
+device  mpt: scsi
+file    dev/ic/mpt.c			mpt
+file    dev/ic/mpt_debug.c		mpt
+file    dev/ic/mpt_openbsd.c		mpt
 
 # UltraStor SCSI controllers
 device	uha: scsi
