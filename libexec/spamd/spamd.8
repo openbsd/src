@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.17 2003/03/04 09:22:54 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.18 2003/03/04 11:32:07 henning Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -142,10 +142,10 @@ may be removed from the relevant blacklists.
 .Pp
 .Sh CONFIGURATION CONNECTIONS
 .Nm
-receives configuration information through a localhost connection
+receives configuration information through a localhost connection.
 Configuration information consists of blacklists, each with a name,
 a message to reject mail with, and addresses in CIDR format. When
-multiple lists are configured, Each configuration line specifies
+multiple lists are configured, each configuration line specifies
 a blacklist, and must have the format:
 .Bd -literal
       tag;"rejection message";aaa.bbb.ccc.ddd/mm;aaa.bbb.ccc.ddd/mm
@@ -160,7 +160,7 @@ single \e.
 will reject mail by displaying all the messages from all blacklists in which
 a connecting address is matched.
 .Xr spamd-setup 8
-is normally used to configure this informaiton.
+is normally used to configure this information.
 .Pp
 .Sh SEE ALSO
 .Xr pf.conf 5 ,
