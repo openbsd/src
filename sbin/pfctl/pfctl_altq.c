@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.72 2003/04/15 11:29:24 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.73 2003/05/08 22:09:54 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -1091,6 +1091,8 @@ getifspeed(char *ifname)
 		err(1, "SIOCGIFDATA");
 	if (shutdown(s, SHUT_RDWR) == -1)
 		err(1, "shutdown");
+	if (close(s))
+		err(1, "close");
 	return ((u_int32_t)ifrdat.ifi_baudrate);
 }
 
@@ -1109,6 +1111,8 @@ getifmtu(char *ifname)
 		err(1, "SIOCGIFMTU");
 	if (shutdown(s, SHUT_RDWR) == -1)
 		err(1, "shutdown");
+	if (close(s))
+		err(1, "close");
 	if (ifr.ifr_mtu > 0)
 		return (ifr.ifr_mtu);
 	else {
