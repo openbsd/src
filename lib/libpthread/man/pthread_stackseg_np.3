@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_stackseg_np.3,v 1.3 2004/01/25 14:48:32 jmc Exp $
+.\" $OpenBSD: pthread_stackseg_np.3,v 1.4 2004/01/26 20:50:02 marc Exp $
 .\"
 .\" PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org>
 .\"
@@ -12,11 +12,11 @@
 .Fd #include <sys/signal.h>
 .Fd #include <pthread_np.h>
 .Ft int
-.Fn pthread_stackseg_np "stack_t *sinfo"
+.Fn pthread_stackseg_np "pthread_t thread" "stack_t *sinfo"
 .Sh DESCRIPTION
 The
 .Fn pthread_stackseg_np
-function returns information about the current thread's stack.
+function returns information about the given thread's stack.
 A
 .Fa stack_t
 is the same as a
@@ -37,8 +37,8 @@ The
 function will fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
-Stack information for the current thread is not currently available.
-There is no guarantee that the current thread's stack information will ever
+Stack information for the given thread is not currently available.
+There is no guarantee that the given thread's stack information will ever
 become available.
 .El
 .Sh SEE ALSO
