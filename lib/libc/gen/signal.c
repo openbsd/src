@@ -32,13 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: signal.c,v 1.3 1998/06/03 16:20:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: signal.c,v 1.4 1998/06/26 02:12:49 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Almost backwards compatible signal.
  */
 #include <signal.h>
+#include <string.h>
 
 sigset_t __sigintr;		/* shared with siginterrupt */
 
