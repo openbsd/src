@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6.c,v 1.14 2003/08/08 21:34:39 fgsch Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.15 2003/08/12 10:27:10 fgsch Exp $	*/
 /* $FreeBSD: sys/dev/aic7xxx/93cx6.c,v 1.5 2000/01/07 23:08:17 gibbs Exp $ */
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -196,26 +196,4 @@ read_seeprom(sd, buf, start_addr, count)
 	printf ("\n");
 #endif
 	return (1);
-}
-
-int
-verify_cksum(struct seeprom_config *sc)
-{
-	int i;
-	int maxaddr;
-	u_int32_t checksum;
-	u_int16_t *scarray;
-
-	maxaddr = (sizeof(*sc)/2) - 1;
-	checksum = 0;
-	scarray = (uint16_t *)sc;
-
-	for (i = 0; i < maxaddr; i++)
-		checksum = checksum + scarray[i];
-	if (checksum == 0 ||
-	    (checksum & 0xFFFF) != sc->checksum) {
-		return (0);
-	} else {
-		return(1);
-	}
 }

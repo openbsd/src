@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.38 2003/07/25 09:49:21 henning Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.39 2003/08/12 10:27:10 fgsch Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ void load_seeprom(struct ahc_softc *ahc);
 static int acquire_seeprom(struct ahc_softc *ahc,
 			   struct seeprom_descriptor *sd);
 static void release_seeprom(struct seeprom_descriptor *sd);
+static int verify_cksum(struct seeprom_config *);
 int ahc_probe_scbs(struct ahc_softc *ahc);
 
 static u_char aic3940_count;
@@ -1662,4 +1663,26 @@ ahc_pci_intr(ahc)
 	ahc_unpause(ahc);
 
 	return;
+}
+
+static int
+verify_cksum(struct seeprom_config *sc)
+{
+	int i;
+	int maxaddr;
+	u_int32_t checksum;
+	u_int16_t *scarray;
+
+	maxaddr = (sizeof(*sc)/2) - 1;
+	checksum = 0;
+	scarray = (uint16_t *)sc;
+
+	for (i = 0; i < maxaddr; i++)
+		checksum = checksum + scarray[i];
+	if (checksum == 0 ||
+	    (checksum & 0xFFFF) != sc->checksum) {
+		return (0);
+	} else {
+		return (1);
+	}
 }
