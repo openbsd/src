@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.13 2000/02/22 17:29:12 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.14 2000/03/04 17:16:02 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -187,7 +187,7 @@ __END_DECLS
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
 #ifndef _ANSI_SOURCE
-#define	P_tmpdir	"/var/tmp/"
+#define	P_tmpdir	"/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
 #define	TMP_MAX		308915776
