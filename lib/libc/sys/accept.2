@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.15 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: accept.2,v 1.16 2004/12/31 18:31:15 matthieu Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -77,6 +77,12 @@ The exact format of the
 .Fa addr
 parameter is determined by the domain in which the communication
 is occurring.
+The structure
+.Li sockaddr_storage
+exists for greater portability.
+It is large enough to hold any of the types that may be returned in the
+.Fa addr
+parameter.
 The
 .Fa addrlen
 is a value-result parameter; it should initially contain the
@@ -124,6 +130,22 @@ call providing only the control information, or by calling
 The call returns \-1 on error.
 If it succeeds, it returns a non-negative integer that is a descriptor
 for the accepted socket.
+.Sh EXAMPLES
+The following code uses struct
+.Li sockaddr_storage
+to allocate enough space for the returned address:
+.Bd -literal -offset indent
+#include <sys/types.h>
+#include <sys/socket.h>
+
+struct sockaddr_storage addr;
+socklen_t len = sizeof(addr);
+int retcode;
+
+retcode = accept(s, (struct sockaddr *)&addr, &len)
+if ( etcode < 0)
+	errx(1, "accept");
+.Ed
 .Sh ERRORS
 The
 .Fn accept
