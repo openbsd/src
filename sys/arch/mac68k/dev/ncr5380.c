@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.19 2002/06/14 21:34:58 todd Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.20 2003/02/26 22:59:13 miod Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -74,11 +74,11 @@ static volatile int	main_running = 0;
 static u_char	busy;
 
 static void	ncr5380_minphys(struct buf *bp);
-static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
+static int	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ncr5380_switch = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
+	mac68k_ncr5380_scsi_cmd,	/* scsi_cmd()			*/
 	ncr5380_minphys,		/* scsi_minphys()		*/
 	0,				/* open_target_lu()		*/
 	0				/* close_target_lu()		*/
@@ -286,7 +286,7 @@ void		*auxp;
  * Carry out a request from the high level driver.
  */
 static int
-ncr5380_scsi_cmd(struct scsi_xfer *xs)
+mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int	sps;
 	SC_REQ	*reqp, *link, *tmp;
