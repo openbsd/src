@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.3 2001/06/07 04:49:07 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.4 2001/06/07 06:04:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.3 2001/06/07 04:49:07 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.4 2001/06/07 06:04:45 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -183,7 +183,7 @@ wi_attach(sc)
 	printf(": ");
 	wi_get_id(sc);
 
-	printf(" address %s", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf("address %s", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	ifp = &sc->arpcom.ac_if;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -1525,7 +1525,7 @@ wi_get_id(sc)
 		ver.wi_ver[1] = letoh16(ver.wi_ver[1]);
 		ver.wi_ver[2] = letoh16(ver.wi_ver[2]);
 		ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
-		printf("%s, Firmware %i.%i variant %i,", p, ver.wi_ver[2],
+		printf("%s, Firmware %i.%i variant %i, ", p, ver.wi_ver[2],
 		       ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
