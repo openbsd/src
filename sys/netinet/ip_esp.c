@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.43 2000/06/01 05:40:41 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.44 2000/06/06 04:49:29 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -278,6 +278,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
     struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
     struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
+    struct tdb_crypto *tc;
     int plen, alen, hlen;
     u_int32_t btsx;
 
@@ -377,6 +378,18 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	return ENOBUFS;
     }
 
+    /* Get IPsec-specific opaque pointer */
+    MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
+           M_XDATA, M_DONTWAIT);
+    if (tc == NULL)
+    {
+	m_freem(m);
+	crypto_freereq(crp);
+	DPRINTF(("esp_input(): failed to allocate tdb_crypto\n"));
+	espstat.esps_crypto++;
+	return ENOBUFS;
+    }
+
     if (esph)
     {
 	crda = crp->crp_desc;
@@ -392,9 +405,10 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
 	/* Keep a copy of the authenticator */
-	MALLOC(crp->crp_opaque4, caddr_t, alen, M_XDATA, M_DONTWAIT);
-	if (crp->crp_opaque4 == 0)
+	MALLOC(tc->tc_ptr, caddr_t, alen, M_XDATA, M_DONTWAIT);
+	if (tc->tc_ptr == 0)
 	{
+	    FREE(tc, M_XDATA);
 	    m_freem(m);
 	    crypto_freereq(crp);
 	    DPRINTF(("esp_input(): failed to allocate auth array\n"));
@@ -403,12 +417,10 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Copy the authenticator */
-	m_copydata(m, m->m_pkthdr.len - alen, alen, crp->crp_opaque4);
+	m_copydata(m, m->m_pkthdr.len - alen, alen, tc->tc_ptr);
     }
     else
       crde = crp->crp_desc;
-
-    tdb->tdb_ref++;
 
     /* Crypto operation descriptor */
     crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
@@ -416,11 +428,14 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     crp->crp_buf = (caddr_t) m;
     crp->crp_callback = (int (*) (struct cryptop *)) esp_input_cb;
     crp->crp_sid = tdb->tdb_cryptoid;
+    crp->crp_opaque = (caddr_t) tc;
 
     /* These are passed as-is to the callback */
-    crp->crp_opaque1 = (caddr_t) tdb;
-    (long) crp->crp_opaque2 = skip;
-    (long) crp->crp_opaque3 = protoff;
+    tc->tc_skip = skip;
+    tc->tc_protoff = protoff;
+    tc->tc_spi = tdb->tdb_spi;
+    tc->tc_proto = tdb->tdb_sproto;
+    bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
     /* Decryption descriptor */
     if (espx)
@@ -462,34 +477,31 @@ esp_input_cb(void *op)
     struct cryptodesc *crd;
     struct auth_hash *esph;
     struct enc_xform *espx;
+    struct tdb_crypto *tc;
     struct cryptop *crp;
     struct tdb *tdb;
+    caddr_t ptr = 0;
 
     crp = (struct cryptop *) op;
     crd = crp->crp_desc;
-    tdb = (struct tdb *) crp->crp_opaque1;
-    esph = (struct auth_hash *) tdb->tdb_authalgxform;
-    espx = (struct enc_xform *) tdb->tdb_encalgxform;
-    skip = (long) crp->crp_opaque2;
-    protoff = (long) crp->crp_opaque3;
+
+    tc = (struct tdb_crypto *) crp->crp_opaque;
+    skip = tc->tc_skip;
+    protoff = tc->tc_protoff;
+    ptr = tc->tc_ptr;
     m = (struct mbuf *) crp->crp_buf;
 
-    /*
-     * Check that the TDB is still valid -- not really an error, but
-     * we need to handle it as such. It may happen if the TDB expired
-     * or was deleted while there was a pending request in the crypto
-     * queue.
-     */
-    if (tdb->tdb_flags & TDBF_INVALID)
+    tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+    FREE(tc, M_XDATA);
+    if (tdb == NULL)
     {
-	espstat.esps_invalid++;
-	tdb_delete(tdb, 0, 0);
-	error = ENXIO;
-	DPRINTF(("esp_input_cb(): TDB expired while processing crypto\n"));
+	espstat.esps_notdb++;
+	DPRINTF(("esp_input_cb(): TDB is expired while in crypto"));
 	goto baddone;
     }
-    else
-      tdb->tdb_ref--;
+
+    esph = (struct auth_hash *) tdb->tdb_authalgxform;
+    espx = (struct enc_xform *) tdb->tdb_encalgxform;
 
     /* Check for crypto errors */
     if (crp->crp_etype)
@@ -499,10 +511,7 @@ esp_input_cb(void *op)
 	  tdb->tdb_cryptoid = crp->crp_sid;
 
 	if (crp->crp_etype == EAGAIN)
-	{
-	    tdb->tdb_ref++;
-	    return crypto_dispatch(crp);
-	}
+	  return crypto_dispatch(crp);
 
 	espstat.esps_noxform++;
 	DPRINTF(("esp_input_cb(): crypto error %d\n", crp->crp_etype));
@@ -523,11 +532,10 @@ esp_input_cb(void *op)
     if (esph)
     {
 	/* Copy the authenticator from the packet */
-	m_copydata(m, m->m_pkthdr.len - esph->authsize,
-		   esph->authsize, aalg);
+	m_copydata(m, m->m_pkthdr.len - esph->authsize, esph->authsize, aalg);
 
 	/* Verify authenticator */
-	if (bcmp(crp->crp_opaque4, aalg, esph->authsize))
+	if (bcmp(ptr, aalg, esph->authsize))
 	{
 	    DPRINTF(("esp_input_cb(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    espstat.esps_badauth++;
@@ -539,7 +547,7 @@ esp_input_cb(void *op)
 	m_adj(m, -(esph->authsize));
 
 	/* We have to manually free this */
-	FREE(crp->crp_opaque4, M_XDATA);
+	FREE(ptr, M_XDATA);
     }
 
     /* Release the crypto descriptors */
@@ -650,8 +658,8 @@ esp_input_cb(void *op)
       m_freem(m);
 
     /* We have to manually free this */
-    if (crp && crp->crp_opaque4)
-      FREE(crp->crp_opaque4, M_XDATA);
+    if (ptr)
+      FREE(ptr, M_XDATA);
 
     crypto_freereq(crp);
 
@@ -669,6 +677,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
     int ilen, hlen, rlen, plen, padding, blks, alen;
     struct mbuf *mi, *mo = (struct mbuf *) NULL;
+    struct tdb_crypto *tc;
     unsigned char *pad;
     u_int8_t prot;
 
@@ -920,14 +929,28 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     else
       crda = crp->crp_desc;
 
-    tdb->tdb_ref++;
+    /* IPsec-specific opaque crypto info */
+    MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
+           M_XDATA, M_DONTWAIT);
+    if (tc == NULL)
+    {
+	m_freem(m);
+	crypto_freereq(crp);
+	DPRINTF(("esp_output(): failed to allocate tdb_crypto\n"));
+	espstat.esps_crypto++;
+	return ENOBUFS;
+    }
+
+    tc->tc_spi = tdb->tdb_spi;
+    tc->tc_proto = tdb->tdb_sproto;
+    bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
     /* Crypto operation descriptor */
     crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
     crp->crp_flags = CRYPTO_F_IMBUF;
     crp->crp_buf = (caddr_t) m;
     crp->crp_callback = (int (*) (struct cryptop *)) esp_output_cb;
-    crp->crp_opaque1 = (caddr_t) tdb;
+    crp->crp_opaque = (caddr_t) tc;
     crp->crp_sid = tdb->tdb_cryptoid;
 
     if (esph)
@@ -953,29 +976,22 @@ int
 esp_output_cb(void *op)
 {
     struct cryptop *crp = (struct cryptop *) op;
+    struct tdb_crypto *tc;
     struct tdb *tdb;
     struct mbuf *m;
     int error;
 
-    tdb = (struct tdb *) crp->crp_opaque1;
+    tc = (struct tdb_crypto *) crp->crp_opaque;
     m = (struct mbuf *) crp->crp_buf;
 
-    /*
-     * Check that the TDB is still valid -- not really an error, but
-     * we need to handle it as such. It may happen if the TDB expired
-     * or was deleted while there was a pending request in the crypto
-     * queue.
-     */
-    if (tdb->tdb_flags & TDBF_INVALID)
+    tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+    FREE(tc, M_XDATA);
+    if (tdb == NULL)
     {
-	espstat.esps_invalid++;
-	tdb_delete(tdb, 0, 0);
-	error = ENXIO;
-	DPRINTF(("esp_output_cb(): TDB expired while processing crypto\n"));
+	espstat.esps_notdb++;
+	DPRINTF(("esp_output_cb(): TDB is expired while in crypto\n"));
 	goto baddone;
     }
-    else
-      tdb->tdb_ref--;
 
     /* Check for crypto errors */
     if (crp->crp_etype)
@@ -985,10 +1001,7 @@ esp_output_cb(void *op)
 	  tdb->tdb_cryptoid = crp->crp_sid;
 
 	if (crp->crp_etype == EAGAIN)
-	{
-	    tdb->tdb_ref++;
-	    return crypto_dispatch(crp);
-	}
+	  return crypto_dispatch(crp);
 
 	espstat.esps_noxform++;
 	DPRINTF(("esp_output_cb(): crypto error %d\n", crp->crp_etype));

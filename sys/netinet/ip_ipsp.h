@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.66 2000/06/01 04:24:26 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.67 2000/06/06 04:49:29 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -271,7 +271,6 @@ struct tdb				/* tunnel descriptor block */
 					   * tdb_exp_first_use <= curtime */
     u_int64_t         tdb_cryptoid;     /* Crypto session ID */
 
-    int32_t           tdb_ref;		/* References */
     u_int32_t	      tdb_spi;    	/* SPI */
     u_int16_t         tdb_amxkeylen;    /* Raw authentication key length */
     u_int16_t         tdb_emxkeylen;    /* Raw encryption key length */
@@ -315,6 +314,15 @@ struct tdb_ident {
     u_int32_t spi;
     union sockaddr_union dst;
     u_int8_t proto;
+};
+
+struct tdb_crypto {
+    u_int32_t			tc_spi;
+    union sockaddr_union	tc_dst;
+    u_int8_t			tc_proto;
+    int                         tc_protoff;
+    int                         tc_skip;
+    caddr_t                     tc_ptr;
 };
 
 struct ipsecinit

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.90 2000/06/01 06:11:08 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.91 2000/06/06 04:49:29 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1045,7 +1045,6 @@ puttdb(struct tdb *tdbp)
     }
     tdbp->tdb_hnext = tdbh[hashval];
     tdbh[hashval] = tdbp;
-    tdbp->tdb_ref++;
     tdb_count++;
     splx(s);
 }
@@ -1111,13 +1110,6 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     struct inpcb *inp;
     u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
     int s;
-
-    /* If it's still referenced, go on */
-    if (--tdbp->tdb_ref > 0)
-    {
-	tdbp->tdb_flags |= TDBF_INVALID;
-	return;
-    }
 
     /* When deleting the bypass tdb, skip the hash table code. */
     if (tdbp == tdb_bypass && tdbp != NULL)
@@ -1472,9 +1464,6 @@ ipsp_kern(int off, char **bufp, int len)
 	      }
 
 	      l += sprintf(buffer + l, "\tCrypto ID: %qu\n", tdb->tdb_cryptoid);
-
-	      l += sprintf(buffer + l, "\tCurrently referenced %d time%s\n",
-			   tdb->tdb_ref, tdb->tdb_ref == 1 ? "" : "s");
 
 	      if (tdb->tdb_xform)
 		l += sprintf(buffer + l, "\txform = <%s>\n", 
