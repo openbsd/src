@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.13 2004/11/09 21:01:36 krapht Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.14 2004/11/09 23:06:01 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -155,7 +155,7 @@ static struct cvs_cmd {
 		"Show repository access history",
 	},
 	{
-		CVS_OP_IMPORT, "import",   { "im",  "imp" }, cvs_import,
+		CVS_OP_IMPORT, "import",   { "im",  "imp" }, NULL,
 		"[-d] [-b branch] [-I ign] [-k subst] [-m msg] "
 		"repository vendor-tag release-tags ...",
 		"b:dI:k:m:",
