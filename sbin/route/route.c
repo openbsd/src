@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.24 1997/11/16 18:42:35 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.25 1997/12/12 09:04:33 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.24 1997/11/16 18:42:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.25 1997/12/12 09:04:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,14 @@ union	sockunion {
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
 
 typedef union sockunion *sup;
-int	pid, rtm_addrs, uid;
+int	pid, rtm_addrs;
 int	s;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, keyword();
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_long  rtm_inits;
+uid_t	uid;
 
 char	*routename __P((struct sockaddr *));
 char	*netname __P((struct sockaddr *));
@@ -187,8 +188,6 @@ main(argc, argv)
 		s = open("/dev/null", O_WRONLY, 0);
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
-	seteuid(uid);
-	setuid(uid);
 	if (s < 0)
 		quit("socket");
 	if (*argv == NULL)
