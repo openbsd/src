@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.29 2002/11/20 15:19:33 fgsch Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.30 2002/11/22 10:38:48 markus Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1366,7 +1366,7 @@ int sis_encap(sc, m_head, txidx)
 	sc->sis_ldata->sis_tx_list[cur].sis_mbuf = m_head;
 	sc->sis_ldata->sis_tx_list[cur].sis_ctl &= ~SIS_CMDSTS_MORE;
 	sc->sis_ldata->sis_tx_list[*txidx].sis_ctl |= SIS_CMDSTS_OWN;
-	sc->sis_cdata.sis_tx_cnt += i - 1;
+	sc->sis_cdata.sis_tx_cnt += i;
 	*txidx = frag;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
