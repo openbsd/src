@@ -1,0 +1,53 @@
+.\"   $NetBSD$
+.\"
+.\" Copyright (c) 1995 Michael Long.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 8, 1995
+.Dt WSS 4 i386
+.Os NetBSD
+.Sh NAME
+.Nm wss
+.Nd Windows Sound System hardware driver
+.Sh SYNOPSIS
+.Cd "device wss0 at isa? port 0x530 irq 10 drq 0"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports Microsoft's Windows Sound System hardware and its clones.
+The Windows Sound System is a half-duplex device.
+.Pp
+The base I/O port is set by a jumper on the board; valid choices are
+0x530, 0x604, 0xE80, or 0xF40.
+Both IRQ and DMA channels are software programmable.
+The IRQ may be set to 7, 9, 10, or 11, and
+the DMA channel may be set to 0, 1, or 3.
+.Sh BUGS
+This driver doesn't work yet.
+.Pp
+The FM synthesizer is not supported.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr pss 4

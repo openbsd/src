@@ -1,0 +1,71 @@
+.\"   $NetBSD$
+.\"
+.\" Copyright (c) 1995 Michael Long.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 8, 1995
+.Dt PSS 4 i386
+.Os NetBSD
+.Sh NAME
+.Nm pss
+.Nd Personal Sound System hardware driver
+.Sh SYNOPSIS
+.Cd "device pss0 at isa?"
+.Cd "device sp0 at pss? port 0x530 irq 10 drq 0"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports soundcards based on ESC614 or ESC614A ASICs and AD1848
+or CS4231 series codecs.  Known examples are:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Cardinal Digital Sound Pro 16
+.It Orchid SoundWave 32
+.El
+.Pp
+The Orchid GameWave 32 is based on the ESC614 ASIC, but is not
+supported because it does not have a codec.
+.Pp
+The
+.Nm
+driver uses the Windows Sound System emulation mode of the ASIC.
+It is a half-duplex device.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr wss 4
+.Sh BUGS
+This driver doesn't work yet.
+.Pp
+The list of cards using the PSS chipset is incomplete.
+.Pp
+The ESC614 (version 1) is unable to reliably determine whether DMA
+channels are free on some motherboards.  The ASIC determines that all
+channels are taken, even if that is untrue.  When this happens, the driver
+cannot verify configured DMA channels with the ASIC's DMA autodetect
+hardware, so it blindly accepts the user setting.
+.Pp
+Cards based on the ESC615 ASIC are not supported.
+.Pp
+The MIDI port, joystick, and CD-ROM drive (if present) are not supported.
