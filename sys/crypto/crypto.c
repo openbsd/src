@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.28 2001/11/09 03:11:38 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.29 2001/11/13 17:45:59 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -67,9 +67,6 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		 */
 		if (crypto_drivers[hid].cc_newsession == NULL ||
 		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP))
-			continue;
-
-		if (crypto_drivers[hid].cc_sessions == 0)
 			continue;
 
 		/* Hardware requested -- ignore software drivers. */
