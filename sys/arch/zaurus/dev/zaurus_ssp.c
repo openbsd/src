@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.3 2005/01/31 02:22:17 uwe Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.4 2005/01/31 03:02:16 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -203,34 +203,39 @@ void
 zssp_write_lz9jg18(u_int32_t data)
 {
 	int s;
+	int sclk_pin, sclk_fn;
+	int sfrm_pin, sfrm_fn;
+	int txd_pin, txd_fn;
+	int rxd_pin, rxd_fn;
 	int i;
-	int ssp_sclk;
-	int ssp_sfrm;
-	int ssp_txd;
-	int ssp_rxd;
 
 	/* XXX this creates a DAC command from a backlight duty value. */
 	data = 0x40 | (data & 0x1f);
 
 	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
 		/* C3000 */
-		ssp_sclk = 19;
-		ssp_sfrm = 14;
-		ssp_txd = 87;
-		ssp_rxd = 86;
+		sclk_pin = 19;
+		sfrm_pin = 14;
+		txd_pin = 87;
+		rxd_pin = 86;
 	} else {
-		ssp_sclk = 23;
-		ssp_sfrm = 24;
-		ssp_txd = 25;
-		ssp_rxd = 26;
+		sclk_pin = 23;
+		sfrm_pin = 24;
+		txd_pin = 25;
+		rxd_pin = 26;
 	}
 
 	s = splhigh();
 
-	pxa2x0_gpio_set_function(ssp_sfrm, GPIO_OUT | GPIO_SET);
-	pxa2x0_gpio_set_function(ssp_sclk, GPIO_OUT | GPIO_CLR);
-	pxa2x0_gpio_set_function(ssp_txd, GPIO_OUT | GPIO_CLR);
-	pxa2x0_gpio_set_function(ssp_rxd, GPIO_IN);
+	sclk_fn = pxa2x0_gpio_get_function(sclk_pin);
+	sfrm_fn = pxa2x0_gpio_get_function(sfrm_pin);
+	txd_fn = pxa2x0_gpio_get_function(txd_pin);
+	rxd_fn = pxa2x0_gpio_get_function(rxd_pin);
+
+	pxa2x0_gpio_set_function(sfrm_pin, GPIO_OUT | GPIO_SET);
+	pxa2x0_gpio_set_function(sclk_pin, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(txd_pin, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(rxd_pin, GPIO_IN);
 
 	pxa2x0_gpio_set_bit(GPIO_MAX1111_CS_C3000);
 	pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000);
@@ -240,28 +245,24 @@ zssp_write_lz9jg18(u_int32_t data)
 	
 	for (i = 0; i < 8; i++) {
 		if (data & 0x80)
-			pxa2x0_gpio_set_bit(ssp_txd);
+			pxa2x0_gpio_set_bit(txd_pin);
 		else
-			pxa2x0_gpio_clear_bit(ssp_txd);
+			pxa2x0_gpio_clear_bit(txd_pin);
 		delay(10);
-		pxa2x0_gpio_set_bit(ssp_sclk);
+		pxa2x0_gpio_set_bit(sclk_pin);
 		delay(10);
-		pxa2x0_gpio_clear_bit(ssp_sclk);
+		pxa2x0_gpio_clear_bit(sclk_pin);
 		delay(10);
 		data <<= 1;
 	}
 
-	pxa2x0_gpio_clear_bit(ssp_txd);
+	pxa2x0_gpio_clear_bit(txd_pin);
 	pxa2x0_gpio_set_bit(GPIO_TG_CS_C3000);
 
-	/* XXX SFRM and RXD alternate functions are not restored here. */
-	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
-		pxa2x0_gpio_set_function(ssp_sclk, GPIO_ALT_FN_1_OUT);
-		pxa2x0_gpio_set_function(ssp_txd, GPIO_ALT_FN_1_OUT);
-	} else {
-		pxa2x0_gpio_set_function(ssp_sclk, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(ssp_txd, GPIO_ALT_FN_2_OUT);
-	}
+	pxa2x0_gpio_set_function(sclk_pin, sclk_fn);
+	pxa2x0_gpio_set_function(sfrm_pin, sfrm_fn);
+	pxa2x0_gpio_set_function(txd_pin, txd_fn);
+	pxa2x0_gpio_set_function(rxd_pin, rxd_fn);
 
 	splx(s);
 }
