@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.12 2003/04/03 11:02:36 jmc Exp $
+.\"	$OpenBSD: sbus.4,v 1.13 2003/06/11 16:10:03 deraadt Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,12 +112,30 @@ bridge.
 .El
 .Ss Graphics devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr agten 4
+Fujitsu AG-10e accelerated 24-bit color frame buffer.
 .It Xr bwtwo 4
 framebuffer device.
-.It Xr cgthree 4
-framebuffer device.
+.It Xr cgfourteen 4
+Accelerated 8/24-bit color frame buffer.
 .It Xr cgsix 4
-framebuffer device.
+Framebuffer device.
+.It Xr cgthree 4
+Framebuffer device.
+.It Xr cgtwelve 4
+Accelerated 24-bit color frame buffer.
+.It Xr mgx 4
+SMS MGX and MGXPlus accelerated 24-bit color frame buffers.
+.It Xr pnozz 4
+Tadpole Weitek P9100 frame buffer.
+.It Xr tcx 4
+Accelerated 8/24-bit color frame buffer.
+.It Xr tvtwo 4
+Accelerated 24-bit color frame buffer.
+.It Xr vigra 4
+8-bit SBus color frame buffer with VGA-compatible modes.
+.It Xr zx 4
+Accelerated 24-bit color frame buffer.
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -offset ind -compact
@@ -134,6 +152,8 @@ Sun Serial/Parallel Interface card.
 .Bl -tag -width 12n -offset ind -compact
 .It Xr uperf 4
 Performance counters on the host bridge.
+.It Xr presto 4
+Prestoserve battery-backed memory.
 .El
 .Sh SEE ALSO
 .Xr apio 4 ,
