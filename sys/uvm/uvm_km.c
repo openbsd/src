@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.27 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.28 2002/03/06 22:05:31 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -234,8 +234,8 @@ uvm_km_init(start, end)
 
 	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
-	if (uvm_map(&kernel_map_store, &base, start - base, NULL,
-	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	if (base != start && uvm_map(&kernel_map_store, &base, start - base,
+	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM,UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		panic("uvm_km_init: could not reserve space for kernel");
 	
