@@ -1,7 +1,7 @@
-/*	$OpenBSD: mavb.c,v 1.2 2005/01/02 18:55:56 kettenis Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.3 2005/01/02 19:25:41 kettenis Exp $	*/
 
 /*
- * Copyright (c) 2004 Mark Kettenis
+ * Copyright (c) 2005 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,9 @@
 #include <mips64/archtype.h>
 
 #include <sgi/localbus/macebus.h>
+#include <sgi/dev/mavbreg.h>
+
+#include <dev/ic/ad1843reg.h>
 
 #undef MAVB_DEBUG
 
@@ -47,142 +50,8 @@ int mavb_debug = ~MAVB_DEBUG_INTR;
 #define MAVB_VOLUME_BUTTON_REPEAT_DEL1	400	/* 400ms to start repeating */
 #define MAVB_VOLUME_BUTTON_REPEAT_DELN  100	/* 100ms between repeats */
 
-/*
- * MACE registers used by the Moosehead A/V Board.
- */
-
-#define MAVB_CONTROL				0x00
-#define  MAVB_CONTROL_RESET			0x0000000000000001
-#define  MAVB_CONTROL_CODEC_PRESENT		0x0000000000000002
-#define  MAVB_CONTROL_VOLUME_BUTTON_UP		0x0000000001000000
-#define  MAVB_CONTROL_VOLUME_BUTTON_DOWN	0x0000000000800000
-
-#define MAVB_CODEC_CONTROL			0x08
-#define  MAVB_CODEC_READ			0x0000000000010000
-#define  MAVB_CODEC_WORD_SHIFT			0
-#define  MAVB_CODEC_WORD_MASK			0x000000000000ffff
-#define  MAVB_CODEC_ADDRESS_SHIFT		17
-#define  MAVB_CODEC_ADDRESS_MASK		0x000000000000001f
-
-#define MAVB_CODEC_STATUS			0x18
-#define MAVB_CHANNEL1_CONTROL			0x20
-#define MAVB_CHANNEL2_CONTROL			0x40
-#define MAVB_CHANNEL3_CONTROL			0x60
-#define  MAVB_CHANNEL_RESET			0x0000000000000400
-#define  MAVB_CHANNEL_DMA_ENABLE		0x0000000000000200
-#define  MAVB_CHANNEL_INT_DISABLED		0x0000000000000000
-#define  MAVB_CHANNEL_INT_25			0x0000000000000020
-#define  MAVB_CHANNEL_INT_50			0x0000000000000040
-#define  MAVB_CHANNEL_INT_75			0x0000000000000060
-#define  MAVB_CHANNEL_INT_EMPTY			0x0000000000000080
-#define  MAVB_CHANNEL_INT_NOT_EMPTY		0x00000000000000a0
-#define  MAVB_CHANNEL_INT_FULL			0x00000000000000c0
-#define  MAVB_CHANNEL_INT_NOT_FULL		0x00000000000000e0
-
-#define MAVB_CHANNEL1_READ_PTR			0x28
-#define MAVB_CHANNEL1_WRITE_PTR			0x30
-#define MAVB_CHANNEL1_DEPTH			0x38
-#define MAVB_CHANNEL2_READ_PTR			0x48
-#define MAVB_CHANNEL2_WRITE_PTR			0x50
-#define MAVB_CHANNEL2_DEPTH			0x58
-
-#define MAVB_NREGS				0x80
-
 /* XXX We need access to some of the MACE ISA registers.  */
 #define MAVB_ISA_NREGS				0x20
-
-/*
- * AD1843 Codec registers & defenitions.
- */
-
-#define AD1843_CODEC_STATUS		0
-#define  AD1843_INIT			0x8000
-#define  AD1843_PDNO			0x4000
-#define  AD1843_REVISION_MASK		0x000f
-
-#define AD1843_ADC_SOURCE_GAIN		2
-#define  AD1843_LSS_MASK		0xe000
-#define  AD1843_LSS_SHIFT		13
-#define  AD1843_RSS_MASK		0x00e0
-#define  AD1843_RSS_SHIFT		5
-#define  AD1843_LMGE			0x1000
-#define  AD1843_RMGE			0x0010
-#define  AD1843_LIG_MASK		0x0f00
-#define  AD1843_LIG_SHIFT		8
-#define  AD1843_RIG_MASK		0x000f
-#define  AD1843_RIG_SHIFT		0
-
-#define AD1843_DAC2_TO_MIXER		3
-#define  AD1843_LD2MM			0x8000
-#define  AD1843_RD2MM			0x0080
-#define  AD1843_LD2M_MASK		0x1f00
-#define  AD1843_LD2M_SHIFT		8
-#define  AD1843_RD2M_MASK		0x001f
-#define  AD1843_RD2M_SHIFT		0
-
-#define AD1843_MISC_SETTINGS		8
-#define  AD1843_MNMM			0x8000
-#define  AD1843_MNM_MASK		0x1f00
-#define  AD1843_MNM_SHIFT		8
-#define  AD1843_ALLMM			0x0080
-#define  AD1843_MNOM			0x0040
-#define  AD1843_HPOM			0x0020
-#define  AD1843_HPOS			0x0010
-#define  AD1843_SUMM			0x0008
-#define  AD1843_DAC2T			0x0002
-#define  AD1843_DAC1T			0x0001
-
-#define AD1843_DAC1_ANALOG_GAIN		9
-#define  AD1843_LDA1GM			0x8000
-#define  AD1843_RDA1GM			0x0080
-#define  AD1843_LDA1G_MASK		0x3f00
-#define  AD1843_LDA1G_SHIFT		8
-#define  AD1843_RDA1G_MASK		0x003f
-#define  AD1843_RDA1G_SHIFT		0
-
-#define AD1843_DAC1_DIGITAL_GAIN	11
-#define  AD1843_LDA1AM			0x8000
-#define  AD1843_RDA1AM			0x0080
-
-#define AD1843_CHANNEL_SAMPLE_RATE	15
-#define  AD1843_DA1C_SHIFT		8
-
-#define AD1843_CLOCK1_SAMPLE_RATE	17
-#define AD1843_CLOCK2_SAMPLE_RATE	20
-#define AD1843_CLOCK3_SAMPLE_RATE	13
-
-#define AD1843_SERIAL_INTERFACE		26
-#define  AD1843_DA2F_MASK		0x0c00
-#define  AD1843_DA2F_SHIFT		10
-#define  AD1843_DA1F_MASK		0x0300
-#define  AD1843_DA1F_SHIFT		8
-#define  AD1843_PCM8			0
-#define  AD1843_PCM16			1
-#define  AD1843_ULAW			2
-#define  AD1843_ALAW			3
-#define  AD1843_SCF			0x0080
-
-#define AD1843_CHANNEL_POWER_DOWN	27
-#define  AD1843_DFREE			0x8000
-#define  AD1843_DDMEN			0x1000
-#define  AD1843_DA2EN			0x0200
-#define  AD1843_DA1EN			0x0100
-#define  AD1843_ANAEN			0x0080
-#define  AD1843_HPEN			0x0040
-#define  AD1843_AAMEN			0x0010
-#define  AD1843_ADREN			0x0002
-#define  AD1843_ADLEN			0x0001
-
-#define AD1843_FUNDAMENTAL_SETTINGS	28
-#define  AD1843_PDNI			0x8000
-#define  AD1843_ACEN			0x4000
-#define  AD1843_C3EN			0x2000
-#define  AD1843_C2EN			0x1000
-#define  AD1843_C1EN			0x0800
-
-#define AD1843_NREGS			32
-
-typedef u_long ad1843_addr_t;
 
 /*
  * AD1843 Mixer.
@@ -237,7 +106,6 @@ const char *ad1843_input[] = {
 	AudioNmono		/* AD1843_MISC_SETTINGS */
 };
 
-
 struct mavb_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_st;
@@ -265,6 +133,12 @@ struct mavb_softc {
 	struct timeout sc_volume_button_to;
 };
 
+typedef u_long ad1843_addr_t;
+
+u_int16_t ad1843_reg_read(struct mavb_softc *, ad1843_addr_t);
+u_int16_t ad1843_reg_write(struct mavb_softc *, ad1843_addr_t, u_int16_t);
+void ad1843_dump_regs(struct mavb_softc *);
+
 int mavb_match(struct device *, void *, void *);
 void mavb_attach(struct device *, struct device *, void *);
 
@@ -275,10 +149,6 @@ struct cfattach mavb_ca = {
 struct cfdriver mavb_cd = {
 	NULL, "mavb", DV_DULL
 };
-
-u_int16_t ad1843_reg_read(struct mavb_softc *, ad1843_addr_t);
-u_int16_t ad1843_reg_write(struct mavb_softc *, ad1843_addr_t, u_int16_t);
-void ad1843_dump_regs(struct mavb_softc *);
 
 int mavb_open(void *, int);
 void mavb_close(void *);
