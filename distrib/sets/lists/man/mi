@@ -1220,3 +1220,8 @@
 ./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/powerpc
 ./usr/share/man/cat4/powerpc/com.0
+./usr/share/man/cat4/ec.0
+./usr/share/man/cat4/ne.0
+./usr/share/man/cat4/pcmcia.0
+./usr/share/man/cat4/sm.0
+./usr/share/man/cat4/we.0
