@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_wait4.c,v 1.6 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_wait4.c,v 1.7 2001/11/09 00:20:26 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -38,16 +38,30 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
+/*
+ * Note: a thread calling wait4 may have its state changed to waiting
+ * until awakened by a signal.  Also note that system(3), for example,
+ * blocks SIGCHLD and calls waitpid (which calls wait4).  If the process
+ * started by system(3) doesn't finish before this function is called the
+ * function will never awaken -- system(3) also ignores SIGINT and SIGQUIT.
+ *
+ * Thus always unmask SIGCHLD here.
+ */
 pid_t
 wait4(pid_t pid, int *istat, int options, struct rusage * rusage)
 {
 	struct pthread	*curthread = _get_curthread();
 	pid_t           ret;
+	sigset_t	mask, omask;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	_thread_kern_sig_defer();
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_UNBLOCK, &mask, &omask);
 
 	/* Perform a non-blocking wait4 syscall: */
 	while ((ret = _thread_sys_wait4(pid, istat, options | WNOHANG, rusage)) == 0 && (options & WNOHANG) == 0) {
@@ -64,6 +78,8 @@ wait4(pid_t pid, int *istat, int options, struct rusage * rusage)
 			break;
 		}
 	}
+
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	_thread_kern_sig_undefer();
 
