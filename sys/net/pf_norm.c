@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.60 2003/06/28 07:27:20 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.61 2003/06/29 23:37:12 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -991,6 +991,173 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	if (r != NULL && r->log)
 		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 
+	return (PF_DROP);
+}
+
+int
+pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
+{
+	struct mbuf		*m = *m0;
+	struct pf_rule		*r;
+	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
+	int			 off;
+	struct ip6_ext		 ext;
+	struct ip6_opt		 opt;
+	struct ip6_opt_jumbo	 jumbo;
+	struct ip6_frag		 frag;
+	u_int32_t		 jumbolen = 0;
+	u_int16_t		 fragoff = 0;
+	int			 optend;
+	int			 ooff;
+	u_int8_t		 proto;
+	int			 terminal;
+
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
+	while (r != NULL) {
+		r->evaluations++;
+		if (r->ifp != NULL && r->ifp != ifp)
+			r = r->skip[PF_SKIP_IFP].ptr;
+		else if (r->direction && r->direction != dir)
+			r = r->skip[PF_SKIP_DIR].ptr;
+		else if (r->af && r->af != AF_INET6)
+			r = r->skip[PF_SKIP_AF].ptr;
+#if 0 /* header chain! */
+		else if (r->proto && r->proto != h->ip6_nxt)
+			r = r->skip[PF_SKIP_PROTO].ptr;
+#endif
+		else if (PF_MISMATCHAW(&r->src.addr,
+		    (struct pf_addr *)&h->ip6_src, AF_INET6, r->src.not))
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
+		else if (PF_MISMATCHAW(&r->dst.addr,
+		    (struct pf_addr *)&h->ip6_dst, AF_INET6, r->dst.not))
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
+		else
+			break;
+	}
+
+	if (r == NULL)
+		return (PF_PASS);
+	else
+		r->packets++;
+
+	/* Check for illegal packets */
+	if (ntohs(h->ip6_plen) == 0) {
+		/* jumbo payload option must be present */
+		if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET >= m->m_pkthdr.len)				goto drop;
+	} else if (sizeof(struct ip6_hdr) + ntohs(h->ip6_plen) !=
+	    m->m_pkthdr.len)
+		goto drop;
+
+	off = sizeof(struct ip6_hdr);
+	proto = h->ip6_nxt;
+	terminal = 0;
+	do {
+		switch (proto) {
+		case IPPROTO_FRAGMENT:
+			goto fragment;
+			break;
+		case IPPROTO_AH:
+		case IPPROTO_ROUTING:
+		case IPPROTO_DSTOPTS:
+			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
+			    NULL, AF_INET6))
+				goto shortpkt;
+			if (proto == IPPROTO_AH)
+				off += (ext.ip6e_len + 2) * 4;
+			else
+				off += (ext.ip6e_len + 1) * 8;
+			proto = ext.ip6e_nxt;
+			break;
+		case IPPROTO_HOPOPTS:
+			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
+			    NULL, AF_INET6))
+				goto shortpkt;
+			optend = off + (ext.ip6e_len + 1) * 8;
+			ooff = off + sizeof(ext);
+			do {
+				if (!pf_pull_hdr(m, ooff, &opt.ip6o_type,
+				    sizeof(opt.ip6o_type), NULL, NULL,
+				    AF_INET6))
+					goto shortpkt;
+				if (opt.ip6o_type == IP6OPT_PAD1) {
+					ooff++;
+					continue;
+				}
+				if (!pf_pull_hdr(m, ooff, &opt, sizeof(opt),
+				    NULL, NULL, AF_INET6))
+					goto shortpkt;
+				if (ooff + sizeof(opt) + opt.ip6o_len > optend)
+					goto drop;
+				switch (opt.ip6o_type) {
+				case IP6OPT_JUMBO:
+					if (h->ip6_plen != 0)
+						goto drop;
+					if (!pf_pull_hdr(m, ooff, &jumbo,
+					    sizeof(jumbo), NULL, NULL,
+					    AF_INET6))
+						goto shortpkt;
+					memcpy(&jumbolen, jumbo.ip6oj_jumbo_len,
+					    sizeof(jumbolen));
+					jumbolen = ntohl(jumbolen);
+					if (jumbolen <= IPV6_MAXPACKET)
+						goto drop;
+					if (sizeof(struct ip6_hdr) + jumbolen !=
+					    m->m_pkthdr.len)
+						goto drop;
+					break;
+				default:
+					break;
+				}
+				ooff += sizeof(opt) + opt.ip6o_len;
+			} while (ooff < optend);
+
+			off = optend;
+			proto = ext.ip6e_nxt;
+			break;
+		default:
+			terminal = 1;
+			break;
+		}
+	} while (!terminal);
+
+	if (ntohs(h->ip6_plen) == 0 && !jumbolen)
+		goto drop;
+
+	/* Enforce a minimum ttl, may cause endless packet loops */
+	if (r->min_ttl && h->ip6_hlim < r->min_ttl)
+		h->ip6_hlim = r->min_ttl;
+
+	return (PF_PASS);
+
+ fragment:
+	if (ntohs(h->ip6_plen) == 0 || jumbolen)
+		goto drop;
+
+	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
+		goto shortpkt;
+	fragoff = ntohs(frag.ip6f_offlg & IP6F_OFF_MASK);
+	if (fragoff + (m->m_pkthdr.len - off - sizeof(frag)) > IPV6_MAXPACKET)
+		goto badfrag;
+
+	/* do something about it */
+	return (PF_PASS);
+
+ shortpkt:
+	REASON_SET(reason, PFRES_SHORT);
+	if (r != NULL && r->log)
+		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
+	return (PF_DROP);
+
+ drop:
+	REASON_SET(reason, PFRES_NORM);
+	if (r != NULL && r->log)
+		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
+	return (PF_DROP);
+
+ badfrag:
+	REASON_SET(reason, PFRES_FRAG);
+	if (r != NULL && r->log)
+		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 }
 
