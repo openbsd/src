@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.19 2004/01/05 00:08:23 tom Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.20 2004/02/10 00:35:15 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -57,7 +57,7 @@
  *
  * We use a long jmp to normalise our address to seg:offset 07A0:0000
  * We set the stack to start at 07C0:FFFC (grows down on i386)
- * We load the partition boot record (PBR) /boot at seg:offset 4000:0000
+ * The partition boot record (PBR) loads /boot at seg:offset 4000:0000
  */
 #define BOOTSEG		0x7c0	/* segment where we are loaded */
 #define BOOTRELOCSEG	0x7a0	/* segment where we relocate to */
@@ -248,8 +248,8 @@ err_stop:
 	call	Lmessage
 
 stay_stopped:
-	cli
-	hlt
+	sti				/* Ensure Ctl-Alt-Del will work */
+	hlt				/* (don't require power cycle) */
 	/* Just to make sure */
 	jmp	stay_stopped
 
