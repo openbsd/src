@@ -594,7 +594,6 @@
 ./usr/share/man/cat4/adw.0
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/alpha
-./usr/share/man/cat4/alpha/autoconf.0
 ./usr/share/man/cat4/alpha/com.0
 ./usr/share/man/cat4/alpha/cy.0
 ./usr/share/man/cat4/alpha/ed.0
@@ -1342,3 +1341,18 @@
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
 ./usr/share/man/cat3/keybound.0
+./usr/share/man/cat1/zcmp.0
+./usr/share/man/cat1/zegrep.0
+./usr/share/man/cat1/zfgrep.0
+./usr/share/man/cat4/arc
+./usr/share/man/cat4/arc/autoconf.0
+./usr/share/man/cat4/arc/com.0
+./usr/share/man/cat4/arc/ed.0
+./usr/share/man/cat4/arc/intro.0
+./usr/share/man/cat4/arc/le.0
+./usr/share/man/cat4/arc/lpt.0
+./usr/share/man/cat4/arc/pms.0
+./usr/share/man/cat4/arc/wd.0
+./usr/share/man/cat4/bridge.0
+./usr/share/man/cat8/brconfig.0
+./usr/share/man/cat8/ipsecadm.0

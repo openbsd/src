@@ -7,7 +7,7 @@
 ./usr/include/i386
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.0
+./usr/lib/libc.so.21.1
 ./usr/lib/libc_r.so.0.0
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.1
@@ -404,7 +404,6 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/net
 ./usr/lib/perl5/site_perl/i386-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/bpfdesc.ph
-./usr/lib/perl5/site_perl/i386-openbsd/net/encap.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_atm.ph
@@ -643,3 +642,6 @@
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
 ./usr/lib/perl5/site_perl/i386-openbsd/dbm.ph
+./usr/lib/perl5/site_perl/i386-openbsd/net/if_bridge.ph
+./usr/lib/perl5/site_perl/i386-openbsd/skipjack.ph
+./usr/lib/perl5/site_perl/i386-openbsd/sys/pool.ph

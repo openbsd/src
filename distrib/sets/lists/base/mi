@@ -1362,6 +1362,7 @@
 ./usr/share/man/man3
 ./usr/share/man/man4
 ./usr/share/man/man4/amiga
+./usr/share/man/man4/arc
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
 ./usr/share/man/man4/hp300
@@ -2505,3 +2506,5 @@
 ./var/yp/README
 ./usr/bin/zegrep
 ./usr/bin/zfgrep
+./usr/sbin/brconfig
+./var/www/icons/small

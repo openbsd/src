@@ -8,7 +8,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.4/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.4/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.0
+./usr/lib/libc.so.21.1
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
@@ -423,3 +423,6 @@
 ./usr/mipsel-unknown-openbsd2.4/lib
 ./usr/mipsel-unknown-openbsd2.4/lib/ldscripts
 ./usr/lib/perl5/site_perl/mips-openbsd/dbm.ph
+./usr/lib/perl5/site_perl/mips-openbsd/net/if_bridge.ph
+./usr/lib/perl5/site_perl/mips-openbsd/skipjack.ph
+./usr/lib/perl5/site_perl/mips-openbsd/sys/pool.ph

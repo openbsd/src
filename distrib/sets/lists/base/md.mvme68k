@@ -4,7 +4,7 @@
 ./usr/include/m68k
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.0
+./usr/lib/libc.so.21.1
 ./usr/lib/libc_r.so.0.0
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.1
@@ -610,3 +610,6 @@
 ./usr/mdec/sboot
 ./usr/mdec/stboot
 ./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/net/if_bridge.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/skipjack.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph

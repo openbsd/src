@@ -730,7 +730,6 @@
 ./usr/include/ndbm.h
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
-./usr/include/net/encap.h
 ./usr/include/net/if.h
 ./usr/include/net/if_arp.h
 ./usr/include/net/if_atm.h
@@ -2822,3 +2821,6 @@
 ./usr/include/netinet6/debug.h
 ./usr/include/netinet6/debug_inet6.h
 ./usr/include/netinet6/osdep.h
+./usr/include/net/if_bridge.h
+./usr/include/skipjack.h
+./usr/include/sys/pool.h

@@ -3,7 +3,7 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.0
+./usr/lib/libc.so.21.1
 ./usr/lib/libcurses.so.4.2
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -31,3 +31,6 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/rmd160.ph
 ./usr/libexec/ld.so
 ./usr/sbin/iteconfig
+./usr/lib/perl5/site_perl/m68k-openbsd/net/if_bridge.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/skipjack.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph
