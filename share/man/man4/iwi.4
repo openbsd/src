@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.15 2005/03/12 10:32:40 jmc Exp $
+.\" $OpenBSD: iwi.4,v 1.16 2005/03/22 18:30:52 sturm Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -148,7 +148,8 @@ which are loaded on demand when the device is attached:
 .It Pa /etc/firmware/iwi-boot
 .It Pa /etc/firmware/iwi-bss
 .It Pa /etc/firmware/iwi-ibss
-.It Pa /etc/firmware/iwi-ucode
+.It Pa /etc/firmware/iwi-ucode-bss
+.It Pa /etc/firmware/iwi-ucode-ibss
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
