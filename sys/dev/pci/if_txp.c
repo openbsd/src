@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.63 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.64 2002/04/30 23:18:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -394,7 +394,7 @@ txp_download_fw(sc)
 	}
 
 	/* Tell boot firmware to get ready for image */
-	WRITE_REG(sc, TXP_H2A_1, fileheader->addr);
+	WRITE_REG(sc, TXP_H2A_1, letoh32(fileheader->addr));
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
@@ -405,11 +405,12 @@ txp_download_fw(sc)
 	secthead = (struct txp_fw_section_header *)(((u_int8_t *)tc990image) +
 	    sizeof(struct txp_fw_file_header));
 
-	for (sect = 0; sect < fileheader->nsections; sect++) {
+	for (sect = 0; sect < letoh32(fileheader->nsections); sect++) {
 		if (txp_download_fw_section(sc, secthead, sect))
 			return (-1);
 		secthead = (struct txp_fw_section_header *)
-		    (((u_int8_t *)secthead) + secthead->nbytes + sizeof(*secthead));
+		    (((u_int8_t *)secthead) + letoh32(secthead->nbytes) +
+			sizeof(*secthead));
 	}
 
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_DOWNLOAD_COMPLETE);
@@ -482,29 +483,30 @@ txp_download_fw_section(sc, sect, sectnum)
 	}
 
 	/* Make sure this section doesn't go past the end */
-	rseg += sect->nbytes;
+	rseg += letoh32(sect->nbytes);
 	if (rseg >= sizeof(tc990image)) {
 		printf(": fw truncated section %d\n", sectnum);
 		return (-1);
 	}
 
 	/* map a buffer, copy segment to it, get physaddr */
-	if (txp_dma_malloc(sc, sect->nbytes, &dma, 0)) {
+	if (txp_dma_malloc(sc, letoh32(sect->nbytes), &dma, 0)) {
 		printf(": fw dma malloc failed, section %d\n", sectnum);
 		return (-1);
 	}
 
-	bcopy(((u_int8_t *)sect) + sizeof(*sect), dma.dma_vaddr, sect->nbytes);
+	bcopy(((u_int8_t *)sect) + sizeof(*sect), dma.dma_vaddr,
+	    letoh32(sect->nbytes));
 
 	/*
 	 * dummy up mbuf and verify section checksum
 	 */
 	m.m_type = MT_DATA;
 	m.m_next = m.m_nextpkt = NULL;
-	m.m_len = sect->nbytes;
+	m.m_len = letoh32(sect->nbytes);
 	m.m_data = dma.dma_vaddr;
 	m.m_flags = 0;
-	csum = in_cksum(&m, sect->nbytes);
+	csum = in_cksum(&m, letoh32(sect->nbytes));
 	if (csum != sect->cksum) {
 		printf(": fw section %d, bad cksum (expected 0x%x got 0x%x)\n",
 		    sectnum, sect->cksum, csum);
@@ -515,9 +517,9 @@ txp_download_fw_section(sc, sect, sectnum)
 	bus_dmamap_sync(sc->sc_dmat, dma.dma_map, 0,
 	    dma.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-	WRITE_REG(sc, TXP_H2A_1, sect->nbytes);
-	WRITE_REG(sc, TXP_H2A_2, sect->cksum);
-	WRITE_REG(sc, TXP_H2A_3, sect->addr);
+	WRITE_REG(sc, TXP_H2A_1, letoh32(sect->nbytes));
+	WRITE_REG(sc, TXP_H2A_2, letoh16(sect->cksum));
+	WRITE_REG(sc, TXP_H2A_3, letoh32(sect->addr));
 	WRITE_REG(sc, TXP_H2A_4, dma.dma_paddr >> 32);
 	WRITE_REG(sc, TXP_H2A_5, dma.dma_paddr & 0xffffffff);
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_SEGMENT_AVAILABLE);
