@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.7 2002/07/04 04:26:40 deraadt Exp $	*/
+/*	$OpenBSD: test.c,v 1.8 2003/06/25 21:12:50 deraadt Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: test.c,v 1.7 2002/07/04 04:26:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: test.c,v 1.8 2003/06/25 21:12:50 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -142,7 +142,7 @@ struct t_op {
 char **t_wp;
 struct t_op const *t_wp_op;
 
-static enum token t_lex();
+static enum token t_lex(char *);
 static int oexpr(enum token n);
 static int aexpr(enum token n);
 static int nexpr(enum token n);
@@ -150,9 +150,9 @@ static int binop(void);
 static int primary(enum token n);
 static int filstat(char *nm, enum token mode);
 static int getn(const char *s);
-static int newerf();
-static int olderf();
-static int equalf();
+static int newerf(const char *, const char *);
+static int olderf(const char *, const char *);
+static int equalf(const char *, const char *);
 static void syntax(const char *op, char *msg);
 
 int
@@ -450,7 +450,7 @@ getn(const char *s)
 }
 
 static int
-newerf(char *f1, char *f2)
+newerf(const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
@@ -460,7 +460,7 @@ newerf(char *f1, char *f2)
 }
 
 static int
-olderf(char *f1, char *f2)
+olderf(const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
@@ -470,7 +470,7 @@ olderf(char *f1, char *f2)
 }
 
 static int
-equalf(char *f1, char *f2)
+equalf(const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 

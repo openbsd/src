@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.16 2003/03/31 15:47:03 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.17 2003/06/25 21:16:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -57,6 +57,7 @@ static	int setuserpath(login_cap_t *, char *);
 static	u_quad_t multiply(u_quad_t, u_quad_t);
 static	u_quad_t strtolimit(char *, char **, int);
 static	u_quad_t strtosize(char *, char **, int);
+static	int gsetrl(login_cap_t *lc, int what, char *name, int type);
 
 login_cap_t *
 login_getclass(class)

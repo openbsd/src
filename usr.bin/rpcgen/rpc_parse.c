@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.12 2003/04/26 18:29:51 pvalchev Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.13 2003/06/25 21:09:26 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -64,7 +64,7 @@ static void unsigned_dec(char **);
  * return the next definition you see
  */
 definition *
-get_definition()
+get_definition(void)
 {
 	definition *defp;
 	token tok;

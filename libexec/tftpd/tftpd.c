@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.27 2003/06/02 19:38:25 millert Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.28 2003/06/25 21:11:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.27 2003/06/02 19:38:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.28 2003/06/25 21:11:25 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -95,9 +95,9 @@ int	sendfile(struct formats *pf);
 
 struct formats {
 	char	*f_mode;
-	int	(*f_validate)();
-	int	(*f_send)();
-	int	(*f_recv)();
+	int	(*f_validate)(char *, int);
+	int	(*f_send)(struct formats *);
+	int	(*f_recv)(struct formats *);
 	int	f_convert;
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
@@ -420,7 +420,7 @@ timer(int signo)
 int
 sendfile(struct formats *pf)
 {
-	struct tftphdr *dp, *r_init();
+	struct tftphdr *dp, *r_init(void);
 	struct tftphdr *ap;    /* ack packet */
 	volatile unsigned short block = 1;
 	int size, n;
@@ -491,7 +491,7 @@ justquit(int signo)
 int
 recvfile(struct formats *pf)
 {
-	struct tftphdr *dp, *w_init();
+	struct tftphdr *dp, *w_init(void);
 	struct tftphdr *ap;    /* ack buffer */
 	volatile unsigned short block = 0;
 	int n, size;

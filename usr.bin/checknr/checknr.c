@@ -1,4 +1,4 @@
-/*	$OpenBSD: checknr.c,v 1.10 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: checknr.c,v 1.11 2003/06/25 21:09:09 deraadt Exp $	*/
 /*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-static char rcsid[] = "$OpenBSD: checknr.c,v 1.10 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: checknr.c,v 1.11 2003/06/25 21:09:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,8 @@ static char rcsid[] = "$OpenBSD: checknr.c,v 1.10 2003/06/10 22:20:45 deraadt Ex
  */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <ctype.h>
 
 #define MAXSTK	100	/* Stack size */
@@ -187,8 +189,6 @@ int	fflag;		/* -f: ignore \f */
 int	sflag;		/* -s: ignore \s */
 int	ncmds;		/* size of knowncmds */
 int	slot;		/* slot in knowncmds found by binsrch */
-
-char	*malloc();
 
 int
 main(int argc, char *argv[])

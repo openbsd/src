@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timezone.c,v 1.6 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: timezone.c,v 1.7 2003/06/25 21:16:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -38,7 +38,7 @@ static char rcsid[] = "$OpenBSD: timezone.c,v 1.6 2003/06/02 20:18:35 millert Ex
 #include <string.h>
 #include <tzfile.h>
 
-char *_tztab();
+char *_tztab(int, int);
 
 /*
  * timezone --

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.44 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.45 2003/06/25 21:19:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.44 2003/06/10 22:20:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.45 2003/06/25 21:19:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -313,7 +313,6 @@ dofiles(struct kinfo_proc *kp)
 #define	filed	filed0.fd_fd
 	struct proc *p = &kp->kp_proc;
 	struct eproc *ep = &kp->kp_eproc;
-	extern char *user_from_uid();
 
 	Uname = user_from_uid(ep->e_ucred.cr_uid, 0);
 	Pid = p->p_pid;
@@ -399,7 +398,7 @@ vtrans(struct vnode *vp, int i, int flag, off_t offset)
 	struct vnode vn;
 	struct filestat fst;
 	char rw[3], mode[17];
-	char *badtype = NULL, *filename, *getmnton();
+	char *badtype = NULL, *filename, *getmnton(struct mount *);
 
 	filename = badtype = NULL;
 	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {

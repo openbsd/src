@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2003/06/25 15:45:10 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2003/06/25 21:09:37 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.15 2003/06/25 15:45:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2003/06/25 21:09:37 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -85,7 +85,7 @@ int	margc;
 char	*margv[MAXARGV+1];
 char	*prompt = "tftp";
 jmp_buf	toplevel;
-void	intr();
+void	intr(int);
 struct	servent *sp;
 
 void	get(int, char **);
@@ -539,7 +539,7 @@ status(int argc, char *argv[])
 }
 
 void
-intr(void)
+intr(int signo)
 {
 
 	signal(SIGALRM, SIG_IGN);

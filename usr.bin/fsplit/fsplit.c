@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.14 2003/06/25 21:19:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.14 2003/06/25 21:19:19 deraadt Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -90,7 +90,7 @@ int saveit(char *);
 char    buf[BSZ];
 FILE   *ifp;
 char    x[] = "zzz000.f", mainp[] = "main000.f", blkp[] = "blkdta000.f";
-char   *look(), *skiplab(), *functs();
+char   *look(char *, char *), *skiplab(char *), *functs(char *);
 
 #define TRUE 1
 #define FALSE 0
@@ -282,6 +282,7 @@ getline(void)
 	warnx("line truncated to %d characters", BSZ);
 	return (1);
 }
+
 /* return 1 for 'end' alone on card (up to col. 72),  0 otherwise */
 int
 lend(void)
@@ -307,10 +308,12 @@ lend(void)
 		return (1);
 	return (0);
 }
-/*		check for keywords for subprograms
-		return 0 if comment card, 1 if found
-		name and put in arg string. invent name for unnamed
-		block datas and main programs.		*/
+
+/* check for keywords for subprograms
+ * return 0 if comment card, 1 if found
+ * name and put in arg string. invent name for unnamed
+ * block datas and main programs.
+ */
 int
 lname(char *s, size_t len)
 {
@@ -416,9 +419,12 @@ functs(char *p)
 	} else
 		return (0);
 }
-/* 	if first 6 col. blank, return ptr to col. 7,
-	if blanks and then tab, return ptr after tab,
-	else return 0 (labelled statement, comment or continuation */
+
+/*
+ * if first 6 col. blank, return ptr to col. 7,
+ * if blanks and then tab, return ptr after tab,
+ * else return 0 (labelled statement, comment or continuation
+ */
 char   *
 skiplab(char *p)
 {
@@ -435,8 +441,11 @@ skiplab(char *p)
 	}
 	return (ptr);
 }
-/* 	return 0 if m doesn't match initial part of s;
-	otherwise return ptr to next char after m in s */
+
+/*
+ * return 0 if m doesn't match initial part of s;
+ * otherwise return ptr to next char after m in s
+ */
 char   *
 look(char *s, char *m)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.10 2003/06/10 22:20:50 deraadt Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.11 2003/06/25 21:18:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.10 2003/06/10 22:20:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.11 2003/06/25 21:18:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,10 @@ struct	whod awhod;
 
 time_t now;
 int rflg = 1;
-int hscmp(), ucmp(), lcmp(), tcmp();
+int	hscmp(const void *, const void *);
+int	ucmp(const void *, const void *);
+int	lcmp(const void *, const void *);
+int	tcmp(const void *, const void *);
 
 void morehosts(void);
 
@@ -78,9 +81,8 @@ main(int argc, char *argv[])
 	struct dirent *dp;
 	int aflg, cc, ch, f, i, maxloadav;
 	char buf[sizeof(struct whod)];
-	int (*cmp)() = hscmp;
-	time_t time();
-	char *interval();
+	int (*cmp)(const void *, const void *) = hscmp;
+	char *interval(time_t, char *);
 
 	aflg = 0;
 	while ((ch = getopt(argc, argv, "alrut")) != -1)
@@ -199,18 +201,18 @@ interval(time_t tval, char *updown)
 
 /* alphabetical comparison */
 int
-hscmp(void *a1, void *a2)
+hscmp(const void *a1, const void *a2)
 {
-	struct hs *h1 = a1, *h2 = a2;
+	const struct hs *h1 = a1, *h2 = a2;
 
 	return(rflg * strcmp(h1->hs_wd->wd_hostname, h2->hs_wd->wd_hostname));
 }
 
 /* load average comparison */
 int
-lcmp(void *a1, void *a2)
+lcmp(const void *a1, const void *a2)
 {
-	struct hs *h1 = a1, *h2 = a2;
+	const struct hs *h1 = a1, *h2 = a2;
 
 	if (ISDOWN(h1))
 		if (ISDOWN(h2))
@@ -226,9 +228,9 @@ lcmp(void *a1, void *a2)
 
 /* number of users comparison */
 int
-ucmp(void *a1, void *a2)
+ucmp(const void *a1, const void *a2)
 {
-	struct hs *h1 = a1, *h2 = a2;
+	const struct hs *h1 = a1, *h2 = a2;
 
 	if (ISDOWN(h1))
 		if (ISDOWN(h2))
@@ -243,9 +245,9 @@ ucmp(void *a1, void *a2)
 
 /* uptime comparison */
 int
-tcmp(void *a1, void *a2)
+tcmp(const void *a1, const void *a2)
 {
-	struct hs *h1 = a1, *h2 = a2;
+	const struct hs *h1 = a1, *h2 = a2;
 
 	return(rflg * (
 		(ISDOWN(h2) ? h2->hs_wd->wd_recvtime - now

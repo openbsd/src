@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.29 2003/05/15 14:40:53 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.30 2003/06/25 21:10:33 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
 
 /*
@@ -104,9 +104,7 @@ static void rtsold_set_dump_file(int);
 static void usage(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int s, ch, once = 0;
 	struct timeval *timeout;
@@ -437,7 +435,7 @@ bad:
 }
 
 void
-iflist_init()
+iflist_init(void)
 {
 	struct ifinfo *ifi, *next;
 
@@ -528,7 +526,7 @@ make_packet(struct ifinfo *ifinfo)
 }
 
 static struct timeval *
-rtsol_check_timer()
+rtsol_check_timer(void)
 {
 	static struct timeval returnval;
 	struct timeval now, rtsol_timer;
@@ -781,7 +779,7 @@ warnmsg(int priority, const char *func, const char *msg, ...)
  * return a list of interfaces which is suitable to sending an RS.
  */
 char **
-autoifprobe()
+autoifprobe(void)
 {
 	static char **argv = NULL;
 	static int n = 0;

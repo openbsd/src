@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2003/06/23 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2003/06/25 21:12:39 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -158,7 +158,7 @@ Char	 *globone(Char *, int);
 int	  Gmatch(Char *, Char *);
 void	  ginit(void);
 Char	**globall(Char **);
-void	  rscan(Char **, void (*)());
+void	  rscan(Char **, void (*)(int));
 void	  tglob(Char **);
 void	  trim(Char **);
 #ifdef FILEC

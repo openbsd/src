@@ -1,4 +1,4 @@
-/*	$OpenBSD: asa.c,v 1.4 2003/06/10 22:20:44 deraadt Exp $	*/
+/*	$OpenBSD: asa.c,v 1.5 2003/06/25 21:08:59 deraadt Exp $	*/
 /*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: asa.c,v 1.4 2003/06/10 22:20:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: asa.c,v 1.5 2003/06/25 21:08:59 deraadt Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
 
-static void asa();
+static void asa(FILE *);
 
 int
 main(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.14 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.15 2003/06/25 21:12:39 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -419,7 +419,7 @@ struct varent {
 #define v_right		v_link[1]
 #define v_parent	v_link[2]
 
-struct varent *adrof1();
+struct varent *adrof1(Char *, struct varent *);
 
 #define adrof(v)	adrof1(v, &shvhed)
 #define value(v)	value1(v, &shvhed)

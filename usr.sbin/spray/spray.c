@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: spray.c,v 1.3 2002/06/02 06:42:29 deraadt Exp $
+ *	$Id: spray.c,v 1.4 2003/06/25 21:10:19 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -41,8 +41,8 @@
 #define SPRAYOVERHEAD	86
 #endif
 
-void usage ();
-void print_xferstats ();
+void usage();
+void print_xferstats(int, int, double);
 
 /* spray buffer */
 char spray_buffer[SPRAYMAX];
@@ -53,9 +53,7 @@ struct timeval ONE_WAY = { 0, 0 };
 struct timeval TIMEOUT = { 25, 0 };
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	char *progname;
 	spraycumul	host_stats;
@@ -190,10 +188,7 @@ main(argc, argv)
 
 
 void
-print_xferstats(packets, packetlen, xfertime)
-	int packets;
-	int packetlen;
-	double xfertime;
+print_xferstats(int packets, int packetlen, double xfertime)
 {
 	int datalen;
 	double pps;		/* packets per second */
@@ -215,7 +210,7 @@ print_xferstats(packets, packetlen, xfertime)
 
 
 void
-usage ()
+usage(void)
 {
 	fprintf(stderr, "usage: spray [-c count] [-l length] [-d delay] host\n");
 	exit(1);

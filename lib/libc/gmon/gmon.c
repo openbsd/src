@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: gmon.c,v 1.15 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: gmon.c,v 1.16 2003/06/25 21:16:47 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -55,6 +55,8 @@ static int	s_scale;
 
 void	moncontrol(int);
 static int hertz(void);
+void	monstartup(u_long lowpc, u_long highpc);
+void	_mcleanup(void);
 
 void
 monstartup(lowpc, highpc)
@@ -122,7 +124,7 @@ monstartup(lowpc, highpc)
 }
 
 void
-_mcleanup()
+_mcleanup(void)
 {
 	int fd;
 	int fromindex;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: telldir.c,v 1.3 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: telldir.c,v 1.4 2003/06/25 21:16:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -61,6 +61,8 @@ struct ddloc {
 
 static long	dd_loccnt;	/* Index of entry for sequential readdir's */
 static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
+
+void __seekdir(DIR *, long);
 
 /*
  * return a pointer into a directory

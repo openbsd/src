@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.30 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.31 2003/06/25 21:16:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -79,6 +79,7 @@ static int __ypexclude_add(const char *);
 static int __ypexclude_is(const char *);
 static void __ypexclude_free(void);
 static void __ypproto_set(void);
+static int __ypparse(struct passwd *pw, char *s);
 
 /* macro for deciding which YP maps to use. */
 #define PASSWD_BYNAME \

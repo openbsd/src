@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.19 2003/06/23 16:42:15 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.20 2003/06/25 21:12:39 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.19 2003/06/23 16:42:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.20 2003/06/25 21:12:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1148,7 +1148,6 @@ static  RLIM_TYPE
 getval(struct limits *lp, Char **v)
 {
     float f;
-    double  atof();
     Char   *cp = *v++;
 
     f = atof(short2str(cp));
@@ -1301,7 +1300,7 @@ dosuspend(Char **v, struct command *t)
 {
     int     ctpgrp;
 
-    void    (*old) ();
+    void    (*old) (int);
 
     if (loginsh)
 	stderror(ERR_SUSPLOG);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: fold.c,v 1.9 2003/06/25 21:19:19 deraadt Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fold.c,v 1.9 2003/06/25 21:19:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,8 +54,8 @@ static char rcsid[] = "$OpenBSD: fold.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $"
 
 #define	DEFLINEWIDTH	80
 
-static void fold ();
-static int new_column_position ();
+static void fold(int);
+static int new_column_position(int, int);
 int count_bytes = 0;
 int split_words = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.18 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.19 2003/06/25 21:12:45 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.18 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.19 2003/06/25 21:12:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ findvar(char *p)
 {
 	VAR *v, key;
 	char *hp;
-	int vcmp();
+	int vcmp(const void *, const void *);
 
 	key.name = p;
 

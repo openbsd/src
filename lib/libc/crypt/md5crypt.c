@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.11 2003/04/02 20:35:29 millert Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.12 2003/06/25 21:16:47 deraadt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.11 2003/04/02 20:35:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.12 2003/06/25 21:16:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -44,6 +44,8 @@ to64(s, v, n)
  *
  * Use MD5 for what it is best at...
  */
+
+char *md5crypt(const char *pw, const char *salt);
 
 char *
 md5crypt(pw, salt)

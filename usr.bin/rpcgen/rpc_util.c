@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.10 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.11 2003/06/25 21:09:26 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -96,8 +96,7 @@ definition *
 findval(lst, val, cmp)
 	list *lst;
 	char *val;
-	int (*cmp) ();
-
+	int (*cmp) (definition *, char *);
 {
 
 	for (; lst != NULL; lst = lst->next) {

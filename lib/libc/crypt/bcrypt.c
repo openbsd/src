@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.17 2003/06/25 21:16:47 deraadt Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -171,6 +171,8 @@ bcrypt_gensalt(u_int8_t log_rounds)
 }
 /* We handle $Vers$log2(NumRounds)$salt+passwd$
    i.e. $2$04$iwouldntknowwhattosayetKdJ6iFtacBqJdKe6aW7ou */
+
+char   *bcrypt(const char *key, const char *salt);
 
 char   *
 bcrypt(key, salt)

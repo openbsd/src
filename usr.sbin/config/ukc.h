@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.10 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: ukc.h,v 1.11 2003/06/25 21:10:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -134,7 +134,7 @@ int	        *get_extraloc(int);
 char	        *get_pdevnames(int);
 struct pdevinit *get_pdevinit(int);
 
-int	more();
+int	more(void);
 void	pnum(int);
 void	pdevnam(short);
 void	pdev(short);
@@ -153,7 +153,7 @@ void	common_attr(char *, int, char);
 void	add_read(char *, char, char *, int, int *);
 void	add(char *, int, short, short);
 
-int	config();
+int	config(void);
 void	process_history(int, char *);
 
 #define UC_CHANGE 'c'

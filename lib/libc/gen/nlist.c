@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.44 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.45 2003/06/25 21:16:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,14 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.44 2003/06/02 20:18:34 millert Exp 
 
 #ifdef _NLIST_DO_ECOFF
 #include <sys/exec_ecoff.h>
+#endif
+
+int	__fdnlist(int, struct nlist *);
+int	__aout_fdnlist(int, struct nlist *);
+int	__ecoff_fdnlist(int, struct nlist *);
+int	__elf_fdnlist(int, struct nlist *);
+#ifdef _NLIST_DO_ELF
+int	__elf_is_okay__(register Elf_Ehdr *ehdr);
 #endif
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)

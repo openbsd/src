@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.77 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.78 2003/06/25 21:18:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -363,7 +363,7 @@ dovmstat(u_int interval, int reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
-	void needhdr();
+	void needhdr(int);
 	int mib[2];
 	struct clockinfo clkinfo;
 	size_t size;
@@ -465,7 +465,7 @@ printhdr(void)
  * Force a header to be prepended to the next output.
  */
 void
-needhdr(void)
+needhdr(int signo)
 {
 
 	hdrcnt = 1;

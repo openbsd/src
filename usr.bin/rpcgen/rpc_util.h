@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.11 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.12 2003/06/25 21:09:26 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -91,12 +91,12 @@ extern int nonfatalerrors;
 /*
  * rpc_util routines 
  */
-void storeval();
+void storeval(list **, definition *);
 
 #define STOREVAL(list,item)	\
 	storeval(list,item)
 
-definition *findval();
+definition *findval(list *, char *, int (*)(definition *, char *));
 
 #define FINDVAL(list,item,finder) \
 	findval(list, item, finder)
