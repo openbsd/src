@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.9 1996/11/06 01:36:54 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.10 1996/12/03 01:06:50 downsj Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ static char *dktypenames[] = {
 #define	FS_ADFS		16		/* Acorn Disk Filing System */
 #define FS_EXT2FS	17		/* ext2fs */
 
-#ifdef	DKTYPENAMES
+#ifdef DKTYPENAMES
 static char *fstypenames[] = {
 	"unused",
 	"swap",
@@ -260,6 +260,30 @@ static char *fstypenames[] = {
 	"ext2fs",
 	NULL
 };
+
+/* Similar to the above, but used for things like the mount command. */
+static char *fstypesnames[] = {
+	"",		/* 0 */
+	"",		/* 1 */
+	"",		/* 2 */
+	"",		/* 3 */
+	"",		/* 4 */
+	"",		/* 5 */
+	"",		/* 6 */
+	"ffs",		/* 7 */
+	"msdos",	/* 8 */
+	"lfs",		/* 9 */
+	"",		/* 10 */
+	"",		/* 11 */
+	"cd9660",	/* 12 */
+	"",		/* 13 */
+	"ados",		/* 14 */
+	"",		/* 15 */
+	"",		/* 16 */
+	"ext2fs",	/* 17 */
+	NULL
+};
+
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #endif
 
