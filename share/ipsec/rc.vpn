@@ -1,11 +1,12 @@
 #!/bin/sh
-#	$OpenBSD: rc.vpn,v 1.16 2002/12/04 15:03:56 markus Exp $
+#	$OpenBSD: rc.vpn,v 1.17 2002/12/05 12:50:03 markus Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
 # v0.81 / 26Jul98
 #
 # Modifications and cleanup by H. Olsson <ho@openbsd.org>, 28Aug99
+# and Markus Friedl <markus@openbsd.org>
 #
 # rc.vpn -- configure IPsec in tunnel mode for a mesh of N local and
 #           M remote networks. (N x M mesh)
@@ -23,11 +24,9 @@
 GW_LOCAL=192.168.254.254
 GW_REMOTE=192.168.1.2
 
-# Local and remote networks, numbered
-LOCAL_NET_0="192.168.254.0/24"
-LOCAL_NET_1="192.168.253.0/24"
-REMOTE_NET_0="192.168.1.0/24"
-REMOTE_NET_1="192.168.2.0/24"
+# Local and remote networks
+LOCAL_NETWORKS="192.168.254.0/24 192.168.253.0/24"
+REMOTE_NETWORKS="192.168.1.0/24 192.168.2.0/24"
 
 # Optional, use for manual keying only
 # Crypto options and keys, note that key/iv lengths need to correspond
@@ -52,11 +51,11 @@ ipsecadm=/sbin/ipsecadm
 
 abort=0
 if [ `/usr/sbin/sysctl -n net.inet.esp.enable` == 0 ]; then
-	echo "$0: variable 'net.inet.esp.enable' (IPsec ESP protocol)"
+	echo "$0: variable 'net.inet.esp.enable=0' (IPsec ESP protocol)"
 	abort=1
 fi
 if [ `/usr/sbin/sysctl -n net.inet.ip.forwarding` == 0 ]; then
-	echo "$0: variable 'net.inet.ip.forwarding' (IP forwarding/routing)"
+	echo "$0: variable 'net.inet.ip.forwarding=0' (IP forwarding/routing)"
 	abort=1
 fi
 if [ ${abort} = 1 ]; then
@@ -84,34 +83,18 @@ fi
 # Setup the Flows, aka SPD
 #
 
-FLOW="$DEBUG $ipsecadm flow -proto esp -src $GW_LOCAL -dst $GW_REMOTE"
-FLOWIN="$FLOW -in -require -addr"
-FLOWOUT="$FLOW -out -require -addr"
+# add the gateways
+LOCAL_NETWORKS="${GW_LOCAL}/32 ${LOCAL_NETWORKS}"
+REMOTE_NETWORKS="${GW_REMOTE}/32 ${REMOTE_NETWORKS}"
 
-# local gateway to remote gateway
-
-$FLOWOUT ${GW_LOCAL}/32  ${GW_REMOTE}/32
-$FLOWIN  ${GW_REMOTE}/32 ${GW_LOCAL}/32
+FLOW="$DEBUG ${ipsecadm} flow -proto esp -src ${GW_LOCAL} -dst ${GW_REMOTE} -require"
 
 # each local net to each remote net
-
-localcount=0
-while true; do
-	local_net=`eval "echo \\\$LOCAL_NET_${localcount}"`
-	if [ "x${local_net}" == "x" ]; then
-		break;
-	fi
-	remotecount=0
-	while true; do
-		remote_net=`eval "echo \\\$REMOTE_NET_${remotecount}"`
-		if [ "x${remote_net}" == "x" ]; then
-			break;
-		fi
-		$FLOWOUT $local_net  $remote_net
-		$FLOWIN  $remote_net $local_net
-		remotecount=$(($remotecount + 1))
+for local_net in ${LOCAL_NETWORKS}; do
+	for remote_net in ${REMOTE_NETWORKS}; do
+		$FLOW -out -addr $local_net  $remote_net
+		$FLOW -in  -addr $remote_net $local_net
 	done
-	localcount=$(($localcount + 1))
 done
 
 exit 0
