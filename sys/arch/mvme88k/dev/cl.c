@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.35 2004/01/02 23:37:17 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.36 2004/01/05 20:08:01 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -99,7 +99,8 @@ struct cl_info {
 
 #ifndef DO_MALLOC
 /* four (4) buffers per port */
-char cl_dmabuf [CLCD_PORTS_PER_CHIP * CL_BUFSIZE * 4];
+char cl_dmabuf[CLCD_PORTS_PER_CHIP * CL_BUFSIZE * 4];
+char cl_dmabuf1[CLCD_PORTS_PER_CHIP * CL_BUFSIZE * 4];
 #endif
 
 struct clsoftc {
@@ -206,9 +207,10 @@ cltty(dev)
 {
 	int unit, channel;
 	struct clsoftc *sc;
+
 	unit = CL_UNIT(dev);
 	if (unit >= cl_cd.cd_ndevs ||
-		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
+	    (sc = (struct clsoftc *)cl_cd.cd_devs[unit]) == NULL) {
 		return (NULL);
 	}
 	channel = CL_CHANNEL(dev);
@@ -221,23 +223,25 @@ clprobe(parent, self, aux)
 	void *self;
 	void *aux;
 {
-	/* probing onboard 166/167/187 CL-cd2400
-	 * should be previously configured,
-	 * we can check the value before resetting the chip
-	 */
 	struct clreg *cl_reg;
 	struct confargs *ca = aux;
 
 	if (brdtyp == BRD_188)
-		return 0;
+		return (0);
 
-	ca->ca_ipl = IPL_TTY;
-	ca->ca_vaddr = ca->ca_paddr = (void *)CD2400_BASE_ADDR;
-	cl_reg = (struct clreg *)ca->ca_vaddr;
+	/*
+	 * We do not accept empty locators here...
+	 */
+	if ((vaddr_t)ca->ca_paddr == CD2400_BASE_ADDR ||
+	    ((vaddr_t)ca->ca_paddr == CD2400_SECONDARY_ADDR &&
+	     brdtyp == BRD_8120)) {
+		ca->ca_ipl = IPL_TTY;
+		ca->ca_vaddr = ca->ca_paddr;
 
-	if (badvaddr((vaddr_t)&cl_reg->cl_gfrcr,1))
-		return 0;
-	return 1;
+		cl_reg = (struct clreg *)ca->ca_vaddr;
+		return (!badvaddr((vaddr_t)&cl_reg->cl_gfrcr, 1));
+	} else
+		return (0);
 }
 
 void
@@ -274,7 +278,11 @@ clattach(parent, self, aux)
 #ifdef DO_MALLOC
 	sc->sc_cl[0].rx[0] = (void *)(dvma_malloc(16 * CL_BUFSIZE));
 #else
-	sc->sc_cl[0].rx[0] = (void *) (&cl_dmabuf);
+	/* XXX */
+	if ((vaddr_t)ca->ca_paddr == CD2400_BASE_ADDR)
+		sc->sc_cl[0].rx[0] = (void *)(&cl_dmabuf);
+	else
+		sc->sc_cl[0].rx[0] = (void *)(&cl_dmabuf1);
 #endif
 	sc->sc_cl[0].rx[1] = (void *)(((int)sc->sc_cl[0].rx[0]) + CL_BUFSIZE);
 	sc->sc_cl[1].rx[0] = (void *)(((int)sc->sc_cl[0].rx[1]) + CL_BUFSIZE);

@@ -1,8 +1,8 @@
-#	$OpenBSD: RAMDISK,v 1.18 2004/01/04 00:29:50 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2004/01/05 20:07:59 miod Exp $
 
 machine		mvme88k
 
-# 2 meg ramdisk
+# 4 meg ramdisk
 option		MINIROOTSIZE=4096
 option		RAMDISK_HOOKS
 
@@ -44,23 +44,24 @@ pcctwo0 at bussw0 offset 0x42000
 
 clock0	at pcctwo0 ipl 5
 vme0	at pcctwo0 offset 0x40000
-nvram0	at pcctwo0 offset 0xc0000
+#nvram0	at pcctwo0 offset 0xc0000
 ie0	at pcctwo0 offset 0x46000 ipl 1
 ssh0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
+#cl1	at pcctwo0 offset 0x45200 ipl 3		# M8120 only
 
 clock0	at syscon0 ipl 5
-nvram0	at syscon0 offset 0x80000
+#nvram0	at syscon0 offset 0x80000
 dart0	at syscon0 offset 0x82000 ipl 3
 vme0	at syscon0 offset 0x85000
 
 vmes0	at vme0
-vmel0	at vme0
+#vmel0	at vme0
 
-vx0	at vmes0 addr 0xff780000 ipl 3 len 0x10000
-vx1	at vmes0 addr 0xff790000 ipl 3 len 0x10000
-vx2	at vmes0 addr 0xff7a0000 ipl 3 len 0x10000
-vx3	at vmes0 addr 0xff7b0000 ipl 3 len 0x10000
+#vx0	at vmes0 addr 0xff780000 ipl 3 len 0x10000
+#vx1	at vmes0 addr 0xff790000 ipl 3 len 0x10000
+#vx2	at vmes0 addr 0xff7a0000 ipl 3 len 0x10000
+#vx3	at vmes0 addr 0xff7b0000 ipl 3 len 0x10000
 le0	at vmes0 addr 0xffff1200 ipl 1 len 0x100
 le1	at vmes0 addr 0xffff1400 ipl 1 len 0x100
 le2	at vmes0 addr 0xffff1600 ipl 1 len 0x100
