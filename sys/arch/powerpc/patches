@@ -4,19 +4,6 @@
 #	some need to be determined if they are to be commited
 #	or not.
 #
-Index: src/bin/sh/Makefile
-===================================================================
-RCS file: /cvs/src/bin/sh/Makefile,v
-retrieving revision 1.7
-diff -r1.7 Makefile
-40c40
-< 	${CC} ${CFLAGS} ${.CURDIR}/mknodes.c -o $@
----
-> 	${HOSTCC} ${CFLAGS} ${.CURDIR}/mknodes.c -o $@
-46c46
-< 	${CC} ${CFLAGS} ${.CURDIR}/mksyntax.c -o $@
----
-> 	${HOSTCC} ${CFLAGS} ${.CURDIR}/mksyntax.c -o $@
 Index: src/lib/libc/stdlib/strtod.c
 #	what define should be used here,
 #	port currently defines both.
@@ -35,13 +22,13 @@ RCS file: /cvs/src/lib/libkvm/kvm.c,v
 retrieving revision 1.4
 diff -r1.4 kvm.c
 1c1
-< /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $ */
+< /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $ */
 ---
-> /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $ */
+> /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $ */
 45c45
-< static char *rcsid = "$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $";
+< static char *rcsid = "$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $";
 ---
-> static char *rcsid = "$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $";
+> static char *rcsid = "$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $";
 361a362
 > #if #defined(__powerpc__)
 368a370
@@ -54,16 +41,6 @@ diff -r1.4 kvm.c
 > #if !defined(__powerpc__)
 511a517
 > #endif
-Index: src/lib/libtermlib/Makefile
-#	Cross compilation issue.
-===================================================================
-RCS file: /cvs/src/lib/libtermlib/Makefile,v
-retrieving revision 1.5
-diff -r1.5 Makefile
-67a68,70
-> mkinfo: mkinfo.c
-> 	${HOSTCC} -O -I${.CURDIR} -o mkinfo ${>}
-> 
 Index: src/sbin/Makefile
 # powerpc and arc use fdisk.
 ===================================================================
@@ -215,9 +192,9 @@ RCS file: /cvs/src/sys/conf/param.c,v
 retrieving revision 1.2
 diff -r1.2 param.c
 1c1
-< /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $	*/
+< /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $	*/
 ---
-> /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $	*/
+> /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $	*/
 103c103
 < int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 ---
@@ -277,26 +254,6 @@ diff -r1.3 memcpy.c
 > {
 > 	return 	memcpy(s1,s2,n);
 > }
-Index: src/usr.bin/lorder/lorder.sh
-#	If no object in a library used a symbol from
-#	another object, that second object would not
-#	be included in the tsort output, This fixes
-#	it with a self dependancy, why does this only
-#	happen on elf or powerpc...
-===================================================================
-RCS file: /cvs/src/usr.bin/lorder/lorder.sh,v
-retrieving revision 1.5
-diff -r1.5 lorder.sh
-67a68,76
-> # make certian that each file is included at least once.
-> # at a minimum put out a line containing "file file"
-> # for each file.
-> 
-> for file in $*
-> do
-> 	echo ${file} ${file}
-> done
-> 
 Index: src/usr.bin/xlint/lint1/param.h
 #	Which is the correct define to use for the port.
 ===================================================================
