@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.592 2003/02/04 19:04:05 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.593 2003/02/05 20:45:08 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -572,6 +572,7 @@
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
+#define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology */
@@ -1021,6 +1022,9 @@
 
 /* c't Magazin products */
 #define	PCI_PRODUCT_C4T_GPPCI	0x6773		/* GPPCI */
+
+/* Cavium products */
+#define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* Nitrox XL */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */

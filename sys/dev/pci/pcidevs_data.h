@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.592 2003/02/04 19:04:05 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.593 2003/02/05 20:45:08 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1401,6 +1401,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_C4T, PCI_PRODUCT_C4T_GPPCI,
 	    "GPPCI",
+	},
+	{
+	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
+	    "Nitrox XL",
 	},
 	{
 	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,
@@ -8341,6 +8345,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ANTARES,
 	    "Antares Microsystems",
+	},
+	{
+	    PCI_VENDOR_CAVIUM,
+	    "Cavium",
 	},
 	{
 	    PCI_VENDOR_LANERGY,
