@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1995/03/18 14:59:46 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1996/02/06 00:00:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.9 1995/03/18 14:59:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.10 1996/02/06 00:00:22 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,15 @@ main(argc, argv)
 {
 	int ch;
 	ino_t ino;
-	char *inputdev = _PATH_DEFTAPE;
+	char *inputdev;
 	char *symtbl = "./restoresymtable";
 	char *p, name[MAXPATHLEN];
 
 	if (argc < 2)
 		usage();
 
+	if ((inputdev = getenv("TAPE")) == NULL)
+		inputdev = _PATH_DEFTAPE;
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != EOF)
 		switch(ch) {
