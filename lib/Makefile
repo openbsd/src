@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1997/01/19 22:41:37 graichen Exp $
+#	$OpenBSD: Makefile,v 1.17 1997/01/20 07:46:47 graichen Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcom_err libcompat libcurses libedit \
@@ -14,11 +14,6 @@ SUBDIR=	csu libarch libc libcom_err libcompat libcurses libedit \
 SUBDIR+=        libkvm
 .else
 SUBDIR+=        libkvm.old
-.endif
-
-# XXX Temporarely until the mips ld can handle __warn_references
-.if (${MACHINE_ARCH} == "mips")
-CFLAGS+=-DNO_WARN_REFERENCES
 .endif
 
 .include <bsd.subdir.mk>

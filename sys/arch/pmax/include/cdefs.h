@@ -33,13 +33,6 @@
 #define	_C_LABEL(x)	_STRING(x)
 
 #define	__indr_references(sym,msg)	/* nothing */
-
-#if defined __GNUC__ && defined __STDC__
-#define __warn_references(sym, msg)                  \
-  static const char __evoke_link_warning_##sym[]     \
-    __attribute__ ((section (".gnu.warning." #sym))) = msg;
-#else
 #define	__warn_references(sym,msg)	/* nothing */
-#endif
 
 #endif /* !_MACHINE_CDEFS_H_ */

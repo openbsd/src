@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.4 1997/01/19 22:32:23 graichen Exp $";
+static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.5 1997/01/20 07:46:57 graichen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,10 +43,8 @@ static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.4 1997/01/19 22:32:23 graichen Exp
 #include <stdio.h>
 #include <unistd.h>
 
-#ifndef NO_WARN_REFERENCES
 __warn_references(tmpnam,
     "warning: tmpnam() possibly used unsafely; consider using mkstemp()");
-#endif
 
 extern char *_mktemp __P((char *));
 
