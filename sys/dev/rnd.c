@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.38 2000/04/18 15:11:28 hugh Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.39 2000/06/08 02:39:08 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -229,13 +229,6 @@
  * Any flaws in the design are solely my responsibility, and should
  * not be attributed to the Phil, Colin, or any of authors of PGP.
  *
- * The code for SHA transform was taken from Peter Gutmann's
- * implementation, which has been placed in the public domain.
- * The code for MD5 transform was taken from Colin Plumb's
- * implementation, which has been placed in the public domain.
- * The MD5 cryptographic checksum was devised by Ronald Rivest, and is
- * documented in RFC 1321, "The MD5 Message Digest Algorithm".
- *
  * Further background information on this topic may be obtained from
  * RFC 1750, "Randomness Recommendations for Security", by Donald
  * Eastlake, Steve Crocker, and Jeff Schiller.
@@ -361,8 +354,8 @@ int	rnd_debug = 0x0000;
  */
 
 /* pIII/333 reported to have some drops w/ these numbers */
-#define QEVLEN 96
-#define QEVSLOW 64 /* yet another 0.75 for 60-minutes hour /-; */
+#define QEVLEN (1024 / sizeof(struct rand_event))
+#define QEVSLOW (QEVLEN * 3 / 4) /* yet another 0.75 for 60-minutes hour /-; */
 #define QEVSBITS 12
 
 /* There is actually only one of these, globally. */
@@ -372,7 +365,6 @@ struct random_bucket {
 	u_char	input_rotate;
 	u_int32_t pool[POOLWORDS];
 	u_int	asleep;
-	u_int	queued;
 	u_int	tmo;
 };
 
@@ -393,9 +385,8 @@ struct arc4_stream {
 };
 
 struct rand_event {
-	struct rand_event *re_next;
 	struct timer_rand_state *re_state;
-	u_char re_nbits;
+	u_int re_nbits;
 	u_int re_time;
 	u_int re_val;
 };
@@ -405,8 +396,7 @@ struct random_bucket random_state;
 struct arc4_stream arc4random_state;
 struct timer_rand_state rnd_states[RND_SRC_NUM];
 struct rand_event rnd_event_space[QEVLEN];
-struct rand_event *rnd_event_q;
-struct rand_event *rnd_event_free;
+struct rand_event *rnd_event_head, *rnd_event_tail;
 
 int rnd_attached;
 int arc4random_initialized;
@@ -420,6 +410,46 @@ static __inline u_int32_t roll(u_int32_t w, int i)
 	w = (w << i) | (w >> (32 - i));
 #endif
 	return w;
+}
+
+/* must be called at a proper spl, returns ptr to the next event */
+static __inline struct rand_event *
+rnd_get(void)
+{
+	struct rand_event *p = rnd_event_tail;
+
+	if (p == rnd_event_head)
+		return NULL;
+
+	if (p + 1 == &rnd_event_space[QEVLEN])
+		rnd_event_tail = rnd_event_space;
+	else
+		rnd_event_tail++;
+
+	return p;
+}
+
+/* must be called at a proper spl, returns next available item */
+static __inline struct rand_event *
+rnd_put(void)
+{
+	struct rand_event *p = rnd_event_head + 1;
+
+	if (p == &rnd_event_space[QEVLEN])
+		p = rnd_event_space;
+
+	if (p == rnd_event_tail)
+		return NULL;
+
+	return rnd_event_head = p;
+}
+
+/* must be called at a proper spl, returns number of items in the queue */
+static __inline int
+rnd_qlen(void)
+{
+	int len = rnd_event_head - rnd_event_tail;
+	return (len < 0)? -len : len;
 }
 
 void dequeue_randomness __P((void *));
@@ -535,8 +565,6 @@ void
 randomattach(void)
 {
 	int i;
-	struct timeval tv;
-	struct rand_event *rep;
 
 	if (rnd_attached) {
 #ifdef RNDEBUG
@@ -552,16 +580,17 @@ randomattach(void)
 	rnd_states[RND_SRC_TRUE].max_entropy = 1;
 
 	bzero(&rndstats, sizeof(rndstats));
+
 	bzero(&rnd_event_space, sizeof(rnd_event_space));
-	rnd_event_free = rnd_event_space;
-	for (rep = rnd_event_space; rep < &rnd_event_space[QEVLEN-1]; rep++)
-		rep->re_next = rep + 1;
+	rnd_event_head = rnd_event_tail = rnd_event_space;
+
 	for (i = 0; i < 256; i++)
 		arc4random_state.s[i] = i;
-	microtime(&tv);
-	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
-	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 	arc4_reinit(NULL);
+
+	timeout_set(&rnd_timeout, dequeue_randomness, &random_state);
+	timeout_set(&arc4_timeout, arc4_reinit, NULL);
+
 	rnd_attached = 1;
 }
 
@@ -608,13 +637,10 @@ add_entropy_words(buf, n)
 		0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
 		0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278
 	};
-	u_int i;
-	int new_rotate;
-	u_int32_t w;
 
 	while (n--) {
-		w = roll(*buf, random_state.input_rotate);
-		i = random_state.add_ptr =
+		register u_int32_t w = roll(*buf, random_state.input_rotate);
+		register u_int i = random_state.add_ptr =
 		    (random_state.add_ptr - 1) & (POOLWORDS - 1);
 		/*
 		 * Normally, we add 7 bits of rotation to the pool.
@@ -622,18 +648,16 @@ add_entropy_words(buf, n)
 		 * rotation, so that successive passes spread the
 		 * input bits across the pool evenly.
 		 */
-		new_rotate = random_state.input_rotate + 14;
-		if (i)
-			new_rotate = random_state.input_rotate + 7;
-		random_state.input_rotate = new_rotate & 31;
+		random_state.input_rotate =
+		    (random_state.input_rotate + (i? 7 : 14)) & 31;
 
 		/* XOR in the various taps */
-		w ^= random_state.pool[(i+TAP1)&(POOLWORDS-1)];
-		w ^= random_state.pool[(i+TAP2)&(POOLWORDS-1)];
-		w ^= random_state.pool[(i+TAP3)&(POOLWORDS-1)];
-		w ^= random_state.pool[(i+TAP4)&(POOLWORDS-1)];
-		w ^= random_state.pool[(i+TAP5)&(POOLWORDS-1)];
-		w ^= random_state.pool[i];
+		w ^= random_state.pool[(i+TAP1) & (POOLWORDS-1)] ^
+		     random_state.pool[(i+TAP2) & (POOLWORDS-1)] ^
+		     random_state.pool[(i+TAP3) & (POOLWORDS-1)] ^
+		     random_state.pool[(i+TAP4) & (POOLWORDS-1)] ^
+		     random_state.pool[(i+TAP5) & (POOLWORDS-1)] ^
+		     random_state.pool[i];
 		random_state.pool[i] = (w >> 3) ^ twist_table[w & 7];
 	}
 }
@@ -654,6 +678,7 @@ void
 enqueue_randomness(state, val)
 	int	state, val;
 {
+	struct random_bucket *rs = &random_state;
 	struct timer_rand_state *p;
 	struct timeval	tv;
 	register struct rand_event *rep;
@@ -721,7 +746,7 @@ enqueue_randomness(state, val)
 		 * the logic is to drop low-entropy entries,
 		 * in hope for dequeuing to be more sourcefull
 		 */
-		if (random_state.queued > QEVSLOW && nbits < QEVSBITS) {
+		if (rnd_qlen() > QEVSLOW && nbits < QEVSBITS) {
 			rndstats.rnd_drople++;
 			return;
 		}
@@ -732,29 +757,23 @@ enqueue_randomness(state, val)
 		nbits = 8 * sizeof(val) - 1;
 
 	s = splhigh();
-	if ((rep = rnd_event_free) == NULL) {
+	if ((rep = rnd_put()) == NULL) {
 		rndstats.rnd_drops++;
 		splx(s);
 		return;
 	}
-	rnd_event_free = rep->re_next;
 
 	rep->re_state = p;
 	rep->re_nbits = nbits;
 	rep->re_time = time;
 	rep->re_val = val;
 
-	rep->re_next = rnd_event_q;
-	rnd_event_q = rep;
-	rep = rep->re_next;
-	random_state.queued++;
-
 	rndstats.rnd_enqs++;
 	rndstats.rnd_ed[nbits]++;
 	rndstats.rnd_sc[state]++;
 	rndstats.rnd_sb[state] += nbits;
 
-	if (++random_state.queued > QEVSLOW/2 && !random_state.tmo) {
+	if (rnd_qlen() > QEVSLOW/2 && !rs->tmo) {
 		random_state.tmo++;
 		timeout_add(&rnd_timeout, 1);
 	}
@@ -765,59 +784,46 @@ void
 dequeue_randomness(v)
 	void *v;
 {
+	struct random_bucket *rs = v;
 	register struct rand_event *rep;
-	u_int32_t val, time;
+	u_int32_t buf[2];
 	u_int nbits;
 	int s;
 
 	timeout_del(&rnd_timeout);
 	rndstats.rnd_deqs++;
 
-	do {
-		s = splhigh();
-		if (rnd_event_q == NULL) {
-			splx(s);
-			break;
-		}
-		rep = rnd_event_q;
-		rnd_event_q = rep->re_next;
-		random_state.queued--;
+	s = splhigh();
+	while ((rep = rnd_get())) {
 
-		val = rep->re_val;
-		time = rep->re_time;
+		buf[0] = rep->re_time;
+		buf[1] = rep->re_val;
 		nbits = rep->re_nbits;
-
-		rep->re_next = rnd_event_free;
-		rnd_event_free = rep;
 		splx(s);
 
-		/* Prevent overflow */
-		if ((random_state.entropy_count + nbits) > POOLBITS &&
-		    arc4random_state.cnt > 253)
-			arc4_stir();
+		add_entropy_words(buf, 2);
 
-		add_entropy_words(&val, 1);
-		add_entropy_words(&time, 1);
-
-		random_state.entropy_count += nbits;
 		rndstats.rnd_total += nbits;
-		if (random_state.entropy_count > POOLBITS)
-			random_state.entropy_count = POOLBITS;
+		rs->entropy_count += nbits;
+		if (rs->entropy_count > POOLBITS)
+			rs->entropy_count = POOLBITS;
 
-		if (random_state.entropy_count > 8 &&
-		    random_state.asleep != 0) {
+		if (rs->asleep && rs->entropy_count > 8) {
 #ifdef	RNDEBUG
 			if (rnd_debug & RD_WAIT)
 				printf("rnd: wakeup[%u]{%u}\n",
-				    random_state.asleep,
-				    random_state.entropy_count);
+				    rs->asleep,
+				    rs->entropy_count);
 #endif
-			random_state.asleep--;
-			wakeup(&random_state.asleep);
+			rs->asleep--;
+			wakeup((void *)&rs->asleep);
 		}
-	} while(1);
 
-	random_state.tmo = 0;
+		s = splhigh();
+	}
+
+	rs->tmo = 0;
+	splx(s);
 }
 
 #if POOLWORDS % 16
@@ -835,19 +841,16 @@ extract_entropy(buf, nbytes)
 	register u_int8_t *buf;
 	int	nbytes;
 {
+	struct random_bucket *rs = &random_state;
 	MD5_CTX tmp;
 	u_char buffer[16];
 
 	add_timer_randomness(nbytes);
 
-	/* Redundant, but just in case... */
-	if (random_state.entropy_count > POOLBITS)
-		random_state.entropy_count = POOLBITS;
-
-	if (random_state.entropy_count / 8 > nbytes)
-		random_state.entropy_count -= nbytes*8;
+	if (rs->entropy_count / 8 > nbytes)
+		rs->entropy_count -= nbytes*8;
 	else
-		random_state.entropy_count = 0;
+		rs->entropy_count = 0;
 
 	while (nbytes) {
 		register u_char *p = buf;
@@ -860,8 +863,7 @@ extract_entropy(buf, nbytes)
 
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
-		MD5Update(&tmp, (u_int8_t*)random_state.pool,
-		    sizeof(random_state.pool));
+		MD5Update(&tmp, (u_int8_t*)rs->pool, sizeof(rs->pool));
 		MD5Final(p, &tmp);
 
 		/*
