@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.186 2004/08/10 14:06:53 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.187 2004/08/11 10:09:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -503,6 +503,9 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		free(la);
 	}
 	free(conf->listen_addrs);
+	free(peer_l);
+	free(mrt_l);
+	free(pfd);
 
 	msgbuf_write(&ibuf_rde.w);
 	msgbuf_clear(&ibuf_rde.w);
