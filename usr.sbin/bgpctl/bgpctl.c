@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.2 2004/01/03 13:55:18 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.3 2004/01/03 14:06:42 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -66,8 +66,11 @@ main(int argc, char *argv[])
 	done = 0;
 
 	while (!done) {
-		if(imsg_read(&ibuf) == -1)
+		if((n = imsg_read(&ibuf)) == -1)
 			break;
+
+		if (n == 0)
+			errx(1, "pipe closed");
 
 		while (!done) {
 			if ((n = imsg_get(&ibuf, &imsg)) == -1)
