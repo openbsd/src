@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.16 2004/10/02 18:31:25 matthieu Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.17 2004/10/03 00:11:26 jmc Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -143,34 +143,9 @@ the end of the directory has been reached.
 Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
-.Sh ERRORS
-.Fn getdirentries
-will fail if:
-.Bl -tag -width Er
-.It Bq Er EBADF
-.Fa fd
-is not a valid file descriptor open for reading.
-.It Bq Er EFAULT
-Either
-.Fa buf
-or
-.Fa basep
-points outside the allocated address space.
-.It Bq Er EINVAL
-The file referenced by
-.Fa fd
-is not a directory, or
-.Fa nbytes
-is too small for returning a directory entry or block of entries,
-or the current position pointer is invalid.
-.It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
-.El
 .Sh EXAMPLES
 The following code may be used to iterate on all entries in a
-directory.
+directory:
 .Bd -literal -offset indent
 char *buf, *ebuf, *cp;
 long base;
@@ -202,6 +177,31 @@ if (nbytes < 0)
 	err(2, "getdirentries");
 free(buf);
 .Ed
+.Sh ERRORS
+.Fn getdirentries
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa fd
+is not a valid file descriptor open for reading.
+.It Bq Er EFAULT
+Either
+.Fa buf
+or
+.Fa basep
+points outside the allocated address space.
+.It Bq Er EINVAL
+The file referenced by
+.Fa fd
+is not a directory, or
+.Fa nbytes
+is too small for returning a directory entry or block of entries,
+or the current position pointer is invalid.
+.It Bq Er EIO
+An
+.Tn I/O
+error occurred while reading from or writing to the file system.
+.El
 .Sh SEE ALSO
 .Xr lseek 2 ,
 .Xr open 2 ,
