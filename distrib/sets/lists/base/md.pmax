@@ -28,6 +28,7 @@
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.2
 ./usr/lib/libpcap.so.1.0
+./usr/lib/libperl.so.6.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.2.2
 ./usr/lib/libtermcap.so.7.1
@@ -372,11 +373,13 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/frame.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/fts.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ieeefp.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/inttypes.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/iso646.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/keynote.ph
@@ -463,6 +466,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_dl.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_enc.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_fddi.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_gre.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_ieee80211.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_ppp.ph
@@ -470,6 +475,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_slvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_stripvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_types.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/netisr.ph
@@ -581,6 +587,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/map.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/md5k.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/mount.ph
@@ -624,6 +631,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/time.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/timeb.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/timex.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/tprintf.ph
@@ -692,11 +700,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph
-./usr/lib/libperl.so.5.3
-./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/net/if_gre.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/net/if_ieee80211.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/sys/timeout.ph

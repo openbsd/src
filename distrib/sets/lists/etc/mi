@@ -7,8 +7,6 @@
 ./etc/afs/SuidCells
 ./etc/afs/ThisCell
 ./etc/afs/afsd.conf
-./etc/aliases
-./etc/aliases.db
 ./etc/amd
 ./etc/amd/master.sample
 ./etc/bootptab
@@ -93,7 +91,7 @@
 ./etc/rpc
 ./etc/rtadvd.conf
 ./etc/security
-./etc/sendmail.cf
+./etc/mail/sendmail.cf
 ./etc/services
 ./etc/shells
 ./etc/skeykeys
@@ -148,3 +146,6 @@
 ./var/www/conf/httpd.conf
 ./var/www/conf/mime.types
 ./var/www/conf/srm.conf
+./etc/mail/aliases
+./etc/mail/aliases.db
+./etc/mail/helpfile
