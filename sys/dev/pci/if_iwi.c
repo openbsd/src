@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.7 2004/11/22 21:34:35 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.8 2004/11/23 21:28:22 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -77,6 +77,14 @@
 #include <dev/pci/if_iwireg.h>
 #include <dev/pci/if_iwivar.h>
 
+const struct pci_matchid iwi_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2200BG_3B },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2915ABG_3B },
+};
+
+static const struct ieee80211_rateset iwi_rateset_11a =
+	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
+
 static const struct ieee80211_rateset iwi_rateset_11b =
 	{ 4, { 2, 4, 11, 22 } };
 
@@ -151,13 +159,8 @@ struct cfattach iwi_ca = {
 int
 iwi_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR (pa->pa_id) == PCI_VENDOR_INTEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_2200BG_3B)
-		return 1;
-
-	return 0;
+	return pci_matchbyid((struct pci_attach_args *)aux, iwi_devices,
+	    sizeof (iwi_devices) / sizeof (iwi_devices[0]));
 }
 
 /* Base Address Register */
@@ -248,10 +251,25 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
-	/* set supported .11b rates */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwi_rateset_11b;
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PRO_2200BG_3B) {
+		/* set supported .11a rates */
+		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
 
-	/* set supported .11g rates */
+		/* set supported .11a channels */
+		for (i = 36; i <= 64; i += 4) {
+			ic->ic_channels[i].ic_freq =
+			    ieee80211_ieee2mhz(i, IEEE80211_CHAN_5GHZ);
+			ic->ic_channels[i].ic_flags = IEEE80211_CHAN_A;
+		}
+		for (i = 149; i <= 161; i += 4) {
+			ic->ic_channels[i].ic_freq =
+			    ieee80211_ieee2mhz(i, IEEE80211_CHAN_5GHZ);
+			ic->ic_channels[i].ic_flags = IEEE80211_CHAN_A;
+		}
+	}
+
+	/* set supported .11b and .11g rates */
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwi_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = iwi_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
@@ -1709,7 +1727,6 @@ iwi_config(struct iwi_softc *sc)
 	bzero(&config, sizeof config);
 	config.bluetooth_coexistence = 1;
 	config.enable_multicast = 1;
-	config.bg_autodetect = 1;
 	config.pass_noise = 1;
 	DPRINTF(("Configuring adapter\n"));
 	error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config, sizeof config,
@@ -1751,7 +1768,17 @@ iwi_config(struct iwi_softc *sc)
 	rs.nrates = ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates;
 	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, rs.rates,
 	    rs.nrates);
-	DPRINTF(("Setting supported rates\n"));
+	DPRINTF(("Setting .11bg supported rates (%u)\n", rs.nrates));
+	error = iwi_cmd(sc, IWI_CMD_SET_RATES, &rs, sizeof rs, 0);
+	if (error != 0)
+		return error;
+
+	rs.mode = IWI_MODE_11A;
+	rs.type = IWI_RATESET_TYPE_SUPPORTED;
+	rs.nrates = ic->ic_sup_rates[IEEE80211_MODE_11A].rs_nrates;
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11A].rs_rates, rs.rates,
+	    rs.nrates);
+	DPRINTF(("Setting .11a supported rates (%u)\n", rs.nrates));
 	error = iwi_cmd(sc, IWI_CMD_SET_RATES, &rs, sizeof rs, 0);
 	if (error != 0)
 		return error;
@@ -1788,23 +1815,34 @@ int
 iwi_scan(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_channel *chan;
 	struct iwi_scan scan;
-	int count;
+	u_int8_t *p;
+	int i, count;
 
 	memset(&scan, 0, sizeof scan);
 	scan.type = IWI_SCAN_TYPE_BROADCAST;
 	scan.intval = htole16(20);
 
+	p = scan.channels;
 	count = 0;
-	for (chan = ic->ic_channels;
-	     chan <= &ic->ic_channels[IEEE80211_CHAN_MAX];
-	     chan++) {
-		if (IEEE80211_IS_CHAN_2GHZ(chan) &&
-		    isset(ic->ic_chan_active, ieee80211_chan2ieee(ic, chan)))
-			scan.channels[++count] = ieee80211_chan2ieee(ic, chan);
+	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
+		if (IEEE80211_IS_CHAN_5GHZ(&ic->ic_channels[i]) &&
+		    isset(ic->ic_chan_active, i)) {
+			*++p = i;
+			count++;
+		}
 	}
-	scan.channels[0] = IWI_CHAN_2GHZ | count;
+	*(p - count) = IWI_CHAN_5GHZ | count;
+
+	count = 0;
+	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
+		if (IEEE80211_IS_CHAN_2GHZ(&ic->ic_channels[i]) &&
+		    isset(ic->ic_chan_active, i)) {
+			*++p = i;
+			count++;
+		}
+	}
+	*(p - count) = IWI_CHAN_2GHZ | count;
 
 	DPRINTF(("Start scanning\n"));
 	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, IWI_ASYNC_CMD);
@@ -1815,11 +1853,26 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwi_configuration config;
 	struct iwi_associate assoc;
 	struct iwi_rateset rs;
 	u_int32_t data;
 	u_int16_t capinfo;
 	int error;
+
+	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+		/* enable b/g autodection */
+		bzero(&config, sizeof config);
+		config.bluetooth_coexistence = 1;
+		config.enable_multicast = 1;
+		config.bg_autodetect = 1;
+		config.pass_noise = 1;
+		DPRINTF(("Configuring adapter\n"));
+		error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config,
+		    sizeof config, IWI_ASYNC_CMD);
+		if (error != 0)
+			return error;
+	}
 
 #ifdef IWI_DEBUG
 	if (iwi_debug > 0) {
@@ -1834,7 +1887,8 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		return error;
 
 	/* the rate set has already been "negociated" */
-	rs.mode = IWI_MODE_11G;
+	rs.mode = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? IWI_MODE_11A :
+	    IWI_MODE_11G;
 	rs.type = IWI_RATESET_TYPE_NEGOCIATED;
 	rs.nrates = ni->ni_rates.rs_nrates;
 	bcopy(ni->ni_rates.rs_rates, rs.rates, rs.nrates);
@@ -1851,7 +1905,8 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		return error;
 
 	bzero(&assoc, sizeof assoc);
-	assoc.mode = IWI_MODE_11G;
+	assoc.mode = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? IWI_MODE_11A :
+	    IWI_MODE_11G;
 	assoc.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 	if (sc->authmode == IEEE80211_AUTH_SHARED)
 		assoc.auth = IWI_AUTH_SHARED | ic->ic_wep_txkey;

@@ -1,4 +1,4 @@
-/*	$Id: if_iwireg.h,v 1.3 2004/11/22 21:34:35 damien Exp $ */
+/*	$Id: if_iwireg.h,v 1.4 2004/11/23 21:28:22 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -236,6 +236,7 @@ struct iwi_cmd {
 } __attribute__((__packed__));
 
 /* constants for 'mode' fields */
+#define IWI_MODE_11A	0
 #define IWI_MODE_11B	1
 #define IWI_MODE_11G	2
 
@@ -295,6 +296,7 @@ struct iwi_scan {
 #define IWI_SCAN_TYPE_BROADCAST	3
 	u_int16_t	intval;
 	u_int8_t	channels[54];
+#define IWI_CHAN_5GHZ	(0 << 6)
 #define IWI_CHAN_2GHZ	(1 << 6)
 	u_int8_t	reserved[3];
 } __attribute__((__packed__));
