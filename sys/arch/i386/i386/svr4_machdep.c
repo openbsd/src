@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.13 1997/08/27 20:17:41 mickey Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.14 1997/09/12 23:17:54 martin Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -397,9 +397,9 @@ svr4_sys_sysarch(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_sysarch_args *uap = v;
+	int error;
 #ifdef USER_LDT
 	caddr_t sg = stackgap_init(p->p_emul);
-	int error;
 #endif
 	*retval = 0;	/* XXX: What to do */
 
