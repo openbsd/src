@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.5 1996/04/28 22:11:55 etheisen Exp $	*/
+/*	$OpenBSD: defs.h,v 1.6 1997/04/27 13:01:28 downsj Exp $	*/
 #ifndef __DEFS_H__
 #define __DEFS_H__
 /*
@@ -35,7 +35,7 @@
  */
 
 /*
- * $Id: defs.h,v 1.5 1996/04/28 22:11:55 etheisen Exp $
+ * $Id: defs.h,v 1.6 1997/04/27 13:01:28 downsj Exp $
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
@@ -95,6 +95,9 @@
 #if	defined(NEED_UNISTD_H)
 #include <unistd.h>
 #endif	/* NEED_UNISTD_H */
+#if	defined(NEED_STDLIB_H)
+#include <stdlib.h>
+#endif	/* NEED_STDLIB_H */
 #if	defined(NEED_STRING_H)
 #include <string.h>
 #endif	/* NEED_STRING_H */
@@ -340,6 +343,7 @@ extern int 		dostatdb;
 extern int 		juststatdb;
 #endif /* USE_STATDB */
 
+#if 0
 /*
  * System function declarations
  */
@@ -348,6 +352,7 @@ char			       *strchr();
 char		 	       *strdup();
 char		 	       *strrchr();
 char 			       *strtok();
+#endif
 
 /*
  * Our own declarations.
@@ -403,7 +408,9 @@ extern void			debugmsg(int, char *, ...);
 extern void			error(char *, ...);
 extern void			fatalerr(char *, ...);
 extern void			message(int, char *, ...);
-/*extern void			setproctitle(char *fmt, ...); /* Not for OpenBSD*/
+#if 0
+extern void			setproctitle(char *fmt, ...);
+#endif
 #else
 extern void			debugmsg();
 extern void			error();
