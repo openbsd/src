@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.2 1996/08/08 21:37:31 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.3 1996/08/08 22:21:23 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -110,10 +110,6 @@ pctrset (int fflag, int cmd, u_short fn)
 int
 pctrioctl (dev_t dev, int cmd, caddr_t data, int fflag, struct proc *p)
 {
-
-  if (minor (dev) || cpu_class < CPUCLASS_586)
-    panic ("pctr: bad device %d should never have been opened.\n", dev);
-
   switch (cmd) {
   case PCIOCRD:
     {
