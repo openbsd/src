@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.102 2004/04/21 15:58:21 miod Exp $
+#	$OpenBSD: Makefile,v 1.103 2004/05/03 15:18:18 drahn Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -134,7 +134,7 @@ ${CROSSDIRS}:
 			echo m68k ;;\
 		luna88k|mvme88k) \
 			echo m88k ;;\
-		macppc|mvmeppc|pegasos) \
+		macppc|mvmeppc) \
 			echo powerpc ;;\
 		sgi) \
 			echo mips ;;\
@@ -176,8 +176,7 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 
 .if ${TARGET} == "alpha" || ${TARGET} == "amd64" || ${TARGET} == "hppa" || \
     ${TARGET} == "i386" || ${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || \
-    ${TARGET} == "pegasos" || ${TARGET} == "sparc" || ${TARGET} == "sparc64" || \
-    ${TARGET} == "sgi"
+    ${TARGET} == "sparc" || ${TARGET} == "sparc64" || ${TARGET} == "sgi"
 BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
 		strings strip
 NEW_BINUTILS?=	Yes

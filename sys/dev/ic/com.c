@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.95 2003/10/31 04:07:10 drahn Exp $	*/
+/*	$OpenBSD: com.c,v 1.96 2004/05/03 15:18:21 drahn Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1460,8 +1460,6 @@ comcnprobe(cp)
 	bus_space_tag_t iot = &arc_bus_io;
 #elif defined(hppa)
 	bus_space_tag_t iot = &hppa_bustag;
-#elif defined(__pegasos__)
-	bus_space_tag_t iot = MD_ISA_IOT;
 #else
 	bus_space_tag_t iot = 0;
 #endif

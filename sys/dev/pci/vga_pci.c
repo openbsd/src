@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.16 2004/02/04 20:03:28 drahn Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.17 2004/05/03 15:18:21 drahn Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -284,10 +284,6 @@ vga_pci_mmap(void *v, off_t off, int prot)
 		return i386_btop(sc->sc_apaddr + off);
 #endif
 	}
-#endif
-#ifdef __pegasos__
-	/* XXX */
-		return off;
 #endif
 	return -1;
 }

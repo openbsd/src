@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.203 2004/05/01 18:16:45 miod Exp $
+#	$OpenBSD: Makefile,v 1.204 2004/05/03 15:18:19 drahn Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -26,7 +26,7 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
     ${MACHINE} == "cats" || ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || ${MACHINE} == "luna88k" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || ${MACHINE} == "pegasos"
+    ${MACHINE} == "sparc64"
 BIN1+=	wsconsctl.conf
 .endif
 
@@ -340,7 +340,6 @@ MAKEDEVARCHS+= macppc
 MAKEDEVARCHS+= mvme68k
 MAKEDEVARCHS+= mvme88k
 #MAKEDEVARCHS+= mvmeppc
-MAKEDEVARCHS+= pegasos
 MAKEDEVARCHS+= sparc
 MAKEDEVARCHS+= sparc64
 MAKEDEVARCHS+= vax
@@ -378,7 +377,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.203 2004/05/01 18:16:45 miod Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.204 2004/05/03 15:18:19 drahn Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \

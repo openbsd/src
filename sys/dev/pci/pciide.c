@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.163 2004/03/12 19:10:07 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.164 2004/05/03 15:18:21 drahn Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -916,13 +916,6 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc,
 		    sc->sc_wdcdev.sc_dev.dv_xname);
-#ifdef __pegasos__
-		/* stupid broken board */
-		if (intrhandle == 0xe)
-			pci_intr_establish(pa->pa_pc,
-			    0xf, IPL_BIO, pci_intr, sc,
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-#endif
 #else
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);

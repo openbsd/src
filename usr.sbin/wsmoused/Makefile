@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2004/01/29 08:50:09 mickey Exp $	
+#	$OpenBSD: Makefile,v 1.6 2004/05/03 15:18:21 drahn Exp $	
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64" ||\
-    ${MACHINE} == "alpha" || ${MACHINE} == "pegasos"
+    ${MACHINE} == "alpha"
 
 PROG=	wsmoused
 SRCS=	wsmoused.c mouse_protocols.c
@@ -13,7 +13,7 @@ NOPROG=yes
 .endif
 
 MAN=	wsmoused.8 
-MANSUBDIR=	i386 amd64 alpha pegasos
+MANSUBDIR=	i386 amd64 alpha
 
 .include <bsd.prog.mk>
 
