@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.44 2001/08/01 22:03:33 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.45 2001/08/03 10:31:30 jakob Exp $");
 
 #include <openssl/evp.h>
 
@@ -48,6 +48,9 @@ RCSID("$OpenBSD: ssh-add.c,v 1.44 2001/08/01 22:03:33 markus Exp $");
 #include "authfile.h"
 #include "pathnames.h"
 #include "readpass.h"
+
+/* argv0 */
+extern char *__progname;
 
 /* we keep a cache of one passphrases */
 static char *pass = NULL;
@@ -189,12 +192,16 @@ list_identities(AuthenticationConnection *ac, int do_fp)
 static void
 usage(void)
 {
-	printf("Usage: ssh-add [options]\n");
-	printf("    -l, -L        : list identities\n");
-	printf("    -d            : delete identity\n");
-	printf("    -D            : delete all identities\n");
-	printf("    -s reader_num : add key in the smartcard in reader_num.\n");
-	printf("    -e reader_num : remove key in the smartcard in reader_num.\n");
+	fprintf(stderr, "Usage: %s [options]\n", __progname);
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "  -l          List fingerprints of all identities.\n");
+	fprintf(stderr, "  -L          List public key parameters of all identities.\n");
+	fprintf(stderr, "  -d          Delete identity.\n");
+	fprintf(stderr, "  -D          Delete all identities.\n");
+#ifdef SMARTCARD
+	fprintf(stderr, "  -s reader   Add key in smartcard reader.\n");
+	fprintf(stderr, "  -e reader   Remove key in smartcard reader.\n");
+#endif
 }
 
 int
