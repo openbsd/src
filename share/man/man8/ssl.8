@@ -6,8 +6,9 @@
 .Nd details for libssl and libcrypto
 .Sh DESCRIPTION
 This document describes some of the issues relating to the use of
-the OpenSSL libssl and libcrypto libraries. This document
-is intended as an overview of what the libraries do, and what uses them.
+the OpenSSL libssl and libcrypto libraries.
+This document is intended as an overview of what the libraries do,
+and what uses them.
 .Pp
 The SSL libraries (libssl and libcrypto) implement the
 .Ar SSL version 2 ,
@@ -32,7 +33,8 @@ and
 OpenBSD uses the 
 .Xr arandom 4
 device as the default source for random data when needed by the routines in
-libcrypto and libssl. If the
+libcrypto and libssl.
+If the
 .Xr arandom 4
 device does not exist or is not readable, many of the routines will fail.
 This is most commonly seen by users as the
@@ -46,18 +48,20 @@ It is important to remember when using a random data source for certificate
 and key generation that the random data source should not be visible by
 people who could duplicate the process and come up with the same result.
 You should ensure that nobody who you don't trust is in a position to read
-the same random data used by you to generate keys and certificates. The
+the same random data used by you to generate keys and certificates.
+The
 .Xr arandom 4 
 device ensures that no two users on the same machine will see the same 
-data. See
+data.
+See
 .Xr openssl 1
 for more information on how to use different sources of random data. 
 .Sh SERVER CERTIFICATES
 The most common uses of
 .Ar SSL/TLS
 will require you to generate a server certificate, which is provided by your
-host as evidence of its identity when clients make new connections. The
-certificates reside in the
+host as evidence of its identity when clients make new connections.
+The certificates reside in the
 .Pa /etc/ssl
 directory, with the keys in the
 .Pa /etc/ssl/private
@@ -68,14 +72,14 @@ Private keys can be encrypted using
 and a passphrase to protect their integrity should the encrypted file
 be disclosed, However it is
 important to note that encrypted server keys mean that the passphrase
-needs to be typed in every time the server is started. If a passphrase
-is not used, you will need to be absolutely sure your key file
-is kept secure.
+needs to be typed in every time the server is started.
+If a passphrase is not used, you will need to be absolutely sure your
+key file is kept secure.
 .Sh GENERATING DSA SERVER CERTIFICATES
 Generating a
 .Ar DSA
-certificate involves several steps. First, you generate
-a
+certificate involves several steps.
+First, you generate a
 .Ar DSA
 parameter set with a command like the following:
 .Bd -literal -offset indent
@@ -110,8 +114,8 @@ To generate
 certificates, you will first need to upgrade your
 shared libraries to support
 .Ar RSA
-as described above. Once that is done,
-you can generate
+as described above.
+Once that is done, you can generate
 .Ar RSA
 certificates that will be usable by
 .Xr httpd 8
@@ -133,8 +137,8 @@ The next step is to generate a
 which is used
 to get a
 .Ar Certifying Authority (CA)
-to sign your certificate. To do this
-use the command:
+to sign your certificate.
+To do this use the command:
 .Bd -literal -offset indent
 # openssl req -new -key /etc/ssl/private/server.key \\
   -out /etc/ssl/private/server.csr
@@ -144,12 +148,13 @@ This
 .Pa server.csr
 file can then be given to
 .Ar Certifying Authority
-who will sign the key. One such CA is
+who will sign the key.
+One such CA is
 .Ar Thawte Certification
 which you can reach at
 .Ar http://www.thawte.com/.
-Thawte can currently sign RSA keys for you. A procedure is being worked out
-to allow for DSA keys.
+Thawte can currently sign RSA keys for you.
+A procedure is being worked out to allow for DSA keys.
 .Pp
 You can also sign the key yourself, using the command:
 .Bd -literal -offset indent
@@ -191,27 +196,28 @@ the RSA patent will expire September 20th, 2000.
 .Xr ssl 3 ,
 .Xr rc 8
 .Sh HISTORY
- Prior to Sept 21, 2000
-There were problems shipping fully fuctional implementations of these
-protocols anywhere in the world, as such shipment would include shipping
+Prior to Sept 21, 2000
+there were problems shipping fully fuctional implementations of these
+protocols everywhere in the world, as such shipment would include shipping
 .Ar into
 the United States, thus causing problems. 
 .Ar RSA Data Security Inc (RSADSI)
 held the patent on the
 .Ar RSA
-algorithm in the United States. Because of this, free
-implementations of
+algorithm in the United States.
+Because of this, free implementations of
 .Ar RSA
 were difficult to distribute and propagate. 
 (The
 .Ar RSA
-patent was probably more effective at preventing the widespread
-international adoption of integrated crypto than the much maligned
-ITAR restrictions were). Prior to OpenBSD 2.8, these libraries 
-shipped without the 
+patent was probably more effective at preventing the late adoption of
+widespread international integrated crypto than the much maligned
+ITAR restrictions were).
+Prior to OpenBSD 2.8, these libraries shipped without the 
 .Ar RSA
 algorithm -- all such functions
-were stubbed to fail. Since
+were stubbed to fail.
+Since
 .Ar RSA
 is a key component of
 .Ar SSL version 2 ,
@@ -228,6 +234,9 @@ involve
 and would work with the shipped version of the libraries,
 assuming both ends could agree to a cipher suite and key exchange that
 did not involve RSA.
+Likewise, the SSH1 protocol in
+.Xr ssh 1
+uses RSA, so it was similarily encumbered.
 .Pp
 For instance, another typical alternative
 is
@@ -251,19 +260,21 @@ Predictably,
 would prefer if web browsers used their patented algorithm, and thus their
 libraries do not implement any
 .Ar non-RSA
-cipher and keying combination. The result of this was that while the
+cipher and keying combination.
+The result of this was that while the
 .Ar https
 protocol allowed for many cipher suites that did not require the use
 of patented algorithms, It was very difficult to use these with the
-popular commercially available software. Prior to version 2.8, 
-OpenBSD allowed users to download 
+popular commercially available software.
+Prior to version 2.8, OpenBSD allowed users to download 
 .Ar RSA 
 enabled versions of the shared libssl and libcrypto libraries
 which allowed users to enable full function without recompiling
-the applications. This method is now no longer needed, as the fully
-functional libraries ship with the system. However, this entire
-debacle is worth remembering when choosing software and vendors.
+the applications.
+This method is now no longer needed, as the fully functional
+libraries ship with the system.
+However, this entire debacle is worth remembering when choosing
+software and vendors.
 .Pp
 This document first appeared in
 .Ox 2.5 .
-
