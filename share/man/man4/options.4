@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.3 1997/08/18 03:16:09 downsj Exp $
+.\"	$OpenBSD: options.4,v 1.4 1997/08/18 15:48:09 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
@@ -150,14 +150,6 @@ Compiles in a kernel debugger for diagnosing kernel problems. See
 for details. 
 .Em NOTE:
 not available on all architectures.
-.It Cd option DDB_ONPANIC
-If set to non-zero, the DDB will be entered upon kernel panic.  The
-default if not specified is "1". Note that this sets the value of
-the
-.Em ddb.onpanic
-sysctl variable which may be changed at run time -- see
-.Xr sysctl 8
-for details.
 .It Cd option KGDB
 Compiles in a remote kernel debugger stub for diagnosing kernel problems
 using the
@@ -418,15 +410,6 @@ See also
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
-.It Cd option UCONSOLE
-Normally, only the superuser can execute the TIOCCONS ioctl, which
-redirects console output to a non-console tty. (See
-.Xr tty 4
-for details).
-This option permits any user to execute the ioctl. This is useful on
-machines such as personal workstations which run X servers, where one
-would prefer to permit console output to be viewed in a window without
-requiring a suid root program to do it.
 .It Cd option MACHINE_NONCONTIG
 This option changes part of the VM/pmap interface, to allow for
 non-contiguous memory.  On some ports it is not an option.  These
@@ -438,51 +421,6 @@ a ramdisk from floppy on open (among other things).
 .It Cd option RAM_DISK_IS_ROOT
 Forces the ramdisk to be the root device. This can only be overridden when
 the kernel is booted in the 'ask-for-root' mode.
-.It Cd option NTP
-Turns on in-kernel precision timekeeping support used by software
-implementing
-.Em NTP
-(Network Time Protocol, RFC1305).
-The
-.Em NTP
-option adds an in-kernel phase-locked loop (PLL) for normal
-.Em NTP
-operation, and a frequency-locked loop (FLL) for intermittently-connected
-operation.
-.Xr xntpd 8
-will employ a user-level PLL when kernel support is unavailable,
-but the in-kernel version has lower latency and more precision, and
-so typically keeps much better time.
-The interface to the kernel
-.Em NTP
-support is provided by the
-.Xr ntp_adjtime 2
-and
-.Xr ntp_gettime 2
-system calls, which are intended for use by
-.Xr xntpd 8
-and are enabled by the option.
-On systems with sub-microsecond resolution timers, or where (HZ / 100000)
-is not an integer, the
-.Em NTP
-option also enables extended-precision arithmetic to keep track of
-fractional clock ticks at NTP time-format precision.
-.It Cd option SETUIDSCRIPTS
-Allows scripts with the setuid bit set to execute as the effective
-user rather than the real user, just like binary executables.
-NOTE: Using this option will also enable 
-.Em option FDSCRIPTS
-.It Cd option FDSCRIPTS
-Allows execution of scripts with the execute bit set, but not the
-read bit, by opening the file and passing the file descriptor to
-the shell, rather than the filename.  NOTE: Execute only (non-readable)
-scripts will have 
-.Va argv[0]
-set to
-.Pa /dev/fd/* .
-What this option allows as far as security is
-concerned, is the ability to safely ensure that the correct script
-it run by the interpreter, as it is passed as an already open file.
 .It Cd option CCDNBUF=integer
 The
 .Xr ccd 4
@@ -542,9 +480,6 @@ and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
 firewall -- source routing is controlled independently.
-To turn off source routing, use 
-.Em option IPFORWSRCRT=0
-(which see).
 Note that IP forwarding may be turned on and off independently of the
 setting of the
 .Em IPFORWARDING
@@ -553,25 +488,6 @@ option through the use of the
 sysctl variable. If
 .Em net.inet.ip.forwarding
 is 1, IP forwarding is on. See
-.Xr sysctl 8
-and
-.Xr sysctl 3
-for details.
-.It Cd option IPFORWSRCRT=value
-If
-.Em value
-is set to zero, source routing of IP datagrams is turned off. If
-.Em value
-is set to one (the default) or the option is absent, source routed IP
-datagrams are forwarded by the machine.  Note that source routing of
-IP packets may be turned on and off independently of the setting of
-the
-.Em IPFORWSRCRT
-option through the use of the
-.Em net.inet.ip.forwsrcrt
-sysctl variable. If
-.Em net.inet.ip.forwsrcrt
-is 1, forwarding of source routed IP datagrams is on. See
 .Xr sysctl 8
 and
 .Xr sysctl 3
