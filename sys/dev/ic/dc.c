@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.40 2001/12/06 21:22:07 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.41 2001/12/06 22:19:35 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1948,6 +1948,11 @@ int dc_newbuf(sc, i, m)
 	c->dc_ctl = htole32(DC_RXCTL_RLINK | DC_RXLEN);
 	c->dc_status = htole32(DC_RXSTAT_OWN);
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct dc_list_data, dc_rx_list[i]),
+	    sizeof(struct dc_desc),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	return(0);
 }
 
@@ -2082,6 +2087,11 @@ int dc_rx_resync(sc)
 	pos = sc->dc_cdata.dc_rx_prod;
 
 	for (i = 0; i < DC_RX_LIST_CNT; i++) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    offsetof(struct dc_list_data, dc_rx_list[pos]),
+		    sizeof(struct dc_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		cur_rx = &sc->dc_ldata->dc_rx_list[pos];
 		if (!(cur_rx->dc_status & htole32(DC_RXSTAT_OWN)))
 			break;
@@ -2117,6 +2127,11 @@ void dc_rxeof(sc)
 	while(!(sc->dc_ldata->dc_rx_list[i].dc_status &
 	    htole32(DC_RXSTAT_OWN))) {
 		struct mbuf		*m0 = NULL;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    offsetof(struct dc_list_data, dc_rx_list[i]),
+		    sizeof(struct dc_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		cur_rx = &sc->dc_ldata->dc_rx_list[i];
 		rxstat = letoh32(cur_rx->dc_status);
@@ -2225,6 +2240,11 @@ void dc_txeof(sc)
 	idx = sc->dc_cdata.dc_tx_cons;
 	while(idx != sc->dc_cdata.dc_tx_prod) {
 		u_int32_t		txstat;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    offsetof(struct dc_list_data, dc_tx_list[idx]),
+		    sizeof(struct dc_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc->dc_ldata->dc_tx_list[idx];
 		txstat = letoh32(cur_tx->dc_status);
@@ -2565,7 +2585,14 @@ int dc_encap(sc, m_head, txidx)
 #endif
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
+
 	sc->dc_ldata->dc_tx_list[*txidx].dc_status = htole32(DC_TXSTAT_OWN);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct dc_list_data, dc_tx_list[0]),
+	    sizeof(struct dc_desc) * DC_TX_LIST_CNT,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	*txidx = frag;
 
 	return(0);
