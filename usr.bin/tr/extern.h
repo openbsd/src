@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1994/12/07 08:35:07 jtc Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1995/11/01 00:45:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ typedef struct {
 	int	 lastch;		/* last character */
 	int	equiv[2];		/* equivalence set */
 	int	*set;			/* set of characters */
-	char	*str;			/* user's string */
+	unsigned char	*str;		/* user's string */
 } STR;
 
 #include <limits.h>
