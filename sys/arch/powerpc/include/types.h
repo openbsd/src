@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.1 1996/09/30 16:34:36 ws Exp $	*/
-/*	$OpenBSD: types.h,v 1.7 1999/01/08 03:04:08 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 1999/07/07 23:16:41 art Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -55,6 +55,11 @@ typedef	u_int32_t		register_t;
 
 typedef	unsigned long		vm_size_t;
 typedef	unsigned long		vm_offset_t;
+
+typedef unsigned long	vaddr_t;
+typedef unsigned long	paddr_t;
+typedef unsigned long	vsize_t;
+typedef unsigned long	psize_t;
 
 typedef struct label_t {
         int val[40]; /* double check this XXX */

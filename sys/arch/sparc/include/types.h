@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.8 1999/04/22 17:39:47 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.9 1999/07/07 23:16:41 art Exp $	*/
 /*	$NetBSD: types.h,v 1.11 1996/12/10 23:19:38 pk Exp $	*/
 
 /*
@@ -60,14 +60,13 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#if defined(UVM)	/* XXX - clean up later */
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
+
 typedef unsigned long	vaddr_t;
 typedef unsigned long	paddr_t;
 typedef unsigned long	vsize_t;
 typedef unsigned long	psize_t;
-#endif
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
 
 /*
  * Basic integral types.  Omit the typedef if
