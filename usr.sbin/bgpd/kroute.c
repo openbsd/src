@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.34 2003/12/26 19:19:25 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.35 2003/12/26 23:22:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -48,6 +48,7 @@ struct knexthop_node {
 
 int		kroute_protect_lo(void);
 int		kroute_msg(int, int, struct kroute *);
+int		kroute_insert(struct kroute_node *);
 int		kroute_compare(struct kroute_node *, struct kroute_node *);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 u_int8_t	prefixlen_classful(in_addr_t);
@@ -215,14 +216,22 @@ kroute_change(int fd, struct kroute *kroute)
 		kr->r.nexthop = kroute->nexthop;
 		kr->flags = F_BGPD_INSERTED;
 
-		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-			logit(LOG_CRIT,
-			    "kroute_tree insert failed for %s/%u",
-			    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+		if (kroute_insert(kr) == -1)
 			free(kr);
-		}
 	} else
 		kr->r.nexthop = kroute->nexthop;
+
+	return (0);
+}
+
+int
+kroute_insert(struct kroute_node *kr)
+{
+	if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
+		logit(LOG_CRIT, "kroute_tree insert failed for %s/%u",
+		    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+		return (-1);
+	}
 
 	return (0);
 }
@@ -385,12 +394,8 @@ kroute_fetchtable(void)
 				kr->flags |= F_CONNECTED;
 		}
 
-		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-			logit(LOG_CRIT,
-			    "kroute_tree insert failed for %s/%u",
-			    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+		if (kroute_insert(kr) == -1)
 			free(kr);
-		}
 	}
 	free(buf);
 	return (0);
@@ -485,14 +490,8 @@ kroute_dispatch_msg(int fd)
 				kr->r.nexthop = nexthop;
 				kr->flags = flags;
 
-				if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-					logit(LOG_CRIT, "kroute_tree insert "
-					    "failed for %s/%u",
-					    log_ntoa(kr->r.prefix),
-					    kr->r.prefixlen);
+				if (kroute_insert(kr) == -1)
 					free(kr);
-					continue;
-				}
 			}
 			break;
 		case RTM_DELETE:
