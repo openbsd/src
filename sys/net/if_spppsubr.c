@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.7 2001/03/22 01:42:35 mickey Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.8 2001/03/25 02:56:18 csapuntz Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1166,11 +1166,13 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 		IF_DROP (&sp->pp_fastq);
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
+		m = NULL;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
-	ifp->if_obytes += m->m_pkthdr.len + 3;
+	if (m != NULL)
+		ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
 /*
@@ -1224,11 +1226,13 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
+		m = NULL;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
-	ifp->if_obytes += m->m_pkthdr.len + 3;
+	if (m != NULL)
+		ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
 /*
@@ -3773,11 +3777,13 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
+		m = NULL;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
-	ifp->if_obytes += m->m_pkthdr.len + 3;
+	if (m != NULL)
+		ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
 /*
