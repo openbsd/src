@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.189 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.190 2001/12/14 08:35:12 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3329,3 +3329,6 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 
 	return (0);
 }
+
+/* If SMALL_KERNEL this results in an out of line definition of splx.  */
+SPLX_OUTLINED_BODY
