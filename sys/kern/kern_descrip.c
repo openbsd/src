@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.34 2001/07/28 17:12:12 gluk Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.35 2001/09/29 20:10:43 gluk Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -829,7 +829,8 @@ fdcopy(p)
 
 	newfdp = pool_get(&fdesc_pool, PR_WAITOK);
 	bcopy(fdp, newfdp, sizeof(struct filedesc));
-	VREF(newfdp->fd_cdir);
+	if (newfdp->fd_cdir)
+		VREF(newfdp->fd_cdir);
 	if (newfdp->fd_rdir)
 		VREF(newfdp->fd_rdir);
 	newfdp->fd_refcnt = 1;
