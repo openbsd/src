@@ -1,6 +1,6 @@
-# Host: Little-endian MIPS machine such as ARC systems.
+# Host: OpenBSD Mips Big Endian based systems. (arc etc.)
 XDEPFILES= 
-XM_FILE= xm-mips.h
+XM_FILE= xm-bigmips.h
 NAT_FILE= nm-mips.h
 NATDEPFILES= infptrace.o inftarg.o corelow.o mips-obsd.o fork-child.o obsdsolib.o
 

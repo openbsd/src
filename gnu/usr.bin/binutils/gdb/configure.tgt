@@ -148,7 +148,8 @@ m88*-*-*)		gdb_target=m88k ;;
 
 mips64*-big-*)		gdb_target=bigmips64 ;;
 mips*-big-*)		gdb_target=bigmips ;;
-mips*-*-openbsd*)	gdb_target=arcmips ;;
+mips*el-*-openbsd*)	gdb_target=mipsel_obsd ;;
+mips*-*-openbsd*)	gdb_target=mipseb_obsd ;;
 mips*-dec-mach3*)	gdb_target=mach3 ;;
 mips*-dec-*)		gdb_target=decstation ;;
 mips64*el-*-ecoff*)	gdb_target=embedl64 ;;

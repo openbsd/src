@@ -106,7 +106,7 @@ m88*-motorola-sysv*)	gdb_host=delta88 ;;
 m88*-*-mach3*)		gdb_host=mach3 ;;
 m88*-*-*)		gdb_host=m88k ;;
 
-mips*-*-openbsd*)	gdb_host=arcmips ;;
+mips*el-*-openbsd*)	gdb_host=mipsel_obsd ;;
 mips-dec-mach3*)	gdb_host=mach3 ;;
 mips-dec-*)		gdb_host=decstation ;;
 mips-little-*)		gdb_host=littlemips ;;
@@ -115,6 +115,7 @@ mips-sgi-irix4*)	gdb_host=irix4 ;;
 mips-sgi-irix5*)	gdb_host=irix5 ;;
 mips-sony-*)		gdb_host=news-mips ;;
 mips-*-mach3*)		gdb_host=mach3 ;;
+mips-*-openbsd*)	gdb_host=mipseb_obsd ;;
 mips-*-sysv4*)		gdb_host=mipsv4 ;;
 mips-*-sysv*)		gdb_host=riscos ;;
 mips-*-riscos*)		gdb_host=riscos ;;
