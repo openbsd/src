@@ -1,4 +1,4 @@
-/* $OpenBSD: i386.h,v 1.7 2002/07/12 21:54:20 fgsch Exp $ */
+/* $OpenBSD: i386.h,v 1.8 2002/07/16 03:58:25 fgsch Exp $ */
 /* i386-opcode.h -- Intel 80386 opcode table
    Copyright (C) 1989, 1991, Free Software Foundation.
 
@@ -245,6 +245,7 @@ static const template i386_optab[] = {
 
 {"shld", 3, 0x0fa4, _, Modrm, Imm8, WordReg, WordReg|Mem},
 {"shld", 3, 0x0fa5, _, Modrm, ShiftCount, WordReg, WordReg|Mem},
+{"shld", 2, 0x0fa5, _, Modrm, WordReg, WordReg|Mem, 0},
 
 {"shr", 2, 0xd0, 5, W|Modrm, Imm1, Reg|Mem, 0},
 {"shr", 2, 0xc0, 5, W|Modrm, Imm8, Reg|Mem, 0},
@@ -253,6 +254,7 @@ static const template i386_optab[] = {
 
 {"shrd", 3, 0x0fac, _, Modrm, Imm8, WordReg, WordReg|Mem},
 {"shrd", 3, 0x0fad, _, Modrm, ShiftCount, WordReg, WordReg|Mem},
+{"shrd", 2, 0x0fad, _, Modrm, WordReg, WordReg|Mem, 0},
 
 {"sar", 2, 0xd0, 7, W|Modrm, Imm1, Reg|Mem, 0},
 {"sar", 2, 0xc0, 7, W|Modrm, Imm8, Reg|Mem, 0},
