@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.100 1998/11/19 05:12:55 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.101 1998/11/19 06:45:23 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -487,7 +487,6 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
-#define	PCI_VENDOR_REALTEK2	0x1211		/* RealTek (2nd ID) */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
@@ -1023,9 +1022,6 @@
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 */
-
-/* RealTek (2nd ID) */
-#define	PCI_PRODUCT_REALTEK2_RT8139	0x1211		/* 8139 */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */

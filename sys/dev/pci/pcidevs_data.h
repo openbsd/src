@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.100 1998/11/19 05:12:55 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.101 1998/11/19 06:45:23 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1998,12 +1998,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 	    0,
 	    "Realtek Semi",
-	    "8139",
-	},
-	{
-	    PCI_VENDOR_REALTEK2, PCI_PRODUCT_REALTEK2_RT8139,
-	    0,
-	    "RealTek (2nd ID)",
 	    "8139",
 	},
 	{
@@ -5574,12 +5568,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_REALTEK2, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "RealTek (2nd ID)",
 	    NULL,
 	},
 	{
