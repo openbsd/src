@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.249 2004/07/06 04:05:27 henning Exp $
+#	$OpenBSD: rc,v 1.250 2004/08/07 00:50:25 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -138,6 +138,8 @@ if [ "X${pf}" != X"NO" ]; then
 	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
 	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
 	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
+	RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type routersol"
+	RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type routeradv"
 	RULES="$RULES\npass proto { pfsync, carp }"
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
 	*[1-9]*)
