@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.5 1997/04/14 10:58:31 deraadt Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.6 1997/04/14 19:09:10 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -12,14 +12,7 @@
 #define data32  .byte 0x66
 
 /* Better use 32, 48 does not seem to compile */
-#define	BLKCNT	16
-#if 0
-#ifdef	DEBUG
 #define	BLKCNT	32
-#else
-#define	BLKCNT	48
-#endif
-#endif
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
@@ -298,20 +291,7 @@ _block_table:
 _block_count:
 	.byte	BLKCNT	/* entries in _block_table */
 
-	/* partitions 0 */
-	. = 446
-	.globl	_partitions
-_partitions:
-	.word	0x0080
-	.word	0x0001
-	.word	0x01a6
-	.word	0x4f12
-	.word	0x0000
-	.word	0x0000
-	.word	0x0b40
-	.word	0x0000
-	.word	0x0000
-	
-	. = 0x200 - 2
+	. = 0x200 - 4
 	/* a little signature */
-	.word	0xaa55
+	.ascii	"boot"
+
