@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.64";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.9 2002/05/25 09:11:02 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.10 2002/05/26 00:21:40 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -648,7 +648,8 @@ _loc P((void))
 		((sizeof locale_home) + namesize + (sizeof lc_time)))
 			goto no_locale;
 	oldsun = 0;
-	(void) snprintf(filename, "%s/%s/%s", locale_home, name, lc_time);
+	(void) snprintf(filename, sizeof filename, "%s/%s/%s", locale_home,
+	    name, lc_time);
 	fd = open(filename, O_RDONLY);
 	if (fd < 0) {
 		/*
