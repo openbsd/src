@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.71 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.72 2004/04/29 22:36:26 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -73,12 +73,11 @@ typedef fd_set  set;
 
 static int      message_check_duplicate(struct message *);
 static int      message_encrypt(struct message *);
-static int
-message_index_payload(struct message *, struct payload *, u_int8_t,
-		      u_int8_t *);
-static int
-message_parse_transform(struct message *, struct payload *,
-			u_int8_t, u_int8_t *);
+static int	message_index_payload(struct message *, struct payload *,
+		    u_int8_t ,u_int8_t *);
+static int	message_parse_transform(struct message *, struct payload *,
+		    u_int8_t, u_int8_t *);
+static u_int16_t message_payload_sz(u_int8_t);
 static int      message_validate_attribute(struct message *, struct payload *);
 static int      message_validate_cert(struct message *, struct payload *);
 static int      message_validate_cert_req(struct message *, struct payload *);
@@ -110,13 +109,6 @@ static struct field *fields[] = {
 	isakmp_id_fld, isakmp_cert_fld, isakmp_certreq_fld, isakmp_hash_fld,
 	isakmp_sig_fld, isakmp_nonce_fld, isakmp_notify_fld, isakmp_delete_fld,
 	isakmp_vendor_fld, isakmp_attribute_fld
-};
-
-static u_int16_t min_payload_lengths[] = {
-	0, ISAKMP_SA_SZ, ISAKMP_PROP_SZ, ISAKMP_TRANSFORM_SZ, ISAKMP_KE_SZ,
-	ISAKMP_ID_SZ, ISAKMP_CERT_SZ, ISAKMP_CERTREQ_SZ, ISAKMP_HASH_SZ,
-	ISAKMP_SIG_SZ, ISAKMP_NONCE_SZ, ISAKMP_NOTIFY_SZ, ISAKMP_DELETE_SZ,
-	ISAKMP_VENDOR_SZ, ISAKMP_ATTRIBUTE_SZ
 };
 
 /*
@@ -284,8 +276,13 @@ message_parse_payloads(struct message * msg, struct payload * p, u_int8_t next,
 	         */
 		len = GET_ISAKMP_GEN_LENGTH(buf);
 
-		if ((payload < ISAKMP_PAYLOAD_RESERVED_MIN)
-		    && (len < min_payload_lengths[payload])) {
+		if (message_payload_sz(payload) == 0) {
+			log_print("message_parse_payloads: unknown minimum "
+			    "payload size for payload type %u", payload);
+			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+			return -1;
+		}
+		if (len < message_payload_sz(payload)) {
 			log_print("message_parse_payloads: payload too short: %u", len);
 			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
 			return -1;
@@ -298,13 +295,13 @@ message_parse_payloads(struct message * msg, struct payload * p, u_int8_t next,
 		/* Ignore private payloads.  */
 		if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN) {
 			LOG_DBG((LOG_MESSAGE, 30,
-				 "message_parse_payloads: private next payload type %d "
-			   "in payload of type %d ignored", next, payload));
+			    "message_parse_payloads: private next payload type "
+			    "%d in payload of type %d ignored", next, payload));
 			goto next_payload;
 		}
 		/*
-		 * Check if the current payload is one of the accepted ones at this
-		 * stage.
+		 * Check if the current payload is one of the accepted ones at
+		 * this stage.
 	         */
 		if (!ISSET(payload, accepted_payloads)) {
 			log_print("message_parse_payloads: payload type %d unexpected",
@@ -371,6 +368,52 @@ message_parse_transform(struct message * msg, struct payload * p,
 #endif
 
 	return 0;
+}
+
+/* Check payloads for their required minimum size. */
+static u_int16_t
+message_payload_sz(u_int8_t payload)
+{
+	switch (payload) {
+	case ISAKMP_PAYLOAD_SA:
+		return ISAKMP_SA_SZ;
+	case ISAKMP_PAYLOAD_PROPOSAL:
+		return ISAKMP_PROP_SZ;
+	case ISAKMP_PAYLOAD_TRANSFORM:
+		return ISAKMP_TRANSFORM_SZ;
+	case ISAKMP_PAYLOAD_KEY_EXCH:
+		return ISAKMP_KE_SZ;
+	case ISAKMP_PAYLOAD_ID:
+		return ISAKMP_ID_SZ;
+	case ISAKMP_PAYLOAD_CERT:
+		return ISAKMP_CERT_SZ;
+	case ISAKMP_PAYLOAD_CERT_REQ:
+		return ISAKMP_CERTREQ_SZ;
+	case ISAKMP_PAYLOAD_HASH:
+		return ISAKMP_HASH_SZ;
+	case ISAKMP_PAYLOAD_SIG:
+		return ISAKMP_SIG_SZ;
+	case ISAKMP_PAYLOAD_NONCE:
+		return ISAKMP_NONCE_SZ;
+	case ISAKMP_PAYLOAD_NOTIFY:
+		return ISAKMP_NOTIFY_SZ;
+	case ISAKMP_PAYLOAD_DELETE:
+		return ISAKMP_DELETE_SZ;
+	case ISAKMP_PAYLOAD_VENDOR:
+		return ISAKMP_VENDOR_SZ;
+	case ISAKMP_PAYLOAD_ATTRIBUTE:
+		return ISAKMP_ATTRIBUTE_SZ;
+	/* Not yet supported and any other unknown payloads. */
+	case ISAKMP_PAYLOAD_SAK:
+	case ISAKMP_PAYLOAD_SAT:
+	case ISAKMP_PAYLOAD_KD:
+	case ISAKMP_PAYLOAD_SEQ:
+	case ISAKMP_PAYLOAD_POP:
+	case ISAKMP_PAYLOAD_NAT_D:
+	case ISAKMP_PAYLOAD_NAT_OA:
+	default:
+		return 0;
+	}
 }
 
 /* Validate the attribute payload P in message MSG.  */
