@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.21 2001/12/19 19:47:50 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.22 2001/12/19 19:59:26 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.21 2001/12/19 19:47:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.22 2001/12/19 19:59:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -966,6 +966,9 @@ ustar_rd(arcn, buf)
  *	are too long. Be careful of the term (last arg) to ul_oct, we only use
  *	'\0' for the termination character (this is different than picky tar)
  *	ASSUMED: space after header in header block is zero filled
+ * NOTE:
+ *	We use strncpy() instead of strlcpy() to please some picky tar
+ *	programs that require all header elements to be zero padded.
  * Return:
  *	0 if file has data to be written after the header, 1 if file has NO
  *	data to write after the header, -1 if archive write failed
@@ -1021,7 +1024,8 @@ ustar_wr(arcn)
 		 * occur, we remove the / and copy the first part to the prefix
 		 */
 		*pt = '\0';
-		strlcpy(hd->prefix, arcn->name, sizeof(hd->prefix));
+		strncpy(hd->prefix, arcn->name, sizeof(hd->prefix) - 1);
+		hd->prefix[sizeof(hd->prefix) - 1] = '\0';
 		*pt++ = '/';
 	} else
 		memset(hd->prefix, 0, sizeof(hd->prefix));
@@ -1030,7 +1034,8 @@ ustar_wr(arcn)
 	 * copy the name part. this may be the whole path or the part after
 	 * the prefix
 	 */
-	strlcpy(hd->name, pt, sizeof(hd->name));
+	strncpy(hd->name, pt, sizeof(hd->name) - 1);
+	hd->name[sizeof(hd->name) - 1] = '\0';
 
 	/*
 	 * set the fields in the header that are type dependent
@@ -1073,7 +1078,8 @@ ustar_wr(arcn)
 			hd->typeflag = SYMTYPE;
 		else
 			hd->typeflag = LNKTYPE;
-		strlcpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		strncpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname) - 1);
+		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
 		memset(hd->devmajor, 0, sizeof(hd->devmajor));
 		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
@@ -1118,8 +1124,8 @@ ustar_wr(arcn)
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3) ||
 	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
-	strncpy(hd->uname,name_uid(arcn->sb.st_uid, 0),sizeof(hd->uname));
-	strncpy(hd->gname,name_gid(arcn->sb.st_gid, 0),sizeof(hd->gname));
+	strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
+	strncpy(hd->gname, name_gid(arcn->sb.st_gid, 0), sizeof(hd->gname));
 
 	/*
 	 * calculate and store the checksum write the header to the archive
