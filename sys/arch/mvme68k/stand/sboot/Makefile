@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 1997/10/20 00:33:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2003/08/19 10:22:30 deraadt Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
-COPTS?= ${DEFS} ${INCL}
+COPTS+= ${DEFS} ${INCL}
 
 .include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
 .include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"

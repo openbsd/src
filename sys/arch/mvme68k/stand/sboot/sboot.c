@@ -1,8 +1,8 @@
-/*	$OpenBSD: sboot.c,v 1.8 2003/06/04 16:36:14 deraadt Exp $ */
+/*	$OpenBSD: sboot.c,v 1.9 2003/08/19 10:22:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -58,8 +58,8 @@
 #include <sys/types.h>
 #include "sboot.h"
 
-void
-main()
+int
+main(int argc, char *argv[])
 {
 	char    buf[128], *ebuf;
 
@@ -76,8 +76,8 @@ main()
 /*
  * exit to rom
  */
-void 
-callrom()
+void
+callrom(void)
 {
 	asm("trap #15; .word 0x0063");
 }
@@ -85,9 +85,8 @@ callrom()
 /*
  * do_cmd: do a command
  */
-void 
-do_cmd(buf, ebuf)
-	char   *buf, *ebuf;
+void
+do_cmd(char *buf, char *ebuf)
 {
 	switch (*buf) {
 	case '\0':
@@ -156,24 +155,26 @@ do_cmd(buf, ebuf)
 	}
 }
 
-/* 
- * ngets: get string from console 
+/*
+ * ngets: get string from console
  */
- 
-char *ngets ( char * str, int size )
+char *
+ngets(char * str, int size)
 {
-  int i = 0;
-  while ( (i < size - 1) && (str[i] = getchar()) != '\r') {
-    if ( str[i] == '\b' || str[i] == 0x7F ) {
-      if ( i == 0) continue;
-      i--;
-      printf("\b \b");
-      continue;
-    }
-    putchar(str[i]);
-    i++; 
-  }
-  printf("\n");
-  str[i] = '\0';
-  return(&str[i]);
+	int i = 0;
+
+	while ((i < size - 1) && (str[i] = getchar()) != '\r') {
+		if (str[i] == '\b' || str[i] == 0x7F) {
+			if (i == 0)
+				continue;
+			i--;
+			printf("\b \b");
+			continue;
+		}
+		putchar(str[i]);
+		i++;
+	}
+	printf("\n");
+	str[i] = '\0';
+	return(&str[i]);
 }

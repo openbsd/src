@@ -1,8 +1,8 @@
-/*	$OpenBSD: srec.c,v 1.4 2001/04/30 00:06:26 miod Exp $ */
+/*	$OpenBSD: srec.c,v 1.5 2003/08/19 10:22:30 deraadt Exp $ */
 
 /*
  * Public domain, believed to be by Mike Price.
- * 
+ *
  * convert binary file to Srecord format
  */
 #include <stdio.h>
@@ -17,15 +17,10 @@ int checksum();
 int mask;
 int size;
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	char buf[32];
-	int cc;
-	int base;
-	int addr;
-	char *name;
+	char buf[32], *name;
+	int cc, base, addr;
 
 	if (argc != 4) {
 		fprintf(stderr, "usage: %s {size} {hex_addr} {name}\n", argv[0]);
@@ -83,12 +78,10 @@ main(argc, argv)
 }
 
 int
-get32(buf)
-	char buf[];
+get32(char buf[])
 {
 	char *cp = buf;
-	int i;
-	int c;
+	int i, c;
 
 	for (i = 0; i < 32; ++i) {
 		if ((c = getchar()) != EOF)
@@ -100,11 +93,7 @@ get32(buf)
 }
 
 void
-put32(len, addr, buf, size, mask)
-	int len;
-	int addr;
-	char buf[];
-	int size, mask;
+put32(int len, int addr, char buf[], int size, int mask)
 {
 	char *cp = buf;
 	int i;
@@ -121,26 +110,20 @@ put32(len, addr, buf, size, mask)
 }
 
 void
-sput(s)
-	char *s;
+sput(char *s)
 {
 	while (*s != '\0')
 		put(*s++);
 }
 
 void
-put(c)
-	int c;
+put(int c)
 {
 	printf("%02X", c & 0xff);
 }
 
 int
-checksum(addr, buf, len, size)
-	int addr;
-	char buf[];
-	int len;
-	int size;
+checksum(int addr, char buf[], int len, int size)
 {
 	char *cp = buf;
 	int sum = 0xff - 1 - size - (len & 0xff);
