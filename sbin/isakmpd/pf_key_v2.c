@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.149 2004/08/12 11:08:54 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.150 2004/09/17 13:53:08 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2983,7 +2983,9 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	struct sadb_lifetime *life, *lifecurrent;
 	struct sa      *sa;
 	struct pf_key_v2_node *lifenode, *ext;
+#ifdef USE_DEBUG
 	char           *dst_str;
+#endif
 
 	msg = (struct sadb_msg *)TAILQ_FIRST(pmsg)->seg;
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_SA);

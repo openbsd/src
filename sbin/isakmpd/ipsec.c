@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.103 2004/08/10 15:59:10 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.104 2004/09/17 13:53:08 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -73,7 +73,9 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+#ifdef USE_X509
 #include "x509.h"
+#endif
 
 extern int acquire_only;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.103 2004/08/23 11:53:24 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.104 2004/09/17 13:53:08 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -73,7 +73,9 @@
  */
 #define MAX_BUCKET_BITS 16
 
+#ifdef USE_DEBUG
 static void     exchange_dump(char *, struct exchange *);
+#endif
 static void     exchange_free_aux(void *);
 #if 0
 static void     exchange_resize(void);
@@ -1188,11 +1190,13 @@ exchange_dump_real(char *header, struct exchange *exchange, int class,
 	    decode_32(exchange->message_id), buf));
 }
 
+#ifdef USE_DEBUG
 static void
 exchange_dump(char *header, struct exchange *exchange)
 {
 	exchange_dump_real(header, exchange, LOG_EXCHANGE, 10);
 }
+#endif
 
 void
 exchange_report(void)
