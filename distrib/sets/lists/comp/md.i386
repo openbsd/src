@@ -4,6 +4,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dis-asm.h
+./usr/include/emmintrin.h
 ./usr/include/g++/backward
 ./usr/include/g++/backward/algo.h
 ./usr/include/g++/backward/algobase.h
@@ -224,7 +225,6 @@
 ./usr/include/i386/vm86.h
 ./usr/include/i386/vmparam.h
 ./usr/include/ieeefp.h
-./usr/include/emmintrin.h
 ./usr/include/mmintrin.h
 ./usr/include/pmmintrin.h
 ./usr/include/unwind.h
