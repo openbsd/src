@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.33 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.34 2004/07/07 21:15:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -139,7 +139,7 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, bgp->as);
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
-	DUMP_SHORT(buf, 4);
+	DUMP_SHORT(buf, AFI_IPv4);
 	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
 	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 
