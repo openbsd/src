@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.27 2005/01/17 22:48:14 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.28 2005/01/18 15:16:27 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -330,6 +330,18 @@ is scheduled to be removed from the repository.
 Files are not actually removed from the repository until the
 .Ic commit
 command has been run subsequently.
+.Pp
+The
+.Fl f
+flag locally removes the file.
+If this flag is not used, the file must be locally removed beforehand for
+the command to be valid.
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
 .Pp
 Aliases:
 .Ic rm ,
