@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.64 2003/04/08 14:53:11 hugh Exp $ */
+/* $OpenBSD: machdep.c,v 1.65 2003/04/16 16:54:17 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -410,41 +410,33 @@ sys_sigreturn(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-struct trampframe {
-	unsigned	sig;	/* Signal number */
-	unsigned	code;	/* Info code */
-	unsigned	scp;	/* Pointer to struct sigcontext */
-	unsigned	r0, r1, r2, r3, r4, r5; /* Registers saved when
-						 * interrupt */
-	unsigned	pc;	/* Address of signal handler */
-	unsigned	arg;	/* Pointer to first (and only) sigreturn
-				 * argument */
+struct sigframe {
+	int		 sf_signum;
+	siginfo_t 	*sf_sip;
+	struct sigcontext *sf_scp;
+	register_t 	 sf_r0, sf_r1, sf_r2, sf_r3, sf_r4, sf_r5;
+	register_t 	 sf_pc;
+	register_t 	 sf_arg;
+	siginfo_t 	 sf_si;
+	struct sigcontext sf_sc;
 };
 
-/*
- * XXX no siginfo implementation!!!!
- */
 void
 sendsig(catcher, sig, mask, code, type, val)
 	sig_t		catcher;
 	int		sig, mask;
 	u_long		code;
-	int 	type;
+	int 		type;
 	union sigval 	val;
 {
 	struct	proc	*p = curproc;
 	struct	sigacts *psp = p->p_sigacts;
 	struct	trapframe *syscf;
-	struct	sigcontext *sigctx, gsigctx;
-	struct	trampframe *trampf, gtrampf;
-	unsigned	cursp;
+	struct	sigframe *sigf, gsigf;
+	unsigned int	cursp;
 	int	onstack;
 
-#if 0
-printf("sendsig: signal %x  catcher %x\n", sig, catcher);
-#endif
 	syscf = p->p_addr->u_pcb.framep;
-
 	onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Allocate space for the signal handler context. */
@@ -454,42 +446,44 @@ printf("sendsig: signal %x  catcher %x\n", sig, catcher);
 		cursp = syscf->sp;
 
 	/* Set up positions for structs on stack */
-	sigctx = (struct sigcontext *) (cursp - sizeof(struct sigcontext));
-	trampf = (struct trampframe *) ((unsigned)sigctx -
-	    sizeof(struct trampframe));
+	sigf = (struct sigframe *) (cursp - sizeof(struct sigframe));
 
 	/*
-	 * Place sp at the beginning of trampf; this ensures that possible
+	 * Place sp at the beginning of sigf; this ensures that possible
 	 * further calls to sendsig won't overwrite this struct
-	 * trampframe/struct sigcontext pair with their own.
+	 * sigframe/struct sigcontext pair with their own.
 	 */
-	cursp = (unsigned) trampf;
+	cursp = (unsigned) sigf;
 
-	gtrampf.arg = (int) sigctx;
-	gtrampf.pc = (unsigned) catcher;
-	gtrampf.scp = (int) sigctx;
-	gtrampf.code = code;
-	gtrampf.sig = sig;
+	bzero(&gsigf, sizeof gsigf);
+	gsigf.sf_arg = (register_t)&sigf->sf_sc;
+	gsigf.sf_pc = (register_t)catcher;
+	gsigf.sf_scp = &sigf->sf_sc;
+	gsigf.sf_signum = sig;
 
-	gsigctx.sc_pc = syscf->pc;
-	gsigctx.sc_ps = syscf->psl;
-	gsigctx.sc_ap = syscf->ap;
-	gsigctx.sc_fp = syscf->fp; 
-	gsigctx.sc_sp = syscf->sp; 
-	gsigctx.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	gsigctx.sc_mask = mask;
+	if (psp->ps_siginfo & sigmask(sig)) {
+		gsigf.sf_sip = &sigf->sf_si;
+		initsiginfo(&gsigf.sf_si, sig, code, type, val);
+	}
+
+	gsigf.sf_sc.sc_pc = syscf->pc;
+	gsigf.sf_sc.sc_ps = syscf->psl;
+	gsigf.sf_sc.sc_ap = syscf->ap;
+	gsigf.sf_sc.sc_fp = syscf->fp; 
+	gsigf.sf_sc.sc_sp = syscf->sp; 
+	gsigf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	gsigf.sf_sc.sc_mask = mask;
 
 #if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
-	native_sigset_to_sigset13(mask, &gsigctx.__sc_mask13);
+	native_sigset_to_sigset13(mask, &gsigf.sf_sc.__sc_mask13);
 #endif
 
-	if (copyout(&gtrampf, trampf, sizeof(gtrampf)) ||
-	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
+	if (copyout(&gsigf, sigf, sizeof(gsigf)))
 		sigexit(p, SIGILL);
 
 	syscf->pc = p->p_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
-	syscf->ap = (unsigned) sigctx-8;
+	syscf->ap = (unsigned) sigf + offsetof(struct sigframe, sf_pc);
 	syscf->sp = cursp;
 
 	if (onstack)
