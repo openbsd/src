@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.35 2003/09/02 18:09:43 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.36 2003/09/04 14:21:43 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1076,7 +1076,7 @@ command below for list of options).
 .It Ev \&?
 The exit status of the last non-asynchronous command executed.
 If the last command was killed by a signal,
-.Ic \&$\&?
+.Ic \&$?\&
 is set to 128 plus the signal number.
 .It Ev 0
 The name the shell was invoked with (i.e.,
@@ -2017,7 +2017,7 @@ command substitutions performed in generating the
 .Ic set
 command.
 For example,
-.Ic set \&-\&- `false`; echo $?
+.Ic set \&-\&- `false`; echo $?\&
 prints 0 in
 .Tn POSIX
 mode, 1 in
@@ -2408,7 +2408,7 @@ The shell exits with the specified exit status.
 If
 .Ar status
 is not specified, the exit status is the current value of the
-.Ic \&?
+.Ic ?\&
 parameter.
 .It Xo Ic export Op Fl p
 .Op Ar parameter Ns Op \&= Ns Ar value
