@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.8 1998/03/01 00:38:12 niklas Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.9 1999/02/26 01:48:51 art Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -93,11 +93,13 @@
  */
 
 union vm_map_object {
-	struct vm_object	*vm_object;	/* object object */
-	struct vm_map		*share_map;	/* share map */
-	struct vm_map		*sub_map;	/* belongs to another map */
 #ifdef UVM
 	struct uvm_object	*uvm_obj;	/* UVM OBJECT */
+	struct vm_map		*sub_map;	/* belongs to another map */
+#else
+	struct vm_object	*vm_object;	/* object object */
+	struct vm_map		*sub_map;	/* belongs to another map */
+	struct vm_map		*share_map;	/* share map */
 #endif /* UVM */
 };
 
@@ -152,7 +154,9 @@ struct vm_map {
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vm_size_t		size;		/* virtual size */
+#ifndef UVM
 	boolean_t		is_main_map;	/* Am I a main map? */
+#endif
 	int			ref_count;	/* Reference count */
 	simple_lock_data_t	ref_lock;	/* Lock for ref_count field */
 	vm_map_entry_t		hint;		/* hint for quick lookups */
@@ -164,6 +168,7 @@ struct vm_map {
 #define max_offset		header.end
 };
 
+#ifndef UVM	/* version handled elsewhere in uvm */
 /*
  *	Map versions are used to validate a previous lookup attempt.
  *
@@ -178,6 +183,7 @@ typedef struct {
 	vm_map_t	share_map;
 	int		share_timestamp;
 } vm_map_version_t;
+#endif /* UVM */
 
 /*
  *	Macros:		vm_map_lock, etc.

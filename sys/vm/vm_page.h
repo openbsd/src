@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.7 1999/02/19 02:54:38 deraadt Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.8 1999/02/26 01:48:51 art Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -240,6 +240,9 @@ struct vm_physseg {
 	vm_offset_t end;		/* (PF# of last page in segment) + 1 */
 	vm_offset_t avail_start;	/* PF# of first free page in segment */
 	vm_offset_t avail_end;		/* (PF# of last free page in segment) +1  */
+#if defined(UVM)
+	int	free_list;		/* which free list they belong on */
+#endif
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
