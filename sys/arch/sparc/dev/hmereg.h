@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.4 1998/07/17 21:33:08 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.5 1998/09/01 17:36:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -356,6 +356,48 @@ struct hme_swr {
 #define HME_TIMER_DONE		0	/* not doing/waiting for anything */
 #define HME_TIMER_AUTONEG	1	/* autonegotiating */
 #define HME_TIMER_LINKUP	2	/* waiting for link up */
+
+struct hme_rxd {
+	volatile u_int32_t	rx_flags;
+	volatile u_int32_t	rx_addr;
+};
+#define	HME_RXD_OWN		0x80000000	/* desc owner: 1=hw,0=sw */
+#define HME_RXD_OVERFLOW	0x40000000	/* 1 = buffer over flow */
+#define HME_RXD_SIZE		0x3fff0000	/* desciptor size */
+#define HME_RXD_CSUM		0x0000ffff	/* checksum mask */
+
+struct hme_txd {
+	volatile u_int32_t	tx_flags;
+	volatile u_int32_t	tx_addr;
+};
+#define	HME_TXD_OWN		0x80000000	/* desc owner: 1=hw,0=sw */
+#define	HME_TXD_SOP		0x40000000 	/* 1 = start of pkt */
+#define	HME_TXD_EOP		0x20000000	/* 1 = end of pkt */
+#define	HME_TXD_CSENABLE	0x10000000	/* 1 = use hw checksums */
+#define	HME_TXD_CSLOCATION	0x0ff00000	/* checksum location mask */
+#define	HME_TXD_CSBUFBEGIN	0x000fc000	/* checksum begin mask */
+#define	HME_TXD_SIZE		0x00003fff 	/* pkt size mask */
+
+#define HME_RX_RING_SIZE	32		/* Must be 32,64,128, or 256 */
+#define HME_TX_RING_SIZE	32		/* 16<=x<=256 and div by 16 */
+#define HME_RX_RING_MAX		256		/* maximum ring size: rx */
+#define HME_TX_RING_MAX		256		/* maximum ring size: tx */
+#define HME_RX_PKT_BUF_SZ	2048		/* size of a rx buffer */
+#define HME_RX_OFFSET		2		/* packet offset */
+#define HME_RX_CSUMLOC		0x00		/* checksum location */
+#define HME_TX_PKT_BUF_SZ	1546		/* size of a tx buffer */
+#define HME_RX_ALIGN_SIZE	64		/* XXX rx bufs must align 64 */
+#define HME_RX_ALIGN_MASK	(~(RX_ALIGN_SIZE - 1))
+
+struct hme_desc {
+	struct hme_rxd hme_rxd[HME_RX_RING_MAX];
+	struct hme_txd hme_txd[HME_TX_RING_MAX];
+};
+
+struct hme_bufs {
+	char rx_buf[HME_RX_RING_SIZE][HME_RX_PKT_BUF_SZ];
+	char tx_buf[HME_TX_RING_SIZE][HME_TX_PKT_BUF_SZ];
+};
 
 /*
  * National Semiconductor DP83840A chip definitions

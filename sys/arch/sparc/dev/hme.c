@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.4 1998/07/17 21:33:07 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.5 1998/09/01 17:36:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -72,7 +72,6 @@
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>	/* for SBUS_BURST_* */
-#include <sparc/dev/stp2002var.h>
 #include <sparc/dev/hmereg.h>
 #include <sparc/dev/hmevar.h>
 
@@ -85,6 +84,7 @@ void	hmereset	__P((struct hme_softc *));
 void	hmestart	__P((struct ifnet *));
 void	hmestop		__P((struct hme_softc *));
 void	hmeinit		__P((struct hme_softc *));
+void	hme_meminit	__P((struct hme_softc *));
 
 static void	hme_tcvr_write	    __P((struct hme_softc *, int reg,
 					u_short val));
@@ -99,6 +99,8 @@ static int	hme_tcvr_reset	    __P((struct hme_softc *));
 
 static void	hme_poll_stop	__P((struct hme_softc *sc));
 
+static int	hme_rint	__P((struct hme_softc *));
+static int	hme_tint	__P((struct hme_softc *));
 static int	hme_mint	__P((struct hme_softc *, u_int32_t));
 static int	hme_eint	__P((struct hme_softc *, u_int32_t));
 
@@ -110,7 +112,10 @@ static void	hme_set_initial_advertisement	__P((struct hme_softc *));
 
 static void	hme_reset_rx		__P((struct hme_softc *));
 static void	hme_reset_tx		__P((struct hme_softc *));
-static void	hme_tx_dmawakeup	__P((void *v));
+
+static struct mbuf *	hme_get __P((struct hme_softc *, int, int));
+static void		hme_read __P((struct hme_softc *, int, int));
+static int		hme_put __P((struct hme_softc *, int, struct mbuf *));
 
 static void hme_mcreset __P((struct hme_softc *));
 
@@ -145,13 +150,14 @@ hmeattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 	struct hme_softc *sc = (struct hme_softc *)self;
-	struct ifnet *ifp = &sc->sc_stp.stp_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int pri;
 	/* XXX the following declaration should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
 	if (ca->ca_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
+		printf(": expected 1 interrupt, got %d\n",
+			ca->ca_ra.ra_nintr);
 		return;
 	}
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -184,8 +190,7 @@ hmeattach(parent, self, aux)
 
 	sc->sc_burst = ((struct sbus_softc *)parent)->sc_burst;
 
-	sc->sc_stp.stp_tx_dmawakeup = hme_tx_dmawakeup;
-	stp2002_meminit(&sc->sc_stp);
+	hme_meminit(sc);
 
 	hme_set_initial_advertisement(sc);
 
@@ -200,8 +205,8 @@ hmeattach(parent, self, aux)
 	 * Otherwise, use the machine's builtin MAC.
 	 */
 	if (getprop(ca->ca_ra.ra_node, "local-mac-address",
-			sc->sc_stp.stp_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0) {
-		myetheraddr(sc->sc_stp.stp_arpcom.ac_enaddr);
+			sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0) {
+		myetheraddr(sc->sc_arpcom.ac_enaddr);
 	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -220,7 +225,7 @@ hmeattach(parent, self, aux)
 	sc->sc_an_ticks = 0;
 
 	printf(" pri %d: address %s rev %d\n", pri,
-		ether_sprintf(sc->sc_stp.stp_arpcom.ac_enaddr), sc->sc_rev);
+		ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->sc_rev);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -240,18 +245,51 @@ void
 hmestart(ifp)
 	struct ifnet *ifp;
 {
-	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
+	struct hme_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+	int bix, len;
 
-	stp2002_start(&sc->sc_stp);
-}
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
-void
-hme_tx_dmawakeup(v)
-	void *v;
-{
-	struct hme_softc *sc = (struct hme_softc *)v;
+	bix = sc->sc_last_td;
 
-	sc->sc_txr->tx_pnding = TXR_TP_DMAWAKEUP;
+	for (;;) {
+		IF_DEQUEUE(&ifp->if_snd, m);
+		if (m == 0)
+			break;
+#if NBPFILTER > 0
+		/*
+		 * If BPF is listening on this interface, let it see the
+		 * packet before we commit it to the wire.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		/*
+		 * Copy the mbuf chain into the transmit buffer.
+		 */
+		len = hme_put(sc, bix, m);
+
+		/*
+		 * Initialize transmit registers and start transmission.
+		 */
+		sc->sc_desc->hme_txd[bix].tx_flags =
+		    HME_TXD_OWN | HME_TXD_SOP | HME_TXD_EOP |
+		    (len & HME_TXD_SIZE);
+		sc->sc_txr->tx_pnding = TXR_TP_DMAWAKEUP;
+
+		if (++bix == HME_TX_RING_SIZE)
+			bix = 0;
+
+		if (++sc->sc_no_td == HME_TX_RING_SIZE) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+	}
+
+	sc->sc_last_td = bix;
 }
 
 #define MAX_STOP_TRIES	16
@@ -295,7 +333,7 @@ hmewatchdog(ifp)
 	struct hme_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_stp.stp_arpcom.ac_if.if_oerrors;
+	++sc->sc_arpcom.ac_if.if_oerrors;
 
 	hmereset(sc);
 }
@@ -313,7 +351,7 @@ hmeioctl(ifp, cmd, data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_stp.stp_arpcom, cmd, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -325,7 +363,7 @@ hmeioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			hmeinit(sc);
-			arp_ifinit(&sc->sc_stp.stp_arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif /* INET */
 #ifdef NS
@@ -336,11 +374,11 @@ hmeioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host = 
-				    *(union ns_host *)(sc->sc_stp.stp_arpcom.ac_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_stp.stp_arpcom.ac_enaddr,
-				    sizeof(sc->sc_stp.stp_arpcom.ac_enaddr));
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
 			hmeinit(sc);
 			break;
@@ -388,8 +426,8 @@ hmeioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_stp.stp_arpcom):
-			ether_delmulti(ifr, &sc->sc_stp.stp_arpcom);
+			ether_addmulti(ifr, &sc->sc_arpcom):
+			ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -408,6 +446,44 @@ hmeioctl(ifp, cmd, data)
 }
 
 void
+hme_meminit(sc)
+	struct hme_softc *sc;
+{
+	struct hme_desc *desc;
+	int i;
+
+	if (sc->sc_desc_dva == NULL)
+		sc->sc_desc_dva = (struct hme_desc *) dvma_malloc(
+		    sizeof(struct hme_desc), &sc->sc_desc, M_NOWAIT);
+	if (sc->sc_bufs_dva == NULL)
+		sc->sc_bufs_dva = (struct hme_bufs *) dvma_malloc(
+		    sizeof(struct hme_bufs), &sc->sc_bufs, M_NOWAIT);
+
+	desc = sc->sc_desc;
+
+	/*
+	 * Setup TX descriptors
+	 */
+	sc->sc_first_td = sc->sc_last_td = sc->sc_no_td = 0;
+	for (i = 0; i < HME_TX_RING_SIZE; i++) {
+		desc->hme_txd[i].tx_addr =
+		    (u_int32_t) &sc->sc_bufs_dva->tx_buf[i][0];
+		desc->hme_txd[i].tx_flags = 0;
+	}
+
+	/*
+	 * Setup RX descriptors
+	 */
+	sc->sc_last_rd = 0;
+	for (i = 0; i < HME_RX_RING_SIZE; i++) {
+		desc->hme_rxd[i].rx_addr =
+		    (u_int32_t) &sc->sc_bufs_dva->rx_buf[i][0];
+		desc->hme_rxd[i].rx_flags = HME_RXD_OWN |
+		    ((HME_RX_PKT_BUF_SZ - HME_RX_OFFSET) << 16);
+	}
+}
+
+void
 hmeinit(sc)
 	struct hme_softc *sc;
 {
@@ -421,7 +497,7 @@ hmeinit(sc)
 	hme_poll_stop(sc);
 	hmestop(sc);
 
-	stp2002_meminit(&sc->sc_stp);
+	hme_meminit(sc);
 
 	tcvr->int_mask = 0xffff;
 
@@ -448,14 +524,14 @@ hmeinit(sc)
 	hme_reset_tx(sc);
 	hme_reset_rx(sc);
 
-	cr->rand_seed = sc->sc_stp.stp_arpcom.ac_enaddr[5] |
-	    ((sc->sc_stp.stp_arpcom.ac_enaddr[4] << 8) & 0x3f00);
-	cr->mac_addr0 = (sc->sc_stp.stp_arpcom.ac_enaddr[0] << 8) |
-			   sc->sc_stp.stp_arpcom.ac_enaddr[1];
-	cr->mac_addr1 = (sc->sc_stp.stp_arpcom.ac_enaddr[2] << 8) |
-			   sc->sc_stp.stp_arpcom.ac_enaddr[3];
-	cr->mac_addr2 = (sc->sc_stp.stp_arpcom.ac_enaddr[4] << 8) |
-			   sc->sc_stp.stp_arpcom.ac_enaddr[5];
+	cr->rand_seed = sc->sc_arpcom.ac_enaddr[5] |
+	    ((sc->sc_arpcom.ac_enaddr[4] << 8) & 0x3f00);
+	cr->mac_addr0 = (sc->sc_arpcom.ac_enaddr[0] << 8) |
+			   sc->sc_arpcom.ac_enaddr[1];
+	cr->mac_addr1 = (sc->sc_arpcom.ac_enaddr[2] << 8) |
+			   sc->sc_arpcom.ac_enaddr[3];
+	cr->mac_addr2 = (sc->sc_arpcom.ac_enaddr[4] << 8) |
+			   sc->sc_arpcom.ac_enaddr[5];
 
 	cr->jsize = HME_DEFAULT_JSIZE;
 	cr->ipkt_gap1 = HME_DEFAULT_IPKT_GAP1;
@@ -465,8 +541,8 @@ hmeinit(sc)
 	cr->htable1 = 0;
 	cr->htable0 = 0;
 
-	rxr->rx_ring = sc->sc_stp.stp_rx_dvma;
-	txr->tx_ring = sc->sc_stp.stp_tx_dvma;
+	rxr->rx_ring = (u_int32_t)&sc->sc_desc_dva->hme_rxd[0];
+	txr->tx_ring = (u_int32_t)&sc->sc_desc_dva->hme_txd[0];
 
 	if (sc->sc_burst & SBUS_BURST_64)
 		gr->cfg = GR_CFG_BURST64;
@@ -482,20 +558,20 @@ hmeinit(sc)
 	gr->imask = GR_IMASK_SENTFRAME | GR_IMASK_TXPERR |
 	              GR_IMASK_GOTFRAME | GR_IMASK_RCNTEXP;
 
-	txr->tx_rsize = (STP_TX_RING_SIZE >> TXR_RSIZE_SHIFT) - 1;
+	txr->tx_rsize = (HME_TX_RING_SIZE >> TXR_RSIZE_SHIFT) - 1;
 	txr->cfg |= TXR_CFG_DMAENABLE;
 
-	c = RXR_CFG_DMAENABLE | (STP_RX_OFFSET << 3) | (STP_RX_CSUMLOC << 16);
-#if STP_RX_RING_SIZE == 32
+	c = RXR_CFG_DMAENABLE | (HME_RX_OFFSET << 3) | (HME_RX_CSUMLOC << 16);
+#if HME_RX_RING_SIZE == 32
 	c |= RXR_CFG_RINGSIZE32;
-#elif STP_RX_RING_SIZE == 64
+#elif HME_RX_RING_SIZE == 64
 	c |= RXR_CFG_RINGSIZE64;
-#elif STP_RX_RING_SIZE == 128
+#elif HME_RX_RING_SIZE == 128
 	c |= RXR_CFG_RINGSIZE128;
-#elif STP_RX_RING_SIZE == 256
+#elif HME_RX_RING_SIZE == 256
 	c |= RXR_CFG_RINGSIZE256;
 #else
-#error "STP_RX_RING_SIZE must be 32, 64, 128, or 256."
+#error "HME_RX_RING_SIZE must be 32, 64, 128, or 256."
 #endif
 	rxr->cfg = c;
 	DELAY(20);
@@ -983,7 +1059,7 @@ hme_negotiate_watchdog(arg)
 	void *arg;
 {
 	struct hme_softc *sc = (struct hme_softc *)arg;
-	struct ifnet *ifp = &sc->sc_stp.stp_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->sc_an_ticks++;
 	switch (sc->sc_an_state) {
@@ -1096,6 +1172,92 @@ hme_mint(sc, why)
 }
 
 /*
+ * transmit interrupt
+ */
+static int
+hme_tint(sc)
+	struct hme_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct hme_cr *cr = sc->sc_cr;
+	int bix;
+	struct hme_txd txd;
+
+	/*
+	 * Get collision counters
+	 */
+	ifp->if_collisions += cr->ex_ctr + cr->lt_ctr + cr->fc_ctr + cr->nc_ctr;
+	cr->ex_ctr = 0;
+	cr->lt_ctr = 0;
+	cr->fc_ctr = 0;
+	cr->nc_ctr = 0;
+
+	bix = sc->sc_first_td;
+
+	for (;;) {
+		if (sc->sc_no_td <= 0)
+			break;
+
+		bcopy(&sc->sc_desc->hme_txd[bix], &txd, sizeof(txd));
+
+		if (txd.tx_flags & HME_TXD_OWN)
+			break;
+
+		ifp->if_flags &= ~IFF_OACTIVE;
+		ifp->if_opackets++;
+
+		if (++bix == HME_TX_RING_SIZE)
+			bix = 0;
+
+		--sc->sc_no_td;
+	}
+
+	sc->sc_first_td = bix;
+
+	hmestart(ifp);
+
+	if (sc->sc_no_td == 0)
+		ifp->if_timer = 0;
+
+	return 1;
+}
+
+static int
+hme_rint(sc)
+	struct hme_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int bix, len;
+	struct hme_rxd rxd;
+
+	bix = sc->sc_last_rd;
+
+	for (;;) {
+		bcopy(&sc->sc_desc->hme_rxd[bix], &rxd, sizeof(rxd));
+		len = rxd.rx_flags >> 16;
+
+		if (rxd.rx_flags & HME_RXD_OWN)
+			break;
+
+		if (rxd.rx_flags & HME_RXD_OVERFLOW)
+			ifp->if_ierrors++;
+		else
+			hme_read(sc, bix, len);
+
+		rxd.rx_flags = HME_RXD_OWN |
+		    ((HME_RX_PKT_BUF_SZ - HME_RX_OFFSET) << 16);
+		bcopy(&rxd, &sc->sc_desc->hme_rxd[bix], sizeof(rxd));
+
+		if (++bix == HME_RX_RING_SIZE)
+			bix = 0;
+	}
+
+	sc->sc_last_rd = bix;
+
+	return 1;
+}
+
+/*
  * error interrupt
  */
 static int
@@ -1192,12 +1354,124 @@ hmeintr(v)
 		r |= hme_mint(sc, why);
 
 	if (why & (GR_STAT_TXALL | GR_STAT_HOSTTOTX))
-		r |= stp2002_tint(&sc->sc_stp);
+		r |= hme_tint(sc);
 
 	if (why & GR_STAT_RXTOHOST)
-		r |= stp2002_rint(&sc->sc_stp);
+		r |= hme_rint(sc);
 
 	return (r);
+}
+
+static struct mbuf *
+hme_get(sc, idx, totlen)
+	struct hme_softc *sc;
+	int idx, totlen;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *m;
+	struct mbuf *top, **mp;
+	int len, pad, boff = 0;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = totlen;
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	m->m_data += pad;
+	len = MHLEN - pad;
+	top = NULL;
+	mp = &top;
+
+	while (totlen > 0) {
+		if (top) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL) {
+				m_freem(top);
+				return NULL;
+			}
+			len = MLEN;
+		}
+		if (top && totlen >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				len = MCLBYTES;
+		}
+		m->m_len = len = min(totlen, len);
+		bcopy(&sc->sc_bufs->rx_buf[idx][boff + HME_RX_OFFSET],
+		    mtod(m, caddr_t), len);
+		boff += len;
+		totlen -= len;
+		*mp = m;
+		mp = &m->m_next;
+	}
+
+	return top;
+}
+
+static int
+hme_put(sc, idx, m)
+	struct hme_softc *sc;
+	int idx;
+	struct mbuf *m;
+{
+	struct mbuf *n;
+	int len, tlen = 0, boff = 0;
+
+	for (; m; m = n) {
+		len = m->m_len;
+		if (len == 0) {
+			MFREE(m, n);
+			continue;
+		}
+		bcopy(mtod(m, caddr_t), &sc->sc_bufs->tx_buf[idx][boff], len);
+		boff += len;
+		tlen += len;
+		MFREE(m, n);
+	}
+	return tlen;
+}
+
+static void
+hme_read(sc, idx, len)
+	struct hme_softc *sc;
+	int idx, len;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ether_header *eh;
+	struct mbuf *m;
+
+	if (len <= sizeof(struct ether_header) ||
+	    len > ETHERMTU + sizeof(struct ether_header)) {
+		printf("%s: invalid packet size %d; dropping\n",
+		    ifp->if_xname, len);
+		ifp->if_ierrors++;
+		return;
+	}
+
+	/* Pull packet off interface. */
+	m = hme_get(sc, idx, len);
+	if (m == NULL) {
+		ifp->if_ierrors++;
+		return;
+	}
+
+	ifp->if_ipackets++;
+
+	/* We assume that the header fit entirely in one mbuf. */
+	eh = mtod(m, struct ether_header *);
+
+#if NBPFILTER > 0
+	/*
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to BPF.
+	 */
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
+#endif
+	/* Pass the packet up, with the ether header sort-of removed. */
+	m_adj(m, sizeof(struct ether_header));
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -1207,8 +1481,8 @@ static void
 hme_mcreset(sc)
 	struct hme_softc *sc;
 {
-	struct arpcom *ac = &sc->sc_stp.stp_arpcom;
-	struct ifnet *ifp = &sc->sc_stp.stp_arpcom.ac_if;
+	struct arpcom *ac = &sc->sc_arpcom;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct hme_cr *cr = sc->sc_cr;
 	struct ether_multi *enm;
 	struct ether_multistep step;
