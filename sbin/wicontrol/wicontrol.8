@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.48 2004/03/18 16:16:11 millert Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.49 2004/04/09 10:28:34 xsa Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -264,7 +264,7 @@ The list of available frequencies is dependent on radio regulations specified
 by regional authorities.
 Recognized regulatory authorities include
 the FCC (United States), ETSI (Europe), France and Japan.
-Frequencies in the table are specified in Mhz.
+Frequencies in the table are specified in MHz.
 .Bl -column "Channel" "FCCXXXX" "ETSIXXX" "FranceX" "JapanXX" -offset indent
 .Em "Channel	FCC	ETSI	France	Japan"
 .It 1 Ta "2412	2412	-	2412"
@@ -289,9 +289,9 @@ above with a *.
 Note that two stations must be set to the same channel in order to
 communicate.
 Note also that the channels do overlap; the bandwidth required for
-each channel is about 20Mhz.
+each channel is about 20MHz.
 When using multiple channels in close proximity it is suggested
-that channels be separated by at least 25Mhz.
+that channels be separated by at least 25MHz.
 In the US, this means that only channels 1, 6, and 11 may be used
 simultaneously without interference.
 .It Fl A Ar 1|2|3
