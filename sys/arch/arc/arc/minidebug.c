@@ -1,4 +1,4 @@
-/*	$OpenBSD: minidebug.c,v 1.2 1996/08/26 11:11:55 pefo Exp $	*/
+/*	$OpenBSD: minidebug.c,v 1.3 1996/10/21 05:37:12 imp Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.2 1996/08/26 11:11:55 pefo Exp $
+ *      $Id: minidebug.c,v 1.3 1996/10/21 05:37:12 imp Exp $
  */
 
 /*
@@ -408,7 +408,10 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				break_insert();
 			}
 			return(TRUE);
-
+		case 'S':
+			printf("Stack traceback:\n");
+			stacktrace();
+			return(TRUE);
 		case 's':
 			set_break(mdbpcb.pcb_regs[PC] + 8);
 			return(TRUE);
