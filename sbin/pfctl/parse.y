@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.230 2002/12/02 22:18:21 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.231 2002/12/02 22:34:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -176,6 +176,27 @@ struct node_queue_bw {
 	u_int16_t	bw_percent;
 };
 
+struct filter_opts {
+	struct node_uid *uid;
+	struct node_gid *gid;
+	struct {
+		u_int8_t	b1;
+		u_int8_t	b2;
+		u_int16_t	w;
+		u_int16_t	w2;
+	} flags;
+	struct node_icmp *icmpspec;
+	u_int32_t tos;
+	struct {
+		int			 action;
+		struct node_state_opt	*options;
+	} keep;
+	int fragment;
+	int allowopts;
+	char *label;
+	char *qname;
+} filter_opts;
+
 int	yyerror(char *, ...);
 int	rule_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_nat *);
@@ -287,6 +308,7 @@ typedef struct {
 		struct node_queue	*queue;
 		struct node_queue_opt	queue_options;
 		struct node_queue_bw	queue_bwspec;
+		struct filter_opts	filter_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -313,7 +335,7 @@ typedef struct {
 %type	<v.number>	tos
 %type	<v.i>	no dir log af nodf allowopts fragment fragcache
 %type	<v.i>	staticport
-%type	<v.b>	action flag flags blockspec
+%type	<v.b>	action flags flag blockspec
 %type	<v.range>	dport rport
 %type	<v.hashkey>     hashkey
 %type	<v.pooltype>	pooltype
@@ -340,6 +362,7 @@ typedef struct {
 %type	<v.queue_options>	schedtype
 %type	<v.number>	cbqflags_list cbqflags_item
 %type	<v.queue_bwspec>	bandwidth
+%type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %%
 
 ruleset		: /* empty */
@@ -693,8 +716,7 @@ tbrsize		: /* empty */		{ $$ = 0; }
 		;
 
 pfrule		: action dir logquick interface route af proto fromto
-		  uids gids flags icmpspec tos keep fragment allowopts label
-		  qname
+		  filter_opts
 		{
 			struct pf_rule r;
 			struct node_state_opt *o;
@@ -727,10 +749,10 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.quick = $3.quick;
 
 			r.af = $6;
-			r.flags = $11.b1;
-			r.flagset = $11.b2;
+			r.flags = $9.flags.b1;
+			r.flagset = $9.flags.b2;
 
-			if ($11.b1 || $11.b2) {
+			if ($9.flags.b1 || $9.flags.b2) {
 				for (proto = $7; proto != NULL &&
 				    proto->proto != IPPROTO_TCP;
 				    proto = proto->next)
@@ -741,9 +763,9 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 			}
 
-			r.tos = $13;
-			r.keep_state = $14.action;
-			o = $14.options;
+			r.tos = $9.tos;
+			r.keep_state = $9.keep.action;
+			o = $9.keep.options;
 			while (o) {
 				struct node_state_opt *p = o;
 
@@ -771,9 +793,9 @@ pfrule		: action dir logquick interface route af proto fromto
 				free(p);
 			}
 
-			if ($15)
+			if ($9.fragment)
 				r.rule_flag |= PFRULE_FRAGMENT;
-			r.allow_opts = $16;
+			r.allow_opts = $9.allowopts;
 
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
@@ -801,29 +823,107 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 			}
 
-			if ($17) {
-				if (strlcpy(r.label, $17, sizeof(r.label)) >=
+			if ($9.label) {
+				if (strlcpy(r.label, $9.label, sizeof(r.label)) >=
 				    PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				free($17);
+				free($9.label);
 			}
 
-			if ($18) {
-				if (strlcpy(r.qname, $18, sizeof(r.qname)) >=
+			if ($9.qname) {
+				if (strlcpy(r.qname, $9.qname, sizeof(r.qname)) >=
 				    PF_QNAME_SIZE) {
 					yyerror("rule qname too long (max "
 					    "%d chars)", PF_QNAME_SIZE-1);
 					YYERROR;
 				}
-				free($18);
+				free($9.qname);
 			}
 
 			expand_rule(&r, $4, $5.host, $7,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    $9, $10, $12);
+			    $9.uid, $9.gid, $9.icmpspec);
+		}
+		;
+
+filter_opts	:	{ bzero(&filter_opts, sizeof filter_opts); }
+		  filter_opts_l
+			{ $$ = filter_opts; }
+		| /* empty */	{
+			bzero(&filter_opts, sizeof filter_opts);
+			$$ = filter_opts;
+		}
+		;
+
+filter_opts_l	: filter_opts_l filter_opt
+		| filter_opt
+		;
+
+filter_opt	: USER uids {
+			if (filter_opts.uid)
+				$2->tail->next = filter_opts.uid;
+			filter_opts.uid = $2;
+			
+		}
+		| GROUP gids {
+			if (filter_opts.gid)
+				$2->tail->next = filter_opts.gid;
+			filter_opts.gid = $2;
+		}
+		| flags {
+			if (filter_opts.flags.b1 || filter_opts.flags.b2) {
+				yyerror("redefining flags");
+				YYERROR;
+			} 
+			filter_opts.flags.b1 |= $1.b1;
+			filter_opts.flags.b2 |= $1.b2;
+			filter_opts.flags.w |= $1.w;
+			filter_opts.flags.w2 |= $1.w2;
+		}
+		| icmpspec {
+			if (filter_opts.icmpspec) {
+				yyerror("redefining icmpspec");
+				YYERROR;
+			} 
+			filter_opts.icmpspec = $1;
+		}
+		| tos {
+			if (filter_opts.tos) {
+				yyerror("redefining tos");
+				YYERROR;
+			} 
+			filter_opts.tos = $1;
+		}
+		| keep {
+			if (filter_opts.keep.options) {
+				yyerror("redefining keep");
+				YYERROR;
+			}
+			filter_opts.keep.action = $1.action;
+			filter_opts.keep.options = $1.options;
+		}
+		| fragment {
+			filter_opts.fragment = $1;
+		}
+		| allowopts {
+			filter_opts.allowopts = $1;
+		}
+		| label	{
+			if (filter_opts.label) {
+				yyerror("redefining label");
+				YYERROR;
+			}
+			filter_opts.label = $1;
+		}
+		| qname	{
+			if (filter_opts.qname) {
+				yyerror("redefining queue");
+				YYERROR;
+			}
+			filter_opts.qname = $1;
 		}
 		;
 
@@ -1145,9 +1245,8 @@ port		: STRING			{
 		}
 		;
 
-uids		: /* empty */			{ $$ = NULL; }
-		| USER uid_item			{ $$ = $2; }
-		| USER '{' uid_list '}'		{ $$ = $3; }
+uids		: uid_item			{ $$ = $1; }
+		| '{' uid_list '}'		{ $$ = $2; }
 		;
 
 uid_list	: uid_item			{ $$ = $1; }
@@ -1223,9 +1322,8 @@ uid		: STRING			{
 		}
 		;
 
-gids		: /* empty */			{ $$ = NULL; }
-		| GROUP gid_item		{ $$ = $2; }
-		| GROUP '{' gid_list '}'	{ $$ = $3; }
+gids		: gid_item			{ $$ = $1; }
+		| '{' gid_list '}'		{ $$ = $2; }
 		;
 
 gid_list	: gid_item			{ $$ = $1; }
@@ -1312,13 +1410,11 @@ flag		: STRING			{
 		}
 		;
 
-flags		: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
-		| FLAGS flag "/" flag		{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
-		| FLAGS "/" flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
+flags		: FLAGS flag '/' flag		{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
+		| FLAGS '/' flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;
 
-icmpspec	: /* empty */			{ $$ = NULL; }
-		| ICMPTYPE icmp_item		{ $$ = $2; }
+icmpspec	: ICMPTYPE icmp_item		{ $$ = $2; }
 		| ICMPTYPE '{' icmp_list '}'	{ $$ = $3; }
 		| ICMP6TYPE icmp6_item		{ $$ = $2; }
 		| ICMP6TYPE '{' icmp6_list '}'	{ $$ = $3; }
@@ -1456,8 +1552,7 @@ icmp6type	: STRING			{
 		}
 		;
 
-tos		: /* empty */			{ $$ = 0; }
-		| TOS STRING			{
+tos		: TOS STRING			{
 			if (!strcmp($2, "lowdelay"))
 				$$ = IPTOS_LOWDELAY;
 			else if (!strcmp($2, "throughput"))
@@ -1475,11 +1570,7 @@ tos		: /* empty */			{ $$ = 0; }
 		}
 		;
 
-keep		: /* empty */			{
-			$$.action = 0;
-			$$.options = NULL;
-		}
-		| KEEP STATE state_opt_spec	{
+keep		: KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
 			$$.options = $3;
 		}
@@ -1489,8 +1580,8 @@ keep		: /* empty */			{
 		}
 		;
 
-state_opt_spec	: /* empty */			{ $$ = NULL; }
-		| '(' state_opt_list ')'	{ $$ = $2; }
+state_opt_spec	: '(' state_opt_list ')'	{ $$ = $2; }
+		| /* empty */			{ $$ = NULL; }
 		;
 
 state_opt_list	: state_opt_item		{ $$ = $1; }
@@ -1539,8 +1630,7 @@ state_opt_item	: MAXIMUM number		{
 		}
 		;
 
-fragment	: /* empty */			{ $$ = 0; }
-		| FRAGMENT			{ $$ = 1; }
+fragment	: FRAGMENT			{ $$ = 1; }
 
 minttl		: /* empty */			{ $$ = 0; }
 		| MINTTL number			{
@@ -1560,19 +1650,16 @@ maxmss		: /* empty */			{ $$ = 0; }
 		| MAXMSS number			{ $$ = $2; }
 		;
 
-allowopts	: /* empty */			{ $$ = 0; }
-		| ALLOWOPTS			{ $$ = 1; }
+allowopts	: ALLOWOPTS			{ $$ = 1; }
 
-label		: /* empty */			{ $$ = NULL; }
-		| LABEL STRING			{
+label		: LABEL STRING			{
 			if (($$ = strdup($2)) == NULL) {
 				yyerror("rule label strdup() failed");
 				YYERROR;
 			}
 		}
 		;
-qname		: /* empty */			{ $$ = NULL; }
-		| QUEUE STRING			{
+qname		: QUEUE STRING			{
 			if (($$ = strdup($2)) == NULL) {
 				yyerror("qname strdup() failed");
 				YYERROR;
