@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.379 2003/05/14 05:14:06 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.380 2003/05/14 22:46:01 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3037,10 +3037,6 @@ rdr_consistent(struct pf_rule *r)
 				}
 			}
 		}
-	}
-	if (r->tagname[0]) {
-		yyerror("tagging on rdr rules is not supported yet");
-		problems++;
 	}
 	return (-problems);
 }
