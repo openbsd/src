@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.14 2004/08/30 12:02:59 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.15 2004/12/16 00:38:59 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,7 +133,7 @@ host_dns(const char *s, struct ntp_addr **hn)
 			return (-1);
 	}
 
-	for (res = res0; res; res = res->ai_next) {
+	for (res = res0; res && cnt < MAX_SERVERS_DNS; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
 			continue;
