@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.16 2004/06/14 18:21:31 otto Exp $	*/
+/*	$OpenBSD: du.c,v 1.17 2004/06/21 09:44:31 otto Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.16 2004/06/14 18:21:31 otto Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.17 2004/06/21 09:44:31 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: du.c,v 1.16 2004/06/14 18:21:31 otto Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/tree.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -217,110 +218,63 @@ main(int argc, char *argv[])
 	exit(rval);
 }
 
+
+struct links_entry {
+	RB_ENTRY(links_entry) entry;
+	struct links_entry *fnext;
+	int	 links;
+	dev_t	 dev;
+	ino_t	 ino;
+};
+
+int
+links_cmp(struct links_entry *e1, struct links_entry *e2)
+{
+	if (e1->dev == e2->dev) {
+		if (e1->ino == e2->ino)
+			return (0);
+		else
+			return (e1->ino < e2->ino ? -1 : 1);
+	}
+	else
+		return (e1->dev < e2->dev ? -1 : 1);
+}
+
+RB_HEAD(ltree, links_entry) links = RB_INITIALIZER(&links);
+
+RB_GENERATE(ltree, links_entry, entry, links_cmp);
+
+
 int
 linkchk(FTSENT *p)
 {
-	struct links_entry {
-		struct links_entry *next;
-		struct links_entry *previous;
-		int	 links;
-		dev_t	 dev;
-		ino_t	 ino;
-	};
-	static const size_t links_hash_initial_size = 8192;
-	static struct links_entry **buckets;
-	static struct links_entry *free_list;
-	static size_t number_buckets;
-	static unsigned long number_entries;
-	static char stop_allocating;
-	struct links_entry *le, **new_buckets;
+	static struct links_entry *free_list = NULL;
+	static int stop_allocating = 0;
+	struct links_entry ltmp, *le;
 	struct stat *st;
-	size_t i, new_size;
-	int count, hash;
 
 	st = p->fts_statp;
 
-	/* If necessary, initialize the hash table. */
-	if (buckets == NULL) {
-		number_buckets = links_hash_initial_size;
-		buckets = malloc(number_buckets * sizeof(buckets[0]));
-		if (buckets == NULL)
-			errx(1, "No memory for hardlink detection");
-		for (i = 0; i < number_buckets; i++)
-			buckets[i] = NULL;
-	}
+	ltmp.ino = st->st_ino;
+	ltmp.dev = st->st_dev;
 
-	/* If the hash table is getting too full, enlarge it. */
-	if (number_entries > number_buckets * 10 && !stop_allocating) {
-		new_size = number_buckets * 2;
-		new_buckets = malloc(new_size * sizeof(struct links_entry *));
-		count = 0;
-
-		/* Try releasing the free list to see if that helps. */
-		if (new_buckets == NULL && free_list != NULL) {
-			while (free_list != NULL) {
-				le = free_list;
-				free_list = le->next;
+	le = RB_FIND(ltree, &links, &ltmp);
+	if (le != NULL) {
+		/*
+		 * Save memory by releasing an entry when we've seen
+		 * all of it's links.
+		 */
+		if (--le->links <= 0) {
+			RB_REMOVE(ltree, &links, le);
+			/* Recycle this node through the free list */
+			if (stop_allocating) {
 				free(le);
+			} else {
+				le->fnext = free_list;
+				free_list = le;
 			}
-			new_buckets = malloc(new_size * sizeof(new_buckets[0]));
 		}
-
-		if (new_buckets == NULL) {
-			stop_allocating = 1;
-			warnx("No more memory for tracking hard links");
-		} else {
-			memset(new_buckets, 0,
-			    new_size * sizeof(struct links_entry *));
-			for (i = 0; i < number_buckets; i++) {
-				while (buckets[i] != NULL) {
-					/* Remove entry from old bucket. */
-					le = buckets[i];
-					buckets[i] = le->next;
-
-					/* Add entry to new bucket. */
-					hash = (le->dev ^ le->ino) % new_size;
-
-					if (new_buckets[hash] != NULL)
-						new_buckets[hash]->previous =
-						    le;
-					le->next = new_buckets[hash];
-					le->previous = NULL;
-					new_buckets[hash] = le;
-				}
-			}
-			free(buckets);
-			buckets = new_buckets;
-			number_buckets = new_size;
-		}
-	}
-
-	/* Try to locate this entry in the hash table. */
-	hash = ( st->st_dev ^ st->st_ino ) % number_buckets;
-	for (le = buckets[hash]; le != NULL; le = le->next) {
-		if (le->dev == st->st_dev && le->ino == st->st_ino) {
-			/*
-			 * Save memory by releasing an entry when we've seen
-			 * all of it's links.
-			 */
-			if (--le->links <= 0) {
-				if (le->previous != NULL)
-					le->previous->next = le->next;
-				if (le->next != NULL)
-					le->next->previous = le->previous;
-				if (buckets[hash] == le)
-					buckets[hash] = le->next;
-				number_entries--;
-				/* Recycle this node through the free list */
-				if (stop_allocating) {
-					free(le);
-				} else {
-					le->next = free_list;
-					free_list = le;
-				}
-			}
-			return (1);
-		}
+		return (1);
 	}
 
 	if (stop_allocating)
@@ -330,24 +284,24 @@ linkchk(FTSENT *p)
 	if (free_list != NULL) {
 		/* Pull a node from the free list if we can. */
 		le = free_list;
-		free_list = le->next;
+		free_list = le->fnext;
 	} else
 		/* Malloc one if we have to. */
 		le = malloc(sizeof(struct links_entry));
+
 	if (le == NULL) {
 		stop_allocating = 1;
 		warnx("No more memory for tracking hard links");
 		return (0);
 	}
+
 	le->dev = st->st_dev;
 	le->ino = st->st_ino;
 	le->links = st->st_nlink - 1;
-	number_entries++;
-	le->next = buckets[hash];
-	le->previous = NULL;
-	if (buckets[hash] != NULL)
-		buckets[hash]->previous = le;
-	buckets[hash] = le;
+	le->fnext = NULL;
+
+	RB_INSERT(ltree, &links, le);
+
 	return (0);
 }
 
