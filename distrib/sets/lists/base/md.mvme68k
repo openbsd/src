@@ -688,3 +688,4 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/machine/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_gif.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/net_osdep.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ifaddrs.ph

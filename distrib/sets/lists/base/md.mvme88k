@@ -400,3 +400,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_gre.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph

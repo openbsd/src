@@ -1004,6 +1004,7 @@
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
+./usr/share/man/cat4/ses.0
 ./usr/share/man/cat4/sf.0
 ./usr/share/man/cat4/sis.0
 ./usr/share/man/cat4/sk.0
@@ -1643,3 +1644,5 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
+./usr/share/man/cat3/freeifaddrs.0
+./usr/share/man/cat3/getifaddrs.0

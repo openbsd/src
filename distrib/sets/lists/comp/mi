@@ -3340,3 +3340,7 @@
 ./usr/include/dev/ic/gdtvar.h
 ./usr/include/dev/pci/if_wxreg.h
 ./usr/include/dev/pci/if_wxvar.h
+./usr/include/dev/ic/isp_target.h
+./usr/include/dev/ic/isp_tpublic.h
+./usr/include/scsi/ses.h
+./usr/include/ifaddrs.h

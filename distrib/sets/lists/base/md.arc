@@ -445,3 +445,4 @@
 ./usr/lib/libperl.so.5.3
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_gre.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph

@@ -690,3 +690,4 @@
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_gre.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ifaddrs.ph
