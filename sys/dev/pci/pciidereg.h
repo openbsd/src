@@ -1,0 +1,71 @@
+/* $OpenBSD: pciidereg.h,v 1.1 1998/06/30 22:58:17 angelos Exp $ */
+/*	$NetBSD: pciidereg.h,v 1.2 1998/03/04 19:17:10 cgd Exp $	*/
+
+/*
+ * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * PCI IDE controller register definitions.
+ *
+ * Author: Christopher G. Demetriou, March 2, 1998.
+ *
+ * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" and
+ * "Programming Interface for Bus Master IDE Controller, Revision 1.0
+ * 5/16/94" from the PCI SIG.
+ */
+
+/*
+ * Number of channels per chip.  MUST NOT CHANGE (macros in pciide.c and
+ * this file depend on its value).
+ */
+#define	PCIIDE_NUM_CHANNELS		2
+
+/*
+ * PCI base address register locations (some are per-channel).
+ */
+#define	PCIIDE_REG_CMD_BASE(chan)	(0x10 + (8 * (chan)))
+#define	PCIIDE_REG_CTL_BASE(chan)	(0x14 + (8 * (chan)))
+#define	PCIIDE_REG_BUS_MASTER_DMA	0x20
+
+/*
+ * Bits in the PCI Programming Interface register (some are per-channel).
+ */
+#define	PCIIDE_INTERFACE_PCI(chan)	(0x01 << (2 * (chan)))
+#define	PCIIDE_INTERFACE_SETTABLE(chan)	(0x02 << (2 * (chan)))
+#define	PCIIDE_INTERFACE_BUS_MASTER_DMA	0x80
+
+/*
+ * Compatibility address/IRQ definitions (some are per-channel).
+ */
+#define	PCIIDE_COMPAT_CMD_BASE(chan)	((chan) == 0 ? 0x1f0 : 0x170)
+#define	PCIIDE_COMPAT_CMD_SIZE		8
+#define	PCIIDE_COMPAT_CTL_BASE(chan)	((chan) == 0 ? 0x3f6 : 0x376)
+#define	PCIIDE_COMPAT_CTL_SIZE		1
+#define	PCIIDE_COMPAT_IRQ(chan)		((chan) == 0 ? 14 : 15)
