@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.45 2003/06/10 21:55:02 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.46 2003/06/14 23:23:08 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -90,15 +90,15 @@ sub variables {
     $group = "/etc/group";
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
-    $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.45 2003/06/10 21:55:02 millert Exp $';
+    $encryptionmethod = "auto";
+    $rcsid = '$OpenBSD: adduser.perl,v 1.46 2003/06/14 23:23:08 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
     # common shells, first element has higher priority
     @shellpref = ('csh', 'sh', 'bash', 'tcsh', 'ksh');
 
-    @encryption_methods = ('blowfish', 'md5', 'des', 'old');
+    @encryption_methods = ('auto', 'blowfish', 'md5', 'des', 'old');
 
     $defaultshell = 'sh';	# defaultshell if not empty
     $group_uniq = 'USER';
@@ -799,9 +799,9 @@ sub new_users {
 	if (&new_users_ok) {
 	    $new_users_ok = 1;
 
-	    $log_cl = "" if ($log_cl eq "default");
 	    $cryptpwd = "*";	# Locked by default
 	    $cryptpwd = encrypt($password, &salt) if ($password ne "");
+	    $log_cl = "" if ($log_cl eq "default");
 
 	    # obscure perl bug
 	    $new_entry = "$name\:" . "$cryptpwd" .
@@ -967,11 +967,11 @@ sub salt {
 	    $rand = rand(25*29*17 + $rand);
 	    $salt .=  $itoa64[$rand & $#itoa64];
         }
-    } elsif ($encryptionmethod eq "md5") {
+    } elsif ($encryptionmethod eq "md5" || $encryptionmethod eq "auto") {
         $salt = "";
     } elsif ($encryptionmethod =~ /^blowfish/ ) {
         ($encryptionmethod, $salt) = split(/\,/, $encryptionmethod);
-	if ($salt eq "") { $salt = 7; }	# default rounds inf unspecified
+	$salt = 7 unless $salt;		# default rounds if unspecified
     } else {
         warn "$encryptionmethod encryption method invalid\n" if ($verbose > 0);
 	warn "Falling back to blowfish,7...\n" if ($verbose > 0);
@@ -987,17 +987,19 @@ sub salt {
 # Encrypt a password using the selected method
 sub encrypt {
     local($pass, $salt) = ($_[0], $_[1]);
-    local($args, $crypt);
+    local(@args, $crypt);
 
     if ($encryptionmethod eq "des" || $encryptionmethod eq "old") {
-        $args = "-s $salt";
+        @args = ("-s", $salt);
     } elsif ($encryptionmethod eq "md5") {
-        $args = "-m";
+        @args = ("-m");
     } elsif ($encryptionmethod eq "blowfish") {
-        $args = "-b $salt";
+        @args = ("-b", $salt);
+    } elsif ($encryptionmethod eq "auto") {
+        @args = ("-c", $log_cl);
     }
 
-    open2(\*ENCRD, \*ENCWR, "/usr/bin/encrypt $args");
+    open2(\*ENCRD, \*ENCWR, "/usr/bin/encrypt", @args);
     print ENCWR "$pass\n";
     close ENCWR;
     $crypt = <ENCRD>;
@@ -1524,7 +1526,7 @@ verbose = $verbose
 defaultpasswd = $defaultpasswd
 
 # Default encryption method for user passwords
-# Methods are all those listed in passwd.conf(5)
+# Methods are all those listed in login.conf(5)
 encryptionmethod = "$defaultencryption"
 
 # copy dotfiles from this dir ("/etc/skel" or "no")
