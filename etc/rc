@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.129 2000/01/30 02:45:51 millert Exp $
+#	$OpenBSD: rc,v 1.130 2000/02/28 17:28:35 itojun Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -399,6 +399,10 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 		if [ "X${rtsold_flags}" != X"NO" ]; then
 			echo -n ' rtsold'
 			/usr/sbin/rtsold ${rtsold_flags}
+		fi
+
+		if [ "X${ip6defaultif}" != X"" ]; then
+			/usr/sbin/ndp -I ${ip6defaultif}
 		fi
 	else
 		# $route6d_flags is imported from /etc/rc.conf;
