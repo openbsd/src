@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.21 1997/09/15 09:58:08 deraadt Exp $
+#	$OpenBSD: daily,v 1.22 1997/10/21 03:00:56 mickey Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -104,7 +104,7 @@ fi
 		echo "Backing up root filesystem:"
 		echo "copying /dev/r$rootdev to /dev/r$rootbak"
 		dd if=/dev/r$rootdev of=/dev/r$rootbak bs=16b seek=1 skip=1 \
-			conv=noerror,sync
+			conv=noerror
 		fsck -y /dev/r$rootbak
 	}
 }
