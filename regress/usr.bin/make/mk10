@@ -1,0 +1,20 @@
+# $OpenBSD: mk10,v 1.1 2000/12/31 16:44:14 espie Exp $
+
+all: a b/o/d.e z.b
+
+a: 
+# Regression test: this will parse as a recursive variable which 
+# does not exist, but should not be interpreted as a dynamic variable
+	# ${@D) abcd ${@F}
+# And this is the real one
+	# ${@D} ${@F}
+
+b/o/d.e:
+	# ${@D} ${@F}
+
+.SUFFIXES: .a .b
+
+.a.b:
+	# ${*D} ${*F}
+
+.PHONY: a b/o/d.e
