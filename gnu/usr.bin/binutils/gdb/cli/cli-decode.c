@@ -402,6 +402,34 @@ add_set_enum_cmd (char *name,
   return c;
 }
 
+/* Add element named NAME to command list LIST (the list for set or
+   some sublist thereof).  CLASS is as in add_cmd.  ENUMLIST is a list
+   of strings which may follow NAME.  VAR is address of the variable
+   which will contain the matching string (from ENUMLIST).  */
+
+void
+add_setshow_enum_cmd (char *name,
+		      enum command_class class,
+		      const char *enumlist[],
+		      const char **var,
+		      const char *set_doc,
+		      const char *show_doc,
+		      const char *help_doc,
+		      const char *print,
+		      cmd_sfunc_ftype *set_func,
+		      cmd_sfunc_ftype *show_func,
+		      struct cmd_list_element **set_list,
+		      struct cmd_list_element **show_list)
+{
+  struct cmd_list_element *c;
+  add_setshow_cmd_full (name, class, var_enum, var,
+			set_doc, show_doc, help_doc, print,
+			set_func, show_func,
+			set_list, show_list,
+			&c, NULL);
+  c->enums = enumlist;
+}
+
 /* Add an auto-boolean command named NAME to both the set and show
    command list lists.  CLASS is as in add_cmd.  VAR is address of the
    variable which will contain the value.  DOC is the documentation
