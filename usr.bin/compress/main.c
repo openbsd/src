@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2003/06/27 17:33:26 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2003/06/29 21:14:37 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.29 2003/06/27 17:33:26 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.30 2003/06/29 21:14:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -561,7 +561,8 @@ decompress(const char *in, const char *out, const struct compressor *method,
 
 	if (cookie == NULL || (method->close)(cookie) || nr < 0) {
 		if (!error && verbose >= 0)
-			warn("%s", in);
+			warnx("%s: %s", in,
+			    errno == EINVAL ? "crc error" : strerror(errno));
 		error++;
 		close (ifd);
 	}
