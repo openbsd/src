@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.8 2001/06/26 10:47:36 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.9 2001/06/26 10:56:16 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -290,7 +290,8 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    sc->sc_scr_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
-		printf("%s: cannot alloc scratch dmamem\n", sc->sc_dv.dv_xname);
+		printf("%s: cannot alloc scratch dmamem\n",
+		    sc->sc_dv.dv_xname);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 		return;
 	}
@@ -390,7 +391,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 
 	/* Initalise the IOP's outbound FIFO. */
 	if (iop_ofifo_init(sc) != 0) {
-		printf("%s: unable to init oubound FIFO\n",
+		printf("%s: unable to init outbound FIFO\n",
 		    sc->sc_dv.dv_xname);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
@@ -448,7 +449,8 @@ iop_config_interrupts(struct device *self)
  	 */
 	if (iop_systab == NULL) {
 		for (i = 0, niop = 0; i < iop_cd.cd_ndevs; i++) {
-			if (!(iop = (struct iop_softc *)device_lookup(&iop_cd, i)))
+			iop = (struct iop_softc *)device_lookup(&iop_cd, i);
+			if (iop == NULL)
 				continue;
 			if ((iop->sc_flags & IOP_HAVESTATUS) == 0)
 				continue;
@@ -474,7 +476,8 @@ iop_config_interrupts(struct device *self)
 		iop_systab->numentries = niop;
 		iop_systab->version = I2O_VERSION_11;
 
-		for (i = 0, ste = iop_systab->entry; i < iop_cd.cd_ndevs; i++) {
+		for (i = 0, ste = iop_systab->entry; i < iop_cd.cd_ndevs; i++)
+		    {
 			iop = (struct iop_softc *)device_lookup(&iop_cd, i);
 			if (iop == NULL)
 				continue;
@@ -531,7 +534,8 @@ iop_config_interrupts(struct device *self)
 	    I2O_EVENT_GEN_STATE_CHANGE |
 	    I2O_EVENT_GEN_GENERAL_WARNING);
 	if (rv != 0) {
-		printf("%s: unable to register for events", sc->sc_dv.dv_xname);
+		printf("%s: unable to register for events",
+		    sc->sc_dv.dv_xname);
 		return;
 	}
 
@@ -903,7 +907,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	struct i2o_exec_status_get mf;
 	paddr_t pa = sc->sc_scr_seg->ds_addr;
 	struct i2o_status *st = (struct i2o_status *)sc->sc_scr;
-	int rv, i;
+	int rv;
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_exec_status_get);
 	mf.msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_STATUS_GET);
@@ -953,9 +957,9 @@ iop_ofifo_init(struct iop_softc *sc)
 	mf->msgtctx = 0;
 	mf->pagesize = PAGE_SIZE;
 	mf->flags = IOP_INIT_CODE | ((IOP_MAX_MSG_SIZE >> 2) << 16);
-	mb[sizeof(*mf) / 4 + 0] = sizeof(*sw) |
+	mb[sizeof(*mf) / sizeof(u_int32_t) + 0] = sizeof(*sw) |
 	    I2O_SGL_SIMPLE | I2O_SGL_END_BUFFER | I2O_SGL_END;
-	mb[sizeof(*mf) / 4 + 1] = sc->sc_scr_seg->ds_addr;
+	mb[sizeof(*mf) / sizeof(u_int32_t) + 1] = sc->sc_scr_seg->ds_addr;
 
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
@@ -1002,12 +1006,13 @@ iop_ofifo_init(struct iop_softc *sc)
 		rv = bus_dmamap_create(sc->sc_dmat, sc->sc_rep_size, 1,
 		    sc->sc_rep_size, 0, BUS_DMA_NOWAIT, &sc->sc_rep_dmamap);
 		if (rv != 0) {
-			printf("%s: dma create = %d\n", sc->sc_dv.dv_xname, rv);
+			printf("%s: dma create = %d\n", sc->sc_dv.dv_xname,
+			    rv);
 			return (rv);
 		}
 
-		rv = bus_dmamap_load(sc->sc_dmat, sc->sc_rep_dmamap, sc->sc_rep,
-		    sc->sc_rep_size, NULL, BUS_DMA_NOWAIT);
+		rv = bus_dmamap_load(sc->sc_dmat, sc->sc_rep_dmamap,
+		    sc->sc_rep, sc->sc_rep_size, NULL, BUS_DMA_NOWAIT);
 		if (rv != 0) {
 			printf("%s: dma load = %d\n", sc->sc_dv.dv_xname, rv);
 			return (rv);
@@ -1119,7 +1124,8 @@ iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
 #endif
 
 	iop_msg_map(sc, im, mb, lct, size, 0);
-	rv = iop_msg_post(sc, im, mb, sizeof(*mf), (chgind == 0 ? 120*1000 : 0));
+	rv = iop_msg_post(sc, im, mb, sizeof(*mf),
+	    (chgind == 0 ? 120*1000 : 0));
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	return (rv);
