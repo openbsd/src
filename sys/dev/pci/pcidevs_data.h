@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.499 2002/04/08 01:48:58 frantzen Exp 
+ *		OpenBSD: pcidevs,v 1.500 2002/04/15 21:18:30 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1837,6 +1837,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_EFSS25,
 	    "25SS-3010 ATM (ASIC)",
+	},
+	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS1023,
+	    "SpeedStream 1023",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
