@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 1998/09/11 22:55:45 millert Exp $
+#	$OpenBSD: install.md,v 1.22 1998/10/09 11:21:03 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -217,7 +217,7 @@ md_copy_kernel() {
 md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
-		echo "Welcome to the OpenBSD/sparc ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/sparc ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put OpenBSD on your disk in a simple and
