@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.21 2001/05/15 07:49:45 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.22 2001/05/23 14:34:30 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -130,8 +130,6 @@ int	fdesc_vfree	__P((void *));
 #define	fdesc_truncate	eopnotsupp
 #define	fdesc_update	eopnotsupp
 #define	fdesc_bwrite	eopnotsupp
-
-static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct proc *));
 
 int (**fdesc_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
@@ -424,87 +422,6 @@ fdesc_open(v)
 	return (0);
 }
 
-static int
-fdesc_attr(fd, vap, cred, p)
-	int fd;
-	struct vattr *vap;
-	struct ucred *cred;
-	struct proc *p;
-{
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct stat stb;
-	int error;
-
-	if (fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
-		return (EBADF);
-
-	switch (fp->f_type) {
-	case DTYPE_VNODE:
-		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, p);
-		if (error == 0 && vap->va_type == VDIR) {
-			/*
-			 * directories can cause loops in the namespace,
-			 * so turn off the 'x' bits to avoid trouble.
-			 */
-			vap->va_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
-		}
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat(fp, &stb, p);
-		if (error == 0) {
-			vattr_null(vap);
-			vap->va_type = VSOCK;
-			vap->va_mode = stb.st_mode;
-			vap->va_nlink = stb.st_nlink;
-			vap->va_uid = stb.st_uid;
-			vap->va_gid = stb.st_gid;
-			vap->va_fsid = stb.st_dev;
-			vap->va_fileid = stb.st_ino;
-			vap->va_size = stb.st_size;
-			vap->va_blocksize = stb.st_blksize;
-			vap->va_atime = stb.st_atimespec;
-			vap->va_mtime = stb.st_mtimespec;
-			vap->va_ctime = stb.st_ctimespec;
-			vap->va_gen = stb.st_gen;
-			vap->va_flags = stb.st_flags;
-			vap->va_rdev = stb.st_rdev;
-			vap->va_bytes = stb.st_blocks * stb.st_blksize;
-		}
-		break;
-
-	case DTYPE_PIPE:
-		error = pipe_stat(fp, &stb, p);
-		if (error == 0) {
-			vattr_null(vap);
-			vap->va_type = VFIFO;
-			vap->va_mode = stb.st_mode;
-			vap->va_nlink = stb.st_nlink;
-			vap->va_uid = stb.st_uid;
-			vap->va_gid = stb.st_gid;
-			vap->va_fsid = stb.st_dev;
-			vap->va_fileid = stb.st_ino;
-			vap->va_size = stb.st_size;
-			vap->va_blocksize = stb.st_blksize;
-			vap->va_atime = stb.st_atimespec;
-			vap->va_mtime = stb.st_mtimespec;
-			vap->va_ctime = stb.st_ctimespec;
-			vap->va_gen = stb.st_gen;
-			vap->va_flags = stb.st_flags;
-			vap->va_rdev = stb.st_rdev;
-			vap->va_bytes = stb.st_blocks * stb.st_blksize;
-		}
-		break;
-
-	default:
-		panic("fdesc attr");
-		break;
-	}
-
-	return (error);
-}
-
 int
 fdesc_getattr(v)
 	void *v;
@@ -517,7 +434,10 @@ fdesc_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
-	unsigned fd;
+	unsigned int fd;
+	struct stat stb;
+        struct filedesc *fdp;
+	struct file *fp;
 	int error = 0;
 
 	switch (VTOFDESC(vp)->fd_type) {
@@ -573,7 +493,36 @@ fdesc_getattr(v)
 
 	case Fdesc:
 		fd = VTOFDESC(vp)->fd_fd;
-		error = fdesc_attr(fd, vap, ap->a_cred, ap->a_p);
+		fdp = ap->a_p->p_fd;
+		if (fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+			return (EBADF);
+		memset(&stb, 0, sizeof(stb));
+		error = (*fp->f_ops->fo_stat)(fp, &stb, ap->a_p);
+		if (error != 0)
+			break;
+		vattr_null(vap);
+		vap->va_type = IFTOVT(stb.st_mode);
+		vap->va_mode = stb.st_mode;
+		/*
+		 * directories can cause loops in the namespace,
+		 * so turn off the 'x' bits to avoid trouble.
+		 */
+		if (vap->va_type == VDIR)
+			vap->va_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
+		vap->va_nlink = stb.st_nlink;
+		vap->va_uid = stb.st_uid;
+		vap->va_gid = stb.st_gid;
+		vap->va_fsid = stb.st_dev;
+		vap->va_fileid = stb.st_ino;
+		vap->va_size = stb.st_size;
+		vap->va_blocksize = stb.st_blksize;
+		vap->va_atime = stb.st_atimespec;
+		vap->va_mtime = stb.st_mtimespec;
+		vap->va_ctime = stb.st_ctimespec;
+		vap->va_gen = stb.st_gen;
+		vap->va_flags = stb.st_flags;
+		vap->va_rdev = stb.st_rdev;
+		vap->va_bytes = stb.st_blocks * stb.st_blksize;
 		break;
 
 	default:
@@ -597,10 +546,10 @@ fdesc_setattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct filedesc *fdp = ap->a_p->p_fd;
 	struct vattr *vap = ap->a_vap;
+	struct proc *p = ap->a_p;
+	struct vnode *vp;
 	struct file *fp;
-	unsigned fd;
 	int error;
 
 	/*
@@ -619,32 +568,31 @@ fdesc_setattr(v)
 		return (EACCES);
 	}
 
-	fd = VTOFDESC(ap->a_vp)->fd_fd;
-	if (fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL) {
-		return (EBADF);
+	if ((error = getvnode(p->p_fd, VTOFDESC(ap->a_vp)->fd_fd, &fp)) != 0) {
+		/*
+		 * getvnode returns EINVAL if the file is not a vnode.
+		 * We siltently drop all changes except chflags when that
+		 * happens.
+		 */
+		if (error == EINVAL) {
+			if (vap->va_flags == VNOVAL)
+				error = 0;
+			else
+				error = EOPNOTSUPP;
+		}
+		return (error);
 	}
-
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		return (EROFS);
 	/*
-	 * Can setattr the underlying vnode, but not sockets!
+	 * Directories can cause deadlocks.
 	 */
-	switch (fp->f_type) {
-	case DTYPE_VNODE:
-		error = VOP_SETATTR((struct vnode *) fp->f_data, ap->a_vap, ap->a_cred, ap->a_p);
-		break;
-
-	case DTYPE_PIPE:
-	case DTYPE_SOCKET:
-		if (vap->va_flags != VNOVAL)
-			error = EOPNOTSUPP;
-		else
-			error = 0;
-		break;
-
-	default:
-		panic("fdesc setattr");
-		break;
-	}
-
+	if (vp->v_type == VDIR)
+		return (EOPNOTSUPP);
+	vn_lock(vp, LK_EXCLUSIVE|LK_RETRY, p);
+	error = VOP_SETATTR(vp, vap, ap->a_cred, p);
+	VOP_UNLOCK(vp, 0, p);
 	return (error);
 }
 
