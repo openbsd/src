@@ -1624,9 +1624,11 @@ EOF
 	;;
   i[3456]86-*-netbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   i[3456]86-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   i[3456]86-esix-sysv3*)
 	COREFILE=trad-core.o
@@ -1667,6 +1669,7 @@ EOF
 	;;
   mips*-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   mips-dec-bsd*)
 	COREFILE=trad-core.o
@@ -1682,8 +1685,9 @@ EOF
 EOF
 
 	;;
-  mips-*-openbsd*)
+  mips-*-netbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   mips-dec-*)
 	COREFILE=trad-core.o
@@ -1754,9 +1758,11 @@ EOF
 	;;
   m68*-*-netbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   m68*-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   m68*-apple-aux*)
 	COREFILE=trad-core.o
@@ -1783,21 +1789,25 @@ EOF
 	;;
   ns32k-*-netbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   ns32k-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   rs6000-*-lynx*)	COREFILE=lynx-core.o ;;
   rs6000-*-aix4*)	COREFILE=rs6000-core.o ;;
   rs6000-*-*)		COREFILE=rs6000-core.o ;;
-  powerpc-*-*bsd*)	COREFILE=netbsd-core.o ;;
+  powerpc-*-*bsd*)	COREFILE=netbsd-core.o;COREFLAG=-DNETBSD_CORE;;
   powerpc-*-aix4*)	COREFILE=rs6000-core.o ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.o ;;
   sparc-*-netbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   sparc-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   tahoe-*-*)
 	COREFILE=trad-core.o
