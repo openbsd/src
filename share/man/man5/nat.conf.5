@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.18 2001/10/10 22:08:25 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.19 2001/12/03 23:02:13 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -117,6 +117,13 @@ rule, "tcp", "udp", and "icmp" connections will be translated.
 If the protocol specification is omitted from an
 .Em rdr
 rule, only "tcp" connections will be redirected.
+.Pp
+.Em rdr
+rules can optionally specify port ranges instead of single ports.
+\'rdr ... port 2000:2999 -> ... port 4000\' redirects ports 2000 to 2999
+(including port 2000 and 2999) to the same port 4000.
+\'rdr ... port 2000:2999 -> ... port 4000:*\' redirects port 2000 to 4000,
+2001 to 4001, ..., 2999 to 4999.
 .Sh EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,
