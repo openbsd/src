@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.9 1998/05/11 15:40:34 niklas Exp $   */
+/*	$OpenBSD: intvec.s,v 1.10 1998/05/11 15:55:17 niklas Exp $   */
 /*	$NetBSD: intvec.s,v 1.23 1997/07/28 21:48:35 ragge Exp $   */
 
 /*
@@ -71,6 +71,9 @@ ENTRY(stray/**/vecnr)		; \
 	calls $2,_stray		; \
 	popr $0x3f		; \
 	rei
+
+#define	PUSHR	pushr	$0x3f
+#define	POPR	popr	$0x3f
 
 #define KSTACK 0
 #define ISTACK 1
