@@ -1,4 +1,4 @@
-/*	$OpenBSD: cradle.c,v 1.1 2004/01/23 20:51:18 sturm Exp $	*/
+/*	$OpenBSD: cradle.c,v 1.2 2005/03/10 22:22:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Marius Aamodt Eriksen <marius@monkey.org>
@@ -105,6 +105,7 @@ static int
 mkunserv(char *path)
 {
 	int s;
+	mode_t old_umask;
 	struct sockaddr_un sun;
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -117,8 +118,10 @@ mkunserv(char *path)
 	    sizeof (sun.sun_path))
 		errx(1, "Path too long: %s", path);
 
+	old_umask = umask(S_IRUSR | S_IWUSR);
 	if (bind(s, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "bind()");
+	umask(old_umask);
 
 	if (chmod(path, S_IRUSR | S_IWUSR) == -1)
 		err(1, "chmod()");
