@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.67 2002/06/18 22:48:16 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.68 2002/06/18 23:03:26 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -576,8 +576,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Notify on expiration. */
 	if (tdb->tdb_flags & TDBF_SOFT_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
-	{
+	    tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes) {
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;  /* Turn off checking. */
 	}
