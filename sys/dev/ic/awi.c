@@ -1221,9 +1221,6 @@ awi_input(sc, m, rxts, rssi)
 {
 	struct ifnet *ifp = sc->sc_ifp;
 	struct ieee80211_frame *wh;
-#ifndef __NetBSD__
-	struct ether_header *eh;
-#endif
 
 	/* trim CRC here for WEP can find its own CRC at the end of packet. */
 	m_adj(m, -ETHER_CRC_LEN);
@@ -1284,9 +1281,7 @@ awi_input(sc, m, rxts, rssi)
 #ifdef __NetBSD__
 		(*ifp->if_input)(ifp, m);
 #else
-		eh = mtod(m, struct ether_header *);
-		m_adj(m, sizeof(*eh));
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 #endif
 		break;
 	case IEEE80211_FC0_TYPE_MGT:
