@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 1996/11/21 09:02:03 mickey Exp $
+#	$OpenBSD: Makefile,v 1.34 1996/12/23 22:56:50 rahnds Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -31,7 +31,7 @@ SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
 # Don't use the standard tool chain on the alpha or mips.
-.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && ${MACHINE_ARCH} != "powerpc")
 SUBDIR+= ar nm ranlib size strip strings
 .endif
 
