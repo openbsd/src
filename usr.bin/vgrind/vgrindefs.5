@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vgrindefs.5,v 1.7 1999/07/09 13:35:30 aaron Exp $
+.\"	$OpenBSD: vgrindefs.5,v 1.8 2000/03/14 14:58:25 aaron Exp $
 .\"	$NetBSD: vgrindefs.5,v 1.3 1994/11/17 08:28:07 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -84,9 +84,13 @@ if ifdef ifndef include undef:
 .Ed
 .Pp
 Note that the first field is just the language name (and any variants
-of it).  Thus the C language could be specified to
+of it).
+Thus the C language could be specified to
 .Xr vgrind 1
-as "c" or "C".
+as
+.Qq c
+or
+.Qq C .
 .Pp
 Entries may continue onto multiple lines by giving a \e as the last
 character of a line.
@@ -98,15 +102,21 @@ some particular feature
 and string
 capabilities which give a regular expression or
 keyword list.
-.Sh REGULAR  EXPRESSIONS
+.Sh REGULAR EXPRESSIONS
 .Nm vgrindefs
 uses regular expression which are very similar to those of
 .Xr ex 1
 and
 .Xr lex 1 .
-The characters `^', `$', `:' and `\e'
+The characters
+.Ql ^ ,
+.Ql $ ,
+.Ql \&: ,
+and
+.Ql \e
 are reserved characters and must be
-"quoted" with a preceding
+.Dq quoted
+with a preceding
 .Ql \e
 if they
 are to be included as normal characters.
@@ -121,7 +131,8 @@ A delimiter (space, tab, newline, start of line).
 .It \ea
 Matches any string of symbols (like .* in lex).
 .It \ep
-Matches any alphanumeric name.  In a procedure definition (pb) the string
+Matches any alphanumeric name.
+In a procedure definition (pb) the string
 that matches this symbol is used as the procedure name.
 .It ()
 Grouping.
@@ -136,12 +147,22 @@ This is typically used for languages (like C) which can include the
 string delimiter in a string by escaping it.
 .El
 .Pp
-Unlike other regular expressions in the system,  these match words
-and not characters.  Hence something like "(tramp|steamer)flies?"
-would match "tramp", "steamer", "trampflies", or "steamerflies".
+Unlike other regular expressions in the system, these match words
+and not characters.
+Hence something like
+.Dq (tramp|steamer)flies?
+would match
+.Dq tramp ,
+.Dq steamer ,
+.Dq trampflies ,
+or
+.Dq steamerflies .
 .Sh KEYWORD LIST
 The keyword list is just a list of keywords in the language separated
-by spaces.  If the "oc" boolean is specified, indicating that upper
+by spaces.
+If the
+.Dq oc
+boolean is specified, indicating that upper
 and lower case are equivalent, then all the keywords should be
 specified in lower case.
 .Sh FILES

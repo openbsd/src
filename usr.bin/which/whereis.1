@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whereis.1,v 1.6 2000/03/06 03:17:41 aaron Exp $
+.\"	$OpenBSD: whereis.1,v 1.7 2000/03/14 14:58:26 aaron Exp $
 .\"	$NetBSD: whereis.1,v 1.4 1995/08/31 21:54:51 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -45,7 +45,7 @@
 .Ar name Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm whereis
+.Nm
 utility checks the standard binary directories for the specified name,
 printing out the paths of any it finds that are executable by the
 user.
@@ -55,7 +55,7 @@ The path searched is the string returned by the
 utility for the
 .Dq user.cs_path
 string.
-.Sh RETURN VALUES
+.Pp
 The
 .Nm
 utility exits with one of the following values:
@@ -67,7 +67,7 @@ All names were successfully resolved.
 Some names were resolved but not all.
 .It 2
 No names were resolved.
-.It -1
+.It \-1
 A system error occurred.
 .El
 .Sh SEE ALSO
@@ -76,12 +76,12 @@ A system error occurred.
 .Xr locate 1 ,
 .Xr which 1 ,
 .Xr sysctl 8
-.Sh HISTORY
-The
-.Nm whereis
-command appeared in
-.Bx 3.0 .
 .Sh COMPATIBILITY
 The historic flags and arguments for the
-.Nm whereis
+.Nm
 utility are no longer available in this version.
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 3.0 .

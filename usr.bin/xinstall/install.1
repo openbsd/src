@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.10 1999/10/17 20:35:48 aaron Exp $
+.\"	$OpenBSD: install.1,v 1.11 2000/03/14 14:58:27 aaron Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -105,7 +105,9 @@ Copy the file.
 If the target file already exists and the files are the same,
 then don't change the modification time of the target.
 .It Fl c
-Copy the file.  This is actually the default.  The
+Copy the file.
+This is actually the default.
+The
 .Fl c
 option is only included for backwards compatibility.
 .It Fl d
@@ -117,15 +119,17 @@ Specify the target's file flags.
 .Xr chflags 1
 for a list of possible flags and their meanings.)
 .It Fl g
-Specify a group.  A numeric GID is allowed.
+Specify a group.
+A numeric GID is allowed.
 .It Fl m
 Specify an alternate mode.
 The default mode is set to rwxr-xr-x (0755).
 The specified mode may be either an octal or symbolic value; see
-.Xr chmod  1
+.Xr chmod 1
 for a description of possible mode values.
 .It Fl o
-Specify an owner.  A numeric UID is allowed.
+Specify an owner.
+A numeric UID is allowed.
 .It Fl p
 Preserve the modification time.
 Copy the file, as if the
@@ -134,29 +138,35 @@ Copy the file, as if the
 except if the target file doesn't already exist or is different,
 then preserve the modification time of the file.
 .It Fl S
-Safe copy.  Normally,
-.Nm install
-unlinks an existing target before installing the new file.  With the
+Safe copy.
+Normally,
+.Nm
+unlinks an existing target before installing the new file.
+With the
 .Fl S
 flag a temporary file is used and then renamed to be
-the target.  The reason this is safer is that if the copy or
+the target.
+The reason this is safer is that if the copy or
 rename fails, the existing target is left untouched.
 .It Fl s
-.Nm install
+.Nm
 exec's the command
 .Pa /usr/bin/strip
 to strip binaries so that install can be portable over a large
-number of systems and binary types.  If the environment variable
+number of systems and binary types.
+If the environment variable
 .Ev STRIP
 is set, it is used instead.
 .El
 .Pp
 By default,
-.Nm install
-preserves all file flags, with the exception of the ``nodump'' flag.
+.Nm
+preserves all file flags, with the exception of the
+.Dq nodump
+flag.
 .Pp
 The
-.Nm install
+.Nm
 utility attempts to prevent moving a file onto itself.
 .Pp
 Installing
@@ -181,13 +191,14 @@ where XXXXXX is decided by
 .Xr mkstemp 3 ,
 are created in the target directory.
 .Sh ENVIRONMENT
-.Nm
-utilizes the following environment variables.
+The following environment variables affect the execution of
+.Nm install :
 .Bl -tag -width "STRIP"
 .It Ev STRIP
 For an alternate
 .Xr strip 1
-program to run.  Default is
+program to run.
+Default is
 .Pa /usr/bin/strip .
 .Sh SEE ALSO
 .Xr chflags 1 ,
@@ -199,7 +210,7 @@ program to run.  Default is
 .Xr chown 8
 .Sh HISTORY
 The
-.Nm install
+.Nm
 utility appeared in
 .Bx 4.2 .
 .Sh CAVEATS
@@ -211,5 +222,5 @@ and
 flags are non-standard and should not relied upon for portability.
 .Pp
 Temporary files may be left in the target directory if
-.Nm install
+.Nm
 exits abnormally.

@@ -1,4 +1,5 @@
-.\"	$OpenBSD: which.1,v 1.11 1999/10/07 19:15:25 aaron Exp $
+.\"	$OpenBSD: which.1,v 1.12 2000/03/14 14:58:26 aaron Exp $
+.\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -43,7 +44,7 @@
 .Op Fl a
 .Ar name Op Ar ...
 .Sh DESCRIPTION
-.Nm which
+.Nm
 takes a list of names and looks for the files which would be
 executed had these names been given as commands.
 Each argument is searched for along the user's path.
@@ -53,7 +54,7 @@ If the
 flag is given,
 .Nm
 will return a list of all matches instead of just the first match.
-.Sh RETURN VALUES
+.Pp
 The
 .Nm
 utility exits with one of the following values:
@@ -65,19 +66,18 @@ All names were successfully resolved.
 Some names were resolved but not all.
 .It 2
 No names were resolved.
-.It -1
+.It \-1
 A system error occurred.
 .El
 .Sh DIAGNOSTICS
 A diagnostic is given if an executable file with the argument
 name was not found in the path.
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm which :
 .Bl -tag -width PATH
 .It Ev PATH
-.Nm
-uses the environment variable
-.Ev PATH
-as a colon-separated list of directories in which to find executables.
+A colon-separated list of directories in which to find executables.
 If
 .Ev PATH
 is not set, and the given name is not a fully qualified
@@ -85,18 +85,6 @@ or relative pathname,
 .Nm
 will fail.
 .El
-.Sh CAVEATS
-The
-.Nm
-command formerly was a
-.Xr csh 1
-script and could expand aliases.
-.Xr csh 1
-now has a built-in
-.Nm
-command so this version is intended for use
-with other shells like
-.Xr sh 1 .
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr find 1 ,
@@ -109,3 +97,15 @@ A
 .Nm
 command appeared in
 .Bx 3.0 .
+.Sh CAVEATS
+The
+.Nm
+command formerly was a
+.Xr csh 1
+script and could expand aliases.
+.Xr csh 1
+now has a built-in
+.Nm
+command so this version is intended for use
+with other shells like
+.Xr sh 1 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vacation.1,v 1.12 1999/10/17 20:24:33 aaron Exp $
+.\"	$OpenBSD: vacation.1,v 1.13 2000/03/14 14:58:24 aaron Exp $
 .\"	$NetBSD: vacation.1,v 1.5 1995/08/31 21:57:08 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
@@ -48,11 +48,13 @@
 .Op Fl a Ar alias
 .Ar login
 .Sh DESCRIPTION
-.Nm vacation
+.Nm
 returns a message to the sender of a message telling them that you
-are currently not reading your mail.  The intended use is in a
+are currently not reading your mail.
+The intended use is in a
 .Pa .forward
-file.  For example, your
+file.
+For example, your
 .Pa .forward
 file might have:
 .Bd -literal -offset indent
@@ -73,20 +75,23 @@ Handle messages for
 in the same manner as those received for the user's
 login name.
 .It Fl i
-Initialize the vacation database files.  It should be used
-before you modify your
+Initialize the vacation database files.
+It should be used before you modify your
 .Pa .forward
 file.
 .It Fl r
 Set the reply interval to
 .Ar interval
-days.  The default is one week.  An interval of
+days.
+The default is one week.
+An interval of
 .Dq 0
 means that
 a reply is sent to each message, and an interval of
 .Dq Li infinite
 (actually, any non-numeric character) will never send more than
-one reply.  It should be noted that intervals of
+one reply.
+It should be noted that intervals of
 .Dq Li \&0
 are quite
 dangerous, as it allows mailers to get into
@@ -125,12 +130,13 @@ database in the file
 .Pa .vacation.db
 in your home directory.
 .Pp
-.Nm vacation
+.Nm
 expects a file
 .Pa .vacation.msg ,
 in your home directory, containing a message to be sent back to each
-sender.  It should be an entire message (including headers).  For
-example, it might contain:
+sender.
+It should be an entire message (including headers).
+For example, it might contain:
 .Pp
 .Bd -unfilled -offset indent -compact
 From: eric@CS.Berkeley.EDU (Eric Allman)
@@ -138,7 +144,8 @@ Subject: I am on vacation
 Delivered-By-The-Graces-Of: The Vacation program
 Precedence: bulk
 
-I am on vacation until July 22.  If you have something urgent,
+I am on vacation until July 22.
+If you have something urgent,
 please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 --eric
 .Ed
@@ -148,22 +155,23 @@ Any occurrence of the string
 in
 .Pa .vacation.msg
 will be replaced by the subject of the message that triggered the
-.Nm vacation
+.Nm
 program.
 .Pp
-.Nm vacation
+.Nm
 reads the incoming message from standard input, checking the message
 headers for either the
 .Ux
 .Dq From
 line or a
 .Dq Return-Path
-header to determine the sender.  If both are present the sender from the
+header to determine the sender.
+If both are present the sender from the
 .Dq Return-Path
 header is used.
 .Pp
 Fatal errors, such as calling
-.Nm vacation
+.Nm
 with incorrect arguments, or with non-existent
 .Ar login Ns Ar s ,
 are logged in the system log file, using
@@ -180,6 +188,6 @@ message to send
 .Xr sendmail 8
 .Sh HISTORY
 The
-.Nm vacation
+.Nm
 command appeared in
 .Bx 4.3 .

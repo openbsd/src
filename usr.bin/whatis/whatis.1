@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.5 1999/10/07 19:15:25 aaron Exp $
+.\"	$OpenBSD: whatis.1,v 1.6 2000/03/14 14:58:26 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 .Op Fl m Ar path
 .Ar command Op Ar ...
 .Sh DESCRIPTION
-.Nm whatis
+.Nm
 looks up a given command and gives the header line from the manual page.
 You can then use the
 .Xr man 1
@@ -55,26 +55,24 @@ The options are as follows:
 .Bl -tag -width Fl
 .It Fl M Ar path
 Override the list of standard directories
-.Nm whatis
+.Nm
 searches for its database named
 .Dq Pa whatis.db .
 The supplied
 .Ar path
 must be a colon
-.Dq \&:
+.Pq Ql \&:
 separated list of directories.
 This search path may also be set using the environment variable
 .Ev MANPATH .
 .It Fl m Ar path
 Augment the list of standard directories
-.Nm whatis
+.Nm
 searches for its database named
 .Dq Pa whatis.db .
 The supplied
 .Ar path
-must be a colon
-.Dq \&:
-separated list of directories.
+must be a colon-separated list of directories.
 These directories will be searched before the standard directories
 or the directories supplied with the
 .Fl M
@@ -83,6 +81,8 @@ option or the
 environment variable are searched.
 .El
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm whatis :
 .Bl -tag -width MANPATH
 .It Ev MANPATH
 The standard search path used by

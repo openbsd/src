@@ -1,4 +1,4 @@
-.\"	$OpenBSD: what.1,v 1.5 2000/03/06 03:17:41 aaron Exp $
+.\"	$OpenBSD: what.1,v 1.6 2000/03/14 14:58:26 aaron Exp $
 .\"	$NetBSD: what.1,v 1.3 1994/11/17 06:59:38 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -44,15 +44,16 @@
 .Nm what
 .Ar name Op Ar ...
 .Sh DESCRIPTION
-.Nm what
+.Nm
 reads each file
 .Ar name
 and searches for sequences of the form
 .Dq \&@(#)
-as inserted by the source code control system.  It prints the remainder
+as inserted by the source code control system.
+It prints the remainder
 of the string following this marker, up to a null character, newline, double
 quote, or
-.Dq \&>
+.Ql >
 character.
 .Sh HISTORY
 The
@@ -65,7 +66,7 @@ As
 is not licensed to distribute
 .Tn SCCS
 this is a rewrite of the
-.Nm what
+.Nm
 command which is part of
 .Tn SCCS ,
 and may not behave exactly the same as that

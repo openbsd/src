@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.9 1999/06/13 16:31:18 pjanzen Exp $
+.\" $OpenBSD: units.1,v 1.10 2000/03/14 14:58:24 aaron Exp $
 .\" converted to new format by deraadt@openbsd.org
 .Dd July 14, 1993
 .Dt UNITS 1
@@ -13,26 +13,17 @@
 .Op Fl v
 .Ar from-unit
 .Ar to-unit
-.Sh ARGUMENTS
-.Bl -tag -width Ds
-.It Fl f Ar filename
-Specifies the name of the units data file to load.
-.It Fl q
-Suppresses prompting of the user for units and the display of statistics
-about the number of units loaded.
-.It Fl v
-Prints the version number.
-.It Ar from-unit Ar to-unit
-Allows a single unit conversion to be done directly from the command
-line.  No prompting will occur.  The units program will print out
-only the result of this single conversion.
-.El
 .Sh DESCRIPTION
-The units program converts quantities expression in various scales to
-their equivalents in other scales.  The units program can only
-handle multiplicative scale changes.  It cannot convert Celsius
-to Fahrenheit, for example.  It works interactively by prompting
-the user for input:
+The
+.Nm
+program converts quantities expression in various scales to
+their equivalents in other scales.
+The
+.Nm
+program can only handle multiplicative scale changes.
+It cannot convert Celsius
+to Fahrenheit, for example.
+It works interactively by prompting the user for input:
 .Pp
 .nf
     You have: meters
@@ -46,6 +37,22 @@ the user for input:
             / 3785.4118
 .fi
 .Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f Ar filename
+Specifies the name of the units data file to load.
+.It Fl q
+Suppresses prompting of the user for units and the display of statistics
+about the number of units loaded.
+.It Fl v
+Prints the version number.
+.It Ar from-unit Ar to-unit
+Allows a single unit conversion to be done directly from the command line.
+No prompting will occur.
+The units program will print out
+only the result of this single conversion.
+.El
+.Pp
 Powers of units can be specified using the
 .Ql ^
 character as shown in
@@ -54,7 +61,8 @@ the example, or by simple concatenation:
 is equivalent to
 .Sq cm^3 .
 Multiplication of units can be specified by using spaces, a dash or
-an asterisk.  Division of units is indicated by the slash
+an asterisk.
+Division of units is indicated by the slash
 .Pq Ql / .
 Note that multiplication has a higher precedence than division, so
 .Sq m/s/s
@@ -74,9 +82,10 @@ it will display the reduced form for each unit:
             2.1166667e-05 kg^2 m / sec
 .fi
 .Pp
-The conversion information is read from a units data file.  The default
-file includes definitions for most familiar units, abbreviations and
-metric prefixes.  Some constants of nature included are:
+The conversion information is read from a units data file.
+The default file includes definitions for most familiar units,
+abbreviations and metric prefixes.
+Some constants of nature included are:
 .Bl -tag -width mercury
 .It pi
 ratio of circumference to diameter
@@ -101,11 +110,11 @@ astronomical unit
 .El
 .Pp
 .Sq Pound
-is a unit of mass.  Compound names are run together
-so
+is a unit of mass.
+Compound names are run together so
 .Sq poundforce
-is a unit of force.  British units that differ from their
-US counterparts are prefixed with
+is a unit of force.
+British units that differ from their US counterparts are prefixed with
 .Sq br ,
 and currency is prefixed with its country name:
 .Sq belgiumfranc ,
@@ -119,8 +128,10 @@ or a trailing
 and check again for a match.
 .Pp
 All of these definitions can be read in the standard units file, or you
-can supply your own file.  A unit is specified on a single line by
-giving its name and an equivalence.  One should be careful to define
+can supply your own file.
+A unit is specified on a single line by
+giving its name and an equivalence.
+One should be careful to define
 new units in terms of old ones so that a reduction leads to the
 primitive units which are marked with
 .Ql !
@@ -129,7 +140,8 @@ The units program will not detect infinite loops that could be caused
 by careless unit definitions.
 .Pp
 Prefixes are defined in the same way as standard units, but with
-a trailing dash at the end of the prefix name.  Prefixes are applied
+a trailing dash at the end of the prefix name.
+Prefixes are applied
 after the longest matching unit name is found; for example,
 .Dq nmile
 is taken to be a nautical mile rather than a nanomile.
@@ -141,18 +153,22 @@ in a prefix is surprising.
 Exponents of units entered by the user can be only one digit.
 You can work around this by multiplying several terms.
 .Pp
-The user must use | to indicate division of numbers and / to
-indicate division of symbols.  This distinction should not
-be necessary.
+The user must use
+.Ql |
+to indicate division of numbers and
+.Ql /
+to indicate division of symbols.
+This distinction should not be necessary.
 .Pp
 Prefixes specified without a unit are treated as dimensionless quantities.
 This can lead to confusion when some prefixes are also defined as units
-(e.g., m).  For example, Tera- / Giga- is 1000, but one Tesla (T) is 10,000
+(e.g., m).
+For example, Tera- / Giga- is 1000, but one Tesla (T) is 10,000
 Gauss (G).
 .Pp
 Some non-SI units have multiple definitions (e.g, barrel, calorie) and
-others have changed over time (e.g., cubit).  In particular, monetary
-values fluctuate.
+others have changed over time (e.g., cubit).
+In particular, monetary values fluctuate.
 .Pp
 The program contains various arbitrary limits on the length
 of the units converted and on the length of the data file.

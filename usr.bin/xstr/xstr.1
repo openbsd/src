@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xstr.1,v 1.7 2000/03/06 03:17:41 aaron Exp $
+.\"	$OpenBSD: xstr.1,v 1.8 2000/03/14 14:58:27 aaron Exp $
 .\"	$NetBSD: xstr.1,v 1.4 1994/11/26 09:25:22 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -82,8 +82,9 @@ data base if they are not there already.
 Repeated strings and strings which are suffixes of existing strings
 do not cause changes to the data base.
 .It Fl l Ar array
-Specify the named array in program references to abstracted
-strings.  The default array name is xstr.
+Specify the named array in program references to abstracted strings.
+The default array name is
+.Dq xstr .
 .El
 .Pp
 After all components of a large program have been compiled a file
@@ -147,9 +148,12 @@ data base of strings
 .It Pa x.c
 massaged C source
 .It Pa xs.c
-C source for definition of array `xstr'
+C source for definition of array
+.Dq xstr
 .It Pa /tmp/xs*
-temporary file when `xstr name' doesn't touch
+temporary file when
+.Dq xstr name
+doesn't touch
 .Pa strings
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wall.1,v 1.5 1999/06/05 01:21:50 aaron Exp $
+.\"	$OpenBSD: wall.1,v 1.6 2000/03/14 14:58:25 aaron Exp $
 .\"	$NetBSD: wall.1,v 1.3 1994/11/17 07:17:57 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -45,9 +45,9 @@
 .Op Fl g Ar group
 .Op Ar file
 .Sh DESCRIPTION
-.Nm wall
+.Nm
 displays the contents of
-.Ar file
+.Ar file ,
 or, by default, its standard input, on the terminals of all
 currently logged in users.
 .Pp
@@ -55,9 +55,12 @@ Only the super-user can write on the
 terminals of users who have chosen
 to deny messages or are using a program which
 automatically denies messages.
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl g
-Send messages to users in this group.  This option may be specified
+Send messages to users in this group.
+This option may be specified
 multiple times, and any user in any of the specified groups will
 receive the message.
 .El

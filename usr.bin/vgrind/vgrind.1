@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vgrind.1,v 1.6 2000/03/06 03:17:40 aaron Exp $
+.\"	$OpenBSD: vgrind.1,v 1.7 2000/03/14 14:58:25 aaron Exp $
 .\"	$NetBSD: vgrind.1,v 1.4 1994/11/17 08:28:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -65,7 +65,8 @@ page as it is encountered.
 .Nm
 runs in two basic modes, filter mode (see the
 .Fl f
-option) or regular mode.  In filter mode
+option) or regular mode.
+In filter mode
 .Nm
 acts as a filter in a manner similar to
 .Xr tbl 1 .
@@ -80,10 +81,11 @@ starts processing
 ends processing
 .El
 .Pp
-These lines are formatted as described above.  The output from this
-filter can be passed to
+These lines are formatted as described above.
+The output from this filter can be passed to
 .Xr troff 1
-for output.  There need be no particular ordering with
+for output.
+There need be no particular ordering with
 .Xr eqn 1
 or
 .Xr tbl 1 .
@@ -117,7 +119,8 @@ Forces filter mode.
 Specifies a particular header to put on every output page (default is
 the file name).
 .It Fl l
-Specifies the language to use.  Currently known are
+Specifies the language to use.
+Currently known are
 .Tn PASCAL
 .Pq Fl l Ns Ar p ,
 .Tn MODEL
@@ -194,7 +197,8 @@ vfontedpr assumes that a certain programming style is followed:
 For
 .Tn C
 \- function names can be preceded on a line only by spaces, tabs, or an
-asterisk.  The parenthesized arguments must also be on the same line.
+asterisk.
+The parenthesized arguments must also be on the same line.
 .Pp
 For
 .Tn PASCAL
@@ -214,8 +218,8 @@ name comment mechanisms will fail.
 More generally, arbitrary formatting styles for programs mostly look bad.
 The use of spaces to align source code fails miserably; if you plan to
 .Nm
-your program you should use tabs.  This is somewhat inevitable since the
-font used by
+your program you should use tabs.
+This is somewhat inevitable since the font used by
 .Nm
 is variable width.
 .Pp

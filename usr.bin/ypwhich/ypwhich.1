@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypwhich.1,v 1.8 1999/06/05 01:21:52 aaron Exp $
+.\"	$OpenBSD: ypwhich.1,v 1.9 2000/03/14 14:58:27 aaron Exp $
 .\"	$NetBSD: ypwhich.1,v 1.3 1996/05/13 02:43:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ypwhich.1,v 1.8 1999/06/05 01:21:52 aaron Exp $
+.\"	$Id: ypwhich.1,v 1.9 2000/03/14 14:58:27 aaron Exp $
 .\"
 .Dd February 23, 1994
 .Dt YPWHICH 1
@@ -80,13 +80,15 @@ to their corresponding map names.
 .It Fl m Op Ar mname
 Find the master
 .Tn YP
-server for the named map.  No
+server for the named map.
+No
 .Ar host
 may be specified with the
 .Fl m
 option.
 .Ar Mname
-can be a map name or nickname.  If
+can be a map name or nickname.
+If
 .Ar mname
 is omitted,
 .Nm
@@ -104,5 +106,3 @@ Display the map nickname table.
 .Xr ypset 8
 .Sh AUTHOR
 Theo De Raadt
-
-

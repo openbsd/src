@@ -1,4 +1,4 @@
-.\"	$OpenBSD: who.1,v 1.9 2000/03/06 03:17:41 aaron Exp $
+.\"	$OpenBSD: who.1,v 1.10 2000/03/14 14:58:26 aaron Exp $
 .\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -56,7 +56,8 @@ hostname if not local.
 The options are as follows:
 .Bl -tag -width file
 .It Fl m
-Only print information about the current terminal.  This is the
+Only print information about the current terminal.
+This is the
 .Tn POSIX
 way of saying
 .Nm
@@ -109,9 +110,13 @@ created.
 If
 .Pa /var/log/wtmp
 is being used as the file, the user name may be empty
-or one of the special characters `|', `}' and `~'.  Logouts produce
-an output line without any user name.  For more information on the
-special characters, see
+or one of the special characters
+.Ql | ,
+.Ql } ,
+and
+.Ql \&~ .
+Logouts produce an output line without any user name.
+For more information on the special characters, see
 .Xr utmp 5 .
 .Sh FILES
 .Bl -tag -width /var/log/wtmp.[0-6] -compact

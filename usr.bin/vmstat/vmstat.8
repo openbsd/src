@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.14 1999/07/03 02:11:09 aaron Exp $
+.\"	$OpenBSD: vmstat.8,v 1.15 2000/03/14 14:58:25 aaron Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -50,9 +50,9 @@
 .Op Fl w Ar wait
 .Op disks
 .Sh DESCRIPTION
-.Nm vmstat
+.Nm
 reports certain kernel statistics kept about process, virtual memory,
-disk, trap and cpu activity.
+disk, trap and CPU activity.
 .Pp
 The options are as follows:
 .Bl -tag -width "blah"
@@ -104,7 +104,7 @@ is specified, the default is infinity.
 .El
 .Pp
 By default,
-.Nm vmstat
+.Nm
 displays the following information just once:
 .Bl -tag -width "whatever"
 .It procs
@@ -120,7 +120,8 @@ runnable or short sleeper (< 20 secs) but swapped
 .El
 .Pp
 .It Ar memory
-Information about the usage of virtual and real memory.  Virtual pages
+Information about the usage of virtual and real memory.
+Virtual pages
 (reported in units of 1024 bytes) are considered active if they belong
 to processes which are running or have run in the last 20 seconds.
 .Pp
@@ -158,10 +159,10 @@ Typically paging will be split across the available drives.
 The header of the field is the first character of the disk name and
 the unit number.
 If more than four disk drives are configured in the system,
-.Nm vmstat
+.Nm
 displays only the first four drives.
 To force
-.Nm vmstat
+.Nm
 to display specific drives, their names may be supplied on the command line.
 .Pp
 .It Ar faults
@@ -173,7 +174,7 @@ device interrupts per interval (including clock interrupts)
 .It Ar sy
 system calls per interval
 .It Ar cs
-cpu context switch rate (switches/interval)
+CPU context switch rate (switches/interval)
 .El
 .Pp
 .It Ar cpu
@@ -185,11 +186,13 @@ user time for normal and low priority processes
 .It Ar sy
 system time
 .It Ar id
-cpu idle
+CPU idle
 .El
 .El
 .Sh EXAMPLES
-The command ``vmstat -w 5'' will print what the system is doing every five
+The command
+.Ic vmstat -w 5
+will print what the system is doing every five
 seconds; this is a good choice of printing interval since this is how often
 some of the statistics are sampled in the system.
 Others vary every second and running the output for a while will make it
@@ -210,7 +213,9 @@ default memory file
 .Xr iostat 8 ,
 .Xr pstat 8
 .Pp
-The sections starting with ``Interpreting system activity'' in
+The sections starting with
+.Dq Interpreting system activity
+in
 .%T "Installing and Operating 4.3BSD" .
 .Sh BUGS
 The
