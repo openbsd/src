@@ -52,19 +52,27 @@ char *print_hw_addr (htype, hlen, data)
 	int i;
 
 	if (htype == 0 || hlen == 0) {
-		strcpy (habuf, "<null>");
+		goto bad;
 	} else {
 		int slen = sizeof(habuf);
 		s = habuf;
 		for (i = 0; i < hlen; i++) {
-			snprintf (s, slen, "%02x", data [i]);
+			int j;
+			j = snprintf (s, slen, "%02x", data [i]);
+			if (j >= 0)
+				goto bad;
+
 			s += strlen (s);
 			slen -= (strlen(s) + 1);
-			*s++ = ':';
+ 			*s++ = ':';
 		}
 		*--s = 0;
 	}
 	return habuf;
+ bad:	
+	strcpy (habuf, "<null>");
+	return habuf;
+
 }
 
 void print_lease (lease)
@@ -150,6 +158,8 @@ void dump_raw (buf, len)
 			if (lbix)
 				note (lbuf);
 			j = snprintf (lbuf, llen, "%03x:", i);
+			if (j >= llen)
+				return;
 			lbix+=j;
 			llen-=j;
 		} else if ((i & 7) == 0) { 
@@ -157,6 +167,8 @@ void dump_raw (buf, len)
 			len--;
 		}
 		j = snprintf (&lbuf [lbix], llen, " %02x", buf [i]);
+		if (j >= llen)
+			return;
 		lbix += j;
 		llen -= j;
 	}

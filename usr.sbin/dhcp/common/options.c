@@ -610,49 +610,67 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 				foo.s_addr = htonl(getULong (dp));
 				opcount = strlcpy(op, inet_ntoa (foo),
 			          opleft);
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				dp += 4;
 				break;
 			      case 'l':
 				opcount = snprintf(op, opleft,"%ld",
 				  (long)getLong (dp));
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				dp += 4;
 				break;
 			      case 'L':
 				opcount = snprintf(op, opleft, "%ld",
 				  (unsigned long)getULong (dp));
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				dp += 4;
 				break;
 			      case 's':
 				opcount = snprintf(op, opleft, "%d",
 				  getShort (dp));
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				dp += 2;
 				break;
 			      case 'S':
 				opcount = snprintf(op, opleft, "%d",
 				  getUShort (dp));
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				dp += 2;
 				break;
 			      case 'b':
 				opcount = snprintf(op, opleft, "%d", 
 				  *(char *)dp++);
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				break;
 			      case 'B':
 				opcount = snprintf(op, opleft, "%d", *dp++);
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				break;
 			      case 'x':
 				opcount = snprintf(op, opleft, "%x", *dp++);
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				break;
 			      case 'f': 
 				opcount = strlcpy(op, 
 				  *dp++ ? "true" : "false", opleft);
+				if (opcount >= opleft) 
+					goto toobig;
 				opleft -= opcount;
 				break;
 			      default:
@@ -660,10 +678,8 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 			}
 			op += strlen (op);
 			opleft -= strlen(op);
-			if (opleft < 1) {
-				warn ("dhcp option too large");
-				return "<error>";			  
-			}
+			if (opleft < 1)
+				goto toobig;
 			if (j + 1 < numelem && comma != ':') {
 				*op++ = ' ';
 				opleft--;
@@ -673,13 +689,14 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 			*op++ = comma;
 			opleft--;
 		}
-		if (opleft < 1) {
-			warn ("dhcp option too large");
-			return "<error>";			  
-		}
+		if (opleft < 1)
+			goto toobig;
 		
 	}
 	return optbuf;
+ toobig:
+	warn ("dhcp option too large");
+	return "<error>";			  
 }
 
 void do_packet (interface, packet, len, from_port, from, hfrom)

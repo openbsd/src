@@ -41,7 +41,7 @@ SRCS += alloc.c dispatch.c hash.c memory.c print.c bpf.c icmp.c options.c \
 	ethernet.c parse.c tables.c
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes \
-	-DCLIENT_PATH=${CLIENT_PATH} -Wall 
+	-DCLIENT_PATH=${CLIENT_PATH} -Wall -Werror
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
