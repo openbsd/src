@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.43 2003/10/08 16:32:44 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.44 2003/10/18 19:26:00 jmc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -272,7 +272,7 @@ intercept_run(int bg, int fd, uid_t uid, gid_t gid,
 	pid_t pid, cpid;
 	int status;
 
-	/* Block signals so that timeing on signal delivery does not matter */
+	/* Block signals so that timing on signal delivery does not matter */
 	sigemptyset(&none);
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);
@@ -642,7 +642,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 
 	if (userp != ICLINK_NONE) {
 		static char rcwd[2*MAXPATHLEN];
-		char *base= basename(cwd);
+		char *base = basename(cwd);
 		int failed = 0;
 
 		/* The dot maybe used by rmdir("/tmp/something/.") */
