@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilms.c,v 1.2 2003/02/26 20:22:04 miod Exp $	*/
+/*	$OpenBSD: hilms.c,v 1.3 2003/03/28 00:20:32 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -258,17 +258,38 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 		flags = sc->sc_features & HIL_ABSOLUTE ?
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
 		    WSMOUSE_INPUT_ABSOLUTE_Z : WSMOUSE_INPUT_DELTA;
-		dx = *buf++;
-		if (sc->sc_features & HIL_16_BITS)
+		if (sc->sc_features & HIL_16_BITS) {
+			dx = *buf++;
 			dx |= (*buf++) << 8;
+			if (!(sc->sc_features & HIL_ABSOLUTE))
+				dx = (int16_t)dx;
+		} else {
+			dx = *buf++;
+			if (!(sc->sc_features & HIL_ABSOLUTE))
+				dx = (int8_t)dx;
+		}
 		if (sc->sc_axes > 1) {
-			dy = *buf++;
-			if (sc->sc_features & HIL_16_BITS)
+			if (sc->sc_features & HIL_16_BITS) {
+				dy = *buf++;
 				dy |= (*buf++) << 8;
+				if (!(sc->sc_features & HIL_ABSOLUTE))
+					dy = (int16_t)dy;
+			} else {
+				dy = *buf++;
+				if (!(sc->sc_features & HIL_ABSOLUTE))
+					dy = (int8_t)dy;
+			}
 			if (sc->sc_axes > 2) {
-				dz = *buf++;
-				if (sc->sc_features & HIL_16_BITS)
+				if (sc->sc_features & HIL_16_BITS) {
+					dz = *buf++;
 					dz |= (*buf++) << 8;
+					if (!(sc->sc_features & HIL_ABSOLUTE))
+						dz = (int16_t)dz;
+				} else {
+					dz = *buf++;
+					if (!(sc->sc_features & HIL_ABSOLUTE))
+						dz = (int8_t)dz;
+				}
 			} else
 				dz = 0;
 		} else
@@ -293,7 +314,7 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 		if (button > 4)
 			button = 4;
 
-		if (*buf >> 1) {
+		if (*buf & 1) {
 			/* Button released, or no pressure */
 			sc->sc_buttonstate &= ~(1 << button);
 		} else {
