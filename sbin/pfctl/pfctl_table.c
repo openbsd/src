@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.9 2003/01/03 23:00:39 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.10 2003/01/03 23:31:26 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -164,8 +164,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		if (!(opts & PF_OPT_QUIET))
 			fprintf(stderr, "%d tables deleted%s.\n", ndel,
 			    DUMMY);
-	}
-	if (!strcmp(*p, "-s")) {
+	} else if (!strcmp(*p, "-s")) {
 		if (argc || file != NULL)
 			usage();
 		for (;;) {
@@ -188,30 +187,26 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				print_tstats(buffer.tstats+i);
 			else
 				print_table(buffer.tables+i);
-	}
-	if (!strcmp(*p, "create")) {
+	} else if (!strcmp(*p, "create")) {
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_add_tables(&table, 1, &nadd, flags));
 		if (!(opts & PF_OPT_QUIET))
 			fprintf(stderr, "%d table added%s.\n", nadd, DUMMY);
-	}
-	if (!strcmp(*p, "kill")) {
+	} else if (!strcmp(*p, "kill")) {
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_del_tables(&table, 1, &ndel, flags));
 		if (!(opts & PF_OPT_QUIET))
 			fprintf(stderr, "%d table deleted%s.\n", ndel, DUMMY);
-	}
-	if (!strcmp(*p, "flush")) {
+	} else if (!strcmp(*p, "flush")) {
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_clr_addrs(&table, &ndel, flags));
 		if (!(opts & PF_OPT_QUIET))
 			fprintf(stderr, "%d addresses deleted%s.\n", ndel,
 				DUMMY);
-	}
-	if (!strcmp(*p, "add")) {
+	} else if (!strcmp(*p, "add")) {
 		load_addr(argc, argv, file, 0);
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
@@ -226,8 +221,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				    buffer.addrs[i].pfra_fback)
 					print_addrx(buffer.addrs+i, NULL,
 					    opts & PF_OPT_USEDNS);
-	}
-	if (!strcmp(*p, "delete")) {
+	} else if (!strcmp(*p, "delete")) {
 		load_addr(argc, argv, file, 0);
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
@@ -242,8 +236,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				    buffer.addrs[i].pfra_fback)
 					print_addrx(buffer.addrs+i, NULL,
 					    opts & PF_OPT_USEDNS);
-	}
-	if (!strcmp(*p, "replace")) {
+	} else if (!strcmp(*p, "replace")) {
 		load_addr(argc, argv, file, 0);
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
@@ -277,8 +270,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				    buffer.addrs[i].pfra_fback)
 					print_addrx(buffer.addrs+i, NULL,
 					    opts & PF_OPT_USEDNS);
-	}
-	if (!strcmp(*p, "show")) {
+	} else if (!strcmp(*p, "show")) {
 		if (argc || file != NULL)
 			usage();
 		for (;;) {
@@ -304,8 +296,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				print_addrx(buffer.addrs+i, NULL,
 				    opts & PF_OPT_USEDNS);
 			}
-	}
-	if (!strcmp(*p, "test")) {
+	} else if (!strcmp(*p, "test")) {
 		load_addr(argc, argv, file, 1);
 		if (opts & PF_OPT_VERBOSE2) {
 			flags |= PFR_FLAG_REPLACE;
@@ -332,8 +323,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 				    opts & PF_OPT_USEDNS);
 		if (nmatch < size)
 			return (2);
-	}
-	if (!strcmp(*p, "zero")) {
+	} else if (!strcmp(*p, "zero")) {
 		if (argc || file != NULL)
 			usage();
 		flags |= PFR_FLAG_RECURSE;
