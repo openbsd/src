@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.51 2004/06/28 01:45:51 aaron Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.52 2004/07/09 16:32:54 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.51 2004/06/28 01:45:51 aaron Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.52 2004/07/09 16:32:54 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -129,18 +129,6 @@ closekre(WINDOW *w)
 }
 
 
-static struct nlist namelist[] = {
-#define	X_INTRNAMES	0		/* no sysctl */
-	{ "_intrnames" },
-#define	X_EINTRNAMES	1		/* no sysctl */
-	{ "_eintrnames" },
-#define	X_INTRCNT	2		/* no sysctl */
-	{ "_intrcnt" },
-#define	X_EINTRCNT	3		/* no sysctl */
-	{ "_eintrcnt" },
-	{ "" },
-};
-
 /*
  * These constants define where the major pieces are laid out
  */
@@ -174,17 +162,6 @@ initkre(void)
 {
 	int mib[4], i, ret;
 	size_t size;
-
-	if (namelist[0].n_type == 0) {
-		if ((ret = kvm_nlist(kd, namelist)) == -1)
-			errx(1, "%s", kvm_geterr(kd));
-		else if (ret > 1)
-			nlisterr(namelist);
-		if (namelist[0].n_type == 0) {
-			error("No namelist");
-			return(0);
-		}
-	}
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;
