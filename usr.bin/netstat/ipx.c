@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.4 1997/06/29 21:46:01 millert Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.5 1998/02/27 12:07:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.4 1997/06/29 21:46:01 millert Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.5 1998/02/27 12:07:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,8 @@ ipx_erputil(z, c)
 			where = "in transit";
 		else
 			where = "at destination";
-		sprintf(codebuf, "Unknown IPX error code 0%o", c);
+		snprintf(codebuf, sizeof codebuf,
+		    "Unknown IPX error code 0%o", c);
 		name = codebuf;
 	} else
 		where =  ipx_errnames[j].where;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.5 1997/06/29 21:46:03 millert Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.6 1998/02/27 12:07:37 deraadt Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ pktscale(n)
 		n /= 1048576;
 	}
 
-	sprintf(buf, "%lu%c", n, t);
+	snprintf(buf, sizeof buf, "%lu%c", n, t);
 	return (buf);
 }
 

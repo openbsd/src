@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.22 1998/02/26 10:13:08 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.23 1998/02/27 12:07:40 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.22 1998/02/26 10:13:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.23 1998/02/27 12:07:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -290,7 +290,7 @@ again:
 	}
 }
 
-char	nbuf[20];
+char	nbuf[25];
 
 static void
 p_rtnode()
@@ -305,13 +305,13 @@ p_rtnode()
 		} else if (rm == 0)
 			return;
 	} else {
-		sprintf(nbuf, "(%d)", rnode.rn_b);
+		snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
 		printf("%6.6s %16p : %16p", nbuf, rnode.rn_l,
 		    rnode.rn_r);
 	}
 	while (rm) {
 		kget(rm, rmask);
-		sprintf(nbuf, " %d refs, ", rmask.rm_refs);
+		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
 		printf(" mk = %16p {(%d),%s",
 			rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, 0, -1);
@@ -433,7 +433,8 @@ p_sockaddr(sa, mask, flags, width)
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
-			(void) sprintf(workbuf, "link#%d", sdl->sdl_index);
+			(void) snprintf(workbuf, sizeof workbuf,
+			    "link#%d", sdl->sdl_index);
 		else switch (sdl->sdl_type) {
 		case IFT_ETHER:
 		    {
@@ -470,7 +471,7 @@ p_sockaddr(sa, mask, flags, width)
 
 		slim = sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
-		cp += sprintf(cp, "(%d)", sa->sa_family);
+		cp += snprintf(cp, cplim - cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
 			cp += snprintf(cp, workbuf + sizeof (workbuf) - cp,
 			    " %02x", *s++);
@@ -581,7 +582,7 @@ routename(in)
 	} else {
 #define C(x)	((x) & 0xff)
 		in = ntohl(in);
-		sprintf(line, "%u.%u.%u.%u",
+		snprintf(line, sizeof line, "%u.%u.%u.%u",
 		    C(in >> 24), C(in >> 16), C(in >> 8), C(in));
 	}
 	return (line);
@@ -612,13 +613,15 @@ netname(in, mask)
 		strncpy(line, cp, sizeof(line) - 1);
 		line[sizeof(line) - 1] = '\0';
 	} else if ((in & 0xffffff) == 0)
-		sprintf(line, "%u/%d", C(in >> 24), mbits);
+		snprintf(line, sizeof line, "%u/%d", C(in >> 24), mbits);
 	else if ((in & 0xffff) == 0)
-		sprintf(line, "%u.%u/%d", C(in >> 24) , C(in >> 16), mbits);
+		snprintf(line, sizeof line, "%u.%u/%d",
+		    C(in >> 24) , C(in >> 16), mbits);
 	else if ((in & 0xff) == 0)
-		sprintf(line, "%u.%u.%u/%d", C(in >> 24), C(in >> 16), C(in >> 8), mbits);
+		snprintf(line, sizeof line, "%u.%u.%u/%d",
+		    C(in >> 24), C(in >> 16), C(in >> 8), mbits);
 	else
-		sprintf(line, "%u.%u.%u.%u/%d", C(in >> 24),
+		snprintf(line, sizeof line, "%u.%u.%u.%u/%d", C(in >> 24),
 			C(in >> 16), C(in >> 8), C(in), mbits);
 	return (line);
 }
@@ -671,10 +674,10 @@ ns_print(sa)
 	net.net_e = work.x_net;
 	if (ns_nullhost(work) && net.long_e == 0) {
 		if (port ) {
-			sprintf(mybuf, "*.%xH", port);
+			snprintf(mybuf, sizeof mybuf, "*.%xH", port);
 			upHex(mybuf);
 		} else
-			sprintf(mybuf, "*.*");
+			snprintf(mybuf, sizeof mybuf, "*.*");
 		return (mybuf);
 	}
 
@@ -684,18 +687,19 @@ ns_print(sa)
 		host = "*";
 	} else {
 		q = work.x_host.c_host;
-		sprintf(chost, "%02x%02x%02x%02x%02x%02xH",
+		snprintf(chost, sizeof chost, "%02x%02x%02x%02x%02x%02xH",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
 			continue;
 		host = p;
 	}
 	if (port)
-		sprintf(cport, ".%xH", htons(port));
+		snprintf(cport, sizeof cport, ".%xH", htons(port));
 	else
 		*cport = 0;
 
-	sprintf(mybuf,"%xH.%s%s", ntohl(net.long_e), host, cport);
+	snprintf(mybuf, sizeof mybuf, "%xH.%s%s", ntohl(net.long_e),
+	    host, cport);
 	upHex(mybuf);
 	return(mybuf);
 }
@@ -739,10 +743,10 @@ ipx_print(sa)
 	net.net_e = work.ipx_net;
 	if (ipx_nullhost(work) && net.long_e == 0) {
 		if (port != 0) {
-			sprintf(mybuf, "*.%xH", port);
+			snprintf(mybuf, sizeof mybuf, "*.%xH", port);
 			upHex(mybuf);
 		} else
-			sprintf(mybuf, "*.*");
+			snprintf(mybuf, sizeof mybuf, "*.*");
 		return (mybuf);
 	}
 
@@ -752,16 +756,17 @@ ipx_print(sa)
 		host = "*";
 	} else {
 		q = work.ipx_host.c_host;
-		sprintf(chost, "%02x:%02x:%02x:%02x:%02x:%02x",
-			q[0], q[1], q[2], q[3], q[4], q[5]);
+		snprintf(chost, sizeof chost, "%02x:%02x:%02x:%02x:%02x:%02x",
+		    q[0], q[1], q[2], q[3], q[4], q[5]);
 		host = chost;
 	}
 	if (port)
-		sprintf(cport, ".%xH", htons(port));
+		snprintf(cport, sizeof cport, ".%xH", htons(port));
 	else
 		*cport = 0;
 
-	sprintf(mybuf,"%xH.%s%s", ntohl(net.long_e), host, cport);
+	snprintf(mybuf, sizeof mybuf, "%xH.%s%s", ntohl(net.long_e),
+	    host, cport);
 	upHex(mybuf);
 	return(mybuf);
 }

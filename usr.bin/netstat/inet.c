@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.22 1997/11/09 16:33:09 provos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.23 1998/02/27 12:07:33 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.22 1997/11/09 16:33:09 provos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.23 1998/02/27 12:07:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -454,7 +454,7 @@ getrpcportnam(port, proto)
 	static int first;
 	static struct rpcnams *rpcn;
 	struct rpcnams *n;
-	char num[10];
+	char num[20];
 	
 	if (first == 0) {
 		first = 1;
@@ -490,7 +490,8 @@ getrpcportnam(port, proto)
 			if (rpc)
 				n->rpcname = strdup(rpc->r_name);
 			else {
-				sprintf(num, "%ld", head->pml_map.pm_prog);
+				snprintf(num, sizeof num, "%ld",
+				    head->pml_map.pm_prog);
 				n->rpcname = strdup(num);
 			}
 		}
@@ -519,17 +520,20 @@ inetprint(in, port, proto, local)
 	int proton;
 	int width;
 
-	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
+	snprintf(line, sizeof line, "%.*s.", (Aflag && !nflag) ? 12 : 16,
+	    inetname(in));
 	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
-		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
+		snprintf(cp, line + sizeof line - cp, "%.8s",
+		    sp ? sp->s_name : "*");
 	else if (local && !nflag && (nam = getrpcportnam(ntohs(port),
 	    (strcmp(proto, "tcp") == 0 ? IPPROTO_TCP : IPPROTO_UDP))))
-		sprintf(cp, "%d[%.8s]", ntohs(port), nam);
+		snprintf(cp, line + sizeof line - cp, "%d[%.8s]",
+		    ntohs(port), nam);
 	else
-		sprintf(cp, "%d", ntohs(port));
+		snprintf(cp, line + sizeof line - cp, "%d", ntohs(port));
 	width = Aflag ? 18 : 22;
 	printf(" %-*.*s", width, width, line);
 }
@@ -579,14 +583,15 @@ inetname(inp)
 		}
 	}
 	if (inp->s_addr == INADDR_ANY)
-		strcpy(line, "*");
+		snprintf(line, sizeof line, "*");
 	else if (cp)
-		strcpy(line, cp);
+		snprintf(line, sizeof line, "%s", cp);
 	else {
 		inp->s_addr = ntohl(inp->s_addr);
 #define C(x)	((x) & 0xff)
-		sprintf(line, "%u.%u.%u.%u", C(inp->s_addr >> 24),
-		    C(inp->s_addr >> 16), C(inp->s_addr >> 8), C(inp->s_addr));
+		snprintf(line, sizeof line, "%u.%u.%u.%u",
+		    C(inp->s_addr >> 24), C(inp->s_addr >> 16),
+		    C(inp->s_addr >> 8), C(inp->s_addr));
 	}
 	return (line);
 }

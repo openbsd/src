@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.6 1997/06/29 21:46:02 millert Exp $	*/
+/*	$OpenBSD: iso.c,v 1.7 1998/02/27 12:07:36 deraadt Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.6 1997/06/29 21:46:02 millert Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.7 1998/02/27 12:07:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -401,12 +401,12 @@ isonetname(iso)
 		if( ihe ) {
 			Ihe = *ihe;
 			ihe = &Ihe;
-			sprintf(line, "%s", ihe->isoh_hname);
+			snprintf(line, sizeof line, "%s", ihe->isoh_hname);
 		} else {
-			sprintf(line, "%s", iso_ntoa(iso));
+			snprintf(line, sizeof line, "%s", iso_ntoa(iso));
 		}
 	} else {
-		sprintf(line, "*");
+		snprintf(line, sizeof line, "*");
 	}
 	return line;
 }
@@ -449,12 +449,13 @@ isonetprint(iso, sufx, sufxlen, islocal)
 			ihe = &Ihe;
 		}
 		if( ihe && (strlen(ihe->isoh_aname)>0) ) {
-			sprintf(cp, "%s", ihe->isoh_aname);
+			snprintf(cp, line + sizeof line - cp, "%s",
+			    ihe->isoh_aname);
 		} else  {
 			iso_sprinttsel(cp, sufx, sufxlen);
 		}
 	} else
-		sprintf(cp, "*");
+		snprintf(cp, line + sizeof line - cp, "*");
 	/*
 	fprintf(stdout, Aflag?" %-18.18s":" %-22.22s", line);
 	*/
