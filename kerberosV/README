@@ -48,21 +48,17 @@ BSD Auth
 ========
 
 There's also a BSD Authentication login script in src/libexec/login_krb5,
-which you can enable by typing 
+which you can build by typing 
 
 # cd /usr/src/libexec/login_krb5
 # make ; make install
+# cd /usr/src/libexec/login_krb5-or-pwd
+# make ; make install
 
-Then change the line with "auth-defaults" in /etc/login.conf to include the
-string "krb5" at the end of the authentication methods. You should now be
-able to login with Kerberos 5 passwords by typing your login name followed
-by ":krb5" on the login prompt.
+Make sure to also rebuild su and login, or things will _seriously_ break.
 
-If you put krb5 first in the list of configuration styles, you will be
-able to login without type ":krb5" at the end, but we do not recommend it
-at this time.
-
-Su does not work at this time, but we expect it to do so in the near future.
+Refer to login.conf(5), login(1), login_krb5(8) and login_krb5-or-pwd(8)
+for more information.
 
 
 TODO
@@ -77,7 +73,7 @@ Things todo, in no particular order:
  - Password quality checks in kpasswdd
  - krb5-config script
  - kx, kxd
- - krb5 support in login, xdm, xlock, su and sudo
+ - BSD Auth support in xdm, xlock, sudo
  - rxtelnet, rxterm
  - pop-server and push
  - rsh, rshd
