@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.5 1999/02/07 23:51:00 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.6 1999/03/10 09:30:53 d Exp $	*/
 /*
  * Atomic lock for sparc
  */
@@ -30,8 +30,12 @@ _atomic_lock(volatile _spinlock_lock_t * lock)
 	 *  two contending processes in a wait-free fashion."
 	 *    - p129, The SPARC Architecture Manual (version 9) Prentice-Hall
 	 *  (See also section J.6 (spinlocks))
+	 *
+	 * (No change to the condition codes are documented.)
 	 */
-	__asm__("ldstub %1,%0" : "=r" (old), "+m" (*lock));
+	__asm__("ldstub %0,%1"
+		: "=m" (*lock), "=r" (old)
+		: "0" (*lock));
 
 	return (old == _SPINLOCK_LOCKED);
 }
