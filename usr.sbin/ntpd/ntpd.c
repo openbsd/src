@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.10 2004/07/09 15:08:54 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.11 2004/07/12 09:22:38 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -110,11 +109,15 @@ main(int argc, char *argv[])
 	if (parse_config(conffile, &conf))
 		exit(1);
 
-	if (geteuid())
-		errx(1, "need root privileges");
+	if (geteuid()) {
+		fprintf(stderr, "ntpd: need root privileges");
+		exit(1);
+	}
 
-	if (getpwnam(NTPD_USER) == NULL)
-		errx(1, "unknown user %s", NTPD_USER);
+	if (getpwnam(NTPD_USER) == NULL) {
+		fprintf(stderr, "ntpd: unknown user %s", NTPD_USER);
+		exit(1);
+	}
 	endpwent();
 
 	log_init(debug);
