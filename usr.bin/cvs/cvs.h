@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.10 2004/07/27 12:01:58 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.11 2004/07/28 01:53:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -230,6 +230,7 @@ struct cvs_op {
 
 
 struct cvsroot {
+	char   *cr_str;
 	u_int   cr_method;
 	char   *cr_buf;
 	char   *cr_user;
@@ -237,6 +238,11 @@ struct cvsroot {
 	char   *cr_host;
 	char   *cr_dir;
 	u_int   cr_port;
+	u_int   cr_ref;
+
+	/* connection data */
+	FILE   *cr_srvin;
+	FILE   *cr_srvout;
 };
 
 
@@ -383,8 +389,8 @@ int         cvs_recvfile       (const char *);
 
 
 /* from client.c */
-int     cvs_client_connect     (void);
-void    cvs_client_disconnect  (void);
+int     cvs_client_connect     (struct cvsroot *);
+void    cvs_client_disconnect  (struct cvsroot *);
 int     cvs_client_sendreq     (u_int, const char *, int);
 int     cvs_client_sendarg     (const char *, int);
 int     cvs_client_sendln      (const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.3 2004/07/27 13:08:23 jfb Exp $	*/
+/*	$OpenBSD: client.c,v 1.4 2004/07/28 01:53:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,12 +78,13 @@ static char   cvs_client_buf[4096];
  * cvs_client_connect()
  *
  * Open a client connection to the cvs server whose address is given in
- * the global <cvs_root> variable.  The method used to connect depends on the
+ * the <root> variable.  The method used to connect depends on the
  * setting of the CVS_RSH variable.
+ * Returns 0 on success, or -1 on failure.
  */
 
 int
-cvs_client_connect(void)
+cvs_client_connect(struct cvsroot *root)
 {
 	int argc, infd[2], outfd[2];
 	pid_t pid;
@@ -121,9 +122,9 @@ cvs_client_connect(void)
 		argc = 0;
 		argv[argc++] = cvs_rsh;
 
-		if (cvs_root->cr_user != NULL) {
+		if (root->cr_user != NULL) {
 			argv[argc++] = "-l";
-			argv[argc++] = cvs_root->cr_user;
+			argv[argc++] = root->cr_user;
 		}
 
 
@@ -131,7 +132,7 @@ cvs_client_connect(void)
 		if (cvs_server_cmd == NULL)
 			cvs_server_cmd = "cvs";
 
-		argv[argc++] = cvs_root->cr_host;
+		argv[argc++] = root->cr_host;
 		argv[argc++] = cvs_server_cmd;
 		argv[argc++] = "server";
 		argv[argc] = NULL;
@@ -156,6 +157,8 @@ cvs_client_connect(void)
 		cvs_log(LP_ERRNO, "failed to create pipe stream");
 		return (-1);
 	}
+	root->cr_srvin = cvs_server_in;
+	root->cr_srvout = cvs_server_out;
 
 	/* make the streams line-buffered */
 	setvbuf(cvs_server_in, NULL, _IOLBF, 0);
@@ -183,7 +186,7 @@ cvs_client_connect(void)
  */
 
 void
-cvs_client_disconnect(void)
+cvs_client_disconnect(struct cvsroot *root)
 {
 	cvs_log(LP_DEBUG, "closing client connection");
 	(void)fclose(cvs_server_in);
