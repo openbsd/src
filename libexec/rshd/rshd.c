@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.26 1998/07/10 08:06:12 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.27 1998/07/10 18:22:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -306,12 +306,7 @@ doit(fromp)
 
 	(void) alarm(0);
 	if (port != 0) {
-		int lport = IPPORT_RESERVED - 1;
-		s = rresvport(&lport);
-		if (s < 0) {
-			syslog(LOG_ERR, "can't get stderr port: %m");
-			exit(1);
-		}
+		int lport;
 #ifdef	KERBEROS
 		if (!use_kerberos)
 #endif
@@ -321,6 +316,12 @@ doit(fromp)
 				exit(1);
 			}
 		fromp->sin_port = htons(port);
+		lport = IPPORT_RESERVED - 1;
+		s = rresvport(&lport);
+		if (s < 0) {
+			syslog(LOG_ERR, "can't get stderr port: %m");
+			exit(1);
+		}
 		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0) {
 			syslog(LOG_INFO, "connect second port %d: %m", port);
 			exit(1);
