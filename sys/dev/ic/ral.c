@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.16 2005/03/01 19:38:09 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.17 2005/03/11 19:39:35 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -20,8 +20,6 @@
 /*-
  * Ralink Technology RT2500 chipset driver
  * http://www.ralinktech.com/
- *
- * The chipset includes a RT2525 Radio Transceiver and a RT2560 MAC/BBP.
  */
 
 #include "bpfilter.h"
@@ -77,15 +75,6 @@ int ral_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
-static const struct ieee80211_rateset ral_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-static const struct ieee80211_rateset ral_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset ral_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 int		ral_alloc_tx_ring(struct ral_softc *, struct ral_tx_ring *,
 		    int);
 void		ral_reset_tx_ring(struct ral_softc *, struct ral_tx_ring *);
@@ -132,11 +121,25 @@ void		ral_update_plcp(struct ral_softc *);
 void		ral_update_led(struct ral_softc *, int, int);
 void		ral_set_bssid(struct ral_softc *, uint8_t *);
 void		ral_set_macaddr(struct ral_softc *, uint8_t *);
+void		ral_get_macaddr(struct ral_softc *, uint8_t *);
 void		ral_update_promisc(struct ral_softc *);
-int		ral_read_eeprom(struct ral_softc *);
+const char	*ral_get_rf(int);
+void		ral_read_eeprom(struct ral_softc *);
 int		ral_bbp_init(struct ral_softc *);
 int		ral_init(struct ifnet *);
 void		ral_stop(struct ifnet *, int);
+
+/*
+ * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
+ */
+static const struct ieee80211_rateset ral_rateset_11a =
+	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
+
+static const struct ieee80211_rateset ral_rateset_11b =
+	{ 4, { 2, 4, 11, 22 } };
+
+static const struct ieee80211_rateset ral_rateset_11g =
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 /*
  * Default values for MAC registers; values taken from the reference driver.
@@ -261,7 +264,7 @@ static const struct {
 	uint32_t	r2;
 	uint32_t	r4;
 } ral_rf5222[] = {
-	/* channels on the 2.4GHz band */
+	/* channels in the 2.4GHz band */
 	{   1, 0x08808, 0x0044d, 0x00282 },
 	{   2, 0x08808, 0x0044e, 0x00282 },
 	{   3, 0x08808, 0x0044f, 0x00282 },
@@ -277,7 +280,7 @@ static const struct {
 	{  13, 0x08808, 0x00469, 0x00282 },
 	{  14, 0x08808, 0x0046b, 0x00286 },
 
-	/* channels on the 5.2GHz band */
+	/* channels in the 5.2GHz band */
 	{  36, 0x08804, 0x06225, 0x00287 },
 	{  40, 0x08804, 0x06226, 0x00287 },
 	{  44, 0x08804, 0x06227, 0x00287 },
@@ -310,31 +313,23 @@ ral_attach(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	uint32_t val;
 	int i;
 
 	timeout_set(&sc->scan_ch, ral_next_scan, sc);
 	timeout_set(&sc->rssadapt_ch, ral_rssadapt_updatestats, sc);
 
-	/* retrieve RT2560 revision */
+	/* retrieve RT2560 rev. no */
 	sc->asic_rev = RAL_READ(sc, RAL_CSR0);
 
 	/* retrieve MAC address */
-	val = RAL_READ(sc, RAL_CSR3);
-	ic->ic_myaddr[0] = val & 0xff;
-	ic->ic_myaddr[1] = (val >>  8) & 0xff;
-	ic->ic_myaddr[2] = (val >> 16) & 0xff;
-	ic->ic_myaddr[3] = (val >> 24) & 0xff;
-	val = RAL_READ(sc, RAL_CSR4);
-	ic->ic_myaddr[4] = val & 0xff;
-	ic->ic_myaddr[5] = (val >> 8) & 0xff;
-
+	ral_get_macaddr(sc, ic->ic_myaddr);
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
-	if (ral_read_eeprom(sc) != 0) {
-		printf("%s: could not read EEPROM\n", sc->sc_dev.dv_xname);
-		goto fail1;
-	}
+	/* retrieve RF rev. no and various other things from EEPROM */
+	ral_read_eeprom(sc);
+
+	printf("%s: MAC/BBP RT2560 (rev 0x%02x), RF %s\n", sc->sc_dev.dv_xname,
+	    sc->asic_rev, ral_get_rf(sc->rf_rev));
 
 	/*
 	 * Allocate Tx and Rx rings.
@@ -981,8 +976,8 @@ ral_eeprom_read(struct ral_softc *sc, uint8_t addr)
 }
 
 /*
- * Some frames have been processed by the hardware cipher engine and are ready
- * for transmission.
+ * Some frames were processed by the hardware cipher engine and are ready for
+ * transmission.
  */
 void
 ral_encryption_intr(struct ral_softc *sc)
@@ -1016,7 +1011,8 @@ ral_encryption_intr(struct ral_softc *sc)
 		    sc->txq.next_encrypt * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 		    BUS_DMASYNC_PREWRITE);
 
-		DPRINTFN(5, ("encryption done idx=%u\n", sc->txq.next_encrypt));
+		DPRINTFN(15, ("encryption done idx=%u\n",
+		    sc->txq.next_encrypt));
 
 		sc->txq.next_encrypt =
 		    (sc->txq.next_encrypt + 1) % RAL_TX_RING_COUNT;
@@ -1058,14 +1054,14 @@ ral_tx_intr(struct ral_softc *sc)
 			break;
 
 		case RAL_TX_SUCCESS_RETRY:
-			DPRINTFN(2, ("data frame sent after %u retries\n",
+			DPRINTFN(9, ("data frame sent after %u retries\n",
 			    (letoh32(desc->flags) >> 5) & 0x7));
 			ieee80211_rssadapt_lower_rate(ic, data->ni,
 			    &rn->rssadapt, &data->id);
 			break;
 
 		case RAL_TX_FAIL_RETRY:
-			DPRINTFN(2, ("sending data frame failed (too much "
+			DPRINTFN(9, ("sending data frame failed (too much "
 			    "retries)\n"));
 			ieee80211_rssadapt_lower_rate(ic, data->ni,
 			    &rn->rssadapt, &data->id);
@@ -1093,7 +1089,7 @@ ral_tx_intr(struct ral_softc *sc)
 		    sc->txq.next * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 		    BUS_DMASYNC_PREWRITE);
 
-		DPRINTFN(5, ("tx done idx=%u\n", sc->txq.next));
+		DPRINTFN(15, ("tx done idx=%u\n", sc->txq.next));
 
 		sc->txq.queued--;
 		sc->txq.next = (sc->txq.next + 1) % RAL_TX_RING_COUNT;
@@ -1130,12 +1126,12 @@ ral_prio_intr(struct ral_softc *sc)
 			break;
 
 		case RAL_TX_SUCCESS_RETRY:
-			DPRINTFN(10, ("mgt frame sent after %u retries\n",
+			DPRINTFN(9, ("mgt frame sent after %u retries\n",
 			    (letoh32(desc->flags) >> 5) & 0x7));
 			break;
 
 		case RAL_TX_FAIL_RETRY:
-			DPRINTFN(10, ("sending mgt frame failed (too much "
+			DPRINTFN(9, ("sending mgt frame failed (too much "
 			    "retries)\n"));
 			break;
 
@@ -1161,7 +1157,7 @@ ral_prio_intr(struct ral_softc *sc)
 		    sc->prioq.next * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 		    BUS_DMASYNC_PREWRITE);
 
-		DPRINTFN(5, ("prio done idx=%u\n", sc->prioq.next));
+		DPRINTFN(15, ("prio done idx=%u\n", sc->prioq.next));
 
 		sc->prioq.queued--;
 		sc->prioq.next = (sc->prioq.next + 1) % RAL_PRIO_RING_COUNT;
@@ -1326,8 +1322,8 @@ ral_rx_intr(struct ral_softc *sc)
 		if ((letoh32(desc->flags) & RAL_RX_PHY_ERROR) ||
 		    (letoh32(desc->flags) & RAL_RX_CRC_ERROR)) {
 			/*
-			 * this should not happen since we did not request
-			 * to receive those frames when we filled RXCSR0
+			 * This should not happen since we did not request
+			 * to receive those frames when we filled RXCSR0.
 			 */
 			DPRINTFN(5, ("PHY or CRC error flags 0x%08x\n",
 			    letoh32(desc->flags)));
@@ -1385,7 +1381,7 @@ ral_beacon_expire(struct ral_softc *sc)
 void
 ral_wakeup_expire(struct ral_softc *sc)
 {
-	DPRINTFN(10, ("wakeup expired\n"));
+	DPRINTFN(15, ("wakeup expired\n"));
 }
 
 int
@@ -2039,6 +2035,8 @@ ral_set_chan(struct ral_softc *sc, struct ieee80211_channel *c)
 	else
 		power = 31;
 
+	DPRINTFN(2, ("setting channel to %u, txpower to %u\n", chan, power));
+
 	switch (sc->rf_rev) {
 	case RAL_RF_2522:
 		ral_rf_write(sc, RAL_RF1, 0x00814);
@@ -2128,6 +2126,8 @@ ral_disable_rf_tune(struct ral_softc *sc)
 
 	tmp = sc->rf_regs[RAL_RF3] & ~RAL_RF3_AUTOTUNE;
 	ral_rf_write(sc, RAL_RF3, tmp);
+
+	DPRINTFN(2, ("disabling RF autotune\n"));
 }
 
 void
@@ -2157,15 +2157,19 @@ ral_enable_tsf_sync(struct ral_softc *sc)
 	else
 		RAL_WRITE(sc, RAL_CSR14, RAL_CSR14_TSF_SYNC_BSS |
 		    RAL_CSR14_TSF_AUTOCOUNT | RAL_CSR14_BCN_RELOAD);
+
+	DPRINTF(("enabling TSF synchronization\n"));
 }
 
 void
 ral_update_plcp(struct ral_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+
 	/* no short preamble for 1Mbps */
 	RAL_WRITE(sc, RAL_ARCSR2, 0x00700400);
 
-	if (!(sc->sc_ic.ic_flags & IEEE80211_F_SHPREAMBLE)) {
+	if (!(ic->ic_flags & IEEE80211_F_SHPREAMBLE)) {
 		/* values taken from the reference driver */
 		RAL_WRITE(sc, RAL_ARCSR3, 0x00380401);
 		RAL_WRITE(sc, RAL_ARCSR4, 0x00150402);
@@ -2176,6 +2180,9 @@ ral_update_plcp(struct ral_softc *sc)
 		RAL_WRITE(sc, RAL_ARCSR4, 0x0015040a);
 		RAL_WRITE(sc, RAL_ARCSR5, 0x000b840b);
 	}
+
+	DPRINTF(("updating PLCP for %s preamble\n",
+	    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ? "short" : "long"));
 }
 
 void
@@ -2199,7 +2206,7 @@ ral_set_bssid(struct ral_softc *sc, uint8_t *bssid)
 	tmp = bssid[4] | bssid[5] << 8;
 	RAL_WRITE(sc, RAL_CSR6, tmp);
 
-	DPRINTFN(10, ("setting BSSID to %s\n", ether_sprintf(bssid)));
+	DPRINTF(("setting BSSID to %s\n", ether_sprintf(bssid)));
 }
 
 void
@@ -2213,7 +2220,23 @@ ral_set_macaddr(struct ral_softc *sc, uint8_t *addr)
 	tmp = addr[4] | addr[5] << 8;
 	RAL_WRITE(sc, RAL_CSR4, tmp);
 
-	DPRINTFN(10, ("setting MAC address to %s\n", ether_sprintf(addr)));
+	DPRINTF(("setting MAC address to %s\n", ether_sprintf(addr)));
+}
+
+void
+ral_get_macaddr(struct ral_softc *sc, uint8_t *addr)
+{
+	uint32_t tmp;
+
+	tmp = RAL_READ(sc, RAL_CSR3);
+	addr[0] = tmp & 0xff;
+	addr[1] = (tmp >>  8) & 0xff;
+	addr[2] = (tmp >> 16) & 0xff;
+	addr[3] = (tmp >> 24);
+
+	tmp = RAL_READ(sc, RAL_CSR4);
+	addr[4] = tmp & 0xff;
+	addr[5] = (tmp >> 8) & 0xff;
 }
 
 void
@@ -2234,52 +2257,33 @@ ral_update_promisc(struct ral_softc *sc)
 	    "entering" : "leaving"));
 }
 
-int
+const char *
+ral_get_rf(int rev)
+{
+	switch (rev) {
+	case RAL_RF_2522:	return "RT2522";
+	case RAL_RF_2523:	return "RT2523";
+	case RAL_RF_2524:	return "RT2524";
+	case RAL_RF_2525:	return "RT2525";
+	case RAL_RF_2525E:	return "RT2525e";
+	case RAL_RF_5222:	return "RT5222";
+	default:		return "unknown";
+	}
+}
+
+void
 ral_read_eeprom(struct ral_softc *sc)
 {
 	uint16_t val;
-	const char *rf;
 	int i;
 
-	val = ral_eeprom_read(sc, RAL_EEPROM_VERSION);
-	sc->eeprom_rev = val >> 8;
-
-	if (sc->eeprom_rev != 1) {
-		printf("%s: unknown EEPROM rev. 0x%x\n", sc->sc_dev.dv_xname,
-		    sc->eeprom_rev);
-		return EIO;
-	}
-
 	val = ral_eeprom_read(sc, RAL_EEPROM_ANTENNA);
-	sc->rf_rev = (val >> 11) & 0x1f;
-	sc->led_mode = (val >> 6) & 0x7;
+	sc->rf_rev =   (val >> 11) & 0x1f;
 	sc->hw_radio = (val >> 10) & 0x1;
-	sc->rx_ant = (val >> 4) & 0x3;
-	sc->tx_ant = (val >> 2) & 0x3;
-	sc->nb_ant = val & 0x3;
-/*	DPRINTFN(10, ("RF rev. 0x%02x, Tx Ant %u, Rx Ant %u, Nb Ant %u, "
-	    "Led Mode %u, HW radio %s\n",
-	    sc->rf_rev, sc->tx_ant, sc->rx_ant, sc->nb_ant, sc->led_mode,
-	    sc->hw_radio ? "yes" : "no"));*/
-
-	switch (sc->rf_rev) {
-	case RAL_RF_2522:  rf = "RT2522";  break;
-	case RAL_RF_2523:  rf = "RT2523";  break;
-	case RAL_RF_2524:  rf = "RT2524";  break;
-	case RAL_RF_2525:  rf = "RT2525";  break;
-	case RAL_RF_2525E: rf = "RT2525e"; break;
-	case RAL_RF_5222:  rf = "RT5222";  break;
-	default:	   rf = "unknown";
-	}
-
-	printf("%s: MAC/BBP RT2560 (rev 0x%02x), RF %s\n", sc->sc_dev.dv_xname,
-	    sc->asic_rev, rf);
-
-	val = ral_eeprom_read(sc, RAL_EEPROM_CONFIG);
-	if (val == 0xffff)
-		val = 0;
-
-	sc->bbp_tune = !((val >> 1) & 0x1);
+	sc->led_mode = (val >> 6)  & 0x7;
+	sc->rx_ant =   (val >> 4)  & 0x3;
+	sc->tx_ant =   (val >> 2)  & 0x3;
+	sc->nb_ant =   val & 0x3;
 
 	/* read default values for BBP registers */
 	for (i = 0; i < 16; i++) {
@@ -2294,8 +2298,6 @@ ral_read_eeprom(struct ral_softc *sc)
 		sc->txpow[i * 2] = val >> 8;
 		sc->txpow[i * 2 + 1] = val & 0xff;
 	}
-
-	return 0;
 }
 
 int
@@ -2350,6 +2352,7 @@ ral_init(struct ifnet *ifp)
 	      RAL_ATIM_RING_COUNT << 16 |
 	      RAL_TX_RING_COUNT   <<  8 |
 	      RAL_TX_DESC_SIZE;
+
 	RAL_WRITE(sc, RAL_TXCSR2, tmp);
 	RAL_WRITE(sc, RAL_TXCSR3, sc->txq.physaddr);
 	RAL_WRITE(sc, RAL_TXCSR4, sc->atimq.physaddr);
@@ -2358,6 +2361,7 @@ ral_init(struct ifnet *ifp)
 
 	/* setup rx ring */
 	tmp = RAL_RX_RING_COUNT << 8 | RAL_RX_DESC_SIZE;
+
 	RAL_WRITE(sc, RAL_RXCSR1, tmp);
 	RAL_WRITE(sc, RAL_RXCSR2, sc->rxq.physaddr);
 

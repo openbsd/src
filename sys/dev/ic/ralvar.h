@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralvar.h,v 1.6 2005/03/01 19:38:09 damien Exp $  */
+/*	$OpenBSD: ralvar.h,v 1.7 2005/03/11 19:39:35 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -128,7 +128,7 @@ struct ral_softc {
 
 	struct {
 		uint8_t		reg;
-		uint8_t		val;	
+		uint8_t		val;
 	}				bbp_prom[16];
 
 	int				led_mode;
@@ -136,8 +136,6 @@ struct ral_softc {
 	int				rx_ant;
 	int				tx_ant;
 	int				nb_ant;
-	int				bbp_tune;
-	
 
 #if NBPFILTER > 0
 	caddr_t				sc_drvbpf;
