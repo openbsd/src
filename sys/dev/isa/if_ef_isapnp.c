@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.5 1999/12/02 20:55:06 jason Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.6 2000/05/26 16:24:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -353,7 +353,7 @@ efioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splnet();
+	s = splimp();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);
@@ -374,6 +374,7 @@ efioctl(ifp, cmd, data)
 			efinit(sc);
 			break;
 		}
+		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
