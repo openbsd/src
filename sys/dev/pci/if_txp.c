@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.56 2001/09/21 17:55:44 miod Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.57 2001/11/02 19:31:00 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -85,6 +85,13 @@
 #include <dev/pci/if_txpreg.h>
 
 #include <dev/microcode/typhoon/3c990img.h>
+
+/*
+ * These currently break the 3c990 firmware, hopefully will be resolved
+ * at some point.
+ */
+#undef	TRY_TX_UDP_CSUM
+#undef	TRY_TX_TCP_CSUM
 
 int txp_probe		__P((struct device *, void *, void *));
 void txp_attach		__P((struct device *, struct device *, void *));
@@ -1321,6 +1328,7 @@ txp_start(ifp)
 	struct txp_softc *sc = ifp->if_softc;
 	struct txp_tx_ring *r = &sc->sc_txhir;
 	struct txp_tx_desc *txd;
+	int txdidx;
 	struct txp_frag_desc *fxd;
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
@@ -1371,12 +1379,12 @@ txp_start(ifp)
 			goto oactive;
 
 		txd = r->r_desc + prod;
-
+		txdidx = prod;
 		txd->tx_flags = TX_FLAGS_TYPE_DATA;
 		txd->tx_numdesc = 0;
 		txd->tx_addrlo = 0;
 		txd->tx_addrhi = 0;
-		txd->tx_totlen = 0;
+		txd->tx_totlen = m->m_pkthdr.len;
 		txd->tx_pflags = 0;
 		txd->tx_numdesc = sd->sd_map->dm_nsegs;
 
@@ -1397,23 +1405,29 @@ txp_start(ifp)
 
 		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
-#if 0
+#ifdef TRY_TX_TCP_CSUM
 		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_TCPCKSUM;
+#endif
+#ifdef TRY_TX_UDP_CSUM
 		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_UDPCKSUM;
 #endif
 
-		txp_bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,
-		    prod * sizeof(struct txp_tx_desc), sizeof(struct txp_tx_desc),
-		    BUS_DMASYNC_PREWRITE);
+		txp_bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
+		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		for (i = 0; i < sd->sd_map->dm_nsegs; i++) {
-			if (++cnt >= (TX_ENTRIES - 4))
+			if (++cnt >= (TX_ENTRIES - 4)) {
+				txp_bus_dmamap_sync(sc->sc_dmat, sd->sd_map,
+				    0, sd->sd_map->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
 				goto oactive;
+			}
 
-			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG;
+			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG |
+			    FRAG_FLAGS_VALID;
 			fxd->frag_rsvd1 = 0;
 			fxd->frag_len = sd->sd_map->dm_segs[i].ds_len;
 			fxd->frag_addrlo =
@@ -1444,8 +1458,29 @@ txp_start(ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		txp_bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
-		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		txd->tx_flags |= TX_FLAGS_VALID;
+		txp_bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,
+		    txdidx * sizeof(struct txp_tx_desc),
+		    sizeof(struct txp_tx_desc), BUS_DMASYNC_PREWRITE);
+
+#if 0
+		{
+			struct mbuf *mx;
+			int i;
+
+			printf("txd: flags 0x%x ndesc %d totlen %d pflags 0x%x\n",
+			    txd->tx_flags, txd->tx_numdesc, txd->tx_totlen,
+			    txd->tx_pflags);
+			for (mx = m; mx != NULL; mx = mx->m_next) {
+				for (i = 0; i < mx->m_len; i++) {
+					printf(":%02x",
+					    (u_int8_t)m->m_data[i]);
+				}
+			}
+			printf("\n");
+		}
+#endif
+
 		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(prod));
 	}
 
@@ -1594,7 +1629,8 @@ txp_response(sc, ridx, id, seq, rspp)
 		}
 
 		if (rsp->rsp_flags & RSP_FLAGS_ERROR) {
-			printf("%s: response error!\n", TXP_DEVNAME(sc));
+			printf("%s: response error: id 0x%x\n",
+			    TXP_DEVNAME(sc), rsp->rsp_id);
 			txp_rsp_fixup(sc, rsp, NULL);
 			ridx = hv->hv_resp_read_idx;
 			continue;
@@ -1955,21 +1991,17 @@ txp_capabilities(sc)
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_TCPCKSUM) {
-#if 0
-		sc->sc_tx_capability |= OFFLOAD_TCPCKSUM;
-#endif
 		sc->sc_rx_capability |= OFFLOAD_TCPCKSUM;
-#if 0
+#ifdef TRY_TX_TCP_CSUM
+		sc->sc_tx_capability |= OFFLOAD_TCPCKSUM;
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4;
 #endif
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_UDPCKSUM) {
-#if 0
-		sc->sc_tx_capability |= OFFLOAD_UDPCKSUM;
-#endif
 		sc->sc_rx_capability |= OFFLOAD_UDPCKSUM;
-#if 0
+#ifdef TRY_TX_UDP_CSUM
+		sc->sc_tx_capability |= OFFLOAD_UDPCKSUM;
 		ifp->if_capabilities |= IFCAP_CSUM_UDPv4;
 #endif
 	}

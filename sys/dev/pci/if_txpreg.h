@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.32 2001/10/29 22:32:56 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.33 2001/11/02 19:31:00 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -374,6 +374,7 @@ struct txp_frag_desc {
 #define	FRAG_FLAGS_TYPE_OPT	0x03		/* type: options */
 #define	FRAG_FLAGS_TYPE_RX	0x04		/* type: command */
 #define	FRAG_FLAGS_TYPE_RESP	0x05		/* type: response */
+#define	FRAG_FLAGS_VALID	0x80		/* valid descriptor */
 
 struct txp_opt_desc {
 	u_int8_t		opt_desctype:3,
