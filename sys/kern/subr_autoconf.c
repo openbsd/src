@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.7 1996/06/18 09:43:44 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.8 1996/06/23 19:34:30 maja Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -179,6 +179,9 @@ config_search(fn, parent, aux)
 	     */
 	    if (cf->cf_fstate == FSTATE_FOUND)
 	      continue;
+	    if (cf->cf_fstate == FSTATE_DNOTFOUND |
+		cf->cf_fstate == FSTATE_DSTAR)
+	      continue;
 	    for (p = cf->cf_parents; *p >= 0; p++)
 	      if (parent->dv_cfdata == &(t->tab)[*p])
 		mapply(&m, cf);
@@ -214,6 +217,9 @@ config_scan(fn, parent)
 	     * parents for one matching `parent', and try match function.
 	     */
 	    if (cf->cf_fstate == FSTATE_FOUND)
+	      continue;
+	    if (cf->cf_fstate == FSTATE_DNOTFOUND |
+		cf->cf_fstate == FSTATE_DSTAR)
 	      continue;
 	    for (p = cf->cf_parents; *p >= 0; p++)
 	      if (parent->dv_cfdata == &(t->tab)[*p]) {

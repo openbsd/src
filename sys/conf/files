@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.24 1996/06/21 15:18:31 chuck Exp $
+#	$OpenBSD: files,v 1.25 1996/06/23 19:37:23 maja Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -142,6 +142,7 @@ file kern/subr_log.c
 file kern/subr_prf.c
 file kern/subr_prof.c
 file kern/subr_rmap.c
+file kern/subr_userconf.c
 file kern/subr_xxx.c
 file kern/sys_generic.c
 file kern/sys_process.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 1996/05/30 10:17:53 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 1996/06/23 19:39:13 maja Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -276,6 +276,9 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
+	if (boothowto & RB_CONFIG) {
+		user_config();
+	}
 	configure();
 
 	/*
