@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.81 2004/12/15 18:40:09 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.82 2004/12/17 06:47:00 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -751,6 +751,10 @@ carpdetach(struct carp_softc *sc)
 	timeout_del(&sc->sc_ad_tmo);
 	timeout_del(&sc->sc_md_tmo);
 	timeout_del(&sc->sc_md6_tmo);
+
+	if (sc->sc_suppress)
+		carp_suppress_preempt--;
+	sc->sc_suppress = 0;
 
 	carp_set_state(sc, INIT);
 	sc->sc_ac.ac_if.if_flags &= ~IFF_UP;
