@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.4 2005/01/05 23:04:24 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.5 2005/01/31 06:41:27 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -272,6 +272,7 @@ omfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
+	default:
 		return (-1);
 	}
 

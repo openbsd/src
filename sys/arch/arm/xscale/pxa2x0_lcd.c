@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.11 2005/01/21 16:22:34 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.12 2005/01/31 06:41:25 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -788,6 +788,7 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
+	default:
 		return -1;	/* not implemented */
 
         case WSDISPLAYIO_LINEBYTES:

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.37 2005/01/05 23:04:25 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.38 2005/01/31 06:41:27 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -613,6 +613,7 @@ vga_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
+	default:
 		/* NONE of these operations are by the generic VGA driver. */
 		return ENOTTY;
 	}
