@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.6 2002/11/01 22:49:48 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.7 2002/12/03 16:19:29 jason Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -15,6 +15,7 @@ Feb 03	Describe the ports mechanism [in OpenBSD], 1997
 Feb 13	Unpatented fast block cipher for new password hashing, 1997
 Feb 19	IPsec package by John Ioannidis and Angelos D. Keromytis, 1997
 Feb 26	OpenBSD/Amiga gets ISA bus support, 1996
+Feb 26	bridge(4) transparent firewall added to OpenBSD, 1999
 Feb 28	Cryptographic services framework in OpenBSD, 2000
 Mar 10	OpenBSD/WWW translation started -- German, Spanish, Dutch, 2000
 May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
