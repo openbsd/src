@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.12 1996/05/30 09:37:34 deraadt Exp $
+#	$OpenBSD: rc,v 1.13 1996/06/10 07:15:17 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -112,7 +112,7 @@ if [ -d /var/yp/binding ]; then
 			_host2=`nslookup $_host2 | grep '^Name: ' | \
 			    sed -e 's/^Name:    //'`
 		fi
-		if [ "$host2" = "$host1" ]; then
+		if [ "$_host2" = "$_host1" ]; then
 			echo -n ' rpc.yppasswdd'; rpc.yppasswdd
 		fi
 	fi
