@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.51 1997/10/15 16:28:29 millert Exp $
+#	$OpenBSD: rc,v 1.52 1997/11/04 08:39:33 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -100,7 +100,7 @@ if [ X"${rfc1323}" = X"NO" ]; then
 	echo 'disabling rfc1323'; 	sysctl -w net.inet.tcp.rfc1323=0
 fi
 
-# $photurisd_flags is imported from /etc/netstart;
+# $photurisd_flags is imported from /etc/rc.conf;
 # If $photurisd_flags == NO or /etc/photuris/photuris.conf doesn't exist, then
 # photurisd isn't run.
 if [ "X${photurisd_flags}" != X"NO" -a -e /etc/photuris/photuris.conf ]; then
@@ -115,7 +115,7 @@ rm -f /var/spool/uucp/STST/*
 
 echo -n 'starting rpc daemons:'
 
-# $portmap is imported from /etc/netstart;
+# $portmap is imported from /etc/rc.conf;
 # if $portmap == YES, the portmapper is started.
 if [ X"${portmap}" = X"YES" ]; then
 	echo -n ' portmap';		portmap
@@ -150,7 +150,7 @@ if [ -d /var/yp/binding ]; then
 	fi
 fi
 
-# $nfs_server is imported from /etc/netstart;
+# $nfs_server is imported from /etc/rc.conf;
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -r /etc/exports -a \
     `cat /etc/exports | sed -e '/^#/d' | wc -l` -ne 0 ]; then
@@ -163,7 +163,7 @@ if [ X${nfs_server} = X"YES" -a -r /etc/exports -a \
 	fi
 fi
 
-# $nfs_client is imported from /etc/netstart;
+# $nfs_client is imported from /etc/rc.conf;
 # if $nfs_client == YES, the machine is setup for being an nfs client
 if [ X${nfs_client} = X"YES" ]; then
 	echo -n ' nfsiod';		nfsiod -n 4
@@ -182,7 +182,7 @@ echo -n 'starting system logger'
 rm -f /dev/log
 syslogd
 
-# $timed_flags is imported from /etc/netstart;
+# $timed_flags is imported from /etc/rc.conf;
 # if $timed_flags == NO, timed isn't run.
 if [ "X${timed_flags}" != X"NO" ]; then
 	echo -n ', time daemon'; timed $timed_flags
@@ -287,7 +287,7 @@ echo '.'
 
 echo -n starting network daemons:
 
-# $gated and $routed_flags are imported from /etc/netstart.
+# $gated and $routed_flags are imported from /etc/rc.conf.
 # If $gated == YES, gated is used; otherwise routed.
 # If $routed_flags == NO, routed isn't run.
 if [ X${gated} = X"YES" -a -r /etc/gated.conf ]; then
@@ -296,20 +296,20 @@ elif [ "X${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
 fi
 
-# $mrouted_flags is imported from /etc/netstart;
+# $mrouted_flags is imported from /etc/rc.conf;
 # If $mrouted_flags == NO, then mrouted isn't run.
 if [ "X${mrouted_flags}" != X"NO" ]; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
 fi
 
-# $named_flags is imported from /etc/netstart;
+# $named_flags is imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
 	echo -n ' named';		named $named_flags
 fi
 mount -a -t nfs		# do again, in case DNS hostnames are used..
 
-# $rwhod is imported from /etc/netstart;
+# $rwhod is imported from /etc/rc.conf;
 # if $rwhod == YES, rwhod is run.
 if [ X${rwhod} = X"YES" ]; then
 	echo -n ' rwhod';		rwhod
@@ -320,7 +320,7 @@ if [ X${lpd} = X"YES" ]; then
 	echo -n ' printer';		lpd
 fi
 
-# $sendmail_flags is imported from /etc/netstart;
+# $sendmail_flags is imported from /etc/rc.conf;
 # If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
 # sendmail isn't run.  We call sendmail with a full path so that
 # SIGHUP works.
@@ -332,21 +332,21 @@ if [ X${inetd} = X"YES" ]; then
 	echo -n ' inetd';		inetd
 fi
 
-# $rarpd_flags is imported from /etc/netstart;
+# $rarpd_flags is imported from /etc/rc.conf;
 # If $rarpd_flags == NO or /etc/ethers doesn't exist, then
 # rarpd isn't run.
 if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
 	echo -n ' rarpd';		rarpd ${rarpd_flags}
 fi
 
-# $bootparamd_flags is imported from /etc/netstart;
+# $bootparamd_flags is imported from /etc/rc.conf;
 # If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
 # bootparamd isn't run.
 if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
 	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
 fi
 
-# $rbootd_flags is imported from /etc/netstart;
+# $rbootd_flags is imported from /etc/rc.conf;
 # If $rbootd_flags == NO or /etc/rbootd.conf doesn't exist, then
 # rbootd isn't run.
 if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then

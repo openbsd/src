@@ -1,6 +1,6 @@
-# $OpenBSD: nat.rules,v 1.2 1997/04/09 07:32:14 deraadt Exp $
+# $OpenBSD: nat.rules,v 1.3 1997/11/04 08:39:32 deraadt Exp $
 #
 # See /usr/share/ipf/nat.1 for examples.
-# edit the nat= line in /etc/netstart to enable Network Address Translation
+# edit the nat= line in /etc/rc.conf to enable Network Address Translation
 
 #map ppp0 10.0.0.0/8 -> ppp0/32 portmap tcp/udp 10000:20000
