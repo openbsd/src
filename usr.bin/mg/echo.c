@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.6 2001/05/23 16:25:24 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.7 2001/05/23 20:49:53 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -335,7 +335,8 @@ veread(fp, buf, nbuf, flag, ap)
 			}
 		}
 	}
-done:	return buf[0] != '\0';
+done:
+	return buf[0] != '\0';
 }
 
 /*
