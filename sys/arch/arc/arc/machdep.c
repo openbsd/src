@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2000/04/11 02:44:25 pjanzen Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2000/10/27 00:16:04 mickey Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.38 2000/04/11 02:44:25 pjanzen Exp $
+ *      $Id: machdep.c,v 1.39 2000/10/27 00:16:04 mickey Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -514,8 +514,8 @@ mips_init(argc, argv, envv)
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    ((100/BUFCACHEPERCENT) * CLSIZE);
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+			    BUFCACHEPERCENT / (100 * CLSIZE);
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;

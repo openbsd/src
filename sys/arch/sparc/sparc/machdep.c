@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2000/06/23 00:55:55 fgsch Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2000/10/27 00:16:20 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -432,7 +432,7 @@ allocsys(v)
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = (physmem / ((100/BUFCACHEPERCENT) / CLSIZE));
+		bufpages = physmem * BUFCACHEPERCENT / (100 * CLSIZE);
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)

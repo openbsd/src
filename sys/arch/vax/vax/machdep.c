@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.26 2000/10/17 19:57:55 hugh Exp $ */
+/* $OpenBSD: machdep.c,v 1.27 2000/10/27 00:16:22 mickey Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -789,8 +789,8 @@ allocsys(v)
 	    if (physmem < btoc(2 * 1024 * 1024))
 	        bufpages = physmem / (10 * CLSIZE);
 	    else
-	        bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-	            ((100 / BUFCACHEPERCENT) * CLSIZE);
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+		    BUFCACHEPERCENT / (100 * CLSIZE);
 	}
     if (nbuf == 0) 
         nbuf = bufpages < 16 ? 16 : bufpages;

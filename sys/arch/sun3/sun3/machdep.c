@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2000/04/29 20:37:31 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2000/10/27 00:16:20 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -218,8 +218,8 @@ allocsys(v)
 	 */
 	if (bufpages == 0) {
 		/* We always have more than 2MB of memory. */
-		bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			((100/BUFCACHEPERCENT) * CLSIZE);
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+		    BUFCACHEPERCENT / (100 * CLSIZE);
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;

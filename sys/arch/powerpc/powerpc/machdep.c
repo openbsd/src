@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2000/10/19 03:13:57 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2000/10/27 00:16:17 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -604,7 +604,7 @@ allocsys(v)
 	 * Decide on buffer space to use.
 	 */
 	if (bufpages == 0)
-		bufpages = (physmem / ((100 / BUFCACHEPERCENT) / CLSIZE));
+		bufpages = physmem * BUFCACHEPERCENT / (100 * CLSIZE);
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
