@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.10 2003/11/26 21:40:08 djm Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.11 2004/11/02 11:07:13 hshoexer Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -99,14 +99,14 @@ arc4_stir(struct arc4_stream *as)
 	}
 
 	arc4_stir_pid = getpid();
-	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
+	arc4_addrandom(as, (void *)&rdat, sizeof(rdat));
 
 	/*
 	 * Discard early keystream, as per recommendations in:
 	 * http://www.wisdom.weizmann.ac.il/~itsik/RC4/Papers/Rc4_ksa.ps
 	 */
 	for (i = 0; i < 256; i++)
-		(void) arc4_getbyte(as);
+		(void)arc4_getbyte(as);
 }
 
 static inline u_int8_t
