@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.7 2002/10/29 23:12:06 millert Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.8 2002/12/22 22:25:20 millert Exp $	*/
 /*	$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-static const char rcsid[] = "$OpenBSD: chroot.c,v 1.7 2002/10/29 23:12:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: chroot.c,v 1.8 2002/12/22 22:25:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ int
 main(int argc, char **argv)
 {
 	struct group	*gp;
-	struct passwd	*pw;
+	struct passwd	*pwd;
 	const char	*shell;
 	char		*fulluser, *user, *group, *grouplist, *endp, *p;
 	gid_t		gid, gidlist[NGROUPS_MAX];
@@ -79,6 +79,7 @@ main(int argc, char **argv)
 	gid = 0;
 	uid = 0;
 	gids = 0;
+	pwd = NULL;
 	user = fulluser = group = grouplist = NULL;
 	while ((ch = getopt(argc, argv, "G:g:U:u:")) != -1) {
 		switch(ch) {
@@ -161,8 +162,8 @@ main(int argc, char **argv)
 		err(1, "setgroups");
 
 	if (user != NULL) {
-		if ((pw = getpwnam(user)) != NULL)
-			uid = pw->pw_uid;
+		if ((pwd = getpwnam(user)) != NULL)
+			uid = pwd->pw_uid;
 		else if (isdigit((unsigned char)*user)) {
 			errno = 0;
 			ul = strtoul(user, &endp, 10);
@@ -175,15 +176,18 @@ main(int argc, char **argv)
 	}
 
 	if (fulluser != NULL) {
-		if ((pw = getpwnam(fulluser)) == NULL)
+		if ((pwd = getpwnam(fulluser)) == NULL)
 			errx(1, "no such user `%s'", fulluser);
-		uid = pw->pw_uid;
-		gid = pw->pw_gid;
+		uid = pwd->pw_uid;
+		gid = pwd->pw_gid;
 		if (setgid(gid) != 0)
 			err(1, "setgid");
 		if (initgroups(fulluser, gid) == -1)
 			err(1, "initgroups");
 	}
+
+	if (pwd != NULL && (getsid(0) == getpid() || setsid() != -1))
+		setlogin(pwd->pw_name);
 
 	if (chroot(argv[0]) != 0 || chdir("/") != 0)
 		err(1, "%s", argv[0]);
@@ -196,14 +200,14 @@ main(int argc, char **argv)
 		err(1, "%s", argv[1]);
 	}
 
-	if ((shell = getenv("SHELL")) == NULL)
+	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
 		shell = _PATH_BSHELL;
 	execlp(shell, shell, "-i", (char *)NULL);
 	err(1, "%s", shell);
 	/* NOTREACHED */
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
