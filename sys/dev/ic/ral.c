@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.17 2005/03/11 19:39:35 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.18 2005/03/11 19:45:19 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2321,12 +2321,14 @@ ral_bbp_init(struct ral_softc *sc)
 	for (i = 0; i < N(ral_def_bbp); i++)
 		ral_bbp_write(sc, ral_def_bbp[i].reg, ral_def_bbp[i].val);
 
+#if 0
 	/* initialize BBP registers to values stored in EEPROM */
 	for (i = 0; i < 16; i++) {
 		if (sc->bbp_prom[i].reg == 0xff)
 			continue;
 		ral_bbp_write(sc, sc->bbp_prom[i].reg, sc->bbp_prom[i].val);
 	}
+#endif
 
 	return 0;
 #undef N
