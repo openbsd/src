@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.6 1996/11/29 22:55:10 niklas Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.7 1997/07/04 17:02:04 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -36,6 +36,8 @@
 
 /* #undef WDDEBUG */
 /* #undef DIAGNOSTIC */
+
+#include "wd.h"
 
 struct wdc_link {
 	int flags;
@@ -134,13 +136,16 @@ struct wdc_xfer {
 void	wdc_exec_xfer		__P((struct wd_link *, struct wdc_xfer *));
 struct	wdc_xfer *wdc_get_xfer	__P((struct wdc_link *, int));
 int	wdc_get_parms		__P((struct wd_link *));
+int	wdccommandshort		__P((struct wdc_softc *, int, int));
+int	wdcwait			__P((struct wdc_softc *, int));
+int	wdccommand		__P((struct wd_link *, int, int, int, int, int, int));
+
+#if NWD > 0
 void	wderror			__P((struct wd_link* , struct buf *, char *));
 int	wdsetctlr		__P((struct wd_link *));
 void	wdstart			__P((void *));
 void	wddone			__P((struct wd_link*, struct buf*));
-int	wdccommand		__P((struct wd_link *, int, int, int, int, int, int));
-int	wdccommandshort		__P((struct wdc_softc *, int, int));
-int	wdcwait			__P((struct wdc_softc *, int));
+#endif	/* NWD */
 
 /*
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
