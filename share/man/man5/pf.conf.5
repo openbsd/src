@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.113 2002/11/23 05:24:19 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.114 2002/11/24 17:27:49 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -961,6 +961,7 @@ queue length.
 .It Em rio
 Enables RIO on this queue. RIO is RED with IN/OUT, thus running
 RED two times more then RED would do.
+RIO is currently not supported in the GENERIC kernel.
 .It Em ecn
 Enables ECN (Explicit Congestion Notification) on this queue.
 ECN implies RED.
