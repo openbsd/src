@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.16 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.17 2002/06/15 10:59:06 gluk Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -654,7 +654,7 @@ device_smart_enable(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_EN;
+	req.features = ATA_SMART_EN;
 
 	ata_command(&req);
 
@@ -682,7 +682,7 @@ device_smart_disable(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_DS;
+	req.features = ATA_SMART_DS;
 
 	ata_command(&req);
 
@@ -710,7 +710,7 @@ device_smart_status(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_STATUS;
+	req.features = ATA_SMART_STATUS;
 
 	ata_command(&req);
 
@@ -749,7 +749,7 @@ device_smart_autosave(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_AUTOSAVE;
+	req.features = ATA_SMART_AUTOSAVE;
 	if ((val = strtoval(argv[1], smart_autosave)) == -1)
 		goto usage;
 	req.sec_num = val;
@@ -782,7 +782,7 @@ device_smart_offline(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_OFFLINE;
+	req.features = ATA_SMART_OFFLINE;
 	if ((val = strtoval(argv[1], smart_offline)) == -1)
 		goto usage;
 	req.sec_num = val;
@@ -816,7 +816,7 @@ device_smart_read(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_READ;
+	req.features = ATA_SMART_READ;
 	req.flags = ATACMD_READ;
 	req.databuf = (caddr_t)&data;
 	req.datalen = sizeof(data);
@@ -879,7 +879,7 @@ device_smart_readlog(argc, argv)
 	req.command = ATAPI_SMART;
 	req.cylinder = 0xc24f;
 	req.timeout = 1000;
-	req.features = ATAPI_SMART_READLOG;
+	req.features = ATA_SMART_READLOG;
 	req.flags = ATACMD_READ;
 	req.sec_count = 1;
 	req.databuf = (caddr_t)inbuf;
@@ -964,7 +964,7 @@ device_smart_readlog(argc, argv)
 		memset(&req, 0, sizeof(req));
 		req.flags = ATACMD_READ;
 		req.command = ATAPI_SMART;
-		req.features = ATAPI_SMART_READLOG;
+		req.features = ATA_SMART_READLOG;
 		req.sec_count = nsect;
 		req.sec_num = SMART_READLOG_COMP;
 		req.cylinder = 0xc24f;
@@ -1118,13 +1118,13 @@ device_attr(argc, argv)
 	req.cylinder = 0xc24f;		/* LBA High = C2h, LBA Mid = 4Fh */
 	req.timeout = 1000;
 
-	req.features = ATAPI_SMART_READ;
+	req.features = ATA_SMART_READ;
 	req.flags = ATACMD_READ;
 	req.databuf = (caddr_t)&attr_val;
 	req.datalen = sizeof(attr_val);
 	ata_command(&req);
 
-	req.features = SMART_THRESHOLD;
+	req.features = ATA_SMART_THRESHOLD;
 	req.flags = ATACMD_READ;
 	req.databuf = (caddr_t)&attr_thr;
 	req.datalen = sizeof(attr_thr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atasmart.h,v 1.1 2002/06/08 12:50:42 gluk Exp $	*/
+/*	$OpenBSD: atasmart.h,v 1.2 2002/06/15 10:59:06 gluk Exp $	*/
 
 /*
  * Copyright (c) 2002 Alexander Yurchenko <grange@rt.mipt.ru>
@@ -30,7 +30,17 @@
  *
  */
 
-#define SMART_THRESHOLD		0xd1	/* SMART read threshold */
+/* ATA SMART subcommands */
+#define ATA_SMART_READ		0xd0 /* SMART read data */
+#define ATA_SMART_THRESHOLD	0xd1 /* SMART read threshold */
+#define ATA_SMART_AUTOSAVE	0xd2 /* SMART en-/disable attr. autosave */
+#define ATA_SMART_SAVE		0xd3 /* SMART save attributes */
+#define ATA_SMART_OFFLINE	0xd4 /* SMART execute offline immediately */
+#define ATA_SMART_READLOG	0xd5 /* SMART read log */
+#define ATA_SMART_WRITELOG	0xd6 /* SMART write log */
+#define ATA_SMART_EN		0xd8 /* SMART enable operations */
+#define ATA_SMART_DS		0xd9 /* SMART disable operations */
+#define ATA_SMART_STATUS	0xda /* SMART return status */
 
 /* device attribute */
 struct attribute {
@@ -204,8 +214,8 @@ struct smart_log_self {
 #define SMART_OFFLINE_SHORTCAP	129
 #define SMART_OFFLINE_EXTENCAP	130
 
-#define SMART_AUTOSAVE_EN	0xf1
 #define SMART_AUTOSAVE_DS	0x00
+#define SMART_AUTOSAVE_EN	0xf1
 
 #define SMART_READLOG_DIR	0x00
 #define SMART_READLOG_SUM	0x01
@@ -214,4 +224,4 @@ struct smart_log_self {
 #define SMART_READLOG_SELF	0x06
 #define SMART_READLOG_ESELF	0x07
 
-#define SMART_LOG_MSECT	0x01
+#define SMART_LOG_MSECT		0x01
