@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.6 2000/02/27 04:59:10 hugh Exp $
+.\"     $OpenBSD: securelevel.7,v 1.7 2000/03/19 19:25:37 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -67,7 +67,7 @@ and
 .Pa /dev/kmem
 may not be written to
 .It
-raw disk devices of mounted filesystems are read-only
+raw disk devices of mounted file systems are read-only
 .It
 system immutable and append-only file flags may not be removed
 .It
@@ -99,34 +99,40 @@ variables may not be raised
 .Sh DESCRIPTION
 Securelevel provides convenient means of
 .Dq locking down
-a system to a degree suited to its environment. It is normally set at
-boot via the
+a system to a degree suited to its environment.
+It is normally set at boot via the
 .Xr rc.securelevel 8
 script, or the superuser may raise securelevel at any time by modifying the
 .Va kern.securelevel
 .Xr sysctl 8
-variable. However, only
+variable.
+However, only
 .Xr init 8
-may lower it once the system has entered secure mode. A kernel built with
-.Dq option INSECURE
+may lower it once the system has entered secure mode.
+A kernel built with
+.Cm option INSECURE
 in the config file will default to permanently insecure mode.
 .Pp
 Highly secure mode may seem Draconian, but is intended as a last line of
-defence should the superuser account be compromised. Its effects preclude
+defence should the superuser account be compromised.
+Its effects preclude
 circumvention of file flags by direct modification of a raw disk device,
-or erasure of a filesystem by means of
+or erasure of a file system by means of
 .Xr newfs 8 .
 Further, it can limit the potential damage of a compromised
 .Dq firewall
-by prohibiting the modification of packet filter rules. Preventing
+by prohibiting the modification of packet filter rules.
+Preventing
 the system clock from being set backwards aids in post-mortem analysis
-and helps ensure the integrity of logs. Precision timekeeping is not
+and helps ensure the integrity of logs.
+Precision timekeeping is not
 affected because the clock may still be slowed.
 .Pp
 Because securelevel can be modified with the in-kernel debugger
 .Xr ddb 4 ,
 a convenient means of locking it off (if present) is provided
-on highly secure systems. This is accomplished by setting
+on highly secure systems.
+This is accomplished by setting
 .Va ddb.console
 and
 .Va ddb.panic
@@ -144,11 +150,10 @@ utility.
 .Xr init 8 ,
 .Xr rc 8 ,
 .Xr sysctl 8
-.Sh BUGS
-The list of securelevel's effects may not be comprehensive.
 .Sh HISTORY
 The
 .Nm
 manual page first appeared in
 .Ox 2.6 .
-
+.Sh BUGS
+The list of securelevel's effects may not be comprehensive.

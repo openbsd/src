@@ -1,3 +1,4 @@
+.\"	$OpenBSD: stdarg.3,v 1.5 2000/03/19 19:25:25 aaron Exp $
 .\"	$NetBSD: stdarg.3,v 1.3 1994/11/30 15:24:37 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -57,13 +58,13 @@ types.
 The include file
 .Aq Pa stdarg.h
 declares a type
-.Pq Em va_list
+.Pq Li va_list
 and defines three macros for stepping
 through a list of arguments whose number and types are not known to
 the called function.
 .Pp
 The called function must declare an object of type
-.Em va_list
+.Li va_list
 which is used by the macros
 .Fn va_start ,
 .Fn va_arg ,
@@ -101,7 +102,7 @@ argument in the call.
 The parameter
 .Fa ap
 is the
-.Em va_list Fa ap
+.Li va_list Fa ap
 initialized by
 .Fn va_start .
 Each call to
@@ -114,7 +115,7 @@ The parameter
 is a type name specified so that the type of a pointer to an
 object that has the specified type can be obtained simply by
 adding a
-.Dq \&*
+.Ql *
 to
 .Fa type .
 .Pp
@@ -203,6 +204,6 @@ code,
 but it also creates difficulties for variadic functions that
 wish to pass all of their arguments on to a function
 that takes a
-.Em va_list
+.Li va_list
 argument, such as
 .Xr vfprintf 3 .

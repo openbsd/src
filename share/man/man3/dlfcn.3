@@ -1,3 +1,4 @@
+.\"	$OpenBSD: dlfcn.3,v 1.10 2000/03/19 19:25:23 aaron Exp $
 .\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -51,13 +52,17 @@ These functions provide an interface to the run-time linker
 .Xr ld.so .
 They allow new shared objects to be loaded into a process's address space
 under program control.
+.Pp
 The
 .Fn dlopen
-function takes a name of a shared object as its first argument. The
-shared object is mapped into the address space, relocated and its external
+function takes a name of a shared object as its first argument.
+The shared object is mapped into the address space, relocated, and its external
 references are resolved in the same way as is done with the implicitly loaded
-shared libraries at program startup. The argument can either be an absolute
-pathname or it can be of the form
+shared libraries at program startup.
+.Pp
+The
+.Fa path
+argument can either be an absolute pathname or it can be of the form
 .Sm off
 .Do Xo lib Ao name Ac .so
 .Op .xx Op .yy Xc
@@ -69,6 +74,7 @@ shared library searches.
 The second argument currently has no effect, but should be set to
 .Dv DL_LAZY
 for future compatibility.
+.Pp
 .Fn dlopen
 returns a handle to be used in calls to
 .Fn dlclose ,
@@ -84,7 +90,8 @@ a handle referring to the resident copy is returned.
 .Fn dlclose
 unlinks and removes the object referred to by
 .Fa handle
-from the process address space. If multiple calls to
+from the process address space.
+If multiple calls to
 .Fn dlopen
 have been done on this object
 .Po or the object was once loaded at startup time
@@ -96,15 +103,16 @@ looks for a definition of
 .Fa symbol
 in the shared object designated by
 .Fa handle .
-The symbol's address is returned. If the symbol cannot be resolved,
+The symbol's address is returned.
+If the symbol cannot be resolved,
 .Dv NULL
 is returned.
 .Pp
 .Fn dlctl
 provides an interface similar to
 .Xr ioctl 2
-to control several aspects of the run-time linker's operation. This interface
-is
+to control several aspects of the run-time linker's operation.
+This interface is
 .Ud .
 .Pp
 .Fn dlerror

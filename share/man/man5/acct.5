@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.5 1998/11/26 04:25:58 aaron Exp $
+.\"	$OpenBSD: acct.5,v 1.6 2000/03/19 19:25:26 aaron Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -46,8 +46,8 @@
 The kernel maintains the following
 .Fa acct
 information structure for all
-processes. If a process terminates, and accounting is enabled,
-the kernel calls the
+processes.
+If a process terminates, and accounting is enabled, the kernel calls the
 .Xr acct 2
 function call to prepare and append the record
 to the accounting file.

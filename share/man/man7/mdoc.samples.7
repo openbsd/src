@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.21 2000/03/04 22:19:33 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.22 2000/03/19 19:25:35 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -73,7 +73,8 @@ page layout macros
 make up the
 .Em "page structure domain"
 which consists of macros for titles, section headers, displays
-and lists. Essentially items which affect the physical position
+and lists.
+Essentially items which affect the physical position
 of text on a formatted page.
 In addition to the page structure domain, there are two more domains,
 the manual domain and the general text domain.
@@ -758,8 +759,8 @@ The result is:
 .Dl Li sptr, ptr),
 .Pp
 The punctuation is not recognized and all is output in the
-literal font. If the punctuation is separated by a leading
-whitespace:
+literal font.
+If the punctuation is separated by a leading whitespace:
 .Pp
 .Dl \&.Li "sptr , ptr ) ,"
 .Pp
@@ -1073,7 +1074,8 @@ and
 may be used with
 .Ql \&.Fa
 (function argument)
-to get around the limitation. For example:
+to get around the limitation.
+For example:
 .Bd -literal -offset indent
 \&.Fo "int res_mkquery"
 \&.Fa "int op"
@@ -1131,8 +1133,8 @@ section.
 It may be used
 anywhere else in the man page without problems, but in the
 .Sx SYNOPSIS
-section it causes a line break after its use. Its main purpose
-is to present the function type in kernel normal form
+section it causes a line break after its use.
+Its main purpose is to present the function type in kernel normal form
 of a section two or three man page by forcing the
 function name to appear on the next line.
 .Pp
@@ -1382,7 +1384,8 @@ macro is
 .Em not
 parsed and
 .Em not
-callable. It accepts at most two arguments.
+callable.
+It accepts at most two arguments.
 .Ss BSD Macro
 .Dl Usage: .Bx [Version/release] ... \*(Pu
 .Bl -tag -width ".Bx 4.3 ) ," -compact -offset 14n
@@ -1499,7 +1502,8 @@ All handle punctuation properly, as long as it
 is presented one character at a time and separated by spaces.
 The quoting macros examine opening and closing punctuation
 to determine whether it comes before or after the
-enclosing string. This makes some nesting possible.
+enclosing string.
+This makes some nesting possible.
 .Bl -tag -width xxx,xxxx
 .It Li \&.Ec , \&.Eo
 These macros expect the first argument to be the
@@ -1511,8 +1515,8 @@ than
 .Xr nroff .
 If formatted with
 .Xr nroff ,
-a quoted literal is always quoted. If formatted with
-troff, an item is only quoted if the width
+a quoted literal is always quoted.
+If formatted with troff, an item is only quoted if the width
 of the item is less than three constant width characters.
 This is to make short strings more visible where the font change
 to literal (constant width) is less noticeable.
@@ -1849,8 +1853,7 @@ The
 .Sx SYNOPSIS
 section describes the typical usage of the
 subject of a man page.
-The  macros required
-are either
+The macros required are either
 .Ql ".Nm" ,
 .Ql ".Cd" ,
 .Ql ".Fn" ,
@@ -1969,7 +1972,8 @@ macro.
 Cross references in the
 .Sx SEE ALSO
 section should be sorted by section number, and then
-placed in alphabetical order and comma separated.  For example:
+placed in alphabetical order and comma separated.
+For example:
 .Pp
 .Xr ls 1 ,
 .Xr ps 1 ,

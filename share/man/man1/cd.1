@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.1,v 1.7 1999/06/05 13:18:30 aaron Exp $
+.\"	$OpenBSD: cd.1,v 1.8 2000/03/19 19:25:21 aaron Exp $
 .\"	$NetBSD: cd.1,v 1.2 1994/11/30 08:34:59 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -59,16 +59,22 @@ environment variable (see below).
 Note that
 .Nm
 is implemented as a built-in command in all shells and not as a stand-alone
-program.  Because each process has its own working directory, a separate
+program.
+Because each process has its own working directory, a separate
 .Nm
 utility would have no effect (it would change the directory and exit,
-leaving the working directory in the parent unchanged).  Different
-shells may implement
+leaving the working directory in the parent unchanged).
+Different shells may implement
 .Nm
-with features different from those described here.  Please consult
-the manual for your specific shell.
+with features different from those described here.
+Please consult the manual for your specific shell.
+.Pp
+The
+.Nm
+utility exits 0 on success or >0 if an error occurred.
 .Sh ENVIRONMENT
-The following environment variables affect the execution of cd:
+The following environment variables affect the execution of
+.Nm cd :
 .Pp
 .Bl -tag -width indent
 .It Ev CDPATH
@@ -102,10 +108,6 @@ becomes the new working directory.
 See
 .Xr environ 7
 for more information on environment variables.
-.Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr pwd 1 ,

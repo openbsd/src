@@ -1,4 +1,4 @@
-.\"	$OpenBSD: environ.7,v 1.8 2000/02/14 15:19:47 aaron Exp $
+.\"	$OpenBSD: environ.7,v 1.9 2000/03/19 19:25:34 aaron Exp $
 .\"	$NetBSD: environ.7,v 1.4 1995/07/03 19:45:07 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -47,7 +47,8 @@ An array of strings called the
 .Dq environment
 is made available by
 .Xr execve 2
-when a process begins.  By convention these strings have the form
+when a process begins.
+By convention these strings have the form
 .Ar name Ns No = Ns Ar value .
 The following variables are recognized by various commands:
 .Bl -tag -width BLOCKSIZE
@@ -141,8 +142,8 @@ and
 .Xr termcap .
 .It Ev TERMPATH
 A sequence of pathnames of termcap files, separated by colons or spaces,
-which are searched for terminal descriptions in the order listed.  Having
-no
+which are searched for terminal descriptions in the order listed.
+Having no
 .Ev TERMPATH
 is equivalent to a
 .Ev TERMPATH

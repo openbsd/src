@@ -1,3 +1,4 @@
+.\"	$OpenBSD: intro.3,v 1.9 2000/03/19 19:25:24 aaron Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -52,8 +53,8 @@ must be indicated at compile time with the
 option of the compiler.
 .Pp
 The various libraries (followed by the loader flag):
-.Bl -tag -width "libc (-lc)"
-.It Xr libc Pq Fl l Ns Ar c
+.Bl -tag -width Ds
+.It libc Pq Fl l Ns Ar c
 Standard C library functions.
 When using the C compiler
 .Xr cc 1 ,
@@ -73,18 +74,19 @@ string operators,
 character tests and character operators,
 des encryption routines,
 storage allocation, time functions, signal handling and more.
-.It Xr libc_r Pq Fl l Ns Ar c_r
-Reentrant C library. Contains POSIX 1003.1c
+.It libc_r Pq Fl l Ns Ar c_r
+Reentrant C library.
+Contains POSIX 1003.1c
 .Xr pthreads 3
 API and thread scheduler, as well as all of the functions
 found in
 .Xr libc .
-.It Xr libcurses Pq Fl l Ns Ar curses
+.It libcurses Pq Fl l Ns Ar curses
 Terminal independent screen management routines
 for two dimensional non-bitmap display terminals.
-(See
-.Xr curses 3 . )
-.It Xr libcompat Pq Fl l Ns Ar compat
+See
+.Xr curses 3 .
+.It libcompat Pq Fl l Ns Ar compat
 Functions which are obsolete but are available for compatibility with
 .Bx 4.3 .
 In particular,
@@ -94,17 +96,19 @@ have been included for source code compatibility.
 Use of these routines should, for the most part, be avoided.
 The manual page entry for each compatibility routine
 indicates the proper interface to use.
-.It Xr libkvm Pq Fl l Ns Ar kvm
-Kernel virtual interface library.  For more information, see
+.It libkvm Pq Fl l Ns Ar kvm
+Kernel virtual interface library.
+See
 .Xr kvm 3 .
-.It Xr libl Pq Fl l Ns Ar l
+.It libl Pq Fl l Ns Ar l
 The library for
 .Xr lex 1 .
-.It Xr libm Pq Fl l Ns Ar m
+.It libm Pq Fl l Ns Ar m
 The math library,
-.Em libm .  See
+.Em libm .
+See
 .Xr math 3 .
-.It Xr libtermcap Pq Fl l Ns Ar termcap
+.It libtermcap Pq Fl l Ns Ar termcap
 The terminal independent operation library package. (See
 .Xr termcap 3 . )
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: a.out.5,v 1.6 1999/09/23 04:12:06 alex Exp $
+.\"	$OpenBSD: a.out.5,v 1.7 2000/03/19 19:25:26 aaron Exp $
 .\"	$NetBSD: a.out.5,v 1.8 1994/11/30 19:31:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -119,8 +119,8 @@ returns a few flags:
 .It Dv EX_DYNAMIC
 Indicates that the executable requires the services of the run-time link editor.
 .It Dv EX_PIC
-Indicates that the object contains position independent code. This flag is
-set by
+Indicates that the object contains position independent code.
+This flag is set by
 .Xr as 1
 when given the
 .Fl k
@@ -287,8 +287,8 @@ If set, the symbol, as identified by the
 field, is to be relocated to an offset into the Procedure Linkage Table.
 .It Fa r_relative
 If set, this relocation is relative to the (run-time) load address of the
-image this object file is going to be a part of. This type of relocation
-only occurs in shared objects.
+image this object file is going to be a part of.
+This type of relocation only occurs in shared objects.
 .It Fa r_copy
 If set, this relocation record identifies a symbol whose contents should
 be copied to the location given in
@@ -399,7 +399,8 @@ the values are described in
 This field provides information on the nature of the symbol independent of
 the symbol's location in terms of segments as determined by the
 .Fa n_type
-field. Currently, the lower 4 bits of the
+field.
+Currently, the lower 4 bits of the
 .Fa n_other
 field hold one of two values:
 .Dv AUX_FUNC

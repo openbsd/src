@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.8 2000/01/05 01:04:14 deraadt Exp $
+.\"	$OpenBSD: hosts.5,v 1.9 2000/03/19 19:25:29 aaron Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -54,8 +54,9 @@ Aliases
 .Ed
 .Pp
 Items are separated by any number of blanks and/or
-tab characters.  A
-.Dq #
+tab characters.
+A
+.Ql #
 indicates the beginning of
 a comment; characters up to the end of the line are
 not interpreted by routines which search the file.
@@ -87,7 +88,8 @@ Center
 .Pq Tn NIC ,
 though local changes may be required
 to bring it up to date regarding unofficial aliases
-and/or unknown hosts.  As the data base maintained at
+and/or unknown hosts.
+As the data base maintained at
 .Tn NIC
 is incomplete, use of the name server is recommended for
 sites on the
@@ -125,7 +127,8 @@ Lines in
 .Pa /etc/hosts
 are limited to
 .Dv BUFSIZE
-characters (currently 1024).  Longer lines will be ignored.
+characters (currently 1024).
+Longer lines will be ignored.
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.5,v 1.10 1999/07/09 13:35:38 aaron Exp $
+.\"	$OpenBSD: ethers.5,v 1.11 2000/03/19 19:25:27 aaron Exp $
 .\"	$NetBSD: ethers.5,v 1.2 1994/11/30 19:31:16 jtc Exp $
 .\"
 .\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
@@ -20,7 +20,8 @@ indicates the beginning of a comment; characters up to the end of
 the line are not interpreted by routines which search the file.
 .Pp
 Ethernet addresses are expressed as six hexadecimal numbers separated by
-colons. The functions described in
+colons.
+The functions described in
 .Xr ethers 3
 can read and produce this format.
 .Pp
@@ -41,7 +42,8 @@ Lines in
 .Pa /etc/ethers
 are limited to
 .Dv BUFSIZE
-characters (currently 1024).  Longer lines will be ignored.
+characters (currently 1024).
+Longer lines will be ignored.
 .Sh HISTORY
 The
 .Nm

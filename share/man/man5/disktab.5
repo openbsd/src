@@ -1,3 +1,4 @@
+.\"	$OpenBSD: disktab.5,v 1.6 2000/03/19 19:25:27 aaron Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -53,16 +54,17 @@ to initialize the disk label on the disk.
 The format is patterned
 after the
 .Xr termcap 5
-terminal database.  Entries in
+terminal database.
+Entries in
 .Nm
 consist of a number of colon
 .Pq Sq \&:
-separated fields.  The
-first entry for each disk gives the names which are
+separated fields.
+The first entry for each disk gives the names which are
 known for the disk, separated by
 .Dq \&|
-characters.  The
-last name given should be a long name fully identifying
+characters.
+The last name given should be a long name fully identifying
 the disk.
 .Pp
 The following list indicates the normal values

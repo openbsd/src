@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.equiv.5,v 1.3 1998/11/29 15:47:24 aaron Exp $
+.\"	$OpenBSD: hosts.equiv.5,v 1.4 2000/03/19 19:25:29 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd Vierling
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,8 @@ wildcard (allow all remote users).
 If a
 .Ar username
 is specified, only that user from the specified host may login to the
-local machine.  If a
+local machine.
+If a
 .Ar username
 is not specified, any user may login with the same user name.
 .Sh EXAMPLES
@@ -100,7 +101,8 @@ The user
 .Ar username
 on
 .Ar somehost
-may login to the local host.  If specified in
+may login to the local host.
+If specified in
 .Pa /etc/hosts.equiv ,
 the user may login with only the same user name.
 .Ed
@@ -116,8 +118,10 @@ may login to the local host from any machine listed in the netgroup
 + +
 .Ed
 .Bd -filled -offset indent -compact
-Two severe security hazards.  In the first case, allows a user on any
-machine to login to the local host as the same user name.  In the second
+Two severe security hazards.
+In the first case, allows a user on any
+machine to login to the local host as the same user name.
+In the second
 case, allows any user on any machine to login to the local host (as any
 user, if in
 .Pa /etc/hosts.equiv ) .
@@ -126,7 +130,8 @@ user, if in
 The user name checks provided by this mechanism are
 .Em not
 secure, as the remote user name is received by the server unchecked
-for validity.  Therefore this mechanism should only be used
+for validity.
+Therefore this mechanism should only be used
 in an environment where all hosts are completely trusted.
 .Pp
 A numeric host address instead of a host name can help security
@@ -153,7 +158,8 @@ Logins as root only check root's
 .Pa .rhosts
 file; the
 .Pa /etc/hosts.equiv
-file is not checked for security.  Access permitted through root's
+file is not checked for security.
+Access permitted through root's
 .Pa .rhosts
 file is typically only for
 .Xr rsh 1 ,

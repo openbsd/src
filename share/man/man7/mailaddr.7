@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailaddr.7,v 1.4 1999/05/23 14:11:09 aaron Exp $
+.\"	$OpenBSD: mailaddr.7,v 1.5 2000/03/19 19:25:34 aaron Exp $
 .\"	$NetBSD: mailaddr.7,v 1.3 1994/11/30 19:07:17 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1990, 1993
@@ -42,12 +42,13 @@
 .Nd mail addressing description
 .Sh DESCRIPTION
 Mail addresses are based on the Internet protocol listed at the end of this
-manual page.  These addresses are in the general format
+manual page.
+These addresses are in the general format
 .Pp
 .Dl user@domain
 .Pp
-where a domain is a hierarchical dot separated list of subdomains.  For
-example, a valid address is:
+where a domain is a hierarchical dot separated list of subdomains.
+For example, a valid address is:
 .Pp
 .Dl eric@CS.Berkeley.EDU
 .Pp
@@ -59,7 +60,8 @@ to CS over the Ethernet rather than going via the Berkeley Internet
 gateway.
 .Ss Abbreviation
 Under certain circumstances it may not be necessary to type the entire
-domain name.  In general, anything following the first dot may be omitted
+domain name.
+In general, anything following the first dot may be omitted
 if it is the same as the domain from which you are sending the message.
 For example, a user on
 .Dq calder.berkeley.edu
@@ -71,7 +73,8 @@ since it is the same on both sending
 and receiving hosts.
 .Ss Compatibility
 Certain old address formats are converted to the new format to provide
-compatibility with the previous mail system.  In particular,
+compatibility with the previous mail system.
+In particular,
 .Pp
 .Dl user@host
 .Pp
@@ -103,14 +106,17 @@ on for compatibility with older UUCP hosts.
 Domain names (i.e., anything after the
 .Dq @
 sign) may be given in any mixture
-of upper and lower case with the exception of UUCP hostnames.  Most hosts
+of upper and lower case with the exception of UUCP hostnames.
+Most hosts
 accept any combination of case in user names, with the notable exception of
 MULTICS sites.
 .Ss Route-addrs
 Under some circumstances it may be necessary to route a message through
-several hosts to get it to the final destination.  Normally this routing
+several hosts to get it to the final destination.
+Normally this routing
 is done automatically, but sometimes it is desirable to route the message
-manually.  Addresses which show these relays are termed
+manually.
+Addresses which show these relays are termed
 .Dq route-addrs .
 These use the syntax:
 .Pp
@@ -127,8 +133,8 @@ path to
 .Dq hostc .
 .Pp
 Route-addrs occur frequently on return addresses, since these are generally
-augmented by the software at each host.  It is generally possible to ignore
-all but the
+augmented by the software at each host.
+It is generally possible to ignore all but the
 .Dq user@hostc
 part of the address to determine the actual sender.
 .Pp
@@ -151,8 +157,8 @@ Some other networks can be reached by giving the name of the network as the
 last component of the domain.
 .Em This is not a standard feature
 and may
-not be supported at all sites.  For example, messages to CSNET or BITNET sites
-can often be sent to
+not be supported at all sites.
+For example, messages to CSNET or BITNET sites can often be sent to
 .Dq user@host.CSNET
 or
 .Dq user@host.BITNET ,

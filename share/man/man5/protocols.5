@@ -1,4 +1,4 @@
-.\"	$OpenBSD: protocols.5,v 1.6 2000/02/29 04:48:39 aaron Exp $
+.\"	$OpenBSD: protocols.5,v 1.7 2000/03/19 19:25:32 aaron Exp $
 .\"	$NetBSD: protocols.5,v 1.3 1994/11/30 19:31:27 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -45,7 +45,8 @@ The
 .Nm
 file contains information regarding the known protocols used in the
 .Tn DARPA
-Internet.  For each protocol a single line should be present
+Internet.
+For each protocol a single line should be present
 with the following information:
 .Bd -unfilled -offset indent
 official protocol name
@@ -77,7 +78,8 @@ Lines in
 .Pa /etc/protocols
 are limited to
 .Dv BUFSIZ
-characters (currently 1024).  Longer lines will be ignored.
+characters (currently 1024).
+Longer lines will be ignored.
 .Sh HISTORY
 The
 .Nm

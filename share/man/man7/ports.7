@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.8 2000/01/29 20:22:30 espie Exp $
+.\" $OpenBSD: ports.7,v 1.9 2000/03/19 19:25:37 aaron Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -40,15 +40,16 @@ for users and administrators to install applications.
 Each
 .Em port
 contains any patches necessary to make the original
-application source code compile and run on BSD.  Compiling an
-application is as simple as typing
+application source code compile and run on BSD.
+Compiling an application is as simple as typing
 .Ic make
-in the port directory!  The
+in the port directory!
+The
 .Pa Makefile
 automatically fetches the
 application source code, either from a local disk or via ftp, unpacks it
-on the local system, applies the patches, and compiles it.  If all goes well,
-simply type
+on the local system, applies the patches, and compiles it.
+If all goes well, simply type
 .Ic sudo make install
 to install the application.
 .Pp
@@ -85,18 +86,20 @@ retrieve information relevant to a given port.
 Individual ports are controlled through a few documented targets.
 Some of these targets work recursively through subdirectories, so that
 someone can, for examples, install all of the net
-ports.  The targets that do this are
+ports.
+The targets that do this are
 .Ar build , checksum , clean , configure , extract , fetch , fetch-list , 
 .Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
 .Ar list-distfiles 
 and
 .Ar package .
 .Pp
-Target names starting with _  are private to the ports infrastructure,
+Target names starting with _ are private to the ports infrastructure,
 should not be invoked directly, and are liable to change without notice.
 .Pp
 In the following list, each target will run the preceeding targets
-in order automatically.  That is,
+in order automatically.
+That is,
 .Ar build
 will be run
 .Pq if necessary
@@ -132,7 +135,8 @@ will skip this step.
 .It Ar depends
 Install
 .Pq or compile if only compilation is necessary
-any dependencies of the current port.  When called by the
+any dependencies of the current port.
+When called by the
 .Ar extract, install
 or
 .Ar fetch
@@ -148,17 +152,19 @@ Expand the distfile into a work directory.
 .It Ar patch
 Apply any patches that are necessary for the port.
 .It Ar configure
-Configure the port.  Some ports will ask questions during
-this stage.  See
+Configure the port.
+Some ports will ask questions during this stage.
+See
 .Ev INTERACTIVE
 and
 .Ev BATCH .
 .It Ar build
-Build the port.  This is the same as calling the
+Build the port.
+This is the same as calling the
 .Ar all
 target.
 .It Ar install
-Install the port and register it with the package system.  
+Install the port and register it with the package system.
 .El
 .Pp
 The following targets are not run during the normal install process.
@@ -169,20 +175,23 @@ build the port.
 .It Ar depends-list package-depends
 Print an ordered list of all the compile and run dependencies.
 .It Ar clean
-Remove the expanded source code.  This does not recurse to dependencies unless
+Remove the expanded source code.
+This does not recurse to dependencies unless
 .Ev CLEANDEPENDS
 is defined to
 .Dv Yes .
 .It Ar distclean
 Remove the port's distfile(s) and perform the
 .Ar clean
-operation.  This does not recurse to dependencies.
+operation.
+This does not recurse to dependencies.
 .It Ar reinstall
 Use this to restore a port after using
 .Xr pkg_delete 1 .
 .It Ar package
-Make a binary package for the port.  The port will be installed if it
-hasn't already been.  The package is a .tgz file that can be used to
+Make a binary package for the port.
+The port will be installed if it hasn't already been.
+The package is a .tgz file that can be used to
 install the port on other machines with
 .Xr pkg_add 1 .
 If the directory specified by
@@ -196,7 +205,8 @@ and
 .Sh PORT VARIABLES
 These can be changed in the environment, or in 
 .Pa /etc/mk.conf
-for persistence.  They can also be set on make's command line, e.g.,
+for persistence.
+They can also be set on make's command line, e.g.,
 .Ic make VAR_FOO=foo
 .Pp
 Boolean variables should be set to 
@@ -216,7 +226,8 @@ and edit it.
 .Pp
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
-Location of the ports tree.  This is
+Location of the ports tree.
+This is
 .Pa /usr/ports
 on
 .\" .Fx
@@ -285,7 +296,8 @@ recurse to dependencies (deprecated, use
 .Ev CLEANDEPENDS 
 instead).
 .It Ev FETCH_CMD
-Command to use to fetch files.  Normally
+Command to use to fetch files.
+Normally
 .Xr fetch 1 .
 .It Ev FORCE_PKG_REGISTER
 If set, overwrite any existing package registration on the system.
@@ -326,8 +338,10 @@ The FreeBSD handbook.
 This man page was originated by
 David O'Brien.
 The FreeBSD ports collection is maintained by Satoshi Asami
-and the awesome ports team.  The OpenBSD ports collection has been maintained by
-Marco S Hyman in the past. It is currently managed by Christopher Turan,
+and the awesome ports team.
+The OpenBSD ports collection has been maintained by
+Marco S Hyman in the past.
+It is currently managed by Christopher Turan,
 with much help from Brad Smith
 and a host of others found at ports@openbsd.org.
 .Sh HISTORY

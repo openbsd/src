@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.8 1999/07/09 13:35:38 aaron Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.9 2000/03/19 19:25:31 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -42,8 +42,8 @@ file, consisting of
 describes the configuration of the password cipher used
 to encrypt local or YP passwords.
 .Pp
-There are default, user and group specific stanzas. If no user
-or group
+There are default, user and group specific stanzas.
+If no user or group
 stanza to a specific option is available, the default stanza
 is used.
 .Pp
@@ -51,12 +51,11 @@ To differentiate between user and group stanzas, groups are prefixed
 with a single dot
 .Pq Sq \&. .
 .Pp
-Some of the fields and their possible values that can appear in
-this file are:
-.Pp
-.Bl -tag -width localcipher -offset indent
-.It localcipher
-The cipher to use for local passwords. Possible values are:
+Some fields and their possible values that can appear in this file are:
+.Bl -tag -width localcipher
+.It Sy localcipher
+The cipher to use for local passwords.
+Possible values are:
 .Dq old ,
 .Dq newsalt,<rounds> ,
 .Dq md5 ,
@@ -67,19 +66,20 @@ For
 the value of rounds is a 24-bit integer with a minmum of 7250 rounds.
 For
 .Dq blowfish
-the value can be between 4 and 31. It specifies the base 2 logarithm of
-the number of rounds.
-.It ypcipher
-The cipher to use for YP passwords. The possible values are the same as
-for localcipher.
+the value can be between 4 and 31.
+It specifies the base 2 logarithm of the number of rounds.
+.It Sy ypcipher
+The cipher to use for YP passwords.
+The possible values are the same as for localcipher.
 .El
 .Pp
 To retrieve information from this file use
 .Xr pw_getconf 3 .
 .Pp
-.Sh EXAMPLE
+.Sh EXAMPLES
 Use blowfish as the local cipher; add some more rounds for root and wheel
-members. The old Unix crypt is used as YP cipher:
+members.
+The old Unix crypt is used as YP cipher:
 .Bd -literal
  default:
       localcipher = blowfish,4
@@ -91,6 +91,10 @@ members. The old Unix crypt is used as YP cipher:
  .wheel:
       localcipher = blowfish,5
 .Ed
+.Sh FILES
+.Bl -tag -width /etc/passwd.conf -compact
+.It Pa /etc/passwd.conf
+.El
 .Sh SEE ALSO
 .Xr passwd 1 ,
 .Xr pw_getconf 3 ,

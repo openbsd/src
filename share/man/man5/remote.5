@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.6 2000/02/29 04:48:39 aaron Exp $
+.\"	$OpenBSD: remote.5,v 1.7 2000/03/19 19:25:32 aaron Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -48,7 +48,8 @@ and their attributes are stored in an
 file which
 is structured somewhat like the
 .Xr termcap 5
-file.  Each line in the file provides a description for a single
+file.
+Each line in the file provides a description for a single
 .Xr system .
 Fields are separated by a colon
 .Pq Sq \&: .
@@ -57,14 +58,15 @@ Lines ending with a
 character immediately followed by a newline are
 continued on the next line.
 .Pp
-The first entry is the name(s) of the host system.  If there is more
+The first entry is the name(s) of the host system.
+If there is more
 than one name for a system, the names are separated by vertical bars
 .Pq Sq \&| .
-After the name of the system comes the fields of the description.  A
-field name followed by an equal sign
+After the name of the system comes the fields of the description.
+A field name followed by an equal sign
 .Pq Sq =
-indicates a string value follows.  A field
-name followed by a pound sign
+indicates a string value follows.
+A field name followed by a pound sign
 .Pq Sq #
 indicates a following numeric value.
 .Pp
@@ -78,20 +80,23 @@ and the
 .Xr cu
 interface to
 .Xr tip ,
-as follows.  When
+as follows.
+When
 .Xr tip
 is invoked with only a phone number, it looks for an entry
 of the form
 .Dq tip300 ,
 where 300 is the baud rate with
-which the connection is to be made.  When the
+which the connection is to be made.
+When the
 .Xr cu
 interface is used, entries of the form
 .Dq cu300
 are used.
 .Sh CAPABILITIES
 Capabilities are either strings (str), numbers (num), or boolean
-flags (bool).  A string capability is specified by
+flags (bool).
+A string capability is specified by
 .Em capability Ns Ar = Ns Em value ;
 for example,
 .Dq dv=/dev/harris .
@@ -114,8 +119,8 @@ The default baud rate is 300 baud.
 .It Sy \&cm
 (str)
 An initial connection message to be sent
-to the remote host.  For example, if a
-host is reached through port selector, this
+to the remote host.
+For example, if a host is reached through port selector, this
 might be set to the appropriate sequence
 required to switch to the host.
 .It Sy \&cu
@@ -181,7 +186,8 @@ string is sent at end-of-file.
 .It Sy \&pa
 (str)
 The type of parity to use when sending data
-to the host.  This may be one of
+to the host.
+This may be one of
 .Dq even ,
 .Dq odd ,
 .Dq none ,
@@ -204,8 +210,8 @@ file for a list of telephone numbers (see
 .It Sy \&tc
 (str)
 Indicates that the list of capabilities is continued
-in the named description.  This is used
-primarily to share common capability information.
+in the named description.
+This is used primarily to share common capability information.
 .El
 .Pp
 Here is a short example showing the use of the capability continuation
