@@ -1,7 +1,7 @@
-stdin:2: address family not given and translation address expands to multiple address families
-stdin:3: address family not given and translation address expands to multiple address families
 stdin:4: invalid use of table <sometable> as the redirect address of a binat rule
 stdin:5: invalid use of table <sometable> as the source address of a binat rule
-pass in dup-to (lo0 <sometable>) all
-pass in route-to (lo0 <sometable>) all
-pass in reply-to (lo0 <sometable>) all
+rdr on lo0 all -> <sometable> round-robin
+nat on lo0 all -> <sometable> round-robin
+pass in dup-to (lo0 <sometable>) round-robin all
+pass in route-to (lo0 <sometable>) round-robin all
+pass in reply-to (lo0 <sometable>) round-robin all
