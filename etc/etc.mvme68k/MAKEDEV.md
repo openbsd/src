@@ -1,28 +1,20 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/12/05 04:30:21 kjc Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.8 2003/06/18 18:08:59 todd Exp $-},
 etc.MACHINE)dnl
 dnl
-dnl Copyright (c) 2002, Miodrag Vallat.
-dnl All rights reserved.
+dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
 dnl
-dnl Redistribution and use in source and binary forms, with or without
-dnl modification, are permitted provided that the following conditions
-dnl are met:
-dnl 1. Redistributions of source code must retain the above copyright
-dnl    notice, this list of conditions and the following disclaimer.
-dnl 2. The name of the author may not be used to endorse or promote products
-dnl    derived from this software without specific prior written permission.
+dnl Permission to use, copy, modify, and distribute this software for any
+dnl purpose with or without fee is hereby granted, provided that the above
+dnl copyright notice and this permission notice appear in all copies.
 dnl
-dnl THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-dnl INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-dnl AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-dnl THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-dnl EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-dnl PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-dnl OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-dnl WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+dnl THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+dnl WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+dnl MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+dnl ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+dnl WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
 dnl *** mvme68k-specific devices
