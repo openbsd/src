@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.7 2002/09/26 22:09:53 miod Exp $
+.\"	$OpenBSD: ugen.4,v 1.8 2004/03/22 23:41:22 millert Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 1998
+.Dd December 15, 2003
 .Dt UGEN 4
 .Os
 .Sh NAME
@@ -61,11 +61,7 @@ endpoint the device accesses and the rest of the bits determine which
 USB device.
 .Pp
 If an endpoint address is used both for input and output the device
-can be opened for both read or write, but an
-.Xr open 2
-cannot specify
-.Dv O_RDWR
-mode; the endpoint must be opened once for each direction.
+can be opened for both read or write.
 .Pp
 To find out what endpoints exist there are a series of
 .Xr ioctl 2
@@ -106,7 +102,7 @@ To perform input from an interrupt endpoint
 should be used.
 A moderate amount of buffering is done by the driver.
 .Pp
-The control endpoint (endpoint 0) handles the following
+All endpoints handle the following
 .Xr ioctl 2
 calls:
 .Pp
@@ -115,7 +111,17 @@ calls:
 Allow short read transfer.
 Normally a transfer from the device which is shorter than the request
 specified is reported as an error.
+.It Dv USB_SET_TIMEOUT (int)
+Set the timeout on the device operations, the time is specified
+in milliseconds.
+The value 0 is used to indicate that there is no timeout.
+.El
 .Pp
+The control endpoint (endpoint 0) handles the following
+.Xr ioctl 2
+calls:
+.Pp
+.Bl -tag -width indent -compact
 .It Dv USB_GET_CONFIG (int)
 Get the device configuration number.
 .Pp
@@ -128,20 +134,20 @@ is the sole open endpoint.
 Get the alternative setting number for the interface with the given
 index.
 The
-.Fa config_index
+.Fa uai_config_index
 is ignored in this call.
 .Bd -literal
 struct usb_alt_interface {
-	int	config_index;
-	int	interface_index;
-	int	alt_no;
+	int	uai_config_index;
+	int	uai_interface_index;
+	int	uai_alt_no;
 };
 .Ed
 .It Dv USB_SET_ALTINTERFACE (struct usb_alt_interface)
 Set the alternative setting to the given number in the interface with the
 given index.
 The
-.Fa config_index
+.Fa uai_config_index
 is ignored in this call.
 .Pp
 This operation can only be performed when no endpoints for the interface
@@ -149,7 +155,7 @@ are open.
 .Pp
 .It Dv USB_GET_NO_ALT (struct usb_alt_interface)
 Return the number of different alternate settings in the
-.Fa alt_no
+.Fa uai_alt_no
 field.
 .Pp
 .It Dv USB_GET_DEVICE_DESC (usb_device_descriptor_t)
@@ -161,8 +167,8 @@ For convenience the current configuration can be specified by
 .Dv USB_CURRENT_CONFIG_INDEX .
 .Bd -literal
 struct usb_config_desc {
-	int	config_index;
-	usb_config_descriptor_t desc;
+	int	ucd_config_index;
+	usb_config_descriptor_t ucd_desc;
 };
 .Ed
 .Pp
@@ -173,10 +179,10 @@ For convenience the current alternative can be specified by
 .Dv USB_CURRENT_ALT_INDEX .
 .Bd -literal
 struct usb_interface_desc {
-	int	config_index;
-	int	interface_index;
-	int	alt_index;
-	usb_interface_descriptor_t desc;
+	int	uid_config_index;
+	int	uid_interface_index;
+	int	uid_alt_index;
+	usb_interface_descriptor_t uid_desc;
 };
 .Ed
 .Pp
@@ -186,11 +192,11 @@ configuration index, interface index, alternative index, and
 endpoint index.
 .Bd -literal
 struct usb_endpoint_desc {
-	int	config_index;
-	int	interface_index;
-	int	alt_index;
-	int	endpoint_index;
-	usb_endpoint_descriptor_t desc;
+	int	ued_config_index;
+	int	ued_interface_index;
+	int	ued_alt_index;
+	int	ued_endpoint_index;
+	usb_endpoint_descriptor_t ued_desc;
 };
 .Ed
 .Pp
@@ -198,16 +204,16 @@ struct usb_endpoint_desc {
 Return all the descriptors for the given configuration.
 .Bd -literal
 struct usb_full_desc {
-	int	config_index;
-	u_int	size;
-	u_char	*data;
+	int	ucd_config_index;
+	u_int	ufd_size;
+	u_char	*ufd_data;
 };
 .Ed
 .Pp
 The
-.Fa data
+.Fa ufd_data
 field should point to a memory area of the size given in the
-.Fa size
+.Fa ufd_size
 field.
 The proper size can be determined by first issuing a
 .Dv USB_GET_CONFIG_DESC
@@ -220,26 +226,29 @@ Get a string descriptor for the given language id and
 string index.
 .Bd -literal
 struct usb_string_desc {
-	int	string_index;
-	int	language_id;
-	usb_string_descriptor_t desc;
+	int	usd_string_index;
+	int	usd_language_id;
+	usb_string_descriptor_t usd_desc;
 };
 .Ed
 .Pp
 .It Dv USB_DO_REQUEST
 Send a USB request to the device on the control endpoint.
 Any data sent to/from the device is located at
-.Fa data .
+.Fa ucr_data .
 The size of the transferred data is determined from the
-.Fa request .
+.Fa ucr_request .
 The
-.Fa addr
+.Fa ucr_addr
 field is ignored in this call.
 .Bd -literal
 struct usb_ctl_request {
-	int	addr;
-	usb_device_request_t request;
-	void	*data;
+	int	ucr_addr;
+	usb_device_request_t ucr_request;
+	void	*ucr_data;
+	int	ucr_flags;
+#define	USBD_SHORT_XFER_OK	0x04	/* allow short reads */
+	int	ucr_actlen;		/* actual length transferred */
 };
 .Ed
 This is a dangerous operation in that it can perform arbitrary operations
@@ -265,11 +274,11 @@ All endpoints (except the control endpoint) for the current configuration
 can be found by iterating the
 .Fa interface_index
 from 0 to
-.Fa config_desc->bNumInterface-1
+.Fa config_desc-\*(GtbNumInterface-1
 and for each of these iterating the
 .Fa endpoint_index
 from 0 to
-.Fa interface_desc->bNumEndpoints .
+.Fa interface_desc-*(GtbNumEndpoints .
 The
 .Fa config_index
 should set to
@@ -278,6 +287,14 @@ and
 .Fa alt_index
 should be set to
 .Dv USB_CURRENT_ALT_INDEX .
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/ugenN.EE
+Endpoint
+.Pa EE
+of device
+.Pa N .
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhub 4 ,
