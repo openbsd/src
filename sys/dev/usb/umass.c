@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.37 2005/03/28 04:40:15 pascoe Exp $ */
+/*	$OpenBSD: umass.c,v 1.38 2005/03/28 04:46:33 pascoe Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -782,8 +782,9 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 
 	/* Initialise a USB control transfer and then schedule it */
 
-	usbd_setup_default_xfer(xfer, sc->sc_udev, (void *) sc, sc->timeout,
-		req, buffer, buflen, flags, sc->sc_methods->wire_state);
+	usbd_setup_default_xfer(xfer, sc->sc_udev, (void *) sc,
+	    USBD_DEFAULT_TIMEOUT, req, buffer, buflen, flags,
+	    sc->sc_methods->wire_state);
 
 	err = usbd_transfer(xfer);
 	if (err && err != USBD_IN_PROGRESS) {
