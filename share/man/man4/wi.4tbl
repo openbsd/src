@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.8 2002/04/08 04:21:49 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.9 2002/04/11 20:34:06 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -52,7 +52,7 @@ All four chipsets provide a similar interface to the driver.
 .Pp
 All host/device interaction is via programmed I/O.
 Supported features include 802.11 and 802.3 frames, power management, BSS,
-WDS and ad-hoc operation modes.
+IBSS, WDS and ad-hoc operation modes.
 Cards based on the Intersil PRISM-II and PRISM-2.5 chips also support a
 host-based access point mode which allows a card to act as a normal access
 point (with some assistance from the
@@ -221,10 +221,30 @@ Join an ad-hoc network with network name
 	mediaopt adhoc
 .Ed
 .Pp
+Create an IBBS network with network name
+.Dq my_net .
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
+	mediaopt create-ibss
+.Ed
+.Pp
+Join an IBBS network with network name
+.Dq my_net .
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet 192.168.0.22 netmask 0xffffff00 nwid my_net \e
+	mediaopt ibss
+.Ed
+.Pp
 Create a host-based access point (Prism only):
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
 	mediaopt hostap
+.Ed
+.Pp
+Create a host-based access point with WEP enabled (Prism only):
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
+	nwkey 0x1234567890 mediaopt hostap
 .Ed
 .Pp
 Create a host-based wireless bridge to fxp0 (Prism only):
@@ -282,3 +302,8 @@ for information on how to change the channel.
 3.3V
 .Nm
 PCMCIA cards do not currently work.
+.Pp
+IBSS creation does not currently work with Symbol cards.
+.Pp
+Prism2 host-based access point mode has bugs for firmware versions
+prior to 0.8.3.
