@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec_conf.c,v 1.5 1996/05/22 07:53:46 etheisen Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
