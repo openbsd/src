@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.7 2004/09/18 20:31:46 henning Exp $
+.\" $OpenBSD: ntpd.8,v 1.8 2004/09/18 20:37:12 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
-.Op Fl ds
+.Op Fl dsS
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
@@ -80,6 +80,9 @@ Set the time immediately once at startup if the local clock is off by more
 than 180 seconds. Allows for a large time correction,
 eliminating the need to run rdate before starting
 .Nm .
+.It Fl S
+Do not set the time immediately at startup.
+This is the default.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ntpd.confXXX" -compact

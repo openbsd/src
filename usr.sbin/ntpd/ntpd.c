@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.19 2004/09/18 20:27:57 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.20 2004/09/18 20:37:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d] [-f file] [-s]\n", __progname);
+	fprintf(stderr, "usage: %s [-dsS] [-f file]\n", __progname);
 	exit(1);
 }
 
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 
 	log_init(1);		/* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "df:s")) != -1) {
+	while ((ch = getopt(argc, argv, "df:sS")) != -1) {
 		switch (ch) {
 		case 'd':
 			conf.debug = 1;
@@ -101,6 +101,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			conf.settime = 1;
+			break;
+		case 'S':
+			conf.settime = 0;
 			break;
 		default:
 			usage();
