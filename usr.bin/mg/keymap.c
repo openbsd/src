@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.9 2001/05/23 22:10:43 art Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.10 2001/05/23 22:36:14 art Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific 
@@ -32,10 +32,10 @@ static struct KEYMAPE (2 + IMAPEXT) helpmap = {
 	rescan,
 	{
 		{
-			CCHR('G'), CCHR('H'), cHcG, (KEYMAP *)NULL
+			CCHR('G'), CCHR('H'), cHcG, NULL
 		},
 		{
-			'a', 'c', cHa, (KEYMAP *)NULL
+			'a', 'c', cHa, NULL
 		},
 	}
 };
@@ -88,10 +88,10 @@ static struct KEYMAPE (2 + IMAPEXT) cX4map = {
 	rescan,
 	{
 		{
-			CCHR('F'), CCHR('G'), cX4cF, (KEYMAP *)NULL
+			CCHR('F'), CCHR('G'), cX4cF, NULL
 		},
 		{
-			'b', 'f', cX4b, (KEYMAP *)NULL
+			'b', 'f', cX4b, NULL
 		},
 	}
 };
@@ -185,24 +185,24 @@ static struct KEYMAPE (5 + IMAPEXT) cXmap = {
 	rescan,
 	{
 		{
-			CCHR('B'), CCHR('G'), cXcB, (KEYMAP *)NULL
+			CCHR('B'), CCHR('G'), cXcB, NULL
 		},
 		{
-			CCHR('L'), CCHR('X'), cXcL, (KEYMAP *)NULL
+			CCHR('L'), CCHR('X'), cXcL, NULL
 		},
 #ifndef NO_MACRO
 		{
-			'(', ')', cXlp, (KEYMAP *)NULL
+			'(', ')', cXlp, NULL
 		},
 #endif /* !NO_MACRO */
 		{
 			'0', '4', cX0, (KEYMAP *) & cX4map
 		},
 		{
-			'=', '=', cXeq, (KEYMAP *)NULL
+			'=', '=', cXeq, NULL
 		},
 		{
-			'^', 's', cXcar, (KEYMAP *)NULL
+			'^', 's', cXcar, NULL
 		},
 	}
 };
@@ -286,28 +286,28 @@ static struct KEYMAPE (8 + IMAPEXT) metamap = {
 	rescan,
 	{
 		{
-			CCHR('G'), CCHR('G'), metacG, (KEYMAP *)NULL
+			CCHR('G'), CCHR('G'), metacG, NULL
 		},
 		{
-			CCHR('V'), CCHR('V'), metacV, (KEYMAP *)NULL
+			CCHR('V'), CCHR('V'), metacV, NULL
 		},
 		{
-			' ', ' ', metasp, (KEYMAP *)NULL
+			' ', ' ', metasp, NULL
 		},
 		{
-			'%', '%', metapct, (KEYMAP *)NULL
+			'%', '%', metapct, NULL
 		},
 		{
-			'-', '>', metami, (KEYMAP *)NULL
+			'-', '>', metami, NULL
 		},
 		{
-			'[', 'f', metalb, (KEYMAP *)NULL
+			'[', 'f', metalb, NULL
 		},
 		{
-			'l', 'x', metal, (KEYMAP *) NULL
+			'l', 'x', metal, NULL
 		},
 		{
-			'~', CCHR('?'), metatilde, (KEYMAP *)NULL
+			'~', CCHR('?'), metatilde, NULL
 		},
 	}
 };
@@ -376,7 +376,7 @@ static struct KEYMAPE (4 + NFUND_XMAPS + IMAPEXT) fundmap = {
 		},
 #else /* !NO_HELP */
 		{
-			CCHR('@'), CCHR('H'), fund_at, (KEYMAP *)NULL
+			CCHR('@'), CCHR('H'), fund_at, NULL
 		},
 #endif /* !NO_HELP */
 		{
@@ -386,7 +386,7 @@ static struct KEYMAPE (4 + NFUND_XMAPS + IMAPEXT) fundmap = {
 			CCHR('['), CCHR('_'), fund_esc, (KEYMAP *) & metamap
 		},
 		{
-			CCHR('?'), CCHR('?'), fund_del, (KEYMAP *)NULL
+			CCHR('?'), CCHR('?'), fund_del, NULL
 		},
 #ifdef FUND_XMAPS
 		FUND_XMAPS,
@@ -404,7 +404,7 @@ static struct KEYMAPE (1 + IMAPEXT) fillmap = {
 	rescan,
 	{
 		{
-			' ', ' ', fill_sp, (KEYMAP *)NULL
+			' ', ' ', fill_sp, NULL
 		},
 	}
 };
@@ -422,7 +422,7 @@ static struct KEYMAPE (1 + IMAPEXT) indntmap = {
 	rescan,
 	{
 		{
-			CCHR('J'), CCHR('M'), indent_lf, (KEYMAP *)NULL
+			CCHR('J'), CCHR('M'), indent_lf, NULL
 		},
 	}
 };
@@ -437,7 +437,7 @@ static struct KEYMAPE (1 + IMAPEXT) blinkmap = {
 	rescan,
 	{
 		{
-			')', ')', blink_rp, (KEYMAP *)NULL
+			')', ')', blink_rp, NULL
 		},
 	}
 };
@@ -453,7 +453,7 @@ static struct KEYMAPE (1 + IMAPEXT) notabmap = {
 	rescan,
 	{
 		{
-			CCHR('I'), CCHR('I'), notab_tab, (KEYMAP *)NULL
+			CCHR('I'), CCHR('I'), notab_tab, NULL
 		},
 	}
 };
@@ -466,7 +466,7 @@ static struct KEYMAPE (1 + IMAPEXT) overwmap = {
 	{
 		/* unused dummy entry for VMS C */
 		{
-			(KCHAR)0, (KCHAR)0, (PF *)NULL, (KEYMAP *)NULL
+			(KCHAR)0, (KCHAR)0, NULL, NULL
 		},
 	}
 };
@@ -552,7 +552,7 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 		},
 #else /* !NO_HELP */
 		{
-			CCHR('@'), CCHR('G'), dirednul, (KEYMAP *)NULL
+			CCHR('@'), CCHR('G'), dirednul, NULL
 		},
 #endif /* !NO_HELP */
 		{
@@ -562,13 +562,13 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 			CCHR('Z'), ' ', diredcz, (KEYMAP *) & metamap
 		},
 		{
-			'c', 'f', diredc, (KEYMAP *)NULL
+			'c', 'f', diredc, NULL
 		},
 		{
-			'n', 'x', diredn, (KEYMAP *)NULL
+			'n', 'x', diredn, NULL
 		},
 		{
-			CCHR('?'), CCHR('?'), direddl, (KEYMAP *)NULL
+			CCHR('?'), CCHR('?'), direddl, NULL
 		},
 #ifdef	DIRED_XMAPS
 		DIRED_XMAPS,	/* map sections for dired mode keys	 */
@@ -627,7 +627,7 @@ map_name(map)
 		if (mp->p_map == map)
 			return mp->p_name;
 	} while (++mp < &map_table[NMAPS]);
-	return (char *)NULL;
+	return NULL;
 }
 
 MAPS *
@@ -640,7 +640,7 @@ name_mode(name)
 		if (strcmp(mp->p_name, name) == 0)
 			return mp;
 	} while (++mp < &map_table[NMAPS]);
-	return (MAPS *)NULL;
+	return NULL;
 }
 
 KEYMAP *
@@ -648,7 +648,7 @@ name_map(name)
 	char *name;
 {
 	MAPS	*mp;
-	return (mp = name_mode(name)) == NULL ? (KEYMAP *)NULL : mp->p_map;
+	return (mp = name_mode(name)) == NULL ? NULL : mp->p_map;
 }
 
 /*
@@ -955,10 +955,10 @@ function_name(fpoint)
 
 	if (fpoint == NULL)
 		/* ambiguous */
-		return (char *)NULL;
+		return NULL;
 	do {
 		if (fnp->n_funct == fpoint)
 			return fnp->n_name;
 	} while (++fnp < &functnames[NFUNCT]);
-	return (char *)NULL;
+	return NULL;
 }

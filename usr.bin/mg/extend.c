@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.12 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.13 2001/05/23 22:36:13 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -139,7 +139,7 @@ remap(curmap, c, funct, pref_map)
 			if (curmap->map_num >= curmap->map_max &&
 			    (curmap = realocmap(curmap)) == NULL)
 				return FALSE;
-			if ((pfp = (PF *)malloc(sizeof(PF))) == NULL) {
+			if ((pfp = malloc(sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
 			}
@@ -182,7 +182,7 @@ remap(curmap, c, funct, pref_map)
 			return TRUE;
 		if (funct != NULL || ele->k_prefmap == NULL) {
 			if (ele->k_funcp[n1] == NULL)
-				ele->k_prefmap = (KEYMAP *) NULL;
+				ele->k_prefmap = NULL;
 			/* easy case */
 			ele->k_funcp[n1] = funct;
 			if (funct == NULL) {
@@ -341,7 +341,7 @@ dobind(curmap, p, unbind)
 		for (s = 0; s < maclcur->l_used - 1; s++) {
 			if (doscan(curmap, c = CHARMASK(maclcur->l_text[s]), &curmap)
 			    != NULL) {
-				if (remap(curmap, c, NULL, (KEYMAP *)NULL)
+				if (remap(curmap, c, NULL, NULL)
 				    != TRUE)
 					return FALSE;
 			}
@@ -408,7 +408,7 @@ bindkey(mapp, fname, keys, kcount)
 	}
 	while (--kcount) {
 		if (doscan(curmap, c = *keys++, &curmap) != NULL) {
-			if (remap(curmap, c, NULL, (KEYMAP *)NULL) != TRUE)
+			if (remap(curmap, c, NULL, NULL) != TRUE)
 				return FALSE;
 			/*
 			 * XXX - Bizzarreness. remap creates an empty KEYMAP
@@ -652,7 +652,7 @@ load(fname)
 		/* just to be careful */
 		return FALSE;
 
-	if (ffropen(fname, (BUFFER *)NULL) != FIOSUC)
+	if (ffropen(fname, NULL) != FIOSUC)
 		return FALSE;
 
 	while ((s = ffgetline(excbuf, sizeof(excbuf) - 1, &nbytes)) == FIOSUC) {
@@ -663,7 +663,7 @@ load(fname)
 			break;
 		}
 	}
-	(void)ffclose((BUFFER *)NULL);
+	(void)ffclose(NULL);
 	excbuf[nbytes] = '\0';
 	if (s != FIOEOF || (nbytes && excline(excbuf) != TRUE))
 		return FALSE;
@@ -891,9 +891,10 @@ excline(line)
 			lp->l_text[lp->l_used] = '\0';
 			status = bindkey(&curmap, lp->l_text, key.k_chars,
 			    key.k_count);
-		} else
-			status = bindkey(&curmap, (char *)NULL, key.k_chars,
+		} else {
+			status = bindkey(&curmap, NULL, key.k_chars,
 			    key.k_count);
+		}
 		break;
 	case BINDNO:
 #endif /* FKEYS */

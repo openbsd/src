@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2001/05/23 22:36:15 art Exp $	*/
 
 /*
  *	Mainline.
@@ -16,7 +16,7 @@ int		 curgoal;			/* goal column		*/
 BUFFER		*curbp;				/* current buffer	*/
 BUFFER		*bheadp;			/* BUFFER listhead	*/
 MGWIN		*curwp;				/* current window	*/
-MGWIN		*wheadp = (MGWIN *)NULL;	/* MGWIN listhead	*/
+MGWIN		*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
 static void	 edinit		__P((void));
@@ -47,7 +47,7 @@ main(argc, argv)
 
 #ifndef NO_STARTUP
 	/* user startup file */
-	if ((cp = startupfile((char *)NULL)) != NULL)
+	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
 #endif	/* !NO_STARTUP */
 	while (--argc > 0) {

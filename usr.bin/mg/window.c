@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.5 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: window.c,v 1.6 2001/05/23 22:36:15 art Exp $	*/
 
 /*
  *		Window handling.
@@ -190,7 +190,7 @@ splitwind(f, n)
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
 		return (FALSE);
 	}
-	if ((wp = (MGWIN *)malloc(sizeof(MGWIN))) == NULL) {
+	if ((wp = malloc(sizeof(MGWIN))) == NULL) {
 		ewprintf("Can't get %d", sizeof(MGWIN));
 		return (FALSE);
 	}

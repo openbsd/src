@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.6 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: line.c,v 1.7 2001/05/23 22:36:14 art Exp $	*/
 
 /*
  *		Text line handling.
@@ -62,9 +62,9 @@ lalloc(used)
 #ifdef MALLOCROUND
 	MALLOCROUND(size);	/* round up to a size optimal to malloc */
 #endif
-	if ((lp = (LINE *)malloc((unsigned)size)) == NULL) {
+	if ((lp = malloc((unsigned)size)) == NULL) {
 		ewprintf("Can't get %d bytes", size);
-		return (LINE *)NULL;
+		return NULL;
 	}
 	lp->l_size = size - OFFSET(LINE, l_text[0]);
 	lp->l_used = used;
