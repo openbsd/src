@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1999/07/05 20:56:26 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1999/10/28 04:28:03 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -308,7 +308,6 @@ where = 3;
          */
 	consinit();
 
-	printf("hello\n");
 	/*
 	 * Figure out ethernet address.
 	 */
@@ -810,6 +809,8 @@ boot(howto)
 #endif
 	OF_exit();
 	(fw->boot)(str);
+	printf("boot failed, spinning\n");
+	while(1) /* forever */;
 }
 
 /*

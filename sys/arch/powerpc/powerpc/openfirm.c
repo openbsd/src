@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.4 1999/07/05 20:56:26 rahnds Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.5 1999/10/28 04:28:03 rahnds Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -36,9 +36,7 @@
 #include <machine/psl.h>
 #include <machine/stdarg.h>
 
-/*#include <dev/ofw/openfirm.h>*/
-
-extern char OF_buf[];
+#include <dev/ofw/openfirm.h>
 
 extern void ofw_stack __P((void));
 extern void ofbcopy __P((const void *, void *, size_t));
@@ -213,6 +211,7 @@ OF_exit()
 	ofw_stack();
 	openfirmware(&args);
 	panic ("OF_exit returned!");		/* just in case */
+	while (1);
 }
 
 /* XXX What is the reason to have this instead of bcopy/memcpy? */
