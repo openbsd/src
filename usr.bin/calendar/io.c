@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2001/09/03 15:53:00 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.14 2001/09/03 16:15:08 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.13 2001/09/03 15:53:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.14 2001/09/03 16:15:08 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,11 +53,11 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.13 2001/09/03 15:53:00 pjanzen Exp $";
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
-#include <sys/file.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -80,8 +80,6 @@ struct iovec header[] = {
 	{"'s Calendar\nPrecedence: bulk\n\n",  30},
 };
 
-
-int	openf(char *path);
 
 void
 cal()
@@ -289,30 +287,6 @@ getfield(p, endp, flags)
 	return (val);
 }
 
-char path[MAXPATHLEN];
-
-int
-openf(path)
-	char *path;
-{
-	struct stat st;
-	int fd;
-
-	fd = open(path, O_RDONLY|O_NONBLOCK);
-	if (fd == -1)
-		return (-1);
-	if (fstat(fd, &st) == -1) {
-		close(fd);
-		return (-1);
-	}
-	if ((st.st_mode & S_IFMT) != S_IFREG) {
-		close (fd);
-		return (-1);
-	}
-
-	fcntl(fd, F_SETFD, fcntl(fd, F_GETFD, 0) &~ O_NONBLOCK);
-	return (fd);
-}
 
 FILE *
 opencal()
@@ -321,14 +295,14 @@ opencal()
 	int fdin;
 
 	/* open up calendar file as stdin */
-	if ((fdin = openf(calendarFile)) == -1) {
+	if ((fdin = open(calendarFile, O_RDONLY)) == -1) {
 		if (!doall) {
 			char *home = getenv("HOME");
 			if (home == NULL || *home == '\0')
 				errx(1, "cannot get home directory");
 			if (!(chdir(home) == 0 &&
 			    chdir(calendarHome) == 0 &&
-			    (fdin = openf(calendarFile)) != -1))
+			    (fdin = open(calendarFile, O_RDONLY)) != -1))
 				errx(1, "no calendar file: ``%s'' or ``~/%s/%s",
 				    calendarFile, calendarHome, calendarFile);
 		}
