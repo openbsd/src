@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.21 2002/12/12 20:21:34 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.22 2003/04/06 17:00:35 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -201,6 +201,14 @@ cgfourteenmatch(parent, vcf, aux)
 	struct romaux *ra = &ca->ca_ra;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
+
+	/*
+	 * This driver should not be attached without an "addr" locator,
+	 * as this is the only way to differentiate the main and secondary
+	 * VSIMM.
+	 */
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != (int)ra->ra_paddr)
 		return (0);
 
 	/*
