@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_raw.c,v 1.3 1999/12/28 15:57:59 millert Exp $	*/
+/*	$OpenBSD: lib_raw.c,v 1.4 2000/01/09 05:06:02 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -50,7 +50,7 @@
 #include <curses.priv.h>
 #include <term.h>		/* cur_term */
 
-MODULE_ID("$From: lib_raw.c,v 1.5 1999/12/19 01:57:23 tom Exp $")
+MODULE_ID("$From: lib_raw.c,v 1.6 2000/01/08 17:28:48 tom Exp $")
 
 #if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
@@ -62,7 +62,6 @@ MODULE_ID("$From: lib_raw.c,v 1.5 1999/12/19 01:57:23 tom Exp $")
 
 #ifdef __EMX__
 #include <io.h>
-#include <fcntl.h>
 #endif
 
 #define COOKED_INPUT	(IXON|BRKINT|PARMRK)
@@ -218,12 +217,11 @@ intrflush(WINDOW *win GCC_UNUSED, bool flag)
     T((T_CALLED("intrflush(%d)"), flag));
 
     /*
-     * This call does the same thing as the qiflush()/noqiflush()
-     * pair.  We know for certain that SVr3 intrflush() tweaks the
-     * NOFLSH bit; on the other hand, the match (in the SVr4 man
-     * pages) between the language describing NOFLSH in termio(7)
-     * and the language describing qiflush()/noqiflush() in
-     * curs_inopts(3x) is too exact to be coincidence.
+     * This call does the same thing as the qiflush()/noqiflush() pair.  We
+     * know for certain that SVr3 intrflush() tweaks the NOFLSH bit; on the
+     * other hand, the match (in the SVr4 man pages) between the language
+     * describing NOFLSH in termio(7) and the language describing
+     * qiflush()/noqiflush() in curs_inopts(3x) is too exact to be coincidence.
      */
 
 #ifdef TERMIOS

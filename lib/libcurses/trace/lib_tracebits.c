@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_tracebits.c,v 1.3 1999/08/22 17:42:37 millert Exp $	*/
+/*	$OpenBSD: lib_tracebits.c,v 1.4 2000/01/09 05:06:02 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,21 +34,20 @@
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <term.h>	/* cur_term */
+#include <term.h>		/* cur_term */
 
-MODULE_ID("$From: lib_tracebits.c,v 1.3 1999/08/21 21:43:48 tom Exp $")
+MODULE_ID("$From: lib_tracebits.c,v 1.4 2000/01/08 17:41:41 tom Exp $")
 
 #if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
 #endif
 
 #if HAVE_SYS_TERMIO_H
-#include <sys/termio.h>	/* needed for ISC */
+#include <sys/termio.h>		/* needed for ISC */
 #endif
 
 #ifdef __EMX__
 #include <io.h>
-#include <fcntl.h>
 #endif
 
 /* may be undefined if we're using termio.h */
@@ -61,90 +60,89 @@ MODULE_ID("$From: lib_tracebits.c,v 1.3 1999/08/21 21:43:48 tom Exp $")
 
 #ifdef TRACE
 
-typedef struct {unsigned int val; const char *name;} BITNAMES;
+typedef struct {
+    unsigned int val;
+    const char *name;
+} BITNAMES;
 
-static void lookup_bits(char *buf, const BITNAMES *table, const char *label, unsigned int val)
+static void
+lookup_bits(char *buf, const BITNAMES * table, const char *label, unsigned int val)
 {
-	const BITNAMES *sp;
+    const BITNAMES *sp;
 
-	(void) strcat(buf, label);
-	(void) strcat(buf, ": {");
-	for (sp = table; sp->name; sp++)
-		if (sp->val != 0
-		&& (val & sp->val) == sp->val)
-		{
-			(void) strcat(buf, sp->name);
-			(void) strcat(buf, ", ");
-		}
-	if (buf[strlen(buf) - 2] == ',')
-		buf[strlen(buf) - 2] = '\0';
-	(void) strcat(buf,"} ");
+    (void) strcat(buf, label);
+    (void) strcat(buf, ": {");
+    for (sp = table; sp->name; sp++)
+	if (sp->val != 0
+	    && (val & sp->val) == sp->val) {
+	    (void) strcat(buf, sp->name);
+	    (void) strcat(buf, ", ");
+	}
+    if (buf[strlen(buf) - 2] == ',')
+	buf[strlen(buf) - 2] = '\0';
+    (void) strcat(buf, "} ");
 }
 
-char *_nc_tracebits(void)
+char *
+_nc_tracebits(void)
 /* describe the state of the terminal control bits exactly */
 {
-char	*buf;
-static const	BITNAMES
+    char *buf;
 
 #ifdef TERMIOS
-iflags[] =
+    static const BITNAMES iflags[] =
     {
-	{BRKINT,	"BRKINT"},
-	{IGNBRK,	"IGNBRK"},
-	{IGNPAR,	"IGNPAR"},
-	{PARMRK,	"PARMRK"},
-	{INPCK, 	"INPCK"},
-	{ISTRIP,	"ISTRIP"},
-	{INLCR, 	"INLCR"},
-	{IGNCR, 	"IGNC"},
-	{ICRNL, 	"ICRNL"},
-	{IXON,  	"IXON"},
-	{IXOFF, 	"IXOFF"},
-	{0,		NULL}
+	{BRKINT, "BRKINT"},
+	{IGNBRK, "IGNBRK"},
+	{IGNPAR, "IGNPAR"},
+	{PARMRK, "PARMRK"},
+	{INPCK, "INPCK"},
+	{ISTRIP, "ISTRIP"},
+	{INLCR, "INLCR"},
+	{IGNCR, "IGNC"},
+	{ICRNL, "ICRNL"},
+	{IXON, "IXON"},
+	{IXOFF, "IXOFF"},
+	{0, NULL}
 #define ALLIN	(BRKINT|IGNBRK|IGNPAR|PARMRK|INPCK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF)
-    },
-oflags[] =
+    }, oflags[] =
     {
-	{OPOST, 	"OPOST"},
-	{0,		NULL}
+	{OPOST, "OPOST"},
+	{0, NULL}
 #define ALLOUT	(OPOST)
-    },
-cflags[] =
+    }, cflags[] =
     {
-	{CLOCAL,	"CLOCAL"},
-	{CREAD, 	"CREAD"},
-	{CSTOPB,	"CSTOPB"},
+	{CLOCAL, "CLOCAL"},
+	{CREAD, "CREAD"},
+	{CSTOPB, "CSTOPB"},
 #if !defined(CS5) || !defined(CS8)
-	{CSIZE, 	"CSIZE"},
+	{CSIZE, "CSIZE"},
 #endif
-	{HUPCL, 	"HUPCL"},
-	{PARENB,	"PARENB"},
-	{PARODD|PARENB,	"PARODD"},	/* concession to readability */
-	{0,		NULL}
+	{HUPCL, "HUPCL"},
+	{PARENB, "PARENB"},
+	{PARODD | PARENB, "PARODD"},	/* concession to readability */
+	{0, NULL}
 #define ALLCTRL	(CLOCAL|CREAD|CSIZE|CSTOPB|HUPCL|PARENB|PARODD)
-    },
-lflags[] =
+    }, lflags[] =
     {
-	{ECHO,  	"ECHO"},
-	{ECHOE|ECHO, 	"ECHOE"},	/* concession to readability */
-	{ECHOK|ECHO, 	"ECHOK"},	/* concession to readability */
-	{ECHONL,	"ECHONL"},
-	{ICANON,	"ICANON"},
-	{ISIG,  	"ISIG"},
-	{NOFLSH,	"NOFLSH"},
-	{TOSTOP,	"TOSTOP"},
-	{IEXTEN,	"IEXTEN"},
-	{0,		NULL}
+	{ECHO, "ECHO"},
+	{ECHOE | ECHO, "ECHOE"},	/* concession to readability */
+	{ECHOK | ECHO, "ECHOK"},	/* concession to readability */
+	{ECHONL, "ECHONL"},
+	{ICANON, "ICANON"},
+	{ISIG, "ISIG"},
+	{NOFLSH, "NOFLSH"},
+	{TOSTOP, "TOSTOP"},
+	{IEXTEN, "IEXTEN"},
+	{0, NULL}
 #define ALLLOCAL	(ECHO|ECHONL|ICANON|ISIG|NOFLSH|TOSTOP|IEXTEN)
     };
 
-
     buf = _nc_trace_buf(0,
-    	8 + sizeof(iflags) +
-    	8 + sizeof(oflags) +
-    	8 + sizeof(cflags) +
-    	8 + sizeof(lflags) +
+	8 + sizeof(iflags) +
+	8 + sizeof(oflags) +
+	8 + sizeof(cflags) +
+	8 + sizeof(lflags) +
 	8);
 
     if (cur_term->Nttyb.c_iflag & ALLIN)
@@ -159,18 +157,28 @@ lflags[] =
 #if defined(CS5) && defined(CS8)
     switch (cur_term->Nttyb.c_cflag & CSIZE) {
 #if defined(CS5) && (CS5 != 0)
-    case CS5:	strcat(buf, "CS5 ");	break;
+    case CS5:
+	strcat(buf, "CS5 ");
+	break;
 #endif
 #if defined(CS6) && (CS6 != 0)
-    case CS6:	strcat(buf, "CS6 ");	break;
+    case CS6:
+	strcat(buf, "CS6 ");
+	break;
 #endif
 #if defined(CS7) && (CS7 != 0)
-    case CS7:	strcat(buf, "CS7 ");	break;
+    case CS7:
+	strcat(buf, "CS7 ");
+	break;
 #endif
 #if defined(CS8) && (CS8 != 0)
-    case CS8:	strcat(buf, "CS8 ");	break;
+    case CS8:
+	strcat(buf, "CS8 ");
+	break;
 #endif
-    default:	strcat(buf, "CSIZE? ");	break;
+    default:
+	strcat(buf, "CSIZE? ");
+	break;
     }
 #endif
 
@@ -195,33 +203,36 @@ lflags[] =
 #define TANDEM 0
 #endif
 
-cflags[] =
+    static const BITNAMES cflags[] =
     {
-	{CBREAK,	"CBREAK"},
-	{CRMOD,		"CRMOD"},
-	{ECHO,		"ECHO"},
-	{EVENP,		"EVENP"},
-	{LCASE,		"LCASE"},
-	{LLITOUT,	"LLITOUT"},
-	{ODDP,		"ODDP"},
-	{RAW,		"RAW"},
-	{TANDEM,	"TANDEM"},
-	{XTABS,		"XTABS"},
-	{0,		NULL}
+	{CBREAK, "CBREAK"},
+	{CRMOD, "CRMOD"},
+	{ECHO, "ECHO"},
+	{EVENP, "EVENP"},
+	{LCASE, "LCASE"},
+	{LLITOUT, "LLITOUT"},
+	{ODDP, "ODDP"},
+	{RAW, "RAW"},
+	{TANDEM, "TANDEM"},
+	{XTABS, "XTABS"},
+	{0, NULL}
 #define ALLCTRL	(CBREAK|CRMOD|ECHO|EVENP|LCASE|LLITOUT|ODDP|RAW|TANDEM|XTABS)
     };
 
     buf = _nc_trace_buf(0,
-    	8 + sizeof(cflags));
+	8 + sizeof(cflags));
 
-    if (cur_term->Nttyb.sg_flags & ALLCTRL)
-    {
+    if (cur_term->Nttyb.sg_flags & ALLCTRL) {
 	lookup_bits(buf, cflags, "cflags", cur_term->Nttyb.sg_flags);
     }
-
 #endif
-    return(buf);
+    return (buf);
 }
 #else
-char *_nc_tracebits(void) { static char tmp[] = ""; return tmp; }
+char *
+_nc_tracebits(void)
+{
+    static char tmp[] = "";
+    return tmp;
+}
 #endif /* TRACE */

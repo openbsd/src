@@ -33,7 +33,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: terminfo.head,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: terminfo.5tbl,v 1.5 1999/03/12 04:36:02 millert Exp $
+.\" $OpenBSD: terminfo.5tbl,v 1.6 2000/01/09 05:06:01 millert Exp $
 .TH TERMINFO 5 "" "" "File Formats"
 .ds n 5
 .ds d /usr/share/terminfo
@@ -1623,7 +1623,7 @@ YI Set page length to #1 hundredth of an inch
 T}
 .TE
 .ad
-.\" $From: terminfo.tail,v 1.29 1999/03/07 02:09:07 tom Exp $
+.\" $From: terminfo.tail,v 1.30 2000/01/08 22:09:12 tom Exp $
 .\" Beginning of terminfo.tail file
 .ps +1
 .PP
@@ -3050,10 +3050,6 @@ of terminfo (under HP-UX and AIX) which diverged from System V terminfo after
 SVr1, and have added extension capabilities to the string table that (in the
 binary format) collide with System V and XSI Curses extensions.
 .SH EXTENSIONS
-The %x operator in parameterized strings is unique to the ncurses implementation
-of \fBtparm\fR (it is required in order to support an unfortunate choice of
-\fBinitc\fR format on the Linux console).
-.PP
 Some SVr4 \fBcurses\fR implementations, and all previous to SVr4, don't
 interpret the %A and %O operators in parameter strings.
 .PP

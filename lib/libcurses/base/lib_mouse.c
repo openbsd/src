@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_mouse.c,v 1.6 1999/12/28 15:57:59 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.7 2000/01/09 05:06:02 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -66,8 +66,7 @@
  */
 
 #ifdef __EMX__
-#  include "io.h"
-#  include "fcntl.h"
+#  include <io.h>
 #  define  INCL_DOS
 #  define  INCL_VIO
 #  define  INCL_KBD
@@ -87,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.47 1999/12/19 01:49:40 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.48 2000/01/08 17:34:43 tom Exp $");
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -422,7 +421,7 @@ _nc_mouse_inline(SCREEN * sp)
 	kbuf[3] = '\0';
 
 	TR(TRACE_IEVENT,
-		("_nc_mouse_inline sees the following xterm data: '%s'", kbuf));
+	    ("_nc_mouse_inline sees the following xterm data: '%s'", kbuf));
 
 	eventp->id = 0;		/* there's only one mouse... */
 
@@ -491,7 +490,7 @@ _nc_mouse_inline(SCREEN * sp)
 	eventp->x = (kbuf[1] - ' ') - 1;
 	eventp->y = (kbuf[2] - ' ') - 1;
 	TR(MY_TRACE,
-		("_nc_mouse_inline: primitive mouse-event %s has slot %ld",
+	    ("_nc_mouse_inline: primitive mouse-event %s has slot %ld",
 		_tracemouse(eventp),
 		(long) (eventp - events)));
 
@@ -601,7 +600,7 @@ _nc_mouse_parse(int runcount)
      */
     if (runcount == 1) {
 	TR(MY_TRACE,
-		("_nc_mouse_parse: returning simple mouse event %s at slot %ld",
+	    ("_nc_mouse_parse: returning simple mouse event %s at slot %ld",
 		_tracemouse(prev),
 		(long) (prev - events)));
 	return (prev->id >= 0)
@@ -789,7 +788,7 @@ _nc_mouse_parse(int runcount)
     for (ep = runp; ep != eventp; ep = NEXT(ep))
 	if (ep->id != INVALID_EVENT)
 	    TR(MY_TRACE,
-		    ("_nc_mouse_parse: returning composite mouse event %s at slot %ld",
+		("_nc_mouse_parse: returning composite mouse event %s at slot %ld",
 		    _tracemouse(ep),
 		    (long) (ep - events)));
 #endif /* TRACE */

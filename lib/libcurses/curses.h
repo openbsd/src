@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.42 2000/01/02 22:06:50 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.43 2000/01/09 05:06:01 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.87 1999/11/14 00:21:57 tom Exp $ */
+/* $From: curses.h.in,v 1.89 2000/01/09 01:10:20 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
 #define NCURSES_VERSION_MINOR 0
-#define NCURSES_VERSION_PATCH 20000101
+#define NCURSES_VERSION_PATCH 20000108
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -439,6 +439,7 @@ extern int doupdate(void);				/* implemented */
 extern WINDOW *dupwin(WINDOW *);			/* implemented */
 extern int echo(void);					/* implemented */
 extern int echochar(const chtype);			/* generated */
+extern int erase(void);					/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int echo_wchar(const cchar_t *);			/* missing */
 extern int erasewchar(wchar_t*);			/* missing */
@@ -1335,6 +1336,7 @@ extern void trace(const unsigned int);
 #define TRACE_BITS	0x0100	/* trace state of TTY control bits */
 #define TRACE_ICALLS	0x0200	/* trace internal/nested calls */
 #define TRACE_CCALLS	0x0400	/* trace per-character calls */
+#define TRACE_DATABASE	0x0800	/* trace read/write of terminfo/termcap data */
 #define TRACE_MAXIMUM	0xffff	/* maximum trace level */
 
 #if defined(TRACE) || defined(NCURSES_TEST)

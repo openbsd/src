@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.6 2000/01/02 22:06:51 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.7 2000/01/09 05:06:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -40,23 +40,13 @@
 
 #include <curses.priv.h>
 
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_entry.c,v 1.63 2000/01/01 23:06:40 tom Exp $")
+MODULE_ID("$From: read_entry.c,v 1.65 2000/01/08 18:59:49 tom Exp $")
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
-#if 0
-#define TRACE_IN(p) DEBUG(2, p)
-#else
-#define TRACE_IN(p)		/*nothing */
+#if !HAVE_TELL
+#define tell(fd) 0		/* lseek() is POSIX, but not tell() - odd... */
 #endif
 
 /*
@@ -123,7 +113,7 @@ convert_shorts(char *buf, short *Numbers, int count)
 	    Numbers[i] = CANCELLED_NUMERIC;
 	else
 	    Numbers[i] = LOW_MSB(buf + 2 * i);
-	TRACE_IN(("get Numbers[%d]=%d", i, Numbers[i]));
+	TR(TRACE_DATABASE, ("get Numbers[%d]=%d", i, Numbers[i]));
     }
 }
 
@@ -142,7 +132,7 @@ convert_strings(char *buf, char **Strings, int count, int size, char *table)
 	    Strings[i] = ABSENT_STRING;
 	} else {
 	    Strings[i] = (LOW_MSB(buf + 2 * i) + table);
-	    TRACE_IN(("Strings[%d] = %s", i, _nc_visbuf(Strings[i])));
+	    TR(TRACE_DATABASE, ("Strings[%d] = %s", i, _nc_visbuf(Strings[i])));
 	}
 
 	/* make sure all strings are NUL terminated */
@@ -170,7 +160,7 @@ read_termtype(int fd, TERMTYPE * ptr)
     int i;
     char buf[MAX_ENTRY_SIZE];
 
-    TRACE_IN(("READ termtype header @%d", tell(fd)));
+    TR(TRACE_DATABASE, ("READ termtype header @%d", tell(fd)));
 
     memset(ptr, 0, sizeof(*ptr));
 
@@ -187,8 +177,10 @@ read_termtype(int fd, TERMTYPE * ptr)
     str_count = LOW_MSB(buf + 8);
     str_size = LOW_MSB(buf + 10);
 
-    TRACE_IN(("header is %d/%d/%d/%d(%d)", name_size, bool_count, num_count,
-	    str_count, str_size));
+    TR(TRACE_DATABASE,
+	    ("TERMTYPE name_size=%d, bool=%d/%d, num=%d/%d str=%d/%d(%d)",
+	    name_size, bool_count, BOOLCOUNT, num_count, NUMCOUNT,
+	    str_count, STRCOUNT, str_size));
     if (name_size < 0
 	|| bool_count < 0
 	|| num_count < 0
@@ -262,7 +254,7 @@ read_termtype(int fd, TERMTYPE * ptr)
      * Read extended entries, if any, after the normal end of terminfo data.
      */
     even_boundary(str_size);
-    TRACE_IN(("READ extended_header @%d", tell(fd)));
+    TR(TRACE_DATABASE, ("READ extended_header @%d", tell(fd)));
     if (_nc_user_definable && read_shorts(fd, buf, 5)) {
 	int ext_bool_count = LOW_MSB(buf + 0);
 	int ext_num_count = LOW_MSB(buf + 2);
@@ -290,60 +282,67 @@ read_termtype(int fd, TERMTYPE * ptr)
 	ptr->Numbers = typeRealloc(short, ptr->num_Numbers, ptr->Numbers);
 	ptr->Strings = typeRealloc(char *, ptr->num_Strings, ptr->Strings);
 
-	TRACE_IN(("extended header is %d/%d/%d(%d:%d)", ext_bool_count,
-		ext_num_count, ext_str_count, ext_str_size, ext_str_limit));
+	TR(TRACE_DATABASE, ("extended header is %d/%d/%d(%d:%d)",
+		ext_bool_count, ext_num_count, ext_str_count, ext_str_size, ext_str_limit));
 
-	TRACE_IN(("READ %d extended-booleans @%d", ext_bool_count, tell(fd)));
+	TR(TRACE_DATABASE, ("READ %d extended-booleans @%d",
+		ext_bool_count, tell(fd)));
 	if ((ptr->ext_Booleans = ext_bool_count) != 0) {
 	    if (read(fd, ptr->Booleans + BOOLCOUNT, (unsigned)
-		ext_bool_count) != ext_bool_count)
+		    ext_bool_count) != ext_bool_count)
 		return (0);
 	}
 	even_boundary(ext_bool_count);
 
-	TRACE_IN(("READ %d extended-numbers @%d", ext_num_count, tell(fd)));
+	TR(TRACE_DATABASE, ("READ %d extended-numbers @%d",
+		ext_num_count, tell(fd)));
 	if ((ptr->ext_Numbers = ext_num_count) != 0) {
 	    if (!read_shorts(fd, buf, ext_num_count))
 		return (0);
-	    TRACE_IN(("Before converting extended-numbers"));
+	    TR(TRACE_DATABASE, ("Before converting extended-numbers"));
 	    convert_shorts(buf, ptr->Numbers + NUMCOUNT, ext_num_count);
 	}
 
-	TRACE_IN(("READ extended-offsets @%d", tell(fd)));
+	TR(TRACE_DATABASE, ("READ extended-offsets @%d", tell(fd)));
 	if ((ext_str_count || need)
 	    && !read_shorts(fd, buf, ext_str_count + need))
 	    return (0);
 
-	TRACE_IN(("READ %d bytes of extended-strings @%d", ext_str_limit,
-		tell(fd)));
+	TR(TRACE_DATABASE, ("READ %d bytes of extended-strings @%d",
+		ext_str_limit, tell(fd)));
+
 	if (ext_str_limit) {
 	    if ((ptr->ext_str_table = typeMalloc(char, ext_str_limit)) == 0)
 		  return (0);
 	    if (read(fd, ptr->ext_str_table, ext_str_limit) != ext_str_limit)
 		return (0);
-	    TRACE_IN(("first extended-string is %s", _nc_visbuf(ptr->ext_str_table)));
+	    TR(TRACE_DATABASE, ("first extended-string is %s", _nc_visbuf(ptr->ext_str_table)));
 	}
 
 	if ((ptr->ext_Strings = ext_str_count) != 0) {
-	    TRACE_IN(("Before computing extended-string capabilities str_count=%d, ext_str_count=%d",
+	    TR(TRACE_DATABASE,
+		("Before computing extended-string capabilities str_count=%d, ext_str_count=%d",
 		    str_count, ext_str_count));
 	    convert_strings(buf, ptr->Strings + str_count, ext_str_count,
 		ext_str_limit, ptr->ext_str_table);
 	    for (i = ext_str_count - 1; i >= 0; i--) {
-		TRACE_IN(("MOVE from [%d:%d] %s", i, i + str_count,
+		TR(TRACE_DATABASE, ("MOVE from [%d:%d] %s",
+			i, i + str_count,
 			_nc_visbuf(ptr->Strings[i + str_count])));
 		ptr->Strings[i + STRCOUNT] = ptr->Strings[i + str_count];
 		if (VALID_STRING(ptr->Strings[i + STRCOUNT]))
 		    base += (strlen(ptr->Strings[i + STRCOUNT]) + 1);
-		TRACE_IN(("... to    [%d] %s", i + STRCOUNT,
-			    _nc_visbuf(ptr->Strings[i + STRCOUNT])));
+		TR(TRACE_DATABASE, ("... to    [%d] %s",
+			i + STRCOUNT,
+			_nc_visbuf(ptr->Strings[i + STRCOUNT])));
 	    }
 	}
 
 	if (need) {
 	    if ((ptr->ext_Names = typeCalloc(char *, need)) == 0)
 		  return (0);
-	    TRACE_IN(("ext_NAMES starting @%d in extended_strings, first = %s",
+	    TR(TRACE_DATABASE,
+		("ext_NAMES starting @%d in extended_strings, first = %s",
 		    base, _nc_visbuf(ptr->ext_str_table + base)));
 	    convert_strings(buf + (2 * ext_str_count), ptr->ext_Names, need,
 		ext_str_limit, ptr->ext_str_table + base);
@@ -354,15 +353,13 @@ read_termtype(int fd, TERMTYPE * ptr)
 		ptr->num_Numbers, ptr->ext_Numbers,
 		ptr->num_Strings, ptr->ext_Strings));
 
-	TRACE_IN(("extend: num_Booleans:%d", ptr->num_Booleans));
+	TR(TRACE_DATABASE, ("extend: num_Booleans:%d", ptr->num_Booleans));
     } else
 #endif /* NCURSES_XNAMES */
     {
 	T(("...done reading terminfo bool %d num %d str %d",
-		bool_count,
-		num_count,
-		str_count));
-	TRACE_IN(("normal: num_Booleans:%d", ptr->num_Booleans));
+		bool_count, num_count, str_count));
+	TR(TRACE_DATABASE, ("normal: num_Booleans:%d", ptr->num_Booleans));
     }
 
     for (i = bool_count; i < BOOLCOUNT; i++)

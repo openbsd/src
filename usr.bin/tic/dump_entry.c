@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.12 2000/01/05 18:15:51 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.13 2000/01/09 05:06:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.44 2000/01/02 02:14:35 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.45 2000/01/08 22:19:05 Todd.Miller Exp $")
 
 #define INDENT			8
 #define DISCARD(string) string = ABSENT_STRING
