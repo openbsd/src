@@ -74,7 +74,7 @@ char **argv;
 	
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EM_MINLEN;
+	em->em_msglen = EMT_IFADDR_LEN;
 	em->em_version = 0;
 	em->em_type = EMT_IFADDR;
 	em->em_ifa.s_addr = inet_addr(argv[2]);
@@ -82,10 +82,4 @@ char **argv;
 	
 	if (write(sd, buf, EMT_IFADDR_LEN) != EMT_IFADDR_LEN)
 	  perror("write");
-	
-	
-	
-
 }
-
-
