@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.20 2000/04/28 18:01:43 turan Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.21 2000/08/18 17:54:17 jason Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -215,7 +215,9 @@ Optional miscellaneous options to set on the interface, i.e.,
 .Pp
 An addressless network interface setup (useful for
 .Xr bridge 4
-member interfaces) consists of
+member interfaces and interfaces to be used with
+.Xr pppoe 4 )
+consists of
 .Pp
 .Bd -literal -offset xxxx
 .Li up Va options
