@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.14 2004/07/30 17:39:27 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.15 2004/07/31 01:13:41 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -291,23 +291,8 @@ CVSFILE*
 cvs_file_getspec(char **fspec, int fsn, int flags)
 {
 	int i, c;
-	char common[MAXPATHLEN];
+	char common[MAXPATHLEN], *cp;
 	CVSFILE *cfp;
-
-	/* first find the common subdir */
-	strlcpy(common, fspec[0], sizeof(common));
-	for (i = 1; i < fsn; i++) {
-		for (c = 0; ; c++) {
-			if (common[c] != fspec[i][c]) {
-				/* go back to last dir */
-				while ((c > 0) && (common[--c] != '/'))
-					common[c] = '\0';
-				break;
-			}
-		}
-	}
-	if (*common == '\0')
-		strlcpy(common, ".", sizeof(common));
 
 	/* first load the common subdirectory */
 	cfp = cvs_file_get(common, flags);
@@ -401,7 +386,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	}
 
 	cdp->cd_root = cvsroot_get(cf->cf_path);
-	printf("cvsroot = %s\n", cdp->cd_root->cr_str);
 	if (cdp->cd_root == NULL) {
 		cvs_file_freedir(cdp);
 		return (-1);
@@ -684,7 +668,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 	cfp->cf_parent = parent;
 
 	if ((parent != NULL) && (CVS_DIR_ENTRIES(parent) != NULL)) {
-		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), path);
+		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), cfp->cf_name);
 	}
 
 	if (ent == NULL)
@@ -715,8 +699,6 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 			else
 				cfp->cf_cvstat = CVS_FST_MODIFIED;
 		}
-
-		cvs_ent_free(ent);
 	}
 
 	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
