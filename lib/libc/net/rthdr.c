@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthdr.c,v 1.4 2003/06/06 07:02:58 itojun Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.5 2003/06/06 07:27:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -180,7 +180,7 @@ inet6_rthdr_segments(cmsg)
 	}
 
 	default:
-	return (-1);
+		return (-1);
 	}
 }
 
@@ -239,6 +239,6 @@ inet6_rthdr_getflags(cmsg, index)
 	}
 
 	default:
-	return (-1);
+		return (-1);
 	}
 }
