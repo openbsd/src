@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.14 2003/11/06 19:48:13 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.15 2003/11/09 20:33:09 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.14 2003/11/06 19:48:13 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.15 2003/11/09 20:33:09 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -489,6 +489,7 @@ pop_printn(void)
 
 	if (value != NULL) {
 		print_value(stdout, value, "", bmachine.obase);
+		fflush(stdout);
 		stack_free_value(value);
 	}
 }
