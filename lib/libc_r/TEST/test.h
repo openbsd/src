@@ -10,7 +10,6 @@
 
 int	_thread_sys_write __P((int, const char*, size_t));
 __dead void _thread_sys__exit __P((int)) __attribute__((noreturn));
-void	_thread_dump_info __P((void));
 
 static __dead void __vpanic __P((const char *, const char *, const char *, 
 	int, const char *, va_list)) __attribute__((noreturn));
@@ -20,9 +19,12 @@ static __dead void __panic __P((const char *, const char *, const char *,
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <pthread.h>
 #include <pthread_np.h>
+void	_thread_dump_info __P((void));
 #define SET_NAME(x)	pthread_set_name_np(pthread_self(), x)
+#define DUMP_INFO()	_thread_dump_info()
 #else
 #define SET_NAME(x)	/* nada */
+#define DUMP_INFO()	/* nada */
 #endif
 
 static void
@@ -47,7 +49,7 @@ __vpanic(type, errstr, filenm, lineno, fmt, ap)
 	strlcat(buf, "\n", sizeof buf);
 	_thread_sys_write(2, buf, strlen(buf));
 
-	_thread_dump_info();
+	DUMP_INFO();
 	_thread_sys__exit(1);
 
 	_thread_sys_write(2, "[locking]\n", 10);
@@ -83,9 +85,14 @@ __panic(type, errstr, filenm, lineno, fmt)
 #define ASSERTe(x,rhs) do { \
 	int _x; \
 	_x = (x); \
-	if (!(_x rhs)) \
+	if (!(_x rhs)) { \
+	    if (_x == -1) \
 		__panic("assert failed", strerror(_x), __FILE__, __LINE__,  \
-		"%s %s", #x, #rhs); \
+		    "%s %s", #x, #rhs); \
+	    else \
+		__panic("assert failed", NULL, __FILE__, __LINE__, \
+		    "%s [=%d] %s", #x, _x, #rhs); \
+	} \
 } while(0)
 
 #define _CHECK(x, rhs, efn) do { \
