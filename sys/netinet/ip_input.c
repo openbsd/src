@@ -45,6 +45,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -69,6 +70,7 @@
 #endif
 int	ipforwarding = IPFORWARDING;
 int	ipsendredirects = IPSENDREDIRECTS;
+int	ip_dosourceroute = 0;	/* no source routing unless sysctl'd to enable */
 int	ip_defttl = IPDEFTTL;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
@@ -702,6 +704,21 @@ ip_dooptions(m)
 				save_rte(cp, ip->ip_src);
 				break;
 			}
+
+			if (!ip_dosourceroute) {
+#if 0
+				char buf[4*sizeof "123"];
+				strcpy(buf, inet_ntoa(ip->ip_dst));
+
+				log(LOG_WARNING,
+				    "attempted source route from %s to %s\n",
+				    inet_ntoa(ip->ip_src), buf);
+#endif
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_SRCFAIL;
+				goto bad;
+			}
+
 			/*
 			 * locate outgoing interface
 			 */
@@ -1069,7 +1086,7 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-		        printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
+			printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
 #endif
 		}
 	}
@@ -1151,6 +1168,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_DEFMTU:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
 #endif
+	case IPCTL_SOURCEROUTE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_dosourceroute));
 	default:
 		return (EOPNOTSUPP);
 	}

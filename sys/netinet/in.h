@@ -243,7 +243,8 @@ struct ip_mreq {
 #ifdef notyet
 #define	IPCTL_DEFMTU		4	/* default MTU */
 #endif
-#define	IPCTL_MAXID		5
+#define IPCTL_SOURCEROUTE	5	/* may perform source routes */
+#define	IPCTL_MAXID		6
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -251,6 +252,7 @@ struct ip_mreq {
 	{ "redirect", CTLTYPE_INT }, \
 	{ "ttl", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
+	{ "sourceroute", CTLTYPE_INT }, \
 }
 
 
