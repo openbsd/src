@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: linux_cdrom.c,v 1.4 1998/01/23 11:30:06 provos Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.5 2001/05/24 06:00:08 jasoni Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -66,15 +66,16 @@ bsd_addr_to_linux_addr(bsd, linux, format)
 }
 
 int
-linux_ioctl_cdrom(p, uap, retval)
+linux_ioctl_cdrom(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp;
 	caddr_t sg;

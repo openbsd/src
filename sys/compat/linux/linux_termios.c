@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.8 2000/08/18 17:40:24 niklas Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.9 2001/05/24 06:00:09 jasoni Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -438,15 +438,16 @@ bsd_termios_to_linux_termios(bts, lts)
 }
 
 int
-linux_ioctl_termios(p, uap, retval)
+linux_ioctl_termios(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp;
 	u_long com;

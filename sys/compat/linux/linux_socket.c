@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.18 2000/07/23 22:35:38 jasoni Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.19 2001/05/24 06:00:09 jasoni Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -77,38 +77,28 @@
  */
 
 int linux_to_bsd_domain __P((int));
-int linux_socket __P((struct proc *, struct linux_socket_args *, register_t *));
-int linux_bind __P((struct proc *, struct linux_bind_args *, register_t *));
-int linux_connect __P((struct proc *, struct linux_connect_args *,
-    register_t *));
-int linux_listen __P((struct proc *, struct linux_listen_args *, register_t *));
-int linux_accept __P((struct proc *, struct linux_accept_args *, register_t *));
-int linux_getsockname __P((struct proc *, struct linux_getsockname_args *,
-    register_t *));
-int linux_getpeername __P((struct proc *, struct linux_getpeername_args *,
-    register_t *));
-int linux_socketpair __P((struct proc *, struct linux_socketpair_args *,
-    register_t *));
-int linux_send __P((struct proc *, struct linux_send_args *, register_t *));
-int linux_recv __P((struct proc *, struct linux_recv_args *, register_t *));
-int linux_sendto __P((struct proc *, struct linux_sendto_args *, register_t *));
-int linux_recvfrom __P((struct proc *, struct linux_recvfrom_args *,
-    register_t *));
-int linux_shutdown __P((struct proc *, struct linux_shutdown_args *,
-    register_t *));
+int linux_socket __P((struct proc *, void *, register_t *));
+int linux_bind __P((struct proc *, void *, register_t *));
+int linux_connect __P((struct proc *, void *, register_t *));
+int linux_listen __P((struct proc *, void *, register_t *));
+int linux_accept __P((struct proc *, void *, register_t *));
+int linux_getsockname __P((struct proc *, void *, register_t *));
+int linux_getpeername __P((struct proc *, void *, register_t *));
+int linux_socketpair __P((struct proc *, void *, register_t *));
+int linux_send __P((struct proc *, void *, register_t *));
+int linux_recv __P((struct proc *, void *, register_t *));
+int linux_sendto __P((struct proc *, void *, register_t *));
+int linux_recvfrom __P((struct proc *, void *, register_t *));
+int linux_shutdown __P((struct proc *, void *, register_t *));
 int linux_to_bsd_sopt_level __P((int));
 int linux_to_bsd_so_sockopt __P((int));
 int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
-int linux_setsockopt __P((struct proc *, struct linux_setsockopt_args *,
-    register_t *));
-int linux_getsockopt __P((struct proc *, struct linux_getsockopt_args *,
-    register_t *));
-int linux_recvmsg __P((struct proc *, struct linux_recvmsg_args *,
-    register_t *));
-int linux_sendmsg __P((struct proc *, struct linux_sendmsg_args *,
-    register_t *));
+int linux_setsockopt __P((struct proc *, void *, register_t *));
+int linux_getsockopt __P((struct proc *, void *, register_t *));
+int linux_recvmsg __P((struct proc *, void *, register_t *));
+int linux_sendmsg __P((struct proc *, void *, register_t *));
 
 int linux_check_hdrincl __P((struct proc *, int, register_t *));
 int linux_sendto_hdrincl __P((struct proc *, struct sys_sendto_args *,
@@ -141,15 +131,16 @@ linux_to_bsd_domain(ldom)
 }
 
 int
-linux_socket(p, uap, retval)
+linux_socket(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_socket_args /* {
 		syscallarg(int)	domain;
 		syscallarg(int)	type;
 		syscallarg(int) protocol;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_socket_args lsa;
 	struct sys_socket_args bsa;
 	int error;
@@ -166,15 +157,16 @@ linux_socket(p, uap, retval)
 }
 
 int
-linux_bind(p, uap, retval)
+linux_bind(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_bind_args /* {
 		syscallarg(int)	s;
 		syscallarg(struct sockaddr *) name;
 		syscallarg(int)	namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_bind_args lba;
 	struct sys_bind_args bba;
 	int error;
@@ -190,15 +182,16 @@ linux_bind(p, uap, retval)
 }
 
 int
-linux_connect(p, uap, retval)
+linux_connect(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_connect_args /* {
 		syscallarg(int)	s;
 		syscallarg(struct sockaddr *) name;
 		syscallarg(int)	namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_connect_args lca;
 	struct sys_connect_args bca;
 	int error;
@@ -254,14 +247,15 @@ linux_connect(p, uap, retval)
 }
 
 int
-linux_listen(p, uap, retval)
+linux_listen(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_listen_args /* {
 		syscallarg(int) s;
 		syscallarg(int) backlog;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_listen_args lla;
 	struct sys_listen_args bla;
 	int error;
@@ -276,15 +270,16 @@ linux_listen(p, uap, retval)
 }
 
 int
-linux_accept(p, uap, retval)
+linux_accept(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) addr;
 		syscallarg(int *) namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_accept_args laa;
 	struct compat_43_sys_accept_args baa;
 	int error;
@@ -300,15 +295,16 @@ linux_accept(p, uap, retval)
 }
 
 int
-linux_getsockname(p, uap, retval)
+linux_getsockname(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_getsockname_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) addr;
 		syscallarg(int *) namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_getsockname_args lga;
 	struct compat_43_sys_getsockname_args bga;
 	int error;
@@ -324,15 +320,16 @@ linux_getsockname(p, uap, retval)
 }
 
 int
-linux_getpeername(p, uap, retval)
+linux_getpeername(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_getpeername_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) addr;
 		syscallarg(int *) namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_getpeername_args lga;
 	struct compat_43_sys_getpeername_args bga;
 	int error;
@@ -348,16 +345,17 @@ linux_getpeername(p, uap, retval)
 }
 
 int
-linux_socketpair(p, uap, retval)
+linux_socketpair(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_socketpair_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 		syscallarg(int *) rsv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_socketpair_args lsa;
 	struct sys_socketpair_args bsa;
 	int error;
@@ -376,16 +374,17 @@ linux_socketpair(p, uap, retval)
 }
 
 int
-linux_send(p, uap, retval)
+linux_send(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_send_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) msg;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_send_args lsa;
 	struct compat_43_sys_send_args bsa;
 	int error;
@@ -402,16 +401,17 @@ linux_send(p, uap, retval)
 }
 
 int
-linux_recv(p, uap, retval)
+linux_recv(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_recv_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) msg;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_recv_args lra;
 	struct compat_43_sys_recv_args bra;
 	int error;
@@ -541,8 +541,11 @@ linux_sendto_hdrincl(p, bsa, retval)
 }
 
 int
-linux_sendto(p, uap, retval)
+linux_sendto(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) msg;
@@ -550,9 +553,7 @@ linux_sendto(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(sockaddr *) to;
 		syscallarg(int) tolen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_sendto_args lsa;
 	struct sys_sendto_args bsa;
 	int error;
@@ -573,8 +574,11 @@ linux_sendto(p, uap, retval)
 }
 
 int
-linux_recvfrom(p, uap, retval)
+linux_recvfrom(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
@@ -582,9 +586,7 @@ linux_recvfrom(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) from;
 		syscallarg(int *) fromlen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_recvfrom_args lra;
 	struct compat_43_sys_recvfrom_args bra;
 	int error;
@@ -603,14 +605,15 @@ linux_recvfrom(p, uap, retval)
 }
 
 int
-linux_shutdown(p, uap, retval)
+linux_shutdown(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_shutdown_args /* {
 		syscallarg(int) s;
 		syscallarg(int) how;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_shutdown_args lsa;
 	struct sys_shutdown_args bsa;
 	int error;
@@ -754,17 +757,18 @@ linux_to_bsd_udp_sockopt(lopt)
  * need conversion, as they are the same on both systems.
  */
 int
-linux_setsockopt(p, uap, retval)
+linux_setsockopt(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_setsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) optname;
 		syscallarg(void *) optval;
 		syscallarg(int) optlen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_setsockopt_args lsa;
 	struct sys_setsockopt_args bsa;
 	int error, name;
@@ -805,17 +809,18 @@ linux_setsockopt(p, uap, retval)
  * getsockopt(2) is very much the same as setsockopt(2) (see above)
  */
 int
-linux_getsockopt(p, uap, retval)
+linux_getsockopt(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_getsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) optname;
 		syscallarg(void *) optval;
 		syscallarg(int) *optlen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_getsockopt_args lga;
 	struct sys_getsockopt_args bga;
 	int error, name;
@@ -853,15 +858,16 @@ linux_getsockopt(p, uap, retval)
 }
 
 int
-linux_recvmsg(p, uap, retval)
+linux_recvmsg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_recvmsg_args lla;
 	struct sys_recvmsg_args bla;
 	int error;
@@ -877,15 +883,16 @@ linux_recvmsg(p, uap, retval)
 }
 
 int
-linux_sendmsg(p, uap, retval)
+linux_sendmsg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct msghdr *) msg;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_sendmsg_args lla;
 	struct sys_sendmsg_args bla;
 	int error;
@@ -979,15 +986,16 @@ linux_sys_socketcall(p, v, retval)
 }
 
 int
-linux_ioctl_socket(p, uap, retval)
+linux_ioctl_socket(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	u_long com;
 	struct sys_ioctl_args ia;
 
