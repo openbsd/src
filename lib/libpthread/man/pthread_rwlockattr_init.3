@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_init.3,v 1.6 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: pthread_rwlockattr_init.3,v 1.7 2003/06/02 11:19:48 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -44,6 +44,13 @@ If successful, the
 .Fn pthread_rwlockattr_init
 function will return zero.
 Otherwise an error number will be returned to indicate the error.
+.Sh ERRORS
+.Fn pthread_rwlockattr_init
+will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+Insufficient memory exists to initialize the attribute object.
+.El
 .Sh SEE ALSO
 .Xr pthread_rwlock_init 3 ,
 .Xr pthread_rwlockattr_destroy 3 ,
@@ -54,13 +61,6 @@ The
 .Fn pthread_rwlockattr_init
 function is expected to conform to
 .St -susv2 .
-.Sh ERRORS
-.Fn pthread_rwlockattr_init
-will fail if:
-.Bl -tag -width Er
-.It Bq Er ENOMEM
-Insufficient memory exists to initialize the attribute object.
-.El
 .Sh HISTORY
 The
 .Fn pthread_rwlockattr_init

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_wrlock.3,v 1.5 2003/05/18 13:06:33 jmc Exp $
+.\" $OpenBSD: pthread_rwlock_wrlock.3,v 1.6 2003/06/02 11:19:48 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -59,15 +59,6 @@ and
 .Fn pthread_rwlock_trywrlock
 functions will return zero.
 Otherwise an error number will be returned to indicate the error.
-.Sh SEE ALSO
-.Xr pthread_rwlock_unlock 3
-.Sh STANDARDS
-The
-.Fn pthread_rwlock_wrlock
-and
-.Fn pthread_rwlock_trywrlock
-functions are expected to conform to
-.St -susv2 .
 .Sh ERRORS
 The
 .Fn pthread_rwlock_trywrlock
@@ -94,6 +85,15 @@ is invalid.
 Insufficient memory exists to initialize the lock (applies to
 statically initialized locks only).
 .El
+.Sh SEE ALSO
+.Xr pthread_rwlock_unlock 3
+.Sh STANDARDS
+The
+.Fn pthread_rwlock_wrlock
+and
+.Fn pthread_rwlock_trywrlock
+functions are expected to conform to
+.St -susv2 .
 .Sh HISTORY
 The
 .Fn pthread_rwlock_wrlock

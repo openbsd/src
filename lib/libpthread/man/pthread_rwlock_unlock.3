@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_unlock.3,v 1.5 2003/05/18 13:06:33 jmc Exp $
+.\" $OpenBSD: pthread_rwlock_unlock.3,v 1.6 2003/06/02 11:19:48 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -53,14 +53,6 @@ Otherwise an error number will be returned to indicate the error.
 The results are undefined if
 .Fa lock
 is not held by the calling thread.
-.Sh SEE ALSO
-.Xr pthread_rwlock_rdlock 3 ,
-.Xr pthread_rwlock_wrlock 3
-.Sh STANDARDS
-The
-.Fn pthread_rwlock_unlock
-function is expected to conform to
-.St -susv2 .
 .Sh ERRORS
 The
 .Fn pthread_rwlock_unlock
@@ -73,6 +65,14 @@ is invalid.
 .It Bq Er EPERM
 The current thread does not own the read/write lock.
 .El
+.Sh SEE ALSO
+.Xr pthread_rwlock_rdlock 3 ,
+.Xr pthread_rwlock_wrlock 3
+.Sh STANDARDS
+The
+.Fn pthread_rwlock_unlock
+function is expected to conform to
+.St -susv2 .
 .Sh HISTORY
 The
 .Fn pthread_rwlock_unlock

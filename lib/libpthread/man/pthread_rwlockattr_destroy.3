@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_destroy.3,v 1.7 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: pthread_rwlockattr_destroy.3,v 1.8 2003/06/02 11:19:48 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -46,13 +46,6 @@ If successful, the
 .Fn pthread_rwlockattr_destroy
 function will return zero.
 Otherwise an error number will be returned to indicate the error.
-.Sh SEE ALSO
-.Xr pthread_rwlockattr_init 3
-.Sh STANDARDS
-The
-.Fn pthread_rwlockattr_destroy
-function is expected to conform to
-.St -susv2 .
 .Sh ERRORS
 .Fn pthread_rwlockattr_destroy
 may fail if:
@@ -62,6 +55,13 @@ The value specified by
 .Fa attr
 is invalid.
 .El
+.Sh SEE ALSO
+.Xr pthread_rwlockattr_init 3
+.Sh STANDARDS
+The
+.Fn pthread_rwlockattr_destroy
+function is expected to conform to
+.St -susv2 .
 .Sh HISTORY
 The
 .Fn pthread_rwlockattr_destroy
