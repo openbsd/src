@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmareg.h,v 1.4 1997/08/08 08:24:58 downsj Exp $	*/
+/*	$OpenBSD: dmareg.h,v 1.5 1999/06/23 16:47:36 deraadt Exp $	*/
 /*	$NetBSD: dmareg.h,v 1.10 1996/11/28 09:37:34 pk Exp $ */
 
 /*
@@ -69,6 +69,7 @@ struct dma_regs {
 #define   DMAREV_1		0x80000000	/* 'DMA' */
 #define   DMAREV_PLUS		0x90000000	/* 'DMA+' */
 #define   DMAREV_2		0xa0000000	/* 'DMA2' */
+#define   DMAREV_HME		0xb0000000	/* 'HME' gate array */
 
 	volatile caddr_t	addr;
 #define DMA_D_ADDR		0x01		/* DMA ADDR (in u_longs) */
