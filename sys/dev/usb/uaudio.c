@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.19 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.20 2004/08/30 03:06:48 drahn Exp $ */
 /*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
@@ -573,14 +573,19 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 {
 	int res;
 	size_t len = sizeof(*mc) * (sc->sc_nctls + 1);
-	struct mixerctl *nmc = sc->sc_nctls == 0 ?
-	    malloc(len, M_USBDEV, M_NOWAIT) :
-	    realloc(sc->sc_ctls, len, M_USBDEV, M_NOWAIT);
+	struct mixerctl *nmc = malloc(len, M_USBDEV, M_NOWAIT);
 
 	if (nmc == NULL) {
 		printf("uaudio_mixer_add_ctl: no memory\n");
 		return;
 	}
+
+	/* Copy old data, if there was any */
+	if (sc->sc_nctls != 0) {
+	    bcopy(sc->sc_ctls, nmc, sizeof(*mc) * (sc->sc_nctls));
+	    free(sc->sc_ctls, M_USBDEV);
+	}
+
 	sc->sc_ctls = nmc;
 
 	mc->delta = 0;
@@ -1079,13 +1084,17 @@ void
 uaudio_add_alt(struct uaudio_softc *sc, struct as_info *ai)
 {
 	size_t len = sizeof(*ai) * (sc->sc_nalts + 1);
-	struct as_info *nai = (sc->sc_nalts == 0) ?
-	    malloc(len, M_USBDEV, M_NOWAIT) :
-	    realloc(sc->sc_alts, len, M_USBDEV, M_NOWAIT);
+	struct as_info *nai = malloc(len, M_USBDEV, M_NOWAIT);
 
 	if (nai == NULL) {
 		printf("uaudio_add_alt: no memory\n");
 		return;
+	}
+
+	/* Copy old data, if there was any */
+	if (sc->sc_nalts != 0) { 
+	    bcopy(sc->sc_alts, nai, sizeof(*ai) * (sc->sc_nalts));
+	    free(sc->sc_alts, M_USBDEV);
 	}
 
 	sc->sc_alts = nai;
