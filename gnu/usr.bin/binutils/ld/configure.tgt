@@ -270,7 +270,7 @@ powerpc-*-linux-gnu*)	targ_emul=elf32ppclinux; targ_extra_emuls=elf32ppc;
 pjl*-*-*)	        targ_emul=pjlelf ; targ_extra_emuls="elf_i386" ;;
 pj*-*-*)	        targ_emul=pjelf ;;
 powerpc-*-elf* | powerpc-*-eabi* | powerpc-*-sysv* \
-  | powerpc-*-netbsd* | powerpc-*-vxworks*)
+  | powerpc-*-netbsd* | powerpc-*-openbsd* | powerpc-*-vxworks*)
 	targ_emul=elf32ppc ;;
 powerpcle-*-elf* | powerpcle-*-eabi* | powerpcle-*-solaris* \
   | powerpcle-*-sysv* | powerpcle-*-vxworks*)
