@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.13 1999/06/23 04:55:09 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.14 2000/03/13 20:32:15 maja Exp 
  */
 
 /*
@@ -96,6 +96,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "BUS6301",
 	    EISA_PRODUCT_BUS6301,
+	},
+	{
+	    0,
+	    "CPQ6101",
+	    EISA_PRODUCT_CPQ6101,
 	},
 	{
 	    0,
@@ -219,6 +224,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "TCM5090",
+	    EISA_PRODUCT_TCM5090,
+	},
+	{
+	    0,
 	    "TCM5091",
 	    EISA_PRODUCT_TCM5091,
 	},
@@ -231,6 +241,16 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "TCM5093",
 	    EISA_PRODUCT_TCM5093,
+	},
+	{
+	    0,
+	    "TCM5094",
+	    EISA_PRODUCT_TCM5094,
+	},
+	{
+	    0,
+	    "TCM5095",
+	    EISA_PRODUCT_TCM5095,
 	},
 	{
 	    0,
@@ -281,6 +301,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "BUS",
 	    "BusLogic",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "CPQ",
+	    "Compaq",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,

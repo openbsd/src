@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.13 1999/06/23 04:55:09 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.14 2000/03/13 20:32:15 maja Exp 
  */
 
 /*
@@ -58,6 +58,9 @@
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
 #define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
 
+/* Compaq products */
+#define	EISA_PRODUCT_CPQ6101	"Compaq NetFlex-2 ENET-TR"
+
 /* Digital Equipment products */
 #define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425 Ethernet"
 #define	EISA_PRODUCT_DEC3001	"Digital Equipment DEFEA FDDI Controller"
@@ -99,9 +102,12 @@
 #define	EISA_PRODUCT_HWPC0E1	"Hewlett-Packard EISA System Board"
 
 /* 3Com products */
+#define	EISA_PRODUCT_TCM5090	"3Com 3C509-TP Ethernet"
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
+#define	EISA_PRODUCT_TCM5094	"3Com 3C509-Combo Ethernet"
+#define	EISA_PRODUCT_TCM5095	"3Com 3C509-TPO Ethernet"
 #define	EISA_PRODUCT_TCM5920	"3Com 3C592 Etherlink III"
 #define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Etherlink TX"
 #define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
