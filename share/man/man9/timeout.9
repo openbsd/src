@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.9 2000/06/05 13:24:55 aaron Exp $
+.\"	$OpenBSD: timeout.9,v 1.10 2000/06/28 04:07:45 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -32,7 +32,9 @@
 .Sh NAME
 .Nm timeout_set ,
 .Nm timeout_add ,
-.Nm timeout_del
+.Nm timeout_del ,
+.Nm timeout_pending ,
+.Nm timeout_initialized
 .Nd execute a function after a specified period of time
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -65,7 +67,7 @@ and
 .Pp
 The function
 .Fn timeout_set
-Prepares the timeout structure
+prepares the timeout structure
 .Fa to
 to be used in future calls to
 .Fn timeout_add
@@ -84,7 +86,7 @@ structure can be used in repeatedly in
 .Fn timeout_add
 and
 .Fn timeout_del
-and doesn't need to be reinitialized unless you wish to
+and does not need to be reinitialized unless you wish to
 change the function called and/or the argument to it.
 .Pp
 The function
