@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.26 1997/08/22 20:13:42 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.27 1997/08/29 19:29:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -273,11 +273,8 @@ biosopen(struct open_file *f, ...)
 #endif
 
 	if (maj == 17) {	/* hd, wd, sd */
-		struct {
-			u_int8_t		mboot[DOSPARTOFF];
-			struct dos_partition	dparts[NDOSPART];
-			u_int16_t		signature;
-		}	mbr;
+		struct dos_mbr	mbr;
+
 		if ((errno = biosstrategy(bd, F_READ, DOSBBSECTOR,
 		    DEV_BSIZE, &mbr, NULL)) != 0) {
 #ifdef DEBUG
@@ -289,7 +286,7 @@ biosopen(struct open_file *f, ...)
 		}
 
 		/* check mbr signature */
-		if (mbr.signature != 0xaa55) {
+		if (mbr.dmbr_sign != DOSMBR_SIGNATURE) {
 #ifdef DEBUG
 			if (debug)
 				printf("bad MBR signature\n");
@@ -299,14 +296,14 @@ biosopen(struct open_file *f, ...)
 		}
 
 		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-			if (mbr.dparts[i].dp_typ == DOSPTYP_OPENBSD)
-				off = mbr.dparts[i].dp_start + LABELSECTOR;
+			if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_OPENBSD)
+				off = mbr.dmbr_parts[i].dp_start + LABELSECTOR;
 
 		/* just in case */
 		if (off == 0)
 			for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-				if (mbr.dparts[i].dp_typ == DOSPTYP_NETBSD)
-					off = mbr.dparts[i].dp_start +
+				if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_NETBSD)
+					off = mbr.dmbr_parts[i].dp_start +
 						LABELSECTOR;
 
 		if (off == 0) {
