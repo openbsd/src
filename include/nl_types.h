@@ -81,7 +81,7 @@ struct _nls_msg_hdr {
 #define	NL_SETD		1
 #define NL_CAT_LOCALE   1
 
-typedef struct {
+typedef struct _nl_catd {
 	void	*__data;
 	int	__size;
 } *nl_catd;
