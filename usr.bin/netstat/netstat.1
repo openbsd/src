@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.31 2003/06/12 07:39:16 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.32 2003/07/14 12:38:30 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -112,15 +112,15 @@ The following address families are recognized:
 .Pp
 .Bl -column "Address Family" "AF_APPLETA" "Description" -offset indent -compact
 .It Sy "Address Family" Ta Sy "Constant" Ta Sy "Description"
-.It "inet" Dv Ta "AF_INET" Ta "IP Version 4"
-.It "inet6" Dv Ta "AF_INET6" Ta "IP Version 6"
-.It "ipx" Dv Ta "AF_IPX" Ta "Novell IPX"
-.It "atalk" Dv Ta "AF_APPLETALK" Ta "AppleTalk"
-.It "ns" Dv Ta "AF_NS" Ta "Xerox NS Protocols"
-.It "iso" Dv Ta "AF_ISO" Ta "ISO Protocol Family"
-.It "encap" Dv Ta "PF_KEY" Ta "IPsec"
-.It "local" Dv Ta "AF_LOCAL" Ta "Local to Host (i.e., pipes)"
-.It "unix" Dv Ta "AF_UNIX" Ta "Local to Host (i.e., pipes)"
+.It "inet" Ta Dv "AF_INET" Ta "IP Version 4"
+.It "inet6" Ta Dv "AF_INET6" Ta "IP Version 6"
+.It "ipx" Ta Dv "AF_IPX" Ta "Novell IPX"
+.It "atalk" Ta Dv "AF_APPLETALK" Ta "AppleTalk"
+.It "ns" Ta Dv "AF_NS" Ta "Xerox NS Protocols"
+.It "iso" Ta Dv "AF_ISO" Ta "ISO Protocol Family"
+.It "encap" Ta Dv "PF_KEY" Ta "IPsec"
+.It "local" Ta Dv "AF_LOCAL" Ta "Local to Host (i.e., pipes)"
+.It "unix" Ta Dv "AF_UNIX" Ta "Local to Host (i.e., pipes)"
 .El
 .Pp
 .It Fl g
@@ -135,7 +135,6 @@ Show information about the specified
 used with a
 .Ar wait
 interval as described below.
-.br
 .Pp
 If the
 .Fl f Ar address_family
