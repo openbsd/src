@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.4 1999/02/28 03:23:38 jason Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.5 2001/02/03 05:16:42 mickey Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -46,6 +46,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -93,6 +94,7 @@ struct iy_softc {
 
 	int sc_iobase;
 	struct arpcom sc_arpcom;
+	struct timeout sc_tmo;
 
 #define MAX_MBS 8
 	struct mbuf *mb[MAX_MBS];
@@ -138,7 +140,7 @@ void iyrint __P((struct iy_softc *));
 void iytint __P((struct iy_softc *));
 void iyxmit __P((struct iy_softc *));
 void iyget __P((struct iy_softc *, int, int));
-void iymbuffill __P((void *)); 
+void iymbuffill __P((void *));
 void iymbufempty __P((void *));
 void iyprobemem __P((struct iy_softc *));
 
@@ -186,7 +188,7 @@ iyprobe(parent, match, aux)
 	u_int16_t eepromtmp;
 	u_int8_t c, d;
 
-	
+
 	iobase = ia->ia_iobase;
 
 	if (iobase == -1)
@@ -197,41 +199,41 @@ iyprobe(parent, match, aux)
 	/* check here for addresses already given to other devices */
 
 	c = inb(iobase + ID_REG);
-	if (c & ID_REG_MASK != ID_REG_SIG)
+	if ((c & ID_REG_MASK) != ID_REG_SIG)
 		return 0;
 
 	d = inb(iobase + ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		return 0;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x40)
 		return 0;
-		
+
 	d = inb(iobase + ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		return 0;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x80)
 		return 0;
-		
+
 	d = inb(iobase + ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		return 0;
 
 	if (((d-c) & R_ROBIN_BITS) != 0xC0)
 		return 0;
-		
+
 	d = inb(iobase + ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		return 0;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x00)
 		return 0;
-		
+
 #ifdef IYDEBUG
 		printf("eepro_probe verified working ID reg.\n");
 #endif
-	
+
 	for (i=0; i<64; ++i) {
 		eepromtmp = eepromread(iobase, i);
 		checksum += eepromtmp;
@@ -241,20 +243,20 @@ iyprobe(parent, match, aux)
 	if (checksum != EEPP_CHKSUM)
 		printf("wrong EEPROM checksum 0x%x should be 0x%x\n",
 		    checksum, EEPP_CHKSUM);
-		
-	
+
+
 	if ((eaddr[EEPPEther0] != eepromread(iobase, EEPPEther0a)) &&
 	    (eaddr[EEPPEther1] != eepromread(iobase, EEPPEther1a)) &&
 	    (eaddr[EEPPEther2] != eepromread(iobase, EEPPEther2a)))
 		printf("EEPROM Ethernet address differs from copy\n");
-	
-        sc->sc_arpcom.ac_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
-        sc->sc_arpcom.ac_enaddr[0] = eaddr[EEPPEther0] >> 8;
-        sc->sc_arpcom.ac_enaddr[3] = eaddr[EEPPEther1] & 0xFF;
-        sc->sc_arpcom.ac_enaddr[2] = eaddr[EEPPEther1] >> 8;
-        sc->sc_arpcom.ac_enaddr[5] = eaddr[EEPPEther2] & 0xFF;
-        sc->sc_arpcom.ac_enaddr[4] = eaddr[EEPPEther2] >> 8;
-	
+
+	sc->sc_arpcom.ac_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
+	sc->sc_arpcom.ac_enaddr[0] = eaddr[EEPPEther0] >> 8;
+	sc->sc_arpcom.ac_enaddr[3] = eaddr[EEPPEther1] & 0xFF;
+	sc->sc_arpcom.ac_enaddr[2] = eaddr[EEPPEther1] >> 8;
+	sc->sc_arpcom.ac_enaddr[5] = eaddr[EEPPEther2] & 0xFF;
+	sc->sc_arpcom.ac_enaddr[4] = eaddr[EEPPEther2] >> 8;
+
 	if (ia->ia_irq == IRQUNK)
 		ia->ia_irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
 
@@ -267,12 +269,12 @@ iyprobe(parent, match, aux)
 	sc->hard_vers = eaddr[EEPW6] & EEPP_BoardRev;
 
 	/* now lets reset the chip */
-	
+
 	outb(iobase + COMMAND_REG, RESET_CMD);
 	delay(200);
-	
-       	ia->ia_iobase = iobase;
-       	ia->ia_iosize = 16;
+
+	ia->ia_iobase = iobase;
+	ia->ia_iosize = 16;
 	return 1;		/* found */
 }
 
@@ -308,8 +310,9 @@ iyattach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, 
-	    IPL_NET, iyintr, sc);
+	timeout_set(&sc->sc_tmo, iymbuffill, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, iyintr, sc, sc->sc_dev.dv_xname);
 }
 
 void
@@ -322,7 +325,7 @@ struct iy_softc *sc;
 #endif
 
 	iobase = sc->sc_iobase;
-	
+
 	outb(iobase + COMMAND_REG, RCV_DISABLE_CMD);
 
 	outb(iobase + INT_MASK_REG, ALL_INTS);
@@ -330,8 +333,8 @@ struct iy_softc *sc;
 
 	outb(iobase + COMMAND_REG, RESET_CMD);
 	delay(200);
-#ifdef IYDEBUG 
-	printf("%s: dumping tx chain (st 0x%x end 0x%x last 0x%x)\n", 
+#ifdef IYDEBUG
+	printf("%s: dumping tx chain (st 0x%x end 0x%x last 0x%x)\n",
 		    sc->sc_dev.dv_xname, sc->tx_start, sc->tx_end, sc->tx_last);
 	p = sc->tx_last;
 	if (!p)
@@ -346,7 +349,7 @@ struct iy_softc *sc;
 		printf(" 0x%04x", p);
 		v = inw(iobase + MEM_PORT_REG);
 		printf(" 0x%b\n", v, "\020\020Ch");
-		
+
 	} while (v & 0x8000);
 #endif
 	sc->tx_start = sc->tx_end = sc->rx_size;
@@ -387,7 +390,7 @@ struct iy_softc *sc;
 	temp = inb(iobase + EEPROM_REG);
 	if (temp & 0x10)
 		outb(iobase + EEPROM_REG, temp & ~0x10);
-	
+
 	for (i=0; i<6; ++i) {
 		outb(iobase + I_ADD(i), sc->sc_arpcom.ac_enaddr[i]);
 	}
@@ -395,12 +398,12 @@ struct iy_softc *sc;
 	temp = inb(iobase + REG1);
 	outb(iobase + REG1, temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP |
 	    RCV_DISCARD_BAD);
-	
+
 	temp = inb(iobase + RECV_MODES_REG);
 	outb(iobase + RECV_MODES_REG, temp | MATCH_BRDCST);
 #ifdef IYDEBUG
 	printf("%s: RECV_MODES were %b set to %b\n",
-	    sc->sc_dev.dv_xname, 
+	    sc->sc_dev.dv_xname,
 	    temp, "\020\1PRMSC\2NOBRDST\3SEECRC\4LENGTH\5NOSaIns\6MultiIA",
 	    temp|MATCH_BRDCST,
 	    "\020\1PRMSC\2NOBRDST\3SEECRC\4LENGTH\5NOSaIns\6MultiIA");
@@ -417,7 +420,7 @@ struct iy_softc *sc;
 	temp = (temp & TEST_MODE_MASK) /* | BNC_BIT XXX*/;
 	outb(iobase + MEDIA_SELECT, temp);
 #ifdef IYDEBUG
-	printf("changed to 0x%b\n", 
+	printf("changed to 0x%b\n",
 	    temp, "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
 #endif
 
@@ -442,14 +445,14 @@ struct iy_softc *sc;
 
 	temp = inb(iobase + REG1);
 #ifdef IYDEBUG
-	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
+	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname,
 	    temp, "\020\2WORD_WIDTH\010INT_ENABLE");
 #endif
 	outb(iobase + REG1, temp | INT_ENABLE); /* XXX what about WORD_WIDTH? */
 
 #ifdef IYDEBUG
 	temp = inb(iobase + REG1);
-	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
+	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname,
 	    temp, "\020\2WORD_WIDTH\010INT_ENABLE");
 #endif
 
@@ -494,7 +497,7 @@ struct ifnet *ifp;
 	printf("iystart called\n");
 #endif
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-                return;
+		return;
 
 	sc = ifp->if_softc;
 	iobase = sc->sc_iobase;
@@ -519,13 +522,13 @@ struct ifnet *ifp;
 			pad = ETHER_MIN_LEN - len;
 		}
 
-        	if (len + pad > ETHER_MAX_LEN) {
-        	        /* packet is obviously too large: toss it */
-        	        ++ifp->if_oerrors;
-        	        IF_DEQUEUE(&ifp->if_snd, m0);
-        	        m_freem(m0);
+		if (len + pad > ETHER_MAX_LEN) {
+			/* packet is obviously too large: toss it */
+			++ifp->if_oerrors;
+			IF_DEQUEUE(&ifp->if_snd, m0);
+			m_freem(m0);
 			continue;
-        	}
+		}
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -539,26 +542,26 @@ struct ifnet *ifp;
 #ifdef IYDEBUG
 		printf("%s: avail is %d.\n", sc->sc_dev.dv_xname, avail);
 #endif
-		/* 
-		 * we MUST RUN at splnet here  --- 
-		 * XXX todo: or even turn off the boards ints ??? hm... 
+		/*
+		 * we MUST RUN at splnet here  ---
+		 * XXX todo: or even turn off the boards ints ??? hm...
 		 */
-	
-       		/* See if there is room to put another packet in the buffer. */
-	
+
+		/* See if there is room to put another packet in the buffer. */
+
 		if ((len+pad+2*I595_XMT_HDRLEN) > avail) {
 			printf("%s: len = %d, avail = %d, setting OACTIVE\n",
 			    sc->sc_dev.dv_xname, len, avail);
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
 		}
-	
+
 		/* we know it fits in the hardware now, so dequeue it */
 		IF_DEQUEUE(&ifp->if_snd, m0);
-		
+
 		last = sc->tx_end;
-		end = last + pad + len + I595_XMT_HDRLEN; 
-		
+		end = last + pad + len + I595_XMT_HDRLEN;
+
 		if (end >= sc->sram) {
 			if ((sc->sram - last) <= I595_XMT_HDRLEN) {
 				/* keep header in one piece */
@@ -609,7 +612,7 @@ struct ifnet *ifp;
 		pad >>= 1;
 		while (pad-- > 0)
 			outw(iobase + MEM_PORT_REG, 0);
-			
+
 #ifdef IYDEBUG
 		printf("%s: new last = 0x%x, end = 0x%x.\n",
 		    sc->sc_dev.dv_xname, last, end);
@@ -626,14 +629,14 @@ struct ifnet *ifp;
 			outw(iobase + MEM_PORT_REG, stat | CHAIN);
 #ifdef IYDEBUG
 			printf("%s: setting 0x%x to 0x%x\n",
-			    sc->sc_dev.dv_xname, sc->tx_last + XMT_COUNT, 
+			    sc->sc_dev.dv_xname, sc->tx_last + XMT_COUNT,
 			    stat | CHAIN);
 #endif
 		}
 		stat = inw(iobase + MEM_PORT_REG); /* dummy read */
 
 		/* XXX todo: enable ints here if disabled */
-		
+
 		++ifp->if_opackets;
 
 		if (sc->tx_start == sc->tx_end) {
@@ -658,8 +661,7 @@ struct ifnet *ifp;
 
 
 static __inline void
-eepromwritebit(eio, what) 
-	int eio, what;
+eepromwritebit(int eio, int what)
 {
 	outb(eio, what);
 	delay(1);
@@ -670,12 +672,11 @@ eepromwritebit(eio, what)
 }
 
 static __inline int
-eepromreadbit(eio) 
-	int eio;
+eepromreadbit(int eio)
 {
-	int b; 
+	int b;
 
-	outb(eio, EECS|EESK); 
+	outb(eio, EECS|EESK);
 	delay(1);
 	b = inb(eio);
 	outb(eio, EECS);
@@ -697,13 +698,13 @@ eepromread(io, offset)
 	delay(1);
 	outb(io, EECS);
 	delay(1);
-	
+
 	eepromwritebit(eio, EECS|EEDI);
 	eepromwritebit(eio, EECS|EEDI);
 	eepromwritebit(eio, EECS);
-	
+
 	for (j=5; j>=0; --j) {
-		if ((offset>>j) & 1) 
+		if ((offset>>j) & 1)
 			eepromwritebit(eio, EECS|EEDI);
 		else
 			eepromwritebit(eio, EECS);
@@ -762,7 +763,7 @@ iyintr(arg)
 			printf("\n");
 	}
 #endif
-	if ((status & (RX_INT | TX_INT) == 0))
+	if ((status & (RX_INT | TX_INT)) == 0)
 		return 0;
 
 	if (status & RX_INT) {
@@ -795,7 +796,7 @@ int iobase, rxlen;
 			goto dropped;
 	} else {
 		if (sc->last_mb == sc->next_mb)
-			timeout(iymbuffill, sc, 1);
+			timeout_add(&sc->sc_tmo, 1);
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
@@ -841,9 +842,9 @@ int iobase, rxlen;
 		*mp = m;
 		mp = &m->m_next;
 	}
-	/* XXX receive the top here */	
+	/* XXX receive the top here */
 	++ifp->if_ipackets;
-	
+
 	eh = mtod(top, struct ether_header *);
 
 #if NBPFILTER > 0
@@ -873,7 +874,7 @@ struct iy_softc *sc;
 	outw(iobase + HOST_ADDR_REG, rxadrs);
 	rxevnt = inw(iobase + MEM_PORT_REG);
 	rxnext = 0;
-	
+
 	while (rxevnt == RCV_DONE) {
 		rxstatus = inw(iobase + MEM_PORT_REG);
 		rxnext = inw(iobase + MEM_PORT_REG);
@@ -908,7 +909,7 @@ struct iy_softc *sc;
 
 	ifp = &sc->sc_arpcom.ac_if;
 	iobase = sc->sc_iobase;
-	
+
 	while (sc->tx_start != sc->tx_end) {
 		outw(iobase + HOST_ADDR_REG, sc->tx_start);
 		txstatus = inw(iobase + MEM_PORT_REG);
@@ -929,7 +930,7 @@ struct iy_softc *sc;
 		else
 			sc->tx_start = sc->tx_end;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		
+
 		if ((txstat2 & 0x2000) == 0)
 			++ifp->if_oerrors;
 		if (txstat2 & 0x000f)
@@ -1086,7 +1087,7 @@ iyioctl(ifp, cmd, data)
 	ifr = (struct ifreq *)data;
 
 #ifdef IYDEBUG
-	printf("iyioctl called with ifp 0x%p (%s) cmd 0x%x data 0x%p\n", 
+	printf("iyioctl called with ifp 0x%p (%s) cmd 0x%x data 0x%p\n",
 	    ifp, ifp->if_xname, cmd, data);
 #endif
 
@@ -1247,8 +1248,8 @@ iymbuffill(arg)
 	sc->last_mb = i;
 	/* If the queue was not filled, try again. */
 	if (sc->last_mb != sc->next_mb)
-		timeout(iymbuffill, sc, 1);
-	splx(s); 
+		timeout_add(&sc->sc_tmo, 1);
+	splx(s);
 }
 
 
@@ -1267,7 +1268,7 @@ iymbufempty(arg)
 		}
 	}
 	sc->last_mb = sc->next_mb = 0;
-	untimeout(iymbuffill, sc);
+	timeout_del(&sc->sc_tmo);
 	splx(s);
 }
 
@@ -1339,7 +1340,7 @@ iyprobemem(sc)
 			/* 1 NFS packet + overhead RX, 4 big packets TX */
 			sc->rx_size = 10*1024;
 			break;
-		default:	
+		default:
 			sc->rx_size = testing/2;
 			break;
 	}
