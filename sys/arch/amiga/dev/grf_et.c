@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_et.c,v 1.5 1997/01/16 09:24:15 niklas Exp $	*/
+/*	$OpenBSD: grf_et.c,v 1.6 1997/05/29 01:15:40 niklas Exp $	*/
 /*	$NetBSD: grf_et.c,v 1.8 1996/12/23 09:10:06 veego Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  * Graphics routines for Tseng ET4000 (&W32) boards,
  *
  * This code offers low-level routines to access Tseng ET4000
- * graphics-boards from within NetBSD for the Amiga.
+ * graphics-boards from within Net- & OpenBSD for the Amiga.
  * No warranties for any kind of function at all - this
  * code may crash your hardware and scratch your harddisk.  Use at your
  * own risk.  Freely distributable.
