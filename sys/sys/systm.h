@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.10 1996/10/19 10:02:45 niklas Exp $	*/
+/*	$OpenBSD: systm.h,v 1.11 1996/10/29 08:28:24 mickey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -96,6 +96,7 @@ extern struct vnode *rootvp;	/* vnode equivalent to above */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
+struct proc;
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
