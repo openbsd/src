@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.2,v 1.7 1998/06/08 17:17:15 deraadt Exp $
+.\"	$OpenBSD: mount.2,v 1.8 1998/12/21 14:08:59 art Exp $
 .\"	$NetBSD: mount.2,v 1.12 1996/02/29 23:47:48 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
@@ -221,6 +221,9 @@ Another process currently holds a reference to
 .It Bq Er EFAULT
 .Fa Dir
 points outside the process's allocated address space.
+.It Bq Er EOPNOTSUPP
+.Fa Type
+is not supported by the kernel.
 .El
 .Pp
 The following errors can occur for a
