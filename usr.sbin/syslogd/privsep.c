@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.2 2003/07/31 18:25:58 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.3 2003/07/31 21:28:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -57,7 +57,7 @@ enum priv_state {
 	STATE_CONFIG,		/* parsing config file for first time */
 	STATE_RUNNING,		/* running and accepting network traffic */
 	STATE_QUIT,		/* shutting down */
-	STATE_RESTART,		/* kill child and re-exec to restart */
+	STATE_RESTART		/* kill child and re-exec to restart */
 };
 
 enum cmd_types {
@@ -68,7 +68,7 @@ enum cmd_types {
 	PRIV_CONFIG_MODIFIED,	/* check if config file has been modified */
 	PRIV_GETHOSTBYNAME,	/* resolve hostname into numerical address */
 	PRIV_GETHOSTBYADDR,	/* resolve numeric address into hostname */
-	PRIV_DONE_CONFIG_PARSE,	/* signal that the initial config parse is done */
+	PRIV_DONE_CONFIG_PARSE	/* signal that the initial config parse is done */
 };
 
 static int priv_fd = -1;
