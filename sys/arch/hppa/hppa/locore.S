@@ -1,7 +1,7 @@
-/*	$OpenBSD: locore.S,v 1.124 2004/04/06 18:25:39 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.125 2004/04/06 18:33:50 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2003 Michael Shalayeff
+ * Copyright (c) 1998-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,6 +163,7 @@ cpu_itmr			/* itmr value at the most recent clk int */
 	BSS(fpu_curpcb, 4)	/* pcb of the fpu owner */
 	.export fpu_enable, data
 	BSS(fpu_enable, 4)	/* bits to set in the ccr to enable fpu */
+	BSS(fpu_scratch, 16)	/* FPU scratch space, enough for a quad */
 	.export hppa_vtop, data
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
 
@@ -2190,6 +2191,14 @@ $ibrk_exit
 	rfir
 	nop
 EXIT(TLABEL(ibrk))
+
+LEAF_ENTRY(fpu_exit)
+	ldil	L%fpu_scratch, %r25
+	ldo	R%fpu_scratch(%r25), %r25
+	fstds	%fr0, 0(%r25)
+	bv	%r0(%rp)
+	sync
+EXIT(fpu_exit)
 
 LEAF_ENTRY(fpu_save)
 	fstds,ma %fr0 , 8(arg0)

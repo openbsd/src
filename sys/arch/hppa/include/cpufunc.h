@@ -1,7 +1,7 @@
-/*	$OpenBSD: cpufunc.h,v 1.23 2003/09/25 22:17:40 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.24 2004/04/06 18:33:50 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,2000 Michael Shalayeff
+ * Copyright (c) 1998,2000-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -208,6 +208,7 @@ ledctl(int on, int off, int toggle)
 extern int (*cpu_hpt_init)(vaddr_t hpt, vsize_t hptsize);
 
 void fpu_save(vaddr_t va);
+void fpu_exit(void);
 void ficache(pa_space_t sp, vaddr_t va, vsize_t size);
 void fdcache(pa_space_t sp, vaddr_t va, vsize_t size);
 void pdcache(pa_space_t sp, vaddr_t va, vsize_t size);
