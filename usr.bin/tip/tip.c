@@ -1,5 +1,5 @@
-/*	$OpenBSD: tip.c,v 1.4 1997/04/02 01:47:03 millert Exp $	*/
-/*	$NetBSD: tip.c,v 1.11 1997/02/11 09:24:06 mrg Exp $	*/
+/*	$OpenBSD: tip.c,v 1.5 1997/04/20 23:29:33 millert Exp $	*/
+/*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.4 1997/04/02 01:47:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.5 1997/04/20 23:29:33 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -304,6 +304,7 @@ prompt(s, p)
 	char *s;
 	register char *p;
 {
+	register int c;
 	register char *b = p;
 	sig_t oint, oquit;
 
@@ -313,7 +314,7 @@ prompt(s, p)
 	unraw();
 	printf("%s", s);
 	if (setjmp(promptbuf) == 0)
-		while ((*p = getchar()) != EOF && *p != '\n')
+		while ((c = getchar()) != EOF && (*p = c) != '\n')
 			p++;
 	*p = '\0';
 
@@ -511,6 +512,8 @@ ttysetup(speed)
 	cfsetispeed(&cntrl, speed);
 	cntrl.c_cflag &= ~(CSIZE|PARENB);
 	cntrl.c_cflag |= CS8;
+	if (boolean(value(DC)))
+		cntrl.c_cflag |= CLOCAL;
 	cntrl.c_iflag &= ~(ISTRIP|ICRNL);
 	cntrl.c_oflag &= ~OPOST;
 	cntrl.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);

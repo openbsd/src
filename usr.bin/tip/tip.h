@@ -1,5 +1,5 @@
-/*	$OpenBSD: tip.h,v 1.5 1997/04/02 01:47:03 millert Exp $	*/
-/*	$NetBSD: tip.h,v 1.5 1996/12/29 10:34:11 cgd Exp $	*/
+/*	$OpenBSD: tip.h,v 1.6 1997/04/20 23:29:33 millert Exp $	*/
+/*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -77,8 +77,8 @@ char	*HO;			/* host name */
 long	BR;			/* line speed for conversation */
 long	FS;			/* frame size for transfers */
 
-char	DU;			/* this host is dialed up */
-char	HW;			/* this device is hardwired, see hunt.c */
+short	DU;			/* this host is dialed up */
+short	HW;			/* this device is hardwired, see hunt.c */
 char	*ES;			/* escape character */
 char	*EX;			/* exceptions */
 char	*FO;			/* force (literal next) char*/
@@ -88,7 +88,8 @@ char	*PR;			/* remote prompt */
 long	DL;			/* line delay for file transfers to remote */
 long	CL;			/* char delay for file transfers to remote */
 long	ET;			/* echocheck timeout */
-char	HD;			/* this host is half duplex - do local echo */
+short	HD;			/* this host is half duplex - do local echo */
+short	DC;			/* this host is directly connected. */
 
 /*
  * String value table

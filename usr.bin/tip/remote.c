@@ -1,5 +1,5 @@
-/*	$OpenBSD: remote.c,v 1.4 1997/04/02 01:47:02 millert Exp $	*/
-/*	$NetBSD: remote.c,v 1.4 1996/12/29 10:34:08 cgd Exp $	*/
+/*	$OpenBSD: remote.c,v 1.5 1997/04/20 23:29:33 millert Exp $	*/
+/*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: remote.c,v 1.4 1997/04/02 01:47:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: remote.c,v 1.5 1997/04/20 23:29:33 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -177,6 +177,8 @@ getremcap(host)
 		setboolean(value(RAWFTP), 1);
 	if (cgetflag("hd"))
 		setboolean(value(HALFDUPLEX), 1);
+	if (cgetflag("dc"))
+		setboolean(value(DC), 1);
 	if (RE == NOSTR)
 		RE = (char *)"tip.record";
 	if (EX == NOSTR)
