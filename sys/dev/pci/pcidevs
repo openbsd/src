@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.583 2003/01/12 18:50:52 henning Exp $
+	$OpenBSD: pcidevs,v 1.584 2003/01/12 18:54:07 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2086,8 +2086,9 @@ product SIGMA DVDMAGICPRO	0x8300	DVDmagic-PRO
 product SIS 86C201		0x0001	86C201 Host-AGP
 product SIS 86C202		0x0002	86C202 VGA
 product SIS 86C205_1		0x0005	86C205
-product SIS 85C503		0x0008	85C503 ISA
+product SIS 85C503		0x0008	85C503 PCI System I/O Chipset
 product SIS 5595		0x0009	5595 PCI System I/O Chipset
+product SIS 85C503_ISA		0x0018	85C503 PCI-ISA
 product SIS 5597VGA		0x0200	5597/5598 VGA
 product SIS 6215		0x0204	6215
 product SIS 86C205_2		0x0205	86C205
@@ -2101,6 +2102,7 @@ product SIS 620			0x0620	620 Host-PCI
 product SIS 630			0x0630	630 Host-PCI
 product SIS 730			0x0730	730 Host-PCI
 product SIS 735			0x0735	735 Host-PCI
+product SIS 745			0x0745	745 Host-PCI
 product SIS 900			0x0900	900 10/100BaseTX
 product SIS 7016		0x7016	7016 10/100BaseTX
 product SIS 7018		0x7018	Trident 4D WAVE
