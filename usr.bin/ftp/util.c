@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 1999/12/08 12:57:06 itojun Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2000/02/01 20:53:06 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.22 1999/12/08 12:57:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.23 2000/02/01 20:53:06 espie Exp $";
 #endif /* not lint */
 
 /*
@@ -565,6 +565,26 @@ remotemodtime(file, noisy)
 	if (command("MDTM %s", file) == COMPLETE) {
 		struct tm timebuf;
 		int yy, mo, day, hour, min, sec;
+ 		/*
+ 		 * time-val = 14DIGIT [ "." 1*DIGIT ]
+ 		 *		YYYYMMDDHHMMSS[.sss]
+ 		 * mdtm-response = "213" SP time-val CRLF / error-response
+ 		 */
+		/* TODO: parse .sss as well, use timespecs. */
+		char *timestr = reply_string;
+
+		/* Repair `19%02d' bug on server side */
+		while (!isspace(*timestr))
+			timestr++;
+		while (isspace(*timestr))
+			timestr++;
+		if (strncmp(timestr, "191", 3) == 0) {
+ 			fprintf(ttyout,
+ 	    "Y2K warning! Fixed incorrect time-val received from server.\n");
+	    		timestr[0] = ' ';
+			timestr[1] = '2';
+			timestr[2] = '0';
+		}
 		sscanf(reply_string, "%*s %04d%02d%02d%02d%02d%02d", &yy, &mo,
 			&day, &hour, &min, &sec);
 		memset(&timebuf, 0, sizeof(timebuf));
