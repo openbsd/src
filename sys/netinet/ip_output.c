@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.127 2001/06/26 18:17:54 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.128 2001/06/27 01:34:07 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -167,27 +167,6 @@ ip_output(m0, va_alist)
 		hlen = ip->ip_hl << 2;
 	}
 
-#ifdef IPSEC
-	s = splnet();
-
-	/*
-	 * If the higher-level protocol has cached the SA to use, we
-	 * can avoid the routing lookup if the source address is zero.
-	 */
-	if (inp != NULL && inp->inp_tdb_out != NULL &&
-	    ip->ip_src.s_addr == INADDR_ANY) {
-		tdb = inp->inp_tdb_out;
-		if (tdb->tdb_src.sa.sa_family == AF_INET &&
-		    tdb->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) {
-			ip->ip_src.s_addr = tdb->tdb_src.sin.sin_addr.s_addr;
-			splx(s);
-			goto skip_routing;
-		}
-	}
-
-	splx(s);
-#endif /* IPSEC */
-
 	/*
 	 * If we're missing the IP source address, do a route lookup. We'll
 	 * remember this result, in case we don't need to do any IPsec
@@ -259,42 +238,29 @@ ip_output(m0, va_alist)
 	}
 
 #ifdef IPSEC
- skip_routing:
 	/*
 	 * splnet is chosen over spltdb because we are not allowed to
 	 * lower the level, and udp_output calls us in splnet().
 	 */
 	s = splnet();
 
-	/*
-	 * Check if there was an outgoing SA bound to the flow
-	 * from a transport protocol.
-	 */
-	if (inp && inp->inp_tdb_out &&
-	    inp->inp_tdb_out->tdb_dst.sa.sa_family == AF_INET &&
-	    !bcmp(&inp->inp_tdb_out->tdb_dst.sin.sin_addr,
-	        &ip->ip_dst, sizeof(ip->ip_dst)))
-	        tdb = inp->inp_tdb_out;
-	else {
-		/* Do we have any pending SAs to apply ? */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-		if (mtag != NULL) {
+	/* Do we have any pending SAs to apply ? */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
+	if (mtag != NULL) {
 #ifdef DIAGNOSTIC
-			if (mtag->m_tag_len != sizeof (struct tdb_ident))
-				panic("ip_output: tag of length %d (should "
-				    "be %d", mtag->m_tag_len,
-				    sizeof (struct tdb_ident));
+		if (mtag->m_tag_len != sizeof (struct tdb_ident))
+			panic("ip_output: tag of length %d (should be %d",
+			    mtag->m_tag_len, sizeof (struct tdb_ident));
 #endif
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
-			if (tdb == NULL)
-				error = -EINVAL;
-			m_tag_delete(m, mtag);
-		}
-		else
-			tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
-			    IPSP_DIRECTION_OUT, NULL, inp);
+		tdbi = (struct tdb_ident *)(mtag + 1);
+		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		if (tdb == NULL)
+			error = -EINVAL;
+		m_tag_delete(m, mtag);
 	}
+	else
+		tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
+		    IPSP_DIRECTION_OUT, NULL, inp);
 
 	if (tdb == NULL) {
 	        splx(s);

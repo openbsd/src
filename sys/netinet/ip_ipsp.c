@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.137 2001/06/26 18:34:39 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.138 2001/06/27 01:34:07 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -180,19 +180,19 @@ tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
  */
 u_int32_t
 reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
-    union sockaddr_union *dst, u_int8_t sproto, int *errval, u_int32_t seq)
+    union sockaddr_union *dst, u_int8_t sproto, int *errval)
 {
 	struct tdb *tdbp;
 	u_int32_t spi;
 	int nums, s;
 
-	/* Don't accept ranges only encompassing reserved SPIs.  */
+	/* Don't accept ranges only encompassing reserved SPIs. */
 	if (tspi < sspi || tspi <= SPI_RESERVED_MAX) {
 		(*errval) = EINVAL;
 		return 0;
 	}
 
-	/* Limit the range to not include reserved areas.  */
+	/* Limit the range to not include reserved areas. */
 	if (sspi <= SPI_RESERVED_MAX)
 		sspi = SPI_RESERVED_MAX + 1;
 
@@ -227,16 +227,16 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 		bcopy(&dst->sa, &tdbp->tdb_dst.sa, SA_LEN(&dst->sa));
 		bcopy(&src->sa, &tdbp->tdb_src.sa, SA_LEN(&src->sa));
 		tdbp->tdb_sproto = sproto;
-		tdbp->tdb_flags |= TDBF_INVALID; /* Mark SA invalid for now */
+		tdbp->tdb_flags |= TDBF_INVALID; /* Mark SA invalid for now. */
 		tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
-		tdbp->tdb_seq = seq;
 		puttdb(tdbp);
 
 		/* Setup a "silent" expiration (since TDBF_INVALID's set) */
 		if (ipsec_keep_invalid > 0) {
 			tdbp->tdb_flags |= TDBF_TIMER;
 			tdbp->tdb_exp_timeout = ipsec_keep_invalid;
-			timeout_add(&tdbp->tdb_timer_tmo, hz * ipsec_keep_invalid);
+			timeout_add(&tdbp->tdb_timer_tmo,
+			    hz * ipsec_keep_invalid);
 		}
 
 		return spi;
@@ -804,11 +804,6 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 	for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++) {
 		if (xsp->xf_type == alg) {
 			err = (*(xsp->xf_init))(tdbp, xsp, ii);
-
-			/* Clear possible pending acquires */
-			if (!err)
-				ipsp_clear_acquire(tdbp);
-
 			return err;
 		}
 	}

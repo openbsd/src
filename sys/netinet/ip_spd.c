@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.32 2001/06/26 23:30:59 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.33 2001/06/27 01:34:07 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -220,7 +220,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		return NULL;
 	}
 
-	/* Actual SPD lookup */
+	/* Actual SPD lookup. */
 	rtalloc((struct route *) re);
 	if (re->re_rt == NULL) {
 		/*
@@ -314,7 +314,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		ipo->ipo_tdb = NULL;
 	}
 
-	/* Outgoing packet SPD lookup. */
+	/* Outgoing packet policy check. */
 	if (direction == IPSP_DIRECTION_OUT) {
 		/*
 		 * If the packet is destined for the policy-specified
@@ -661,61 +661,7 @@ ipsp_delete_acquire(void *v)
 
 	timeout_del(&ipa->ipa_timeout);
 	TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
-	if (ipa->ipa_packet)
-		m_freem(ipa->ipa_packet);
 	pool_put(&ipsec_acquire_pool, ipa);
-}
-
-/*
- * Clear possibly pending ACQUIRE records.
- */
-void
-ipsp_clear_acquire(struct tdb *tdb)
-{
-	struct ipsec_acquire *ipa;
-
-	ipa = ipsec_get_acquire(tdb->tdb_seq);
-	if (ipa == NULL)
-		return;
-
-	/* Just delete and return if no pending packet. */
-	if (ipa->ipa_packet == NULL) {
-		ipsp_delete_acquire(ipa);
-		return;
-	}
-
-	/* Retransmit last packet. */
-	switch (ipa->ipa_info.sen_type) {
-#ifdef INET
-	case SENT_IP4:
-	{
-		struct ip *ip;
-
-		ip = mtod(ipa->ipa_packet, struct ip *);
-
-		if (ipa->ipa_packet->m_len < sizeof(struct ip))
-			break;
-
-		/* Same as in ip_output() -- massage the header. */
-		ip->ip_len = htons((u_short) ip->ip_len);
-		ip->ip_off = htons((u_short) ip->ip_off);
-
-		ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET, 0);
-		ipa->ipa_packet = NULL;
-		break;
-	}
-#endif /* INET */
-
-#ifdef INET6
-	case SENT_IP6:
-		ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET6, 0);
-		ipa->ipa_packet = NULL;
-		break;
-#endif /* INET6 */
-	}
-
-	/* Delete. */
-	ipsp_delete_acquire(ipa);
 }
 
 /*
@@ -750,20 +696,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 #endif
 
 	/* Check whether request has been made already. */
-	if ((ipa = ipsp_pending_acquire(gw)) != NULL) {
-		if ((ipo->ipo_addr.sen_type == SENT_IP4 &&
-		    ipo->ipo_addr.sen_direction == IPSP_DIRECTION_OUT) ||
-		    (ipo->ipo_addr.sen_type == SENT_IP6 &&
-		    ipo->ipo_addr.sen_ip6_direction == IPSP_DIRECTION_OUT)) {
-			if (ipa->ipa_packet != NULL && m != NULL) {
-				m_freem(ipa->ipa_packet);
-				ipa->ipa_packet = m_copym2(m, 0, M_COPYALL,
-				    M_DONTWAIT);
-			}
-		}
-
+	if ((ipa = ipsp_pending_acquire(gw)) != NULL)
 		return 0;
-	}
 
 	/* Add request in cache and proceed. */
 	if (ipsec_acquire_pool_initialized == 0) {
@@ -876,18 +810,25 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		return 0;
 	}
 
-	/*
-	 * Store the packet for eventual retransmission -- failure is not
-	 * catastrophic.
-	 */
-	if (m != NULL)
-		ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
-
 	timeout_add(&ipa->ipa_timeout, ipsec_expire_acquire * hz);
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 
 	/* PF_KEYv2 notification message. */
 	return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
+}
+
+/*
+ * Deal with PCB security requirements.
+ */
+struct tdb *
+ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
+    struct tdb *tdbp, struct inpcb *inp, struct ipsec_policy *ipo)
+{
+	/* XXX */
+	if (ipo != NULL)
+		return ipo->ipo_tdb;
+	else
+		return NULL;
 }
 
 /*
@@ -905,18 +846,4 @@ ipsec_get_acquire(u_int32_t seq)
 			return ipa;
 
 	return NULL;
-}
-
-/*
- * Deal with PCB security requirements.
- */
-struct tdb *
-ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
-    struct tdb *tdbp, struct inpcb *inp, struct ipsec_policy *ipo)
-{
-	/* XXX */
-	if (ipo != NULL)
-		return ipo->ipo_tdb;
-	else
-		return NULL;
 }
