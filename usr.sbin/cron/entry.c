@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.10 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.11 2002/07/11 19:29:36 millert Exp $	*/
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.10 2002/07/08 18:11:02 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.11 2002/07/11 19:29:36 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -35,7 +35,7 @@ static char const rcsid[] = "$OpenBSD: entry.c,v 1.10 2002/07/08 18:11:02 miller
 
 typedef	enum ecode {
 	e_none, e_minute, e_hour, e_dom, e_month, e_dow,
-	e_cmd, e_timespec, e_username, e_option
+	e_cmd, e_timespec, e_username, e_option, e_memory
 } ecode_e;
 
 static const char *ecodes[] =
@@ -49,7 +49,8 @@ static const char *ecodes[] =
 		"bad command",
 		"bad time specifier",
 		"bad username",
-		"bad option"
+		"bad option",
+		"out of memory"
 	};
 
 static char	get_list(bitstr_t *, int, int, const char *[], char, FILE *),
@@ -265,30 +266,28 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	 * others are overrides.
 	 */
 	if ((e->envp = env_copy(envp)) == NULL) {
-		ecode = e_none;
+		ecode = e_memory;
 		goto eof;
 	}
 	if (!env_get("SHELL", e->envp)) {
 		if (glue_strings(envstr, sizeof envstr, "SHELL",
 				 _PATH_BSHELL, '=')) {
-			if ((tenvp = env_set(e->envp, envstr))) {
-				e->envp = tenvp;
-			} else {
-				ecode = e_none;
+			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
+				ecode = e_memory;
 				goto eof;
 			}
+			e->envp = tenvp;
 		} else
 			log_it("CRON", getpid(), "error", "can't set SHELL");
 	}
 	if (!env_get("HOME", e->envp)) {
 		if (glue_strings(envstr, sizeof envstr, "HOME",
 				 pw->pw_dir, '=')) {
-			if ((tenvp = env_set(e->envp, envstr))) {
-				e->envp = tenvp;
-			} else {
-				ecode = e_none;
+			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
+				ecode = e_memory;
 				goto eof;
 			}
+			e->envp = tenvp;
 		} else
 			log_it("CRON", getpid(), "error", "can't set HOME");
 	}
@@ -296,35 +295,32 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	if (!env_get("PATH", e->envp)) {
 		if (glue_strings(envstr, sizeof envstr, "PATH",
 				 _PATH_DEFPATH, '=')) {
-			if ((tenvp = env_set(e->envp, envstr))) {
-				e->envp = tenvp;
-			} else {
-				ecode = e_none;
+			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
+				ecode = e_memory;
 				goto eof;
 			}
+			e->envp = tenvp;
 		} else
 			log_it("CRON", getpid(), "error", "can't set PATH");
 	}
 #endif /* LOGIN_CAP */
 	if (glue_strings(envstr, sizeof envstr, "LOGNAME",
 			 pw->pw_name, '=')) {
-		if ((tenvp = env_set(e->envp, envstr))) {
-			e->envp = tenvp;
-		} else {
-			ecode = e_none;
+		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
+			ecode = e_memory;
 			goto eof;
 		}
+		e->envp = tenvp;
 	} else
 		log_it("CRON", getpid(), "error", "can't set LOGNAME");
 #if defined(BSD)
 	if (glue_strings(envstr, sizeof envstr, "USER",
 			 pw->pw_name, '=')) {
-		if ((tenvp = env_set(e->envp, envstr))) {
-			e->envp = tenvp;
-		} else {
-			ecode = e_none;
+		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
+			ecode = e_memory;
 			goto eof;
 		}
+		e->envp = tenvp;
 	} else
 		log_it("CRON", getpid(), "error", "can't set USER");
 #endif
