@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2001/07/09 02:14:05 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2001/07/09 02:26:05 mickey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -118,6 +118,8 @@ void pmap_deactivate __P((struct proc *p));
 void pmap_activate __P((struct proc *p));
 void pmap_real_memory __P((vm_offset_t *start, vm_size_t *size));
 void switchexit __P((struct proc *));
+
+paddr_t vtophys __P((paddr_t));
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 2000/10/19 04:53:06 drahn Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.7 2001/07/09 02:26:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -88,6 +88,4 @@ struct ppc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_ether_hw_addr(c, s)						\
     (*(c)->pc_ether_hw_addr)((c), (s))
-
-vm_offset_t vtophys __P((void *));
 
