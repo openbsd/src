@@ -1,3 +1,4 @@
+/*	$OpenBSD: crt0.c,v 1.2 2004/02/01 05:44:37 drahn Exp $	*/
 /*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
 
 /*
