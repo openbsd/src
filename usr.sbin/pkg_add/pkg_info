@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.6 2004/08/06 08:06:01 espie Exp $
+# $OpenBSD: pkg_info,v 1.7 2004/08/06 08:14:52 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,6 @@ use warnings;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use Getopt::Std;
-use File::Copy;
 
 package main;
 
@@ -50,38 +49,52 @@ sub print_info
 	} else {
 		print $opt_p, "Information for ", $pkg, "\n\n" unless $opt_q;
 		if ($opt_c) {
+			require File::Copy;
+
 			print $opt_p, "Comment:\n" unless $opt_q;
-			copy($dir.COMMENT, \*STDOUT);
+			File::Copy::copy($dir.COMMENT, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_R && -f $dir.REQUIRED_BY) {
+			require File::Copy;
+
 			print $opt_p, "Required by:\n" unless $opt_q;
-			copy($dir.REQUIRED_BY, \*STDOUT);
+			File::Copy::copy($dir.REQUIRED_BY, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_d) {
+			require File::Copy;
+
 			print $opt_p, "Description:\n" unless $opt_q;
-			copy($dir.DESC, \*STDOUT);
+			File::Copy::copy($dir.DESC, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_D && -f $dir.DISPLAY) {
+			require File::Copy;
+
 			print $opt_p, "Install notice:\n" unless $opt_q;
-			copy($dir.DISPLAY, \*STDOUT);
+			File::Copy::copy($dir.DISPLAY, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_i && -f $dir.INSTALL) {
+			require File::Copy;
+
 			print $opt_p, "Install script:\n" unless $opt_q;
-			copy($dir.INSTALL, \*STDOUT);
+			File::Copy::copy($dir.INSTALL, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_k && -f $dir.DEINSTALL) {
+			require File::Copy;
+
 			print $opt_p, "De-Install script:\n" unless $opt_q;
-			copy($dir.DEINSTALL, \*STDOUT);
+			File::Copy::copy($dir.DEINSTALL, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_r && -f $dir.REQUIRE) {
+			require File::Copy;
+
 			print $opt_p, "Require script:\n" unless $opt_q;
-			copy($dir.REQUIRE, \*STDOUT);
+			File::Copy::copy($dir.REQUIRE, \*STDOUT);
 			print "\n";
 		}
 		my $plist;
