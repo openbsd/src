@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.32 2001/06/27 04:49:41 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.33 2001/07/25 16:03:14 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -226,8 +226,8 @@ sys_dup2(p, v, retval)
 		syscallarg(u_int) from;
 		syscallarg(u_int) to;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register int old = SCARG(uap, from), new = SCARG(uap, to);
+	struct filedesc *fdp = p->p_fd;
+	int old = SCARG(uap, from), new = SCARG(uap, to);
 	int i, error;
 
 	if ((u_int)old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL ||
@@ -259,14 +259,14 @@ sys_fcntl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fcntl_args /* {
+	struct sys_fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct vnode *vp;
 	int i, tmp, error, flg = F_POSIX;
 	struct flock fl;
