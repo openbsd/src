@@ -152,7 +152,8 @@ scsibus*	at asc?
 sd*	at	scsibus?	target ? lun ?
 st*	at	scsibus?	target ? lun ?
 cd*	at	scsibus?	target ? lun ?
-
+ss*	at	scsibus?	target ? lun ?
+uk*	at	scsibus?	target ? lun ?
 
 #
 # SCSI configuration for old DECstation SCSI driver
