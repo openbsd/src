@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/04/08 13:55:59 briggs Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 1997/04/23 00:29:17 gene Exp $	*/
 /*	$NetBSD: trap.c,v 1.46 1997/04/07 22:54:44 scottr Exp $	*/
 
 /*
@@ -431,11 +431,11 @@ copyfault:
 	/*
 	 * Trace traps.
 	 *
-	 * M68k NetBSD uses trap #2,
+	 * M68k OpenBSD uses trap #2,
 	 * SUN 3.x uses trap #15,
 	 * KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
 	 *
-	 * M68k NetBSD traps get mapped by locore.s into T_TRACE.
+	 * M68k OpenBSD traps get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.15 1997/04/14 18:48:01 gene Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.16 1997/04/23 00:29:15 gene Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -314,7 +314,7 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 
 /*
  * This routine return the "Handle" to a ROM Resource.  Since few
- *  ROM Resources are called for in NetBSD we keep a small table
+ *  ROM Resources are called for in OpenBSD we keep a small table
  *  for the Handles we return. (Can't reuse the Handle without
  *  defeating the purpose for a Handle in the first place!)  If
  *  we get more requests than we have space for, we panic.
@@ -1392,7 +1392,7 @@ mrg_fixupROMBase(obase, nbase)
          * ADB Initialization on some systems. If the correct entry
          * point in the ADBInit code is selected, this address is
          * re-configured by the ROM during initialization. This feature
-	 * is not currently used by NetBSD.
+	 * is not currently used by OpenBSD.
          */
         JADBProc = mrg_jadbprocpanic;
 
