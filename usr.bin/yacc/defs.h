@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.3 1996/03/27 19:33:18 niklas Exp $	*/
+/*	$OpenBSD: defs.h,v 1.4 1996/03/31 04:56:00 etheisen Exp $	*/
 
 #include <assert.h>
 #include <ctype.h>
