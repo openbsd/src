@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.12 2001/08/29 21:43:18 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.13 2001/08/30 17:23:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: displayq.c,v 1.12 2001/08/29 21:43:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: displayq.c,v 1.13 2001/08/30 17:23:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,8 @@ extern int	users;		/* # of users in user array */
 extern uid_t	uid, euid;
 
 static int	col;		/* column on screen */
-static char	current[MAXPATHLEN]; /* current file being printed */
-static char	file[MAXPATHLEN]; /* print file name */
+static char	current[NAME_MAX]; /* current file being printed */
+static char	file[NAME_MAX];	/* print file name */
 static int	first;		/* first file in ``files'' column? */
 static int	garbage;	/* # of garbage cf files */
 static int	lflag;		/* long output option */
