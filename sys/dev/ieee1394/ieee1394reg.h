@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1394reg.h,v 1.2 2002/12/13 02:52:04 tdeval Exp $	*/
+/*	$OpenBSD: ieee1394reg.h,v 1.3 2002/12/13 22:33:52 tdeval Exp $	*/
 /*	$NetBSD: ieee1394reg.h,v 1.12 2002/02/27 05:07:25 jmc Exp $	*/
 
 /*
@@ -206,11 +206,12 @@ typedef struct ieee1394_async_nodata {
 #define	CSR_SB_TOPOLOGY_MAP			0x1000
 #define	CSR_SB_END				0x1400
 
-#define	IEEE1394_MAX_REC(i)			((0x1 << (i + 1)))
+#define	IEEE1394_MAX_REC(i)			(0x1 << ((i) + 1))
+#define	IEEE1394_MAX_ASYNC(i)			(0x200 << (i))
 #define	IEEE1394_BUSINFO_LEN			3
 
-#define	IEEE1394_GET_MAX_REC(i)			((i & 0x0000f000) >> 12)
-#define	IEEE1394_GET_LINK_SPD(i)		(i & 0x00000007)
+#define	IEEE1394_GET_MAX_REC(i)			(((i) & 0x0000f000) >> 12)
+#define	IEEE1394_GET_LINK_SPD(i)		((i) & 0x00000007)
 
 /*
  * XXX. Should be at if_fw level but needed here for constructing the config
