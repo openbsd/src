@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.27 2002/07/19 19:28:12 marc Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.28 2002/07/27 22:06:06 deraadt Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -323,7 +323,7 @@ rtld(int version, struct crt_ldso *crtp, struct _dynamic *dp)
 
 		/* Set breakpoint for the benefit of debuggers */
 		if (mprotect(addr, PAGSIZ,
-				PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
+		    PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
 			err(1, "Cannot set breakpoint (%s)", main_progname);
 		}
 		md_set_breakpoint((long)crtp->crt_bp, (long *)&ddp->dd_bpt_shadow);
@@ -606,8 +606,8 @@ again:
 	}
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
-		 PROT_READ|PROT_EXEC,
-		 MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	    PROT_READ|PROT_EXEC,
+	    MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -623,9 +623,9 @@ again:
 	}
 
 	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
-		 PROT_READ|PROT_WRITE|PROT_EXEC,
-		 MAP_ANON|MAP_COPY|MAP_FIXED,
-		 anon_fd, 0) == (caddr_t)-1) {
+	    PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_COPY|MAP_FIXED,
+	    anon_fd, 0) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -720,8 +720,8 @@ check_text_reloc(struct relocation_info *r, struct so_map *smp, caddr_t addr)
 
 	if (smp->som_write == 0 &&
 		mprotect(smp->som_addr + LM_TXTADDR(smp),
-				LD_TEXTSZ(smp->som_dynamic),
-				PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
+		    LD_TEXTSZ(smp->som_dynamic),
+		    PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
 
 		err(1, "Cannot enable writes to %s:%s",
 					main_progname, smp->som_path);
@@ -811,11 +811,10 @@ reloc_map(struct so_map *smp)
 
 	if (smp->som_write) {
 		if (mprotect(smp->som_addr + LM_TXTADDR(smp),
-				LD_TEXTSZ(smp->som_dynamic),
-				PROT_READ|PROT_EXEC) == -1) {
-
+		    LD_TEXTSZ(smp->som_dynamic),
+		    PROT_READ|PROT_EXEC) == -1) {
 			err(1, "Cannot disable writes to %s:%s",
-						main_progname, smp->som_path);
+			    main_progname, smp->som_path);
 		}
 		smp->som_write = 0;
 	}
