@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.58 2004/06/01 23:01:44 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.59 2004/10/21 20:47:29 grange Exp $
 
 NEW_BINUTILS=alpha arm hppa i386 mips powerpc sparc sparc64 amd64
 
@@ -65,6 +65,13 @@ CONFIGURE_HOST_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
 ALL_HOST_MODULES=${SUBDIRS:S/^/all-/g}
 INSTALL_MODULES=${INST_SUBDIRS:S/^/install-/g}
 	
+# cross-compilation
+.if defined(TARGET_ARCH)
+CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
+.else
+CONFIGTARGET=
+.endif
+
 all:	config.status
 	SUBDIRS='${SUBDIRS}' \
 	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
@@ -94,7 +101,8 @@ do-config: .USE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
-	    --disable-nls --disable-gdbtk --disable-commonbfdlib ${CF}
+	    --disable-nls --disable-gdbtk --disable-commonbfdlib ${CF} \
+	    ${CONFIGTARGET}
 	cd ${.OBJDIR} && \
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
 	    mv -f Makefile.tmp Makefile

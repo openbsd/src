@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.49 2004/09/06 09:01:05 pefo Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.50 2004/10/21 20:47:29 grange Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -65,8 +65,23 @@ M_ARCH=		${MACHINE_ARCH}
 GCCARCH=	${M_ARCH}-unknown-openbsd${OSREV}
 GCCINC=	/usr/lib/gcc-lib/${GCCARCH}/$V/include
 
+# cross-compilation
+.if defined(TARGET_ARCH) && defined(CROSSDIR)
+CONFIGTARGET=	--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
+CONFIGPREFIX=	${CROSSDIR}/usr
+MAKE_FLAGS+=	GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include"
+PATH=		/bin:/usr/bin:/sbin:/usr/sbin:${CROSSDIR}/usr/bin
+GXX_INCDIR=	${CROSSDIR}/usr/include/g++
+GNUCFLAGS=	${CFLAGS} ${COPTS} -I${LIBIBERTY_INCLUDES}
+VAXHOST_CFLAGS=	-DIN_GCC -DHAVE_CONFIG_H -O0
+.else
+CONFIGTARGET=
+CONFIGPREFIX=	/usr
+PATH=		/bin:/usr/bin:/sbin:/usr/sbin
+.endif
+
 all:	config.status
-	exec ${MAKE} ${MAKE_FLAGS} all doc proto
+	exec env PATH="${PATH}" ${MAKE} ${MAKE_FLAGS} all doc proto
 
 tconfig.h: config.status
 	exec ${MAKE} ${MAKE_FLAGS} tconfig.h
@@ -86,14 +101,15 @@ CF=
 .endif
 
 config.status: gcc/Makefile.in gcc/configure gcc/c-parse.in
-	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	PATH="${PATH}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	CPPFLAGS=-I${LIBIBERTY_INCLUDES} \
 	/bin/sh ${.CURDIR}/gcc/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --mandir='$$(prefix)/share/man' \
+		--prefix=${CONFIGPREFIX} --mandir='$$(prefix)/share/man' \
 		--with-local-prefix=/usr ${CF} \
 		${LANGUAGES} --enable-cpp --disable-nls \
-		--with-gxx-include-dir=${GXX_INCDIR} ${GCCARCH} && touch config.status
+		--with-gxx-include-dir=${GXX_INCDIR} \
+		${CONFIGTARGET} ${GCCARCH} && touch config.status
 
 .ifdef NOMAN
 maninstall:
@@ -138,8 +154,9 @@ install:	maninstall target_path
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xgcc \
 	   ${DESTDIR}/usr/bin/gcc
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
-	[ -f ${DESTDIR}/usr/bin/g77 ] && \
-		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77
+	if [ -f ${DESTDIR}/usr/bin/g77 ]; then \
+		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77; \
+	fi
 #	ln -fs `cat target-path`/cpp \
 #		${DESTDIR}/usr/libexec
 	for i in ${FAKE_FILES}; do \

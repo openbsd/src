@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.105 2004/10/16 15:28:14 grange Exp $
+#	$OpenBSD: Makefile,v 1.106 2004/10/21 20:47:29 grange Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -187,13 +187,15 @@ NEW_BINUTILS?=	No
 
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
 .if ${NEW_BINUTILS:L} == "yes"
-	export BSDSRCDIR=${.CURDIR}; \
-	    (cd ${CROSSDIR}/usr/obj/gnu/usr.bin/binutils; \
-	    /bin/sh ${BSDSRCDIR}/gnu/usr.bin/binutils/configure \
-	    --prefix ${CROSSDIR}/usr \
-	    --disable-nls --disable-gdbtk --disable-commonbfdlib \
-	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    ${MAKE} CFLAGS="${CFLAGS}" && ${MAKE} install )
+	(cd ${.CURDIR}/gnu/usr.bin/binutils; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    ${MAKE} -f Makefile.bsd-wrapper depend && \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    ${MAKE} -f Makefile.bsd-wrapper all && \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} -f Makefile.bsd-wrapper install)
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/gas; \
 	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
@@ -253,10 +255,37 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    ln -sf ${CROSSDIR}/usr/bin/$$cmd \
 	        ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd; \
 	 fi ;\
+	 if [ -e ${CROSSDIR}/usr/bin/$$cmd -a \
+	 ! -e ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/$$cmd ]; then \
+	    ln -sf ${CROSSDIR}/usr/bin/$$cmd \
+	        ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/$$cmd; \
+	 fi ;\
 	done
 	@touch ${CROSSBINUTILS}
 
+# bsd.own.mk can't do it for us
+.if ${TARGET} == "amd64" || ${TARGET} == "cats" || \
+    ${TARGET} == "hppa" || ${TARGET} == "hppa64" || \
+    ${TARGET} == "sparc64" || ${TARGET} == "sgi"
+USE_GCC3=yes
+.endif
+
 ${CROSSGCC}:		${CROSSBINUTILS}
+.if ${USE_GCC3:L} == "yes"
+	(cd ${.CURDIR}/gnu/usr.bin/gcc; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` CROSSDIR=${CROSSDIR} \
+	    ${MAKE} -f Makefile.bsd-wrapper depend && \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` CROSSDIR=${CROSSDIR} \
+	    ${MAKE} -f Makefile.bsd-wrapper all && \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} -f Makefile.bsd-wrapper install)
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-g++ \
+	    ${CROSSDIR}/usr/bin/c++
+	ln -sf ${CROSSDIR}/usr/libexec/cpp \
+	    ${CROSSDIR}/usr/bin/cpp
+.else
 	(cd ${CROSSDIR}/usr/obj/gnu/egcs/gcc; \
 	    /bin/sh ${.CURDIR}/gnu/egcs/gcc/configure \
 	    --with-gnu-as --with-gnu-ld --prefix ${CROSSDIR}/usr \
@@ -285,6 +314,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    ${.CURDIR}/usr.bin/cpp/cpp.sh > ${CROSSDIR}/usr/bin/cpp
 	chmod ${BINMODE} ${CROSSDIR}/usr/bin/cpp
 	chown ${BINOWN}:${BINGRP} ${CROSSDIR}/usr/bin/cpp
+.endif
 	@touch ${CROSSGCC}
 
 # XXX MAKEOBJDIR maybe should be obj.${TARGET} here, revisit later
