@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.128 2004/07/30 14:44:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.129 2004/08/02 21:30:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -541,6 +541,7 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.announce_type =
 				    ANNOUNCE_DEFAULT_ROUTE;
 			else {
+				yyerror("invalid announce type");
 				free($2);
 				YYERROR;
 			}
@@ -993,6 +994,7 @@ filter_elm	: filter_prefix_h	{
 		| COMMUNITY STRING	{
 			if (fmopts.m.community.as) {
 				yyerror("\"community\" already specified");
+				free($2);
 				YYERROR;
 			}
 			if (parsecommunity($2, &fmopts.m.community.as,
