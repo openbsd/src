@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.40 2000/06/05 11:02:51 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.41 2000/07/19 13:37:28 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2188,6 +2188,7 @@ tty_attach(tp)
 
 	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
 	++tty_count;
+	timeout_set(&tp->t_rstrt_to, ttrstrt, tp);
 }
 
 /*
