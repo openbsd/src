@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.48 2001/01/13 18:43:31 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.49 2001/01/18 17:00:00 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1668,10 +1668,8 @@ session_proctitle(Session *s)
 }
 
 void
-do_authenticated2(void)
+do_authenticated2(Authctxt *authctxt)
 {
-	struct passwd *pw;
-
 	/*
 	 * Cancel the alarm we set to limit the time taken for
 	 * authentication.
@@ -1682,8 +1680,7 @@ do_authenticated2(void)
 		startup_pipe = -1;
 	}
 #ifdef HAVE_LOGIN_CAP
-	pw = auth_get_user();
-	if ((lc = login_getclass(pw->pw_class)) == NULL) {
+	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
 		error("unable to get login class");
 		return;
 	}

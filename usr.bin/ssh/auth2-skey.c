@@ -1,5 +1,28 @@
+/*
+ * Copyright (c) 2001 Markus Friedl. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #include "includes.h"
-RCSID("$OpenBSD: auth2-skey.c,v 1.2 2000/12/19 23:17:55 markus Exp $");
+RCSID("$OpenBSD: auth2-skey.c,v 1.3 2001/01/18 16:59:59 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -8,52 +31,44 @@ RCSID("$OpenBSD: auth2-skey.c,v 1.2 2000/12/19 23:17:55 markus Exp $");
 #include "xmalloc.h"
 #include "dispatch.h"
 
-void	send_userauth_into_request(Authctxt *authctxt, int echo);
-void	input_userauth_info_response(int type, int plen, void *ctxt);
+void send_userauth_into_request(Authctxt *authctxt, char *challenge, int echo);
+void input_userauth_info_response(int type, int plen, void *ctxt);
 
 /*
- * try skey authentication, always return -1 (= postponed) since we have to
- * wait for the s/key response.
+ * try challenge-reponse, return -1 (= postponed) if we have to
+ * wait for the response.
  */
 int
-auth2_skey(Authctxt *authctxt)
+auth2_challenge(Authctxt *authctxt, char *devs)
 {
-	send_userauth_into_request(authctxt, 0);
-	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, &input_userauth_info_response);
-	return -1;
+	char *challenge;
+
+	if (!authctxt->valid || authctxt->user == NULL)
+		return 0;
+	if ((challenge = get_challenge(authctxt, devs)) == NULL)
+		return 0;
+	send_userauth_into_request(authctxt, challenge, 0);
+	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE,
+	    &input_userauth_info_response);
+	authctxt->postponed = 1;
+	return 0;
 }
 
 void
-send_userauth_into_request(Authctxt *authctxt, int echo)
+send_userauth_into_request(Authctxt *authctxt, char *challenge, int echo)
 {
-	int retval = -1;
-	struct skey skey;
-	char challenge[SKEY_MAX_CHALLENGE];
-	char *fake;
+	int nprompts = 1;
 
-	if (authctxt->user == NULL)
-		fatal("send_userauth_into_request: internal error: no user");
-
-	/* get skey challenge */
-	if (authctxt->valid)
-		retval = skeychallenge(&skey, authctxt->user, challenge);
-
-	if (retval == -1) {
-		fake = skey_fake_keyinfo(authctxt->user);
-		strlcpy(challenge, fake, sizeof challenge);
-	}
-	/* send our info request */
 	packet_start(SSH2_MSG_USERAUTH_INFO_REQUEST);
-	packet_put_cstring("S/Key Authentication");	/* Name */
-	packet_put_cstring(challenge);			/* Instruction */
-	packet_put_cstring("");				/* Language */
-	packet_put_int(1);			 	/* Number of prompts */
-	packet_put_cstring(echo ?
-		 "Response [Echo]: ": "Response: ");	/* Prompt */
-	packet_put_char(echo);				/* Echo */
+	/* name, instruction and language are unused */
+	packet_put_cstring("");
+	packet_put_cstring("");
+	packet_put_cstring("");
+	packet_put_int(nprompts);
+	packet_put_cstring(challenge);
+	packet_put_char(echo);
 	packet_send();
 	packet_write_wait();
-	memset(challenge, 'c', sizeof challenge);
 }
 
 void
@@ -62,43 +77,37 @@ input_userauth_info_response(int type, int plen, void *ctxt)
 	Authctxt *authctxt = ctxt;
 	int authenticated = 0;
 	u_int nresp, rlen;
-	char *resp, *method;
+	char *response, *method = "challenge-reponse";
 
 	if (authctxt == NULL)
-		fatal("input_userauth_info_response: no authentication context");
+		fatal("input_userauth_info_response: no authctxt");
 
-	if (authctxt->attempt++ >= AUTH_FAIL_MAX)
-		packet_disconnect("too many failed userauth_requests");
-
+	authctxt->postponed = 0;	/* reset */
 	nresp = packet_get_int();
 	if (nresp == 1) {
-		/* we only support s/key and assume s/key for nresp == 1 */
-		method = "s/key";
-		resp = packet_get_string(&rlen);
+		response = packet_get_string(&rlen);
 		packet_done();
-		if (strlen(resp) == 0) {
+		if (strlen(response) == 0) {
 			/*
-			 * if we received a null response, resend prompt with
-			 * echo enabled
+			 * if we received an empty response, resend challenge
+			 * with echo enabled
 			 */
-			authenticated = -1;
-			userauth_log(authctxt, authenticated, method);
-			send_userauth_into_request(authctxt, 1);
-		} else {
-			/* verify skey response */
-			if (authctxt->valid &&
-			    skey_haskey(authctxt->pw->pw_name) == 0 &&
-			    skey_passcheck(authctxt->pw->pw_name, resp) != -1) {
-				authenticated = 1;
-			} else {
-				authenticated = 0;
+			char *challenge = get_challenge(authctxt, NULL);
+			if (challenge != NULL) {
+				send_userauth_into_request(authctxt,
+				    challenge, 1);
+				authctxt->postponed = 1;
 			}
-			memset(resp, 'r', rlen);
-			/* unregister callback */
-			dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, NULL);
-			userauth_log(authctxt, authenticated, method);
-			userauth_reply(authctxt, authenticated);
+		} else if (authctxt->valid) {
+			authenticated = verify_response(authctxt, response);
+			memset(response, 'r', rlen);
 		}
-		xfree(resp);
+		xfree(response);
+	}
+	auth_log(authctxt, authenticated, method, " ssh2");
+	if (!authctxt->postponed) {
+		/* unregister callback and send reply */
+		dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, NULL);
+		userauth_reply(authctxt, authenticated);
 	}
 }

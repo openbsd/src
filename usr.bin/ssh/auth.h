@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $OpenBSD: auth.h,v 1.8 2000/12/28 14:25:51 markus Exp $
+ * $OpenBSD: auth.h,v 1.9 2001/01/18 16:59:59 markus Exp $
  */
 #ifndef AUTH_H
 #define AUTH_H
@@ -29,24 +29,33 @@
 typedef struct Authctxt Authctxt;
 struct Authctxt {
 	int success;
+	int postponed;
 	int valid;
 	int attempt;
 	int failures;
 	char *user;
 	char *service;
 	struct passwd *pw;
+	char *style;
 };
 
 void	do_authentication(void);
 void	do_authentication2(void);
 
-void	userauth_log(Authctxt *authctxt, int authenticated, char *method);
+Authctxt *authctxt_new(void);
+void	auth_log(Authctxt *authctxt, int authenticated, char *method, char *info);
 void	userauth_reply(Authctxt *authctxt, int authenticated);
+int	auth_root_allowed(void);
 
-int	auth2_skey(Authctxt *authctxt);
+int	auth2_challenge(Authctxt *authctxt, char *devs);
 
 int	allowed_user(struct passwd * pw);
+
+char	*get_challenge(Authctxt *authctxt, char *devs);
+int	verify_response(Authctxt *authctxt, char *response);
+
 struct passwd * auth_get_user(void);
+struct passwd * pwcopy(struct passwd *pw);
 
 #define AUTH_FAIL_MAX 6
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
