@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.7 2003/09/29 03:08:17 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.8 2003/09/29 04:10:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -82,26 +82,33 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	u_int32_t command;
 	bus_size_t iosize;
 
 	sc->sc_devid = PCI_PRODUCT(pa->pa_id);
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command |= PCI_COMMAND_MASTER_ENABLE;
 	if (sc->sc_devid == PCI_PRODUCT_MYSON_MTD800 &&
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, MTD_PCI_LOIO) & 0x300)
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, MTD_PCI_LOIO) & 0x300) {
 		pa->pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+		command &= ~PCI_COMMAND_IO_ENABLE;
+	}
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
-#ifndef MTD_USE_IO
-	if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_bust, &sc->sc_bush, NULL, &iosize, 0)) {
-		printf(": can't map mem space\n");
-		return;
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if (command & PCI_COMMAND_MEM_ENABLE) {
+		if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->sc_bust, &sc->sc_bush, NULL, &iosize, 0)) {
+			printf(": can't map mem space\n");
+			return;
+		}
+	} else {
+		if (pci_mapreg_map(pa, MTD_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->sc_bust, &sc->sc_bush, NULL, &iosize, 0)) {
+			printf(": can't map io space\n");
+			return;
+		}
 	}
-#else	/* MTD_USE_IO */
-	if (pci_mapreg_map(pa, MTD_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_bust, &sc->sc_bush, NULL, &iosize, 0)) {
-		printf(": can't map io space\n");
-		return;
-	}
-#endif	/* MTD_USE_IO */
 
 	/*
 	 * Allocate our interrupt.
