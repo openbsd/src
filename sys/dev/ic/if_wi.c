@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.50 2002/04/08 18:31:27 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.51 2002/04/10 19:25:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.50 2002/04/08 18:31:27 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.51 2002/04/10 19:25:07 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -173,6 +173,13 @@ void	wi_stop(struct wi_softc *);
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
 	NULL, "wi", DV_IFNET
+};
+
+/* Map of firmware type to IBBS port type */
+int ibss_portmap[] = {
+	1,		/* WI_LUCENT */
+	0,		/* WI_INTERSIL */
+	4,		/* WI_SYMBOL */
 };
 
 int
@@ -269,8 +276,11 @@ wi_attach(sc)
 	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
 #define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
-	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_IBSS, 0), 0);
+	if (sc->sc_firmware_type != WI_SYMBOL)
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+		    IFM_IEEE80211_IBSSMASTER, 0), 0);
 	if (sc->sc_firmware_type == WI_INTERSIL)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 		    IFM_IEEE80211_HOSTAP, 0), 0);
@@ -278,6 +288,11 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+		    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->sc_firmware_type != WI_SYMBOL)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
@@ -286,6 +301,11 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+		    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->sc_firmware_type != WI_SYMBOL)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
@@ -294,6 +314,11 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+		    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->sc_firmware_type != WI_SYMBOL)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
@@ -302,6 +327,11 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+		    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->sc_firmware_type != WI_SYMBOL)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
@@ -788,7 +818,15 @@ wi_read_record(sc, ltv)
 	if (ltv->wi_len > 1)
 		CSR_READ_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1)*2);
 
-	if (sc->sc_firmware_type != WI_LUCENT) {
+	if (ltv->wi_type == WI_RID_PORTTYPE && sc->wi_ptype == WI_PORTTYPE_IBSS
+	    && letoh16(ltv->wi_val) == ibss_portmap[sc->sc_firmware_type]) {
+		/*
+		 * Convert vendor IBSS port type to WI_PORTTYPE_IBSS.
+		 * Since Lucent uses port type 1 for BSS *and* IBSS we
+		 * have to rely on wi_ptype to distinguish this for us.
+		 */
+		ltv->wi_val = htole16(WI_PORTTYPE_IBSS);
+	} else if (sc->sc_firmware_type != WI_LUCENT) {
 		int v;
 
 		switch (oltv->wi_type) {
@@ -836,7 +874,14 @@ wi_write_record(sc, ltv)
 	int			i;
 	struct wi_ltv_gen	p2ltv;
 
-	if (sc->sc_firmware_type != WI_LUCENT) {
+	if (ltv->wi_type == WI_RID_PORTTYPE &&
+	    letoh16(ltv->wi_val) == WI_PORTTYPE_IBSS) {
+		/* Convert WI_PORTTYPE_IBSS to vendor IBSS port type. */
+		p2ltv.wi_type = WI_RID_PORTTYPE;
+		p2ltv.wi_len = 2;
+		p2ltv.wi_val = htole16(ibss_portmap[sc->sc_firmware_type]);
+		ltv = &p2ltv;
+	} else if (sc->sc_firmware_type != WI_LUCENT) {
 		int v;
 
 		switch (ltv->wi_type) {
@@ -1142,6 +1187,7 @@ wi_setdef(sc, wreq)
 		break;
 	case WI_RID_CREATE_IBSS:
 		sc->wi_create_ibss = letoh16(wreq->wi_val[0]);
+		error = wi_sync_media(sc, sc->wi_ptype, sc->wi_tx_rate);
 		break;
 	case WI_RID_OWN_CHNL:
 		sc->wi_channel = letoh16(wreq->wi_val[0]);
@@ -1450,11 +1496,11 @@ wi_init(sc)
 	/* Program max data length. */
 	WI_SETVAL(WI_RID_MAX_DATALEN, sc->wi_max_data_len);
 
-	/* Enable/disable IBSS creation. */
-	WI_SETVAL(WI_RID_CREATE_IBSS, sc->wi_create_ibss);
-
 	/* Set the port type. */
 	WI_SETVAL(WI_RID_PORTTYPE, sc->wi_ptype);
+
+	/* Enable/disable IBSS creation. */
+	WI_SETVAL(WI_RID_CREATE_IBSS, sc->wi_create_ibss);
 
 	/* Program the RTS/CTS threshold. */
 	WI_SETVAL(WI_RID_RTS_THRESH, sc->wi_rts_thresh);
@@ -1483,7 +1529,8 @@ wi_init(sc)
 	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
 
 	/* Specify the IBSS name */
-	if (sc->wi_ptype == WI_PORTTYPE_AP)
+	if ((sc->wi_create_ibss && sc->wi_ptype == WI_PORTTYPE_IBSS) ||
+	    sc->wi_ptype == WI_PORTTYPE_AP)
 		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_net_name);
 	else
 		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_ibss_name);
@@ -2107,12 +2154,22 @@ wi_sync_media(sc, ptype, txrate)
 		break;
 	}
 
+	options &= ~IFM_OMASK;
 	switch (ptype) {
+	case WI_PORTTYPE_BSS:
+		/* default port type */
+		break;
 	case WI_PORTTYPE_ADHOC:
 		options |= IFM_IEEE80211_ADHOC;
 		break;
-	case WI_PORTTYPE_BSS:
-		options &= ~IFM_IEEE80211_ADHOC;
+	case WI_PORTTYPE_AP:
+		options |= IFM_IEEE80211_HOSTAP;
+		break;
+	case WI_PORTTYPE_IBSS:
+		if (sc->wi_create_ibss)
+			options |= IFM_IEEE80211_IBSSMASTER;
+		else
+			options |= IFM_IEEE80211_IBSS;
 		break;
 	default:
 		subtype = IFM_MANUAL;		/* Unable to represent */
@@ -2135,21 +2192,37 @@ wi_media_change(ifp)
 	struct wi_softc *sc = ifp->if_softc;
 	int otype = sc->wi_ptype;
 	int orate = sc->wi_tx_rate;
+	int ocreate_ibss = sc->wi_create_ibss;
 
-	if ((sc->sc_media.ifm_cur->ifm_media &
-	    (IFM_IEEE80211_ADHOC|IFM_IEEE80211_HOSTAP)) ==
-	    (IFM_IEEE80211_ADHOC|IFM_IEEE80211_HOSTAP))
-		return (EINVAL);
 	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_HOSTAP) &&
-	    sc->sc_firmware_type == WI_LUCENT)
+	    sc->sc_firmware_type != WI_INTERSIL)
 		return (EINVAL);
 
-	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC))
-		sc->wi_ptype = WI_PORTTYPE_ADHOC;
-	else if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_HOSTAP))
-		sc->wi_ptype = WI_PORTTYPE_AP;
-	else
+	sc->wi_create_ibss = 0;
+
+	switch (sc->sc_media.ifm_cur->ifm_media & IFM_OMASK) {
+	case 0:
 		sc->wi_ptype = WI_PORTTYPE_BSS;
+		break;
+	case IFM_IEEE80211_ADHOC:
+		sc->wi_ptype = WI_PORTTYPE_ADHOC;
+		break;
+	case IFM_IEEE80211_HOSTAP:
+		sc->wi_ptype = WI_PORTTYPE_AP;
+		break;
+	case IFM_IEEE80211_IBSSMASTER:
+	case IFM_IEEE80211_IBSSMASTER|IFM_IEEE80211_IBSS:
+		if (sc->sc_firmware_type == WI_SYMBOL)
+			return (EINVAL);	/* not working on Symbol */
+		sc->wi_create_ibss = 1;
+		/* FALLTHROUGH */
+	case IFM_IEEE80211_IBSS:
+		sc->wi_ptype = WI_PORTTYPE_IBSS;
+		break;
+	default:
+		/* Invalid combination. */
+		return (EINVAL);
+	}
 
 	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
 	case IFM_IEEE80211_DS1:
@@ -2170,8 +2243,8 @@ wi_media_change(ifp)
 	}
 
 	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
-		if (otype != sc->wi_ptype ||
-		    orate != sc->wi_tx_rate)
+		if (otype != sc->wi_ptype || orate != sc->wi_tx_rate ||
+		    ocreate_ibss != sc->wi_create_ibss)
 			wi_init(sc);
 	}
 
