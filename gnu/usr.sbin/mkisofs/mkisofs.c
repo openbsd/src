@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkisofs.c,v 1.4 2000/08/02 04:10:45 millert Exp $	*/
+/*	$OpenBSD: mkisofs.c,v 1.5 2001/04/15 00:42:15 deraadt Exp $	*/
 /*
  * Program mkisofs.c - generate iso9660 filesystem  based upon directory
  * tree on hard disk.
@@ -54,7 +54,7 @@ static char rcsid[] ="$From: mkisofs.c,v 1.10.1.3 1998/06/02 03:36:16 eric Exp $
 
 #include "exclude.h"
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
@@ -460,7 +460,7 @@ int FDECL2(main, int, argc, char **, argv){
 	usage();
 	exit(1);
       }
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     {
 	int resource;
     struct rlimit rlp;
