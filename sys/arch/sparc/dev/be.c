@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.21 1999/02/15 16:22:26 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.22 1999/12/08 22:50:13 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -1068,8 +1068,14 @@ be_get(sc, idx, totlen)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	len = MHLEN;
+	if (totlen >= MINCLSIZE) {
+		MCLGET(m, M_DONTWAIT);
+		if (m->m_flags & M_EXT)
+			len = MCLBYTES;
+	}
 	m->m_data += pad;
-	len = MHLEN - pad;
+	len -= pad;
 	top = NULL;
 	mp = &top;
 
