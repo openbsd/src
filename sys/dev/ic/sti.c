@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.20 2003/02/11 19:41:35 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.21 2003/02/17 13:02:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -528,7 +528,7 @@ sti_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sti_softc *sc;
+	struct sti_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
 
 	switch (cmd) {
