@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modload.8,v 1.17 2001/08/02 18:37:34 mpech Exp $
+.\"	$OpenBSD: modload.8,v 1.18 2001/09/17 11:45:20 assar Exp $
 .\"	$NetBSD: modload.8,v 1.5 1995/03/18 14:56:43 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm modload
-.Op Fl dvuv
+.Op Fl dvsqu
 .Op Fl A Ar kernel
 .Op Fl e Ar entry
 .Op Fl p Ar postinstall
@@ -53,6 +53,10 @@ Debug.
 Used to debug
 .Nm
 itself.
+.It Fl v
+Print comments about the loading process.
+.It Fl s
+Do not load symbols from the kernel module.
 .It Fl q
 Be very quiet.
 .It Fl u
@@ -61,8 +65,6 @@ Delete the loaded module
 after loading.
 If the output file was not specified, this option causes the
 temporary file to be kept rather than deleted.
-.It Fl v
-Print comments about the loading process.
 .It Fl A Ar kernel
 Specify the file that is passed to the linker
 to resolve module references to external symbols.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.26 2001/07/09 07:04:46 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.27 2001/09/17 11:45:20 assar Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: modload [-dvqu] [-A <kernel>] [-e <entry]\n");
+	fprintf(stderr, "usage: modload [-dvsqu] [-A <kernel>] [-e <entry]\n");
 	fprintf(stderr,
 	    "\t[-p <postinstall>] [-o <output file>] <input file>\n");
 	exit(1);
