@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.7 2001/06/25 10:14:07 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.8 2001/06/25 10:15:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -50,8 +50,8 @@
 #include "pfctl_parser.h"
 
 void		 print_addr (u_int32_t);
-void		 print_host (struct state_host *);
-void		 print_seq (struct state_peer *);
+void		 print_host (struct pf_state_host *);
+void		 print_seq (struct pf_state_peer *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_flags (u_int8_t);
 char		*next_word (char **);
@@ -84,7 +84,7 @@ print_addr(u_int32_t a)
 }
 
 void
-print_host(struct state_host *h)
+print_host(struct pf_state_host *h)
 {
 	u_int32_t a = ntohl(h->addr);
 	u_int16_t p = ntohs(h->port);
@@ -93,7 +93,7 @@ print_host(struct state_host *h)
 }
 
 void
-print_seq(struct state_peer *p)
+print_seq(struct pf_state_peer *p)
 {
 	printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
 }
@@ -209,7 +209,7 @@ print_status(struct pf_status *s)
 void
 print_state(struct pf_state *s)
 {
-	struct state_peer *src, *dst;
+	struct pf_state_peer *src, *dst;
 	u_int8_t hrs, min, sec;
 
 	if (s->direction == PF_OUT) {
