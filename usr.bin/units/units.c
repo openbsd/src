@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.10 2004/12/01 16:41:07 pat Exp $	*/
+/*	$OpenBSD: units.c,v 1.11 2004/12/02 22:54:55 pat Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -171,15 +171,19 @@ readunits(char *userfile)
 				    linenum);
 				continue;
 			}
+
 			lineptr[strlen(lineptr) - 1] = 0;
+			for (i = 0; i < prefixcount; i++) {
+				if (!strcmp(prefixtable[i].prefixname, lineptr))
+					break;
+			}
+			if (i < prefixcount) {
+				fprintf(stderr, "Redefinition of prefix '%s' "
+				    "on line %d ignored\n", lineptr, linenum);
+				continue;	/* skip duplicate prefix */
+			}
+
 			prefixtable[prefixcount].prefixname = dupstr(lineptr);
-			for (i = 0; i < prefixcount; i++)
-				if (!strcmp(prefixtable[i].prefixname, lineptr)) {
-					fprintf(stderr,
-					    "Redefinition of prefix '%s' on line %d ignored\n",
-					    lineptr, linenum);
-					continue;
-				}
 			lineptr += len + 1;
 			if (!strlen(lineptr)) {
 				readerror(linenum);
@@ -197,14 +201,18 @@ readunits(char *userfile)
 				    linenum);
 				continue;
 			}
+
+			for (i = 0; i < unitcount; i++) {
+				if (!strcmp(unittable[i].uname, lineptr))
+					break;
+			}
+			if (i < unitcount) {
+				fprintf(stderr, "Redefinition of unit '%s' "
+				    "on line %d ignored\n", lineptr, linenum);
+				continue;	/* skip duplicate unit */
+			}
+
 			unittable[unitcount].uname = dupstr(lineptr);
-			for (i = 0; i < unitcount; i++)
-				if (!strcmp(unittable[i].uname, lineptr)) {
-					fprintf(stderr,
-					    "Redefinition of unit '%s' on line %d ignored\n",
-					    lineptr, linenum);
-					continue;
-				}
 			lineptr += len + 1;
 			lineptr += strspn(lineptr, " \n\t");
 			if (!strlen(lineptr)) {
