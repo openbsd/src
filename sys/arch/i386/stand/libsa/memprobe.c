@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.39 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.40 2003/11/03 06:35:34 david Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -258,7 +258,7 @@ addrprobe(u_int kloc)
 /* Probe for all extended memory.
  *
  * This is only used as a last resort.  If we resort to this
- * routine, we are getting pretty desparate.  Hopefully nobody
+ * routine, we are getting pretty desperate.  Hopefully nobody
  * has to rely on this after all the work above.
  *
  * XXX - Does not detect aliased memory.

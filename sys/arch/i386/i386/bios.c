@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.52 2003/07/11 17:51:11 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.53 2003/11/03 06:35:34 david Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -286,7 +286,7 @@ bios_getopt()
 #endif
 				/*
 				 * older /boots passed memmap in Kbytes,
-				 * which is very inconvinient from the
+				 * which is very inconvenient from the
 				 * point of view of memory management
 				 */
 				for (p = bios_memmap;
