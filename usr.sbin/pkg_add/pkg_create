@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.19 2004/09/20 10:36:39 espie Exp $
+# $OpenBSD: pkg_create,v 1.20 2004/10/11 10:07:37 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -218,13 +218,13 @@ sub deduce_name
 our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
-	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C, $opt_A, $opt_L,
+	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
 	$opt_M,
 	$opt_B);
 
 my @contents;
 
-getopts('p:f:c:d:vi:k:r:M:S:m:hs:OP:C:A:L:B:D:', 
+getopts('p:f:c:d:vi:k:r:M:S:hs:OA:L:B:D:', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -296,19 +296,6 @@ if ($ARGV[0] =~ m|([^/]+)$|) {
 	$pkgname =~ s/\.tgz$//;
 	OpenBSD::PackingElement::Name->add($plist, $pkgname);
 } 
-
-if (defined $opt_P) {
-	for my $e (split(/\s+/, $opt_P)) {
-		OpenBSD::PackingElement::PkgDep->add($plist, $e);
-    	}
-}
-
-if (defined $opt_C) {
-	for my $e (split(/\s+/, $opt_C)) {
-		OpenBSD::PackingElement::PkgConflict->add($plist, $e);
-    	}
-
-}
 
 if (defined $opt_A) {
 	OpenBSD::PackingElement::Arch->add($plist, $opt_A);
@@ -400,11 +387,6 @@ if (defined $opt_r) {
 if (defined $opt_M) {
     copy_subst($opt_M, $dir.DISPLAY);
 }
-
-if (defined $opt_m) {
-    copy_subst($opt_m, $dir.MTREE_DIRS);
-}
-
 
 my @extra_files = ();
 OpenBSD::PackingElement::Cwd->add($plist, '.');

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.2 2003/11/14 23:18:51 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.3 2004/10/11 10:07:37 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -118,8 +118,6 @@ lot of different information fields at once for a package, but don't
 necessary want the output intermingled in such a way that they can't
 organize it.
 This lets you add a special token to the start of each field.
-.It Fl m
-Show the mtree file (if any) for each package.
 .It Fl p
 Show the installation prefix for each package.
 .It Fl q
@@ -170,8 +168,7 @@ in
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
-.Xr mkstemp 3 ,
-.Xr mtree 8
+.Xr mkstemp 3
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"

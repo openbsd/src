@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.14 2004/09/22 10:57:27 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.15 2004/10/11 10:07:37 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -37,8 +37,6 @@
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
 .Op Fl D Ar name=value
-.Op Fl P Ar dpkgs
-.Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
 .Op Fl i Ar iscript
 .Op Fl k Ar dscript
@@ -121,14 +119,6 @@ to be the install procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically
 when the package is later installed.
-.It Fl P Ar dpkgs
-Set the initial package dependency list to
-.Ar dpkgs 
-(deprecated).
-.It Fl C Ar cpkgs
-Set the initial package conflict list to
-.Ar cpkgs 
-(deprecated).
 .It Fl p Ar prefix
 Set
 .Ar prefix

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.7 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.8 2004/10/11 10:07:37 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -39,7 +39,7 @@ my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
 our $list;
 
-our @info = (CONTENTS, COMMENT, DESC, INSTALL, DEINSTALL, REQUIRE, REQUIRED_BY, DISPLAY, MTREE_DIRS);
+our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, DISPLAY, MTREE_DIRS);
 
 our %info = ();
 for my $i (@info) {
