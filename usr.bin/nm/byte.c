@@ -1,4 +1,4 @@
-/* $OpenBSD: byte.c,v 1.3 2001/08/19 23:21:40 espie Exp $ */
+/* $OpenBSD: byte.c,v 1.4 2003/11/07 04:43:14 mickey Exp $ */
 /*
  * Copyright (c) 1999  
  *	Marc Espie.  All rights reserved.
@@ -31,6 +31,7 @@ static int byte_sex(mid)
 	case MID_SUN020:
 	case MID_HP200:
 	case MID_HP300:
+	case MID_HPPA:
 	case MID_HPUX800:
 	case MID_HPUX:
 	case MID_SPARC:
