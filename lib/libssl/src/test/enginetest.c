@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,8 +56,11 @@
  *
  */
 
+#include <openssl/e_os2.h>
 #include <stdio.h>
 #include <string.h>
+#include <openssl/buffer.h>
+#include <openssl/crypto.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
@@ -76,6 +79,9 @@ static void display_engine_list()
 		h = ENGINE_get_next(h);
 		}
 	printf("end of list\n");
+	/* ENGINE_get_first() increases the struct_ref counter, so we 
+           must call ENGINE_free() to decrease it again */
+	ENGINE_free(h);
 	}
 
 int main(int argc, char *argv[])
@@ -91,6 +97,18 @@ int main(int argc, char *argv[])
 	ENGINE *new_h3 = NULL;
 	ENGINE *new_h4 = NULL;
 
+	/* enable memory leak checking unless explicitly disabled */
+	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
+		{
+		CRYPTO_malloc_debug_init();
+		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+		}
+	else
+		{
+		/* OPENSSL_DEBUG_MEMORY=off */
+		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
+		}
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	ERR_load_crypto_strings();
 
 	memset(block, 0, 512 * sizeof(ENGINE *));
@@ -124,6 +142,8 @@ int main(int argc, char *argv[])
 		printf("Remove failed!\n");
 		goto end;
 		}
+	if (ptr)
+		ENGINE_free(ptr);
 	display_engine_list();
 	if(!ENGINE_add(new_h3) || !ENGINE_add(new_h2))
 		{
@@ -158,12 +178,7 @@ int main(int argc, char *argv[])
 		}
 	else
 		printf("Remove that should fail did.\n");
-	if(!ENGINE_remove(new_h1))
-		{
-		printf("Remove failed!\n");
-		goto end;
-		}
-	display_engine_list();
+	ERR_clear_error();
 	if(!ENGINE_remove(new_h3))
 		{
 		printf("Remove failed!\n");
@@ -183,6 +198,8 @@ int main(int argc, char *argv[])
 		if(!ENGINE_remove(ptr))
 			printf("Remove failed!i - probably no hardware "
 				"support present.\n");
+	if (ptr)
+		ENGINE_free(ptr);
 	display_engine_list();
 	if(!ENGINE_add(new_h1) || !ENGINE_remove(new_h1))
 		{
@@ -195,9 +212,9 @@ int main(int argc, char *argv[])
 	for(loop = 0; loop < 512; loop++)
 		{
 		sprintf(buf, "id%i", loop);
-		id = strdup(buf);
+		id = BUF_strdup(buf);
 		sprintf(buf, "Fake engine type %i", loop);
-		name = strdup(buf);
+		name = BUF_strdup(buf);
 		if(((block[loop] = ENGINE_new()) == NULL) ||
 				!ENGINE_set_id(block[loop], id) ||
 				!ENGINE_set_name(block[loop], name))
@@ -228,12 +245,13 @@ cleanup_loop:
 			printf("\nRemove failed!\n");
 			goto end;
 			}
+		ENGINE_free(ptr);
 		printf("."); fflush(stdout);
 		}
 	for(loop = 0; loop < 512; loop++)
 		{
-		free((char *)(ENGINE_get_id(block[loop])));
-		free((char *)(ENGINE_get_name(block[loop])));
+		OPENSSL_free((void *)ENGINE_get_id(block[loop]));
+		OPENSSL_free((void *)ENGINE_get_name(block[loop]));
 		}
 	printf("\nTests completed happily\n");
 	to_return = 0;
@@ -247,5 +265,10 @@ end:
 	for(loop = 0; loop < 512; loop++)
 		if(block[loop])
 			ENGINE_free(block[loop]);
+	ENGINE_cleanup();
+	CRYPTO_cleanup_all_ex_data();
+	ERR_free_strings();
+	ERR_remove_state(0);
+	CRYPTO_mem_leaks_fp(stderr);
 	return to_return;
 	}
