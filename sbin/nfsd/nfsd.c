@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.19 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.20 2002/09/10 05:15:02 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -126,9 +126,10 @@ main(int argc, char *argv[])
 	struct sockaddr_iso isoaddr, isopeer;
 #endif
 	fd_set ready, sockbits;
-	int ch, cltpflag, connect_type_cnt, i, len, maxsock = 0, msgsock;
+	int ch, cltpflag, connect_type_cnt, i, maxsock = 0, msgsock;
 	int nfsdcnt, nfssvc_flag, on, reregister, sock, tcpflag, tcpsock;
 	int tp4cnt, tpipcnt, udpflag;
+	socklen_t len;
 
 #define	MAXNFSDCNT	20
 #define	DEFNFSDCNT	 4
