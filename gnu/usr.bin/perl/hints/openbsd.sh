@@ -95,6 +95,9 @@ case "$openbsd_distribution" in
 	sysman='/usr/share/man/man1'
 	libpth='/usr/lib'
 	glibpth='/usr/lib'
+	# Local things, however, do go in /usr/local
+	siteprefix='/usr/local'
+	siteprefixexp='/usr/local'
 	# Ports installs non-std libs in /usr/local/lib so look there too
 	locincpth='/usr/local/include'
 	loclibpth='/usr/local/lib'

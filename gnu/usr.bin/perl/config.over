@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.8 2000/04/08 16:40:51 millert Exp $
+# $OpenBSD: config.over,v 1.9 2000/10/18 19:34:34 millert Exp $
 #
 
 # We use a different architecture name than the default
@@ -13,6 +13,8 @@ prefix='/usr'
 prefixexp='/usr'
 
 # But site binaries go in /usr/local/bin for ports
+siteprefix='/usr/local'
+siteprefixexp='/usr/local'
 installsitebin='/usr/local/bin'
 
 installarchlib="/usr/libdata/perl5/${archname}/${version}"
