@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.25 2000/03/08 08:41:57 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.39 2000/03/07 22:52:21 ho Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.26 2000/06/19 02:25:31 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.40 2000/06/19 02:13:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1153,7 +1153,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (ingress)
     ssa.sadb_sa_flags |= SADB_X_SAFLAGS_INGRESS_FLOW;
 #endif
-  if (!delete & !ingress)
+  if (!delete && !ingress)
     ssa.sadb_sa_flags |= SADB_X_SAFLAGS_REPLACEFLOW;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa, 0) == -1)
     goto cleanup;
