@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.42 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.43 2003/06/17 07:06:34 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -343,3 +343,12 @@ A
 .Nm
 command appeared in
 .At v3 .
+.Sh CAVEATS
+After a successful
+.Nm mount ,
+the permissions on the original mount point determine if
+.Dq \&.\&.
+is accessible from the mounted file system.
+The minimum permissions for
+the mount point for traversal across the mount point in both
+directions to be possible for all users is 0111 (execute for all).
