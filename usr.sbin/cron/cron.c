@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.32 2003/03/10 15:27:17 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.33 2004/05/03 15:10:21 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.32 2003/03/10 15:27:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.33 2004/05/03 15:10:21 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -406,7 +406,7 @@ cron_sleep(int target) {
 			Debug(DSCH, ("[%ld] Got a poke on the socket\n",
 			    (long)getpid()))
 			fd = accept(cronSock, (struct sockaddr *)&s_un, &sunlen);
-			if (fd >= 0) {
+			if (fd >= 0 && fcntl(fd, F_SETFL, O_NONBLOCK) == 0) {
 				(void) read(fd, &poke, 1);
 				close(fd);
 				if (poke & RELOAD_CRON)
