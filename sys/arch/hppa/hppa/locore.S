@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.54 2002/02/20 19:33:01 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.55 2002/03/08 08:34:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2211,6 +2211,7 @@ LEAF_ENTRY(spstrcpy)
 	ldil	L%curproc, r31
 	ldw	R%curproc(r31), r31
 	ldw	P_ADDR(r31), r31
+	ldw	PCB_ONFAULT+U_PCB(r31), t3
 	ldil	L%copy_on_fault, t2
 	ldo	R%copy_on_fault(t2), t2
 	stw	t2, PCB_ONFAULT+U_PCB(r31)
@@ -2230,13 +2231,14 @@ $spstrcpy_loop
 
 $spstrcpy_exit
 	/* reset fault handler */
-	stw	r0, PCB_ONFAULT+U_PCB(r31)
-	copy	r0, ret0
-	mtsp	ret0, sr2	/* XXX need this? */
 	sub	arg1, arg0, arg1
+	mtsp	ret0, sr2	/* XXX need this? */
 	ldw	HPPA_FRAME_ARG(5)(sp), arg0
-	bv	0(rp)
+	copy	r0, ret0
+	add,=	r0, arg0, r0
 	stw	arg1, 0(arg0)
+	bv	0(rp)
+	stw	t3, PCB_ONFAULT+U_PCB(r31)
 EXIT(spstrcpy)
 
 
