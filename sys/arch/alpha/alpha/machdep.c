@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1997/07/28 19:32:41 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 1997/07/31 03:07:55 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ alpha_init(pfn, ptb, symend)
 	alpha_pal_imb();
 
 	/*
-	 * get address of the restart block, while we the bootstrap
+	 * get address of the restart block, while the bootstrap
 	 * mapping is still around.
 	 */
 	hwrpb = (struct rpb *)ALPHA_PHYS_TO_K0SEG(
