@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.190 2000/06/19 08:37:00 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.191 2000/06/21 22:29:55 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -22,6 +22,8 @@ option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
 
 #option		DUMMY_NOPS	# speed hack; recommended
+
+option		FFS_SOFTUPDATES	# Soft updates
 
 option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
