@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.131 2001/06/23 04:01:57 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.132 2001/06/23 04:39:34 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1263,7 +1263,7 @@ struct m_tag *
 ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 {
     int ipv4sa = 0, s, esphlen = 0, trail = 0, i;
-    DLIST_HEAD(packet_tags, m_tag) tags;
+    SLIST_HEAD(packet_tags, m_tag) tags;
     unsigned char lasteight[8];
     struct tdb_ident *tdbi;
     struct m_tag *mtag;
@@ -1281,7 +1281,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
     if (proto != IPPROTO_IPV4 && proto != IPPROTO_IPV6)
       return NULL;
 
-    DLIST_INIT(&tags);
+    SLIST_INIT(&tags);
 
     while (1)
     {
@@ -1325,7 +1325,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
 					 sizeof(struct tdb_ident), M_NOWAIT);
 			if (mtag == NULL)
-			  return tags.dh_first;
+			  return tags.slh_first;
 
 			tdbi = (struct tdb_ident *) (mtag + 1);
 			bzero(tdbi, sizeof(struct tdb_ident));
@@ -1335,7 +1335,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			tdbi->dst.sin6.sin6_family = AF_INET6;
 			tdbi->dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
 			tdbi->dst.sin6.sin6_addr = ip6_dst;
-			DLIST_INSERT_HEAD(&tags, mtag, m_tag_link);
+			SLIST_INSERT_HEAD(&tags, mtag, m_tag_link);
 		    }
 		    else
 		      if (nxtp == IPPROTO_IPV6)
@@ -1379,7 +1379,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		    if (tdb == NULL)
 		    {
 			splx(s);
-			return tags.dh_first;
+			return tags.slh_first;
 		    }
 
 		    /* How large is the ESP header ? We use this later */
@@ -1396,7 +1396,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		    if (tdb->tdb_flags & TDBF_RANDOMPADDING)
 		    {
 			splx(s);
-			return tags.dh_first;
+			return tags.slh_first;
 		    }
 
 		    /* Update the length of trailing ESP authenticators */
@@ -1412,11 +1412,11 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		    if (lasteight[6] != 0)
 		    {
 			if (lasteight[6] != lasteight[5])
-			  return tags.dh_first;
+			  return tags.slh_first;
 
 			for (i = 4; lasteight[i + 1] != 1 && i >= 0; i--)
 			  if (lasteight[i + 1] != lasteight[i] + 1)
-			    return tags.dh_first;
+			    return tags.slh_first;
 		    }
 		}
 		/* Fall through */
@@ -1424,7 +1424,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
 				 sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL)
-		  return tags.dh_first;
+		  return tags.slh_first;
 
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		bzero(tdbi, sizeof(struct tdb_ident));
@@ -1458,7 +1458,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		}
 #endif /* INET6 */
 
-		DLIST_INSERT_HEAD(&tags, mtag, m_tag_link);
+		SLIST_INSERT_HEAD(&tags, mtag, m_tag_link);
 
 		/* Update next protocol/header and header offset */
 		if (proto == IPPROTO_AH)
@@ -1478,7 +1478,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		break;
 
 	    default:
-		return tags.dh_first; /* done */
+		return tags.slh_first; /* done */
 	}
     }
 }

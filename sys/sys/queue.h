@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.21 2001/06/23 04:23:05 angelos Exp $	*/
+/*	$OpenBSD: queue.h,v 1.22 2001/06/23 04:39:35 angelos Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -221,70 +221,6 @@ struct {								\
 		    &(elm2)->field.le_next;				\
 	(elm2)->field.le_prev = (elm)->field.le_prev;			\
 	*(elm2)->field.le_prev = (elm2);				\
-} while (0)
-
-/*
- * Doubly-linked list with a single head pointer. This is
- * the same as the LIST_* type, except that le_prev of the
- * first element does not point to the list head.
- */
-#define DLIST_HEAD(name, type)						\
-struct name {								\
-	struct type *dh_first;	/* first element */			\
-}
-
-#define DLIST_HEAD_INITIALIZER(head)					\
-	{ NULL }
-
-#define DLIST_ENTRY(type)						\
-struct {								\
-	struct type *de_next;	/* next element */	       		\
-	struct type **de_prev;	/* address of previous next element */	\
-}
-
-/*
- * List access methods
- */
-#define	DLIST_FIRST(head)		((head)->dh_first)
-#define	DLIST_END(head)			NULL
-#define	DLIST_EMPTY(head)		(LIST_FIRST(head) == LIST_END(head))
-#define	DLIST_NEXT(elm, field)		((elm)->field.de_next)
-
-#define DLIST_FOREACH(var, head, field)					\
-	for((var) = DLIST_FIRST(head);					\
-	    (var)!= DLIST_END(head);					\
-	    (var) = DLIST_NEXT(var, field))
-
-/*
- * List functions.
- */
-#define	DLIST_INIT(head) do {						\
-	DLIST_FIRST(head) = DLIST_END(head);				\
-} while (0)
-
-#define DLIST_INSERT_AFTER(listelm, elm, field) do {			\
-	if (((elm)->field.de_next = (listelm)->field.de_next) != NULL)	\
-		(listelm)->field.de_next->field.de_prev =		\
-		    &(elm)->field.de_next;				\
-	(listelm)->field.de_next = (elm);				\
-	(elm)->field.de_prev = &(listelm)->field.de_next;		\
-} while (0)
-
-#define DLIST_INSERT_HEAD(head, elm, field) do {			\
-	if (((elm)->field.de_next = (head)->dh_first) != NULL)		\
-		(head)->dh_first->field.de_prev = &(elm)->field.de_next;\
-	(head)->dh_first = (elm);					\
-	(elm)->field.de_prev = NULL;					\
-} while (0)
-
-#define DLIST_REMOVE(head, elm, field) do {				\
-	if ((elm)->field.de_next != NULL)				\
-		(elm)->field.de_next->field.de_prev =			\
-		    (elm)->field.de_prev;				\
-	if ((elm)->field.de_prev != NULL)				\
-		*(elm)->field.de_prev = (elm)->field.de_next;		\
-	else								\
-		(head)->dh_first = DLIST_END(head);			\
 } while (0)
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.41 2001/06/23 03:57:25 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.42 2001/06/23 04:39:35 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 
 /* Packet tags structure */
 struct m_tag {
-	DLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
+	SLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
 	u_int16_t		m_tag_id;	/* Tag ID */
 	u_int16_t		m_tag_len;	/* Length of data */
 };
@@ -82,7 +82,7 @@ struct m_hdr {
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
-	DLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
+	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
 	int	csum;			/* Hardware checksum info */
 };
@@ -237,7 +237,7 @@ struct mbuf *_sk_mget(int, int);
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
-		DLIST_INIT(&(m)->m_pkthdr.tags); \
+		SLIST_INIT(&(m)->m_pkthdr.tags); \
 		(m)->m_pkthdr.csum = 0; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
@@ -421,7 +421,7 @@ void _sk_mclget(struct mbuf *, int);
  */
 #define M_DUP_HDR(to, from) { \
 	M_COPY_HDR((to), (from)); \
-	DLIST_INIT(&(to)->m_pkthdr.tags); \
+	SLIST_INIT(&(to)->m_pkthdr.tags); \
 	m_tag_copy_chain((to), (from)); \
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.14 2001/06/23 03:57:48 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.15 2001/06/23 04:39:33 angelos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -300,7 +300,7 @@ m_tag_prepend(m, t)
 	struct mbuf *m;
 	struct m_tag *t;
 {
-	DLIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
+	SLIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
 }
 
 /* Unlink a packet tag. */
@@ -309,7 +309,7 @@ m_tag_unlink(m, t)
 	struct mbuf *m;
 	struct m_tag *t;
 {
-	DLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag_link);
+	SLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag, m_tag_link);
 }
 
 /* Unlink and free a packet tag. */
@@ -333,10 +333,10 @@ m_tag_delete_chain(m, t)
 	if (t != NULL)
 		p = t;
 	else
-		p = DLIST_FIRST(&m->m_pkthdr.tags);
+		p = SLIST_FIRST(&m->m_pkthdr.tags);
 	if (p == NULL)
 		return;
-	while ((q = DLIST_NEXT(p, m_tag_link)) != NULL)
+	while ((q = SLIST_NEXT(p, m_tag_link)) != NULL)
 		m_tag_delete(m, q);
 	m_tag_delete(m, p);
 }
@@ -351,13 +351,13 @@ m_tag_find(m, type, t)
 	struct m_tag *p;
 
 	if (t == NULL)
-		p = DLIST_FIRST(&m->m_pkthdr.tags);
+		p = SLIST_FIRST(&m->m_pkthdr.tags);
 	else
-		p = DLIST_NEXT(t, m_tag_link);
+		p = SLIST_NEXT(t, m_tag_link);
 	while (p != NULL) {
 		if (p->m_tag_id == type)
 			return (p);
-		p = DLIST_NEXT(p, m_tag_link);
+		p = SLIST_NEXT(p, m_tag_link);
 	}
 	return (NULL);
 }
@@ -390,16 +390,16 @@ m_tag_copy_chain(to, from)
 	struct m_tag *p, *t, *tprev = NULL;
 
 	m_tag_delete_chain(to, NULL);
-	DLIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
+	SLIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
 		t = m_tag_copy(p);
 		if (t == NULL) {
 			m_tag_delete_chain(to, NULL);
 			return (0);
 		}
 		if (tprev == NULL)
-			DLIST_INSERT_HEAD(&to->m_pkthdr.tags, t, m_tag_link);
+			SLIST_INSERT_HEAD(&to->m_pkthdr.tags, t, m_tag_link);
 		else {
-			DLIST_INSERT_AFTER(tprev, t, m_tag_link);
+			SLIST_INSERT_AFTER(tprev, t, m_tag_link);
 			tprev = t;
 		}
 	}
@@ -411,7 +411,7 @@ void
 m_tag_init(m)
 	struct mbuf *m;
 {
-	DLIST_INIT(&m->m_pkthdr.tags);
+	SLIST_INIT(&m->m_pkthdr.tags);
 }
 
 /* Get first tag in chain. */
@@ -419,7 +419,7 @@ struct m_tag *
 m_tag_first(m)
 	struct mbuf *m;
 {
-	return (DLIST_FIRST(&m->m_pkthdr.tags));
+	return (SLIST_FIRST(&m->m_pkthdr.tags));
 }
 
 /* Get next tag in chain. */
@@ -428,5 +428,5 @@ m_tag_next(m, t)
 	struct mbuf *m;
 	struct m_tag *t;
 {
-	return (DLIST_NEXT(t, m_tag_link));
+	return (SLIST_NEXT(t, m_tag_link));
 }
