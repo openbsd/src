@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.56 2001/06/12 15:40:33 niklas Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.57 2001/06/14 23:55:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -698,13 +698,11 @@ ubsec_process(crp)
 					m_copyback(q->q_src_m, enccrd->crd_inject,
 					    8, (caddr_t)ctx.pc_iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV) {
-					if (crp->crp_iv == NULL) {
-						err = EINVAL;
-						goto errout;
-					}
-					bcopy(crp->crp_iv,
-					    (caddr_t)ctx.pc_iv, 8);
-				}
+					if (crp->crp_iv == NULL)
+						bzero((caddr_t)ctx.pc_iv, 8);
+					else
+						bcopy(crp->crp_iv,
+						    (caddr_t)ctx.pc_iv, 8);
 			}
 		} else {
 			ctx.pc_flags |= UBS_PKTCTX_INBOUND;
@@ -715,11 +713,11 @@ ubsec_process(crp)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (caddr_t)ctx.pc_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				if (crp->crp_iv == NULL) {
-					err = EINVAL;
-					goto errout;
-				}
-				bcopy(crp->crp_iv, (caddr_t)ctx.pc_iv, 8);
+				if (crp->crp_iv == NULL)
+					bzero((caddr_t)ctx.pc_iv, 8);
+				else
+					bcopy(crp->crp_iv,
+					    (caddr_t)ctx.pc_iv, 8);
 			}
 		}
 
