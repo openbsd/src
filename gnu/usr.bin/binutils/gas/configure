@@ -1885,8 +1885,12 @@ EOF
                                 sparc64) fmt=elf ;;
                             esac
                             ;;
-      sparc-*-openbsd*)     fmt=aout em=nbsd ;;
-
+      sparc-*-openbsd*)     em=nbsd
+			    case ${cpu} in
+				sparc) fmt=aout ;;
+				sparc64) fmt=elf ;;
+			    esac
+			    ;;
       strongarm-*-coff)     fmt=coff ;;
       strongarm-*-elf)      fmt=elf ;;
 

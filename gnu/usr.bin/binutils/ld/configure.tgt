@@ -56,6 +56,7 @@ sparc*-*-linux-gnu*)	targ_emul=elf32_sparc
 			;;
 sparc*-*-lynxos*)	targ_emul=sparclynx ;;
 sparc64-*-netbsd*)	targ_emul=elf64_sparc ;;
+sparc64-*-openbsd*)	targ_emul=elf64_sparc ;;
 sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc ;;
 sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
 sparc*-*-openbsd*)	targ_emul=sparcnbsd ;;
