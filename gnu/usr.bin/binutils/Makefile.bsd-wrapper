@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.45 2002/04/02 21:56:33 fgsch Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.46 2002/05/08 16:48:11 art Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa sparc64
 
@@ -25,11 +25,11 @@ INSTALL_X11_MODULES+=install-gdb
 
 .for _arch in ${MACHINE_ARCH}
 .  if !empty(NEW_BINUTILS:M${_arch})
-SUBDIRS+=	binutils ld gas gprof
+SUBDIRS+=	binutils ld gas
 MAN+=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/ranlib.1 \
 		binutils/size.1 binutils/strings.1 binutils/strip.1 \
-		gas/doc/as.1 gprof/gprof.1 ld/ld.1
+		gas/doc/as.1 ld/ld.1
 .  endif
 .endfor
 
