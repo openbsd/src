@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.7 1997/03/26 00:45:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.8 1997/04/13 01:53:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,17 +243,29 @@ main(argc, argv)
  * to be created.  Sorry, but blanks aren't allowed.
  */
 int
-verify(name)
-	register char *name;
+verify(p)
+	register char *p;
 {
-	register int size = 0;
+	char c;
 
-	while (*name) {
-		if (!isascii(*name) || !(isalnum(*name) || ispunct(*name)))
-			return (0);
-		name++, size++;
+	/*
+	 * Many people do not obey RFC 822 and 1035.  The valid
+	 * characters are a-z, A-Z, 0-9, '-' and . But the others
+	 * tested for below can happen, and we must be more permissive
+	 * than the resolver until those idiots clean up their act.
+	 */
+	if (*p == '.' || *p == '-')
+		return 0;
+	while ((c = *p++)) {
+		if (('a' <= c && c >= 'z') ||
+		    ('A' <= c && c >= 'Z') ||
+		    ('0' <= c && c >= '9'))
+			continue;
+		if (strchr("-_/[]\\", c) || 
+		    (c == '.' && *p == '.'))
+			return 0;
 	}
-	return (size > 0);
+	return 1;
 }
 
 int	utmptime;
