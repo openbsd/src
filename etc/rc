@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.48 1997/09/20 07:40:40 deraadt Exp $
+#	$OpenBSD: rc,v 1.49 1997/09/26 18:43:45 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -216,6 +216,14 @@ if [ -f /etc/ptmp ]; then
 	'password file may be incorrect -- /etc/ptmp exists'
 fi
 
+echo clearing /tmp
+
+# prune quickly with one rm, then use find to clean up /tmp/[lq]*
+# (not needed with mfs /tmp, but doesn't hurt there...)
+(cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
+    find . ! -name . ! -name lost+found ! -name quota.user \
+	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
+
 test -f /etc/rc.securelevel && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
 	echo -n 'setting kernel security level: '
@@ -241,14 +249,6 @@ if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 		sendmail -t < $i
 	done
 fi
-
-echo clearing /tmp
-
-# prune quickly with one rm, then use find to clean up /tmp/[lq]*
-# (not needed with mfs /tmp, but doesn't hurt there...)
-(cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
-    find . ! -name . ! -name lost+found ! -name quota.user \
-	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
 
 if [ -f /var/account/acct ]; then
 	echo 'turning on accounting';	accton /var/account/acct
