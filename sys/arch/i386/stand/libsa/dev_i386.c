@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.8 1997/04/15 21:35:13 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.9 1997/04/17 21:28:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -113,8 +113,9 @@ putchar(c)
 
 	switch(c) {
 	case '\t':
-		while(++pos % 8)
+		do
 			putc(' ');
+		while(++pos % 8);
 		break;
 	case '\n':
 		putc('\r');
