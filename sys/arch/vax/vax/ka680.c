@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.3 2001/03/16 22:46:26 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.4 2001/04/01 16:51:40 hugh Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -32,6 +32,7 @@
  */
 
 /* Done by Michael Kukat (michael@unixiron.org) */
+/* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,17 +115,22 @@ ka680_conf()
 	hej[-1] = hej[-1];
 
 	switch((vax_siedata & 0xff00) >> 8) {
-		case VAX_STYP_675:
-			cpuname = "KA675"; break;
-		case VAX_STYP_680:
-			cpuname = "KA680"; break;
-		case VAX_STYP_681:
-			cpuname = "KA681"; break;
-		case VAX_STYP_690:
-			cpuname = "KA690"; break;
-		case VAX_STYP_691:
-			cpuname = "KA691"; break;
-		default:
+	case VAX_STYP_675:
+		cpuname = "KA675";
+		break;
+	case VAX_STYP_680:
+		cpuname = "KA680";
+		break;
+	case VAX_STYP_681:
+		cpuname = "KA681";
+		break;
+	case VAX_STYP_690:
+		cpuname = "KA690";
+		break;
+	case VAX_STYP_691:
+		cpuname = "KA691";
+		break;
+	default:
 			cpuname = "unknown NVAX";
 	}
 	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
@@ -133,7 +139,7 @@ ka680_conf()
 void
 ka680_cache_enable()
 {
-	int start, slut;
+	int start, pslut, fslut, cslut, havevic;
 
 	/*
 	 * Turn caches off.
@@ -150,31 +156,49 @@ ka680_cache_enable()
 	mtpr(mfpr(PR_BCEDSTS), PR_BCEDSTS);	/* Clear error bits */
 	mtpr(mfpr(PR_NESTS), PR_NESTS);	 /* Clear error bits */
 
+	switch((vax_siedata & 0xff00) >> 8) {
+	case VAX_STYP_680:
+	case VAX_STYP_681:	/* XXX untested */
+		fslut = 0x01420000;
+		cslut = 0x01020000;
+		havevic = 1;
+		break;
+	case VAX_STYP_690:
+	case VAX_STYP_691:	/* XXX untested */
+		fslut = 0x01440000;
+		cslut = 0x01040000;
+		havevic = 1;
+		break;
+	case VAX_STYP_675:
+	default:		/* unknown cpu; cross fingers */
+		fslut = 0x01420000;
+		cslut = 0x01020000;
+		havevic = 0;
+		break;
+	}
 
 	start = 0x01400000;
-	slut  = 0x01420000;
 
 	/* Flush cache lines */
-	for (; start < slut; start += 0x20)
+	for (; start < fslut; start += 0x20)
 		mtpr(0, start);
 
 	mtpr((mfpr(PR_CCTL) & ~(CCTL_SW_ETM|CCTL_ENABLE)) | CCTL_HW_ETM,
 	    PR_CCTL);
 
 	start = 0x01000000;
-	slut  = 0x01020000;
 
 	/* clear tag and valid */
-	for (; start < slut; start += 0x20)
+	for (; start < cslut; start += 0x20)
 		mtpr(0, start);
 
 	mtpr(mfpr(PR_CCTL) | 6 | CCTL_ENABLE, PR_CCTL); /* enab. bcache */
 
 	start = 0x01800000;
-	slut  = 0x01802000;
+	pslut = 0x01802000;
 
 	/* Clear primary cache */
-	for (; start < slut; start += 0x20)
+	for (; start < pslut; start += 0x20)
 		mtpr(0, start);
 
 	/* Flush the pipes (via REI) */
@@ -184,7 +208,9 @@ ka680_cache_enable()
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);
 
 	/* Enable the VIC */
-	if(((vax_siedata & 0xff00) >> 8) == VAX_STYP_680) {
+	if (havevic) {
+		int slut;
+
 		start = 0;
 		slut  = 0x800;
 		for (; start < slut; start += 0x20) {
