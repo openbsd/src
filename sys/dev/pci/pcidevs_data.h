@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.165 1999/07/24 19:45:18 jason Exp 
+ *	OpenBSD: pcidevs,v 1.166 1999/07/24 23:44:05 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2659,6 +2659,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SMC",
 	    "83C170 (EPIC/100)",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
+	    0,
+	    "Sony",
+	    "CXD1947A FireWire",
 	},
 	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
