@@ -139,8 +139,8 @@ char *is_shlib(char *dir, char *name, int *type)
 	    cp = cp + strlen(cp);
 
 	/* construct the full path name */
-	sprintf(buff, "%s%s%s%s", Ppath, dir, (*dir && strcmp(dir, "/")) ?
-		"/" : "", name);
+	snprintf(buff, sizeof buff, "%s%s%s%s", Ppath, dir,
+		(*dir && strcmp(dir, "/")) ? "/" : "", name);
 
 	/* first, make sure it's a regular file */
 	if (lstat(buff, &statbuf))
@@ -196,8 +196,8 @@ void link_shlib(char *dir, char *file, char *so)
     struct stat linkstat;
 
     /* construct the full path names */
-    sprintf(libname, "%s%s/%s", Ppath, dir, file);
-    sprintf(linkname, "%s/%s", dir, so);
+    snprintf(libname, sizeof libname, "%s%s/%s", Ppath, dir, file);
+    snprintf(linkname, sizeof linkname, "%s/%s", dir, so);
 
     /* see if a link already exists */
     if (!stat(linkname, &linkstat))
@@ -268,7 +268,7 @@ void scan_dir(char *name)
     char *so;
     struct lib *lp, *libs = NULL;
     int libtype;
-    char *op = malloc(strlen(Ppath) + strlen(name));
+    char *op = malloc(strlen(Ppath) + strlen(name) + 1);
 
     /* let 'em know what's going on */
     if (verbose)
@@ -354,7 +354,7 @@ char *get_extpath(void)
     char *cp = NULL;
     FILE *file;
     struct stat stat;
-    char *op = malloc(strlen(Ppath) + strlen(LDSO_CONF));
+    char *op = malloc(strlen(Ppath) + strlen(LDSO_CONF) + 1);
 
     strcpy(op, Ppath);
     strcat(op, LDSO_CONF);
@@ -541,7 +541,7 @@ void cache_dolib(char *dir, char *so, char *lib, int libtype)
     liblist_t *new_lib, *cur_lib;
 
     magic.nlibs++;
-    sprintf(fullpath, "%s/%s", dir, lib);
+    snprintf(fullpath, sizeof fullpath, "%s/%s", dir, lib);
     new_lib = xmalloc(sizeof (liblist_t));
     new_lib->flags = libtype;
     new_lib->soname = xstrdup(so);
@@ -569,7 +569,7 @@ void cache_rmlib(char *dir, char *so)
     char fullpath[PATH_MAX];
     liblist_t *cur_lib;
 
-    sprintf(fullpath, "%s/%s", dir, so);
+    snprintf(fullpath, sizeof fullpath, "%s/%s", dir, so);
 
     for (cur_lib = lib_head; cur_lib != NULL; cur_lib = cur_lib->next)
     {
@@ -593,7 +593,7 @@ void cache_write(void)
     if (!magic.nlibs)
 	return;
 
-    sprintf(tempfile, "%s~", cachefile);
+    snprintf(tempfile, sizeof tempfile, "%s~", cachefile);
 
     if (unlink(tempfile) && errno != ENOENT)
         error("can't unlink %s (%s)", tempfile, strerror(errno));
