@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.32 1999/10/29 01:50:34 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.33 1999/10/29 02:02:33 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -273,8 +273,7 @@ ip4_input(m, va_alist)
 
 #ifdef IPSEC
 int
-ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, 
-	    struct mbuf **mp)
+ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
 {
     struct ip *ipo, *ipi;
     ushort ilen;
