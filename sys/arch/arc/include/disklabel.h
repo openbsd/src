@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.2 1996/08/26 11:01:35 pefo Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.3 1996/09/21 10:48:47 pefo Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 1995/01/18 06:37:55 mellon Exp $	*/
 
 /*
@@ -34,8 +34,8 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
+#define	LABELSECTOR	1			/* sector containing label */
+#define	LABELOFFSET	0			/* offset of label in sector */
 #define	MAXPARTITIONS	16			/* number of partitions */
 #define	PARTITIONSHIFT	4			/* log2 */
 #define	PARTITIONMASK	0xf			
