@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.346 2003/05/12 01:25:31 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.347 2003/05/12 17:49:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -265,37 +265,37 @@ pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
+		if (a->addr[0].addr32[3] > b->addr[0].addr32[3])
 			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
+		if (a->addr[0].addr32[3] < b->addr[0].addr32[3])
 			return (-1);
-		if (a->addr[0].addr32[1] > b->addr[0].addr32[1])
+		if (a->addr[1].addr32[3] > b->addr[1].addr32[3])
 			return (1);
-		if (a->addr[0].addr32[1] < b->addr[0].addr32[1])
+		if (a->addr[1].addr32[3] < b->addr[1].addr32[3])
 			return (-1);
 		if (a->addr[0].addr32[2] > b->addr[0].addr32[2])
 			return (1);
 		if (a->addr[0].addr32[2] < b->addr[0].addr32[2])
 			return (-1);
-		if (a->addr[0].addr32[3] > b->addr[0].addr32[3])
+		if (a->addr[1].addr32[2] > b->addr[1].addr32[2])
 			return (1);
-		if (a->addr[0].addr32[3] < b->addr[0].addr32[3])
+		if (a->addr[1].addr32[2] < b->addr[1].addr32[2])
 			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
+		if (a->addr[0].addr32[1] > b->addr[0].addr32[1])
 			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
+		if (a->addr[0].addr32[1] < b->addr[0].addr32[1])
 			return (-1);
 		if (a->addr[1].addr32[1] > b->addr[1].addr32[1])
 			return (1);
 		if (a->addr[1].addr32[1] < b->addr[1].addr32[1])
 			return (-1);
-		if (a->addr[1].addr32[2] > b->addr[1].addr32[2])
+		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
 			return (1);
-		if (a->addr[1].addr32[2] < b->addr[1].addr32[2])
+		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
 			return (-1);
-		if (a->addr[1].addr32[3] > b->addr[1].addr32[3])
+		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
 			return (1);
-		if (a->addr[1].addr32[3] < b->addr[1].addr32[3])
+		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
 			return (-1);
 		break;
 #endif /* INET6 */
