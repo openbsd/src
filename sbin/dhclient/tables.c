@@ -1,6 +1,6 @@
-/* tables.c
+/*	$OpenBSD: tables.c,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
 
-   Tables of information... */
+/* Tables of information... */
 
 /*
  * Copyright (c) 1995, 1996 The Internet Software Consortium.

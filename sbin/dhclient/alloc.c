@@ -1,6 +1,6 @@
-/* alloc.c
+/*	$OpenBSD: alloc.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
 
-   Memory allocation... */
+/* Memory allocation... */
 
 /*
  * Copyright (c) 1995, 1996, 1998 The Internet Software Consortium.

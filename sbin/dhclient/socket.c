@@ -1,6 +1,6 @@
-/* socket.c
+/*	$OpenBSD: socket.c,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
 
-   BSD socket interface code... */
+/* BSD socket interface code... */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999

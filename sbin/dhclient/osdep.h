@@ -1,6 +1,6 @@
-/* osdep.h
+/*	$OpenBSD: osdep.h,v 1.4 2004/02/04 12:16:56 henning Exp $	*/
 
-   Operating system dependencies... */
+/* Operating system dependencies... */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999 The Internet Software Consortium.

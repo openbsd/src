@@ -1,4 +1,4 @@
-# Makefile
+# $OpenBSD: Makefile,v 1.3 2004/02/04 12:16:56 henning Exp $
 #
 # Copyright (c) 1996, 1997 The Internet Software Consortium.
 # All rights reserved.

@@ -1,6 +1,6 @@
-/* errwarn.c
+/*	$OpenBSD: errwarn.c,v 1.4 2004/02/04 12:16:56 henning Exp $	*/
 
-   Errors and warnings... */
+/* Errors and warnings... */
 
 /*
  * Copyright (c) 1996 The Internet Software Consortium.

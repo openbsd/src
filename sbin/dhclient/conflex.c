@@ -1,6 +1,6 @@
-/* conflex.c
+/*	$OpenBSD: conflex.c,v 1.4 2004/02/04 12:16:56 henning Exp $	*/
 
-   Lexical scanner for dhcpd config file... */
+/* Lexical scanner for dhcpd config file... */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.

@@ -1,6 +1,6 @@
-/* packet.c
+/*	$OpenBSD: packet.c,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
 
-   Packet assembly code, originally contributed by Archie Cobbs. */
+/* Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
  * Copyright (c) 1995, 1996, 1999 The Internet Software Consortium.

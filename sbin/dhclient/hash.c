@@ -1,6 +1,6 @@
-/* hash.c
+/*	$OpenBSD: hash.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
 
-   Routines for manipulating hash tables... */
+/* Routines for manipulating hash tables... */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.

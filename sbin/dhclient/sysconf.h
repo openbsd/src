@@ -1,6 +1,6 @@
-/* systat.h
+/*	$OpenBSD: sysconf.h,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
 
-   Definitions for systat protocol... */
+/* Definitions for systat protocol... */
 
 /*
  * Copyright (c) 1997 The Internet Software Consortium.
