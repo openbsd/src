@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.120 2003/08/15 00:10:01 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.121 2003/08/21 20:24:12 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -838,6 +838,9 @@ By default, ${DESTDIRNAME}=${WRKINST}.
 .It Ev FAKE_TARGET
 Target build by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
+.It Ev FAKEOBJDIR
+If defined, used as a base for the fake area.
+The real fake directory ${WRKINST} is created there.
 .It Ev FETCH_CMD
 Command used to fetch distribution files for this port.
 Defaults to
