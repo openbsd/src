@@ -10,10 +10,7 @@ MAN5	=	keycap.${MAN5EXT}
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${LIBDIR} ]; then mkdir ${DESTDIR}${LIBDIR};fi
-	@${ECHO} "Saving old keycap database"
-	-mv -f ${CAPPATH} ${CAPPATH}.BAK
 	install -c -m ${LIBMODE} -o ${LIBOWN} -g ${LIBGRP} \
 	${.CURDIR}/${KEYCAPSRC} ${CAPPATH}
-
 
 .include <bsd.lib.mk>
