@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.70 2001/04/04 20:19:02 gluk Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.71 2001/05/13 02:40:46 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2819,6 +2819,7 @@ sys_pread(p, v, retval)
                 syscallarg(int) fd;
                 syscallarg(void *) buf;
                 syscallarg(size_t) nbyte;
+                syscallarg(int) pad;
                 syscallarg(off_t) offset;
         } */ *uap = v;
         struct filedesc *fdp = p->p_fd;
@@ -2871,6 +2872,7 @@ sys_preadv(p, v, retval)
                 syscallarg(int) fd;
                 syscallarg(const struct iovec *) iovp;
                 syscallarg(int) iovcnt;
+                syscallarg(int) pad;
                 syscallarg(off_t) offset;
         } */ *uap = v;
         struct filedesc *fdp = p->p_fd;
@@ -2923,6 +2925,7 @@ sys_pwrite(p, v, retval)
                 syscallarg(int) fd;
                 syscallarg(const void *) buf;
                 syscallarg(size_t) nbyte;
+                syscallarg(int) pad;
                 syscallarg(off_t) offset;
         } */ *uap = v;
         struct filedesc *fdp = p->p_fd;
@@ -2976,6 +2979,7 @@ sys_pwritev(p, v, retval)
                 syscallarg(int) fd;
                 syscallarg(const struct iovec *) iovp;
                 syscallarg(int) iovcnt;
+                syscallarg(int) pad;
                 syscallarg(off_t) offset;
         } */ *uap = v;
         struct filedesc *fdp = p->p_fd;
