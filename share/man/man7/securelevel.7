@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.11 2001/05/01 18:31:43 aaron Exp $
+.\"     $OpenBSD: securelevel.7,v 1.12 2001/05/30 03:24:16 millert Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -82,11 +82,12 @@ raw disk devices are always read-only whether mounted or not
 .It
 .Xr settimeofday 2
 may not set the time backwards
-.It
-.Xr ipf 8
-and
-.Xr ipnat 8
-rules may not be altered
+.\"XXX - replace with ipfw when it is in-tree
+.\".It
+.\".Xr ipf 8
+.\"and
+.\".Xr ipnat 8
+.\"rules may not be altered
 .It
 the
 .Va ddb.console

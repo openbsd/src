@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.29 2000/12/30 21:57:21 angelos Exp $
+.\"	$OpenBSD: bridge.4,v 1.30 2001/05/30 03:24:15 millert Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -52,9 +52,10 @@ a transparent filter for
 .Xr ip 4
 datagrams.
 .Pp
-The bridges provided by this interface are learning bridges with
-IP filtering, see
-.Xr ipf 4 .
+.\"XXX - replace with ipfw when it is in-tree
+.\"The bridges provided by this interface are learning bridges with
+.\"IP filtering, see
+..\"Xr ipf 4 .
 In general a bridge works like a hub, forwarding traffic from one interface
 to another.
 It differs from a hub in that it will "learn" which machines
@@ -79,16 +80,17 @@ bridge will forward the packet only to the destination segment.
 If the destination is on the same segment as the origin segment, the bridge
 will drop the packet because the receiver has already had a chance to see
 the frame.
-Before forwarding a frame, the bridge will check to see if the packet
-contains an
-.Xr ip 4
-datagram; if so, the datagram is run through the
-.Xr ipf 4
-interface so that it can be filtered.
-Only the
-.Xr ipf 4
-input rules for the source interface are checked with the datagram;
-output rules have no effect.
+.\"XXX - replace with ipfw when it is in-tree
+.\"Before forwarding a frame, the bridge will check to see if the packet
+.\"contains an
+.\".Xr ip 4
+.\"datagram; if so, the datagram is run through the
+.\".Xr ipf 4
+.\"interface so that it can be filtered.
+.\"Only the
+.\".Xr ipf 4
+.\"input rules for the source interface are checked with the datagram;
+.\"output rules have no effect.
 .Sh IOCTLS
 A
 .Nm
@@ -518,7 +520,7 @@ No such member interface in the bridge.
 .Xr ioctl 2 ,
 .Xr gif 4 ,
 .Xr ip 4 ,
-.Xr ipf 4 ,
+.\".Xr ipf 4 ,
 .Xr netintro 4 ,
 .Xr bridgename.if 5 ,
 .Xr brconfig 8
@@ -542,8 +544,9 @@ kernel interface first appeared in
 There is currently no loop detection.
 Care must be taken to ensure that loops are not created when a bridge
 is brought up.
-.Pp
-Only
-.Xr ipf 4
-input rules are checked with incoming packet; there is no easy way to
-handle output rules.
+.\"XXX - replace with ipfw when it is in-tree
+.\".Pp
+.\"Only
+.\".Xr ipf 4
+.\"input rules are checked with incoming packet; there is no easy way to
+.\"handle output rules.

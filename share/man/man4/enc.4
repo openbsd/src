@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.11 2001/03/25 22:32:45 angelos Exp $
+.\"	$OpenBSD: enc.4,v 1.12 2001/05/30 03:24:16 millert Exp $
 .\"
 .Dd October 7, 1999
 .Dt ENC 4
@@ -9,21 +9,24 @@
 .Sh SYNOPSIS
 .Cd "pseudo-device enc 4"
 .Sh DESCRIPTION
+.\"XXX - replace with ipfw when it is in-tree
+.\"The
+.\".Nm
+.\"interface is a software loopback mechanism that allows hosts or
+.\"firewalls to filter
+.\".Xr ipsec 4
+.\"traffic using
+.\".Xr ipf 5 .
+.\"The
+.\".Xr vpn 8
+.\"manpage shows an example of such a setup.
+.\".Pp
+.\"The other use of the
+.\"XXX
 The
 .Nm
-interface is a software loopback mechanism that allows hosts or
-firewalls to filter
-.Xr ipsec 4
-traffic using
-.Xr ipf 5 .
-The
-.Xr vpn 8
-manpage shows an example of such a setup.
-.Pp
-The other use of the
-.Nm
-interface is to allow an administrator to see outgoing packets before
-they have been processed by
+interface is a software loopback mechanism that allows an administrator
+to see outgoing packets before they have been processed by
 .Xr ipsec 4 ,
 or incoming packets after they have been similarly processed, via
 .Xr tcpdump 8 .
@@ -52,5 +55,5 @@ or all incoming packets after they have been similarly processed:
 .Xr inet 4 ,
 .Xr ipsec 4 ,
 .Xr netintro 4 ,
-.Xr ipf 5 ,
+.\".Xr ipf 5 ,
 .Xr vpn 8
