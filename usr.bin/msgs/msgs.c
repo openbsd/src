@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.21 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.22 2002/08/08 10:37:41 ho Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.21 2002/02/16 21:27:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.22 2002/08/08 10:37:41 ho Exp $";
 #endif
 #endif /* not lint */
 
@@ -793,14 +793,16 @@ ask(prompt)
 		if (inch == 's') {
 			in = nxtfld(inbuf);
 			if (*in) {
-				for (n=0; in[n] > ' '; n++) { /* sizeof fname? */
+				for (n=0;
+				     in[n] > ' ' && n < sizeof *fname - 1;
+				     n++) {
 					fname[n] = in[n];
 				}
 				fname[n] = NULL;
 			}
 			else
 				strcpy(fname, "Messages");
-			fd = open(fname, O_RDWR|O_EXCL|O_CREAT|O_APPEND);
+			fd = open(fname, O_RDWR|O_EXCL|O_CREAT|O_APPEND, 0666);
 		}
 		else {
 			strcpy(fname, _PATH_TMPFILE);
