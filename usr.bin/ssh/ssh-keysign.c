@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.1 2002/05/23 19:24:30 markus Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.2 2002/05/31 10:30:33 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -35,16 +35,18 @@ RCSID("$OpenBSD: ssh-keysign.c,v 1.1 2002/05/23 19:24:30 markus Exp $");
 #include "bufaux.h"
 #include "authfile.h"
 #include "msg.h"
+#include "canohost.h"
 #include "pathnames.h"
 
 static int
-valid_request(struct passwd *pw, Key **ret, u_char *data, u_int datalen)
+valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
+    u_int datalen)
 {
 	Buffer b;
 	Key *key;
-	u_char *p, *pkblob;
-	u_int blen;
-	char *pkalg;
+	u_char *pkblob;
+	u_int blen, len;
+	char *pkalg, *p;
 	int pktype, fail;
 
 	fail = 0;
@@ -86,11 +88,20 @@ valid_request(struct passwd *pw, Key **ret, u_char *data, u_int datalen)
 	xfree(pkalg);
 	xfree(pkblob);
 
-	/* chost */
-	buffer_skip_string(&b);
+	/* client host name, handle trailing dot */
+	p = buffer_get_string(&b, &len);
+	debug2("valid_request: check expect chost %s got %s", host, p);
+	if (strlen(host) != len - 1)
+		fail++;
+	else if (p[len - 1] != '.')
+	      fail++;
+	else if (strncasecmp(host, p, len - 1) != 0)
+	      fail++;
+	xfree(p);
 
 	/* local user */
 	p = buffer_get_string(&b, NULL);
+
 	if (strcmp(pw->pw_name, p) != 0)
 		fail++;
 	xfree(p);
@@ -115,8 +126,9 @@ main(int argc, char **argv)
 	Buffer b;
 	Key *keys[2], *key;
 	struct passwd *pw;
-	int key_fd[2], i, found, version = 1;
+	int key_fd[2], i, found, version = 2, fd;
 	u_char *signature, *data;
+	char *host;
 	u_int slen, dlen;
 
 	key_fd[0] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
@@ -157,10 +169,17 @@ main(int argc, char **argv)
 		fatal("msg_recv failed");
 	if (buffer_get_char(&b) != version)
 		fatal("bad version");
+	fd = buffer_get_int(&b);
+	if ((fd == STDIN_FILENO) || (fd == STDOUT_FILENO))
+		fatal("bad fd");
+	if ((host = get_local_name(fd)) == NULL)
+		fatal("cannot get sockname for fd");
+	
 	data = buffer_get_string(&b, &dlen);
-	if (valid_request(pw, &key, data, dlen) < 0)
+	if (valid_request(pw, host, &key, data, dlen) < 0)
 		fatal("not a valid request");
 	xfree(data);
+	xfree(host);
 
 	found = 0;
 	for (i = 0; i < 2; i++) {
