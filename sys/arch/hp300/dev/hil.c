@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.19 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: hil.c,v 1.20 2003/09/24 06:41:43 miod Exp $	*/
 /*	$NetBSD: hil.c,v 1.34 1997/04/02 22:37:32 scottr Exp $	*/
 
 /*
@@ -748,7 +748,7 @@ hilpoll(dev, events, p)
 	int s, revents, device;
 
 	revents = events & (POLLOUT | POLLWRNORM);
-	if (events & (POLLIN | POLLRDNORM) == 0)
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
 	device = HILUNIT(dev);
