@@ -30,8 +30,8 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: elbereth.mc,v 1.3 1997/11/04 16:19:20 kstailey Exp $')dnl
-OSTYPE(bsd4.4)dnl
+VERSIONID(`$OpenBSD: elbereth.mc,v 1.4 1998/08/15 18:17:13 millert Exp $')dnl
+OSTYPE(openbsd)dnl
 MASQUERADE_AS(disclosure.com)dnl
 FEATURE(masquerade_envelope)dnl
 define(`SMART_HOST', `disclosure.com')

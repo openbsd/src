@@ -31,8 +31,8 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: lucifier.mc,v 1.3 1998/03/27 08:15:52 deraadt Exp $')dnl
-OSTYPE(bsd4.4)dnl
+VERSIONID(`$OpenBSD: lucifier.mc,v 1.4 1998/08/15 18:17:15 millert Exp $')dnl
+OSTYPE(openbsd)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 MASQUERADE_AS(lucifier.dial-up.user.akula.net)dnl

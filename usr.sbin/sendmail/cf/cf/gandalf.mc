@@ -30,8 +30,8 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: gandalf.mc,v 1.3 1998/08/02 06:50:22 tholo Exp $')dnl
-OSTYPE(bsd4.4)dnl
+VERSIONID(`$OpenBSD: gandalf.mc,v 1.4 1998/08/15 18:17:14 millert Exp $')dnl
+OSTYPE(openbsd)dnl
 DOMAIN(sigmasoft)dnl
 MASQUERADE_AS(SigmaSoft.COM)dnl
 FEATURE(allmasquerade)dnl
