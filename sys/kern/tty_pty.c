@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.23 2004/07/09 08:55:41 niklas Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.24 2004/07/21 12:10:20 art Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ check_pty(int minor)
 {
 	struct pt_softc *pti;
 
-	rw_enter_write(&pt_softc_lock, curproc);
+	rw_enter_write(&pt_softc_lock);
 	if (minor >= npty) {
 		struct pt_softc **newpt;
 		int newnpty;
@@ -975,7 +975,7 @@ sysctl_pty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		err = sysctl_int(oldp, oldlenp, newp, newlen, &newmax);
 		if (err)
 			return (err);
-		rw_enter_write(&pt_softc_lock, curproc);
+		rw_enter_write(&pt_softc_lock);
 		/*
 		 * We can't set the max lower than the current
 		 * active value or to a value bigger than a dev_t minor

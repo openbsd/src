@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.3 2004/01/11 00:42:03 tedu Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.4 2004/07/21 12:10:20 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -48,7 +48,7 @@
  *  atomically test for RWLOCK_WRLOCK and if not set, increment the lock
  *  by RWLOCK_READ_INCR. While RWLOCK_WRLOCK is set, loop into rw_enter_wait.
  *
- * void rw_enter_write(struct rwlock *, struct proc *);
+ * void rw_enter_write(struct rwlock *);
  *  atomically test for the lock being 0 (it's not possible to have
  *  owner/read count unset and waiter bits set) and if 0 set the owner to
  *  the proc and RWLOCK_WRLOCK. While not zero, loop into rw_enter_wait.
@@ -90,7 +90,7 @@ struct rwlock {
 void rw_init(struct rwlock *);
 
 void rw_enter_read(struct rwlock *);
-void rw_enter_write(struct rwlock *, struct proc *);
+void rw_enter_write(struct rwlock *);
 void rw_exit_read(struct rwlock *);
 void rw_exit_write(struct rwlock *);
 

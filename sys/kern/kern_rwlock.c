@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.2 2003/11/18 18:12:14 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.3 2004/07/21 12:10:20 art Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -49,8 +49,10 @@ rw_enter_read(struct rwlock *rwl)
 }
 
 void
-rw_enter_write(struct rwlock *rwl, struct proc *p)
+rw_enter_write(struct rwlock *rwl)
 {
+	struct proc *p = curproc;
+
 	while (__predict_false(rwl->rwl_owner != 0)) {
 		/*
 		 * Not the simple case, go to slow path.
@@ -208,7 +210,7 @@ rwlock_testp3(void *a)
 	printf("rwlock test3 start\n");
 	tsleep(&local, PWAIT, "rw3", 2);
 	printf("rwlock test3 exited waiting\n");
-	rw_enter_write(&rw_test, curproc);
+	rw_enter_write(&rw_test);
 	printf("rwlock test3 obtained\n");
 	tsleep(&local, PWAIT, "rw3/2", 4);
 	rw_exit_write(&rw_test);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.7 2004/03/16 06:28:27 tedu Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.8 2004/07/21 12:10:20 art Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -75,9 +75,9 @@ int ufsdirhash_recycle(int wanted);
 
 struct pool		ufsdirhash_pool;
 
-#define	DIRHASHLIST_LOCK()	rw_enter_write(&ufsdirhash_mtx, curproc)
+#define	DIRHASHLIST_LOCK()	rw_enter_write(&ufsdirhash_mtx)
 #define	DIRHASHLIST_UNLOCK()	rw_exit_write(&ufsdirhash_mtx)
-#define	DIRHASH_LOCK(dh)	rw_enter_write(&(dh)->dh_mtx, curproc)
+#define	DIRHASH_LOCK(dh)	rw_enter_write(&(dh)->dh_mtx)
 #define	DIRHASH_UNLOCK(dh)	rw_exit_write(&(dh)->dh_mtx)
 #define	DIRHASH_BLKALLOC_WAITOK()	pool_get(&ufsdirhash_pool, PR_WAITOK)
 #define	DIRHASH_BLKFREE(v)		pool_put(&ufsdirhash_pool, v)
