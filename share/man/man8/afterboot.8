@@ -229,6 +229,39 @@ to
 You may wish to create a file
 .Pa amd.home
 in this directory, or alternatively supply your amd.home map via YP.
+\!\"--------------------------------------------------------------------------
+.Sh COMPILING A KERNEL
+To compile your own kernel off a CDROM do the following:
+.Bd -literal -offset indent
+# cd /somewhere
+# cp /usr/src/sys/arch/$ARCH/conf/SOMEFILE .
+# edit SOMEFILE (to make any changes you want)
+# config -s /usr/src/sys -b . SOMEFILE
+# make
+.Ed
+.Pp
+To compile a kernel inside a writable source tree, do the following:
+.Bd -literal -offset indent
+# cd /sys/arch/$ARCH/conf
+# edit SOMEFILE (to make any changes you want)
+# config SOMEFILE
+# cd ../compile/SOMEFILE
+# make
+.Ed
+.Pp
+$ARCH should be the architecture (e.g. i386).  If you like, do a
+"make depend" too so you'll have your dependencies there next time
+you do a compile.
+.Pp
+After either of these two steps, you can place the new kernel (called
+.Pa bsd )
+in
+.Pa /
+and the system will boot it next time.  Most people save their backup
+kernels as
+.Pa /bsd.1 ,
+.Pa /bsd.2 ...
+\!\"--------------------------------------------------------------------------
 .Sh CHANGING /ETC FILES
 The system should be usable now, but you may wish to do more customizing,
 such as adding of users, etc.  Many of the following sections may be skipped
