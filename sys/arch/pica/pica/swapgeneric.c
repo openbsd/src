@@ -160,30 +160,34 @@ gets(cp)
 
 	lp = cp;
 	for (;;) {
-		printf("%c", c = cngetc()&0177);
+		c = cngetc() & 0177;
 		switch (c) {
 		case '\n':
 		case '\r':
+			cnputc(c);
 			*lp++ = '\0';
 			return;
 		case '\b':
 		case '\177':
 			if (lp > cp) {
-				printf(" \b");
+				printf("\b \b");
 				lp--;
 			}
 			continue;
 		case '#':
+			cnputc(c);
 			lp--;
 			if (lp < cp)
 				lp = cp;
 			continue;
 		case '@':
 		case 'u'&037:
+			cnputc(c);
+			cnputc('\n');
 			lp = cp;
-			printf("%c", '\n');
 			continue;
 		default:
+			cnputc(c);
 			*lp++ = c;
 		}
 	}
