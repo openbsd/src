@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_aereg.h,v 1.3 1996/05/26 18:35:24 briggs Exp $	*/
 /*	$NetBSD: if_aereg.h,v 1.12 1996/01/12 04:53:05 briggs Exp $	*/
 
 /*

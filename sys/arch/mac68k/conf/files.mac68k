@@ -1,3 +1,4 @@
+#	$OpenBSD: files.mac68k,v 1.5 1996/05/26 18:35:10 briggs Exp $
 #	$NetBSD: files.mac68k,v 1.48 1996/05/19 22:29:10 scottr Exp $
 
 # mac68k-specific configuration info

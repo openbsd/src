@@ -1,3 +1,4 @@
+/*	$OpenBSD: keyboard.h,v 1.3 1996/05/26 18:35:54 briggs Exp $	*/
 /*	$NetBSD: keyboard.h,v 1.5 1996/02/23 05:43:48 scottr Exp $	*/
 
 /*-

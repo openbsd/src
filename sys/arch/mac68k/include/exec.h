@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec.h,v 1.3 1996/05/26 18:35:49 briggs Exp $	*/
 /*	$NetBSD: exec.h,v 1.8 1996/05/05 06:17:40 briggs Exp $	*/
 
 /*-

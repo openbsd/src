@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_ae.c,v 1.8 1996/05/26 18:35:23 briggs Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.46 1996/05/15 03:20:22 briggs Exp $	*/
 
 /*

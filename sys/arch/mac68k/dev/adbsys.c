@@ -1,3 +1,4 @@
+/*	$OpenBSD: adbsys.c,v 1.3 1996/05/26 18:35:15 briggs Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.20 1996/05/08 13:36:41 briggs Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: nubus.c,v 1.4 1996/05/26 18:35:32 briggs Exp $	*/
 /*	$NetBSD: nubus.c,v 1.23 1996/05/08 15:14:53 scottr Exp $	*/
 
 /*

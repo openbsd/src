@@ -1,3 +1,4 @@
+/*	$OpenBSD: vectors.s,v 1.2 1996/05/26 18:36:36 briggs Exp $	*/
 |	$NetBSD: vectors.s,v 1.6 1995/01/21 05:21:26 briggs Exp $
 
 | Copyright (c) 1988 University of Utah

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pram.h,v 1.3 1996/05/26 18:36:31 briggs Exp $	*/
 /*	$NetBSD: pram.h,v 1.3 1996/05/05 06:18:53 briggs Exp $	*/
 
 /*

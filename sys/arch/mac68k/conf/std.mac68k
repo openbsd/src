@@ -1,3 +1,4 @@
+#	$OpenBSD: std.mac68k,v 1.5 1996/05/26 18:35:11 briggs Exp $
 #	$NetBSD: std.mac68k,v 1.12 1996/05/18 18:53:56 briggs Exp $
 #
 # standard Macintosh information.

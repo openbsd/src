@@ -1,3 +1,4 @@
+/*	$OpenBSD: bounds.h,v 1.2 1996/05/26 18:35:19 briggs Exp $	*/
 /*	$NetBSD: bounds.h,v 1.3 1995/04/21 02:47:47 briggs Exp $	*/
 
 #if defined(CHECKBOUNDS)

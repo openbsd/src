@@ -1,3 +1,4 @@
+/*	$OpenBSD: macromasm.s,v 1.3 1996/05/26 18:36:26 briggs Exp $	*/
 /*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
 
 /*-

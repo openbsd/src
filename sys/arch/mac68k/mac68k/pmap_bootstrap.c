@@ -1,3 +1,4 @@
+/*	$OpenBSD: pmap_bootstrap.c,v 1.4 1996/05/26 18:36:29 briggs Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.26 1996/05/18 18:54:52 briggs Exp $	*/
 
 /* 

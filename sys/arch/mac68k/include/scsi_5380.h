@@ -1,3 +1,4 @@
+/*	$OpenBSD: scsi_5380.h,v 1.2 1996/05/26 18:36:04 briggs Exp $	*/
 /*	$NetBSD: scsi_5380.h,v 1.3 1994/10/26 08:46:46 cgd Exp $	*/
 
 /*
