@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2001/09/22 18:00:10 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 2001/11/30 17:37:43 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.14 1995/09/26 04:02:10 gwr Exp $	*/
 
 /*
@@ -145,6 +145,7 @@
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
+#define __HAVE_PMAP_PHYSSEG
 struct pmap_physseg {
 	struct pvlist *pv_head;
 };

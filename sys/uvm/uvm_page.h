@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.14 2001/11/28 19:28:15 art Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.15 2001/11/30 17:37:43 art Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.27 2001/06/28 00:26:38 thorpej Exp $	*/
 
 /*
@@ -216,9 +216,9 @@ struct vm_physseg {
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */
-/* #ifdef __HAVE_PMAP_PHYSSEG XXX */
+#ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
-/* #endif */
+#endif
 };
 
 #ifdef _KERNEL
