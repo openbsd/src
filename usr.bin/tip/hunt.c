@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.6 1997/09/01 23:24:24 deraadt Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.7 2001/09/17 22:21:09 deraadt Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hunt.c,v 1.6 1997/09/01 23:24:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hunt.c,v 1.7 2001/09/17 22:21:09 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -65,7 +65,12 @@ hunt(name)
 	f = signal(SIGALRM, dead);
 	while ((cp = getremote(name))) {
 		deadfl = 0;
-		uucplock = strrchr(cp, '/')+1;
+		uucplock = strrchr(cp, '/');
+		if (uucplock == NULL)
+			uucplock = cp;
+		else
+			uucplock++;
+
 		if (uu_lock(uucplock) < 0)
 			continue;
 		/*
