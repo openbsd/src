@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.19 2002/11/27 21:47:14 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.20 2002/12/08 17:21:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -78,6 +78,13 @@ cpumatch(parent, cfdata, aux)
 		return 0;
 
 	return 1;
+}
+
+int
+cpu_hardclock(void *v)
+{
+	hardclock(v);
+	return (1);
 }
 
 void
@@ -186,7 +193,7 @@ cpuattach(parent, self, aux)
 	/* sanity against lusers amongst config editors */
 	if (ca->ca_irq == 31)
 		sc->sc_ih = cpu_intr_establish(IPL_CLOCK, ca->ca_irq,
-		    (int (*)(void *))hardclock, NULL /*frame*/, &sc->sc_dev);
+		    cpu_hardclock, NULL /*frame*/, &sc->sc_dev);
 	else
 		printf ("%s: bad irq %d\n", sc->sc_dev.dv_xname, ca->ca_irq);
 }
