@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3var.h,v 1.15 2000/09/15 22:28:51 aaron Exp $	*/
+/*	$OpenBSD: elink3var.h,v 1.16 2000/11/09 18:06:39 mickey Exp $	*/
 /*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 struct ep_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	struct timeout sc_epmbuffill_tmo;
 
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
 	struct mii_data sc_mii;		/* MII/media control		*/
