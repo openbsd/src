@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.14 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: md5.c,v 1.15 2002/01/20 13:32:04 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -196,7 +196,7 @@ digest_time(struct hash_functions *hf)
 	double elapsed;
 
 	(void)printf("%s time trial.  Processing %d %d-byte blocks...",
-	    hf->name, TEST_BLOCK_LEN, TEST_BLOCK_COUNT);
+	    hf->name, TEST_BLOCK_COUNT, TEST_BLOCK_LEN);
 	fflush(stdout);
 
 	/* Initialize data based on block number. */
