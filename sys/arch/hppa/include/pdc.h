@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.29 2004/09/14 22:11:25 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.30 2004/10/26 21:27:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -331,8 +331,8 @@ struct cache_cf {	/* PDC_CACHE (for "struct pdc_cache") */
 		cc_wt	: 1,	/* D-cache: write-to = 0, write-through = 1 */
 		cc_sh	: 2,	/* separate I and D = 0, shared I and D = 1 */
 		cc_cst  : 3,	/* D-cache: incoherent = 0, coherent = 1 */
-		cc_resv2: 5,	/* (reserved) */
-		cc_assoc: 8;	/* D-cache: associativity of cache */
+		cc_resv2:11,	/* (reserved) */
+		cc_hvers: 2;	/* H-VERSION dependent */
 };
 
 struct tlb_cf {		/* PDC_CACHE (for "struct pdc_cache") */
