@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 2002/01/15 22:05:30 jason Exp $
+#	$OpenBSD: GENERIC,v 1.40 2002/01/16 21:35:04 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -67,6 +67,8 @@ audio*		at audioce?
 
 zs*	at sbus? slot ? offset ?
 zstty*	at zs? channel ?
+zskbd*	at zs? channel ?
+wskbd*	at zskbd? console ?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0				# PROM console
@@ -141,10 +143,10 @@ nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
-cgsix*		at sbus? disable slot ? offset ?
+cgsix*		at sbus? slot ? offset ?
 wsdisplay*	at cgsix?
 
-cgthree*	at sbus? disable slot ? offset ?
+cgthree*	at sbus? slot ? offset ?
 wsdisplay*	at cgthree?
 
 audiocs*	at sbus? slot ? offset ?
