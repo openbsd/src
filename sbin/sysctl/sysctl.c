@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.76 2001/08/02 11:09:39 art Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.77 2001/11/05 23:15:25 art Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.76 2001/08/02 11:09:39 art Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.77 2001/11/05 23:15:25 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.76 2001/08/02 11:09:39 art Exp $";
 #include <sys/uio.h>
 #include <sys/tty.h>
 #include <sys/namei.h>
-#include <vm/vm_param.h>
 #include <machine/cpu.h>
 #include <net/route.h>
 
