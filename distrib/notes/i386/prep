@@ -34,10 +34,7 @@ does!
 
 The OpenBSD root partition must also reside completely within the BIOS
 supported part of the hard disk -- this would typically be 504M, 2G or 8G,
-depending upon the age of the machine and its BIOS.  Due to a limit of the
-OpenBSD boot loader, the root partition must be within the first 8G even if
-the BIOS supports more.  Note that only the root partition has this issue,
-once OpenBSD is loaded, the entire disk is available for use.
+depending upon the age of the machine and its BIOS.
 
 Fourth, use the other operating system's "fdisk" program or partition
 editor to create at least one of the partitions to be used for that
