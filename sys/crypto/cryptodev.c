@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.56 2003/05/30 03:33:23 jason Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.57 2003/06/03 15:28:06 beck Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -51,6 +51,9 @@
 #include <crypto/blf.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
+
+extern struct cryptocap *crypto_drivers;
+extern int crypto_drivers_num;
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -297,9 +300,10 @@ bail:
 int
 cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 {
-	struct cryptop *crp = NULL;
+	struct cryptop *crp= NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
-	int i, error;
+	int i, s, error;
+	u_int32_t hid;
 
 	if (cop->len > 64*1024-4)
 		return (E2BIG);
@@ -367,7 +371,6 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	}
 
 	crp->crp_ilen = cop->len;
-	crp->crp_flags = CRYPTO_F_IOV;
 	crp->crp_buf = (caddr_t)&cse->uio;
 	crp->crp_callback = (int (*) (struct cryptop *)) cryptodev_cb;
 	crp->crp_sid = cse->sid;
@@ -403,15 +406,33 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		crp->crp_mac=cse->tmp_mac;
 	}
 
+	/* try the fast path first */
+	crp->crp_flags = CRYPTO_F_IOV | CRYPTO_F_NOQUEUE;
+	hid = (crp->crp_sid >> 32) & 0xffffffff;
+	if (hid >= crypto_drivers_num)
+		goto dispatch;
+	if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE)
+		goto dispatch;
+	if (crypto_drivers[hid].cc_process == NULL)
+		goto dispatch;
+	error = crypto_drivers[hid].cc_process(crp);
+	if (error) {
+		/* clear error */
+		crp->crp_etype = 0;
+		goto dispatch;
+	}
+	goto processed;
+ dispatch:
+	crp->crp_flags = CRYPTO_F_IOV;
 	crypto_dispatch(crp);
-	error = tsleep(cse, PSOCK, "crydev", 0);
+ processed:
+	s = splnet();
+	while (!(crp->crp_flags & CRYPTO_F_DONE)) {
+		error = tsleep(cse, PSOCK, "crydev", 0);
+	}
+	splx(s);
 	if (error) {
 		/* XXX can this happen?  if so, how do we recover? */
-		goto bail;
-	}
-
-	if (crp->crp_etype != 0) {
-		error = crp->crp_etype;
 		goto bail;
 	}
 
@@ -419,6 +440,11 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		error = cse->error;
 		goto bail;
 	}
+	if (crp->crp_etype != 0) {
+		error = crp->crp_etype;
+		goto bail;
+	}
+
 
 	if (cop->dst &&
 	    (error = copyout(cse->uio.uio_iov[0].iov_base, cop->dst, cop->len)))
@@ -444,8 +470,10 @@ cryptodev_cb(void *op)
 	struct csession *cse = (struct csession *)crp->crp_opaque;
 
 	cse->error = crp->crp_etype;
-	if (crp->crp_etype == EAGAIN)
+	if (crp->crp_etype == EAGAIN) {
+		crp->crp_flags = CRYPTO_F_IOV;
 		return crypto_dispatch(crp);
+	}
 	wakeup(cse);
 	return (0);
 }

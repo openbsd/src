@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.37 2003/02/15 22:57:58 jason Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.38 2003/06/03 15:28:06 beck Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -160,6 +160,8 @@ struct cryptop {
 #define CRYPTO_F_IMBUF	0x0001	/* Input/output are mbuf chains, otherwise contig */
 #define CRYPTO_F_IOV	0x0002	/* Input/output are uio */
 #define CRYPTO_F_REL	0x0004	/* Must return data in same place */
+#define CRYPTO_F_NOQUEUE	0x0008	/* Don't use crypto queue/thread */
+#define CRYPTO_F_DONE	0x0010	/* request completed */
 
 	caddr_t		crp_buf;	/* Data to be processed */
 	caddr_t		crp_opaque;	/* Opaque pointer, passed along */
