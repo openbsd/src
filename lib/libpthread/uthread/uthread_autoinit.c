@@ -1,7 +1,7 @@
 /*
  * David Leonard, 1998. Public Domain. <david.leonard@csee.uq.edu.au>
  *
- * $OpenBSD: uthread_autoinit.c,v 1.8 2000/01/06 07:14:16 d Exp $
+ * $OpenBSD: uthread_autoinit.c,v 1.9 2002/01/24 18:39:46 pefo Exp $
  */
 
 #include <stdio.h>
@@ -45,22 +45,6 @@ _thread_dot_init()
 }
 
 /*
- * The GNU ELF loader will place a function called _init
- * found in the .dynamic section into the _INIT field. This then gets
- * automatically run by GNU ELF's ld.so.
- */
-#ifdef __mips__
-extern int _init() __attribute__((constructor,section (".dynamic")));
-int 
-_init()
-{ 
-	init_debug("elf _init");
-	_thread_init();
-	return 0; 
-}
-#endif /* __mips__ */
-
-/*
  * A GNU C installation may know how to automatically run
  * constructors for other architectures. (It doesn't matter if 
  * we initialise multiple times.)  This construct places
@@ -83,3 +67,4 @@ _thread_init_constructor()
  * is always loaded from archives.
  */
 int _thread_autoinit_dummy_decl = 0;
+
