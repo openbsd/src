@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.4 2002/02/14 14:32:26 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.30 2002/02/14 14:32:26 todd Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.5 2002/02/14 17:44:38 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.31 2002/02/14 17:44:38 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.39 2002/02/14 14:32:50 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.40 2002/02/14 17:46:15 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -76,8 +76,8 @@
 #	dmz*	unibus dmz32
 #	vt*	console
 #	dz*	unibus dz11 and dz32
+#	dl*	unibus dl11
 # Special purpose devices:
-#	audio*	audio device
 #	openprom	
 #	bpf*	Berkeley Packet Filter
 #	pf*	Packet Filter
@@ -222,16 +222,17 @@ std)
 	M ksyms		c 50 0 640 kmem
 	M drum		c 7 0 640 kmem
 	M klog		c 33 0 600
-	M ttyg0		c 25 0
-	M ttyg1		c 25 1
-	M ttyg2		c 25 2
-	M ttyg3		c 25 3
-	M crl		c 35 0
+	M ttyg0		c 25 0 600
+	M ttyg1		c 25 1 600
+	M ttyg2		c 25 2 600
+	M ttyg3		c 25 3 600
+	M crl		c 35 0 600
 	M csa1		c 51 0 600
 	M csa2		c 51 1 600
-	M tu0		b 8 0
-	M tu1		b 8 1
-	M kUmem		c 3 3 660
+	M tu0		b 8 0 600
+	M tu1		b 8 1 600
+	M floppy	c 8 0 600
+	M kUmem		c 3 3 600
 	;;
 
 ht*|tm*|mt*|ts*|ut*)
@@ -244,21 +245,23 @@ ht*|tm*|mt*|ts*|ut*)
 	esac
 	case $U in
 	[0-7])
-		four=$(($U+4)) eight=$(($U+8))
-		twelve=$(($U+12)) twenty=$(($U+20))
+		four=$(($U+4))
+		eight=$(($U+8))
+		twelve=$(($U+12))
+		twenty=$(($U+20))
 		M $n$U		b $b $U	660 operator
 		M $n$four	b $b $four	660 operator
 		M $n$eight	b $b $eight	660 operator
 		M $n$twelve	b $b $twelve	660 operator
-		M n$n$four	b $b $four	660 operator
-		M n$n$twelve	b $b $twelve	660 operator
-		M nr$n$four	c $c $four	660 operator
-		M nr$n$twelve	c $c $twelve	660 operator
+		M n$n$U		b $b $four	660 operator;: sanity w/pdp11 v7
+		M n$n$eight	b $b $twelve	660 operator;: ditto
+		M nr$n$U	c $c $four	660 operator;: ditto
+		M nr$n$twelve	c $c $twelve	660 operator;: ditto
 		M r$n$U		c $c $U		660 operator
 		M r$n$four	c $c $four	660 operator
 		M r$n$eight	c $c $eight	660 operator
 		M r$n$twelve	c $c $twelve	660 operator
-		if [ $i = ut ]; : XXXX
+		if [ "$i" = "ut" ];
 		then
 			M $n$twenty	b $b $twenty 660 operator
 			M r$n$twenty	c $b $twenty 660 operator
@@ -345,30 +348,17 @@ openprom)
 	M openprom c 70 0  
 	;;
 
-audio*)
-	M sound$U	c 69 $U
-	M mixer$U	c 69 $(($U+16))
-	M audio$U	c 69 $(($U+128))
-	M audioctl$U	c 69 $(($U+192))
-	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
-	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
-	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
-	;;
-
 dz*)
-	unit=${i#dz};
-       case $unit in
+	case $U in
        [0-7])
 	       i=0
 	       while [ $i -lt 8 ]; do
-		       no=$(($unit * 8 + $i))
+		       no=$(($(($U*8))+$i))
 		       if [ $no -lt 10 ]; then
 			       no="0${no}"
 		       fi
-		       rm -f tty${no}
-		       mknod tty${no} c 1 $no
-		       i=$(($i + 1))
+		       M tty${no} c 1 $no 600
+		       let i=i+1
 	       done
 	       ;;
 	*)
@@ -377,38 +367,33 @@ dz*)
        esac
 	;;
 
-dhu*|dmz*|dmf*|dh*)
+dhu*|dmz*|dmf*|dh*|vt*)
 	set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
 	case $i in
 	vt*)    name=vt; major=68; count=8;
-		unit=${i#vt}
-		case $unit in
+		case $U in
 		0) ch=w ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dmz*)   name=dmz; major=37; count=24;
-		unit=${i#dmz}
-		case $unit in
+		case $U in
 		0) ch=a ;; 1) ch=b ;; 2) ch=c ;; 3) ch=e ;; 4) ch=f ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dmf*)   name=dmf; major=22; count=8;
-		unit=${i#dmf}
-		case $unit in
+		case $U in
 		0) ch=A ;; 1) ch=B ;; 2) ch=C ;; 3) ch=E ;;
 		4) ch=F ;; 5) ch=G ;; 6) ch=H ;; 7) ch=I ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dhu*)   name=dhu; major=34; count=16;
-		unit=${i#dhu}
-		case $unit in
+		case $U in
 		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
 		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dh*)    name=dh; major=12; count=16;
-		unit=${i#dh}
-		case $unit in
+		case $U in
 		0) ch=h ;; 1) ch=i ;; 2) ch=j ;; 3) ch=k ;;
 		4) ch=l ;; 5) ch=m ;; 6) ch=n ;; 7) ch=o ;;
 		*) echo bad unit for $name in: $i ;;
@@ -418,51 +403,36 @@ dhu*|dmz*|dmf*|dh*)
 	while [ $i -lt $count ]; do
 		let=${cnvtbl[$i]}
 		if [ -n "$let" ] ;then
-			rm -f tty${ch}${let}
-			mknod tty${ch}${let} c $major $(($unit * $count + $i))
+			M tty${ch}${let} c $major $(($(($U*$count))+$i)) 600
 		else
-			echo bad count for ${name}: $unit, $count, $i
+			echo bad count for ${name}: $U, $count, $i
 		fi
-		i=$(($i + 1))
+		let i=i+1
 	done
 	;;
 
 dl*)
-	unit=${i#dl}
 	major=66
-	let=${cnvtbl[$unit]}
+	let=${cnvtbl[$U]}
 	if [ -n "$let" ] ;then
-		rm -f ttyJ${let}
-		mknod ttyJ${let} c $major $unit
+		M ttyJ${let} c $major $U 600
 	else
-		echo bad number for ${name}: $unit
+		echo bad number for ${name}: $U
 	fi
 	;;
 
 pty*)
-	case $U in
-	0) off=0 name=p;;
-	1) off=16 name=q;;
-	2) off=32 name=r;;
-	3) off=48 name=s;;
-	4) off=64 name=t;;
-	5) off=80 name=u;;
-	6) off=96 name=v;;
-	7) off=112 name=w;;
-	8) off=128 name=x;;
-	9) off=144 name=y;;
-	10) off=160 name=z;;
-	11) off=176 name=P;;
-	12) off=192 name=Q;;
-	13) off=206 name=R;;
-	14) off=224 name=S;;
-	15) off=240 name=T;;
-	*) echo bad unit for pty in: $i; continue;;
-	esac
+	if [ $U -gt 15 ]; then
+		echo bad unit for pty in: $i
+		continue
+	fi
+	set -A tbl p q r s t u v w x y z P Q R S T
+	name=${tbl[$U]}
 	n=0
 	while [ $n -lt 16 ]
 	do
 		nam=$name$(hex $n)
+		off=$(($U*16))
 		M tty$nam c 20 $(($off+$n))
 		M pty$nam c 21 $(($off+$n))
 		n=$(($n+1))
@@ -511,7 +481,9 @@ uk*)
 	;;
 
 ss*)
-	M ss$U c 64 $U 440 operator
+	M ss$U c 64 $(($U*16)) 640 operator
+	M nss$U c 64 $(($(($U*16))+1)) 640 operator
+	M enss$U c 64 $(($(($U*16))+3)) 640 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
 	;;
@@ -529,7 +501,7 @@ st*)
 	for pre in " " n e en
 	do
 		M ${pre}st$U	b 21 $n 660 operator
-		M ${pre}rst$U	c 38 $n 660 operator
+		M ${pre}rst$U	c 60 $n 660 operator
 		n=$(($n+1))
 	done
 	;;
@@ -539,15 +511,15 @@ local)
 	;;
 
 all)
-	R dz0 dh0 dmf0 dmz0 dhu0 mt0 hd0 hd1 hd2 audio0 xfs0 ss0 ss1
-	R uk0 ses0 rndrandom lkm pf altq tun0 tun1 tun2 tun3 bpf0 bpf1
-	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D
-	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3 ut0 up0 up1 up2 up3 ts0 tm0
-	R rx0 rx1 rl0 rl1 rl2 rl3 rb0 rb1 rb2 rb3 ra0 ra1 ra2 ra3 ht0
-	R hp0 hp1 hp2 hp3 hk0 hk1 hk2 hk3 rd0 raid0 raid1 raid2 raid3
-	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0
-	R st1 pty0 pty1 pty2 fd sd0 sd1 sd2 sd3 sd4
+	R vt0 dl0 dz0 dh0 dmf0 dmz0 dhu0 ts0 ts1 mt0 mt1 hd0 hd1 hd2
+	R xfs0 ss0 ss1 uk0 ses0 rndrandom lkm pf altq tun0 tun1 tun2
+	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1
+	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
+	R fd0F fd0G fd0H xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3 ut0 up0 up1
+	R up2 up3 tm0 rx0 rx1 rl0 rl1 rl2 rl3 rb0 rb1 rb2 rb3 ra0 ra1
+	R ra2 ra3 ht0 hp0 hp1 hp2 hp3 hk0 hk1 hk2 hk3 rd0 raid0 raid1
+	R raid2 raid3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0
+	R cd1 ch0 st0 st1 pty0 pty1 pty2 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
 up*|xd*|xy*|sd*|rx*|rl*|rb*|raid*|ra*|hp*|hk*|hd*|ccd*)
