@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.119 2004/06/22 23:17:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.120 2004/06/23 07:10:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -543,7 +543,6 @@ rde_update_dispatch(struct imsg *imsg)
 	if (peer->conf.ebgp && !aspath_loopfree(attrs.aspath, conf->as)) {
 		char *s;
 		aspath_asprint(&s, attrs.aspath->data, attrs.aspath->hdr.len);
-		log_peer_warnx(&peer->conf, "AS path loop: %s", s);
 		free(s);
 		attr_free(&attrs);
 		return (0);
