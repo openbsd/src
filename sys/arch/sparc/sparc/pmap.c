@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.124 2002/07/09 18:06:08 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.125 2002/07/09 18:08:18 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5264,7 +5264,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 		ret = pmap_enu4m(pm, va, prot, flags, pv, pteproto);
 #ifdef DIAGNOSTIC
 	if ((flags & PMAP_CANFAIL) == 0 && ret != 0)
-		panic("pmap_enter4_4c: can't fail, but did");
+		panic("pmap_enter4m: can't fail, but did");
 #endif
 	if (pv) {
 		if (flags & VM_PROT_WRITE)
