@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.6 2001/10/08 03:42:09 mickey Exp $
+#	$OpenBSD: zipcodes,v 1.7 2001/11/05 05:38:02 mickey Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -7324,6 +7324,8 @@
 18016:Bethlehem, PA
 18017:Bethlehem, PA
 18018:Bethlehem, PA
+18020:Bethlehem, PA
+18025:Bethlehem, PA
 18030:Bowmanstown, PA
 18031:Breinigsville, PA
 18032:Catasauqua, PA
@@ -7378,13 +7380,13 @@
 18092:Zionsville, PA
 18098:Emmaus, PA
 18099:Emmaus, PA
-18100:Allentown, PA
 18101:Allentown, PA
 18102:Allentown, PA
 18103:Allentown, PA
 18104:Allentown, PA
 18105:Allentown, PA
 18106:Allentown, PA
+18109:Allentown, PA
 18175:Allentown, PA
 18195:Allentown, PA
 18201:Hazleton, PA
@@ -39408,7 +39410,11 @@
 94023:Los Altos, CA
 94025:Menlo Park, CA
 94026:Menlo Park, CA
+94027:Atherton, CA
+94028:Portola Valley, CA
+94029:Menlo Park, CA
 94030:Millbrae, CA
+94031:Millbrae, CA
 94035:Mountain View, CA
 94037:Montara, CA
 94038:Moss Beach, CA
@@ -39436,7 +39442,6 @@
 94096:San Bruno, CA
 94098:San Bruno, CA
 94099:San Bruno, CA
-94100:San Francisco, CA
 94101:San Francisco, CA
 94102:San Francisco, CA
 94103:San Francisco, CA
@@ -39482,6 +39487,7 @@
 94144:San Francisco, CA
 94145:San Francisco, CA
 94146:San Francisco, CA
+94147:San Francisco, CA
 94150:San Francisco, CA
 94151:San Francisco, CA
 94152:San Francisco, CA
@@ -39489,14 +39495,22 @@
 94154:San Francisco, CA
 94155:San Francisco, CA
 94156:San Francisco, CA
+94157:San Francisco, CA
 94159:San Francisco, CA
 94160:San Francisco, CA
 94161:San Francisco, CA
 94162:San Francisco, CA
 94163:San Francisco, CA
 94164:San Francisco, CA
+94165:San Francisco, CA
+94166:San Francisco, CA
+94167:San Francisco, CA
+94168:San Francisco, CA
+94169:San Francisco, CA
+94170:San Francisco, CA
 94171:San Francisco, CA
 94175:San Francisco, CA
+94177:San Francisco, CA
 94188:San Francisco, CA
 94203:Sacramento, CA
 94204:Sacramento, CA
@@ -39594,7 +39608,7 @@
 94520:Concord, CA
 94521:Concord, CA
 94522:Concord, CA
-94523:Concord, CA
+94523:Pleasant Hill, CA
 94524:Concord, CA
 94525:Crockett, CA
 94526:Danville, CA
@@ -39673,7 +39687,7 @@
 94605:Oakland, CA
 94606:Oakland, CA
 94607:Oakland, CA
-94608:Oakland, CA
+94608:Emeryville, CA
 94609:Oakland, CA
 94610:Oakland, CA
 94611:Oakland, CA
@@ -39685,8 +39699,9 @@
 94617:Oakland, CA
 94618:Oakland, CA
 94619:Oakland, CA
-94620:Oakland, CA
+94620:Piedmont, CA
 94621:Oakland, CA
+94622:Oakland, CA
 94623:Oakland, CA
 94624:Oakland, CA
 94625:Oakland, CA
@@ -39697,7 +39712,7 @@
 94659:Oakland, CA
 94660:Oakland, CA
 94661:Oakland, CA
-94662:Oakland, CA
+94662:Emeryville, CA
 94666:Oakland, CA
 94701:Berkeley, CA
 94702:Berkeley, CA
@@ -40271,18 +40286,6 @@
 95758:Elk Grove, CA
 95759:Elk Grove, CA
 95761:South Lake Tahoe, CA
-95800:Sacramento, CA
-95801:Sacramento, CA
-95802:Sacramento, CA
-95803:Sacramento, CA
-95804:Sacramento, CA
-95805:Sacramento, CA
-95806:Sacramento, CA
-95807:Sacramento, CA
-95808:Sacramento, CA
-95809:Sacramento, CA
-95810:Sacramento, CA
-95811:Sacramento, CA
 95812:Sacramento, CA
 95813:Sacramento, CA
 95814:Sacramento, CA
@@ -40313,6 +40316,7 @@
 95840:Sacramento, CA
 95841:Sacramento, CA
 95842:Sacramento, CA
+95843:Antelope, CA
 95851:Sacramento, CA
 95852:Sacramento, CA
 95853:Sacramento, CA
@@ -40325,7 +40329,7 @@
 95873:Sacramento, CA
 95887:Sacramento, CA
 95894:Sacramento, CA
-95895:Sacramento, CA
+95899:Sacramento, CA
 95901:Marysville, CA
 95903:Marysville, CA
 95910:Alleghany, CA
