@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.3 1996/03/14 08:11:54 tholo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.4 1996/07/25 09:46:12 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -201,6 +201,7 @@ tcp_usrreq(so, req, m, nam, control)
 			error = ENOBUFS;
 			break;
 		}
+		so->so_state |= SS_CONNECTOUT;
 		/* Compute window scaling to request.  */
 		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
 		    (TCP_MAXWIN << tp->request_r_scale) < so->so_rcv.sb_hiwat)
