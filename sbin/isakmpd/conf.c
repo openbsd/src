@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.19 2000/10/13 11:44:10 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.38 2000/10/13 10:23:03 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2000/10/13 12:19:57 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.39 2000/10/13 12:20:35 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -523,8 +523,12 @@ conf_reinit (void)
       return;
     }
   if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
-    log_print ("conf_reinit: warning, %s may have too open permissions",
-	       conf_path);
+    {
+      log_print ("conf_reinit: not loading %s - too open permissions",
+		 conf_path);
+      close (fd);
+      return;
+    }
   sz = st.st_size;
   new_conf_addr = malloc (sz);
   if (!new_conf_addr)
