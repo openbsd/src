@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.38 2004/10/20 13:19:53 jsg Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.39 2004/11/23 21:12:23 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,7 +55,8 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net/if_ieee80211.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #include <machine/bus.h>
 

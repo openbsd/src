@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.112 2004/10/20 12:53:28 deraadt Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.113 2004/11/23 21:12:23 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,7 +87,8 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net/if_ieee80211.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -126,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.112 2004/10/20 12:53:28 deraadt Exp $";
+	"$OpenBSD: if_wi.c,v 1.113 2004/11/23 21:12:23 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
