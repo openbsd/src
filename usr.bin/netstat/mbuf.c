@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.9 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.10 2002/01/15 22:41:01 art Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.10 2002/01/15 22:41:01 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ mbpr(mbaddr, mbpooladdr, mclpooladdr)
 	int totmem, totused, totmbufs, totpct;
 	int i;
 	struct mbtypes *mp;
+	int page_size = getpagesize();
 
 	if (nmbtypes != 256) {
 		fprintf(stderr,
@@ -131,8 +132,8 @@ mbpr(mbaddr, mbpooladdr, mclpooladdr)
 	printf("%lu/%lu mapped pages in use\n",
 	       (u_long)(mclpool.pr_nget - mclpool.pr_nput),
 	       ((u_long)mclpool.pr_npages * mclpool.pr_itemsperpage));
-	totmem = (mbpool.pr_npages << mbpool.pr_pageshift) +
-	    (mclpool.pr_npages << mclpool.pr_pageshift);
+	totmem = (mbpool.pr_npages * page_size) +
+	    (mclpool.pr_npages * page_size);
 	totused = (mbpool.pr_nget - mbpool.pr_nput) * mbpool.pr_size + 
 	    (mclpool.pr_nget - mclpool.pr_nput) * mclpool.pr_size;
 	totpct = (totmem == 0)? 0 : ((totused * 100)/totmem);
