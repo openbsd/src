@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.11 2003/06/25 21:09:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.12 2003/07/09 03:35:21 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -131,17 +131,13 @@ storeval(lstp, val)
 }
 
 static int
-findit(def, type)
-	definition *def;
-	char *type;
+findit(definition *def, char *type)
 {
 	return (streq(def->def_name, type));
 }
 
 static char *
-fixit(type, orig)
-	char *type;
-	char *orig;
+fixit(char *type, char *orig)
 {
 	definition *def;
 
@@ -200,9 +196,7 @@ ptype(prefix, type, follow)
 }
 
 static int
-typedefed(def, type)
-	definition *def;
-	char *type;
+typedefed(definition *def, char *type)
 {
 	if (def->def_kind != DEF_TYPEDEF || def->def.ty.old_prefix != NULL)
 		return (0);
@@ -306,7 +300,7 @@ record_open(file)
 }
 
 static char expectbuf[100];
-static char *toktostr();
+static char *toktostr(tok_kind);
 
 /*
  * error, token encountered was not the expected one
@@ -392,8 +386,7 @@ static token tokstrings[] = {
 };
 
 static char *
-toktostr(kind)
-	tok_kind kind;
+toktostr(tok_kind kind)
 {
 	token *sp;
 
@@ -403,7 +396,7 @@ toktostr(kind)
 }
 
 static void
-printbuf()
+printbuf(void)
 {
 	char c;
 	int i;

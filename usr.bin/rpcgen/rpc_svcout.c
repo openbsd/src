@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.18 2003/07/06 21:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.19 2003/07/09 03:35:21 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -64,14 +64,12 @@ static void write_timeout_func(void);
 static void write_pm_most(char *, int);
 static void write_caller_func(void);
 static void write_rpc_svc_fg(char *, char *);
-static void write_msg_out();
+static void write_msg_out(void);
 static void open_log_file(char *, char *);
 int nullproc(proc_list *proc);
 
 static void
-p_xdrfunc(rname, typename)
-char *rname;
-char *typename;
+p_xdrfunc(char *rname, char *typename)
 {
 	if (Cflag)
 		fprintf(fout, "\t\txdr_%s = (xdrproc_t) xdr_%s;\n",

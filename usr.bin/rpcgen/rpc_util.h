@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.12 2003/06/25 21:09:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.13 2003/07/09 03:35:21 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -70,7 +70,7 @@ extern bas_type *typ_list_t;
  * All the option flags
  */
 extern int inetdflag;
-extern int pmflag;   
+extern int pmflag;
 extern int tblflag;
 extern int logflag;
 extern int newstyle;
@@ -157,3 +157,5 @@ void write_sample_clnt_main(void);
 
 void add_type(int len, char *type);
 
+void pdeclaration(char *, declaration *, int, char *);
+void add_sample_msg(void);

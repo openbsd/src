@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.13 2003/06/25 21:09:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.14 2003/07/09 03:35:21 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -376,9 +376,7 @@ static char *reserved_types[] = {
 /* check that the given name is not one that would eventually result in
    xdr routines that would conflict with internal XDR routines. */
 static void
-check_type_name(name, new_type)
-	int new_type;
-	char *name;
+check_type_name(char *name, int new_type)
 {
 	int i;
 	char tmp[100];

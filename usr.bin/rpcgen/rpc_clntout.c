@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_clntout.c,v 1.11 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_clntout.c,v 1.12 2003/07/09 03:35:21 deraadt Exp $	*/
 /*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,8 +46,6 @@ static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 
 static void write_program(definition *);
 static void printbody(proc_list *);
-
-extern void pdeclaration();
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
 static char RESULT[] = "clnt_res";
@@ -147,8 +145,7 @@ void printarglist(proc, addargname, addargtype)
 }
 
 static char *
-ampr(type)
-	char *type;
+ampr(char *type)
 {
 	if (isvectordef(type, REL_ALIAS)) {
 		return ("");
