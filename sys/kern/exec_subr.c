@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.20 2002/10/02 23:56:32 mickey Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.21 2002/10/06 22:39:25 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -107,8 +107,7 @@ vmcmdset_extend(evsp)
 }
 
 void
-kill_vmcmds(evsp)
-	struct	exec_vmcmd_set *evsp;
+kill_vmcmds(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *vcp;
 	int i;
@@ -127,6 +126,40 @@ kill_vmcmds(evsp)
 		free(evsp->evs_cmds, M_EXEC);
 	evsp->evs_cmds = evsp->evs_start;
 	evsp->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
+}
+
+int
+exec_process_vmcmds(struct proc *p, struct exec_package *epp)
+{
+	struct exec_vmcmd *base_vc = NULL;
+	int error = 0;
+	int i;
+
+	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
+		struct exec_vmcmd *vcp;
+
+		vcp = &epp->ep_vmcmds.evs_cmds[i];
+
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vc == NULL)
+				panic("exec_process_vmcmds: RELATIVE no base");
+#endif
+			vcp->ev_addr += base_vc->ev_addr;
+		}
+		error = (*vcp->ev_proc)(p, vcp);
+		if (vcp->ev_flags & VMCMD_BASE) {
+#ifdef DIAGNOSTIC
+			if (base_vc != NULL)
+				panic("exec_process_vmcmds: multiple BASE");
+#endif
+			base_vc = vcp;
+		}
+	}
+
+	kill_vmcmds(&epp->ep_vmcmds);
+
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.41 2002/09/23 01:41:09 art Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.42 2002/10/06 22:39:25 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -661,13 +661,12 @@ int
 ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 {
 	char	*interp;
-	int	error, i;
+	int	error;
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	Elf_Addr	pos = epp->ep_interp_pos;
-	struct exec_vmcmd *base_vc;
 
-	if (epp->ep_interp == 0) {
+	if (epp->ep_interp == NULL) {
 		return (0);
 	}
 
@@ -683,23 +682,7 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 	/*
 	 * We have to do this ourselves...
 	 */
-	base_vc = NULL;
-	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
-		struct exec_vmcmd *vcp;
-		vcp = &epp->ep_vmcmds.evs_cmds[i];
-
-		if (vcp->ev_flags & VMCMD_RELATIVE) {
-#ifdef DIAGNOSTIC
-			if (base_vc == NULL)
-				panic("sys_execve: RELATIVE without base");
-#endif
-			vcp->ev_addr += base_vc->ev_addr;
-		}
-		error = (*vcp->ev_proc)(p, vcp);
-		if (vcp->ev_flags & VMCMD_BASE)
-			base_vc = vcp;
-	}
-	kill_vmcmds(&epp->ep_vmcmds);
+	error = exec_process_vmcmds(p, epp);
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically

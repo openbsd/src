@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.17 2002/09/23 01:41:09 art Exp $	*/
+/*	$OpenBSD: exec.h,v 1.18 2002/10/06 22:39:25 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -191,6 +191,7 @@ void	setregs(struct proc *, struct exec_package *,
 				    u_long, register_t *);
 int	check_exec(struct proc *, struct exec_package *);
 int	exec_setup_stack(struct proc *, struct exec_package *);
+int	exec_process_vmcmds(struct proc *, struct exec_package *);
 
 #ifdef DEBUG
 void	new_vmcmd(struct exec_vmcmd_set *evsp,
