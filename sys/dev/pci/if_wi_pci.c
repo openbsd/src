@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.31 2003/01/10 22:10:19 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.32 2003/01/31 21:19:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -450,13 +450,7 @@ wi_pci_common_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 {
 	pci_intr_handle_t ih;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t csr;
 	const char *intrstr;
-
-	/* Enable the card. */
-	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
