@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.2 1996/12/21 21:17:50 tholo Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.3 1997/01/26 08:00:52 downsj Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -299,6 +299,7 @@ extern	void	markcombo __P((struct combostr *));
 extern	void	panic __P((char *));
 extern	int	pickmove __P((int));
 extern	void	printcombo __P((struct combostr *, char *));
+extern	void	qlog __P((char *));
 extern	void	quit __P((int));
 extern	int	readinput __P((FILE *));
 extern	void	scanframes __P((int));
