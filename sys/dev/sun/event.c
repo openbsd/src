@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.1.1.1 1996/01/24 01:15:34 gwr Exp $	*/
+/*	$NetBSD: event.c,v 1.2 1996/05/29 21:24:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
 #include <sys/vnode.h>
 
 #include <machine/vuid_event.h>
-#include "event_var.h"
+#include <dev/sun/event_var.h>
 
 /*
  * Initialize a firm_event queue.
@@ -164,6 +164,7 @@ ev_select(ev, rw, p)
 		break;
 
 	case FWRITE:
+		splx(s);
 		return (1);	/* always fails => never blocks */
 	}
 	splx(s);
