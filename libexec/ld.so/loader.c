@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.11 2001/05/31 13:53:56 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.12 2001/05/31 13:58:24 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -285,7 +285,10 @@ _dl_printf("%p %p 0x%lx %p %p\n", argv, envp, loff, dynp, dl_data);
 		Elf_Addr ooff;
 
 		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, 0, 0);
-		(*(void (*)(Elf_Addr))(sym->st_value + ooff))((Elf_Addr)_dl_dtors);
+		if (sym == NULL) {
+			_dl_printf("cannot find atexit, destructors will not be run!\n");
+		} else
+			(*(void (*)(Elf_Addr))(sym->st_value + ooff))((Elf_Addr)_dl_dtors);
 	}
 
 
