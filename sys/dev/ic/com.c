@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.35 1997/07/07 16:37:12 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.36 1997/09/03 20:55:28 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -654,12 +654,14 @@ comopen(dev, flag, mode, p)
 			return EBUSY;
 		}
 	} else {
-		while (!(DEVCUA(dev) && sc->sc_cua) &&
-		    !ISSET(tp->t_cflag, CLOCAL) &&
-		    !ISSET(tp->t_state, TS_CARR_ON)) {
+		while (sc->sc_cua ||
+		    (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON))) {
 			SET(tp->t_state, TS_WOPEN);
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    ttopen, 0);
+			if (!DEVCUA(dev) && sc->sc_cua && error == EINTR)
+				continue;
 			if (error) {
 				/* XXX should turn off chip if we're the
 				   only waiter */
@@ -669,6 +671,8 @@ comopen(dev, flag, mode, p)
 				splx(s);
 				return error;
 			}
+			if (!DEVCUA(dev) && sc->sc_cua)
+				continue;
 		}
 	}
 	splx(s);
