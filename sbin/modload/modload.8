@@ -1,4 +1,4 @@
-.\" $OpenBSD: modload.8,v 1.20 2002/01/08 21:51:50 ericj Exp $
+.\" $OpenBSD: modload.8,v 1.21 2002/01/09 18:23:31 mpech Exp $
 .\" $NetBSD: modload.8,v 1.17 2001/11/16 11:57:16 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -40,7 +40,7 @@
 .Nm modload
 .Nd load a kernel module
 .Sh SYNOPSIS
-.Nm ""
+.Nm modload
 .Op Fl dnvsS
 .Op Fl A Ar kernel
 .Op Fl e Ar entry
@@ -58,7 +58,8 @@ The options to
 are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Debug.  Used to debug
+Debug.
+Used to debug
 .Nm
 itself.
 .It Fl n
@@ -69,7 +70,8 @@ Print comments about the loading process.
 .It Fl s
 Do not load symbols from the kernel module.
 .It Fl S
-Do not remove the temporary object file.  By default, the
+Do not remove the temporary object file.
+By default, the
 .Xr ld 1
 output is removed after being loaded into the kernel.
 .It Fl A Ar kernel
@@ -90,8 +92,8 @@ will be made, where <module_name> is the filename being loaded without
 the `.o'.
 .It Fl p Ar postinstall
 Specify the name of a shell script or program that will
-be executed if the module is successfully loaded. It
-is always passed the module id (in decimal) and module
+be executed if the module is successfully loaded.
+It is always passed the module id (in decimal) and module
 type (in hexadecimal) as the first two arguments.
 For loadable drivers, the third argument is
 the block or character major device number.
