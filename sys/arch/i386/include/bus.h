@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 1998/09/06 23:10:57 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 1998/10/04 22:33:41 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -597,7 +597,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	}								\
 } while (0)
 
-#if 0	/* Cause a link error for bus_space_set_region_8 */
+#if 0	/* Cause a link error for bus_space_set_multi_8 */
 #define	bus_space_set_multi_8					\
 			!!! bus_space_set_multi_8 unimplemented !!!
 #endif
