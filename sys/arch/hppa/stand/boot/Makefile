@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2000/05/31 19:56:51 mickey Exp $
+#	$OpenBSD: Makefile,v 1.11 2002/10/24 19:27:15 mickey Exp $
 
 MAN=	boot.8
 MANSUBDIR=/hppa
@@ -8,11 +8,12 @@ CLEANFILES+=	boot.gdb boot.map boot.lif bsd
 
 .if ${MACHINE} == "hppa"
 PROG=	boot
-SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
+SRCS=	srt0.S exec.c boot.c cmd.c vars.c bootarg.c conf.c
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
 SIZE?=	size
+STRIP?=	strip
 SADIR=	${.CURDIR}/..
 
 LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}

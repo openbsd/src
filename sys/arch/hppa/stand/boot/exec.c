@@ -1,7 +1,7 @@
-/*	$OpenBSD: exec_som.c,v 1.1 1999/12/23 04:10:30 mickey Exp $	*/
+/*	$OpenBSD: exec.c,v 1.1 2002/10/24 19:27:15 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,65 +31,34 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/param.h>
+#include <machine/pdc.h>
 #include "libsa.h"
-#include <machine/exec.h>
-#include <lib/libsa/exec.h>
+#include <lib/libsa/loadfile.h>
+#include <stand/boot/bootarg.h>
+#include "dev_hppa.h"
 
-int
-som_probe(fd, hdr)
-	int fd;
-	union x_header *hdr;
+typedef void (*startfuncp) __P((int, int, int, int, int, int, caddr_t))
+    __attribute__ ((noreturn));
+
+void
+exec(char *file, void *addr, int howto)
 {
-	return !SOM_BADMAGIC(&hdr->x_som);
-}
+	u_long marks[MARK_MAX];
 
+	marks[MARK_START] = (u_long)addr;
 
-int
-som_load(fd, xp)
-	int fd;
-	register struct x_param *xp;
-{
-	register struct som_filehdr *xf = &xp->xp_hdr->x_som;
-	struct som_exec_aux x;
+	if (loadfile(file, marks, LOAD_KERNEL))
+		return;
 
-	if (lseek(fd, xf->aux_loc, SEEK_SET) < 0 ||
-	    read (fd, &x, sizeof(x)) != sizeof(x)) {
-		if (!errno)
-			errno = EIO;
-		return -1;
-	}
+	marks[MARK_END] = ALIGN(marks[MARK_END] - (u_long)addr);
+	fcacheall();
 
-	xp->xp_entry = x.a_entry;
+	__asm("mtctl %r0, %cr17");
+	__asm("mtctl %r0, %cr17");
+	/* stack and the gung is ok at this point, so, no need for asm setup */
+	(*(startfuncp)(marks[MARK_ENTRY]))((int)pdc, howto, bootdev,
+	    marks[MARK_END], BOOTARG_APIVER, BOOTARG_LEN, (caddr_t)BOOTARG_OFF);
 
-	xp->text.size = hppa_round_page(x.a_tsize);
-	xp->data.size = hppa_round_page(x.a_dsize);
-	xp->bss.size = x.a_bsize;
-	xp->sym.size = xf->sym_total * sizeof(struct som_sym);
-	xp->str.size = xf->strings_size;
-
-	xp->text.foff = x.a_tfile;
-	xp->data.foff = x.a_dfile;
-	xp->bss.foff = 0;
-	if (xf->sym_total) {
-		xp->sym.foff = xf->sym_loc;
-		xp->str.foff = xf->strings_loc;
-	}
-
-	xp->text.addr = x.a_tmem;
-	xp->data.addr = x.a_dmem;
-	xp->bss.addr = xp->data.addr + x.a_dsize;
-	xp->sym.addr = xp->bss.addr + xp->bss.size;
-	xp->str.addr = xp->sym.addr + xp->sym.size;
-
-	return 0;
-}
-
-int
-som_ldsym(fd, xp)
-	int fd;
-	register struct x_param *xp;
-{
-	return -1;
+	/* not reached */
 }
