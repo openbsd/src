@@ -1,2 +1,3 @@
-This is the first public release of OpenBSD for the HP 9000/300 series of
-computers.
+OpenBSD OSREV is a port of OpenBSD for the HP 9000/300 series of
+computers, featuring a wide range of supported hardware, and with all
+the usual OpenBSD stability and security.

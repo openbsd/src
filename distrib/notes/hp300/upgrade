@@ -1,6 +1,10 @@
-There is no upgrade mechanism supported by this release of OpenBSD/hp300,
-since it is the first official release for this architecture, and is not
-compatible with other operating systems.
+To upgrade to OpenBSD OSREV from a previous version start with the general
+instructions in the section "Installing OpenBSD".
 
-Be sure to back up any important data from your system, and then do an
-install from scratch.
+After booting with the miniroot, select the (U)pdate option rather than
+the (I)nstall option at the prompt in the install process.
+
+The upgrade script will use the existing disk partitions to install the
+new system in, and also preserves files in `/etc' which you are likely
+to have customized since a previous installation.
+
