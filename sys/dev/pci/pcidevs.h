@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.621 2003/05/14 01:15:42 pb Exp 
+ *		OpenBSD: pcidevs,v 1.622 2003/05/14 02:09:28 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2272,6 +2272,7 @@
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 #define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
+#define	PCI_PRODUCT_SUN_CE	0xabba		/* Cassini Ethernet */
 
 /* Sundance products */
 #define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */
