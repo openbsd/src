@@ -416,6 +416,17 @@ setregs(p, pack, stack, retval)
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
+#ifdef COMPAT_SUNOS
+	/*
+	 * SunOS' ld.so does self-modifying code without knowing
+	 * about the 040's cache purging needs.  So we need to uncache
+	 * writeable executable pages.
+	 */
+	if (p->p_emul == &emul_sunos)
+		p->p_md.md_flags |= MDP_UNCACHE_WX;
+	else
+		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
+#endif
 }
 
 /*
