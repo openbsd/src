@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.13 2004/03/21 19:47:59 miod Exp $
+.\"	$OpenBSD: pty.4,v 1.14 2004/04/11 18:04:36 millert Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -73,7 +73,7 @@ This is not a hard limit--space for additional pseudo terminal pairs
 is allocated on demand up to the limit imposed by the
 .Li kern.tty.maxptys
 .Xr sysctl 8
-(256 by default).
+(992 by default).
 .Pp
 The following
 .Xr ioctl 2

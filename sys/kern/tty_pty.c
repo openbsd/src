@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.21 2004/04/11 16:41:30 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.22 2004/04/11 18:04:36 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -61,13 +61,13 @@
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
 /*
- * pts == /dev/tty[p-zP-T][0-9a-f]
- * ptc == /dev/pty[p-zP-T][0-9a-f]
+ * pts == /dev/tty[p-zP-T][0-9a-zA-Z]
+ * ptc == /dev/pty[p-zP-T][0-9a-zA-Z]
  */
 
 /* XXX this needs to come from somewhere sane, and work with MAKEDEV */
 #define TTY_LETTERS "pqrstuvwxyzPQRST"
-#define TTY_SUFFIX "0123456789abcdef"
+#define TTY_SUFFIX "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static int pts_major;
 
@@ -82,7 +82,7 @@ struct	pt_softc {
 };
 
 #define	DEFAULT_NPTYS		8	/* default number of initial ptys */
-#define DEFAULT_MAXPTYS		256	/* default maximum number of ptys */
+#define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
 
 static struct pt_softc **pt_softc = NULL;	/* pty array */
 static int npty = 0;				/* size of pty array */
