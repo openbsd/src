@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.16 2003/11/08 08:49:51 jmc Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.17 2003/12/22 11:11:27 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -575,7 +575,6 @@ main(int argc, char **argv)
 		signal(SIGINT , terminate);
 		signal(SIGQUIT, terminate);
 		signal(SIGTERM, terminate);
-		signal(SIGKILL, terminate);
 		if ((mouse.mfd = open(mouse.portname,
 		    O_RDONLY | O_NONBLOCK, 0)) == -1)
 			logerr(1, "unable to open %s", mouse.portname);

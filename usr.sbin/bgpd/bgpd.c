@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.14 2003/12/22 11:04:12 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.15 2003/12/22 11:11:25 miod Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -52,7 +52,6 @@ sighdlr(int sig)
 {
 	switch (sig) {
 	case SIGTERM:
-	case SIGKILL:
 	case SIGINT:
 	case SIGCHLD:
 		quit = 1;
@@ -140,7 +139,6 @@ main(int argc, char *argv[])
 		exit (1);
 
 	signal(SIGTERM, sighdlr);
-	signal(SIGKILL, sighdlr);
 	signal(SIGINT, sighdlr);
 	signal(SIGCHLD, sighdlr);
 	signal(SIGHUP, sighdlr);
