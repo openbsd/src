@@ -1149,7 +1149,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/cd9660_extern.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/cd9660_mount.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/cd9660_node.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/cd9660_rrip.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/iso.ph

@@ -820,7 +820,6 @@
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
 ./usr/include/isofs/cd9660/cd9660_extern.h
-./usr/include/isofs/cd9660/cd9660_mount.h
 ./usr/include/isofs/cd9660/cd9660_node.h
 ./usr/include/isofs/cd9660/cd9660_rrip.h
 ./usr/include/isofs/cd9660/iso.h
