@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.8 1998/06/08 20:28:28 brian Exp $	*/
+/*	$OpenBSD: util.h,v 1.9 1999/07/20 16:38:57 jakob Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include <stdio.h>
 #include <pwd.h>
 #include <utmp.h>
 #include <termios.h>
@@ -46,12 +47,22 @@
 #include <sys/cdefs.h>
 
 /*
+ * fparseln() specific operation flags.
+ */
+#define FPARSELN_UNESCESC	0x01
+#define FPARSELN_UNESCCONT	0x02
+#define FPARSELN_UNESCCOMM	0x04
+#define FPARSELN_UNESCREST	0x08
+#define FPARSELN_UNESCALL	0x0f
+
+/*
  * opendev() specific operation flags.
  */
 #define OPENDEV_PART	0x01		/* Try to open the raw partition. */
 #define OPENDEV_DRCT	0x02		/* Try to open the device directly. */
 
 __BEGIN_DECLS
+char   *fparseln __P((FILE *, size_t *, size_t *, const char[3], int));
 void	login __P((struct utmp *));
 int	login_tty __P((int));
 int	logout __P((const char *));
