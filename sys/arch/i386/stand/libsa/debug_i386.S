@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.4 1997/04/09 08:39:32 mickey Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.5 1997/07/18 00:34:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,33 +40,40 @@
 #include <debug_md.h>
 #undef _LOCORE
 
-	.data
+	.text
 	.globl	alltraps
 
 alltraps:
 	pushal
 	pushl	%ds
 	pushl	%es
+	pushl	%fs
+	pushl	%gs
 #ifdef	DEBUG
 	movl	$0xb8280, %edi
-	movl	0x0a*4(%esp), %eax	# trapno
-	addb	$'0', %al
-	movb	$0x47, %ah
-	movl	%eax, (%edi)
+	movl	0x0c*4(%esp), %eax	# trapno
+	addb	$'@', %al
+	movb	$0x17, %ah
+	shll	$16, %eax
+	movb	0x0d*4(%esp), %al	# error
+	addl	$' ', %al
+	movb	$0x17, %ah
+	movl	%ax, (%edi)
 #endif
+	hlt
 	call	_check_regs
 1:
 #ifdef	DEBUG
 	movl	$0xb8290, %edi
 	movl	$0x47394738, (%edi)
 #endif
+	popl	%gs
+	popl	%fs
 	popl	%es
 	popl	%ds
 	popal
 	addl	$0x8, %esp
 	iret
-
-	.text
 
 ENTRY(check_regs)
 #ifdef	DEBUG
@@ -77,28 +84,28 @@ ENTRY(check_regs)
 	movl	%ax, %ds
 	movl	$_reg, %edi
 	cld
-	movl	0x0a*4(%esp), %eax; stosl # %eax
-	movl	0x09*4(%esp), %eax; stosl # %ecx
-	movl	0x08*4(%esp), %eax; stosl # %edx
-	movl	0x07*4(%esp), %eax; stosl # %ebx
-	movl	0x06*4(%esp), %eax; stosl # %esp
-	movl	0x05*4(%esp), %eax; stosl # %ebp
-	movl	0x04*4(%esp), %eax; stosl # %esi
-	movl	0x03*4(%esp), %eax; stosl # %edi
-	movl	0x0d*4(%esp), %eax; stosl # %eip
-	movl	0x0f*4(%esp), %eax; stosl # %eflags
-	movl	0x0e*4(%esp), %eax; stosl # %cs
+	movl	0x0c*4(%esp), %eax; stosl # %eax
+	movl	0x0b*4(%esp), %eax; stosl # %ecx
+	movl	0x0a*4(%esp), %eax; stosl # %edx
+	movl	0x09*4(%esp), %eax; stosl # %ebx
+	movl	0x08*4(%esp), %eax; stosl # %esp
+	movl	0x07*4(%esp), %eax; stosl # %ebp
+	movl	0x06*4(%esp), %eax; stosl # %esi
+	movl	0x05*4(%esp), %eax; stosl # %edi
+	movl	0x0f*4(%esp), %eax; stosl # %eip
+	movl	0x11*4(%esp), %eax; stosl # %eflags
+	movl	0x10*4(%esp), %eax; stosl # %cs
 	movl		%ss,  %eax; stosl # %ss
+	movl	0x04*4(%esp), %eax; stosl # %ds
+	movl	0x03*4(%esp), %eax; stosl # %es
 	movl	0x02*4(%esp), %eax; stosl # %ds
 	movl	0x01*4(%esp), %eax; stosl # %es
-	movl		%fs,  %eax; stosl # %fs
-	movl		%gs,  %eax; stosl # %gs
 
 #ifdef	DEBUG
 	movl	$0xb8288, %edi
 	movl	$0x47354734, (%edi)
 #endif
-	movl	0x0b*4(%esp), %eax	# trapno
+	movl	0x0d*4(%esp), %eax	# trapno
 	pushl	%eax
 	call	_C_LABEL(dump_regs)
 	popl	%eax
