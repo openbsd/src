@@ -1,5 +1,5 @@
-/*	$OpenBSD: kerberos.c,v 1.2 2000/02/25 16:43:21 hin Exp $	*/
-/* $Id: kerberos.c,v 1.2 2000/02/25 16:43:21 hin Exp $ */
+/*	$OpenBSD: kerberos.c,v 1.3 2000/07/11 09:29:28 hin Exp $	*/
+/* $Id: kerberos.c,v 1.3 2000/07/11 09:29:28 hin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -655,7 +655,10 @@ unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
     memcpy(cred->ticket_st.dat, p, cred->ticket_st.length);
     cred->ticket_st.mbz = 0;
     p += krb_get_int(p, (u_int32_t *)&cred->issue_date, 4, 0);
-    p += krb_get_nir(p, cred->pname, cred->pinst, NULL);
+    p += krb_get_nir(p,
+		     cred->pname, sizeof(cred->pname),
+		     cred->pinst, sizeof(cred->pinst)
+		     NULL, 0);
     return 0;
 }
 
