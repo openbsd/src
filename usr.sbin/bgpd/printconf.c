@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.14 2004/04/27 22:42:13 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.15 2004/04/27 23:20:42 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,8 @@ void		 print_set(struct filter_set *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
 void		 print_peer(struct peer_config *);
+const char	*print_auth_alg(u_int8_t);
+const char	*print_enc_alg(u_int8_t);
 void		 print_rule(struct peer *, struct filter_rule *);
 const char *	 mrt_type(enum mrt_type);
 void		 print_mrt(u_int32_t, u_int32_t, const char *);
@@ -165,8 +167,24 @@ print_peer(struct peer_config *p)
 		printf("%s\tannounce all\n", c);
 	else
 		printf("%s\tannounce ???\n", c);
+
 	if (p->auth.method == MD5SIG)
 		printf("%s\ttcp md5sig\n", c);
+	else if (p->auth.method == IPSEC_MANUAL_ESP) {
+		printf("%s\tipsec esp in spi %u %s XXXXXX", c, p->auth.spi_in,
+		    print_auth_alg(p->auth.auth_alg_in));
+		if (p->auth.enc_alg_in)
+			printf(" %s XXXXXX", print_enc_alg(p->auth.enc_alg_in));
+		printf("\n");
+
+		printf("%s\tipsec esp out spi %u %s XXXXXX", c, p->auth.spi_out,
+		    print_auth_alg(p->auth.auth_alg_out));
+		if (p->auth.enc_alg_out)
+			printf(" %s XXXXXX",
+			    print_enc_alg(p->auth.enc_alg_out));
+		printf("\n");
+	} else if (p->auth.method == IPSEC_IKE)
+		printf("%s\tipsec ike\n", c);
 
 	if (p->attrset.flags)
 		printf("%s\t", c);
@@ -179,6 +197,32 @@ print_peer(struct peer_config *p)
 	printf("%s}\n", c);
 	if (p->group[0])
 		printf("}\n");
+}
+
+const char *
+print_auth_alg(u_int8_t alg)
+{
+	switch (alg) {
+	case SADB_AALG_SHA1HMAC:
+		return ("sha1");
+	case SADB_AALG_MD5HMAC:
+		return ("md5");
+	default:
+		return ("???");
+	}
+}
+
+const char *
+print_enc_alg(u_int8_t alg)
+{
+	switch (alg) {
+	case SADB_EALG_3DESCBC:
+		return ("3des");
+	case SADB_X_EALG_AES:
+		return ("aes");
+	default:
+		return ("???");
+	}
 }
 
 void
