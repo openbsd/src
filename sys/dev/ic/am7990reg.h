@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990reg.h,v 1.2 1996/10/31 01:01:27 niklas Exp $	*/
+/*	$OpenBSD: am7990reg.h,v 1.3 1999/03/12 18:52:21 jason Exp $	*/
 /*	$NetBSD: am7990reg.h,v 1.1 1995/04/11 04:17:50 mycroft Exp $	*/
 
 /*-
@@ -38,6 +38,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_lereg.h	8.1 (Berkeley) 6/10/93
+ */
+
+/*
+ * Documentation for this chip can be found on AMD's website:
+ *	http://www.amd.com/products/npd/techdocs/techdocs.html
  */
 
 #define	LEBLEN		1536	/* ETHERMTU + header + CRC */
