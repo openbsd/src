@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcat.c,v 1.6 2001/05/07 15:18:30 millert Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.7 2001/05/07 15:42:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcat.c,v 1.6 2001/05/07 15:18:30 millert Exp $";
+static char *rcsid = "$OpenBSD: strlcat.c,v 1.7 2001/05/07 15:42:46 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -38,8 +38,8 @@ static char *rcsid = "$OpenBSD: strlcat.c,v 1.6 2001/05/07 15:18:30 millert Exp 
  * Appends src to string dst of size siz (unlike strncat, siz is the
  * full size of dst, not space left).  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
- * Returns strlen(initial dst) + strlen(src); if retval >= siz,
- * truncation occurred.
+ * Returns strlen(src) + MIN(siz, strlen(initial dst)).
+ * If retval >= siz, truncation occurred.
  */
 size_t strlcat(dst, src, siz)
 	char *dst;
@@ -58,7 +58,7 @@ size_t strlcat(dst, src, siz)
 	n = siz - dlen;
 
 	if (n == 0)
-		return(strlen(dst) + strlen(s));
+		return(dlen + strlen(s));
 	while (*s != '\0') {
 		if (n != 1) {
 			*d++ = *s;
