@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.31 2002/06/25 23:28:58 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.32 2002/08/28 20:15:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  */
-	.file	"bootbios.S"
+	.file	"biosboot.S"
 
 #include <machine/asm.h>
 #include <assym.h>
