@@ -1,4 +1,4 @@
-/*	$OpenBSD: getline.c,v 1.11 2002/12/19 01:29:03 deraadt Exp $ */
+/*	$OpenBSD: getline.c,v 1.12 2002/12/19 18:19:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -126,7 +126,7 @@ refill_buffer(struct csiob *iobp)
 		if (errno == EAGAIN || errno == EINTR)
 			goto doread;
 		if (errno != ECONNRESET) {
-			syslog(LOG_INFO, "read failed on socket from %s (%m)",
+			syslog(LOG_INFO, "read() failed on socket from %s (%m)",
 			    iobp->who);
 			exit(EX_DATAERR);
 		}
@@ -213,7 +213,7 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 				break;
 			if (iobp->io_buffer[ix] == '\0') {
 				syslog(LOG_INFO,
-				    "got null byte from %s - bye!",
+				    "got NUL byte from %s - bye!",
 				    iobp->who);
 				exit(EX_DATAERR);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2002/12/19 01:29:03 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.13 2002/12/19 18:19:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -82,13 +82,13 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	slen = sizeof(*real_server_sa_ptr);
 	if (getsockname(connected_fd, (struct sockaddr *)real_server_sa_ptr,
 	    &slen) != 0) {
-		syslog(LOG_ERR, "getsockname failed (%m)");
+		syslog(LOG_ERR, "getsockname() failed (%m)");
 		return(-1);
 	}
 	slen = sizeof(*client_sa_ptr);
 	if (getpeername(connected_fd, (struct sockaddr *)client_sa_ptr,
 	    &slen) != 0) {
-		syslog(LOG_ERR, "getpeername failed (%m)");
+		syslog(LOG_ERR, "getpeername() failed (%m)");
 		return(-1);
 	}
 
@@ -111,13 +111,13 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	 */
 	fd = open("/dev/pf", O_RDWR);
 	if (fd == -1) {
-		syslog(LOG_ERR, "Can't open /dev/pf (%m)");
+		syslog(LOG_ERR, "cannot open /dev/pf (%m)");
 		exit(EX_UNAVAILABLE);
 	}
 
 	if (ioctl(fd, DIOCNATLOOK, &natlook) == -1) {
 		syslog(LOG_INFO,
-		    "pf nat lookup failed (%m), connection from %s:%hu",
+		    "pf nat lookup failed %s:%hu (%m)",
 		    inet_ntoa(client_sa_ptr->sin_addr),
 		    ntohs(client_sa_ptr->sin_port));
 		close(fd);
@@ -155,7 +155,7 @@ xfer_data(const char *what_read,int from_fd, int to_fd, struct in_addr from,
 	 */
 	if (ioctl(from_fd, SIOCATMARK, &mark) < 0) {
 		xerrno = errno;
-		syslog(LOG_ERR,"can't ioctl(SIOCATMARK) socket from %s (%m)",
+		syslog(LOG_ERR, "cannot ioctl(SIOCATMARK) socket from %s (%m)",
 		    what_read);
 		errno = xerrno;
 		return(-1);
@@ -171,19 +171,19 @@ snarf:
 		rlen = recv(from_fd, tbuf, sizeof(tbuf), flags);
 	}
 	if (rlen == 0) {
-		debuglog(3, "xfer_data - eof on read socket");
+		debuglog(3, "EOF on read socket");
 		return(0);
 	} else if (rlen == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			goto snarf;
 		xerrno = errno;
-		syslog(LOG_ERR, "(xfer_data:%s) - failed (%m) with flags 0%o",
+		syslog(LOG_ERR, "xfer_data (%s): failed (%m) with flags 0%o",
 		    what_read, flags);
 		errno = xerrno;
 		return(-1);
 	} else {
 		offset = 0;
-		debuglog(3, "xfer got %d bytes from socket", rlen);
+		debuglog(3, "got %d bytes from socket", rlen);
 
 		while (offset < rlen) {
 			int wlen;
@@ -191,7 +191,7 @@ snarf:
 			wlen = send(to_fd, &tbuf[offset], rlen - offset,
 			    flags);
 			if (wlen == 0) {
-				debuglog(3, "zero length write");
+				debuglog(3, "zero-length write");
 				goto fling;
 			} else if (wlen == -1) {
 				if (errno == EAGAIN || errno == EINTR)
