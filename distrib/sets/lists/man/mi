@@ -1814,6 +1814,7 @@
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/makemap.0
 ./usr/share/man/cat8/makewhatis.0
+./usr/share/man/cat8/map-mbone.0
 ./usr/share/man/cat8/mfs.0
 ./usr/share/man/cat8/mkalias.0
 ./usr/share/man/cat8/mkhybrid.0
@@ -1840,6 +1841,9 @@
 ./usr/share/man/cat8/mount_union.0
 ./usr/share/man/cat8/mount_xfs.0
 ./usr/share/man/cat8/mountd.0
+./usr/share/man/cat8/mrinfo.0
+./usr/share/man/cat8/mrouted.0
+./usr/share/man/cat8/mtrace.0
 ./usr/share/man/cat8/mtree.0
 ./usr/share/man/cat8/mvme68k
 ./usr/share/man/cat8/mvme68k/MAKEDEV.0

@@ -1591,6 +1591,7 @@
 ./usr/sbin/mailwrapper
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
+./usr/sbin/map-mbone
 ./usr/sbin/mkalias
 ./usr/sbin/mkhybrid
 ./usr/sbin/mknetid
@@ -1599,6 +1600,9 @@
 ./usr/sbin/mopd
 ./usr/sbin/mopprobe
 ./usr/sbin/moptrace
+./usr/sbin/mrinfo
+./usr/sbin/mrouted
+./usr/sbin/mtrace
 ./usr/sbin/mtree
 ./usr/sbin/named
 ./usr/sbin/named-checkconf
