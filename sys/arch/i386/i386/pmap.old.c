@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.27 1999/02/26 10:37:51 art Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.28 1999/06/01 06:37:22 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1293,7 +1293,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		vm_offset_t v;
 
 		if (curproc == NULL || curproc->p_vmspace == NULL ||
-		    pmap != &curproc->p_vmspace->vm_pmap)
+		    pmap != curproc->p_vmspace->vm_map.pmap)
 			panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
 
 		/* our guess about the vm_map was good!  fault it in.  */
