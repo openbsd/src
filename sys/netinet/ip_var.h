@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.20 2001/06/23 05:54:50 angelos Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.21 2002/01/24 22:42:48 provos Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -165,6 +165,7 @@ int	  ip_defttl;			/* default IP ttl */
 int   ip_mtudisc;		/* mtu discovery */
 u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 struct rttimer_queue *ip_mtudisc_timeout_q;
+extern struct pool ipqent_pool;
 
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	 ip_dooptions __P((struct mbuf *));

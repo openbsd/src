@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.56 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.57 2002/01/24 22:42:49 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -147,6 +147,8 @@ struct pool tcpcb_pool;
 #ifdef TCP_SACK
 struct pool sackhl_pool;
 #endif
+
+int	tcp_freeq __P((struct tcpcb *));
 
 struct tcpstat tcpstat;		/* tcp statistics */
 
@@ -542,10 +544,8 @@ tcp_drop(tp, errno)
  *	wake up any sleepers
  */
 struct tcpcb *
-tcp_close(tp)
-	register struct tcpcb *tp;
+tcp_close(struct tcpcb *tp)
 {
-	register struct ipqent *qe;
 	struct inpcb *inp = tp->t_inpcb;
 	struct socket *so = inp->inp_socket;
 #ifdef TCP_SACK
@@ -663,25 +663,8 @@ tcp_close(tp)
 #endif /* RTV_RTT */
 
 	/* free the reassembly queue, if any */
-#ifdef INET6
-	/* Reassembling TCP segments in v6 might be sufficiently different
-	 * to merit two codepaths to free the reasssembly queue.
-	 * If an undecided TCP socket, then the IPv4 codepath will be used 
-	 * because it won't matter much anyway.
-	 */
-	if (tp->pf == AF_INET6) {
-		while ((qe = tp->segq.lh_first) != NULL) {
-			LIST_REMOVE(qe, ipqe_q);
-			m_freem(qe->ipqe_m);
-			FREE(qe, M_IPQ);
-		}
-	} else
-#endif /* INET6 */
-		while ((qe = tp->segq.lh_first) != NULL) {
-			LIST_REMOVE(qe, ipqe_q);
-			m_freem(qe->ipqe_m);
-			FREE(qe, M_IPQ);
-		}
+	tcp_freeq(tp);
+
 #ifdef TCP_SACK
 	/* Free SACK holes. */
 	q = p = tp->snd_holes;
@@ -699,6 +682,21 @@ tcp_close(tp)
 	in_pcbdetach(inp);
 	tcpstat.tcps_closed++;
 	return ((struct tcpcb *)0);
+}
+
+int
+tcp_freeq(struct tcpcb *tp)
+{
+	struct ipqent *qe;
+	int rv = 0;
+
+	while ((qe = LIST_FIRST(&tp->segq)) != NULL) {
+		LIST_REMOVE(qe, ipqe_q);
+		m_freem(qe->ipqe_m);
+		pool_put(&ipqent_pool, qe);
+		rv = 1;
+	}
+	return (rv);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.103 2002/01/15 19:18:01 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.104 2002/01/24 22:42:48 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ tcp_reass(tp, th, m, tlen)
 	 * Allocate a new queue entry, before we throw away any data.
 	 * If we can't, just drop the packet.  XXX
 	 */
-	MALLOC(tiqe, struct ipqent *, sizeof(struct ipqent), M_IPQ, M_NOWAIT);
+	tiqe =  pool_get(&ipqent_pool, PR_NOWAIT);
 	if (tiqe == NULL) {
 		tcpstat.tcps_rcvmemdrop++;
 		m_freem(m);
@@ -207,7 +207,7 @@ tcp_reass(tp, th, m, tlen)
 				tcpstat.tcps_rcvduppack++;
 				tcpstat.tcps_rcvdupbyte += *tlen;
 				m_freem(m);
-				FREE(tiqe, M_IPQ);
+				pool_put(&ipqent_pool, tiqe);
 				return (0);
 			}
 			m_adj(m, i);
@@ -237,7 +237,7 @@ tcp_reass(tp, th, m, tlen)
 		nq = q->ipqe_q.le_next;
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 	}
 
 	/* Insert the new fragment queue entry into place. */
@@ -273,7 +273,7 @@ present:
 			m_freem(q->ipqe_m);
 		else
 			sbappend(&so->so_rcv, q->ipqe_m);
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 		q = nq;
 	} while (q != NULL && q->ipqe_tcp->th_seq == tp->rcv_nxt);
 	sorwakeup(so);
