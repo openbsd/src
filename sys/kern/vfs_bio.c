@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.50 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.51 2001/11/15 23:25:37 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -110,8 +110,7 @@ struct pool bufpool;
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
 
-static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
-					    struct ucred *, int));
+static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int, int));
 int getnewbuf __P((int slpflag, int slptimeo, struct buf **));
 
 /*
@@ -244,11 +243,10 @@ bufinit()
 }
 
 static __inline struct buf *
-bio_doread(vp, blkno, size, cred, async)
+bio_doread(vp, blkno, size, async)
 	struct vnode *vp;
 	daddr_t blkno;
 	int size;
-	struct ucred *cred;
 	int async;
 {
 	register struct buf *bp;
@@ -261,7 +259,6 @@ bio_doread(vp, blkno, size, cred, async)
 	 * Therefore, it's valid if it's I/O has completed or been delayed.
 	 */
 	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
-		/* Start I/O for the buffer (keeping credentials). */
 		SET(bp->b_flags, B_READ | async);
 		VOP_STRATEGY(bp);
 
@@ -289,7 +286,7 @@ bread(vp, blkno, size, cred, bpp)
 	register struct buf *bp;
 
 	/* Get buffer for block. */
-	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
+	bp = *bpp = bio_doread(vp, blkno, size, 0);
 
 	/* Wait for the read to complete, and return result. */
 	return (biowait(bp));
@@ -311,7 +308,7 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 	register struct buf *bp;
 	int i;
 
-	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
+	bp = *bpp = bio_doread(vp, blkno, size, 0);
 
 	/*
 	 * For each of the read-ahead blocks, start a read, if necessary.
@@ -322,7 +319,7 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 			continue;
 
 		/* Get a buffer for the read-ahead block */
-		(void) bio_doread(vp, rablks[i], rasizes[i], cred, B_ASYNC);
+		(void) bio_doread(vp, rablks[i], rasizes[i], B_ASYNC);
 	}
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
