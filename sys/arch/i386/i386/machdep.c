@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.242 2003/09/02 17:35:53 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.243 2003/09/11 19:46:22 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -99,6 +99,11 @@
 #include <sys/kcore.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
+#endif
+
+#if defined(I686_CPU)
+/* YYY move */
+#include <crypto/cryptodev.h>
 #endif
 
 #ifdef KGDB
@@ -1091,6 +1096,350 @@ viac3_rnd(void *v)
 	timeout_add(tmo, (hz>100)?(hz/100):1);
 	splx(s);
 }
+
+struct viac3_session {
+	u_int8_t ses_iv[16];
+	int ses_klen, ses_used;
+};
+
+struct viac3_softc {
+	int32_t			sc_cid;
+	int			sc_nsessions;
+	struct viac3_session	*sc_sessions;
+};
+
+#define VIAC3_SESSION(sid)		((sid) & 0x0fffffff)
+#define	VIAC3_SID(crd,ses)		(((crd) << 28) | ((ses) & 0x0fffffff))
+
+#define	C3_CRYPT_CWLO_ROUND_M		0x0000000f
+#define	C3_CRYPT_CWLO_ALG_M		0x00000070
+#define	C3_CRYPT_CWLO_ALG_AES		0x00000000
+#define	C3_CRYPT_CWLO_KEYGEN_M		0x00000080
+#define	C3_CRYPT_CWLO_KEYGEN_HW		0x00000000
+#define	C3_CRYPT_CWLO_KEYGEN_SW		0x00000080
+#define	C3_CRYPT_CWLO_NORMAL		0x00000000
+#define	C3_CRYPT_CWLO_INTERMEDIATE	0x00000100
+#define	C3_CRYPT_CWLO_ENCRYPT		0x00000000
+#define	C3_CRYPT_CWLO_DECRYPT		0x00000200
+#define	C3_CRYPT_CWLO_KEY128		0x0000000a	/* 128bit, 10 rds */
+#define	C3_CRYPT_CWLO_KEY192		0x0000040c	/* 192bit, 12 rds */
+#define	C3_CRYPT_CWLO_KEY256		0x0000080e	/* 256bit, 15 rds */
+
+struct viac3_crypto_op {
+	u_int32_t		op_cw[4];
+	u_int8_t		op_iv[16];
+	u_int8_t		op_key[32];
+	void			*op_src;
+	void			*op_dst;
+	u_int32_t		pad[2];
+};
+
+static struct viac3_softc *vc3_sc;
+int viac3_crypto_present;
+
+/* Opcodes */
+#define	VIAC3_CRYPTOP_RNG	0xc0		/* rng */
+#define	VIAC3_CRYPTOP_ECB	0xc8		/* aes-ecb */
+#define	VIAC3_CRYPTOP_CBC	0xd0		/* aes-cbc */
+#define	VIAC3_CRYPTOP_CFB	0xe0		/* aes-cfb */
+#define	VIAC3_CRYPTOP_OFB	0xe8		/* aes-ofb */
+
+void viac3_crypto_setup(void);
+int viac3_crypto_newsession(u_int32_t *, struct cryptoini *);
+int viac3_crypto_process(struct cryptop *);
+int viac3_crypto_freesession(u_int64_t);
+void viac3_crypto(void *, void *, void *, void *, int, void *, int);
+
+void
+viac3_crypto_setup(void)
+{
+	int algs[CRYPTO_ALGORITHM_MAX + 1];
+
+	if ((vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF, M_NOWAIT)) == NULL)
+		return;		/* YYY bitch? */
+	bzero(vc3_sc, sizeof(*vc3_sc));
+
+	bzero(algs, sizeof(algs));
+	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+	vc3_sc->sc_cid = crypto_get_driverid(0);
+	if (vc3_sc->sc_cid < 0)
+		return;		/* YYY bitch? */
+
+	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
+	    viac3_crypto_freesession, viac3_crypto_process);
+}
+
+int
+viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
+{
+	struct viac3_softc *sc = vc3_sc;
+	struct viac3_session *ses = NULL;
+	int sesn;
+
+	if (sc == NULL || sidp == NULL || cri == NULL)
+		return (EINVAL);
+	if (cri->cri_next != NULL || cri->cri_alg != CRYPTO_AES_CBC)
+		return (EINVAL);
+	/* Initial version doesn't work for 192/256 */
+	if (cri->cri_klen != 128)
+		return (EINVAL);
+	if (sc->sc_sessions == NULL) {
+		ses = sc->sc_sessions = (struct viac3_session *)malloc(
+		    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+		if (ses == NULL)
+			return (ENOMEM);
+		sesn = 0;
+		sc->sc_nsessions = 1;
+	} else {
+		for (sesn = 0; sesn < sc->sc_nsessions; sesn++) {
+			if (sc->sc_sessions[sesn].ses_used == 0) {
+				ses = &sc->sc_sessions[sesn];
+				break;
+			}
+		}
+
+		if (ses == NULL) {
+			sesn = sc->sc_nsessions;
+			ses = (struct viac3_session *)malloc((sesn + 1) *
+			    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+			if (ses == NULL)
+				return (ENOMEM);
+			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
+			bzero(sc->sc_sessions, sesn * sizeof(*ses));
+			free(sc->sc_sessions, M_DEVBUF);
+			sc->sc_sessions = ses;
+			ses = &sc->sc_sessions[sesn];
+			sc->sc_nsessions++;
+		}
+	}
+
+	bzero(ses, sizeof(*ses));
+	ses->ses_used = 1;
+
+	get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+	ses->ses_klen = cri->cri_klen;
+	bcopy(cri->cri_key, cri->cri_key, ses->ses_klen / 8);
+
+	*sidp = VIAC3_SID(0, sesn);
+	return (0);
+}
+
+int
+viac3_crypto_freesession(u_int64_t tid)
+{
+	struct viac3_softc *sc = vc3_sc;
+	int sesn;
+	u_int32_t sid = ((u_int32_t)tid) & 0xffffffff;
+
+	if (sc == NULL)
+		return (EINVAL);
+	sesn = VIAC3_SESSION(sid);
+	if (sesn >= sc->sc_nsessions)
+		return (EINVAL);
+	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
+	return (0);
+}
+
+int
+viac3_crypto_process(struct cryptop *crp)
+{
+	struct viac3_softc *sc = vc3_sc;
+	struct viac3_crypto_op *op = NULL;
+	int sesn, err = 0;
+	struct cryptodesc *crd;
+	struct viac3_session *ses;
+
+	if (crp == NULL || crp->crp_callback == NULL) {
+		err = EINVAL;
+		goto out;
+	}
+	sesn = VIAC3_SESSION(crp->crp_sid);
+	if (sesn >= sc->sc_nsessions) {
+		err = EINVAL;
+		goto out;
+	}
+	ses = &sc->sc_sessions[sesn];
+
+	crd = crp->crp_desc;
+	if (crd == NULL || crd->crd_next != NULL ||
+	    crd->crd_alg != CRYPTO_AES_CBC || crd->crd_klen != 128) {
+		err = EINVAL;
+		goto out;
+	}
+
+	op = (struct viac3_crypto_op *)malloc(sizeof(*op), M_DEVBUF, M_NOWAIT);
+	if (op == NULL) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	bcopy(crd->crd_key, op->op_key, crd->crd_klen / 8);
+
+	if ((crd->crd_len % 16) != 0) {
+		err = EINVAL;
+		goto out;
+	}
+
+	op->op_src = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
+	if (op->op_src == NULL) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	op->op_dst = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
+	if (op->op_dst == NULL) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	op->op_cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_HW |
+	    C3_CRYPT_CWLO_NORMAL | C3_CRYPT_CWLO_KEY128;
+	op->op_cw[1] = op->op_cw[2] = op->op_cw[3] = 0;
+	if (crd->crd_flags & CRD_F_ENCRYPT) {
+		op->op_cw[0] |= C3_CRYPT_CWLO_ENCRYPT;
+		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+			bcopy(crd->crd_iv, op->op_iv, 16);
+		else
+			bcopy(ses->ses_iv, op->op_iv, 16);
+
+		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copyback((struct mbuf *)crp->crp_buf,
+				    crd->crd_inject, 16, op->op_iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copyback((struct uio *)crp->crp_buf,
+				    crd->crd_inject, 16, op->op_iv);
+			else
+				bcopy(op->op_iv,
+				    crp->crp_buf + crd->crd_inject, 16);
+		}
+	} else {
+		op->op_cw[0] |= C3_CRYPT_CWLO_DECRYPT;
+		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+			bcopy(crd->crd_iv, op->op_iv, 16);
+		else {
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crd->crd_inject, 16, op->op_iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copydata((struct uio *)crp->crp_buf,
+				    crd->crd_inject, 16, op->op_iv);
+			else
+				bcopy(crp->crp_buf + crd->crd_inject,
+				    op->op_iv, 16);
+		}
+	}
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		m_copydata((struct mbuf *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, op->op_src);
+	else if (crp->crp_flags & CRYPTO_F_IOV)
+		cuio_copydata((struct uio *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, op->op_src);
+	else
+		bcopy(crp->crp_buf + crd->crd_skip, op->op_src, crd->crd_len);
+
+	viac3_crypto(&op->op_cw, op->op_src, op->op_dst, op->op_key,
+	    crd->crd_len / 16, op->op_iv, VIAC3_CRYPTOP_CBC);
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		m_copyback((struct mbuf *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, op->op_dst);
+	else if (crp->crp_flags & CRYPTO_F_IOV)
+		cuio_copyback((struct uio *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, op->op_dst);
+	else
+		bcopy(op->op_dst, crp->crp_buf + crd->crd_skip, crd->crd_len);
+
+	/* copy out last block for use as next session IV */
+	if (crd->crd_flags & CRD_F_ENCRYPT) {
+		if (crp->crp_flags & CRYPTO_F_IMBUF)
+			m_copydata((struct mbuf *)crp->crp_buf,
+			    crd->crd_skip + crd->crd_len - 16, 16, ses->ses_iv);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			cuio_copydata((struct uio *)crp->crp_buf,
+			    crd->crd_skip + crd->crd_len - 16, 16, op->op_iv);
+		else
+			bcopy(crp->crp_buf + crd->crd_skip + crd->crd_len - 16,
+			    op->op_iv, 16);
+	}
+
+out:
+	if (op != NULL) {
+		if (op->op_src != NULL)
+			free(op->op_src, M_DEVBUF);
+		if (op->op_dst != NULL)
+			free(op->op_dst, M_DEVBUF);
+		free(op, M_DEVBUF);
+	}
+	crp->crp_etype = err;
+	crypto_done(crp);
+	return (err);
+}
+
+void
+viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
+    void *iv, int type)
+{
+	unsigned int creg0, creg4;
+	int s;
+        
+	s = splhigh();
+        
+	/* XXX - should not be needed, but we might need FXSR & FPU for XUnit */
+	creg0 = rcr0();
+	lcr0(creg0 & ~(CR0_EM|CR0_TS));
+	creg4 = rcr4();
+	lcr4(creg4 | CR4_OSFXSR);
+
+	/* Do the deed */
+	switch (type) {
+	case VIAC3_CRYPTOP_RNG:
+		__asm __volatile(
+			"rep;.byte 0x0F,0xA7,0xC0"
+			    :
+			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+			    : "memory", "cc");
+		break;
+	case VIAC3_CRYPTOP_ECB:
+		__asm __volatile(
+			"rep;.byte 0x0F,0xA7,0xC8"
+			    :
+			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+			    : "memory", "cc");
+		break;
+	case VIAC3_CRYPTOP_CBC:
+		__asm __volatile(
+			"rep;.byte 0x0F,0xA7,0xD0"
+			    :
+			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+			    : "memory", "cc");
+		break;
+	case VIAC3_CRYPTOP_CFB:
+		__asm __volatile(
+			"rep;.byte 0x0F,0xA7,0xE0"
+			    :
+			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+			    : "memory", "cc");
+		break;
+	case VIAC3_CRYPTOP_OFB:
+		__asm __volatile(
+			"rep;.byte 0x0F,0xA7,0xE8"
+			    :
+			    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+			    : "memory", "cc");
+		break;
+	default:
+	}
+
+	/* XXX - should not be neeeded */
+	lcr0(creg0);
+	lcr4(creg4);
+
+	splx(s);
+}
+
 #endif
 
 void
@@ -1137,21 +1486,34 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			    : "=d" (val) : "a" (0xC0000001) : "cc");
 		}
 
-		/* Stop here if no RNG */
-		if (!(val & 0x4))
-			break;
+		/* Enable RNG if present and disabled */
+		if (val & 0x44)
+			printf("%s:", cpu_device);
+		if (val & 0x4) {
+			if (!(val & 0x8)) {
+				u_int64_t msreg;
 
-		/* Enable RNG if disabled */
-		if (!(val & 0x8)) {
-			u_int64_t msreg;
-
-			msreg = rdmsr(0x110B);
-			msreg |= 0x40;
-			wrmsr(0x110B, msreg);
-			printf("Screwed with MSR 0x110B!\n");
+				msreg = rdmsr(0x110B);
+				msreg |= 0x40;
+				wrmsr(0x110B, msreg);
+			}
+			viac3_rnd_present = 1;
+			printf(" RNG");
 		}
-		viac3_rnd_present = 1;
-		printf("%s: RNG activated\n", cpu_device);
+
+		/* Enable AES engine if present and disabled */
+		if (val & 0x40) {
+			if (!(val & 0x80)) {
+				u_int64_t msreg;
+
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28);
+				wrmsr(0x1107, msreg);
+			}
+			viac3_crypto_present = 1;
+			printf(" AES");
+		}
+		printf("\n");
 		break;
 	}
 #endif

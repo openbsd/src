@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.48 2003/09/07 04:02:03 krw Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.49 2003/09/11 19:46:22 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -81,6 +81,8 @@ dev_t	bootdev = 0;		/* bootdevice, initialized in locore.s */
 extern struct timeout viac3_rnd_tmo;
 extern int	viac3_rnd_present;
 void		viac3_rnd(void *);
+extern int	viac3_crypto_present;
+void		viac3_crypto_setup(void);
 #endif
 
 /*
@@ -125,6 +127,11 @@ cpu_configure()
 		timeout_set(&viac3_rnd_tmo, viac3_rnd, &viac3_rnd_tmo);
 		viac3_rnd(&viac3_rnd_tmo);
 	}
+	/*
+	 * Also, if the chip as crypto available, enable it.
+	 */
+	if (viac3_crypto_present)
+		viac3_crypto_setup();
 #endif
 }
 
