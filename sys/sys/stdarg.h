@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.2 2004/01/03 14:55:34 espie Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.3 2004/02/26 17:21:59 drahn Exp $ */
 /*
  * Copyright (c) 2003, 2004  Marc espie <espie@openbsd.org>
  *
@@ -36,6 +36,7 @@ typedef __builtin_va_list __gnuc_va_list;
 #define va_end		__builtin_va_end
 #define va_arg		__builtin_va_arg
 #define va_copy(d,s)	__builtin_va_copy((d),(s))
+#define __va_copy(d,s)	__builtin_va_copy((d),(s))
 
 
 typedef __gnuc_va_list va_list;
