@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.4 1997/12/29 22:23:06 brian Exp $
+ * $Id: ip.c,v 1.5 1998/01/04 20:30:38 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -396,6 +396,12 @@ IpInput(struct mbuf * bp)
   cp = tun.data;
   nb = 0;
   for (wp = bp; wp; wp = wp->next) {	/* Copy to contiguous region */
+    if (sizeof tun.data - (cp - tun.data) < wp->cnt) {
+      LogPrintf(LogERROR, "IpInput: Packet too large (%d) - dropped\n",
+                plength(bp));
+      pfree(bp);
+      return;
+    }
     memcpy(cp, MBUF_CTOP(wp), wp->cnt);
     cp += wp->cnt;
     nb += wp->cnt;
