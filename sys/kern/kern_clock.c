@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.36 2002/06/07 08:16:26 nordin Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.37 2002/06/07 21:20:02 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -861,7 +861,7 @@ statclock(frame)
 	if (CLKF_USERMODE(frame)) {
 		p = curproc;
 		if (p->p_flag & P_PROFIL)
-			addupc_intr(p, CLKF_PC(frame), 1);
+			addupc_intr(p, CLKF_PC(frame));
 		if (--pscnt > 0)
 			return;
 		/*

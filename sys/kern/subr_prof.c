@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.9 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.10 2002/06/07 21:20:02 art Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -198,55 +198,34 @@ sys_profil(p, v, retval)
 /*
  * Collect user-level profiling statistics; called on a profiling tick,
  * when a process is running in user-mode.  This routine may be called
- * from an interrupt context.  We try to update the user profiling buffers
- * cheaply with fuswintr() and suswintr().  If that fails, we revert to
- * an AST that will vector us to trap() with a context in which copyin
- * and copyout will work.  Trap will then call addupc_task().
- *
- * Note that we may (rarely) not get around to the AST soon enough, and
- * lose profile ticks when the next tick overwrites this one, but in this
- * case the system is overloaded and the profile is probably already
- * inaccurate.
+ * from an interrupt context. Schedule and AST that will vector us to
+ * trap() with a context in which copyin and copyout will work.
+ * Trap will then call addupc_task().
  */
 void
-addupc_intr(p, pc, ticks)
-	register struct proc *p;
-	register u_long pc;
-	u_int ticks;
+addupc_intr(struct proc *p, u_long pc)
 {
-	register struct uprof *prof;
-	register caddr_t addr;
-	register u_int i;
-	register int v;
+	struct uprof *prof;
 
-	if (ticks == 0)
-		return;
 	prof = &p->p_stats->p_prof;
-	if (pc < prof->pr_off ||
-	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
+	if (pc < prof->pr_off || PC_TO_INDEX(pc, prof) >= prof->pr_size)
 		return;			/* out of range; ignore */
 
-	addr = prof->pr_base + i;
-	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + ticks) == -1) {
-		prof->pr_addr = pc;
-		prof->pr_ticks = ticks;
-		need_proftick(p);
-	}
+	prof->pr_addr = pc;
+	need_proftick(p);
 }
+
 
 /*
  * Much like before, but we can afford to take faults here.  If the
  * update fails, we simply turn off profiling.
  */
 void
-addupc_task(p, pc, ticks)
-	register struct proc *p;
-	register u_long pc;
-	u_int ticks;
+addupc_task(struct proc *p, u_long pc, u_int ticks)
 {
-	register struct uprof *prof;
-	register caddr_t addr;
-	register u_int i;
+	struct uprof *prof;
+	caddr_t addr;
+	u_int i;
 	u_short v;
 
 	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
