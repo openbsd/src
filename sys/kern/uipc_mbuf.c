@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.33 2001/05/26 05:46:33 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.34 2001/05/26 06:59:14 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ m_prepend(m, len, how)
 	if (m->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(mn, m);
 		m->m_flags &= ~M_PKTHDR;
-		TAILQ_INIT(&m->m_pkthdr.tags);
+		m_tag_init(m);
 	}
 	mn->m_next = m;
 	m = mn;
@@ -597,7 +597,7 @@ m_pullup(n, len)
 		if (n->m_flags & M_PKTHDR) {
 			M_COPY_PKTHDR(m, n);
 			n->m_flags &= ~M_PKTHDR;
-			TAILQ_INIT(&n->m_pkthdr.tags);
+			m_tag_init(n);
 		}
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -665,14 +665,10 @@ m_pullup2(n, len)
 		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
 			/* M_COPY_PKTHDR(m, n);*//* Too many adverse side effects. */
-			m->m_pkthdr = n->m_pkthdr;
-			if (TAILQ_EMPTY(&n->m_pkthdr.tags))
-				TAILQ_INIT(&m->m_pkthdr.tags);
-			else 
-				TAILQ_FIRST(&m->m_pkthdr.tags)->m_tag_link.tqe_prev = &m->m_pkthdr.tags.tqh_first;
+			M_COPY_HDR(m, n);
 			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
 			n->m_flags &= ~M_PKTHDR;
-			TAILQ_INIT(&n->m_pkthdr.tags);
+			m_tag_init(n);
 			/* n->m_data is cool. */
 		}
 	}
