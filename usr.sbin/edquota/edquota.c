@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.15 1997/01/28 21:28:43 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.16 1997/06/30 06:05:01 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -59,6 +59,7 @@ static char *rcsid = "$Id: edquota.c,v 1.15 1997/01/28 21:28:43 deraadt Exp $";
 #include <grp.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,11 +76,20 @@ struct quotause {
 	struct	dqblk dqblk;
 	char	fsname[MAXPATHLEN + 1];
 	char	qfname[1];	/* actually longer */
-} *getprivs();
+} *getprivs __P((u_int, int));
 #define	FOUND	0x01
 
-void putprivs __P((long, int, struct quotause *));
-void freeprivs __P((struct quotause *));
+void	putprivs __P((long, int, struct quotause *));
+void	freeprivs __P((struct quotause *));
+int	getentry __P((char *, int));
+int	writetimes __P((struct quotause *, int, int));
+int	editit __P((char *));
+int	readtimes __P((struct quotause *, int));
+int	writeprivs __P((struct quotause *, int, char *, int));
+int	alldigits __P((char *s));
+int	readprivs __P((struct quotause *, int));
+int	hasquota __P((struct fstab *, int, char **));
+int	cvtatos __P((time_t, char *, time_t *));
 
 void
 usage()
@@ -99,9 +109,9 @@ main(argc, argv)
 	register struct quotause *qup, *protoprivs, *curprivs;
 	extern char *optarg;
 	extern int optind;
-	register long id, protoid;
+	register u_int id, protoid;
 	register int quotatype, tmpfd;
-	char *protoname;
+	char *protoname = NULL;
 	int ch;
 	int tflag = 0, pflag = 0;
 
@@ -149,7 +159,10 @@ main(argc, argv)
 		exit(0);
 	}
 	tmpfd = mkstemp(tmpfil);
-	fchown(tmpfd, getuid(), getgid());
+	if (tmpfd == -1) {
+		fprintf(stderr, "edquota: cannot open file\n");
+		exit(1);
+	}
 	if (tflag) {
 		protoprivs = getprivs(0, quotatype);
 		if (writetimes(protoprivs, tmpfd, quotatype) == 0) {
@@ -194,12 +207,12 @@ getentry(name, quotatype)
 		return (atoi(name));
 	switch(quotatype) {
 	case USRQUOTA:
-		if (pw = getpwnam(name))
+		if ((pw = getpwnam(name)))
 			return (pw->pw_uid);
 		fprintf(stderr, "%s: no such user\n", name);
 		break;
 	case GRPQUOTA:
-		if (gr = getgrnam(name))
+		if ((gr = getgrnam(name)))
 			return (gr->gr_gid);
 		fprintf(stderr, "%s: no such group\n", name);
 		break;
@@ -216,7 +229,7 @@ getentry(name, quotatype)
  */
 struct quotause *
 getprivs(id, quotatype)
-	register long id;
+	register u_int id;
 	int quotatype;
 {
 	register struct fstab *fs;
@@ -336,7 +349,7 @@ int
 editit(tmpfile)
 	char *tmpfile;
 {
-	long omask;
+	int omask;
 	int pid, stat, xpid;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	register char *ed;
@@ -605,7 +618,7 @@ readtimes(quplist, infd)
 		}
 		cnt = sscanf(cp,
 		    " block grace period: %d %s file grace period: %d %s",
-		    &btime, bunits, &itime, iunits);
+		    (int *)&btime, bunits, (int *)&itime, iunits);
 		if (cnt != 4) {
 			fprintf(stderr, "%s:%s: bad format\n", fsp, cp);
 			return (0);
@@ -650,15 +663,15 @@ cvtstoa(time)
 
 	if (time % (24 * 60 * 60) == 0) {
 		time /= 24 * 60 * 60;
-		sprintf(buf, "%d day%s", time, time == 1 ? "" : "s");
+		sprintf(buf, "%d day%s", (int) time, time == 1 ? "" : "s");
 	} else if (time % (60 * 60) == 0) {
 		time /= 60 * 60;
-		sprintf(buf, "%d hour%s", time, time == 1 ? "" : "s");
+		sprintf(buf, "%d hour%s", (int) time, time == 1 ? "" : "s");
 	} else if (time % 60 == 0) {
 		time /= 60;
-		sprintf(buf, "%d minute%s", time, time == 1 ? "" : "s");
+		sprintf(buf, "%d minute%s", (int) time, time == 1 ? "" : "s");
 	} else
-		sprintf(buf, "%d second%s", time, time == 1 ? "" : "s");
+		sprintf(buf, "%d second%s", (int) time, time == 1 ? "" : "s");
 	return (buf);
 }
 
@@ -716,7 +729,7 @@ alldigits(s)
 	do {
 		if (!isdigit(c))
 			return (0);
-	} while (c = *s++);
+	} while ((c = *s++));
 	return (1);
 }
 
