@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.67 1999/04/06 19:30:34 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.68 1999/04/06 23:30:15 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -381,6 +381,7 @@ com/pccom	USR2030 # U.S.Robotics Inc. Sportster 560
 com/pccom	USR2070	# U.S.Robotics Inc. Sportster 560
 com/pccom	USR3031 # U.S. Robotics 56K FAX INT
 com/pccom	USR9190	# U.S. Robotics 56K Voice INT
+com/pccom	SMM00C1	# Leopard 56k PnP
 
 # Ethernet:
 #ep		TCM5090	# 3COM 3c509B		(PNP80F7)
