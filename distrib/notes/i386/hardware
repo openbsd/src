@@ -234,7 +234,7 @@ SPECIAL CARE FOR SMC ULTRA ELITE
 
 
 Note for SMC Elite Ultra ethernet card users:  The Elite Ultra is very
-sensitive to how it's i/o port is treated.  Mistreating it can cause
+sensitive to how its I/O port is treated.  Mistreating it can cause
 a number of effects -- everything from the card not responding when the
 kernel probes, or the soft configuration being corrupted or wiped completely.
 
@@ -245,11 +245,12 @@ soft config setting.
 
 Unfortunately, the kernel's autconfiguration process (specifically, some
 of the devices it probes for) cause conflicts with the SMC Elite Ultra, and
-very often cause it to lose it's configuration and fail it's own probe.
+very often cause it to lose its configuration and fail its own probe.
 If this happens, you must boot the computer into DOS, and run the EzSetup
-program available from SMC.  The complete URL of which is 
-ftp://ftp.smc.com/pub/nics/ethernet/elite_ultra/gez122.exe.  This program
-will allow you to reconfigure and recover a card that has lost it's
+program from SMC (if you do not have a copy on the floppy
+accompanying your board, the complete URL to download the program is 
+ftp://ftp.smc.com/pub/nics/ethernet/elite_ultra/gez122.exe).  This program
+will allow you to reconfigure and recover a card that has lost its
 configuration with a minimum of hassle.
 
 In order to avoid blowing away the card, one *must* use the run-time kernel
@@ -276,3 +277,86 @@ risk other device probes wreaking the havoc we are trying to avoid.
 When all three extra devices are disabled and any changes made, the
 'quit' command will exit the UKC.  The kernel should then boot, and find
 your Elite Ultra on device ed2.
+
+SPECIAL CARE FOR NEWER NOTEBOOK COMPUTERS AND PCMCIA
+
+There is a problem on some newer notebooks with OpenBSD's autoconfiguration
+not YET finding the PCI<-->PCMCIA bridge, and therefore not finding any of the
+PCMCIA cards, which can be a nuisance if you're trying to install over
+an Ethernet LAN.
+
+The symptoms:
+1) No probe messages indicating any PCMCIA response or any probe response
+   for any PCMCIA cards, and
+2) A probe message like this:
+	Cirrus Logic CL-GD6729 (class bridge, subclass PCMCIA, revision 0xfe)
+	at pci0 dev 4 function 0 not configured
+   The details will vary; the important parts are 
+	class bridge, subclass PCMCIA, ... at pci* ... not configured
+
+Finding the Bridge Address
+
+Bear in mind that both ISA and PCI are just different ways of electrically
+connecting an adaptor into the PC's memory space. PCI merely provides
+convenient iterators for finding everything on it, which is easier than
+it is on ISA. This is why you get the "not configured" message above.
+But once a device is connected in there, the driver only needs to know its 
+memory mapped address. Now we don't know its address on YOUR brand of PC,
+but we can help you find it out. Someday our software will do this for you,
+of course, but it doesn't as of today.
+
+Your first try should be 0x3000, which seems to be used on several notebooks.
+If this fails, you need to do some nosing around.
+
+The easiest way is to boot up Windows '95, if you have it on a hard disk.
+Right-click on the "My Computer" Icon, select Properties, select the
+Device Manager tab, and double click on PCMCIA Socket, then on the Bridge
+that is listed under this heading. Select Properties at the bottom of
+the window, and click on Resources. Finally you will see an address range,
+in Hex. On my Dell Lattitude LM, for example, the range was FCFC-FCFF.
+
+If you don't have Windows '95 on a hard disk, there are several possibilities:
+1) But you do have Windows'95 setup floppies? Then look through them for
+the ".INF" files, and rummage around in them until you find it.
+2) You have a friend, or the dealer, who has a similar Notebook PC with
+Windows '95 installed? Proceed as above.
+3) Call Customer Support at the manufacturer, tell them you're having
+a setup problem, and need to know the memory address to set for the
+PCI to PCMCIA bridge. Oh, take a few cans of Jolt and a good book to read
+while waiting on the line.
+
+Fixing it - temporarily
+
+OK, now you have the address and size of the memory window for the PCMCIA
+bridge. Or so you think. To try it out, use the UKC, as described earlier
+(under SMC Elite, above). Basically you use "boot -c" to get into UKC.
+Give the command "change pcicmaster0", and to set the address and iosize
+to the values you found above. Then type "quit", and the boot should
+continue, and you should find your PCMCIA cards.
+
+Note that if the card is an "ep0" (3c589 on PCMCIA) AND you are using
+UTP, you must give the arguments "link0 link1" on the ifconfig command.
+The autoconfig message
+	ep0 at pcmcia0 port 0x300-0x30f irq 10: ep0: address nn:nn:nn:nn:nn:nn,
+		utp/aui/bnc (default utp)
+implies that the default is UTP and you can omit the link* arguments, but
+in fact you cannot!
+
+Fixing it - configuring a new kernel
+
+Follow the normal steps for building a new kernel documented elsewhere.
+For my system I changed the original pcicmaster0 line as follows:
+
+#pcicmaster0	at isa? port 0x3E0 size 2
+# hack for CL PCIC on Dell Lattitude LM; really on PCI, but...
+pcicmaster0	at isa? port 0xFCFC size 4
+
+IRQ's: You probably do NOT have to worry about the IRQ's appearing
+different than what Windows'95 claims. Trust me, and try it.
+
+Fixing it for good
+
+OK, this is the tough part. Somebody has to wade in and rewrite the
+OpenBSD PCMCIA subsystem to support multiple adapters on multiple busses.
+Nobody's done this yet. You have the source, so you truly can
+"Use The Source, Luke."  
