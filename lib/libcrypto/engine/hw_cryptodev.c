@@ -581,7 +581,7 @@ cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
 static int
 bn2crparam(const BIGNUM *a, struct crparam *crp)
 {
-	int i, j, n;
+	int i, j, k;
 	ssize_t words, bytes, bits;
 	u_char *b;
 
@@ -598,17 +598,13 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 	crp->crp_p = b;
 	crp->crp_nbits = bits;
 
-	words = (bits + BN_BITS2 - 1) / BN_BITS2;
-
-	n = 0;
-	for (i = 0; i < words && n < bytes; i++) {
-		BN_ULONG word;
-
-		word = a->d[i];
-		for (j = 0 ; j < BN_BYTES && n < bytes; j++, n++) {
-			*b++ = (word & 0xff);
-			word >>= 8;
+	for (i = 0, j = 0; i < a->top; i++) {
+		for (k = 0; k < BN_BITS2 / 8; k++) {
+			if ((j + k) >= bytes)
+				return (0);
+			b[j + k] = a->d[i] >> (k * 8);
 		}
+		j += BN_BITS2 / 8;
 	}
 	return (0);
 }
@@ -617,15 +613,22 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 static int
 crparam2bn(struct crparam *crp, BIGNUM *a)
 {
+	u_int8_t *pd;
 	int i, bytes;
 
-	bytes = (crp->crp_nbits + 7)/8;
+	bytes = (crp->crp_nbits + 7) / 8;
 
-	BN_zero(a);
-	for (i = bytes - 1; i >= 0; i--) {
-		BN_lshift(a, a, 8);
-		BN_add_word(a, (u_char)crp->crp_p[i]);
-	}
+	if (bytes == 0)
+		return (-1);
+
+	if ((pd = (u_int8_t *) malloc(bytes)) == NULL)
+		return (-1);
+
+	for (i = 0; i < bytes; i++)
+		pd[i] = crp->crp_p[bytes - i - 1];
+
+	BN_bin2bn(pd, bytes, a);
+	free(pd);
 
 	return (0);
 }
@@ -644,23 +647,26 @@ zapparams(struct crypt_kop *kop)
 }
 
 static int
-cryptodev_sym(struct crypt_kop *kop, BIGNUM *r, BIGNUM *s)
+cryptodev_sym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 {
 	int ret = -1;
 
 	if (r) {
-		kop->crk_param[kop->crk_iparams].crp_p = malloc(256);
-		kop->crk_param[kop->crk_iparams].crp_nbits = 256 * 8;
+		kop->crk_param[kop->crk_iparams].crp_p = malloc(rlen);
+		kop->crk_param[kop->crk_iparams].crp_nbits = rlen * 8;
 		kop->crk_oparams++;
 	}
 	if (s) {
-		kop->crk_param[kop->crk_iparams+1].crp_p = malloc(256);
-		kop->crk_param[kop->crk_iparams+1].crp_nbits = 256 * 8;
+		kop->crk_param[kop->crk_iparams+1].crp_p = malloc(slen);
+		kop->crk_param[kop->crk_iparams+1].crp_nbits = slen * 8;
 		kop->crk_oparams++;
 	}
 
 	if (ioctl(cryptodev_fd, CIOCKEY, &kop) == 0) {
-		crparam2bn(&kop->crk_param[3], r);
+		if (r)
+			crparam2bn(&kop->crk_param[3], r);
+		if (s)
+			crparam2bn(&kop->crk_param[4], s);
 		ret = 0;
 	}
 	return (ret);
@@ -676,16 +682,16 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_MOD_EXP;
 
-	/* inputs: a m p */
+	/* inputs: a^p % m */
 	if (bn2crparam(a, &kop.crk_param[0]))
 		goto err;
-	if (bn2crparam(m, &kop.crk_param[1]))
+	if (bn2crparam(p, &kop.crk_param[1]))
 		goto err;
-	if (bn2crparam(p, &kop.crk_param[2]))
+	if (bn2crparam(m, &kop.crk_param[2]))
 		goto err;
 	kop.crk_iparams = 3;
 
-	if (cryptodev_sym(&kop, r, NULL) == -1) {
+	if (cryptodev_sym(&kop, BN_num_bytes(m), r, 0, NULL) == -1) {
 		ret = BN_mod_exp(r, a, p, m, ctx);
 	}
 err:
@@ -722,7 +728,7 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		goto err;
 	kop.crk_iparams = 6;
 
-	if (cryptodev_sym(&kop, r0, NULL) == -1) {
+	if (cryptodev_sym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL) == -1) {
 		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
 
 		ret = (*meth->rsa_mod_exp)(r0, I, rsa);
@@ -785,7 +791,8 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	kop.crk_iparams = 5;
 
-	if (cryptodev_sym(&kop, r, s) == 0) {
+	if (cryptodev_sym(&kop, BN_num_bytes(dsa->q), r,
+	    BN_num_bytes(dsa->q), s) == 0) {
 		dsaret = DSA_SIG_new();
 		dsaret->r = r;
 		dsaret->s = s;
@@ -829,7 +836,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 		goto err;
 	kop.crk_iparams = 7;
 
-	if (cryptodev_sym(&kop, NULL, NULL) == 0) {
+	if (cryptodev_sym(&kop, 0, NULL, 0, NULL) == 0) {
 		dsaret = kop.crk_status;
 	} else {
 		const DSA_METHOD *meth = DSA_OpenSSL();
