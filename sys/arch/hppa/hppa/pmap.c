@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 1998/11/11 05:18:12 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 1998/11/24 04:56:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -1523,6 +1523,16 @@ pmap_is_referenced(pa)
 	splx(s);
 
 	return pv != NULL;
+}
+
+int
+kvtop(va)
+	caddr_t va;
+{
+	if ((vm_offset_t)va < virtual_avail)
+		return (int)va;
+	else
+		return (int)pmap_extract(kernel_pmap, (vm_offset_t)va);
 }
 
 #ifdef DEBUG
