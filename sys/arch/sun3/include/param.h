@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 1997/09/08 01:30:30 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.16 1997/09/08 18:08:51 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
  * must be cast to any desired pointer type.
  */
 
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 
 #define NBSG		0x20000	/* bytes/segment */
@@ -70,29 +68,9 @@
 #define SEGSHIFT	17	        /* LOG2(NBSG) */
 
 #define	KERNBASE	0x0E000000	/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 #define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
 
 #include <m68k/param.h>
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		128		/* size of an mbuf */
-#define	MCLSHIFT	11
-#define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
-#define	MCLOFSET	(MCLBYTES - 1)
-#ifndef NMBCLUSTERS
-#ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
-#endif
-#endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
@@ -100,26 +78,6 @@
 #ifndef NKMEMCLUSTERS
 #define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
 #endif
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 /*
  * spl functions; all are done in-line
