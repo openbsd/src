@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.15 1996/06/03 03:36:57 mickey Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.16 1996/06/17 02:48:04 downsj Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1333,9 +1333,9 @@ US               gname=bin uname=bin mode=0555
 ..
 
 # ./usr/src
-src
+#src
 # ./usr/src
-..
+#..
 
 # ./usr
 ..

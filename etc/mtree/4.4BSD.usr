@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.6 1996/06/03 03:36:58 mickey Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.7 1996/06/17 02:48:05 downsj Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -11,10 +11,10 @@
 .               type=dir
 
 # ./.src
-/set type=file gname=sww uname=sww mode=02775
-.src            type=dir uname=root gname=wheel mode=0755
+#/set type=file gname=sww uname=sww mode=02775
+#.src            type=dir uname=root gname=wheel mode=0755
 # ./.src
-..
+#..
 
 
 # ./X11R4
@@ -1685,14 +1685,14 @@ US              type=dir mode=0555
 
 
 # ./src
-/set type=file gname=wsrc uname=bin mode=0775
-src             type=dir
+#/set type=file gname=wsrc uname=bin mode=0775
+#src             type=dir
 # ./src
-..
+#..
 
 
 # ./ucb
-/set type=file gname=wheel uname=root mode=0755
-ucb             type=dir
+#/set type=file gname=wheel uname=root mode=0755
+#ucb             type=dir
 # ./ucb
-..
+#..
