@@ -1,3 +1,5 @@
+/*    $OpenBSD: sfas.c,v 1.4 1996/02/26 21:08:02 niklas Exp $  */
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,9 +167,15 @@ sfasinitialize(dev)
 	dev->sc_config2 = SFAS_CFG2_FEATURES_ENABLE;
 	dev->sc_config3 = (dev->sc_clock_freq > 25 ? SFAS_CFG3_FASTCLK : 0);
 
-/* Precalculate timeout value and clock period. */
+#if 0	/* don't use floating point */
 	dev->sc_timeout_val  = 1+dev->sc_timeout*dev->sc_clock_freq/
 				 (7.682*dev->sc_clock_conv_fact);
+#endif
+	/* Precalculate timeout value and clock period. */
+	dev->sc_timeout_val  = 1 +
+	    (dev->sc_timeout * dev->sc_clock_freq * 1000)
+	    / (7682 * dev->sc_clock_conv_fact);
+
 	dev->sc_clock_period = 1000/dev->sc_clock_freq;
 
 	sfasreset(dev, 1 | 2);	/* Reset Chip and Bus */
