@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.12 1997/11/05 02:14:18 mickey Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.13 1998/03/11 13:05:07 graichen Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -120,7 +120,7 @@ reloc:
 	popl	%ds	/* and %ds is at the %cs */
 
 #ifdef SERIAL
-	/* Initialize the serial port to 9600 baud, 8N1. */
+	/* Initialize the serial port to 9600 baud, 8N1.
 	 * Do we need to do this?  Most things at this level
 	 * do not know or care (on a PC) where the output is
 	 * happening to go.  I think if we are headless,
