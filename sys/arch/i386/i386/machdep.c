@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.268 2004/02/01 19:05:23 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.269 2004/02/01 19:16:54 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1139,16 +1139,13 @@ void
 viac3_rnd(void *v)
 {
 	struct timeout *tmo = v;
-	unsigned int *p, i, rv, creg0, creg4, len = VIAC3_RNG_BUFSIZ;
+	unsigned int *p, i, rv, creg0, len = VIAC3_RNG_BUFSIZ;
 	static int buffer[VIAC3_RNG_BUFSIZ + 2];
 	int s;
 
 	s = splhigh();
-	/* XXX - should not be needed, but we need FXSR & FPU set to access RNG */
-	creg0 = rcr0();
+	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
-	creg4 = rcr4();
-	lcr4(creg4 | CR4_OSFXSR);
 
 	/*
 	 * Here we collect the random data from the VIA C3 RNG.  We make
@@ -1159,9 +1156,7 @@ viac3_rnd(void *v)
 	    : "=a" (rv) : "d" (3), "D" (buffer), "c" (len*sizeof(int))
 	    : "memory", "cc");
 
-	/* XXX - should not be needed */
 	lcr0(creg0);
-	lcr4(creg4);
 
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
 		add_true_randomness(*p);
@@ -1440,16 +1435,12 @@ void
 viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
     void *iv, int type)
 {
-	unsigned int creg0, creg4;
+	unsigned int creg0;
 	int s;
 
 	s = splhigh();
-
-	/* XXX - should not be needed, but we might need FXSR & FPU for XUnit */
-	creg0 = rcr0();
+	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
-	creg4 = rcr4();
-	lcr4(creg4 | CR4_OSFXSR);
 
 	/* Do the deed */
 	switch (type) {
@@ -1480,10 +1471,7 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 		break;
 	}
 
-	/* XXX - should not be neeeded */
 	lcr0(creg0);
-	lcr4(creg4);
-
 	splx(s);
 }
 
