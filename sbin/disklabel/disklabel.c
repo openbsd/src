@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.58 1999/03/01 01:50:45 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.59 1999/03/07 03:05:31 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.58 1999/03/01 01:50:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.59 1999/03/07 03:05:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -400,6 +400,7 @@ writelabel(f, boot, lp)
 #endif
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
 #ifdef DOSLABEL
