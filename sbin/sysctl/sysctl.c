@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.55 2000/12/22 22:47:04 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.56 2001/01/04 06:07:22 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.55 2000/12/22 22:47:04 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.56 2001/01/04 06:07:22 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.55 2000/12/22 22:47:04 deraadt Exp 
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#include <sys/malloc.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 #include <net/route.h>
@@ -121,6 +122,8 @@ struct ctlname netname[] = CTL_NET_NAMES;
 struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
+struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
+struct ctlname kernbucketname[] = CTL_KERN_MALLOC_BUCKET_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -329,6 +332,12 @@ parse(string, flags)
 				(void)printf("%s = %s\n", string,
 				    state == GMON_PROF_OFF ? "off" : "running");
 			return;
+		case KERN_MALLOCSTATS:
+			len = sysctl_malloc(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			newsize = 0;
+			break;
 		case KERN_VNODE:
 		case KERN_FILE:
 			if (flags == 0)
@@ -1058,7 +1067,7 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 		}
 		mib[3] = atoi(name);
 		*typep = CTLTYPE_STRUCT;
-		return 4;
+		return(4);
 	} else {
 		*typep = bioslist.list[indx].ctl_type;
 		return(3);
@@ -1208,6 +1217,75 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ etheripname, ETHERIPCTL_MAXID },
 };
+
+struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
+struct list kernbucketlist = { kernbucketname, KERN_MALLOC_BUCKET_MAXID };
+
+/*
+ * handle malloc statistics
+ */
+int
+sysctl_malloc(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx, size, stor, i;
+	char *name, bufp[BUFSIZ], *buf;
+        struct list lp;
+
+	if (*bufpp == NULL) {
+		listall(string, &kernmalloclist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &kernmalloclist)) == -1)
+	        return (-1);
+	mib[2] = indx;
+	if (mib[2] == KERN_MALLOC_BUCKET) {
+	        if ((name = strsep(bufpp, ".")) == NULL) {
+		        size = BUFSIZ;
+			stor = mib[2];
+			mib[2] = KERN_MALLOC_BUCKETS;
+			buf = bufp;
+			if (sysctl(mib, 3, buf, &size, NULL, 0) < 0)
+			        return(-1);
+			mib[2] = stor;
+			for (stor = 0, i = 0; i < size; i++)
+			        if (buf[i] == ',')
+				        stor++;
+			lp.list = calloc(stor + 2, sizeof(struct ctlname));
+			if (lp.list == NULL)
+			        return(-1);
+			lp.size = stor + 2;
+			for (i = 1;
+			     (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
+			     i++) {
+			        lp.list[i].ctl_type = CTLTYPE_QUAD;
+			}
+			lp.list[i].ctl_name = buf;
+			lp.list[i].ctl_type = CTLTYPE_QUAD;
+			listall(string, &lp);
+			free(lp.list);
+			return(-1);
+		}
+		mib[3] = atoi(name);
+		if (*bufpp == NULL) {
+		        listall(string, &kernbucketlist);
+			return(-1);
+		}
+		if ((indx = findname(string, "fifth", bufpp,
+				     &kernbucketlist)) == -1)
+		        return (-1);
+		mib[4] = indx;
+		*typep = CTLTYPE_QUAD;
+		return(5);
+	} else {
+	        *typep = CTLTYPE_STRING;
+	        return(3);
+	}
+}
 
 /*
  * handle internet requests
