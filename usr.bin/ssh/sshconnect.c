@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.55 2000/02/15 13:08:01 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.56 2000/02/18 08:50:33 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -956,8 +956,11 @@ ssh_exchange_identification()
 
 	/* Read other side\'s version identification. */
 	for (i = 0; i < sizeof(buf) - 1; i++) {
-		if (read(connection_in, &buf[i], 1) != 1)
+		int len = read(connection_in, &buf[i], 1);
+		if (len < 0)
 			fatal("ssh_exchange_identification: read: %.100s", strerror(errno));
+		if (len != 1)
+			fatal("ssh_exchange_identification: Connection closed by remote host");
 		if (buf[i] == '\r') {
 			buf[i] = '\n';
 			buf[i + 1] = 0;
