@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_cdrom.c,v 1.1 1997/12/07 22:59:14 provos Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.2 1997/12/10 00:01:39 provos Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -208,6 +208,9 @@ linux_ioctl_cdrom(p, uap, retval)
 		break;
 	case LINUX_CDROMSTART:
 		SCARG(&ia, com) = CDIOCSTART;
+		break;
+	case LINUX_CDROMEJECT:
+		SCARG(&ia, com) = CDIOCEJECT;
 		break;
 	default:
 	        printf("linux_ioctl_cdrom: invalid ioctl %08lx\n", com);
