@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.53 2005/01/24 01:55:59 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.54 2005/02/05 00:03:57 jsg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.50 2005/01/24 01:55:37 brad Exp 
+ *	OpenBSD: miidevs,v 1.51 2005/02/04 23:59:46 jsg Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -269,6 +269,8 @@
 #define	MII_STR_xxSEEQ_80220	"Seeq 80220 10/100 PHY"
 #define	MII_MODEL_xxSEEQ_84220	0x0004
 #define	MII_STR_xxSEEQ_84220	"Seeq 84220 10/100 PHY"
+#define	MII_MODEL_xxSEEQ_80225	0x0008
+#define	MII_STR_xxSEEQ_80225	"Seeq 80225 10/100 PHY"
 
 /* Silicon Integrated Systems PHYs */
 #define	MII_MODEL_xxSIS_900	0x0000
