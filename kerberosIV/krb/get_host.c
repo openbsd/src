@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_host.c,v 1.6 1998/03/25 21:50:11 art Exp $	*/
+/*	$OpenBSD: get_host.c,v 1.7 1998/05/15 00:58:54 art Exp $	*/
 /* $KTH: get_host.c,v 1.31 1997/09/26 17:42:37 joda Exp $ */
 
 /*
@@ -214,7 +214,17 @@ read_file(const char *filename, const char *r)
     if(f == NULL)
 	return -1;
     while(fgets(line, sizeof(line), f) != NULL) {
-	n = sscanf(line, "%s %s admin %s", realm, address, scratch);
+	char *format = NULL;
+
+	asprintf(&format, "%%%ds %%%ds admin %%%ds", sizeof(realm) - 1,
+		 sizeof(address) - 1, sizeof(scratch) - 1);
+	if (format == NULL) {
+	    fclose(f);
+	    return -1;
+	}
+	n = sscanf(line, format, realm, address, scratch);
+	free(format);
+	format = NULL;
 	if(n == 2 || n == 3){
 	    if(strcmp(realm, r))
 		continue;
