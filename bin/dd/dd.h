@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.h,v 1.2 1996/06/23 14:19:48 deraadt Exp $	*/
+/*	$OpenBSD: dd.h,v 1.3 1997/02/14 07:05:20 millert Exp $	*/
 /*	$NetBSD: dd.h,v 1.4 1995/03/21 09:04:08 cgd Exp $	*/
 
 /*-
@@ -44,9 +44,9 @@
 typedef struct {
 	u_char	*db;			/* buffer address */
 	u_char	*dbp;			/* current buffer I/O address */
-	u_long	dbcnt;			/* current buffer byte count */
-	int	dbrcnt;			/* last read byte count */
-	u_long	dbsz;			/* buffer size */
+	size_t	dbcnt;			/* current buffer byte count */
+	size_t	dbrcnt;			/* last read byte count */
+	size_t	dbsz;			/* buffer size */
 
 #define	ISCHR		0x01		/* character device (warn on short) */
 #define	ISPIPE		0x02		/* pipe (not truncatable) */
@@ -56,22 +56,22 @@ typedef struct {
 
 	char 	*name;			/* name */
 	int	fd;			/* file descriptor */
-	u_long	offset;			/* # of blocks to skip */
+	off_t	offset;			/* # of blocks to skip */
 
-	u_long	f_stats;		/* # of full blocks processed */
-	u_long	p_stats;		/* # of partial blocks processed */
-	u_long	s_stats;		/* # of odd swab blocks */
-	u_long	t_stats;		/* # of truncations */
+	size_t	f_stats;		/* # of full blocks processed */
+	size_t	p_stats;		/* # of partial blocks processed */
+	size_t	s_stats;		/* # of odd swab blocks */
+	size_t	t_stats;		/* # of truncations */
 } IO;
 
 typedef struct {
-	u_long	in_full;		/* # of full input blocks */
-	u_long	in_part;		/* # of partial input blocks */
-	u_long	out_full;		/* # of full output blocks */
-	u_long	out_part;		/* # of partial output blocks */
-	u_long	trunc;			/* # of truncated records */
-	u_long	swab;			/* # of odd-length swab blocks */
-	u_long	bytes;			/* # of bytes written */
+	size_t	in_full;		/* # of full input blocks */
+	size_t	in_part;		/* # of partial input blocks */
+	size_t	out_full;		/* # of full output blocks */
+	size_t	out_part;		/* # of partial output blocks */
+	size_t	trunc;			/* # of truncated records */
+	size_t	swab;			/* # of odd-length swab blocks */
+	off_t	bytes;			/* # of bytes written */
 	time_t	start;			/* start time of dd */
 } STAT;
 

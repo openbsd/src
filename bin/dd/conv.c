@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.4 1996/12/14 12:17:48 mickey Exp $	*/
+/*	$OpenBSD: conv.c,v 1.5 1997/02/14 07:05:19 millert Exp $	*/
 /*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: conv.c,v 1.4 1996/12/14 12:17:48 mickey Exp $";
+static char rcsid[] = "$OpenBSD: conv.c,v 1.5 1997/02/14 07:05:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: conv.c,v 1.4 1996/12/14 12:17:48 mickey Exp $";
 void
 def()
 {
-	int cnt;
+	size_t cnt;
 	u_char *inp;
 	const u_char *t;
 
@@ -118,7 +118,8 @@ void
 block()
 {
 	static int intrunc;
-	int ch = -1, cnt, maxlen;
+	int ch = -1;
+	size_t cnt, maxlen;
 	u_char *inp, *outp;
 	const u_char *t;
 
@@ -161,7 +162,7 @@ block()
 		 * input block.
 		 */
 		if (ch != '\n' && in.dbcnt < cbsz) {
-			memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
+			(void)memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
 			break;
 		}
 
@@ -211,7 +212,7 @@ block_close()
 	 */
 	if (in.dbcnt) {
 		++st.trunc;
-		memmove(out.dbp, in.dbp - in.dbcnt, in.dbcnt);
+		(void)memmove(out.dbp, in.dbp - in.dbcnt, in.dbcnt);
 		(void)memset(out.dbp + in.dbcnt,
 		    ctab ? ctab[' '] : ' ', cbsz - in.dbcnt);
 		out.dbcnt += cbsz;
@@ -228,7 +229,7 @@ block_close()
 void
 unblock()
 {
-	int cnt;
+	size_t cnt;
 	u_char *inp;
 	const u_char *t;
 
@@ -245,7 +246,7 @@ unblock()
 		for (t = inp + cbsz - 1; t >= inp && *t == ' '; --t);
 		if (t >= inp) {
 			cnt = t - inp + 1;
-			memmove(out.dbp, inp, cnt);
+			(void)memmove(out.dbp, inp, cnt);
 			out.dbp += cnt;
 			out.dbcnt += cnt;
 		}
@@ -255,14 +256,14 @@ unblock()
 			dd_out(0);
 	}
 	if (in.dbcnt)
-		memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
+		(void)memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
 	in.dbp = in.db + in.dbcnt;
 }
 
 void
 unblock_close()
 {
-	int cnt;
+	size_t cnt;
 	u_char *t;
 
 	if (in.dbcnt) {
@@ -270,7 +271,7 @@ unblock_close()
 		for (t = in.db + in.dbcnt - 1; t >= in.db && *t == ' '; --t);
 		if (t >= in.db) {
 			cnt = t - in.db + 1;
-			memmove(out.dbp, in.db, cnt);
+			(void)memmove(out.dbp, in.db, cnt);
 			out.dbp += cnt;
 			out.dbcnt += cnt;
 		}

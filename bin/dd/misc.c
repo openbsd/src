@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1996/12/14 12:17:50 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1997/02/14 07:05:21 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1996/12/14 12:17:50 mickey Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1997/02/14 07:05:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,21 +69,21 @@ summary()
 		secs = 1;
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf, sizeof(buf),
-	    "%lu+%lu records in\n%lu+%lu records out\n",
+	    "%u+%u records in\n%u+%u records out\n",
 	    st.in_full, st.in_part, st.out_full, st.out_part);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 	if (st.swab) {
-		(void)snprintf(buf, sizeof(buf), "%lu odd length swab %s\n",
+		(void)snprintf(buf, sizeof(buf), "%u odd length swab %s\n",
 		     st.swab, (st.swab == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	if (st.trunc) {
-		(void)snprintf(buf, sizeof(buf), "%lu truncated %s\n",
+		(void)snprintf(buf, sizeof(buf), "%u truncated %s\n",
 		     st.trunc, (st.trunc == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
-	    "%lu bytes transferred in %lu secs (%lu bytes/sec)\n",
+	    "%qd bytes transferred in %ld secs (%qd bytes/sec)\n",
 	    st.bytes, secs, st.bytes / secs);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }

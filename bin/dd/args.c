@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.5 1996/12/14 12:17:47 mickey Exp $	*/
+/*	$OpenBSD: args.c,v 1.6 1997/02/14 07:05:18 millert Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.5 1996/12/14 12:17:47 mickey Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.6 1997/02/14 07:05:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,8 @@ static void	f_obs __P((char *));
 static void	f_of __P((char *));
 static void	f_seek __P((char *));
 static void	f_skip __P((char *));
-static u_long	get_bsz __P((char *));
+static size_t	get_bsz __P((char *));
+static off_t	get_off __P((char *));
 
 const static struct arg {
 	char *name;
@@ -106,7 +107,8 @@ jcl(argv)
 	in.dbsz = out.dbsz = 512;
 
 	while ((oper = *++argv) != NULL) {
-		oper = strdup(oper);
+		if ((oper = strdup(oper)) == NULL)
+			errx(1, "out of memory");
 		if ((arg = strchr(oper, '=')) == NULL)
 			errx(1, "unknown operand %s", oper);
 		*arg++ = '\0';
@@ -170,14 +172,13 @@ jcl(argv)
 		errx(1, "buffer sizes cannot be zero");
 
 	/*
-	 * Read, write and seek calls take ints as arguments.  Seek sizes
-	 * could be larger if we wanted to do it in stages or check only
-	 * regular files, but it's probably not worth it.
+	 * Read and write take size_t's as arguments.  Lseek, however,
+	 * takes an off_t (quad).
 	 */
-	if (in.dbsz > INT_MAX || out.dbsz > INT_MAX)
-		errx(1, "buffer sizes cannot be greater than %d", INT_MAX);
-	if (in.offset > INT_MAX / in.dbsz || out.offset > INT_MAX / out.dbsz)
-		errx(1, "seek offsets cannot be larger than %d", INT_MAX);
+	if (in.dbsz > SIZE_T_MAX || out.dbsz > SIZE_T_MAX)
+		errx(1, "buffer sizes cannot be greater than %u", SIZE_T_MAX);
+	if (in.offset > QUAD_MAX / in.dbsz || out.offset > QUAD_MAX / out.dbsz)
+		errx(1, "seek offsets cannot be larger than %qd", QUAD_MAX);
 }
 
 static int
@@ -193,7 +194,7 @@ f_bs(arg)
 	char *arg;
 {
 
-	in.dbsz = out.dbsz = (int)get_bsz(arg);
+	in.dbsz = out.dbsz = get_bsz(arg);
 }
 
 static void
@@ -201,7 +202,7 @@ f_cbs(arg)
 	char *arg;
 {
 
-	cbsz = (int)get_bsz(arg);
+	cbsz = get_bsz(arg);
 }
 
 static void
@@ -209,7 +210,7 @@ f_count(arg)
 	char *arg;
 {
 
-	cpy_cnt = (u_int)get_bsz(arg);
+	cpy_cnt = get_bsz(arg);
 	if (!cpy_cnt)
 		terminate(0);
 }
@@ -219,7 +220,7 @@ f_files(arg)
 	char *arg;
 {
 
-	files_cnt = (int)get_bsz(arg);
+	files_cnt = get_bsz(arg);
 }
 
 static void
@@ -228,7 +229,7 @@ f_ibs(arg)
 {
 
 	if (!(ddflags & C_BS))
-		in.dbsz = (int)get_bsz(arg);
+		in.dbsz = get_bsz(arg);
 }
 
 static void
@@ -245,7 +246,7 @@ f_obs(arg)
 {
 
 	if (!(ddflags & C_BS))
-		out.dbsz = (int)get_bsz(arg);
+		out.dbsz = get_bsz(arg);
 }
 
 static void
@@ -261,7 +262,7 @@ f_seek(arg)
 	char *arg;
 {
 
-	out.offset = (u_int)get_bsz(arg);
+	out.offset = get_off(arg);
 }
 
 static void
@@ -269,7 +270,7 @@ f_skip(arg)
 	char *arg;
 {
 
-	in.offset = (u_int)get_bsz(arg);
+	in.offset = get_off(arg);
 }
 
 #ifdef	NO_CONV
@@ -335,7 +336,7 @@ c_conv(a, b)
 #endif	/* NO_CONV */
 
 /*
- * Convert an expression of the following forms to an unsigned long.
+ * Convert an expression of the following forms to a size_t
  * 	1) A positive decimal number.
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
@@ -345,15 +346,15 @@ c_conv(a, b)
  *	   seperated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  */
-static u_long
+static size_t
 get_bsz(val)
 	char *val;
 {
-	u_long num, t;
+	size_t num, t;
 	char *expr;
 
 	num = strtoul(val, &expr, 0);
-	if (num == ULONG_MAX)			/* Overflow. */
+	if (num == SIZE_T_MAX)			/* Overflow. */
 		err(1, "%s", oper);
 	if (expr == val)			/* No digits. */
 		errx(1, "%s: illegal numeric value", oper);
@@ -396,6 +397,77 @@ get_bsz(val)
 		case 'x':
 			t = num;
 			num *= get_bsz(expr + 1);
+			if (t > num)
+erange:				errx(1, "%s: %s", oper, strerror(ERANGE));
+			break;
+		default:
+			errx(1, "%s: illegal numeric value", oper);
+	}
+	return (num);
+}
+
+/*
+ * Convert an expression of the following forms to an off_t
+ * 	1) A positive decimal number.
+ *	2) A positive decimal number followed by a b (mult by 512).
+ *	3) A positive decimal number followed by a k (mult by 1024).
+ *	4) A positive decimal number followed by a m (mult by 512).
+ *	5) A positive decimal number followed by a w (mult by sizeof int)
+ *	6) Two or more positive decimal numbers (with/without k,b or w).
+ *	   seperated by x (also * for backwards compatibility), specifying
+ *	   the product of the indicated values.
+ */
+static off_t
+get_off(val)
+	char *val;
+{
+	off_t num, t;
+	char *expr;
+
+	num = strtoq(val, &expr, 0);
+	if (num == QUAD_MAX)			/* Overflow. */
+		err(1, "%s", oper);
+	if (expr == val)			/* No digits. */
+		errx(1, "%s: illegal numeric value", oper);
+
+	switch(*expr) {
+	case 'b':
+		t = num;
+		num *= 512;
+		if (t > num)
+			goto erange;
+		++expr;
+		break;
+	case 'k':
+		t = num;
+		num *= 1024;
+		if (t > num)
+			goto erange;
+		++expr;
+		break;
+	case 'm':
+		t = num;
+		num *= 1048576;
+		if (t > num)
+			goto erange;
+		++expr;
+		break;
+	case 'w':
+		t = num;
+		num *= sizeof(int);
+		if (t > num)
+			goto erange;
+		++expr;
+		break;
+	}
+
+	switch(*expr) {
+		case '\0':
+			break;
+		case '*':			/* Backward compatible. */
+		case 'x':
+			t = num;
+			num *= get_off(expr + 1);
 			if (t > num)
 erange:				errx(1, "%s: %s", oper, strerror(ERANGE));
 			break;

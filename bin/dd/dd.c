@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.4 1996/12/14 12:17:49 mickey Exp $	*/
+/*	$OpenBSD: dd.c,v 1.5 1997/02/14 07:05:20 millert Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.4 1996/12/14 12:17:49 mickey Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.5 1997/02/14 07:05:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,11 +78,11 @@ static void setup __P((void));
 IO	in, out;		/* input/output state */
 STAT	st;			/* statistics */
 void	(*cfunc) __P((void));	/* conversion function */
-u_long	cpy_cnt;		/* # of blocks to copy */
+size_t	cpy_cnt;		/* # of blocks to copy */
 u_int	ddflags;		/* conversion options */
-u_int	cbsz;			/* conversion block size */
-u_int	files_cnt = 1;		/* # of files to copy */
-const u_char	*ctab;		/* conversion table */
+size_t	cbsz;			/* conversion block size */
+size_t	files_cnt = 1;		/* # of files to copy */
+const	u_char	*ctab;		/* conversion table */
 
 int
 main(argc, argv)
@@ -172,7 +172,7 @@ setup()
 	 * kinds of output files, tapes, for example.
 	 */
 	if ((ddflags & (C_OF | C_SEEK | C_NOTRUNC)) == (C_OF | C_SEEK))
-		(void)ftruncate(out.fd, (off_t)out.offset * out.dbsz);
+		(void)ftruncate(out.fd, out.offset * out.dbsz);
 
 	/*
 	 * If converting case at the same time as another conversion, build a
@@ -227,7 +227,8 @@ getfdtype(io)
 static void
 dd_in()
 {
-	int flags, n;
+	int flags;
+	ssize_t n;
 
 	for (flags = ddflags;;) {
 		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
@@ -240,9 +241,9 @@ dd_in()
 		 */
 		if ((flags & (C_NOERROR|C_SYNC)) == (C_NOERROR|C_SYNC))
 			if (flags & (C_BLOCK|C_UNBLOCK))
-				memset(in.dbp, ' ', in.dbsz);
+				(void)memset(in.dbp, ' ', in.dbsz);
 			else
-				memset(in.dbp, 0, in.dbsz);
+				(void)memset(in.dbp, 0, in.dbsz);
 
 		n = read(in.fd, in.dbp, in.dbsz);
 		if (n == 0) {
@@ -333,7 +334,7 @@ dd_close()
 	else if (cfunc == unblock)
 		unblock_close();
 	if (ddflags & C_OSYNC && out.dbcnt < out.dbsz) {
-		memset(out.dbp, 0, out.dbsz - out.dbcnt);
+		(void)memset(out.dbp, 0, out.dbsz - out.dbcnt);
 		out.dbcnt = out.dbsz;
 	}
 	if (out.dbcnt)
@@ -345,7 +346,8 @@ dd_out(force)
 	int force;
 {
 	static int warned;
-	int cnt, n, nw;
+	size_t cnt, n;
+	ssize_t nw;
 	u_char *outp;
 
 	/*
@@ -401,6 +403,6 @@ dd_out(force)
 
 	/* Reassemble the output block. */
 	if (out.dbcnt)
-		memmove(out.db, out.dbp - out.dbcnt, out.dbcnt);
+		(void)memmove(out.db, out.dbp - out.dbcnt, out.dbcnt);
 	out.dbp = out.db + out.dbcnt;
 }

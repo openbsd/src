@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1996/06/23 14:19:48 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1997/02/14 07:05:21 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
@@ -59,10 +59,10 @@ void unblock_close __P((void));
 extern IO in, out;
 extern STAT st;
 extern void (*cfunc)();
-extern u_long cpy_cnt;
-extern u_int cbsz;
+extern size_t cpy_cnt;
+extern size_t cbsz;
 extern u_int ddflags;
-extern u_int files_cnt;
+extern size_t files_cnt;
 extern const u_char *ctab;
 extern const u_char a2e_32V[], a2e_POSIX[];
 extern const u_char e2a_32V[], e2a_POSIX[];
