@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.57 2003/07/08 21:12:09 mickey Exp $
+#	$OpenBSD: SUN4M,v 1.58 2003/07/16 15:18:07 millert Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -114,6 +114,10 @@ lebuffer0	at sbus0				# sun4m SBus
 lebuffer*	at sbus?				# sun4m SBus
 le0	at lebuffer0					#
 le*	at lebuffer?					#
+
+# Additional SBus LANCE devices - unbuffered
+le0     at sbus0
+le*     at sbus?
 
 # HappyMeal ethernet
 hme*	at sbus?
