@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.99 2002/12/17 21:54:25 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.100 2002/12/17 22:46:31 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -116,9 +116,12 @@ $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
 	.block	TF_PHYS		/* XXX must be aligned to 64 */
 
 	.globl	intrcnt, eintrcnt, intrnames, eintrnames
+	.export	intrcnt, data
 intrcnt
 	.block	16 * 4
+	.export	eintrcnt, data
 eintrcnt
+	.export	intrnames, data
 intrnames
 	.asciz	"spur"
 	.asciz	"lev1"
@@ -136,6 +139,7 @@ intrnames
 	.asciz	"lev13"
 	.asciz	"lev14"
 	.asciz	"lev15"
+	.export	eintrnames, data
 eintrnames
 	.export netisr, data
 	.align 16
