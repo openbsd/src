@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.27 1999/11/22 21:02:39 markus Exp $
+.\" $Id: sshd.8,v 1.28 2000/01/04 00:08:00 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -320,6 +320,10 @@ Specifies what local address
 .Nm
 should listen on.
 The default is to listen to all local addresses.
+Multiple options of this type are permitted.
+Additionally, the
+.Cm Ports
+options must precede this option.
 .It Cm LoginGraceTime
 The server disconnects after this time if the user has not
 successfully logged in.  If the value is 0, there is no time limit.
@@ -365,6 +369,7 @@ normally not allowed).
 Specifies the port number that
 .Nm
 listens on.  The default is 22.
+Multiple options of this type are permitted.
 .It Cm PrintMotd
 Specifies whether
 .Nm
