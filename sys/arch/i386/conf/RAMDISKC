@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.36 2004/05/08 05:11:00 grange Exp $
+#	$OpenBSD: RAMDISKC,v 1.37 2004/05/11 04:00:46 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -268,7 +268,7 @@ nsphyter*	at mii? phy ?			# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
-#mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
+mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
 dcphy*	at mii? phy ?				# Digital Clone PHYs
 amphy*	at mii? phy ?				# AMD 79C873 PHYs
 tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
