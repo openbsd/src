@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.20 1999/07/07 04:18:01 kjell Exp $
+.\" $OpenBSD: vpn.8,v 1.21 1999/07/07 06:21:04 kjell Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -67,10 +67,13 @@ manual (symmetric shared secret)
 .Xr photurisd 8
 .El
 .Pp
-At present VPNs between private networks must use manual keying.
+At present VPNs between private (RFC 1597) networks must use
+manual keying, as  
 .Xr photurisd 8
-may only be used in situations where both
-security gateways are within their protected network ranges.
+can only be used if the IP address of the security gateway actually
+falls within the range of addresses being tunnelled to.
+This can clearly never occur if the addresses being tunnelled to
+are non-routable private networks.
 .Ss Generating Manual Keys
 The shared secret symmetric keys used to create a VPN can
 be any hexadecimal value, so long as both sides of the connection use 
@@ -334,12 +337,11 @@ Photuris configuration file
 Firewall configuration file
 .El
 .Sh BUGS
-When using 
 .Xr photurisd 8
-in VPN mode, both of the security gateways IP addresses must fall within
-their protected netranges.
+can not be used in VPN mode unless both of the security gateway IP addresses 
+lie within the network ranges being tunnelled to.
 In situations where the gateway IP is outside the desired netrange, such 
-as with private networks (RFC 1597), manual keying must be used.
+as with private (RFC 1597) networks, manual keying must be used.
 This should be fixed in the next release.
 .Sh SEE ALSO
 .Xr ipsec 4 ,
