@@ -964,8 +964,6 @@ bktr_attach( ATTACH_ARGS )
 	bktr = (bktr_ptr_t)self;
 	unit = bktr->bktr_dev.dv_unit;
 
-	printf("\n");
-
 	/*
 	 * map memory
 	 */
@@ -976,7 +974,7 @@ bktr_attach( ATTACH_ARGS )
 		retval = bus_space_map(pa->pa_memt, bktr->phys_base,
 				       bktr->obmemsz, 0, &bktr->memh);
 	if (retval) {
-		printf("%s: couldn't map memory\n", bktr->bktr_dev.dv_xname);
+		printf(": couldn't map memory\n");
 		return;
 	}
 	bktr->base = (bt848_ptr_t)bktr->memh;
@@ -987,7 +985,7 @@ bktr_attach( ATTACH_ARGS )
 	 */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", bktr->bktr_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -995,17 +993,15 @@ bktr_attach( ATTACH_ARGS )
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
 				      bktr_intr, bktr, bktr->bktr_dev.dv_xname);
 	if (bktr->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-	       bktr->bktr_dev.dv_xname);
-	       if (intrstr != NULL)
-		       printf(" at %s", intrstr);
-	       printf("\n");
-	       return;
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)	
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
 	}
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", bktr->bktr_dev.dv_xname,
-		       intrstr);
+		printf(": %s\n", intrstr);
 #endif /* __OpenBSD__ */
 
 #if defined(__NetBSD__) 
@@ -1068,14 +1064,13 @@ bktr_attach( ATTACH_ARGS )
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	latency = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_LATENCY_TIMER);
 	latency = (latency >> 8) & 0xff;
-	if ( bootverbose ) {
-		if (latency)
-			printf("bktr%d: PCI bus latency is", unit);
-		else
-			printf("bktr%d: PCI bus latency was 0 changing to",
-				unit);
-	}
+
 	if ( !latency ) {
+		if ( bootverbose ) {
+			printf("%s: PCI bus latency was 0 changing to %d",
+			       bktr->bktr_dev.dv_xname, 
+			       BROOKTREE_DEF_LATENCY_VALUE);
+		}
 		latency = BROOKTREE_DEF_LATENCY_VALUE;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 
 			       PCI_LATENCY_TIMER, latency<<8);
@@ -1094,10 +1089,10 @@ bktr_attach( ATTACH_ARGS )
 		latency = BROOKTREE_DEF_LATENCY_VALUE;
 		pci_conf_write(tag, PCI_LATENCY_TIMER,	latency<<8);
 	}
-#endif /* !__NetBSD__  && !__OpenBSD__ */
 	if ( bootverbose ) {
 		printf(" %d.\n", (int) latency);
 	}
+#endif /* !__NetBSD__  && !__OpenBSD__ */
 
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -1122,10 +1117,8 @@ bktr_attach( ATTACH_ARGS )
 		buf = 0;
 #endif
 
-	if ( bootverbose ) {
-		printf("bktr%d: buffer size %d, addr 0x%x\n",
-			unit, BROOKTREE_ALLOC, vtophys(buf));
-	}
+	DPR(("bktr%d: buffer size %d, addr 0x%x\n",
+	    unit, BROOKTREE_ALLOC, vtophys(buf)));
 
 	bktr->bigbuf = buf;
 	bktr->alloc_pages = BROOKTREE_ALLOC_PAGES;
@@ -4500,8 +4493,7 @@ probeCard( bktr_ptr_t bktr, int verbose )
 	bt848 = bktr->base;
 
 	bt848->gpio_out_en = 0;
-	if (bootverbose)
-	    printf("bktr: GPIO is 0x%08x\n", bt848->gpio_data);
+	DPR(("bktr: GPIO is 0x%08x\n", bt848->gpio_data));
 
 #if defined( OVERRIDE_CARD )
 	bktr->card = cards[ (card = OVERRIDE_CARD) ];
@@ -4613,7 +4605,7 @@ checkMSP:
 checkEnd:
 
 	if ( verbose ) {
-		printf( "%s", bktr->card.name );
+		printf( "%s: %s", bktr->bktr_dev.dv_xname, bktr->card.name);
 		if ( bktr->card.tuner )
 			printf( ", %s tuner", bktr->card.tuner->name );
 		if ( bktr->card.dbx )
