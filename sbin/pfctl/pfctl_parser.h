@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.47 2003/02/03 14:51:36 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.48 2003/02/16 14:04:34 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -113,8 +113,8 @@ void	print_binat(struct pf_rule *, int);
 void	print_rdr(struct pf_rule *, int);
 void	print_status(struct pf_status *);
 
-int	 eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
-int	 eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
+int	eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
+int	eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
 
 void	pfctl_begin_table(void);
 void	pfctl_append_addr(char *, int, int);
