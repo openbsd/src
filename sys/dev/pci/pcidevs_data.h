@@ -427,6 +427,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M1531 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1533,
+	    "M1533 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1535,
+	    "M1535 PCI",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
 	    "M1543 PCI-ISA",
 	},
