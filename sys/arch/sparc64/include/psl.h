@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.9 2003/05/16 22:14:13 henric Exp $	*/
+/*	$OpenBSD: psl.h,v 1.10 2003/05/23 02:00:51 henric Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -247,7 +247,7 @@
 
 extern u_int64_t ver;	/* Copy of v9 version register.  We need to read this only once, in locore.s. */
 #ifndef SPLDEBUG
-static __inline void splx(int);
+extern __inline void splx(int);
 #endif
 
 #ifdef DIAGNOSTIC
@@ -340,52 +340,70 @@ stxa_sync(u_int64_t va, u_int64_t asi, u_int64_t val)
 void prom_printf(const char *fmt, ...);
 extern int printspl;
 #define SPLPRINT(x)	if(printspl) { int i=10000000; prom_printf x ; while(i--); }
-#define	SPL(name, newpil) \
-static __inline int name##X(const char *, int); \
-static __inline int name##X(const char *file, int line) \
-{ \
-	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
-	SPLPRINT(("{%s:%d %d=>%d}", file, line, oldpil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
-	return (oldpil); \
+#define	SPL(name, newpil)						\
+extern __inline int name##X(const char *, int);				\
+extern __inline int name##X(const char *file, int line)			\
+{									\
+	u_int64_t oldpil = sparc_rdpr(pil);				\
+	SPLPRINT(("{%s:%d %d=>%d}", file, line, oldpil, newpil));	\
+	sparc_wrpr(pil, newpil, 0);					\
+	return (oldpil);						\
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static __inline int name##X(const char *, int); \
-static __inline int name##X(const char * file, int line) \
-{ \
-	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
-	if (newpil <= oldpil) \
-		return oldpil; \
-	SPLPRINT(("{%s:%d %d->!d}", file, line, oldpil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
-	return (oldpil); \
+extern __inline int name##X(const char *, int);				\
+extern __inline int name##X(const char * file, int line)		\
+{									\
+	int oldpil = sparc_rdpr(pil);					\
+	if (__predict_false((u_int64_t)newpil <= oldpil))		\
+		return (oldpil);					\
+	SPLPRINT(("{%s:%d %d->!d}", file, line, oldpil, newpil));	\
+	sparc_wrpr(pil, newpil, 0);					\
+	return (oldpil);						\
 }
 
 #else
 #define SPLPRINT(x)	
-#define	SPL(name, newpil) \
-static __inline int name(void); \
-static __inline int name() \
-{ \
-	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
-	return (oldpil); \
+#define	SPL(name, newpil)						\
+extern __inline int name(void);						\
+extern __inline int name()						\
+{									\
+	int oldpil;							\
+	__asm __volatile("    rdpr %%pil, %0		\n"		\
+			 "    wrpr %%g0, %1, %%pil	\n"		\
+	    : "=&r" (oldpil)						\
+	    : "n" (newpil)						\
+	    : "%g0");							\
+	return (oldpil);						\
 }
 /* A non-priority-decreasing version of SPL */
-#define	SPLHOLD(name, newpil) \
-static __inline int name(void); \
-static __inline int name() \
-{ \
-	int oldpil; \
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
-	if (newpil <= oldpil) \
-		return oldpil; \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
-	return (oldpil); \
+#define	SPLHOLD(name, newpil)						\
+extern __inline int name(void);						\
+extern __inline int name()						\
+{									\
+	int oldpil;							\
+									\
+	if (newpil <= 1) {						\
+		__asm __volatile("    rdpr	%%pil, %0	\n"	\
+				 "    brnz,pn	%0, 1f		\n"	\
+				 "     nop			\n"	\
+				 "    wrpr	%%g0, %1, %%pil	\n"	\
+				 "1:				\n"	\
+	    : "=&r" (oldpil)						\
+	    : "I" (newpil)						\
+	    : "%g0");							\
+	} else {							\
+		__asm __volatile("    rdpr	%%pil, %0	\n"	\
+				 "    cmp	%0, %1 - 1	\n"	\
+				 "    bgu,pn	%%xcc, 1f	\n"	\
+				 "     nop			\n"	\
+				 "    wrpr	%%g0, %1, %%pil	\n"	\
+				 "1:				\n"	\
+	    : "=&r" (oldpil)						\
+	    : "I" (newpil)						\
+	    : "cc");							\
+	}								\
+	return (oldpil);						\
 }
 #endif
 
@@ -443,20 +461,8 @@ SPLHOLD(splhigh, PIL_HIGH)
 
 /* splx does not have a return value */
 #ifdef SPLDEBUG
-/* Keep gcc happy -- reduce warnings */
-#if 0
-static __inline void splx(newpil)
-	int newpil;
-{
-	int pil;
 
-	__asm __volatile("rdpr %%pil,%0" : "=r" (pil));
-	SPLPRINT(("{%d->%d}", pil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
-}
-#endif
-
-#define	spl0()	spl0X(__FILE__, __LINE__)
+#define	spl0()		spl0X(__FILE__, __LINE__)
 #define	spllowersoftclock() spllowersoftclockX(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
 #define	splausoft()	splausoftX(__FILE__, __LINE__)
@@ -477,20 +483,18 @@ static __inline void splx(newpil)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
 
-static __inline void splxX(int, const char *, int);
-static __inline void splxX(newpil, file, line)
-	int newpil, line;
-	const char *file;
+extern __inline void splxX(u_int64_t, const char *, int);
+extern __inline void
+splxX(u_int64_t newpil, const char *file, int line)
 #else
-static __inline void splx(newpil)
-	int newpil;
+extern __inline void splx(int newpil)
 #endif
 {
-	int pil;
-
-	__asm __volatile("rdpr %%pil,%0" : "=r" (pil));
-	SPLPRINT(("{%d->%d}", pil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
+#ifdef SPLDEBUG
+	u_int64_t oldpil = sparc_rdpr(pil);
+	SPLPRINT(("{%d->%d}", oldpil, newpil));
+#endif
+	sparc_wrpr(pil, newpil, 0);
 }
 #endif /* KERNEL && !_LOCORE */
 
