@@ -1,5 +1,5 @@
 /* Subroutines shared by all languages that are variants of C.
-   Copyright (C) 1992, 93-98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-99, 2000 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -54,7 +54,7 @@ int skip_evaluation;
 enum attrs {A_PACKED, A_NOCOMMON, A_COMMON, A_NORETURN, A_CONST, A_T_UNION,
 	    A_NO_CHECK_MEMORY_USAGE, A_NO_INSTRUMENT_FUNCTION,
 	    A_CONSTRUCTOR, A_DESTRUCTOR, A_MODE, A_SECTION, A_ALIGNED,
-	    A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS};
+	    A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS, A_NONNULL};
 
 enum format_type { printf_format_type, scanf_format_type,
 		   strftime_format_type };
@@ -63,9 +63,6 @@ static void declare_hidden_char_array	PROTO((const char *, const char *));
 static void add_attribute		PROTO((enum attrs, const char *,
 					       int, int, int));
 static void init_attributes		PROTO((void));
-static void record_function_format	PROTO((tree, tree, enum format_type,
-					       int, int));
-static void record_international_format	PROTO((tree, tree, int));
 static tree c_find_base_decl            PROTO((tree));
 static int default_valid_lang_attribute PROTO ((tree, tree, tree, tree));
 
@@ -391,6 +388,7 @@ init_attributes ()
   add_attribute (A_ALIGNED, "aligned", 0, 1, 0);
   add_attribute (A_FORMAT, "format", 3, 3, 1);
   add_attribute (A_FORMAT_ARG, "format_arg", 1, 1, 1);
+  add_attribute (A_NONNULL, "nonnull", 0, -1, 1);
   add_attribute (A_WEAK, "weak", 0, 0, 1);
   add_attribute (A_ALIAS, "alias", 1, 1, 1);
   add_attribute (A_NO_INSTRUMENT_FUNCTION, "no_instrument_function", 0, 0, 1);
@@ -416,6 +414,28 @@ default_valid_lang_attribute (attr_name, attr_args, decl, type)
 int (*valid_lang_attribute) PROTO ((tree, tree, tree, tree))
      = default_valid_lang_attribute;
 
+typedef struct function_attribute_info
+{
+  struct function_attribute_info *next;
+  enum attrs type;
+  /* data added there */
+} function_attribute_info;
+
+typedef struct function_attributes_info
+{
+  struct function_attributes_info *next;  /* next structure on the list */
+  tree name;			/* identifier such as "printf" */
+  tree assembler_name;		/* optional mangled identifier (for C++) */
+  function_attribute_info *first;
+} function_attributes_info;
+
+static function_attribute_info *new_function_format 
+  PROTO((enum format_type, int, int));
+static function_attribute_info *new_international_format PROTO((int));
+static function_attribute_info *new_nonnull_info PROTO((int));
+static function_attributes_info *insert_function_attribute
+  PROTO((function_attributes_info *, tree, tree, function_attribute_info *));
+
 /* Process the attributes listed in ATTRIBUTES and PREFIX_ATTRIBUTES
    and install them in NODE, which is either a DECL (including a TYPE_DECL)
    or a TYPE.  PREFIX_ATTRIBUTES can appear after the declaration specifiers
@@ -428,6 +448,7 @@ decl_attributes (node, attributes, prefix_attributes)
   tree decl = 0, type = 0;
   int is_type = 0;
   tree a;
+  function_attributes_info *list = NULL;
 
   if (attrtab_idx == 0)
     init_attributes ();
@@ -461,6 +482,7 @@ decl_attributes (node, attributes, prefix_attributes)
       tree args = TREE_VALUE (a);
       int i;
       enum attrs id;
+      int length;
 
       for (i = 0; i < attrtab_idx; i++)
 	if (attrtab[i].name == name)
@@ -482,12 +504,16 @@ decl_attributes (node, attributes, prefix_attributes)
 		   IDENTIFIER_POINTER (name));
 	  continue;
 	}
-      else if (list_length (args) < attrtab[i].min
-	       || list_length (args) > attrtab[i].max)
-	{
-	  error ("wrong number of arguments specified for `%s' attribute",
-		 IDENTIFIER_POINTER (name));
-	  continue;
+      else
+        {
+	  length = list_length (args);
+          if (length < attrtab[i].min 
+	       || (attrtab[i].max != -1 && length > attrtab[i].max))
+	    {
+	      error ("wrong number of arguments specified for `%s' attribute",
+		     IDENTIFIER_POINTER (name));
+	      continue;
+	    }
 	}
 
       id = attrtab[i].id;
@@ -810,9 +836,9 @@ decl_attributes (node, attributes, prefix_attributes)
 		  }
 	      }
 
-	    record_function_format (DECL_NAME (decl),
-				    DECL_ASSEMBLER_NAME (decl),
-				    format_type, format_num, first_arg_num);
+	    list = insert_function_attribute (list, DECL_NAME (decl),
+	      DECL_ASSEMBLER_NAME (decl),
+	      new_function_format (format_type, format_num, first_arg_num));
 	    break;
 	  }
 
@@ -874,11 +900,94 @@ decl_attributes (node, attributes, prefix_attributes)
 		continue;
 	      }
 
-	    record_international_format (DECL_NAME (decl),
-					 DECL_ASSEMBLER_NAME (decl),
-					 format_num);
+	    list = insert_function_attribute (list, DECL_NAME (decl),
+	      DECL_ASSEMBLER_NAME (decl),
+	      new_international_format (format_num));
 	    break;
 	  }
+
+	case A_NONNULL:
+	  if (TREE_CODE (decl) != FUNCTION_DECL)
+	    {
+	      error_with_decl (decl,
+		       "nonnull attribute specified for non-function `%s'");
+	      continue;
+	    }
+      
+      	  /* No argument number: assume a full prototype, all pointers
+	     should be non null.  */
+	  if (!args)
+	    {
+	      tree argument;
+	      int arg_num;
+
+	      argument = TYPE_ARG_TYPES (type);
+	      if (!argument)
+	        {
+		  error_with_decl (decl, 
+		"nonnull attribute without arguments on a non-prototype `%s'");
+		  continue;
+		}
+	      for (arg_num = 1; ; ++arg_num)
+		{
+		  if (argument == 0)
+		    break;
+		  if (TREE_CODE (TREE_VALUE (argument)) == POINTER_TYPE)
+		    list = insert_function_attribute (list, 
+			    DECL_NAME (decl),
+			    DECL_ASSEMBLER_NAME (decl), 
+			    new_nonnull_info (arg_num));
+		  argument = TREE_CHAIN (argument);
+		}
+	      break;
+	    }
+
+	  for (; args; args = TREE_CHAIN (args))
+	    {
+	      tree argument;
+	      tree arg_num_expr = TREE_VALUE (args);
+	      int arg_num, ck_num;
+
+	    /* Strip any conversions from the arg number
+	       and verify they are constants.  */
+	    while (TREE_CODE (arg_num_expr) == NOP_EXPR
+		   || TREE_CODE (arg_num_expr) == CONVERT_EXPR
+		   || TREE_CODE (arg_num_expr) == NON_LVALUE_EXPR)
+	      arg_num_expr = TREE_OPERAND (arg_num_expr, 0);
+
+
+	    if (TREE_CODE (arg_num_expr) != INTEGER_CST)
+	      {
+		error ("nonnull argument has non-constant operand number");
+		continue;
+	      }
+
+	    arg_num = TREE_INT_CST_LOW (arg_num_expr);
+
+	    /* If a parameter list is specified, verify that the arg_num
+	       argument is actually a pointer, in case the attribute
+	       is in error.  */
+	    argument = TYPE_ARG_TYPES (type);
+	    if (argument)
+	      {
+		for (ck_num = 1; ; ++ck_num)
+		  {
+		    if (argument == 0 || ck_num == arg_num)
+		      break;
+		    argument = TREE_CHAIN (argument);
+		  }
+		if (! argument
+		    || TREE_CODE (TREE_VALUE (argument)) != POINTER_TYPE)
+		  {
+		    error ("nonnull argument not a pointer type");
+		    continue;
+		  }
+	      }
+
+	    list = insert_function_attribute (list, DECL_NAME (decl),
+	      DECL_ASSEMBLER_NAME (decl), new_nonnull_info (arg_num));
+	    }
+	  break;
 
 	case A_WEAK:
 	  declare_weak (decl);
@@ -1144,29 +1253,58 @@ static format_char_info time_char_table[] = {
   { NULL,		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
+
+static function_attributes_info *function_attributes_list = NULL;
+
+/* Specialized flavors of function_attribute_info.  */
+
 typedef struct function_format_info
 {
-  struct function_format_info *next;  /* next structure on the list */
-  tree name;			/* identifier such as "printf" */
-  tree assembler_name;		/* optional mangled identifier (for C++) */
+  struct function_attribute_info *next;
+  enum attrs type;
   enum format_type format_type;	/* type of format (printf, scanf, etc.) */
   int format_num;		/* number of format argument */
   int first_arg_num;		/* number of first arg (zero for varargs) */
 } function_format_info;
 
-static function_format_info *function_format_list = NULL;
-
 typedef struct international_format_info
 {
-  struct international_format_info *next;  /* next structure on the list */
-  tree name;			/* identifier such as "gettext" */
-  tree assembler_name;		/* optional mangled identifier (for C++) */
+  struct function_attribute_info *next;
+  enum attrs type;
   int format_num;		/* number of format argument */
 } international_format_info;
 
-static international_format_info *international_format_list = NULL;
+typedef struct nonnull_info
+{
+  struct function_attribute_info *next;
+  enum attrs type;
+  int argument_num;		/* number of non-null argument */
+} nonnull_info;
+
+static function_attribute_info *find_function_attribute
+  PROTO((tree, tree, enum attrs));
 
 static void check_format_info		PROTO((function_format_info *, tree));
+static void check_nonnull_info 		PROTO((nonnull_info *, tree));
+
+/* Helper function for setting up initial attribute for printf-like
+   functions, since the format argument is also non-null checked for
+   those.  */
+
+static void
+add_function_format (name, type, arg1, arg2)
+     const char *name;
+     enum format_type type;
+     int arg1;
+     int arg2;
+{
+  tree t = get_identifier (name);
+  insert_function_attribute (insert_function_attribute (NULL, t, NULL_TREE,
+                               new_function_format(type, arg1, arg2)),
+			     t,
+			     NULL_TREE,
+			     new_nonnull_info (arg1));
+}
 
 /* Initialize the table of functions to perform format checking on.
    The ANSI functions are always checked (whether <stdio.h> is
@@ -1181,109 +1319,136 @@ static void check_format_info		PROTO((function_format_info *, tree));
 void
 init_function_format_info ()
 {
-  record_function_format (get_identifier ("printf"), NULL_TREE,
-			  printf_format_type, 1, 2);
-  record_function_format (get_identifier ("fprintf"), NULL_TREE,
-			  printf_format_type, 2, 3);
-  record_function_format (get_identifier ("sprintf"), NULL_TREE,
-			  printf_format_type, 2, 3);
-  record_function_format (get_identifier ("scanf"), NULL_TREE,
-			  scanf_format_type, 1, 2);
-  record_function_format (get_identifier ("fscanf"), NULL_TREE,
-			  scanf_format_type, 2, 3);
-  record_function_format (get_identifier ("sscanf"), NULL_TREE,
-			  scanf_format_type, 2, 3);
-  record_function_format (get_identifier ("vprintf"), NULL_TREE,
-			  printf_format_type, 1, 0);
-  record_function_format (get_identifier ("vfprintf"), NULL_TREE,
-			  printf_format_type, 2, 0);
-  record_function_format (get_identifier ("vsprintf"), NULL_TREE,
-			  printf_format_type, 2, 0);
-  record_function_format (get_identifier ("strftime"), NULL_TREE,
-			  strftime_format_type, 3, 0);
-
-  record_international_format (get_identifier ("gettext"), NULL_TREE, 1);
-  record_international_format (get_identifier ("dgettext"), NULL_TREE, 2);
-  record_international_format (get_identifier ("dcgettext"), NULL_TREE, 2);
+  add_function_format ("printf", printf_format_type, 1, 2);
+  add_function_format ("fprintf", printf_format_type, 2, 3);
+  add_function_format ("sprintf", printf_format_type, 2, 3);
+  add_function_format ("scanf", scanf_format_type, 1, 2);
+  add_function_format ("fscanf", scanf_format_type, 2, 3);
+  add_function_format ("sscanf", scanf_format_type, 2, 3);
+  add_function_format ("vprintf", printf_format_type, 1, 0);
+  add_function_format ("vfprintf", printf_format_type, 2, 0);
+  add_function_format ("vsprintf", printf_format_type, 2, 0);
+  add_function_format ("strftime", strftime_format_type, 3, 0);
+  insert_function_attribute (NULL, get_identifier ("gettext"), NULL_TREE,
+    new_international_format (1));
+  insert_function_attribute (NULL, get_identifier ("dgettext"), NULL_TREE,
+    new_international_format (2));
+  insert_function_attribute (NULL, get_identifier ("dcgettext"), NULL_TREE, 
+    new_international_format (2));
 }
 
-/* Record information for argument format checking.  FUNCTION_IDENT is
-   the identifier node for the name of the function to check (its decl
-   need not exist yet).
-   FORMAT_TYPE specifies the type of format checking.  FORMAT_NUM is the number
+/* Create information record for argument format checking.  FORMAT_TYPE 
+   specifies the type of format checking.  FORMAT_NUM is the number
    of the argument which is the format control string (starting from 1).
    FIRST_ARG_NUM is the number of the first actual argument to check
    against the format string, or zero if no checking is not be done
    (e.g. for varargs such as vfprintf).  */
 
-static void
-record_function_format (name, assembler_name, format_type,
+static function_attribute_info *
+new_function_format (format_type,
 			format_num, first_arg_num)
-      tree name;
-      tree assembler_name;
       enum format_type format_type;
       int format_num;
       int first_arg_num;
 {
   function_format_info *info;
 
-  /* Re-use existing structure if it's there.  */
-
-  for (info = function_format_list; info; info = info->next)
-    {
-      if (info->name == name && info->assembler_name == assembler_name)
-	break;
-    }
-  if (! info)
-    {
-      info = (function_format_info *) xmalloc (sizeof (function_format_info));
-      info->next = function_format_list;
-      function_format_list = info;
-
-      info->name = name;
-      info->assembler_name = assembler_name;
-    }
-
+  info = (function_format_info *) xmalloc (sizeof (function_format_info));
+  info->next = NULL;
+  info->type = A_FORMAT;
   info->format_type = format_type;
   info->format_num = format_num;
   info->first_arg_num = first_arg_num;
+  return (function_attribute_info *) (info);
 }
 
-/* Record information for the names of function that modify the format
+/* Create information record for functions that modify the format
    argument to format functions.  FUNCTION_IDENT is the identifier node for
    the name of the function (its decl need not exist yet) and FORMAT_NUM is
    the number of the argument which is the format control string (starting
    from 1).  */
 
-static void
-record_international_format (name, assembler_name, format_num)
-      tree name;
-      tree assembler_name;
+static function_attribute_info *
+new_international_format (format_num)
       int format_num;
 {
   international_format_info *info;
 
-  /* Re-use existing structure if it's there.  */
-
-  for (info = international_format_list; info; info = info->next)
-    {
-      if (info->name == name && info->assembler_name == assembler_name)
-	break;
-    }
-
-  if (! info)
-    {
-      info
-	= (international_format_info *)
+  info = (international_format_info *)
 	  xmalloc (sizeof (international_format_info));
-      info->next = international_format_list;
-      international_format_list = info;
-
-      info->name = name;
-      info->assembler_name = assembler_name;
-    }
-
+  info->next = NULL;
+  info->type = A_FORMAT_ARG;
   info->format_num = format_num;
+  return (function_attribute_info *) (info);
+}
+
+/* Create information record for functions with non-null parameters.
+   ARGUMENT_NUM is the number of the argument to check.  */
+
+static function_attribute_info *
+new_nonnull_info (argument_num)
+      int argument_num;
+{
+  nonnull_info *info;
+
+  info = (nonnull_info *)
+	  xmalloc (sizeof (nonnull_info));
+  info->next = NULL;
+  info->type = A_NONNULL;
+  info->argument_num = argument_num;
+  return (function_attribute_info *) (info);
+}
+
+/* Record attribute information for the names of function.  Used as:
+ * newlist = insert_function_attribute (old, name, asm, new_xxx (...) );
+ * In reality, newlist == old if old != NULL, but clients don't need to
+ * depend on that.
+ */
+
+static function_attributes_info *
+insert_function_attribute (list, name, assembler_name, info)
+	function_attributes_info *list;
+	tree name;
+	tree assembler_name;
+	function_attribute_info *info;
+{
+  if (! list)
+  /* Re-use existing structure if it's there.  */
+    {
+      for (list = function_attributes_list; list; list = list->next)
+	{
+	  if (list->name == name && list->assembler_name == assembler_name)
+	    {
+	      function_attribute_info *i, *j;
+
+	      /* Remove existing attributes.  Maybe we should have a flag
+	       * to mark compiler built-in attributes ?  Or always warn if 
+	       * we override existing attributes ?
+	       */
+	      for (i = list->first; i; i = j)
+	        {
+		  j = i->next;
+		  free (i);
+		}
+	      list->first = NULL;
+	      break;
+	    }
+	}
+    }
+  if (! list)
+    {
+      list = (function_attributes_info *) 
+             xmalloc (sizeof (function_format_info));
+      list->next = function_attributes_list;
+      function_attributes_list = list;
+
+      list->name = name;
+      list->assembler_name = assembler_name;
+      list->first = NULL;
+    }
+  info->next = list->first;
+  list->first = info;
+  return list;
 }
 
 static void
@@ -1304,19 +1469,140 @@ check_function_format (name, assembler_name, params)
      tree assembler_name;
      tree params;
 {
-  function_format_info *info;
+  function_attributes_info *info;
+  function_attribute_info *ck;
 
-  /* See if this function is a format function.  */
-  for (info = function_format_list; info; info = info->next)
+  /* See if this function has attributes.  */
+  for (info = function_attributes_list; info; info = info->next)
     {
       if (info->assembler_name
 	  ? (info->assembler_name == assembler_name)
 	  : (info->name == name))
 	{
-	  /* Yup; check it.  */
-	  check_format_info (info, params);
+	  /* Yup; check those attributes.  */
+	  for (ck = info->first; ck; ck = ck->next)
+	    {
+	      switch (ck->type)
+	        {
+		  case A_FORMAT:
+		    check_format_info ((function_format_info *)ck, params);
+		    break;
+		  case A_NONNULL:
+		    check_nonnull_info ((nonnull_info *)ck, params);
+		    break;
+		}
+	    }
 	  break;
 	}
+    }
+}
+
+/* Find a function attribute corresponding to given function names, and a
+   given attribute TYPE.  */
+ 
+static function_attribute_info *
+find_function_attribute(name, assembler_name, type)
+	tree name;
+	tree assembler_name;
+	enum attrs type;
+{
+   function_attributes_info *info;
+   function_attribute_info *ck;
+
+   ck = NULL;
+
+   for (info = function_attributes_list; info; info = info->next)
+      if (info->assembler_name
+	  ? (info->assembler_name == assembler_name)
+	  : (info->name == name))
+        {
+	  for (ck = info->first; ck; ck = ck->next)
+	    {
+	      if (ck->type == type)
+		break;
+	    }
+	  break;
+	}
+    return ck;
+}
+
+/* Reduce an argument pointer to handle some non-trivial common cases.  */
+
+static tree
+reduce_pointer (arg)
+	tree arg;
+{
+  /* We can only check the argument if it's a string constant.  */
+  while (TREE_CODE (arg) == NOP_EXPR)
+    arg = TREE_OPERAND (arg, 0); /* strip coercion */
+
+  if (TREE_CODE (arg) == CALL_EXPR
+      && TREE_CODE (TREE_OPERAND (arg, 0)) == ADDR_EXPR
+      && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (arg, 0), 0))
+	  == FUNCTION_DECL))
+    {
+      tree function = TREE_OPERAND (TREE_OPERAND (arg, 0), 0);
+
+      /* See if this is a call to a known internationalization function
+	 that modifies the format arg.  */
+      international_format_info *info;
+
+      info = (international_format_info *) 
+        find_function_attribute (DECL_NAME (function),
+	                         DECL_ASSEMBLER_NAME (function),
+				 A_FORMAT_ARG);
+      if (info)
+	  {
+	    tree inner_args;
+	    int i;
+
+	    for (inner_args = TREE_OPERAND (arg, 1), i = 1;
+		 inner_args != 0;
+		 inner_args = TREE_CHAIN (inner_args), i++)
+	      if (i == info->format_num)
+		{
+		  arg = TREE_VALUE (inner_args);
+
+		  while (TREE_CODE (arg) == NOP_EXPR)
+		    arg = TREE_OPERAND (arg, 0);
+		}
+	  }
+    }
+    return arg;
+}
+
+/* Check the argument list for non-null pointers.
+   INFO points to the nonnull_info structure.
+   PARAMS is the list of argument values.  */
+
+static void
+check_nonnull_info (info, params)
+     nonnull_info *info;
+     tree params;
+{
+  tree arg;
+  int arg_num;
+
+  /* Skip to checked argument.  If the argument isn't available, there's
+     no work for us to do; prototype checking will catch the problem.  */
+  for (arg_num = 1; ; ++arg_num)
+    {
+      if (params == 0)
+	return;
+      if (arg_num == info->argument_num)
+	break;
+      params = TREE_CHAIN (params);
+    }
+  arg = TREE_VALUE (params);
+  if (arg == 0)
+    return;
+
+  arg = reduce_pointer (arg);
+
+  if (integer_zerop (arg))
+    {
+      warning ("null argument #%d", arg_num);
+      return;
     }
 }
 
@@ -1360,47 +1646,8 @@ check_format_info (info, params)
   if (format_tree == 0)
     return;
 
-  /* We can only check the format if it's a string constant.  */
-  while (TREE_CODE (format_tree) == NOP_EXPR)
-    format_tree = TREE_OPERAND (format_tree, 0); /* strip coercion */
+  format_tree = reduce_pointer (format_tree);
 
-  if (TREE_CODE (format_tree) == CALL_EXPR
-      && TREE_CODE (TREE_OPERAND (format_tree, 0)) == ADDR_EXPR
-      && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (format_tree, 0), 0))
-	  == FUNCTION_DECL))
-    {
-      tree function = TREE_OPERAND (TREE_OPERAND (format_tree, 0), 0);
-
-      /* See if this is a call to a known internationalization function
-	 that modifies the format arg.  */
-      international_format_info *info;
-
-      for (info = international_format_list; info; info = info->next)
-	if (info->assembler_name
-	    ? (info->assembler_name == DECL_ASSEMBLER_NAME (function))
-	    : (info->name == DECL_NAME (function)))
-	  {
-	    tree inner_args;
-	    int i;
-
-	    for (inner_args = TREE_OPERAND (format_tree, 1), i = 1;
-		 inner_args != 0;
-		 inner_args = TREE_CHAIN (inner_args), i++)
-	      if (i == info->format_num)
-		{
-		  format_tree = TREE_VALUE (inner_args);
-
-		  while (TREE_CODE (format_tree) == NOP_EXPR)
-		    format_tree = TREE_OPERAND (format_tree, 0);
-		}
-	  }
-    }
-
-  if (integer_zerop (format_tree))
-    {
-      warning ("null format string");
-      return;
-    }
   if (TREE_CODE (format_tree) != ADDR_EXPR)
     return;
   format_tree = TREE_OPERAND (format_tree, 0);
