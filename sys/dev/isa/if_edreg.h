@@ -153,6 +153,26 @@
 #define	ED_WD790_ICR_EIL	0x01	/* enable interrupts */
 
 /*
+ * REV/IOPA Revision / I/O Pipe register for the 83C79X
+ */
+#define ED_WD790_REV	7
+
+#define ED_WD790	0x20
+#define ED_WD795	0x40
+
+/*
+ * 79X RAM Address Register (RAR)
+ *      Enabled with SWH bit=1 in HWR register
+ */
+
+#define ED_WD790_RAR	0x0b
+
+#define ED_WD790_RAR_SZ8	0x00	/* 8k memory buffer */
+#define ED_WD790_RAR_SZ16	0x10	/* 16k memory buffer */
+#define ED_WD790_RAR_SZ32	0x20	/* 32k memory buffer */
+#define ED_WD790_RAR_SZ64	0x30	/* 64k memory buffer */
+
+/*
  * General Control Register (GCR)
  * Eanbled with SWH bit == 1 in HWR register
  */

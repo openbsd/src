@@ -310,14 +310,31 @@ ed_probe_WD80x3(sc, cf, ia)
 		isa16bit = 1;
 		break;
 	case ED_TYPE_SMC8216C:
-		sc->type_str = "SMC8216/SMC8216C";
-		memsize = 16384;
-		isa16bit = 1;
-		sc->is790 = 1;
-		break;
 	case ED_TYPE_SMC8216T:
-		sc->type_str = "SMC8216T";
-		memsize = 16384;
+		sc->type_str = (sc->type == ED_TYPE_SMC8216C) ?
+				"SMC8216/SMC8216C" : "SMC8216T";
+		outb(sc->asic_addr + ED_WD790_HWR,
+			inb(sc->asic_addr + ED_WD790_HWR) | ED_WD790_HWR_SWH);
+		switch (inb(sc->asic_addr + ED_WD790_RAR) & ED_WD790_RAR_SZ64) {
+		case ED_WD790_RAR_SZ64:
+			memsize = 65536;
+			break;
+		case ED_WD790_RAR_SZ32:
+			memsize = 32768;
+			break;
+		case ED_WD790_RAR_SZ16:
+			memsize = 16384;
+			break;
+		case ED_WD790_RAR_SZ8:
+			/* 8216 has 16K shared mem -- 8416 has 8K */
+			sc->type_str = (sc->type == ED_TYPE_SMC8216C) ?
+				"SMC8416C/SMC8416BT" : "SMC8416T";
+			memsize = 8192;
+			break;
+		}
+		outb(sc->asic_addr + ED_WD790_HWR,
+			inb(sc->asic_addr + ED_WD790_HWR) & ~ED_WD790_HWR_SWH);
+
 		isa16bit = 1;
 		sc->is790 = 1;
 		break;
