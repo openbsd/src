@@ -1,5 +1,5 @@
-/*	$OpenBSD: attribute.c,v 1.5 1999/02/26 03:33:02 niklas Exp $	*/
-/*	$EOM: attribute.c,v 1.7 1999/02/25 11:38:44 niklas Exp $	*/
+/*	$OpenBSD: attribute.c,v 1.6 1999/03/31 23:46:11 niklas Exp $	*/
+/*	$EOM: attribute.c,v 1.8 1999/03/31 23:31:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -63,7 +63,12 @@ attribute_set_var (u_int8_t *buf, u_int16_t type, u_int8_t *value,
   return buf + ISAKMP_ATTR_VALUE_OFF + len;
 }
 
-/* Validate an area of ISAKMP attributes.  */
+/*
+ * Execute a function FUNC taking an attribute type, value, length and ARG
+ * as arguments for each attribute in the area of ISAKMP attributes located
+ * at BUF, sized SZ.  If any invocation fails, the processing aborts with a
+ * -1 return value.  If all goes well return zero.
+ */
 int
 attribute_map (u_int8_t *buf, size_t sz,
 	       int (*func) (u_int16_t, u_int8_t *, u_int16_t, void *),
