@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2001/03/07 02:00:08 miod Exp $
+#	$OpenBSD: GENERIC,v 1.16 2001/03/08 03:37:18 itojun Exp $
 
 machine		mvme88k 
 
@@ -85,6 +85,3 @@ cd*	at scsibus? target ? lun ?
 # ------------------------------ pseudo devices ------------------------
 #pseudo-device	raid		4
 pseudo-device	rd 2
-# for IPv6
-pseudo-device	gif		4
-#pseudo-device	faith		1

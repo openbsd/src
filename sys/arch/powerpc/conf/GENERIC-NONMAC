@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-NONMAC,v 1.1 2000/08/08 01:07:52 deraadt Exp $
+#	$OpenBSD: GENERIC-NONMAC,v 1.2 2001/03/08 03:37:19 itojun Exp $
 #
 # PPC GENERIC config file
 #
@@ -77,7 +77,3 @@ ofrtc*		at openfirm?
 ofdisk*		at openfirm?	 # used for floppy support
 #ofnet*		at openfirm?
 #ofcons*	at openfirm?
-
-# for IPv6
-pseudo-device	gif		4
-#pseudo-device	faith		1

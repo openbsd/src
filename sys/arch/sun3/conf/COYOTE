@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.12 2001/01/03 02:03:28 miod Exp $
+# $OpenBSD: COYOTE,v 1.13 2001/03/08 03:37:20 itojun Exp $
 #
 
 #
@@ -100,7 +100,3 @@ option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #option 	SYSCALL_DEBUG
 #option 	EXEC_DEBUG
 #option 	SCSIDEBUG
-
-# for IPv6
-pseudo-device	gif		4
-#pseudo-device	faith		1

@@ -1,4 +1,4 @@
-#	$OpenBSD: FOUR_TTYS,v 1.12 2001/01/03 02:03:28 miod Exp $
+#	$OpenBSD: FOUR_TTYS,v 1.13 2001/03/08 03:37:20 itojun Exp $
 #	$NetBSD: FOUR_TTYS,v 1.1.4.1 1996/08/19 23:35:05 gwr Exp $
 
 #
@@ -156,7 +156,3 @@ option	 	PMAP_DEBUG
 #option 	SYSCALL_DEBUG
 #option 	EXEC_DEBUG
 #option 	SCSIDEBUG
-
-# for IPv6
-pseudo-device	gif		4
-#pseudo-device	faith		1

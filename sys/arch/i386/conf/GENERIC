@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.245 2001/03/05 15:13:42 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.246 2001/03/08 03:37:17 itojun Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -429,9 +429,6 @@ pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
-# for IPv6
-pseudo-device	gif		4
-#pseudo-device	faith		1
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
