@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2004/07/29 16:59:39 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2004/07/29 17:31:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -87,6 +87,10 @@ static const char *cvs_ign_std[] = {
 };
 
 
+/*
+ * Entries in the CVS/Entries file with a revision of '0' have only been
+ * added.  Compare against this revision to see if this is the case
+ */
 static RCSNUM *cvs_addedrev;
 
 
@@ -409,7 +413,7 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 	int nf, ret, fd;
 	long base;
 	void *dp, *ep, *tmp;
-	char fbuf[1024], pbuf[MAXPATHLEN];
+	char fbuf[2048], pbuf[MAXPATHLEN];
 	struct dirent *ent;
 	struct cvs_file *cfp;
 	struct cvs_dir *cdp;
@@ -438,35 +442,38 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 		cvs_file_freedir(cdp);
 		return (-1);
 	}
-	ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
-	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to get directory entries");
-		(void)close(fd);
-		cvs_file_freedir(cdp);
-		return (-1);
-	}
 
-	dp = fbuf;
-	ep = fbuf + (size_t)ret;
-	while (dp < ep) {
-		ent = (struct dirent *)dp;
-		dp += ent->d_reclen;
-
-		if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
-			continue;
-
-		snprintf(pbuf, sizeof(pbuf), "%s/%s", cf->cf_path, ent->d_name);
-		cfp = cvs_file_get(pbuf, flags);
-		if (cfp != NULL) {
-			cfp->cf_parent = cf;
-
-			if (cfp->cf_type == DT_DIR) 
-				TAILQ_INSERT_HEAD(&dirs, cfp, cf_list);
-			else
-				TAILQ_INSERT_HEAD(&(cdp->cd_files), cfp,
-				    cf_list);
+	do {
+		ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
+		if (ret == -1) {
+			cvs_log(LP_ERRNO, "failed to get directory entries");
+			(void)close(fd);
+			cvs_file_freedir(cdp);
+			return (-1);
 		}
-	}
+
+		dp = fbuf;
+		ep = fbuf + (size_t)ret;
+		while (dp < ep) {
+			ent = (struct dirent *)dp;
+			dp += ent->d_reclen;
+
+			if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
+				continue;
+
+			snprintf(pbuf, sizeof(pbuf), "%s/%s",
+			    cf->cf_path, ent->d_name);
+			cfp = cvs_file_get(pbuf, flags);
+			if (cfp != NULL) {
+				cfp->cf_parent = cf;
+				if (cfp->cf_type == DT_DIR) 
+					TAILQ_INSERT_HEAD(&dirs, cfp, cf_list);
+				else
+					TAILQ_INSERT_HEAD(&(cdp->cd_files), cfp,
+					    cf_list);
+			}
+		}
+	} while (ret > 0);
 
 	if (flags & CF_SORT) {
 		cvs_file_sort(&(cdp->cd_files));
