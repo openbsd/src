@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.4 2000/05/08 01:28:59 mickey Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.5 2000/06/20 02:45:55 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -129,7 +129,7 @@ timeout_add(new, to_ticks)
 
 	/* If this timeout was already on a queue we remove it. */
 	if (new->to_flags & TIMEOUT_ONQUEUE)
-		TAILQ_REMOVE(&timeout_todo, to, to_list);
+		TAILQ_REMOVE(&timeout_todo, new, to_list);
 	else
 		new->to_flags |= TIMEOUT_ONQUEUE;
 	/* Initialize the time here, it won't change. */
