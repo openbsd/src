@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.13 2001/08/28 19:35:04 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.14 2001/08/28 19:57:29 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -1069,15 +1069,6 @@ main(int argc, char **argv)
 		exit(EX_NOPERM);
 
 	client_iob.fd = 0;
-
-	/*
-	 * Check to see if we have a timeout defined, if so,
-	 * set a timeout for this select call to that value, so
-	 * we may time out if don't see any data in timeout
-	 * seconds.
-	 */
-	tv.tv_sec = timeout_seconds;
-	tv.tv_usec = 0;
 
 	debuglog(1, "client is %s:%u\n", ClientName,
 	    ntohs(client_iob.sa.sin_port));
