@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.4 1997/07/23 20:36:30 kstailey Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.5 1997/08/05 23:42:54 angelos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.4 1997/07/23 20:36:30 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.5 1997/08/05 23:42:54 angelos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.4 1997/07/23 20:36:30 kstailey E
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "clean.h"
 char *special = "cleanerd";
@@ -545,6 +546,7 @@ sig_report(sig)
 	int sig;
 {
 	double avg;
+	int save_errno = errno;
 
 	printf("lfs_cleanerd:\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n",
 		"blocks_read    ", cleaner_stats.blocks_read,
@@ -571,4 +573,5 @@ sig_report(sig)
 	}
 	if (sig == SIGINT)
 		exit(0);
+	errno = save_errno;
 }
