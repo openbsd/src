@@ -1,4 +1,5 @@
-/*	$OpenBSD: pfctl_altq.h,v 1.5 2002/12/02 22:18:21 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.h,v 1.6 2002/12/07 19:52:33 henning Exp $	*/
+
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -69,10 +70,10 @@
 
 #ifndef REDF_ECN4
 /* red flags */
-#define	REDF_ECN4	0x01	/* use packet marking for IPv4 packets */
-#define	REDF_ECN6	0x02	/* use packet marking for IPv6 packets */
-#define	REDF_ECN	(REDF_ECN4 | REDF_ECN6)
-#define	REDF_FLOWVALVE	0x04	/* use flowvalve (aka penalty-box) */
+#define	REDF_ECN4		0x01	/* use packet marking for IPv4 pkts */
+#define	REDF_ECN6		0x02	/* use packet marking for IPv6 pkts */
+#define	REDF_ECN		(REDF_ECN4 | REDF_ECN6)
+#define	REDF_FLOWVALVE		0x04	/* use flowvalve (aka penalty-box) */
 #endif
 
 #ifndef DEFAULT_PRIORITY
@@ -94,16 +95,16 @@ void			 pfctl_print_altq_node(const struct pf_altq_node *,
 			    unsigned);
 void			 pfctl_free_altq_node(struct pf_altq_node *);
 
-int check_commit_altq(int, int);
-void pfaltq_store(struct pf_altq *);
-void pfaltq_free(struct pf_altq *);
-struct pf_altq *pfaltq_lookup(const char *);
-struct pf_altq *qname_to_pfaltq(const char *, const char *);
-u_int32_t qname_to_qid(const char *, const char *);
-char *qid_to_qname(u_int32_t, const char *);
+int		 check_commit_altq(int, int);
+void		 pfaltq_store(struct pf_altq *);
+void		 pfaltq_free(struct pf_altq *);
+struct pf_altq	*pfaltq_lookup(const char *);
+struct pf_altq	*qname_to_pfaltq(const char *, const char *);
+u_int32_t	 qname_to_qid(const char *, const char *);
+char		*qid_to_qname(u_int32_t, const char *);
 
-void print_altq(const struct pf_altq *, unsigned);
-void print_queue(const struct pf_altq *, unsigned);
+void	 print_altq(const struct pf_altq *, unsigned);
+void	 print_queue(const struct pf_altq *, unsigned);
 
-int eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
-int eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
+int	 eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
+int	 eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
