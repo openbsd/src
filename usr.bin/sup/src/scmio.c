@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.9 2001/05/07 13:09:39 millert Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.10 2001/05/15 15:31:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -477,10 +477,14 @@ readdata(count, data)		/* read raw data from network */
 	if (rfdsize < howmany(netfile+1, NFDBITS) * sizeof(fd_mask)) {
 		rfdsize = howmany(netfile+1, NFDBITS) * sizeof(fd_mask);
 		p = readfds ? realloc(readfds, rfdsize) : malloc(rfdsize);
-		if (p == NULL)
+		if (p == NULL) {
+			free(readfds);
+			rfdsize = 0;
 			return (SCMERR);
+		}
 		readfds = (fd_set *) p;
 	}
+	memset(readfds, 0, rfdsize);
 	bufptr = buffer;
 	bufcnt = 0;
 	timout.tv_usec = 0;
