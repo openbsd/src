@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.10 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: rename.2,v 1.11 2003/07/15 10:09:21 jmc Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -180,19 +180,19 @@ function conforms to
 .Sh CAVEATS
 The system can deadlock if a loop in the file system graph is present.
 This loop takes the form of an entry in directory
-.Ql Pa a ,
+.Sq Pa a ,
 say
-.Ql Pa a/foo ,
+.Sq Pa a/foo ,
 being a hard link to directory
-.Ql Pa b ,
+.Sq Pa b ,
 and an entry in
 directory
-.Ql Pa b ,
+.Sq Pa b ,
 say
-.Ql Pa b/bar ,
+.Sq Pa b/bar ,
 being a hard link
 to directory
-.Ql Pa a .
+.Sq Pa a .
 When such a loop exists and two separate processes attempt to
 perform
 .Ql rename a/foo b/bar
