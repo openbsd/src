@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.13 2003/03/30 22:23:34 tedu Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.14 2003/05/14 01:12:27 jason Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -111,6 +111,10 @@
 #ifdef TCPDEBUG
 int	tcpconsdebug = 0;
 #endif
+
+struct	tcp_debug tcp_debug[TCP_NDEBUG];
+int	tcp_debx;
+
 /*
  * Tcp debug routines
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.42 2002/10/12 01:09:45 krw Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.43 2003/05/14 01:12:27 jason Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -170,14 +170,6 @@ void softdep_disk_write_complete(struct buf *);
 void softdep_deallocate_dependencies(struct buf *);
 void softdep_move_dependencies(struct buf *, struct buf *);
 int softdep_count_dependencies(struct buf *bp, int, int);
-
-struct bio_ops bioops = {
-	softdep_disk_io_initiation,		/* io_start */
-	softdep_disk_write_complete,		/* io_complete */
-	softdep_deallocate_dependencies,	/* io_deallocate */
-	softdep_move_dependencies,		/* io_movedeps */
-	softdep_count_dependencies,		/* io_countdeps */
-};
 
 /*
  * Locking primitives.
@@ -1156,6 +1148,12 @@ top:
 void 
 softdep_initialize()
 {
+
+	bioops.io_start = softdep_disk_io_initiation;
+	bioops.io_complete = softdep_disk_write_complete;
+	bioops.io_deallocate = softdep_deallocate_dependencies;
+	bioops.io_movedeps = softdep_move_dependencies;
+	bioops.io_countdeps = softdep_count_dependencies;
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
