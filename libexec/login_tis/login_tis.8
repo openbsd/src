@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_tis.8,v 1.1 2004/09/28 15:02:01 millert Exp $
+.\" $OpenBSD: login_tis.8,v 1.2 2004/09/28 22:01:28 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -79,13 +79,13 @@ and is used to look up
 variables (see below).
 It is also sent to
 .Em authsrv
-for logging purposed.
+for logging purposes.
 If no
 .Ar class
-argument is specified the class will be obtained from the password database.
+argument is specified, the class will be obtained from the password database.
 .Pp
 .Nm
-will connect to 
+will connect to
 .Em authsrv
 and, depending on the desired protocol,
 will do one of three things:
@@ -149,5 +149,5 @@ Defaults to 15 seconds.
 .Xr login 1 ,
 .Xr login.conf 5 ,
 .Xr services 5 ,
-.Xr login_radius 8 ,
-.Xr ftpd 8
+.Xr ftpd 8 ,
+.Xr login_radius 8
