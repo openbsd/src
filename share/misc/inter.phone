@@ -1,8 +1,8 @@
-#	$OpenBSD: inter.phone,v 1.15 2001/07/13 23:49:38 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.16 2001/07/14 00:24:54 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
-# Country Code : City Code : City : Country
+# Country Code: City Code: City: Country
 1:718:Brooklyn:USA
 7:095:Moscow:Russia
 7:::Kazakhstan
@@ -607,8 +607,6 @@
 41:75::Liechtenstein
 41:82:St. Moritz:Switzerland
 41:91:Lugano:Switzerland
-42:2:Prague:Czech Republic
-42:7:Bratislava:Slovak Republic
 43:1:Vienna:Austria
 43:316:Graz:Austria
 43:512:Innsbruck:Austria
@@ -1244,6 +1242,263 @@
 386:61:Ljubliana:Slovenia
 387:71:Sarajevo:Bosnia-Herzegovina
 389:91:Skopje:Macedonia
+420:2:Prague:Czech Republic
+420:164:Ostrov nad Ohri:Czech Republic
+420:165:Marianske Lazne:Czech Republic
+420:166:Cheb:Czech Republic
+420:168:Sokolov:Czech Republic
+420:169:Touzim:Czech Republic
+420:17:Karlovy Vary:Czech Republic
+420:181:Rokycany:Czech Republic
+420:182:Plasy:Czech Republic
+420:183:Stribro:Czech Republic
+420:184:Tachov:Czech Republic
+420:185:Blovice:Czech Republic
+420:186:Klatovy:Czech Republic
+420:187:Susice:Czech Republic
+420:188:Horsovsky Tyn:Czech Republic
+420:189:Domazlice:Czech Republic
+420:19:Plzen:Czech Republic
+420:2:Prague (Praha):Czech Republic
+420:202:Brandys nad Labem:Czech Republic
+420:203:Cesky Brod:Czech Republic
+420:204:Ricany u Prahy:Czech Republic
+420:205:Kralupy nad Vlt.:Czech Republic
+420:206:Melnik:Czech Republic
+420:2098:Davle (MTO):Czech Republic
+420:301:Benesov u Prahy:Czech Republic
+420:302:Votice:Czech Republic
+420:303:Vlasim:Czech Republic
+420:304:Sedicany:Czech Republic
+420:305:Dobris:Czech Republic
+420:306:Pribram:Czech Republic
+420:311:Beroun:Czech Republic
+420:312:Kladno:Czech Republic
+420:313:Rakovnik:Czech Republic
+420:314:Slany:Czech Republic
+420:316:Horovice:Czech Republic
+420:321:Kolin:Czech Republic
+420:322:Caslav:Czech Republic
+420:324:Podebrady:Czech Republic
+420:325:Nymburk:Czech Republic
+420:326:Mlada Boleslav:Czech Republic
+420:327:Kutna Hora:Czech Republic
+420:328:Uhlirske Janovice:Czech Republic
+420:329:Mnichovo Hradiste:Czech Republic
+420:331:Jindrichuv Hradec:Czech Republic
+420:332:Dacice:Czech Republic
+420:333:Trebon:Czech Republic
+420:334:Tyn nad Vltavou:Czech Republic
+420:335:Trhove Sviny:Czech Republic
+420:336:Kaplice:Czech Republic
+420:337:Cesky Krumlov:Czech Republic
+420:338:Prachatice:Czech Republic
+420:339:Vimperk:Czech Republic
+420:342:Strakonice:Czech Republic
+420:344:Blatna:Czech Republic
+420:35:Most:Czech Republic
+420:361:Tabor:Czech Republic
+420:362:Pisek:Czech Republic
+420:364:Kamenice nad Lipou:Czech Republic
+420:365:Pacov:Czech Republic
+420:367:Humpolec:Czech Republic
+420:38:Ceske Budejovice:Czech Republic
+420:363:Sobeslav:Czech Republic
+420:366:Pelhrimov:Czech Republic
+420:368:Milevsko:Czech Republic
+420:395:Louny:Czech Republic
+420:396:Chomutov:Czech Republic
+420:397:Zatec:Czech Republic
+420:398:Kadan:Czech Republic
+420:399:Podborany:Czech Republic
+420:40:Pardubice:Czech Republic
+420:411:Roudnice nad Labem:Czech Republic
+420:412:Decin:Czech Republic
+420:413:Rumburk:Czech Republic
+420:416:Litomerice:Czech Republic
+420:417:Teplice:Czech Republic
+420:419:Lovosice:Czech Republic
+420:424:Novy Bor:Czech Republic
+420:425:Ceska Lipa:Czech Republic
+420:427:Frydlant v Cechach:Czech Republic
+420:428:Jablonec nad Nisou:Czech Republic
+420:437:Dvur Kralove n.L.:Czech Republic
+420:431:Semily:Czech Republic
+420:432:Jilemnice:Czech Republic
+420:433:Jicin:Czech Republic
+420:434:Nova Paka:Czech Republic
+420:435:Horice v Podkrkonosi:Czech Republic
+420:436:Turnov:Czech Republic
+420:438:Vrchlabi:Czech Republic
+420:439:Trutnov:Czech Republic
+420:441:Nachod:Czech Republic
+420:442:Jaromer:Czech Republic
+420:443:Dobruska:Czech Republic
+420:444:Kostelec nad Orlici:Czech Republic
+420:445:Rychnov nad Kneznou:Czech Republic
+420:446:Zamberk:Czech Republic
+420:447:Broumov:Czech Republic
+420:448:Novy Bydzov:Czech Republic
+420:451:Havlickuv Brod:Czech Republic
+420:452:Ledec nad Sazavou:Czech Republic
+420:453:Chotebor:Czech Republic
+420:454:Hlinsko v Cechach:Czech Republic
+420:455:Chrudim:Czech Republic
+420:456:Holice:Czech Republic
+420:457:Prelouc:Czech Republic
+420:461:Svitavy:Czech Republic
+420:462:Moravska Trebov:Czech Republic
+420:463:Policka:Czech Republic
+420:464:Litomysl:Czech Republic
+420:465:Usti nad Orlici:Czech Republic
+420:467:Lanskroun:Czech Republic
+420:468:Vysoke Myto:Czech Republic
+420:47:Usti nad Labem:Czech Republic
+420:48:Liberec:Czech Republic
+420:49:Hradec Kralove:Czech Republic
+420:5:Brno:Czech Republic
+420:501:Boskovice:Czech Republic
+420:502:Rosice u Brna:Czech Republic
+420:503:Zidlochovice:Czech Republic
+420:504:Tisnov:Czech Republic
+420:505:Bystrice nad Pernstejnem:Czech Republic
+420:506:Blansko:Czech Republic
+420:507:Vyskov:Czech Republic
+420:508:Prostejov:Czech Republic
+420:509:Namest nad Oslavou:Czech Republic
+420:601:Eurotel NMT:Czech Republic
+420:602:Eurotel GSM:Czech Republic
+420:603:Radiomobil GSM, Paegas:Czech Republic
+420:606:Eurotel GSM:Czech Republic
+420:616:Zdar nad Sazavou:Czech Republic
+420:617:Moravske Budejovice:Czech Republic
+420:618:Trebic:Czech Republic
+420:619:Velke Mezirici:Czech Republic
+420:621:Moravsky Krumlov:Czech Republic
+420:624:Znojmo:Czech Republic
+420:625:Mikulov:Czech Republic
+420:626:Hustopece:Czech Republic
+420:627:Breclav:Czech Republic
+420:628:Hodonin:Czech Republic
+420:629:Kyjov:Czech Republic
+420:631:Veseli nad Moravou:Czech Republic
+420:632:Uherske Hradiste:Czech Republic
+420:633:Uhersky Brod:Czech Republic
+420:634:Kromeriz:Czech Republic
+420:635:Holesov:Czech Republic
+420:636:Valasske Klobouky:Czech Republic
+420:641:Prerov:Czech Republic
+420:642:Hranice:Czech Republic
+420:643:Sternberk:Czech Republic
+420:644:Litovel:Czech Republic
+420:645:Jesenik:Czech Republic
+420:646:Bruntal:Czech Republic
+420:647:Rymarov:Czech Republic
+420:648:Zabreh:Czech Republic
+420:649:Sumperk:Czech Republic
+420:651:Valasske Mezirici:Czech Republic
+420:652:Krnov:Czech Republic
+420:653:Opava:Czech Republic
+420:654:Vitkov:Czech Republic
+420:655:Bilovoc:Czech Republic
+420:656:Novy Jicin:Czech Republic
+420:657:Vsetin:Czech Republic
+420:658:Frydek-Mistok:Czech Republic
+420:659:Trinec:Czech Republic
+420:66:Jihlava:Czech Republic
+420:67:Zlin (Gottwaldov):Czech Republic
+420:68:Olomouc:Czech Republic
+420:69:Ostrava:Czech Republic
+420:6992:Bohumin (MTO):Czech Republic
+420:6993:Karvina (MTO):Czech Republic
+420:6994:Havirov (MTO):Czech Republic
+420:6995:Orlova (MTO):Czech Republic
+420:800:toll-free:Czech Republic
+421:7:Bratislava:Slovak Republic
+421:703:Malacky:Slovak Republic
+421:704:Pezinok:Slovak Republic
+421:706:Sala:Slovak Republic
+421:707:Galanta:Slovak Republic
+421:708:Samorin:Slovak Republic
+421:709:Dunajska-Streda:Slovak Republic
+421:801:Holic:Slovak Republic
+421:802:Senica:Slovak Republic
+421:804:Hlohovec:Slovak Republic
+421:805:Trnava:Slovak Republic
+421:810:Sturovo:Slovak Republic
+421:811:Zeliezovce:Slovak Republic
+421:812:Sahy:Slovak Republic
+421:813:Levice:Slovak Republic
+421:814:Zlate Moravce:Slovak Republic
+421:815:Topolcany:Slovak Republic
+421:816:Surany:Slovak Republic
+421:817:Nove Zamky:Slovak Republic
+421:818:Hurbanovo:Slovak Republic
+421:819:Komarno:Slovak Republic
+421:821:Bytca:Slovak Republic
+421:822:Povazska Bystrica n. V.:Slovak Republic
+421:823:Rajec nad Rajciankou:Slovak Republic
+421:824:Cadca:Slovak Republic
+421:825:Puchov:Slovak Republic
+421:826:Kysucke Nove Mesto:Slovak Republic
+421:827:Dubnica nad Vahom:Slovak Republic
+421:831:Trencin:Slovak Republic
+421:832:Banovce nad Bebravou:Slovak Republic
+421:834:Nove Mesto nad Vahom:Slovak Republic
+421:838:Piestany:Slovak Republic
+421:841:Turcianske Teplice:Slovak Republic
+421:842:Martin:Slovak Republic
+421:844:Liptovsky Hradok:Slovak Republic
+421:845:Dolny Kubin:Slovak Republic
+421:846:Namestovo:Slovak Republic
+421:847:Tvrdosin (Trstena):Slovak Republic
+421:848:Ruzomberok:Slovak Republic
+421:849:Liptovsky Mikulas:Slovak Republic
+421:854:Velky Krtis:Slovak Republic
+421:855:Zvolen:Slovak Republic
+421:856:Krupina:Slovak Republic
+421:857:Ziar nad Hronom:Slovak Republic
+421:858:Zarnovica:Slovak Republic
+421:859:Banska Stiavnica:Slovak Republic
+421:862:Prievidza:Slovak Republic
+421:863:Lucenec:Slovak Republic
+421:864:Poltar:Slovak Republic
+421:865:Hnusta:Slovak Republic
+421:866:Rimavska Sobota:Slovak Republic
+421:867:Brezno:Slovak Republic
+421:868:Safarikovo:Slovak Republic
+421:87:Nitra:Slovak Republic
+421:88:Banska Bystrica:Slovak Republic
+421:89:Zilina:Slovak Republic
+421:901:mobile - Eurotel NMT:Slovak Republic
+421:903:mobile - Eurotel GSM:Slovak Republic
+421:905:mobile - Globtel GSM:Slovak Republic
+421:91:Presov:Slovak Republic
+421:92:Poprad:Slovak Republic
+421:931:Vranov nad Toplou:Slovak Republic
+421:932:Snina:Slovak Republic
+421:933:Humenne:Slovak Republic
+421:934:Sabinov:Slovak Republic
+421:935:Bardejov:Slovak Republic
+421:936:Giraltovce:Slovak Republic
+421:937:Svidnik:Slovak Republic
+421:938:Stropkov:Slovak Republic
+421:939:Medzilaborce:Slovak Republic
+421:941:Revuca:Slovak Republic
+421:942:Roznava:Slovak Republic
+421:943:Moldava nad Bodvou:Slovak Republic
+421:944:Gelnica:Slovak Republic
+421:946:Michalovce:Slovak Republic
+421:947:Sobrance:Slovak Republic
+421:948:Trebisov:Slovak Republic
+421:949:Kral'ovsky Chlmec (Kral. Chlmec):Slovak Republic
+421:95:Kosice:Slovak Republic
+421:963:Stara Lubnova:Slovak Republic
+421:964:Spisska Stara Ves:Slovak Republic
+421:965:Spisska Nova Ves:Slovak Republic
+421:966:Levoca:Slovak Republic
+421:968:Kezmarok:Slovak Republic
+421:969:Stary Smokovec:Slovak Republic
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
 502:2:Guatemala City:Guatemala
