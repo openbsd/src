@@ -1,6 +1,6 @@
-.\" $OpenBSD: skeyinfo.1,v 1.5 2001/06/19 01:49:45 millert Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.6 2002/05/16 17:26:58 millert Exp $
 .\"
-.Dd 17 June 2001
+.Dd May 16, 2002
 .Dt SKEYINFO 1
 .Os
 .Sh NAME
@@ -8,7 +8,6 @@
 .Nd obtain the next S/Key challenge for a user
 .Sh SYNOPSIS
 .Nm skeyinfo
-.Op Fl a Ar auth-type
 .Op Fl v
 .Op Ar user
 .Sh DESCRIPTION
@@ -17,14 +16,7 @@ prints out the next S/Key challenge for the specified user or for the
 current user if no user is specified.
 .Pp
 The options are as follows:
-.Bl -tag -width auth-typeXXXX
-.It Fl a Ar auth-type
-Specify an authentication type instead of the default
-.Dq skey .
-This can be used to get a challenge for a challenge/response authentication
-mechanism other than S/Key, or if a remote S/Key server is in use.
-Note that this will cause an error if the selected type
-does not support challenge/response style authentication.
+.Bl -tag -width Ds
 .It Fl v
 Print the hash algorithm as well.
 .El
@@ -33,9 +25,26 @@ Print the hash algorithm as well.
 .Pp
 This would print out a list of S/Key passwords for use over
 an untrusted network (perhaps for use at a conference).
+.Sh ERRORS
+.Bl -tag -width Ds
+.It cannot open /etc/skey/user
+The user does not have an entry in
+.Pa /etc/skey
+or access to the S/Key database has been disabled.
+The database can be enabled with the
+.Xr skeyinit 1
+program.
+.It user is not listed in /etc/skey
+The S/Key database is enabled but the user does not have an entry in it.
+The
+.Xr skeyinit 1
+program can be used to create an entry for the user.
+.El
+.Sh FILES
+.Bl -tag -width /etc/skey
+.It Pa /etc/skey
+directory containing user entries for S/Key
+.El
 .Sh SEE ALSO
 .Xr skey 1 ,
 .Xr skeyinit 1
-.Sh CAVEATS
-If the user does not have an entry in the S/Key database a fake
-challenge will be printed.
