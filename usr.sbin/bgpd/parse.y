@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.142 2004/11/04 14:05:46 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.143 2004/11/05 14:30:54 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -862,6 +862,7 @@ filter_peer	: ANY		{
 				}
 			if ($$->p.peerid == 0) {
 				yyerror("no such peer: %s", log_addr(&$1));
+				free($$);
 				YYERROR;
 			}
 		}
@@ -881,6 +882,7 @@ filter_peer	: ANY		{
 			if ($$->p.groupid == 0) {
 				yyerror("no such group: \"%s\"", $2);
 				free($2);
+				free($$);
 				YYERROR;
 			}
 			free($2);
