@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.4 2002/02/16 21:27:47 millert Exp $	*/
+/*	$OpenBSD: lam.c,v 1.5 2003/04/05 16:24:23 deraadt Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.4 2002/02/16 21:27:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: lam.c,v 1.5 2003/04/05 16:24:23 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -157,7 +157,8 @@ getargs(av)
 				fmtp += strlen(fmtp) + 1;
 				if (fmtp > fmtbuf + BUFSIZ)
 					error("No more format space", "");
-				sprintf(fmtp, "%%%ss", p);
+				snprintf(fmtp, fmtbuf + BUFSIZ - fmtp,
+				    "%%%ss", p);
 				ip->format = fmtp;
 			}
 			else
