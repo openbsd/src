@@ -723,6 +723,10 @@ mach_init(argc, argv, code, cv)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
 	/*
 	 * Determine how many buffers to allocate.
 	 * We allocate more buffer space than the BSD standard of
@@ -730,13 +734,29 @@ mach_init(argc, argv, code, cv)
 	 * We just allocate a flat 10%.  Ensure a minimum of 16 buffers.
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
+	if (bufpages == 0) {
+		if (physmem < btoc(2 * 1024 * 1024))
+			bufpages = physmem / (10 * CLSIZE);
+		else
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+			    ((100/BUFCACHEPERCENT) * CLSIZE);
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
+	/* Restrict to at most 70% filled kvm */
+	if (nbuf * MAXBSIZE >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    MAXBSIZE * 7 / 10;
+
+	/* More buffer pages than fits into the buffers is senseless.  */
+	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
+		bufpages = nbuf * MAXBSIZE / CLBYTES;
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -798,6 +818,12 @@ cpu_startup()
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+	if (base >= MAXBSIZE / CLBYTES) {
+		/* don't want to alloc more physical mem than needed */
+		base = MAXBSIZE / CLBYTES;
+		residual = 0;
+	}
+
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;

@@ -411,7 +411,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	u_quad_t sticks;
 	vm_prot_t ftype;
 	extern unsigned onfault_table[];
-	int typ;
+	int typ = 0;
 
 #ifdef DEBUG
 	trp->status = statusReg;
@@ -596,7 +596,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 			goto err;
 		}
-		ucode = vadr;
+		ucode = ftype;
 		i = SIGSEGV;
 		typ = SEGV_MAPERR;
 		break;
@@ -604,11 +604,13 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
+		ucode = 0;		/* XXX should be VM_PROT_something */
 		i = SIGBUS;
 		typ = BUS_ADRALN;
 		break;
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
+		ucode = 0;		/* XXX should be VM_PROT_something */
 		i = SIGBUS;
 		typ = BUS_OBJERR;
 		break;
