@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/10/12 16:45:43 jason Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/10/12 18:56:08 jason Exp $
 
 TARGET=cd.fs
 
@@ -10,13 +10,16 @@ all ${TARGET}:
 
 all: ${TARGET}
 
-${TARGET}: vn_up install_files installboot vn_down
+${TARGET}: vn_up install_files installboot showit vn_down
 
 vn_up: blank_filesystem
 	vnconfig svnd0 ${TARGET}
 	disklabel -w svnd0 fakeramdisk
-	newfs /dev/rsvnd0a
+	newfs -m 0 /dev/rsvnd0a
 	mount /dev/svnd0a /mnt
+
+showit:
+	df -ki /mnt
 
 vn_down:
 	-umount /mnt
@@ -36,7 +39,7 @@ installboot:
 	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk /dev/svnd0c
 
 blank_filesystem:
-	dd if=/dev/zero of=${TARGET} bs=512 count=12800
+	dd if=/dev/zero of=${TARGET} bs=512 count=3200
 
 .endif
 
