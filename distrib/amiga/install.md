@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2002/05/08 23:01:46 krw Exp $
+#	$OpenBSD: install.md,v 1.16 2002/05/09 21:54:46 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -108,70 +108,10 @@ md_prep_disklabel()
 	esac
 }
 
-md_welcome_banner() {
-{
-	if [ "$MODE" = "install" ]; then
-		echo ""
-		echo "Welcome to the OpenBSD/amiga ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
-		cat << __EOT
-
-This program is designed to help you put OpenBSD on your disk in a simple and
-rational way.
-__EOT
-
-	else
-		echo ""
-		echo "Welcome to the OpenBSD/amiga ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
-		cat << __EOT
-
-This program is designed to help you upgrade your OpenBSD system in a
-simple and rational way.
-
-As a reminder, installing the `etc' binary set is NOT recommended.
-Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
-already exist on your system.
-__EOT
-	fi
-
-cat << __EOT
-
-As with anything which modifies your disk's contents, this
-program can cause SIGNIFICANT data loss, and you are advised
-to make sure your data is backed up before beginning the
-installation process.
-
-Default answers are displayed in brackets after the questions.
-You can hit Control-C at any time to quit, but if you do so at a
-prompt, you may have to hit return.  Also, quitting in the middle of
-installation may leave your system in an inconsistent state.
-
-__EOT
-} | more
-}
-
-md_not_going_to_install() {
-	cat << __EOT
-
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
-machine has halted, power-cycle the system and you'll get back to AmigaOS.
-
-__EOT
-}
-
 md_congrats() {
-	local what;
-	if [ "$MODE" = "install" ]; then
-		what="installed";
-	else
-		what="upgraded";
-	fi
 	cat << __EOT
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!
-To boot the installed system, enter halt at the command prompt. Once the
-system has halted, reset the machine, enter AmigaOS and boot via loadbsd
-without the -b flag, per the install document.
-
+Once in AmigaOS, boot via loadbsd without the -b flag, as described
+in the install document.
 __EOT
 }

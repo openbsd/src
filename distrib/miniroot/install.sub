@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.219 2002/05/08 23:01:46 krw Exp $
+#	$OpenBSD: install.sub,v 1.220 2002/05/09 21:54:46 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -76,10 +76,8 @@
 #	md_installboot()	  - install boot-blocks on disk
 #	md_native_fsopts()	  - native filesystem options for disk installs
 #	md_native_fstype()	  - native filesystem type for disk installs
-#	md_not_going_to_install() - display friendly message
 #	md_prep_disklabel()	  - label the root disk
 #	md_set_term()		  - set up terminal
-#	md_welcome_banner()	  - display friendly message
 #
 # The following variables can be provided if required:
 #	MDTERM           - 'vt220' assumed if not provided
@@ -92,6 +90,67 @@ set_term() {
 	export TERM
 
 	md_set_term
+}
+
+
+welcome_banner() {
+	cat << __EOT
+
+Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
+
+This program will help you ${MODE} OpenBSD in a simple and rational way.
+__EOT
+
+	if [ "$MODE" = "upgrade" ]; then
+		cat << __EOT
+
+As a reminder, installing the 'etc' binary set is NOT recommended.
+Once the rest of your system has been upgraded, you should manually
+merge any changes to files in the 'etc' set into those files which
+already exist on your system.
+__EOT
+	else
+		cat << __EOT
+
+You'll be asked several questions, and it would probably be useful to
+have your disk's hardware manual, the installation notes, and a
+calculator handy.
+__EOT
+	fi
+
+	cat << __EOT
+
+As with anything that modifies your disk's contents, this program can
+cause SIGNIFICANT data loss, and you are advised to make sure your
+data is backed up before beginning the installation process.
+
+Default answers are displayed in brackets after the questions. You can
+hit Control-C at any time to quit, but if you do so at a prompt, you
+may have to hit return. Also, quitting in the middle of an ${MODE} may
+leave your system in an inconsistent state.
+
+If you hit Control-C and restart the ${MODE}, the ${MODE} program will
+remember many of your old answers.
+__EOT
+}
+
+not_going_to_install() {
+	cat << __EOT
+
+Enter 'halt' at the prompt to gracefully exit OpenBSD. You can then
+power cycle the machine and boot your original OS.
+__EOT
+}
+
+congrats() {
+	cat << __EOT
+
+CONGRATULATIONS! Your OpenBSD ${MODE} has been successfully completed!
+To boot the new system, enter halt at the command prompt. Once the
+system has halted, reset the machine and boot from the disk.
+__EOT
+
+	md_congrats
 }
 
 # Ask for a password, saving the input in $resp.
@@ -2087,7 +2146,7 @@ finish_up() {
 	cleanup_on_exit
 
 	# Pat on the back.
-	md_congrats
+	congrats
 
 	exit 0
 }
@@ -2137,11 +2196,11 @@ trap 'cleanup_on_exit' EXIT
 trap 'exit 2' HUP INT QUIT TERM
 
 # Good {morning,afternoon,evening,night}.
-echo
-md_welcome_banner
+welcome_banner | more
 
 if [ -f /etc/fstab -a "$MODE" = "install" ]; then
 	cat << __EOT
+
 You seem to be trying to restart an interrupted installation!
 You can skip the disk preparation steps and continue,
 or you can reboot and start over.
@@ -2149,14 +2208,14 @@ or you can reboot and start over.
 __EOT
 	echo -n "Skip disk initialization and p"
 else
-	echo -n "P"
+	echo -n "\nP"
 fi
 	
 ask "roceed with ${MODE}?" n
 case $resp in
 y*|Y*)	echo "\nCool!  Let's get to it...\n"
 	;;
-*)	md_not_going_to_install
+*)	not_going_to_install
 	exit
 	;;
 esac
