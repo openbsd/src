@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.93 2003/02/28 21:29:08 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.94 2003/05/13 06:06:39 tedu Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -52,10 +52,10 @@ option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
-# layer filesystems.  not yet functional
-#option		NULLFS		# loopback file system
-#option		UMAPFS		# NULLFS + uid and gid remapping
-#option		UNION		# union file system
+# layer filesystems
+option		NULLFS		# loopback file system
+option		UMAPFS		# NULLFS + uid and gid remapping
+option		UNION		# union file system
 
 #option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
