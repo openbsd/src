@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2003/12/27 17:34:10 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.24 2003/12/27 21:40:43 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,7 @@ typedef struct {
 %}
 
 %token	SET
-%token	AS BGPID HOLDTIME YMIN LISTEN ON NO FIBUPDATE
+%token	AS ROUTERID HOLDTIME YMIN LISTEN ON NO FIBUPDATE
 %token	GROUP NEIGHBOR
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE
 %token	ERROR
@@ -144,7 +144,7 @@ varset		: STRING '=' string		{
 conf_main	: AS number		{
 			conf->as = $2;
 		}
-		| BGPID address		{
+		| ROUTERID address		{
 			conf->bgpid = $2.s_addr;
 		}
 		| HOLDTIME number	{
@@ -323,13 +323,12 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "AS",			AS},
-		{ "bgpid",		BGPID},
 		{ "descr",		DESCR},
 		{ "fib-update",		FIBUPDATE},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "listen",		LISTEN},
-		{ "local-addr",		LOCALADDR},
+		{ "local-address",	LOCALADDR},
 		{ "log",		LOG},
 		{ "min",		YMIN},
 		{ "mrtdump",		MRTDUMP},
@@ -338,6 +337,7 @@ lookup(char *s)
 		{ "on",			ON},
 		{ "passive",		PASSIVE},
 		{ "remote-as",		REMOTEAS},
+		{ "router-id",		ROUTERID},
 		{ "set",		SET},
 		{ "updates",		UPDATES},
 	};

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.9 2003/12/27 18:43:36 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.10 2003/12/27 21:40:43 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -95,11 +95,11 @@ AS 65001
 sets the local
 .Ar AS
 to 65001.
-.It Ar bgpid
-Set the bgp id to the given IP address which must be local to the
+.It Ar router-id
+Set the router id to the given IP address which must be local to the
 machine.
 .Bd -literal -offset indent
-bgpid 10.0.0.1
+router-id 10.0.0.1
 .Ed
 .Pp
 If not given the bgp id is determined as the biggest IP address assigned
@@ -175,12 +175,12 @@ Add a description.
 The description is used when logging neighbor events and in status
 reports etc and has no further meaning to
 .Ar bgpd .
-.It Ar local-addr
+.It Ar local-address
 When
 .Ar bgpd
 initiates the TCP connection to the neighbor system, it normally does not
 bind to a specific IP address.
-If a local-addr is given it binds
+If a local-address is given it binds
 to this address before.
 .It Ar multihop
 Normally neighbors that are not in the same AS as the local
