@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.369 2003/06/24 13:55:13 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.370 2003/06/28 00:27:10 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,13 +111,6 @@ struct timeout		 pf_expire_to;			/* expire timeout */
 struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 
-void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
-			    sa_family_t);
-int			 pf_insert_state(struct pf_state *);
-struct pf_state		*pf_find_state(struct pf_state_tree *,
-			    struct pf_tree_node *);
-void			 pf_purge_expired_states(void);
-void			 pf_purge_timeout(void *);
 void			 pf_dynaddr_update(void *);
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 void			 pf_print_state(struct pf_state *);
@@ -180,9 +173,6 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 			    void *, struct pf_pdesc *);
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct ifnet *, struct pf_pdesc *);
-void			 pf_calc_skip_steps(struct pf_rulequeue *);
-void			 pf_rule_set_qid(struct pf_rulequeue *);
-u_int32_t		 pf_qname_to_qid(char *);
 struct pf_tag		*pf_get_tag(struct mbuf *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
 			     struct pf_rule *, struct pf_rule *,
