@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.25 2000/11/09 17:53:25 aaron Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.26 2001/03/21 16:27:00 aaron Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1220,7 +1220,7 @@ The ack sequence number is a 32-bit integer.
 The first time
 .Nm
 sees a tcp connection, it prints the sequence number from the packet.
-On subsequent packets of the connnection, the difference between
+On subsequent packets of the connection, the difference between
 the current packet's sequence number and this initial sequence number
 is printed.
 This means that sequence numbers after the first can be interpreted
