@@ -1,4 +1,4 @@
-/*	$OpenBSD: si_obio.c,v 1.7 1997/04/29 13:09:25 kstailey Exp $	*/
+/*	$OpenBSD: si_obio.c,v 1.8 1997/09/11 16:09:59 kstailey Exp $	*/
 /*	$NetBSD: si_obio.c,v 1.7 1996/11/20 18:57:00 gwr Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ struct cfattach si_obio_ca = {
 
 /* Options.  Interesting values are: 1,3,7 */
 /* XXX: Using 1 for now to mask a (pmap?) bug not yet found... */
-int si_obio_options = 0;	/* XXX */
+int si_obio_options = 1;	/* XXX */
 
 
 static int
@@ -255,13 +255,13 @@ si_obio_dma_setup(ncr_sc)
 	data_pa = dvma_kvtopa(dh->dh_dvma, sc->sc_adapter_type);
 	data_pa += (ncr_sc->sc_dataptr - dh->dh_addr);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%x", data_pa);
+		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=%p, pa=0x%lx, xlen=%d\n",
+		printf("si_dma_setup: dh=%p, pa=0x%lx, xlen=0x%x\n",
 			   dh, data_pa, xlen);
 	}
 #endif

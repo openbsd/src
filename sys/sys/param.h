@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 1997/05/22 06:55:59 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 1997/09/11 16:09:57 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -156,7 +156,9 @@
  * made larger without any effect on existing file systems; however making
  * it smaller makes some file systems unmountable.
  */
+#ifndef MAXBSIZE	/* XXX temp until sun3 DMA chaining */
 #define	MAXBSIZE	MAXPHYS
+#endif
 #define MAXFRAG 	8
 
 /*

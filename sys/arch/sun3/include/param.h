@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 1997/09/08 18:08:51 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.17 1997/09/11 16:09:58 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -51,9 +51,6 @@
  */
 #define	_MACHINE	sun3
 #define	MACHINE		"sun3"
-#define	_MACHINE_ARCH	m68k
-#define	MACHINE_ARCH	"m68k"
-#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
@@ -71,6 +68,27 @@
 #define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
 
 #include <m68k/param.h>
+
+#define MAXBSIZE 0x8000		/* XXX temp until sun3 dma chaining */
+
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#define	MSIZE		128		/* size of an mbuf */
+#define	MCLSHIFT	11
+#define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
+#define	MCLOFSET	(MCLBYTES - 1)
+#ifndef NMBCLUSTERS
+#ifdef GATEWAY
+#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#else
+#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#endif
+#endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
