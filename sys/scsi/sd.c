@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.29 1998/05/02 16:48:21 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.30 1998/10/01 05:11:11 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -99,6 +99,11 @@ struct sd_softc {
 		int blksize;		/* number of bytes/sector */
 		u_long disksize;	/* total number sectors */
 	} params;
+	struct disk_name {
+		char vendor[9];		/* disk vendor/manufacturer */
+		char product[17];	/* disk product model */
+		char revision[5];	/* drive/firmware revision */
+	} name;
 	struct buf buf_queue;
 	u_int8_t type;
 };
@@ -120,8 +125,9 @@ void	sddone __P((struct scsi_xfer *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_get_optparms __P((struct sd_softc *, int, struct disk_parms *));
 int	sd_get_parms __P((struct sd_softc *, int));
-static int sd_mode_sense __P((struct sd_softc *, struct scsi_mode_sense_data *,
+static	int sd_mode_sense __P((struct sd_softc *, struct scsi_mode_sense_data *,
 			      int, int));
+void	viscpy __P((u_char *, u_char *, int));
 
 struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach
@@ -221,6 +227,11 @@ sdattach(parent, self, aux)
 				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 	} else
 		error = 0;
+
+	/* Fill in name struct for spoofed label */
+	viscpy(sd->name.vendor, sa->sa_inqbuf->vendor, 8);
+	viscpy(sd->name.product, sa->sa_inqbuf->product, 16);
+	viscpy(sd->name.revision, sa->sa_inqbuf->revision, 4);
 
 	if (error || sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf("drive offline\n");
@@ -820,7 +831,15 @@ sdgetdisklabel(dev, sd)
 	else
 		strncpy(lp->d_typename, "SCSI disk",
 		    sizeof(lp->d_typename) - 1);
-	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname) - 1);
+
+	if (strlen(sd->name.vendor) + strlen(sd->name.product) + 1 <
+	    sizeof(lp->d_packname))
+		sprintf(lp->d_packname, "%s %s", sd->name.vendor,
+		    sd->name.product);
+	else
+		strncpy(lp->d_packname, sd->name.product,
+		    sizeof(lp->d_packname) - 1);
+
 	lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
@@ -1204,3 +1223,25 @@ sddump(dev, blkno, va, size)
 	return ENXIO;
 }
 #endif	/* __BDEVSW_DUMP_OLD_TYPE */
+
+/*
+ * Copy up to len chars from src to dst, ignoring non-printables. 
+ * Must be room for len+1 chars in dst so we can write the NUL.
+ * Does not assume src is NUL-terminated.
+ */
+void
+viscpy(dst, src, len)
+	u_char *dst;
+	u_char *src; 
+	int len;
+{
+	while (len > 0 && *src != '\0') {
+		if (*src < 0x20 || *src >= 0x80) {
+			src++;
+			continue;
+		}
+		*dst++ = *src++;
+		len--;
+	}
+	*dst = '\0';
+}
