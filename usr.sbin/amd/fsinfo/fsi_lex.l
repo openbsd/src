@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_lex.l	8.2 (Berkeley) 2/17/94
- *	$Id: fsi_lex.l,v 1.3 2003/04/05 19:19:44 pvalchev Exp $
+ *	$Id: fsi_lex.l,v 1.4 2003/04/05 21:36:31 pvalchev Exp $
  */
 
 /*
@@ -239,7 +239,7 @@ int yywrap()
 static int first = 1;
 	if (first) {
 		char prog[16*1024];
-		strcpy(prog, "for file in ");
+		strlcpy(prog, "for file in ", sizeof(prog));
 		while (*++g_argv) {
 			if (access(*g_argv, 4) < 0) {
 				error("\"%s\": Cannot open for reading", *g_argv);
