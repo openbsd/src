@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.67 1999/12/06 12:10:12 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.68 1999/12/06 20:15:30 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -684,7 +684,7 @@ main(int ac, char **av)
 		/* Send our protocol version identification. */
 		snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
 			 PROTOCOL_MAJOR, PROTOCOL_MINOR, SSH_VERSION);
-		if (write(sock_out, buf, strlen(buf)) != strlen(buf))
+		if (atomicio(write, sock_out, buf, strlen(buf)) != strlen(buf))
 			fatal("Could not write ident string to %s.", get_remote_ipaddr());
 
 		/* Read other side\'s version identification. */
@@ -710,9 +710,10 @@ main(int ac, char **av)
 	 * several versions and set appropriate flags to handle them.
 	 */
 	if (sscanf(buf, "SSH-%d.%d-%[^\n]\n", &remote_major, &remote_minor,
-		   remote_version) != 3) {
-		const char *s = "Protocol mismatch.\n";
-		(void) write(sock_out, s, strlen(s));
+	    remote_version) != 3) {
+		char *s = "Protocol mismatch.\n";
+
+		(void) atomicio(write, sock_out, s, strlen(s));
 		close(sock_in);
 		close(sock_out);
 		fatal("Bad protocol version identification '%.100s' from %s",
@@ -721,8 +722,9 @@ main(int ac, char **av)
 	debug("Client protocol version %d.%d; client software version %.100s",
 	      remote_major, remote_minor, remote_version);
 	if (remote_major != PROTOCOL_MAJOR) {
-		const char *s = "Protocol major versions differ.\n";
-		(void) write(sock_out, s, strlen(s));
+		char *s = "Protocol major versions differ.\n";
+
+		(void) atomicio(write, sock_out, s, strlen(s));
 		close(sock_in);
 		close(sock_out);
 		fatal("Protocol major versions differ for %s: %d vs. %d",

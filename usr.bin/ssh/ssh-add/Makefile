@@ -13,7 +13,7 @@ BINMODE?=555
 BINDIR=	/usr/bin
 MAN=	ssh-add.1
 
-SRCS=	ssh-add.c log-client.c
+SRCS=	ssh-add.c log-client.c atomicio.c
 
 .include <bsd.prog.mk>
 

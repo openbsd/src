@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.21 1999/11/24 20:26:35 markus Exp $");
+RCSID("$Id: scp.c,v 1.22 1999/12/06 20:15:28 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -974,7 +974,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.21 1999/11/24 20:26:35 markus Exp $
+ *	$Id: scp.c,v 1.22 1999/12/06 20:15:28 deraadt Exp $
  */
 
 char *
@@ -1065,30 +1065,6 @@ lostconn(signo)
 	exit(1);
 }
 
-/*
- * ensure all of data on socket comes through. f==read || f==write
- */
-int
-atomicio(f, fd, s, n)
-	int (*f) ();
-	char *s;
-{
-	int res, pos = 0;
-
-	while (n > pos) {
-		res = (f) (fd, s + pos, n - pos);
-		switch (res) {
-		case -1:
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-		case 0:
-			return (res);
-		default:
-			pos += res;
-		}
-	}
-	return (pos);
-}
 
 void
 alarmtimer(int wait)
