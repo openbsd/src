@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.c,v 1.2 1996/06/26 05:31:20 deraadt Exp $	*/
+/*	$OpenBSD: extract.c,v 1.3 1997/05/31 08:17:33 deraadt Exp $	*/
 /*	$NetBSD: extract.c,v 1.5 1995/03/26 03:27:53 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: extract.c,v 1.2 1996/06/26 05:31:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: extract.c,v 1.3 1997/05/31 08:17:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ extract(argv)
 		}
 		if (options & AR_O) {
 			tv[0].tv_sec = tv[1].tv_sec = chdr.date;
-			if (utimes(file, tv)) {
+			if (futimes(tfd, tv)) {
 				warn("utimes: %s", file);
 				eval = 1;
 			}
