@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.6 1998/12/04 01:56:14 mickey Exp $
+$OpenBSD: cpudevs,v 1.7 1999/02/17 03:04:19 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -51,13 +51,13 @@ board	HP715_75	0x316	715/75 (Scorpio)
 board	HP715_99	0x60B	715/99 (Scorpio)
 
 #board	HP720		0x200	720 (Cobra)
-board	HP725_50	0x318	725/50
-board	HP725_75	0x319	725/75
-board	HP725_100	0x60D	725/100
+board	HP725_50	0x318	725/50 (Scorpio)
+board	HP725_75	0x319	725/75 (Scorpio)
+board	HP725_100	0x60D	725/100 (Scorpio)
 
 #board	HP730		0x202	730 (King Cobra)
 board	HP735_99	0x203	735/99 (Hardball)
-board	HP735_135	0x206	735/135 (Hardball)
+board	HP735_125	0x206	735/125 (Hardball)
 
 #board	HP743i_1	0x603	743i1
 #board	HP743i_2	0x604	743i2
@@ -74,8 +74,8 @@ board	HP750		0x201	750 (Coral)
 
 #board	HP770_100	0x585   770/100 (J-class J200)
 #board	HP770_120	0x586   770/120 (J-class J210)
-#board	HP777_100	0x592   777/100 (C-class C200)
-#board	HP777_120	0x58E   777/120 (C-class C210)
+#board	HP777_100	0x592   777/100 (C-class C100)
+#board	HP777_120	0x58E   777/120 (C-class C110)
 
 #board	HP806			806 (E25)
 #board	HP807			807 (F10)
@@ -130,7 +130,9 @@ type	bha	11	bus adaptor
 type	multi	12	Multiple-Type I/O
 type	faulty	31	broken
 
+cpu	HPPA11	0	PA-RISC 1.0
 cpu	HPPA11	4	PA-RISC 1.1
+cpu	HPPA20	8	PA-RISC 2.0
 
 memory	ARCH	0x8	architected memory module
 memory	PDEP	0x9	pdep memory module
