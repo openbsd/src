@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1997/05/04 03:26:24 tholo Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/05/04 20:22:14 tholo Exp $
 
 # Revision is 2.1
 REV=           21
@@ -65,7 +65,11 @@ bsd.gz: bsd.rd
 
 bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd
+.if exists(${.CURDIR}/${__objdir})
 	${.CURDIR}/${__objdir}/rdsetroot bsd.rd < ${IMAGE}
+.else
+	${.CURDIR}/rdsetroot bsd.rd < ${IMAGE}
+.endif
 
 bsd:
 	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
