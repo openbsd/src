@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.4 1997/04/20 20:47:34 tholo Exp $	*/
+/*	$OpenBSD: time.h,v 1.5 1997/04/22 00:40:17 mickey Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ struct clockinfo {
 #define TIMER_RELTIME	0x0	/* relative timer */
 #define TIMER_ABSTIME	0x1	/* absolute timer */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
 void	microtime __P((struct timeval *tv));
