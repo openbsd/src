@@ -1,4 +1,4 @@
-/* $OpenBSD: ispvar.h,v 1.2 1999/03/17 05:26:09 mjacob Exp $ */
+/*	$OpenBSD: ispvar.h,v 1.3 1999/03/17 12:54:32 mjacob Exp $ */
 /* release_03_16_99 */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.

@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_openbsd.c,v 1.1 1999/03/17 05:26:09 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.2 1999/03/17 12:54:32 mjacob Exp $ */
 /* release_03_16_99 */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.

@@ -1,4 +1,4 @@
-/* $OpenBSD: asm_sbus.h,v 1.2 1999/03/17 05:22:56 mjacob Exp $ */
+/*	$OpenBSD: asm_sbus.h,v 1.3 1999/03/17 12:56:23 mjacob Exp $ */
 /* release_03_16_99 */
 /*
  * SBus Qlogic Host Adapter Firmware Tables

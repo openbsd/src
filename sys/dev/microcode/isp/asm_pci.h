@@ -1,4 +1,4 @@
-/* $OpenBSD: asm_pci.h,v 1.2 1999/03/17 05:22:51 mjacob Exp $ */
+/*	$OpenBSD: asm_pci.h,v 1.3 1999/03/17 12:56:19 mjacob Exp $ */
 /* release_03_16_99 */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 by Qlogic Corporation
