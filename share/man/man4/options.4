@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.70 2001/06/26 02:09:09 pjanzen Exp $
+.\"	$OpenBSD: options.4,v 1.71 2001/07/06 09:02:54 jjbg Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -836,6 +836,12 @@ for details.
 Enables PFKEYv2 (RFC 2367) support.
 While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
+.It Cd option IPCOMP
+Enables IPComp (IP Payload Compression Protocol) support. See
+.Xr ipcomp 4 
+and RFC 2393 for more details. Option
+.Em IPSEC 
+is required with this option.
 .El
 .Ss SCSI Subsystem Options
 .Bl -ohang
