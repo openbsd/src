@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.8 1999/07/24 23:04:34 deraadt Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.9 1999/09/12 19:44:04 weingart Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -55,8 +55,7 @@ dev_t dev_rawpart __P((struct device *));	/* XXX */
 
 extern u_int32_t bios_cksumlen;
 extern bios_diskinfo_t *bios_diskinfo;
-
-void dkcsumattach __P((void));			/* XXX should be elsewhere */
+extern dev_t bootdev;
 
 void
 dkcsumattach()
@@ -167,6 +166,24 @@ dkcsumattach()
 			    dv->dv_xname);
 #endif
 			continue;
+		}
+
+		/* Fixup bootdev if units match.  This means that all of
+		 * hd*, sd*, wd*, will be interpreted the same.  Not 100%
+		 * backwards compatible, but sd* and wd* should be phased-
+		 * out in the bootblocks.
+		 */
+		if (B_UNIT(bootdev) == (hit->bios_number & 0x7F)) {
+			int type, ctrl, adap, part, unit;
+
+			/* Translate to MAKEBOOTDEV() style */
+			type = major(bp->b_dev);
+			adap = B_ADAPTOR(bootdev);
+			ctrl = B_CONTROLLER(bootdev);
+			unit = DISKUNIT(bp->b_dev);
+			part = B_PARTITION(bootdev);
+
+			bootdev = MAKEBOOTDEV(type, ctrl, adap, unit, part);
 		}
 
 		/* This will overwrite /boot's guess, just so you remember */

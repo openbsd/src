@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.40 1999/08/17 10:32:18 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.41 1999/09/12 19:44:04 weingart Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ struct	proc *initproc;
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
 
+void	(*md_diskconf) __P((void)) = NULL;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timeval boottime;
@@ -364,16 +365,9 @@ main(framep)
 	roundrobin(NULL);
 	schedcpu(NULL);
 
-#ifdef i386
-#include "bios.h"
-#if NBIOS
-	/* XXX This is only a transient solution */
-	{
-		extern void dkcsumattach __P((void));
-		dkcsumattach();
-	}
-#endif
-#endif
+	/* Configure root/swap devices */
+	if (md_diskconf)
+		(*md_diskconf)();
 
 	/* Mount the root file system. */
 	if (vfs_mountroot())

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 1999/07/30 19:05:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 1999/09/12 19:44:04 weingart Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -62,9 +62,10 @@
 
 #include <dev/cons.h>
 
+void rootconf __P((void));
 void swapconf __P((void));
 void setroot __P((void));
-void setconf __P((void));
+void diskconf __P((void));
 
 /*
  * The following several variables are related to
@@ -72,6 +73,7 @@ void setconf __P((void));
  * the machine.
  */
 extern int	cold;		/* cold start flag initialized in locore.s */
+dev_t	bootdev = 0;		/* bootdevice, initialized in locore.s */
 
 /*
  * Determine i/o configuration for a machine.
@@ -91,15 +93,34 @@ configure()
 
 	spl0();
 
-	setconf();
-
 	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
+	 * We can not know which is our root disk, defer
+	 * until we can checksum blocks to figure it out.
 	 */
+	md_diskconf = diskconf;
+	cold = 0;
+}
+
+/*
+ * Now that we are fully operational, we can checksum the
+ * disks, and using some heuristics, hopefully are able to
+ * always determine the correct root disk.
+ */
+void
+diskconf()
+{
+	/*
+	 * Configure root, swap, and dump area.  This is
+	 * currently done by running the same checksum
+	 * algorithm over all known disks, as was done in
+	 * /boot.  Then we basically fixup the *dev vars
+	 * from the info we gleaned from this.
+	 */
+	dkcsumattach();
+
+	rootconf();
 	swapconf();
 	dumpconf();
-	cold = 0;
 }
 
 /*
@@ -127,7 +148,6 @@ swapconf()
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
 static const char *devname[] = {
 	"wd",		/* 0 = wd */
@@ -176,13 +196,13 @@ setroot()
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
+	majdev = B_TYPE(bootdev);
 	if (majdev > sizeof(devname)/sizeof(devname[0]) ||
 	    *devname[majdev] == '\0')
 		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
+	adaptor = B_ADAPTOR(bootdev);
+	part = B_PARTITION(bootdev);
+	unit = B_UNIT(bootdev);
 	mindev = (unit * MAXPARTITIONS) + part;
 	orootdev = rootdev;
 	rootdev = makedev(majdev, mindev);
@@ -268,17 +288,14 @@ struct	genericconf {
 };
 
 void
-setconf()
+rootconf()
 {
 	register struct genericconf *gc;
 	int unit, part = 0;
-#if 0
-	int swaponroot = 0;
-#endif
 	char *num;
 
 #ifdef INSTALL
-	if (((bootdev >> B_TYPESHIFT) & B_TYPEMASK) == 2) {
+	if (B_TYPE(bootdev) == 2) {
 		printf("\n\nInsert file system floppy...\n");
 		if (!(boothowto & RB_ASKNAME))
 			cngetc();
@@ -299,12 +316,6 @@ retry:
 				break;
 		if (gc->gc_driver) {
 			num = &name[strlen(gc->gc_name)];
-#if 0
-			if (num[0] == '*') {
-				strcpy(num, num+1);
-				swaponroot++;
-			}
-#endif
 
 			unit = -2;
 			do {
@@ -360,8 +371,4 @@ doswap:
 	swdevt[0].sw_dev = argdev = dumpdev =
 	    makedev(major(rootdev), minor(rootdev) + 1);
 	/* swap size and dumplo set during autoconfigure */
-#if 0
-	if (swaponroot)
-		rootdev = dumpdev;
-#endif
 }
