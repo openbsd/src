@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.70 2003/07/17 16:25:52 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.71 2003/08/14 19:00:12 jason Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1275,7 +1275,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 
 	/* copy back packet headers if we sanitized */
 	if (rewrite)
-		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		m_copyback(m, off, sizeof(*th), th);
 
 	return (PF_PASS);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.86 2003/07/24 09:59:02 itojun Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.87 2003/08/14 19:00:12 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -888,7 +888,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	/* Fix Next Protocol in IPv4/IPv6 header. */
 	prot = IPPROTO_ESP;
-	m_copyback(m, protoff, sizeof(u_int8_t), (u_char *) &prot);
+	m_copyback(m, protoff, sizeof(u_int8_t), &prot);
 
 	/* Get crypto descriptors. */
 	crp = crypto_getreq(esph && espx ? 2 : 1);

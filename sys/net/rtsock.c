@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.30 2003/07/05 00:00:32 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.31 2003/08/14 19:00:12 jason Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ flush:
 	if (dst)
 		route_proto.sp_protocol = dst->sa_family;
 	if (rtm) {
-		m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+		m_copyback(m, 0, rtm->rtm_msglen, rtm);
 		if (m->m_pkthdr.len < rtm->rtm_msglen) {
 			m_freem(m);
 			m = NULL;
@@ -494,7 +494,7 @@ rt_msg1(type, rtinfo)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
-		m_copyback(m, len, dlen, (caddr_t)sa);
+		m_copyback(m, len, dlen, sa);
 		len += dlen;
 	}
 	if (m->m_pkthdr.len != len) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.19 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.20 2003/08/14 19:00:13 jason Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -480,9 +480,9 @@ rip6_output(struct mbuf *m, ...)
 		off += sizeof(struct ip6_hdr);
 
 		sum = 0;
-		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		m_copyback(m, off, sizeof(sum), &sum);
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		m_copyback(m, off, sizeof(sum), &sum);
 	}
 
 	flags = 0;

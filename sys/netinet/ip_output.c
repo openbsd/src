@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.154 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.155 2003/08/14 19:00:12 jason Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1434,7 +1434,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				m->m_len += ipr->ref_len;
 				*mtod(m, u_int16_t *) = ipr->ref_type;
 				m_copyback(m, sizeof(u_int16_t), ipr->ref_len,
-					   (caddr_t)(ipr + 1));
+				    ipr + 1);
 			}
 #endif
 			break;
@@ -1913,7 +1913,7 @@ in_delayed_cksum(struct mbuf *m)
 	}
 
 	if ((offset + sizeof(u_int16_t)) > m->m_len)
-		m_copyback(m, offset, sizeof(csum), (caddr_t) &csum);
+		m_copyback(m, offset, sizeof(csum), &csum);
 	else
 		*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
 }

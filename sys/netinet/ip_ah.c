@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.78 2003/07/24 09:59:02 itojun Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.79 2003/08/14 19:00:12 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -362,7 +362,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			ip6.ip6_dst.s6_addr16[1] = 0;
 
 		/* Done with IPv6 header. */
-		m_copyback(m, 0, sizeof(struct ip6_hdr), (caddr_t) &ip6);
+		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6);
 
 		/* Let's deal with the remaining headers (if any). */
 		if (skip - sizeof(struct ip6_hdr) > 0) {
@@ -1153,7 +1153,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    (caddr_t) &iplen, sizeof(u_int16_t));
 			iplen = htons(ntohs(iplen) + rplen + ahx->authsize);
 			m_copyback(m, offsetof(struct ip, ip_len),
-			    sizeof(u_int16_t), (caddr_t) &iplen);
+			    sizeof(u_int16_t), &iplen);
 			break;
 #endif /* INET */
 
@@ -1164,7 +1164,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    (caddr_t) &iplen, sizeof(u_int16_t));
 			iplen = htons(ntohs(iplen) + rplen + ahx->authsize);
 			m_copyback(m, offsetof(struct ip6_hdr, ip6_plen),
-			    sizeof(u_int16_t), (caddr_t) &iplen);
+			    sizeof(u_int16_t), &iplen);
 			break;
 #endif /* INET6 */
 		}
@@ -1174,7 +1174,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 		/* Update the Next Protocol field in the IP header. */
 		prot = IPPROTO_AH;
-		m_copyback(m, protoff, sizeof(u_int8_t), (caddr_t) &prot);
+		m_copyback(m, protoff, sizeof(u_int8_t), &prot);
 
 		/* "Massage" the packet headers for crypto processing. */
 		if ((len = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
@@ -1187,7 +1187,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	} else {
 		/* Update the Next Protocol field in the IP header. */
 		prot = IPPROTO_AH;
-		m_copyback(m, protoff, sizeof(u_int8_t), (caddr_t) &prot);
+		m_copyback(m, protoff, sizeof(u_int8_t), &prot);
 	}
 
 	/* Crypto operation descriptor. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.39 2003/07/25 03:45:42 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.40 2003/08/14 19:00:12 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -206,7 +206,7 @@ vlan_start(struct ifnet *ifp)
 				    sizeof(struct ether_vlan_header);
 
 			m_copyback(m0, 0, sizeof(struct ether_vlan_header),
-			    (caddr_t)&evh);
+			    &evh);
 
 			m = m0;
 		}
@@ -265,7 +265,7 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 		if (m->m_len < sizeof(struct ether_vlan_header) &&
 		    (m = m_pullup(m, sizeof(struct ether_vlan_header))) == NULL)
 			return (-1);
-		m_copyback(m, 0, sizeof(struct ether_vlan_header), (caddr_t)&vh);
+		m_copyback(m, 0, sizeof(struct ether_vlan_header), &vh);
 		ether_input_mbuf(m->m_pkthdr.rcvif, m);
 		return (-1);
 	}
