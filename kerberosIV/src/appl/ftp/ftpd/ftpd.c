@@ -38,7 +38,7 @@
 #endif
 #include "getarg.h"
 
-RCSID("$KTH: ftpd.c,v 1.131.2.4 2000/09/26 09:30:26 assar Exp $");
+RCSID("$KTH: ftpd.c,v 1.131.2.8 2001/03/26 11:43:25 assar Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -840,8 +840,8 @@ pass(char *passwd)
 
 	/* some clients insists on sending a password */
 	if (logged_in && askpasswd == 0){
-	     reply(230, "Dumpucko!");
-	     return;
+	    reply(230, "Password not necessary");
+	    return;
 	}
 
 	if (logged_in || askpasswd == 0) {
@@ -1880,6 +1880,9 @@ pasv(void)
 		return;
 	}
 
+	if(pdata != -1)
+	    close(pdata);
+
 	pdata = socket(ctrl_addr->sa_family, SOCK_STREAM, 0);
 	if (pdata < 0) {
 		perror_reply(425, "Can't open passive connection");
@@ -2081,9 +2084,9 @@ list_file(char *file)
 	pdata = -1;
     } else {
 #ifdef HAVE_LS_A
-	const char *cmd = "/bin/ls -lA -- %s";
+	const char *cmd = "/bin/ls -lA %s";
 #else
-	const char *cmd = "/bin/ls -la -- %s";
+	const char *cmd = "/bin/ls -la %s";
 #endif
 	retrieve(cmd, file);
     }
@@ -2103,7 +2106,7 @@ send_file_list(char *whichf)
   char buf[MaxPathLen];
 
   if (strpbrk(whichf, "~{[*?") != NULL) {
-    int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+    int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT;
 
     memset(&gl, 0, sizeof(gl));
     freeglob = 1;
