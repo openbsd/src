@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.6 2003/03/10 04:02:50 david Exp $	*/
+/*	$OpenBSD: deflate.c,v 1.7 2003/10/04 07:57:14 deraadt Exp $	*/
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -274,6 +274,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
     if (s->window == Z_NULL || s->prev == Z_NULL || s->head == Z_NULL ||
         s->pending_buf == Z_NULL) {
         strm->msg = (char*)ERR_MSG(Z_MEM_ERROR);
+        s->status = INIT_STATE;
         deflateEnd (strm);
         return Z_MEM_ERROR;
     }
