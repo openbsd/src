@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.14 1998/03/01 00:38:04 niklas Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.15 1998/03/26 21:36:18 chuck Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.21 1998/01/31 04:02:39 ross Exp $	*/
 
 /* 
@@ -286,6 +286,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 * Mark page busy for other threads.
 			 */
 			m->flags |= PG_BUSY;
+			curproc->p_addr->u_stats.p_ru.ru_minflt++;
 			break;
 		}
 
@@ -320,7 +321,6 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 */
 			UNLOCK_MAP;
 			cnt.v_pageins++;
-			curproc->p_addr->u_stats.p_ru.ru_majflt++;
 			rv = vm_pager_get(object->pager, m, TRUE);
 
 			/*
@@ -345,6 +345,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 				m->flags &= ~PG_FAKE;
 				m->flags |= PG_CLEAN;
 				pmap_clear_modify(VM_PAGE_TO_PHYS(m));
+				curproc->p_addr->u_stats.p_ru.ru_majflt++;
 				break;
 			}
 
@@ -409,6 +410,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			vm_page_zero_fill(m);
 			cnt.v_zfod++;
 			m->flags &= ~PG_FAKE;
+			curproc->p_addr->u_stats.p_ru.ru_minflt++;
 			break;
 		}
 		else {
