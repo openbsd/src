@@ -1,7 +1,7 @@
 #
 #	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: SARUMAN,v 1.1 1996/11/05 03:57:16 tholo Exp $
+#	$OpenBSD: SARUMAN,v 1.2 1996/12/28 01:00:43 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -87,8 +87,8 @@ eisa0	at mainbus0
 npx0	at isa?	port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 
-pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
