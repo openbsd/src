@@ -1769,9 +1769,6 @@ swapconf()
 dev_t	bootdev;
 #endif
 
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
-
 struct nam2blk {
 	char *name;
 	int maj;
@@ -1829,13 +1826,13 @@ parsedisk(str, len, defpart, devp)
 {
 	register struct device *dv;
 	register char *cp, c;
-	int majdev, mindev, part;
+	int majdev, unit, part;
 
 	if (len == 0)
 		return (NULL);
 	cp = str + len - 1;
 	c = *cp;
-	if (c >= 'a' && c <= 'h') {
+	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
 		part = c - 'a';
 		*cp = '\0';
 	} else
@@ -1845,10 +1842,10 @@ parsedisk(str, len, defpart, devp)
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 			majdev = findblkmajor(dv);
+			unit = dv->dv_unit;
 			if (majdev < 0)
 				panic("parsedisk");
-			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
-			*devp = makedev(majdev, mindev);
+			*devp = MAKEDISKDEV(majdev, unit, part);
 			break;
 		}
 #ifdef NFSCLIENT
@@ -1896,7 +1893,7 @@ setroot()
 {
 	register struct swdevt *swp;
 	register struct device *dv;
-	register int len, majdev, mindev;
+	register int len, majdev, unit, part;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
 	dev_t temp;
@@ -1968,8 +1965,8 @@ setroot()
 					nswapdev = NODEV;
 					break;
 				case DV_DISK:
-					nswapdev = makedev(major(nrootdev),
-					    (minor(nrootdev) & ~ PARTITIONMASK) | 1);
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
 					break;
 				case DV_TAPE:
 				case DV_TTY:
@@ -2004,11 +2001,11 @@ gotswap:
 			 * val[2] of the boot device is the partition number.
 			 * Assume swap is on partition b.
 			 */
-			int part = bp->val[2];
-			mindev = (bootdv->dv_unit << PARTITIONSHIFT) + part;
-			rootdev = makedev(majdev, mindev);
-			nswapdev = dumpdev = makedev(major(rootdev),
-			    (minor(rootdev) & ~ PARTITIONMASK) | 1);
+			part = bp->val[2];
+			unit = bootdv->dv_unit;
+			rootdev = MAKEDISKDEV(majdev, unit, part);
+			nswapdev = dumpdev = MAKEDISKDEV(major(rootdev),
+			    DISKUNIT(rootdev), 1);
 		} else {
 			/*
 			 * Root and swap are on a net.
@@ -2025,7 +2022,8 @@ gotswap:
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
 		majdev = major(rootdev);
-		mindev = minor(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
 		goto gotroot;
 	}
 
@@ -2039,9 +2037,10 @@ gotswap:
 	case DV_DISK:
 		mountroot = dk_mountroot;
 		majdev = major(rootdev);
-		mindev = minor(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
 		printf("root on %s%c\n", bootdv->dv_xname,
-		    (mindev & PARTITIONMASK) + 'a');
+		    part + 'a');
 		break;
 	default:
 		printf("can't figure root, hope your kernel is right\n");
@@ -2051,11 +2050,10 @@ gotswap:
 	/*
 	 * Make the swap partition on the root drive the primary swap.
 	 */
-	mindev &= ~PARTITIONMASK;
 	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		    unit == DISKUNIT(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
