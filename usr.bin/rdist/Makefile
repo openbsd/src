@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 3/12/91
-#	$Id: Makefile,v 1.2 1996/02/03 12:12:07 dm Exp $
+#	$Id: Makefile,v 1.3 1996/03/01 08:34:55 tholo Exp $
 
 PROG=	rdist
 CFLAGS+=-I. -DOS_H=\"os-openbsd.h\"
@@ -12,3 +12,5 @@ LDADD=	-lcompat
 DPADD=	${LIBCOMPAT}
 
 .include <bsd.prog.mk>
+
+.depend: gram.c
