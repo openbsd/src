@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.14 2001/12/22 09:49:39 smurph Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.15 2001/12/22 18:45:35 smurph Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -247,11 +247,9 @@ vematch(parent, vcf, args)
 {
 
 	struct confargs *ca = args;
-	if (!badvaddr((unsigned)ca->ca_vaddr, 1)) {
-		return (1);
-	} else {
+	if (badvaddr((unsigned)ca->ca_vaddr, 1))
 		return (0);
-	}           
+		return (1);
 }
 
 /*

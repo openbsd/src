@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.15 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: vx.c,v 1.16 2001/12/22 18:45:35 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -205,15 +205,9 @@ vxmatch(parent, self, aux)
 
 	vx_reg = (struct vxreg *)ca->ca_vaddr;
 	board_addr = (unsigned int)ca->ca_vaddr;
-	if (!badvaddr((unsigned)&vx_reg->ipc_cr, 1)) {
-		if (ca->ca_vec & 0x03) {
-			printf("xvt: bad vector 0x%x\n", ca->ca_vec);
+	if (badvaddr((unsigned)&vx_reg->ipc_cr, 1))
 			return (0);
-		}
 		return (1);
-	} else {
-		return (0);
-	}      
 }
 
 void

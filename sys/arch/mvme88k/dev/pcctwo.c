@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.14 2001/12/20 06:07:28 smurph Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.15 2001/12/22 18:45:35 smurph Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -54,6 +54,8 @@
 #include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 
+#include "bussw.h"
+
 struct pcctwosoftc {
 	struct device	sc_dev;
 	void		*sc_vaddr;	/* PCC2 space */
@@ -73,6 +75,8 @@ struct cfdriver pcctwo_cd = {
 };
 
 struct pcctworeg *sys_pcc2 = NULL;
+
+int pcc2bus;
 
 int pcctwo_print __P((void *args, const char *bus));
 int pcctwo_scan __P((struct device *parent, void *child, void *args));
@@ -98,7 +102,7 @@ void *vcf, *args;
 		return (0);
 	}
 
-	if (badvaddr((vm_offset_t)pcc2, 4) <= 0) {
+	if (badvaddr((vm_offset_t)pcc2, 4)) {
 		printf("==> pcctwo: failed address check.\n");
 		return (0);
 	}
@@ -173,13 +177,26 @@ void *args;
 	 */
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
-	switch (brdtyp) {
-	case BRD_187:
+	
+	pcc2bus = ca->ca_bustype;
+
+	switch (pcc2bus) {
+	case BUS_MAIN:
 		sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
 		break;
-	case BRD_197: /* pcctwo is a child of buswitch XXX smurph */
+#if NBUSSW > 0
+	case BUS_BUSSWITCH:
 		sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
+		/* 
+		 * fake up our address so that pcc2 child devices
+		 * are offeset of 0xFFF00000 - XXX smurph
+		 */
+                sc->sc_paddr -= PCC2_PCC2CHIP_OFF;
+                sc->sc_vaddr -= PCC2_PCC2CHIP_OFF;
+                /* make sure the bus is mc68040 compatible */
+		sc->sc_pcc2->pcc2_genctl |= PCC2_GENCTL_C040;	
 		break;
+#endif 
 	}
 	sys_pcc2 = sc->sc_pcc2;
 

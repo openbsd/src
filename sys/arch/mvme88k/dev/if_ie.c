@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.18 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.19 2001/12/22 18:45:35 smurph Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -352,9 +352,8 @@ iematch(parent, vcf, args)
 	void	*vcf, *args;
 {
 	struct confargs *ca = args;
-	int ret;
 
-	if ((ret = badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)) <=0){
+	if (badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)){
 		return(0);
 	}
 	return(1);                      

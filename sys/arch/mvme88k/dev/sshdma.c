@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.9 2001/12/16 23:49:46 miod Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.10 2001/12/22 18:45:35 smurph Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -99,10 +99,8 @@ afscmatch(pdp, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	int ret;
 
-	if ((ret = badvaddr((vm_offset_t)IIOV(ca->ca_vaddr), 4)) <=0){
-	    printf("==> ssh: failed address check returning %ld.\n", ret);
+	if (badvaddr((vm_offset_t)IIOV(ca->ca_vaddr), 4)) {
 	    return(0);
 	}
 
@@ -176,10 +174,8 @@ afscattach(parent, self, auxp)
 			CACHE_INH);
 
 		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
-/*		intr_establish(PCC2_VECT + SCSIIRQ, &sc->sc_ih);*/
 		/* enable interrupts at ca_ipl */
 		pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
-/*		pcc2->pcc2_scsiirq = ca->ca_ipl | PCC2_SCSIIRQ_IEN;*/
 		break;
 	    }
 #endif
