@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.114 2004/01/31 20:12:20 markus Exp $
+.\"	$OpenBSD: sysctl.8,v 1.115 2004/02/01 21:22:20 deraadt Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -315,6 +315,10 @@ privilege can change the value.
 .It machdep.apmhalt	integer	yes (i386 only)
 .It machdep.kbdreset	integer	yes (i386 only)
 .It machdep.userldt	integer	yes (i386 only)
+.It machdep.osxsfr	integer no (i386 only)
+.It machdep.sse	integer no (i386 only)
+.It machdep.sse2	integer no (i386 only)
+.It machdep.xcrypt	integer no (i386 only)
 .It machdep.allowaperture	integer	yes (XFree86)
 .It machdep.led_blink	integer	yes (sparc/sparc64)
 .It machdep.ceccerrs	integer	no (sparc64)
