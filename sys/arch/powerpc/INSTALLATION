@@ -123,7 +123,7 @@ cd /mnt
 for file in /tmp/*.tar.gz
 do
 echo ${file}
-gzip -dc ${file} | pax -r
+gzip -dc ${file} | pax -r -pe
 
 
 PATH=/mnt/bin:/mnt/sbin:/mnt/usr/sbin:/mnt/usr/bin:$PATH
