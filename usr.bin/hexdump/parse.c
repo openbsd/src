@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.3 1997/01/17 07:12:39 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.4 1998/08/11 22:06:27 provos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.3 1997/01/17 07:12:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.4 1998/08/11 22:06:27 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -147,6 +147,9 @@ add(fmt)
 		escape(tfu->fmt);
 		p++;
 	}
+	/* no single fu in fmt */
+	if (tfs->nextfu == NULL)
+		badfmt(fmt);
 }
 
 static char *spec = ".#-+ 0123456789";
