@@ -58,7 +58,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #include <openssl/md5.h>
 
 #ifndef MD5_LONG_LOG2

@@ -1,4 +1,4 @@
-	.title	vax_bn_mul_add_word  unsigned multiply & add, 32*32+32+32=>64
+	.title	vax_bn_mul_add_words  unsigned multiply & add, 32*32+32+32=>64
 ;
 ; w.j.m. 15-jan-1999
 ;
@@ -59,7 +59,7 @@ w=16 ;(AP)	w	by value (input)
 	movl	r6,r0			; return c
 	ret
 
-	.title	vax_bn_mul_word  unsigned multiply & add, 32*32+32=>64
+	.title	vax_bn_mul_words  unsigned multiply & add, 32*32+32=>64
 ;
 ; w.j.m. 15-jan-1999
 ;
@@ -172,147 +172,175 @@ n=12 ;(AP)	n	by value (input)
 ; }
 ;
 ; Using EDIV would be very easy, if it didn't do signed calculations.
-; Therefore, som extra things have to happen around it.  The way to
-; handle that is to shift all operands right one step (basically dividing
-; them by 2) and handle the different cases depending on what the lowest
-; bit of each operand was.
+; Any time any of the input numbers are signed, there are problems,
+; usually with integer overflow, at which point it returns useless
+; data (the quotient gets the value of l, and the remainder becomes 0).
 ;
-; To start with, let's define the following:
+; If it was just for the dividend, it would be very easy, just divide
+; it by 2 (unsigned), do the division, multiply the resulting quotient
+; and remainder by 2, add the bit that was dropped when dividing by 2
+; to the remainder, and do some adjustment so the remainder doesn't
+; end up larger than the divisor.  For some cases when the divisor is
+; negative (from EDIV's point of view, i.e. when the highest bit is set),
+; dividing the dividend by 2 isn't enough, and since some operations
+; might generate integer overflows even when the dividend is divided by
+; 4 (when the high part of the shifted down dividend ends up being exactly
+; half of the divisor, the result is the quotient 0x80000000, which is
+; negative...) it needs to be divided by 8.  Furthermore, the divisor needs
+; to be divided by 2 (unsigned) as well, to avoid more problems with the sign.
+; In this case, a little extra fiddling with the remainder is required.
 ;
-; a' = l & 1
-; a2 = <h,l> >> 1	# UNSIGNED shift!
-; b' = d & 1
-; b2 = d >> 1		# UNSIGNED shift!
+; So, the simplest way to handle this is always to divide the dividend
+; by 8, and to divide the divisor by 2 if it's highest bit is set.
+; After EDIV has been used, the quotient gets multiplied by 8 if the
+; original divisor was positive, otherwise 4.  The remainder, oddly
+; enough, is *always* multiplied by 8.
+; NOTE: in the case mentioned above, where the high part of the shifted
+; down dividend ends up being exactly half the shifted down divisor, we
+; end up with a 33 bit quotient.  That's no problem however, it usually
+; means we have ended up with a too large remainder as well, and the
+; problem is fixed by the last part of the algorithm (next paragraph).
 ;
-; Now, use EDIV to calculate a quotient and a remainder:
+; The routine ends with comparing the resulting remainder with the
+; original divisor and if the remainder is larger, subtract the
+; original divisor from it, and increase the quotient by 1.  This is
+; done until the remainder is smaller than the divisor.
 ;
-; q'' = a2/b2
-; r'' = a2 - q''*b2
+; The complete algorithm looks like this:
 ;
-; If b' is 0, the quotient is already correct, we just need to adjust the
-; remainder:
+; d'    = d
+; l'    = l & 7
+; [h,l] = [h,l] >> 3
+; [q,r] = floor([h,l] / d)	# This is the EDIV operation
+; if (q < 0) q = -q		# I doubt this is necessary any more
 ;
-; if (b' == 0)
+; r'    = r >> 29
+; if (d' >= 0)
+;   q'  = q >> 29
+;   q   = q << 3
+; else
+;   q'  = q >> 30
+;   q   = q << 2
+; r     = (r << 3) + l'
+;
+; if (d' < 0)
 ;   {
-;     r = 2*r'' + a'
-;     q = q''
-;   }
-;
-; If b' is 1, we need to do other adjustements.  The first thought is the
-; following (note that r' will not always have the right value, but an
-; adjustement follows further down):
-;
-; if (b' == 1)
-;   {
-;     q' = q''
-;     r' = a - q'*b
-;
-; However, one can note the folowing relationship:
-;
-;                         r'' = a2 - q''*b2
-;                  =>   2*r'' = 2*a2 - 2*q''*b2
-;                             = { a = 2*a2 + a', b = 2*b2 + b' = 2*b2 + 1,
-;                                 q' = q'' }
-;                             = a - a' - q'*(b - 1)
-;                             = a - q'*b - a' + q'
-;                             = r' - a' + q'
-;                  =>     r'  = 2*r'' - q' + a'
-;
-; This enables us to use r'' instead of discarding and calculating another
-; modulo:
-;
-; if (b' == 1)
-;   {
-;     q' = q''
-;     r' = (r'' << 1) - q' + a'
-;
-; Now, all we have to do is adjust r', because it might be < 0:
-;
-;     while (r' < 0)
+;     [r',r] = [r',r] - q
+;     while ([r',r] < 0)
 ;       {
-;         r' = r' + b
-;         q' = q' - 1
+;         [r',r] = [r',r] + d
+;         [q',q] = [q',q] - 1
 ;       }
 ;   }
 ;
-; return q'
+; while ([r',r] >= d')
+;   {
+;     [r',r] = [r',r] - d'
+;     [q',q] = [q',q] + 1
+;   }
+;
+; return q
 
 h=4 ;(AP)	h	by value (input)
 l=8 ;(AP)	l	by value (input)
 d=12 ;(AP)	d	by value (input)
 
-;aprim=r5
-;a2=r6
-;a20=r6
-;a21=r7
-;bprim=r8
-;b2=r9
-;qprim=r10	; initially used as q''
-;rprim=r11	; initially used as r''
-
+;r2 = l, q
+;r3 = h, r
+;r4 = d
+;r5 = l'
+;r6 = r'
+;r7 = d'
+;r8 = q'
 
 	.psect	code,nowrt
 
-.entry	bn_div_words,^m<r2,r3,r4,r5,r6,r7,r8,r9,r10,r11>
+.entry	bn_div_words,^m<r2,r3,r4,r5,r6,r7,r8>
 	movl	l(ap),r2
 	movl	h(ap),r3
 	movl	d(ap),r4
 
-	movl	#0,r5
-	movl	#0,r8
-	movl	#0,r0
-;	movl	#0,r1
+	bicl3	#^XFFFFFFF8,r2,r5 ; l' = l & 7
+	bicl3	#^X00000007,r2,r2
 
-	rotl	#-1,r2,r6	; a20 = l >> 1 (almost)
-	rotl	#-1,r3,r7	; a21 = h >> 1 (almost)
-	rotl	#-1,r4,r9	; b2 = d >> 1 (almost)
+	bicl3	#^XFFFFFFF8,r3,r6
+	bicl3	#^X00000007,r3,r3
+        
+	addl	r6,r2
 
-	tstl	r6
-	bgeq	1$
-	xorl2	#^X80000000,r6	; fixup a20 so highest bit is 0
-	incl	r5		; a' = 1
-1$:
-	tstl	r7
-	bgeq	2$
-	xorl2	#^X80000000,r6	; fixup a20 so highest bit is 1,
-				; since that's what was lowest in a21
-	xorl2	#^X80000000,r7	; fixup a21 so highest bit is 1
-2$:
-	tstl	r9
+	rotl	#-3,r2,r2	; l = l >> 3
+	rotl	#-3,r3,r3	; h = h >> 3
+                
+	movl	r4,r7		; d' = d
+
+	movl	#0,r6		; r' = 0
+	movl	#0,r8		; q' = 0
+
+	tstl	r4
 	beql	666$		; Uh-oh, the divisor is 0...
-	bgtr	3$
-	xorl2	#^X80000000,r9	; fixup b2 so highest bit is 0
-	incl	r8		; b' = 1
-3$:
-	tstl	r9
-	bneq	4$		; if b2 is 0, we know that b' is 1
-	tstl	r3
-	bneq	666$		; if higher half isn't 0, we overflow
-	movl	r2,r10		; otherwise, we have our result
-	brb	42$		; This is a success, really.
-4$:
-	ediv	r9,r6,r10,r11
+	bgtr	1$
+	rotl	#-1,r4,r4	; If d is negative, shift it right.
+	bicl2	#^X80000000,r4	; Since d is then a large number, the
+				; lowest bit is insignificant
+				; (contradict that, and I'll fix the problem!)
+1$:     
+	ediv	r4,r2,r2,r3	; Do the actual division
 
-	tstl	r8
-	bneq	5$		; If b' != 0, go to the other part
-;	addl3	r11,r11,r1
-;	addl2	r5,r1
-	brb	42$
-5$:
-	ashl	#1,r11,r11
-	subl2	r10,r11
-	addl2	r5,r11
-	bgeq	7$
-6$:
-	decl	r10
-	addl2	r4,r11
-	blss	6$
-7$:
-;	movl	r11,r1
+	tstl	r2
+	bgeq	3$
+	mnegl	r2,r2		; if q < 0, negate it
+3$:     
+	tstl	r7
+	blss	4$
+	rotl	#3,r2,r2	;   q = q << 3
+	bicl3	#^XFFFFFFF8,r2,r8 ;    q' gets the high bits from q
+	bicl3	#^X00000007,r2,r2
+	bsb	41$
+4$:				; else
+	rotl	#2,r2,r2	;   q = q << 2
+	bicl3	#^XFFFFFFFC,r2,r8 ;   q' gets the high bits from q
+	bicl3	#^X00000003,r2,r2
+41$:
+	rotl	#3,r3,r3	; r = r << 3
+	bicl3	#^XFFFFFFF8,r3,r6 ; r' gets the high bits from r
+	bicl3	#^X00000007,r3,r3
+	addl	r5,r3		; r = r + l'
+
+	tstl	r7
+	bgeq	5$
+	bitl	#1,r7
+	beql	5$		; if d' < 0 && d' & 1
+	subl	r2,r3		;   [r',r] = [r',r] - [q',q]
+	sbwc	r8,r6
+45$:
+	bgeq	5$		;   while r < 0
+	decl	r2		;     [q',q] = [q',q] - 1
+	sbwc	#0,r8
+	addl	r7,r3		;     [r',r] = [r',r] + d'
+	adwc	#0,r6
+	brb	45$
+
+; The return points are placed in the middle to keep a short distance from
+; all the branch points
 42$:
-	movl	r10,r0
-666$:
+;	movl	r3,r1
+	movl	r2,r0
 	ret
+666$:
+	movl	#^XFFFFFFFF,r0
+	ret
+
+5$:
+	tstl	r6
+	bneq	6$
+	cmpl	r3,r7
+	blssu	42$		; while [r',r] >= d'
+6$:
+	subl	r7,r3		;   [r',r] = [r',r] - d'
+	sbwc	#0,r6
+	incl	r2		;   [q',q] = [q',q] + 1
+	adwc	#0,r8
+	brb	5$	
 
 	.title	vax_bn_add_words  unsigned add of two arrays
 ;

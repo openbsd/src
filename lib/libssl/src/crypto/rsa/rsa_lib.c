@@ -62,7 +62,10 @@
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 
@@ -71,10 +74,6 @@ static const RSA_METHOD *default_RSA_meth=NULL;
 RSA *RSA_new(void)
 	{
 	RSA *r=RSA_new_method(NULL);
-
-#ifndef OPENSSL_NO_FORCE_RSA_BLINDING
-	r->flags|=RSA_FLAG_BLINDING;
-#endif
 
 	return r;
 	}
@@ -114,11 +113,13 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 	const RSA_METHOD *mtmp;
 	mtmp = rsa->meth;
 	if (mtmp->finish) mtmp->finish(rsa);
+#ifndef OPENSSL_NO_ENGINE
 	if (rsa->engine)
 		{
 		ENGINE_finish(rsa->engine);
 		rsa->engine = NULL;
 		}
+#endif
 	rsa->meth = meth;
 	if (meth->init) meth->init(rsa);
 	return 1;
@@ -136,6 +137,7 @@ RSA *RSA_new_method(ENGINE *engine)
 		}
 
 	ret->meth = RSA_get_default_method();
+#ifndef OPENSSL_NO_ENGINE
 	if (engine)
 		{
 		if (!ENGINE_init(engine))
@@ -160,6 +162,7 @@ RSA *RSA_new_method(ENGINE *engine)
 			return NULL;
 			}
 		}
+#endif
 
 	ret->pad=0;
 	ret->version=0;
@@ -181,8 +184,10 @@ RSA *RSA_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
+#ifndef OPENSSL_NO_ENGINE
 		if (ret->engine)
 			ENGINE_finish(ret->engine);
+#endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
@@ -211,8 +216,10 @@ void RSA_free(RSA *r)
 
 	if (r->meth->finish)
 		r->meth->finish(r);
+#ifndef OPENSSL_NO_ENGINE
 	if (r->engine)
 		ENGINE_finish(r->engine);
+#endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
 
@@ -303,7 +310,8 @@ void RSA_blinding_off(RSA *rsa)
 		BN_BLINDING_free(rsa->blinding);
 		rsa->blinding=NULL;
 		}
-	rsa->flags&= ~RSA_FLAG_BLINDING;
+	rsa->flags &= ~RSA_FLAG_BLINDING;
+	rsa->flags |= RSA_FLAG_NO_BLINDING;
 	}
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
@@ -322,15 +330,32 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if (rsa->blinding != NULL)
 		BN_BLINDING_free(rsa->blinding);
 
+	/* NB: similar code appears in setup_blinding (rsa_eay.c);
+	 * this should be placed in a new function of its own, but for reasons
+	 * of binary compatibility can't */
+
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
-	if (!BN_rand_range(A,rsa->n)) goto err;
+	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
+		{
+		/* if PRNG is not properly seeded, resort to secret exponent as unpredictable seed */
+		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0);
+		if (!BN_pseudo_rand_range(A,rsa->n)) goto err;
+		}
+	else
+		{
+		if (!BN_rand_range(A,rsa->n)) goto err;
+		}
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
 	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
-	    goto err;
-	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);
-	rsa->flags|=RSA_FLAG_BLINDING;
+		goto err;
+	if ((rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n)) == NULL) goto err;
+	/* to make things thread-safe without excessive locking,
+	 * rsa->blinding will be used just by the current thread: */
+	rsa->blinding->thread_id = CRYPTO_thread_id();
+	rsa->flags |= RSA_FLAG_BLINDING;
+	rsa->flags &= ~RSA_FLAG_NO_BLINDING;
 	BN_free(Ai);
 	ret=1;
 err:

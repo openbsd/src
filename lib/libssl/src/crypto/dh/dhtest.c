@@ -59,9 +59,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef OPENSSL_SYS_WINDOWS
-#include "../bio/bss_file.c" 
-#endif
+
+#include "../e_os.h"
+
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
@@ -84,10 +84,6 @@ int main(int argc, char *argv[])
 #endif
 
 static void MS_CALLBACK cb(int p, int n, void *arg);
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#include "bss_file.c"
-#endif
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
@@ -111,7 +107,7 @@ int main(int argc, char *argv[])
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	out=BIO_new(BIO_s_file());
-	if (out == NULL) exit(1);
+	if (out == NULL) EXIT(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
 	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,out);
@@ -195,7 +191,7 @@ err:
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
 	CRYPTO_mem_leaks_fp(stderr);
-	exit(ret);
+	EXIT(ret);
 	return(ret);
 	}
 

@@ -68,7 +68,8 @@
 
 #include "cryptlib.h"
 
-#if defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WINCE)
+#elif defined(OPENSSL_SYS_WIN32)
 #  include <process.h>
 #elif defined(OPENSSL_SYS_VMS)
 #  include <opcdef.h>
@@ -77,7 +78,7 @@
 #  include <starlet.h>
 #elif defined(__ultrix)
 #  include <sys/syslog.h>
-#elif !defined(MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG) /* Unix */
+#elif (!defined(MSDOS) || defined(WATT32)) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG)
 #  include <syslog.h>
 #endif
 
@@ -274,7 +275,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	LPCSTR lpszStrings[2];
 	WORD evtype= EVENTLOG_ERROR_TYPE;
 	int pid = _getpid();
-	char pidbuf[20];
+	char pidbuf[DECIMAL_SIZE(pid)+4];
 
 	switch (priority)
 		{
@@ -373,11 +374,15 @@ static void xcloselog(BIO* bp)
 {
 }
 
-#else /* Unix */
+#else /* Unix/Watt32 */
 
 static void xopenlog(BIO* bp, char* name, int level)
 {
+#ifdef WATT32   /* djgpp/DOS */
+	openlog(name, LOG_PID|LOG_CONS|LOG_NDELAY, level);
+#else
 	openlog(name, LOG_PID|LOG_CONS, level);
+#endif
 }
 
 static void xsyslog(BIO *bp, int priority, const char *string)

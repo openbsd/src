@@ -87,18 +87,25 @@ SSL_METHOD *SSLv23_client_method(void)
 
 	if (init)
 		{
-		memcpy((char *)&SSLv23_client_data,
-			(char *)sslv23_base_method(),sizeof(SSL_METHOD));
-		SSLv23_client_data.ssl_connect=ssl23_connect;
-		SSLv23_client_data.get_ssl_method=ssl23_get_client_method;
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&SSLv23_client_data,
+				(char *)sslv23_base_method(),sizeof(SSL_METHOD));
+			SSLv23_client_data.ssl_connect=ssl23_connect;
+			SSLv23_client_data.get_ssl_method=ssl23_get_client_method;
+			init=0;
+			}
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv23_client_data);
 	}
 
 int ssl23_connect(SSL *s)
 	{
-	BUF_MEM *buf;
+	BUF_MEM *buf=NULL;
 	unsigned long Time=time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -152,6 +159,7 @@ int ssl23_connect(SSL *s)
 					goto end;
 					}
 				s->init_buf=buf;
+				buf=NULL;
 				}
 
 			if (!ssl3_setup_buffers(s)) { ret= -1; goto end; }
@@ -200,6 +208,8 @@ int ssl23_connect(SSL *s)
 		}
 end:
 	s->in_handshake--;
+	if (buf != NULL)
+		BUF_MEM_free(buf);
 	if (cb != NULL)
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);
@@ -363,7 +373,7 @@ static int ssl23_get_server_hello(SSL *s)
 
 		if (s->s3 != NULL) ssl3_free(s);
 
-		if (!BUF_MEM_grow(s->init_buf,
+		if (!BUF_MEM_grow_clean(s->init_buf,
 			SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
 			{
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,ERR_R_BUF_LIB);

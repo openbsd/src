@@ -61,6 +61,8 @@
 #include <string.h>
 #include <openssl/md2.h>
 
+#include "../e_os.h"
+
 #ifdef OPENSSL_NO_MD2
 int main(int argc, char *argv[])
 {
@@ -122,8 +124,7 @@ int main(int argc, char *argv[])
 		R++;
 		P++;
 		}
-	exit(err);
-	return(0);
+	EXIT(err);
 	}
 
 static char *pt(unsigned char *md)

@@ -120,7 +120,9 @@ int MAIN(int argc, char **argv)
     char *passin = NULL, *passout = NULL;
     char *inrand = NULL;
     char *CApath = NULL, *CAfile = NULL;
+#ifndef OPENSSL_NO_ENGINE
     char *engine=NULL;
+#endif
 
     apps_startup();
 
@@ -252,11 +254,13 @@ int MAIN(int argc, char **argv)
 			args++;	
 			CAfile = *args;
 		    } else badarg = 1;
+#ifndef OPENSSL_NO_ENGINE
 		} else if (!strcmp(*args,"-engine")) {
 		    if (args[1]) {
 			args++;	
 			engine = *args;
 		    } else badarg = 1;
+#endif
 		} else badarg = 1;
 
 	} else badarg = 1;
@@ -304,14 +308,18 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-password p   set import/export password source\n");
 	BIO_printf (bio_err, "-passin p     input file pass phrase source\n");
 	BIO_printf (bio_err, "-passout p    output file pass phrase source\n");
+#ifndef OPENSSL_NO_ENGINE
 	BIO_printf (bio_err, "-engine e     use engine e, possibly a hardware device.\n");
+#endif
 	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
     	goto end;
     }
 
+#ifndef OPENSSL_NO_ENGINE
     e = setup_engine(bio_err, engine, 0);
+#endif
 
     if(passarg) {
 	if(export_cert) passargout = passarg;
@@ -399,7 +407,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("read MAC password");
 #endif
-	if(EVP_read_pw_string (macpass, 50, "Enter MAC Password:", export_cert))
+	if(EVP_read_pw_string (macpass, sizeof macpass, "Enter MAC Password:", export_cert))
 	{
     	    BIO_printf (bio_err, "Can't read Password\n");
     	    goto end;
@@ -545,7 +553,7 @@ int MAIN(int argc, char **argv)
 #endif
 
 	if(!noprompt &&
-		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1)) {
+		EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:", 1)) {
 	    BIO_printf (bio_err, "Can't read Password\n");
 	    goto export_end;
         }
@@ -642,7 +650,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("read import password");
 #endif
-    if(!noprompt && EVP_read_pw_string(pass, 50, "Enter Import Password:", 0)) {
+    if(!noprompt && EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:", 0)) {
 	BIO_printf (bio_err, "Can't read Password\n");
 	goto end;
     }
@@ -696,7 +704,7 @@ int MAIN(int argc, char **argv)
     if(passin) OPENSSL_free(passin);
     if(passout) OPENSSL_free(passout);
     apps_shutdown();
-    EXIT(ret);
+    OPENSSL_EXIT(ret);
 }
 
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,

@@ -94,7 +94,7 @@
  *   RAND_egd() is a wrapper for RAND_egd_bytes() with numbytes=255.
  */
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(__DJGPP__)
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS)
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 	{
 	return(-1);
@@ -114,7 +114,7 @@ int RAND_egd_bytes(const char *path,int bytes)
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifndef NO_SYS_UN_H
-# ifdef OPENSSL_SYS_VSWORKS
+# ifdef OPENSSL_SYS_VXWORKS
 #   include <streams/un.h>
 # else
 #   include <sys/un.h>
@@ -143,7 +143,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	if (strlen(path) > sizeof(addr.sun_path))
+	if (strlen(path) >= sizeof(addr.sun_path))
 		return (-1);
 	strlcpy(addr.sun_path,path,sizeof addr.sun_path);
 	len = offsetof(struct sockaddr_un, sun_path) + strlen(path);

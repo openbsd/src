@@ -514,6 +514,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
+#if 0
 /* Cipher 1E */
 	{
 	0,
@@ -527,41 +528,14 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
+#endif
 
 #ifndef OPENSSL_NO_KRB5
 /* The Kerberos ciphers
 ** 20000107 VRS: And the first shall be last,
 ** in hopes of avoiding the lynx ssl renegotiation problem.
 */
-/* Cipher 21 VRS */
-	{
-	1,
-	SSL3_TXT_KRB5_DES_40_CBC_SHA,
-	SSL3_CK_KRB5_DES_40_CBC_SHA,
-	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_SHA1   |SSL_SSLV3,
-	SSL_EXPORT|SSL_EXP40,
-	0,
-	40,
-	56,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-
-/* Cipher 22 VRS */
-	{
-	1,
-	SSL3_TXT_KRB5_DES_40_CBC_MD5,
-	SSL3_CK_KRB5_DES_40_CBC_MD5,
-	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_MD5    |SSL_SSLV3,
-	SSL_EXPORT|SSL_EXP40,
-	0,
-	40,
-	56,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-
-/* Cipher 23 VRS */
+/* Cipher 1E VRS */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_64_CBC_SHA,
@@ -575,21 +549,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 24 VRS */
-	{
-	1,
-	SSL3_TXT_KRB5_DES_64_CBC_MD5,
-	SSL3_CK_KRB5_DES_64_CBC_MD5,
-	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_MD5    |SSL_SSLV3,
-	SSL_NOT_EXP|SSL_LOW,
-	0,
-	56,
-	56,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-
-/* Cipher 25 VRS */
+/* Cipher 1F VRS */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_192_CBC3_SHA,
@@ -603,7 +563,49 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 26 VRS */
+/* Cipher 20 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_RC4_128_SHA,
+	SSL3_CK_KRB5_RC4_128_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_RC4|SSL_SHA1  |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 21 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_IDEA_128_CBC_SHA,
+	SSL3_CK_KRB5_IDEA_128_CBC_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_IDEA|SSL_SHA1  |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 22 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_64_CBC_MD5,
+	SSL3_CK_KRB5_DES_64_CBC_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_MD5    |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_LOW,
+	0,
+	56,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 23 VRS */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_192_CBC3_MD5,
@@ -613,6 +615,118 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	0,
 	112,
 	168,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 24 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_RC4_128_MD5,
+	SSL3_CK_KRB5_RC4_128_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_RC4|SSL_MD5  |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 25 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_IDEA_128_CBC_MD5,
+	SSL3_CK_KRB5_IDEA_128_CBC_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_IDEA|SSL_MD5  |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 26 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_40_CBC_SHA,
+	SSL3_CK_KRB5_DES_40_CBC_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_SHA1   |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 27 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_RC2_40_CBC_SHA,
+	SSL3_CK_KRB5_RC2_40_CBC_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_RC2|SSL_SHA1   |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 28 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_RC4_40_SHA,
+	SSL3_CK_KRB5_RC4_40_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_RC4|SSL_SHA1   |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 29 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_40_CBC_MD5,
+	SSL3_CK_KRB5_DES_40_CBC_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_MD5    |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 2A VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_RC2_40_CBC_MD5,
+	SSL3_CK_KRB5_RC2_40_CBC_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_RC2|SSL_MD5    |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 2B VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_RC4_40_MD5,
+	SSL3_CK_KRB5_RC4_40_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_RC4|SSL_MD5    |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	128,
+	128,
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
@@ -988,7 +1102,7 @@ void ssl3_free(SSL *s)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 	EVP_MD_CTX_cleanup(&s->s3->finish_dgst1);
 	EVP_MD_CTX_cleanup(&s->s3->finish_dgst2);
-	memset(s->s3,0,sizeof *s->s3);
+	OPENSSL_cleanse(s->s3,sizeof *s->s3);
 	OPENSSL_free(s->s3);
 	s->s3=NULL;
 	}
@@ -1343,16 +1457,19 @@ SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 
-		for (i=0; i<SSL3_NUM_CIPHERS; i++)
-			sorted[i]= &(ssl3_ciphers[i]);
+		if (init)
+			{
+			for (i=0; i<SSL3_NUM_CIPHERS; i++)
+				sorted[i]= &(ssl3_ciphers[i]);
 
-		qsort(	(char *)sorted,
-			SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-			FP_ICC ssl_cipher_ptr_id_cmp);
+			qsort(sorted,
+				SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
+				FP_ICC ssl_cipher_ptr_id_cmp);
 
+			init=0;
+			}
+		
 		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-
-		init=0;
 		}
 
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];

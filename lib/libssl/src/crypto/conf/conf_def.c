@@ -208,7 +208,8 @@ static int def_load(CONF *conf, const char *name, long *line)
 
 static int def_load_bio(CONF *conf, BIO *in, long *line)
 	{
-#define BUFSIZE	512
+/* The macro BUFSIZE conflicts with a system macro in VxWorks */
+#define CONFBUFSIZE	512
 	int bufnum=0,i,ii;
 	BUF_MEM *buff=NULL;
 	char *s,*p,*end;
@@ -252,20 +253,21 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 	section_sk=(STACK_OF(CONF_VALUE) *)sv->value;
 
 	bufnum=0;
+	again=0;
 	for (;;)
 		{
-		again=0;
-		if (!BUF_MEM_grow(buff,bufnum+BUFSIZE))
+		if (!BUF_MEM_grow(buff,bufnum+CONFBUFSIZE))
 			{
 			CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_BUF_LIB);
 			goto err;
 			}
 		p= &(buff->data[bufnum]);
 		*p='\0';
-		BIO_gets(in, p, BUFSIZE-1);
-		p[BUFSIZE-1]='\0';
+		BIO_gets(in, p, CONFBUFSIZE-1);
+		p[CONFBUFSIZE-1]='\0';
 		ii=i=strlen(p);
-		if (i == 0) break;
+		if (i == 0 && !again) break;
+		again=0;
 		while (i > 0)
 			{
 			if ((p[i-1] != '\r') && (p[i-1] != '\n'))
@@ -275,7 +277,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 			}
 		/* we removed some trailing stuff so there is a new
 		 * line on the end. */
-		if (i == ii)
+		if (ii && i == ii)
 			again=1; /* long line */
 		else
 			{
@@ -627,7 +629,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 				CONFerr(CONF_F_STR_COPY,CONF_R_VARIABLE_HAS_NO_VALUE);
 				goto err;
 				}
-			BUF_MEM_grow(buf,(strlen(p)+len-(e-from)));
+			BUF_MEM_grow_clean(buf,(strlen(p)+len-(e-from)));
 			while (*p)
 				buf->data[to++]= *(p++);
 			from=e;

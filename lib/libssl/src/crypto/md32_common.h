@@ -1,6 +1,6 @@
 /* crypto/md32_common.h */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -198,7 +198,7 @@
    *
    * 					<appro@fy.chalmers.se>
    */
-#  if defined(__i386) || defined(__i386__)
+#  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"roll %1,%0"		\
@@ -224,7 +224,7 @@
  */
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
-#  if (defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)
+#  if (defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)) && !defined(I386_ONLY)
 #   define BE_FETCH32(a)	({ register unsigned int l=(a);\
 				asm (			\
 				"bswapl %0"		\
@@ -456,7 +456,10 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 				{
 				ew=(c->num>>2);
 				ec=(c->num&0x03);
-				l=p[sw]; HOST_p_c2l(data,l,sc); p[sw++]=l;
+				if (sc)
+					l=p[sw];
+				HOST_p_c2l(data,l,sc);
+				p[sw++]=l;
 				for (; sw < ew; sw++)
 					{
 					HOST_c2l(data,l); p[sw]=l;
@@ -603,7 +606,32 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	c->num=0;
 	/* clear stuff, HASH_BLOCK may be leaving some stuff on the stack
 	 * but I'm not worried :-)
-	memset((void *)c,0,sizeof(HASH_CTX));
+	OPENSSL_cleanse((void *)c,sizeof(HASH_CTX));
 	 */
 	return 1;
 	}
+
+#ifndef MD32_REG_T
+#define MD32_REG_T long
+/*
+ * This comment was originaly written for MD5, which is why it
+ * discusses A-D. But it basically applies to all 32-bit digests,
+ * which is why it was moved to common header file.
+ *
+ * In case you wonder why A-D are declared as long and not
+ * as MD5_LONG. Doing so results in slight performance
+ * boost on LP64 architectures. The catch is we don't
+ * really care if 32 MSBs of a 64-bit register get polluted
+ * with eventual overflows as we *save* only 32 LSBs in
+ * *either* case. Now declaring 'em long excuses the compiler
+ * from keeping 32 MSBs zeroed resulting in 13% performance
+ * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
+ * Well, to be honest it should say that this *prevents* 
+ * performance degradation.
+ *				<appro@fy.chalmers.se>
+ * Apparently there're LP64 compilers that generate better
+ * code if A-D are declared int. Most notably GCC-x86_64
+ * generates better code.
+ *				<appro@fy.chalmers.se>
+ */
+#endif

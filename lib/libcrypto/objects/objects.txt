@@ -276,6 +276,10 @@ rsadsi 3 8		: RC5-CBC		: rc5-cbc
 1 3 6 1 4 1 311 10 3 3	: msSGC			: Microsoft Server Gated Crypto
 !Cname ms-efs
 1 3 6 1 4 1 311 10 3 4	: msEFS			: Microsoft Encrypted File System
+!Cname ms-smartcard-login
+1 3 6 1 4 1 311 20 2 2	: msSmartcardLogin	: Microsoft Smartcardlogin
+!Cname ms-upn
+1 3 6 1 4 1 311 20 2 3	: msUPN			: Microsoft Universal Principal Name
 
 1 3 6 1 4 1 188 7 1 1 2	: IDEA-CBC		: idea-cbc
 			: IDEA-ECB		: idea-ecb
@@ -537,7 +541,7 @@ X509 11			: OU			: organizationalUnitName
 X509 12			: 			: title
 X509 13			: 			: description
 X509 41			: name			: name
-X509 42			: gn			: givenName
+X509 42			: GN			: givenName
 X509 43			: 			: initials
 X509 44			: 			: generationQualifier
 X509 45			: 			: x500UniqueIdentifier

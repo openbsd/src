@@ -144,6 +144,14 @@ typedef unsigned int u_int;
 #include <conio.h>
 #endif
 
+#ifdef OPENSSL_SYS_WINCE
+/* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
+#ifdef fileno
+#undef fileno
+#endif
+#define fileno(a) (int)_fileno(a)
+#endif
+
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -234,7 +242,9 @@ static int s_msg=0;
 static int s_quiet=0;
 
 static int hack=0;
+#ifndef OPENSSL_NO_ENGINE
 static char *engine_id=NULL;
+#endif
 static const char *session_id_prefix=NULL;
 
 #ifdef MONOLITH
@@ -259,7 +269,9 @@ static void s_server_init(void)
 	s_msg=0;
 	s_quiet=0;
 	hack=0;
+#ifndef OPENSSL_NO_ENGINE
 	engine_id=NULL;
+#endif
 	}
 #endif
 
@@ -308,7 +320,9 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err," -HTTP         - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
         BIO_printf(bio_err,"                 with the assumption it contains a complete HTTP response.\n");
+#ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+#endif
 	BIO_printf(bio_err," -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	}
@@ -482,7 +496,9 @@ int MAIN(int argc, char *argv[])
 	int no_tmp_rsa=0,no_dhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e=NULL;
+#endif
 	char *inrand=NULL;
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
@@ -657,11 +673,13 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			session_id_prefix = *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine_id= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -686,7 +704,9 @@ bad:
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
+#endif
 
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
@@ -860,7 +880,7 @@ end:
 		bio_s_out=NULL;
 		}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
@@ -1176,7 +1196,7 @@ err:
 	BIO_printf(bio_s_out,"CONNECTION CLOSED\n");
 	if (buf != NULL)
 		{
-		memset(buf,0,bufsize);
+		OPENSSL_cleanse(buf,bufsize);
 		OPENSSL_free(buf);
 		}
 	if (ret >= 0)
@@ -1228,14 +1248,14 @@ static int init_ssl_connection(SSL *con)
 		{
 		BIO_printf(bio_s_out,"Client certificate\n");
 		PEM_write_bio_X509(bio_s_out,peer);
-		X509_NAME_oneline(X509_get_subject_name(peer),buf,BUFSIZ);
+		X509_NAME_oneline(X509_get_subject_name(peer),buf,sizeof buf);
 		BIO_printf(bio_s_out,"subject=%s\n",buf);
-		X509_NAME_oneline(X509_get_issuer_name(peer),buf,BUFSIZ);
+		X509_NAME_oneline(X509_get_issuer_name(peer),buf,sizeof buf);
 		BIO_printf(bio_s_out,"issuer=%s\n",buf);
 		X509_free(peer);
 		}
 
-	if (SSL_get_shared_ciphers(con,buf,BUFSIZ) != NULL)
+	if (SSL_get_shared_ciphers(con,buf,sizeof buf) != NULL)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
@@ -1395,7 +1415,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			else
 				{
 				BIO_printf(bio_s_out,"read R BLOCK\n");
-#ifndef OPENSSL_SYS_MSDOS
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
 				sleep(1);
 #endif
 				continue;

@@ -87,7 +87,6 @@
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#include <openssl/evp.h>
 #include <openssl/e_os2.h>
 #include <openssl/ossl_typ.h>
 
@@ -487,10 +486,12 @@ typedef struct Netscape_certificate_sequence
 	STACK_OF(X509) *certs;
 	} NETSCAPE_CERT_SEQUENCE;
 
+/* Unused (and iv length is wrong)
 typedef struct CBCParameter_st
 	{
 	unsigned char iv[8];
 	} CBC_PARAM;
+*/
 
 /* Password based encryption structure */
 

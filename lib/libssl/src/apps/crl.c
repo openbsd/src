@@ -81,6 +81,7 @@ static char *crl_usage[]={
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -hash           - print hash value\n",
+" -fingerprint    - print the crl fingerprint\n",
 " -issuer         - print issuer DN\n",
 " -lastupdate     - lastUpdate field\n",
 " -nextupdate     - nextUpdate field\n",
@@ -377,7 +378,7 @@ end:
 		X509_STORE_free(store);
 	}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static X509_CRL *load_crl(char *infile, int format)

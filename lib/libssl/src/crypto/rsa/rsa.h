@@ -158,6 +158,11 @@ struct rsa_st
 #define RSA_FLAG_CACHE_PUBLIC		0x02
 #define RSA_FLAG_CACHE_PRIVATE		0x04
 #define RSA_FLAG_BLINDING		0x08
+#define RSA_FLAG_NO_BLINDING		0x80 /* new with 0.9.6j and 0.9.7b; the built-in
+                                              * RSA implementation now uses blinding by
+                                              * default (ignoring RSA_FLAG_BLINDING),
+                                              * but other engines might not need it
+                                              */
 #define RSA_FLAG_THREAD_SAFE		0x10
 /* This flag means the private key operations will be handled by rsa_mod_exp
  * and that they do not depend on the private key components being present:
@@ -170,10 +175,14 @@ struct rsa_st
  */
 #define RSA_FLAG_SIGN_VER		0x40
 
+#define RSA_FLAG_NO_BLINDING		0x80
+
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
+
+#define RSA_PKCS1_PADDING_SIZE	11
 
 #define RSA_set_app_data(s,arg)         RSA_set_ex_data(s,0,arg)
 #define RSA_get_app_data(s)             RSA_get_ex_data(s,0)

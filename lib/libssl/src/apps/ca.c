@@ -64,7 +64,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "apps.h"
 #include <openssl/conf.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -94,10 +93,12 @@
 #    else
 #      include <unixlib.h>
 #    endif
-#  elif !defined(OPENSSL_SYS_VXWORKS)
+#  elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS)
 #    include <sys/file.h>
 #  endif
 #endif
+
+#include "apps.h"
 
 #ifndef W_OK
 #  define F_OK 0
@@ -195,7 +196,9 @@ static char *ca_usage[]={
 " -extensions ..  - Extension section (override value in config file)\n",
 " -extfile file   - Configuration file with X509v3 extentions to add\n",
 " -crlexts ..     - CRL extension section (override value in config file)\n",
+#ifndef OPENSSL_NO_ENGINE
 " -engine e       - use engine e, possibly a hardware device.\n",
+#endif
 " -status serial  - Shows certificate status given the serial number\n",
 " -updatedb       - Updates db for expired certificates\n",
 NULL
@@ -332,7 +335,10 @@ int MAIN(int argc, char **argv)
 #define BSIZE 256
 	MS_STATIC char buf[3][BSIZE];
 	char *randfile=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
+#endif
+	char *tofree=NULL;
 
 #ifdef EFENCE
 EF_PROTECT_FREE=1;
@@ -535,11 +541,13 @@ EF_ALIGNMENT=0;
 			rev_arg = *(++argv);
 			rev_type = REV_CA_COMPROMISE;
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else
 			{
 bad:
@@ -560,25 +568,31 @@ bad:
 
 	ERR_load_crypto_strings();
 
-        e = setup_engine(bio_err, engine, 0);
+#ifndef OPENSSL_NO_ENGINE
+	e = setup_engine(bio_err, engine, 0);
+#endif
 
 	/*****************************************************************/
+	tofree=NULL;
 	if (configfile == NULL) configfile = getenv("OPENSSL_CONF");
 	if (configfile == NULL) configfile = getenv("SSLEAY_CONF");
 	if (configfile == NULL)
 		{
-		/* We will just use 'buf[0]' as a temporary buffer.  */
+		const char *s=X509_get_default_cert_area();
+		size_t len;
+
 #ifdef OPENSSL_SYS_VMS
-		strncpy(buf[0],X509_get_default_cert_area(),
-			sizeof(buf[0])-1-sizeof(CONFIG_FILE));
+		len = strlen(s)+sizeof(CONFIG_FILE);
+		tofree=OPENSSL_malloc(len);
+		strcpy(tofree,s);
 #else
-		strncpy(buf[0],X509_get_default_cert_area(),
-			sizeof(buf[0])-2-sizeof(CONFIG_FILE));
-		buf[0][sizeof(buf[0])-2-sizeof(CONFIG_FILE)]='\0';
-		strlcat(buf[0],"/",sizeof(buf[0]));
+		len = strlen(s)+sizeof(CONFIG_FILE)+1;
+		tofree=OPENSSL_malloc(len);
+		strlcpy(tofree,s,len);
+		strlcat(tofree,"/",len);
 #endif
-		strlcat(buf[0],CONFIG_FILE,sizeof(buf[0]));
-		configfile=buf[0];
+		strlcat(tofree,CONFIG_FILE,len);
+		configfile=tofree;
 		}
 
 	BIO_printf(bio_err,"Using configuration from %s\n",configfile);
@@ -592,6 +606,11 @@ bad:
 			BIO_printf(bio_err,"error on line %ld of config file '%s'\n"
 				,errorline,configfile);
 		goto err;
+		}
+	if(tofree)
+		{
+		OPENSSL_free(tofree);
+		tofree = NULL;
 		}
 
 	if (!load_config(bio_err, conf))
@@ -701,7 +720,7 @@ bad:
 		}
 	pkey = load_key(bio_err, keyfile, keyform, 0, key, e, 
 		"CA private key");
-	if (key) memset(key,0,strlen(key));
+	if (key) OPENSSL_cleanse(key,strlen(key));
 	if (pkey == NULL)
 		{
 		/* load_key() has already printed an appropriate message */
@@ -1158,9 +1177,14 @@ bad:
 			}
 		if (verbose)
 			{
-			if ((f=BN_bn2hex(serial)) == NULL) goto err;
-			BIO_printf(bio_err,"next serial number is %s\n",f);
-			OPENSSL_free(f);
+			if (BN_is_zero(serial))
+				BIO_printf(bio_err,"next serial number is 00\n");
+			else
+				{
+				if ((f=BN_bn2hex(serial)) == NULL) goto err;
+				BIO_printf(bio_err,"next serial number is %s\n",f);
+				OPENSSL_free(f);
+				}
 			}
 
 		if ((attribs=NCONF_get_section(conf,policy)) == NULL)
@@ -1280,8 +1304,13 @@ bad:
 
 			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_X509_num(cert_sk));
 
-			strncpy(buf[0],serialfile,BSIZE-4);
-			buf[0][BSIZE-4]='\0';
+			if(strlen(serialfile) > BSIZE-5 || strlen(dbfile) > BSIZE-5)
+				{
+				BIO_printf(bio_err,"file name too long\n");
+				goto err;
+				}
+
+			strcpy(buf[0],serialfile);
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[0],"-new");
@@ -1291,8 +1320,7 @@ bad:
 
 			if (!save_serial(buf[0],serial)) goto err;
 
-			strncpy(buf[1],dbfile,BSIZE-4);
-			buf[1][BSIZE-4]='\0';
+			strcpy(buf[1],dbfile);
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[1],"-new");
@@ -1322,8 +1350,13 @@ bad:
 			j=x->cert_info->serialNumber->length;
 			p=(char *)x->cert_info->serialNumber->data;
 			
-			strncpy(buf[2],outdir,BSIZE-(j*2)-6);
-			buf[2][BSIZE-(j*2)-6]='\0';
+			if(strlen(outdir) >= (size_t)(j ? BSIZE-j*2-6 : BSIZE-8))
+				{
+				BIO_printf(bio_err,"certificate file name too long\n");
+				goto err;
+				}
+
+			strcpy(buf[2],outdir);
 
 #ifndef OPENSSL_SYS_VMS
 			strlcat(buf[2],"/",sizeof(buf[2]));
@@ -1561,8 +1594,13 @@ bad:
 			if (j <= 0) goto err;
 			X509_free(revcert);
 
-			strncpy(buf[0],dbfile,BSIZE-4);
-			buf[0][BSIZE-4]='\0';
+			if(strlen(dbfile) > BSIZE-5)
+				{
+				BIO_printf(bio_err,"filename too long\n");
+				goto err;
+				}
+
+			strcpy(buf[0],dbfile);
 #ifndef OPENSSL_SYS_VMS
 			strlcat(buf[0],".new",sizeof(buf[0]));
 #else
@@ -1606,16 +1644,19 @@ bad:
 	/*****************************************************************/
 	ret=0;
 err:
+	if(tofree)
+		OPENSSL_free(tofree);
 	BIO_free_all(Cout);
 	BIO_free_all(Sout);
 	BIO_free_all(out);
 	BIO_free_all(in);
 
-	sk_X509_pop_free(cert_sk,X509_free);
+	if (cert_sk)
+		sk_X509_pop_free(cert_sk,X509_free);
 
 	if (ret) ERR_print_errors(bio_err);
 	app_RAND_write_file(randfile, bio_err);
-	if (free_key)
+	if (free_key && key)
 		OPENSSL_free(key);
 	BN_free(serial);
 	TXT_DB_free(db);
@@ -1625,7 +1666,7 @@ err:
 	NCONF_free(conf);
 	OBJ_cleanup();
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void lookup_fail(char *name, char *tag)
@@ -1690,7 +1731,7 @@ static BIGNUM *load_serial(char *serialfile)
 	ret=ASN1_INTEGER_to_BN(ai,NULL);
 	if (ret == NULL)
 		{
-		BIO_printf(bio_err,"error converting number from bin to BIGNUM");
+		BIO_printf(bio_err,"error converting number from bin to BIGNUM\n");
 		goto err;
 		}
 err:
@@ -2093,7 +2134,10 @@ again2:
 			}
 		}
 
-	row[DB_serial]=BN_bn2hex(serial);
+	if (BN_is_zero(serial))
+		row[DB_serial]=BUF_strdup("00");
+	else
+		row[DB_serial]=BN_bn2hex(serial);
 	if (row[DB_serial] == NULL)
 		{
 		BIO_printf(bio_err,"Memory allocation failure\n");
@@ -2156,7 +2200,7 @@ again2:
 
 #ifdef X509_V3
 	/* Make it an X509 v3 certificate. */
-	if (!X509_set_version(x509,2)) goto err;
+	if (!X509_set_version(ret,2)) goto err;
 #endif
 
 	if (BN_to_ASN1_INTEGER(serial,ci->serialNumber) == NULL)
@@ -2577,7 +2621,10 @@ static int do_revoke(X509 *x509, TXT_DB *db, int type, char *value)
 		row[i]=NULL;
 	row[DB_name]=X509_NAME_oneline(X509_get_subject_name(x509),NULL,0);
 	bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509),NULL);
-	row[DB_serial]=BN_bn2hex(bn);
+	if (BN_is_zero(bn))
+		row[DB_serial]=BUF_strdup("00");
+	else
+		row[DB_serial]=BN_bn2hex(bn);
 	BN_free(bn);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
@@ -3046,55 +3093,59 @@ X509_NAME *do_subject(char *subject, long chtype)
 	sp++; /* skip leading / */
 
 	while (*sp)
-	{
+		{
 		/* collect type */
 		ne_types[ne_num] = bp;
 		while (*sp)
-		{
+			{
 			if (*sp == '\\') /* is there anything to escape in the type...? */
+				{
 				if (*++sp)
 					*bp++ = *sp++;
 				else
-				{
+					{
 					BIO_printf(bio_err, "escape character at end of string\n");
 					goto error;
+					}
 				}
 			else if (*sp == '=')
-			{
+				{
 				sp++;
 				*bp++ = '\0';
 				break;
-			}
+				}
 			else
 				*bp++ = *sp++;
-		}
+			}
 		if (!*sp)
-		{
+			{
 			BIO_printf(bio_err, "end of string encountered while processing type of subject name element #%d\n", ne_num);
 			goto error;
-		}
+			}
 		ne_values[ne_num] = bp;
 		while (*sp)
-		{
+			{
 			if (*sp == '\\')
+				{
 				if (*++sp)
 					*bp++ = *sp++;
 				else
-				{
+					{
 					BIO_printf(bio_err, "escape character at end of string\n");
 					goto error;
+					}
 				}
 			else if (*sp == '/')
-			{
+				{
 				sp++;
 				break;
-			}
+				}
 			else
 				*bp++ = *sp++;
-		}
+			}
 		*bp++ = '\0';
 		ne_num++;
-	}
+		}
 
 	if (!(n = X509_NAME_new()))
 		goto error;

@@ -62,7 +62,6 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include <openssl/engine.h>
 
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH	36
@@ -77,10 +76,11 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	const unsigned char *s = NULL;
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
-	if((rsa->flags & RSA_FLAG_SIGN_VER)
-	      && ENGINE_get_RSA(rsa->engine)->rsa_sign)
-	      return ENGINE_get_RSA(rsa->engine)->rsa_sign(type,
-			m, m_len, sigret, siglen, rsa);
+	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_sign)
+		{
+		return rsa->meth->rsa_sign(type, m, m_len,
+			sigret, siglen, rsa);
+		}
 	/* Special case: SSL signature, just check the length */
 	if(type == NID_md5_sha1) {
 		if(m_len != SSL_SIG_LENGTH) {
@@ -113,7 +113,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 		i=i2d_X509_SIG(&sig,NULL);
 	}
 	j=RSA_size(rsa);
-	if ((i-RSA_PKCS1_PADDING) > j)
+	if (i > (j-RSA_PKCS1_PADDING_SIZE))
 		{
 		RSAerr(RSA_F_RSA_SIGN,RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
 		return(0);
@@ -136,7 +136,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 		*siglen=i;
 
 	if(type != NID_md5_sha1) {
-		memset(tmps,0,(unsigned int)j+1);
+		OPENSSL_cleanse(tmps,(unsigned int)j+1);
 		OPENSSL_free(tmps);
 	}
 	return(ret);
@@ -155,10 +155,11 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 
-	if((rsa->flags & RSA_FLAG_SIGN_VER)
-	    && ENGINE_get_RSA(rsa->engine)->rsa_verify)
-	    return ENGINE_get_RSA(rsa->engine)->rsa_verify(dtype,
-			m, m_len, sigbuf, siglen, rsa);
+	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_verify)
+		{
+		return rsa->meth->rsa_verify(dtype, m, m_len,
+			sigbuf, siglen, rsa);
+		}
 
 	s=(unsigned char *)OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)
@@ -221,7 +222,7 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 	}
 err:
 	if (sig != NULL) X509_SIG_free(sig);
-	memset(s,0,(unsigned int)siglen);
+	OPENSSL_cleanse(s,(unsigned int)siglen);
 	OPENSSL_free(s);
 	return(ret);
 	}

@@ -122,7 +122,7 @@ static char *x509_usage[]={
 " -CAkey arg      - set the CA key, must be PEM format\n",
 "                   missing, it is assumed to be in the CA file.\n",
 " -CAcreateserial - create serial number file if it does not exist\n",
-" -CAserial       - serial file\n",
+" -CAserial arg   - serial file\n",
 " -set_serial     - serial number to use\n",
 " -text           - print the certificate in text form\n",
 " -C              - print out C code forms\n",
@@ -131,7 +131,9 @@ static char *x509_usage[]={
 " -extensions     - section from config file with X509V3 extensions to add\n",
 " -clrext         - delete extensions before signing and input certificate\n",
 " -nameopt arg    - various certificate name options\n",
+#ifndef OPENSSL_NO_ENGINE
 " -engine e       - use engine e, possibly a hardware device.\n",
+#endif
 " -certopt arg    - various certificate text options\n",
 NULL
 };
@@ -183,7 +185,9 @@ int MAIN(int argc, char **argv)
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
 	unsigned long nmflag = 0, certflag = 0;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	reqfile=0;
 
@@ -354,17 +358,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
 			}
-		else if (strcmp(*argv,"-setalias") == 0)
-			{
-			if (--argc < 1) goto bad;
-			alias= *(++argv);
-			trustout = 1;
-			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-C") == 0)
 			C= ++num;
 		else if (strcmp(*argv,"-email") == 0)
@@ -450,7 +450,9 @@ bad:
 		goto end;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (need_rand)
 		app_RAND_load_file(NULL, bio_err, 0);
@@ -479,7 +481,7 @@ bad:
 
 	if (extfile)
 		{
-		long errorline;
+		long errorline = -1;
 		X509V3_CTX ctx2;
 		extconf = NCONF_new(NULL);
 		if (!NCONF_load(extconf, extfile,&errorline))
@@ -770,10 +772,11 @@ bad:
 				int y,z;
 
 				X509_NAME_oneline(X509_get_subject_name(x),
-					buf,256);
+					buf,sizeof buf);
 				BIO_printf(STDout,"/* subject:%s */\n",buf);
 				m=X509_NAME_oneline(
-					X509_get_issuer_name(x),buf,256);
+					X509_get_issuer_name(x),buf,
+					sizeof buf);
 				BIO_printf(STDout,"/* issuer :%s */\n",buf);
 
 				z=i2d_X509(x,NULL);
@@ -1016,7 +1019,7 @@ end:
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	if (passin) OPENSSL_free(passin);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
@@ -1076,7 +1079,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 		}
 	else 
 		{
-		if (!a2i_ASN1_INTEGER(io,bs,buf2,1024))
+		if (!a2i_ASN1_INTEGER(io,bs,buf2,sizeof buf2))
 			{
 			BIO_printf(bio_err,"unable to load serial number from %s\n",buf);
 			ERR_print_errors(bio_err);

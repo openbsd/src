@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2003/01/31 14:05:35 deraadt Exp $
+# $OpenBSD: Makefile,v 1.30 2003/05/12 02:18:34 markus Exp $
 
 LIB=	crypto
 
@@ -34,7 +34,8 @@ CFLAGS+= -DOPENSSL_NO_HW_SUREWARE -DOPENSSL_NO_HW_4758_CCA
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
 SRCS+= o_time.c
-SRCS+=	cryptlib.c ex_data.c cpt_err.c mem.c mem_dbg.c tmdiff.c cversion.c uid.c
+SRCS+=	cryptlib.c ex_data.c cpt_err.c mem.c mem_dbg.c mem_clr.c
+SRCS+=	tmdiff.c cversion.c uid.c
 SRCS+=	md2_dgst.c md2_one.c 					
 SRCS+=	md5_dgst.c md5_one.c 					
 SRCS+=	sha_dgst.c sha1dgst.c sha_one.c sha1_one.c	

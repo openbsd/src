@@ -241,7 +241,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			M_ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
 			}
 		OPENSSL_free(tmp);
-		memset(key, 0, keylen);
+		OPENSSL_cleanse(key, keylen);
 
 		if (out == NULL)
 			out=btmp;
@@ -448,7 +448,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		} 
 		EVP_CipherInit_ex(evp_ctx,NULL,NULL,tmp,NULL,0);
 
-		memset(tmp,0,jj);
+		OPENSSL_cleanse(tmp,jj);
 
 		if (out == NULL)
 			out=etmp;
@@ -578,7 +578,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
 			EVP_MD_CTX_copy_ex(&ctx_tmp,mdc);
-			if (!BUF_MEM_grow(buf,EVP_PKEY_size(si->pkey)))
+			if (!BUF_MEM_grow_clean(buf,EVP_PKEY_size(si->pkey)))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_BIO_LIB);
 				goto err;

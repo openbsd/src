@@ -59,6 +59,12 @@
 #ifndef HEADER_ENGINE_H
 #define HEADER_ENGINE_H
 
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_NO_ENGINE
+#error ENGINE is disabled.
+#endif
+
 #include <openssl/ossl_typ.h>
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_RSA
@@ -307,11 +313,8 @@ void ENGINE_load_ubsec(void);
 void ENGINE_load_aep(void);
 void ENGINE_load_sureware(void);
 void ENGINE_load_4758cca(void);
-void ENGINE_load_openbsd_dev_crypto(void);
-void ENGINE_load_builtin_engines(void);
-#ifdef __OpenBSD__
 void ENGINE_load_cryptodev(void);
-#endif	
+void ENGINE_load_builtin_engines(void);
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
  * "registry" handling. */
@@ -409,6 +412,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
  * compatibility! */
 ENGINE *ENGINE_new(void);
 int ENGINE_free(ENGINE *e);
+int ENGINE_up_ref(ENGINE *e);
 int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
@@ -665,6 +669,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_SET_NAME			 130
 #define ENGINE_F_ENGINE_TABLE_REGISTER			 184
 #define ENGINE_F_ENGINE_UNLOAD_KEY			 152
+#define ENGINE_F_ENGINE_UP_REF				 190
 #define ENGINE_F_INT_CTRL_HELPER			 172
 #define ENGINE_F_INT_ENGINE_CONFIGURE			 188
 #define ENGINE_F_LOG_MESSAGE				 141

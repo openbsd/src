@@ -50,6 +50,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -61,8 +62,9 @@ certificate trust settings.
 Since there are a large number of options they will split up into
 various sections.
 
+=head1 OPTIONS
 
-=head1 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
+=head2 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
 
 =over 4
 
@@ -97,13 +99,19 @@ digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options. If not
 specified then MD5 is used. If the key being used to sign with is a DSA key then
 this option has no effect: SHA1 is always used with DSA keys.
 
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 
-=head1 DISPLAY OPTIONS
+=head2 DISPLAY OPTIONS
 
 Note: the B<-alias> and B<-purpose> options are also display options
-but are described in the B<TRUST OPTIONS> section.
+but are described in the B<TRUST SETTINGS> section.
 
 =over 4
 
@@ -181,7 +189,7 @@ this outputs the certificate in the form of a C source file.
 
 =back
 
-=head1 TRUST SETTINGS
+=head2 TRUST SETTINGS
 
 Please note these options are currently experimental and may well change.
 
@@ -252,7 +260,7 @@ EXTENSIONS> section.
 
 =back
 
-=head1 SIGNING OPTIONS
+=head2 SIGNING OPTIONS
 
 The B<x509> utility can be used to sign certificates and requests: it
 can thus behave like a "mini CA".
@@ -341,7 +349,7 @@ The default filename consists of the CA certificate file base name with
 ".srl" appended. For example if the CA certificate file is called 
 "mycacert.pem" it expects to find a serial number file called "mycacert.srl".
 
-=item B<-CAcreateserial filename>
+=item B<-CAcreateserial>
 
 with this option the CA serial number file is created if it does not exist:
 it will contain the serial number "02" and the certificate being signed will
@@ -362,7 +370,7 @@ specified then the extensions should either be contained in the unnamed
 
 =back
 
-=head1 NAME OPTIONS
+=head2 NAME OPTIONS
 
 The B<nameopt> command line switch determines how the subject and issuer
 names are displayed. If no B<nameopt> switch is present the default "oneline"
@@ -499,7 +507,7 @@ name.
 
 =back
 
-=head1 TEXT OPTIONS
+=head2 TEXT OPTIONS
 
 As well as customising the name output format, it is also possible to
 customise the actual fields printed using the B<certopt> options when
@@ -636,25 +644,25 @@ certificate extensions:
 Set a certificate to be trusted for SSL client use and change set its alias to
 "Steve's Class 1 CA"
 
- openssl x509 -in cert.pem -addtrust sslclient \
-	-alias "Steve's Class 1 CA" -out trust.pem
+ openssl x509 -in cert.pem -addtrust clientAuth \
+	-setalias "Steve's Class 1 CA" -out trust.pem
 
 =head1 NOTES
 
 The PEM format uses the header and footer lines:
 
- -----BEGIN CERTIFICATE----
- -----END CERTIFICATE----
+ -----BEGIN CERTIFICATE-----
+ -----END CERTIFICATE-----
 
 it will also handle files containing:
 
- -----BEGIN X509 CERTIFICATE----
- -----END X509 CERTIFICATE----
+ -----BEGIN X509 CERTIFICATE-----
+ -----END X509 CERTIFICATE-----
 
 Trusted certificates have the lines
 
- -----BEGIN TRUSTED CERTIFICATE----
- -----END TRUSTED CERTIFICATE----
+ -----BEGIN TRUSTED CERTIFICATE-----
+ -----END TRUSTED CERTIFICATE-----
 
 The conversion to UTF8 format used with the name options assumes that
 T61Strings use the ISO8859-1 character set. This is wrong but Netscape

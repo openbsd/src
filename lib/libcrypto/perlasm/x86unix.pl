@@ -87,12 +87,12 @@ sub main'DWP
 	$ret.=$addr if ($addr ne "") && ($addr ne 0);
 	if ($reg2 ne "")
 		{
-		if($idx ne "")
+		if($idx ne "" && $idx != 0)
 		    { $ret.="($reg1,$reg2,$idx)"; }
 		else
 		    { $ret.="($reg1,$reg2)"; }
 	        }
-	else
+	elsif ($reg1 ne "")
 		{ $ret.="($reg1)" }
 	return($ret);
 	}
@@ -167,7 +167,7 @@ sub main'pop	{ &out1("popl",@_); $stack-=4; }
 sub main'pushf	{ &out0("pushf"); $stack+=4; }
 sub main'popf	{ &out0("popf"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
-sub main'call	{ &out1("call",$under.$_[0]); }
+sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':$under).$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 
@@ -345,15 +345,15 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
-.${func}_end:
+.L_${func}_end:
 EOF
 	push(@out,$tmp);
 
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
+		{ push(@out,"\tSIZE($func,.L_${func}_end-$func)\n"); }
 	elsif ($main'gaswin)
                 { $tmp=push(@out,"\t.align 4\n"); }
-	else	{ push(@out,"\t.size\t$func,.${func}_end-$func\n"); }
+	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
@@ -426,6 +426,11 @@ sub main'swtmp
 
 sub main'comment
 	{
+	if ($main'elf)	# GNU and SVR4 as'es use different comment delimiters,
+		{	# so we just skip comments...
+		push(@out,"\n");
+		return;
+		}
 	foreach (@_)
 		{
 		if (/^\s*$/)
@@ -542,3 +547,39 @@ sub popvars
 	&main'pop("edx");
 	&main'popf();
 	}
+
+sub main'picmeup
+	{
+	local($dst,$sym)=@_;
+	if ($main'cpp)
+		{
+		local($tmp)=<<___;
+#if (defined(ELF) || defined(SOL)) && defined(PIC)
+	.align	8
+	call	1f
+1:	popl	$regs{$dst}
+	addl	\$_GLOBAL_OFFSET_TABLE_+[.-1b],$regs{$dst}
+	movl	$sym\@GOT($regs{$dst}),$regs{$dst}
+#else
+	leal	$sym,$regs{$dst}
+#endif
+___
+		push(@out,$tmp);
+		}
+	elsif ($main'pic && ($main'elf || $main'aout))
+		{
+		push(@out,"\t.align\t8\n");
+		&main'call(&main'label("PIC_me_up"));
+		&main'set_label("PIC_me_up");
+		&main'blindpop($dst);
+		&main'add($dst,"\$$under"."_GLOBAL_OFFSET_TABLE_+[.-".
+				&main'label("PIC_me_up") . "]");
+		&main'mov($dst,&main'DWP($sym."\@GOT",$dst));
+		}
+	else
+		{
+		&main'lea($dst,&main'DWP($sym));
+		}
+	}
+
+sub main'blindpop { &out1("popl",@_); }

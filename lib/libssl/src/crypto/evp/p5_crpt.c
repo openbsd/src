@@ -140,12 +140,14 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 		EVP_DigestFinal_ex (&ctx, md_tmp, NULL);
 	}
 	EVP_MD_CTX_cleanup(&ctx);
+	OPENSSL_assert(EVP_CIPHER_key_length(cipher) <= sizeof md_tmp);
 	memcpy(key, md_tmp, EVP_CIPHER_key_length(cipher));
+	OPENSSL_assert(EVP_CIPHER_iv_length(cipher) <= 16);
 	memcpy(iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
 						 EVP_CIPHER_iv_length(cipher));
 	EVP_CipherInit_ex(cctx, cipher, NULL, key, iv, en_de);
-	memset(md_tmp, 0, EVP_MAX_MD_SIZE);
-	memset(key, 0, EVP_MAX_KEY_LENGTH);
-	memset(iv, 0, EVP_MAX_IV_LENGTH);
+	OPENSSL_cleanse(md_tmp, EVP_MAX_MD_SIZE);
+	OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
+	OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
 	return 1;
 }

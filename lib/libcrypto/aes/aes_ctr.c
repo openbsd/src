@@ -49,7 +49,13 @@
  *
  */
 
+#ifndef AES_DEBUG
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
+#endif
 #include <assert.h>
+
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
@@ -90,26 +96,31 @@ static void AES_ctr128_inc(unsigned char *counter) {
 
 /* The input encrypted as though 128bit counter mode is being
  * used.  The extra state information to record how much of the
- * 128bit block we have used is contained in *num;
+ * 128bit block we have used is contained in *num, and the
+ * encrypted counter is kept in ecount_buf.  Both *num and
+ * ecount_buf must be initialised with zeros before the first
+ * call to AES_ctr128_encrypt().
  */
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
-	unsigned char *counter, unsigned int *num) {
+	unsigned char counter[AES_BLOCK_SIZE],
+	unsigned char ecount_buf[AES_BLOCK_SIZE],
+	unsigned int *num) {
 
 	unsigned int n;
 	unsigned long l=length;
-	unsigned char tmp[AES_BLOCK_SIZE];
 
 	assert(in && out && key && counter && num);
+	assert(*num < AES_BLOCK_SIZE);
 
 	n = *num;
 
 	while (l--) {
 		if (n == 0) {
-			AES_encrypt(counter, tmp, key);
+			AES_encrypt(counter, ecount_buf, key);
 			AES_ctr128_inc(counter);
 		}
-		*(out++) = *(in++) ^ tmp[n];
+		*(out++) = *(in++) ^ ecount_buf[n];
 		n = (n+1) % AES_BLOCK_SIZE;
 	}
 

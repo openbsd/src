@@ -55,6 +55,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef FLAT_INC
+#include "e_os.h"
+#else
+#include "../e_os.h"
+#endif
 #include <string.h>
 #include <time.h>
 
@@ -65,14 +70,16 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 
 
 #include <openssl/ec.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
 
 #define ABORT do { \
 	fflush(stdout); \
 	fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
 	ERR_print_errors_fp(stderr); \
-	exit(1); \
+	EXIT(1); \
 } while (0)
 
 #if 0
@@ -623,7 +630,9 @@ int main(int argc, char *argv[])
 	if (P_384) EC_GROUP_free(P_384);
 	if (P_521) EC_GROUP_free(P_521);
 
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
+#endif
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_state(0);

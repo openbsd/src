@@ -154,6 +154,13 @@ extern "C" {
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
 #define EADDRINUSE		WSAEADDRINUSE
+#elif defined(__DJGPP__)
+#define WATT32
+#define get_last_socket_error()	errno
+#define clear_socket_error()	errno=0
+#define closesocket(s)		close_s(s)
+#define readsocket(s,b,n)	read_s(s,b,n)
+#define writesocket(s,b,n)	send(s,b,n,0)
 #elif defined(MAC_OS_pre_X)
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -194,6 +201,9 @@ extern "C" {
 #  ifdef __DJGPP__
 #    include <unistd.h>
 #    include <sys/stat.h>
+#    include <sys/socket.h>
+#    include <tcp.h>
+#    include <netdb.h>
 #    define _setmode setmode
 #    define _O_TEXT O_TEXT
 #    define _O_BINARY O_BINARY
@@ -207,7 +217,7 @@ extern "C" {
 #    define S_IFMT	_S_IFMT
 #  endif
 
-#  if !defined(WINNT)
+#  if !defined(WINNT) && !defined(__DJGPP__)
 #    define NO_SYSLOG
 #  endif
 #  define NO_DIRENT
@@ -222,6 +232,10 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
+#  ifdef OPENSSL_SYS_WINCE
+#    include <winsock_extras.h>
+#  endif
+
 #  define ssize_t long
 
 #  if defined (__BORLANDC__)
@@ -232,10 +246,11 @@ extern "C" {
 #    define _kbhit kbhit
 #  endif
 
-#  if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
+#  if defined(WIN16) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
+#    define EXIT(n) _wsetexit(_WINEXITNOPERSIST)
+#    define OPENSSL_EXIT(n) do { if (n == 0) EXIT(n); return(n); } while(0)
 #  else
-#    define EXIT(n)		return(n);
+#    define EXIT(n) return(n)
 #  endif
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
@@ -251,7 +266,11 @@ extern "C" {
 #  define SSLEAY_CONF	OPENSSL_CONF
 #  define NUL_DEV	"nul"
 #  define RFILE		".rnd"
-#  define DEFAULT_HOME  "C:"
+#  ifdef OPENSSL_SYS_WINCE
+#    define DEFAULT_HOME  ""
+#  else
+#    define DEFAULT_HOME  "C:"
+#  endif
 
 #else /* The non-microsoft world world */
 
@@ -287,18 +306,13 @@ extern "C" {
      the status is tagged as an error, which I believe is what is wanted here.
      -- Richard Levitte
   */
-#    if !defined(MONOLITH) || defined(OPENSSL_C)
-#      define EXIT(n)		do { int __VMS_EXIT = n; \
+#    define EXIT(n)		do { int __VMS_EXIT = n; \
                                      if (__VMS_EXIT == 0) \
 				       __VMS_EXIT = 1; \
 				     else \
 				       __VMS_EXIT = (n << 3) | 2; \
                                      __VMS_EXIT |= 0x10000000; \
-				     exit(__VMS_EXIT); \
-				     return(__VMS_EXIT); } while(0)
-#    else
-#      define EXIT(n)		return(n)
-#    endif
+				     exit(__VMS_EXIT); } while(0)
 #    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
@@ -329,11 +343,7 @@ extern "C" {
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ':'
 #    define NUL_DEV		"/dev/null"
-#    ifndef MONOLITH
-#      define EXIT(n)		exit(n); return(n)
-#    else
-#      define EXIT(n)		return(n)
-#    endif
+#    define EXIT(n)		exit(n)
 #  endif
 
 #  define SSLeay_getpid()	getpid()
@@ -344,7 +354,7 @@ extern "C" {
 /*************/
 
 #ifdef USE_SOCKETS
-#  if (defined(WINDOWS) || defined(MSDOS)) && !defined(__DJGPP__)
+#  if defined(WINDOWS) || defined(MSDOS)
       /* windows world */
 
 #    ifdef OPENSSL_NO_SOCK
@@ -352,13 +362,18 @@ extern "C" {
 #      define SSLeay_Read(a,b,c)	(-1)
 #      define SHUTDOWN(fd)		close(fd)
 #      define SHUTDOWN2(fd)		close(fd)
-#    else
+#    elif !defined(__DJGPP__)
 #      include <winsock.h>
 extern HINSTANCE _hInstance;
 #      define SSLeay_Write(a,b,c)	send((a),(b),(c),0)
 #      define SSLeay_Read(a,b,c)	recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)		{ shutdown((fd),0); closesocket(fd); }
 #      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
+#    else
+#      define SSLeay_Write(a,b,c)	write_s(a,b,c,0)
+#      define SSLeay_Read(a,b,c)	read_s(a,b,c)
+#      define SHUTDOWN(fd)		close_s(fd)
+#      define SHUTDOWN2(fd)		close_s(fd)
 #    endif
 
 #  elif defined(MAC_OS_pre_X)
@@ -455,6 +470,14 @@ extern char *sys_errlist[]; extern int sys_nerr;
 	(((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
 #endif
 
+#ifndef OPENSSL_EXIT
+# if defined(MONOLITH) && !defined(OPENSSL_C)
+#  define OPENSSL_EXIT(n) return(n)
+# else
+#  define OPENSSL_EXIT(n) do { EXIT(n); return(n); } while(0)
+# endif
+#endif
+
 /***********************************************/
 
 /* do we need to do this for getenv.
@@ -484,6 +507,36 @@ extern char *sys_errlist[]; extern int sys_nerr;
 # define NO_SYSLOG
 # define strcasecmp stricmp
 #endif
+
+/* vxworks */
+#if defined(OPENSSL_SYS_VXWORKS)
+#include <ioLib.h>
+#include <tickLib.h>
+#include <sysLib.h>
+
+#define TTY_STRUCT int
+
+#define sleep(a) taskDelay((a) * sysClkRateGet())
+#if defined(ioctlsocket)
+#undef ioctlsocket
+#endif
+#define ioctlsocket(a,b,c) ioctl((a),(b),*(c))
+
+#include <vxWorks.h>
+#include <sockLib.h>
+#include <taskLib.h>
+
+#define getpid taskIdSelf
+
+/* NOTE: these are implemented by helpers in database app!
+ * if the database is not linked, we need to implement them
+ * elswhere */
+struct hostent *gethostbyname(const char *name);
+struct hostent *gethostbyaddr(const char *addr, int length, int type);
+struct servent *getservbyname(const char *name, const char *proto);
+
+#endif
+/* end vxworks */
 
 #ifdef  __cplusplus
 }

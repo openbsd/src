@@ -84,9 +84,7 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/des.h>
 
-#if defined(PERL5) || defined(__FreeBSD__) || defined(NeXT)
 #define crypt(c,s) (des_crypt((c),(s)))
-#endif
 
 /* tisk tisk - the test keys don't all have odd parity :-( */
 /* test data */
@@ -322,7 +320,11 @@ static unsigned char ofb_cipher[24]=
 	0x3d,0x6d,0x5b,0xe3,0x25,0x5a,0xf8,0xc3
 	};
 
+#if 0
 static DES_LONG cbc_cksum_ret=0xB462FEF7L;
+#else
+static DES_LONG cbc_cksum_ret=0xF7FE62B4L;
+#endif
 static unsigned char cbc_cksum_data[8]={0x1D,0x26,0x93,0x97,0xf7,0xfe,0x62,0xb4};
 
 static char *pt(unsigned char *p);

@@ -91,11 +91,19 @@ static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
 static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
 
-/* Functions to handle mutexes */
+/* Functions to handle mutexes if have dynamic locks */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex*);
+#if 1 /* This is a HACK which will disappear in 0.9.8 */
+/* Functions to handle mutexes if only have static locks */
+static int hwcrhk_static_mutex_init(HWCryptoHook_Mutex *m,
+                                    HWCryptoHook_CallerContext *c);
+static int hwcrhk_static_mutex_lock(HWCryptoHook_Mutex *m);
+static void hwcrhk_static_mutex_unlock(HWCryptoHook_Mutex *m);
+static void hwcrhk_static_mutex_destroy(HWCryptoHook_Mutex *m);
+#endif
 
 /* BIGNUM stuff */
 static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -373,6 +381,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
+#ifndef ENGINE_DYNAMIC_SUPPORT
 static ENGINE *engine_ncipher(void)
 	{
 	ENGINE *ret = ENGINE_new();
@@ -395,6 +404,7 @@ void ENGINE_load_chil(void)
 	ENGINE_free(toadd);
 	ERR_clear_error();
 	}
+#endif
 
 /* This is a process-global DSO handle used for loading and unloading
  * the HWCryptoHook library. NB: This is only set (or unset) during an
@@ -558,15 +568,31 @@ static int hwcrhk_init(ENGINE *e)
 
 	/* Check if the application decided to support dynamic locks,
 	   and if it does, use them. */
-	if (disable_mutex_callbacks == 0 &&
-		CRYPTO_get_dynlock_create_callback() != NULL &&
-		CRYPTO_get_dynlock_lock_callback() != NULL &&
-		CRYPTO_get_dynlock_destroy_callback() != NULL)
+	if (disable_mutex_callbacks == 0)
 		{
-		hwcrhk_globals.mutex_init = hwcrhk_mutex_init;
-		hwcrhk_globals.mutex_acquire = hwcrhk_mutex_lock;
-		hwcrhk_globals.mutex_release = hwcrhk_mutex_unlock;
-		hwcrhk_globals.mutex_destroy = hwcrhk_mutex_destroy;
+		if (CRYPTO_get_dynlock_create_callback() != NULL &&
+			CRYPTO_get_dynlock_lock_callback() != NULL &&
+			CRYPTO_get_dynlock_destroy_callback() != NULL)
+			{
+			hwcrhk_globals.mutex_init = hwcrhk_mutex_init;
+			hwcrhk_globals.mutex_acquire = hwcrhk_mutex_lock;
+			hwcrhk_globals.mutex_release = hwcrhk_mutex_unlock;
+			hwcrhk_globals.mutex_destroy = hwcrhk_mutex_destroy;
+			}
+		else if (CRYPTO_get_locking_callback() != NULL)
+			{
+			HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_DYNAMIC_LOCKING_MISSING);
+			ERR_add_error_data(1,"You HAVE to add dynamic locking callbacks via CRYPTO_set_dynlock_{create,lock,destroy}_callback()");
+#if 1 /* This is a HACK which will disappear in 0.9.8 */
+			hwcrhk_globals.maxmutexes    = 1; /* Only have one lock */
+			hwcrhk_globals.mutex_init    = hwcrhk_static_mutex_init;
+			hwcrhk_globals.mutex_acquire = hwcrhk_static_mutex_lock;
+			hwcrhk_globals.mutex_release = hwcrhk_static_mutex_unlock;
+			hwcrhk_globals.mutex_destroy = hwcrhk_static_mutex_destroy;
+#else
+			goto err;
+#endif
+			}
 		}
 
 	/* Try and get a context - if not, we may have a DSO but no
@@ -1020,7 +1046,7 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 
 		/* Perform the operation */
 		ret = p_hwcrhk_ModExpCRT(hwcrhk_context, m_a, m_p, m_q,
-			m_dmp1, m_dmq1, m_iqmp, &m_r, NULL);
+			m_dmp1, m_dmq1, m_iqmp, &m_r, &rmsg);
 
 		/* Convert the response */
 		r->top = m_r.size / sizeof(BN_ULONG);
@@ -1171,6 +1197,26 @@ static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex *mt)
 	CRYPTO_destroy_dynlockid(mt->lockid);
 	}
 
+/* Mutex upcalls to use if the application does not support dynamic locks */
+
+static int hwcrhk_static_mutex_init(HWCryptoHook_Mutex *m,
+	HWCryptoHook_CallerContext *c)
+	{
+	return 0;
+	}
+static int hwcrhk_static_mutex_lock(HWCryptoHook_Mutex *m)
+	{
+	CRYPTO_w_lock(CRYPTO_LOCK_HWCRHK);
+	return 0;
+	}
+static void hwcrhk_static_mutex_unlock(HWCryptoHook_Mutex *m)
+	{
+	CRYPTO_w_unlock(CRYPTO_LOCK_HWCRHK);
+	}
+static void hwcrhk_static_mutex_destroy(HWCryptoHook_Mutex *m)
+	{
+	}
+
 static int hwcrhk_get_pass(const char *prompt_info,
 	int *len_io, char *buf,
 	HWCryptoHook_PassphraseContext *ppctx,
@@ -1318,7 +1364,7 @@ static void hwcrhk_log_message(void *logstr, const char *message)
 		lstream=*(BIO **)logstr;
 	if (lstream)
 		{
-		BIO_write(lstream, message, strlen(message));
+		BIO_printf(lstream, "%s\n", message);
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 	}

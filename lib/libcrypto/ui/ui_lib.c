@@ -62,6 +62,7 @@
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #include "ui_locl.h"
+#include "cryptlib.h"
 
 IMPLEMENT_STACK_OF(UI_STRING_ST)
 
@@ -144,7 +145,8 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
 		{
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,ERR_R_PASSED_NULL_PARAMETER);
 		}
-	else if (result_buf == NULL)
+	else if ((type == UIT_PROMPT || type == UIT_VERIFY
+			 || type == UIT_BOOLEAN) && result_buf == NULL)
 		{
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,UI_R_NO_RESULT_BUFFER);
 		}
@@ -235,7 +237,7 @@ static int general_allocate_boolean(UI *ui,
 	return ret;
 	}
 
-/* Returns the index to the place in the stack or 0 for error.  Uses a
+/* Returns the index to the place in the stack or -1 for error.  Uses a
    direct reference to the prompt.  */
 int UI_add_input_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize)
@@ -831,8 +833,8 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 	case UIT_PROMPT:
 	case UIT_VERIFY:
 		{
-		char number1[20];
-		char number2[20];
+		char number1[DECIMAL_SIZE(uis->_.string_data.result_minsize)+1];
+		char number2[DECIMAL_SIZE(uis->_.string_data.result_maxsize)+1];
 
 		BIO_snprintf(number1, sizeof(number1), "%d",
 			uis->_.string_data.result_minsize);

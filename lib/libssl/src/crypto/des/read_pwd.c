@@ -101,7 +101,9 @@
 
 #ifdef WIN_CONSOLE_BUG
 #include <windows.h>
+#ifndef OPENSSL_SYS_WINCE
 #include <wincon.h>
+#endif
 #endif
 
 
@@ -133,7 +135,7 @@
 #define SGTTY
 #endif
 
-#if defined(OPENSSL_SYS_VSWORKS)
+#if defined(OPENSSL_SYS_VXWORKS)
 #undef TERMIOS
 #undef TERMIO
 #undef SGTTY
@@ -167,7 +169,7 @@
 #include <sys/ioctl.h>
 #endif
 
-#if defined(OPENSSL_SYS_MSDOS) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(__CYGWIN32__) && !defined(OPENSSL_SYS_WINCE)
 #include <conio.h>
 #define fgets(a,b,c) noecho_fgets(a,b,c)
 #endif
@@ -218,11 +220,29 @@ int des_read_pw_string(char *buf, int length, const char *prompt,
 	int ret;
 
 	ret=des_read_pw(buf,buff,(length>BUFSIZ)?BUFSIZ:length,prompt,verify);
-	memset(buff,0,BUFSIZ);
+	OPENSSL_cleanse(buff,BUFSIZ);
 	return(ret);
 	}
 
-#ifndef OPENSSL_SYS_WIN16
+#ifdef OPENSSL_SYS_WINCE
+
+int des_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
+	{ 
+	memset(buf,0,size);
+	memset(buff,0,size);
+	return(0);
+	}
+
+#elif defined(OPENSSL_SYS_WIN16)
+
+int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
+	{ 
+	memset(buf,0,size);
+	memset(buff,0,size);
+	return(0);
+	}
+
+#else /* !OPENSSL_SYS_WINCE && !OPENSSL_SYS_WIN16 */
 
 static void read_till_nl(FILE *in)
 	{
@@ -274,7 +294,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #ifdef OPENSSL_SYS_MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VSWORKS)
+#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VXWORKS)
 	tty=stdin;
 #else
 #ifndef OPENSSL_SYS_MPE
@@ -393,17 +413,6 @@ error:
 	return(!ok);
 	}
 
-#else /* OPENSSL_SYS_WIN16 */
-
-int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
-	{ 
-	memset(buf,0,size);
-	memset(buff,0,size);
-	return(0);
-	}
-
-#endif
-
 static void pushsig(void)
 	{
 	int i;
@@ -466,7 +475,7 @@ static void recsig(int i)
 #endif
 	}
 
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
+#ifdef OPENSSL_SYS_MSDOS
 static int noecho_fgets(char *buf, int size, FILE *tty)
 	{
 	int i;
@@ -509,3 +518,4 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
 	return(strlen(buf));
 	}
 #endif
+#endif /* !OPENSSL_SYS_WINCE && !WIN16 */

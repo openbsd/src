@@ -59,13 +59,16 @@
 #include <stdlib.h>
 #include "cryptlib.h"
 #include <openssl/tmdiff.h>
+#if !defined(OPENSSL_SYS_MSDOS)
+#include OPENSSL_UNISTD
+#endif
 
 #ifdef TIMEB
 #undef OPENSSL_SYS_WIN32
 #undef TIMES
 #endif
 
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS) || defined(__DECC) && !defined(OPENSSL_SYS_MACOSX) && !defined(OPENSSL_SYS_VXWORKS)
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !(defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX_RHAPSODY) && !defined(OPENSSL_SYS_VXWORKS)
 # define TIMES
 #endif
 
@@ -101,14 +104,19 @@
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
-# ifndef CLK_TCK
-#  ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#   define HZ  100.0
-#  else /* _BSD_CLK_TCK_ */
-#   define HZ ((double)_BSD_CLK_TCK_)
+# if defined(_SC_CLK_TCK) \
+     && (!defined(OPENSSL_SYS_VMS) || __CTRL_VER >= 70000000)
+#  define HZ ((double)sysconf(_SC_CLK_TCK))
+# else
+#  ifndef CLK_TCK
+#   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
+#    define HZ  100.0
+#   else /* _BSD_CLK_TCK_ */
+#    define HZ ((double)_BSD_CLK_TCK_)
+#   endif
+#  else /* CLK_TCK */
+#   define HZ ((double)CLK_TCK)
 #  endif
-# else /* CLK_TCK */
-#  define HZ ((double)CLK_TCK)
 # endif
 #endif
 
@@ -121,7 +129,7 @@ typedef struct ms_tm
 	HANDLE thread_id;
 	FILETIME ms_win32;
 #  else
-#    ifdef OPENSSL_SYS_VSWORKS
+#    ifdef OPENSSL_SYS_VXWORKS
           unsigned long ticks;
 #    else
 	struct timeb ms_timeb;
@@ -163,7 +171,7 @@ void ms_time_get(char *a)
 #  ifdef OPENSSL_SYS_WIN32
 	GetThreadTimes(tm->thread_id,&tmpa,&tmpb,&tmpc,&(tm->ms_win32));
 #  else
-#    ifdef OPENSSL_SYS_VSWORKS
+#    ifdef OPENSSL_SYS_VXWORKS
         tm->ticks = tickGet();
 #    else
 	ftime(&tm->ms_timeb);
@@ -197,7 +205,7 @@ double ms_time_diff(char *ap, char *bp)
 	ret=((double)(lb-la))/1e7;
 	}
 # else
-#  ifdef OPENSSL_SYS_VSWORKS
+#  ifdef OPENSSL_SYS_VXWORKS
         ret = (double)(b->ticks - a->ticks) / (double)sysClkRateGet();
 #  else
 	ret=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+
@@ -222,7 +230,7 @@ int ms_time_cmp(char *ap, char *bp)
 	d =(b->ms_win32.dwHighDateTime&0x000fffff)*10+b->ms_win32.dwLowDateTime/1e7;
 	d-=(a->ms_win32.dwHighDateTime&0x000fffff)*10+a->ms_win32.dwLowDateTime/1e7;
 # else
-#  ifdef OPENSSL_SYS_VSWORKS
+#  ifdef OPENSSL_SYS_VXWORKS
         d = (b->ticks - a->ticks);
 #  else
 	d=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+

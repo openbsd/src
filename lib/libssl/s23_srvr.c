@@ -139,11 +139,18 @@ SSL_METHOD *SSLv23_server_method(void)
 
 	if (init)
 		{
-		memcpy((char *)&SSLv23_server_data,
-			(char *)sslv23_base_method(),sizeof(SSL_METHOD));
-		SSLv23_server_data.ssl_accept=ssl23_accept;
-		SSLv23_server_data.get_ssl_method=ssl23_get_server_method;
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&SSLv23_server_data,
+				(char *)sslv23_base_method(),sizeof(SSL_METHOD));
+			SSLv23_server_data.ssl_accept=ssl23_accept;
+			SSLv23_server_data.get_ssl_method=ssl23_get_server_method;
+			init=0;
+			}
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv23_server_data);
 	}
@@ -505,7 +512,7 @@ int ssl23_get_client_hello(SSL *s)
 
 		if (s->s3 != NULL) ssl3_free(s);
 
-		if (!BUF_MEM_grow(s->init_buf,
+		if (!BUF_MEM_grow_clean(s->init_buf,
 			SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
 			{
 			goto err;

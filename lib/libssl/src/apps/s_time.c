@@ -146,6 +146,8 @@
 #undef BUFSIZZ
 #define BUFSIZZ 1024*10
 
+#define MYBUFSIZ 1024*8
+
 #undef min
 #undef max
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -320,6 +322,11 @@ static int parseArgs(int argc, char **argv)
 		{
 		if (--argc < 1) goto bad;
 		s_www_path= *(++argv);
+		if(strlen(s_www_path) > MYBUFSIZ-100)
+			{
+			BIO_printf(bio_err,"-www option too long\n");
+			badop=1;
+			}
 		}
 	else if(strcmp(*argv,"-bugs") == 0)
 	    st_bugs=1;
@@ -480,7 +487,7 @@ int MAIN(int argc, char **argv)
 	tm_Time_F(START);
 	for (;;)
 		{
-		if (finishtime < time(NULL)) break;
+		if (finishtime < (long)time(NULL)) break;
 #ifdef WIN32_STUFF
 
 		if( flushWinMsgs(0) == -1 )
@@ -531,9 +538,9 @@ int MAIN(int argc, char **argv)
 		}
 	totalTime += tm_Time_F(STOP); /* Add the time for this iteration */
 
-	i=(int)(time(NULL)-finishtime+maxTime);
+	i=(int)((long)time(NULL)-finishtime+maxTime);
 	printf( "\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double)nConn/totalTime),bytes_read);
-	printf( "%d connections in %ld real seconds, %ld bytes read per connection\n",nConn,time(NULL)-finishtime+maxTime,bytes_read/nConn);
+	printf( "%d connections in %ld real seconds, %ld bytes read per connection\n",nConn,(long)time(NULL)-finishtime+maxTime,bytes_read/nConn);
 
 	/* Now loop and time connections using the same session id over and over */
 
@@ -565,7 +572,7 @@ next:
 	nConn = 0;
 	totalTime = 0.0;
 
-	finishtime=time(NULL)+maxTime;
+	finishtime=(long)time(NULL)+maxTime;
 
 	printf( "starting\n" );
 	bytes_read=0;
@@ -573,7 +580,7 @@ next:
 		
 	for (;;)
 		{
-		if (finishtime < time(NULL)) break;
+		if (finishtime < (long)time(NULL)) break;
 
 #ifdef WIN32_STUFF
 		if( flushWinMsgs(0) == -1 )
@@ -623,7 +630,7 @@ next:
 
 
 	printf( "\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double)nConn/totalTime),bytes_read);
-	printf( "%d connections in %ld real seconds, %ld bytes read per connection\n",nConn,time(NULL)-finishtime+maxTime,bytes_read/nConn);
+	printf( "%d connections in %ld real seconds, %ld bytes read per connection\n",nConn,(long)time(NULL)-finishtime+maxTime,bytes_read/nConn);
 
 	ret=0;
 end:
@@ -635,7 +642,7 @@ end:
 		tm_ctx=NULL;
 		}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 /***********************************************************************

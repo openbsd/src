@@ -144,11 +144,18 @@ SSL_METHOD *SSLv2_client_method(void)
 
 	if (init)
 		{
-		memcpy((char *)&SSLv2_client_data,(char *)sslv2_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv2_client_data.ssl_connect=ssl2_connect;
-		SSLv2_client_data.get_ssl_method=ssl2_get_client_method;
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&SSLv2_client_data,(char *)sslv2_base_method(),
+				sizeof(SSL_METHOD));
+			SSLv2_client_data.ssl_connect=ssl2_connect;
+			SSLv2_client_data.get_ssl_method=ssl2_get_client_method;
+			init=0;
+			}
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv2_client_data);
 	}
@@ -200,10 +207,13 @@ int ssl2_connect(SSL *s)
 			if (!BUF_MEM_grow(buf,
 				SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
 				{
+				if (buf == s->init_buf)
+					buf=NULL;
 				ret= -1;
 				goto end;
 				}
 			s->init_buf=buf;
+			buf=NULL;
 			s->init_num=0;
 			s->state=SSL2_ST_SEND_CLIENT_HELLO_A;
 			s->ctx->stats.sess_connect++;
@@ -330,6 +340,8 @@ int ssl2_connect(SSL *s)
 		}
 end:
 	s->in_handshake--;
+	if (buf != NULL)
+		BUF_MEM_free(buf);
 	if (cb != NULL) 
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);
@@ -762,8 +774,8 @@ static int client_certificate(SSL *s)
 	if (s->state == SSL2_ST_SEND_CLIENT_CERTIFICATE_A)
 		{
 		i=ssl2_read(s,(char *)&(buf[s->init_num]),
-			SSL2_MAX_CERT_CHALLENGE_LENGTH+1-s->init_num);
-		if (i<(SSL2_MIN_CERT_CHALLENGE_LENGTH+1-s->init_num))
+			SSL2_MAX_CERT_CHALLENGE_LENGTH+2-s->init_num);
+		if (i<(SSL2_MIN_CERT_CHALLENGE_LENGTH+2-s->init_num))
 			return(ssl2_part_read(s,SSL_F_CLIENT_CERTIFICATE,i));
 		s->init_num += i;
 		if (s->msg_callback)
@@ -863,7 +875,7 @@ static int client_certificate(SSL *s)
 		EVP_MD_CTX_init(&ctx);
 		EVP_SignInit_ex(&ctx,s->ctx->rsa_md5, NULL);
 		EVP_SignUpdate(&ctx,s->s2->key_material,
-			(unsigned int)s->s2->key_material_length);
+			       s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);
 		n=i2d_X509(s->session->sess_cert->peer_key->x509,&p);
 		EVP_SignUpdate(&ctx,buf,(unsigned int)n);
@@ -937,7 +949,7 @@ static int get_server_verify(SSL *s)
 		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* SERVER-VERIFY */
 	p += 1;
 
-	if (memcmp(p,s->s2->challenge,(unsigned int)s->s2->challenge_length) != 0)
+	if (memcmp(p,s->s2->challenge,s->s2->challenge_length) != 0)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_SERVER_VERIFY,SSL_R_CHALLENGE_IS_DIFFERENT);
@@ -1001,14 +1013,14 @@ static int get_server_finished(SSL *s)
 		 * or bad things can happen */
 		/* ZZZZZZZZZZZZZ */
 		s->session->session_id_length=SSL2_SSL_SESSION_ID_LENGTH;
-		memcpy(s->session->session_id,p,SSL2_SSL_SESSION_ID_LENGTH);
+		memcpy(s->session->session_id,p+1,SSL2_SSL_SESSION_ID_LENGTH);
 		}
 	else
 		{
 		if (!(s->options & SSL_OP_MICROSOFT_SESS_ID_BUG))
 			{
 			if ((s->session->session_id_length > sizeof s->session->session_id)
-			    || (0 != memcmp(buf, s->session->session_id,
+			    || (0 != memcmp(buf + 1, s->session->session_id,
 			                    (unsigned int)s->session->session_id_length)))
 				{
 				ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);

@@ -115,7 +115,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2))
+#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS))
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -233,7 +233,7 @@ int RAND_poll(void)
 	if (n > 0)
 		{
 		RAND_add(tmpbuf,sizeof tmpbuf,n);
-		memset(tmpbuf,0,n);
+		OPENSSL_cleanse(tmpbuf,n);
 		}
 #endif
 
@@ -254,4 +254,11 @@ int RAND_poll(void)
 }
 
 #endif
+#endif
+
+#if defined(OPENSSL_SYS_VXWORKS)
+int RAND_poll(void)
+{
+    return 0;
+}
 #endif

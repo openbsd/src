@@ -149,7 +149,12 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 	ASN1_CTX c;
 	int want=HEADER_SIZE;
 	int eos=0;
+#if defined(__GNUC__) && defined(__ia64)
+	/* pathetic compiler bug in all known versions as of Nov. 2002 */
+	long off=0;
+#else
 	int off=0;
+#endif
 	int len=0;
 
 	b=BUF_MEM_new();
@@ -166,7 +171,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			{
 			want-=(len-off);
 
-			if (!BUF_MEM_grow(b,len+want))
+			if (!BUF_MEM_grow_clean(b,len+want))
 				{
 				ASN1err(ASN1_F_ASN1_D2I_BIO,ERR_R_MALLOC_FAILURE);
 				goto err;
@@ -221,18 +226,23 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			if (want > (len-off))
 				{
 				want-=(len-off);
-				if (!BUF_MEM_grow(b,len+want))
+				if (!BUF_MEM_grow_clean(b,len+want))
 					{
 					ASN1err(ASN1_F_ASN1_D2I_BIO,ERR_R_MALLOC_FAILURE);
 					goto err;
 					}
-				i=BIO_read(in,&(b->data[len]),want);
-				if (i <= 0)
+				while (want > 0)
 					{
-					ASN1err(ASN1_F_ASN1_D2I_BIO,ASN1_R_NOT_ENOUGH_DATA);
-					goto err;
+					i=BIO_read(in,&(b->data[len]),want);
+					if (i <= 0)
+						{
+						ASN1err(ASN1_F_ASN1_D2I_BIO,
+						    ASN1_R_NOT_ENOUGH_DATA);
+						goto err;
+						}
+					len+=i;
+					want -= i;
 					}
-				len+=i;
 				}
 			off+=(int)c.slen;
 			if (eos <= 0)

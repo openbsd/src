@@ -182,7 +182,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 
 		km+=MD5_DIGEST_LENGTH;
 		}
-	memset(smd,0,SHA_DIGEST_LENGTH);
+	OPENSSL_cleanse(smd,SHA_DIGEST_LENGTH);
 	EVP_MD_CTX_cleanup(&m5);
 	EVP_MD_CTX_cleanup(&s1);
 	return 1;
@@ -192,7 +192,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	{
 	unsigned char *p,*key_block,*mac_secret;
 	unsigned char exp_key[EVP_MAX_KEY_LENGTH];
-	unsigned char exp_iv[EVP_MAX_KEY_LENGTH];
+	unsigned char exp_iv[EVP_MAX_IV_LENGTH];
 	unsigned char *ms,*key,*iv,*er1,*er2;
 	EVP_CIPHER_CTX *dd;
 	const EVP_CIPHER *c;
@@ -333,8 +333,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
 
-	memset(&(exp_key[0]),0,sizeof(exp_key));
-	memset(&(exp_iv[0]),0,sizeof(exp_iv));
+	OPENSSL_cleanse(&(exp_key[0]),sizeof(exp_key));
+	OPENSSL_cleanse(&(exp_iv[0]),sizeof(exp_iv));
 	EVP_MD_CTX_cleanup(&md);
 	return(1);
 err:
@@ -408,7 +408,7 @@ void ssl3_cleanup_key_block(SSL *s)
 	{
 	if (s->s3->tmp.key_block != NULL)
 		{
-		memset(s->s3->tmp.key_block,0,
+		OPENSSL_cleanse(s->s3->tmp.key_block,
 			s->s3->tmp.key_block_length);
 		OPENSSL_free(s->s3->tmp.key_block);
 		s->s3->tmp.key_block=NULL;
@@ -474,6 +474,7 @@ int ssl3_enc(SSL *s, int send)
 				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
 				return 0;
 				}
+			/* otherwise, rec->length >= bs */
 			}
 		
 		EVP_Cipher(ds,rec->data,rec->input,l);
@@ -482,7 +483,7 @@ int ssl3_enc(SSL *s, int send)
 			{
 			i=rec->data[l-1]+1;
 			/* SSL 3.0 bounds the number of padding bytes by the block size;
-			 * padding bytes (except that last) are arbitrary */
+			 * padding bytes (except the last one) are arbitrary */
 			if (i > bs)
 				{
 				/* Incorrect padding. SSLerr() and ssl3_alert are done
@@ -491,6 +492,7 @@ int ssl3_enc(SSL *s, int send)
 				 * (see http://www.openssl.org/~bodo/tls-cbc.txt) */
 				return -1;
 				}
+			/* now i <= bs <= rec->length */
 			rec->length-=i;
 			}
 		}

@@ -309,7 +309,7 @@ void ssl2_free(SSL *s)
 	s2=s->s2;
 	if (s2->rbuf != NULL) OPENSSL_free(s2->rbuf);
 	if (s2->wbuf != NULL) OPENSSL_free(s2->wbuf);
-	memset(s2,0,sizeof *s2);
+	OPENSSL_cleanse(s2,sizeof *s2);
 	OPENSSL_free(s2);
 	s->s2=NULL;
 	}
@@ -378,15 +378,19 @@ SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 
-		for (i=0; i<SSL2_NUM_CIPHERS; i++)
-			sorted[i]= &(ssl2_ciphers[i]);
+		if (init)
+			{
+			for (i=0; i<SSL2_NUM_CIPHERS; i++)
+				sorted[i]= &(ssl2_ciphers[i]);
 
-		qsort(  (char *)sorted,
-			SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-			FP_ICC ssl_cipher_ptr_id_cmp);
+			qsort((char *)sorted,
+				SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
+				FP_ICC ssl_cipher_ptr_id_cmp);
 
+			init=0;
+			}
+			
 		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-		init=0;
 		}
 
 	id=0x02000000L|((unsigned long)p[0]<<16L)|
@@ -451,6 +455,9 @@ int ssl2_generate_key_material(SSL *s)
 
 		EVP_DigestInit_ex(&ctx, md5, NULL);
 
+		OPENSSL_assert(s->session->master_key_length >= 0
+		    && s->session->master_key_length
+		    < sizeof s->session->master_key);
 		EVP_DigestUpdate(&ctx,s->session->master_key,s->session->master_key_length);
 		EVP_DigestUpdate(&ctx,&c,1);
 		c++;
@@ -489,9 +496,7 @@ void ssl2_write_error(SSL *s)
 
 	error=s->error; /* number of bytes left to write */
 	s->error=0;
-	if (error < 0 || error > sizeof buf) /* can't happen */
- 		return;
-  
+	OPENSSL_assert(error >= 0 && error <= sizeof buf);
 	i=ssl2_write(s,&(buf[3-error]),error);
 
 /*	if (i == error) s->rwstate=state; */

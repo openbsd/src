@@ -145,18 +145,25 @@ SSL_METHOD *SSLv3_client_method(void)
 
 	if (init)
 		{
-		init=0;
-		memcpy((char *)&SSLv3_client_data,(char *)sslv3_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv3_client_data.ssl_connect=ssl3_connect;
-		SSLv3_client_data.get_ssl_method=ssl3_get_client_method;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&SSLv3_client_data,(char *)sslv3_base_method(),
+				sizeof(SSL_METHOD));
+			SSLv3_client_data.ssl_connect=ssl3_connect;
+			SSLv3_client_data.get_ssl_method=ssl3_get_client_method;
+			init=0;
+			}
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv3_client_data);
 	}
 
 int ssl3_connect(SSL *s)
 	{
-	BUF_MEM *buf;
+	BUF_MEM *buf=NULL;
 	unsigned long Time=time(NULL),l;
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
@@ -217,6 +224,7 @@ int ssl3_connect(SSL *s)
 					goto end;
 					}
 				s->init_buf=buf;
+				buf=NULL;
 				}
 
 			if (!ssl3_setup_buffers(s)) { ret= -1; goto end; }
@@ -495,6 +503,8 @@ int ssl3_connect(SSL *s)
 		}
 end:
 	s->in_handshake--;
+	if (buf != NULL)
+		BUF_MEM_free(buf);
 	if (cb != NULL)
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);
@@ -637,6 +647,7 @@ static int ssl3_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SSL3_SESSION_ID_TOO_LONG);
 		goto f_err;
 		}
+
 	if (j != 0 && j == s->session->session_id_length
 	    && memcmp(p,s->session->session_id,j) == 0)
 	    {
@@ -687,7 +698,12 @@ static int ssl3_get_server_hello(SSL *s)
 		goto f_err;
 		}
 
-	if (s->hit && (s->session->cipher != c))
+	/* Depending on the session caching (internal/external), the cipher
+	   and/or cipher_id values may not be set. Make sure that
+	   cipher_id is set and use it for comparison. */
+	if (s->session->cipher)
+		s->session->cipher_id = s->session->cipher->id;
+	if (s->hit && (s->session->cipher_id != c->id))
 		{
 		if (!(s->options &
 			SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG))
@@ -1445,16 +1461,16 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				
 			tmp_buf[0]=s->client_version>>8;
 			tmp_buf[1]=s->client_version&0xff;
-			if (RAND_bytes(&(tmp_buf[2]),SSL_MAX_MASTER_KEY_LENGTH-2) <= 0)
+			if (RAND_bytes(&(tmp_buf[2]),sizeof tmp_buf-2) <= 0)
 					goto err;
 
-			s->session->master_key_length=SSL_MAX_MASTER_KEY_LENGTH;
+			s->session->master_key_length=sizeof tmp_buf;
 
 			q=p;
 			/* Fix buf for TLS and beyond */
 			if (s->version > SSL3_VERSION)
 				p+=2;
-			n=RSA_public_encrypt(SSL_MAX_MASTER_KEY_LENGTH,
+			n=RSA_public_encrypt(sizeof tmp_buf,
 				tmp_buf,p,rsa,RSA_PKCS1_PADDING);
 #ifdef PKCS1_CHECK
 			if (s->options & SSL_OP_PKCS1_CHECK_1) p[1]++;
@@ -1476,8 +1492,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			s->session->master_key_length=
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
-					tmp_buf,SSL_MAX_MASTER_KEY_LENGTH);
-			memset(tmp_buf,0,SSL_MAX_MASTER_KEY_LENGTH);
+					tmp_buf,sizeof tmp_buf);
+			OPENSSL_cleanse(tmp_buf,sizeof tmp_buf);
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
@@ -1573,7 +1589,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				n+=2;
 				}
  
-			if (RAND_bytes(tmp_buf,SSL_MAX_MASTER_KEY_LENGTH) <= 0)
+			if (RAND_bytes(tmp_buf,sizeof tmp_buf) <= 0)
 			    goto err;
 
 			/*  20010420 VRS.  Tried it this way; failed.
@@ -1583,11 +1599,11 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			**	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
 			*/
 
-			memset(iv, 0, EVP_MAX_IV_LENGTH);  /* per RFC 1510 */
+			memset(iv, 0, sizeof iv);  /* per RFC 1510 */
 			EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,
 				kssl_ctx->key,iv);
 			EVP_EncryptUpdate(&ciph_ctx,epms,&outl,tmp_buf,
-				SSL_MAX_MASTER_KEY_LENGTH);
+				sizeof tmp_buf);
 			EVP_EncryptFinal_ex(&ciph_ctx,&(epms[outl]),&padl);
 			outl += padl;
 			if (outl > sizeof epms)
@@ -1606,10 +1622,10 @@ static int ssl3_send_client_key_exchange(SSL *s)
                         s->session->master_key_length=
                                 s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
-					tmp_buf, SSL_MAX_MASTER_KEY_LENGTH);
+					tmp_buf, sizeof tmp_buf);
 
-			memset(tmp_buf, 0, SSL_MAX_MASTER_KEY_LENGTH);
-			memset(epms, 0, outl);
+			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
+			OPENSSL_cleanse(epms, outl);
                         }
 #endif
 #ifndef OPENSSL_NO_DH

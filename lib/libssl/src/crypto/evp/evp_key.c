@@ -103,7 +103,7 @@ int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
 			buff,0,(len>=BUFSIZ)?BUFSIZ-1:len,buf);
 	ret = UI_process(ui);
 	UI_free(ui);
-	memset(buff,0,BUFSIZ);
+	OPENSSL_cleanse(buff,BUFSIZ);
 	return ret;
 	}
 
@@ -118,6 +118,8 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 
 	nkey=type->key_len;
 	niv=type->iv_len;
+	OPENSSL_assert(nkey <= EVP_MAX_KEY_LENGTH);
+	OPENSSL_assert(niv <= EVP_MAX_IV_LENGTH);
 
 	if (data == NULL) return(nkey);
 
@@ -166,7 +168,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 		if ((nkey == 0) && (niv == 0)) break;
 		}
 	EVP_MD_CTX_cleanup(&c);
-	memset(&(md_buf[0]),0,EVP_MAX_MD_SIZE);
+	OPENSSL_cleanse(&(md_buf[0]),EVP_MAX_MD_SIZE);
 	return(type->key_len);
 	}
 

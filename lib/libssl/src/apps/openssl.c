@@ -122,7 +122,9 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
 #include "progs.h"
 #include "s_apps.h"
@@ -139,11 +141,11 @@ static unsigned long MS_CALLBACK hash(const void *a_void);
 static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
-CONF *config=NULL;
 char *default_config_file=NULL;
 
 /* Make sure there is only one when MONOLITH is defined */
 #ifdef MONOLITH
+CONF *config=NULL;
 BIO *bio_err=NULL;
 #endif
 
@@ -218,7 +220,8 @@ int main(int Argc, char *Argv[])
 #define PROG_NAME_SIZE	39
 	char pname[PROG_NAME_SIZE+1];
 	FUNCTION f,*fp;
-	MS_STATIC char *prompt,buf[1024],config_name[256];
+	MS_STATIC char *prompt,buf[1024];
+	char *to_free=NULL;
 	int n,i,ret=0;
 	int argc;
 	char **argv,*p;
@@ -227,6 +230,10 @@ int main(int Argc, char *Argv[])
  
 	arg.data=NULL;
 	arg.count=0;
+
+	if (bio_err == NULL)
+		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	if (getenv("OPENSSL_DEBUG_MEMORY") != NULL) /* if not defined, use compiled-in library defaults */
 		{
@@ -252,23 +259,12 @@ int main(int Argc, char *Argv[])
 
 	apps_startup();
 
-	if (bio_err == NULL)
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
 	/* Lets load up our environment a little */
 	p=getenv("OPENSSL_CONF");
 	if (p == NULL)
 		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
-		{
-		strlcpy(config_name,X509_get_default_cert_area(),sizeof config_name);
-#ifndef OPENSSL_SYS_VMS
-		strlcat(config_name,"/",sizeof config_name);
-#endif
-		strlcat(config_name,OPENSSL_CONF,sizeof config_name);
-		p=config_name;
-		}
+		p=to_free=make_config_name();
 
 	default_config_file=p;
 
@@ -284,7 +280,7 @@ int main(int Argc, char *Argv[])
 	prog=prog_init();
 
 	/* first check the program name */
-	program_name(Argv[0],pname,PROG_NAME_SIZE);
+	program_name(Argv[0],pname,sizeof pname);
 
 	f.name=pname;
 	fp=(FUNCTION *)lh_retrieve(prog,&f);
@@ -312,7 +308,7 @@ int main(int Argc, char *Argv[])
 		{
 		ret=0;
 		p=buf;
-		n=1024;
+		n=sizeof buf;
 		i=0;
 		for (;;)
 			{
@@ -346,6 +342,8 @@ int main(int Argc, char *Argv[])
 	BIO_printf(bio_err,"bad exit\n");
 	ret=1;
 end:
+	if (to_free)
+		OPENSSL_free(to_free);
 	if (config != NULL)
 		{
 		NCONF_free(config);
@@ -362,7 +360,7 @@ end:
 		BIO_free(bio_err);
 		bio_err=NULL;
 		}
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 #define LIST_STANDARD_COMMANDS "list-standard-commands"

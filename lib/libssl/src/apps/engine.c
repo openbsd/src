@@ -56,6 +56,8 @@
  *
  */
 
+#ifndef OPENSSL_NO_ENGINE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -516,5 +518,12 @@ end:
 	sk_pop_free(post_cmds, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
+#else
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
+#endif

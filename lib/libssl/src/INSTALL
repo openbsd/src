@@ -140,8 +140,8 @@
      standard headers).  If it is a problem with OpenSSL itself, please
      report the problem to <openssl-bugs@openssl.org> (note that your
      message will be recorded in the request tracker publicly readable
-     via http://www.openssl.org/rt2.html and will be forwarded to a public
-     mailing list). Include the output of "make report" in your message.
+     via http://www.openssl.org/support/rt2.html and will be forwarded to a
+     public mailing list). Include the output of "make report" in your message.
      Please check out the request tracker. Maybe the bug was already
      reported or has already been fixed.
 
@@ -158,11 +158,11 @@
      If a test fails, look at the output.  There may be reasons for
      the failure that isn't a problem in OpenSSL itself (like a missing
      or malfunctioning bc).  If it is a problem with OpenSSL itself,
-     try removing any compiler optimization flags from the CFLAGS line
+     try removing any compiler optimization flags from the CFLAG line
      in Makefile.ssl and run "make clean; make". Please send a bug
      report to <openssl-bugs@openssl.org>, including the output of
      "make report" in order to be added to the request tracker at
-     http://www.openssl.org/rt2.html.
+     http://www.openssl.org/support/rt2.html.
 
   4. If everything tests ok, install OpenSSL with
 
@@ -296,3 +296,37 @@
  targets for shared library creation, like linux-shared.  Those targets
  can currently be used on their own just as well, but this is expected
  to change in future versions of OpenSSL.
+
+ Note on random number generation
+ --------------------------------
+
+ Availability of cryptographically secure random numbers is required for
+ secret key generation. OpenSSL provides several options to seed the
+ internal PRNG. If not properly seeded, the internal PRNG will refuse
+ to deliver random bytes and a "PRNG not seeded error" will occur.
+ On systems without /dev/urandom (or similar) device, it may be necessary
+ to install additional support software to obtain random seed.
+ Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
+ and the FAQ for more information.
+
+ Note on support for multiple builds
+ -----------------------------------
+
+ OpenSSL is usually built in it's source tree.  Unfortunately, this doesn't
+ support building for multiple platforms from the same source tree very well.
+ It is however possible to build in a separate tree through the use of lots
+ of symbolic links, which should be prepared like this:
+
+	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
+	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
+		mkdir -p `dirname $F`
+		rm -f $F; ln -s $OPENSSL_SOURCE/$F $F
+		echo $F '->' $OPENSSL_SOURCE/$F
+	done
+	make -f Makefile.org clean
+
+ OPENSSL_SOURCE is an environment variable that contains the absolute (this
+ is important!) path to the OpenSSL source tree.
+
+ Also, operations like 'make update' should still be made in the source tree.

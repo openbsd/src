@@ -24,6 +24,7 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"VC-W31-16",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 286",
 	"VC-WIN16",   "Alias for VC-W31-32",
@@ -63,6 +64,8 @@ and [options] can be one of
 	no-asm 					- No x86 asm
 	no-krb5					- No KRB5
 	no-ec					- No EC
+	no-engine				- No engine
+	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
@@ -136,6 +139,10 @@ elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
 	$NT = 1 if $platform eq "VC-NT";
 	require 'VC-32.pl';
+	}
+elsif ($platform eq "VC-CE")
+	{
+	require 'VC-CE.pl';
 	}
 elsif ($platform eq "Mingw32")
 	{
@@ -213,7 +220,7 @@ $cflags.=" -DOPENSSL_NO_MD4"  if $no_md4;
 $cflags.=" -DOPENSSL_NO_MD5"  if $no_md5;
 $cflags.=" -DOPENSSL_NO_SHA"  if $no_sha;
 $cflags.=" -DOPENSSL_NO_SHA1" if $no_sha1;
-$cflags.=" -DOPENSSL_NO_RIPEMD" if $no_rmd160;
+$cflags.=" -DOPENSSL_NO_RIPEMD" if $no_ripemd;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
 $cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
 $cflags.=" -DOPENSSL_NO_CAST" if $no_cast;
@@ -227,6 +234,8 @@ $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
+$cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
+$cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -266,6 +275,17 @@ $defs= <<"EOF";
 # The one monster makefile better suits building in non-unix
 # environments.
 
+EOF
+
+if ($platform eq "VC-CE")
+	{
+	$defs.= <<"EOF";
+!INCLUDE <\$(WCECOMPAT)/wcedefs.mak>
+
+EOF
+	}
+
+$defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
 
 # Set your compiler options
@@ -632,6 +652,8 @@ sub var_add
 	local($dir,$val)=@_;
 	local(@a,$_,$ret);
 
+	return("") if $no_engine && $dir =~ /\/engine/;
+	return("") if $no_hw   && $dir =~ /\/hw/;
 	return("") if $no_idea && $dir =~ /\/idea/;
 	return("") if $no_aes  && $dir =~ /\/aes/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
@@ -641,6 +663,7 @@ sub var_add
 	return("") if $no_rsa  && $dir =~ /^rsaref/;
 	return("") if $no_dsa  && $dir =~ /\/dsa/;
 	return("") if $no_dh   && $dir =~ /\/dh/;
+	return("") if $no_ec   && $dir =~ /\/ec/;
 	if ($no_des && $dir =~ /\/des/)
 		{
 		if ($val =~ /read_pwd/)
@@ -675,7 +698,7 @@ sub var_add
 	@a=grep(!/(^md2)|(_md2$)/,@a) if $no_md2;
 	@a=grep(!/(^md4)|(_md4$)/,@a) if $no_md4;
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
-	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_rmd160;
+	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_ripemd;
 
 	@a=grep(!/(^d2i_r_)|(^i2d_r_)/,@a) if $no_rsa;
 	@a=grep(!/(^p_open$)|(^p_seal$)/,@a) if $no_rsa;
@@ -692,6 +715,8 @@ sub var_add
 	@a=grep(!/(^sha1)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
+	@a=grep(!/^engine$/,@a) if $no_engine;
+	@a=grep(!/^hw$/,@a) if $no_hw;
 	@a=grep(!/(^rsa$)|(^genrsa$)/,@a) if $no_rsa;
 	@a=grep(!/(^dsa$)|(^gendsa$)|(^dsaparam$)/,@a) if $no_dsa;
 	@a=grep(!/^gendsa$/,@a) if $no_sha1;
@@ -885,10 +910,12 @@ sub read_options
 	elsif (/^no-sock$/)	{ $no_sock=1; }
 	elsif (/^no-krb5$/)	{ $no_krb5=1; }
 	elsif (/^no-ec$/)	{ $no_ec=1; }
+	elsif (/^no-engine$/)	{ $no_engine=1; }
+	elsif (/^no-hw$/)	{ $no_hw=1; }
 
 	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
 				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1;
+				  $no_ssl2=$no_err=$no_ripemd=$no_rc5=1;
 				  $no_aes=1; }
 
 	elsif (/^rsaref$/)	{ }

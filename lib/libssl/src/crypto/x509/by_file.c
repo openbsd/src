@@ -100,17 +100,18 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	case X509_L_FILE_LOAD:
 		if (argl == X509_FILETYPE_DEFAULT)
 			{
-			ok = (X509_load_cert_crl_file(ctx,X509_get_default_cert_file(),
-				X509_FILETYPE_PEM) != 0);
+			file = (char *)Getenv(X509_get_default_cert_file_env());
+			if (file)
+				ok = (X509_load_cert_crl_file(ctx,file,
+					      X509_FILETYPE_PEM) != 0);
+
+			else
+				ok = (X509_load_cert_crl_file(ctx,X509_get_default_cert_file(),
+					      X509_FILETYPE_PEM) != 0);
+
 			if (!ok)
 				{
 				X509err(X509_F_BY_FILE_CTRL,X509_R_LOADING_DEFAULTS);
-				}
-			else
-				{
-				file=(char *)Getenv(X509_get_default_cert_file_env());
-				ok = (X509_load_cert_crl_file(ctx,file,
-					X509_FILETYPE_PEM) != 0);
 				}
 			}
 		else
@@ -284,7 +285,8 @@ int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 		if(itmp->x509) {
 			X509_STORE_add_cert(ctx->store_ctx, itmp->x509);
 			count++;
-		} else if(itmp->crl) {
+		}
+		if(itmp->crl) {
 			X509_STORE_add_crl(ctx->store_ctx, itmp->crl);
 			count++;
 		}

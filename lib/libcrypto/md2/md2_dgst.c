@@ -61,6 +61,7 @@
 #include <string.h>
 #include <openssl/md2.h>
 #include <openssl/opensslv.h>
+#include <openssl/crypto.h>
 
 const char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
 
@@ -118,9 +119,9 @@ const char *MD2_options(void)
 int MD2_Init(MD2_CTX *c)
 	{
 	c->num=0;
-	memset(c->state,0,MD2_BLOCK*sizeof(MD2_INT));
-	memset(c->cksm,0,MD2_BLOCK*sizeof(MD2_INT));
-	memset(c->data,0,MD2_BLOCK);
+	memset(c->state,0,sizeof c->state);
+	memset(c->cksm,0,sizeof c->cksm);
+	memset(c->data,0,sizeof c->data);
 	return 1;
 	}
 
@@ -196,7 +197,7 @@ static void md2_block(MD2_CTX *c, const unsigned char *d)
 		t=(t+i)&0xff;
 		}
 	memcpy(sp1,state,16*sizeof(MD2_INT));
-	memset(state,0,48*sizeof(MD2_INT));
+	OPENSSL_cleanse(state,48*sizeof(MD2_INT));
 	}
 
 int MD2_Final(unsigned char *md, MD2_CTX *c)

@@ -100,9 +100,11 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	static const char magic[]="Salted__";
-	char mbuf[8];	/* should be 1 smaller than magic */
+	char mbuf[sizeof magic-1];
 	char *strbuf=NULL;
 	unsigned char *buff=NULL,*bufsize=NULL;
 	int bsize=BSIZE,verbose=0;
@@ -119,7 +121,9 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  39
 	char pname[PROG_NAME_SIZE+1];
+#ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
+#endif
 
 	apps_startup();
 
@@ -131,7 +135,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 
 	/* first check the program name */
-	program_name(argv[0],pname,PROG_NAME_SIZE);
+	program_name(argv[0],pname,sizeof pname);
 	if (strcmp(pname,"base64") == 0)
 		base64=1;
 
@@ -163,11 +167,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passarg= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if	(strcmp(*argv,"-d") == 0)
 			enc=0;
 		else if	(strcmp(*argv,"-p") == 0)
@@ -216,7 +222,7 @@ int MAIN(int argc, char **argv)
 				goto bad;
 				}
 			buf[0]='\0';
-			fgets(buf,128,infile);
+			fgets(buf,sizeof buf,infile);
 			fclose(infile);
 			i=strlen(buf);
 			if ((i > 0) &&
@@ -270,7 +276,9 @@ bad:
 			BIO_printf(bio_err,"%-14s key/iv in hex is the next argument\n","-K/-iv");
 			BIO_printf(bio_err,"%-14s print the iv/key (then exit if -P)\n","-[pP]");
 			BIO_printf(bio_err,"%-14s buffer size\n","-bufsize <n>");
+#ifndef OPENSSL_NO_ENGINE
 			BIO_printf(bio_err,"%-14s use engine e, possibly a hardware device.\n","-engine e");
+#endif
 
 			BIO_printf(bio_err,"Cipher Types\n");
 			OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
@@ -284,7 +292,9 @@ bad:
 		argv++;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (bufsize != NULL)
 		{
@@ -442,12 +452,12 @@ bad:
 			else {
 				if(enc) {
 					if(hsalt) {
-						if(!set_hex(hsalt,salt,PKCS5_SALT_LEN)) {
+						if(!set_hex(hsalt,salt,sizeof salt)) {
 							BIO_printf(bio_err,
 								"invalid hex salt value\n");
 							goto end;
 						}
-					} else if (RAND_pseudo_bytes(salt, PKCS5_SALT_LEN) < 0)
+					} else if (RAND_pseudo_bytes(salt, sizeof salt) < 0)
 						goto end;
 					/* If -P option then don't bother writing */
 					if((printkey != 2)
@@ -455,14 +465,14 @@ bad:
 							 sizeof magic-1) != sizeof magic-1
 					       || BIO_write(wbio,
 							    (char *)salt,
-							    PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
+							    sizeof salt) != sizeof salt)) {
 						BIO_printf(bio_err,"error writing output file\n");
 						goto end;
 					}
 				} else if(BIO_read(rbio,mbuf,sizeof mbuf) != sizeof mbuf
 					  || BIO_read(rbio,
 						      (unsigned char *)salt,
-				    PKCS5_SALT_LEN) != PKCS5_SALT_LEN) {
+				    sizeof salt) != sizeof salt) {
 					BIO_printf(bio_err,"error reading input file\n");
 					goto end;
 				} else if(memcmp(mbuf,magic,sizeof magic-1)) {
@@ -481,9 +491,9 @@ bad:
 			 * bug picked up by
 			 * Larry J. Hughes Jr. <hughes@indiana.edu> */
 			if (str == strbuf)
-				memset(str,0,SIZE);
+				OPENSSL_cleanse(str,SIZE);
 			else
-				memset(str,0,strlen(str));
+				OPENSSL_cleanse(str,strlen(str));
 			}
 		if ((hiv != NULL) && !set_hex(hiv,iv,sizeof iv))
 			{
@@ -524,7 +534,7 @@ bad:
 			if (!nosalt)
 				{
 				printf("salt=");
-				for (i=0; i<PKCS5_SALT_LEN; i++)
+				for (i=0; i<sizeof salt; i++)
 					printf("%02X",salt[i]);
 				printf("\n");
 				}
@@ -586,7 +596,7 @@ end:
 	if (b64 != NULL) BIO_free(b64);
 	if(pass) OPENSSL_free(pass);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 int set_hex(char *in, unsigned char *out, int size)

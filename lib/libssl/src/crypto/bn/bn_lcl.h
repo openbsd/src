@@ -230,6 +230,21 @@ struct bignum_ctx
 	     : "r"(a), "r"(b));		\
 	ret;			})
 #  endif	/* compiler */
+# elif defined(__x86_64) && defined(SIXTY_FOUR_BIT_LONG)
+#  if defined(__GNUC__)
+#   define BN_UMULT_HIGH(a,b)	({	\
+	register BN_ULONG ret,discard;	\
+	asm ("mulq	%3"		\
+	     : "=a"(discard),"=d"(ret)	\
+	     : "a"(a), "g"(b)		\
+	     : "cc");			\
+	ret;			})
+#   define BN_UMULT_LOHI(low,high,a,b)	\
+	asm ("mulq	%3"		\
+		: "=a"(low),"=d"(high)	\
+		: "a"(a),"g"(b)		\
+		: "cc");
+#  endif
 # endif		/* cpu */
 #endif		/* OPENSSL_NO_ASM */
 
@@ -337,7 +352,7 @@ struct bignum_ctx
 
 #define LBITS(a)	((a)&BN_MASK2l)
 #define HBITS(a)	(((a)>>BN_BITS4)&BN_MASK2l)
-#define	L2HBITS(a)	((BN_ULONG)((a)&BN_MASK2l)<<BN_BITS4)
+#define	L2HBITS(a)	(((a)<<BN_BITS4)&BN_MASK2)
 
 #define LLBITS(a)	((a)&BN_MASKl)
 #define LHBITS(a)	(((a)>>BN_BITS2)&BN_MASKl)
@@ -353,7 +368,7 @@ struct bignum_ctx
 	lt=(bl)*(lt); \
 	m1=(bl)*(ht); \
 	ht =(bh)*(ht); \
-	m=(m+m1)&BN_MASK2; if (m < m1) ht+=L2HBITS(1L); \
+	m=(m+m1)&BN_MASK2; if (m < m1) ht+=L2HBITS((BN_ULONG)1); \
 	ht+=HBITS(m); \
 	m1=L2HBITS(m); \
 	lt=(lt+m1)&BN_MASK2; if (lt < m1) ht++; \
@@ -418,20 +433,19 @@ void bn_sqr_comba4(BN_ULONG *r,const BN_ULONG *a);
 int bn_cmp_words(const BN_ULONG *a,const BN_ULONG *b,int n);
 int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
 	int cl, int dl);
+#if 0
+/* bn_mul.c rollback <appro> */
 void bn_mul_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
 	int dna,int dnb,BN_ULONG *t);
 void bn_mul_part_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,
 	int n,int tna,int tnb,BN_ULONG *t);
+#endif
 void bn_sqr_recursive(BN_ULONG *r,const BN_ULONG *a, int n2, BN_ULONG *t);
 void bn_mul_low_normal(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b, int n);
 void bn_mul_low_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
 	BN_ULONG *t);
 void bn_mul_high(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,BN_ULONG *l,int n2,
 	BN_ULONG *t);
-BN_ULONG bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
-	int cl, int dl);
-BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
-	int cl, int dl);
 
 #ifdef  __cplusplus
 }

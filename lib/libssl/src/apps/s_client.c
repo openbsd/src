@@ -140,6 +140,14 @@ typedef unsigned int u_int;
 #include <conio.h>
 #endif
 
+#ifdef OPENSSL_SYS_WINCE
+/* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
+#ifdef fileno
+#undef fileno
+#endif
+#define fileno(a) (int)_fileno(a)
+#endif
+
 
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
@@ -214,7 +222,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
 	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
 	BIO_printf(bio_err,"                 only \"smtp\" is supported.\n");
+#ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+#endif
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 
 	}
@@ -246,8 +256,10 @@ int MAIN(int argc, char **argv)
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
 	char *inrand=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
+#endif
 #ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
@@ -407,11 +419,13 @@ int MAIN(int argc, char **argv)
 			else
 				goto bad;
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if	(strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine_id = *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -436,7 +450,9 @@ bad:
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
+#endif
 
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
@@ -662,7 +678,11 @@ re_start:
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
+#ifdef OPENSSL_SYS_WINCE
+					if(!i && (!_kbhit() || !read_tty) ) continue;
+#else
 					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
+#endif
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,NULL);
 			}
@@ -746,8 +766,8 @@ re_start:
 				goto shut;
 				}
 			}
-#ifdef OPENSSL_SYS_WINDOWS
-		/* Assume Windows can always write */
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+		/* Assume Windows/DOS can always write */
 		else if (!ssl_pending && write_tty)
 #else
 		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
@@ -828,7 +848,11 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			}
 
 #ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENSSL_SYS_WINCE
+		else if (_kbhit())
+#else
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
+#endif
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif
@@ -892,16 +916,16 @@ end:
 	if (con != NULL) SSL_free(con);
 	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
-	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); OPENSSL_free(cbuf); }
-	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); OPENSSL_free(sbuf); }
-	if (mbuf != NULL) { memset(mbuf,0,BUFSIZZ); OPENSSL_free(mbuf); }
+	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
+	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
+	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);
 		bio_c_out=NULL;
 		}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 
@@ -930,10 +954,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 			for (i=0; i<sk_X509_num(sk); i++)
 				{
 				X509_NAME_oneline(X509_get_subject_name(
-					sk_X509_value(sk,i)),buf,BUFSIZ);
+					sk_X509_value(sk,i)),buf,sizeof buf);
 				BIO_printf(bio,"%2d s:%s\n",i,buf);
 				X509_NAME_oneline(X509_get_issuer_name(
-					sk_X509_value(sk,i)),buf,BUFSIZ);
+					sk_X509_value(sk,i)),buf,sizeof buf);
 				BIO_printf(bio,"   i:%s\n",buf);
 				if (c_showcerts)
 					PEM_write_bio_X509(bio,sk_X509_value(sk,i));
@@ -948,10 +972,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 			if (!(c_showcerts && got_a_chain)) /* Redundant if we showed the whole chain */
 				PEM_write_bio_X509(bio,peer);
 			X509_NAME_oneline(X509_get_subject_name(peer),
-				buf,BUFSIZ);
+				buf,sizeof buf);
 			BIO_printf(bio,"subject=%s\n",buf);
 			X509_NAME_oneline(X509_get_issuer_name(peer),
-				buf,BUFSIZ);
+				buf,sizeof buf);
 			BIO_printf(bio,"issuer=%s\n",buf);
 			}
 		else
@@ -973,7 +997,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 			{
 			BIO_printf(bio,"---\nNo client certificate CA names sent\n");
 			}
-		p=SSL_get_shared_ciphers(s,buf,BUFSIZ);
+		p=SSL_get_shared_ciphers(s,buf,sizeof buf);
 		if (p != NULL)
 			{
 			/* This works only for SSL 2.  In later protocol

@@ -223,6 +223,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
+#ifndef ENGINE_DYNAMIC_SUPPORT
 static ENGINE *engine_4758_cca(void)
 	{
 	ENGINE *ret = ENGINE_new();
@@ -244,6 +245,7 @@ void ENGINE_load_4758cca(void)
 	ENGINE_free(e_4758);
 	ERR_clear_error();   
 	}
+#endif
 
 static int ibm_4758_cca_destroy(ENGINE *e)
 	{
@@ -715,7 +717,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
 	if (type == NID_sha1 || type == NID_md5)
 		{
-		memset(hashBuffer, 0, keyLength+1);
+		OPENSSL_cleanse(hashBuffer, keyLength+1);
 		OPENSSL_free(hashBuffer);
 		}
 
@@ -838,7 +840,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 
 	if (type == NID_sha1 || type == NID_md5)
 		{
-		memset(hashBuffer, 0, keyLength+1);
+		OPENSSL_cleanse(hashBuffer, keyLength+1);
 		OPENSSL_free(hashBuffer);
 		}
 

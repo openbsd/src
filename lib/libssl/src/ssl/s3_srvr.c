@@ -153,11 +153,18 @@ SSL_METHOD *SSLv3_server_method(void)
 
 	if (init)
 		{
-		memcpy((char *)&SSLv3_server_data,(char *)sslv3_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv3_server_data.ssl_accept=ssl3_accept;
-		SSLv3_server_data.get_ssl_method=ssl3_get_server_method;
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&SSLv3_server_data,(char *)sslv3_base_method(),
+				sizeof(SSL_METHOD));
+			SSLv3_server_data.ssl_accept=ssl3_accept;
+			SSLv3_server_data.get_ssl_method=ssl3_get_server_method;
+			init=0;
+			}
+			
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv3_server_data);
 	}
@@ -1172,7 +1179,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			kn=0;
 			}
 
-		if (!BUF_MEM_grow(buf,n+4+kn))
+		if (!BUF_MEM_grow_clean(buf,n+4+kn))
 			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_BUF);
 			goto err;
@@ -1299,7 +1306,7 @@ static int ssl3_send_certificate_request(SSL *s)
 				{
 				name=sk_X509_NAME_value(sk,i);
 				j=i2d_X509_NAME(name,NULL);
-				if (!BUF_MEM_grow(buf,4+n+j+2))
+				if (!BUF_MEM_grow_clean(buf,4+n+j+2))
 					{
 					SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,ERR_R_BUF_LIB);
 					goto err;
@@ -1466,7 +1473,6 @@ static int ssl3_get_client_key_exchange(SSL *s)
 				 * made up by the adversary is properly formatted except
 				 * that the version number is wrong.  To avoid such attacks,
 				 * we should treat this just like any other decryption error. */
-				p[0] = (char)(int) "CAN-2003-0131 patch 2003-03-20";
 				}
 			}
 
@@ -1486,7 +1492,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key,
 				p,i);
-		memset(p,0,i);
+		OPENSSL_cleanse(p,i);
 		}
 	else
 #endif
@@ -1549,7 +1555,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		s->session->master_key_length=
 			s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key,p,i);
-		memset(p,0,i);
+		OPENSSL_cleanse(p,i);
 		}
 	else
 #endif
@@ -1652,7 +1658,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
                 if (enc == NULL)
                     goto err;
 
-		memset(iv, 0, EVP_MAX_IV_LENGTH);	/* per RFC 1510 */
+		memset(iv, 0, sizeof iv);	/* per RFC 1510 */
 
 		if (!EVP_DecryptInit_ex(&ciph_ctx,enc,NULL,kssl_ctx->key,iv))
 			{
@@ -1740,7 +1746,7 @@ static int ssl3_get_cert_verify(SSL *s)
 		SSL3_ST_SR_CERT_VRFY_A,
 		SSL3_ST_SR_CERT_VRFY_B,
 		-1,
-		512, /* 512? */
+		514, /* 514? */
 		&ok);
 
 	if (!ok) return((int)n);

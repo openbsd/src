@@ -87,6 +87,7 @@ all:	exe
 exe:	$(PROGRAM)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
+	LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	$(CC) -o req $(CFLAG) sreq.o $(A_OBJ) $(RAND_OBJ) $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 
 sreq.o: req.c 
@@ -99,17 +100,20 @@ install:
 	@for i in $(EXE); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+	 cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
 	 done;
 	@for i in $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
-	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
+	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
+	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
+	 mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	 done
-	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR); \
-	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
+	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
+	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
+	mv -f  $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
 tags:
 	ctags $(SRC)
@@ -123,7 +127,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(CFLAG) $(INCLUDES) $(DEPFLAG) $(PROGS) $(SRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
@@ -134,21 +138,26 @@ clean:
 	rm -f req
 
 $(DLIBSSL):
-	(cd ../ssl; $(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' TESTS='${TESTS}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}')
+	(cd ..; $(MAKE) DIRS=ssl all)
 
 $(DLIBCRYPTO):
-	(cd ../crypto; $(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' TESTS='${TESTS}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}')
+	(cd ..; $(MAKE) DIRS=crypto all)
 
 $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(PROGRAM)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
+	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
-		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
-		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH; \
+		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
+		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
+		SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
+		LIBPATH="`pwd`:$$LIBPATH"; \
+		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
+		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 		$(PERL) tools/c_rehash certs)
 
 progs.h: progs.pl
@@ -762,30 +771,30 @@ rand.o: ../include/openssl/sha.h ../include/openssl/stack.h
 rand.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
 rand.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 rand.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h rand.c
-req.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
-req.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
-req.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-req.o: ../include/openssl/cast.h ../include/openssl/conf.h
-req.o: ../include/openssl/crypto.h ../include/openssl/des.h
-req.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-req.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-req.o: ../include/openssl/engine.h ../include/openssl/err.h
-req.o: ../include/openssl/evp.h ../include/openssl/idea.h
-req.o: ../include/openssl/lhash.h ../include/openssl/md2.h
-req.o: ../include/openssl/md4.h ../include/openssl/md5.h
-req.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
-req.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-req.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-req.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-req.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-req.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-req.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-req.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-req.o: ../include/openssl/sha.h ../include/openssl/stack.h
-req.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
-req.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
-req.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-req.o: ../include/openssl/x509v3.h apps.h req.c
+req.o: ../crypto/cryptlib.h ../e_os.h ../include/openssl/aes.h
+req.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+req.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
+req.o: ../include/openssl/buffer.h ../include/openssl/cast.h
+req.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+req.o: ../include/openssl/des.h ../include/openssl/des_old.h
+req.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+req.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
+req.o: ../include/openssl/err.h ../include/openssl/evp.h
+req.o: ../include/openssl/idea.h ../include/openssl/lhash.h
+req.o: ../include/openssl/md2.h ../include/openssl/md4.h
+req.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+req.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+req.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+req.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+req.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+req.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+req.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+req.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+req.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+req.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+req.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
+req.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
+req.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h req.c
 rsa.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 rsa.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 rsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h

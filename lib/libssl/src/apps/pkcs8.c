@@ -63,7 +63,6 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
-#include "apps.h"
 #define PROG pkcs8_main
 
 int MAIN(int, char **);
@@ -86,7 +85,9 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *pkey=NULL;
 	char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
 	int badarg = 0;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 
@@ -146,11 +147,13 @@ int MAIN(int argc, char **argv)
 			if (!args[1]) goto bad;
 			passargout= *(++args);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*args,"-engine") == 0)
 			{
 			if (!args[1]) goto bad;
 			engine= *(++args);
 			}
+#endif
 		else if (!strcmp (*args, "-in")) {
 			if (args[1]) {
 				args++;
@@ -183,11 +186,15 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-nocrypt        use or expect unencrypted private key\n");
 		BIO_printf(bio_err, "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
 		BIO_printf(bio_err, "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
+#endif
 		return (1);
 	}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
@@ -245,7 +252,8 @@ int MAIN(int argc, char **argv)
 			if(passout) p8pass = passout;
 			else {
 				p8pass = pass;
-				EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1);
+				if (EVP_read_pw_string(pass, sizeof pass, "Enter Encryption Password:", 1))
+					return (1);
 			}
 			app_RAND_load_file(NULL, bio_err, 0);
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
@@ -302,7 +310,7 @@ int MAIN(int argc, char **argv)
 		if(passin) p8pass = passin;
 		else {
 			p8pass = pass;
-			EVP_read_pw_string(pass, 50, "Enter Password:", 0);
+			EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0);
 		}
 		p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
 		X509_SIG_free(p8);

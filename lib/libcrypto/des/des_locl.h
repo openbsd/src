@@ -162,7 +162,18 @@
 
 #if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 #define	ROTATE(a,n)	(_lrotr(a,n))
-#else
+#elif defined(__GNUC__) && __GNUC__>=2 && !defined(__STRICT_ANSI__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
+# if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+#  define ROTATE(a,n)	({ register unsigned int ret;	\
+				asm ("rorl %1,%0"	\
+					: "=r"(ret)	\
+					: "I"(n),"0"(a)	\
+					: "cc");	\
+			   ret;				\
+			})
+# endif
+#endif
+#ifndef ROTATE
 #define	ROTATE(a,n)	(((a)>>(n))+((a)<<(32-(n))))
 #endif
 

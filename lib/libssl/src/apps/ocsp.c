@@ -55,6 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+#ifndef OPENSSL_NO_OCSP
 
 #include <stdio.h>
 #include <string.h>
@@ -523,7 +524,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-serial n          serial number to check\n");
 		BIO_printf (bio_err, "-signer file       certificate to sign OCSP request with\n");
 		BIO_printf (bio_err, "-signkey file      private key to sign OCSP request with\n");
-		BIO_printf (bio_err, "-sign_certs file   additional certificates to include in signed request\n");
+		BIO_printf (bio_err, "-sign_other file   additional certificates to include in signed request\n");
 		BIO_printf (bio_err, "-no_certs          don't include any certificates in signed request\n");
 		BIO_printf (bio_err, "-req_text          print text form of request\n");
 		BIO_printf (bio_err, "-resp_text         print text form of response\n");
@@ -543,10 +544,10 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-validity_period n maximum validity discrepancy in seconds\n");
 		BIO_printf (bio_err, "-status_age n      maximum status age in seconds\n");
 		BIO_printf (bio_err, "-noverify          don't verify response at all\n");
-		BIO_printf (bio_err, "-verify_certs file additional certificates to search for signer\n");
+		BIO_printf (bio_err, "-verify_other file additional certificates to search for signer\n");
 		BIO_printf (bio_err, "-trust_other       don't verify additional certificates\n");
 		BIO_printf (bio_err, "-no_intern         don't search certificates contained in response for signer\n");
-		BIO_printf (bio_err, "-no_sig_verify     don't check signature on response\n");
+		BIO_printf (bio_err, "-no_signature_verify don't check signature on response\n");
 		BIO_printf (bio_err, "-no_cert_verify    don't check signing certificate\n");
 		BIO_printf (bio_err, "-no_chain          don't chain verify response\n");
 		BIO_printf (bio_err, "-no_cert_checks    don't do additional checks on signing certificate\n");
@@ -722,7 +723,12 @@ int MAIN(int argc, char **argv)
 		}
 	else if (host)
 		{
+#ifndef OPENSSL_NO_SOCK
 		cbio = BIO_new_connect(host);
+#else
+		BIO_printf(bio_err, "Error creating connect BIO - sockets not supported.\n");
+		goto end;
+#endif
 		if (!cbio)
 			{
 			BIO_printf(bio_err, "Error creating connect BIO\n");
@@ -732,7 +738,16 @@ int MAIN(int argc, char **argv)
 		if (use_ssl == 1)
 			{
 			BIO *sbio;
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 			ctx = SSL_CTX_new(SSLv23_client_method());
+#elif !defined(OPENSSL_NO_SSL3)
+			ctx = SSL_CTX_new(SSLv3_client_method());
+#elif !defined(OPENSSL_NO_SSL2)
+			ctx = SSL_CTX_new(SSLv2_client_method());
+#else
+			BIO_printf(bio_err, "SSL is disabled\n");
+			goto end;
+#endif
 			SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
 			sbio = BIO_new_ssl(ctx, 1);
 			cbio = BIO_push(sbio, cbio);
@@ -899,7 +914,7 @@ end:
 		SSL_CTX_free(ctx);
 		}
 
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 }
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
@@ -1120,7 +1135,10 @@ static char **lookup_serial(TXT_DB *db, ASN1_INTEGER *ser)
 	char *itmp, *row[DB_NUMBER],**rrow;
 	for (i = 0; i < DB_NUMBER; i++) row[i] = NULL;
 	bn = ASN1_INTEGER_to_BN(ser,NULL);
-	itmp = BN_bn2hex(bn);
+	if (BN_is_zero(bn))
+		itmp = BUF_strdup("00");
+	else
+		itmp = BN_bn2hex(bn);
 	row[DB_serial] = itmp;
 	BN_free(bn);
 	rrow=TXT_DB_get_by_index(db,DB_serial,row);
@@ -1136,7 +1154,11 @@ static BIO *init_responder(char *port)
 	bufbio = BIO_new(BIO_f_buffer());
 	if (!bufbio) 
 		goto err;
+#ifndef OPENSSL_NO_SOCK
 	acbio = BIO_new_accept(port);
+#else
+	BIO_printf(bio_err, "Error setting up accept BIO - sockets not supported.\n");
+#endif
 	if (!acbio)
 		goto err;
 	BIO_set_accept_bios(acbio, bufbio);
@@ -1176,7 +1198,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port
 
 	for(;;)
 		{
-		len = BIO_gets(cbio, inbuf, 1024);
+		len = BIO_gets(cbio, inbuf, sizeof inbuf);
 		if (len <= 0)
 			return 1;
 		/* Look for "POST" signalling start of query */
@@ -1223,3 +1245,4 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 	return 1;
 	}
 
+#endif

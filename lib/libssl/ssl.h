@@ -204,6 +204,22 @@ extern "C" {
 
 /*    VRS Additional Kerberos5 entries
  */
+#define SSL_TXT_KRB5_DES_64_CBC_SHA   SSL3_TXT_KRB5_DES_64_CBC_SHA
+#define SSL_TXT_KRB5_DES_192_CBC3_SHA SSL3_TXT_KRB5_DES_192_CBC3_SHA
+#define SSL_TXT_KRB5_RC4_128_SHA      SSL3_TXT_KRB5_RC4_128_SHA
+#define SSL_TXT_KRB5_IDEA_128_CBC_SHA SSL3_TXT_KRB5_IDEA_128_CBC_SHA
+#define SSL_TXT_KRB5_DES_64_CBC_MD5   SSL3_TXT_KRB5_DES_64_CBC_MD5       
+#define SSL_TXT_KRB5_DES_192_CBC3_MD5 SSL3_TXT_KRB5_DES_192_CBC3_MD5       
+#define SSL_TXT_KRB5_RC4_128_MD5      SSL3_TXT_KRB5_RC4_128_MD5
+#define SSL_TXT_KRB5_IDEA_128_CBC_MD5 SSL3_TXT_KRB5_IDEA_128_CBC_MD5 
+
+#define SSL_TXT_KRB5_DES_40_CBC_SHA   SSL3_TXT_KRB5_DES_40_CBC_SHA 
+#define SSL_TXT_KRB5_RC2_40_CBC_SHA   SSL3_TXT_KRB5_RC2_40_CBC_SHA 
+#define SSL_TXT_KRB5_RC4_40_SHA	      SSL3_TXT_KRB5_RC4_40_SHA
+#define SSL_TXT_KRB5_DES_40_CBC_MD5   SSL3_TXT_KRB5_DES_40_CBC_MD5 
+#define SSL_TXT_KRB5_RC2_40_CBC_MD5   SSL3_TXT_KRB5_RC2_40_CBC_MD5 
+#define SSL_TXT_KRB5_RC4_40_MD5	      SSL3_TXT_KRB5_RC4_40_MD5
+
 #define SSL_TXT_KRB5_DES_40_CBC_SHA   SSL3_TXT_KRB5_DES_40_CBC_SHA
 #define SSL_TXT_KRB5_DES_40_CBC_MD5   SSL3_TXT_KRB5_DES_40_CBC_MD5
 #define SSL_TXT_KRB5_DES_64_CBC_SHA   SSL3_TXT_KRB5_DES_64_CBC_SHA
@@ -299,9 +315,7 @@ extern "C" {
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
-#include <openssl/bio.h>
 #include <openssl/pem.h>
-#include <openssl/x509.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -507,6 +521,8 @@ typedef struct ssl_session_st
 /* Never bother the application with retries if the transport
  * is blocking: */
 #define SSL_MODE_AUTO_RETRY 0x00000004L
+/* Don't attempt to automatically build certificate chain */
+#define SSL_MODE_NO_AUTO_CHAIN 0x00000008L
 
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
@@ -704,10 +720,11 @@ struct ssl_ctx_st
 #define SSL_SESS_CACHE_SERVER			0x0002
 #define SSL_SESS_CACHE_BOTH	(SSL_SESS_CACHE_CLIENT|SSL_SESS_CACHE_SERVER)
 #define SSL_SESS_CACHE_NO_AUTO_CLEAR		0x0080
-/* This one, when set, makes the server session-id lookup not look
- * in the cache.  If there is an application get_session callback
- * defined, this will still get called. */
+/* enough comments already ... see SSL_CTX_set_session_cache_mode(3) */
 #define SSL_SESS_CACHE_NO_INTERNAL_LOOKUP	0x0100
+#define SSL_SESS_CACHE_NO_INTERNAL_STORE	0x0200
+#define SSL_SESS_CACHE_NO_INTERNAL \
+	(SSL_SESS_CACHE_NO_INTERNAL_LOOKUP|SSL_SESS_CACHE_NO_INTERNAL_STORE)
 
   struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx);
 #define SSL_CTX_sess_number(ctx) \
@@ -1212,12 +1229,10 @@ int	SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file); /* PEM t
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					    const char *file);
-#ifndef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_SYS_VMS
 #ifndef OPENSSL_SYS_MACINTOSH_CLASSIC /* XXXXX: Better scheme needed! [was: #ifndef MAC_OS_pre_X] */
 int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
-#endif
 #endif
 #endif
 
@@ -1688,6 +1703,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_LENGTH_TOO_SHORT				 160
 #define SSL_R_LIBRARY_BUG				 274
 #define SSL_R_LIBRARY_HAS_NO_CIPHERS			 161
+#define SSL_R_MASTER_KEY_TOO_LONG			 1112
 #define SSL_R_MESSAGE_TOO_LONG				 1111
 #define SSL_R_MISSING_DH_DSA_CERT			 162
 #define SSL_R_MISSING_DH_KEY				 163

@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
@@ -81,13 +82,14 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 	unsigned long ret=0;
 	EVP_MD_CTX ctx;
 	unsigned char md[16];
-	char str[256];
+	char *f;
 
 	EVP_MD_CTX_init(&ctx);
-	X509_NAME_oneline(a->cert_info->issuer,str,256);
-	ret=strlen(str);
+	f=X509_NAME_oneline(a->cert_info->issuer,NULL,0);
+	ret=strlen(f);
 	EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	EVP_DigestUpdate(&ctx,(unsigned char *)str,ret);
+	EVP_DigestUpdate(&ctx,(unsigned char *)f,ret);
+	OPENSSL_free(f);
 	EVP_DigestUpdate(&ctx,(unsigned char *)a->cert_info->serialNumber->data,
 		(unsigned long)a->cert_info->serialNumber->length);
 	EVP_DigestFinal_ex(&ctx,&(md[0]),NULL);
@@ -159,6 +161,99 @@ int X509_cmp(const X509 *a, const X509 *b)
 }
 #endif
 
+
+/* Case insensitive string comparision */
+static int nocase_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
+{
+	int i;
+
+	if (a->length != b->length)
+		return (a->length - b->length);
+
+	for (i=0; i<a->length; i++)
+	{
+		int ca, cb;
+
+		ca = tolower(a->data[i]);
+		cb = tolower(b->data[i]);
+
+		if (ca != cb)
+			return(ca-cb);
+	}
+	return 0;
+}
+
+/* Case insensitive string comparision with space normalization 
+ * Space normalization - ignore leading, trailing spaces, 
+ *       multiple spaces between characters are replaced by single space  
+ */
+static int nocase_spacenorm_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
+{
+	unsigned char *pa = NULL, *pb = NULL;
+	int la, lb;
+	
+	la = a->length;
+	lb = b->length;
+	pa = a->data;
+	pb = b->data;
+
+	/* skip leading spaces */
+	while (la > 0 && isspace(*pa))
+	{
+		la--;
+		pa++;
+	}
+	while (lb > 0 && isspace(*pb))
+	{
+		lb--;
+		pb++;
+	}
+
+	/* skip trailing spaces */
+	while (la > 0 && isspace(pa[la-1]))
+		la--;
+	while (lb > 0 && isspace(pb[lb-1]))
+		lb--;
+
+	/* compare strings with space normalization */
+	while (la > 0 && lb > 0)
+	{
+		int ca, cb;
+
+		/* compare character */
+		ca = tolower(*pa);
+		cb = tolower(*pb);
+		if (ca != cb)
+			return (ca - cb);
+
+		pa++; pb++;
+		la--; lb--;
+
+		if (la <= 0 || lb <= 0)
+			break;
+
+		/* is white space next character ? */
+		if (isspace(*pa) && isspace(*pb))
+		{
+			/* skip remaining white spaces */
+			while (la > 0 && isspace(*pa))
+			{
+				la--;
+				pa++;
+			}
+			while (lb > 0 && isspace(*pb))
+			{
+				lb--;
+				pb++;
+			}
+		}
+	}
+	if (la > 0 || lb > 0)
+		return la - lb;
+
+	return 0;
+}
+
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 	{
 	int i,j;
@@ -172,10 +267,20 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 		{
 		na=sk_X509_NAME_ENTRY_value(a->entries,i);
 		nb=sk_X509_NAME_ENTRY_value(b->entries,i);
-		j=na->value->length-nb->value->length;
+		j=na->value->type-nb->value->type;
 		if (j) return(j);
-		j=memcmp(na->value->data,nb->value->data,
-			na->value->length);
+		if (na->value->type == V_ASN1_PRINTABLESTRING)
+			j=nocase_spacenorm_cmp(na->value, nb->value);
+		else if (na->value->type == V_ASN1_IA5STRING
+			&& OBJ_obj2nid(na->object) == NID_pkcs9_emailAddress)
+			j=nocase_cmp(na->value, nb->value);
+		else
+			{
+			j=na->value->length-nb->value->length;
+			if (j) return(j);
+			j=memcmp(na->value->data,nb->value->data,
+				na->value->length);
+			}
 		if (j) return(j);
 		j=na->set-nb->set;
 		if (j) return(j);

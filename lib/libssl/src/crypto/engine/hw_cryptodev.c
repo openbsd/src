@@ -29,8 +29,32 @@
  *
  */
 
-#include <sys/types.h>
+#include <openssl/objects.h>
+#include <openssl/engine.h>
+#include <openssl/evp.h>
+
+#if (defined(__unix__) || defined(unix)) && !defined(USG)
 #include <sys/param.h>
+# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041)
+# define HAVE_CRYPTODEV
+# endif
+# if (OpenBSD >= 200110)
+# define HAVE_SYSLOG_R
+# endif
+#endif
+
+#ifndef HAVE_CRYPTODEV
+
+void
+ENGINE_load_cryptodev(void)
+{
+	/* This is a NOP on platforms without /dev/crypto */
+	return;
+}
+
+#else 
+
+#include <sys/types.h>
 #include <crypto/cryptodev.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -39,9 +63,6 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <syslog.h>
-#include <ssl/objects.h>
-#include <ssl/engine.h>
-#include <ssl/evp.h>
 #include <errno.h>
 #include <string.h>
 
@@ -101,10 +122,6 @@ static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
 void ENGINE_load_cryptodev(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
-	{ENGINE_CMD_BASE,
-		"SO_PATH",
-		"Specifies the path to the some stupid shared library",
-		ENGINE_CMD_FLAG_STRING},
 	{ 0, NULL, NULL, 0 }
 };
 
@@ -1011,12 +1028,18 @@ static DH_METHOD cryptodev_dh = {
 static int
 cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 {
+#ifdef HAVE_SYSLOG_R
 	struct syslog_data sd = SYSLOG_DATA_INIT;
+#endif
 
 	switch (cmd) {
 	default:
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_ERR, &sd,
 		    "cryptodev_ctrl: unknown command %d", cmd);
+#else
+		syslog(LOG_ERR, "cryptodev_ctrl: unknown command %d", cmd);
+#endif
 		break;
 	}
 	return (1);
@@ -1043,7 +1066,7 @@ ENGINE_load_cryptodev(void)
 	close(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
-	    !ENGINE_set_name(engine, "OpenBSD cryptodev engine") ||
+	    !ENGINE_set_name(engine, "BSD cryptodev engine") ||
 	    !ENGINE_set_ciphers(engine, cryptodev_engine_ciphers) ||
 	    !ENGINE_set_digests(engine, cryptodev_engine_digests) ||
 	    !ENGINE_set_ctrl_function(engine, cryptodev_ctrl) ||
@@ -1104,3 +1127,5 @@ ENGINE_load_cryptodev(void)
 	ENGINE_free(engine);
 	ERR_clear_error();
 }
+
+#endif /* HAVE_CRYPTODEV */

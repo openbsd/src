@@ -114,9 +114,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#define NON_MAIN
-#include "apps.h"
-#undef NON_MAIN
+#include <ctype.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -124,7 +122,9 @@
 #include <openssl/pkcs12.h>
 #include <openssl/ui.h>
 #include <openssl/safestack.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp
@@ -136,9 +136,9 @@
 #  endif /* NO_STRINGS_H */
 #endif
 
-#ifdef OPENSSL_SYS_WINDOWS
-#  include "bss_file.c"
-#endif
+#define NON_MAIN
+#include "apps.h"
+#undef NON_MAIN
 
 typedef struct {
 	char *name;
@@ -335,8 +335,7 @@ void program_name(char *in, char *out, int size)
 		p++;
 	else
 		p=in;
-	strncpy(out,p,size-1);
-	out[size-1]='\0';
+	BUF_strlcpy(out,p,size);
 	}
 #endif
 #endif
@@ -344,6 +343,7 @@ void program_name(char *in, char *out, int size)
 #ifdef OPENSSL_SYS_WIN32
 int WIN32_rename(char *from, char *to)
 	{
+#ifndef OPENSSL_SYS_WINCE
 	/* Windows rename gives an error if 'to' exists, so delete it
 	 * first and ignore file not found errror
 	 */
@@ -351,6 +351,46 @@ int WIN32_rename(char *from, char *to)
 		return -1;
 #undef rename
 	return rename(from, to);
+#else
+	/* convert strings to UNICODE */
+	{
+	BOOL result = FALSE;
+	WCHAR* wfrom;
+	WCHAR* wto;
+	int i;
+	wfrom = malloc((strlen(from)+1)*2);
+	wto = malloc((strlen(to)+1)*2);
+	if (wfrom != NULL && wto != NULL)
+		{
+		for (i=0; i<(int)strlen(from)+1; i++)
+			wfrom[i] = (short)from[i];
+		for (i=0; i<(int)strlen(to)+1; i++)
+			wto[i] = (short)to[i];
+		result = MoveFile(wfrom, wto);
+		}
+	if (wfrom != NULL)
+		free(wfrom);
+	if (wto != NULL)
+		free(wto);
+	return result;
+	}
+#endif
+	}
+#endif
+
+#ifdef OPENSSL_SYS_VMS
+int VMS_strcasecmp(const char *str1, const char *str2)
+	{
+	while (*str1 && *str2)
+		{
+		int res = toupper(*str1) - toupper(*str2);
+		if (res) return res < 0 ? -1 : 1;
+		}
+	if (*str1)
+		return 1;
+	if (*str2)
+		return -1;
+	return 0;
 	}
 #endif
 
@@ -429,16 +469,20 @@ int app_init(long mesgwin)
 
 int dump_cert_text (BIO *out, X509 *x)
 {
-	char buf[256];
-	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
-	BIO_puts(out,"subject=");
-	BIO_puts(out,buf);
+	char *p;
 
-	X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
-	BIO_puts(out,"\nissuer= ");
-	BIO_puts(out,buf);
+	p=X509_NAME_oneline(X509_get_subject_name(x),NULL,0);
+	BIO_puts(out,"subject=");
+	BIO_puts(out,p);
+	OPENSSL_free(p);
+
+	p=X509_NAME_oneline(X509_get_issuer_name(x),NULL,0);
+	BIO_puts(out,"\nissuer=");
+	BIO_puts(out,p);
 	BIO_puts(out,"\n");
-        return 0;
+	OPENSSL_free(p);
+
+	return 0;
 }
 
 static int ui_open(UI *ui)
@@ -569,7 +613,7 @@ int password_callback(char *buf, int bufsiz, int verify,
 
 		if (buff)
 			{
-			memset(buff,0,(unsigned int)bufsiz);
+			OPENSSL_cleanse(buff,(unsigned int)bufsiz);
 			OPENSSL_free(buff);
 			}
 
@@ -579,13 +623,13 @@ int password_callback(char *buf, int bufsiz, int verify,
 			{
 			BIO_printf(bio_err, "User interface error\n");
 			ERR_print_errors(bio_err);
-			memset(buf,0,(unsigned int)bufsiz);
+			OPENSSL_cleanse(buf,(unsigned int)bufsiz);
 			res = 0;
 			}
 		if (ok == -2)
 			{
 			BIO_printf(bio_err,"aborted!\n");
-			memset(buf,0,(unsigned int)bufsiz);
+			OPENSSL_cleanse(buf,(unsigned int)bufsiz);
 			res = 0;
 			}
 		UI_free(ui);
@@ -813,6 +857,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		BIO_printf(err,"no keyfile specified\n");
 		goto end;
 		}
+#ifndef OPENSSL_NO_ENGINE
 	if (format == FORMAT_ENGINE)
 		{
 		if (!e)
@@ -822,6 +867,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 				ui_method, &cb_data);
 		goto end;
 		}
+#endif
 	key=BIO_new(BIO_s_file());
 	if (key == NULL)
 		{
@@ -889,6 +935,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		BIO_printf(err,"no keyfile specified\n");
 		goto end;
 		}
+#ifndef OPENSSL_NO_ENGINE
 	if (format == FORMAT_ENGINE)
 		{
 		if (!e)
@@ -898,6 +945,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 				ui_method, &cb_data);
 		goto end;
 		}
+#endif
 	key=BIO_new(BIO_s_file());
 	if (key == NULL)
 		{
@@ -960,7 +1008,7 @@ load_netscape_key(BIO *err, BIO *key, const char *file,
 		goto error;
 	for (;;)
 		{
-		if (!BUF_MEM_grow(buf,size+1024*10))
+		if (!BUF_MEM_grow_clean(buf,size+1024*10))
 			goto error;
 		i = BIO_read(key, &(buf->data[size]), 1024*10);
 		size += i;
@@ -1235,6 +1283,7 @@ void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 	char *buf;
 	char mline = 0;
 	int indent = 0;
+
 	if(title) BIO_puts(out, title);
 	if((lflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 		mline = 1;
@@ -1282,6 +1331,7 @@ X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath)
 	return NULL;
 }
 
+#ifndef OPENSSL_NO_ENGINE
 /* Try to load an engine in a shareable library */
 static ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
 	{
@@ -1338,6 +1388,7 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 		}
         return e;
         }
+#endif
 
 int load_config(BIO *err, CONF *cnf)
 	{
@@ -1355,4 +1406,21 @@ int load_config(BIO *err, CONF *cnf)
 		return 0;
 		}
 	return 1;
+	}
+
+char *make_config_name()
+	{
+	const char *t=X509_get_default_cert_area();
+	size_t len;
+	char *p;
+
+	len=strlen(t)+strlen(OPENSSL_CONF)+2;
+	p=OPENSSL_malloc(len);
+	strlcpy(p,t,len);
+#ifndef OPENSSL_SYS_VMS
+	strlcat(p,"/",len);
+#endif
+	strlcat(p,OPENSSL_CONF,len);
+
+	return p;
 	}

@@ -2,7 +2,266 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
+ Changes between 0.9.7a and 0.9.7b  [10 Apr 2003]
+
+  *) Countermeasure against the Klima-Pokorny-Rosa extension of
+     Bleichbacher's attack on PKCS #1 v1.5 padding: treat
+     a protocol version number mismatch like a decryption error
+     in ssl3_get_client_key_exchange (ssl/s3_srvr.c).
+     [Bodo Moeller]
+
+  *) Turn on RSA blinding by default in the default implementation
+     to avoid a timing attack. Applications that don't want it can call
+     RSA_blinding_off() or use the new flag RSA_FLAG_NO_BLINDING.
+     They would be ill-advised to do so in most cases.
+     [Ben Laurie, Steve Henson, Geoff Thorpe, Bodo Moeller]
+
+  *) Change RSA blinding code so that it works when the PRNG is not
+     seeded (in this case, the secret RSA exponent is abused as
+     an unpredictable seed -- if it is not unpredictable, there
+     is no point in blinding anyway).  Make RSA blinding thread-safe
+     by remembering the creator's thread ID in rsa->blinding and
+     having all other threads use local one-time blinding factors
+     (this requires more computation than sharing rsa->blinding, but
+     avoids excessive locking; and if an RSA object is not shared
+     between threads, blinding will still be very fast).
+     [Bodo Moeller]
+
+  *) Fixed a typo bug that would cause ENGINE_set_default() to set an
+     ENGINE as defaults for all supported algorithms irrespective of
+     the 'flags' parameter. 'flags' is now honoured, so applications
+     should make sure they are passing it correctly.
+     [Geoff Thorpe]
+
+  *) Target "mingw" now allows native Windows code to be generated in
+     the Cygwin environment as well as with the MinGW compiler.
+     [Ulf Moeller] 
+
+ Changes between 0.9.7 and 0.9.7a  [19 Feb 2003]
+
+  *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
+     via timing by performing a MAC computation even if incorrrect
+     block cipher padding has been found.  This is a countermeasure
+     against active attacks where the attacker has to distinguish
+     between bad padding and a MAC verification error. (CAN-2003-0078)
+
+     [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
+     Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
+     Martin Vuagnoux (EPFL, Ilion)]
+
+  *) Make the no-err option work as intended.  The intention with no-err
+     is not to have the whole error stack handling routines removed from
+     libcrypto, it's only intended to remove all the function name and
+     reason texts, thereby removing some of the footprint that may not
+     be interesting if those errors aren't displayed anyway.
+
+     NOTE: it's still possible for any application or module to have it's
+     own set of error texts inserted.  The routines are there, just not
+     used by default when no-err is given.
+     [Richard Levitte]
+
+  *) Add support for FreeBSD on IA64.
+     [dirk.meyer@dinoex.sub.org via Richard Levitte, resolves #454]
+
+  *) Adjust DES_cbc_cksum() so it returns the same value as the MIT
+     Kerberos function mit_des_cbc_cksum().  Before this change,
+     the value returned by DES_cbc_cksum() was like the one from
+     mit_des_cbc_cksum(), except the bytes were swapped.
+     [Kevin Greaney <Kevin.Greaney@hp.com> and Richard Levitte]
+
+  *) Allow an application to disable the automatic SSL chain building.
+     Before this a rather primitive chain build was always performed in
+     ssl3_output_cert_chain(): an application had no way to send the 
+     correct chain if the automatic operation produced an incorrect result.
+
+     Now the chain builder is disabled if either:
+
+     1. Extra certificates are added via SSL_CTX_add_extra_chain_cert().
+
+     2. The mode flag SSL_MODE_NO_AUTO_CHAIN is set.
+
+     The reasoning behind this is that an application would not want the
+     auto chain building to take place if extra chain certificates are
+     present and it might also want a means of sending no additional
+     certificates (for example the chain has two certificates and the
+     root is omitted).
+     [Steve Henson]
+
+  *) Add the possibility to build without the ENGINE framework.
+     [Steven Reddie <smr@essemer.com.au> via Richard Levitte]
+
+  *) Under Win32 gmtime() can return NULL: check return value in
+     OPENSSL_gmtime(). Add error code for case where gmtime() fails.
+     [Steve Henson]
+
+  *) DSA routines: under certain error conditions uninitialized BN objects
+     could be freed. Solution: make sure initialization is performed early
+     enough. (Reported and fix supplied by Ivan D Nestlerode <nestler@MIT.EDU>,
+     Nils Larsch <nla@trustcenter.de> via PR#459)
+     [Lutz Jaenicke]
+
+  *) Another fix for SSLv2 session ID handling: the session ID was incorrectly
+     checked on reconnect on the client side, therefore session resumption
+     could still fail with a "ssl session id is different" error. This
+     behaviour is masked when SSL_OP_ALL is used due to
+     SSL_OP_MICROSOFT_SESS_ID_BUG being set.
+     Behaviour observed by Crispin Flowerday <crispin@flowerday.cx> as
+     followup to PR #377.
+     [Lutz Jaenicke]
+
+  *) IA-32 assembler support enhancements: unified ELF targets, support
+     for SCO/Caldera platforms, fix for Cygwin shared build.
+     [Andy Polyakov]
+
+  *) Add support for FreeBSD on sparc64.  As a consequence, support for
+     FreeBSD on non-x86 processors is separate from x86 processors on
+     the config script, much like the NetBSD support.
+     [Richard Levitte & Kris Kennaway <kris@obsecurity.org>]
+
+ Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
+
+  *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
+     code (06) was taken as the first octet of the session ID and the last
+     octet was ignored consequently. As a result SSLv2 client side session
+     caching could not have worked due to the session ID mismatch between
+     client and server.
+     Behaviour observed by Crispin Flowerday <crispin@flowerday.cx> as
+     PR #377.
+     [Lutz Jaenicke]
+
+  *) Change the declaration of needed Kerberos libraries to use EX_LIBS
+     instead of the special (and badly supported) LIBKRB5.  LIBKRB5 is
+     removed entirely.
+     [Richard Levitte]
+
+  *) The hw_ncipher.c engine requires dynamic locks.  Unfortunately, it
+     seems that in spite of existing for more than a year, many application
+     author have done nothing to provide the necessary callbacks, which
+     means that this particular engine will not work properly anywhere.
+     This is a very unfortunate situation which forces us, in the name
+     of usability, to give the hw_ncipher.c a static lock, which is part
+     of libcrypto.
+     NOTE: This is for the 0.9.7 series ONLY.  This hack will never
+     appear in 0.9.8 or later.  We EXPECT application authors to have
+     dealt properly with this when 0.9.8 is released (unless we actually
+     make such changes in the libcrypto locking code that changes will
+     have to be made anyway).
+     [Richard Levitte]
+
+  *) In asn1_d2i_read_bio() repeatedly call BIO_read() until all content
+     octets have been read, EOF or an error occurs. Without this change
+     some truncated ASN1 structures will not produce an error.
+     [Steve Henson]
+
+  *) Disable Heimdal support, since it hasn't been fully implemented.
+     Still give the possibility to force the use of Heimdal, but with
+     warnings and a request that patches get sent to openssl-dev.
+     [Richard Levitte]
+
+  *) Add the VC-CE target, introduce the WINCE sysname, and add
+     INSTALL.WCE and appropriate conditionals to make it build.
+     [Steven Reddie <smr@essemer.com.au> via Richard Levitte]
+
+  *) Change the DLL names for Cygwin to cygcrypto-x.y.z.dll and
+     cygssl-x.y.z.dll, where x, y and z are the major, minor and
+     edit numbers of the version.
+     [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
+
+  *) Introduce safe string copy and catenation functions
+     (BUF_strlcpy() and BUF_strlcat()).
+     [Ben Laurie (CHATS) and Richard Levitte]
+
+  *) Avoid using fixed-size buffers for one-line DNs.
+     [Ben Laurie (CHATS)]
+
+  *) Add BUF_MEM_grow_clean() to avoid information leakage when
+     resizing buffers containing secrets, and use where appropriate.
+     [Ben Laurie (CHATS)]
+
+  *) Avoid using fixed size buffers for configuration file location.
+     [Ben Laurie (CHATS)]
+
+  *) Avoid filename truncation for various CA files.
+     [Ben Laurie (CHATS)]
+
+  *) Use sizeof in preference to magic numbers.
+     [Ben Laurie (CHATS)]
+
+  *) Avoid filename truncation in cert requests.
+     [Ben Laurie (CHATS)]
+
+  *) Add assertions to check for (supposedly impossible) buffer
+     overflows.
+     [Ben Laurie (CHATS)]
+
+  *) Don't cache truncated DNS entries in the local cache (this could
+     potentially lead to a spoofing attack).
+     [Ben Laurie (CHATS)]
+
+  *) Fix various buffers to be large enough for hex/decimal
+     representations in a platform independent manner.
+     [Ben Laurie (CHATS)]
+
+  *) Add CRYPTO_realloc_clean() to avoid information leakage when
+     resizing buffers containing secrets, and use where appropriate.
+     [Ben Laurie (CHATS)]
+
+  *) Add BIO_indent() to avoid much slightly worrying code to do
+     indents.
+     [Ben Laurie (CHATS)]
+
+  *) Convert sprintf()/BIO_puts() to BIO_printf().
+     [Ben Laurie (CHATS)]
+
+  *) buffer_gets() could terminate with the buffer only half
+     full. Fixed.
+     [Ben Laurie (CHATS)]
+
+  *) Add assertions to prevent user-supplied crypto functions from
+     overflowing internal buffers by having large block sizes, etc.
+     [Ben Laurie (CHATS)]
+
+  *) New OPENSSL_assert() macro (similar to assert(), but enabled
+     unconditionally).
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused copy of key in RC4.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and incorrectly sized buffers for IV in pem.h.
+     [Ben Laurie (CHATS)]
+
+  *) Fix off-by-one error in EGD path.
+     [Ben Laurie (CHATS)]
+
+  *) If RANDFILE path is too long, ignore instead of truncating.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and incorrectly sized X.509 structure
+     CBCParameter.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and dangerous function knumber().
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and dangerous structure, KSSL_ERR.
+     [Ben Laurie (CHATS)]
+
+  *) Protect against overlong session ID context length in an encoded
+     session object. Since these are local, this does not appear to be
+     exploitable.
+     [Ben Laurie (CHATS)]
+
+  *) Change from security patch (see 0.9.6e below) that did not affect
+     the 0.9.6 release series:
+
+     Remote buffer overflow in SSL3 protocol - an attacker could
+     supply an oversized master key in Kerberos-enabled versions.
+     (CAN-2002-0657)
+     [Ben Laurie (CHATS)]
+
+  *) Change the SSL kerb5 codes to match RFC 2712.
+     [Richard Levitte]
 
   *) Make -nameopt work fully for req and add -reqopt switch.
      [Michael Bell <michael.bell@rz.hu-berlin.de>, Steve Henson]
@@ -34,7 +293,7 @@
 	# is assumed to contain the absolute OpenSSL source directory.
 	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
 	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
-	(cd $OPENSSL_SOURCE; find . -type f -o -type l) | while read F; do
+	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
 		mkdir -p `dirname $F`
 		ln -s $OPENSSL_SOURCE/$F $F
 	done
@@ -1534,6 +1793,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      be reduced modulo  m.
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
+#if 0
+     The following entry accidentily appeared in the CHANGES file
+     distributed with OpenSSL 0.9.7.  The modifications described in
+     it do *not* apply to OpenSSL 0.9.7.
+
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
      was actually never needed) and in BN_mul().  The removal in BN_mul()
      required a small change in bn_mul_part_recursive() and the addition
@@ -1542,6 +1806,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+#endif
 
   *) In 'openssl passwd', verify passwords read from the terminal
      unless the '-salt' option is used (which usually means that
@@ -1673,7 +1938,76 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
+ Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
+
+  *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
+     via timing by performing a MAC computation even if incorrrect
+     block cipher padding has been found.  This is a countermeasure
+     against active attacks where the attacker has to distinguish
+     between bad padding and a MAC verification error. (CAN-2003-0078)
+
+     [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
+     Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
+     Martin Vuagnoux (EPFL, Ilion)]
+
+ Changes between 0.9.6g and 0.9.6h  [5 Dec 2002]
+
+  *) New function OPENSSL_cleanse(), which is used to cleanse a section of
+     memory from it's contents.  This is done with a counter that will
+     place alternating values in each byte.  This can be used to solve
+     two issues: 1) the removal of calls to memset() by highly optimizing
+     compilers, and 2) cleansing with other values than 0, since those can
+     be read through on certain media, for example a swap space on disk.
+     [Geoff Thorpe]
+
+  *) Bugfix: client side session caching did not work with external caching,
+     because the session->cipher setting was not restored when reloading
+     from the external cache. This problem was masked, when
+     SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG (part of SSL_OP_ALL) was set.
+     (Found by Steve Haslam <steve@araqnid.ddts.net>.)
+     [Lutz Jaenicke]
+
+  *) Fix client_certificate (ssl/s2_clnt.c): The permissible total
+     length of the REQUEST-CERTIFICATE message is 18 .. 34, not 17 .. 33.
+     [Zeev Lieber <zeev-l@yahoo.com>]
+
+  *) Undo an undocumented change introduced in 0.9.6e which caused
+     repeated calls to OpenSSL_add_all_ciphers() and 
+     OpenSSL_add_all_digests() to be ignored, even after calling
+     EVP_cleanup().
+     [Richard Levitte]
+
+  *) Change the default configuration reader to deal with last line not
+     being properly terminated.
+     [Richard Levitte]
+
+  *) Change X509_NAME_cmp() so it applies the special rules on handling
+     DN values that are of type PrintableString, as well as RDNs of type
+     emailAddress where the value has the type ia5String.
+     [stefank@valicert.com via Richard Levitte]
+
+  *) Add a SSL_SESS_CACHE_NO_INTERNAL_STORE flag to take over half
+     the job SSL_SESS_CACHE_NO_INTERNAL_LOOKUP was inconsistently
+     doing, define a new flag (SSL_SESS_CACHE_NO_INTERNAL) to be
+     the bitwise-OR of the two for use by the majority of applications
+     wanting this behaviour, and update the docs. The documented
+     behaviour and actual behaviour were inconsistent and had been
+     changing anyway, so this is more a bug-fix than a behavioural
+     change.
+     [Geoff Thorpe, diagnosed by Nadav Har'El]
+
+  *) Don't impose a 16-byte length minimum on session IDs in ssl/s3_clnt.c
+     (the SSL 3.0 and TLS 1.0 specifications allow any length up to 32 bytes).
+     [Bodo Moeller]
+
+  *) Fix initialization code race conditions in
+        SSLv23_method(),  SSLv23_client_method(),   SSLv23_server_method(),
+        SSLv2_method(),   SSLv2_client_method(),    SSLv2_server_method(),
+        SSLv3_method(),   SSLv3_client_method(),    SSLv3_server_method(),
+        TLSv1_method(),   TLSv1_client_method(),    TLSv1_server_method(),
+        ssl2_get_cipher_by_char(),
+        ssl3_get_cipher_by_char().
+     [Patrick McCormick <patrick@tellme.com>, Bodo Moeller]
 
   *) Reorder cleanup sequence in SSL_CTX_free(): only remove the ex_data after
      the cached sessions are flushed, as the remove_cb() might use ex_data
@@ -1703,7 +2037,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      overflow checks added in 0.9.6e.  This prevents DoS (the
      assertions could call abort()).
      [Arne Ansper <arne@ats.cyber.ee>, Bodo Moeller]
-  
+
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
   *) Add various sanity checks to asn1_get_length() to reject
@@ -1755,18 +2089,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
 
   *) Remote buffer overflow in SSL3 protocol - an attacker could
-     supply an oversized master key in Kerberos-enabled versions.
-     (CAN-2002-0657)
-     [Ben Laurie (CHATS)]
-
-  *) Remote buffer overflow in SSL3 protocol - an attacker could
      supply an oversized session ID to a client. (CAN-2002-0656)
      [Ben Laurie (CHATS)]
 
   *) Remote buffer overflow in SSL2 protocol - an attacker could
      supply an oversized client master key. (CAN-2002-0656)
      [Ben Laurie (CHATS)]
-
 
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
@@ -1854,12 +2182,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      value is 0.
      [Richard Levitte]
 
-  *) Add the configuration target linux-s390x.
-     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
-
   *) [In 0.9.6d-engine release:]
      Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
+
+  *) Add the configuration target linux-s390x.
+     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
 
   *) The earlier bugfix for the SSL3_ST_SW_HELLO_REQ_C case of
      ssl3_accept (ssl/s3_srvr.c) incorrectly used a local flag

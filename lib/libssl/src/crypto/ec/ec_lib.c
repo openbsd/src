@@ -128,7 +128,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
 	EC_GROUP_clear_free_extra_data(group);
 
-	memset(group, 0, sizeof *group);
+	OPENSSL_cleanse(group, sizeof *group);
 	OPENSSL_free(group);
 	}
 
@@ -268,7 +268,9 @@ void *EC_GROUP_get_extra_data(const EC_GROUP *group, void *(*extra_data_dup_func
 		|| (group->extra_data_free_func != extra_data_free_func)
 		|| (group->extra_data_clear_free_func != extra_data_clear_free_func))
 		{
-		ECerr(EC_F_EC_GROUP_GET_EXTRA_DATA, EC_R_NO_SUCH_EXTRA_DATA);
+#if 0 /* this was an error in 0.9.7, but that does not make a lot of sense */
+		ECerr(..._F_EC_GROUP_GET_EXTRA_DATA, ..._R_NO_SUCH_EXTRA_DATA);
+#endif
 		return NULL;
 		}
 
@@ -357,7 +359,7 @@ void EC_POINT_clear_free(EC_POINT *point)
 		point->meth->point_clear_finish(point);
 	else if (point->meth != NULL && point->meth->point_finish != 0)
 		point->meth->point_finish(point);
-	memset(point, 0, sizeof *point);
+	OPENSSL_cleanse(point, sizeof *point);
 	OPENSSL_free(point);
 	}
 

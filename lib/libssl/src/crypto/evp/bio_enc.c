@@ -132,7 +132,7 @@ static int enc_free(BIO *a)
 	if (a == NULL) return(0);
 	b=(BIO_ENC_CTX *)a->ptr;
 	EVP_CIPHER_CTX_cleanup(&(b->cipher));
-	memset(a->ptr,0,sizeof(BIO_ENC_CTX));
+	OPENSSL_cleanse(a->ptr,sizeof(BIO_ENC_CTX));
 	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
@@ -271,7 +271,7 @@ static int enc_write(BIO *b, const char *in, int inl)
 			if (i <= 0)
 				{
 				BIO_copy_next_retry(b);
-				return(i);
+				return (ret == inl) ? i : ret - inl;
 				}
 			n-=i;
 			ctx->buf_off+=i;
@@ -325,10 +325,7 @@ again:
 			{
 			i=enc_write(b,NULL,0);
 			if (i < 0)
-				{
-				ret=i;
-				break;
-				}
+				return i;
 			}
 
 		if (!ctx->finished)

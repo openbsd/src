@@ -5,6 +5,28 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7a and OpenSSL 0.9.7b:
+
+      o Security: counter the Klima-Pokorny-Rosa extension of
+        Bleichbacher's attack 
+      o Security: make RSA blinding default.
+      o Configuration: Irix fixes, AIX fixes, better mingw support.
+      o Support for new platforms: linux-ia64-ecc.
+      o Build: shared library support fixes.
+      o ASN.1: treat domainComponent correctly.
+      o Documentation: fixes and additions.
+
+  Major changes between OpenSSL 0.9.7 and OpenSSL 0.9.7a:
+
+      o Security: Important security related bugfixes.
+      o Enhanced compatibility with MIT Kerberos.
+      o Can be built without the ENGINE framework.
+      o IA32 assembler enhancements.
+      o Support for new platforms: FreeBSD/IA64 and FreeBSD/Sparc64.
+      o Configuration: the no-err option now works properly.
+      o SSL/TLS: now handles manual certificate chain building.
+      o SSL/TLS: certain session ID malfunctions corrected.
+
   Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.7:
 
       o New library section OCSP.
@@ -17,6 +39,15 @@
         a separate distribution.
       o New elliptic curve library section.
       o New AES (Rijndael) library section.
+      o Support for new platforms: Windows CE, Tandem OSS, A/UX, AIX 64-bit,
+        Linux x86_64, Linux 64-bit on Sparc v9
+      o Extended support for some platforms: VxWorks
+      o Enhanced support for shared libraries.
+      o Now only builds PIC code when shared library support is requested.
+      o Support for pkg-config.
+      o Lots of new manuals.
+      o Makes symbolic links to or copies of manuals to cover all described
+        functions.
       o Change DES API to clean up the namespace (some applications link also
         against libdes providing similar functions having the same name).
         Provide macros for backward compatibility (will be removed in the
@@ -30,15 +61,42 @@
       o Reworked parts of the BIGNUM code.
       o Support for new engines: Broadcom ubsec, Accelerated Encryption
         Processing, IBM 4758.
+      o A few new engines added in the demos area.
       o Extended and corrected OID (object identifier) table.
       o PRNG: query at more locations for a random device, automatic query for
         EGD style random sources at several locations.
       o SSL/TLS: allow optional cipher choice according to server's preference.
       o SSL/TLS: allow server to explicitly set new session ids.
       o SSL/TLS: support Kerberos cipher suites (RFC2712).
+	Only supports MIT Kerberos for now.
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
+
+  Major changes between OpenSSL 0.9.6i and OpenSSL 0.9.6j:
+
+      o Security: counter the Klima-Pokorny-Rosa extension of
+        Bleichbacher's attack 
+      o Security: make RSA blinding default.
+      o Build: shared library support fixes.
+
+  Major changes between OpenSSL 0.9.6h and OpenSSL 0.9.6i:
+
+      o Important security related bugfixes.
+
+  Major changes between OpenSSL 0.9.6g and OpenSSL 0.9.6h:
+
+      o New configuration targets for Tandem OSS and A/UX.
+      o New OIDs for Microsoft attributes.
+      o Better handling of SSL session caching.
+      o Better comparison of distinguished names.
+      o Better handling of shared libraries in a mixed GNU/non-GNU environment.
+      o Support assembler code with Borland C.
+      o Fixes for length problems.
+      o Fixes for uninitialised variables.
+      o Fixes for memory leaks, some unusual crashes and some race conditions.
+      o Fixes for smaller building problems.
+      o Updates of manuals, FAQ and other instructive documents.
 
   Major changes between OpenSSL 0.9.6f and OpenSSL 0.9.6g:
 
