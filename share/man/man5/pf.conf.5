@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.116 2002/11/24 18:12:12 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.117 2002/11/24 23:06:04 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -48,8 +48,8 @@ performed.
 For each packet inspected by the translator, the set of rules is evaluated
 from top to bottom, and the first matching rule decides what action is
 performed.
-In short: filters are last match, nat is first match.
-Rules must be in order: options, scrub, nat, queue, filter.
+In short: filters are last match, translation is first match.
+Rules must be in order: options, scrub, translation, queue, filter.
 .Sh FILTER RULES
 While filter rules are typically manipulated using
 .Xr pfctl 8
@@ -250,7 +250,8 @@ Example:
 .Ss require-order
 By default
 .Xr pfctl 8
-enforces an ordering of the ruleset to: options, scrub, nat, queue, filter.
+enforces an ordering of the ruleset to: options, scrub, translation, queue,
+filter.
 Setting this option to
 .Em no
 disables this enforcement.
@@ -558,7 +559,7 @@ Example:
 .Sh NO
 The
 .Sq no
-option is to a NAT rule what the
+option is to a translation rule what the
 .Sq quick
 option is to a filter rule.
 This option causes matching packets to remain untranslated.
@@ -1147,7 +1148,7 @@ pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \\
 	flags S/SA keep state
 
 .Ed
-.Sh NAT EXAMPLES
+.Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,
 therefore lacks permission to bind to port 80).
