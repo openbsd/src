@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.36 2004/02/18 21:06:40 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.37 2004/02/25 13:43:19 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -5003,24 +5003,24 @@ should be input by the user.
 .Sh RSA
 .Cm openssl rsa
 .Bk -words
-.Op Fl inform Ar DER | NET | PEM
-.Op Fl outform Ar DER | NET | PEM
-.Op Fl in Ar file
-.Op Fl passin Ar arg
-.Op Fl out Ar file
-.Op Fl passout Ar arg
-.Op Fl sgckey
 .Oo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Oc
-.Op Fl text
-.Op Fl noout
-.Op Fl modulus
 .Op Fl check
+.Op Fl modulus
+.Op Fl noout
 .Op Fl pubin
 .Op Fl pubout
+.Op Fl sgckey
+.Op Fl text
 .Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl inform Ar DER | NET | PEM
+.Op Fl out Ar file
+.Op Fl outform Ar DER | NET | PEM
+.Op Fl passin Ar arg
+.Op Fl passout Ar arg
 .Ek
 .Pp
 The
@@ -5038,6 +5038,36 @@ utility.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
+.It Xo
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
+.Xc
+These options encrypt the private key with the AES, DES,
+or the triple DES ciphers, respectively, before outputting it.
+A pass phrase is prompted for.
+If none of these options is specified the key is written in plain text.
+This means that using the
+.Nm rsa
+utility to read in an encrypted key with no encryption option can be used
+to remove the pass phrase from a key, or by setting the encryption options
+it can be used to add or change the pass phrase.
+These options can only be used with PEM format output files.
+.It Fl check
+This option checks the consistency of an RSA private key.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm rsa
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl in Ar file
+This specifies the input
+.Ar file
+to read a key from, or standard input if this
+option is not specified.
+If the key is encrypted, a pass phrase will be prompted for.
 .It Fl inform Ar DER | NET | PEM
 This specifies the input format.
 The
@@ -5055,16 +5085,22 @@ The
 form is a format described in the
 .Sx RSA NOTES
 section.
+.It Fl noout
+This option prevents output of the encoded version of the key.
+.It Fl modulus
+This option prints out the value of the modulus of the key.
+.It Fl out Ar file
+This specifies the output
+.Ar file
+to write a key to, or standard output if this option is not specified.
+If any encryption options are set, then a pass phrase will be prompted for.
+The output filename should
+.Em not
+be the same as the input filename.
 .It Fl outform Ar DER | NET | PEM
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read a key from, or standard input if this
-option is not specified.
-If the key is encrypted, a pass phrase will be prompted for.
 .It Fl passin Ar arg
 The input file password source.
 For more information about the format of
@@ -5072,63 +5108,27 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl out Ar file
-This specifies the output
-.Ar file
-to write a key to, or standard output if this option is not specified.
-If any encryption options are set then, a pass phrase will be prompted for.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl passout Ar password
+.It Fl passout Ar arg
 The output file password source.
 For more information about the format of
 .Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
+.It Fl pubin
+By default, a private key is read from the input file; with this
+option a public key is read instead.
+.It Fl pubout
+By default, a private key is output;
+with this option a public key will be output instead.
+This option is automatically set if the input is a public key.
 .It Fl sgckey
 Use the modified
 .Em NET
 algorithm used with some versions of Microsoft IIS and SGC keys.
-.It Xo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
-.Xc
-These options encrypt the private key with the DES, triple DES, or the
-AES ciphers, respectively, before outputting it.
-A pass phrase is prompted for.
-If none of these options is specified the key is written in plain text.
-This means that using the
-.Nm rsa
-utility to read in an encrypted key with no encryption option can be used
-to remove the pass phrase from a key, or by setting the encryption options
-it can be used to add or change the pass phrase.
-These options can only be used with PEM format output files.
 .It Fl text
 Prints out the various public or private key components in
 plain text, in addition to the encoded version.
-.It Fl noout
-This option prevents output of the encoded version of the key.
-.It Fl modulus
-This option prints out the value of the modulus of the key.
-.It Fl check
-This option checks the consistency of an RSA private key.
-.It Fl pubin
-By default, a private key is read from the input file: with this
-option a public key is read instead.
-.It Fl pubout
-By default, a private key is output:
-with this option a public key will be output instead.
-This option is automatically set if the input is a public key.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm rsa
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .El
 .Sh RSA NOTES
 The PEM private key format uses the header and footer lines:
@@ -5199,20 +5199,20 @@ without having to manually edit them.
 .Sh RSAUTL
 .Nm openssl rsautl
 .Bk -words
-.Op Fl in Ar file
-.Op Fl out Ar file
-.Op Fl inkey Ar file
-.Op Fl keyform Ar DER | PEM
-.Op Fl pubin
+.Op Fl asn1parse
 .Op Fl certin
+.Op Fl decrypt
+.Op Fl encrypt
+.Op Fl hexdump
+.Op Fl oaep | pkcs | raw | ssl
+.Op Fl pubin
 .Op Fl sign
 .Op Fl verify
-.Op Fl encrypt
-.Op Fl decrypt
-.Op Fl pkcs | oaep | ssl | raw
-.Op Fl hexdump
-.Op Fl asn1parse
 .Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl inkey Ar file
+.Op Fl keyform Ar DER | PEM
+.Op Fl out Ar file
 .Ek
 .Pp
 The
@@ -5222,51 +5222,16 @@ data using the RSA algorithm.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read data from, or standard input
-if this option is not specified.
-.It Fl out Ar file
-Specifies the output
-.Ar file
-to write to, or standard output by
-default.
-.It Fl inkey Ar file
-The input key file, by default it should be an RSA private key.
-.It Fl keyform Ar DER | PEM
-Private ket format.
-Default is
-.Ar PEM .
-.It Fl pubin
-The input file is an RSA public key.
-.It Fl certin
-The input is a certificate containing an RSA public key.
-.It Fl sign
-Sign the input data and output the signed result.
-This requires an RSA private key.
-.It Fl verify
-Verify the input data and output the recovered data.
-.It Fl encrypt
-Encrypt the input data using an RSA public key.
-.It Fl decrypt
-Decrypt the input data using an RSA private key.
-.It Fl pkcs | oaep | ssl | raw
-The padding to use: PKCS#1 v1.5
-.Pq the default ,
-PKCS#1 OAEP, special padding used in SSL v2 backwards compatible handshakes,
-or no padding, respectively.
-For signatures, only
-.Fl pkcs
-and
-.Fl raw
-can be used.
-.It Fl hexdump
-Hex dump the output data.
 .It Fl asn1parse
 Asn1parse the output data; this is useful when combined with the
 .Fl verify
 option.
+.It Fl certin
+The input is a certificate containing an RSA public key.
+.It Fl decrypt
+Decrypt the input data using an RSA private key.
+.It Fl encrypt
+Encrypt the input data using an RSA public key.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -5275,6 +5240,42 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl hexdump
+Hex dump the output data.
+.It Fl in Ar file
+This specifies the input
+.Ar file
+to read data from, or standard input
+if this option is not specified.
+.It Fl inkey Ar file
+The input key file, by default it should be an RSA private key.
+.It Fl keyform Ar DER | PEM
+Private ket format.
+Default is
+.Ar PEM .
+.It Fl oaep | pkcs | raw | ssl
+The padding to use:
+PKCS#1 OAEP, PKCS#1 v1.5
+.Pq the default ,
+no padding,
+or special padding used in SSL v2 backwards compatible handshakes, respectively.
+For signatures, only
+.Fl pkcs
+and
+.Fl raw
+can be used.
+.It Fl out Ar file
+Specifies the output
+.Ar file
+to write to, or standard output by
+default.
+.It Fl pubin
+The input file is an RSA public key.
+.It Fl sign
+Sign the input data and output the signed result.
+This requires an RSA private key.
+.It Fl verify
+Verify the input data and output the recovered data.
 .El
 .Sh RSAUTL NOTES
 .Nm rsautl ,
@@ -5346,7 +5347,7 @@ It can be extracted with:
 .Pp
 The certificate public key can be extracted with:
 .Pp
-.Dl $ openssl x509 -in test/testx509.pem -pubout -noout >pubkey.pem
+.Dl $ openssl x509 -in test/testx509.pem -pubkey -noout >pubkey.pem
 .Pp
 The signature can be analysed with:
 .Pp
@@ -5363,7 +5364,7 @@ The signature can be analysed with:
 This is the parsed version of an ASN1
 .Em DigestInfo
 structure.
-It can be seen that the digest used was md5.
+It can be seen that the digest used was MD5.
 The actual part of the certificate that was signed can be extracted with:
 .Pp
 .Dl "$ openssl asn1parse -in pca-cert.pem -out tbs -noout -strparse 4"
