@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.4 1996/10/24 12:11:07 mickey Exp $	*/
+/*	$OpenBSD: printf.c,v 1.5 1996/10/29 07:47:48 mickey Exp $	*/
 /*	$NetBSD: printf.c,v 1.7 1996/02/08 20:19:36 gwr Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@
 static void kprintn __P((void (*)(int), u_long, int));
 static void kprintf __P((void (*)(int), const char *, va_list));
 
-#ifndef	NO_SPRINTF
+#ifndef	STRIPPED
 static void sputchar __P((int));
 static char *sbuf;
 
@@ -137,9 +137,9 @@ kprintf(put, fmt, ap)
 	va_list ap;
 {
 	register char *p;
-	register int ch, n;
+	register int ch;
 	unsigned long ul;
-	int lflag, set;
+	int lflag;
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
@@ -152,7 +152,10 @@ reswitch:	switch (ch = *fmt++) {
 		case 'l':
 			lflag = 1;
 			goto reswitch;
+#ifndef	STRIPPED
 		case 'b':
+		{
+			register int set, n;
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
 			kprintn(put, ul, *p++);
@@ -171,7 +174,9 @@ reswitch:	switch (ch = *fmt++) {
 			}
 			if (set)
 				put('>');
+		}
 			break;
+#endif
 		case 'c':
 			ch = va_arg(ap, int);
 				put(ch & 0x7f);
