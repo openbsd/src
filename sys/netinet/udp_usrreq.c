@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.95 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.96 2003/12/21 14:57:19 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -410,9 +410,7 @@ udp_input(struct mbuf *m, ...)
 		 * (Algorithm copied from raw_intr().)
 		 */
 		last = NULL;
-		for (inp = udbtable.inpt_queue.cqh_first;
-		    inp != (struct inpcb *)&udbtable.inpt_queue;
-		    inp = inp->inp_queue.cqe_next) {
+		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 #ifdef INET6
 			/* don't accept it if AF does not match */
 			if (ip6 && !(inp->inp_flags & INP_IPV6))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.71 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.72 2003/12/21 14:57:19 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -591,11 +591,11 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;) {
+	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	    inp != CIRCLEQ_END(&table->inpt_queue);) {
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6) {
-			inp = inp->inp_queue.cqe_next;
+			inp = CIRCLEQ_NEXT(inp, inp_queue);
 			continue;
 		}
 #endif
@@ -604,11 +604,11 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 		    inp->inp_fport != fport ||
 		    inp->inp_lport != lport ||
 		    inp->inp_laddr.s_addr != laddr.s_addr) {
-			inp = inp->inp_queue.cqe_next;
+			inp = CIRCLEQ_NEXT(inp, inp_queue);
 			continue;
 		}
 		oinp = inp;
-		inp = inp->inp_queue.cqe_next;
+		inp = CIRCLEQ_NEXT(inp, inp_queue);
 		if (notify)
 			(*notify)(oinp, errno);
 	}
@@ -642,13 +642,13 @@ in_pcbnotifyall(table, dst, errno, notify)
 	    inp != (struct inpcb *)&table->inpt_queue;) {
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6) {
-			inp = inp->inp_queue.cqe_next;
+			inp = CIRCLEQ_NEXT(inp, inp_queue);
 			continue;
 		}
 #endif
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
 		    inp->inp_socket == 0) {
-			inp = inp->inp_queue.cqe_next;
+			inp = CIRCLEQ_NEXT(inp, inp_queue);
 			continue;
 		}
 		oinp = inp;

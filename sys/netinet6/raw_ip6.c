@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.21 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.22 2003/12/21 14:57:19 markus Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -176,10 +176,7 @@ rip6_input(mp, offp, proto)
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
-	for (in6p = rawin6pcbtable.inpt_queue.cqh_first;
-	     in6p != (struct inpcb *)&rawin6pcbtable.inpt_queue;
-	     in6p = in6p->inp_queue.cqe_next)
-	{
+	CIRCLEQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (!(in6p->in6p_flags & INP_IPV6))
 			continue;
 		if (in6p->in6p_ip6.ip6_nxt &&
