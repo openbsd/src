@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.17 2002/08/23 09:09:04 gluk Exp $	*/
+/*	$OpenBSD: setup.c,v 1.18 2003/04/30 22:54:32 tedu Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.17 2002/08/23 09:09:04 gluk Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.18 2003/04/30 22:54:32 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ void badsb(int, char *);
 int calcsb(char *, int, struct fs *);
 static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
+static int cmpsb(struct fs *, struct fs *);
 
 int
 setup(char *dev)
@@ -435,53 +436,10 @@ readsb(int listerr)
 		havesb = 1;
 		return (1);
 	}
-	/*
-	 * Set all possible fields that could differ, then do check
-	 * of whole super block against an alternate super block.
-	 * When an alternate super-block is specified this check is skipped.
-	 */
 	getblk(&asblk, cgsblock(&sblock, sblock.fs_ncg - 1), sblock.fs_sbsize);
 	if (asblk.b_errs)
 		return (0);
-	altsblock.fs_firstfield = sblock.fs_firstfield;
-	altsblock.fs_fscktime = sblock.fs_fscktime;
-	altsblock.fs_time = sblock.fs_time;
-	altsblock.fs_cstotal = sblock.fs_cstotal;
-	altsblock.fs_cgrotor = sblock.fs_cgrotor;
-	altsblock.fs_fmod = sblock.fs_fmod;
-	altsblock.fs_clean = sblock.fs_clean;
-	altsblock.fs_ronly = sblock.fs_ronly;
-	altsblock.fs_flags = sblock.fs_flags;
-	altsblock.fs_maxcontig = sblock.fs_maxcontig;
-	altsblock.fs_minfree = sblock.fs_minfree;
-	altsblock.fs_optim = sblock.fs_optim;
-	altsblock.fs_rotdelay = sblock.fs_rotdelay;
-	altsblock.fs_maxbpg = sblock.fs_maxbpg;
-	memcpy(altsblock.fs_ocsp, sblock.fs_ocsp, sizeof sblock.fs_ocsp);
-	altsblock.fs_contigdirs = sblock.fs_contigdirs;
-	altsblock.fs_csp = sblock.fs_csp;
-	altsblock.fs_maxcluster = sblock.fs_maxcluster;
-	altsblock.fs_avgfilesize = sblock.fs_avgfilesize;
-	altsblock.fs_avgfpdir = sblock.fs_avgfpdir;
-	memcpy(altsblock.fs_fsmnt, sblock.fs_fsmnt,
-		sizeof sblock.fs_fsmnt);
-	memcpy(altsblock.fs_snapinum, sblock.fs_snapinum,
-		sizeof sblock.fs_snapinum);
-	memcpy(altsblock.fs_sparecon, sblock.fs_sparecon,
-		sizeof sblock.fs_sparecon);
-	/*
-	 * The following should not have to be copied.
-	 */
-	altsblock.fs_fsbtodb = sblock.fs_fsbtodb;
-	altsblock.fs_interleave = sblock.fs_interleave;
-	altsblock.fs_npsect = sblock.fs_npsect;
-	altsblock.fs_nrpos = sblock.fs_nrpos;
-	altsblock.fs_state = sblock.fs_state;
-	altsblock.fs_qbmask = sblock.fs_qbmask;
-	altsblock.fs_qfmask = sblock.fs_qfmask;
-	altsblock.fs_state = sblock.fs_state;
-	altsblock.fs_maxfilesize = sblock.fs_maxfilesize;
-	if (memcmp(&sblock, &altsblock, (int)sblock.fs_sbsize)) {
+	if (cmpsb(&sblock, &altsblock)) {
 		if (debug) {
 			long *nlp, *olp, *endlp;
 
@@ -584,4 +542,43 @@ getdisklabel(char *s, int fd)
 		errexit("%s: can't read disk label\n", s);
 	}
 	return (&lab);
+}
+
+/*
+ * Compare two superblocks
+ */
+static int
+cmpsb(struct fs *sb, struct fs *asb)
+{
+	/*
+	 * Only compare fields which should be the same, and ignore ones
+	 * likely to change to ensure future compatibility.
+	 */
+	if (asb->fs_sblkno != sb->fs_sblkno ||
+	    asb->fs_cblkno != sb->fs_cblkno ||
+	    asb->fs_iblkno != sb->fs_iblkno ||
+	    asb->fs_dblkno != sb->fs_dblkno ||
+	    asb->fs_cgoffset != sb->fs_cgoffset ||
+	    asb->fs_cgmask != sb->fs_cgmask ||
+	    asb->fs_ncg != sb->fs_ncg ||
+	    asb->fs_bsize != sb->fs_bsize ||
+	    asb->fs_fsize != sb->fs_fsize ||
+	    asb->fs_frag != sb->fs_frag ||
+	    asb->fs_bmask != sb->fs_bmask ||
+	    asb->fs_fmask != sb->fs_fmask ||
+	    asb->fs_bshift != sb->fs_bshift ||
+	    asb->fs_fshift != sb->fs_fshift ||
+	    asb->fs_fragshift != sb->fs_fragshift ||
+	    asb->fs_fsbtodb != sb->fs_fsbtodb ||
+	    asb->fs_sbsize != sb->fs_sbsize ||
+	    asb->fs_nindir != sb->fs_nindir ||
+	    asb->fs_inopb != sb->fs_inopb ||
+	    asb->fs_cssize != sb->fs_cssize ||
+	    asb->fs_cpg != sb->fs_cpg ||
+	    asb->fs_ipg != sb->fs_ipg ||
+	    asb->fs_fpg != sb->fs_fpg ||
+	    asb->fs_magic != sb->fs_magic)
+		    return (1);
+	/* they're the same */
+	return (0);
 }
