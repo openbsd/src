@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.2 2000/06/18 08:37:11 angelos Exp $	*/
+/*	$OpenBSD: xform.c,v 1.3 2000/10/09 22:17:30 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -140,7 +140,7 @@ struct enc_xform enc_xform_skipjack =
 
 struct enc_xform enc_xform_rijndael128 =
 {
-    CRYPTO_RIJNDAEL128_CBC, "Rijndael-128",
+    CRYPTO_RIJNDAEL128_CBC, "Rijndael-128/AES",
     16, 8, 32, 16,
     rijndael128_encrypt,
     rijndael128_decrypt,

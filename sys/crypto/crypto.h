@@ -58,6 +58,7 @@
 #define CRYPTO_MD5_KPDK         9
 #define CRYPTO_SHA1_KPDK        10
 #define CRYPTO_RIJNDAEL128_CBC  11 /* 128 bit blocksize */
+#define CRYPTO_AES_CBC          11 /* 128 bit blocksize -- the same as above */
 
 #define CRYPTO_ALGORITHM_MAX    11 /* Keep this updated */
 
