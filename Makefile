@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.103 2004/05/03 15:18:18 drahn Exp $
+#	$OpenBSD: Makefile,v 1.104 2004/08/06 22:30:54 pefo Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -137,7 +137,7 @@ ${CROSSDIRS}:
 		macppc|mvmeppc) \
 			echo powerpc ;;\
 		sgi) \
-			echo mips ;;\
+			echo mips64 ;;\
 		*) \
 			(echo Unknown arch ${TARGET} >&2) ; exit 1;; \
 	esac > ${CROSSDIR}/TARGET_ARCH
