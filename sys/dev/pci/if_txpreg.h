@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.7 2001/04/09 03:15:47 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.8 2001/04/09 04:09:18 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -344,6 +344,15 @@ struct txp_tcpseg_desc {
 };
 
 /*
+ * Transceiver types
+ */
+#define	TXP_XCVR_10_HDX		0
+#define	TXP_XCVR_10_FDX		1
+#define	TXP_XCVR_100_HDX	2
+#define	TXP_XCVR_100_FDX	3
+#define	TXP_XCVR_AUTO		4
+
+/*
  * boot record (pointers to rings)
  */
 struct txp_boot_record {
@@ -441,6 +450,8 @@ struct txp_softc {
 	struct txp_rsp_ring	sc_rspring;
 	void *			sc_ih;
 	struct timeout		sc_tick_tmo;
+	struct ifmedia		sc_ifmedia;
+	u_int16_t		sc_xcvr;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
 	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;
 	struct txp_dma_alloc	sc_txhiring_dma, sc_txloring_dma;

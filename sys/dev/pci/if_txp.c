@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.6 2001/04/09 03:15:47 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.7 2001/04/09 04:09:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -110,6 +110,17 @@ int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
 int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t,
     struct txp_rsp_desc **));
 
+void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
+int txp_ifmedia_upd __P((struct ifnet *));
+
+struct cfattach txp_ca = {
+	sizeof(struct txp_softc), txp_probe, txp_attach,
+};
+
+struct cfdriver txp_cd = {
+	0, "txp", DV_IFNET
+};
+
 int
 txp_probe(parent, match, aux)
 	struct device *parent;
@@ -208,6 +219,19 @@ txp_attach(parent, self, aux)
 	sc->sc_arpcom.ac_enaddr[5] = ((u_int8_t *)&p2)[0];
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
+	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
+	    NULL, NULL, NULL, 0);
+
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -727,7 +751,7 @@ txp_ioctl(ifp, command, data)
 	caddr_t data;
 {
 	struct txp_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
@@ -775,6 +799,10 @@ txp_ioctl(ifp, command, data)
 			/* XXX TODO: set multicast list */
 			error = 0;
 		}
+		break;
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, command);
 		break;
 	default:
 		error = EINVAL;
@@ -965,10 +993,70 @@ txp_watchdog(ifp)
 {
 }
 
-struct cfattach txp_ca = {
-	sizeof(struct txp_softc), txp_probe, txp_attach,
-};
+int
+txp_ifmedia_upd(ifp)
+	struct ifnet *ifp;
+{
+	struct txp_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
+	u_int16_t new_xcvr;
 
-struct cfdriver txp_cd = {
-	0, "txp", DV_IFNET
-};
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+			new_xcvr = TXP_XCVR_10_FDX;
+		else
+			new_xcvr = TXP_XCVR_10_HDX;
+	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+			new_xcvr = TXP_XCVR_100_FDX;
+		else
+			new_xcvr = TXP_XCVR_100_HDX;
+	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
+		new_xcvr = TXP_XCVR_AUTO;
+	}
+
+	/* nothing to do */
+	if (sc->sc_xcvr == new_xcvr)
+		return (0);
+
+	txp_command(sc, TXP_CMD_XCVR_SELECT, new_xcvr, 0, 0,
+	    NULL, NULL, NULL, 0);
+	sc->sc_xcvr = new_xcvr;
+
+	return (0);
+}
+
+void
+txp_ifmedia_sts(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct txp_softc *sc = ifp->if_softc;
+
+	switch (sc->sc_xcvr) {
+	case TXP_XCVR_10_HDX:
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
+		break;
+	case TXP_XCVR_10_FDX:
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
+		break;
+	case TXP_XCVR_100_HDX:
+		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
+		break;
+	case TXP_XCVR_100_FDX:
+		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
+		break;
+	case TXP_XCVR_AUTO:
+		ifmr->ifm_active = IFM_ETHER | IFM_AUTO;
+		break;
+	default:
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		break;
+	}
+
+	/* XXX determine real speed/duplex/link status */
+	ifmr->ifm_status &= ~IFM_AVALID;
+}
