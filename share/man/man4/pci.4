@@ -99,10 +99,14 @@ interfaces.
 Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
 interfaces.
-.It Xr adw 4
+.It Xr adw 4 , Xr adv 4
 AdvanSys PCI
 .Tn SCSI
 interfaces.
+.It Xr gdt 4
+ICP-Vortex GDT
+.Tn Raid
+interface.
 .El
 .Pp
 .Ss Network interfaces
@@ -111,9 +115,11 @@ interfaces.
 .Tn DEC
 DC21x4x (Tulip) based
 .Tn Ethernet
-interfaces, including the DE435,
-DE450, and DE500, and Znyx, SMC, Cogent/Adaptec, and Asante single- and
-multi-port
+interfaces, including the DE435, DE450, DE500;
+Znyx ZX3xx;
+SMC 8432, 9332, 9334;
+Cogent/Adaptec EM100FX and EM440TX;
+and Asante single- and multi-port
 .Tn Ethernet
 interfaces.  Multi-port interfaces are typically
 configured as a
@@ -154,6 +160,61 @@ interfaces.
 Texas Instruments ThunderLAN-based
 .Tn Ethernet
 interfaces.
+.It Xr dc 4
+Various Tulip-like
+.Tn Ethernet
+interfaces such as the DEC/Intel 21143;
+Macronix 98713, 98713A, 98715, 98715A and 98725;
+Davicom DM9100 and DM9102;
+ASIX Electronics AX88140A and AX88141
+ADMtek AL981 Comet and AN985 Centaur;
+Lite-On 82c168 and 82c169 PNIC;
+and
+Lite-On/Macronix 82c115 PNIC II.
+.It Xr lmc 4
+ Lan Media Corporation
+.Tn SSI/DS1/HSSI/DS3
+interfaces.
+.It Xr rl 4
+RealTek 8129/8139
+.Tn Ethernet
+interfaces.
+.It Xr sf 4
+Adaptec AIC-6915 "Starfire"
+.Tn Ethernet
+interfaces.
+.It Xr sis 4
+Silicon Integrated Systems
+.Tn Ethernet
+interfaces.
+.It Xr sk 4
+SysKonnect SK-984x
+.Tn Gigabit Ethernet
+interfaces.
+.It Xr ste 4
+Sundance Technologies ST201
+.Tn Ethernet
+interfaces.
+.It Xr ti 4
+Alteon Networks Tigon I and Tigon II
+.Tn Gigabit Ethernet
+interfaces.
+.It Xr tx 4
+SMC 9432 10/100 Mbps
+.Tn Ethernet
+interfaces.
+.It Xr vr 4
+VIA Technologies VT3043 and VT86C100A
+.Tn Ethernet
+interfaces.
+.It Xr wb 4
+Winbond W89C840F
+.Tn Ethernet
+interfaces.
+.It Xr wx 4
+Intel
+.Tn Gigabit Ethernet
+interfaces.
 .El
 .Pp
 .Ss Serial interfaces
@@ -187,7 +248,7 @@ Yenta compatible
 .Tn CardBus
 bridges.
 .It Xr ohci 4
-USB OHCI host controller
+USB OHCI host controller.
 .It Xr pcic 4
 .Tn PCI
 .Tn PCMCIA
@@ -207,7 +268,10 @@ and
 .Xr lpt 4
 communications ports.
 .It Xr uhci 4
-USB UHCI host controller
+USB UHCI host controller.
+.It Xr hifn 4
+ Hi/fn 7751
+.Tn Symmetric Encryption Accelerator.
 .El
 .Pp
 .Sh SEE ALSO
