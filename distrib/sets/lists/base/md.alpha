@@ -1,6 +1,6 @@
-./usr/lib/perl5/alpha-openbsd/5.003/rmd160.ph
 ./dev/scan0
 ./dev/scan1
+./sbin/fdisk
 ./usr/alpha-unknown-openbsd2.1
 ./usr/alpha-unknown-openbsd2.1/bin
 ./usr/alpha-unknown-openbsd2.1/lib
@@ -66,9 +66,8 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/curses.ph
-./usr/lib/perl5/alpha-openbsd/5.003/des.ph
-./usr/lib/perl5/alpha-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/db.ph
+./usr/lib/perl5/alpha-openbsd/5.003/des.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/dirent.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/disktab.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/elf_abi.ph
@@ -83,12 +82,15 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/fstab.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/fts.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/glob.ph
+./usr/lib/perl5/alpha-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/grp.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/histedit.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/ieeefp.ph
+./usr/lib/perl5/alpha-openbsd/5.003/inttypes.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/iso646.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/kvm.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/langinfo.ph
+./usr/lib/perl5/alpha-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/limits.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/locale.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/machine
@@ -199,6 +201,7 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/regex.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/regexp.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/resolv.ph
+./usr/lib/perl5/alpha-openbsd/5.003/rmd160.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/scsi.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/search.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/setjmp.ph
@@ -354,5 +357,4 @@
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/mdec/netboot
-./sbin/fdisk
 ./usr/mdec/setnetbootinfo
