@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.3 1997/10/02 00:51:58 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.4 1997/10/02 01:16:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.3 1997/10/02 00:51:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.4 1997/10/02 01:16:01 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,6 @@ void	editor_display __P((struct disklabel *, u_int32_t *, char));
 void	editor_change __P((struct disklabel *, u_int32_t *, char *));
 char	*getstring __P((struct disklabel *, char *, char *, char *));
 u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, int));
-char	get_yn __P((char *));
 int	has_overlap __P((struct disklabel *, u_int32_t *, int));
 void	make_contiguous __P((struct disklabel *));
 u_int32_t next_offset __P((struct disklabel *));
@@ -112,7 +111,11 @@ editor(lp, f)
 		fputs("> ", stdout);
 		fflush(stdout);
 		rewind(stdin);
-		fgets(buf, sizeof(buf), stdin);
+		if (fgets(buf, sizeof(buf), stdin) == NULL) {
+			putchar('\n');
+			buf[0] = 'q';
+			buf[1] = '\0';
+		}
 		cmd = strtok(buf, " \t");
 		arg = strtok(NULL, " \t");
 
@@ -874,7 +877,10 @@ getstring(lp, prompt, helpstring, oval)
 		printf("%s: [%s] ", prompt, oval ? oval : "");
 		fflush(stdout);
 		rewind(stdin);
-		fgets(buf, sizeof(buf), stdin);
+		if (fgets(buf, sizeof(buf), stdin) == NULL) {
+			putchar('\n');
+			buf[0] == '\0';
+		}
 		n = strlen(buf);
 		if (n > 0 && buf[n-1] == '\n')
 			buf[--n] = '\0';
@@ -914,7 +920,10 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 		printf("%s: [%u] ", prompt, oval);
 		fflush(stdout);
 		rewind(stdin);
-		fgets(buf, sizeof(buf), stdin);
+		if (fgets(buf, sizeof(buf), stdin) == NULL) {
+			putchar('\n');
+			buf[0] = '\0';
+		}
 		n = strlen(buf);
 		if (n > 0 && buf[n-1] == '\n')
 			buf[--n] = '\0';
@@ -1186,18 +1195,4 @@ edit_parms(lp, freep)
 			break;
 	}
 	lp->d_rpm = ui;
-}
-
-char
-get_yn(prompt)
-	char *prompt;
-{
-	int c;
-
-	do {
-		printf("%s [y/n] ", prompt);
-		c = tolower(getchar());
-	} while (c != EOF && c != 'y' && c != 'n');
-
-	return((char)c);
 }

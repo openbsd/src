@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.40 1997/10/02 00:49:11 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.41 1997/10/02 01:16:02 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.40 1997/10/02 00:49:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.41 1997/10/02 01:16:02 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,7 +134,6 @@ int	checklabel __P((struct disklabel *));
 void	setbootflag __P((struct disklabel *));
 void	usage __P((void));
 u_short	dkcksum __P((struct disklabel *));
-char	get_yn __P((char *));
 
 int
 main(argc, argv)
