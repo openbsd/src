@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.5 1996/09/16 05:43:38 tholo Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.6 1996/09/25 08:17:30 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -46,6 +46,7 @@ static char *rcsid = "$OpenBSD: __strerror.c,v 1.5 1996/09/16 05:43:38 tholo Exp
 #define sys_nerr	_sys_nerr
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -86,18 +87,20 @@ __strerror(num, buf)
 	errnum = num;				/* convert to unsigned */
 	if (errnum < sys_nerr) {
 #ifdef NLS
-		strcpy(buf, catgets(catd, 1, errnum,
-		    (char *)sys_errlist[errnum])); 
+		strncpy(buf, catgets(catd, 1, errnum,
+		    (char *)sys_errlist[errnum]), NL_TEXTMAX-1);
+		buf[NL_TEXTMAX - 1] = '\0';
 #else
 		return(sys_errlist[errnum]);
 #endif
 	} else {
 #ifdef NLS
-		strcpy(buf, catgets(catd, 1, 0xffff, UPREFIX));
+		strncpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX-1);
+		buf[NL_TEXTMAX - 1] = '\0';
 #else
 		strcpy(buf, UPREFIX);
 #endif
-		strcat(buf, itoa(errnum));
+		strncat(buf, itoa(errnum), NL_TEXTMAX-strlen(buf)-1);
 	}
 
 #ifdef NLS
