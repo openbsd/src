@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.11 2002/06/06 16:29:37 mickey Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.12 2002/06/06 20:57:47 aaron Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -380,12 +380,12 @@ bktr_attach( device_t dev )
         fun = fun | 1;	/* Enable writes to the sub-system vendor ID */
 
 #if defined( BKTR_430_FX_MODE )
-	if (bootverbose) printf("Using 430 FX chipset compatibilty mode\n");
+	if (bootverbose) printf("Using 430 FX chipset compatibility mode\n");
         fun = fun | 2;	/* Enable Intel 430 FX compatibility mode */
 #endif
 
 #if defined( BKTR_SIS_VIA_MODE )
-	if (bootverbose) printf("Using SiS/VIA chipset compatibilty mode\n");
+	if (bootverbose) printf("Using SiS/VIA chipset compatibility mode\n");
         fun = fun | 4;	/* Enable SiS/VIA compatibility mode (usefull for
                            OPTi chipset motherboards too */
 #endif
@@ -969,12 +969,12 @@ bktr_attach( pcici_t tag, int unit )
         fun = fun | 1;	/* Enable writes to the sub-system vendor ID */
 
 #if defined( BKTR_430_FX_MODE )
-	if (bootverbose) printf("Using 430 FX chipset compatibilty mode\n");
+	if (bootverbose) printf("Using 430 FX chipset compatibility mode\n");
         fun = fun | 2;	/* Enable Intel 430 FX compatibility mode */
 #endif
 
 #if defined( BKTR_SIS_VIA_MODE )
-	if (bootverbose) printf("Using SiS/VIA chipset compatibilty mode\n");
+	if (bootverbose) printf("Using SiS/VIA chipset compatibility mode\n");
         fun = fun | 4;	/* Enable SiS/VIA compatibility mode (usefull for
                            OPTi chipset motherboards too */
 #endif
