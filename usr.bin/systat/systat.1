@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.31 2003/12/17 20:58:39 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.32 2004/02/15 22:56:12 tedu Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -211,6 +211,9 @@ statistics in bar graph form (default).
 .It Cm secs
 Toggle the display of time in disk activity (the default is to
 not display time).
+.It Cm split
+Toggle the display of separate read/write statistics (the default is
+combined statistics).
 .El
 .It Ic swap
 Show information about swap space usage on all the

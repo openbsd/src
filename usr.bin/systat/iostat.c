@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.22 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.23 2004/02/15 22:56:12 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.22 2004/02/15 02:45:47 tedu Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.23 2004/02/15 22:56:12 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static  int linesperregion;
 static  double etime;
 static  int numbers = 0;		/* default display bar graphs */
 static  int secs = 0;			/* default seconds shown */
+static	int split = 0;			/* whether to split r/w stats */
 
 static int barlabels(int);
 static void histogram(double, int, double);
@@ -126,7 +127,7 @@ numlabels(int row)
 		mvwaddstr(wnd, row++, INSET, "No drives attached.");
 		return (row);
 	}
-#define COLWIDTH	17
+#define COLWIDTH	(split ? 30 : 17)
 #define DRIVESPERLINE	((wnd->_maxx - INSET) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < cur.dk_ndrive; i++)
 		if (cur.dk_select[i])
@@ -151,7 +152,11 @@ numlabels(int row)
 					break;
 			}
 			mvwaddstr(wnd, row, col + 4, cur.dk_name[i]);
-			mvwaddstr(wnd, row + 1, col, " KBps tps  sec");
+			if (split)
+				mvwaddstr(wnd, row + 1, col, " rKBps wKBps "
+				    "rtps wtps  sec");
+			else
+				mvwaddstr(wnd, row + 1, col, " KBps tps  sec");
 			col += COLWIDTH;
 		}
 	if (col)
@@ -175,8 +180,17 @@ barlabels(int row)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (row > wnd->_maxy - linesperregion)
 				break;
-			mvwprintw(wnd, row++, 0, "%4.4s  Kps|", cur.dk_name[i]);
-			mvwaddstr(wnd, row++, 0, "      tps|");
+			if (split) {
+				mvwprintw(wnd, row++, 0, "%4.4s rKps|",
+				    cur.dk_name[i]);
+				mvwaddstr(wnd, row++, 0, "     wKps|");
+				mvwaddstr(wnd, row++, 0, "     rtps|");
+				mvwaddstr(wnd, row++, 0, "     wtps|");
+			} else {
+				mvwprintw(wnd, row++, 0, "%4.4s  Kps|",
+				    cur.dk_name[i]);
+				mvwaddstr(wnd, row++, 0, "      tps|");
+			}
 			if (secs)
 				mvwaddstr(wnd, row++, 0, "     msec|");
 		}
@@ -246,24 +260,42 @@ showiostat(void)
 static int
 stats(int row, int col, int dn)
 {
-	double atime, words;
+	double atime, rwords, wwords;
 
 	/* time busy in disk activity */
 	atime = (double)cur.dk_time[dn].tv_sec +
 		((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-	/* # of K transferred */
-	words = (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / 1024.0;
+	rwords = cur.dk_rbytes[dn] / 1024.0;	/* # of K read */
+	wwords = cur.dk_wbytes[dn] / 1024.0;	/* # of K written */
 	if (numbers) {
-		mvwprintw(wnd, row, col, "%5.0f%4.0f%5.1f",
-		    words / etime, (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) /
-		    etime, atime / etime);
+		if (split)
+			mvwprintw(wnd, row, col, "%6.0f%6.0f%5.0f%5.0f%5.1f",
+			    rwords / etime, wwords / etime, cur.dk_rxfer[dn] /
+			    etime, cur.dk_wxfer[dn] / etime, atime / etime);
+		else
+			mvwprintw(wnd, row, col, "%5.0f%4.0f%5.1f",
+			    (rwords + wwords) / etime,
+			    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime,
+			    atime / etime);
 		return (row);
 	}
-	wmove(wnd, row++, col);
-	histogram(words / etime, 50, 0.5);
-	wmove(wnd, row++, col);
-	histogram((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime, 50, 0.5);
+	if (split) {
+		wmove(wnd, row++, col);
+		histogram(rwords / etime, 50, 0.5);
+		wmove(wnd, row++, col);
+		histogram(wwords / etime, 50, 0.5);
+		wmove(wnd, row++, col);
+		histogram(cur.dk_rxfer[dn] / etime, 50, 0.5);
+		wmove(wnd, row++, col);
+		histogram(cur.dk_wxfer[dn] / etime, 50, 0.5);
+	} else {
+		wmove(wnd, row++, col);
+		histogram((rwords + wwords) / etime, 50, 0.5);
+		wmove(wnd, row++, col);
+		histogram((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime, 50,
+		    0.5);
+	}
 	if (secs) {
 		wmove(wnd, row++, col);
 		atime *= 1000;	/* In milliseconds */
@@ -316,6 +348,8 @@ cmdiostat(char *cmd, char *args)
 		numbers = 1;
 	else if (prefix(cmd, "bars"))
 		numbers = 0;
+	else if (prefix(cmd, "split"))
+		split = ~split;
 	else if (!dkcmd(cmd, args))
 		return (0);
 	wclear(wnd);

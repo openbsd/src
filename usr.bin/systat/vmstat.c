@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.44 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.45 2004/02/15 22:56:12 tedu Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.44 2004/02/15 02:45:47 tedu Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.45 2004/02/15 22:56:12 tedu Exp $";
 #endif /* not lint */
 
 /*
@@ -326,7 +326,7 @@ labelkre(void)
 	    "Namei         Sys-cache    Proc-cache    No-cache");
 	mvprintw(NAMEIROW + 1, NAMEICOL,
 	    "    Calls     hits    %%    hits     %%    miss   %%");
-	mvprintw(DISKROW, DISKCOL, "Discs");
+	mvprintw(DISKROW, DISKCOL, "Disks");
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
 	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
