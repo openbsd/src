@@ -198,6 +198,9 @@ extern void sparc32_sol2_init_abi (struct gdbarch_info info,
 /* Register offsets for NetBSD.  */
 extern const struct sparc_gregset sparc32nbsd_gregset;
 
+extern void sparc32nbsd_elf_init_abi (struct gdbarch_info info,
+                                      struct gdbarch *gdbarch);
+
 extern struct trad_frame_saved_reg *
   sparc32nbsd_sigcontext_saved_regs (struct frame_info *next_frame);
 
