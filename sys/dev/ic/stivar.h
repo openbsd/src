@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.8 2003/02/11 19:11:51 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.9 2003/02/18 09:39:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -52,11 +52,14 @@ struct sti_softc {
 
 	struct sti_dd sc_dd;		/* in word format */
 	struct sti_font sc_curfont;
-	void *sc_romfont;
 	struct sti_cfg sc_cfg;
 	struct sti_ecfg sc_ecfg;
 
-	vaddr_t sc_code;
+	void	*sc_romfont;		/* ROM font copy, either in memory... */
+	u_int	sc_fontmaxcol;		/* ...or in off-screen frame buffer */
+	u_int	sc_fontbase;
+
+	vaddr_t	sc_code;
 
 	sti_init_t	init;
 	sti_mgmt_t	mgmt;

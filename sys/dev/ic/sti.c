@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.22 2003/02/17 22:41:31 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.23 2003/02/18 09:39:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -119,8 +119,9 @@ enum sti_bmove_funcs {
 int sti_init(struct sti_softc *sc, int mode);
 int sti_inqcfg(struct sti_softc *sc, struct sti_inqconfout *out);
 void sti_bmove(struct sti_softc *sc, int, int, int, int, int, int,
-	enum sti_bmove_funcs);
-int sti_fetchfonts(struct sti_softc *sc, u_int32_t addr);
+    enum sti_bmove_funcs);
+int sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg,
+    u_int32_t addr);
 void sti_attach_deferred(void *);
 
 void
@@ -321,7 +322,7 @@ sti_attach_common(sc)
 	    sc->sc_dev.dv_xname, cfg.fbwidth, cfg.fbheight,
 	    cfg.width, cfg.height, cfg.bpp, cfg.owidth, cfg.oheight);
 
-	if ((error = sti_fetchfonts(sc, dd->dd_fntaddr))) {
+	if ((error = sti_fetchfonts(sc, &cfg, dd->dd_fntaddr))) {
 		printf("%s: cannot fetch fonts (%d)\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
@@ -370,11 +371,19 @@ sti_attach_deferred(void *v)
 }
 
 int
-sti_fetchfonts(struct sti_softc *sc, u_int32_t addr)
+sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 {
 	struct sti_font *fp = &sc->sc_curfont;
-	int size;
+	int uc, size;
+	struct {
+		struct sti_unpmvflags flags;
+		struct sti_unpmvin in;
+		struct sti_unpmvout out;
+	} a;
 
+	/*
+	 * Get the first PROM font in memory
+	 */
 	do {
 		if (sc->sc_devtype == STI_DEVTYPE1) {
 			fp->first  = parseshort(addr + 0x00);
@@ -413,6 +422,40 @@ sti_fetchfonts(struct sti_softc *sc, u_int32_t addr)
 
 		addr = NULL; /* fp->next */
 	} while (addr);
+
+	/*
+	 * If there is enough room in the off-screen framebuffer memory,
+	 * display all the characters there in order to display them
+	 * faster with blkmv operations rather than unpmv later on.
+	 */
+	if (size <= cfg->fbheight *
+	    (cfg->fbwidth - cfg->width - cfg->owidth)) {
+		bzero(&a, sizeof(a));
+		a.flags.flags = STI_UNPMVF_WAIT;
+		a.in.fg_colour = STI_COLOUR_WHITE;
+		a.in.bg_colour = STI_COLOUR_BLACK;
+		a.in.font_addr = sc->sc_romfont;
+
+		sc->sc_fontmaxcol = cfg->fbheight / fp->height;
+		sc->sc_fontbase = cfg->width + cfg->owidth;
+		for (uc = fp->first; uc <= fp->last; uc++) {
+			a.in.x = ((uc - fp->first) / sc->sc_fontmaxcol) *
+			    fp->width + sc->sc_fontbase;
+			a.in.y = ((uc - fp->first) % sc->sc_fontmaxcol) *
+			    fp->height;
+			a.in.index = uc;
+
+			(*sc->unpmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+			if (a.out.errno) {
+				printf("%s: unpmv %d returned %d\n",
+				    sc->sc_dev.dv_xname, uc, a.out.errno);
+				return (0);
+			}
+		}
+
+		free(sc->sc_romfont, M_DEVBUF);
+		sc->sc_romfont = NULL;
+	}
 
 	return (0);
 }
@@ -638,7 +681,6 @@ sti_mapchar(v, uni, index)
 	return 1;
 }
 
-/* TODO reimplement w/ blkmv and font in the fb mem per doc suggest */
 void
 sti_putchar(v, row, col, uc, attr)
 	void *v;
@@ -648,24 +690,57 @@ sti_putchar(v, row, col, uc, attr)
 {
 	struct sti_softc *sc = v;
 	struct sti_font *fp = &sc->sc_curfont;
-	struct {
-		struct sti_unpmvflags flags;
-		struct sti_unpmvin in;
-		struct sti_unpmvout out;
-	} a;
 
-	bzero(&a, sizeof(a));
+	if (sc->sc_romfont != NULL) {
+		/*
+		 * Font is in memory, use unpmv
+		 */
+		struct {
+			struct sti_unpmvflags flags;
+			struct sti_unpmvin in;
+			struct sti_unpmvout out;
+		} a;
 
-	a.flags.flags = STI_UNPMVF_WAIT;
-	/* XXX does not handle text attributes */
-	a.in.fg_colour = STI_COLOUR_WHITE;
-	a.in.bg_colour = STI_COLOUR_BLACK;
-	a.in.x = col * fp->width;
-	a.in.y = row * fp->height;
-	a.in.font_addr = sc->sc_romfont;
-	a.in.index = uc;
+		bzero(&a, sizeof(a));
 
-	(*sc->unpmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+		a.flags.flags = STI_UNPMVF_WAIT;
+		/* XXX does not handle text attributes */
+		a.in.fg_colour = STI_COLOUR_WHITE;
+		a.in.bg_colour = STI_COLOUR_BLACK;
+		a.in.x = col * fp->width;
+		a.in.y = row * fp->height;
+		a.in.font_addr = sc->sc_romfont;
+		a.in.index = uc;
+
+		(*sc->unpmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+	} else {
+		/*
+		 * Font is in frame buffer, use blkmv
+		 */
+		struct {
+			struct sti_blkmvflags flags;
+			struct sti_blkmvin in;
+			struct sti_blkmvout out;
+		} a;
+
+		bzero(&a, sizeof(a));
+
+		a.flags.flags = STI_BLKMVF_WAIT;
+		/* XXX does not handle text attributes */
+		a.in.fg_colour = STI_COLOUR_WHITE;
+		a.in.bg_colour = STI_COLOUR_BLACK;
+
+		a.in.srcx = ((uc - fp->first) / sc->sc_fontmaxcol) *
+		    fp->width + sc->sc_fontbase;
+		a.in.srcy = ((uc - fp->first) % sc->sc_fontmaxcol) *
+		    fp->height;
+		a.in.dstx = col * fp->width;
+		a.in.dsty = row * fp->height;
+		a.in.height = fp->height;
+		a.in.width = fp->width;
+
+		(*sc->blkmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+	}
 }
 
 void
@@ -705,8 +780,9 @@ sti_copyrows(v, srcrow, dstrow, nrows)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = &sc->sc_curfont;
 
-	sti_bmove(sc, 0, srcrow * fp->height, 0, dstrow * fp->height,
-	    nrows * fp->height, sc->sc_cfg.fb_width, bmf_copy);
+	sti_bmove(sc, sc->sc_cfg.oscr_width, srcrow * fp->height,
+	    sc->sc_cfg.oscr_width, dstrow * fp->height,
+	    nrows * fp->height, sc->sc_cfg.scr_width, bmf_copy);
 }
 
 void
@@ -718,8 +794,9 @@ sti_eraserows(v, srcrow, nrows, attr)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = &sc->sc_curfont;
 
-	sti_bmove(sc, 0, srcrow * fp->height, 0, srcrow * fp->height,
-	    nrows * fp->height, sc->sc_cfg.fb_width, bmf_clear);
+	sti_bmove(sc, sc->sc_cfg.oscr_width, srcrow * fp->height,
+	    sc->sc_cfg.oscr_width, srcrow * fp->height,
+	    nrows * fp->height, sc->sc_cfg.scr_width, bmf_clear);
 }
 
 int
