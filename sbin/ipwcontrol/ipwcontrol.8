@@ -1,4 +1,4 @@
-.\" $Id: ipwcontrol.8,v 1.1 2004/10/20 12:50:48 deraadt Exp $
+.\" $Id: ipwcontrol.8,v 1.2 2004/10/20 21:01:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -33,8 +33,8 @@
 .Nd configure Intel PRO/Wireless 2100 network adapter
 .Sh SYNOPSIS
 .Nm
-.Op Fl i Ar iface
-.Op f Ar firmware
+.Op Fl i Ar interface
+.Op Fl f Ar firmware
 .Op Fl k
 .Op Fl r
 .Sh DESCRIPTION
@@ -52,7 +52,7 @@ instead.
 .Sh OPTIONS
 The options are as follows:
 .Bl -tag -width indent
-.It Fl i Ar iface
+.It Fl i Ar interface
 Display adapter's internal statistics.
 .It Fl f Ar firmware
 Download firmware binary image
