@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.9 1998/04/22 19:59:49 deraadt Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.10 1998/05/03 07:12:51 gene Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
@@ -47,7 +47,6 @@
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
-#include <machine/macinfo.h>
 
 #include <arch/mac68k/mac68k/macrom.h>
 #include "adbvar.h"

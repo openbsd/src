@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.10 1997/04/18 21:58:54 gene Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.11 1998/05/03 07:13:01 gene Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <dev/ic/ncr5380var.h>
 
 #include <machine/cpu.h>
-#include <machine/macinfo.h>
 #include <machine/viareg.h>
 
 #include "sbcreg.h"

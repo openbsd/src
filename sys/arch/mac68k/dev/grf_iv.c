@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.16 1998/04/27 02:04:34 gene Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.17 1998/05/03 07:12:55 gene Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/macinfo.h>
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
 

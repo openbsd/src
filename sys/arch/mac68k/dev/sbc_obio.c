@@ -49,7 +49,6 @@
 
 #include <machine/cpu.h>
 #include <machine/viareg.h>
-#include <machine/macinfo.h>
 
 #include "sbcreg.h"
 #include "sbcvar.h"

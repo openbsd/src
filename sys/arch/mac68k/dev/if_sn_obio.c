@@ -43,7 +43,7 @@
 #include <netinet/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/macinfo.h>
+#include <machine/cpu.h>
 #include <machine/viareg.h>
 
 #include "obiovar.h"

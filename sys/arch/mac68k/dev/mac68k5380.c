@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.11 1997/04/27 19:28:39 briggs Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.12 1998/05/03 07:12:59 gene Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include "ncr5380reg.h"
 
 #include <machine/stdarg.h>
-#include <machine/macinfo.h>
 #include <machine/viareg.h>
 
 #include "ncr5380var.h"

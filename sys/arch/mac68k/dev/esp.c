@@ -99,7 +99,6 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <machine/macinfo.h>
 #include <machine/viareg.h>
 
 #include <mac68k/dev/espvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.2 1997/04/06 16:35:18 briggs Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.3 1998/05/03 07:13:00 gene Exp $	*/
 /*  pm_direct.c 1.22 01/09/97 Takashi Hamada */
 
 /*
@@ -42,7 +42,6 @@
 
 #include <machine/adbsys.h>
 #include <machine/cpu.h>
-#include <machine/macinfo.h>
 #include <machine/param.h>
 #include <machine/viareg.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.c,v 1.9 1997/04/14 18:47:55 gene Exp $	*/
+/*	$OpenBSD: adbsys.c,v 1.10 1998/05/03 07:12:53 gene Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
 #include <sys/systm.h>
 
 #include <machine/cpu.h>
-#include <machine/macinfo.h>
 #include <machine/viareg.h>
 
 #include <arch/mac68k/mac68k/macrom.h>
