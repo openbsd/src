@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 1997/05/29 20:12:22 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.24 1997/06/23 03:57:23 kstailey Exp $
 
 .include <bsd.own.mk>
 
@@ -47,4 +47,6 @@ tags:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.ifndef NOMAN
 .include <bsd.man.mk>
+.endif
