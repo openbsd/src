@@ -1,129 +1,132 @@
-#	$OpenBSD: RAMDISK,v 1.1 1998/07/02 20:48:43 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.2 1999/02/25 17:03:24 mickey Exp $
 #
-# Ram disk kernel.
+# Generic kernel config w/ root on ram disk (all that is supportted)
 #
 
-source	/sys
-build	/usr/obj/sys/arch/hppa/compile/RAMDISK
+machine	hppa
 
-machine hppa
-
-
-#option		INSECURE	# default to secure
-
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
-option		NTP		# hooks supporting the Network Time Protocol
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
-
-#option		DDB		# in-kernel debugger
-#makeoptions	DEBUG="-g"	# compile full symbol table
-option		DIAGNOSTIC	# internal consistency checks
-#option		KTRACE		# system call tracing, a la ktrace(1)
-
-#option		SYSVMSG		# System V-like message queues
-#option		SYSVSEM		# System V-like semaphores
-#option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
-
-option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
-option		COMPAT_10	# NetBSD 1.0,
-option		COMPAT_11	# NetBSD 1.1,
-option		COMPAT_43	# and 4.3BSD
-#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-
-#option		LKM		# loadable kernel modules
-
-option		FFS		# UFS
-#option		QUOTA		# UFS quotas
-#option		LFS		# log-structured file system
-#option		EXT2FS		# Second Extended Filesystem
-#option		MFS		# memory file system
-
-
-#option		NFSCLIENT	# Network File System client
-#option		NFSSERVER	# Network File System server
-
-#option		CD9660		# ISO 9660 + Rock Ridge file system
-#option		MSDOSFS		# MS-DOS file system
-#option		FDESC		# /dev/fd
-option		FIFO		# FIFOs; RECOMMENDED
-#option		KERNFS		# /kern
-#option		NULLFS		# loopback file system
-#option		PORTAL		# dynamically created filesystem objects
-#option		PROCFS		# /proc
-#option		UMAPFS		# NULLFS + uid and gid remapping
-#option		UNION		# union file system
-
-#option		GATEWAY		# packet forwarding
-option		INET		# IP + ICMP + TCP + UDP
-#option		IPSEC		# IPsec
-#option		NS		# XNS
-#option		NSIP		# XNS tunneling over IP
-#option		IPX		# IPX+SPX
-#option		IPXIP		# IPX tunneling over IP
-#option		ISO,TPIP	# OSI
-#option		EON		# OSI tunneling over IP
-#option		CCITT,LLC,HDLC	# X.25
-#option		IPFILTER	# IP packet filter for security
-#option		IPFILTER_LOG	# use /dev/ipl to log IPF
-#option		PPP_BSDCOMP	# PPP BSD compression
-#option		PPP_DEFLATE
-
-pseudo-device	loop	2	# network loopback
-pseudo-device	bpfilter 8	# packet filter
-#pseudo-device	sl	2	# CSLIP
-#pseudo-device	ppp	2	# PPP
-#pseudo-device	tun	2	# network tunneling over tty
-#pseudo-device	enc	1	# encryption device
-#pseudo-device	strip	1	# Starmode Radio IP interface
-
-pseudo-device	pty	64	# pseudo-terminals
-#pseudo-device	tb	1	# tablet line discipline
-#pseudo-device	vnd	4	# paging to files
-#pseudo-device	ccd	4	# concatenated disk devices
-
-option		BOOT_CONFIG	# add support for boot -c
-
-# Include all GENERIC options
-#include "/sys/conf/GENERIC"
-
-# Support for various CPU types
-option	 	HP700
-
-option		FPEMUL
-
-# Need to set locally
+include "/sys/conf/GENERIC"
 maxusers	8
 
-# Options for HP hardware
-#option	 	USELEDS		# make the lights twinkle
-#option		PANICBUTTON	# two fast <reset>s on HIL dump kernel
-#option		CONSCODE="9"	# force console at this select code
-#option	 	UK_KEYBOARD	# include United Kingdom HIL keymap
-#option	 	SE_KEYBOARD	# include Swedish HIL keymap
+# Support for various CPU types
+option	HP7000		# PCX-S
+option	HP7100
+option	HP7150		# PCX-T
+option	HP7100LC	# PCX-L
+option	HP7200
+option	HP7250		# PCX-T*
+#option	HP7300LC	# PCX-L2
+#option	HP8000		# PCX-U  (in 32bit mode)
+#option	HP8200		# PCX-U+ (in 32bit mode)
+#option	HP8500		# PCX-W  (in 32bit mode)
+
+option		FPEMUL
+option		USELEDS		# blink w/ 'em
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
+#option	 	COMPAT_OSF1	# OSF1 binary compatibility
+#option	 	COMPAT_LINUX	# MkLinux binary compatibility
+
+option	GSCVERBOSE
+option	EISAVERBOSE
+#option	PCIVERBOSE
 
 # Options for the ramdisk.
-option		MINIROOTSIZE=4096
-option		RAMDISK_HOOKS
+option	MINIROOTSIZE=4096
+option	RAMDISK_HOOKS
 
-config		bsd root rd0 swap rd0
+config	bsd root rd0 swap rd0
 
-mainbus0	at root		# root "bus"
+mainbus0 at root		# root "bus"
 
-gsc0		at mainbus0	# internal i/o space
+mem*	at mainbus0
+cpu*	at mainbus0
+pdc0	at mainbus0
 
-#eisa*		at gsc? scode ?
+lasi*	at mainbus0 irq 28	# LASI host adapter (LSI PN???)
+asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
+#wax*	at mainbus0 irq 28	# Wax may host EISA as well
+eba*	at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
+#vmeb*	at mainbus0 irq ?	# VME bus adapter
+#dino*	at mainbus0 irq ?	# PCI bus adapter
 
-#sd*		at scsi? target ? lun ?	# SCSI disks
-#st*		at scsi? target ? lun ?	# SCSI tapes
-#cd*		at scsi? target ? lun ?	# SCSI cdrom
-#ch*		at scsi? target ? lun ?	# SCSI changer
-#ss*		at scsi? target ? lun ?	# SCSI scanner
-#uk*		at scsi? target ? lun ?	# SCSI unknown
+#sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
 
-pseudo-device	rd 2
+# internal i/o space
+gsc*	at lasi?		# 712,715/100,725/75,725/100
+gsc*	at asp?			# 7xx
+#gsc*	at wax?			# 715?
+
+#vme*	at vmeb?
+#pci*	at dino?
+eisa*	at eba?
+#eisa*	at wax?
+#isa*	at eba?
+#isa*	at wax?
+
+# GSC devices
+
+hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
+#hkbd*	at hil? code 0	# keyboard
+#hms*	at hil? code 1	# mouse, 3b mouse, 3b trackball, 3b quadrature mouse
+
+#medusa* at gsc? irq 4	# FDDI
+com0	at gsc? irq 5	# RS/232 serial port
+com1	at gsc? irq 6	# RS/232 serial port
+lpt0	at gsc? irq 7	# LPT centronics iface
+ie0	at gsc? irq 8	# 82C5[89]6 ether
+#siop0	at gsc? irq 9	# NCR 53C7xx
+#siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
+#scsibus* at siop?
+#aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
+#audio* at aone?
+#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
+#audio* at atwo?
+pckbc*	at gsc? irq 27
+pckbd*	at pckbc?	# PS/2 keyboard
+#pms*	at pckbc?	# PS/2 mouse
+#fdc*	at gsc?		# PC floppy controller (WD37C65C)
+#option	FD_DEBUG
+
+# EISA devices
+#vga*	at eisa? slot ?
+#sh*	at eisa? slot ?	# Interphase Seahawk 4811 EISA/FDDI board
+ep*	at eisa? slot ?
+bha*	at eisa? slot ?
+scsibus* at bha?
+
+# ISA devices
+#vga*	at isa?
+#fdc*	at isa? port 0x3f0 irq 6 drq 2
+#wdc0	at isa? port 0x1f0 irq 14
+#wdc1	at isa? port 0x170 irq 15
+#ie*	at isa? port 0x360 iomem 0xd0000 irq 7
+#ie*	at isa? port 0x300 irq 10
+
+# PCI devices
+#myri*	at pci? dev ? function ?	# ANSI/VITA-26-1998 Gbit iface
+
+# MI devices
+option	WSEMUL_DUMB
+#wsdisplay*	at vgafb?
+#wsdisplay*	at sti?
+wskbd*		at pckbd?
+#wskbd*		at hkbd?
+#wsmouse*	at pms?
+#wsmouse*	at hms?
+
+#fd*	at fdc?	drive ?	# floppy drives
+
+#atapibus* at wdc?
+#wd*	at wdc? drive ?
+#acd*	at atapibus? drive ?
+
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
+
+pseudo-device	rd	2
+
