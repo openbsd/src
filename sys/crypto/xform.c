@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.21 2003/02/15 22:57:58 jason Exp $	*/
+/*	$OpenBSD: xform.c,v 1.22 2003/02/19 02:38:42 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -228,7 +228,7 @@ struct comp_algo comp_algo_deflate = {
 };
 
 struct comp_algo comp_algo_lzs = {
-	CRYPTO_DEFLATE_COMP, "LZS",
+	CRYPTO_LZS_COMP, "LZS",
 	90, lzs_dummy,
 	lzs_dummy
 };
