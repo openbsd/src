@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.5 2001/01/29 01:58:31 niklas Exp $	*/
+/*	$OpenBSD: recover.c,v 1.6 2001/05/28 22:41:35 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -610,7 +610,7 @@ rcv_read(sp, frp)
 		return (1);
 	rp = O_STR(sp, O_RECDIR);
 	if ((dirp = opendir(rp)) == NULL) {
-		msgq_str(sp, M_ERR, rp, "%s");
+		msgq_str(sp, M_SYSERR, rp, "%s");
 		return (1);
 	}
 
