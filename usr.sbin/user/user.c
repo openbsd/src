@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.9 2000/04/26 06:27:57 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.10 2000/05/04 22:56:52 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -136,7 +136,7 @@ enum {
 	MaxFieldNameLen = 32,
 	MaxCommandLen = 2048,
 	MaxEntryLen = 2048,
-	PasswordLength = 13,
+	PasswordLength = _PASSWORD_LEN,
 
 	LowGid = DEF_LOWUID,
 	HighGid = DEF_HIGHUID
@@ -237,13 +237,13 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 		(void) asystem("cd %s; %s -rw -pe %s . %s", 
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
-	(void) asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
+	(void) asystem("%s -R -P %d:%d %s", CHOWN, uid, gid, dir);
 	return n;
 }
 
 /* create a group entry with gid `gid' */
 static int
-creategid(char *group, int gid, char *name)
+creategid(char *group, int gid)
 {
 	struct stat	st;
 	FILE		*from;
@@ -258,7 +258,7 @@ creategid(char *group, int gid, char *name)
 		return 0;
 	}
 	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
-		warn("can't create gid for %s: can't open %s", name, _PATH_GROUP);
+		warn("can't create gid for %s: can't open %s", group, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
@@ -287,7 +287,7 @@ creategid(char *group, int gid, char *name)
 			return 0;
 		}
 	}
-	(void) fprintf(to, "%s:*:%d:%s\n", group, gid, name);
+	(void) fprintf(to, "%s:*:%d:\n", group, gid);
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
@@ -531,6 +531,10 @@ read_defaults(user_t *up)
 				for (cp = s + 5 ; *cp && isspace(*cp) ; cp++) {
 				}
 				memsave(&up->u_shell, cp, strlen(cp));
+			} else if (strncmp(s, "password", 8) == 0) {
+				for (cp = s + 8 ; *cp && isspace(*cp) ; cp++) {
+				}
+				memsave(&up->u_password, cp, strlen(cp));
 			} else if (strncmp(s, "inactive", 8) == 0) {
 				for (cp = s + 8 ; *cp && isspace(*cp) ; cp++) {
 				}
@@ -690,12 +694,11 @@ adduser(char *login, user_t *up)
 			expire = mktime(&tm);
 		}
 	}
-	password[PasswordLength] = '\0';
 	if (up->u_password != NULL &&
-	    strlen(up->u_password) == PasswordLength) {
-		(void) memcpy(password, up->u_password, PasswordLength);
+	    strlen(up->u_password) <= PasswordLength) {
+		(void) strlcpy(password, up->u_password, sizeof(password));
 	} else {
-		(void) memset(password, '*', PasswordLength);
+		(void) strlcpy(password, "*", sizeof(password));
 		if (up->u_password != NULL) {
 			warnx("Password `%s' is invalid: setting it to `%s'",
 				up->u_password, password);
@@ -724,9 +727,9 @@ adduser(char *login, user_t *up)
 		}
 		(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 	}
-	if (strcmp(up->u_primgrp, "=uid") == 0 &&
+	if (sync_uid_gid &&
 	    getgrnam(login) == (struct group *) NULL &&
-	    !creategid(login, gid, login)) {
+	    !creategid(login, gid)) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
 		err(EXIT_FAILURE, "can't create gid %d for login name %s", gid, login);
@@ -826,18 +829,17 @@ moduser(char *login, char *newlogin, user_t *up)
 				expire = mktime(&tm);
 			}
 		}
-		password[PasswordLength] = '\0';
 		if (up->u_password != NULL &&
 		    strlen(up->u_password) == PasswordLength) {
-			(void) memcpy(password, up->u_password, PasswordLength);
+			(void) strlcpy(password, up->u_password, sizeof(password));
 		} else {
-			(void) memcpy(password, pwp->pw_passwd, PasswordLength);
+			(void) strlcpy(password, pwp->pw_passwd, sizeof(password));
 		}
 		if (strcmp(up->u_comment, DEF_COMMENT) == 0) {
 			memsave(&up->u_comment, pwp->pw_gecos, strlen(pwp->pw_gecos));
 		}
 		if (strcmp(up->u_shell, DEF_SHELL) == 0 && strcmp(pwp->pw_shell, DEF_SHELL) != 0) {
-			memsave(&up->u_comment, pwp->pw_shell, strlen(pwp->pw_shell));
+			memsave(&up->u_shell, pwp->pw_shell, strlen(pwp->pw_shell));
 		}
 	}
 	loginc = strlen(login);
@@ -1235,8 +1237,7 @@ userdel(int argc, char **argv)
 	}
 	if (u.u_preserve) {
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		(void) memset(password, '*', PasswordLength);
-		password[PasswordLength] = '\0';
+		(void) strlcpy(password, "*", sizeof(password));
 		memsave(&u.u_password, password, PasswordLength);
 		return moduser(argv[optind], argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
@@ -1290,7 +1291,7 @@ groupadd(int argc, char **argv)
 	if (!valid_group(argv[optind])) {
 		warnx("warning - invalid group name `%s'", argv[optind]);
 	}
-	if (!creategid(argv[optind], gid, "")) {
+	if (!creategid(argv[optind], gid)) {
 		err(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
@@ -1394,6 +1395,7 @@ groupmod(int argc, char **argv)
 		cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s%s", *cpp,
 			(cpp[1] == NULL) ? "" : ",");
 	}
+	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
 	if (!modify_gid(argv[optind], buf)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
