@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.6 1998/01/16 14:05:45 niklas Exp $
+#	$OpenBSD: rc.securelevel,v 1.7 1998/02/16 23:24:13 deraadt Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -14,10 +14,6 @@
 securelevel=1
 
 echo 'starting pre-securelevel services:'
-
-# Use traditional BSD semantics with chown(2)
-#echo 'Enabling traditional BSD chown(2) semantics.'
-#sysctl -w fs.posix.setuid=0 >/dev/null 2>&1
 
 # To run an accellerated X server when securelevel > 0 we must use /dev/ap.
 # NOTE: modload will panic your kernel if the booted kernel is not /bsd.
