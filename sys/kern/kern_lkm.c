@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.22 1998/03/17 05:30:18 art Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.23 1998/03/18 22:47:27 art Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -723,6 +723,12 @@ _lkm_vfs(lkmtp, cmd)
 		bcopy(args->lkm_name, vfsp->vfc_name, 
 		    min(strlen(args->lkm_name) + 1, MFSNAMELEN));
 #undef min
+
+		vfsp->vfc_typenum = 0;
+		vfsp->vfc_refcount = 0;
+		vfsp->vfc_flags = 0; /* XXX - should be configurable */
+		vfsp->vfc_mountroot = 0;
+		vfsp->vfc_next = NULL;
 
 		maxvfsconf++;
 
