@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 1996/05/22 11:40:49 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 1996/11/06 01:36:54 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ static char *dktypenames[] = {
 #define	FS_ADOS		14		/* AmigaDOS fast file system */
 #define	FS_HFS		15		/* Macintosh HFS */
 #define	FS_ADFS		16		/* Acorn Disk Filing System */
+#define FS_EXT2FS	17		/* ext2fs */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -256,6 +257,7 @@ static char *fstypenames[] = {
 	"ADOS",
 	"HFS",
 	"ADFS",
+	"ext2fs",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
