@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.18 2003/04/19 17:22:29 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.19 2003/05/06 21:52:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.18 2003/04/19 17:22:29 millert Exp $";
+"$OpenBSD: common.c,v 1.19 2003/05/06 21:52:25 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -985,26 +985,19 @@ extern char *xbasename(path)
 extern char *searchpath(path)
 	char *path;
 {
-	char *cp;
 	char *file;
+	char *space;
+	int found;
 	struct stat statbuf;
 
-	for (; ;) {
-		if (!path)
-			return(NULL);
-		file = path;
-		cp = strchr(path, ':');
-		if (cp) {
-			path = cp + 1;
-			*cp = CNULL;
-		} else
-			path = NULL;
-		if (stat(file, &statbuf) == 0)
-			return(file);
-		/* Put back what we zapped */
-		if (path)
-			*cp = ':';
+	for (found = 0; !found && (file = strsep(&path, ":")) != NULL; ) {
+		if ((space = strchr(file, ' ')) != NULL)
+			*space = CNULL;
+		found = stat(file, &statbuf) == 0;
+		if (space)
+			*space = ' ';		/* Put back what we zapped */
 	}
+	return (file);
 }
 
 /*
