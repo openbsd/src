@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.3 1998/10/29 02:21:44 brian Exp $
+ *	$Id: bundle.c,v 1.4 1998/10/29 23:48:19 brian Exp $
  */
 
 #include <sys/param.h>
@@ -625,12 +625,6 @@ bundle_DescriptorRead(struct descriptor *d, struct bundle *bundle,
         if (pri >= 0) {
           struct mbuf *bp;
 
-#ifndef NOALIAS
-          if (bundle->AliasEnabled) {
-            PacketAliasIn(tun.data, sizeof tun.data);
-            n = ntohs(((struct ip *)tun.data)->ip_len);
-          }
-#endif
           bp = mbuf_Alloc(n, MB_IPIN);
           memcpy(MBUF_CTOP(bp), tun.data, n);
           ip_Input(bundle, bp);
