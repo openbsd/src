@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2004/02/13 00:05:52 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -683,6 +683,10 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	if (copyin((caddr_t)scp, &ksc, sizeof ksc))
 		return (error);
+
+	if (((ksc.sc_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
+		return (EINVAL);
 
 	ksc.sc_trapno = tf->tf_trapno;
 	ksc.sc_err = tf->tf_err;
