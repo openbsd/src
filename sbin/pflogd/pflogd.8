@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.10 2001/12/13 20:16:48 mpech Exp $
+.\"	$OpenBSD: pflogd.8,v 1.11 2002/02/28 22:19:47 kjell Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -117,6 +117,7 @@ Display binary logs:
 Display the logs in real time (this does not interfere with the
 operation of pflogd):
 .Bd -literal -offset indent
+# ifconfig pflog0 up
 # tcpdump -n -e -ttt -i pflog0
 .Ed
 .Sh FILES
@@ -130,8 +131,9 @@ Default log file
 .Xr pcap 3 ,
 .Xr pf 4 ,
 .Xr pf.conf 5 ,
-.Xr tcpdump 8 ,
-.Xr newsyslog 8
+.Xr pflog 4 ,
+.Xr newsyslog 8 ,
+.Xr tcpdump 8
 .Sh AUTHORS
 Can Erkin Acar
 .Sh HISTORY
