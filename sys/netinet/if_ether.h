@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.4 1996/07/03 08:09:45 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.5 1996/07/27 11:06:42 deraadt Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ struct	ether_arp {
 struct	arpcom {
 	struct	 ifnet ac_if;			/* network-visible interface */
 	u_int8_t ac_enaddr[ETHER_ADDR_LEN];	/* ethernet hardware address */
+	char	 ac__pad[2];			/* pad for some machines */
 	LIST_HEAD(, ether_multi) ac_multiaddrs;	/* list of ether multicast addrs */
 	int	 ac_multicnt;			/* length of ac_multiaddrs list */
 };
