@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.25 1997/10/16 01:47:10 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.26 1997/10/19 23:29:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,13 +49,13 @@ usage()
 {
 	extern char * __progname;
 	fprintf(stderr, "usage: %s "
-		"[-ie] [-f mbrboot] [-c cyl -h head -s sect] disk\n"
-		"\t-i: initialize disk with virgin MBR\n"
-		"\t-e: edit MBRs on disk interactively\n"
-		"\t-f: specify non-standard MBR template\n"
-		"\t-chs: specify disk geometry\n"
-		"`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
-		__progname);
+	    "[-ie] [-f mbrboot] [-c cyl -h head -s sect] disk\n"
+	    "\t-i: initialize disk with virgin MBR\n"
+	    "\t-e: edit MBRs on disk interactively\n"
+	    "\t-f: specify non-standard MBR template\n"
+	    "\t-chs: specify disk geometry\n"
+	    "`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
+	    __progname);
 	exit(1);
 }
 
@@ -74,72 +74,72 @@ main(argc, argv)
 	mbr_t mbr;
 	char mbr_buf[DEV_BSIZE];
 
-	while((ch = getopt(argc, argv, "ief:c:h:s:")) != -1){
-		switch(ch){
-			case 'i':
-				i_flag = 1;
-				break;
-
-			case 'e':
-				m_flag = 1;
-				break;
-
-			case 'f':
-				mbrfile = optarg;
-				break;
-
-			case 'c':
-				c_arg = atoi(optarg);
-				if(c_arg < 0 || c_arg > 1023)
-					errx(1, "Cylinder argument out of range.");
-				break;
-
-			case 'h':
-				h_arg = atoi(optarg);
-				if(h_arg < 0 || h_arg > 255)
-					errx(1, "Head argument out of range.");
-				break;
-
-			case 's':
-				s_arg = atoi(optarg);
-				if(s_arg < 1 || s_arg > 63)
-					errx(1, "Sector argument out of range.");
-				break;
-
-			default:
-				usage();
+	while ((ch = getopt(argc, argv, "ief:c:h:s:")) != -1) {
+		switch(ch) {
+		case 'i':
+			i_flag = 1;
+			break;
+		case 'e':
+			m_flag = 1;
+			break;
+		case 'f':
+			mbrfile = optarg;
+			break;
+		case 'c':
+			c_arg = atoi(optarg);
+			if (c_arg < 0 || c_arg > 1023)
+				errx(1, "Cylinder argument out of range.");
+			break;
+		case 'h':
+			h_arg = atoi(optarg);
+			if (h_arg < 0 || h_arg > 255)
+				errx(1, "Head argument out of range.");
+			break;
+		case 's':
+			s_arg = atoi(optarg);
+			if (s_arg < 1 || s_arg > 63)
+				errx(1, "Sector argument out of range.");
+			break;
+		default:
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
 	/* Argument checking */
-	if(argc != 1)
+	if (argc != 1)
 		usage();
 	else
 		disk.name = argv[0];
 
 	/* Put in supplied geometry if there */
-	if(c_arg | h_arg | s_arg){
+	if (c_arg | h_arg | s_arg) {
 		usermetrics = malloc(sizeof(DISK_metrics));
-		if(usermetrics != NULL){
-			if(c_arg) usermetrics->cylinders = c_arg;
-			else errx(1, "Please specify a full geometry with [-chs].");
-			if(h_arg) usermetrics->heads = h_arg;
-			else errx(1, "Please specify a full geometry with [-chs].");
-			if(s_arg) usermetrics->sectors = s_arg;
-			else errx(1, "Please specify a full geometry with [-chs].");
+		if (usermetrics != NULL) {
+			if (c_arg)
+				usermetrics->cylinders = c_arg;
+			else
+				errx(1, "Please specify a full geometry with [-chs].");
+			if (h_arg)
+				usermetrics->heads = h_arg;
+			else
+				errx(1, "Please specify a full geometry with [-chs].");
+			if (s_arg)
+				usermetrics->sectors = s_arg;
+			else
+				errx(1, "Please specify a full geometry with [-chs].");
 		}
 		usermetrics->size = c_arg * h_arg * s_arg;
-	}else
+	} else
 		usermetrics = NULL;
 
 	/* Get the geometry */
-	if(DISK_getmetrics(&disk, usermetrics))
+	if (DISK_getmetrics(&disk, usermetrics))
 		errx(1, "Can't get disk geometry, please use [-chs] to specify.");
 
 	/* Parse mbr template, to pass on later */
-	if((fd = open(mbrfile, O_RDONLY)) < 0)
+	if ((fd = open(mbrfile, O_RDONLY)) < 0)
 		err(1, "open mbr file");
 	MBR_read(fd, 0, mbr_buf);
 	close(fd);
@@ -147,19 +147,18 @@ main(argc, argv)
 
 
 	/* Print out current MBRs on disk */
-	if((i_flag + m_flag) == 0)
+	if ((i_flag + m_flag) == 0)
 		exit(USER_print_disk(&disk));
 
 	/* Punt if no i or m */
-	if((i_flag + m_flag) != 1)
+	if ((i_flag + m_flag) != 1)
 		usage();
 
-
 	/* Now do what we are supposed to */
-	if(i_flag)
+	if (i_flag)
 		USER_init(&disk, &mbr);
 
-	if(m_flag)
+	if (m_flag)
 		USER_modify(&disk, &mbr, 0);
 
 	return(0);

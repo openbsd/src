@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.5 1997/10/16 01:53:08 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.6 1997/10/19 23:29:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -102,7 +102,7 @@ PRT_printall()
 	int i;
 
 	printf("Choose from the following Partition id values:\n");
-	for(i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
+	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
 		printf("%02X %s%s", part_types[i].type,
 		    part_types[i].sname, (i+1) % 4 ? "   " : "\n");
 	}
@@ -117,12 +117,12 @@ PRT_ascii_id(id)
 	static char unknown[] = "<Unknown ID>";
 	int i;
 
-	for(i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++){
-		if(part_types[i].type == id)
-			return(part_types[i].sname);
+	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
+		if (part_types[i].type == id)
+			return (part_types[i].sname);
 	}
 
-	return(unknown);
+	return (unknown);
 }
 
 void
@@ -176,11 +176,11 @@ PRT_print(num, partn)
 	prt_t *partn;
 {
 
-	if(partn == NULL){
+	if (partn == NULL) {
 		printf("         Starting        Ending\n");
 		printf(" #: id  cyl  hd sec -  cyl  hd sec [     start -       size]\n");
 		printf("-------------------------------------------------------------------------\n");
-	}else{
+	} else {
 		printf("%c%1d: %.2X %4d %3d %3d - %4d %3d %3d [%10d - %10d] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
@@ -214,7 +214,7 @@ PRT_fix_BN(disk, part)
 	end += part->esect - 1;
 
 	/* XXX - Should handle this... */
-	if(start > end)
+	if (start > end)
 		warn("Start of partition after end!");
 
 	part->bs = start;

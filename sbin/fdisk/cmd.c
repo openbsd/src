@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.9 1997/10/19 23:13:48 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.10 1997/10/19 23:29:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -83,7 +83,7 @@ Xreinit(cmd, disk, mbr, tt, offset)
 	printf("In memory copy is initialized.\n");
 	printf("Use 'write' to update disk.\n");
 
-	return(CMD_DIRTY);
+	return (CMD_DIRTY);
 }
 
 int
@@ -99,7 +99,7 @@ Xdisk(cmd, disk, mbr, tt, offset)
 	DISK_printmetrics(disk);
 
 	/* Ask for new info */
-	if(ask_yn("Change disk geometry?")){
+	if (ask_yn("Change disk geometry?")) {
 		disk->real->cylinders = ask_num("BIOS Cylinders", ASK_DEC,
 		    disk->real->cylinders, 1, 1024, NULL);
 		disk->real->heads = ask_num("BIOS Heads", ASK_DEC,
@@ -111,7 +111,7 @@ Xdisk(cmd, disk, mbr, tt, offset)
 			* disk->real->sectors;
 	}
 
-	return(CMD_CONT);
+	return (CMD_CONT);
 }
 
 int
@@ -127,13 +127,13 @@ Xedit(cmd, disk, mbr, tt, offset)
 
 	ret = CMD_CONT;
 
-	if(!isdigit(cmd->args[0])){
+	if (!isdigit(cmd->args[0])) {
 		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
 		return (ret);
 	}
 	pn = atoi(cmd->args);
 
-	if(pn < 0 || pn > 3){
+	if (pn < 0 || pn > 3) {
 		printf("Invalid partition number.\n");
 		return (ret);
 	}
@@ -152,14 +152,14 @@ Xedit(cmd, disk, mbr, tt, offset)
 	EDIT("Partition id", ASK_HEX, pp->id, 0, 0xFF, PRT_printall);
 
 	/* Unused, so just zero out */
-	if(pp->id == DOSPTYP_UNUSED){
+	if (pp->id == DOSPTYP_UNUSED) {
 		memset(pp, 0, sizeof(*pp));
 		printf("Partiton %d cleared.\n", pn);
-		return(ret);
+		return (ret);
 	}
 
 	/* Change table entry */
-	if(ask_yn("Do you wish to edit in CHS mode?")){
+	if (ask_yn("Do you wish to edit in CHS mode?")) {
 		int maxcyl, maxhead, maxsect;
 
 		/* Shorter */
@@ -176,8 +176,9 @@ Xedit(cmd, disk, mbr, tt, offset)
 		EDIT("BIOS Ending sector",     ASK_DEC, pp->esect, 1, maxsect, NULL);
 		/* Fix up off/size values */
 		PRT_fix_BN(disk, pp);
-	}else{
+	} else {
 		u_int m;
+
 		/* Get data */
 		EDIT("Partition offset", ASK_DEC, pp->bs, 0,
 		    disk->real->size, NULL);
@@ -189,7 +190,7 @@ Xedit(cmd, disk, mbr, tt, offset)
 		PRT_fix_CHS(disk, pp);
 	}
 #undef EDIT
-	return(ret);
+	return (ret);
 }
 
 int
@@ -203,31 +204,30 @@ Xselect(cmd, disk, mbr, tt, offset)
 	int off;
 	int pn;
 
-	if(!isdigit(cmd->args[0])){
+	if (!isdigit(cmd->args[0])) {
 		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
-		return(CMD_CONT);
+		return (CMD_CONT);
 	}
 
 	pn = atoi(cmd->args);
 	off = mbr->part[pn].bs;
 
 	/* Sanity checks */
-	if(mbr->part[pn].id != DOSPTYP_EXTEND){
+	if (mbr->part[pn].id != DOSPTYP_EXTEND) {
 		printf("Partition %d is not an extended partition.\n", pn);
-		return(CMD_CONT);
+		return (CMD_CONT);
 	}
-	if(!off){
+	if (!off) {
 		printf("Loop to offset 0!  Not selected.\n");
-		return(CMD_CONT);
-	}else{
+		return (CMD_CONT);
+	} else {
 		printf("Selected extended partition %d\n", pn);
 		printf("New MBR at offset %d.\n", off);
 	}
 
 	/* Recursion is beautifull! */
 	USER_modify(disk, tt, off);
-
-	return(CMD_CONT);
+	return (CMD_CONT);
 }
 
 int
@@ -243,7 +243,7 @@ Xprint(cmd, disk, mbr, tt, offset)
 	printf("Offset: %d\t", offset);
 	MBR_print(mbr);
 
-	return(CMD_CONT);
+	return (CMD_CONT);
 }
 
 int
@@ -263,7 +263,7 @@ Xwrite(cmd, disk, mbr, tt, offset)
 	MBR_make(mbr, mbr_buf);
 	MBR_write(fd, offset, mbr_buf);
 	close(fd);
-	return(CMD_CLEAN);
+	return (CMD_CLEAN);
 }
 
 int
@@ -276,7 +276,7 @@ Xexit(cmd, disk, r, tt, offset)
 {
 
 	/* Nothing to do here */
-	return(CMD_SAVE);
+	return (CMD_SAVE);
 }
 
 int
@@ -290,7 +290,7 @@ Xabort(cmd, disk, mbr, tt, offset)
 	exit(0);
 
 	/* NOTREACHED */
-	return(CMD_CONT);
+	return (CMD_CONT);
 }
 
 
@@ -304,7 +304,7 @@ Xquit(cmd, disk, mbr, tt, offset)
 {
 
 	/* Nothing to do here */
-	return(CMD_EXIT);
+	return (CMD_EXIT);
 }
 
 int
@@ -319,11 +319,9 @@ Xhelp(cmd, disk, mbr, tt, offset)
 	int i;
 
 	/* Hmm, print out cmd_table here... */
-	for(i = 0; cmd_table[i].cmd != NULL; i++){
+	for (i = 0; cmd_table[i].cmd != NULL; i++)
 		printf("\t%s\t\t%s\n", cmd_table[i].cmd, cmd_table[i].help);
-	}
-
-	return(CMD_CONT);
+	return (CMD_CONT);
 }
 
 int
@@ -337,10 +335,8 @@ Xupdate(cmd, disk, mbr, tt, offset)
 
 	/* Update code */
 	memcpy(mbr->code, tt->code, MBR_CODE_SIZE);
-
 	printf("Machine code updated.\n");
-
-	return(CMD_DIRTY);
+	return (CMD_DIRTY);
 }
 
 int
@@ -354,26 +350,27 @@ Xflag(cmd, disk, mbr, tt, offset)
 	int i, pn = -1;
 
 	/* Parse partition table entry number */
-	if(!isdigit(cmd->args[0])){
+	if (!isdigit(cmd->args[0])) {
 		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
-		return(CMD_CONT);
+		return (CMD_CONT);
 	}
 	pn = atoi(cmd->args);
 
-	if(pn < 0 || pn > 3){
+	if (pn < 0 || pn > 3) {
 		printf("Invalid partition number.\n");
-		return(CMD_CONT);
+		return (CMD_CONT);
 	}
 
 	/* Set active flag */
-	for(i = 0; i < 4; i++){
-		if(i == pn) mbr->part[i].flag = DOSACTIVE;
-		else mbr->part[i].flag = 0x00;
+	for (i = 0; i < 4; i++) {
+		if (i == pn)
+			mbr->part[i].flag = DOSACTIVE;
+		else
+			mbr->part[i].flag = 0x00;
 	}
 
 	printf("Partition %d marked active.\n", pn);
-
-	return(CMD_DIRTY);
+	return (CMD_DIRTY);
 }
 
 int
@@ -384,10 +381,13 @@ Xmanual(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
+	char *pager = "/usr/bin/less";
 	extern char manpage[];
 	FILE *f;
 
-	f = popen("/usr/bin/less", "w");
+	if (getenv("PAGER"))
+		pager = getenv("PAGER");
+	f = popen(pager, "w");
 	if (f) {
 		(void) fwrite(manpage, strlen(manpage), 1, f);
 		pclose(f);

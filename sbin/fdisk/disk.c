@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.4 1997/10/16 01:47:09 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.6 1997/10/19 23:30:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -48,7 +48,6 @@
 #endif
 #include "disk.h"
 
-
 int
 DISK_open(disk, mode)
 	char *disk;
@@ -58,13 +57,13 @@ DISK_open(disk, mode)
 	struct stat st;
 
 	fd = opendev(disk, mode, OPENDEV_PART, NULL);
-	if(fd < 0) err(1, "%s", disk);
-	if(fstat(fd, &st) < 0) err(1, "%s", disk);
-
-	if(!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
+	if (fd < 0)
+		err(1, "%s", disk);
+	if (fstat(fd, &st) < 0)
+		err(1, "%s", disk);
+	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
 		err(1, "%s is not a character device or a regular file", disk);
-
-	return(fd);
+	return (fd);
 }
 
 int
@@ -72,7 +71,7 @@ DISK_close(fd)
 	int fd;
 {
 
-	return(close(fd));
+	return (close(fd));
 }
 
 /* Routine to go after the disklabel for geometry
@@ -89,14 +88,14 @@ DISK_getlabelmetrics(name)
 	int fd;
 
 	/* Get label metrics */
-	if((fd = DISK_open(name, O_RDONLY)) >= 0){
+	if ((fd = DISK_open(name, O_RDONLY)) >= 0) {
 		lm = malloc(sizeof(DISK_metrics));
 
-		if(ioctl(fd, DIOCGDINFO, &dl) < 0){
+		if (ioctl(fd, DIOCGDINFO, &dl) < 0) {
 			warn("DIOCGDINFO");
 			free(lm);
 			lm = NULL;
-		}else{
+		} else {
 			lm->cylinders = dl.d_ncylinders;
 			lm->heads = dl.d_ntracks;
 			lm->sectors = dl.d_nsectors;
@@ -105,7 +104,7 @@ DISK_getlabelmetrics(name)
 		DISK_close(fd);
 	}
 
-	return(lm);
+	return (lm);
 }
 
 #ifdef CPU_BIOS
@@ -131,7 +130,7 @@ DISK_getbiosmetrics(name)
 	mib[2] = BIOS_DEV;
 	size = sizeof(biosdev);
 
-	if(sysctl(mib, 3, &biosdev, &size, NULL, 0) < 0){
+	if (sysctl(mib, 3, &biosdev, &size, NULL, 0) < 0) {
 		warn("sysctl");
 		return (NULL);
 	}
@@ -139,7 +138,7 @@ DISK_getbiosmetrics(name)
 	mib[2] = BIOS_GEOMETRY;
 	size = sizeof(biosgeo);
 
-	if(sysctl(mib, 3, &biosgeo, &size, NULL, 0) < 0){
+	if (sysctl(mib, 3, &biosgeo, &size, NULL, 0) < 0) {
 		warn("sysctl");
 		return (NULL);
 	}
@@ -150,7 +149,7 @@ DISK_getbiosmetrics(name)
 	bm->sectors = BIOSNSECTS(biosgeo);
 	bm->size = BIOSNTRACKS(biosgeo) * BIOSNHEADS(biosgeo) *
 	    BIOSNSECTS(biosgeo);
-	return(bm);
+	return (bm);
 }
 #else
 /*
@@ -161,7 +160,7 @@ DISK_metrics *
 DISK_getbiosmetrics(name)
 	char *name;
 {
-	return(NULL);
+	return (NULL);
 }
 #endif
 
@@ -184,18 +183,18 @@ DISK_getmetrics(disk, user)
 	disk->bios = DISK_getbiosmetrics(disk->name);
 
 	/* If user supplied, use that */
-	if(user){
+	if (user) {
 		disk->real = user;
-		return(0);
+		return (0);
 	}
 
 	/* If we have a label, use that */
-	if(!disk->real && disk->label)
+	if (!disk->real && disk->label)
 		disk->real = disk->label;
 
 	/* Can not get geometry, punt */
-	if(disk->real == NULL)
-		return(1);
+	if (disk->real == NULL)
+		return (1);
 
 	/* If we have a bios, use that (if label looks bogus)
 	 *
@@ -204,12 +203,12 @@ DISK_getmetrics(disk, user)
 	 * It needs to be, at least, a BSD device.
 	 * Or we need a mapping from biosdev -> BSD universe.
 	 */
-	if(disk->bios)
-		if(disk->real->cylinders > 1024 || disk->real->heads > 255
-			|| disk->real->sectors > 63)
+	if (disk->bios)
+		if (disk->real->cylinders > 1024 || disk->real->heads > 255 ||
+		    disk->real->sectors > 63)
 			disk->real = disk->bios;
 
-	return(0);
+	return (0);
 }
 
 int
@@ -218,12 +217,12 @@ DISK_printmetrics(disk)
 {
 
 	printf("Disk: %s\t", disk->name);
-	if(disk->real)
+	if (disk->real)
 		printf("geometry: %d/%d/%d [%d sectors]\n", disk->real->cylinders,
-			disk->real->heads, disk->real->sectors, disk->real->size);
+		    disk->real->heads, disk->real->sectors, disk->real->size);
 	else
 		printf("geometry: <none>\n");
 
-	return(0);
+	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.9 1997/10/17 08:07:15 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.10 1997/10/19 23:29:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -100,7 +100,7 @@ USER_init(disk, tt)
 	   "\t-----------------------------------------------------\n"
 	   "\t------ ATTENTION - UPDATING MASTER BOOT RECORD ------\n"
 	   "\t-----------------------------------------------------\n");
-	if(ask_yn("\nDo you wish to write new MBR?")){
+	if (ask_yn("\nDo you wish to write new MBR?")) {
 		fd = DISK_open(disk->name, O_RDWR);
 		MBR_make(tt, mbr_buf);
 		MBR_write(fd, (off_t)0, mbr_buf);
@@ -108,7 +108,7 @@ USER_init(disk, tt)
 	} else
 		printf("MBR is unchanged\n");
 
-	return(0);
+	return (0);
 }
 
 int modified;
@@ -124,7 +124,6 @@ USER_modify(disk, tt, offset)
 	mbr_t mbr;
 	cmd_t cmd;
 	int i, st, fd;
-
 
 	/* One level deeper */
 	editlevel += 1;
@@ -151,47 +150,51 @@ again:
 
 		if (cmd.cmd[0] == '\0')
 			goto again;
-		for(i = 0; cmd_table[i].cmd != NULL; i++)
-			if(strstr(cmd_table[i].cmd, cmd.cmd)==cmd_table[i].cmd)
+		for (i = 0; cmd_table[i].cmd != NULL; i++)
+			if (strstr(cmd_table[i].cmd, cmd.cmd)==cmd_table[i].cmd)
 				break;
 
 		/* Quick hack to put in '?' == 'help' */
-		if(!strcmp(cmd.cmd, "?"))
+		if (!strcmp(cmd.cmd, "?"))
 			i = 0;
 
 		/* Check for valid command */
-		if(cmd_table[i].cmd == NULL){
+		if (cmd_table[i].cmd == NULL) {
 			printf("Invalid command '%s'.  Try 'help'.\n", cmd.cmd);
 			continue;
-		}else
+		} else
 			strcpy(cmd.cmd, cmd_table[i].cmd);
 
 		/* Call function */
 		st = cmd_table[i].fcn(&cmd, disk, &mbr, tt, offset);
 
 		/* Update status */
-		if(st == CMD_EXIT) break;
-		if(st == CMD_SAVE) break;
-		if(st == CMD_CLEAN) modified = 0;
-		if(st == CMD_DIRTY) modified = 1;
-	} while(1);
+		if (st == CMD_EXIT)
+			break;
+		if (st == CMD_SAVE)
+			break;
+		if (st == CMD_CLEAN)
+			modified = 0;
+		if (st == CMD_DIRTY)
+			modified = 1;
+	} while (1);
 
 	/* Write out MBR */
-	if(modified){
-		if(st == CMD_SAVE){
+	if (modified) {
+		if (st == CMD_SAVE) {
 			printf("Writing current MBR to disk.\n");
 			fd = DISK_open(disk->name, O_RDWR);
 			MBR_make(&mbr, mbr_buf);
 			MBR_write(fd, offset, mbr_buf);
 			close(fd);
-		}else
+		} else
 			printf("Aborting changes to current MBR.\n");
 	}
 
 	/* One level less */
 	editlevel -= 1;
 
-	return(0);
+	return (0);
 }
 
 int
@@ -215,11 +218,11 @@ USER_print_disk(disk)
 		MBR_print(&mbr);
 
 		/* Print out extended partitions too */
-		for(offset = i = 0; i < 4; i++)
-			if(mbr.part[i].id == DOSPTYP_EXTEND)
+		for (offset = i = 0; i < 4; i++)
+			if (mbr.part[i].id == DOSPTYP_EXTEND)
 				offset = mbr.part[i].bs;
-	} while(offset);
+	} while (offset);
 
-	return(DISK_close(fd));
+	return (DISK_close(fd));
 }
 

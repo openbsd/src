@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.3 1997/10/16 01:47:11 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.4 1997/10/19 23:29:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -58,8 +58,9 @@ MBR_parse(mbr_buf, mbr)
 	mbr->spare = getshort(&mbr_buf[MBR_SPARE_OFF]);
 	mbr->signature = getshort(&mbr_buf[MBR_SIG_OFF]);
 
-	for(i = 0; i < NDOSPART; i++)
-		PRT_parse(&mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i], &mbr->part[i]);
+	for (i = 0; i < NDOSPART; i++)
+		PRT_parse(&mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i],
+		    &mbr->part[i]);
 }
 
 void
@@ -74,8 +75,9 @@ MBR_make(mbr, mbr_buf)
 	putshort(&mbr_buf[MBR_SPARE_OFF], mbr->spare);
 	putshort(&mbr_buf[MBR_SIG_OFF], mbr->signature);
 
-	for(i = 0; i < NDOSPART; i++)
-		PRT_make(&mbr->part[i], &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i]);
+	for (i = 0; i < NDOSPART; i++)
+		PRT_make(&mbr->part[i], &mbr_buf[MBR_PART_OFF +
+		    MBR_PART_SIZE * i]);
 }
 
 void
@@ -86,13 +88,12 @@ MBR_print(mbr)
 
 	/* Header */
 	printf("Signatures: 0x%X,0x%X\n",
-		(int)mbr->signature, (int)mbr->nt_serial);
+	    (int)mbr->signature, (int)mbr->nt_serial);
 	PRT_print(0, NULL);
 
 	/* Entries */
-	for(i = 0; i < NDOSPART; i++){
+	for (i = 0; i < NDOSPART; i++)
 		PRT_print(i, &mbr->part[i]);
-	}
 }
 
 int
@@ -106,11 +107,11 @@ MBR_read(fd, where, buf)
 
 	where *= DEV_BSIZE;
 	off = lseek(fd, where, SEEK_SET);
-	if(off != where) return(off);
-
+	if (off != where)
+		return(off);
 	len = read(fd, buf, DEV_BSIZE);
-	if(len != DEV_BSIZE) return(len);
-
+	if (len != DEV_BSIZE)
+		return(len);
 	return(0);
 }
 
@@ -125,11 +126,10 @@ MBR_write(fd, where, buf)
 
 	where *= DEV_BSIZE;
 	off = lseek(fd, where, SEEK_SET);
-	if(off != where) return(off);
-
+	if (off != where)
+		return(off);
 	len = write(fd, buf, DEV_BSIZE);
-	if(len != DEV_BSIZE) return(len);
-
+	if (len != DEV_BSIZE)
+		return(len);
 	return(0);
 }
-
