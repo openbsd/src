@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.10 2001/09/24 23:38:09 art Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/11/20 01:13:44 pvalchev Exp $
 
-SUBDIR=libdl ldconfig ldd
+SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
 
 NOMAN=
