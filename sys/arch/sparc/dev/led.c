@@ -1,4 +1,4 @@
-/*	$Id: led.c,v 1.1 1998/03/25 07:54:56 jason Exp $	*/
+/*	$OpenBSD: led.c,v 1.2 1998/03/26 07:04:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Jason Wright
+ *	This product includes software developed by Jason L. Wright
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -61,6 +61,11 @@ extern int sparc_led_blink;     /* from machdep */
 
 static char led_attached = 0;
 static int led_index = 0;
+/*
+ * These led patterns produce a line that scrolls across the display, then
+ * back again.  Note that a value of 0 for a particular bit lights the
+ * corresponding LED, and 1 leaves it dark.
+ */
 static char led_patterns[] =
 	{ 0xff, 0x7f, 0xbf, 0xdf, 0xef, 0xf7, 0xfb, 0xfd, 0xfe,
 	  0xff, 0xfe, 0xfd, 0xfb, 0xf7, 0xef, 0xdf, 0xbf, 0x7f, };
@@ -88,10 +93,9 @@ ledattach(parent, self, aux)
 }
 
 /*
- * led_sun4_cycle:
- *	check to see whether we were configured and whether
- *	machdep.led_blink != 0, if so, put a new pattern into
- *	the register.
+ * Check to see whether we were configured and whether machdep.led_blink != 0.
+ * If so, put a new pattern into the register and schedule ourselves to
+ * be called again later.  The timeout is set to: [(1/8) * loadavg] seconds.
  */
 void
 led_sun4_cycle(zero)
