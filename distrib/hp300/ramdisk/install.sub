@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.8 1997/10/31 05:41:29 downsj Exp $
+#	$OpenBSD: install.sub,v 1.9 1998/02/18 22:33:10 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -610,7 +610,7 @@ install_url() {
 	# Get several parameters from the user, and xfer
 	# files from the server.
 	# Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
-	#	_ftp_server_password, and _ftp_passive must be global.
+	#	_ftp_server_password, and _ftp_active must be global.
 
 	local _sets
 	local _f
@@ -642,16 +642,20 @@ install_url() {
 		export http_proxy=${_proxy_host}
 	fi
 	if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
-		# Use passive mode ftp? (incompatible with proxy)
-		case "${_ftp_passive}" in
-			-p)	resp=y ;;
+		# Use active mode ftp? (irrelevant if using a proxy)
+		case "${_ftp_active}" in
+			-A)	resp=y ;;
 			*)	resp=n ;;
 		esac
-		echo -n "Do you want to use passive ftp? [${resp}] "
+		echo "By default, ftp will attempt a passive connection and fall back to a normal"
+		echo "(active) connection if that doesn't work.  However, there are some very"
+		echo "old ftp servers that claim to support passive mode, but really do not."
+		echo "In this case, you should explicately request an active session."
+		echo -n "Do you want to use active ftp? [${resp}] "
 		getresp "${resp}"
 		case "$resp" in
-			y*|Y*)	_ftp_passive=-p ;;
-			*)	unset _ftp_passive ;;
+			y*|Y*)	_ftp_active=-A ;;
+			*)	unset _ftp_active ;;
 		esac
 	fi
 
@@ -661,7 +665,7 @@ install_url() {
 	case "$resp" in
 	n*|N*) ;;
 	*)
-		ftp ${_ftp_passive} -V -a ftp://ftp.openbsd.org/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist | grep "^${_url_type}:"
+		ftp ${_ftp_active} -V -a -o - ftp://ftp.openbsd.org/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist | grep "^${_url_type}:"
 		;;
 	esac
 
@@ -720,7 +724,7 @@ install_url() {
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list=`eval ftp -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | sed 's///'`
+		_file_list=`eval ftp -o - -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | sed 's///'`
 	fi
 
 	_sets=""
@@ -857,15 +861,15 @@ install_url() {
 			echo ""
 			if [ "X${_f}" = "X${_kernel}" ]; then
 				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp ${_ftp_passive} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
+					( cd /mnt ; ftp -o - ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
 				else
-					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
+					( cd /mnt ; eval ftp -o - -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
 				fi
 			else
 				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp ${_ftp_passive} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} | tar zxvpf - )
+					( cd /mnt ; ftp -o - ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} | tar zxvpf - )
 				else
-					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} | tar zxvpf - )
+					( cd /mnt ; eval ftp -o - -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} | tar zxvpf - )
 				fi
 			fi
 			if [ $? -ne 0 ]; then
