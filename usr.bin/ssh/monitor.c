@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.48 2003/08/26 09:58:43 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.49 2003/08/28 12:54:34 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -121,9 +121,6 @@ int mm_answer_rsa_response(int, Buffer *);
 int mm_answer_sesskey(int, Buffer *);
 int mm_answer_sessid(int, Buffer *);
 
-#ifdef KRB5
-int mm_answer_krb5(int, Buffer *);
-#endif
 #ifdef GSSAPI
 int mm_answer_gss_setup_ctx(int, Buffer *);
 int mm_answer_gss_accept_ctx(int, Buffer *);
@@ -175,9 +172,6 @@ struct mon_table mon_dispatch_proto20[] = {
 #endif
     {MONITOR_REQ_KEYALLOWED, MON_ISAUTH, mm_answer_keyallowed},
     {MONITOR_REQ_KEYVERIFY, MON_AUTH, mm_answer_keyverify},
-#ifdef KRB5
-    {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
-#endif
 #ifdef GSSAPI
     {MONITOR_REQ_GSSSETUP, MON_ISAUTH, mm_answer_gss_setup_ctx},
     {MONITOR_REQ_GSSSTEP, MON_ISAUTH, mm_answer_gss_accept_ctx},
@@ -211,9 +205,6 @@ struct mon_table mon_dispatch_proto15[] = {
 #ifdef SKEY
     {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
     {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
-#endif
-#ifdef KRB5
-    {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
 #endif
     {0, 0, NULL}
 };
@@ -1291,45 +1282,6 @@ mm_answer_rsa_response(int socket, Buffer *m)
 
 	return (success);
 }
-
-#ifdef KRB5
-int
-mm_answer_krb5(int socket, Buffer *m)
-{
-	krb5_data tkt, reply;
-	char *client_user;
-	u_int len;
-	int success;
-
-	/* use temporary var to avoid size issues on 64bit arch */
-	tkt.data = buffer_get_string(m, &len);
-	tkt.length = len;
-
-	success = options.kerberos_authentication &&
-	    authctxt->valid &&
-	    auth_krb5(authctxt, &tkt, &client_user, &reply);
-
-	if (tkt.length)
-		xfree(tkt.data);
-
-	buffer_clear(m);
-	buffer_put_int(m, success);
-
-	if (success) {
-		buffer_put_cstring(m, client_user);
-		buffer_put_string(m, reply.data, reply.length);
-		if (client_user)
-			xfree(client_user);
-		if (reply.length)
-			xfree(reply.data);
-	}
-	mm_request_send(socket, MONITOR_ANS_KRB5, m);
-
-	auth_method = "kerberos";
-
-	return success;
-}
-#endif
 
 int
 mm_answer_term(int socket, Buffer *req)
