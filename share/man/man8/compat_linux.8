@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.17 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.18 2001/08/17 11:13:58 mpech Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -37,12 +37,15 @@
 .Nm compat_linux
 .Nd setup procedure for running Linux binaries under emulation
 .Sh DESCRIPTION
-OpenBSD supports running Linux binaries. This only applies to i386 systems
+.Ox
+supports running Linux binaries. This only applies to i386 systems
 for now. Both the a.out and ELF binary formats are supported. Most programs
 should work, including the ones that use the Linux SVGAlib. Additionally,
 OSS audio is emulated, so Linux bins can access the native audio
 transparently. Programs that will not work include those that use the Linux
-/proc filesystem (which is different from the optional OpenBSD /proc
+/proc filesystem (which is different from the optional 
+.Ox
+/proc
 filesystem), and i386-specific calls, such as enabling virtual 8086 mode.
 .Pp
 The Linux compatibility feature is active
@@ -53,21 +56,31 @@ option enabled.
 A lot of programs are dynamically linked. This means, that you will
 also need the Linux shared libraries that the program depends on, and
 the runtime linker.  Also, you will need to create a "shadow root"
-directory for Linux binaries on your OpenBSD system. This directory
+directory for Linux binaries on your
+.Ox
+system. This directory
 is named /emul/linux. Any file operations done by Linux programs
-run under OpenBSD will look in this directory first. So, if a Linux
-program opens, for example, /etc/passwd, OpenBSD will
-first try to open /emul/linux/etc/passwd, and if that does not exist
+run under
+.Ox
+will look in this directory first. So, if a Linux
+program opens, for example, /etc/passwd,
+.Ox
+will first try to open /emul/linux/etc/passwd, and if that does not exist
 open the 'real' /etc/passwd file. It is recommended that you install
 Linux packages that include configuration files, etc under /emul/linux,
-to avoid naming conflicts with possible OpenBSD counterparts. Shared
-libraries should also be installed in the shadow tree.
+to avoid naming conflicts with possible
+.Ox
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that Linux
 binaries depend on only the first few times that you install a Linux
-program on your OpenBSD system. After a while, you will have a sufficient
-set of Linux shared libraries on your system to be able to run newly
-imported Linux binaries without any extra work.
+program on your
+.Ox
+system.
+After a while, you will have a sufficient set of Linux shared libraries
+on your system to be able to run newly imported Linux binaries without
+any extra work.
 
 .Ss Setting up shared libraries
 How to get to know which shared libraries Linux binaries need, and where
@@ -92,10 +105,12 @@ needed.
 .It 2.
 You have access to a Linux system. In this case you can
 temporarily install the binary there, see what shared libraries
-it needs, and copy them to your OpenBSD system. Example: you have
-just ftp-ed the Linux binary of Doom. Put it on the Linux
-system you have access to, and check which shared libraries it
-needs by running `ldd linuxxdoom':
+it needs, and copy them to your
+.Ox
+system.
+Example: you have just ftp-ed the Linux binary of Doom.
+Put it on the Linux system you have access to, and check which shared
+libraries it needs by running `ldd linuxxdoom':
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@linux) ldd linuxxdoom
@@ -109,7 +124,9 @@ libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 You would need go get all the files from the last column, and
 put them under /emul/linux, with the names in the first column
 as symbolic links pointing to them. This means you eventually have
-these files on your OpenBSD system:
+these files on your
+.Ox
+system:
 .Pp
 .nf
 /emul/linux/usr/X11/lib/libXt.so.3.1.0
@@ -153,9 +170,10 @@ you with:
 .Pp
 Please note that the symbolic link mechanism is
 .Nm only
-needed for Linux binaries, the OpenBSD runtime linker takes care of
-looking for matching major revision numbers itself, you
-don't need to worry about that.
+needed for Linux binaries, the
+.Ox
+runtime linker takes care of looking for matching major revision numbers
+itself, you don't need to worry about that.
 .Pp
 Finally, you must make sure that you have the Linux runtime linker
 and its config files on your system. You should copy these
@@ -187,9 +205,11 @@ any version mismatches), and install them under /emul/linux
 .Pp
 ldconfig and ldd don't necessarily need to be under /emul/linux,
 you can install them elsewhere in the system too. Just make sure
-they don't conflict with their OpenBSD counterparts. A good idea
-would be to install them in /usr/local/bin as ldconfig-linux and
-ldd-linux.
+they don't conflict with their
+.Ox
+counterparts.
+A good idea would be to install them in /usr/local/bin as ldconfig-linux
+and ldd-linux.
 .Pp
 Create the file /emul/linux/etc/ld.so.conf, containing the
 directories in which the Linux runtime linker should look
@@ -246,7 +266,8 @@ the information below is valid as of the time this
 document was written (March, 1995), but certain details
 such as names of ftp sites, directories and distribution names
 may have changed by the time you read this.  You can also
-save yourself a lot of headaches by using the OpenBSD
+save yourself a lot of headaches by using the
+.Ox
 .Xr ports 7
 system (possibility 3, above).
 .Pp

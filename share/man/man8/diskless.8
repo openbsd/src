@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.13 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: diskless.8,v 1.14 2001/08/17 11:13:58 mpech Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -192,7 +192,9 @@ manual page for more information.
 If booting a Sun or Motorola client, install a copy of the
 appropriate diskless boot loader (such as
 .Pa boot.net
-from the root directory of the OpenBSD sparc tree) in the
+from the root directory of the
+.Ox
+sparc tree) in the
 .Pa /tftpboot
 directory.
 Make a link such that the boot program is
@@ -246,7 +248,9 @@ This creates a 16 Megabyte swap file.
 Populate myclient's
 .Pa /
 filesystem on the server.  How this is done depends on the
-client architecture and the version of the OpenBSD distribution.
+client architecture and the version of the 
+.Ox
+distribution.
 It can be as simple as copying and modifying the server's root
 filesystem, or perhaps you need to get those files out of the
 standard binary distribution.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.33 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: ssl.8,v 1.34 2001/08/17 11:13:58 mpech Exp $
 .\"
 .Dd March 15, 1999
 .Dt SSL 8
@@ -32,7 +32,8 @@ The libcrypto library is also used by various programs such as
 and
 .Xr isakmpd 8 .
 .Sh RANDOM DATA SOURCE
-OpenBSD uses the
+.Ox
+uses the
 .Xr arandom 4
 device as the default source for random data when needed by the routines in
 libcrypto and libssl.
@@ -216,7 +217,9 @@ were difficult to distribute and propagate.
 patent was probably more effective at preventing the late adoption of
 widespread international integrated crypto than the much maligned
 ITAR restrictions were).
-Prior to OpenBSD 2.8, these libraries shipped without the
+Prior to
+.Ox 2.8 ,
+these libraries shipped without the
 .Ar RSA
 algorithm -- all such functions
 were stubbed to fail.
@@ -269,7 +272,9 @@ The result of this was that while the
 protocol allowed for many cipher suites that did not require the use
 of patented algorithms, It was very difficult to use these with the
 popular commercially available software.
-Prior to version 2.8, OpenBSD allowed users to download
+Prior to version 2.8,
+.Ox
+allowed users to download
 .Ar RSA
 enabled versions of the shared libssl and libcrypto libraries
 which allowed users to enable full function without recompiling

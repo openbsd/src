@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ibcs2.8,v 1.6 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: compat_ibcs2.8,v 1.7 2001/08/17 11:13:58 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -76,29 +76,41 @@ option should be enabled in addition to
 Many COFF-format programs and most ELF-format programs are dynamically
 linked. This means that you will also need the shared libraries that
 the program depends on.  Also, you will need to create a "shadow root"
-directory for iBCS2 binaries on your OpenBSD system. This directory is
-named /emul/ibcs2.  Any file operations done by iBCS2 programs run
-under OpenBSD will look in this directory first. So, if an iBCS2
-program opens, for example, /etc/passwd, OpenBSD will first try to open
-/emul/ibcs2/etc/passwd, and if that does not exist open the 'real'
-/etc/passwd file. It is recommended that you install iBCS2 packages
-that include configuration files, etc. under /emul/ibcs2, to avoid
-naming conflicts with possible OpenBSD counterparts. Shared libraries
-should also be installed in the shadow tree.
+directory for iBCS2 binaries on your
+.Ox
+system.
+This directory is named /emul/ibcs2.
+Any file operations done by iBCS2 programs run
+under
+.Ox
+will look in this directory first. So, if an iBCS2
+program opens, for example, /etc/passwd,
+.Ox
+will first try to open /emul/ibcs2/etc/passwd, and if that does not
+exist open the 'real' /etc/passwd file.
+It is recommended that you install iBCS2 packages that include
+configuration files, etc. under /emul/ibcs2, to avoid naming conflicts
+with possible
+.Ox 
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that
 iBCS2 binaries depend on only the first few times that you install
-an iBCS2 program on your OpenBSD system. After a while, you will
-have a sufficient set of iBCS2 shared libraries on your system to
-be able to run newly imported iBCS2 binaries without any extra
-work.
+an iBCS2 program on your
+.Ox
+system.
+After a while, you will have a sufficient set of iBCS2 shared libraries
+on your system to be able to run newly imported iBCS2 binaries without
+any extra work.
 
 .Ss Setting up shared libraries
 How to get to know which shared libraries iBCS2 binaries need, and
 where to get them? Depending on the file type of the executable, there
 are different possibilities (when following these instructions: you
-will need to be root on your OpenBSD system to do the necessary
-installation steps).
+will need to be root on your
+.Ox
+system to do the necessary installation steps).
 
 .Bl -tag -width 123 -compact
 .It 1. COFF binaries

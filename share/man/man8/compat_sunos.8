@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_sunos.8,v 1.9 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: compat_sunos.8,v 1.10 2001/08/17 11:13:58 mpech Exp $
 .\"	$NetBSD: compat_sunos.8,v 1.6 1995/06/11 23:05:17 pk Exp $
 .\"
 .\" Copyright (c) 1994 Theo de Raadt
@@ -66,7 +66,9 @@ setup to allow dynamically linked executables to work.
 The files you need are on your SunOS machine.
 You need to worry about the legal issues of ensuring that you
 have a right to use the required files on your machine.
-On your OpenBSD machine, do the following:
+On your
+.Ox
+machine, do the following:
 .Pp
 .Bl -enum -inset -offset 123 -compact
 .It
@@ -91,7 +93,9 @@ If you ever expect to use YP, you will want to create a link:
 .Pp
 Alternatively, you can use an NFS mount to accomplish the same
 effect.
-On your OpenBSD machine, do the following:
+On your
+.Ox
+machine, do the following:
 .Pp
 .Bl -enum -inset -offset 123 -compact
 .Pp
@@ -103,8 +107,9 @@ On your OpenBSD machine, do the following:
 .fi
 .El
 .Pp
-This will place the SunOS libraries on your OpenBSD machine
-in a location where the SunOS compatibility code will look for
+This will place the SunOS libraries on your
+.Ox
+machine in a location where the SunOS compatibility code will look for
 first, where they do not conflict with the standard libraries.
 .Sh SEE ALSO
 .Xr compat_svr4 8

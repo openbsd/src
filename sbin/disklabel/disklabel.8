@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.41 2001/08/07 01:46:12 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.42 2001/08/17 11:13:57 mpech Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -323,7 +323,9 @@ parameters: sectors/track, tracks/cylinder, sectors/cylinder,
 number of cylinders on the disk, total sectors on the disk, rpm,
 interleave, disk type, and a descriptive label string.
 .It b
-Set OpenBSD disk boundaries.
+Set
+.Ox
+disk boundaries.
 This option tells
 .Nm
 which parts of the disk it is allowed to modify.
@@ -634,5 +636,6 @@ free block list and only move partitions around with the user's
 permission.
 Also, in
 .Fl E
-mode, partitions outside the OpenBSD portion of the disk should
-be changeable.
+mode, partitions outside the
+.Ox
+portion of the disk should be changeable.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pkg_sign.1,v 1.6 2000/04/15 02:15:20 aaron Exp $
+.\" $OpenBSD: pkg_sign.1,v 1.7 2001/08/17 11:13:58 mpech Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -101,7 +101,9 @@ set a flag
 .Dv EXTRA_FIELD
 in the gzip header and store extra data between the gzip header and the
 compressed file proper.
-The OpenBSD signing scheme uses eight bytes markers such `SIGPGP' \+ length
+The
+.Ox
+signing scheme uses eight bytes markers such `SIGPGP' \+ length
 or `CKSHA1' \+ length for its signatures (those markers are conveniently
 eight bytes long).
 .Sh RESULTS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_bsdos.8,v 1.3 1999/09/16 18:28:13 aaron Exp $
+.\"	$OpenBSD: compat_bsdos.8,v 1.4 2001/08/17 11:13:58 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -35,13 +35,15 @@
 .Os
 .Sh NAME
 .Nm compat_bsdos
-.Nd setup procedure for running BSD/OS binaries under emulation
+.Nd setup procedure for running BSDI binaries under emulation
 .Sh DESCRIPTION
-OpenBSD supports the execution of BSD/OS binaries; most binaries should
-work, at least from the BSD/OS 2.1 era.  Some things that are not currently
-supported are proprietary extensions made to the BSD/OS kernel.
+.Ox
+supports the execution of BSDI binaries; most binaries should
+work, at least from the BSDI 2.1 era.
+Some things that are not currently
+supported are proprietary extensions made to the BSDI kernel.
 .Pp
-To activate the BSD/OS compatibility feature, the kernel must be compiled
+To activate the BSDI compatibility feature, the kernel must be compiled
 with the
 .Nm COMPAT_BSDOS
 option enabled.
@@ -51,28 +53,27 @@ follows the standard
 .Dq emul
 filesystem scheme, using
 .Pa /emul/bsdos
-as the prefix.  This means that all BSD/OS executables first look in
+as the prefix.  This means that all BSDI executables first look in
 .Pa /emul/bsdos
 whenever opening a file; configuration information, shared library images,
-etc., for BSD/OS binaries should all be installed under the emulation
+etc., for BSDI binaries should all be installed under the emulation
 directory in order to avoid conflicts with native files.
 .Pp
-Although many commercial BSD/OS binaries are
+Although many commercial BSDI binaries are
 .Dq pure
 (in that they need no shared libraries), system binaries and those
-compiled/linked with the
-BSD/OS
+compiled/linked with the BSDI
 .\" no .Xr here because we don't have junk like shlicc.
 .Nm shlicc
 program require the appropriate shared library images.  These may be
 found in the
 .Pa /shlib
-directory on a BSD/OS system, and must be copied to
+directory on a BSDI system, and must be copied to
 .Pa /emul/bsdos/shlib
 in order for such binaries to work.  The user is responsible for having
-the appropriate BSD/OS licenses in order to use the shared library images.
+the appropriate BSDI licenses in order to use the shared library images.
 .Sh BUGS
-If BSDi ever manages to port their system to more architectures or switch
+If BSDI ever manages to port their system to more architectures or switch
 to real dynamically linked libraries these instructions may have to change.
 .Pp
 .Nm COMPAT_BSDOS

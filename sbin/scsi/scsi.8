@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.17 2001/08/03 16:03:02 mpech Exp $
+.\"	$OpenBSD: scsi.8,v 1.18 2001/08/17 11:13:58 mpech Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -164,9 +164,13 @@ See
 for a description of the "super scsi" device.
 .Pp
 .It Fl r
-Can be used in FreeBSD 1.1 to reprobe a specific SCSI device at a given
+Can be used in
+.Fx 1.1
+to reprobe a specific SCSI device at a given
 Bus, Target and Lun.
-This is not needed in FreeBSD 2.1, since opening a fixed SCSI device
+This is not needed in
+.Fx 2.1 ,
+since opening a fixed SCSI device
 has the side effect of reprobing it, and probing with the bus with the
 .Fl p
 option should bring on line any newly found devices.
