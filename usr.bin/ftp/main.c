@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1996/12/17 02:11:45 michaels Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1996/12/18 01:59:15 michaels Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1996/12/17 02:11:45 michaels Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1996/12/18 01:59:15 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ main(argc, argv)
 			extern char *__progname;
 			char portstr[20], *p, *bufp = NULL;
 			char *host = NULL, *dir = NULL, *file = NULL;
-			int xargc = 2, tmp;
+			int xargc = 2, looping = 0, tmp;
 
 			if (setjmp(toplevel))
 				exit(0);
@@ -190,21 +190,13 @@ main(argc, argv)
 				http_fetch(host);
 				goto bail;
 			}
-			if (strncmp(host, "ftp://", sizeof("ftp://")-1) == 0) {
-				host += sizeof("ftp://") - 1;
+			if (strncmp(host, "ftp://", strlen("ftp://")) == 0) {
+				host += strlen("ftp://");
 				p = strchr(host, '/');
-			} else
+			}
+			else
 				p = strchr(host, ':');
 			*p = '\0';
-			dir = ++p;
-			p = strrchr(p, '/');
-			if (p) {
-				*p = '\0';
-				file = ++p;
-			} else {
-				file = dir;
-				dir = NULL;
-			}
 
 			xargv[1] = host;
 			xargc = 2;
@@ -214,41 +206,51 @@ main(argc, argv)
 				    force_port);
 			}
 			xargv[xargc] = NULL;
-			setpeer(xargc, xargv);
+		   	setpeer(xargc, xargv);
 			if (!connected) {
 				printf("failed to connect to %s\n", host);
 				ret = 1;
 				goto bail;
 			}
-
-			if (dir != NULL && *dir != '\0') {
-				xargv[1] = dir;
+			*argv = strchr(argv[0], ':') + 1;
+			do {
+				dir = *argv;
+				p = strrchr(dir, '/');
+				if (p != NULL) {
+					*p = '\0';
+					file = ++p;
+				} else {
+					file = dir;
+					dir = NULL;
+				}
+				if (dir != NULL && *dir != '\0') {
+					xargv[1] = dir;
+					xargv[2] = NULL;
+					xargc = 2;
+					cd(xargc, xargv);
+				}
+				xargv[1] = *file == '\0' ? "/" : file;
 				xargv[2] = NULL;
 				xargc = 2;
-				cd(xargc, xargv);
-			}
-			/*
-		 	 * either "file" is the file user wants, or he wants
-			 * to cd to "file" aswell, so try cd first, after
-			 * switcing of verbose (already got a CWD from above).
-			*/
-			xargv[1] = *file == '\0' ? "/" : file;
-			xargv[2] = NULL;
-			xargc = 2;
-			tmp = verbose;
-			verbose = 0;
-			if (cd(xargc, xargv) == 0) {
+				tmp = verbose;
+				verbose = -1;
+				if (cd(xargc, xargv) == 0) {
+					verbose = tmp;
+					goto CLINE_CD;
+				}
 				verbose = tmp;
-				goto CLINE_CD;
-			}
-			verbose = tmp;
-			setbinary(NULL, 0);
-
-			/* fetch file */
-			xargv[1] = file;
-			xargv[2] = NULL;
-			xargc = 2;
-			get(xargc, xargv);
+				if (!looping) {
+					setbinary(NULL, 0);
+					looping = 1;
+				}
+				/* fetch file */
+				xargv[1] = file;
+				xargv[2] = NULL;
+				xargc = 2;
+				get(xargc, xargv);
+				--argc;
+				argv++;
+		} while (argc > 0 && strchr(argv[0], ':') == NULL);
 
 			/* get ready for the next file */
 bail:
@@ -258,8 +260,6 @@ bail:
 			}
 			if (connected)
 				disconnect(1, xargv);
-			--argc;
-			argv++;
 		}
 		exit(ret);
 	}
