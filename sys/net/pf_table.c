@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.24 2003/01/15 16:55:10 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.25 2003/02/12 20:10:08 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1030,6 +1030,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			xadd++;
 		}
 _skip:
+	;
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
@@ -1072,6 +1073,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 			xdel++;
 		}
 _skip:
+	;
 	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
@@ -1223,6 +1225,7 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 				xchange++;
 		}
 _skip:
+	;
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
