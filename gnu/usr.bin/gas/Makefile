@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1998/02/15 18:48:39 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/04/25 06:48:34 niklas Exp $
 #	$NetBSD: Makefile,v 1.25 1997/10/25 10:10:35 lukem Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
@@ -61,7 +61,7 @@ config_hostfile=	$(.CURDIR)/config/ho-$(gas_hosttype).h
 config_hostfile=	$(.CURDIR)/config/ho-generic.h
 .endif
 
-host.h: Makefile config/Makefile.$(MACHINE_ARCH)
+host.h: $(config_hostfile)
 	@cmp -s $(config_hostfile) host.h || \
 	    ( echo "updating ${.TARGET}..." ; /bin/rm -f host.h ; \
 	    cp $(config_hostfile) host.h )

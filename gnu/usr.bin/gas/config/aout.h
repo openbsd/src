@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout.h,v 1.2 1998/02/15 18:49:09 niklas Exp $	*/
+/*	$OpenBSD: aout.h,v 1.3 1998/04/25 06:48:39 niklas Exp $	*/
 
 /* This file is aout.h
 
@@ -113,7 +113,7 @@ struct exec_bytes {
 
 struct exec
 {
-	unsigned long a_info;		/* Use macros N_MAGIC, etc for access */
+	u_int32_t a_info;		/* Use macros N_MAGIC, etc for access */
 	unsigned a_text;		/* length of text, in bytes */
 	unsigned a_data;		/* length of data, in bytes */
 	unsigned a_bss;		/* length of uninitialized data area for file, in bytes */
