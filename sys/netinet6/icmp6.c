@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.79 2004/02/04 11:23:15 dhartmei Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.80 2004/02/04 13:14:42 dhartmei Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ icmp6_input(mp, offp, proto)
 	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
 		/*
 		 * Deliver very specific ICMP6 type only.
-		 * This is important to deilver TOOBIG.  Otherwise PMTUD
+		 * This is important to deliver TOOBIG.  Otherwise PMTUD
 		 * will not work.
 		 */
 		switch (icmp6->icmp6_type) {
