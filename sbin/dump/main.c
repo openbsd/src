@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1996/09/01 15:31:02 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1996/09/14 03:26:02 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -266,7 +266,6 @@ main(argc, argv)
 	if (signal(SIGINT, interrupt) == SIG_IGN)
 		signal(SIGINT, SIG_IGN);
 
-	set_operators();	/* /etc/group snarfed */
 	getfstab();		/* /etc/fstab snarfed */
 	/*
 	 *	disk can be either the full special file name,
