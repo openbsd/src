@@ -1,4 +1,4 @@
-/*	$OpenBSD: koi8,v 1.1 1996/04/29 11:21:11 mickey Exp $	*/
+/*	$OpenBSD: koi8,v 1.2 1996/05/09 14:19:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -49,7 +49,7 @@
     KB_ASCII,	"-",	"_",	"\037",	"-",	"_",	/* 12 - */
     KB_ASCII,	"=",	"+",	"+",	"=",	"+",	/* 13 = */
     KB_ASCII,	"\177",	"\177",	"\010",	"\177",	"\177",	/* 14 backspace */
-    KB_ASCII,	"\t",	"\177\t", "\t",	"\t",	"\177\t",/* 15 tab */
+    KB_ASCII,	"\t",	"\t",   "\t",	"\t",	"\t",	/* 15 tab */
     KB_ASCII,	"q",	"Q",	"\021",	"\xca",	"\xea",	/* 16 q */
     KB_ASCII,	"w",	"W",	"\027",	"\xc3",	"\xe3",	/* 17 w */
     KB_ASCII,	"e",	"E",	"\005",	"\xd5",	"\xf5",	/* 18 e */

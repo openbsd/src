@@ -1,4 +1,4 @@
-/*	$OpenBSD: us.english,v 1.1 1996/04/29 11:21:11 mickey Exp $	*/
+/*	$OpenBSD: us.english,v 1.2 1996/05/09 14:19:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -49,7 +49,7 @@
     KB_ASCII,  "-",      "_",      "\037",   "",       "",  /* 12 - */
     KB_ASCII,  "=",      "+",      "+",      "",       "",  /* 13 = */
     KB_ASCII,  "\177",   "\177",   "\010",   "",       "",  /* 14 backspace */
-    KB_ASCII,  "\t",     "\177\t", "\t",     "",       "",  /* 15 tab */
+    KB_ASCII,  "\t",     "\t",     "\t",     "",       "",  /* 15 tab */
     KB_ASCII,  "q",      "Q",      "\021",   "",       "",  /* 16 q */
     KB_ASCII,  "w",      "W",      "\027",   "",       "",  /* 17 w */
     KB_ASCII,  "e",      "E",      "\005",   "",       "",  /* 18 e */
