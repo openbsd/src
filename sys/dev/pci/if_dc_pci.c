@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.14 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.15 2001/08/14 16:19:01 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -266,7 +266,8 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_21143;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			dc_read_srom(sc, 9);
+			dc_eeprom_width(sc);
+			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		break;
 	case PCI_VENDOR_DAVICOM:
