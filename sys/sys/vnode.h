@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.12 1997/11/24 22:42:34 niklas Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.13 1998/01/10 23:41:17 csapuntz Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -447,6 +447,7 @@ int	vfinddev __P((dev_t, enum vtype, struct vnode **));
 void	vflushbuf __P((struct vnode *vp, int sync));
 int	vflush __P((struct mount *mp, struct vnode *vp, int flags));
 void	vntblinit __P((void));
+void    vn_initialize_syncerd __P((void));
 void	vwakeup __P((struct buf *));
 int 	vget __P((struct vnode *vp, int lockflag, struct proc *p));
 void 	vgone __P((struct vnode *vp));
