@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.32 2002/07/30 19:38:22 miod Exp $
+dnl	$OpenBSD: hardware,v 1.33 2002/08/05 04:05:37 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -142,8 +142,9 @@ Supported devices {:-include-:}:
 
 	Framebuffers:
 		SBUS framebuffers:
+			bwtwo (monochrome, unaccelerated)
 			cgthree (8 bit color, unaccelerated)
-			cgsix (8 bit color, unaccelerated)
+			cgsix (8 bit color)
 		PCI video boards:
 			ATI Rage (vgafb), includes the on-board PGX (8 bit
 			    color, unaccelerated) and PGX24 (24 bit color,
