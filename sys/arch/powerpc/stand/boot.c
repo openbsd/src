@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 1997/02/06 23:44:56 rahnds Exp $	*/
+/*	$OpenBSD: boot.c,v 1.5 1997/04/01 21:01:42 rahnds Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1996/10/07 21:43:02 cgd Exp $	*/
 
 /*
@@ -210,11 +210,13 @@ loadfile(fd, addr, args)
 	}
 #endif
 	close(fd);
+#if 0
 	if (floppyboot) {
 		printf("Please insert root disk and press ENTER ");
 		getchar();
 		printf("\n");
 	}
+#endif
 	chain((void *)exec_addr, args);
 }
 

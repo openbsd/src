@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/02/18 22:36:41 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/04/01 21:01:48 rahnds Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 R=              ..
@@ -23,7 +23,7 @@ LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
 $(PROG):        $(OBJS) $(LIBS) hack-coff
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o ${.TARGET}
 	${OBJCOPY} ${OBJCOPY_ARGS} ${.TARGET}
-	hack-coff ${.TARGET}
+	${.OBJDIR}/hack-coff ${.TARGET}
 #	${MAKEELF} $(REAL_VIRT) a.out $(.TARGET)
 
 hack-coff:	hack-coff.c
