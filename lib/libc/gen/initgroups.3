@@ -1,4 +1,4 @@
-.\"	$NetBSD: initgroups.3,v 1.5 1995/06/03 02:27:17 mycroft Exp $
+.\"	$NetBSD: initgroups.3,v 1.6 1995/10/12 15:39:26 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
-.Fn initgroups "const char *name" "int basegid"
+.Fn initgroups "const char *name" "gid_t basegid"
 .Sh DESCRIPTION
 The
 .Fn initgroups
