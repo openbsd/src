@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl.c,v 1.5 1999/03/03 20:43:30 millert Exp $	*/
+/*	$OpenBSD: ctl.c,v 1.6 2002/06/02 22:29:19 deraadt Exp $	*/
 /*	$NetBSD: ctl.c,v 1.3 1994/12/09 02:14:10 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl.c,v 1.5 1999/03/03 20:43:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctl.c,v 1.6 2002/06/02 22:29:19 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -113,7 +113,7 @@ print_addr(addr)
 
 	printf("addr = %s, port = %o, family = %o zero = ",
 		inet_ntoa(addr.sin_addr), addr.sin_port, addr.sin_family);
-	for (i = 0; i<8;i++)
-	printf("%o ", (int)addr.sin_zero[i]);
+	for (i = 0; i < 8; i++)
+		printf("%o ", (int)addr.sin_zero[i]);
 	putchar('\n');
 }
