@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.130 1999/03/13 21:15:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.131 1999/03/23 08:17:16 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1106,6 +1106,7 @@
 
 /* Sigma Designs */
 #define	PCI_PRODUCT_SIGMA_64GX	0x6401		/* 64GX */
+#define	PCI_PRODUCT_SIGMA_DVDMAGICPRO	0x8300		/* DVDmagic-PRO */
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 Host-AGP */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.130 1999/03/13 21:15:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.131 1999/03/23 08:17:16 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2317,6 +2317,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sigma Designs",
 	    "64GX",
+	},
+	{
+	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_DVDMAGICPRO,
+	    0,
+	    "Sigma Designs",
+	    "DVDmagic-PRO",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
