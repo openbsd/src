@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.32 1999/09/03 18:00:51 art Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.33 1999/11/30 06:44:51 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1222,7 +1222,9 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 		vmap = &curproc->p_vmspace->vm_map;
 		v = trunc_page(vtopte(va));
+#ifdef DEBUG
 		printf("faulting in a pt page map %x va %x\n", vmap, v);
+#endif
 #if defined(UVM)
 		rv = uvm_fault(vmap, v, 0, VM_PROT_READ|VM_PROT_WRITE);
 #else
