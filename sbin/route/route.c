@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.9 1996/09/03 07:29:31 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.10 1996/10/27 14:53:37 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.9 1996/09/03 07:29:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.10 1996/10/27 14:53:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -952,7 +952,7 @@ ns_print(sns)
 	struct ns_addr work;
 	union { union ns_net net_e; u_long long_e; } net;
 	u_short port;
-	static char mybuf[50];
+	static char mybuf[50+MAXHOSTNAMELEN];
 	char cport[10], chost[25];
 	char *host = "";
 	register char *p;
@@ -984,7 +984,8 @@ ns_print(sns)
 	else
 		*cport = '\0';
 
-	(void) sprintf(mybuf,"0x%x.%s%s", ntohl(net.long_e), host, cport);
+	(void) snprintf(mybuf, sizeof mybuf, "0x%x.%s%s",
+	    ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 
