@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.6 1997/07/09 18:22:39 niklas Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.7 1997/07/31 01:14:59 downsj Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1318,15 +1318,18 @@ fxp_init(xsc)
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
 
 	/*
-	 * Toggle a few bits in the DP83840 PHY.
+	 * Toggle a few bits in the PHY.
 	 */
-	if (sc->phy_primary_device == FXP_PHY_DP83840 ||
-	     sc->phy_primary_device == FXP_PHY_DP83840A) {
+	switch (sc->phy_primary_device) {
+	case FXP_PHY_DP83840:
+	case FXP_PHY_DP83840A:
 		fxp_mdi_write(sc, sc->phy_primary_addr, FXP_DP83840_PCR,
 		    fxp_mdi_read(sc, sc->phy_primary_addr, FXP_DP83840_PCR) |
 		    FXP_DP83840_PCR_LED4_MODE |	/* LED4 always indicates duplex */
 		    FXP_DP83840_PCR_F_CONNECT |	/* force link disconnect bypass */
 		    FXP_DP83840_PCR_BIT10);	/* XXX I have no idea */
+		/* fallthrough */
+	case FXP_PHY_82555:
 		/*
 		 * If link0 is set, disable auto-negotiation and then:
 		 *	If link1 is unset = 10Mbps
@@ -1339,24 +1342,31 @@ fxp_init(xsc)
 			int flags;
 
 			flags = (ifp->if_flags & IFF_LINK1) ?
-			     FXP_DP83840_BMCR_SPEED_100M : 0;
+			     FXP_PHY_BMCR_SPEED_100M : 0;
 			flags |= (ifp->if_flags & IFF_LINK2) ?
-			     FXP_DP83840_BMCR_FULLDUPLEX : 0;
+			     FXP_PHY_BMCR_FULLDUPLEX : 0;
 			fxp_mdi_write(sc, sc->phy_primary_addr,
-			    FXP_DP83840_BMCR,
+			    FXP_PHY_BMCR,
 			    (fxp_mdi_read(sc, sc->phy_primary_addr,
-			    FXP_DP83840_BMCR) &
-			    ~(FXP_DP83840_BMCR_AUTOEN |
-			      FXP_DP83840_BMCR_SPEED_100M |
-			     FXP_DP83840_BMCR_FULLDUPLEX)) | flags);
+			    FXP_PHY_BMCR) &
+			    ~(FXP_PHY_BMCR_AUTOEN |
+			      FXP_PHY_BMCR_SPEED_100M |
+			     FXP_PHY_BMCR_FULLDUPLEX)) | flags);
 		} else {
 			fxp_mdi_write(sc, sc->phy_primary_addr,
-			    FXP_DP83840_BMCR,
+			    FXP_PHY_BMCR,
 			    (fxp_mdi_read(sc, sc->phy_primary_addr,
-			     FXP_DP83840_BMCR) |
-			    FXP_DP83840_BMCR_AUTOEN));
+			     FXP_PHY_BMCR) |
+			    FXP_PHY_BMCR_AUTOEN));
 		}
-	} else {
+		break;
+	/*
+	 * The Seeq 80c24 doesn't have a PHY programming interface, so do
+	 * nothing.
+	 */
+	case FXP_PHY_80C24:
+		break;
+	default:
 		printf(FXP_FORMAT
 		    ": warning: unsupported PHY, type = %d, addr = %d\n",
 		     FXP_ARGS(sc), sc->phy_primary_device,
