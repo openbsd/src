@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.19 2004/02/14 15:09:22 grange Exp $ */
+/*	$OpenBSD: cpu.c,v 1.20 2004/11/18 16:10:10 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -42,19 +42,6 @@
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
-
-#define MPC601          1
-#define MPC603          3
-#define MPC604          4
-#define MPC603e         6
-#define MPC603ev        7
-#define MPC750          8
-#define MPC604ev        9
-#define MPC7400         12
-#define	IBM750FX	0x7000
-#define MPC7410         0x800c
-#define MPC7450         0x8000
-#define MPC7455         0x8001
 
 /* only valid on 603(e,ev) and G3, G4 */
 #define HID0_DOZE	(1 << (31-8))
@@ -122,43 +109,43 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	pvr = ppc_mfpvr();
 	cpu = pvr >> 16;
 	switch (cpu) {
-	case MPC601:
+	case PPC_CPU_MPC601:
 		snprintf(cpu_model, sizeof(cpu_model), "601");
 		break;
-	case MPC603:
+	case PPC_CPU_MPC603:
 		snprintf(cpu_model, sizeof(cpu_model), "603");
 		break;
-	case MPC604:
+	case PPC_CPU_MPC604:
 		snprintf(cpu_model, sizeof(cpu_model), "604");
 		break;
-	case MPC603e:
+	case PPC_CPU_MPC603e:
 		snprintf(cpu_model, sizeof(cpu_model), "603e");
 		break;
-	case MPC603ev:
+	case PPC_CPU_MPC603ev:
 		snprintf(cpu_model, sizeof(cpu_model), "603ev");
 		break;
-	case MPC750:
+	case PPC_CPU_MPC750:
 		snprintf(cpu_model, sizeof(cpu_model), "750");
 		break;
-	case MPC604ev:
+	case PPC_CPU_MPC604ev:
 		snprintf(cpu_model, sizeof(cpu_model), "604ev");
 		break;
-	case MPC7400:
+	case PPC_CPU_MPC7400:
 		snprintf(cpu_model, sizeof(cpu_model), "7400");
 		break;
-	case IBM750FX:
+	case PPC_CPU_IBM750FX:
 		snprintf(cpu_model, sizeof(cpu_model), "750FX");
 		break;
-	case MPC7410:
+	case PPC_CPU_MPC7410:
 		snprintf(cpu_model, sizeof(cpu_model), "7410");
 		break;
-	case MPC7450:
+	case PPC_CPU_MPC7450:
 		if ((pvr & 0xf) < 3)
 			snprintf(cpu_model, sizeof(cpu_model), "7450");
 		 else
 			snprintf(cpu_model, sizeof(cpu_model), "7451");
 		break;
-	case MPC7455:
+	case PPC_CPU_MPC7455:
 		snprintf(cpu_model, sizeof(cpu_model), "7455");
 		break;
 	default:
@@ -199,18 +186,18 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	/* power savings mode */
 	hid0 = ppc_mfhid0();
 	switch (cpu) {
-	case MPC603:
-	case MPC603e:
-	case MPC750:
-	case MPC7400:
-	case IBM750FX:
-	case MPC7410:
+	case PPC_CPU_MPC603:
+	case PPC_CPU_MPC603e:
+	case PPC_CPU_MPC750:
+	case PPC_CPU_MPC7400:
+	case PPC_CPU_IBM750FX:
+	case PPC_CPU_MPC7410:
 		/* select DOZE mode */
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
 		break;
-	case MPC7450:
-	case MPC7455:
+	case PPC_CPU_MPC7450:
+	case PPC_CPU_MPC7455:
 		/* select NAP mode */
 		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
@@ -218,15 +205,16 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
-		if (cpu == MPC7450 && (pvr & 0xffff) < 0x0200)
+		if (cpu == PPC_CPU_MPC7450 && (pvr & 0xffff) < 0x0200)
 			hid0 &= ~HID0_BTIC;
 		break;
 	}
 	ppc_mthid0(hid0);
 
 	/* if processor is G3 or G4, configure l2 cache */
-	if ( (cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX)
-	    || (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7455)) {
+	if (cpu == PPC_CPU_MPC750 || cpu == PPC_CPU_MPC7400 ||
+	    cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7410 ||
+	    cpu == PPC_CPU_MPC7450 || cpu == PPC_CPU_MPC7455) {
 		config_l2cr(cpu);
 	}
 	printf("\n");
@@ -309,7 +297,7 @@ config_l2cr(int cpu)
 	}
 
 	if (l2cr & L2CR_L2E) {
-		if (cpu == MPC7450 || cpu == MPC7455) {
+		if (cpu == PPC_CPU_MPC7450 || cpu == PPC_CPU_MPC7455) {
 			u_int l3cr;
 
 			printf(": 256KB L2 cache");
@@ -318,7 +306,7 @@ config_l2cr(int cpu)
 			if (l3cr & L3CR_L3E)
 				printf(", %cMB L3 cache",
 				    l3cr & L3CR_L3SIZ ? '2' : '1');
-		} else if (cpu == IBM750FX)
+		} else if (cpu == PPC_CPU_IBM750FX)
 			printf(": 512KB L2 cache");
 		else {
 			switch (l2cr & L2CR_L2SIZ) {

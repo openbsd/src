@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 2004/06/13 21:49:19 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 2004/11/18 16:10:08 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #define	CLKF_INTR(frame)	((frame)->depth != 0)
 
 #define	cpu_swapout(p)
-#define cpu_wait(p)
+#define	cpu_wait(p)
 
 void	delay(unsigned);
 #define	DELAY(n)		delay(n)
@@ -69,7 +69,7 @@ syncicache(void *from, int len)
 
 	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
 	l = len;
-	
+
 	do {
 		__asm __volatile ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
@@ -89,10 +89,10 @@ invdcache(void *from, int len)
 {
 	int l;
 	char *p = from;
-	
+
 	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
 	l = len;
-	
+
 	do {
 		__asm __volatile ("dcbi 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
@@ -104,12 +104,12 @@ invdcache(void *from, int len)
 static __inline u_int32_t ppc_mf ## name (void)			\
 {								\
 	int ret;						\
-        __asm __volatile ("mfspr %0," # n : "=r" (ret));	\
+	__asm __volatile ("mfspr %0," # n : "=r" (ret));	\
 	return ret;						\
 }								\
 static __inline void ppc_mt ## name (u_int32_t val)		\
 {								\
-        __asm __volatile ("mtspr "# n ",%0" :: "r" (val));	\
+	__asm __volatile ("mtspr "# n ",%0" :: "r" (val));	\
 }								\
 
 FUNC_SPR(0, mq)
@@ -159,7 +159,7 @@ static __inline u_int32_t
 ppc_mftbl (void)
 {
 	int ret;
-        __asm __volatile ("mftb %0" : "=r" (ret));
+	__asm __volatile ("mftb %0" : "=r" (ret));
 	return ret;
 }
 
@@ -221,5 +221,21 @@ ppc_intr_disable(void)
 }
 
 int ppc_cpuspeed(int *);
+
+/*
+ * PowerPC CPU types
+ */
+#define	PPC_CPU_MPC601		1
+#define	PPC_CPU_MPC603		3
+#define	PPC_CPU_MPC604		4
+#define	PPC_CPU_MPC603e		6
+#define	PPC_CPU_MPC603ev	7
+#define	PPC_CPU_MPC750		8
+#define	PPC_CPU_MPC604ev	9
+#define	PPC_CPU_MPC7400		12
+#define	PPC_CPU_IBM750FX	0x7000
+#define	PPC_CPU_MPC7410		0x800c
+#define	PPC_CPU_MPC7450		0x8000
+#define	PPC_CPU_MPC7455		0x8001
 
 #endif	/* _POWERPC_CPU_H_ */
