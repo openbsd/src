@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.49 2002/05/24 13:10:52 art Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.50 2002/11/10 21:23:09 miod Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1300,7 +1300,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		 */
 		if (!ccdmap && !(ccd.ccd_flags & CCDF_OLD))
 			ccdmap = uvm_km_suballoc(kernel_map, &min, &max,
-			    CCD_CLUSTERS * MAXBSIZE, FALSE, FALSE, NULL);
+			    CCD_CLUSTERS * MAXBSIZE, VM_MAP_INTRSAFE,
+			    FALSE, NULL);
 
 		/* Attach the disk. */
 		cs->sc_dkdev.dk_name = cs->sc_xname;
