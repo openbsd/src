@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.35 2001/06/27 04:44:03 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.36 2001/06/27 05:35:51 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -681,8 +681,7 @@ ipsp_pending_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw)
 {
 	struct ipsec_acquire *ipa;
 
-	for (ipa = TAILQ_FIRST(&ipo->ipo_acquires); ipa;
-	    ipa = TAILQ_NEXT(ipa, ipa_next)) {
+	TAILQ_FOREACH (ipa, &ipo->ipo_acquires, ipa_ipo_next) {
 		if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
 			return ipa;
 	}
@@ -852,8 +851,7 @@ ipsec_get_acquire(u_int32_t seq)
 {
 	struct ipsec_acquire *ipa;
 
-	for (ipa = TAILQ_FIRST(&ipsec_acquire_head); ipa;
-	    ipa = TAILQ_NEXT(ipa, ipa_next))
+	TAILQ_FOREACH (ipa, &ipsec_acquire_head, ipa_ipo_next)
 		if (ipa->ipa_seq == seq)
 			return ipa;
 
