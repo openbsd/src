@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.26 2001/03/26 05:37:03 aaron Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.27 2001/06/23 15:26:29 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.28 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
@@ -214,29 +214,29 @@ struct vndbuf {
 /*
  * We keep a of pool vndbuf's and vndxfer structures.
  */
-struct pool *vndxfer_pool;
-struct pool *vndbuf_pool;
+struct pool vndxfer_pool;
+struct pool vndbuf_pool;
 
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
 	vnx = (struct vndxfer *)					\
-		pool_get(vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
+		pool_get(&vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
 	splx(s);							\
 } while (0)
 
 #define putvndxfer(vnx) {						\
-	pool_put(vndxfer_pool, (void *)(vnx));				\
+	pool_put(&vndxfer_pool, (void *)(vnx));				\
 }
 
 #define	getvndbuf(vbp)	do {						\
 	int s = splbio();						\
 	vbp = (struct vndbuf *)						\
-		pool_get(vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
+		pool_get(&vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
 	splx(s);							\
 } while (0)
 
 #define putvndbuf(vbp) {						\
-	pool_put(vndbuf_pool, (void *)(vbp));				\
+	pool_put(&vndbuf_pool, (void *)(vbp));				\
 }
 
 
@@ -245,7 +245,7 @@ struct pool *vndbuf_pool;
  */
 static struct extent *swapmap;		/* controls the mapping of /dev/drum */
 SIMPLEQ_HEAD(swapbufhead, swapbuf);
-struct pool *swapbuf_pool;
+struct pool swapbuf_pool;
 
 /* list of all active swap devices [by priority] */
 LIST_HEAD(swap_priority, swappri);
@@ -334,24 +334,16 @@ uvm_swap_init()
 	 * be adjusted by MD code before we get here].
 	 */
 
-	swapbuf_pool =
-		pool_create(sizeof(struct swapbuf), 0, 0, 0, "swp buf", 0,
+
+	pool_init(&swapbuf_pool, sizeof(struct swapbuf), 0, 0, 0, "swp buf", 0,
 			    NULL, NULL, 0);
-	if (swapbuf_pool == NULL)
-		panic("swapinit: pool_create failed");
 	/* XXX - set a maximum on swapbuf_pool? */
 
-	vndxfer_pool =
-		pool_create(sizeof(struct vndxfer), 0, 0, 0, "swp vnx", 0,
-			    NULL, NULL, 0);
-	if (vndxfer_pool == NULL)
-		panic("swapinit: pool_create failed");
+	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
+			    0, NULL, NULL, 0);
 
-	vndbuf_pool =
-		pool_create(sizeof(struct vndbuf), 0, 0, 0, "swp vnd", 0,
+	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", 0,
 			    NULL, NULL, 0);
-	if (vndbuf_pool == NULL)
-		panic("swapinit: pool_create failed");
 
 	/*
 	 * Setup the initial swap partition
@@ -1186,7 +1178,7 @@ swap_on(p, sdp)
 	int s = splbio();
 	int n = 8 * sdp->swd_maxactive;
 
-	(void)pool_prime(swapbuf_pool, n, 0);
+	(void)pool_prime(&swapbuf_pool, n, 0);
 
 	if (vp->v_type == VREG) {
 		/* Allocate additional vnx and vnd buffers */
@@ -1197,10 +1189,10 @@ swap_on(p, sdp)
 		 */
 
 		n = 8 * sdp->swd_maxactive;
-		(void)pool_prime(vndxfer_pool, n, 0);
+		(void)pool_prime(&vndxfer_pool, n, 0);
 
 		n = 16 * sdp->swd_maxactive;
-		(void)pool_prime(vndbuf_pool, n, 0);
+		(void)pool_prime(&vndbuf_pool, n, 0);
 	}
 	splx(s);
 #endif
@@ -2022,7 +2014,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	pflag = ((flags & B_ASYNC) != 0 || curproc == uvm.pagedaemon_proc)
 		? 0
 		: PR_WAITOK;
-	sbp = pool_get(swapbuf_pool, pflag);
+	sbp = pool_get(&swapbuf_pool, pflag);
 	splx(s);		/* drop splbio */
 
 	/*
@@ -2157,7 +2149,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if (bp->b_vp)
 		brelvp(bp);
 
-	pool_put(swapbuf_pool, sbp);
+	pool_put(&swapbuf_pool, sbp);
 	splx(s);
 
 	/*
@@ -2265,7 +2257,7 @@ uvm_swap_aiodone(aio)
 	 * finally, we can dispose of the swapbuf
 	 */
 	s = splbio();
-	pool_put(swapbuf_pool, sbp);
+	pool_put(&swapbuf_pool, sbp);
 	splx(s);
 
 	/*
