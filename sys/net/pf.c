@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.472 2004/12/10 22:13:25 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.473 2004/12/11 11:45:44 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5208,8 +5208,12 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m0 = *m;
 	}
 
-	if (m0->m_len < sizeof(struct ip))
-		panic("pf_route: m0->m_len < sizeof(struct ip)");
+	if (m0->m_len < sizeof(struct ip)) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_route: m0->m_len < sizeof(struct ip)\n"));
+		goto bad;
+	}
+
 	ip = mtod(m0, struct ip *);
 
 	ro = &iproute;
@@ -5232,8 +5236,11 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	} else {
-		if (TAILQ_EMPTY(&r->rpool.list))
-			panic("pf_route: TAILQ_EMPTY(&r->rpool.list)");
+		if (TAILQ_EMPTY(&r->rpool.list)) {
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf_route: TAILQ_EMPTY(&r->rpool.list)\n"));
+			goto bad;
+		}
 		if (s == NULL) {
 			pf_map_addr(AF_INET, r, (struct pf_addr *)&ip->ip_src,
 			    &naddr, NULL, &sn);
@@ -5256,8 +5263,11 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			goto bad;
 		else if (m0 == NULL)
 			goto done;
-		if (m0->m_len < sizeof(struct ip))
-			panic("pf_route: m0->m_len < sizeof(struct ip)");
+		if (m0->m_len < sizeof(struct ip)) {
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf_route: m0->m_len < sizeof(struct ip)\n"));
+			goto bad;
+		}
 		ip = mtod(m0, struct ip *);
 	}
 
@@ -5402,8 +5412,11 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m0 = *m;
 	}
 
-	if (m0->m_len < sizeof(struct ip6_hdr))
-		panic("pf_route6: m0->m_len < sizeof(struct ip6_hdr)");
+	if (m0->m_len < sizeof(struct ip6_hdr)) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_route6: m0->m_len < sizeof(struct ip6_hdr)\n"));
+		goto bad;
+	}
 	ip6 = mtod(m0, struct ip6_hdr *);
 
 	ro = &ip6route;
@@ -5423,8 +5436,11 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		return;
 	}
 
-	if (TAILQ_EMPTY(&r->rpool.list))
-		panic("pf_route6: TAILQ_EMPTY(&r->rpool.list)");
+	if (TAILQ_EMPTY(&r->rpool.list)) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_route6: TAILQ_EMPTY(&r->rpool.list)\n"));
+		goto bad;
+	}
 	if (s == NULL) {
 		pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
 		    &naddr, NULL, &sn);
@@ -5446,8 +5462,11 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			goto bad;
 		else if (m0 == NULL)
 			goto done;
-		if (m0->m_len < sizeof(struct ip6_hdr))
-			panic("pf_route6: m0->m_len < sizeof(struct ip6_hdr)");
+		if (m0->m_len < sizeof(struct ip6_hdr)) {
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf_route6: m0->m_len < sizeof(struct ip6_hdr)\n"));
+			goto bad;
+		}
 		ip6 = mtod(m0, struct ip6_hdr *);
 	}
 
@@ -5916,7 +5935,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("non-M_PKTHDR is passed to pf_test");
+		panic("non-M_PKTHDR is passed to pf_test6");
 #endif /* DIAGNOSTIC */
 
 	memset(&pd, 0, sizeof(pd));
