@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.c,v 1.10 1998/06/27 12:06:44 brian Exp $
+ * $Id: lcp.c,v 1.11 1998/06/28 09:41:40 brian Exp $
  *
  * TODO:
  *      o Validate magic number received from peer.
@@ -261,7 +261,7 @@ do {								\
 do {								\
   o.id = ty;							\
   o.len = 6;							\
-  *(u_long *)o.data = htonl(arg);				\
+  *(u_int32_t *)o.data = htonl(arg);				\
   cp += LcpPutConf(LogLCP, cp, &o, cftypes[o.id], "0x%08lx", (u_long)arg);\
 } while (0)
 
@@ -281,7 +281,7 @@ do {								\
   o.id = TY_QUALPROTO;						\
   o.len = 8;							\
   *(u_short *)o.data = htons(PROTO_LQR);			\
-  *(u_long *)(o.data+2) = htonl(period);			\
+  *(u_int32_t *)(o.data+2) = htonl(period);			\
   cp += LcpPutConf(LogLCP, cp, &o, cftypes[o.id],		\
                    "period %ld", (u_long)period);		\
 } while (0)

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: command.c,v 1.30 1998/06/07 17:10:33 brian Exp $
+ * $Id: command.c,v 1.31 1998/06/28 09:41:37 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -1330,7 +1330,7 @@ SetVariable(struct cmdargs const *arg)
 {
   u_long map;
   const char *argp;
-  int param = (int)arg->data;
+  long param = (long)arg->data;
 
   if (arg->argc > 0)
     argp = *arg->argv;
