@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.11 2000/10/30 02:35:33 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.12 2000/12/29 14:36:04 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -458,9 +458,12 @@ void dhcpack (packet)
 	cancel_timeout (send_request, ip);
 
 	/* Figure out the lease time. */
-	ip -> client -> new -> expiry =
-		getULong (ip -> client ->
-			  new -> options [DHO_DHCP_LEASE_TIME].data);
+        if (ip -> client -> new -> options [DHO_DHCP_LEASE_TIME].data)
+		ip -> client -> new -> expiry =
+			getULong (ip -> client ->
+			  	  new -> options [DHO_DHCP_LEASE_TIME].data);
+	else
+		ip -> client -> new -> expiry = default_lease_time;
 
 	/* Take the server-provided renewal time if there is one;
 	   otherwise figure it out according to the spec. */
