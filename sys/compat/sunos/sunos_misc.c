@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.37 2002/03/14 20:31:31 mickey Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.38 2002/07/25 22:18:27 nordin Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -1169,10 +1169,6 @@ sunos_sys_ostime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/*
-	 * XXX - settime() is private to kern_time.c so we just lie.
-	 */
-#if 0
 	struct sunos_sys_ostime_args /* {
 		syscallarg(int) time;
 	} */ *uap = v;
@@ -1184,11 +1180,8 @@ sunos_sys_ostime(p, v, retval)
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	settime(&tv);
-	return(0);
-#else
-	return(EPERM);
-#endif
+	error = settime(&tv);
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.13 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.14 2002/07/25 22:18:27 nordin Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ struct clockinfo {
 int	itimerfix(struct timeval *tv);
 int	itimerdecr(struct itimerval *itp, int usec);
 void	microtime(struct timeval *tv);
-void	settime(struct timeval *tv);
+int	settime(struct timeval *tv);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
 #else /* !_KERNEL */
