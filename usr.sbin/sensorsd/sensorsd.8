@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.2 2003/10/06 06:59:39 henning Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.3 2003/10/07 19:38:22 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -35,6 +35,12 @@ to send an alert if they are out of the given limits.
 Limits for a particular sensor may be specified in the
 .Xr sensorsd.conf 5
 configuration file.
+.Sh FILES
+.Bl -tag -width "/etc/sensorsd.conf"
+.It /etc/sensorsd.conf
+Configuration file for
+.Nm .
+.El
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr syslog 3 ,
