@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.23 2003/08/27 20:59:15 mickey Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.24 2003/10/06 16:04:45 fgsch Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -463,6 +463,7 @@ typedef u_int8_t pci_revision_t;
 /*
  * Power Management Control Status Register; access via capability pointer.
  */
+#define PCI_PMCSR		0x04
 #define PCI_PMCSR_STATE_MASK	0x03
 #define PCI_PMCSR_STATE_D0	0x00
 #define PCI_PMCSR_STATE_D1	0x01
