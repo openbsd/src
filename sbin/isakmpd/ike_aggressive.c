@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_aggressive.c,v 1.7 2004/05/23 18:17:55 hshoexer Exp $	 */
+/* $OpenBSD: ike_aggressive.c,v 1.8 2004/07/29 08:54:08 ho Exp $	 */
 /* $EOM: ike_aggressive.c,v 1.4 2000/01/31 22:33:45 niklas Exp $	 */
 
 /*
@@ -54,16 +54,20 @@
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
+#if defined (USE_NAT_TRAVERSAL)
+#include "nat_traversal.h"
+#endif
 #include "prf.h"
 #include "sa.h"
 #include "transport.h"
 #include "util.h"
 
-static int      initiator_recv_SA_KE_NONCE_ID_AUTH(struct message *);
-static int      initiator_send_SA_KE_NONCE_ID(struct message *);
-static int      initiator_send_AUTH(struct message *);
-static int      responder_recv_SA_KE_NONCE_ID(struct message *);
-static int      responder_send_SA_KE_NONCE_ID_AUTH(struct message *);
+static int	initiator_recv_SA_KE_NONCE_ID_AUTH(struct message *);
+static int	initiator_send_SA_KE_NONCE_ID(struct message *);
+static int	initiator_send_AUTH(struct message *);
+static int	responder_recv_SA_KE_NONCE_ID(struct message *);
+static int	responder_send_SA_KE_NONCE_ID_AUTH(struct message *);
+static int	responder_recv_AUTH(struct message *);
 
 int (*ike_aggressive_initiator[])(struct message *) = {
 	initiator_send_SA_KE_NONCE_ID,
@@ -74,7 +78,7 @@ int (*ike_aggressive_initiator[])(struct message *) = {
 int (*ike_aggressive_responder[])(struct message *) = {
 	responder_recv_SA_KE_NONCE_ID,
 	responder_send_SA_KE_NONCE_ID_AUTH,
-	ike_phase_1_recv_AUTH
+	responder_recv_AUTH
 };
 
 /* Offer a set of transforms to the responder in the MSG message.  */
@@ -159,5 +163,22 @@ responder_send_SA_KE_NONCE_ID_AUTH(struct message *msg)
 		return -1;
 
 	return ike_phase_1_responder_send_ID_AUTH(msg);
-	return -1;
+}
+
+/*
+ * Reply with the transform we chose.  Send our public DH value and a nonce
+ * to the initiator.
+ */
+static int
+responder_recv_AUTH(struct message *msg)
+{
+	if (ike_phase_1_recv_AUTH(msg))
+		return -1;
+
+#if defined (USE_NAT_TRAVERSAL)
+	/* Aggressive: Check for NAT-D payloads and contents.  */
+	if (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
+		(void)nat_t_exchange_check_nat_d(msg);
+#endif
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.54 2004/07/05 17:33:35 pvalchev Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.55 2004/07/29 08:54:08 ho Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -592,8 +592,9 @@ ike_phase_1_recv_KE_NONCE(struct message *msg)
 		return -1;
 	}
 #if defined (USE_NAT_TRAVERSAL)
-	/* Check NAT-D payloads and contents.  */
-	if (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
+	/* MainMode: Check for NAT-D payloads and contents.  */
+	if (msg->exchange->type == ISAKMP_EXCH_ID_PROT &&
+	    msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
 		(void)nat_t_exchange_check_nat_d(msg);
 #endif
 	return 0;
