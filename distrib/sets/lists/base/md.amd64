@@ -1,8 +1,10 @@
+
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
 ./sbin/kbd
 ./sbin/ldconfig
+./sbin/mount_ntfs
 ./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/gccbug
