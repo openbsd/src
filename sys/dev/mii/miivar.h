@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.7 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.8 2000/10/16 16:53:54 aaron Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -207,7 +207,7 @@ struct mii_media {
 	    (p)->mii_phy, (r), (v))
 
 #define mii_phy_probe(x, y, z) \
-	mii_attach((x), (y), (z), MII_PHY_ANY, MII_OFFSET_ANY, MIIF_NOISOLATE)
+	mii_attach((x), (y), (z), MII_PHY_ANY, MII_OFFSET_ANY, 0)
 
 void	mii_attach __P((struct device *, struct mii_data *, int, int,
 	    int, int));
