@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 2001/03/18 17:39:54 millert Exp $
+#	$OpenBSD: Makefile,v 1.91 2001/05/14 12:34:27 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -65,46 +65,46 @@ NOOBJ=	noobj
 # Change SYS_INCLUDE in bsd.own.mk to "symlinks" if you don't want copies
 .include <bsd.own.mk>
 SYS_INCLUDE?=	copies
-.if (${KERBEROS:L} == "yes")
+.if ${KERBEROS:L} == "yes"
 RDIRS+=	../kerberosIV/lib
 PRDIRS+=../kerberosIV/lib/kadm ../kerberosIV/lib/krb
 .endif
 
 prereq:
-	@-for i in ${PRDIRS}; do \
+	@for i in ${PRDIRS}; do \
 		echo preparing in ${.CURDIR}/$$i; \
-		(cd ${.CURDIR}/$$i; ${MAKE} prereq) \
+		cd ${.CURDIR}/$$i && ${MAKE} prereq; \
 	done
-	@-for i in ${PWDIRS}; do \
+	@for i in ${PWDIRS}; do \
 		echo preparing in ${.CURDIR}/$$i; \
-		(cd ${.CURDIR}/$$i; ${MAKE} -f Makefile.bsd-wrapper prereq) \
+		cd ${.CURDIR}/$$i && ${MAKE} -f Makefile.bsd-wrapper prereq; \
 	done
 
 includes:
 	@echo installing ${FILES}
-	@-for i in ${FILES}; do \
+	@for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${DIRS}
-	@-for i in ${DIRS}; do \
+	@for i in ${DIRS}; do \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${DESTDIR}/usr/include/$$i; \
-		(cd $$i; for j in *.[ih]; do \
+		cd ${.CURDIR}/$$i && for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
 			${INSTALL} ${INSTALL_COPY} -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
-		done); \
+		done; \
 	done
 	@rm -f ${DESTDIR}/usr/include/openssl
 	@ln -sf ssl ${DESTDIR}/usr/include/openssl
 	@echo installing ${LFILES}
-	@-for i in ${LFILES}; do \
-		rm -f ${DESTDIR}/usr/include/$$i; \
+	@for i in ${LFILES}; do \
+		rm -f ${DESTDIR}/usr/include/$$i && \
 		ln -s sys/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${MFILES}
-	@-for i in ${MFILES}; do \
-		rm -f ${DESTDIR}/usr/include/$$i; \
+	@for i in ${MFILES}; do \
+		rm -f ${DESTDIR}/usr/include/$$i && \
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
@@ -112,19 +112,19 @@ includes:
 		xargs chmod a=r
 	find ${DESTDIR}/usr/include -type d | \
 		xargs chmod u=rwx,go=rx
-	@-for i in ${RDIRS}; do \
+	@for i in ${RDIRS}; do \
 		echo installing in ${.CURDIR}/$$i; \
-		(cd ${.CURDIR}/$$i; ${MAKE} includes) \
+		cd ${.CURDIR}/$$i && ${MAKE} includes; \
 	done
-	@-for i in ${WDIRS}; do \
+	@for i in ${WDIRS}; do \
 		echo installing in ${.CURDIR}/$$i; \
-		(cd ${.CURDIR}/$$i; ${MAKE} -f Makefile.bsd-wrapper includes) \
+		cd ${.CURDIR}/$$i && ${MAKE} -f Makefile.bsd-wrapper includes; \
 	done
 
 copies:
 	@echo copies: ${LDIRS}
-	@-for i in ${LDIRS}; do \
-		rm -rf ${DESTDIR}/usr/include/$$i; \
+	@for i in ${LDIRS}; do \
+		rm -rf ${DESTDIR}/usr/include/$$i && \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${DESTDIR}/usr/include/$$i ; \
 	done
@@ -152,7 +152,7 @@ copies:
 symlinks:
 	@echo symlinks: ${LDIRS}
 	@for i in ${LDIRS}; do \
-		rm -rf ${DESTDIR}/usr/include/$$i; \
+		rm -rf ${DESTDIR}/usr/include/$$i && \
 		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
@@ -162,8 +162,9 @@ symlinks:
 		ln -s /sys/arch/${MACHINE_ARCH}/include \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 	fi
-	ln -sf ${MACHINE} ${DESTDIR}/usr/include/machine ; \
+	ln -sf ${MACHINE} ${DESTDIR}/usr/include/machine
 
 includes: ${SYS_INCLUDE}
 
+.PHONY: prereq includes copies symlink
 .include <bsd.prog.mk>

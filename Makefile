@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 2001/03/28 22:52:22 todd Exp $
+#	$OpenBSD: Makefile,v 1.66 2001/05/14 12:34:26 espie Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -53,48 +53,44 @@ SUBDIR+= regress
 
 regression-tests:
 	@echo Running regression tests...
-	@(cd ${.CURDIR}/regress && ${MAKE} regress)
+	@cd ${.CURDIR}/regress && exec ${MAKE} regress
 .endif
 
 includes:
-	(cd ${.CURDIR}/include; ${MAKE} prereq; ${MAKE} includes)
+	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${MAKE} includes
 
 beforeinstall:
-.ifndef DESTDIR
-	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR= distrib-dirs)
-.else
-	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
-.endif
-	(cd ${.CURDIR}/include; ${MAKE} includes)
+	cd ${.CURDIR}/etc && exec ${MAKE} DESTDIR=${DESTDIR} distrib-dirs
+	cd ${.CURDIR}/include && exec ${MAKE} includes
 
 afterinstall:
 .ifndef NOMAN
-	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
+	cd ${.CURDIR}/share/man && exec ${MAKE} makedb
 .endif
 
 build:
 .ifdef GLOBAL_AUTOCONF_CACHE
 	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
 .endif
-	(cd ${.CURDIR}/share/mk && ${SUDO} ${MAKE} install)
-	(cd ${.CURDIR}/include; ${MAKE} prereq; ${SUDO} ${MAKE} includes)
+	cd ${.CURDIR}/share/mk && exec ${SUDO} ${MAKE} install
+	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${SUDO} ${MAKE} includes
 	${SUDO} ${MAKE} cleandir
-	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 ${SUDO} ${MAKE} install)
-	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 ${SUDO} ${MAKE} install)
+	cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && \
+	    NOMAN=1 exec ${SUDO} ${MAKE} install
+	cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
+	    NOMAN=1 exec ${SUDO} ${MAKE} install
 .if (${KERBEROS:L} == "yes")
-	(cd ${.CURDIR}/kerberosIV/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 ${SUDO} ${MAKE} install)
+	cd ${.CURDIR}/kerberosIV/lib && ${MAKE} depend && ${MAKE} && \
+	    NOMAN=1 exec ${SUDO} ${MAKE} install
 .endif
-	(cd ${.CURDIR}/gnu/usr.bin/perl && \
+	cd ${.CURDIR}/gnu/usr.bin/perl && \
 	    ${MAKE} -f Makefile.bsd-wrapper depend && \
 	    ${MAKE} -f Makefile.bsd-wrapper perl.lib && \
-	    ${SUDO} ${MAKE} -f Makefile.bsd-wrapper install.lib)
+	    exec ${SUDO} ${MAKE} -f Makefile.bsd-wrapper install.lib
 .if (${MACHINE_ARCH} == "mips")
 	ldconfig -R
 .endif
-	${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install
+	${MAKE} depend && ${MAKE} && exec ${SUDO} ${MAKE} install
 
 .if !defined(TARGET)
 cross-tools:
