@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.10 1995/08/31 22:06:22 jtc Exp $	*/
+/*	$NetBSD: tsort.c,v 1.11 1996/01/17 20:37:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: tsort.c,v 1.10 1995/08/31 22:06:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: tsort.c,v 1.11 1996/01/17 20:37:53 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ typedef struct _buf {
 
 DB *db;
 NODE *graph, **cycle_buf, **longest_cycle;
-int debug, longest;
+int debug, longest, quiet;
 
 void	 add_arc __P((char *, char *));
 int	 find_cycle __P((NODE *, NODE *, int, int));
@@ -124,13 +124,16 @@ main(argc, argv)
 	int bsize, ch, nused;
 	BUF bufs[2];
 
-	while ((ch = getopt(argc, argv, "dl")) != EOF)
+	while ((ch = getopt(argc, argv, "dlq")) != EOF)
 		switch (ch) {
 		case 'd':
 			debug = 1;
 			break;
 		case 'l':
 			longest = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case '?':
 		default:
@@ -341,10 +344,12 @@ tsort()
 		for (n = graph; n != NULL; n = n->n_next)
 			if (!(n->n_flags & NF_ACYCLIC))
 				if (cnt = find_cycle(n, n, 0, 0)) {
-					warnx("cycle in data");
-					for (i = 0; i < cnt; i++)
-						warnx("%s", 
-						    longest_cycle[i]->n_name);
+					if (!quiet) {
+						warnx("cycle in data");
+						for (i = 0; i < cnt; i++)
+							warnx("%s", 
+							    longest_cycle[i]->n_name);
+					}
 					remove_node(n);
 					clear_cycle();
 					break;
@@ -429,6 +434,6 @@ find_cycle(from, to, longest_len, depth)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: tsort [-l] [file]\n");
+	(void)fprintf(stderr, "usage: tsort [-lq] [file]\n");
 	exit(1);
 }

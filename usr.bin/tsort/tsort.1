@@ -1,4 +1,4 @@
-.\"	$NetBSD: tsort.1,v 1.5 1994/12/07 01:06:24 jtc Exp $
+.\"	$NetBSD: tsort.1,v 1.6 1996/01/17 20:37:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 .Sh SYNOPSIS
 .Nm tsort
 .Op Fl l
+.Op Fl q
 .Op Ar file
 .Sh DESCRIPTION
 .Nm Tsort
@@ -68,9 +69,13 @@ Cycles are reported on standard error.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl l 
+.It Fl l
 Search for and display the longest cycle.
 Can take a very long time.
+.It Fl q
+Do not display informational messages about cycles.  This is primarily
+intended for building libraries, where optimal ordering is not critical,
+and cycles occur often.
 .El
 .Sh SEE ALSO
 .Xr ar 1
