@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.14 1999/03/11 01:35:03 pjanzen Exp $
+.\"	$OpenBSD: newfs.8,v 1.15 1999/04/10 04:09:23 millert Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -57,6 +57,7 @@
 .Op Fl n Ar nrpos
 .Op Fl o Ar optimization
 .Op Fl p Ar sectors
+.Op Fl q
 .Op Fl r Ar revolutions
 .Op Fl s Ar size
 .Op Fl t Ar fstype
@@ -148,6 +149,10 @@ Creates a
 format filesystem.
 This options is primarily used to build root filesystems
 that can be understood by older boot ROMs.
+.It Fl q
+Operate in quiet mode.  With this option,
+.Nm
+will not print extraneous information like superblock backups.
 .It Fl a Ar maxcontig
 This specifies the maximum number of contiguous blocks that will be
 laid out before forcing a rotational delay (see the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.17 1997/09/26 01:49:18 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.18 1999/04/10 04:09:23 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.17 1997/09/26 01:49:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.18 1999/04/10 04:09:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,6 +178,7 @@ int	nrpos = NRPOS;		/* # of distinguished rotational positions */
 int	bbsize = BBSIZE;	/* boot block size */
 int	sbsize = SBSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
+int	quiet = 0;		/* quiet flag */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
 #ifdef COMPAT
@@ -209,7 +210,7 @@ main(argc, argv)
 	int ffs = 1;
 
 	if (strstr(__progname, "mfs"))
-		mfs = Nflag = 1;
+		mfs = Nflag = quiet = 1;
 
 	maxpartitions = getmaxpartitions();
 	if (maxpartitions > 26)
@@ -217,7 +218,7 @@ main(argc, argv)
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:z:";
+	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
@@ -299,6 +300,9 @@ main(argc, argv)
 			if ((trackspares = atoi(optarg)) < 0)
 				fatal("%s: bad spare sectors per track",
 				    optarg);
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 'r':
 			if ((rpm = atoi(optarg)) <= 0)
