@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.4 2004/05/04 18:51:18 henning Exp $ */
+/*	$OpenBSD: privsep.c,v 1.5 2004/05/04 18:58:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -67,7 +67,6 @@ buf_close(int sock, struct buf *buf)
 
 	free(buf->buf);
 	free(buf);
-
 	return (n);
 }
 
@@ -75,14 +74,15 @@ ssize_t
 buf_read(int sock, void *buf, size_t nbytes)
 {
 	ssize_t	n, r = 0;
+	char *p = buf;
 
 	do {
-		n = read(sock, buf, nbytes);
+		n = read(sock, p, nbytes);
 		if (n == 0)
 			error("connection closed");
 		if (n != -1) {
 			r += n;
-			buf += n;
+			p += n;
 			nbytes -= n;
 		}
 	} while (n == -1 && (errno == EINTR || errno == EAGAIN));
@@ -141,6 +141,7 @@ dispatch_imsg(int fd)
 		free(medium);
 		break;
 	case IMSG_SCRIPT_WRITE_PARAMS:
+		bzero(&lease, sizeof lease);
 		totlen = sizeof(hdr) + sizeof(lease) + sizeof(size_t);
 		if (hdr.len < totlen)
 			error("corrupted message received");
@@ -209,7 +210,6 @@ dispatch_imsg(int fd)
 		for (i = 0; i < 256; i++)
 			if (lease.options[i].len > 0)
 				free(lease.options[i].data);
-
 		break;
 	case IMSG_SCRIPT_GO:
 		if (hdr.len != sizeof(hdr))

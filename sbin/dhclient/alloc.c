@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.7 2004/04/14 20:22:27 henning Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.8 2004/05/04 18:58:50 deraadt Exp $	*/
 
 /* Memory allocation... */
 
@@ -43,7 +43,7 @@
 #include "dhcpd.h"
 
 struct string_list *
-new_string_list(size_t size, char * name)
+new_string_list(size_t size)
 {
 	struct string_list *rval;
 
@@ -54,7 +54,7 @@ new_string_list(size_t size, char * name)
 }
 
 struct hash_table *
-new_hash_table(int count, char *name)
+new_hash_table(int count)
 {
 	struct hash_table *rval;
 
@@ -68,7 +68,7 @@ new_hash_table(int count, char *name)
 }
 
 struct hash_bucket *
-new_hash_bucket(char *name)
+new_hash_bucket(void)
 {
 	struct hash_bucket *rval = calloc(1, sizeof(struct hash_bucket));
 
@@ -76,7 +76,7 @@ new_hash_bucket(char *name)
 }
 
 void
-free_hash_bucket(struct hash_bucket *ptr, char *name)
+free_hash_bucket(struct hash_bucket *ptr)
 {
 	free(ptr);
 }

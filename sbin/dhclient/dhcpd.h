@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.29 2004/05/04 12:52:05 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.30 2004/05/04 18:58:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -290,18 +290,17 @@ struct dns_host_entry *enter_dns_host(char *);
 pair cons(caddr_t, pair);
 
 /* alloc.c */
-struct string_list	*new_string_list(size_t size, char * name);
-struct hash_table	*new_hash_table(int, char *);
-struct hash_bucket	*new_hash_bucket(char *);
-void			 free_hash_bucket(struct hash_bucket *, char *);
+struct string_list	*new_string_list(size_t size);
+struct hash_table	*new_hash_table(int);
+struct hash_bucket	*new_hash_bucket(void);
+void			 free_hash_bucket(struct hash_bucket *);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
 void if_register_send(struct interface_info *);
 void if_register_receive(struct interface_info *);
-ssize_t send_packet(struct interface_info *,
-    struct packet *, struct dhcp_packet *, size_t, struct in_addr,
-    struct sockaddr_in *, struct hardware *);
+ssize_t send_packet(struct interface_info *, struct dhcp_packet *, size_t,
+    struct in_addr, struct sockaddr_in *, struct hardware *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
     struct sockaddr_in *, struct hardware *);
 
@@ -391,10 +390,9 @@ void	 priv_script_init(char *, char *);
 void	 priv_script_write_params(char *, struct client_lease *);
 int	 priv_script_go(void);
 
-void script_init(struct interface_info *, char *, struct string_list *);
-void script_write_params(struct interface_info *,
-    char *, struct client_lease *);
-int script_go(struct interface_info *);
+void script_init(char *, struct string_list *);
+void script_write_params(char *, struct client_lease *);
+int script_go(void);
 void client_envadd(struct client_state *,
     const char *, const char *, const char *, ...);
 void script_set_env(struct client_state *, const char *, const char *,
@@ -412,12 +410,11 @@ void dhcp(struct packet *);
 /* packet.c */
 void assemble_hw_header(struct interface_info *, unsigned char *,
     int *, struct hardware *);
-void assemble_udp_ip_header(struct interface_info *, unsigned char *,
-    int *, u_int32_t, u_int32_t, unsigned int, unsigned char *, int);
-ssize_t decode_hw_header(struct interface_info *, unsigned char *,
-    int, struct hardware *);
-ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
-    int, struct sockaddr_in *, unsigned char *, int);
+void assemble_udp_ip_header(unsigned char *, int *, u_int32_t, u_int32_t,
+    unsigned int, unsigned char *, int);
+ssize_t decode_hw_header(unsigned char *, int, struct hardware *);
+ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
+    unsigned char *, int);
 
 /* ethernet.c */
 void assemble_ethernet_header(struct interface_info *, unsigned char *,

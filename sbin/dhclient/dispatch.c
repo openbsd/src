@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.23 2004/04/07 16:27:08 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.24 2004/05/04 18:58:50 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -241,7 +241,7 @@ got_one(struct protocol *l)
 	struct sockaddr_in from;
 	struct hardware hfrom;
 	struct iaddr ifrom;
-	size_t result;
+	ssize_t result;
 	union {
 		/*
 		 * Packet input buffer.  Must be as large as largest

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.10 2004/03/02 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.11 2004/05/04 18:58:50 deraadt Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -182,9 +182,9 @@ if_register_receive(struct interface_info *info)
 }
 
 ssize_t
-send_packet(struct interface_info *interface, struct packet *packet,
-    struct dhcp_packet *raw, size_t len, struct in_addr from,
-    struct sockaddr_in *to, struct hardware *hto)
+send_packet(struct interface_info *interface, struct dhcp_packet *raw,
+    size_t len, struct in_addr from, struct sockaddr_in *to,
+    struct hardware *hto)
 {
 	unsigned char buf[256];
 	struct iovec iov[2];
@@ -192,7 +192,7 @@ send_packet(struct interface_info *interface, struct packet *packet,
 
 	/* Assemble the headers... */
 	assemble_hw_header(interface, buf, &bufp, hto);
-	assemble_udp_ip_header(interface, buf, &bufp, from.s_addr,
+	assemble_udp_ip_header(buf, &bufp, from.s_addr,
 	    to->sin_addr.s_addr, to->sin_port, (unsigned char *)raw, len);
 
 	/* Fire it off */
@@ -274,8 +274,8 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		interface->rbuf_offset += hdr.bh_hdrlen;
 
 		/* Decode the physical header... */
-		offset = decode_hw_header(interface,
-		    interface->rbuf, interface->rbuf_offset, hfrom);
+		offset = decode_hw_header(interface->rbuf,
+		    interface->rbuf_offset, hfrom);
 
 		/*
 		 * If a physical layer checksum failed (dunno of any
@@ -290,7 +290,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		hdr.bh_caplen -= offset;
 
 		/* Decode the IP and UDP headers... */
-		offset = decode_udp_ip_header(interface, interface->rbuf,
+		offset = decode_udp_ip_header(interface->rbuf,
 		    interface->rbuf_offset, from, NULL, hdr.bh_caplen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.38 2004/05/04 12:52:05 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.39 2004/05/04 18:58:50 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -199,10 +199,10 @@ routehandler(struct protocol *p)
 	return;
 
 die:
-	script_init(ifi, "FAIL", NULL);
+	script_init("FAIL", NULL);
 	if (ifi->client->alias)
-		script_write_params(ifi, "alias_", ifi->client->alias);
-	script_go(ifi);
+		script_write_params("alias_", ifi->client->alias);
+	script_go();
 	exit(1);
 }
 
@@ -460,14 +460,14 @@ state_selecting(void *ipp)
 		/* Check to see if we got an ARPREPLY for the address
 		   in this particular lease. */
 		if (!picked) {
-			script_init(ip, "ARPCHECK", lp->medium);
-			script_write_params(ip, "check_", lp);
+			script_init("ARPCHECK", lp->medium);
+			script_write_params("check_", lp);
 
 			/* If the ARPCHECK code detects another
 			   machine using the offered address, it exits
 			   nonzero.  We need to send a DHCPDECLINE and
 			   toss the lease. */
-			if (script_go(ip)) {
+			if (script_go()) {
 				make_decline(ip, lp);
 				send_decline(ip);
 				goto freeit;
@@ -610,16 +610,16 @@ bind_lease(struct interface_info *ip)
 	write_client_lease(ip, ip->client->new, 0);
 
 	/* Run the client script with the new parameters. */
-	script_init(ip, (ip->client->state == S_REQUESTING ? "BOUND" :
+	script_init((ip->client->state == S_REQUESTING ? "BOUND" :
 	    (ip->client->state == S_RENEWING ? "RENEW" :
 	    (ip->client->state == S_REBOOTING ? "REBOOT" : "REBIND"))),
 	    ip->client->new->medium);
 	if (ip->client->active && ip->client->state != S_REBOOTING)
-		script_write_params(ip, "old_", ip->client->active);
-	script_write_params(ip, "new_", ip->client->new);
+		script_write_params("old_", ip->client->active);
+	script_write_params("new_", ip->client->new);
 	if (ip->client->alias)
-		script_write_params(ip, "alias_", ip->client->alias);
-	script_go(ip);
+		script_write_params("alias_", ip->client->alias);
+	script_go();
 
 	/* Replace the old active lease with the new one. */
 	if (ip->client->active)
@@ -784,11 +784,11 @@ dhcpoffer(struct packet *packet)
 	lease->medium = ip->client->medium;
 
 	/* Send out an ARP Request for the offered IP address. */
-	script_init(ip, "ARPSEND", lease->medium);
-	script_write_params(ip, "check_", lease);
+	script_init("ARPSEND", lease->medium);
+	script_write_params("check_", lease);
 	/* If the script can't send an ARP request without waiting,
 	   we'll be waiting when we do the ARPCHECK, so don't wait now. */
-	if (script_go(ip))
+	if (script_go())
 		arp_timeout_needed = 0;
 	else
 		arp_timeout_needed = 2;
@@ -972,10 +972,7 @@ void
 send_discover(void *ipp)
 {
 	struct interface_info *ip = ipp;
-
-	int result;
-	int interval;
-	int increase = 1;
+	int interval, increase = 1;
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ip->client->first_sending;
@@ -1007,8 +1004,8 @@ again:
 
 		note("Trying medium \"%s\" %d", ip->client->medium->string,
 		    increase);
-		script_init(ip, "MEDIUM", ip->client->medium);
-		if (script_go(ip))
+		script_init("MEDIUM", ip->client->medium);
+		if (script_go())
 			goto again;
 	}
 
@@ -1059,8 +1056,8 @@ again:
 	    ntohs(sockaddr_broadcast.sin_port), ip->client->interval);
 
 	/* Send out a packet. */
-	result = send_packet(ip, NULL, &ip->client->packet,
-	    ip->client->packet_length, inaddr_any, &sockaddr_broadcast, NULL);
+	(void)send_packet(ip, &ip->client->packet, ip->client->packet_length,
+	    inaddr_any, &sockaddr_broadcast, NULL);
 
 	add_timeout(cur_time + ip->client->interval, send_discover, ip);
 }
@@ -1075,7 +1072,6 @@ void
 state_panic(void *ipp)
 {
 	struct interface_info *ip = ipp;
-
 	struct client_lease *loop = ip->client->active;
 	struct client_lease *lp;
 
@@ -1093,17 +1089,17 @@ state_panic(void *ipp)
 			    piaddr(ip->client->active->address));
 			/* Run the client script with the existing
 			   parameters. */
-			script_init(ip, "TIMEOUT",
+			script_init("TIMEOUT",
 			    ip->client->active->medium);
-			script_write_params(ip, "new_", ip->client->active);
+			script_write_params("new_", ip->client->active);
 			if (ip->client->alias)
-				script_write_params(ip, "alias_",
+				script_write_params("alias_",
 				    ip->client->alias);
 
 			/* If the old lease is still good and doesn't
 			   yet need renewal, go into BOUND state and
 			   timeout at the renewal time. */
-			if (!script_go(ip)) {
+			if (!script_go()) {
 				if (cur_time <
 				    ip->client->active->renewal) {
 					ip->client->state = S_BOUND;
@@ -1155,10 +1151,10 @@ activate_next:
 	   tell the shell script that we failed to allocate an address,
 	   and try again later. */
 	note("No working leases in persistent database - sleeping.\n");
-	script_init(ip, "FAIL", NULL);
+	script_init("FAIL", NULL);
 	if (ip->client->alias)
-		script_write_params(ip, "alias_", ip->client->alias);
-	script_go(ip);
+		script_write_params("alias_", ip->client->alias);
+	script_go();
 	ip->client->state = S_INIT;
 	add_timeout(cur_time + ip->client->config->retry_interval, state_init,
 	    ip);
@@ -1169,11 +1165,9 @@ void
 send_request(void *ipp)
 {
 	struct interface_info *ip = ipp;
-
-	int result;
-	int interval;
 	struct sockaddr_in destination;
 	struct in_addr from;
+	int interval;
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ip->client->first_sending;
@@ -1203,10 +1197,10 @@ cancel:
 	if (ip->client->state == S_REBOOTING &&
 	    !ip->client->medium &&
 	    ip->client->active->medium ) {
-		script_init(ip, "MEDIUM", ip->client->active->medium);
+		script_init("MEDIUM", ip->client->active->medium);
 
 		/* If the medium we chose won't fly, go to INIT state. */
-		if (script_go(ip))
+		if (script_go())
 			goto cancel;
 
 		/* Record the medium. */
@@ -1218,18 +1212,18 @@ cancel:
 	if (ip->client->state != S_REQUESTING &&
 	    cur_time > ip->client->active->expiry) {
 		/* Run the client script with the new parameters. */
-		script_init(ip, "EXPIRE", NULL);
-		script_write_params(ip, "old_", ip->client->active);
+		script_init("EXPIRE", NULL);
+		script_write_params("old_", ip->client->active);
 		if (ip->client->alias)
-			script_write_params(ip, "alias_", ip->client->alias);
-		script_go(ip);
+			script_write_params("alias_", ip->client->alias);
+		script_go();
 
 		/* Now do a preinit on the interface so that we can
 		   discover a new address. */
-		script_init(ip, "PREINIT", NULL);
+		script_init("PREINIT", NULL);
 		if (ip->client->alias)
-			script_write_params(ip, "alias_", ip->client->alias);
-		script_go(ip);
+			script_write_params("alias_", ip->client->alias);
+		script_go();
 
 		ip->client->state = S_INIT;
 		state_init(ip);
@@ -1293,8 +1287,8 @@ cancel:
 	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
 
 	/* Send out a packet. */
-	result = send_packet(ip, NULL, &ip->client->packet,
-	    ip->client->packet_length, from, &destination, NULL);
+	(void) send_packet(ip, &ip->client->packet, ip->client->packet_length,
+	    from, &destination, NULL);
 
 	add_timeout(cur_time + ip->client->interval, send_request, ip);
 }
@@ -1303,15 +1297,14 @@ void
 send_decline(void *ipp)
 {
 	struct interface_info *ip = ipp;
-	int result;
 
 	note("DHCPDECLINE on %s to %s port %d", ip->name,
 	    inet_ntoa(sockaddr_broadcast.sin_addr),
 	    ntohs(sockaddr_broadcast.sin_port));
 
 	/* Send out a packet. */
-	result = send_packet(ip, NULL, &ip->client->packet,
-	    ip->client->packet_length, inaddr_any, &sockaddr_broadcast, NULL);
+	(void) send_packet(ip, &ip->client->packet, ip->client->packet_length,
+	    inaddr_any, &sockaddr_broadcast, NULL);
 }
 
 void
@@ -1319,25 +1312,22 @@ send_release(void *ipp)
 {
 	struct interface_info *ip = ipp;
 
-	int result;
-
 	note("DHCPRELEASE on %s to %s port %d", ip->name,
 	    inet_ntoa(sockaddr_broadcast.sin_addr),
 	    ntohs(sockaddr_broadcast.sin_port));
 
 	/* Send out a packet. */
-	result = send_packet(ip, NULL, &ip->client->packet,
-	    ip->client->packet_length, inaddr_any, &sockaddr_broadcast, NULL);
+	(void) send_packet(ip, &ip->client->packet, ip->client->packet_length,
+	    inaddr_any, &sockaddr_broadcast, NULL);
 }
 
 void
 make_discover(struct interface_info *ip, struct client_lease *lease)
 {
 	unsigned char discover = DHCPDISCOVER;
-	int i;
-
 	struct tree_cache *options[256];
 	struct tree_cache option_elements[256];
+	int i;
 
 	memset(option_elements, 0, sizeof(option_elements));
 	memset(options, 0, sizeof(options));
@@ -1421,10 +1411,9 @@ void
 make_request(struct interface_info *ip, struct client_lease * lease)
 {
 	unsigned char request = DHCPREQUEST;
-	int i;
-
 	struct tree_cache *options[256];
 	struct tree_cache option_elements[256];
+	int i;
 
 	memset(options, 0, sizeof(options));
 	memset(&ip->client->packet, 0, sizeof(ip->client->packet));
@@ -1529,13 +1518,12 @@ void
 make_decline(struct interface_info *ip, struct client_lease *lease)
 {
 	unsigned char decline = DHCPDECLINE;
-	int i;
-
 	struct tree_cache *options[256];
 	struct tree_cache message_type_tree;
 	struct tree_cache requested_address_tree;
 	struct tree_cache server_id_tree;
 	struct tree_cache client_id_tree;
+	int i;
 
 	memset(options, 0, sizeof(options));
 	memset(&ip->client->packet, 0, sizeof(ip->client->packet));
@@ -1610,11 +1598,10 @@ void
 make_release(struct interface_info *ip, struct client_lease *lease)
 {
 	unsigned char request = DHCPRELEASE;
-	int i;
-
 	struct tree_cache *options[256];
 	struct tree_cache message_type_tree;
 	struct tree_cache server_id_tree;
+	int i;
 
 	memset(options, 0, sizeof(options));
 	memset(&ip->client->packet, 0, sizeof(ip->client->packet));
@@ -1765,7 +1752,7 @@ char scriptName[256];
 FILE *scriptFile;
 
 void
-script_init(struct interface_info *ip, char *reason, struct string_list *medium)
+script_init(char *reason, struct string_list *medium)
 {
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
@@ -1955,8 +1942,7 @@ supersede:
 }
 
 void
-script_write_params(struct interface_info *ip, char *prefix,
-    struct client_lease *lease)
+script_write_params(char *prefix, struct client_lease *lease)
 {
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
@@ -2007,7 +1993,7 @@ script_write_params(struct interface_info *ip, char *prefix,
 }
 
 int
-script_go(struct interface_info *ip)
+script_go(void)
 {
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;

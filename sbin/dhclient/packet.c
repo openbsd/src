@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.8 2004/02/25 14:22:12 henning Exp $	*/
+/*	$OpenBSD: packet.c,v 1.9 2004/05/04 18:58:50 deraadt Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -113,9 +113,8 @@ assemble_hw_header(struct interface_info *interface, unsigned char *buf,
 }
 
 void
-assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
-    int *bufix, u_int32_t from, u_int32_t to, unsigned int port,
-    unsigned char *data, int len)
+assemble_udp_ip_header(unsigned char *buf, int *bufix, u_int32_t from,
+    u_int32_t to, unsigned int port, unsigned char *data, int len)
 {
 	struct ip ip;
 	struct udphdr udp;
@@ -151,8 +150,7 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 }
 
 ssize_t
-decode_hw_header(struct interface_info *interface, unsigned char *buf,
-    int bufix, struct hardware *from)
+decode_hw_header(unsigned char *buf, int bufix, struct hardware *from)
 {
 	struct ether_header eh;
 
@@ -166,8 +164,8 @@ decode_hw_header(struct interface_info *interface, unsigned char *buf,
 }
 
 ssize_t
-decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
-    int bufix, struct sockaddr_in *from, unsigned char *data, int buflen)
+decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
+    unsigned char *data, int buflen)
 {
 	struct ip *ip;
 	struct udphdr *udp;
