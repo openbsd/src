@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.432 2004/03/25 03:03:49 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.433 2004/03/26 22:20:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4320,6 +4320,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			struct pf_state		 key;
 			struct pf_state_peer	*src, *dst;
 			u_int8_t		 dws;
+			int			 copyback = 0;
 
 			/*
 			 * Only the first 8 bytes of the TCP header can be
@@ -4365,9 +4366,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 			/* Demodulate sequence number */
 			seq = ntohl(th.th_seq) - src->seqdiff;
-			if (src->seqdiff)
+			if (src->seqdiff) {
 				pf_change_a(&th.th_seq, icmpsum,
 				    htonl(seq), 0);
+				copyback = 1;
+			}
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws))) {
@@ -4398,6 +4401,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    pd2.ip_sum, icmpsum,
 					    pd->ip_sum, 0, pd2.af);
 				}
+				copyback = 1;
+			}
+
+			if (copyback) {
 				switch (pd2.af) {
 #ifdef INET
 				case AF_INET:
@@ -4417,8 +4424,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					break;
 #endif /* INET6 */
 				}
-				m_copyback(m, off2, 8, &th);
-			} else if (src->seqdiff) {
 				m_copyback(m, off2, 8, &th);
 			}
 
