@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.15 2001/06/27 04:29:19 art Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.16 2001/08/24 22:53:15 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -27,21 +27,15 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/* locore_asm_routines.c 
- *
- **********************************************************************
- * This file created by Omron Corporation, 1990.
- *
- * HISTORY
- *
- **************************************************************RCS*****/
 
 #include "assym.h"
-#include <machine/trap.h>
-#include <machine/cpu_number.h>
-#include <machine/board.h>
-#include <machine/asm.h>
+
 #include <sys/errno.h>
+
+#include <machine/asm.h>
+#include <machine/board.h>
+#include <machine/cpu_number.h>
+#include <machine/trap.h>
 
 /*****************************************************************************
  * DO_LOAD_ADDRESS
@@ -57,7 +51,7 @@
 
 ENTRY(do_load_word)	/* do_load_word(address, supervisor) */
 	bcnd	ne0,r3,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.usr	r2,r2,r0
 	NOP
@@ -72,7 +66,7 @@ ENTRY(do_load_word)	/* do_load_word(address, supervisor) */
 
 ENTRY(do_load_half)	/* do_load_half(address, supervisor) */
 	bcnd	ne0,r3,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.h.usr	r2,r2,r0
 	NOP
@@ -87,7 +81,7 @@ ENTRY(do_load_half)	/* do_load_half(address, supervisor) */
 
 ENTRY(do_load_byte)	/* do_load_byte(address, supervisor) */
 	bcnd	ne0,r3,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.b.usr	r2,r2,r0
 	NOP
@@ -102,7 +96,7 @@ ENTRY(do_load_byte)	/* do_load_byte(address, supervisor) */
 
 ENTRY(do_store_word)	/* do_store_word(address, data, supervisor) */
 	bcnd	ne0,r4,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.usr	r3,r2,r0
 	NOP
@@ -117,7 +111,7 @@ ENTRY(do_store_word)	/* do_store_word(address, data, supervisor) */
 
 ENTRY(do_store_half)	/* do_store_half(address, data, supervisor) */
 	bcnd	ne0,r4,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.h.usr	r3,r2,r0
 	NOP
@@ -132,7 +126,7 @@ ENTRY(do_store_half)	/* do_store_half(address, data, supervisor) */
 
 ENTRY(do_store_byte)	/* do_store_byte(address, data, supervisor) */
 	bcnd	ne0,r4,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.b.usr	r3,r2,r0
 	NOP
@@ -147,7 +141,7 @@ ENTRY(do_store_byte)	/* do_store_byte(address, data, supervisor) */
 
 ENTRY(do_xmem_word)	/* do_xmem_word(address, data, supervisor) */
 	bcnd	ne0,r4,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	xmem.usr	r3,r2,r0
 	NOP
@@ -162,7 +156,7 @@ ENTRY(do_xmem_word)	/* do_xmem_word(address, data, supervisor) */
 
 ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	bcnd	ne0,r4,1f
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	xmem.bu.usr	r3,r2,r0
 	NOP
@@ -175,313 +169,7 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 1:	xmem.bu	r3,r2,r0
 2:	jmp	r1
 
-   .data
-
-/*
- * reserve MAX_CPUS words for lockinit and lockeach;
- * counters for simple_lock_init calls and lock acquisition calls.
- */
-
-LABEL(lockinit)
-   zero 4*MAX_CPUS
-
-LABEL(lockuse)
-   zero 4*MAX_CPUS
-
-LABEL(lockpause)
-   zero 4*MAX_CPUS
-
-   .text
-
-/*************************************************************************/
-/******************  SIMPLE LOCK OPERATIONS  *****************************/
-/*************************************************************************/
-
-#ifdef done_in_kernel
-/*************************************************************
- *************************************************************
- **
- **  	void simple_lock_init(int *lock_data)
- **	{
- **		*lock_data = 0;
- **	}
- **
- **  	void simple_unlock(simple_lock_t *)
- **	{
- **		*lock_data = 0;
- **	}
- **/
-#undef simple_unlock
-ENTRY(simple_lock_init)
-	st      r0, r2, 0               /* init */
-        
-	ldcr	r2, SR1
-	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
-	mask  	r2, r2, 3			/* play it safe */
-        or.u    r3, r0, hi16(lockinit)
-        or      r3, r3, lo16(lockinit)
-        ld      r4, r3[r2]
-        addu    r4, r4, 1
-        jmp.n   r1
-        st      r4, r3[r2]
-        
-ENTRY(simple_unlock)
-        jmp.n   r1
-        st      r0, r2, 0
-
 #if DDB
-/* version of simple_unlock for the debugger - should be identical to
-   simple_unlock, but should never have breakpoints inserted on it */
-ENTRY(db_simple_unlock)
-   jmp.n r1
-   st    r0, r2, 0
-#endif       
-
-/**
- **     Simple_lock
- **
- **	Returns when the lock is taken. It also increments lockuse[cpu]
- **/
-ENTRY(simple_lock)
-   /* do r3 = test_and_set(r2, 1) */
-   or    r3, r0, 1
-   xmem  r3, r2, r0
-   bcnd  ne0, r3, 1f
-#if 0
-   ldcr  r5, SR1
-   extu  r5, r5, FLAG_CPU_FIELD_WIDTH<0>	/* r5 = cpu# */
-   mask  r5, r5, 3				/* play it safe */
-   or.u  r3, r0, hi16(lockuse)
-   or    r3, r3, lo16(lockuse)
-   ld    r4, r3[r5]
-   addu  r4, r4, 1
-   st    r4, r3[r5]
-#endif
-   jmp     r1
-	
-1:
-	/* wait until the lock appears to be free */
-   or.u  r4, r0, 0x0300
-2:
-   subu  r4, r4, 1
-   bcnd  eq0, r4, _simple_lock_too_long
-   ld    r3, r2, 0       /* check lock */
-   bcnd  ne0, r3, 2b
-   br    _simple_lock	/* looks free... check again with the xmem */
-
-ENTRY(simple_lock_too_long)
-#ifdef JEFF_DEBUG
-	/* just want to break here.... */
-   tb0   0, r0 , 0x84 /* gimmeabreak */
-#else
-	/* waited too long */
-   subu  r31, r31, 0x40
-   st    r1, r31, 0x30
-   st    r30, r31, 0x34
-   st    r2, r31, 0x38
-   or    r3, r0, r1
-#if 0
-   bsr   _report_lock_info
-#endif 
-   ld    r2, r31, 0x38
-   ld    r30, r31, 0x34
-   ld    r1, r31, 0x30
-   addu  r31, r31, 0x40
-   br    _simple_lock
-#endif /* JEFF_DEBUG */
-
-
-#if DDB
-/*
- * Version of simple_lock for the kernel debugger; should never have
- * breakpoints set on it. Should be kept consistent with simple_lock.
- */
-ENTRY(db_simple_lock)
-   /* do r10 = test_and_set(r2, 1) */
-   or    r10, r0, 1
-   xmem  r10, r2, r0
-   bcnd  ne0, r10, db_simple_lock_watch
-   
-   ldcr  r2, SR1
-   extu  r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
-   mask  r2, r2, 3				/* play it safe */
-   or.u  r3, r0, hi16(lockuse)
-   or    r3, r3, lo16(lockuse)
-   ld    r4, r3[r2]
-   addu  r4, r4, 1
-   jmp.n r1
-   st    r4, r3[r2]
-	
-db_simple_lock_watch:
-	/* wait until the lock appears to be free */
-3:
-   ld    r10, r2, 0
-   bcnd  ne0, r10, 3b
-   br    _db_simple_lock	/* looks free... check again with the xmem */
-#endif /* DDB */
-
-/*************************************************************
- *************************************************************
- **
- ** 	boolean_t simple_try_lock(simple_lock_t *);
- **
- **	Grab the lock if it's free.  Return zero if the lock was
- **	busy, non-zero if the lock has been taken.
- **/
-ENTRY(simple_lock_try)
-   or    r3, r0, 1	/* r3 := test_and_set(r2, 1) */
-   xmem  r3, r2, r0
-   /* If r3 is now zero, we hold the lock -- return non-zero.  */
-   /* If r3 is now one,  we didn't get it -- return zero.	     */
-   /* Thus, we want to "return(!r3)"			     */
-   cmp   r4, r3, r0
-   jmp.n r1
-   extu  r2, r4, 1<2>
-
-#if DDB
-/* version for the kernel debugger - keep consistent with above */
-ENTRY(db_simple_lock_try)
-   or    r3, r0, 1	/* r3 := test_and_set(r2, 1) */
-   xmem  r3, r2, r0
-   /* If r3 is now zero, we hold the lock -- return non-zero.  */
-   /* If r3 is now one,  we didn't get it -- return zero.	     */
-   /* Thus, we want to "return(!r3)"			     */
-   cmp   r4, r3, r0
-   jmp.n r1
-   extu  r2, r4, 1<2>
-#endif
-
-#if DDB  /* version for the debugger */
-ENTRY(db_simple_lock_held)
-   jmp.n r1
-   ld    r2, r2, 0
-#endif
-
-/*
- * void simple_lock_pause(void). 
- *
- * This routine is called when we find a simple lock held that we wish to
- * acquire, but cannot spin on because we are holding a lock that is in the
- * wrong order to it with respect to the locking hierarchy. Once we drop the
- * lock we are holding, however, we cannot assume the lock we were trying to 
- * acquire is not deallocated. Consequently, we drop the lock we are holding 
- * and wait for a while, then retry. This is the wait for a while routine. 
- *
- * We define a array of counters[cpus], lockpause
- * to tell use how many times this routine is called.
- * We currently wait 128 cycles per call.
- */
-
-ENTRY(simple_lock_pause)
-	ldcr	r2, SR1
-	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
-	mask	r2, r2, 3				/* play it safe */
-        or.u    r3, r0, hi16(lockpause)
-        or      r3, r3, lo16(lockpause)
-        ld      r4, r3[r2]
-        or      r5, r0, 128                     /* initialize counters*/
-1:      subu    r5, r5, 1                       /* count down */
-        bcnd    ne0, r5, 1b
-        addu    r4, r4, 1
-	jmp.n	r1                              /* return*/
-  	st	r4, r3[r2]
-
-#endif /* done_in_kernel */
-
-#ifdef now_in_c
-/*************************************************************************
- *************************************************************************
- **
- **	void get_psr(unsigned psr)
- **
- **	Enables processor interrupts (for the executing cpu).
- **/
-#undef get_psr
-ENTRY(get_psr)
-	ldcr	r2, PSR
-	jmp	r1
-
-/*************************************************************************
- *************************************************************************
- **
- **	void set_psr(unsigned psr)
- **
- **	Enables processor interrupts (for the executing cpu).
- **/
-
-#undef set_psr
-ENTRY(set_psr)
-	stcr	r2, PSR
-        FLUSH_PIPELINE
-	jmp	r1
-
-/*************************************************************************
- *************************************************************************
- **
- **	void enable_interrupt(void)
- **
- **	Enables processor interrupts (for the executing cpu).
- **/
-#undef enable_interrupt
-ENTRY(enable_interrupt)
-	ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2, PSR
-        FLUSH_PIPELINE
-	jmp	r1
-
-#if DDB
-/* a version of enable_interrupt for the debugger; should never
-   have breakpoints set it in. Keep it consistent with enable
-   interrupt above */
-ENTRY(db_enable_interrupt)
-	ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2, PSR
-        FLUSH_PIPELINE
-	jmp	r1
-#endif /* DDB */
-
-/*************************************************************************
- *************************************************************************
- **
- ** unsigned long disable_interrupt(void)
- **
- ** Disables processor interrupts (for the executing CPU) and returns
- ** the *previous* PSR.
- **
- **     if ((oldPSR & 0x02) == 0)
- **		interrupts_were_previously_on = 1;
- **/
-#undef disable_interrupt
-ENTRY(disable_interrupt)
-	ldcr	r2, PSR
-	set	r3, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	 /* set disable bit*/
-	stcr	r3, PSR
-        FLUSH_PIPELINE
-	jmp	r1
-
-#if DDB
-ENTRY(db_disable_interrupt)
-	ldcr	r2, PSR
-	set	r3, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	 /* set disable bit*/
-	stcr	r3, PSR
-        FLUSH_PIPELINE
-	jmp	r1
-#endif /* DDB */
-
-#endif /* now_in_c */
-
-ENTRY(are_interrupts_disabled)
-	ldcr	r2, PSR                   /* get the processor status word */
-	set  	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>   /* set mask */
-	jmp.n 	r1                                     /* delayed return */
-	and 	r2, r2, r3                            /* r2 = r3 & r2 */
-
-
-/* version for the debugger */
-#if DDB
-
 ENTRY(db_are_interrupts_disabled)
 	ldcr	r2, PSR                   /* get the processor status word */
 	set  	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>   /* set mask */
@@ -489,11 +177,9 @@ ENTRY(db_are_interrupts_disabled)
 	and 	r2, r2, r3                             /* r2 = r3 & r2 */
 #endif /* DDB */
 
-LABEL(_FAULT_ERROR)
+GLOBAL(FAULT_ERROR)
 	or	r2,r0,1		/* bad copy */
 	jmp	r1
-
-/* LABEL(_ALLOW_FAULT_START) */
 
 /*
  * Fetch from user space
@@ -507,7 +193,7 @@ ENTRY(fuiword)
 	or.u	r5,   r0,   hi16(fusu_fault)
 	or	r5,   r5,   lo16(fusu_fault)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.usr	r5,   r0,  r2
 	NOP
@@ -533,7 +219,7 @@ ENTRY(fusword)
 	or.u	r5,   r0,   hi16(fusu_fault)
 	or	r5,   r5,   lo16(fusu_fault)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.h.usr r5,   r0,  r2
 	NOP
@@ -552,7 +238,7 @@ ENTRY(fuibyte)
 	or.u	r5,   r0,   hi16(fusu_fault)
 	or	r5,   r5,   lo16(fusu_fault)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.b.usr r5,   r0,  r2
 	NOP
@@ -570,7 +256,7 @@ ENTRY(fuswintr)
 	or.u	r5,   r0,   hi16(_fubail)
 	or	r5,   r5,   lo16(_fubail)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fubail */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.h.usr r5,   r2, r0
 	NOP
@@ -599,7 +285,7 @@ ENTRY(suiword)
 	or.u	r5,   r0,   hi16(fusu_fault)
 	or	r5,   r5,   lo16(fusu_fault)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.usr	r3,   r2, r0
 	NOP
@@ -617,7 +303,7 @@ ENTRY(susword)
 	or.u	r5,   r0,   hi16(fusu_fault)
 	or	r5,   r5,   lo16(fusu_fault)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.h.usr r3,   r2, r0
 	NOP
@@ -636,7 +322,7 @@ ENTRY(suibyte)
 	or.u	r5,   r0,   hi16(fusu_fault)
 	or	r5,   r5,   lo16(fusu_fault)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.b.usr r3,   r2, r0
 	NOP
@@ -654,7 +340,7 @@ ENTRY(suswintr)
 	or.u	r5,   r0,   hi16(_subail)
 	or	r5,   r5,   lo16(_subail)
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = subail */
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.h.usr r3,   r2, r0
 	NOP
@@ -670,40 +356,6 @@ ENTRY(subail)
 	subu	r2,   r0, 1
 	br	fusu_ret
 
-#if 0
-/*
- * copystr(fromaddr, toaddr, maxlength, &lencopied)
- *
- * Copy a null terminated string from one point to another in
- * the kernel address space.
- */
-ENTRY(copystr)
-	or	r6,r0,0
-	bcnd	lt0,r4,Lcsflt1		/* negative count, error */
-	bcnd	eq0,r4,Lcsdone		/* zero count, all done */
-Lcsloop:
-	ld	r8,r2,r6		/* copy a byte */
-	st	r8,r3,r6		
-	addu	r6,r6,1			/* bump the index */
-	bcnd	eq0,r8,Lcsdone 		/* if null, done */
-	subu	r4,r4,1			/* decrement count to copy */
-	bcnd	ne0,r4,Lcsloop		/* if more to copy, loop */
-	br	Lcsflt2 		/* ran out of room, error */
-Lcsdone:
-	bcnd	eq0, r5, Lcsret		/* if return len not desired, return */
-	st	r6,r5,0			/* stash it */
-Lcsret:
-	or	r2,r0,0			/* good status */
-	jmp	r1
-Lcsflt1:
-	or	r2,r0,EFAULT		/* return fault */
-	br	Lcsdone
-Lcsflt2:
-	or	r2,r0,ENAMETOOLONG	/* ran out of space */
-	br	Lcsdone	
-Lcsdone:
-	jmp	r1
-#endif /* 0 */
 /*
  * Copy specified amount of data from user space into the kernel
  * copyin(from, to, len)
@@ -759,7 +411,7 @@ copyin_right_aligned_to_word:
 	or	r7,   r0,   4
 
 copyin_right_aligned_to_doubleword:
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.usr 	r5,   SRC,  r0
 	NOP
@@ -785,7 +437,7 @@ copyin_right_aligned_to_doubleword:
         /***************************************************/
 
 copyin_left_align_to_halfword:
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.b.usr r5,   SRC,  r0
 	NOP
@@ -801,7 +453,7 @@ copyin_left_align_to_halfword:
 	addu	DEST, DEST, 1
 
 copyin_left_align_to_word:
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.h.usr r5,   SRC,  r0
 	NOP
@@ -818,7 +470,7 @@ copyin_left_align_to_word:
 
 copyin_right_align_to_halfword:
 	subu	LEN,  LEN,  1
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.b.usr r5,   SRC,  LEN
 	NOP
@@ -832,7 +484,7 @@ copyin_right_align_to_halfword:
 
 copyin_right_align_to_word:
 	subu	LEN,  LEN,  2
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.h.usr r5,   SRC,  LEN
 	NOP
@@ -846,7 +498,7 @@ copyin_right_align_to_word:
 
 copyin_right_align_to_doubleword:
 	subu	LEN,  LEN,  4
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.usr	r5,   SRC,  LEN
 	NOP
@@ -864,7 +516,7 @@ copyin_byte_only:
 	bcnd	eq0, LEN, 2f
    1:
 	subu	LEN, LEN, 1
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.b.usr r5, SRC, LEN
 	NOP
@@ -920,7 +572,7 @@ ENTRY(copyinstr)
 	bcnd	eq0,  CNT,   .Lcisdone
 	or	r6,   r0,   0
    1:	
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	ld.bu.usr  	r7,   SRC,  r6
 	NOP
@@ -1015,7 +667,7 @@ copyout_right_aligned_to_doubleword:
 	ld 	r5,   SRC,  r0
 	ld    	r6,   SRC,  r7
 	subu	LEN,  LEN,  8
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.usr	r5,   DEST, r0
 	NOP
@@ -1025,7 +677,7 @@ copyout_right_aligned_to_doubleword:
 	st.usr	r5,   DEST, r0
 #endif
 	addu	SRC,  SRC,  8
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.usr	r6,   DEST, r7
 	NOP
@@ -1043,7 +695,7 @@ copyout_right_aligned_to_doubleword:
 copyout_left_align_to_halfword:
 	ld.b   	r5,   SRC,  r0
 	subu	LEN,  LEN,  1
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.b.usr r5,   DEST, r0
 	NOP
@@ -1059,7 +711,7 @@ copyout_left_align_to_halfword:
 copyout_left_align_to_word:
 	ld.h   	r5,   SRC,  r0
 	subu    LEN,  LEN,  2
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.h.usr r5,   DEST, r0
 	NOP
@@ -1075,7 +727,7 @@ copyout_left_align_to_word:
 copyout_right_align_to_halfword:
 	subu	LEN,  LEN,  1
 	ld.b   	r5,   SRC,  LEN
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP     
 	st.b.usr r5,   DEST, LEN
 	NOP
@@ -1090,7 +742,7 @@ copyout_right_align_to_halfword:
 copyout_right_align_to_word:
 	subu	LEN,  LEN,  2
 	ld.h   	r5,   SRC,  LEN
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP     
 	st.h.usr r5,   DEST, LEN
 	NOP
@@ -1105,7 +757,7 @@ copyout_right_align_to_word:
 copyout_right_align_to_doubleword:
 	subu	LEN,  LEN,  4
 	ld	r5,   SRC,  LEN
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.usr	r5,   DEST, LEN
 	NOP
@@ -1119,12 +771,12 @@ copyout_right_align_to_doubleword:
    	or	r2, r0, r0	/* successful return */
 	br	.Lcodone
 
-_LABEL(copyout_byte_only)
+ASGLOBAL(copyout_byte_only)
 	bcnd	eq0, LEN, 2f
    1:
 	subu	LEN, LEN, 1
 	ld.b   	r5, SRC, LEN
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.b.usr r5, DEST, LEN
 	NOP
@@ -1180,7 +832,7 @@ ENTRY(copyoutstr)
 	or	r6,   r0,   0
    1:	
 	ld.bu	r7,   SRC,  r6
-#if  ERRATA__XXX_USR
+#ifdef ERRATA__XXX_USR
 	NOP
 	st.b.usr r7,   DEST,  r6
 	NOP
@@ -1216,9 +868,6 @@ ENTRY(copyoutstr)
 #undef CNT
 #undef LEN
 
-/*######################################################################*/
-/*LABEL(_ALLOW_FAULT_END)*/
-/*word 0	*/ /* to separate from routine below */
 /*######################################################################*/
 
 /*
@@ -1260,7 +909,7 @@ ENTRY(kcopy)
 /*
  * Copy three bytes from src to destination then copy words
  */
-_LABEL(kf_3byte_word_copy)
+ASGLOBAL(kf_3byte_word_copy)
 	ld.bu	r6,r2,0		/* load byte from source */
 	ld.bu	r7,r2,1		/* load byte from source */
 	ld.bu	r8,r2,2		/* load byte from source */
@@ -1275,7 +924,7 @@ _LABEL(kf_3byte_word_copy)
 /*
  * Copy 1 halfword from src to destination then copy words
  */
-_LABEL(kf_1half_word_copy)
+ASGLOBAL(kf_1half_word_copy)
 	ld.hu	r6,r2,0		/* load half-word from source */
 	st.h	r6,r3,0		/* store half-word to destination */
 	addu	r2,r2,2		/* increment source pointer */
@@ -1286,7 +935,7 @@ _LABEL(kf_1half_word_copy)
 /* 
  * Copy 1 byte from src to destination then copy words
  */
-_LABEL(kf_1byte_word_copy)
+ASGLOBAL(kf_1byte_word_copy)
 	ld.bu	r6,r2,0		/* load 1 byte from source */
 	st.b	r6,r3,0		/* store 1 byte to destination */
 	addu	r2,r2,1		/* increment source pointer */
@@ -1296,7 +945,7 @@ _LABEL(kf_1byte_word_copy)
 /*
  * Copy as many full words as possible, 4 words per loop
  */	
-_LABEL(kf_word_copy)
+ASGLOBAL(kf_word_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,kf_byte_copy 	/* not enough left, copy bytes */
 	ld	r6,r2,0		/* load first word */
@@ -1312,7 +961,7 @@ _LABEL(kf_word_copy)
 	br.n	kf_word_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(kf_1byte_half_copy)
+ASGLOBAL(kf_1byte_half_copy)
 	ld.bu	r6,r2,0		/* load 1 byte from source */
 	st.b	r6,r3,0		/* store 1 byte to destination */
 	addu	r2,r2,1		/* increment source pointer */
@@ -1320,7 +969,7 @@ _LABEL(kf_1byte_half_copy)
 	subu	r4,r4,1		/* decrement remaining length */
 	/* fall through to half copy */
 
-_LABEL(kf_half_copy)
+ASGLOBAL(kf_half_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,kf_byte_copy /* not enough left, copy bytes */
 	ld.hu	r6,r2,0		/* load first half-word */
@@ -1344,7 +993,7 @@ _LABEL(kf_half_copy)
 	br.n	kf_half_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(kf_byte_copy)
+ASGLOBAL(kf_byte_copy)
 	bcnd	eq0,r4,kcopy_out /* branch if nothing left to copy */ 
 	ld.bu	r6,r2,0		/* load byte from source */
 	st.b	r6,r3,0		/* store byte in destination */
@@ -1356,7 +1005,7 @@ _LABEL(kf_byte_copy)
 /*
  *	source address is less than destination address, copy in reverse
  */
-_LABEL(kcopy_reverse)
+ASGLOBAL(kcopy_reverse)
 /*
  * start copy pointers at end of data 
  */
@@ -1383,7 +1032,7 @@ _LABEL(kcopy_reverse)
 /*
  * Copy three bytes from src to destination then copy words
  */
-_LABEL(kr_3byte_word_copy)
+ASGLOBAL(kr_3byte_word_copy)
 	subu	r2,r2,3		/* decrement source pointer */
 	subu	r3,r3,3		/* decrement destination pointer */
 	ld.bu	r6,r2,0		/* load byte from source */
@@ -1398,7 +1047,7 @@ _LABEL(kr_3byte_word_copy)
 /*
  * Copy 1 halfword from src to destination then copy words
  */
-_LABEL(kr_1half_word_copy)
+ASGLOBAL(kr_1half_word_copy)
 	subu	r2,r2,2		/* decrement source pointer */
 	subu	r3,r3,2		/* decrement destination pointer */
 	ld.hu	r6,r2,0		/* load half-word from source */
@@ -1409,7 +1058,7 @@ _LABEL(kr_1half_word_copy)
 /* 
  * Copy 1 byte from src to destination then copy words
  */
-_LABEL(kr_1byte_word_copy)
+ASGLOBAL(kr_1byte_word_copy)
 	subu	r2,r2,1		/* decrement source pointer */
 	subu	r3,r3,1		/* decrement destination pointer */
 	ld.bu	r6,r2,0		/* load 1 byte from source */
@@ -1419,7 +1068,7 @@ _LABEL(kr_1byte_word_copy)
 /*
  * Copy as many full words as possible, 4 words per loop
  */	
-_LABEL(kr_word_copy)
+ASGLOBAL(kr_word_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,kr_byte_copy 	/* not enough left, copy bytes */
 	subu	r2,r2,16	/* decrement source pointer */
@@ -1435,7 +1084,7 @@ _LABEL(kr_word_copy)
 	br.n	kr_word_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(kr_1byte_half_copy)
+ASGLOBAL(kr_1byte_half_copy)
 	subu	r2,r2,1		/* decrement source pointer */
 	subu	r3,r3,1		/* decrement destination pointer */
 	ld.bu	r6,r2,0		/* load 1 byte from source */
@@ -1443,7 +1092,7 @@ _LABEL(kr_1byte_half_copy)
 	subu	r4,r4,1		/* decrement remaining length */
 	/* fall through to half copy */
 
-_LABEL(kr_half_copy)
+ASGLOBAL(kr_half_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,kr_byte_copy /* not enough left, copy bytes */
 	subu	r2,r2,16	/* decrement source pointer */
@@ -1467,7 +1116,7 @@ _LABEL(kr_half_copy)
 	br.n	kr_half_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(kr_byte_copy)
+ASGLOBAL(kr_byte_copy)
 	bcnd	eq0,r4,kcopy_out /* branch if nothing left to copy */ 
 	subu	r2,r2,1		/* decrement source pointer */
 	subu	r3,r3,1		/* decrement destination pointer */
@@ -1476,21 +1125,21 @@ _LABEL(kr_byte_copy)
 	br.n	kr_byte_copy	/* branch for next byte */ 
 	subu	r4,r4,1		/* decrement remaining length */
 
-_LABEL(kcopy_out)
+ASGLOBAL(kcopy_out)
 	or	r2,   r0,   0		/* return success */
-_LABEL(kcopy_out_fault)	
+ASGLOBAL(kcopy_out_fault)	
 	or.u	r5,r0,hi16(_curpcb)
 	ld	r6,r5,lo16(_curpcb)
 	st	r0,r6,PCB_ONFAULT	/* clear the handler */
 	jmp	r1		/* all done, return to caller */
 
-_LABEL(kcopy_fault)
+ASGLOBAL(kcopy_fault)
 	or	r2,   r0,   EFAULT	/* return fault */
 	br     kcopy_out_fault
 	
 	data
 	align	4
-_LABEL(kf_strat)
+ASGLOBAL(kf_strat)
 	word	kf_word_copy
 	word	kf_byte_copy
 	word	kf_half_copy
@@ -1508,7 +1157,7 @@ _LABEL(kf_strat)
 	word	kf_byte_copy
 	word	kf_1byte_word_copy
 
-_LABEL(kr_strat)
+ASGLOBAL(kr_strat)
 	word	kr_word_copy
 	word	kr_byte_copy
 	word	kr_half_copy
@@ -1602,7 +1251,7 @@ ENTRY(ovbcopy)
 /*
  * Copy three bytes from src to destination then copy words
  */
-_LABEL(f_3byte_word_copy)
+ASGLOBAL(f_3byte_word_copy)
 	ld.bu	r6,r2,0		/* load byte from source */
 	ld.bu	r7,r2,1		/* load byte from source */
 	ld.bu	r8,r2,2		/* load byte from source */
@@ -1617,7 +1266,7 @@ _LABEL(f_3byte_word_copy)
 /*
  * Copy 1 halfword from src to destination then copy words
  */
-_LABEL(f_1half_word_copy)
+ASGLOBAL(f_1half_word_copy)
 	ld.hu	r6,r2,0		/* load half-word from source */
 	st.h	r6,r3,0		/* store half-word to destination */
 	addu	r2,r2,2		/* increment source pointer */
@@ -1628,7 +1277,7 @@ _LABEL(f_1half_word_copy)
 /* 
  * Copy 1 byte from src to destination then copy words
  */
-_LABEL(f_1byte_word_copy)
+ASGLOBAL(f_1byte_word_copy)
 	ld.bu	r6,r2,0		/* load 1 byte from source */
 	st.b	r6,r3,0		/* store 1 byte to destination */
 	addu	r2,r2,1		/* increment source pointer */
@@ -1638,7 +1287,7 @@ _LABEL(f_1byte_word_copy)
 /*
  * Copy as many full words as possible, 4 words per loop
  */	
-_LABEL(f_word_copy)
+ASGLOBAL(f_word_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,f_byte_copy 	/* not enough left, copy bytes */
 	ld	r6,r2,0		/* load first word */
@@ -1654,7 +1303,7 @@ _LABEL(f_word_copy)
 	br.n	f_word_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(f_1byte_half_copy)
+ASGLOBAL(f_1byte_half_copy)
 	ld.bu	r6,r2,0		/* load 1 byte from source */
 	st.b	r6,r3,0		/* store 1 byte to destination */
 	addu	r2,r2,1		/* increment source pointer */
@@ -1662,7 +1311,7 @@ _LABEL(f_1byte_half_copy)
 	subu	r4,r4,1		/* decrement remaining length */
 	/* fall through to half copy */
 
-_LABEL(f_half_copy)
+ASGLOBAL(f_half_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,f_byte_copy /* not enough left, copy bytes */
 	ld.hu	r6,r2,0		/* load first half-word */
@@ -1686,7 +1335,7 @@ _LABEL(f_half_copy)
 	br.n	f_half_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(f_byte_copy)
+ASGLOBAL(f_byte_copy)
 	bcnd	eq0,r4,bcopy_out /* branch if nothing left to copy */ 
 	ld.bu	r6,r2,0		/* load byte from source */
 	st.b	r6,r3,0		/* store byte in destination */
@@ -1698,7 +1347,7 @@ _LABEL(f_byte_copy)
 /*
  *	source address is less than destination address, copy in reverse
  */
-_LABEL(bcopy_reverse)
+ASGLOBAL(bcopy_reverse)
 /*
  * start copy pointers at end of data 
  */
@@ -1725,7 +1374,7 @@ _LABEL(bcopy_reverse)
 /*
  * Copy three bytes from src to destination then copy words
  */
-_LABEL(r_3byte_word_copy)
+ASGLOBAL(r_3byte_word_copy)
 	subu	r2,r2,3		/* decrement source pointer */
 	subu	r3,r3,3		/* decrement destination pointer */
 	ld.bu	r6,r2,0		/* load byte from source */
@@ -1740,7 +1389,7 @@ _LABEL(r_3byte_word_copy)
 /*
  * Copy 1 halfword from src to destination then copy words
  */
-_LABEL(r_1half_word_copy)
+ASGLOBAL(r_1half_word_copy)
 	subu	r2,r2,2		/* decrement source pointer */
 	subu	r3,r3,2		/* decrement destination pointer */
 	ld.hu	r6,r2,0		/* load half-word from source */
@@ -1751,7 +1400,7 @@ _LABEL(r_1half_word_copy)
 /* 
  * Copy 1 byte from src to destination then copy words
  */
-_LABEL(r_1byte_word_copy)
+ASGLOBAL(r_1byte_word_copy)
 	subu	r2,r2,1		/* decrement source pointer */
 	subu	r3,r3,1		/* decrement destination pointer */
 	ld.bu	r6,r2,0		/* load 1 byte from source */
@@ -1761,7 +1410,7 @@ _LABEL(r_1byte_word_copy)
 /*
  * Copy as many full words as possible, 4 words per loop
  */	
-_LABEL(r_word_copy)
+ASGLOBAL(r_word_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,r_byte_copy 	/* not enough left, copy bytes */
 	subu	r2,r2,16	/* decrement source pointer */
@@ -1777,7 +1426,7 @@ _LABEL(r_word_copy)
 	br.n	r_word_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(r_1byte_half_copy)
+ASGLOBAL(r_1byte_half_copy)
 	subu	r2,r2,1		/* decrement source pointer */
 	subu	r3,r3,1		/* decrement destination pointer */
 	ld.bu	r6,r2,0		/* load 1 byte from source */
@@ -1785,7 +1434,7 @@ _LABEL(r_1byte_half_copy)
 	subu	r4,r4,1		/* decrement remaining length */
 	/* fall through to half copy */
 
-_LABEL(r_half_copy)
+ASGLOBAL(r_half_copy)
 	cmp	r10,r4,16	/* see if we have 16 bytes remaining */	
 	bb1	lo,r10,r_byte_copy /* not enough left, copy bytes */
 	subu	r2,r2,16	/* decrement source pointer */
@@ -1809,7 +1458,7 @@ _LABEL(r_half_copy)
 	br.n	r_half_copy	/* branch to copy another block */
 	subu	r4,r4,16	/* decrement remaining length */
 	
-_LABEL(r_byte_copy)
+ASGLOBAL(r_byte_copy)
 	bcnd	eq0,r4,bcopy_out /* branch if nothing left to copy */ 
 	subu	r2,r2,1		/* decrement source pointer */
 	subu	r3,r3,1		/* decrement destination pointer */
@@ -1818,12 +1467,12 @@ _LABEL(r_byte_copy)
 	br.n	r_byte_copy	/* branch for next byte */ 
 	subu	r4,r4,1		/* decrement remaining length */
 
-_LABEL(bcopy_out)
+ASGLOBAL(bcopy_out)
 	jmp	r1		/* all done, return to caller */
 	
 	data
 	align	4
-_LABEL(f_strat)
+ASGLOBAL(f_strat)
 	word	f_word_copy
 	word	f_byte_copy
 	word	f_half_copy
@@ -1841,7 +1490,7 @@ _LABEL(f_strat)
 	word	f_byte_copy
 	word	f_1byte_word_copy
 
-_LABEL(r_strat)
+ASGLOBAL(r_strat)
 	word	r_word_copy
 	word	r_byte_copy
 	word	r_half_copy
@@ -2132,261 +1781,6 @@ ENTRY(invalidate_pte)
         jmp.n   r1
         or      r2,r3,r0
 
-#ifdef now_in_c
-/*
- * This has to be cleaned - we should not use INT_MASK_LEVEL. Should
- * use pcc2_int_lvl instead. XXX nivas
- */
-/*
- * I don't think we need to explictly enable interrupts. We can always enable
- * interrupts and depend on the int level and mask in PCC2 to block the
- * appropriate interrupts for us. If we don't depend on the PCC2 to block ints
- * for us, we need to explicitly set the IND bit in the PSR for every spln(x)
- * when x > 0. But for now... Rewrite the whole mess. XXX nivas
- * This is bogus - it is blocking interrupts for all but 0 XXX nivas
- */
-
-ENTRY(spln)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	or	r5,r2,r0 /* copy of r2 */
-	bb1	PSR_INTERRUPT_DISABLE_BIT,r10,1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR
-        FLUSH_PIPELINE
-    1:
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 2f
-	or.u	r2, r0, hi16(IEN0_REG)
-	or	r2, r2, lo16(IEN0_REG)
-	bsr.n	_m188_get_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r4,r2,r0 /* old mask in r4 */
-	or	r3,r5,r0 /* new mask in r3 */
-	or.u	r2, r0, hi16(IEN0_REG)
-	or	r2, r2, lo16(IEN0_REG)
-	bsr.n	_m188_set_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r2,r4,r0 /* old mask in r2 */
-	br	m188_spln_done
-#endif /* MVME188 */    
-    2:		
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	or	r3,r3,lo16(INT_MASK_LEVEL)
-	xmem.bu	r2,r3,r0
-m188_spln_done:
-	bcnd	ne0, r5, 3f
-	clr	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r11,PSR
-        FLUSH_PIPELINE
-    3:
-	jmp	r1
-
-ENTRY(getipl)
-ENTRY(spl)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR
-        FLUSH_PIPELINE
-      1:
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 2f
-	/* get the current mask value mvme188 */
-	or.u	r2, r0, hi16(IEN0_REG)
-	or	r2, r2, lo16(IEN0_REG)
-	bsr.n	_m188_get_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	
-	br 	m188_spl_done
-#endif	/* MVME188 */
-      2:	
-	/* get the current mask value mvme1x7 */
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	ld.b	r2,r3,lo16(INT_MASK_LEVEL)
-m188_spl_done:	
-	stcr	r11,PSR
-        FLUSH_PIPELINE
-	jmp	r1
-
-/*
- *	Set the interrupt mask to the value passed in, returning the
- *	the current mask level. This routine does not enable/disable
- *	interrupts explicitly. It is assumed that the callers know what
- *	to do with interrupts.
- */
- 
-ENTRY(setipl)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR 			/* disable ints, if needed */
-   FLUSH_PIPELINE
-1:
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 2f
-	or	r3, r0, r2 			/* r3 now new mask value */
-	/* get the current mask value mvme188 */
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_get_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r4, r0, r2 			/* r4 now current mask value */
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_set_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r2, r0, r4			/* r2 now the old value */
-	br	m188_setipl_done     
-#endif	/* MVME188 */
-     2:	
-	/* get the current mask value mvme1x7 */
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	or	r3,r3,lo16(INT_MASK_LEVEL)
-	xmem.bu	r2,r3,r0			/* xchng the new mask value */
-m188_setipl_done:
-        FLUSH_PIPELINE
-	stcr	r11,PSR				/* restore psr */
-        FLUSH_PIPELINE
-	jmp	r1				/* and return the old value */
-
-#if DDB
-ENTRY(db_spln)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	or	r5,r2,r0 /* copy of r2 */
-	bb1	PSR_INTERRUPT_DISABLE_BIT,r10,1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR
-        FLUSH_PIPELINE
-    1:
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 2f
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_get_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r4,r2,r0 /* old mask in r4 */
-	or	r3,r5,r0 /* new mask in r3 */
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_set_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r2,r4,r0 /* old mask in r2 */
-	br	m188_db_spln_done
-#endif /* MVME188 */    
-    2:		
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	or	r3,r3,lo16(INT_MASK_LEVEL)
-	xmem.bu	r2,r3,r0
-m188_db_spln_done:
-	bcnd	ne0, r5, 3f
-	clr	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r11,PSR
-        FLUSH_PIPELINE
-    3:
-	jmp	r1
-
-ENTRY(db_getipl)
-ENTRY(db_spl)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR
-        FLUSH_PIPELINE
-      1:
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 2f
-	/* get the current mask value mvme188 */
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_get_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	br 	m188_db_spl_done
-#endif /* MVME188 */      
-      2:	
-	/* get the current mask value mvme1x7 */
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	ld.b	r2,r3,lo16(INT_MASK_LEVEL)
-m188_db_spl_done:	
-	stcr	r11,PSR
-        FLUSH_PIPELINE
-	jmp	r1
-
-ENTRY(db_setipl)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR 			/* disable ints, if needed */
-        FLUSH_PIPELINE
-     1:
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 2f
-	or	r3, r0, r2 			/* r3 now new mask value */
-	/* get the current mask value mvme188 */
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_get_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r4, r0, r2 			/* r4 now current mask value */
-	or.u	r2,r0,hi16(IEN0_REG)
-	or	r2,r2,lo16(IEN0_REG)
-	bsr.n	_m188_set_mask
-	subu	r31, r31, 40
-	addu	r31, r31, 40
-	or	r2, r0, r4			/* r2 now the old value */
-	br	m188_db_setipl_done     
-#endif /* MVME188 */	
-     2:	
-	/* get the current mask value mvme1x7 */
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	or	r3,r3,lo16(INT_MASK_LEVEL)
-	xmem.bu	r2,r3,r0			/* xchng the new mask value */
-m188_db_setipl_done:
-        FLUSH_PIPELINE
-	stcr	r11,PSR				/* restore psr */
-        FLUSH_PIPELINE
-	jmp	r1				/* and return the old value */
-#endif /* DDB */	
-#endif /* now_in_c */
-
 #if DDB
 ENTRY(db_flush_pipeline)
         FLUSH_PIPELINE
@@ -2440,31 +1834,6 @@ ENTRY(guarded_access_end)
 	jmp.n	 r1
 	or	 r2,r0,0
 
-#if 0  /* There is an inline version of this in 
-machine/cpu_number.h but it doesn't work right for some reason.
-/*************************************************************************
- *************************************************************************
- **
- ** 	int cpu_number(void)
- **
- **	Returns the number of the current cpu. 
- **/
-#undef cpu_number
-ENTRY(cpu_number)
-        or      r2, r0, r0                      /* clear return value */
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
-	cmp	r4, r3, 0x188
-	bb1	ne, r4, 1f
-        ldcr    r2, SR1
-#endif /* MVME188 */	
-1:    
-        jmp.n   r1
-	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
-#endif
-	
 /*************************************************************************
  *************************************************************************
  **

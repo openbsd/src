@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2001/08/15 21:27:20 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2001/08/24 22:53:14 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -69,10 +69,6 @@
 
 /***********************************************************************/
 
-#ifndef UADDR
-#define	UADDR		0xEEE00000	/* address of u */
-#endif /* UADDR */
-
 /*
  * The memory looks like:
  *   0x00000 - 0x01000   : trap vectors
@@ -83,26 +79,26 @@
  ***********************************************************************/
 	text
 
-LABEL(_kernelstart)
-LABEL(_kernel_text)
-LABEL(_start)
-LABEL(start)
-	br	_start_text
-	br	_start_text
-	br	_start_text
-	br	_start_text
+GLOBAL(kernelstart)
+GLOBAL(kernel_text)
+GLOBAL(start)
+ASGLOBAL(start)
+	br	_C_LABEL(start_text)
+	br	_C_LABEL(start_text)
+	br	_C_LABEL(start_text)
+	br	_C_LABEL(start_text)
 
-ENTRY(doboot)
+GLOBAL(doboot)
 	/*
 	 *	Try hitting the SRST bit in VMEchip2 to reset the system.
 	 */
 #ifdef MVME188
 	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_cputyp)
-	ld	r3, r4, lo16(_cputyp)
+	or.u	r4, r0, hi16(_C_LABEL(cputyp))
+	ld	r3, r4, lo16(_C_LABEL(cputyp))
 	cmp	r4, r3, 0x188
 	bb1	ne, r4, 1f
-	bsr	_m188_reset
+	bsr	_C_LABEL(m188_reset)
 	br	m188_doboot_fail
 #endif	/* MVME188 */
 1:	
@@ -115,8 +111,8 @@ ENTRY(doboot)
 	 *	We will be here if the reset above failed. In this case,
 	 *	we will try to return to bug.
 	 *
-	 *	Switch to interrupt stack and call __doboot to take care
-	 *	going to BUG. Need to do this since __doboot turns off the
+	 *	Switch to interrupt stack and call _doboot to take care
+	 *	going to BUG. Need to do this since _doboot turns off the
 	 *	the MMU and we need to be on a 1-to-1 mapped stack so that
 	 *	further calls don't get data access exceptions.
 	 */
@@ -127,11 +123,11 @@ m188_doboot_fail:
 	or	r31, r31, lo16(_intstack_end)
 	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
 
-	bsr	__doboot
+	bsr	_C_LABEL(_doboot)
 	/*NOTREACHED*/
 
 /**************************************************************************/
-LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
+GLOBAL(start_text)	/* This is the *real* start upon poweron or reset */
 	/*
 	 * Args passed by boot loader
 	 * 	r2 howto
@@ -228,19 +224,19 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	 */
 	or.u	r11, r0,  hi16(initialized_cpu_lock)
 	or	r11, r11, lo16(initialized_cpu_lock)
-_LABEL(check_init_lock)
+ASGLOBAL(check_init_lock)
 	FLUSH_PIPELINE
 	or	r22, r0,  1
 	xmem    r22, r11, r0	  	/* If r22 gets 0, we have the lock.. */
 	bcnd	eq0, r22, have_init_lock/* ..but if not, we must wait */
 
-_LABEL(wait_for_init_lock)
+ASGLOBAL(wait_for_init_lock)
 	/* just watch the lock until it looks clear */
 	ld	r22, r11, r0
 	bcnd	eq0, r22, check_init_lock
 	br	wait_for_init_lock	/* looks clear -- try to grab */
 
-_LABEL(have_init_lock)
+ASGLOBAL(have_init_lock)
 	FLUSH_PIPELINE
 	or.u	r11, r0,  hi16(_initialized_cpus)
 	ld	r22, r11, lo16(_initialized_cpus)
@@ -256,24 +252,24 @@ _LABEL(have_init_lock)
 	 */
 	or.u	r11, r0,  hi16(_inter_processor_lock)
 	or	r11, r11, lo16(_inter_processor_lock)
-_LABEL(check_ip_lock)
+ASGLOBAL(check_ip_lock)
 	FLUSH_PIPELINE
 	or	r22, r0,  1
 	xmem	r22, r11, r0            /* If r22 gets 0, we have the lock.. */ 
 	bcnd	eq0, r22, have_ip_lock  /* ..but if not, we must wait */
-_LABEL(wait_for_ip_lock)
+ASGLOBAL(wait_for_ip_lock)
 	/* just watch the lock until it looks clear */
 	ld	r22, r11, r0
 	bcnd	ne0, r22, wait_for_ip_lock
 	/* since we can be here with caches off, add a few nops to 
 	keep the bus from getting overloaded */
 	or	r2, r0, lo16(1000)
-_LABEL(ip_loop)
+ASGLOBAL(ip_loop)
 	subu	r2, r2, 1
 	bcnd	eq0, r2, ip_loop
 	br	check_ip_lock           /* looks clear -- try to grab */
 
-_LABEL(have_ip_lock)
+ASGLOBAL(have_ip_lock)
 	/* now try to grab the master_processor_chosen prize */
 	FLUSH_PIPELINE
 	or.u	r11, r0,  hi16(master_processor_chosen)
@@ -293,7 +289,7 @@ _LABEL(have_ip_lock)
 	bcnd	ne0, r22, slave_start
 	/* fall through to master start if that's appropriate */
 
-_LABEL(master_start)
+ASGLOBAL(master_start)
 	/*
 	 * Switch to interrupt stack
 	 * Use idle_u's stack instead?
@@ -358,7 +354,7 @@ _LABEL(master_start)
 /***********************************************************************
  *	slave CPUs starts here
  */
-_LABEL(slave_start)
+ASGLOBAL(slave_start)
 	/* while holding the inter_processor_lock, the slave cpu
 	   can find use the slavestack to call slave_pre_main and
 	   determine its cpu number. After that, however, it should
@@ -386,7 +382,7 @@ _LABEL(slave_start)
 	br.n	_slave_main     /* does not return */
 	subu	r31, r31, 40    /* allocate frame */
 	
-_LABEL(_spin_cpu)
+GLOBAL(spin_cpu)
         or.u	r3,   r0,  hi16(_start_text)
 	or	r3,   r3,  lo16(_start_text)
 	or	r9,   r0,  0x100		/* .FORKMPU */
@@ -421,16 +417,16 @@ _ret_addr:
 	global _msgsw
 _msgsw:
 	word 0 			 /* Bits here turn on/off debugging somewhere */
-_LABEL(initialized_cpu_lock)
+ASGLOBAL(initialized_cpu_lock)
    /* XMEM spin lock -- to count CPUs */
 	word 0
-LABEL(_initialized_cpus)
+GLOBAL(initialized_cpus)
    /* CPU counter to initialize */
 	word 0
-_LABEL(master_processor_chosen)
+ASGLOBAL(master_processor_chosen)
    /* The first processor that XMEMs this becomes the master */
 	word 0
-LABEL(_inter_processor_lock)
+GLOBAL(inter_processor_lock)
    /* XMEM spin lock -- controls access to master_processor_chosen */
 	word 0
 	

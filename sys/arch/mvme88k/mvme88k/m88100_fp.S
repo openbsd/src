@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.10 2001/08/07 22:12:31 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.11 2001/08/24 22:53:15 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -164,7 +164,7 @@ fp_p_trap:
 	st      r3,r31,32       /* save exception frame */
 	or      r2,r0,T_FPEPFLT /* load trap type */
 	or	r3, r29, r0
-	bsr     _trap           /* trap */
+	bsr     _C_LABEL(trap18x)           /* trap */
 	ld      r1,r31,36       /* recover return address */
 	addu    r31,r31,40      /* deallocate stack */
  	br	fp_p_return
@@ -643,7 +643,7 @@ FPintov_return:      ld     r1,r31,0     /* load return address from memory */
 /* do not influence this instruction. */
 
              text
-LABEL(_FPresoper)
+GLOBAL(FPresoper)
 	     st	    r1, r31, 0
 	     extu   r10,r9,5<11>   /* extract opcode */
 /*             cmp    r11,r10,FSQRTop ;compare to FSQRT */
@@ -655,7 +655,7 @@ LABEL(_FPresoper)
              cmp    r11,r10,TRNCop /* compare to TRNC */
              bb0    eq,r11,opercheck /* check for reserved operands */
 
-_LABEL(S1clear)
+ASGLOBAL(S1clear)
 	     or     r5,r0,r0       /* clear any NaN''s, denorms, or infinities */
              or     r6,r0,r0       /* that may be left in S1HI,S1LO from a  */
                                    /* previous instruction */
@@ -677,11 +677,11 @@ _LABEL(S1clear)
 /* S2 is a NaN or infinity.  If it is a NaN, then branch to the NaN routine. */
 
              
-_LABEL(opercheck)
+ASGLOBAL(opercheck)
 	     extu   r10,r5,11<20>        /* internal representation for double */
              bb1.n  s1size,r9,S1NaNdoub /* S1 is double precision */
              or     r12,r0,r0      /* clear operand flag register */
-_LABEL(S1NaNsing)
+ASGLOBAL(S1NaNsing)
 	     xor    r10,r10,0x0080       /* internal representation for single */
              ext    r10,r10,8<0>         /* precision is IEEE 8 bits sign extended */
                                          /* to 11 bits; for real exp. > 0, the */
@@ -697,11 +697,11 @@ _LABEL(S1NaNsing)
                                    /* number, branch to noS1NaN when eq0 */
              br.n   S2NaN          /* see if S2 has a NaN */
              set    r12,r12,1<s1nan> /* indicate that S1 has a NaN */
-_LABEL(noS1NaNs)
+ASGLOBAL(noS1NaNs)
 	     br.n   S2NaN          /* check contents of S2 */
              set    r12,r0,1<s1inf> /* indicate that S1 has an infinity */
 
-_LABEL(S1NaNdoub)
+ASGLOBAL(S1NaNdoub)
 	     xor    r10,r10,0x0400       /* precision is the same IEEE 11 bits  */
                                          /* The */
                                          /* above instructions gives a result exp. */
@@ -715,13 +715,13 @@ _LABEL(S1NaNdoub)
                                    /* number, branch to noS1NaN when eq0 */
              br.n   S2NaN          /* see if S2 has a NaN */
              set    r12,r12,1<s1nan> /* indicate that S1 has a NaN */
-_LABEL(noS1NaNd)
+ASGLOBAL(noS1NaNd)
 	     set    r12,r0,1<s1inf> /* indicate that S1 has an infinity */
 
-_LABEL(S2NaN)
+ASGLOBAL(S2NaN)
 	     bb1.n  s2size,r9,S2NaNdoub /* S1 is double precision */
              extu   r10,r7,11<20>        /* internal representation for double */
-_LABEL(S2NaNsing)
+ASGLOBAL(S2NaNsing)
 	     xor    r10,r10,0x0080       /* internal representation for single */
              ext    r10,r10,8<0>         /* precision is IEEE 8 bits sign extended */
                                          /* to 11 bits; for real exp. > 0, the */
@@ -737,7 +737,7 @@ _LABEL(S2NaNsing)
                                    /* number, branch to noS2NaNs when eq0 */
              br.n   _NaN           /* branch to NaN routine */
              set    r12,r12,1<s2nan> /* indicate that s2 has a NaN */
-_LABEL(noS2NaNs)
+ASGLOBAL(noS2NaNs)
 	     bb0    s1nan,r12, 1f /* branch to NaN if S1 is a NaN */
 	     br	    _NaN
 1:           br.n   _infinity      /* If S1 had a NaN we would have already */
@@ -746,7 +746,7 @@ _LABEL(noS2NaNs)
                                    /* handle the finity */
              set    r12,r12,1<s2inf> /* indicate that S2 has an infinity */
 
-_LABEL(S2NaNdoub)
+ASGLOBAL(S2NaNdoub)
 	     xor    r10,r10,0x0400       /* precision is the same IEEE 11 bits  */
                                          /* The */
                                          /* above instruction gives a result exp. */
@@ -760,7 +760,7 @@ _LABEL(S2NaNdoub)
                                    /* number, branch to noS2NaNd when eq0 */
              br.n   _NaN           /* branch to NaN routine */
              set    r12,r12,1<s2nan> /* indicate that s2 has a NaN */
-_LABEL(noS2NaNd)
+ASGLOBAL(noS2NaNd)
 	     bb0    s1nan,r12,1f /* branch to NaN if S1 is a NaN */
 	     br	    _NaN
 1:           br.n   _infinity      /* If S1 had a NaN we would have already */
@@ -776,7 +776,7 @@ _LABEL(noS2NaNd)
 /* If the routine still has not branched, then branch to denorm, the only  */
 /* reserved operand left. */
 
-_LABEL(inf)
+ASGLOBAL(inf)
 	     bb0    s1nan,r12,1f  /* branch if S1 has a NaN and S2 does not */
 	     br	    _NaN
 1:           bb0    s1inf,r12,2f    /* Neither S1 or S2 has a NaN, and we would */
@@ -1491,7 +1491,7 @@ return:
 /* it can be written, but a signalling S2 is not modified in this routine */
 /* if S1 is a NaN. */
              text
-LABEL(_NaN)
+GLOBAL(NaN)
 	        bb0.n	s1nan,r12,S2sigcheck /* S1 is not a NaN */
 		st	r1,r31,0 /* save return address */
 		bb1	sigbit,r5,S2sigcheck /* S1 is not a signaling NaN */
@@ -1517,14 +1517,14 @@ LABEL(_NaN)
 		bb0	oper,r3,S1nohandler /* branch if no user handler */
 		bsr	_handler       /* branch to handler */
 		br	FPnan_return
-_LABEL(S1nohandler)
+ASGLOBAL(S1nohandler)
 #endif
 	        br.n	S1write        /* FPSR bit already set, S1 is made quiet, */
                                    /* and since we always write S1 if it is a */
                                    /* NaN, write S1 and skip rest of routine */
 		set	r5,r5,1<sigbit> /* make S1 a quiet NaN */
 
-_LABEL(S2sigcheck)
+ASGLOBAL(S2sigcheck)
 		bb0	s2nan,r12,S1write /* S2 is not a NaN */
 		bb1	sigbit,r7,S1write /* S2 is not a signaling NaN */
 		set	r2,r2,1<oper>  /* set invalid operation bit in FPSR */
@@ -1534,14 +1534,14 @@ _LABEL(S2sigcheck)
 		br	FPnan_return
 #endif
 
-_LABEL(S2nohandler)
+ASGLOBAL(S2nohandler)
 		set    r7,r7,1<sigbit> /* make S2 a quiet NaN */
 
 
 /* Write a single or double precision quiet NaN unless the opeation is FCMP. */
 /* If the operation is FCMP, then set the not comparable bit in the result. */
 
-_LABEL(S1write)
+ASGLOBAL(S1write)
 	     bb0    s1nan,r12,S2write /* do not write S1 if it is not a NaN */
              extu   r10,r9,5<11>      /* extract opcode */
              cmp    r11,r10,FCMPop    /* compare to FCMP */
@@ -1549,11 +1549,11 @@ _LABEL(S1write)
              set    r6,r0,1<nc>       /* set the not comparable bit */
              br.n   FPnan_return            /* return from subroutine */
              set    r6,r6,1<ne>       /* set the not equal bit */
-_LABEL(S1noFCMP)
+ASGLOBAL(S1noFCMP)
 	     bb1.n  dsize,r9,wrdoubS1 /* double destination */
              set    r5,r5,11<20>      /* set all exponent bits to 1 */
 /* The single result will be formed the same way whether S1 is a single or double */
-_LABEL(wrsingS1)
+ASGLOBAL(wrsingS1)
 	     mak    r10,r5,28<3>      /* wipe out extra exponent bits */
              extu   r11,r6,3<29>      /* get lower three bits of mantissa */
              or     r10,r10,r11       /* combine all of result except sign */
@@ -1561,16 +1561,16 @@ _LABEL(wrsingS1)
              br.n   FPnan_return            /* return from function */
              or     r6,r6,r10         /* form result */
 
-_LABEL(wrdoubS1)
+ASGLOBAL(wrdoubS1)
 /* ;;;;;	     bb1    s1size,r9,wrdoubS1d ;write double source to double dest. */
 /* took out the above instruction -- don't see why it's there.... jfriedl */
-_LABEL(wrdoubS1s)
+ASGLOBAL(wrdoubS1s)
 	     set    r6,r6,29<0>       /* set extra bits of lower word */
-_LABEL(wrdoubS1d)
+ASGLOBAL(wrdoubS1d)
 	     br     FPnan_return      /* no modification necessary for writing */
                                       /* double to double, so return from function */
 
-_LABEL(S2write)
+ASGLOBAL(S2write)
 	     extu   r10,r9,5<11>      /* extract opcode */
              cmp    r11,r10,FCMPop    /* compare to FCMP */
              bb1.n  ne,r11,S2noFCMP   /* operation is not FCMP */
@@ -1578,7 +1578,7 @@ _LABEL(S2write)
              set    r6,r0,1<nc>       /* set the not comparable bit */
              br.n   FPnan_return            /* return from subroutine */
              set    r6,r6,1<ne>       /* set the not equal bit */
-_LABEL(S2noFCMP)
+ASGLOBAL(S2noFCMP)
 	     bb1.n  dsize,r9,wrdoubS2 /* double destination */
 	/*
 	 * In the original, the ".n" above and the "set r5..." below
@@ -1589,7 +1589,7 @@ _LABEL(S2noFCMP)
 	 */
              set    r5,r5,11<20>      /* set all exponent bits to 1 */
 /* The single result will be formed the same way whether S1 is a single or double */
-_LABEL(wrsingS2)
+ASGLOBAL(wrsingS2)
 	     mak    r10,r7,28<3>      /* wipe out extra exponent bits */
              extu   r11,r8,3<29>      /* get lower three bits of mantissa */
              or     r10,r10,r11       /* combine all of result except sign */
@@ -1597,20 +1597,20 @@ _LABEL(wrsingS2)
              br.n   FPnan_return            /* return from function */
              or     r6,r6,r10         /* form result */
 
-_LABEL(wrdoubS2)
+ASGLOBAL(wrdoubS2)
 	
 /* ;;;	     bb1  s2size,r9,FPnan_return  ;write double source to double dest. */
 	/*
 	 * I took out the above branch because I just don't see how it
 	 * makes sense. jfriedl Dec 1, '89
 	 */
-_LABEL(wrdoubS2s)
+ASGLOBAL(wrdoubS2s)
 	     set    r6,r8,29<0>       /* set extra bits of lower word */
 
 
 /* Return from this subroutine with the result. */
 
-_LABEL(FPnan_return)
+ASGLOBAL(FPnan_return)
 	     /* no modification necessary for writing */
                                       /* double to double, so return from function */
              ld     r1,r31,	 0   /* retrieve return address */
