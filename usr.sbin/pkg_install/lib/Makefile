@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 1998/10/13 23:09:52 marc Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/10/05 22:30:18 espie Exp $
 LIB=	install
 SRCS=	file.c plist.c str.c exec.c global.c pen.c
-CFLAGS+= ${DEBUG}
+.PATH:  ${.CURDIR}/../sign
+SRCS+= check.c gzip.c common.c sha1.c pgp_check.c pgp_sign.c
+CFLAGS+= ${DEBUG} 
 NOPROFILE= yes
 NOPIC=	yes
 
