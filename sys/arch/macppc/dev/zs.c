@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.4 2001/09/28 04:13:12 drahn Exp $	*/
+/*	$OpenBSD: zs.c,v 1.5 2002/02/25 16:15:04 drahn Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -806,7 +806,7 @@ void
 zscninit(cp)
 	struct consdev *cp;
 {
-	int escc, escc_ch, obio, zs_offset;
+	int escc, escc_ch, obio, zs_offset, zs_size;
 	int ch = 0;
 	u_int32_t reg[5];
 	char name[16];
@@ -824,13 +824,14 @@ zscninit(cp)
 	if (OF_getprop(escc_ch, "reg", reg, sizeof(reg)) < 4)
 		return;
 	zs_offset = reg[0];
+	zs_size   = reg[1];
 
 	escc = OF_parent(escc_ch);
 	obio = OF_parent(escc);
 
 	if (OF_getprop(obio, "assigned-addresses", reg, sizeof(reg)) < 12)
 		return;
-	zs_conschan = (void *)(reg[2] + zs_offset);
+	zs_conschan = mapiodev(reg[2] + zs_offset, zs_size);
 
 	zs_hwflags[0][ch] = ZS_HWFLAG_CONSOLE;
 }
