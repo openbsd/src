@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.17 2004/01/05 01:09:18 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.18 2004/01/07 17:08:32 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -506,8 +506,12 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		TAILQ_INSERT_TAIL(untagged_q, scb, links.tqe);
 		scb->flags |= SCB_UNTAGGEDQ;
 		if (TAILQ_FIRST(untagged_q) != scb) {
-			ahc_unlock(ahc, &s);
-			return (SUCCESSFULLY_QUEUED);
+			if (xs->flags & SCSI_POLL)
+				goto poll;
+			else {		
+				ahc_unlock(ahc, &s);
+				return (SUCCESSFULLY_QUEUED);
+			}
 		}
 	}
 	scb->flags |= SCB_ACTIVE;
@@ -532,6 +536,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	/*
 	 * If we can't use interrupts, poll for completion
 	 */
+poll:
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_poll\n"));
 
 	target = xs->sc_link->target;
