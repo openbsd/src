@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_isa.c,v 1.3 1996/11/29 22:54:53 niklas Exp $	*/
+/*	$OpenBSD: cy_isa.c,v 1.4 1999/11/30 23:48:07 aaron Exp $	*/
 
 /*
  * cy.c
@@ -33,7 +33,6 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/user.h>
-#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

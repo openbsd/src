@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.14 1999/02/28 03:23:37 jason Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.15 1999/11/30 23:48:07 aaron Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
