@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.13 2004/11/26 23:49:58 marco Exp $
+.\"	$OpenBSD: bus_space.9,v 1.14 2004/12/20 22:12:43 jsg Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1202,7 +1202,7 @@ In that case, they will never return.
 .El
 .Sh READING AND WRITING A SINGLE LOCATION MULTIPLE TIMES
 Some devices implement single locations in bus space which are to be
-read or written multiple times to communicate data, e.g. some ethernet
+read or written multiple times to communicate data, e.g. some Ethernet
 devices' packet buffer FIFOs.
 In order to allow drivers to manipulate these types of devices as
 efficiently as possible, the
