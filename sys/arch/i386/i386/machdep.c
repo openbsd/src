@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 1999/09/30 04:00:42 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.115 1999/10/14 20:09:09 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -167,6 +167,23 @@ extern struct proc *npxproc;
 #endif
 
 #include "bios.h"
+
+/*
+ * The following defines are for the code in setup_buffers that tries to
+ * ensure that enough ISA DMAable memory is still left after the buffercache
+ * has been allocated.
+ */
+#define CHUNKSZ		(3 * 1024 * 1024)
+#define ISADMA_LIMIT	(16 * 1024 * 1024)	/* XXX wrong place */
+#ifdef UVM
+#define ALLOC_PGS(sz, limit, pgs) \
+    uvm_pglistalloc((sz), 0, (limit), CLBYTES, 0, &(pgs), 1, 0)
+#define FREE_PGS(pgs) uvm_pglistfree(&(pgs))
+#else
+#define ALLOC_PGS(sz, limit, pgs) \
+    vm_page_alloc_memory((sz), 0, (limit), CLBYTES, 0, &(pgs), 1, 0)
+#define FREE_PGS(pgs) vm_page_free_memory(&(pgs))
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
@@ -515,9 +532,9 @@ setup_buffers(maxaddr)
 {
 	vm_size_t size;
 	vm_offset_t addr;
-	int base, residual, left, i;
-	struct pglist pgs, freepgs;
-	vm_page_t pg, *last, *last2;
+	int base, residual, left, chunk, i;
+	struct pglist pgs, saved_pgs;
+	vm_page_t pg;
 
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
@@ -552,52 +569,49 @@ setup_buffers(maxaddr)
 	 * reside there as that lowers the probability of them needing to
 	 * bounce, but we have to set aside some space for DMA buffers too.
 	 *
-	 * The current strategy is to grab hold of 2MB chunks at a time as long
-	 * as they fit below 16MB, and as soon as that fail, give back the
-	 * last one and allocate the rest above 16MB.  That should guarantee
-	 * at least 2MB below 16MB left for DMA buffers.
+	 * The current strategy is to grab hold of one 3MB chunk below 16MB
+	 * first, which we are saving for DMA buffers, then try to get
+	 * one chunk at a time for fs buffers, until that is not possible
+	 * anymore, at which point we get the rest wherever we may find it.
+	 * After that we give our saved area back. That will guarantee at
+	 * least 3MB below 16MB left for drivers' attach routines, among
+	 * them isadma.  However we still have a potential problem of PCI
+	 * devices attached earlier snatching that memory.  This can be
+	 * solved by making the PCI DMA memory allocation routines go for
+	 * memory above 16MB first.
 	 */
+
+	/*
+	 * First, save ISA DMA bounce buffer area so we won't lose that
+	 * capability.
+	 */
+	TAILQ_INIT(&saved_pgs);
 	TAILQ_INIT(&pgs);
-	last = last2 = 0;
-	addr = 0;
-	for (left = bufpages; left > 2 * 1024 * 1024 / CLBYTES;
-	    left -= 2 * 1024 * 1024 / CLBYTES) {
-#if defined(UVM)
-		if (uvm_pglistalloc(2 * 1024 * 1024, 0, 16 * 1024 * 1024,
-		    CLBYTES, 0, &pgs, 1, 0)) {
-#else
-		if (vm_page_alloc_memory(2 * 1024 * 1024, 0, 16 * 1024 * 1024,
-		    CLBYTES, 0, &pgs, 1, 0)) {
-#endif
-			if (last2) {
-				TAILQ_INIT(&freepgs);
-				freepgs.tqh_first = *last2;
-				freepgs.tqh_last = pgs.tqh_last;
-				(*last2)->pageq.tqe_prev = &freepgs.tqh_first;
-				pgs.tqh_last = last2;
-				*last2 = NULL;
-#if defined(UVM)
-				uvm_pglistfree(&freepgs);
-#else
-				vm_page_free_memory(&freepgs);
-#endif
-				left += 2 * 1024 * 1024 / CLBYTES;
-				addr = 16 * 1024 * 1024;
-			}
-			break;
+	if (!ALLOC_PGS(CHUNKSZ, ISADMA_LIMIT, saved_pgs)) {
+		/*
+		 * Then, grab as much ISA DMAable memory as possible
+		 * for the buffer * cache as it is nice to not need to
+		 * bounce all buffer I/O.
+		 */
+		for (left = bufpages; left > 0; left -= chunk) {
+			chunk = min(left, CHUNKSZ / CLBYTES);
+			if (ALLOC_PGS(chunk * CLBYTES, ISADMA_LIMIT, pgs))
+				break;
 		}
-		last2 = last ? last : &pgs.tqh_first;
-		last = pgs.tqh_last;
 	}
-	if (left > 0)
-#if defined(UVM)
-		if (uvm_pglistalloc(left * CLBYTES, addr, avail_end,
-		    CLBYTES, 0, &pgs, 1, 0))
-#else
-		if (vm_page_alloc_memory(left * CLBYTES, addr, avail_end,
-		    CLBYTES, 0, &pgs, 1, 0))
-#endif
-			panic("cannot get physical memory for buffer cache");
+
+	/*
+	 * If we need more pages for the buffer cache, get them from anywhere.
+	 */
+	if (left > 0 && ALLOC_PGS(left * CLBYTES, avail_end, pgs))
+		panic("cannot get physical memory for buffer cache");
+
+	/*
+	 * Finally, give back the ISA DMA bounce buffer area, so it can be
+	 * allocated by the isadma driver later.
+	 */
+	if (!TAILQ_EMPTY(&saved_pgs))
+		FREE_PGS(saved_pgs);
 
 	pg = pgs.tqh_first;
 	for (i = 0; i < nbuf; i++) {
