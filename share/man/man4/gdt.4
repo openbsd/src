@@ -1,0 +1,86 @@
+.\"	$OpenBSD: gdt.4,v 1.1 2000/02/17 21:13:14 niklas Exp $
+.\"
+.\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
+.\"
+.\"
+.Dd February 17, 2000
+.Dt GDT 4
+.Os
+.Sh NAME
+.Nm gdt
+.Nd
+.Tn ICP-Vortex GDT RAID driver
+.Sh SYNOPSIS
+.Cd "gdt* at pci? dev ? function ?"
+.Cd "scsibus* at gdt?"
+.Sh HARDWARE
+The
+.Nm
+driver provides support for the following adapters:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Tn GDT60x0
+.It Tn GDT6000B
+.It Tn GDT6x10
+.It Tn GDT6x20
+.It Tn GDT6530
+.It Tn GDT6550
+.It Tn GDT6x17
+.It Tn GDT6x27
+.It Tn GDT6537
+.It Tn GDT6557
+.It Tn GDT6x15
+.It Tn GDT6x25
+.It Tn GDT6535
+.It Tn GDT6555
+.It Tn GDT6x17RP
+.It Tn GDT6x27RP
+.It Tn GDT6537RP
+.It Tn GDT6557RP
+.It Tn GDT6x11RP
+.It Tn GDT6x21RP
+.It Tn GDT6x17RD
+.It Tn GDT6x27RD
+.It Tn GDT6537RD
+.It Tn GDT6557RD
+.It Tn GDT6x11RD
+.It Tn GDT6x21RD
+.It Tn GDT6x18RD
+.It Tn GDT6x28RD
+.It Tn GDT6x38RD
+.It Tn GDT6x58RD
+.It Tn GDT7x18RN
+.It Tn GDT7x28RN
+.It Tn GDT7x38RN
+.It Tn GDT7x58RN
+.It Tn GDT6x19RD
+.It Tn GDT6x29RD
+.It Tn GDT7x19RN
+.It Tn GDT7x29RN
+.El
+.Pp
+However, only the
+.Tn GDT6x27RP
+has been tested as that was the adapter that was available to the author.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 .
+.Sh AUTHOR
+The
+.Nm
+driver was written by 
+.An Niklas Hallqvist Aq niklas@openbsd.org , 
+inspired by the Linux driver by
+.An Achim Luebner Aq achim@vortex.de .
+.Sh HISTORY
+The
+.Nm gdt
+driver first appeared in
+.Ox 2.7 .
+.Sh BUGS
+This manpage is inadaquate.
+.Pp
+An ISA & EISA front-end is needed.
+.Pp
+The driver does not yet support transparent raw SCSI mode.
