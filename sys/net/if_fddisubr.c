@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.40 2004/07/16 15:01:08 henning Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.41 2004/12/09 16:57:35 mcbride Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -396,7 +396,6 @@ fddi_output(ifp, m0, dst, rt0)
 		    sizeof(fh->fddi_shost));
 #if NCARP > 0
 	if (ifp->if_carp) { 
-		int error;
 		error = carp_output(ifp, m, NULL, NULL);
 		if (error)
 			goto bad;
