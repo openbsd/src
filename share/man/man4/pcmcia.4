@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.25 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.26 2002/09/27 22:40:28 millert Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -127,10 +127,37 @@ bus will be mapped in big-endian format instead of the natural (and
 preferred) little endian format.
 Unfortunately such controllers lack the hardware facility to swap bytes,
 and it is not efficient to convert all drivers to always know about this.
-While 8 bit drivers can invisibly work on such a bus, but 16 bit
+While 8 bit drivers can invisibly work on such a bus, 16 bit
 drivers will need modification to handle this.
+So far,
 .Xr wi 4
-is the first driver to have these modifications. 
+is the only driver to require these modifications.
+.Pp
+If the
+.Nm
+adapter is not detected, or if
+.Nm
+events (such as card insertion) do not occur, there may be a
+.Tn PCI
+card BIOS mapped in the same memory space the
+.Nm
+driver is configured to use (this is often the case with ethernet
+card boot ROMs).
+The output from
+.Xr dmesg 1
+should contain a line beginning with
+.Dq bios0
+that lists the memory address and size of mapped regions.
+If there is a conflict, you can use
+.Xr boot_config 8
+to change the iomem parameter of the
+.Em pcic
+device to a non-overlapping address, such as 0xd8000 for
+.Em pcic0 .
+Some experimentation may be required to find a working value; in some
+cases the size parameter of the
+.Em pcic
+device may need to be decreased to avoid a conflict.
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr an 4 ,
