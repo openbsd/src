@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.8 1995/05/11 21:30:22 christos Exp $	*/
+/*	$NetBSD: shell.h,v 1.9 1996/03/01 01:59:00 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
