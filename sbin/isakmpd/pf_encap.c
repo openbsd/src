@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.13 1999/05/01 20:43:43 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.64 1999/05/01 20:21:11 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.14 1999/05/01 22:57:38 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.65 1999/05/01 21:08:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -158,14 +158,11 @@ pf_encap_expire (struct encap_msghdr *emsg)
        * from us on use.
        */
       if (sa->name && (sa->flags & SA_FLAG_REPLACED) == 0)
-	{
-	  /*
-	   * We reestablish the on-demand route here even if we have started
-	   * a new negotiation, considering it might fail.
-	   */
-	  pf_encap_deregister_on_demand_connection (sa->name);
-	  pf_encap_connection (sa->name);
-	}
+	/*
+	 * We reestablish the on-demand route here even if we have started
+	 * a new negotiation, considering it might fail.
+	 */
+	pf_encap_connection_check (sa->name);
 
       /* Remove the old SA, it isn't useful anymore.  */
       sa_free (sa);
