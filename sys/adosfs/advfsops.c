@@ -1,3 +1,4 @@
+/*	$OpenBSD: advfsops.c,v 1.4 1996/02/26 14:18:20 niklas Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.14.2.1 1995/11/10 16:05:16 chopps Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: adosfs.h,v 1.3 1996/02/26 14:18:18 niklas Exp $	*/
 /*	$NetBSD: adosfs.h,v 1.9 1996/02/09 19:06:39 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: adutil.c,v 1.3 1996/02/26 14:18:19 niklas Exp $	*/
 /*	$NetBSD: adutil.c,v 1.8 1996/02/09 19:06:41 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: advnops.c,v 1.3 1996/02/26 14:18:21 niklas Exp $	*/
 /*	$NetBSD: advnops.c,v 1.22 1995/08/18 15:14:38 chopps Exp $	*/
 
 /*
@@ -188,10 +189,10 @@ adosfs_getattr(v)
 	vap->va_uid = ap->uid;
 	vap->va_gid = ap->gid;
 	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsid.val[0];
-	vap->va_atime.ts_sec = vap->va_mtime.ts_sec = vap->va_ctime.ts_sec =
+	vap->va_atime.tv_sec = vap->va_mtime.tv_sec = vap->va_ctime.tv_sec =
 		ap->mtime.days * 24 * 60 * 60 + ap->mtime.mins * 60 +
 		ap->mtime.ticks / 50 + (8 * 365 + 2) * 24 * 60 * 60;
-	vap->va_atime.ts_nsec = vap->va_mtime.ts_nsec = vap->va_ctime.ts_nsec = 0;
+	vap->va_atime.tv_nsec = vap->va_mtime.tv_nsec = vap->va_ctime.tv_nsec = 0;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = NODEV;
