@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.29 2004/04/13 01:09:55 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.30 2005/01/28 20:35:49 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -275,12 +275,12 @@ _thread_kern_sched(struct sigcontext * scp)
 		 */
 		PTHREAD_WAITQ_SETACTIVE();
 		while (((pthread = TAILQ_FIRST(&_waitingq)) != NULL) &&
-		    (pthread->wakeup_time.tv_sec != -1) &&
-		    (((pthread->wakeup_time.tv_sec == 0) &&
-		    (pthread->wakeup_time.tv_nsec == 0)) ||
-		    (pthread->wakeup_time.tv_sec < ts.tv_sec) ||
-		    ((pthread->wakeup_time.tv_sec == ts.tv_sec) &&
-		    (pthread->wakeup_time.tv_nsec <= ts.tv_nsec)))) {
+		       (pthread->wakeup_time.tv_sec != -1) &&
+		       (((pthread->wakeup_time.tv_sec == 0) &&
+			 (pthread->wakeup_time.tv_nsec == 0)) ||
+			(pthread->wakeup_time.tv_sec < ts.tv_sec) ||
+			((pthread->wakeup_time.tv_sec == ts.tv_sec) &&
+			 (pthread->wakeup_time.tv_nsec <= ts.tv_nsec)))) {
 			switch (pthread->state) {
 			case PS_POLL_WAIT:
 			case PS_SELECT_WAIT:
@@ -937,20 +937,10 @@ _thread_kern_set_timeout(const struct timespec * timeout)
 		curthread->wakeup_time.tv_sec = 0;
 		curthread->wakeup_time.tv_nsec = 0;
 	} else {
-		/* Get the current time: */
+		gettimeofday((struct timeval *) &_sched_tod, NULL);
 		GET_CURRENT_TOD(tv);
 		TIMEVAL_TO_TIMESPEC(&tv, &current_time);
-
-		/* Calculate the time for the current thread to wake up: */
-		curthread->wakeup_time.tv_sec = current_time.tv_sec + timeout->tv_sec;
-		curthread->wakeup_time.tv_nsec = current_time.tv_nsec + timeout->tv_nsec;
-
-		/* Check if the nanosecond field needs to wrap: */
-		if (curthread->wakeup_time.tv_nsec >= 1000000000) {
-			/* Wrap the nanosecond field: */
-			curthread->wakeup_time.tv_sec += 1;
-			curthread->wakeup_time.tv_nsec -= 1000000000;
-		}
+		timespecadd(&current_time, timeout, &curthread->wakeup_time);
 	}
 }
 
