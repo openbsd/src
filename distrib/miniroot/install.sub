@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.14 1997/05/04 05:08:00 tholo Exp $
+#	$OpenBSD: install.sub,v 1.15 1997/05/05 00:28:45 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -549,6 +549,17 @@ several questions.  The correct set of commands will be placed in a script
 that will be fed to ftp(1).
 
 __install_ftp_1
+
+	# Provide a list of possible FTP servers
+	echo -n "Do you want a list of potential FTP servers? [y] "
+	getresp "y"
+	case "$resp" in
+	n*|N*) ;;
+	*)
+		ftp -V -a ftp://cvs.openbsd.org/pub/OpenBSD/`echo ${VERSION} | sed 's/\(.\)\(.\)/\1.\2/'`/ftplist | cat
+		;;
+	esac
+
 	# Get server IP address
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
