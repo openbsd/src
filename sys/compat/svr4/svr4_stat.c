@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.23 2003/01/09 22:27:11 miod Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.24 2003/05/07 22:16:26 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -123,7 +123,7 @@ bsd_to_svr4_xstat(st, st4)
 	st4->st_ctim = st->st_ctimespec;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
-	strcpy(st4->st_fstype, "unknown");
+	strlcpy(st4->st_fstype, "unknown", sizeof st4->st_fstype);
 }
 
 static void
@@ -132,20 +132,20 @@ bsd_to_svr4_stat64(st, st4)
 	struct svr4_stat64	*st4;
 {
 	bzero(st4, sizeof(*st4));
-        st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
-        st4->st_ino = st->st_ino;
-        st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode); 
-        st4->st_nlink = st->st_nlink;
-        st4->st_uid = st->st_uid;
-        st4->st_gid = st->st_gid;
-        st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
-        st4->st_size = st->st_size;
-        st4->st_atim = st->st_atimespec;
-        st4->st_mtim = st->st_mtimespec;  
-        st4->st_ctim = st->st_ctimespec;
-        st4->st_blksize = st->st_blksize;
-        st4->st_blocks = st->st_blocks;
-        strcpy(st4->st_fstype, "unknown");
+	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
+	st4->st_ino = st->st_ino;
+	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode); 
+	st4->st_nlink = st->st_nlink;
+	st4->st_uid = st->st_uid;
+	st4->st_gid = st->st_gid;
+	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
+	st4->st_size = st->st_size;
+	st4->st_atim = st->st_atimespec;
+	st4->st_mtim = st->st_mtimespec;  
+	st4->st_ctim = st->st_ctimespec;
+	st4->st_blksize = st->st_blksize;
+	st4->st_blocks = st->st_blocks;
+	strlcpy(st4->st_fstype, "unknown", sizeof st4->st_fstype);
 }
 
 
@@ -504,9 +504,9 @@ svr4_ustat(p, v, retval)
 	bzero(&us, sizeof us);
 
 	/*
-         * XXX: should set f_tfree and f_tinode at least
-         * How do we translate dev -> fstat? (and then to svr4_ustat)
-         */
+	 * XXX: should set f_tfree and f_tinode at least
+	 * How do we translate dev -> fstat? (and then to svr4_ustat)
+	 */
 	if ((error = copyout(&us, SCARG(uap, name), sizeof us)) != 0)
 		return (error);
 

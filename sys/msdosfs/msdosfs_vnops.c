@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.39 2003/04/26 10:23:07 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.40 2003/05/07 22:16:26 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1499,11 +1499,13 @@ msdosfs_readdir(v)
 				switch (n) {
 				case 0:
 					dirbuf.d_namlen = 1;
-					strcpy(dirbuf.d_name, ".");
+					strlcpy(dirbuf.d_name, ".",
+					    sizeof dirbuf.d_name);
 					break;
 				case 1:
 					dirbuf.d_namlen = 2;
-					strcpy(dirbuf.d_name, "..");
+					strlcpy(dirbuf.d_name, "..",
+					    sizeof dirbuf.d_name);
 					break;
 				}
 				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
