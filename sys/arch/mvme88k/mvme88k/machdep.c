@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.122 2003/12/19 22:30:18 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.123 2003/12/22 23:29:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -921,15 +921,21 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	bcopy((caddr_t)tf->r, (caddr_t)sf.sf_sc.sc_regs,
 	      sizeof(sf.sf_sc.sc_regs));
+
+	/*
+	 * Be sure to keep the xip values intact, especially on 88100: should
+	 * we return back to the process, it must be in the same instruction
+	 * fetching state, or bad things will happen...
+	 */
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		sf.sf_sc.sc_xip = tf->sxip & ~3;
-		sf.sf_sc.sc_nip = tf->snip & ~3;
-		sf.sf_sc.sc_fip = tf->sfip & ~3;
+		sf.sf_sc.sc_xip = tf->sxip;
+		sf.sf_sc.sc_nip = tf->snip;
+		sf.sf_sc.sc_fip = tf->sfip;
 	} else {
 		/* mc88110 */
-		sf.sf_sc.sc_xip = tf->exip & ~3;
-		sf.sf_sc.sc_nip = tf->enip & ~3;
+		sf.sf_sc.sc_xip = tf->exip;
+		sf.sf_sc.sc_nip = tf->enip;
 		sf.sf_sc.sc_fip = 0;
 	}
 	sf.sf_sc.sc_ps = tf->epsr;
@@ -970,6 +976,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	sf.sf_sc.sc_fprh = tf->fprh;
 	sf.sf_sc.sc_fprl = tf->fprl;
 	sf.sf_sc.sc_fpit = tf->fpit;
+
 	if (copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -1041,21 +1048,7 @@ sys_sigreturn(p, v, retval)
 
 	tf = p->p_md.md_tf;
 	scp = &ksc;
-	/*
-	 * xip, nip and fip must be multiples of 4.  This is all
-	 * that is required; if it holds, just do it.
-	 */
-#if 0
-	if (((scp->sc_xip | scp->sc_nip | scp->sc_fip) & 3) != 0)
-		return (EINVAL);
-#endif /* 0 */
-#if DIAGNOSTIC
-	if (((scp->sc_xip | scp->sc_nip | scp->sc_fip) & 3) != 0){
-		printf("xip %x nip %x fip %x\n",
-		       scp->sc_xip, scp->sc_nip, scp->sc_fip);
-		return (EINVAL);
-	}
-#endif
+
 	/*
 	 * this can be improved by doing
 	 *	 bcopy(sc_reg to tf, sizeof sigcontext - 2 words)
@@ -1064,13 +1057,13 @@ sys_sigreturn(p, v, retval)
 	bcopy((caddr_t)scp->sc_regs, (caddr_t)tf->r, sizeof(scp->sc_regs));
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		tf->sxip = (scp->sc_xip) | XIP_V;
-		tf->snip = (scp->sc_nip) | NIP_V;
-		tf->sfip = (scp->sc_fip) | FIP_V;
+		tf->sxip = scp->sc_xip;
+		tf->snip = scp->sc_nip;
+		tf->sfip = scp->sc_fip;
 	} else {
 		/* mc88110 */
-		tf->exip = (scp->sc_xip);
-		tf->enip = (scp->sc_nip);
+		tf->exip = scp->sc_xip;
+		tf->enip = scp->sc_nip;
 		tf->sfip = 0;
 	}
 	tf->epsr = scp->sc_ps;
@@ -1115,7 +1108,7 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & 01)
+	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
