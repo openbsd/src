@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.9 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: dio.c,v 1.10 2004/12/26 21:41:32 miod Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -40,8 +40,6 @@
 /*
  * Autoconfiguration and mapping support for the DIO bus.
  */
-
-#define	_HP300_INTR_H_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
