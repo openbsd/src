@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.28 1999/01/27 16:47:29 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.29 1999/02/05 05:42:36 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1923,31 +1923,31 @@ dodata:							/* XXX */
 	 */
 	if ((tlen || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
-	  if (th->th_seq == tp->rcv_nxt && tp->segq.lh_first == NULL &&
-	      tp->t_state == TCPS_ESTABLISHED) {
-	    if (th->th_flags & TH_PUSH)
-	      tp->t_flags |= TF_ACKNOW;
-	    else
-	      tp->t_flags |= TF_DELACK;
-	    (tp)->rcv_nxt += tlen;
-	    tiflags = th->th_flags & TH_FIN;
-	    tcpstat.tcps_rcvpack++;
-	    tcpstat.tcps_rcvbyte += tlen;
-	    sbappend(&so->so_rcv, m);
-	    sorwakeup(so);
-	  } else {
-	    tiflags = tcp_reass(tp, th, m, &tlen);
-	    tp->t_flags |= TF_ACKNOW;
-	  }
+		if (th->th_seq == tp->rcv_nxt && tp->segq.lh_first == NULL &&
+		    tp->t_state == TCPS_ESTABLISHED) {
+			if (th->th_flags & TH_PUSH)
+				tp->t_flags |= TF_ACKNOW;
+			else
+				tp->t_flags |= TF_DELACK;
+			tp->rcv_nxt += tlen;
+			tiflags = th->th_flags & TH_FIN;
+			tcpstat.tcps_rcvpack++;
+			tcpstat.tcps_rcvbyte += tlen;
+			sbappend(&so->so_rcv, m);
+			sorwakeup(so);
+		} else {
+			tiflags = tcp_reass(tp, th, m, &tlen);
+			tp->t_flags |= TF_ACKNOW;
+		}
 #ifdef TCP_SACK
 		if (!tp->sack_disable)
 			tcp_update_sack_list(tp); 
 #endif 
 
-	  /* 
-	   * variable len never referenced again in modern BSD,
-	   * so why bother computing it ??
-	   */
+		/* 
+		 * variable len never referenced again in modern BSD,
+		 * so why bother computing it ??
+		 */
 #if 0
 		/*
 		 * Note the amount of data that peer has sent into
