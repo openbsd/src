@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.12 2001/03/22 23:36:51 niklas Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.13 2001/04/30 13:17:38 art Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@ int gdt_flags;
 static __inline void gdt_lock __P((void));
 static __inline void gdt_unlock __P((void));
 void gdt_compact __P((void));
-void gdt_init __P((void));
 void gdt_grow __P((void));
 void gdt_shrink __P((void));
 int gdt_get_slot __P((void));
