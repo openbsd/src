@@ -1,4 +1,4 @@
-/*     $OpenBSD: parse.c,v 1.23 1999/02/05 05:58:42 deraadt Exp $      */
+/*     $OpenBSD: parse.c,v 1.24 1999/06/06 20:34:55 deraadt Exp $      */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -40,7 +40,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.23 1999/02/05 05:58:42 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.24 1999/06/06 20:34:55 deraadt Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -620,12 +620,13 @@ int	*resolved;
 {
 	struct	hostent	*hp;
 	struct	netent	*np;
+	struct	in_addr addr;
 
 	*resolved = 0;
 	if (!strcasecmp("any",host))
 		return 0L;
-	if (isdigit(*host))
-		return inet_addr(host);
+	if (inet_aton(host, &addr))
+		return addr.s_addr;
 	if (!strcasecmp("<thishost>", host))
 		host = thishost;
 

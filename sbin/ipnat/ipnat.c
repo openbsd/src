@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.27 1999/06/03 17:53:11 deraadt Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.28 1999/06/06 20:34:56 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.27 1999/06/03 17:53:11 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.28 1999/06/06 20:34:56 deraadt Exp $";
 #endif
 
 
@@ -515,16 +515,17 @@ char	*msk;
 
 #if defined(__OpenBSD__)
 /*
- * get_if_addr():
+ * if_addr():
  *	given a string containing an interface name (e.g. "ppp0")
- *	return the IP address it represents as an unsigned int
+ *	return the IP address it represents
  *
  * The OpenBSD community considers this feature to be quite useful and
  * suggests inclusion into other platforms. The closest alternative is
  * to define /etc/networks with suitable values.
  */
-u_32_t  if_addr(name)
-char   *name;
+int	if_addr(name, ap)
+char		*name;
+struct in_addr	*ap;
 {
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
@@ -533,7 +534,7 @@ char   *name;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		warn("socket");
-		return INADDR_NONE;
+		return 0;
 	}
 
 	while (1) {
@@ -567,14 +568,15 @@ char   *name;
 			close(s);
 			free(inbuf);
 			sin = (struct sockaddr_in *)&ifr->ifr_addr;
-			return (sin->sin_addr.s_addr);
+			*ap = sin->sin_addr;
+			return (1);
 		}
 	}
 
 if_addr_lose:
 	close(s);
 	free(inbuf);
-	return INADDR_NONE;
+	return 0;
 }
 #endif
 
@@ -590,19 +592,19 @@ int	*resolved;
 	struct	hostent	*hp;
 	struct	netent	*np;
 #if defined(__OpenBSD__)
-	u_32_t		addr;
+	struct in_addr	addr;
 #endif
 
 	*resolved = 0;
 	if (!strcasecmp("any", host))
 		return 0L;
-	if (isdigit(*host))
-		return inet_addr(host);
+	if (inet_aton(host, &addr))
+		return (u_32_t)addr.s_addr;
 
 #if defined(__OpenBSD__)
 	/* attempt a map from interface name to address */
-	if ((addr = if_addr(host)) != INADDR_NONE)
-		return addr;
+	if (if_addr(host, &addr))
+		return (u_32_t)addr.s_addr;
 #endif
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
