@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.22 1999/08/18 05:29:48 d Exp $
+	$OpenBSD: pcmciadevs,v 1.23 1999/08/25 21:54:57 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -45,7 +45,7 @@ vendor 3COM			0x0101	3Com
 vendor MEGAHERTZ		0x0102	Megahertz
 vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK
-vendor XIRCOM			0x0105	Xircom -- same as TDK
+vendor XIRCOM			0x0105	Xircom
 vendor SMC			0x0108	SMC
 vendor MOTOROLA			0x0109	Motorola
 vendor USROBOTICS		0x0115	US Robotics
@@ -56,7 +56,7 @@ vendor QUATECH			0x0137	Quatech
 vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
-vendor SYMBOL			0x014d	Symbol -- same as Simple Technology
+vendor SYMBOL			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent Technologies
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
@@ -65,50 +65,55 @@ vendor IODATA			0x01bf	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor COMPEX			0x8a01	Compex
+vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
+vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
 /*
  * List of known products.  Grouped by vendor.
  */
-/* Adaptec Products */
+/* Adaptec */
 product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A SCSI Host Adapter
 product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
 
-/* Allied Telesis */
-product COREGA LA_PCM		0x0002 Allied Telesis LA-PCM
+/* Allied Telesis K.K. */
+product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
-/* BreezeCOM Products */
+/* BreezeCOM */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET IEEE 802.11 FHSS
 
-/* 3COM Products */
+/* 3COM */
 product 3COM 3CXEM556B		0x003d 3Com/Megahertz 3CXEM556B-INT Ethernet/Modem
 product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589
 product 3COM 3C574		0x0574 3Com 3c574-TX
 
-/* Compex Products */
-product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B
-product COMPEX AMP_WIRELESS	0x0066 AMP Wireless
+/* Contec C-NET(PC) */
+product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
 
-/* Dayna Products */
+/* Compex */
+product COMPEX AMP_WIRELESS	0x0066 AMP Wireless
+product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B
+
+/* Dayna */
 product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
 product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
-/* DIGITAL Products */
+/* Digital */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
-/* Fujitsu Products */
+/* Fujitsu */
 product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501
 
-/* Motorola Products */
+/* Motorola */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4
 product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD
 product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6
 
-/* IBM Products */
+/* IBM */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
 product IBM PORTABLE_CDROM_DRIVE 0x002d Portable CD-ROM Drive
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away
@@ -123,7 +128,7 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 /* Kingston */
 product KINGSTON KNE_PC2	0x0100 Kingston KNE-PC2
 
-/* Lasat Products */
+/* Lasat */
 product LASAT CREDIT_288	0x2811 Lasat Credit 288
 
 /* Linksys corporation */
@@ -135,52 +140,52 @@ product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 /* Lucent technologies corporation */
 product LUCENT WAVELAN		0x0002 Lucent WaveLAN IEEE 802.11 DSSS
 
-/* Megahertz Products */
+/* Megahertz */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288
 product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK
 product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK
 
-/* Proxim Products */
+/* Proxim */
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
 product PROXIM RANGELAN2_7401	0x1158 Proxim RangeLAN2 7401
 
-/* Quatech Products */
+/* Quatech */
 product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
 
-/* US Robotics Products */
+/* US Robotics */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4
 
-/* Sandisk Products */
+/* Sandisk */
 product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
 
-/* Simple Technology Products */
+/* Simple Technology */
 product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 
-/* Socket Communications Products */
+/* Socket Communications */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 
-/* Symbol Products */
+/* Symbol */
 product SYMBOL SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
 
-/* TDK Products */
+/* TDK */
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX
 product TDK DFL9610		0x0d0a TDK DFL9610
 
-/* TDK Vendor ID also used by Xircom! */
+/* Xircom */
 product XIRCOM XIR_CE_10	0x0108 Xircom CE10
 product XIRCOM XIR_PS_CE2_10	0x010b Xircom CE2
 product XIRCOM XIR_CNW		0x0802 Xircom Netwave
 product XIRCOM XIR_CEM_10	0x110a Xircom CEM-10
 product XIRCOM XIR_CEM_28	0x110b Xircom CEM-28
 
-/* NewMedia Products */
+/* NewMedia */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS
 product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia Sound/SCSI
 product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI
 
-/* Standard Microsystems Corporation Products */
+/* Standard Microsystems Corporation */
 product SMC 8016		0x0105 SMC 8016
 product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
 
