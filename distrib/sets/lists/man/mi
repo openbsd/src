@@ -1562,6 +1562,7 @@
 ./usr/share/man/cat8/dmesg.0
 ./usr/share/man/cat8/dump.0
 ./usr/share/man/cat8/dumpfs.0
+./usr/share/man/cat8/editmap.0
 ./usr/share/man/cat8/edquota.0
 ./usr/share/man/cat8/ext_srvtab.0
 ./usr/share/man/cat8/faithd.0

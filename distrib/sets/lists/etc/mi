@@ -47,7 +47,9 @@
 ./etc/mail/aliases
 ./etc/mail/aliases.db
 ./etc/mail/helpfile
+./etc/mail/localhost.cf
 ./etc/mail/sendmail.cf
+./etc/mail/submit.cf
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
