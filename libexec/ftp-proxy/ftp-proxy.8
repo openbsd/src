@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.16 2002/05/19 22:51:32 millert Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.17 2002/05/23 10:22:14 deraadt Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -61,24 +61,24 @@ The proxy will allow connections to log in to other sites as the user
 "ftp" or "anonymous" only.
 Any attempt to log in as another user will be blocked by the proxy.
 .It Fl g Ar groupname
-specify the named group to drop group privileges to, after doing pf lookups
+Specify the named group to drop group privileges to, after doing pf lookups
 which require root.
 By default
 .Nm ftp-proxy
 uses the default group of the user it drops privilege to.
 .It Fl u Ar username
-specify the named user to drop privilege to, after doing pf lookups
+Specify the named user to drop privilege to, after doing pf lookups
 which require root privilege.
 By default
 .Nm ftp-proxy
 drops privilege to the user
 .Em proxy .
-.Pp 
+.Pp
 Running as root means that the source of data connections the proxy makes
 for PORT and EPRT will be the RFC mandated port 20.
 When running as a non-root user the source of the data connections from
 .Nm ftp-proxy
-will be chosen randomly from the range 
+will be chosen randomly from the range
 .Nm minport
 to
 .Nm maxport
@@ -120,26 +120,26 @@ Use reverse host (reverse DNS) lookups for logging and libwrap use.
 By default the proxy does not look up hostnames for libwrap or logging
 purposes.
 .It Fl m Ar minport
-specify the lower end of the port range the proxy will use for all
+Specify the lower end of the port range the proxy will use for all
 data connections it establishes.
 The default is
 .Ev IPPORT_HIFIRSTAUTO
 defined in <netinet/in.h>
 as 49152.
 .It Fl M Ar maxport
-specify the upper end of the port range the proxy will use for the
+Specify the upper end of the port range the proxy will use for the
 data connections it establishes.
 The default is
 .Ev IPPORT_HILASTAUTO
 defined in <netinet/in.h>
 as 65535.
 .It Fl t Ar timeout
-specifies a timeout, in seconds.
+Specifies a timeout, in seconds.
 The proxy will exit and close open connections if it sees no data the
 duration of the timeout.
 The default is 0, which means the proxy will not time out.
 .It Fl D Ar debuglevel
-specify a debug level, where the proxy emits verbose debug output
+Specify a debug level, where the proxy emits verbose debug output
 into
 .Xr syslog 8
 at level LOG_DEBUG.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getline.c,v 1.7 2001/12/07 18:45:32 mpech Exp $ */
+/*	$OpenBSD: getline.c,v 1.8 2002/05/23 10:22:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -62,14 +62,13 @@ int
 refill_buffer(struct csiob *iobp)
 {
 	int rqlen, rlen;
-	
-	if (!(iobp->data_available)) 
+
+	if (!(iobp->data_available))
 		return(0);
-	
-	
+
 	if (iobp->got_eof)
 		return(0);
-	
+
 	/*
 	 * The buffer has been entirely consumed if next_byte == io_buffer_len.
 	 * Otherwise, there is some still-to-be-used data in io_buffer.
@@ -79,13 +78,10 @@ refill_buffer(struct csiob *iobp)
 	 * overlap (memcpy isn't defined to work properly with overlapping
 	 * regions).
 	 */
-	
 	if (iobp->next_byte < iobp->io_buffer_len) {
-		int dst_ix, src_ix;
-		int amount;
-		dst_ix = 0;
-		src_ix = iobp->next_byte;
-		amount = iobp->io_buffer_len - iobp->next_byte;
+		int dst_ix = 0;
+		int src_ix = iobp->next_byte;
+		int amount = iobp->io_buffer_len - iobp->next_byte;
 
 		bcopy(&iobp->io_buffer[src_ix], &iobp->io_buffer[dst_ix],
 		    amount);
@@ -97,13 +93,13 @@ refill_buffer(struct csiob *iobp)
 		    iobp->next_byte, iobp->io_buffer_len);
 		exit(EX_OSERR);
 	}
-	
+
 	iobp->next_byte = 0;
-	
+
 	/* don't do tiny reads, grow first if we need to */
 	rqlen = iobp->io_buffer_size - iobp->io_buffer_len;
 	if (rqlen <= 128) {
-		char * tmp;
+		char *tmp;
 
 		iobp->io_buffer_size += 128;
 		tmp = realloc(iobp->io_buffer, iobp->io_buffer_size);
@@ -111,10 +107,10 @@ refill_buffer(struct csiob *iobp)
 			syslog(LOG_INFO, "Insufficient memory");
 			exit(EX_UNAVAILABLE);
 		}
-		iobp->io_buffer = tmp;		
+		iobp->io_buffer = tmp;
 		rqlen = iobp->io_buffer_size - iobp->io_buffer_len;
 	}
-	
+
 	/*
 	 * Always leave an unused byte at the end of the buffer
 	 * because the debug output uses that byte from time to time
@@ -126,7 +122,6 @@ refill_buffer(struct csiob *iobp)
 	rlen = read(iobp->fd, &iobp->io_buffer[iobp->io_buffer_len], rqlen);
 	iobp->data_available = 0;
 	switch (rlen) {
-		
 	case -1:
 		if (errno == EAGAIN || errno == EINTR)
 			goto doread;
@@ -136,15 +131,13 @@ refill_buffer(struct csiob *iobp)
 			exit(EX_DATAERR);
 		}
 		/* fall through to EOF case */
-		
 	case 0:
 		iobp->got_eof = 1;
 		return(0);
 		break;
-		
 	default:
 		iobp->io_buffer_len += rlen;
-		
+		break;
 	}
 	return(1);
 }
@@ -163,38 +156,34 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 	unsigned char ch;
 	int ix;
 	char tbuf[100];
-	
+
 	iobp->line_buffer[0] = '\0';
-	
+
 	/*
 	 * If the buffer is empty then refill it right away.
 	 */
-	
 	if (iobp->next_byte == iobp->io_buffer_len)
 		if (!refill_buffer(iobp))
 			return(0);
-	
+
 	/*
 	 * Is there a telnet command in the buffer?
 	 */
-	
 	ch = iobp->io_buffer[iobp->next_byte];
 	if (ch == IAC) {
-		
 		/*
 		 * Yes - buffer must have at least three bytes in it
 		 */
-		
 		if (iobp->io_buffer_len - iobp->next_byte < 3) {
 			if (!refill_buffer(iobp))
 				return(0);
 			if (iobp->io_buffer_len - iobp->next_byte < 3)
 				return(0);
 		}
-		
+
 		iobp->next_byte++;
 		ch = iobp->io_buffer[iobp->next_byte++];
-		
+
 		switch (ch) {
 		case WILL:
 		case WONT:
@@ -203,26 +192,22 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 			tbuf[0] = IAC;
 			tbuf[1] = ch;
 			tbuf[2] = iobp->io_buffer[iobp->next_byte++];
-			(void)send(telnet_passthrough->fd,tbuf,3, 
+			(void)send(telnet_passthrough->fd, tbuf, 3,
 			    telnet_passthrough->send_oob_flags);
 			break;
-			
 		case IAC:
 			break;
-			
 		default:
 			break;
 		}
 		return(1);
-		
 	} else {
 		int clen;
-		
+
 		/*
 		 * Is there a newline in the buffer?
 		 */
-		
-		for (ix = iobp->next_byte; ix < iobp->io_buffer_len; 
+		for (ix = iobp->next_byte; ix < iobp->io_buffer_len;
 		    ix += 1) {
 			if (iobp->io_buffer[ix] == '\n')
 				break;
@@ -232,19 +217,18 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 				    iobp->who);
 				exit(EX_DATAERR);
 			}
-			
 		}
-		
+
 		if (ix == iobp->io_buffer_len) {
 			if (!refill_buffer(iobp))
 				return(0);
-			/* 
-			 * Empty line returned 
+			/*
+			 * Empty line returned
 			 * will try again soon!
 			 */
-			return(1);		
+			return(1);
 		}
-		
+
 		/*
 		 * Expand the line buffer if it isn't big enough.  We
 		 * use a fudge factor of 5 rather than trying to
@@ -252,14 +236,13 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 		 * such.  The correct fudge factor is 0, 1 or 2 but
 		 * anything higher also works. We also grow it by a
 		 * bunch to avoid having to do this often. Yes this is
-		 * nasty. 
+		 * nasty.
 		 */
-		
 		if (ix - iobp->next_byte > iobp->line_buffer_size - 5) {
-			char * tmp;
+			char *tmp;
 
 			iobp->line_buffer_size = 256 + ix - iobp->next_byte;
-			tmp = realloc(iobp->line_buffer, 
+			tmp = realloc(iobp->line_buffer,
 			    iobp->line_buffer_size);
 			if (tmp == NULL) {
 				syslog(LOG_INFO, "Insufficient memory");
@@ -267,7 +250,7 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 			}
 			iobp->line_buffer = tmp;
 		}
-		
+
 		/* +1 is for the newline */
 		clen = (ix+1) - iobp->next_byte;
 		while (clen > 0 && isspace(iobp->io_buffer[iobp->next_byte])) {
@@ -278,9 +261,6 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 		    clen);
 		iobp->next_byte += clen;
 		iobp->line_buffer[clen] = '\0';
-		
 		return(1);
-
 	}
-	
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2002/02/15 12:40:59 mpech Exp $ */
+/*	$OpenBSD: util.c,v 1.8 2002/05/23 10:22:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -142,7 +142,6 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
  * Transfer one unit of data across a pair of sockets
  *
  * A unit of data is as much as we get with a single read(2) call.
- *
  */
 int
 xfer_data(const char *what_read,int from_fd, int to_fd, struct in_addr from,
@@ -169,7 +168,7 @@ snarf:
 	if (rlen == -1 && flags == MSG_OOB && errno == EINVAL) {
 		/* OOB didn't work */
 		flags = 0;
-		rlen = recv(from_fd,tbuf,sizeof(tbuf), flags);
+		rlen = recv(from_fd, tbuf, sizeof(tbuf), flags);
 	}
 	if (rlen == 0) {
 		debuglog(3, "xfer_data - eof on read socket");
@@ -236,7 +235,7 @@ get_backchannel_socket(int type, int min_port, int max_port, int start_port,
 	count = 1 + max_port - min_port;
 
 	/*
-	 * pick a port we can bind to from within the range we want.
+	 * Pick a port we can bind to from within the range we want.
 	 * If the caller specifies -1 as the starting port number then
 	 * we pick one somewhere in the range to try.
 	 * This is an optimization intended to speedup port selection and
@@ -251,11 +250,12 @@ get_backchannel_socket(int type, int min_port, int max_port, int start_port,
 	}
 
 	while (count-- > 0) {
-		int one, fd;
 		struct sockaddr_in sa;
+		int one, fd;
 
 		fd = socket(AF_INET, type, 0);
 
+		bzero(&sa, sizeof sa);
 		sa.sin_family = AF_INET;
 		if (sap == NULL)
 			sa.sin_addr.s_addr = INADDR_ANY;

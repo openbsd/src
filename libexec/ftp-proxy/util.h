@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2001/08/28 19:35:04 deraadt Exp $ */
+/*	$OpenBSD: util.h,v 1.3 2002/05/23 10:22:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -20,36 +20,35 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL OBTUSE SYSTEMS CORPORATION OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *   
  */
 
 struct proxy_channel {
-    int pc_to_fd, pc_from_fd;
-    int pc_alive;
-    int pc_nextbyte;
-    int pc_flags;
-    int pc_length;
-    int pc_size;
-    struct sockaddr_in pc_from_sa, pc_to_sa;
-    int (*pc_filter)( void ** databuf, int datalen);
-    char *pc_buffer;
+	int pc_to_fd, pc_from_fd;
+	int pc_alive;
+	int pc_nextbyte;
+	int pc_flags;
+	int pc_length;
+	int pc_size;
+	struct sockaddr_in pc_from_sa, pc_to_sa;
+	int (*pc_filter)( void ** databuf, int datalen);
+	char *pc_buffer;
 };
 
 struct csiob {
-    int fd;
-    int line_buffer_size, io_buffer_size, io_buffer_len, next_byte;
-    unsigned char *io_buffer, *line_buffer;
-    struct sockaddr_in sa, real_sa;
-    char *who;
-    char alive, got_eof, data_available;
-    int send_oob_flags;
+	int fd;
+	int line_buffer_size, io_buffer_size, io_buffer_len, next_byte;
+	unsigned char *io_buffer, *line_buffer;
+	struct sockaddr_in sa, real_sa;
+	char *who;
+	char alive, got_eof, data_available;
+	int send_oob_flags;
 };
 
 extern int telnet_getline(struct csiob *iobp,

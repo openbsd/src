@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.20 2002/03/12 08:01:51 dhartmei Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.21 2002/05/23 10:22:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -170,7 +170,6 @@ usage()
 	exit(EX_USAGE);
 }
 
-
 static void
 close_client_data()
 {
@@ -181,7 +180,6 @@ close_client_data()
 	}
 }
 
-
 static void
 close_server_data()
 {
@@ -191,7 +189,6 @@ close_server_data()
 		server_data_socket = -1;
 	}
 }
-
 
 static void
 drop_privs()
@@ -255,17 +252,15 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 		 * the tcp wrapper cares about these things, and we don't
 		 * want to pass in a printed address as a name.
 		 */
-		i = getnameinfo(
-			(struct sockaddr *) &client_sin->sin_addr,
-			sizeof(&client_sin->sin_addr), cname,
-			sizeof(cname), NULL, 0, NI_NAMEREQD);
+		i = getnameinfo((struct sockaddr *) &client_sin->sin_addr,
+		    sizeof(&client_sin->sin_addr), cname, sizeof(cname),
+		    NULL, 0, NI_NAMEREQD);
 		if (i == -1)
 			strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
 
-		i = getnameinfo(
-			(struct sockaddr *)&server_sin->sin_addr,
-			sizeof(&server_sin->sin_addr), sname,
-			sizeof(sname), NULL, 0, NI_NAMEREQD);
+		i = getnameinfo((struct sockaddr *)&server_sin->sin_addr,
+		    sizeof(&server_sin->sin_addr), sname, sizeof(sname),
+		    NULL, 0, NI_NAMEREQD);
 		if (i == -1)
 			strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
 	} else {
@@ -425,7 +420,7 @@ new_dataconn(int server)
 	close_server_data();
 
 	if (server) {
-		bzero (&server_listen_sa, sizeof(server_listen_sa));
+		bzero(&server_listen_sa, sizeof(server_listen_sa));
 		server_listen_socket = get_backchannel_socket(SOCK_STREAM,
 		    min_port, max_port, -1, 1, &server_listen_sa);
 
@@ -456,8 +451,6 @@ new_dataconn(int server)
 	return(0);
 }
 
-
-
 static void
 connect_pasv_backchannel()
 {
@@ -468,7 +461,6 @@ connect_pasv_backchannel()
 	 * We are about to accept a connection from the client.
 	 * This is a PASV data connection.
 	 */
-
 	debuglog(2, "client listen socket ready\n");
 
 	close_server_data();
@@ -502,8 +494,6 @@ connect_pasv_backchannel()
 	xfer_start_time = wallclock_time();
 }
 
-
-
 static void
 connect_port_backchannel()
 {
@@ -514,7 +504,6 @@ connect_port_backchannel()
 	 * We are about to accept a connection from the server.
 	 * This is a PORT or EPRT data connection.
 	 */
-
 	debuglog(2, "server listen socket ready\n");
 
 	close_server_data();
@@ -581,7 +570,6 @@ connect_port_backchannel()
 	server_data_bytes = 0;
 	xfer_start_time = wallclock_time();
 }
-
 
 void
 do_client_cmd(struct csiob *client, struct csiob *server)
@@ -779,14 +767,14 @@ out:
 			exit(EX_DATAERR);
 		}
 
-		for (i = 0; i<6; i++)
+		for (i = 0; i<6; i++) {
 			if (values[i] > 255) {
 				syslog(LOG_INFO,
 				    "malformed PORT command (%s)",
 				    client->line_buffer);
 				exit(EX_DATAERR);
 			}
-
+		}
 
 		client_listen_sa.sin_family = AF_INET;
 		client_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) |
@@ -810,12 +798,12 @@ out:
 		    ntohs(server_listen_sa.sin_port));
 
 		snprintf(tbuf, sizeof(tbuf), "PORT %u,%u,%u,%u,%u,%u\r\n",
-			 ((u_char *)&server->sa.sin_addr.s_addr)[0],
-			 ((u_char *)&server->sa.sin_addr.s_addr)[1],
-			 ((u_char *)&server->sa.sin_addr.s_addr)[2],
-			 ((u_char *)&server->sa.sin_addr.s_addr)[3],
-			 ((u_char *)&server_listen_sa.sin_port)[0],
-			 ((u_char *)&server_listen_sa.sin_port)[1]);
+		    ((u_char *)&server->sa.sin_addr.s_addr)[0],
+		    ((u_char *)&server->sa.sin_addr.s_addr)[1],
+		    ((u_char *)&server->sa.sin_addr.s_addr)[2],
+		    ((u_char *)&server->sa.sin_addr.s_addr)[3],
+		    ((u_char *)&server_listen_sa.sin_port)[0],
+		    ((u_char *)&server_listen_sa.sin_port)[1]);
 
 		debuglog(1, "to server(modified):  %s", tbuf);
 
@@ -878,8 +866,8 @@ do_server_reply(struct csiob *server, struct csiob *client)
 	}
 	if (*p == '-')
 		continuing = 1;
-	else 
-		continuing = 0;	  
+	else
+		continuing = 0;
 	if (code == 227 && !NatMode) {
 		unsigned int values[6];
 		u_char *tailptr;
@@ -896,7 +884,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 				exit(EX_DATAERR);
 			}
 		}
-		tailptr++; /* skip past space or ( */ 
+		tailptr++; /* skip past space or ( */
 
 		byte_number = 0;
 		values[0] = 0;
