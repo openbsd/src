@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: lock.c,v 1.2 2004/08/02 17:32:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -62,4 +62,5 @@ cvs_unlock(const char *path)
 
 
 
+	return (0);
 }
