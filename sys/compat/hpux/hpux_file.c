@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.3 1996/08/02 20:34:55 niklas Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.4 1997/01/27 00:18:36 downsj Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.3 1996/01/06 12:44:14 thorpej Exp $	*/
 
 /*
@@ -739,7 +739,7 @@ hpux_sys_chown(p, v, retval)
 
 	/* XXX What about older HP-UX executables? */
 
-	return (sys_chown(p, uap, retval));
+	return (sys_lchown(p, uap, retval));
 }
 
 /*
