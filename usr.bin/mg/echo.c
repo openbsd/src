@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.14 2001/05/24 01:55:49 mickey Exp $	*/
+/*	$OpenBSD: echo.c,v 1.15 2001/05/24 09:34:05 mickey Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -15,10 +15,10 @@
 
 #include <stdarg.h>
 
-static int	veread		__P((const char *, char *buf, int, int, ...));
+static int	veread		__P((const char *, char *buf, int, int, va_list));
 static int	complt		__P((int, int, char *, int));
 static int	complt_list	__P((int, int, char *, int));
-static void	eformat		__P((const char *, ...));
+static void	eformat		__P((const char *, va_list));
 static void	eputi		__P((int, int));
 static void	eputl		__P((long, int));
 static void	eputs		__P((char *));
@@ -153,12 +153,11 @@ eread(const char *fmt, char *buf, int nbuf, int flag, ...)
 }
 
 static int
-veread(const char *fp, char *buf, int nbuf, int flag, ...)
+veread(const char *fp, char *buf, int nbuf, int flag, va_list ap)
 {
 	int	 cpos;
 	int	 i;
 	int	 c;
-	va_list		ap;
 
 #ifndef NO_MACRO
 	if (inmacro) {
@@ -175,9 +174,7 @@ veread(const char *fp, char *buf, int nbuf, int flag, ...)
 		epresf = TRUE;
 	} else
 		eputc(' ');
-	va_start(ap, flag);
 	eformat(fp, ap);
-	va_end(ap);
 	tteeol();
 	ttflush();
 	for (;;) {
@@ -608,13 +605,11 @@ ewprintf(const char *fmt, ...)
  * %k prints the name of a key (and takes no arguments).
  */
 static void
-eformat(const char *fp, ...)
+eformat(const char *fp, va_list ap)
 {
 	char	kname[NKNAME], *cp;
-	va_list ap;
 	int	c;
 
-	va_start(ap, fp);
 	while ((c = *fp++) != '\0') {
 		if (c != '%')
 			eputc(c);
