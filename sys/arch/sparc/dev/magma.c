@@ -673,9 +673,9 @@ int serviced = 0;
 int s, flags;
 
 	/*
-	 * check the tty ports to see what needs doing
+	 * check the tty ports (if any) to see what needs doing
 	 */
-	for( port = 0 ; port < mtty->ms_nports ; port++ ) {
+	if( mtty ) for( port = 0 ; port < mtty->ms_nports ; port++ ) {
 	struct mtty_port *mp = &mtty->ms_port[port];
 	struct tty *tp = mp->mp_tty;
 
@@ -729,9 +729,9 @@ int s, flags;
 	} /* for(each mtty...) */
 
 	/*
-	 * check the bpp ports to see what needs doing
+	 * check the bpp ports (if any) to see what needs doing
 	 */
-	for( port = 0 ; port < mbpp->ms_nports ; port++ ) {
+	if( mbpp ) for( port = 0 ; port < mbpp->ms_nports ; port++ ) {
 	struct mbpp_port *mp = &mbpp->ms_port[port];
 
 		if( !ISSET(mp->mp_flags, MBPPF_OPEN) ) continue;
