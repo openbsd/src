@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.7 2001/05/07 22:57:19 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.8 2001/05/14 12:55:48 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -136,6 +136,7 @@ new_ifile(name, stream)
 
     ifile = emalloc(sizeof(*ifile));
     ifile->fname = name;
+    ifile->str = NULL;
     /* Naturally enough, we start reading at line 0 */
     ifile->lineno = 0;
     ifile->F = stream;
@@ -149,8 +150,7 @@ free_ifile(ifile)
 {
     if (ifile->F && fileno(ifile->F) != STDIN_FILENO)
 	(void)fclose(ifile->F);
-    else
-	free(ifile->str);
+    free(ifile->str);
     /* Note we can't free the file names yet, as they are embedded in GN for
      * error reports. */
     free(ifile);
