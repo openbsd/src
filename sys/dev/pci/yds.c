@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.11 2002/01/04 20:42:18 ericj Exp $	*/
+/*	$OpenBSD: yds.c,v 1.12 2002/01/06 23:01:40 ericj Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1484,16 +1484,6 @@ yds_trigger_input(addr, start, end, blksize, intr, arg, param)
 		return (EINVAL);
 	}
 	sc->sc_rec.dma = p;
-
-#ifdef DIAGNOSTIC
-	{
-		u_int32_t ctrlsize;
-		if ((ctrlsize = YREAD4(sc, YDS_REC_CTRLSIZE)) !=
-		    sizeof(struct rec_slot) / sizeof(u_int32_t))
-			panic("%s: invalid rec slot ctrldata %d",
-				sc->sc_dev.dv_xname, ctrlsize);
-	}
-#endif
 
 	s = DMAADDR(p);
 	l = ((char *)end - (char *)start);
