@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.10 1997/08/13 02:22:02 mickey Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.11 1997/08/29 19:47:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -43,18 +43,14 @@
 	.file	"mbr.S"
 
 #include <machine/asm.h>
-#include <machine/specialreg.h>
+#include <assym.h>
 
 #define data32	.byte 0x66
 #define addr32	.byte 0x67
 
 #define BOOTBIOS	0x7c0	/* segment where we are loaded */
 #define BOOTRELOC	0x7a0	/* segment where to relocate */
-#define SIGNATURE	0xaa55	/* MBR signature */
-#define NUMPART		4	/* number of partitions in partition table */
 #define PARTSZ		16	/* each partition table entry is 16 bytes */
-#define BSDPART		0xA6	/* OpenBSD partition */
-#define BOOTABLE	0x80	/* bootable partition */
 
 #ifdef DEBUG
 #define CHAR_S		'S'	/* started */
@@ -186,10 +182,10 @@ reloc:
 	 * for the (l)user though.
 	 */
 1:	xorl	%bx, %bx
-	# cmpw	$SIGNATURE, (%bx)
+	# cmpw	$DOSMBR_SIGNATURE, (%bx)
 	.byte	0x81, 0xbf
 	.word	signature
-	.word	SIGNATURE
+	.word	DOSMBR_SIGNATURE
 	je	sigok
 	data32
 	movl	$esig, %esi
@@ -207,12 +203,12 @@ sigok:
 	data32
 	movl	$pt, %esi
 	data32
-	movl	$NUMPART, %ecx
+	movl	$NDOSPART, %ecx
 1:
 	DBGMSG(CHAR_L)
 	# movb	(%si), %al
 	.byte	0x8a, 0x44, 0x00
-	cmpb	$BOOTABLE, %al
+	cmpb	$DOSACTIVE, %al
 	je	found
 	data32
 	addl	$PARTSZ, %esi
@@ -357,7 +353,7 @@ endofcode:
 
 /* partition table */
 /* flag, head, sec, cyl, type, ehead, esect, ecyl, start, len */
-	. = 0x1be	# starting address of partition table
+	. = DOSPARTOFF	# starting address of partition table
 pt:
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
@@ -365,11 +361,11 @@ pt:
 	.long	0,0
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
-	.byte	BOOTABLE,0,1,0,BSDPART,255,255,255
+	.byte	DOSACTIVE,0,1,0,DOSPTYP_OPENBSD,255,255,255
 	.long	0,0x7FFFFFFF
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = 0x1fe
 signature:
-	.short	SIGNATURE
+	.short	DOSMBR_SIGNATURE
 	. = 0x200
 

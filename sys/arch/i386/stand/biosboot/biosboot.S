@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.15 1997/08/13 04:03:28 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.16 1997/08/29 19:47:23 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -17,12 +17,6 @@
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
 #define ZMAGIC		0x0b01	/* ZMAGIC */
-
-/*
- * Partition table values
- */
-#define BOOTABLE	0x80	/* flag of boot_ind, means bootable partition */
-#define OPENBSDPART	0xA6	/* OpenBSD partition type */
 
 #ifdef DEBUG
 #define DBGMSG(msg)		\
@@ -330,12 +324,12 @@ _block_count:
 
 	. = 0x1b8
 	.space	4, 0	/* (MBR) NT registry offset from James C. Cortilier III */
-	. = 446
+	. = DOSPARTOFF
 	.globl	_partitions
 	/* throw in a partition in case we are block0 as well */
 	/* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
 _partitions:
-	.byte   BOOTABLE, 0, 1, 0,OPENBSDPART, 255, 255, 255
+	.byte   DOSACTIVE, 0, 1, 0, DOSPTYP_OPENBSD, 255, 255, 255
 	.long   0,50000
 	.byte   0,0,0,0,0,0,0,0
 	.long   0,0

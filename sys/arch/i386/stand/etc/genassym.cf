@@ -1,11 +1,17 @@
-#	$OpenBSD: genassym.cf,v 1.2 1997/08/13 02:55:01 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.3 1997/08/29 19:47:23 mickey Exp $
 
 include <sys/param.h>
 
 include <machine/specialreg.h>
 include <machine/segments.h>
 include <machine/biosvar.h>
+include <machine/disklabel.h>
 
+export	DOSPARTOFF
+export	DOSACTIVE
+export	DOSPTYP_OPENBSD
+export	NDOSPART
+export	DOSMBR_SIGNATURE
 export	DEV_BSIZE
 export	CR0_PE
 export	SDT_MEMERAC
