@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2004/12/06 21:13:49 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2004/12/07 06:33:11 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -441,6 +441,39 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 	}
 
 	return (argc);
+}
+
+
+/*
+ * cvs_makeargv()
+ *
+ * Allocate an argument vector large enough to accomodate for all the
+ * arguments found in <line> and return it.
+ */
+
+char**
+cvs_makeargv(const char *line, int *argc)
+{
+	int i, ret;
+	char *argv[1024], **copy;
+
+	ret = cvs_getargv(line, argv, 1024);
+	if (ret == -1)
+		return (NULL);
+
+	copy = (char **)malloc((ret + 1) * sizeof(char *));
+	if (copy == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate argument vector");
+		return (NULL);
+	}
+	memset(copy, 0, sizeof(copy));
+
+	for (i = 0; i < ret; i++)
+		copy[i] = argv[i];
+	copy[ret] = NULL;
+
+	*argc = ret;
+	return (copy);
 }
 
 

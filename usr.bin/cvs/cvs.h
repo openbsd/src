@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.33 2004/12/02 17:45:44 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.34 2004/12/07 06:33:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -81,6 +81,7 @@
 #define CVS_CMD_MAXNAMELEN   16
 #define CVS_CMD_MAXALIAS      2
 #define CVS_CMD_MAXDESCRLEN  64
+#define CVS_CMD_MAXARG      128
 
 
 /* defaults */
@@ -298,6 +299,7 @@ int    cvs_mkadmin    (CVSFILE *, mode_t);
 int    cvs_cksum      (const char *, char *, size_t);
 int    cvs_exec       (int, char **, int []);
 int    cvs_getargv    (const char *, char **, int);
+char** cvs_makeargv   (const char *, int *);
 void   cvs_freeargv   (char **, int);
 
 
