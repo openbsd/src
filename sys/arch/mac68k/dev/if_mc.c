@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.7 2002/04/20 00:17:05 miod Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.8 2004/12/13 17:19:23 claudio Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
@@ -164,6 +164,7 @@ mcsetup(sc, lladdr)
 	NIC_PUT(sc, MACE_IMR, ~0);
 
 	bcopy(lladdr, sc->sc_enaddr, ETHER_ADDR_LEN);
+	bcopy(sc->sc_enaddr, sc->sc_ethercom.ac_enaddr, ETHER_ADDR_LEN);
 	printf(": address %s\n", ether_sprintf(lladdr));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
