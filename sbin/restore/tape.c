@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.22 2003/03/13 05:00:44 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.23 2003/04/06 13:29:41 avsm Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -743,7 +743,7 @@ xtrlnkfile(buf, size)
 	if (pathlen > MAXPATHLEN)
 		errx(1, "symbolic link name: %s->%s%s; too long %d",
 		    curfile.name, lnkbuf, buf, pathlen);
-	(void)strcat(lnkbuf, buf);
+	(void)strlcat(lnkbuf, buf, sizeof(lnkbuf));
 }
 
 /*
