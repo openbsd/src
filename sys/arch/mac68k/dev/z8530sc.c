@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530sc.c,v 1.1 1996/05/26 19:02:10 briggs Exp $	*/
-/*	$NetBSD: z8530sc.c,v 1.1 1996/05/18 18:54:28 briggs Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.2 1996/09/01 18:50:02 briggs Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.2 1996/08/26 14:09:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -296,39 +296,42 @@ zsc_intr_hard(arg)
 	register struct zs_chanstate *cs_a;
 	register struct zs_chanstate *cs_b;
 	register int rval;
-	register u_char rr3;
+	register u_char rr3, rr3a;
 
 	cs_a = &zsc->zsc_cs[0];
 	cs_b = &zsc->zsc_cs[1];
 	rval = 0;
+	rr3a = 0;
 
 	/* Note: only channel A has an RR3 */
-	rr3 = zs_read_reg(cs_a, 3);
+	while ((rr3 = zs_read_reg(cs_a, 3))) {
+		/* Handle receive interrupts first. */
+		if (rr3 & ZSRR3_IP_A_RX)
+			(*cs_a->cs_ops->zsop_rxint)(cs_a);
+		if (rr3 & ZSRR3_IP_B_RX)
+			(*cs_b->cs_ops->zsop_rxint)(cs_b);
 
-	/* Handle receive interrupts first. */
-	if (rr3 & ZSRR3_IP_A_RX)
-		(*cs_a->cs_ops->zsop_rxint)(cs_a);
-	if (rr3 & ZSRR3_IP_B_RX)
-		(*cs_b->cs_ops->zsop_rxint)(cs_b);
+		/* Handle status interrupts (i.e. flow control). */
+		if (rr3 & ZSRR3_IP_A_STAT)
+			(*cs_a->cs_ops->zsop_stint)(cs_a);
+		if (rr3 & ZSRR3_IP_B_STAT)
+			(*cs_b->cs_ops->zsop_stint)(cs_b);
 
-	/* Handle status interrupts (i.e. flow control). */
-	if (rr3 & ZSRR3_IP_A_STAT)
-		(*cs_a->cs_ops->zsop_stint)(cs_a);
-	if (rr3 & ZSRR3_IP_B_STAT)
-		(*cs_b->cs_ops->zsop_stint)(cs_b);
+		/* Handle transmit done interrupts. */
+		if (rr3 & ZSRR3_IP_A_TX)
+			(*cs_a->cs_ops->zsop_txint)(cs_a);
+		if (rr3 & ZSRR3_IP_B_TX)
+			(*cs_b->cs_ops->zsop_txint)(cs_b);
 
-	/* Handle transmit done interrupts. */
-	if (rr3 & ZSRR3_IP_A_TX)
-		(*cs_a->cs_ops->zsop_txint)(cs_a);
-	if (rr3 & ZSRR3_IP_B_TX)
-		(*cs_b->cs_ops->zsop_txint)(cs_b);
+		rr3a |= rr3;
+	}
 
 	/* Clear interrupt. */
-	if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
+	if (rr3a & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
 		zs_write_csr(cs_a, ZSWR0_CLR_INTR);
 		rval |= 1;
 	}
-	if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
+	if (rr3a & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
 		zs_write_csr(cs_b, ZSWR0_CLR_INTR);
 		rval |= 2;
 	}
