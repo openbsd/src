@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 1995/08/17 17:41:05 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 1996/01/28 11:46:54 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -74,12 +74,12 @@ bdev_decl(ts);
 #include "mu.h"
 bdev_decl(mt);
 
-#if 0 /* defined(VAX750) || defined(VAX730) */
+#if defined(VAX750)
 #define	NCTU	1
 #else
 #define	NCTU	0
 #endif
-bdev_decl(tu);
+bdev_decl(ctu);
 
 #include "uda.h"
 bdev_decl(uda);
@@ -108,6 +108,9 @@ bdev_decl(rl);
 #include "ccd.h"
 bdev_decl(ccd);
 
+#include "vnd.h"
+bdev_decl(vnd);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
@@ -118,7 +121,7 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NTE,tm),		/* 5: TM11/TE10 */
 	bdev_tape_init(NTS,ts),		/* 6: TS11 */
 	bdev_tape_init(NMU,mt),		/* 7: TU78 */
-	bdev_tape_init(NCTU,tu),	/* 8: Console TU58 on 730/750 */
+	bdev_tape_init(NCTU,ctu),	/* 8: Console TU58 on 730/750 */
 	bdev_disk_init(NUDA,uda),	/* 9: UDA50/RA?? */
 	bdev_tape_init(NTJ,ut),		/* 10: TU45 */
 	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
@@ -128,6 +131,7 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NTMSCP,tmscp),	/* 15: TMSCP tape */
 	bdev_disk_init(NKDB,kdb),	/* 16: KDB50/RA?? */
 	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
+	bdev_disk_init(NVND,vnd),	/* 18: vnode disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -308,18 +312,13 @@ cdev_decl(qd);
 #endif
 cdev_decl(ii);
 
-/* open, close, read, ioctl */
-cdev_decl(ipl);
-#define	cdev_gen_ipf(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
+cdev_decl(vnd);
+
+#include "bpfilter.h"
+cdev_decl(bpf);
+
+#include "tun.h" 
+cdev_decl(tun);
 
 struct cdevsw	cdevsw[] =
 {
@@ -373,11 +372,14 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_gen_ipf(NIPF,ipl),		/* 50: IP filter log */
+	cdev_notdef(),			/* 50 */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
 	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
+	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */
+	cdev_bpftun_init(NTUN,tun),	/* 57: tunnel filter */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -450,6 +452,7 @@ int	chrtoblktbl[] = {
 	16,	/* 52 */
 	NODEV,	/* 53 */
 	17,	/* 54 */
+	18,	/* 55 */
 };
 
 chrtoblk(dev)
