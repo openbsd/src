@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2004/07/19 15:09:05 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2004/07/22 11:19:14 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -115,6 +115,7 @@
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
@@ -350,7 +351,7 @@ struct pmap_tlb_shootdown_q {
 	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;
 	int pq_pte;			/* aggregate PTE bits */
 	int pq_count;			/* number of pending requests */
-	struct SIMPLELOCK pq_slock;	/* spin lock on queue */
+	struct mutex pq_mutex;	/* spin lock on queue */
 	int pq_flushg;		/* pending flush global */
 	int pq_flushu;		/* pending flush user */
 } pmap_tlb_shootdown_q[X86_MAXPROCS];
@@ -363,7 +364,7 @@ struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
 void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
 	    struct pmap_tlb_shootdown_job *);
 
-struct SIMPLELOCK pmap_tlb_shootdown_job_lock;
+struct mutex pmap_tlb_shootdown_job_mutex = MUTEX_INITIALIZER(IPL_NONE);
 union pmap_tlb_shootdown_job_al *pj_page, *pj_free;
 
 /*
@@ -638,7 +639,6 @@ pmap_apte_flush(struct pmap *pmap)
 	struct pmap_tlb_shootdown_q *pq;
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int s;
 #endif
 
 	tlbflush();		/* flush TLB on current processor */
@@ -655,15 +655,9 @@ pmap_apte_flush(struct pmap *pmap)
 			continue;
 		if (pmap_is_active(pmap, ci->ci_cpuid)) {
 			pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
-			s = splipi();
-#ifdef MULTIPROCESSOR
-			SIMPLE_LOCK(&pq->pq_slock);
-#endif
+			mtx_enter(&pq->pq_mutex);
 			pq->pq_flushu++;
-#ifdef MULTIPROCESSOR
-			SIMPLE_UNLOCK(&pq->pq_slock);
-#endif
-			splx(s);
+			mtx_leave(&pq->pq_mutex);
 			x86_send_ipi(ci, X86_IPI_TLB);
 		}
 	}
@@ -1117,11 +1111,9 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	 * Initialize the TLB shootdown queues.
 	 */
 
-	SIMPLE_LOCK_INIT(&pmap_tlb_shootdown_job_lock);
-
 	for (i = 0; i < X86_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
-		SIMPLE_LOCK_INIT(&pmap_tlb_shootdown_q[i].pq_slock);
+		mtx_init(&pmap_tlb_shootdown_q[i].pq_mutex, IPL_IPI);
 	}
 
 	/*
@@ -3600,7 +3592,6 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
 	CPU_INFO_ITERATOR cii;
-	int s;
 
 #ifdef LARGEPAGES
 	if (pte & PG_PS)
@@ -3612,9 +3603,8 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		return;
 	}
 
-	s = splipi();
 #if 0
-	printf("dshootdown %lx\n", va);
+	printf("doshootdown %lx\n", va);
 #endif
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -3624,9 +3614,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		if (ci != self && !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
-#if defined(MULTIPROCESSOR)
-		SIMPLE_LOCK(&pq->pq_slock);
-#endif
+		mtx_enter(&pq->pq_mutex);
 
 		/*
 		 * If there's a global flush already queued, or a
@@ -3635,28 +3623,9 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		 */
 		if (pq->pq_flushg > 0 ||
 		    (pq->pq_flushu > 0 && (pte & pmap_pg_g) == 0)) {
-#if defined(MULTIPROCESSOR)
-			SIMPLE_UNLOCK(&pq->pq_slock);
-#endif
+			mtx_leave(&pq->pq_mutex);
 			continue;
 		}
-
-#ifdef I386_CPU
-		/*
-		 * i386 CPUs can't invalidate a single VA, only
-		 * flush the entire TLB, so don't bother allocating
-		 * jobs for them -- just queue a `flushu'.
-		 *
-		 * XXX note that this can be executed for non-i386
-		 * when called * early (before identifycpu() has set
-		 * cpu_class)
-		 */
-		if (cpu_class == CPUCLASS_386) {
-			pq->pq_flushu++;
-			*cpumaskp |= 1U << ci->ci_cpuid;
-			continue;
-		}
-#endif
 
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
@@ -3669,10 +3638,6 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 			 */
 			if (ci == self && pq->pq_count < PMAP_TLB_MAXJOBS) {
 				pmap_update_pg(va);
-#if defined(MULTIPROCESSOR)
-				SIMPLE_LOCK(&pq->pq_slock);
-#endif
-				continue;
 			} else {
 				if (pq->pq_pte & pmap_pg_g)
 					pq->pq_flushg++;
@@ -3693,11 +3658,8 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
 			*cpumaskp |= 1U << ci->ci_cpuid;
 		}
-#if defined(MULTIPROCESSOR)
-		SIMPLE_UNLOCK(&pq->pq_slock);
-#endif
+		mtx_leave(&pq->pq_mutex);
 	}
-	splx(s);
 }
 
 /*
@@ -3711,17 +3673,12 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 	u_long cpu_id = cpu_number();
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
 	struct pmap_tlb_shootdown_job *pj;
-	int s;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 #endif
 
-	s = splipi();
-
-#ifdef MULTIPROCESSOR
-	SIMPLE_LOCK(&pq->pq_slock);
-#endif
+	mtx_enter(&pq->pq_mutex);
 
 	if (pq->pq_flushg) {
 		COUNT(flushg);
@@ -3755,10 +3712,8 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 	for (CPU_INFO_FOREACH(cii, ci))
 		x86_atomic_clearbits_ul(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
-	SIMPLE_UNLOCK(&pq->pq_slock);
 #endif
-
-	splx(s);
+	mtx_leave(&pq->pq_mutex);
 }
 
 
@@ -3793,29 +3748,24 @@ pmap_tlb_shootdown_q_drain(pq)
  *	Note: We expect the queue to be locked.
  */
 struct pmap_tlb_shootdown_job *
-pmap_tlb_shootdown_job_get(pq)
-	struct pmap_tlb_shootdown_q *pq;
+pmap_tlb_shootdown_job_get(struct pmap_tlb_shootdown_q *pq)
 {
 	struct pmap_tlb_shootdown_job *pj;
 
 	if (pq->pq_count >= PMAP_TLB_MAXJOBS)
 		return (NULL);
 
-#ifdef MULTIPROCESSOR
-	SIMPLE_LOCK(&pmap_tlb_shootdown_job_lock);
-#endif
+	mtx_enter(&pmap_tlb_shootdown_job_mutex);
+
 	if (pj_free == NULL) {
-#ifdef MULTIPROCESSOR
-		SIMPLE_UNLOCK(&pmap_tlb_shootdown_job_lock);
-#endif
+		mtx_leave(&pmap_tlb_shootdown_job_mutex);
 		return NULL;
 	}
 	pj = &pj_free->pja_job;
 	pj_free =
 	    (union pmap_tlb_shootdown_job_al *)pj_free->pja_job.pj_nextfree;
-#ifdef MULTIPROCESSOR
-	SIMPLE_UNLOCK(&pmap_tlb_shootdown_job_lock);
-#endif
+
+	mtx_leave(&pmap_tlb_shootdown_job_mutex);
 
 	pq->pq_count++;
 	return (pj);
@@ -3829,23 +3779,18 @@ pmap_tlb_shootdown_job_get(pq)
  *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_job_put(pq, pj)
-	struct pmap_tlb_shootdown_q *pq;
-	struct pmap_tlb_shootdown_job *pj;
+pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *pq,
+    struct pmap_tlb_shootdown_job *pj)
 {
 
 #ifdef DIAGNOSTIC
 	if (pq->pq_count == 0)
 		panic("pmap_tlb_shootdown_job_put: queue length inconsistency");
 #endif
-#ifdef MULTIPROCESSOR
-	SIMPLE_LOCK(&pmap_tlb_shootdown_job_lock);
-#endif
+	mtx_enter(&pmap_tlb_shootdown_job_mutex);
 	pj->pj_nextfree = &pj_free->pja_job;
 	pj_free = (union pmap_tlb_shootdown_job_al *)pj;
-#ifdef MULTIPROCESSOR
-	SIMPLE_UNLOCK(&pmap_tlb_shootdown_job_lock);
-#endif
+	mtx_leave(&pmap_tlb_shootdown_job_mutex);
 
 	pq->pq_count--;
 }
