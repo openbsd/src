@@ -75,6 +75,7 @@
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 
+#include <machine/bsd_openprom.h>
 #include <machine/autoconf.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
@@ -606,6 +607,7 @@ boot(howto)
 	static char str[4];	/* room for "-sd\0" */
 	extern volatile void romhalt(void);
 	extern volatile void romboot(char *);
+	extern	struct promvec *promvec;
 
 	fb_unblank();
 	boothowto = howto;
@@ -627,8 +629,13 @@ boot(howto)
 		resettodr();
 	}
 	(void) splhigh();		/* ??? */
+
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
+#if defined(SUN4M) || defined(SUN4C)
+		if (cputyp==CPU_SUN4M || cputyp==CPU_SUN4C)
+			*promvec->pv_synchook = NULL;
+#endif
 		romhalt();
 	}
 	if (howto & RB_DUMP)
@@ -644,6 +651,10 @@ boot(howto)
 		str[i] = 0;
 	} else
 		str[0] = 0;
+#if defined(SUN4M) || defined(SUN4C)
+	if (cputyp==CPU_SUN4M || cputyp==CPU_SUN4C)
+		*promvec->pv_synchook = NULL;
+#endif
 	romboot(str);
 	/*NOTREACHED*/
 }
