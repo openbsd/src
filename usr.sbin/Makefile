@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2000/02/03 21:54:39 jakob Exp $
+#	$OpenBSD: Makefile,v 1.58 2000/02/12 15:27:29 espie Exp $
 
 # not yet done: catman
 
@@ -7,9 +7,9 @@
 SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 	chown chroot config cron dev_mkdb dhcp \
 	edquota gspa httpd inetd iostat \
-	ipftest ipmon ipsend kgmon kvm_mkdb lpr openssl\
+	ipftest ipmon ipsend kgmon kvm_mkdb lpr \
 	mailwrapper map-mbone mrinfo mopd mrouted mtrace mtree named \
-	netgroup_mkdb pkg_install portmap ppp pppd pstat pwd_mkdb \
+	netgroup_mkdb openssl pkg_install portmap ppp pppd pstat pwd_mkdb \
 	quot quotaon rarpd rbootd rdconfig rdate repquota rmt \
 	rpc.bootparamd rpc.lockd rpc.pcnfsd rwhod \
 	sa sendmail sliplogin slstats spray \
@@ -18,6 +18,9 @@ SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 
 # IPv6
 SUBDIR+=faithd ifmcstat ndp rip6query route6d rtadvd rtsold
+
+# Amiga manpages
+SUBDIR+=iteconfig grfconfig videomode
 
 .if (${AFS} == "yes")
 SUBDIR+=afs
@@ -29,11 +32,7 @@ SUBDIR+=ypbind yppoll ypset ypserv
 
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+=apm apmd bad144 eeprom fdformat grfconfig grfinfo \
-	hilinfo iteconfig pccon screenblank videomode memconfig
-.elif ${MACHINE} == "amiga" 
-SUBDIR+=grfconfig iteconfig videomode
-.elif ${MACHINE} == "atari"
-SUBDIR+=iteconfig
+	hilinfo pccon screenblank videomode memconfig
 .elif ${MACHINE} == "hp300"
 SUBDIR+=grfinfo hilinfo
 .elif ${MACHINE} == "i386"
