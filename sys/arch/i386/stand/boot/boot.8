@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.3 1997/09/05 21:25:16 weingart Exp $
+.\"	$OpenBSD: boot.8,v 1.4 1997/09/06 00:37:34 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -38,27 +38,27 @@
 secondary system bootstrap program
 .Sh DESCRIPTION
 The main purpose of this program is to load the system kernel, dealing with
-all the bugs and bottlenecks of the PC ``architecture'' and philosophy.
+all the bugs and bottlenecks of the PC BIOS ``architecture'' and philosophy.
 .Pp
 As described in
 .Xr boot_i386 8
 this program is loaded by the
 .Xr biosboot 8
-primary bootstrap loader and will give you convinient way to load the kernel.
+primary bootstrap loader and will give you a convinient way to load the kernel.
 This program acts as an enhanced boot monitor or ROM for PC systems, providing
 a buffer or common interface for the kernel to start from.
 .Pp
 Basic operations include:
 .Bl -bullet -compact
 .It
-Detecting and switching between multiple consoles.
+Detecting and switching between multiple console types.
 .It
 Loading kernels from any device supported by your system BIOS.
 .It
 Loading kernels compressed by
 .Xr gzip 1
 program or
-.Xr zlib
+.Xr zlib 3
 routines.
 .It
 Passing system parameters queried from the BIOS to the kernel.
@@ -88,9 +88,9 @@ and up to four serial consoles connected to the serial ports.
 Corresponding messages report about the found devices to the default
 console device, which is pc0, if present.
 .It
-Probe for memory. Conventional memory probed by quering the BIOS.
-Extended memory probed by running through the memory probing
-for present pages, which elliminates BIOS restriction for 64M of memory.
+Probe for memory. Conventional memory is probed by quering the BIOS.
+Extended memory is probed by running through the memory probing
+for present pages, which eliminates the BIOS restriction of 64M of memory.
 All the memory found is reported to the default console device.
 .It
 Probe for APM support in the BIOS. Message printed if support is present.
@@ -105,7 +105,7 @@ accepts at the interactive prompt.
 Usually they are commands that change boot parameters according to your
 environment, although default values are usable in most cases.
 .It
-Header line
+The header line
 .Pp
 .Dl OpenBSD BOOT [x.xx]
 .Pp
@@ -134,7 +134,7 @@ Boots kernel image specified by the
 with options if any. Image specification consists of a pair
 .Nm device : Nm filename ,
 either of each maybe omitted (':' is not needed if both)
-in wich case values from
+in which case values from
 .Nm
 variables will be used.
 .It echo
