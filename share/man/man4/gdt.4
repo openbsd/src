@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.2 2000/04/03 21:19:36 aaron Exp $
+.\"	$OpenBSD: gdt.4,v 1.3 2000/05/29 22:46:56 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -18,46 +18,45 @@ The
 .Nm
 driver provides support for the following adapters:
 .Pp
-.Bl -tag -width -offset indent -compact
-.It Tn GDT60x0
-.It Tn GDT6000B
-.It Tn GDT6x10
-.It Tn GDT6x20
-.It Tn GDT6530
-.It Tn GDT6550
-.It Tn GDT6x17
-.It Tn GDT6x27
-.It Tn GDT6537
-.It Tn GDT6557
-.It Tn GDT6x15
-.It Tn GDT6x25
-.It Tn GDT6535
-.It Tn GDT6555
-.It Tn GDT6x17RP
-.It Tn GDT6x27RP
-.It Tn GDT6537RP
-.It Tn GDT6557RP
-.It Tn GDT6x11RP
-.It Tn GDT6x21RP
-.It Tn GDT6x17RD
-.It Tn GDT6x27RD
-.It Tn GDT6537RD
-.It Tn GDT6557RD
-.It Tn GDT6x11RD
-.It Tn GDT6x21RD
-.It Tn GDT6x18RD
-.It Tn GDT6x28RD
-.It Tn GDT6x38RD
-.It Tn GDT6x58RD
-.It Tn GDT7x18RN
-.It Tn GDT7x28RN
-.It Tn GDT7x38RN
-.It Tn GDT7x58RN
-.It Tn GDT6x19RD
-.It Tn GDT6x29RD
-.It Tn GDT7x19RN
-.It Tn GDT7x29RN
-.El
+.Bl -width -offset indent -compact
+.Tn GDT60x0 ,
+.Tn GDT6000B ,
+.Tn GDT6x10 ,
+.Tn GDT6x20 ,
+.Tn GDT6530 ,
+.Tn GDT6550 ,
+.Tn GDT6x17 ,
+.Tn GDT6x27 ,
+.Tn GDT6537 ,
+.Tn GDT6557 ,
+.Tn GDT6x15 ,
+.Tn GDT6x25 ,
+.Tn GDT6535 ,
+.Tn GDT6555 ,
+.Tn GDT6x17RP ,
+.Tn GDT6x27RP ,
+.Tn GDT6537RP ,
+.Tn GDT6557RP ,
+.Tn GDT6x11RP ,
+.Tn GDT6x21RP ,
+.Tn GDT6x17RD ,
+.Tn GDT6x27RD ,
+.Tn GDT6537RD ,
+.Tn GDT6557RD ,
+.Tn GDT6x11RD ,
+.Tn GDT6x21RD ,
+.Tn GDT6x18RD ,
+.Tn GDT6x28RD ,
+.Tn GDT6x38RD ,
+.Tn GDT6x58RD ,
+.Tn GDT7x18RN ,
+.Tn GDT7x28RN ,
+.Tn GDT7x38RN ,
+.Tn GDT7x58RN ,
+.Tn GDT6x19RD ,
+.Tn GDT6x29RD ,
+.Tn GDT7x19RN ,
+.Tn GDT7x29RN .
 .Pp
 However, only the
 .Tn GDT6x27RP
