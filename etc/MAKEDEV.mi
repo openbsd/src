@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.19 2002/01/23 06:31:18 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -139,7 +139,7 @@ target(all,altq)dnl
 target(all,pf)dnl
 twrget(all,cry,crypto)dnl
 target(all,apm)dnl
-target(all,tth,0,1)dnl
+twrget(all,tth,ttyh,0,1)dnl
 target(all,ttyA,0,1)dnl
 target(all,ttyB,0,1,2,3,4,5)dnl
 twrget(all,attyB,ttyB,0,1,2,3,4)dnl
