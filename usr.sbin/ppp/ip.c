@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.7 1998/01/21 02:13:33 brian Exp $
+ * $Id: ip.c,v 1.8 1998/03/13 01:25:58 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -473,11 +473,12 @@ IpInput(struct mbuf * bp)
     IpcpAddInOctets(nb);
     nb += sizeof tun - sizeof tun.data;
     nw = write(tun_out, &tun, nb);
-    if (nw != nb)
+    if (nw != nb) {
       if (nw == -1)
 	LogPrintf(LogERROR, "IpInput: wrote %d, got %s\n", nb, strerror(errno));
       else
         LogPrintf(LogERROR, "IpInput: wrote %d, got %d\n", nb, nw);
+    }
   }
   pfree(bp);
 
