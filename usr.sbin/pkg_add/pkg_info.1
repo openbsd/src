@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.12 2004/11/15 13:20:40 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.13 2004/11/15 14:19:36 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -27,6 +27,7 @@
 .Nm pkg_info
 .Op Fl cDdfIiKkLMpqRrsUv
 .Op Fl e Ar pkg-name
+.Op Fl E Ar filename
 .Op Fl l Ar str
 .Ar pkg-name Op Ar ...
 .Nm pkg_info
@@ -95,6 +96,9 @@ For example,
 .Ic pkg_info -e x11/kde/base3
 will match any package that was compiled according to
 .Pa ${PORTSDIR}/x11/kde/base3 .
+.It Fl E Ar filename
+Look for the package(s) that contains the given
+.Ar filename .
 .It Fl f
 Show the packing list instructions for each package.
 .It Fl I
