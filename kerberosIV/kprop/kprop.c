@@ -1,4 +1,5 @@
-/*	$OpenBSD: kprop.c,v 1.4 1998/02/18 11:53:59 art Exp $	*/
+/*	$OpenBSD: kprop.c,v 1.5 1998/02/18 12:55:17 art Exp $	*/
+/* $KTH: kprop.c,v 1.30 1997/12/05 01:34:49 assar Exp $ */
 
 /*
  * This software may now be redistributed outside the US.
@@ -28,19 +29,20 @@
 #include <slav_locl.h>
 #include <kprop.h>
 #include <sys/param.h>
+#include <err.h>
 
 static char kprop_version[KPROP_PROT_VERSION_LEN] = KPROP_PROT_VERSION;
 
 int     debug = 0;
 
 char    my_realm[REALM_SZ];
-int     princ_data_size = 3 * sizeof(long) + 3 * sizeof(unsigned char);
+int     princ_data_size = 3 * sizeof(int32_t) + 3 * sizeof(unsigned char);
 short   transfer_mode, net_transfer_mode;
 int force_flag;
 static char ok[] = ".dump_ok";
 
 struct slave_host {
-    u_long  net_addr;
+    u_int32_t  net_addr;
     char   *name;
     char   *instance;
     char   *realm;
@@ -48,14 +50,6 @@ struct slave_host {
     int    succeeded;
     struct slave_host *next;
 };
-
-static void
-Death(char *s)
-{
-    fprintf(stderr, "kprop: ");
-    perror(s);
-    exit(1);
-}
 
 static
 int get_slaves(struct slave_host **psl, char *file, time_t ok_mtime)
@@ -69,55 +63,57 @@ int get_slaves(struct slave_host **psl, char *file, time_t ok_mtime)
     char   *ppath;
     struct stat stbuf;
 
-    if ((fin = fopen(file, "r")) == NULL) {
-	fprintf(stderr, "Can't open slave host file, '%s'.\n", file);
-	exit(-1);
-    }
+    if ((fin = fopen(file, "r")) == NULL)
+	err(1, "open(%s)", file);
     strcpy(path, file);
     if ((ppath = strrchr(path, '/'))) {
 	ppath += 1;
     } else {
 	ppath = path;
     }
-    for (th = psl; fgets(namebuf, sizeof namebuf, fin); th = &(*th)->next) {
+    th = psl;
+    while(fgets(namebuf, sizeof(namebuf), fin)){
 	if ((pc = strchr(namebuf, '\n'))) {
 	    *pc = '\0';
 	} else {
-	    fprintf(stderr, "Host name too long (>= %d chars) in '%s'.\n",
-		    (int)(sizeof(namebuf)), file);
-	    exit(-1);
+	    if(strlen(namebuf) == sizeof(namebuf) - 1){
+		warnx ("Hostname too long (>= %d chars) in '%s'.",
+		       (int) sizeof(namebuf), file);
+		do{
+		    if(fgets(namebuf, sizeof(namebuf), fin) == NULL)
+			break;
+		}while(strchr(namebuf, '\n') == NULL);
+		continue;
+	    }
 	}
+	if(namebuf[0] == 0 || namebuf[0] == '#')
+	    continue;
 	host = gethostbyname(namebuf);
 	if (host == NULL) {
-	    fprintf(stderr, "Unknown host '%s' in '%s'.\n", namebuf, file);
-	    exit(-1);
+	    warnx ("Ignoring host '%s' in '%s': %s", 
+		   namebuf, file,
+		   "unknown error"
+		   );
+	    continue;
 	}
 	(*th) = (struct slave_host *) malloc(sizeof(struct slave_host));
-	if (!*th) {
-	    fprintf(stderr, "No memory reading host list from '%s'.\n",
+	if (!*th)
+	    errx (1, "No memory reading host list from '%s'.",
 		    file);
-	    exit(-1);
-	}
-	bzero( (*th) , (sizeof(struct slave_host)) );
-	(*th)->name = malloc(strlen(namebuf) + 1);
-	if (!(*th)->name) {
-	    fprintf(stderr, "No memory reading host list from '%s'.\n",
-		    file);
-	    exit(-1);
-	}
+	memset(*th, 0, sizeof(struct slave_host));
+	(*th)->name = strdup(namebuf);
+	if ((*th)->name == NULL)
+	    errx (1, "No memory reading host list from '%s'.",
+		  file);
 	/* get kerberos cannonical instance name */
-	strcpy((*th)->name, namebuf);
 	inst = krb_get_phost ((*th)->name);
-	(*th)->instance = malloc(strlen(inst) + 1);
-	if (!(*th)->instance) {
-	    fprintf(stderr, "No memory reading host list from '%s'.\n",
-		    file);
-	    exit(-1);
-	}
-	strcpy((*th)->instance, inst);
+	(*th)->instance = strdup(inst);
+	if ((*th)->instance == NULL)
+	    errx (1, "No memory reading host list from '%s'.",
+		  file);
 	/* what a concept, slave servers in different realms! */
 	(*th)->realm = my_realm;
-	bcopy(host->h_addr, (char *)&(*th)->net_addr, sizeof(host->h_addr));
+	memcpy(&(*th)->net_addr, host->h_addr, sizeof((*th)->net_addr));
 	(*th)->not_time_yet = 0;
 	(*th)->succeeded = 0;
 	(*th)->next = NULL;
@@ -126,6 +122,7 @@ int get_slaves(struct slave_host **psl, char *file, time_t ok_mtime)
 	    (*th)->not_time_yet = 1;
 	    (*th)->succeeded = 1;	/* no change since last success */
 	}
+	th = &(*th)->next;
     }
     fclose(fin);
     return (1);
@@ -135,7 +132,7 @@ int get_slaves(struct slave_host **psl, char *file, time_t ok_mtime)
      1) 8 byte version string
      2) 2 bytes of "transfer mode" (net byte order of course)
      3) ticket/authentication send by sendauth
-     4) 4 bytes of "block" length (u_long)
+     4) 4 bytes of "block" length (u_int32_t)
      5) data
 
      4 and 5 repeat til EOF ...
@@ -144,18 +141,16 @@ int get_slaves(struct slave_host **psl, char *file, time_t ok_mtime)
 static int
 prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
 {
-    char *dot, admin[MAXHOSTNAMELEN];
-    char buf[KPROP_BUFSIZ];
-    char obuf[KPROP_BUFSIZ + 64	/* leave room for private msg overhead */ ];
-    struct servent *sp;
+    u_char buf[KPROP_BUFSIZ];
+    u_char obuf[KPROP_BUFSIZ + 64]; /* leave room for private msg overhead */
     struct sockaddr_in sin, my_sin;
     int     i, n, s;
     struct slave_host *cs;	/* current slave */
     char   path[256], my_host_name[MAXHOSTNAMELEN], *p_my_host_name;
     char   kprop_service_instance[INST_SZ];
     char   *pc;
-    u_long cksum;
-    u_long length, nlength;
+    u_int32_t cksum;
+    u_int32_t length, nlength;
     long   kerror;
     KTEXT_ST     ticket;
     CREDENTIALS  cred;
@@ -164,17 +159,12 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
     
     des_key_schedule session_sched;
 
-    (void) mktemp(tkstring);
+    close(mkstemp(tkstring));
     krb_set_tkt_string(tkstring);
     
-    if ((sp = getservbyname("krb_prop", "tcp")) == 0) {
-	fprintf(stderr, "tcp/krb_prop: service unknown.\n");
-	exit(1);
-    }
-
-    bzero(&sin, sizeof sin);
+    memset(&sin, 0, sizeof sin);
     sin.sin_family = AF_INET;
-    sin.sin_port = sp->s_port;
+    sin.sin_port = k_getportbyname ("krb_prop", "tcp", htons(KPROP_PORT));
     sin.sin_addr.s_addr = INADDR_ANY;
 
     strcpy(path, fslv);
@@ -187,45 +177,43 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
     for (i = 0; i < 5; i++) {	/* try each slave five times max */
 	for (cs = sl; cs; cs = cs->next) {
 	    if (!cs->succeeded) {
-		if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		    perror("kprop: socket");
-		    exit(1);
-		}
-		bcopy(&cs->net_addr, &sin.sin_addr,
+		if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		    err (1, "socket");
+		memcpy(&sin.sin_addr, &cs->net_addr, 
 		      sizeof cs->net_addr);
 
 		if (connect(s, (struct sockaddr *) &sin, sizeof sin) < 0) {
-		    fprintf(stderr, "%s: ", cs->name);
-		    perror("connect");
+		    warn ("connect(%s)", cs->name);
 		    close(s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
 		
 		/* for krb_mk_{priv, safe} */
-		bzero (&my_sin, sizeof my_sin);
+		memset(&my_sin, 0, sizeof my_sin);
 		n = sizeof my_sin;
 		if (getsockname (s, (struct sockaddr *) &my_sin, &n) != 0) {
-		    fprintf (stderr, "kprop: can't get socketname.");
-		    perror ("getsockname");
+		    warn ("getsockname(%s)", cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
 		if (n != sizeof (my_sin)) {
-		    fprintf (stderr, "kprop: can't get socketname. len");
+		    warnx ("can't get socketname %s length", cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
 		
 		/* Get ticket */
 		kerror = krb_mk_req (&ticket, KPROP_SERVICE_NAME, 
-				     cs->instance, cs->realm, (u_long) 0);
+				     cs->instance, cs->realm, (u_int32_t) 0);
 		/* if ticket has expired try to get a new one, but
 		 * first get a TGT ...
 		 */
 		if (kerror != MK_AP_OK) {
 		    if (gethostname (my_host_name, sizeof(my_host_name)) != 0) {
-			fprintf (stderr, "%s:", cs->name);
-			perror ("getting my hostname");
+			warnx ("gethostname(%s): %s",
+			       my_host_name,
+			       "unknown error"
+			       );
 			close (s);
 			break;	/* next one can't work either! */
 		    }
@@ -234,45 +222,36 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
 		    /* copy it to make sure gethostbyname static doesn't
 		     * screw us. */
 		    strcpy (kprop_service_instance, p_my_host_name);
-
-		    if (krb_get_admhst(admin, my_realm, 1) != KSUCCESS) {
-			fprintf (stderr,  "Could not get admin host.\n");
-			break;
-		    }
-		    if ((dot = strchr(admin, '.')) != NULL)
-			*dot = '\0';
 		    kerror = krb_get_svc_in_tkt (KPROP_SERVICE_NAME, 
 #if 0
 						 kprop_service_instance,
 #else
-						 admin,
+						 KRB_MASTER,
 #endif
 						 my_realm,
-						 TGT_SERVICE_NAME,
+						 KRB_TICKET_GRANTING_TICKET,
 						 my_realm,
 						 96,
 						 KPROP_SRVTAB);
 		    if (kerror != INTK_OK) {
-			fprintf (stderr,
-				 "%s: %s.  While getting initial ticket\n",
-				 cs->name, krb_err_txt[kerror]);
+			warnx ("%s: %s.  While getting initial ticket\n",
+			       cs->name, krb_get_err_text(kerror));
 			close (s);
 			goto punt;
 		    }
 		    kerror = krb_mk_req (&ticket, KPROP_SERVICE_NAME, 
-					 cs->instance, cs->realm, (u_long) 0);
+					 cs->instance, cs->realm, (u_int32_t) 0);
 		}
 		if (kerror != MK_AP_OK) {
-		    fprintf (stderr, "%s: %s. Calling krb_mk_req.",
-			     cs->name, krb_err_txt[kerror]);
+		    warnx ("%s: krb_mk_req: %s",
+			   cs->name, krb_get_err_text(kerror));
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}		    
 
 		if (write(s, kprop_version, sizeof(kprop_version))
 		    != sizeof(kprop_version)) {
-		    fprintf (stderr, "%s: ", cs->name);
-		    perror ("write (version) error");
+		    warn ("%s", cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
@@ -280,8 +259,7 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
 		net_transfer_mode = htons (transfer_mode);
 		if (write(s, &net_transfer_mode, sizeof(net_transfer_mode))
 		    != sizeof(net_transfer_mode)) {
-		    fprintf (stderr, "%s: ", cs->name);
-		    perror ("write (transfer_mode) error");
+		    warn ("write(%s)", cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
@@ -289,17 +267,17 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
 		kerror = krb_get_cred (KPROP_SERVICE_NAME, cs->instance,
 				       cs->realm, &cred);
 		if (kerror != KSUCCESS) {
-		    fprintf (stderr, "%s: %s.  Getting session key.", 
-			     cs->name, krb_err_txt[kerror]);
+		    warnx ("%s: %s.  Getting session key.", 
+			   cs->name, krb_get_err_text(kerror));
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
 #ifdef NOENCRYPTION
-		bzero((char *)session_sched, sizeof(session_sched));
+		memset(session_sched, 0, sizeof(session_sched));
 #else
 		if (des_key_sched (&cred.session, session_sched)) {
-		    fprintf (stderr, "%s: can't make key schedule.",
-			     cs->name);
+		    warnx ("%s: can't make key schedule.",
+			   cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
@@ -332,18 +310,16 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
 				      &sin,
 				      KPROP_PROT_VERSION);
 		if (kerror != KSUCCESS) {
-		    fprintf (stderr, "%s: %s.  Calling krb_sendauth.", 
-			     cs->name, krb_err_txt[kerror]);
+		    warnx ("%s: krb_sendauth: %s.",
+			   cs->name, krb_get_err_text(kerror));
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
 
 		lseek(fd, 0L, SEEK_SET); /* Rewind file before rereading it. */
 		while ((n = read(fd, buf, sizeof buf))) {
-		    if (n < 0) {
-			perror("input file read error");
-			exit(1);
-		    }
+		    if (n < 0)
+			err (1, "read");
 		    switch (transfer_mode) {
 		    case KPROP_TRANSFER_PRIVATE:
 		    case KPROP_TRANSFER_SAFE:
@@ -356,32 +332,29 @@ prop_to_slaves(struct slave_host *sl, int fd, char *fslv)
 						  &cred.session,
 						  &my_sin, &sin);
 			if (length == -1) {
-			    fprintf (stderr, "%s: %s failed.",
-				     cs->name,
-				     (transfer_mode == KPROP_TRANSFER_PRIVATE) 
-				     ? "krb_rd_priv" : "krb_rd_safe");
+			    warnx ("%s: %s failed.",
+				   cs->name,
+				   (transfer_mode == KPROP_TRANSFER_PRIVATE) 
+				   ? "krb_rd_priv" : "krb_rd_safe");
 			    close (s);
 			    continue; /*** NEXT SLAVE ***/
 			}
 			nlength = htonl(length);
 			if (write(s, &nlength, sizeof nlength)
 			    != sizeof nlength) {
-			    fprintf (stderr, "%s: ", cs->name);
-			    perror ("write error");
+			    warn ("write(%s)", cs->name);
 			    close (s);
 			    continue; /*** NEXT SLAVE ***/
 			}
 			if (write(s, obuf, length) != length) {
-			    fprintf(stderr, "%s: ", cs->name);
-			    perror("write error");
+			    warn ("write(%s)", cs->name);
 			    close(s);
 			    continue; /*** NEXT SLAVE ***/
 			}
 			break;
 		    case KPROP_TRANSFER_CLEAR:
 			if (write(s, buf, n) != n) {
-			    fprintf(stderr, "%s: ", cs->name);
-			    perror("write error");
+			    warn ("write(%s)", cs->name);
 			    close(s);
 			    continue; /*** NEXT SLAVE ***/
 			}
@@ -407,6 +380,20 @@ punt:
     return (1);
 }
 
+static void
+usage()
+{
+    /* already got floc and fslv, what is this? */
+    fprintf(stderr,
+	    "\nUsage: kprop [-force] [-realm realm] [-private"
+#ifdef not_safe_yet
+	    "|-safe|-clear"
+#endif
+	    "] [data_file [slaves_file]]\n\n");
+    exit(1);
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -427,11 +414,11 @@ main(int argc, char **argv)
     pc[strlen(pc) - 1] = '\0';
     printf("\nStart slave propagation: %s\n", pc);
  
-    floc = (char *) NULL;
-    fslv = (char *) NULL;
+    floc = NULL;
+    fslv = NULL;
 
     if (krb_get_lrealm(my_realm,1) != KSUCCESS)
-      Death ("Getting my kerberos realm.  Check krb.conf");
+      errx (1, "Getting my kerberos realm.  Check krb.conf");
 
     for (i = 1; i < argc; i++) 
       switch (argv[i][0]) {
@@ -449,62 +436,46 @@ main(int argc, char **argv)
 	    if (i < argc)
 		strcpy(my_realm, argv[i]);
 	    else
-		goto usage;
+		usage();
 	} else if (strcmp (argv[i], "-force") == 0)
 	    force_flag++;
 	else {
-	  fprintf (stderr, "kprop: unknown control argument %s.\n",
-		   argv[i]);
-	  exit (1);
+	    warnx("unknown control argument %s.", argv[i]);
+	    usage ();
 	}
 	break;
       default:
 	/* positional arguments are marginal at best ... */
-	if (floc == (char *) NULL)
+	if (floc == NULL)
 	  floc = argv[i];
 	else {
-	  if (fslv == (char *) NULL)
+	  if (fslv == NULL)
 	    fslv = argv[i];
-	  else {
-	  usage:
-		  /* already got floc and fslv, what is this? */
-	    fprintf(stderr,
-		    "\nUsage: kprop [-force] [-realm realm] [-private|-safe|-clear] data_file slaves_file\n\n");
-	    exit(1);
-	  }
+	  else 
+	      usage();
 	}
       }
-    if ((floc == (char *)NULL) || (fslv == (char *)NULL))
-	    goto usage;
-    
-    if ((floc_ok = (char *) malloc(strlen(floc) + strlen(ok) + 1))
-	== NULL) {
-	Death(floc);
-    }
-    strcat(strcpy(floc_ok, floc), ok);
+    if(floc == NULL)
+	floc = DB_DIR "/slave_dump";
+    if(fslv == NULL)
+	fslv = DB_DIR "/slaves";
+	
+    asprintf (&floc_ok, "%s%s", floc, ok);
+    if (floc_ok == NULL)
+	errx (1, "out of memory in copying %s", floc);
 
-    if ((fd = open(floc, O_RDONLY)) < 0) {
-	Death(floc);
-    }
-    if (flock(fd, LOCK_EX | LOCK_NB)) {
-	Death(floc);
-    }
-    if (stat(floc, &stbuf)) {
-	Death(floc);
-    }
-    if (stat(floc_ok, &stbuf_ok)) {
-	Death(floc_ok);
-    }
-    if (stbuf.st_mtime > stbuf_ok.st_mtime) {
-	fprintf(stderr, "kprop: '%s' more recent than '%s'.\n",
-		floc, floc_ok);
-	exit(1);
-    }
-    if (!get_slaves(&slave_host_list, fslv, stbuf_ok.st_mtime)) {
-	fprintf(stderr,
-		"kprop: can't read slave host file '%s'.\n", fslv);
-	exit(1);
-    }
+    if ((fd = open(floc, O_RDONLY)) < 0)
+	err (1, "open(%s)", floc);
+    if (flock(fd, K_LOCK_SH | K_LOCK_NB))
+	err (1, "flock(%s)", floc);
+    if (stat(floc, &stbuf))
+	err (1, "stat(%s)", floc);
+    if (stat(floc_ok, &stbuf_ok))
+	err (1, "stat(%s)", floc_ok);
+    if (stbuf.st_mtime > stbuf_ok.st_mtime)
+	errx (1, "'%s' more recent than '%s'.", floc, floc_ok);
+    if (!get_slaves(&slave_host_list, fslv, stbuf_ok.st_mtime))
+	errx (1, "can't read slave host file '%s'.", fslv);
 #ifdef KPROP_DBG
     {
 	struct slave_host *sh;
@@ -519,14 +490,10 @@ main(int argc, char **argv)
     }
 #endif				/* KPROP_DBG */
 
-    if (!prop_to_slaves(slave_host_list, fd, fslv)) {
-	fprintf(stderr,
-		"kprop: propagation failed.\n");
-	exit(1);
-    }
-    if (flock(fd, LOCK_UN)) {
-	Death(floc);
-    }
+    if (!prop_to_slaves(slave_host_list, fd, fslv))
+	errx (1, "propagation failed.");
+    if (flock(fd, K_LOCK_UN))
+	err (1, "flock(%s, LOCK_UN)", floc);
     fprintf(stderr, "\n\n");
     for (sh = slave_host_list; sh; sh = sh->next) {
 	fprintf(stderr, "%s:\t\t%s\n", sh->name,
@@ -546,17 +513,14 @@ u_long get_data_checksum(fd, key_sched)
      int fd;
      des_key_schedule key_sched;
 {
-	unsigned long cksum = 0;
+	u_int32_t cksum = 0;
 	int n;
 	char buf[BUFSIZ];
-	long obuf[2];
+	u_int32_t obuf[2];
 
 	while (n = read(fd, buf, sizeof buf)) {
-	    if (n < 0) {
-		fprintf(stderr, "Input data file read error: ");
-		perror("read");
-		exit(1);
-	    }
+	    if (n < 0)
+		err (1, "read");
 	    cksum = cbc_cksum(buf, obuf, n, key_sched, key_sched);
 	}
 	return cksum;
