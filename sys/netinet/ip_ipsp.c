@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.29 1998/11/16 08:00:43 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.30 1998/11/16 08:02:59 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -814,7 +814,7 @@ ipsp_kern(int off, char **bufp, int len)
 	    l += sprintf(buffer + l, "\t\tCurrently %qu packets processed\n",
 			 tdb->tdb_cur_packets);
 	    
-	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
+	    if (tdb->tdb_flags & TDBF_FIRSTUSE) {
 	      if (tdb->tdb_first_use)
 		l += sprintf(buffer + l,
 			     "\t\tHard expiration(2) in %qu seconds\n",
@@ -824,8 +824,9 @@ ipsp_kern(int off, char **bufp, int len)
 		l += sprintf(buffer + l,
 			     "\t\tHard expiration in %qu seconds after first "
 			     "use\n", tdb->tdb_exp_first_use);
+	    }
 
-	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
 	      if (tdb->tdb_first_use)
 		l += sprintf(buffer + l,
 			     "\t\tSoft expiration(2) in %qu seconds\n",
@@ -835,6 +836,7 @@ ipsp_kern(int off, char **bufp, int len)
 		l += sprintf(buffer + l,
 			     "\t\tSoft expiration in %qu seconds after first "
 			     "use\n", tdb->tdb_soft_first_use);
+	    }
 
 	    if (!(tdb->tdb_flags & (TDBF_TIMER | TDBF_SOFT_TIMER | TDBF_BYTES |
 				    TDBF_SOFT_PACKETS | TDBF_PACKETS |
