@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.130 2002/07/25 15:27:20 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.131 2002/07/29 05:45:28 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -164,7 +164,8 @@ hifn_attach(parent, self, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
-		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS;
+		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS |
+		    HIFN_NO_BURSTWRITE;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
@@ -194,14 +195,6 @@ hifn_attach(parent, self, aux)
 	}
 
 	hifn_set_retry(sc);
-
-	if (sc->sc_flags & HIFN_IS_7811) {
-		u_int32_t revid;
-
-		revid = READ_REG_1(sc, HIFN_1_REVID);
-		if (revid == HIFN_REVID_7811_PB3_2)
-			sc->sc_flags |= HIFN_NO_BURSTWRITE;
-	}
 
 	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
 		sc->sc_waw_lastgroup = -1;
