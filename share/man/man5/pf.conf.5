@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.221 2003/04/01 12:29:28 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.222 2003/04/05 21:46:50 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -633,6 +633,9 @@ in a parent
 declaration.
 The following keywords can be used:
 .Bl -tag -width xxxx
+.It Ar on <interface>
+Specifies the interface the queue operates on.
+If not given, it operates on all matching interfaces.
 .It Ar bandwidth <bw>
 Specifies the maximum bitrate to be processed by the queue.
 This value must not exceed the value of the parent
@@ -1963,7 +1966,7 @@ tableaddr      = hostname | ipv4-dotted-quad | ipv6-coloned-hex |
 
 altq-rule      = altq on interface-name queueopts-list
                  queue queue-list
-queue-rule     = queue string queueopts-list queue-list
+queue-rule     = queue string [ on interface-name ] queueopts-list queue-list
 
 anchor-rule    = anchor string [ ( in | out ) ] [ on ifspec ] [ af ] [ proto ]
                  [ protospec ] [ hosts ]
