@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.270 2002/12/27 22:13:31 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.271 2002/12/30 23:46:54 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1870,7 +1870,7 @@ icmp6type	: STRING			{
 				$$ = ulval + 1;
 			} else {
 				if ((p = geticmptypebyname($1, AF_INET6)) == NULL) {
-					yyerror("unknown ipv6-icmp-type %s", $1);
+					yyerror("unknown icmp6-type %s", $1);
 					YYERROR;
 				}
 				$$ = p->type + 1;
@@ -3437,10 +3437,10 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "icmp-type",		ICMPTYPE},
+		{ "icmp6-type",		ICMP6TYPE},
 		{ "in",			IN},
 		{ "inet",		INET},
 		{ "inet6",		INET6},
-		{ "ipv6-icmp-type",	ICMP6TYPE},
 		{ "keep",		KEEP},
 		{ "label",		LABEL},
 		{ "limit",		LIMIT},

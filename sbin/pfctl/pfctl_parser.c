@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.123 2002/12/18 19:40:41 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.124 2002/12/30 23:46:54 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -858,7 +858,7 @@ print_filter(struct pf_rule *r, int verbose)
 		if (r->af != AF_INET6)
 			printf("icmp-type");
 		else
-			printf("ipv6-icmp-type");
+			printf("icmp6-type");
 		if (it != NULL)
 			printf(" %s ", it->name);
 		else
