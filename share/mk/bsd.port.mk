@@ -1,5 +1,5 @@
 # -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.1 1996/06/03 22:47:10 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.2 1996/06/03 23:07:28 niklas Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -264,8 +264,8 @@ MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
 MAKE_ENV+=		PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 
-NCFTP?=			/usr/bin/ncftp
-NCFTPFLAGS?=	-N
+NCFTP?=			/usr/bin/ftp
+NCFTPFLAGS?=
 
 TOUCH?=			/usr/bin/touch
 TOUCH_FLAGS?=	-f
@@ -277,8 +277,8 @@ PATCH_DIST_STRIP?=	-p0
 PATCH_ARGS?=	-d ${WRKSRC} -E ${PATCH_STRIP}
 PATCH_DIST_ARGS?=	-d ${WRKSRC} -E ${PATCH_DIST_STRIP}
 .else
-PATCH_ARGS?=	-d ${WRKSRC} --forward --quiet -E ${PATCH_STRIP}
-PATCH_DIST_ARGS?=	-d ${WRKSRC} --forward --quiet -E ${PATCH_DIST_STRIP}
+PATCH_ARGS?=	-d ${WRKSRC} -N -s -E ${PATCH_STRIP}
+PATCH_DIST_ARGS?=	-d ${WRKSRC} -N -s -E ${PATCH_DIST_STRIP}
 .endif
 .if defined(BATCH)
 PATCH_ARGS+=		--batch
