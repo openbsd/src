@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.8 1999/06/06 15:17:32 aaron Exp $
+.\"	$OpenBSD: strcpy.3,v 1.9 1999/06/29 18:01:33 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -92,20 +92,22 @@ return
 .Fa dst .
 .Sh EXAMPLES
 The following sets
-.Dq Li chararray
+.Va chararray
 to
-.Dq Li abc\e0\e0\e0 :
+.Dq abc\e0\e0\e0 :
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abc", 6);
 .Ed
 .Pp
 The following sets
-.Dq Li chararray
+.Va chararray
 to
-.Dq Li abcdef
+.Dq abcdef
 and does
 .Em not
-null terminate chararray because the source string is >= the length parameter.
+null terminate
+.Va chararray
+because the source string is >= the length parameter.
 .Fn strncpy
 .Em only
 null terminates the destination string when then length of the source
@@ -115,9 +117,9 @@ string is less than the length parameter.
 .Ed
 .Pp
 The following copies as many characters from
-.Dq Li input
+.Va input
 to
-.Dq Li buf
+.Va buf
 as will fit and null terminates the result.  Because
 .Fn strncpy
 does
@@ -143,7 +145,7 @@ is simply:
 .Xr memccpy 3 ,
 .Xr memcpy 3 ,
 .Xr memmove 3 ,
-.Xr strlcpy 3 
+.Xr strlcpy 3
 .Sh STANDARDS
 The
 .Fn strcpy

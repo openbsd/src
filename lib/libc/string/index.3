@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: index.3,v 1.4 1997/12/30 01:09:49 deraadt Exp $
+.\"	$OpenBSD: index.3,v 1.5 1999/06/29 18:01:32 aaron Exp $
 .\"
 .Dd April 19, 1991
 .Dt INDEX 3
@@ -50,13 +50,13 @@ function
 locates the first character matching
 .Fa c
 (converted to a
-.Em char )
+.Li char )
 in the null-terminated string
 .Fa s .
 .Sh RETURN VALUES
 If the character
 .Fa c
-is found, a pointer to it is returned; otherwise
+is found, a pointer to it is returned; otherwise,
 .Dv NULL
 is returned.
 If
@@ -78,5 +78,5 @@ locates the terminating '\e0'.
 .Sh HISTORY
 An
 .Fn index
-function appeared in 
+function appeared in
 .At v6 .
