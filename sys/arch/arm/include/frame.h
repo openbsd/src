@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: frame.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ struct frame {
 };
 
 #ifdef _KERNEL
-void validate_trapframe __P((trapframe_t *, int));
+void validate_trapframe (trapframe_t *, int);
 #endif /* _KERNEL */
 
 #else /* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 2004/02/26 04:58:38 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -266,8 +266,8 @@ extern int want_resched;	/* resched() was called */
  */
 
 struct device;
-void	cpu_attach	__P((struct device *));
-int	cpu_alloc_idlepcb	__P((struct cpu_info *));
+void	cpu_attach	(struct device *);
+int	cpu_alloc_idlepcb	(struct cpu_info *);
 #endif
 
 
@@ -276,24 +276,24 @@ int	cpu_alloc_idlepcb	__P((struct cpu_info *));
  */
 
 /* locore.S */
-void atomic_set_bit	__P((u_int *address, u_int setmask));
-void atomic_clear_bit	__P((u_int *address, u_int clearmask));
+void atomic_set_bit	(u_int *address, u_int setmask);
+void atomic_clear_bit	(u_int *address, u_int clearmask);
 
 /* cpuswitch.S */
 struct pcb;
-void	savectx		__P((struct pcb *pcb));
+void	savectx		(struct pcb *pcb);
 
 /* ast.c */
 void userret (register struct proc *p, u_int32_t pc, quad_t ticks);
 
 /* machdep.h */
-void bootsync		__P((void));
+void bootsync		(void);
 
 /* fault.c */
-int badaddr_read	__P((void *, size_t, void *));
+int badaddr_read	(void *, size_t, void *);
 
 /* syscall.c */
-void swi_handler	__P((trapframe_t *));
+void swi_handler	(trapframe_t *);
 
 #endif	/* !_LOCORE */
 

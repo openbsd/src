@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -68,10 +68,10 @@ extern struct bus_space mainbus_bs_tag;
 
 /* Prototypes for functions provided */
 
-int  mainbusmatch  __P((struct device *, void *, void *));
-void mainbusattach __P((struct device *, struct device *, void *));
-int  mainbusprint  __P((void *aux, const char *mainbus));
-int  mainbussearch __P((struct device *, struct cfdata *, void *));
+int  mainbusmatch  (struct device *, void *, void *);
+void mainbusattach (struct device *, struct device *, void *);
+int  mainbusprint  (void *aux, const char *mainbus);
+int  mainbussearch (struct device *, struct cfdata *, void *);
 
 /* attach and device structures for the device */
 

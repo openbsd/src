@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /* 
@@ -86,7 +86,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
-	int		(*pr) __P((const char *, ...));
+	int		(*pr) (const char *, ...);
 {
 	u_int32_t	*frame, *lastframe;
 	char c, *cp = modif;

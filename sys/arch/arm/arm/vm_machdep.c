@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -70,12 +70,12 @@
 
 extern pv_addr_t systempage;
 
-int process_read_regs	__P((struct proc *p, struct reg *regs));
-int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
+int process_read_regs	(struct proc *p, struct reg *regs);
+int process_read_fpregs	(struct proc *p, struct fpreg *regs);
 
-void	switch_exit	__P((struct proc *p, struct proc *p0,
-			     void (*)(struct proc *)));
-extern void proc_trampoline	__P((void));
+void	switch_exit	(struct proc *p, struct proc *p0,
+			     void (*)(struct proc *));
+extern void proc_trampoline	(void);
 
 /*
  * Special compilation symbols:
@@ -126,7 +126,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func) (void *);
 	void *arg;
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;

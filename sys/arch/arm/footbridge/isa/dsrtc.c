@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: dsrtc.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: dsrtc.c,v 1.5 2003/03/23 14:12:26 chris Exp $	*/
 
 /*
@@ -58,15 +58,15 @@ struct dsrtc_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-void dsrtcattach __P((struct device *parent, struct device *self, void *aux));
-int dsrtcmatch __P((struct device *parent, void *cf, void *aux));
-int ds1687_read __P((struct dsrtc_softc *sc, int addr));
-void ds1687_write __P((struct dsrtc_softc *sc, int addr, int data));
-int ds1687_ram_read __P((struct dsrtc_softc *sc, int addr));
-void ds1687_ram_write __P((struct dsrtc_softc *sc, int addr, int data));
-static void ds1687_bank_select __P((struct dsrtc_softc *, int));
-static int dsrtc_write __P((void *, rtc_t *));
-static int dsrtc_read __P((void *, rtc_t *));
+void dsrtcattach (struct device *parent, struct device *self, void *aux);
+int dsrtcmatch (struct device *parent, void *cf, void *aux);
+int ds1687_read (struct dsrtc_softc *sc, int addr);
+void ds1687_write (struct dsrtc_softc *sc, int addr, int data);
+int ds1687_ram_read (struct dsrtc_softc *sc, int addr);
+void ds1687_ram_write (struct dsrtc_softc *sc, int addr, int data);
+static void ds1687_bank_select (struct dsrtc_softc *, int);
+static int dsrtc_write (void *, rtc_t *);
+static int dsrtc_read (void *, rtc_t *);
 
 int
 ds1687_read(sc, addr)

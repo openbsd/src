@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_clock.c,v 1.2 2004/02/14 00:17:06 drahn Exp $	*/
+/*	$OpenBSD: footbridge_clock.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
@@ -57,9 +57,9 @@
 extern struct footbridge_softc *clock_sc;
 extern u_int dc21285_fclk;
 
-int clockhandler __P((void *));
-int statclockhandler __P((void *));
-static int load_timer __P((int, int));
+int clockhandler (void *);
+int statclockhandler (void *);
+static int load_timer (int, int);
 
 /*
  * Statistics clock variance, in usec.  Variance must be a
@@ -75,8 +75,8 @@ int statcountperusec;		/* number of ticks per usec at current stathz */
 int statprev;			/* last value of we set statclock to */
 
 #if 0
-static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
-static void clockattach	__P((struct device *parent, struct device *self, void *aux));
+static int clockmatch	(struct device *parent, struct cfdata *cf, void *aux);
+static void clockattach	(struct device *parent, struct device *self, void *aux);
 
 CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);

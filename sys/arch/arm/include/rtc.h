@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: rtc.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: rtc.h,v 1.1 2001/02/23 21:23:50 reinoud Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ typedef struct {
 #define RTC_ADDR_CENT     	0xc1
 
 #ifdef _KERNEL
-int cmos_read __P((int));
-int cmos_write __P((int, int));
+int cmos_read (int);
+int cmos_write (int, int);
 #endif /* _KERNEL */
 
 /* End of rtc.h */

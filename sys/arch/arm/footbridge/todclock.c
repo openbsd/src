@@ -1,4 +1,4 @@
-/*	$OpenBSD: todclock.c,v 1.2 2004/02/15 17:25:01 drahn Exp $	*/
+/*	$OpenBSD: todclock.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: todclock.c,v 1.4 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #error "Can only had 1 todclock device"
 #endif
 
-static int yeartoday __P((int));
+static int yeartoday (int);
  
 /*
  * softc structure for the todclock device
@@ -71,8 +71,8 @@ static int yeartoday __P((int));
 struct todclock_softc {
 	struct device	sc_dev;			/* device node */
 	void	*sc_rtc_arg;			/* arg to read/write */
-	int	(*sc_rtc_write)	__P((void *, rtc_t *));	/* rtc write function */
-	int	(*sc_rtc_read)	__P((void *, rtc_t *));	/* rtc read function */
+	int	(*sc_rtc_write)	(void *, rtc_t *);	/* rtc write function */
+	int	(*sc_rtc_read)	(void *, rtc_t *);	/* rtc read function */
 };
 
 /* prototypes for functions */

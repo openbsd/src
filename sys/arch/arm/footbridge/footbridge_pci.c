@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_pci.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: footbridge_pci.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: footbridge_pci.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
 
 /*
@@ -56,19 +56,19 @@
 #include <dev/isa/isavar.h>
 #endif
 
-void		footbridge_pci_attach_hook __P((struct device *,
-		    struct device *, struct pcibus_attach_args *));
-int		footbridge_pci_bus_maxdevs __P((void *, int));
-pcitag_t	footbridge_pci_make_tag __P((void *, int, int, int));
-void		footbridge_pci_decompose_tag __P((void *, pcitag_t, int *,
-		    int *, int *));
-pcireg_t	footbridge_pci_conf_read __P((void *, pcitag_t, int));
-void		footbridge_pci_conf_write __P((void *, pcitag_t, int,
-		    pcireg_t));
-int		footbridge_pci_intr_map __P((struct pci_attach_args *,
-		    pci_intr_handle_t *));
-const char	*footbridge_pci_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
+void		footbridge_pci_attach_hook (struct device *,
+		    struct device *, struct pcibus_attach_args *);
+int		footbridge_pci_bus_maxdevs (void *, int);
+pcitag_t	footbridge_pci_make_tag (void *, int, int, int);
+void		footbridge_pci_decompose_tag (void *, pcitag_t, int *,
+		    int *, int *);
+pcireg_t	footbridge_pci_conf_read (void *, pcitag_t, int);
+void		footbridge_pci_conf_write (void *, pcitag_t, int,
+		    pcireg_t);
+int		footbridge_pci_intr_map (struct pci_attach_args *,
+		    pci_intr_handle_t *);
+const char	*footbridge_pci_intr_string (void *, pci_intr_handle_t);
+const struct evcnt *footbridge_pci_intr_evcnt (void *, pci_intr_handle_t);
 void		*footbridge_pci_intr_establish (void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *, char *);
 void		footbridge_pci_intr_disestablish (void *, void *);
@@ -369,7 +369,7 @@ void *
 footbridge_pci_intr_establish(pcv, ih, level, func, arg, name)
 	void *pcv;
 	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
+	int level, (*func) (void *);
 	void *arg;
 	char *name;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.4 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*-
@@ -101,15 +101,15 @@
 #include "isadma.h"
 
 /* prototypes */
-static void isa_icu_init __P((void));
+static void isa_icu_init (void);
 
 struct arm32_isa_chipset isa_chipset_tag;
 
-void isa_strayintr __P((int));
-void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
+void isa_strayintr (int);
+void intr_calculatemasks (void);
+int fakeintr (void *);
 
-int isa_irqdispatch __P((void *arg));
+int isa_irqdispatch (void *arg);
 
 u_int imask[NIPL];
 unsigned imen;
@@ -383,7 +383,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, name)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun) (void *);
 	void *ih_arg;
 	char *name;
 {

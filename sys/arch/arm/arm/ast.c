@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.2 2004/02/23 19:09:57 drahn Exp $	*/
+/*	$OpenBSD: ast.c,v 1.3 2004/05/19 03:17:06 drahn Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 /*
  * Prototypes
  */
-void ast __P((struct trapframe *));
+void ast (struct trapframe *);
  
 int want_resched = 0;
 extern int astpending;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge.c,v 1.2 2004/02/23 05:23:17 drahn Exp $	*/
+/*	$OpenBSD: footbridge.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: footbridge.c,v 1.7 2002/05/16 01:01:33 thorpej Exp $	*/
 
 /*
@@ -65,12 +65,12 @@
 
 /* Declare prototypes */
 
-static int footbridge_match	__P((struct device *parent, void *cf,
-	                             void *aux));
-static void footbridge_attach	__P((struct device *parent, struct device *self,
-        	                     void *aux));
-static int footbridge_print	__P((void *aux, const char *pnp));
-static int footbridge_intr	__P((void *arg));
+static int footbridge_match	(struct device *parent, void *cf,
+	                             void *aux);
+static void footbridge_attach	(struct device *parent, struct device *self,
+        	                     void *aux);
+static int footbridge_print	(void *aux, const char *pnp);
+static int footbridge_intr	(void *arg);
 
 /* Driver and attach structures */
 struct cfattach footbridge_ca = {

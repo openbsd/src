@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysbeep_isa.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: sysbeep_isa.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: sysbeep_isa.c,v 1.4 2002/10/02 15:45:10 thorpej Exp $	*/
 
 /*-
@@ -45,9 +45,9 @@
 #include <dev/isa/pcppivar.h>
 
 /* Prototypes */
-int sysbeep_isa_match __P((struct device *parent, void *cf, void *aux));
-void sysbeep_isa_attach __P((struct device *parent, struct device *self, void *aux));
-void sysbeep_isa __P((int pitch, int period));
+int sysbeep_isa_match (struct device *parent, void *cf, void *aux);
+void sysbeep_isa_attach (struct device *parent, struct device *self, void *aux);
+void sysbeep_isa (int pitch, int period);
 
 /* device attach structure */
 struct cfattach sysbeep_isa_ca = {

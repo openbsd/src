@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -53,8 +53,8 @@
 #include <machine/sysarch.h>
 
 /* Prototypes */
-static int arm32_sync_icache __P((struct proc *, char *, register_t *));
-static int arm32_drain_writebuf __P((struct proc *, char *, register_t *));
+static int arm32_sync_icache (struct proc *, char *, register_t *);
+static int arm32_drain_writebuf (struct proc *, char *, register_t *);
 
 static int
 arm32_sync_icache(p, args, retval)

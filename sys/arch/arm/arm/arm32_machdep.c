@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.4 2004/02/26 04:58:38 drahn Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.5 2004/05/19 03:17:06 drahn Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -123,9 +123,9 @@ int allowaperture = 0;
 
 /* Prototypes */
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-extern void configure		__P((void));
+void data_abort_handler		(trapframe_t *frame);
+void prefetch_abort_handler	(trapframe_t *frame);
+extern void configure		(void);
 
 /*
  * arm32_vector_init:
