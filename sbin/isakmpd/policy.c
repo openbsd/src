@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.12 2000/05/02 14:35:27 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.26 2000/05/01 19:52:50 niklas Exp $ */
+/*	$OpenBSD: policy.c,v 1.13 2000/06/08 20:51:42 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.38 2000/06/08 04:36:26 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -53,6 +53,12 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
+#ifdef KAME
+#  include <openssl/ssl.h>
+#else
+#  include <ssl/ssl.h>
+#endif
+
 #include "sysdep.h"
 
 #include "app.h"
@@ -75,6 +81,7 @@
 #include "ui.h"
 #include "util.h"
 #include "policy.h"
+#include "x509.h"
 
 #if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE) && 0
 
@@ -94,6 +101,9 @@ char *(*lk_kn_encode_key) (struct keynote_deckey *, int, int, int);
 int (*lk_kn_init) (void);
 char **(*lk_kn_read_asserts) (char *, int, int *);
 int (*lk_kn_remove_authorizer) (int, char *);
+int (*lk_kn_get_authorizer) (int, int, int *);
+void (*lk_kn_free_key) (struct keynote_deckey *);
+struct keynote_keylist *(*lk_kn_get_licensees) (int, int);
 #define SYMENTRY(x) { SYM, SYM (x), (void **)&lk_ ## x }
 
 static struct dynload_script libkeynote_script[] = {
@@ -111,12 +121,18 @@ static struct dynload_script libkeynote_script[] = {
   SYMENTRY (kn_init),
   SYMENTRY (kn_read_asserts),
   SYMENTRY (kn_remove_authorizer),
+  SYMENTRY (kn_get_licensees),
+  SYMENTRY (kn_get_authorizer),
   { EOS }
 };
 #endif
 
 int keynote_sessid = -1;
-
+char **keynote_policy_asserts = NULL;
+int keynote_policy_asserts_num = 0;
+char **x509_policy_asserts = NULL;
+int x509_policy_asserts_num = 0;
+int x509_policy_asserts_num_alloc = 0;
 struct exchange *policy_exchange = 0;
 struct sa *policy_sa = 0;
 struct sa *policy_isakmp_sa = 0;
@@ -146,7 +162,7 @@ my_inet_ntop4 (const in_addr_t *src, char *dst, size_t size, int normalize)
   return dst;
 }
 
-static char *
+char *
 policy_callback (char *name)
 {
   struct proto *proto;
@@ -769,9 +785,11 @@ policy_callback (char *name)
 	  remote_id_proto = "udp";
 	  break;
 
+#ifdef IPPROTO_ETHERIP
 	case IPPROTO_ETHERIP:
 	  remote_id_proto = "etherip";
 	  break;
+#endif
 
  	default:
 	  sprintf (remote_id_proto_num, "%2d", id[1]);
@@ -945,9 +963,11 @@ policy_callback (char *name)
 	      remote_filter_proto = "udp";
 	      break;
 	
+#ifdef IPPROTO_ETHERIP
 	    case IPPROTO_ETHERIP:
 	      remote_filter_proto = "etherip";
 	      break;
+#endif
 
  	    default:
 	      sprintf (remote_filter_proto_num, "%2d", id[1]);
@@ -1123,9 +1143,11 @@ policy_callback (char *name)
 	      local_filter_proto = "udp";
 	      break;
 
+#ifdef IPPROTO_ETHERIP
 	    case IPPROTO_ETHERIP:
 	      local_filter_proto = "etherip";
 	      break;
+#endif
 
  	    default:
 	      sprintf (local_filter_proto_num, "%2d", id[1]);
@@ -1157,56 +1179,55 @@ policy_callback (char *name)
 	    }
         }
 
-#if 0
-      printf ("esp_present == %s\n", esp_present);
-      printf ("ah_present == %s\n", ah_present);
-      printf ("comp_present == %s\n", comp_present);
-      printf ("ah_hash_alg == %s\n", ah_hash_alg);
-      printf ("esp_enc_alg == %s\n", esp_enc_alg);
-      printf ("comp_alg == %s\n", comp_alg);
-      printf ("ah_auth_alg == %s\n", ah_auth_alg);
-      printf ("esp_auth_alg == %s\n", esp_auth_alg);
-      printf ("ah_life_seconds == %s\n", ah_life_seconds);
-      printf ("ah_life_kbytes == %s\n", ah_life_kbytes);
-      printf ("esp_life_seconds == %s\n", esp_life_seconds);
-      printf ("esp_life_kbytes == %s\n", esp_life_kbytes);
-      printf ("comp_life_seconds == %s\n", comp_life_seconds);
-      printf ("comp_life_kbytes == %s\n", comp_life_kbytes);
-      printf ("ah_encapsulation == %s\n", ah_encapsulation);
-      printf ("esp_encapsulation == %s\n", esp_encapsulation);
-      printf ("comp_encapsulation == %s\n", comp_encapsulation);
-      printf ("comp_dict_size == %s\n", comp_dict_size);
-      printf ("comp_private_alg == %s\n", comp_private_alg);
-      printf ("ah_key_length == %s\n", ah_key_length);
-      printf ("ah_key_rounds == %s\n", ah_key_rounds);
-      printf ("esp_key_length == %s\n", esp_key_length);
-      printf ("esp_key_rounds == %s\n", esp_key_rounds);
-      printf ("ah_group_desc == %s\n", ah_group_desc);
-      printf ("esp_group_desc == %s\n", esp_group_desc);
-      printf ("comp_group_desc == %s\n", comp_group_desc);
-      printf ("remote_filter_type == %s\n", remote_filter_type);
-      printf ("remote_filter_addr_upper == %s\n", remote_filter_addr_upper);
-      printf ("remote_filter_addr_lower == %s\n", remote_filter_addr_lower);
-      printf ("remote_filter == %s\n", remote_filter);
-      printf ("remote_filter_port == %s\n", remote_filter_port);
-      printf ("remote_filter_proto == %s\n", remote_filter_proto);
-      printf ("local_filter_type == %s\n", local_filter_type);
-      printf ("local_filter_addr_upper == %s\n", local_filter_addr_upper);
-      printf ("local_filter_addr_lower == %s\n", local_filter_addr_lower);
-      printf ("local_filter == %s\n", local_filter);
-      printf ("local_filter_port == %s\n", local_filter_port);
-      printf ("local_filter_proto == %s\n", local_filter_proto);
-      printf ("remote_id_type == %s\n", remote_id_type);
-      printf ("remote_id_addr_upper == %s\n", remote_id_addr_upper);
-      printf ("remote_id_addr_lower == %s\n", remote_id_addr_lower);
-      printf ("remote_id == %s\n", remote_id);
-      printf ("remote_id_port == %s\n", remote_id_port);
-      printf ("remote_id_proto == %s\n", remote_id_proto);
-      printf ("remote_negotiation_address == %s\n", remote_ike_address);
-      printf ("local_negotiation_address == %s\n", local_ike_address);
-      printf ("pfs == %s\n", pfs);
-      printf ("initiator == %s\n", initiator);
-#endif /* 0 */
+      LOG_DBG ((LOG_SA, 80, "Policy context (action attributes):"));
+      LOG_DBG ((LOG_SA, 80, "esp_present == %s", esp_present));
+      LOG_DBG ((LOG_SA, 80, "ah_present == %s", ah_present));
+      LOG_DBG ((LOG_SA, 80, "comp_present == %s", comp_present));
+      LOG_DBG ((LOG_SA, 80, "ah_hash_alg == %s", ah_hash_alg));
+      LOG_DBG ((LOG_SA, 80, "esp_enc_alg == %s", esp_enc_alg));
+      LOG_DBG ((LOG_SA, 80, "comp_alg == %s", comp_alg));
+      LOG_DBG ((LOG_SA, 80, "ah_auth_alg == %s", ah_auth_alg));
+      LOG_DBG ((LOG_SA, 80, "esp_auth_alg == %s", esp_auth_alg));
+      LOG_DBG ((LOG_SA, 80, "ah_life_seconds == %s", ah_life_seconds));
+      LOG_DBG ((LOG_SA, 80, "ah_life_kbytes == %s", ah_life_kbytes));
+      LOG_DBG ((LOG_SA, 80, "esp_life_seconds == %s", esp_life_seconds));
+      LOG_DBG ((LOG_SA, 80, "esp_life_kbytes == %s", esp_life_kbytes));
+      LOG_DBG ((LOG_SA, 80, "comp_life_seconds == %s", comp_life_seconds));
+      LOG_DBG ((LOG_SA, 80, "comp_life_kbytes == %s", comp_life_kbytes));
+      LOG_DBG ((LOG_SA, 80, "ah_encapsulation == %s", ah_encapsulation));
+      LOG_DBG ((LOG_SA, 80, "esp_encapsulation == %s", esp_encapsulation));
+      LOG_DBG ((LOG_SA, 80, "comp_encapsulation == %s", comp_encapsulation));
+      LOG_DBG ((LOG_SA, 80, "comp_dict_size == %s", comp_dict_size));
+      LOG_DBG ((LOG_SA, 80, "comp_private_alg == %s", comp_private_alg));
+      LOG_DBG ((LOG_SA, 80, "ah_key_length == %s", ah_key_length));
+      LOG_DBG ((LOG_SA, 80, "ah_key_rounds == %s", ah_key_rounds));
+      LOG_DBG ((LOG_SA, 80, "esp_key_length == %s", esp_key_length));
+      LOG_DBG ((LOG_SA, 80, "esp_key_rounds == %s", esp_key_rounds));
+      LOG_DBG ((LOG_SA, 80, "ah_group_desc == %s", ah_group_desc));
+      LOG_DBG ((LOG_SA, 80, "esp_group_desc == %s", esp_group_desc));
+      LOG_DBG ((LOG_SA, 80, "comp_group_desc == %s", comp_group_desc));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_type == %s", remote_filter_type));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_addr_upper == %s", remote_filter_addr_upper));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_addr_lower == %s", remote_filter_addr_lower));
+      LOG_DBG ((LOG_SA, 80, "remote_filter == %s", remote_filter));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_port == %s", remote_filter_port));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_proto == %s", remote_filter_proto));
+      LOG_DBG ((LOG_SA, 80, "local_filter_type == %s", local_filter_type));
+      LOG_DBG ((LOG_SA, 80, "local_filter_addr_upper == %s", local_filter_addr_upper));
+      LOG_DBG ((LOG_SA, 80, "local_filter_addr_lower == %s", local_filter_addr_lower));
+      LOG_DBG ((LOG_SA, 80, "local_filter == %s", local_filter));
+      LOG_DBG ((LOG_SA, 80, "local_filter_port == %s", local_filter_port));
+      LOG_DBG ((LOG_SA, 80, "local_filter_proto == %s", local_filter_proto));
+      LOG_DBG ((LOG_SA, 80, "remote_id_type == %s", remote_id_type));
+      LOG_DBG ((LOG_SA, 80, "remote_id_addr_upper == %s", remote_id_addr_upper));
+      LOG_DBG ((LOG_SA, 80, "remote_id_addr_lower == %s", remote_id_addr_lower));
+      LOG_DBG ((LOG_SA, 80, "remote_id == %s", remote_id));
+      LOG_DBG ((LOG_SA, 80, "remote_id_port == %s", remote_id_port));
+      LOG_DBG ((LOG_SA, 80, "remote_id_proto == %s", remote_id_proto));
+      LOG_DBG ((LOG_SA, 80, "remote_negotiation_address == %s", remote_ike_address));
+      LOG_DBG ((LOG_SA, 80, "local_negotiation_address == %s", local_ike_address));
+      LOG_DBG ((LOG_SA, 80, "pfs == %s", pfs));
+      LOG_DBG ((LOG_SA, 80, "initiator == %s", initiator));
 
       /* Unset dirty now.  */
       dirty = 0;
@@ -1454,18 +1475,294 @@ policy_init (void)
         log_print ("policy_init: "
 		   "kn_add_assertion (%d, %p, %d, ASSERT_FLAG_LOCAL) failed",
                    keynote_sessid, asserts[fd], strlen (asserts[fd]));
-
-      free (asserts[fd]);
     }
 
-  if (asserts)
-    free (asserts);
+  /* Cleanup */
+  if (keynote_policy_asserts)
+    {
+      for (fd = 0; fd < keynote_policy_asserts_num; fd++)
+        if (keynote_policy_asserts && keynote_policy_asserts[fd])
+          free (keynote_policy_asserts[fd]);
 
-  /* Add the callback that will handle attributes.  */
-  if (LK (kn_add_action, (keynote_sessid, ".*", (char *) policy_callback,
-			  ENVIRONMENT_FLAG_FUNC | ENVIRONMENT_FLAG_REGEX))
-      == -1)
-    log_fatal ("policy_init: "
-	       "kn_add_action (%d, \".*\", %p, FUNC | REGEX) failed",
-	       keynote_sessid, policy_callback);
+      free (keynote_policy_asserts);
+    }
+
+  keynote_policy_asserts = asserts;
+  keynote_policy_asserts_num = i;
+}
+
+/* Nothing needed for initialization */
+int
+keynote_cert_init (void)
+{
+  return 1;
+}
+
+/* Just copy and return */
+void *
+keynote_cert_get (u_int8_t *data, u_int32_t len)
+{
+  char *foo = calloc (len + 1, sizeof(char));
+
+  if (foo == NULL)
+    return NULL;
+
+  memcpy (foo, data, len);
+  return foo;
+}
+
+/*
+ * We just verify the signature on the certificates.
+ * XXX Is this the right thing to do -- verify the signature on all
+ * XXX credentials ?
+ */
+int
+keynote_cert_validate (void *scert)
+{
+  char **foo;
+  int num, i;
+
+  if (scert == NULL)
+    return 0;
+
+  foo = LK (kn_read_asserts, ((char *) scert, strlen ((char *) scert),
+			      &num));
+  if (foo == NULL)
+    return 0;
+
+  for (i = 0; i < num; i++)
+    {
+      if (LK (kn_verify_assertion, (scert, strlen ((char *) scert))) !=
+	  SIGRESULT_TRUE)
+        {
+	  for (; i < num; i++)
+	    free (foo[i]);
+	  free (foo);
+	  return 0;
+	}
+
+      free (foo[i]);
+    }
+
+  free (foo);
+  return 1;
+}
+
+/* Add received credentials */
+int
+keynote_cert_insert (int sid, void *scert)
+{
+  char **foo;
+  int num;
+
+  if (scert == NULL)
+    return 0;
+
+  foo = LK (kn_read_asserts, ((char *) scert, strlen ((char *) scert),
+			      &num));
+  if (foo == NULL)
+    return 0;
+
+  while (num--)
+    LK (kn_add_assertion, (sid, foo[num], strlen (foo[num]), 0));
+
+  return 1;
+}
+
+/* Just regular memory free */
+void
+keynote_cert_free (void *cert)
+{
+  free (cert);
+}
+
+/* Verify that the key given to us is valid */
+int
+keynote_certreq_validate (u_int8_t *data, u_int32_t len)
+{
+    struct keynote_deckey dc;
+    int err = 1;
+    char *dat;
+
+    dat = calloc (len + 1, sizeof(char));
+    if (dat == NULL)
+      return 0;
+
+    memcpy (dat, data, len);
+
+    if (LK (kn_decode_key, (&dc, dat, KEYNOTE_PUBLIC_KEY)) != 0)
+      err = 0;
+    else
+      LK (kn_free_key, (&dc));
+
+    free (dat);
+
+    return err;
+}
+
+/* Beats me what we should be doing with this */
+void *
+keynote_certreq_decode (u_int8_t *data, u_int32_t len)
+{
+  /* XXX */
+  return NULL;
+}
+
+void
+keynote_free_aca (void *blob)
+{
+  /* XXX */
+}
+
+int
+keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
+		     u_int32_t *certlen)
+{
+  char *dirname, *file;
+  struct stat sb;
+  int idtype, fd, len;
+
+  if (!id)
+    {
+      log_print ("keynote_cert_obtain: ID is missing");
+      return 0;
+    }
+
+  /* Get type of ID */
+  idtype = id[0];
+  id += ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+  id_len -= ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+
+  dirname = conf_get_str ("KeyNote", "Credential-directory");
+  if (!dirname)
+    {
+      log_print ("keynote_cert_obtain: no Credential-directory");
+      return 0;
+    }
+
+  len = strlen (dirname) + strlen (CREDENTIAL_FILE) + 3;
+
+  switch (idtype)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      {
+	struct in_addr in;
+
+	file = calloc (len + 15, sizeof(char));
+	if (file == NULL)
+	  {
+	    log_print ("keynote_cert_obtain: failed to allocate %d bytes",
+		       len + 15);
+	    return 0;
+	  }
+
+	memcpy (&in, id, sizeof(in));
+	sprintf (file, "%s/%s/%s", dirname, inet_ntoa (in), CREDENTIAL_FILE);
+	break;
+      }
+
+    case IPSEC_ID_FQDN:
+    case IPSEC_ID_USER_FQDN:
+      {
+        file = calloc (len + id_len, sizeof(char));
+	if (file == NULL)
+	  {
+	    log_print ("keynote_cert_obtain: failed to allocate %d bytes",
+		       len + id_len);
+	    return 0;
+	  }
+
+	sprintf (file, "%s/", dirname);
+	memcpy (file + strlen (file), id, id_len);
+	sprintf (file + strlen (dirname) + 1 + id_len, "/%s", CREDENTIAL_FILE);
+	break;
+      }
+
+    default:
+      return 0;
+    }
+
+  if (stat (file, &sb) < 0)
+    {
+      log_print ("keynote_cert_obtain: failed to stat \"%s\"", file);
+      free (file);
+      return 0;
+    }
+
+  *cert = calloc (sb.st_size, sizeof(char));
+  if (*cert == NULL)
+    {
+      log_print ("keynote_cert_obtain: failed to allocate %d bytes",
+		 sb.st_size);
+      free (file);
+      return 0;
+    }
+
+  fd = open (file, O_RDONLY, 0);
+  if (fd < 0)
+    {
+      log_print ("keynote_cert_obtain: failed to open \"%s\"", file);
+      free (file);
+      return 0;
+    }
+
+  if (read (fd, *cert, sb.st_size) != sb.st_size)
+    {
+      log_print ("keynote_cert_obtain: failed to read %d bytes from \"%s\"",
+		 sb.st_size, file);
+      free (file);
+      close (fd);
+      return 0;
+    }
+
+  close (fd);
+  free (file);
+  *certlen = sb.st_size;
+  return 1;
+}
+
+/* This should never be called */
+int
+keynote_cert_get_subject (void *scert, u_int8_t **id, u_int32_t *id_len)
+{
+  return 0;
+}
+
+/* Get the Authorizer key */
+int
+keynote_cert_get_key (void *scert, void *keyp)
+{
+  struct keynote_keylist *kl;
+  int sid, num;
+  char **foo;
+
+  foo = LK (kn_read_asserts, ((char *) scert, strlen ((char *) scert), &num));
+  if ((foo == NULL) || (num == 0))
+    return 0;
+
+  sid = LK (kn_add_assertion, (keynote_sessid, foo[num - 1],
+			       strlen (scert), 0));
+  while (num--)
+    free (foo[num]);
+  free (foo);
+
+  if (sid == -1)
+    return 0;
+
+  *(RSA **)keyp = NULL;
+
+  kl = LK (kn_get_licensees, (keynote_sessid, sid));
+  while (kl)
+    {
+      if (kl->key_alg == KEYNOTE_ALGORITHM_RSA)
+      {
+	  *(RSA **)keyp = LC (RSAPublicKey_dup, (kl->key_key));
+	  break;
+      }
+
+      kl = kl->key_next;
+    }
+
+  LK (kn_remove_assertion, (keynote_sessid, sid));
+  return *(RSA **)keyp == NULL ? 0 : 1;
 }
