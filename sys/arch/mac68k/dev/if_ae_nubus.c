@@ -1,5 +1,5 @@
 /*	$NetBSD: if_ae_nubus.c,v 1.11 1997/03/19 08:04:39 scottr Exp $	*/
-/*	$OpenBSD: if_ae_nubus.c,v 1.5 1997/04/08 04:14:45 briggs Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.6 1997/04/24 02:17:56 gene Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -387,9 +387,6 @@ ae_nb_card_vendor(na)
 		}
 		break;
 	default:
-#ifdef AE_DEBUG
-		printf("Unknown ethernet drsw: %x\n", na->drsw);
-#endif
 		vendor = AE_VENDOR_UNKNOWN;
 	}
 	return vendor;
