@@ -1,5 +1,5 @@
-$OpenBSD: README.PKI,v 1.3 1999/07/18 09:33:33 niklas Exp $
-$EOM: README.PKI,v 1.3 1999/07/18 09:25:33 niklas Exp $
+$OpenBSD: README.PKI,v 1.4 1999/07/18 09:43:09 niklas Exp $
+$EOM: README.PKI,v 1.4 1999/07/18 09:44:58 niklas Exp $
 
 1	Create your own CA as root.
 
@@ -25,8 +25,6 @@ $EOM: README.PKI,v 1.3 1999/07/18 09:25:33 niklas Exp $
 	run too.  See to encode the ID in the common name too, so it gets
 	unique.
 
-	mkdir -p /etc/isakmpd/private /etc/isakmpd/ca /etc/isakmpd/certs
-	chmod 600 /etc/isakmpd/private
 	ssleay genrsa -out /etc/isakmpd/private/local.key 1024
 	ssleay req -new -key /etc/isakmpd/private/local.key \
 		-out /etc/isakmpd/private/10.0.0.1.csr
