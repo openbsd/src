@@ -133,6 +133,20 @@
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
+#ifdef        GPROF
+#define       PENTRY(name)    \
+	ENTRY(name) \
+	pushl	%ebp \
+	movl	%esp,%ebp \
+	pushl	%ebx \
+	pushl	_cpl \
+	movl	$0,_cpl \
+	call	_Xspllower \
+	call	mcount \
+	popl	_cpl \
+	leal	4(%esp),%esp \
+	popl	%ebp
+#endif
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
 
@@ -801,8 +815,14 @@ ENTRY(bcopyw)
  * bcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes.
  */
+#ifdef        GPROF
+ENTRY(ovbcopy)
+	jmp _bcopy
+PENTRY(bcopy)
+#else
 ENTRY(bcopy)
 ALTENTRY(ovbcopy)
+#endif
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
@@ -853,7 +873,11 @@ ALTENTRY(ovbcopy)
  * copyout(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes into the user's address space.
  */
+#ifdef        GPROF
+PENTRY(copyout)
+#else
 ENTRY(copyout)
+#endif
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%eax
@@ -948,7 +972,11 @@ ENTRY(copyout)
  * copyin(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes from the user's address space.
  */
+#ifdef        GPROF
+PENTRY(copyin)
+#else
 ENTRY(copyin)
+#endif
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%eax
@@ -2128,7 +2156,11 @@ syscall1:
  *	write len zero bytes to the string b.
  */
 
+#ifdef        GPROF
+PENTRY(bzero)
+#else
 ENTRY(bzero)
+#endif
 	pushl	%edi
 	movl	8(%esp),%edi
 	movl	12(%esp),%edx
