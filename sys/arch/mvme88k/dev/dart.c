@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.29 2004/02/10 10:30:25 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.30 2004/02/11 20:41:07 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -94,7 +94,8 @@ struct cfdriver dart_cd = {
 	NULL, "dart", DV_TTY
 };
 
-int dart_cons = -1;
+/* console is on the first port */
+#define	CONS_PORT	A_PORT
 
 /* prototypes */
 cons_decl(dart);
@@ -237,9 +238,14 @@ dartattach(parent, self, aux)
 	/* Enable input port change interrupt */
 	dart_sv_reg.sv_imr  = IIPCHG;
 
-	if (dart_cons >= 0) {
-		printf(": console (tty%s) ", dart_cons == 0 ? "a" : "b");
-	}
+	/*
+	 * Although we are still running using the BUG routines,
+	 * this device will be elected as the console after
+	 * autoconf.
+	 * We do not even test since we know we are an MVME188 and
+	 * console is always on the first port.
+	 */
+	printf(": console");
 
 	dprintf(("\ndartattach: resetting port A\n"));
 
@@ -349,7 +355,7 @@ dartstart(tp)
 
 	dprintf(("dartstart: dev(%d, %d)\n", major(dev), minor(dev)));
 
-	if (port != dart_cons)
+	if (port != CONS_PORT)
 		dprintf(("dartstart: ptaddr = 0x%08x from uart at 0x%08x\n",
 			 ptaddr, addr));
 
@@ -363,12 +369,12 @@ dartstart(tp)
 			c = getc(&tp->t_outq);
 			cc--;
 			if (tp->t_flags & CS8 || c <= 0177) {
-				if (port != dart_cons)
+				if (port != CONS_PORT)
 					dprintf(("dartstart: writing char \"%c\" (0x%02x) to port %d\n",
 						 c & 0xff, c & 0xff, port));
 				ptaddr->write.wr_tb = c & 0xff;
 
-				if (port != dart_cons)
+				if (port != CONS_PORT)
 					dprintf(("dartstart: enabling Tx int\n"));
 				if (port == A_PORT)
 					dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYA;
@@ -378,7 +384,7 @@ dartstart(tp)
 
 			} else {
 				tp->t_state &= ~TS_BUSY;
-				if (port != dart_cons)
+				if (port != CONS_PORT)
 					dprintf(("dartxint: timing out char \"%c\" (0x%02x)\n",
 					 c & 0xff, c % 0xff));
 				timeout_add(&tp->t_rstrt_to, 1);
@@ -603,7 +609,7 @@ dartioctl(dev, cmd, data, flag, p)
 /*		*(int *)data = dartmctl(dev, 0, DMGET);*/
 		break;
 	case TIOCGFLAGS:
-		if (dart_cons == port)
+		if (CONS_PORT == port)
 			dart->dart_swflags |= TIOCFLAG_SOFTCAR;
 		*(int *)data = dart->dart_swflags;
 		break;
@@ -613,7 +619,7 @@ dartioctl(dev, cmd, data, flag, p)
 			return(EPERM);
 
 		dart->dart_swflags = *(int *)data;
-		if (dart_cons == port)
+		if (CONS_PORT == port)
 			dart->dart_swflags |= TIOCFLAG_SOFTCAR;
 		dart->dart_swflags &= /* only allow valid flags */
 			(TIOCFLAG_SOFTCAR | TIOCFLAG_CLOCAL | TIOCFLAG_CRTSCTS);
@@ -664,7 +670,7 @@ dartparam(tp, t)
 	/* disable Tx and Rx */
 	dprintf(("dartparam: disabling Tx and Rx int\n"));
 
-	if (dart_cons == port) {
+	if (CONS_PORT == port) {
 		dprintf(("dartparam: skipping console init\n"));
 	} else {
 		if (port == A_PORT)
@@ -846,7 +852,7 @@ dartopen (dev, flag, mode, p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = B9600;
 		dartparam(tp, &tp->t_termios);
-		if (port == dart_cons) {
+		if (port == CONS_PORT) {
 			/* console is 8N1 */
 			tp->t_cflag = (CREAD | CS8 | HUPCL);
 		} else {
@@ -975,7 +981,7 @@ dartrint(sc, port)
 		dprintf(("dartrint: read char \"%c\" (0x%02x) tp = 0x%x\n",
 			 data, data, tp));
 
-		if ((tp->t_state & (TS_ISOPEN|TS_WOPEN)) == 0 && dart_cons != port) {
+		if ((tp->t_state & (TS_ISOPEN|TS_WOPEN)) == 0 && CONS_PORT != port) {
 			return;
 		}
 
@@ -1163,7 +1169,6 @@ void
 dartcninit(cp)
 	struct consdev *cp;
 {
-	dart_cons = A_PORT;
 }
 
 void

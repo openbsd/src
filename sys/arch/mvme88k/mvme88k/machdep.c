@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.133 2004/01/14 11:49:49 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.134 2004/02/11 20:41:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -248,8 +248,10 @@ extern struct pcb *curpcb;
 extern struct user *proc0paddr;
 
 /*
- *  XXX this is to fake out the console routines, while
- *  booting. New and improved! :-) smurph
+ * This is to fake out the console routines, while booting.
+ * We could use directly the bugtty console, but we want to be able to
+ * configure a kernel without bugtty since we do not necessarily need a
+ * full-blown console driver.
  */
 cons_decl(boot);
 #define bootcnpollc nullcnpollc
@@ -266,20 +268,15 @@ struct consdev bootcons = {
 };
 
 /*
- * Console initialization: called early on from main,
- * before vm init or startup.  Do enough configuration
- * to choose and initialize a console.
+ * Early console initialization: called early on from main, before vm init.
+ * We want to stick to the BUG routines for now, and we'll switch to the
+ * real console in cpu_startup().
  */
 void
 consinit()
 {
-	extern struct consdev *cn_tab;
 
-	/*
-	 * Initialize the console before we print anything out.
-	 */
-	cn_tab = NULL;
-	cninit();
+	cn_tab = &bootcons;
 
 #if defined(DDB)
 	db_machine_init();

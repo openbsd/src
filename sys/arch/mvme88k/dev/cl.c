@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.39 2004/02/10 10:30:25 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.40 2004/02/11 20:41:07 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -254,9 +254,12 @@ clattach(parent, self, aux)
 	sc->cl_reg = (struct clreg *)ca->ca_vaddr;
 	sc->sc_pcctwo = ca->ca_master;
 
-	if ((u_char *)ca->ca_paddr == (u_char *)cl_cons.cl_paddr) {
-		/* if this device is configured as console,
-		 * line cl_cons.channel is the console */
+	if ((paddr_t)ca->ca_paddr == CD2400_BASE_ADDR) {
+		/*
+		 * Although we are still running using the BUG routines,
+		 * this device will be elected as the console after
+		 * autoconf. Mark it as such.
+		 */
 		sc->sc_cl[0].cl_consio = 1;
 		printf(": console ");
 	} else {

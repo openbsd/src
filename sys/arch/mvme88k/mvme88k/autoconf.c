@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2003/10/05 20:25:08 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2004/02/11 20:41:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -61,7 +61,8 @@ void	swapconf(void);
 char	buginchr(void);
 void	dumpconf(void);
 int	findblkmajor(struct device *);
-struct device	*getdisk(char *, int, int, dev_t *);
+struct device *getdisk(char *, int, int, dev_t *);
+struct device *getdevunit(char *name, int unit);
 
 int cold = 1;   /* 1 if still booting */
 
@@ -75,8 +76,6 @@ struct device *bootdv;	/* set by device drivers (if found) */
 void
 cpu_configure()
 {
-	struct consdev *temp;
-	extern struct consdev bootcons;
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
@@ -85,19 +84,19 @@ cpu_configure()
 	 * Turn external interrupts on.
 	 *
 	 * XXX We have a race here. If we enable interrupts after setroot(),
-	 * the kernel dies. If we enable interrupts here, console on cl does
-	 * not work (for boot -a). So we switch to the boot console for the
-	 * time being...
+	 * the kernel dies.
 	 */
-	temp = cn_tab;
-	cn_tab = &bootcons;
-
 	enable_interrupt();
 	spl0();
 	setroot();
 	swapconf();
 
-	cn_tab = temp;
+	/*
+	 * Finally switch to the real console driver,
+	 * and say goodbye to the BUG!
+	 */
+	cn_tab = NULL;
+	cninit();
 
 	cold = 0;
 }
