@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 		EC_GROUP *tmp;
 		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
 		if (!tmp) ABORT;
-		if (!EC_GROUP_copy(tmp, group));
+		if (!EC_GROUP_copy(tmp, group)) ABORT;
 		EC_GROUP_free(group);
 		group = tmp;
 	}
