@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.6 1997/03/06 12:44:42 kstailey Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.7 1997/03/10 02:29:40 kstailey Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ mustek_attach(ss, sa)
 	    ss->sio.scan_scanner_type));
 
 	/* install special handlers */
-	ss->special = &mustek_special;
+	ss->special = mustek_special;
 
 	/*
 	 * populate the scanio struct with legal values

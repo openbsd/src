@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.20 1997/03/10 00:56:59 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.21 1997/03/10 02:29:39 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -68,18 +68,17 @@ struct quirkdata {
 	char *name;
 	u_int quirks;
 #define SS_Q_WINDOW_DESC_LEN	0x0001 /* needs special WDL */
-#define SS_Q_BRIGHTNESS		0x0002 /* use special value for brightness */
+#define SS_Q_BRIGHTNESS		0x0002 /* needs special value for brightness */
 #define SS_Q_REV_BRIGHTNESS	0x0004 /* reverse brightness control in s/w */
-#define SS_Q_THRESHOLD		0x0008 /* use special value for threshold */
+#define SS_Q_THRESHOLD		0x0008 /* needs special value for threshold */
 #define SS_Q_MONO_THRESHOLD	0x0010 /* same as SS_Q_THRESHOLD but only
 					* for monochrome image data */
-#define SS_Q_CONTRAST		0x0020 /* use special value for contrast */
+#define SS_Q_CONTRAST		0x0020 /* needs special value for contrast */
 #define SS_Q_REV_CONTRAST	0x0040 /* reverse contrast control in s/w */
 #define SS_Q_HALFTONE		0x0080 /* uses non-zero halftone */
 #define SS_Q_SET_RIF		0x0100 /* set RIF bit */
 #define SS_Q_PADDING_TYPE	0x0200 /* does not pad to byte boundary */
-#define SS_Q_BIT_ORDERING	0x0400 /* uses non-zero bit ordering */
-#define SS_Q_GET_BUFFER_SIZE	0x0800 /* use GET_BUFFER_SIZE while reading */
+#define SS_Q_BIT_ORDERING	0x0400 /* needs non-zero bit ordering */
 	long window_descriptor_length;
 	u_int8_t brightness;
 	u_int8_t threshold;
@@ -87,8 +86,13 @@ struct quirkdata {
 	u_int8_t halftone_pattern[2];
 	int pad_type;
 	long bit_ordering;
+	/*
+	 * To enable additional scanner options, point vendor_unique_sw
+	 * at a function that adds more stuff to the SET_WINDOW parameters.
+	 */
 	int	(*vendor_unique_sw)__P((struct ss_softc *, struct scan_io *,
 					struct scsi_set_window *, void *));
+	void	(*special_minphys)__P(( struct ss_softc *, struct buf *));
 };
 
 struct ss_quirk_inquiry_pattern {
@@ -112,6 +116,7 @@ int	fujitsu_m3096g_sw __P((struct ss_softc *, struct scan_io *,
 			       struct scsi_set_window *, void *));
 #endif
 
+void	get_buffer_status __P((struct ss_softc *, struct buf *));
 
 /*
  * WDL:
@@ -133,7 +138,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
-		 ricoh_is410_sw
+		 ricoh_is410_sw, get_buffer_status
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS410           ", "    "}, {
@@ -143,7 +148,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
-		 ricoh_is410_sw
+		 ricoh_is410_sw, get_buffer_status
 	 }},
 	{{T_SCANNER, T_FIXED,	       /* Ricoh IS-410 OEMed by IBM */
 	 "IBM     ", "2456-001        ", "    "}, {
@@ -153,7 +158,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
-		 ricoh_is410_sw
+		 ricoh_is410_sw, get_buffer_status
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UC630           ", "    "}, {
@@ -161,7 +166,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_WINDOW_DESC_LEN |
 		 SS_Q_HALFTONE,
 		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
-		 umax_uc630_sw
+		 umax_uc630_sw, NULL
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UG630           ", "    "}, {
@@ -169,7 +174,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_WINDOW_DESC_LEN |
 		 SS_Q_HALFTONE,
 		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
-		 umax_uc630_sw
+		 umax_uc630_sw, NULL
 	 }},
 #ifdef NOTYET			/* ADF version */
 	{{T_SCANNER, T_FIXED,
@@ -182,7 +187,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_SET_RIF |
 		 SS_Q_PADDING_TYPE,
 		 64, 0, 0, 0, { 0, 1 }, 0, 0,
-		 fujistsu_m3096g_sw
+		 fujistsu_m3096g_sw, NULL
 	 }},
 #else				/* flatbed-only version */
 	{{T_SCANNER, T_FIXED,
@@ -194,7 +199,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_PADDING_TYPE,
 		 0, 0, 0, 0, { 0, 1 }, 0, 0,
-		 NULL
+		 NULL, NULL
 	 }},
 #endif
 };
@@ -302,6 +307,9 @@ ss_identify_scanner(ss, inqbuf)
 	    sizeof(ss_quirk_patterns[0]), &priority);
 	if (priority != 0) {
 		ss->quirkdata = &finger->quirkdata;
+		if (ss->quirkdata->special_minphys != NULL) {
+			ss->special.minphys = ss->quirkdata->special_minphys;
+		}
 		printf("%s\n", ss->quirkdata->name);
 	} else {
 		printf("generic scanner\n"); /* good luck 8c{)] */
@@ -390,9 +398,9 @@ ssclose(dev, flag, mode, p)
 	SC_DEBUG(ss->sc_link, SDEV_DB1, ("closing\n"));
 
 	if (SSMODE(dev) == MODE_REWIND) {
-		if (ss->special->rewind_scanner) {
+		if (ss->special.rewind_scanner) {
 			/* call special handler to rewind/abort scan */
-			error = (ss->special->rewind_scanner)(ss);
+			error = (ss->special.rewind_scanner)(ss);
 			if (error)
 				return (error);
 		} else {
@@ -426,8 +434,8 @@ ssminphys(bp)
 	 * time, also some cannot disconnect, so the read must be
 	 * short enough to happen quickly
 	 */
-	if (ss->special->minphys)
-		(ss->special->minphys)(ss, bp);
+	if (ss->special.minphys)
+		(ss->special.minphys)(ss, bp);
 }
 
 /*
@@ -446,8 +454,8 @@ ssread(dev, uio, flag)
 
 	/* if the scanner has not yet been started, do it now */
 	if (!(ss->flags & SSF_TRIGGERED)) {
-		if (ss->special->trigger_scanner) {
-			error = (ss->special->trigger_scanner)(ss);
+		if (ss->special.trigger_scanner) {
+			error = (ss->special.trigger_scanner)(ss);
 			if (error)
 				return (error);
 		}
@@ -534,7 +542,7 @@ ssstart(v)
 	struct ss_softc *ss = v;
 	struct scsi_link *sc_link = ss->sc_link;
 	register struct buf *bp, *dp;
-	struct scsi_r_scanner cmd;
+	struct scsi_r_scanner read_cmd;
 	int flags;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
@@ -562,23 +570,20 @@ ssstart(v)
 			ss->buf_queue.b_actb = bp->b_actb;
 		*bp->b_actb = dp;
 
-		if (ss->special->read) {
-			(ss->special->read)(ss, bp);
+		if (ss->special.read) {
+			(ss->special.read)(ss, bp);
 		} else {
 			/* generic scsi2 scanner read */
-			if (ss->quirkdata->quirks & SS_Q_GET_BUFFER_SIZE) {
-				/* XXX add GET BUFFER SIZE command */
-			}
-			bzero(&cmd, sizeof(cmd));
-			cmd.opcode = READ;
-			_lto3b(bp->b_bcount, cmd.len);
+			bzero(&read_cmd, sizeof(read_cmd));
+			read_cmd.opcode = READ;
+			_lto3b(bp->b_bcount, read_cmd.len);
 			flags = SCSI_DATA_IN;
 			/*
 			 * go ask the adapter to do all this for us
 			 */
-			if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-			    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
-			    100000, bp, flags | SCSI_NOSLEEP))
+			if (scsi_scsi_cmd(sc_link, (struct scsi_generic *)
+			    &read_cmd, sizeof(read_cmd), (u_char *) bp->b_data,
+			    bp->b_bcount, 0, 100000, bp, flags | SCSI_NOSLEEP))
 				printf("%s: not queued\n", ss->sc_dev.dv_xname);
 		}
 	}
@@ -603,8 +608,8 @@ ssioctl(dev, cmd, addr, flag, p)
 	switch (cmd) {
 	case SCIOCGET:
 		/* call special handler, if any */
-		if (ss->special->get_params) {
-			error = (ss->special->get_params)(ss);
+		if (ss->special.get_params) {
+			error = (ss->special.get_params)(ss);
 			if (error)
 				return (error);
 		}
@@ -614,8 +619,8 @@ ssioctl(dev, cmd, addr, flag, p)
 		sio = (struct scan_io *)addr;
 
 		/* call special handler, if any */
-		if (ss->special->set_params) {
-			error = (ss->special->set_params)(ss, sio);
+		if (ss->special.set_params) {
+			error = (ss->special.set_params)(ss, sio);
 			if (error)
 				return (error);
 		} else {
@@ -625,8 +630,8 @@ ssioctl(dev, cmd, addr, flag, p)
 		break;
 	case SCIOCRESTART:
 		/* call special handler, if any */
-		if (ss->special->rewind_scanner ) {
-			error = (ss->special->rewind_scanner)(ss);
+		if (ss->special.rewind_scanner ) {
+			error = (ss->special.rewind_scanner)(ss);
 			if (error)
 				return (error);
 		} else
@@ -880,3 +885,33 @@ fujitsu_m3096g_sw(ss, sio, wcmd, vwd)
 	    SCSI_DATA_OUT));
 }
 #endif
+
+void
+get_buffer_status(ss, bp)
+	struct ss_softc *ss;
+	struct buf *bp;
+{
+	struct scsi_get_buffer_status gbs_cmd;
+	struct scsi_link *sc_link = ss->sc_link;
+	struct {
+		u_int8_t stat_len[3];
+		u_int8_t res1;
+		u_int8_t window_id;
+		u_int8_t res2;
+		u_int8_t tgt_accept_buf_len[3];
+		u_int8_t tgt_send_buf_len[3];
+	} buf_sz_retn;
+	int flags;
+
+	bzero(&gbs_cmd, sizeof(gbs_cmd));
+	gbs_cmd.opcode = GET_BUFFER_STATUS;
+	_lto2b(12, gbs_cmd.len);
+	flags = SCSI_DATA_IN;
+
+	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &gbs_cmd,
+	    sizeof(gbs_cmd), (u_char *) &buf_sz_retn, sizeof(buf_sz_retn),
+	    0, 100000, bp, flags | SCSI_NOSLEEP)) {
+		printf("%s: not queued\n", ss->sc_dev.dv_xname);
+	}
+	bp->b_bcount = _3btol(buf_sz_retn.tgt_send_buf_len);
+}
