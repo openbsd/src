@@ -35,18 +35,20 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.56 2002/05/16 22:02:50 markus Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.57 2002/05/30 08:07:31 markus Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
 #include "cipher.h"
 
 #include <openssl/md5.h>
-#include "rijndael.h"
 
+#if OPENSSL_VERSION_NUMBER < 0x00907000L
+#include "rijndael.h"
+static const EVP_CIPHER *evp_rijndael(void);
+#endif
 static const EVP_CIPHER *evp_ssh1_3des(void);
 static const EVP_CIPHER *evp_ssh1_bf(void);
-static const EVP_CIPHER *evp_rijndael(void);
 
 struct Cipher {
 	char	*name;
@@ -64,11 +66,19 @@ struct Cipher {
 	{ "blowfish-cbc", 	SSH_CIPHER_SSH2, 8, 16, EVP_bf_cbc },
 	{ "cast128-cbc", 	SSH_CIPHER_SSH2, 8, 16, EVP_cast5_cbc },
 	{ "arcfour", 		SSH_CIPHER_SSH2, 8, 16, EVP_rc4 },
+#if OPENSSL_VERSION_NUMBER < 0x00907000L
 	{ "aes128-cbc", 	SSH_CIPHER_SSH2, 16, 16, evp_rijndael },
 	{ "aes192-cbc", 	SSH_CIPHER_SSH2, 16, 24, evp_rijndael },
 	{ "aes256-cbc", 	SSH_CIPHER_SSH2, 16, 32, evp_rijndael },
 	{ "rijndael-cbc@lysator.liu.se",
 				SSH_CIPHER_SSH2, 16, 32, evp_rijndael },
+#else
+	{ "aes128-cbc",		SSH_CIPHER_SSH2, 16, 16, EVP_aes_128_cbc },
+	{ "aes192-cbc",		SSH_CIPHER_SSH2, 16, 24, EVP_aes_192_cbc },
+	{ "aes256-cbc",		SSH_CIPHER_SSH2, 16, 32, EVP_aes_256_cbc },
+	{ "rijndael-cbc@lysator.liu.se",
+				SSH_CIPHER_SSH2, 16, 32, EVP_aes_256_cbc },
+#endif
 
 	{ NULL,			SSH_CIPHER_ILLEGAL, 0, 0, NULL }
 };
@@ -403,6 +413,7 @@ evp_ssh1_bf(void)
 	return (&ssh1_bf);
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x00907000L
 /* RIJNDAEL */
 #define RIJNDAEL_BLOCKSIZE 16
 struct ssh_rijndael_ctx
@@ -505,6 +516,7 @@ evp_rijndael(void)
 	    EVP_CIPH_ALWAYS_CALL_INIT;
 	return (&rijndal_cbc);
 }
+#endif
 
 /*
  * Exports an IV from the CipherContext required to export the key
@@ -543,6 +555,7 @@ cipher_get_keyiv(CipherContext *cc, u_char *iv, u_int len)
 			fatal("%s: wrong iv length %d != %d", __FUNCTION__,
 			    evplen, len);
 
+#if OPENSSL_VERSION_NUMBER < 0x00907000L
 		if (c->evptype == evp_rijndael) {
 			struct ssh_rijndael_ctx *aesc;
 
@@ -550,7 +563,9 @@ cipher_get_keyiv(CipherContext *cc, u_char *iv, u_int len)
 			if (aesc == NULL)
 				fatal("%s: no rijndael context", __FUNCTION__);
 			civ = aesc->r_iv;
-		} else {
+		} else
+#endif
+		{
 			civ = cc->evp.iv;
 		}
 		break;
@@ -588,6 +603,7 @@ cipher_set_keyiv(CipherContext *cc, u_char *iv)
 		if (evplen == 0)
 			return;
 
+#if OPENSSL_VERSION_NUMBER < 0x00907000L
 		if (c->evptype == evp_rijndael) {
 			struct ssh_rijndael_ctx *aesc;
 
@@ -595,7 +611,9 @@ cipher_set_keyiv(CipherContext *cc, u_char *iv)
 			if (aesc == NULL)
 				fatal("%s: no rijndael context", __FUNCTION__);
 			div = aesc->r_iv;
-		}else {
+		} else
+#endif
+		{
 			div = cc->evp.iv;
 		}
 		break;
