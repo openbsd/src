@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.9 1996/04/23 10:10:20 mickey Exp $
-#	$NetBSD: GENERIC,v 1.40 1996/03/30 23:57:09 perry Exp $
+#	$OpenBSD: GENERIC,v 1.10 1996/05/04 09:21:15 deraadt Exp $
+#	$NetBSD: GENERIC,v 1.44 1996/04/25 20:14:13 scottr Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -10,6 +10,7 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
+#options	VM86		# Virtual 8086 emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
@@ -127,9 +128,9 @@ ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
-ahe0	at isa? port 0x1c00 irq ?	# Adaptec 284x SCSI controllers
+ahe0	at eisa? slot ?			# Adaptec 284x SCSI controllers
 scsibus* at ahe?
-aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -170,8 +171,10 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+ep*	at eisa? slot ?				# 3C579 ethernet cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards

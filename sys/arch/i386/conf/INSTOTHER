@@ -1,5 +1,5 @@
-#	$OpenBSD: INSTOTHER,v 1.4 1996/04/21 22:16:14 deraadt Exp $
-#	$NetBSD: INSTOTHER,v 1.11 1996/03/30 05:42:59 mycroft Exp $
+#	$OpenBSD: INSTOTHER,v 1.5 1996/05/04 09:21:18 deraadt Exp $
+#	$NetBSD: INSTOTHER,v 1.13 1996/04/25 20:14:26 scottr Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -112,7 +112,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 le*	at pci? bus ? dev ?			# PCnet-PCI based ethernet cards
 de*	at pci? bus ? dev ?			# DC21X4X-based ethernet cards

@@ -1,5 +1,5 @@
-#	$OpenBSD: DISKLESS,v 1.4 1996/04/21 22:16:04 deraadt Exp $
-#	$NetBSD: DISKLESS,v 1.23 1996/03/25 05:45:14 perry Exp $
+#	$OpenBSD: DISKLESS,v 1.5 1996/05/04 09:21:13 deraadt Exp $
+#	$NetBSD: DISKLESS,v 1.25 1996/04/25 20:14:28 scottr Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -120,7 +120,7 @@ mms1	at isa? port 0x238 irq 5
 #scsibus* at aha?
 #ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
-#aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+#aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -157,7 +157,8 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN & 3C507 ethernet cards
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
