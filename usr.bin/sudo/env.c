@@ -323,6 +323,13 @@ rebuild_env(envp, sudo_mode, noexec)
 	/* Pull in vars we want to keep from the old environment. */
 	for (ep = envp; *ep; ep++) {
 	    keepit = 0;
+
+	    /* Skip variables with values beginning with () (bash functions) */
+	    if ((cp = strchr(*ep, '=')) != NULL) {
+		if (strncmp(cp, "=() ", 3) == 0)
+		    continue;
+	    }
+
 	    for (cur = def_env_keep; cur; cur = cur->next) {
 		len = strlen(cur->value);
 		/* Deal with '*' wildcard */
@@ -404,6 +411,12 @@ rebuild_env(envp, sudo_mode, noexec)
 	 */
 	for (ep = envp; *ep; ep++) {
 	    okvar = 1;
+
+	    /* Skip variables with values beginning with () (bash functions) */
+	    if ((cp = strchr(*ep, '=')) != NULL) {
+		if (strncmp(cp, "=() ", 3) == 0)
+		    continue;
+	    }
 
 	    /* Skip anything listed in env_delete. */
 	    for (cur = def_env_delete; cur && okvar; cur = cur->next) {

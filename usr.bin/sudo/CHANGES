@@ -1731,3 +1731,10 @@ Sudo 1.6.8 released.
 547) Updated sample.pam to a current version.
 
 548) Better detection of unchanged files in sudoedit.
+
+Sudo 1.6.8p1 released.
+
+549) Bash exported functions and the CDPATH variable are now stripped from
+     the environment passed to the program to be executed.
+
+Sudo 1.6.8p2 released.

@@ -149,7 +149,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SUDO 8"
-.TH SUDO 8 "September  8, 2004" "1.6.8" "MAINTENANCE COMMANDS"
+.TH SUDO 8 "November 11, 2004" "1.6.8p2" "MAINTENANCE COMMANDS"
 .SH "NAME"
 sudo, sudoedit \- execute a command as another user
 .SH "SYNOPSIS"
@@ -406,13 +406,15 @@ to subvert the program that \fBsudo\fR runs.  To combat this the
 \&\f(CW\*(C`LD_*\*(C'\fR, \f(CW\*(C`_RLD_*\*(C'\fR, \f(CW\*(C`SHLIB_PATH\*(C'\fR (\s-1HP\-UX\s0 only), and \f(CW\*(C`LIBPATH\*(C'\fR (\s-1AIX\s0
 only) environment variables are removed from the environment passed
 on to all commands executed.  \fBsudo\fR will also remove the \f(CW\*(C`IFS\*(C'\fR,
-\&\f(CW\*(C`ENV\*(C'\fR, \f(CW\*(C`BASH_ENV\*(C'\fR, \f(CW\*(C`KRB_CONF\*(C'\fR, \f(CW\*(C`KRBCONFDIR\*(C'\fR, \f(CW\*(C`KRBTKFILE\*(C'\fR,
+\&\f(CW\*(C`CDPATH\*(C'\fR, \f(CW\*(C`ENV\*(C'\fR, \f(CW\*(C`BASH_ENV\*(C'\fR, \f(CW\*(C`KRB_CONF\*(C'\fR, \f(CW\*(C`KRBCONFDIR\*(C'\fR, \f(CW\*(C`KRBTKFILE\*(C'\fR,
 \&\f(CW\*(C`KRB5_CONFIG\*(C'\fR, \f(CW\*(C`LOCALDOMAIN\*(C'\fR, \f(CW\*(C`RES_OPTIONS\*(C'\fR, \f(CW\*(C`HOSTALIASES\*(C'\fR,
 \&\f(CW\*(C`NLSPATH\*(C'\fR, \f(CW\*(C`PATH_LOCALE\*(C'\fR, \f(CW\*(C`TERMINFO\*(C'\fR, \f(CW\*(C`TERMINFO_DIRS\*(C'\fR and
 \&\f(CW\*(C`TERMPATH\*(C'\fR variables as they too can pose a threat.  If the
 \&\f(CW\*(C`TERMCAP\*(C'\fR variable is set and is a pathname, it too is ignored.
 Additionally, if the \f(CW\*(C`LC_*\*(C'\fR or \f(CW\*(C`LANGUAGE\*(C'\fR variables contain the
-\&\f(CW\*(C`/\*(C'\fR or \f(CW\*(C`%\*(C'\fR characters, they are ignored.  If \fBsudo\fR has been
+\&\f(CW\*(C`/\*(C'\fR or \f(CW\*(C`%\*(C'\fR characters, they are ignored.  Environment variables
+with a value beginning with \f(CW\*(C`()\*(C'\fR are also removed as they could
+be interpreted as \fBbash\fR functions.  If \fBsudo\fR has been
 compiled with SecurID support, the \f(CW\*(C`VAR_ACE\*(C'\fR, \f(CW\*(C`USR_ACE\*(C'\fR and
 \&\f(CW\*(C`DLC_ACE\*(C'\fR variables are cleared as well.  The list of environment
 variables that \fBsudo\fR clears is contained in the output of
