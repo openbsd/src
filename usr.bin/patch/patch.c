@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.34 2003/07/31 21:07:35 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.35 2003/08/01 20:30:48 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,14 +27,13 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.34 2003/07/31 21:07:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.35 2003/08/01 20:30:48 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <limits.h>
@@ -53,36 +52,36 @@ int		filemode = 0644;
 
 char		buf[MAXLINELEN];	/* general purpose buffer */
 
-bool		using_plan_a = TRUE;	/* try to keep everything in memory */
-bool		out_of_mem = FALSE;	/* ran out of memory in plan a */
+bool		using_plan_a = true;	/* try to keep everything in memory */
+bool		out_of_mem = false;	/* ran out of memory in plan a */
 
 #define MAXFILEC 2
 
 char		*filearg[MAXFILEC];
-bool		ok_to_create_file = FALSE;
+bool		ok_to_create_file = false;
 char		*outname = NULL;
 char		*origprae = NULL;
 char		*TMPOUTNAME;
 char		*TMPINNAME;
 char		*TMPREJNAME;
 char		*TMPPATNAME;
-bool		toutkeep = FALSE;
-bool		trejkeep = FALSE;
+bool		toutkeep = false;
+bool		trejkeep = false;
 bool		warn_on_invalid_line;
 
 #ifdef DEBUGGING
 int		debug = 0;
 #endif
 
-bool		force = FALSE;
-bool		batch = FALSE;
-bool		verbose = TRUE;
-bool		reverse = FALSE;
-bool		noreverse = FALSE;
-bool		skip_rest_of_patch = FALSE;
+bool		force = false;
+bool		batch = false;
+bool		verbose = true;
+bool		reverse = false;
+bool		noreverse = false;
+bool		skip_rest_of_patch = false;
 int		strippath = 957;
-bool		canonicalize = FALSE;
-bool		check_only = FALSE;
+bool		canonicalize = false;
+bool		check_only = false;
 int		diff_type = 0;
 char		*revision = NULL;	/* prerequisite revision, if any */
 LINENUM		input_lines = 0;	/* how long is input file in lines */
@@ -101,11 +100,11 @@ static bool	patch_match(LINENUM, LINENUM, LINENUM);
 static bool	similar(const char *, const char *, int);
 static __dead void usage(void);
 
-/* TRUE if -E was specified on command line.  */
-static int	remove_empty_files = FALSE;
+/* true if -E was specified on command line.  */
+static bool	remove_empty_files = false;
 
-/* TRUE if -R was specified on command line.  */
-static int	reverse_flag_specified = FALSE;
+/* true if -R was specified on command line.  */
+static bool	reverse_flag_specified = false;
 
 /* buffer holding the name of the rejected patch file. */
 static char	rejname[NAME_MAX + 1];
@@ -129,7 +128,7 @@ static LINENUM	last_offset = 0;
 static LINENUM	maxfuzz = 2;
 
 /* patch using ifdef, ifndef, etc. */
-static bool		do_defines = FALSE;
+static bool		do_defines = false;
 /* #ifdef xyzzy */
 static char		if_defined[128];
 /* #ifndef xyzzy */
@@ -146,7 +145,7 @@ int
 main(int argc, char *argv[])
 {
 	int	error = 0, hunk, failed, patch_seen = 0, i, fd;
-	LINENUM	where, newwhere, fuzz, mymaxfuzz;
+	LINENUM	where = 0, newwhere, fuzz, mymaxfuzz;
 	const	char *tmpdir;
 	char	*v;
 
@@ -210,8 +209,8 @@ main(int argc, char *argv[])
 	    reinitialize_almost_everything()) {
 		/* for each patch in patch file */
 
-		patch_seen = TRUE;
-		warn_on_invalid_line = TRUE;
+		patch_seen = true;
+		warn_on_invalid_line = true;
 
 		if (outname == NULL)
 			outname = savestr(filearg[0]);
@@ -238,7 +237,7 @@ main(int argc, char *argv[])
 		/* apply each hunk of patch */
 		hunk = 0;
 		failed = 0;
-		out_of_mem = FALSE;
+		out_of_mem = false;
 		while (another_hunk()) {
 			hunk++;
 			fuzz = 0;
@@ -270,7 +269,7 @@ main(int argc, char *argv[])
 								fatal("lost hunk on alloc error!\n");
 							reverse = !reverse;
 							say("Ignoring previously applied (or reversed) patch.\n");
-							skip_rest_of_patch = TRUE;
+							skip_rest_of_patch = true;
 						} else if (batch) {
 							if (verbose)
 								say("%seversed (or previously applied) patch detected!  %s -R.",
@@ -283,7 +282,7 @@ main(int argc, char *argv[])
 							if (*buf == 'n') {
 								ask("Apply anyway? [n] ");
 								if (*buf != 'y')
-									skip_rest_of_patch = TRUE;
+									skip_rest_of_patch = true;
 								where = 0;
 								reverse = !reverse;
 								if (!pch_swap())
@@ -341,7 +340,8 @@ main(int argc, char *argv[])
 			rejfp = NULL;
 			continue;
 		}
-		assert(hunk);
+		if (hunk == 0)
+			fatal("Internal error: hunk should not be 0\n");
 
 		/* finish spewing out the new file */
 		if (!skip_rest_of_patch)
@@ -355,7 +355,7 @@ main(int argc, char *argv[])
 
 			if (!check_only) {
 				if (move_file(TMPOUTNAME, outname) < 0) {
-					toutkeep = TRUE;
+					toutkeep = true;
 					realout = TMPOUTNAME;
 					chmod(TMPOUTNAME, filemode);
 				} else
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 				    failed, hunk, rejname);
 			}
 			if (!check_only && move_file(TMPREJNAME, rejname) < 0)
-				trejkeep = TRUE;
+				trejkeep = true;
 		}
 		set_signals(1);
 	}
@@ -411,24 +411,22 @@ reinitialize_almost_everything(void)
 	last_frozen_line = 0;
 
 	filec = 0;
-	if (filearg[0] != NULL && !out_of_mem) {
+	if (!out_of_mem) {
 		free(filearg[0]);
 		filearg[0] = NULL;
 	}
-	if (outname != NULL) {
-		free(outname);
-		outname = NULL;
-	}
-	last_offset = 0;
 
+	free(outname);
+	outname = NULL;
+
+	last_offset = 0;
 	diff_type = 0;
 
-	if (revision != NULL) {
-		free(revision);
-		revision = NULL;
-	}
+	free(revision);
+	revision = NULL;
+
 	reverse = reverse_flag_specified;
-	skip_rest_of_patch = FALSE;
+	skip_rest_of_patch = false;
 
 	get_some_switches();
 }
@@ -500,14 +498,14 @@ get_some_switches(void)
 			diff_type = CONTEXT_DIFF;
 			break;
 		case 'C':
-			check_only = TRUE;
+			check_only = true;
 			break;
 		case 'd':
 			if (chdir(optarg) < 0)
 				pfatal("can't cd to %s", optarg);
 			break;
 		case 'D':
-			do_defines = TRUE;
+			do_defines = true;
 			if (!isalpha(*optarg) && *optarg != '_')
 				fatal("argument to -D is not an identifier\n");
 			snprintf(if_defined, sizeof if_defined,
@@ -521,10 +519,10 @@ get_some_switches(void)
 			diff_type = ED_DIFF;
 			break;
 		case 'E':
-			remove_empty_files = TRUE;
+			remove_empty_files = true;
 			break;
 		case 'f':
-			force = TRUE;
+			force = true;
 			break;
 		case 'F':
 			maxfuzz = atoi(optarg);
@@ -535,13 +533,13 @@ get_some_switches(void)
 			filearg[filec] = savestr(optarg);
 			break;
 		case 'l':
-			canonicalize = TRUE;
+			canonicalize = true;
 			break;
 		case 'n':
 			diff_type = NORMAL_DIFF;
 			break;
 		case 'N':
-			noreverse = TRUE;
+			noreverse = true;
 			break;
 		case 'o':
 			outname = savestr(optarg);
@@ -555,14 +553,14 @@ get_some_switches(void)
 				fatal("argument for -r is too long\n");
 			break;
 		case 'R':
-			reverse = TRUE;
-			reverse_flag_specified = TRUE;
+			reverse = true;
+			reverse_flag_specified = true;
 			break;
 		case 's':
-			verbose = FALSE;
+			verbose = false;
 			break;
 		case 't':
-			batch = TRUE;
+			batch = true;
 			break;
 		case 'u':
 			diff_type = UNI_DIFF;
@@ -786,7 +784,8 @@ apply_hunk(LINENUM where)
 				new++;
 			}
 		} else {
-			assert(pch_char(new) == ' ');
+			if (pch_char(new) != ' ')
+				fatal("Internal error: expected ' '\n");
 			old++;
 			new++;
 			if (do_defines && def_state != OUTSIDE) {
@@ -898,16 +897,16 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 	for (iline = base + offset + fuzz; pline <= pat_lines; pline++, iline++) {
 		ilineptr = ifetch(iline, offset >= 0);
 		if (ilineptr == NULL)
-			return FALSE;
+			return false;
 		plineptr = pfetch(pline);
 		plinelen = pch_line_len(pline);
 		if (canonicalize) {
 			if (!similar(ilineptr, plineptr, plinelen))
-				return FALSE;
+				return false;
 		} else if (strnNE(ilineptr, plineptr, plinelen))
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
 /*
@@ -919,7 +918,7 @@ similar(const char *a, const char *b, int len)
 	while (len) {
 		if (isspace(*b)) {	/* whitespace (or \n) to match? */
 			if (!isspace(*a))	/* no corresponding whitespace? */
-				return FALSE;
+				return false;
 			while (len && isspace(*b) && *b != '\n')
 				b++, len--;	/* skip pattern whitespace */
 			while (isspace(*a) && *a != '\n')
@@ -927,10 +926,10 @@ similar(const char *a, const char *b, int len)
 			if (*a == '\n' || *b == '\n')
 				return (*a == *b);	/* should end in sync */
 		} else if (*a++ != *b++)	/* match non-whitespace chars */
-			return FALSE;
+			return false;
 		else
 			len--;	/* probably not necessary */
 	}
-	return TRUE;		/* actually, this is not reached */
+	return true;		/* actually, this is not reached */
 	/* since there is always a \n */
 }

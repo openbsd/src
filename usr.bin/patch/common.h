@@ -1,11 +1,10 @@
-/*	$OpenBSD: common.h,v 1.21 2003/07/31 14:10:21 otto Exp $	*/
+/*	$OpenBSD: common.h,v 1.22 2003/08/01 20:30:48 otto Exp $	*/
+
+#include <stdbool.h>
 
 #define DEBUGGING
 
 /* constants */
-
-#define TRUE	1
-#define FALSE	0
 
 #define MAXHUNKSIZE 100000	/* is this enough lines? */
 #define INITHUNKMAX 125		/* initial dynamic allocation size */
@@ -32,7 +31,6 @@
 
 /* typedefs */
 
-typedef char    bool;
 typedef long    LINENUM;	/* must be signed */
 
 /* globals */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.16 2003/07/28 18:35:36 otto Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.17 2003/08/01 20:30:48 otto Exp $	*/
 
 /*
  * backupfile.c -- make Emacs style backup file names Copyright (C) 1990 Free
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: backupfile.c,v 1.16 2003/07/28 18:35:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: backupfile.c,v 1.17 2003/08/01 20:30:48 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -168,7 +168,7 @@ static int
 argmatch(const char *arg, const char **optlist)
 {
 	int	i;	/* Temporary index in OPTLIST. */
-	int	arglen;	/* Length of ARG. */
+	size_t	arglen;	/* Length of ARG. */
 	int	matchind = -1;	/* Index of first nonexact match. */
 	int	ambiguous = 0;	/* If nonzero, multiple nonexact match(es). */
 

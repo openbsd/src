@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.21 2003/07/31 14:10:21 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.22 2003/08/01 20:30:48 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.21 2003/07/31 14:10:21 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.22 2003/08/01 20:30:48 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ re_input(void)
 		i_womp = NULL;
 		i_ptr = NULL;
 	} else {
-		using_plan_a = TRUE;	/* maybe the next one is smaller */
+		using_plan_a = true;	/* maybe the next one is smaller */
 		close(tifd);
 		tifd = -1;
 		free(tibuf[0]);
@@ -88,7 +88,7 @@ plan_a(const char *filename)
 	struct stat	filestat;
 
 	if (filename == NULL || *filename == '\0')
-		return FALSE;
+		return false;
 
 	statfailed = stat(filename, &filestat);
 	if (statfailed && ok_to_create_file) {
@@ -101,8 +101,8 @@ plan_a(const char *filename)
 		 * to normal patch behavior as possible
 		 */
 		if (check_only)
-			return TRUE;
-		makedirs(filename, TRUE);
+			return true;
+		makedirs(filename, true);
 		close(creat(filename, 0666));
 		statfailed = stat(filename, &filestat);
 	}
@@ -178,21 +178,21 @@ plan_a(const char *filename)
 	i_size = filestat.st_size;
 	if (out_of_mem) {
 		set_hunkmax();	/* make sure dynamic arrays are allocated */
-		out_of_mem = FALSE;
-		return FALSE;	/* force plan b because plan a bombed */
+		out_of_mem = false;
+		return false;	/* force plan b because plan a bombed */
 	}
 	if (i_size > SIZE_MAX - 2)
 		fatal("block too large to allocate");
 	i_womp = malloc((size_t)(i_size + 2));
 	if (i_womp == NULL)
-		return FALSE;
+		return false;
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
 
 	if (read(ifd, i_womp, (size_t) i_size) != i_size) {
 		close(ifd);	/* probably means i_size > 15 or 16 bits worth */
 		free(i_womp);	/* at this point it doesn't matter if i_womp was */
-		return FALSE;	/* undersized. */
+		return false;	/* undersized. */
 	}
 
 	close(ifd);
@@ -212,7 +212,7 @@ plan_a(const char *filename)
 
 	if (i_ptr == NULL) {	/* shucks, it was a near thing */
 		free(i_womp);
-		return FALSE;
+		return false;
 	}
 	/* now scan the buffer and build pointer array */
 
@@ -248,7 +248,7 @@ plan_a(const char *filename)
 			say("Good.  This file appears to be the %s version.\n",
 			    revision);
 	}
-	return TRUE;		/* plan a will work */
+	return true;		/* plan a will work */
 }
 
 /* Keep (virtually) nothing in memory. */
@@ -260,7 +260,7 @@ plan_b(const char *filename)
 	int	i = 0, maxlen = 1;
 	bool	found_revision = (revision == NULL);
 
-	using_plan_a = FALSE;
+	using_plan_a = false;
 	if ((ifp = fopen(filename, "r")) == NULL)
 		pfatal("can't open file %s", filename);
 	(void) unlink(TMPINNAME);
@@ -268,7 +268,7 @@ plan_b(const char *filename)
 		pfatal("can't open file %s", TMPINNAME);
 	while (fgets(buf, sizeof buf, ifp) != NULL) {
 		if (revision != NULL && !found_revision && rev_in_string(buf))
-			found_revision = TRUE;
+			found_revision = true;
 		if ((i = strlen(buf)) > maxlen)
 			maxlen = i;	/* find longest line */
 	}
@@ -331,7 +331,7 @@ ifetch(LINENUM line, int whichbuf)
 	if (line < 1 || line > input_lines) {
 		if (warn_on_invalid_line) {
 			say("No such line %ld in input file, ignoring\n", line);
-			warn_on_invalid_line = FALSE;
+			warn_on_invalid_line = false;
 		}
 		return NULL;
 	}
@@ -368,15 +368,15 @@ rev_in_string(const char *string)
 	int		patlen;
 
 	if (revision == NULL)
-		return TRUE;
+		return true;
 	patlen = strlen(revision);
 	if (strnEQ(string, revision, patlen) && isspace(string[patlen]))
-		return TRUE;
+		return true;
 	for (s = string; *s; s++) {
 		if (isspace(*s) && strnEQ(s + 1, revision, patlen) &&
 		    isspace(s[patlen + 1])) {
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }

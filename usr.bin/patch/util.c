@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.24 2003/07/31 20:51:43 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2003/08/01 20:30:49 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.24 2003/07/31 20:51:43 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.25 2003/08/01 20:30:49 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ savestr(const char *s)
 	rv = strdup(s);
 	if (rv == NULL) {
 		if (using_plan_a)
-			out_of_mem = TRUE;
+			out_of_mem = true;
 		else
 			fatal("out of memory\n");
 	}
@@ -275,7 +275,7 @@ ignore_signals(void)
 
 /*
  * Make sure we'll have the directories to create a file. If `striplast' is
- * TRUE, ignore the last element of `filename'.
+ * true, ignore the last element of `filename'.
  */
 
 void
