@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.5 1996/09/23 05:40:47 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.6 1996/10/20 23:45:50 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.5 1996/09/23 05:40:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.6 1996/10/20 23:45:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,12 @@ main(argc, argv)
 	/* Get the passwd lock file and open the passwd file for reading. */
 	pw_init();
 	tfd = pw_lock(0);
-	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
+	if (tfd < 0) {
+		if (errno == EEXIST)
+			errx(1, "the passwd file is busy.");
+		else
+			err(1, "can't open passwd temp file");
+	}
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
