@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.9 1997/06/29 07:35:48 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.10 1999/02/26 00:15:54 art Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -124,7 +124,8 @@ ftpd_popen(program, type)
 	gargv[gargc] = NULL;
 
 	iop = NULL;
-	switch(pid = vfork()) {
+
+	switch(pid = fork()) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -146,6 +147,13 @@ ftpd_popen(program, type)
 			(void)close(pdes[1]);
 		}
 		closelog();
+
+		if (strcmp(gargv[0], "/bin/ls") == 0) {
+			extern int optreset;
+			/* reset getopt for ls_main */
+			optreset = optind = 1;
+			exit(ls_main(gargc, gargv));
+		}
 
 		execv(gargv[0], gargv);
 		_exit(1);
