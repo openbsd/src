@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.13 2003/09/02 23:35:44 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.14 2005/03/16 05:07:48 itojun Exp $	*/
 /*	$KAME: ftp.c,v 1.20 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -835,11 +835,13 @@ eprtparamfail:
 				n = 0;
 			if (n)
 				write(src, sbuf, n);
+			freeaddrinfo(res);
 			return n;
 		}
 
 		memcpy(&data6, res->ai_addr, res->ai_addrlen);
 
+		freeaddrinfo(res);
 		goto sendport;
 	} else if (strcmp(cmd, "LPSV") == 0 && !param) {
 		/*
