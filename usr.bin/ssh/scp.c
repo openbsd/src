@@ -12,7 +12,7 @@
  * software must be clearly marked as such, and if the derived work is
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
- *
+ */
 /*
  * Copyright (c) 1999 Theo de Raadt. All rights reserved.
  * Copyright (c) 1999 Aaron Campbell. All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.38 2000/09/07 20:27:53 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.39 2000/09/07 20:53:00 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
