@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.11 1996/09/14 19:29:00 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.12 1996/10/12 01:24:15 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.11 1996/09/14 19:29:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.12 1996/10/12 01:24:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,8 @@ getfstab()
 		return;
 	}
 	while ((fs = getfsent()) != NULL) {
-		if (strcmp(fs->fs_vfstype, "ffs"))
+		if (strcmp(fs->fs_vfstype, "ffs") &&
+		    strcmp(fs->fs_vfstype, "ufs"))
 			continue;
 		if (strcmp(fs->fs_type, FSTAB_RW) &&
 		    strcmp(fs->fs_type, FSTAB_RO) &&
