@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.4 2004/01/15 13:40:22 deraadt Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.5 2004/01/29 18:56:14 tedu Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.4 2000/08/28 00:45:59 eeh Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 ENTRY(setjmp)
 	/*
 	 * We use the part of the sigcontext structure, the sp, pc, and npc
-	 * fields, for the osigaltstack call so we don't need to get our own
+	 * fields, for the sigaltstack call so we don't need to get our own
 	 * stackframe. It won't be filled out till later anyway.
 	 */
 	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
@@ -76,12 +76,12 @@ ENTRY(setjmp)
 
 	st	%o0, [%o3 + 0x38]	/* sc.sc_mask = current mask; */
 
-	mov	SYS_osigaltstack, %g1
-	clr	%o0			/* osigaltstack(NULL, &foo) */
+	mov	SYS_sigaltstack, %g1
+	clr	%o0			/* sigaltstack(NULL, &foo) */
 	add	%o3, 0x40, %o1		/* (foo being the sigcontext sc_mask) */
 	t	ST_SYSCALL
 	
-	lduw	[%o3 + 0x40+0xc], %o0	/* foo.ss_flags */
+	lduw	[%o3 + 0x40+0x10], %o0	/* foo.ss_flags */
 	and	%o0, 1, %o1		/* onstack = foo.ss_flags & 1; */
 	st	%o1, [%o3 + 0x00]	/* sc.sc_onstack = current onstack; */
 
