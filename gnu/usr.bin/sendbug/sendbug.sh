@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.13 2003/02/28 01:35:07 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.14 2003/03/21 21:32:47 david Exp $
 
 # The version of this sendbug.
 VERSION=3.97
@@ -477,7 +477,7 @@ while [ -z "$REQUEST_ID" ]; do
     *)  echo "$COMMAND: \`$CLASS' is not a valid value for \`Class'."
   esac
 
-  [ $CNT -lt 5 -a -z "$BATCH" ] && 
+  [ $CNT -lt 4 -a -z "$BATCH" ] && 
     echo "Errors were found with the problem report."
 
   while true; do
@@ -485,7 +485,7 @@ while [ -z "$REQUEST_ID" ]; do
       $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
       read input
     else
-      if [ $CNT -eq 5 ]; then
+      if [ $CNT -eq 4 ]; then
         input=s
       else
         input=a
