@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2004/01/03 20:37:34 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.27 2004/01/05 19:04:11 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -229,7 +229,7 @@ neighbor	: NEIGHBOR address optnl '{' optnl {
 group		: GROUP string optnl '{' optnl {
 			curgroup = curpeer = new_group();
 			if (strlcpy(curgroup->conf.group, $2,
-			    sizeof(curgroup->conf.group)) >
+			    sizeof(curgroup->conf.group)) >=
 			    sizeof(curgroup->conf.group)) {
 				yyerror("group name \"%s\" too long: max %u",
 				    $2, sizeof(curgroup->conf.group) - 1);
@@ -264,7 +264,7 @@ peeropts	: REMOTEAS number	{
 		}
 		| DESCR string		{
 			if (strlcpy(curpeer->conf.descr, $2,
-			    sizeof(curpeer->conf.descr)) >
+			    sizeof(curpeer->conf.descr)) >=
 			    sizeof(curpeer->conf.descr)) {
 				yyerror("descr \"%s\" too long: max %u",
 				    $2, sizeof(curpeer->conf.descr) - 1);
@@ -576,7 +576,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	} else {
 		if ((fin = fopen(filename, "r")) == NULL) {
 			warn("%s", filename);
-			return (1);
+			free(conf);
+			free(mrtconf);
+			return (-1);
 		}
 		infile = filename;
 	}
@@ -650,15 +652,17 @@ int
 cmdline_symset(char *s)
 {
 	char	*sym, *val;
-	int	 ret;
+	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
 
-	if ((sym = malloc(strlen(s) - strlen(val) + 1)) == NULL)
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
 		fatal("cmdline_symset: malloc");
 
-	strlcpy(sym, s, strlen(s) - strlen(val) + 1);
+	strlcpy(sym, s, len);
 
 	ret = symset(sym, val + 1, 1);
 	free(sym);
@@ -706,11 +710,11 @@ new_peer(void)
 	if (curgroup != NULL) {
 		memcpy(p, curgroup, sizeof(struct peer));
 		if (strlcpy(p->conf.group, curgroup->conf.group,
-		    sizeof(p->conf.group)) > sizeof(p->conf.group))
-			fatalx("new_peer strlcpy");
+		    sizeof(p->conf.group)) >= sizeof(p->conf.group))
+			fatalx("new_peer group strlcpy");
 		if (strlcpy(p->conf.descr, curgroup->conf.descr,
-		    sizeof(p->conf.descr)) > sizeof(p->conf.descr))
-			fatalx("new_peer strlcpy");
+		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
+			fatalx("new_peer descr strlcpy");
 	}
 	p->state = STATE_NONE;
 	p->next = NULL;
@@ -749,9 +753,10 @@ add_mrtconfig(enum mrtdump_type type, char *name, time_t timeout)
 
 	n->type = MRT_TABLE_DUMP;
 	n->msgbuf.sock = -1;
-	if (strlcpy(n->name, name, sizeof(n->name)) > sizeof(n->name)) {
+	if (strlcpy(n->name, name, sizeof(n->name)) >= sizeof(n->name)) {
 		yyerror("filename \"%s\" too long: max %u",
 		    name, sizeof(n->name) - 1);
+		free(n);
 		return (-1);
 	}
 	n->ReopenTimerInterval = timeout;
