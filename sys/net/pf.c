@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.275 2002/12/18 16:59:47 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.276 2002/12/18 18:35:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1877,7 +1877,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		if ((*rm)->log) {
 			if (rewrite)
 				m_copyback(m, off, sizeof(*th), (caddr_t)th);
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 		}
 
 		if (((*rm)->action == PF_DROP) &&
@@ -2125,7 +2125,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		if ((*rm)->log) {
 			if (rewrite)
 				m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 		}
 
 		if (((*rm)->action == PF_DROP) &&
@@ -2386,7 +2386,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				m_copyback(m, off, ICMP_MINLEN,
 				    (caddr_t)pd->hdr.icmp6);
 #endif /* INET6 */
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 		}
 
 		if ((*rm)->action != PF_PASS)
@@ -2574,7 +2574,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		REASON_SET(&reason, PFRES_MATCH);
 		if ((*rm)->log)
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 
 		if ((*rm)->action != PF_PASS)
 			return (PF_DROP);
@@ -2638,7 +2638,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			REASON_SET(&reason, PFRES_MEMORY);
 			if (*rm && (*rm)->log)
 				PFLOG_PACKET(ifp, h, m, af, direction, reason,
-				    *rm);
+				    rs);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
@@ -2717,7 +2717,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		REASON_SET(&reason, PFRES_MATCH);
 		if ((*rm)->log)
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 
 		if ((*rm)->action != PF_PASS)
 			return (PF_DROP);
