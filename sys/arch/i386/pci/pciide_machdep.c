@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.3 2001/04/04 07:02:55 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.4 2001/06/25 21:42:31 csapuntz Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -65,9 +65,12 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
 	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg, dev->dv_xname);
-	if (cookie == NULL)
-		return (NULL);
-	printf("%s: %s interrupting at irq %d\n", dev->dv_xname,
-	    PCIIDE_CHANNEL_NAME(chan), irq);
+
 	return (cookie);
+}
+
+void
+pciide_machdep_compat_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
+{
+	isa_intr_disestablish(NULL, cookie);
 }
