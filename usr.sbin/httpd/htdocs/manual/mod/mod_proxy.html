@@ -102,6 +102,10 @@
     topics</a></h2>
 
     <ul>
+      <li><a href="#forwardreverse">Forward and Reverse Proxies</a></li>
+
+      <li><a href="#examples">Basic Examples</a></li>
+
       <li><a href="#access">Controlling access to your
       proxy</a></li>
 
@@ -130,6 +134,89 @@
       an intranet proxy server?</a></li>
     </ul>
 
+<h2><a name="forwardreverse" id="forwardreverse">Forward and Reverse Proxies</a></h2>
+      <p>Apache can be configured in both a <dfn>forward</dfn> and
+      <dfn>reverse</dfn> proxy mode.</p>
+
+      <p>An ordinary <dfn>forward proxy</dfn> is an intermediate
+      server that sits between the client and the <em>origin
+      server</em>.  In order to get content from the origin server,
+      the client sends a request to the proxy naming the origin server
+      as the target and the proxy then requests the content from the
+      origin server and returns it to the client.  The client must be
+      specially configured to use the forward proxy to access other
+      sites.</p>
+
+      <p>A typical usage of a forward proxy is to provide Internet
+      access to internal clients that are otherwise restricted by a
+      firewall.  The forward proxy can also use caching to reduce
+      network usage.</p>
+
+      <p>The forward proxy is activated using the <code><a
+      href="#proxyrequests">ProxyRequests</a></code> directive.
+      Because forward proxys allow clients to access arbitrary sites
+      through your server and to hide their true origin, it is
+      essential that you <a href="#access">secure your server</a> so
+      that only authorized clients can access the proxy before
+      activating a forward proxy.</p>
+
+      <p>A <dfn>reverse proxy</dfn>, by contrast, appears to the
+      client just like an ordinary web server.  No special
+      configuration on the client is necessary.  The client makes
+      ordinary requests for content in the name-space of the reverse
+      proxy.  The reverse proxy then decides where to send those
+      requests, and returns the content as if it was itself the
+      origin.</p>
+
+      <p>A typical usage of a reverse proxy is to provide Internet
+      users access to a server that is behind a firewall.  Reverse
+      proxies can also be used to balance load among several back-end
+      servers, or to provide caching for a slower back-end server.
+      In addition, reverse proxies can be used simply to bring
+      several servers into the same URL space.</p>
+
+      <p>A reverse proxy is activated using the <code><a
+      href="#proxypass">ProxyPass</a></code> directive or the
+      <code>[P]</code> flag to the <code><a
+      href="../mod/mod_rewrite.html#rewriterule">RewriteRule</a></code>
+      directive.  It is <strong>not</strong> necessary to turn
+      <code><a href="#proxyrequests">ProxyRequests</a></code> on in
+      order to configure a reverse proxy.</p> 
+
+<h2><a name="examples" id="examples">Basic Examples</a></h2>
+
+    <p>The examples below are only a very basic idea to help you
+    get started.  Please read the documentation on the individual
+    directives.</p>
+
+    <h3>Forward Proxy</h3><p><code>
+    ProxyRequests On<br />
+    ProxyVia On<br />
+    <br />
+    &lt;Directory proxy:*&gt;<br />
+    
+      Order deny,allow<br />
+      Deny from all<br />
+      Allow from internal.example.com<br />
+    
+    &lt;/Directory&gt;<br />
+    <br />
+    CacheRoot "/usr/local/apache/proxy"<br />
+    CacheSize 5<br />
+    CacheGcInterval 4<br />
+    CacheMaxExpire 24<br />
+    CacheLastModifiedFactor 0.1<br />
+    CacheDefaultExpire 1<br />
+    NoCache a-domain.com another-domain.edu joes.garage-sale.com
+    </code></p>
+
+    <h3>Reverse Proxy</h3><p><code>
+    ProxyRequests Off<br />
+    <br />
+    ProxyPass /foo http://foo.example.com/bar<br />
+    ProxyPassReverse /foo http://foo.example.com/bar
+    </code></p>
+
     <h2><a id="access" name="access">Controlling access to your
     proxy</a></h2>
     You can control who can access your proxy via the normal
@@ -148,6 +235,18 @@ Allow from yournetwork.example.com
 
     <p>For more information, see <a
     href="mod_access.html">mod_access</a>.</p>
+
+      <p>Strictly limiting access is essential if you are using a
+      forward proxy (using the <code><a
+      href="#proxyrequests">ProxyRequests</a></code> directive).
+      Otherwise, your server can be used by any client to access
+      arbitrary hosts while hiding his or her true identity.  This is
+      dangerous both for your network and for the Internet at large.
+      When using a reverse proxy (using the <code><a
+      href="#proxypass">ProxyPass</a></code> directive with
+      <code>ProxyRequests Off</code>), access control is less critical
+      because clients can only contact the hosts that you have
+      specifically configured.</p>
 
     <h2><a id="shortname" name="shortname">Using Netscape hostname
     shortcuts</a></h2>
@@ -201,7 +300,7 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
      To log in to an FTP server by username and password, Apache
      uses different strategies.
      In absense of a user name and password in the URL altogether,
-     Apache sends an anomymous login to the FTP server, i.e.,
+     Apache sends an anonymous login to the FTP server, i.e.,
      <blockquote><code>
        user: anonymous<br />
        password: apache_proxy@
@@ -262,7 +361,10 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     useful for an intranet proxy server?</a></h2>
 
     <p>An Apache proxy server situated in an intranet needs to
-    forward external requests through the company's firewall.
+    forward external requests through the company's firewall
+    (for this, configure the <a href="#proxyremote">ProxyRemote</a>
+    directive to forward the respective <em>scheme</em> to
+    the firewall proxy).
     However, when it has to access resources within the intranet,
     it can bypass the firewall when accessing hosts. The <a
     href="#noproxy">NoProxy</a> directive is useful for specifying
@@ -304,7 +406,7 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     rel="Help"><strong>Compatibility:</strong></a> ProxyRequests is
     only available in Apache 1.1 and later. 
 
-    <p>This allows or prevents Apache from functioning as a proxy
+    <p>This allows or prevents Apache from functioning as a forward proxy
     server. Setting ProxyRequests to 'off' does not disable use of
     the <a href="#proxypass">ProxyPass</a> directive.</p>
 
@@ -391,10 +493,16 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
 <pre>
    ProxyPass /mirror/foo/ http://foo.com/
 </pre>
-    will cause a local request for the
+    <p>will cause a local request for the
     &lt;<samp>http://wibble.org/mirror/foo/bar</samp>&gt; to be
     internally converted into a proxy request to
-    &lt;<samp>http://foo.com/bar</samp>&gt;. 
+    &lt;<samp>http://foo.com/bar</samp>&gt;.</p>
+
+    <p><strong>Warning:</strong> The <code><a
+    href="#proxyrequests">ProxyRequests</a></code> directive should
+    usually be set <strong>off</strong> when using <code
+    class="directive">ProxyPass</code>.
+
     <hr />
 
     <h2><a id="proxypassreverse"

@@ -7,7 +7,7 @@
     <title>Apache ディレクティブ</title>
 
   </head>
-  <!-- English revision: 1.79 -->
+  <!-- English revision: 1.82 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -180,6 +180,8 @@
 
       <li><a href="mod_proxy.html#cachesize">CacheSize</a></li>
 
+      <li><a href="core.html#cgicommandargs">CGICommandArgs</a></li>
+
       <li><a href="mod_speling.html#checkspelling"
       >CheckSpelling</a></li>
 
@@ -332,6 +334,9 @@
 
       <li><a href="core.html#limitexcept"
       >&lt;LimitExcept&gt;</a></li>
+
+      <li><a href="core.html#limitinternalrecursion"
+      >LimitInternalRecursion</a></li>
 
       <li><a href="core.html#limitrequestbody"
       >LimitRequestBody</a></li>

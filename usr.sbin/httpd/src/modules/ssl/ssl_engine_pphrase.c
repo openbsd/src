@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2003 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -237,6 +237,9 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
                     ssl_die();
                 }
                 cpPassPhraseCur = NULL;
+                /* Ensure that the error stack is empty; otherwise the
+                   OpenSSL UI code may dump it to stderr. */
+                ERR_clear_error();
                 bReadable = ((pPrivateKey = SSL_read_PrivateKey(fp, NULL,
                              ssl_pphrase_Handle_CB)) != NULL ? TRUE : FALSE);
                 ap_pfclose(p, fp);

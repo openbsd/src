@@ -2014,9 +2014,6 @@ API_EXPORT(void) ap_cleanup_for_exec(void)
     cleanup_pool_for_exec(permanent_pool);
     ap_unblock_alarms();
 #endif /* ndef WIN32 */
-#ifdef EAPI
-    ap_kill_alloc_shared();
-#endif
 }
 
 API_EXPORT_NONSTD(void) ap_null_cleanup(void *data)
@@ -3095,7 +3092,12 @@ static void free_proc_chain(struct process_chain *procs)
     for (p = procs; p; p = p->next) {
 	if ((p->kill_how == kill_after_timeout)
 	    || (p->kill_how == kill_only_once)) {
-	    /* Subprocess may be dead already.  Only need the timeout if not. */
+	    /*
+	     * This is totally bogus, but seems to be the
+	     * only portable (as in reliable) way to accomplish
+	     * this. Note that this implies an unavoidable
+	     * delay.
+	     */
 	    ap_os_kill(p->pid, SIGTERM);
 	    need_timeout = 1;
 	}

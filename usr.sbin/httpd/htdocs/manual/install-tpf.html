@@ -119,7 +119,7 @@
           <li><b><tt>cd&nbsp;apache_1.3.<em>xx</em>/src/lib</tt></b></li>
           <li><b><tt>rm&nbsp;-r&nbsp;expat-lite&nbsp;sdbm</tt></b></li>
           <li><b><tt>cd&nbsp;../os</tt></b></li>
-          <li><b><tt>rm&nbsp;-r&nbsp;bs2000&nbsp;cygwin&nbsp;mpeix&nbsp;netware&nbsp;os2&nbsp;os390&nbsp;win32</tt></b></li>
+          <li><b><tt>rm -fr bs2000 cygwin mpeix netware os2 os390 unix win32</tt></b></li>
           <li><b><tt>cd&nbsp;..</tt></b></li>
         </ul>
         &nbsp;
@@ -369,6 +369,7 @@
        + configured for TPF platform
        + setting C compiler to c89
        + setting C pre-processor to c89 -E
+       + using "tr [a-z] [A-Z]" to uppercase
        + checking for system header files
        + adding selected modules
        + checking sizeof various data types
@@ -462,20 +463,13 @@
 
         <ul>
           <li>
-            The following two compilation warnings may or may not occur.
-            They should be ignored:<br />
-            <br />
-              util_uri.c:&nbsp;&nbsp;&nbsp;<tt>Function argument
-              assignment between types "unsigned char*" and "const
-              unsigned char*" is not allowed.</tt>
-            <br />
+            The following compilation warning may or may not occur.
+            It should be ignored:<br />
             <br />
               main/http_main.c:&nbsp;&nbsp;&nbsp;
               <tt>Infinite loop detected in function child_main.
               Program may not stop.</tt>
             <br />
-            <br />
-
           </li>
 
           <li>If during compilation you get a warning about a
@@ -598,14 +592,12 @@
       <li>
         Using either TFTP or FTP, transfer the configuration file,
         icons, and web pages to your TPF system. A typical
-        directory structure for Apache is as follows:<br />
-<pre>
-<tt> /usr/local/apache/conf
+        directory structure for Apache is as follows:
+<pre><tt>     /usr/local/apache/conf
      /usr/local/apache/logs
      /usr/local/apache/icons
      /usr/local/apache/htdocs
-</tt>
-</pre>
+</tt></pre>
         All gif, jpg, and zip files should be transferred as
         binary; the configuration file and html pages should be
         transferred as text.&nbsp;<br />
@@ -670,7 +662,6 @@
       <tt><b>http://<i>xx.xx.xx.xx</i></b></tt>
       &nbsp;&nbsp;&nbsp;(where <i>xx.xx.xx.xx</i> is your IP
       address)</li>
-
     </ol>
     <a id="visualage" name="visualage"></a> 
 

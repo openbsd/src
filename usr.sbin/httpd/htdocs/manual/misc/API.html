@@ -496,7 +496,7 @@ int default_handler (request_rec *r)
     if (r-&gt;method_number != M_GET) return DECLINED;
     if (r-&gt;finfo.st_mode == 0) return NOT_FOUND;
 
-    if ((errstatus = ap_set_content_length (r, r-&gt;finfo.st_size)) {
+    if ((errstatus = ap_set_content_length (r, r-&gt;finfo.st_size))) {
         return errstatus;
     }
 

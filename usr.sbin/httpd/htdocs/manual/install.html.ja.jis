@@ -7,7 +7,7 @@
     <title>Compiling and Installing Apache</title>
 
   </head>
-  <!-- English revision: 1.39 -->
+  <!-- English revision: 1.40 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#000080"
   alink="#ff0000">
@@ -56,13 +56,9 @@
 
     <h2><a id="download" name="download">Apache のダウンロード</a></h2>
 
-    <p>Apache の最新版は Apache ウェブサイト <a
-    href="http://www.apache.org/dist/httpd/">http://www.apache.org/dist/httpd/</a>
-    または <a href="http://www.apache.org/dyn/closer.cgi"
-    >http://www.apache.org/dyn/closer.cgi</a>
-    にリストされた多くのミラーサイトから直接ダウンロードすることも出来ます。
-    これらのサイトには現在のリリース版や最新のベータ版、古いバージョンへのリンク、
-    いろいろなプラットホーム用のバイナリ配布がリストされます。</p>
+    <p>Apache の最新版は <a
+    href="http://httpd.apache.org/download.cgi">Download Page</a>
+    から直接ダウンロードすることが出来ます。</p>
 
     <h2><a id="intro" name="intro">導入</a></h2>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.15 2003/08/21 13:11:35 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.16 2003/11/17 18:57:05 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1280,7 +1280,7 @@ static const char *set_error_document(cmd_parms *cmd, core_dir_config *conf,
     if (error_number == 401 &&
 	line[0] != '/' && line[0] != '"') { /* Ignore it... */
 	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, cmd->server,
-		     "cannot use a full or relative URL in a 401 ErrorDocument "
+		     "cannot use a full URL in a 401 ErrorDocument "
 		     "directive --- ignoring!");
     }
     else { /* Store it... */

@@ -145,16 +145,18 @@
     installed on your PC before you can install the Apache runtime
     distributions. Windows 2000 and Windows ME are both delivered
     with the Microsoft Installer support, others will need to
-    download it. Instructions on locating the Microsoft Installer,
+    download it.  For more information, visit the main download
+    page at <a
+    href="http://httpd.apache.org/download.cgi">http://httpd.apache.org/download.cgi</a>.
+    Instructions on locating the Microsoft Installer,
     as well as the binary distributions of Apache, are found at 
-    <a href="http://httpd.apache.org/dist/httpd/binaries/win32/"
-      >http://httpd.apache.org/dist/httpd/binaries/win32/</a></p>
+    <a href="http://www.apache.org/dyn/closer.cgi/httpd/binaries/win32/"
+      >the win32 download directory on the mirrors.</a></p>
 
     <p>The source code is available in the <code>-src.msi</code>
     distribution, or from the
-    <a href="http://httpd.apache.org/dist/httpd/"
-      >http://httpd.apache.org/dist/httpd/</a>
-    distribution directory as a <code>.zip</code> file. If you plan
+    <a href="http://www.apache.org/dyn/closer.cgi/httpd/"
+      >distribution directory</a> as a <code>.zip</code> file. If you plan
     on compiling Apache yourself, there is no need to install
     either <code>.msi</code> package. The <code>.zip</code> file
     contains only source code, with MS-DOS line endings (that is

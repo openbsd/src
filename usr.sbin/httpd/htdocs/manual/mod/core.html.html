@@ -885,7 +885,8 @@
 
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> &lt;Directory
-    <em>directory-path</em>&gt; ... &lt;/Directory&gt; <br />
+    <em>directory-path</em>|proxy:<em>url-path</em>&gt;
+    ... &lt;/Directory&gt; <br />
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server config, virtual
     host<br />
@@ -993,11 +994,31 @@
     <em>want</em> accessible. See the <a
     href="../misc/security_tips.html">Security Tips</a> page for
     more details.</strong></p>
-    The directory sections typically occur in the access.conf file,
-    but they may appear in any configuration file.
     &lt;Directory&gt; directives cannot nest, and cannot appear in
     a <a href="#limit">&lt;Limit&gt;</a> or <a
     href="#limitexcept">&lt;LimitExcept&gt;</a> section. 
+
+   <p>If you have <a href="mod_proxy.html">mod_proxy</a> enabled, you
+   can use the <code>proxy:</code> syntax to apply configuration
+   directives to proxied content. The syntax for this is to specify the
+   proxied URLs to which you wish to apply the configuration, or to
+   specify <code>*</code> to apply to all proxied content:</p>
+
+   <p>To apply to all proxied content:</p>
+
+   <pre>
+   &lt;Directory proxy:*&gt;
+     ... directives here ...
+   &lt;/Directory&gt;
+   </pre>
+
+   <p>To apply to just a subset of proxied content:</p>
+
+   <pre>
+   &lt;Directory proxy:http://www.example.com/&gt;
+     ... directives here ...
+   &lt;/Directory&gt;
+   </pre>
 
     <p><strong>See also</strong>: <a href="../sections.html">How
     Directory, Location and Files sections work</a> for an
@@ -1965,11 +1986,19 @@ Syntax OK
        Require valid-user<br />
        &lt;/Limit&gt;</code>
     </blockquote>
-    The method names listed can be one or more of: GET, POST, PUT,
+    <p>The method names listed can be one or more of: GET, POST, PUT,
     DELETE, CONNECT, OPTIONS, PATCH, PROPFIND, PROPPATCH,
     MKCOL, COPY, MOVE, LOCK, and UNLOCK. <strong>The method name is
     case-sensitive.</strong> If GET is used it will also restrict
-    HEAD requests. The TRACE method cannot be limited.
+    HEAD requests. The TRACE method cannot be limited.</p>
+
+    <p><strong>Warning:</strong> A <a
+    href="#limitexcept">&lt;LimitExcept&gt;</a> section should
+    always be used in preference to a <a
+    href="#limit">&lt;Limit&gt;</a> section when restricting access,
+    since a <a href="#limitexcept">&lt;LimitExcept&gt;</a> section
+    provides protection against arbitrary methods.</p>
+
     <hr />
 
     <h2><a id="limitexcept" name="limitexcept">&lt;LimitExcept&gt;
@@ -2070,9 +2099,7 @@ Syntax OK
 
     <p>This directive specifies the number of <em>bytes</em> from 0
     (meaning unlimited) to 2147483647 (2GB) that are allowed in a
-    request body. The default value is defined by the compile-time
-    constant <code>DEFAULT_LIMIT_REQUEST_BODY</code> (0 as
-    distributed).</p>
+    request body.</p>
 
     <p>The LimitRequestBody directive allows the user to set a
     limit on the allowed size of an HTTP request message body
@@ -2578,6 +2605,11 @@ Syntax OK
     <p>For example:</p>
 
     <pre>LogLevel notice</pre>
+
+    <p><strong>NOTE:</strong> When logging to a regular file messages
+    of the level <code>notice</code> cannot be suppressed and thus are
+    always logged. However, this doesn't apply when logging is done
+    using <code>syslog</code>.</p>
 
     <hr />
 

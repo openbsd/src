@@ -7,7 +7,7 @@
     <title>Apache チュートリアル: Server Side Includes 入門</title>
 
   </head>
-  <!-- English revision: 1.11 -->
+  <!-- English revision: 1.14 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
@@ -112,11 +112,6 @@
       </tr>
     </table>
 
-    <p>この文書は最初、Apache Today (http://www.apachetoday.com/)
-    に三回の連載記事として掲載されました。ここでは、ApcheToday と
-    Internet.com との協定により載せています。
-    </p>
-
     <p>この記事は、通常は単に SSI と呼ばれる Server Side Includes
     を扱います。この記事においては、サーバでの SSI を許可するための設定と、
     現在の HTML ページに動的なコンテンツを加えるためのいくつかの基本的な
@@ -149,8 +144,10 @@
     name="configuringyourservertopermitssi">SSI
     を許可するためのサーバの設定</a></h2>
 
-    <p>サーバで SSI を許可するには、<code>httpd.conf</code>
-    ファイルまたは <code>.htaccess</code>
+    <p>サーバで SSI を許可するには、<a
+    href="../mod/mod_include.html">mod_include</a>
+    をインストール、有効化する必要があります。さらに、
+    <code>httpd.conf</code> ファイルまたは <code>.htaccess</code>
     ファイルに次のディレクティブを指定する必要があります:</p>
 <pre>
         Options +Includes

@@ -23,6 +23,30 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.16 (18-Jul-2003 to 01-Nov-2003)
+
+   *) Upgraded to Apache 1.3.29
+
+   *) Avoid memory corruption in certificate handling caused by a heap
+      memory double-freeing situation.
+
+   *) Allow "HTTPS" variable to be passed through by suEXEC.
+
+   *) Clear the OpenSSL error code in pass phrase reading code to
+      workaround the following situation: multiple keys, all with
+      different passphrases -- entering the correct pass phrase at each
+      prompt leads to an OpenSSL error message after the last prompt.
+
+   *) Reverted the recent change where ap_cleanup_for_exec() called
+      ap_kill_alloc_shared(). This caused nasty side-effects in other
+      processes and is not necessary at all (because shared memory
+      segments are not inherited across exec).
+   
+   *) mod_ssl was checking the OpenSSL error reason code against
+      SSL_R_HTTP_REQUEST and concluded the result is an SSL error. Since
+      OpenSSL reason codes are not unique, this isn't always the case.
+      It now additionally checks that the library is the SSL library.
+
   Changes with mod_ssl 2.8.15 (21-Mar-2003 to 18-Jul-2003)
 
    *) Upgraded to Apache 1.3.28

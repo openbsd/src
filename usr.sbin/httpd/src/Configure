@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.22 2003/08/21 13:11:33 henning Exp $
+# $OpenBSD: Configure,v 1.23 2003/11/17 18:57:05 henning Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -2028,7 +2028,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=28
+	V=1 R=3 P=29
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi

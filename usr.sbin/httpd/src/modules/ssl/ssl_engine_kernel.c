@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2003 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -253,7 +253,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
                 return;
             }
-            else if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST) {
+            else if ((ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST) &&
+                     (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)) {
                 /*
                  * The case where OpenSSL has recognized a HTTP request:
                  * This means the client speaks plain HTTP on our HTTPS
@@ -964,11 +965,11 @@ int ssl_hook_Access(request_rec *r)
             certstack = SSL_get_peer_cert_chain(ssl);
             cert = SSL_get_peer_certificate(ssl);
             if (certstack == NULL && cert != NULL) {
-                /* client cert is in the session cache, but there is
-                   no chain, since ssl3_get_client_certificate()
-                   sk_X509_shift'ed the peer cert out of the chain.
-                   So we put it back here for the purpose of quick
-                   renegotiation.  */
+                /* client certificate is in the SSL session cache, but
+                   there is no chain, since ssl3_get_client_certificate()
+                   sk_X509_shift()'ed the peer certificate out of the
+                   chain. So we put it back here for the purpose of quick
+                   renegotiation. */
                 certstack = sk_new_null();
                 sk_X509_push(certstack, cert);
             }
@@ -995,10 +996,12 @@ int ssl_hook_Access(request_rec *r)
             SSL_set_verify_result(ssl, certstorectx.error);
             X509_STORE_CTX_cleanup(&certstorectx);
             if (SSL_get_peer_cert_chain(ssl) != certstack) {
-                /* created by us, so free it */
+                /* created by us above, so free it */
                 sk_X509_pop_free(certstack, X509_free);
             }
-            X509_free(cert);
+            else {
+                /* X509_free(cert); not necessary AFAIK --rse */
+            }
         }
         else {
             /* do a full renegotiation */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.22 2003/03/19 15:13:26 henning Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.23 2003/11/17 18:57:06 henning Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -11,7 +11,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2003 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

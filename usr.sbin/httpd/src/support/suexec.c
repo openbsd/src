@@ -138,6 +138,7 @@ char *safe_env_lst[] =
     /* variable name starts with */
     "HTTP_",
 #ifdef MOD_SSL
+    "HTTPS=",
     "HTTPS_",
     "SSL_",
 #endif
