@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.5 2003/06/24 18:45:30 tedu Exp $	*/
+/*	$OpenBSD: grep.h,v 1.6 2003/06/25 15:02:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -87,10 +87,10 @@ void		 printline(str_t *line, int sep);
 int		 fastcomp(fastgrep_t *, const char *);
 
 /* queue.c */
-void		 initqueue();
+void		 initqueue(void);
 void		 enqueue(str_t *x);
-void		 printqueue();
-void		 clearqueue();
+void		 printqueue(void);
+void		 clearqueue(void);
 
 /* mmfile.c */
 typedef struct mmfile {
