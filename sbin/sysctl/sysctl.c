@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.37 1999/02/25 21:59:50 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.38 1999/04/09 23:30:06 niklas Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.37 1999/02/25 21:59:50 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.38 1999/04/09 23:30:06 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.37 1999/02/25 21:59:50 deraadt Exp 
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip_ip4.h>
 #include <netinet/icmp_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
@@ -935,6 +936,7 @@ sysctl_ipsec(string, bufpp, mib, flags, typep)
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
+struct ctlname ip4name[] = IP4CTL_NAMES;
 struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
@@ -943,7 +945,7 @@ struct list inetvars[] = {
 	{ icmpname, ICMPCTL_MAXID },	/* icmp */
 	{ 0, 0 },			/* igmp */
 	{ 0, 0 },			/* ggmp */
-	{ 0, 0 },
+	{ ip4name, IP4CTL_MAXID },	/* ipencap */
 	{ 0, 0 },
 	{ tcpname, TCPCTL_MAXID },	/* tcp */
 	{ 0, 0 },
