@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.50 2001/04/30 12:07:30 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.51 2001/04/30 13:54:51 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -119,7 +119,7 @@ struct nlist namelist[] = {
 	{ "_forkstat" },
 #define X_POOLHEAD	14
 	{ "_pool_head" },
-#define X_NSELCOLL	16
+#define X_NSELCOLL	15
 	{ "_nselcoll" },
 #define X_END		16
 #if defined(__pc532__)
