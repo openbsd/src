@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2000/05/27 21:17:59 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2000/05/27 22:12:33 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -378,7 +378,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 			toads = z2mem_start;
 
 #if defined(UVM)
-		vm_page_physload(atop(fromads), atop(toads),
+		uvm_page_physload(atop(fromads), atop(toads),
 			atop(fromads), atop(toads), (fromads & 0xff000000) ?
 			VM_FREELIST_DEFAULT : VM_FREELIST_ZORROII);
 #else
@@ -599,7 +599,7 @@ bogons:
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vm_offset_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s, FALSE);
+	rv = uvm_unmap(kernel_map, addr, addr + s);
 	if (rv != KERN_SUCCESS)
 		panic("pmap_init: uvm_unmap failed");
 #else
@@ -733,7 +733,7 @@ pmap_alloc_pv()
 
 	if (pv_nfree == 0) {
 #if defined(UVM)
-		pvp = (struct pv_page *)kmem_km_zalloc(kernel_map, NBPG);
+		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
 #else
@@ -2009,7 +2009,7 @@ pmap_activate(p)
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
 		printf("pmap_activate(%p)\n", p);
 #endif
-	PMAP_ACTIVATE(pmap, pcbp, p == curproc);
+	PMAP_ACTIVATE(pmap, pcb, p == curproc);
 }
 
 /*
