@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.29 1995/05/08 18:00:20 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.31 1996/01/07 03:59:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -111,7 +111,7 @@
  * XXX
  * The interrupt frame is set up to look like a trap frame.  This may be a
  * waste.  The only handler which needs a frame is the clock handler, and it
- * only needs a few bits.  doreti() needs a trap frame for handling ASTs, but
+ * only needs a few bits.  Xdoreti() needs a trap frame for handling ASTs, but
  * it could easily convert the frame on demand.
  *
  * The direct costs of setting up a trap frame are two pushl's (error code and
@@ -199,10 +199,15 @@ FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
  * interrupt.  On a system with level-triggered interrupts, we could terminate
  * immediately when one of them returns 1; but this is a PC.
  *
- * On exit, we jump to doreti, to process soft interrupts and ASTs.
+ * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 #define	INTR(irq_num, icu, enable_icus) \
-IDTVEC(intr/**/irq_num)							;\
+IDTVEC(recurse/**/irq_num)						;\
+	pushfl								;\
+	pushl	%cs							;\
+	pushl	%esi							;\
+	cli								;\
+_Xintr/**/irq_num/**/:							;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -235,7 +240,7 @@ _Xresume/**/irq_num/**/:						;\
 	jnz	7b							;\
 	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
-	INTREXIT			/* lower spl and do ASTs */	;\
+	jmp	_Xdoreti		/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
 	call	_isa_strayintr						;\
@@ -284,42 +289,6 @@ INTR(14, IO_ICU2, ENABLE_ICU1_AND_2)
 INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
 
 /*
- * Recursive interrupts.
- *
- * This is a somewhat nasty hack to deal with resuming interrupts from splx().
- * We can't just jump to the resume point, because some handlers require an
- * interrupt frame.  Instead, we just recursively interrupt.
- *
- * On entry, %esi contains a pointer to where we need to return.  This is a
- * bit faster than a call/ret/jmp to continue the loop.
- *
- * XXX
- * It might be a little faster to build the interrupt frame manually and jump
- * to the resume point.  The code would be larger, though.
- */
-#define	RECURSE(irq_num) \
-IDTVEC(recurse/**/irq_num)						;\
-	int	$(ICU_OFFSET + irq_num)					;\
-	jmp	%esi
-
-RECURSE(0)
-RECURSE(1)
-RECURSE(2)
-RECURSE(3)
-RECURSE(4)
-RECURSE(5)
-RECURSE(6)
-RECURSE(7)
-RECURSE(8)
-RECURSE(9)
-RECURSE(10)
-RECURSE(11)
-RECURSE(12)
-RECURSE(13)
-RECURSE(14)
-RECURSE(15)
-
-/*
  * These tables are used by the ISA configuration code.
  */
 /* interrupt service routine entry points */
@@ -334,7 +303,7 @@ IDTVEC(fast)
 	.long   _Xfast13, _Xfast14, _Xfast15
 
 /*
- * These tables are used by doreti() and spllower().
+ * These tables are used by Xdoreti() and Xspllower().
  */
 /* resume points for suspended interrupts */
 IDTVEC(resume)

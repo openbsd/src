@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.2.1 1995/10/24 16:32:42 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.142 1996/01/07 03:59:28 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -101,8 +101,6 @@
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
-#define	INTREXIT \
-	jmp	_Xdoreti
 #define	INTRFASTEXIT \
 	popl	%es		; \
 	popl	%ds		; \
@@ -1530,7 +1528,7 @@ ENTRY(cpu_switch)
 	movl	$0,_curproc
 
 	movl	$0,_cpl			# spl0()
-	call	_spllower		# process pending interrupts
+	call	_Xspllower		# process pending interrupts
 
 switch_search:
 	/*
@@ -1877,7 +1875,7 @@ IDTVEC(fpu)
 	incl	_cnt+V_TRAP
 	call	_npxintr
 	addl	$4,%esp
-	INTREXIT
+	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
 #endif

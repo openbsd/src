@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.22 1995/10/11 04:20:23 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.25 1996/01/07 03:59:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,7 +99,10 @@
 
 #ifndef LOCORE
 
-int cpl, ipending, astpending, imask[5];
+volatile int cpl, ipending, astpending;
+int imask[5];
+
+extern void Xspllower __P((void));
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
@@ -109,28 +112,38 @@ splraise(ncpl)
 	register int ncpl;
 {
 	register int ocpl = cpl;
-	cpl |= ncpl;
+
+	cpl = ocpl | ncpl;
 	return (ocpl);
 }
 
-extern void spllower __P((void));
-
 /*
  * Restore a value to cpl (unmasking interrupts).  If any unmasked
- * interrupts are pending, call spllower() to process them.
- *
- * NOTE: We go to the trouble of returning the old value of cpl for
- * the benefit of some splsoftclock() callers.  This extra work is
- * usually optimized away by the compiler.
+ * interrupts are pending, call Xspllower() to process them.
  */
-static __inline int
+static __inline void
 splx(ncpl)
 	register int ncpl;
 {
-	register int ocpl = cpl;
+
 	cpl = ncpl;
 	if (ipending & ~ncpl)
-		spllower();
+		Xspllower();
+}
+
+/*
+ * Same as splx(), but we return the old value of spl, for the
+ * benefit of some splsoftclock() callers.
+ */
+static __inline int
+spllower(ncpl)
+	register int ncpl;
+{
+	register int ocpl = cpl;
+
+	cpl = ncpl;
+	if (ipending & ~ncpl)
+		Xspllower();
 	return (ocpl);
 }
 
@@ -150,7 +163,7 @@ splx(ncpl)
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	splsoftclock()	splx(SIR_CLOCKMASK)
+#define	splsoftclock()	spllower(SIR_CLOCKMASK)
 #define	splsoftnet()	splraise(SIR_NETMASK)
 #define	splsofttty()	splraise(SIR_TTYMASK)
 
@@ -158,7 +171,7 @@ splx(ncpl)
  * Miscellaneous
  */
 #define	splhigh()	splraise(-1)
-#define	spl0()		splx(0)
+#define	spl0()		spllower(0)
 
 /*
  * Software interrupt registration

@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.43 1995/10/11 04:20:31 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -64,7 +64,6 @@ _splx:
  *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
  */
-ENTRY(spllower)
 IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
@@ -103,6 +102,7 @@ IDTVEC(doreti)
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
 	jnc     1b			# some intr cleared the in-memory bit
+	cli
 	jmp	*_Xresume(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
