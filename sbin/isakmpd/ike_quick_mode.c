@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.61 2002/06/06 02:15:27 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.62 2002/06/07 21:59:22 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -1651,6 +1651,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       retval = 0;
 
     next_sa:
+      ; /* XXX gcc3 wants this. */
     }
 
   if (kep)

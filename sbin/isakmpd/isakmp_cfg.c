@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.11 2002/06/07 20:26:22 ho Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.12 2002/06/07 21:59:22 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -833,6 +833,7 @@ cfg_responder_send_ATTR (struct message *msg)
 	  break;
 
 	default:
+	  break;
 	}
       SET_ISAKMP_ATTR_LENGTH_VALUE (attrp + off, attr->length);
     }

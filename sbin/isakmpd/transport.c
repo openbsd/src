@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.c,v 1.16 2001/10/26 11:37:16 ho Exp $	*/
+/*	$OpenBSD: transport.c,v 1.17 2002/06/07 21:59:22 ho Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <string.h>
 
 #include "sysdep.h"
 
