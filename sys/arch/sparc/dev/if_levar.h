@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.5 1995/12/10 10:15:07 mycroft Exp $ */
+/*	$NetBSD: if_levar.h,v 1.2 1995/12/11 12:43:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -39,12 +39,53 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-#define	MEMSIZE	0x4000
-
 /*
- * LANCE registers.
+ * Ethernet software status per interface.
+ *
+ * Each interface is referenced by a network interface structure,
+ * arpcom.ac_if, which the routing code uses to locate the interface.
+ * This structure contains the output queue for the interface, its address, ...
  */
-struct lereg1 {
-	volatile u_int16_t	ler1_rdp;	/* data port */
-	volatile u_int16_t	ler1_rap;	/* register select port */
+struct	le_softc {
+	struct	device sc_dev;		/* base structure */
+	struct	arpcom sc_arpcom;	/* Ethernet common part */
+
+	void	(*sc_copytodesc)();	/* Copy to descriptor */
+	void	(*sc_copyfromdesc)();	/* Copy from descriptor */
+
+	void	(*sc_copytobuf)();	/* Copy to buffer */
+	void	(*sc_copyfrombuf)();	/* Copy from buffer */
+	void	(*sc_zerobuf)();	/* and Zero bytes in buffer */
+
+	u_int16_t sc_conf3;		/* CSR3 value */
+
+	void	*sc_mem;		/* base address of RAM -- CPU's view */
+	u_long	sc_addr;		/* base address of RAM -- LANCE's view */
+	u_long	sc_memsize;		/* size of RAM */
+
+	int	sc_nrbuf;		/* number of receive buffers */
+	int	sc_ntbuf;		/* number of transmit buffers */
+	int	sc_last_rd;
+	int	sc_first_td, sc_last_td, sc_no_td;
+
+	int	sc_initaddr;
+	int	sc_rmdaddr;
+	int	sc_tmdaddr;
+	int	sc_rbufaddr;
+	int	sc_tbufaddr;
+
+#ifdef LEDEBUG
+	int	sc_debug;
+#endif
+
+	struct	sbusdev sc_sd;		/* sbus device */
+	struct	intrhand sc_ih;		/* interrupt vectoring */
+	struct	lereg1 *sc_r1;		/* LANCE registers */
+	struct	dma_softc *sc_dma;	/* pointer to my dma */
 };
+
+/* DMA macros for ledma */ 
+#define DMA_ENINTR(r)           ((r->enintr)(r))
+#define DMA_ISINTR(r)           ((r->isintr)(r))
+#define DMA_RESET(r)            ((r->reset)(r))
+
