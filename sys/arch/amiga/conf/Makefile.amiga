@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.30 1995/12/27 08:22:54 chopps Exp $
+#	$NetBSD: Makefile.amiga,v 1.31 1996/01/14 21:06:47 thorpej Exp $
 
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
@@ -115,7 +115,7 @@ newvers:
 
 clean::
 	rm -f eddep *netbsd netbsd.gdb tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks genassym
+		vnode_if.[ch] Errs errs linterrs makelinks genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \

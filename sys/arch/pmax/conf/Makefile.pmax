@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.18 1995/12/17 09:09:42 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.19 1996/01/14 21:06:54 thorpej Exp $
 
 #	@(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
 #
@@ -122,7 +122,7 @@ newvers:
 
 clean::
 	rm -f eddep *vmunix vmunix.gdb tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks genassym
+		vnode_if.[ch] Errs errs linterrs makelinks genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \

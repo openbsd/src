@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.14 1995/09/19 23:51:40 thorpej Exp $
+#	$NetBSD: Makefile.pc532,v 1.15 1996/01/14 21:06:52 thorpej Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
@@ -77,7 +77,7 @@ SYSTEM_LD_TAIL= size $@ ; nm -n $@ > SYMMS ; chmod 755 $@
 
 clean::
 	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
-		errs linterrs makelinks genassym
+		vnode_if.[ch] errs linterrs makelinks genassym
 
 #lint: /tmp param.c
 #	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \

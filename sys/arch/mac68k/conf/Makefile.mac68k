@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.26 1995/11/01 04:53:34 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.27 1996/01/14 21:06:51 thorpej Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -106,7 +106,7 @@ newvers:
 
 clean::
 	rm -f eddep netbsd tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks
+		vnode_if.[ch] Errs errs linterrs makelinks
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \

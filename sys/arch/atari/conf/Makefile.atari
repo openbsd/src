@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.8 1995/11/30 00:57:51 jtc Exp $
+#	$NetBSD: Makefile.atari,v 1.9 1996/01/14 21:06:49 thorpej Exp $
 #
 # Makefile for NetBSD Atari-TT
 #
@@ -107,7 +107,7 @@ newvers:
 
 clean::
 	rm -f eddep *netbsd netbsd.gdb tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks genassym
+		vnode_if.[ch] Errs errs linterrs makelinks genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \

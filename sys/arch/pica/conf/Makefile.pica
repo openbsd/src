@@ -114,7 +114,7 @@ newvers:
 
 clean::
 	rm -f eddep bsd bsd.gdb tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks genassym
+	    vnode_if.[ch] Errs errs linterrs makelinks genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
