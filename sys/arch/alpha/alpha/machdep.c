@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1999/01/07 23:15:51 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1999/03/24 22:56:13 alex Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -343,6 +343,11 @@ alpha_init(pfn, ptb, symend)
 	PAGE_SIZE = hwrpb->rpb_page_size;
 	if (PAGE_SIZE != 8192)
 		panic("page size %d != 8192?!", PAGE_SIZE);
+
+	/*
+	 * Init PAGE_SIZE dependent variables in the MI VM system
+	 */
+	vm_set_page_size();
 
 	v = (caddr_t)alpha_round_page(symend ? symend : _end);
 	/*
