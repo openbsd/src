@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.2 2002/12/21 18:19:33 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.3 2002/12/23 01:09:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -51,7 +51,8 @@ time_t t;
 #define MAXCON 200
 int maxcon = MAXCON;
 int clients;
-int debug = 0;
+int debug;
+#define MAXTIME 400
 
 struct con {
 	int fd;
@@ -63,7 +64,7 @@ struct con {
 	 * we will do stuttering by changing these to time_t's of
 	 * now + n, and only advancing when the time is in the past/now
 	 */
-	int r;
+	time_t r;
 	time_t w;
 	time_t s;
 
@@ -171,7 +172,7 @@ nextstate(struct con *cp)
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->state = 1;
-		cp->r = 1;
+		cp->r = t;
 		break;
 	case 1:
 		/* received input: parse, and select next state */
@@ -192,7 +193,7 @@ nextstate(struct con *cp)
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->state = 3;
-		cp->r = 1;
+		cp->r = t;
 		break;
 	mail:
 	case 3:
@@ -213,7 +214,7 @@ nextstate(struct con *cp)
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->state = 5;
-		cp->r = 1;
+		cp->r = t;
 		break;
 	rcpt:
 	case 5:
@@ -234,7 +235,7 @@ nextstate(struct con *cp)
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->state = 50;
-		cp->r = 1;
+		cp->r = t;
 		break;
 
 	spam:
@@ -340,7 +341,8 @@ main(int argc, char *argv[])
 		setuid(pw->pw_uid);
 	}
 
-	gethostname(hostname, sizeof hostname);
+	if (gethostname(hostname, sizeof hostname) == 1)
+		err(1, "gethostname");
 
 	for (i = 0; i < MAXCON; i++)
 		con[i].fd = -1;
@@ -382,7 +384,7 @@ main(int argc, char *argv[])
 
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s == -1)
-		errx(1, "socket");
+		err(1, "socket");
 
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one,
 	    sizeof(one))  == -1)
@@ -394,7 +396,7 @@ main(int argc, char *argv[])
 	sin.sin_port = htons(port);
 
 	if (bind(s, (struct sockaddr *)&sin, sizeof sin) == -1)
-		errx(1, "bind");
+		err(1, "bind");
 
 	listen(s, 10);
 
@@ -422,11 +424,11 @@ main(int argc, char *argv[])
 			fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsr == NULL)
-				errx(1, "calloc");
+				err(1, "calloc");
 			fdsw = (fd_set *)calloc(howmany(max+1, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsw == NULL)
-				errx(1, "calloc");
+				err(1, "calloc");
 			omax = max;
 		} else {
 			memset(fdsr, howmany(max+1, NFDBITS),
@@ -437,9 +439,18 @@ main(int argc, char *argv[])
 
 		writers = 0;
 		for (i = 0; i < maxcon; i++) {
-			if (con[i].fd != -1 && con[i].r)
+			if (con[i].fd != -1 && con[i].r) {
+				if (con[i].r + MAXTIME > t) {
+					closecon(&con[i]);
+					continue;
+				}
 				FD_SET(con[i].fd, fdsr);
+			}
 			if (con[i].fd != -1 && con[i].w) {
+				if (con[i].w + MAXTIME > t) {
+					closecon(&con[i]);
+					continue;
+				}
 				if (con[i].w <= t)
 					FD_SET(con[i].fd, fdsw);
 				writers = 1;
@@ -457,7 +468,7 @@ main(int argc, char *argv[])
 
 		n = select(max+1, fdsr, fdsw, NULL, tvp);
 		if (n == -1 && errno == EINTR)
-			errx(1, "select");
+			err(1, "select");
 		if (n == 0)
 			continue;
 
@@ -473,7 +484,7 @@ main(int argc, char *argv[])
 			if (s2 == -1) {
 				if (errno == EINTR)
 					continue;
-				errx(1, "accept");
+				err(1, "accept");
 			}
 			for (i = 0; i < maxcon; i++)
 				if (con[i].fd == -1)
