@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.39 2003/08/24 23:20:19 dhartmei Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.40 2003/08/26 18:30:03 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -679,6 +679,9 @@ nextstate(struct con *cp)
 	done:
 	case 98:
 		cp->lists = strdup(doreply(cp));
+		if (cp->lists != NULL)
+			syslog_r(LOG_INFO, &sdata, "%s: matched lists: %s",
+			    cp->addr, cp->lists);
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
 		cp->w = t + stutter;
