@@ -35,6 +35,9 @@
  *	@(#)mpool.h	8.2 (Berkeley) 7/14/94
  */
 
+#ifndef _MPOOL_H_ 
+#define _MPOOL_H_
+
 #include <sys/queue.h>
 
 /*
@@ -99,3 +102,5 @@ int	 mpool_close __P((MPOOL *));
 void	 mpool_stat __P((MPOOL *));
 #endif
 __END_DECLS
+
+#endif
