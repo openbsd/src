@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.215 2000/02/07 00:33:03 niklas Exp $
+	$OpenBSD: pcidevs,v 1.216 2000/02/08 00:33:43 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -36,7 +36,7 @@
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
+ *	http://www.yourvote.com/pci/
  *	http://members.hyperlink.net.au/~chart/pci.htm
  */
 
@@ -1322,6 +1322,9 @@ product	SONY CXD1947A		0x8009	CXD1947A FireWire
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
+
+/* Sun */
+product SUN HME			0x1001 HME
 
 /* Sundance products */
 product SUNDANCE ST201		0x0201	ST201
