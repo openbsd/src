@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.19 1999/02/26 03:16:25 art Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.20 1999/03/15 15:58:09 deraadt Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	if (off >= va.va_size)
 		cnt = 0;
 	else if ((off + reqlen) > va.va_size)
-		cnt = nfsm_rndup(va.va_size - off);
+		cnt = va.va_size - off;
 	else
 		cnt = reqlen;
 	nfsm_reply(NFSX_POSTOPORFATTR(v3) + 3 * NFSX_UNSIGNED+nfsm_rndup(cnt));
@@ -600,7 +600,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		fp = (struct nfs_fattr *)tl;
 		tl += (NFSX_V2FATTR / sizeof (u_int32_t));
 	}
-	len = left = cnt;
+	len = left = nfsm_rndup (cnt);
 	if (cnt > 0) {
 		/*
 		 * Generate the mbuf list with the uio_iov ref. to it.
@@ -625,7 +625,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		       M_TEMP, M_WAITOK);
 		uiop->uio_iov = iv2 = iv;
 		m = mb;
-		left = cnt;
+		left = len;
 		i = 0;
 		while (left > 0) {
 			if (m == NULL)
@@ -643,7 +643,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		}
 		uiop->uio_iovcnt = i;
 		uiop->uio_offset = off;
-		uiop->uio_resid = cnt;
+		uiop->uio_resid = len;
 		uiop->uio_rw = UIO_READ;
 		uiop->uio_segflg = UIO_SYSSPACE;
 		error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
@@ -662,18 +662,19 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		uiop->uio_resid = 0;
 	vput(vp);
 	nfsm_srvfillattr(&va, fp);
-	len -= uiop->uio_resid;
-	tlen = nfsm_rndup(len);
-	if (cnt != tlen || tlen != len)
-		nfsm_adj(mb, cnt - tlen, tlen - len);
+	tlen = len - uiop->uio_resid;
+	cnt = cnt < tlen ? cnt : tlen;
+	tlen = nfsm_rndup (cnt);
+	if (len != tlen || tlen != cnt)
+		nfsm_adj(mb, len - tlen, tlen - cnt);
 	if (v3) {
-		*tl++ = txdr_unsigned(len);
+		*tl++ = txdr_unsigned(cnt);
 		if (len < reqlen)
 			*tl++ = nfs_true;
 		else
 			*tl++ = nfs_false;
 	}
-	*tl = txdr_unsigned(len);
+	*tl = txdr_unsigned(cnt);
 	nfsm_srvdone;
 }
 
