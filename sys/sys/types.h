@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.23 1995/05/28 03:06:34 jtc Exp $	*/
+/*	$NetBSD: types.h,v 1.24 1995/12/29 01:15:13 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -148,8 +148,13 @@ typedef	struct fd_set {
 #define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
 #define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
 #define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
+#ifdef _KERNEL
 #define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
 #define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
+#else
+#define	FD_COPY(f, t)	memcpy(t, f, sizeof(*(f)))
+#define	FD_ZERO(p)	memset(p, 0, sizeof(*(p)))
+#endif
 
 #if defined(__STDC__) && defined(_KERNEL)
 /*
