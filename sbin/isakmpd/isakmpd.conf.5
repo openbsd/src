@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.50 2001/04/05 23:04:53 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.51 2001/04/30 13:53:26 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -937,6 +937,17 @@ LIFE_DURATION=		4608000,4096000:8192000
 does not currently verify the Remote-ID as specified in the
 ISAKMP-peer section.
 It is still possible to verify this through the policy file.
+.Sh FILES
+.Bl -tag -width /etc/isakmpd/isakmpd.conf
+.It Pa /etc/isakmpd/isakmpd.conf
+The default
+.Nm isakmpd
+configuration file.
+.It Pa /usr/share/ipsec/isakmpd/
+A directory containing some sample
+.Nm isakmpd
+configuration files.
+.El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr keynote 1 ,
