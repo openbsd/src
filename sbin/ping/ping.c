@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.28 1998/03/31 23:04:10 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.29 1998/04/02 20:52:53 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.28 1998/03/31 23:04:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.29 1998/04/02 20:52:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -732,7 +732,8 @@ pr_pack(buf, cc, from)
 			hlen -= 2;
 			j = *++cp;
 			++cp;
-			if (j > IPOPT_MINOFF)
+			i = 0;
+			if (j > IPOPT_MINOFF) {
 				for (;;) {
 					l = *++cp;
 					l = (l<<8) + *++cp;
@@ -740,13 +741,20 @@ pr_pack(buf, cc, from)
 					l = (l<<8) + *++cp;
 					if (l == 0)
 						(void)printf("\t0.0.0.0");
-				else
-					(void)printf("\t%s", pr_addr(ntohl(l)));
-				hlen -= 4;
-				j -= 4;
-				if (j <= IPOPT_MINOFF)
-					break;
-				(void)putchar('\n');
+					else
+						(void)printf("\t%s",
+						    pr_addr(ntohl(l)));
+					hlen -= 4;
+					j -= 4;
+					i += 4;
+					if (j <= IPOPT_MINOFF)
+						break;
+					if (i >= MAX_IPOPTLEN) {
+						(void)printf("\t(truncated route)");
+						break;
+					}
+					(void)putchar('\n');
+				}
 			}
 			break;
 		case IPOPT_RR:
