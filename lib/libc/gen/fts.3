@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.2 1996/08/19 08:22:57 tholo Exp $
+.\"	$OpenBSD: fts.3,v 1.3 1997/03/21 21:36:36 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
+.\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
+.\"
 .Dd April 16, 1994
 .Dt FTS 3
 .Os
@@ -42,13 +44,13 @@
 .Fd #include <sys/stat.h>
 .Fd #include <fts.h>
 .Ft FTS *
-.Fn fts_open "char * const *path_argv" "int options" "int *compar(const FTSENT **, const FTSENT **)"
+.Fn fts_open "char * const *path_argv" "int options" "int (*compar)(const FTSENT **, const FTSENT **)"
 .Ft FTSENT *
 .Fn fts_read "FTS *ftsp"
 .Ft FTSENT *
 .Fn fts_children "FTS *ftsp" "int options"
 .Ft int
-.Fn fts_set "FTS ftsp" "FTSENT *f" "int options"
+.Fn fts_set "FTS *ftsp" "FTSENT *f" "int options"
 .Ft int
 .Fn fts_close "FTS *ftsp"
 .Sh DESCRIPTION
