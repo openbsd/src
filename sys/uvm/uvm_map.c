@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.66 2004/05/03 07:14:53 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.67 2004/05/30 22:35:43 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3039,11 +3039,18 @@ uvm_map_clean(map, start, end, flags)
  flush_object:
 		/*
 		 * flush pages if we've got a valid backing object.
+		 *
+		 * Don't PGO_FREE if we don't have write permission
+	 	 * and don't flush if this is a copy-on-write object
+		 * since we can't know our permissions on it.
 		 */
 
 		offset = current->offset + (start - current->start);
 		size = MIN(end, current->end) - start;
-		if (uobj != NULL) {
+		if (uobj != NULL &&
+		    ((flags & PGO_FREE) == 0 ||
+		     ((entry->max_protection & VM_PROT_WRITE) != 0 &&
+		      (entry->etype & UVM_ET_COPYONWRITE) == 0))) {
 			simple_lock(&uobj->vmobjlock);
 			rv = uobj->pgops->pgo_flush(uobj, offset,
 			    offset + size, flags);
