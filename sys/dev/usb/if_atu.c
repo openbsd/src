@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.35 2004/12/05 02:04:36 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.36 2004/12/05 03:04:44 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -166,8 +166,7 @@ int	atu_upload_external_firmware(struct atu_softc *sc);
 int	atu_get_card_config(struct atu_softc *sc);
 int	atu_media_change(struct ifnet *ifp);
 void	atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
-int	atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
-	    int listlen, int need_mbuf, int bufsize, struct atu_list_head *list);
+int	atu_tx_list_init(struct atu_softc *);
 int	atu_rx_list_init(struct atu_softc *);
 void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 	    int listlen);
@@ -1302,9 +1301,6 @@ USB_ATTACH(atu)
 	sc->atu_mode = INFRASTRUCTURE_MODE;
 	sc->atu_encrypt = ATU_WEP_OFF;
 
-	/* Initialise transfer lists */
-	SLIST_INIT(&sc->atu_cdata.atu_tx_free);
-
 	ic->ic_softc = sc;
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
@@ -1433,9 +1429,6 @@ atu_rx_list_init(struct atu_softc *sc)
 		c = &cd->atu_rx_chain[i];
 		c->atu_sc = sc;
 		c->atu_idx = i;
-		if (c->atu_xfer != NULL) {
-			printf("UGH RX\n");
-		}
 		if (c->atu_xfer == NULL) {
 			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
 			if (c->atu_xfer == NULL)
@@ -1448,50 +1441,37 @@ atu_rx_list_init(struct atu_softc *sc)
 				return(ENOBUFS);
 		}
 	}
-
 	return (0);
 }
 
 int
-atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
-    int listlen, int need_mbuf, int bufsize, struct atu_list_head *list)
+atu_tx_list_init(struct atu_softc *sc)
 {
-	struct atu_cdata	*cd;
+	struct atu_cdata	*cd = &sc->atu_cdata;
+	struct atu_chain	*c;
 	int			i;
 
-	cd = &sc->atu_cdata;
+	DPRINTFN(15, ("%s: atu_tx_list_init\n",
+	    USBDEVNAME(sc->atu_dev)));
 
-	DPRINTFN(15, ("%s: list init (%d entries of %d bytes)\n",
-	    USBDEVNAME(sc->atu_dev), listlen, bufsize));
+	SLIST_INIT(&cd->atu_tx_free);
+	sc->atu_cdata.atu_tx_inuse = 0;
 
-	for (i = 0; i < listlen; i++) {
-		ch->atu_sc = sc;
-		ch->atu_idx = i;
-		if (ch->atu_xfer == NULL) {
-			ch->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
-			if (ch->atu_xfer == NULL)
+	for (i = 0; i < ATU_TX_LIST_CNT; i++) {
+		c = &cd->atu_tx_chain[i];
+		c->atu_sc = sc;
+		c->atu_idx = i;
+		if (c->atu_xfer == NULL) {
+			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
+			if (c->atu_xfer == NULL)
 				return(ENOBUFS);
+			c->atu_mbuf = NULL;
+			c->atu_buf = usbd_alloc_buffer(c->atu_xfer,
+			    ATU_TX_BUFSZ);
+			if (c->atu_buf == NULL)
+				return(ENOBUFS); /* XXX free xfer */
+			SLIST_INSERT_HEAD(&cd->atu_tx_free, c, atu_list);
 		}
-
-		if (need_mbuf) {
-			if (atu_newbuf(sc, ch, NULL) == ENOBUFS)
-				return(ENOBUFS);
-		} else {
-			ch->atu_mbuf = NULL;
-		}
-
-		if ((bufsize > 0) && (ch->atu_buf == NULL)) {
-			ch->atu_buf = usbd_alloc_buffer(ch->atu_xfer,
-			    bufsize);
-			if (ch->atu_buf == NULL)
-				return(ENOBUFS);
-		}
-
-		if (list != NULL) {
-			SLIST_INSERT_HEAD(list, ch, atu_list);
-		}
-
-		ch++;
 	}
 	return(0);
 }
@@ -1917,7 +1897,6 @@ atu_init(struct ifnet *ifp)
 {
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ieee80211com	*ic = &sc->sc_ic;
-	struct atu_cdata	*cd = &sc->atu_cdata;
 	struct atu_chain	*c;
 	usbd_status		err;
 	int			i, s;
@@ -1932,10 +1911,8 @@ atu_init(struct ifnet *ifp)
 	}
 
 	/* Init TX ring */
-	if (atu_xfer_list_init(sc, cd->atu_tx_chain, ATU_TX_LIST_CNT, 0,
-	    ATU_TX_BUFSZ, &cd->atu_tx_free)) {
-		DPRINTF(("%s: tx list init failed\n",
-		    USBDEVNAME(sc->atu_dev)));
+	if (atu_tx_list_init(sc)) {
+		printf("%s: tx list init failed\n", USBDEVNAME(sc->atu_dev));
 	}
 
 	/* Init RX ring */
