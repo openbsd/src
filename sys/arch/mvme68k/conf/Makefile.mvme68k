@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.22 2003/05/23 22:16:16 tedu Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.23 2003/07/22 19:39:50 otto Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -169,6 +169,10 @@ depend:: .depend
 	mkdep ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh mkdep -f assym.dep ${CFLAGS} \
+	    ${CPPFLAGS} < ${MVME68K}/mvme68k/genassym.cf
+	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration

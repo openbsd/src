@@ -144,6 +144,10 @@ depend:: .depend
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	    ${CPPFLAGS} < ${SPARC64}/sparc64/genassym.cf
+	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@rm -f assym.dep
 
 locore.o: ${SPARC64}/sparc64/locore.s assym.h
 	${NORMAL_S}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.33 2003/05/23 22:16:16 tedu Exp $
+#	$OpenBSD: Makefile.hp300,v 1.34 2003/07/22 19:39:50 otto Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -201,7 +201,7 @@ depend:: .depend
 	fi
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${HP300}/hp300/genassym.cf
-	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
 
 # depend on root or device configuration

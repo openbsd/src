@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.24 2003/06/26 13:06:22 miod Exp $
+#	$OpenBSD: Makefile.vax,v 1.25 2003/07/22 19:39:50 otto Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -180,6 +180,10 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	    ${CPPFLAGS} < ${VAX}/vax/genassym.cf
+	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.15 2003/05/23 22:16:16 tedu Exp $
+#	$OpenBSD: Makefile.macppc,v 1.16 2003/07/22 19:39:50 otto Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -167,6 +167,10 @@ depend:: .depend
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	    ${CPPFLAGS} < ${MACPPC}/macppc/genassym.cf
+	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@rm -f assym.dep
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
