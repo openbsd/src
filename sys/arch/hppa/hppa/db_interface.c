@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.26 2003/02/18 19:01:50 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.27 2003/03/03 18:28:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -245,7 +245,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char		*modif;
 	int		(*pr)(const char *, ...);
 {
-	register_t fp, pc, rp, nargs, *argp;
+	register_t *fp, pc, rp, nargs, *argp;
 	db_sym_t sym;
 	db_expr_t off;
 	char *name;
@@ -255,17 +255,17 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		count = 65536;
 
 	if (!have_addr) {
-		fp = ddb_regs.tf_r3;
+		fp = (register_t *)ddb_regs.tf_r3;
 		pc = ddb_regs.tf_iioq_head;
 		rp = ddb_regs.tf_rp;
 	} else {
-		fp = addr;
+		fp = (register_t *)addr;
 		pc = 0;
 		rp = ((register_t *)fp)[-5];
 	}
 
 #ifdef DDB_DEBUG
-	/* (*pr) (">> %x, %x, %x\t", fp, pc, rp); */
+	/* (*pr) (">> %p, 0x%x, 0x%x\t", fp, pc, rp); */
 #endif
 	while (fp && count--) {
 
@@ -288,7 +288,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * XXX first four args are passed on registers, and may not
 		 * be stored on stack, dunno how to recover their values yet
 		 */
-		for (argp = &((register_t *)fp)[-9]; nargs--; argp--) {
+		for (argp = &fp[-9]; nargs--; argp--) {
 			if (argnp)
 				(*pr)("%s=", *argnp++);
 			(*pr)("%x%s", db_get_value((int)argp, 4, FALSE),
@@ -302,8 +302,26 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 		/* next frame */
 		pc = rp;
-		rp = ((register_t *)fp)[-5];
-		fp = ((register_t *)fp)[0];
+		rp = fp[-5];
+
+		/* if a terminal frame and not a start of a page
+		 * then skip the trapframe and the terminal frame */
+		if (!fp[0]) {
+			struct trapframe *tf;
+
+			tf = (struct trapframe *)((char *)fp - sizeof(*tf));
+
+			(*pr)("-- trap #%d%s\n", tf->tf_flags & 0x3f,
+			    (tf->tf_flags & T_USER)? " from user" : "");
+
+			if (!(tf->tf_flags & TFF_LAST)) {
+				fp = (register_t *)tf->tf_r3;
+				pc = tf->tf_iioq_head;
+				rp = tf->tf_rp;
+			} else
+				fp = 0;
+		} else
+			fp = (register_t *)fp[0];
 #ifdef DDB_DEBUG
 		/* (*pr) (">> %x, %x, %x\t", fp, pc, rp); */
 #endif
@@ -314,4 +332,3 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		(*pr)(":\n");
 	}
 }
-
