@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_sn.c,v 1.15 1997/03/17 13:09:05 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.16 1997/03/25 05:02:39 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -127,26 +128,26 @@ snsetup(sc)
 
 	sc->sc_csr = (struct sonic_reg *) sc->sc_regh;
 
-/*
- * Disable caching on the SONIC's data space.
- */
+	/*
+	 * Disable caching on the SONIC's data space.
+	 */
 	physaccess((caddr_t) sc->space, (caddr_t) kvtop((caddr_t) sc->space),
 		sizeof(sc->space), PG_V | PG_RW | PG_CI);
 
-/*
- * Put the pup in reset mode (sninit() will fix it later)
- * and clear any interrupts.
- */
+	/*
+	 * Put the pup in reset mode (sninit() will fix it later)
+	 * and clear any interrupts.
+	 */
 	sc->sc_csr->s_cr = CR_RST;
 	wbflush();
 	sc->sc_csr->s_isr = 0x7fff;
 	wbflush();
 
-/*
- * because the SONIC is basically 16bit device it 'concatenates'
- * a higher buffer address to a 16 bit offset--this will cause wrap
- * around problems near the end of 64k !!
- */
+	/*
+	 * because the SONIC is basically 16bit device it 'concatenates'
+	 * a higher buffer address to a 16 bit offset--this will cause wrap
+	 * around problems near the end of 64k !!
+	 */
 	p = &sc->space[0];
 	pp = (unsigned char *)ROUNDUP ((int)p, NBPG);
 	p = pp;
@@ -673,7 +674,8 @@ camprogram(sc)
 		continue;
 	if (timeout == 0) {
 		/* XXX */
-		panic("sonic: CAM initialisation failed\n");
+		panic("%s: CAM initialisation failed\n",
+		    sc->sc_dev.dv_xname);
 	}
 	timeout = 10000;
 	while ((csr->s_isr & ISR_LCD) == 0 && timeout--)
@@ -682,7 +684,8 @@ camprogram(sc)
 	if (csr->s_isr & ISR_LCD)
 		csr->s_isr = ISR_LCD;
 	else
-		printf("sonic: CAM initialisation without interrupt\n");
+		printf("%s: CAM initialisation without interrupt\n",
+		    sc->sc_dev.dv_xname);
 }
 
 #if 0
@@ -823,7 +826,8 @@ snintr(arg, slot)
 		wbflush();
 
 		if (isr & (ISR_BR | ISR_LCD | ISR_PINT | ISR_TC))
-			printf("sonic: unexpected interrupt status 0x%x\n", isr);
+			printf("%s: unexpected interrupt status 0x%x\n",
+			    sc->sc_dev.dv_xname, isr);
 
 		if (isr & (ISR_TXDN | ISR_TXER))
 			sonictxint(sc);
@@ -841,14 +845,19 @@ snintr(arg, slot)
 				 * if we can't detect a carrier that we have a
 				 * problem.
 				 */
+				;
 			if (isr & ISR_RDE)
-				printf("sonic: receive descriptors exhausted\n");
+				printf("%s: receive descriptors exhausted\n",
+				    sc->sc_dev.dv_xname);
 			if (isr & ISR_RBE)
-				printf("sonic: receive buffers exhausted\n");
+				printf("%s: receive buffers exhausted\n",
+				    sc->sc_dev.dv_xname);
 			if (isr & ISR_RBAE)
-				printf("sonic: receive buffer area exhausted\n");
+				printf("%s: receive buffer area exhausted\n",
+				    sc->sc_dev.dv_xname);
 			if (isr & ISR_RFO)
-				printf("sonic: receive FIFO overrun\n");
+				printf("%s: receive FIFO overrun\n",
+				    sc->sc_dev.dv_xname);
 		}
 		if (isr & (ISR_CRC | ISR_FAE | ISR_MP)) {
 #ifdef notdef
@@ -910,8 +919,9 @@ sonictxint(sc)
 		/* XXX - Do stats here. */
 
 		if ((SRO(sc->bitmode, txp, TXP_STATUS) & TCR_PTX) == 0) {
-			printf("sonic: Tx packet status=0x%x\n",
-				SRO(sc->bitmode, txp, TXP_STATUS));
+			printf("%s: Tx packet status=0x%x\n",
+			    sc->sc_dev.dv_xname,
+			    SRO(sc->bitmode, txp, TXP_STATUS));
 
 			/* XXX - DG This looks bogus */
 			if (sc->mtd_hw != sc->mtd_free) {
@@ -948,7 +958,8 @@ sonicrxint(sc)
 	while (SRO(bitmode, rda, RXPKT_INUSE) == 0) {
 		unsigned status = SRO(bitmode, rda, RXPKT_STATUS);
 		if ((status & RCR_LPKT) == 0)
-			printf("sonic: more than one packet in RBA!\n");
+			printf("%s: more than one packet in RBA!\n",
+			    sc->sc_dev.dv_xname);
 
 		orra = RBASEQ(SRO(bitmode, rda, RXPKT_SEQNO)) & RRAMASK;
 		len = SRO(bitmode, rda, RXPKT_BYTEC) -
@@ -1041,7 +1052,8 @@ sonic_read(sc, pkt, len)
 		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
 	}
 	if (len < ETHERMIN || len > ETHERMTU) {
-		printf("sonic: invalid packet length %d bytes\n", len);
+		printf("%s: invalid packet length %d bytes\n",
+		    sc->sc_dev.dv_xname, len);
 		return (0);
 	}
 
