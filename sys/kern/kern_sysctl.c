@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.82 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.83 2003/06/10 21:50:26 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -554,7 +554,8 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 /*
  * Debugging related system variables.
  */
-struct ctldebug debug0, debug1, debug2, debug3, debug4;
+extern struct ctldebug debug0, debug1;
+struct ctldebug debug2, debug3, debug4;
 struct ctldebug debug5, debug6, debug7, debug8, debug9;
 struct ctldebug debug10, debug11, debug12, debug13, debug14;
 struct ctldebug debug15, debug16, debug17, debug18, debug19;
