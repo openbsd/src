@@ -29,22 +29,28 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: labs.3,v 1.6 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: labs.3,v 1.7 2003/07/21 20:20:04 millert Exp $
 .\"
-.Dd June 29, 1991
+.Dd May 14, 2003
 .Dt LABS 3
 .Os
 .Sh NAME
-.Nm labs
+.Nm labs, llabs
 .Nd return the absolute value of a long integer
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft long
-.Fn labs "long j"
+.Fn labs "long i"
+.Ft long long
+.Fn llabs "long long j"
 .Sh DESCRIPTION
 The
 .Fn labs
 function returns the absolute value of the long integer
+.Fa i .
+The
+.Fn llabs
+function returns the absolute value of the long long integer
 .Fa j .
 .Sh SEE ALSO
 .Xr abs 3 ,
@@ -54,7 +60,9 @@ function returns the absolute value of the long integer
 .Sh STANDARDS
 The
 .Fn labs
-function conforms to
-.St -ansiC .
+and
+.Fn llabs
+functions conform to
+.St -ansiC-99 .
 .Sh BUGS
 The absolute value of the most negative integer remains negative.
