@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 1998/08/13 12:56:54 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 1998/10/30 19:16:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPPA_CONF_H_
-#define _HPPA_CONF_H_
+#ifndef _MACHINE_CONF_H_
+#define _MACHINE_CONF_H_
 
 #include <sys/conf.h>
 struct tty;
@@ -41,6 +41,7 @@ cdev_decl(pdc);
 int pdcparam __P((struct tty *, struct termios *));
 void pdcstart __P((struct tty *));
 
-cdev_decl(dca);
+cdev_decl(fd);
+bdev_decl(fd);
 
-#endif /* _HPPA_CONF_H_ */
+#endif /* _MACHINE_CONF_H_ */
