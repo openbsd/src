@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.3 2000/04/04 22:52:30 aaron Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.4 2000/04/23 17:33:47 maja Exp $ */
 /*	$NetBSD: if_cue.c,v 1.21 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -709,6 +709,10 @@ USB_ATTACH(cue)
 
 	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->cue_dev),
 	    ether_sprintf(eaddr));
+
+#if defined(__OpenBSD__)
+	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+#endif
 
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);

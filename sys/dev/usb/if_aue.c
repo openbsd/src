@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.4 2000/04/14 22:50:24 aaron Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.5 2000/04/23 17:33:47 maja Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -883,6 +883,10 @@ USB_ATTACH(aue)
 
 	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->aue_dev),
 	    ether_sprintf(eaddr));
+
+#if defined(__OpenBSD__)
+	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+#endif
 
 	/* Initialize interface info.*/
 	ifp->if_softc = sc;
