@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.10 2002/03/14 20:41:50 mickey Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.11 2003/05/14 08:45:56 cloder Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: traverse.c,v 1.10 2002/03/14 20:41:50 mickey Exp $";
+static char rcsid[] = "$OpenBSD: traverse.c,v 1.11 2003/05/14 08:45:56 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -666,7 +666,7 @@ loop:
 		msg("short read error from %s: [block %d]: count=%d, got=%d\n",
 			disk, blkno, size, cnt);
 	if (++breaderrors > BREADEMAX) {
-		msg("More than %d block read errors from %d\n",
+		msg("More than %d block read errors from %s\n",
 			BREADEMAX, disk);
 		broadcast("DUMP IS AILING!\n");
 		msg("This is an unrecoverable error.\n");
