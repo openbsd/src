@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.21 2001/11/30 22:08:13 miod Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.22 2001/11/30 23:14:28 miod Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -593,7 +593,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	/*
 	 * invalidate remainder of kernel PT
 	 */
-	while (pg < (paddr_t) (ptpa + ptsize))
+	while ((paddr_t)pg < (paddr_t) (ptpa + ptsize))
 		*pg++ = PG_NV;
 
 	/*
