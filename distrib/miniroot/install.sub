@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.317 2003/08/16 20:37:24 krw Exp $
+#	$OpenBSD: install.sub,v 1.318 2003/08/17 18:18:50 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -232,15 +232,16 @@ ask_until () {
 # $1 = device name (disk, cd, etc.)
 # $2 = question to ask
 # $3 = list of devices from /var/run/dmesg.boot scan
-# $4 = default device. If it is not specified, use the first device in $3.
+# $4 = default device. If it is not specified, use the first device in $3
+# $5 = error message if no devices in $3, defaults to 'No $1s found.'
 #
 # $resp holds device selected at exit, or 'done'
 ask_which () {
-	local _name=$1 _query=$2 _devs=$3 _defdev=$4
+	local _name=$1 _query=$2 _devs=$3 _defdev=$4 _err=$5
 
 	set -- $_devs
 	if [[ $# -lt 1 ]]; then
-		echo "Done - no available ${_name}s found."
+		echo "${_err:=No ${_name}s found}."
 		resp=done
 		return
 	fi
@@ -253,7 +254,7 @@ ask_which () {
 		# Put both lines in ask prompt, rather than use a
 		# separate 'echo' to ensure the entire question is
 		# re-ask'ed after a '!' or '!foo' shell escape.
-		ask "Available ${_name}s are: ${_devs}.\nWhich one $_query (or 'done')" "$_defdev"
+		ask "Available ${_name}s are: ${_devs}.\nWhich one ${_query}? (or 'done')" "$_defdev"
 		[[ $resp == done ]] && break
 
 		# Quote $resp to prevent user from confusing isin() by
@@ -401,34 +402,6 @@ makedev() {
 	DEVSMADE=`addel $_dev $DEVSMADE`
 }
 
-get_rootdisk() {
-	local _defdsk
-
-	if [[ $MODE == install && ! -f /etc/fstab ]]; then
-		cat << __EOT
-
-You will now initialize the disk(s) that OpenBSD will use. To enable all
-available security features you should configure the disk(s) to allow the
-creation of separate filesystems for /, /tmp, /var, /usr, and /home.
-
-__EOT
-fi
-
-	ROOTDISK=
-	ROOTDEV=
-	SWAPDEV=
-
-	set -- $DKDEVS
-	[[ $# -gt 1 ]] && _defdsk=done
-
-	ask_which "disk" "is the root disk?" "$DKDEVS" "$_defdsk"
-	[[ $resp == done ]] && exit
-
-	ROOTDISK=$resp
-	ROOTDEV=${ROOTDISK}a
-	SWAPDEV=${ROOTDISK}b
-}
-
 # Create an entry in the hosts file. If an entry with the
 # same symbolic name already exists, delete it.
 # $1 - IP address
@@ -502,7 +475,8 @@ configure_all_interfaces() {
 	while : ; do
 		_IFDEVS=`rmel "$_ifs" $_IFDEVS`
 
-		ask_which "interface" "do you wish to initialize?" "$_IFDEVS"
+		ask_which "interface" "do you wish to initialize" "$_IFDEVS" "" \
+		    "No more interfaces to initialize"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
@@ -1024,7 +998,7 @@ install_mounted_fs() {
 install_cdrom() {
 	local _drive _part _fstype _directory _n
 
-	ask_which "CD-ROM" "contains the ${MODE} media?" "$CDDEVS"
+	ask_which "CD-ROM" "contains the ${MODE} media" "$CDDEVS"
 	[[ $resp == done ]] && return
 
 	_drive=$resp
@@ -1109,7 +1083,7 @@ mount_a_disk() {
 	local _drive _def_partition _partition_range _partition
 	local _fstype _fsopts
 
-	ask_which "disk" "contains the ${MODE} sets?" "$DKDEVS"
+	ask_which "disk" "contains the ${MODE} sets" "$DKDEVS"
 	[[ $resp == done ]] && return 1
 
 	_drive=$resp
@@ -1760,5 +1734,23 @@ umount -v /mnt 1>/dev/null 2>&1
 # Introduce ourselves.
 welcome
 
-# Get ROOTDISK and default ROOTDEV
-get_rootdisk
+# Get ROOTDISK, ROOTDEV and SWAPDEV.
+if [[ $MODE == install && ! -f /etc/fstab ]]; then
+	cat << __EOT
+
+You will now initialize the disk(s) that OpenBSD will use. To enable all
+available security features you should configure the disk(s) to allow the
+creation of separate filesystems for /, /tmp, /var, /usr, and /home.
+
+__EOT
+fi
+
+set -- $DKDEVS
+[[ $# -gt 1 ]] && _defdsk=done
+
+ask_which "disk" "is the root disk" "$DKDEVS" "$_defdsk"
+[[ $resp == done ]] && exit
+
+ROOTDISK=$resp
+ROOTDEV=${ROOTDISK}a
+SWAPDEV=${ROOTDISK}b
