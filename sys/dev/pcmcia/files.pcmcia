@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.27 2000/03/29 20:23:21 mickey Exp $
+#	$OpenBSD: files.pcmcia,v 1.28 2000/04/03 01:02:00 mickey Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -82,3 +82,7 @@ file    dev/ic/am79c930.c                       awi
 device	ray: ether, ifnet, ifmedia
 attach	ray at pcmcia
 file	dev/pcmcia/if_ray.c			ray
+
+# Aironet 4500/4800 802.11 DS WLAN
+attach	an at pcmcia with an_pcmcia
+file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
