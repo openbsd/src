@@ -1,4 +1,5 @@
 ./usr/bin/addr2line
+./usr/bin/gccbug
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/arm
@@ -317,6 +318,7 @@
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libform_pic.a
+./usr/lib/libfrtbegin_pic.a
 ./usr/lib/libg2c_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
