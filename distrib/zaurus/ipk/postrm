@@ -1,7 +1,18 @@
 #!/bin/sh
+
 rmmod zbsdmod
+
+cd /root/etc/rc.d || exit $?
+
 mount -o remount,rw /
+
 rm -f /root/etc/rc.d/rc.zboot
 rm -f /root/etc/rc.d/zboot
 rm -f /root/etc/rc.d/zbsdmod.o
+
+# XXX removing ext2/ext3 and vfat hacks can cause HDD1 Error and such.
+#if [ -f /root/etc/rc.d/rc.rofilesys.openbsd ]; then
+#	mv -f /root/etc/rc.d/rc.rofilesys.openbsd /root/etc/rc.d/rc.rofilesys
+#fi
+
 mount -o remount,ro /

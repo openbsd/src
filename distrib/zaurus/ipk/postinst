@@ -1,12 +1,34 @@
 #!/bin/sh
+
+cd /root/etc/rc.d || exit $?
+
 rmmod zbsdmod 2>/dev/null
+
 mount -o remount,rw /
-rm -f /root/etc/rc.d/rc.zboot
-rm -f /root/etc/rc.d/zboot
-rm -f /root/etc/rc.d/zbsdmod.o
-cp /hdd2/OpenBSD/rc.zboot /root/etc/rc.d
-cp /hdd2/OpenBSD/zboot /root/etc/rc.d
-cp /hdd2/OpenBSD/zbsdmod.o /root/etc/rc.d
+
+if [ ! -f rc.rofilesys.openbsd ]; then
+	cp -p rc.rofilesys rc.rofilesys.openbsd
+fi
+
+cat rc.rofilesys | sed -e '/vfat/s/^/#/' > tmp || exit $?
+mv tmp rc.rofilesys
+cat rc.rofilesys | sed -e '/^LINUXFMT=ext3$/s/^/#/' \
+    -e '/^#LINUXFMT=ext2$/s/^#//' > tmp || exit $?
+mv tmp rc.rofilesys
+cat rc.rofilesys | sed \
+    -e '/\/pcmcia start$/s,$,; sh /root/etc/rc.d/rc.zboot,' > tmp || exit $?
+mv tmp rc.rofilesys
+chown root:root rc.rofilesys
+chmod 775 rc.rofilesys
+
+rm -f rc.zboot
+rm -f zboot
+rm -f zbsdmod.o
+cp /hdd2/OpenBSD/rc.zboot .
+cp /hdd2/OpenBSD/zboot .
+cp /hdd2/OpenBSD/zbsdmod.o .
+
 sync; sleep 3
 mount -o remount,ro /
+
 insmod /hdd2/OpenBSD/zbsdmod.o
