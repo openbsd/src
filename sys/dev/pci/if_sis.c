@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.28 2002/11/19 18:40:17 jason Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.29 2002/11/20 15:19:33 fgsch Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -130,7 +130,7 @@ void sis_eeprom_getword(struct sis_softc *, int, u_int16_t *);
 #ifdef __i386__
 void sis_read_cmos(struct sis_softc *, struct pci_attach_args *, caddr_t, int, int);
 #endif
-void sis_read_630ea1_enaddr(struct sis_softc *, struct pci_attach_args *);
+void sis_read_mac(struct sis_softc *, struct pci_attach_args *);
 void sis_read_eeprom(struct sis_softc *, caddr_t, int, int, int);
 
 int sis_miibus_readreg(struct device *, int, int);
@@ -337,7 +337,7 @@ void sis_read_cmos(sc, pa, dest, off, cnt)
 }
 #endif
 
-void sis_read_630ea1_enaddr(sc, pa)
+void sis_read_mac(sc, pa)
 	struct sis_softc *sc;
 	struct pci_attach_args *pa;
 {
@@ -384,7 +384,8 @@ int sis_miibus_readreg(self, phy, reg)
 		return(val);
 	}
 
-	if (sc->sis_type == SIS_TYPE_900 && phy != 0)
+	if (sc->sis_type == SIS_TYPE_900 &&
+	    sc->sis_rev < SIS_REV_635 && phy != 0)
 		return(0);
 
 	CSR_WRITE_4(sc, SIS_PHYCTL, (phy << 11) | (reg << 6) | SIS_PHYOP_READ);
@@ -743,6 +744,8 @@ void sis_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
+	sc->sis_rev = PCI_REVISION(pa->pa_class);
+
 	/* Reset the adapter. */
 	sis_reset(sc);
 
@@ -803,17 +806,16 @@ void sis_attach(parent, self, aux)
 		 * requires some datasheets that I don't have access
 		 * to at the moment.
 		 */
-		command = pci_conf_read(pc, pa->pa_tag,
-		    PCI_CLASS_REG) & 0x000000ff;
-		if (command == SIS_REV_630S ||
-		    command == SIS_REV_630E)
+		if (sc->sis_rev == SIS_REV_630S ||
+		    sc->sis_rev == SIS_REV_630E ||
+		    sc->sis_rev == SIS_REV_630EA1)
 			sis_read_cmos(sc, pa, (caddr_t)&sc->arpcom.ac_enaddr,
 			    0x9, 6);
 		else
 #endif
-		if (command == SIS_REV_630EA1 ||
-		    command == SIS_REV_630ET)
-			sis_read_630ea1_enaddr(sc, pa);
+		if (sc->sis_rev == SIS_REV_635 ||
+		    sc->sis_rev == SIS_REV_630ET) 	
+			sis_read_mac(sc, pa);
 		else
 			sis_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 			    SIS_EE_NODEADDR, 3, 0);
