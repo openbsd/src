@@ -2118,11 +2118,11 @@ API_EXPORT(char *) ap_get_local_host(pool *a)
 	   }
         }
 	else
-            /* Since we found a fdqn, return it with no logged message. */
+            /* Since we found a fqdn, return it with no logged message. */
             return server_hostname;
     }
 
-    /* If we don't have an fdqn or IP, fall back to the loopback addr */
+    /* If we don't have an fqdn or IP, fall back to the loopback addr */
     if (!server_hostname) 
         server_hostname = ap_pstrdup(a, "127.0.0.1");
     
