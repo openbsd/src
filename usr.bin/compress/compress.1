@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.19 2003/06/23 20:51:02 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.20 2003/06/30 03:42:05 millert Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -47,31 +47,31 @@
 .Nm compress
 .Op Fl LV
 .Nm compress
-.Op Fl cdfgOqrtv123456789
+.Op Fl cdfghOqrtv123456789
 .Op Fl b Ar bits
 .Op Fl S Ar suffix
 .Op Fl o Ar filename
 .Op Ar
 .Nm uncompress
-.Op Fl cfqrtv
+.Op Fl cfhqrtv
 .Op Fl o Ar filename
 .Op Ar
 .Pp
 .Nm gzip
 .Op Fl LV
 .Nm gzip
-.Op Fl cdfgOqrtv123456789
+.Op Fl cdfghOqrtv123456789
 .Op Fl b Ar bits
 .Op Fl S Ar suffix
 .Op Fl o Ar filename
 .Op Ar
 .Nm gunzip
-.Op Fl cfqrtv
+.Op Fl cfhqrtv
 .Op Fl o Ar filename
 .Op Ar
 .Pp
 .Nm zcat
-.Op Fl fqr
+.Op Fl fhqr
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -163,6 +163,8 @@ Use deflate scheme which reportedly provides better compression rates (force
 mode).
 This flag need not be specified when invoked as
 .Nm gzip .
+.It Fl h
+Print a short help message.
 .It Fl 1...9
 Use deflate scheme with compression factor of
 .Fl 1

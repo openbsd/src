@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2003/06/29 21:14:37 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2003/06/30 03:42:05 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.30 2003/06/29 21:14:37 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.31 2003/06/30 03:42:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ const struct compressor {
 
 int permission(const char *);
 void setfile(const char *, struct stat *);
-void usage(void);
+__dead void usage(int);
 int compress(const char *, const char *, const struct compressor *,
     int, struct stat *);
 int decompress(const char *, const char *, const struct compressor *,
@@ -266,9 +266,10 @@ main(int argc, char *argv[])
 			break;
 
 		case 'h':
-		case '?':
+			usage(0);
+			break;
 		default:
-			usage();
+			usage(1);
 		}
 	argc -= optind;
 	argv += optind;
@@ -620,11 +621,11 @@ permission(const char *fname)
 	return (first == 'y');
 }
 
-void
-usage(void)
+__dead void
+usage(int status)
 {
 	fprintf(stderr,
-	    "usage: %s [-cdfgOqrtvV] [-b bits] [-S suffix] [-[1-9]] [file ...]\n",
+	    "usage: %s [-cdfghOqrtvV] [-b bits] [-S suffix] [-[1-9]] [file ...]\n",
 	    __progname);
-	exit(1);
+	exit(status);
 }
