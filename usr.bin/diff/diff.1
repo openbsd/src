@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff.1,v 1.22 2003/09/18 09:38:33 jmc Exp $
+.\" $OpenBSD: diff.1,v 1.23 2004/01/07 17:19:05 otto Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd differential file and directory comparator
 .Sh SYNOPSIS
 .Nm diff
-.Op Fl abdilqtTw
+.Op Fl abdilpqtTw
 .Oo
 .Fl c | Fl e | Fl f |
 .Fl n | Fl u
@@ -45,7 +45,7 @@
 .Op Fl L Ar label
 .Ar file1 file2
 .Nm diff
-.Op Fl abdilqtTw
+.Op Fl abdilpqtTw
 .Op Fl L Ar label
 .Fl C Ar number
 .Ar file1 file2
@@ -54,12 +54,12 @@
 .Fl D Ar string
 .Ar file1 file2
 .Nm diff
-.Op Fl abdilqtTw
+.Op Fl abdilpqtTw
 .Op Fl L Ar label
 .Fl U Ar number
 .Ar file1 file2
 .Nm diff
-.Op Fl abdilNPqtTw
+.Op Fl abdilNPpqtTw
 .Oo
 .Fl c | Fl e | Fl f |
 .Fl n | Fl u
@@ -205,6 +205,12 @@ after all text file differences are reported.
 Print
 .Ar label
 instead of the first file name and time in the context or unified diff header.
+.It Fl p
+With unified and context diffs, show with each change
+the first 40 characters of the last line before the context beginning
+with a letter, an underscore or a dollar sign.
+For C source code following standard layout conventions, this will
+show the prototype of the function the change applies to.
 .It Fl t
 Will expand tabs in output lines.
 Normal or
