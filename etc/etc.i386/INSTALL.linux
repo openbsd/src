@@ -1,29 +1,29 @@
-$OpenBSD: INSTALL.linux,v 1.11 2002/06/09 06:15:14 todd Exp $
+$OpenBSD: INSTALL.linux,v 1.12 2004/08/18 08:57:33 espie Exp $
 
    Linux + OpenBSD: it's possible
 
-   by Marc Espie --  espie@cvs.OpenBSD.org
+   by Marc Espie --  espie@OpenBSD.org
+   recent information by Tim Kornau -- opti@openbsd.de
 
 It is perfectly possible to have Linux and OpenBSD on the same disk.
-As of this writing (OpenBSD 2.5 & linux 2.2.3), both can read and write
-other partitions, though Linux's support of BSD filesystems is still
-experimental. Please note that 2.0 linux kernels, and most 2.1 kernels
-don't know how to handle OpenBSD partitions (other BSD partitions are type
-A5 and differ significantly from OpenBSD partitions--type A6).
+Both can read and write other partitions.
 
 You can even install OpenBSD from an ext2fs partition (choose install from
 disk... ext2fs does not appear in the choices, but `default' it is).
 
 If you are starting from scratch, it is better to install Linux first.
-Since you are going to use several OSes, you need a way to multi-boot, and
-Linux's lilo fits the bill fine.
+Since you are going to use several OSes, you need a way to multi-boot.
+If you keep Windows NT (or XP) on the disk, its multi-booter can deal
+with OpenBSD (see the FAQ). Otherwise Linux's lilo fits the bill fine.
+Recent versions of GRUB can also multiboot OpenBSD.
 
-IMPORTANT: don't forget about lilo. You can't uninstall linux from this
-disk without *first* restoring the MBR to an un-liloed state and making
-*dead* sure OpenBSD boots as a default.
+IMPORTANT: don't forget about lilo. If you use lilo, you can't uninstall 
+linux from this disk without *first* restoring the MBR to an 
+un-liloed state and making *dead* sure OpenBSD boots as a default.
 
-If you want to grab space from a Windows/DOS partition, use fips.
+If you want to grab space from an older Windows/DOS partition, use fips.
 Fips20 knows all about FAT32, so windows 95 is no longer a problem.
+Or use the commercial offering Partition Magic.
 
 Other sources of information, especially concerning other BSD systems,
 must be taken with a healthy dose of skepticism. OpenBSD definitely
@@ -84,30 +84,6 @@ They know more about its internal workings than you do. So use linux fdisk
 for linux partitions, don't let it touch the OpenBSD disklabel, and
 reciprocally.
 
-DOS and BIOS and all the problems of the world
-----------------------------------------------
-Due to historical accident, your machine resident `Operating System',
-also known as the BIOS, can only access hard-disks up to cylinder 1024.
-Various lying tricks are used, so that your whole disk is usually
-accessible to the BIOS, except for very large disks (>8Gb).
-
-fdisk is usually going to give you reliable information: anything that is
-before cylinder 1024 can be accessed through the BIOS.
-
-When you first boot up OpenBSD, the kernel will detect your hardware,
-and give you a message such as
-  wd0 at wdc0 drive 0: <TOSHIBA MK4006MAV>
-  wd0: 3909MB, 7944 cyl, 16 head, 63 sec, 512 bytes/sec, 8007552 sec total
-  wd0: using 16-sector 16-bit pio transfers, lba addressing
-don't panic. This is just the real disk geometry. Trust fdisk on this one.
-
-If fdisk shows you more than 1024 cylinders, you will have to cram OpenBSD
-into that. Actually, it's enough that the disklabel partition used for
-booting fits within the first 1024 cylinders (a:), so if you can get your
-OpenBSD partition to start within 1024 cylinders, just get a small enough
-a:, and you're in the clear.  (You can get by with a: a bit under 20Mb,
-BTW, just enough for /bin /sbin, a kernel and /etc).
-
 Mapping your disk
 -----------------
 Starting from Linux, get a grasp of your partitions. Use df to check which
@@ -127,8 +103,6 @@ Units = cylinders of 8064 * 512 bytes
 The + at the end of the DOS line is because linux fdisk is brain-damaged
 and wants to write output in 1024-sized chunks, so this stands for
 `850720 blocks and a half'
-
-Older flavors of linux fdisk won't recognize a6 as OpenBSD.
 
 As you can see, my linux setup is very small. I have enough to check how
 things such as gcc work on linux, but my machine is definitely an
@@ -202,20 +176,6 @@ hwclock --systohc --utc.
 
 Normally, this is one of the choices that the Linux installation program
 lets you do: set your hardware clock to GMT.
-
-The Linux partition table and OpenBSD
--------------------------------------
-There used to be a problem with Linux's rc: it always mounts all file systems
-even in single-user mode.  The 2.2 kernels fix that in a handy way: the
-partition recorded in the MBR is scanned for a disklabel, and marked with
-a ! if one is found. Then, the rest of the disk is scanned, before
-coming back to the disklabel itself. That way, changes to the
-OpenBSD disklabel won't affect the setup of the rest of the disk.
-
-Anyhow, you may want to check that you can still boot from a Linux kernel
-which doesn't know about disklabels.  The long term solution is to fix your
-inittab and rc scripts to make deadly sure that single-user boot will work
--- preferably by moving disk mounts to multi-user.
 
 The OpenBSD installation
 ------------------------
@@ -347,8 +307,33 @@ Once the disklabel is written to disk, the installation proceeds as usual.
 
 ext2fs partitions are perfectly usable from OpenBSD.
 
-Booting
--------
+Booting with GRUB
+-----------------
+Here is a sample configuration for a linux 2.4, linux 2.6, OpenBSD 3.6,
+WindowsXP
+                                                                                
+timeout 30                                                                      
+default 0                                                                       
+fallback 1                                                                      
+                                                                                
+title OpenBSD                                                                   
+rootnoverify (hd0,3)                                                            
+makeactive                                                                      
+chainloader +1                                                                  
+                                                                                
+title WinOS                                                                     
+rootnoverify (hd0,0)                                                            
+chainloader +1                                                                  
+                                                                                
+title           Debian GNU/Linux, kernel                                        
+root            (hd0,2)                                                         
+kernel          /boot/vmlinuz root=/dev/ide/host0/bus0/target0/lun0/part3 ro    
+savedefault                                                                     
+boot                                                                            
+
+
+Booting with lilo
+-----------------
 First time I booted my system back, I did not get into OpenBSD as expected...
 I plain forgot I had installed lilo in the master boot block, and lilo
 does not heed the active partition flag. The fix was rather simple: from
@@ -367,25 +352,16 @@ image=/boot/vmlinuz-2.2.3
         vga=4
         root=/dev/hda2
         read-only
-image=/boot/vmlinuz-2.0.36-0.7
-        label=linux.orig
-        root=/dev/hda2
-        read-only
 other=/dev/hda1
         label=dos
         table=/dev/hda
-
-More details: I've kept the original redhat installation as
-vmlinuz-2.0.36 because I'm paranoid, but the real setup uses only
-bsd, linux, and dos.
 
 Rerun lilo (DON'T FORGET THAT STEP), and voila, OpenBSD is able to boot!
 
 Linux and OpenBSD partitions
 ----------------------------
-The 2.2 kernel does incorporate my patch for the correct handling of
-OpenBSD partitions. You will probably need to reconfigure and rebuild
-your linux kernel to recognize BSD disklabels... Here is how it shows up
+You will probably need to reconfigure and rebuild your linux kernel 
+to recognize BSD disklabels... Here is how it shows up
 on my box:
 
 Partition check:
@@ -410,7 +386,7 @@ and here is my linux fstab:
 /dev/fd0                /mnt/floppy             ext2    noauto          0 0
 /dev/cdrom              /mnt/cdrom              iso9660 noauto,ro
 
-2.2 kernels also include a working UFS, though you may run into problems when
+linux kernels also include a working UFS, though you may run into problems when
 writing to ufs partitions.   Note the ufstype=44bsd. If you forget that
 in your mounts, it will fail. Depending upon your installation, you may
 get a failure message, or you will have to dig through /var/log/ to find
@@ -484,30 +460,15 @@ you know what you are doing, and don't expect there will always be someone
 to get you out of trouble. If your setup is really too weird, no-one can help.
 
 As far as the boot process goes, I think lilo allows you to boot from ANY
-partition recorded in the MBR, including extended partitions. The only
-limitation is that the next stage bootstrap MUST take place entirely within
-the first 1024 cylinders of the disk, as seen by the BIOS.  OpenBSD
-MBR partitions that extend beyond cylinder 1024 are no problem, as long as
-the disklabel root (a) partition doesn't extend beyond cylinder 1024.
+partition recorded in the MBR, including extended partitions. 
 
-Since Windows, OpenBSD, and linux all have that limitation, the easiest way
-is to start with Windows partitions (entirely within the first 1024
-cylinders), follow with the linux boot partition (still within the first
-1024 cylinders), then the OpenBSD area (which can span the 1024 cylinders
-boundary, as long as a lives within the limit), and the remaining linux
-partitions.
-
-Weirder setups are unwarranted.  Several bsd on the same disk MAY be
-possible, but will be harder to manage:
+Several bsd on the same disk MAY be possible, but will be harder to manage:
 - it is better if disklabels match,
 - linux will obey the first disklabel it finds, try to ensure this is
 OpenBSD disklabel, it can describe more partitions than the others,
 - other BSD may get confused with each other data. Normally, the A5/A6
 split ensures that Net/Free won't get mixed up with OpenBSD,
 - FreeBSD and NetBSD will probably get confused with each other,
-- if you have a 1024 cylinder limit, all boot areas must stay within the
-1024 cylinder boundary, so only one of the BSD may span that limit, apart
-from very, very nasty tricks.
 
 Finally, how much disk space do you have anyway ?  Do you really need to
 cram that many OSes on the same disk ? Put them on separate disks rather.
