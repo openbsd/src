@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.25 1997/11/13 21:14:15 rees Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.26 1997/11/16 07:46:46 millert Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5175,7 +5175,7 @@ tulip_pci_attach(
 #endif
 
 
-#if defined(__alpha__)
+#if defined(__alpha__) && defined(__NetBSD__)
     /*
      * The Alpha SRM console encodes a console set media in the driver
      * part of the CFDA register.  Note that the Multia presents a
