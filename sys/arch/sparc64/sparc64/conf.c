@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2001/09/17 04:20:28 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2001/09/19 23:41:55 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -403,7 +403,7 @@ static int chrtoblktbl[] = {
 	/* 58 */	18,
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
-	/* 61 */	NODEV,
+	/* 61 */	5,
 	/* 62 */	NODEV,
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
