@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.95 2000/05/25 19:09:22 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.96 2000/06/19 19:14:39 todd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -84,6 +84,11 @@ mtree
 # ./etc/mtree
 ..
 
+# ./etc/photuris
+photuris
+# ./etc/photuris
+..
+
 # ./etc/ppp
 ppp
 # ./etc/ppp
@@ -115,14 +120,14 @@ lib
 # ./etc/ssl
 ..
 
+# ./etc/tcfs
+tcfs
+# ./etc/tcfs
+..
+
 # ./etc/uucp
 uucp
 # ./etc/uucp
-..
-
-# ./etc/photuris
-photuris
-# ./etc/photuris
 ..
 
 # ./etc
