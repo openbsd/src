@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.6 2003/01/14 11:38:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -149,7 +149,7 @@ devboot(dev, p)
 			unit = 0;
 			break;
 		}
-		dev = bootdev = MAKEBOOTDEV(type, 0, 0, unit, 0);
+		dev = bootdev = MAKEBOOTDEV(type, 0, 0, unit, B_PARTITION(dev));
 	}
 #ifdef _TEST
 	*p++ = '/';
