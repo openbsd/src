@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1996/06/02 05:05:36 tholo Exp $
+#	$OpenBSD: Makefile,v 1.13 1996/06/03 07:03:41 mickey Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -40,7 +40,7 @@ distribution: distrib-dirs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
-	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
+	pwd_mkdb -p -d ${DESTDIR}/etc ${DESTDIR}/etc/master.passwd
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	(cd root; \
