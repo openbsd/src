@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.65 2001/06/24 22:34:05 fgsch Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.66 2001/06/25 05:04:43 kjell Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -33,6 +33,7 @@
 
 #include "bpfilter.h"
 #include "gif.h"
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,7 +51,8 @@
 #include <net/if_llc.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#ifdef PACKETFILTER
+
+#if NPF > 0
 #include <net/pfvar.h>
 #endif
 
@@ -63,10 +65,6 @@
 #include <netinet/ip_ipsp.h>
 
 #include <net/if_enc.h>
-#ifdef IPFILTER
-#include <netinet/ip_fil_compat.h>
-#include <netinet/ip_fil.h>
-#endif
 #endif
 
 #if NBPFILTER > 0
@@ -144,7 +142,7 @@ u_int8_t bridge_filterrule __P((struct brl_head *, struct ether_header *));
 	 (a)->ether_addr_octet[2] == 0x5e)
 
 
-#ifdef PACKETFILTER
+#if NPF > 0
 /*
  * Filter hooks
  */
@@ -1865,7 +1863,7 @@ bridge_flushrule(bif)
 	return (0);
 }
 
-#ifdef PACKETFILTER
+#if NPF > 0
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
