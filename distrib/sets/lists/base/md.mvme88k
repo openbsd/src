@@ -15,3 +15,4 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
+./usr/lib/perl5/site_perl/m88k-openbsd/dbm.ph

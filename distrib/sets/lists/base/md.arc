@@ -411,3 +411,4 @@
 ./usr/mipsel-unknown-openbsd2.4/bin
 ./usr/mipsel-unknown-openbsd2.4/lib
 ./usr/mipsel-unknown-openbsd2.4/lib/ldscripts
+./usr/lib/perl5/site_perl/mips-openbsd/dbm.ph

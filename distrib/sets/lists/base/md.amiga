@@ -593,3 +593,4 @@
 ./usr/share/keymaps/amiga/din.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph

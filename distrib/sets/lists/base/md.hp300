@@ -596,3 +596,4 @@
 ./usr/mdec/uboot.raw
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
+./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph

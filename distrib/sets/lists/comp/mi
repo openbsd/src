@@ -26,6 +26,7 @@
 ./usr/bin/strip
 ./usr/bin/xstr
 ./usr/bin/yacc
+./usr/include/dbm.h
 ./usr/include/a.out.h
 ./usr/include/ar.h
 ./usr/include/arpa/ftp.h
@@ -271,9 +272,7 @@
 ./usr/include/dev/raidframe/rf_debugprint.h
 ./usr/include/dev/raidframe/rf_decluster.h
 ./usr/include/dev/raidframe/rf_declusterPQ.h
-./usr/include/dev/raidframe/rf_demo.h
 ./usr/include/dev/raidframe/rf_desc.h
-./usr/include/dev/raidframe/rf_diskevent.h
 ./usr/include/dev/raidframe/rf_diskqueue.h
 ./usr/include/dev/raidframe/rf_disks.h
 ./usr/include/dev/raidframe/rf_diskthreads.h
@@ -286,8 +285,6 @@
 ./usr/include/dev/raidframe/rf_fifo.h
 ./usr/include/dev/raidframe/rf_freelist.h
 ./usr/include/dev/raidframe/rf_general.h
-./usr/include/dev/raidframe/rf_geometry.h
-./usr/include/dev/raidframe/rf_heap.h
 ./usr/include/dev/raidframe/rf_hist.h
 ./usr/include/dev/raidframe/rf_interdecluster.h
 ./usr/include/dev/raidframe/rf_invertq.h
@@ -301,7 +298,6 @@
 ./usr/include/dev/raidframe/rf_openbsd.h
 ./usr/include/dev/raidframe/rf_options.h
 ./usr/include/dev/raidframe/rf_optnames.h
-./usr/include/dev/raidframe/rf_owner.h
 ./usr/include/dev/raidframe/rf_paritylog.h
 ./usr/include/dev/raidframe/rf_paritylogDiskMgr.h
 ./usr/include/dev/raidframe/rf_paritylogging.h
@@ -318,13 +314,11 @@
 ./usr/include/dev/raidframe/rf_raid5.h
 ./usr/include/dev/raidframe/rf_raid5_rotatedspare.h
 ./usr/include/dev/raidframe/rf_raidframe.h
-./usr/include/dev/raidframe/rf_randmacros.h
 ./usr/include/dev/raidframe/rf_reconbuffer.h
 ./usr/include/dev/raidframe/rf_reconmap.h
 ./usr/include/dev/raidframe/rf_reconstruct.h
 ./usr/include/dev/raidframe/rf_reconutil.h
 ./usr/include/dev/raidframe/rf_revent.h
-./usr/include/dev/raidframe/rf_rst.h
 ./usr/include/dev/raidframe/rf_shutdown.h
 ./usr/include/dev/raidframe/rf_sstf.h
 ./usr/include/dev/raidframe/rf_states.h
@@ -2822,3 +2816,4 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/netinet/ip_skipjack.h

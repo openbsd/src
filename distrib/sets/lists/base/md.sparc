@@ -611,3 +611,4 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
+./usr/lib/perl5/site_perl/sparc-openbsd/dbm.ph
