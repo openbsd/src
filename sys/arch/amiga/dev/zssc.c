@@ -79,7 +79,7 @@ struct cfdriver zssccd = {
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*
- * if we are an PPI Zeus
+ * if we are a PPI Zeus
  */
 int
 zsscmatch(pdp, cdp, auxp)
@@ -130,6 +130,10 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_isr.isr_intr = zssc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 6;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	/* XXX Don't remap it yet, the driver uses a sicallback still.  */
+	sc->sc_isr.isr_mapped_ipl = 6;
+#endif
 	add_isr(&sc->sc_isr);
 
 	/*

@@ -50,6 +50,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/rtc.h>
 #include <amiga/dev/zbusvar.h>
 
@@ -57,12 +58,23 @@
 #include <sys/PROF.h>
 #endif
 
+extern void hardclock();
+
 /* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz. 
    We're using a 100 Hz clock. */
 
 #define CLK_INTERVAL amiga_clk_interval
 int amiga_clk_interval;
 int eclockfreq;
+
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+/*
+ * The INT6 handler copies the clockframe from the stack in here as hardclock
+ * may be delayed by the IPL-remapping code.  At that time the original stack
+ * location will no longer be valid.
+ */
+struct clockframe hardclock_frame;
+#endif
 
 /*
  * Machine-dependent clock routines.
@@ -137,9 +149,26 @@ clockattach(pdp, dp, auxp)
 	ciab.tahi = interval >> 8;
 }
 
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+int
+clockintr ()
+{
+	/* Is it a timer A interrupt? */
+	if (ciab.icr & 1) {
+		hardclock(&hardclock_frame);
+		return 1;
+	}
+	return 0;
+}
+#endif
+
 void
 cpu_initclocks()
 {
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	static struct isr isr;
+#endif
+
 	/*
 	 * enable interrupts for timer A
 	 */
@@ -150,10 +179,17 @@ cpu_initclocks()
 	 */
 	ciab.cra = (ciab.cra & 0xc0) | 1;
   
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	isr.isr_intr = clockintr;
+	isr.isr_ipl = 6;
+	isr.isr_mapped_ipl = 4;
+	add_isr(&isr);
+#else
 	/*
 	 * and globally enable interrupts for ciab
 	 */
 	custom.intena = INTF_SETCLR | INTF_EXTER;
+#endif
 }
 
 setstatclockrate(hz)
@@ -213,7 +249,7 @@ setmicspertick()
 
 	/*
 	 * set timer B in "count timer A underflows" mode
-	 * set tiemr A in one-shot mode
+	 * set timer A in one-shot mode
 	 */
 	ciaa.crb = (ciaa.crb & 0x80) | 0x48;
 	ciaa.cra = (ciaa.cra & 0xc0) | 0x08;

@@ -129,6 +129,10 @@ mgnscattach(pdp, dp, auxp)
 	sc->sc_isr.isr_intr = mgnsc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 6;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	/* XXX Don't remap it yet, the driver uses a sicallback still.  */
+	sc->sc_isr.isr_mapped_ipl = 6;
+#endif
 	add_isr (&sc->sc_isr);
 
 	/*

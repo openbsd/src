@@ -147,86 +147,103 @@
  */
 #include <machine/psl.h>
 
-/*
- * point to the custom.intenar and custom.intenaw respectively.
- */
-extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
+#ifdef _KERNEL
 
-#if 0
-#define _debug_spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-	if ((_spl_r&PSL_IPL) > ((s)&PSL_IPL)&&((s)&PSL_IPL)!=PSL_IPL1) \
-		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
-		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&(s))>>8)); \
-        _spl_r; \
-})
-#else
-/*
- * Don't lower IPL below current IPL (unless new IPL is 6)
- */
-#define _debug_spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0" : \
-                "&=d" (_spl_r)); \
-	if ((((s)&PSL_IPL) >= PSL_IPL6) || (_spl_r&PSL_IPL) < ((s)&PSL_IPL) || ((s)&PSL_IPL) <= PSL_IPL1) \
-		__asm __volatile ("movew %0,sr" : : "di" (s)); \
-        _spl_r; \
-})
+static __inline int
+splraise(npsl)
+	register int npsl;
+{
+        register int opsl;
+
+        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : "&=d" (opsl) :
+	    "di" (npsl));
+        return opsl;
+}
+
+#ifdef IPL_REMAP_1
+
+extern int isr_exter_ipl;
+extern void walk_ipls __P((int, int));
+
+static __inline int
+splx(npsl)
+	register int npsl;
+{
+        register int opsl;
+
+        __asm __volatile ("clrl %0; movew sr,%0" : "=d" (opsl));
+	if ((isr_exter_ipl << 8) > (npsl & PSL_IPL))
+		walk_ipls(isr_exter_ipl, npsl);
+        __asm __volatile("movew %0,sr" : : "di" (npsl));
+        return opsl;
+}
 #endif
 
-#define _spl_no_check(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
-})
-#if defined (DEBUGXX)		/* No workee */
-#define _spl _debug_spl
+#ifndef IPL_REMAP_2
+#define splx splraise
 #else
-#define _spl _spl_no_check
+
+extern int walk_ipls __P((int));
+
+static __inline int
+splx(npsl)
+	register int npsl;
+{
+        register int opsl;
+
+	/* We should maybe have a flag telling if this is needed.  */
+	opsl = walk_ipls(npsl);
+        __asm __volatile("movew %0,sr" : : "di" (npsl));
+        return opsl;
+}
+
 #endif
 
-#define spl0()	_spl(PSL_S|PSL_IPL0)
-#define spl1()	_spl(PSL_S|PSL_IPL1)
-#define spl2()	_spl(PSL_S|PSL_IPL2)
-#define spl3()	_spl(PSL_S|PSL_IPL3)
-#define spl4()	_spl(PSL_S|PSL_IPL4)
-#define spl5()	_spl(PSL_S|PSL_IPL5)
-#define spl6()	_spl(PSL_S|PSL_IPL6)
-#define spl7()	_spl(PSL_S|PSL_IPL7)
+/*
+ * Shortcuts
+ */
+#define spl1()	splraise(PSL_S|PSL_IPL1)
+#define spl2()	splraise(PSL_S|PSL_IPL2)
+#define spl3()	splraise(PSL_S|PSL_IPL3)
+#define spl4()	splraise(PSL_S|PSL_IPL4)
+#define spl5()	splraise(PSL_S|PSL_IPL5)
+#define spl6()	splraise(PSL_S|PSL_IPL6)
+#define spl7()  splraise(PSL_S|PSL_IPL7)
 
-#define splnone()	spl0()
-#define splsoftclock()	spl1()
-#define splsoftnet()	spl1()
+/*
+ * Hardware interrupt masks
+ */
 #define splbio()	spl3()
 #define splnet()	spl3()
 #define spltty()	spl4()
 #define splimp()	spl4()
-#ifndef LEV6_DEFER
-#define splclock()	spl6()
-#define splstatclock()	spl6()
-#define splvm()		spl6()
-#define splhigh()	spl7()
-#define splsched()	spl7()
-#else
+#if defined(LEV6_DEFER) || defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 #define splclock()	spl4()
-#define splstatclock()	spl4()
-#define splvm()		spl4()
-#define splhigh()	spl4()
-#define splsched()	spl4()
+#else
+#define splclock()	spl6()
 #endif
+#define splstatclock()	splclock()
 
-#define splx(s)         _spl_no_check(s)
+/*
+ * Software interrupt masks
+ *
+ * NOTE: splsoftclock() is used by hardclock() to lower the priority from
+ * clock to softclock before it calls softclock().
+ */
+#define splsoftclock()	splx(PSL_S|PSL_IPL1)
+#define splsoftnet()	spl1()
+#define splsofttty()	spl1()
 
-#ifdef _KERNEL
+/*
+ * Miscellaneous
+ */
+#if defined(LEV6_DEFER) || defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+#define splhigh()	spl4()
+#else
+#define splhigh()	spl7()
+#endif
+#define spl0()	splx(PSL_S|PSL_IPL0)
+
 void delay __P((int));
 void DELAY __P((int));
 #endif

@@ -362,6 +362,9 @@ mfcattach(pdp, dp, auxp)
 	scc->sc_isr.isr_intr = mfcintr;
 	scc->sc_isr.isr_arg = scc;
 	scc->sc_isr.isr_ipl = 6;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	scc->sc_isr.isr_mapped_ipl = 3;
+#endif
 	add_isr(&scc->sc_isr);
 
 	/* configure ports */

@@ -531,7 +531,7 @@ siopinitialize(sc)
 	extern int shift_nosync;
 
 	/*
-	 * Need to check that scripts is on a long word boundary
+	 * Need to check that scripts is on a long word boundary.
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
