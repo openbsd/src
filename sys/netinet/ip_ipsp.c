@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.26 1998/05/18 21:10:57 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.27 1998/10/13 06:49:46 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -378,7 +378,7 @@ cleanup_expirations(struct in_addr dst, u_int32_t spi, u_int8_t sproto)
 {
     struct expiration *exp, *nexp;
     
-    for (exp = explist; exp; exp = exp->exp_next)
+    for (exp = explist; exp; exp = exp ? exp->exp_next : explist)
       if ((exp->exp_dst.s_addr == dst.s_addr) &&
 	  (exp->exp_spi == spi) && (exp->exp_sproto == sproto))
       {
