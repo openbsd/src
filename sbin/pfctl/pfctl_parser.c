@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.52 2001/10/15 16:22:22 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.53 2001/10/24 09:09:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -461,7 +461,7 @@ print_rdr(struct pf_rdr *r)
 		printf("any ");
 	printf("to ");
 	if (!PF_AZERO(&r->daddr, r->af) || !PF_AZERO(&r->dmask, r->af)) {
-		if (r->snot)
+		if (r->dnot)
 			printf("! ");
 		print_addr(&r->daddr, &r->dmask, r->af);
 		printf(" ");
