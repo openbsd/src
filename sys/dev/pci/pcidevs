@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.321 2000/09/19 08:37:30 niklas Exp $
+	$OpenBSD: pcidevs,v 1.322 2000/09/22 15:09:38 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1525,6 +1525,7 @@ product SMC 83C170		0x0005	83C170 (EPIC/100)
 /* Sony products */
 product	SONY CXD1947A		0x8009	CXD1947A FireWire
 product	SONY CXD3222		0x8039	CXD3222 FireWire
+product SONY MEMSTICK_SLOT	0x808a	Memory Stick Media Slot
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
