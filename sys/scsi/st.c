@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.15 1997/04/14 04:09:17 downsj Exp $	*/
+/*	$OpenBSD: st.c,v 1.16 1997/07/11 02:18:40 tholo Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -234,6 +234,9 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 #define NOEJECT 0
 #define EJECT 1
 
+#define NOREWIND 0
+#define REWIND 1
+
 struct st_softc {
 	struct device sc_dev;
 /*--------------------present operating parameters, flags etc.----------------*/
@@ -276,7 +279,7 @@ void	stattach __P((struct device *, struct device *, void *));
 void	st_identify_drive __P((struct st_softc *, struct scsi_inquiry_data *));
 void	st_loadquirks __P((struct st_softc *));
 int	st_mount_tape __P((dev_t, int));
-void	st_unmount __P((struct st_softc *, boolean));
+void	st_unmount __P((struct st_softc *, boolean, boolean));
 int	st_decide_mode __P((struct st_softc *, boolean));
 void	ststart __P((void *));
 int	st_read __P((struct st_softc *, char *, int, int));
@@ -406,6 +409,13 @@ stattach(parent, self, aux)
 	st->buf_queue.b_active = 0;
 	st->buf_queue.b_actf = 0;
 	st->buf_queue.b_actb = &st->buf_queue.b_actf;
+
+	/*
+	 * Reset the media loaded flag, sometimes the data
+	 * aquired at boot time is not quite accurate.  This
+	 * will be checked again at the first open.
+	 */
+	sc_link->flags &= ~SDEV_MEDIA_LOADED;
 }
 
 /*
@@ -530,7 +540,7 @@ stopen(dev, flags, mode, p)
 	 * session but continue with open processing
 	 */
 	if (st->last_dsty != dsty || !(sc_link->flags & SDEV_MEDIA_LOADED))
-		st_unmount(st, NOEJECT);
+		st_unmount(st, NOEJECT, REWIND);
 
 	/*
 	 * If we are not mounted, then we should start a new
@@ -553,7 +563,7 @@ stopen(dev, flags, mode, p)
 	return 0;
 
 bad:
-	st_unmount(st, NOEJECT);
+	st_unmount(st, NOEJECT, REWIND);
 	sc_link->flags &= ~SDEV_OPEN;
 	return error;
 }
@@ -575,17 +585,17 @@ stclose(dev, flags, mode, p)
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
 		st_write_filemarks(st, 1, 0);
 	switch (STMODE(dev)) {
-	case 0:
-	case 3:		/* for now */
-		st_unmount(st, NOEJECT);
+	case 0:		/* normal */
+		st_unmount(st, NOEJECT, REWIND);
 		break;
-	case 1:
-		/* leave mounted unless media seems to have been removed */
-		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
-			st_unmount(st, NOEJECT);
+	case 3:		/* eject, no rewind */
+		st_unmount(st, EJECT, NOREWIND);
 		break;
-	case 2:
-		st_unmount(st, EJECT);
+	case 1:		/* no rewind */
+		st_unmount(st, NOEJECT, NOREWIND);
+		break;
+	case 2:		/* rewind, eject */
+		st_unmount(st, EJECT, REWIND);
 		break;
 	}
 	st->sc_link->flags &= ~SDEV_OPEN;
@@ -699,9 +709,9 @@ st_mount_tape(dev, flags)
  * operations require another mount operation
  */
 void
-st_unmount(st, eject)
+st_unmount(st, eject, rewind)
 	struct st_softc *st;
-	boolean eject;
+	boolean eject, rewind;
 {
 	struct scsi_link *sc_link = st->sc_link;
 	int nmarks;
@@ -710,7 +720,8 @@ st_unmount(st, eject)
 		return;
 	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
 	st_check_eod(st, FALSE, &nmarks, SCSI_IGNORE_NOT_READY);
-	st_rewind(st, 0, SCSI_IGNORE_NOT_READY);
+	if (rewind)
+		st_rewind(st, 0, SCSI_IGNORE_NOT_READY);
 	scsi_prevent(sc_link, PR_ALLOW,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	if (eject)
@@ -1145,7 +1156,7 @@ stioctl(dev, cmd, arg, flag, p)
 			error = st_rewind(st, 0, flags);
 			break;
 		case MTOFFL:	/* rewind and put the drive offline */
-			st_unmount(st, EJECT);
+			st_unmount(st, EJECT, REWIND);
 			break;
 		case MTNOP:	/* no operation, sets status only */
 			break;
