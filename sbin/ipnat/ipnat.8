@@ -1,5 +1,5 @@
 .Dd October 10, 1998
-.Dt IPNAT 1
+.Dt IPNAT 8
 .Os
 .Sh NAME
 .Nm ipnat
@@ -42,7 +42,7 @@ This file is typically
 .Pa /etc/ipnat.rules ;
 stdin is represented by "\-". Each rule is parsed, then sequentially added to
 the kernel's internal NAT list. Like 
-.Xr ipf 1 ,
+.Xr ipf 8 ,
 if an entry contradicts another previously added, the newer will take precedence. 
 .Pp
 Comments (beginning with a ``#'') and blank lines are ignored as
