@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.7 1999/03/22 18:43:19 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.8 1999/11/28 17:58:57 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.37 1999/03/14 12:29:30 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.38 1999/11/27 23:00:21 tom Exp $")
 
 #define INDENT			8
 
@@ -628,7 +628,9 @@ bool	outcount = 0;
 	    {
 		char *src = _nc_tic_expand(tterm->Strings[i], outform==F_TERMINFO, numbers);
 		sprintf(buffer, "%s=", name);
-		if (pretty && outform==F_TERMINFO)
+		if (pretty
+		 && (outform == F_TERMINFO
+		  || outform == F_VARIABLE))
 		    fmt_complex(buffer + strlen(buffer), src, 1);
 		else
 		    strcat(buffer, src);
