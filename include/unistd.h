@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.7 1996/08/22 20:36:59 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.8 1996/08/25 20:02:43 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -177,6 +177,7 @@ int	 undelete __P((const char *));
 void	 usleep __P((u_int));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
 pid_t	 vfork __P((void));
+int	 issetugid __P((void));
 
 int	 getopt __P((int, char * const *, const char *));
 extern	 char *optarg;			/* getopt(3) external variables */
