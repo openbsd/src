@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.25 1997/09/12 03:56:08 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.26 1997/09/21 23:02:03 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.25 1997/09/12 03:56:08 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.26 1997/09/21 23:02:03 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.25 1997/09/12 03:56:08 millert Exp 
 #include <string.h>
 #include <ctype.h>
 
-#ifdef CPU_BIOSGEOMETRY
+#ifdef CPU_BIOS
 #include <machine/biosvar.h>
 #endif
 
@@ -150,6 +150,7 @@ int sysctl_inet __P((char *, char **, int *, int, int *));
 int sysctl_ipsec __P((char *, char **, int *, int, int *));
 int sysctl_ipx __P((char *, char **, int *, int, int *));
 int sysctl_fs __P((char *, char **, int *, int, int *));
+int sysctl_bios __P((char *, char **, int *, int, int *));
 
 int
 main(argc, argv)
@@ -401,13 +402,17 @@ parse(string, flags)
 		if (mib[1] == CPU_CONSDEV)
 			special |= CONSDEV;
 #endif
-#ifdef CPU_BIOSGEOMETRY
-		if (mib[1] == CPU_BIOSGEOMETRY)
-			special |= BIOSGEO;
-#endif
-#ifdef CPU_BIOSDEV
-		if (mib[1] == CPU_BIOSDEV)
-			special |= BIOSDEV;
+#ifdef CPU_BIOS
+		if (mib[1] == CPU_BIOS) {
+			len = sysctl_bios(string, &bufp, mib, flags, &type);
+			if (mib[2] == BIOS_GEOMETRY)
+				special |= BIOSGEO;
+			if (mib[2] == BIOS_DEV)
+				special |= BIOSDEV;
+			if (len >= 0)
+				break;
+			return;
+		}
 #endif
 		break;
 
@@ -495,7 +500,7 @@ parse(string, flags)
 			(void)printf("0x%x\n", dev);
 		return;
 	}
-#ifdef CPU_BIOSGEOMETRY
+#ifdef CPU_BIOS
 	if (special & BIOSGEO) {
 		int geo = *(int *)buf;
 
@@ -505,7 +510,6 @@ parse(string, flags)
 			      BIOSNSECTS(geo), BIOSNHEADS(geo));
 		return;
 	}
-#endif
 	if (special & BIOSDEV) {
 		int dev = *(int*)buf;
 
@@ -518,6 +522,7 @@ parse(string, flags)
 		(void) printf("%c:\n", dev);
 		return;
 	}
+#endif
 	if (special & RNDSTATS) {
 		struct rndstats *rndstats = (struct rndstats *)buf;
 
@@ -719,6 +724,35 @@ sysctl_fs(string, bufpp, mib, flags, typep)
 	*typep = fslist.list[indx].ctl_type;
 	return(3);
 }
+
+#ifdef CPU_BIOS
+struct ctlname biosname[] = CTL_BIOS_NAMES;
+struct list bioslist = { biosname, BIOS_MAXID };
+
+/*
+ * handle BIOS requests
+ */
+int
+sysctl_bios(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &bioslist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &bioslist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	*typep = bioslist.list[indx].ctl_type;
+	return(3);
+}
+#endif
 
 struct ctlname encapname[] = ENCAPCTL_NAMES;
 struct ctlname ipsecname[] = CTL_IPSEC_NAMES;
