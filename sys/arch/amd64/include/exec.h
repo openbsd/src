@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 2004/02/27 17:41:25 deraadt Exp $	*/
 /*
  * Written by Artur Grabowski <art@openbsd.org> Public Domain
  */
@@ -14,7 +14,7 @@
 
 #define ELF_TARG_CLASS		ELFCLASS64
 #define ELF_TARG_DATA		ELFDATA2LSB
-#define ELF_TARG_MACH		EM_X86_64
+#define ELF_TARG_MACH		EM_AMD64
 
 #define _NLIST_DO_ELF
 #define _KERN_DO_ELF64

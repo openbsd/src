@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2004/02/25 00:16:04 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 2004/02/27 17:41:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -142,7 +142,7 @@
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amd64";		/* cpu "architecture" */
-char machine_arch[] = "x86_64";		/* machine == machine_arch */
+char machine_arch[] = "amd64";		/* machine == machine_arch */
 
 int x86_64_ndisks = 0;
 
