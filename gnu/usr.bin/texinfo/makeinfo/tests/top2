@@ -4,8 +4,9 @@
 : ${srcdir=.}
 
 # But this input file is erroneous, so throw away errors.
-../makeinfo --force -o top2.html --html $srcdir/top2.txi 2>/dev/null
+../makeinfo --no-split --force -o top2.html --html $srcdir/top2.txi 2>/dev/null
 test -s top2.html
 exit_status=$?
+
 rm -f top2.html
 exit $exit_status

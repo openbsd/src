@@ -1,5 +1,5 @@
 #!/bin/sh
-# Test that a minimal Texinfo file can be converted to HTML.
+# Bug where whitespace after @menu caused confusion.
 
 : ${srcdir=.}
 input=`basename $0`.txi

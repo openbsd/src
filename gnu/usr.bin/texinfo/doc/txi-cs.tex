@@ -1,6 +1,11 @@
-% Czech translation for texinfo.tex (1999-01-24, GNU Texinfo 3.12c).
+% $Id: txi-cs.tex,v 1.1.1.2 2002/06/10 13:21:49 espie Exp $
+% Czech translation for texinfo.tex.
 %
-% Copyright (C) 1999 Vladimir Michl <Vladimir.Michl@mujweb.cz>
+% Copyright (C) 1999, 2000 Free Software Foundation.
+% 
+% Authors:
+% Vladimir Michl <Vladimir.Michl@mujweb.cz>
+% Stepan Kasal <kasal@suse.cz>
 %
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -14,26 +19,26 @@
 %
 % You should have received a copy of the GNU General Public License
 % along with this program; if not, write to the Free Software
-% Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-%
-% To: Karl Berry <karl@cs.umb.edu>
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 %
 \gdef\putwordAppendix{Pøílohy}
 \gdef\putwordChapter{Kapitola}
 \gdef\putwordfile{soubor}
-\gdef\putwordIndexIsEmpty{(Rejstøík je prázdný)}
-\gdef\putwordIndexNonexistent{(Rejstøík neexistuje)}
+\gdef\putwordin{v~knize}
+\gdef\putwordIndexIsEmpty{(Rejstøík je prázdný.)}
+\gdef\putwordIndexNonexistent{(Rejstøík neexistuje.)}
 \gdef\putwordInfo{Info}
-\gdef\putwordMethodon{Metoda aktivní}
+\gdef\putwordInstanceVariableof{Promìnná pro instance tøídy}
+\gdef\putwordMethodon{Metoda tøídy}
 \gdef\putwordNoTitle{Bez nadpisu}
-\gdef\putwordOf{}
-\gdef\putwordon{zapnuto}
+\gdef\putwordof{tøídy}
+\global\let\putwordon\putwordof
 \gdef\putwordpage{stránka}
-\gdef\putwordsection{podkapitola}
-\gdef\putwordSection{Podkapitola}
-\gdef\putwordsee{vidìt}
-\gdef\putwordSee{Vidìt}
-\gdef\putwordShortTOC{Krátký obsah}
+\gdef\putwordsection{oddíl}
+\gdef\putwordSection{Oddíl}
+\gdef\putwordsee{viz}
+\gdef\putwordSee{Viz}
+\gdef\putwordShortTOC{Struèný obsah}
 \gdef\putwordTOC{Obsah}
 %
 \gdef\putwordMJan{ledna}
@@ -51,22 +56,21 @@
 %
 \gdef\putwordDefmac{Makro}
 \gdef\putwordDefspec{Speciální forma}
-\gdef\putwordDefivar{Instance promìnné}
 \gdef\putwordDefvar{Promìnná}
 \gdef\putwordDefopt{Volby}
-\gdef\putwordDeftypevar{Promìnná}
+\global\let\putwordDeftypevar\putwordDefvar
 \gdef\putwordDeffunc{Funkce}
-\gdef\putwordDeftypefun{Funkce}
+\global\let\putwordDeftypefun\putwordDeffunc
 %
 % Redefine \today to produce Czech
 % preferred dates such as 28. januar 1999.
 %
 \gdef\today{%
-  \number\day.\space
+  \number\day.\nobreak\space
   \ifcase\month
   \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
   \or\putwordMMai\or\putwordMJun\or\putwordMJul\or\putwordMAug
   \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
   \fi
-  \space\number\year}
+  \penalty3000\relax\space\number\year}
 %

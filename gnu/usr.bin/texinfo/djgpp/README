@@ -12,18 +12,16 @@ distribution, look for the "Installation" section below.
    a. To compile Texinfo, you will need the following tools:
 
       - basic DJGPP development environment: GCC, Binutils and djdev;
-      - a DJGPP port of GNU Make version 3.75 or later;
-      - a DJGPP port of Bash;
-      - a port of GNU Sed;
-      - ginstall and rm from the Fileutils package;
-      - DJGPP ports of Fileutils, Diffutils, and Grep (only if you
-        need to reconfigure the source distribution);
+      - a DJGPP port of GNU Make version 3.78 or later;
+      - a DJGPP port of Bash 2.04 or later;
+      - a port of GNU Sed 3.02 or later;
+      - DJGPP ports of Fileutils, Textutils, Sh-utils, Diffutils,
+        Gawk and Grep;
       - etags (from the Emacs distribution) and mkid (from ID-utils)
         if you need the TAGS and ID targets of the Makefile's.
 
       All of the above are available from the DJGPP ftp sites on
-      SimTel.NET mirrors, in the pub/simtelnet/gnu/djgpp/v2gnu
-      directory.
+      SimTel.NET mirrors, in the v2gnu directory.
 
    b. From the root of your DJGPP installation, unzip the source package:
 
@@ -48,13 +46,18 @@ distribution, look for the "Installation" section below.
 
 	 pkunzip -d txiXYZs
 
-      If you build Texinfo on Windows 9X, you are advised to use a
-      version of Unzip which supports long filenames, so that the
-      original long filenames of the source files will be preserved.
-      Otherwise, the build procedure will most probably fail.
+      If you build Texinfo on Windows 9X, Windows ME, Windows 2000 or
+      Windows XP, you are advised to use a version of Unzip which
+      supports long filenames, so that the original long filenames of
+      the source files will be preserved.  Otherwise, the build
+      procedure will most probably fail.
 
-      Note: do NOT use an unzip program which supports long file names
-      on Windows NT, as DJGPP doesn't support long names there.
+      Do NOT use an unzip program which supports long file names on
+      Windows NT 4, as DJGPP doesn't support long names there.
+
+      The program unzip32.exe, available from the SimTel.NET site,
+      will deal correctly with long file names on any platform, so it
+      is the recommended way of unzipping txiXYZs.zip archives.
 
    c. If the source distribution comes with a ready Makefile (this is
       usually the case with archives downloaded from the DJGPP sites),
@@ -109,9 +112,9 @@ distribution, look for the "Installation" section below.
       development environment (djdevNN.zip), then you already have
       this file in the info/ subdirectory of your DJGPP installation.
       Otherwise, you will need to create it.  A minimal DIR file is
-      available in this distribution, as a starting point.  Copy it to
-      the directory where you install the Info files from this
-      distribution.
+      available in this distribution under the name `dir-example', 
+      which you can use as a starting point.  Copy it to the directory
+      where you install the Info files from this distribution.
 
       Even if you already have a DIR file, you should review it to
       make sure it is consistent with the names of the Info file you
@@ -125,10 +128,19 @@ distribution, look for the "Installation" section below.
       * Info-Standalone: (info-stnd).
 	      This topic helps you use the standalone Info-Program (info.exe)
 
+      * infokey: (info-stnd)Invoking infokey.
+	      Compile Info key customizations.
+
+      * Makeinfo: (texinfo)Invoking makeinfo.
+	      Convert a .texinfo file (.txi) to an info file suitable for the
+	      info reader or Emacs, into plain ASCII, into HTML, into XML,
+	      or into DocBook.
+
       * Texinfo: (texinfo).
-	      With one source file, make either a printed manual
-	      (through TeX) or an Info file (through makeinfo).
-	      Full documentation in this menu item.
+	      With one source file, make either a printed manual (through TeX)
+	      or an on-line manual (through makeinfo).  This topic includes
+	      a full description of the Texinfo language and related
+	      facilities, including Emacs commands to work with Texinfo files.
 
       * install-info: (texinfo)Invoking install-info. 
 	      How to update info/dir entries when installing GNU packages.
@@ -138,9 +150,6 @@ distribution, look for the "Installation" section below.
 
       * texindex: (texinfo)Format with tex/texindex.	
 	      Sorting Texinfo index files automatically.
-
-      * makeinfo: (texinfo)makeinfo options.
-	      Translate Texinfo source into Info, plain ASCII, or HTML.
 
 
       Note that the asterisk `*' should be flushed all the way to the
@@ -237,9 +246,9 @@ distribution, look for the "Installation" section below.
           variable.
 
         * The default operation of the `print-node' command has been
-          changed so that it will automatically print to the local
-          printer device connected to the PRN port.  (If your printer
-          is connected to another port, set the INFO_PRINT_COMMAND
+          changed so that it automatically prints to the local printer
+          device connected to the PRN port.  (If your printer is
+          connected to another port, set the INFO_PRINT_COMMAND
           environment variable like this:
 
 		set INFO_PRINT_COMMAND=>LPT2
@@ -249,10 +258,10 @@ distribution, look for the "Installation" section below.
           whose name follows the `>' character.  (Don't leave any
           blanks between `>' and the device name!).
 
-	  Note that stock DOS shell won't let you use the `>'
-	  character in environment variables set from the DOS prompt
-	  or batch files, but you can set it in the [info] section of
-	  your DJGPP.ENV file.
+	  Note that some old versions of stock DOS shell won't let you
+	  use the `>' character in environment variables set from the
+	  DOS prompt or batch files, but you can set it in the [info]
+	  section of your DJGPP.ENV file.
 
         * The `set-screen-height' command now actually changes the
           screen dimensions from within Info if you specify one of the
@@ -374,10 +383,10 @@ distribution, look for the "Installation" section below.
    this is done *before* Info checks the above butchered names.
 
    Special considerations apply if you are installing Info on dual
-   DOS/Windows 9X system, where you'd like Info to work with the same
-   files both in plain DOS and from the Windows DOS box.  In this
-   case, you should make sure your compressed Info files follow the
-   8+3 DOS naming conventions outlined above, even though Info
+   DOS/Windows 9X/ME/2K/XP system, where you'd like Info to work with
+   the same files both in plain DOS and from the Windows DOS box.  In
+   this case, you should make sure your compressed Info files follow
+   the 8+3 DOS naming conventions outlined above, even though Info
    supports long file names on Windows 9X.  Also, you need to turn off
    the generation of numeric tails in short 8+3 aliases Windows
    creates for long names (if you don't know how, the DJGPP FAQ list

@@ -1,7 +1,9 @@
 #!/bin/sh
 # Test no extra <li> from @menu.
 
-li_count=`../makeinfo --html -o - ${srcdir-.}/html-extrali.txi 2>/dev/null \
+: ${srcdir=.}
+
+li_count=`../makeinfo --no-split --html -o - $srcdir/html-extrali.txi 2>/dev/null \
 | grep '<li>' \
 | wc -l`
 

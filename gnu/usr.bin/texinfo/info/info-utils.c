@@ -1,5 +1,5 @@
 /* info-utils.c -- miscellanous.
-   $Id: info-utils.c,v 1.1.1.3 2000/02/09 01:24:44 espie Exp $
+   $Id: info-utils.c,v 1.1.1.4 2002/06/10 13:21:04 espie Exp $
 
    Copyright (C) 1993, 98 Free Software Foundation, Inc.
 
@@ -443,9 +443,11 @@ printed_representation (character, hpos)
 {
   register int i = 0;
   int printable_limit = ISO_Latin_p ? 255 : 127;
-    
+
+  if (raw_escapes_p && character == '\033')
+    the_rep[i++] = character;
   /* Show CTRL-x as ^X.  */
-  if (iscntrl (character) && character < 127)
+  else if (iscntrl (character) && character < 127)
     {
       switch (character)
         {

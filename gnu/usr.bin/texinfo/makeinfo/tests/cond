@@ -10,7 +10,7 @@ egrep 'This is (ifnothtml|ifinfo|ifnottex) text' cond.out >/dev/null \
 test `fgrep ' text.' cond.out | wc -l` -eq 3 || exit 3
 
 # Default HTML output.
-../makeinfo --html -o cond.out $srcdir/cond.txi || exit 1
+../makeinfo --no-split --html -o cond.out $srcdir/cond.txi || exit 1
 egrep 'This is (html|ifhtml|ifnotinfo|ifnottex) text' cond.out >/dev/null \
  || exit 2
 test `fgrep ' text.' cond.out | wc -l` -eq 4 || exit 3

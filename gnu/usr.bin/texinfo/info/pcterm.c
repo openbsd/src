@@ -1,5 +1,5 @@
 /* pc_term.c -- How to handle the PC terminal for Info under MS-DOS/MS-Windows.
-   $Id: pcterm.c,v 1.1.1.1 2000/02/09 01:25:07 espie Exp $
+   $Id: pcterm.c,v 1.1.1.2 2002/06/10 13:21:14 espie Exp $
 
    Copyright (C) 1998, 99 Free Software Foundation, Inc.
 
@@ -329,6 +329,13 @@ pc_initialize_terminal (term_name)
   term_kP = (char *)find_sequence (K_PageUp);
   term_kN = (char *)find_sequence (K_PageDown);
 
+#if defined(INFOKEY)
+  term_kh = (char *)find_sequence (K_Home);
+  term_ke = (char *)find_sequence (K_End);
+  term_ki = (char *)find_sequence (K_Insert);
+  term_kx = (char *)find_sequence (K_Delete);
+#endif
+
   /* Set all the hooks to our PC-specific functions.  */
   terminal_begin_inverse_hook       = pc_begin_inverse;
   terminal_end_inverse_hook         = pc_end_inverse;
@@ -381,8 +388,13 @@ static struct
   {K_Control_Down,      "\033\061m"},
   {K_Control_Center,    "\033\061l"},
 
-  {K_Home,              "\001"},   /* ...and these are for moving IN a node */
-  {K_End,               "\005"},   /* they're Numeric-Keypad-Keys, so       */
+#if defined(INFOKEY)
+  {K_Home,              "\033[H"}, /* ...and these are for moving IN a node */
+  {K_End,               "\033[F"}, /* they're Numeric-Keypad-Keys, so       */
+#else
+  {K_Home,              "\001"},
+  {K_End,               "\005"},
+#endif
   {K_Left,              "\033[D"}, /* NUMLOCK should be off !!              */
   {K_Right,             "\033[C"},
   {K_Down,              "\033[B"},
@@ -394,8 +406,13 @@ static struct
   {K_Control_Home,      "\033<"},
   {K_Control_End,       "\033>"},
 
-  {K_EHome,             "\001"},   /* these are also for moving IN a node */
-  {K_EEnd,              "\005"},   /* they're the "extended" (Grey) keys  */
+#if defined(INFOKEY)
+  {K_EHome,             "\033[H"}, /* these are also for moving IN a node */
+  {K_EEnd,              "\033[F"}, /* they're the "extended" (Grey) keys  */
+#else
+  {K_EHome,             "\001"},
+  {K_EEnd,              "\005"},
+#endif
   {K_ELeft,             "\033[D"},
   {K_ERight,            "\033[C"},
   {K_EDown,             "\033[B"},
@@ -411,6 +428,10 @@ static struct
   {K_F1,                "\10"},    /* YEAH, gimme that good old F-one-thing */
   {K_Delete,            "\177"},   /* to make Kp-Del be DEL (0x7f)          */
   {K_EDelete,           "\177"},   /* to make Delete be DEL (0x7f)          */
+#if defined(INFOKEY)
+  {K_Insert,            "\033[L"},
+  {K_EInsert,           "\033[L"},
+#endif
 
   /* These are here to map more Alt-X keys to ESC X sequences.  */
   {K_Alt_Q,             "\033q"},

@@ -1,3 +1,11 @@
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# 
 # List of source files containing translatable strings.
 # The last line must not be a comment.
 
@@ -8,6 +16,8 @@ info/indices.c
 info/info.c
 info/info.h
 info/infodoc.c
+info/infokey.c
+info/infomap.c
 info/m-x.c
 info/makedoc.c
 info/nodemenu.c
@@ -32,5 +42,6 @@ makeinfo/multi.c
 makeinfo/node.c
 makeinfo/sectioning.c
 makeinfo/toc.c
+makeinfo/xml.c
 util/install-info.c
 util/texindex.c

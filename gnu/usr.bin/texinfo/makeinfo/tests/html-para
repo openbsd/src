@@ -1,7 +1,7 @@
 #!/bin/sh
 # Test that paragraph beginnings in HTML work ok.
 
-../makeinfo --html ${srcdir-.}/html-para.txi
+../makeinfo --no-split --html ${srcdir-.}/html-para.txi
 exit_status=$?
 
 rm -f html-para.html

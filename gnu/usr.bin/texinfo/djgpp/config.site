@@ -1,25 +1,53 @@
 #! /bin/sh
-
-# This is the config.site file for configuring GNU packages
-# which are to be built with DJGPP tools.
+# Site defaults for the DJGPP configuration
 
 # These two variables are required, otherwise looking for
 # programs along the PATH will not work.
 PATH_SEPARATOR=:
 PATH_EXPAND=y
 
+# This is required in for "test -f foo" to find foo.exe.
+export TEST_FINDS_EXE=y
+
 # The root of the DJGPP tree serves as the default prefix
-test "x$prefix" = xNONE && prefix='${DJDIR}'
+# for all paths that are hardcoded in the binaries.
+# When installing the installation prefix must be supplied.
+test "x$prefix" = xNONE && prefix='/dev/env/DJDIR'
 
 # This is required for config.status script to be run, since
 # ./configure runs it by invoking ${CONFIG_SHELL-/bin/sh}
-CONFIG_SHELL=${CONFIG_SHELL='sh'}
+# CONFIG_SHELL=${CONFIG_SHELL='sh'}
 
 # These are set here so the generated Makefile's will be good
 # for every DJGPP installation, not only the one where the
 # package was configured.
 # $INSTALL must be an absolute path name, otherwise config.status
 # will try to prepend ./ and ../ to it when it goes into subdirs.
-INSTALL=${INSTALL='${DJDIR}/bin/ginstall -c'}
+INSTALL=${INSTALL='/dev/env/DJDIR/bin/ginstall -c'}
 RANLIB=${RANLIB='ranlib'}
+GMSGFMT=${GMSGFMT='/dev/env/DJDIR/bin/msgfmt'}
+MSGFMT=${MSGFMT='/dev/env/DJDIR/bin/msgfmt'}
+XGETTEXT=${XGETTEXT='/dev/env/DJDIR/bin/xgettext'}
 
+# Sane defaults for standard programs used by the build process.
+# We force the values of these variables so that the resultant
+# Makefile's will work on any DJGPP platform, not only on the
+# machine where the package was configured.
+ac_cv_prog_AWK=${AWK='gawk'}
+ac_cv_prog_INTLBISON=${INTLBISON='bison'}
+ac_cv_prog_CC=${CC='gcc'}
+
+# These are set here so the generated libtool/Makefile's will
+# be good for every DJGPP installation, not only the one where
+# the package was configured.
+NM=${NM='nm'}
+LD=${LD='ld'}
+MAKEINFO=${MAKEINFO='makeinfo'}
+
+# Force the test for 'ln -s' to report 'cp -pf'.
+ac_cv_prog_LN_S='cp -pf'
+
+# We have `fork', but it always fails.  Don't trust Autoconf to be
+# smart enough to detect that...
+ac_cv_func_fork=no
+ac_cv_func_vfork=no
