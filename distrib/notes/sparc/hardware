@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.56 2003/07/08 21:15:49 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.57 2003/08/04 00:39:06 brad Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -65,6 +65,7 @@ For sun4m machines, the following Mbus CPU modules are supported:
 	- Ross HyperSparc RT620/625 at 125 MHz, with 256KB of primary cache
 	- Ross HyperSparc RT620/625 at 150 MHz, with 512KB of primary cache
 	- Ross HyperSparc RT620/625 at 166 MHz, with 512KB of primary cache
+	- Ross HyperSparc RT620/625 at 180 MHz, with 512KB of primary cache
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
