@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2003/12/17 20:22:50 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.26 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.27 2003/12/17 20:22:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,9 +193,8 @@ gethz(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: systat [-M core] [-N system] [-w wait]\n");
 	fprintf(stderr,
-	    "              [iostat|mbufs|netstat|pigs|swap|vmstat]\n");
+	    "usage: systat [-w wait] [iostat|mbufs|netstat|pigs|swap|vmstat]\n");
 	exit(1);
 }
 
