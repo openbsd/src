@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.9 2003/12/18 11:55:47 jmc Exp $
+.\"	$OpenBSD: disktab.5,v 1.10 2005/02/20 21:29:15 jaredy Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -71,7 +71,7 @@ floppy).
 .It "\&ns	num	Number of sectors per track."
 .It "\&nt	num	Number of tracks per cylinder."
 .It "\&nc	num	Total number of cylinders on the disk."
-.It "\&sc	num	Number of sectors per cylinder (default: nc*nt)."
+.It "\&sc	num	Number of sectors per cylinder (default: ns*nt)."
 .It "\&su	num	Number of sectors per unit (default: sc*nc)."
 .It "\&se	num	Sector size in bytes (default:"
 .Dv DEV_BSIZE ) .
