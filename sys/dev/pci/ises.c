@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.5 2001/06/04 13:07:19 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.6 2001/06/05 15:32:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -239,7 +239,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", intrstr);
 
-	memset (&isesstats, 0, sizeof(isesstats));
+	bzero(&isesstats, sizeof(isesstats));
 
 	sc->sc_cid = crypto_get_driverid();
 
@@ -517,7 +517,7 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data,
 		isesstats.nomem++;
 		return (ENOMEM);
 	}
-	memset(cq, 0, sizeof (struct ises_cmd));
+	bzero(cq, sizeof (struct ises_cmd));
 	cq->cmd_code = code;
 	cq->cmd_cb = callback;
 	SIMPLEQ_INSERT_TAIL(&sc->sc_cmdq, cq, cmd_next);
@@ -609,7 +609,7 @@ ises_process_oqueue(struct ises_softc *sc)
 				DPRINTF(("%s:process_oqueue: LNAU 1 result "
 				     "upload (len=%d)\n", dv, len));
 				sc->sc_lnau1_rlen = len;
-				memset (sc->sc_lnau1_r, 0, 2048 / 8);
+				bzero(sc->sc_lnau1_r, 2048 / 8);
 				while (len--) {
 					/* first word is LSW */
 					sc->sc_lnau1_r[len] = 
@@ -622,7 +622,7 @@ ises_process_oqueue(struct ises_softc *sc)
 				DPRINTF(("%s:process_oqueue: LNAU 2 result "
 				     "upload (len=%d)\n", dv, len));
 				sc->sc_lnau2_rlen = len;
-				memset (sc->sc_lnau1_r, 0, 2048 / 8);
+				bzero(sc->sc_lnau1_r, 2048 / 8);
 				while (len--) {
 					/* first word is LSW */
 					sc->sc_lnau2_r[len] = 
@@ -837,8 +837,8 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (ENOMEM);
 			}
 
-			memcpy(ses, sc->sc_sessions, i);
-			memset(sc->sc_sessions, 0, i);
+			bcopy(sc->sc_sessions, ses, i);
+			bzero(sc->sc_sessions, i);
 			free(sc->sc_sessions, M_DEVBUF);
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sc->sc_nsessions];
@@ -846,7 +846,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		}
 	}
 
-	memset(ses, 0, sizeof(struct ises_session));
+	bzero(ses, sizeof(struct ises_session));
 	ses->ses_used = 1;
 
 	if (enc) {
@@ -856,11 +856,11 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 		/* crypto key */
 		if (c->cri_alg == CRYPTO_DES_CBC) {
-			memcpy(&ses->ses_deskey[0], enc->cri_key, 8);
-			memcpy(&ses->ses_deskey[2], enc->cri_key, 8);
-			memcpy(&ses->ses_deskey[4], enc->cri_key, 8);
+			bcopy(enc->cri_key, &ses->ses_deskey[0], 8);
+			bcopy(enc->cri_key, &ses->ses_deskey[2], 8);
+			bcopy(enc->cri_key, &ses->ses_deskey[4], 8);
 		} else
-			memcpy(&ses->ses_deskey[0], enc->cri_key, 24);
+			bcopy(enc->cri_key, &ses->ses_deskey[0], 24);
 
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
@@ -880,7 +880,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			memcpy(ses->ses_hminner, md5ctx.state,
+			bcopy(md5ctx.state, ses->ses_hminner,
 			    sizeof(md5ctx.state));
 			break;
 		case CRYPTO_SHA1_HMAC:
@@ -888,7 +888,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			memcpy(ses->ses_hminner, sha1ctx.state,
+			bcopy(sha1ctx.state, ses->ses_hminner,
 			    sizeof(sha1ctx.state));
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
@@ -898,7 +898,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    mac->cri_klen / 8);
 			RMD160Update(&rmd160ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
-			memcpy(ses->ses_hminner, rmd160ctx.state,
+			bcopy(rmd160ctx.state, ses->ses_hminner,
 			    sizeof(rmd160ctx.state));
 			break;
 		}
@@ -912,7 +912,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			memcpy(ses->ses_hmouter, md5ctx.state,
+			bcopy(md5ctx.state, ses->ses_hmouter,
 			    sizeof(md5ctx.state));
 			break;
 		case CRYPTO_SHA1_HMAC:
@@ -920,7 +920,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			memcpy(ses->ses_hmouter, sha1ctx.state,
+			bcopy(sha1ctx.state, ses->ses_hmouter,
 			    sizeof(sha1ctx.state));
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
@@ -930,7 +930,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    mac->cri_klen / 8);
 			RMD160Update(&rmd160ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
-			memcpy(ses->ses_hmouter, rmd160ctx.state,
+			bcopy(rmd160ctx.state, ses->ses_hmouter,
 			    sizeof(rmd160ctx.state));
 			break;
 		}
@@ -959,7 +959,7 @@ ises_freesession(u_int64_t tsid)
 
 	sc = ises_cd.cd_devs[card];
 	sesn = ISES_SESSION(sid);
-	memset(&sc->sc_sessions[sesn], 0, sizeof(sc->sc_sessions[sesn]));
+	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 
 	return (0);
 }
@@ -1005,7 +1005,7 @@ ises_process(struct cryptop *crp)
 		err = ENOMEM;
 		goto errout;
 	}
-	memset(q, 0, sizeof(struct ises_q));
+	bzero(q, sizeof(struct ises_q));
 
 	q->q_sesn = ISES_SESSION(crp->crp_sid);
 	ses = &sc->sc_sessions[q->q_sesn];
@@ -1641,7 +1641,7 @@ ises_debug_loop (void *v)
 		/* Crypto. */
 
 		/* Load BCHU session data */
-		memset(&bses, 0, sizeof bses);
+		bzero(&bses, sizeof bses);
 		bses.kr[0] = 0xD0;
 		bses.kr[1] = 0xD1;
 		bses.kr[2] = 0xD2;
