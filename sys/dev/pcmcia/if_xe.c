@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.2 1999/05/18 22:19:44 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.3 1999/05/19 14:04:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -343,16 +343,16 @@ xe_pcmcia_attach(parent, self, aux)
 		}
 
 		bus_space_write_1(pcmh.memt, pcmh.memh,
-			ccr_offset + PCMCIA_CCR_DCOR0, PCMCIA_CCR_DCOR0_SFINT);
+		    ccr_offset + PCMCIA_CCR_DCOR0, PCMCIA_CCR_DCOR0_SFINT);
 		bus_space_write_1(pcmh.memt, pcmh.memh,
-			ccr_offset + PCMCIA_CCR_DCOR1,
-			PCMCIA_CCR_DCOR1_FORCE_LEVIREQ | PCMCIA_CCR_DCOR1_D6);
+		    ccr_offset + PCMCIA_CCR_DCOR1,
+		    PCMCIA_CCR_DCOR1_FORCE_LEVIREQ | PCMCIA_CCR_DCOR1_D6);
 		bus_space_write_1(pcmh.memt, pcmh.memh,
-			ccr_offset + PCMCIA_CCR_DCOR2, 0);
+		    ccr_offset + PCMCIA_CCR_DCOR2, 0);
 		bus_space_write_1(pcmh.memt, pcmh.memh,
-			ccr_offset + PCMCIA_CCR_DCOR3, 0);
+		    ccr_offset + PCMCIA_CCR_DCOR3, 0);
 		bus_space_write_1(pcmh.memt, pcmh.memh,
-			ccr_offset + PCMCIA_CCR_DCOR4, 0);
+		    ccr_offset + PCMCIA_CCR_DCOR4, 0);
 
 		/* We don't need them anymore and can free them (I think). */
 		pcmcia_mem_unmap(pf, ccr_window);
@@ -426,10 +426,17 @@ xe_pcmcia_attach(parent, self, aux)
 	/*
 	 * Reset and initialize the card again for DINGO (as found in Linux
 	 * driver).  Without this Dingo will get a watchdog timeout the first
-	 * time.
+	 * time.  The ugly media tickling seems to be necessary for getting
+	 * autonegotiation to work too.
 	 */
-	if (sc->sc_flags & XEF_DINGO)
+	if (sc->sc_flags & XEF_DINGO) {
 		xe_full_reset(sc);
+		xe_init(sc);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE);
+		xe_stop(sc);
+	}
+
 
 #ifdef notyet
 	/*
