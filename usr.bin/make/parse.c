@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.53 2000/09/14 13:32:07 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.54 2000/09/14 13:36:46 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.53 2000/09/14 13:32:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.54 2000/09/14 13:36:46 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -544,17 +544,16 @@ ParseDoSrc (tOp, src, allsrc)
  */
 static int
 ParseFindMain(gnp, dummy)
-    void *gnp;	    /* Node to examine */
-    void *dummy;
+    void 	*gnp;	/* Node to examine */
+    void 	*dummy	UNUSED;		
 {
     GNode   	  *gn = (GNode *) gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
-	return (dummy ? 0 : 0);
-    } else {
-	return (dummy ? 1 : 1);
-    }
+	return 0;
+    } else
+	return 1;
 }
 
 /*-

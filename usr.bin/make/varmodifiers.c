@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.5 2000/09/14 13:35:38 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.6 2000/09/14 13:36:46 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -138,11 +138,11 @@ static Boolean VarLowercase __P((const char *, Boolean, Buffer, void *));
  */
 static Boolean
 VarUppercase(word, addSpace, buf, dummy)
-    const char    *word;    	/* Word to Upper Case */
-    Boolean 	  addSpace; 	/* True if need to add a space to the buffer
+    const char	*word;    	/* Word to Upper Case */
+    Boolean	addSpace; 	/* True if need to add a space to the buffer
 				 * before sticking in the head */
-    Buffer  	  buf;	    	/* Buffer in which to store it */
-    void *dummy;
+    Buffer	buf;	    	/* Buffer in which to store it */
+    void 	*dummy		UNUSED;
 {
     size_t len = strlen(word);
 
@@ -169,11 +169,11 @@ VarUppercase(word, addSpace, buf, dummy)
  */
 static Boolean
 VarLowercase(word, addSpace, buf, dummy)
-    const char    *word;    	/* Word to Lower Case */
-    Boolean 	  addSpace; 	/* True if need to add a space to the buffer
+    const char	*word;    	/* Word to Lower Case */
+    Boolean	addSpace; 	/* True if need to add a space to the buffer
 				 * before sticking in the head */
-    Buffer  	  buf;	    	/* Buffer in which to store it */
-    void *dummy;
+    Buffer	buf;	    	/* Buffer in which to store it */
+    void 	*dummy		UNUSED;
 {
     size_t len = strlen(word);
 
@@ -201,13 +201,13 @@ VarLowercase(word, addSpace, buf, dummy)
  */
 static Boolean
 VarHead(word, addSpace, buf, dummy)
-    const char    *word;    	/* Word to trim */
-    Boolean 	  addSpace; 	/* True if need to add a space to the buffer
+    const char	*word;    	/* Word to trim */
+    Boolean	addSpace; 	/* True if need to add a space to the buffer
 				 * before sticking in the head */
-    Buffer  	  buf;	    	/* Buffer in which to store it */
-    void 	  *dummy;
+    Buffer	buf;	    	/* Buffer in which to store it */
+    void	*dummy		UNUSED;
 {
-    const char 	  *slash;
+    const char	*slash;
 
     slash = strrchr(word, '/');
     if (slash != NULL) {
@@ -222,7 +222,7 @@ VarHead(word, addSpace, buf, dummy)
 	else
 	    Buf_AddChar(buf, '.');
     }
-    return(dummy ? TRUE : TRUE);
+    return TRUE;
 }
 
 /*-
@@ -242,13 +242,13 @@ VarHead(word, addSpace, buf, dummy)
  */
 static Boolean
 VarTail(word, addSpace, buf, dummy)
-    const char    *word;    	/* Word to trim */
-    Boolean 	  addSpace; 	/* TRUE if need to stick a space in the
+    const char	*word;    	/* Word to trim */
+    Boolean	addSpace; 	/* TRUE if need to stick a space in the
 				 * buffer before adding the tail */
-    Buffer  	  buf;	    	/* Buffer in which to store it */
-    void 	  *dummy;
+    Buffer	buf;	    	/* Buffer in which to store it */
+    void	*dummy		UNUSED;
 {
-    const char *slash;
+    const char	*slash;
 
     if (addSpace) 
 	Buf_AddSpace(buf);
@@ -257,7 +257,7 @@ VarTail(word, addSpace, buf, dummy)
 	Buf_AddString(buf, slash+1);
     else
 	Buf_AddString(buf, word);
-    return (dummy ? TRUE : TRUE);
+    return TRUE;
 }
 
 /*-
@@ -276,13 +276,13 @@ VarTail(word, addSpace, buf, dummy)
  */
 static Boolean
 VarSuffix(word, addSpace, buf, dummy)
-    const char    *word;    	/* Word to trim */
-    Boolean 	  addSpace; 	/* TRUE if need to add a space before placing
+    const char	*word;    	/* Word to trim */
+    Boolean	addSpace; 	/* TRUE if need to add a space before placing
 				 * the suffix in the buffer */
-    Buffer  	  buf;	    	/* Buffer in which to store it */
-    void 	  *dummy;
+    Buffer	buf;	    	/* Buffer in which to store it */
+    void	*dummy		UNUSED;
 {
-    const char *dot;
+    const char	*dot;
 
     dot = strrchr(word, '.');
     if (dot != NULL) {
@@ -291,7 +291,7 @@ VarSuffix(word, addSpace, buf, dummy)
 	Buf_AddString(buf, dot+1);
 	addSpace = TRUE;
     }
-    return (dummy ? addSpace : addSpace);
+    return addSpace;
 }
 
 /*-
@@ -311,13 +311,13 @@ VarSuffix(word, addSpace, buf, dummy)
  */
 static Boolean
 VarRoot(word, addSpace, buf, dummy)
-    const char 	  *word;    	/* Word to trim */
-    Boolean 	  addSpace; 	/* TRUE if need to add a space to the buffer
+    const char	*word;    	/* Word to trim */
+    Boolean	addSpace; 	/* TRUE if need to add a space to the buffer
 				 * before placing the root in it */
-    Buffer  	  buf;	    	/* Buffer in which to store it */
-    void 	  *dummy;
+    Buffer	buf;	    	/* Buffer in which to store it */
+    void	*dummy		UNUSED;
 {
-    const char *dot;
+    const char	*dot;
 
     if (addSpace)
 	Buf_AddSpace(buf);
@@ -327,7 +327,7 @@ VarRoot(word, addSpace, buf, dummy)
 	Buf_AddInterval(buf, word, dot);
     else
 	Buf_AddString(buf, word);
-    return (dummy ? TRUE : TRUE);
+    return TRUE;
 }
 
 /*-
