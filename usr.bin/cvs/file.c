@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.54 2005/03/02 16:56:58 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.55 2005/03/05 03:00:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -631,15 +631,18 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
 			    ent->d_name);
 			cfp = cvs_file_lget(pbuf, flags, cf);
-			if (cfp != NULL) {
-				if (cfp->cf_type == DT_DIR) {
-					TAILQ_INSERT_TAIL(&dirs, cfp, cf_list);
-					ndirs++;
-				} else {
-					TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp,
-					    cf_list);
-					cdp->cd_nfiles++;
-				}
+			if (cfp == NULL) {
+				(void)close(fd);
+				return (-1);
+			}
+
+			if (cfp->cf_type == DT_DIR) {
+				TAILQ_INSERT_TAIL(&dirs, cfp, cf_list);
+				ndirs++;
+			} else {
+				TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp,
+				    cf_list);
+				cdp->cd_nfiles++;
 			}
 		}
 	} while (ret > 0);
