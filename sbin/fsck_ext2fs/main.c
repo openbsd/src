@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2004/04/07 14:09:35 aaron Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2005/02/03 05:03:50 jaredy Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #if 0
 static char rcsid[] = "$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2004/04/07 14:09:35 aaron Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2005/02/03 05:03:50 jaredy Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -319,7 +319,7 @@ usage(void)
 	extern char *__progname;
 
 	(void) fprintf(stderr,
-	    "Usage: %s [-dfnpy] [-b block] [-c level] [-m mode] filesystem ...\n",
+	    "usage: %s [-dfnpy] [-b block#] [-m mode] filesystem ...\n",
 	    __progname);
 	exit(1);
 }

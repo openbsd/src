@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2005/02/03 05:03:50 jaredy Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.25 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.26 2005/02/03 05:03:50 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,8 @@ main(int argc, char *argv[])
 			break;
 
 		default:
-			errexit("usage: %s -p [-f] [-m mode]\n       %s [-f] [-b block#] [-c level] [-y] [-n] [-m mode] [filesystem] ...\n", __progname, __progname);
+			errexit("usage: %s [-fnpy] [-b block#] [-c level] "
+			    "[-m mode] filesystem ...\n", __progname);
 		}
 	}
 	argc -= optind;
