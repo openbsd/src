@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.5 1998/09/08 01:30:38 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.6 1998/10/28 21:01:33 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -70,7 +70,8 @@ device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
-Block and character devices are accessed through files in the file
+Character and block
+devices are accessed through files in the file
 system of a special type; see
 .Xr mknod 8 .
 Network interfaces are indirectly accessed through the interprocess
@@ -223,10 +224,14 @@ Magma serial/parallel communication boards
 Sun mouse (on zs)
 .It openprom
 Sun Open boot PROM (what became IEEE 1275) configuration driver
+.It qe
+Quad 10BaseT SBus Ethernet controller
 .It qec
 Supported as a carrier for the
 .Nm be
-controller.
+or
+.Nm qe
+Ethernet controllers.
 .It si
 NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller
 .It sw
