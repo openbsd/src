@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.56 2001/02/16 14:03:43 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.57 2001/02/23 15:37:45 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -184,6 +184,7 @@ do_authenticated(struct passwd * pw)
 	int n_bytes;
 	int plen;
 	u_int proto_len, data_len, dlen;
+	int screen_flag;
 
 	/*
 	 * Cancel the alarm we set to limit the time taken for
@@ -308,13 +309,18 @@ do_authenticated(struct passwd * pw)
 			s->auth_proto = packet_get_string(&proto_len);
 			s->auth_data = packet_get_string(&data_len);
 
-			if (packet_get_protocol_flags() & SSH_PROTOFLAG_SCREEN_NUMBER) {
-				debug2("SSH_PROTOFLAG_SCREEN_NUMBER == true");
+			screen_flag = packet_get_protocol_flags() &
+			    SSH_PROTOFLAG_SCREEN_NUMBER;
+			debug2("SSH_PROTOFLAG_SCREEN_NUMBER: %d", screen_flag);
+
+			if (packet_remaining() == 4) {
+				if (!screen_flag)
+					debug2("Buggy client: "
+					    "X11 screen flag missing");
 				packet_integrity_check(plen,
 				    4 + proto_len + 4 + data_len + 4, type);
 				s->screen = packet_get_int();
 			} else {
-				debug2("SSH_PROTOFLAG_SCREEN_NUMBER == false");
 				packet_integrity_check(plen,
 				    4 + proto_len + 4 + data_len, type);
 				s->screen = 0;
