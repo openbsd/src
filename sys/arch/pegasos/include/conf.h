@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2003/10/31 03:54:33 drahn Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2004/01/22 21:41:14 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -35,14 +35,3 @@
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
-
-/* open, close, write, ioctl, kqueue */
-#define cdev_apm_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
-
-cdev_decl(aed);
-cdev_decl(apm);
-cdev_decl(zs);
