@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.17 2002/03/14 01:26:51 millert Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.18 2003/11/23 17:14:21 avsm Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -152,6 +152,9 @@ show_ioc(str, ioc)
 	len = ioc->len;
 	if (len > 1024)
 		len = 1024;
+
+	if (len <= 0)
+		return 0;
 
 	ptr = (u_char *) malloc(len, M_TEMP, M_WAITOK);	
 	uprintf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
