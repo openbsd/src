@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.14 2004/12/13 18:50:23 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.15 2004/12/26 15:18:51 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,16 +21,19 @@ use strict;
 use warnings;
 package OpenBSD::Ustar;
 
-use constant FILE => "\0";
-use constant FILE1 => '0';
-use constant HARDLINK => '1';
-use constant SOFTLINK => '2';
-use constant CHARDEVICE => '3';
-use constant BLOCKDEVICE => '4';
-use constant DIR => '5';
-use constant FIFO => '6';
-use constant CONTFILE => '7';
-use constant USTAR_HEADER => 'a100a8a8a8a12a12a8aa100a6a2a32a32a8a8a155';
+use constant {
+	FILE => "\0",
+	FILE1 => '0',
+	HARDLINK => '1',
+	SOFTLINK => '2',
+	CHARDEVICE => '3',
+	BLOCKDEVICE => '4',
+	DIR => '5',
+	FIFO => '6',
+	CONTFILE => '7',
+	USTAR_HEADER => 'a100a8a8a8a12a12a8aa100a6a2a32a32a8a8a155',
+};
+
 use File::Path ();
 use File::Basename ();
 use OpenBSD::IdCache;
@@ -140,6 +143,44 @@ sub next
     return $result;
 }
 
+sub mkheader
+{
+	my ($entry, $type) = @_;
+	my ($name, $prefix);
+	if (length($name) < 100) {
+		$prefix = '';
+	} elsif (length($name) > 255) {
+		die "Can't fit such a name $name\n";
+	} elsif ($name =~ m|^(.*)/(.{,100})$|) {
+		$prefix = $1;
+		$name = $2;
+	} else {
+		die "Can't fit such a name $name\n";
+	}
+	my $header;
+	my $cksum = ' 'x8;
+	for (1 .. 2) {
+		$header = pack(USTAR_HEADER, 
+		    $name,
+		    sprintf("%o", $entry->{mode}),
+		    sprintf("%o", $entry->{uid}),
+		    sprintf("%o", $entry->{gid}),
+		    sprintf("%o", $entry->{size}),
+		    sprintf("%o", $entry->{mtime}),
+		    $cksum,
+		    $type,
+		    $entry->{linkname},
+		    'ustar', '00',
+		    $entry->{uname},
+		    $entry->{gname},
+		    '0', '0',
+		    $prefix);
+		$cksum = unpack("%C*", $header);
+	}
+	return $header;
+}
+
+
 package OpenBSD::Ustar::Object;
 sub set_modes
 {
@@ -206,19 +247,34 @@ sub create
 sub isLink() { 1 }
 sub isSymLink() { 1 }
 
-package OpenBSD::Ustar::File;
-our @ISA=qw(OpenBSD::Ustar::Object);
+package OpenBSD::CompactWriter;
 
-my $bs;
-my $zeroes;
-sub print_compact
+use constant {
+	FH => 0,
+	BS => 1,
+	ZEROES => 2,
+	UNFINISHED => 3,
+};
+
+sub new
 {
-	my ($fh, $buffer) = @_;
-	my $newbs = (stat $fh)[11];
-	if (!defined $bs or $newbs != $bs) {
-		$bs = $newbs;
+	my ($class, $fname) = @_;
+	open (my $out, '>', $fname);
+	if (!defined $out) {
+		return undef;
+	}
+	my $bs = (stat $out)[11];
+	my $zeroes;
+	if (defined $bs) {
 		$zeroes = "\x00"x$bs;
 	}
+	bless [ $out, $bs, $zeroes, 0 ], $class;
+}
+
+sub write
+{
+	my ($self, $buffer) = @_;
+	my ($fh, $bs, $zeroes, $e) = @$self;
 START:
 	if (defined $bs) {
 		for (my $i = 0; $i + $bs <= length($buffer); $i+= $bs) {
@@ -233,23 +289,41 @@ START:
 				defined(sysseek($fh, $seek_forward, 1)) 
 				    or return 0;
 				$buffer = substr($buffer, $i);
+				if (length $buffer == 0) {
+					$self->[UNFINISHED] = 1;
+					return 1;
+				}
 				goto START;
 			}
 		}
 	}
+	$self->[UNFINISHED] = 0;
 	defined(syswrite($fh, $buffer)) or return 0;
 	return 1;
 }
+
+sub close
+{
+	my ($self) = @_;
+	if ($self->[UNFINISHED]) {
+		defined(sysseek($self->[FH], -1, 1)) or return 0;
+		defined(syswrite($self->[FH], "\0")) or return 0;
+	}
+	return 1;
+}
+
+package OpenBSD::Ustar::File;
+our @ISA=qw(OpenBSD::Ustar::Object);
 
 sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
-	open (my $out, '>', $self->{destdir}.$self->{name});
+	my $buffer;
+	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->{name});
 	if (!defined $out) {
 		die "Can't write to $self->{destdir}$self->{name}: $!";
 	}
-	my $buffer;
 	my $toread = $self->{size};
 	while ($toread > 0) {
 		my $maxread = $buffsize;
@@ -258,7 +332,7 @@ sub create
 			die "Error reading from archive: $!";
 		}
 		$self->{archive}->{swallow} -= $maxread;
-		unless (print_compact($out, $buffer)) {
+		unless ($out->write($buffer)) {
 			die "Error writing to $self->{destdir}$self->{name}: $!";
 		}
 			
