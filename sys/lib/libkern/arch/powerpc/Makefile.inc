@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2001/07/09 04:24:29 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2002/11/11 16:32:48 drahn Exp $
 #	$NetBSD: Makefile.inc,v 1.6 1994/10/26 06:39:03 cgd Exp $
 
 CFLAGS	+= -D_KERNEL
@@ -18,6 +18,12 @@ OBJS+=	bzero.o
 CLEANFILES+=	bzero.o
 
 bzero.o: ${KERNDIR}/memset.c
+	@echo "${COMPILE.c} -DBZERO ${KERNDIR}/memset.c -o ${.TARGET}"
+	@${COMPILE.c} -DBZERO ${KERNDIR}/memset.c  -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+				 
+bzero.po: ${KERNDIR}/memset.c
 	@echo "${COMPILE.c} -DBZERO ${KERNDIR}/memset.c -o ${.TARGET}"
 	@${COMPILE.c} -DBZERO ${KERNDIR}/memset.c  -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
