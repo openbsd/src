@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.28 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.29 2004/05/18 11:16:33 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -1501,11 +1501,17 @@ iestart(ifp)
 			    sc->xchead);
 #endif
 
+		len = 0;
 		buffer = sc->xmit_cbuffs[sc->xchead];
-		for (m = m0; m != 0; m = m->m_next) {
+
+		for (m = m0; m != NULL && (len + m->m_len) < IE_TBUF_SIZE;
+		    m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
+			len += m->m_len;
 		}
+		if (m != NULL)
+			printf("%s: tbuf overflow\n", sc->sc_dev.dv_xname);
 
 		m_freem(m0);
 
