@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.76 1999/07/09 19:28:31 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.77 1999/07/18 09:39:51 niklas Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -41,6 +41,27 @@ amd
 # ./etc/disklabels
 disklabels
 # ./etc/disklabels
+..
+
+# ./etc/isakmpd
+isakmpd
+
+# ./etc/isakmpd/ca
+ca
+# ./etc/isakmpd/ca
+..
+
+# ./etc/isakmpd/certs
+certs
+# ./etc/isakmpd/certs
+..
+
+# ./etc/isakmpd/private
+private		uname=root mode=0700
+# ./etc/isakmpd/private
+..
+
+# ./etc/isakmpd
 ..
 
 # ./etc/kerberosIV
