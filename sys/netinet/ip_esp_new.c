@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.23 1998/07/30 08:41:20 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.24 1998/08/01 08:35:12 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -502,7 +502,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     }
 
     esp = (struct esp_new *) ((u_int8_t *) ip + (ip->ip_hl << 2));
-
     ipo = *ip;
 
     /* Replay window checking */
@@ -549,46 +548,23 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     {
 	bcopy(&(xd->edx_ictx), &ctx, xd->edx_hash->ctxsize);
 
-	/* Auth covers SPI + SN + IV*/
+	/* Auth covers SPI + SN + IV */
 	oplen = plen + 2 * sizeof(u_int32_t) + xd->edx_ivlen; 
 	off = (ip->ip_hl << 2);
 
+	/* Copy the authentication data */
+	m_copydata(m, m->m_pkthdr.len - alen, alen, buf);
+
 	mo = m;
+
 	while (oplen > 0)
 	{
 	    if (mo == 0)
 	      panic("esp_new_input(): m_copydata (copy)");
 
 	    count = min(mo->m_len - off, oplen);
-
 	    xd->edx_hash->Update(&ctx, mtod(mo, unsigned char *) + off, count);
 	    oplen -= count;
-	    if (oplen == 0) 
-	    {
-		/* Get the authentication data */
-		if (mo->m_len - off - count >= alen)
-		  bcopy(mtod(mo, unsigned char *) + off + count, buf, alen);
-		else 
-		{
-		    int olen = alen, tmp = 0;
-		      
-		    mi = mo;
-		    off += count;
-		      
-		    while (mi != NULL && olen > 0) 
-		    {
-			count = min(mi->m_len - off, olen);
-			bcopy(mtod(mi, unsigned char *) + off, buf + tmp,
-			      count);
-			  
-			off = 0;
-			tmp += count;
-			olen -= count;
-			mi = mi->m_next;
-		    }
-		}
-	    }
-		   
 	    off = 0;
 	    mo = mo->m_next;
 	}
@@ -690,7 +666,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 		    
 		xd->edx_xform->decrypt(xd, blk);
 
-		for (i=0; i<blks; i++)
+		for (i = 0; i < blks; i++)
 		    blk[i] ^= ivp[i];
 
 		ivp = ivn;
@@ -715,7 +691,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
 	    xd->edx_xform->decrypt(xd, idat);
 
-	    for (i=0; i<blks; i++)
+	    for (i = 0; i < blks; i++)
 		idat[i] ^= ivp[i];
 
 	    ivp = ivn;
@@ -1052,7 +1028,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    {
 		bcopy(idat, blk + rest, blks - rest);
 		    
-		for (i=0; i<blks; i++)
+		for (i = 0; i < blks; i++)
 		    blk[i] ^= ivp[i];
 
 		xd->edx_xform->encrypt(xd, blk);
@@ -1075,7 +1051,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
 	while (ilen >= blks && plen > 0)
 	{
-	    for (i=0; i<blks; i++)
+	    for (i = 0; i < blks; i++)
 		idat[i] ^= ivp[i];
 
 	    xd->edx_xform->encrypt(xd, idat);

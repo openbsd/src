@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.34 1998/07/29 22:18:48 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.35 1998/08/01 08:35:11 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -237,7 +237,8 @@ ip_output(m0, va_alist)
 			if (encdebug)
 				printf("ip_output(): no gw or gw data not IPSP\n");
 #endif /* ENCDEBUG */
-			RTFREE(re->re_rt);
+			if (re->re_rt)
+				RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -289,12 +290,16 @@ ip_output(m0, va_alist)
 		if (sa_require & ~sa_have)
 			goto no_encap;
 
+		if (tdb == NULL) {
 #ifdef ENCDEBUG
-		if (encdebug && (tdb == NULL))
-			printf("ip_output(): non-existant TDB for SA %08x/%x/%d\n",
-			    ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_dst,
-			    gw->sen_ipsp_sproto);
-#endif ENCDEBUG
+			if (encdebug)
+				printf("ip_output(): non-existant TDB for SA %08x/%x/%d\n", ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_dst, gw->sen_ipsp_sproto);
+#endif
+			if (re->re_rt)
+                        	RTFREE(re->re_rt);
+			error = EHOSTUNREACH;
+			goto bad;
+		}
 
 		/* Fix the ip_src field if necessary */
 		if (ip->ip_src.s_addr == INADDR_ANY) {
@@ -481,9 +486,11 @@ expbail:
 
 			error = (*(tdb->tdb_xform->xf_output))(m, gw,
 			    tdb, &mp);
-			if (mp == NULL)
+			if (!error && mp == NULL)
 				error = EFAULT;
 			if (error) {
+				if (mp != NULL)
+					m_freem(mp);
 				RTFREE(re->re_rt);
 				return error;
 			}
