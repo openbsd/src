@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_cast.h,v 1.1 1997/11/04 09:11:06 provos Exp $       */
+/*      $OpenBSD: ip_cast.h,v 1.2 1998/11/24 10:04:06 niklas Exp $       */
 /*
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>
@@ -9,8 +9,8 @@
 #ifndef _CAST_H_
 #define _CAST_H_
 
-typedef unsigned char u8;	/* 8-bit unsigned */
-typedef unsigned long u32;	/* 32-bit unsigned */
+typedef u_int8_t u8;	/* 8-bit unsigned */
+typedef u_int32_t u32;	/* 32-bit unsigned */
 
 typedef struct {
 	u32 xkey[32];	/* Key, after expansion */

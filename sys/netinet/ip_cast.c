@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_cast.c,v 1.1 1997/11/04 09:11:05 provos Exp $       */
+/*      $OpenBSD: ip_cast.c,v 1.2 1998/11/24 10:04:06 niklas Exp $       */
 /*
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>
@@ -6,6 +6,7 @@
  *	Released 1997.10.11
  */
 
+#include <sys/types.h>
 #include <netinet/ip_cast.h>
 #include <netinet/ip_castsb.h>
 
