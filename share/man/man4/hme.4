@@ -1,4 +1,4 @@
-.\"     $OpenBSD: hme.4,v 1.3 2003/06/02 18:51:33 jason Exp $
+.\"     $OpenBSD: hme.4,v 1.4 2004/03/21 19:50:25 miod Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -67,7 +67,7 @@ When a
 interface is brought up, by default, it will attempt to auto-negotiate the
 link speed and duplex.
 The speeds, in order of attempt, are:
-100Mb/s Full Duplex, 100Mb/s Half Duplex, 10 Mb/s Full Duplex, and
+100 Mb/s Full Duplex, 100 Mb/s Half Duplex, 10 Mb/s Full Duplex, and
 10 Mb/s Half Duplex.
 .Pp
 The
@@ -79,13 +79,13 @@ The supported media types are:
 .Bl -tag -width "media autoselect" -offset indent
 .It media autoselect
 Attempt to autoselect the media type (default)
-.It media 100baseTX  mediaopt full-duplex
+.It media 100baseTX mediaopt full-duplex
 Use 100baseTX, full duplex
-.It media 100baseTX Op mediaopt half-duplex
+.It media 100baseTX mediaopt half-duplex
 Use 100baseTX, half duplex
 .It media 10baseT mediaopt full-duplex
 Use 10baseT, full duplex
-.It media 10baseT Op mediaopt half-duplex
+.It media 10baseT mediaopt half-duplex
 Use 10baseT, half duplex
 .El
 .Sh SEE ALSO
