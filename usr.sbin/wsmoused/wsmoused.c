@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.7 2001/12/09 14:58:27 miod Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.8 2002/01/12 01:15:37 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -390,9 +390,6 @@ wsmoused(void)
 	u_char b;
 	FILE *fp;
 
-	if ((mouse.cfd = open("/dev/ttyCcfg", O_RDWR, 0)) == -1)
-		logerr(1, "cannot open /dev/ttyCcfg");
-
 	if (!nodaemon && !background) {
 		if (daemon(0, 0)) {
 			logerr(1, "failed to become a daemon");
@@ -405,6 +402,9 @@ wsmoused(void)
 			}
 		}
 	}
+
+	if ((mouse.cfd = open("/dev/ttyCcfg", O_RDWR, 0)) == -1)
+		logerr(1, "cannot open /dev/ttyCcfg");
 
 	/* initialization */
     

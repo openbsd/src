@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.2 2001/12/11 21:10:50 miod Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.3 2002/01/12 01:15:37 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -55,23 +55,28 @@
 
 /* Logging macros */
 
+extern char *pidfile;
+
 #define debug(fmt,args...) \
 	if (debug&&nodaemon) printf(fmt, ##args)
 
-#define logerr(e, fmt, args...) {				\
-	if (background) {					\
-	    syslog(LOG_ERR, fmt, ##args);		\
-	    exit(e);						\
-	} else							\
-	    errx(e, fmt, ##args);				\
-}
+#define logerr(e, fmt, args...) 				\
+	do {							\
+		unlink(pidfile);				\
+		if (background) {				\
+			syslog(LOG_ERR, fmt, ##args);		\
+			exit(e);				\
+		} else						\
+			errx(e, fmt, ##args);			\
+	} while (0)
 
-#define logwarn(fmt, args...) {				\
-	if (background)						\
-	    syslog(LOG_WARNING, fmt, ##args);	\
-	else							\
-	    warnx(fmt, ##args);					\
-}
+#define logwarn(fmt, args...)					\
+	do {							\
+		if (background)					\
+		    syslog(LOG_WARNING, fmt, ##args);		\
+		else						\
+		    warnx(fmt, ##args);				\
+	} while (0)
 
 /* Daemon flags */
 
