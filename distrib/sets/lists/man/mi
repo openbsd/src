@@ -1483,8 +1483,6 @@
 ./usr/share/man/cat4/sparc/clock.0
 ./usr/share/man/cat4/sparc/daadio.0
 ./usr/share/man/cat4/sparc/esp.0
-./usr/share/man/cat4/sparc/fd.0
-./usr/share/man/cat4/sparc/fdc.0
 ./usr/share/man/cat4/sparc/fga.0
 ./usr/share/man/cat4/sparc/fvme.0
 ./usr/share/man/cat4/sparc/ie.0
