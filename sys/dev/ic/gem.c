@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.30 2003/01/23 22:55:52 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.31 2003/03/02 02:59:10 henric Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -446,9 +446,8 @@ gem_stop(struct ifnet *ifp, int disable)
 	timeout_del(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
 
-	/* XXX - Should we reset these instead? */
-	gem_disable_rx(sc);
-	gem_disable_tx(sc);
+	gem_reset_rx(sc);
+	gem_reset_tx(sc);
 
 	/*
 	 * Release any queued transmit buffers.
