@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.9 1996/12/19 22:19:51 deraadt Exp $
+#	$OpenBSD: special,v 1.10 1997/01/20 04:18:18 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -8,11 +8,11 @@
 .		type=dir mode=0755 uname=root gname=wheel
 
 dev		type=dir mode=0755 uname=root gname=wheel
-drum		type=char mode=640 uname=root gname=kmem
+drum		type=char mode=0640 uname=root gname=kmem
 fd		type=dir mode=0555 uname=root gname=wheel ignore
 ..	#dev/fd
-kmem		type=char mode=640 uname=root gname=kmem
-mem		type=char mode=640 uname=root gname=kmem
+kmem		type=char mode=0640 uname=root gname=kmem
+mem		type=char mode=0640 uname=root gname=kmem
 ..	#dev
 
 etc		type=dir mode=0755 uname=root gname=wheel
@@ -23,6 +23,7 @@ csh.cshrc	type=file mode=0644 uname=root gname=wheel
 csh.login	type=file mode=0644 uname=root gname=wheel
 csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
+daily.local	type=file mode=0644 uname=root gname=wheel optional
 disklabels	type=dir mode=0755 uname=root gname=wheel ignore
 ..	#disklabels
 exports		type=file mode=0644 uname=root gname=wheel
@@ -37,14 +38,15 @@ ipf.rules	type=file mode=0644 uname=root gname=wheel optional
 kerberosIV	type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#kerberosIV
 mail.rc		type=file mode=0644 uname=root gname=wheel
-master.passwd	type=file mode=600 uname=root gname=wheel
+master.passwd	type=file mode=0600 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
+monthly.local	type=file mode=0644 uname=root gname=wheel optional
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
 named.boot	type=file mode=0644 uname=root gname=wheel
 netstart	type=file mode=0744 uname=root gname=wheel
-passwd		type=file mode=644 uname=root gname=wheel
+passwd		type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
 rc		type=file mode=0644 uname=root gname=wheel
 rc.local	type=file mode=0644 uname=root gname=wheel
@@ -57,6 +59,7 @@ spwd.db		type=file mode=0600 uname=root gname=wheel
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
+weekly.local	type=file mode=0644 uname=root gname=wheel optional
 uucp		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#uucp
 ..	#etc
@@ -76,7 +79,7 @@ usr		type=dir mode=0755 uname=root gname=wheel
 bin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/bin
 games		type=dir mode=0755 uname=root gname=wheel optional
-hide		type=dir mode=0700 uname=root gname=wheel optional ignore
+hide		type=dir mode=0550 uname=root gname=games optional ignore
 ..	#usr/games/hide
 ..	#usr/games
 include		type=dir mode=0755 uname=root gname=bin ignore
@@ -103,7 +106,7 @@ src		type=dir mode=0775 uname=root gname=wsrc ignore
 
 var		type=dir mode=0755 uname=root gname=wheel
 account		type=dir mode=0755 uname=root gname=wheel
-acct		type=file mode=644 uname=root gname=wheel optional
+acct		type=file mode=0644 uname=root gname=wheel optional
 ..	#var/account
 at		type=dir mode=0755 uname=root gname=daemon ignore
 ..	#var/at
@@ -134,13 +137,13 @@ utmp		type=file mode=0664 uname=root gname=utmp
 spool		type=dir mode=0755 uname=root gname=wheel
 ftp		type=dir mode=0755 uname=root gname=wheel optional
 bin		type=dir mode=0755 uname=root gname=wheel optional
-ls		type=file mode=555 uname=root gname=wheel optional
+ls		type=file mode=0555 uname=root gname=wheel optional
 ..	#var/spool/ftp/bin
 etc		type=dir mode=0755 uname=root gname=wheel optional
-group		type=file mode=644 uname=root gname=wheel optional
-localtime	type=file mode=644 uname=root gname=wheel optional
-master.passwd	type=file mode=600 uname=root gname=wheel optional
-passwd		type=file mode=644 uname=root gname=wheel optional
+group		type=file mode=0644 uname=root gname=wheel optional
+localtime	type=file mode=0644 uname=root gname=wheel optional
+master.passwd	type=file mode=0600 uname=root gname=wheel optional
+passwd		type=file mode=0644 uname=root gname=wheel optional
 ..	#var/spool/ftp/etc
 hidden		type=dir mode=0111 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp/hidden
