@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.24 2002/05/24 21:33:09 deraadt Exp $
+ * $OpenBSD: skeysubr.c,v 1.25 2002/05/29 18:53:15 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -94,7 +94,7 @@ keycrunch_md4(result, seed, passwd)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
-		(void)strcat(buf, passwd);
+		(void)strlcat(buf, passwd, buflen + 1);
 		sevenbit(buf);
 	} else {
 		buf = result;
@@ -139,7 +139,7 @@ keycrunch_md5(result, seed, passwd)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
-		(void)strcat(buf, passwd);
+		(void)strlcat(buf, passwd, buflen + 1);
 		sevenbit(buf);
 	} else {
 		buf = result;
@@ -184,7 +184,7 @@ keycrunch_sha1(result, seed, passwd)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
-		(void)strcat(buf, passwd);
+		(void)strlcat(buf, passwd, buflen + 1);
 		sevenbit(buf);
 	} else {
 		buf = result;
@@ -240,7 +240,7 @@ keycrunch_rmd160(result, seed, passwd)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
-		(void)strcat(buf, passwd);
+		(void)strlcat(buf, passwd, buflen + 1);
 		sevenbit(buf);
 	} else {
 		buf = result;

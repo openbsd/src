@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.13 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.14 2002/05/29 18:53:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -139,7 +139,7 @@ clnt_sperror(rpch, s)
 		break;
 	}
 	strstart[CLNT_PERROR_BUFLEN-2] = '\0';
-	strcat(strstart, "\n");
+	strlcat(strstart, "\n", CLNT_PERROR_BUFLEN);
 	return (strstart);
 
 truncated:
