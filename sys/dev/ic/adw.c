@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.11 2000/11/10 04:24:50 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.12 2000/12/08 00:03:30 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -670,7 +670,6 @@ adw_scsi_cmd(xs)
 			splx(s);
 			return (TRY_AGAIN_LATER);
 		}
-
 		xs = adw_dequeue(sc);
 		fromqueue = 1;
 		nowait = 1;
@@ -1088,14 +1087,17 @@ adw_reset_bus(sc)
 	int	 s;
 
 	s = splbio();
-	AdwResetSCSIBus(sc);
+	AdwResetSCSIBus(sc); /* XXX - should check return value? */
 	while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
 			adw_pending_ccb)) != NULL) {
 	        timeout_del( &ccb->to );
 		TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 		TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
 	}
+
+	bzero(sc->sc_freeze_dev, sizeof(sc->sc_freeze_dev));
 	adw_queue_ccb(sc, TAILQ_FIRST(&sc->sc_waiting_ccb), 1);
+
 	splx(s);
 }
 
@@ -1194,15 +1196,23 @@ adw_isr_callback(sc, scsiq)
 	ADW_SOFTC      *sc;
 	ADW_SCSI_REQ_Q *scsiq;
 {
-	bus_dma_tag_t   dmat = sc->sc_dmat;
+	bus_dma_tag_t   dmat;
 	ADW_CCB        *ccb;
 	struct scsi_xfer *xs;
 	struct scsi_sense_data *s1, *s2;
 
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
+	timeout_del(&ccb->to);
+	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 
-	timeout_del( &ccb->to );
+	if ((ccb->flags & CCB_ALLOC) == 0) {
+		printf("%s: unallocated ccb found on pending list!\n",
+		    sc->sc_dev.dv_xname);
+		Debugger();
+		adw_free_ccb(sc, ccb);
+		return;
+	}
 
 	xs = ccb->xs;
 
@@ -1210,17 +1220,12 @@ adw_isr_callback(sc, scsiq)
          * If we were a data transfer, unload the map that described
          * the data buffer.
          */
+	dmat = sc->sc_dmat;
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
-			 (xs->flags & SCSI_DATA_IN) ?
-			 BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		    (xs->flags & SCSI_DATA_IN) ?
+		        BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
-	}
-
-	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
-		Debugger();
-		return;
 	}
 
 	/*
@@ -1228,143 +1233,150 @@ adw_isr_callback(sc, scsiq)
 	 * 'host_status' conatins the host adapter status.
 	 * 'scsi_status' contains the scsi peripheral status.
 	 */
-	if ((scsiq->host_status == QHSTA_NO_ERROR) &&
-	   ((scsiq->done_status == QD_NO_ERROR) ||
-	    (scsiq->done_status == QD_WITH_ERROR))) {
+
+	sc->sc_freeze_dev[scsiq->target_id] = 0;
+	xs->status = scsiq->scsi_status;
+
+	switch (scsiq->done_status) {
+	case QD_NO_ERROR: /* (scsi_status == 0) && (host_status == 0) */
+		/*
+		 * XXX - is there no better way to handle the inquiries
+		 *       generated during boot time probes?
+		 */
+		if ((scsiq->cdb[0] == INQUIRY) &&
+		    (scsiq->target_lun == 0))
+			adw_print_info(sc, scsiq->target_id);
+NO_ERROR:
+		xs->resid = scsiq->data_cnt;
+		xs->error = XS_NOERROR;
+		break;
+
+	case QD_WITH_ERROR:
 		switch (scsiq->host_status) {
-		case SCSI_STATUS_GOOD:
-			if ((scsiq->cdb[0] == INQUIRY) &&
-			    (scsiq->target_lun == 0)) {
-				adw_print_info(sc, scsiq->target_id);
+		case QHSTA_NO_ERROR:
+			switch (scsiq->scsi_status) {
+			case SCSI_STATUS_CONDITION_MET:
+			case SCSI_STATUS_INTERMID:
+			case SCSI_STATUS_INTERMID_COND_MET:
+				/*
+				 * These non-zero status values are 
+				 * not really error conditions.
+				 *
+				 * XXX - would it be too paranoid to 
+				 *       add SCSI_STATUS_GOOD here in
+				 *       case the docs are wrong re
+				 *       QD_NO_ERROR?
+				 */
+				goto NO_ERROR;
+
+			case SCSI_STATUS_CHECK_CONDITION:
+			case SCSI_STATUS_CMD_TERMINATED:
+			case SCSI_STATUS_ACA_ACTIVE:
+				s1 = &ccb->scsi_sense;
+				s2 = &xs->sense;
+				*s2 = *s1;
+				xs->error = XS_SENSE;
+				break;
+
+			case SCSI_STATUS_TARGET_BUSY:
+			case SCSI_STATUS_QUEUE_FULL:
+			case SCSI_STATUS_RSERV_CONFLICT:
+				sc->sc_freeze_dev[scsiq->target_id] = 1;
+				xs->error = XS_BUSY;
+				break;
+		
+			default: /* scsiq->scsi_status value */
+				printf("%s: bad scsi_status: 0x%02x.\n"
+				    ,sc->sc_dev.dv_xname
+				    ,scsiq->scsi_status);
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
 			}
-			xs->error = XS_NOERROR;
-			xs->resid = scsiq->data_cnt;
-			sc->sc_freeze_dev[scsiq->target_id] = 0;
 			break;
-
-		case SCSI_STATUS_CHECK_CONDITION:
-		case SCSI_STATUS_CMD_TERMINATED:
-			s1 = &ccb->scsi_sense;
-			s2 = &xs->sense;
-			*s2 = *s1;
-			xs->error = XS_SENSE;
-			sc->sc_freeze_dev[scsiq->target_id] = 1;
-			break;
-
-		default:
-			xs->error = XS_BUSY;
-			sc->sc_freeze_dev[scsiq->target_id] = 1;
-			break;
-		}
-	} else if (scsiq->done_status == QD_ABORTED_BY_HOST) {
-		xs->error = XS_DRIVER_STUFFUP;
-	} else {
-		switch (scsiq->host_status) {
+		
 		case QHSTA_M_SEL_TIMEOUT:
 			xs->error = XS_SELTIMEOUT;
 			break;
 
+		case QHSTA_M_DIRECTION_ERR:
 		case QHSTA_M_SXFR_OFF_UFLW:
 		case QHSTA_M_SXFR_OFF_OFLW:
-		case QHSTA_M_DATA_OVER_RUN:
-			printf("%s: Overrun/Overflow/Underflow condition\n",
-				sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_SXFR_DESELECTED:
-		case QHSTA_M_UNEXPECTED_BUS_FREE:
-			printf("%s: Unexpected BUS free\n",sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_SCSI_BUS_RESET:
-		case QHSTA_M_SCSI_BUS_RESET_UNSOL:
-			printf("%s: BUS Reset\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_BUS_DEVICE_RESET:
-			printf("%s: Device Reset\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
+		case QHSTA_M_SXFR_XFR_OFLW:
 		case QHSTA_M_QUEUE_ABORTED:
-			printf("%s: Queue Aborted\n", sc->sc_dev.dv_xname);
+		case QHSTA_M_INVALID_DEVICE:
+		case QHSTA_M_SGBACKUP_ERROR:
+		case QHSTA_M_SXFR_DESELECTED:
+		case QHSTA_M_SXFR_XFR_PH_ERR:
+		case QHSTA_M_BUS_DEVICE_RESET:
+		case QHSTA_M_NO_AUTO_REQ_SENSE:
+		case QHSTA_M_BAD_CMPL_STATUS_IN:
+		case QHSTA_M_SXFR_UNKNOWN_ERROR:
+		case QHSTA_M_AUTO_REQ_SENSE_FAIL:
+		case QHSTA_M_UNEXPECTED_BUS_FREE:
+			printf("%s: host adapter error 0x%02x."
+			       " See adw(4).\n"
+			    ,sc->sc_dev.dv_xname, scsiq->host_status);
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
+		case QHSTA_M_RDMA_PERR:
+		case QHSTA_M_SXFR_WD_TMO:
+		case QHSTA_M_WTM_TIMEOUT:
+		case QHSTA_M_FROZEN_TIDQ:
 		case QHSTA_M_SXFR_SDMA_ERR:
 		case QHSTA_M_SXFR_SXFR_PERR:
-		case QHSTA_M_RDMA_PERR:
+		case QHSTA_M_SCSI_BUS_RESET:
+		case QHSTA_M_DIRECTION_ERR_HUNG:
+		case QHSTA_M_SCSI_BUS_RESET_UNSOL:
 			/*
-			 * DMA Error. This should *NEVER* happen!
-			 *
-			 * Lets try resetting the bus and reinitialize
-			 * the host adapter.
+			 * XXX - are all these cases really asking
+			 *       for a card reset? _BUS_RESET and
+			 *       _BUS_RESET_UNSOL added just to make
+			 *       sure the pending queue is cleared out
+			 *       in case card has lost track of them.
 			 */
-			printf("%s: DMA Error. Resetting bus\n",
-				sc->sc_dev.dv_xname);
-			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+			printf("%s: host adapter error 0x%02x,"
+			       " resetting bus. See adw(4).\n"
+			    ,sc->sc_dev.dv_xname, scsiq->host_status);
 			adw_reset_bus(sc);
-			xs->error = XS_BUSY;
-			goto done;
+			xs->error = XS_RESET;
+			break;
 			
-		case QHSTA_M_WTM_TIMEOUT:
-		case QHSTA_M_SXFR_WD_TMO:
-			/* The SCSI bus hung in a phase */
-			printf("%s: Watch Dog timer expired. Resetting bus\n",
-				sc->sc_dev.dv_xname);
-			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
-			adw_reset_bus(sc);
-			xs->error = XS_BUSY;
-			goto done;
-
-		case QHSTA_M_SXFR_XFR_PH_ERR:
-			printf("%s: Transfer Error\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_BAD_CMPL_STATUS_IN:
-			/* No command complete after a status message */
-			printf("%s: Bad Completion Status\n",
-				sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_AUTO_REQ_SENSE_FAIL:
-			printf("%s: Auto Sense Failed\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_INVALID_DEVICE:
-			printf("%s: Invalid Device\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_NO_AUTO_REQ_SENSE:
+		default: /* scsiq->host_status value */
 			/*
-			 * User didn't request sense, but we got a
-			 * check condition.
+			 * XXX - is a panic really appropriate here? If
+			 *       not, would it be better to make the 
+			 *       XS_DRIVER_STUFFUP case above the 
+			 *       default behaviour? Or XS_RESET?
 			 */
-			printf("%s: Unexpected Check Condition\n",
-					sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case QHSTA_M_SXFR_UNKNOWN_ERROR:
-			printf("%s: Unknown Error\n", sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		default:
-			panic("%s: Unhandled Host Status Error %x",
-			      sc->sc_dev.dv_xname, scsiq->host_status);
+			panic("%s: bad host_status: 0x%02x"
+			    ,sc->sc_dev.dv_xname, scsiq->host_status);
+			break;      
 		}
+		break;
+
+	case QD_ABORTED_BY_HOST:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+
+	default: /* scsiq->done_status value */
+		/*
+		 * XXX - would QD_NO_STATUS really mean the I/O is not
+		 *       done? and would that mean it should somehow be
+		 *       put back as a pending I/O?
+		 */
+		printf("%s: bad done_status: 0x%02x"
+		       " (host_status: 0x%02x, scsi_status: 0x%02x)\n"
+		    ,sc->sc_dev.dv_xname
+		    ,scsiq->done_status
+		    ,scsiq->host_status
+		    ,scsiq->scsi_status);
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
 	}
 
-	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
-done:	adw_free_ccb(sc, ccb);
+	adw_free_ccb(sc, ccb);
+
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
@@ -1391,7 +1403,7 @@ adw_async_callback(sc, code)
 		 */
 		printf("%s: RDMA failure. Resetting the SCSI Bus and"
 				" the adapter\n", sc->sc_dev.dv_xname);
-		AdwResetSCSIBus(sc);
+		adw_reset_bus(sc);
 		break;
 
 	case ADV_HOST_SCSI_BUS_RESET:
@@ -1400,15 +1412,23 @@ adw_async_callback(sc, code)
 				sc->sc_dev.dv_xname);
 		break;
 
-#ifdef ADW_DEBUG
+
 	case ADV_ASYNC_CARRIER_READY_FAILURE:
-		/* Carrier Ready failure. */
-	        /* Warning only - RISC too busy to realize it's been tickled */
+		/* 
+		 * Carrier Ready failure.
+	         *
+		 * A warning only - RISC too busy to realize it's been 
+		 * tickled. Occurs in normal operation under heavy
+		 * load, so a message is printed only when ADW_DEBUG'ing
+		 */
+#ifdef ADW_DEBUG
 		printf("%s: Carrier Ready failure!\n", sc->sc_dev.dv_xname);
-		break;
 #endif
+		break;
 
 	default:
+	        printf("%s: Unknown Async callback code (ignored): 0x%02x\n"
+		       ,sc->sc_dev.dv_xname );
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.5 2000/07/22 15:10:13 krw Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.6 2000/12/08 00:03:31 krw Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -821,7 +821,7 @@ typedef struct adw_scsi_req_q {
 	u_int8_t	sg_working_ix;	/* ,uCode working SG variable. */
 	u_int8_t	cdb[12];	/* SCSI CDB bytes 0-11. */
 	u_int32_t	sg_real_addr;	/* SG list physical address. */
-	u_int32_t	scsiq_rptr;	/* Iternal pointer to ADW_SCSI_REQ_Q */
+	u_int32_t	scsiq_rptr;	/* Internal pointer to ADW_SCSI_REQ_Q */
 	u_int8_t	cdb16[4];	/* SCSI CDB bytes 12-15. */
 	u_int32_t	ccb_ptr;	/* CCB Physical Address */
 	u_int32_t	carr_va;	/* Carrier v-address (unused) */
@@ -885,6 +885,7 @@ typedef struct adw_scsi_req_q {
 #define SCSI_STATUS_RSERV_CONFLICT	0x18
 #define SCSI_STATUS_CMD_TERMINATED	0x22
 #define SCSI_STATUS_QUEUE_FULL		0x28
+#define SCSI_STATUS_ACA_ACTIVE		0x30
 
 
 /*

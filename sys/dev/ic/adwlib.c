@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.10 2000/07/22 15:10:13 krw Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.11 2000/12/08 00:03:31 krw Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -2096,7 +2096,6 @@ ADW_SOFTC	*sc;
 					: sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
-
 
 		target_bit = ADW_TID_TO_TIDMASK(scsiq->target_id);
 
