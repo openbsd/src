@@ -1,3 +1,5 @@
+/*	$OpenBSD: remove.c,v 1.4 1997/10/08 05:26:38 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,19 +37,24 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: remove.c,v 1.3 1996/10/28 04:55:25 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$OpenBSD: remove.c,v 1.4 1997/10/08 05:26:38 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
+int
 remove(file)
 	const char *file;
 {
 	struct stat st;
 
-	if (stat(file, &st) < 0)
+	if (lstat(file, &st) < 0)
 		return (-1);
 	if (S_ISDIR(st.st_mode))
 		return (rmdir(file));
