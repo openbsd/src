@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.7 2001/05/14 09:02:58 deraadt Exp $
+.\"	$OpenBSD: ubsec.4,v 1.8 2001/05/14 14:31:29 jason Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,15 +40,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports cards containing the Broadcom 5501, 5601, or 5805.
+driver supports cards containing the Bluesteel 5501 or 5601 or
+Broadcom 5805 or 5820.
 .Pp
 The
 .Nm
 driver registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
 and SHA1-HMAC96 operations in
 .Xr ipsec 4 .
-On models which support it, this driver also registers itself to
-provide random data to the
+On all models except the Bluesteel 5501, the driver also registers
+itself to provide random data to the
 .Xr random 4
 subsystem.
 .Sh SEE ALSO
