@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.13 1999/10/27 16:37:45 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.14 1999/10/27 23:34:53 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -529,6 +529,15 @@ main(int ac, char **av)
 	cleanup_socket();
 	exit(1);
   }
+
+  /* Create a new session and process group  */
+  if (setsid() < 0) {
+      perror("setsid failed");
+      exit(1);
+  }
+
+  /* Ignore if a client dies while we are sending a reply */
+  signal(SIGPIPE, SIG_IGN);
 
   sock = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0)
