@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.6 2005/01/20 23:34:36 uwe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.7 2005/02/12 05:20:25 dlg Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -45,7 +45,7 @@ file arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
 
 # OHCI USB Controller
 attach ohci at pxaip with pxaohci
-file   arch/arm/xscale/pxa2x0_ohci.c           pxaohci
+file	arch/arm/xscale/pxa2x0_ohci.c		pxaohci
 
 # LCD controller
 device lcd: wsemuldisplaydev, rasops16, rasops8, rasops4
