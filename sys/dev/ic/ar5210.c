@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.9 2005/01/09 18:18:15 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.10 2005/02/16 01:31:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -2191,7 +2191,7 @@ ar5k_ar5210_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 	u_int32_t cfp_period, next_cfp;
 
 	/* Return on an invalid beacon state */
-	if (state->bs_interval > 0)
+	if (state->bs_interval < 1)
 		return;
 
 	/*
