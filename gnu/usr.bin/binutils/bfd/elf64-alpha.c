@@ -4644,7 +4644,7 @@ elf64_alpha_ecoff_debug_swap =
 #define TARGET_LITTLE_NAME	"elf64-alpha"
 #define ELF_ARCH		bfd_arch_alpha
 #define ELF_MACHINE_CODE 	EM_ALPHA
-#define ELF_MAXPAGESIZE 	0x100000
+#define ELF_MAXPAGESIZE 	0x10000
 
 #define bfd_elf64_bfd_link_hash_table_create \
   elf64_alpha_bfd_link_hash_table_create
