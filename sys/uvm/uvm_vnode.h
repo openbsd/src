@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.6 1998/08/13 02:11:04 eeh Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.7 1999/03/25 18:48:56 mrg Exp $	*/
 
 /*
  *

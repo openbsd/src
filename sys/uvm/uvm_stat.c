@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.11 1999/03/25 18:48:56 mrg Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.12 1999/03/26 17:34:16 chs Exp $	 */
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.26 1999/03/26 17:34:16 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.27 1999/03/30 16:07:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.23 1999/04/11 04:04:11 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

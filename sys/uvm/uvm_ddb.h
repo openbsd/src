@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_ddb.h,v 1.1 1998/07/04 22:18:53 jonathan Exp $	*/
+/*	$NetBSD: uvm_ddb.h,v 1.2 1999/03/25 18:48:50 mrg Exp $	*/
 
 /*
  *

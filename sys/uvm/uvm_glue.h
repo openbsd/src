@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.h,v 1.4 1998/02/10 02:34:37 perry Exp $	*/
+/*	$NetBSD: uvm_glue.h,v 1.5 1999/03/25 18:48:51 mrg Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.6 1999/03/24 03:52:41 cgd Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.7 1999/03/25 18:48:50 mrg Exp $	*/
 
 /*
  *

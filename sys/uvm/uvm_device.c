@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.15 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.16 1999/04/08 10:26:21 drochner Exp $	*/
 
 /*
  *
