@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.48 2002/06/11 05:45:10 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.49 2002/06/11 06:49:19 kjell Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Nd control the packet filter (PF) and network address translation (NAT) device
 .Sh SYNOPSIS
 .Nm pfctl
-.Op Fl deqhnrvz
+.Op Fl deqhnNrRvz
 .Op Fl F Ar modifier
 .Op Fl O Ar level
 .Op Fl f Ar file
@@ -92,6 +92,9 @@ The options are as follows:
 Disable the packet filter.
 .It Fl e
 Enable the packet filter.
+.It Fl f Ar file
+Load rule file. This file may contain scrub, nat, and filter
+rules, in that order.
 .It Fl F Ar modifier
 Flush one of the following.
 Modifier name may be abbreviated:
@@ -107,8 +110,6 @@ Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar all
 Flush all of the above.
 .El
-.It Fl f Ar file
-Load config file.
 .It Fl k Ar host
 Kill all of the state entries from the specified host.
 A second
@@ -151,6 +152,9 @@ Display all maxima, cannot be set.
 .El
 .It Fl n
 Do not actually load rules, just parse them.
+.It Fl N
+Load only the NAT rules present in the rule file. Filter rules are
+ignored
 .It Fl O Ar modifier
 Optimize the engine to one of the following network topographies or
 environments:
@@ -182,6 +186,9 @@ more is planned in future revisions of the finite state machines (FSMs).
 Only print errors and warnings.
 .It Fl r
 Perform reverse DNS lookups on states when displaying them.
+.It Fl R
+Load only the filter rules present in the rule file. NAT rules are
+ignored.
 .It Fl s Ar modifier
 Show filter parameters.
 Modifier names may be abbreviated:
