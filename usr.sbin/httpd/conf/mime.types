@@ -446,6 +446,7 @@ audio/x-pn-realaudio		ram rm
 audio/x-pn-realaudio-plugin	rpm
 audio/x-realaudio		ra
 audio/x-wav			wav
+audio/x-vorbis			ogg
 chemical/x-pdb			pdb
 chemical/x-xyz			xyz
 image/bmp			bmp
