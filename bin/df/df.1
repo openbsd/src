@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.32 2003/12/08 11:39:45 jmc Exp $
+.\"	$OpenBSD: df.1,v 1.33 2004/01/05 20:36:19 jmc Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -53,7 +53,7 @@ specified
 or on the file system of which
 .Ar file
 is a part.
-Values are displayed in 512-byte per block block counts.
+By default, values are displayed as 512-byte block counts.
 If neither a file nor a
 .Ar file_system
 operand is specified,
@@ -100,7 +100,7 @@ by portable scripts.
 Indicate the actions should only be taken on
 file systems of the specified
 .Ar type .
-More than one type may be specified in a comma separated list.
+More than one type may be specified in a comma-separated list.
 The list of file system types can be prefixed with
 .Dq no
 to specify the file system types for which action should
