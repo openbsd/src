@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.17 2003/06/04 00:18:39 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.18 2003/06/04 00:24:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.17 2003/06/04 00:18:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.18 2003/06/04 00:24:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1509,74 +1509,6 @@ retry:
 		ntty.c_cc[VMIN] = 1;	/* read at least 1 char */
 		ntty.c_cc[VTIME] = 0;	/* no timeout */
 	}
-}
-
-int
-handle_signal(int sig)
-{
-	int ch = -1;
-
-	signo = 0;
-
-	switch (sig) {
-	case SIGQUIT:
-		if (!inwait) {
-			putchar('\n');
-			if (startup)
-				Pause++;
-		} else if (!dum_opt && notell) {
-			write(STDERR_FILENO, QUIT_IT,
-			    sizeof(QUIT_IT) - 1);
-			promptlen += sizeof(QUIT_IT) - 1;
-			notell = 0;
-		}
-		break;
-	case SIGTSTP:
-	case SIGTTIN:
-	case SIGTTOU:
-		/* XXX - should use saved values instead of SIG_DFL */
-		sa.sa_handler = SIG_DFL;
-		sa.sa_flags = SA_RESTART;
-		(void)sigaction(SIGTSTP, &sa, NULL);
-		(void)sigaction(SIGTTIN, &sa, NULL);
-		(void)sigaction(SIGTTOU, &sa, NULL);
-		reset_tty();
-		kill(getpid(), sig);
-
-		sa.sa_handler = onsignal;
-		sa.sa_flags = 0;
-		(void)sigaction(SIGTSTP, &sa, NULL);
-		(void)sigaction(SIGTTIN, &sa, NULL);
-		(void)sigaction(SIGTTOU, &sa, NULL);
-		set_tty();
-		if (!no_intty)
-			ch = '\f';	/* force redraw */
-		break;
-	case SIGINT:
-		end_it();
-		break;
-	case SIGWINCH: {
-		struct winsize win;
-
-		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != 0)
-			break;
-		if (win.ws_row != 0) {
-			Lpp = win.ws_row;
-			nscroll = Lpp/2 - 1;
-			if (nscroll <= 0)
-				nscroll = 1;
-			dlines = Lpp - (noscroll ? 1 : 2);
-		}
-		if (win.ws_col != 0)
-			Mcol = win.ws_col;
-		if (!no_intty)
-			ch = '\f';	/* force redraw */
-		break;
-	} default:
-		/* NOTREACHED */
-		break;
-	}
-	return (ch);
 }
 
 int
