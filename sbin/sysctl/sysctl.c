@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.54 2000/11/21 06:18:27 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.55 2000/12/22 22:47:04 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.54 2000/11/21 06:18:27 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.55 2000/12/22 22:47:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -247,8 +247,7 @@ listall(prefix, lp)
 
 	if (lp->list == NULL)
 		return;
-	(void)strncpy(name, prefix, BUFSIZ-1);
-	name[BUFSIZ-1] = '\0';
+	(void)strlcpy(name, prefix, BUFSIZ);
 	cp = &name[strlen(name)];
 	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
@@ -278,8 +277,7 @@ parse(string, flags)
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
 
-	(void)strncpy(buf, string, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
+	(void)strlcpy(buf, string, sizeof(buf));
 	bufp = buf;
 	if ((cp = strchr(string, '=')) != NULL) {
 		if (!wflag)
