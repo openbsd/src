@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.34 2004/07/30 11:59:03 jmc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.35 2004/09/14 22:21:30 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -774,6 +774,7 @@ Clean_up:
 	return (0);
 }
 
+/* ARGSUSED */
 int
 play_prev(char *arg)
 {
@@ -798,6 +799,7 @@ play_prev(char *arg)
 	return (0);
 }
 
+/* ARGSUSED */
 int
 play_same(char *arg)
 {
@@ -817,6 +819,7 @@ play_same(char *arg)
 	return (0);
 }
 
+/* ARGSUSED */
 int
 play_next(char *arg)
 {
@@ -868,6 +871,7 @@ strstatus(int sts)
 	}
 }
 
+/* ARGSUSED */
 int
 pstatus(char *arg)
 {
@@ -908,7 +912,7 @@ pstatus(char *arg)
 		if (ss.data->what.media_catalog.mc_valid &&
 		    ss.data->what.media_catalog.mc_number[0]) {
 		    	strvisx(vis_catalog,
-			   ss.data->what.media_catalog.mc_number,
+			   (char *)ss.data->what.media_catalog.mc_number,
 			   15, VIS_SAFE);
 			printf(", number \"%.15s\"", vis_catalog);
 		}
@@ -955,6 +959,7 @@ cdid(void)
 	return id ? 0 : 1;
 }
 
+/* ARGSUSED */
 int
 info(char *arg)
 {
