@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.5 1995/09/23 03:36:07 gwr Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.6 1995/12/08 04:10:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -107,7 +107,8 @@ bp_whoami(sockfd)
 		struct xdr_inaddr xina;
 	} *args;
 	struct repl {
-		u_int32_t port;
+		u_int16_t _pad;
+		u_int16_t port;
 		u_int32_t encap_len;
 		/* encapsulated data here */
 		n_long  capsule[64];
