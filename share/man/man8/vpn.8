@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.72 2004/02/25 08:42:38 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.73 2004/03/12 09:46:03 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -78,7 +78,7 @@ Make sure that the following options and devices are enabled in the kernel:
 .Bd -literal -offset indent
 option    CRYPTO          # Cryptographic Framework
 option    IPSEC           # IPSEC VPN
-pseudo-device enc 4       # Encapsulation device used by IPSEC
+pseudo-device enc 1       # Encapsulation device used by IPSEC
 .Ed
 .Pp
 To use IPsec,
