@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.358 2003/04/13 19:36:00 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.359 2003/04/13 20:16:06 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -223,9 +223,9 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_host *, struct node_port *, struct node_uid *,
 	    struct node_gid *, struct node_icmp *);
 int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
-	    struct node_queue_bw bwspec);
+	    struct node_queue_bw bwspec, struct node_queue_opt *);
 int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
-	    struct node_queue_bw);
+	    struct node_queue_bw, struct node_queue_opt *);
 
 int	 check_rulestate(int);
 int	 kw_cmp(const void *, const void *);
@@ -812,29 +812,14 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 				YYERROR;
 			}
 			a.scheduler = $3.scheduler.qtype;
-			switch (a.scheduler) {
-			case ALTQT_CBQ:
-				a.pq_u.cbq_opts =
-				    $3.scheduler.data.cbq_opts;
-				break;
-			case ALTQT_PRIQ:
-				a.pq_u.priq_opts =
-				    $3.scheduler.data.priq_opts;
-				break;
-			case ALTQT_HFSC:
-				a.pq_u.hfsc_opts =
-				    $3.scheduler.data.hfsc_opts;
-				break;
-			default:
-				break;
-			}
 			a.qlimit = $3.qlimit;
 			a.tbrsize = $3.tbrsize;
 			if ($5 == NULL) {
 				yyerror("no child queues specified");
 				YYERROR;
 			}
-			if (expand_altq(&a, $2, $5, $3.queue_bwspec))
+			if (expand_altq(&a, $2, $5, $3.queue_bwspec,
+			    &$3.scheduler))
 				YYERROR;
 		}
 		;
@@ -864,23 +849,8 @@ queuespec	: QUEUE STRING interface queue_opts qassign {
 			a.priority = $4.priority;
 			a.qlimit = $4.qlimit;
 			a.scheduler = $4.scheduler.qtype;
-			switch (a.scheduler) {
-			case ALTQT_CBQ:
-				a.pq_u.cbq_opts =
-				    $4.scheduler.data.cbq_opts;
-				break;
-			case ALTQT_PRIQ:
-				a.pq_u.priq_opts =
-				    $4.scheduler.data.priq_opts;
-				break;
-			case ALTQT_HFSC:
-				a.pq_u.hfsc_opts =
-				    $4.scheduler.data.hfsc_opts;
-				break;
-			default:
-				break;
-			}
-			if (expand_queue(&a, $3, $5, $4.queue_bwspec))
+			if (expand_queue(&a, $3, $5, $4.queue_bwspec,
+			    &$4.scheduler))
 				YYERROR;
 		}
 		;
@@ -3087,7 +3057,8 @@ expand_label(char *label, const char *ifname, sa_family_t af,
 
 int
 expand_altq(struct pf_altq *a, struct node_if *interfaces,
-    struct node_queue *nqueues, struct node_queue_bw bwspec)
+    struct node_queue *nqueues, struct node_queue_bw bwspec,
+    struct node_queue_opt *opts)
 {
 	struct pf_altq		 pa, pb;
 	char			 qname[PF_QNAME_SIZE];
@@ -3111,7 +3082,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			yyerror("altq on ! <interface> is not supported");
 			errs++;
 		} else {
-			if (eval_pfaltq(pf, &pa, &bwspec))
+			if (eval_pfaltq(pf, &pa, &bwspec, opts))
 				errs++;
 			else
 				if (pfctl_add_altq(pf, &pa))
@@ -3150,13 +3121,9 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 					errx(1, "expand_altq: strlcpy");
 				pb.qlimit = pa.qlimit;
 				pb.scheduler = pa.scheduler;
-				if (pa.scheduler == ALTQT_CBQ)
-					pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
-				if (pa.scheduler == ALTQT_HFSC)
-					pb.pq_u.hfsc_opts = pa.pq_u.hfsc_opts;
 				bw.bw_absolute = pa.ifbandwidth;
 				bw.bw_percent = 0;
-				if (eval_pfqueue(pf, &pb, &bw))
+				if (eval_pfqueue(pf, &pb, &bw, opts))
 					errs++;
 				else
 					if (pfctl_add_altq(pf, &pb))
@@ -3199,7 +3166,8 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 
 int
 expand_queue(struct pf_altq *a, struct node_if *interfaces,
-    struct node_queue *nqueues, struct node_queue_bw bwspec)
+    struct node_queue *nqueues, struct node_queue_bw bwspec,
+    struct node_queue_opt *opts)
 {
 	struct node_queue	*n, *nq;
 	struct pf_altq		 pa;
@@ -3264,7 +3232,7 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 				    sizeof(pa.parent)) >= sizeof(pa.parent))
 					errx(1, "expand_queue: strlcpy");
 
-				if (eval_pfqueue(pf, &pa, &bwspec))
+				if (eval_pfqueue(pf, &pa, &bwspec, opts))
 					errs++;
 				else
 					if (pfctl_add_altq(pf, &pa))

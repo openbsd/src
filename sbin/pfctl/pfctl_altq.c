@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.59 2003/04/13 19:36:00 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.60 2003/04/13 20:16:06 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -84,6 +84,8 @@ static double		 sc_x2y(struct service_curve *, double);
 
 u_int32_t	 getifspeed(char *);
 u_long		 getifmtu(char *);
+int		 eval_queue_opts(struct pf_altq *, struct node_queue_opt *,
+		     u_int32_t);
 
 static u_int32_t	 max_qid = 1;
 
@@ -232,7 +234,8 @@ print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent,
  * eval_pfaltq computes the discipline parameters.
  */
 int
-eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw)
+eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
+    struct node_queue_opt *opts)
 {
 	u_int	rate, size, errors = 0;
 
@@ -249,6 +252,8 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw)
 				pa->ifbandwidth = rate / 100 * bw->bw_percent;
 			else
 				pa->ifbandwidth = rate;
+
+	errors += eval_queue_opts(pa, opts, rate);
 
 	/* if tbrsize is not specified, use heuristics */
 	if (pa->tbrsize == 0) {
@@ -301,7 +306,8 @@ check_commit_altq(int dev, int opts)
  * eval_pfqueue computes the queue parameters.
  */
 int
-eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw)
+eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
+    struct node_queue_opt *opts)
 {
 	/* should be merged with expand_queue */
 	struct pf_altq	*if_pa, *parent;
@@ -358,6 +364,9 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw)
 			return (1);
 		}
 	}
+
+	if (eval_queue_opts(pa, opts, parent == NULL? 0 : parent->bandwidth))
+		return (1);
 
 	switch (pa->scheduler) {
 	case ALTQT_CBQ:
@@ -1121,4 +1130,30 @@ getifmtu(char *ifname)
 		warnx("could not get mtu for %s, assuming 1500", ifname);
 		return (1500);
 	}
+}
+
+int
+eval_queue_opts(struct pf_altq *pa, struct node_queue_opt *opts,
+    u_int32_t ref_bw)
+{
+	int	errors = 0;
+
+	switch (pa->scheduler) {
+	case ALTQT_CBQ:
+		pa->pq_u.cbq_opts = opts->data.cbq_opts;
+		break;
+	case ALTQT_PRIQ:
+		pa->pq_u.priq_opts = opts->data.priq_opts;
+		break;
+	case ALTQT_HFSC:
+		pa->pq_u.hfsc_opts.flags = opts->data.hfsc_opts.flags;
+		break;
+	default:
+		warnx("eval_queue_opts: unknown scheduler type %u",
+		    opts->qtype);
+		errors++;
+		break;
+	}
+
+	return (errors);
 }
