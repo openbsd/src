@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.14 2001/12/15 21:16:10 kjell Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.15 2001/12/15 21:28:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -61,9 +61,8 @@
 
 #define DBGMSG(msg)		\
 	movb    $msg, %al;	\
-	/* call    Lchr */;	\
-	.byte	0xe8;		\
-	.word	Lchr - . - 2
+	data32;			\
+	call    chr
 #else /* !DEBUG */
 #define DBGMSG(msg)
 #endif /* !DEBUG */
@@ -294,15 +293,14 @@ Lmessage:
 	lodsb			# load a byte into %al
 	testb	%al, %al
 	jz	1f
-	/* call	Lchr */
-	.byte	0xe8
-	.word	Lchr - . - 2
+	data32
+	call	chr
 	jmp	1b
 
 #
-#	Lchr: write the error message in %ds:%si to console
+#	chr: write the error message in %ds:%si to console
 #
-Lchr:
+chr:
 	pushl	%eax
 
 #ifndef SERIAL
@@ -321,6 +319,7 @@ Lchr:
 	popl	%edx
 #endif
 1:	popl	%eax
+	data32
 	ret
 
 /* Info messages */
