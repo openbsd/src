@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.8 1999/06/29 19:39:40 millert Exp $	*/
+/*	$OpenBSD: tput.c,v 1.9 1999/07/02 16:00:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -69,7 +69,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.8 1999/06/29 19:39:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.9 1999/07/02 16:00:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +89,7 @@ static char rcsid[] = "$OpenBSD: tput.c,v 1.8 1999/06/29 19:39:40 millert Exp $"
 static void   init __P((void));
 static char **process __P((char *, char *, char **));
 static void   reset __P((void));
+static void   set_margins __P((void));
 static void   usage __P((void));
 
 extern char  *__progname;
@@ -294,9 +295,8 @@ init()
 	FILE *ifile;
 	size_t len;
 	char *buf;
-	int waitinfo;
+	int wstatus;
 
-	/* XXX - should we check for existence before exec()'ing? */
 	if (init_prog && !issetugid()) {
 		switch (vfork()) {
 		case -1:
@@ -308,8 +308,8 @@ init()
 			_exit(127);
 			break;
 		default:
-			wait(&waitinfo);
-			/* XXX - interpret waitinfo? */
+			wait(&wstatus);
+			/* parent */
 			break;
 		}
 	}
@@ -317,6 +317,20 @@ init()
 		putp(init_1string);
 	if (init_2string)
 		putp(init_2string);
+	set_margins();
+	/* always use 8 space tabs */
+	if (init_tabs != 8 && clear_all_tabs && set_tab) {
+		int i;
+
+		putp(clear_all_tabs);
+		for (i = 0; i < (columns - 1) / 8; i++) {
+			if (parm_right_cursor)
+				putp(tparm(parm_right_cursor, 8));
+			else
+				fputs("        ", stdout);
+			putp(set_tab);
+		}
+	}
 	if (init_file && !issetugid() && (ifile = fopen(init_file, "r"))) {
 		while ((buf = fgetln(ifile, &len)) != NULL) {
 			if (buf[len-1] != '\n')
@@ -328,7 +342,6 @@ init()
 	}
 	if (init_3string)
 		putp(init_3string);
-	/* XXX - do tabs and margins */
 	fflush(stdout);
 }
 
@@ -343,7 +356,7 @@ reset()
 		putp(reset_1string);
 	if (reset_2string)
 		putp(reset_2string);
-	/* XXX - cat reset_file */
+	set_margins();
 	if (reset_file && !issetugid() && (rfile = fopen(reset_file, "r"))) {
 		while ((buf = fgetln(rfile, &len)) != NULL) {
 			if (buf[len-1] != '\n')
@@ -355,7 +368,40 @@ reset()
 	}
 	if (reset_3string)
 		putp(reset_3string);
-	/* XXX - do tabs and margins */
+	fflush(stdout);
+}
+
+static void
+set_margins()
+{
+
+	/*
+	 * Four possibilities:
+	 *	1) we have set_lr_margin and can set things with one call
+	 *	2) we have set_{left,right}_margin_parm, use two calls
+	 *	3) we have set_{left,right}_margin, set based on position
+	 *	4) none of the above, leave things the way they are
+	 */
+	if (set_lr_margin) {
+		putp(tparm(set_lr_margin, 0, columns - 1));
+	} else if (set_left_margin_parm && set_right_margin_parm) {
+		putp(tparm(set_left_margin_parm, 0));
+		putp(tparm(set_right_margin_parm, columns - 1));
+	} else if (set_left_margin && set_right_margin && clear_margins) {
+		putp(clear_margins);
+
+		/* go to column 0 and set the left margin */
+		putp(carriage_return ? carriage_return : "\r");
+		putp(set_left_margin);
+
+		/* go to last column and set the right margin */
+		if (parm_right_cursor)
+			putp(tparm(parm_right_cursor, columns - 1));
+		else
+			printf("%*s", columns - 1, " ");
+		putp(set_right_margin);
+		putp(carriage_return ? carriage_return : "\r");
+	}
 	fflush(stdout);
 }
 
