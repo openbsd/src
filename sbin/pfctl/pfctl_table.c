@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.6 2003/01/03 22:50:14 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.7 2003/01/03 22:54:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -552,6 +552,7 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 		union sockaddr_union sa;
 		int rv;
 
+		bzero(&sa, sizeof sa);
 		sa.sa.sa_len = (ad->pfra_af == AF_INET) ?
 		    sizeof(sa.sin) : sizeof(sa.sin6);
 		sa.sa.sa_family = ad->pfra_af;
