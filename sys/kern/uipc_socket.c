@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.55 2004/09/16 13:11:01 markus Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.56 2004/11/18 15:09:07 markus Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -383,7 +383,6 @@ sosend(so, addr, uio, top, control, flags)
 	struct mbuf *control;
 	int flags;
 {
-	struct proc *p = curproc;		/* XXX */
 	struct mbuf **mp;
 	struct mbuf *m;
 	long space, len, mlen, clen = 0;
@@ -411,7 +410,8 @@ sosend(so, addr, uio, top, control, flags)
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	p->p_stats->p_ru.ru_msgsnd++;
+	if (uio && uio->uio_procp)
+		uio->uio_procp->p_stats->p_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
@@ -682,10 +682,8 @@ dontblock:
 	 * While we process the initial mbufs containing address and control
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
-#ifdef notyet /* XXXX */
 	if (uio->uio_procp)
 		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
-#endif
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
