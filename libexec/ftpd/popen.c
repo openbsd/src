@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.15 2002/05/26 09:32:07 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.16 2002/05/29 20:35:27 mpech Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static char rcsid[] = "$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $";
  * may create a pipe to a hidden program as a side effect of a list or dir
  * command.
  */
-static int *pids;
+static pid_t *pids;
 static int fds;
 
 #define MAX_ARGV	100
@@ -88,9 +88,9 @@ ftpd_popen(program, type)
 	if (!pids) {
 		if ((fds = getdtablesize()) <= 0)
 			return (NULL);
-		if ((pids = (int *)malloc((u_int)(fds * sizeof(int)))) == NULL)
+		if ((pids = (pid_t *)malloc((u_int)(fds * sizeof(pid_t)))) == NULL)
 			return (NULL);
-		memset(pids, 0, fds * sizeof(int));
+		memset(pids, 0, fds * sizeof(pid_t));
 	}
 	if (pipe(pdes) < 0)
 		return (NULL);
@@ -204,7 +204,7 @@ ftpd_pclose(iop)
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
 	pids[fdes] = 0;
 	if (pid < 0)
-		return (pid);
+		return (-1);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));
 	return (1);
