@@ -1,4 +1,4 @@
-$OpenBSD: diodevs,v 1.5 2005/01/14 11:49:01 miod Exp $
+$OpenBSD: diodevs,v 1.6 2005/01/15 21:45:23 miod Exp $
 /* $NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $ */
 
 /*-
@@ -80,7 +80,7 @@ framebuffer HYPERION	0x0e	1	A1096A (\"hyperion\") display
 /* Unsupported framebuffers. */
 
 framebuffer XGENESIS	0x0b	1	x-genesis display
-framebuffer TIGER	0x0c	1	tiger display
+framebuffer TIGERSHARK	0x0c	3	TurboVRX (\"tigershark\") display
 framebuffer YGENESIS	0x0d	1	y-genesis display
 
 /* Devices not yet supported.  Descriptions are lacking. */
