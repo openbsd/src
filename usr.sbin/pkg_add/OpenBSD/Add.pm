@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.13 2004/11/11 12:17:25 espie Exp $
+# $OpenBSD: Add.pm,v 1.14 2004/11/11 12:29:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -52,37 +52,6 @@ sub register_installation
 	$plist->to_installation();
 }
 
-sub collision_report($)
-{
-	my $list = shift;
-	my %todo = map {($_, 1)} @$list;
-	my $bypkg = {};
-	
-
-	for my $pkg (installed_packages()) {
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
-		    \&OpenBSD::PackingList::FilesOnly);
-		for my $item (@{$plist->{items}}) {
-			next unless $item->IsFile();
-			my $name = $item->fullname();
-			if (defined $todo{$name}) {
-				$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
-				push(@{$bypkg->{$pkg}}, $name);
-				delete $todo{$name};
-			}
-		}
-	}
-	print "Collision: the following files already exist\n";
-	for my $pkg (sort keys %$bypkg) {
-	    for my $item (sort @{$bypkg->{$pkg}}) {
-	    	print "\t$item ($pkg)\n";
-	    }
-	}
-	for my $item (sort keys %todo) {
-	    print "\t$item\n";
-	}
-}
-
 sub validate_plist($$)
 {
 	my ($plist, $state) = @_;
@@ -124,7 +93,9 @@ sub validate_plist($$)
 		}
 	}
 	if (@$colliding > 0) {
-		collision_report($colliding);
+		require OpenBSD::CollisionReport;
+
+		OpenBSD::CollisionReport::collision_report($colliding, $state);
 	}
 	Fatal "fatal issues" if $problems;
 	return $totsize;
