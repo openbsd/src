@@ -1,0 +1,30 @@
+# $OpenBSD: id.policy,v 1.1 2004/01/15 17:14:43 sturm Exp $
+Policy: /usr/bin/id, Emulation: native
+	native-issetugid: permit
+	native-mprotect: permit
+	native-mmap: permit
+	native-fsread: filename eq "/var/run/ld.so.hints" then permit
+	native-fstat: permit
+	native-close: permit
+	native-fsread: filename match "/usr/lib/libc.so.*" then permit
+	native-read: permit
+	native-mquery: permit
+	native-munmap: permit
+	native-sigprocmask: permit
+	native-__sysctl: permit
+	native-fsread: filename eq "/etc/malloc.conf" then permit
+	native-break: permit
+	native-getuid: permit
+	native-ioctl: permit
+	native-fsread: filename eq "/etc/spwd.db" then permit
+	native-fsread: filename eq "/etc/pwd.db" then permit
+	native-fcntl: permit
+	native-pread: permit
+	native-geteuid: permit
+	native-getgid: permit
+	native-fsread: filename eq "/etc/group" then permit
+	native-getegid: permit
+	native-getgroups: permit
+	native-write: permit
+	native-exit: permit
+

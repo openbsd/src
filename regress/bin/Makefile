@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2002/02/27 19:57:17 dhartmei Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/01/15 17:14:42 sturm Exp $
 
-SUBDIR+= md5 ksh
+SUBDIR+= md5 ksh systrace
 
 install:
 
