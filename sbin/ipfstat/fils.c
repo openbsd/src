@@ -1,4 +1,4 @@
-/*	$OpenBSD: fils.c,v 1.4 1996/06/23 14:30:57 deraadt Exp $	*/
+/*	$OpenBSD: fils.c,v 1.5 1996/07/10 03:53:49 ccappuc Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -46,7 +46,7 @@ static	char	sccsid[] = "@(#)fils.c	1.20 3/24/96 (C) 1993-1996 Darren Reed";
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
 #else
-#define	VMUNIX	"/vmunix"
+#define	VMUNIX	"/bsd"
 #endif
 
 extern	char	*optarg;
