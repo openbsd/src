@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.64 2004/04/07 09:43:00 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.65 2004/04/26 06:24:20 cedric Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.64 2004/04/07 09:43:00 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.65 2004/04/26 06:24:20 cedric Exp $";
 #endif
 #endif /* not lint */
 
@@ -710,6 +710,7 @@ newroute(int argc, char **argv)
 				if (!--argc)
 					usage(1+*argv);
 				(void) getaddr(RTA_GATEWAY, *++argv, 0);
+				gateway = *argv;
 				break;
 			case K_DST:
 				if (!--argc)
