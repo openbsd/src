@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 1998/03/16 09:38:49 pefo Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.4 1998/03/18 12:06:18 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -61,7 +61,7 @@ struct arc_pci_chipset {
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
 	int		(*pc_ether_hw_addr) __P((u_int8_t *));
-	void		(*pc_flush_cache) __P((vm_offset_t, int));
+	void		(*pc_sync_cache) __P((vm_offset_t, int));
 };
 
 /*
@@ -89,8 +89,8 @@ struct arc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_ether_hw_addr(c, p)						\
     (*(c)->pc_ether_hw_addr)((p))
-#define	pci_flush_cache(p, s)						\
-    (*(c)->pc_flush_cache)((p, s))
+#define	pci_sync_cache(c, p, s)						\
+    (*(c)->pc_sync_cache)((p), (s))
 
 vm_offset_t vtophysaddr __P((struct device *, vm_offset_t));
 
