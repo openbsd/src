@@ -795,6 +795,38 @@ cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	return (cryptodev_bn_mod_exp(r, a, p, m, ctx, m_ctx));
 }
 
+static int
+cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
+    BIGNUM *u1, BIGNUM *pub_key, BIGNUM *u2, BIGNUM *p,
+    BN_CTX *ctx, BN_MONT_CTX *mont)
+{
+	BIGNUM t2;
+	int ret = 0;
+	
+	BN_init(&t2);
+ 
+	/* v = ( g^u1 * y^u2 mod p ) mod q */
+	/* let t1 = g ^ u1 mod p */
+	ret = 0; 
+
+	if (!dsa->meth->bn_mod_exp(dsa,t1,dsa->g,u1,dsa->p,ctx,mont))
+		goto err;
+
+	/* let t2 = y ^ u2 mod p */
+	if (!dsa->meth->bn_mod_exp(dsa,&t2,dsa->pub_key,u2,dsa->p,ctx,mont))
+		goto err;
+	/* let u1 = t1 * t2 mod p */
+	if (!BN_mod_mul(u1,t1,&t2,dsa->p,ctx))
+		goto err;
+
+	BN_copy(t1,u1);
+
+	ret = 1;
+err:
+	BN_free(&t2);
+	return(ret);
+}
+
 static DSA_SIG *
 cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
@@ -850,7 +882,6 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 	struct crypt_kop kop;
 	int dsaret = 1;
 
-	printf("foo\n");
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_DSA_VERIFY;
 
@@ -1029,10 +1060,12 @@ ENGINE_load_cryptodev(void)
 		memcpy(&cryptodev_dsa, meth, sizeof(DSA_METHOD)); 
 		if (cryptodev_asymfeat & CRF_DSA_SIGN) 
 			cryptodev_dsa.dsa_do_sign = cryptodev_dsa_do_sign;   
+  	        if (cryptodev_asymfeat & CRF_MOD_EXP) {
+			cryptodev_dsa.bn_mod_exp = cryptodev_dsa_bn_mod_exp;
+			cryptodev_dsa.dsa_mod_exp = cryptodev_dsa_dsa_mod_exp;
+		}
   	        if (cryptodev_asymfeat & CRF_DSA_VERIFY)
 			cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;   
-  	        if (cryptodev_asymfeat & CRF_MOD_EXP)
-			cryptodev_dsa.bn_mod_exp = cryptodev_dsa_bn_mod_exp;
 	}
 		
 
@@ -1054,3 +1087,4 @@ ENGINE_load_cryptodev(void)
 	ENGINE_free(engine);
 	ERR_clear_error();
 }
+
