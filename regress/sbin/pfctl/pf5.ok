@@ -1,11 +1,11 @@
 foo = ssh, ftp
 bar = other thing
 inside = 10.0.0.0/8
-@0 block in inet proto udp from 10.0.0.0/8 port = 113 to 12.34.56.78 port = 16 keep state 
-@1 block in inet proto udp from 10.0.0.0/8 port = 113 to 12.34.56.78 port = 6667 keep state 
-@2 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 16 keep state 
-@3 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6667 keep state 
-@4 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 16 keep state 
-@5 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 keep state 
-@6 block in inet proto udp from 10.0.0.0/8 port = echo to 12.34.56.78 port = 16 keep state 
-@7 block in inet proto udp from 10.0.0.0/8 port = echo to 12.34.56.78 port = 6667 keep state 
+@0 block in inet proto udp from 10.0.0.0/8 port = 113 to 12.34.56.78 port = 16 
+@1 block in inet proto udp from 10.0.0.0/8 port = 113 to 12.34.56.78 port = 6667 
+@2 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 16 
+@3 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6667 
+@4 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 16 
+@5 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 
+@6 block in inet proto udp from 10.0.0.0/8 port = echo to 12.34.56.78 port = 16 
+@7 block in inet proto udp from 10.0.0.0/8 port = echo to 12.34.56.78 port = 6667 

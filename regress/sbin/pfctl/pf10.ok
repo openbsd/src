@@ -2,8 +2,8 @@
 @1 pass in inet6 proto ipv6-icmp all 
 @2 block in inet proto icmp all 
 @3 block in inet6 proto ipv6-icmp all 
-@4 block return-rst in inet proto icmp all 
-@5 block return-rst in inet6 proto ipv6-icmp all 
+@4 block return-rst in inet proto tcp all 
+@5 block return-rst in inet6 proto tcp all 
 @6 block return-icmp in inet proto icmp all 
 @7 block return-icmp(net-unr) in inet proto icmp all 
 @8 block return-icmp(net-unr) in inet proto icmp all 

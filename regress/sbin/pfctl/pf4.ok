@@ -12,35 +12,35 @@
 @11 block in proto tcp from any port != 1234 to any 
 @12 block in proto tcp from any port 21 >< 2048 to any 
 @13 block in proto tcp from any port = ssh to any 
-@14 block in inet proto udp from 172.16.0.0/12 port = 21 to 12.34.56.78 port = 6668 keep state 
-@15 block in inet proto udp from 172.16.0.0/12 port = 21 to 12.34.56.78 port = 6667 keep state 
-@16 block in inet proto udp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port = 6668 keep state 
-@17 block in inet proto udp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port = 6667 keep state 
-@18 block in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6668 keep state 
-@19 block in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6667 keep state 
-@20 block in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6668 keep state 
-@21 block in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6667 keep state 
-@22 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6668 keep state 
-@23 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6667 keep state 
-@24 block in inet proto udp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port = 6668 keep state 
-@25 block in inet proto udp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port = 6667 keep state 
-@26 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6668 keep state 
-@27 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 keep state 
-@28 block in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6668 keep state 
-@29 block in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6667 keep state 
-@30 block in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port = 6668 keep state 
-@31 block in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port = 6667 keep state 
-@32 block in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port = 6668 keep state 
-@33 block in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port = 6667 keep state 
-@34 block in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6668 keep state 
-@35 block in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6667 keep state 
-@36 block in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6668 keep state 
-@37 block in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6667 keep state 
-@38 block in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port = 6668 keep state 
-@39 block in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port = 6667 keep state 
-@40 block in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port = 6668 keep state 
-@41 block in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port = 6667 keep state 
-@42 block in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6668 keep state 
-@43 block in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 keep state 
-@44 block in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6668 keep state 
-@45 block in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6667 keep state 
+@14 block in inet proto udp from 172.16.0.0/12 port = 21 to 12.34.56.78 port = 6668 
+@15 block in inet proto udp from 172.16.0.0/12 port = 21 to 12.34.56.78 port = 6667 
+@16 block in inet proto udp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port = 6668 
+@17 block in inet proto udp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port = 6667 
+@18 block in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6668 
+@19 block in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6667 
+@20 block in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6668 
+@21 block in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6667 
+@22 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6668 
+@23 block in inet proto udp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6667 
+@24 block in inet proto udp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port = 6668 
+@25 block in inet proto udp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port = 6667 
+@26 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6668 
+@27 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 
+@28 block in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6668 
+@29 block in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6667 
+@30 block in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port = 6668 
+@31 block in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port = 6667 
+@32 block in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port = 6668 
+@33 block in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port = 6667 
+@34 block in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6668 
+@35 block in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6667 
+@36 block in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6668 
+@37 block in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6667 
+@38 block in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port = 6668 
+@39 block in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port = 6667 
+@40 block in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port = 6668 
+@41 block in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port = 6667 
+@42 block in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6668 
+@43 block in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 
+@44 block in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6668 
+@45 block in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6667 

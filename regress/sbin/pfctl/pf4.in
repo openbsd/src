@@ -11,4 +11,5 @@ block in proto tcp from any port = ssh to any
 block in proto tcp from any port { ssh, ftp >< 2048, != 1234, >= www } to any
 
 block in proto { tcp, udp } from { 10.0.0.0/8, 172.16.0.0/12 } port { ssh, ftp } \
-	to { 192.168.0.0/16, 12.34.56.78 } port { 6667, 6668 } keep state
+	to { 192.168.0.0/16, 12.34.56.78 } port { 6667, 6668 }
+
