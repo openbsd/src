@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.4 1998/11/23 21:55:56 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.5 1998/12/03 04:16:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -3001,38 +3001,29 @@ tl_probe(parent, match, aux)
 	}
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_N100TX)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_COMPAQ_N100TX:
+		case PCI_PRODUCT_COMPAQ_N10T:
+		case PCI_PRODUCT_COMPAQ_IntNF3P:
+		case PCI_PRODUCT_COMPAQ_DPNet100TX:
+		case PCI_PRODUCT_COMPAQ_IntPL100TX:
+		case PCI_PRODUCT_COMPAQ_DP4000:
+		case PCI_PRODUCT_COMPAQ_N10T2:
+		case PCI_PRODUCT_COMPAQ_N10_TX_UTP:
+		case PCI_PRODUCT_COMPAQ_NF3P:
+		case PCI_PRODUCT_COMPAQ_NF3P_BNC:
 			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_Nunknown)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_N10T)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_IntNF3P)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_DPNet100TX)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_IntPL100TX)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_DP4000)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_N10T2)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_N10_TX_UTP)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_NF3P)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_NF3P_BNC)
-			return 1;
+		}
 		return 0;
 	}
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_OLICOM) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_OLICOM_OC2183)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_OLICOM_OC2183:
+		case PCI_PRODUCT_OLICOM_OC2325:
+		case PCI_PRODUCT_OLICOM_OC2326:
 			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_OLICOM_OC2325)
-			return 1;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_OLICOM_OC2326)
-			return 1;
+		}
 		return 0;
 	}
 
