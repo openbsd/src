@@ -358,8 +358,9 @@ void _nc_linedump(void)
 /* dump the state of the real and virtual oldnum fields */
 {
     int	n;
-    char	buf[BUFSIZ];
+    char *buf;
 
+    buf = malloc((LINES * 12) + 1);	/* Assumes int is at most 32bits */
     (void) strcpy(buf, "real");
     for (n = 0; n < LINES; n++)
 	(void) sprintf(buf + strlen(buf), " %02d", REAL(n));
@@ -369,6 +370,7 @@ void _nc_linedump(void)
     for (n = 0; n < LINES; n++)
 	(void) sprintf(buf + strlen(buf), " %02d", OLDNUM(n));
     TR(TRACE_UPDATE | TRACE_MOVE, (buf));
+    free(buf);
 }
 #endif /* defined(TRACE) || defined(SCROLLDEBUG) */
 
@@ -379,7 +381,9 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 {
     char	line[BUFSIZ], *st;
 
+#ifdef TRACE
     _nc_tracing = TRACE_MOVE;
+#endif /* TRACE */
     for (;;)
     {
 	int	n;
