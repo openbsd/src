@@ -1,0 +1,234 @@
+.\"	$OpenBSD: systrace.4,v 1.1 2002/06/01 08:01:59 wcobb Exp $
+.\"
+.\" Copyright (c) 2002 CubeSoft Communications, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistribution of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Neither the name of CubeSoft Communications, nor the names of its
+.\"    contributors may be used to endorse or promote products derived from
+.\"    this software without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 26, 2002
+.Dt SYSTRACE 4
+.Os
+.Sh NAME
+.Nm systrace
+.Nd enforce and generate policies for system calls
+.Sh SYNOPSIS
+.Cd "pseudo-device systrace 1"
+.Sh DESCRIPTION
+.Nm
+attaches to processes and enforces policies for system calls.
+A pseudo-device,
+.Pa /dev/systrace ,
+allows userland processes to control the behavior of
+.Nm
+through an
+.Xr ioctl 2
+interface.
+.Sh SYSTEM CALL POLICIES
+.Nm
+can assign the following policies to system calls:
+.Bl -tag -enum -width "xxxxxx"
+.It SYSTR_POLICY_ASK
+Send a message of the type
+.Dv SYSTR_MSG_ASK ,
+and put the process to sleep until a
+.Dv STRIOCANSWER
+.Xr ioctl 2
+is made.
+.It SYSTR_POLICY_PERMIT
+Immediately allow the system call.
+.It SYSTR_POLICY_NEVER
+Immediately return an error code.
+.El
+.Sh SYSTRACE MESSAGES
+A
+.Xr read 2
+operation on the
+.Nm systrace
+pseudo-device will block if there are no pending messages, or
+return the following structure:
+.Bd -literal
+struct str_message {
+	int msg_type;
+#define SYSTR_MSG_ASK	1
+#define SYSTR_MSG_RES	2
+#define SYSTR_MSG_EMUL	3
+#define SYSTR_MSG_CHILD	4
+	pid_t msg_pid;
+	short msg_policy;
+	union {
+		struct str_msg_emul msg_emul;
+		struct str_msg_ask msg_ask;
+		struct str_msg_child msg_child;
+	} msg_data;
+};
+
+struct str_msg_emul {
+	char emul[SYSTR_EMULEN];
+};
+
+struct str_msg_ask {
+	int code;
+	int argsize;
+	register_t args[SYSTR_MAXARGS];
+	register_t rval[2];
+	int result;
+};
+
+struct str_msg_child {
+	pid_t new_pid;
+};
+.Ed
+.Sh IOCTL INTERFACE
+
+.Bl -tag -width "xxxxxx"
+.It Dv SYSTR_CLONE Fa "int"
+Return a
+.Nm
+file descriptor for
+further
+.Xr ioctl 2
+operations.
+.El
+.Nm
+supports the following
+.Xr ioctl 2
+command:
+.Bl -tag -width "xxxxxx"
+.It Dv STRIOCATTACH Fa "pid_t"
+Attach to a process, unless:
+.Bl -enum -compact -width 2n
+.It
+It's the process that's doing the attaching.
+.It
+It's a system process.
+.It
+It's being traced already.
+.It
+You do not own the process and you're not root.
+.It
+It's
+.Xr init 8 ,
+and the
+kernel was not compiled with
+.Cd option INSECURE .
+.El
+.It Dv STRIOCDETACH Fa "pid_t"
+Wake up a process if it is waiting for an answer, and detach from it.
+.It Dv STRIOCANSWER Fa "struct systrace_answer"
+Tell
+.Nm
+what to do with a system call that was assigned a policy of
+.Dv SYSTR_POLICY_ASK .
+.Bd -literal
+struct systrace_answer {
+	pid_t stra_pid;     /* PID of process being traced */
+	int stra_policy;    /* Policy to assign */
+	int stra_error;     /* Return value of denied syscall
+	                       (will return EPERM if zero) */
+	int stra_flags;
+#define	SYSTR_FLAGS_RESULT 0x0001    /* Report syscall result */
+};
+.Ed
+.It Dv STRIOCIO Fa "struct systrace_io"
+Copy data in/out of the process being traced.
+.Bd -literal
+struct systrace_io {
+	pid_t strio_pid;    /* PID of process being traced */
+	int strio_ops;
+#define	SYSTR_READ	1
+#define	SYSTR_WRITE	2
+	void *strio_offs;
+	void *strio_addr;
+	size_t strio_len;
+};
+.Ed
+.It Dv STRIOCPOLICY Fa "struct systrace_policy"
+Manipulate the set of policies.
+.Bd -literal
+struct systrace_policy {
+	int strp_op;
+#define	SYSTR_POLICY_NEW	1    /* Allocate a new policy */
+#define	SYSTR_POLICY_ASSIGN	2    /* Assign policy to process */
+#define	SYSTR_POLICY_MODIFY	3    /* Modify an entry */
+	int strp_num;
+	union {
+		struct {
+			short code;
+#define SYSTR_POLICY_ASK	0
+#define SYSTR_POLICY_PERMIT	1
+#define SYSTR_POLICY_NEVER	2
+			short policy;
+		} assign;
+		pid_t pid;
+		int maxents;
+	} strp_data;
+#define strp_pid	strp_data.pid
+#define strp_maxents	strp_data.maxents
+#define strp_code	strp_data.assign.code
+#define strp_policy	strp_data.assign.policy
+};
+.Ed
+.Pp
+The
+.Dv SYSTR_POLICY_NEW
+operation allocates a new policy with all entries initialized to
+.Dv SYSTR_POLICY_ASK ,
+and returns the new policy number into
+.Va strp_num .
+The
+.Dv SYSTR_POLICY_ASSIGN
+operation attaches the policy identified by
+.Va strp_num
+to
+.Va strp_pid ,
+with a maximum of
+.Va strp_maxents
+entries.
+The
+.Dv SYSTR_POLICY_MODIFY
+operation changes the entry indexed by
+.Va strp_code
+to
+.Va strp_policy .
+.It Dv STRIOCGETCWD Fa "pid_t"
+Set the working directory of the current process to that of the
+named process.
+.It Dv STRIOCRESCWD
+Restore the working directory of the current process.
+.El
+.Sh FILES
+.Bl -tag -width "/dev/systrace" -compact
+.It Pa /dev/systrace
+system call tracing facility
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr read 2 ,
+.Xr options 4 ,
+.Xr securelevel 7
+.Sh HISTORY
+The
+.Nm
+facility first appeared in
+.Ox 3.2 .
+.\" .Sh BUGS
+.\" .Sh CAVEATS
