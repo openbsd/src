@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.2 1999/09/23 04:12:03 alex Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.3 1999/11/05 04:23:08 angelos Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -127,15 +127,11 @@ Set the name of the service set (IBSS) that this station wishes to
 join. The
 .Ar network name
 can be any text string up to 30 characters in length. The default name
-is the string "ANY" which should allow the station to connect to the first
+is the empty string which should allow the station to connect to the first
 available access point. The interface should be set for BSS mode using
 the
 .Fl p
 flag in order for this to work.
-.Pp
-Note: the WaveLAN manual indicates that an empty string will allow the
-host to connect to any access point, however I have also seen a reference
-in another driver which indicates that the "ANY" string works as well.
 .It Fl i Ar iface Fl s Ar station name
 Sets the
 .Ar station name
