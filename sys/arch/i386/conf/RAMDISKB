@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.43 2001/09/22 20:44:48 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.44 2001/10/10 20:11:50 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -134,8 +134,8 @@ scsibus* at ami?
 cac*	at pci? dev ? function ?	# Compaq Smart ARRAY RAID controllers
 cac*	at eisa? slot ?
 scsibus* at cac?
-twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-scsibus* at twe?
+#twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+#scsibus* at twe?
 iha*	at pci? dev ? function ?	# Initio Ultra/UltraWide SCSI controllers
 scsibus* at iha?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
