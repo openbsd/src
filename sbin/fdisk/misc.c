@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2003/07/29 18:38:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,7 +50,7 @@ unit_lookup(char *units)
 	/* default */
 	if (unit_types[i].abbr == NULL)
 		return (UNIT_TYPE_DEFAULT);
-	
+
 	return (i);
 }
 
@@ -188,7 +188,7 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 	int mult = 1;
 	double d;
 	int secpercyl;
-	
+
 	secpercyl = disk->real->sectors * disk->real->heads;
 
 	/* We only care about the remainder */

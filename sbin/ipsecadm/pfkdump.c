@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.7 2003/07/24 09:59:03 itojun Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.8 2003/07/29 18:38:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -264,9 +264,9 @@ print_msg(struct sadb_msg *msg, int promisc)
 	struct sadb_ext *ext;
 
 	printf("%s: satype %s vers %u len %u seq %u %spid %u\n",
-            lookup_name(msg_types, msg->sadb_msg_type),
-            lookup_name(sa_types, msg->sadb_msg_satype),
-            msg->sadb_msg_version, msg->sadb_msg_len,
+	    lookup_name(msg_types, msg->sadb_msg_type),
+	    lookup_name(sa_types, msg->sadb_msg_satype),
+	    msg->sadb_msg_version, msg->sadb_msg_len,
 	    msg->sadb_msg_seq,
 #if 0
 	    promisc ? "from " : "to ",
@@ -302,7 +302,7 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 		    lookup_name(enc_types, sa->sadb_sa_encrypt));
 	printf("\t\tstate %s replay %u flags %u\n",
 	    lookup_name(states, sa->sadb_sa_state),
-            sa->sadb_sa_replay, sa->sadb_sa_flags);
+	    sa->sadb_sa_replay, sa->sadb_sa_flags);
 }
 
 void
@@ -417,8 +417,8 @@ void
 print_alg(struct sadb_alg *alg, u_int8_t ext_type)
 {
 	printf("\t\t%s iv %u min %u max %u\n",
-            alg_by_ext(ext_type, alg->sadb_alg_id), alg->sadb_alg_ivlen,
-            alg->sadb_alg_minbits, alg->sadb_alg_maxbits);
+	    alg_by_ext(ext_type, alg->sadb_alg_id), alg->sadb_alg_ivlen,
+	    alg->sadb_alg_minbits, alg->sadb_alg_maxbits);
 }
 
 void
@@ -502,7 +502,7 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 	struct sadb_ident *ident = (struct sadb_ident *) ext;
 
 	printf("type %s id %llu: %s\n",
-            lookup_name(identity_types, ident->sadb_ident_type),
+	    lookup_name(identity_types, ident->sadb_ident_type),
 	    ident->sadb_ident_id, (char *)(ident + 1));
 }
 

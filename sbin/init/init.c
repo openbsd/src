@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.32 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.33 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.32 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.33 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -242,12 +242,12 @@ main(int argc, char *argv[])
 	 */
 	handle(badsys, SIGSYS, 0);
 	handle(disaster, SIGABRT, SIGFPE, SIGILL, SIGSEGV,
-	       SIGBUS, SIGXCPU, SIGXFSZ, 0);
+	    SIGBUS, SIGXCPU, SIGXFSZ, 0);
 	handle(transition_handler, SIGHUP, SIGTERM, SIGTSTP, SIGUSR1, 0);
 	handle(alrm_handler, SIGALRM, 0);
 	sigfillset(&mask);
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGSYS,
-		SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGUSR1, SIGTSTP, SIGALRM, 0);
+	    SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGUSR1, SIGTSTP, SIGALRM, 0);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 	memset(&sa, 0, sizeof sa);
 	sigemptyset(&sa.sa_mask);
@@ -647,7 +647,7 @@ single_user(void)
 			warning("single user shell terminated.");
 			sleep(STALL_TIMEOUT);
 			_exit(0);
-		} else {	
+		} else {
 			warning("single user shell terminated, restarting");
 			return (state_func_t) single_user;
 		}
@@ -711,12 +711,12 @@ runcom(void)
 			if (errno == EINTR)
 				continue;
 			warning("wait for %s on %s failed: %m; going to single user mode",
-				_PATH_BSHELL, _PATH_RUNCOM);
+			    _PATH_BSHELL, _PATH_RUNCOM);
 			return (state_func_t) single_user;
 		}
 		if (wpid == pid && WIFSTOPPED(status)) {
 			warning("init: %s on %s stopped, restarting\n",
-				_PATH_BSHELL, _PATH_RUNCOM);
+			    _PATH_BSHELL, _PATH_RUNCOM);
 			kill(pid, SIGCONT);
 			wpid = -1;
 		}
@@ -734,7 +734,7 @@ runcom(void)
 
 	if (!WIFEXITED(status)) {
 		warning("%s on %s terminated abnormally, going to single user mode",
-			_PATH_BSHELL, _PATH_RUNCOM);
+		    _PATH_BSHELL, _PATH_RUNCOM);
 		return (state_func_t) single_user;
 	}
 
@@ -822,8 +822,8 @@ char **
 construct_argv(char *command)
 {
 	int argc = 0;
-	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
-						* sizeof (char *));
+	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1) *
+	    sizeof (char *));
 	static const char separators[] = " \t";
 
 	if ((argv[argc++] = strtok(command, separators)) == 0)
@@ -921,7 +921,7 @@ setupargv(session_t *sp, struct ttyent *typ)
 		sp->se_window_argv = construct_argv(sp->se_window);
 		if (sp->se_window_argv == 0) {
 			warning("can't parse window for port %s",
-				sp->se_device);
+			    sp->se_device);
 			free(sp->se_window);
 			sp->se_window = 0;
 			return (0);
@@ -978,7 +978,7 @@ start_window_system(session_t *sp)
 
 	if ((pid = fork()) == -1) {
 		emergency("can't fork for window system on port %s: %m",
-			sp->se_device);
+		    sp->se_device);
 		/* hope that getty fails and we can try again */
 		return;
 	}
@@ -996,7 +996,7 @@ start_window_system(session_t *sp)
 
 	execv(sp->se_window_argv[0], sp->se_window_argv);
 	stall("can't exec window system '%s' for port %s: %m",
-		sp->se_window_argv[0], sp->se_device);
+	    sp->se_window_argv[0], sp->se_device);
 	_exit(1);
 }
 
@@ -1067,7 +1067,7 @@ start_getty(session_t *sp)
 	if (current_time > sp->se_started &&
 	    current_time - sp->se_started < GETTY_SPACING) {
 		warning("getty repeating too quickly on port %s, sleeping",
-		        sp->se_device);
+		    sp->se_device);
 		sleep((unsigned) GETTY_SLEEP);
 	}
 
@@ -1083,7 +1083,7 @@ start_getty(session_t *sp)
 
 	execv(sp->se_getty_argv[0], sp->se_getty_argv);
 	stall("can't exec getty '%s' for port %s: %m",
-		sp->se_getty_argv[0], sp->se_device);
+	    sp->se_getty_argv[0], sp->se_device);
 	_exit(1);
 }
 
@@ -1221,8 +1221,8 @@ clean_ttys(void)
 			sp->se_flags |= SE_PRESENT;
 			if (sp->se_index != session_index) {
 				warning("port %s changed utmp index from %d to %d",
-				       sp->se_device, sp->se_index,
-				       session_index);
+				    sp->se_device, sp->se_index,
+				    session_index);
 				sp->se_index = session_index;
 			}
 			if ((typ->ty_status & TTY_ON) == 0 ||
@@ -1234,7 +1234,7 @@ clean_ttys(void)
 			sp->se_flags &= ~SE_SHUTDOWN;
 			if (setupargv(sp, typ) == 0) {
 				warning("can't parse getty for port %s",
-					sp->se_device);
+				    sp->se_device);
 				sp->se_flags |= SE_SHUTDOWN;
 				kill(sp->se_process, SIGHUP);
 			}
@@ -1338,10 +1338,10 @@ nice_death(void)
 
 		clang = 0;
 		alarm(DEATH_WATCH);
-		do
+		do {
 			if ((pid = waitpid(-1, NULL, 0)) != -1)
 				collect_child(pid);
-		while (clang == 0 && errno != ECHILD);
+		} while (clang == 0 && errno != ECHILD);
 
 		if (errno == ECHILD)
 			goto die;
@@ -1379,10 +1379,10 @@ death(void)
 
 		clang = 0;
 		alarm(DEATH_WATCH);
-		do
+		do {
 			if ((pid = waitpid(-1, NULL, 0)) != -1)
 				collect_child(pid);
-		while (clang == 0 && errno != ECHILD);
+		} while (clang == 0 && errno != ECHILD);
 
 		if (errno == ECHILD)
 			return (state_func_t) single_user;

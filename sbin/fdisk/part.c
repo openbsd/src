@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.35 2003/07/02 21:44:57 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.36 2003/07/29 18:38:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -142,21 +142,20 @@ PRT_printall(void)
 {
 	int i, idrows;
 
-        idrows = ((sizeof(part_types)/sizeof(struct part_type))+3)/4;
+	idrows = ((sizeof(part_types)/sizeof(struct part_type))+3)/4;
 
 	printf("Choose from the following Partition id values:\n");
 	for (i = 0; i < idrows; i++) {
-		printf("%02X %s   %02X %s   %02X %s"
-                      , part_types[i         ].type, part_types[i         ].sname
-                      , part_types[i+idrows  ].type, part_types[i+idrows  ].sname
-                      , part_types[i+idrows*2].type, part_types[i+idrows*2].sname
-                      );
-                if ((i+idrows*3) < (sizeof(part_types)/sizeof(struct part_type))) {
-		       printf("   %02X %s\n"
-                             , part_types[i+idrows*3].type, part_types[i+idrows*3].sname );
-                }
-		else
-		        printf( "\n" );
+		printf("%02X %s   %02X %s   %02X %s",
+		    part_types[i].type, part_types[i].sname,
+		    part_types[i+idrows].type, part_types[i+idrows].sname,
+		    part_types[i+idrows*2].type, part_types[i+idrows*2].sname);
+		if ((i+idrows*3) < (sizeof(part_types)/sizeof(struct part_type))) {
+			printf("   %02X %s\n",
+			    part_types[i+idrows*3].type,
+			    part_types[i+idrows*3].sname);
+		} else
+			printf( "\n" );
 	}
 }
 
@@ -289,10 +288,10 @@ PRT_print(int num, prt_t *partn, char *units)
 		printf("%c%1d: %.2X %4d %3d %2d - %4d %3d %2d [%12d:%12.0f%s] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
-		        partn->scyl, partn->shead, partn->ssect,
+			partn->scyl, partn->shead, partn->ssect,
 			partn->ecyl, partn->ehead, partn->esect,
 			partn->bs, size,
-		        unit_types[i].abbr,
+			unit_types[i].abbr,
 			PRT_ascii_id(partn->id));
 	}
 }

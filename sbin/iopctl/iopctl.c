@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopctl.c,v 1.3 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.4 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 	struct iovec iov;
 
 	dv = "/dev/iop0";
-	
+
 	while ((ch = getopt(argc, argv, "f:")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -170,7 +170,7 @@ show(const char *hdr, const char *fmt, ...)
 {
 	int i;
 	va_list va;
-	
+
 	for (i = printf("%s", hdr); i < 25; i++)
 		putchar(' ');
 	va_start(va, fmt);
@@ -184,11 +184,11 @@ const char *
 class2str(int class)
 {
 	int i;
-	
+
 	for (i = 0; i < sizeof(i2oclass) / sizeof(i2oclass[0]); i++)
 		if (class == i2oclass[i].class)
 			return (i2oclass[i].caption);
-			
+
 	return ("unknown");
 }
 
@@ -237,7 +237,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 		    ((struct i2o_reply *)buf)->reqstatus);
 	if ((rf->msgflags & I2O_MSGFLAGS_FAIL) != 0)
 		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (FAIL)");
-}	
+}
 
 void
 showlct(char **argv)
@@ -282,7 +282,7 @@ showlct(char **argv)
 		    sizeof(ident));
 		show("identity tag", "<%s>", ident);
 		show("event caps", "%x", letoh32(ent->eventcaps));
-		
+
 		if (i != nent - 1)
 			printf("\n");
 	}
@@ -447,6 +447,6 @@ i2ostrvis(const char *src, int slen, char *dst, int dlen)
 		}
 		src++;
 	}
-	
+
 	dst[lc] = '\0';
 }

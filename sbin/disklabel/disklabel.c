@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.84 2003/07/16 18:03:44 tedu Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.85 2003/07/29 18:38:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.84 2003/07/16 18:03:44 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.85 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -494,7 +494,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 			 * disable after writing.
 			 */
 			writeable = 1;
-			
+
 			if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 				perror("ioctl DIOCWLABEL");
 #ifdef __alpha__
@@ -606,7 +606,7 @@ readmbr(int f)
 	signature = *((u_char *)mbr + DOSMBR_SIGNATURE_OFF) |
 	    (*((u_char *)mbr + DOSMBR_SIGNATURE_OFF + 1) << 8);
 	bcopy((char *)mbr+DOSPARTOFF, (char *)mbr, sizeof(*dp) * NDOSPART);
-		
+
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
 	 * partition table to find OpenBSD partition, and obtain

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.11 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ readsb(int listerr)
 
 	/* Copy the superblock in memory */
 	e2fs_sbload(sblk.b_un.b_fs, &sblock.e2fs);
-	
+
 	/*
 	 * run a few consistency checks of the super block
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.31 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: mount.c,v 1.32 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.31 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.32 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ main(int argc, char * const argv[])
 	if ((rval == 0 || new) && getuid() == 0 &&
 	    (mountdfp = fopen(_PATH_MOUNTDPID, "r")) != NULL) {
 		if (fscanf(mountdfp, "%d", &pid) == 1 &&
-		     pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
+		    pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
 			err(1, "signal mountd");
 		(void)fclose(mountdfp);
 	}
@@ -380,7 +380,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 			if (verbose)
 				(void)printf("%s on %s type %.*s: %s\n",
 				    sf.f_mntfromname, sf.f_mntonname,
-			            MFSNAMELEN, sf.f_fstypename,
+				    MFSNAMELEN, sf.f_fstypename,
 				    "already mounted");
 			return (0);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.26 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: optr.c,v 1.27 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: optr.c,v 1.26 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: optr.c,v 1.27 2003/07/29 18:38:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ timeest(void)
 	if (tnow >= tschedule) {
 		tschedule = tnow + 300;
 		if (blockswritten < 500)
-			return;	
+			return;
 		deltat = tstart_writing - tnow +
 			(1.0 * (tnow - tstart_writing))
 			/ blockswritten * tapesize;

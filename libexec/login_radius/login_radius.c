@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.c,v 1.4 2003/07/06 21:54:38 deraadt Exp $	*/
+/*	$OpenBSD: login_radius.c,v 1.5 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -175,7 +175,7 @@ main(int argc, char **argv)
 
 	emsg = NULL;
 
-	c = raddauth(username, class, style, 
+	c = raddauth(username, class, style,
 	    strcmp(service, "login") ? challenge : NULL, password, &emsg);
 
 	if (c == 0) {

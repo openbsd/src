@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.8 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.7 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$Id: print.c,v 1.8 2003/07/29 18:39:23 deraadt Exp $";
 #endif /* not lint */
 
 /* debug print routines */
@@ -55,7 +55,7 @@ void
 print_request(char *cp, CTL_MSG *mp)
 {
 	char tbuf[80], *tp;
-	
+
 	if (mp->type > NTYPES) {
 		(void)snprintf(tbuf, sizeof(tbuf), "type %d", mp->type);
 		tp = tbuf;
@@ -69,7 +69,7 @@ void
 print_response(char *cp, CTL_RESPONSE *rp)
 {
 	char tbuf[80], *tp, abuf[80], *ap;
-	
+
 	if (rp->type > NTYPES) {
 		(void)snprintf(tbuf, sizeof(tbuf), "type %d", rp->type);
 		tp = tbuf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.11 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: restore.c,v 1.12 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: restore.c,v 1.11 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: restore.c,v 1.12 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -495,7 +495,7 @@ nodeupdates(name, ino, type)
 	default:
 		panic("[%s] %s: impossible state\n", keyval(key), name);
 		break;
-	}	
+	}
 	return (descend);
 }
 

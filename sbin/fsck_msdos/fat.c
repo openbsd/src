@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.10 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: fat.c,v 1.11 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.10 2002/02/16 21:27:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.11 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -110,7 +110,7 @@ readfat(fs, boot, no, fp)
 			free(fat);
 		return (FSFATAL);
 	}
-	
+
 	(void)memset(fat, 0, sizeof(struct fatEntry) * boot->NumClusters);
 
 	off = boot->ResSectors + no * boot->FATsecs;
@@ -534,7 +534,7 @@ checklost(dosfs, boot, fat)
 	cl_t head;
 	int mod = FSOK;
 	int ret;
-	
+
 	for (head = CLUST_FIRST; head < boot->NumClusters; head++) {
 		/* find next untravelled chain */
 		if (fat[head].head != head

@@ -2,10 +2,10 @@
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
  * All rights reserved.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Christoph Herrmann and Thomas-Henning von Kamptz, Munich and Frankfurt.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -22,7 +22,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -418,7 +418,7 @@ dbg_dump_inmap(struct fs *sb, const char *comment, struct cg *cgr)
 		for(k=0; k<32; k+=8) {
 			if(j+k+8<e) {
 				fprintf(dbg_log,
-				    "%02x%02x%02x%02x%02x%02x%02x%02x ", 
+				    "%02x%02x%02x%02x%02x%02x%02x%02x ",
 				    cp[0], cp[1], cp[2], cp[3],
 				    cp[4], cp[5], cp[6], cp[7]);
 			} else {
@@ -463,7 +463,7 @@ dbg_dump_frmap(struct fs *sb, const char *comment, struct cg *cgr)
 		for(k=0; k<32; k+=8) {
 			if(j+k+8<e) {
 				fprintf(dbg_log,
-				    "%02x%02x%02x%02x%02x%02x%02x%02x ", 
+				    "%02x%02x%02x%02x%02x%02x%02x%02x ",
 				    cp[0], cp[1], cp[2], cp[3],
 				    cp[4], cp[5], cp[6], cp[7]);
 			} else {
@@ -507,7 +507,7 @@ dbg_dump_clmap(struct fs *sb, const char *comment, struct cg *cgr)
 		for(k=0; k<32; k+=8) {
 			if(j+k+8<e) {
 				fprintf(dbg_log,
-				    "%02x%02x%02x%02x%02x%02x%02x%02x ", 
+				    "%02x%02x%02x%02x%02x%02x%02x%02x ",
 				    cp[0], cp[1], cp[2], cp[3],
 				    cp[4], cp[5], cp[6], cp[7]);
 			} else {
@@ -601,7 +601,7 @@ dbg_dump_ino(struct fs *sb, const char *comment, struct dinode *ino)
 {
 	int ictr;
 	int remaining_blocks;
-	
+
 	if(!dbg_log) {
 		return;
 	}
@@ -612,7 +612,7 @@ dbg_dump_ino(struct fs *sb, const char *comment, struct dinode *ino)
 
 	fprintf(dbg_log, "mode       u_int16_t      0%o\n", ino->di_mode);
 	fprintf(dbg_log, "nlink      int16_t        0x%04x\n", ino->di_nlink);
-	fprintf(dbg_log, "size       u_int64_t      0x%08x%08x\n", 
+	fprintf(dbg_log, "size       u_int64_t      0x%08x%08x\n",
 	    ((unsigned int *)&(ino->di_size))[1],
 	    ((unsigned int *)&(ino->di_size))[0]);
 	fprintf(dbg_log, "atime      int32_t        0x%08x\n", ino->di_atime);

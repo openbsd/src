@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.18 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.19 2003/07/29 18:38:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.18 2003/06/11 06:22:14 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.19 2003/07/29 18:38:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -204,7 +204,7 @@ getino(ino_t inum)
  * reading in sector sized pieces.  Error recovery is attempted at most
  * BREADEMAX times before seeking consent from the operator to continue.
  */
-int	breaderrors = 0;		
+int	breaderrors = 0;
 #define	BREADEMAX 32
 
 void
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 				    optarg);
 			addinode((ino_t)ulval);
 
-			while (optind < argc) {	
+			while (optind < argc) {
 				errno = 0;
 				ulval = strtoul(argv[optind], &ep, 10);
 				if (argv[optind][0] == '\0' || *ep != '\0')

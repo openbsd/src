@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.15 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: umount.c,v 1.16 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.15 2003/06/02 20:06:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.16 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	/* -h implies "-t nfs" if no -t flag. */
 	if ((nfshost != NULL) && (typelist == NULL))
 		maketypelist("nfs");
-		
+
 	if (all)
 		errs = umountall();
 	else

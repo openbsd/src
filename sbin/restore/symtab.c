@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.11 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.12 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: symtab.c,v 1.11 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: symtab.c,v 1.12 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -428,7 +428,7 @@ freename(name)
 	char *name;
 {
 	struct strhdr *tp, *np;
-	
+
 	tp = &strtblhdr[strlen(name) / STRTBLINCR];
 	np = (struct strhdr *)name;
 	np->next = tp->next;

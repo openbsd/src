@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.35 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.36 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -412,15 +412,15 @@ build_reply(struct con *cp)
 		goto bad;
 	}
 	for (; *matches; matches++) {
-		int used = 0, s = sizeof(matchlists) - 4; 
+		int used = 0, s = sizeof(matchlists) - 4;
 		char *c = cp->obuf + off;
 		int left = cp->osize - off;
 
 		/* don't report an insane amount of lists in the logs.
 		 * just truncate and indicate with ...
 		 */
-		if (strlen(matchlists) + strlen(matches[0]->tag) + 1 
-		    >= s) 
+		if (strlen(matchlists) + strlen(matches[0]->tag) + 1
+		    >= s)
 			strlcat(matchlists, " ...", sizeof(matchlists));
 		else {
 			strlcat(matchlists, " ", s);
@@ -537,7 +537,7 @@ closecon(struct con *cp)
 		printf("%s connected for %d seconds.\n", cp->addr, t - cp->s);
 	}
 	if (cp->lists != NULL) {
-		free(cp->lists);	  
+		free(cp->lists);
 		cp->lists = NULL;
 	}
 	if (cp->osize > 0 && cp->obufalloc) {
@@ -641,7 +641,7 @@ nextstate(struct con *cp)
 		break;
 	case 99:
 		syslog_r(LOG_INFO, &sdata, "%s: %s -> %s %ldsec by lists:%s",
-		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s), 
+		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s),
 		    (cp->lists != NULL) ? cp->lists : "");
 		closecon(cp);
 		break;
@@ -973,7 +973,6 @@ main(int argc, char *argv[])
 				close(conffd);
 				conffd = -1;
 			}
-				
 		}
 		if (conffd != -1 && FD_ISSET(conffd, fdsr)) {
 			do_config();

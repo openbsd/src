@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.26 2003/06/02 19:38:25 millert Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.27 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.26 2003/06/02 19:38:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.27 2003/07/29 18:39:23 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 	for(;;) {
 		s = accept(tcp_socket, &hisctladdr, &hisaddrlen);
 		if (s < 0){
-			if (errno == EINTR) 
+			if (errno == EINTR)
 				continue;
 			perror("uucpd: accept");
 			exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.11 2003/06/26 08:01:54 tedu Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.11 2003/06/26 08:01:54 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ void
 errexit(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -108,7 +108,7 @@ void
 pfatal(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	vmsg(1, fmt, ap);
 	va_end(ap);
@@ -119,7 +119,7 @@ void
 pwarn(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	vmsg(0, fmt, ap);
 	va_end(ap);
@@ -135,7 +135,7 @@ void
 panic(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	vmsg(1, fmt, ap);
 	va_end(ap);

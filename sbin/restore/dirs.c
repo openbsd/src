@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.24 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.25 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: dirs.c,v 1.24 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: dirs.c,v 1.25 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -593,7 +593,7 @@ setdirmodes(flags)
 	struct modeinfo node;
 	struct entry *ep;
 	char *cp;
-	
+
 	Vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
 		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%d",

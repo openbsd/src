@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 1995/04/23 10:33:19 cgd Exp $	*/
 
 /*
@@ -126,7 +126,6 @@ pinsert(path *p0, qelem *q0)
 	}
 	ins_que(&p0->p_q, q0->q_back);
 	return (1);
-	
 }
 
 static path *

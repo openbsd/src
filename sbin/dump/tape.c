@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.19 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: tape.c,v 1.20 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.19 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.20 2003/07/29 18:38:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -600,7 +600,7 @@ restore_check_point:
 			case X_FINOK:
 				msg("Child %d finishes X_FINOK\n", childpid);
 				break;
-			case X_ABORT:	
+			case X_ABORT:
 				msg("Child %d finishes X_ABORT\n", childpid);
 				break;
 			case X_REWRITE:
@@ -758,12 +758,11 @@ enslave(void)
 			Exit(X_FINOK);
 		}
 	}
-	
+
 	for (i = 0; i < SLAVES; i++)
 		(void) atomic((ssize_t (*)(int, void *, size_t))write,
 		    slaves[i].fd, (char *) &slaves[(i + 1) % SLAVES].pid,
 		    sizeof(slaves[0].pid));
-		
 	master = 0;
 }
 

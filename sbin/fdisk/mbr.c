@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.18 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.19 2003/07/29 18:38:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -174,7 +174,7 @@ MBR_pcopy(disk_t *disk, mbr_t *mbr)
 	int i, fd, offset = 0, reloff = 0;
 	mbr_t mbrd;
 	char mbr_disk[DEV_BSIZE];
-	
+
 	fd = DISK_open(disk->name, O_RDONLY);
 	MBR_read(fd, offset, mbr_disk);
 	DISK_close(fd);

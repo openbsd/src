@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.13 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.14 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
  * here.
  */
 
-#define fsck_ino_to_fsba(fs, x)                      \
+#define fsck_ino_to_fsba(fs, x) \
 	(fs2h32((fs)->e2fs_gd[ino_to_cg(fs, x)].ext2bgd_i_tables) + \
 	(((x)-1) % (fs)->e2fs.e2fs_ipg)/(fs)->e2fs_ipb)
 
@@ -440,11 +440,11 @@ inocleanup(void)
 	free((char *)inpsort);
 	inphead = inpsort = NULL;
 }
-	
+
 void
 inodirty(void)
 {
-	
+
 	dirty(pbp);
 }
 

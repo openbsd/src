@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.6 2002/03/19 20:22:21 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.7 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -29,7 +29,7 @@
 #include "common.h"
 
 int
-pwd_login(char *username, char *password, char *wheel, int lastchance, 
+pwd_login(char *username, char *password, char *wheel, int lastchance,
     char *class)
 {
 	struct passwd *pwd;

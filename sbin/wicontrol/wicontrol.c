@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.46 2003/07/02 21:44:58 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.47 2003/07/29 18:38:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.46 2003/07/02 21:44:58 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.47 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -661,7 +661,7 @@ wi_dumpinfo(char *iface)
 			break;
 		default:
 			break;
-		}	
+		}
 		printf("\n");
 	}
 
@@ -699,7 +699,7 @@ wi_dumpinfo(char *iface)
 				break;
 			default:
 				break;
-			}	
+			}
 			printf("\n");
 		}
 	}

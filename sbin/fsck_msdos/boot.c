@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2003/03/11 04:42:25 david Exp $	*/
+/*	$OpenBSD: boot.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.8 2003/03/11 04:42:25 david Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -57,7 +57,7 @@ readboot(dosfs, boot)
 	int ret = FSOK;
 
 	if (read(dosfs, block, sizeof block) < sizeof block) {
-		perror("could not read boot block"); 		
+		perror("could not read boot block");
 		return (FSFATAL);
 	}
 

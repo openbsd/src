@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2003/07/05 17:02:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2003/07/29 18:39:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.27 2003/07/05 17:02:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.28 2003/07/29 18:39:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
 	 * If the tty line is "-", we do the old style getty presuming
-	 * that the file descriptors are already set up for us. 
+	 * that the file descriptors are already set up for us.
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0) {

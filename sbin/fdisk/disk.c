@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.19 2003/07/02 21:44:57 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.20 2003/07/29 18:38:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -227,7 +227,7 @@ DISK_getmetrics(disk_t *disk, DISK_metrics *user)
  */
 int
 DISK_printmetrics(disk_t *disk, char *units)
-{	
+{
 	int i;
 	double size;
 	i = unit_lookup(units);

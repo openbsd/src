@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.17 2003/03/30 08:31:53 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.18 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.17 2003/03/30 08:31:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.18 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -886,7 +886,7 @@ handleDirTree(dosfs, boot, fat)
 	struct fatEntry *fat;
 {
 	int mod;
-	
+
 	mod = readDosDirSection(dosfs, boot, fat, rootDir);
 	if (mod & FSFATAL)
 		return (FSFATAL);

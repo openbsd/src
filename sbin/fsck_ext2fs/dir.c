@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.11 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
 	char pathbuf[MAXPATHLEN + 1];
-	
+
 	if ((parent < EXT2_FIRSTINO && parent != EXT2_ROOTINO)
 		|| parent >= maxino ||
 	    (ino < EXT2_FIRSTINO && ino < EXT2_ROOTINO) || ino >= maxino)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.26 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: tape.c,v 1.27 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.26 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.27 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1256,7 +1256,7 @@ checksum(buf)
 			i += swabl(*buf++);
 		while (--j);
 	}
-			
+
 	if (i != CHECKSUM) {
 		fprintf(stderr, "Checksum error %o, inode %d file %s\n", i,
 			curfile.ino, curfile.name);
@@ -1320,7 +1320,7 @@ swabst(cp, sp)
 		case '5': case '6': case '7': case '8': case '9':
 			n = (n * 10) + (*cp++ - '0');
 			continue;
-		
+
 		case 's': case 'w': case 'h':
 			if (n == 0)
 				n = 1;

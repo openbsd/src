@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.35 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.36 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.35 2003/06/10 16:41:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.36 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ kmem_setup(void)
 	kvm_t	*kd_kern;
 	char	errbuf[_POSIX2_LINE_MAX];
 	int	i, hdrsz;
-	
+
 	/*
 	 * Some names we need for the currently running system, others for
 	 * the system that was running when the dump was made.  The values
@@ -236,7 +236,7 @@ kmem_setup(void)
 	if (kvm_nlist(kd_kern, current_nl) == -1)
 		syslog(LOG_ERR, "%s: kvm_nlist: %s", _PATH_UNIX,
 			kvm_geterr(kd_kern));
-	
+
 	for (i = 0; cursyms[i] != -1; i++)
 		if (current_nl[cursyms[i]].n_value == 0) {
 			syslog(LOG_ERR, "%s: %s not in namelist",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.37 2003/06/28 01:05:21 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.38 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -255,11 +255,11 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 			gentoken(token, sizeof token);
 			syslog(LOG_NOTICE, "token %s == NO USER", token);
 			n = snprintf(buf, sizeof(buf),
-			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport, 
+			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
 			    opsys_name, charset_sep, charset_name, token);
-			if (timed_write(fd, buf, n, IO_TIMEOUT) != n && 
+			if (timed_write(fd, buf, n, IO_TIMEOUT) != n &&
 			    syslog_flag) {
-				syslog(LOG_NOTICE, "write to %s: %m", 
+				syslog(LOG_NOTICE, "write to %s: %m",
 				    gethost4_addr(faddr));
 				return 1;
 			}
@@ -451,11 +451,11 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 			gentoken(token, sizeof token);
 			syslog(LOG_NOTICE, "token %s == NO USER", token);
 			n = snprintf(buf, sizeof(buf),
-			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport, 
+			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
 			    opsys_name, charset_sep, charset_name, token);
-			if (timed_write(fd, buf, n, IO_TIMEOUT) != n && 
+			if (timed_write(fd, buf, n, IO_TIMEOUT) != n &&
 			    syslog_flag) {
-				syslog(LOG_NOTICE, "write to %s: %m", 
+				syslog(LOG_NOTICE, "write to %s: %m",
 				    gethost6(faddr));
 				return 1;
 			}

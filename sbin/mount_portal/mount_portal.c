@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.25 2003/07/03 22:41:40 tedu Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.26 2003/07/29 18:38:36 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.25 2003/07/03 22:41:40 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.26 2003/07/29 18:38:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 			conf_read(&q, conf);
 			continue;
 		}
-	
+
 		/*
 		 * Accept a new connection
 		 * Will get EINTR if a signal has arrived, so just

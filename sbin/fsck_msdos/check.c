@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.8 2001/07/07 18:26:12 deraadt Exp $	*/
+/*	$OpenBSD: check.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.8 2001/07/07 18:26:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -159,7 +159,7 @@ checkfilesys(fname)
 		(void)close(dosfs);
 		return (8);
 	}
-	
+
 	if (!preen)
 		printf("** Phase 4 - Check for Lost Files\n");
 

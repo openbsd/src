@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.87 2003/07/16 18:03:44 tedu Exp $	*/
+/*	$OpenBSD: editor.c,v 1.88 2003/07/29 18:38:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.87 2003/07/16 18:03:44 tedu Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.88 2003/07/29 18:38:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -539,7 +539,7 @@ getoff1:
 		}
 	}
 	pp->p_fstype = ui;
-	
+
 	/* Get size */
 	if (get_size(lp, partno, freep, 1) != 0 || pp->p_size == 0) {
 		pp->p_size = 0;			/* effective delete */
@@ -606,7 +606,7 @@ editor_name(struct disklabel *lp, char **mp, char *p)
 		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
 		return;
 	}
-	
+
 	/* Not all fstypes can be named */
 	if (pp->p_fstype == FS_UNUSED || pp->p_fstype == FS_SWAP ||
 	    pp->p_fstype == FS_BOOT || pp->p_fstype == FS_OTHER) {
@@ -648,7 +648,7 @@ editor_modify(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
 		return;
 	}
-	
+
 	/* Get filesystem type */
 	if (get_fstype(lp, partno) != 0) {
 		*pp = origpart;			/* undo changes */
@@ -836,7 +836,7 @@ next_offset(struct disklabel *lp, u_int32_t *sizep)
 	/* Get a sorted list of the partitions */
 	if ((spp = sort_partitions(lp, &npartitions)) == NULL)
 		return(starting_sector);
-	
+
 	new_offset = starting_sector;
 	for (i = 0; i < npartitions; i++ ) {
 		/*
@@ -1171,7 +1171,7 @@ has_overlap(struct disklabel *lp, u_int32_t *freep, int resolve)
 					(void)free(spp);
 					return(1);
 				}
-					
+
 				/* Overlap!  Convert to real part numbers. */
 				i = ((char *)spp[i] - (char *)lp->d_partitions)
 				    / sizeof(**spp);
@@ -1557,7 +1557,7 @@ set_bounds(struct disklabel *lp, u_int32_t *freep)
 	} while (ui > lp->d_secperunit - start_temp);
 	ending_sector = start_temp + ui;
 	starting_sector = start_temp;
-	
+
 	/* Recalculate the free sectors */
 	editor_countfree(lp, freep);
 }
@@ -1602,7 +1602,7 @@ free_chunks(struct disklabel *lp)
 		} else {
 			/* Last partition */
 			if (spp[i]->p_offset + spp[i]->p_size < ending_sector) {
-				
+
 				chunks[numchunks].start =
 				    spp[i]->p_offset + spp[i]->p_size;
 				chunks[numchunks].stop = ending_sector;

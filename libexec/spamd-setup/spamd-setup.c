@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.12 2003/07/06 21:57:27 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.13 2003/07/29 18:39:23 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -795,7 +795,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < blc; i++) {
 		struct cidr **cidrs, **tmp;
 		if (blists[i].blc > 0) {
-			cidrs = collapse_blacklist(blists[i].bl, 
+			cidrs = collapse_blacklist(blists[i].bl,
 			   blists[i].blc);
 			if (cidrs == NULL)
 				errx(1, "malloc failed");

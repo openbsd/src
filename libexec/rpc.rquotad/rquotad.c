@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.17 2003/07/05 17:02:36 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.18 2003/07/29 18:39:23 deraadt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	exit(1);
 }
 
-void 
+void
 rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
@@ -124,7 +124,7 @@ rquota_service(struct svc_req *request, SVCXPRT *transp)
 }
 
 /* read quota for the specified id, and send it */
-void 
+void
 sendquota(struct svc_req *request, SVCXPRT *transp)
 {
 	struct getquota_args getq_args;
@@ -175,7 +175,7 @@ sendquota(struct svc_req *request, SVCXPRT *transp)
 }
 
 /* initialise the fs_tab list from entries in /etc/fstab */
-void 
+void
 initfs(void)
 {
 	struct fs_stat *fs_current = NULL;
