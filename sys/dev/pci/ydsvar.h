@@ -1,4 +1,4 @@
-/*	$OpenBSD: ydsvar.h,v 1.4 2002/01/04 20:42:18 ericj Exp $	*/
+/*	$OpenBSD: ydsvar.h,v 1.5 2003/05/14 09:04:59 jason Exp $	*/
 /*	$NetBSD$	*/
 
 /*
@@ -119,7 +119,5 @@ struct yds_softc {
 };
 #define sc_opl_iot	sc_legacy_iot
 #define sc_mpu_iot	sc_legacy_iot
-
-int ac97_id2;
 
 #endif /* _DEV_PCI_YDSVAR_H_ */

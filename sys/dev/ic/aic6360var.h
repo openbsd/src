@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360var.h,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: aic6360var.h,v 1.3 2003/05/14 09:04:59 jason Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ struct aic_tinfo {
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	width;		/* Width suggestion */
-} tinfo_t;
+};
 
 struct aic_softc {
 	struct device sc_dev;
