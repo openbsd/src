@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.17 2003/12/09 07:34:55 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.18 2003/12/16 22:38:40 henning Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.17 2003/12/09 07:34:55 millert Exp $";
+    "$OpenBSD: gzopen.c,v 1.18 2003/12/16 22:38:40 henning Exp $";
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -434,7 +434,7 @@ gz_read(void *cookie, char *buf, int len)
 				errno = EINVAL;
 				return -1;
 			}
-			if (get_int32(s) != s->z_stream.total_out) {
+			if (get_int32(s) != (u_int32_t)s->z_stream.total_out) {
 				errno = EIO;
 				return -1;
 			}
