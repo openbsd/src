@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.80 2002/02/21 20:14:12 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.81 2002/03/03 21:47:00 angelos Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -551,6 +551,12 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 
     if (sa->tdb_remote_auth)
       i += PADUP(sa->tdb_remote_auth->ref_len) + sizeof(struct sadb_x_cred);
+
+    if (sa->tdb_amxkey)
+	    i+= PADUP(sa->tdb_amxkeylen) + sizeof(struct sadb_key);
+
+    if (sa->tdb_emxkey)
+	    i+= PADUP(sa->tdb_emxkeylen) + sizeof(struct sadb_key);
 
     if (!(p = malloc(i, M_PFKEY, M_DONTWAIT)))
     {
