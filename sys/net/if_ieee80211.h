@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ieee80211.h,v 1.8 2003/09/21 11:22:24 fgsch Exp $	*/
+/*	$OpenBSD: if_ieee80211.h,v 1.9 2003/11/16 20:30:07 avsm Exp $	*/
 /*	$NetBSD: if_ieee80211.h,v 1.36 2003/07/06 20:54:24 dyoung Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ struct ieee80211_plcp_hdr {
 	u_int16_t	i_crc;		/* CRC16 of i_signal, i_service,
 					 * i_length
 					 */
-} __attribute__((__packed__));
+} __packed;
 
 #define IEEE80211_PLCP_SFD	0xF3A0
 #define IEEE80211_PLCP_SERVICE	0x00

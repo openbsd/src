@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopreg.h,v 1.7 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: siopreg.h,v 1.8 2003/11/16 20:30:06 avsm Exp $ */
 /*	$NetBSD: siopreg.h,v 1.13 2002/08/29 16:43:23 bouyer Exp $	*/
 
 /*
@@ -457,7 +457,7 @@ struct nvram_symbios {
 		u_int16_t	flags;
 #define	NVRAM_SYM_HOST_F_SCAN_AT_BOOT	0x0001
 		u_int16_t	io_port;	/* PCI I/O address */
-	} __attribute__((__packed__)) host[4];
+	} __packed host[4];
 
 	/* Targets (8 bytes x 16) */
 	struct nvram_symbios_target {
@@ -471,7 +471,7 @@ struct nvram_symbios {
 		u_int8_t	sync_offset;	/* 8, 16, etc. */
 		u_int16_t	sync_period;	/* 4 * factor */
 		u_int16_t	timeout;
-	} __attribute__((__packed__)) target[16];
+	} __packed target[16];
 
 	/* SCAM table (8 bytes x 4) */
 	struct nvram_symbios_scam {
@@ -488,11 +488,11 @@ struct nvram_symbios {
 #define	NVRAM_SYM_SCAM_ID_VALID		3
 		u_int8_t		target_id;
 		u_int8_t		rsvd;
-	} __attribute__((__packed__)) scam[4];
+	} __packed scam[4];
 
 	u_int8_t	spare_devices[15 * 8];
 	u_int8_t	trailer[6];	/* 0xfe 0xfe 0x00 0x00 0x00 0x00 */
-} __attribute__((__packed__));
+} __packed;
 
 #define	SIOP_NVRAM_TEK_SIZE		64
 #define	SIOP_NVRAM_TEK_93c46_ADDRESS	0
@@ -516,7 +516,7 @@ struct nvram_tekram {
 #define	NVRAM_TEK_TARG_F_WIDE_NEGO	0x20
 		u_int8_t	sync_index;
 		u_int16_t	word2;
-	} __attribute__((__packed__)) target[16];
+	} __packed target[16];
 	u_int8_t	host_id;
 	u_int8_t	flags;
 #define	NVRAM_TEK_F_MORE_THAN_2_DRIVES	0x01
@@ -531,4 +531,4 @@ struct nvram_tekram {
 	u_int16_t	flags1;
 #define	NVRAM_TEK_F_F2_F6_ENABLED	0x0001
 	u_int16_t	spare[29];
-} __attribute__((__packed__));
+} __packed;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2003/10/15 16:59:23 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2003/11/16 20:30:06 avsm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -57,7 +57,7 @@ struct hppa_iv {
 	struct hppa_iv *next;
 	struct hppa_iv *share;
 	int pad2[3];
-} __attribute__((__packed__));
+} __packed;
 
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
 volatile int cpl = IPL_NESTED;

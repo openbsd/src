@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.11 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: segments.h,v 1.12 2003/11/16 20:30:06 avsm Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -87,7 +87,7 @@ struct segment_descriptor {
 	unsigned sd_def32:1;		/* default 32 vs 16 bit size */
 	unsigned sd_gran:1;		/* limit granularity (byte/page) */
 	unsigned sd_hibase:8;		/* segment base address (msb) */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Gate descriptors (e.g. indirect descriptors)
@@ -101,7 +101,7 @@ struct gate_descriptor {
 	unsigned gd_dpl:2;		/* segment descriptor priority level */
 	unsigned gd_p:1;		/* segment descriptor present */
 	unsigned gd_hioffset:16;	/* gate offset (msb) */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Generic descriptor
@@ -109,7 +109,7 @@ struct gate_descriptor {
 union descriptor {
 	struct segment_descriptor sd;
 	struct gate_descriptor gd;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * region descriptors, used to load gdt/idt tables before segments yet exist.
@@ -117,7 +117,7 @@ union descriptor {
 struct region_descriptor {
 	unsigned rd_limit:16;		/* segment extent */
 	unsigned rd_base:32;		/* base address  */
-} __attribute__((__packed__));
+} __packed;
 
 #if __GNUC__ == 2 && __GNUC_MINOR__ < 7
 #pragma pack(4)

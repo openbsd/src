@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.11 2003/07/30 05:26:33 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.12 2003/11/16 20:30:06 avsm Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ struct pcibios_softc {
 struct pcibios_linkmap {
 	u_int8_t	link;
 	u_int16_t	bitmap;
-} __attribute__((__packed__));
+} __packed;
 
 struct pcibios_intr_routing {
 	u_int8_t	bus;
@@ -80,7 +80,7 @@ struct pcibios_intr_routing {
 	struct pcibios_linkmap linkmap[4];	/* INT[A:D]# */
 	u_int8_t	slot;
 	u_int8_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * $PIR header.  Reference:
@@ -98,7 +98,7 @@ struct pcibios_pir_header {
 	u_int32_t	miniport;
 	u_int8_t	reserved[11];
 	u_int8_t	checksum;
-} __attribute__((__packed__));
+} __packed;
 
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.8 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.9 2003/11/16 20:30:06 avsm Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct osiop_ds {
 	
 	struct scsi_generic scsi_cmd;	/* DMA'able copy of xs->cmd */
 	u_int32_t pad[1+4];		/* pad to 256 bytes */
-} __attribute__((__packed__));
+} __packed;
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_OSIOP_NOCHECK	0xfe	/* don't check the scsi status */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcdreg.h,v 1.5 2000/12/06 17:18:41 deraadt Exp $	*/
+/*	$OpenBSD: mcdreg.h,v 1.6 2003/11/16 20:30:06 avsm Exp $	*/
 /*	$NetBSD: mcdreg.h,v 1.8 1997/04/04 18:59:37 christos Exp $	*/
 
 /*
@@ -163,14 +163,14 @@ union mcd_qchninfo {
 		u_char	upccode[7];
 		u_char	junk[2];
 	} upc;
-} __attribute__((__packed__));
+} __packed;
 
 struct mcd_volinfo {
 	bcd_t	trk_low;
 	bcd_t	trk_high;
 	bcd_t	vol_msf[3];
 	bcd_t	trk1_msf[3];
-} __attribute__((__packed__));
+} __packed;
 
 struct mcd_result {
 	u_char	length;
@@ -185,7 +185,7 @@ struct mcd_result {
 		union mcd_qchninfo qchninfo;
 		struct mcd_volinfo volinfo;
 	} data;
-} __attribute__((__packed__));
+} __packed;
 
 struct mcd_command {
 	u_char	opcode;
@@ -223,19 +223,19 @@ struct mcd_command {
 			u_char	data1, data2;
 		} config;
 	} data;
-} __attribute__((__packed__));
+} __packed;
 
 struct mcd_mbox {
 	struct mcd_command cmd;
 	struct mcd_result res;
-} __attribute__((__packed__));
+} __packed;
 
 struct mcd_volume {
 	u_char	v0l;
 	u_char	v0rs;
 	u_char	v0r;
 	u_char	v0ls;
-} __attribute__((__packed__));
+} __packed;
 
 struct mcd_rawsector {
 	u_char	sync1[12];
@@ -244,4 +244,4 @@ struct mcd_rawsector {
 	u_char	subheader2[4];
 	u_char	data[MCD_BLKSIZE_COOKED];
 	u_char	ecc_bits[280];
-} __attribute__((__packed__));
+} __packed;

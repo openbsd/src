@@ -52,7 +52,7 @@
  */
 struct stge_frag {
 	uint64_t	frag_word0;	/* address, length */
-} __attribute__((__packed__));
+} __packed;
 
 #define	FRAG_ADDR(x)	(((uint64_t)(x)) << 0)
 #define	FRAG_ADDR_MASK	FRAG_ADDR(0xfffffffffULL)
@@ -69,7 +69,7 @@ struct stge_tfd {
 	uint64_t	tfd_control;	/* control bits */
 					/* the buffer fragments */
 	struct stge_frag tfd_frags[STGE_NTXFRAGS];
-} __attribute__((__packed__));
+} __packed;
 
 #define	TFD_FrameId(x)		((x) << 0)
 #define	TFD_FrameId_MAX		0xffff
@@ -98,7 +98,7 @@ struct stge_rfd {
 	uint64_t	rfd_next;	/* next RFD in list */
 	uint64_t	rfd_status;	/* status bits */
 	struct stge_frag rfd_frag;	/* the buffer */
-} __attribute__((__packed__));
+} __packed;
 
 #define	RFD_RxDMAFrameLen(x)	((x) & 0xffff)
 #define	RFD_RxFIFOOverrun	(1ULL << 16)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: czreg.h,v 1.1 2001/06/21 13:21:50 nate Exp $	*/
+/*	$OpenBSD: czreg.h,v 1.2 2003/11/16 20:30:06 avsm Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -171,7 +171,7 @@ struct zfirm_header {
 	u_int32_t zfh_nblocks;
 	u_int32_t zfh_blockoff;
 	u_int32_t zfh_reserved[9];
-} __attribute__((__packed__));
+} __packed;
 
 struct zfirm_config {
 	u_int8_t zfc_name[64];
@@ -179,7 +179,7 @@ struct zfirm_config {
 	u_int32_t zfc_function;
 	u_int32_t zfc_nblocks;
 	u_int32_t zfc_blocklist[ZFIRM_MAX_BLOCKS];
-} __attribute__((__packed__));
+} __packed;
 
 #define	ZFC_FUNCTION_NORMAL	0	/* normal operation */
 #define	ZFC_FUNCTION_TEST	1	/* test mode operation */
@@ -189,7 +189,7 @@ struct zfirm_block {
 	u_int32_t zfb_fileoff;
 	u_int32_t zfb_ramoff;
 	u_int32_t zfb_size;
-} __attribute__((__packed__));
+} __packed;
 
 #define	ZFB_TYPE_FIRMWARE	0	/* MIPS firmware */
 #define	ZFB_TYPE_FPGA		1	/* FPGA code */

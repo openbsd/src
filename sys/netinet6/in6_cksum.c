@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.12 2003/07/18 06:48:05 itojun Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.13 2003/11/16 20:30:07 avsm Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ in6_cksum(m, nxt, off, len)
 			u_int32_t	ph_len;
 			u_int8_t	ph_zero[3];
 			u_int8_t	ph_nxt;
-		} ph __attribute__((__packed__));
+		} ph __packed;
 	} uph;
 	union {
 		u_int8_t	c[2];

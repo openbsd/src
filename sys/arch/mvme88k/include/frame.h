@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.5 2003/06/02 23:27:52 millert Exp $	*/
+/*	$OpenBSD: frame.h,v 1.6 2003/11/16 20:30:06 avsm Exp $	*/
 /*	$NetBSD: frame.h,v 1.15 1997/05/03 12:49:05 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #define	_M88K_FRAME_H_
 
 struct frame {
-	struct m88100_saved_state  __attribute__((__packed__)) F_t;
+	struct m88100_saved_state  __packed F_t;
 };
 
 #endif	/* _M88K_FRAME_H_ */

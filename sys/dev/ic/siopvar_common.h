@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.17 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.18 2003/11/16 20:30:06 avsm Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $ */
 
 /*
@@ -41,7 +41,7 @@
 typedef struct scr_table {
 	u_int32_t count;
 	u_int32_t addr;
-} scr_table_t __attribute__((__packed__));
+} scr_table_t __packed;
 
 /* Number of scatter/gather entries */
 /* XXX Ensure alignment of siop_xfer's. */
@@ -66,7 +66,7 @@ struct siop_common_xfer {
 	scr_table_t cmd;		/*  88 */
 	scr_table_t t_status;		/*  96 */
 	scr_table_t data[SIOP_NSG]; 	/* 104 */
-} __attribute__((__packed__));
+} __packed;
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */

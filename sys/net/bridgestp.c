@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.15 2003/06/02 18:42:56 jason Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.16 2003/11/16 20:30:07 avsm Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -108,7 +108,7 @@ struct bstp_cbpdu {
 	u_int16_t	cbu_maxage;		/* maximum age */
 	u_int16_t	cbu_hellotime;		/* hello time */
 	u_int16_t	cbu_forwarddelay;	/* forwarding delay */
-} __attribute__((__packed__));
+} __packed;
 
 /* topology change notification bridge protocol data unit */
 struct bstp_tbpdu {
@@ -118,7 +118,7 @@ struct bstp_tbpdu {
 	u_int16_t	tbu_protoid;		/* protocol id */
 	u_int8_t	tbu_protover;		/* protocol version */
 	u_int8_t	tbu_bpdutype;		/* message type */
-} __attribute__((__packed__));
+} __packed;
 
 u_int8_t bstp_etheraddr[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
 
