@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2004/06/17 00:30:08 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2004/07/02 04:19:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -686,6 +686,8 @@ syscall(struct trapframe *frame)
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->tf_t1 = error;
+		frame->tf_ret0 = error;
+		frame->tf_ret1 = 0;
 		break;
 	}
 #ifdef SYSCALL_DEBUG
