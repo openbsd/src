@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.12 2003/12/09 02:39:58 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.13 2004/10/14 21:37:34 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -361,13 +361,13 @@
 10/07	National Heroes Day in Jamaica
 10/08	Constitution Day in U.S.S.R
 10/08	Fiji Day in Fiji
-10/08	Thanksgiving Day in Canada
 10/09	Independence Day in Uganda
 10/09	Korean Alphabet Day in South Korea
 10/09	Leif Erikson Day commemorates the discovery of North America in AD 1000
 10/09	Republic Day in Khmer Republic
 10/10	Fiji Day in Fiji
 10/MonSecond	Health-Sports Day in Japan
+10/MonSecond	Thanksgiving Day in Canada
 10/10	National Day in Taiwan
 10/10	Oklahoma Historical Day in Oklahoma
 10/11	Day of the Revolution in Panama
@@ -380,7 +380,6 @@
 10/13	St. Edward's Day - Patron saint of England
 10/14	National Day in Yemen Arab Republic
 10/14	Young People's Day in Zaire
-10/14*	Thanksgiving Day in Canada
 10/15	Evacuation Day in Tunisia
 10/16	National Boss Day
 10/17	Heroes Day in Jamaica
