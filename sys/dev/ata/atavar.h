@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.17 2003/10/21 09:57:04 jmc Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.18 2004/09/24 07:05:44 grange Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_ATA_ATAVAR_H_
+#define _DEV_ATA_ATAVAR_H_
 
 /* High-level functions and structures used by both ATA and ATAPI devices */
 #include <dev/ata/atareg.h>
@@ -183,3 +186,5 @@ int ata_set_mode(struct ata_drive_datas*, u_int8_t, u_int8_t);
 
 void ata_dmaerr(struct ata_drive_datas *);
 void ata_perror(struct ata_drive_datas *, int, char *, size_t);
+
+#endif	/* !_DEV_ATA_ATAVAR_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.12 2004/04/28 17:21:16 grange Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.13 2004/09/24 07:05:44 grange Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -34,6 +34,9 @@
  *
  *	@(#)wdreg.h	7.1 (Berkeley) 5/9/91
  */
+
+#ifndef _DEV_IC_WDCREG_H_
+#define _DEV_IC_WDCREG_H_
 
 /*
  * Controller register (wdr_ctlr)
@@ -187,3 +190,5 @@
 #define PHASE_DATAOUT	WDCS_DRQ
 #define PHASE_COMPLETED	(WDCI_IN | WDCI_CMD)
 #define PHASE_ABORTED	0
+
+#endif	/* !_DEV_IC_WDCREG_H_ */

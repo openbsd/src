@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.33 2004/06/02 18:55:08 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.34 2004/09/24 07:05:44 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_WDCVAR_H_
+#define _DEV_IC_WDCVAR_H_
 
 #include <sys/timeout.h>
 
@@ -302,3 +305,5 @@ void wdc_input_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
 void wdc_print_current_modes(struct channel_softc *);
 
 int wdc_ioctl(struct ata_drive_datas *, u_long, caddr_t, int, struct proc *);
+
+#endif	/* !_DEV_IC_WDCVAR_H_ */
