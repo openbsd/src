@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.8 2003/08/20 20:17:11 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.9 2003/08/20 22:23:13 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -2012,12 +2012,13 @@ safe_kpoll(void *vsc)
 	int s, i;
 	u_int32_t buf[64];
 
+	s = splnet();
 	if (sc->sc_pkq_cur == NULL)
-		return;
+		goto out;
 	if (READ_REG(sc, SAFE_PK_FUNC) & SAFE_PK_FUNC_RUN) {
 		/* still running, check back later */
 		timeout_add(&sc->sc_pkto, 1);
-		return;
+		goto out;
 	}
 
 	q = sc->sc_pkq_cur;
@@ -2027,7 +2028,7 @@ safe_kpoll(void *vsc)
 	for (i = 0; i < sc->sc_pk_reslen >> 2; i++)
 		buf[i] = READ_REG(sc, SAFE_PK_RAM_START + sc->sc_pk_resoff +
 		    (i << 2));
-	bcopy(buf, res->crp_p, sc->sc_pk_reslen);
+	bcopy(buf, res->crp_p, (res->crp_nbits + 7) / 8);
 	res->crp_nbits = sc->sc_pk_reslen * 8;
 	res->crp_nbits = safe_ksigbits(res);
 
@@ -2038,8 +2039,8 @@ safe_kpoll(void *vsc)
 	free(q, M_DEVBUF);
 	sc->sc_pkq_cur = NULL;
 
-	s = splnet();
 	safe_kfeed(sc);
+out:
 	splx(s);
 }
 
