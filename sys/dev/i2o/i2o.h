@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2o.h,v 1.1 2001/06/25 23:04:28 niklas Exp $	*/
+/*	$OpenBSD: i2o.h,v 1.2 2001/06/27 02:38:01 mickey Exp $	*/
 /*	$NetBSD: i2o.h,v 1.3 2001/03/20 13:01:48 ad Exp $	*/
 
 /*-
@@ -469,10 +469,35 @@ struct i2o_param_hba_ctlr_info {
 #define	I2O_PARAM_HBA_SCSI_PORT_INFO	0x0001
 struct i2o_param_hba_scsi_port_info {
 	u_int8_t	physicalif;
+#define	I2O_PARAM_HBA_SCSI_PORT_GENERIC	0x01
+#define	I2O_PARAM_HBA_SCSI_PORT_UNKNOWN	0x02
+#define	I2O_PARAM_HBA_SCSI_PORT_PARINTF	0x03
+#define	I2O_PARAM_HBA_SCSI_PORT_FCL	0x04
+#define	I2O_PARAM_HBA_SCSI_PORT_1394	0x05
+#define	I2O_PARAM_HBA_SCSI_PORT_SSA	0x06
 	u_int8_t	electricalif;
+#define	I2O_PARAM_HBA_SCSI_PORT_SE	0x03
+#define	I2O_PARAM_HBA_SCSI_PORT_DIFF	0x04
+#define	I2O_PARAM_HBA_SCSI_PORT_LVD	0x05
+#define	I2O_PARAM_HBA_SCSI_PORT_OPTCL	0x06
 	u_int8_t	isosynchonrous;
 	u_int8_t	connectortype;
+#define	I2O_PARAM_HBA_SCSI_PORT_HDBS50	0x04
+#define	I2O_PARAM_HBA_SCSI_PORT_HDBU50	0x05
+#define	I2O_PARAM_HBA_SCSI_PORT_DBS50	0x06
+#define	I2O_PARAM_HBA_SCSI_PORT_DBU50	0x07
+#define	I2O_PARAM_HBA_SCSI_PORT_HDBS68	0x08
+#define	I2O_PARAM_HBA_SCSI_PORT_HDBU68	0x09
+#define	I2O_PARAM_HBA_SCSI_PORT_SCA1	0x0a
+#define	I2O_PARAM_HBA_SCSI_PORT_SCA2	0x0b
+#define	I2O_PARAM_HBA_SCSI_PORT_FCDB9	0x0c
+#define	I2O_PARAM_HBA_SCSI_PORT_FC	0x0d
+#define	I2O_PARAM_HBA_SCSI_PORT_FCSCA40	0x0e
+#define	I2O_PARAM_HBA_SCSI_PORT_FCSCA20	0x0f
+#define	I2O_PARAM_HBA_SCSI_PORT_FCBNC	0x10
 	u_int8_t	connectorgender;
+#define	I2O_PARAM_HBA_SCSI_PORT_FEMALE	0x03
+#define	I2O_PARAM_HBA_SCSI_PORT_MALE	0x04
 	u_int8_t	reserved1;
 	u_int16_t	reserved2;
 	u_int32_t	maxnumberofdevices;
@@ -481,6 +506,10 @@ struct i2o_param_hba_scsi_port_info {
 #define	I2O_PARAM_HBA_SCSI_CTLR_INFO	0x0200
 struct i2o_param_hba_scsi_ctlr_info {
 	u_int8_t	scsitype;
+#define	I2O_PARAM_HBA_SCSI_CTRL_SCSI0	0x00
+#define	I2O_PARAM_HBA_SCSI_CTRL_SCSI1	0x01
+#define	I2O_PARAM_HBA_SCSI_CTRL_SCSI2	0x02
+#define	I2O_PARAM_HBA_SCSI_CTRL_SCSI3	0x03
 	u_int8_t	protection;
 	u_int8_t	settings;
 	u_int8_t	reserved;
@@ -491,6 +520,7 @@ struct i2o_param_hba_scsi_ctlr_info {
 	u_int8_t	maxdatawidth;
 	u_int64_t	maxsyncrate;
 } __attribute__ ((__packed__));
+
 
 /*
  * ================= Utility messages =================
