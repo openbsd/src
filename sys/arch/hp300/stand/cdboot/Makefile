@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1999/08/18 17:13:19 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/10/05 13:05:46 downsj Exp $
 
 PROG=	cdboot
 
@@ -30,7 +30,7 @@ cdboot:	${OBJS} ${LIBS}
 	@size $@
 	@echo $@ total size may not exceed 30000 bytes
 
-install:	cdboot.lif cdboot.raw ${MKBOOT_PROG}
+install:	cdboot.lif ${MKBOOT_PROG}
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 cdboot.lif \
 	    ${DESTDIR}/usr/mdec
 
