@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.20 2002/07/10 18:08:13 deraadt Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.21 2002/09/21 15:05:49 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -210,7 +210,8 @@ int	ngedebug = 0;
 #define SIO_CLR(x)					\
 	CSR_WRITE_4(sc, NGE_MEAR, CSR_READ_4(sc, NGE_MEAR) & ~x)
 
-void nge_delay(sc)
+void
+nge_delay(sc)
 	struct nge_softc	*sc;
 {
 	int			idx;
@@ -219,7 +220,8 @@ void nge_delay(sc)
 		CSR_READ_4(sc, NGE_CSR);
 }
 
-void nge_eeprom_idle(sc)
+void
+nge_eeprom_idle(sc)
 	struct nge_softc	*sc;
 {
 	int		i;
@@ -246,11 +248,12 @@ void nge_eeprom_idle(sc)
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-void nge_eeprom_putbyte(sc, addr)
+void
+nge_eeprom_putbyte(sc, addr)
 	struct nge_softc	*sc;
 	int			addr;
 {
-	register int		d, i;
+	int			d, i;
 
 	d = addr | NGE_EECMD_READ;
 
@@ -274,12 +277,13 @@ void nge_eeprom_putbyte(sc, addr)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-void nge_eeprom_getword(sc, addr, dest)
+void
+nge_eeprom_getword(sc, addr, dest)
 	struct nge_softc	*sc;
 	int			addr;
 	u_int16_t		*dest;
 {
-	register int		i;
+	int			i;
 	u_int16_t		word = 0;
 
 	/* Force EEPROM to idle state. */
@@ -319,7 +323,8 @@ void nge_eeprom_getword(sc, addr, dest)
 /*
  * Read a sequence of words from the EEPROM.
  */
-void nge_read_eeprom(sc, dest, off, cnt, swap)
+void
+nge_read_eeprom(sc, dest, off, cnt, swap)
 	struct nge_softc	*sc;
 	caddr_t			dest;
 	int			off;
@@ -342,10 +347,11 @@ void nge_read_eeprom(sc, dest, off, cnt, swap)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-void nge_mii_sync(sc)
+void
+nge_mii_sync(sc)
 	struct nge_softc		*sc;
 {
-	register int		i;
+	int			i;
 
 	SIO_SET(NGE_MEAR_MII_DIR|NGE_MEAR_MII_DATA);
 
@@ -360,7 +366,8 @@ void nge_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-void nge_mii_send(sc, bits, cnt)
+void
+nge_mii_send(sc, bits, cnt)
 	struct nge_softc		*sc;
 	u_int32_t		bits;
 	int			cnt;
@@ -385,7 +392,8 @@ void nge_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-int nge_mii_readreg(sc, frame)
+int
+nge_mii_readreg(sc, frame)
 	struct nge_softc		*sc;
 	struct nge_mii_frame	*frame;
 {
@@ -476,7 +484,8 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-int nge_mii_writereg(sc, frame)
+int
+nge_mii_writereg(sc, frame)
 	struct nge_softc		*sc;
 	struct nge_mii_frame	*frame;
 {
@@ -521,7 +530,8 @@ int nge_mii_writereg(sc, frame)
 	return(0);
 }
 
-int nge_miibus_readreg(dev, phy, reg)
+int
+nge_miibus_readreg(dev, phy, reg)
 	struct device		*dev;
 	int			phy, reg;
 {
@@ -537,7 +547,8 @@ int nge_miibus_readreg(dev, phy, reg)
 	return(frame.mii_data);
 }
 
-void nge_miibus_writereg(dev, phy, reg, data)
+void
+nge_miibus_writereg(dev, phy, reg, data)
 	struct device		*dev;
 	int			phy, reg, data;
 {
@@ -553,7 +564,8 @@ void nge_miibus_writereg(dev, phy, reg, data)
 	nge_mii_writereg(sc, &frame);
 }
 
-void nge_miibus_statchg(dev)
+void
+nge_miibus_statchg(dev)
 	struct device		*dev;
 {
 	struct nge_softc	*sc = (struct nge_softc *)dev;
@@ -590,7 +602,8 @@ void nge_miibus_statchg(dev)
 
 }
 
-u_int32_t nge_crc(sc, addr)
+u_int32_t
+nge_crc(sc, addr)
 	struct nge_softc	*sc;
 	caddr_t			addr;
 {
@@ -619,7 +632,8 @@ u_int32_t nge_crc(sc, addr)
 	return((crc >> 21) & 0x00000FFF);
 }
 
-void nge_setmulti(sc)
+void
+nge_setmulti(sc)
 	struct nge_softc	*sc;
 {
 	struct arpcom		*ac = &sc->arpcom;
@@ -674,10 +688,11 @@ void nge_setmulti(sc)
 	CSR_WRITE_4(sc, NGE_RXFILT_CTL, filtsave);
 }
 
-void nge_reset(sc)
+void
+nge_reset(sc)
 	struct nge_softc	*sc;
 {
-	register int		i;
+	int			i;
 
 	NGE_SETBIT(sc, NGE_CSR, NGE_CSR_RESET);
 
@@ -704,7 +719,8 @@ void nge_reset(sc)
  * Probe for an NatSemi chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
  */
-int nge_probe(parent, match, aux)
+int
+nge_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
@@ -724,7 +740,8 @@ struct nge_softc *my_nge_softc;
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void nge_attach(parent, self, aux)
+void
+nge_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -977,7 +994,8 @@ fail:
 /*
  * Initialize the transmit descriptors.
  */
-int nge_list_tx_init(sc)
+int
+nge_list_tx_init(sc)
 	struct nge_softc	*sc;
 {
 	struct nge_list_data	*ld;
@@ -1015,7 +1033,8 @@ int nge_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-int nge_list_rx_init(sc)
+int
+nge_list_rx_init(sc)
 	struct nge_softc	*sc;
 {
 	struct nge_list_data	*ld;
@@ -1049,7 +1068,8 @@ int nge_list_rx_init(sc)
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-int nge_newbuf(sc, c, m)
+int
+nge_newbuf(sc, c, m)
 	struct nge_softc	*sc;
 	struct nge_desc		*c;
 	struct mbuf		*m;
@@ -1100,7 +1120,8 @@ int nge_newbuf(sc, c, m)
 	return(0);
 }
 
-int nge_alloc_jumbo_mem(sc)
+int
+nge_alloc_jumbo_mem(sc)
 	struct nge_softc	*sc;
 {
 	caddr_t			ptr, kva;
@@ -1179,7 +1200,8 @@ int nge_alloc_jumbo_mem(sc)
 /*
  * Allocate a jumbo buffer.
  */
-void *nge_jalloc(sc)
+void *
+nge_jalloc(sc)
 	struct nge_softc	*sc;
 {
 	struct nge_jpool_entry   *entry;
@@ -1202,7 +1224,8 @@ void *nge_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-void nge_jfree(buf, size, arg)
+void
+nge_jfree(buf, size, arg)
 	caddr_t		buf;
 	u_int		size;
 	void		*arg;
@@ -1244,7 +1267,8 @@ void nge_jfree(buf, size, arg)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-void nge_rxeof(sc)
+void
+nge_rxeof(sc)
 	struct nge_softc	*sc;
 {
         struct mbuf		*m;
@@ -1347,7 +1371,8 @@ void nge_rxeof(sc)
 	sc->nge_cdata.nge_rx_prod = i;
 }
 
-void nge_rxeoc(sc)
+void
+nge_rxeoc(sc)
 	struct nge_softc	*sc;
 {
 	struct ifnet		*ifp;
@@ -1363,7 +1388,8 @@ void nge_rxeoc(sc)
  * the list buffers.
  */
 
-void nge_txeof(sc)
+void
+nge_txeof(sc)
 	struct nge_softc	*sc;
 {
 	struct nge_desc		*cur_tx = NULL;
@@ -1420,7 +1446,8 @@ void nge_txeof(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 }
 
-void nge_tick(xsc)
+void
+nge_tick(xsc)
 	void			*xsc;
 {
 	struct nge_softc	*sc = xsc;
@@ -1449,7 +1476,8 @@ void nge_tick(xsc)
 	splx(s);
 }
 
-int nge_intr(arg)
+int
+nge_intr(arg)
 	void			*arg;
 {
 	struct nge_softc	*sc;
@@ -1518,7 +1546,8 @@ int nge_intr(arg)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-int nge_encap(sc, m_head, txidx)
+int
+nge_encap(sc, m_head, txidx)
 	struct nge_softc	*sc;
 	struct mbuf		*m_head;
 	u_int32_t		*txidx;
@@ -1602,7 +1631,8 @@ int nge_encap(sc, m_head, txidx)
  * physical addresses.
  */
 
-void nge_start(ifp)
+void
+nge_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct nge_softc	*sc;
@@ -1658,7 +1688,8 @@ void nge_start(ifp)
 
 int nge_loop = 0;
 
-void nge_init(xsc)
+void
+nge_init(xsc)
 	void			*xsc;
 {
 	struct nge_softc	*sc = xsc;
@@ -1828,7 +1859,8 @@ void nge_init(xsc)
 /*
  * Set media options.
  */
-int nge_ifmedia_upd(ifp)
+int
+nge_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct nge_softc	*sc = ifp->if_softc;
@@ -1849,7 +1881,8 @@ int nge_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-void nge_ifmedia_sts(ifp, ifmr)
+void
+nge_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
@@ -1861,7 +1894,8 @@ void nge_ifmedia_sts(ifp, ifmr)
 	ifmr->ifm_status = mii->mii_media_status;
 }
 
-int nge_ioctl(ifp, command, data)
+int
+nge_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -1966,7 +2000,8 @@ int nge_ioctl(ifp, command, data)
 	return(error);
 }
 
-void nge_watchdog(ifp)
+void
+nge_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct nge_softc	*sc;
@@ -1989,10 +2024,11 @@ void nge_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-void nge_stop(sc)
+void
+nge_stop(sc)
 	struct nge_softc	*sc;
 {
-	register int		i;
+	int			i;
 	struct ifnet		*ifp;
 	struct ifmedia_entry	*ifm;
 	struct mii_data		*mii = &sc->nge_mii;
@@ -2057,7 +2093,8 @@ void nge_stop(sc)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-void nge_shutdown(xsc)
+void
+nge_shutdown(xsc)
 	void *xsc;
 {
 	struct nge_softc *sc = (struct nge_softc *)xsc;
