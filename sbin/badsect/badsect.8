@@ -1,4 +1,4 @@
-.\"	$OpenBSD: badsect.8,v 1.4 1998/09/23 01:20:22 aaron Exp $
+.\"	$OpenBSD: badsect.8,v 1.5 1998/11/26 21:32:50 aaron Exp $
 .\"	$NetBSD: badsect.8,v 1.8 1995/03/18 14:54:27 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -41,10 +41,10 @@
 .Nm badsect
 .Nd create files to contain bad sectors
 .Sh SYNOPSIS
-.Nm /sbin/badsect
+.Nm
 .Ar bbdir sector Op Ar ...
 .Sh DESCRIPTION
-.Nm badsect
+.Nm
 makes a file to contain a bad sector.  Normally, bad sectors
 are made inaccessible by the standard formatter, which provides
 a forwarding table for bad sectors to the driver; see
@@ -56,7 +56,7 @@ makes the pack appear perfect, and such packs can then be copied with
 .Xr dd 1 .
 The technique used by this program is also less general than
 bad block forwarding, as
-.Nm badsect
+.Nm
 can't make amends for
 bad blocks in the i-list of file systems or in swap areas.
 .Pp
@@ -68,16 +68,16 @@ formatter.
 Thus to deal with a newly bad block
 or on disks where the drivers
 do not support the bad-blocking standard 
-.Nm badsect
+.Nm
 may be used to good effect.
 .Pp
-.Nm badsect
+.Nm
 is used on a quiet file system in the following way:
 First mount the file system, and change to its root directory.
 Make a directory
 .Li BAD
 there.  Run
-.Nm badsect
+.Nm
 giving as argument the
 .Ar BAD
 directory followed by
@@ -100,7 +100,7 @@ This will leave the bad sectors in only the
 .Li BAD
 files.
 .Pp
-.Nm badsect
+.Nm
 works by giving the specified sector numbers in a
 .Xr mknod 2
 system call,
@@ -118,7 +118,7 @@ to convert the inode to a regular file containing the bad block.
 .Xr format 8 ,
 .Xr fsck 8
 .Sh DIAGNOSTICS
-.Nm badsect
+.Nm
 refuses to attach a block that
 resides in a critical area or is out of range of the file system.
 A warning is issued if the block is already in use.
