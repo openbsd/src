@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2001/05/10 22:46:49 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 2001/05/13 02:37:30 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 
 #define	PAGE_SHIFT	13
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SHIFT - 1)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define NBSG		0x20000	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */

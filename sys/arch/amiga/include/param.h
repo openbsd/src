@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2001/05/10 22:46:29 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2001/05/13 02:37:28 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:36 veego Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 
 #define	PAGE_SHIFT	13
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SHIFT - 1)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2001/05/10 22:46:43 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.18 2001/05/13 02:37:29 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.17 2001/05/10 22:46:43 miod Exp $
+ *	$Id: param.h,v 1.18 2001/05/13 02:37:29 millert Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -76,7 +76,7 @@
 
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SHIFT - 1)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define NPTEPG		(NBPG/(sizeof(u_int)))
 

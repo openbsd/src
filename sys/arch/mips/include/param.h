@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.4 2001/05/10 22:46:38 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.5 2001/05/13 02:37:29 millert Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,7 @@
 
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SHIFT - 1)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	NPTEPG		(NBPG/4)
 
