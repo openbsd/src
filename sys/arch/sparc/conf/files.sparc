@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.27 1999/03/01 04:56:03 jason Exp $
+#	$OpenBSD: files.sparc,v 1.28 1999/03/17 05:34:14 mjacob Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -203,8 +203,8 @@ file	arch/sparc/dev/si.c		si | sw
 
 # Qlogic ISP 10x0 (Sbus) family
 # device declaration in sys/conf/files
-#attach isp at sbus with isp_sbus
-#file	arch/sparc/dev/isp_sbus.c	isp_sbus
+attach	isp at sbus with isp_sbus
+file	arch/sparc/dev/isp_sbus.c	isp_sbus
 
 pseudo-device	kbd
 

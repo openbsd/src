@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.28 1999/03/01 04:56:04 jason Exp $
+#	$OpenBSD: SUN4M,v 1.29 1999/03/17 05:34:15 mjacob Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -89,6 +89,9 @@ dma*	at sbus? slot ? offset ?			# SBus SCSI
 esp*	at sbus? slot ? offset ? flags 0xff0f		# two flavours
 esp*	at dma? flags 0xff0f				# depending on model
 
+#sun4c, sun4m
+isp*	at sbus? slot ? offset ?
+
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
@@ -137,7 +140,7 @@ cgfourteen0	at obio0			# sun4m
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
 scsibus* at esp?
-#scsibus* at isp?
+scsibus* at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
