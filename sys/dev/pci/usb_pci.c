@@ -1,3 +1,4 @@
+/*	$OpenBSD: usb_pci.c,v 1.2 2004/10/01 04:08:46 jsg Exp $	*/
 /*	$NetBSD: usb_pci.c,v 1.3 2002/02/14 21:58:30 augustss Exp $	*/
 
 /*

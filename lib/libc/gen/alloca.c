@@ -1,3 +1,5 @@
+/*	$OpenBSD: alloca.c,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+
 /* alloca.c -- allocate automatically reclaimed memory
    (Mostly) portable public-domain implementation -- D A Gwyn
 

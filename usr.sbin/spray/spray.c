@@ -1,3 +1,5 @@
+/*	$OpenBSD: spray.c,v 1.6 2004/10/01 04:08:46 jsg Exp $	*/
+
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: spray.c,v 1.5 2003/06/26 22:22:33 deraadt Exp $
+ *	$Id: spray.c,v 1.6 2004/10/01 04:08:46 jsg Exp $
  */
 
 #include <stdio.h>

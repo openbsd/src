@@ -1,3 +1,4 @@
+;	$OpenBSD: oosiop.ss,v 1.2 2004/10/01 04:08:45 jsg Exp $
 ;	$NetBSD: oosiop.ss,v 1.2 2003/04/06 09:48:42 tsutsui Exp $
 
 ;

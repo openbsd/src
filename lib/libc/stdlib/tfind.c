@@ -1,3 +1,5 @@
+/*	$OpenBSD: tfind.c,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
  * the AT&T man page says.

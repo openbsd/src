@@ -1,3 +1,5 @@
+/*	$OpenBSD: midivar.h,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
  *

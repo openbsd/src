@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_axereg.h,v 1.3 2004/10/01 04:08:46 jsg Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.

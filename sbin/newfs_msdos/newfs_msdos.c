@@ -1,3 +1,5 @@
+/*	$OpenBSD: newfs_msdos.c,v 1.15 2004/10/01 04:08:45 jsg Exp $	*/
+
 /*
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.

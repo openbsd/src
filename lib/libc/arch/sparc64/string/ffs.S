@@ -1,3 +1,5 @@
+/*	$OpenBSD: ffs.S,v 1.3 2004/10/01 04:08:45 jsg Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

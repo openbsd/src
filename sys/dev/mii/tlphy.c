@@ -1,3 +1,4 @@
+/*	$OpenBSD: tlphy.c,v 1.12 2004/10/01 04:08:45 jsg Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-

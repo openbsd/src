@@ -1,3 +1,5 @@
+/*	$OpenBSD: mutex.h,v 1.2 2004/10/01 04:08:46 jsg Exp $	*/
+
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 

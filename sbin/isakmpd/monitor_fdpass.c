@@ -1,3 +1,5 @@
+/*	$OpenBSD: monitor_fdpass.c,v 1.11 2004/10/01 04:08:45 jsg Exp $	*/
+
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.

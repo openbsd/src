@@ -1,4 +1,4 @@
-/*	$OpentBSD: agp_intel.c,v 1.1 2001/10/25 21:44:00 thorpej Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.3 2004/10/01 04:08:46 jsg Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
