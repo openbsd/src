@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.100 2001/08/27 21:57:52 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.101 2001/08/28 18:52:16 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1002,7 +1002,11 @@ hifn_write_command(cmd, buf)
 	base_cmd = (hifn_base_command_t *)buf_pos;
 	base_cmd->masks = cmd->base_masks;
 	slen = cmd->src_map->dm_mapsize;
-	dlen = cmd->dst_map->dm_mapsize;
+	if (cmd->sloplen)
+		dlen = cmd->dst_map->dm_mapsize - cmd->sloplen +
+		    sizeof(u_int32_t);
+	else
+		dlen = cmd->dst_map->dm_mapsize;
 	base_cmd->total_source_count = slen & HIFN_BASE_CMD_LENMASK_LO;
 	base_cmd->total_dest_count = dlen & HIFN_BASE_CMD_LENMASK_LO;
 	dlen >>= 16;
@@ -1081,12 +1085,15 @@ hifn_write_command(cmd, buf)
 }
 
 int
-hifn_dmamap_aligned(bus_dmamap_t map)
+hifn_dmamap_aligned(map)
+	bus_dmamap_t map;
 {
 	int i;
 
 	for (i = 0; i < map->dm_nsegs; i++) {
-		if ((map->dm_segs[i].ds_addr & 3) ||
+		if (map->dm_segs[i].ds_addr & 3)
+			return (0);
+		if ((i != (map->dm_nsegs - 1)) &&
 		    (map->dm_segs[i].ds_len & 3))
 			return (0);
 	}
@@ -1138,8 +1145,8 @@ hifn_crypto(sc, cmd, crp)
 	struct cryptop *crp;
 {
 	struct	hifn_dma *dma = sc->sc_dma;
-	u_int32_t cmdlen;
-	int cmdi, resi, s, err = 0;
+	u_int32_t cmdlen, last;
+	int cmdi, resi, s, err = 0, idx, i;
 
 	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
 	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
@@ -1163,6 +1170,7 @@ hifn_crypto(sc, cmd, crp)
 	}
 
 	if (hifn_dmamap_aligned(cmd->src_map)) {
+		cmd->sloplen = cmd->src_map->dm_mapsize & 3;
 		if (crp->crp_flags & CRYPTO_F_IOV)
 			cmd->dstu.dst_io = cmd->srcu.src_io;
 		else if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -1271,10 +1279,14 @@ hifn_crypto(sc, cmd, crp)
 	 * need 1 cmd, and 1 res
 	 * need N src, and N dst
 	 */
-	if (dma->cmdu+1 > HIFN_D_CMD_RSIZE ||
-	    dma->srcu+cmd->src_map->dm_nsegs > HIFN_D_SRC_RSIZE ||
-	    dma->dstu+cmd->dst_map->dm_nsegs > HIFN_D_DST_RSIZE ||
-	    dma->resu+1 > HIFN_D_RES_RSIZE) {
+	if ((dma->cmdu + 1) > HIFN_D_CMD_RSIZE ||
+	    (dma->resu + 1) > HIFN_D_RES_RSIZE) {
+		splx(s);
+		err = ENOMEM;
+		goto err_dstmap;
+	}
+	if ((dma->srcu + cmd->src_map->dm_nsegs) > HIFN_D_SRC_RSIZE ||
+	    (dma->dstu + cmd->dst_map->dm_nsegs + 1) > HIFN_D_DST_RSIZE) {
 		splx(s);
 		err = ENOMEM;
 		goto err_dstmap;
@@ -1318,21 +1330,33 @@ hifn_crypto(sc, cmd, crp)
 
 	hifnstats.hst_ipackets++;
 	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
-	
-	dma->srci = hifn_dmamap_load(sc, cmd->src_map, dma->srci, dma->srcr,
-	    HIFN_D_SRC_RSIZE, &dma->srcu, offsetof(struct hifn_dma,
-		srcr[0]));
+
+	idx = dma->srci;
+	for (i = 0; i < cmd->src_map->dm_nsegs; i++) {
+		if (i == cmd->src_map->dm_nsegs - 1)
+			last = HIFN_D_LAST;
+		else
+			last = 0;
+
+		dma->srcr[idx].p = cmd->src_map->dm_segs[i].ds_addr;
+		dma->srcr[idx].l = cmd->src_map->dm_segs[i].ds_len |
+		    HIFN_D_VALID | HIFN_D_MASKDONEIRQ | last;
+		HIFN_SRCR_SYNC(sc, idx,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		if (++idx == HIFN_D_SRC_RSIZE) {
+			dma->srcr[idx].l = HIFN_D_VALID | HIFN_D_JUMP |
+			    HIFN_D_MASKDONEIRQ;
+			HIFN_SRCR_SYNC(sc, idx,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			idx = 0;
+		}
+	}
+	dma->srci = idx;
+
 	if (sc->sc_s_busy == 0) {
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
 		sc->sc_s_busy = 1;
-	}
-
-	dma->dsti = hifn_dmamap_load(sc, cmd->dst_map, dma->dsti, dma->dstr,
-	    HIFN_D_DST_RSIZE, &dma->dstu, offsetof(struct hifn_dma,
-		dstr[0]));
-	if (sc->sc_d_busy == 0) {
-		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
-		sc->sc_d_busy = 1;
 	}
 
 	/*
@@ -1359,6 +1383,84 @@ hifn_crypto(sc, cmd, crp)
 	if (sc->sc_r_busy == 0) {
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
 		sc->sc_r_busy = 1;
+	}
+
+	if (cmd->sloplen)
+		cmd->slop = (caddr_t)&dma->slop[resi];
+
+	idx = dma->dsti;
+	for (i = 0; i < cmd->dst_map->dm_nsegs; i++) {
+		if (i == (cmd->dst_map->dm_nsegs - 1)) {
+			if (cmd->sloplen == 0) {
+				dma->dstr[idx].p =
+				    cmd->dst_map->dm_segs[i].ds_addr;
+				dma->dstr[idx].l = HIFN_D_VALID |
+				    HIFN_D_MASKDONEIRQ | HIFN_D_LAST |
+				    cmd->dst_map->dm_segs[i].ds_len;
+			} else {
+				if ((cmd->dst_map->dm_segs[i].ds_len -
+				    cmd->sloplen) == 0) {
+					dma->dstr[idx].p =
+					    sc->sc_dmamap->dm_segs[0].ds_addr +
+					    offsetof(struct hifn_dma, slop[resi]);
+					dma->dstr[idx].l = HIFN_D_VALID |
+					    HIFN_D_MASKDONEIRQ | HIFN_D_LAST |
+					    sizeof(u_int32_t);
+				} else {
+					dma->dstr[idx].p =
+					    cmd->dst_map->dm_segs[i].ds_addr;
+					dma->dstr[idx].l = HIFN_D_VALID |
+					    HIFN_D_MASKDONEIRQ |
+					    (cmd->dst_map->dm_segs[i].ds_len -
+						cmd->sloplen);
+
+					HIFN_DSTR_SYNC(sc, idx,
+					    BUS_DMASYNC_PREREAD |
+					    BUS_DMASYNC_PREWRITE);
+
+					if (++idx == HIFN_D_DST_RSIZE) {
+						dma->dstr[idx].l =
+						    HIFN_D_VALID |
+						    HIFN_D_JUMP |
+						    HIFN_D_MASKDONEIRQ;
+						HIFN_DSTR_SYNC(sc, idx,
+						    BUS_DMASYNC_PREREAD |
+						    BUS_DMASYNC_PREWRITE);
+						idx = 0;
+					}
+
+					dma->dstr[idx].p =
+					    sc->sc_dmamap->dm_segs[0].ds_addr +
+					    offsetof(struct hifn_dma, slop[resi]);
+					dma->dstr[idx].l = HIFN_D_VALID |
+					    HIFN_D_MASKDONEIRQ | HIFN_D_LAST |
+					    sizeof(u_int32_t);
+				}
+
+			}
+		} else {
+			dma->dstr[idx].p =
+			    cmd->dst_map->dm_segs[i].ds_addr;
+			dma->dstr[idx].l = HIFN_D_VALID | HIFN_D_MASKDONEIRQ |
+			    cmd->dst_map->dm_segs[i].ds_len;
+		}
+
+		HIFN_DSTR_SYNC(sc, idx,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		if (++idx == HIFN_D_DST_RSIZE) {
+			dma->dstr[idx].l = HIFN_D_VALID | HIFN_D_JUMP |
+			    HIFN_D_MASKDONEIRQ;
+			HIFN_DSTR_SYNC(sc, idx,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			idx = 0;
+		}
+	}
+	dma->dsti = idx;
+
+	if (sc->sc_d_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
+		sc->sc_d_busy = 1;
 	}
 
 #ifdef HIFN_DEBUG
@@ -1704,9 +1806,9 @@ hifn_process(crp)
 
 	if (crd2 == NULL) {
 		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
-                   crd1->crd_alg == CRYPTO_SHA1_HMAC ||
-                   crd1->crd_alg == CRYPTO_SHA1 ||
-                   crd1->crd_alg == CRYPTO_MD5) {
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1 ||
+		    crd1->crd_alg == CRYPTO_MD5) {
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
@@ -1722,9 +1824,9 @@ hifn_process(crp)
 		}
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
-                    crd1->crd_alg == CRYPTO_SHA1_HMAC ||
-                    crd1->crd_alg == CRYPTO_MD5 ||
-                    crd1->crd_alg == CRYPTO_SHA1) &&
+                     crd1->crd_alg == CRYPTO_SHA1_HMAC ||
+                     crd1->crd_alg == CRYPTO_MD5 ||
+                     crd1->crd_alg == CRYPTO_SHA1) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 		     crd2->crd_alg == CRYPTO_3DES_CBC ||
 		     crd2->crd_alg == CRYPTO_ARC4) &&
@@ -1733,12 +1835,12 @@ hifn_process(crp)
 			maccrd = crd1;
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_ARC4 ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
+		     crd1->crd_alg == CRYPTO_ARC4 ||
+		     crd1->crd_alg == CRYPTO_3DES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
-                    crd2->crd_alg == CRYPTO_SHA1_HMAC ||
-                    crd2->crd_alg == CRYPTO_MD5 ||
-                    crd2->crd_alg == CRYPTO_SHA1) &&
+                     crd2->crd_alg == CRYPTO_SHA1_HMAC ||
+                     crd2->crd_alg == CRYPTO_MD5 ||
+                     crd2->crd_alg == CRYPTO_SHA1) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -1999,6 +2101,17 @@ hifn_callback(sc, cmd, macbuf)
 			cmd->dstu.dst_m->m_pkthdr.len =
 			    cmd->srcu.src_m->m_pkthdr.len;
 		}
+	}
+
+	if (cmd->sloplen != 0) {
+		if (crp->crp_flags & CRYPTO_F_IMBUF)
+			m_copyback((struct mbuf *)crp->crp_buf,
+			    cmd->src_map->dm_mapsize - cmd->sloplen,
+			    cmd->sloplen, cmd->slop);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			cuio_copyback((struct uio *)crp->crp_buf,
+			    cmd->src_map->dm_mapsize - cmd->sloplen,
+			    cmd->sloplen, cmd->slop);
 	}
 
 	i = dma->dstk; u = dma->dstu;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.35 2001/08/27 21:57:52 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.36 2001/08/28 18:52:16 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -82,18 +82,19 @@ struct hifn_dma {
 
 	struct hifn_command	*hifn_commands[HIFN_D_RES_RSIZE];
 
-	u_char	command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
-	u_char	result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
+	u_char			command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
+	u_char			result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
+	u_int32_t		slop[HIFN_D_CMD_RSIZE];
 
-	u_int64_t	test_src, test_dst;
+	u_int64_t		test_src, test_dst;
 
 	/*
 	 *  Our current positions for insertion and removal from the desriptor
 	 *  rings. 
 	 */
-	int		cmdi, srci, dsti, resi;
-	volatile int	cmdu, srcu, dstu, resu;
-	int		cmdk, srck, dstk, resk;
+	int			cmdi, srci, dsti, resi;
+	volatile int		cmdu, srcu, dstu, resu;
+	int			cmdk, srck, dstk, resk;
 };
 
 struct hifn_session {
@@ -229,6 +230,8 @@ struct hifn_command {
 	u_int16_t base_masks, cry_masks, mac_masks;
 	u_int8_t iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 	int cklen;
+	int sloplen;		/* length of end buffer */
+	caddr_t slop;		/* pointer to end buffer */
 
 	union {
 		struct mbuf *src_m;
