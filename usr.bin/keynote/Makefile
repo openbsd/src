@@ -1,16 +1,14 @@
-# $OpenBSD: Makefile,v 1.1.1.1 1999/05/24 01:30:20 angelos Exp $
+# $OpenBSD: Makefile,v 1.2 1999/05/24 01:45:07 angelos Exp $
 
-PROG=	keynote-sign
-LINKS=	${BINDIR}/keynote-sign ${BINDIR}/keynote-sigver
-LINKS+=	${BINDIR}/keynote-sign ${BINDIR}/keynote-verify
-LINKS+=	${BINDIR}/keynote-sign ${BINDIR}/keynote-keygen
+PROG=	keynote
 
 BINOWN= root
 BINGRP= bin
 BINMODE= 555
 BINDIR= /usr/bin
 LDADD=	-lkeynote -lm -lcrypto
-MAN=	keynote-sign.1 keynote-verify.1 keynote-sigver.1 keynote-keygen.1
+MAN=	keynote-sign.1 keynote-verify.1 keynote-sigver.1 keynote-keygen.1 \
+	keynote.1
 CLEANFILES+= lex.kv.c z.tab.c z.tab.h
 
 CFLAGS+= -DCRYPTO -I. -I${.CURDIR}
