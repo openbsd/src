@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.4 2000/07/01 03:19:14 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.5 2000/07/06 21:17:44 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -297,7 +297,8 @@ xl_cardbus_attach(parent, self, aux)
 
 	bus_space_write_2(sc->xl_btag, sc->xl_bhandle, XL_COMMAND,
 	    XL_CMD_RESET);
-	delay(400);
+	delay(5000);
+
 	{
 		int i = 0;
 		while (bus_space_read_2(sc->xl_btag, sc->xl_bhandle, XL_STATUS)
