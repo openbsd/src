@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.53 2003/05/14 06:39:49 miod Exp $
+#	$OpenBSD: files.sparc,v 1.54 2003/05/15 04:13:14 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -272,8 +272,6 @@ file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
-# N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
-# identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc/sparc/autoconf.c
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
@@ -281,17 +279,12 @@ file	arch/sparc/sparc/emul.c
 file	arch/sparc/sparc/in_cksum.c
 file	arch/sparc/sparc/intr.c
 file	arch/sparc/sparc/kgdb_machdep.c	kgdb
-# sparc/sparc/locore.s is handled specially in the makefile,
-# because it must come first in the "ld" command line.
 file	arch/sparc/sparc/locore2.c
 file	arch/sparc/sparc/machdep.c
 file	arch/sparc/sparc/process_machdep.c
 file	arch/sparc/sparc/mem.c
 file	arch/sparc/sparc/openprom.c
 file	arch/sparc/sparc/pmap.c
-# the following overrides the generic "sys_process.c"
-# commented out by deraadt
-#file	arch/sparc/sparc/sys_process.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
