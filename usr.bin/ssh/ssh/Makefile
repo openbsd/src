@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.49 2003/08/24 18:17:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.50 2003/08/28 07:49:13 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -24,9 +24,9 @@ CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV -DGSSAPI
 .include <bsd.prog.mk>
 
 .if (${KERBEROS5:L} == "yes")
-LDADD+=  -lgssapi -lkrb5
 DPADD+=  ${LIBGSSAPI} ${LIBKRB5}
+LDADD+=  -lgssapi -lkrb5
 .endif # KERBEROS5
 
-DPADD+=	${LIBGSSAPI} ${LIBKRB5} ${LIBCRYPTO} ${LIBZ} ${LIBDES}
-LDADD+=	-lgssapi -lkrb5 -lcrypto -lz -ldes
+DPADD+=	${LIBCRYPTO} ${LIBZ} ${LIBDES}
+LDADD+=	-lcrypto -lz -ldes
