@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 1999/02/01 16:43:20 pefo Exp $
+#	$OpenBSD: Makefile,v 1.21 1999/07/14 23:16:26 deraadt Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -31,7 +31,7 @@ CFLAGS+= -DNUMBOOT=1
 .endif
 
 .if (${MACHINE} == "sun3") || (${MACHINE} == "sparc")
-CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DCYLCHECK
+CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DCYLCHECK -DAAT0
 .endif
 
 .if (${MACHINE} == "mvme68k") || (${MACHINE} == "mvme68k")

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.64 1999/06/16 10:12:38 espie Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.65 1999/07/14 23:16:26 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.64 1999/06/16 10:12:38 espie Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.65 1999/07/14 23:16:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1640,6 +1640,13 @@ checklabel(lp)
 		if (pp->p_offset % lp->d_secpercyl)
 			warnx("warning, partition %c: offset %% cylinder-size != 0",
 			    part);
+#endif
+#ifdef AAT0
+		if (i == 0 && pp->p_size != 0 && pp->p_offset != 0) {
+			warnx("this architecture requires partition 'a' to "
+			    "start at sector 0");
+			errors++;
+		}
 #endif
 		if (pp->p_offset > lp->d_secperunit) {
 			warnx("partition %c: offset past end of unit", part);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.65 1999/06/10 22:37:54 pjanzen Exp $	*/
+/*	$OpenBSD: editor.c,v 1.66 1999/07/14 23:16:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.65 1999/06/10 22:37:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.66 1999/07/14 23:16:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2054,6 +2054,11 @@ get_offset(lp, partno)
 			    "at sector %u, you tried to add a partition at %u."
 			    "  You can use the 'b' command to change the size "
 			    "of the OpenBSD portion.\n", ending_sector, ui);
+#ifdef AAT0
+		else if (partno == 0 && ui != 0)
+			fprintf(stderr, "This architecture requires that "
+			    "partition 'a' start at sector 0.");
+#endif
 		else
 			break;
 	}
