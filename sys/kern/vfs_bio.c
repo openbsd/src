@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.18 1997/11/06 05:58:25 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.19 1997/11/07 23:01:36 csapuntz Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -850,15 +850,13 @@ biodone(bp)
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
 		(*bioops.io_complete)(bp);
 
-	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
-		CLR(bp->b_flags, B_CALL);	/* but note callout done */
-		(*bp->b_iodone)(bp);
-	} 
-
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);
 
-	if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
+	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
+		CLR(bp->b_flags, B_CALL);	/* but note callout done */
+		(*bp->b_iodone)(bp);
+	} else if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
 		brelse(bp);
 	else {					/* or just wakeup the buffer */
 		CLR(bp->b_flags, B_WANTED);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.14 1997/11/06 22:46:19 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.15 1997/11/07 23:01:37 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1063,6 +1063,7 @@ vop_nolock(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
+#ifdef notyet
 	/*
 	 * This code cannot be used until all the non-locking filesystems
 	 * (notably NFS) are converted to properly lock and release nodes.
@@ -1106,6 +1107,15 @@ vop_nolock(v)
 	if (flags & LK_INTERLOCK)
 		vnflags |= LK_INTERLOCK;
 	return(lockmgr(vp->v_vnlock, vnflags, &vp->v_interlock, ap->a_p));
+#else /* for now */
+        /*
+         * Since we are not using the lock manager, we must clear
+         * the interlock here.
+         */
+        if (ap->a_flags & LK_INTERLOCK)
+                simple_unlock(&ap->a_vp->v_interlock);
+        return (0);
+#endif
 }
  
 /*
