@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.3 2002/09/14 22:54:34 drahn Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.4 2003/10/27 20:58:46 millert Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -73,25 +73,37 @@ off_t mmap_offs;
 size_t mmap_size;
 
 int find_rd_root_image(char *, Elf_Ehdr *, Elf_Phdr *);
+__dead void usage(void);
 
 int
 main(argc,argv)
 	char **argv;
 {
-	int fd, n;
+	int ch, fd, n, xflag;
 	int found;
 	u_int32_t *ip;
 	Elf_Ehdr eh;
 	Elf_Phdr *ph;
 	int phsize;
 
-	if (argc < 2) {
-		printf("%s: missing file name\n", argv[0]);
-		exit(1);
+	xflag = 0;
+	while ((ch = getopt(argc, argv, "x")) != -1) {
+		switch (ch) {
+		case 'x':
+			xflag = 1;
+			break;
+		default:
+			usage();
+		}
 	}
-	file = argv[1];
+	argc -= optind;
+	argv += optind;
 
-	fd = open(file, O_RDWR);
+	if (argc != 1)
+		usage();
+	file = argv[0];
+
+	fd = open(file, O_RDWR, 0644);
 	if (fd < 0) {
 		perror(file);
 		exit(1);
@@ -158,14 +170,23 @@ main(argc,argv)
 #ifdef	DEBUG
 	printf("copying root image...\n");
 #endif
-	n = read(0, dataseg + rd_root_image_off,
-			 rd_root_size_val);
-	if (n < 0) {
-		perror("read");
-		exit(1);
-	}
+	if (xflag) {
+		n = write(STDOUT_FILENO, dataseg + rd_root_image_off,
+		    rd_root_size_val);
+		if (n != rd_root_size_val) {
+			perror("write");
+			exit(1);
+		}
+	} else {
+		n = read(STDIN_FILENO, dataseg + rd_root_image_off,
+		    rd_root_size_val);
+		if (n < 0) {
+			perror("read");
+			exit(1);
+		}
 
-	msync(dataseg, mmap_size, 0);
+		msync(dataseg, mmap_size, 0);
+	}
 
 #ifdef	DEBUG
 	printf("...copied %d bytes\n", n);
@@ -221,4 +242,13 @@ find_rd_root_image(file, eh, ph)
 	mmap_offs = ph->p_offset;
 	mmap_size =  kernel_size;
 	return(1);
+}
+
+__dead void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-x] file_name\n", __progname);
+	exit(1);
 }
