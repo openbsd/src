@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2004/05/23 04:03:57 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.17 2004/05/25 20:49:32 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -323,7 +323,7 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
 xl*	at pci? dev ? function ?		# 3C9xx ethernet
 #xl*	at cardbus? dev ? function ?		# 3C575/3C656 ethernet
-#rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
+rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 #rl*	at cardbus? dev ? function ?		# RealTek 81[23]9 ethernet
 #mtd*	at pci? dev ? function ?		# Myson MTD800/803/891
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
