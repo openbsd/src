@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.22 2001/06/23 07:04:14 pjanzen Exp $
+.\"	$OpenBSD: intro.4,v 1.23 2001/07/18 19:07:36 mickey Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -98,6 +98,8 @@ Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width speaker -offset xxxx -compact
+.It aac
+Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid) RAID controllers.
 .It aha
 Adaptec 154x ISA SCSI adapter boards.
 .It ahb
@@ -110,12 +112,20 @@ AdvanSys PCI narrow SCSI Host Adapters
 AdvanSys PCI wide SCSI Host Adapters
 .It aic
 Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
+.It ami
+American Megatrends Inc. MegaRAID Controllers.
+.It an
+Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
 .It apm
 advanced power management.
 .It aria
 Sierra Semiconductor Aria 16 sound cards
 .It ast
 multiplexing serial communications card first made by AST.
+.It auich
+Intel 82801AA/AB/BA and 440MX PCI audio.
+.It auvia
+VIA VT82C686A integrated AC'97 audio device.
 .It ax
 ASIX AX88104A and AX88141 based PCI Ethernet adapters
 .It bktr
@@ -124,6 +134,8 @@ Brooktree video capture.
 BOCA serial cards.
 .It bt
 Buslogic BT-445, BT-74x, and BT-9xx SCSI boards.
+.It cac
+Compaq Smart ARRAY RAID controllers.
 .It com
 NS8250-, NS16450-, and NS16550-based asynchronous serial
 communications.
@@ -133,6 +145,8 @@ Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications.
 DEC tulip clone ethernet cards (Macronix, Lite-On, Davicom, ADMtek)
 .It de
 DEC tulip-based ethernet cards
+.It dpt
+DPT SmartCache/SmartRAID III and IV SCSI controllers.
 .It ec
 3Com Etherlink II Ethernet (3C503).
 .It ef
@@ -145,10 +159,18 @@ DEC tulip-based ethernet cards
 3Com Etherlink III Ethernet (3C5x9, 3C59x).
 .It ex
 Intel EtherExpress PRO/10 ethernet cards
+.It
+ICP-Vortex GDT RAID controllers.
 .It hifn
 Hi/Fn 7751 Encryption Accelerator
 .It ie
 AT&T StarLAN 10, EN100, StarLan Fiber, and 3Com 3c507 Ethernet.
+.It iha
+Initio INIC-940 and INIC-950 based SCSI interfaces.
+.It iop
+I2O adapter.
+.It ises
+Pijnenburg PCC-ISES hardware crypto accelerator.
 .It isp
 QLogic PCI SCSI controllers.
 .It iy
@@ -196,8 +218,12 @@ console speaker.
 Alteon Tigon I & II Gigabit ethernet (3COM 3C985, Netgear GA620, etc).
 .It tl
 Texas Instruments ThunderLAN ethernet
+.It twe
+3ware Escalade RAID controller.
 .It tx
 SMC 9432 10/100 Mbps Ethernet cards
+.It
+Broadcom Bluesteelnet uBsec 5501, 5601, 5805, and 5820.
 .It uha
 Ultrastor ISA and EISA SCSI adapter cards.
 Ultrastor 14f, Ultrastor 34f, and Ultrastor 24f.
