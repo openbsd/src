@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.6 1999/07/24 06:23:12 fgsch Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.7 1999/07/24 06:33:07 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,14 +45,14 @@
 .Cd "xx*     at pcmcia? function ?"
 .Pp
 .Sh INTRODUCTION
-.Nx
-provides machine-independent bus support and
+The
+.Nm pcmcia
+subsystem provides machine-independent bus support and
 drivers for PCMCIA (PC Card)
 devices.
 .Sh SUPPORTED DEVICES
-.Nx
-includes the following machine-independent PCMCIA
-drivers, sorted by function and driver name:
+The following devices are supported, sorted by function
+and driver name:
 .Pp
 .Ss Serial interfaces and modems
 .Bl -tag -width speaker -offset indent -compact
@@ -62,14 +62,11 @@ drivers, sorted by function and driver name:
 8250/16450/16550-compatible PCMCIA serial cards and modems.
 i386-specific driver.
 .El
-.\"
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ep
 3com 3c589 Etherlink-III ethernet cards.
-.\".It mbe
-.\"Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
 .It ne
 NE2000 compatible cards.
 .It rln
@@ -81,7 +78,6 @@ Xircom 16bit ethernet cards.
 .It wi
 WaveLAN IEEE 802.11-compatible cards.
 .El
-.\"
 .Pp
 .Ss SCSI controllers
 .Bl -tag -width speaker -offset indent -compact
@@ -91,9 +87,9 @@ Adaptec APA-14[56]0 and NewMedia BusToaster SCSI controller cards.
 .Ss IDE controllers
 .Bl -tag -width speaker -offset indent -compact
 .It wdc
-Devices implemented as ATA drives and flash cards that uses the ATA interface and emulate a disk drive.
+Devices which implement an ATA/IDE interface, such as mini disk drives,
+CDROMS.  This includes flash cards which emulate a disk drive.
 .El
-.\"
 .Pp
 The supported PCMCIA controllers are those that are i82365 compatible.
 .Sh SEE ALSO
