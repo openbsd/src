@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.8 2002/01/22 22:09:28 mickey Exp $ */
+/* $OpenBSD: radioctl.c,v 1.9 2004/08/08 00:21:55 jaredy Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -105,12 +105,12 @@ int
 main(int argc, char **argv)
 {
 	struct opt_t opt;
+	char **avp;
 
 	char *radiodev = NULL;
 	int rd = -1;
 	int optchar;
 	int show_vars = 0;
-	int set_param = 0;
 	int silent = 0;
 	int mode = O_RDONLY;
 
@@ -133,8 +133,7 @@ main(int argc, char **argv)
 			silent = 1;
 			break;
 		case 'w':
-			set_param = 1;
-			mode = O_RDWR;
+			/* backwards compatibility */
 			break;
 		default:
 			usage();
@@ -145,6 +144,16 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	/*
+	 * Scan the options for `name=value` so the
+	 * device can be opened in the proper mode.
+	 */
+	for (avp = argv; *avp != NULL; avp++)
+		if (strchr(*avp, '=') != NULL) {
+			mode = O_RDWR;
+			break;
+		}	
+
 	rd = open(radiodev, mode);
 	if (rd < 0)
 		err(1, "%s open error", radiodev);
@@ -152,10 +161,10 @@ main(int argc, char **argv)
 	if (ioctl(rd, RIOCGINFO, &ri) < 0)
 		err(1, "RIOCGINFO");
 
-	if (!argc && show_vars && !set_param)
+	if (!argc && show_vars)
 		print_vars(silent);
 	else if (argc > 0 && !show_vars) {
-		if (set_param) {
+		if (mode == O_RDWR) {
 			for(; argc--; argv++)
 				if (parse_opt(*argv, &opt))
 					do_ioctls(rd, &opt, silent);
@@ -180,8 +189,9 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	fprintf(stderr, "usage:  %s [-f file] [-n] variable ...\n"
-	    "        %s [-f file] [-n] -w variable=value ...\n"
+	fprintf(stderr,
+	    "usage:  %s [-f file] [-n] variable ...\n"
+	    "        %s [-f file] [-n] variable=value ...\n"
 	    "        %s [-f file] [-n] -a\n",
 	    __progname, __progname, __progname);
 	exit(1);
