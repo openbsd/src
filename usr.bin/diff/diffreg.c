@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.57 2004/06/20 18:47:45 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.58 2004/09/14 23:04:27 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.57 2004/06/20 18:47:45 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.58 2004/09/14 23:04:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -156,7 +156,7 @@ struct cand {
 	int x;
 	int y;
 	int pred;
-} cand;
+};
 
 struct line {
 	int serial;
@@ -423,7 +423,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 	klist = emalloc((slen[0] + 2) * sizeof(int));
 	clen = 0;
 	clistlen = 100;
-	clist = emalloc(clistlen * sizeof(cand));
+	clist = emalloc(clistlen * sizeof(struct cand));
 	i = stone(class, slen[0], member, klist);
 	free(member);
 	free(class);
@@ -688,7 +688,7 @@ newcand(int x, int y, int pred)
 
 	if (clen == clistlen) {
 		clistlen = clistlen * 11 / 10;
-		clist = erealloc(clist, clistlen * sizeof(cand));
+		clist = erealloc(clist, clistlen * sizeof(struct cand));
 	}
 	q = clist + clen;
 	q->x = x;
