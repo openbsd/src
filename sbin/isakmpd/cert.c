@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.22 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: cert.c,v 1.23 2002/08/07 13:19:20 ho Exp $	*/
 /*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct cert_handler cert_handler[] = {
 #ifdef USE_X509
   {
     ISAKMP_CERTENC_X509_SIG,
-    x509_cert_init, x509_cert_get, x509_cert_validate,
+    x509_cert_init, x509_crl_init, x509_cert_get, x509_cert_validate,
     x509_cert_insert, x509_cert_free,
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
     x509_cert_obtain, x509_cert_get_key, x509_cert_get_subjects,
@@ -68,7 +68,7 @@ struct cert_handler cert_handler[] = {
 #ifdef USE_KEYNOTE
   {
     ISAKMP_CERTENC_KEYNOTE,
-    keynote_cert_init, keynote_cert_get, keynote_cert_validate,
+    keynote_cert_init, NULL, keynote_cert_get, keynote_cert_validate,
     keynote_cert_insert, keynote_cert_free,
     keynote_certreq_validate, keynote_certreq_decode, keynote_free_aca,
     keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subjects,
@@ -87,6 +87,18 @@ cert_init (void)
 
   for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
     if (cert_handler[i].cert_init && !(*cert_handler[i].cert_init) ())
+      err = 0;
+
+  return err;
+}
+
+int
+crl_init (void)
+{
+  int i, err = 1;
+
+  for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
+    if (cert_handler[i].crl_init && !(*cert_handler[i].crl_init) ())
       err = 0;
 
   return err;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2002/08/02 13:10:41 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2002/08/07 13:19:20 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -424,7 +424,8 @@ conf_load_defaults (int tr)
 	    0, 1);
   conf_set (tr, "X509-certificates", "Private-key", CONF_DFLT_X509_PRIVATE_KEY,
 	    0, 1);
-  conf_set (tr, "X509-certificates", "CRL-file", CONF_DFLT_X509_CRL_FILE, 0, 1);
+  conf_set (tr, "X509-certificates", "CRL-directory", CONF_DFLT_X509_CRL_DIR,
+	    0, 1);
 #endif
 
 #ifdef USE_KEYNOTE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.73 2002/08/02 13:10:41 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.74 2002/08/07 13:19:20 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -762,6 +762,98 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
   return 1;
 }
 
+/* XXX share code with x509_read_from_dir() ?  */
+int
+x509_read_crls_from_dir (X509_STORE *ctx, char *name)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+  DIR *dir;
+  struct dirent *file;
+  BIO *crlh;
+  X509_CRL *crl;
+  char fullname[PATH_MAX];
+  int off, size;
+
+  if (strlen (name) >= sizeof fullname - 1)
+    {
+      log_print ("x509_read_from_dir: directory name too long");
+      return 0;
+    }
+
+  LOG_DBG ((LOG_CRYPTO, 40, "x509_read_crls_from_dir: reading CRLs from %s",
+	    name));
+
+  dir = opendir(name);
+  if (!dir)
+    {
+      log_error ("x509_read_crls_from_dir: opendir (\"%s\") failed", name);
+      return 0;
+    }
+
+  strlcpy (fullname, name, sizeof fullname);
+  off = strlen (fullname);
+  size = sizeof fullname - off;
+
+  while ((file = readdir (dir)) != NULL)
+    {
+      strlcpy (fullname + off, file->d_name, size);
+
+      if (file->d_type != DT_UNKNOWN)
+      {
+	  if (file->d_type != DT_REG && file->d_type != DT_LNK)
+	    continue;
+      }
+      else
+      {
+	struct stat sb;
+
+	if (stat(fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+	  continue;
+      }
+
+      if (file->d_type != DT_REG && file->d_type != DT_LNK)
+	continue;
+
+      LOG_DBG ((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading CRL %s",
+		file->d_name));
+
+      crlh = BIO_new (BIO_s_file ());
+      if (!crlh)
+	{
+	  log_error ("x509_read_crls_from_dir: "
+		     "BIO_new (BIO_s_file ()) failed");
+	  continue;
+	}
+
+      if (BIO_read_filename (crlh, fullname) == -1)
+	{
+	  BIO_free (crlh);
+	  log_error ("x509_read_crls_from_dir: "
+		     "BIO_read_filename (crlh, \"%s\") failed", fullname);
+	  continue;
+	}
+
+      crl = PEM_read_bio_X509_CRL (crlh, NULL, NULL, NULL);
+
+      BIO_free (crlh);
+      if (crl == NULL)
+	{
+	  log_print ("x509_read_crls_from_dir: "
+		     "PEM_read_bio_X509_CRL failed for %s", file->d_name);
+	  continue;
+	}
+
+      if (!X509_STORE_add_crl (ctx, crl))
+	LOG_DBG ((LOG_CRYPTO, 50, "x509_read_crls_from_dir: "
+		  "X509_STORE_add_crl failed for %s", file->d_name));
+    }
+
+  closedir (dir);
+#endif /* OPENSSL_VERSION_NUMBER >= 0x00907000L */
+
+  return 1;
+}
+
 /* Initialize our databases and load our own certificates.  */
 int
 x509_cert_init (void)
@@ -823,48 +915,40 @@ x509_cert_init (void)
   return 1;
 }
 
+int
+x509_crl_init (void)
+{
+  /* 
+   * XXX I'm not sure if the method to use CRLs in certificate validation
+   * is valid for OpenSSL versions prior to 0.9.7. For now, simply do not
+   * support it.
+   */
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+  char *dirname;
+  dirname = conf_get_str ("X509-certificates", "CRL-directory");
+  if (!dirname)
+    {
+      log_print ("x509_crl_init: no CRL-directory");
+      return 0;
+    }
+
+  if (!x509_read_crls_from_dir (x509_cas, dirname))
+    {
+      log_print ("x509_crl_init: x509_read_from_dir failed");
+      return 0;
+    }
+#else
+  LOG_DBG ((LOG_CRYPTO, 10, "x509_crl_init: CRL support only "
+	    "with OpenSSL v0.9.7 or later"));
+#endif
+
+  return 1;
+}
+
 void *
 x509_cert_get (u_int8_t *asn, u_int32_t len)
 {
   return x509_from_asn (asn, len);
-}
-
-int
-x509_crl_get (X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
-{
-  char *crlfile;
-  BIO *in;
-
-  if ((crlfile = conf_get_str ("X509-certificates", "CRL-file")) == NULL)
-    {
-      LOG_DBG ((LOG_MISC, 10, "x509_crl_get: no CRL-file specified"));
-      return 0;
-    }
-
-  if((in = BIO_new (BIO_s_file ())) == NULL)
-    {
-      log_print ("x509_crl_get: BIO_new (BIO_s_file ()) failed");
-      return 0;
-    }
-
-  if (BIO_read_filename (in, crlfile) <= 0)
-    {
-      log_print ("x509_crl_get: BIO_read_filename (in, \"%s\") failed",
-		 crlfile);
-      BIO_free (in);
-      return 0;
-    }
-
-  *crl = PEM_read_bio_X509_CRL (in, NULL, NULL, NULL);
-  BIO_free (in);
-  if (*crl == NULL)
-    {
-      log_print ("x509_crl_get: PEM_read_bio_X509_CRL (in, NULL, NULL, NULL)"
-		 " failed");
-      return 0;
-    }
-
-  return 1;
 }
 
 int
@@ -881,9 +965,10 @@ x509_cert_validate (void *scert)
    * trust.
    */
   X509_STORE_CTX_init (&csc, x509_cas, cert, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
   X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK);
   X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK_ALL);
-  csc.get_crl = x509_crl_get;
+#endif
   res = X509_verify_cert (&csc);
   err = csc.error;
   X509_STORE_CTX_cleanup (&csc);

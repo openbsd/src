@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.19 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.20 2002/08/07 13:19:20 ho Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ init (void)
 
   /* Depends on conf_init and policy_init having run */
   cert_init ();
+  crl_init ();
 
   sa_init ();
   transport_init ();
@@ -127,6 +128,7 @@ reinit (void)
 
   /* Reinitialize certificates */
   cert_init ();
+  crl_init ();
 
   /* Reinitialize our connection list.  */
   connection_reinit ();

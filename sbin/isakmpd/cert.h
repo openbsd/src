@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.h,v 1.10 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: cert.h,v 1.11 2002/08/07 13:19:20 ho Exp $	*/
 /*	$EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -45,8 +45,9 @@
 /*
  * CERT handler for each kind of certificate:
  *
- * cert_init - Initialize CERT handler - called only once.
- * cert_get  - Get a certificate in internal representation from raw data.
+ * cert_init - initialize CERT handler.
+ * crl_init - initialize CRLs, if applicable.
+ * cert_get - get a certificate in internal representation from raw data.
  * cert_validate - validated a certificate, if it returns != 0 we can use it.
  * cert_insert - inserts cert into memory storage, we can retrieve with
  *               cert_obtain.
@@ -60,7 +61,8 @@
 
 struct cert_handler {
   u_int16_t id;				/* ISAKMP Cert Encoding ID */
-  int (*cert_init) (void);		
+  int (*cert_init) (void);
+  int (*crl_init) (void);
   void *(*cert_get) (u_int8_t *, u_int32_t);
   int (*cert_validate) (void *);
   int (*cert_insert) (int, void *);
@@ -92,5 +94,6 @@ struct certreq_aca *certreq_decode (u_int16_t, u_int8_t *, u_int32_t);
 void cert_free_subjects (int, u_int8_t **, u_int32_t *);
 struct cert_handler *cert_get (u_int16_t);
 int cert_init (void);
+int crl_init (void);
 
 #endif /* _CERT_H_ */

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.41 2002/08/02 13:27:22 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.42 2002/08/07 13:19:20 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -330,9 +330,9 @@ and put it in
 .El
 .Pp
 To revoke certificates, create a Certificate Revocation List (CRL) file
-and install it to
-.Pa /etc/isakmpd/crl.pem .
-See
+and install it to the
+.Pa /etc/isakmpd/crls/
+directory. See
 .Xr openssl 1
 and the 'crl' subcommand for more info.
 .Pp
@@ -439,8 +439,8 @@ The directory where CA certificates can be found.
 The directory where IKE certificates can be found, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
-.It Pa /etc/isakmpd/crl.pem
-A list of revoked certificates.
+.It Pa /etc/isakmpd/crls/
+The directory where CRLs can be found.
 .It Pa /etc/isakmpd/isakmpd.conf
 The configuration file.
 As this file can contain sensitive information
