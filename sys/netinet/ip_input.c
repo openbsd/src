@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.94 2001/11/26 16:50:26 jasoni Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.95 2001/12/06 02:12:52 itojun Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1478,9 +1478,6 @@ ip_forward(m, srcrt)
 		}
 	}
 
-#if 0 /*KAME IPSEC*/
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 
 	    0, NULL, NULL);
