@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.18 2001/06/10 02:31:09 deraadt Exp $
+#	$OpenBSD: changelist,v 1.19 2001/06/23 02:51:05 provos Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -38,6 +38,7 @@
 /etc/mailer.conf
 /etc/man.conf
 /etc/master.passwd
+/etc/moduli
 /etc/monthly
 /etc/monthly.local
 /etc/mygate
