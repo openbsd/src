@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.2 1999/12/09 15:10:49 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.3 1999/12/16 03:13:24 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,9 +160,6 @@ main(argc, argv)
 		if (log_upto >= 0)
 			setlogmask(LOG_UPTO(log_upto));
 	}
-
-	/* random value initilization */
-	srandom((u_long)time(NULL));
 
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
@@ -506,7 +503,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
-		interval = random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
+		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = interval % MILLION;
 		break;
