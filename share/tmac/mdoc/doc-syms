@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.29 2000/03/24 19:53:08 aaron Exp $
+.\"	$OpenBSD: doc-syms,v 1.30 2000/03/24 21:03:46 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -260,6 +260,10 @@
 .if \\n(.$==2 \{\
 .	if "\\$1"32v" \&Version 32V \\*(tNAT&T UNIX\\*(aa\\$2
 .	if "\\$1"v1"  \&Version 1 \\*(tNAT&T UNIX\\*(aa\\$2
+.	if "\\$1"v2"  \&Version 2 \\*(tNAT&T UNIX\\*(aa\\$2
+.	if "\\$1"v3"  \&Version 3 \\*(tNAT&T UNIX\\*(aa\\$2
+.	if "\\$1"v4"  \&Version 4 \\*(tNAT&T UNIX\\*(aa\\$2
+.	if "\\$1"v5"  \&Version 5 \\*(tNAT&T UNIX\\*(aa\\$2
 .	if "\\$1"v6"  \&Version 6 \\*(tNAT&T UNIX\\*(aa\\$2
 .	if "\\$1"v7"  \&Version 7 \\*(tNAT&T UNIX\\*(aa\\$2
 .	if "\\$1"V"  \&\\*(tNAT&T\\*(aa System V \\*(tNUNIX\\*(aa\\$2
@@ -270,6 +274,11 @@
 .\}
 .if \\n(.$==1 \{\
 .	if "\\$1"32v" \&Version 32V \\*(tNAT&T UNIX\\*(aa
+.	if "\\$1"v1"  \&Version 1 \\*(tNAT&T UNIX\\*(aa
+.	if "\\$1"v2"  \&Version 2 \\*(tNAT&T UNIX\\*(aa
+.	if "\\$1"v3"  \&Version 3 \\*(tNAT&T UNIX\\*(aa
+.	if "\\$1"v4"  \&Version 4 \\*(tNAT&T UNIX\\*(aa
+.	if "\\$1"v5"  \&Version 5 \\*(tNAT&T UNIX\\*(aa
 .	if "\\$1"v6"  \&Version 6 \\*(tNAT&T UNIX\\*(aa
 .	if "\\$1"v7"  \&Version 7 \\*(tNAT&T UNIX\\*(aa
 .	if "\\$1"V"  \&\\*(tNAT&T\\*(aa System V \\*(tNUNIX\\*(aa
@@ -317,163 +326,100 @@
 .	ds aa \&\f\\n(cF\s\\n(cZ
 .	nr aP \\n(aP+1
 .       if "\\*(A\\n(aP"-p1003.1-88" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1988\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1988\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
-.       \}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1988\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
+.	\}
 .       if "\\*(A\\n(aP"-p1003.1-90" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1b" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1b-93" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b-1993\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b-1993\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b-1993\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
+.	if "\\*(A\\n(aP"-p1003.1c-95" \{\
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1c-1995\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
+.	\}
+.	if "\\*(A\\n(aP"-p1003.1-96" \{\
+.		ds b1 \&\\*(tNISO/IEC \\*(aa9945-1:1996\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
+.	\}
 .       if "\\*(A\\n(aP"-p1003.2-92" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2-1992\\*(sV
-.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2-1992\\*(sV
-.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.2-1992\\*(sV
+.		as b1 (``\\*(tN\\*(Px.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.2" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2
-.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2\\*(sV
-.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.2\\*(sV
+.		as b1 (``\\*(tN\\*(Px.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1387.2-95" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2-1995\\*(sV
-.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2-1995\\*(sV
-.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1387.2-1995\\*(sV
+.		as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1387.2" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2
-.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2\\*(sV
-.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa1387.2\\*(sV
+.		as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-ansiC" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
+.		as b1 (``\\*(tNANSI C\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-ansiC-89" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
+.		as b1 (``\\*(tNANSI C\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-ieee754" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa754-1985
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa754-1985
-.		\}
+.		ds b1 \&\\*(tNIEEE Std\\*(aa754-1985
 .       \}
 .       if "\\*(A\\n(aP"-iso8802-3" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNISO \\*(aa8802-3: 1989\\*(sV
-.\" .			as b1 (``\\*(tNANSI C\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&\\*(tNISO \\*(aa8802-3: 1989\\*(sV
-.\" .			as b1 (``\\*(tNANSI C\\*(aa'')
-.		\}
+.		ds b1 \&\\*(tNISO \\*(aa8802-3: 1989\\*(sV
+.\" .		as b1 (``\\*(tNANSI C\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-xpg3" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&X/Open Portability Guide Issue 3\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG3\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&X/Open Portability Guide Issue 3\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG3\\*(aa'')
-.		\}
+.		ds b1 \&X/Open Portability Guide Issue 3\\*(aa\\*(sV
+.		as b1 (``\\*(tNXPG3\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-xpg4" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&X/Open Portability Guide Issue 4\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG4\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&X/Open Portability Guide Issue 4\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG4\\*(aa'')
-.		\}
+.		ds b1 \&X/Open Portability Guide Issue 4\\*(aa\\*(sV
+.		as b1 (``\\*(tNXPG4\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-xpg4.2" \{\
-.		ie \\n(sT==1 \{\
-.			ds b1 \&X/Open Portability Guide Issue 4.2\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG4.2\\*(aa'')
-.		\}
-.		el \{\
-.			ds b1 \&X/Open Portability Guide Issue 4.2\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG4.2\\*(aa'')
-.		\}
+.		ds b1 \&X/Open Portability Guide Issue 4.2\\*(aa\\*(sV
+.		as b1 (``\\*(tNXPG4.2\\*(aa'')
 .       \}
+.	if "\\*(A\\n(aP"-xbd5" \{\
+.		ds b1 \&X/Open System Interface Definitions Issue 5\\*(sV
+.		as b1 (``\\*(tNXBD5\\*(aa'')
+.	\}
+.	if "\\*(A\\n(aP"-xcu5" \{\
+.		ds b1 \&X/Open Commands and Utilities Issue 5\\*(sV
+.		as b1 (``\\*(tNXCU5\\*(aa'')
+.	\}
+.	if "\\*(A\\n(aP"-xsh5" \{\
+.		ds b1 \&X/Open System Interfaces and Headers Issue 5\\*(sV
+.		as b1 (``\\*(tNXSH5\\*(aa'')
+.	\}
+.	if "\\*(A\\n(aP"-xns5" \{\
+.		ds b1 \&X/Open Networking Services Issue 5\\*(sV
+.		as b1 (``\\*(tNXNS5\\*(aa'')
+.	\}
+.	if "\\*(A\\n(aP"-xns5.2d2.0" \{\
+.		ds b1 \&X/Open Networking Services Issue 5.2 Draft 2.0\\*(sV
+.		as b1 (``\\*(tNXNS5.2D2.0\\*(aa'')
+.	\}
+.	if "\\*(A\\n(aP"-xcurses4.2" \{\
+.		ds b1 \&X/Open Curses Issue 4 Version 2\\*(sV
+.		as b1 (``\\*(tNXCURSES4.2\\*(aa'')
+.	\}
 .	if "\\*(A\\n(aP"-susv2" \{\
 .		ds b1 \&Version 2 of the Single\\*(aa\\*(sV
 .		as b1 \&\\*(tNUNIX\\*(aa\\*(sV
