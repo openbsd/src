@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.29 2002/07/16 10:21:20 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.30 2002/07/16 10:24:04 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -37,18 +37,18 @@
 
 extern char *__progname;
 
-int     verbose_flag = 0;
-int     debug_flag = 0;
-int     syslog_flag = 0;
-int     multi_flag = 0;
-int     unknown_flag = 0;
-int     number_flag = 0;
-int     noident_flag = 0;
-int	userident_flag = 0;
-int	token_flag = 0;
+int     verbose_flag;
+int     debug_flag;
+int     syslog_flag;
+int     multi_flag;
+int     unknown_flag;
+int     number_flag;
+int     noident_flag;
+int	userident_flag;
+int	token_flag;
 
-int     lport = 0;
-int     fport = 0;
+int     lport;
+int     fport;
 
 const  char *opsys_name = "UNIX";
 const  char *charset_sep = "";
