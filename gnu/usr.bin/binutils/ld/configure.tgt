@@ -124,6 +124,7 @@ mips*vr4100-*-elf*)	targ_emul=elf32b4300 ;;
 mips*el-*-elf*)		targ_emul=elf32lmip ;;
 mips*-*-elf*)		targ_emul=elf32bmip ;;
 alpha-*-linux*)		targ_emul=alpha ;;
+alpha-*-openbsd*)	targ_emul=alpha ;;
 alpha-*-osf*)		targ_emul=alpha ;;
 alpha-*-netware*)	targ_emul=alpha ;;
 z8k-*-coff) 		targ_emul=z8002; targ_extra_emuls=z8001 ;;
