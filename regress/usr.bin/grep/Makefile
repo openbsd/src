@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.5 2003/12/06 20:19:12 otto Exp $
+# $OpenBSD: Makefile,v 1.6 2004/01/19 02:27:10 espie Exp $
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14
 
 t1:
 	grep t.s ${.CURDIR}/in | diff - ${.CURDIR}/t1.out
@@ -41,6 +41,9 @@ t12:
 t13:
 	grep 'abcd. abcd.' ${.CURDIR}/t13.in | diff - ${.CURDIR}/t13.out
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
+t14:
+	test X`grep -w -l u_int ${.CURDIR}/t14.in` = X${.CURDIR}/t14.in
+
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14
 
 .include <bsd.regress.mk>

@@ -1,0 +1,51 @@
+typedef u_int32_t	recno_t;
+
+/* Key/data structure -- a Data-Base Thang. */
+typedef struct {
+	void	*data;			/* data */
+	size_t	 size;			/* data length */
+} DBT;
+
+/* Routine flags. */
+#define	R_CURSOR	1		/* del, put, seq */
+#define	__R_UNUSED	2		/* UNUSED */
+#define	R_FIRST		3		/* seq */
+#define	R_IAFTER	4		/* put (RECNO) */
+#define	R_IBEFORE	5		/* put (RECNO) */
+#define	R_LAST		6		/* seq (BTREE, RECNO) */
+#define	R_NEXT		7		/* seq */
+#define	R_NOOVERWRITE	8		/* put */
+#define	R_PREV		9		/* seq (BTREE, RECNO) */
+#define	R_SETCURSOR	10		/* put (RECNO) */
+#define	R_RECNOSYNC	11		/* sync (RECNO) */
+
+typedef enum { DB_BTREE, DB_HASH, DB_RECNO } DBTYPE;
+
+/*
+ * !!!
+ * The following flags are included in the dbopen(3) call as part of the
+ * open(2) flags.  In order to avoid conflicts with the open flags, start
+ * at the top of the 16 or 32-bit number space and work our way down.  If
+ * the open flags were significantly expanded in the future, it could be
+ * a problem.  Wish I'd left another flags word in the dbopen call.
+ *
+ * !!!
+ * None of this stuff is implemented yet.  The only reason that it's here
+ * is so that the access methods can skip copying the key/data pair when
+ * the DB_LOCK flag isn't set.
+ */
+#if UINT_MAX > 65535
+#define	DB_LOCK		0x20000000	/* Do locking. */
+#define	DB_SHMEM	0x40000000	/* Use shared memory. */
+#define	DB_TXN		0x80000000	/* Do transactions. */
+#else
+#define	DB_LOCK		    0x2000	/* Do locking. */
+#define	DB_SHMEM	    0x4000	/* Use shared memory. */
+#define	DB_TXN		    0x8000	/* Do transactions. */
+#endif
+
+/* Access method description structure. */
+typedef struct __db {
+	DBTYPE type;			/* Underlying db type. */
+	int (*close)(struct __db *);
+	int (*del)(const struct __db *, const DBT *, u_int);
