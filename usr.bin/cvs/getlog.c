@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.7 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.8 2004/12/06 03:13:52 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -48,7 +48,9 @@
 #define CVS_GETLOG_REVEND \
  "============================================================================="
 
+#ifdef notyet 
 static void cvs_getlog_print   (const char *, RCSFILE *, u_int);
+#endif
 static int  cvs_getlog_file    (CVSFILE *, void *);
 
 
