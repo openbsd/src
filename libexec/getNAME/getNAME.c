@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.6 1998/05/17 06:33:11 millert Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.7 2001/12/07 18:45:32 mpech Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.6 1998/05/17 06:33:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: getNAME.c,v 1.7 2001/12/07 18:45:32 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,7 @@ newman:
 
 void
 trimln(cp)
-	register char *cp;
+	char *cp;
 {
 
 	while (*cp)
@@ -289,7 +289,7 @@ void
 doname(name)
 	char *name;
 {
-	register char *dp = name, *ep;
+	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
@@ -313,7 +313,7 @@ void
 split(line, name)
 	char *line, *name;
 {
-	register char *cp, *dp;
+	char *cp, *dp;
 	char *sp, *sep;
 
 	cp = strchr(line, '-');
@@ -328,7 +328,7 @@ split(line, name)
 	for (sep = "", dp = line; dp && *dp; dp = cp, sep = "\n") {
 		cp = strchr(dp, ',');
 		if (cp) {
-			register char *tp;
+			char *tp;
 
 			for (tp = cp - 1; *tp == ' ' || *tp == '\t'; tp--)
 				;
@@ -346,7 +346,7 @@ void
 dorefname(name)
 	char *name;
 {
-	register char *dp = name, *ep;
+	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')

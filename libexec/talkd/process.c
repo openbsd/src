@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.9 1998/07/10 08:06:18 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.10 2001/12/07 18:45:33 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.9 1998/07/10 08:06:18 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.10 2001/12/07 18:45:33 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -64,10 +64,10 @@ static char rcsid[] = "$Id: process.c,v 1.9 1998/07/10 08:06:18 deraadt Exp $";
 
 void
 process_request(mp, rp)
-	register CTL_MSG *mp;
-	register CTL_RESPONSE *rp;
+	CTL_MSG *mp;
+	CTL_RESPONSE *rp;
 {
-	register CTL_MSG *ptr;
+	CTL_MSG *ptr;
 	char *s;
 
 	rp->vers = TALK_VERSION;
@@ -150,7 +150,7 @@ process_request(mp, rp)
 
 void
 do_announce(mp, rp)
-	register CTL_MSG *mp;
+	CTL_MSG *mp;
 	CTL_RESPONSE *rp;
 {
 	struct hostent *hp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.23 2001/11/27 17:10:26 millert Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.24 2001/12/07 18:45:32 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.23 2001/11/27 17:10:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.24 2001/12/07 18:45:32 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register FILE *fp;
-	register int ch, ac = 2;
+	FILE *fp;
+	int ch, ac = 2;
 	int p[2], logging, secure, user_required, short_list;
 #define	ENTRIES	50
 	char **comp, *prog;

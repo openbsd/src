@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.5 2001/10/24 13:06:35 mpech Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.6 2001/12/07 18:45:32 mpech Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -187,8 +187,8 @@ int	silent;
 	}
 
 	while ((dp = readdir(dd)) != NULL) {
-		register int n;
-		register char *cp;
+		int n;
+		char *cp;
 
 		/* Check for `lib' prefix */
 		if (dp->d_name[0] != 'l' ||

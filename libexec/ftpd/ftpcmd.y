@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.26 2001/12/04 21:18:04 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.27 2001/12/07 18:45:32 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.26 2001/12/04 21:18:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.27 2001/12/07 18:45:32 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -1091,7 +1091,7 @@ getline(s, n, iop)
 	FILE *iop;
 {
 	int c;
-	register char *cs;
+	char *cs;
 
 	cs = s;
 /* tmpline may contain saved command from urgent mode interruption */
@@ -1144,8 +1144,8 @@ getline(s, n, iop)
 			/* Don't syslog passwords */
 			syslog(LOG_DEBUG, "command: %.5s ???", s);
 		} else {
-			register char *cp;
-			register int len;
+			char *cp;
+			int len;
 
 			/* Don't syslog trailing CR-LF */
 			len = strlen(s);

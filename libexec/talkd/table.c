@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.6 1999/11/29 22:22:57 d Exp $	*/
+/*	$OpenBSD: table.c,v 1.7 2001/12/07 18:45:33 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.6 1999/11/29 22:22:57 d Exp $";
+static char rcsid[] = "$Id: table.c,v 1.7 2001/12/07 18:45:33 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,7 @@ struct table_entry {
 };
 TAILQ_HEAD(, table_entry)	table;
 
-static void	delete __P((register TABLE_ENTRY *));
+static void	delete __P((TABLE_ENTRY *));
 
 /*
  * Init the table
@@ -89,9 +89,9 @@ init_table()
  */
 CTL_MSG *
 find_match(request)
-	register CTL_MSG *request;
+	CTL_MSG *request;
 {
-	register TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr;
 	time_t current_time;
 
 	gettimeofday(&tp, &txp);
@@ -126,9 +126,9 @@ find_match(request)
  */
 CTL_MSG *
 find_request(request)
-	register CTL_MSG *request;
+	CTL_MSG *request;
 {
-	register TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr;
 	time_t current_time;
 
 	gettimeofday(&tp, &txp);
@@ -167,7 +167,7 @@ insert_table(request, response)
 	CTL_MSG *request;
 	CTL_RESPONSE *response;
 {
-	register TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr;
 	time_t current_time;
 
 	if (debug)
@@ -209,7 +209,7 @@ int
 delete_invite(id_num)
 	int id_num;
 {
-	register TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr;
 
 	if (debug)
 		syslog(LOG_DEBUG, "delete_invite(%d)", id_num);
@@ -231,7 +231,7 @@ delete_invite(id_num)
  */
 static void
 delete(ptr)
-	register TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr;
 {
 
 	if (debug)

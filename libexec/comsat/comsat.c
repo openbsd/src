@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.19 2001/11/18 21:25:55 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.20 2001/12/07 18:45:32 mpech Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.19 2001/11/18 21:25:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.20 2001/12/07 18:45:32 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ main(argc, argv)
 {
 	struct sockaddr_storage from;
 	struct sigaction sa;
-	register int cc;
+	int cc;
 	int fromlen;
 	char msgbuf[100];
 	sigset_t sigset;
@@ -204,8 +204,8 @@ void
 mailfor(name)
 	char *name;
 {
-	register struct utmp *utp = &utmp[nutmp];
-	register char *cp;
+	struct utmp *utp = &utmp[nutmp];
+	char *cp;
 	off_t offset;
 
 	if (!(cp = strchr(name, '@')))
@@ -221,7 +221,7 @@ static char *cr;
 
 void
 notify(utp, offset)
-	register struct utmp *utp;
+	struct utmp *utp;
 	off_t offset;
 {
 	FILE *tp;
@@ -262,15 +262,15 @@ notify(utp, offset)
 
 void
 jkfprintf(tp, name, offset)
-	register FILE *tp;
+	FILE *tp;
 	char name[];
 	off_t offset;
 {
-	register char *cp, ch;
+	char *cp, ch;
 	char visout[5], *s2;
-	register FILE *fi;
-	register int linecnt, charcnt, inheader;
-	register struct passwd *p;
+	FILE *fi;
+	int linecnt, charcnt, inheader;
+	struct passwd *p;
 	char line[BUFSIZ];
 
 	/* Set effective uid to user in case mail drop is on nfs */

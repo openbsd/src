@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.19 2001/07/09 07:04:45 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.20 2001/12/07 18:45:33 mpech Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.19 2001/07/09 07:04:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.20 2001/12/07 18:45:33 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -74,7 +74,7 @@ static char rcsid[] = "$OpenBSD: uucpd.c,v 1.19 2001/07/09 07:04:45 deraadt Exp 
 #include "pathnames.h"
 
 void doit __P((struct sockaddr_in *));
-int readline __P((register char *, register int n));
+int readline __P((char *, int n));
 void dologout __P((void));
 void dologin __P((struct passwd *, struct sockaddr_in *));
 
@@ -100,7 +100,7 @@ int argc;
 char **argv;
 {
 #ifndef BSDINETD
-	register int s, tcp_socket;
+	int s, tcp_socket;
 	struct servent *sp;
 #endif /* !BSDINETD */
 	pid_t childpid;
@@ -233,8 +233,8 @@ struct sockaddr_in *sinp;
 
 int
 readline(p, n)
-register char *p;
-register int n;
+char *p;
+int n;
 {
 	char c;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.h,v 1.3 1998/08/18 03:42:11 millert Exp $	*/
+/*	$OpenBSD: talkd.h,v 1.4 2001/12/07 18:45:33 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -46,14 +46,14 @@ int	new_id __P((void));
 int	delete_invite __P((int));
 
 /* process.c */
-void	process_request __P(( register CTL_MSG *, register CTL_RESPONSE *));
-void	do_announce __P((register CTL_MSG *, CTL_RESPONSE *));
+void	process_request __P(( CTL_MSG *, CTL_RESPONSE *));
+void	do_announce __P((CTL_MSG *, CTL_RESPONSE *));
 int	find_user __P((char *name, char *tty));
 
 /* announce.c */
 int	announce __P((CTL_MSG *,char *));
 
 /* print.c */
-void	print_request __P((char *,register CTL_MSG *));
-void	print_response __P((char *,register CTL_RESPONSE *));
+void	print_request __P((char *,CTL_MSG *));
+void	print_response __P((char *,CTL_RESPONSE *));
 

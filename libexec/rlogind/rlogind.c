@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogind.c,v 1.29 2001/07/08 21:18:09 deraadt Exp $	*/
+/*	$OpenBSD: rlogind.c,v 1.30 2001/12/07 18:45:33 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: rlogind.c,v 1.29 2001/07/08 21:18:09 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rlogind.c,v 1.30 2001/12/07 18:45:33 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -414,10 +414,10 @@ control(pty, cp, n)
  */
 void
 protocol(f, p)
-	register int f, p;
+	int f, p;
 {
 	char pibuf[1024+1], fibuf[1024], *pbp, *fbp;
-	register int pcc = 0, fcc = 0;
+	int pcc = 0, fcc = 0;
 	int cc, nfd, n;
 	char cntl;
 
@@ -488,7 +488,7 @@ protocol(f, p)
 			if (fcc < 0 && errno == EWOULDBLOCK)
 				fcc = 0;
 			else {
-				register char *cp;
+				char *cp;
 				int left, n;
 
 				if (fcc <= 0)
@@ -652,7 +652,7 @@ void
 setup_term(fd)
 	int fd;
 {
-	register char *cp = strchr(term+ENVSIZE, '/');
+	char *cp = strchr(term+ENVSIZE, '/');
 	char *speed;
 	struct termios tt;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.2 2001/01/30 02:39:06 brad Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.3 2001/12/07 18:45:32 mpech Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ void
 add_search_path(path)
 char	*path;
 {
-	register char	*cp, *dup;
+	char	*cp, *dup;
 
 	if (path == NULL)
 		return;
@@ -141,7 +141,7 @@ void
 remove_search_path(path)
 char	*path;
 {
-	register char	*cp, *dup;
+	char	*cp, *dup;
 
 	if (path == NULL)
 		return;
@@ -206,7 +206,7 @@ cmpndewey(d1, n1, d2, n2)
 int	d1[], d2[];
 int	n1, n2;
 {
-	register int	i;
+	int	i;
 
 	for (i = 0; i < n1 && i < n2; i++) {
 		if (d1[i] < d2[i])
