@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.8 2000/11/10 15:33:12 provos Exp $	*/
+/*	$OpenBSD: pr.c,v 1.9 2001/02/05 01:57:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.8 2000/11/10 15:33:12 provos Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.9 2001/02/05 01:57:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,7 +142,7 @@ char	*timefrmt;	/* time conversion string */
 /*
  * misc globals
  */
-FILE	*err;		/* error message file pointer */
+FILE	*ferr;		/* error message file pointer */
 int	addone = 0;	/* page length is odd with double space */
 int	errcnt = 0;	/* error count on file processing */
 int	beheaded = 0;	/* header / trailer link */
@@ -918,7 +918,7 @@ mulfile(argc, argv)
 	pgwd = ((colwd + 1) * clcnt) - 1;
     }
     if (colwd < 1) {
-	(void)fprintf(err,
+	(void)fprintf(ferr,
 	  "pr: page width too small for %d columns\n", clcnt);
 	return(1);
     }
@@ -1399,7 +1399,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	    return(inf);
 	if (gettimeofday(&tv, &tz) < 0) {
 	    ++errcnt;
-	    (void)fprintf(err, "pr: cannot get time of day, %s\n",
+	    (void)fprintf(ferr, "pr: cannot get time of day, %s\n",
 		strerror(errno));
 	    eoptind = argc - 1;
 	    return(NULL);
@@ -1423,7 +1423,7 @@ nxtfile(argc, argv, fname, buf, dt)
 		return(inf);
 	    if (gettimeofday(&tv, &tz) < 0) {
 		++errcnt;
-		(void)fprintf(err,
+		(void)fprintf(ferr,
 		    "pr: cannot get time of day, %s\n",
 		    strerror(errno));
 		return(NULL);
@@ -1438,7 +1438,7 @@ nxtfile(argc, argv, fname, buf, dt)
 		++errcnt;
 		if (nodiag)
 		    continue;
-		(void)fprintf(err, "pr: Cannot open %s, %s\n",
+		(void)fprintf(ferr, "pr: Cannot open %s, %s\n",
 		    argv[eoptind], strerror(errno));
 		continue;
 	    }
@@ -1455,7 +1455,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	    if (dt) {
 		if (gettimeofday(&tv, &tz) < 0) {
 		    ++errcnt;
-		    (void)fprintf(err,
+		    (void)fprintf(ferr,
 			 "pr: cannot get time of day, %s\n",
 			 strerror(errno));
 		    return(NULL);
@@ -1466,7 +1466,7 @@ nxtfile(argc, argv, fname, buf, dt)
 		if (fstat(fileno(inf), &statbuf) < 0) {
 		    ++errcnt;
 		    (void)fclose(inf);
-		    (void)fprintf(err, 
+		    (void)fprintf(ferr, 
 			"pr: Cannot stat %s, %s\n",
 			argv[eoptind], strerror(errno));
 		    return(NULL);
@@ -1486,7 +1486,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	++errcnt;
 	if (inf != stdin)
 	    (void)fclose(inf);
-	(void)fputs("pr: time conversion failed\n", err);
+	(void)fputs("pr: time conversion failed\n", ferr);
 	return(NULL);
     }
     return(inf);
@@ -1701,35 +1701,35 @@ flsh_errs()
     char buf[BUFSIZ];
 
     (void)fflush(stdout);
-    (void)fflush(err);
-    if (err == stderr)
+    (void)fflush(ferr);
+    if (ferr == stderr)
 	return;
-    rewind(err);
-    while (fgets(buf, BUFSIZ, err) != NULL)
+    rewind(ferr);
+    while (fgets(buf, BUFSIZ, ferr) != NULL)
 	(void)fputs(buf, stderr);
 }
 
 void
 mfail()
 {
-    (void)fputs("pr: memory allocation failed\n", err);
+    (void)fputs("pr: memory allocation failed\n", ferr);
 }
 
 void
 pfail()
 {
-    (void)fprintf(err, "pr: write failure, %s\n", strerror(errno));
+    (void)fprintf(ferr, "pr: write failure, %s\n", strerror(errno));
 }
 
 void
 usage()
 {
     (void)fputs(
-     "usage: pr [+page] [-col] [-adfFmrt] [-e[ch][gap]] [-h header]\n",err);
+     "usage: pr [+page] [-col] [-adfFmrt] [-e[ch][gap]] [-h header]\n", ferr);
     (void)fputs(
-     "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n",err);
+     "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n", ferr);
     (void)fputs(
-     "          [-s[ch]] [-w width] [-] [file ...]\n", err);
+     "          [-s[ch]] [-w width] [-] [file ...]\n", ferr);
 }
 
 /*
@@ -1751,25 +1751,25 @@ setup(argc, argv)
 	/*
 	 * defer diagnostics until processing is done
 	 */
-	if ((err = tmpfile()) == NULL) {
+	if ((ferr = tmpfile()) == NULL) {
 	       (void)fputs("Cannot defer diagnostic messages\n",stderr);
 	       return(1);
 	}
     } else
-	err = stderr;
+	ferr = stderr;
     while ((c = egetopt(argc, argv, "#adfFmrte?h:i?l:n?o:s?w:")) != -1) {
 	switch (c) {
 	case '+':
 	    if ((pgnm = atoi(eoptarg)) < 1) {
 		(void)fputs("pr: +page number must be 1 or more\n",
-		err);
+		    ferr);
 		return(1);
 	    }
 	    ++skipping;
 	    break;
 	case '-':
 	    if ((clcnt = atoi(eoptarg)) < 1) {
-		(void)fputs("pr: -columns must be 1 or more\n",err);
+		(void)fputs("pr: -columns must be 1 or more\n",ferr);
 		return(1);
 	    }
 	    if (clcnt > 1)
@@ -1790,13 +1790,13 @@ setup(argc, argv)
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
 		if ((ingap = atoi(eoptarg)) < 0) {
 		    (void)fputs(
-		    "pr: -e gap must be 0 or more\n", err);
+		    "pr: -e gap must be 0 or more\n", ferr);
 		    return(1);
 		}
 		if (ingap == 0)
 		    ingap = INGAP;
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
-		(void)fprintf(err,
+		(void)fprintf(ferr,
 		      "pr: invalid value for -e %s\n", eoptarg);
 		return(1);
 	    } else
@@ -1818,13 +1818,13 @@ setup(argc, argv)
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
 		if ((ogap = atoi(eoptarg)) < 0) {
 		    (void)fputs(
-		    "pr: -i gap must be 0 or more\n", err);
+		    "pr: -i gap must be 0 or more\n", ferr);
 		    return(1);
 		}
 		if (ogap == 0)
 		    ogap = OGAP;
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
-		(void)fprintf(err,
+		(void)fprintf(ferr,
 		      "pr: invalid value for -i %s\n", eoptarg);
 		return(1);
 	    } else
@@ -1833,7 +1833,7 @@ setup(argc, argv)
 	case 'l':
 	    if (!isdigit(*eoptarg) || ((lines=atoi(eoptarg)) < 1)) {
 		(void)fputs(
-		 "pr: Number of lines must be 1 or more\n",err);
+		 "pr: Number of lines must be 1 or more\n",ferr);
 		return(1);
 	    }
 	    break;
@@ -1848,11 +1848,11 @@ setup(argc, argv)
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
 		if ((nmwd = atoi(eoptarg)) < 1) {
 		    (void)fputs(
-		    "pr: -n width must be 1 or more\n",err);
+		    "pr: -n width must be 1 or more\n",ferr);
 		    return(1);
 		}
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
-		(void)fprintf(err,
+		(void)fprintf(ferr,
 		      "pr: invalid value for -n %s\n", eoptarg);
 		return(1);
 	    } else
@@ -1861,7 +1861,7 @@ setup(argc, argv)
 	case 'o':
 	    if (!isdigit(*eoptarg) || ((offst = atoi(eoptarg))< 1)){
 		(void)fputs("pr: -o offset must be 1 or more\n",
-		    err);
+		    ferr);
 		return(1);
 	    }
 	    break;
@@ -1875,7 +1875,7 @@ setup(argc, argv)
 	    else {
 		schar = *eoptarg++;
 		if (*eoptarg != '\0') {
-		    (void)fprintf(err,
+		    (void)fprintf(ferr,
 		        "pr: invalid value for -s %s\n", eoptarg);
 		    return(1);
 		}
@@ -1888,7 +1888,7 @@ setup(argc, argv)
 	    ++wflag;
 	    if (!isdigit(*eoptarg) || ((pgwd = atoi(eoptarg)) < 1)){
 		(void)fputs(
-		   "pr: -w width must be 1 or more \n",err);
+		   "pr: -w width must be 1 or more \n",ferr);
 		return(1);
 	    }
 	    break;
@@ -1917,11 +1917,11 @@ setup(argc, argv)
     if (across) {
 	if (clcnt == 1) {
 	    (void)fputs("pr: -a flag requires multiple columns\n",
-		err);
+		ferr);
 	    return(1);
 	}
 	if (merge) {
-	    (void)fputs("pr: -m cannot be used with -a\n", err);
+	    (void)fputs("pr: -m cannot be used with -a\n", ferr);
 	    return(1);
 	}
     }
@@ -1944,7 +1944,7 @@ setup(argc, argv)
     if (cflag) {
 	if (merge) {
 	    (void)fputs(
-	      "pr: -m cannot be used with multiple columns\n", err);
+	      "pr: -m cannot be used with multiple columns\n", ferr);
 	    return(1);
 	}
 	if (nmwd) {
@@ -1955,7 +1955,7 @@ setup(argc, argv)
 	    pgwd = ((colwd + 1) * clcnt) - 1;
 	}
 	if (colwd < 1) {
-	    (void)fprintf(err,
+	    (void)fprintf(ferr,
 	      "pr: page width is too small for %d columns\n",clcnt);
 	    return(1);
 	}
