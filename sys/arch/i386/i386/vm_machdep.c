@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.56 1995/12/24 01:07:32 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.57 1995/12/26 16:59:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -104,18 +104,16 @@ cpu_fork(p1, p2)
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
-
 	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
 
 	/*
-	 * Preset these so that gdt_compact() doesn't get confused if called during
-	 * the allocations below.
+	 * Preset these so that gdt_compact() doesn't get confused if called
+	 * during the allocations below.
 	 */
 	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 
-	/* Fix up the TSS, etc. */
-	pcb->pcb_cr0 |= CR0_TS;
+	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
 	tss_alloc(pcb);
