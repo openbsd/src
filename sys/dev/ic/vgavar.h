@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.4 2000/11/15 20:17:38 aaron Exp $ */
+/* $OpenBSD: vgavar.h,v 1.5 2001/05/08 16:16:10 mickey Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -28,6 +28,8 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/timeout.h>
+
 struct vga_handle {
 	struct pcdisplay_handle vh_ph;
 	bus_space_handle_t vh_ioh_vga, vh_allmemh;
@@ -37,6 +39,30 @@ struct vga_handle {
 #define vh_memt vh_ph.ph_memt
 #define vh_ioh_6845 vh_ph.ph_ioh_6845
 #define vh_memh vh_ph.ph_memh
+
+struct vga_config {
+	struct vga_handle hdl;
+
+	struct device *vc_softc;
+	int vc_type;
+	int nscreens;
+	LIST_HEAD(, vgascreen) screens;
+	struct vgascreen *active; /* current display */
+	const struct wsscreen_descr *currenttype;
+	int currentfontset1, currentfontset2;
+
+	struct vgafont *vc_fonts[8];
+
+	struct vgascreen *wantedscreen;
+	void (*switchcb) __P((void *, int, int));
+	void *switchcbarg;
+
+#ifdef arc
+	paddr_t (*vc_mmap) __P((void *, off_t, int));
+#endif
+
+	struct timeout vc_switch_timeout;
+};
 
 static inline u_int8_t _vga_attr_read __P((struct vga_handle *, int));
 static inline void _vga_attr_write __P((struct vga_handle *, int, u_int8_t));
@@ -153,3 +179,6 @@ void vga_loadchars __P((struct vga_handle *, int, int, int, int, char *));
 void vga_setfontset __P((struct vga_handle *, int, int));
 void vga_setscreentype __P((struct vga_handle *,
 			    const struct wsscreen_descr *));
+#if NVGA_PCI > 0
+int vga_pci_ioctl __P((void *, u_long, caddr_t, int, struct proc *)); 
+#endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.23 2001/04/14 04:44:01 aaron Exp $ */
+/* $OpenBSD: vga.c,v 1.24 2001/05/08 16:16:10 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -28,9 +28,10 @@
  * rights to redistribute these changes.
  */
 
+#include "vga.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -84,29 +85,6 @@ struct vgascreen {
 
 	int mindispoffset, maxdispoffset;
 	int vga_rollover;
-};
-
-struct vga_config {
-	struct vga_handle hdl;
-
-	int vc_type;
-	int nscreens;
-	LIST_HEAD(, vgascreen) screens;
-	struct vgascreen *active; /* current display */
-	const struct wsscreen_descr *currenttype;
-	int currentfontset1, currentfontset2;
-
-	struct vgafont *vc_fonts[8];
-
-	struct vgascreen *wantedscreen;
-	void (*switchcb) __P((void *, int, int));
-	void *switchcbarg;
-
-#ifdef arc
-	paddr_t (*vc_mmap) __P((void *, off_t, int));
-#endif
-
-	struct timeout vc_switch_timeout;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -546,6 +524,7 @@ vga_extended_attach(self, iot, memt, type, map)
 		vga_init(vc, iot, memt);
 	}
 
+	vc->vc_softc = self;
 	vc->vc_type = type;
 #ifdef arc
 	vc->vc_mmap = map;
@@ -610,6 +589,13 @@ vga_ioctl(v, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct vga_config *vc = v;
+	int error;
+
+#if NVGA_PCI > 0
+	if (vc->vc_type == WSDISPLAY_TYPE_PCIVGA &&
+	    (error = vga_pci_ioctl(v, cmd, data, flag, p)) != ENOTTY)
+		return (error);
+#endif
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:

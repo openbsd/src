@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.9 2000/11/19 03:28:53 aaron Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.10 2001/05/08 16:16:11 mickey Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -27,6 +27,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "vga.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,4 +134,15 @@ vga_pci_cnattach(iot, memt, pc, bus, device, function)
 	int bus, device, function;
 {
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
+}
+
+int
+vga_pci_ioctl(v, cmd, addr, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t addr;
+	int flag;
+	struct proc *p;
+{
+	return (ENOTTY);
 }
