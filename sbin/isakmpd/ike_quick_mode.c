@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.34 2000/04/07 22:05:19 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.121 2000/04/07 19:02:42 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.35 2000/06/08 20:50:16 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.126 2000/06/08 04:21:17 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef USE_POLICY
+#if defined(USE_POLICY) || defined(USE_KEYNOTE)
 #include <sys/types.h>
 #include <regex.h>
 #include <keynote.h>
@@ -93,12 +93,6 @@ int (*ike_quick_mode_responder[]) (struct message *) = {
 
 #ifdef USE_POLICY
 
-/* Policy session ID and other necessary globals.  XXX Why not in policy.h?  */
-extern int keynote_sessid;
-extern struct exchange *policy_exchange;
-extern struct sa *policy_sa;
-extern struct sa *policy_isakmp_sa;
-
 /* How many return values will policy handle -- true/false for now */
 #define RETVALUES_NUM 2
 
@@ -110,8 +104,9 @@ static int
 check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
   char *return_values[RETVALUES_NUM];
-  char *principal = NULL, *principal2 = NULL;
-  int result;
+  char **principal = NULL;
+  int i, result = 0, nprinc = 0;
+  int *x509_ids, *keynote_ids;
 #ifdef USE_X509
   char cn[259];
   struct keynote_deckey dc;
@@ -119,9 +114,59 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   RSA *key;
 #endif
 
-  /* If there is no policy setup, everything fails.  */
-  if (keynote_sessid < 0)
-    return 0;
+  /* Initialize if necessary -- e.g., if pre-shared key auth was used */
+  if (isakmp_sa->policy_id < 0)
+    {
+      if ((isakmp_sa->policy_id = LK (kn_init, ())) == -1)
+        {
+	  log_print ("check_policy: failed to initialize policy session");
+	  return 0;
+	}
+    }
+  
+  /* Add the callback that will handle attributes.  */
+  if (LK (kn_add_action, (isakmp_sa->policy_id, ".*",
+			  (char *) policy_callback,
+			  ENVIRONMENT_FLAG_FUNC | ENVIRONMENT_FLAG_REGEX))
+      == -1)
+    {
+      log_print ("check_policy: "
+		 "kn_add_action (%d, \".*\", %p, FUNC | REGEX) failed",
+		 isakmp_sa->policy_id, policy_callback);
+      LK (kn_close, (isakmp_sa->policy_id));
+      isakmp_sa->policy_id = -1;
+      return 0;
+    }
+
+  keynote_ids = calloc (keynote_policy_asserts_num, sizeof(int));
+  if (keynote_ids == NULL)
+    {
+      log_print ("check_policy: failed to allocate %d bytes for book keeping",
+		 keynote_policy_asserts_num * sizeof(int));
+      return 0;
+    }
+
+  x509_ids = calloc (x509_policy_asserts_num, sizeof(int));
+  if (x509_ids == NULL)
+    {
+      log_print ("check_policy: failed to allocate %d bytes for book keeping",
+		 x509_policy_asserts_num * sizeof(int));
+      free (keynote_ids);
+      return 0;
+    }
+
+  /* Add the policy assertions */
+  for (i = 0; i < keynote_policy_asserts_num; i++)
+    keynote_ids[i] = LK (kn_add_assertion, (isakmp_sa->policy_id,
+					    keynote_policy_asserts[i],
+					    strlen (keynote_policy_asserts[i]),
+					    ASSERT_FLAG_LOCAL));
+
+  for (i = 0; i < x509_policy_asserts_num; i++)
+    x509_ids[i] = LK (kn_add_assertion, (isakmp_sa->policy_id,
+					 x509_policy_asserts[i],
+					 strlen (x509_policy_asserts[i]),
+					 ASSERT_FLAG_LOCAL));
 
   /* Initialize -- we'll let the callback do all the work.  */
   policy_exchange = exchange;
@@ -138,13 +183,52 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     case ISAKMP_CERTENC_NONE:
       /* For shared keys, just duplicate the passphrase with the
          appropriate prefix tag. */
-      principal = calloc (isakmp_sa->recv_certlen + 1 + strlen ("passphrase:"),
-                          sizeof (char));
+      nprinc = 1;
+      principal = calloc (nprinc, sizeof(*principal));
       if (principal == NULL)
-	return 0;
-      strcpy (principal, "passphrase:");
-      memcpy (principal + strlen ("passphrase:"), isakmp_sa->recv_cert,
+        {
+	  log_print ("check_policy: failed to allocate %d bytes",
+		     nprinc * sizeof(*principal));
+	  goto policydone;
+	}
+
+      principal[0] = calloc (isakmp_sa->recv_certlen + 1 +
+			     strlen ("passphrase:"), sizeof (char));
+      if (principal[0] == NULL)
+        {
+	  log_print ("check_policy: failed to allocate %d bytes",
+		     isakmp_sa->recv_certlen + 1 + strlen ("passphrase:"));
+	  free (principal);
+	  goto policydone;
+	}
+
+      strcpy (principal[0], "passphrase:");
+      memcpy (principal[0] + strlen ("passphrase:"), isakmp_sa->recv_cert,
 	      isakmp_sa->recv_certlen);
+      break;
+
+    case ISAKMP_CERTENC_KEYNOTE:
+#ifdef USE_KEYNOTE
+      nprinc = 1;
+
+      principal = calloc (nprinc, sizeof(*principal));
+      if (principal == NULL)
+        {
+	  log_print ("check_policy: failed to allocate %d bytes",
+		     nprinc * sizeof(*principal));
+	  goto policydone;
+	}
+
+      /* Dup the keys */
+      principal[0] = strdup (isakmp_sa->recv_key);
+      if (principal[0] == NULL)
+        {
+	  log_print ("check_policy: failed to allocate %d bytes",
+		     strlen (isakmp_sa->recv_key));
+	  free (principal);
+	  goto policydone;
+	}
+#endif
       break;
 
     case ISAKMP_CERTENC_X509_SIG:
@@ -153,42 +237,54 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (!x509_cert_get_key (isakmp_sa->recv_cert, &key))
 	{
 	  log_print ("check_policy: failed to get key from X509 cert");
-	  return 0;
+	  goto policydone;
+	}
+
+      principal = calloc (2, sizeof(*principal));
+      if (principal == NULL)
+        {  
+	  log_print ("check_policy: failed to get memory for principal");
+	  goto policydone;
 	}
 
       /* XXX RSA-specific.  */
       dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
       dc.dec_key = (void *) key;
-      principal = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
-				      KEYNOTE_PUBLIC_KEY));
+      principal[0] = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+					 KEYNOTE_PUBLIC_KEY));
       if (LKV (keynote_errno) == ERROR_MEMORY)
 	{
 	  log_print ("check_policy: failed to get memory for public key");
 	  LC (RSA_free, (key));
-	  return 0;
-	}
-      if (principal == NULL)
-	{
-	  log_print ("check_policy: failed to allocate memory for principal");
-	  LC (RSA_free, (key));
-	  return 0;
-	}
-      principal2 = calloc (strlen (principal) + strlen ("rsa-hex:") + 1,
-			   sizeof (char));
-      if (principal2 == NULL)
-	{
-	  log_print ("check_policy: failed to allocate memory for principal");
 	  free (principal);
-	  LC (RSA_free, (key));
-	  return 0;
+	  goto policydone;
 	}
 
-      strcpy (principal2, "rsa-hex:");
-      strcpy (principal2 + strlen ("rsa-hex:"), principal);
-      free (principal);
+      if (principal[0] == NULL)
+	{
+	  log_print ("check_policy: failed to allocate memory for principal");
+	  LC (RSA_free, (key));
+	  free (principal);
+	  goto policydone;
+	}
+
+      principal[1] = calloc (strlen (principal[0]) + strlen ("rsa-hex:") + 1,
+			     sizeof (char));
+      if (principal[1] == NULL)
+	{
+	  log_print ("check_policy: failed to allocate memory for principal");
+	  free (principal[0]);
+	  free(principal);
+	  LC (RSA_free, (key));
+	  goto policydone;
+	}
+
+      strcpy (principal[1], "rsa-hex:");
+      strcpy (principal[1] + strlen ("rsa-hex:"), principal[0]);
+      free (principal[0]);
       LC (RSA_free, (key));
-      principal = principal2;
-      principal2 = NULL;
+      principal[0] = principal[1];
+      principal[1] = NULL;
 
       /* Generate a "DN:" principal */
       subject = LC (X509_get_subject_name, (isakmp_sa->recv_cert));
@@ -196,7 +292,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	{
 	  strcpy (cn, "DN:");
 	  LC (X509_NAME_oneline, (subject, cn + 3, 256));
-	  principal2 = cn;
+	  principal[1] = cn;
+	  nprinc = 2;
+	} else {
+	  nprinc = 1;
 	}
       break;
 #endif
@@ -211,14 +310,11 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     case ISAKMP_CERTENC_ARL:
     case ISAKMP_CERTENC_SPKI:
     case ISAKMP_CERTENC_X509_ATTR:
-#if 0
-    case ISAKMP_CERTENC_KEYNOTE:
-#endif
     default:
       log_print ("check_policy: "
 		 "unknown/unsupported certificate/authentication method %d",
 		 isakmp_sa->recv_certtype);
-      return 0;
+      goto policydone;
     }
 
   /* 
@@ -226,39 +322,72 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    * this may be a public or a secret key, depending on
    * what mode of authentication we used in Phase 1.
    */
-  if (LK (kn_add_authorizer, (keynote_sessid, principal)) == -1)
+  for (i = 0; i < nprinc; i++)
     {
-      free (principal);
-      log_print ("check_policy: kn_add_authorizer failed");
-      return 0;
+      if (LK (kn_add_authorizer, (isakmp_sa->policy_id, principal[i])) == -1)
+        {
+	  int j;
+
+	  for (j = 0; j < i; j++)
+	    {
+		LK (kn_remove_authorizer, (isakmp_sa->policy_id,
+					   principal[j]));
+		free (principal[j]);
+	    }
+
+	  for (; j < nprinc; j++)
+	    free (principal[j]);
+
+	  free(principal);
+	  log_print ("check_policy: kn_add_authorizer failed");
+	  goto policydone;
+	}
     }
 
-  if (principal2)
-    if (LK (kn_add_authorizer, (keynote_sessid, principal2)) == -1)
-      {
-	free (principal);
-      	log_print ("check_policy: kn_add_authorizer failed");
-      	return 0;
-      }
-
   /* Ask policy.  */
-  result = LK (kn_do_query, (keynote_sessid, return_values, RETVALUES_NUM));
+  result = LK (kn_do_query, (isakmp_sa->policy_id, return_values,
+			     RETVALUES_NUM));
+  LOG_DBG ((LOG_MISC, 40, "check_policy: kn_do_query returned %d", result));
 
-  /* Remove authorizer from the session.  */
-  LK (kn_remove_authorizer, (keynote_sessid, principal));
+  /* Cleanup environment */
+  LK (kn_cleanup_action_environment, (isakmp_sa->policy_id));
+
+  /* Remove authorizers from the session.  */
+  for (i = 0; i < nprinc; i++)
+    {
+      LK (kn_remove_authorizer, (isakmp_sa->policy_id, principal[i]));
+      free (principal[i]);
+    }
+
   free (principal);
-
-  /* Remove "DN:" authorizer, if present */
-  if (principal2)
-          LK (kn_remove_authorizer, (keynote_sessid, principal2));
 
   /* Check what policy said.  */
   if (result < 0)
     {
-      LOG_DBG ((LOG_MISC, 40, "check_policy: kn_do_query returned %d",
-		result));
-      return 0;
+	LOG_DBG ((LOG_MISC, 40, "check_policy: proposal refused"));
+      result = 0;
+      goto policydone;
     }
+
+ policydone:
+  /* Remove the policies */
+  for (i = 0; i < keynote_policy_asserts_num; i++)
+    {
+      if (keynote_ids[i] != -1)
+	LK (kn_remove_assertion, (isakmp_sa->policy_id, keynote_ids[i]));
+    }
+
+  for (i = 0; i < x509_policy_asserts_num; i++)
+    {
+      if (x509_ids[i] != -1)
+	LK (kn_remove_assertion, (isakmp_sa->policy_id, x509_ids[i]));
+    }
+
+  if (keynote_ids)
+    free (keynote_ids);  
+
+  if (x509_ids)
+    free (x509_ids);
 
   /*
    * XXX Currently, check_policy() is only called from message_negotiate_sa(),
@@ -1382,7 +1511,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	  goto cleanup;
 	}
     }
-#if !defined (USE_POLICY) || !defined (USE_KEYNOTE)
+#if !defined (USE_POLICY) && !defined (USE_KEYNOTE)
 #ifdef USE_POLICY
   else if (!libkeynote)
 #else
@@ -1399,7 +1528,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       /* XXX Notify peer and log.  */
       goto cleanup;
     }
-#endif /* !USE_POLICY || !USE_KEYNOTE */
+#endif /* !USE_POLICY && !USE_KEYNOTE */
 
   return retval;
 
