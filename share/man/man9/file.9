@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.1 2002/08/23 15:22:51 art Exp $
+.\"     $OpenBSD: file.9,v 1.2 2002/08/23 15:59:09 mpech Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -48,13 +48,13 @@
 .Sh DESCRIPTION
 These functions provide the interface for the UNIX file descriptors.
 File descriptors can be used to access vnodes (see
-.Xr vnode 9 ),
+.Xr vnode 9 ) ,
 sockets (see
-.Xr socket 2 ),
+.Xr socket 2 ) ,
 pipes (see
-.Xr pipe 2 ),
+.Xr pipe 2 ) ,
 kqueues (see
-.Xr kqueue 2 ),
+.Xr kqueue 2 ) ,
 and various special purpose communication endpoints.
 .Sh 
 A new file descriptor is allocated with the function
@@ -66,7 +66,7 @@ freed with
 and
 .Fn fdrelease
 deal with allocating and freeing slots in the file descriptor table
-expanding the table when necessary and intializing the descriptor.
+expanding the table when necessary and initializing the descriptor.
 It's possible to do those things in smaller steps, but it's not
 recommended to make complicated kernel APIs that require it.
 .Pp
@@ -110,7 +110,7 @@ not using them.
 .Sh SEE ALSO
 .Xr vnode 9
 .Sh CODE REFERENCES
-The majority of those functions are implmeneted in
+The majority of those functions are implemented in
 .Pa sys/kern/kern_descrip.c .
 The function prototypes and the macros are located in
 .Pa sys/sys/file.h 
