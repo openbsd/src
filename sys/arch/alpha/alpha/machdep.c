@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.39 2000/12/21 16:54:52 aaron Exp $ */
+/* $OpenBSD: machdep.c,v 1.40 2001/01/24 16:59:12 art Exp $ */
 /* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -222,7 +222,7 @@ struct platform platform;
 /* for cpu_sysctl() */
 int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
-int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
+int	alpha_unaligned_sigbus = 1;	/* SIGBUS on fixed-up accesses */
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!
