@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.26 2003/12/19 14:52:15 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.27 2003/12/21 15:00:41 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2738,9 +2738,35 @@ or RC4 with an 84-bit key with this program.
 .\" ERRSTR
 .\"
 .Sh ERRSTR
+.Nm openssl errstr
+.Op Fl stats
+.Ar errno ...
+.Pp
 The
 .Nm errstr
-utility is currently undocumented.
+command performs error number to error string conversion,
+generating a human-readable string representing the error code
+.Ar errno .
+The string is obtained through the
+.Xr ERR_error_string_n 3
+function and has the following format:
+.Pp
+.Dl error:[error code]:[library name]:[function name]:[reason string]
+.Pp
+.Bq error code
+is an 8-digit hexadecimal number.
+The remaining fields
+.Bq library name ,
+.Bq function name ,
+and
+.Bq reason string
+are all ASCII text.
+.Pp
+The options are as follows:
+.Bl -tag -width "-stats"
+.It Fl stats
+Print debugging statistics about various aspects of the hash table. 
+.El
 .\"
 .\" GENDH
 .\"
@@ -8110,6 +8136,7 @@ certificates.
 .Xr crypto 3 ,
 .Xr des_crypt 3 ,
 .Xr dsa 3 ,
+.Xr ERR_error_string_n 3 ,
 .Xr HMAC 3 ,
 .Xr md4 3 ,
 .Xr md5 3 ,
