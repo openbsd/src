@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.6 2001/01/08 15:23:20 d Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.7 2001/08/23 16:32:19 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: strptime.c,v 1.6 2001/01/08 15:23:20 d Exp $";
 #include <time.h>
 #include <tzfile.h>
 
-#define	_ctloc(x)		__CONCAT(_CurrentTimeLocale->,x)
+#define	_ctloc(x)		(_CurrentTimeLocale->x)
 
 /*
  * We do not implement alternate representations. However, we always
