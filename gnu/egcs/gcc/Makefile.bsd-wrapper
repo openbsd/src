@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 2003/02/16 18:28:40 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2003/04/08 01:55:05 millert Exp $
 
 MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MLINKS+=	gcc.1 cc.1
@@ -105,14 +105,14 @@ install:	maninstall target_path
 		     intl.install lang.install-normal' \
 		NO_TARGET_GCC=true bindir=${DESTDIR}/usr/bin \
 		install
-	chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
+	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
 	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib
 #	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
-#		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
+#		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
 #		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
 #	fi
 	if [ -e ${DESTDIR}/usr/include/f2c.h ]; then \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
+		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
 		chmod 444 ${DESTDIR}/usr/include/f2c.h; \
 	fi
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 cpp \
