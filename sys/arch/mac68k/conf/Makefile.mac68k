@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.10 1996/08/10 21:37:40 briggs Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.11 1996/08/30 22:41:40 briggs Exp $
 #	$NetBSD: Makefile.mac68k,v 1.40 1996/08/10 06:09:07 mycroft Exp $
 
 # Makefile for NetBSD
@@ -29,7 +29,7 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S!=	cd ../../../..; pwd
+S=	../../../..
 MAC68K=	$S/arch/mac68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
