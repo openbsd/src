@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.3 2001/01/16 12:07:19 espie Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.4 2001/03/13 01:45:56 deraadt Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -267,17 +267,14 @@ struct audio_device maestro_audev = {
 };
 
 struct {
-	int vendor, product;
-	char *name;
+	u_short vendor, product;
 	int flags;
 } maestro_pcitab[] = {
-	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,
-	  "ESS Technology Maestro-2", 0 },
-	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
-	  "ESS Technology Maestro-2E", 0 },
-	{ 0x1285, 0x0100, "ESS Technology Maestro-1", 0 },
-	{ PCI_VENDOR_NEC, 0x8058, "NEC Versa(?)", MAESTRO_FLAG_SETUPGPIO },
-	{ PCI_VENDOR_NEC, 0x803c, "NEC VersaProNX VA26D", MAESTRO_FLAG_SETUPGPIO }
+	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,	0 },
+	{ PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,	0 },
+	{ PCI_VENDOR_PLATFORM, PCI_PRODUCT_PLATFORM_ES1849,	0 },
+	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAMAESTRO,		MAESTRO_FLAG_SETUPGPIO },
+	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAPRONXVA26D,	MAESTRO_FLAG_SETUPGPIO }
 };
 #define NMAESTRO_PCITAB	lengthof(maestro_pcitab)
 
@@ -311,7 +308,6 @@ maestro_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-/* This is grossly inelegant, but we can't store results at match time. */
 	if (maestro_get_flags(pa) == -1)
 		return (0);
 	else
@@ -335,7 +331,6 @@ maestro_attach(parent, self, aux)
 	int dmastage = 0;
 	int rseg;
 
-	printf("\n");
 	sc->sc_audev = &maestro_audev;
 	sc->flags = maestro_get_flags(pa);
 
@@ -346,19 +341,19 @@ maestro_attach(parent, self, aux)
 	/* Map interrupt */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
 	    &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, maestro_intr, sc,
 	    sc->dev.dv_xname);
 	if (sc->ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s\n", intrstr);
 		return;
 	}
-	printf("%s: interrupting at %s, ", sc->dev.dv_xname, intrstr);
+	printf(": %s", intrstr);
 
 	/* Rangers, power up */
 	maestro_power(sc, PPMI_D0);
@@ -367,7 +362,7 @@ maestro_attach(parent, self, aux)
 	/* Map i/o */
 	if ((error = pci_mapreg_map(pa, PCI_MAPS, PCI_MAPREG_TYPE_IO, 
 	    0, &sc->iot, &sc->ioh, NULL, NULL)) != 0) {
-		printf("couldn't map i/o space\n");
+		printf(", couldn't map i/o space\n");
 		goto bad;
 	};
 
@@ -381,30 +376,26 @@ maestro_attach(parent, self, aux)
 	sc->dmasize = MAESTRO_BUFSIZ * 16;
 	if ((error = bus_dmamem_alloc(sc->dmat, sc->dmasize, NBPG, 0, 
 	    &sc->dmaseg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to alloc dma, error %d\n",
-		    sc->dev.dv_xname, error);
+		printf(", unable to alloc dma, error %d\n", error);
 		goto bad;
 	}
 	dmastage = 1;
 	if ((error = bus_dmamem_map(sc->dmat, &sc->dmaseg, 1,
 	    sc->dmasize, &sc->dmabase, BUS_DMA_NOWAIT | 
 	    BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map dma, error %d\n",
-		    sc->dev.dv_xname, error);
+		printf(", unable to map dma, error %d\n", error);
 		goto bad;
 	}
 	dmastage = 2;
 	if ((error = bus_dmamap_create(sc->dmat, sc->dmasize, 1, 
 	    sc->dmasize, 0, BUS_DMA_NOWAIT, &sc->dmamap)) != 0) {
-		printf("%s: unable to create dma map, error %d\n",
-		    sc->dev.dv_xname, error);
+		printf(", unable to create dma map, error %d\n", error);
 		goto bad;
 	}
 	dmastage = 3;
 	if ((error = bus_dmamap_load(sc->dmat, sc->dmamap, 
 	    sc->dmabase, sc->dmasize, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load dma map, error %d\n",
-		    sc->dev.dv_xname, error);
+		printf(", unable to load dma map, error %d\n", error);
 		goto bad;
 	}
 
@@ -415,11 +406,13 @@ maestro_attach(parent, self, aux)
 	/* Make DMA memory pool */
 	if ((sc->dmapool = salloc_new(sc->dmabase+16, sc->dmasize-16,
 	    128/*overkill?*/)) == NULL) {
-		printf("%s: unable to make dma pool\n", sc->dev.dv_xname);
+		printf(", unable to make dma pool\n");
 		goto bad;
 	}
 	
 	sc->physaddr = sc->dmamap->dm_segs[0].ds_addr;
+
+	printf("\n");
 
 	/* Kick device */
 	maestro_init(sc);
