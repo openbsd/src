@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.112 2002/12/29 22:02:46 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.113 2002/12/31 01:39:46 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -432,10 +432,8 @@ pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
 			return (-1);
 		}
 		pa = calloc(1, sizeof(struct pf_pooladdr));
-		if (pa == NULL) {
+		if (pa == NULL)
 			err(1, "calloc");
-			return (-1);
-		}
 		bcopy(&pp.addr, pa, sizeof(struct pf_pooladdr));
 		TAILQ_INSERT_TAIL(&pool->list, pa, entries);
 	}
