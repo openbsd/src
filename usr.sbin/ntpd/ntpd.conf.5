@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.4 2004/07/07 08:36:26 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.5 2004/07/09 10:56:35 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -34,11 +34,6 @@ The settings are as follows:
 Specify a local IP address the
 .Xr ntpd 8
 daemon should listen on.
-For example:
-.Bd -literal -offset indent
-listen on 127.0.0.1
-.Ed
-.Pp
 It can appear multiple times:
 .Xr ntpd 8
 will listen on each given address.
@@ -49,13 +44,37 @@ is given as an address,
 will listen on all local addresses.
 .Xr ntpd 8
 does not listen on any address by default.
+For example:
+.Bd -literal -offset indent
+listen on *
+listen on 127.0.0.1
+listen on ::1
+.Ed
 .It Ar server
 Specify the IP address or the hostname of an NTP
 server to syncronize to.
+If the hostname resolves to multiple IPv4 and/or IPv6 adresses,
+.Xr ntpd 8
+uses the first address.
+If it does not get a reply,
+.Xr ntpd 8
+retries with the next address and continues to do so unless a working address
+is found.
 For example:
 .Bd -literal -offset indent
 server 10.0.0.2
-server pool.ntp.org
+server ntp.example.org
+.Ed
+.It Ar servers
+As with
+.Ar server ,
+specify the IP address or hostname of an ntp server to synchronize to.
+Should the hostname resolve to multiple IP adresses,
+.Xr ntpd 8
+will try synchronize to all of them.
+For example:
+.Bd -literal -offset indent
+servers pool.ntp.org
 .Ed
 .El
 .Sh FILES
