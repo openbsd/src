@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.4 2002/10/11 19:08:41 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.5 2002/11/12 18:56:28 drahn Exp $	*/
 /*
  * Atomic lock for powerpc
  */
@@ -10,11 +10,12 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 {
 	_spinlock_lock_t old;
 
-	__asm__("1: lwarx %0,0,%1  \n"
+	__asm__("1: lwarx 0,0,%1   \n"
 		"   stwcx. %2,0,%1 \n"
 		"   bne- 1b        \n"
+		"   mr %0, 0	   \n"
 		: "=r" (old), "=r" (lock)
-		: "r" (_SPINLOCK_LOCKED), "1" (lock)
+		: "r" (_SPINLOCK_LOCKED), "1" (lock) : "0"
 	);
 
 	return (old != _SPINLOCK_UNLOCKED);
