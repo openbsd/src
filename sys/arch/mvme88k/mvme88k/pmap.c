@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2001/11/28 15:34:16 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.49 2001/12/08 20:08:27 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -1919,15 +1919,15 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 		flush_atc_entry(users, tva, kflush);
 
 		if (opte.pte.modified) {
-			if (vm_physseg_find(atop(pa), NULL) != -1) {
+			if (PMAP_MANAGED(pa)) {
 				struct vm_page *pg;
 
 				pg = PHYS_TO_VM_PAGE(opte.bits & ~PAGE_MASK);
 				pg->flags &= ~PG_CLEAN;
-			}
-			/* keep track ourselves too */
-			if (PMAP_MANAGED(pa))
+
+				/* keep track ourselves too */
 				SET_ATTRIB(pa, 1);
+			}
 		}
 
 	} /* end for ( va = s; ...) */
