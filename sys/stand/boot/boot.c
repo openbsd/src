@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.16 1997/09/02 21:37:38 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.17 1998/02/24 22:16:02 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -52,7 +52,7 @@ boot(bootdev)
 	dev_t	bootdev;
 {
 	register const char *bootfile = kernels[0];
-	register int i = 0, f;
+	register int i = 0, try = 0, st;
 
 	machdep();
 
@@ -63,28 +63,35 @@ boot(bootdev)
 	cmd.addr = (void *)0x100000;
 	cmd.timeout = 5;
 
-	f = read_conf();
+	st = read_conf();
 
 	printf(">> OpenBSD BOOT %s\n", version);
 
 	while (1) {
-		if (f <= 0) /* no boot.conf, or no boot cmd in there */
+		if (st <= 0) /* no boot.conf, or no boot cmd in there */
 			do {
 				printf("boot> ");
 			} while(!getcmd());
-		f = 0;
+		st = 0;
 
 		printf("booting %s: ", cmd.path);
 		exec(cmd.path, cmd.addr, cmd.boothowto);
 
-		if (kernels[++i] == NULL)
+		if (kernels[++i] == NULL) {
+			try += 1;
 			bootfile = kernels[i=0];
-		else
+		} else
 			bootfile = kernels[i];
-
-		cmd.timeout++;
-		printf(" failed(%d). will try %s\n", errno, bootfile);
 		strncpy(cmd.image, bootfile, sizeof(cmd.image));
+		printf(" failed(%d). will try %s\n", errno, bootfile);
+
+		if (try < 2)
+			cmd.timeout++;
+		else {
+			if (cmd.timeout)
+				printf("Turning timeout off.\n");
+			cmd.timeout = 0;
+		}
 	}
 }
 

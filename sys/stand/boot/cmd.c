@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.35 1997/11/04 20:15:31 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.36 1998/02/24 22:16:03 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -50,6 +50,7 @@ static int Xdebug __P((void));
 static int Xhelp __P((void));
 static int Ximage __P((void));
 static int Xls __P((void));
+static int Xnop __P((void));
 static int Xreboot __P((void));
 static int Xset __P((void));
 static int Xstty __P((void));
@@ -75,7 +76,8 @@ static const struct cmd_table cmd_set[] = {
 };
 
 static const struct cmd_table cmd_table[] = {
-	{"boot",   CMDT_CMD, Xboot}, /* XXX must be first */
+	{"#",      CMDT_CMD, Xnop},  /* XXX must be first */
+	{"boot",   CMDT_CMD, Xboot},
 	{"echo",   CMDT_CMD, Xecho},
 	{"help",   CMDT_CMD, Xhelp},
 	{"ls",     CMDT_CMD, Xls},
@@ -161,7 +163,7 @@ static int
 docmd()
 {
 	register char *p = NULL;
-	const struct cmd_table *ct, *cs;
+	const struct cmd_table *ct = cmd_table, *cs;
 
 	cmd.argc = 1;
 	if (cmd.cmd == NULL) {
@@ -241,11 +243,17 @@ readline(buf, to)
 	register char *p = buf, *pe = buf, ch;
 	time_t tt;
 
-	for (tt = getsecs() + to; getsecs() < tt && !cnischar(); )
-		;
+	/* Only do timeout if greater than 0 */
+	if (to > 0) {
+		for (tt = getsecs() + to; getsecs() < tt && !cnischar(); )
+			;
 
-	if (!cnischar())
-		return 0;
+		if (!cnischar()) {
+			strncpy(buf, "boot", 5);
+			return strlen(buf);
+		}
+	} else
+		while (!cnischar()) ;
 
 	while (1) {
 		switch ((ch = getchar())) {
@@ -420,23 +428,10 @@ Ximage()
 static int
 Xaddr()
 {
-	register char *p;
-
 	if (cmd.argc != 2)
 		printf("%p", cmd.addr);
-	else {
-		register u_long a;
-
-		p = cmd.argv[1];
-		if (p[0] == '0' && p[1] == 'x')
-			p += 2;
-		for (a = 0; *p != '\0'; p++) {
-			a <<= 4;
-			a |= (isdigit(*p)? *p - '0':
-			      10 + tolower(*p) - 'a') & 0xf;
-		}
-		cmd.addr = (void *)a;
-	}
+	else
+		cmd.addr = (void *)strtol(cmd.argv[1], NULL, 0);
 	return 0;
 }
 
@@ -529,6 +524,19 @@ ls(name, sb)
 		(u_long)sb->st_size, name);
 }
 #undef lsrwx
+
+static int
+Xnop()
+{
+	static int doboot = 1;
+
+	if (doboot) {
+		doboot = 0;
+		return(Xboot());
+	}
+
+	return 0;
+}
 
 static int
 Xhowto()
