@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.3 1999/12/16 03:13:24 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.4 1999/12/16 03:13:46 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ int main __P((int argc, char *argv[]));
 /* static variables and functions */
 static int mobile_node = 0;
 static int do_dump;
-static char *dumpfilename = "/var/tmp/rtsold.dump"; /* XXX: should be configurable */
+static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
 static char *pidfilename = "/var/run/rtsold.pid"; /* should be configurable */
 
 static int ifconfig __P((char *ifname));
