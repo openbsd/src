@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.78 2002/06/11 17:43:46 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.79 2002/06/12 22:27:05 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -177,7 +177,7 @@ pfctl_enable(int dev, int opts)
 			err(1, "DIOCSTART");
 	}
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("pf enabled\n");
+		fprintf(stderr, "pf enabled\n");
 	return (0);
 }
 
@@ -191,7 +191,7 @@ pfctl_disable(int dev, int opts)
 			err(1, "DIOCSTOP");
 	}
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("pf disabled\n");
+		fprintf(stderr, "pf disabled\n");
 	return (0);
 }
 
@@ -201,7 +201,7 @@ pfctl_clear_stats(int dev, int opts)
 	if (ioctl(dev, DIOCCLRSTATUS))
 		err(1, "DIOCCLRSTATUS");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("pf: statistics cleared\n");
+		fprintf(stderr, "pf: statistics cleared\n");
 	return (0);
 }
 
@@ -215,7 +215,7 @@ pfctl_clear_rules(int dev, int opts)
 	else if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
 		err(1, "DIOCCOMMITRULES");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("rules cleared\n");
+		fprintf(stderr, "rules cleared\n");
 	return (0);
 }
 
@@ -239,7 +239,7 @@ pfctl_clear_nat(int dev, int opts)
 	else if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 		err(1, "DIOCCOMMITRDRS");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("nat cleared\n");
+		fprintf(stderr, "nat cleared\n");
 	return (0);
 }
 
@@ -249,7 +249,7 @@ pfctl_clear_states(int dev, int opts)
 	if (ioctl(dev, DIOCCLRSTATES))
 		err(1, "DIOCCLRSTATES");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("states cleared\n");
+		fprintf(stderr, "states cleared\n");
 	return (0);
 }
 
@@ -349,8 +349,8 @@ pfctl_kill_states(int dev, int opts)
 		freeaddrinfo(res[1]);
 
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("killed %d states from %d sources and %d destinations\n",
-		    killed, sources, dests);
+		fprintf(stderr, "killed %d states from %d sources and %d \
+		    destinations\n", killed, sources, dests);
 	return (0);
 }
 
@@ -616,10 +616,10 @@ pfctl_rules(int dev, char *filename, int opts)
 			err(1, "DIOCCOMMITRULES");
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
-			printf("%u nat entries loaded\n", n);
-			printf("%u rdr entries loaded\n", r);
-			printf("%u binat entries loaded\n", b);
-			printf("%u rules loaded\n", n);
+			fprintf(stderr, "%u nat entries loaded\n", n);
+			fprintf(stderr, "%u rdr entries loaded\n", r);
+			fprintf(stderr, "%u binat entries loaded\n", b);
+			fprintf(stderr, "%u rules loaded\n", n);
 		}
 #endif
 	}
@@ -637,7 +637,7 @@ pfctl_log(int dev, char *ifname, int opts)
 	if (ioctl(dev, DIOCSETSTATUSIF, &pi))
 		err(1, "DIOCSETSTATUSIF");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("now logging %s\n", pi.ifname);
+		fprintf(stderr, "now logging %s\n", pi.ifname);
 	return (0);
 }
 
@@ -835,7 +835,7 @@ pfctl_settimeout(int dev, const char *opt, int seconds)
 	if (ioctl(dev, DIOCSETTIMEOUT, &pt))
 		err(1, "DIOCSETTIMEOUT");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("%s timeout %ds -> %ds\n", pf_timeouts[i].name,
+		fprintf(stderr, "%s timeout %ds -> %ds\n", pf_timeouts[i].name,
 		    pt.seconds, seconds);
 	return (0);
 }
@@ -846,22 +846,22 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 	if (ioctl(dev, DIOCSETDEBUG, &level))
 		err(1, "DIOCSETDEBUG");
 	if ((opts & PF_OPT_QUIET) == 0) {
-		printf("debug level set to '");
+		fprintf(stderr, "debug level set to '");
 		switch (level) {
 		case PF_DEBUG_NONE:
-			printf("none");
+			fprintf(stderr, "none");
 			break;
 		case PF_DEBUG_URGENT:
-			printf("urgent");
+			fprintf(stderr, "urgent");
 			break;
 		case PF_DEBUG_MISC:
-			printf("misc");
+			fprintf(stderr, "misc");
 			break;
 		default:
-			printf("<invalid>");
+			fprintf(stderr, "<invalid>");
 			break;
 		}
-		printf("'\n");
+		fprintf(stderr, "'\n");
 	}
 	return (0);
 }
@@ -872,7 +872,7 @@ pfctl_clear_rule_counters(int dev, int opts)
 	if (ioctl(dev, DIOCCLRRULECTRS))
 		err(1, "DIOCCLRRULECTRS");
 	if ((opts & PF_OPT_QUIET) == 0)
-		printf("pf: rule counters cleared\n");
+		fprintf(stderr, "pf: rule counters cleared\n");
 	return (0);
 }
 
