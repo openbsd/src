@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.50 2005/02/14 14:25:33 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.51 2005/02/16 13:33:02 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -752,7 +752,39 @@ The time zone.
 The user who made the action.
 .El
 .Pp
-The other columns may vary depending on the command issued.
+The other columns vary depending on the command issued:
+.Pp
+For records coming from the
+.Ic rtag
+command, the additional columns are as follows:
+.Bd -literal -offset indent
+<module> [<tag>:<argument>] {<working directory>}
+.Ed
+.Pp
+For records coming from the
+.Ic checkout
+and
+.Ic export
+commands, the additional columns are as follows:
+.Bd -literal -offset indent
+<request> <repository> =<module>= <working directory>
+.Ed
+.Pp
+For records coming from the
+.Ic release
+command, the additional columns are as follows:
+.Bd -literal -offset indent
+=<module>= <working directory>
+.Ed
+.Pp
+For records coming from the
+.Ic commit
+and
+.Ic update
+commands, the additional columns are as follows:
+.Bd -literal -offset indent
+<version> <file> <module> == <working directory>
+.Ed
 .Pp
 Aliases:
 .Ic hi ,
