@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.20 2004/11/15 13:20:40 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.21 2004/11/18 21:51:43 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -43,10 +43,12 @@
 .Op Fl k Ar dscript
 .Op Fl L Ar localbase
 .Op Fl M Ar displayfile
+.Op Fl P Ar pkg-dependency
 .Op Fl p Ar prefix
 .Op Fl r Ar rscript
 .Op Fl S Ar pkg-destdir
 .Op Fl U Ar undisplayfile
+.Op Fl W Ar wantedlib
 .Fl c Ar desc
 .Fl d Ar desc
 .Fl f Ar packinglist
@@ -151,6 +153,10 @@ Display the file (using
 after installing the package.
 Useful for things like
 legal notices on almost-free software, etc.
+.It Fl P Ar pkg-dependency
+Specify a
+.Cm @depend
+dependency on the command line.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -184,6 +190,10 @@ when deinstalling the package.
 Useful for reminders about stuff to clean up.
 .It Fl v
 Turn on verbose output.
+.It Fl W Ar wantedlib
+Specify a
+.Cm @wantlib
+requirement on the command line.
 .El
 .Sh PACKING LIST DETAILS
 The
@@ -213,19 +223,13 @@ Imbed a comment in the packing list.
 Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
 Can also be used to comment out elements that update-plist
-.Po
-see
-.Xr bsd.port.mk 5
-.Pc
+.Pq see Xr bsd.port.mk 5
 will insist in inserting in a packing-list.
 .Pp
 .It Cm @conflict Ar pkgspec
 Declare a conflict with packages matching
 .Ar pkgspec
-.Po
-see
-.Xr packages-specs 7
-.Pc .
+.Pq see Xr packages-specs 7 .
 The
 .Ar pkgname
 package can
@@ -240,6 +244,26 @@ Set the package current directory.
 All subsequent filenames will be assumed relative to
 .Ar pathname .
 .Pp
+.It Xo
+.Cm @depend
+.Sm off
+.Ar pkgpath :
+.Ar pkgspec :
+.Ar default
+.Sm on
+.Xc
+Declare a dependency on a package matching
+.Ar pkgspec
+.Pq see Xr packages-specs 7 .
+An appropriate package must be installed before this package may be
+installed, and this package must be deinstalled before this package
+is deinstalled.
+The dependency also contains a
+.Ar pkgpath
+.Pq see Ev FULLPKGPATH in Xr bsd.port.mk 5
+and a
+.Ar default
+package name, in case there is no listing of available packages.
 .It Cm @dir Ar directoryname
 Create directory
 .Pa directoryname
@@ -526,6 +550,9 @@ package is deinstalled.
 Multiple
 .Cm @pkgdep
 directives may be used if the package depends on multiple other packages.
+Deprecated, use
+.Cm @depend
+instead.
 .Pp
 .It Cm @sample Ar filename
 Last preceding
@@ -574,6 +601,26 @@ Expansion of special
 .Cm \&%
 sequences is the same as for
 .Cm @exec .
+.It Cm @wantlib Ar libspec
+Package needs a shared library to work.
+.Ar libspec
+is
+.Sq name.major.minor
+or
+.Sq path/name.major.minor .
+The package won't be installed unless a library with the same name,
+the exact same major number and at least the same minor number can
+be located.
+A library without path is searched through dependent packages under the
+same
+.Ar localbase ,
+then in the system libraries under
+.Pa /usr/lib
+and
+.Pa /usr/X11R6/lib .
+A library with a path is only searched through dependent packages,
+that path being relative to
+.Ar localbase .
 .El
 .Sh VARIABLE SUBSTITUTION AND FRAGMENT INCLUSION
 In packing-lists, installation, deinstallation and requirement scripts,

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.24 2004/11/15 16:47:54 espie Exp $
+# $OpenBSD: pkg_create,v 1.25 2004/11/18 21:51:43 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -219,12 +219,13 @@ our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
 	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
-	$opt_M, $opt_U,
+	$opt_M, $opt_U, $opt_P, $opt_W,
 	$opt_B);
 
 my @contents;
 
-getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:', 
+my $plist = new OpenBSD::PackingList;
+getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -237,6 +238,12 @@ getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:',
 	 'f' =>
 	 	sub {
 			push(@contents, shift);
+		},
+	 'P' => sub {
+	 		OpenBSD::PackingElement::Dependency->add($plist, shift);
+		},
+	 'W' => sub {
+	 		OpenBSD::PackingElement::Wantlib->add($plist, shift);
 		}
 	});
 
@@ -304,7 +311,6 @@ if (defined $opt_U) {
     copy_subst($opt_U, $dir.UNDISPLAY);
 }
 
-my $plist = new OpenBSD::PackingList;
 my @extra_files = ();
 for my $special (info_names()) {
     next unless -f $dir.$special;
@@ -407,6 +413,9 @@ $plist->avert_duplicates();
 if (defined $plist->{pkgcfl}) {
 	print STDERR "Error: \@pkgcfl is obsolete, use \@conflict instead\n";
 	$errors++;
+}
+if (defined $plist->{pkgdep}) {
+	print STDERR "\@pkgdep is obsolete, use \@depend instead\n";
 }
 if ($errors) {
 	exit(1);
