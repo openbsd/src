@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2002/06/30 16:36:55 miod Exp $
+dnl	$OpenBSD: hardware,v 1.27 2002/10/07 20:16:51 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -6,8 +6,8 @@ here, please send mail to <alpha@openbsd.org> with as much information
 as possible.
 
 Supported hardware:
-    XP1000, DS10, DS20, 264DP, and other single processor EV6 machines
-    using the Tsunami chipset (only one processor on the DS20 will be used)
+    XP1000, DS10, DS20, 264DP, and other EV6 machines using the Tsunami
+    chipset (only one processor on the DS20 will be used)
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21143 ethernet.
@@ -223,6 +223,7 @@ Supported Peripherals:
 			Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
 			Intel EtherExpress PRO/100+ "Management Adapter"
 			Intel EtherExpress PRO/100 Dual Port
+			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
 		Novell NE1000, NE2000 (ISA and PCI variants thereof) (ne) [*]
 		RealTek 8129/8139-based adapters (rl), including: [*]
 			Accton MPX 5030/5038
@@ -243,16 +244,24 @@ Supported Peripherals:
 			Hawking PN102TX
 			D-Link DFE530TX
 	Gigabit Ethernet Adapters
-		Intel i82542, i82543, and i82544 based adapters (gx),
-		  including: [*]
-		  Often known as Intel Pro/1000 Gigabit Server Adapter
-			Intel i82542 1000BASE-X Ethernet
-			Intel i82543 1000BASE-X Ethernet
-			Intel i82543-SC 1000BASE-X Ethernet
-			Intel i82543 1000BASE-T Ethernet
-			Intel i82544 1000BASE-T Ethernet
-			Intel i82544 1000BASE-X Ethernet
-			Intel i82544GC 1000BASE-T Ethernet (32- and 64-bit)
+		Intel i82540, i82542, i82543, i82544, i82545, and i82546
+	       	  based adapters (em), including: [*]
+		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
+		      (PWLA8490)
+		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
+		      (PWLA8490SX)
+		    Intel PRO/1000T Server Adapter (PWLA8490T)
+		    Intel PRO/1000XT Server Adapter (PWLA8490XT)
+		    Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
+		    Intel PRO/1000T Desktop Adapter (PWLA8390T)
+		    Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
+		    Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
+		    Intel PRO/1000MT Server Adapter (PWLA8490MT)
+		    Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
+		    Intel PRO/1000MF Server Adapter (SX Fiber) (PWLA8490MF)
+		    Intel PRO/1000MF Dual Port Server Adapter (SX Fiber)
+		      (PWLA8492MF)
+		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 		Broadcom BCM570x (a.k.a. Tigon3) based PCI adapters (bge),
 		  including: [-]
 			3Com 3c996-T (10/100/1000baseTX)
@@ -270,8 +279,8 @@ Supported Peripherals:
 		Hifn 7751-based boards (hifn), including:
 		    Soekris Engineering vpn1201 and vpn1211
 		    GTGI PowerCrypt Encryption Accelerator
-		    NETSEC 7751
-		    HiFn reference board
+		    NetSec 7751
+		    Hifn reference board
 		    Invertex AEON
 	Sound Devices [*]
 		Ensoniq AudioPCI (eap)
@@ -323,6 +332,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Siemens SpeedStream USB
 			Smartbridces smartNIC 2
 			SMC 2202USB
+			SMC EZ Connect USB
 			SOHOware NUB100
 		AMD LANCE and PCnet-based PCI adapters (le), including: [*]
 			BOCALANcard/PCI
@@ -373,6 +383,10 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		  including: [*]
 			NetGear FA311
 			NetGear FA312
+		RealTek RTL8150L based USB adapters, including: [G]
+		    Melco Inc. LUA-KTX
+		    GreenHouse GH-USB100B
+		    Linksys USB100M
 		SiS 900 and SiS 7016-based PCI adapters (sis), including: [*]
 			Mototech ME313
 			NetSurf NS-KFE30D
