@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.19 2004/07/13 21:29:12 millert Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.20 2004/07/15 17:23:44 millert Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -45,28 +45,26 @@ void	to64(char *, int32_t, int n);
 char	*bcrypt_gensalt(u_int8_t);
 int	pwd_gensalt(char *, int, login_cap_t *, char);
 
+#define	YPCIPHER_DEF		"old"
+#define	LOCALCIPHER_DEF		"blowfish,6"
+
 int
 pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 {
-	char *next, *now, *cipher;
+	char *next, *now;
 
 	*salt = '\0';
 
 	switch (type) {
 	case 'y':
-		cipher = "ypcipher";
+		next = login_getcapstr(lc, "ypcipher", YPCIPHER_DEF,
+		    YPCIPHER_DEF);
 		break;
 	case 'l':
 	default:
-		cipher = "localcipher";
+		next = login_getcapstr(lc, "localcipher", LOCALCIPHER_DEF,
+		    LOCALCIPHER_DEF);
 		break;
-	}
-
-	if ((next = login_getcapstr(lc, cipher, NULL, NULL)) == NULL) {
-		if (type == 'y')
-			next = "old";
-		else		
-			next = "blowfish,6";
 	}
 
 	now = strsep(&next, ",");
