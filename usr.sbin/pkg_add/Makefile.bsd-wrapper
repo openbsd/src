@@ -1,13 +1,14 @@
 .BEGIN:
 	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
 
+MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1
 depend:
 	perl ${.CURDIR}/Makefile.PL
 
 all:
 	cd ${.OBJDIR} && exec ${MAKE}
 
-install:
+install: maninstall
 	cd ${.OBJDIR} && exec ${MAKE} pure_install
 	
 clean:
@@ -27,6 +28,4 @@ LNDIR=          /usr/bin/lndir
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-.ifndef NOMAN
-.  include <bsd.man.mk>
-.endif
+.include <bsd.man.mk>
