@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2001/06/23 19:46:59 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2001/06/27 05:15:40 art Exp $
 
 machine 	vax			# machine type
 
@@ -25,8 +25,6 @@ option 		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option 		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000/10{0,5,6}
-
-option		UVM			# VAX uses UVM; REQUIRED
 
 maxusers	8		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
