@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.341 2003/03/10 14:46:09 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.342 2003/03/10 14:50:29 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3137,8 +3137,8 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 {
 	struct node_queue	*n;
 	struct pf_altq		 pa;
-	u_int8_t		 added = 0;
 	u_int8_t		 found = 0;
+	u_int8_t		 errs = 0;
 
 	if ((pf->loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) == 0) {
 		FREE_LIST(struct node_queue, nqueues);
@@ -3191,10 +3191,12 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 			    sizeof(pa.parent)) >= sizeof(pa.parent))
 				errx(1, "expand_queue: strlcpy");
 
-			if (!eval_pfqueue(pf, &pa, bwspec.bw_absolute,
+			if (eval_pfqueue(pf, &pa, bwspec.bw_absolute,
 			    bwspec.bw_percent))
-				if (!pfctl_add_altq(pf, &pa))
-					added++;
+				errs++;
+			else
+				if (pfctl_add_altq(pf, &pa))
+					errs++;
 
 			if (nqueues == NULL)
 				continue;
@@ -3240,10 +3242,14 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 
 	FREE_LIST(struct node_queue, nqueues);
 
-	if (!added) {
-		yyerror("queue has no parent");
+	if (!found) {
+		yyerror("queue %s has no parent", a->qname);
+		errs++;
+	}
+
+	if (errs)
 		return (1);
-	} else
+	else
 		return (0);
 }
 
