@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.13 1999/05/06 17:37:13 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.14 1999/06/03 14:30:15 millert Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct kmemstats kmemstats[M_LAST];
 #endif
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 char *memname[] = INITKMEMNAMES;
 #endif
 
