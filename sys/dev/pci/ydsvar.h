@@ -1,4 +1,4 @@
-/*	$OpenBSD: ydsvar.h,v 1.3 2001/12/20 04:50:06 jcs Exp $	*/
+/*	$OpenBSD: ydsvar.h,v 1.4 2002/01/04 20:42:18 ericj Exp $	*/
 /*	$NetBSD$	*/
 
 /*
@@ -60,6 +60,7 @@ struct yds_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;
+	int			sc_revision;
 	void			*sc_ih;		/* interrupt vectoring */
 	bus_space_tag_t		memt;
 	bus_space_handle_t	memh;

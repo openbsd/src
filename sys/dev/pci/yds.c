@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.10 2001/12/20 04:50:06 jcs Exp $	*/
+/*	$OpenBSD: yds.c,v 1.11 2002/01/04 20:42:18 ericj Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -667,11 +667,8 @@ yds_attach(parent, self, aux)
 	char devinfo[256];
 	mixer_ctrl_t ctl;
 	int i, r;
-	int revision;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,
@@ -702,6 +699,7 @@ yds_attach(parent, self, aux)
 	sc->sc_pc = pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_id = pa->pa_id;
+	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	sc->sc_flags = yds_get_dstype(sc->sc_id);
 #ifdef AUDIO_DEBUG
 	if (ydsdebug)
@@ -847,6 +845,13 @@ yds_read_codec(sc_, reg, data)
 		return EIO;
 	}
 
+	if (PCI_PRODUCT(sc->sc->sc_id) == PCI_PRODUCT_YAMAHA_YMF744 &&
+	    sc->sc->sc_revision < 2) {
+		int i;
+
+		for (i = 0; i < 600; i++)
+			YREAD2(sc->sc, sc->status_data);
+	}
 	*data = YREAD2(sc->sc, sc->status_data);
 
 	return 0;
@@ -908,7 +913,7 @@ yds_intr(p)
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
 	if ((status & (YDS_STAT_INT|YDS_STAT_TINT)) == 0) {
-#if NMPU > 0
+#if 0
 		if (sc->sc_mpu)
 			return mpu_intr(sc->sc_mpu);
 #endif
