@@ -1199,3 +1199,12 @@
 ./usr/share/man/cat1/tic.0
 ./usr/share/man/cat1/captoinfo.0
 ./usr/share/man/cat1/lockspool.0
+./usr/share/man/cat5/dhclient.conf.0
+./usr/share/man/cat5/dhclient.leases.0
+./usr/share/man/cat5/dhcp-options.0
+./usr/share/man/cat5/dhcpd.conf.0
+./usr/share/man/cat5/dhcpd.leases.0
+./usr/share/man/cat8/dhclient-script.0
+./usr/share/man/cat8/dhclient.0
+./usr/share/man/cat8/dhcpd.0
+./usr/share/man/cat8/dhcrelay.0
