@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.34 2004/04/19 22:38:37 deraadt Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.35 2004/09/16 13:11:00 markus Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -133,6 +133,7 @@ do {									\
 #define	SS_ASYNC		0x200	/* async i/o notify */
 #define	SS_ISCONFIRMING		0x400	/* deciding to accept connection req */
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
+#define	SS_ISSENDING		0x2000	/* hint for lower layer */
 
 /*
  * Macros for sockets and socket buffering.
@@ -157,6 +158,10 @@ do {									\
 /* do we have to send all at once on a socket? */
 #define	sosendallatonce(so) \
     ((so)->so_proto->pr_flags & PR_ATOMIC)
+
+/* are we sending on this socket? */
+#define	soissending(so) \
+    ((so)->so_state & SS_ISSENDING)
 
 /* can we read something from so? */
 #define	soreadable(so) \
