@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.1 1997/05/07 12:46:55 niklas Exp $
+#	$OpenBSD: dot.profile,v 1.2 1997/05/08 06:13:42 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -39,6 +39,9 @@ export TERM
 echo 'erase ^?, werase ^H, kill ^U, intr ^C'
 stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
 echo ''
+
+# mount / rw
+mount /dev/rd0a /
 
 # pull in the function definitions that people will use from the shell prompt.
 . /.commonutils
