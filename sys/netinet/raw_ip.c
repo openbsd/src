@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.13 1998/12/26 12:35:12 provos Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.14 1999/01/08 21:51:23 provos Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -206,8 +206,10 @@ rip_output(m, va_alist)
 			m_freem(m);
 			return (EINVAL);
 		}
-		if (ip->ip_id == 0)
-			ip->ip_id = htons(ip_randomid());
+		if (ip->ip_id == 0) {
+			ip->ip_id = ip_randomid();
+			HTONS(ip->ip_id);
+		}
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
 		ipstat.ips_rawout++;
