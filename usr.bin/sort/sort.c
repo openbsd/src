@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.21 2003/06/10 22:20:51 deraadt Exp $	*/
+/*	$OpenBSD: sort.c,v 1.22 2003/06/26 00:12:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.21 2003/06/10 22:20:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.22 2003/06/26 00:12:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ static void usage(char *);
 int
 main(int argc, char *argv[])
 {
-	int (*get)();
+	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
 	int ch, i, stdinflag = 0, tmp = 0;
 	char nfields = 0, cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;

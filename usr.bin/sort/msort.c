@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.12 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.13 2003/06/26 00:12:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.12 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.13 2003/06/26 00:12:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,15 +71,14 @@ void
 fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 	union f_handle files;
 	int binno, nfiles;
-	int (*get)();
+	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
 	FILE *outfp;
-	void (*fput)();
+	void (*fput)(RECHEADER *, FILE *);
 	struct field *ftbl;
 {
 	FILE *tout;
 	int i, j, last;
 	void (*put)(RECHEADER *, FILE *);
-	extern int geteasy();
 	struct tempfile *l_fstack;
 
 	wts = ftbl->weights;
@@ -145,7 +144,7 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 void
 merge(infl0, nfiles, get, outfp, put, ftbl)
 	int infl0, nfiles;
-	int (*get)();
+	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
 	void (*put)(RECHEADER *, FILE *);
 	FILE *outfp;
 	struct field *ftbl;
@@ -256,7 +255,7 @@ insert(flist, rec, ttop, delete)
 void
 order(infile, get, ftbl)
 	union f_handle infile;
-	int (*get)();
+	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
 	struct field *ftbl;
 {
 	u_char *crec_end, *prec_end, *trec_end;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.14 2003/04/16 23:11:52 tdeval Exp $	*/
+/*	$OpenBSD: var.c,v 1.15 2003/06/26 00:09:45 deraadt Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -125,6 +125,8 @@ initvar()
  * non-zero if this is an array, sets *valp to the array index, returns
  * the basename of the array.
  */
+const char *array_index_calc(const char *n, bool_t *arrayp, int *valp);
+
 const char *
 array_index_calc(n, arrayp, valp)
 	const char *n;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 2003/06/26 00:12:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.5 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.6 2003/06/26 00:12:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,9 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.5 2003/06/03 02:56:16 millert Exp $"
 extern struct coldesc *clist;
 extern int ncols;
 u_char gweights[NBINS];
+
+static void insertcol(struct field *);
+char *setcolumn(char *, struct field *, int);
 
 /*
  * clist (list of columns which correspond to one or more icol or tcol)
@@ -150,7 +153,6 @@ setfield(pos, cur_fld, gflag)
 	int gflag;
 {
 	int tmp;
-	char *setcolumn();
 	cur_fld->weights = ascii;
 	cur_fld->mask = alltable;
 	pos = setcolumn(pos, cur_fld, gflag);

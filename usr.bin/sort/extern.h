@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2003/06/26 00:12:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,14 +34,16 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-void	 append(u_char **, int, int, FILE *, void (*)(), struct field *);
+void	 append(u_char **, int, int, FILE *, void (*)(RECHEADER *, FILE *),
+	    struct field *);
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, DBT *, int, struct field *);
 void	 fixit(int *, char **);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
-void	 fmerge(int, union f_handle,
-	    int, int (*)(), FILE *, void (*)(), struct field *);
+void	 fmerge(int, union f_handle, int,
+	    int (*)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
+	    FILE *, void (*)(RECHEADER *, FILE *), struct field *);
 void	 fsort(int, int, union f_handle, int, FILE *, struct field *);
 int	 geteasy(int, union f_handle,
 	    int, RECHEADER *, u_char *, struct field *);
@@ -51,11 +53,15 @@ int	 makekey(int, union f_handle,
 	    int, RECHEADER *, u_char *, struct field *);
 int	 makeline(int, union f_handle,
 	    int, RECHEADER *, u_char *, struct field *);
-void	 merge(int, int, int (*)(), FILE *, void (*)(), struct field *);
+void	 merge(int, int,
+	    int (*)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
+	    FILE *, void (*)(RECHEADER *, FILE *), struct field *);
 void	 num_init(void);
 void	 onepass(u_char **, int, long, long *, u_char *, FILE *);
 int	 optval(int, int);
-void	 order(union f_handle, int (*)(), struct field *);
+void	 order(union f_handle,
+	    int (*)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
+	    struct field *);
 void	 putline(RECHEADER *, FILE *);
 void	 putrec(RECHEADER *, FILE *);
 void	 rd_append(int, union f_handle, int, FILE *, u_char *, u_char *);
