@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.7 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: fork1.9,v 1.8 2004/03/16 17:48:36 tedu Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/proc.h>
 .Ft int
-.Fn "fork1" "struct proc *p1" "int flags" "void *stack" "size_t stacksize" "register_t *retval"
+.Fn "fork1" "struct proc *p1" "int exitsig" "int flags" "void *stack" "size_t stacksize" "void (*func)(void *)" "void *arg" "register_t *retval"
 .Sh DESCRIPTION
 .Fn fork1
 creates a new process out of
@@ -128,6 +128,26 @@ This will contain the pid of the child process.
 In the parent process, this will contain the value 0.
 In the child process, this will contain 1.
 .El
+.Pp
+The signal
+.Fa exitsig
+is sent to the parent
+.Fa p1
+on exit of the new process.
+.Pp
+If
+.Fa func
+is not
+.Dv NULL ,
+the new process will begin execution by calling this function.
+It defaults to child_return, which returns to userland.
+.Pp
+If
+.Fa arg
+is not
+.Dv NULL ,
+it is the argument to the previous function.
+It defaults to a pointer to the new process.
 .Sh RETURN VALUES
 Upon successful completion of the fork operation,
 .Fn fork1
@@ -149,7 +169,8 @@ user id would be exceeded.
 .Xr vfork 2 ,
 .Xr kthread_create 9 ,
 .Xr pfind 9 ,
-.Xr psignal 9
+.Xr psignal 9 ,
+.Xr uvm_fork 9
 .Sh CAVEATS
 The
 .Nm
