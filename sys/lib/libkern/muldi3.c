@@ -1,4 +1,4 @@
-/*	$OpenBSD: muldi3.c,v 1.2 1997/11/07 15:56:46 niklas Exp $	*/
+/*	$OpenBSD: muldi3.c,v 1.3 1998/06/27 00:32:26 mickey Exp $	*/
 /*	$NetBSD: muldi3.c,v 1.5 1995/10/07 09:26:33 mycroft Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)muldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: muldi3.c,v 1.2 1997/11/07 15:56:46 niklas Exp $";
+static char rcsid[] = "$OpenBSD: muldi3.c,v 1.3 1998/06/27 00:32:26 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,7 +105,7 @@ static char rcsid[] = "$OpenBSD: muldi3.c,v 1.2 1997/11/07 15:56:46 niklas Exp $
  * of 2^n in either one will also vanish.  Only `low' need be computed
  * mod 2^2n, and only because of the final term above.
  */
-static quad_t __lmulq(u_long, u_long);
+static quad_t __lmulq __P((u_long, u_long));
 
 quad_t
 __muldi3(a, b)
@@ -193,7 +193,9 @@ __muldi3(a, b)
  * splits into high and low longs as HHALF(l) and LHUP(l) respectively.
  */
 static quad_t
-__lmulq(u_long u, u_long v)
+__lmulq(u, v)
+	u_long u;
+	u_long v;
 {
 	u_long u1, u0, v1, v0, udiff, vdiff, high, mid, low;
 	u_long prodh, prodl, was;

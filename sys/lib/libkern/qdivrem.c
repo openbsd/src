@@ -1,4 +1,4 @@
-/*	$OpenBSD: qdivrem.c,v 1.2 1997/11/07 15:56:48 niklas Exp $	*/
+/*	$OpenBSD: qdivrem.c,v 1.3 1998/06/27 00:32:27 mickey Exp $	*/
 /*	$NetBSD: qdivrem.c,v 1.5 1995/10/07 09:26:40 mycroft Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #ifdef notdef
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$OpenBSD: qdivrem.c,v 1.2 1997/11/07 15:56:48 niklas Exp $";
+static char rcsid[] = "$OpenBSD: qdivrem.c,v 1.3 1998/06/27 00:32:27 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -277,7 +277,10 @@ __qdivrem(uq, vq, arq)
  * We may assume len >= 0.  NOTE THAT THIS WRITES len+1 DIGITS.
  */
 static void
-shl(register digit *p, register int len, register int sh)
+shl(p, len, sh)
+	register digit *p;
+	register int len;
+	register int sh;
 {
 	register int i;
 
