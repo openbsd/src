@@ -1,4 +1,4 @@
-/*	$OpenBSD: addcom_isa.c,v 1.2 2001/07/17 18:27:52 jason Exp $	*/
+/*	$OpenBSD: addcom_isa.c,v 1.3 2001/07/20 14:26:28 jason Exp $	*/
 /*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ struct addcom_softc {
 	int sc_alive;			/* mask of slave units attached */
 	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 	bus_space_handle_t sc_slaveioh[NSLAVES];
+	bus_space_handle_t sc_statusioh;
 };
 
 #define SLAVE_IOBASE_OFFSET 0x108
@@ -202,6 +203,12 @@ addcomattach(parent, self, aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
+	if (bus_space_map(iot, STATUS_IOADDR, STATUS_SIZE,
+	    0, &sc->sc_statusioh)) {
+		printf("%s: can't map status space\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	for (i = 0; i < NSLAVES; i++) {
 		iobase = sc->sc_iobase
 		    + slave_iobases[i]
@@ -240,11 +247,20 @@ addcomintr(arg)
 	void *arg;
 {
 	struct addcom_softc *sc = arg;
-	int i, r = 0;
+	int i, r = 0, n = 1, t;
 
-	for (i = 0; i < NSLAVES; i++)
-		if (sc->sc_alive & (1 << i))
-			r |= comintr(sc->sc_slaves[i]);
+	while (n) {
+		n = 0;
+		for (i = 0; i < NSLAVES; i++) {
+			if (sc->sc_alive & (1 << i)) {
+				t = comintr(sc->sc_slaves[i]);
+				if (t) {
+					n++;
+					r |= t;
+				}
+			}
+		}
+	}
 
 	return (r);
 }
