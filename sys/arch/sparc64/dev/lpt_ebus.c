@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ebus.c,v 1.2 2002/03/20 06:54:06 jason Exp $	*/
+/*	$OpenBSD: lpt_ebus.c,v 1.3 2002/04/16 16:19:32 jason Exp $	*/
 /*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
@@ -53,8 +53,6 @@ struct cfattach lpt_ebus_ca = {
 	sizeof(struct lpt_softc), lpt_ebus_match, lpt_ebus_attach
 };
 
-#define	ROM_LPT_NAME	"ecpp"
-
 int
 lpt_ebus_match(parent, match, aux)
 	struct device *parent;
@@ -63,7 +61,7 @@ lpt_ebus_match(parent, match, aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	if (strcmp(ea->ea_name, ROM_LPT_NAME) == 0)
+	if (strcmp(ea->ea_name, "ecpp") == 0)
 		return (1);
 
 	return (0);
@@ -79,31 +77,16 @@ lpt_ebus_attach(parent, self, aux)
 	int i;
 
 	sc->sc_iot = ea->ea_bustag;
-	/*
-	 * Addresses that shoud be supplied by the prom:
-	 *	- normal lpt registers
-	 *	- ns873xx configuration registers
-	 *	- DMA space
-	 * The `lpt' driver does not use DMA accesses, so we can
-	 * ignore that for now.  We should enable the lpt port in
-	 * the ns873xx registers here. XXX
-	 *
-	 * Use the prom address if there.
-	 */
-	if (ea->ea_nvaddrs)
-		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
-	else if (ebus_bus_map(sc->sc_iot, 0,
-			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-			      ea->ea_regs[0].size,
-			      BUS_SPACE_MAP_LINEAR,
-			      0, &sc->sc_ioh) != 0) {
+
+	if (ebus_bus_map(sc->sc_iot, 0, EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_ioh) != 0) {
 		printf(": can't map register space\n");
                 return;
 	}
 
 	for (i = 0; i < ea->ea_nintrs; i++)
-		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i],
-				   IPL_SERIAL, 0, lptintr, sc);
+		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i], IPL_SERIAL,
+		    0, lptintr, sc);
 
 	lpt_attach_common(sc);
 }
