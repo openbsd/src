@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.4 2002/01/22 21:48:43 ericj Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.5 2002/01/23 03:20:41 ericj Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -109,6 +109,12 @@ extern void dec_eb164_init __P((void));
 #define	dec_eb164_init		platform_not_configured
 #endif
 
+#ifdef DEC_EB64PLUS
+extern void dec_eb64plus_init __P((void));
+#else
+#define dec_eb64plus_init __P((void));
+#endif
+
 #ifdef	DEC_KN300
 extern void dec_kn300_init __P((void));
 #else
@@ -150,7 +156,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_init(ST_DEC_KN20AA, dec_kn20aa_init, "DEC_KN20AA"),
 	cpu_notsupp(ST_DEC_1000, "DEC_1000"),
 	cpu_notsupp(ST_EB66, "DEC_EB66"),
-	cpu_notsupp(ST_EB64P, "DEC_EB64PLUS"),
+	cpu_init(ST_EB64P, dec_eb64plus_init, "DEC_EB64PLUS"),
 	cpu_notsupp(ST_ALPHABOOK1, "DEC_ALPHABOOK1"),
 	cpu_notsupp(ST_DEC_4100, "DEC_KN300"),
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),

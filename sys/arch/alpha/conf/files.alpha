@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.53 2001/11/05 02:41:01 art Exp $
+#	$OpenBSD: files.alpha,v 1.54 2002/01/23 03:20:41 ericj Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -11,7 +11,8 @@ maxusers 2 8 64
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
 file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
-					dec_kn20aa | dec_6600 | dec_550
+					dec_kn20aa | dec_6600 | dec_550 |
+					dec_eb64plus
 
 define	alpha_sgmap
 file	arch/alpha/dev/sgmap_common.c alpha_sgmap | dec_3000_500
@@ -224,14 +225,16 @@ file    arch/alpha/pci/tsp_pci.c        tsp
 file    arch/alpha/pci/tsp_bus_io.c     tsp
 file    arch/alpha/pci/tsp_bus_mem.c    tsp
 
-file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
-file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
-file	arch/alpha/pci/pci_eb164.c	dec_eb164
-file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
-file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
-file	arch/alpha/pci/pci_550.c	dec_550
-file	arch/alpha/pci/pci_6600.c	dec_6600
-file	arch/alpha/pci/pci_up1000.c	api_up1000
+file	arch/alpha/pci/pci_2100_a50.c		dec_2100_a50
+file	arch/alpha/pci/pci_axppci_33.c		dec_axppci_33
+file	arch/alpha/pci/pci_eb164.c		dec_eb164
+file	arch/alpha/pci/pci_eb164_intr.s		dec_eb164
+file	arch/alpha/pci/pci_eb64plus.c		dec_eb64plus
+file	arch/alpha/pci/pci_eb64plus_intr.s	dec_eb64plus
+file	arch/alpha/pci/pci_kn20aa.c		dec_kn20aa
+file	arch/alpha/pci/pci_550.c		dec_550
+file	arch/alpha/pci/pci_6600.c		dec_6600
+file	arch/alpha/pci/pci_up1000.c		api_up1000
 
 #
 # PCI Bus devices
@@ -312,6 +315,7 @@ file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
+file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file    arch/alpha/alpha/dec_6600.c             dec_6600	needs-flag
