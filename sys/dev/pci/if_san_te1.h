@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.h,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+/*	$OpenBSD: if_san_te1.h,v 1.3 2004/06/27 01:54:21 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -41,14 +41,8 @@
 # define EXTERN extern
 #endif
 
-/***********************************************************************
-*		     		INCLUDE				       *
-***********************************************************************/
 # include <dev/pci/if_san_front_end.h>
 
-/***********************************************************************
-*		     	DEFINES AND MACROS			       *
-***********************************************************************/
 
 #define REG_GLOBAL_CFG			0x00
 #define BIT_GLOBAL_PIO_OE		0x80
@@ -227,8 +221,8 @@
 
 /* T1 XBOC Code */
 #define REG_T1_XBOC_CODE		0x67
-#define MASK_T1_XBOC_CODE		0x3F 
- 
+#define MASK_T1_XBOC_CODE		0x3F
+
 /* T1 RBOC Enable */
 #define REG_T1_RBOC_ENABLE		0x6A
 #define BIT_T1_RBOC_ENABLE_IDLE		0x04
@@ -352,7 +346,7 @@
 
 /* RDLC Data */
 #define REG_RDLC_DATA			0xC3
- 
+
 #define REG_CSU_CFG			0xD6
 #define MASK_CSU_CFG			0xC7
 #define BIT_CSU_MODE2			0x04
@@ -360,13 +354,13 @@
 #define BIT_CSU_MODE0			0x01
 
 /* RLPS Equalization Indirect Data (MSB) */
-#define REG_RLPS_IND_DATA_1		0xD8	
-/* RLPS Equalization Indirect Data		 */
-#define REG_RLPS_IND_DATA_2		0xD9	
-/* RLPS Equalization Indirect Data		 */
-#define REG_RLPS_IND_DATA_3		0xDA	
+#define REG_RLPS_IND_DATA_1		0xD8
+/* RLPS Equalization Indirect Data */
+#define REG_RLPS_IND_DATA_2		0xD9
+/* RLPS Equalization Indirect Data */
+#define REG_RLPS_IND_DATA_3		0xDA
 /* RLPS Equalization Indirect Data (LSB) */
-#define REG_RLPS_IND_DATA_4		0xDB	
+#define REG_RLPS_IND_DATA_4		0xDB
 
 #define REG_EQ_VREF				0xDC
 
@@ -465,13 +459,13 @@
 #define BIT_INT_SRC_3_TRAN		0x04
 #define BIT_INT_SRC_3_RLPS		0x02
 #define BIT_INT_SRC_3_BTIF		0x01
- 
+
 #define REG_CDRC_INT_EN			0x11
 #define BIT_CDRC_INT_EN_LCVE		0x80
 #define BIT_CDRC_INT_EN_LOSE		0x40
 #define BIT_CDRC_INT_EN_LCSDE		0x20
 #define BIT_CDRC_INT_EN_ZNDE		0x10
- 
+
 #define REG_CDRC_INT_STATUS		0x12
 #define BIT_CDRC_INT_STATUS_LCVI	0x80
 #define BIT_CDRC_INT_STATUS_LOSI	0x40
@@ -486,7 +480,7 @@
 #define REG_TJAT_INT_STATUS		0x18
 #define BIT_TJAT_INT_STATUS_OVRI	0x02
 #define BIT_TJAT_INT_STATUS_UNDI	0x01
- 
+
 #define REG_RX_ELST_INT_EN_STATUS	0x1D
 #define BIT_RX_ELST_INT_EN_STATUS_SLIPE	0x04
 #define BIT_RX_ELST_INT_EN_STATUS_SLIPD	0x02
@@ -503,7 +497,7 @@
 #define BIT_T1_FRMR_INT_EN_BEEE		0x08
 #define BIT_T1_FRMR_INT_EN_SFEE		0x04
 #define BIT_T1_FRMR_INT_EN_MFPE		0x02
-#define BIT_T1_FRMR_INT_EN_INFRE	0x01	
+#define BIT_T1_FRMR_INT_EN_INFRE	0x01
 
 #define REG_T1_FRMR_INT_STATUS		0x4A
 #define BIT_T1_FRMR_INT_STATUS_COFAI	0x80
@@ -587,7 +581,7 @@
 #define BIT_XPDE_INT_EN_STATUS_PDVI	0x04
 #define BIT_XPDE_INT_EN_STATUS_Z16DE	0x02
 #define BIT_XPDE_INT_EN_STATUS_PDVE	0x01
- 
+
 #define REG_T1_APRM_INT_STATUS		0x7A
 #define BIT_T1_APRM_INT_STATUS_INTR	0x01
 
@@ -614,8 +608,8 @@
 #define BIT_E1_FRMR_FRM_STAT_INT_EN_FERE	0x04
 #define BIT_E1_FRMR_FRM_STAT_INT_EN_SMFERE	0x02
 #define BIT_E1_FRMR_FRM_STAT_INT_EN_CMFERE	0x01
- 
-#define REG_E1_FRMR_M_A_INT_EN 		0x93
+
+#define REG_E1_FRMR_M_A_INT_EN		0x93
 #define BIT_E1_FRMR_M_A_INT_EN_RAIE	0x80
 #define BIT_E1_FRMR_M_A_INT_EN_RMAIE	0x40
 #define BIT_E1_FRMR_M_A_INT_EN_AISDE	0x20
@@ -625,24 +619,24 @@
 #define BIT_E1_FRMR_M_A_INT_EN_CRCEE	0x01
 
 /* E1 FRMR Framing status Interrupt Indication */
-#define REG_E1_FRMR_FRM_STAT_INT_IND 		0x94
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_C2NCIWI 	0x80
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_OOFI 	0x40
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_OOSMFI 	0x20
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_OOCMFI 	0x10
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_COFAI 	0x08
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_FERI 	0x04
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_SMFERI 	0x02
-#define BIT_E1_FRMR_FRM_STAT_INT_IND_CMFERI 	0x01
+#define REG_E1_FRMR_FRM_STAT_INT_IND		0x94
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_C2NCIWI	0x80
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_OOFI	0x40
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_OOSMFI	0x20
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_OOCMFI	0x10
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_COFAI	0x08
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_FERI	0x04
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_SMFERI	0x02
+#define BIT_E1_FRMR_FRM_STAT_INT_IND_CMFERI	0x01
 
-#define REG_E1_FRMR_M_A_INT_IND 	0x95
-#define BIT_E1_FRMR_M_A_INT_IND_RAII 	0x80
-#define BIT_E1_FRMR_M_A_INT_IND_FMAII 	0x40
-#define BIT_E1_FRMR_M_A_INT_IND_AISDI 	0x20
-#define BIT_E1_FRMR_M_A_INT_IND_REDI 	0x08
-#define BIT_E1_FRMR_M_A_INT_IND_AISI 	0x04
-#define BIT_E1_FRMR_M_A_INT_IND_FEBEI 	0x02
-#define BIT_E1_FRMR_M_A_INT_IND_CRCEI 	0x01
+#define REG_E1_FRMR_M_A_INT_IND		0x95
+#define BIT_E1_FRMR_M_A_INT_IND_RAII	0x80
+#define BIT_E1_FRMR_M_A_INT_IND_FMAII	0x40
+#define BIT_E1_FRMR_M_A_INT_IND_AISDI	0x20
+#define BIT_E1_FRMR_M_A_INT_IND_REDI	0x08
+#define BIT_E1_FRMR_M_A_INT_IND_AISI	0x04
+#define BIT_E1_FRMR_M_A_INT_IND_FEBEI	0x02
+#define BIT_E1_FRMR_M_A_INT_IND_CRCEI	0x01
 
 #define REG_E1_FRMR_P_A_INT_EN		0x9E
 #define BIT_E1_FRMR_P_A_INT_EN_OOOFE	0x80
@@ -664,11 +658,6 @@
 #define BIT_E1_FRMR_P_A_INT_STAT_ICMFPI		0x02
 #define BIT_E1_FRMR_P_A_INT_STAT_ISMFPI		0x01
 
-/*
-*************************************************************************
-*			  DEFINES AND MACROS				*
-*************************************************************************
-*/
 
 /*The line code */
 #define WANOPT_LC_AMI           0x01
@@ -723,8 +712,8 @@
 #define BIT_OOOF_ALARM		0x0100
 #define BIT_RAI_ALARM		0x0200
 #define BIT_YEL_ALARM		0x0400
-#define BIT_LOOPUP_CODE		0x2000	
-#define BIT_LOOPDOWN_CODE	0x4000	
+#define BIT_LOOPUP_CODE		0x2000
+#define BIT_LOOPDOWN_CODE	0x4000
 #define BIT_TE1_ALARM		0x8000	/* for Windows only */
 
 /* Performamce monitor counter defines */
@@ -752,7 +741,7 @@
 #define LINELB_ACTIVATE_CODE	0x07
 #define LINELB_DEACTIVATE_CODE	0x1C
 #define LINELB_DS3LINE		0x1B
-#define LINELB_DS1LINE_1	0x21	
+#define LINELB_DS1LINE_1	0x21
 #define LINELB_DS1LINE_2	0x22
 #define LINELB_DS1LINE_3	0x23
 #define LINELB_DS1LINE_4	0x24
@@ -787,16 +776,16 @@
 #define POLLING_TE1_TIMER	1000	/* 1 sec */
 
 /* TE1 critical flag */
-#define TE_TIMER_RUNNING 	0x01
-#define TE_TIMER_KILL 		0x02
+#define TE_TIMER_RUNNING	0x01
+#define TE_TIMER_KILL		0x02
 #define LINELB_WAITING		0x03
 #define LINELB_CODE_BIT		0x04
 #define LINELB_CHANNEL_BIT	0x05
 #define TE_CONFIGURED		0x06
 
 #if 0
-#define TE_TIMER_RUNNING 	0x01
-#define TE_TIMER_KILL 		0x02
+#define TE_TIMER_RUNNING	0x01
+#define TE_TIMER_KILL		0x02
 #define LINELB_WAITING		0x04
 #define LINELB_CODE_BIT		0x08
 #define LINELB_CHANNEL_BIT	0x10
@@ -815,14 +804,14 @@
 #define IS_T1(te_cfg)	((te_cfg)->media == WANOPT_MEDIA_T1)
 #define IS_E1(te_cfg)	((te_cfg)->media == WANOPT_MEDIA_E1)
 
-#define IS_TE1(te_cfg)	(IS_T1(te_cfg) || IS_E1(te_cfg)) 
+#define IS_TE1(te_cfg)	(IS_T1(te_cfg) || IS_E1(te_cfg))
 
 #define IS_TE1_UNFRAMED(card)   ((card)->te_cfg.frame == WANOPT_FR_UNFRAMED)
- 
+
 #define GET_TE_CHANNEL_RANGE(card)				\
 		(IS_T1(&card->te_cfg) ? NUM_OF_T1_CHANNELS :	\
 		 IS_E1(&card->te_cfg) ? NUM_OF_E1_CHANNELS :0)
-			
+
 #define ALOS_ALARM(val)		(val & BIT_ALOS_ALARM) ? "ON" : "OFF"
 #define LOS_ALARM(val)		(val & BIT_LOS_ALARM) ? "ON" : "OFF"
 #define ALTLOS_ALARM(val)	(val & BIT_ALTLOS_ALARM) ? "ON" : "OFF"
@@ -843,34 +832,30 @@
 				(val == WANOPT_LC_HDB3) ? "HDB3" : "Unknown"
 
 #define FRAME_DECODE(val)	(val == WANOPT_FR_ESF)		? "ESF"  : \
-				(val == WANOPT_FR_D4) 		? "D4"   : \
+				(val == WANOPT_FR_D4)		? "D4"   : \
 				(val == WANOPT_FR_CRC4)		? "CRC4" : \
 				(val == WANOPT_FR_NCRC4)	? "non-CRC4" :	\
-				(val == WANOPT_FR_UNFRAMED)	? "Unframed" : "Unknown"
+				(val == WANOPT_FR_UNFRAMED)	? \
+				    "Unframed" : "Unknown"
 
 #define TECLK_DECODE(val)	(val == WANOPT_NORMAL_CLK) ? "Normal" :	\
-				(val == WANOPT_MASTER_CLK) ? "Master" : "Unknown"
+				(val == WANOPT_MASTER_CLK) ? "Master" : \
+				"Unknown"
 
-#define LBO_DECODE(val)		(val == WANOPT_T1_LBO_0_DB)	? "0db" :	\
-				(val == WANOPT_T1_LBO_75_DB)	? "7.5db" :	\
-				(val == WANOPT_T1_LBO_15_DB)	? "15dB" :	\
-				(val == WANOPT_T1_LBO_225_DB)	? "22.5dB" :	\
-				(val == WANOPT_T1_0_110)	? "0-110ft" :	\
-				(val == WANOPT_T1_110_220)	? "110-220ft" :	\
-				(val == WANOPT_T1_220_330)	? "220-330ft" :	\
-				(val == WANOPT_T1_330_440)	? "330-440ft" :	\
-				(val == WANOPT_T1_440_550)	? "440-550ft" :	\
-				(val == WANOPT_T1_550_660)	? "550-660ft" : "Unknown"
+#define LBO_DECODE(val)		\
+	(val == WANOPT_T1_LBO_0_DB)	? "0db" :	\
+	(val == WANOPT_T1_LBO_75_DB)	? "7.5db" :	\
+	(val == WANOPT_T1_LBO_15_DB)	? "15dB" :	\
+	(val == WANOPT_T1_LBO_225_DB)	? "22.5dB" :	\
+	(val == WANOPT_T1_0_110)	? "0-110ft" :	\
+	(val == WANOPT_T1_110_220)	? "110-220ft" :	\
+	(val == WANOPT_T1_220_330)	? "220-330ft" :	\
+	(val == WANOPT_T1_330_440)	? "330-440ft" :	\
+	(val == WANOPT_T1_440_550)	? "440-550ft" :	\
+	(val == WANOPT_T1_550_660)	? "550-660ft" : "Unknown"
 
-	
+
 /*
- ******************************************************************************
-			STRUCTURES AND TYPEDEFS
- ******************************************************************************
-*/
-
-
-/*----------------------------------------------------------------------------
  * T1/E1 configuration structures.
  */
 typedef struct sdla_te_cfg {
@@ -893,9 +878,9 @@ typedef struct pmc_pmon {
 
 #ifdef _KERNEL
 
-/* -----------------------------------------------------------------------------
+/* 
  * Constants for the SET_T1_E1_SIGNALING_CFG/READ_T1_E1_SIGNALING_CFG commands
- * ---------------------------------------------------------------------------*/
+ */
 
 /* the structure for setting the signaling permission */
 #pragma pack(1)
@@ -908,11 +893,11 @@ typedef struct {
 #define TE_SIG_DISABLED		0x00 /* signaling is disabled */
 #define TE_RX_SIG_ENABLED	0x01 /* receive signaling is enabled */
 #define TE_TX_SIG_ENABLED	0x02 /* transmit signaling is enabled */
-#define TE_SET_TX_SIG_BITS	0x80 /* a flag indicating that outgoing 
+#define TE_SET_TX_SIG_BITS	0x80 /* a flag indicating that outgoing
 					signaling bits should be set */
 
-/* the structure used for the 
- * SET_T1_E1_SIGNALING_CFG/READ_T1_E1_SIGNALING_CFG command 
+/* the structure used for the
+ * SET_T1_E1_SIGNALING_CFG/READ_T1_E1_SIGNALING_CFG command
  */
 #pragma pack(1)
 typedef struct {
@@ -947,41 +932,35 @@ typedef struct {
 	unsigned long	ptr_te_Tx_sig_off;
 
 	sdla_te_cfg_t	te_cfg;		/* TE1 hw configuration */
-	unsigned long 	te_alarm;	/* TE1 alarm */
+	unsigned long	te_alarm;	/* TE1 alarm */
 	pmc_pmon_t	te_pmon;	/* TE PMON counters */
-	unsigned char 	te_rx_lb_cmd;	/* Received LB cmd */	
-	unsigned long 	te_rx_lb_time;	/* Time when LB cmd received */	
+	unsigned char	te_rx_lb_cmd;	/* Received LB cmd */
+	unsigned long	te_rx_lb_time;	/* Time when LB cmd received */
 
-	unsigned char 	te_tx_lb_cmd;	/* Received LB cmd */	
-	unsigned long 	te_tx_lb_cnt;	/* Time when LB cmd received */
-	unsigned char 	te_critical;	/* T1/E1 critical flag */	
-	struct timeout	te_timer;	/* Timer  */	
-	unsigned char	te_timer_cmd;	
+	unsigned char	te_tx_lb_cmd;	/* Received LB cmd */
+	unsigned long	te_tx_lb_cnt;	/* Time when LB cmd received */
+	unsigned char	te_critical;	/* T1/E1 critical flag */
+	struct timeout	te_timer;	/* Timer  */
+	unsigned char	te_timer_cmd;
 } sdla_te_softc_t;
 
 
-
-/*
- ******************************************************************************
-			  FUNCTION PROTOTYPES
- ******************************************************************************
-*/
-EXTERN int sdla_te_defcfg(void*);
-EXTERN int sdla_te_setcfg(void*,struct ifmedia*);
-EXTERN void sdla_te_settimeslot(void*,unsigned long);
-EXTERN unsigned long sdla_te_gettimeslot(void*);
-EXTERN short sdla_te_config(void*);
-EXTERN void sdla_te_unconfig(void*);
-EXTERN unsigned long sdla_te_alarm(void*, int);
-EXTERN void sdla_te_alarm_print(void*);
-EXTERN void sdla_te_pmon(void*);
-EXTERN void sdla_flush_te1_pmon(void*);
-EXTERN void sdla_te_intr(void*);
-EXTERN int sdla_set_te1_lb_modes(void*, unsigned char, unsigned char);
-EXTERN void sdla_te_polling(void* card_id);
-EXTERN void sdla_te_timer(void*);
-EXTERN int sdla_te_udp(void*, void*, unsigned char *);
-EXTERN void aft_green_led_ctrl(void*, int);
+EXTERN int sdla_te_defcfg(void *);
+EXTERN int sdla_te_setcfg(void *, struct ifmedia *);
+EXTERN void sdla_te_settimeslot(void *, unsigned long);
+EXTERN unsigned long sdla_te_gettimeslot(void *);
+EXTERN short sdla_te_config(void *);
+EXTERN void sdla_te_unconfig(void *);
+EXTERN unsigned long sdla_te_alarm(void *, int);
+EXTERN void sdla_te_alarm_print(void *);
+EXTERN void sdla_te_pmon(void *);
+EXTERN void sdla_flush_te1_pmon(void *);
+EXTERN void sdla_te_intr(void *);
+EXTERN int sdla_set_te1_lb_modes(void *, unsigned char, unsigned char);
+EXTERN void sdla_te_polling(void *);
+EXTERN void sdla_te_timer(void *);
+EXTERN int sdla_te_udp(void *, void *, unsigned char *);
+EXTERN void aft_green_led_ctrl(void *, int);
 #endif /* _KERNEL */
 
 #undef EXTERN
