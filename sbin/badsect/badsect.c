@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.3 1996/08/30 01:06:34 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.4 1996/09/13 16:25:26 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.3 1996/08/30 01:06:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.4 1996/09/13 16:25:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ main(argc, argv)
 	register struct direct *dp;
 	DIR *dirp;
 	char name[BUFSIZ];
+	int len;
 
 	if (argc < 3) {
 		fprintf(stderr, "usage: badsect bbdir blkno [ blkno ]\n");
@@ -112,12 +113,13 @@ main(argc, argv)
 		exit(2);
 	}
 	strcpy(name, _PATH_DEV);
+	len = strlen(name);
 	if ((dirp = opendir(name)) == NULL) {
 		perror(name);
 		exit(3);
 	}
 	while ((dp = readdir(dirp)) != NULL) {
-		strcpy(&name[5], dp->d_name);
+		strcpy(&name[len], dp->d_name);
 		if (stat(name, &devstat) < 0) {
 			perror(name);
 			exit(4);
@@ -128,12 +130,14 @@ main(argc, argv)
 	}
 
 	/*
-	 * we've found the block device, but since the filesystem 
+	 * We've found the block device, but since the filesystem 
 	 * is mounted, we must write to the raw (character) device
-	 * instead.
+	 * instead. This is not guaranteed to work if someone has a
+	 * /dev that doesn't follow standard naming conventions, but
+	 * it's all we've got.
 	 */
-	name[5] = 'r';
-	strcpy(&name[6], dp->d_name);
+	name[len] = 'r';
+	strcpy(&name[len+1], dp->d_name);
 	closedir(dirp);
 	if (dp == NULL) {
 		printf("Cannot find dev 0%o corresponding to %s\n",
