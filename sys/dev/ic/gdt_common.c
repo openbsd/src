@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.1 2000/02/07 00:33:02 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.2 2000/02/12 09:45:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -121,7 +121,7 @@ gdt_attach(gdt)
 	for (i = 0; i < GDT_MAXCMDS; i++) {
 		gdt->sc_ccbs[i].gc_cmd_index = i + 2;
 		(void)gdt_ccb_set_cmd(gdt->sc_ccbs + i, GDT_GCF_UNUSED);
-		TAILQ_INSERT_HEAD(&gdt->sc_free_ccb, &gdt->sc_ccbs[i],
+		TAILQ_INSERT_TAIL(&gdt->sc_free_ccb, &gdt->sc_ccbs[i],
 		    gc_chain);
 	}
 
@@ -480,7 +480,7 @@ gdt_scsi_cmd(xs)
 		GDT_UNLOCK_GDT(gdt);
 		return (SUCCESSFULLY_QUEUED);
 	}
-	GDT_LOCK_GDT(gdt);
+	GDT_UNLOCK_GDT(gdt);
 
 	switch (xs->cmd->opcode) {
 	case TEST_UNIT_READY:
@@ -554,7 +554,7 @@ gdt_scsi_cmd(xs)
 			blockcnt = _2btol(rwb->length);
 		}
 		if (blockno >= gdt->sc_hdr[target].hd_size ||
-		    blockno + blockcnt >= gdt->sc_hdr[target].hd_size) {
+		    blockno + blockcnt > gdt->sc_hdr[target].hd_size) {
 			printf("%s: out of bounds %d-%d >= %d\n",
 			    gdt->sc_dev.dv_xname, blockno, blockcnt,
 			    gdt->sc_hdr[target].hd_size);
