@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.4 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.5 2004/04/29 06:23:45 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -333,11 +333,7 @@ leattach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
-	if (sc->sc_addr == 0L) {
-		printf("\n%s: kvtop() failed!\n", sc->sc_dev.dv_xname);
-		return;
-	}
+	sc->sc_addr = (paddr_t)addr & 0x00ffffff;
 
 	lesc->sc_r1 = (void *)bus_space_vaddr(iot, ioh);
 	lesc->sc_ipl = ca->ca_ipl;
