@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.25 2000/06/08 20:48:53 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.51 2000/06/08 01:47:53 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.26 2000/06/20 05:55:15 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.52 2000/06/19 07:41:07 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -149,8 +149,10 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 
       if (!key)
         {
-	    log_print ("ike_auth_get_key: no key found for peer \"%s\"or local ID \"%s\"", id, local_id);
-	    return 0;
+	  log_print ("ike_auth_get_key: "
+		     "no key found for peer \"%s\"or local ID \"%s\"",
+		     id, local_id);
+	  return 0;
 	}
 
       /* If the key starts with 0x it is in hex format.  */
@@ -228,7 +230,9 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  if (read (fd, buf, sb.st_size) != sb.st_size)
 	    {
 	      free (buf);
-	      log_print ("ike_auth_get_key: failed reading %d bytes from \"%s\"", sb.st_size, keyfile);
+	      log_print ("ike_auth_get_key: "
+			 "failed reading %d bytes from \"%s\"",
+			 sb.st_size, keyfile);
 	      free (keyfile);
 	      return 0;
 	    }
@@ -596,8 +600,9 @@ rsa_sig_decode_hash (struct message *msg)
 	    {
 	      if (!handler->cert_get_key (cert, &key))
 	        {
-		    log_print ("rsa_sig_decode_hash: decoding certificate failed");
-		    handler->cert_free (cert);
+		  log_print ("rsa_sig_decode_hash: "
+			     "decoding certificate failed");
+		  handler->cert_free (cert);
 		}
 	      else
 	        {
@@ -610,11 +615,8 @@ rsa_sig_decode_hash (struct message *msg)
 		}
 	    }
 	}
-      else
-	if (handler->id == ISAKMP_CERTENC_KEYNOTE)
-	  {
-	    handler->cert_insert (exchange->policy_id, rawcert);
-	  }
+      else if (handler->id == ISAKMP_CERTENC_KEYNOTE)
+	handler->cert_insert (exchange->policy_id, rawcert);
       free (rawcert);
     }
 
@@ -888,7 +890,7 @@ rsa_sig_encode_hash (struct message *msg)
 		  "rsa_sig_encode_hash: no certificate to send"));
     }
 
-  switch (id[0])
+  switch (id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ])
     {
     case IPSEC_ID_IPV4_ADDR:
       buf2 = malloc (16);
