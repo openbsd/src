@@ -178,10 +178,10 @@ ufsdirhash_build(struct inode *ip)
 		return (-1);
 	}
 	memset(dh, 0, sizeof *dh);
-	MALLOC(dh->dh_hash, doff_t **, narrays * sizeof(dh->dh_hash[0]),
+	dh->dh_hash = malloc(narrays * sizeof(dh->dh_hash[0]),
 	    M_DIRHASH, M_NOWAIT);
 	memset(dh->dh_hash, 0, narrays * sizeof(dh->dh_hash[0]));
-	MALLOC(dh->dh_blkfree, u_int8_t *, nblocks * sizeof(dh->dh_blkfree[0]),
+	dh->dh_blkfree = malloc(nblocks * sizeof(dh->dh_blkfree[0]),
 	    M_DIRHASH, M_NOWAIT);
 	if (dh->dh_hash == NULL || dh->dh_blkfree == NULL)
 		goto fail;
@@ -256,10 +256,10 @@ fail:
 		for (i = 0; i < narrays; i++)
 			if (dh->dh_hash[i] != NULL)
 				DIRHASH_FREE(dh->dh_hash[i]);
-		FREE(dh->dh_hash, M_DIRHASH);
+		free(dh->dh_hash, M_DIRHASH);
 	}
 	if (dh->dh_blkfree != NULL)
-		FREE(dh->dh_blkfree, M_DIRHASH);
+		free(dh->dh_blkfree, M_DIRHASH);
 	FREE(dh, M_DIRHASH);
 	ip->i_dirhash = NULL;
 	LOCK(&ufsdirhash_mtx);
@@ -292,8 +292,8 @@ ufsdirhash_free(struct inode *ip)
 	if (dh->dh_hash != NULL) {
 		for (i = 0; i < dh->dh_narrays; i++)
 			DIRHASH_FREE(dh->dh_hash[i]);
-		FREE(dh->dh_hash, M_DIRHASH);
-		FREE(dh->dh_blkfree, M_DIRHASH);
+		free(dh->dh_hash, M_DIRHASH);
+		free(dh->dh_blkfree, M_DIRHASH);
 		mem += dh->dh_narrays * sizeof(*dh->dh_hash) +
 		    dh->dh_narrays * DH_NBLKOFF * sizeof(**dh->dh_hash) +
 		    dh->dh_nblk * sizeof(*dh->dh_blkfree);
@@ -1055,8 +1055,8 @@ ufsdirhash_recycle(int wanted)
 		UNLOCK(&ufsdirhash_mtx);
 		for (i = 0; i < narrays; i++)
 			DIRHASH_FREE(hash[i]);
-		FREE(hash, M_DIRHASH);
-		FREE(blkfree, M_DIRHASH);
+		free(hash, M_DIRHASH);
+		free(blkfree, M_DIRHASH);
 
 		/* Account for the returned memory, and repeat if necessary. */
 		LOCK(&ufsdirhash_mtx);
