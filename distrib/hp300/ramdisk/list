@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 1999/04/01 04:39:51 millert Exp $
+#	$OpenBSD: list,v 1.14 1999/09/27 06:00:23 downsj Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -75,7 +75,7 @@ LINK	usr/mdec/uboot.lif	usr/mdec/sdboot
 COPY	rd.group		etc/group
 COPY	rd.master.passwd	etc/master.passwd
 COPY	rd.disktab		etc/disktab
-SPECIAL	cd etc; pwd_mkdb -p -d . ./master.passwd
+SPECIAL	cd etc; pwd_mkdb -p -d `pwd` `pwd`/master.passwd
 
 # we strip comments from files since we need the space...
 
