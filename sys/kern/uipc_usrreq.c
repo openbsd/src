@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.19 2002/02/11 12:35:53 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.20 2002/02/19 23:14:59 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -678,10 +678,10 @@ restart:
 	 * First loop -- allocate file descriptor table slots for the
 	 * new descriptors.
 	 */
-	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
+	rp = ((struct file **)CMSG_DATA(cm));
 	for (i = 0; i < nfds; i++) {
 		bcopy(rp, &fp, sizeof(fp));
-		rp--;
+		rp++;
 		if ((error = fdalloc(p, 0, &fdp[i])) != 0) {
 			/*
 			 * Back out what we've done so far.
@@ -775,11 +775,11 @@ morespace:
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(struct file *));
 	control->m_len = CMSG_SPACE(nfds * sizeof(struct file *));
 
-	ip = ((int *)CMSG_DATA(cm));
+	ip = ((int *)CMSG_DATA(cm)) + nfds - 1;
 	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
 		bcopy(ip, &fd, sizeof fd);
-		ip++;
+		ip--;
 		if ((fp = fd_getfile(fdp, fd)) == NULL) {
 			error = EBADF;
 			goto fail;
