@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.726 2004/05/04 06:26:59 grange Exp 
+ *	OpenBSD: pcidevs,v 1.727 2004/05/05 04:17:10 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2211,6 +2211,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Compaq SMART RAID 42xx",
 	},
 	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,
+	    "SWXCR RAID",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
 	    "PERC 2/Si",
 	},
@@ -4235,12 +4239,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DMA4 serial",
 	},
 	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
-	    "DAC960P RAID",
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P_V2,
+	    "DAC960P V2 RAID",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P_V3,
+	    "DAC960P V3 RAID",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P_V4,
+	    "DAC960P V4 RAID",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P_V5,
+	    "DAC960P V5 RAID",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
 	    "AcceleRAID",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
+	    "eXtremeRAID",
 	},
 	{
 	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD800,
