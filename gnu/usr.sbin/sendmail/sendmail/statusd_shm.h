@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Id: statusd_shm.h,v 1.1.1.2 2001/01/15 20:52:18 millert Exp $
+ *	$Sendmail: statusd_shm.h,v 8.4 1999/05/18 08:00:04 gshapiro Exp $
  *
  * Contributed by Exactis.com, Inc.
  *

@@ -15,15 +15,16 @@
 
 #ifndef lint
 # if SMTP
-static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.245 2000/03/23 17:35:10 ca Exp $ (with SMTP)";
+static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.245.4.18 2000/12/20 16:36:11 ca Exp $ (with SMTP)";
 # else /* SMTP */
-static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.245 2000/03/23 17:35:10 ca Exp $ (without SMTP)";
+static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.245.4.18 2000/12/20 16:36:11 ca Exp $ (without SMTP)";
 # endif /* SMTP */
 #endif /* ! lint */
 
 #include <sysexits.h>
 
 #if SMTP
+
 
 static void	datatimeout __P((void));
 static void	esmtp_check __P((char *, bool, MAILER *, MCI *, ENVELOPE *));
@@ -277,6 +278,74 @@ esmtp_check(line, firstline, m, mci, e)
 	if (strstr(line, "8BIT-OK") != NULL)
 		mci->mci_flags |= MCIF_8BITOK;
 }
+# if SASL
+/*
+**  STR_UNION -- create the union of two lists
+**
+**	Parameters:
+**		s1, s2 -- lists of items (separated by single blanks).
+**
+**	Returns:
+**		the union of both lists.
+*/
+
+static char *
+str_union(s1, s2)
+	char *s1, *s2;
+{
+	char *hr, *h1, *h, *res;
+	int l1, l2, rl;
+
+	if (s1 == NULL || *s1 == '\0')
+		return s2;
+	if (s2 == NULL || *s2 == '\0')
+		return s1;
+	l1 = strlen(s1);
+	l2 = strlen(s2);
+	rl = l1 + l2;
+	res = (char *)malloc(rl + 2);
+	if (res == NULL)
+	{
+		if (l1 > l2)
+			return s1;
+		return s2;
+	}
+	(void) strlcpy(res, s1, rl);
+	hr = res;
+	h1 = s2;
+	h = s2;
+
+	/* walk through s2 */
+	while (h != NULL && *h1 != '\0')
+	{
+		/* is there something after the current word? */
+		if ((h = strchr(h1, ' ')) != NULL)
+			*h = '\0';
+		l1 = strlen(h1);
+
+		/* does the current word appear in s1 ? */
+		if (iteminlist(h1, s1, " ") == NULL)
+		{
+			/* add space as delimiter */
+			*hr++ = ' ';
+
+			/* copy the item */
+			memcpy(hr, h1, l1);
+
+			/* advance pointer in result list */
+			hr += l1;
+			*hr = '\0';
+		}
+		if (h != NULL)
+		{
+			/* there are more items */
+			*h = ' ';
+			h1 = h + 1;
+		}
+	}
+	return res;
+}
+# endif /* SASL */
 /*
 **  HELO_OPTIONS -- process the options on a HELO line.
 **
@@ -302,7 +371,14 @@ helo_options(line, firstline, m, mci, e)
 	register char *p;
 
 	if (firstline)
+	{
+# if SASL
+		if (mci->mci_saslcap != NULL)
+			free(mci->mci_saslcap);
+		mci->mci_saslcap = NULL;
+# endif /* SASL */
 		return;
+	}
 
 	if (strlen(line) < (SIZE_T) 5)
 		return;
@@ -327,28 +403,43 @@ helo_options(line, firstline, m, mci, e)
 		mci->mci_flags |= MCIF_DSN;
 	else if (strcasecmp(line, "enhancedstatuscodes") == 0)
 		mci->mci_flags |= MCIF_ENHSTAT;
+# if STARTTLS
+	else if (strcasecmp(line, "starttls") == 0)
+		mci->mci_flags |= MCIF_TLS;
+# endif /* STARTTLS */
 # if SASL
 	else if (strcasecmp(line, "auth") == 0)
 	{
-		if (p == NULL || *p == '\0')
+		if (p != NULL && *p != '\0')
 		{
-			/* no parameter? */
-			mci->mci_saslcap = NULL;
-		}
-		else
-		{
-			int l;
-
-			if (mci->mci_saslcap != NULL)
-				free(mci->mci_saslcap);
-			l = strlen(p) + 1;
-			mci->mci_saslcap = (char *)malloc(l);
-
-			/* XXX this may be leaked */
 			if (mci->mci_saslcap != NULL)
 			{
-				(void) strlcpy(mci->mci_saslcap, p, l);
+				char *h;
+
+				/*
+				**  create the union with previous auth
+				**  offerings because we recognize "auth "
+				**  and "auth=" (old format).
+				*/
+				h = mci->mci_saslcap;
+				mci->mci_saslcap = str_union(h, p);
+				if (h != mci->mci_saslcap)
+					free(h);
 				mci->mci_flags |= MCIF_AUTH;
+			}
+			else
+			{
+				int l;
+
+				l = strlen(p) + 1;
+				mci->mci_saslcap = (char *)malloc(l);
+
+				/* XXX this may be leaked */
+				if (mci->mci_saslcap != NULL)
+				{
+					(void) strlcpy(mci->mci_saslcap, p, l);
+					mci->mci_flags |= MCIF_AUTH;
+				}
 			}
 		}
 	}
@@ -448,7 +539,8 @@ getsasldata(line, firstline, m, mci, e)
 # define SASL_DEFREALM	4
 # define SASL_MECH	5
 
-static char *sasl_info_name[] = {
+static char *sasl_info_name[] =
+{
 	"",
 	"user id",
 	"authorization id",
@@ -561,7 +653,8 @@ static int getsimple	__P((void *, int, const char **, unsigned *));
 static int getsecret	__P((sasl_conn_t *, void *, int, sasl_secret_t **));
 static int saslgetrealm	__P((void *, int, const char **, const char **));
 
-static sasl_callback_t callbacks[] = {
+static sasl_callback_t callbacks[] =
+{
 	{	SASL_CB_GETREALM,	&saslgetrealm,	NULL	},
 # define CB_GETREALM_IDX	0
 	{	SASL_CB_PASS,		&getsecret,	NULL	},
@@ -605,7 +698,8 @@ getsimple(context, id, result, len)
 	if (result == NULL)
 		return SASL_BADPARAM;
 
-	switch (id) {
+	switch (id)
+	{
 	  case SASL_CB_USER:
 		if (user == NULL)
 		{
@@ -626,7 +720,16 @@ getsimple(context, id, result, len)
 			   strcasecmp(context, "CRAM-MD5") == 0;
 		if (addedrealm != addrealm && authid != NULL)
 		{
+#  if SASL > 10522
+			/*
+			**  digest-md5 prior to 1.5.23 doesn't copy the
+			**  value it gets from the callback, but free()s
+			**  it later on
+			**  workaround: don't free() it here
+			**  this can cause a memory leak!
+			*/
 			free(authid);
+#  endif /* SASL > 10522 */
 			authid = NULL;
 			addedrealm = addrealm;
 		}
@@ -803,13 +906,13 @@ saslgetrealm(context, id, availrealms, result)
 {
 	if (LogLevel > 12)
 		sm_syslog(LOG_INFO, NOQID, "saslgetrealm: realm %s available realms %s",
-			  context,
-			  availrealms == NULL ? "<No Realms>" : *availrealms);
+			  context == NULL ? "<No Context>" : (char *) context,
+			  (availrealms == NULL || *availrealms == NULL) ? "<No Realms>" : *availrealms);
 	if (context == NULL)
 		return SASL_FAIL;
 
 	/* check whether context is in list? */
-	if (availrealms != NULL)
+	if (availrealms != NULL && *availrealms != NULL)
 	{
 		if (iteminlist(context, (char *)(*availrealms + 1), " ,}") ==
 		    NULL)
@@ -1027,8 +1130,12 @@ attemptauth(m, mci, e, mechused)
 
 	*mechused = NULL;
 	if (mci->mci_conn != NULL)
-		free(mci->mci_conn);
-	mci->mci_conn = NULL;
+	{
+		sasl_dispose(&(mci->mci_conn));
+
+		/* just in case, sasl_dispose() should take care of it */
+		mci->mci_conn = NULL;
+	}
 
 	/* make a new client sasl connection */
 	saslresult = sasl_client_new(bitnset(M_LMTP, m->m_flags) ? "lmtp"
@@ -1037,13 +1144,32 @@ attemptauth(m, mci, e, mechused)
 
 	/* set properties */
 	(void) memset(&ssp, '\0', sizeof ssp);
+#  if SFIO
+	/* XXX should these be options settable via .cf ? */
+	/* ssp.min_ssf = 0; is default due to memset() */
+	{
+		ssp.max_ssf = INT_MAX;
+		ssp.maxbufsize = MAXOUTLEN;
+#   if 0
+		ssp.security_flags = SASL_SEC_NOPLAINTEXT;
+#   endif /* 0 */
+	}
+#  endif /* SFIO */
 	saslresult = sasl_setprop(mci->mci_conn, SASL_SEC_PROPS, &ssp);
 	if (saslresult != SASL_OK)
 		return EX_TEMPFAIL;
 
-	/* external security strength factor; we have none so zero */
+	/* external security strength factor, authentication id */
 	ssf.ssf = 0;
 	ssf.auth_id = NULL;
+# if _FFR_EXT_MECH
+	out = macvalue(macid("{cert_subject}", NULL), e);
+	if (out != NULL && *out != '\0')
+		ssf.auth_id = out;
+	out = macvalue(macid("{cipher_bits}", NULL), e);
+	if (out != NULL && *out != '\0')
+		ssf.ssf = atoi(out);
+# endif /* _FFR_EXT_MECH */
 	saslresult = sasl_setprop(mci->mci_conn, SASL_SSF_EXTERNAL, &ssf);
 	if (saslresult != SASL_OK)
 		return EX_TEMPFAIL;
@@ -1061,7 +1187,7 @@ attemptauth(m, mci, e, mechused)
 			return EX_TEMPFAIL;
 		addrsize = sizeof(struct sockaddr_in);
 		if (getsockname(fileno(mci->mci_out),
-				(struct sockaddr *) &saddr_l, &addrsize) != 0)
+				(struct sockaddr *) &saddr_l, &addrsize) == 0)
 		{
 			if (sasl_setprop(mci->mci_conn, SASL_IP_LOCAL,
 					 &saddr_l) != SASL_OK)
@@ -1079,6 +1205,13 @@ attemptauth(m, mci, e, mechused)
 
 	if (saslresult != SASL_OK && saslresult != SASL_CONTINUE)
 	{
+#  if SFIO
+		if (saslresult == SASL_NOMECH && LogLevel > 8)
+		{
+			sm_syslog(LOG_NOTICE, e->e_id,
+				  "available AUTH mechanisms do not fulfill requirements");
+		}
+#  endif /* SFIO */
 		return EX_TEMPFAIL;
 	}
 
@@ -1113,10 +1246,12 @@ attemptauth(m, mci, e, mechused)
 		{
 			define(macid("{auth_type}", NULL),
 			       newstr(mechusing), e);
+#  if !SFIO
 			if (LogLevel > 9)
 				sm_syslog(LOG_INFO, NOQID,
 					  "SASL: outgoing connection to %.64s: mech=%.16s",
 					  mci->mci_host, mechusing);
+#  endif /* !SFIO */
 			return EX_OK;
 		}
 		if (smtpresult == -1)
@@ -1163,7 +1298,7 @@ attemptauth(m, mci, e, mechused)
 		}
 		else
 			in64[0] = '\0';
-		smtpmessage(in64, m, mci);
+		smtpmessage("%s", m, mci, in64);
 		smtpresult = reply(m, mci, e, TimeOuts.to_datafinal,
 				   getsasldata, NULL);
 		/* which timeout? XXX */
@@ -1227,7 +1362,8 @@ smtpauth(m, mci, e)
 	result = sasl_client_init(callbacks);
 	if (result != SASL_OK)
 		return EX_TEMPFAIL;
-	do {
+	do
+	{
 		result = attemptauth(m, mci, e, &mechused);
 		if (result == EX_OK)
 			mci->mci_sasl_auth = TRUE;
@@ -1406,7 +1542,7 @@ smtpmailfrom(m, mci, e)
 		smtpquit(m, mci, e);
 		return EX_TEMPFAIL;
 	}
-	else if (r == 421)
+	else if (r == SMTPCLOSING)
 	{
 		/* service shutting down */
 		mci_setstat(mci, EX_TEMPFAIL, ENHSCN(enhsc, "4.5.0"),
@@ -1704,6 +1840,7 @@ smtpdata(m, mci, e)
 
 	ev = setevent(timeout, datatimeout, 0);
 
+
 	if (tTd(18, 101))
 	{
 		/* simulate a DATA timeout */
@@ -1969,7 +2106,7 @@ smtpquit(m, mci, e)
 
 		/* look for naughty mailers */
 		sm_syslog(LOG_ERR, e->e_id,
-			  "smtpquit: mailer%s%s exited with exit value %d\n",
+			  "smtpquit: mailer%s%s exited with exit value %d",
 			  mailer == NULL ? "" : " ",
 			  mailer == NULL ? "" : mailer,
 			  rcode);
@@ -2004,9 +2141,13 @@ smtprset(m, mci, e)
 		**  Any response is deemed to be acceptable.
 		**  The standard does not state the proper action
 		**  to take when a value other than 250 is received.
+		**
+		**  However, if 421 is returned for the RSET, leave
+		**  mci_state as MCIS_SSD (set in reply()).
 		*/
 
-		mci->mci_state = MCIS_OPEN;
+		if (mci->mci_state != MCIS_SSD)
+			mci->mci_state = MCIS_OPEN;
 		return;
 	}
 	smtpquit(m, mci, e);

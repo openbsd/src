@@ -11,21 +11,45 @@
  *
  */
 
+
 #include <sendmail.h>
 
 #ifndef lint
 # if SMTP
-static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.471 2000/04/06 08:39:58 gshapiro Exp $ (with SMTP)";
+static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.471.2.2.2.66 2000/12/18 18:00:44 ca Exp $ (with SMTP)";
 # else /* SMTP */
-static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.471 2000/04/06 08:39:58 gshapiro Exp $ (without SMTP)";
+static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.471.2.2.2.66 2000/12/18 18:00:44 ca Exp $ (without SMTP)";
 # endif /* SMTP */
 #endif /* ! lint */
 
 #if SMTP
+# if SASL || STARTTLS
+#  include "sfsasl.h"
+# endif /* SASL || STARTTLS */
 # if SASL
 #  define ENC64LEN(l)	(((l) + 2) * 4 / 3 + 1)
 static int saslmechs __P((sasl_conn_t *, char **));
 # endif /* SASL */
+# if STARTTLS
+#  include <sysexits.h>
+#   include <openssl/err.h>
+#   include <openssl/bio.h>
+#   include <openssl/pem.h>
+#   ifndef HASURANDOMDEV
+#    include <openssl/rand.h>
+#   endif /* !HASURANDOMDEV */
+
+static SSL	*srv_ssl = NULL;
+static SSL_CTX	*srv_ctx = NULL;
+#  if !TLS_NO_RSA
+static RSA	*rsa = NULL;
+#  endif /* !TLS_NO_RSA */
+static bool	tls_ok = FALSE;
+static int	tls_verify_cb __P((X509_STORE_CTX *));
+#  if !TLS_NO_RSA
+#   define RSA_KEYLENGTH	512
+#  endif /* !TLS_NO_RSA */
+# endif /* STARTTLS */
 
 static time_t	checksmtpattack __P((volatile int *, int, bool,
 				     char *, ENVELOPE *));
@@ -75,6 +99,9 @@ struct cmd
 # if SASL
 #  define CMDAUTH	13	/* auth -- SASL authenticate */
 # endif /* SASL */
+# if STARTTLS
+#  define CMDSTLS	14	/* STARTTLS -- start TLS session */
+# endif /* STARTTLS */
 /* non-standard commands */
 # define CMDONEX	16	/* onex -- sending one transaction only */
 # define CMDVERB	17	/* verb -- go into verbose mode */
@@ -86,6 +113,11 @@ struct cmd
 /* debugging-only commands, only enabled if SMTPDEBUG is defined */
 # define CMDDBGQSHOW	24	/* showq -- show send queue */
 # define CMDDBGDEBUG	25	/* debug -- set debug mode */
+
+/*
+**  Note: If you change this list,
+**        remember to update 'helpfile'
+*/
 
 static struct cmd	CmdTab[] =
 {
@@ -111,6 +143,9 @@ static struct cmd	CmdTab[] =
 # if SASL
 	{ "auth",	CMDAUTH,	},
 # endif /* SASL */
+# if STARTTLS
+	{ "starttls",	CMDSTLS,	},
+# endif /* STARTTLS */
     /* remaining commands are here only to trap and log attempts to use them */
 	{ "showq",	CMDDBGQSHOW	},
 	{ "debug",	CMDDBGDEBUG	},
@@ -128,6 +163,11 @@ static char	*CurSmtpClient;		/* who's at the other end of channel */
 # define MAXVRFYCOMMANDS	6	/* max VRFY/EXPN commands before slowdown */
 # define MAXETRNCOMMANDS	8	/* max ETRN commands before slowdown */
 # define MAXTIMEOUT	(4 * 60)	/* max timeout for bad commands */
+
+/* runinchild() returns */
+# define RIC_INCHILD		0	/* in a child process */
+# define RIC_INPARENT		1	/* still in parent process */
+# define RIC_TEMPFAIL		2	/* temporary failure occurred */
 
 void
 smtp(nullserver, d_flags, e)
@@ -149,6 +189,7 @@ smtp(nullserver, d_flags, e)
 	auto char *delimptr;
 	char *id;
 	volatile int nrcpts = 0;	/* number of RCPT commands */
+	int ric;
 	bool doublequeue;
 	volatile bool discard;
 	volatile int badcommands = 0;	/* count of bad commands */
@@ -164,7 +205,7 @@ smtp(nullserver, d_flags, e)
 # endif /* _FFR_MILTER */
 	volatile time_t wt;		/* timeout after too many commands */
 	volatile time_t previous;	/* time after checksmtpattack() */
-	volatile int lognullconnection = TRUE;
+	volatile bool lognullconnection = TRUE;
 	register char *q;
 	char *addr;
 	char *greetcode = "220";
@@ -192,7 +233,18 @@ smtp(nullserver, d_flags, e)
 	int len;
 	sasl_security_properties_t ssp;
 	sasl_external_properties_t ext_ssf;
+#  if SFIO
+	sasl_ssf_t *ssf;
+#  endif /* SFIO */
 # endif /* SASL */
+# if STARTTLS
+	int r;
+	int rfd, wfd;
+	volatile bool usetls = TRUE;
+	volatile bool tls_active = FALSE;
+	bool saveQuickAbort;
+	bool saveSuprErrs;
+# endif /* STARTTLS */
 
 	if (fileno(OutChannel) != fileno(stdout))
 	{
@@ -222,7 +274,7 @@ smtp(nullserver, d_flags, e)
 	/* SASL server new connection */
 	hostname = macvalue('j', e);
 #  if SASL > 10505
-	/* use empty realm: doesn't work in SASL <= 1.5.5 */
+	/* use empty realm: only works in SASL > 1.5.5 */
 	result = sasl_server_new("smtp", hostname, "", NULL, 0, &conn);
 #  else /* SASL > 10505 */
 	/* use no realm -> realm is set to hostname by SASL lib */
@@ -275,6 +327,14 @@ smtp(nullserver, d_flags, e)
 
 		/* set properties */
 		(void) memset(&ssp, '\0', sizeof ssp);
+#  if SFIO
+		/* XXX should these be options settable via .cf ? */
+		/* ssp.min_ssf = 0; is default due to memset() */
+		{
+			ssp.max_ssf = INT_MAX;
+			ssp.maxbufsize = MAXOUTLEN;
+		}
+#  endif /* SFIO */
 #  if _FFR_SASL_OPTS
 		ssp.security_flags = SASLOpts & SASL_SEC_MASK;
 #  endif /* _FFR_SASL_OPTS */
@@ -285,6 +345,10 @@ smtp(nullserver, d_flags, e)
 			/*
 			**  external security strength factor;
 			**  we have none so zero
+#   if STARTTLS
+			**  we may have to change this for STARTTLS
+			**  (dynamically)
+#   endif
 			*/
 			ext_ssf.ssf = 0;
 			ext_ssf.auth_id = NULL;
@@ -305,6 +369,20 @@ smtp(nullserver, d_flags, e)
 				  result);
 	}
 # endif /* SASL */
+
+# if STARTTLS
+#  if _FFR_TLS_O_T
+	saveQuickAbort = QuickAbort;
+	saveSuprErrs = SuprErrs;
+	SuprErrs = TRUE;
+	QuickAbort = FALSE;
+	if (rscheck("offer_tls", CurSmtpClient, "", e, TRUE, FALSE, 8,
+		    NULL) != EX_OK || Errors > 0)
+		usetls = FALSE;
+	QuickAbort = saveQuickAbort;
+	SuprErrs = saveSuprErrs;
+#  endif /* _FFR_TLS_O_T */
+# endif /* STARTTLS */
 
 # if _FFR_MILTER
 	if (milterize)
@@ -343,11 +421,6 @@ smtp(nullserver, d_flags, e)
 			milterize = FALSE;
 			break;
 
-		  case SMFIR_DISCARD:
-			e->e_flags |= EF_DISCARD;
-			milterize = FALSE;
-			break;
-
 		  case SMFIR_TEMPFAIL:
 			tempfail = TRUE;
 			milterize = FALSE;
@@ -370,7 +443,7 @@ smtp(nullserver, d_flags, e)
 	else
 		snprintf(cmdbuf, sizeof cmdbuf,
 			 "%s-%%.*s ESMTP%%s", greetcode);
-	message(cmdbuf, id - inp, inp, id);
+	message(cmdbuf, (int) (id - inp), inp, id);
 
 	/* output remaining lines */
 	while ((id = p) != NULL && (p = strchr(id, '\n')) != NULL)
@@ -524,11 +597,67 @@ smtp(nullserver, d_flags, e)
 #  endif /* 0 */
 
 
+#  if SFIO
+				/* get security strength (features) */
+				result = sasl_getprop(conn, SASL_SSF,
+						      (void **) &ssf);
+				if (result != SASL_OK)
+				{
+					define(macid("{auth_ssf}", NULL),
+					       "0", &BlankEnvelope);
+					ssf = NULL;
+				}
+				else
+				{
+					char pbuf[8];
+
+					snprintf(pbuf, sizeof pbuf, "%u", *ssf);
+					define(macid("{auth_ssf}", NULL),
+					       newstr(pbuf), &BlankEnvelope);
+					if (tTd(95, 8))
+						dprintf("SASL auth_ssf: %u\n",
+							*ssf);
+				}
+				/*
+				**  only switch to encrypted connection
+				**  if a security layer has been negotiated
+				*/
+				if (ssf != NULL && *ssf > 0)
+				{
+					/*
+					**  convert sfio stuff to use SASL
+					**  check return values
+					**  if the call fails,
+					**  fall back to unencrypted version
+					**  unless some cf option requires
+					**  encryption then the connection must
+					**  be aborted
+					*/
+					if (sfdcsasl(InChannel, OutChannel,
+					    conn) == 0)
+					{
+						/* restart dialogue */
+						gothello = FALSE;
+						OneXact = TRUE;
+						n_helo = 0;
+					}
+					else
+						syserr("503 5.3.3 SASL TLS failed");
+					if (LogLevel > 9)
+						sm_syslog(LOG_INFO,
+							  NOQID,
+							  "SASL: connection from %.64s: mech=%.16s, id=%.64s, bits=%d",
+							  CurSmtpClient,
+							  auth_type, user,
+							  *ssf);
+				}
+#  else /* SFIO */
 				if (LogLevel > 9)
 					sm_syslog(LOG_INFO, NOQID,
 						  "SASL: connection from %.64s: mech=%.16s, id=%.64s",
 						  CurSmtpClient, auth_type,
 						  user);
+#  endif /* SFIO */
 			}
 			else if (result == SASL_CONTINUE)
 			{
@@ -609,7 +738,7 @@ smtp(nullserver, d_flags, e)
 		/* decode command */
 		for (c = CmdTab; c->cmd_name != NULL; c++)
 		{
-			if (!strcasecmp(c->cmd_name, cmdbuf))
+			if (strcasecmp(c->cmd_name, cmdbuf) == 0)
 				break;
 		}
 
@@ -691,6 +820,16 @@ smtp(nullserver, d_flags, e)
 				message("503 5.5.0 AUTH not permitted during a mail transaction");
 				break;
 			}
+			if (tempfail)
+			{
+				if (LogLevel > 9)
+					sm_syslog(LOG_INFO, e->e_id,
+						  "SMTP AUTH command (%.100s) from %.100s tempfailed (due to previous checks)",
+						  p, CurSmtpClient);
+				usrerr("454 4.7.1 Please try again later");
+				break;
+			}
+
 			ismore = FALSE;
 
 			/* crude way to avoid crack attempts */
@@ -808,13 +947,196 @@ smtp(nullserver, d_flags, e)
 			}
 			else
 			{
-				message("334 %s", *out2 == '\0' ? "=" : out2);
+				message("334 %s", out2);
 				authenticating = SASL_PROC_AUTH;
 			}
 
 			break;
 # endif /* SASL */
 
+# if STARTTLS
+		  case CMDSTLS: /* starttls */
+			if (*p != '\0')
+			{
+				message("501 5.5.2 Syntax error (no parameters allowed)");
+				break;
+			}
+			if (!usetls)
+			{
+				message("503 5.5.0 TLS not available");
+				break;
+			}
+			if (!tls_ok)
+			{
+				message("454 4.3.3 TLS not available after start");
+				break;
+			}
+			if (gotmail)
+			{
+				message("503 5.5.0 TLS not permitted during a mail transaction");
+				break;
+			}
+			if (tempfail)
+			{
+				if (LogLevel > 9)
+					sm_syslog(LOG_INFO, e->e_id,
+						  "SMTP STARTTLS command (%.100s) from %.100s tempfailed (due to previous checks)",
+						  p, CurSmtpClient);
+				usrerr("454 4.7.1 Please try again later");
+				break;
+			}
+# if TLS_NO_RSA
+			/*
+			**  XXX do we need a temp key ?
+			*/
+# else /* TLS_NO_RSA */
+			if (SSL_CTX_need_tmp_RSA(srv_ctx) &&
+			   !SSL_CTX_set_tmp_rsa(srv_ctx,
+				(rsa = RSA_generate_key(RSA_KEYLENGTH, RSA_F4,
+							NULL, NULL)))
+			  )
+			{
+				message("454 4.3.3 TLS not available: error generating RSA temp key");
+				if (rsa != NULL)
+					RSA_free(rsa);
+				break;
+			}
+# endif /* TLS_NO_RSA */
+			if (srv_ssl != NULL)
+				SSL_clear(srv_ssl);
+			else if ((srv_ssl = SSL_new(srv_ctx)) == NULL)
+			{
+				message("454 4.3.3 TLS not available: error generating SSL handle");
+				break;
+			}
+			rfd = fileno(InChannel);
+			wfd = fileno(OutChannel);
+			if (rfd < 0 || wfd < 0 ||
+			    SSL_set_rfd(srv_ssl, rfd) <= 0 ||
+			    SSL_set_wfd(srv_ssl, wfd) <= 0)
+			{
+				message("454 4.3.3 TLS not available: error set fd");
+				SSL_free(srv_ssl);
+				srv_ssl = NULL;
+				break;
+			}
+			message("220 2.0.0 Ready to start TLS");
+			SSL_set_accept_state(srv_ssl);
+
+#  define SSL_ACC(s)	SSL_accept(s)
+			if ((r = SSL_ACC(srv_ssl)) <= 0)
+			{
+				int i;
+
+				/* what to do in this case? */
+				i = SSL_get_error(srv_ssl, r);
+				if (LogLevel > 5)
+				{
+					sm_syslog(LOG_WARNING, e->e_id,
+						  "TLS: error: accept failed=%d (%d)",
+						  r, i);
+					if (LogLevel > 9)
+						tlslogerr();
+				}
+				tls_ok = FALSE;
+				SSL_free(srv_ssl);
+				srv_ssl = NULL;
+
+				/*
+				**  according to the next draft of
+				**  RFC 2487 the connection should be dropped
+				*/
+
+				/* arrange to ignore any current send list */
+				e->e_sendqueue = NULL;
+				goto doquit;
+			}
+
+			/* ignore return code for now, it's in {verify} */
+			(void) tls_get_info(srv_ssl, &BlankEnvelope, TRUE,
+					    CurSmtpClient, TRUE);
+
+			/*
+			**  call Stls_client to find out whether
+			**  to accept the connection from the client
+			*/
+
+			saveQuickAbort = QuickAbort;
+			saveSuprErrs = SuprErrs;
+			SuprErrs = TRUE;
+			QuickAbort = FALSE;
+			if (rscheck("tls_client",
+				     macvalue(macid("{verify}", NULL), e),
+				     "STARTTLS", e, TRUE, TRUE, 6, NULL) !=
+			    EX_OK || Errors > 0)
+			{
+				extern char MsgBuf[];
+
+				if (MsgBuf[0] != '\0' && ISSMTPREPLY(MsgBuf))
+					nullserver = newstr(MsgBuf);
+				else
+					nullserver = "503 5.7.0 Authentication required.";
+			}
+			QuickAbort = saveQuickAbort;
+			SuprErrs = saveSuprErrs;
+
+			tls_ok = FALSE;	/* don't offer STARTTLS again */
+			gothello = FALSE;	/* discard info */
+			n_helo = 0;
+			OneXact = TRUE;	/* only one xaction this run */
+#  if SASL
+			if (sasl_ok)
+			{
+				char *s;
+
+				if ((s = macvalue(macid("{cipher_bits}", NULL), e)) != NULL &&
+				    (ext_ssf.ssf = atoi(s)) > 0)
+				{
+#  if _FFR_EXT_MECH
+					ext_ssf.auth_id = macvalue(macid("{cert_subject}",
+									 NULL),
+								   e);
+#  endif /* _FFR_EXT_MECH */
+					sasl_ok = sasl_setprop(conn, SASL_SSF_EXTERNAL,
+							       &ext_ssf) == SASL_OK;
+					if (mechlist != NULL)
+						free(mechlist);
+					mechlist = NULL;
+					if (sasl_ok)
+					{
+						n_mechs = saslmechs(conn,
+								    &mechlist);
+						sasl_ok = n_mechs > 0;
+					}
+				}
+			}
+#  endif /* SASL */
+
+			/* switch to secure connection */
+#if SFIO
+			r = sfdctls(InChannel, OutChannel, srv_ssl);
+#else /* SFIO */
+# if _FFR_TLS_TOREK
+			r = sfdctls(&InChannel, &OutChannel, srv_ssl);
+# endif /* _FFR_TLS_TOREK */
+#endif /* SFIO */
+			if (r == 0)
+				tls_active = TRUE;
+			else
+			{
+				/*
+				**  XXX this is an internal error
+				**  how to deal with it?
+				**  we can't generate an error message
+				**  since the other side switched to an
+				**  encrypted layer, but we could not...
+				**  just "hang up"?
+				*/
+				nullserver = "454 4.3.3 TLS not available: can't switch to encrypted layer";
+				syserr("TLS: can't switch to encrypted layer");
+			}
+			break;
+# endif /* STARTTLS */
 
 		  case CMDHELO:		/* hello -- introduce yourself */
 		  case CMDEHLO:		/* extended hello */
@@ -894,48 +1216,34 @@ smtp(nullserver, d_flags, e)
 				q = "accepting invalid domain name";
 			}
 
+			gothello = TRUE;
+
 # if _FFR_MILTER
 			if (milterize && !bitset(EF_DISCARD, e->e_flags))
 			{
 				char state;
 				char *response;
 
-				ok = TRUE;
 				response = milter_helo(p, e, &state);
 				switch (state)
 				{
 				  case SMFIR_REPLYCODE:
+					nullserver = response;
 					milterize = FALSE;
-					ok = FALSE;
-					usrerr(response);
 					break;
 
 				  case SMFIR_REJECT:
-					ok = FALSE;
 					nullserver = "Command rejected";
-					milterize = FALSE;
-					usrerr("550 HELO/EHLO rejected");
-					break;
-
-				  case SMFIR_DISCARD:
-					e->e_flags |= EF_DISCARD;
 					milterize = FALSE;
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					ok = FALSE;
 					tempfail = TRUE;
 					milterize = FALSE;
 					break;
 				}
-				if (response != NULL)
-					free(response);
-				if (!ok)
-					break;
 			}
 # endif /* _FFR_MILTER */
-
-			gothello = TRUE;
 
 			/* print HELO response message */
 			if (c->cmd_code != CMDEHLO)
@@ -955,7 +1263,14 @@ smtp(nullserver, d_flags, e)
 				break;
 			}
 
-			/* print EHLO features list */
+			/*
+			**  print EHLO features list
+			**
+			**  Note: If you change this list,
+			**        remember to update 'helpfile'
+			*/
+
+
 			message("250-ENHANCEDSTATUSCODES");
 			if (!bitset(PRIV_NOEXPN, PrivacyFlags))
 			{
@@ -985,6 +1300,10 @@ smtp(nullserver, d_flags, e)
 			if (sasl_ok && mechlist != NULL && *mechlist != '\0')
 				message("250-AUTH %s", mechlist);
 # endif /* SASL */
+# if STARTTLS
+			if (tls_ok && usetls)
+				message("250-STARTTLS");
+# endif /* STARTTLS */
 			message("250 HELP");
 			break;
 
@@ -1017,26 +1336,33 @@ smtp(nullserver, d_flags, e)
 			}
 # endif /* SASL */
 
+			p = skipword(p, "from");
+			if (p == NULL)
+				break;
 			if (tempfail)
 			{
 				if (LogLevel > 9)
 					sm_syslog(LOG_INFO, e->e_id,
-						  "MAIL From:<%.100s> from %.100s tempfailed (from previous HELO/EHLO check)",
-						  args[0], CurSmtpClient);
+						  "SMTP MAIL command (%.100s) from %.100s tempfailed (due to previous checks)",
+						  p, CurSmtpClient);
 				usrerr("451 4.7.1 Please try again later");
 				break;
 			}
+
 			/* make sure we know who the sending host is */
 			if (sendinghost == NULL)
 				sendinghost = peerhostname;
 
-			p = skipword(p, "from");
-			if (p == NULL)
-				break;
 
 			/* fork a subprocess to process this command */
-			if (runinchild("SMTP-MAIL", e) > 0)
+			ric = runinchild("SMTP-MAIL", e);
+
+			/* Catch a problem and stop processing */
+			if (ric == RIC_TEMPFAIL && nullserver == NULL)
+				nullserver = "452 4.3.0 Internal software error";
+			if (ric != RIC_INCHILD)
 				break;
+
 			if (Errors > 0)
 				goto undo_subproc_no_pm;
 			if (!gothello)
@@ -1194,11 +1520,12 @@ smtp(nullserver, d_flags, e)
 
 			/* do config file checking of the sender */
 			if (rscheck("check_mail", addr,
-				    NULL, e, TRUE, TRUE, 4) != EX_OK ||
+				    NULL, e, TRUE, TRUE, 4, NULL) != EX_OK ||
 			    Errors > 0)
 				goto undo_subproc_no_pm;
 
-			if (MaxMessageSize > 0 && e->e_msgsize > MaxMessageSize)
+			if (MaxMessageSize > 0 &&
+			   (e->e_msgsize > MaxMessageSize || e->e_msgsize < 0))
 			{
 				usrerr("552 5.2.3 Message size exceeds fixed maximum message size (%ld)",
 					MaxMessageSize);
@@ -1214,6 +1541,7 @@ smtp(nullserver, d_flags, e)
 				goto undo_subproc_no_pm;
 
 # if _FFR_MILTER
+			LogUsrErrs = TRUE;
 			if (milterize && !bitset(EF_DISCARD, e->e_flags))
 			{
 				char state;
@@ -1235,7 +1563,7 @@ smtp(nullserver, d_flags, e)
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					usrerr("451 4.7.1 Try again later");
+					usrerr("451 4.7.1 Please try again later");
 					break;
 				}
 				if (response != NULL)
@@ -1387,7 +1715,7 @@ smtp(nullserver, d_flags, e)
 
 			/* do config file checking of the recipient */
 			if (rscheck("check_rcpt", addr,
-				    NULL, e, TRUE, TRUE, 4) != EX_OK ||
+				    NULL, e, TRUE, TRUE, 4, NULL) != EX_OK ||
 			    Errors > 0)
 				break;
 
@@ -1413,7 +1741,7 @@ smtp(nullserver, d_flags, e)
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					usrerr("451 4.7.1 Try again later");
+					usrerr("451 4.7.1 Please try again later");
 					break;
 				}
 				if (response != NULL)
@@ -1499,7 +1827,7 @@ smtp(nullserver, d_flags, e)
 				char state;
 				char *response;
 
-				response = milter_body(e, &state);
+				response = milter_data(e, &state);
 				switch (state)
 				{
 				  case SMFIR_REPLYCODE:
@@ -1515,7 +1843,7 @@ smtp(nullserver, d_flags, e)
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					usrerr("451 4.7.1 Try again later");
+					usrerr("451 4.7.1 Please try again later");
 					break;
 				}
 				if (response != NULL)
@@ -1686,6 +2014,16 @@ smtp(nullserver, d_flags, e)
 
 		  case CMDVRFY:		/* vrfy -- verify address */
 		  case CMDEXPN:		/* expn -- expand address */
+			if (tempfail)
+			{
+				if (LogLevel > 9)
+					sm_syslog(LOG_INFO, e->e_id,
+						  "SMTP %s command (%.100s) from %.100s tempfailed (due to previous checks)",
+						  c->cmd_code == CMDVRFY ? "VRFY" : "EXPN",
+						  p, CurSmtpClient);
+				usrerr("550 5.7.1 Please try again later");
+				break;
+			}
 			wt = checksmtpattack(&nverifies, MAXVRFYCOMMANDS, FALSE,
 				c->cmd_code == CMDVRFY ? "VRFY" : "EXPN", e);
 			previous = curtime();
@@ -1736,13 +2074,19 @@ smtp(nullserver, d_flags, e)
 			{
 				/* do config file checking of the address */
 				if (rscheck(vrfy ? "check_vrfy" : "check_expn",
-					    p, NULL, e, TRUE, FALSE, 4)
+					    p, NULL, e, TRUE, FALSE, 4, NULL)
 				    != EX_OK || Errors > 0)
 					goto undo_subproc;
 				(void) sendtolist(p, NULLADDR, &vrfyqueue, 0, e);
 			}
 			if (wt > 0)
-				(void) sleep(wt - (curtime() - previous));
+			{
+				time_t t;
+
+				t = wt - (curtime() - previous);
+				if (t > 0)
+					(void) sleep(t);
+			}
 			if (Errors > 0)
 				goto undo_subproc;
 			if (vrfyqueue == NULL)
@@ -1760,7 +2104,7 @@ smtp(nullserver, d_flags, e)
 				/* see if there is more in the vrfy list */
 				a = vrfyqueue;
 				while ((a = a->q_next) != NULL &&
-				       (!QS_IS_UNDELIVERED(vrfyqueue->q_state)))
+				       (!QS_IS_UNDELIVERED(a->q_state)))
 					continue;
 				printvrfyaddr(vrfyqueue, a == NULL, vrfy);
 				vrfyqueue = a;
@@ -1782,6 +2126,15 @@ smtp(nullserver, d_flags, e)
 						  shortenstring(inp, MAXSHORTSTR));
 				break;
 			}
+			if (tempfail)
+			{
+				if (LogLevel > 9)
+					sm_syslog(LOG_INFO, e->e_id,
+						  "SMTP ETRN command (%.100s) from %.100s tempfailed (due to previous checks)",
+						  p, CurSmtpClient);
+				usrerr("451 4.7.1 Please try again later");
+				break;
+			}
 
 			if (strlen(p) <= 0)
 			{
@@ -1794,8 +2147,8 @@ smtp(nullserver, d_flags, e)
 					     "ETRN", e);
 
 			/* do config file checking of the parameter */
-			if (rscheck("check_etrn", p, NULL, e, TRUE, FALSE, 4)
-			    != EX_OK || Errors > 0)
+			if (rscheck("check_etrn", p, NULL, e, TRUE, FALSE, 4,
+				    NULL) != EX_OK || Errors > 0)
 				break;
 
 			if (LogLevel > 5)
@@ -1841,6 +2194,14 @@ smtp(nullserver, d_flags, e)
 			/* arrange to ignore any current send list */
 			e->e_sendqueue = NULL;
 
+# if STARTTLS
+			/* shutdown TLS connection */
+			if (tls_active)
+			{
+				(void) endtls(srv_ssl, "server");
+				tls_active = FALSE;
+			}
+# endif /* STARTTLS */
 # if SASL
 			if (authenticating == SASL_IS_AUTH)
 			{
@@ -1975,7 +2336,7 @@ doquit:
 **		e -- the current envelope.
 **
 **	Returns:
-**		none.
+**		time to wait.
 **
 **	Side Effects:
 **		Slows down if we seem to be under attack.
@@ -2093,11 +2454,12 @@ mail_esmtp_args(kp, vp, e)
 			/* NOTREACHED */
 		}
 		define(macid("{msg_size}", NULL), newstr(vp), e);
-# if defined(__STDC__) && !defined(BROKEN_ANSI_LIBRARY)
-		e->e_msgsize = strtoul(vp, (char **) NULL, 10);
-# else /* defined(__STDC__) && !defined(BROKEN_ANSI_LIBRARY) */
 		e->e_msgsize = strtol(vp, (char **) NULL, 10);
-# endif /* defined(__STDC__) && !defined(BROKEN_ANSI_LIBRARY) */
+		if (e->e_msgsize == LONG_MAX && errno == ERANGE)
+		{
+			usrerr("552 5.2.3 Message size exceeds maximum value");
+			/* NOTREACHED */
+		}
 	}
 	else if (strcasecmp(kp, "body") == 0)
 	{
@@ -2224,8 +2586,8 @@ mail_esmtp_args(kp, vp, e)
 		SuprErrs = TRUE;
 		QuickAbort = FALSE;
 		if (strcmp(auth_param, "<>") != 0 &&
-		     (rscheck("trust_auth", pbuf, NULL, e, TRUE, FALSE, 10)
-		      != EX_OK || Errors > 0))
+		     (rscheck("trust_auth", pbuf, NULL, e, TRUE, FALSE, 10,
+			      NULL) != EX_OK || Errors > 0))
 		{
 			if (tTd(95, 8))
 			{
@@ -2251,7 +2613,7 @@ mail_esmtp_args(kp, vp, e)
 # endif /* SASL */
 	else
 	{
-		usrerr("501 5.5.4 %s parameter unrecognized", kp);
+		usrerr("555 5.5.4 %s parameter unrecognized", kp);
 		/* NOTREACHED */
 	}
 }
@@ -2340,7 +2702,7 @@ rcpt_esmtp_args(a, kp, vp, e)
 	}
 	else
 	{
-		usrerr("501 5.5.4 %s parameter unrecognized", kp);
+		usrerr("555 5.5.4 %s parameter unrecognized", kp);
 		/* NOTREACHED */
 	}
 }
@@ -2409,8 +2771,9 @@ printvrfyaddr(a, last, vrfy)
 **		label -- a string used in error messages
 **
 **	Returns:
-**		zero in the child
-**		one in the parent
+**		RIC_INCHILD in the child
+**		RIC_INPARENT in the parent
+**		RIC_TEMPFAIL tempfail condition
 **
 **	Side Effects:
 **		none.
@@ -2443,12 +2806,13 @@ runinchild(label, e)
 
 		(void) blocksignal(SIGCHLD);
 
+
 		childpid = dofork();
 		if (childpid < 0)
 		{
 			syserr("451 4.3.0 %s: cannot fork", label);
 			(void) releasesignal(SIGCHLD);
-			return 1;
+			return RIC_INPARENT;
 		}
 		if (childpid > 0)
 		{
@@ -2461,10 +2825,13 @@ runinchild(label, e)
 			if (st == -1)
 				syserr("451 4.3.0 %s: lost child", label);
 			else if (!WIFEXITED(st))
+			{
 				syserr("451 4.3.0 %s: died on signal %d",
-					label, st & 0177);
+				       label, st & 0177);
+				return RIC_TEMPFAIL;
+			}
 
-			/* if we exited on a QUIT command, complete the process */
+			/* if exited on a QUIT command, complete the process */
 			if (WEXITSTATUS(st) == EX_QUIT)
 			{
 				disconnect(1, e);
@@ -2474,7 +2841,7 @@ runinchild(label, e)
 			/* restore the child signal */
 			(void) releasesignal(SIGCHLD);
 
-			return 1;
+			return RIC_INPARENT;
 		}
 		else
 		{
@@ -2488,7 +2855,7 @@ runinchild(label, e)
 			(void) releasesignal(SIGCHLD);
 		}
 	}
-	return 0;
+	return RIC_INCHILD;
 }
 
 # if SASL
@@ -2503,6 +2870,7 @@ runinchild(label, e)
 **	Returns:
 **		number of mechs
 */
+
 static int
 saslmechs(conn, mechlist)
 	sasl_conn_t *conn;
@@ -2528,6 +2896,7 @@ saslmechs(conn, mechlist)
 			sm_syslog(LOG_WARNING, NOQID,
 				  "SASL error: listmech=%d, num=%d",
 				  result, num);
+		num = 0;
 	}
 	return num;
 }
@@ -2545,6 +2914,7 @@ saslmechs(conn, mechlist)
 **	Returns:
 **		ok?
 */
+
 int
 proxy_policy(context, auth_identity, requested_user, user, errstr)
 	void *context;
@@ -2561,6 +2931,1227 @@ proxy_policy(context, auth_identity, requested_user, user, errstr)
 
 # endif /* SASL */
 
+# if STARTTLS
+#  if !TLS_NO_RSA
+RSA *rsa_tmp;	/* temporary RSA key */
+static RSA * tmp_rsa_key __P((SSL *, int, int));
+#  endif /* !TLS_NO_RSA */
+
+# if !NO_DH
+static DH *get_dh512 __P((void));
+
+static unsigned char dh512_p[] =
+{
+	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
+	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
+	0xED,0x94,0xEF,0x9C,0x8A,0x44,0x03,0xED,0x57,0x46,0x50,0xD3,
+	0x69,0x99,0xDB,0x29,0xD7,0x76,0x27,0x6B,0xA2,0xD3,0xD4,0x12,
+	0xE2,0x18,0xF4,0xDD,0x1E,0x08,0x4C,0xF6,0xD8,0x00,0x3E,0x7C,
+	0x47,0x74,0xE8,0x33
+};
+static unsigned char dh512_g[] =
+{
+	0x02
+};
+
+static DH *
+get_dh512()
+{
+	DH *dh = NULL;
+
+	if ((dh = DH_new()) == NULL)
+		return(NULL);
+	dh->p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
+	dh->g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
+	if ((dh->p == NULL) || (dh->g == NULL))
+		return(NULL);
+	return(dh);
+}
+# endif /* !NO_DH */
+
+/*
+**  TLS_RAND_INIT -- initialize STARTTLS random generator
+**
+**	Parameters:
+**		randfile -- name of file with random data
+**		logl -- loglevel
+**
+**	Returns:
+**		success/failure
+**
+**	Side Effects:
+**		initializes PRNG for tls library.
+*/
+
+#define MIN_RAND_BYTES	16	/* 128 bits */
+
+bool
+tls_rand_init(randfile, logl)
+	char *randfile;
+	int logl;
+{
+# ifndef HASURANDOMDEV
+	/* not required if /dev/urandom exists, OpenSSL does it internally */
+
+#define RF_OK		0	/* randfile OK */
+#define RF_MISS		1	/* randfile == NULL || *randfile == '\0' */
+#define RF_UNKNOWN	2	/* unknown prefix for randfile */
+
+#define RI_NONE		0	/* no init yet */
+#define RI_SUCCESS	1	/* init was successful */
+#define RI_FAIL		2	/* init failed */
+
+	bool ok;
+	int randdef;
+	static int done = RI_NONE;
+
+	/*
+	**  initialize PRNG
+	*/
+
+	/* did we try this before? if yes: return old value */
+	if (done != RI_NONE)
+		return done == RI_SUCCESS;
+
+	/* set default values */
+	ok = FALSE;
+	done = RI_FAIL;
+	randdef = (randfile == NULL || *randfile == '\0') ? RF_MISS : RF_OK;
+#   if EGD
+	if (randdef == RF_OK && strncasecmp(randfile, "egd:", 4) == 0)
+	{
+		randfile += 4;
+		if (RAND_egd(randfile) < 0)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: RAND_egd(%s) failed: random number generator not seeded",
+				   randfile);
+		}
+		else
+			ok = TRUE;
+	}
+	else
+#   endif /* EGD */
+	if (randdef == RF_OK && strncasecmp(randfile, "file:", 5) == 0)
+	{
+		int fd;
+		long sff;
+		struct stat st;
+
+		randfile += 5;
+		sff = SFF_SAFEDIRPATH | SFF_NOWLINK
+		      | SFF_NOGWFILES | SFF_NOWWFILES
+		      | SFF_NOGRFILES | SFF_NOWRFILES
+		      | SFF_MUSTOWN | SFF_ROOTOK | SFF_OPENASROOT;
+		if ((fd = safeopen(randfile, O_RDONLY, 0, sff)) >= 0)
+		{
+			if (fstat(fd, &st) < 0)
+			{
+				if (LogLevel > logl)
+					sm_syslog(LOG_ERR, NOQID,
+						  "TLS: can't fstat(%s)",
+						  randfile);
+			}
+			else
+			{
+				bool use, problem;
+
+				use = TRUE;
+				problem = FALSE;
+				if (st.st_mtime + 600 < curtime())
+				{
+					use = bitnset(DBS_INSUFFICIENTENTROPY,
+						      DontBlameSendmail);
+					problem = TRUE;
+					if (LogLevel > logl)
+						sm_syslog(LOG_ERR, NOQID,
+							  "TLS: RandFile %s too old: %s",
+							  randfile,
+							  use ? "unsafe" :
+								"unusable");
+				}
+				if (use && st.st_size < MIN_RAND_BYTES)
+				{
+					use = bitnset(DBS_INSUFFICIENTENTROPY,
+						      DontBlameSendmail);
+					problem = TRUE;
+					if (LogLevel > logl)
+						sm_syslog(LOG_ERR, NOQID,
+							  "TLS: size(%s) < %d: %s",
+							  randfile,
+							  MIN_RAND_BYTES,
+							  use ? "unsafe" :
+								"unusable");
+				}
+				if (use)
+					ok = RAND_load_file(randfile, -1) >=
+					     MIN_RAND_BYTES;
+				if (use && !ok)
+				{
+					if (LogLevel > logl)
+						sm_syslog(LOG_WARNING,
+							  NOQID,
+							  "TLS: RAND_load_file(%s) failed: random number generator not seeded",
+							  randfile);
+				}
+				if (problem)
+					ok = FALSE;
+			}
+			if (ok || bitnset(DBS_INSUFFICIENTENTROPY,
+					  DontBlameSendmail))
+			{
+				/* add this even if fstat() failed */
+				RAND_seed((void *) &st, sizeof st);
+			}
+			(void) close(fd);
+		}
+		else
+		{
+			if (LogLevel > logl)
+				sm_syslog(LOG_WARNING, NOQID,
+					  "TLS: Warning: safeopen(%s) failed",
+					  randfile);
+		}
+	}
+	else if (randdef == RF_OK)
+	{
+		if (LogLevel > logl)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: Error: no proper random file definition %s",
+				  randfile);
+		randdef = RF_UNKNOWN;
+	}
+	if (randdef == RF_MISS)
+	{
+		if (LogLevel > logl)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: Error: missing random file definition");
+	}
+	if (!ok && bitnset(DBS_INSUFFICIENTENTROPY, DontBlameSendmail))
+	{
+		int i;
+		long r;
+		unsigned char buf[MIN_RAND_BYTES];
+
+		/* assert((MIN_RAND_BYTES % sizeof(long)) == 0); */
+		for (i = 0; i <= sizeof(buf) - sizeof(long); i += sizeof(long))
+		{
+			r = get_random();
+			(void) memcpy(buf + i, (void *) &r, sizeof(long));
+		}
+		RAND_seed(buf, sizeof buf);
+		if (LogLevel > logl)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: Warning: random number generator not properly seeded");
+		ok = TRUE;
+	}
+	done = ok ? RI_SUCCESS : RI_FAIL;
+	return ok;
+# else /* !HASURANDOMDEV */
+	return TRUE;
+# endif /* !HASURANDOMDEV */
+}
+
+/*
+**  status in initialization
+**  these flags keep track of the status of the initialization
+**  i.e., whether a file exists (_EX) and whether it can be used (_OK)
+**  [due to permissions]
+*/
+#define TLS_S_NONE	0x00000000	/* none yet  */
+#define TLS_S_CERT_EX	0x00000001	/* CERT file exists */
+#define TLS_S_CERT_OK	0x00000002	/* CERT file is ok */
+#define TLS_S_KEY_EX	0x00000004	/* KEY file exists */
+#define TLS_S_KEY_OK	0x00000008	/* KEY file is ok */
+#define TLS_S_CERTP_EX	0x00000010	/* CA CERT PATH exists */
+#define TLS_S_CERTP_OK	0x00000020	/* CA CERT PATH is ok */
+#define TLS_S_CERTF_EX	0x00000040	/* CA CERT FILE exists */
+#define TLS_S_CERTF_OK	0x00000080	/* CA CERT FILE is ok */
+
+# if _FFR_TLS_1
+#define TLS_S_CERT2_EX	0x00001000	/* 2nd CERT file exists */
+#define TLS_S_CERT2_OK	0x00002000	/* 2nd CERT file is ok */
+#define TLS_S_KEY2_EX	0x00004000	/* 2nd KEY file exists */
+#define TLS_S_KEY2_OK	0x00008000	/* 2nd KEY file is ok */
+# endif /* _FFR_TLS_1 */
+
+#define TLS_S_DH_OK	0x00200000	/* DH cert is ok */
+#define TLS_S_DHPAR_EX	0x00400000	/* DH param file exists */
+#define TLS_S_DHPAR_OK	0x00800000	/* DH param file is ok to use */
+
+/*
+**  TLS_OK_F -- can var be an absolute filename?
+**
+**	Parameters:
+**		var -- filename
+**		fn -- what is the filename used for?
+**
+**	Returns:
+**		ok?
+*/
+
+static bool
+tls_ok_f(var, fn)
+	char *var;
+	char *fn;
+{
+	/* must be absolute pathname */
+	if (var != NULL && *var == '/')
+		return TRUE;
+	if (LogLevel > 12)
+		sm_syslog(LOG_WARNING, NOQID, "TLS: file %s missing", fn);
+	return FALSE;
+}
+
+/*
+**  TLS_SAFE_F -- is a file safe to use?
+**
+**	Parameters:
+**		var -- filename
+**		sff -- flags for safefile()
+**
+**	Returns:
+**		ok?
+*/
+
+static bool
+tls_safe_f(var, sff)
+	char *var;
+	long sff;
+{
+	int ret;
+
+	if ((ret = safefile(var, RunAsUid, RunAsGid, RunAsUserName, sff,
+			    S_IRUSR, NULL)) == 0)
+		return TRUE;
+	if (LogLevel > 7)
+		sm_syslog(LOG_WARNING, NOQID, "TLS: file %s unsafe: %s",
+			  var, errstring(ret));
+	return FALSE;
+}
+
+/*
+**  TLS_OK_F -- macro to simplify calls to tls_ok_f
+**
+**	Parameters:
+**		var -- filename
+**		fn -- what is the filename used for?
+**		req -- is the file required?
+**		st -- status bit to set if ok
+**
+**	Side Effects:
+**		uses r, ok; may change ok and status.
+**
+*/
+
+#define TLS_OK_F(var, fn, req, st) if (ok) \
+	{ \
+		r = tls_ok_f(var, fn); \
+		if (r) \
+			status |= st; \
+		else if (req) \
+			ok = FALSE; \
+	}
+
+/*
+**  TLS_UNR -- macro to return whether a file should be unreadable
+**
+**	Parameters:
+**		bit -- flag to test
+**		req -- flags
+**
+**	Returns:
+**		0/SFF_NORFILES
+*/
+#define TLS_UNR(bit, req)	(bitset(bit, req) ? SFF_NORFILES : 0)
+
+/*
+**  TLS_SAFE_F -- macro to simplify calls to tls_safe_f
+**
+**	Parameters:
+**		var -- filename
+**		sff -- flags for safefile()
+**		req -- is the file required?
+**		ex -- does the file exist?
+**		st -- status bit to set if ok
+**
+**	Side Effects:
+**		uses r, ok, ex; may change ok and status.
+**
+*/
+
+#define TLS_SAFE_F(var, sff, req, ex, st) if (ex && ok) \
+	{ \
+		r = tls_safe_f(var, sff); \
+		if (r) \
+			status |= st;	\
+		else if (req) \
+			ok = FALSE;	\
+	}
+
+/*
+**  INITTLS -- initialize TLS
+**
+**	Parameters:
+**		ctx -- pointer to context
+**		req -- requirements for initialization (see sendmail.h)
+**		srv -- server side?
+**		certfile -- filename of certificate
+**		keyfile -- filename of private key
+**		cacertpath -- path to CAs
+**		cacertfile -- file with CA
+**		dhparam -- parameters for DH
+**
+**	Returns:
+**		succeeded?
+*/
+
+bool
+inittls(ctx, req, srv, certfile, keyfile, cacertpath, cacertfile, dhparam)
+	SSL_CTX **ctx;
+	u_long req;
+	bool srv;
+	char *certfile, *keyfile, *cacertpath, *cacertfile, *dhparam;
+{
+# if !NO_DH
+	static DH *dh = NULL;
+# endif /* !NO_DH */
+	int r;
+	bool ok;
+	long sff, status;
+	char *who;
+# if _FFR_TLS_1
+	char *cf2, *kf2;
+# endif /* _FFR_TLS_1 */
+
+	status = TLS_S_NONE;
+	who = srv ? "srv" : "clt";
+	if (ctx == NULL)
+		syserr("TLS: %s:inittls: ctx == NULL", who);
+
+	/* already initialized? (we could re-init...) */
+	if (*ctx != NULL)
+		return TRUE;
+
+	/* PRNG seeded? */
+	if (!tls_rand_init(RandFile, 10))
+		return FALSE;
+
+	/* let's start with the assumption it will work */
+	ok = TRUE;
+
+# if _FFR_TLS_1
+	/*
+	**  look for a second filename: it must be separated by a ','
+	**  no blanks allowed (they won't be skipped).
+	**  we change a global variable here! this change will be undone
+	**  before return from the function but only if it returns TRUE.
+	**  this isn't a problem since in a failure case this function
+	**  won't be called again with the same (overwritten) values.
+	**  otherwise each return must be replaced with a goto endinittls.
+	*/
+	cf2 = NULL;
+	kf2 = NULL;
+	if (certfile != NULL && (cf2 = strchr(certfile, ',')) != NULL)
+	{
+		*cf2++ = '\0';
+		if (keyfile != NULL && (kf2 = strchr(keyfile, ',')) != NULL)
+			*kf2++ = '\0';
+	}
+# endif /* _FFR_TLS_1 */
+
+	/*
+	**  what do we require from the client?
+	**  must it have CERTs?
+	**  introduce an option and decide based on that
+	*/
+
+	TLS_OK_F(certfile, "CertFile", bitset(TLS_I_CERT_EX, req),
+		 TLS_S_CERT_EX);
+	TLS_OK_F(keyfile, "KeyFile", bitset(TLS_I_KEY_EX, req),
+		 TLS_S_KEY_EX);
+	TLS_OK_F(cacertpath, "CACERTPath", bitset(TLS_I_CERTP_EX, req),
+		 TLS_S_CERTP_EX);
+	TLS_OK_F(cacertfile, "CACERTFile", bitset(TLS_I_CERTF_EX, req),
+		 TLS_S_CERTF_EX);
+
+# if _FFR_TLS_1
+	if (cf2 != NULL)
+	{
+		TLS_OK_F(cf2, "CertFile", bitset(TLS_I_CERT_EX, req),
+			 TLS_S_CERT2_EX);
+	}
+	if (kf2 != NULL)
+	{
+		TLS_OK_F(kf2, "KeyFile", bitset(TLS_I_KEY_EX, req),
+			 TLS_S_KEY2_EX);
+	}
+# endif /* _FFR_TLS_1 */
+
+	/*
+	**  valid values for dhparam are (only the first char is checked)
+	**  none	no parameters: don't use DH
+	**  512		generate 512 bit parameters (fixed)
+	**  1024	generate 1024 bit parameters
+	**  /file/name	read parameters from /file/name
+	**  default is: 1024 for server, 512 for client (OK? XXX)
+	*/
+	if (bitset(TLS_I_TRY_DH, req))
+	{
+		if (dhparam != NULL)
+		{
+			char c = *dhparam;
+
+			if (c == '1')
+				req |= TLS_I_DH1024;
+			else if (c == '5')
+				req |= TLS_I_DH512;
+			else if (c != 'n' && c != 'N' && c != '/')
+			{
+				if (LogLevel > 12)
+					sm_syslog(LOG_WARNING, NOQID,
+						  "TLS: error: illegal value '%s' for DHParam",
+						  dhparam);
+				dhparam = NULL;
+			}
+		}
+		if (dhparam == NULL)
+			dhparam = srv ? "1" : "5";
+		else if (*dhparam == '/')
+		{
+			TLS_OK_F(dhparam, "DHParameters",
+				 bitset(TLS_I_DHPAR_EX, req),
+				 TLS_S_DHPAR_EX);
+		}
+	}
+	if (!ok)
+		return ok;
+
+	/* certfile etc. must be "safe". */
+	sff = SFF_REGONLY | SFF_SAFEDIRPATH | SFF_NOWLINK
+	     | SFF_NOGWFILES | SFF_NOWWFILES
+	     | SFF_MUSTOWN | SFF_ROOTOK | SFF_OPENASROOT;
+	if (DontLockReadFiles)
+		sff |= SFF_NOLOCK;
+
+	TLS_SAFE_F(certfile, sff | TLS_UNR(TLS_I_CERT_UNR, req),
+		   bitset(TLS_I_CERT_EX, req),
+		   bitset(TLS_S_CERT_EX, status), TLS_S_CERT_OK);
+	TLS_SAFE_F(keyfile, sff | TLS_UNR(TLS_I_KEY_UNR, req),
+		   bitset(TLS_I_KEY_EX, req),
+		   bitset(TLS_S_KEY_EX, status), TLS_S_KEY_OK);
+	TLS_SAFE_F(cacertfile, sff | TLS_UNR(TLS_I_CERTF_UNR, req),
+		   bitset(TLS_I_CERTF_EX, req),
+		   bitset(TLS_S_CERTF_EX, status), TLS_S_CERTF_OK);
+	TLS_SAFE_F(dhparam, sff | TLS_UNR(TLS_I_DHPAR_UNR, req),
+		   bitset(TLS_I_DHPAR_EX, req),
+		   bitset(TLS_S_DHPAR_EX, status), TLS_S_DHPAR_OK);
+	if (!ok)
+		return ok;
+# if _FFR_TLS_1
+	if (cf2 != NULL)
+	{
+		TLS_SAFE_F(cf2, sff | TLS_UNR(TLS_I_CERT_UNR, req),
+			   bitset(TLS_I_CERT_EX, req),
+			   bitset(TLS_S_CERT2_EX, status), TLS_S_CERT2_OK);
+	}
+	if (kf2 != NULL)
+	{
+		TLS_SAFE_F(kf2, sff | TLS_UNR(TLS_I_KEY_UNR, req),
+			   bitset(TLS_I_KEY_EX, req),
+			   bitset(TLS_S_KEY2_EX, status), TLS_S_KEY2_OK);
+	}
+# endif /* _FFR_TLS_1 */
+
+	/* create a method and a new context */
+	if (srv)
+	{
+		if ((*ctx = SSL_CTX_new(SSLv23_server_method())) == NULL)
+		{
+			if (LogLevel > 7)
+				sm_syslog(LOG_WARNING, NOQID,
+					  "TLS: error: SSL_CTX_new(SSLv23_server_method()) failed");
+			return FALSE;
+		}
+	}
+	else
+	{
+		if ((*ctx = SSL_CTX_new(SSLv23_client_method())) == NULL)
+		{
+			if (LogLevel > 7)
+				sm_syslog(LOG_WARNING, NOQID,
+					  "TLS: error: SSL_CTX_new(SSLv23_client_method()) failed");
+			return FALSE;
+		}
+	}
+
+#  if TLS_NO_RSA
+	/* turn off backward compatibility, required for no-rsa */
+	SSL_CTX_set_options(*ctx, SSL_OP_NO_SSLv2);
+#  endif /* TLS_NO_RSA */
+
+
+#  if !TLS_NO_RSA
+	/*
+	**  Create a temporary RSA key
+	**  XXX  Maybe we shouldn't create this always (even though it
+	**  is only at startup).
+	**  It is a time-consuming operation and it is not always necessary.
+	**  maybe we should do it only on demand...
+	*/
+	if (bitset(TLS_I_RSA_TMP, req) &&
+	    (rsa_tmp = RSA_generate_key(RSA_KEYLENGTH, RSA_F4, NULL,
+					NULL)) == NULL
+	   )
+	{
+		if (LogLevel > 7)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: RSA_generate_key failed",
+				  who);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+		return FALSE;
+	}
+#  endif /* !TLS_NO_RSA */
+
+	/*
+	**  load private key
+	**  XXX change this for DSA-only version
+	*/
+	if (bitset(TLS_S_KEY_OK, status) &&
+	    SSL_CTX_use_PrivateKey_file(*ctx, keyfile,
+					 SSL_FILETYPE_PEM) <= 0)
+	{
+		if (LogLevel > 7)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: SSL_CTX_use_PrivateKey_file(%s) failed",
+				  who, keyfile);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+		if (bitset(TLS_I_USE_KEY, req))
+			return FALSE;
+	}
+
+	/* get the certificate file */
+	if (bitset(TLS_S_CERT_OK, status) &&
+	    SSL_CTX_use_certificate_file(*ctx, certfile,
+					 SSL_FILETYPE_PEM) <= 0)
+	{
+		if (LogLevel > 7)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: SSL_CTX_use_certificate_file(%s) failed",
+				  who, certfile);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+		if (bitset(TLS_I_USE_CERT, req))
+			return FALSE;
+	}
+
+	/* check the private key */
+	if (bitset(TLS_S_KEY_OK, status) &&
+	    (r = SSL_CTX_check_private_key(*ctx)) <= 0)
+	{
+		/* Private key does not match the certificate public key */
+		if (LogLevel > 5)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: SSL_CTX_check_private_key failed(%s): %d",
+				  who, keyfile, r);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+		if (bitset(TLS_I_USE_KEY, req))
+			return FALSE;
+	}
+
+# if _FFR_TLS_1
+	/* XXX this code is pretty much duplicated from above! */
+
+	/* load private key */
+	if (bitset(TLS_S_KEY2_OK, status) &&
+	    SSL_CTX_use_PrivateKey_file(*ctx, kf2, SSL_FILETYPE_PEM) <= 0)
+	{
+		if (LogLevel > 7)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: SSL_CTX_use_PrivateKey_file(%s) failed",
+				  who, kf2);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+	}
+
+	/* get the certificate file */
+	if (bitset(TLS_S_CERT2_OK, status) &&
+	    SSL_CTX_use_certificate_file(*ctx, cf2, SSL_FILETYPE_PEM) <= 0)
+	{
+		if (LogLevel > 7)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: SSL_CTX_use_certificate_file(%s) failed",
+				  who, cf2);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+	}
+
+	/* we should also check the private key: */
+	if (bitset(TLS_S_KEY2_OK, status) &&
+	    (r = SSL_CTX_check_private_key(*ctx)) <= 0)
+	{
+		/* Private key does not match the certificate public key */
+		if (LogLevel > 5)
+		{
+			sm_syslog(LOG_WARNING, NOQID,
+				  "TLS: error: %s: SSL_CTX_check_private_key 2 failed: %d",
+				  who, r);
+			if (LogLevel > 9)
+				tlslogerr();
+		}
+	}
+# endif /* _FFR_TLS_1 */
+
+	/* SSL_CTX_set_quiet_shutdown(*ctx, 1); violation of standard? */
+	SSL_CTX_set_options(*ctx, SSL_OP_ALL);	/* XXX bug compatibility? */
+
+# if !NO_DH
+	/* Diffie-Hellman initialization */
+	if (bitset(TLS_I_TRY_DH, req))
+	{
+		if (bitset(TLS_S_DHPAR_OK, status))
+		{
+			BIO *bio;
+
+			if ((bio = BIO_new_file(dhparam, "r")) != NULL)
+			{
+				dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+				BIO_free(bio);
+				if (dh == NULL && LogLevel > 7)
+				{
+					u_long err;
+
+					err = ERR_get_error();
+					sm_syslog(LOG_WARNING, NOQID,
+						  "TLS: error: %s: cannot read DH parameters(%s): %s",
+						  who, dhparam,
+						  ERR_error_string(err, NULL));
+					if (LogLevel > 9)
+						tlslogerr();
+				}
+			}
+			else
+			{
+				if (LogLevel > 5)
+				{
+					sm_syslog(LOG_WARNING, NOQID,
+						  "TLS: error: %s: BIO_new_file(%s) failed",
+						  who, dhparam);
+					if (LogLevel > 9)
+						tlslogerr();
+				}
+			}
+		}
+		if (dh == NULL && bitset(TLS_I_DH1024, req))
+		{
+			DSA *dsa;
+
+			/* this takes a while! (7-130s on a 450MHz AMD K6-2) */
+			dsa = DSA_generate_parameters(1024, NULL, 0, NULL,
+						      NULL, 0, NULL);
+			dh = DSA_dup_DH(dsa);
+			DSA_free(dsa);
+		}
+		else
+		if (dh == NULL && bitset(TLS_I_DH512, req))
+			dh = get_dh512();
+
+		if (dh == NULL)
+		{
+			if (LogLevel > 9)
+			{
+				u_long err;
+
+				err = ERR_get_error();
+				sm_syslog(LOG_WARNING, NOQID,
+					  "TLS: error: %s: cannot read or set DH parameters(%s): %s",
+					  who, dhparam,
+					  ERR_error_string(err, NULL));
+			}
+			if (bitset(TLS_I_REQ_DH, req))
+				return FALSE;
+		}
+		else
+		{
+			SSL_CTX_set_tmp_dh(*ctx, dh);
+
+			/* important to avoid small subgroup attacks */
+			SSL_CTX_set_options(*ctx, SSL_OP_SINGLE_DH_USE);
+			if (LogLevel > 12)
+				sm_syslog(LOG_INFO, NOQID,
+					  "TLS: %s: Diffie-Hellman init, key=%d bit (%c)",
+					  who, 8 * DH_size(dh), *dhparam);
+			DH_free(dh);
+		}
+	}
+# endif /* !NO_DH */
+
+
+	/* XXX do we need this cache here? */
+	if (bitset(TLS_I_CACHE, req))
+		SSL_CTX_sess_set_cache_size(*ctx, 128);
+	/* timeout? SSL_CTX_set_timeout(*ctx, TimeOut...); */
+
+	/* load certificate locations and default CA paths */
+	if (bitset(TLS_S_CERTP_EX, status) && bitset(TLS_S_CERTF_EX, status))
+	{
+		if ((r = SSL_CTX_load_verify_locations(*ctx, cacertfile,
+						       cacertpath)) == 1)
+		{
+#  if !TLS_NO_RSA
+			if (bitset(TLS_I_RSA_TMP, req))
+				SSL_CTX_set_tmp_rsa_callback(*ctx, tmp_rsa_key);
+#  endif /* !TLS_NO_RSA */
+
+			/* ask to verify the peer */
+			SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER, NULL);
+
+			/* install verify callback */
+			SSL_CTX_set_cert_verify_callback(*ctx, tls_verify_cb,
+							 NULL);
+			SSL_CTX_set_client_CA_list(*ctx,
+				SSL_load_client_CA_file(cacertfile));
+		}
+		else
+		{
+			/*
+			**  can't load CA data; do we care?
+			**  the data is necessary to authenticate the client,
+			**  which in turn would be necessary
+			**  if we want to allow relaying based on it.
+			*/
+			if (LogLevel > 5)
+			{
+				sm_syslog(LOG_WARNING, NOQID,
+					  "TLS: error: %s: %d load verify locs %s, %s",
+					  who, r, cacertpath, cacertfile);
+				if (LogLevel > 9)
+					tlslogerr();
+			}
+			if (bitset(TLS_I_VRFY_LOC, req))
+				return FALSE;
+		}
+	}
+
+	/* XXX: make this dependent on an option? */
+	if (tTd(96, 9))
+		SSL_CTX_set_info_callback(*ctx, apps_ssl_info_cb);
+
+#  if _FFR_TLS_1
+	/*
+	**  XXX install our own cipher list: option?
+	*/
+	if (CipherList != NULL && *CipherList != '\0')
+	{
+		if (SSL_CTX_set_cipher_list(*ctx, CipherList) <= 0)
+		{
+			if (LogLevel > 7)
+			{
+				sm_syslog(LOG_WARNING, NOQID,
+					  "TLS: error: %s: SSL_CTX_set_cipher_list(%s) failed, list ignored",
+					  who, CipherList);
+
+				if (LogLevel > 9)
+					tlslogerr();
+			}
+			/* failure if setting to this list is required? */
+		}
+	}
+#  endif /* _FFR_TLS_1 */
+	if (LogLevel > 12)
+		sm_syslog(LOG_INFO, NOQID, "TLS: init(%s)=%d", who, ok);
+
+# if _FFR_TLS_1
+#  if 0
+	/*
+	**  this label is required if we want to have a "clean" exit
+	**  see the comments above at the initialization of cf2
+	*/
+    endinittls:
+#  endif /* 0 */
+
+	/* undo damage to global variables */
+	if (cf2 != NULL)
+		*--cf2 = ',';
+	if (kf2 != NULL)
+		*--kf2 = ',';
+# endif /* _FFR_TLS_1 */
+
+	return ok;
+}
+/*
+**  INITSRVTLS -- initialize server side TLS
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		succeeded?
+*/
+
+bool
+initsrvtls()
+{
+
+	tls_ok = inittls(&srv_ctx, TLS_I_SRV, TRUE, SrvCERTfile, Srvkeyfile,
+			 CACERTpath, CACERTfile, DHParams);
+	return tls_ok;
+}
+/*
+**  TLS_GET_INFO -- get information about TLS connection
+**
+**	Parameters:
+**		ssl -- SSL connection structure
+**		e -- current envelope
+**		srv -- server or client
+**		host -- hostname of other side
+**		log -- log connection information?
+**
+**	Returns:
+**		result of authentication.
+**
+**	Side Effects:
+**		sets ${cipher}, ${tls_version}, ${verify}, ${cipher_bits},
+**		${cert}
+*/
+
+int
+tls_get_info(ssl, e, srv, host, log)
+	SSL *ssl;
+	ENVELOPE *e;
+	bool srv;
+	char *host;
+	bool log;
+{
+	SSL_CIPHER *c;
+	int b, r;
+	char *s;
+	char bitstr[16];
+	X509 *cert;
+
+	c = SSL_get_current_cipher(ssl);
+	define(macid("{cipher}", NULL), newstr(SSL_CIPHER_get_name(c)), e);
+	b = SSL_CIPHER_get_bits(c, &r);
+	(void) snprintf(bitstr, sizeof bitstr, "%d", b);
+	define(macid("{cipher_bits}", NULL), newstr(bitstr), e);
+# if _FFR_TLS_1
+	(void) snprintf(bitstr, sizeof bitstr, "%d", r);
+	define(macid("{alg_bits}", NULL), newstr(bitstr), e);
+# endif /* _FFR_TLS_1 */
+	s = SSL_CIPHER_get_version(c);
+	if (s == NULL)
+		s = "UNKNOWN";
+	define(macid("{tls_version}", NULL), newstr(s), e);
+
+	cert = SSL_get_peer_certificate(ssl);
+	if (log && LogLevel >= 14)
+		sm_syslog(LOG_INFO, e->e_id,
+			  "TLS: get_verify in %s: %ld get_peer: 0x%lx",
+			  srv ? "srv" : "clt",
+			  SSL_get_verify_result(ssl), (u_long) cert);
+	if (cert != NULL)
+	{
+		char buf[MAXNAME];
+
+		X509_NAME_oneline(X509_get_subject_name(cert),
+				  buf, sizeof buf);
+		define(macid("{cert_subject}", NULL),
+			       newstr(xtextify(buf, "<>\")")), e);
+		X509_NAME_oneline(X509_get_issuer_name(cert),
+				  buf, sizeof buf);
+		define(macid("{cert_issuer}", NULL),
+		       newstr(xtextify(buf, "<>\")")), e);
+# if _FFR_TLS_1
+		X509_NAME_get_text_by_NID(X509_get_subject_name(cert),
+					  NID_commonName, buf, sizeof buf);
+		define(macid("{cn_subject}", NULL),
+		       newstr(xtextify(buf, "<>\")")), e);
+		X509_NAME_get_text_by_NID(X509_get_issuer_name(cert),
+					  NID_commonName, buf, sizeof buf);
+		define(macid("{cn_issuer}", NULL),
+		       newstr(xtextify(buf, "<>\")")), e);
+# endif /* _FFR_TLS_1 */
+	}
+	else
+	{
+		define(macid("{cert_subject}", NULL), "", e);
+		define(macid("{cert_issuer}", NULL), "", e);
+# if _FFR_TLS_1
+		define(macid("{cn_subject}", NULL), "", e);
+		define(macid("{cn_issuer}", NULL), "", e);
+# endif /* _FFR_TLS_1 */
+	}
+	switch(SSL_get_verify_result(ssl))
+	{
+	  case X509_V_OK:
+		if (cert != NULL)
+		{
+			s = "OK";
+			r = TLS_AUTH_OK;
+		}
+		else
+		{
+			s = "NO";
+			r = TLS_AUTH_NO;
+		}
+		break;
+	  default:
+		s = "FAIL";
+		r = TLS_AUTH_FAIL;
+		break;
+	}
+	define(macid("{verify}", NULL), newstr(s), e);
+	if (cert != NULL)
+		X509_free(cert);
+
+	/* do some logging */
+	if (log && LogLevel > 9)
+	{
+		char *vers, *s1, *s2, *bits;
+
+		vers = macvalue(macid("{tls_version}", NULL), e);
+		bits = macvalue(macid("{cipher_bits}", NULL), e);
+		s1 = macvalue(macid("{verify}", NULL), e);
+		s2 = macvalue(macid("{cipher}", NULL), e);
+		sm_syslog(LOG_INFO, NOQID,
+			  "TLS: connection %s %.64s, version=%.16s, verify=%.16s, cipher=%.64s, bits=%.6s",
+			  srv ? "from" : "to",
+			  host == NULL ? "none" : host,
+			  vers == NULL ? "none" : vers,
+			  s1 == NULL ? "none" : s1,
+			  s2 == NULL ? "none" : s2,
+			  bits == NULL ? "0" : bits);
+		if (LogLevel > 11)
+		{
+			/*
+			**  maybe run xuntextify on the strings?
+			**  that is easier to read but makes it maybe a bit
+			**  more complicated to figure out the right values
+			**  for the access map...
+			*/
+			s1 = macvalue(macid("{cert_subject}", NULL), e);
+			s2 = macvalue(macid("{cert_issuer}", NULL), e);
+			sm_syslog(LOG_INFO, NOQID,
+				  "TLS: %s cert subject:%.128s, cert issuer=%.128s",
+				  srv ? "client" : "server",
+				  s1 == NULL ? "none" : s1,
+				  s2 == NULL ? "none" : s2);
+		}
+	}
+
+	return r;
+}
+
+# if !TLS_NO_RSA
+/*
+**  TMP_RSA_KEY -- return temporary RSA key
+**
+**	Parameters:
+**		s -- SSL connection structure
+**		export --
+**		keylength --
+**
+**	Returns:
+**		temporary RSA key.
+*/
+
+/* ARGUSED0 */
+static RSA *
+tmp_rsa_key(s, export, keylength)
+	SSL *s;
+	int export;
+	int keylength;
+{
+	return rsa_tmp;
+}
+# endif /* !TLS_NO_RSA */
+/*
+**  APPS_SSL_INFO_CB -- info callback for TLS connections
+**
+**	Parameters:
+**		s -- SSL connection structure
+**		where --
+**		ret --
+**
+**	Returns:
+**		none.
+*/
+
+void
+apps_ssl_info_cb(s, where, ret)
+	SSL *s;
+	int where;
+	int ret;
+{
+	char *str;
+	int w;
+	BIO *bio_err = NULL;
+
+	if (LogLevel > 14)
+		sm_syslog(LOG_INFO, NOQID,
+			  "info_callback where 0x%x ret %d", where, ret);
+
+	w = where & ~SSL_ST_MASK;
+	if (bio_err == NULL)
+		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+	if (w & SSL_ST_CONNECT)
+		str = "SSL_connect";
+	else if (w & SSL_ST_ACCEPT)
+		str = "SSL_accept";
+	else
+		str = "undefined";
+
+	if (where & SSL_CB_LOOP)
+	{
+		if (LogLevel > 12)
+			sm_syslog(LOG_NOTICE, NOQID,
+			"%s:%s\n", str, SSL_state_string_long(s));
+	}
+	else if (where & SSL_CB_ALERT)
+	{
+		str = (where & SSL_CB_READ) ? "read" : "write";
+		if (LogLevel > 12)
+			sm_syslog(LOG_NOTICE, NOQID,
+		"SSL3 alert %s:%s:%s\n",
+			   str, SSL_alert_type_string_long(ret),
+			   SSL_alert_desc_string_long(ret));
+	}
+	else if (where & SSL_CB_EXIT)
+	{
+		if (ret == 0)
+		{
+			if (LogLevel > 7)
+				sm_syslog(LOG_WARNING, NOQID,
+					"%s:failed in %s\n",
+					str, SSL_state_string_long(s));
+		}
+		else if (ret < 0)
+		{
+			if (LogLevel > 7)
+				sm_syslog(LOG_WARNING, NOQID,
+					"%s:error in %s\n",
+					str, SSL_state_string_long(s));
+		}
+	}
+}
+/*
+**  TLS_VERIFY_LOG -- log verify error for TLS certificates
+**
+**	Parameters:
+**		ok -- verify ok?
+**		ctx -- x509 context
+**
+**	Returns:
+**		0 -- fatal error
+**		1 -- ok
+*/
+
+static int
+tls_verify_log(ok, ctx)
+	int ok;
+	X509_STORE_CTX *ctx;
+{
+	SSL *ssl;
+	X509 *cert;
+	int reason, depth;
+	char buf[512];
+
+	cert = X509_STORE_CTX_get_current_cert(ctx);
+	reason = X509_STORE_CTX_get_error(ctx);
+	depth = X509_STORE_CTX_get_error_depth(ctx);
+	ssl = (SSL *)X509_STORE_CTX_get_ex_data(ctx,
+			SSL_get_ex_data_X509_STORE_CTX_idx());
+
+	if (ssl == NULL)
+	{
+		/* internal error */
+		sm_syslog(LOG_ERR, NOQID,
+			  "TLS: internal error: tls_verify_cb: ssl == NULL");
+		return 0;
+	}
+
+	X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof buf);
+	sm_syslog(LOG_INFO, NOQID,
+		  "TLS cert verify: depth=%d %s, state=%d, reason=%s\n",
+		  depth, buf, ok, X509_verify_cert_error_string(reason));
+	return 1;
+}
+
+/*
+**  TLS_VERIFY_CB -- verify callback for TLS certificates
+**
+**	Parameters:
+**		ctx -- x509 context
+**
+**	Returns:
+**		accept connection?
+**		currently: always yes.
+*/
+
+static int
+tls_verify_cb(ctx)
+	X509_STORE_CTX *ctx;
+{
+	int ok;
+
+	ok = X509_verify_cert(ctx);
+	if (ok == 0)
+	{
+		if (LogLevel > 13)
+			return tls_verify_log(ok, ctx);
+		return 1;	/* override it */
+	}
+	return ok;
+}
+
+
+/*
+**  TLSLOGERR -- log the errors from the TLS error stack
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		none.
+*/
+
+void
+tlslogerr()
+{
+	unsigned long l;
+	int line, flags;
+	unsigned long es;
+	char *file, *data;
+	char buf[256];
+#define CP (const char **)
+
+	es = CRYPTO_thread_id();
+	while ((l = ERR_get_error_line_data(CP &file, &line, CP &data, &flags))
+		!= 0)
+	{
+		sm_syslog(LOG_WARNING, NOQID,
+			 "TLS: %lu:%s:%s:%d:%s\n", es, ERR_error_string(l, buf),
+			 file, line, (flags & ERR_TXT_STRING) ? data : "");
+	}
+}
+
+# endif /* STARTTLS */
 #endif /* SMTP */
 /*
 **  HELP -- implement the HELP command.

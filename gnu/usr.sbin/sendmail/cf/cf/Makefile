@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2000/06/18 03:13:08 itojun Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/01/15 21:08:51 millert Exp $
 #
 #  Makefile for configuration files.
 #
-#	$Sendmail: Makefile,v 8.40 2000/02/01 22:07:15 gshapiro Exp $
+#	$Sendmail: Makefile,v 8.40.8.4 2000/10/26 18:27:44 gshapiro Exp $
 #
 
 #

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: nextstep.m4,v 1.1.1.2 2001/01/15 20:52:36 millert Exp $')
+VERSIONID(`$Sendmail: nextstep.m4,v 8.21 1999/10/21 00:31:40 gshapiro Exp $')
 ifdef(`UUCP_MAILER_PATH',, `define(`UUCP_MAILER_PATH', /usr/bin/uux)')dnl
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
 ifdef(`LOCAL_SHELL_FLAGS',, `define(`LOCAL_SHELL_FLAGS', `euP')')dnl

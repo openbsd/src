@@ -14,7 +14,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: gnu.m4,v 1.1.1.2 2001/01/15 20:52:35 millert Exp $')
+VERSIONID(`$Sendmail: gnu.m4,v 8.13 1999/04/24 05:37:41 gshapiro Exp $')
 ifdef(`STATUS_FILE',, `define(`STATUS_FILE', `/var/log/sendmail.st')')dnl
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /libexec/mail.local)')dnl
 ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', `mail $u')')dnl

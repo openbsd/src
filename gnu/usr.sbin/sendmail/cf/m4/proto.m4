@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.446 2000/04/06 06:29:45 gshapiro Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.446.2.5.2.38 2000/12/28 03:37:28 ca Exp $')
 
 MAILER(local)dnl
 
@@ -160,11 +160,31 @@ ifdef(`_ACCEPT_UNRESOLVABLE_DOMAINS_',`dnl',`dnl
 # Resolve map (to check if a host exists in check_mail)
 Kresolve host -a<OK> -T<TEMP>')
 
+ifdef(`_FFR_5_', `# macro storage map
+Kmacro macro')
+
 ifdef(`confCR_FILE', `dnl
-# Hosts that will permit relaying ($=R)
+# Hosts for which relaying is permitted ($=R)
 FR`'confCR_FILE',
 `dnl')
 
+define(`TLS_SRV_TAG', `TLS_Srv')dnl
+define(`TLS_CLT_TAG', `TLS_Clt')dnl
+define(`TLS_TRY_TAG', `Try_TLS')dnl
+define(`TLS_OFF_TAG', `Offer_TLS')dnl
+dnl this may be useful in other contexts too
+ifdef(`_ARITH_MAP_', `', `# arithmetic map
+define(`_ARITH_MAP_', `1')dnl
+Karith arith')
+ifdef(`_ACCESS_TABLE_', `dnl
+# possible values for tls_connect in access map
+C{tls}VERIFY ENCR', `dnl')
+ifdef(`_CERT_REGEX_ISSUER_', `dnl
+# extract relevant part from cert issuer
+KCERTIssuer regex _CERT_REGEX_ISSUER_', `dnl')
+ifdef(`_CERT_REGEX_SUBJECT_', `dnl
+# extract relevant part from cert subject
+KCERTSubject regex _CERT_REGEX_SUBJECT_', `dnl')
 
 # who I send unqualified names to (null means deliver locally)
 DR`'ifdef(`LOCAL_RELAY', LOCAL_RELAY)
@@ -297,7 +317,9 @@ ifelse(defn(`confDAEMON_OPTIONS'), `', `dnl',
 `errprint(WARNING: `confDAEMON_OPTIONS' is no longer valid.  See cf/README for more information.
 )'dnl
 `DAEMON_OPTIONS(`confDAEMON_OPTIONS')')
-ifelse(defn(`_DPO_'), `', `O DaemonPortOptions=Name=MTA', `_DPO_')
+ifelse(defn(`_DPO_'), `',
+`ifdef(`_NETINET6_', `O DaemonPortOptions=Name=MTA-IPv4, Family=inet
+O DaemonPortOptions=Name=MTA-IPv6, Family=inet6',`O DaemonPortOptions=Name=MTA')', `_DPO_')
 ifdef(`_NO_MSA_', `dnl', `O DaemonPortOptions=Port=587, Name=MSA, M=E')
 
 # SMTP client options
@@ -387,7 +409,7 @@ _OPTION(RefuseLA, `confREFUSE_LA', `12')
 _OPTION(MaxDaemonChildren, `confMAX_DAEMON_CHILDREN', `12')
 
 # maximum number of new connections per second
-_OPTION(ConnectionRateThrottle, `confCONNECTION_RATE_THROTTLE', `3')
+_OPTION(ConnectionRateThrottle, `confCONNECTION_RATE_THROTTLE', `0')
 
 # work recipient factor
 _OPTION(RecipientFactor, `confWORK_RECIPIENT_FACTOR', `30000')
@@ -525,6 +547,22 @@ _OPTION(Milter.macros.helo, `confMILTER_MACROS_HELO', `')
 _OPTION(Milter.macros.envfrom, `confMILTER_MACROS_ENVFROM', `')
 _OPTION(Milter.macros.envrcpt, `confMILTER_MACROS_ENVRCPT', `')')
 
+# CA directory
+_OPTION(CACERTPath, `confCACERT_PATH', `')
+# CA file
+_OPTION(CACERTFile, `confCACERT', `')
+# Server Cert
+_OPTION(ServerCertFile, `confSERVER_CERT', `')
+# Server private key
+_OPTION(ServerKeyFile, `confSERVER_KEY', `')
+# Client Cert
+_OPTION(ClientCertFile, `confCLIENT_CERT', `')
+# Client private key
+_OPTION(ClientKeyFile, `confCLIENT_KEY', `')
+# DHParameters (only required if DSA/DH is used)
+_OPTION(DHParameters, `confDH_PARAMETERS', `')
+# Random data source (required for systems without /dev/urandom under OpenSSL)
+_OPTION(RandFile, `confRAND_FILE', `')
 
 ifdef(`confQUEUE_FILE_MODE',
 `# queue file mode (qf files)
@@ -597,6 +635,7 @@ R$* : $* [ $* ]		$: $1 : $2 [ $3 ] <@>		remark if leading colon
 R$* : $* <@>		$: $2				strip colon if marked
 R$* <@>			$: $1				unmark
 R$* ;			   $1				strip trailing semi
+R$* < $+ :; > $*	$@ $2 :; <@>			catch <list:;>
 R$* < $* ; >		   $1 < $2 >			bogus bracketed semi
 
 # null input now results from list:; syntax
@@ -741,6 +780,9 @@ dnl then $- does not work.
 R$* $| $* < @ $* > $*	$: $2 < @ $[ $3 $] > $4', `dnl')', `dnl
 dnl _NO_CANONIFY_ is not set: canonify unless:
 dnl {daemon_flags} contains CC (do not canonify)
+dnl but add a trailing dot to qualified hostnames so other rules will work
+dnl should we do this for every hostname: even unqualified?
+R$* CC $* $| $* < @ $+.$+ > $*	$: $3 < @ $4.$5 . > $6
 R$* CC $* $| $*			$: $3
 # pass to name server to make hostname canonical
 R$* $| $* < @ $* > $*		$: $2 < @ $[ $3 $] > $4')
@@ -768,6 +810,7 @@ R$* < @ $* . . > $*		$1 < @ $2 . > $3
 ##################################################
 Sfinal=4
 
+R$+ :; <@>		$@ $1 :				handle <list:;>
 R$* <@>			$@				handle <> and list:;
 
 # strip trailing dot off possibly canonical name
@@ -824,24 +867,26 @@ R$*			$: $>Parse1 $1		final parsing
 
 SParse0
 R<@>			$@ <@>			special case error msgs
-R$* : $* ; <@>		$#error $@ 5.1.3 $: "553 List:; syntax illegal for recipient addresses"
+R$* : $* ; <@>		$#error $@ 5.1.3 $: "501 List:; syntax illegal for recipient addresses"
 R@ <@ $* >		< @ $1 >		catch "@@host" bogosity
-R<@ $+>			$#error $@ 5.1.3 $: "553 User address required"
+R<@ $+>			$#error $@ 5.1.3 $: "501 User address required"
 R$*			$: <> $1
 R<> $* < @ [ $+ ] > $*	$1 < @ [ $2 ] > $3
-R<> $* <$* : $* > $*	$#error $@ 5.1.3 $: "553 Colon illegal in host name part"
+R<> $* <$* : $* > $*	$#error $@ 5.1.3 $: "501 Colon illegal in host name part"
 R<> $*			$1
-R$* < @ . $* > $*	$#error $@ 5.1.2 $: "553 Invalid host name"
-R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "553 Invalid host name"
+R$* < @ . $* > $*	$#error $@ 5.1.2 $: "501 Invalid host name"
+R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "501 Invalid host name"
+dnl comma only allowed before @; this check is not complete
+R$* , $~O $*		$#error $@ 5.1.2 $: "501 Invalid route address"
 
 # now delete the local info -- note $=O to find characters that cause forwarding
 R$* < @ > $*		$@ $>Parse0 $>canonify $1	user@ => user
 R< @ $=w . > : $*	$@ $>Parse0 $>canonify $2	@here:... -> ...
 R$- < @ $=w . >		$: $(dequote $1 $) < @ $2 . >	dequote "foo"@here
-R< @ $+ >		$#error $@ 5.1.3 $: "553 User address required"
+R< @ $+ >		$#error $@ 5.1.3 $: "501 User address required"
 R$* $=O $* < @ $=w . >	$@ $>Parse0 $>canonify $1 $2 $3	...@here -> ...
 R$- 			$: $(dequote $1 $) < @ *LOCAL* >	dequote "foo"
-R< @ *LOCAL* >		$#error $@ 5.1.3 $: "553 User address required"
+R< @ *LOCAL* >		$#error $@ 5.1.3 $: "501 User address required"
 R$* $=O $* < @ *LOCAL* >
 			$@ $>Parse0 $>canonify $1 $2 $3	...@*LOCAL* -> ...
 R$* < @ *LOCAL* >	$: $1
@@ -896,6 +941,8 @@ R< $+ > $+ < @ $+ >	$: $>Recurse $1',
 # short circuit local delivery so forwarded email works
 ifdef(`_MAILER_usenet_', `dnl
 R$+ . USENET < @ $=w . >	$#usenet $@ usenet $: $1	handle usenet specially', `dnl')
+
+
 ifdef(`_STICKY_LOCAL_DOMAIN_',
 `R$+ < @ $=w . >		$: < $H > $1 < @ $2 . >		first try hub
 R< $+ > $+ < $+ >	$>MailerToTriple < $1 > $2 < $3 >	yep ....
@@ -966,7 +1013,7 @@ R$* < @ $* > $*		$: $>MailerToTriple < $S > $1 < @ $2 > $3	glue on smarthost nam
 # deal with other remote names
 ifdef(`_MAILER_smtp_',
 `R$* < @$* > $*		$#_SMTP_ $@ $2 $: $1 < @ $2 > $3	user@host.domain',
-`R$* < @$* > $*		$#error $@ 5.1.2 $: "553 Unrecognized host name " $2')
+`R$* < @$* > $*		$#error $@ 5.1.2 $: "501 Unrecognized host name " $2')
 
 # handle locally delivered names
 R$=L			$#_LOCAL_ $: @ $1		special local names
@@ -982,31 +1029,44 @@ R$+			$: $1 $| $>"Local_localaddr" $1
 R$+ $| $#$*		$#$2
 R$+ $| $*		$: $1
 
-# deal with plussed users so aliases work nicely
-R$+ + *			$#_LOCAL_ $@ $&h $: $1
-R$+ + $*		$#_LOCAL_ $@ + $2 $: $1 + *
+ifdef(`_FFR_5_', `
+# Preserve host in a macro
+R$+			$: $(macro {LocalAddrHost} $) $1
+R$+ @ $+		$: $(macro {LocalAddrHost} $@ @ $2 $) $1')
 
+ifdef(`_PRESERVE_LOCAL_PLUS_DETAIL_', `', `
+# deal with plussed users so aliases work nicely
+R$+ + *			$#_LOCAL_ $@ $&h $: $1`'ifdef(`_FFR_5_', ` $&{LocalAddrHost}')
+R$+ + $*		$#_LOCAL_ $@ + $2 $: $1 + *`'ifdef(`_FFR_5_', ` $&{LocalAddrHost}')
+')
 # prepend an empty "forward host" on the front
 R$+			$: <> $1
 
 ifdef(`LUSER_RELAY', `dnl
 # send unrecognized local users to a relay host
+ifdef(`_PRESERVE_LOCAL_PLUS_DETAIL_', `
+R< > $+ + $*		$: < ? $L > <+ $2> $(user $1 $)	look up user+
+R< > $+			$: < ? $L > < > $(user $1 $)	look up user
+R< ? $* > < $* > $+ <>	$: < > $3 $2			found; strip $L
+R< ? $* > < $* > $+	$: < $1 > $3 $2			not found', `
 R< > $+ 		$: < $L > $(user $1 $)		look up user
-R< $* > $+ <>		$: < > $2			found; strip $L',
+R< $* > $+ <>		$: < > $2			found; strip $L')',
 `dnl')
 
 # see if we have a relay or a hub
 R< > $+			$: < $H > $1			try hub
 R< > $+			$: < $R > $1			try relay
+ifdef(`_PRESERVE_LOCAL_PLUS_DETAIL_', `
+R< > $+			$@ $1', `
 R< > $+			$: < > < $1 <> $&h >		nope, restore +detail
 R< > < $+ <> + $* >	$: < > < $1 + $2 >		check whether +detail
 R< > < $+ <> $* >	$: < > < $1 >			else discard
 R< > < $+ + $* > $*	   < > < $1 > + $2 $3		find the user part
-R< > < $+ > + $*	$#_LOCAL_ $@ $2 $: @ $1		strip the extra +
+R< > < $+ > + $*	$#_LOCAL_ $@ $2 $: @ $1`'ifdef(`_FFR_5_', ` $&{LocalAddrHost}')		strip the extra +
 R< > < $+ >		$@ $1				no +detail
 R$+			$: $1 <> $&h			add +detail back in
 R$+ <> + $*		$: $1 + $2			check whether +detail
-R$+ <> $*		$: $1				else discard
+R$+ <> $*		$: $1				else discard')
 R< local : $* > $*	$: $>MailerToTriple < local : $1 > $2	no host extension
 R< error : $* > $*	$: $>MailerToTriple < error : $1 > $2	no host extension
 R< $- : $+ > $+		$: $>MailerToTriple < $1 : $2 > $3 < @ $2 >
@@ -1164,8 +1224,7 @@ undivert(3)dnl LOCAL_RULE_0
 ifdef(`_LDAP_ROUTING_', `dnl
 SLDAPExpand
 # do the LDAP lookups
-R<$+><$+>
-	$: <$(ldap_mailroutingaddress $2 $: $)> <$(ldap_mailhost $2 $: $)> <$1> <$2>
+R<$+><$+>		$: <$(ldapmra $2 $: $)> <$(ldapmh $2 $: $)> <$1> <$2>
 
 # if mailRoutingAddress and local or non-existant mailHost,
 # return the new mailRoutingAddress
@@ -1232,6 +1291,7 @@ R<?> <$+.$+> <$+> <$*> <+ $*>	$: < $(access .$2 $: ? $) > <$1.$2> <$3> <$4> <+ $
 dnl lookup IP address (no check is done whether it is an IP number!)
 R<?> <[$+.$-]> <$+> <$*> <$*>	$@ $>LookUpDomain <[$1]> <$3> <$4> <$5>
 dnl lookup IPv6 address
+R<?> <[$+::$-]> <$+> <$*> <$*>	$: $>LookUpDomain <[$1]> <$3> <$4> <$5>
 R<?> <[$+:$-]> <$+> <$*> <$*>	$: $>LookUpDomain <[$1]> <$3> <$4> <$5>
 dnl not found, but subdomain: try again
 R<?> <$+.$+> <$+> <$*> <$*>	$@ $>LookUpDomain <$2> <$3> <$4> <$5>
@@ -1261,7 +1321,8 @@ R<$+> <$+> <$*> <$- $+>		$: < $(access $5`'_TAG_DELIM_`'$1 $: ? $) > <$1> <$2> <
 dnl lookup without tag
 R<?> <$+> <$+> <$*> <+ $+>	$: < $(access $1 $: ? $) > <$1> <$2> <$3> <+ $4>
 dnl no match; IPv6: remove last part
-R<?> <$+:$-> <$+> <$*> <$*>	$: $>LookUpAddress <$1> <$3> <$4> <$5>
+R<?> <$+::$-> <$+> <$*> <$*>	$@ $>LookUpAddress <$1> <$3> <$4> <$5>
+R<?> <$+:$-> <$+> <$*> <$*>	$@ $>LookUpAddress <$1> <$3> <$4> <$5>
 dnl no match; IPv4: remove last part
 R<?> <$+.$-> <$+> <$*> <$*>	$@ $>LookUpAddress <$1> <$3> <$4> <$5>
 dnl no match: return default
@@ -1366,17 +1427,22 @@ R< d > $*		$@ deferred
 R< $* > $*		$: $2
 
 ifdef(`_ACCESS_TABLE_', `dnl
+dnl workspace: {client_name} $| {client_addr}
 R$+ $| $+		$: $>LookUpDomain < $1 > <?> < $2 > <+Connect>
+dnl workspace: <result-of-lookup> <{client_addr}>
 R<?> <$+>		$: $>LookUpAddress < $1 > <?> < $1 > <+Connect>	no: another lookup
+dnl workspace: <result-of-lookup> <{client_addr}>
 R<?> < $+ >		$: $1					found nothing
-R<$={Accept}> < $* >	$@ $1
+dnl workspace: <result-of-lookup> <{client_addr}>
+dnl or {client_addr}
+R<$={Accept}> < $* >	$@ $1				return value of lookup
 R<REJECT> $*		$#error ifdef(`confREJECT_MSG', `$: "confREJECT_MSG"', `$@ 5.7.1 $: "550 Access denied"')
 R<DISCARD> $*		$#discard $: discard
 dnl error tag
-R<ERROR:$-.$-.$-:$+> $*		$#error $@ $1.$2.$3 $: $4
-R<ERROR:$+> $*		$#error $: $1
+R<ERROR:$-.$-.$-:$+> <$*>	$#error $@ $1.$2.$3 $: $4
+R<ERROR:$+> <$*>		$#error $: $1
 dnl generic error from access map
-R<$+> $*		$#error $: $1', `dnl')
+R<$+> <$*>		$#error $: $1', `dnl')
 
 ifdef(`_RBL_',`dnl
 # DNS based IP address spam list
@@ -1403,6 +1469,14 @@ SBasic_check_mail
 R$*			$: < ${deliveryMode} > $1
 R< d > $*		$@ deferred
 R< $* > $*		$: $2
+
+# authenticated?
+dnl done first: we can require authentication for every mail transaction
+dnl workspace: address as given by MAIL FROM: (sender)
+R$*			$: $1 $| $>"tls_client" $&{verify} $| MAIL
+R$* $| $#$+		$#$2
+dnl undo damage: remove result of tls_client call
+R$* $| $*		$: $1
 
 dnl workspace: address as given by MAIL FROM:
 R<>			$@ <OK>			we MUST accept <> (RFC 1123)
@@ -1448,7 +1522,7 @@ dnl workspace: < ? $&{client_name} > <user@localhost|host>
 dnl	or:    <address>
 dnl	or:    <?> <address>	(thanks to u in ${daemon_flags})
 R<? $=w> $*		$: $2			local client: ok
-R<? $+> <$+>		$#error $@ 5.5.4 $: "553 Real domain name required"
+R<? $+> <$+>		$#error $@ 5.5.4 $: "501 Real domain name required for sender address"
 dnl remove <?> (happens only if ${client_name} == "" or u in ${daemon_flags})
 R<?> $*			$: $1')
 dnl workspace: address (or <address>)
@@ -1498,7 +1572,7 @@ dnl remove daemon_flags
 R$* $| $*		$: $2
 R<?> $*			$: < ? $&{client_name} > $1
 R<?> $*			$@ <OK>				...local unqualed ok
-R<? $+> $*		$#error $@ 5.5.4 $: "553 Domain name required"
+R<? $+> $*		$#error $@ 5.5.4 $: "501 Domain name required for sender address " $&f
 							...remote is not')
 # check results
 R<?> $*			$: @ $1		mark address: nothing known about it
@@ -1570,7 +1644,7 @@ ifdef(`_ACCESS_TABLE_', `dnl
 R$*			$: <?> $1
 dnl user is now tagged with @ to be consistent with check_mail
 dnl and to distinguish users from hosts (com would be host, com@ would be user)
-R<?> $+ < @ $=w >	$: <> <$1 < @ $2 >> $| <F:$1@$2> <U:$1@>
+R<?> $+ < @ $=w >	$: <> <$1 < @ $2 >> $| <F:$1@$2> <U:$1@> <H:$2>
 R<?> $+ < @ $* >	$: <> <$1 < @ $2 >> $| <F:$1@$2> <H:$2>
 R<?> $+			$: <> <$1> $| <U:$1@>
 dnl $| is used as delimiter, otherwise false matches may occur: <user<@domain>>
@@ -1596,6 +1670,16 @@ R<$+> $*		$#error $: $1		error from access db
 R@ $*			$1		remove mark', `dnl')', `dnl')
 
 ifdef(`_PROMISCUOUS_RELAY_', `divert(-1)')
+# authenticated?
+dnl do this unconditionally? this requires to manage CAs carefully
+dnl just because someone has a CERT signed by a "trusted" CA
+dnl does not mean we want to allow relaying for her,
+dnl either use a subroutine or provide something more sophisticated
+dnl this could for example check the DN (maybe an access map lookup)
+R$*		$: $1 $| $>RelayAuth $1 $| $&{verify}	client authenticated?
+R$* $| $# $+		$# $2				error/ok?
+R$* $| $*		$: $1				no
+
 # authenticated by a trusted mechanism?
 R$*			$: $1 $| $&{auth_type}
 dnl empty ${auth_type}?
@@ -1605,8 +1689,10 @@ dnl use $# to override further tests (delay_checks): see check_rcpt below
 R$* $| $={TrustAuthMech}	$# RELAYAUTH
 dnl undo addition of ${auth_type}
 R$* $| $*		$: $1
+dnl workspace: localpart<@domain> | localpart
 ifelse(defn(`_NO_UUCP_'), `r',
-`R$* ! $* < @ $* >	$: <REMOTE> $2 < @ BANG_PATH >', `dnl')
+`R$* ! $* < @ $* >	$: <REMOTE> $2 < @ BANG_PATH >
+R$* ! $* 		$: <REMOTE> $2 < @ BANG_PATH >', `dnl')
 # anything terminating locally is ok
 ifdef(`_RELAY_ENTIRE_DOMAIN_', `dnl
 R$+ < @ $* $=m >	$@ RELAYTO', `dnl')
@@ -1615,11 +1701,13 @@ ifdef(`_RELAY_HOSTS_ONLY_',
 `R$+ < @ $=R >		$@ RELAYTO
 ifdef(`_ACCESS_TABLE_', `dnl
 R$+ < @ $+ >		$: <$(access To:$2 $: ? $)> <$1 < @ $2 >>
-R$+ < @ $+ >		$: <$(access $2 $: ? $)> <$1 < @ $2 >>',`dnl')',
+dnl workspace: <Result-of-lookup | ?> <localpart<@domain>>
+R<?> <$+ < @ $+ >>	$: <$(access $2 $: ? $)> <$1 < @ $2 >>',`dnl')',
 `R$+ < @ $* $=R >	$@ RELAYTO
 ifdef(`_ACCESS_TABLE_', `dnl
 R$+ < @ $+ >		$: $>LookUpDomain <$2> <?> <$1 < @ $2 >> <+To>',`dnl')')
 ifdef(`_ACCESS_TABLE_', `dnl
+dnl workspace: <Result-of-lookup | ?> <localpart<@domain>>
 R<RELAY> $*		$@ RELAYTO
 R<$*> <$*>		$: $2',`dnl')
 
@@ -1810,8 +1898,11 @@ dnl		A: recursive address lookup (LookUpAddress) [not yet required]
 ###	return: <RHS of lookup> or <?> (not found)
 ######################################################################
 
+# class with valid marks for SearchList
+dnl if A is activated: add it
+C{src}E F H U
 SSearchList
-# if it is H: do lookup?
+# mark H: lookup domain
 R<$+> $| <H:$+> <$*>		$: <$1> $| <@> $>LookUpDomain <$2> <?> <$3> <$1>
 R<$+> $| <@> <$+> <$*>		$: <$1> $| <$2> <$3>
 dnl A: NOT YET REQUIRED
@@ -1819,9 +1910,9 @@ dnl R<$+> $| <A:$+> <$*>	$: <$1> $| <@> $>LookUpAddress <$2> <?> <$3> <$1>
 dnl R<$+> $| <@> <$+> <$*>	$: <$1> $| <$2> <$3>
 dnl lookup of the item with tag
 dnl this applies to F: U: E:
-R<$- $-> $| <$-:$+> <$*>	$: <$1 $2> $| <$(access $2`'_TAG_DELIM_`'$4 $: $3:$4 $)> <$5>
+R<$- $-> $| <$={src}:$+> <$*>	$: <$1 $2> $| <$(access $2`'_TAG_DELIM_`'$4 $: $3:$4 $)> <$5>
 dnl no match, try without tag
-R<+ $-> $| <$-:$+> <$*>		$: <+ $1> $| <$(access $3 $: $2:$3 $)> <$4>
+R<+ $-> $| <$={src}:$+> <$*>	$: <+ $1> $| <$(access $3 $: $2:$3 $)> <$4>
 dnl do we really have to distinguish these cases?
 dnl probably yes, there might be a + in the domain part (is that allowed?)
 dnl user+detail lookups: should it be:
@@ -1832,13 +1923,12 @@ dnl user lookups are always with trailing @
 dnl do not remove the @ from the lookup:
 dnl it is part of the +detail@ which is omitted for the lookup
 R<$- $-> $| <U:$* + $*> <$*>	$: <$1 $2> $| <$(access $2`'_TAG_DELIM_`'$3@ $: U:$3 + $4$)> <$5>
+dnl no match, try without tag
 R<+ $-> $| <U:$* + $*> <$*>	$: <+ $1> $| <$(access $2@ $: U:$2 + $3$)> <$4>
-dnl special case for ERROR because this matches the input mark:address
-R<$+> $| <ERROR:$+> <>		$@ <ERROR:$2>
 dnl no match, try rest of list
-R<$+> $| <$-:$+> <$+>		$@ $>SearchList <$1> $| <$4>
+R<$+> $| <$={src}:$+> <$+>	$@ $>SearchList <$1> $| <$4>
 dnl no match, list empty: return failure
-R<$+> $| <$-:$+> <>		$@ <?>
+R<$+> $| <$={src}:$+> <>	$@ <?>
 dnl got result, return it
 R<$+> $| <$+> <$*>		$@ <$2>
 dnl return result from recursive invocation
@@ -1862,6 +1952,136 @@ R$*			$#error $@ 5.7.1 $: "550 " $&{auth_authen} " not allowed to act as " $&{au
 dnl empty ruleset definition so it can be called
 SLocal_trust_auth
 
+ifdef(`_FFR_TLS_O_T', `dnl
+Soffer_tls
+R$*		$: $>LookUpDomain <$&{client_name}> <?> <> <! TLS_OFF_TAG>
+R<?>$*		$: $>LookUpAddress <$&{client_addr}> <?> <> <! TLS_OFF_TAG>
+R<?>$*		$: <$(access TLS_OFF_TAG: $: ? $)>
+R<?>$*		$@ OK
+R<NO> <>	$#error $@ 5.7.1 $: "550 do not offer TLS for " $&{client_name} " ["$&{client_addr}"]"
+
+Stry_tls
+R$*		$: $>LookUpDomain <$&{server_name}> <?> <> <! TLS_TRY_TAG>
+R<?>$*		$: $>LookUpAddress <$&{server_addr}> <?> <> <! TLS_TRY_TAG>
+R<?>$*		$: <$(access TLS_TRY_TAG: $: ? $)>
+R<?>$*		$@ OK
+R<NO>$*		$#error $@ 5.7.1 $: "550 do not try TLS with " $&{server_name} " ["$&{server_addr}"]"
+')dnl
+
+# is connection with client "good" enough? (done in server)
+# input: ${verify} $| (MAIL|STARTTLS)
+dnl MAIL: called from check_mail
+dnl STARTTLS: called from smtp() after STARTTLS has been accepted
+Stls_client
+ifdef(`_ACCESS_TABLE_', `dnl
+dnl ignore second arg for now
+dnl maybe use it to distinguish permanent/temporary error?
+dnl if MAIL: permanent (STARTTLS has not been offered)
+dnl if STARTTLS: temporary (offered but maybe failed)
+R$* $| $*	$: $1 $| $>LookUpDomain <$&{client_name}> <?> <> <! TLS_CLT_TAG>
+R$* $| <?>$*	$: $1 $| $>LookUpAddress <$&{client_addr}> <?> <> <! TLS_CLT_TAG>
+dnl do a default lookup: just TLS_CLT_TAG
+R$* $| <?>$*	$: $1 $| <$(access TLS_CLT_TAG`'_TAG_DELIM_ $: ? $)>
+R$*		$@ $>"tls_connection" $1', `dnl
+R$* $| $*	$@ $>"tls_connection" $1')
+
+# is connection with server "good" enough? (done in client)
+dnl i.e. has the server been authenticated and is encryption active?
+dnl called from deliver() after STARTTLS command
+# input: ${verify}
+Stls_server
+ifdef(`_ACCESS_TABLE_', `dnl
+R$*		$: $1 $| $>LookUpDomain <$&{server_name}> <?> <> <! TLS_SRV_TAG>
+R$* $| <?>$*	$: $1 $| $>LookUpAddress <$&{server_addr}> <?> <> <! TLS_SRV_TAG>
+dnl do a default lookup: just TLS_SRV_TAG
+R$* $| <?>$*	$: $1 $| <$(access TLS_SRV_TAG`'_TAG_DELIM_ $: ? $)>
+R$*		$@ $>"tls_connection" $1', `dnl
+R$*		$@ $>"tls_connection" $1')
+
+Stls_connection
+ifdef(`_ACCESS_TABLE_', `dnl
+dnl common ruleset for tls_{client|server}
+dnl input: $&{verify} $| <ResultOfLookup> [<>]
+dnl remove optional <>
+R$* $| <$*>$*			$: $1 $| <$2>
+dnl permanent or temporary error?
+R$* $| <PERM + $={tls} $*>	$: $1 $| <503:5.7.0> <$2 $3>
+R$* $| <TEMP + $={tls} $*>	$: $1 $| <403:4.7.0> <$2 $3>
+dnl default case depends on TLS_PERM_ERR
+R$* $| <$={tls} $*>		$: $1 $| <ifdef(`TLS_PERM_ERR', `503:5.7.0', `403:4.7.0')> <$2 $3>
+dnl deal with TLS handshake failures: abort
+RSOFTWARE $| <$-:$+> $* 	$#error $@ $2 $: $1 " TLS handshake failed."
+dnl no <reply:dns> i.e. not requirements in the access map
+dnl use default error
+RSOFTWARE $| $* 		$#error $@ ifdef(`TLS_PERM_ERR', `5.7.0', `4.7.0') $: "ifdef(`TLS_PERM_ERR', `503', `403') TLS handshake failed."
+R$* $| <$*> <VERIFY>		$: <$2> <VERIFY> $1
+R$* $| <$*> <$={tls}:$->$*	$: <$2> <$3:$4> $1
+dnl some other value in access map: accept
+dnl this also allows to override the default case (if used)
+R$* $| $*			$@ OK
+# authentication required: give appropriate error
+# other side did authenticate (via STARTTLS)
+dnl workspace: <SMTP:ESC> <{VERIFY,ENCR}[:BITS]> ${verify}
+dnl only verification required and it succeeded
+R<$*><VERIFY> OK		$@ OK
+dnl verification required + some level of encryption
+R<$*><VERIFY:$-> OK		$: <$1> <REQ:$2>
+dnl just some level of encryption required
+R<$*><ENCR:$-> $*		$: <$1> <REQ:$2>
+dnl verification required but ${verify} is not set
+R<$-:$+><VERIFY $*>		$#error $@ $2 $: $1 " authentication required"
+R<$-:$+><VERIFY $*> FAIL	$#error $@ $2 $: $1 " authentication failed"
+R<$-:$+><VERIFY $*> NO		$#error $@ $2 $: $1 " not authenticated"
+R<$-:$+><VERIFY $*> NONE	$#error $@ $2 $: $1 " other side does not support STARTTLS"
+dnl some other value for ${verify}
+R<$-:$+><VERIFY $*> $+		$#error $@ $2 $: $1 " authentication failure " $4
+dnl some level of encryption required: get the maximum level
+R<$*><REQ:$->			$: <$1> <REQ:$2> $>max $&{cipher_bits} : $&{auth_ssf}
+dnl compare required bits with actual bits
+R<$*><REQ:$-> $-		$: <$1> <$2:$3> $(arith l $@ $3 $@ $2 $)
+R<$-:$+><$-:$-> TRUE		$#error $@ $2 $: $1 " encryption too weak " $4 " less than " $3
+
+Smax
+dnl compute the max of two values separated by :
+R:		$: 0
+R:$-		$: $1
+R$-:		$: $1
+R$-:$-		$: $(arith l $@ $1 $@ $2 $) : $1 : $2
+RTRUE:$-:$-	$: $2
+R$-:$-:$-	$: $2',
+`dnl use default error
+dnl deal with TLS handshake failures: abort
+RSOFTWARE	$#error $@ ifdef(`TLS_PERM_ERR', `5.7.0', `4.7.0') $: "ifdef(`TLS_PERM_ERR', `503', `403') TLS handshake."')
+
+SRelayAuth
+# authenticated?
+dnl we do not allow relaying for anyone who can present a cert
+dnl signed by a "trusted" CA. For example, even if we put verisigns
+dnl CA in CERTPath so we can authenticate users, we do not allow
+dnl them to abuse our server (they might be easier to get hold of,
+dnl but anyway).
+dnl so here is the trick: if the verification succeeded
+dnl we look up the cert issuer in the access map
+dnl (maybe after extracting a part with a regular expression)
+dnl if this returns RELAY we relay without further questions
+dnl if it returns SUBJECT we perform a similar check on the
+dnl cert subject.
+R$* $| OK		$: $1
+R$* $| $*		$@ NO		not authenticated
+ifdef(`_ACCESS_TABLE_', `dnl
+ifdef(`_CERT_REGEX_ISSUER_', `dnl
+R$*			$: $1 $| $(CERTIssuer $&{cert_issuer} $)',
+`R$*			$: $1 $| $&{cert_issuer}')
+R$* $| $+		$: $1 $| $(access CERTISSUER:$2 $)
+dnl use $# to stop further checks (delay_check)
+R$* $| RELAY		$# RELAYCERTISSUER
+ifdef(`_CERT_REGEX_SUBJECT_', `dnl
+R$* $| SUBJECT		$: $1 $| <@> $(CERTSubject $&{cert_subject} $)',
+`R$* $| SUBJECT		$: $1 $| <@> $&{cert_subject}')
+R$* $| <@> $+		$: $1 $| <@> $(access CERTSUBJECT:$2 $)
+R$* $| <@> RELAY	$# RELAYCERTSUBJECT
+R$* $| $*		$: $1', `dnl')
+
 undivert(9)dnl LOCAL_RULESETS
 ifdef(`_FFR_MILTER', `
 #
@@ -1882,3 +2102,4 @@ _MAIL_FILTERS_')
 ######################################################################
 ######################################################################
 undivert(7)dnl MAILER_DEFINITIONS
+

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: domainos.m4,v 1.1.1.2 2001/01/15 20:52:35 millert Exp $')
+VERSIONID(`$Sendmail: domainos.m4,v 8.14 1999/04/24 05:37:40 gshapiro Exp $')
 divert(-1)
 
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: amdahl-uts.m4,v 1.1.1.2 2001/01/15 20:52:34 millert Exp $')
+VERSIONID(`$Sendmail: amdahl-uts.m4,v 8.16 1999/04/24 05:37:40 gshapiro Exp $')
 divert(-1)
 
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `fSn9')

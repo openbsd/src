@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: relay_local_from.m4,v 1.1.1.2 2001/01/15 20:52:31 millert Exp $')
+VERSIONID(`$Sendmail: relay_local_from.m4,v 8.5 1999/02/07 07:26:12 gshapiro Exp $')
 divert(-1)
 
 define(`_RELAY_LOCAL_FROM_', 1)

@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Id: mailstats.c,v 1.1.1.2 2001/01/15 20:52:08 millert Exp $";
+static char id[] = "@(#)$Sendmail: mailstats.c,v 8.53.16.11 2000/09/17 17:04:26 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <unistd.h>

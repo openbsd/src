@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Id: milter.h,v 1.1.1.2 2001/01/15 20:52:21 millert Exp $
+ *	$Sendmail: milter.h,v 8.24.16.8 2000/09/17 17:04:24 gshapiro Exp $
  */
 
 /*

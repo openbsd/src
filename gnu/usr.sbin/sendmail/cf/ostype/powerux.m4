@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: powerux.m4,v 1.1.1.2 2001/01/15 20:52:36 millert Exp $')
+VERSIONID(`$Sendmail: powerux.m4,v 8.13 1999/04/24 05:37:43 gshapiro Exp $')
 
 define(`LOCAL_MAILER_PATH', `/usr/bin/rmail')dnl
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `mn9')dnl

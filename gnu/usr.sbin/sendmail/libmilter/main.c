@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Id: main.c,v 1.1.1.2 2001/01/15 20:52:43 millert Exp $";
+static char id[] = "@(#)$Sendmail: main.c,v 8.34.4.9 2000/09/09 02:23:03 gshapiro Exp $";
 #endif /* ! lint */
 
 #if _FFR_MILTER

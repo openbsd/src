@@ -16,10 +16,11 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-define(`TEMPFILE', maketemp(/tmp/cfXXXXXX))dnl
+ifdef(`unix', `dnl
+ifdef(`TEMPFILE', `dnl', `define(`TEMPFILE', maketemp(/tmp/cfXXXXXX))dnl
 syscmd(sh _CF_DIR_`'sh/makeinfo.sh _CF_DIR_ > TEMPFILE)dnl
 include(TEMPFILE)dnl
-syscmd(rm -f TEMPFILE)dnl
+syscmd(rm -f TEMPFILE)dnl')', `dnl')
 #####
 ######################################################################
 ######################################################################
@@ -155,6 +156,8 @@ define(`SITE', `ifelse(CONCAT($'2`, $3), SU,
 sinclude(_CF_DIR_`'siteconfig/$1.m4)')
 define(`EXPOSED_USER', `PUSHDIVERT(5)CE$1
 POPDIVERT`'dnl`'')
+ifdef(`_FFR_EXPOSED_USER_FILE', `define(`EXPOSED_USER_FILE', `PUSHDIVERT(5)FE$1
+POPDIVERT`'dnl`'')', `dnl')
 define(`LOCAL_USER', `PUSHDIVERT(5)CL$1
 POPDIVERT`'dnl`'')
 define(`MASQUERADE_AS', `define(`MASQUERADE_NAME', $1)')
@@ -212,9 +215,12 @@ define(`_REC_FULL_AUTH_', `$.$?{auth_type}(authenticated as ${auth_authen} $?{au
 define(`_REC_HDR_', `$?sfrom $s $.$?_($?s$|from $.$_)')
 define(`_REC_END_', `for $u; $|;
 	$.$b')
+define(`_REC_TLS_', `(using ${tls_version} with cipher ${cipher} (${cipher_bits} bits) verified ${verify})$.$?u')
+define(`_REC_BY_', `$.by $j ($v/$Z)$?r with $r$. id $i$?{tls_version}')
 define(`confRECEIVED_HEADER', `_REC_HDR_
-	_REC_AUTH_)
-	$.by $j ($v/$Z)$?r with $r$. id $i$?u
+	_REC_AUTH_$?{auth_ssf} (${auth_ssf} bits)$.)
+	_REC_BY_
+	_REC_TLS_
 	_REC_END_')
 define(`confSEVEN_BIT_INPUT', `False')
 define(`confEIGHT_BIT_HANDLING', `pass8')
@@ -240,9 +246,10 @@ define(`confMIME_FORMAT_ERRORS', `True')
 define(`confFORWARD_PATH', `$z/.forward.$w:$z/.forward')
 define(`confCR_FILE', `-o MAIL_SETTINGS_DIR`'relay-domains')
 define(`confMILTER_MACROS_CONNECT', ``j, _, {daemon_name}, {if_name}, {if_addr}'')
-define(`confMILTER_MACROS_ENVFROM', ``i, {auth_type}, {auth_authen}, {auth_author}, {mail_mailer}, {mail_host}, {mail_addr}'')
+define(`confMILTER_MACROS_HELO', ``{tls_version}, {cipher}, {cipher_bits}, {cert_subject}, {cert_issuer}'')
+define(`confMILTER_MACROS_ENVFROM', ``i, {auth_type}, {auth_authen}, {auth_ssf}, {auth_author}, {mail_mailer}, {mail_host}, {mail_addr}'')
 define(`confMILTER_MACROS_ENVRCPT', ``{rcpt_mailer}, {rcpt_host}, {rcpt_addr}'')
 
 
 divert(0)dnl
-VERSIONID(`$Sendmail: cfhead.m4,v 8.76 2000/03/21 23:56:59 gshapiro Exp $')
+VERSIONID(`$Sendmail: cfhead.m4,v 8.76.4.13 2000/08/24 17:09:50 gshapiro Exp $')

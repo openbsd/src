@@ -18,6 +18,9 @@ adding the following to your devtools/Site/site.config.m4 file:
 	APPENDDEF(`conf_sendmail_ENVDEF', `-D_FFR_MILTER=1')
 	APPENDDEF(`conf_libmilter_ENVDEF', `-D_FFR_MILTER=1') 
 
+You will also need to define _FFR_MILTER when building your .cf file using
+m4.
+
 +-------------------+
 | BUILDING A FILTER |
 +-------------------+
@@ -32,7 +35,8 @@ It is recommended that you build your filters in a location outside of
 the sendmail source tree.  Modify the compiler include references (-I)
 and the library locations accordingly.  Also, some operating systems may
 require additional libraries.  For example, SunOS 5.X requires '-lresolv
--lsocket -lnsl'.
+-lsocket -lnsl'.  Depending on your OS you may need a library instead
+of the option -pthread, e.g., -lpthread.
 
 Filters must be thread-safe!  Many operating systems now provide support for
 POSIX threads in the standard C libraries.  The compiler flag to link with
@@ -49,14 +53,14 @@ Filters are specified with a key letter ``X'' (for ``eXternal'').
 
 For example:
 
-	Xfilter1, S=unix:/var/run/f1.sock, F=R
+	Xfilter1, S=local:/var/run/f1.sock, F=R
 	Xfilter2, S=inet6:999@localhost, F=T, T=S:1s;R:1s;E:5m
 	Xfilter3, S=inet:3333@localhost
 
 specifies three filters.  Filters can be specified in your .mc file using
 the following:
 
-	INPUT_MAIL_FILTER(`filter1', `S=unix:/var/run/f1.sock, F=R')
+	INPUT_MAIL_FILTER(`filter1', `S=local:/var/run/f1.sock, F=R')
 	INPUT_MAIL_FILTER(`filter2', `S=inet6:999@localhost, F=T, T=S:1s;R:1s;E:5m')
 	INPUT_MAIL_FILTER(`filter3', `S=inet:3333@localhost')
 
@@ -66,6 +70,9 @@ IPv4 socket on port 3333 of localhost.  The current flags (F=) are:
 
 	R		Reject connection if filter unavailable
 	T		Temporary fail connection if filter unavailable
+
+If neither F=R nor F=T is specified, the message is passed through sendmail
+as if the filter were not present.
 
 Finally, you can override the default timeouts used by sendmail when
 talking to the filters using the T= equate.  There are three fields inside
@@ -84,13 +91,17 @@ T=S:10s;R:10s;E:5m
 
 where 's' is seconds and 'm' is minutes.
 
-Actual sequencing is handled by the InputMailFilters option which is set
-automatically according to the order of the INPUT_MAIL_FILTER commands
-in your .mc file.  Alternatively, you can reset it's value by setting
-confINPUT_MAIL_FILTERS in your .mc file.  This options causes the three
-filters to be called in the same order they were specified.  It allows
-for possible future filtering on output (although this is not intended
-for this release).
+Which filters are invoked and their sequencing is handled by the 
+InputMailFilters option.
+
+	O InputMailFilters=filter1, filter2, filter3
+
+This is is set automatically according to the order of the
+INPUT_MAIL_FILTER commands in your .mc file.  Alternatively, you can
+reset its value by setting confINPUT_MAIL_FILTERS in your .mc file.
+This options causes the three filters to be called in the same order
+they were specified.  It allows for possible future filtering on output
+(although this is not intended for this release).
 
 Also note that a filter can be defined without adding it to the input
 filter list by using MAIL_FILTER() instead of INPUT_MAIL_FILTER() in your
@@ -99,7 +110,7 @@ filter list by using MAIL_FILTER() instead of INPUT_MAIL_FILTER() in your
 To test sendmail with the sample filter, the following might be added (in
 the appropriate locations) to your .mc file:
 
-	INPUT_MAIL_FILTER(`sample', `S=unix:/var/run/f1.sock')
+	INPUT_MAIL_FILTER(`sample', `S=local:/var/run/f1.sock')
 
 
 +------------------+
@@ -115,7 +126,7 @@ on which to create a listening socket for the filter.  Maintaining
 consistency with the suggested options for sendmail.cf, this would be the
 UNIX domain socket located in /var/run/f1.sock.
 
-	% ./sample -p unix:/var/run/f1.sock
+	% ./sample -p local:/var/run/f1.sock
 
 If the sample filter returns immediately to a command line, there was either
 an error with your command or a problem creating the specified socket.
@@ -130,7 +141,7 @@ connected via one of these options, the session can be continued through
 the use of standard SMTP commands.
 
 % sendmail -bs
-220 test.sendmail.com ESMTP Sendmail 8.10.0.Beta8/8.10.0.Beta8; Mon, 6 Dec 1999 19:34:23 -0800 (PST)
+220 test.sendmail.com ESMTP Sendmail 8.11.0/8.11.0; Tue, 10 Nov 1970 13:05:23 -0500 (EST)
 HELO localhost
 250 test.sendmail.com Hello testy@localhost, pleased to meet you
 MAIL From:<testy>
@@ -167,9 +178,29 @@ See the sendmail(8) manual page for more information.
 | SOURCE FOR SAMPLE FILTER |
 +--------------------------+
 
+Note that the filter below may not be thread safe on some operating
+systems.  You should check your system man pages for the functions used
+below to verify the functions are thread safe.
+
 /* A trivial filter that logs all email to a file. */
 
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sysexits.h>
+#include <unistd.h>
+
 #include "libmilter/mfapi.h"
+
+typedef int bool;
+
+#ifndef FALSE
+# define FALSE	0
+#endif /* ! FALSE*/
+#ifndef TRUE
+# define TRUE	1
+#endif /* ! TRUE*/
 
 struct mlfiPriv
 {
@@ -336,7 +367,7 @@ struct smfiDesc smfilter =
 {
 	"SampleFilter",	/* filter name */
 	SMFI_VERSION,	/* version code -- do not change */
-	SMFIF_MODHDRS,	/* flags */
+	SMFIF_ADDHDRS,	/* flags */
 	NULL,		/* connection info filter */
 	NULL,		/* SMTP HELO command filter */
 	mlfi_envfrom,	/* envelope sender filter */
@@ -355,7 +386,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char c;
+	int c;
 	const char *args = "p:";
 
 	/* Process command line options */
@@ -385,4 +416,4 @@ main(argc, argv)
 
 /* eof */
 
-$Revision: 1.3 $, Last updated $Date: 2000/04/07 19:20:34 $
+$Revision: 1.4 $, Last updated $Date: 2001/01/15 21:09:02 $

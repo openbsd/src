@@ -12,10 +12,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: collect.c,v 8.136 2000/03/15 21:47:27 ca Exp $";
+static char id[] = "@(#)$Sendmail: collect.c,v 8.136.4.8 2000/10/09 00:50:04 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 static void	collecttimeout __P((time_t));
 static void	dferror __P((FILE *volatile, char *, ENVELOPE *));
@@ -62,41 +63,6 @@ static EVENT	*CollectTimeout;
 #define MS_BODY		2	/* reading message body */
 #define MS_DISCARD	3	/* discarding rest of message */
 
-#if _FFR_MILTER
-# define MILTER_EOH() \
-{ \
-	if (bitset(CHHDR_MILTER, chompflags) && \
-	    rstat == EX_OK && \
-	    !bitset(EF_DISCARD, e->e_flags)) \
-	{ \
-		char state; \
-		char *response; \
- \
-		response = milter_eoh(e, &state); \
-		chompflags &= ~CHHDR_MILTER; \
-		switch (state) \
-		{ \
-		  case SMFIR_REPLYCODE: \
-			usrerr(response); \
-			break; \
- \
-		  case SMFIR_REJECT: \
-			usrerr("554 5.7.1 Message rejected"); \
-			break; \
- \
-		  case SMFIR_DISCARD: \
-			e->e_flags |= EF_DISCARD; \
-			break; \
- \
-		  case SMFIR_TEMPFAIL: \
-			usrerr("451 4.7.1 Try again later"); \
-			break; \
-		} \
-	} \
-}
-# endif /* _FFR_MILTER */
-
-
 void
 collect(fp, smtpmode, hdrp, e)
 	FILE *fp;
@@ -119,7 +85,6 @@ collect(fp, smtpmode, hdrp, e)
 	volatile int numhdrs = 0;
 	volatile int dfd;
 	volatile int afd;
-	volatile int chompflags = CHHDR_CHECK|CHHDR_USER;
 	volatile int rstat = EX_OK;
 	u_char *volatile pbp;
 	u_char peekbuf[8];
@@ -179,12 +144,7 @@ collect(fp, smtpmode, hdrp, e)
 	*/
 
 	if (smtpmode)
-	{
 		message("354 Enter mail, end with \".\" on a line by itself");
-#if _FFR_MILTER
-		chompflags |= CHHDR_MILTER;
-# endif /* _FFR_MILTER */
-	}
 
 	if (tTd(30, 2))
 		dprintf("collect\n");
@@ -235,9 +195,14 @@ collect(fp, smtpmode, hdrp, e)
 				{
 					errno = 0;
 					c = getc(fp);
-					if (errno != EINTR)
-						break;
-					clearerr(fp);
+
+					if (c == EOF && errno == EINTR)
+					{
+						/* Interrupted, retry */
+						clearerr(fp);
+						continue;
+					}
+					break;
 				}
 				CollectProgress = TRUE;
 				if (TrafficLogFile != NULL && !headeronly)
@@ -326,13 +291,22 @@ collect(fp, smtpmode, hdrp, e)
 
 bufferchar:
 			if (!headeronly)
-				e->e_msgsize++;
+			{
+				/* no overflow? */
+				if (e->e_msgsize >= 0)
+				{
+					e->e_msgsize++;
+					if (MaxMessageSize > 0 &&
+					    !bitset(EF_TOOBIG, e->e_flags) &&
+					    e->e_msgsize > MaxMessageSize)
+						 e->e_flags |= EF_TOOBIG;
+				}
+			}
 			switch (mstate)
 			{
 			  case MS_BODY:
 				/* just put the character out */
-				if (MaxMessageSize <= 0 ||
-				    e->e_msgsize <= MaxMessageSize)
+				if (!bitset(EF_TOOBIG, e->e_flags))
 					(void) putc(c, df);
 
 				/* FALLTHROUGH */
@@ -424,7 +398,7 @@ nextstate:
 				clearerr(fp);
 				errno = 0;
 				c = getc(fp);
-			} while (errno == EINTR);
+			} while (c == EOF && errno == EINTR);
 			if (c != EOF)
 				(void) ungetc(c, fp);
 			if (c == ' ' || c == '\t')
@@ -438,7 +412,8 @@ nextstate:
 				bp++;
 			*bp = '\0';
 
-			if (bitset(H_EOH, chompheader(buf, (int *)&chompflags,
+			if (bitset(H_EOH, chompheader(buf,
+						      CHHDR_CHECK | CHHDR_USER,
 						      hdrp, e)))
 			{
 				mstate = MS_BODY;
@@ -461,18 +436,7 @@ nextstate:
 				dprintf("collect: rscheck(\"check_eoh\", \"%s $| %s\")\n",
 					hnum, hsize);
 			rstat = rscheck("check_eoh", hnum, hsize, e, FALSE,
-					TRUE, 4);
-
-#if _FFR_MILTER
-			/*
-			**  see if a header check already rejected
-			**  this message or if the check_eoh call
-			**  resulted in an error.  Also, don't call
-			**  filters if we are discarding the message.
-			*/
-
-			MILTER_EOH();
-# endif /* _FFR_MILTER */
+					TRUE, 4, NULL);
 
 			bp = buf;
 
@@ -486,8 +450,7 @@ nextstate:
 			}
 
 			/* if not a blank separator, write it out */
-			if (MaxMessageSize <= 0 ||
-			    e->e_msgsize <= MaxMessageSize)
+			if (!bitset(EF_TOOBIG, e->e_flags))
 			{
 				while (*bp != '\0')
 					(void) putc(*bp++, df);
@@ -509,15 +472,6 @@ readerr:
 				"collect: premature EOM: %s", errmsg);
 		inputerr = TRUE;
 	}
-
-#if _FFR_MILTER
-	/*
-	**  If the message was completely empty (no headers, no body),
-	**  milter hasn't been sent the EOH so do it now.
-	*/
-
-	MILTER_EOH();
-# endif /* _FFR_MILTER */
 
 	/* reset global timer */
 	clrevent(CollectTimeout);
@@ -563,7 +517,7 @@ readerr:
 				st.st_size = -1;
 			errno = EEXIST;
 			syserr("collect: bfcommit(%s): already on disk, size = %ld",
-			       dfile, st.st_size);
+			       dfile, (long) st.st_size);
 			dfd = fileno(df);
 			if (dfd >= 0)
 				dumpfd(dfd, TRUE, TRUE);
@@ -686,11 +640,11 @@ readerr:
 			break;
 
 		  case NRA_ADD_BCC:
-			addheader("Bcc", " ", &e->e_header);
+			addheader("Bcc", " ", 0, &e->e_header);
 			break;
 
 		  case NRA_ADD_TO_UNDISCLOSED:
-			addheader("To", "undisclosed-recipients:;", &e->e_header);
+			addheader("To", "undisclosed-recipients:;", 0, &e->e_header);
 			break;
 		}
 
@@ -703,13 +657,13 @@ readerr:
 				if (tTd(30, 3))
 					dprintf("Adding %s: %s\n",
 						hdr, q->q_paddr);
-				addheader(hdr, q->q_paddr, &e->e_header);
+				addheader(hdr, q->q_paddr, 0, &e->e_header);
 			}
 		}
 	}
 
 	/* check for message too large */
-	if (MaxMessageSize > 0 && e->e_msgsize > MaxMessageSize)
+	if (bitset(EF_TOOBIG, e->e_flags))
 	{
 		e->e_flags |= EF_NO_BODY_RETN|EF_CLRQUEUE;
 		e->e_status = "5.2.3";
@@ -900,6 +854,11 @@ eatfrom(fm, e)
 			p++;
 		while (*p == ' ')
 			p++;
+		if (strlen(p) < 17)
+		{
+			/* no room for the date */
+			return;
+		}
 		if (!(isascii(*p) && isupper(*p)) ||
 		    p[3] != ' ' || p[13] != ':' || p[16] != ':')
 			continue;
@@ -912,8 +871,10 @@ eatfrom(fm, e)
 			continue;
 
 		for (dt = MonthList; *dt != NULL; dt++)
+		{
 			if (strncmp(*dt, &p[4], 3) == 0)
 				break;
+		}
 		if (*dt != NULL)
 			break;
 	}

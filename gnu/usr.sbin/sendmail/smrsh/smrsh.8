@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 .\"	 All rights reserved.
 .\" Copyright (c) 1993 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1993
@@ -9,10 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: smrsh.8,v 8.11 1999/06/09 16:51:07 ca Exp $
-.\"	$OpenBSD: smrsh.8,v 1.2 2000/04/11 07:31:32 form Exp $
+.\"     $Sendmail: smrsh.8,v 8.11.16.2 2000/12/15 19:50:46 gshapiro Exp $
 .\"
-.TH SMRSH 8 11/02/93
+.TH SMRSH 8 "$Date: 2001/01/15 21:09:11 $"
 .SH NAME
 smrsh \- restricted shell for sendmail
 .SH SYNOPSIS
@@ -38,8 +37,9 @@ limits the set of programs that he or she can execute.
 .PP
 Briefly,
 .I smrsh
-limits programs to be in the directory
-/usr/libexec/sm.bin,
+limits programs to be in a single directory,
+by default
+/usr/adm/sm.bin,
 allowing the system administrator to choose the set of acceptable commands,
 and to the shell builtin commands ``exec'', ``exit'', and ``echo''.
 It also rejects any commands with the characters
@@ -56,10 +56,10 @@ so forwarding to ``/usr/ucb/vacation'',
 and
 ``vacation''
 all actually forward to
-``/usr/libexec/sm.bin/vacation''.
+``/usr/adm/sm.bin/vacation''.
 .PP
 System administrators should be conservative about populating
-/usr/libexec/sm.bin.
+the sm.bin directory.
 Reasonable additions are
 .IR vacation (1),
 .IR procmail (1),
@@ -78,11 +78,11 @@ it simply disallows execution of arbitrary programs.
 Compilation should be trivial on most systems.
 You may need to use \-DPATH=\e"\fIpath\fP\e"
 to adjust the default search path
-(defaults to ``/bin:/usr/bin'')
+(defaults to ``/bin:/usr/bin:/usr/ucb'')
 and/or \-DCMDBIN=\e"\fIdir\fP\e"
 to change the default program directory
-(defaults to ``/usr/libexec/sm.bin'').
+(defaults to ``/usr/adm/sm.bin'').
 .SH FILES
-/usr/libexec/sm.bin \- directory for restricted programs
+/usr/adm/sm.bin \- directory for restricted programs
 .SH SEE ALSO
 sendmail(8)

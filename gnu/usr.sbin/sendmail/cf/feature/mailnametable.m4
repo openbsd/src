@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: mailnametable.m4,v 1.1 2000/04/02 21:15:53 millert Exp $')
+VERSIONID(`$OpenBSD: mailnametable.m4,v 1.2 2001/01/15 21:08:55 millert Exp $')
 divert(-1)
 
 define(`MAILNAME_TABLE', ifelse(_ARG_, `', DATABASE_MAP_TYPE `-o' MAIL_SETTINGS_DIR`mailnames', `_ARG_'))

@@ -20,7 +20,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Id: generic-hpux9.mc,v 1.1.1.2 2001/01/15 20:52:23 millert Exp $')
+VERSIONID(`$Sendmail: generic-hpux9.mc,v 8.11 1999/02/07 07:26:02 gshapiro Exp $')
 OSTYPE(hpux9)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

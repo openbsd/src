@@ -11,7 +11,7 @@ divert(-1)
 
 divert(0)
 ifdef(`_DNSBL_R_',`dnl',`dnl
-VERSIONID(`$Id: dnsbl.m4,v 1.1.1.2 2001/01/15 20:52:28 millert Exp $')')
+VERSIONID(`$Sendmail: dnsbl.m4,v 8.18.16.1 2000/11/22 01:13:21 ca Exp $')')
 divert(-1)
 define(`_DNSBL_SRV_', `ifelse(len(X`'_ARG_),`1',`blackholes.mail-abuse.org',_ARG_)')dnl
 define(`_DNSBL_MSG_', `ifelse(len(X`'_ARG2_),`1',`"550 Mail from " $`'&{client_addr} " refused by blackhole site '_DNSBL_SRV_`"',`_ARG2_')')dnl

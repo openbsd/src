@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: always_add_domain.m4,v 1.1.1.2 2001/01/15 20:52:27 millert Exp $')
+VERSIONID(`$Sendmail: always_add_domain.m4,v 8.9 1999/02/07 07:26:08 gshapiro Exp $')
 divert(-1)
 
 define(`_ALWAYS_ADD_DOMAIN_', 1)

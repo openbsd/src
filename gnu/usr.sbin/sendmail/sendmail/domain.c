@@ -15,9 +15,9 @@
 
 #ifndef lint
 # if NAMED_BIND
-static char id[] = "@(#)$Id: domain.c,v 1.1.1.2 2001/01/15 20:52:13 millert Exp $ (with name server)";
+static char id[] = "@(#)$Sendmail: domain.c,v 8.114.6.1.2.6 2000/12/19 02:50:33 gshapiro Exp $ (with name server)";
 # else /* NAMED_BIND */
-static char id[] = "@(#)$Id: domain.c,v 1.1.1.2 2001/01/15 20:52:13 millert Exp $ (without name server)";
+static char id[] = "@(#)$Sendmail: domain.c,v 8.114.6.1.2.6 2000/12/19 02:50:33 gshapiro Exp $ (without name server)";
 # endif /* NAMED_BIND */
 #endif /* ! lint */
 

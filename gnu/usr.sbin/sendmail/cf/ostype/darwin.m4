@@ -11,7 +11,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: darwin.m4,v 1.1.1.1 2001/01/15 20:52:34 millert Exp $')
+VERSIONID(`$Sendmail: darwin.m4,v 8.1.2.1 2000/06/15 06:37:04 gshapiro Exp $')
 ifdef(`STATUS_FILE',, `define(`STATUS_FILE', `/var/log/sendmail.st')')dnl
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /usr/libexec/mail.local)')dnl
 ifdef(`UUCP_MAILER_ARGS',, `define(`UUCP_MAILER_ARGS', `uux - -r -z -a$g $h!rmail ($u)')')dnl

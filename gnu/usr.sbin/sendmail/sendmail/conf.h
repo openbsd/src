@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: conf.h,v 8.496 2000/04/06 02:15:29 gshapiro Exp $
+ *	$Sendmail: conf.h,v 8.496.4.32 2000/12/15 19:20:53 gshapiro Exp $
  */
 
 /*
@@ -27,20 +27,23 @@
 struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #endif /* __GNUC__ */
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifndef __QNX__
+# include <sys/param.h>
+# include <sys/types.h>
+# if SFIO && defined(SF_APPEND)
+#  undef SF_APPEND		/* Both sfio/stdio.h and sys/stat.h define it */
+# endif /* SFIO && defined(SF_APPEND) */
+# include <sys/stat.h>
+# ifndef __QNX__
 /* in QNX this grabs bogus LOCK_* manifests */
-# include <sys/file.h>
-#endif /* ! __QNX__ */
-#include <sys/wait.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <grp.h>
+#  include <sys/file.h>
+# endif /* ! __QNX__ */
+# include <sys/wait.h>
+# include <limits.h>
+# include <fcntl.h>
+# include <signal.h>
+# include <netdb.h>
+# include <pwd.h>
+# include <grp.h>
 
 /* make sure TOBUFSIZ isn't larger than system limit for size of exec() args */
 #ifdef ARG_MAX
@@ -87,6 +90,7 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #define MAXSHORTSTR	203		/* max short string length */
 #define MAXMACNAMELEN	25		/* max macro name length */
 #define MAXMACROID	0377		/* max macro id number */
+					/* Must match (BITMAPBITS - 1) */
 #ifndef MAXHDRSLEN
 # define MAXHDRSLEN	(32 * 1024)	/* max size of message headers */
 #endif /* ! MAXHDRSLEN */
@@ -100,12 +104,18 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #define MAXLINKPATHLEN	(MAXPATHLEN * MAXSYMLINKS) /* max link-expanded file */
 #define DATA_PROGRESS_TIMEOUT	300	/* how ofter to check DATA progress */
 #define ENHSCLEN	10		/* max len of enhanced status code */
+#if _FFR_DYNAMIC_TOBUF
+# define DEFAULT_MAX_RCPT	100	/* max number of RCPTs per envelope */
+#endif /* _FFR_DYNAMIC_TOBUF */
 
 #if SASL
 # ifndef AUTH_MECHANISMS
-#  define AUTH_MECHANISMS	"GSSAPI KERBEROS_V4 DIGEST-MD5 CRAM-MD5"
+#  if STARTTLS && _FFR_EXT_MECH
+#   define AUTH_MECHANISMS	"EXTERNAL GSSAPI KERBEROS_V4 DIGEST-MD5 CRAM-MD5"
+#  else /* STARTTLS && _FFR_EXT_MECH */
+#   define AUTH_MECHANISMS	"GSSAPI KERBEROS_V4 DIGEST-MD5 CRAM-MD5"
+#  endif /* STARTTLS && _FFR_EXT_MECH */
 # endif /* ! AUTH_MECHANISMS */
-#else /* SASL */
 #endif /* SASL */
 
 #ifdef LDAPMAP
@@ -227,6 +237,7 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #  define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps */
 # endif /* ! HASGETUSERSHELL */
 # ifdef HPUX11
+#  define HASFCHOWN	1	/* has fchown(2) */
 #  define HASSNPRINTF	1	/* has snprintf(3) */
 #  ifndef BROKEN_RES_SEARCH
 #   define BROKEN_RES_SEARCH 1	/* res_search(unknown) returns h_errno=0 */
@@ -504,6 +515,9 @@ typedef int		pid_t;
 #    ifndef LA_TYPE
 #     define LA_TYPE	LA_KSTAT	/* use kstat(3k) -- may work in < 2.5 */
 #    endif /* ! LA_TYPE */
+#    ifndef RANDOMSHIFT		/* random() doesn't work well (sometimes) */
+#     define RANDOMSHIFT	8
+#    endif /* RANDOMSHIFT */
 #   endif /* SOLARIS < 207 || (SOLARIS > 10000 && SOLARIS < 20700) */
 #  else /* SOLARIS >= 20500 || (SOLARIS < 10000 && SOLARIS >= 205) */
 #   ifndef HASRANDOM
@@ -512,18 +526,27 @@ typedef int		pid_t;
 #  endif /* SOLARIS >= 20500 || (SOLARIS < 10000 && SOLARIS >= 205) */
 #  if SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206)
 #   define HASSNPRINTF	1		/* has snprintf starting in 2.6 */
+#  else /* SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
+#   if _FFR_MILTER
+#    define SM_INT32	int	/* 32bit integer */
+#   endif /* _FFR_MILTER */
 #  endif /* SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
 #  if SOLARIS >= 20700 || (SOLARIS < 10000 && SOLARIS >= 207)
 #   ifndef LA_TYPE
 #    include <sys/loadavg.h>
-#    define LA_TYPE	LA_SUBR		/* getloadavg(3c) appears in 2.7 */
+#    if SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209)
+#     include <sys/pset.h>
+#     define LA_TYPE	LA_PSET	/* pset_getloadavg(3c) appears in 2.9 */
+#    else
+#     define LA_TYPE	LA_SUBR	/* getloadavg(3c) appears in 2.7 */
+#    endif /* SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209) */
 #   endif /* ! LA_TYPE */
 #   define HASGETUSERSHELL 1	/* getusershell(3c) bug fixed in 2.7 */
 #  endif /* SOLARIS >= 20700 || (SOLARIS < 10000 && SOLARIS >= 207) */
 #  if SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208)
-#   undef NETINET6
-#   define NETINET6	1	/* IPv6 added in 2.8 */
 #   define HASSTRL	1	/* str*(3) added in 2.8 */
+#   undef _PATH_SENDMAILPID	/* tmpfs /var/run added in 2.8 */
+#   define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
 #  endif /* SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208) */
 #  ifndef HASGETUSERSHELL
 #   define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps pre-2.7 */
@@ -772,7 +795,7 @@ typedef int		pid_t;
 **	Also used for Apple Darwin support.
 */
 
-#if defined(__APPLE__) && !defined(NeXT)
+#if defined(DARWIN)
 # define HASFCHMOD	1	/* has fchmod(2) syscall */
 # define HASFLOCK	1	/* has flock(2) syscall */
 # define HASUNAME	1	/* has uname(2) syscall */
@@ -800,7 +823,7 @@ typedef int		pid_t;
 # define SPT_TYPE	SPT_PSSTRINGS
 # define SPT_PADCHAR	'\0'	/* pad process title with nulls */
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
-#endif /* __APPLE__ && ! NeXT */
+#endif /* DARWIN */
 
 
 /*
@@ -931,6 +954,7 @@ typedef int		pid_t;
 # define SAFENFSPATHCONF 1	/* pathconf(2) pessimizes on NFS filesystems */
 # define GIDSET_T	gid_t
 # define QUAD_T		unsigned long long
+# define SFIO_STDIO_COMPAT	1	/* can use RES_DEBUG */
 # ifndef LA_TYPE
 #  define LA_TYPE	LA_SUBR
 # endif /* ! LA_TYPE */
@@ -939,10 +963,14 @@ typedef int		pid_t;
 #  undef SPT_TYPE
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 # endif /* defined(__NetBSD__) && (NetBSD > 199307 || NetBSD0_9 > 1) */
+# if defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3))
+#   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
+# endif /* defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3)) */
 # if defined(__FreeBSD__)
 #  define HASSETLOGIN	1	/* has setlogin(2) */
 #  if __FreeBSD_version >= 227001
 #   define HASSRANDOMDEV	1	/* has srandomdev(3) */
+#   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 #  endif /* __FreeBSD_version >= 227001 */
 #  undef SPT_TYPE
 #  if __FreeBSD__ >= 2
@@ -970,9 +998,10 @@ typedef int		pid_t;
 # if defined(__OpenBSD__)
 #  undef SPT_TYPE
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
-#  define HASSETLOGIN	1	/* has setlogin(2) */
-#  define HASSRANDOMDEV	1	/* has srandomdev(3) */
-#  define HASSETUSERCONTEXT 1	/* has setusercontext(3) */
+#  define HASSETLOGIN	1		/* has setlogin(2) */
+#  define HASSRANDOMDEV	1		/* has srandomdev(3) */
+#  define HASURANDOMDEV	1		/* has /dev/urandom(4) */
+#  define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
 #  if OpenBSD < 199912
 #   define HASSTRL	0	/* strlcat(3) is broken in 2.5 and earlier */
 #  else /* OpenBSD < 199912 */
@@ -1365,6 +1394,10 @@ extern void		*malloc();
 */
 
 #ifdef __linux__
+# include <linux/version.h>
+# if !defined(KERNEL_VERSION)	/* not defined in 2.0.x kernel series */
+#  define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+# endif /* KERNEL_VERSION */
 # define BSD		1	/* include BSD defines */
 # define USESETEUID	0	/* Have it due to POSIX, but doesn't work */
 # define NEEDGETOPT	1	/* need a replacement for getopt(3) */
@@ -1384,7 +1417,6 @@ extern void		*malloc();
 # endif /* ! HAS_IN_H */
 # define USE_SIGLONGJMP	1	/* sigsetjmp needed for signal handling */
 # ifndef HASFLOCK
-#  include <linux/version.h>
 #  if LINUX_VERSION_CODE < 66399
 #   define HASFLOCK	0	/* flock(2) is broken after 0.99.13 */
 #  else /* LINUX_VERSION_CODE < 66399 */
@@ -1396,6 +1428,11 @@ extern void		*malloc();
 # endif /* ! LA_TYPE */
 # define SFS_TYPE	SFS_VFS		/* use <sys/vfs.h> statfs() impl */
 # define SPT_PADCHAR	'\0'		/* pad process title with nulls */
+# if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0))
+#  ifndef HASURANDOMDEV
+#   define HASURANDOMDEV 1	/* 2.0 (at least) has linux/drivers/char/random.c */
+#  endif /* ! HASURANDOMDEV */
+# endif /* LINUX_VERSION_CODE */
 # ifndef TZ_TYPE
 #  define TZ_TYPE	TZ_NONE		/* no standard for Linux */
 # endif /* ! TZ_TYPE */
@@ -1405,6 +1442,14 @@ extern void		*malloc();
 # include <sys/sysmacros.h>
 # undef atol			/* wounded in <stdlib.h> */
 # if NETINET6
+   /*
+   **  Linux doesn't have a good way to tell userland what interfaces are
+   **  IPv6-capable.  Therefore, the BIND resolver can not determine if there
+   **  are IPv6 interfaces to honor AI_ADDRCONFIG.  Unfortunately, it assumes
+   **  that none are present.  (Excuse the macro name ADDRCONFIG_IS_BROKEN.)
+   */
+#  define ADDRCONFIG_IS_BROKEN	1
+
    /*
    **  Indirectly included from glibc's <feature.h>.  IPv6 support is native
    **  in 2.1 and later, but the APIs appear before the functions.
@@ -1663,6 +1708,7 @@ typedef int		pid_t;
 # define __svr4__
 # define SYS5SIGNALS		1
 # define HASSETSID		1
+# define HASSNPRINTF		1
 # define HASSETREUID		1
 # define HASWAITPID		1
 # define HASGETDTABLESIZE	1
@@ -1682,6 +1728,7 @@ typedef int		pid_t;
 # ifndef _PATH_SENDMAILPID
 #  define _PATH_SENDMAILPID	"/etc/sendmail.pid"
 # endif /* ! _PATH_SENDMAILPID */
+# undef offsetof		/* avoid stddefs.h, sys/sysmacros.h conflict */
 #endif /* __svr5__ */
 
 /* ###################################################################### */
@@ -1774,6 +1821,7 @@ typedef int		pid_t;
 # define __svr4__
 # define HASFCHOWN	1	/* has fchown(2) call */
 # define SIOCGIFNUM_IS_BROKEN	1	/* SIOCGIFNUM has non-std interface */
+# define SO_REUSEADDR_IS_BROKEN	1	/* doesn't work if accept() fails */
 # define SYSLOG_BUFSIZE	1024
 # define SPT_TYPE	SPT_NONE
 # ifndef _XOPEN_SOURCE
@@ -1853,7 +1901,7 @@ extern int	syslog();
 /*
 **  Amdahl UTS System V 2.1.5 (SVr3-based)
 **
-**	From: Janet Jackson <janet@dialix.oz.au>.
+**    From: Janet Jackson <janet@dialix.oz.au>.
 */
 
 #ifdef _UTS
@@ -2173,6 +2221,7 @@ typedef struct msgb		mblk_t;
 # define _PATH_VENDOR_CF	"/etc/sendmail.cf"
 # define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
 #endif /* MOTO */
+
 
 /**********************************************************************
 **  End of Per-Operating System defines
@@ -2495,9 +2544,9 @@ typedef struct msgb		mblk_t;
 # define NAMED_BIND	1	/* not one without the other */
 #endif /* HESIOD && !defined(NAMED_BIND) */
 
-#if NAMED_BIND && !defined(__ksr__) && !defined(h_errno)
+# if NAMED_BIND && !defined( __ksr__ ) && !defined( h_errno )
 extern int	h_errno;
-#endif /* NAMED_BIND && !defined(__ksr__) && !defined(h_errno) */
+# endif /* NAMED_BIND && !defined( __ksr__ ) && !defined( h_errno ) */
 
 #ifdef LDAPMAP
 # include <sys/time.h>
@@ -2726,6 +2775,20 @@ typedef void		(*sigfunc_t) __P((int));
 #endif /* !defined(NGROUPS_MAX) && defined(NGROUPS) */
 
 /*
+**  Some snprintf() implementations are rumored not to NUL terminate.
+*/
+#if SNPRINTF_IS_BROKEN
+# ifdef snprintf
+#  undef snprintf
+# endif /* snprintf */
+# define snprintf	sm_snprintf
+# ifdef vsnprintf
+#  undef vsnprintf
+# endif /* vsnprintf */
+# define vsnprintf	sm_vsnprintf
+#endif /* SNPRINTF_IS_BROKEN */
+
+/*
 **  If we don't have a system syslog, simulate it.
 */
 
@@ -2740,5 +2803,18 @@ typedef void		(*sigfunc_t) __P((int));
 # define LOG_DEBUG	7	/* debug-level messages */
 #endif /* !LOG */
 
+#if SFIO
+# ifdef ERRLIST_PREDEFINED
+#  undef ERRLIST_PREDEFINED
+# endif /* ERRLIST_PREDEFINED */
+# if !HASSNPRINTF
+#  define HASSNPRINTF	1	/* sfio includes snprintf() */
+# endif /* !HASSNPRINTF */
+#endif /* SFIO */
+
+
+#ifndef SFIO_STDIO_COMPAT
+# define SFIO_STDIO_COMPAT	0
+#endif /* ! SFIO_STDIO_COMPAT */
 
 #endif /* CONF_H */

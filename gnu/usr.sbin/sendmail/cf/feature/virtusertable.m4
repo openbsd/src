@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: virtusertable.m4,v 1.1.1.2 2001/01/15 20:52:32 millert Exp $')
+VERSIONID(`$Sendmail: virtusertable.m4,v 8.16 1999/07/22 17:55:36 gshapiro Exp $')
 divert(-1)
 
 define(`_VIRTUSER_TABLE_', `')

@@ -10,14 +10,18 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: sendmail.h,v 8.34 2000/03/16 22:05:28 gshapiro Exp $
+ *	$Sendmail: sendmail.h,v 8.34.4.7 2000/10/09 16:15:26 gshapiro Exp $
  */
 
 /*
 **  SENDMAIL.H -- Global definitions for sendmail.
 */
 
+#if SFIO
+# include <sfio/stdio.h>
+#else /* SFIO */
 # include <stdio.h>
+#endif /* SFIO */
 #include <string.h>
 #include "conf.h"
 #include "sendmail/errstring.h"
@@ -48,6 +52,9 @@
 #define _BITBIT(bit)	((unsigned int)1 << ((bit) % (BYTEBITS * sizeof (int))))
 
 typedef unsigned int	BITMAP256[BITMAPBYTES / sizeof (int)];
+
+/* properly case and truncate bit */
+#define bitidx(bit)		((unsigned int) (bit) & 0xff)
 
 /* test bit number N */
 #define bitnset(bit, map)	((map)[_BITWORD(bit)] & _BITBIT(bit))
@@ -144,9 +151,16 @@ extern bool	filechanged __P((char *, int, struct stat *));
 #define DBS_NONROOTSAFEADDR				31
 #define DBS_TRUSTSTICKYBIT				32
 #define DBS_DONTWARNFORWARDFILEINUNSAFEDIRPATH		33
+#define DBS_INSUFFICIENTENTROPY				34
 #if _FFR_UNSAFE_SASL
-#define DBS_GROUPREADABLESASLFILE			34
+# define DBS_GROUPREADABLESASLFILE			35
 #endif /* _FFR_UNSAFE_SASL */
+#if _FFR_UNSAFE_WRITABLE_INCLUDE
+# define DBS_GROUPWRITABLEFORWARDFILE			36
+# define DBS_GROUPWRITABLEINCLUDEFILE			37
+# define DBS_WORLDWRITABLEFORWARDFILE			38
+# define DBS_WORLDWRITABLEINCLUDEFILE			39
+#endif /* _FFR_UNSAFE_WRITABLE_INCLUDE */
 
 /* struct defining such things */
 struct dbsval
@@ -163,11 +177,10 @@ extern int	dflush __P((void));
 #define dflush()	fflush(stdout)
 #endif /* _FFR_DPRINTF */
 
-#if !HASSNPRINTF
-extern int	snprintf __P((char *, size_t, const char *, ...));
-extern int	vsnprintf __P((char *, size_t, const char *, va_list));
-#endif /* !HASSNPRINTF */
+extern int	sm_snprintf __P((char *, size_t, const char *, ...));
+extern int	sm_vsnprintf __P((char *, size_t, const char *, va_list));
 extern char	*quad_to_string __P((QUAD_T));
 
 extern size_t	strlcpy __P((char *, const char *, size_t));
 extern size_t	strlcat __P((char *, const char *, size_t));
+

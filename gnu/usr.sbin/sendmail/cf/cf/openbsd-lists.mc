@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.3 2000/05/15 03:38:25 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.4 2001/01/15 21:08:53 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -46,9 +46,9 @@ dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
 FEATURE(blacklist_recipients)dnl
-FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
-FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
-FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
+dnl FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
+dnl FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
+dnl FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
 dnl FEATURE(dnsbl, `relays.orbs.org', `Open spam relay - see http://www.orbs.org/')dnl
 dnl
 dnl List the mailers we support
@@ -101,6 +101,13 @@ D{ILPat}ILOVEYOU
 D{ILMsg}This message may contain the ILOVEYOU virus; see http://www.datafellows.com/v-descs/love.htm
 
 #
+# Life stages worm detection (done in Check_Subject)
+# See http://www.f-secure.com/v-descs/stages.htm
+#
+D{LSPat}Fw: Life stages
+D{LSMsg}This message may contain the Life stages virus; see http://www.f-secure.com/v-descs/stages.htm
+
+#
 # Reject some mail based on To: header
 #
 SCheckTo
@@ -128,3 +135,5 @@ R${MPat} $*			$#error $: 553 ${MMsg}
 RRe: ${MPat} $*			$#error $: 553 ${MMsg}
 R${ILPat}			$#error $: 553 ${ILMsg}
 RRe: ${ILPat}			$#error $: 553 ${ILMsg}
+R${LSPat}			$#error $: 553 ${LSMsg}
+RRe: ${LSPat}			$#error $: 553 ${LSMsg}

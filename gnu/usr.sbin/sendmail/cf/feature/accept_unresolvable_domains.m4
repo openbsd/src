@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: accept_unresolvable_domains.m4,v 1.1.1.2 2001/01/15 20:52:27 millert Exp $')
+VERSIONID(`$Sendmail: accept_unresolvable_domains.m4,v 8.10 1999/02/07 07:26:07 gshapiro Exp $')
 divert(-1)
 
 define(`_ACCEPT_UNRESOLVABLE_DOMAINS_', 1)

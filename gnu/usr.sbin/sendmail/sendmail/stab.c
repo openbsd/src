@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: stab.c,v 8.40 1999/11/04 23:31:07 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: stab.c,v 8.40.16.3 2000/10/09 02:46:12 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -268,6 +268,7 @@ queueup_macros(class, qfp, e)
 	if (e == NULL)
 		return;
 
+	class = bitidx(class);
 	for (shead = SymTab; shead < &SymTab[STABSIZE]; shead++)
 	{
 		for (s = *shead; s != NULL; s = s->s_next)
@@ -276,10 +277,30 @@ queueup_macros(class, qfp, e)
 			char *p;
 
 			if (s->s_type == ST_CLASS &&
-			    bitnset(class & 0xff, s->s_class) &&
+			    bitnset(class, s->s_class) &&
 			    (m = macid(s->s_name, NULL)) != '\0' &&
 			    (p = macvalue(m, e)) != NULL)
 			{
+				/*
+				**  HACK ALERT: Unfortunately, 8.10 and
+				**  8.11 reused the ${if_addr} and
+				**  ${if_family} macros for both the incoming
+				**  interface address/family (getrequests())
+				**  and the outgoing interface address/family
+				**  (makeconnection()).  In order for D_BINDIF
+				**  to work properly, have to preserve the
+				**  incoming information in the queue file for
+				**  later delivery attempts.  The original
+				**  information is stored in the envelope
+				**  in readqf() so it can be stored in
+				**  queueup_macros().  This should be fixed
+				**  in 8.12.
+				*/
+
+				if (e->e_if_macros[EIF_ADDR] != NULL &&
+				    strcmp(s->s_name, "{if_addr}") == 0)
+					p = e->e_if_macros[EIF_ADDR];
+
 				fprintf(qfp, "$%s%s\n",
 					s->s_name,
 					denlstring(p, TRUE, FALSE));
@@ -306,13 +327,14 @@ copy_class(src, dst)
 	register STAB **shead;
 	register STAB *s;
 
-	dst = ((unsigned int)dst) & 0xff;
+	src = bitidx(src);
+	dst = bitidx(dst);
 	for (shead = SymTab; shead < &SymTab[STABSIZE]; shead++)
 	{
 		for (s = *shead; s != NULL; s = s->s_next)
 		{
 			if (s->s_type == ST_CLASS &&
-			    bitnset(src & 0xff, s->s_class))
+			    bitnset(src, s->s_class))
 				setbitn(dst, s->s_class);
 		}
 	}

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: redirect.m4,v 1.1.1.2 2001/01/15 20:52:30 millert Exp $')
+VERSIONID(`$Sendmail: redirect.m4,v 8.15 1999/08/06 01:47:36 gshapiro Exp $')
 divert(-1)
 
 LOCAL_RULE_0

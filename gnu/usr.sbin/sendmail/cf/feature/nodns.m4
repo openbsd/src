@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: nodns.m4,v 1.1.1.2 2001/01/15 20:52:30 millert Exp $')
+VERSIONID(`$Sendmail: nodns.m4,v 8.14 1999/07/22 17:55:35 gshapiro Exp $')
 divert(-1)
 
 undefine(`confBIND_OPTS')dnl

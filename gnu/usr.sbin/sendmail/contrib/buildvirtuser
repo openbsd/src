@@ -27,7 +27,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# $Id: buildvirtuser,v 1.1.1.1 2001/01/15 20:52:40 millert Exp $
+# $Sendmail: buildvirtuser,v 1.1.2.1 2000/10/26 22:51:03 gshapiro Exp $
 
 =head1 NAME
 

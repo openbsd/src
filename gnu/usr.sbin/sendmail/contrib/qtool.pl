@@ -3,7 +3,7 @@
 ## Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 ##       All rights reserved.
 ##
-## $Id: qtool.pl,v 1.1.1.2 2001/01/15 20:52:41 millert Exp $
+## $Sendmail: qtool.pl,v 8.15.16.4 2000/11/30 07:14:01 gshapiro Exp $
 ##
 use strict;
 use File::Basename;

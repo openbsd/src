@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: engine.c,v 8.67 2000/03/27 05:04:16 ca Exp $";
+static char id[] = "@(#)$Sendmail: engine.c,v 8.67.4.15 2000/12/29 19:43:10 gshapiro Exp $";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -19,9 +19,6 @@ static char id[] = "@(#)$Sendmail: engine.c,v 8.67 2000/03/27 05:04:16 ca Exp $"
 #if NETINET || NETINET6
 # include <arpa/inet.h>
 #endif /* NETINET || NETINET6 */
-
-/* length of options: two 32bit integers */
-#define MILTER_OPTLEN	8
 
 /* generic argument for functions in the command table */
 struct arg_struct
@@ -87,7 +84,7 @@ static int	st_sender __P((genarg *));
 static int	st_rcpt __P((genarg *));
 static int	st_eoh __P((genarg *));
 static int	st_quit __P((genarg *));
-static int	sendreply __P((sfsistat, int, struct timeval *, SMFICTX_PTR));
+static int	sendreply __P((sfsistat, socket_t, struct timeval *, SMFICTX_PTR));
 static void	fix_stm __P((SMFICTX_PTR));
 static bool	trans_ok __P((int, int));
 static char	**dec_argv __P((char *, size_t));
@@ -109,6 +106,9 @@ static int	dec_arg2 __P((char *, size_t, char **, char **));
 #define ST_ABRT	11	/* abort */
 #define ST_LAST	ST_ABRT
 #define ST_SKIP	15	/* not a state but required for the state table */
+
+/* in a mail transaction? must be before eom according to spec. */
+#define ST_IN_MAIL(st)	((st) >= ST_MAIL && (st) < ST_ENDM)
 
 /*
 **  set of next states
@@ -187,11 +187,13 @@ mi_engine(ctx)
 	SMFICTX_PTR ctx;
 {
 	size_t len;
-	int i, fd;
+	int i;
+	socket_t sd;
 	int ret = MI_SUCCESS;
 	int ncmds = sizeof(cmds) / sizeof(cmdfct);
 	int curstate = ST_INIT;
 	int newstate;
+	bool call_abort;
 	sfsistat r;
 	char cmd;
 	char *buf = NULL;
@@ -199,13 +201,17 @@ mi_engine(ctx)
 	struct timeval timeout;
 	int (*f) __P((genarg *));
 	sfsistat (*fi_abort) __P((SMFICTX *));
+	sfsistat (*fi_close) __P((SMFICTX *));
 
 	arg.a_ctx = ctx;
-	fd = ctx->ctx_fd;
+	sd = ctx->ctx_sd;
 	fi_abort = ctx->ctx_smfi->xxfi_abort;
 	mi_clr_macros(ctx, 0);
 	fix_stm(ctx);
-	do {
+	do
+	{
+		/* call abort only if in a mail transaction */
+		call_abort = ST_IN_MAIL(curstate);
 		timeout.tv_sec = ctx->ctx_timeout;
 		timeout.tv_usec = 0;
 		if (mi_stop() == MILTER_ABRT)
@@ -216,12 +222,12 @@ mi_engine(ctx)
 			ret = MI_FAILURE;
 			break;
 		}
-		if ((buf = mi_rd_cmd(fd, &timeout, &cmd, &len,
+		if ((buf = mi_rd_cmd(sd, &timeout, &cmd, &len,
 				     ctx->ctx_smfi->xxfi_name)) == NULL &&
 		    cmd < SMFIC_VALIDCMD)
 		{
 			if (ctx->ctx_dbg > 5)
-				dprintf("[%d] error (%x)\n",
+				dprintf("[%d] mi_engine: mi_rd_cmd error (%x)\n",
 					(int) ctx->ctx_id, (int) cmd);
 
 			/*
@@ -275,7 +281,9 @@ mi_engine(ctx)
 					curstate, MASK(curstate),
 					newstate, MASK(newstate),
 					next_states[curstate]);
-			if (fi_abort != NULL)
+
+			/* call abort only if in a mail transaction */
+			if (fi_abort != NULL && call_abort)
 				(void) (*fi_abort)(ctx);
 
 			/*
@@ -303,12 +311,13 @@ mi_engine(ctx)
 			free(buf);
 			buf = NULL;
 		}
-		if (sendreply(r, fd, &timeout, ctx) != MI_SUCCESS)
+		if (sendreply(r, sd, &timeout, ctx) != MI_SUCCESS)
 		{
 			ret = MI_FAILURE;
 			break;
 		}
 
+		call_abort = ST_IN_MAIL(curstate);
 		if (r == SMFIS_ACCEPT)
 		{
 			/* accept mail, no further actions taken */
@@ -337,16 +346,14 @@ mi_engine(ctx)
 
 	if (ret != MI_SUCCESS)
 	{
-		if (fi_abort != NULL)
+		/* call abort only if in a mail transaction */
+		if (fi_abort != NULL && call_abort)
 			(void) (*fi_abort)(ctx);
 	}
-	else
-	{
-		sfsistat (*fi_close) __P((SMFICTX *));
 
-		if ((fi_close = ctx->ctx_smfi->xxfi_close) != NULL)
-			(void) (*fi_close)(ctx);
-	}
+	/* close must always be called */
+	if ((fi_close = ctx->ctx_smfi->xxfi_close) != NULL)
+		(void) (*fi_close)(ctx);
 	if (buf != NULL)
 		free(buf);
 	mi_clr_macros(ctx, 0);
@@ -357,7 +364,7 @@ mi_engine(ctx)
 **
 **	Parameters:
 **		r -- reply code
-**		fd -- file descriptor
+**		sd -- socket descriptor
 **		timeout_ptr -- (ptr to) timeout to use for sending
 **		ctx -- context structure
 **
@@ -366,24 +373,24 @@ mi_engine(ctx)
 */
 
 static int
-sendreply(r, fd, timeout_ptr, ctx)
+sendreply(r, sd, timeout_ptr, ctx)
 	sfsistat r;
-	int fd;
+	socket_t sd;
 	struct timeval *timeout_ptr;
 	SMFICTX_PTR ctx;
 {
 	int ret = MI_SUCCESS;
 
-	switch(r)
+	switch (r)
 	{
 	  case SMFIS_CONTINUE:
-		ret = mi_wr_cmd(fd, timeout_ptr, SMFIR_CONTINUE, NULL, 0);
+		ret = mi_wr_cmd(sd, timeout_ptr, SMFIR_CONTINUE, NULL, 0);
 		break;
 	  case SMFIS_TEMPFAIL:
 	  case SMFIS_REJECT:
 		if (ctx->ctx_reply != NULL)
 		{
-			ret = mi_wr_cmd(fd, timeout_ptr, SMFIR_REPLYCODE,
+			ret = mi_wr_cmd(sd, timeout_ptr, SMFIR_REPLYCODE,
 					ctx->ctx_reply,
 					strlen(ctx->ctx_reply) + 1);
 			free(ctx->ctx_reply);
@@ -391,15 +398,15 @@ sendreply(r, fd, timeout_ptr, ctx)
 		}
 		else
 		{
-			ret = mi_wr_cmd(fd, timeout_ptr, r == SMFIS_REJECT ?
+			ret = mi_wr_cmd(sd, timeout_ptr, r == SMFIS_REJECT ?
 					SMFIR_REJECT : SMFIR_TEMPFAIL, NULL, 0);
 		}
 		break;
 	  case SMFIS_DISCARD:
-		ret = mi_wr_cmd(fd, timeout_ptr, SMFIR_DISCARD, NULL, 0);
+		ret = mi_wr_cmd(sd, timeout_ptr, SMFIR_DISCARD, NULL, 0);
 		break;
 	  case SMFIS_ACCEPT:
-		ret = mi_wr_cmd(fd, timeout_ptr, SMFIR_ACCEPT, NULL, 0);
+		ret = mi_wr_cmd(sd, timeout_ptr, SMFIR_ACCEPT, NULL, 0);
 		break;
 	  case _SMFIS_OPTIONS:
 		{
@@ -411,7 +418,10 @@ sendreply(r, fd, timeout_ptr, ctx)
 			v = htonl(ctx->ctx_smfi->xxfi_flags);
 			(void) memcpy(&(buf[MILTER_LEN_BYTES]), (void *) &v,
 				      MILTER_LEN_BYTES);
-			ret = mi_wr_cmd(fd, timeout_ptr, SMFIC_OPTNEG, buf,
+			v = htonl(ctx->ctx_pflags);
+			(void) memcpy(&(buf[MILTER_LEN_BYTES * 2]), (void *) &v,
+				      MILTER_LEN_BYTES);
+			ret = mi_wr_cmd(sd, timeout_ptr, SMFIC_OPTNEG, buf,
 				       MILTER_OPTLEN);
 		}
 		break;
@@ -466,15 +476,17 @@ static int
 st_optionneg(g)
 	genarg *g;
 {
-	mi_int32 i, version;
+	mi_int32 i, v;
 
 	if (g == NULL || g->a_ctx->ctx_smfi == NULL)
 		return SMFIS_CONTINUE;
 	mi_clr_macros(g->a_ctx, g->a_idx + 1);
-	if (g->a_len != MILTER_OPTLEN)
+
+	/* check for minimum length */
+	if (g->a_len < MILTER_OPTLEN)
 	{
 		smi_log(SMI_LOG_ERR,
-			"%s: st_optionneg[%d]: len mismatch %d != %d",
+			"%s: st_optionneg[%d]: len too short %d < %d",
 			g->a_ctx->ctx_smfi->xxfi_name,
 			(int) g->a_ctx->ctx_id, g->a_len,
 			MILTER_OPTLEN);
@@ -483,23 +495,51 @@ st_optionneg(g)
 
 	(void) memcpy((void *) &i, (void *) &(g->a_buf[0]),
 		      MILTER_LEN_BYTES);
-	version = ntohl(i);
-	if (version != g->a_ctx->ctx_smfi->xxfi_version)
+	v = ntohl(i);
+	if (v < g->a_ctx->ctx_smfi->xxfi_version)
 	{
+		/* hard failure for now! */
 		smi_log(SMI_LOG_ERR,
-			"%s: st_optionneg[%d]: version mismatch %d != %d",
+			"%s: st_optionneg[%d]: version mismatch MTA: %d < milter: %d",
 			g->a_ctx->ctx_smfi->xxfi_name,
-			(int) g->a_ctx->ctx_id, (int) version,
+			(int) g->a_ctx->ctx_id, (int) v,
 			g->a_ctx->ctx_smfi->xxfi_version);
 		return _SMFIS_ABORT;
 	}
 
-#if 0
-	/* flags are currently ignored */
 	(void) memcpy((void *) &i, (void *) &(g->a_buf[MILTER_LEN_BYTES]),
 		      MILTER_LEN_BYTES);
-	flags = ntohl(i);
-#endif /* 0 */
+	v = ntohl(i);
+
+	/* no flags? set to default value for V1 actions */
+	if (v == 0)
+		v = SMFI_V1_ACTS;
+	i = g->a_ctx->ctx_smfi->xxfi_flags;
+	if ((v & i) != i)
+	{
+		smi_log(SMI_LOG_ERR,
+			"%s: st_optionneg[%d]: 0x%x does not fulfill action requirements 0x%x",
+			g->a_ctx->ctx_smfi->xxfi_name,
+			(int) g->a_ctx->ctx_id, v, i);
+		return _SMFIS_ABORT;
+	}
+
+	(void) memcpy((void *) &i, (void *) &(g->a_buf[MILTER_LEN_BYTES * 2]),
+		      MILTER_LEN_BYTES);
+	v = ntohl(i);
+
+	/* no flags? set to default value for V1 protocol */
+	if (v == 0)
+		v = SMFI_V1_PROT;
+	i = g->a_ctx->ctx_pflags;
+	if ((v & i) != i)
+	{
+		smi_log(SMI_LOG_ERR,
+			"%s: st_optionneg[%d]: 0x%x does not fulfill protocol requirements 0x%x",
+			g->a_ctx->ctx_smfi->xxfi_name,
+			(int) g->a_ctx->ctx_id, v, i);
+		return _SMFIS_ABORT;
+	}
 
 	return _SMFIS_OPTIONS;
 }
@@ -518,9 +558,9 @@ st_connectinfo(g)
 	genarg *g;
 {
 	size_t l;
-	int i;
+	size_t i;
 	char *s, family;
-	u_short port;
+	u_short port = 0;
 	_SOCK_ADDR sockaddr;
 	sfsistat (*fi_connect) __P((SMFICTX *, char *, _SOCK_ADDR *));
 
@@ -569,6 +609,8 @@ st_connectinfo(g)
 				return _SMFIS_ABORT;
 			}
 			sockaddr.sa.sa_family = AF_INET;
+			if (port > 0)
+				sockaddr.sin.sin_port = port;
 		}
 		else
 # endif /* NETINET */
@@ -585,6 +627,8 @@ st_connectinfo(g)
 				return _SMFIS_ABORT;
 			}
 			sockaddr.sa.sa_family = AF_INET6;
+			if (port > 0)
+				sockaddr.sin6.sin6_port = port;
 		}
 		else
 # endif /* NETINET6 */
@@ -763,7 +807,7 @@ st_macros(g)
 		return _SMFIS_FAIL;
 	if ((argv = dec_argv(g->a_buf + 1, g->a_len - 1)) == NULL)
 		return _SMFIS_FAIL;
-	switch(g->a_buf[0])
+	switch (g->a_buf[0])
 	{
 	  case SMFIC_CONNECT:
 		i = CI_CONN;
@@ -857,15 +901,15 @@ st_bodyend(g)
 		if ((fi_body = g->a_ctx->ctx_smfi->xxfi_body) != NULL &&
 		    g->a_len > 0)
 		{
-			int fd;
+			socket_t sd;
 			struct timeval timeout;
 
 			timeout.tv_sec = g->a_ctx->ctx_timeout;
 			timeout.tv_usec = 0;
-			fd = g->a_ctx->ctx_fd;
+			sd = g->a_ctx->ctx_sd;
 			r = (*fi_body)(g->a_ctx, (u_char *)g->a_buf, g->a_len);
 			if (r != SMFIS_CONTINUE &&
-			    sendreply(r, fd, &timeout, g->a_ctx) != MI_SUCCESS)
+			    sendreply(r, sd, &timeout, g->a_ctx) != MI_SUCCESS)
 				return _SMFIS_ABORT;
 		}
 	}
@@ -915,7 +959,8 @@ trans_ok(old, new)
 	int s, n;
 
 	s = old;
-	do {
+	do
+	{
 		/* is this state transition allowed? */
 		if ((MASK(new) & next_states[s]) != 0)
 			return TRUE;
@@ -960,21 +1005,20 @@ fix_stm(ctx)
 
 	if (ctx == NULL || ctx->ctx_smfi == NULL)
 		return;
-	fl = ctx->ctx_smfi->xxfi_flags;
-	if (bitset(SMFIF_NOCONNECT, fl))
+	fl = ctx->ctx_pflags;
+	if (bitset(SMFIP_NOCONNECT, fl))
 		next_states[ST_CONN] |= NX_SKIP;
-	if (bitset(SMFIF_NOHELO, fl))
+	if (bitset(SMFIP_NOHELO, fl))
 		next_states[ST_HELO] |= NX_SKIP;
-	if (bitset(SMFIF_NOMAIL, fl))
+	if (bitset(SMFIP_NOMAIL, fl))
 		next_states[ST_MAIL] |= NX_SKIP;
-	if (bitset(SMFIF_NORCPT, fl))
+	if (bitset(SMFIP_NORCPT, fl))
 		next_states[ST_RCPT] |= NX_SKIP;
-	if (bitset(SMFIF_NOHDRS, fl))
-	{
+	if (bitset(SMFIP_NOHDRS, fl))
 		next_states[ST_HDRS] |= NX_SKIP;
+	if (bitset(SMFIP_NOEOH, fl))
 		next_states[ST_EOHS] |= NX_SKIP;
-	}
-	if (bitset(SMFIF_NOBODY, fl))
+	if (bitset(SMFIP_NOBODY, fl))
 		next_states[ST_BODY] |= NX_SKIP;
 }
 /*
@@ -1019,7 +1063,7 @@ dec_argv(buf, len)
 
 	/* overwrite last entry */
 	s[elem] = NULL;
-	return (s);
+	return s;
 }
 /*
 **  DEC_ARG2 -- split a buffer into two strings
@@ -1040,7 +1084,7 @@ dec_arg2(buf, len, s1, s2)
 	char **s1;
 	char **s2;
 {
-	int i;
+	size_t i;
 
 	*s1 = buf;
 	for (i = 1; i < len && buf[i] != '\0'; i++)

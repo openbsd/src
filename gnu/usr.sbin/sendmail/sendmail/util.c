@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,11 +12,12 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: util.c,v 8.225 2000/03/28 21:55:22 ca Exp $";
+static char id[] = "@(#)$Sendmail: util.c,v 8.225.2.1.2.15 2000/10/18 23:46:07 ca Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
 #include <sysexits.h>
+
 
 static void	readtimeout __P((time_t));
 
@@ -208,6 +209,7 @@ shorten_rfc822_string(string, length)
 	**  If have to rebalance an already short enough string,
 	**  need to do it within allocated space.
 	*/
+
 	slen = strlen(string);
 	if (length == 0 || slen < length)
 		length = slen;
@@ -239,7 +241,7 @@ shorten_rfc822_string(string, length)
 
 increment:
 		/* Check for sufficient space for next character */
-		if (length - (ptr - string) <= ((backslash ? 1 : 0) +
+		if (length - (ptr - string) <= (size_t) ((backslash ? 1 : 0) +
 						parencount +
 						(quoted ? 1 : 0)))
 		{
@@ -499,10 +501,13 @@ log_sendmail_pid(e)
 	}
 	else
 	{
+		long pid;
 		extern char *CommandLineArgs;
 
+		pid = (long) getpid();
+
 		/* write the process id on line 1 */
-		fprintf(pidf, "%ld\n", (long) getpid());
+		fprintf(pidf, "%ld\n", pid);
 
 		/* line 2 contains all command line flags */
 		fprintf(pidf, "%s\n", CommandLineArgs);
@@ -639,7 +644,7 @@ xputs(s)
 				if (strchr("=~&?", *s) != NULL)
 					(void) putchar(*s++);
 				if (bitset(0200, *s))
-					printf("{%s}", macname(*s++ & 0377));
+					printf("{%s}", macname(bitidx(*s++)));
 				else
 					printf("%c", *s++);
 				continue;
@@ -917,6 +922,11 @@ putxline(l, len, mci, pxflags)
 			{
 				if (putc('.', mci->mci_out) == EOF)
 					dead = TRUE;
+				else
+				{
+					/* record progress for DATA timeout */
+					DataProgress = TRUE;
+				}
 				if (TrafficLogFile != NULL)
 					(void) putc('.', TrafficLogFile);
 			}
@@ -927,6 +937,11 @@ putxline(l, len, mci, pxflags)
 			{
 				if (putc('>', mci->mci_out) == EOF)
 					dead = TRUE;
+				else
+				{
+					/* record progress for DATA timeout */
+					DataProgress = TRUE;
+				}
 				if (TrafficLogFile != NULL)
 					(void) putc('>', TrafficLogFile);
 			}
@@ -935,14 +950,17 @@ putxline(l, len, mci, pxflags)
 
 			while (l < q)
 			{
-				if (putc(*l++, mci->mci_out) == EOF)
+				if (putc((unsigned char) *l++, mci->mci_out) ==
+				    EOF)
 				{
 					dead = TRUE;
 					break;
 				}
-
-				/* record progress for DATA timeout */
-				DataProgress = TRUE;
+				else
+				{
+					/* record progress for DATA timeout */
+					DataProgress = TRUE;
+				}
 			}
 			if (dead)
 				break;
@@ -955,14 +973,16 @@ putxline(l, len, mci, pxflags)
 				dead = TRUE;
 				break;
 			}
-
-			/* record progress for DATA timeout */
-			DataProgress = TRUE;
-
+			else
+			{
+				/* record progress for DATA timeout */
+				DataProgress = TRUE;
+			}
 			if (TrafficLogFile != NULL)
 			{
 				for (l = l_base; l < q; l++)
-					(void) putc(*l, TrafficLogFile);
+					(void) putc((unsigned char)*l,
+						    TrafficLogFile);
 				fprintf(TrafficLogFile, "!\n%05d >>>  ",
 					(int) getpid());
 			}
@@ -978,6 +998,11 @@ putxline(l, len, mci, pxflags)
 		{
 			if (putc('.', mci->mci_out) == EOF)
 				break;
+			else
+			{
+				/* record progress for DATA timeout */
+				DataProgress = TRUE;
+			}
 			if (TrafficLogFile != NULL)
 				(void) putc('.', TrafficLogFile);
 		}
@@ -988,21 +1013,28 @@ putxline(l, len, mci, pxflags)
 		{
 			if (putc('>', mci->mci_out) == EOF)
 				break;
+			else
+			{
+				/* record progress for DATA timeout */
+				DataProgress = TRUE;
+			}
 			if (TrafficLogFile != NULL)
 				(void) putc('>', TrafficLogFile);
 		}
 		for ( ; l < p; ++l)
 		{
 			if (TrafficLogFile != NULL)
-				(void) putc(*l, TrafficLogFile);
-			if (putc(*l, mci->mci_out) == EOF)
+				(void) putc((unsigned char)*l, TrafficLogFile);
+			if (putc((unsigned char) *l, mci->mci_out) == EOF)
 			{
 				dead = TRUE;
 				break;
 			}
-
-			/* record progress for DATA timeout */
-			DataProgress = TRUE;
+			else
+			{
+				/* record progress for DATA timeout */
+				DataProgress = TRUE;
+			}
 		}
 		if (dead)
 			break;
@@ -1011,6 +1043,11 @@ putxline(l, len, mci, pxflags)
 			(void) putc('\n', TrafficLogFile);
 		if (fputs(mci->mci_mailer->m_eol, mci->mci_out) == EOF)
 			break;
+		else
+		{
+			/* record progress for DATA timeout */
+			DataProgress = TRUE;
+		}
 		if (l < end && *l == '\n')
 		{
 			if (*++l != ' ' && *l != '\t' && *l != '\0' &&
@@ -1018,13 +1055,15 @@ putxline(l, len, mci, pxflags)
 			{
 				if (putc(' ', mci->mci_out) == EOF)
 					break;
+				else
+				{
+					/* record progress for DATA timeout */
+					DataProgress = TRUE;
+				}
 				if (TrafficLogFile != NULL)
 					(void) putc(' ', TrafficLogFile);
 			}
 		}
-
-		/* record progress for DATA timeout */
-		DataProgress = TRUE;
 	} while (l < end);
 }
 /*
@@ -1075,6 +1114,7 @@ xunlink(f)
 **	Side Effects:
 **		none.
 */
+
 
 static jmp_buf	CtxReadTimeout;
 
@@ -1343,8 +1383,10 @@ bitintersect(a, b)
 	int i;
 
 	for (i = BITMAPBYTES / sizeof (int); --i >= 0; )
+	{
 		if ((a[i] & b[i]) != 0)
 			return TRUE;
+	}
 	return FALSE;
 }
 /*
@@ -1368,8 +1410,10 @@ bitzerop(map)
 	int i;
 
 	for (i = BITMAPBYTES / sizeof (int); --i >= 0; )
+	{
 		if (map[i] != 0)
 			return FALSE;
+	}
 	return TRUE;
 }
 /*
@@ -1481,8 +1525,8 @@ checkfds(where)
 	static BITMAP256 baseline;
 	extern int DtableSize;
 
-	if (DtableSize > 256)
-		maxfd = 256;
+	if (DtableSize > BITMAPBITS)
+		maxfd = BITMAPBITS;
 	else
 		maxfd = DtableSize;
 	if (where == NULL)
@@ -1856,17 +1900,29 @@ prog_open(argv, pfd, e)
 	{
 		expand(ProgMailer->m_rootdir, buf, sizeof buf, e);
 		if (chroot(buf) < 0)
+		{
 			syserr("prog_open: cannot chroot(%s)", buf);
+			exit(EX_TEMPFAIL);
+		}
 		if (chdir("/") < 0)
+		{
 			syserr("prog_open: cannot chdir(/)");
+			exit(EX_TEMPFAIL);
+		}
 	}
 
 	/* run as default user */
 	endpwent();
 	if (setgid(DefGid) < 0 && geteuid() == 0)
+	{
 		syserr("prog_open: setgid(%ld) failed", (long) DefGid);
+		exit(EX_TEMPFAIL);
+	}
 	if (setuid(DefUid) < 0 && geteuid() == 0)
+	{
 		syserr("prog_open: setuid(%ld) failed", (long) DefUid);
+		exit(EX_TEMPFAIL);
+	}
 
 	/* run in some directory */
 	if (ProgMailer != NULL)
@@ -2256,6 +2312,8 @@ proc_list_drop(pid)
 	}
 	if (CurChildren > 0)
 		CurChildren--;
+
+
 	return type;
 }
 /*

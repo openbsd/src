@@ -11,17 +11,18 @@
  *
  */
 
+
 #include <sendmail.h>
 
 #ifndef lint
 # if QUEUE
-static char id[] = "@(#)$Sendmail: queue.c,v 8.343 2000/03/15 06:58:09 gshapiro Exp $ (with queueing)";
+static char id[] = "@(#)$Sendmail: queue.c,v 8.343.4.38 2000/12/08 14:33:02 ca Exp $ (with queueing)";
 # else /* QUEUE */
-static char id[] = "@(#)$Sendmail: queue.c,v 8.343 2000/03/15 06:58:09 gshapiro Exp $ (without queueing)";
+static char id[] = "@(#)$Sendmail: queue.c,v 8.343.4.38 2000/12/08 14:33:02 ca Exp $ (without queueing)";
 # endif /* QUEUE */
 #endif /* ! lint */
 
-#include <dirent.h>
+# include <dirent.h>
 
 #if QUEUE
 
@@ -82,6 +83,9 @@ static int	workcmpf4();
 **		The queue file is left locked.
 */
 
+# define TEMPQF_LETTER 'T'
+# define LOSEQF_LETTER 'Q'
+
 void
 queueup(e, announce)
 	register ENVELOPE *e;
@@ -115,34 +119,38 @@ queueup(e, announce)
 	/* if newid, just write the qf file directly (instead of tf file) */
 	if (!newid)
 	{
+		int flags;
+
+		flags = O_CREAT|O_WRONLY|O_EXCL;
+
 		/* get a locked tf file */
 		for (i = 0; i < 128; i++)
 		{
-#if _FFR_QUEUE_FILE_MODE
+			if (tfd < 0)
 			{
+#if _FFR_QUEUE_FILE_MODE
 				MODE_T oldumask;
 
 				if (bitset(S_IWGRP, QueueFileMode))
 					oldumask = umask(002);
-				tfd = open(tf, O_CREAT|O_WRONLY|O_EXCL,
-					   QueueFileMode);
+				tfd = open(tf, flags, QueueFileMode);
 				if (bitset(S_IWGRP, QueueFileMode))
 					(void) umask(oldumask);
-			}
 #else /* _FFR_QUEUE_FILE_MODE */
-			tfd = open(tf, O_CREAT|O_WRONLY|O_EXCL, FileMode);
+				tfd = open(tf, flags, FileMode);
 #endif /* _FFR_QUEUE_FILE_MODE */
 
-			if (tfd < 0)
-			{
-				if (errno != EEXIST)
-					break;
-				if (LogLevel > 0 && (i % 32) == 0)
-					sm_syslog(LOG_ALERT, e->e_id,
-						  "queueup: cannot create %s, uid=%d: %s",
-						  tf, geteuid(), errstring(errno));
+				if (tfd < 0)
+				{
+					if (errno != EEXIST)
+						break;
+					if (LogLevel > 0 && (i % 32) == 0)
+						sm_syslog(LOG_ALERT, e->e_id,
+							  "queueup: cannot create %s, uid=%d: %s",
+							  tf, geteuid(), errstring(errno));
+				}
 			}
-			else
+			if (tfd >= 0)
 			{
 				if (lockfile(tfd, tf, NULL, LOCK_EX|LOCK_NB))
 					break;
@@ -150,13 +158,17 @@ queueup(e, announce)
 					sm_syslog(LOG_ALERT, e->e_id,
 						  "queueup: cannot lock %s: %s",
 						  tf, errstring(errno));
-				(void) close(tfd);
+				if ((i % 32) == 31)
+				{
+					(void) close(tfd);
+					tfd = -1;
+				}
 			}
 
 			if ((i % 32) == 31)
 			{
 				/* save the old temp file away */
-				(void) rename(tf, queuename(e, 'T'));
+				(void) rename(tf, queuename(e, TEMPQF_LETTER));
 			}
 			else
 				(void) sleep(i % 32);
@@ -373,6 +385,9 @@ queueup(e, announce)
 			(void) putc('F', tfp);
 		if (bitset(QPINGONDELAY, q->q_flags))
 			(void) putc('D', tfp);
+		if (q->q_alias != NULL &&
+		    bitset(QALIAS, q->q_alias->q_flags))
+			(void) putc('A', tfp);
 		(void) putc(':', tfp);
 		(void) fprintf(tfp, "%s\n", denlstring(q->q_paddr, TRUE, FALSE));
 		if (announce)
@@ -436,7 +451,7 @@ queueup(e, announce)
 		{
 			if (bitset(0200, h->h_macro))
 				fprintf(tfp, "${%s}",
-					macname(h->h_macro & 0377));
+					macname(bitidx(h->h_macro)));
 			else
 				fprintf(tfp, "$%c", h->h_macro);
 		}
@@ -509,7 +524,6 @@ queueup(e, announce)
 		if (rename(tf, qf) < 0)
 			syserr("cannot rename(%s, %s), uid=%d",
 				tf, qf, geteuid());
-
 		/*
 		**  fsync() after renaming to make sure
 		**  metadata is written to disk on
@@ -518,8 +532,7 @@ queueup(e, announce)
 		*/
 
 		if (tfd >= 0 && SuperSafe && fsync(tfd) < 0)
-			syserr("!queueup: cannot fsync queue temp file %s",
-			       tf);
+			syserr("!queueup: cannot fsync queue temp file %s", tf);
 
 		/* close and unlock old (locked) qf */
 		if (e->e_lockfp != NULL)
@@ -642,6 +655,9 @@ runqueue(forkflag, verbose)
 	bool ret = TRUE;
 	static int curnum = 0;
 
+	DoQueueRun = FALSE;
+
+
 	if (!forkflag && NumQueues > 1 && !verbose)
 		forkflag = TRUE;
 
@@ -699,10 +715,8 @@ run_single_queue(queuedir, forkflag, verbose)
 	register ENVELOPE *e;
 	int njobs;
 	int sequenceno = 0;
-	time_t current_la_time;
+	time_t current_la_time, now;
 	extern ENVELOPE BlankEnvelope;
-
-	DoQueueRun = FALSE;
 
 	/*
 	**  If no work will ever be selected, don't even bother reading
@@ -788,6 +802,7 @@ run_single_queue(queuedir, forkflag, verbose)
 		(void) releasesignal(SIGCHLD);
 		(void) setsignal(SIGCHLD, SIG_DFL);
 		(void) setsignal(SIGHUP, intsig);
+
 	}
 
 	sm_setproctitle(TRUE, CurEnv, "running queue: %s",
@@ -850,6 +865,7 @@ run_single_queue(queuedir, forkflag, verbose)
 	/* order the existing work requests */
 	njobs = orderq(queuedir, FALSE);
 
+
 	/* process them once at a time */
 	while (WorkQ != NULL)
 	{
@@ -864,10 +880,11 @@ run_single_queue(queuedir, forkflag, verbose)
 		**	Get new load average every 30 seconds.
 		*/
 
-		if (current_la_time < curtime() - 30)
+		now = curtime();
+		if (current_la_time < now - 30)
 		{
 			CurrentLA = sm_getla(e);
-			current_la_time = curtime();
+			current_la_time = now;
 		}
 		if (shouldqueue(WkRecipFact, current_la_time))
 		{
@@ -980,6 +997,7 @@ runqueueevent()
 # define NEED_T		002
 # define NEED_R		004
 # define NEED_S		010
+# define NEED_H		020
 
 static WORK	*WorkList = NULL;
 static int	WorkListSize = 0;
@@ -1043,7 +1061,7 @@ orderq(queuedir, doall)
 
 		WorkQ = nw;
 		free(w->w_name);
-		if (w->w_host)
+		if (w->w_host != NULL)
 			free(w->w_host);
 		free((char *) w);
 		w = nw;
@@ -1136,7 +1154,9 @@ orderq(queuedir, doall)
 		}
 
 		/* avoid work if possible */
-		if (QueueSortOrder == QSO_BYFILENAME)
+		if (QueueSortOrder == QSO_BYFILENAME &&
+		    QueueLimitSender == NULL &&
+		    QueueLimitRecipient == NULL)
 		{
 			w->w_name = newstr(d->d_name);
 			w->w_host = NULL;
@@ -1148,6 +1168,7 @@ orderq(queuedir, doall)
 
 		/* open control file */
 		cf = fopen(qf, "r");
+
 		if (cf == NULL)
 		{
 			/* this may be some random person sending hir msgs */
@@ -1170,9 +1191,14 @@ orderq(queuedir, doall)
 
 		/* extract useful information */
 		i = NEED_P | NEED_T;
+		if (QueueSortOrder == QSO_BYHOST)
+		{
+			/* need w_host set for host sort order */
+			i |= NEED_H;
+		}
 		if (QueueLimitSender != NULL)
 			i |= NEED_S;
-		if (QueueSortOrder == QSO_BYHOST || QueueLimitRecipient != NULL)
+		if (QueueLimitRecipient != NULL)
 			i |= NEED_R;
 		while (i != 0 && fgets(lbuf, sizeof lbuf, cf) != NULL)
 		{
@@ -1211,6 +1237,7 @@ orderq(queuedir, doall)
 				{
 					w->w_host = strrev(&p[1]);
 					makelower(w->w_host);
+					i &= ~NEED_H;
 				}
 				if (QueueLimitRecipient == NULL)
 				{
@@ -1239,17 +1266,17 @@ orderq(queuedir, doall)
 				break;
 
 			  case 'S':
-				  check = QueueLimitSender;
-				  while (check != NULL)
-				  {
-					  if (strcontainedin(check->queue_match,
-							     &lbuf[1]))
-						  break;
-					  else
-						  check = check->queue_next;
-				  }
-				  if (check != NULL)
-					  i &= ~NEED_S;
+				check = QueueLimitSender;
+				while (check != NULL)
+				{
+					if (strcontainedin(check->queue_match,
+							   &lbuf[1]))
+						break;
+					else
+						check = check->queue_next;
+				}
+				if (check != NULL)
+					i &= ~NEED_S;
 				break;
 
 			  case 'K':
@@ -1813,7 +1840,6 @@ readqf(e)
 	struct stat st;
 	char *bp;
 	int qfver = 0;
-	int chompflags;
 	long hdrsize = 0;
 	register char *p;
 	char *orcpt = NULL;
@@ -1836,7 +1862,8 @@ readqf(e)
 			dprintf("readqf(%s): fopen failure (%s)\n",
 				qf, errstring(errno));
 		errno = save_errno;
-		if (errno != ENOENT)
+		if (errno != ENOENT
+		    )
 			syserr("readqf: no control file %s", qf);
 		return FALSE;
 	}
@@ -1937,6 +1964,7 @@ readqf(e)
 		u_long qflags;
 		ADDRESS *q;
 		int mid;
+		time_t now;
 		auto char *ep;
 
 		if (tTd(40, 4))
@@ -1998,6 +2026,11 @@ readqf(e)
 					  case 'P':
 						qflags |= QPRIMARY;
 						break;
+
+					  case 'A':
+						if (ctladdr != NULL)
+							ctladdr->q_flags |= QALIAS;
+						break;
 					}
 				}
 			}
@@ -2021,8 +2054,7 @@ readqf(e)
 			break;
 
 		  case 'H':		/* header */
-			chompflags = 0;
-			(void) chompheader(&bp[1], &chompflags, NULL, e);
+			(void) chompheader(&bp[1], CHHDR_QUEUE, NULL, e);
 			hdrsize += strlen(&bp[1]);
 			break;
 
@@ -2074,12 +2106,13 @@ readqf(e)
 			e->e_ntries = atoi(&buf[1]);
 
 			/* if this has been tried recently, let it be */
-			if (e->e_ntries > 0 && e->e_dtime <= curtime() &&
-			    curtime() < e->e_dtime + queuedelay(e))
+			now = curtime();
+			if (e->e_ntries > 0 && e->e_dtime <= now &&
+			    now < e->e_dtime + queuedelay(e))
 			{
 				char *howlong;
 
-				howlong = pintvl(curtime() - e->e_dtime, TRUE);
+				howlong = pintvl(now - e->e_dtime, TRUE);
 				if (Verbose)
 					printf("%s: too young (%s)\n",
 					       e->e_id, howlong);
@@ -2165,8 +2198,35 @@ readqf(e)
 			break;
 
 		  case '$':		/* define macro */
-			mid = macid(&bp[1], &ep);
-			define(mid, newstr(ep), e);
+			{
+				char *p;
+
+				mid = macid(&bp[1], &ep);
+				if (mid == 0)
+					break;
+
+				p = newstr(ep);
+				define(mid, p, e);
+
+				/*
+				**  HACK ALERT: Unfortunately, 8.10 and
+				**  8.11 reused the ${if_addr} and
+				**  ${if_family} macros for both the incoming
+				**  interface address/family (getrequests())
+				**  and the outgoing interface address/family
+				**  (makeconnection()).  In order for D_BINDIF
+				**  to work properly, have to preserve the
+				**  incoming information in the queue file for
+				**  later delivery attempts.  The original
+				**  information is stored in the envelope
+				**  in readqf() so it can be stored in
+				**  queueup_macros().  This should be fixed
+				**  in 8.12.
+				*/
+
+				if (strcmp(macname(mid), "if_addr") == 0)
+					e->e_if_macros[EIF_ADDR] = p;
+			}
 			break;
 
 		  case '.':		/* terminate file */
@@ -2301,7 +2361,7 @@ printqueue()
 **		queuedir -- queue directory
 **
 **	Returns:
-**		none.
+**		number of entries
 **
 **	Side Effects:
 **		Prints a listing of the mail queue on the standard output.
@@ -2580,9 +2640,9 @@ queuename(e, type)
 				sub = "/df";
 			break;
 
-		  case 'T':
+		  case TEMPQF_LETTER:
 		  case 't':
-		  case 'Q':
+		  case LOSEQF_LETTER:
 		  case 'q':
 			if (bitset(QP_SUBQF, QPaths[e->e_queuedir].qp_subdirs))
 				sub = "/qf";
@@ -2722,6 +2782,7 @@ unlockqueue(e)
 		dprintf("unlockqueue(%s)\n",
 			e->e_id == NULL ? "NOQUEUE" : e->e_id);
 
+
 	/* if there is a lock file in the envelope, close it */
 	if (e->e_lockfp != NULL)
 		(void) fclose(e->e_lockfp);
@@ -2803,7 +2864,9 @@ setctluser(user, qfver)
 		}
 		else if ((pw = sm_getpwnam(user)) != NULL)
 		{
-			if (strcmp(pw->pw_dir, "/") == 0)
+			if (*pw->pw_dir == '\0')
+				a->q_home = NULL;
+			else if (strcmp(pw->pw_dir, "/") == 0)
 				a->q_home = "";
 			else
 				a->q_home = newstr(pw->pw_dir);
@@ -2846,7 +2909,7 @@ loseqfile(e, why)
 	if (strlen(p) >= (SIZE_T) sizeof buf)
 		return;
 	(void) strlcpy(buf, p, sizeof buf);
-	p = queuename(e, 'Q');
+	p = queuename(e, LOSEQF_LETTER);
 	if (rename(buf, p) < 0)
 		syserr("cannot rename(%s, %s), uid=%d", buf, p, geteuid());
 	else if (LogLevel > 0)
@@ -2990,6 +3053,10 @@ chkqdir(name, sff)
 	struct stat statb;
 	int i;
 
+	/* skip over . and .. directories */
+	if (name[0] == '.' &&
+	    (name[1] == '\0' || (name[2] == '.' && name[3] == '\0')))
+		return FALSE;
 # if HASLSTAT
 	if (lstat(name, &statb) < 0)
 # else /* HASLSTAT */
@@ -3091,7 +3158,7 @@ multiqueue_cache()
 			syserr("QueueDirectory: can not wildcard relative path");
 			if (tTd(41, 2))
 				dprintf("multiqueue_cache: \"%s\": Can not wildcard relative path.\n",
-					QueueDir);
+					qpath);
 			ExitStat = EX_CONFIG;
 			return;
 		}

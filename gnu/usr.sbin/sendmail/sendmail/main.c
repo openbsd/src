@@ -21,12 +21,14 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: main.c,v 8.485 2000/03/11 19:53:01 ca Exp $";
+static char id[] = "@(#)$Sendmail: main.c,v 8.485.4.38 2000/12/19 02:50:33 gshapiro Exp $";
 #endif /* ! lint */
 
 #define	_DEFINE
 
 #include <sendmail.h>
+
+
 #if NETINET || NETINET6
 # include <arpa/inet.h>
 #endif /* NETINET || NETINET6 */
@@ -91,11 +93,13 @@ ERROR %%%%   Cannot have SMTP mode without QUEUE   %%%% ERROR
 #define MAXCONFIGLEVEL	9	/* highest config version level known */
 
 #if SASL
-static sasl_callback_t srvcallbacks[] = {
+static sasl_callback_t srvcallbacks[] =
+{
 	{	SASL_CB_VERIFYFILE,	&safesaslfile,	NULL	},
 	{	SASL_CB_PROXY_POLICY,	&proxy_policy,	NULL	},
 	{	SASL_CB_LIST_END,	NULL,		NULL	}
 };
+
 #endif /* SASL */
 
 int SubmitMode;
@@ -113,6 +117,7 @@ main(argc, argv, envp)
 	STAB *st;
 	register int i;
 	int j;
+	int dp;
 	bool safecf = TRUE;
 	BITMAP256 *p_flags = NULL;	/* daemon flags */
 	bool warn_C_flag = FALSE;
@@ -130,6 +135,9 @@ main(argc, argv, envp)
 	char jbuf[MAXHOSTNAMELEN];	/* holds MyHostName */
 	static char rnamebuf[MAXNAME];	/* holds RealUserName */
 	char *emptyenviron[1];
+# if STARTTLS
+	bool tls_ok;
+# endif /* STARTTLS */
 	QUEUE_CHAR *new;
 	extern int DtableSize;
 	extern int optind;
@@ -156,6 +164,7 @@ main(argc, argv, envp)
 	/* do machine-dependent initializations */
 	init_md(argc, argv);
 
+
 	/* in 4.4BSD, the table can be huge; impose a reasonable limit */
 	DtableSize = getdtsize();
 	if (DtableSize > 256)
@@ -179,11 +188,11 @@ main(argc, argv, envp)
 	errno = 0;
 
 #if LOG
-# ifdef LOG_MAIL
+#  ifdef LOG_MAIL
 	openlog("sendmail", LOG_PID, LOG_MAIL);
-# else /* LOG_MAIL */
+#  else /* LOG_MAIL */
 	openlog("sendmail", LOG_PID);
-# endif /* LOG_MAIL */
+#  endif /* LOG_MAIL */
 #endif /* LOG */
 
 	if (MissingFds != 0)
@@ -229,12 +238,13 @@ main(argc, argv, envp)
 #endif /* NGROUPS_MAX */
 
 	/* drop group id privileges (RunAsUser not yet set) */
-	(void) drop_privileges(FALSE);
+	dp = drop_privileges(FALSE);
+	setstat(dp);
 
-#ifdef SIGUSR1
+# ifdef SIGUSR1
 	/* arrange to dump state on user-1 signal */
 	(void) setsignal(SIGUSR1, sigusr1);
-#endif /* SIGUSR1 */
+# endif /* SIGUSR1 */
 
 	/* initialize for setproctitle */
 	initsetproctitle(argc, argv, envp);
@@ -245,6 +255,7 @@ main(argc, argv, envp)
 	/*
 	**  Do a quick prescan of the argument list.
 	*/
+
 
 #if defined(__osf__) || defined(_AIX3)
 # define OPTIONS	"B:b:C:cd:e:F:f:Gh:IiL:M:mN:nO:o:p:q:R:r:sTtUV:vX:x"
@@ -293,14 +304,13 @@ main(argc, argv, envp)
 	{
 #if LOG
 		closelog();
-# ifdef LOG_MAIL
+#  ifdef LOG_MAIL
 		openlog(sysloglabel, LOG_PID, LOG_MAIL);
-# else /* LOG_MAIL */
+#  else /* LOG_MAIL */
 		openlog(sysloglabel, LOG_PID);
-# endif /* LOG_MAIL */
+#  endif /* LOG_MAIL */
 #endif /* LOG */
 	}
-
 
 	/* set up the blank envelope */
 	BlankEnvelope.e_puthdr = putheader;
@@ -326,6 +336,7 @@ main(argc, argv, envp)
 	else
 		(void) snprintf(rnamebuf, sizeof rnamebuf, "Unknown UID %d",
 				(int) RealUid);
+
 	RealUserName = rnamebuf;
 
 	if (tTd(0, 101))
@@ -476,8 +487,17 @@ main(argc, argv, envp)
 #if NAMED_BIND
 	if (!bitset(RES_INIT, _res.options))
 		(void) res_init();
+
+	/*
+	**  hack to avoid crashes when debugging for the resolver is
+	**  turned on and sfio is used
+	*/
 	if (tTd(8, 8))
+# if !SFIO || SFIO_STDIO_COMPAT
 		_res.options |= RES_DEBUG;
+# else /* !SFIO || SFIO_STDIO_COMPAT */
+		dprintf("RES_DEBUG not available due to SFIO\n");
+# endif /* !SFIO || SFIO_STDIO_COMPAT */
 	else
 		_res.options &= ~RES_DEBUG;
 # ifdef RES_NOALIASES
@@ -604,6 +624,10 @@ main(argc, argv, envp)
 			setclass('w', ipbuf);
 		}
 #endif /* NETINET || NETINET6 */
+#if _FFR_FREEHOSTENT && NETINET6
+		freehostent(hp);
+		hp = NULL;
+#endif /* _FFR_FREEHOSTENT && NETINET6 */
 	}
 
 	/* current time */
@@ -680,14 +704,15 @@ main(argc, argv, envp)
 			break;
 
 		  case 'B':	/* body type */
-			CurEnv->e_bodytype = optarg;
+			CurEnv->e_bodytype = newstr(optarg);
 			break;
 
 		  case 'C':	/* select configuration file (already done) */
 			if (RealUid != 0)
 				warn_C_flag = TRUE;
-			ConfFile = optarg;
-			(void) drop_privileges(TRUE);
+			ConfFile = newstr(optarg);
+			dp = drop_privileges(TRUE);
+			setstat(dp);
 			safecf = FALSE;
 			break;
 
@@ -716,7 +741,7 @@ main(argc, argv, envp)
 			break;
 
 		  case 'h':	/* hop count */
-			CurEnv->e_hopcount = strtol(optarg, &ep, 10);
+			CurEnv->e_hopcount = (short) strtol(optarg, &ep, 10);
 			if (*ep)
 			{
 				usrerr("Bad hop count (%s)", optarg);
@@ -885,7 +910,8 @@ main(argc, argv, envp)
 			break;
 
 		  case 'X':	/* traffic log file */
-			(void) drop_privileges(TRUE);
+			dp = drop_privileges(TRUE);
+			setstat(dp);
 			if (stat(optarg, &traf_st) == 0 &&
 			    S_ISFIFO(traf_st.st_mode))
 				TrafficLogFile = fopen(optarg, "w");
@@ -1014,7 +1040,8 @@ main(argc, argv, envp)
 	if (OpMode != MD_DAEMON && OpMode != MD_FGDAEMON)
 	{
 		/* drop privileges -- daemon mode done after socket/bind */
-		(void) drop_privileges(FALSE);
+		dp = drop_privileges(FALSE);
+		setstat(dp);
 	}
 
 #if NAMED_BIND
@@ -1373,7 +1400,6 @@ main(argc, argv, envp)
 	setclass(macid("{persistentMacros}", NULL), "s");
 	setclass(macid("{persistentMacros}", NULL), "_");
 	setclass(macid("{persistentMacros}", NULL), "{if_addr}");
-	setclass(macid("{persistentMacros}", NULL), "{if_family}");
 	setclass(macid("{persistentMacros}", NULL), "{daemon_flags}");
 	setclass(macid("{persistentMacros}", NULL), "{client_flags}");
 
@@ -1431,6 +1457,7 @@ main(argc, argv, envp)
 	if (OpMode == MD_DAEMON || OpMode == MD_SMTP)
 		milter_parse_list(InputFilterList, InputFilters, MAXFILTERS);
 #endif /* _FFR_MILTER */
+
 
 	/* if we've had errors so far, exit now */
 	if (ExitStat != EX_OK && OpMode != MD_TEST)
@@ -1554,6 +1581,22 @@ main(argc, argv, envp)
 	}
 
 #if SMTP
+# if STARTTLS
+	/*
+	**  basic TLS initialization
+	**  ignore result for now
+	*/
+	SSL_library_init();
+	SSL_load_error_strings();
+#  if 0
+	/* this is currently a macro for SSL_library_init */
+	SSLeay_add_ssl_algorithms();
+#  endif /* 0 */
+
+	/* initialize PRNG */
+	tls_ok = tls_rand_init(RandFile, 7);
+
+# endif /* STARTTLS */
 #endif /* SMTP */
 
 #if QUEUE
@@ -1564,11 +1607,29 @@ main(argc, argv, envp)
 	if (OpMode == MD_QUEUERUN && QueueIntvl == 0)
 	{
 # if SMTP
+#  if STARTTLS
+		if (tls_ok
+		   )
+		{
+			/* init TLS for client, ignore result for now */
+			(void) initclttls();
+		}
+#  endif /* STARTTLS */
 # endif /* SMTP */
 		(void) runqueue(FALSE, Verbose);
 		finis(TRUE, ExitStat);
 	}
 #endif /* QUEUE */
+
+# if SASL
+	if (OpMode == MD_SMTP || OpMode == MD_DAEMON)
+	{
+		/* give a syserr or just disable AUTH ? */
+		if ((i = sasl_server_init(srvcallbacks, "Sendmail")) != SASL_OK)
+			syserr("!sasl_server_init failed! [%s]",
+			       sasl_errstring(i, NULL, NULL));
+	}
+# endif /* SASL */
 
 	/*
 	**  If a daemon, wait for a request.
@@ -1642,6 +1703,10 @@ main(argc, argv, envp)
 		dropenvelope(CurEnv, TRUE);
 
 #if DAEMON
+# if STARTTLS
+		/* init TLS for server, ignore result for now */
+		(void) initsrvtls();
+# endif /* STARTTLS */
 		p_flags = getrequests(CurEnv);
 
 		/* drop privileges */
@@ -1662,8 +1727,7 @@ main(argc, argv, envp)
 	if (LogLevel > 9)
 	{
 		/* log connection information */
-		sm_syslog(LOG_INFO, CurEnv->e_id,
-			  "connect from %.100s", authinfo);
+		sm_syslog(LOG_INFO, NULL, "connect from %.100s", authinfo);
 	}
 
 #if SMTP
@@ -1719,12 +1783,6 @@ main(argc, argv, envp)
 		define(macid("{client_port}", NULL),
 		       newstr(pbuf), &BlankEnvelope);
 
-#if SASL
-		/* give a syserr or just disable AUTH ? */
-		if (sasl_server_init(srvcallbacks, "Sendmail") != SASL_OK)
-			syserr("!sasl_server_init failed!");
-#endif /* SASL */
-
 		if (OpMode == MD_DAEMON)
 		{
 			/* validate the connection */
@@ -1738,6 +1796,12 @@ main(argc, argv, envp)
 			p_flags = (BITMAP256 *) xalloc(sizeof *p_flags);
 			clrbitmap(p_flags);
 		}
+# if STARTTLS
+		if (OpMode == MD_SMTP)
+			(void) initsrvtls();
+# endif /* STARTTLS */
+
+
 		smtp(nullserver, *p_flags, CurEnv);
 	}
 #endif /* SMTP */
@@ -2121,7 +2185,7 @@ struct metamac	MetaMacros[] =
 	/* miscellaneous control characters */
 	{ '&', MACRODEXPAND },
 
-	{ '\0' }
+	{ '\0', '\0' }
 };
 
 #define MACBINDING(name, mid) \
@@ -2135,7 +2199,7 @@ initmacros(e)
 	register struct metamac *m;
 	register int c;
 	char buf[5];
-	extern char *MacroName[256];
+	extern char *MacroName[MAXMACROID + 1];
 
 	for (m = MetaMacros; m->metaname != '\0'; m++)
 	{
@@ -2342,14 +2406,25 @@ auth_warning(e, msg, va_alist)
 		static char hostbuf[48];
 
 		if (hostbuf[0] == '\0')
-			(void) myhostname(hostbuf, sizeof hostbuf);
+		{
+			struct hostent *hp;
+
+			hp = myhostname(hostbuf, sizeof hostbuf);
+#if _FFR_FREEHOSTENT && NETINET6
+			if (hp != NULL)
+			{
+				freehostent(hp);
+				hp = NULL;
+			}
+#endif /* _FFR_FREEHOSTENT && NETINET6 */
+		}
 
 		(void) snprintf(buf, sizeof buf, "%s: ", hostbuf);
 		p = &buf[strlen(buf)];
 		VA_START(msg);
 		vsnprintf(p, SPACELEFT(buf, p), msg, ap);
 		VA_END;
-		addheader("X-Authentication-Warning", buf, &e->e_header);
+		addheader("X-Authentication-Warning", buf, 0, &e->e_header);
 		if (LogLevel > 3)
 			sm_syslog(LOG_INFO, e->e_id,
 				  "Authentication-Warning: %.400s",
@@ -2564,7 +2639,8 @@ drop_privileges(to_real_uid)
 
 	if (tTd(47, 1))
 		dprintf("drop_privileges(%d): Real[UG]id=%d:%d, RunAs[UG]id=%d:%d\n",
-			(int)to_real_uid, (int)RealUid, (int)RealGid, (int)RunAsUid, (int)RunAsGid);
+			(int)to_real_uid, (int)RealUid,
+			(int)RealGid, (int)RunAsUid, (int)RunAsGid);
 
 	if (to_real_uid)
 	{
@@ -2579,19 +2655,61 @@ drop_privileges(to_real_uid)
 	/* reset group permissions; these can be set later */
 	emptygidset[0] = (to_real_uid || RunAsGid != 0) ? RunAsGid : getegid();
 	if (setgroups(1, emptygidset) == -1 && geteuid() == 0)
+	{
+		syserr("drop_privileges: setgroups(1, %d) failed",
+		       (int)emptygidset[0]);
 		rval = EX_OSERR;
+	}
 
 	/* reset primary group and user id */
 	if ((to_real_uid || RunAsGid != 0) && setgid(RunAsGid) < 0)
+	{
+		syserr("drop_privileges: setgid(%d) failed", (int)RunAsGid);
 		rval = EX_OSERR;
-	if ((to_real_uid || RunAsUid != 0) && setuid(RunAsUid) < 0)
-		rval = EX_OSERR;
+	}
+	if (to_real_uid || RunAsUid != 0)
+	{
+		uid_t euid = geteuid();
+
+		if (setuid(RunAsUid) < 0)
+		{
+			syserr("drop_privileges: setuid(%d) failed",
+			       (int)RunAsUid);
+			rval = EX_OSERR;
+		}
+		else if (RunAsUid != 0 && setuid(0) == 0)
+		{
+			/*
+			**  Believe it or not, the Linux capability model
+			**  allows a non-root process to override setuid()
+			**  on a process running as root and prevent that
+			**  process from dropping privileges.
+			*/
+
+			syserr("drop_privileges: setuid(0) succeeded (when it should not)");
+			rval = EX_OSERR;
+		}
+		else if (RunAsUid != euid && setuid(euid) == 0)
+		{
+			/*
+			**  Some operating systems will keep the saved-uid
+			**  if a non-root effective-uid calls setuid(real-uid)
+			**  making it possible to set it back again later.
+			*/
+
+			syserr("drop_privileges: Unable to drop non-root set-user-id privileges");
+			rval = EX_OSERR;
+		}
+	}
 	if (tTd(47, 5))
 	{
 		dprintf("drop_privileges: e/ruid = %d/%d e/rgid = %d/%d\n",
-			(int)geteuid(), (int)getuid(), (int)getegid(), (int)getgid());
+			(int)geteuid(), (int)getuid(),
+			(int)getegid(), (int)getgid());
 		dprintf("drop_privileges: RunAsUser = %d:%d\n",
 			(int)RunAsUid, (int)RunAsGid);
+		if (tTd(47, 10))
+			dprintf("drop_privileges: rval = %d\n", rval);
 	}
 	return rval;
 }
@@ -2673,6 +2791,11 @@ testmodeline(line, e)
 #if _FFR_ADDR_TYPE
 	define(macid("{addr_type}", NULL), "e r", e);
 #endif /* _FFR_ADDR_TYPE */
+
+	/* skip leading spaces */
+	while (*line == ' ')
+		line++;
+
 	switch (line[0])
 	{
 	  case '#':
@@ -2688,7 +2811,7 @@ testmodeline(line, e)
 		{
 		  case 'D':
 			mid = macid(&line[2], &delimptr);
-			if (mid == '\0')
+			if (mid == 0)
 				return;
 			translate_dollars(delimptr);
 			define(mid, newstr(delimptr), e);
@@ -2699,7 +2822,7 @@ testmodeline(line, e)
 				return;
 
 			mid = macid(&line[2], &delimptr);
-			if (mid == '\0')
+			if (mid == 0)
 				return;
 			translate_dollars(delimptr);
 			expand(delimptr, exbuf, sizeof exbuf, e);
@@ -2805,12 +2928,12 @@ testmodeline(line, e)
 		if (line[1] == '=')
 		{
 			mid = macid(&line[2], NULL);
-			if (mid != '\0')
+			if (mid != 0)
 				stabapply(dump_class, mid);
 			return;
 		}
 		mid = macid(&line[1], NULL);
-		if (mid == '\0')
+		if (mid == 0)
 			return;
 		p = macvalue(mid, e);
 		if (p == NULL)
@@ -3075,6 +3198,6 @@ dump_class(s, id)
 {
 	if (s->s_type != ST_CLASS)
 		return;
-	if (bitnset(id & 0xff, s->s_class))
+	if (bitnset(bitidx(id), s->s_class))
 		printf("%s\n", s->s_name);
 }

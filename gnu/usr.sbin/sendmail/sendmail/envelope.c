@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,10 +12,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: envelope.c,v 8.180 1999/12/03 03:39:44 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: envelope.c,v 8.180.14.6 2000/11/30 00:39:46 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 /*
 **  NEWENVELOPE -- allocate a new envelope
@@ -87,8 +88,10 @@ dropenvelope(e, fulldrop)
 	bool delay_return = FALSE;
 	bool success_return = FALSE;
 	bool pmnotify = bitset(EF_PM_NOTIFY, e->e_flags);
+	bool done = FALSE;
 	register ADDRESS *q;
 	char *id = e->e_id;
+	time_t now;
 	char buf[MAXLINE];
 
 	if (tTd(50, 1))
@@ -128,7 +131,8 @@ dropenvelope(e, fulldrop)
 	**  Extract state information from dregs of send list.
 	*/
 
-	if (curtime() > e->e_ctime + TimeOuts.to_q_return[e->e_timeoutclass])
+	now = curtime();
+	if (now > e->e_ctime + TimeOuts.to_q_return[e->e_timeoutclass])
 		message_timeout = TRUE;
 
 	if (TimeOuts.to_q_return[e->e_timeoutclass] == NOW &&
@@ -147,12 +151,19 @@ dropenvelope(e, fulldrop)
 		/* see if a notification is needed */
 		if (bitset(QPINGONFAILURE, q->q_flags) &&
 		    ((message_timeout && QS_IS_QUEUEUP(q->q_state)) ||
-		     QS_IS_BADADDR(q->q_state)))
+		     QS_IS_BADADDR(q->q_state) ||
+		     (TimeOuts.to_q_return[e->e_timeoutclass] == NOW &&
+		      !bitset(EF_RESPONSE, e->e_flags))))
+
 		{
 			failure_return = TRUE;
-			if (q->q_owner == NULL && !emptyaddr(&e->e_from))
+			if (!done && q->q_owner == NULL &&
+			    !emptyaddr(&e->e_from))
+			{
 				(void) sendtolist(e->e_from.q_paddr, NULLADDR,
 						  &e->e_errorqueue, 0, e);
+				done = TRUE;
+			}
 		}
 		else if (bitset(QPINGONSUCCESS, q->q_flags) &&
 			 ((QS_IS_SENT(q->q_state) &&
@@ -178,8 +189,8 @@ dropenvelope(e, fulldrop)
 		if (failure_return)
 		{
 			(void) snprintf(buf, sizeof buf,
-				"Cannot send message within %s",
-				pintvl(TimeOuts.to_q_return[e->e_timeoutclass], FALSE));
+					"Cannot send message for %s",
+					pintvl(TimeOuts.to_q_return[e->e_timeoutclass], FALSE));
 			if (e->e_message != NULL)
 				free(e->e_message);
 			e->e_message = newstr(buf);
@@ -199,7 +210,7 @@ dropenvelope(e, fulldrop)
 		}
 	}
 	else if (TimeOuts.to_q_warning[e->e_timeoutclass] > 0 &&
-	    curtime() > e->e_ctime + TimeOuts.to_q_warning[e->e_timeoutclass])
+		 now > e->e_ctime + TimeOuts.to_q_warning[e->e_timeoutclass])
 	{
 		if (!bitset(EF_WARNING|EF_RESPONSE, e->e_flags) &&
 		    e->e_class >= 0 &&
@@ -253,7 +264,8 @@ dropenvelope(e, fulldrop)
 	{
 		for (q = e->e_sendqueue; q != NULL; q = q->q_next)
 		{
-			if (QS_IS_UNDELIVERED(q->q_state) &&
+			if ((QS_IS_OK(q->q_state) ||
+			     QS_IS_VERIFIED(q->q_state)) &&
 			    bitset(QPINGONFAILURE, q->q_flags))
 			{
 				failure_return = TRUE;
@@ -582,6 +594,7 @@ openxscript(e)
 	p = queuename(e, 'x');
 	e->e_xfp = bfopen(p, FileMode, XscriptFileBufferSize,
 			  SFF_NOTEXCL|SFF_OPENASROOT);
+
 	if (e->e_xfp == NULL)
 	{
 		syserr("Can't create transcript file %s", p);
@@ -800,7 +813,9 @@ setsender(from, e, delimptr, delimchar, internal)
 			*/
 
 			/* extract home directory */
-			if (strcmp(pw->pw_dir, "/") == 0)
+			if (*pw->pw_dir == '\0')
+				e->e_from.q_home = NULL;
+			else if (strcmp(pw->pw_dir, "/") == 0)
 				e->e_from.q_home = newstr("");
 			else
 				e->e_from.q_home = newstr(pw->pw_dir);
@@ -952,7 +967,7 @@ static struct eflags	EnvelopeFlags[] =
 	{ "HAS_DF",		EF_HAS_DF	},
 	{ "IS_MIME",		EF_IS_MIME	},
 	{ "DONT_MIME",		EF_DONT_MIME	},
-	{ NULL }
+	{ NULL,			0		}
 };
 
 void

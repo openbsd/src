@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: osf1.m4,v 1.1.1.2 2001/01/15 20:52:36 millert Exp $')
+VERSIONID(`$Sendmail: osf1.m4,v 8.16 1999/10/11 18:45:43 gshapiro Exp $')
 ifdef(`STATUS_FILE',, `define(`STATUS_FILE', `/usr/adm/sendmail/sendmail.st')')dnl
 define(`confDEF_USER_ID', `daemon')
 define(`confEBINDIR', `/usr/lbin')dnl

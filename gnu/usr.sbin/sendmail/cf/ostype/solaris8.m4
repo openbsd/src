@@ -15,7 +15,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: solaris8.m4,v 1.1.1.1 2001/01/15 20:52:37 millert Exp $')
+VERSIONID(`$Sendmail: solaris8.m4,v 8.1.2.2 2000/08/23 16:10:01 gshapiro Exp $')
 divert(-1)
 
 ifdef(`UUCP_MAILER_ARGS',, `define(`UUCP_MAILER_ARGS', `uux - -r -a$g $h!rmail ($u)')')

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: allmasquerade.m4,v 1.1.1.2 2001/01/15 20:52:27 millert Exp $')
+VERSIONID(`$Sendmail: allmasquerade.m4,v 8.11 1999/08/06 01:28:26 gshapiro Exp $')
 divert(-1)
 
 define(`_ALL_MASQUERADE_', 1)

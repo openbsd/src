@@ -15,9 +15,9 @@
 
 #ifndef lint
 # if USERDB
-static char id[] = "@(#)$Id: udb.c,v 1.1.1.2 2001/01/15 20:52:19 millert Exp $ (with USERDB)";
+static char id[] = "@(#)$Sendmail: udb.c,v 8.111 1999/11/16 02:04:04 gshapiro Exp $ (with USERDB)";
 # else /* USERDB */
-static char id[] = "@(#)$Id: udb.c,v 1.1.1.2 2001/01/15 20:52:19 millert Exp $ (without USERDB)";
+static char id[] = "@(#)$Sendmail: udb.c,v 8.111 1999/11/16 02:04:04 gshapiro Exp $ (without USERDB)";
 # endif /* USERDB */
 #endif /* ! lint */
 

@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: smrsh.c,v 8.31 2000/03/17 07:32:49 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: smrsh.c,v 8.31.4.6 2000/10/09 20:37:16 gshapiro Exp $";
 #endif /* ! lint */
 
 /*
@@ -74,7 +74,11 @@ static char id[] = "@(#)$Sendmail: smrsh.c,v 8.31 2000/03/17 07:32:49 gshapiro E
 
 /* directory in which all commands must reside */
 #ifndef CMDDIR
-# define CMDDIR		"/usr/adm/sm.bin"
+# if defined(HPUX10) || defined(HPUX11) || SOLARIS >= 20800
+#  define CMDDIR	"/var/adm/sm.bin"
+# else /* HPUX10 || HPUX11 || SOLARIS > 20800 */
+#  define CMDDIR	"/usr/adm/sm.bin"
+# endif /* HPUX10 || HPUX11 || SOLARIS > 20800 */
 #endif /* ! CMDDIR */
 
 /* characters disallowed in the shell "-c" argument */

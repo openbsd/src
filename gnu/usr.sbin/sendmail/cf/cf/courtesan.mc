@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.2 2000/05/15 03:38:25 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.3 2001/01/15 21:08:51 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -21,6 +21,11 @@ FEATURE(redirect)dnl
 MASQUERADE_AS(courtesan.com)dnl
 FEATURE(masquerade_envelope)dnl
 FEATURE(mailnametable)dnl
+dnl
+dnl Virtual domains
+FEATURE(stickyhost)dnl
+FEATURE(virtusertable)dnl
+dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
 FEATURE(blacklist_recipients)dnl

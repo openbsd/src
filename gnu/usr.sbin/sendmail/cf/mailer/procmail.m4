@@ -29,7 +29,7 @@ POPDIVERT
 ###   PROCMAIL Mailer specification   ###
 ##################*****##################
 
-VERSIONID(`$Id: procmail.m4,v 1.1.1.2 2001/01/15 20:52:33 millert Exp $')
+VERSIONID(`$Sendmail: procmail.m4,v 8.20 1999/10/18 04:57:54 gshapiro Exp $')
 
 Mprocmail,	P=PROCMAIL_MAILER_PATH, F=_MODMF_(CONCAT(`DFM', PROCMAIL_MAILER_FLAGS), `PROCMAIL'), S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP/HdrFromSMTP,
 		ifdef(`PROCMAIL_MAILER_MAX', `M=PROCMAIL_MAILER_MAX, ')T=DNS/RFC822/X-Unix,

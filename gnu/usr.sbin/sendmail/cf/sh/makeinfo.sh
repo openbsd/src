@@ -11,7 +11,7 @@
 # the sendmail distribution.
 #
 #
-#	$Id: makeinfo.sh,v 1.1.1.2 2001/01/15 20:52:38 millert Exp $
+#	$Sendmail: makeinfo.sh,v 8.14 1999/02/07 07:26:25 gshapiro Exp $
 #
 
 usewhoami=0

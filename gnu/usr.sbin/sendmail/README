@@ -47,10 +47,9 @@ complaining, you MUST execute the following command:
 
 You will probably have to tweak this for your environment (for example,
 some systems put the spool directory into /usr/spool instead of
-/var/spool and use /etc/mail for aliases file instead of /etc).  If you
-set the RunAsUser option in your sendmail.cf, the /var/spool/mqueue
-directory will have to be owned by the RunAsUser user.  As a general rule,
-after you have compiled sendmail, run the command
+/var/spool).  If you set the RunAsUser option in your sendmail.cf, the
+/var/spool/mqueue directory will have to be owned by the RunAsUser user.
+As a general rule, after you have compiled sendmail, run the command
 
 	sendmail -v -bi
 
@@ -90,8 +89,8 @@ the items in the file to be marked as safe for file and program
 delivery.
 
 Other files affected by this strengthened security include class
-files (i.e. Fw /etc/sendmail.cw), persistent host status files, and
-the files specified by the ErrorHeader and HelpFile options.  Similar
+files (i.e. Fw /etc/mail/local-host-names), persistent host status files,
+and the files specified by the ErrorHeader and HelpFile options.  Similar
 DontBlameSendmail flags are available for the class, ErrorHeader, and
 HelpFile files.
 
@@ -187,6 +186,7 @@ Important RFCs for electronic mail are:
 	RFC2033 Local Mail Transfer Protocol (LMTP)
 	RFC2034 SMTP Service Extension for Returning Enhanced Error Codes
 	RFC2476 Message Submission
+	RFC2487 SMTP Service Extension for Secure SMTP over TLS
 	RFC2554 SMTP Service Extension for Authentication
 
 Other standards that may be of interest (but which are less directly
@@ -198,6 +198,27 @@ relevant to sendmail) are:
 Warning to AIX users: this version of sendmail does not implement
 MB, MR, or MG DNS resource records, as defined (as experiments) in
 RFC1035.
+
+
++---------+
+| WARNING |
++---------+
+
+Since sendmail 8.11 and later includes hooks to cryptography, the
+following information from OpenSSL applies to sendmail as well.
+
+PLEASE REMEMBER THAT EXPORT/IMPORT AND/OR USE OF STRONG CRYPTOGRAPHY
+SOFTWARE, PROVIDING CRYPTOGRAPHY HOOKS OR EVEN JUST COMMUNICATING
+TECHNICAL DETAILS ABOUT CRYPTOGRAPHY SOFTWARE IS ILLEGAL IN SOME
+PARTS OF THE WORLD.  SO, WHEN YOU IMPORT THIS PACKAGE TO YOUR
+COUNTRY, RE-DISTRIBUTE IT FROM THERE OR EVEN JUST EMAIL TECHNICAL
+SUGGESTIONS OR EVEN SOURCE PATCHES TO THE AUTHOR OR OTHER PEOPLE
+YOU ARE STRONGLY ADVISED TO PAY CLOSE ATTENTION TO ANY EXPORT/IMPORT
+AND/OR USE LAWS WHICH APPLY TO YOU. THE AUTHORS ARE NOT LIABLE FOR
+ANY VIOLATIONS YOU MAKE HERE. SO BE CAREFUL, IT IS YOUR RESPONSIBILITY.
+
+If you use OpenSSL then make sure you read their README file which
+contains information about patents etc.
 
 
 +-------------------+
@@ -364,4 +385,4 @@ sendmail	Source for the sendmail program itself.
 test		Some test scripts (currently only for compilation aids).
 vacation	Source for the vacation program.  NOT PART OF SENDMAIL!
 
-$Revision: 1.3 $, Last updated $Date: 2000/04/07 19:20:25 $
+$Revision: 1.4 $, Last updated $Date: 2001/01/15 21:08:50 $

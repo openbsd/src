@@ -1,6 +1,6 @@
 PUSHDIVERT(-1)
 #
-# Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -14,17 +14,17 @@ PUSHDIVERT(-1)
 _DEFIFNOT(`_DEF_SMTP_MAILER_FLAGS', `mDFMuX')
 _DEFIFNOT(`SMTP_MAILER_FLAGS',`')
 _DEFIFNOT(`RELAY_MAILER_FLAGS', `SMTP_MAILER_FLAGS')
-ifdef(`SMTP_MAILER_ARGS',, `define(`SMTP_MAILER_ARGS', `IPC $h')')
-ifdef(`ESMTP_MAILER_ARGS',, `define(`ESMTP_MAILER_ARGS', `IPC $h')')
-ifdef(`SMTP8_MAILER_ARGS',, `define(`SMTP8_MAILER_ARGS', `IPC $h')')
-ifdef(`DSMTP_MAILER_ARGS',, `define(`DSMTP_MAILER_ARGS', `IPC $h')')
-ifdef(`RELAY_MAILER_ARGS',, `define(`RELAY_MAILER_ARGS', `IPC $h')')
+ifdef(`SMTP_MAILER_ARGS',, `define(`SMTP_MAILER_ARGS', `TCP $h')')
+ifdef(`ESMTP_MAILER_ARGS',, `define(`ESMTP_MAILER_ARGS', `TCP $h')')
+ifdef(`SMTP8_MAILER_ARGS',, `define(`SMTP8_MAILER_ARGS', `TCP $h')')
+ifdef(`DSMTP_MAILER_ARGS',, `define(`DSMTP_MAILER_ARGS', `TCP $h')')
+ifdef(`RELAY_MAILER_ARGS',, `define(`RELAY_MAILER_ARGS', `TCP $h')')
 POPDIVERT
 #####################################
 ###   SMTP Mailer specification   ###
 #####################################
 
-VERSIONID(`$Sendmail: smtp.m4,v 8.56 2000/04/03 20:54:55 ca Exp $')
+VERSIONID(`$Sendmail: smtp.m4,v 8.56.2.1.2.3 2000/09/25 13:53:27 ca Exp $')
 
 #
 #  common sender and masquerading recipient rewriting
@@ -101,17 +101,17 @@ R$+			$: $>MasqSMTP $1
 R$+			$: $>MasqHdr $1
 
 Msmtp,		P=[IPC], F=_MODMF_(CONCAT(_DEF_SMTP_MAILER_FLAGS, SMTP_MAILER_FLAGS), `SMTP'), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
-		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
+		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_MAXRCPTS', `r=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
 		A=SMTP_MAILER_ARGS
-Mesmtp,		P=[IPC], F=CONCAT(_DEF_SMTP_MAILER_FLAGS, `a', SMTP_MAILER_FLAGS), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
-		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
+Mesmtp,		P=[IPC], F=_MODMF_(CONCAT(_DEF_SMTP_MAILER_FLAGS, `a', SMTP_MAILER_FLAGS), `SMTP'), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
+		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_MAXRCPTS', `r=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
 		A=ESMTP_MAILER_ARGS
-Msmtp8,		P=[IPC], F=CONCAT(_DEF_SMTP_MAILER_FLAGS, `8', SMTP_MAILER_FLAGS), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
-		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
+Msmtp8,		P=[IPC], F=_MODMF_(CONCAT(_DEF_SMTP_MAILER_FLAGS, `8', SMTP_MAILER_FLAGS), `SMTP'), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
+		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_MAXRCPTS', `r=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
 		A=SMTP8_MAILER_ARGS
-Mdsmtp,		P=[IPC], F=CONCAT(_DEF_SMTP_MAILER_FLAGS, `a%', SMTP_MAILER_FLAGS), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
-		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
+Mdsmtp,		P=[IPC], F=_MODMF_(CONCAT(_DEF_SMTP_MAILER_FLAGS, `a%', SMTP_MAILER_FLAGS), `SMTP'), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `EnvToSMTP/HdrFromSMTP', `EnvToSMTP'), E=\r\n, L=990,
+		_OPTINS(`SMTP_MAILER_MAX', `M=', `, ')_OPTINS(`SMTP_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_MAXRCPTS', `r=', `, ')_OPTINS(`SMTP_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/SMTP,
 		A=DSMTP_MAILER_ARGS
-Mrelay,		P=[IPC], F=CONCAT(_DEF_SMTP_MAILER_FLAGS, `a8', RELAY_MAILER_FLAGS), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `MasqSMTP/MasqRelay', `MasqSMTP'), E=\r\n, L=2040,
-		_OPTINS(`RELAY_MAILER_CHARSET', `C=', `, ')_OPTINS(`RELAY_MAILER_MAXMSGS', `m=', `, ')T=DNS/RFC822/SMTP,
+Mrelay,		P=[IPC], F=_MODMF_(CONCAT(_DEF_SMTP_MAILER_FLAGS, `a8', RELAY_MAILER_FLAGS), `RELAY'), S=EnvFromSMTP/HdrFromSMTP, R=ifdef(`_ALL_MASQUERADE_', `MasqSMTP/MasqRelay', `MasqSMTP'), E=\r\n, L=2040,
+		_OPTINS(`RELAY_MAILER_CHARSET', `C=', `, ')_OPTINS(`RELAY_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`SMTP_MAILER_MAXRCPTS', `r=', `, ')T=DNS/RFC822/SMTP,
 		A=RELAY_MAILER_ARGS
