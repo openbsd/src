@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.1 2004/10/20 12:50:48 deraadt Exp $  */
+/*	$Id: if_iwi.c,v 1.2 2004/10/20 22:26:42 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -150,8 +150,6 @@ int iwi_debug = 2;
 struct cfattach iwi_ca = {
 	sizeof (struct iwi_softc), iwi_match, iwi_attach, iwi_detach
 };
-
-#define PCI_PRODUCT_INTEL_PRO_2200BG_3B	0x4220
 
 static int
 iwi_match(struct device *parent, void *match, void *aux)
