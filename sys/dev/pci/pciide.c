@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.43 2001/01/29 00:20:17 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.44 2001/02/06 07:57:08 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -286,6 +286,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801AB_IDE, /* Intel 82801AB IDE (ICH0) */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801BAM_IDE, /* Intel 82801BAM IDE (ICH2) */
 	  0,
 	  piix_chip_map
 	},
@@ -1377,6 +1381,7 @@ piix_chip_map(sc, pa)
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
+		case PCI_PRODUCT_INTEL_82801BAM_IDE:
 		case PCI_PRODUCT_INTEL_82801BA_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			break;
@@ -1391,6 +1396,7 @@ piix_chip_map(sc, pa)
 	case PCI_PRODUCT_INTEL_82801AA_IDE:
 		sc->sc_wdcdev.UDMA_cap = 4;
 		break;
+	case PCI_PRODUCT_INTEL_82801BAM_IDE:
 	case PCI_PRODUCT_INTEL_82801BA_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
@@ -1421,6 +1427,7 @@ piix_chip_map(sc, pa)
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -1472,6 +1479,7 @@ piix_chip_map(sc, pa)
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -1632,10 +1640,12 @@ piix3_4_setup_channel(chp)
 
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 		    ideconf |= PIIX_CONFIG_PINGPONG;
 		}
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			/* setup Ultra/100 */
 		if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
