@@ -156,6 +156,8 @@ the calling process:
 .It control terminal Ta see Xr termios 4
 .It resource usages Ta see Xr getrusage 2
 .It interval timers Ta see Xr getitimer 2
+(unless process image file is setuid or setgid,
+in which case all timers are disabled)
 .It resource limits Ta see Xr getrlimit 2
 .It file mode mask Ta see Xr umask 2
 .It signal mask Ta see Xr sigaction 2 ,
