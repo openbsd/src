@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_update.c,v 1.1 1998/11/14 23:37:24 deraadt Exp $";
+static char rcsid[] = "$Id: handle_spi_update.c,v 1.2 1999/03/27 21:18:00 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -154,6 +154,9 @@ handle_spi_update(u_char *packet, int size, char *address,
 	     spi_value_reset(spi);
 	     return 0;
 	} 
+
+	/* The State object always retains the latest SPI pairs */
+	bcopy(header->SPI, st->uSPI, SPI_SIZE);
 
 	if ((spi = spi_new(st->address, header->SPI)) == NULL) {
 	     log_error(0, "spi_new() in handle_spi_update()"); 

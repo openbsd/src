@@ -39,18 +39,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.1 1998/11/14 23:37:25 deraadt Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.2 1999/03/27 21:18:01 provos Exp $";
 #endif
 
 #include <time.h>
 #include <sys/time.h>
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
+#include <sys/uio.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -70,7 +72,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.1 1998/11/14 23:37:25 deraadt Exp $";
 #include <string.h>
 #include <paths.h>
 #define INET                     /* Needed for setting ipsec routes */
-#include <net/encap.h>
+#include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ah.h>
@@ -96,7 +98,13 @@ time_t now;
 #define kernel_debug(x)
 #endif
 
-static int sd;
+#define SPITOINT(x) (((x)[0]<<24) + ((x)[1]<<16) + ((x)[2]<<8) + (x)[3])
+#define KERNEL_XF_SET(x) kernel_xf_set(sd, buffer, BUFFER_SIZE, iov, cnt, x)
+
+static int sd;		/* normal PFKEY socket */
+static int regsd;	/* PFKEY socket for Register and Acquire */
+static int pfkey_seq;
+static pid_t pfkey_pid;
 
 /*
  * Translate a Photuris ID into a data structure for the 
@@ -114,10 +122,33 @@ kernel_get_transform(int id)
      return NULL;
 }
 
+/*
+ * Mark a transform as supported by the kernel
+ */
+
+void
+kernel_transform_seen(int id, int type)
+{
+     int i;
+
+     for (i=sizeof(xf)/sizeof(transform)-1; i >= 0; i--) 
+	  if (xf[i].kernel_id == id && (xf[i].flags & type)) {
+	       xf[i].flags |= XF_SUP;
+	       return;
+	  }
+}
+
+/*
+ * See if we know about this transform and if it is supported
+ * by the kernel.
+ */
+
 int
 kernel_known_transform(int id)
 {
-     return kernel_get_transform(id) == NULL ? -1 : 0;
+     transform *xf = kernel_get_transform(id);
+
+     return (xf == NULL || !(xf->flags & XF_SUP)) ? -1 : 0;
 }
 
 /*
@@ -177,15 +208,24 @@ kernel_valid_auth(attrib_t *auth, u_int8_t *flag, u_int16_t size)
 int
 init_kernel(void)
 {
-     if ((sd = socket(AF_ENCAP, SOCK_RAW, AF_UNSPEC)) < 0) 
-	  crit_error(1, "socket() for IPSec in init_kernel()");
+     if ((sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
+	  crit_error(1, "socket(PF_KEY) for IPSec keyengine in init_kernel()");
+     if ((regsd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
+	  crit_error(1, "socket() for PFKEY register in init_kernel()");
+
+     pfkey_seq = 0;
+     pfkey_pid = getpid();
+
+     if (kernel_register(regsd) == -1)
+	  crit_error(0, "PFKEY socket registration failed in init_kernel()");
+     
      return 1;
 }
 
 int
 kernel_get_socket(void)
 {
-     return sd;
+     return regsd;
 }
 
 void
@@ -211,30 +251,136 @@ kernel_set_socket_policy(int sd)
 }
 
 int
-kernel_xf_set(struct encap_msghdr *em)
+kernel_xf_set(int sd, char *buffer, int blen, struct iovec *iov,
+	      int cnt, int len)
 {
-     if (write(sd, (char *)em, em->em_msglen) != em->em_msglen)
+     struct sadb_msg *sres;
+     int seq;
+
+     sres = (struct sadb_msg *)iov[0].iov_base;
+     seq = sres->sadb_msg_seq;
+
+     if (writev(sd, iov, cnt) != len) {
+	  perror("writev() in kernel_xf_set()");
 	  return 0;
+     }
+
+     if (buffer)
+	  return kernel_xf_read(sd, buffer, blen, seq);
      return 1;
 }
 
 int
-kernel_xf_read(struct encap_msghdr *em, int msglen)
+kernel_xf_read(int sd, char *buffer, int blen, int seq)
 {
-     if (read(sd, (char *)em, msglen) != msglen) {
-	  log_error(1, "read() in kernel_xf_read()");
+     struct sadb_msg *sres = (struct sadb_msg *)buffer;
+     int len;
+
+     /*
+      * Read in response from the kernel. If seq number and/or PID are
+      * given, we need to check PID and sequence number to see if it
+      * really is a message for us.
+      */
+     do {
+	  if (recv(sd, sres, sizeof(*sres), MSG_PEEK) != sizeof(*sres)) {
+	       perror("read() in kernel_xf_read()");
+	       return 0;
+	  }
+	  len = sres->sadb_msg_len * 8;
+	  if (len >= BUFFER_SIZE) {
+	       log_error(0, "PFKEYV2 message len %d too big in kernel_xf_read()", len);
+	       return 0;
+	  }
+	  if (read(sd, sres, len) != len) {
+	       perror("read() in kernel_xf_read()");
+	       return 0;
+	  }
+     } while ((seq && sres->sadb_msg_seq != seq) ||
+	      (sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid));
+     if (sres->sadb_msg_errno) {
+	  log_error(0, "kernel_xf_read: PFKEYV2 result: %s",
+		    strerror(sres->sadb_msg_errno));
 	  return 0;
      }
      return 1;
 }
 
+int
+kernel_register(int sd)
+{
+     struct sadb_msg smsg, *sres;
+     struct sadb_supported *ssup;
+     struct sadb_alg *salg;
+     int len;
+     struct iovec iov[1];
+     int cnt = 0;
+
+     kernel_debug(("kernel_register: fd %d\n", sd));
+
+     bzero(&smsg, sizeof(smsg));
+
+     smsg.sadb_msg_len = sizeof(smsg) / 8;
+     smsg.sadb_msg_version = PF_KEY_V2;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     smsg.sadb_msg_pid = pfkey_pid;
+     smsg.sadb_msg_type = SADB_REGISTER;
+     iov[cnt].iov_base = &smsg;
+     iov[cnt++].iov_len = sizeof(smsg);
+
+     /* Register for AH */
+     smsg.sadb_msg_satype = SADB_SATYPE_ESP;
+     if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
+			smsg.sadb_msg_len*8)) {
+	  log_error(1, "kernel_xf_set() in kernel_reserve_single_spi()");
+	  return -1;
+     }
+
+     /* Register for ESP */
+     smsg.sadb_msg_satype = SADB_SATYPE_AH;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
+			smsg.sadb_msg_len*8)) {
+	  log_error(1, "kernel_xf_set() in kernel_reserve_single_spi()");
+	  return -1;
+     }
+
+     /* 
+      * XXX - this might need changing in the case that the response
+      * to register only includes the transforms matching the satype
+      * in the message.
+      */
+     sres = (struct sadb_msg *)buffer;
+     ssup = (struct sadb_supported *)(sres + 1);
+     if (ssup->sadb_supported_exttype != SADB_EXT_SUPPORTED) {
+	  log_error(0, "SADB_REGISTER did not return a SADB_EXT_SUPORTED "
+		    "struct: %d in kernel_register()",
+		    ssup->sadb_supported_exttype);
+	  return -1;
+     }
+
+     len = ssup->sadb_supported_len * 8 - sizeof(*ssup);
+     if (len != (ssup->sadb_supported_nauth + ssup->sadb_supported_nencrypt) *
+	 sizeof(struct sadb_alg)) {
+	  log_error(0, "SADB_SUPPORTED length mismatch in kernel_register()");
+	  return -1;
+     }
+
+     salg = (struct sadb_alg *)(ssup + 1);
+     for (cnt = 0; cnt < ssup->sadb_supported_nauth; cnt++, salg++)
+	  kernel_transform_seen(salg->sadb_alg_type, XF_AUTH);
+     for (cnt = 0; cnt < ssup->sadb_supported_nencrypt; cnt++, salg++)
+	  kernel_transform_seen(salg->sadb_alg_type, XF_ENC);
+	  
+     return 0;
+}
+
 u_int32_t
-kernel_reserve_spi(char *srcaddress, int options)
+kernel_reserve_spi(char *src, char *dst, int options)
 {
      u_int32_t spi;
      int proto;
 
-     kernel_debug(("kernel_reserve_spi: %s\n", srcaddress));
+     kernel_debug(("kernel_reserve_spi: %s\n", src));
 
      if ((options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) != 
 	 (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) {
@@ -244,16 +390,16 @@ kernel_reserve_spi(char *srcaddress, int options)
 	  default:
 	       proto = IPPROTO_AH;
 	  }
-	  return kernel_reserve_single_spi(srcaddress, 0, proto);
+	  return kernel_reserve_single_spi(src, dst, 0, proto);
      }
 
-     if (!(spi = kernel_reserve_single_spi(srcaddress, 0, IPPROTO_ESP)))
+     if (!(spi = kernel_reserve_single_spi(src, dst, 0, IPPROTO_ESP)))
 	  return spi;
      
      /* Try to get the same spi for ah and esp */
-     while (!kernel_reserve_single_spi(srcaddress, spi, IPPROTO_AH)) {
-	  kernel_delete_spi(srcaddress, (u_int8_t *)&spi, IPPROTO_ESP);
-	  if (!(spi = kernel_reserve_single_spi(srcaddress, 0, IPPROTO_ESP)))
+     while (!kernel_reserve_single_spi(src, dst, spi, IPPROTO_AH)) {
+	  kernel_delete_spi(src, spi, IPPROTO_ESP);
+	  if (!(spi = kernel_reserve_single_spi(src, dst, 0, IPPROTO_ESP)))
 	       return spi;
      }
 
@@ -261,102 +407,207 @@ kernel_reserve_spi(char *srcaddress, int options)
 }
 
 u_int32_t
-kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, int proto)
+kernel_reserve_single_spi(char *srcaddress, char *dstaddress, u_int32_t spi,
+			  int proto)
 {
-     struct encap_msghdr *em;
+     struct sadb_msg smsg, *sres;
+     struct sadb_address sad1, sad2; /* src and dst */
+     struct sadb_spirange sspi;
+     struct sadb_sa *ssa;
+     union sockaddr_union src, dst;
+     struct iovec iov[6];
+     int cnt = 0;
 
      kernel_debug(("kernel_reserve_single_spi: %s, %08x\n", srcaddress, spi));
 
-     bzero(buffer, EMT_RESERVESPI_FLEN);
+     bzero(&src, sizeof(union sockaddr_union));
+     bzero(&dst, sizeof(union sockaddr_union));
+     bzero(iov, sizeof(iov));
 
-     em = (struct encap_msghdr *)buffer;
-     
-     em->em_msglen = EMT_RESERVESPI_FLEN;
-     em->em_version = PFENCAP_VERSION_1;
-     em->em_type = EMT_RESERVESPI;
+     bzero(&smsg, sizeof(smsg));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&sspi, sizeof(sspi));
 
-     em->em_gen_spi = spi;
-     em->em_gen_dst.s_addr = inet_addr(srcaddress);
-     em->em_gen_sproto = proto;
+     smsg.sadb_msg_len = sizeof(smsg) / 8;
+     smsg.sadb_msg_version = PF_KEY_V2;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     smsg.sadb_msg_pid = pfkey_pid;
+     smsg.sadb_msg_type = SADB_GETSPI;
+     smsg.sadb_msg_satype = proto == IPPROTO_AH ? 
+	  SADB_SATYPE_AH : SADB_SATYPE_ESP;
+     iov[cnt].iov_base = &smsg;
+     iov[cnt++].iov_len = sizeof(smsg);
+
+     /* Source Address */
+     sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+     sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
+     iov[cnt].iov_base = &sad1;
+     iov[cnt++].iov_len = sizeof(sad1);
+
+     src.sin.sin_family = AF_INET;
+     src.sin.sin_len = sizeof(struct sockaddr_in);
+     src.sin.sin_addr.s_addr = inet_addr(dstaddress);
+
+     iov[cnt].iov_base = &src;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+     smsg.sadb_msg_len += sad1.sadb_address_len;
+
+     /* Destination Address */
+     sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+     sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
+
+     iov[cnt].iov_base = &sad2;
+     iov[cnt++].iov_len = sizeof(sad2);
+
+     dst.sin.sin_family = AF_INET;
+     dst.sin.sin_len = sizeof(struct sockaddr_in);
+     dst.sin.sin_addr.s_addr = inet_addr(srcaddress);
+
+     iov[cnt].iov_base = &dst;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+     smsg.sadb_msg_len += sad2.sadb_address_len;
+
+     sspi.sadb_spirange_exttype = SADB_EXT_SPIRANGE;
+     sspi.sadb_spirange_len = sizeof(sspi) / 8;
+     if (spi) {
+	  sspi.sadb_spirange_min = spi;
+	  sspi.sadb_spirange_max = spi;
+     } else {
+	  sspi.sadb_spirange_min = 0x100;
+	  sspi.sadb_spirange_max = -1;
+     }
+     iov[cnt].iov_base = &sspi;
+     iov[cnt++].iov_len = sizeof(sspi);
+     smsg.sadb_msg_len += sspi.sadb_spirange_len;
      
-     if (!kernel_xf_set(em)) {
+     /* get back SADB_EXT_SA */
+
+     if (!KERNEL_XF_SET(smsg.sadb_msg_len*8)) {
 	  log_error(1, "kernel_xf_set() in kernel_reserve_single_spi()");
 	  return 0;
      }
 
-     if (!kernel_xf_read(em, EMT_RESERVESPI_FLEN))
+     sres = (struct sadb_msg *)buffer;
+     ssa = (struct sadb_sa *)(sres + 1);
+     if (ssa->sadb_sa_exttype != SADB_EXT_SA) {
+	  log_error(0, "SADB_GETSPI did not return a SADB_EXT_SA struct: %d",
+		    ssa->sadb_sa_exttype);
 	  return 0;
+     }
 
-     return em->em_gen_spi;
+     return ntohl(ssa->sadb_sa_spi);
 }
 
 int
 kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
 {
-     struct encap_msghdr *em;
-     struct ah_old_xencap *xdo;
-     struct ah_new_xencap *xdn;
+     struct sadb_msg sa;
+     struct sadb_address sad1;
+     struct sadb_address sad2;
+     struct sadb_sa sr;
+     struct sadb_lifetime sl;
+     struct sadb_key sk;
+     struct sockaddr_in src;
+     struct sockaddr_in dst;
+     struct iovec iov[20];
+     int len, cnt = 0;
      transform *xf = kernel_get_transform(ob->id);
+     time_t now = time(NULL);
 
      if (xf == NULL || !(xf->flags & XF_AUTH)) {
 	  log_error(0, "%d is not an auth transform in kernel_ah()", ob->id);
 	  return -1;
      }
 
-     em = (struct encap_msghdr *)buffer;
+     bzero(&sa, sizeof(sa));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&sr, sizeof(sr));
+     bzero(&sk, sizeof(sk));
+     bzero(&sl, sizeof(sl));
+     bzero(&src, sizeof(src));
+     bzero(&dst, sizeof(dst));
 
-     if (!hmac) {
-	  bzero(buffer, EMT_SETSPI_FLEN + 4 + ob->klen);
+     sa.sadb_msg_len = sizeof(sa) / 8;
+     sa.sadb_msg_version = PF_KEY_V2;
+     sa.sadb_msg_type = SPI->flags & SPI_OWNER ? 
+	  SADB_UPDATE : SADB_ADD;
+     sa.sadb_msg_satype = !hmac ?
+	  SADB_SATYPE_X_AH_OLD : SADB_SATYPE_AH;
+     sa.sadb_msg_seq = pfkey_seq++;
+     sa.sadb_msg_pid = pfkey_pid;
+     iov[cnt].iov_base = &sa;
+     len = iov[cnt++].iov_len = sizeof(sa);
 
-	  em->em_msglen = EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN + ob->klen;
-	  
-	  em->em_alg = XF_OLD_AH;
+     /* Source Address */
+     sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+     sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+     src.sin_family = AF_INET;
+     src.sin_len = sizeof(struct sockaddr_in);
+     src.sin_addr.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
+				     SPI->address : SPI->local_address);
+     sa.sadb_msg_len += sad1.sadb_address_len;
 
-	  xdo = (struct ah_old_xencap *)(em->em_dat);
-	  
-	  xdo->amx_hash_algorithm = xf->kernel_id;
-	  xdo->amx_keylen = ob->klen;
-	
-	  bcopy(secrets, xdo->amx_key, ob->klen);
+     iov[cnt].iov_base = &sad1;
+     len += iov[cnt++].iov_len = sizeof(sad1);
+     iov[cnt].iov_base = &src;
+     len += iov[cnt++].iov_len = sizeof(struct sockaddr);
 
-     } else {
-	  bzero(buffer, EMT_SETSPI_FLEN + AH_NEW_XENCAP_LEN + ob->klen);
+     /* Destination Address */
+     sad2.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+     sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+     dst.sin_family = AF_INET;
+     dst.sin_len = sizeof(struct sockaddr_in);
+     dst.sin_addr.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
+				     SPI->local_address : SPI->address);
+     sa.sadb_msg_len += sad2.sadb_address_len;
 
-	  em->em_msglen = EMT_SETSPI_FLEN + AH_NEW_XENCAP_LEN + ob->klen;
+     iov[cnt].iov_base = &sad2;
+     len += iov[cnt++].iov_len = sizeof(sad2);
+     iov[cnt].iov_base = &dst;
+     len += iov[cnt++].iov_len = sizeof(struct sockaddr);
 
-	  em->em_alg = XF_NEW_AH;
+     sr.sadb_sa_len = sizeof(sr) / 8;
+     sr.sadb_sa_exttype = SADB_EXT_SA;
+     sr.sadb_sa_spi = htonl(SPITOINT(SPI->SPI));
+     sr.sadb_sa_replay = !hmac ? 0 : 32;
+     sr.sadb_sa_state = SADB_SASTATE_MATURE;
+     sr.sadb_sa_auth = xf->kernel_id;
+     sr.sadb_sa_encrypt = 0;
+     if (SPI->flags & SPI_TUNNEL)
+	  sr.sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+     sa.sadb_msg_len += sr.sadb_sa_len;
 
-	  xdn = (struct ah_new_xencap *)(em->em_dat);
+     iov[cnt].iov_base = &sr;
+     len += iov[cnt++].iov_len = sizeof(sr);
 
-	  xdn->amx_hash_algorithm = xf->kernel_id;
-	  xdn->amx_wnd = 16;
-	  xdn->amx_keylen = ob->klen;
+     sl.sadb_lifetime_len = sizeof(sl) / 8;
+     sl.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+     sl.sadb_lifetime_allocations = 10;   /* 10 flows */
+     sl.sadb_lifetime_bytes = 1000000000;   /* lots of bytes */
+     sl.sadb_lifetime_addtime = SPI->lifetime + 60 - now;
+     sl.sadb_lifetime_usetime = SPI->lifetime - now; /* first use */
+     sa.sadb_msg_len += sl.sadb_lifetime_len;
 
-	  bcopy(secrets, xdn->amx_key, ob->klen);
-     }
-     
-     em->em_version = PFENCAP_VERSION_1;
-     em->em_type = EMT_SETSPI;
-     em->em_spi = htonl((SPI->SPI[0]<<24) + (SPI->SPI[1]<<16) + 
-			(SPI->SPI[2]<<8) + SPI->SPI[3]);
-     em->em_src.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
-				   SPI->address : SPI->local_address);
-     em->em_dst.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
-				   SPI->local_address : SPI->address);
-	  
-     if (SPI->flags & SPI_TUNNEL) {
-	  em->em_osrc.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
-					 SPI->address : SPI->local_address);
-	  em->em_odst.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
-					 SPI->local_address : SPI->address);
-     }
-     em->em_sproto = IPPROTO_AH;
+     iov[cnt].iov_base = &sl;
+     len += iov[cnt++].iov_len = sizeof(sl);
+
+     sk.sadb_key_len = (sizeof(sk) + ob->klen + 7) / 8;
+     sk.sadb_key_exttype = SADB_EXT_KEY_AUTH;
+     sk.sadb_key_bits = ob->klen * 8;
+     sa.sadb_msg_len += sk.sadb_key_len;
+
+     iov[cnt].iov_base = &sk;
+     len += iov[cnt++].iov_len = sizeof(sk);
+     iov[cnt].iov_base = secrets;
+     len += iov[cnt++].iov_len = ((ob->klen + 7) / 8) * 8;
 
      kernel_debug(("kernel_ah: %08x. %s-Mode\n", 
-		   em->em_spi, 
+		   ntohl(sr.sadb_sa_spi),
 		   SPI->flags & SPI_TUNNEL ? "Tunnel" : "Transport"));
 
-     if (!kernel_xf_set(em)) {
+     if (!KERNEL_XF_SET(len)) {
 	  log_error(1, "kernel_xf_set() in kernel_ah()");
 	  return -1;
      }
@@ -366,12 +617,21 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
 int
 kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 {
-     struct encap_msghdr *em;
-     struct esp_old_xencap *xdo;
-     struct esp_new_xencap *xdn;
+     struct sadb_msg sa;
+     struct sadb_address sad1;
+     struct sadb_address sad2;
+     struct sadb_sa sr;
+     struct sadb_lifetime sl;
+     struct sadb_key sk1;
+     struct sadb_key sk2;
+     struct sockaddr_in src;
+     struct sockaddr_in dst;
+     struct iovec iov[20];
      attrib_t *attenc, *attauth = NULL;
      u_int8_t *sec1, *sec2 = NULL;
-     transform *xf_enc, *xf_auth;
+     transform *xf_enc, *xf_auth = NULL;
+     int cnt = 0;
+     time_t now = time(NULL);
 
      if (ob->type & AT_AUTH) {
 	  if (ob2 == NULL || ob2->type != AT_ENC) {
@@ -403,70 +663,109 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      if (attauth != NULL)
 	  xf_auth = kernel_get_transform(attauth->id);
 
-     em = (struct encap_msghdr *)buffer;
+     bzero(&sa, sizeof(sa));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&sr, sizeof(sr));
+     bzero(&sk1, sizeof(sk1));
+     bzero(&sk2, sizeof(sk2));
+     bzero(&sl, sizeof(sl));
+     bzero(&src, sizeof(src));
+     bzero(&dst, sizeof(dst));
 
-     if (xf_enc->flags & ESP_OLD) {
-	  bzero(buffer, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN +4+attenc->klen);
-	  
-	  em->em_msglen = EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN +4+attenc->klen;
+     sa.sadb_msg_len = sizeof(sa) / 8;
+     sa.sadb_msg_version = PF_KEY_V2;
+     sa.sadb_msg_type = SPI->flags & SPI_OWNER ?
+	  SADB_UPDATE : SADB_ADD;
+     sa.sadb_msg_satype = xf_enc->flags & ESP_OLD ?
+	  SADB_SATYPE_X_ESP_OLD : SADB_SATYPE_ESP;
+     sa.sadb_msg_seq = pfkey_seq++;
+     sa.sadb_msg_pid = pfkey_pid;
+     iov[cnt].iov_base = &sa;
+     iov[cnt++].iov_len = sizeof(sa);
 
-	  em->em_alg = XF_OLD_ESP;
+     sr.sadb_sa_len = sizeof(sr) / 8;
+     sr.sadb_sa_exttype = SADB_EXT_SA;
+     sr.sadb_sa_spi = htonl(SPITOINT(SPI->SPI));
+     sr.sadb_sa_replay = xf_enc->flags & ESP_OLD ? 0 : 32;
+     sr.sadb_sa_state = SADB_SASTATE_MATURE;
+     sr.sadb_sa_auth = attauth ? xf_auth->kernel_id : 0;
+     sr.sadb_sa_encrypt = xf_enc->kernel_id;
+     if (xf_enc->flags & ESP_OLD)
+	  sr.sadb_sa_flags |= SADB_SAFLAGS_X_HALFIV;
+     if (SPI->flags & SPI_TUNNEL)
+	  sr.sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+     sa.sadb_msg_len += sr.sadb_sa_len;
 
-	  xdo = (struct esp_old_xencap *)(em->em_dat);
+     iov[cnt].iov_base = &sr;
+     iov[cnt++].iov_len = sizeof(sr);
 
-	  xdo->edx_enc_algorithm = xf_enc->kernel_id;
-	  xdo->edx_ivlen = 4;
-	  xdo->edx_keylen = attenc->klen;
+     /* Source Address */
+     sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+     sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+     src.sin_family = AF_INET;
+     src.sin_len = sizeof(struct sockaddr_in);
+     src.sin_addr.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
+				     SPI->address : SPI->local_address);
+     sa.sadb_msg_len += sad1.sadb_address_len;
 
-	  bcopy(SPI->SPI, xdo->edx_data, 4);
-	  bcopy(sec1, xdo->edx_data+4, attenc->klen);
-     } else {
-	  bzero(buffer, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + attenc->klen +
-		(attauth ? attauth->klen : 0));
+     iov[cnt].iov_base = &sad1;
+     iov[cnt++].iov_len = sizeof(sad1);
+     iov[cnt].iov_base = &src;
+     iov[cnt++].iov_len = sizeof(struct sockaddr);
 
-	  em->em_msglen = EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + 
-	       attenc->klen + (attauth ? attauth->klen : 0);
+     /* Destination Address */
+     sad2.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+     sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+     dst.sin_family = AF_INET;
+     dst.sin_len = sizeof(struct sockaddr_in);
+     dst.sin_addr.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
+				     SPI->local_address : SPI->address);
+     sa.sadb_msg_len += sad2.sadb_address_len;
 
-	  em->em_alg = XF_NEW_ESP;
+     iov[cnt].iov_base = &sad2;
+     iov[cnt++].iov_len = sizeof(sad2);
+     iov[cnt].iov_base = &dst;
+     iov[cnt++].iov_len = sizeof(struct sockaddr);
 
-	  xdn = (struct esp_new_xencap *)(em->em_dat);
+     sl.sadb_lifetime_len = sizeof(sl) / 8;
+     sl.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+     sl.sadb_lifetime_allocations = 10;   /* 10 flows */
+     sl.sadb_lifetime_bytes = 1000000000;   /* lots of bytes */
+     sl.sadb_lifetime_addtime = SPI->lifetime + 60 - now;
+     sl.sadb_lifetime_usetime = SPI->lifetime - now; /* first use */
+     sa.sadb_msg_len += sl.sadb_lifetime_len;
 
-	  xdn->edx_enc_algorithm = xf_enc->kernel_id;
-	  xdn->edx_hash_algorithm = attauth ? xf_auth->kernel_id : 0;
-	  xdn->edx_ivlen = 0;
-	  xdn->edx_confkeylen = attenc->klen;
-	  xdn->edx_authkeylen = attauth ? attauth->klen : 0;
-	  xdn->edx_wnd = 16;
-	  xdn->edx_flags = attauth ? ESP_NEW_FLAG_AUTH : 0;
+     iov[cnt].iov_base = &sl;
+     iov[cnt++].iov_len = sizeof(sl);
 
-	  bcopy(sec1, xdn->edx_data, attenc->klen);
-	  if (attauth != NULL)
-	       bcopy(sec2, xdn->edx_data + attenc->klen, attauth->klen);
-     }
-     /* Common settings shared by ESP_OLD and ESP_NEW */
+     sk1.sadb_key_len = (sizeof(sk1) + attenc->klen + 7) / 8;
+     sk1.sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
+     sk1.sadb_key_bits = attenc->klen * 8;
+     sa.sadb_msg_len += sk1.sadb_key_len;
 
-     em->em_version = PFENCAP_VERSION_1;
-     em->em_type = EMT_SETSPI;
-     em->em_spi = htonl((SPI->SPI[0]<<24) + (SPI->SPI[1]<<16) + 
-			(SPI->SPI[2]<<8) + SPI->SPI[3]);
-     em->em_src.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
-				   SPI->address : SPI->local_address);
-     em->em_dst.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
-				   SPI->local_address : SPI->address);
-     em->em_sproto = IPPROTO_ESP;
-	
-     if (SPI->flags & SPI_TUNNEL) {
-	  em->em_osrc.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
-					 SPI->address : SPI->local_address);
-	  em->em_odst.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
-					 SPI->local_address : SPI->address);
+     iov[cnt].iov_base = &sk1;
+     iov[cnt++].iov_len = sizeof(sk1);
+     iov[cnt].iov_base = sec1;
+     iov[cnt++].iov_len = ((attenc->klen + 7) / 8) * 8;
+
+     if (attauth != NULL) {
+	  sk2.sadb_key_len = (sizeof(sk2) + attauth->klen + 7) / 8;
+	  sk2.sadb_key_exttype = SADB_EXT_KEY_AUTH;
+	  sk2.sadb_key_bits = attauth->klen * 8;
+	  sa.sadb_msg_len += sk2.sadb_key_len;
+
+	  iov[cnt].iov_base = &sk2;
+	  iov[cnt++].iov_len = sizeof(sk2);
+	  iov[cnt].iov_base = sec2;
+	  iov[cnt++].iov_len = ((attauth->klen + 7) / 8) * 8;
      }
 
      kernel_debug(("kernel_esp: %08x. %s-Mode\n", 
-		   em->em_spi,
+		   ntohl(sr.sadb_sa_spi),
 		   SPI->flags & SPI_TUNNEL ? "Tunnel" : "Transport"));
-     
-     if (!kernel_xf_set(em)) {
+
+     if (!KERNEL_XF_SET(sa.sadb_msg_len * 8)) {
 	  log_error(1, "kernel_xf_set() in kernel_esp()");
 	  return -1;
      }
@@ -479,33 +778,177 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 int
 kernel_group_spi(char *address, u_int8_t *spi)
 {
-     struct encap_msghdr *em;
-     in_addr_t addr;
+     struct sadb_msg smsg;
+     struct sadb_sa sa, sa2;
+     struct sadb_address sad1, sad2;
+     struct sadb_protocol sproto;
+     union sockaddr_union dst1, dst2;
+     struct iovec iov[8];
+     int cnt = 0;
      u_int32_t SPI;
 
-     SPI = (spi[0]<<24) + (spi[1]<<16) + (spi[2]<<8) + spi[3];
+     SPI = SPITOINT(spi);
+
+     bzero(&smsg, sizeof(smsg));
+     bzero(&sa, sizeof(sa));
+     bzero(&sa2, sizeof(sa2));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&dst1, sizeof(dst1));
+     bzero(&dst2, sizeof(dst2));
+
+     smsg.sadb_msg_version = PF_KEY_V2;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     smsg.sadb_msg_pid = pfkey_pid;
+     smsg.sadb_msg_type = SADB_X_GRPSPIS;
+     smsg.sadb_msg_satype = SADB_SATYPE_ESP;
+     smsg.sadb_msg_len = sizeof(smsg) / 8;
+
+     iov[cnt].iov_base = &smsg;
+     iov[cnt++].iov_len = sizeof(smsg);
+
+     sa.sadb_sa_len = sizeof(sa) / 8;
+     sa.sadb_sa_exttype = SADB_EXT_SA;
+     sa.sadb_sa_spi = htonl(SPI);
+     sa.sadb_sa_state = SADB_SASTATE_MATURE;
+     smsg.sadb_msg_len += sa.sadb_sa_len;
+
+     iov[cnt].iov_base = &sa;
+     iov[cnt++].iov_len = sizeof(sa);
+
+     sa2.sadb_sa_len = sizeof(sa2) / 8;
+     sa2.sadb_sa_exttype = SADB_EXT_X_SA2;
+     sa2.sadb_sa_spi = htonl(SPI);
+     sa2.sadb_sa_state = SADB_SASTATE_MATURE;
+     smsg.sadb_msg_len += sa2.sadb_sa_len;
+
+     iov[cnt].iov_base = &sa2;
+     iov[cnt++].iov_len = sizeof(sa2);
+
+     sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
+     sad1.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+     iov[cnt].iov_base = &sad1;
+     iov[cnt++].iov_len = sizeof(sad1);
+     dst1.sin.sin_family = AF_INET;
+     dst1.sin.sin_len = sizeof(struct sockaddr_in);
+     dst1.sin.sin_addr.s_addr = inet_addr(address);
+     smsg.sadb_msg_len += sad1.sadb_address_len;
+     iov[cnt].iov_base = &dst1;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
+     sad2.sadb_address_exttype = SADB_EXT_X_DST2;
+     iov[cnt].iov_base = &sad2;
+     iov[cnt++].iov_len = sizeof(sad2);
+     dst2.sin.sin_family = AF_INET;
+     dst2.sin.sin_len = sizeof(struct sockaddr_in);
+     dst2.sin.sin_addr.s_addr = inet_addr(address);
+     smsg.sadb_msg_len += sad2.sadb_address_len;
+     iov[cnt].iov_base = &dst2;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     sproto.sadb_protocol_len = sizeof(sproto) / 8;
+     sproto.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+     sproto.sadb_protocol_proto = SADB_SATYPE_AH;
+     smsg.sadb_msg_len += sproto.sadb_protocol_len;
+     iov[cnt].iov_base = &sproto;
+     iov[cnt++].iov_len = sizeof(sproto);
 
      kernel_debug(("kernel_group_spi: %s, %08x\n", address, SPI));
 
-     addr = inet_addr(address);
-
-     bzero(buffer, EMT_GRPSPIS_FLEN);
-
-     em = (struct encap_msghdr *)buffer;
-	  
-     em->em_msglen = EMT_GRPSPIS_FLEN;
-     em->em_version = PFENCAP_VERSION_1;
-     em->em_type = EMT_GRPSPIS;
-
-     em->em_rel_spi = htonl(SPI);
-     em->em_rel_dst.s_addr = addr;
-     em->em_rel_sproto = IPPROTO_ESP;
-     em->em_rel_spi2 = htonl(SPI);
-     em->em_rel_dst2.s_addr = addr;
-     em->em_rel_sproto2 = IPPROTO_AH;
-     
-     if (!kernel_xf_set(em)) {
+     if (!KERNEL_XF_SET(smsg.sadb_msg_len*8)) {
 	  log_error(1, "kernel_xf_set() in kernel_group_spi()");
+	  return -1;
+     }
+
+     return 1;
+}
+
+int
+kernel_bind_spis(struct spiob *spi1, struct spiob *spi2)
+{
+     struct sadb_msg smsg;
+     struct sadb_sa sa, sa2;
+     struct sadb_address sad1, sad2;
+     struct sadb_protocol sproto;
+     union sockaddr_union dst1, dst2;
+     struct iovec iov[8];
+     int cnt = 0;
+     u_int32_t inspi = SPITOINT(spi1->SPI);
+     u_int32_t outspi = SPITOINT(spi2->SPI);
+
+     bzero(&smsg, sizeof(smsg));
+     bzero(&sa, sizeof(sa));
+     bzero(&sa2, sizeof(sa2));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&dst1, sizeof(dst1));
+     bzero(&dst2, sizeof(dst2));
+
+     smsg.sadb_msg_version = PF_KEY_V2;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     smsg.sadb_msg_pid = pfkey_pid;
+     smsg.sadb_msg_type = SADB_X_BINDSA;
+     smsg.sadb_msg_satype = spi1->flags & SPI_ESP ?
+	  SADB_SATYPE_ESP : SADB_SATYPE_AH;
+     smsg.sadb_msg_len = sizeof(smsg) / 8;
+
+     iov[cnt].iov_base = &smsg;
+     iov[cnt++].iov_len = sizeof(smsg);
+
+     sa.sadb_sa_len = sizeof(sa) / 8;
+     sa.sadb_sa_exttype = SADB_EXT_SA;
+     sa.sadb_sa_spi = htonl(inspi);
+     sa.sadb_sa_state = SADB_SASTATE_MATURE;
+     smsg.sadb_msg_len += sa.sadb_sa_len;
+
+     iov[cnt].iov_base = &sa;
+     iov[cnt++].iov_len = sizeof(sa);
+
+     sa2.sadb_sa_len = sizeof(sa2) / 8;
+     sa2.sadb_sa_exttype = SADB_EXT_X_SA2;
+     sa2.sadb_sa_spi = htonl(outspi);
+     sa2.sadb_sa_state = SADB_SASTATE_MATURE;
+     smsg.sadb_msg_len += sa2.sadb_sa_len;
+
+     iov[cnt].iov_base = &sa2;
+     iov[cnt++].iov_len = sizeof(sa2);
+
+     sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
+     sad1.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+     iov[cnt].iov_base = &sad1;
+     iov[cnt++].iov_len = sizeof(sad1);
+     dst1.sin.sin_family = AF_INET;
+     dst1.sin.sin_len = sizeof(struct sockaddr_in);
+     dst1.sin.sin_addr.s_addr = inet_addr(spi1->local_address);
+     smsg.sadb_msg_len += sad1.sadb_address_len;
+     iov[cnt].iov_base = &dst1;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
+     sad2.sadb_address_exttype = SADB_EXT_X_DST2;
+     iov[cnt].iov_base = &sad2;
+     iov[cnt++].iov_len = sizeof(sad2);
+     dst2.sin.sin_family = AF_INET;
+     dst2.sin.sin_len = sizeof(struct sockaddr_in);
+     dst2.sin.sin_addr.s_addr = inet_addr(spi2->address);
+     smsg.sadb_msg_len += sad2.sadb_address_len;
+     iov[cnt].iov_base = &dst2;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     sproto.sadb_protocol_len = sizeof(sproto) / 8;
+     sproto.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+     sproto.sadb_protocol_proto = spi2->flags & SPI_ESP ?
+	  SADB_SATYPE_ESP : SADB_SATYPE_AH;
+     smsg.sadb_msg_len += sproto.sadb_protocol_len;
+     iov[cnt].iov_base = &sproto;
+     iov[cnt++].iov_len = sizeof(sproto);
+
+     kernel_debug(("kernel_bind_spi: <%s, %08x> -> <%s, %08x>\n",
+		   spi1->local_address, inspi, spi2->address, outspi));
+
+     if (!KERNEL_XF_SET(smsg.sadb_msg_len*8)) {
+	  log_error(1, "kernel_xf_set() in kernel_bind_spi()");
 	  return -1;
      }
 
@@ -517,32 +960,104 @@ kernel_enable_spi(in_addr_t isrc, in_addr_t ismask,
 		  in_addr_t idst, in_addr_t idmask, 
 		  char *address, u_int8_t *spi, int proto, int flags)
 {
-     struct encap_msghdr *em;
+     struct sadb_msg smsg;
+     struct sadb_sa sa;
+     struct sadb_address sad, sad1, sad2, sad3, sad4;
+     union sockaddr_union dst, osrc, osmask, odst, odmask;
+     struct iovec iov[12];
      u_int32_t SPI;
+     int cnt = 0;
+     SPI = SPITOINT(spi);
 
-     SPI = (spi[0]<<24) + (spi[1]<<16) + (spi[2]<<8) + spi[3];
+     bzero(&smsg, sizeof(smsg));
+     bzero(&sa, sizeof(sa));
+     bzero(&sad, sizeof(sad));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&sad3, sizeof(sad3));
+     bzero(&sad4, sizeof(sad4));
+     bzero(&dst, sizeof(dst));
+     bzero(&osrc, sizeof(osrc));
+     bzero(&osmask, sizeof(osmask));
+     bzero(&odst, sizeof(odst));
+     bzero(&odmask, sizeof(odmask));
+     
+     smsg.sadb_msg_len = sizeof(smsg) / 8;
+     smsg.sadb_msg_version = PF_KEY_V2;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     smsg.sadb_msg_pid = pfkey_pid;
+     smsg.sadb_msg_type = SADB_X_ADDFLOW;
+     smsg.sadb_msg_satype = proto == IPPROTO_ESP ?
+	  SADB_SATYPE_ESP : SADB_SATYPE_AH;
+     iov[cnt].iov_base = &smsg;
+     iov[cnt++].iov_len = sizeof(smsg);
+
+     sa.sadb_sa_len = sizeof(sa) / 8;
+     sa.sadb_sa_exttype = SADB_EXT_SA;
+     sa.sadb_sa_state = SADB_SASTATE_MATURE;
+     sa.sadb_sa_spi = htonl(SPI);
+     sa.sadb_sa_flags = flags;
+     smsg.sadb_msg_len += sa.sadb_sa_len;
+     iov[cnt].iov_base = &sa;
+     iov[cnt++].iov_len = sizeof(sa);
+
+     sad.sadb_address_len = (sizeof(sad) + sizeof(struct sockaddr_in)) / 8;
+     sad.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+     smsg.sadb_msg_len += sad.sadb_address_len;
+     iov[cnt].iov_base = &sad;
+     iov[cnt++].iov_len = sizeof(sad);
+
+     dst.sin.sin_family = AF_INET;
+     dst.sin.sin_len = sizeof(struct sockaddr_in);
+     dst.sin.sin_addr.s_addr = inet_addr(address);
+     iov[cnt].iov_base = &dst;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     sad1.sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
+     sad2.sadb_address_exttype = SADB_EXT_X_SRC_MASK;
+     sad3.sadb_address_exttype = SADB_EXT_X_DST_FLOW;
+     sad4.sadb_address_exttype = SADB_EXT_X_DST_MASK;
+     
+     sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
+     sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
+     sad3.sadb_address_len = (sizeof(sad3) + sizeof(struct sockaddr_in)) / 8;
+     sad4.sadb_address_len = (sizeof(sad4) + sizeof(struct sockaddr_in)) / 8;
+     
+     osrc.sin.sin_family = odst.sin.sin_family = AF_INET;
+     osmask.sin.sin_family = odmask.sin.sin_family = AF_INET;
+     osrc.sin.sin_len = odst.sin.sin_len = sizeof(struct sockaddr_in);
+     osmask.sin.sin_len = sizeof(struct sockaddr_in);
+     odmask.sin.sin_len = sizeof(struct sockaddr_in);
+	    
+     osrc.sin.sin_addr.s_addr = isrc;
+     osmask.sin.sin_addr.s_addr = ismask;
+     odst.sin.sin_addr.s_addr = idst;
+     odmask.sin.sin_addr.s_addr = idmask;
+     smsg.sadb_msg_len += sad1.sadb_address_len * 4;
+
+     iov[cnt].iov_base = &sad1;
+     iov[cnt++].iov_len = sizeof(sad1);
+     iov[cnt].iov_base = &osrc;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     iov[cnt].iov_base = &sad2;
+     iov[cnt++].iov_len = sizeof(sad2);
+     iov[cnt].iov_base = &osmask;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     iov[cnt].iov_base = &sad3;
+     iov[cnt++].iov_len = sizeof(sad3);
+     iov[cnt].iov_base = &odst;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     iov[cnt].iov_base = &sad4;
+     iov[cnt++].iov_len = sizeof(sad4);
+     iov[cnt].iov_base = &odmask;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
      kernel_debug(("kernel_enable_spi: %08x\n", SPI));
 
-     bzero(buffer, EMT_ENABLESPI_FLEN);
-
-     em = (struct encap_msghdr *)buffer;
-     
-     em->em_msglen = EMT_ENABLESPI_FLEN;
-     em->em_version = PFENCAP_VERSION_1;
-     em->em_type = EMT_ENABLESPI;
-
-     em->em_ena_isrc.s_addr = isrc;
-     em->em_ena_ismask.s_addr = ismask;
-     em->em_ena_idst.s_addr = idst;
-     em->em_ena_idmask.s_addr = idmask;
-
-     em->em_ena_dst.s_addr = inet_addr(address);
-     em->em_ena_spi = htonl(SPI);
-     em->em_ena_sproto = proto;
-     em->em_ena_flags = flags;
-
-     if (!kernel_xf_set(em)) {
+     if (!KERNEL_XF_SET(smsg.sadb_msg_len*8)) {
 	  log_error(1, "kernel_xf_set() in kernel_enable_spi()");
 	  return -1;
      }
@@ -555,32 +1070,90 @@ kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
 		   in_addr_t idst, in_addr_t idmask, 
 		   char *address, u_int8_t *spi, int proto, int flags)
 {
-     struct encap_msghdr *em;
+     struct sadb_msg smsg;
+     struct sadb_sa sa;
+     struct sadb_address sad1, sad2, sad3, sad4;
+     union sockaddr_union osrc, osmask, odst, odmask;
+     struct iovec iov[12];
      u_int32_t SPI;
+     int cnt = 0;
+     SPI = SPITOINT(spi);
 
-     SPI = (spi[0]<<24) + (spi[1]<<16) + (spi[2]<<8) + spi[3];
+     bzero(&smsg, sizeof(smsg));
+     bzero(&sa, sizeof(sa));
+     bzero(&sad1, sizeof(sad1));
+     bzero(&sad2, sizeof(sad2));
+     bzero(&sad3, sizeof(sad3));
+     bzero(&sad4, sizeof(sad4));
+     bzero(&osrc, sizeof(osrc));
+     bzero(&osmask, sizeof(osmask));
+     bzero(&odst, sizeof(odst));
+     bzero(&odmask, sizeof(odmask));
+     
+     smsg.sadb_msg_len = sizeof(smsg) / 8;
+     smsg.sadb_msg_version = PF_KEY_V2;
+     smsg.sadb_msg_seq = pfkey_seq++;
+     smsg.sadb_msg_pid = pfkey_pid;
+     smsg.sadb_msg_type = SADB_X_DELFLOW;
+     smsg.sadb_msg_satype = proto == IPPROTO_ESP ?
+	  SADB_SATYPE_ESP : SADB_SATYPE_AH;
+     iov[cnt].iov_base = &smsg;
+     iov[cnt++].iov_len = sizeof(smsg);
+
+     sa.sadb_sa_len = sizeof(sa) / 8;
+     sa.sadb_sa_exttype = SADB_EXT_SA;
+     sa.sadb_sa_state = SADB_SASTATE_MATURE;
+     sa.sadb_sa_spi = htonl(SPI);
+     sa.sadb_sa_flags = flags;
+     smsg.sadb_msg_len += sa.sadb_sa_len;
+     iov[cnt].iov_base = &sa;
+     iov[cnt++].iov_len = sizeof(sa);
+
+     sad1.sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
+     sad2.sadb_address_exttype = SADB_EXT_X_SRC_MASK;
+     sad3.sadb_address_exttype = SADB_EXT_X_DST_FLOW;
+     sad4.sadb_address_exttype = SADB_EXT_X_DST_MASK;
+     
+     sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
+     sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
+     sad3.sadb_address_len = (sizeof(sad3) + sizeof(struct sockaddr_in)) / 8;
+     sad4.sadb_address_len = (sizeof(sad4) + sizeof(struct sockaddr_in)) / 8;
+     
+     osrc.sin.sin_family = odst.sin.sin_family = AF_INET;
+     osmask.sin.sin_family = odmask.sin.sin_family = AF_INET;
+     osrc.sin.sin_len = odst.sin.sin_len = sizeof(struct sockaddr_in);
+     osmask.sin.sin_len = sizeof(struct sockaddr_in);
+     odmask.sin.sin_len = sizeof(struct sockaddr_in);
+	    
+     osrc.sin.sin_addr.s_addr = isrc;
+     osmask.sin.sin_addr.s_addr = ismask;
+     odst.sin.sin_addr.s_addr = idst;
+     odmask.sin.sin_addr.s_addr = idmask;
+     smsg.sadb_msg_len += sad1.sadb_address_len * 4;
+
+     iov[cnt].iov_base = &sad1;
+     iov[cnt++].iov_len = sizeof(sad1);
+     iov[cnt].iov_base = &osrc;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     iov[cnt].iov_base = &sad2;
+     iov[cnt++].iov_len = sizeof(sad2);
+     iov[cnt].iov_base = &osmask;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     iov[cnt].iov_base = &sad3;
+     iov[cnt++].iov_len = sizeof(sad3);
+     iov[cnt].iov_base = &odst;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+
+     iov[cnt].iov_base = &sad4;
+     iov[cnt++].iov_len = sizeof(sad4);
+     iov[cnt].iov_base = &odmask;
+     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
      kernel_debug(("kernel_disable_spi: %08x\n", SPI));
 
-     bzero(buffer, EMT_DISABLESPI_FLEN);
-
-     em = (struct encap_msghdr *)buffer;
-     
-     em->em_msglen = EMT_DISABLESPI_FLEN;
-     em->em_version = PFENCAP_VERSION_1;
-     em->em_type = EMT_DISABLESPI;
-
-     em->em_ena_isrc.s_addr = isrc;
-     em->em_ena_ismask.s_addr = ismask;
-     em->em_ena_idst.s_addr = idst;
-     em->em_ena_idmask.s_addr = idmask;
-
-     em->em_ena_dst.s_addr = inet_addr(address);
-     em->em_ena_spi = htonl(SPI);
-     em->em_ena_sproto = proto;
-     em->em_ena_flags = flags;
-     
-     if (!kernel_xf_set(em) && errno != ENOENT) {
+     if (!KERNEL_XF_SET(smsg.sadb_msg_len*8)) {
 	  log_error(1, "kernel_xf_set() in kernel_disable_spi()");
 	  return -1;
      }
@@ -593,30 +1166,74 @@ kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
  */
 
 int
-kernel_delete_spi(char *address, u_int8_t *spi, int proto)
+kernel_delete_spi(char *address, u_int32_t spi, int proto)
 {
-	struct encap_msghdr *em;
+     struct sadb_msg sa; 
+     struct sadb_sa sr; 
+     struct sadb_address sad1; 
+     struct sadb_address sad2; 
+     union sockaddr_union src, dst;
+     struct iovec iov[10]; 
+     int cnt = 0; 
+ 
+     bzero(&sa, sizeof(sa)); 
+     bzero(&sad1, sizeof(sad1)); 
+     bzero(&sad2, sizeof(sad2)); 
+     bzero(&sr, sizeof(sr)); 
+     bzero(&src, sizeof(src)); 
+     bzero(&dst, sizeof(dst)); 
+   
+     sa.sadb_msg_version = PF_KEY_V2; 
+     sa.sadb_msg_type = SADB_DELETE; 
+     sa.sadb_msg_satype = proto == IPPROTO_ESP ?
+	  SADB_SATYPE_ESP : SADB_SATYPE_AH; 
+     sa.sadb_msg_seq = pfkey_seq++; 
+     sa.sadb_msg_pid = pfkey_pid; 
+ 
+     /* Source Address */
+     sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8; 
+     sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC; 
 
-	bzero(buffer, EMT_DELSPI_FLEN);
+     src.sin.sin_family = AF_INET; 
+     src.sin.sin_len = sizeof(struct sockaddr_in); 
+  
+     /* Destination Address */
+     sad2.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8; 
+     sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST; 
 
-	em = (struct encap_msghdr *)buffer;
+     dst.sin.sin_family = AF_INET; 
+     dst.sin.sin_len = sizeof(struct sockaddr_in); 
+     dst.sin.sin_addr.s_addr = inet_addr(address); 
+ 
+     sr.sadb_sa_exttype = SADB_EXT_SA; 
+     sr.sadb_sa_spi = htonl(spi);
+     sr.sadb_sa_len = sizeof(sr) / 8; 
+ 
+     sa.sadb_msg_len = 2 + sr.sadb_sa_len + sad2.sadb_address_len + 
+	  sad1.sadb_address_len; 
+    
+     iov[cnt].iov_base = &sa; 
+     iov[cnt++].iov_len = sizeof(sa); 
+     iov[cnt].iov_base = &sad1; 
+     iov[cnt++].iov_len = sizeof(sad1); 
+     iov[cnt].iov_base = &src; 
+     iov[cnt++].iov_len = sizeof(struct sockaddr); 
+     iov[cnt].iov_base = &sad2; 
+     iov[cnt++].iov_len = sizeof(sad2); 
+     iov[cnt].iov_base = &dst;
+     iov[cnt++].iov_len = sizeof(struct sockaddr); 
+     iov[cnt].iov_base = &sr; 
+     iov[cnt++].iov_len = sizeof(sr); 
+    
 
-	em->em_msglen = EMT_DELSPI_FLEN;
-	em->em_version = PFENCAP_VERSION_1;
-	em->em_type = EMT_DELSPI;
-	em->em_gen_spi = htonl((spi[0]<<24) + (spi[1]<<16) + 
-			   (spi[2]<<8) + spi[3]);
-	em->em_gen_dst.s_addr = inet_addr(address);
-	em->em_gen_sproto = proto;
+     kernel_debug(("kernel_delete_spi: %08x\n", spi));
 
-	kernel_debug(("kernel_delete_spi: %08x\n", em->em_gen_spi));
+     if (!KERNEL_XF_SET(sa.sadb_msg_len * 8)) {
+	  log_error(1, "kernel_xf_set() in kernel_delete_spi()");
+	  return -1;
+     }
 
-	if (!kernel_xf_set(em)) {
-	     log_error(1, "kernel_xf_set() in kernel_delete_spi()");
-	     return -1;
-	}
-
-	return 1;
+     return 1;
 }
 
 /*
@@ -632,6 +1249,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
      u_int8_t *attributes;
      u_int16_t attribsize, ahsize, espsize;
      u_int8_t *secrets, *ah, *esp;
+     struct spiob *spi2;
      attrib_t *attprop;
      int offset, proto = 0;
 
@@ -663,7 +1281,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       count += esp[count+1]+2;
 	  }
 	  if (atesp == NULL) {
-	       log_error(0, "No encryption attribute in ESP section for SA(%08x, %s->%s) in kernel_insert()", (SPI->SPI[0] << 24) + (SPI->SPI[1] << 16) + (SPI->SPI[2] << 8) + SPI->SPI[3], SPI->local_address, SPI->address);
+	       log_error(0, "No encryption attribute in ESP section for SA(%08x, %s->%s) in kernel_insert()", SPITOINT(SPI->SPI), SPI->local_address, SPI->address);
 	       return -1;
 	  }
 
@@ -702,7 +1320,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	  }
 
 	  if (atah == NULL) {
-	       log_error(0, "No authentication attribute in AH section for SA(%08x, %s->%s) in kernel_insert()", (SPI->SPI[0] << 24) + (SPI->SPI[1] << 16) + (SPI->SPI[2] << 8) + SPI->SPI[3], SPI->local_address, SPI->address);
+	       log_error(0, "No authentication attribute in AH section for SA(%08x, %s->%s) in kernel_insert()", SPITOINT(SPI->SPI), SPI->local_address, SPI->address);
 	       return -1;
 	  }
 
@@ -717,10 +1335,13 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	  secrets += offset; 
      }
 
-     if (esp != NULL)
+     if (esp != NULL) {
 	  proto = IPPROTO_ESP;
-     else
+	  SPI->flags |= SPI_ESP;
+     } else {
 	  proto = IPPROTO_AH;
+	  SPI->flags &= ~SPI_ESP;
+     }
 
      /* Group the SPIs for User */
      if (!(SPI->flags & SPI_OWNER) && ah != NULL && esp != NULL) {
@@ -728,25 +1349,42 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       log_error(0, "kernel_group_spi() in kernel_insert_spi()");
      }
      
-     if (!(SPI->flags & SPI_OWNER)) 
+     if (!(SPI->flags & SPI_OWNER)) {
 	  if (!(SPI->flags & SPI_NOTIFY) || vpn_mode) {
 	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
 				     SPI->idst, SPI->idmask,
 				     SPI->address, spi, proto, 
-				     ENABLE_FLAG_REPLACE|ENABLE_FLAG_LOCAL |
-				     (vpn_mode ? ENABLE_FLAG_MODIFY : 0)) == -1)
+				     /* ENABLE_FLAG_REPLACE|*/ SADB_SAFLAGS_X_LOCALFLOW |
+				     (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0)) == -1)
 		    log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
 	  } else {
 	       /* 
 		* Inform the kernel that we obtained the requested SA
 		*/
-	       kernel_notify_result(st, SPI, proto);
+		    kernel_notify_result(st, SPI, proto);
 	  }
+     }
 	  
      /* Is this what people call perfect forward security ? */
      bzero(SPI->sessionkey, SPI->sessionkeysize);
      free(SPI->sessionkey);
      SPI->sessionkey = NULL; SPI->sessionkeysize = 0;
+
+     /* Bind the pair of SPI in the state object */
+     if (SPI->flags & SPI_OWNER)
+	  spi2 = spi_find(SPI->address, st->uSPI);
+     else
+	  spi2 = spi_find(SPI->local_address, st->oSPI);
+
+     if (!spi2) {
+	  log_error(0, "kernel_insert_spi(): can not find second SPI");
+	  return 0;
+     }
+
+     if (SPI->flags & SPI_OWNER)
+	  kernel_bind_spis(SPI, spi2);
+     else
+	  kernel_bind_spis(spi2, SPI);
 
      return 1;
 }
@@ -762,9 +1400,6 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 int
 kernel_unlink_spi(struct spiob *ospi)
 {
-     int n, proto = 0;
-     attrib_t *attprop;
-     u_int32_t spi;
      u_int8_t *p, *ah, *esp;
      u_int16_t ahsize, espsize;
 
@@ -777,9 +1412,9 @@ kernel_unlink_spi(struct spiob *ospi)
 			AT_ESP_ATTRIB);
      get_attrib_section(ospi->attributes, ospi->attribsize, &ah, &ahsize,
 			AT_AH_ATTRIB);
-
+     
      if (esp != NULL) {
-	  int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | ENABLE_FLAG_LOCAL;
+	  int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | SADB_SAFLAGS_X_LOCALFLOW;
 	  if (!(ospi->flags & SPI_OWNER) && 
 	      kernel_disable_spi(ospi->isrc, ospi->ismask,
 				 ospi->idst, ospi->idmask,
@@ -787,14 +1422,14 @@ kernel_unlink_spi(struct spiob *ospi)
 				 IPPROTO_ESP, flag) == -1)
 	       log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
 
-	  if (kernel_delete_spi(p, ospi->SPI, IPPROTO_ESP) == -1)
+	  if (kernel_delete_spi(p, SPITOINT(ospi->SPI), IPPROTO_ESP) == -1)
 	       log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
      }
 	  
      if (ah != NULL) {
 	  if (esp == NULL) {
-	       int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | 
-		    ENABLE_FLAG_LOCAL;
+	       int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | 
+					SADB_SAFLAGS_X_LOCALFLOW;
 	       if (!(ospi->flags & SPI_OWNER) &&
 		   kernel_disable_spi(ospi->isrc, ospi->ismask,
 				      ospi->idst, ospi->idmask,
@@ -803,7 +1438,7 @@ kernel_unlink_spi(struct spiob *ospi)
 		    log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
 	  }
 	  
-	  if (kernel_delete_spi(p, ospi->SPI, IPPROTO_AH) == -1)
+	  if (kernel_delete_spi(p, SPITOINT(ospi->SPI), IPPROTO_AH) == -1)
 	       log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
      }
 
@@ -818,44 +1453,29 @@ kernel_unlink_spi(struct spiob *ospi)
 void
 kernel_handle_notify(int sd)
 {
-     struct encap_msghdr em;
-     int msglen;
+     struct sadb_msg *sres = (struct sadb_msg *)buffer;
 
-     if ((msglen = recvfrom(sd, (char *)&em, sizeof(em),0, NULL,0)) == -1) {
-	  log_error(1, "recvfrom() in kernel_handle_notify()");
+     if (!kernel_xf_read(regsd, buffer, BUFFER_SIZE, 0))
 	  return;
-     }
-
-     if (msglen != em.em_msglen) {
-	  log_error(0, "message length incorrect in kernel_handle_notify(): got %d where it should be %d", msglen, em.em_msglen);
-	  return;
-     }
-
-     if (em.em_type != EMT_NOTIFY) {
-	  log_error(0, "message type is not notify in kernel_handle_notify()");
-	  return;
-     }
 
 #ifdef DEBUG
-     printf("Received EMT_NOTIFY message: subtype %d\n", em.em_not_type);
+     kernel_debug(("Got PFKEYV2 message: type %d\n", sres->sadb_msg_type));
 #endif
 
-     switch (em.em_not_type) {
-     case NOTIFY_SOFT_EXPIRE:
-     case NOTIFY_HARD_EXPIRE:
-	  log_error(0, "Notify is an SA Expiration - not yet supported.\n");
+     switch (sres->sadb_msg_type) {
+     case SADB_EXPIRE:
+	  log_error(0, "PFKEYV2 SA Expiration - not yet supported.\n");
 	  return;
-     case NOTIFY_REQUEST_SA:
+     case SADB_ACQUIRE:
 #ifdef DEBUG
-	  printf("Notify SA Request for IP: %s, require %d\n",
-		 inet_ntoa(em.em_not_dst), em.em_not_satype);
+	  kernel_debug(("Got Notify SA Request (SADB_ACQUIRE)\n"));
 #endif
-	  kernel_request_sa(&em);
+	  kernel_request_sa(sres);
 	  break;
      default:
-	  log_error(0, "Unknown notify message in kernel_handle_notify");
-	  return;
-     }
+	  /* discard silently */
+	  return; 
+	  }
 }
 
 /*
@@ -864,13 +1484,13 @@ kernel_handle_notify(int sd)
  */
 
 int
-kernel_request_sa(struct encap_msghdr *em) 
+kernel_request_sa(void *em /*struct encap_msghdr *em*/) 
 {
-     struct stateob *st;
+/*     struct stateob *st;
      time_t tm;
      char *address = inet_ntoa(em->em_not_dst);
 
-     /* Try to find an already established exchange which is still valid */
+     /#* Try to find an already established exchange which is still valid *#/
      st = state_find(address);
 
      tm = time(NULL);
@@ -878,34 +1498,34 @@ kernel_request_sa(struct encap_msghdr *em)
 	  st = state_find_next(st, address);
 
      if (st == NULL) {
-	  /* No established exchange found, start a new one */
+	  /#* No established exchange found, start a new one *#/
 	  if ((st = state_new()) == NULL) {
 	       log_error(0, "state_new() failed in kernel_request_sa() for remote ip %s",
 			 address);
 	       return (-1);
 	  }
-	  /* Set up the state information */
+	  /#* Set up the state information *#/
 	  strncpy(st->address, address, sizeof(st->address)-1);
 	  st->port = global_port;
 	  st->sport = em->em_not_sport;
 	  st->dport = em->em_not_dport;
 	  st->protocol = em->em_not_protocol;
 
-	  /*
+	  /#*
 	   * For states which were created by kernel notifies we wont
 	   * set up routes since other keying daemons might habe beaten
 	   * us in establishing SAs. The kernel has to decide which SA
 	   * will actually be routed.
-	   */
+	   *#/
 	  st->flags = IPSEC_NOTIFY;
 	  if (em->em_not_satype & NOTIFY_SATYPE_CONF)
 	       st->flags |= IPSEC_OPT_ENC;
 	  if (em->em_not_satype & NOTIFY_SATYPE_AUTH)
 	       st->flags |= IPSEC_OPT_AUTH;
-	  /* XXX - handling of tunnel requests missing */
+	  /#* XXX - handling of tunnel requests missing *#/
 	  if (start_exchange(global_socket, st, st->address, st->port) == -1) {
 	       log_error(0, "start_exchange() in kernel_request_sa() - informing kernel of failure");
-	       /* Inform kernel of our failure */
+	       /#* Inform kernel of our failure *#/
 	       kernel_notify_result(st, NULL, 0);
 	       state_value_reset(st);
 	       free(st);
@@ -913,11 +1533,12 @@ kernel_request_sa(struct encap_msghdr *em)
 	  } else
 	       state_insert(st);
      } else {
-	  /* 
+	  /#* 
 	   * We need different attributes for this exchange, send
 	   * an SPI_NEEDED message.
-	   */
+	   *#/
      }
+*/
 }
 
 /*
@@ -929,7 +1550,8 @@ kernel_request_sa(struct encap_msghdr *em)
 void
 kernel_notify_result(struct stateob *st, struct spiob *spi, int proto)
 {
-     struct encap_msghdr em;
+
+     /*     struct encap_msghdr em;
 
      bzero((char *)&em, sizeof(em));
      em.em_type = EMT_NOTIFY;
@@ -951,5 +1573,5 @@ kernel_notify_result(struct stateob *st, struct spiob *spi, int proto)
      }
 
      if (!kernel_xf_set(&em))
-	  log_error(1, "kernel_xf_set() in kernel_notify_result()");
+     log_error(1, "kernel_xf_set() in kernel_notify_result()"); */
 }

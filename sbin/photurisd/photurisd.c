@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.1 1998/11/14 23:37:28 deraadt Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.2 1999/03/27 21:18:02 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -158,16 +158,17 @@ main(int argc, char **argv)
 
      init_schemes();
 
+#ifdef IPSEC
+     init_kernel();
+#endif
+
+     /* Depends on the available attributes in the kernel, init_kernel() */
      init_attributes(); 
 
      if (init_identities(NULL,NULL) == -1)
 	  exit(-1);
      
      init_schedule();
-
-#ifdef IPSEC
-     init_kernel();
-#endif
 
      init_server();
 

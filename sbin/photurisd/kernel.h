@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.2 1999/02/20 21:22:32 deraadt Exp $ */
+/* $Id: kernel.h,v 1.3 1999/03/27 21:18:01 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -40,13 +40,15 @@
 #ifdef _KERNEL_C_
 #define EXTERN
 
-#define ESP_OLD   0x01
-#define ESP_NEW   0x02
-#define AH_OLD    0x04
-#define AH_NEW    0x08
+#define ESP_OLD		0x01
+#define ESP_NEW		0x02
+#define AH_OLD		0x04
+#define AH_NEW		0x08
 
-#define XF_ENC    0x10
-#define XF_AUTH   0x20
+#define XF_ENC		0x10
+#define XF_AUTH		0x20
+
+#define XF_SUP		0x80		/* Mark the transforms as supported */
 
 typedef struct {
      int photuris_id;
@@ -60,26 +62,33 @@ typedef struct {
  */
 
 transform xf[] = {
-     {  5, ALG_AUTH_MD5, XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
-     {  6, ALG_AUTH_SHA1, XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
-     {  7, ALG_AUTH_RMD160, XF_AUTH|AH_NEW|ESP_NEW},
-     {  8, ALG_ENC_DES, XF_ENC|ESP_OLD},
-     { 18, ALG_ENC_3DES, XF_ENC|ESP_NEW},
-     { 16, ALG_ENC_BLF, XF_ENC|ESP_NEW},
-     { 17, ALG_ENC_CAST, XF_ENC|ESP_NEW},
-     { 19, ALG_ENC_SKIPJACK, XF_ENC|ESP_NEW},
+     {  5, SADB_AALG_X_MD5, XF_AUTH|AH_OLD},
+     {  6, SADB_AALG_X_SHA1, XF_AUTH|AH_OLD},
+     {  5, SADB_AALG_MD5HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
+     {  6, SADB_AALG_SHA1HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
+     {  7, SADB_AALG_X_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
+     {  8, SADB_EALG_DESCBC, XF_ENC|ESP_OLD},
+     { 18, SADB_EALG_3DESCBC, XF_ENC|ESP_NEW},
+     { 16, SADB_EALG_X_BLF, XF_ENC|ESP_NEW},
+     { 17, SADB_EALG_X_CAST, XF_ENC|ESP_NEW},
+     { 19, SADB_EALG_X_SKIPJACK, XF_ENC|ESP_NEW},
 };
 
 transform *kernel_get_transform(int id);
+void kernel_transform_seen(int id, int type);
 
-int kernel_xf_set(struct encap_msghdr *em);
-int kernel_xf_read(struct encap_msghdr *em, int msglen);
+int kernel_register(int sd);
+
+int kernel_xf_set(int sd, char *buf, int blen, struct iovec *io, int cnt,
+		  int len);
+int kernel_xf_read(int sd, char *buf, int blen, int seq);
 
 int kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac);
 int kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, 
 	       u_int8_t *secrets);
 
 int kernel_group_spi(char *address, u_int8_t *spi);
+int kernel_bind_spis(struct spiob *spi1, struct spiob *spi2);
 
 int kernel_enable_spi(in_addr_t isrc, in_addr_t ismask, 
 		      in_addr_t idst, in_addr_t idmask, 
@@ -87,9 +96,9 @@ int kernel_enable_spi(in_addr_t isrc, in_addr_t ismask,
 int kernel_disable_spi(in_addr_t isrc, in_addr_t ismask, 
 		       in_addr_t idst, in_addr_t idmask, 
 		       char *address, u_int8_t *spi, int proto, int flags);
-int kernel_delete_spi(char *address, u_int8_t *spi, int proto);
+int kernel_delete_spi(char *address, u_int32_t spi, int proto);
 
-int kernel_request_sa(struct encap_msghdr *em);
+int kernel_request_sa(void *em /* struct encap_msghdr *em */);
 #else
 #define EXTERN extern
 #endif
@@ -98,9 +107,10 @@ EXTERN int kernel_known_transform(int id);
 EXTERN int kernel_valid(attrib_t *enc, attrib_t *auth);
 EXTERN int kernel_valid_auth(attrib_t *auth, u_int8_t *flag, u_int16_t size);
 
-EXTERN u_int32_t kernel_reserve_spi( char *srcaddress, int options);
-EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, 
-					   int proto);
+EXTERN u_int32_t kernel_reserve_spi(char *srcaddress, char *dstaddress, 
+				    int options);
+EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, char *dstaddress,
+					   u_int32_t spi, int proto);
 
 EXTERN int kernel_insert_spi(struct stateob *st, struct spiob *SPI);
 EXTERN int kernel_unlink_spi(struct spiob *ospi);
