@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.578 2003/01/11 22:48:17 henning Exp 
+ *		OpenBSD: pcidevs,v 1.579 2003/01/12 10:14:05 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2411,6 +2411,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000MF (PWLA8490LX)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559,
+	    "82559",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	    "PRO/100 VE",
 	},
@@ -2503,6 +2507,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82815 Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA_APIC,
+	    "82806AA PCI64 APIC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
 	    "82559ER",
 	},
@@ -2529,14 +2537,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557,
 	    "82557",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559,
-	    "82559",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA_APIC,
-	    "82806AA PCI64 APIC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
@@ -4059,6 +4059,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce 220/420",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_AC97,
+	    "nForce AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_ISA,
 	    "nForce PCI-ISA",
 	},
@@ -4077,6 +4081,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_IDE,
 	    "nForce IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_USB,
+	    "nForce USB",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3,
