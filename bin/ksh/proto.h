@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.17 2004/12/18 21:58:39 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.18 2004/12/18 22:35:41 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -65,7 +65,6 @@ char	*debunk(char *dp, const char *sp, size_t dlen);
 void	expand(char *cp, XPtrV *wp, int f);
 int	glob_str(char *cp, XPtrV *wp, int markdirs);
 /* exec.c */
-int	fd_clexec(int fd);
 int 	execute(struct op * volatile t, volatile int flags);
 int 	shcomexec(char **wp);
 struct tbl * findfunc(const char *name, unsigned int h, int create);

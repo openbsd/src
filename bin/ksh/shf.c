@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.9 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: shf.c,v 1.10 2004/12/18 22:35:41 millert Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -118,7 +118,7 @@ shf_fdopen(fd, sflags, shf)
 	shf->errno_ = 0;
 	shf->bsize = bsize;
 	if (sflags & SHF_CLEXEC)
-		fd_clexec(fd);
+		fcntl(fd, F_SETFD, FD_CLOEXEC);
 	return shf;
 }
 
@@ -161,7 +161,7 @@ shf_reopen(fd, sflags, shf)
 	shf->flags = (shf->flags & (SHF_ALLOCS | SHF_ALLOCB)) | sflags;
 	shf->errno_ = 0;
 	if (sflags & SHF_CLEXEC)
-		fd_clexec(fd);
+		fcntl(fd, F_SETFD, FD_CLOEXEC);
 	return shf;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.34 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.35 2004/12/18 22:35:41 millert Exp $	*/
 
 /*
  * execute command tree
@@ -25,17 +25,6 @@ static const char *dbteste_getopnd(Test_env *te, Test_op op,
 static int	dbteste_eval(Test_env *te, Test_op op, const char *opnd1,
 				const char *opnd2, int do_eval);
 static void	dbteste_error(Test_env *te, int offset, const char *msg);
-
-
-/*
- * we now use this function always.
- */
-int
-fd_clexec(fd)
-    int fd;
-{
-	return fcntl(fd, F_SETFD, 1);
-}
 
 
 /*
