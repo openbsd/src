@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.48 2003/01/22 16:23:24 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.49 2003/01/29 20:57:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -72,6 +72,7 @@ cpu_coredump(p, vp, cred, core)
 	core->c_cpusize = sizeof(md_core);
 
 	process_read_regs(p, &md_core.md_reg);
+	process_read_fpregs(p, &md_core.md_fpreg);
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_HPPA, CORE_CPU);
 	cseg.c_addr = 0;
