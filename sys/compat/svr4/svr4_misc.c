@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.24 1999/10/07 16:14:28 brad Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.25 1999/10/07 17:23:53 brad Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -96,9 +96,11 @@ static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
 
 struct svr4_hrtcntl_args;
 static int svr4_hrtcntl	__P((struct proc *, struct svr4_hrtcntl_args *,
-			     register_t *));
+    register_t *));
 static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
-					    struct svr4_statvfs *));
+    struct svr4_statvfs *));
+static void bsd_statfs_to_svr4_statvfs64 __P((const struct statfs *,
+    struct svr4_statvfs64 *));
 static struct proc *svr4_pfind __P((pid_t pid));
 
 static int svr4_mknod __P((struct proc *, register_t *, char *,
@@ -450,7 +452,7 @@ svr4_sys_xmknod(p, v, retval)
 	struct svr4_sys_xmknod_args *uap = v;
 	return svr4_mknod(p, retval,
 			  SCARG(uap, path), SCARG(uap, mode),
-			  svr4_to_bsd_odev_t(SCARG(uap, dev)));
+			  svr4_to_bsd_dev_t(SCARG(uap, dev)));
 }
 
 
@@ -1167,6 +1169,32 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 }
 
 
+static void
+bsd_statfs_to_svr4_statvfs64(bfs, sfs)
+	const struct statfs *bfs;
+	struct svr4_statvfs64 *sfs; 
+{
+	sfs->f_bsize = bfs->f_iosize; /* XXX */
+	sfs->f_frsize = bfs->f_bsize;
+	sfs->f_blocks = bfs->f_blocks;
+	sfs->f_bfree = bfs->f_bfree;
+	sfs->f_bavail = bfs->f_bavail;
+	sfs->f_files = bfs->f_files;
+	sfs->f_ffree = bfs->f_ffree;  
+	sfs->f_favail = bfs->f_ffree;
+	sfs->f_fsid = bfs->f_fsid.val[0];
+	bcopy(bfs->f_fstypename, sfs->f_basetype, sizeof(sfs->f_basetype));
+	sfs->f_flag = 0;
+	if (bfs->f_flags & MNT_RDONLY)
+		sfs->f_flag |= SVR4_ST_RDONLY;
+	if (bfs->f_flags & MNT_NOSUID)
+		sfs->f_flag |= SVR4_ST_NOSUID;
+	sfs->f_namemax = MAXNAMLEN;   
+	bcopy(bfs->f_fstypename, sfs->f_fstr, sizeof(sfs->f_fstr)); /* XXX */
+	bzero(sfs->f_filler, sizeof(sfs->f_filler));
+}
+
+
 int
 svr4_sys_statvfs(p, v, retval) 
 	register struct proc *p;
@@ -1224,6 +1252,36 @@ svr4_sys_fstatvfs(p, v, retval)
 
 	return copyout(&sfs, SCARG(uap, fs), sizeof(sfs));
 }
+
+
+int
+svr4_sys_fstatvfs64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_fstatvfs64_args *uap = v;
+	struct sys_fstatfs_args fs_args;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
+	struct statfs bfs;
+	struct svr4_statvfs64 sfs;
+	int error;
+
+	SCARG(&fs_args, fd) = SCARG(uap, fd);
+	SCARG(&fs_args, buf) = fs;
+
+	if ((error = sys_fstatfs(p, &fs_args, retval)) != 0)
+		return error;
+
+	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
+		return error;
+
+	bsd_statfs_to_svr4_statvfs64(&bfs, &sfs);
+
+	return copyout(&sfs, SCARG(uap, fs), sizeof(sfs));
+}
+
 
 int
 svr4_sys_alarm(p, v, retval)

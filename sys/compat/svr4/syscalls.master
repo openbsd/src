@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.25 1999/10/07 16:14:28 brad Exp $
+	$OpenBSD: syscalls.master,v 1.26 1999/10/07 17:23:53 brad Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -329,7 +329,8 @@
 217	STD		{ int svr4_sys_fstat64(int fd, \
 			    struct svr4_stat64 *sb); }
 218	UNIMPL		statvfs64
-219	UNIMPL		fstatvfs64
+219     STD             { int svr4_sys_fstatvfs64(int fd, \
+                            struct svr4_statvfs64 *fs); }
 220	UNIMPL		setrlimit64
 221	UNIMPL		getrlimit64
 222	UNIMPL		pread64
