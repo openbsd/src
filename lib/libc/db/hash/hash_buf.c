@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_buf.c,v 1.9 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: hash_buf.c,v 1.10 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-static char rcsid[] = "$OpenBSD: hash_buf.c,v 1.9 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_buf.c,v 1.10 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -266,22 +266,22 @@ newbuf(hashp, addr, prev_bp)
 
 	/* Now assign this buffer */
 	bp->addr = addr;
-	bp->ovfl = NULL;
 #ifdef DEBUG1
 	(void)fprintf(stderr, "NEWBUF1: %d->ovfl was %d is now %d\n",
 	    bp->addr, (bp->ovfl ? bp->ovfl->addr : 0), 0);
 #endif
+	bp->ovfl = NULL;
 	if (prev_bp) {
 		/*
 		 * If prev_bp is set, this is an overflow page, hook it in to
 		 * the buffer overflow links.
 		 */
-		prev_bp->ovfl = bp;
 #ifdef DEBUG1
 		(void)fprintf(stderr, "NEWBUF2: %d->ovfl was %d is now %d\n",
 		    prev_bp->addr, (prev_bp->ovfl ? prev_bp->ovfl->addr : 0),
 		    (bp ? bp->addr : 0));
 #endif
+		prev_bp->ovfl = bp;
 		bp->flags = 0;
 	} else
 		bp->flags = BUF_BUCKET;

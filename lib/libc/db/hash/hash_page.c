@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.11 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.12 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-static char rcsid[] = "$OpenBSD: hash_page.c,v 1.11 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_page.c,v 1.12 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,6 @@ static char rcsid[] = "$OpenBSD: hash_page.c,v 1.11 2002/02/16 21:27:22 millert 
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -79,14 +78,13 @@ static char rcsid[] = "$OpenBSD: hash_page.c,v 1.11 2002/02/16 21:27:22 millert 
 #include "page.h"
 #include "extern.h"
 
-static u_int32_t	*fetch_bitmap(HTAB *, int);
-static u_int32_t	 first_free(u_int32_t);
-static int	 open_temp(HTAB *);
-static u_int16_t	 overflow_page(HTAB *);
-static void	 putpair(char *, const DBT *, const DBT *);
-static void	 squeeze_key(u_int16_t *, const DBT *, const DBT *);
-static int	 ugly_split
-(HTAB *, u_int32_t, BUFHEAD *, BUFHEAD *, int, int);
+static u_int32_t *fetch_bitmap(HTAB *, int);
+static u_int32_t  first_free(u_int32_t);
+static int	  open_temp(HTAB *);
+static u_int16_t  overflow_page(HTAB *);
+static void	  putpair(char *, const DBT *, const DBT *);
+static void	  squeeze_key(u_int16_t *, const DBT *, const DBT *);
+static int	  ugly_split(HTAB *, u_int32_t, BUFHEAD *, BUFHEAD *, int, int);
 
 #define	PAGE_INIT(P) { \
 	((u_int16_t *)(P))[0] = 0; \

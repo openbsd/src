@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.9 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.10 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.9 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.10 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -450,7 +450,7 @@ __big_return(hashp, bufp, ndx, val, set_current)
 		}
 
 	val->size = collect_data(hashp, bufp, (int)len, set_current);
-	if (val->size == (size_t) -1)
+	if (val->size == (size_t)-1)
 		return (-1);
 	if (save_p->addr != save_addr) {
 		/* We are pretty short on buffers. */
@@ -529,7 +529,7 @@ __big_keydata(hashp, bufp, key, val, set)
 	int set;
 {
 	key->size = collect_key(hashp, bufp, 0, val, set);
-	if (key->size == (size_t) -1)
+	if (key->size == (size_t)-1)
 		return (-1);
 	key->data = (u_char *)hashp->tmp_key;
 	return (0);

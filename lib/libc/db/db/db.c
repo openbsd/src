@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.4 2002/02/09 17:40:24 millert Exp $	*/
+/*	$OpenBSD: db.c,v 1.5 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$OpenBSD: db.c,v 1.4 2002/02/09 17:40:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: db.c,v 1.5 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,10 +96,10 @@ __dbpanic(dbp)
 	DB *dbp;
 {
 	/* The only thing that can succeed is a close. */
-	dbp->del = (int (*)())__dberr;
-	dbp->fd = (int (*)())__dberr;
-	dbp->get = (int (*)())__dberr;
-	dbp->put = (int (*)())__dberr;
-	dbp->seq = (int (*)())__dberr;
-	dbp->sync = (int (*)())__dberr;
+	dbp->del = (int (*)(const struct __db *, const DBT*, u_int))__dberr;
+	dbp->fd = (int (*)(const struct __db *))__dberr;
+	dbp->get = (int (*)(const struct __db *, const DBT*, DBT *, u_int))__dberr;
+	dbp->put = (int (*)(const struct __db *, DBT *, const DBT *, u_int))__dberr;
+	dbp->seq = (int (*)(const struct __db *, DBT *, DBT *, u_int))__dberr;
+	dbp->sync = (int (*)(const struct __db *, u_int))__dberr;
 }

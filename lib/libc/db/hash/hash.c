@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.12 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.13 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static char rcsid[] = "$OpenBSD: hash.c,v 1.12 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.13 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,8 +102,10 @@ int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 extern DB *
 __hash_open(file, flags, mode, info, dflags)
 	const char *file;
-	int flags, mode, dflags;
+	int flags;
+	int mode;
 	const HASHINFO *info;	/* Special directives for create */
+	int dflags;
 {
 	HTAB *hashp;
 	struct stat statbuf;
@@ -114,6 +116,7 @@ __hash_open(file, flags, mode, info, dflags)
 		errno = EINVAL;
 		return (NULL);
 	}
+
 	if (!(hashp = (HTAB *)calloc(1, sizeof(HTAB))))
 		return (NULL);
 	hashp->fp = -1;
@@ -212,7 +215,7 @@ __hash_open(file, flags, mode, info, dflags)
 
 #ifdef DEBUG
 	(void)fprintf(stderr,
-"%s\n%s%x\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
+"%s\n%s%p\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
 	    "init_htab:",
 	    "TABLE POINTER   ", hashp,
 	    "BUCKET SIZE     ", hashp->BSIZE,

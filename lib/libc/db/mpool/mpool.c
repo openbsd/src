@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.9 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.10 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.7 (Berkeley) 11/2/95";
 #else
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.9 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.10 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -458,7 +458,7 @@ mpool_look(mp, pgno)
 	head = &mp->hqh[HASHKEY(pgno)];
 	for (bp = head->cqh_first; bp != (void *)head; bp = bp->hq.cqe_next)
 		if ((bp->pgno == pgno) &&
-			(bp->flags & MPOOL_INUSE == MPOOL_INUSE)) {
+			((bp->flags & MPOOL_INUSE) == MPOOL_INUSE)) {
 #ifdef STATISTICS
 			++mp->cachehit;
 #endif

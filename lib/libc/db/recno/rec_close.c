@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_close.c,v 1.6 1999/02/15 05:11:25 millert Exp $	*/
+/*	$OpenBSD: rec_close.c,v 1.7 2002/02/25 23:45:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_close.c	8.6 (Berkeley) 8/18/94";
 #else
-static char rcsid[] = "$OpenBSD: rec_close.c,v 1.6 1999/02/15 05:11:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: rec_close.c,v 1.7 2002/02/25 23:45:15 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,10 +89,12 @@ __rec_close(dbp)
 		if (F_ISSET(t, R_CLOSEFP)) {
 			if (fclose(t->bt_rfp))
 				status = RET_ERROR;
-		} else
+		} else {
 			if (close(t->bt_rfd))
 				status = RET_ERROR;
+		}
 	}
+
 	if (__bt_close(dbp) == RET_ERROR)
 		status = RET_ERROR;
 
@@ -161,7 +163,7 @@ __rec_sync(dbp, flags)
 			status = (dbp->seq)(dbp, &key, &data, R_NEXT);
 		}
 	} else {
-		iov[1].iov_base = (void *) &t->bt_bval;
+		iov[1].iov_base = &t->bt_bval;
 		iov[1].iov_len = 1;
 
 		status = (dbp->seq)(dbp, &key, &data, R_FIRST);
