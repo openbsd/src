@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.3 2000/01/08 05:28:38 jason Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.4 2000/02/18 14:42:06 jason Exp $	*/
 /*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
 
 /*-
@@ -148,8 +148,7 @@ struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
  * if_media Options word:
  *	Bits	Use
  *	----	-------
- *	0-3	Media variant
- *	4	RFU
+ *	0-4	Media variant		MAX SUBTYPE == 31!
  *	5-7	Media type
  *	8-15	Type specific options
  *	16-19	RFU
@@ -176,6 +175,7 @@ struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
 #define	IFM_1000_LX	15		/* 1000baseLX Single-mode Fiber */
 #define	IFM_1000_CX	16		/* 1000baseCX 150ohm STP */
 #define	IFM_1000_TX	17		/* 1000baseTX 4 pair cat 5 */
+#define	IFM_HPNA_1	18		/* HomePNA 1.0 (1Mb/s) */
 
 /*
  * Token ring
@@ -219,7 +219,7 @@ struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
  * Masks
  */
 #define	IFM_NMASK	0x000000e0	/* Network type */
-#define	IFM_TMASK	0x0000000f	/* Media sub-type */
+#define	IFM_TMASK	0x0000001f	/* Media sub-type */
 #define	IFM_IMASK	0xf0000000	/* Instance */
 #define	IFM_ISHIFT	28		/* Instance shift */
 #define	IFM_OMASK	0x0000ff00	/* Type specific options */
@@ -320,6 +320,8 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_LX,	"1000baseLX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
 	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
+	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
+	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
