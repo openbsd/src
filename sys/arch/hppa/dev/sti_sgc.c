@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.23 2004/08/30 18:37:45 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.24 2004/09/15 20:11:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -68,11 +68,7 @@ extern struct cfdriver sti_cd;
 int sti_sgc_probe(struct device *, void *, void *);
 void sti_sgc_attach(struct device *, struct device *, void *);
 
-struct cfattach sti_sgc_ca = {
-	sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach
-};
-
-struct cfattach sti_phantom_ca = {
+struct cfattach sti_gedoens_ca = {
 	sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach
 };
 
@@ -232,7 +228,6 @@ sti_sgc_attach(parent, self, aux)
 	if (cpu_type == hpcxl2)
 		eaio_l2(0x8 >> (((ca->ca_hpa >> 25) & 3) - 2));
 
-	sc->sc_devtype = bus_space_read_1(sc->iot, sc->romh, 3);
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
 		sc->sc_flags |= STI_CONSOLE;
 	sti_attach_common(sc);

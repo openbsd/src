@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.12 2004/08/29 00:26:12 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.13 2004/09/15 20:11:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -1595,7 +1595,7 @@ dinoattach(parent, self, aux)
 
 	/* scan for ps2 kbd/ms, serial, and flying toasters */
 	ca->ca_hpamask = -1;
-	pdc_scanbus(self, ca, MAXMODBUS);
+	pdc_scanbus(self, ca, MAXMODBUS, 0);
 
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;

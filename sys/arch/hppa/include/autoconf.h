@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.20 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.21 2004/09/15 20:11:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -69,7 +69,7 @@ extern void (*cold_hook)(int);
 struct device;
 
 const char *hppa_mod_info(int, int);
-void	pdc_scanbus(struct device *, struct confargs *, int);
+void	pdc_scanbus(struct device *, struct confargs *, int, hppa_hpa_t hpa);
 int	mbprint(void *, const char *);
 int	mbsubmatch(struct device *, void *, void *);
 void	*cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *),

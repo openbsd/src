@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.56 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.57 2004/09/15 20:11:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -43,6 +43,8 @@
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+
+#include <hppa/dev/cpudevs.h>
 
 struct mainbus_softc {
 	struct  device sc_dv;
@@ -1042,7 +1044,6 @@ mbattach(parent, self, aux)
 #endif
 
 	bzero (&nca, sizeof(nca));
-	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
 	nca.ca_irq = -1;
 	nca.ca_hpamask = HPPA_IOSPACE;
@@ -1051,7 +1052,31 @@ mbattach(parent, self, aux)
 	nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
-	pdc_scanbus(self, &nca, MAXMODBUS);
+	switch (cpu_hvers) {
+#if 0
+	case HPPA_BOARD_HP809:
+	case HPPA_BOARD_HP819:
+	case HPPA_BOARD_HP839:
+	case HPPA_BOARD_HP859:
+	case HPPA_BOARD_HP770_J200:
+	case HPPA_BOARD_HP770_J210:
+	case HPPA_BOARD_HP770_J210XC:
+	case HPPA_BOARD_HP780_J282:
+	case HPPA_BOARD_HP782_J2240:
+#endif
+	case HPPA_BOARD_HP785_C160:
+	case HPPA_BOARD_HP785_C180P:
+	case HPPA_BOARD_HP785_C180XP:
+	case HPPA_BOARD_HP785_C200:
+	case HPPA_BOARD_HP785_C230:
+	case HPPA_BOARD_HP785_C240:
+	case HPPA_BOARD_HP785_C360:
+		pdc_scanbus(self, &nca, MAXMODBUS, FP_ADDR);
+	break;
+	default:
+		pdc_scanbus(self, &nca, MAXMODBUS, 0);
+	break;
+	}
 }
 
 /*

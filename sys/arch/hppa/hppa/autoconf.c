@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2004/09/14 23:07:56 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.41 2004/09/15 20:11:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -631,10 +631,11 @@ struct pdc_sysmap_addrs pdc_addr PDC_ALIGNMENT;
 struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 
 void
-pdc_scanbus(self, ca, maxmod)
+pdc_scanbus(self, ca, maxmod, hpa)
 	struct device *self;
 	struct confargs *ca;
 	int maxmod;
+	hppa_hpa_t hpa;
 {
 	int i;
 
@@ -653,8 +654,13 @@ pdc_scanbus(self, ca, maxmod)
 		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
 		nca.ca_dp.dp_mod = i;
 		nca.ca_hpamask = ca->ca_hpamask;
+		nca.ca_naddrs = 0;
+		nca.ca_hpa = 0;
 
-		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
+		if (hpa) {
+			nca.ca_hpa = hpa + IOMOD_HPASIZE * i;
+			nca.ca_dp.dp_mod = i;
+		} else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
 		    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
 			nca.ca_hpa = pdc_memmap.hpa;
 		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSMAP,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.7 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: wax.c,v 1.8 2004/09/15 20:11:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -121,13 +121,15 @@ waxattach(parent, self, aux)
 	sc->sc_ic.gsc_base = sc->sc_regs;
 
 	ga.ga_ca = *ca;	/* clone from us */
-	ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
-	ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
-	ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
-	ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
-	ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
-	ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
-	ga.ga_dp.dp_mod = 0;
+	if (!strcmp(parent->dv_xname, "mainbus0")) {
+		ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+		ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+		ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+		ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+		ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+		ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+		ga.ga_dp.dp_mod = 0;
+	}
 
 	ga.ga_name = "gsc";
 	ga.ga_hpamask = WAX_IOMASK;
