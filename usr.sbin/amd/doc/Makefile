@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.1.1.1 1995/10/18 08:47:16 deraadt Exp $
+# $Id: Makefile,v 1.2 1998/07/12 05:06:27 todd Exp $
 #
 # Copyright (c) 1990 Jan-Simon Pendry
 # Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -38,17 +38,19 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:16 deraadt Exp $
+#	$Id: Makefile,v 1.2 1998/07/12 05:06:27 todd Exp $
 
 PROG = amdref
-SRCS = amdref.texinfo
+SRCS = ${.CURDIR}/amdref.texinfo
 
 ${PROG}: amdref.dvi
 
 amdref.dvi: ${SRCS}
-	-tex amdref.texinfo; tex amdref.texinfo
+	-tex ${.CURDIR}/amdref.texinfo; tex ${.CURDIR}/amdref.texinfo
 
 clean:
 	-rm -f amdref.aux amdref.cp amdref.cps amdref.dvi amdref.fn \
 	amdref.fns amdref.ky amdref.kys amdref.log amdref.pg amdref.pgs \
 	amdref.toc amdref.tp amdref.tps amdref.vr amdref.vrs
+
+.include <bsd.prog.mk>
