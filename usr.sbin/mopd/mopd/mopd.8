@@ -1,0 +1,113 @@
+.\"
+.\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Mats O Jansson.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" @(#) $Id: mopd.8,v 1.1.1.1 1996/09/21 13:49:17 maja Exp $
+.\"
+.Dd September 24, 1995
+.Dt MOPD 8
+.Sh NAME
+.Nm mopd
+.Nd MOP Loader Daemon
+.Sh SYNOPSIS
+.Nm mopd
+.Op Fl adf
+.Op Ar interface
+.Sh DESCRIPTION
+.Nm Mopd
+services MOP Load requests on the Ethernet connected to
+.Ar interface
+or all interfaces if
+.Sq Fl a
+is given.
+In a load request received by
+.Nm mopd
+a filename can be given. This is the normal case for e.g. terminal servers.
+If a filename isn't given
+.Nm mopd
+must know what image to load.
+.Pp
+Upon receiving a request, 
+.Nm mopd
+checks if the requested file exists in
+.Pa /tftpboot/mop , 
+the filename is normaly uppercase and with an extension of
+.Pa .SYS .
+If the filename isn't given, the ethernet address of the target is used as
+filename, e.g.
+.Pa 08002b09f4de.SYS
+and it might be a soft link to another file.
+.Pp
+.Nm Mopd
+supports two kinds of files. The first type that is check is if the file is
+in
+.Xr a.out 5
+format. If not, a couple of Digital's formats are checked.
+.Pp
+In normal operation, 
+.Nm mopd
+forks a copy of itself and runs in
+the background.  Anomalies and errors are reported via 
+.Xr syslog 3 .
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl a
+Listen on all the Ethernets attached to the system.
+If 
+.Sq Fl a 
+is omitted, an interface must be specified.
+.It Fl d
+Run in debug mode, with all the output to stdout. The process will run in
+the foreground.
+.It Fl f
+Run in the foreground. 
+.El
+.Sh BUGS
+.Xr a.out 5
+isn't supported yet non bsd implementations (otherOS).
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /tftpboot/mop
+.El
+.Sh SEE ALSO
+.Xr bpf 4 ,
+.Xr mopa.out 1 ,
+.Xr mopchk 1 ,
+.Xr mopprobe 1 ,
+.Xr moptrace 1 
+.Rs 
+DECnet Digital Network Architecture Phase IV, 
+.%R Maintenance Operations Functional Specification V3.0.0
+.%N AA-X436A-TK
+.Re
+.Rs 
+DECnet Digital Network Architecture, 
+.%R Maintenance Operations Protocol Functional Specification V4.0.0
+.%N EK-DNA11-FS-001
+.Re
+.Sh AUTHORS
+Mats O Jansson (moj@stacken.kth.se).

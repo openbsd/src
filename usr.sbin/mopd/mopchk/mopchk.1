@@ -1,0 +1,65 @@
+.\"
+.\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Mats O Jansson.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" @(#) $Id: mopchk.1,v 1.1.1.1 1996/09/21 13:49:17 maja Exp $
+.\"
+.Dd October 2, 1995
+.Dt MOPCHK 1
+.Sh NAME
+.Nm mopchk
+.Nd MOP Check Utility
+.Sh SYNOPSIS
+.Nm mopchk 
+.Op Fl a
+.Op Fl v
+.Op Ar filename
+.Sh DESCRIPTION
+.Nm Mopchk
+shows information about which devices are known, version of mopd suite or
+information about a MOP-image.
+.Pp
+If
+.Ar filename
+is given, information about the MOP-image is read from the header of the
+file.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl a
+Show all the Ethernets attached to the system.
+.It Fl v
+Show version of mopprobe.
+.El
+.Sh BUGS
+In some implementation the same interface can occure more than once.
+.Sh SEE ALSO
+.Xr mopa.out 1 ,
+.Xr mopprobe 1 ,
+.Xr moptrace 1 ,
+.Xr mopd 8
+.Sh AUTHORS
+Mats O Jansson (moj@stacken.kth.se).
