@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.5 2003/12/26 18:07:33 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.6 2003/12/26 19:28:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -120,9 +120,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	asp1 = p1->aspath;
 	asp2 = p2->aspath;
 	/* 1. check if prefix is eligible a.k.a reachable */
-	if (asp2->state == NEXTHOP_UNREACH)
+	if (asp2->state != NEXTHOP_REACH)
 		return (1);
-	if (asp1->state == NEXTHOP_UNREACH)
+	if (asp1->state != NEXTHOP_REACH)
 		return (-1);
 
 	/* 2. preference of prefix, bigger is better */
@@ -208,10 +208,13 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		/*
 		 * XXX send update with remove for pte->active and add for xp
 		 * but remember that xp may be ineligible or NULL.
+		 * do not send an update if the only available path
+		 * has an unreachable nexthop
 		 */
-		rde_send_kroute(xp, pte->active);
+		if (!(xp != NULL && xp->aspath->state != NEXTHOP_REACH))
+			rde_send_kroute(xp, pte->active);
 
-		if (xp == NULL || xp->aspath->state == NEXTHOP_UNREACH)
+		if (xp == NULL || xp->aspath->state != NEXTHOP_REACH)
 			pte->active = NULL;
 		else {
 			pte->active = xp;
