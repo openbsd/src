@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.5 2004/12/21 11:43:46 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.6 2004/12/28 14:50:38 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -23,12 +23,30 @@ sub mark_available_lib
 {
 }
 
+sub mark_bogus_lib
+{
+}
+
+package OpenBSD::PackingElement::FileBase;
+
+sub mark_bogus_lib
+{
+	my ($self, $pkgname) = @_;
+	my $fname = $self->fullname();
+	return unless $fname =~ m/\/lib[^\/]+\.so\.\d+\.\d+$/;
+	OpenBSD::SharedLibs::register_lib($fname, $pkgname);
+}
+
 package OpenBSD::PackingElement::Lib;
 
 sub mark_available_lib
 {
 	my ($self, $pkgname) = @_;
 	OpenBSD::SharedLibs::register_lib($self->fullname(), $pkgname);
+}
+
+sub mark_bogus_lib
+{
 }
 
 package OpenBSD::SharedLibs;
@@ -129,6 +147,19 @@ sub add_package_libs
 	}
 
 	$plist->visit('mark_available_lib', $pkgname);
+}
+
+sub add_bogus_package_libs
+{
+	my $pkgname = $_[0];
+	return if $done_plist->{$pkgname} == 2;
+	$done_plist->{$pkgname} = 2;
+	my $plist = OpenBSD::PackingList->from_installation($pkgname);
+	if (!defined $plist) {
+		Warn "Can't read plist for $pkgname\n";
+		return;
+	}
+	$plist->visit('mark_bogus_lib', $pkgname);
 }
 
 sub add_plist_libs

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.30 2004/12/26 15:01:06 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.31 2004/12/28 14:50:38 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -143,6 +143,9 @@ These include:
 .Bl -tag -width "updatedependsXX" -compact
 .It Ar arch
 architecture recorded in package may not match.
+.It Ar boguslibs
+not all shared libraries are marked with @lib.
+Inefficiently rescan package lists for non marked libraries.
 .It Ar conflicts
 package may conflict with other packages.
 .It Ar installed
