@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.12 2003/07/25 02:12:45 millert Exp $
+.\"	$OpenBSD: patch.1,v 1.13 2003/07/28 16:13:53 millert Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -481,14 +481,25 @@ indicates that there is unprocessed text in the patch file and that
 is attempting to intuit whether there is a patch in that text and, if so,
 what kind of patch it is.
 .Pp
+The
 .Nm
-will exit with a non-zero status if any reject files were created.
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It \&0
+Successful completion.
+.It \&1
+One or more lines were written to a reject file.
+.It \*[Gt]\&1
+An error occurred.
+.El
+.Pp
 When applying a set of patches in a loop it behooves you to check this
 exit status so you don't apply a later patch to a partially patched file.
 .Sh SEE ALSO
 .Xr diff 1
 .Sh AUTHORS
-.An Larry Wall Aq larry@wall.org
+.An Larry Wall
 with many other contributors.
 .Sh CAVEATS
 .Nm

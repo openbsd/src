@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.18 2003/07/25 02:12:45 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 2003/07/28 16:13:53 millert Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.18 2003/07/25 02:12:45 millert Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.19 2003/07/28 16:13:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -199,7 +199,7 @@ fatal(char *fmt, ...)
 	fprintf(stderr, "patch: **** ");
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	my_exit(1);
+	my_exit(2);
 }
 
 /*
@@ -216,7 +216,7 @@ pfatal(char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fprintf(stderr, ": %s\n", strerror(errnum));
-	my_exit(1);
+	my_exit(2);
 }
 
 /*
@@ -385,7 +385,7 @@ void
 version(void)
 {
 	fprintf(stderr, "Patch version 2.0-12u8-OpenBSD\n");
-	my_exit(0);
+	my_exit(EXIT_SUCCESS);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.27 2003/07/25 02:12:45 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.28 2003/07/28 16:13:53 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.27 2003/07/25 02:12:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.28 2003/07/28 16:13:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ static char	serrbuf[BUFSIZ];
 int
 main(int argc, char *argv[])
 {
-	int	hunk = 0, failed = 0, failtotal = 0, patch_seen = 0, i;
+	int	error = 0, hunk, failed, patch_seen = 0, i;
 	LINENUM	where, newwhere, fuzz, mymaxfuzz;
 	char	*tmpdir, *v;
 
@@ -310,7 +310,7 @@ main(int argc, char *argv[])
 		fclose(rejfp);
 		rejfp = NULL;
 		if (failed) {
-			failtotal += failed;
+			error = 1;
 			if (!*rejname) {
 				if (strlcpy(rejname, outname,
 				    sizeof(rejname)) >= sizeof(rejname))
@@ -331,9 +331,7 @@ main(int argc, char *argv[])
 		}
 		set_signals(1);
 	}
-	if (!patch_seen)
-		failtotal++;
-	my_exit(failtotal);
+	my_exit(error);
 	/* NOTREACHED */
 }
 
@@ -534,7 +532,7 @@ usage(void)
 "             [-Fmax-fuzz] [-o out-file] [-p[strip-count]] [-r rej-name]\n"
 "             [-V {numbered,existing,simple}] [-z backup-ext]\n"
 "             [origfile [patchfile]]\n");
-	my_exit(1);
+	my_exit(EXIT_SUCCESS);
 }
 
 /*
@@ -692,7 +690,7 @@ apply_hunk(LINENUM where)
 			say("oldchar = '%c', newchar = '%c'\n",
 			    pch_char(old), pch_char(new));
 #endif
-			my_exit(1);
+			my_exit(2);
 		} else if (pch_char(new) == '!') {
 			copy_till(where + old - 1);
 			if (R_do_defines) {
