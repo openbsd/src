@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.3 2000/11/15 17:27:18 aaron Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -662,7 +662,7 @@ vt100_selectattribute(edp, flags, fgcol, bgcol, attr, bkgdattr)
 	    !(edp->scrcapabilities & WSSCREEN_UNDERLINE)) {
 		flags &= ~WSATTR_UNDERLINE;
 		if (edp->scrcapabilities & WSSCREEN_WSCOLORS) {
-			bgcol = WSCOL_BROWN;
+			fgcol = WSCOL_CYAN;
 			flags &= ~WSATTR_UNDERLINE;
 			flags |= WSATTR_WSCOLORS;
 		} else {
