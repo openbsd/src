@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.15 2004/10/19 07:36:51 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.16 2004/12/02 19:30:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,10 +18,11 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.15 2004/10/19 07:36:51 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.16 2004/12/02 19:30:05 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -34,6 +35,7 @@ int		lineno;
 static char	*strbuf = NULL;
 static size_t	strbuf_sz = 1;
 static bool	dot_seen;
+static volatile sig_atomic_t	interactive = 0;
 
 static void	init_strbuf(void);
 static void	add_str(const char *);
@@ -223,9 +225,14 @@ add_str(const char *str)
 void
 abort_line(int sig)
 {
-	if (isatty(fileno(yyin))) {
+	const char str[] = "[\n]P\n";
+	int save_errno;
+
+	if (interactive) {
+		save_errno = errno;
 		YY_FLUSH_BUFFER;
-		printf("[\n]P\n");
+		write(STDOUT_FILENO, str, sizeof(str) - 1);
+		errno = save_errno;
 	}
 }
 
@@ -264,6 +271,7 @@ yywrap(void)
 	} else if (fileindex == sargc) {
 		fileindex++;
 		yyin = stdin;
+		interactive = isatty(fileno(yyin));
 		lineno = 1;
 		filename = "stdin";
 		return (0);
