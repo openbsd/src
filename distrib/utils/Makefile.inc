@@ -1,7 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.3 1995/11/21 21:17:19 gwr Exp $
+# $NetBSD: Makefile.inc,v 1.4 1996/03/27 04:48:28 scottr Exp $
 # utils one might want in a crunched binary
 
-BSDSRCDIR?=	/usr/src
 LDSTATIC=	-static
 
 install:	.NOTMAIN

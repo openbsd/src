@@ -7,6 +7,8 @@
 
 	This product includes software developed by Philip A. Nelson.
 
+	This product includes software developed by Matthias Pfaller.
+
 	This product includes software at the Helsinki University of
 	Technology.  
 
@@ -82,4 +84,23 @@ Some files have the following copyright:
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
+ */
+
+The IEEE floating point support in /usr/src/sys/arch/pc532/fpu has
+the following copyright:
+
+/* 
+ * IEEE floating point support for NS32081 and NS32381 fpus.
+ * Copyright (c) 1995 Ian Dall
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * IAN DALL ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.
+ * IAN DALL DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  */

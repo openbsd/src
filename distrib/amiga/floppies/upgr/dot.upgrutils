@@ -27,11 +27,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.upgrutils,v 1.1.1.1 1995/10/18 08:37:29 deraadt Exp $
+#	$OpenBSD: dot.upgrutils,v 1.2 1996/04/25 02:36:08 mickey Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell
-# prompt, by people installing NetBSD.
+# prompt, by people installing OpenBSD.
 
 Cleanup()
 {

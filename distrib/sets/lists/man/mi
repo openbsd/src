@@ -50,8 +50,10 @@
 ./usr/share/man/cat1/df.0
 ./usr/share/man/cat1/diff.0
 ./usr/share/man/cat1/diff3.0
+./usr/share/man/cat1/dig.0
 ./usr/share/man/cat1/dirname.0
 ./usr/share/man/cat1/dirs.0
+./usr/share/man/cat1/dnsquery.0
 ./usr/share/man/cat1/domainname.0
 ./usr/share/man/cat1/du.0
 ./usr/share/man/cat1/echo.0
@@ -88,6 +90,7 @@
 ./usr/share/man/cat1/head.0
 ./usr/share/man/cat1/hexdump.0
 ./usr/share/man/cat1/history.0
+./usr/share/man/cat1/host.0
 ./usr/share/man/cat1/hostname.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
@@ -107,6 +110,8 @@
 ./usr/share/man/cat1/lastcomm.0
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/leave.0
+./usr/share/man/cat1/less.0
+./usr/share/man/cat1/lesskey.0
 ./usr/share/man/cat1/limit.0
 ./usr/share/man/cat1/ln.0
 ./usr/share/man/cat1/locate.0
@@ -450,6 +455,9 @@
 ./usr/share/man/cat8/mtree.0
 ./usr/share/man/cat8/named-xfer.0
 ./usr/share/man/cat8/named.0
+./usr/share/man/cat8/named.reload.0
+./usr/share/man/cat8/named.restart.0
+./usr/share/man/cat8/ndc.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
 ./usr/share/man/cat8/newlfs.0

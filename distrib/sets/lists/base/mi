@@ -178,6 +178,7 @@
 ./usr/bin/gzip
 ./usr/bin/head
 ./usr/bin/hexdump
+./usr/bin/host
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -194,6 +195,8 @@
 ./usr/bin/lastcomm
 ./usr/bin/ldd
 ./usr/bin/leave
+./usr/bin/less
+./usr/bin/lesskey
 ./usr/bin/locate
 ./usr/bin/lock
 ./usr/bin/logger
@@ -444,7 +447,9 @@
 ./usr/sbin/chroot
 ./usr/sbin/cron
 ./usr/sbin/dev_mkdb
+./usr/sbin/dig
 ./usr/sbin/diskpart
+./usr/sbin/dnsquery
 ./usr/sbin/edquota
 ./usr/sbin/fsinfo
 ./usr/sbin/gettable
@@ -466,10 +471,9 @@
 ./usr/sbin/named
 ./usr/sbin/named.reload
 ./usr/sbin/named.restart
+./usr/sbin/ndc
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nslookup
-./usr/sbin/nsquery
-./usr/sbin/nstest
 ./usr/sbin/pac
 ./usr/sbin/portmap
 ./usr/sbin/pppd
@@ -921,6 +925,7 @@
 ./usr/share/zoneinfo/Asia/Istanbul
 ./usr/share/zoneinfo/Asia/Jakarta
 ./usr/share/zoneinfo/Asia/Jayapura
+./usr/share/zoneinfo/Asia/Jerusalem
 ./usr/share/zoneinfo/Asia/Kabul
 ./usr/share/zoneinfo/Asia/Kamchatka
 ./usr/share/zoneinfo/Asia/Karachi
@@ -1043,6 +1048,7 @@
 ./usr/share/zoneinfo/Etc/GMT-11
 ./usr/share/zoneinfo/Etc/GMT-12
 ./usr/share/zoneinfo/Etc/GMT-13
+./usr/share/zoneinfo/Etc/GMT-14
 ./usr/share/zoneinfo/Etc/GMT-2
 ./usr/share/zoneinfo/Etc/GMT-3
 ./usr/share/zoneinfo/Etc/GMT-4
@@ -1142,6 +1148,7 @@
 ./usr/share/zoneinfo/Mideast
 ./usr/share/zoneinfo/Mideast/Riyadh87
 ./usr/share/zoneinfo/Mideast/Riyadh88
+./usr/share/zoneinfo/Mideast/Riyadh89
 ./usr/share/zoneinfo/NZ
 ./usr/share/zoneinfo/NZ-CHAT
 ./usr/share/zoneinfo/Navajo

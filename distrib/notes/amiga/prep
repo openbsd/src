@@ -18,9 +18,12 @@ Preparing you hard disk with HDToolBox:
 
 		Back up the partitions you are keeping.
 
-	What you need to do is partition your drives; creating
-	at least root, swap and /usr partitions and possibly at least
-	one more for /local if you have the space.
+	What you need to do is partition your drives; creating at least
+	root, swap and /usr partitions and possibly at least one more for
+	/local if you have the space. (The root and swap partitions must
+	be on the same drive for your initial installation. You can use
+	other configurations after building a customized kernel once your
+	system is running.)
 
 	This should be done as the HDToolBox manual describes.  One thing
 	to note is that if you are not using a Commodore controller you
@@ -100,14 +103,14 @@ Transferring the miniroot filesystem:
 	single-user state processes are not using the swap partition.
 
 	On AmigaDOS, the command:
-		xstreamtodev --input=inst-11.fs -rdb-name=<swap partition>
+		xstreamtodev --input=inst-11.fs --rdb-name=<swap partition>
 	where <swap partition> is the name you gave to the NetBSD
 	partition to be used for swapping.  Use upgr-11.fs if you
 	are going to do an upgrade of an existing NetBSD system.  If
 	xstreamtodev is unable to determine the SCSI driver device
 	name or the unit number of the specified partition, you may
-	also need to include the option "-device=<driver.name>" and/or
-	"-unit=<SCSI unit number>".
+	also need to include the option "--device=<driver.name>" and/or
+	"--unit=<SCSI unit number>".
 
 	To transfer the miniroot using NetBSD, you should be booted up
 	in single user state on the current NetBSD system, or use the

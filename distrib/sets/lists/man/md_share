@@ -77,6 +77,7 @@
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
 ./usr/share/man/cat4/pc532/lpt.0
+./usr/share/man/cat4/pc532/mem.0
 ./usr/share/man/cat4/pc532/plip.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgsix.0
