@@ -44,7 +44,6 @@
    o  Clean Apache module architecture
    o  Integrates seamlessly into Apache through an Extended API (EAPI)
    o  Full Dynamic Shared Object (DSO) support
-   o  Support for the OpenSSL+RSAref US-situation
    o  Advanced pass-phrase handling for private keys
    o  X.509 certificate based authentication for both client and server
    o  X.509 certificate revocation list (CRL) support
@@ -58,6 +57,7 @@
    o  Fully integrated into the Apache 1.3 configuration mechanism
    o  Additional integration into the Apache Autoconf-style Interface (APACI)
    o  Assistance in X.509v3 certificate generation (both RSA and DSA)
+   o  Experimental support for external Crypto Devices (OpenSSL ENGINE)
 
   Disclaimer
   __________
@@ -125,10 +125,10 @@
   Compatibility
   _____________
 
-  This module was developed and tested with Netscape Communicator 4.0x, Lynx
-  2.7.x and cURL 5.x under FreeBSD 2.2.x and 3.1 as the clients only. But it
-  should work with other Navigator/Communicator variants, too. Even Internet
-  Explorer users should be able to use this software.
+  This module was developed and tested with Netscape Communicator 4.x,
+  Lynx 2.x and cURL 7.x under FreeBSD 2.2.x, 3.x and 4.x as the clients
+  only. But it should work with other Navigator/Communicator variants,
+  too. Even Internet Explorer users should be able to use this software.
 
   Resources
   _________
@@ -141,8 +141,8 @@
   _______
 
   Special thanks to The Apache Group and the NCSA for Apache, to the OpenSSL
-  project for the SSL/TLS toolkit and especially to Eric A. Young and Tim J.
-  Hudson for SSLeay on which OpenSSL is based.  And thanks also go to Ben
-  Laurie for the original Apache-SSL on which mod_ssl is based. Without the
-  effort of these people mod_ssl would not be possible.
+  project for the SSL/TLS toolkit and especially to Eric A.  Young and Tim J.
+  Hudson for SSLeay on which OpenSSL is based. And thanks also go to Ben
+  Laurie for the original Apache-SSL on which mod_ssl was originally based.
+  Without the effort of these people mod_ssl would not be possible.
 

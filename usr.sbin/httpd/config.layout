@@ -70,20 +70,40 @@
     proxycachedir: proxy
 </Layout>
 
-#   Apple's Mac OS X Server Layout
+#   Mac OS X Server (Rhapsody)
 <Layout Mac OS X Server>
     prefix:        /Local/Library/WebServer
-    exec_prefix:   /usr/local
+    exec_prefix:   /usr
     bindir:        $exec_prefix/bin
     sbindir:       $exec_prefix/sbin
-    libexecdir:    /Local/Library/Apache/Modules
+    libexecdir:    /System/Library/Apache/Modules
     mandir:        $exec_prefix/share/man
     sysconfdir:    $prefix/Configuration
     datadir:       $prefix
-    iconsdir:      /Local/Library/Apache/Icons
+    iconsdir:      /System/Library/Apache/Icons
     htdocsdir:     $datadir/Documents
     cgidir:        $datadir/CGI-Executables
-    includedir:    /Local/Library/Frameworks/Apache.framework/Versions/1.3/Headers
+    includedir:    /System/Library/Frameworks/Apache.framework/Versions/1.3/Headers
+    localstatedir: /var
+    runtimedir:    $prefix/Logs
+    logfiledir:    $prefix/Logs
+    proxycachedir: $prefix/ProxyCache
+</Layout>
+
+#   Mac OS Layout
+<Layout Darwin>
+    prefix:        /Library/WebServer
+    exec_prefix:   /usr
+    bindir:        $exec_prefix/bin
+    sbindir:       $exec_prefix/sbin
+    libexecdir:    /System/Library/Apache/Modules
+    mandir:        $exec_prefix/share/man
+    sysconfdir:    $prefix/Configuration
+    datadir:       $prefix
+    iconsdir:      /System/Library/Apache/Icons
+    htdocsdir:     $datadir/Documents
+    cgidir:        $datadir/CGI-Executables
+    includedir:    /System/Library/Frameworks/Apache.framework/Versions/1.3/Headers
     localstatedir: /var
     runtimedir:    $prefix/Logs
     logfiledir:    $prefix/Logs
@@ -190,6 +210,45 @@
     proxycachedir: $localstatedir/proxy
 </Layout>
 
+#   Solaris 8 Layout
+<Layout Solaris>
+    prefix:        /usr/apache
+    exec_prefix:   $prefix
+    bindir:        $exec_prefix/bin
+    sbindir:       $exec_prefix/bin
+    libexecdir:    $exec_prefix/libexec
+    mandir:        $exec_prefix/man
+    sysconfdir:    /etc/apache
+    datadir:       /var/apache
+    iconsdir:      $datadir/icons
+    htdocsdir:     $datadir/htdocs
+    cgidir:        $datadir/cgi-bin
+    includedir:    $exec_prefix/include
+    localstatedir: $prefix
+    runtimedir:    /var/run
+    logfiledir:    $datadir/logs
+    proxycachedir: $datadir/proxy
+</Layout>
+
+#   OpenBSD Layout
+<Layout OpenBSD>
+    prefix:        /var/www
+    exec_prefix:   /usr
+    bindir:        $exec_prefix/bin
+    sbindir:       $exec_prefix/sbin
+    libexecdir:    $exec_prefix/lib/apache/modules
+    mandir:        $exec_prefix/share/man
+    sysconfdir:    $prefix/conf
+    datadir:       $prefix
+    iconsdir:      $prefix/icons
+    htdocsdir:     $prefix/htdocs
+    cgidir:        $prefix/cgi-bin
+    includedir:    $exec_prefix/lib/apache/include
+    localstatedir: $prefix
+    runtimedir:    $prefix/logs
+    logfiledir:    $prefix/logs
+    proxycachedir: $prefix/proxy
+</Layout>
 #   OpenBSD apache path layout.
 <Layout OpenBSD>
     prefix:        /var/www

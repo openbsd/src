@@ -662,3 +662,105 @@ G5Sp9yIT0Ds5AXWJAEUCBRAuvsWtldOLUWZxqVUBAU4tAX9YK5N9ywRzvPVYrkEx
 CW0KCc2+7PSGKY0/YXE+XiDmure7yLTd2o9u5XB+vFLPL6Y=
 =Duku
 -----END PGP PUBLIC KEY BLOCK-----
+
+
+Type Bits/KeyID    Date       User ID
+pub  1024/28AA55C5 2000/03/02 Daniel Lopez Ridruejo <ridruejo@apache.org>
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: 2.6.2
+
+mQCNAzi+5mgAAAEEAKRyfbHaGoNuWwHVSa/5mRbWdhDTkR26z3Uwq4KdCZ2Wp+b0
+VF4Tfh6d4IoK2jXKBUlUfq+v7FYzSzYdPCmwB9L9cHlaU/ItfcWD2G7rIHyO/lGn
+VXK/BGUPoOhT2yeO8tf6oe81hmN5VzqqhG/SWEkwlJASRX3ApyanqCooqlXFAAUR
+tCtEYW5pZWwgTG9wZXogUmlkcnVlam8gPHJpZHJ1ZWpvQGFwYWNoZS5vcmc+iQCV
+AwUQOMAjHyanqCooqlXFAQF9swQAnVrUersSbO/SrT+nnwgRPL/xRMjGCQe93gUe
+JPcOOYU2be1tFGynJl842SIDPTHcJVg1hHReO93K4jvQKsbmT5zrzIlQ7hVB2u48
+WNcgsIKWIxcGaMp4+qsDOhN7Fh7vIEZdRRYhL7YcGKZ2WnXOZnGsKSD8VZenycwQ
+cAA4xkA=
+=3hIM
+-----END PGP PUBLIC KEY BLOCK-----  
+
+Type Bits KeyID      Created    Expires    Algorithm       Use
+sec+ 2048 0xC808A7BF 2000-03-09 ---------- RSA             Sign & Encrypt
+uid  rbb@apache.org   
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: PGPfreeware 5.0i for non-commercial use
+
+mQENAzjHNiMAAAEIAK+iTnKRHymuUYmRRe6JlH3oN4GfpakM6CITpS0aM/piJBX8
+MNgcCUK2tz8MSCqAlfF+2r0hGRMSQ+UpXqLXcJaCkGIvXtlKmxCcCX6R+LDCnzoa
+QvOar3+rKFFJyiauyV7VPucZZhFKesReG6o53uoOAd0jyzcV9TdpAIn4Xl8W617T
+L98GdODY9jK0zfgGo2bSgPpo2YswlDCGbYzRX6bfEGmAbP4t4UnP1ikVCE3NTIyz
+gT4kywMb5AT1Tm3FbwTx7rXc/nL20t22VTJMjyCxqPrOTs91PxdXyTAQUKY82x+U
+ZgW39f6aKrJHDEJtxOyym+B5NpYgeP5QQsgIp78ABRG0DnJiYkBhcGFjaGUub3Jn
+iQEVAwUQOMc2I3j+UELICKe/AQE4yAgAkNXkalNn8Xi+v3BFCmHLlB7PKlItzlS2
+PnMcTJPgzO8w+PyXc5lzS3dnqLEBoCwRazEZh8ncVbeBJz1LjQU67gvCBqyFl+3n
+r+Z8k6cJYw1AzSK9FLAgOEtG8IdE+jsPq39xORpu6Dhsuln++G1xaK6fePeAEgR3
+qH7gog/SFCa9QXQd85wsGRlQlmMwe/HDyoRd/iHg3X7mr4yB+zYkxYKDD+TKlSqq
+V23n0H4n3oTI10PfaB8LDYVuPiQvIRn08XKUv0Att1KPH6iJTIJ/KRbZyGb2J+1r
+RO1nBGw+qaOAw4wUQXOpJyXVUeanIt1tSe8Gczlf/uxJZdCNSpgeqIkAPwMFEDjH
+OY/9b4jGIdCnGxECdl8AnAvSwMQ2v2ryh2NLL4FgfVLCjb40AJoDu0jaEqUinZnp
+oMBmjFgtsDYp+w==
+=5ByY
+-----END PGP PUBLIC KEY BLOCK-----
+
+
+Type Bits KeyID      Created    Expires    Algorithm       Use
+sec+ 1024 0x00ADEBF5 2000-01-25 ---------- RSA             Sign & Encrypt 
+uid  Marc Slemko <marcs@znep.com>
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: PGPfreeware 5.0i for non-commercial use
+
+mQCNAziM6n8AAAEEAODTLW2h2homp9NCjlsNdQQQACaUgrEm0sO0Lr1BVSp35fFQ
+a6XtrIxQXwcvBqM0py1ea2zcmYqnv6vY+7i6sBnxiNNugH3ShBnOYeCaO6AzQNaN
+2OvLkB7+1AoDmbU4a/+APtLrhzYzUj4DmwSmr7wTwdO06PsdM1Qv/g4Arev1AAUR
+tBxNYXJjIFNsZW1rbyA8bWFyY3NAem5lcC5jb20+iQCVAwUQOIzqf1Qv/g4Arev1
+AQFTZgP/Q+/pcNsCncKr4x39f/N5zXine0zQaKY46ek+PCUrhDm5N8cFTyijE7V0
+huRDVENAFkwtznz/H7BN0vtMRlvUQJOPFa2UaN8zIbcMIzSbiNEx5nvfFeT/Gr52
+GtnrQ+BvczfaauJ0Zw4p5uq6na/+0iyEf17d4qrhIBftlO3Ti+M=
+=+laC
+-----END PGP PUBLIC KEY BLOCK-----
+
+
+Type bits      keyID      Date       User ID
+RSA  1024      0x62C48B29 1996/01/22 *** DEFAULT SIGNING KEY ***
+                                     Ask Bjoern Hansen <ask@netcetera.dk>
+                                     Ask Bjoern Hansen <ask@plys.net>
+                                     Ask Bjoern Hansen <ask@perl.org>
+                                     Ask Bjoern Hansen <ask@apache.org>
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: PGP 6.5.1
+
+mQCNAjEC6XcAAAEEALdrW5rH+2XOKX2zAPQmgomvHGADJedG4Dxf3Ci3HpGmKazV
+Uoo/f7Vf21ldvBBYC2CMpJU5uiMstNdrJ8Rx0KDBH2pLXsfE4XvVm8cGLbHcJycj
+cZsYl4yppOufL/76kmpP7q0Jni/pXrkYg2mLG3lCN3JoZqX9tvkoKP1ixIspAAUR
+tCRBc2sgQmpvZXJuIEhhbnNlbiA8YXNrQG5ldGNldGVyYS5kaz6JAJUDBRA1eczx
++Sgo/WLEiykBAZIjA/4+uCJi5WD0p3EFzOnmkZRxf8egjQlFdBDVR7sixVToZCze
+oZZ9EVianFbwv8XU0McA7FLSUala0FIxRtmOs8/yN96rhBqJnYfLxu3b/ZRpBf4Z
+UExXQbussUX7AsPUmFim9Xp8mTy7xDEpcfiBnGY9Dtx+nmSvyLO38W5VvKP1qYkA
+PwMFEDV7CdYJPTjw/8ByixECHSsAoKUySg0ht56Rjsct6ViXjWfVEF1xAKCldK5x
+LXMjefgsiuW3n5seRVogQokARgQQEQIABgUCNgEYdgAKCRBoqAGJariS5S72AJ9N
+JsXpts88tCq7uZiirWlL54vTUwCg4A2urEUCEPuSz5deMyMX4lpjN5GJAJUDBRA5
+Ix6ndTAZgHu8twkBAZDHA/0fiaJSxGAxIdgYQY1KqYJGWg/E7Gwn87kZyiRHKUaJ
+gP4IA4PVnh0rMtTTo+CWyzcqMPjRAZNDW4ECWymrqqNrYgqy/NrcN4h7LZC5wmnW
+hXF3HdgAgxIn7m2YQOLluNqIrhVKga5G9/xytZLsF15qZbvjyX4mqToOsRqAtUBI
+ALQgQXNrIEJqb2VybiBIYW5zZW4gPGFza0BwbHlzLm5ldD6JAJUDBRAz6gMS+Sgo
+/WLEiykBAd9fA/9YdBn26x/7DE0by/Zzelfxu8o4AgZOV0AuWqZJebXKjeFmkJ0B
+lZRaC+NUcvpXOcANP6berJknvAMjNfTD1wi89XUVlbisDSW3UMR7Op8EpYjqLTo5
+u+KmyS+ehhQjA3somcJc8fBdnGJZ17cKWEbzJK+oJBvnzpjtgtvw6/oH/okAlQMF
+EDV5zQX5KCj9YsSLKQEBbk0EAJ+CwSbR4QQ2pgyXV7U4P4+1xSXa8U6IuI7AX9Fm
+LNlDu7a8DnJt8trZxjBcEMZcfoSNmbjIzMotzl0vvtDpqYgKfJ5Dd3eUTRCDYYS7
+8DoYcuB0cunBoGijkHS/2IkucAZGgcnNjPdhm7EnDJ/4F5VR9ZByqXiAIhZ746bs
+Z+nrtCBBc2sgQmpvZXJuIEhhbnNlbiA8YXNrQHBlcmwub3JnPokAlQMFEDkjD+v5
+KCj9YsSLKQEBEK0EAJBYAopnB9/dun1G0t+TKWVwGQUi56sWd5bwLypHklf/fy2V
+QPjCz9QoI0L/jAguBrqCfwtlIHRHMwzvvNWLRtuA8oiTDl4w2gO2vjy7V3Y4qneA
+3U5CYRT/ekvK42d+aHA6yMeHSPlNEQg09Idmee5Lub7kV8ejjtRZ8s3jcZ0utCJB
+c2sgQmpvZXJuIEhhbnNlbiA8YXNrQGFwYWNoZS5vcmc+iQCVAwUQOSMQB/koKP1i
+xIspAQGtCwP9FFWCZN2540lomDAY6tXt7Q3AhP/CkAec5i/lsv21sUl09jlZQnr/
+Kc8hL1lPOuAlLFGqso3zL7KMVlrOIng+R/E5fcYpE60QhhIoHdvlxFKTJ5GZq7DG
+stCrR34q2A4OWtoC7tF0Uu+Ew2ontVgvqsrgq4qt0h3yh/kABp/8mRw=
+=GGxP
+-----END PGP PUBLIC KEY BLOCK-----
