@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.47 2003/05/23 03:29:00 itojun Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.48 2003/05/26 05:01:55 itojun Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ struct tcpcb {
 	tcp_seq	rcv_nxt;		/* receive next */
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
-#ifdef TCP_SACK
+#if 1 /*def TCP_SACK*/
 	tcp_seq rcv_laststart;		/* start of last segment recd. */
 	tcp_seq rcv_lastend;		/* end of ... */
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
