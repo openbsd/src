@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.3 1996/06/09 18:42:46 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.4 1996/06/10 00:43:56 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -350,6 +351,12 @@ acdclose(dev, flag, fmt)
 
 		atapi_prevent(acd->ad_link, PR_ALLOW);
 		acd->ad_link->flags &= ~ADEV_OPEN;
+
+		if (acd->ad_link->flags & ADEV_EJECTING) {
+			atapi_start_stop(acd->ad_link, SSS_STOP|SSS_LOEJ, 0);
+
+			acd->ad_link->flags &= ~ADEV_EJECTING;
+		}
 	}
 
 	acdunlock(acd);
@@ -873,9 +880,14 @@ acdioctl(dev, cmd, addr, flag, p)
 	case CDIOCSTOP:
 		return atapi_start_stop(acd->ad_link, SSS_STOP, 0);
 
-	case CDIOCEJECT:
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
+		/* FALLTHROUGH */
+	case CDIOCEJECT:	/* FALLTHROUGH */
 	case DIOCEJECT:
-		return atapi_start_stop(acd->ad_link, SSS_STOP|SSS_LOEJ, 0);
+		acd->ad_link->flags |= ADEV_EJECTING;
+		return 0;
 
 	case CDIOCALLOW:
 		return atapi_prevent(acd->ad_link, PR_ALLOW);

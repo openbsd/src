@@ -140,17 +140,19 @@ struct scsi_link {
 	u_int8_t adapter_target;	/* what are we on the scsi bus */
 	u_int8_t openings;		/* available operations */
 	u_int8_t active;		/* operations in progress */
-	u_int8_t flags;			/* flags that all devices have */
-#define	SDEV_REMOVABLE	 	0x01	/* media is removable */
-#define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
-#define	SDEV_WAITING	 	0x04	/* a process is waiting for this */
-#define	SDEV_OPEN	 	0x08	/* at least 1 open session */
-#define	SDEV_DBX		0xf0	/* debuging flags (scsi_debug.h) */
+	u_int16_t flags;		/* flags that all devices have */
+#define	SDEV_REMOVABLE	 	0x0001	/* media is removable */
+#define	SDEV_MEDIA_LOADED 	0x0002	/* device figures are still valid */
+#define	SDEV_WAITING	 	0x0004	/* a process is waiting for this */
+#define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
+#define	SDEV_DBX		0x00f0	/* debuging flags (scsi_debug.h) */
+#define SDEV_EJECTING		0x0100	/* eject on device close */
 	u_int8_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x01	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
+#define SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */

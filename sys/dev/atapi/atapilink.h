@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapilink.h,v 1.2 1996/06/09 08:59:50 downsj Exp $	*/
+/*	$OpenBSD: atapilink.h,v 1.3 1996/06/10 00:43:57 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -140,14 +140,15 @@ struct at_dev_link {
 	struct	atapi_identify id;  
 	struct	bus_link *bus;
 	u_int16_t flags;
-#define ADEV_REMOVABLE		0x001	/* media is removable */
-#define ADEV_MEDIA_LOADED	0x002	/* device figures are still valid */  
-#define ADEV_WAITING		0x004	/* a process is waiting for this */
-#define ADEV_OPEN		0x008	/* at least 1 open session */
-#define ACAP_DRQ_MPROC		0x000	/* microprocessor DRQ */
-#define ACAP_DRQ_INTR		0x100	/* interrupt DRQ */
-#define ACAP_DRQ_ACCEL		0x200	/* accelerated DRQ */
-#define ACAP_LEN 		0x400	/* 16 bit commands */
+#define ADEV_REMOVABLE		0x0001	/* media is removable */
+#define ADEV_MEDIA_LOADED	0x0002	/* device figures are still valid */  
+#define ADEV_WAITING		0x0004	/* a process is waiting for this */
+#define ADEV_OPEN		0x0008	/* at least 1 open session */
+#define ADEV_EJECTING		0x0010	/* eject on close */
+#define ACAP_DRQ_MPROC		0x0000	/* microprocessor DRQ */
+#define ACAP_DRQ_INTR		0x0100	/* interrupt DRQ */
+#define ACAP_DRQ_ACCEL		0x0200	/* accelerated DRQ */
+#define ACAP_LEN 		0x0400	/* 16 bit commands */
 	void	(*start)();		/* device start routine */
 	int	(*done)();		/* device done routine */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.12 1996/06/01 09:35:03 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.13 1996/06/10 00:44:00 downsj Exp $	*/
 /*	$NetBSD: sd.c,v 1.100 1996/05/14 10:38:47 leo Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -397,6 +398,12 @@ sdclose(dev, flag, fmt, p)
 		scsi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
+
+		if (sd->sc_link->flags & SDEV_EJECTING) {
+		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0);
+
+		    sd->sc_link->flags &= ~SDEV_EJECTING;
+		}
 	}
 
 	sdunlock(sd);
@@ -730,9 +737,15 @@ sdioctl(dev, cmd, addr, flag, p)
 		return scsi_prevent(sd->sc_link,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
 
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
+		/* FALLTHROUGH */
 	case DIOCEJECT:
-		return ((sd->sc_link->flags & SDEV_REMOVABLE) == 0 ? ENOTTY :
-		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
+		if ((sd->sc_link->flags & SDEV_REMOVABLE) == 0)
+			return ENOTTY;
+		sd->sc_link->flags |= SDEV_EJECTING;
+		return 0;
 
 	default:
 		if (SDPART(dev) != RAW_PART)
@@ -838,6 +851,9 @@ sd_get_parms(sd, flags)
 	} scsi_sense;
 	u_long sectors;
 
+	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) != 0)
+		goto fake_it;
+
 	/*
 	 * do a "mode sense page 4"
 	 */
@@ -845,28 +861,14 @@ sd_get_parms(sd, flags)
 	scsi_cmd.opcode = MODE_SENSE;
 	scsi_cmd.page = 4;
 	scsi_cmd.length = 0x20;
+
 	/*
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
 	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)&scsi_sense, sizeof(scsi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN) != 0) {
-		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
-	fake_it:
-		printf("; using fictitious geometry\n");
-		/*
-		 * use adaptec standard fictitious geometry
-		 * this depends on which controller (e.g. 1542C is
-		 * different. but we have to put SOMETHING here..)
-		 */
-		sectors = scsi_size(sd->sc_link, flags);
-		dp->heads = 64;
-		dp->sectors = 32;
-		dp->cyls = sectors / (64 * 32);
-		dp->blksize = 512;
-		dp->disksize = sectors;
-	} else {
+	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN) == 0) {
 		SC_DEBUG(sd->sc_link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsi_sense.pages.rigid_geometry.ncyl),
@@ -898,8 +900,26 @@ sd_get_parms(sd, flags)
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
+		return 0;
 	}
+	else
+		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
 
+
+fake_it:
+	/*
+	 * use adaptec standard fictitious geometry
+	 * this depends on which controller (e.g. 1542C is
+	 * different. but we have to put SOMETHING here..)
+	 */
+	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0)
+		printf("; using fictitious geometry\n");
+	sectors = scsi_size(sd->sc_link, flags);
+	dp->heads = 64;
+	dp->sectors = 32;
+	dp->cyls = sectors / (64 * 32);
+	dp->blksize = 512;
+	dp->disksize = sectors;
 	return 0;
 }
 

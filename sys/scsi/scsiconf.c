@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.10 1996/05/06 11:33:06 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.11 1996/06/10 00:43:59 downsj Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -347,6 +347,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
+	{{T_DIRECT, T_REMOV,
+	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOMODESENSE},
+	{{T_DIRECT, T_REMOV,
+	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
 
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */

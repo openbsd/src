@@ -53,6 +53,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -416,6 +417,12 @@ cdclose(dev, flag, fmt, p)
 		scsi_prevent(cd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		cd->sc_link->flags &= ~SDEV_OPEN;
+
+		if (cd->sc_link->flags & SDEV_EJECTING) {
+			scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
+
+			cd->sc_link->flags &= ~SDEV_EJECTING;
+		}
 	}
 
 	cdunlock(cd);
@@ -929,9 +936,14 @@ cdioctl(dev, cmd, addr, flag, p)
 		return scsi_start(cd->sc_link, SSS_START, 0);
 	case CDIOCSTOP:
 		return scsi_start(cd->sc_link, SSS_STOP, 0);
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
+		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case DIOCEJECT:
-		return scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
+		cd->sc_link->flags |= SDEV_EJECTING;
+		return 0;
 	case CDIOCALLOW:
 		return scsi_prevent(cd->sc_link, PR_ALLOW, 0);
 	case CDIOCPREVENT:

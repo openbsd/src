@@ -11,10 +11,10 @@
  * the following DEBUG bits are defined to exist in the flags word of
  * the scsi_link structure.
  */
-#define	SDEV_DB1		0x10	/* scsi commands, errors, data	*/ 
-#define	SDEV_DB2		0x20	/* routine flow tracking */
-#define	SDEV_DB3		0x40	/* internal to routine flows	*/
-#define	SDEV_DB4		0x80	/* level 4 debugging for this dev */
+#define	SDEV_DB1		0x0010	/* scsi commands, errors, data	*/ 
+#define	SDEV_DB2		0x0020	/* routine flow tracking */
+#define	SDEV_DB3		0x0040	/* internal to routine flows	*/
+#define	SDEV_DB4		0x0080	/* level 4 debugging for this dev */
 
 /* target and LUN we want to debug */
 #define	DEBUGTARGET	-1 /* -1 = disable */
