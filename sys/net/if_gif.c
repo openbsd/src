@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.12 2001/02/06 03:26:10 mickey Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.13 2001/02/20 10:33:28 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ gif_output(ifp, m, dst, rt)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m0.m_next = m;
 		m0.m_len = 4;
