@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.37 2002/04/01 20:38:36 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.38 2002/04/01 20:42:18 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.37 2002/04/01 20:38:36 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.38 2002/04/01 20:42:18 markus Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1585,15 +1585,15 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	if (!sc->wi_icv_flag) {
 		sc->wi_icv = arc4random();
 		sc->wi_icv_flag++;
-	} else if (sc->wi_icv >= 0x03ff00 &&
-            (sc->wi_icv & 0xf8ff00) == 0x00ff00) {
-		/*
-		 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
-		 * (B, 255, N) with 3 <= B < 8
-		 */
-                sc->wi_icv += 0x000100;
         } else
 		sc->wi_icv++;
+	/*
+	 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
+	 * (B, 255, N) with 3 <= B < 8
+	 */
+	if (sc->wi_icv >= 0x03ff00 &&
+            (sc->wi_icv & 0xf8ff00) == 0x00ff00)
+                sc->wi_icv += 0x000100;
 
 	/* prepend 24bit IV to tx key, byte order does not matter */
 	key[0] = sc->wi_icv >> 16;
