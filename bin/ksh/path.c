@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.6 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.7 2000/03/01 23:10:58 todd Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -10,64 +10,6 @@
  *	a path name.
  *
  *	Larry Bouzane (larry@cs.mun.ca)
- */
-
-/*
- * $Log: path.c,v $
- * Revision 1.6  1999/06/15 01:18:35  millert
- * patches from pdksh 5.2.13.11
- *
- * Revision 1.5  1998/10/29 04:09:21  millert
- * Bug fixes from pdksh-unstable-5.2.13.4, including "official" versions of
- * some that we had already fixed locally.
- *  o typeset -f FUNC doesn't print follows command (and expression) substitutions.
- *  o when re-allocating memory, too much may be copied from old memory.
- *  o set -o printed some options sans names.
- *  o emacs mode: <esc>. in very fist command causes core dump.
- *  o pdksh dumps core after a cd command.
- *  o typeset -i reports on array elements that have no value
- *    (at&t ksh reports on array base name - no index).
- *  o ulimit -ctn unlimittttted kills shell (resource exceeded).
- *  o ". /dev/null" says access denied.
- *  o flag field in aliases incorrectly changed (all flags set instead of
- *    clearing ISSET) in exec.c(flushcom).
- *  o ${#array[*]} prints largest index instead of number of (set) elements
- *    in an array (ksh88 does the former).
- *  o sys_siglist[] doesn't always have NSIG non-null entries...
- *
- * Revision 1.4  1998/06/25 19:02:14  millert
- * pdksh-5.2.13 + local changes
- *
- * Revision 1.2  1994/05/19  18:32:40  michael
- * Merge complete, stdio replaced, various fixes. (pre autoconf)
- *
- * Revision 1.1  1994/04/06  13:14:03  michael
- * Initial revision
- *
- * Revision 4.2  1990/12/06  18:05:24  larry
- * Updated test code to reflect parameter change.
- * Fixed problem with /a/./.dir being simplified to /a and not /a/.dir due
- * to *(cur+2) == *f test instead of the correct cur+2 == f
- *
- * Revision 4.1  90/10/29  14:42:19  larry
- * base MUN version
- * 
- * Revision 3.1.0.4  89/02/16  20:28:36  larry
- * Forgot to set *pathlist to NULL when last changed make_path().
- * 
- * Revision 3.1.0.3  89/02/13  20:29:55  larry
- * Fixed up cd so that it knew when a node from CDPATH was used and would
- * print a message only when really necessary.
- * 
- * Revision 3.1.0.2  89/02/13  17:51:22  larry
- * Merged with Eric Gisin's version.
- * 
- * Revision 3.1.0.1  89/02/13  17:50:58  larry
- * *** empty log message ***
- * 
- * Revision 3.1  89/02/13  17:49:28  larry
- * *** empty log message ***
- * 
  */
 
 #ifdef S_ISLNK
