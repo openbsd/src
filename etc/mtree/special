@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.14 1997/07/26 19:25:28 millert Exp $
+#	$OpenBSD: special,v 1.15 1997/09/29 16:37:20 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -126,6 +126,7 @@ log		type=dir mode=0755 uname=root gname=wheel
 authlog		type=file mode=0640 uname=root gname=wheel
 secure		type=file mode=0600 uname=root gname=wheel
 wtmp		type=file mode=0644 uname=root gname=wheel
+lastlog		type=file mode=0644 uname=root gname=wheel
 ..	#var/log
 mail		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/mail
