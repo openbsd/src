@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_fcntl.h,v 1.2 1996/08/02 20:35:06 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_fcntl.h,v 1.3 1997/12/20 16:04:08 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_fcntl.h,v 1.2 1994/10/26 02:52:54 cgd Exp $	*/
 
 /*
@@ -48,14 +48,15 @@
 #define IBCS2_O_EXCL		0x0400
 #define IBCS2_O_NOCTTY		0x0800
 
-#define IBCS2_F_DUPFD         0
-#define IBCS2_F_GETFD         1
-#define IBCS2_F_SETFD         2
-#define IBCS2_F_GETFL         3
-#define IBCS2_F_SETFL         4
-#define IBCS2_F_GETLK         5
-#define IBCS2_F_SETLK         6
-#define IBCS2_F_SETLKW        7
+#define IBCS2_F_DUPFD		0
+#define IBCS2_F_GETFD		1
+#define IBCS2_F_SETFD		2
+#define IBCS2_F_GETFL		3
+#define IBCS2_F_SETFL		4
+#define IBCS2_F_GETLK		5
+#define IBCS2_F_SETLK		6
+#define IBCS2_F_SETLKW		7
+#define IBCS2_F_FREESP		11
 
 struct ibcs2_flock {
         short   	l_type;
