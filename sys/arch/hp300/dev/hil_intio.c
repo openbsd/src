@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_intio.c,v 1.2 2005/01/24 18:18:22 miod Exp $	*/
+/*	$OpenBSD: hil_intio.c,v 1.3 2005/02/20 23:05:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -74,6 +74,7 @@ hil_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hil_softc *sc = (void *)self;
 	int hil_is_console;
+	extern struct consdev wsdisplay_cons;
 
 	sc->sc_bst = HP300_BUS_TAG(HP300_BUS_INTIO, 0);
 	if (bus_space_map(sc->sc_bst, HILADDR - INTIOBASE,
@@ -85,14 +86,15 @@ hil_intio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Check that the configured console device is a wsdisplay.
 	 */
-	if (cdevsw[major(cn_tab->cn_dev)].d_open == wsdisplayopen) {
+	if (cn_tab == &wsdisplay_cons) {
 		/*
 		 * For now, HIL is always considered as a valid console
 		 * keyboard, as we do not attach the Domain keyboard yet.
 		 */
 		hil_is_console = 1;
-	} else
+	} else {
 		hil_is_console = 0;
+	}
 
 	hil_attach(sc, hil_is_console);
 
