@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.24 2003/11/26 21:17:17 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.25 2003/12/13 20:10:38 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2139,11 +2139,13 @@ option was added in
 .Nm openssl dsa
 .Bk -words
 .Oo
-.Fl des | des3 | aes128 | aes192 |
-.Fl aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Oc
 .Op Fl modulus
 .Op Fl noout
+.Op Fl pubin
+.Op Fl pubout
 .Op Fl text
 .Op Fl engine Ar id
 .Op Fl in Ar filename
@@ -2152,8 +2154,6 @@ option was added in
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
-.Op Fl pubin
-.Op Fl pubout
 .Ek
 .Pp
 The
@@ -2172,11 +2172,11 @@ command.
 The options are as follows:
 .Bl -tag -width "XXXX"
 .It Xo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Xc
-These options encrypt the private key with the DES, triple DES, or the
-AES ciphers, respectively, before outputting it.
+These options encrypt the private key with the AES, DES, or the triple DES
+ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
 If none of these options is specified, the key is written in plain text.
 This means that using the
@@ -2209,7 +2209,7 @@ argument with a private key uses an ASN1 DER encoded form of an ASN.1
 SEQUENCE consisting of the values of version
 .Pq currently zero ,
 P, Q, G,
-the public and private key components, respectively, as ASN.1 INTEGERs.
+and the public and private key components, respectively, as ASN.1 INTEGERs.
 When used with a public key it uses a
 .Em SubjectPublicKeyInfo
 structure: it is an error if the key is not DSA.
@@ -2217,7 +2217,7 @@ structure: it is an error if the key is not DSA.
 The
 .Ar PEM
 form is the default format:
-It consists of the DER format base64
+it consists of the DER format base64
 encoded with additional header and footer lines.
 In the case of a private key, PKCS#8 format is also accepted.
 .It Fl modulus
@@ -2303,16 +2303,16 @@ To just output the public part of a private key:
 .Sh DSAPARAM
 .Nm openssl dsaparam
 .Bk -words
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl C
+.Op Fl genkey
 .Op Fl noout
 .Op Fl text
-.Op Fl C
-.Op Fl rand Ar file ...
-.Op Fl genkey
 .Op Fl engine Ar id
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
+.Op Fl rand Ar file ...
 .Op Ar numbits
 .Ek
 .Pp
@@ -2322,6 +2322,29 @@ command is used to manipulate or generate DSA parameter files.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
+.It Fl C
+This option converts the parameters into C code.
+The parameters can then be loaded by calling the
+.Cm get_dsa Ns Ar XXX Ns Li ()
+function.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm dsaparam
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl genkey
+This option will generate a DSA either using the specified or generated
+parameters.
+.It Fl in Ar filename
+This specifies the input
+.Ar filename
+to read parameters from, or standard input if this option is not specified.
+If the
+.Ar numbits
+parameter is included, then this option will be ignored.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
 The
@@ -2334,17 +2357,15 @@ The
 form is the default format:
 it consists of the DER format base64 encoded with additional header
 and footer lines.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar filename
-This specifies the input
-.Ar filename
-to read parameters from, or standard input if this option is not specified.
-If the
-.Ar numbits
-parameter is included, then this option will be ignored.
+.It Fl noout
+This option inhibits the output of the encoded version of the parameters.
+.It Ar numbits
+This option specifies that a parameter set should be generated of size
+.Ar numbits .
+It must be the last option.
+If this option is included, then the input file
+.Pq if any
+is ignored.
 .It Fl out Ar filename
 This specifies the output
 .Ar filename
@@ -2353,39 +2374,18 @@ Standard output is used if this option is not present.
 The output filename should
 .Em not
 be the same as the input filename.
-.It Fl noout
-This option inhibits the output of the encoded version of the parameters.
-.It Fl text
-This option prints out the DSA parameters in human readable form.
-.It Fl C
-This option converts the parameters into C code.
-The parameters can then be loaded by calling the
-.Cm get_dsa Ns Ar XXX Ns Li ()
-function.
-.It Fl genkey
-This option will generate a DSA either using the specified or generated
-parameters.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
 .It Fl rand Ar file ...
 A file or files containing random data used to seed the random number
 generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified, separated by a
 .Sq \&: .
-.It Ar numbits
-This option specifies that a parameter set should be generated of size
-.Ar numbits .
-It must be the last option.
-If this option is included, then the input file
-.Pq if any
-is ignored.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm dsaparam
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
+.It Fl text
+This option prints out the DSA parameters in human readable form.
 .El
 .Sh DSAPARAM NOTES
 .Ar PEM
