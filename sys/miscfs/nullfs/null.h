@@ -1,4 +1,4 @@
-/*	$OpenBSD: null.h,v 1.7 1997/11/06 05:58:39 csapuntz Exp $	*/
+/*	$OpenBSD: null.h,v 1.8 1998/03/01 17:01:24 niklas Exp $	*/
 /*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
 
 /*
@@ -65,12 +65,15 @@ struct null_node {
 #endif
 };
 
-/* XXX - __builtin_return_address() broken on alpha due to gcc bug */
-#if defined(__alpha__) || !defined(__GNUC__) || __GNUC__ < 2 || \
-	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#if !defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #define RETURN_PC(frameno) (void *)0
 #else
+/* Some architectures can just get the current frame's return address */
+#if defined(alpha) || defined(arc)
+#define RETURN_PC(frameno) (frameno ? 0 : __builtin_return_address(frameno))
+#else
 #define RETURN_PC(frameno) __builtin_return_address(frameno)
+#endif
 #endif
 
 #define NULL_WANTED	0x01
