@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.536 2002/07/31 01:56:20 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.537 2002/08/15 23:24:45 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1871,7 +1871,6 @@
 #define	PCI_PRODUCT_PCTEL_MICROMODEM56	0x7879		/* HSP MicroModem 56 */
 
 /* Ross -> Pequr -> ServerWorks -> Broadcom products */
-#define	PCI_PRODUCT_RCC_ROSB4	0x0200		/* ROSB4 SouthBridge */
 #define	PCI_PRODUCT_RCC_XX5	0x0005		/* PCIHB5 */
 #define	PCI_PRODUCT_RCC_CIOB20	0x0006		/* I/O Bridge */
 #define	PCI_PRODUCT_RCC_XX7	0x0007		/* PCIHB7 */
@@ -1879,9 +1878,16 @@
 #define	PCI_PRODUCT_RCC_CNB20LE	0x0009		/* CNB20LE Host */
 #define	PCI_PRODUCT_RCC_CIOB30	0x0010		/* CIOB30 */
 #define	PCI_PRODUCT_RCC_CMIC_HE	0x0011		/* CMIC_HE Host */
+#define	PCI_PRODUCT_RCC_CMIC_LE	0x0012		/* CMIC_LE Host */
+#define	PCI_PRODUCT_RCC_CMIC_SL	0x0017		/* CMIC_SL Host */
+#define	PCI_PRODUCT_RCC_CIOBX2	0x0101		/* CIOBX2 */
+#define	PCI_PRODUCT_RCC_ROSB4	0x0200		/* ROSB4 SouthBridge */
+#define	PCI_PRODUCT_RCC_CSB5	0x0201		/* CSB5 SouthBridge */
 #define	PCI_PRODUCT_RCC_OSB4_IDE	0x0211		/* OSB4 IDE */
 #define	PCI_PRODUCT_RCC_CSB5_IDE	0x0212		/* CSB5 IDE */
-#define	PCI_PRODUCT_RCC_USB	0x0220		/* USB */
+#define	PCI_PRODUCT_RCC_USB	0x0220		/* OSB4/CSB5 USB */
+#define	PCI_PRODUCT_RCC_CSB5BRIDGE	0x0225		/* CSB5 PCI Bridge */
+#define	PCI_PRODUCT_RCC_unknown	0x0230		/* unknown SouthBridge */
 
 /* Picopower */
 #define	PCI_PRODUCT_PICOPOWER_PT80C826	0x0000		/* PT80C826 */

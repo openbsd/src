@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.536 2002/07/31 01:56:20 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.537 2002/08/15 23:24:45 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4043,10 +4043,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HSP MicroModem 56",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4,
-	    "ROSB4 SouthBridge",
-	},
-	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX5,
 	    "PCIHB5",
 	},
@@ -4075,6 +4071,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CMIC_HE Host",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE,
+	    "CMIC_LE Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_SL,
+	    "CMIC_SL Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOBX2,
+	    "CIOBX2",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4,
+	    "ROSB4 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5,
+	    "CSB5 SouthBridge",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4_IDE,
 	    "OSB4 IDE",
 	},
@@ -4084,7 +4100,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_USB,
-	    "USB",
+	    "OSB4/CSB5 USB",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5BRIDGE,
+	    "CSB5 PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_unknown,
+	    "unknown SouthBridge",
 	},
 	{
 	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,
