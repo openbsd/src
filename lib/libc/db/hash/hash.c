@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.13 2002/02/25 23:45:15 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.14 2002/03/25 19:08:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static char rcsid[] = "$OpenBSD: hash.c,v 1.13 2002/02/25 23:45:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.14 2002/03/25 19:08:48 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -435,6 +435,10 @@ hdestroy(hashp)
 	for (i = 0; i < hashp->nmaps; i++)
 		if (hashp->mapp[i])
 			free(hashp->mapp[i]);
+	if (hashp->tmp_key)
+		free(hashp->tmp_key);
+	if (hashp->tmp_buf)
+		free(hashp->tmp_buf);
 
 	if (hashp->fp != -1)
 		(void)close(hashp->fp);
