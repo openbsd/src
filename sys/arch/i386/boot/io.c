@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.17 1995/03/12 00:11:00 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.18 1995/12/23 17:21:26 perry Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -31,6 +31,15 @@
 #include <sys/types.h>
 #include <machine/pio.h>
 
+void gateA20 __P((int on));
+/*void printf __P((const char *format, int data));*/ /* not quite right XXX */
+void putchar __P((int c));
+int gets __P((char *buf));
+int strcmp __P((const char *s1, const char *s2));
+void bcopy __P((char *from, char *to, int len));
+int awaitkey __P((int seconds));
+void twiddle __P((void));
+
 #define K_RDWR 		0x60		/* keyboard data & cmds (read/write) */
 #define K_STATUS 	0x64		/* keyboard status */
 #define K_CMD	 	0x64		/* keybd ctlr command (write-only) */
@@ -48,6 +57,7 @@
 /*
  * Gate A20 for high memory
  */
+void
 gateA20(on)
 	int on;
 {
@@ -74,9 +84,9 @@ gateA20(on)
 }
 
 /* printf - only handles %d as decimal, %c as char, %s as string */
-
+void
 printf(format, data)
-	char *format;
+	const char *format;
 	int data;
 {
 	int *dataptr = &data;
@@ -124,6 +134,7 @@ printf(format, data)
 	}
 }
 
+void
 putchar(c)
 	int c;
 {
@@ -132,37 +143,37 @@ putchar(c)
 	putc(c);
 }
 
+int
 gets(buf)
 	char *buf;
 {
-	int	i;
 	char *ptr = buf;
 
-	for (i = 240000; i > 0; i--)
-		if (ischar())
-			for (;;) {
-				register int c = getc();
-				if (c == '\n' || c == '\r') {
-					putchar('\n');
-					*ptr = '\0';
-					return 1;
-				} else if (c == '\b' || c == '\177') {
-					if (ptr > buf) {
-						putchar('\b');
-						putchar(' ');
-						putchar('\b');
-						ptr--;
-					}
-				} else {
-					putchar(c);
-					*ptr++ = c;
-				}
+	for (;;) {
+		register int c = getc();
+		if (c == '\n' || c == '\r') {
+			putchar('\n');
+			*ptr = '\0';
+			return 1;
+		} else if (c == '\b' || c == '\177') {
+			if (ptr > buf) {
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				ptr--;
 			}
-	return 0;
+		} else {
+			putchar(c);
+			*ptr++ = c;
+		}
+	}
+
+	/* shouldn't ever be reached; we have to return in the loop. */
 }
 
+int
 strcmp(s1, s2)
-	char *s1, *s2;
+	const char *s1, *s2;
 {
 	while (*s1 == *s2) {
 		if (!*s1++)
@@ -172,6 +183,7 @@ strcmp(s1, s2)
 	return 1;
 }
 
+void
 bcopy(from, to, len)
 	char *from, *to;
 	int len;
@@ -185,6 +197,37 @@ bcopy(from, to, len)
 		while (--len >= 0)
 			*--to = *--from;
 	}
+}
+
+/* Number of milliseconds to sleep during each microsleep */
+#define NAPTIME 50
+
+/*
+ * awaitkey takes a number of seconds to wait for a key to be
+ * struck. If a key is struck during the period, it returns true, else
+ * it returns false. It returns (nearly) as soon as the key is
+ * hit. Note that it does something only slightly smarter than busy waiting.
+ */
+int
+awaitkey(seconds)
+	int seconds;
+{
+	int i;
+
+	/*
+	 * We sleep for brief periods (typically 50 milliseconds, set
+	 * by NAPTIME), polling the input buffer at the end of
+	 * each period.
+	 */
+	for (i = ((seconds*1000)/NAPTIME); i > 0; i--) {
+		/* multiply by 1000 to get microseconds. */
+		usleep(NAPTIME*1000);
+		if (ischar())
+			break;
+	}
+
+	/* If a character was hit, "i" will still be non-zero. */
+	return (i != 0);
 }
 
 void

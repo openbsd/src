@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.11 1995/03/12 00:10:56 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.12 1995/12/23 17:21:25 perry Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -328,6 +328,47 @@ xdone:
 	call	_C_LABEL(real_to_prot)
 
 	movl	%ebx, %eax
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/*
+# BIOS call "INT 15H Function 86H" to sleep for a set number of microseconds
+#	Call with	%ah = 0x86
+#			%cx = time interval (high)
+#			%dx = time interval (low)
+#	Return:	
+#		If error
+#			CF  = set
+#		else
+#			CF  = clear
+*/
+ENTRY(usleep)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	pushl	%ecx		# not clear if I need this.
+	pushl	%edx		# ...or this, but they are harmless. (perry)
+
+	movw	8(%ebp),  %dx
+	movw	10(%ebp), %cx
+
+	call	_C_LABEL(prot_to_real)
+
+	movb	$0x86, %ah
+	int	$0x15
+	setnc	%ah
+
+	movb	%ah, %bl	# real_to_prot uses %eax
+
+	data32
+	call	_C_LABEL(real_to_prot)
+
+	xorl	%eax, %eax
+	movb	%bl, %al
+
+	popl	%edx
+	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret
