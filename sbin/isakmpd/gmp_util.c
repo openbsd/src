@@ -1,5 +1,5 @@
-/*	$OpenBSD: gmp_util.c,v 1.5 1999/04/19 19:54:53 niklas Exp $	*/
-/*	$EOM: gmp_util.c,v 1.3 1999/04/02 00:57:39 niklas Exp $	*/
+/*	$OpenBSD: gmp_util.c,v 1.6 2000/04/07 22:03:51 niklas Exp $	*/
+/*	$EOM: gmp_util.c,v 1.4 2000/04/07 19:40:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -36,45 +36,70 @@
  */
 
 #include <sys/param.h>
-#include <gmp.h>
 
 #include "sysdep.h"
 
 #include "gmp_util.h"
+#include "math_mp.h"
 
 /* Various utility functions for gmp, used in more than one module */
 
 u_int32_t
-mpz_sizeinoctets (mpz_ptr a)
+mpz_sizeinoctets (math_mp_t a)
 {
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
   return (7 + mpz_sizeinbase (a, 2)) >> 3;
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  return BN_num_bytes (a);
+#endif
 }
 
 void
-mpz_getraw (u_int8_t *raw, mpz_ptr v, u_int32_t len)
+mpz_getraw (u_int8_t *raw, math_mp_t v, u_int32_t len)
 {
-  mpz_t a, tmp;
+  math_mp_t a;
 
-  mpz_init_set (a, v);
-  mpz_init (tmp);
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#error "XXX not implemented yet"
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  /* XXX bn2bin?  */
+  a = BN_dup (v);
+#endif
 
   while (len-- > 0)
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
       raw[len] = mpz_fdiv_qr_ui (a, tmp, a, 256);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+      raw[len] = BN_div_word (a, 256);
+#endif
 
-  mpz_clear (a);
-  mpz_clear (tmp);
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#error "XXX not implemented yet"
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  BN_clear_free (a);
+#endif
 }
 
 void
-mpz_setraw (mpz_ptr d, u_int8_t *s, u_int32_t l)
+mpz_setraw (math_mp_t d, u_int8_t *s, u_int32_t l)
 {
   u_int32_t i;
 
-  mpz_set_ui (d, 0);
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#error "XXX not implemented yet"
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  /* XXX bin2bn?  */
+  BN_set_word (d, 0);
+#endif
   for (i = 0; i < l; i++)
     {
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
       mpz_mul_ui (d, d, 256);
       mpz_add_ui (d, d, s[i]);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+      BN_mul_word (d, 256);
+      BN_add_word (d, s[i]);
+#endif
     }
 }
 
