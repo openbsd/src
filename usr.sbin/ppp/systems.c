@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: systems.c,v 1.4 1997/12/17 21:18:07 brian Exp $
+ * $Id: systems.c,v 1.5 1997/12/21 02:11:29 brian Exp $
  *
  *  TODO:
  */
@@ -288,6 +288,8 @@ ReadSystem(const char *name, const char *file, int doexec)
           if (issep(*cp)) {
 	    n = strspn(cp, " \t");
 	    cp += n;
+	    if (*cp == '#')
+	      continue;
             len = strlen(cp);
             if (!len)
               continue;
