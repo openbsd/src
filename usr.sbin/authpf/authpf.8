@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.35 2004/06/07 18:41:26 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.36 2004/08/15 10:40:50 canacar Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -97,11 +97,16 @@ in order to cause evaluation of any
 .Nm
 rules:
 .Bd -literal -offset indent
-nat-anchor authpf
-rdr-anchor authpf
-binat-anchor authpf
-anchor authpf
+nat-anchor "authpf/*"
+rdr-anchor "authpf/*"
+binat-anchor "authpf/*"
+anchor "authpf/*"
 .Ed
+.Pp
+The "/*" at the end of the anchor name is required for
+.Xr pf 4
+to process the rulesets attached to the anchor by
+.Nm authpf .
 .Sh FILTER AND TRANSLATION RULES
 Filter and translation rules for
 .Nm
@@ -399,15 +404,15 @@ Example
 # ssh and use us as a dns server.
 internal_if="fxp1"
 gateway_addr="10.0.1.1"
-nat-anchor authpf
-rdr-anchor authpf
-binat-anchor authpf
+nat-anchor "authpf/*"
+rdr-anchor "authpf/*"
+binat-anchor "authpf/*"
 block in on $internal_if from any to any
 pass in quick on $internal_if proto tcp from any to $gateway_addr \e
       port = ssh
 pass in quick on $internal_if proto udp from any to $gateway_addr \e
       port = domain
-anchor authpf
+anchor "authpf/*"
 .Ed
 .Pp
 .Sy For a switched, wired net
@@ -497,8 +502,8 @@ processing can be sped up by looking up the anchor
 only for packets coming from logged in users:
 .Bd -literal
 table <authpf_users> persist
-anchor authpf from <authpf_users>
-rdr-anchor authpf from <authpf_users>
+anchor "authpf/*" from <authpf_users>
+rdr-anchor "authpf/*" from <authpf_users>
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/authpf/authpf.conf" -compact
