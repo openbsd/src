@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2001/11/07 01:18:00 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.56 2001/11/24 17:53:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -665,17 +665,22 @@ halt_establish(fn, pri)
 	}
 }
 
-void
+__dead void
 boot(howto)
 	register int howto;
 {
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curproc->p_addr);
 
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
 		/* do that another panic fly away */
 		if (curproc == NULL)
@@ -701,10 +706,11 @@ boot(howto)
 	if (howto & RB_DUMP)
 		dumpsys();
 
+haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-	if (howto&RB_HALT) {
+	if (howto & RB_HALT) {
 		printf("halted\n\n");
 	} else {
 		struct haltvec *hv;

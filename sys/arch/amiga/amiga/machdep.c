@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2001/11/09 15:25:55 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 2001/11/24 17:53:41 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -739,6 +739,12 @@ boot(howto)
 	if (curproc)
 		savectx(&curproc->p_addr->u_pcb);
 
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
 		bootsync();
@@ -762,6 +768,7 @@ boot(howto)
 	if (howto & RB_DUMP)
 		dumpsys();
 
+haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 

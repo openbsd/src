@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2001/11/09 15:25:55 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2001/11/24 17:53:41 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -885,34 +885,36 @@ void
 boot(howto)
 	int howto;
 {
-	if (cold)
-		/* XXX howto |= RB_HALT */;
-	else {
-		boothowto = howto | (boothowto & RB_HALT);
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
 
-		if (!(howto & RB_NOSYNC) && waittime < 0) {
-			extern struct proc proc0;
+	boothowto = howto | (boothowto & RB_HALT);
 
-			/* protect against curproc->p_stats refs in sync XXX */
-			if (curproc == NULL)
-				curproc = &proc0;
-
-			waittime = 0;
-			vfs_shutdown();
-			if ((howto & RB_TIMEBAD) == 0)
-				resettodr();
-			else
-				printf("WARNING: not updating battery clock\n");
-		}
+	if (!(howto & RB_NOSYNC)) {
+		waittime = 0;
+		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
+		 */
+		if ((howto & RB_TIMEBAD) == 0)
+			resettodr();
+		else
+			printf("WARNING: not updating battery clock\n");
 	}
 
 	/* XXX probably save howto into stable storage */
 
 	splhigh();
 
-	if ((howto & (RB_DUMP /* | RB_HALT */)) == RB_DUMP)
+	if (howto & RB_DUMP)
 		dumpsys();
 
+haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {

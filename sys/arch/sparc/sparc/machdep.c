@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2001/11/22 09:49:43 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2001/11/24 17:53:41 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -675,9 +675,10 @@ boot(howto)
 	int i;
 	static char str[4];	/* room for "-sd\0" */
 
+	/* If system is cold, just halt. */
 	if (cold) {
-		printf("halted\n\n");
-		romhalt();
+		howto |= RB_HALT;
+		goto haltsys;
 	}
 
 	fb_unblank();
@@ -703,8 +704,15 @@ boot(howto)
 		}
 	}
 	(void) splhigh();		/* ??? */
+
+	if (howto & RB_DUMP)
+		dumpsys();
+
+haltsys:
+	/* Run any shutdown hooks */
+	doshutdownhooks();
+
 	if ((howto & RB_HALT) || (howto & RB_POWERDOWN)) {
-		doshutdownhooks();
 #if defined(SUN4M)
 		if (howto & RB_POWERDOWN) {
 #if NPOWER > 0 || NTCTRL >0
@@ -722,10 +730,7 @@ boot(howto)
 		printf("halted\n\n");
 		romhalt();
 	}
-	if (howto & RB_DUMP)
-		dumpsys();
 
-	doshutdownhooks();
 	printf("rebooting\n\n");
 	i = 1;
 	if (howto & RB_SINGLE)

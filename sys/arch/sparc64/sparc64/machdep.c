@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2001/11/16 21:28:08 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2001/11/24 17:53:41 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -793,8 +793,11 @@ boot(howto)
 		 * successfully by inittodr() or set by an explicit call
 		 * to resettodr() (e.g. from settimeofday()).
 		 */
-		if (sparc_clock_time_is_ok)
+		if ((howto & RB_TIMEBAD) == 0 && sparc_clock_time_is_ok) {
 			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
 	}
 	(void) splhigh();		/* ??? */
 

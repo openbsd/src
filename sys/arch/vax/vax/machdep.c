@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.44 2001/11/09 15:25:56 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.45 2001/11/24 17:53:41 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -488,6 +488,12 @@ void
 boot(howto)
 	register int howto;
 {
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
@@ -498,12 +504,20 @@ boot(howto)
 		resettodr();
 	}
 	splhigh();		/* extreme priority */
+
+	/* If rebooting and a dump is requested, do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
+haltsys:
 	if (howto & RB_HALT) {
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
-		for (;;)
-			;
+		for (;;) ;
 	} else {
 		showto = howto;
 #ifdef notyet
@@ -540,13 +554,6 @@ boot(howto)
 		");
 #endif
 
-		/* If rebooting and a dump is requested, do it. */
-		if (showto & RB_DUMP)
-			dumpsys();
-
-		/* Run any shutdown hooks. */
-		doshutdownhooks();
-
 		if (dep_call->cpu_reboot)
 			(*dep_call->cpu_reboot)(showto);
 
@@ -559,7 +566,8 @@ boot(howto)
 	asm("movl %0, r5":: "g" (showto)); /* How to boot */
 	asm("movl %0, r11":: "r"(showto)); /* ??? */
 	asm("halt");
-	panic("Halt sket sej");
+	for (;;) ;
+	/* NOTREACHED */
 }
 
 void
