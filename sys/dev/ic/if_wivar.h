@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.9 2002/04/07 23:23:49 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.10 2002/04/11 00:08:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -72,7 +72,6 @@ struct wi_softc	{
 	struct ieee80211_nwid	wi_ibss_name;
 
 	u_int8_t		wi_txbuf[1596];
-	int			wi_has_wep;
 	int			wi_use_wep;
 	int			wi_authmode;
 	int			wi_tx_key;
@@ -80,18 +79,24 @@ struct wi_softc	{
 	struct wi_counters	wi_stats;
 	void			*sc_ih;
 	struct timeout		sc_timo;
-	int			sc_enabled;
 	int			sc_firmware_type;
 	int			sc_sta_firmware_ver;
 	int			sc_pci;
 	struct wihap_info	wi_hostap_info;
 	u_int32_t		wi_icv;
 	int			wi_icv_flag;
+	int			wi_ibss_port;
 };
 
 /* Values for wi_flags. */
-#define WI_FLAGS_ATTACHED	0x01
-#define WI_FLAGS_INITIALIZED	0x02
+#define WI_FLAGS_ATTACHED		0x01
+#define WI_FLAGS_INITIALIZED		0x02
+#define WI_FLAGS_HAS_WEP		0x04
+#define WI_FLAGS_HAS_IBSS		0x08
+#define WI_FLAGS_HAS_CREATE_IBSS	0x10
+#define WI_FLAGS_HAS_MOR		0x20
+#define WI_FLAGS_HAS_ROAMING		0x30
+#define WI_FLAGS_HAS_DIVERSITY		0x40
 
 /* Firmware types */
 #define WI_LUCENT	0

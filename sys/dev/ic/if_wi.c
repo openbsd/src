@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.51 2002/04/10 19:25:07 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.52 2002/04/11 00:08:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.51 2002/04/10 19:25:07 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.52 2002/04/11 00:08:25 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -173,13 +173,6 @@ void	wi_stop(struct wi_softc *);
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
 	NULL, "wi", DV_IFNET
-};
-
-/* Map of firmware type to IBBS port type */
-int ibss_portmap[] = {
-	1,		/* WI_LUCENT */
-	0,		/* WI_INTERSIL */
-	4,		/* WI_SYMBOL */
 };
 
 int
@@ -254,12 +247,43 @@ wi_attach(sc)
 		sc->wi_channel = 3;
 
 	/*
+	 * Set flags based on firmware version.
+	 */
+	switch (sc->sc_firmware_type) {
+	case WI_LUCENT:
+		sc->wi_flags |= WI_FLAGS_HAS_ROAMING;
+		if (sc->sc_sta_firmware_ver >= 60000)
+			sc->wi_flags |= WI_FLAGS_HAS_MOR;
+		if (sc->sc_sta_firmware_ver >= 60006) {
+			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
+			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
+		}
+		sc->wi_ibss_port = htole16(1);
+		break;
+	case WI_INTERSIL:
+		sc->wi_flags |= WI_FLAGS_HAS_ROAMING;
+		if (sc->sc_sta_firmware_ver >= 800) {
+			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
+			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
+		}
+		sc->wi_ibss_port = htole16(0);
+		break;
+	case WI_SYMBOL:
+		sc->wi_flags |= WI_FLAGS_HAS_DIVERSITY;
+		/* XXX - Symbol does not seem to support IBSS creation. */
+		if (sc->sc_sta_firmware_ver >= 20000)
+			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
+		sc->wi_ibss_port = htole16(4);
+		break;
+	}
+
+	/*
 	 * Find out if we support WEP on this card.
 	 */
 	gen.wi_type = WI_RID_WEP_AVAIL;
 	gen.wi_len = 2;
-	if (wi_read_record(sc, &gen) == 0)
-		sc->wi_has_wep = letoh16(gen.wi_val);
+	if (wi_read_record(sc, &gen) == 0 && gen.wi_val != htole16(0))
+		sc->wi_flags |= WI_FLAGS_HAS_WEP;
 	timeout_set(&sc->sc_timo, wi_inquire, sc);
 
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
@@ -277,8 +301,10 @@ wi_attach(sc)
 #define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_IBSS, 0), 0);
-	if (sc->sc_firmware_type != WI_SYMBOL)
+	if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_IBSS,
+		    0), 0);
+	if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 		    IFM_IEEE80211_IBSSMASTER, 0), 0);
 	if (sc->sc_firmware_type == WI_INTERSIL)
@@ -288,9 +314,10 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-		    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->sc_firmware_type != WI_SYMBOL)
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+			    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
@@ -301,9 +328,10 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-		    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->sc_firmware_type != WI_SYMBOL)
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+			    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
@@ -314,9 +342,10 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-		    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->sc_firmware_type != WI_SYMBOL)
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+			    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
@@ -327,9 +356,10 @@ wi_attach(sc)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-		    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->sc_firmware_type != WI_SYMBOL)
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+			    IFM_IEEE80211_IBSS, 0), 0);
+		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 			    IFM_IEEE80211_IBSSMASTER, 0), 0);
 		if (sc->sc_firmware_type == WI_INTERSIL)
@@ -744,11 +774,12 @@ wi_cor_reset(sc)
 	DPRINTF(WID_RESET, ("wi_cor_reset: sc %p\n", sc));
 
 	/*
-	 * Do a soft reset of the card.  This is required by Symbol cards
-	 * and shouldn't hurt others.  We don't do this on Lucent cards
-	 * because it messes up some old Lucent firmware revisions.
+	 * Do a soft reset of the card; this is required for Symbol cards.
+	 * This shouldn't hurt other cards but there have been reports
+	 * of the COR reset messing up old Lucent firmware revisions so
+	 * we only soft reset Symbol cards for now.
 	 */
-	if (sc->sc_firmware_type != WI_LUCENT) {
+	if (sc->sc_firmware_type == WI_SYMBOL) {
 		cor_value = bus_space_read_2(sc->wi_ltag, sc->wi_lhandle,
 		    sc->wi_cor_offset);
 		bus_space_write_1(sc->wi_ltag, sc->wi_lhandle,
@@ -819,7 +850,7 @@ wi_read_record(sc, ltv)
 		CSR_READ_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1)*2);
 
 	if (ltv->wi_type == WI_RID_PORTTYPE && sc->wi_ptype == WI_PORTTYPE_IBSS
-	    && letoh16(ltv->wi_val) == ibss_portmap[sc->sc_firmware_type]) {
+	    && ltv->wi_val == sc->wi_ibss_port) {
 		/*
 		 * Convert vendor IBSS port type to WI_PORTTYPE_IBSS.
 		 * Since Lucent uses port type 1 for BSS *and* IBSS we
@@ -879,7 +910,7 @@ wi_write_record(sc, ltv)
 		/* Convert WI_PORTTYPE_IBSS to vendor IBSS port type. */
 		p2ltv.wi_type = WI_RID_PORTTYPE;
 		p2ltv.wi_len = 2;
-		p2ltv.wi_val = htole16(ibss_portmap[sc->sc_firmware_type]);
+		p2ltv.wi_val = sc->wi_ibss_port;
 		ltv = &p2ltv;
 	} else if (sc->sc_firmware_type != WI_LUCENT) {
 		int v;
@@ -1389,13 +1420,19 @@ wi_ioctl(ifp, command, data)
 			break;
 		case WI_RID_SYMBOL_DIVERSITY:
 		case WI_RID_ROAMING_MODE:
-			/* Only Symbol cards support antenna diversity */
-			if (wreq.wi_type == WI_RID_SYMBOL_DIVERSITY &&
-			    sc->sc_firmware_type != WI_SYMBOL)
-				break;
-			/* Symbol cards use 0xFC2D for something else. */
-			if (wreq.wi_type == WI_RID_ROAMING_MODE &&
-			    sc->sc_firmware_type == WI_SYMBOL)
+		case WI_RID_CREATE_IBSS:
+		case WI_RID_MICROWAVE_OVEN:
+			/*
+			 * Check for features that may not be supported.
+			 */
+			if ((wreq.wi_type == WI_RID_SYMBOL_DIVERSITY &&
+			    !(sc->wi_flags & WI_FLAGS_HAS_DIVERSITY)) ||
+			    (wreq.wi_type == WI_RID_ROAMING_MODE &&
+			    !(sc->wi_flags & WI_FLAGS_HAS_ROAMING)) ||
+			    (wreq.wi_type == WI_RID_CREATE_IBSS &&
+			    !(sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)) ||
+			    (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
+			    !(sc->wi_flags & WI_FLAGS_HAS_MOR)))
 				break;
 			/* FALLTHROUGH */
 		default:
@@ -1518,11 +1555,11 @@ wi_init(sc)
 	WI_SETVAL(WI_RID_MAX_SLEEP, sc->wi_max_sleep);
 
 	/* Set Roaming Mode unless this is a Symbol card. */
-	if (sc->sc_firmware_type != WI_SYMBOL)
+	if (sc->wi_flags & WI_FLAGS_HAS_ROAMING)
 		WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
 
 	/* Set Antenna Diversity if this is a Symbol card. */
-	if (sc->sc_firmware_type == WI_SYMBOL)
+	if (sc->wi_flags & WI_FLAGS_HAS_DIVERSITY)
 		WI_SETVAL(WI_RID_SYMBOL_DIVERSITY, sc->wi_diversity);
 
 	/* Specify the network name */
@@ -1562,7 +1599,7 @@ wi_init(sc)
 		WI_SETVAL(WI_RID_PROMISC, 0);
 
 	/* Configure WEP. */
-	if (sc->wi_has_wep) {
+	if (sc->wi_flags & WI_FLAGS_HAS_WEP) {
 		WI_SETVAL(WI_RID_ENCRYPTION, sc->wi_use_wep);
 		WI_SETVAL(WI_RID_TX_CRYPT_KEY, sc->wi_tx_key);
 		sc->wi_keys.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
@@ -2212,8 +2249,8 @@ wi_media_change(ifp)
 		break;
 	case IFM_IEEE80211_IBSSMASTER:
 	case IFM_IEEE80211_IBSSMASTER|IFM_IEEE80211_IBSS:
-		if (sc->sc_firmware_type == WI_SYMBOL)
-			return (EINVAL);	/* not working on Symbol */
+		if (!(sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS))
+			return (EINVAL);
 		sc->wi_create_ibss = 1;
 		/* FALLTHROUGH */
 	case IFM_IEEE80211_IBSS:
@@ -2279,7 +2316,7 @@ wi_set_nwkey(sc, nwkey)
 	struct wi_req wreq;
 	struct wi_ltv_keys *wk = (struct wi_ltv_keys *)&wreq;
 
-	if (!sc->wi_has_wep)
+	if (!(sc->wi_flags & WI_FLAGS_HAS_WEP))
 		return ENODEV;
 	if (nwkey->i_defkid <= 0 || nwkey->i_defkid > IEEE80211_WEP_NKID)
 		return EINVAL;
@@ -2341,7 +2378,7 @@ wi_get_nwkey(sc, nwkey)
 	int i, len, error;
 	struct wi_ltv_keys *wk = &sc->wi_keys;
 
-	if (!sc->wi_has_wep)
+	if (!(sc->wi_flags & WI_FLAGS_HAS_WEP))
 		return ENODEV;
 	nwkey->i_wepon = sc->wi_use_wep;
 	nwkey->i_defkid = sc->wi_tx_key + 1;
