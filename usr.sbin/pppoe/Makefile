@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2000/06/18 07:47:32 jason Exp $
+# $OpenBSD: Makefile,v 1.3 2002/09/08 05:10:56 jason Exp $
 
 PROG=		pppoe
 MAN=		pppoe.8
 SRCS=		client.c common.c debug.c pppoe.c server.c session.c tag.c
-CFLAGS+=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.8 2002/09/08 04:33:46 jason Exp $	*/
+/*	$OpenBSD: common.c,v 1.9 2002/09/08 05:10:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -53,8 +53,6 @@
 #include <unistd.h>
 #include <sysexits.h>
 #include <stdlib.h>
-#include <grp.h>
-#include <syslog.h>
 #include <md5.h>
 
 #include "pppoe.h"
@@ -118,7 +116,6 @@ runppp(bpffd, sysname)
 
 	execlp(PPP_PROG, "ppp", "-direct", sysname, (char *)NULL);
 	perror("execlp");
-	syslog(LOG_INFO, "%s exec failed: %m", PPP_PROG);
 	_exit(1);
 	/*NOTREACHED*/
 	return (-1);
