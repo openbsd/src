@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.4 1997/05/09 17:59:37 millert Exp $
+#       $OpenBSD: install.md,v 1.5 1997/05/11 03:54:26 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -37,21 +37,39 @@
 #
 # machine dependent section of installation/upgrade script.
 #
-#
 
 TMPWRITEABLE=/tmp/writeable
 KERNFSMOUNTED=/tmp/kernfsmounted
 
+# Machine-dependent install sets
+MDSETS="kernel"
+
 md_copy_kernel() {
-	echo "This must be done later by hand"
+	if [ ! -s /mnt/bsd ]; then
+		echo	""
+		echo	"Warning, no kernel installed!"
+		echo	"You did not unpack a file set containing a kernel."
+		echo	"This is needed to boot.  Please note that the install"
+		echo	"install kernel is not suitable for general use."
+		echo -n	"Escape to shell add /mnt/bsd by hand? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				echo "Type 'exit' to return to install."
+				sh
+				;;
+			*)
+				;;
+		esac
+	fi
 }
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [xterm]: "
-	getresp "xterm"
+	echo -n "Specify terminal type [ansi-mini]: "
+	getresp "ansi-mini"
 	TERM="$resp"
 	export TERM
 }

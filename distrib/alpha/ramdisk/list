@@ -1,15 +1,15 @@
-#	$OpenBSD: list,v 1.1 1997/05/07 12:46:57 niklas Exp $
+#	$OpenBSD: list,v 1.2 1997/05/11 03:54:27 millert Exp $
 
 # the disktab explanation file
-COPY	disktab.preinstall		etc
+COPY	disktab.preinstall			etc
 
 # and the installation tools
-#LINK    sbin/init                 	usr/bin/vi
-COPY	dot.profile			.profile
-COPY	dot.instutils			.instutils
-COPY	install.sh			install
-COPY	install.md			install.md
-COPY	install.sub			install.sub
-COPY	disktab.shadow			etc/disktab.shadow
+#LINK    sbin/init                 		usr/bin/vi
+COPY	dot.profile				.profile
+COPY	dot.instutils				.instutils
+COPY	install.md				install.md
+COPY	${CURDIR}/../../miniroot/install.sh	install
+COPY	disktab.shadow				etc/disktab.shadow
 
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install
