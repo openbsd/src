@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.13 2004/01/07 12:33:15 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.14 2004/01/13 14:31:18 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -237,6 +237,29 @@ Inherited from the global configuration if not given.
 .It Ar holdtime min
 Set the minimal acceptable holdtime.
 Inherited from the global configuration if not given.
+.It Ar announce
+If set to
+.Em none ,
+no
+.Em UPDATE
+messages will be sent to the neighbor.
+If set to
+.Em all ,
+all generated
+.Em UPDATE
+messages will be sent to the neighbor.
+This is normally only necessary for transit
+.Em AS's .
+The default value is
+.Em self
+which limits the sent
+.Em UPDATE
+messages to announcements of the local
+.Em AS
+only.
+.It Ar max-prefix
+Limit amount of prefixes received.
+The default is unlimited.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
