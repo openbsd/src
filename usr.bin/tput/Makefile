@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 1998/07/24 00:11:05 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1998/07/25 20:47:31 downsj Exp $
 
 PROG=	tput
 DPADD=	${LIBCURSES}
-LDADD=	-lcurses
+LDADD=	-locurses
 MLINKS=	tput.1 clear.1
 LINKS= ${BINDIR}/tput ${BINDIR}/clear
 
