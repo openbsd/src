@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.6 1998/04/13 01:17:28 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.7 1998/10/15 07:33:32 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -47,13 +47,6 @@ set -o emacs # emacs-style command line editing
 TERMS="sun vt* pcvt* pc3 dumb"
 TERM=sun
 
-# editors believed to be in $EDITBIN, smart and dumb defaults
-EDITORS="vi ed"
-EDITOR=vi
-DUMB=ed
-EDITBIN=/bin
-EDITUBIN=/usr/bin
-
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
@@ -75,44 +68,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		fi
 	done
 	export TERM
-
-	# get the editor preference
-	if [ "X$TERM" = "Xdumb" -o "X$TERM" = "Xunknown" ]; then
-		echo -n "$TERM can't handle $EDITOR"
-		EDITOR="$DUMB"
-		echo ", using $EDITOR as text editor!"
-	elif [ "X$EDITOR" = "X$EDITORS" ]; then
-		echo "Only one editor available, you get to use $EDITOR!"
-	else
-		_forceloop=""
-		while [ "X$_forceloop" = X"" ]; do
-			echo "Supported editors are: $EDITORS"
-			echo -n "text editor? [$EDITOR] "
-			read _choice
-			if [ "X$_choice" = "X" ]; then
-				_choice="$EDITOR"
-				_forceloop="$_choice"
-			else
-				for _editor in $EDITORS; do
-					if [ "X$_choice" = "X$_editor" ]; then
-						_forceloop="$_choice"
-						break
-					fi
-				done
-			fi
-			if [ "X$_forceloop" != "X" -a \
-					! \( -x $EDITBIN/$_choice -o \
-						-x $EDITUBIN/$_choice \) ]; then
-				_forceloop=""
-			fi
-			if [ "X$_forceloop" = "X" ]; then
-				echo "Sorry, $_choice isn't available."
-				_forceloop=""
-			fi
-		done
-		EDITOR="$_choice"
-	fi
-	export EDITOR
 
 	# Installing or upgrading?
 	_forceloop=""
