@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2002/11/08 03:30:17 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.20 2003/11/20 23:32:26 tedu Exp $
 
 # Define SMALL to disable command line editing
 #CFLAGS+=-DSMALL
@@ -19,6 +19,7 @@ CPPFLAGS+= -DINET6
 
 LDADD+=	-ledit -lcurses -lutil
 DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBUTIL}
+LDSTATIC= ${STATIC}
 
 #COPTS+= -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes
 
