@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.28 1998/09/19 10:08:05 maja Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.29 1998/09/27 21:22:15 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -243,10 +243,9 @@ epconfig(sc, chipset, enaddr)
 	printf(" address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
-	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
-	 * allow FDDI-sized (4500) byte packets.  Commands only take an
-	 * 11-bit parameter, and  11 bits isn't enough to hold a full-size
-	 * packet length.
+	 * Vortex-based (3c59x pci,eisa) cards allow FDDI-sized (4500) byte
+	 * packets.  Commands only take an 11-bit parameter, and  11 bits
+	 * isn't enough to hold a full-size packet length.
 	 * Commands to these cards implicitly upshift a packet size
 	 * or threshold by 2 bits. 
 	 * To detect  cards with large-packet support, we probe by setting
