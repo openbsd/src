@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.18 1999/02/26 04:59:39 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.19 1999/03/02 22:19:08 niklas Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -280,11 +280,9 @@ again:
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
-	if (forktype == ISRFORK && (rforkflags & RFNOWAIT)) {
+	if (forktype == ISRFORK && (rforkflags & RFNOWAIT))
 		p2->p_flag |= P_NOZOMBIE;
-	} else {
-		LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
-	}
+	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
 #ifdef KTRACE

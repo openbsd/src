@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.15 1999/02/26 05:06:34 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.16 1999/03/02 22:19:09 niklas Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -335,9 +335,10 @@ sys_wait4(q, v, retval)
 loop:
 	nfound = 0;
 	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
-		if (SCARG(uap, pid) != WAIT_ANY &&
+		if ((p->p_flag & P_NOZOMBIE) ||
+		    (SCARG(uap, pid) != WAIT_ANY &&
 		    p->p_pid != SCARG(uap, pid) &&
-		    p->p_pgid != -SCARG(uap, pid))
+		    p->p_pgid != -SCARG(uap, pid)))
 			continue;
 		nfound++;
 		if (p->p_stat == SZOMB) {
