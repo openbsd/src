@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.8 1997/06/22 22:29:06 downsj Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.9 1997/06/23 07:03:30 downsj Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.8 1997/06/22 22:29:06 downsj Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.9 1997/06/23 07:03:30 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,8 +90,8 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, dopower, killflg, mbuflen;
-static char *nosync, *whom, mbuf[BUFSIZ];
+static int dofast, dohalt, doreboot, dopower, killflg, mbuflen, nosync;
+static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
 void die_you_gravy_sucking_pig_dog __P((void));
@@ -120,7 +120,6 @@ main(argc, argv)
 		exit(1);
 	}
 #endif
-	nosync = NULL;
 	readstdin = 0;
 	while ((ch = getopt(argc, argv, "-fhknpr")) != -1)
 		switch (ch) {
@@ -137,7 +136,7 @@ main(argc, argv)
 			killflg = 1;
 			break;
 		case 'n':
-			nosync = "-n";
+			nosync = 1;
 			break;
 		case 'p':
 			dopower = 1;
@@ -368,17 +367,15 @@ die_you_gravy_sucking_pig_dog()
 	(void)printf("\nkill -HUP 1\n");
 #else
 	if (doreboot) {
-		execle(_PATH_REBOOT, "reboot", "-l", nosync, NULL, NULL);
+		execle(_PATH_REBOOT, "reboot", "-l", (nosync ? "-n" : NULL),
+		    NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		perror("shutdown");
 	}
 	else if (dohalt) {
-		if (dopower) {
-			execle(_PATH_HALT, "halt", "-l", "-p", nosync, NULL,
-				NULL);
-		} else {
-			execle(_PATH_HALT, "halt", "-l", nosync, NULL, NULL);
-		}
+		execle(_PATH_HALT, "halt", "-l",
+		    (dopower ? "-p" : (nosync ? "-n" : NULL)),
+		    (nosync ? "-n" : NULL), NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		perror("shutdown");
 	}
