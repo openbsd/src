@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.51 1999/10/29 02:10:02 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.52 1999/11/04 11:21:14 ho Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #include <netinet/ip_esp.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
+#include <net/pfkeyv2.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -304,11 +305,13 @@ ip_output(m0, va_alist)
 			     * default (which should be tunable via sysctl).
 			     * For now, drop packet and ignore SPD entry.
 			     */
+			    splx(s);
 			    goto no_encap;
 			}
 
 			/* PF_KEYv2 notification message */
-			pfkeyv2_acquire(tdb, 0); /* XXX Check for errors */
+			if (tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
+			    pfkeyv2_acquire(tdb, 0); /* XXX Check for errors */
 
 			splx(s);
 
