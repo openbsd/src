@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.56 2003/05/10 00:51:53 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.57 2003/05/10 06:14:29 cloder Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -642,6 +642,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 			goto error;
 		}
 
+		infile = NULL;
 		fclose(f);
 		f = NULL;
 	}
@@ -670,6 +671,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 error:
 	if (f != NULL)
 		fclose(f);
+
+	infile = NULL;
 	return (-1);
 }
 
