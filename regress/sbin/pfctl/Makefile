@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.180 2004/07/03 19:31:34 henning Exp $
+# $OpenBSD: Makefile,v 1.181 2004/10/01 23:19:17 mcbride Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -8,6 +8,7 @@
 # pfr: table tests
 # pfsimple: just check wether pfctl accepts a given ruleset, not checking output
 # pfload: load ruleset into anchor regress and verify pfctl -vvsr
+# pfoptimize: as pfload, with -o flag to pfctl
 # pfopt: as target pf, but supply extra command line options
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
@@ -133,6 +134,31 @@ pfload:		${PFLOAD_TARGETS}
 pfload-update:	${PFLOAD_UPDATES}
 REGRESS_TARGETS+=pfload
 UPDATE_TARGETS+=pfload-update
+
+.for n in ${PFLOAD}
+PFOPTIMIZE_TARGETS+=pfoptimize${n}
+PFOPTIMIZE_UPDATES+=pfoptimize${n}-update
+
+pfoptimize${n}:
+	${SUDO} pfctl -o -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -a regress -gvvsn; \
+	${SUDO} pfctl -a regress -gvvsr) | \
+	    diff -u ${.CURDIR}/pf${n}.optimized /dev/stdin
+	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
+
+pfoptimize${n}-update:
+	${SUDO} pfctl -o -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -a regress -gvvsn; \
+	${SUDO} pfctl -a regress -gvvsr) > ${.CURDIR}/pf${n}.optimized
+	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
+
+.endfor
+
+pfoptimize:		${PFOPTIMIZE_TARGETS}
+pfoptimize-update:	${PFOPTIMIZE_UPDATES}
+REGRESS_TARGETS+=pfoptimize
 
 .for n in ${PFTABLE}
 PFR_TARGETS+=pfr${n}

@@ -1,0 +1,32 @@
+@0 pass in on lo0 route-to { (pflog0 127.0.0.1), (pflog0 127.0.0.2) } round-robin inet all
+  [ Skip steps: i=end f=4 p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@1 pass out on lo0 route-to { (pflog0 127.0.0.1), (pflog0 127.0.0.2) } round-robin inet all
+  [ Skip steps: i=end f=4 p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@2 pass in on lo0 route-to (pflog0 127.0.0.0/24) bitmask inet all
+  [ Skip steps: i=end f=4 p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@3 pass out on lo0 dup-to (pflog0 127.0.0.0/24) random inet all
+  [ Skip steps: i=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@4 pass in on lo0 reply-to { pflog0, pflog0 } round-robin inet6 all
+  [ Skip steps: i=end d=6 p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@5 pass in on lo0 reply-to (pflog0 127.0.0.0/28) source-hash 0x0123456789abcdef0123456789abcdef inet all
+  [ Skip steps: i=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@6 pass out on lo0 route-to (pflog0 127.0.0.0/24) source-hash 0x4da8e393fd22f577426cfdf7fe52d3b0 inet all
+  [ Skip steps: i=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@7 pass in on lo0 dup-to (pflog0 127.0.0.0/24) round-robin inet all
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

@@ -1,0 +1,76 @@
+@0 scrub all fragment reassemble
+  [ Skip steps: i=end d=2 f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@1 scrub all fragment reassemble
+  [ Skip steps: i=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@2 scrub in all fragment reassemble
+  [ Skip steps: i=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@3 scrub out all fragment reassemble
+  [ Skip steps: i=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@4 scrub in all fragment reassemble
+  [ Skip steps: i=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@5 scrub all fragment reassemble
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@0 block drop all
+  [ Skip steps: i=7 d=5 f=end p=2 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@1 block return all
+  [ Skip steps: i=7 d=5 f=end sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@2 block return-rst proto tcp all
+  [ Skip steps: i=7 d=5 f=end sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@3 pass all
+  [ Skip steps: i=7 d=5 f=end p=10 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@4 block drop all
+  [ Skip steps: i=7 f=end p=10 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@5 pass in all
+  [ Skip steps: i=7 f=end p=10 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@6 pass out all
+  [ Skip steps: f=end p=10 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@7 block drop on lo0 all
+  [ Skip steps: i=10 d=12 f=end p=10 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@8 pass on lo0 all
+  [ Skip steps: i=10 d=12 f=end p=10 sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@9 block drop on lo0 all
+  [ Skip steps: d=12 f=end sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@10 pass proto tcp all flags S/SA
+  [ Skip steps: i=12 d=12 f=end sa=end sp=end da=end dp=12 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@11 pass proto udp all keep state
+  [ Skip steps: f=end sa=end sp=end da=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@12 pass out on lo0 proto tcp from any to any port = smtp keep state
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

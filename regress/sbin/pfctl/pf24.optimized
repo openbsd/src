@@ -1,0 +1,8 @@
+@0 pass in proto tcp from any to any port = ssh
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@1 pass in proto tcp from any to any port = ftp
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
