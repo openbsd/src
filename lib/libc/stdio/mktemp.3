@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.16 1999/06/06 15:17:31 aaron Exp $
+.\"	$OpenBSD: mktemp.3,v 1.17 1999/08/11 02:32:08 todd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -225,7 +225,7 @@ FILE *sfp;
 
 strcpy(sfn, "/tmp/ed.XXXXXX");
 if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
-        fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
+        fprintf(stderr, "%s: %s\en", sfn, strerror(errno));
         return (NULL);
 }
 return (sfp);
@@ -244,7 +244,7 @@ if ((fd = mkstemp(sfn)) == -1 ||
                 unlink(sfn);
                 close(fd);
         }
-        fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
+        fprintf(stderr, "%s: %s\en", sfn, strerror(errno));
         return (NULL);
 }
 return (sfp);
