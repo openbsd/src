@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.4 1997/02/24 14:06:41 niklas Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.5 1997/02/26 03:01:04 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -79,6 +79,7 @@ ip4_input(register struct mbuf *m, int iphlen)
 	 * Strip IP options, if any.
 	 */
 
+	ip4stat.ip4s_ipackets++;
 	if (iphlen > sizeof (struct ip))
 	{
 		ip_stripoptions(m, (struct mbuf *)0);
@@ -159,6 +160,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
 	struct ip4_xdata *xd;
 	ushort ilen;
 
+	ip4stat.ip4s_opackets++;
 	ipi = mtod(m, struct ip *);
 	ilen = ntohs(ipi->ip_len);
 

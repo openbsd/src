@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.2 1997/02/24 14:06:36 niklas Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.3 1997/02/26 03:01:02 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -74,6 +74,8 @@ ah_input(register struct mbuf *m, int iphlen)
 	struct ifqueue *ifq = NULL;
 	int s;
 	
+	ahstat.ahs_input++;
+
 	/*
 	 * Strip IP options, if any.
 	 */
