@@ -34,6 +34,7 @@
 ./etc/ksh.kshrc
 ./etc/localtime
 ./etc/locate.rc
+./etc/lynx.cfg
 ./etc/magic
 ./etc/mail.rc
 ./etc/man.conf

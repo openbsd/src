@@ -249,6 +249,7 @@
 ./usr/bin/lpq
 ./usr/bin/lpr
 ./usr/bin/lprm
+./usr/bin/lynx
 ./usr/bin/m4
 ./usr/bin/machine
 ./usr/bin/mail
