@@ -1,0 +1,152 @@
+.\" $OpenBSD: em.4,v 1.1 2002/09/24 19:03:14 nate Exp $
+.\" Copyright (c) 2002 Intel Corporation
+.\" All rights reserved.
+.\" Redistribution and use in source and binary forms of the Software, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met:
+.\" 1. Redistributions of source code of the Software may retain the above 
+.\" copyright notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form of the Software may reproduce the 
+.\" above copyright notice, this list of conditions and the following 
+.\" disclaimer in the documentation and/or other materials provided with the 
+.\" distribution.
+.\" 3. Neither the name of the Intel Corporation nor the names of its contributors 
+.\" shall be used to endorse or promote products derived from this Software 
+.\" without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+.\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE INTEL OR ITS CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+.\" USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" * Other names and brands may be claimed as the property of others.
+.\"
+.\" $FreeBSD$
+.Dd March 2002 
+.Dt EM 4
+.Os
+.Sh NAME
+.Nm em
+.Nd "Intel(R) PRO/1000 gigabit Ethernet driver"
+.Sh SYNOPSIS
+.Cd "em* at pci? dev ? function ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for PCI gigabit Ethernet adapters based on
+the Intel 82540, 82542, 82543, 82544, and 82546 Ethernet controller chips.
+This includes the following models:
+.Pp
+.Bl -bullet -compact
+.It
+Intel PRO/1000 Gigabit Server Adapter (SX Fiber) (PWLA8490)
+.It
+Intel PRO/1000F Gigabit Server Adapter (SX Fiber) (PWLA8490SX)
+.It
+Intel PRO/1000T Server Adapter (PWLA8490T)
+.It
+Intel PRO/1000XT Server Adapter (PWLA8490XT)
+.It
+Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
+.It
+Intel PRO/1000T Desktop Adapter (PWLA8390T)
+.It
+Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
+.It
+Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
+.It
+Intel PRO/1000MT Server Adapter (PWLA8490MT)
+.It
+Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
+.It
+Intel PRO/1000MF Server Adapter (SX Fiber) (PWLA8490MF)
+.It
+Intel PRO/1000MF Dual Port Server Adapter (SX Fiber) (PWLA8492MF)
+.It
+Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
+.El
+.Pp
+The
+.Nm
+driver supports the following media types:
+.Pp
+.Bl -tag -width ".Cm 1000baseSX"
+.It Cm autoselect
+Enables auto-negotiation for speed and duplex.
+.It Cm 10baseT
+Sets 10Mbps operation.
+Use the
+.Cm mediaopt
+option to select
+.Cm full-duplex
+mode.
+.It Cm 100baseTX
+Sets 100Mbps operation.
+Use the
+.Cm mediaopt
+option to select
+.Cm full-duplex
+mode.
+.It Cm 1000baseSX
+Sets 1000Mbps operation.
+Only 
+.Cm full-duplex
+mode is supported at this speed.
+.It Cm 1000baseTX
+Sets 1000Mbps operation.
+Only 
+.Cm full-duplex
+mode is supported at this speed.
+.El
+.Pp
+The
+.Nm
+driver supports the following media options:
+.Pp
+.Bl -tag -width ".Cm full-duplex" 
+.It Cm full-duplex
+Forces full-duplex operation
+.It Cm half-duplex
+Forces half-duplex operation.
+.El
+.Pp
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "em%d: Unable to allocate bus resource: memory"
+A fatal initialization error has occurred.
+.It "em%d: Unable to allocate bus resource: interrupt"
+A fatal initialization error has occurred.
+.It "em%d: watchdog timeout -- resetting"
+The device has stopped responding to the network, or there is a problem with
+the network connection (cable).
+.El
+.Sh SUPPORT
+For general information and support, go to the Intel support website at:
+.Pa http://support.intel.com .
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr vlan 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 3.2 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Intel Corporation Aq freebsdnic@mailbox.intel.com .
