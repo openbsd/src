@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.29 1999/12/08 06:50:17 itojun Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.30 2000/01/17 18:16:48 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ sys_pipe(p, v, retval)
 	int error, fds[2];
 	register_t rval[2];
 
-	if ((error = sys_opipe(p, v, rval)) == -1)
+	if ((error = sys_opipe(p, v, rval)) != 0)
 		return (error);
 	
 	fds[0] = rval[0];
