@@ -55,4 +55,6 @@ typedef struct label_t {
         int val[40]; /* double check this XXX */
 } label_t;
 
+#define	__BROKEN_INDIRECT_CONFIG
+
 #endif	/* _MACHINE_TYPES_H_ */
