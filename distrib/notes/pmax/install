@@ -57,6 +57,20 @@ sh as default. Simply type Return here and you are in single user
 mode. For further instructions please read on in the "Continuing the
 installation from single user mode" below.
 
+Note: if booting the kernel in the miniroot should not work - there are
+      two kernels part of the distribution - look at the place you got
+      the distribution from - the kernels are there also - so you can
+      see which kernels there are - usually there should be 3 of them
+
+        * bsd - a generic kernel which should ask for the root device
+        * bsd_rz0 - generic kernel with root and swap fixed to rz0
+                    don't ask me why - but this should be usable then
+                    installing from a simpleroot on a zip disk (which
+                    is usually rz5 or rz6 - bsd crashes here :-)
+        * bsd_nfs - a generic kernel with root and swap configured
+                    to be on nfs
+
+      Maybe the names will change from bsd_xxx to bsd.xxx.
 
 Installing using a diskless setup.
 
