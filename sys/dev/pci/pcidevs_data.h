@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.296 2000/08/03 21:29:39 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.297 2000/08/04 17:45:41 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3913,6 +3913,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SIS",
 	    "85C596",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_SiS530,
+	    0,
+	    "SIS",
+	    "SiS530 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,

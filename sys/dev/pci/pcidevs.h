@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.296 2000/08/03 21:29:39 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.297 2000/08/04 17:45:41 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1449,6 +1449,7 @@
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_85C596	0x0496		/* 85C596 */
+#define	PCI_PRODUCT_SIS_SiS530	0x0530		/* SiS530 Host-PCI */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 EIDE */
 #define	PCI_PRODUCT_SIS_620	0x0620		/* 620 Host-PCI */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100BaseTX */
