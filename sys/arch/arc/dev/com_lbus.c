@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.3 1997/04/10 16:29:15 pefo Exp $	*/
+/*	$OpenBSD: com_lbus.c,v 1.4 1997/05/01 15:18:13 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -92,29 +92,20 @@ com_localbus_probe(parent, match, aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iobase, needioh;
+	int iobase;
 	int rv = 1;
 	struct confargs *ca = aux;
 
 	if(!BUS_MATCHNAME(ca, "com"))
 		return(0);
-	iobase = (long)BUS_CVTADDR(ca);
+	ioh = iobase = (long)BUS_CVTADDR(ca);
 	iot = &arc_bus_io;
-	needioh = 1;
 
 	/* if it's in use as console, it's there. */
-	if (iobase == comconsaddr && !comconsattached)
-		goto out;
-
-	if (needioh && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
-		rv = 0;
-		goto out;
+	if (iobase == comconsaddr && !comconsattached) {
+		return(rv);
 	}
 	rv = comprobe1(iot, ioh, iobase);
-	if (needioh)
-		bus_space_unmap(iot, ioh, COM_NPORTS);
-
-out:
 	return (rv);
 }
 
