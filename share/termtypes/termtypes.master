@@ -1,7 +1,7 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-#	Version 10.2.5
-#	$Date: 1999/01/18 03:43:10 $
+#	Version 10.2.7
+#	Date: 1999/03/10 15:53:04
 #	master syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -10,7 +10,7 @@
 #
 # Please e-mail changes to terminfo@ccil.org; the old termcap@berkeley.edu
 # address is no longer valid.  The latest version can always be found at
-# <http://earthspace.net/terminfo>.
+# <http://www.tuxedo.org/terminfo>.
 #
 # PURPOSE OF THIS FILE:
 #
@@ -26,7 +26,7 @@
 # termcap/terminfo versions.
 #
 # Pointers to related resources (including the ncurses distribution) may
-# be found at <http://earthspace.net/terminfo>.
+# be found at <http://www.tuxedo.org/terminfo>.
 #
 # INTERNATIONALIZATION:
 #
@@ -208,7 +208,7 @@
 # As the ANSI/ECMA-48 standard and variants take firmer hold, and as
 # character-cell terminals are increasingly replaced by X displays, much of
 # this file is becoming a historical document (this is part of the reason for
-# the new organization, which puts ANSI types, xterm, free-Unix consoles,
+# the new organization, which puts ANSI types, xterm, Unix consoles,
 # and vt100 up front in confidence that this will catch 95% of new hardware).
 #
 # For the terminal types still alive, I'd like to have manufacturer's
@@ -769,7 +769,7 @@ oldpc3|oldibmpc3|old IBM PC BSD/386 Console,
 # "stty rows NN", e.g. to use 24 lines.
 # (Color support from Kevin Rosenberg <kevin@cyberport.com>, 2 May 1996) 
 # Bug: The <op> capability resets attributes.
-bsdos|BSD/OS console,
+bsdos-pc|BSD/OS console,
 	am, bw, eo, km, xon, OTbs,
 	colors#8, cols#80, it#8, lines#25, pairs#64,
 	bel=^G, blink=\E[5m, bold=\E[1m, clear=\Ec, cr=^M, 
@@ -783,15 +783,15 @@ bsdos|BSD/OS console,
 	op=\E[x, rc=\E8, rev=\E[7m, rmso=\E[0m, sc=\E7, 
 	setab=\E[4%p1%dm, setaf=\E[3%p1%dm, sgr0=\E[0m, 
 	smso=\E[7m, 
-bsdos-bold|IBM PC BSD/386 Console with bold instead of underline, 
-	rmul=\E[0m, smul=\E[1m, use=bsdos,
+bsdos-pc-bold|IBM PC BSD/386 Console with bold instead of underline, 
+	rmul=\E[0m, smul=\E[1m, use=bsdos-pc,
 
 # If you are BSDI, you want the following entries, for the moment.  
 # In release 2.0 they will probably phase out the pc3 and ibmpc3 names
 pc3|IBM PC BSD/386 Console,
-	use=bsdos,
+	use=bsdos-pc,
 ibmpc3|pc3-bold|IBM PC BSD/386 Console with bold instead of underline, 
-	smul=\E[1m, use=bsdos-bold,
+	smul=\E[1m, use=bsdos-pc-bold,
 
 #### DEC VT100 and compatibles
 #
@@ -1025,8 +1025,8 @@ vt220|vt200|DEC VT220 in vt100 emulation mode,
 	cup=\E[%i%p1%d;%p2%dH$<10>, cuu1=\E[A, dch1=\E[P,
 	dl1=\E[M, ed=\E[J$<50>, el=\E[K$<3>, home=\E[H, ht=\t,
 	if=/usr/share/tabset/vt100, il1=\E[L, ind=\ED$<20/>,
-	is2=\E[1;24r\E[24;1H, kbs=\177, kcub1=\EOD, kcud1=\EOB,
-	kcuf1=\EOC, kcuu1=\EOA, kf1=\EOP,
+	is2=\E[1;24r\E[24;1H, kbs=^H, kcub1=\E[D, kcud1=\E[B,
+	kcuf1=\E[C, kcuu1=\E[A, kf1=\EOP,
 	kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\E[17~, kf6=\E[18~,
 	kf7=\E[19~, kf8=\E[20~, kf9=\E[21~, kf10=\E[29~, rc=\E8,
 	rev=\E[7m$<2>, rf=/usr/share/tabset/vt100, ri=\EM$<14/>,
@@ -1073,8 +1073,8 @@ vt220-8|dec vt220 8 bit terminal,
 	ech=\E[%p1%dX, ed=\E[J, el=\E[K, el1=\E[1K,
 	enacs=\E)0, flash=\E[?5h$<200/>\E[?5l, home=\E[H,
 	ht=\t, hts=\EH, ich=\E[%p1%d@, il=\E[%p1%dL, il1=\E[L,
-	ind=\ED, is2=\E[?7h\E[>\E[?1h\E\sF\E[?4l, kbs=\177,
-	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
+	ind=\ED, is2=\E[?7h\E[>\E[?1h\E\sF\E[?4l, kbs=\b,
+	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
 	kf1=\EOP, kf10=\E[21~, kf11=\E[23~, kf12=\E[24~,
 	kf13=\E[25~, kf14=\E[26~, kf17=\E[31~, kf18=\E[32~,
 	kf19=\E[33~, kf2=\EOQ, kf20=\E[34~, kf3=\EOR,
@@ -1112,7 +1112,7 @@ vt200-js|vt220-js|dec vt200 series with jump scroll,
 	dl1=\E[M, ed=\E[J, el=\E[K, home=\E[H, ht=^I, 
 	il1=\E[L, ind=\ED, 
 	is2=\E[61"p\E[H\E[?3l\E[?4l\E[?1l\E[?5l\E[?6l\E[?7h\E[?8h\E[?25h\E>\E[m, 
-	kbs=\177, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
+	kbs=^H, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
 	kcuu1=\EOA, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, 
 	nel=^M\ED, rf=/usr/lib/tabset/vt100, ri=\EM, rmdc=, 
 	rmir=\E[4l, rmkx=\E[?1l\E>, rmso=\E[27m$<5/>, 
@@ -1223,7 +1223,7 @@ vt340|dec-vt340|vt330|dec-vt330|dec vt340 graphics terminal with 24 line page,
 	ht=^I, hts=\EH, ich=\E[%p1%d@, il=\E[%p1%dL, 
 	il1=\E[L, ind=\ED, 
 	is2=\E<\E F\E>\E[?1h\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H, 
-	kbs=\177 kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
+	kbs=^H, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
 	kcuu1=\EOA, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, 
 	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, 
 	lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, nel=^M\ED, 
@@ -1271,7 +1271,7 @@ vt400|vt400-24|dec-vt400|dec vt400 24x80 column autowrap,
 	home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@, 
 	ich1=\E[@, il=\E[%p1%dL, il1=\E[L, ind=\ED, 
 	is2=\E<\E F\E>\E[?1h\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H, 
-	kbs=\177, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
+	kbs=^H, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
 	kcuu1=\EOA, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, 
 	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, 
 	lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, nel=^M\ED, 
@@ -1295,7 +1295,7 @@ vt420|DEC VT420,
 	dl1=\E[M, ed=\E[J$<50>, el=\E[K$<3>, home=\E[H, ht=\t,
 	if=/usr/share/tabset/vt300, il1=\E[L, ind=\ED,
 	is2=\E[1;24r\E[24;1H, is3=\E[?67h\E[64;1"p,
-	kbs=\177, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	kbs=^H, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
 	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\E[17~,
 	kf6=\E[18~, kf7=\E[19~, kf8=\E[20~, kf9=\E[21~, kf10=\E[29~,
 	kfnd=\E[1~, kich1=\E[2~, kdch1=\E[3~,
@@ -1394,7 +1394,7 @@ vt520|DEC VT520,
 	dl1=\E[M, ed=\E[J$<50>, el=\E[K$<3>, home=\E[H, ht=\t,
 	if=/usr/share/tabset/vt300, il1=\E[L, ind=\ED,
 	is2=\E[1;24r\E[24;1H, is3=\E[?67h\E[64;1"p,
-	kbs=\177, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	kbs=^H, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
 	kf0=\E[29~, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\E[17~,
 	kf6=\E[18~, kf7=\E[19~, kf8=\E[20~, kf9=\E[21~, kf10=\E[29~,
 	kfnd=\E[1~, kich1=\E[2~, kdch1=\E[3~,
@@ -1421,7 +1421,7 @@ vt525|DEC VT525,
 	dl1=\E[M, ed=\E[J$<50>, el=\E[K$<3>, home=\E[H, ht=\t,
 	if=/usr/share/tabset/vt300, il1=\E[L, ind=\ED,
 	is2=\E[1;24r\E[24;1H, is3=\E[?67h\E[64;1"p,
-	kbs=\177, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	kbs=^H, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
 	kf0=\E[29~, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\E[17~,
 	kf6=\E[18~, kf7=\E[19~, kf8=\E[20~, kf9=\E[21~, kf10=\E[29~,
 	kfnd=\E[1~, kich1=\E[2~, kdch1=\E[3~,
@@ -1508,11 +1508,9 @@ ncsa|NCSA Telnet 2.7 for Macintosh in vt220-8 mode,
         setab=\e[4%p1%dm,
         setaf=\e[3%p1%dm,
         use=ncsa-m,
-ncsa-ns|NCSA Telnet 2.7 for Macintosh in vt220-8 mode,
-# colours, no status line
+ncsa-ns|NCSA color Telnet 2.7 for Macintosh in vt220-8 mode/no status line,
         hs@, tsl@, fsl@, dsl@, use=ncsa,
-ncsa-m-ns|NCSA Telnet 2.6 for Macintosh in vt220-8 mode,
-# no colours, no status line
+ncsa-m-ns|NCSA Telnet 2.6 for Macintosh in vt220-8 mode/no status line,
         hs@, tsl@, fsl@, dsl@, use=ncsa-m,
 
 # Zstem340 is an (IMHO) excellent VT emulator for PC's.  I recommend it to
@@ -1606,10 +1604,10 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kf2=\EOQ, kf20=\E[34~, kf3=\EOR, kf4=\EOS, kf5=\E[15~, 
 	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, kfnd=\E[1~, 
 	kich1=\E[2~, knp=\E[6~, kpp=\E[5~, kslt=\E[4~, meml=\El, 
-	memu=\Em, rev=\E[7m, ri=\EM, rmacs=^O, 
+	memu=\Em, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O, 
 	rmcup=\E[2J\E[?47l\E8, rmir=\E[4l, rmkx=\E[?1l\E>, 
 	rmso=\E[m, rmul=\E[m, 
-	rs2=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>,
+	rs2=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>, sc=\E7, 
 	sgr0=\E[m, smacs=^N, smcup=\E7\E[?47h, smir=\E[4h, 
 	smkx=\E[?1h\E=, smso=\E[7m, smul=\E[4m, tbc=\E[3g, 
 # This is the base xterm entry for the xterm supplied with XFree86 3.2 & up.
@@ -5472,12 +5470,12 @@ wy520-epc|wyse520-epc|wyse 520 with EPC keyboard,
 #
 #       Wyse 520 with 24 data lines and status (terminal status)
 #       with EPC keyboard.
-wy520-epc-24|wyse520-pc-24|wyse 520 with 24 data lines, 
+wy520-epc-24|wyse520-pc-24|wyse 520 with 24 data lines and EPC keyboard, 
 	hs@, 
 	dsl@, fsl@, rs3=\E[?5l\E[47h\E[40l\E[1;24r, tsl@, use=wy520-epc, 
 #
 #       Wyse 520 with visual bell.
-wy520-epc-vb|wyse520-pc-vb|wyse 520 with visible bell, 
+wy520-epc-vb|wyse520-pc-vb|wyse 520 with visible bell and EPC keyboard, 
 	flash=\E[30h\E\054\E[30l$<100>, 
 	use=wy520-epc, 
 #
@@ -5489,7 +5487,7 @@ wy520-epc-w|wyse520-epc-w|wyse 520 in 132-column mode with EPC keyboard,
 	use=wy520-epc, 
 #
 #       Wyse 520 in 132-column mode with visual bell.
-wy520-epc-wvb|wyse520-p-wvb|wyse 520 with visible bell 132-columns, 
+wy520-epc-wvb|wyse520-p-wvb|wyse 520 with visible bell 132-columns and EPC keyboard, 
 	flash=\E[30h\E\054\E[30l$<100>, 
 	use=wy520-epc-w, 
 #
@@ -5537,7 +5535,7 @@ wy520-36wpc|wyse520-36wpc|wyse 520 with 36 data lines and EPC keyboard,
 	rs3=\E[?5l\E[36*|\E[36t\E[40l\E[1;36r\E[132$|, use=wy520-36pc, 
 #
 #       Wyse 520 in 132-column, 48 lines with EPC keyboard
-wy520-48wpc|wyse520-48wpc|wyse 520 with 48 data lines, 
+wy520-48wpc|wyse520-48wpc|wyse 520 with 48 data lines and EPC keyboard, 
 	cols#132, wsl#132, 
 	rs2=\E[?3h, 
 	rs3=\E[?5l\E[48*|\E[48t\E[40l\E[1;48r\E[132$|, use=wy520-48pc, 
@@ -5674,7 +5672,7 @@ vt320-k3|MS-Kermit 3.00's vt320 emulation,
 	flash=\E[?5h\E[?5l\E[?5h\E[?5l\E[?5h\E[?5l, 
 	fsl=\E[0$}, home=\E[H, hpa=\E[%i%p1%dG, ht=^I, 
 	hts=\EH, ich=\E[%p1%d@, il=\E[%p1%dL, il1=\E[L, ind=^J, 
-	is2=\E>\E F\E[?1l\E[?7h\E[r\E[2$~, kbs=\177, 
+	is2=\E>\E F\E[?1l\E[?7h\E[r\E[2$~, kbs=^H, 
 	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA, 
 	kdl1=\E[3~, kf0=\E[21~, kf1=\EOP, kf2=\EOQ, 
 	kf3=\EOR, kf4=\EOS, kf6=\E[17~, kf7=\E[18~, 
@@ -5706,7 +5704,7 @@ vt320-k311|dec vt320 series as defined by kermit 3.11,
 	hts=\EH, ich=\E[%p1%d@, il=\E[%p1%dL, 
 	il1=\E[L$<3/>, ind=\ED, 
 	is2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H, 
-	kbs=\177, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
+	kbs=^H, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, 
 	kcuu1=\EOA, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, 
 	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, 
 	lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, nel=^M\ED, 
@@ -7508,6 +7506,164 @@ adds980|a980|adds consul 980,
 	kf2=\E2, kf3=\E3, kf4=\E4, kf5=\E5, kf6=\E6, 
 	kf7=\E7, kf8=\E8, kf9=\E9, rmso=^O, sgr0=^O, smso=^Y^^^N, 
 
+# Beehive documentation is undated and marked Preliminary and has no figures
+# so we must have early Superbee2 (Model 600, according to phone conversation
+# with mfr.). It has proved reliable except for some missing padding
+# (notably after \EK and <nl> at bottom of screen).
+# 
+# The key idea is that AEP mode is poison for <cup> & that US's in 
+# the local memory should be avoided like the plague. That means 
+# that the 2048 character local buffer is used as 25 lines of 80 
+# characters, period. No scrolling local memory, folks. It also 
+# appears that we cannot use naked INS LINE feature since it uses
+# US. The sbi fakes <il1> with an 80-space insert that may be too 
+# slow at low speeds; also spaces get converted to \040 which is 
+# too long for some programs (not vi).  DEL LINE is ok but slow.
+# 
+# The <nl> string is designed for last line of screen ONLY; cup to 
+# 25th line corrects the motion inherent in scrolling to Page 1.
+# 
+# There is one understood bug. It is that the screen appears to
+# pop to a new (blank) page after a <nel>, or leave a half-line 
+# ellipsis to a quad that is the extra 48 memory locations. The 
+# data received is dumped into memory but not displayed.  Not to 
+# worry if <cup> is being used; the lines not displayed will be, 
+# whenever the cursor is moved up there. Since <cup> is addressed 
+# relative to MEMORY of window, nothing is lost; but beware of 
+# relative cursor motion (<cuu1>,<cud1>,<cuf1>,<cub1>). Recommended,
+# therefore, is setenv MORE -c .
+# 
+# WARNING: Not all features tested.
+# 
+# Timings are assembled from 3 sources. Some timings may reflect 
+# SB2/Model 300 that were used if more conservative.
+# Tested on a Model 600 at 1200 and 9600 bd.
+# 
+# The BACKSPACEkb option is cute. The NEWLINE key, so cleverly 
+# placed on the keyboard and useless because of AEP, is made 
+# into a backspace key. In use ESC must be pressed twice (to send)
+# and sending ^C must be prefixed by ESC to avoid that weird 
+# transmit mode associated with ENTER key.
+# 
+# IF TERMINAL EVER GOES CATATONIC with the cursor buzzing across 
+# the screen, then it has dropped into ENTER mode; hit 
+# RESET--ONLINE--!tset.
+# 
+# As delivered this machine has a FATAL feature that will throw 
+# it into that strange transmit state (SPOW) if the space bar is 
+# hit after a CR is received, but before receiving a LF (or a 
+# few others).
+# 
+# The circuits MUST be modified to eliminate the SPOW latch. 
+# This is done by strapping on chip A46 of the I/O board; cut 
+# the p.c. connection to Pin 5 and strap Pin 5 to Pin 8 of that 
+# chip. This mod has been checked out on a Mod 600 of Superbee II.
+# With this modification absurdly high timings on cr are 
+# unnecessary.
+# 
+# NOTE WELL that the rear panel switch should be set to CR/LF, 
+# not AEP!
+#
+sb|sb1|beehive superbee,
+	am, bw, da, db, mir, ul, xsb, OTbs,
+	cols#80, lines#25, xmc#1, 
+	bel=^G, cbt=\E`$<650>, clear=\EH$<1>\EJ$<3>, cr=$<1>\r, cub1=\b$<1>,
+	cub1=^H, cud1=\EB$<3>, cud1=^J, cuf1=\EC$<3>, cup=\EF%p2%03d%p1%03d,
+	cuu1=\EA$<3>, dch1=\EP$<3>, dl1=\EM$<100>, ed=\EJ$<3>, el=\EK$<3>,
+	home=\EH$<1>, ht=\t, hts=\E1, 
+	il1=\EN\EL$<3>\EQ\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\EP$<3>\s\EO\ER\EA$<3>,
+	ind=^J, is2=\EE$<3>\EX\EZ\EO\Eb\Eg\ER, kbs=^_, kcub1=\ED, kcud1=\EB, 
+	kcuf1=\EC, kcuu1=\EA, kdl1=\EM, ked=\EJ, kel=\EK, kf0=\E2, kf1=\Ep,
+	kf2=\Eq, kf3=\Er, kf4=\Es, kf5=\Et, kf6=\Eu, kf7=\Ev, kf8=\Ew, kf9=\E1,
+	khome=\EH, kich1=\EQ\EO, krmir=\ER, lf0=TAB CLEAR, lf9=TAB SET, rmcup=,
+	rmir=\ER, rmso=\E_3, rmul=\E_3, sgr0=\E_3, smcup=\EO, smir=\EQ\EO,
+	smso=\E_1, smul=\E_0, tbc=\E3,
+sbi|superbee|beehive superbee at Indiana U.,
+	xsb, 
+	cr=^M$<1>, il1=1\EN\EL$<9>\EQ \EP$<9> \EO\ER\EA, 
+	use=sb1,
+# Alternate (older) description of Superbee - f1=escape, f2=^C.
+# Note: there are at least 3 kinds of superbees in the world.  The sb1
+# holds onto escapes and botches ^C's.  The sb2 is the best of the 3.
+# The sb3 puts garbage on the bottom of the screen when you scroll with
+# the switch in the back set to CRLF instead of AEP.  This description
+# is tested on the sb2 but should work on all with either switch setting.
+# The f1/f2 business is for the sb1 and the <xsb> can be taken out for
+# the other two if you want to try to hit that tiny escape key.
+# This description is tricky: being able to use cup depends on there being
+# 2048 bytes of memory and the hairy <nl> string.
+superbee-xsb|beehive super bee, 
+	am, da, db, xsb, 
+	cols#80, it#8, lines#25, 
+	clear=\EH\EJ$<3>, cnorm=^J, cr=\r$<1000>, cub1=^H, 
+	cud1=^J, cuf1=\EC, cup=\EF%p2%3d%p1%3d, cuu1=\EA$<3>, 
+	dch1=\EP$<3>, dl1=\EM$<100>, ed=\EJ$<3>, el=\EK$<3>, home=\EH, 
+	ht=^I, hts=\E1, 
+	ind=\n\0\0\0\n\0\0\0\EA\EK\0\0\0\ET\ET, 
+	is2=\EH\EJ, kcub1=\ED, kcud1=\EB, kcuf1=\EC, 
+	kcuu1=\EA, kf1=\Ep, kf2=\Eq, kf3=\Er, kf4=\Es, 
+	kf5=\Et, kf6=\Eu, kf7=\Ev, kf8=\Ew, khome=\EH, 
+	rmso=\E_3, sgr0=\E_3, smso=\E_1, tbc=\E3, 
+# This loses on lines > 80 chars long, use at your own risk
+superbeeic|super bee with insert char, 
+	ich1=, rmir=\ER, smir=\EQ, 
+	use=superbee-xsb,
+sb2|sb3|fixed superbee, 
+	xsb@, 
+	use=superbee,
+
+####  Beehive Medical Electronics
+#
+# Steve Seymour <srseymour@mindspring.com> writes (Wed, 03 Feb 1999):
+# Regarding your question though; Beehive terminals weren't made by Harris.
+# They were made by Beehive Medical Electronics in Utah. They went out of
+# business in the early '80s.
+#
+# (OK, then, I don't know why a couple of these say "harris beehive".)
+#
+
+# Reports are that most of these Beehive entries (except superbee) have not
+# been tested and do not work right.  <rmso> is a trouble spot.  Be warned.
+
+# (bee: <ich1> was empty, which is obviously bogus -- esr)
+beehive|bee|harris beehive, 
+	am, mir, OTbs,
+	cols#80, lines#24, 
+	cbt=\E>, clear=\EE, cub1=^H, cud1=\EB, cuf1=\EC, 
+	cup=\EF%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, 
+	dch1=\EP, dl1=\EM, ed=\EJ, el=\EK, home=\EH, il1=\EL, kbs=^H, 
+	kcbt=\E>, kclr=\EE, kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA, 
+	kdch1=\EP, kdl1=\EM, kel=\EK, khome=\EH, kich1=\EQ, kil1=\EL, 
+	krmir=\E@, rmir=\E@, rmso=\Ed@, rmul=\Ed@, sgr0=\Ed@, smir=\EQ,
+	smso=\EdP, smul=\Ed`, 
+# set tab is ^F, clear (one) tab is ^V, no way to clear all tabs.
+# good grief - does this entry make :sg:/:ug: when it doesn't have to?
+# look at those spaces in <rmso>/<smso>.  Seems strange to me...
+# (beehive: <if=/usr/share/tabset/beehive> removed, no such file.  If you
+# really care, cook up one using ^F -- esr)
+beehive3|bh3m|beehiveIIIm|harris beehive 3m, 
+	am, OTbs,
+	cols#80, it#8, lines#20, 
+	bel=^G, clear=^E^R, cr=^M, cub1=^H, cud1=^J, cuf1=^L, cuu1=^K, 
+	dl1=\021$<350>, ed=^R, el=^P, home=^E, ht=^I, hts=^F,
+	il1=\023$<160>, ll=^E^K, ind=^J, rmso= ^_, smso=^] , 
+beehive4|bh4|beehive 4,
+	cr=^M, cud1=^J, ind=^J, bel=^G,
+	cols#80, lines#24, am, cub1=^H, ed=\EJ, el=\EK, clear=\EE,
+	home=\EH, cuu1=\EA, cuf1=\EC, cub1=\ED,
+# There was an early Australian kit-built computer called a "Microbee".
+# It's not clear whether this is for one of those or for a relative
+# of the Beehive.
+microb|microbee|micro bee series, 
+	am, OTbs,
+	cols#80, it#8, lines#24, 
+	bel=^G, clear=\EE, cr=^M, cub1=^H, cud1=^J, cuf1=\EC, 
+	cup=\EF%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, ed=\EJ, ht=^I,
+	el=\EK, ht=\t, kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA, 
+	kf1=\Ep, kf2=\Eq, kf3=\Er, kf4=\Es, kf5=\Et, 
+	kf6=\Eu, kf7=\Ev, kf8=\Ew, kf9=\Ex, khome=\EH, ind=^J,
+	rmso=\Ed@, rmul=\Ed@, sgr0=\Ed@, smso= \EdP, smul=\Ed`, 
+
 #### C. Itoh Electronics
 #
 # As of 1995 these people no longer make terminals (they're still in the
@@ -8387,24 +8543,10 @@ dg6053|dg100|data general 6053,
 
 #### Datamedia (dm)
 #
-# Datamedia was headquartered in Nashua, New Hampshire in 1993.
-# As of early 1996, at least one company called `Datamedia' has been taken
-# over by:
-#
-#    Axent Technologies, Inc.
-#    2400 Research Boulevard
-#    Rockville, Maryland 20850
-#    voice: +1 301/258-5043
-#      fax: +1 301/330-5756
-#    email: <info@axent.com>
-#
-# makers of OmniGuard client/server security software.  They are a software
-# only company and no longer make terminals.  However, the operator there
-# told me that she had once spoken to a customer looking for Datamedia
-# terminals who'd mentioned a Datamedia in New Jersey.  This is backed up
-# by comp.terminals poosting describing the ID plate on the back of a
-# "Datamedia 3000" terminal.  Was this an earlier incarnation of Axent?
-# Inquiring minds want to know...
+# Datamedia was headquartered in Nashua, New Hampshire until it went 
+# out of business in 1993, but the ID plates on the terminals referred
+# to the factory in Pennsauken, NJ.  The factory was sold to a PCB board
+# manufacturer which threw out all information about the terminals.
 #
 
 cs10|colorscan|Datamedia Color Scan 10,
@@ -8784,157 +8926,12 @@ go225|go-225|Graphon 225,
 	sgr0=\E[m, smam=\E[?7h, smcup=\E[2;0#w\E[1;25r, smir=\E[4h, 
 	smkx=\E=, smso=\E[7m, smul=\E[4m,
 
-#### Harris (Beehive)
+#### Harris
 #
 # Bletch.  These guys shared the Terminal Brain Damage laurels with Hazeltine.
 # Their terminal group is ancient history now (1995) though the parent
 # company is still in business.
 #
-
-# Beehive documentation is undated and marked Preliminary and has no figures
-# so we must have early Superbee2 (Model 600, according to phone conversation
-# with mfr.). It has proved reliable except for some missing padding
-# (notably after \EK and <nl> at bottom of screen).
-# 
-# The key idea is that AEP mode is poison for <cup> & that US's in 
-# the local memory should be avoided like the plague. That means 
-# that the 2048 character local buffer is used as 25 lines of 80 
-# characters, period. No scrolling local memory, folks. It also 
-# appears that we cannot use naked INS LINE feature since it uses
-# US. The sbi fakes <il1> with an 80-space insert that may be too 
-# slow at low speeds; also spaces get converted to \040 which is 
-# too long for some programs (not vi).  DEL LINE is ok but slow.
-# 
-# The <nl> string is designed for last line of screen ONLY; cup to 
-# 25th line corrects the motion inherent in scrolling to Page 1.
-# 
-# There is one understood bug. It is that the screen appears to
-# pop to a new (blank) page after a <nel>, or leave a half-line 
-# ellipsis to a quad that is the extra 48 memory locations. The 
-# data received is dumped into memory but not displayed.  Not to 
-# worry if <cup> is being used; the lines not displayed will be, 
-# whenever the cursor is moved up there. Since <cup> is addressed 
-# relative to MEMORY of window, nothing is lost; but beware of 
-# relative cursor motion (<cuu1>,<cud1>,<cuf1>,<cub1>). Recommended,
-# therefore, is setenv MORE -c .
-# 
-# WARNING: Not all features tested.
-# 
-# Timings are assembled from 3 sources. Some timings may reflect 
-# SB2/Model 300 that were used if more conservative.
-# Tested on a Model 600 at 1200 and 9600 bd.
-# 
-# The BACKSPACEkb option is cute. The NEWLINE key, so cleverly 
-# placed on the keyboard and useless because of AEP, is made 
-# into a backspace key. In use ESC must be pressed twice (to send)
-# and sending ^C must be prefixed by ESC to avoid that weird 
-# transmit mode associated with ENTER key.
-# 
-# IF TERMINAL EVER GOES CATATONIC with the cursor buzzing across 
-# the screen, then it has dropped into ENTER mode; hit 
-# RESET--ONLINE--!tset.
-# 
-# As delivered this machine has a FATAL feature that will throw 
-# it into that strange transmit state (SPOW) if the space bar is 
-# hit after a CR is received, but before receiving a LF (or a 
-# few others).
-# 
-# The circuits MUST be modified to eliminate the SPOW latch. 
-# This is done by strapping on chip A46 of the I/O board; cut 
-# the p.c. connection to Pin 5 and strap Pin 5 to Pin 8 of that 
-# chip. This mod has been checked out on a Mod 600 of Superbee II.
-# With this modification absurdly high timings on cr are 
-# unnecessary.
-# 
-# NOTE WELL that the rear panel switch should be set to CR/LF, 
-# not AEP!
-#
-sb|sb1|beehive superbee,
-	am, bw, da, db, mir, ul, xsb, OTbs,
-	cols#80, lines#25, xmc#1, 
-	bel=^G, cbt=\E`$<650>, clear=\EH$<1>\EJ$<3>, cr=$<1>\r, cub1=\b$<1>,
-	cub1=^H, cud1=\EB$<3>, cud1=^J, cuf1=\EC$<3>, cup=\EF%p2%03d%p1%03d,
-	cuu1=\EA$<3>, dch1=\EP$<3>, dl1=\EM$<100>, ed=\EJ$<3>, el=\EK$<3>,
-	home=\EH$<1>, ht=\t, hts=\E1, 
-	il1=\EN\EL$<3>\EQ\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\EP$<3>\s\EO\ER\EA$<3>,
-	ind=^J, is2=\EE$<3>\EX\EZ\EO\Eb\Eg\ER, kbs=^_, kcub1=\ED, kcud1=\EB, 
-	kcuf1=\EC, kcuu1=\EA, kdl1=\EM, ked=\EJ, kel=\EK, kf0=\E2, kf1=\Ep,
-	kf2=\Eq, kf3=\Er, kf4=\Es, kf5=\Et, kf6=\Eu, kf7=\Ev, kf8=\Ew, kf9=\E1,
-	khome=\EH, kich1=\EQ\EO, krmir=\ER, lf0=TAB CLEAR, lf9=TAB SET, rmcup=,
-	rmir=\ER, rmso=\E_3, rmul=\E_3, sgr0=\E_3, smcup=\EO, smir=\EQ\EO,
-	smso=\E_1, smul=\E_0, tbc=\E3,
-sbi|superbee|beehive superbee at Indiana U.,
-	xsb, 
-	cr=^M$<1>, il1=1\EN\EL$<9>\EQ \EP$<9> \EO\ER\EA, 
-	use=sb1,
-# Alternate (older) description of Superbee - f1=escape, f2=^C.
-# Note: there are at least 3 kinds of superbees in the world.  The sb1
-# holds onto escapes and botches ^C's.  The sb2 is the best of the 3.
-# The sb3 puts garbage on the bottom of the screen when you scroll with
-# the switch in the back set to CRLF instead of AEP.  This description
-# is tested on the sb2 but should work on all with either switch setting.
-# The f1/f2 business is for the sb1 and the <xsb> can be taken out for
-# the other two if you want to try to hit that tiny escape key.
-# This description is tricky: being able to use cup depends on there being
-# 2048 bytes of memory and the hairy <nl> string.
-superbee-xsb|beehive super bee, 
-	am, da, db, xsb, 
-	cols#80, it#8, lines#25, 
-	clear=\EH\EJ$<3>, cnorm=^J, cr=\r$<1000>, cub1=^H, 
-	cud1=^J, cuf1=\EC, cup=\EF%p2%3d%p1%3d, cuu1=\EA$<3>, 
-	dch1=\EP$<3>, dl1=\EM$<100>, ed=\EJ$<3>, el=\EK$<3>, home=\EH, 
-	ht=^I, hts=\E1, 
-	ind=\n\0\0\0\n\0\0\0\EA\EK\0\0\0\ET\ET, 
-	is2=\EH\EJ, kcub1=\ED, kcud1=\EB, kcuf1=\EC, 
-	kcuu1=\EA, kf1=\Ep, kf2=\Eq, kf3=\Er, kf4=\Es, 
-	kf5=\Et, kf6=\Eu, kf7=\Ev, kf8=\Ew, khome=\EH, 
-	rmso=\E_3, sgr0=\E_3, smso=\E_1, tbc=\E3, 
-# This loses on lines > 80 chars long, use at your own risk
-superbeeic|super bee with insert char, 
-	ich1=, rmir=\ER, smir=\EQ, 
-	use=superbee-xsb,
-sb2|sb3|fixed superbee, 
-	xsb@, 
-	use=superbee,
-
-# Reports are that most of these Beehive entries (except superbee) have not
-# been tested and do not work right.  <rmso> is a trouble spot.  Be warned.
-
-# (bee: <ich1> was empty, which is obviously bogus -- esr)
-beehive|bee|harris beehive, 
-	am, mir, OTbs,
-	cols#80, lines#24, 
-	cbt=\E>, clear=\EE, cub1=^H, cud1=\EB, cuf1=\EC, 
-	cup=\EF%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, 
-	dch1=\EP, dl1=\EM, ed=\EJ, el=\EK, home=\EH, il1=\EL, kbs=^H, 
-	kcbt=\E>, kclr=\EE, kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA, 
-	kdch1=\EP, kdl1=\EM, kel=\EK, khome=\EH, kich1=\EQ, kil1=\EL, 
-	krmir=\E@, rmir=\E@, rmso=\Ed@, rmul=\Ed@, sgr0=\Ed@, smir=\EQ,
-	smso=\EdP, smul=\Ed`, 
-# set tab is ^F, clear (one) tab is ^V, no way to clear all tabs.
-# good grief - does this entry make :sg:/:ug: when it doesn't have to?
-# look at those spaces in <rmso>/<smso>.  Seems strange to me...
-# (beehive: <if=/usr/share/tabset/beehive> removed, no such file.  If you
-# really care, cook up one using ^F -- esr)
-beehive3|bh3m|beehiveIIIm|harris beehive 3m, 
-	am, OTbs,
-	cols#80, it#8, lines#20, 
-	bel=^G, clear=^E^R, cr=^M, cub1=^H, cud1=^J, cuf1=^L, cuu1=^K, 
-	dl1=\021$<350>, ed=^R, el=^P, home=^E, ht=^I, hts=^F,
-	il1=\023$<160>, ll=^E^K, ind=^J, rmso= ^_, smso=^] , 
-beehive4|bh4|beehive 4,
-	cr=^M, cud1=^J, ind=^J, bel=^G,
-	cols#80, lines#24, am, cub1=^H, ed=\EJ, el=\EK, clear=\EE,
-	home=\EH, cuu1=\EA, cuf1=\EC, cub1=\ED,
-microb|microbee|micro bee series, 
-	am, OTbs,
-	cols#80, it#8, lines#24, 
-	bel=^G, clear=\EE, cr=^M, cub1=^H, cud1=^J, cuf1=\EC, 
-	cup=\EF%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, ed=\EJ, ht=^I,
-	el=\EK, ht=\t, kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA, 
-	kf1=\Ep, kf2=\Eq, kf3=\Er, kf4=\Es, kf5=\Et, 
-	kf6=\Eu, kf7=\Ev, kf8=\Ew, kf9=\Ex, khome=\EH, ind=^J,
-	rmso=\Ed@, rmul=\Ed@, sgr0=\Ed@, smso= \EdP, smul=\Ed`, 
 
 # 8675, 8686, and bee from Cyrus Rahman
 # (8675: changed k10, k11...k16 to k;, F1...F6 -- esr)
@@ -10879,7 +10876,7 @@ ergo4000|microterm ergo 4000,
 # identical, except for case, to lower-case ones.  I also uncommented the acsc
 # capabilities.X
 #
-# The Intecolor emulation of the NCR 2900/260C color terminal is basicly a
+# The Intecolor emulation of the NCR 2900/260C color terminal is basically a
 # DEC vt200/300 with color capabilities added.
 ncr260intan|NCR Intecolor emulation of the 2900_260C with an ANSI keyboard,
 	colors#8, pairs#64,
@@ -10887,7 +10884,7 @@ ncr260intan|NCR Intecolor emulation of the 2900_260C with an ANSI keyboard,
 	setaf=\E[3%p1%dm,
 	setab=\E[4%p1%dm,
 	use=ncr260vt300an,
-# The Intecolor emulation of the NCR 2900/260C color terminal is basicly a
+# The Intecolor emulation of the NCR 2900/260C color terminal is basically a
 # DEC vt200/300 with color capabilities added.
 ncr260intwan|NCR Intecolor emulation of the 2900_260C with an ANSI keyboard,
 	colors#8, pairs#64,
@@ -10895,8 +10892,8 @@ ncr260intwan|NCR Intecolor emulation of the 2900_260C with an ANSI keyboard,
 	setaf=\E[3%p1%dm,
 	setab=\E[4%p1%dm,
 	use=ncr260vt300wan,
-# The Intecolor emulation of the NCR 2900/260C color terminal is basicly a DEC 
-# vt200/300 with color capabilities added.
+# The Intecolor emulation of the NCR 2900/260C color terminal is basically a
+# DEC vt200/300 with color capabilities added.
 ncr260intpp|NCR Intecolor emulation of the 2900_260C with a PC+ keyboard,
 	colors#8, pairs#64,
 	op=\E[0m,
@@ -14126,7 +14123,8 @@ soroc140|iq140|soroc iq140,
 #### Southwest Technical Products
 #
 # These guys made an early personal micro called the M6800.  
-# The ct82 was probably its console terminal.
+# The ct82 was its console. It was actually sold as a seperate terminal;
+# there is a full-page ad for it in page 1 of the December 1978 BYTE.
 #
 
 # (swtp: removed obsolete ":bc=^D:" -- esr)
@@ -14769,7 +14767,7 @@ masscomp2|masscomp large screen version 2,
 #
 
 # (news-unk: this had :KB=news: -- esr)
-news-unk|SONY NEWS vt100 emulator common entry, 
+news-unk|SONY NEWS vt100 emulator old common entry, 
 	OTbs, OTpt, am, xenl, 
 	cols#80, 
 	OTnl=^J, 
@@ -14836,7 +14834,7 @@ news-old-unk|SONY NEWS vt100 emulator common entry,
 	smul=\E[4m, 
 #
 # (nwp512: this had :DE=^H:, which I think means <OTbs> --esr)
-nwp512|news|nwp514|news40|vt100-bm|sony vt100 emulator 40 lines, 
+nwp512|news|nwp514|news40|vt100-bm|old sony vt100 emulator 40 lines, 
 	OTbs, 
 	lines#40, 
 	is2=\E7\E[r\E8\EE\EE\EE\EM\EM\EM\E[?7h\E[?1l\E[?3l\E7\E[1;40r\E8, use=news-old-unk,
@@ -14860,13 +14858,13 @@ nwp513|nwp518|nwe501|newscbm|news31|sony vt100 emulator 33 lines,
 #
 # (nwp513-a: this had :TY=ascii: and :DE=^H:, which I interpret as <OTbs>; --esr)
 # also the alias vt100-bm.
-nwp513-a|nwp518-a|nwe501-a|nwp251-a|newscbm-a|news31-a|newscbm33|news33|sony vt100 emulator 33 lines, 
+nwp513-a|nwp518-a|nwe501-a|nwp251-a|newscbm-a|news31-a|newscbm33|news33|old sony vt100 emulator 33 lines, 
 	OTbs, 
 	lines#33, 
 	is2=\E7\E[r\E8\EE\EE\EE\EM\EM\EM\E[?7h\E[?1l\E[?3l\E7\E[1;33r\E8, use=news-old-unk,
 #
 # (nwp513-o: had :DE=^H:, I think that's <OTbs>; also the alias vt100-bm --esr)
-nwp513-o|nwp518-o|nwe501-o|nwp251-o|newscbm-o|news31-o|sony vt100 emulator 33 lines, 
+nwp513-o|nwp518-o|nwe501-o|nwp251-o|newscbm-o|news31-o|old sony vt100 emulator 33 lines, 
 	OTbs, 
 	lines#31, 
 	is2=\E7\E[r\E8\EE\EE\EE\EM\EM\EM\E[?7h\E[?1l\E[?3l\E7\E[1;31r\E8, use=news-old-unk,
@@ -15375,6 +15373,25 @@ teletec|Teletec Datascreen,
 # terminal from 1984/85.  The function key definitions k0-k5 represent the
 # edit keypad: FIND, INSERT HERE, REMOVE, SELECT, PREV SCREEN,
 # NEXT SCREEN. The key definitions k6-k9 represent the PF1 to PF4 keys.
+#
+# Kenneth Randell <kenr@datametrics.com> writes on 31 Dec 1998:
+# I had a couple of scopes (3221) like this once where I used to work, around
+# the 1987 time frame if memory serves me correctly.  These scopes were made  
+# by an outfit called LANPAR Technologies, and were meant to me DEC VT 220
+# compatible.  The 3220 was a plain text terminal like the VT-220, the 3221
+# was a like the VT-240 (monochrome with Regis + Sixel graphics), and the 3222
+# was like the VT-241 (color with Regis + Sixel Graphics).  These terminals
+# (3221) cost about $1500 each, and one was always broken -- had to be sent
+# back to the shop for repairs.
+# The only real advantage these scopes had over the VT-240's were:
+# 1) They were faster in the Regis display, or at least the ones I did
+# 2) They had a handy debugging feature where you could split-screen the
+# scope, the graphics would appear on the top, and the REGIS commands would
+# appear on the bottom.  I don't remember the VT-240s being able to do that.
+# I would swear that LANPAR Technologies was in MA someplace, but since I
+# don't work at the same place anymore, and those terminals and manuals were
+# long since junked, I cannot be any more sure than that.
+#
 # (v3220: removed obsolete ":kn#10:",
 # I added <rmam>/<smam> based on the init string -- esr)
 v3220|LANPAR Vision II model 3220/3221/3222, 
@@ -16617,6 +16634,8 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* dtterm enacs correction from Alexander V. Lukyanov.
 #	* Added ncsa-telnet, resolving Debian bug report 25341.
 #	* Added Francesco Potorti's tuned Wyse 99 entries.
+# 10.2.6: (Mon Dec 21 00:49:43 EST 1998):
+#	* Home site has changed.
 #
 # The following sets edit modes for GNU EMACS.
 # Local Variables:
