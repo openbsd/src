@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.10 1999/09/28 20:36:05 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.11 1999/09/29 21:01:01 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1966,6 +1966,7 @@ vt_col(struct video_state *svsp, int cols)
 #endif /* PCVT_SIGWINCH */
 
 	}
+	reallocate_scrollbuffer(svsp, SCROLLBACK_PAGES);
 	return(1);
 }
 
