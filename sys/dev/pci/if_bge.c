@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.53 2005/03/07 13:31:40 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.54 2005/03/07 18:59:11 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1779,11 +1779,11 @@ bge_attach(parent, self, aux)
 	printf(", ");
 	br = bge_lookup_rev(sc->bge_chipid);
 	if (br == NULL) {
-		printf("unknown ASIC 0x%08x", sc->bge_chipid);
+		printf("unknown ASIC (0x%04x)", sc->bge_chipid >> 16);
 		sc->bge_quirks = 0;
 	} else {
-		printf("%s", br->br_name);
-		sc->bge_quirks = br->br_quirks;
+		printf("%s (0x%04x)", br->br_name, sc->bge_chipid >> 16);
+		sc->bge_quirks |= br->br_quirks;
 	}
 
 	printf(": %s", intrstr);
