@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.184 2001/11/28 13:47:38 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.185 2001/11/28 15:02:58 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2209,7 +2209,7 @@ init386(first_avail)
 #ifdef DEBUG
 	printf("\n");
 #endif
-	pmap_update();
+	tlbflush();
 #if 0
 #if NISADMA > 0
 	/*
@@ -2377,7 +2377,7 @@ cpu_reset()
 	 * entire address space.
 	 */
 	bzero((caddr_t)PTD, NBPG);
-	pmap_update(); 
+	tlbflush(); 
 #endif
 
 	for (;;);
@@ -2669,7 +2669,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 			pmap_update_pg(va);
 		}
 	}
-	pmap_update();
+	tlbflush();
 
 	return 0;
 }
@@ -3099,7 +3099,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
-	pmap_update();
+	tlbflush();
 
 	return (0);
 }
