@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.48 2002/02/03 01:30:38 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.49 2002/02/04 19:52:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -101,8 +101,11 @@
 
 	.section .bss
 	.export	pdc_stack, data
-pdc_stack
+pdc_stack			/* temp stack for PDC call, must be > 9k */
 	.comm	4*NBPG
+	.export	exit_stack, data
+exit_stack			/* temp stack used during exit2() */
+	.comm   2*NBPG
 kernelmapped			/* set when kernel is mapped */
 	.comm	4
 	.export fpu_csw, data
@@ -2588,7 +2591,17 @@ ENTRY(switch_exit,0)
 	ldi	HPPA_PID_KERNEL, t4
 	mtctl	t4, pidr2
 
-	/* XXX we need to switch to some stupid stack here */
+	/* switch onto the temporary stack */
+	ldil	L%exit_stack, t4
+	ldo	HPPA_FRAME_SIZE(t4), sp
+	stw	r0, HPPA_FRAME_PSP(sp)
+	stw	r0, HPPA_FRAME_CRP(sp)
+
+	/* start the stack frame for our callee */
+	copy	sp, r3
+	ldo	HPPA_FRAME_SIZE(sp), sp
+	stw	r3, HPPA_FRAME_PSP(sp)
+
 	/* arg0 -- oldproc */
 	.import exit2, code
 	ldil	L%exit2, t2
