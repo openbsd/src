@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.7 2002/10/10 17:00:57 pvalchev Exp $	*/
 /*	$NetBSD: pcb.h,v 1.5 1996/11/13 22:21:00 cgd Exp $	*/
 
 /*
@@ -27,6 +27,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _ALPHA_PCB_H_
+#define _ALPHA_PCB_H_
 
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -68,3 +71,5 @@ struct md_coredump {
 #ifdef _KERNEL
 void savectx(struct pcb *);
 #endif
+
+#endif /* _ALPHA_PCB_H_ */

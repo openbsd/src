@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 1997/01/12 15:13:38 downsj Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 2002/10/10 17:00:57 pvalchev Exp $	*/
 /*	$NetBSD: pcb.h,v 1.8 1995/05/12 12:55:17 mycroft Exp $	*/
 
 /*
@@ -43,6 +43,9 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _HP300_PCB_H_
+#define _HP300_PCB_H_
+
 #include <machine/frame.h>
 
 /*
@@ -66,3 +69,5 @@ struct pcb {
 struct md_coredump {
 	int	md_exec[16];	/* exec structure for HP-UX core dumps */
 };
+
+#endif /* _HP300_PCB_H_ */

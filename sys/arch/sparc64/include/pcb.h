@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 2002/10/10 17:00:57 pvalchev Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
 
 /*
@@ -44,6 +44,9 @@
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SPARC64_PCB_H_
+#define _SPARC64_PCB_H_
 
 #include <machine/reg.h>
 
@@ -159,3 +162,5 @@ extern struct pcb *cpcb;
 #define pcb_psr	pcb_pstate
 #define pcb_wim	pcb_cwp
 #endif /* _KERNEL */
+
+#endif /* _SPARC64_PCB_H_ */
