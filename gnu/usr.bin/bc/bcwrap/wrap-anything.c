@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrap-anything.c,v 1.3 2001/08/12 17:53:16 fgsch Exp $	*/
+/*	$OpenBSD: wrap-anything.c,v 1.4 2002/09/12 06:47:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -49,9 +49,7 @@
 #include <poll.h>
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int pd[2];
 	struct pollfd pfd[2];
