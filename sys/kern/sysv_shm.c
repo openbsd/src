@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.5 1996/09/02 05:25:06 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.6 1997/02/21 08:52:23 deraadt Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
 
 /*
@@ -479,6 +479,11 @@ shmfork(p1, p2)
 	size_t size;
 	int i;
 
+	if (p1->p_vmspace->vm_shm == NULL) {
+		p2->p_vmspace->vm_shm = NULL;
+		return;
+	}
+
 	size = shminfo.shmseg * sizeof(struct shmmap_state);
 	shmmap_s = malloc(size, M_SHM, M_WAITOK);
 	bcopy((caddr_t)p1->p_vmspace->vm_shm, (caddr_t)shmmap_s, size);
@@ -496,6 +501,8 @@ shmexit(p)
 	int i;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
+	if (shmmap_s == NULL)
+		return;
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1)
 			shm_delete_mapping(p, shmmap_s);
