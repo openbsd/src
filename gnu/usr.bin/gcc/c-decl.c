@@ -776,7 +776,6 @@ c_decode_option (p)
       warn_unused = 1;
       warn_switch = 1;
       warn_format = 1;
-      warn_char_subscripts = 1;
       warn_parentheses = 1;
       warn_missing_braces = 1;
       /* We set this to 2 here, but 1 in -Wmain, so -ffreestanding can turn

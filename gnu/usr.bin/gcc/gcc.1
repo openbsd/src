@@ -20,7 +20,7 @@
 .if n .sp
 .if t .sp 0.4
 ..
-.Id $OpenBSD: gcc.1,v 1.3 1998/03/07 18:47:21 millert Exp $
+.Id $OpenBSD: gcc.1,v 1.4 1998/03/07 19:33:12 millert Exp $
 .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
 .SH NAME
 gcc, g++ \- GNU project C and C++ Compiler (v2.7)
@@ -1870,9 +1870,11 @@ fully available (C++ only).
 .B \-Wall
 All of the above `\|\c
 .B \-W\c
-\&\|' options combined.  These are all the
-options which pertain to usage that we recommend avoiding and that we
-believe is easy to avoid, even in conjunction with macros.
+\&\|' options, with the exception of
+.B \-Wchar\-subscripts,
+combined.  These are all the options which pertain to usage that
+we recommend avoiding and that we believe is easy to avoid, even
+in conjunction with macros.
 .PP
 The remaining `\|\c
 .B \-W.\|.\|.\c
