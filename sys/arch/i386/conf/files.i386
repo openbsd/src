@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.98 2002/07/12 20:17:03 mickey Exp $
+#	$OpenBSD: files.i386,v 1.99 2002/08/05 19:02:19 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -91,6 +91,12 @@ file	arch/i386/i386/mainbus.c	mainbus
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c		pci
 file	arch/i386/pci/agp_machdep.c		pciagp
+file	dev/pci/agp_ali.c			pciagp
+file	dev/pci/agp_amd.c			pciagp
+file	dev/pci/agp_i810.c			pciagp
+file	dev/pci/agp_intel.c			pciagp
+file	dev/pci/agp_sis.c			pciagp
+file	dev/pci/agp_via.c			pciagp
 file	arch/i386/pci/pciide_machdep.c		pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
