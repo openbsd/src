@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.7 2004/02/25 21:56:12 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.8 2004/08/06 16:45:51 millert Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -82,9 +82,7 @@ proceed even if some package names don't resolve to installed package names.
 .El
 .It Fl c
 Delete extra configuration file, mentioned as
-.Bd -literal
-@extra file
-.Ed
+.Dl @extra file
 in the packing-list.
 .It Fl q
 Delete package quickly, do not bother checking md5s before removing files.

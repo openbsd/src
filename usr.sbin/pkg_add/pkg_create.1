@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.9 2004/08/06 16:41:31 millert Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.10 2004/08/06 16:45:51 millert Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -306,17 +306,13 @@ Directories to remove can be shared between packages.
 If
 .Ar name
 does not begin with an @, same as
-.Bd -literal -offset
-name/
-.Ed
+.Dl name/
 .It Cm @dirrm Ar directoryname
 Declare directory
 .Pa directoryname
 to be deleted at deinstall time.
 Deprecated, use
-.Bd -literal -offset
-directoryname/
-.Ed
+.Dl directoryname/
 instead, as it handles proper directory creation as well.
 .It Cm @extra Ar file
 Declare extra file
