@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.9 2004/12/22 21:07:29 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.10 2004/12/22 21:08:23 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -840,10 +840,12 @@ nextbyte:
 
 		if ((spc_read(PSNS) & PSNS_ATN) != 0)
 			spc_write(SCMD, SCMD_RST_ATN);
+		spc_write(PCTL, PCTL_BFINT_ENAB | PH_MSGIN);
 
 		while ((spc_read(PSNS) & PSNS_REQ) == 0) {
-			if ((spc_read(PSNS) & PH_MASK) != PH_MSGIN &&
-			    (spc_read(SSTS) & SSTS_INITIATOR) == 0)
+			if (((spc_read(PSNS) & PH_MASK) != PH_MSGIN &&
+			     (spc_read(SSTS) & SSTS_INITIATOR) == 0) ||
+			    spc_read(INTS) != 0)
 				/*
 				 * Target left MESSAGE IN, probably because it
 				 * a) noticed our ATN signal, or
@@ -853,7 +855,6 @@ nextbyte:
 			DELAY(1);
 		}
 
-		spc_write(PCTL, PH_MSGIN);
 		msg = spc_read(TEMP);
 
 		/* Gather incoming message bytes if needed. */
@@ -1322,6 +1323,7 @@ spc_dataout_pio(struct spc_softc *sc, u_char *p, int n)
 			/* Break on interrupt. */
 			if (intstat != 0)
 				goto phasechange;
+			DELAY(1);
 		}
 
 		xfer = min(DOUTAMOUNT, n);
@@ -1339,6 +1341,7 @@ spc_dataout_pio(struct spc_softc *sc, u_char *p, int n)
 		for (;;) {
 			if (spc_read(INTS) != 0)
 				break;
+			DELAY(1);
 		}
 		SPC_MISC(("extra data  "));
 	} else {
@@ -1351,6 +1354,7 @@ spc_dataout_pio(struct spc_softc *sc, u_char *p, int n)
 			/* Break on interrupt. */
 			if (intstat != 0)
 				goto phasechange;
+			DELAY(1);
 		}
 	}
 
@@ -1440,6 +1444,7 @@ spc_datain_pio(struct spc_softc *sc, u_char *p, int n)
 					goto phasechange;
 				intstat = spc_read(INTS);
 			}
+			DELAY(1);
 		}
 		SPC_MISC(("extra data  "));
 	}
@@ -1761,7 +1766,7 @@ dophase:
 #else
 	spc_write(INTS, ints);
 	while ((spc_read(PSNS) & PSNS_REQ) == 0)
-		delay(1);	/* need timeout XXX */
+		DELAY(1);	/* need timeout XXX */
 #endif
 
 	/*
@@ -1850,9 +1855,9 @@ dophase:
 		acb = sc->sc_nexus;
 		if ((spc_read(PSNS) & PSNS_ATN) != 0)
 			spc_write(SCMD, SCMD_RST_ATN);
+		spc_write(PCTL, PCTL_BFINT_ENAB | PH_STAT);
 		while ((spc_read(PSNS) & PSNS_REQ) == 0)
 			DELAY(1);	/* XXX needs timeout */
-		spc_write(PCTL, PH_STAT);
 		acb->target_stat = spc_read(TEMP);
 		spc_write(SCMD, SCMD_SET_ACK);
 		while ((spc_read(PSNS) & PSNS_REQ) != 0)
@@ -1871,7 +1876,6 @@ reset:
 	return;
 
 finish:
-	timeout_del(&acb->xs->stimeout);
 	spc_write(INTS, ints);
 	ints = 0;
 	spc_done(sc, acb);
