@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfadd.c,v 1.6 2002/09/20 19:26:59 mickey Exp $	*/
+/*	$OpenBSD: dfadd.c,v 1.7 2002/11/29 09:27:34 deraadt Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -277,7 +277,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	if(Dbl_iszero_hidden(resultp1))
 	    {
 	    /* Handle normalization */
-	    /* A straight foward algorithm would now shift the result
+	    /* A straight forward algorithm would now shift the result
 	     * and extension left until the hidden bit becomes one.  Not
 	     * all of the extension bits need participate in the shift.
 	     * Only the two most significant bits (round and guard) are

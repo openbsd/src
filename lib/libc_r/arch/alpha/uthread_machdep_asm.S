@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2002/06/06 15:43:04 art Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.3 2002/11/29 09:27:34 deraadt Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -69,7 +69,7 @@ LEAF(_atomic_lock,1)
 0:      ldq_l   v0, 0(a0)       /* read existing lock value */
         mov     1, t0           /* locked value to store */
         stq_c   t0, 0(a0)       /* attempt to store, status in t0 */
-        beq     t0, 1f          /* branch foward to optimise prediction */
+        beq     t0, 1f          /* branch forward to optimise prediction */
         mb                      /* sync with other processors */
         RET                     /* return with v0==0 if lock obtained */
 1:      br      0b              /* loop to try again */
