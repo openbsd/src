@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.45 2002/05/29 10:47:10 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.46 2002/07/22 04:51:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.45 2002/05/29 10:47:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.46 2002/07/22 04:51:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -344,18 +344,22 @@ void
 auth_err(auth_session_t *as, int eval, const char *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
-	verr(eval, fmt, ap);
-	auth_close(as);
+	vwarn(fmt, ap);
 	va_end(ap);
+	auth_close(as);
+	exit(eval);
 }
 
 void
 auth_errx(auth_session_t *as, int eval, const char *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
-	verrx(eval, fmt, ap);
-	auth_close(as);
+	vwarnx(fmt, ap);
 	va_end(ap);
+	auth_close(as);
+	exit(eval);
 }
