@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.190 2002/11/18 23:28:50 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.191 2002/11/18 23:37:00 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -774,22 +774,22 @@ pfrule		: action dir logquick interface route af proto fromto
 			}
 
 			if ($17) {
-				if (strlen($17) >= PF_RULE_LABEL_SIZE) {
+				if (strlcpy(r.label, $17, sizeof(r.label)) >=
+				    PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
-				}
-				strlcpy(r.label, $17, sizeof(r.label));
+				};
 				free($17);
 			}
 
 			if ($18) {
-				if (strlen($18) >= PF_QNAME_SIZE) {
+				if (strlcpy(r.qname, $18, sizeof(r.qname)) >=
+				    PF_QNAME_SIZE) {
 					yyerror("rule qname too long (max "
 					    "%d chars)", PF_QNAME_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.qname, $18, sizeof(r.qname));
 				free($18);
 			}
 
