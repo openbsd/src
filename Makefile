@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 1999/02/02 02:36:35 imp Exp $
+#	$OpenBSD: Makefile,v 1.48 1999/02/02 08:53:32 imp Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -88,9 +88,9 @@ build:
 .endif
 .if (${KERBEROS} == "yes")
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} SUDO=${SUDO} build)
-.endif
 .if (${MACHINE_ARCH} == "mips")
 	ldconfig
+.endif
 .endif
 	${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install
 
@@ -98,7 +98,8 @@ build:
 cross-tools:
 	echo "TARGET must be set"; exit 1
 .else
-cross-tools:	cross-helpers cross-includes cross-binutils cross-gcc cross-lib
+cross-tools:	cross-helpers cross-dirs cross-includes cross-binutils \
+	cross-gcc cross-lib
 
 CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
@@ -110,21 +111,44 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		HOSTCC=cc
 
 cross-helpers:
-	-mkdir -p ${CROSSDIR}/usr/include
+	mkdir -p ${CROSSDIR}
 	echo _MACHINE_ARCH | \
 	    cat ${.CURDIR}/sys/arch/${TARGET}/include/param.h - | \
 	    ${CPP} -E -I${.CURDIR}/sys/arch | \
 	    sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
+# GROSS KLUDGE  MACHINE_ARCH is mips, but we use mipsel for gnu tools.
+.if ${TARGET} == "arc" || ${TARGET} == "pmax"
+	eval `grep '^osr=' sys/conf/newvers.sh`; \
+	   sed "s/\$$/el-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
+	   ${CROSSDIR}/TARGET_CANON
+.else
 	eval `grep '^osr=' sys/conf/newvers.sh`; \
 	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
 	   ${CROSSDIR}/TARGET_CANON
+.endif
 
-cross-includes:
-	-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
+cross-dirs:	${CROSSDIR}/stamp.dirs
+	@-mkdir -p ${CROSSDIR}
+	@-mkdir -p ${CROSSDIR}/usr/obj
+	@-mkdir -p ${CROSSDIR}/usr/bin
+	@-mkdir -p ${CROSSDIR}/usr/include
+	@-mkdir -p ${CROSSDIR}/usr/lib
+	@-mkdir -p ${CROSSDIR}/var/db
+	@-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`
+	@ln -sf ${CROSSDIR}/usr/include \
+		${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
+	@ln -sf ${CROSSDIR}/usr/lib \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/lib
+	@-mkdir -p ${CROSSDIR}/usr/obj
+	@-mkdir -p ${CROSSDIR}/usr/bin
+	@-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin
+
+${CROSSDIR}/stamp.dirs:
+	@touch ${CROSSDIR}/stamp.dirs
+
+cross-includes:	cross-dirs
 	export MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` ;\
 	    ${MAKE} DESTDIR=${CROSSDIR} includes
-	ln -sf ${CROSSDIR}/usr/include \
-	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
 
 .if ${TARGET} == "powerpc" || ${TARGET} == "alpha" || ${TARGET} == "arc" || \
     ${TARGET} == "pmax" || ${TARGET} == "wgrisc" || ${TARGET} == "hppa"
@@ -133,9 +157,7 @@ cross-binutils: cross-binutils-new
 cross-binutils: cross-binutils-old
 .endif
 
-cross-binutils-new:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-binutils-new:	cross-dirs
 	export BSDSRCDIR=`pwd`; \
 	    (cd ${.CURDIR}/gnu/usr.bin/binutils; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
@@ -177,10 +199,7 @@ cross-binutils-new:
 cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
 
-cross-gas:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
-	-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin
+cross-gas:	cross-dirs
 	(cd ${.CURDIR}/gnu/usr.bin/gas; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -193,9 +212,7 @@ cross-gas:
 	ln -sf ${CROSSDIR}/usr/bin/as \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/as
 
-cross-ld:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-ld:	cross-dirs
 	(cd ${.CURDIR}/gnu/usr.bin/ld; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -208,9 +225,7 @@ cross-ld:
 	ln -sf ${CROSSDIR}/usr/bin/ld \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ld
 
-cross-ar:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-ar:	cross-dirs
 	(cd ${.CURDIR}/usr.bin/ar; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -221,9 +236,7 @@ cross-ar:
 	ln -sf ${CROSSDIR}/usr/bin/ar \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ar
 
-cross-ranlib:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-ranlib:	cross-dirs
 	(cd ${.CURDIR}/usr.bin/ranlib; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -234,9 +247,7 @@ cross-ranlib:
 	ln -sf ${CROSSDIR}/usr/bin/ranlib \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ranlib
 
-cross-strip:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-strip:	cross-dirs
 	(cd ${.CURDIR}/usr.bin/strip; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -248,9 +259,7 @@ cross-strip:
 	ln -sf ${CROSSDIR}/usr/bin/strip \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/strip
 
-cross-size:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-size:	cross-dirs
 	(cd ${.CURDIR}/usr.bin/size; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -262,9 +271,7 @@ cross-size:
 	ln -sf ${CROSSDIR}/usr/bin/size \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/size
 
-cross-nm:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-nm:	cross-dirs
 	(cd ${.CURDIR}/usr.bin/nm; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -276,9 +283,7 @@ cross-nm:
 	ln -sf ${CROSSDIR}/usr/bin/nm \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/nm
 
-cross-gcc:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/bin
+cross-gcc:	cross-dirs
 	cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj BSDSRCDIR=${.CURDIR} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -304,10 +309,7 @@ cross-gcc:
 	chown ${BINOWN}.${BINGRP} ${CROSSDIR}/usr/bin/cpp
 
 # XXX MAKEOBJDIR maybe should be obj.${TARGET} here, revisit later
-cross-lib:
-	-mkdir -p ${CROSSDIR}/usr/obj
-	-mkdir -p ${CROSSDIR}/usr/lib
-	-mkdir -p ${CROSSDIR}/var/db
+cross-lib:	cross-dirs
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
 	export MACHINE MACHINE_ARCH; \
 	(cd ${.CURDIR}/lib; \
@@ -344,9 +346,6 @@ cross-lib:
 		    ${MAKE} NOMAN= install); \
 	    done)
 .endif
-	ln -sf ${CROSSDIR}/usr/lib \
-	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/lib
-
 .endif
 
 .include <bsd.subdir.mk>
