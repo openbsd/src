@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.325 2000/09/25 20:55:19 aaron Exp $
+	$OpenBSD: pcidevs,v 1.326 2000/09/28 18:37:35 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -856,6 +856,7 @@ product CIRRUS CS4610		0x6001	CS4610 SoundFusion Audio
 product CIRRUS CS4614		0x6003	CS4614
 product CIRRUS CS4615		0x6004	CS4615
 product CIRRUS CS4280		0x6003	CS4280 CrystalClear Audio
+product CIRRUS CS4281		0x6005	CS4281 CrystalClear Audio
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
 product	CMDTECH 640		0x0640	PCI0640
