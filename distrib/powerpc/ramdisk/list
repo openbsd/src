@@ -1,8 +1,9 @@
-#	$OpenBSD: list,v 1.5 1998/05/29 04:34:20 rahnds Exp $
+#	$OpenBSD: list,v 1.6 1998/08/07 01:35:30 rahnds Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 SRCDIRS usr.bin/vi usr.sbin/pppd
+SRCDIRS usr.bin/vi
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -43,10 +44,11 @@ LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/mount_kernfs
 LINK	instbin			sbin/mount_ext2fs
 LINK	instbin			sbin/newfs
+LINK	instbin			sbin/newfs_msdos
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
-LINK	instbin			sbin/slattach
+#LINK	instbin			sbin/slattach
 LINK	instbin			sbin/scsi
 LINK	instbin			sbin/umount
 LINK	instbin			usr/bin/cut

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.1 1998/05/29 04:34:20 rahnds Exp $
+#	$OpenBSD: install.sub,v 1.2 1998/08/07 01:35:28 rahnds Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -926,7 +926,7 @@ _osetsdone="$_setsdone"
 # Set a minimal default
 for _f in $_sets $_kernel; do
 	case "$_f" in
-		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd)
+		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd|bsdofw)
 			if ! isin ${_f} ${_setsdone}; then
 				_get_files=`addel ${_f} ${_get_files}`
 				_setsdone=`addel ${_f} ${_setsdone}`
@@ -1174,7 +1174,7 @@ _osetsdone="$_setsdone"
 # Set a minimal default
 for _f in $_sets $_kernel; do
 	case "$_f" in
-		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd)
+		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd|bsdofw)
 			if ! isin ${_f} ${_setsdone}; then
 				_get_files=`addel ${_f} ${_get_files}`
 				_setsdone=`addel ${_f} ${_setsdone}`
