@@ -732,7 +732,7 @@ Basic Questions
    asserts the I/O Read signal.
 
    Be careful when looking at the table below -- the data rate is
-   the data transfer rate achieved while transfering the sector
+   the data transfer rate achieved while transferring the sector
    or block or sectors.  It is an "instantaneous" data rate.  The
    overall data transfer rate for a command includes many time
    consuming events such as the amount of time the host requires

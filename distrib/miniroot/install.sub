@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.292 2003/03/06 00:27:41 krw Exp $
+#	$OpenBSD: install.sub,v 1.293 2003/03/06 04:19:45 david Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -416,7 +416,7 @@ quit
 __EOT
 }
 
-# Check for the existance of the device nodes for the
+# Check for the existence of the device nodes for the
 # supplied device name. If they are missing (as indicated
 # by r${1}c not being found) then create them. In either
 # case, return true if the nodes exist and false if not.

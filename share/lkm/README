@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.3 2002/01/24 19:36:53 fgsch Exp $
+#	$OpenBSD: README,v 1.4 2003/03/06 04:19:45 david Exp $
 #
 # Copyright (c) 1993 Terrence R. Lambert.
 # All rights reserved.
@@ -44,9 +44,9 @@
 	Please do *not* mail me at Novell.
 
 
-1.0	About this build heirarchy
+1.0	About this build hierarchy
 
-	This is the build heirarchy for the loadable kernel modules
+	This is the build hierarchy for the loadable kernel modules
 	(lkm) command line interface and test suite (including a
 	set of sample code for each possible module type).
 
@@ -73,9 +73,9 @@
 3.0	Usage warnings
 
 	Loading a bogus module will kill your machine, but if you are
-	doing developement, this will end up happening (hopefully)
+	doing development, this will end up happening (hopefully)
 	less frequently than changing, recompiling, installing, and
-	rebooting would normally occur.  This should speed developement
+	rebooting would normally occur.  This should speed development
 	considerably for a lot of the in-kernel work that is currently
 	taking place.
 
@@ -177,7 +177,7 @@
 	Execution interpreters allow loading of programs with magic
 	numbers other than the default numbers supported by NetBSD.
 	The reasoning behind this is to effectively allow user space
-	developement of changes in exec format to support, among
+	development of changes in exec format to support, among
 	other things, shared libraries.
 
 	Another portential use requires changing the references to
