@@ -56,6 +56,9 @@ extern int sc_width, sc_height;
 position(where)
 	int where;
 {
+	if (where >= table_size)
+		where = BOTTOM;
+
 	switch (where)
 	{
 	case BOTTOM:
