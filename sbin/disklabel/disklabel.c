@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.72 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.73 2002/03/24 22:51:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.72 2002/02/16 21:27:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.73 2002/03/24 22:51:54 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1009,6 +1009,8 @@ display_partition(f, lp, mp, i, unit, width)
 	if (width == 0)
 		width = 8;
 	unit = toupper(unit);
+	p_size = -1.0;			/* no conversion by default */
+	p_offset = 0.0;
 	switch (unit) {
 	case 'B':
 		p_size = (double)pp->p_size * lp->d_secsize;
@@ -1033,11 +1035,6 @@ display_partition(f, lp, mp, i, unit, width)
 	case 'G':
 		p_size = (double)pp->p_size / ((1024*1024*1024) / lp->d_secsize);
 		p_offset = (double)pp->p_offset / ((1024*1024*1024) / lp->d_secsize);
-		break;
-
-	default:
-		p_size = -1;			/* no conversion */
-		p_offset = 0;
 		break;
 	}
 
