@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.45 2001/05/08 20:02:59 fgsch Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.46 2001/05/08 20:13:15 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -1643,7 +1643,7 @@ struct ifnet *get_unit(name, v)
 char *name;
 int v;
 {
-	struct ifnet *ifp, **ifa;
+	struct ifnet *ifp, **ifa, **nifneta;
 # if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
 	(defined(OpenBSD) && (OpenBSD >= 199603))
 	for (ifa = ifneta; ifa && (ifp = *ifa); ifa++) {
@@ -1673,12 +1673,14 @@ int v;
 		nifs = 1;
 	} else {
 		nifs++;
-		ifneta = (struct ifnet **)realloc(ifneta,
+		nifneta = (struct ifnet **)realloc(ifneta,
 						  (nifs + 1) * sizeof(*ifa));
-		if (!ifneta) {
+		if (!nifneta) {
 			nifs = 0;
+			free(ifneta);
 			return NULL;
 		}
+		ifneta = nifneta;
 		ifneta[nifs] = NULL;
 		ifneta[nifs - 1] = (struct ifnet *)malloc(sizeof(*ifp));
 		if (!ifneta[nifs - 1]) {
