@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.6 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.7 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -63,24 +63,24 @@
  * Local routines.
  */
 
-static int	rmc_satisfied(struct rm_class *, struct timeval *);
-static void	rmc_wrr_set_weights(struct rm_ifdat *);
-static void	rmc_depth_compute(struct rm_class *);
-static void	rmc_depth_recompute(rm_class_t *);
+static int	 rmc_satisfied(struct rm_class *, struct timeval *);
+static void	 rmc_wrr_set_weights(struct rm_ifdat *);
+static void	 rmc_depth_compute(struct rm_class *);
+static void	 rmc_depth_recompute(rm_class_t *);
 
 static mbuf_t	*_rmc_wrr_dequeue_next(struct rm_ifdat *, int);
 static mbuf_t	*_rmc_prr_dequeue_next(struct rm_ifdat *, int);
 
-static int	_rmc_addq(rm_class_t *, mbuf_t *);
-static void	_rmc_dropq(rm_class_t *);
+static int	 _rmc_addq(rm_class_t *, mbuf_t *);
+static void	 _rmc_dropq(rm_class_t *);
 static mbuf_t	*_rmc_getq(rm_class_t *);
 static mbuf_t	*_rmc_pollq(rm_class_t *);
 
-static int	rmc_under_limit(struct rm_class *, struct timeval *);
-static void	rmc_tl_satisfied(struct rm_ifdat *, struct timeval *);
-static void	rmc_drop_action(struct rm_class *);
-static void	rmc_restart(struct rm_class *);
-static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
+static int	 rmc_under_limit(struct rm_class *, struct timeval *);
+static void	 rmc_tl_satisfied(struct rm_ifdat *, struct timeval *);
+static void	 rmc_drop_action(struct rm_class *);
+static void	 rmc_restart(struct rm_class *);
+static void	 rmc_root_overlimit(struct rm_class *, struct rm_class *);
 
 #define	BORROW_OFFTIME
 /*
@@ -167,29 +167,19 @@ static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
  * offtime = offtime * 8 / (1000 * nsecPerByte)
  *
  * When USE_HRTIME is employed, then maxidle and offtime become:
- * 	maxidle = maxilde * (8.0 / nsecPerByte);
- * 	offtime = offtime * (8.0 / nsecPerByte);
+ *	maxidle = maxilde * (8.0 / nsecPerByte);
+ *	offtime = offtime * (8.0 / nsecPerByte);
  */
 
 struct rm_class *
-rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
-	     maxidle, minidle, offtime, pktsize, flags)
-	int		pri;
-	struct rm_ifdat	*ifd;
-	u_int		nsecPerByte;
-	void		(*action)(rm_class_t *, rm_class_t *);
-	int		maxq;
-	struct rm_class	*parent;
-	struct rm_class	*borrow;
-	u_int		maxidle;
-	int		minidle;
-	u_int		offtime;
-	int		pktsize;
-	int		flags;
+rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
+    void (*action)(rm_class_t *, rm_class_t *), int maxq,
+    struct rm_class *parent, struct rm_class *borrow, u_int maxidle,
+    int minidle, u_int offtime, int pktsize, int flags)
 {
-	struct rm_class *cl;
-	struct rm_class *peer;
-	int s;
+	struct rm_class	*cl;
+	struct rm_class	*peer;
+	int		 s;
 
 	if (pri >= RM_MAXPRIO)
 		return (NULL);
@@ -336,18 +326,12 @@ rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
 }
 
 int
-rmc_modclass(cl, nsecPerByte, maxq, maxidle, minidle, offtime, pktsize)
-	struct rm_class *cl;
-	u_int		nsecPerByte;
-	int		maxq;
-	u_int		maxidle;
-	int		minidle;
-	u_int		offtime;
-	int		pktsize;
+rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
+    int minidle, u_int offtime, int pktsize)
 {
 	struct rm_ifdat	*ifd;
-	u_int old_allotment;
-	int s;
+	u_int		 old_allotment;
+	int		 s;
 
 	ifd = cl->ifdat_;
 	old_allotment = cl->allotment_;
@@ -393,15 +377,14 @@ rmc_modclass(cl, nsecPerByte, maxq, maxidle, minidle, offtime, pktsize)
 /*
  * static void
  * rmc_wrr_set_weights(struct rm_ifdat *ifdat) - This function computes
- * 	the appropriate run robin weights for the CBQ weighted round robin
+ *	the appropriate run robin weights for the CBQ weighted round robin
  *	algorithm.
  *
  *	Returns: NONE
  */
 
 static void
-rmc_wrr_set_weights(ifd)
-	struct rm_ifdat *ifd;
+rmc_wrr_set_weights(struct rm_ifdat *ifd)
 {
 	int		i;
 	struct rm_class	*cl, *clh;
@@ -439,9 +422,7 @@ rmc_wrr_set_weights(ifd)
 }
 
 int
-rmc_get_weight(ifd, pri)
-	struct rm_ifdat *ifd;
-	int pri;
+rmc_get_weight(struct rm_ifdat *ifd, int pri)
 {
 	if ((pri >= 0) && (pri < RM_MAXPRIO))
 		return (ifd->M_[pri]);
@@ -452,16 +433,15 @@ rmc_get_weight(ifd, pri)
 /*
  * static void
  * rmc_depth_compute(struct rm_class *cl) - This function computes the
- * 	appropriate depth of class 'cl' and its ancestors.
+ *	appropriate depth of class 'cl' and its ancestors.
  *
  *	Returns:	NONE
  */
 
 static void
-rmc_depth_compute(cl)
-	struct rm_class *cl;
+rmc_depth_compute(struct rm_class *cl)
 {
-	rm_class_t *t = cl, *p;
+	rm_class_t	*t = cl, *p;
 
 	/*
 	 * Recompute the depth for the branch of the tree.
@@ -481,7 +461,7 @@ rmc_depth_compute(cl)
  * rmc_depth_recompute(struct rm_class *cl) - This function re-computes
  *	the depth of the tree after a class has been deleted.
  *
- *	Returns: 	NONE
+ *	Returns:	NONE
  */
 
 static void
@@ -540,12 +520,10 @@ rmc_depth_recompute(rm_class_t *cl)
  */
 
 void
-rmc_delete_class(ifd, cl)
-	struct rm_ifdat *ifd;
-	struct rm_class *cl;
+rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 {
 	struct rm_class	*p, *head, *previous;
-	int		s;
+	int		 s;
 
 	ASSERT(cl->children_ == NULL);
 
@@ -556,7 +534,7 @@ rmc_delete_class(ifd, cl)
 	/*
 	 * Free packets in the packet queue.
 	 * XXX - this may not be a desired behavior.  Packets should be
-	 * 		re-queued.
+	 *		re-queued.
 	 */
 	rmc_dropall(cl);
 
@@ -662,17 +640,9 @@ rmc_delete_class(ifd, cl)
  */
 
 void
-rmc_init(ifq, ifd, nsecPerByte, restart, maxq, maxqueued, maxidle,
-	 minidle, offtime, flags)
-	struct ifaltq	*ifq;
-	struct rm_ifdat *ifd;
-	u_int	nsecPerByte;
-	void	(*restart)(struct ifaltq *);
-	int	maxq, maxqueued;
-	u_int	maxidle;
-	int	minidle;
-	u_int	offtime;
-	int	flags;
+rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
+    void (*restart)(struct ifaltq *), int maxq, int maxqueued, u_int maxidle,
+    int minidle, u_int offtime, int flags)
 {
 	int		i, mtu;
 
@@ -747,14 +717,12 @@ rmc_init(ifq, ifd, nsecPerByte, restart, maxq, maxqueued, maxidle,
  *			-1 when packet drop occurs
  */
 int
-rmc_queue_packet(cl, m)
-	struct rm_class *cl;
-	mbuf_t *m;
+rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 {
-	struct timeval	now;
+	struct timeval	 now;
 	struct rm_ifdat *ifd = cl->ifdat_;
-	int		cpri = cl->pri_;
-	int		is_empty = qempty(cl->q_);
+	int		 cpri = cl->pri_;
+	int		 is_empty = qempty(cl->q_);
 
 	RM_GETTIME(now);
 	if (ifd->cutoff_ > 0) {
@@ -817,11 +785,9 @@ rmc_queue_packet(cl, m)
  */
 
 static void
-rmc_tl_satisfied(ifd, now)
-	struct rm_ifdat *ifd;
-	struct timeval *now;
+rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now)
 {
-	int	i;
+	int		 i;
 	rm_class_t	*p, *bp;
 
 	for (i = RM_MAXPRIO - 1; i >= 0; i--) {
@@ -845,11 +811,9 @@ rmc_tl_satisfied(ifd, now)
  */
 
 static int
-rmc_satisfied(cl, now)
-	struct rm_class *cl;
-	struct timeval *now;
+rmc_satisfied(struct rm_class *cl, struct timeval *now)
 {
-	rm_class_t 	*p;
+	rm_class_t	*p;
 
 	if (cl == NULL)
 		return (1);
@@ -880,9 +844,7 @@ rmc_satisfied(cl, now)
  */
 
 static int
-rmc_under_limit(cl, now)
-	struct rm_class *cl;
-	struct timeval *now;
+rmc_under_limit(struct rm_class *cl, struct timeval *now)
 {
 	rm_class_t	*p = cl;
 	rm_class_t	*top;
@@ -964,15 +926,13 @@ rmc_under_limit(cl, now)
  */
 
 static mbuf_t *
-_rmc_wrr_dequeue_next(ifd, op)
-	struct rm_ifdat *ifd;
-	int op;
+_rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 {
 	struct rm_class	*cl = NULL, *first = NULL;
-	u_int		deficit;
-	int		cpri;
+	u_int		 deficit;
+	int		 cpri;
 	mbuf_t		*m;
-	struct timeval	now;
+	struct timeval	 now;
 
 	RM_GETTIME(now);
 
@@ -1122,14 +1082,12 @@ _rmc_wrr_dequeue_next(ifd, op)
  * output.
  */
 static mbuf_t *
-_rmc_prr_dequeue_next(ifd, op)
-	struct rm_ifdat *ifd;
-	int op;
+_rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 {
 	mbuf_t		*m;
-	int		cpri;
+	int		 cpri;
 	struct rm_class	*cl, *first = NULL;
-	struct timeval	now;
+	struct timeval	 now;
 
 	RM_GETTIME(now);
 
@@ -1238,9 +1196,7 @@ _rmc_prr_dequeue_next(ifd, op)
  */
 
 mbuf_t *
-rmc_dequeue_next(ifd, mode)
-	struct rm_ifdat *ifd;
-	int mode;
+rmc_dequeue_next(struct rm_ifdat *ifd, int mode)
 {
 	if (ifd->queued_ >= ifd->maxqueued_)
 		return (NULL);
@@ -1264,11 +1220,10 @@ rmc_dequeue_next(ifd, mode)
  */
 #define	NSEC_TO_USEC(t)	(((t) >> 10) + ((t) >> 16) + ((t) >> 17))
 void
-rmc_update_class_util(ifd)
-	struct rm_ifdat *ifd;
+rmc_update_class_util(struct rm_ifdat *ifd)
 {
-	int		idle, avgidle, pktlen;
-	int 		pkt_time, tidle;
+	int		 idle, avgidle, pktlen;
+	int		 pkt_time, tidle;
 	rm_class_t	*cl, *borrowed;
 	rm_class_t	*borrows;
 	struct timeval	*nowp;
@@ -1444,8 +1399,7 @@ rmc_update_class_util(ifd)
  */
 
 static void
-rmc_drop_action(cl)
-	struct rm_class *cl;
+rmc_drop_action(struct rm_class *cl)
 {
 	struct rm_ifdat	*ifd = cl->ifdat_;
 
@@ -1455,10 +1409,9 @@ rmc_drop_action(cl)
 		ifd->na_[cl->pri_]--;
 }
 
-void rmc_dropall(cl)
-    struct rm_class *cl;
+void rmc_dropall(struct rm_class *cl)
 {
-	struct rm_ifdat *ifd = cl->ifdat_;
+	struct rm_ifdat	*ifd = cl->ifdat_;
 
 	if (!qempty(cl->q_)) {
 		_flushq(cl->q_);
@@ -1466,23 +1419,6 @@ void rmc_dropall(cl)
 		ifd->na_[cl->pri_]--;
 	}
 }
-
-#if (__FreeBSD_version > 300000)
-/* hzto() is removed from FreeBSD-3.0 */
-static int hzto(struct timeval *);
-
-static int
-hzto(tv)
-	struct timeval *tv;
-{
-	struct timeval t2;
-
-	getmicrotime(&t2);
-	t2.tv_sec = tv->tv_sec - t2.tv_sec;
-	t2.tv_usec = tv->tv_usec - t2.tv_usec;
-	return (tvtohz(&t2));
-}
-#endif /* __FreeBSD_version > 300000 */
 
 /*
  * void
@@ -1497,8 +1433,7 @@ hzto(tv)
  */
 
 void
-rmc_delay_action(cl, borrow)
-	struct rm_class *cl, *borrow;
+rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 {
 	int	delay, t, extradelay;
 
@@ -1576,11 +1511,10 @@ rmc_delay_action(cl, borrow)
  */
 
 static void
-rmc_restart(cl)
-	struct rm_class *cl;
+rmc_restart(struct rm_class *cl)
 {
-	struct rm_ifdat *ifd = cl->ifdat_;
-	int s;
+	struct rm_ifdat	*ifd = cl->ifdat_;
+	int		 s;
 
 	s = splimp();
 	if (cl->sleeping_) {
@@ -1604,8 +1538,7 @@ rmc_restart(cl)
  */
 
 static void
-rmc_root_overlimit(cl, borrow)
-	struct rm_class *cl, *borrow;
+rmc_root_overlimit(struct rm_class *cl, struct rm_class *borrow)
 {
     panic("rmc_root_overlimit");
 }
@@ -1617,9 +1550,7 @@ rmc_root_overlimit(cl, borrow)
  */
 
 static int
-_rmc_addq(cl, m)
-	rm_class_t *cl;
-	mbuf_t *m;
+_rmc_addq(rm_class_t *cl, mbuf_t *m)
 {
 #ifdef ALTQ_RIO
 	if (q_is_rio(cl->q_))
@@ -1639,18 +1570,16 @@ _rmc_addq(cl, m)
 
 /* note: _rmc_dropq is not called for red */
 static void
-_rmc_dropq(cl)
-	rm_class_t *cl;
+_rmc_dropq(rm_class_t *cl)
 {
-	mbuf_t  *m;
+	mbuf_t	*m;
 
 	if ((m = _getq(cl->q_)) != NULL)
 		m_freem(m);
 }
 
 static mbuf_t *
-_rmc_getq(cl)
-	rm_class_t *cl;
+_rmc_getq(rm_class_t *cl)
 {
 #ifdef ALTQ_RIO
 	if (q_is_rio(cl->q_))
@@ -1664,17 +1593,16 @@ _rmc_getq(cl)
 }
 
 static mbuf_t *
-_rmc_pollq(cl)
-	rm_class_t *cl;
+_rmc_pollq(rm_class_t *cl)
 {
 	return qhead(cl->q_);
 }
 
 #ifdef CBQ_TRACE
 
-struct cbqtrace		cbqtrace_buffer[NCBQTRACE+1];
+struct cbqtrace		 cbqtrace_buffer[NCBQTRACE+1];
 struct cbqtrace		*cbqtrace_ptr = NULL;
-int			cbqtrace_count;
+int			 cbqtrace_count;
 
 /*
  * DDB hook to trace cbq events:
@@ -1685,22 +1613,21 @@ void cbqtrace_dump(int);
 static char *rmc_funcname(void *);
 
 static struct rmc_funcs {
-	void *func;
-	char *name;
+	void	*func;
+	char	*name;
 } rmc_funcs[] =
 {
-	rmc_init, 		"rmc_init",
-	rmc_queue_packet, 	"rmc_queue_packet",
-	rmc_under_limit, 	"rmc_under_limit",
-	rmc_update_class_util, 	"rmc_update_class_util",
-	rmc_delay_action, 	"rmc_delay_action",
-	rmc_restart, 		"rmc_restart",
-	_rmc_wrr_dequeue_next, 	"_rmc_wrr_dequeue_next",
-	NULL, 			NULL
+	rmc_init,		"rmc_init",
+	rmc_queue_packet,	"rmc_queue_packet",
+	rmc_under_limit,	"rmc_under_limit",
+	rmc_update_class_util,	"rmc_update_class_util",
+	rmc_delay_action,	"rmc_delay_action",
+	rmc_restart,		"rmc_restart",
+	_rmc_wrr_dequeue_next,	"_rmc_wrr_dequeue_next",
+	NULL,			NULL
 };
 
-static char *rmc_funcname(func)
-	void *func;
+static char *rmc_funcname(void *func)
 {
 	struct rmc_funcs *fp;
 
@@ -1710,11 +1637,10 @@ static char *rmc_funcname(func)
 	return ("unknown");
 }
 
-void cbqtrace_dump(counter)
-	int counter;
+void cbqtrace_dump(int counter)
 {
-	int i, *p;
-	char *cp;
+	int	 i, *p;
+	char	*cp;
 
 	counter = counter % NCBQTRACE;
 	p = (int *)&cbqtrace_buffer[counter];
@@ -1736,11 +1662,9 @@ void cbqtrace_dump(counter)
 #if !defined(__GNUC__) || defined(ALTQ_DEBUG)
 
 void
-_addq(q, m)
-	class_queue_t *q;
-	mbuf_t *m;
+_addq(class_queue_t *q, mbuf_t *m)
 {
-        mbuf_t  *m0;
+        mbuf_t	*m0;
 
 	if ((m0 = qtail(q)) != NULL)
 		m->m_nextpkt = m0->m_nextpkt;
@@ -1752,10 +1676,9 @@ _addq(q, m)
 }
 
 mbuf_t *
-_getq(q)
-	class_queue_t *q;
+_getq(class_queue_t *q)
 {
-	mbuf_t  *m, *m0;
+	mbuf_t	*m, *m0;
 
 	if ((m = qtail(q)) == NULL)
 		return (NULL);
@@ -1772,10 +1695,9 @@ _getq(q)
 
 /* drop a packet at the tail of the queue */
 mbuf_t *
-_getq_tail(q)
-	class_queue_t *q;
+_getq_tail(class_queue_t *q)
 {
-	mbuf_t *m, *m0, *prev;
+	mbuf_t	*m, *m0, *prev;
 
 	if ((m = m0 = qtail(q)) == NULL)
 		return NULL;
@@ -1796,11 +1718,10 @@ _getq_tail(q)
 
 /* randomly select a packet in the queue */
 mbuf_t *
-_getq_random(q)
-	class_queue_t *q;
+_getq_random(class_queue_t *q)
 {
-	struct mbuf *m;
-	int i, n;
+	struct mbuf	*m;
+	int		 i, n;
 
 	if ((m = qtail(q)) == NULL)
 		return NULL;
@@ -1825,11 +1746,9 @@ _getq_random(q)
 }
 
 void
-_removeq(q, m)
-	class_queue_t *q;
-	mbuf_t *m;
+_removeq(class_queue_t *q, mbuf_t *m)
 {
-	mbuf_t *m0, *prev;
+	mbuf_t	*m0, *prev;
 
 	m0 = qtail(q);
 	do {
@@ -1845,8 +1764,7 @@ _removeq(q, m)
 }
 
 void
-_flushq(q)
-	class_queue_t *q;
+_flushq(class_queue_t *q)
 {
 	mbuf_t *m;
 

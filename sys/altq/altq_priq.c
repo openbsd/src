@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.7 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.8 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -84,8 +84,8 @@ priq_pfattach(struct pf_altq *a)
 int
 priq_add_altq(struct pf_altq *a)
 {
-	struct priq_if *pif;
-	struct ifnet 	*ifp;
+	struct priq_if	*pif;
+	struct ifnet	*ifp;
 
 	if ((ifp = ifunit(a->ifname)) == NULL)
 		return (EINVAL);

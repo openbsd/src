@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.h,v 1.5 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.h,v 1.6 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ struct rm_class {
 	struct timeval	undertime_;	/* time can next send */
 	struct timeval	last_;		/* time last packet sent */
 	struct timeval	overtime_;
-	struct callout	callout_; 	/* for timeout() calls */
+	struct callout	callout_;	/* for timeout() calls */
 
 	rm_class_stats_t stats_;	/* Class Statistics */
 };
@@ -246,7 +246,7 @@ extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_int,
 				     int, struct rm_class *, struct rm_class *,
 				     u_int, int, u_int, int, int);
 extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
-extern int 	rmc_modclass(struct rm_class *, u_int, int,
+extern int	rmc_modclass(struct rm_class *, u_int, int,
 				  u_int, int, u_int, int);
 extern void	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
 			      void (*)(struct ifaltq *),

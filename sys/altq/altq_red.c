@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.8 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.9 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -156,12 +156,12 @@ static int default_inv_pmax = INV_P_MAX;
  */
 red_t *
 red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
-	int	weight, inv_pmax, th_min, th_max;
-	int	flags, pkttime;
+	int	 weight, inv_pmax, th_min, th_max;
+	int	 flags, pkttime;
 {
-	red_t 	*rp;
-	int	w, i;
-	int	npkts_per_sec;
+	red_t	*rp;
+	int	 w, i;
+	int	 npkts_per_sec;
 
 	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
 	if (rp == NULL)
@@ -254,7 +254,7 @@ red_getstats(rp, sp)
 	red_t *rp;
 	struct redstats *sp;
 {
-	sp->q_avg 		= rp->red_avg >> rp->red_wshift;
+	sp->q_avg		= rp->red_avg >> rp->red_wshift;
 	sp->xmit_cnt		= rp->red_stats.xmit_cnt;
 	sp->drop_cnt		= rp->red_stats.drop_cnt;
 	sp->drop_forced		= rp->red_stats.drop_forced;

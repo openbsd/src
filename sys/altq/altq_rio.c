@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.c,v 1.7 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_rio.c,v 1.8 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -138,9 +138,9 @@
 #define	TV_DELTA(a, b, delta) {					\
 	register int	xxs;					\
 								\
-	delta = (a)->tv_usec - (b)->tv_usec; 			\
-	if ((xxs = (a)->tv_sec - (b)->tv_sec) != 0) { 		\
-		if (xxs < 0) { 					\
+	delta = (a)->tv_usec - (b)->tv_usec;			\
+	if ((xxs = (a)->tv_sec - (b)->tv_sec) != 0) {		\
+		if (xxs < 0) {					\
 			delta = 60000000;			\
 		} else if (xxs > 4)  {				\
 			if (xxs > 60)				\
@@ -166,14 +166,11 @@ static struct redparams default_rio_params[RIO_NDROPPREC] = {
 static int dscp2index(u_int8_t);
 
 rio_t *
-rio_alloc(weight, params, flags, pkttime)
-	int	weight;
-	struct redparams *params;
-	int	flags, pkttime;
+rio_alloc(int weight, struct redparams *params, int flags, int pkttime)
 {
-	rio_t 	*rp;
-	int	w, i;
-	int	npkts_per_sec;
+	rio_t	*rp;
+	int	 w, i;
+	int	 npkts_per_sec;
 
 	MALLOC(rp, rio_t *, sizeof(rio_t), M_DEVBUF, M_WAITOK);
 	if (rp == NULL)
@@ -259,19 +256,16 @@ rio_alloc(weight, params, flags, pkttime)
 }
 
 void
-rio_destroy(rp)
-	rio_t *rp;
+rio_destroy(rio_t *rp)
 {
 	wtab_destroy(rp->rio_wtab);
 	FREE(rp, M_DEVBUF);
 }
 
 void
-rio_getstats(rp, sp)
-	rio_t *rp;
-	struct redstats *sp;
+rio_getstats(rio_t *rp, struct redstats *sp)
 {
-	int i;
+	int	i;
 
 	for (i = 0; i < RIO_NDROPPREC; i++) {
 		bcopy(&rp->q_stats[i], sp, sizeof(struct redstats));
@@ -288,7 +282,7 @@ rio_getstats(rp, sp)
 static int
 dscp2index(u_int8_t dscp)
 {
-	int dpindex = dscp & AF_DROPPRECMASK;
+	int	dpindex = dscp & AF_DROPPRECMASK;
 
 	if (dpindex == 0)
 		return (0);
@@ -310,17 +304,14 @@ dscp2index(u_int8_t dscp)
 #endif
 
 int
-rio_addq(rp, q, m, pktattr)
-	rio_t *rp;
-	class_queue_t *q;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
+    struct altq_pktattr *pktattr)
 {
-	int avg, droptype;
-	u_int8_t dsfield, odsfield;
-	int dpindex, i, n, t;
-	struct timeval now;
-	struct dropprec_state *prec;
+	int			 avg, droptype;
+	u_int8_t		 dsfield, odsfield;
+	int			 dpindex, i, n, t;
+	struct timeval		 now;
+	struct dropprec_state	*prec;
 
 	dsfield = odsfield = read_dsfield(m, pktattr);
 	dpindex = dscp2index(dsfield);
@@ -426,12 +417,10 @@ rio_addq(rp, q, m, pktattr)
 }
 
 struct mbuf *
-rio_getq(rp, q)
-	rio_t *rp;
-	class_queue_t *q;
+rio_getq(rio_t *rp, class_queue_t *q)
 {
-	struct mbuf *m;
-	int dpindex, i;
+	struct mbuf	*m;
+	int		 dpindex, i;
 
 	if ((m = _getq(q)) == NULL)
 		return NULL;

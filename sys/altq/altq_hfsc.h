@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.h,v 1.3 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.h,v 1.4 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
@@ -100,15 +100,15 @@ struct hfsc_classstats {
 	u_int			qlimit;
 	struct pktcntr		xmit_cnt;
 	struct pktcntr		drop_cnt;
-	u_int 			period;
+	u_int			period;
 
 	u_int			vtperiod;	/* vt period sequence no */
 	u_int			parentperiod;	/* parent's vt period seqno */
 	int			nactive;	/* number of active children */
 
 	/* red and rio related info */
-	int		qtype;
-	struct redstats	red[3];
+	int			qtype;
+	struct redstats		red[3];
 };
 
 #ifdef _KERNEL

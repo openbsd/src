@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.h,v 1.3 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.h,v 1.4 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000-2002
@@ -55,13 +55,13 @@ struct priq_classstats {
 
 	u_int			qlength;
 	u_int			qlimit;
-	u_int 			period;
+	u_int			period;
 	struct pktcntr		xmitcnt;  /* transmitted packet counter */
 	struct pktcntr		dropcnt;  /* dropped packet counter */
 
 	/* red and rio related info */
-	int		qtype;
-	struct redstats	red[3];		/* rio has 3 red stats */
+	int			qtype;
+	struct redstats		red[3];	/* rio has 3 red stats */
 };
 
 #ifdef _KERNEL

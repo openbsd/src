@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.h,v 1.4 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_red.h,v 1.5 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_red.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -43,9 +43,9 @@
  * disciplines (e.g., CBQ)
  */
 struct redparams {
-	int th_min;		/* red min threshold */
-	int th_max;		/* red max threshold */
-	int inv_pmax;		/* inverse of max drop probability */
+	int	th_min;		/* red min threshold */
+	int	th_max;		/* red max threshold */
+	int	inv_pmax;	/* inverse of max drop probability */
 };
 
 struct redstats {
@@ -61,37 +61,37 @@ struct redstats {
 
 /* weight table structure for idle time calibration */
 struct wtab {
-	struct wtab *w_next;
-	int w_weight;
-	int w_param_max;
-	int w_refcount;
-	int32_t w_tab[32];
+	struct wtab	*w_next;
+	int		 w_weight;
+	int		 w_param_max;
+	int		 w_refcount;
+	int32_t		 w_tab[32];
 };
 
 typedef struct red {
-	int red_pkttime; 	/* average packet time in micro sec
-				   used for idle calibration */
-	int red_flags;		/* red flags */
+	int		red_pkttime;	/* average packet time in micro sec
+					   used for idle calibration */
+	int		red_flags;	/* red flags */
 
 	/* red parameters */
-	int red_weight;		/* weight for EWMA */
-	int red_inv_pmax;	/* inverse of max drop probability */
-	int red_thmin;		/* red min threshold */
-	int red_thmax;		/* red max threshold */
+	int		red_weight;	/* weight for EWMA */
+	int		red_inv_pmax;	/* inverse of max drop probability */
+	int		red_thmin;	/* red min threshold */
+	int		red_thmax;	/* red max threshold */
 
 	/* variables for internal use */
-	int red_wshift;		/* log(red_weight) */
-	int red_thmin_s;	/* th_min scaled by avgshift */
-	int red_thmax_s;	/* th_max scaled by avgshift */
-	int red_probd;		/* drop probability denominator */
+	int		red_wshift;	/* log(red_weight) */
+	int		red_thmin_s;	/* th_min scaled by avgshift */
+	int		red_thmax_s;	/* th_max scaled by avgshift */
+	int		red_probd;	/* drop probability denominator */
 
-	int red_avg;		/* queue length average scaled by avgshift */
-	int red_count; 	  	/* packet count since the last dropped/marked
-				   packet */
-	int red_idle;		/* queue was empty */
-	int red_old;		/* avg is above th_min */
-	struct wtab *red_wtab;	/* weight table */
-	struct timeval red_last;  /* timestamp when the queue becomes idle */
+	int		red_avg;	/* queue len avg scaled by avgshift */
+	int		red_count;	/* packet count since last dropped/
+					   marked packet */
+	int		red_idle;	/* queue was empty */
+	int		red_old;	/* avg is above th_min */
+	struct wtab	*red_wtab;	/* weight table */
+	struct timeval	 red_last;	/* time when the queue becomes idle */
 
 	struct {
 		struct pktcntr	xmit_cnt;
@@ -107,17 +107,17 @@ typedef struct red {
 #define	DTYPE_FORCED	1	/* a "forced" drop */
 #define	DTYPE_EARLY	2	/* an "unforced" (early) drop */
 
-extern red_t *red_alloc(int, int, int, int, int, int);
-extern void red_destroy(red_t *);
-extern void red_getstats(red_t *, struct redstats *);
-extern int red_addq(red_t *, class_queue_t *, struct mbuf *,
-			 struct altq_pktattr *);
-extern struct mbuf *red_getq(red_t *, class_queue_t *);
-extern int drop_early(int, int, int);
-extern int mark_ecn(struct mbuf *, struct altq_pktattr *, int);
-extern struct wtab *wtab_alloc(int);
-extern int wtab_destroy(struct wtab *);
-extern int32_t pow_w(struct wtab *, int);
+extern red_t		*red_alloc(int, int, int, int, int, int);
+extern void		 red_destroy(red_t *);
+extern void		 red_getstats(red_t *, struct redstats *);
+extern int		 red_addq(red_t *, class_queue_t *, struct mbuf *,
+			     struct altq_pktattr *);
+extern struct mbuf	*red_getq(red_t *, class_queue_t *);
+extern int		 drop_early(int, int, int);
+extern int		 mark_ecn(struct mbuf *, struct altq_pktattr *, int);
+extern struct wtab	*wtab_alloc(int);
+extern int		 wtab_destroy(struct wtab *);
+extern int32_t		 pow_w(struct wtab *, int);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.8 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.9 2002/12/16 17:27:19 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -49,16 +49,16 @@
 /*
  * Forward Declarations.
  */
-static int	cbq_class_destroy(cbq_state_t *, struct rm_class *);
+static int		 cbq_class_destroy(cbq_state_t *, struct rm_class *);
 static struct rm_class  *clh_to_clp(cbq_state_t *, u_int32_t);
-static int	cbq_clear_interface(cbq_state_t *);
-static int	cbq_request(struct ifaltq *, int, void *);
-static int	cbq_enqueue(struct ifaltq *, struct mbuf *,
-    struct altq_pktattr *);
-static struct mbuf 	*cbq_dequeue(struct ifaltq *, int);
-static void	cbqrestart(struct ifaltq *);
-static void 	get_class_stats(class_stats_t *, struct rm_class *);
-static void	cbq_purge(cbq_state_t *);
+static int		 cbq_clear_interface(cbq_state_t *);
+static int		 cbq_request(struct ifaltq *, int, void *);
+static int		 cbq_enqueue(struct ifaltq *, struct mbuf *,
+			     struct altq_pktattr *);
+static struct mbuf	*cbq_dequeue(struct ifaltq *, int);
+static void		 cbqrestart(struct ifaltq *);
+static void		 get_class_stats(class_stats_t *, struct rm_class *);
+static void		 cbq_purge(cbq_state_t *);
 
 /*
  * int
@@ -187,14 +187,14 @@ get_class_stats(statsp, cl)
 	class_stats_t	*statsp;
 	struct rm_class	*cl;
 {
-	statsp->xmit_cnt 	= cl->stats_.xmit_cnt;
-	statsp->drop_cnt 	= cl->stats_.drop_cnt;
+	statsp->xmit_cnt	= cl->stats_.xmit_cnt;
+	statsp->drop_cnt	= cl->stats_.drop_cnt;
 	statsp->over		= cl->stats_.over;
-	statsp->borrows 	= cl->stats_.borrows;
-	statsp->overactions 	= cl->stats_.overactions;
-	statsp->delays 		= cl->stats_.delays;
+	statsp->borrows		= cl->stats_.borrows;
+	statsp->overactions	= cl->stats_.overactions;
+	statsp->delays		= cl->stats_.delays;
 
-	statsp->depth 		= cl->depth_;
+	statsp->depth		= cl->depth_;
 	statsp->priority	= cl->pri_;
 	statsp->maxidle		= cl->maxidle_;
 	statsp->minidle		= cl->minidle_;
@@ -235,7 +235,7 @@ int
 cbq_add_altq(struct pf_altq *a)
 {
 	cbq_state_t	*cbqp;
-	struct ifnet 	*ifp;
+	struct ifnet	*ifp;
 
 	if ((ifp = ifunit(a->ifname)) == NULL)
 		return (EINVAL);
@@ -247,7 +247,7 @@ cbq_add_altq(struct pf_altq *a)
 	if (cbqp == NULL)
 		return (ENOMEM);
 	bzero(cbqp, sizeof(cbq_state_t));
- 	CALLOUT_INIT(&cbqp->cbq_callout);
+	CALLOUT_INIT(&cbqp->cbq_callout);
 	cbqp->cbq_qlen = 0;
 	cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
 
@@ -260,7 +260,7 @@ cbq_add_altq(struct pf_altq *a)
 int
 cbq_remove_altq(struct pf_altq *a)
 {
-	cbq_state_t 	*cbqp;
+	cbq_state_t	*cbqp;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
@@ -527,8 +527,8 @@ cbq_dequeue(ifq, op)
 	struct ifaltq *ifq;
 	int op;
 {
-	cbq_state_t 	*cbqp = (cbq_state_t *)ifq->altq_disc;
-	struct mbuf 	*m;
+	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
+	struct mbuf	*m;
 
 	m = rmc_dequeue_next(&cbqp->ifnp, op);
 
@@ -574,7 +574,7 @@ static void cbq_purge(cbqp)
 	cbq_state_t *cbqp;
 {
 	struct rm_class	*cl;
-	int 		i;
+	int		 i;
 
 	for (i = 0; i < CBQ_MAX_CLASSES; i++)
 		if ((cl = cbqp->cbq_class_tbl[i]) != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.5 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.6 2002/12/16 17:27:19 henning Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ extern "C" {
 #define	CBQCLF_CTLCLASS		0x4000	/* control class */
 #define	CBQCLF_CLASSMASK	0xf000	/* class mask */
 
-#define	CBQ_MAXQSIZE	200
+#define	CBQ_MAXQSIZE		200
 
 typedef struct _cbq_class_stats_ {
 	u_int32_t	handle;
@@ -103,21 +103,21 @@ typedef struct _cbq_class_stats_ {
 /*
  * Define macros only good for kernel drivers and modules.
  */
-#define	CBQ_WATCHDOG    	(HZ / 20)
+#define	CBQ_WATCHDOG		(HZ / 20)
 #define	CBQ_TIMEOUT		10
 #define	CBQ_LS_TIMEOUT		(20 * hz / 1000)
 
-#define	CBQ_MAX_CLASSES	256
+#define	CBQ_MAX_CLASSES		256
 
 /*
  * Define State structures.
  */
 typedef struct cbqstate {
-	int			cbq_qlen;	/* # of packets in cbq */
+	int			 cbq_qlen;	/* # of packets in cbq */
 	struct rm_class		*cbq_class_tbl[CBQ_MAX_CLASSES];
 
-	struct rm_ifdat		ifnp;
-	struct callout		cbq_callout;	/* for timeouts */
+	struct rm_ifdat		 ifnp;
+	struct callout		 cbq_callout;	/* for timeouts */
 } cbq_state_t;
 
 #endif /* _KERNEL */

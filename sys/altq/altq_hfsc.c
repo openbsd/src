@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.8 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.9 2002/12/16 17:27:20 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -567,7 +567,7 @@ hfsc_class_destroy(cl)
 /*
  * hfsc_nextclass returns the next class in the tree.
  *   usage:
- * 	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
+ *	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
  *		do_something;
  */
 static struct hfsc_class *
