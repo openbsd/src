@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.209 2004/08/06 21:59:11 pefo Exp $
+#	$OpenBSD: Makefile,v 1.210 2004/08/16 17:39:21 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -169,8 +169,6 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/var/named/standard/loopback; \
 		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.arpa \
 		    ${DESTDIR}/var/named/standard/loopback6.arpa; \
-		${INSTALL} -c -o root -g wheel -m 644 db.loopback6.int \
-		    ${DESTDIR}/var/named/standard/loopback6.int; \
 		${INSTALL} -c -o root -g wheel -m 644 root.hint \
 		    ${DESTDIR}/var/named/standard; \
 	/bin/rm -f ${DESTDIR}/etc/localtime
@@ -374,7 +372,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.209 2004/08/06 21:59:11 pefo Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.210 2004/08/16 17:39:21 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
