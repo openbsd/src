@@ -1,0 +1,8 @@
+#	$OpenBSD: files.i2o,v 1.1 2001/06/25 23:04:29 niklas Exp $
+
+device	iop {tid = -1}: scsi
+file	dev/i2o/iop.c			iop
+
+device	iopsp: scsi
+attach	iopsp at iop
+file	dev/i2o/iopsp.c			iopsp
