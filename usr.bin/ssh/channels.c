@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.59 2000/05/30 17:23:36 markus Exp $");
+RCSID("$Id: channels.c,v 1.60 2000/06/17 15:58:46 deraadt Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -932,7 +932,7 @@ channel_output_poll()
 				packet_send();
 				buffer_consume(&c->input, len);
 				c->remote_window -= len;
-				debug("channel %d: send data len %d", c->self, len);
+				/* debug("channel %d: send data len %d", c->self, len); */
 			}
 		} else if (c->istate == CHAN_INPUT_WAIT_DRAIN) {
 			if (compat13)
