@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.21 2001/08/24 19:21:00 mickey Exp $
+#	$OpenBSD: changelist,v 1.22 2001/10/14 02:17:05 millert Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -18,12 +18,15 @@
 /etc/csh.logout
 /etc/daily
 /etc/daily.local
+/etc/defaultdomain
+/etc/dhclient.conf
 /etc/dhcpd.conf
 /etc/distfile
 /etc/dm.conf
 /etc/exports
 /etc/fbtab
 /etc/fstab
+/etc/ftpchroot
 /etc/ftpusers
 /etc/gettytab
 /etc/group
@@ -33,7 +36,9 @@
 /etc/hosts.equiv
 /etc/hosts.lpd
 /etc/inetd.conf
+/etc/ksh.kshrc
 /etc/locate.rc
+/etc/login.conf
 /etc/mail.rc
 /etc/mailer.conf
 /etc/man.conf
@@ -41,6 +46,7 @@
 /etc/moduli
 /etc/monthly
 /etc/monthly.local
+/etc/mrouted.conf
 /etc/mygate
 /etc/myname
 /etc/named.boot
@@ -52,6 +58,7 @@
 /etc/passwd
 /etc/passwd.conf
 /etc/pf.conf
+/etc/phones
 /etc/printcap
 /etc/protocols
 /etc/rbootd.conf
@@ -70,6 +77,7 @@
 /etc/shosts.equiv
 /etc/slip.hosts
 /etc/slip.login
+/etc/ssh_config
 +/etc/ssh_host_dsa_key
 /etc/ssh_host_dsa_key.pub
 +/etc/ssh_host_rsa_key
@@ -85,7 +93,9 @@
 /etc/weekly.local
 /etc/wsconsctl.conf
 /etc/mail/aliases
+/etc/mail/localhost.cf
 /etc/mail/sendmail.cf
+/etc/mail/submit.cf
 /etc/mail/local-host-names
 /root/.cshrc
 /root/.klogin
