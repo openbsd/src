@@ -1,4 +1,4 @@
-#	$OpenBSD: PCMCIA,v 1.9 1996/10/24 23:25:15 downsj Exp $
+#	$OpenBSD: PCMCIA,v 1.10 1997/01/01 20:10:37 graichen Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -105,7 +105,13 @@ spkr0	at pckbd? port 0x61
 # controllers instead of two-slot controllers.
 # The i82365 (pcic) controller uses the same ports for the first two
 # controllers and for the second two controllers.
-
+# On some systems there the pcicmaster is a pci-chip (you'll see a pci
+# device of the type "class bridge, subclass PCMCIA, ..." at bootup)
+# you may try the following:
+#
+#   pcicmaster0     at isa? port 0x3000 size 2
+#   pcic0           at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
+#
 # IRQ 2/9 doesn't seem to work for status change interrupts, so use one
 # of the higher ones.
 pcicmaster0	at isa? port 0x3E0 size 2

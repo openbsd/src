@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.20 1996/12/11 00:40:04 deraadt Exp $
+#	$OpenBSD: TDR,v 1.21 1997/01/01 20:10:38 graichen Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -179,7 +179,13 @@ ep2	at isa? port ? irq ?
 # controllers instead of two-slot controllers.
 # The i82365 (pcic) controller uses the same ports for the first two
 # controllers and for the second two controllers.
-
+# On some systems there the pcicmaster is a pci-chip (you'll see a pci
+# device of the type "class bridge, subclass PCMCIA, ..." at bootup)
+# you may try the following:
+#
+#   pcicmaster0     at isa? port 0x3000 size 2
+#   pcic0           at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
+#
 # IRQ 2/9 doesn't seem to work for status change interrupts, so use one
 # of the higher ones.
 #pcicmaster0	at isa? port 0x3E0 size 2
