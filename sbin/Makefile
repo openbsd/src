@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 1999/07/11 16:31:07 niklas Exp $
+#	$OpenBSD: Makefile,v 1.44 1999/07/23 22:17:38 niklas Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck
@@ -29,9 +29,7 @@ SUBDIR+= mount_xfs
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+= bim edlabel fdisk wicontrol
 .elif ${MACHINE} == "i386"
-#SUBDIR+= config_slot
 SUBDIR+= fdisk
-#SUBDIR+= pcmcia_cntrl
 SUBDIR+= wicontrol
 .elif (${MACHINE} == "arc") || (${MACHINE} == "powerpc") || (${MACHINE} == "alpha")
 SUBDIR+= fdisk
