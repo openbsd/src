@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.37 2001/08/07 22:57:15 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.38 2001/09/13 14:41:50 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -693,7 +693,6 @@ preempt(newp)
 
 
 /*
- * The machine independent parts of mi_switch().
  * Must be called at splstatclock() or higher.
  */
 void
