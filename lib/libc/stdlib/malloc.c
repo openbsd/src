@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.56 2003/05/14 17:46:39 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.57 2003/07/13 08:35:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -387,6 +387,7 @@ map_pages(pages)
 #ifdef MALLOC_EXTRA_SANITY
 	wrterror("(ES): overflow in map_pages fails\n");
 #endif /* MALLOC_EXTRA_SANITY */
+	errno = ENOMEM;
 	return (NULL);
     }
     tail = result + pages;
@@ -838,8 +839,10 @@ imalloc(size)
     if (suicide)
 	abort();
 
-    if ((size + malloc_pagesize) < size)       /* Check for overflow */
+    if ((size + malloc_pagesize) < size) {     /* Check for overflow */
 	result = NULL;
+	errno = ENOMEM;
+    }
     else if (size <= malloc_maxsize)
 	result =  malloc_bytes(size);
     else
