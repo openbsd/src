@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.14 2001/02/13 09:16:04 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.15 2001/09/04 23:25:56 millert Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1988, 1990, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
+static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.14 2001/02/13 09:16:04 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.15 2001/09/04 23:25:56 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -69,12 +69,16 @@ static char rcsid[] = "$OpenBSD: wall.c,v 1.14 2001/02/13 09:16:04 deraadt Exp $
 #include <err.h>
 
 struct wallgroup {
-	struct wallgroup *next;
-	char	*name;
 	gid_t	gid;
+	char	*name;
+	char	**mem;
+	struct wallgroup *next;
 } *grouplist;
 
-void	makemsg __P((char *));
+void	makemsg(char *);
+void	addgroup(struct group *, char *);
+char   *ttymsg(struct iovec *, int, char *, int);
+__dead	void usage(void);
 
 #define	IGNOREUSER	"sleeper"
 
@@ -84,52 +88,40 @@ char *mbuf;
 
 /* ARGSUSED */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	extern int optind;
-	int ch;
+	FILE *fp;
+	int ch, ingroup;
 	struct iovec iov;
 	struct utmp utmp;
-	FILE *fp;
-	char *p, *ttymsg();
-	struct passwd *pep = getpwnam("nobody");
+	char *p, **mem;
 	char line[sizeof(utmp.ut_line) + 1];
+	char username[sizeof(utmp.ut_name) + 1];
+	struct passwd *pw;
+	struct group *grp;
 	struct wallgroup *g;
 
 	while ((ch = getopt(argc, argv, "ng:")) != -1)
 		switch (ch) {
 		case 'n':
 			/* undoc option for shutdown: suppress banner */
-			if (geteuid() == 0 || (pep && getuid() == pep->pw_uid))
+			pw = getpwnam("nobody");
+			if (geteuid() == 0 || (pw && getuid() == pw->pw_uid))
 				nobanner = 1;
 			break;
 		case 'g':
-			g = (struct wallgroup *)malloc(sizeof *g);
-			g->next = grouplist;
-			g->name = optarg;
-			g->gid = -1;
-			grouplist = g;
+			grp = getgrnam(optarg);
+			if ((grp = getgrnam(optarg)) == NULL)
+				errx(1, "unknown group `%s'", optarg);
+			addgroup(grp, optarg);
 			break;
-		case '?':
 		default:
-usage:
-			(void)fprintf(stderr, "usage: wall [-g group] [file]\n");
-			exit(1);
+			usage();
 		}
 	argc -= optind;
 	argv += optind;
 	if (argc > 1)
-		goto usage;
-
-	for (g = grouplist; g; g = g->next) {
-		struct group *grp;
-
-		grp = getgrnam(g->name);
-		if (grp)
-			g->gid = grp->gr_gid;
-	}
+		usage();
 
 	makemsg(*argv);
 
@@ -138,29 +130,22 @@ usage:
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
 	/* NOSTRICT */
-	while (fread((char *)&utmp, sizeof(utmp), 1, fp) == 1) {
+	while (fread(&utmp, sizeof(utmp), 1, fp) == 1) {
 		if (!utmp.ut_name[0] ||
 		    !strncmp(utmp.ut_name, IGNOREUSER, sizeof(utmp.ut_name)))
 			continue;
 		if (grouplist) {
-			int ingroup = 0, ngrps, i;
-			char username[MAXLOGNAME];
-			struct passwd *pw;
-			gid_t grps[NGROUPS_MAX];
-
-			bzero(username, sizeof username);
-			strncpy(username, utmp.ut_name, sizeof utmp.ut_name);
+			ingroup = 0;
+			strncpy(username, utmp.ut_name, sizeof(utmp.ut_name));
+			username[sizeof(utmp.ut_name)] = '\0';
 			pw = getpwnam(username);
 			if (!pw)
 				continue;
-			ngrps = getgroups(pw->pw_gid, grps);
 			for (g = grouplist; g && ingroup == 0; g = g->next) {
-				if (g->gid == -1)
-					continue;
 				if (g->gid == pw->pw_gid)
 					ingroup = 1;
-				for (i = 0; i < ngrps && ingroup == 0; i++)
-					if (g->gid == grps[i])
+				for (mem = g->mem; *mem && ingroup == 0; mem++)
+					if (strcmp(username, *mem) == 0)
 						ingroup = 1;
 			}
 			if (ingroup == 0)
@@ -175,10 +160,9 @@ usage:
 }
 
 void
-makemsg(fname)
-	char *fname;
+makemsg(char *fname)
 {
-	register int ch, cnt;
+	int ch, cnt;
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
@@ -190,9 +174,12 @@ makemsg(fname)
 	char *ttynam;
 
 	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXX", _PATH_TMP);
-	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+")))
+	if ((fd = mkstemp(tmpname)) >= 0) {
+		(void)unlink(tmpname);
+		fp = fdopen(fd, "r+");
+	}
+	if (fd == -1 || fp == NULL)
 		errx(1, "can't open temporary file.");
-	(void)unlink(tmpname);
 
 	if (!nobanner) {
 		if (!(whom = getlogin()))
@@ -257,4 +244,40 @@ makemsg(fname)
 	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
 		errx(1, "can't read temporary file.");
 	(void)close(fd);
+}
+
+void
+addgroup(struct group *grp, char *name)
+{
+	int i;
+	struct wallgroup *g;
+
+	for (i = 0; grp->gr_mem[i]; i++)
+		;
+
+	g = (struct wallgroup *)malloc(sizeof *g);
+	if (g == NULL)
+		errx(1, "out of memory.");
+	g->gid = grp->gr_gid;
+	g->name = name;
+	g->mem = (char **)malloc(i + 1);
+	if (g->mem == NULL)
+		errx(1, "out of memory.");
+	for (i = 0; grp->gr_mem[i] != NULL; i++) {
+		g->mem[i] = strdup(grp->gr_mem[i]);
+		if (g->mem[i] == NULL)
+			errx(1, "out of memory.");
+	}
+	g->mem[i] = NULL;
+	g->next = grouplist;
+	grouplist = g;
+}
+
+void
+usage(void)
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-g group] [file]\n", __progname);
+	exit(1);
 }
