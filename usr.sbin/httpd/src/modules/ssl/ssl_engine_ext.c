@@ -279,6 +279,7 @@ static void ssl_ext_mp_init(server_rec *s, pool *p)
     /*
      * Initialize each virtual server 
      */
+    ERR_clear_error();
     for (; s != NULL; s = s->next) {
         sc = mySrvConfig(s);
         cpVHostID = ssl_util_vhostid(p, s);

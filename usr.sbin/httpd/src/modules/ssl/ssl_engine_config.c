@@ -140,6 +140,9 @@ void ssl_config_global_create(void)
         mc->tPrivateKey            = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
         mc->tPublicCert            = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
         mc->tTmpKeys               = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
+#ifdef SSL_EXPERIMENTAL_ENGINE
+        mc->szCryptoDevice         = NULL;
+#endif
 
         (void)memset(mc->pTmpKeys, 0, SSL_TKPIDX_MAX*sizeof(void *));
 
@@ -440,6 +443,29 @@ const char *ssl_cmd_SSLPassPhraseDialog(
     return NULL;
 }
 
+#ifdef SSL_EXPERIMENTAL_ENGINE
+const char *ssl_cmd_SSLCryptoDevice(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLModConfigRec *mc = myModConfig();
+    const char *err;
+    ENGINE *e;
+
+    if ((err = ap_check_cmd_context(cmd, GLOBAL_ONLY)) != NULL)
+        return err;
+    if (strcEQ(arg, "builtin")) {
+        mc->szCryptoDevice = NULL;
+    }
+    else if ((e = ENGINE_by_id(arg)) != NULL) {
+        mc->szCryptoDevice = arg;
+        ENGINE_free(e);
+    }
+    else
+        return "SSLCryptoDevice: Invalid argument";
+    return NULL;
+}
+#endif
+
 const char *ssl_cmd_SSLRandomSeed(
     cmd_parms *cmd, char *struct_ptr, char *arg1, char *arg2, char *arg3)
 {
@@ -705,12 +731,14 @@ const char *ssl_cmd_SSLSessionCache(
         mc->szSessionCacheDataFile = ap_pstrdup(mc->pPool,
                                      ssl_util_server_root_relative(cmd->pool, "scache", arg+4));
     }
-    else if (strlen(arg) > 4 && strcEQn(arg, "shm:", 4)) {
+    else if (   (strlen(arg) > 4 && strcEQn(arg, "shm:",   4)) 
+             || (strlen(arg) > 6 && strcEQn(arg, "shmht:", 6))) {
         if (!ap_mm_useable())
             return "SSLSessionCache: shared memory cache not useable on this platform";
-        mc->nSessionCacheMode      = SSL_SCMODE_SHM;
+        mc->nSessionCacheMode      = SSL_SCMODE_SHMHT;
+        cp = strchr(arg, ':');
         mc->szSessionCacheDataFile = ap_pstrdup(mc->pPool,
-                                     ssl_util_server_root_relative(cmd->pool, "scache", arg+4));
+                                     ssl_util_server_root_relative(cmd->pool, "scache", cp+1));
         mc->tSessionCacheDataTable = NULL;
         mc->nSessionCacheDataSize  = 1024*512; /* 512KB */
         if ((cp = strchr(mc->szSessionCacheDataFile, '(')) != NULL) {
@@ -727,6 +755,30 @@ const char *ssl_cmd_SSLSessionCache(
                                    "size has to be < %d bytes on this platform", maxsize);
         }
     }
+#ifdef SSL_EXPERIMENTAL_SHMCB
+    else if (strlen(arg) > 6 && strcEQn(arg, "shmcb:", 6)) {
+        if (!ap_mm_useable())
+            return "SSLSessionCache: shared memory cache not useable on this platform";
+        mc->nSessionCacheMode      = SSL_SCMODE_SHMCB;
+        mc->szSessionCacheDataFile = ap_pstrdup(mc->pPool,
+                                     ap_server_root_relative(cmd->pool, arg+6));
+        mc->tSessionCacheDataTable = NULL;
+        mc->nSessionCacheDataSize  = 1024*512; /* 512KB */
+        if ((cp = strchr(mc->szSessionCacheDataFile, '(')) != NULL) {
+            *cp++ = NUL;
+            if ((cp2 = strchr(cp, ')')) == NULL)
+                return "SSLSessionCache: Invalid argument: no closing parenthesis";
+            *cp2 = NUL;
+            mc->nSessionCacheDataSize = atoi(cp);
+            if (mc->nSessionCacheDataSize <= 8192)
+                return "SSLSessionCache: Invalid argument: size has to be >= 8192 bytes";
+            maxsize = ap_mm_core_maxsegsize();
+            if (mc->nSessionCacheDataSize >= maxsize)
+                return ap_psprintf(cmd->pool, "SSLSessionCache: Invalid argument: "
+                                   "size has to be < %d bytes on this platform", maxsize);
+        }
+    }
+#endif
 	else
 #ifdef SSL_VENDOR
         if (!ap_hook_use("ap::mod_ssl::vendor::cmd_sslsessioncache",

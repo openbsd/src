@@ -74,6 +74,7 @@ ap_clear_module_list
 ap_clear_pool
 ap_clear_table
 ap_close_piped_log
+ap_configtestonly
 ap_construct_server
 ap_construct_url
 ap_content_type_tolower
@@ -169,6 +170,7 @@ ap_is_directory
 ap_is_fnmatch
 ap_is_initial_req
 ap_is_matchexp
+ap_is_rdirectory
 ap_is_url
 ap_keepalive_timeout
 ap_kill_cleanup
@@ -267,6 +269,7 @@ ap_regexec
 ap_register_cleanup
 ap_register_other_child
 ap_remove_module
+ap_remove_spaces
 ap_requires
 ap_reset_timeout
 ap_response_code_string
@@ -287,6 +290,7 @@ ap_rwrite
 ap_satisfies
 ap_scan_script_header_err
 ap_scan_script_header_err_buff
+ap_scan_script_header_err_strs
 ap_scoreboard_fname
 ap_scoreboard_image
 ap_send_error_response
@@ -340,7 +344,9 @@ ap_start_restart
 ap_start_shutdown
 ap_str_tolower
 ap_strcasecmp_match
+ap_strcasestr
 ap_strcmp_match
+ap_stripprefix
 ap_sub_req_lookup_file
 ap_sub_req_lookup_uri
 ap_sub_req_method_uri
@@ -358,6 +364,7 @@ ap_table_setn
 ap_table_unset
 ap_threads_per_child
 ap_tm2sec
+ap_to64
 ap_translate_name
 ap_uname2id
 ap_unblock_alarms
@@ -376,6 +383,7 @@ ap_uudecode
 ap_validate_password
 ap_vbprintf
 ap_vformatter
+ap_vrprintf
 ap_vsnprintf
 core_module
 top_module

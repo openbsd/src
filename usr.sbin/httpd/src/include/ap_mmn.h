@@ -227,6 +227,9 @@
  *                        ap_base64decode_binary(), ap_base64decode_len(),
  *                        ap_pbase64decode(), ap_pbase64encode()
  * 19990320.7           - add ap_strcasestr()
+ * 19990320.8           - add request_rec.case_preserved_filename
+ * 19990320.9           - renamed alloc.h to ap_alloc.h
+ * 19990320.10          - add ap_is_rdirectory() and ap_stripprefix()
  */
 
 /* 
@@ -250,24 +253,28 @@
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
 #define MODULE_MAGIC_NUMBER_MAJOR 19990320
 #endif
-#define MODULE_MAGIC_NUMBER_MINOR 7                     /* 0...n */
-#define MODULE_MAGIC_NUMBER MODULE_MAGIC_NUMBER_MAJOR	/* backward compat */
+#define MODULE_MAGIC_NUMBER_MINOR 10                    /* 0...n */
 
 /* Useful for testing for features. */
-#define MODULE_MAGIC_AT_LEAST(major,minor)		\
-    ((major) > MODULE_MAGIC_NUMBER_MAJOR 		\
+#define AP_MODULE_MAGIC_AT_LEAST(major,minor)		\
+    ((major) < MODULE_MAGIC_NUMBER_MAJOR 		\
 	|| ((major) == MODULE_MAGIC_NUMBER_MAJOR 	\
-	    && (minor) >= MODULE_MAGIC_NUMBER_MINOR))
+	    && (minor) <= MODULE_MAGIC_NUMBER_MINOR))
 
-/* For example, suppose you wish to use the ap_overlap_tables
-   function.  You can do this:
+/*
+ * For example, suppose you wish to use the ap_overlap_tables
+ * function.  You can do this:
+ *
+ * #if AP_MODULE_MAGIC_AT_LEAST(19980812,2)
+ *    ... use ap_overlap_tables()
+ * #else
+ *    ... alternative code which doesn't use ap_overlap_tables()
+ * #endif
+ *
+ */
 
-#if MODULE_MAGIC_AT_LEAST(19980812,2)
-    ... use ap_overlap_tables()
-#else
-    ... alternative code which doesn't use ap_overlap_tables()
-#endif
-
-*/
+/* deprecated. present for backwards compatibility */
+#define MODULE_MAGIC_NUMBER MODULE_MAGIC_NUMBER_MAJOR
+#define MODULE_MAGIC_AT_LEAST old_broken_macro_we_hope_you_are_not_using
 
 #endif /* !APACHE_AP_MMN_H */

@@ -112,8 +112,8 @@ extern "C" {
  * reset_timeout() resets the timeout in progress.
  */
 
-void ap_start_shutdown(void);
-void ap_start_restart(int);
+API_EXPORT(void) ap_start_shutdown(void);
+API_EXPORT(void) ap_start_restart(int);
 API_EXPORT(void) ap_hard_timeout(char *, request_rec *);
 void ap_keepalive_timeout(char *, request_rec *);
 API_EXPORT(void) ap_soft_timeout(char *, request_rec *);
@@ -130,6 +130,8 @@ API_EXPORT(unsigned int) ap_set_callback_and_alarm(void (*fn) (int), int x);
 unsigned int ap_set_callback_and_alarm(void (*fn) (int), int x);
 #endif
 API_EXPORT(int) ap_check_alarm(void);
+
+void setup_signal_names(char *prefix);
 
 #ifndef NO_OTHER_CHILD
 /*

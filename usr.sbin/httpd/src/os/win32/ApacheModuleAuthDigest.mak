@@ -32,10 +32,10 @@ NULL=nul
 
 !IF  "$(CFG)" == "ApacheModuleAuthDigest - Win32 Release"
 
-OUTDIR=.\ApacheModuleAuthDigestD
-INTDIR=.\ApacheModuleAuthDigestD
+OUTDIR=.\ApacheModuleAuthDigestR
+INTDIR=.\ApacheModuleAuthDigestR
 # Begin Custom Macros
-OutDir=.\.\ApacheModuleAuthDigestD
+OutDir=.\ApacheModuleAuthDigestR
 # End Custom Macros
 
 !IF "$(RECURSE)" == "0" 
@@ -44,25 +44,30 @@ ALL : "$(OUTDIR)\ApacheModuleAuthDigest.dll"
 
 !ELSE 
 
-ALL : "$(OUTDIR)\ApacheModuleAuthDigest.dll"
+ALL : "ApacheCore - Win32 Release" "$(OUTDIR)\ApacheModuleAuthDigest.dll"
 
 !ENDIF 
 
+!IF "$(RECURSE)" == "1" 
+CLEAN :"ApacheCore - Win32 ReleaseCLEAN" 
+!ELSE 
 CLEAN :
+!ENDIF 
 	-@erase "$(INTDIR)\mod_auth_digest.obj"
 	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.dll"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.exp"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.lib"
+	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.map"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "..\..\include" /D "NDEBUG" /D "WIN32" /D\
- "_WINDOWS" /D "SHARED_MODULE" /Fp"$(INTDIR)\ApacheModuleAuthDigest.pch" /YX\
- /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-CPP_OBJS=.\ApacheModuleAuthDigestD/
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\..\include" /I "..\..\os\win32" /D\
+ "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "SHARED_MODULE" /Fo"$(INTDIR)\\"\
+ /Fd"$(INTDIR)\\" /FD /c 
+CPP_OBJS=.\ApacheModuleAuthDigestR/
 CPP_SBRS=.
 
 .c{$(CPP_OBJS)}.obj::
@@ -103,14 +108,15 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\ApacheModuleAuthDigest.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=..\..\CoreR\ApacheCore.lib kernel32.lib user32.lib gdi32.lib\
- winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib\
- uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll\
- /incremental:no /pdb:"$(OUTDIR)\ApacheModuleAuthDigest.pdb" /machine:I386\
+LINK32_FLAGS=kernel32.lib advapi32.lib /nologo /subsystem:windows /dll\
+ /incremental:no /pdb:"$(OUTDIR)\ApacheModuleAuthDigest.pdb"\
+ /map:"$(INTDIR)\ApacheModuleAuthDigest.map" /machine:I386\
  /out:"$(OUTDIR)\ApacheModuleAuthDigest.dll"\
- /implib:"$(OUTDIR)\ApacheModuleAuthDigest.lib" 
+ /implib:"$(OUTDIR)\ApacheModuleAuthDigest.lib"\
+ /base:@"BaseAddr.ref",mod_auth_digest 
 LINK32_OBJS= \
-	"$(INTDIR)\mod_auth_digest.obj"
+	"$(INTDIR)\mod_auth_digest.obj" \
+	"..\..\CoreR\ApacheCore.lib"
 
 "$(OUTDIR)\ApacheModuleAuthDigest.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -122,7 +128,7 @@ LINK32_OBJS= \
 OUTDIR=.\ApacheModuleAuthDigestD
 INTDIR=.\ApacheModuleAuthDigestD
 # Begin Custom Macros
-OutDir=.\.\ApacheModuleAuthDigestD
+OutDir=.\ApacheModuleAuthDigestD
 # End Custom Macros
 
 !IF "$(RECURSE)" == "0" 
@@ -131,28 +137,31 @@ ALL : "$(OUTDIR)\ApacheModuleAuthDigest.dll"
 
 !ELSE 
 
-ALL : "$(OUTDIR)\ApacheModuleAuthDigest.dll"
+ALL : "ApacheCore - Win32 Debug" "$(OUTDIR)\ApacheModuleAuthDigest.dll"
 
 !ENDIF 
 
+!IF "$(RECURSE)" == "1" 
+CLEAN :"ApacheCore - Win32 DebugCLEAN" 
+!ELSE 
 CLEAN :
+!ENDIF 
 	-@erase "$(INTDIR)\mod_auth_digest.obj"
 	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(INTDIR)\vc50.pdb"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.dll"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.exp"
-	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.ilk"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.lib"
+	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.map"
 	-@erase "$(OUTDIR)\ApacheModuleAuthDigest.pdb"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "..\..\include" /D "_DEBUG" /D\
- "WIN32" /D "_WINDOWS" /D "SHARED_MODULE"\
- /Fp"$(INTDIR)\ApacheModuleAuthDigest.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\"\
- /FD /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\..\include" /I\
+ "..\..\os\win32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "SHARED_MODULE"\
+ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 CPP_OBJS=.\ApacheModuleAuthDigestD/
 CPP_SBRS=.
 
@@ -194,14 +203,15 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\ApacheModuleAuthDigest.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=..\..\CoreD\ApacheCore.lib kernel32.lib user32.lib gdi32.lib\
- winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib\
- uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll\
- /incremental:yes /pdb:"$(OUTDIR)\ApacheModuleAuthDigest.pdb" /debug\
- /machine:I386 /out:"$(OUTDIR)\ApacheModuleAuthDigest.dll"\
- /implib:"$(OUTDIR)\ApacheModuleAuthDigest.lib" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib advapi32.lib /nologo /subsystem:windows /dll\
+ /incremental:no /pdb:"$(OUTDIR)\ApacheModuleAuthDigest.pdb"\
+ /map:"$(INTDIR)\ApacheModuleAuthDigest.map" /debug /machine:I386\
+ /out:"$(OUTDIR)\ApacheModuleAuthDigest.dll"\
+ /implib:"$(OUTDIR)\ApacheModuleAuthDigest.lib" /pdbtype:sept\
+ /base:@"BaseAddr.ref",mod_auth_digest 
 LINK32_OBJS= \
-	"$(INTDIR)\mod_auth_digest.obj"
+	"$(INTDIR)\mod_auth_digest.obj" \
+	"..\..\CoreD\ApacheCore.lib"
 
 "$(OUTDIR)\ApacheModuleAuthDigest.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -213,10 +223,40 @@ LINK32_OBJS= \
 
 !IF "$(CFG)" == "ApacheModuleAuthDigest - Win32 Release" || "$(CFG)" ==\
  "ApacheModuleAuthDigest - Win32 Debug"
+
+!IF  "$(CFG)" == "ApacheModuleAuthDigest - Win32 Release"
+
+"ApacheCore - Win32 Release" : 
+   cd "\apache\apache-1.3\src"
+   $(MAKE) /$(MAKEFLAGS) /F ".\ApacheCore.mak" CFG="ApacheCore - Win32 Release"\
+ 
+   cd ".\os\win32"
+
+"ApacheCore - Win32 ReleaseCLEAN" : 
+   cd "\apache\apache-1.3\src"
+   $(MAKE) /$(MAKEFLAGS) CLEAN /F ".\ApacheCore.mak"\
+ CFG="ApacheCore - Win32 Release" RECURSE=1 
+   cd ".\os\win32"
+
+!ELSEIF  "$(CFG)" == "ApacheModuleAuthDigest - Win32 Debug"
+
+"ApacheCore - Win32 Debug" : 
+   cd "\apache\apache-1.3\src"
+   $(MAKE) /$(MAKEFLAGS) /F ".\ApacheCore.mak" CFG="ApacheCore - Win32 Debug" 
+   cd ".\os\win32"
+
+"ApacheCore - Win32 DebugCLEAN" : 
+   cd "\apache\apache-1.3\src"
+   $(MAKE) /$(MAKEFLAGS) CLEAN /F ".\ApacheCore.mak"\
+ CFG="ApacheCore - Win32 Debug" RECURSE=1 
+   cd ".\os\win32"
+
+!ENDIF 
+
 SOURCE=..\..\modules\experimental\mod_auth_digest.c
 DEP_CPP_MOD_A=\
-	"..\..\include\alloc.h"\
 	"..\..\include\ap.h"\
+	"..\..\include\ap_alloc.h"\
 	"..\..\include\ap_config.h"\
 	"..\..\include\ap_ctype.h"\
 	"..\..\include\ap_md5.h"\
@@ -235,6 +275,12 @@ DEP_CPP_MOD_A=\
 	"..\..\include\util_uri.h"\
 	".\os.h"\
 	".\readdir.h"\
+	
+NODEP_CPP_MOD_A=\
+	"..\..\include\ap_config_auto.h"\
+	"..\..\include\ebcdic.h"\
+	"..\..\include\sfio.h"\
+	"..\..\modules\experimental\mm.h"\
 	
 
 "$(INTDIR)\mod_auth_digest.obj" : $(SOURCE) $(DEP_CPP_MOD_A) "$(INTDIR)"

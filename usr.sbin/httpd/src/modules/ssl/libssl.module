@@ -364,6 +364,15 @@ ConfigStart
     esac
 
     #
+    #   SSL engine support
+    #
+    case $SSL_VERSION_ID in
+        *0.9.6*engine* )
+            SSL_CFLAGS="$SSL_CFLAGS -DSSL_ENGINE"
+            ;;
+    esac
+
+    #
     #   determine location of OpenSSL headers
     #
     if [ ".$SSL_BASE" = .SYSTEM ]; then
@@ -433,89 +442,6 @@ ConfigStart
         *      ) my_note="(stand-alone)" ;;
     esac
     echo "$my_prefix SSL library type: $my_type $my_note"
-
-    #
-    #   support for RSAref library
-    #
-    if [ ".$RSA_BASE" = . ]; then
-        RSA_BASE=`egrep '^RSA_BASE=' $file | tail -1 | awk -F= '{print $2}'`
-    fi
-    if [ ".$RSA_BASE" != . ]; then
-        if [ ! -f "$my_real_ssl_libdir/libRSAglue.a" ]; then
-            echo "Error: Cannot find OpenSSL's RSAglue library under $my_real_ssl_libdir" 1>&2
-            exit 1
-        else
-            SSL_LIBS="$SSL_LIBS -lRSAglue"
-        fi
-        case $RSA_BASE in
-            SYSTEM ) ;;
-            /* ) ;;
-             * ) RSA_BASE="`cd ../$RSA_BASE; pwd`" ;;
-        esac
-        echo "$my_prefix SSL library plugin mode: RSAref (explicitly configured)"
-    else
-        if [ -f "$my_real_ssl_libdir/libRSAglue.a" ]; then
-            if [ ".`$SSL_PROGRAM version -f | grep -- -DRSAref`" != . ]; then
-                SSL_LIBS="$SSL_LIBS -lRSAglue"
-                if [ -f "$SSL_BASE/Makefile.ssl" ]; then
-                    if [ ".`egrep -- '-L[^ ]*/rsaref' $SSL_BASE/Makefile.ssl`" != . ]; then
-                         RSA_BASE=`egrep -- '-L[^ ]*/rsaref' $SSL_BASE/Makefile.ssl |\
-                                   head -1 | sed -e 's;.*-L\([^ ]*/rsaref[^ ]*\).*;\1;'`
-                    fi
-                fi
-                if [ ".$RSA_BASE" = . ]; then
-                    RSA_BASE='SYSTEM'
-                fi
-            fi
-        fi
-        if [ ".$RSA_BASE" != . ]; then
-            echo "$my_prefix SSL library plugin mode: RSAref (implicitly configured)"
-        else
-            echo "$my_prefix SSL library plugin mode: none"
-        fi
-    fi
-    if [ ".$RSA_BASE" != . ]; then
-        if [ ".$RSA_BASE" = .SYSTEM ]; then
-            my_found=no
-            for p in . /lib /usr/lib /usr/local/lib; do
-                if [ -f "$p/librsaref.a" -o -f "$p/librsaref.so" ]; then
-                    SSL_LDFLAGS="$SSL_LDFLAGS -L$p"
-                    SSL_LIBS="$SSL_LIBS -lrsaref"
-                    echo "$my_prefix SSL library plugin path: $p/librsaref.a"
-                    my_found=yes
-                    break
-                fi
-            done
-            if [ .$my_found = .no ]; then
-                echo "Error: Cannot find RSAref library in any of the following dirs:" 1>&2
-                echo "Error: . /lib /usr/lib /usr/local/lib" 1>&2
-                exit 1
-            fi
-        else
-            my_found=no
-            if [ -f "$RSA_BASE/librsaref.a" ]; then
-                SSL_LDFLAGS="$SSL_LDFLAGS -L$RSA_BASE"
-                SSL_LIBS="$SSL_LIBS -lrsaref"
-                echo "$my_prefix SSL library plugin path: $RSA_BASE/librsaref.a"
-                my_found=yes
-            elif [ -f "$RSA_BASE/rsaref.a" ]; then
-                SSL_LIBS="$SSL_LIBS $RSA_BASE/rsaref.a"
-                echo "$my_prefix SSL library plugin path: $RSA_BASE/rsaref.a"
-                my_found=yes
-            else
-                wild="`echo $RSA_BASE/*/rsaref.a`"
-                if [ -f "$wild" ]; then
-                    SSL_LIBS="$SSL_LIBS $wild"
-                    echo "$my_prefix SSL library plugin path: $wild"
-                    my_found=yes
-                fi
-            fi
-            if [ .$my_found = .no ]; then
-                echo "Error: Cannot find RSAref library under $RSA_BASE" 1>&2
-                exit 1
-            fi
-        fi
-    fi
 
     #
     #   Special GCC/DSO support

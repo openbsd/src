@@ -74,7 +74,7 @@
  * 
  * Anonymous                    magic-user-id [magic-user-id]...
  *
- * Anonymous_MustGiveEmail      [ on | off ] default = off
+ * Anonymous_MustGiveEmail      [ on | off ] default = on
  * Anonymous_LogEmail           [ on | off ] default = on
  * Anonymous_VerifyEmail        [ on | off ] default = off
  * Anonymous_NoUserId           [ on | off ] default = off
@@ -83,7 +83,7 @@
  * The magic user id is something like 'anonymous', it is NOT case sensitive. 
  * 
  * The MustGiveEmail flag can be used to force users to enter something
- * in the password field (like an email address). Default is off.
+ * in the password field (like an email address). Default is on.
  *
  * Furthermore the 'NoUserID' flag can be set to allow completely empty
  * usernames in as well; this can be is convenient as a single return
@@ -313,10 +313,3 @@ module MODULE_VAR_EXPORT anon_auth_module =
     NULL,			/* child_exit */
     NULL			/* post read-request */
 };
-
-#ifdef NETWARE
-int main(int argc, char *argv[]) 
-{
-    ExitThread(TSR_THREAD, 0);
-}
-#endif

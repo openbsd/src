@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.5 2000/06/30 05:35:10 beck Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.6 2000/12/15 22:18:17 beck Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -92,6 +92,11 @@ static command_rec ssl_config_cmds[] = {
     AP_SRV_CMD(SessionCache, TAKE1,
                "SSL Session Cache storage "
                "(`none', `dbm:/path/to/file')")
+#ifdef SSL_EXPERIMENTAL_ENGINE
+    AP_SRV_CMD(CryptoDevice, TAKE1,
+               "SSL external Crypto Device usage "
+               "(`builtin', `...')")
+#endif
     AP_SRV_CMD(RandomSeed, TAKE23,
                "SSL Pseudo Random Number Generator (PRNG) seeding source "
                "(`startup|connect builtin|file:/path|exec:/path [bytes]')")

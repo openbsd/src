@@ -303,7 +303,7 @@ coherences.
     <strong id="howto">
 How can I create a real SSLv2-only server?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#cipher-sslv2"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#cipher-sslv2"><b>L</b></a>]
     <p>
 The following creates an SSL server which speaks only the SSLv2 protocol and
 its ciphers.
@@ -352,7 +352,7 @@ SSLCipherSuite SSLv2:+HIGH:+MEDIUM:+LOW:+EXP
     <strong id="howto">
 How can I create an SSL server which accepts strong encryption only?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#cipher-strong"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#cipher-strong"><b>L</b></a>]
     <p>
 The following enables only the seven strongest ciphers:
 <p>
@@ -401,7 +401,7 @@ SSLCipherSuite HIGH:MEDIUM
 How can I create an SSL server which accepts strong encryption only,
 but allows export browsers to upgrade to stronger encryption?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#cipher-sgc"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#cipher-sgc"><b>L</b></a>]
     <p>
 This facility is called Server Gated Cryptography (SGC) and details you can
 find in the <code>README.GlobalID</code> document in the mod_ssl distribution.
@@ -465,7 +465,7 @@ SSLRequire %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
 How can I create an SSL server which accepts all types of ciphers in general,
 but requires a strong ciphers for access to a particular URL?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#cipher-perdir"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#cipher-perdir"><b>L</b></a>]
     <p>
 Obviously you cannot just use a server-wide <code>SSLCipherSuite</code> which
 restricts the ciphers to the strong variants. But mod_ssl allows you to
@@ -525,7 +525,7 @@ SSLCipherSuite HIGH:MEDIUM
 How can I authenticate clients based on certificates when I know all my
 clients?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#auth-simple"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#auth-simple"><b>L</b></a>]
     <p>
 When you know your user community (i.e. a closed user group situation), as
 it's the case for instance in an Intranet, you can use plain certificate
@@ -581,7 +581,7 @@ SSLCACertificateFile conf/ssl.crt/ca.crt
 How can I authenticate my clients for a particular URL based on certificates
 but still allow arbitrary clients to access the remaining parts of the server?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#auth-selective"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#auth-selective"><b>L</b></a>]
     <p>
 For this we again use the per-directory reconfiguration feature of mod_ssl:
 <p>
@@ -635,7 +635,7 @@ How can I authenticate only particular clients for a some URLs based
 on certificates but still allow arbitrary clients to access the remaining
 parts of the server?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#auth-particular"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#auth-particular"><b>L</b></a>]
     <p>
 The key is to check for various ingredients of the client certficate. Usually
 this means to check the whole or part of the Distinguished Name (DN) of the
@@ -797,7 +797,7 @@ certificates for access to a subarea on the Intranet website for clients
 coming from the Internet but still allow plain HTTP access for clients on the
 Intranet?
 </strong>&nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#auth-intranet"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#auth-intranet"><b>L</b></a>]
     <p>
 Let us assume the Intranet can be distinguished through the IP network
 192.160.1.0/24 and the subarea on the Intranet website has the URL
@@ -883,7 +883,7 @@ Require              valid-user
 </ul>
       <p>
       <br>
-      <table>
+      <table summary="">
       <tr>
         <td>
            <table width="600" border="0" summary="">
@@ -905,7 +905,7 @@ Require              valid-user
         <td><table width="598" summary="">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.modssl.org/">mod_ssl</a> 2.6, User Manual<br>
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.7, User Manual<br>
         The Apache Interface to OpenSSL
         </font>
         </td>

@@ -7,7 +7,7 @@
  mod_ssl                               ``Ralf Engelschall has released an
  Apache Interface to OpenSSL             excellent module that integrates
  http://www.modssl.org/                  Apache and SSLeay.''                 
- Version 2.6                                               -- Tim J. Hudson
+ Version 2.7                                               -- Tim J. Hudson
                                            
  SYNOPSIS
 
@@ -42,7 +42,6 @@
    ssl_engine_mutex.c ...... mutual exclusion support
    ssl_engine_pphrase.c .... pass-phrase handling
    ssl_engine_rand.c ....... PRNG support
-   ssl_engine_scache.c ..... session cache support
    ssl_engine_vars.c ....... Variable Expansion support
    ssl_expr.c .............. expression handling main source
    ssl_expr.h .............. expression handling common header
@@ -52,6 +51,10 @@
    ssl_expr_parse.h ........ expression parser header     (pre-generated)
    ssl_expr_parse.y ........ expression parser source
    ssl_expr_eval.c ......... expression machine evaluation
+   ssl_scache.c ............ session cache abstraction layer
+   ssl_scache_dbm.c ........ session cache via DBM file
+   ssl_scache_shmcb.c ...... session cache via shared memory cyclic buffer
+   ssl_scache_shmht.c ...... session cache via shared memory hash table
    ssl_util.c .............. utility functions
    ssl_util_ssl.c .......... the OpenSSL companion source
    ssl_util_ssl.h .......... the OpenSSL companion header
@@ -132,6 +135,13 @@
      The ability to use various additional SSLProxyXXX directives in
      oder to control extended client functionality in the HTTPS proxy
      code.
+
+   o SSL_EXPERIMENTAL_ENGINE
+     The ability to support the new forthcoming OpenSSL ENGINE stuff.
+     Until this development branch of OpenSSL is merged into the main
+     stream, you have to use openssl-engine-0.9.x.tar.gz for this.
+     mod_ssl automatically recognizes this OpenSSL variant and then can
+     activate external crypto devices through SSLCryptoDevice directive.
 
  VENDOR EXTENSIONS
 

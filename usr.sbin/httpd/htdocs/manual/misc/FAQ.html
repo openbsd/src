@@ -21,7 +21,7 @@
 
   <H1 ALIGN="CENTER">Apache Server Frequently Asked Questions</H1>
   <P>
-  $Revision: 1.6 $ ($Date: 2000/03/19 11:16:29 $)
+  $Revision: 1.7 $ ($Date: 2000/12/15 22:17:28 $)
   </P>
   <P>
   The latest version of this FAQ is always available from the main
@@ -83,7 +83,7 @@
 <!--   file) don't have the type listed at all.                     -->
 <!-- - RewriteRule /~fraggle/* /cgi-bin/fraggle.pl does not work    -->
 <!-- - how do I disable authentication for a subdirectory?          -->
-<!--   (A: you can't but "satisfy any; allow from all" can be close -->
+<!--   (A: you can't but "Satisfy any; Allow from all" can be close -->
 <!-- - '400 malformed request' on Win32 might mean stale proxy; see -->
 <!--   PR #2300.                                                    -->
 <!-- - how do I tell what version of Apache I am running?           -->
@@ -102,10 +102,7 @@
   <OL>
    <LI><A HREF="#what">What is Apache?</A>
    </LI>
-   <LI><A HREF="#why">Why was Apache created?</A>
-   </LI>
-   <LI><A HREF="#relate">How does The Apache Group's work relate to
-    other servers?</A>
+   <LI><A HREF="#why">How and why was Apache created?</A>
    </LI>
    <LI><A HREF="#name">Why the name &quot;Apache&quot;?</A>
    </LI>
@@ -121,6 +118,8 @@
    </LI>
    <LI><A HREF="#where">Where can I get Apache?</A>
    </LI>
+   <li><a href="#logo">May I use the Apache logo on my product or Web site?</a>
+   </li>
   </OL>
  </LI>
 
@@ -253,9 +252,20 @@
 	Use ServerName directive to set it manually.</samp>"  What does
 	this mean?</A>
    </LI>
-   <LI><A HREF="#ws2_32dll">When I try to start Apache for Windows, I get a message
-	like "<samp>Unable To Locate WS2_32.DLL...</samp>". What should I do?</A>
+   <LI><A HREF="#ws2_32dll">When I try to start Apache for Windows, I get
+        a message like "<samp>Unable To Locate WS2_32.DLL...</samp>". What
+	should I do?</A>
    </LI>
+   <LI><A HREF="#WSADuplicateSocket">Apache for Windows does not start.
+        Error log contains this message "<samp>[crit] (10045) The attempted
+	operation is not supported for the type of object referenced: Parent:
+	WSADuplicateSocket failed for socket ###</samp>".  What does this
+	mean?</a>
+   </LI>
+   <li><a href="#err1067">When I try to start Apache on Windows, I get
+        a message like &quot;<code>System error 1067 has occurred.  The process
+	terminated unexpectedly.</code>&quot;  What does this mean?</a>
+   </li>
   </OL>
  </LI>
 
@@ -318,6 +328,13 @@
    <LI><A HREF="#forbidden">Why do I get a 
         &quot;<SAMP>Forbidden</SAMP>&quot; message whenever I try to 
         access a particular directory?</A>
+   <li><a href="#malfiles">Why do I get a 
+        &quot;<samp>Forbidden/You don't have permission to access /
+	on this server</samp>&quot; message whenever I try to 
+        access my server?</a></li>
+   <LI><A HREF="#ie-ignores-mime">Why do my files appear correctly in
+        Internet Explorer, but show up as source or trigger a save
+        window with Netscape?</A> 
   </OL>
  </LI>
 
@@ -371,6 +388,9 @@
    <LI><A HREF="#remote-user-var">Why is the environment variable
         <SAMP>REMOTE_USER</SAMP> not set?</A>
    </LI>
+   <LI><A HREF="#user-cgi">How do I allow each of my user directories
+     to have a cgi-bin directory?</A>
+   </LI>
   </OL>
  </LI>
 
@@ -410,6 +430,9 @@
    </LI>
    <LI><A HREF="#passwdauth">Can I use my <SAMP>/etc/passwd</SAMP> file
         for Web page authentication?</A>
+   </LI>
+   <LI><A HREF="#prompted-twice">Why does Apache ask for my password
+	twice before serving a file?</a>
    </LI>
   </OL>
  </LI>
@@ -489,6 +512,15 @@
    </LI>
    <LI><A HREF="#rotate">How can I rotate my log files?</A>
    </LI>
+   <LI><A HREF="#conditional-logging">How do I keep certain requests from
+        appearing in my logs?</A>
+   </LI>
+   <li><a href="#dbinteg">Does Apache include any sort of database
+        integration?</a>
+   </li>
+   <li><a href="#asp">Can I use Active Server Pages (ASP) with Apache?</a>
+   </li>
+   <li><a href="#java">Does Apache come with Java support?</a></li>
   </OL>
  </LI>
 
@@ -518,43 +550,72 @@
  <LI><A NAME="what">
       <STRONG>What is Apache?</STRONG>
      </A>
-  <P>
-  Apache was originally based on code and ideas found in the most
-  popular HTTP server of the time.. NCSA httpd 1.3 (early 1995). It has
-  since evolved into a far superior system which can rival (and probably
-  surpass) almost any other UNIX based HTTP server in terms of functionality,
-  efficiency and speed.
-  </P>
-  <P>
-  Since it began, it has been completely rewritten, and includes many new
-  features. Apache is, as of January 1997, the most popular WWW server on
-  the Internet, according to the
-  <A HREF="http://www.netcraft.com/Survey/">Netcraft Survey</A>.
+  <P>The Apache httpd server
+<UL>
+ <LI>is a powerful, flexible, HTTP/1.1 compliant web server
+ <LI>implements the latest protocols, including HTTP/1.1 (RFC2616)
+ <LI>is highly configurable and extensible with third-party modules
+ <LI>can be customised by writing 'modules' using the Apache module API
+ <LI>provides full source code and comes with an unrestrictive license
+ <LI>runs on Windows NT/9x, Netware 5.x, OS/2, and most versions of Unix, 
+     as well as several other operating systems
+ <LI>is actively being developed
+ <LI>encourages user feedback through new ideas, bug reports and patches
+ <LI>implements many frequently requested features, including:<BR><BR>
+  <DL>
+    <DT>DBM databases for authentication</DT>
+    <DD>allows you to easily set up password-protected pages with 
+    enormous numbers of authorized users, without bogging down the server.
+    <DT>Customized responses to errors and problems</DT>
+     <DD>Allows you to set up files, or even CGI scripts, which are
+      returned by the server in response
+      to errors and problems, e.g. setup a script to intercept
+      <STRONG>500 Server Error</STRONG>s and perform on-the-fly diagnostics for
+      both users and yourself. </DD>
+    <DT> Multiple DirectoryIndex directives </DT>
+    <DD> Allows you to say <CODE>DirectoryIndex index.html
+         index.cgi</CODE>, which instructs the server to either send
+         back <CODE>index.html</CODE> or run <CODE>index.cgi</CODE>
+         when a directory URL is requested, whichever it finds in the
+          directory.
+    <DT> Unlimited flexible URL rewriting and aliasing </DT>
+    <DD> Apache has no fixed limit on the numbers of Aliases and
+         Redirects which may be declared in the config files.  In addition,
+	 a powerful rewriting engine can be used to solve most URL
+         manipulation problems.
+    <DT>Content negotiation</DT>
+    <DD>i.e. the ability to automatically serve clients of varying
+     sophistication and HTML level compliance, with documents which
+     offer the best representation of information that the client is
+     capable of accepting.</DD>
+    <DT>Virtual Hosts</DT>
+     <DD>A much requested feature, sometimes known as multi-homed servers.
+      This allows the server to distinguish between requests made to
+      different IP addresses or names (mapped to the same machine).  Apache
+      also offers dynamically configurable mass-virtual hosting.
+     </DD>
+    <DT>Configurable Reliable Piped Logs</DT> 
+     <DD>You can configure
+     Apache to generate logs in the format that you want.  In addition, on
+     most Unix architectures, Apache can send log files to a pipe, allowing
+     for log rotation, hit filtering, real-time splitting of multiple vhosts
+     into separate logs, and asynchronous DNS resolving on the fly.
+  </DL>
+</UL>
+
   </P>
   <HR>
  </LI>
 
  <LI><A NAME="why">
-      <STRONG>Why was Apache created?</STRONG>
+      <STRONG>How and why was Apache created?</STRONG>
      </A>
   <P>
-  To address the concerns of a group of WWW providers and part-time httpd
-  programmers that httpd didn't behave as they wanted it to behave.
-  Apache is an entirely volunteer effort, completely funded by its
-  members, not by commercial sales.
-  </P>
-  <HR>
- </LI>
-
- <LI><A NAME="relate">
-      <STRONG>How does The Apache Group's work relate to other
-      server efforts, such as NCSA's?</STRONG>
-     </A>
-  <P>
-  We, of course, owe a great debt to NCSA and their programmers for
-  making the server Apache was based on. We now, however, have our own
-  server, and our project is mostly our own. The Apache Project is an
-  entirely independent venture.
+  The <A HREF="http://www.apache.org/ABOUT_APACHE.html">About Apache</A>
+  document explains how the Apache project evolved from its beginnings
+  as an outgrowth of the NCSA httpd project to its current status as
+  one of the fastest, most efficient, and most functional web servers
+  in existence.
   </P>
   <HR>
  </LI>
@@ -569,7 +630,7 @@
   </P>
 
   <P>
-  For many developers it is also a reverant connotation to the Native
+  For many developers it is also a reverent connotation to the Native
   American Indian tribe of Apache, <A
   HREF="http://www.indians.org/welker/apache.htm">well-known for their
   superior skills in warfare strategy and inexhaustible endurance</A>.
@@ -598,14 +659,15 @@
   comparison chart.
   </P>
   <P>
-  Apache has been shown to be substantially faster than many other
-  free servers. Although certain commercial servers have claimed to
-  surpass Apache's speed (it has not been demonstrated that any of these
-  &quot;benchmarks&quot; are a good way of measuring WWW server speed at any
-  rate), we feel that it is better to have a mostly-fast free server
-  than an extremely-fast server that costs thousands of dollars. Apache
-  is run on sites that get millions of hits per day, and they have
-  experienced no performance difficulties.
+  Apache has been shown to be substantially faster, more stable, and
+  more feature-full than many other web servers. Although certain
+  commercial servers have claimed to surpass Apache's speed (it has
+  not been demonstrated that any of these &quot;benchmarks&quot; are a
+  good way of measuring WWW server speed at any rate), we feel that it
+  is better to have a mostly-fast free server than an extremely-fast
+  server that costs thousands of dollars. Apache is run on sites that
+  get millions of hits per day, and they have experienced no
+  performance difficulties.
   </P>
   <HR>
  </LI>
@@ -614,17 +676,13 @@
       <STRONG>How thoroughly tested is Apache?</STRONG>
      </A>
   <P>
-  Apache is run on over 3 million Internet servers (as of June 1999). It has
-  been tested thoroughly by both developers and users. The Apache Group
-  maintains rigorous standards before releasing new versions of their
-  server, and our server runs without a hitch on over one half of all
-  WWW servers available on the Internet.  When bugs do show up, we
-  release patches and new versions as soon as they are available.
-  </P>
-  <P>
-  The Apache project's web site includes a page with a partial list of
-  <A HREF="http://www.apache.org/info/apache_users.html">sites running
-  Apache</A>.
+  Apache is run on over 6 million Internet servers (as of February
+  2000).  It has been tested thoroughly by both developers and
+  users. The Apache Group maintains rigorous standards before
+  releasing new versions of their server, and our server runs without
+  a hitch on over one half of all WWW servers available on the
+  Internet.  When bugs do show up, we release patches and new versions
+  as soon as they are available.
   </P>
   <HR>
  </LI>
@@ -679,7 +737,7 @@
      </A>
   <P>
   Indeed there is.  See the main
-  <A HREF="http://www.apache.org/">Apache web site</A>.
+  <A HREF="http://www.apache.org/httpd">Apache web site</A>.
   There is also a regular electronic publication called
   <A HREF="http://www.apacheweek.com/" REL="Help"><CITE>Apache Week</CITE></A>
   available.  Links to relevant <CITE>Apache Week</CITE> articles are
@@ -696,10 +754,32 @@
   <P>
   You can find out how to download the source for Apache at the
   project's
-  <A HREF="http://www.apache.org/">main web page</A>.
+  <A HREF="http://www.apache.org/httpd">main web page</A>.
   </P>
   <HR>
  </LI>
+
+ <li><a name="logo">
+      <b>May I use the Apache logo on my product or Web site?</b></a>
+  <p>
+  You may <b>NOT</b> use any original artwork from the Apache Software
+  Foundation, nor make or use modified versions of such artwork, except
+  under the following conditions:
+  </p>
+  <ul>
+   <li>You may use the
+    <a href="../../apache_pb.gif">'Powered by Apache' graphic</a>
+    on a Web site that is being served by the Apache HTTP server software.</li>
+   <li>You may use the aforementioned 'Powered by Apache' graphic or the
+    <a href="http://www.apache.org/foundation/images/asf_logo.gif"
+    >Apache Software Foundation logo</a> in product description and
+    promotional material <b>IF and ONLY IF</b> such use can in no way
+    be interpreted as anything other than an attribution.  Using the
+    Apache name and artwork in a manner that implies endorsement of a
+    product or service is <b>strictly forbidden</b>.</li>
+  </ul>
+  <hr>
+ </li>
 </OL>
 
 
@@ -1508,14 +1588,69 @@
   <A HREF="http://www.microsoft.com/windows95/downloads/">http://www.microsoft.com/windows95/downloads/</A>
   </p>
   <p>
-  Detailed answer: Prior to version 1.3.9, Apache for Windows used Winsock 1.1. Beginning with
-  version 1.3.9, Apache began using Winsock 2 features (specifically, WSADuplicateSocket()).
-  WS2_32.DLL implements the Winsock 2 API. Winsock 2 ships with Windows NT 4.0 and Windows 98.
-  Some of the earlier releases of Windows 95 did not include Winsock 2.
+  Detailed answer: Prior to version 1.3.9, Apache for Windows used Winsock
+  1.1. Beginning with version 1.3.9, Apache began using Winsock 2 features
+  (specifically, WSADuplicateSocket()).
+  WS2_32.DLL implements the Winsock 2 API. Winsock 2 ships with Windows
+  NT 4.0 and Windows 98.  Some of the earlier releases of Windows 95 did
+  not include Winsock 2.
   </p>
   <hr>
  </LI>
-
+ <LI><A name="WSADuplicateSocket">
+      <b>Apache for Windows does not start. Error log contains this message:
+      "<samp>[crit] (10045) The attempted operation is not supported for
+      the type of object referenced: Parent: WSADuplicateSocket failed for
+      socket ###</samp>".  What does this mean?</b></A>
+  <p>
+  We have seen this problem when Apache is run on systems along with
+  Virtual Private Networking clients like Aventail Connect. Aventail Connect
+  is a Layered Service Provider (LSP) that inserts itself, as a "shim,"
+  between the Winsock 2 API and Window's native Winsock 2 implementation.
+  The Aventail Connect shim does not implement WSADuplicateSocket, which is
+  the cause of the failure.
+  </p>
+  <p>
+  The shim is not unloaded when Aventail Connect is shut down. Once
+  observed, the problem persists until the shim is either explicitly
+  unloaded or the machine is rebooted. Instructions for temporarily
+  removing the Aventail Connect V3.x shim can be found here:
+  "<a href="http://support.aventail.com/akb/article00386.html"
+   >How to Remove Aventail Connect v3.x from the LSP Order for Testing
+    Purposes</a>."
+  </p>
+  <p>
+  Another potential solution (not tested) is to add <code>apache.exe</code>
+  to the Aventail "Connect Exclusion List".  See this link for details:
+  "<a href="http://support.aventail.com/akb/article00586.html"
+   >How to Add an Application to Aventail Connect's Application Exclusion
+    List</a>."
+  </p>
+  <hr>
+ </LI>
+ <li><a name="err1067"><b>When I try to start Apache on Windows, I get
+      a message like &quot;<code>System error 1067 has occurred.  The process
+      terminated unexpectedly</code>.&quot;  What does this mean?</b></a>
+  <p>
+  This message means that the Web server was unable to start correctly
+  for one reason or another.  To find out why, execute the following
+  commands in a DOS window:
+  </p>
+  <pre>
+    c:
+    cd "\Program Files\Apache Group\Apache"
+    apache
+  </pre>
+  <p>
+  (If you don't get the prompt back, hit Control-C to cause Apache to
+  exit.)
+  </p>
+  <p>
+  The error you see will probably be one of those preceding this question
+  in the FAQ.
+  </p>
+  <hr>
+ </li>
 </OL>
 
 
@@ -1930,8 +2065,7 @@
   directives so Apache can be sure to tell them apart correctly.
   </P>
   <P>
-  Please see the
-  <A HREF="http://www.apache.org/docs/vhosts/">Apache
+  Please see the <A HREF="../vhosts/">Apache
   Virtual Host documentation</A> for further details about configuration.
   </P>
   <HR>
@@ -1996,6 +2130,56 @@
    web server in order for the content to be accessible.
    </P>
    <HR>
+ </LI>
+ <li><a name="malfiles"><b>Why do I get a 
+        &quot;<samp>Forbidden/You don't have permission to access /
+	on this server</samp>&quot; message whenever I try to 
+        access my server?</b></a>
+   <p>
+   Search your <code>conf/httpd.conf</code> file for this exact
+   string:
+   <code>&lt;Files ~&gt;</code>.  If you find it,
+   that's your problem -- that particular &lt;Files&gt; container
+   is malformed.  Delete it or replace it with 
+   <code>&lt;Files ~ &quot;^\.ht&quot;&gt;</code> 
+   and restart your server and things should work as expected.
+   </p>
+   <p>
+   This error appears to be caused by a problem with the version of
+   linuxconf distributed with Redhat 6.x.  It may reappear if
+   you use linuxconf again.
+   </p>
+   <p>
+   If you don't find this string, check out the
+   <a href="#forbidden">previous question</a>.
+   </p>
+   <hr>
+ </li>
+ <LI><A NAME="ie-ignores-mime">
+       <STRONG>Why do my files appear correctly in Internet
+       Explorer, but show up as source or trigger a save window
+       with Netscape?</STRONG></A> 
+   <P>
+   Internet Explorer (IE) and Netscape handle mime type detection in different
+   ways, and therefore will display the document differently.  In particular,
+   IE sometimes relies on the file extension to determine the mime type.  This
+   can happen when the server specifies a mime type of
+   <CODE>application/octet-stream</CODE> or <CODE>text/plain</CODE>.
+   (Unfortunately, this behavior makes it impossible to properly send plain
+   text in some situations unless the file extension is <CODE>txt</CODE>.)
+   There are more details available on IE's mime type detection behavior in an
+   <A HREF="http://msdn.microsoft.com/workshop/networking/moniker/overview/appendix_a.asp">MSDN
+   article</A>.
+   </P>
+
+   <P>
+   In order to make all browsers work correctly, you should assure
+   that Apache sends the correct mime type for the file.  This is
+   accomplished by editing the <CODE>mime.types</CODE> file or using
+   an <A HREF="../mod/mod_mime.html#addtype"><CODE>AddType</CODE></A>
+   directive in the Apache configuration files.
+   </P>
+   <HR>
   </LI>
 </OL>
 
@@ -2045,7 +2229,7 @@
     a line such as
     <P>
     <DL>
-     <DD><CODE>AddHandler cgi-script .cgi</CODE>
+     <DD><CODE>AddHandler cgi-script cgi</CODE>
      </DD>
     </DL>
     <P></P>
@@ -2258,13 +2442,14 @@
   xSSI (eXtended SSI) directives.
   </P>
   <P>
-  Processing a document at run-time is called <EM>parsing</EM> it; hence
-  the term &quot;parsed HTML&quot; sometimes used for documents that
-  contain SSI instructions.  Parsing tends to be <EM>extremely</EM>
-  resource-consumptive, and is not enabled by default.  It can also
-  interfere with the cachability of your documents, which can put a
-  further load on your server.  (see the
-  <A HREF="#ssi-part-ii">next question</A> for more information about this.)
+  Processing a document at run-time is called <EM>parsing</EM> it;
+  hence the term &quot;parsed HTML&quot; sometimes used for documents
+  that contain SSI instructions.  Parsing tends to be
+  resource-consumptive compared to serving static files, and is not
+  enabled by default.  It can also interfere with the cachability of
+  your documents, which can put a further load on your server.  (See
+  the <A HREF="#ssi-part-ii">next question</A> for more information
+  about this.)
   </P>
   <P>
   To enable SSI processing, you need to
@@ -2412,6 +2597,42 @@
   </P>
   <HR>
  </LI>
+ <LI><A NAME="user-cgi"><STRONG>How do I allow each of my user directories
+     to have a cgi-bin directory?</STRONG></A>
+  <P>
+  Remember that CGI execution does not need to be restricted only to
+  cgi-bin directories.  You can <A HREF="#CGIoutsideScriptAlias">allow
+  CGI script execution in arbitrary parts of your filesystem</A>.
+  </P>
+  <P>
+  There are many ways to give each user directory a cgi-bin directory
+  such that anything requested as 
+  <SAMP>http://example.com/~user/cgi-bin/program</SAMP> will be
+  executed as a CGI script.
+  Two alternatives are:
+  <OL>
+   <LI>Place the cgi-bin directory next to the public_html directory:
+    <P>
+    <DL>
+     <DD><CODE>ScriptAliasMatch ^/~([^/]*)/cgi-bin/(.*) /home/$1/cgi-bin/$2</CODE>
+     </DD>
+    </DL>
+    </P>
+    </LI>
+    <LI>Place the cgi-bin directory underneath the public_html directory:
+     <P></p>
+     <DL>
+      <DD><CODE>&lt;Directory /home/*/public_html/cgi-bin&gt;<BR>
+       &nbsp;&nbsp;&nbsp;&nbsp;Options ExecCGI<BR>
+       &nbsp;&nbsp;&nbsp;&nbsp;SetHandler cgi-script<BR>
+       &lt;/Directory&gt;</CODE>
+      </DD>
+     </DL>
+     <p></P>
+    </LI>
+   </OL>
+  <HR> 
+ </LI>
 
 </OL>
 
@@ -2518,9 +2739,9 @@
   </P>
   <P>
   <DL>
-   <DD><CODE>deny from all
+   <DD><CODE>Deny from all
     <BR>
-    allow from .domain.com
+    Allow from .domain.com
     <BR>
     AuthType Basic
     <BR>
@@ -2528,9 +2749,9 @@
     <BR>
     AuthName "special directory"
     <BR>
-    require valid-user
+    Require valid-user
     <BR>
-    satisfy any</CODE>
+    Satisfy any</CODE>
    </DD>
   </DL>
   <P></P>
@@ -2689,6 +2910,37 @@
   </P>
   <HR>
  </LI>
+ <LI><A NAME="prompted-twice"><STRONG>Why does Apache ask for my password
+	      twice before serving a file?</STRONG></a>
+  <P>
+  If the hostname under which you are accessing the server is
+  different than the hostname specified in the 
+  <A HREF="../mod/core.html#servername"><CODE>ServerName</CODE></A>
+  directive, then depending on the setting of the
+  <A HREF="../mod/core.html#usecanonicalname"><CODE>UseCanonicalName</CODE></A>
+  directive, Apache will redirect you to a new hostname when
+  constructing self-referential URLs.  This happens, for example, in
+  the case where you request a directory without including the
+  trailing slash.
+  </P>
+  <P>
+  When this happens, Apache will ask for authentication once under the
+  original hostname, perform the redirect, and then ask again under the
+  new hostname.  For security reasons, the browser must prompt again
+  for the password when the host name changes.
+  </P>
+  <P>
+  To eliminate this problem you should
+  <OL>
+    <LI>Always use the trailing slash when requesting directories;
+    <LI>Change the <CODE>ServerName</CODE> to match the name you are
+        using in the URL; and/or
+    <LI>Set <CODE>UseCanonicalName off</CODE>.
+  </OL>
+  </P>
+  <HR>
+ </LI>
+
 </OL>
 
 
@@ -2813,19 +3065,21 @@
       </STRONG>
      </A>
   <P>
-  You can't! The reason is: First, case translations for arbitrary
-  length URLs cannot be done <EM>via</EM> regex patterns and
-  corresponding substitutions.  One need a per-character pattern like
-  sed/Perl <SAMP>tr|..|..|</SAMP> feature.  Second, just making URLs
-  always upper or lower case will not resolve the complete problem of
-  case-INSENSITIVE URLs, because actually the URLs had to be rewritten
-  to the correct case-variant residing on the filesystem because in
-  later processing Apache needs to access the file.  And Unix
-  filesystem is always case-SENSITIVE.
+  You can't! The reasons are: first, that, case translations for
+  arbitrary length URLs cannot be done <EM>via</EM> regex patterns and
+  corresponding substitutions.  One needs a per-character pattern like
+  the sed/Perl <SAMP>tr|..|..|</SAMP> feature.  Second, just making
+  URLs always upper or lower case does not solve the whole problem of
+  case-INSENSITIVE URLs, because URLs actually have to be rewritten to
+  the correct case-variant for the file residing on the filesystem
+  in order to allow Apache to access the file.  And
+  the Unix filesystem is always case-SENSITIVE.
   </P>
   <P>
-  But there is a module named <CODE>mod_speling.c</CODE> (yes, it is named
-  this way!) out there on the net. Try this one.
+  But there is a module named <CODE><A
+  HREF="../mod/mod_speling.html">mod_speling.c</A></CODE> in the
+  Apache distribution. Try this module to help correct people who use
+  mis-cased URLs.
   </P>
   <HR>
  </LI>
@@ -3004,6 +3258,60 @@
   </PRE></P>
   <HR>
  </LI>
+ <LI><A NAME="conditional-logging">
+      <STRONG>How do I keep certain requests from appearing
+      in my logs?</STRONG></A> 
+  <P>
+  The maximum flexibility for removing unwanted information from
+  log files is obtained by post-processing the logs, or using
+  piped-logs to feed the logs through a program which does whatever
+  you want.  However, Apache does offer the ability to prevent
+  requests from ever appearing in the log files.  You can do this by
+  using the
+  <A HREF="../mod/mod_setenvif.html#SetEnvIf"><CODE>SetEnvIf</CODE></A>
+  directive to set an environment variable for certain requests and
+  then using the conditional
+  <A HREF="../mod/mod_log_config.html#customlog-conditional"><CODE>CustomLog</CODE></A>
+  syntax to prevent logging when the environment variable is set.
+  </P>
+  <HR>
+ </LI>
+
+ <li><a name="dbinteg"><b>Does Apache support any sort of database
+      integration?</b></a>
+  <p>
+  No.  Apache is a Web (HTTP) server, not an application server.  The
+  base package does not include any such functionality.  See the
+  <a href="http://www.php.net/">PHP project</a> and the
+  <a href="http://perl.apache.org/">mod_perl project</a>
+  for examples of modules that allow you to work with databases
+  from within the Apache environment.
+  </p>
+  <hr>
+ </li>
+
+ <li><a name="asp"><b>Can I use Active Server Pages (ASP) with Apache?</b></a>
+  <p>
+  The base Apache Web server package does not include ASP support.
+  However, there are a couple of after-market solutions that let you
+  add this functionality; see the
+  <a href="http://www.apache.org/related_projects.html"
+  >related projects</a> page to find out more.
+  </p>
+  <hr>
+ </li>
+
+ <li><a name="java"><b>Does Apache come with Java support?</b></a>
+  <p>
+  The base Apache Web server package does not include support for
+  Java, Java Server Pages, Enterprise Java Beans, or Java servlets.
+  Those features are available as add-ons from the Apache/Java project
+  site, &lt;URL:<a href="http://jakarta.apache.org"
+                >http://jakarta.apache.org/</a>&gt;.
+  </p>
+  <hr>
+ </li>
+
 </OL>
 
 

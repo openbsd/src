@@ -72,10 +72,10 @@ extern "C" {
 #ifdef EAPI
 #include "ap_mm.h"
 #endif
-#include "alloc.h"
+#include "ap_alloc.h"
 /*
  * Include the Extended API headers.
- * Don't move the position. It has to be after alloc.h because it uses the
+ * Don't move the position. It has to be after ap_alloc.h because it uses the
  * pool stuff but before buff.h because the buffer stuff uses the EAPI, too. 
  */
 #ifdef EAPI
@@ -457,12 +457,19 @@ extern "C" {
  * Example: "Apache/1.1.0 MrWidget/0.1-alpha" 
  */
 
-#define SERVER_BASEVERSION "Apache/1.3.12"	/* SEE COMMENTS ABOVE */
-#define SERVER_VERSION  SERVER_BASEVERSION
+#define SERVER_BASEVENDOR   "Apache Group"
+#define SERVER_BASEPRODUCT  "Apache"
+#define SERVER_BASEREVISION "1.3.14"
+#define SERVER_BASEVERSION  SERVER_BASEPRODUCT "/" SERVER_BASEREVISION
+
+#define SERVER_PRODUCT  SERVER_BASEPRODUCT
+#define SERVER_REVISION SERVER_BASEREVISION
+#define SERVER_VERSION  SERVER_PRODUCT "/" SERVER_REVISION
 enum server_token_type {
     SrvTk_MIN,		/* eg: Apache/1.3.0 */
     SrvTk_OS,		/* eg: Apache/1.3.0 (UNIX) */
-    SrvTk_FULL		/* eg: Apache/1.3.0 (UNIX) PHP/3.0 FooBar/1.2b */
+    SrvTk_FULL,		/* eg: Apache/1.3.0 (UNIX) PHP/3.0 FooBar/1.2b */
+    SrvTk_PRODUCT_ONLY	/* eg: Apache */
 };
 
 API_EXPORT(const char *) ap_get_server_version(void);
@@ -476,7 +483,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10312100
+#define APACHE_RELEASE 10314100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -847,6 +854,17 @@ struct request_rec {
  */
     const struct htaccess_result *htaccess;
 
+    /* On systems with case insensitive file systems (Windows, OS/2, etc.), 
+     * r->filename is case canonicalized (folded to either lower or upper 
+     * case, depending on the specific system) to accomodate file access
+     * checking. case_preserved_filename is the same as r->filename 
+     * except case is preserved. There is at least one instance where Apache 
+     * needs access to the case preserved filename: Java class files published 
+     * with WebDAV need to preserve filename case to make the Java compiler 
+     * happy.
+     */
+    char *case_preserved_filename;
+
 /* Things placed at the end of the record to avoid breaking binary
  * compatibility.  It would be nice to remember to reorder the entire
  * record to improve 64bit alignment the next time we need to break
@@ -1052,6 +1070,7 @@ API_EXPORT(char *) ap_make_full_path(pool *a, const char *dir, const char *f);
 API_EXPORT(int) ap_is_matchexp(const char *str);
 API_EXPORT(int) ap_strcmp_match(const char *str, const char *exp);
 API_EXPORT(int) ap_strcasecmp_match(const char *str, const char *exp);
+API_EXPORT(char *) ap_stripprefix(const char *bigstring, const char *prefix);
 API_EXPORT(char *) ap_strcasestr(const char *s1, const char *s2);
 API_EXPORT(char *) ap_pbase64decode(pool *p, const char *bufcoded);
 API_EXPORT(char *) ap_pbase64encode(pool *p, char *string); 
@@ -1076,6 +1095,7 @@ API_EXPORT(int) ap_ind(const char *, char);	/* Sigh... */
 API_EXPORT(int) ap_rind(const char *, char);
 
 API_EXPORT(char *) ap_escape_quotes (pool *p, const char *instring);
+API_EXPORT(void) ap_remove_spaces(char *dest, char *src);
 
 /* Common structure for reading of config files / passwd files etc. */
 typedef struct {
@@ -1115,6 +1135,7 @@ char *strerror(int err);
 API_EXPORT(uid_t) ap_uname2id(const char *name);
 API_EXPORT(gid_t) ap_gname2id(const char *name);
 API_EXPORT(int) ap_is_directory(const char *name);
+API_EXPORT(int) ap_is_rdirectory(const char *name);
 API_EXPORT(int) ap_can_exec(const struct stat *);
 API_EXPORT(void) ap_chdir_file(const char *file);
 
@@ -1130,7 +1151,12 @@ API_EXPORT(char *) ap_os_canonical_filename(pool *p, const char *file);
 #ifdef WIN32
 API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
 API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
+#elif defined(OS2)
+API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
+API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
 #else
+/* XXX: This makes little sense for NETWARE ... NETWARE is case insensitive?
+ */
 #define ap_os_case_canonical_filename(p,f) ap_os_canonical_filename(p,f)
 #define ap_os_systemcase_filename(p,f) ap_os_canonical_filename(p,f)
 #endif

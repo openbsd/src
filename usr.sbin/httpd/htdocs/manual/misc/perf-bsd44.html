@@ -248,6 +248,70 @@ helped reduce the number of "unable" errors, because the CPU was
 often maxed out.</BLOCKQUOTE>
 <P>
 
+<A NAME="accf">
+<H2>Accept filtering on FreeBSD</H2>
+</A>
+
+<P>
+
+Versions of FreeBSD from August 2000 onwards include a feature called
+&quot;accept filters&quot; which delay the return from accept() until
+a condition has been met, e.g. an HTTP request has arrived. This
+postpones the requirement for a child process to handle the new
+connection which therefore increases the number of connections that a
+given number of child processes can handle. It also allows a child
+process to accomplish more immediately after accept() returns (because
+the request is already available to be read) so there is less context
+switching.
+
+<P>
+
+There are two filters in FreeBSD at the time of writing:
+&quot;dataready&quot; and &quot;httpready&quot;. The former just waits
+for the first packet to arrive from the client; the latter waits for
+the end of the HTTP headers. Unfortunately the &quot;httpready&quot;
+filter breaks support for HTTP/0.9 (which doesn't have headers) so
+Apache doesn't use it, but the &quot;dataready&quot; filter gives the
+same benefit in the majority of cases so Apache attempts to use that
+instead.
+
+<P>
+
+Accept filters provide the most benefit on servers that are already so
+busy that they are configured with &quot;<CODE>KeepAlive Off</CODE>&quot;.
+<A HREF="../keepalive.html">HTTP KeepAlive (aka persistent connections)</A>
+avoids the cost of setting up a new connection for every request, but
+connections that are being kept alive use up one of the available
+child processes. Since there is a limited number of child processes
+this can significantly reduce the capacity of the server. The viewers
+of a web site will still get a lot of the benefit of persistent
+connections even with a very small <CODE>KeepAliveTimeout</CODE> so
+you should try reducing it before turning it off altogether.
+
+<P>
+
+To enable accept filtering, you must either load the appropriate
+accept filter module,
+e.g. with the command <CODE>kldload accf_data</CODE>,
+or compile a kernel with <CODE>options ACCEPT_FILTER_DATA</CODE>.
+Apache will then enable filtering when it is restarted.
+
+<P>
+
+If you are more concerned about performance than compatibility with
+absurdly obsolete HTTP/0.9 user agents then you can recompile Apache
+to use the &quot;httpready&quot; filter. This may be particularly
+helpful if your web site uses really big cookies, for example.
+If you are using <CODE>src/Configure</CODE> then add
+<CODE>-DACCEPT_FILTER_NAME=\&quot;httpready\&quot;</CODE> to the
+<CODE>EXTRA_CFLAGS</CODE> line in the <CODE>src/Configuration</CODE>
+file.
+If you are using APACI (aka <CODE>./configure</CODE>) then use the command
+<CODE>CFLAGS=-DACCEPT_FILTER_NAME=\'\&quot;httpready\&quot;\' ./configure</CODE>
+(with all the funky backslashed quotes).
+
+<P>
+
 <HR>
 
 <H3>More welcome!</H3>

@@ -20,12 +20,32 @@
 
   <H1 ALIGN="CENTER">Module mod_setenvif</H1>
   <P>
-  This module is contained in the <SAMP>mod_setenvif.c</SAMP> file, and
-  <STRONG>is</STRONG> compiled in by default. It provides for
-  the ability to set environment variables based upon attributes of the
-  request.
+  This module provides the ability to set environment variables based
+  upon attributes of the request.
   </P>
-  <H2>Summary</H2>
+ 
+<P><A
+HREF="module-dict.html#Status"
+REL="Help"
+><STRONG>Status:</STRONG></A> Base
+<BR>
+<A
+HREF="module-dict.html#SourceFile"
+REL="Help"
+><STRONG>Source File:</STRONG></A> mod_setenvif.c
+<BR>
+<A
+HREF="module-dict.html#ModuleIdentifier"
+REL="Help"
+><STRONG>Module Identifier:</STRONG></A> setenvif_module
+<BR>
+<A
+HREF="module-dict.html#Compatibility"
+REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.3 and later.
+</P>
+
+ <H2>Summary</H2>
   <P>
   The <SAMP>mod_setenvif</SAMP> module allows you to set environment
   variables according to whether different aspects of the request match
@@ -55,7 +75,7 @@
   </UL>
 
   <HR> <!-- the HR is part of the directive description -->
-  <H2><A NAME="BrowserMatch">The <SAMP>BrowserMatch</SAMP> Directive</A></H2>
+  <H2><A NAME="BrowserMatch">BrowserMatch directive</A></H2>
   <P>
   <A
    HREF="directive-dict.html#Syntax"
@@ -65,17 +85,18 @@
   <A
    HREF="directive-dict.html#Default"
    REL="Help"
-  ><STRONG>Default:</STRONG></A> <EM>none</EM>
+  ><STRONG>Default:</STRONG></A> <i>none</i>
   <BR>
   <A
    HREF="directive-dict.html#Context"
    REL="Help"
-  ><STRONG>Context:</STRONG></A> server config
+  ><STRONG>Context:</STRONG></A> server config, virtual host, directory,
+   .htaccess
   <BR>
   <A
    HREF="directive-dict.html#Override"
    REL="Help"
-  ><STRONG>Override:</STRONG></A> <EM>none</EM>
+  ><STRONG>Override:</STRONG></A> FileInfo
   <BR>
   <A
    HREF="directive-dict.html#Status"
@@ -91,7 +112,8 @@
    HREF="directive-dict.html#Compatibility"
    REL="Help"
   ><STRONG>Compatibility:</STRONG></A> Apache 1.2 and above (in Apache 1.2
-  this directive was found in the now-obsolete mod_browser module)
+  this directive was found in the now-obsolete mod_browser module); use
+  in .htaccess files only supported with 1.3.13 and later
   </P>
   <P>
   The BrowserMatch directive defines environment variables based on the
@@ -153,8 +175,7 @@
 
   <HR> <!-- the HR is part of the directive description -->
   <H2>
-   <A NAME="BrowserMatchNoCase">
-    The <SAMP>BrowserMatchNoCase</SAMP> Directive
+   <A NAME="BrowserMatchNoCase">BrowserMatchNoCase directive
    </A>
   </H2>
   <P>
@@ -172,12 +193,13 @@
   <A
    HREF="directive-dict.html#Context"
    REL="Help"
-  ><STRONG>Context:</STRONG></A> server config
+  ><STRONG>Context:</STRONG></A> server config, virtual host, directory,
+   .htaccess
   <BR>
   <A
    HREF="directive-dict.html#Override"
    REL="Help"
-  ><STRONG>Override:</STRONG></A> <EM>none</EM>
+  ><STRONG>Override:</STRONG></A> FileInfo
   <BR>
   <A
    HREF="directive-dict.html#Status"
@@ -227,8 +249,7 @@
 
   <HR> <!-- the HR is part of the directive description -->
   <H2>
-   <A NAME="SetEnvIf">
-    The <SAMP>SetEnvIf</SAMP> Directive
+   <A NAME="SetEnvIf">SetEnvIf directive
    </A>
   </H2>
   <P>
@@ -246,12 +267,13 @@
   <A
    HREF="directive-dict.html#Context"
    REL="Help"
-  ><STRONG>Context:</STRONG></A> server config
+  ><STRONG>Context:</STRONG></A> server config, virtual host, directory,
+   .htaccess
   <BR>
   <A
    HREF="directive-dict.html#Override"
    REL="Help"
-  ><STRONG>Override:</STRONG></A> <EM>none</EM>
+  ><STRONG>Override:</STRONG></A> FileInfo
   <BR>
   <A
    HREF="directive-dict.html#Status"
@@ -268,15 +290,14 @@
    REL="Help"
   ><STRONG>Compatibility:</STRONG></A> Apache 1.3 and above; the
   Request_Protocol keyword and environment-variable matching are only
-  available with 1.3.7 and later
+  available with 1.3.7 and later; use in .htaccess files only supported
+  with 1.3.13 and later
   </P>
   <P>
   The <SAMP>SetEnvIf</SAMP> directive defines environment variables
   based on attributes of the request.  These attributes can be the
   values of various HTTP request header fields (see
-  <A
-   HREF="http://ds.internic.net/rfc/rfc2068.txt"
-  >RFC2068</A>
+  <a href="http://www.rfc-editor.org/rfc/rfc2616.txt">RFC2616</a>
   for more information about these), or of other aspects of the request,
   including the following:
   </P>
@@ -340,8 +361,7 @@
 
   <HR> <!-- the HR is part of the directive description -->
   <H2>
-   <A NAME="SetEnvIfNoCase">
-    The <SAMP>SetEnvIfNoCase</SAMP> Directive
+   <A NAME="SetEnvIfNoCase">SetEnvIfNoCase directive
    </A>
   </H2>
   <P>
@@ -359,12 +379,13 @@
   <A
    HREF="directive-dict.html#Context"
    REL="Help"
-  ><STRONG>Context:</STRONG></A> server config
+  ><STRONG>Context:</STRONG></A> server config, virtual host, directory,
+   .htaccess
   <BR>
   <A
    HREF="directive-dict.html#Override"
    REL="Help"
-  ><STRONG>Override:</STRONG></A> <EM>none</EM>
+  ><STRONG>Override:</STRONG></A> FileInfo
   <BR>
   <A
    HREF="directive-dict.html#Status"
@@ -379,7 +400,10 @@
   <A
    HREF="directive-dict.html#Compatibility"
    REL="Help"
-  ><STRONG>Compatibility:</STRONG></A> Apache 1.3 and above
+  ><STRONG>Compatibility:</STRONG></A> Apache 1.3 and above; the
+  Request_Protocol keyword and environment-variable matching are only
+  available with 1.3.7 and later; use in .htaccess files only supported
+  with 1.3.13 and later
   </P>
   <P>
   The <SAMP>SetEnvIfNoCase</SAMP> is semantically identical to the

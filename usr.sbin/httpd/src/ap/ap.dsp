@@ -1,5 +1,5 @@
 # Microsoft Developer Studio Project File - Name="ap" - Package Owner=<4>
-# Microsoft Developer Studio Generated Build File, Format Version 5.00
+# Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
@@ -22,6 +22,7 @@ CFG=ap - Win32 Debug
 !MESSAGE 
 
 # Begin Project
+# PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
@@ -38,8 +39,9 @@ CPP=cl.exe
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+RSC=rc.exe
+# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\include" /I "..\os\win32" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FD /c
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -59,8 +61,9 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /GX /Z7 /Od /I "../include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
+RSC=rc.exe
+# ADD BASE CPP /nologo /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
+# ADD CPP /nologo /MDd /W3 /GX /Z7 /Od /I "..\include" /I "..\os\win32" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -79,11 +82,27 @@ LIB32=link.exe -lib
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=.\ap_base64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ap_checkpass.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\ap_cpystrn.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\ap_fnmatch.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ap_md5c.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ap_sha1.c
 # End Source File
 # Begin Source File
 
@@ -101,22 +120,26 @@ SOURCE=.\ap_snprintf.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\include\ap.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\ap_ctype.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\ap_md5.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\ap_sha1.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\fnmatch.h
+# End Source File
 # End Group
-# Begin Source File
-
-SOURCE=.\ap_md5c.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\ap_sha1.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\ap_checkpass.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\ap_base64.c
-# End Source File
 # End Target
 # End Project

@@ -33,15 +33,6 @@
 #   installation tree. Alternatively you can also use the value 'SYSTEM' which
 #   then indicates that OpenSSL is installed under various system locations.
 #
-# o If you're a US-citizen you have to compile OpenSSL with the RSAref library
-#   (which replaces the RSA code of OpenSSL) because of patent legalities with
-#   the RSA algorithm used for the SSL protocol. For this situation you
-#   already have to compile OpenSSL with the -DRSAref define and now you have
-#   to force Apache to link against the RSAglue library (from OpenSSL) and the
-#   rsaref library (from RSA). So, set RSA_BASE to the directory of your
-#   RSAref source tree or to 'SYSTEM' (indicating that librsaref.a is
-#   installed under a system location)
-#
 # o Disable SSL_COMPAT rule to build mod_ssl without backward compatibility
 #   code for Apache-SSL 1.x, mod_ssl 2.0.x, Sioux 1.x and Stronghold 2.x.
 #
@@ -67,7 +58,6 @@
 #   picked up by the compilation process.
 
 #SSL_BASE=/usr/local/ssl
-#RSA_BASE=/usr/local/rsa
 Rule SSL_COMPAT=yes
 Rule SSL_SDBM=default
 Rule SSL_EXPERIMENTAL=no

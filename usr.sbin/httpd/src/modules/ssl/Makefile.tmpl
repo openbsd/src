@@ -79,9 +79,12 @@ OBJS=\
  ssl_engine_log.o\
  ssl_engine_mutex.o\
  ssl_engine_pphrase.o\
- ssl_engine_scache.o\
  ssl_engine_vars.o\
  ssl_engine_ext.o\
+ ssl_scache.o\
+ ssl_scache_dbm.o\
+ ssl_scache_shmht.o\
+ ssl_scache_shmcb.o\
  ssl_expr.o\
  ssl_expr_scan.o\
  ssl_expr_parse.o\
@@ -105,9 +108,12 @@ OBJS_PIC=\
  ssl_engine_log.lo\
  ssl_engine_mutex.lo\
  ssl_engine_pphrase.lo\
- ssl_engine_scache.lo\
  ssl_engine_vars.lo\
  ssl_engine_ext.lo\
+ ssl_scache.lo\
+ ssl_scache_dbm.lo\
+ ssl_scache_shmht.lo\
+ ssl_scache_shmcb.lo\
  ssl_expr.lo\
  ssl_expr_scan.lo\
  ssl_expr_parse.lo\
@@ -212,274 +218,312 @@ $(OBJS) $(OBJS_PIC): Makefile
 mod_ssl.o mod_ssl.lo: mod_ssl.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_compat.o ssl_engine_compat.lo: ssl_engine_compat.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_config.o ssl_engine_config.lo: ssl_engine_config.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_dh.o ssl_engine_dh.lo: ssl_engine_dh.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_ds.o ssl_engine_ds.lo: ssl_engine_ds.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_ext.o ssl_engine_ext.lo: ssl_engine_ext.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_init.o ssl_engine_init.lo: ssl_engine_init.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_io.o ssl_engine_io.lo: ssl_engine_io.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_kernel.o ssl_engine_kernel.lo: ssl_engine_kernel.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_log.o ssl_engine_log.lo: ssl_engine_log.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_mutex.o ssl_engine_mutex.lo: ssl_engine_mutex.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_pphrase.o ssl_engine_pphrase.lo: ssl_engine_pphrase.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_rand.o ssl_engine_rand.lo: ssl_engine_rand.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
-ssl_engine_scache.o ssl_engine_scache.lo: ssl_engine_scache.c mod_ssl.h \
- $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
- $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
- $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
- $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
- $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
- $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
- $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
- $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
- $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_engine_vars.o ssl_engine_vars.lo: ssl_engine_vars.c mod_ssl.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
  $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_expr.o ssl_expr.lo: ssl_expr.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_expr_eval.o ssl_expr_eval.lo: ssl_expr_eval.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_expr_parse.o ssl_expr_parse.lo: ssl_expr_parse.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_expr_scan.o ssl_expr_scan.lo: ssl_expr_scan.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
  $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h ssl_expr_parse.h
+ ssl_expr_parse.h
+ssl_scache.o ssl_scache.lo: ssl_scache.c mod_ssl.h $(INCDIR)/ap_config.h \
+ $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
+ $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
+ $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
+ $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
+ $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
+ $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
+ $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
+ $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
+ssl_scache_dbm.o ssl_scache_dbm.lo: ssl_scache_dbm.c mod_ssl.h $(INCDIR)/ap_config.h \
+ $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
+ $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
+ $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
+ $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
+ $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
+ $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
+ $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
+ $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
+ssl_scache_shmcb.o ssl_scache_shmcb.lo: ssl_scache_shmcb.c mod_ssl.h \
+ $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
+ $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
+ $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
+ $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
+ $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
+ $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
+ $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
+ $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
+ $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
+ssl_scache_shmht.o ssl_scache_shmht.lo: ssl_scache_shmht.c mod_ssl.h \
+ $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
+ $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
+ $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
+ $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
+ $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
+ $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
+ $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
+ $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
+ $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_util.o ssl_util.lo: ssl_util.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_util_sdbm.o ssl_util_sdbm.lo: ssl_util_sdbm.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_util_ssl.o ssl_util_ssl.lo: ssl_util_ssl.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/alloc.h \
+ $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
  $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
  $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
  $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
  $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
  $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h \
- ssl_util_sdbm.h
+ $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
+ $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_util_table.o ssl_util_table.lo: ssl_util_table.c ssl_util_table.h

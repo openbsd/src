@@ -1708,7 +1708,7 @@ int ssl_callback_NewSessionCacheEntry(SSL *ssl, SSL_SESSION *pNew)
      * same expire time, so it expires automatically there, too.
      */
     t = (SSL_get_time(pNew) + sc->nSessionCacheTimeout);
-    rc = ssl_scache_store(s, pNew, t);
+    rc = ssl_scache_store(s, pNew->session_id, pNew->session_id_length, t, pNew);
 
     /*
      * Log this cache operation
@@ -1716,7 +1716,7 @@ int ssl_callback_NewSessionCacheEntry(SSL *ssl, SSL_SESSION *pNew)
     ssl_log(s, SSL_LOG_TRACE, "Inter-Process Session Cache: "
             "request=SET status=%s id=%s timeout=%ds (session caching)",
             rc == TRUE ? "OK" : "BAD",
-            ssl_scache_id2sz(pNew->session_id, pNew->session_id_length),
+            SSL_SESSION_id2sz(pNew->session_id, pNew->session_id_length),
             t-time(NULL));
 
     /*
@@ -1757,11 +1757,11 @@ SSL_SESSION *ssl_callback_GetSessionCacheEntry(
     if (pSession != NULL)
         ssl_log(s, SSL_LOG_TRACE, "Inter-Process Session Cache: "
                 "request=GET status=FOUND id=%s (session reuse)",
-                ssl_scache_id2sz(id, idlen));
+                SSL_SESSION_id2sz(id, idlen));
     else
         ssl_log(s, SSL_LOG_TRACE, "Inter-Process Session Cache: "
                 "request=GET status=MISSED id=%s (session renewal)",
-                ssl_scache_id2sz(id, idlen));
+                SSL_SESSION_id2sz(id, idlen));
 
     /*
      * Return NULL or the retrieved SSL_SESSION. But indicate (by
@@ -1794,14 +1794,14 @@ void ssl_callback_DelSessionCacheEntry(
     /*
      * Remove the SSL_SESSION from the inter-process cache
      */
-    ssl_scache_remove(s, pSession);
+    ssl_scache_remove(s, pSession->session_id, pSession->session_id_length);
 
     /*
      * Log this cache operation
      */
     ssl_log(s, SSL_LOG_TRACE, "Inter-Process Session Cache: "
             "request=REM status=OK id=%s (session dead)",
-            ssl_scache_id2sz(pSession->session_id,
+            SSL_SESSION_id2sz(pSession->session_id,
             pSession->session_id_length));
 
     return;

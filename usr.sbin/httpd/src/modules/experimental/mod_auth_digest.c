@@ -78,8 +78,20 @@
  *     currently ignored by mod_proxy (needs patch to mod_proxy)
  *   - generating the secret takes a while (~ 8 seconds) if using the
  *     truerand library
+ *   - The source of the secret should be run-time directive (with server
+ *     scope: RSRC_CONF). However, that could be tricky when trying to
+ *     choose truerand vs. file...
  *   - shared-mem not completely tested yet. Seems to work ok for me,
  *     but... (definitely won't work on Windoze)
+ *   - Sharing a realm among multiple servers has following problems:
+ *     o Server name and port can't be included in nonce-hash
+ *       (we need two nonce formats, which must be configured explicitly)
+ *     o Nonce-count check can't be for equal, or then nonce-count checking
+ *       must be disabled. What we could do is the following:
+ *       (expected < received) ? set expected = received : issue error
+ *       The only problem is that it allows replay attacks when somebody
+ *       captures a packet sent to one server and sends it to another
+ *       one. Should we add "AuthDigestNcCheck Strict"?
  */
 
 /* The section for the Configure script:
@@ -306,7 +318,8 @@ static void initialize_secret(server_rec *s)
 {
 #ifdef	DEV_RANDOM
     int rnd;
-    size_t got, tot;
+    ssize_t got;
+    size_t tot;
 #else
     extern int randbyte(void);	/* from the truerand library */
     unsigned int idx;
@@ -523,7 +536,7 @@ static const char *set_group_file(cmd_parms *cmd, void *config,
 static const char *set_qop(cmd_parms *cmd, void *config, const char *op)
 {
     digest_config_rec *conf = (digest_config_rec *) config;
-    const char **tmp;
+    char **tmp;
     int cnt;
 
     if (!strcasecmp(op, "none")) {
@@ -548,7 +561,7 @@ static const char *set_qop(cmd_parms *cmd, void *config, const char *op)
     memcpy(tmp, conf->qop_list, cnt*sizeof(char*));
     tmp[cnt]   = ap_pstrdup(cmd->pool, op);
     tmp[cnt+1] = NULL;
-    conf->qop_list = tmp;
+    conf->qop_list = (const char **)tmp;
 
     return NULL;
 }
@@ -629,7 +642,7 @@ static const command_rec digest_cmds[] =
      "The algorithm used for the hash calculation"},
     {"AuthDigestDomain", set_uri_list, NULL, OR_AUTHCFG, ITERATE,
      "A list of URI's which belong to the same protection space as the current URI"},
-    {NULL}
+    {NULL, NULL, NULL, 0, 0, NULL}
 };
 
 
@@ -764,9 +777,9 @@ static long gc(void)
 
 /*
  * Add a new client to the list. Returns the entry if successful, NULL
- * otherwise. This triggers the garbage collection is memory is low.
+ * otherwise. This triggers the garbage collection if memory is low.
  */
-static client_entry *add_client(unsigned long key, client_entry *new,
+static client_entry *add_client(unsigned long key, client_entry *info,
 				server_rec *s)
 {
     int bucket;
@@ -797,7 +810,7 @@ static client_entry *add_client(unsigned long key, client_entry *new,
 
     /* now add the entry */
 
-    memcpy(entry, new, sizeof(client_entry));
+    memcpy(entry, info, sizeof(client_entry));
     entry->key  = key;
     entry->next = client_list->table[bucket];
     client_list->table[bucket] = entry;
@@ -964,8 +977,8 @@ static int update_nonce_count(request_rec *r)
  * Nonce generation code
  */
 
-/* The hash part of the nonce is a SHA-1 hash of the time, realm, opaque,
- * and our secret.
+/* The hash part of the nonce is a SHA-1 hash of the time, realm, server host
+ * and port, opaque, and our secret.
  */
 static void gen_nonce_hash(char *hash, const char *timestr, const char *opaque,
 			   const server_rec *server,
@@ -977,10 +990,12 @@ static void gen_nonce_hash(char *hash, const char *timestr, const char *opaque,
     int idx;
 
     memcpy(&ctx, &conf->nonce_ctx, sizeof(ctx));
+    /*
     ap_SHA1Update_binary(&ctx, (const unsigned char *) server->server_hostname,
 			 strlen(server->server_hostname));
     ap_SHA1Update_binary(&ctx, (const unsigned char *) &server->port,
 			 sizeof(server->port));
+     */
     ap_SHA1Update_binary(&ctx, (const unsigned char *) timestr, strlen(timestr));
     if (opaque)
 	ap_SHA1Update_binary(&ctx, (const unsigned char *) opaque,
@@ -1035,7 +1050,7 @@ static const char *gen_nonce(pool *p, time_t now, const char *opaque,
 static client_entry *gen_client(const request_rec *r)
 {
     unsigned long op;
-    client_entry new = { 0, NULL, 0, "", "" }, *entry;
+    client_entry new_entry = { 0, NULL, 0, "", "" }, *entry;
 
     if (!opaque_mm)  return 0;
 
@@ -1043,7 +1058,7 @@ static client_entry *gen_client(const request_rec *r)
     op = (*opaque_cntr)++;
     mm_unlock(opaque_mm);
 
-    if (!(entry = add_client(op, &new, r->server))) {
+    if (!(entry = add_client(op, &new_entry, r->server))) {
 	ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
 		      "Digest: failed to allocate client entry - ignoring "
 		      "client");
@@ -1062,53 +1077,70 @@ static client_entry *gen_client(const request_rec *r) { return NULL; }
  * MD5-sess code.
  *
  * If you want to use algorithm=MD5-sess you must write get_userpw_hash()
- * yourself (see below). The dummy provided here just returns the hash
- * from the auth-file, i.e. it is only useful for testing client
- * implementations of MD5-sess .
+ * yourself (see below). The dummy provided here just uses the hash from
+ * the auth-file, i.e. it is only useful for testing client implementations
+ * of MD5-sess .
  */
 
 /*
  * get_userpw_hash() will be called each time a new session needs to be
  * generated and is expected to return the equivalent of
  *
+ * h_urp = ap_md5(r->pool,
+ *         ap_pstrcat(r->pool, username, ":", ap_auth_name(r), ":", passwd))
  * ap_md5(r->pool,
- *        ap_pstrcat(r->pool, username, ":", ap_auth_name(r), ":", passwd))
+ *         (unsigned char *) ap_pstrcat(r->pool, h_urp, ":", resp->nonce, ":",
+ *                                      resp->cnonce, NULL));
  *
- * You must implement this yourself, and will probably consist of code
- * contacting the password server and retrieving the hash from it.
+ * or put differently, it must return
+ *
+ *   MD5(MD5(username ":" realm ":" password) ":" nonce ":" cnonce)
+ *
+ * If something goes wrong, the failure must be logged and NULL returned.
+ *
+ * You must implement this yourself, which will probably consist of code
+ * contacting the password server with the necessary information (typically
+ * the username, realm, nonce, and cnonce) and receiving the hash from it.
  *
  * TBD: This function should probably be in a seperate source file so that
- * people need not modify mod_auth_digest.c each time they install a new version
- * of apache.
+ * people need not modify mod_auth_digest.c each time they install a new
+ * version of apache.
  */
 static const char *get_userpw_hash(const request_rec *r,
 				   const digest_header_rec *resp,
 				   const digest_config_rec *conf)
 {
-    /* for now, just get it from pwfile */
-    return conf->ha1;
+    return ap_md5(r->pool,
+	     (unsigned char *) ap_pstrcat(r->pool, conf->ha1, ":", resp->nonce,
+					  ":", resp->cnonce, NULL));
 }
 
 
-static const char *get_session(const request_rec *r,
-			       digest_header_rec *resp,
-			       const digest_config_rec *conf)
+/* Retrieve current session H(A1). If there is none and "generate" is
+ * true then a new session for MD5-sess is generated and stored in the
+ * client struct; if generate is false, or a new session could not be
+ * generated then NULL is returned (in case of failure to generate the
+ * failure reason will have been logged already).
+ */
+static const char *get_session_HA1(const request_rec *r,
+				   digest_header_rec *resp,
+				   const digest_config_rec *conf,
+				   int generate)
 {
-    const char *ha1 = NULL, *urp;
+    const char *ha1 = NULL;
 
-    /* get ha1 from client list */
-    if (resp->opaque && resp->client)
-	ha1 = resp->client->ha1;
+    /* return the current sessions if there is one */
+    if (resp->opaque && resp->client && resp->client->ha1[0])
+	return resp->client->ha1;
+    else if (!generate)
+	return NULL;
 
-    /* generate new session if necessary */
-    if (ha1 == NULL || ha1[0] == '\0') {
-	urp = get_userpw_hash(r, resp, conf);
-	ha1 = ap_md5(r->pool,
-		     (unsigned char *) ap_pstrcat(r->pool, urp, ":", resp->nonce,
-						  ":", resp->cnonce, NULL));
-	if (!resp->client)
-	    resp->client = gen_client(r);
-	if (resp->client)
+    /* generate a new session */
+    if (!resp->client)
+	resp->client = gen_client(r);
+    if (resp->client) {
+	ha1 = get_userpw_hash(r, resp, conf);
+	if (ha1)
 	    memcpy(resp->client->ha1, ha1, sizeof(resp->client->ha1));
     }
 
@@ -1221,11 +1253,6 @@ static void note_digest_auth_failure(request_rec *r,
 	qop = ap_pstrcat(r->pool, qop, "\"", NULL);
     }
 
-    /* MD5-sess stuff */
-
-    if (!stale && !strcasecmp(conf->algorithm, "MD5-sess"))
-	clear_session(resp);
-
     /* Setup opaque */
 
     if (resp->opaque == NULL) {
@@ -1264,6 +1291,14 @@ static void note_digest_auth_failure(request_rec *r,
     nonce = gen_nonce(r->pool, r->request_time, opaque, r->server, conf);
     if (resp->client && conf->nonce_lifetime == 0)
 	memcpy(resp->client->last_nonce, nonce, NONCE_LEN+1);
+
+    /* Setup MD5-sess stuff. Note that we just clear out the session
+     * info here, since we can't generate a new session until the request
+     * from the client comes in with the cnonce.
+     */
+
+    if (!strcasecmp(conf->algorithm, "MD5-sess"))
+	clear_session(resp);
 
     /* setup domain attribute. We want to send this attribute wherever
      * possible so that the client won't send the Authorization header
@@ -1332,28 +1367,29 @@ static const char *get_hash(request_rec *r, const char *user,
 static int check_nc(const request_rec *r, const digest_header_rec *resp,
 		    const digest_config_rec *conf)
 {
-    if (conf->check_nc && client_mm) {
-	unsigned long nc;
+    unsigned long nc;
+    const char *snc = resp->nonce_count;
+    char *endptr;
 
-	const char *snc = resp->nonce_count;
-	char *endptr;
+    if (!conf->check_nc || !client_mm)
+	return OK;
 
-	nc = strtol(snc, &endptr, 16);
-	if (endptr < (snc+strlen(snc)) && !ap_isspace(*endptr)) {
-	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-			  "Digest: invalid nc %s received - not a number", snc);
-	    return !OK;
-	}
+    nc = strtol(snc, &endptr, 16);
+    if (endptr < (snc+strlen(snc)) && !ap_isspace(*endptr)) {
+	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+		      "Digest: invalid nc %s received - not a number", snc);
+	return !OK;
+    }
 
-	if (!resp->client)
-	    return !OK;
+    if (!resp->client)
+	return !OK;
 
-	if (nc != resp->client->nonce_count) {
-	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, r,
-			  "nonce-count check failed: %lu != %lu", nc,
-			  resp->client->nonce_count);
-	    return !OK;
-	}
+    if (nc != resp->client->nonce_count) {
+	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+		      "Digest: Warning, possible replay attack: nonce-count "
+		      "check failed: %lu != %lu", nc,
+		      resp->client->nonce_count);
+	return !OK;
     }
 
     return OK;
@@ -1423,12 +1459,12 @@ static int check_nonce(request_rec *r, digest_header_rec *resp,
 
 /* The actual MD5 code... whee */
 
+/* RFC-2069 */
 static const char *old_digest(const request_rec *r,
 			      const digest_header_rec *resp, const char *ha1)
 {
     const char *ha2;
 
-    /* rfc-2069 */
     ha2 = ap_md5(r->pool, (unsigned char *)ap_pstrcat(r->pool, r->method, ":",
 						      resp->uri, NULL));
     return ap_md5(r->pool,
@@ -1436,15 +1472,18 @@ static const char *old_digest(const request_rec *r,
 					      ":", ha2, NULL));
 }
 
+/* RFC-2617 */
 static const char *new_digest(const request_rec *r,
 			      digest_header_rec *resp,
 			      const digest_config_rec *conf)
 {
     const char *ha1, *ha2, *a2;
 
-    /* draft-ietf-http-authentication-03 */
-    if (resp->algorithm && !strcasecmp(resp->algorithm, "MD5-sess"))
-	ha1 = get_session(r, resp, conf);
+    if (resp->algorithm && !strcasecmp(resp->algorithm, "MD5-sess")) {
+	ha1 = get_session_HA1(r, resp, conf, 1);
+	if (!ha1)
+	    return NULL;
+    }
     else
 	ha1 = conf->ha1;
 
@@ -1465,7 +1504,8 @@ static const char *new_digest(const request_rec *r,
 
 
 static void copy_uri_components(uri_components *dst, uri_components *src,
-				request_rec *r) {
+				request_rec *r)
+{
     if (src->scheme && src->scheme[0] != '\0')
 	dst->scheme = src->scheme;
     else
@@ -1487,11 +1527,40 @@ static void copy_uri_components(uri_components *dst, uri_components *src,
 	dst->path = ap_pstrdup(r->pool, src->path);
 	ap_unescape_url(dst->path);
     }
+    else
+	dst->path = src->path;
 
     if (src->query && src->query[0] != '\0') {
 	dst->query = ap_pstrdup(r->pool, src->query);
 	ap_unescape_url(dst->query);
     }
+    else
+	dst->query = src->query;
+}
+
+/* This handles non-FQDN's. If h1 is empty, the comparison succeeds. Else
+ * if h1 is a FQDN (i.e. contains a '.') then normal strcasecmp() is done.
+ * Else only the first part of h2 (up to the first '.') is compared.
+ */
+static int compare_hostnames(const char *h1, const char *h2)
+{
+    const char *dot;
+
+    /* if no hostname given, then ok */
+    if (!h1 || h1[0] == '\0')
+	return 1;
+
+    /* handle FQDN's in h1 */
+    dot = strchr(h1, '.');
+    if (dot != NULL)
+	return !strcasecmp(h1, h2);
+
+    /* handle non-FQDN's in h1 */
+    dot = strchr(h2, '.');
+    if (dot == NULL)
+	return !strcasecmp(h1, h2);
+    else
+	return (strlen(h1) == (size_t) (dot - h2)) && !strncasecmp(h1, h2, dot-h2);
 }
 
 /* These functions return 0 if client is OK, and proper error status
@@ -1600,8 +1669,7 @@ static int authenticate_digest_user(request_rec *r)
 	}
 	else if (
 	    /* check hostname matches, if present */
-	    (d_uri.hostname && d_uri.hostname[0] != '\0'
-	      && strcasecmp(d_uri.hostname, r_uri.hostname))
+	    !compare_hostnames(d_uri.hostname, r_uri.hostname)
 	    /* check port matches, if present */
 	    || (d_uri.port_str && d_uri.port != r_uri.port)
 	    /* check that server-port is default port if no port present */
@@ -1675,6 +1743,7 @@ static int authenticate_digest_user(request_rec *r)
 	}
     }
     else {
+	const char *exp_digest;
 	int match = 0, idx;
 	for (idx=0; conf->qop_list[idx] != NULL; idx++) {
 	    if (!strcasecmp(conf->qop_list[idx], resp->message_qop)) {
@@ -1693,18 +1762,23 @@ static int authenticate_digest_user(request_rec *r)
 	    return AUTH_REQUIRED;
 	}
 
-	if (strcmp(resp->digest, new_digest(r, resp, conf))) {
+	if (check_nc(r, resp, conf) != OK) {
+	    note_digest_auth_failure(r, conf, resp, 0);
+	    return AUTH_REQUIRED;
+	}
+
+	exp_digest = new_digest(r, resp, conf);
+	if (!exp_digest) {
+	    /* we failed to allocate a client struct */
+	    return SERVER_ERROR;
+	}
+	if (strcmp(resp->digest, exp_digest)) {
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 			  "Digest: user %s: password mismatch: %s", conn->user,
 			  r->uri);
 	    note_digest_auth_failure(r, conf, resp, 0);
 	    return AUTH_REQUIRED;
 	}
-    }
-
-    if (check_nc(r, resp, conf) != OK) {
-	note_digest_auth_failure(r, conf, resp, 0);
-	return AUTH_REQUIRED;
     }
 
     /* Note: this check is done last so that a "stale=true" can be
@@ -1945,8 +2019,15 @@ static int add_auth_info(request_rec *r)
 
 	/* calculate rspauth attribute
 	 */
-	if (resp->algorithm && !strcasecmp(resp->algorithm, "MD5-sess"))
-	    ha1 = get_session(r, resp, conf);
+	if (resp->algorithm && !strcasecmp(resp->algorithm, "MD5-sess")) {
+	    ha1 = get_session_HA1(r, resp, conf, 0);
+	    if (!ha1) {
+		ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+			      "Digest: internal error: couldn't find session "
+			      "info for user %s", resp->username);
+		return !OK;
+	    }
+	}
 	else
 	    ha1 = conf->ha1;
 

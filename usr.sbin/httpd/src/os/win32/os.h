@@ -106,10 +106,14 @@
 #define MULTITHREAD
 #define HAVE_CANONICAL_FILENAME
 #define HAVE_DRIVE_LETTERS
+#define HAVE_UNC_PATHS
 typedef int uid_t;
 typedef int gid_t;
 typedef int pid_t;
-typedef int mode_t;
+#ifdef _MSC_VER
+/* modified to match declaration in sys/stat.h */
+typedef unsigned short mode_t;
+#endif
 typedef char * caddr_t;
 
 /*
@@ -118,34 +122,39 @@ every configuration function as __stdcall.
 */
 
 #ifdef SHARED_MODULE
-# define API_VAR_EXPORT		__declspec(dllimport)
-# define API_EXPORT(type)    __declspec(dllimport) type __stdcall
-# define API_EXPORT_NONSTD(type)    __declspec(dllimport) type
+#define API_VAR_EXPORT          __declspec(dllimport)
+#define API_EXPORT(type)        __declspec(dllimport) type __stdcall
+#define API_EXPORT_NONSTD(type) __declspec(dllimport) type __cdecl
 #else
-# define API_VAR_EXPORT		__declspec(dllexport)
-# define API_EXPORT(type)    __declspec(dllexport) type __stdcall
-# define API_EXPORT_NONSTD(type)    __declspec(dllexport) type
+#define API_VAR_EXPORT          __declspec(dllexport)
+#define API_EXPORT(type)        __declspec(dllexport) type __stdcall
+#define API_EXPORT_NONSTD(type) __declspec(dllexport) type __cdecl
 #endif
 #define MODULE_VAR_EXPORT   __declspec(dllexport)
 
 #define strcasecmp(s1, s2) stricmp(s1, s2)
 #define strncasecmp(s1, s2, n) strnicmp(s1, s2, n)
 #define lstat(x, y) stat(x, y)
+#ifndef S_ISLNK
 #define S_ISLNK(m) (0)
-#define S_ISREG(m) ((m & _S_IFREG) == _S_IFREG)
-#ifndef S_ISDIR
-#define S_ISDIR(m) (((m) & S_IFDIR) == S_IFDIR)
 #endif
 #ifndef S_ISREG
-#define S_ISREG(m)      (((m)&(S_IFREG)) == (S_IFREG))
+#define S_ISREG(m) ((m & _S_IFREG) == _S_IFREG)
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & _S_IFDIR) == _S_IFDIR)
 #endif
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 #define JMP_BUF jmp_buf
 #define sleep(t) Sleep(t*1000)
+#ifndef O_CREAT
 #define O_CREAT _O_CREAT
+#endif
+#ifndef O_RDWR
 #define O_RDWR _O_RDWR
+#endif
 #define SIGPIPE 17
 /* Seems Windows is not a subgenius */
 #define NO_SLACK
@@ -159,7 +168,7 @@ __inline int ap_os_is_path_absolute(const char *file)
   /* For now, just do the same check that http_request.c and mod_alias.c
    * do. 
    */
-  return file[0] == '/' || file[1] == ':';
+  return file && (file[0] == '/' || (file[1] == ':' && file[2] == '/'));
 }
 
 #define stat(f,ps)  os_stat(f,ps)
@@ -175,7 +184,7 @@ API_EXPORT(int) os_spawnv(int mode,const char *cmdname,const char *const *argv);
 API_EXPORT(int) os_spawnve(int mode,const char *cmdname,const char *const *argv,const char *const *envp);
 #define _spawnle			    os_spawnle
 #define spawnle				    os_spawnle
-API_EXPORT(int) os_spawnle(int mode,const char *cmdname,...);
+API_EXPORT_NONSTD(int) os_spawnle(int mode,const char *cmdname,...);
 
 /* OS-dependent filename routines in util_win32.c */
 
@@ -186,10 +195,11 @@ API_EXPORT(int) ap_os_is_filename_valid(const char *file);
  */
 #define ap_os_dso_handle_t  HINSTANCE
 #define ap_os_dso_init()
-#define ap_os_dso_load(l)   LoadLibraryEx(l, NULL, LOAD_WITH_ALTERED_SEARCH_PATH)
 #define ap_os_dso_unload(l) FreeLibrary(l)
 #define ap_os_dso_sym(h,s)  GetProcAddress(h,s)
-#define ap_os_dso_error()   ""	/* for now */
+
+API_EXPORT(ap_os_dso_handle_t) ap_os_dso_load(const char *);
+API_EXPORT(const char *) ap_os_dso_error(void);
 
 /* Other ap_os_ routines not used by this platform */
 #define ap_os_kill(pid, sig)                kill(pid, sig)

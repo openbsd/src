@@ -108,7 +108,7 @@ API_VAR_EXPORT const char ap_day_snames[7][4] =
     "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 
-API_EXPORT(char *) ap_get_time()
+API_EXPORT(char *) ap_get_time(void)
 {
     time_t t;
     char *time_string;
@@ -335,6 +335,32 @@ API_EXPORT(char *) ap_strcasestr(const char *s1, const char *s2)
     }
     return((char *)s1);
 }
+
+/*
+ * Returns an offsetted pointer in bigstring immediately after
+ * prefix. Returns bigstring if bigstring doesn't start with
+ * prefix or if prefix is longer than bigstring while still matching.
+ * NOTE: pointer returned is relative to bigstring, so we
+ * can use standard pointer comparisons in the calling function
+ * (eg: test if ap_stripprefix(a,b) == a)
+ */
+API_EXPORT(char *) ap_stripprefix(const char *bigstring, const char *prefix)
+{
+    char *p1;
+    if (*prefix == '\0') {
+        return( (char *)bigstring);
+    }
+    p1 = (char *)bigstring;
+    while(*p1 && *prefix) {
+        if (*p1++ != *prefix++)
+            return( (char *)bigstring);
+    }
+    if (*prefix == '\0')
+        return(p1);
+    else /* hit the end of bigstring! */
+        return( (char *)bigstring);
+}
+
 /* 
  * Apache stub function for the regex libraries regexec() to make sure the
  * whole regex(3) API is available through the Apache (exported) namespace.
@@ -505,7 +531,7 @@ API_EXPORT(void) ap_no2slash(char *name)
 
     s = d = name;
 
-#ifdef WIN32
+#ifdef HAVE_UNC_PATHS
     /* Check for UNC names.  Leave leading two slashes. */
     if (s[0] == '/' && s[1] == '/')
         *d++ = *s++;
@@ -536,9 +562,21 @@ API_EXPORT(void) ap_no2slash(char *name)
  *    /a/b, 2  ==> /a/
  *    /a/b, 3  ==> /a/b/
  *    /a/b, 4  ==> /a/b/
+ *
+ * MODIFIED FOR HAVE_DRIVE_LETTERS and NETWARE environments, 
+ * so that if n == 0, "/" is returned in d with n == 1 
+ * and s == "e:/test.html", "e:/" is returned in d
+ * *** See also directory_walk in src/main/http_request.c
  */
 API_EXPORT(char *) ap_make_dirstr_prefix(char *d, const char *s, int n)
 {
+#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
+    if (!n) {
+        *d = '/';
+        *++d = '\0';
+        return (d);
+    }
+#endif /* def HAVE_DRIVE_LETTERS || NETWARE */
     for (;;) {
 	*d = *s;
 	if (*d == '\0') {
@@ -1640,6 +1678,20 @@ API_EXPORT(int) ap_is_directory(const char *path)
     return (S_ISDIR(finfo.st_mode));
 }
 
+/*
+ * see ap_is_directory() except this one is symlink aware, so it
+ * checks for a "real" directory
+ */
+API_EXPORT(int) ap_is_rdirectory(const char *path)
+{
+    struct stat finfo;
+
+    if (lstat(path, &finfo) == -1)
+	return 0;		/* in error condition, just return no */
+
+    return ((!(S_ISLNK(finfo.st_mode))) && (S_ISDIR(finfo.st_mode)));
+}
+
 API_EXPORT(char *) ap_make_full_path(pool *a, const char *src1,
 				  const char *src2)
 {
@@ -1695,7 +1747,7 @@ API_EXPORT(int) ap_can_exec(const struct stat *finfo)
 		return 1;
     }
 #endif
-    return (finfo->st_mode & S_IXOTH);
+    return ((finfo->st_mode & S_IXOTH) != 0);
 #endif
 }
 
@@ -1976,7 +2028,7 @@ char *ap_get_local_host(pool *a)
 #define MAXHOSTNAMELEN 256
 #endif
     char str[MAXHOSTNAMELEN];
-    char *server_hostname;
+    char *server_hostname = NULL;
     struct hostent *p;
 
 #ifdef BEOS /* BeOS returns zero as an error for gethostname */
@@ -1984,17 +2036,37 @@ char *ap_get_local_host(pool *a)
 #else    
     if (gethostname(str, sizeof(str) - 1) != 0) {
 #endif /* BeOS */
-	perror("Unable to gethostname");
-	exit(1);
+	ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
+	             "%s: gethostname() failed to detemine ServerName\n",
+                     ap_server_argv0);
+	server_hostname = ap_pstrdup(a, "127.0.0.1");
     }
-    str[sizeof(str) - 1] = '\0';
-    if ((!(p = gethostbyname(str))) || (!(server_hostname = find_fqdn(a, p)))) {
-	fprintf(stderr, "%s: cannot determine local host name.\n",
-		ap_server_argv0);
-	fprintf(stderr, "Use the ServerName directive to set it manually.\n");
-	exit(1);
+    else 
+    {
+        str[sizeof(str) - 1] = '\0';
+        if ((!(p = gethostbyname(str))) 
+            || (!(server_hostname = find_fqdn(a, p)))) {
+            /* Recovery - return the default servername by IP: */
+            if (!str && p->h_addr_list[0]) {
+                ap_snprintf(str, sizeof(str), "%pA", p->h_addr_list[0]);
+	        server_hostname = ap_pstrdup(a, str);
+                /* We will drop through to report the IP-named server */
+            }
+        }
+	else
+            /* Since we found a fdqn, return it with no logged message. */
+            return server_hostname;
     }
 
+    /* If we don't have an fdqn or IP, fall back to the loopback addr */
+    if (!server_hostname) 
+        server_hostname = ap_pstrdup(a, "127.0.0.1");
+    
+    ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, NULL,
+	         "%s: Could not determine the server's fully qualified "
+                 "domain name, using %s for ServerName",
+                 ap_server_argv0, server_hostname);
+    
     return server_hostname;
 }
 
@@ -2183,4 +2255,17 @@ API_EXPORT(char *) ap_escape_quotes (pool *p, const char *instring)
     }
     *outchr = '\0';
     return outstring;
+}
+
+/* dest = src with whitespace removed
+ * length of dest assumed >= length of src
+ */
+API_EXPORT(void) ap_remove_spaces(char *dest, char *src)
+{
+    while (*src) {
+        if (!ap_isspace(*src)) 
+            *dest++ = *src;
+        src++;
+    }
+    *dest = 0;
 }

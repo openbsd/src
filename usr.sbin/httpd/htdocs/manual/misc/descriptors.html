@@ -120,6 +120,16 @@ situation somewhat.  Here is a partial list of systems and workarounds
 	End of story.  Version 4.1.5 has a hard limit of 2000.
     <P>
 
+    <DT><STRONG>SCO OpenServer</STRONG> 
+    <DD>Edit the
+    <CODE>/etc/conf/cf.d/stune</CODE> file or use 
+    <CODE>/etc/conf/cf.d/configure</CODE> choice 7
+    (User and Group configuration) and modify the <CODE>NOFILES</CODE> kernel
+    parameter to a suitably higher value.  SCO recommends a number
+    between 60 and 11000, the default is 110.  Relink and reboot, 
+    and the new number of descriptors will be available.
+
+
     <DT><STRONG>Others</STRONG>
     <DD>If you have details on another operating system, please submit
         it through our <A HREF="http://www.apache.org/bug_report.html">Bug

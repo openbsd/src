@@ -34,7 +34,7 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool,
 {
     char buf[HUGE_STRING_LEN];
     char *pInputName;
-    char *p, *q;
+    char *p, *q, *t;
     BOOL bDone = FALSE;
     BOOL bFileExists = TRUE;
     HANDLE hFind;
@@ -43,7 +43,7 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool,
     if (!szFile || strlen(szFile) == 0 || strlen(szFile) >= sizeof(buf))
         return ap_pstrdup(pPool, "");
 
-    buf[0] = '\0';
+    t = buf;
     pInputName = ap_pstrdup(pPool, szFile);
 
     /* First convert all slashes to \ so Win32 calls work OK */
@@ -52,27 +52,30 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool,
             *p = '\\';
     }
     
-    p = pInputName;
+    q = p = pInputName;
     /* If there is drive information, copy it over. */ 
     if (pInputName[1] == ':') {
-        buf[0] = tolower(*p++);
-        buf[1] = *p++;
-        buf[2] = '\0';
+        /* This is correct - if systemcase is used for
+         * comparison, d: designations will match
+         */                    
+        *(t++) = tolower(*p++);
+        *(t++) = *p++;
+        q = p;
 
         /* If all we have is a drive letter, then we are done */
-        if (strlen(pInputName) == 2)
+        if (!*p)
             bDone = TRUE;
-    }
-    
-    q = p;
+    }    
+
     if (*p == '\\') {
-        p++;
-        if (*p == '\\')  /* Possible UNC name */
+        ++p;
+        if (*p == '\\')  /* UNC name */
         {
-            p++;
             /* Get past the machine name.  FindFirstFile */
             /* will not find a machine name only */
-            p = strchr(p, '\\'); 
+            *(t++) = '\\';
+            ++q;
+            p = strchr(p + 1, '\\'); 
             if (p)
             {
                 p++;
@@ -80,14 +83,21 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool,
                 /* will not find a \\machine\share name only */
                 p = strchr(p, '\\'); 
                 if (p) {
-                    strncat(buf,q,p-q);
+                    /* This was faulty - as of 1.3.13 \\machine\share 
+                     * name is now always lowercased
+                     */
+                    strncpy(t,q,p-q);
+                    strlwr(t);
+                    t += p - q;
                     q = p;
                     p++;
                 }
             }
 
-            if (!p)
+            if (!p) {
+                bFileExists = FALSE;
                 p = q;
+            }
         }
     }
 
@@ -117,13 +127,17 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool,
                 FindClose(hFind);
 
                 if (*q == '\\')
-                    strcat(buf,"\\");
-                strcat(buf, wfd.cFileName);
+                    *(t++) = '\\';
+                t = strchr(strcpy(t, wfd.cFileName), '\0');
             }
         }
         
         if (!bFileExists || OnlyDots((*q == '.' ? q : q+1))) {
-            strcat(buf, q);
+            /* XXX: Comparison could be faulty ...\unknown
+             * names may not match!
+             */
+            strcpy(t, q);
+            t = strchr(t, '\0');
         }
         
         if (p) {
@@ -135,8 +149,9 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool,
             bDone = TRUE;
         }
     }
+    *t = '\0';
     
-    /* First convert all slashes to / so server code handles it ok */
+    /* Finally, convert all slashes to / so server code handles it ok */
     for (p = buf; *p; p++) {
         if (*p == '\\')
             *p = '/';
@@ -214,9 +229,17 @@ API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool,
      *   (where n is a number) and the first three characters 
      *   after the last period."
      *  Here, we attempt to detect and decode these names.
-     */
-    p = strchr(pNewStr, '~');
-    if (p != NULL) {
+     *
+     *  XXX: Netware network clients may have alternate short names,
+     *  simply truncated, with no embedded '~'.  Further, this behavior
+     *  can be modified on WinNT volumes.  This was not a safe test,
+     *  therefore exclude the '~' pretest.
+     */     
+#ifdef WIN32_SHORT_FILENAME_INSECURE_BEHAVIOR
+     p = strchr(pNewStr, '~');
+     if (p != NULL)
+#endif
+     {
         char *pConvertedName, *pQstr, *pPstr;
         char buf[HUGE_STRING_LEN];
         /* We potentially have a short name.  Call 
@@ -262,7 +285,6 @@ API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool,
         }
     }
 
-
     return pNewStr;
 }
 
@@ -288,8 +310,9 @@ API_EXPORT(char *) ap_os_canonical_filename(pool *pPool, const char *szFile)
 API_EXPORT(int) os_stat(const char *szPath, struct stat *pStat)
 {
     int n;
+    int len = strlen(szPath);
     
-    if (strlen(szPath) == 0) {
+    if ((len == 0) || (len >= MAX_PATH)) {
         return -1;
     }
 
@@ -298,7 +321,6 @@ API_EXPORT(int) os_stat(const char *szPath, struct stat *pStat)
 	char *s;
 	int nSlashes = 0;
 
-	ap_assert(strlen(szPath) < _MAX_PATH);
 	strcpy(buf, szPath);
 	for (s = buf; *s; ++s) {
 	    if (*s == '/') {
@@ -308,6 +330,9 @@ API_EXPORT(int) os_stat(const char *szPath, struct stat *pStat)
 	}
 	/* then we need to add one more to get \\machine\share\ */
 	if (nSlashes == 3) {
+            if (++len >= MAX_PATH) {
+                return -1;
+            }
 	    *s++ = '\\';
 	}
 	*s = '\0';
@@ -424,7 +449,7 @@ API_EXPORT(int) os_spawnve(int mode, const char *cmdname,
     return _spawnve(mode, szCmd, aszArgs, envp);
 }
 
-API_EXPORT(int) os_spawnle(int mode, const char *cmdname, ...)
+API_EXPORT_NONSTD(int) os_spawnle(int mode, const char *cmdname, ...)
 {
     int n;
     va_list vlist;
@@ -580,7 +605,7 @@ API_EXPORT(int) ap_os_is_filename_valid(const char *file)
     };
 
     /* Test 1 */
-    if (strlen(file) > MAX_PATH) {
+    if (strlen(file) >= MAX_PATH) {
 	/* Path too long for Windows. Note that this test is not valid
 	 * if the path starts with //?/ or \\?\. */
 	return 0;
@@ -674,4 +699,70 @@ API_EXPORT(int) ap_os_is_filename_valid(const char *file)
     }
 
     return 1;
+}
+
+
+API_EXPORT(ap_os_dso_handle_t) ap_os_dso_load(const char *module_name)
+{
+    UINT em;
+    ap_os_dso_handle_t dsoh;
+    char path[MAX_PATH], *p;
+    /* Load the module...
+     * per PR2555, the LoadLibraryEx function is very picky about slashes.
+     * Debugging on NT 4 SP 6a reveals First Chance Exception within NTDLL.
+     * LoadLibrary in the MS PSDK also reveals that it -explicitly- states
+     * that backslashes must be used.
+     *
+     * Transpose '\' for '/' in the filename.
+     */
+    ap_cpystrn(path, module_name, MAX_PATH);
+    p = path;
+    while (p = strchr(p, '/'))
+        *p = '\\';
+    
+    /* First assume the dso/dll's required by -this- dso are sitting in the 
+     * same path or can be found in the usual places.  Failing that, let's
+     * let that dso look in the apache root.
+     */
+    em = SetErrorMode(SEM_FAILCRITICALERRORS);
+    dsoh = LoadLibraryEx(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+    if (!dsoh) {
+        dsoh = LoadLibraryEx(path, NULL, 0);
+    }
+    SetErrorMode(em);
+    return dsoh;
+}
+
+API_EXPORT(const char *) ap_os_dso_error(void)
+{
+    int len, nErrorCode;
+    static char errstr[120];
+    /* This is -not- threadsafe code, but it's about the best we can do.
+     * mostly a potential problem for isapi modules, since LoadModule
+     * errors are handled within a single config thread.
+     */
+    
+    nErrorCode = GetLastError();
+    len = ap_snprintf(errstr, sizeof(errstr) - len, "(%d) ", nErrorCode);
+
+    len += FormatMessage( 
+            FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL,
+            nErrorCode,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
+            (LPTSTR) errstr + len,
+            sizeof(errstr) - len,
+            NULL 
+        );
+        /* FormatMessage may have appended a newline (\r\n). So remove it 
+         * and use ": " instead like the Unix errors. The error may also
+         * end with a . before the return - if so, trash it.
+         */
+    if (len > 1 && errstr[len-2] == '\r' && errstr[len-1] == '\n') {
+        if (len > 2 && errstr[len-3] == '.')
+            len--;
+        errstr[len-2] = ':';
+        errstr[len-1] = ' ';
+    }
+    return errstr;
 }

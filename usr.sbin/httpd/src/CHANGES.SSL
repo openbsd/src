@@ -17,6 +17,52 @@
   _INTENTIONALLY_ no contributor names attached to the entries. Instead all
   contributors are listed in the CREDITS file.
 
+      ____   _____ 
+     |___ \ |___  |
+       __) |   / / 
+      / __/ _ / /  
+  __ |_____(_)_/______________________________________________
+              
+  Changes with mod_ssl 2.7.1 (13-Oct-2000 to 14-Oct-2000)
+
+   *) Fixed the parsing of SSLSessionCache directives. The prefixes were
+      incorrectly skipped and leaded to "unable to open semaphore file"
+      errors.
+
+  Changes with mod_ssl 2.7.0 (12-Aug-2000 to 13-Oct-2000)
+
+   *) Upgraded to Apache 1.3.14 as base version.
+
+   *) Added new Cyclic Buffer based Shared Memory Session Cache
+      as ssl_scache_shmcb.c. This was contributed by Geoff Thorpe
+      <geoff@geoffthorpe.net> and is derived from the "c2shm" variant
+      used in Stronghold V3. It uses a fixed size cyclic buffer placed
+      over a shared memory segment for storing SSL session ids. This
+      way it is even more efficient and faster than the old hash table
+      based shared memory cache (ssl_scache_shmht.c). It can be used
+      by building mod_ssl with --enable-rule=SSL_EXPERIMENTAL and then
+      using "SSLSessionCache shmcb:<path-to-temp-file>(<bytes>)".
+
+   *) Cleaned up and restructured the session cache implementation.
+      ssl_engine_scache.c was split into ssl_scache.c (the abstraction
+      layer), ssl_scache_dbm.c (the DBM-based implementation) and
+      ssl_scache_shmht.c (the shared memory based implementation which
+      uses a hash table).
+
+   *) Added experimental support for the ENGINE branch of OpenSSL 0.9.6.
+      A new SSLCryptoDevice configuration directive is available if the
+      OpenSSL-ENGINE 0.9.6 package and --enable-rule=SSL_EXPERIMENTAL
+      is used. The default is "SSLCryptoDevice builtin". To enable
+      to use of a crypto device use "SSLCryptoDevice <name>",
+      where <name> is its ID as used with the OpenSSL command line
+      option "-engine <name>". 
+
+   *) Completely removed RSAref support to make sure US residents no
+      longer try to use this ancient piece of restricted/buggy code.
+
+   *) mod_ssl failed to start if two certificate keys are encrypted 
+      with different pass phrases and SSLProxyVerify was specified.  
+
       ____    __   
      |___ \  / /_  
        __) || '_ \ 

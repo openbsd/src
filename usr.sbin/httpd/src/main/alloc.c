@@ -663,6 +663,12 @@ void ap_kill_alloc_shared(void)
 }
 #endif /* EAPI */
 
+void ap_cleanup_alloc(void)
+{
+    ap_destroy_mutex(alloc_mutex);
+    ap_destroy_mutex(spawn_mutex);
+}
+
 API_EXPORT(void) ap_clear_pool(struct pool *a)
 {
     ap_block_alarms();
@@ -1398,7 +1404,7 @@ API_EXPORT(char *) ap_array_pstrcat(pool *p, const array_header *arr,
  */
 
 /* XXX: if you tweak this you should look at is_empty_table() and table_elts()
- * in alloc.h */
+ * in ap_alloc.h */
 struct table {
     /* This has to be first to promote backwards compatibility with
      * older modules which cast a table * to an array_header *...

@@ -266,6 +266,13 @@ void ssl_init_Module(server_rec *s, pool *p)
 #endif
 
     /*
+     * SSL external crypto device ("engine") support
+     */
+#ifdef SSL_EXPERIMENTAL_ENGINE
+    ssl_init_Engine(s, p);
+#endif
+
+    /*
      * Warn the user that he should use the session cache.
      * But we can operate without it, of course.
      */
@@ -349,6 +356,35 @@ void ssl_init_SSLLibrary(void)
     X509V3_add_standard_extensions();
     return;
 }
+
+/*
+ * Support for external a Crypto Device ("engine"), usually
+ * a hardware accellerator card for crypto operations.
+ */
+#ifdef SSL_EXPERIMENTAL_ENGINE
+void ssl_init_Engine(server_rec *s, pool *p)
+{
+    SSLModConfigRec *mc = myModConfig();
+    ENGINE *e;
+
+    if (mc->szCryptoDevice != NULL) {
+        if ((e = ENGINE_by_id(mc->szCryptoDevice)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to load Crypto Device API `%s'",
+                    mc->szCryptoDevice);
+            ssl_die();
+        }
+        if (strEQ(mc->szCryptoDevice, "chil")) 
+            ENGINE_ctrl(e, ENGINE_CTRL_CHIL_SET_FORKCHECK, 1, 0, 0);
+        if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to enable Crypto Device API `%s'",
+                    mc->szCryptoDevice);
+            ssl_die();
+        }
+        ENGINE_free(e);
+    }
+    return;
+}
+#endif
 
 /*
  * Handle the Temporary RSA Keys and DH Params

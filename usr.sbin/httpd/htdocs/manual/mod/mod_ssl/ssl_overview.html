@@ -323,12 +323,9 @@ module. A lot of hints you can find in the <a
 href="http://cwis.kub.nl/~frw/people/koops/lawsurvy.htm">International Law
 Crypto Survey</a> which is a really comprehensive resource on this topic. At
 least two countries with heavy cryptography restrictions are well known:
-In the United States (USA) first it's not allowed to (re-)export mod_ssl
-or OpenSSL and second it's not allowed to use Apache+mod_ssl+OpenSSL (because of
-patent issues on the RSA and RC4 algorithms) unless OpenSSL is built with RSA
-DSI's RSAref package and used for non-commercial purposes only. And inside
-France it's not allowed to use any cryptography at all when keys with more
-than 40 bits are used.
+In the United States (USA) it's not allowed to (re-)export mod_ssl
+or OpenSSL And inside France it's not allowed to use any cryptography at all
+when keys with more than 40 bits are used.
 <p>
 <table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
@@ -434,7 +431,7 @@ they support linking of a DSO against a static library (libssl.a, libcrypo.a).
 Not all platform support this.
       <p>
       <br>
-      <table>
+      <table summary="">
       <tr>
         <td>
            <table width="600" border="0" summary="">
@@ -456,7 +453,7 @@ Not all platform support this.
         <td><table width="598" summary="">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.modssl.org/">mod_ssl</a> 2.6, User Manual<br>
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.7, User Manual<br>
         The Apache Interface to OpenSSL
         </font>
         </td>

@@ -76,6 +76,7 @@ typedef int gid_t;
 #include <nwthread.h>
 #include <nwmalloc.h>
 #include <nwnamspc.h>
+#include <nwlib.h>
 #include <nwadv.h>
 #include <ws2nlm.h>
 #include <winsock2.h>
@@ -106,11 +107,11 @@ typedef int gid_t;
 #define FD_SETSIZE 128
 #define NO_DBM_REWRITEMAP
 
-
-
 #define crypt(buf,salt)	    (buf)
 #define sleep(t) delay(t*1000)
 #define getpid GetThreadID
+/* Netware doesn't have symlinks so S_ISLNK is always false */
+#define S_ISLNK(m) 0
 #define lstat(x, y) stat(x, y)
 #define ap_os_is_filename_valid(f)          (1)
 #define strcasecmp(s1, s2) stricmp(s1, s2)
@@ -121,11 +122,12 @@ typedef int gid_t;
 
 /* Prototypes */
 void AMCSocketCleanup(void);
-static void clean_parent_exit(int code);
+void clean_parent_exit(int code);
 
 inline int ap_os_is_path_absolute(const char *file)
 {
-    if (strstr(file, ":/"))
+    /* XXX: Should this test *(strchr(file, ':') + 1) == '/' ? */
+    if ((file[0] == '/') || strchr(file, ':'))
         return 1;
     else
         return 0;
@@ -139,5 +141,6 @@ void *ap_os_dso_sym(void *, const char *);
 const char *ap_os_dso_error(void);
 char *remove_filename(char*);
 char *bslash2slash(char*);
+void init_name_space(void);
 #endif /*! APACHE_OS_H*/
 

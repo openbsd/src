@@ -286,10 +286,9 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
 
     if (new->add_default_charset != ADD_DEFAULT_CHARSET_UNSET) {
 	conf->add_default_charset = new->add_default_charset;
-    }
-
-    if (new->add_default_charset_name) {
-	conf->add_default_charset_name = new->add_default_charset_name;
+	if (new->add_default_charset_name) {
+	    conf->add_default_charset_name = new->add_default_charset_name;
+	}
     }
 
     return (void*)conf;
@@ -369,10 +368,20 @@ CORE_EXPORT(void) ap_add_file_conf(core_dir_config *conf, void *url_config)
  * See directory_walk().
  */
 
-#ifdef HAVE_DRIVE_LETTERS
+#if defined(HAVE_DRIVE_LETTERS)
 #define IS_SPECIAL(entry_core)	\
     ((entry_core)->r != NULL \
 	|| ((entry_core)->d[0] != '/' && (entry_core)->d[1] != ':'))
+#elif defined(NETWARE)
+/* XXX: Fairly certain this is correct... '/' must prefix the path
+ *      or else in the case xyz:/ or abc/xyz:/, '/' must follow the ':'.
+ *      If there is no leading '/' or embedded ':/', then we are special.
+ */
+#define IS_SPECIAL(entry_core)	\
+    ((entry_core)->r != NULL \
+	|| ((entry_core)->d[0] != '/' \
+            && strchr((entry_core)->d, ':') \
+            && *(strchr((entry_core)->d, ':') + 1) != '/'))
 #else
 #define IS_SPECIAL(entry_core)	\
     ((entry_core)->r != NULL || (entry_core)->d[0] != '/')
@@ -1450,6 +1459,18 @@ static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
 	cmd->path = ap_getword_conf(cmd->pool, &arg);
 	r = ap_pregcomp(cmd->pool, cmd->path, REG_EXTENDED|USE_ICASE);
     }
+#if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
+    else if (strcmp(cmd->path, "/") == 0) {
+        /* Treat 'default' path / as an inalienable root */
+        cmd->path = ap_pstrdup(cmd->pool, cmd->path);
+    }
+#endif
+#if defined(HAVE_UNC_PATHS)
+    else if (strcmp(cmd->path, "//") == 0) {
+        /* Treat UNC path // as an inalienable root */
+        cmd->path = ap_pstrdup(cmd->pool, cmd->path);
+    }
+#endif
     else {
 	/* Ensure that the pathname is canonical */
 	cmd->path = ap_os_canonical_filename(cmd->pool, cmd->path);
@@ -2643,8 +2664,15 @@ static const char *set_serv_tokens(cmd_parms *cmd, void *dummy, char *arg)
     else if (!strcasecmp(arg, "Min") || !strcasecmp(arg, "Minimal")) {
         ap_server_tokens = SrvTk_MIN;
     }
-    else {
+    else if (!strcasecmp(arg, "Full")) {
         ap_server_tokens = SrvTk_FULL;
+    }
+    else if (!strcasecmp(arg, "Prod") || !strcasecmp(arg, "ProductOnly")) {
+        ap_server_tokens = SrvTk_PRODUCT_ONLY;
+    }
+    else {
+	return ap_pstrcat(cmd->pool, "Unrecognised ServerTokens keyword: ",
+			  arg, NULL);
     }
     return NULL;
 }
@@ -2741,7 +2769,9 @@ static const char *set_interpreter_source(cmd_parms *cmd, core_dir_config *d,
     } else if (!strcasecmp(arg, "script")) {
         d->script_interpreter_source = INTERPRETER_SOURCE_SHEBANG;
     } else {
-        d->script_interpreter_source = INTERPRETER_SOURCE_SHEBANG;
+        return ap_pstrcat(cmd->temp_pool, "ScriptInterpreterSource \"", arg, 
+                          "\" must be \"registry\" or \"script\"",
+                          NULL);
     }
     return NULL;
 }

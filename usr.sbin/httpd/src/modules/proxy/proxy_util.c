@@ -68,7 +68,7 @@ static int proxy_match_ipaddr(struct dirconn_entry *This, request_rec *r);
 static int proxy_match_domainname(struct dirconn_entry *This, request_rec *r);
 static int proxy_match_hostname(struct dirconn_entry *This, request_rec *r);
 static int proxy_match_word(struct dirconn_entry *This, request_rec *r);
-
+static struct per_thread_data *get_per_thread_data(void);
 /* already called in the knowledge that the characters are hex digits */
 int ap_proxy_hex2c(const char *x)
 {
@@ -239,12 +239,12 @@ char *
 	strp = strchr(user, ':');
 	if (strp != NULL) {
 	    *strp = '\0';
-	    password = ap_proxy_canonenc(p, strp + 1, strlen(strp + 1), enc_user, 1);
+	    password = ap_proxy_canonenc(p, strp + 1, strlen(strp + 1), enc_user, STD_PROXY);
 	    if (password == NULL)
 		return "Bad %-escape in URL (password)";
 	}
 
-	user = ap_proxy_canonenc(p, user, strlen(user), enc_user, 1);
+	user = ap_proxy_canonenc(p, user, strlen(user), enc_user, STD_PROXY);
 	if (user == NULL)
 	    return "Bad %-escape in URL (username)";
     }
@@ -280,7 +280,7 @@ char *
 	if (!ap_isdigit(host[i]) && host[i] != '.')
 	    break;
     /* must be an IP address */
-#if defined(WIN32) || defined(NETWARE) || defined(TPF)
+#if defined(WIN32) || defined(NETWARE) || defined(TPF) || defined(BEOS)
     if (host[i] == '\0' && (inet_addr(host) == -1))
 #else
     if (host[i] == '\0' && (ap_inet_addr(host) == -1 || inet_network(host) == -1))
@@ -517,7 +517,7 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c)
 
     ap_kill_timeout(r);
 
-#if defined(WIN32) || defined(TPF)
+#if defined(WIN32) || defined(TPF) || defined(NETWARE)
     /* works fine under win32, so leave it */
     ap_hard_timeout("proxy send body", r);
     alternate_timeouts = 0;
@@ -740,7 +740,7 @@ void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
     char tmp[22];
     int i, k, d;
     unsigned int x;
-#if defined(AIX) && defined(__ps2__)
+#if defined(MPE) || (defined(AIX) && defined(__ps2__))
     /* Believe it or not, AIX 1.x does not allow you to name a file '@',
      * so hack around it in the encoding. */
     static const char enc_table[64] =
@@ -867,9 +867,7 @@ const char *
 {
     int i;
     struct hostent *hp;
-    static APACHE_TLS struct hostent hpbuf;
-    static APACHE_TLS u_long ipaddr;
-    static APACHE_TLS char *charpbuf[2];
+    struct per_thread_data *ptd = get_per_thread_data();
 
     for (i = 0; host[i] != '\0'; i++)
 	if (!ap_isdigit(host[i]) && host[i] != '.')
@@ -881,17 +879,17 @@ const char *
 	    return "Host not found";
     }
     else {
-	ipaddr = ap_inet_addr(host);
-	hp = gethostbyaddr((char *) &ipaddr, sizeof(u_long), AF_INET);
+	ptd->ipaddr = ap_inet_addr(host);
+	hp = gethostbyaddr((char *) &ptd->ipaddr, sizeof(ptd->ipaddr), AF_INET);
 	if (hp == NULL) {
-	    memset(&hpbuf, 0, sizeof(hpbuf));
-	    hpbuf.h_name = 0;
-	    hpbuf.h_addrtype = AF_INET;
-	    hpbuf.h_length = sizeof(u_long);
-	    hpbuf.h_addr_list = charpbuf;
-	    hpbuf.h_addr_list[0] = (char *) &ipaddr;
-	    hpbuf.h_addr_list[1] = 0;
-	    hp = &hpbuf;
+	    memset(&ptd->hpbuf, 0, sizeof(ptd->hpbuf));
+	    ptd->hpbuf.h_name = 0;
+	    ptd->hpbuf.h_addrtype = AF_INET;
+	    ptd->hpbuf.h_length = sizeof(ptd->ipaddr);
+	    ptd->hpbuf.h_addr_list = ptd->charpbuf;
+	    ptd->hpbuf.h_addr_list[0] = (char *) &ptd->ipaddr;
+	    ptd->hpbuf.h_addr_list[1] = 0;
+	    hp = &ptd->hpbuf;
 	}
     }
     *reqhp = *hp;
@@ -1290,3 +1288,44 @@ unsigned ap_proxy_bputs2(const char *data, BUFF *client, cache_req *cache)
     return len;
 }
 
+#if defined WIN32
+
+static DWORD tls_index;
+
+BOOL WINAPI DllMain (HINSTANCE dllhandle, DWORD reason, LPVOID reserved)
+{
+    LPVOID memptr;
+
+    switch (reason) {
+    case DLL_PROCESS_ATTACH:
+	tls_index = TlsAlloc();
+    case DLL_THREAD_ATTACH: /* intentional no break */
+	TlsSetValue (tls_index, malloc (sizeof (struct per_thread_data)));
+	break;
+    case DLL_THREAD_DETACH:
+	memptr = TlsGetValue (tls_index);
+	if (memptr) {
+	    free (memptr);
+	    TlsSetValue (tls_index, 0);
+	}
+	break;
+    }
+
+    return TRUE;
+}
+
+#endif
+
+static struct per_thread_data *get_per_thread_data(void)
+{
+#if defined(WIN32)
+
+    return (struct per_thread_data *) TlsGetValue (tls_index);
+
+#else
+
+    static APACHE_TLS struct per_thread_data sptd;
+    return &sptd;
+
+#endif
+}

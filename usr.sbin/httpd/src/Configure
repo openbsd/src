@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.12 2000/10/16 21:23:35 brad Exp $
+# $OpenBSD: Configure,v 1.13 2000/12/15 22:17:52 beck Exp $
 ## ====================================================================
 ## Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
 ##
@@ -318,11 +318,18 @@ case "$PLAT" in
 	;;
     *-ibm-aix4.3)
 	OS='IBM AIX 4.3'
-	CFLAGS="$CFLAGS -DAIX=43 -U__STR__"
-	LDFLAGS="$LDFLAGS -lm"
+	CFLAGS="$CFLAGS -DAIX=43 -DUSE_PTHREAD_SERIALIZED_ACCEPT -U__STR__"
+	LDFLAGS="$LDFLAGS -lm -lpthread"
 	RULE_SHARED_CORE=no
 	DEF_SHARED_CORE=no
 	;;
+    ia64-ibm-aix*)
+       OS='IBM AIX IA64'
+       CFLAGS="$CFLAGS -DAIXIA64 -U__STR__"
+       LDFLAGS="$LDFLAGS -lm"
+       RULE_SHARED_CORE=no
+       DEF_SHARED_CORE=no
+       ;;
     *-ibm-aix*)
 	OS='IBM AIX'
 	CFLAGS="$CFLAGS -DAIX=1 -U__STR__"
@@ -351,14 +358,14 @@ case "$PLAT" in
 	OS='HI-UX'
 	CFLAGS="$CFLAGS -DHIUX"
 	;;
-    *-hp-hpux11.*)
+    *-hp*-hpux11.*)
 	OS='HP-UX 11'
 	CFLAGS="$CFLAGS -DHPUX11"
 	RANLIB="/bin/true"
 	LIBS="$LIBS -lm -lpthread"
 	DEF_WANTHSREGEX=yes
 	;;
-    *-hp-hpux10.*)
+    *-hp*-hpux10.*)
 	OS='HP-UX 10'
 	CFLAGS="$CFLAGS -DHPUX10"
 	RANLIB="/bin/true"
@@ -371,7 +378,7 @@ case "$PLAT" in
  	esac
 	DEF_WANTHSREGEX=yes
 	;;
-    *-hp-hpux*)
+    *-hp*-hpux*)
 	OS='HP-UX'
 	CFLAGS="$CFLAGS -DHPUX"
 	RANLIB="/bin/true"
@@ -430,6 +437,12 @@ case "$PLAT" in
 	CFLAGS="$CFLAGS -DLINUX=2"
 	LIBS="$LIBS -lm"
 	;;
+    *-GNU*)
+	DEF_WANTHSREGEX=yes
+	OS='GNU/Hurd'
+	CFLAGS="$CFLAGS -DHURD"
+	LIBS="$LIBS -lm -lcrypt"
+	;;
     *-linux1)
 	DEF_WANTHSREGEX=yes
 	OS='Linux'
@@ -469,7 +482,7 @@ case "$PLAT" in
     	PLATOSVERS=`echo $PLAT | sed 's/^.*freebsd//'`
 	OS="FreeBSD $PLATOSVERS"
 	case "$PLATOSVERS" in
-	    [234]*)
+	    [2345]*)
 		DEF_WANTHSREGEX=no
 		CFLAGS="$CFLAGS -funsigned-char"
 		;;
@@ -499,12 +512,12 @@ case "$PLAT" in
 	;;
     *-apple-rhapsody*)
 	OS='Mac OS X Server'
-	CFLAGS="$CFLAGS -DMAC_OS_X_SERVER"
+	CFLAGS="$CFLAGS -DDARWIN -DMAC_OS_X_SERVER"
 	DEF_WANTHSREGEX=yes
 	;;
-    *-apple-macos*)
-	OS='Mac OS'
-	CFLAGS="$CFLAGS -DMAC_OS"
+    *-apple-darwin*)
+	OS='Darwin'
+	CFLAGS="$CFLAGS -DDARWIN"
 	DEF_WANTHSREGEX=yes
 	;;
     *-dec-osf*)
@@ -1021,7 +1034,6 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LD_SHLIB=ld	
 	    LDFLAGS_SHLIB='-b -a archive'
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
-	    LIBS_SHLIB='$(OSDIR)/mpe_dl_stub.o'	
 	    ;;
 	*-linux1)
 	    CFLAGS_SHLIB="-fpic"
@@ -1045,7 +1057,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_SHLIB_EXPORT=""
 	    SHLIB_SUFFIX_DEPTH=2
 	    ;;
-	*-freebsd3*|*-freebsd4*)
+	*-freebsd[3-9]*)
 		LD_SHLIB="gcc"
 	    CFLAGS_SHLIB="-fpic"
 	    LDFLAGS_SHLIB="-shared"
@@ -1106,7 +1118,7 @@ if [ "x$using_shlib" = "x1" ] ; then
  	    LDFLAGS_SHLIB_EXPORT=''
  	    SHLIB_SUFFIX_DEPTH=0
  	    ;;
-	*-apple-rhapsody* | *-apple-macos* )
+	*-apple-rhapsody* | *-apple-darwin* )
 	    LD_SHLIB="cc"
 	    CFLAGS_SHLIB=""
 	    LDFLAGS_SHLIB='$(EXTRA_LDFLAGS) -bundle -undefined suppress'
@@ -1233,6 +1245,14 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
 	    LDFLAGS_SHLIB_EXPORT="-Wl,-Blargedynsym"
 	    ;;
+	BS2000-siemens-sysv4*)
+	    CFLAGS_SHLIB="-K PIC"
+	    LDFLAGS_SHLIB="-G"
+	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
+	    LDFLAGS_SHLIB_EXPORT=""
+	    SHLIB_SUFFIX_DEPTH=0
+	    DEF_SHARED_CORE=no
+	    ;;
 	*-siemens-sysv4*)
 	    # Older SINIX machines must be linked as "shared core"-Apache
 	    case $CC in
@@ -1275,6 +1295,18 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_SHLIB_EXPORT="-Wl,-E -Wl,-B,deferred -Wl,+s"
 	    SHLIB_SUFFIX_NAME=sl
 	    ;;
+       ia64-ibm-aix*)
+           case $CC in
+               */gcc|gcc ) CFLAGS_SHLIB="-fpic" ;;
+               */cc|cc   ) CFLAGS_SHLIB="" ;;
+           esac
+           LDFLAGS_SHLIB=" -L /usr/lib/ia64l32 -G "
+           LDFLAGS_MOD_SHLIB="$LDFLAGS_SHLIB -bI:@libexecdir@/httpd.exp -lc"
+           LDFLAGS_SHLIB="$LDFLAGS_SHLIB -Bexport:\`echo \$@|sed -e 's:\.so\$\$:.exp:'\`"
+           LDFLAGS_SHLIB="$LDFLAGS_SHLIB -lc"
+           LDFLAGS_SHLIB_EXPORT="-Wl,-Bexport:\$(SRCDIR)/support/httpd.exp"
+           SHLIB_EXPORT_FILES=yes
+           ;;
 	*-ibm-aix*)
 	    case $CC in
 		*/gcc|gcc ) CFLAGS_SHLIB="-fpic" ;;
@@ -1455,6 +1487,13 @@ case "$OS" in
 	    ;;
 	esac
 	;;
+    'IBM AIX IA64')
+       case $CC in
+           */cc|cc )
+               CFLAGS="$CFLAGS -qnogenpcomp -qnousepcomp"
+           ;;
+       esac
+       ;;
 esac
 
 ####################################################################
@@ -1524,6 +1563,18 @@ case "$PLAT" in
 	if TLIB=$TLIB ${SHELL} helpers/TestCompile lib socket; then
 	    LIBS="-lsocket $LIBS"
 	fi
+	# Auto-detect presence of libdl for dynamic loading
+	if ${SHELL} /helpers/TestCompile lib dl; then
+	    if ${SHELL} /helpers/TestCompile func dlopen; then
+		LIBS="$LIBS -ldl"
+		TLIB='-ldl'
+    	   fi
+	fi
+	# Test for the presence of the _rini_struct typedef:
+	if TCADDINCL='#include <pwd.h>' ${SHELL} /helpers/TestCompile sizeof _rini_struct; then
+	    CFLAGS="$CFLAGS -DHAVE_RINI_STRUCT"
+	fi
+	# Test whether initgroups() must be emulated:
 	if ${SHELL} helpers/TestCompile func initgroups; then
 	    :
 	else
@@ -1859,7 +1910,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=12
+	V=1 R=3 P=14
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi
@@ -2090,6 +2141,9 @@ echo "RANLIB=$RANLIB" >>Makefile.config
 if [ "x$using_shlib" = "x1" ] ; then
     DL_LIB=""
     case $PLAT in
+       ia64-ibm-aix* )
+           DL_LIB="-ldl"
+           ;;
 	*-ibm-aix* )
 	    DL_LIB="-lld"
 	    ;;

@@ -233,29 +233,29 @@ int ap_thread_count = 0;
 BOOL ap_main_finished = FALSE;
 unsigned int ap_thread_stack_size = 65536;
 #endif
-int ap_standalone=0;
+API_VAR_EXPORT int ap_standalone=0;
 int ap_configtestonly=0;
 int ap_docrootcheck=1;
-uid_t ap_user_id=0;
-char *ap_user_name=NULL;
-gid_t ap_group_id=0;
+API_VAR_EXPORT uid_t ap_user_id=0;
+API_VAR_EXPORT char *ap_user_name=NULL;
+API_VAR_EXPORT gid_t ap_group_id=0;
 #ifdef MULTIPLE_GROUPS
 gid_t group_id_list[NGROUPS_MAX];
 #endif
-int ap_max_requests_per_child=0;
-int ap_threads_per_child=0;
-int ap_excess_requests_per_child=0;
-char *ap_pid_fname=NULL;
-char *ap_scoreboard_fname=NULL;
+API_VAR_EXPORT int ap_max_requests_per_child=0;
+API_VAR_EXPORT int ap_threads_per_child=0;
+API_VAR_EXPORT int ap_excess_requests_per_child=0;
+API_VAR_EXPORT char *ap_pid_fname=NULL;
+API_VAR_EXPORT char *ap_scoreboard_fname=NULL;
 char *ap_lock_fname;
-char *ap_server_argv0=NULL;
+API_VAR_EXPORT char *ap_server_argv0=NULL;
 struct in_addr ap_bind_address;
-int ap_daemons_to_start=0;
-int ap_daemons_min_free=0;
-int ap_daemons_max_free=0;
-int ap_daemons_limit=0;
+API_VAR_EXPORT int ap_daemons_to_start=0;
+API_VAR_EXPORT int ap_daemons_min_free=0;
+API_VAR_EXPORT int ap_daemons_max_free=0;
+API_VAR_EXPORT int ap_daemons_limit=0;
 time_t ap_restart_time=0;
-int ap_suexec_enabled = 0;
+API_VAR_EXPORT int ap_suexec_enabled = 0;
 int ap_listenbacklog;
 int ap_dump_settings = 0;
 API_VAR_EXPORT int ap_extended_status = 0;
@@ -291,7 +291,7 @@ listen_rec *ap_listeners;
 static listen_rec *head_listener;
 
 API_VAR_EXPORT char ap_server_root[MAX_STRING_LEN]="";
-char ap_server_confname[MAX_STRING_LEN]="";
+API_VAR_EXPORT char ap_server_confname[MAX_STRING_LEN]="";
 char ap_coredump_dir[MAX_STRING_LEN];
 
 array_header *ap_server_pre_read_config;
@@ -426,7 +426,10 @@ API_EXPORT(void) ap_add_version_component(const char *component)
  */
 static void ap_set_version(void)
 {
-    if (ap_server_tokens == SrvTk_MIN) {
+    if (ap_server_tokens == SrvTk_PRODUCT_ONLY) {
+	ap_add_version_component(SERVER_PRODUCT);
+    }
+    else if (ap_server_tokens == SrvTk_MIN) {
 	ap_add_version_component(SERVER_BASEVERSION);
     }
     else {
@@ -1094,6 +1097,9 @@ static void usage(char *bin)
     fprintf(stderr, "  -l               : list compiled-in modules\n");
     fprintf(stderr, "  -L               : list available configuration directives\n");
     fprintf(stderr, "  -S               : show parsed settings (currently only vhost settings)\n");
+#ifdef NETWARE
+    fprintf(stderr, "  -s               : load Apache without a screen\n");
+#endif
     fprintf(stderr, "  -t               : run syntax check for config files (with docroot check)\n");
     fprintf(stderr, "  -T               : run syntax check for config files (without docroot check)\n");
 #ifdef WIN32
@@ -1128,7 +1134,18 @@ typedef struct _TSD {
     unsigned int 	alarm_expiry_time;
 } TSD;
 
-#define get_tsd            TSD* tsd = (TSD*) GetThreadDataAreaPtr();
+static TSD Tsd;
+
+void init_tsd()
+{    
+    int *thread_ptr;
+
+    memset(&Tsd, 0, sizeof(TSD));
+    thread_ptr = __get_thread_data_area_ptr();
+    *thread_ptr = (int) &Tsd;
+}
+
+#define get_tsd            TSD* tsd = (TSD*) Thread_Data_Area;
 #define current_conn       tsd->current_conn
 #define alarms_blocked     tsd->alarms_blocked
 #define alarm_pending      tsd->alarm_pending
@@ -2235,15 +2252,26 @@ static ap_inline void put_scoreboard_info(int child_num,
 }
 
 /* a clean exit from the parent with proper cleanup */
+#ifdef NETWARE
+void clean_parent_exit(int code) __attribute__((noreturn));
+void clean_parent_exit(int code)
+#else
 static void clean_parent_exit(int code) __attribute__((noreturn));
 static void clean_parent_exit(int code)
+#endif
 {
 #ifdef NETWARE
     AMCSocketCleanup();
+    ap_destroy_pool(pcommands);    
+    free(ap_loaded_modules);    
+    ap_cleanup_method_ptrs();    
+    ap_destroy_pool(pglobal);
+    ap_cleanup_alloc();
     ap_main_finished = TRUE;
-#endif
+#else
     /* Clear the pool - including any registered cleanups */
     ap_destroy_pool(pglobal);
+#endif
 #ifdef EAPI
     ap_kill_alloc_shared();
 #endif
@@ -2556,6 +2584,7 @@ int reap_children(ap_wait_t *status)
  * a while...
  */
 
+#ifndef NETWARE
 /* number of calls to wait_or_timeout between writable probes */
 #ifndef INTERVAL_OF_WRITABLE_PROBES
 #define INTERVAL_OF_WRITABLE_PROBES 10
@@ -2592,31 +2621,6 @@ static int wait_or_timeout(ap_wait_t *status)
 	}
     }
     return (-1);
-#elif defined(NETWARE)
-    struct timeval tv;
-    int ret = 0;
-
-    ++wait_or_timeout_counter;
-    if (wait_or_timeout_counter == INTERVAL_OF_WRITABLE_PROBES) {
-	    wait_or_timeout_counter = 0;
-#ifndef NO_OTHER_CHILD
-	    probe_writable_fds();
-#endif
-    }
-
-    if (ret == -1 && errno == EINTR) {
-	    return -1;
-    }
-
-    if (ret > 0) {
-	    return ret;
-    }
-    
-    tv.tv_sec = SCOREBOARD_MAINTENANCE_INTERVAL / 1000000;
-    tv.tv_usec = SCOREBOARD_MAINTENANCE_INTERVAL % 1000000;
-    ap_select(0, NULL, NULL, NULL, &tv);
-    return -1;
-
 #else /* WIN32 */
     struct timeval tv;
     int ret;
@@ -2646,7 +2650,7 @@ static int wait_or_timeout(ap_wait_t *status)
     return -1;
 #endif /* WIN32 */
 }
-
+#endif
 
 #if defined(NSIG)
 #define NumSIG NSIG
@@ -2922,7 +2926,7 @@ static void signal_parent(int type)
  * variables are no longer used to pass on the required action to the parent.
  */
 
-void ap_start_shutdown(void)
+API_EXPORT(void) ap_start_shutdown(void)
 {
 #ifndef WIN32
     if (shutdown_pending == 1) {
@@ -2939,7 +2943,7 @@ void ap_start_shutdown(void)
 }
 
 /* do a graceful restart if graceful == 1 */
-void ap_start_restart(int graceful)
+API_EXPORT(void) ap_start_restart(int graceful)
 {
 #ifndef WIN32
     if (restart_pending == 1) {
@@ -3150,7 +3154,7 @@ static void detach(void)
 
 static void set_group_privs(void)
 {
-#if !defined(WIN32) && !defined(NETWARE)
+#if !defined(WIN32) && !defined(NETWARE) && !defined(BEOS)
     if (!geteuid()) {
 	char *name;
 
@@ -3180,12 +3184,21 @@ static void set_group_privs(void)
 	 * Set the GID before initgroups(), since on some platforms
 	 * setgid() is known to zap the group list.
 	 */
+#ifdef MPE
+	GETPRIVMODE();
+#endif
 	if (setgid(ap_group_id) == -1) {
+#ifdef MPE
+	    GETUSERMODE();
+#endif
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 			"setgid: unable to set group id to Group %u",
 			(unsigned)ap_group_id);
 	    clean_child_exit(APEXIT_CHILDFATAL);
 	}
+#ifdef MPE
+	GETUSERMODE();
+#endif
 
 	/* Reset `groups' attributes. */
 
@@ -3204,7 +3217,7 @@ static void set_group_privs(void)
 #endif /* MULTIPLE_GROUPS */
 #endif /* !defined(OS2) && !defined(TPF) */
     }
-#endif /* ndef WIN32 */
+#endif /* !defined(WIN32) && !defined(NETWARE) && !defined(BEOS) */
 }
 
 /* check to see if we have the 'suexec' setuid wrapper installed */
@@ -3212,7 +3225,7 @@ static int init_suexec(void)
 {
     int result = 0;
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(NETWARE)
     struct stat wrapper;
 
     if ((stat(SUEXEC_BIN, &wrapper)) != 0) {
@@ -3362,12 +3375,12 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 	ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 		    "make_sock: for %s, setsockopt: (SO_REUSEADDR)", addr);
 #ifdef BEOS
-    closesocket(s);
+	closesocket(s);
 #else
 	close(s);
 #endif
 	ap_unblock_alarms();
-	return -1;
+	exit(1);
     }
 #endif /*_OSD_POSIX*/
     one = 1;
@@ -3376,13 +3389,13 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 	ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 		    "make_sock: for %s, setsockopt: (SO_KEEPALIVE)", addr);
 #ifdef BEOS
-    closesocket(s);
+	closesocket(s);
 #else
 	close(s);
 #endif
 
 	ap_unblock_alarms();
-	return -1;
+	exit(1);
     }
 #endif
 
@@ -3435,7 +3448,7 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 #endif
 
 #ifdef BEOS
-    closesocket(s);
+	closesocket(s);
 #else
 	close(s);
 #endif
@@ -3451,13 +3464,37 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 	ap_log_error(APLOG_MARK, APLOG_ERR, server_conf,
 	    "make_sock: unable to listen for connections on %s", addr);
 #ifdef BEOS
-    closesocket(s);
+	closesocket(s);
 #else
 	close(s);
 #endif
 	ap_unblock_alarms();
 	exit(1);
     }
+
+#ifdef SO_ACCEPTFILTER
+    {
+#ifndef ACCEPT_FILTER_NAME
+#define ACCEPT_FILTER_NAME "dataready"
+#endif
+	/*
+	 * See htdocs/manual/misc/perf-bsd44.html for a discussion of
+	 * how to enable this feature and various issues with it.
+	 */
+	struct accept_filter_arg af = {
+	    ACCEPT_FILTER_NAME, ""
+	};
+	if (setsockopt(s, SOL_SOCKET, SO_ACCEPTFILTER, &af, sizeof(af)) < 0
+	    && errno != ENOENT) {
+	    ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
+			 "make_sock: for %s, setsockopt: (SO_ACCEPTFILTER)",
+			 addr);
+	    close(s);
+	    ap_unblock_alarms();
+	    exit(1);
+	}
+    }
+#endif
 
 #ifdef WORKAROUND_SOLARIS_BUG
     s = ap_slack(s, AP_SLACK_HIGH);
@@ -3475,11 +3512,11 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 	    "found, you probably need to rebuild Apache with a "
 	    "larger FD_SETSIZE", addr, s, FD_SETSIZE);
 #ifdef BEOS
-    closesocket(s);
+	closesocket(s);
 #else
 	close(s);
 #endif
-	return -1;
+	exit(1);
     }
 #endif
 
@@ -3512,10 +3549,6 @@ static void copy_listeners(pool *p)
     do {
 	listen_rec *nr = malloc(sizeof *nr);
 
-#ifdef NETWARE
-        ThreadSwitch();
-#endif
-	
         if (nr == NULL) {
             fprintf(stderr, "Ouch!  malloc failed in copy_listeners()\n");
             exit(1);
@@ -3570,7 +3603,7 @@ static void setup_listeners(pool *p)
     for (;;) {
 	fd = find_listener(lr);
 	if (fd < 0) {
-        fd = make_sock(p, &lr->local_addr);
+	    fd = make_sock(p, &lr->local_addr);
 	}
 	else {
 	    ap_note_cleanups_for_socket(p, fd);
@@ -3580,6 +3613,9 @@ static void setup_listeners(pool *p)
 	    if (fd > listenmaxfd)
 		listenmaxfd = fd;
 	}
+	FD_SET(fd, &listenfds);
+	if (fd > listenmaxfd)
+	    listenmaxfd = fd;
 	lr->fd = fd;
 	if (lr->next == NULL)
 	    break;
@@ -3614,9 +3650,6 @@ static ap_inline listen_rec *find_ready_listener(fd_set * main_fds)
 
     lr = head_listener;
     do {
-#ifdef NETWARE
-	ThreadSwitch();
-#endif
 	if (FD_ISSET(lr->fd, main_fds)) {
 	    head_listener = lr->next;
 	    return (lr);
@@ -3914,17 +3947,15 @@ static void child_main(int child_num_arg)
 
     set_group_privs();
 #ifdef MPE
-    /* Only try to switch if we're running as MANAGER.SYS */
-    if (geteuid() == 1 && ap_user_id > 1) {
-	GETPRIVMODE();
-	if (setuid(ap_user_id) == -1) {
-	    GETUSERMODE();
-	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
-			"setuid: unable to change to uid: %d", ap_user_id);
-	    exit(1);
-	}
+    /* No such thing as root on MPE, so try to switch unconditionally */
+    GETPRIVMODE();
+    if (setuid(ap_user_id) == -1) {
 	GETUSERMODE();
+	ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		    "setuid: unable to change to uid: %d", ap_user_id);
+	exit(1);
     }
+    GETUSERMODE();
 #else
     /* Only try to switch if we're running as root */
     if (!geteuid() && (
@@ -5135,17 +5166,15 @@ int REALMAIN(int argc, char *argv[])
 	set_group_privs();
 
 #ifdef MPE
-	/* Only try to switch if we're running as MANAGER.SYS */
-	if (geteuid() == 1 && ap_user_id > 1) {
-	    GETPRIVMODE();
-	    if (setuid(ap_user_id) == -1) {
-		GETUSERMODE();
-		ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
-			    "setuid: unable to change to uid: %d", ap_user_id);
-		exit(1);
-	    }
+	/* No such thing as root on MPE, so try to switch unconditionally */
+	GETPRIVMODE();
+	if (setuid(ap_user_id) == -1) {
 	    GETUSERMODE();
+	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+			"setuid: unable to change to uid: %d", ap_user_id);
+	    exit(1);
 	}
+	GETUSERMODE();
 #else
 	/* Only try to switch if we're running as root */
 	if (!geteuid() && setuid(ap_user_id) == -1) {
@@ -5432,13 +5461,11 @@ static void child_sub_main(int child_num)
     TSD* tsd = NULL;
 
     while(tsd == NULL) {
-        tsd = (TSD*) GetThreadDataAreaPtr();
+        tsd = (TSD*) Thread_Data_Area;
         ThreadSwitchWithDelay();
     }
 
-    SetCurrentNameSpace(4);
-    SetTargetNameSpace(4);
-
+    init_name_space();
     ap_thread_count++;
 #endif
 
@@ -5459,7 +5486,7 @@ static void child_sub_main(int child_num)
 #endif
 
 #ifdef NETWARE
-    tsd = (TSD*) GetThreadDataAreaPtr();
+    tsd = (TSD*) Thread_Data_Area;
 #endif
 
     while (1) {
@@ -5536,9 +5563,6 @@ static void child_sub_main(int child_num)
 	 * until no requests are left or we decide to close.
 	 */
 	while ((r = ap_read_request(current_conn)) != NULL) {
-#ifdef NETWARE
-            ThreadSwitch();
-#endif
             (void) ap_update_child_status(child_num, SERVER_BUSY_WRITE, r);
 
 	    if (r->status == HTTP_OK)
@@ -5609,9 +5633,10 @@ void child_main(int child_num_arg)
      */
 #ifdef NETWARE
     TSD Tsd;
-
+    int *thread_ptr;
     memset(&Tsd, 0, sizeof(TSD));
-	SaveThreadDataAreaPtr(&Tsd);
+    thread_ptr = __get_thread_data_area_ptr();
+    *thread_ptr = (int) &Tsd;
 	child_sub_main((int)child_num_arg);
 #else
     child_sub_main(child_num_arg);
@@ -5771,15 +5796,16 @@ void worker_main(void)
     int clen;
     int csd;
     struct sockaddr_in sa_client;
-    int total_jobs = 0;
     thread **child_handles;
     int rv;
     int i;
     struct timeval tv;
     int my_pid;
-    
     int count_select_errors = 0;
     pool *pchild;
+    module **m;    
+    listen_rec* lr;
+    
 
     pchild = ap_make_sub_pool(pconf);
 
@@ -5807,10 +5833,26 @@ void worker_main(void)
         
         ap_destroy_pool(pchild);
         cleanup_scoreboard();
-        exit(0);
+        exit(1);
     }
     
     set_signals();
+
+    /* Display listening ports */
+    printf("   Listening on port(s):");
+    lr = ap_listeners;
+    do {
+       printf(" %d", ntohs(lr->local_addr.sin_port));
+       lr = lr->next;
+    } while(lr && lr != ap_listeners);
+    
+    /* Display dynamic modules loaded */
+    printf("\n");    
+    for (m = ap_loaded_modules; *m != NULL; m++) {
+        if (((module*)*m)->dynamic_load_handle) {
+            printf("   Loaded dynamic module %s\n", ap_find_module_name(*m));
+        }
+    }
 
     /*
      * - Initialize allowed_globals
@@ -5900,7 +5942,6 @@ void worker_main(void)
         }
         else {
             add_job(csd);
-            total_jobs++;
         }
     }
       
@@ -5908,8 +5949,7 @@ void worker_main(void)
 
     /* Get ready to shutdown and exit */
     allowed_globals.exit_now = 1;
-    ap_release_mutex(start_mutex);
-
+    
     for (i = 0; i < nthreads; i++) {
         add_job(-1);
     }
@@ -5995,7 +6035,7 @@ void worker_main(void)
 
 	ap_destroy_pool(pchild);
 	cleanup_scoreboard();
-	exit(0);
+	exit(1);
     }
     if (rv == WAIT_OBJECT_0 + 1) {
 	/* exit event signalled - exit now */
@@ -6020,7 +6060,7 @@ void worker_main(void)
 
 	ap_destroy_pool(pchild);
 	cleanup_scoreboard();
-	exit(0);
+	exit(1);
     }
     set_signals();
 
@@ -6234,6 +6274,8 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
     DWORD BytesWritten;
     HANDLE hPipeRead = NULL;
     HANDLE hPipeWrite = NULL;
+    HANDLE hPipeWriteDup;
+    HANDLE hCurrentProcess;
     SECURITY_ATTRIBUTES sa = {0};  
 
     sa.nLength = sizeof(sa);
@@ -6269,7 +6311,10 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
     pCommand = ap_psprintf(p, "\"%s\" -Z %s -f \"%s\"", buf, exit_event_name, ap_server_confname);  
 
     for (i = 1; i < argc; i++) {
-        pCommand = ap_pstrcat(p, pCommand, " \"", argv[i], "\"", NULL);
+        if ((argv[i][0] == '-') && ((argv[i][1] == 'k') || (argv[i][1] == 'n')))
+            ++i;
+        else
+            pCommand = ap_pstrcat(p, pCommand, " \"", argv[i], "\"", NULL);
     }
 
     /* Create a pipe to send socket info to the child */
@@ -6279,7 +6324,15 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
         return -1;
     }
 
-    /* Give the read in of teh pipe (hPipeRead) to the child as stdin. The 
+    hCurrentProcess = GetCurrentProcess();
+    if (DuplicateHandle(hCurrentProcess, hPipeWrite, hCurrentProcess,
+                        &hPipeWriteDup, 0, FALSE, DUPLICATE_SAME_ACCESS))
+    {
+        CloseHandle(hPipeWrite);
+        hPipeWrite = hPipeWriteDup;
+    }
+
+    /* Give the read in of the pipe (hPipeRead) to the child as stdin. The 
      * parent will write the socket data to the child on this pipe.
      */
     memset(&si, 0, sizeof(si));
@@ -6706,11 +6759,6 @@ void signal_handler(int sig)
     }
     return;
 }
-
-int main(int argc, char *argv[]) 
-{
-    ExitThread(TSR_THREAD, 0);
-}
 #endif
 
 #if defined(NETWARE)
@@ -6726,29 +6774,33 @@ int REALMAIN(int argc, char *argv[])
     int child = 0;
     char *cp;
     char *s;
-    char *service_name = NULL;
-    int install = 0;
     int conf_specified = 0;
-    char *signal_to_send = NULL;
     char cwd[MAX_STRING_LEN];
 
-#ifdef NETWARE
-    TSD Tsd;
+#ifdef WIN32
+    char *service_name = NULL;
+    int install = 0;
+    char *signal_to_send = NULL;
 
-    SetCurrentNameSpace(4);
-    SetTargetNameSpace(4);
-    signal(SIGTERM, signal_handler);
-    memset(&Tsd, 0, sizeof(Tsd));
-    SaveThreadDataAreaPtr(&Tsd);
-#else
-    /* Service application
-     * Configuration file in registry at:
-     * HKLM\System\CurrentControlSet\Services\[Svc name]\Parameters\ConfPath
-     */
-    if (isProcessService()) {
-        service_main(master_main, argc, argv);
-        clean_parent_exit(0);
+    /* Service application under WinNT */
+    if (isWindowsNT()) 
+    {
+        if (((argc == 1) && isProcessService()) 
+            || ((argc == 2) && !strcmp(argv[1], "--ntservice")))
+        {
+            service_main(master_main, argc, argv);
+            clean_parent_exit(0);
+        }
     }
+
+    /* This behavior is voided by setting real_exit_code to 0 */
+    atexit(hold_console_open_on_error);
+#endif
+
+#ifdef NETWARE
+    init_name_space();
+    signal(SIGTERM, signal_handler);
+    init_tsd();
 #endif
 
     /* Console application or a child process. */
@@ -6770,7 +6822,7 @@ int REALMAIN(int argc, char *argv[])
     }
 #else
     if(!GetCurrentDirectory(sizeof(cwd),cwd)) {
-       ap_log_error(APLOG_MARK,APLOG_WIN32ERROR, NULL,
+       ap_log_error(APLOG_MARK,APLOG_EMERG|APLOG_WIN32ERROR, NULL,
        "GetCurrentDirectory() failure");
        return -1;
     }
@@ -6796,6 +6848,8 @@ int REALMAIN(int argc, char *argv[])
 	    break;
 #ifdef WIN32
 	case 'Z':
+            /* Prevent holding open the (nonexistant) console */
+            real_exit_code = 0;
 	    exit_event = open_event(optarg);
 	    APD2("child: opened process event %s", optarg);
 	    cp = strchr(optarg, '_');
@@ -6808,11 +6862,6 @@ int REALMAIN(int argc, char *argv[])
 	    break;
         case 'n':
             service_name = ap_pstrdup(pcommands, optarg);
-            if (isValidService(optarg)) {
-                ap_registry_get_service_conf(pconf, ap_server_confname, sizeof(ap_server_confname),
-                                             optarg);
-                conf_specified = 1;
-            }
             break;
 	case 'i':
 	    install = 1;
@@ -6824,9 +6873,17 @@ int REALMAIN(int argc, char *argv[])
 	    ap_dump_settings = 1;
 	    break;
 	case 'k':
-	    signal_to_send = optarg;
+            if (!strcasecmp(optarg, "stop"))
+                signal_to_send = "shutdown";
+            else
+                signal_to_send = optarg;
 	    break;
 #endif /* WIN32 */
+#ifdef NETWARE
+        case 's':
+            DestroyScreen(GetCurrentScreen());
+            break;
+#endif
 	case 'd':
             optarg = ap_os_canonical_filename(pcommands, optarg);
             if (!ap_os_is_path_absolute(optarg)) {
@@ -6849,20 +6906,36 @@ int REALMAIN(int argc, char *argv[])
 	    ap_set_version();
 	    printf("Server version: %s\n", ap_get_server_version());
 	    printf("Server built:   %s\n", ap_get_server_built());
+#ifdef NETWARE
             clean_parent_exit(0);
+#else
+            clean_parent_exit(1);
+#endif
 
-	case 'V':
+        case 'V':
 	    ap_set_version();
 	    show_compile_settings();
+#ifdef NETWARE
             clean_parent_exit(0);
+#else
+            clean_parent_exit(1);
+#endif
 
 	case 'l':
 	    ap_show_modules();
+#ifdef NETWARE
             clean_parent_exit(0);
+#else
+            clean_parent_exit(1);
+#endif
 
 	case 'L':
 	    ap_show_directives();
+#ifdef NETWARE
             clean_parent_exit(0);
+#else
+            clean_parent_exit(1);
+#endif
 
 	case 'X':
 	    ++one_process;	/* Weird debugging mode. */
@@ -6884,6 +6957,31 @@ int REALMAIN(int argc, char *argv[])
         ThreadSwitch();
 #endif
     }       /* while  */
+
+#ifdef WIN32
+    if (!service_name && install) {
+        service_name = DEFAULTSERVICENAME;
+    }
+
+    if (service_name && isValidService(service_name)) 
+    {
+        ap_registry_get_service_conf(pconf, ap_server_confname, 
+                                     sizeof(ap_server_confname),
+                                     service_name);
+        conf_specified = 1;
+        if (install > 0) {
+            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, NULL,
+                         "Service \"%s\" is already installed!", service_name);
+            clean_parent_exit(1);
+        }
+    }
+    else if (service_name && (install <= 0))
+    {
+        ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, NULL,
+                     "Service \"%s\" is not installed!", service_name);
+        clean_parent_exit(1);
+    }
+#endif
 
     /* ServerConfFile is found in this order:
      * (1) -f or -n
@@ -6921,28 +7019,46 @@ int REALMAIN(int argc, char *argv[])
     ap_no2slash(ap_server_confname);
 
 #ifdef WIN32
+    /* Read the conf now unless we are uninstalling the service,
+     * or shutting down a running service 
+     * (but do read the conf for the pidfile if we shutdown the console)
+     */
+    if ((install >= 0) && (!service_name || !signal_to_send 
+                            || strcasecmp(signal_to_send,"shutdown"))) {
+        server_conf = ap_read_config(pconf, ptrans, ap_server_confname);
+    }
+
     if (install) {
         if (!service_name)
             service_name = ap_pstrdup(pconf, DEFAULTSERVICENAME);
         if (install > 0) 
-            InstallService(service_name, ap_server_root_relative(pcommands, ap_server_confname));
+            InstallService(service_name, ap_server_root_relative(pcommands, 
+                                                         ap_server_confname));
         else
             RemoveService(service_name);
-        clean_parent_exit(0);
-    }
-    
-    if (service_name && signal_to_send) {
-        send_signal_to_service(service_name, signal_to_send);
         clean_parent_exit(0);
     }
 
     if (service_name && !conf_specified) {
         printf("Unknown service: %s\n", service_name);
-        clean_parent_exit(0);
+        clean_parent_exit(1);
     }
-#endif
-    server_conf = ap_read_config(pconf, ptrans, ap_server_confname);
 
+    /* All NT signals, and all but the 9x start signal are handled entirely.
+     * Die if we failed, are on NT, or are not "start"ing the service
+     */
+    if (service_name && signal_to_send) {
+        if (send_signal_to_service(service_name, signal_to_send))
+            clean_parent_exit(0);
+        if (isWindowsNT() || strcasecmp(signal_to_send, "start"))
+            clean_parent_exit(1);
+        /* Still here?  Then we are hanging around to detach the console 
+         * and use this process as the Windows 9x service.
+         */
+    }
+#else /* ndef WIN32 */
+    server_conf = ap_read_config(pconf, ptrans, ap_server_confname);
+#endif
 #ifdef EAPI
     ap_init_alloc_shared(FALSE);
 #endif
@@ -6956,12 +7072,14 @@ int REALMAIN(int argc, char *argv[])
         clean_parent_exit(0);
     }
 
-    /* Treat -k start confpath as just -f confpath */
+#ifdef WIN32
+    /* Non-service Signals.  (Ignore -k start for now [with or without -n arg]) */
     if (signal_to_send && strcasecmp(signal_to_send, "start")) {
         send_signal(pconf, signal_to_send);
         clean_parent_exit(0);
     }
-    
+#endif
+
 #ifndef NETWARE
     if (!child && !ap_dump_settings) { 
         ap_log_pid(pconf, ap_pid_fname);
@@ -6970,13 +7088,15 @@ int REALMAIN(int argc, char *argv[])
 
     post_parse_init();
 
-#ifdef OS2
+#if defined(OS2)
     printf("%s running...\n", ap_get_server_version());
-#endif
-#if defined(WIN32) || defined(NETWARE)
+#elif defined(WIN32)
     if (!child) {
-	printf("%s running...\n", ap_get_server_version());
+        printf("%s running...\n", ap_get_server_version());
     }
+#elif defined(NETWARE)
+    clrscr();
+    printf("%s running...\n", ap_get_server_version());
 #endif
 
 #ifndef NETWARE
@@ -6992,7 +7112,7 @@ int REALMAIN(int argc, char *argv[])
 
     while((ap_thread_count) || (!shutdown_pending))
         ThreadSwitchWithDelay();
-#else
+#else 
     /*
      * In the future, the main will spawn off a couple
      * of children and monitor them. As soon as a child
@@ -7001,13 +7121,35 @@ int REALMAIN(int argc, char *argv[])
     if (child || one_process) {
 	if (!exit_event || !start_mutex)
 	    exit(-1);
+#ifdef WIN32
+	if (child)
+	    FreeConsole();
+#endif
 	worker_main();
 	ap_destroy_mutex(start_mutex);
 	destroy_event(exit_event);
+    } 
+#ifdef WIN32
+    else if (service_name && signal_to_send && !isWindowsNT()
+             && !strcasecmp(signal_to_send, "start")) {
+        /* service95_main will call master_main() */
+        service95_main(master_main, argc, argv, service_name);
     }
     else 
+    {
+	/* Let's go fishing for some signals including ctrl+c, ctrl+break,
+         * logoff, close and shutdown, while the server is running
+	 */
+	ap_start_console_monitor();
         master_main(argc, argv);
-#endif
+    }
+#else /* ndef WIN32 */
+    else 
+    {
+        master_main(argc, argv);
+    }
+#endif /* ndef WIN32 */
+#endif /* ndef NETWARE */
 
     clean_parent_exit(0);
     return 0;	/* purely to avoid a warning */
@@ -7130,6 +7272,14 @@ int main(int argc, char *argv[], char *envp[])
 	}
     }
 
+#ifdef MPE
+    /*
+     * MPE doesn't currently initialize the envp parameter.  Instead, we must
+     * use the global variable environ. 
+     */
+    envp = environ;
+#endif
+	
     /* 
      * create path to SHARED_CORE_EXECUTABLE_PROGRAM
      */

@@ -20,22 +20,46 @@
 </DIV>
 
 <H1 ALIGN="CENTER">Module mod_actions</H1>
-<P>
-This module is contained in the <CODE>mod_actions.c</CODE> file, and
-is compiled in by default. It provides for
-executing CGI scripts based on media type or request method. It is not
-present in versions prior to Apache 1.1.
+
+
+<p>This module provides for executing CGI scripts based on media type or
+request method.
+</p>
+
+<P><A
+HREF="module-dict.html#Status"
+REL="Help"
+><STRONG>Status:</STRONG></A> Base
+<BR>
+<A
+HREF="module-dict.html#SourceFile"
+REL="Help"
+><STRONG>Source File:</STRONG></A> mod_actions.c
+<BR>
+<A
+HREF="module-dict.html#ModuleIdentifier"
+REL="Help"
+><STRONG>Module Identifier:</STRONG></A> actions_module
+<BR>
+<A
+HREF="module-dict.html#Compatibility"
+REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.1 and later.
 </P>
+
 <H2>Summary</H2>
 <P>
-This module lets you run CGI scripts whenever a file of a certain type
-is requested. This makes it much easier to execute scripts that
+This module has two directives.  The Action directive lets you run CGI
+scripts whenever a file of a certain type is requested. The Script
+directive lets you run CGI scripts whenever a particular method is
+used in a request.  This makes it much easier to execute scripts that
 process files.
 </P>
+
 <H2>Directives</H2>
 <UL>
-<LI><A HREF="#action">Action</A>
-<LI><A HREF="#script">Script</A>
+<LI><A HREF="#action">Action</A></LI>
+<LI><A HREF="#script">Script</A></LI>
 </UL>
 
 <HR>
@@ -129,7 +153,9 @@ will proceed normally.
 Examples:
 </P>
 <PRE>
-    Script GET /cgi-bin/search     #<EM>e.g.</EM> for &lt;ISINDEX&gt;-style searching
+    # For &lt;ISINDEX&gt;-style searching
+    Script GET /cgi-bin/search
+    # A CGI PUT handler
     Script PUT /~bob/put.cgi
 </PRE>
 

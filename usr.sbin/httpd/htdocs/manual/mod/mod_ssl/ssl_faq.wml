@@ -69,7 +69,7 @@ author.
     <a name="<get-var ref>"></a>
     <strong id="faq">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.6/ssl_faq.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.7/ssl_faq.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
@@ -146,14 +146,15 @@ What are the major differences between mod_ssl and
 the commercial alternatives like Raven or Stronghold?
 </faq>
 
-    As of this writing (end of the year 1999) the major difference is
-    the RSA license which one receives (very cheaply in contrast to
+    In the past (until September 20th, 2000) the major difference was
+    the RSA license which one received (very cheaply in contrast to
     a direct licensing from RSA DSI) with the commercial Apache SSL
-    products. On the other hand, one needs this license only in the
-    US, of course. So for non-US citizens this point is useless. And
-    even for US citizens the situations is at least solved next year
-    (September 20th, 2000) when the RSA patent expires.
-        
+    products. On the other hand, one needed this license only in the US,
+    of course. So for non-US citizens this point was useless. But now
+    even for US citizens the situations changed because the RSA patent
+    expired on September 20th, 2000 and RSA DSI also placed the RSA
+    algorithm explicitly into the public domain.
+
     <p>
     Second, there is the point that one has guaranteed support from
     the commercial vendors. On the other hand, if you monitored the
@@ -184,13 +185,11 @@ the commercial alternatives like Raven or Stronghold?
     
     <p>
     So, in short: There are lots of commercial versions of the popular
-    Apache+mod_ssl+OpenSSL server combination available. And until the
-    RSA patent expires in the year 2000, US citizens have no choice,
-    of course. They have to buy one of the commercial versions. Non-US
-    citizens are not forced into this situation and should decide
-    carefully whether they really need to buy a commercial version or
-    whether it would not be sufficient to directly use the free and
-    official versions of the Apache, mod_ssl and OpenSSL packages.
+    Apache+mod_ssl+OpenSSL server combination available. Every user
+    should decide carefully whether they really need to buy a commercial
+    version or whether it would not be sufficient to directly use the
+    free and official versions of the Apache, mod_ssl and OpenSSL
+    packages.
 
 <faq ref="what-version" toc="mod_ssl/Apache versions?">
 How do I know which mod_ssl version is for which Apache version?
@@ -1119,8 +1118,8 @@ In case of problems you should search here first.
 <p>
 <ol>
 <li><em>Answers in the User Manual's F.A.Q. List (this)</em><br>
-    <a href="http://www.modssl.org/docs/2.6/ssl_faq.html">
-    http://www.modssl.org/docs/2.6/ssl_faq.html</a><br>
+    <a href="http://www.modssl.org/docs/2.7/ssl_faq.html">
+    http://www.modssl.org/docs/2.7/ssl_faq.html</a><br>
     First look inside the F.A.Q. (this text), perhaps your problem is such
     popular that it was already answered a lot of times in the past.
 <p>

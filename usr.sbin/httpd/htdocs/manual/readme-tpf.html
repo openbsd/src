@@ -9,6 +9,7 @@
 <HR>
 <CENTER>[&nbsp;<A HREF="#configuration_files">Configuration Files</A>
    &nbsp;|&nbsp;<A HREF="#whats_available">What's Available</A>
+   &nbsp;|&nbsp;<A HREF="#cgi">CGI Scripts</A>
    &nbsp;|&nbsp;<A HREF="#porting_notes">Porting Notes</A>&nbsp;]
 </CENTER>
 <HR>
@@ -157,6 +158,69 @@
    <LI>suexec.c
    </UL></MULTICOL>
 
+<A NAME="cgi">&nbsp;</A>
+<H2 align=center>How to Use CGI Scripts</H2>
+<P>
+   The following is a very simple example of a CGI script ("Hello World") and the necessary steps to run it.<BR>
+   Refer to the <A HREF="http://www.apache.org/docs/mod/mod_cgi.html">mod_cgi module</A> for 
+   additional information.<BR>
+   
+   <H3>Add necessary directives to httpd.conf:</H3>
+   <UL>
+   Example:
+   <tt><BR><UL> 
+         ScriptLog logs/script_log<BR>
+         ScriptAlias /cgi-bin/ /usr/local/apache/cgi-bin/
+   </tt></UL><BR>
+   A request for <tt>http://myserver/cgi-bin/filename.cgi</tt> would cause the server to run the script
+   <tt>/usr/local/apache/cgi-bin/filename.cgi</tt>
+   </UL>
+
+   <H3>Create the CGI script:</H3>
+   <UL>
+        For this example <tt>QZZ1</tt> is the name of the TPF program that will be executed by the CGI script.<BR>                
+        The directory path must match what is in the httpd.conf file for <tt>ScriptAlias</tt> directive.<BR><BR>
+        <UL>
+        <tt>zfile echo "#!QZZ1" > /usr/local/apache/cgi-bin/filename.cgi <BR><BR>
+        zfile cat /usr/local/apache/cgi-bin/filename.cgi&nbsp;&nbsp;&nbsp;&nbsp;</tt>
+                 (this should display<tt>#!QZZ1</tt>)<BR><BR>
+        </UL>
+   </UL>
+
+   <H3>Mark the script as executable:</H3>
+   <UL>
+        <tt>zfile chmod 755 /usr/local/apache/cgi-bin/filename.cgi<BR><BR></tt>
+   </UL>
+
+   <H3>Create, load, and activate a loadset containing the CGI program (QZZ1xx):</H3>
+   <UL> 
+        <code>
+        /**     QZZ1-- simple "Hello world" program to demonstrate basic CGI output  **/<BR><BR>
+        #include &LT;stdio.h&GT<BR><BR>
+        void main() {<BR><BR>
+        <UL>
+             /**   Print the CGI response header, required for all HTML output.    **/<BR>
+             /**   Note the extra \n, to send the blank line.                      **/<BR><BR>
+
+             printf("Content-type: text/html\n\n");<BR><BR>
+
+             /** Print the HTML response page to stdout. **/<BR>
+             printf("&LT;html&GT\n");<BR>
+             printf("&LT;head&GT&LT;title&GT CGI Output &LT;/title&GT&LT;/head&GT\n");<BR>
+             printf("&LT;body&GT\n");<BR>
+             printf("&LT;h1&GT Hello world &LT;/h1&GT \n");<BR>
+             printf("&LT/body&GT\n");<BR>
+             printf("&LT/html&GT\n");<BR><BR>
+        </UL>
+        }<BR>
+        </code>
+    </UL>
+
+   <H3>Request the CGI script from a browser:</H3>
+   <UL>         
+        <tt>http://myserver/cgi-bin/filename.cgi</tt><BR>
+   </UL>
+
 <A NAME="porting_notes">&nbsp;</A>
 <H2 align=center>Porting Notes</H2>
 <P>
@@ -201,6 +265,7 @@
 <CENTER>[&nbsp;<A HREF="#top">top</A>
    &nbsp;|&nbsp;<A HREF="#configuration_files">Configuration Files</A>
    &nbsp;|&nbsp;<A HREF="#whats_available">What's Available</A>
+   &nbsp;|&nbsp;<A HREF="#cgi">CGI Scripts</A>
    &nbsp;|&nbsp;<A HREF="#porting_notes">Porting Notes</A>&nbsp;]
 </CENTER>
 

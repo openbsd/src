@@ -122,6 +122,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-linux1"; exit 0
 	;;
 
+    GNU:*)
+	echo "${MACHINE}-GNU-GNU/Hurd"; exit 0
+	;;
+
     LynxOS:*)
 	echo "${MACHINE}-lynx-lynxos"; exit 0
 	;;
@@ -274,9 +278,9 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-apple-rhapsody${RELEASE}"; exit 0
 	;;
 
-    "Mac OS":*:*:*)
+    Darwin:*:*:*)
 	MACHINE=`uname -p`
-	echo "${MACHINE}-apple-macos${RELEASE}"; exit 0
+	echo "${MACHINE}-apple-darwin${RELEASE}"; exit 0
 	;;
 
     "RISC iX":*)

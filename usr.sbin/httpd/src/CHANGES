@@ -1,3 +1,397 @@
+Changes with Apache 1.3.14
+
+  *) Fixes to allow compilation on NetWare [Brad Nicholes
+     <bnicholes@novell.com>]
+
+Changes with Apache 1.3.13 [not released]
+
+  *) NOTE: A number of Win32 symbols were exported without explicit
+     declaration in the ApacheCore.def file.  These are now exported
+     with the same ordinal export values from 1.3.12, but are now
+     named consistent with Apache's conventions. [William Rowe]
+
+  *) Add support for a "conf directory" which operates similar to
+     /etc/rc.d/init. Basically, if a config file is actually a
+     directory, all the files in that directory will be parsed
+     as conf files. PR #6397 [Jim Jagielski, Lionel Clark
+     <bishop@platypus.bc.ca>]
+
+  *) Initial support added for mod_proxy under MPE/iX.
+     [Mark Bixby <mark_bixby@hp.com>]
+
+  *) Refined UID/GID management and permissions on MPE/iX to deal 
+     with some limitations. [Mark Bixby <mark_bixby@hp.com>]
+
+  *) Updated the MPE DSO code to be compatible with an OS patch that
+     fixed an earlier DSO problem,  #include tweakage required for 
+     using apxs to build modules without access to the full source 
+     tree, and other minor MPE tweaks.  
+     [Mark Bixby <mark_bixby@hp.com>]
+
+  *) Tighten up the syntax checking of Host: headers to fix a
+     security bug in some mass virtual hosting configurations
+     that can allow a remote attacker to retrieve some files
+     on the system that should be inaccessible. [Tony Finch]
+
+  *) Add support for /, //, //servername and //server/sharename 
+     parsing of <Directory > blocks under Win32 and OS2.
+     [Tim Costello, William Rowe, Brian Harvard]
+
+  *) Expand dbmmanage to allow -d -m -s -p options for Crypt, MD5,
+     SHA1 and plaintext password encodings.  Make feature tests a
+     bit more flexible.  [William Rowe]
+
+  *) Fix a security problem that affects some configurations of
+     mod_rewrite. If the result of a RewriteRule is a filename that
+     contains expansion specifiers, especially regexp backreferences
+     $0..$9 and %0..%9, then it may have been possible for an attacker
+     to access any file on the web server. [Tony Finch]
+
+  *) Add mod_auth_dbm (sdbm flavor) binary build for Win32.
+     [William Rowe]
+
+  *) Overhaul of dbmmanage to allow a groups arg (as in Apache 1.2)
+     as well as a comment arg to the add, adduser and update cmds.
+     update allows the user to clear or preserve pw/groups/comment.
+     Fixed a bug in dbmmanage that prevented the check option from 
+     parsing a password followed by :group... text.  Corrected the
+     seed calcualation for Win32 systems, and added -lsdbm support.
+     [William Rowe]
+
+  *) Radical surgery to improve mod_isapi support under Win32.
+     Includes a number of newer ServerSupportFunction calls, support
+     for ReadClient (in order to retrieve POSTs greater than 48KB),
+     and general bug fixes to more reliably load ISAPI .dll's and
+     prevent leaking handle resources.  Note: There are still 
+     discrepancies between IIS's and Apache's ServerVariables, and
+     async calls are still not supported.  Additional warnings are
+     logged to facilitate debugging of unsupported ISAPI calls.
+     [William Rowe]
+
+  *) Update Configure script to allow building Apache on IBM's
+     IA64 version of AIX. [Paul Reder]
+
+  *) NameVirtualHost can now take "*" as an argument instead of
+     an IP address. This allows you to create a purely name-based
+     virtual hosting server that does not have any IP addresses in
+     the configuration file and which ignores the local address
+     of any connections. PR #5595, PR #4455 [Tony Finch]
+
+  *) Fix processing/merging of Remove* MIME directives.
+     PR #5597 [Sander van Zoest <sander@covalent.net>]
+
+  *) Fix merging of AddDefaultCharset directive.
+     PR #5872 [Jun Kuriyama <kuriyama@imgsrc.co.jp>]
+    
+  *) Win32: Work around bug in Win32 select on network reads. Select
+     can indicate a socket has data to read, but the subsequent read
+     can return WSAEWOULDBLOCK. This problem has been observed
+     when running with SSL enabled Apache, specifically, browsers
+     sometimes cannot complete the SSL handshake when an SGC 
+     certificate is used, receiving a network error message.
+     [Richard Scholz richard.scholz@subito.de]
+
+  *) Use "accept filtering" on recent versions of FreeBSD iff the
+     kernel is configured to support them. This allows Apache to avoid
+     having to handle new connections until the request has arrived.
+     [Tony Finch]
+
+  *) Fix error handling in make_sock. [Tony Finch]
+
+  *) The htdocs/ tree has been moved out of the CVS source tree into
+     a separate area for easier development.  This has NO EFFECT on
+     end-users or Apache installations.  [Ken Coar]
+
+  *) Fix problem matching Configure guessos on HP-UX 10.
+     [Victor J. Orlikowski]  PR#6015
+
+  *) Correct the problem where the only local host name that the IP stack
+     can discover are 'undotted' private names.  If no fully qualified
+     domain name can be identified, the default ServerName will be set to
+     the machine's IP address string. A warning is provided if Apache has
+     to assume the IP dotted address string or the localhost/loopback
+     address as the ServerName.  The default ServerName is removed from
+     the default Win32 httpd.conf file.  [William Rowe]
+
+  *) Add new directives RemoveType and  RemoveEncoding to accompany the
+     RemoveHandler directive added in 1.3.4.  AddType, AddEncoding, and
+     AddHandler now all have corresponding 'undo' directives.  This allows
+     things like marking foo.tar.gz.asc as *not* being gzipped, so it will be
+     correctly interpreted as an unzipped signature of a gzipped file.
+     [Ken Coar]
+
+  *) Win32 NT and 2000 services now capture stderr messages that occur
+     before Apache's logs are opened to the Application Event Log.
+     Console and Win9x services now hold the console open for 30 seconds
+     (and may be dismissed with the <ESC> key) if they exit with an error.
+     [William Rowe]
+
+  *) Expand Win32 protection for pathname length, to provide protection
+     from future potential bugs such as that which caused directory index 
+     to be displayed rather than returning an error.
+     [William Rowe, Allan Edwards <ake@raleigh.ibm.com>]
+
+  *) USE_SYSVSEM_SERIALIZED_ACCEPT locking on OS/390
+     [Ovies Brabson]
+
+  *) Change Win32 the isProcessService() routine to compensate for other
+     helper apps that invoke Apache.exe without a console.  Recognize that
+     we are running NT, and use the STARTF_FORCEOFFFEEDBACK flag to be
+     sure that the SCM has invoked the process. [William Rowe,
+       Jim Patterson <jim-patterson@ncf.ca>, Kevin Kiley <TOKILEY@aol.com>]
+
+  *) Export from Win32 the ap_start_shutdown and ap_start_restart symbols 
+     for modules and executables dynamically linked to the core.
+     [William Rowe; Jim Patterson <jim-patterson@ncf.ca>]
+
+  *) Prevent the source code for CGIs from being revealed when using
+     mod_vhost_alias and the CGI directory is under the document root
+     and a user makes a request like http://www.example.com//cgi-bin/cgi
+     as reported in <news:960999105.344321@ernani.logica.co.uk>
+     [Tony Finch]
+
+  *) Under Win32, The console input mode is fixed to ignore mouse events 
+     and always listen for a Ctrl+C interrupt, even if the console window
+     defaults to another mode. [William Rowe]
+
+  *) All Win32 services will now perform a graceful restart when given
+     the -n servicename -k restart signal.  No equivilant control exists
+     in the service control panel applet or through the NET command.
+     There is no useful acknowledgement on Windows 95/98, however.
+     [William Rowe]
+
+  *) Significant overhaul of the Win32 port documentation contained in
+     the README-WIN.TXT, as well as the htdocs/manual pages windows.html,
+     win_compiling.html, and the new win_service.html.
+     [Andrew Braund <abraund@dingoblue.net.au>, William Rowe]
+
+  *) Add 'services' for Windows 95 and 98, including install/uninstall
+     options.  The Apache server therefore can start when the OS loads,
+     and will not stop between logoffs.  This implementation remains 
+     -HIGHLY EXPERIMENTAL-.  Additional changes provide for clean shutdown 
+     of Win95/98 when Apache is running as a 'service' or a console.  
+     [William Rowe, Jan Just Keijser <KEIJSERJJ@logica.com>]
+
+  *) USE_PTHREAD_SERIALIZED_ACCEPT on AIX 4.3 and above. This change
+     provides a substantial performance improvement on multi-CPU
+     machines serving large numbers of concurrent clients.  
+     [Victor J. Orlikowski <vjo@raleigh.ibm.com>]
+
+  *) Brought httpd.conf-dist-win into sync with httpd.conf-dist, and added
+     explicit documentation of many Win32 specific features. [William Rowe]
+
+  *) Convert Win32 build files (.dsp) to MSVC 6.0 format, and add perl
+     scripts cvstodsp5.pl and dsp5tocvs.pl for portability to version 5.0.
+     [William Rowe]
+
+  *) Fix mod_expires to merge its settings for Cache-Control into any
+     existing value for the field.  It was unconditionally setting it,
+     wiping out anything from, say, a 'Header Append Cache-Control'.
+     PR#5769 [Ken Coar]
+
+  *) Add Win32 option -k stop as an alias of -k shutdown, to correspond to
+     the NET START/NET STOP syntax. [William Rowe]
+
+  *) Force Apache to test the Win32 config prior to any operation,
+     except the [-k shutdown -n service] and [-u -n service] combinations.
+     [William Rowe]
+
+  *) Add Win32 Ctrl+C/Ctrl+Break/Close/Logoff/Shutdown handler.
+     [William Rowe, Jan Just Keijser <KEIJSERJJ@logica.com>]
+
+  *) Expand mod_setenvif so its directives can be used in <Files> and
+     <Directory> containers, and in .htaccess files when FileInfo
+     overriding is allowed.  PR#3000 [Ken Coar]
+
+  *) Fix Win32 bug when pathname length exactly equals MAX_PATH. 
+     This bug caused directory index to be displayed rather than
+     returning an error. [Allan Edwards <ake@raleigh.ibm.com>]
+
+  *) Correct mod_proxy Win95 dynamic link __declspec(thread) bug.
+     David Whitmarsh <david.whitmarsh@dial.pipex.com> 
+     PR: 1462, 2216, 3645
+  
+  *) Changed Apache for NetWare build to link with XDC data which
+     marks the NLMs as being able to run on any processor.
+     [Mike Gardiner <mgardiner@novell.com>]
+
+  *) Ported expat-lite to NetWare and integrated project files into the
+     ApacheNW.mcp. [Mike Gardiner <mgardiner@novell.com>]
+  
+  *) Switched thread storage data mechanism on NetWare to use updated
+     system calls. [Mike Gardiner <mgardiner@novell.com>]
+ 
+  *) Fixed problem with multilanguage support that prevented Apache on
+     NetWare from displaying the correct language page.
+     [Mike Gardiner <mgardiner@novell.com>]
+  
+  *) Fixed memory leaks on NetWare port.  When unloading Apache with
+     the developer option turned on NetWare would spew messages
+     complaining about unreleased resources.
+     [Mike Gardiner <mgardiner@novell.com>]   
+  
+  *) Fixed a problem that prevented Apache on NetWare from shutting down
+     correctly when loading multiple instances in individual address
+     spaces. [Mike Gardiner <mgardiner@novell.com>]
+
+  *) Changed threading primitives to use faster more scalable calls.
+     [Mike Gardiner <mgardiner@novell.com>]
+  
+  *) Added -s option for NetWare port to allow Apache to run without a
+     screen. [Mike Gardiner <mgardiner@novell.com>]
+  
+  *) Added code for NetWare port to display the listening ports and loaded
+     DSO modules to the console screen.
+     [Mike Gardiner <mgardiner@novell.com>]
+  
+  *) Removed ugly NetWare specific code from the modules and added libpre.c
+     and libprews.c instead.  These files implement the NLM startup code
+     for shared NLMs (DSOs).  The result of using these files is less
+     obtrusive code, faster load times, and a smaller executable size.
+     libprews.c contains WSAStartup and WSACleanup WinSock calls needed for
+     initialization and termination of DSO modules.
+     [Mike Gardiner <mgardiner@novell.com>]
+  
+  *) Moved htpasswd and htdigest projects files for NetWare into the main
+     ApacheNW.mcp project file. [Mike Gardiner <mgardiner@novell.com>]
+ 
+  *) Added mod_tls (SSL/TLS) module for NetWare SSL/TLS support.
+     [Mike Gardiner <mgardiner@novell.com>]
+
+  *) Updated httpd.conf-dist-nw with <IfModule> directives around
+     standard DSO modules. [Mike Gardiner <mgardiner@novell.com>]
+    
+  *) Correct mod_proxy Win32 garbage collection bug (clean failing
+     due to stat() against directory).
+     PR: 1891, 3278, 3640, 4139, 5997
+     [Michael Friedel <mfriedel@lbell.slctnet.com>]
+
+  *) Add '-n' option to htpasswd to make it print its user:pw record
+     on stdout rather than having to frob a text file.  [Ken Coar]
+
+  *) Set default ServerName setting to 127.0.0.1 for the Windows
+     config file (httpd.conf-dist-win)
+     PR: 5509, 5783, 5953, 5903, 5983, 5259, 5515, 5858
+     [Oliver Wendemuth <owendemuth@ko.hbv.de>]
+
+  *) [EBCDIC] Update mod_mmap_static so that an ebcdic box can use 
+     MMapFile for files that shouldn't be converted from ebcdic->ascii.
+     [Greg Ames <gregames@us.ibm.com>]
+
+  *) Revamp the Win32 make environment. Apache.dsw created to bring 
+     together all the pieces. Create new file os/win32/BaseAddr.ref 
+     to define module base addresses (to prevent dll relocation at 
+     start-up).  Extraneous compiler files were removed (precompiled
+     headers, incremental link images), and .map files were added
+     for consistent diagnostics of gpfaults of the binary release.
+     [William Rowe, Greg Marr, Tim Costello, Bill Stoddard]
+
+  *) Resolved Win32 mod_info (ApacheModuleInfo.dll) errors.
+     PR1442, PR2472, PR4125, PR1643 and PR2208
+     Jim Patterson, Jan Just Keijser <KEIJSERJJ@logica.com>
+
+  *) Add some more error reporting to htpasswd in the case of problems
+     generating or accessing the temporary file.  Also, pass in a
+     buffer if the implementation knows how to use it (i.e., if L_tmpnam
+     is defined).  [Ken Coar]  PR#3945, 5253, 5383, 5558
+
+  *) PORT: Add recognition of the GNU/Hurd platform.
+     [Adam Farrell <skate111@stampede.org>]
+
+  *) More FAQs and answers from comp.infosystems.www.servers.unix.
+     [Joshua Slive <slive@finance.commerce.ubc.ca>]
+
+  *) Win32: Add dependency checking to the CreateService call to ensure 
+     TCPIP and AFP (winsock) are started before Apache.
+     [William Rowe <wrowe@lnd.com>]
+
+  *) FAQ changes related to tidying up historical documents on the web site.
+     [Joshua Slive <slive@finance.commerce.ubc.ca>]
+
+  *) Various fixes to mod_auth_digest:
+      - Reworked MD5-sess stuff. The semantics of userpw_hash() have been
+	changed for it to return
+            MD5(MD5(username ":" realm ":" password) ":" nonce ":" cnonce)
+	instead of just
+	    MD5(username ":" realm ":" password)
+	because one of the points of MD5-sess is to allow the info to be
+	retrieved from login servers so that the server itself never has
+	the full auth info (after all, MD5(u/r/p) is equivalent to the
+	password for auth purposes).
+      - In order to allow for servers to share a realm the server-name
+	and port have been removed from the nonce-hash. Even so, sharing
+	the realm has problems - see the new comments at the beginning.
+      - Fixed uri-comparison when request-uri isn't identical to uri in
+	Authorization header (some fields were not being initialized).
+      - Handle non-FQDN's (i.e. simple hostnames) in uri parameter in
+	the Authorization header. Thanks to Joe Orton
+	<joe@orton.demon.co.uk> for pointing out the problem.
+      [Ronald Tschalär]
+
+  *) Add case_preserved_filename field to the request_rec structure.
+     On systems with case insensitive file systems (Windows, OS/2, etc.), 
+     r->filename is case canonicalized (folded to either lower or upper 
+     case, depending on the specific system) to accomodate file access
+     checking. case_preserved_filename is the same as r->filename 
+     except case is preserved. There is at least one instance where Apache 
+     needs access to the case preserved filename: Java class files published 
+     with WebDAV need to preserve filename case to make the Java compiler 
+     happy. [Bill Stoddard]
+
+  *) Put in Korean and Norwegian index.html pages (2.0 and 1.3)
+     which where donated by Lee Kuk Hyun and Lorant Czaran [dirkx].
+
+  *) Modules which load third-party DLLs (ala mod_dav)
+     expect them to be in the path or cwd.  Tweak the
+     service startup code to not only change to correct
+     drive but also correct directory.
+     [Keith Wannamaker <wannamaker@us.ibm.com>]
+
+  *) WinNT: Do a better job at handling spaces in service names.
+     Add the util function ap_remove_spaces and export it on all
+     platforms. Change some Win32 service and registry functions to 
+     make use of this new function. 
+     [Keith Wannamaker <wannamaker@us.ibm.com>]
+
+  *) use send/recv instead of write/read in proxy_connect -- fixes
+     https through proxy on NT.  [willem.vanpelt@philips.com]
+     PR 5963, 5899, 5823, 5107, 4990?, 4885, 4680, 4468, 3801, 2014
+
+  *) [EBCDIC] Make chunked encoding work again; it was broken by the
+     recent CRLF macro changes. An oversight. [Martin Kraemer]
+
+  *) Work around a popular restriction of some sed(1)'s in APACI where
+     "1,/<pattern>/" commands start searching for <pattern> at line 2 only.
+     [Ralf S. Engelschall]
+
+  *) Merged in a small subset of SGI's latest `10x' patchkit for Apache
+     1.3.11. The extracted and merged in parts are entirely cleanup and
+     non-performance related changes only. SGI's remaining changes are
+     not taken over, because they are either cluttering the Apache 1.3
+     sources too much (e.g. the lint(1) related changes) or cause too
+     much internal changes (e.g. the ap_int32 types, etc.) which are not
+     reasonable to do any longer for Apache 1.3 (they should be done for
+     Apache 2.0 instead).
+     [Mike Abbott <mja@sgi.com>, Ralf S. Engelschall]
+
+  *) Fixes to mod_proxy for BeOS support.
+     [David Reid <dreid@jetnet.co.uk>]
+
+  *) Fix return value calculation in APXS' error messages.
+     This should avoid the confusion on APXS errors.
+     [Ralf S. Engelschall]
+
+  *) Make ApacheBench (ab) compile again stand-alone under 
+     -DNO_APACHE_INCLUDES.
+     [Ralf S. Engelschall]
+
+  *) The ServerTokens directive now accepts the 'ProductOnly' keyword,
+     which results in the display of just 'Apache' with no version
+     information.  Additional product tokens are still only visible
+     with ServerTokens Full.  In addition, ServerTokens now complains
+     about bogus keywords (which it used to silently treat as 'Full').
+     [Ken Coar]
+
 Changes with Apache 1.3.12
 
   *) Only OS/2 requires the addition "t" flag for ap_pfopen()
@@ -6182,8 +6576,7 @@ Changes with Apache 1.2b5
 
   *) Added description of "." mode in server-status [Jim Jagielski]
 
-
-Changes with Apache 1.2b4:
+Changes with Apache 1.2b4
 
   *) Fix possible race condition in accept_mutex_init() that
      could leave a small security hole open allowing files to be
@@ -6359,11 +6752,11 @@ Changes with Apache 1.2b2:
         NCR Unix         (-ncr-sysv4)
      and fixed something in helpers/PrintPath  [Ben Laurie]
 
-Changes with Apache 1.2b1:
+Changes with Apache 1.2b1
 
   *) Not listed. See <http://www.apache.org/docs/new_features_1_2.html>
 
-Changes with Apache 1.1.1:
+Changes with Apache 1.1.1
 
   *) Fixed bug where Cookie module would make two entries in the
      logfile for each access [Mark Cox]
@@ -6377,7 +6770,7 @@ Changes with Apache 1.1.1:
 
   *) Fix misspelling of "Anonymous_Authorative" directive in mod_auth_anon.
 
-Changes with Apache 1.1.0:
+Changes with Apache 1.1.0
 
   *) Bring NeXT support up to date. [Takaaki Matsumoto]
 
@@ -6399,7 +6792,7 @@ Changes with Apache 1.1.0:
         c) Leading colons were stripped from passwords [osm@interguide.com]
         d) Another fix to multi-method Limit problem [jk@tools.de]
 
-Changes with Apache 1.1b4:
+Changes with Apache 1.1b4
 
   *) r->bytes_sent variable restored. [Robert Thau]
 
@@ -6424,7 +6817,7 @@ Changes with Apache 1.1b4:
         c) compile warnings on several systems
         d) problems when scripts stop reading output early
 
-Changes with Apache 1.1b3:
+Changes with Apache 1.1b3
 
   *) Much of cgi-bin and all of cgi-src has been removed, due to
      various security holes found and that we could no longer support
@@ -6473,18 +6866,18 @@ Changes with Apache 1.1b3:
         e) closing fd's twice in mod_include (causing core dumps on
            Linux and elsewhere).
 
-Changes with Apache 1.1b2:
+Changes with Apache 1.1b2
 
   *) Bugfixes:
         a) core dumps in mod_digest
         b) truncated hostnames/ip address in the logs
         c) relative URL's in mod_imap map files
 
-Changes with Apache 1.1b1:
+Changes with Apache 1.1b1
 
   *) Not listed. See <http://www.apache.org/docs/new_features_1_1.html>
 
-Changes with Apache 1.0.3:
+Changes with Apache 1.0.3
 
   *) Internal redirects which occur in mod_dir.c now preserve the
      query portion of a request (the bit after the question mark).
@@ -6571,11 +6964,11 @@ Changes with Apache 1.0.1
 
   *) Fix typo in license. [David Robinson]
 
-Changes with Apache 1.0.0
+Changes with Apache 1.0.0                                        23 Nov 1995
 
   *) Not listed. See <http://www.apache.org/docs/new_features_1_0.html>
 
-Changes with Apache 0.8.16
+Changes with Apache 0.8.16                                       05 Nov 1995
 
   *) New man page for 'httpd' added to support directory [David Robinson]
 
@@ -6614,7 +7007,7 @@ Changes with Apache 0.8.16
   *) Fixed bug involving handling URIs with escaped %-characters
      in redirects [David Robinson]
 
-Changes with Apache 0.8.15
+Changes with Apache 0.8.15                                       14 Oct 1995
 
   *) Switched to new, simpler license
 
@@ -6669,7 +7062,7 @@ Changes with Apache 0.8.15
   *) Doesn't send itself SIGHUP on startup when run in the -X debug-only mode
      [Ben Laurie]
 
-Changes with Apache 0.8.14
+Changes with Apache 0.8.14                                       19 Sep 1995
 
   *) Compiles on SCO ODT 3.0 [Ben Laurie]
 
@@ -6687,7 +7080,7 @@ Changes with Apache 0.8.14
 
   *) Nuked another compiler warning for -Wall on Linux [Aram Mirzadeh]
 
-Changes with Apache 0.8.13
+Changes with Apache 0.8.13                                       07 Sep 1995
 
   *) Make IndexIgnore *work* (ooops) [Jarkko Torppa]
 
@@ -6719,7 +7112,7 @@ Changes with Apache 0.8.13
   *) Suppress -Wall warning by initializing variable in negotiation code
      [Tobias Weingartner]
 
-Changes with Apache 0.8.12
+Changes with Apache 0.8.12                                       31 Aug 1995
 
   *) Doesn't pause three seconds after including a CGI script which is
      too slow to die off (this is done by not even trying to kill off
@@ -6757,7 +7150,7 @@ Changes with Apache 0.8.12
 
   *) Cleaned up comments in mod_cgi.c [Robert Thau]
 
-Changes with Apache 0.8.11
+Changes with Apache 0.8.11                                       24 Aug 1995
 
   *) Wildcard <Directory> specifications work.  [Robert Thau]
 
@@ -6802,8 +7195,7 @@ Changes with Apache 0.8.11
      NCSA code did not check Options ExecCGI in ScriptAlias directories).
      [Robert Thau]
 
-
-Changes with Apache 0.8.10
+Changes with Apache 0.8.10                                       18 Aug 1995
 
   *) AllowOverride applies to the named directory, and not just
      subdirectories.  [David Robinson]
@@ -6815,7 +7207,7 @@ Changes with Apache 0.8.10
      lot of "server hang" problems with Solaris.  [David Robinson;
      thanks to Merten Schumann for help diagnosing the problem].
 
-Changes with Apache 0.8.9
+Changes with Apache 0.8.9                                        12 Aug 1995
 
   *) Compiles with -DMAXIMUM_DNS ---- ooops! [Henrik Mortensen]
 
@@ -6865,7 +7257,7 @@ Changes with Apache 0.8.9
      it seems to work well enough without it (even in a 10 hits/sec
      workout), and the overhead for the locking under A/UX is
      alarmingly high (though it is very low on other systems).
-     [Eric Hagberg]
+     [Eric Hagberg, Jim Jagielski]
 
   *) Fixed portability problems with mod_cookies.c [Cliff Skolnick]
 
@@ -6878,7 +7270,7 @@ Changes with Apache 0.8.9
 
   *) Compiles clean on SGI [Robert Thau]
 
-Changes with Apache 0.8.8
+Changes with Apache 0.8.8                                        08 Aug 1995
 
   *) SunOS library prototypes now never included unless explicitly
      requested in the configuration (via -DSUNOS_LIB_PROTOTYPES);
@@ -6894,7 +7286,7 @@ Changes with Apache 0.8.8
   *) Strips trailing '/' characters off both args to the Alias command,
      to make 'Alias /foo/ /bar/' work.
 
-Changes with Apache 0.8.7
+Changes with Apache 0.8.7                                        03 Aug 1995
 
   *) Don't hang when restarting with a child from 'TransferLog "|..."' running
      [reported by David Robinson]
@@ -6905,7 +7297,7 @@ Changes with Apache 0.8.7
      experimental LogFormat support) to CHANGES file in distribution root
      directory
 
-Changes with Apache 0.8.6
+Changes with Apache 0.8.6                                        02 Aug 1995
 
   *) Deleted Netscape reload workaround --- it's in violation of HTTP specs.
      (If you actually wanted a conditional GET which bypassed the cache, you
@@ -6924,7 +7316,7 @@ Changes with Apache 0.8.6
 
   *) Scoreboard file (/tmp/htstatus.*) no longer publically writable.
 
-Changes with Apache 0.8.5
+Changes with Apache 0.8.5                                        01 Aug 1995
 
   *) Added last-minute configurable log experiment, as optional module
 
@@ -6939,7 +7331,8 @@ Changes with Apache 0.8.5
 
   *) Added parameter to set maximum number of server processes.
 
-  *) Added patches to make it work on A/UX.  A/UX is *weird*.  [Eric Hagberg]
+  *) Added patches to make it work on A/UX.  A/UX is *weird*.  [Eric Hagberg,
+     Jim Jagielski]
 
   *) IdentityCheck bugfix [Chuck Murcko].
 
@@ -7012,7 +7405,7 @@ Changes with Apache 0.8.3
      deleted his old, and no doubt non-functional email address).  Would be
      nice to have examples of new features...
 
-Changes with Apache 0.8.2
+Changes with Apache 0.8.2                                        19 Jul 1995
 
   *) Added AddLanuage code [Florent Guillaume]
 
@@ -7053,7 +7446,7 @@ Changes with Apache 0.8.1
   *) Don't mung directory listings with very long filenames.
      [Florent Guillaume]
 
-Changes with Apache 0.8.0 (nee Shambhala 0.6.2):
+Changes with Apache 0.8.0 (nee Shambhala 0.6.2)                  16 Jul 1995
 
   *) New config script.  See INSTALL for info.  [Robert Thau]
 
@@ -7113,7 +7506,7 @@ Changes with Apache 0.8.0 (nee Shambhala 0.6.2):
   *) Another acc-related fix.  (It doesn't like const char
      in some places...). [Mark Cox]
 
-Changes with 0.6.1
+Changes with Shambhala 0.6.1                                     13 Jul 1995
 
   *) Fixed auth_name-related typos in http_core.c [Brian Behlendorf]
      Also, fixed auth typo in http_protocol.c unmasked by this fix.
@@ -7134,7 +7527,7 @@ Changes with 0.6.1
   *) No longer kills off nph- child processes before they are
      finished sending output. [Matthew Gray]
 
-Changes with 0.6.0
+Changes with Shambhala 0.6.0                                     10 Jul 1995
 
   *) Two styles of timeout --- hard and soft.  soft_timeout()s just put
      the connection to the client in an "aborted" state, but otherwise
@@ -7181,7 +7574,7 @@ Changes with 0.6.0
      directories.  (On Linux, readdir() returns a pointer to the same
      memory area every time).  Fix is in mod_dir.c.  [Paul Sutton]
 
-Changes with 0.5.3 [not released]
+Changes with Shambhala 0.5.3 [not released]
 
   *) Default response handler notes "file not found" in the error log,
      if the file was not found.  [Cliff Skolnick].
@@ -7190,7 +7583,7 @@ Changes with 0.5.3 [not released]
      code no longer sets up bogus PATH_INFO which fakes out the directory
      handler). [Cliff Skolnick]
 
-Changes with 0.5.2
+Changes with Shambhala 0.5.2                                     06 Jul 1995
 
   *) Changes to http_main.c --- root server no longer plays silly
      games with SIGCHLD, and so now detects and replaces dying
@@ -7210,7 +7603,7 @@ Changes with 0.5.2
   *) More directory handling bugs (reported by Cox)
      Parent Directory link is now set correctly. [Robert Thau]
 
-Changes with 0.5.1: [Hopefully complete]                  10 Apr 1995
+Changes with Shambhala 0.5.1                                     04 Jul 1995
 
   *) Generalized cleanup interface in alloc.c --- any function can be
      registered with alloc.c as a cleanup for a resource pool;
@@ -7252,18 +7645,156 @@ Changes with 0.5.1: [Hopefully complete]                  10 Apr 1995
 
   *) CHANGES file added to distribution ;-).
 
-Changes with 0.4                                          02 Apr 1995
+Changes with Shambhala 0.4.5
+
+  *) mod_dld --- early dynamic loading support [rst]
+  *) Add wildcard content handlers for XBITHACK; default_hander now
+     invoked with that mechanism (as a handler hanging off mod_core) [rst]
+  *) XBITHACK supported as a wildcard content-handler, and 
+     configurable at run-time (not just at compile time, as in the
+     "patchy server" releases) [rst]
+
+Changes with Shambhala 0.4.4                                     30 Jun 1995
+
+  *) Fixed basic thinkos in mod_dbm_auth.c [rst, reported by Mark Cox]
+  *) Handle Addtype x/y .z [rst, reported by Cox]
+
+Changes with Shambhala 0.4.3
+
+  *) Fixed very dumb bug in mod_alias; "Alias" and "Redirect" are not
+     synonymous [rst, terbush]
+
+Changes with Shambhala 0.4.1                                     28 Jun 1995
+
+  *) First-cut virtual host implementation; some refit in the config
+     reading code, and log management, was necessary to support this [rst]
+  *) Sub-pool machinery, originally added to avoid excessive storage
+     allocation on listings of large directories (which turned out to
+     be the problem that the 0.3 storage accounting was added to
+     find).  Subrequests and mod_dir changed to use subpools.  [rst]
+  *) More memory debugging --- free list consistency checks. [rst]
+  *) Added err_headers to request_rec, with support elsewhere [rst]
+  *) Other fixes to minor bugs in mod_dir and mod_includes [rst, terbush]
+
+Changes with Shambhala 0.3                                       19 Jun 1995
+
+  *) Switch ONE_PROCESS to a runtime command-line option (-X)
+  *) Don't compile in mod_ai_backcompat by default
+  *) Switch name of server from Apache to Shambhala in Makefile
+  *) Add some accounting routines to track memory usage in the pools,
+     for debugging
+
+Changes with Shambhala 0.2
+
+  *) Set DOCUMENT_ROOT CGI variable
+  *) Add single-process debugging, as a compile-time option (ONE_PROCESS)
+  *) Add critical section protection to handling of cleanup structures 
+     in alloc.c [rst]
+  *) Significant code reorg within the server core to group related
+     functions together [rst]
+  *) Correctly handle clients that hang up before sending any request
+     [rst]
+  *) Replace dying child processes. [rst]
+
+Changes with Shambhala 0.1                                       12 Jun 1995
+
+   Major rewrite of the pre-existing "patchy server" codebase, by
+   Robert Thau (rst).  Significant portions of the server code, such
+   as configuration-file handling and HTTP authentication support,
+   were ripped out and rewritten from scratch.  Code that was not
+   completely rewritten was significantly altered.
+
+   Major changes with this release include:
+
+   *) Introduction of the module API; in request handling, the central 
+      machinery just dispatches to various modules, which actually do
+      most of the work.  Configuration handling is similar --- modules
+      declare their own commands, and the central machinery just
+      dispatches to them.  
+
+      API features from shambhala/0.1 were substantially unchanged in
+      Apache 1.0 and 1.1.  (1.0 API features not yet present in this
+      release, such as wildcard handlers and subpools, were added in
+      subsequent Shambhala releases, and were also generally rst's
+      work). 
+
+   *) This release included the following modules:
+
+      mod_access      (access control --- allow and deny directives),
+      mod_alias       (Alias and Redirect commands),
+      mod_auth        (straight HTTP authentication, based on flat-files)
+      mod_auth_dbm    (same, with dbm files)
+      mod_cgi         (CGI scripts and, in this release, ScriptAlias)
+      mod_common_log  (CLF access logs; later renamed mod_log_common)
+      mod_dir         (directory indexing)
+      mod_include     (server-side includes)
+      mod_mime        (AddType directives)
+      mod_negotiation (content negotiation)
+      mod_userdir     (support for users' public_html directories)
+
+      It also included a mod_ai_backcompat, which was a private hack
+      for back-compatibility with rst's own AI-lab servers.
+
+      All of these modules were substantially complete, and functional 
+      or nearly so (a few, which implemented features not in use at
+      Thau's site, required patches of a few lines).
+
+   *) sub-request machinery, to allow modules to determine how other
+      modules would assign MIME types to a given file, or optionally
+      serve its content (this is heavily used by mod_dir, mod_include
+      and mod_negotiation).
+
+   *) Resource pool system for keeping track of memory allocated and
+      files opened in service of a particular request.  Much of the
+      code in the modules (when they weren't rewrites) was adjusted to 
+      replace a pervasive convention of using fixed-size buffers on
+      the stack with an equally pervasive convention of using memory
+      allocated with palloc().
+
+   *) Reorganization of data structures associated with a given
+      request to eliminate use of global variables and the troublesome 
+      unmunge_name function (used in NCSA and early Apache releases to 
+      attempt to determine the URI which mapped to a given filename
+      --- a difficult proposition, given that it is easy to produce
+      setups in which multiple URIs map to the same file).
+
+   *) Source files renamed and rearranged
+
+   *) Very simple pre-forking behavior --- parent process forked off a 
+      fixed number of children, and then just waited for SIGHUP.
+
+   *) Other more minor changes too numerous to list.
+
+   This release included modified versions of a lot of code from the
+   Apache 0.6.4 public release, plus an early pre-forking patch
+   codeveloped by Robert Thau and Rob Hartill.
+
+Changes with Apache 0.7.3                                        20 Jun 1995
+
+   *) There were a bunch of changes between Apache 0.6.4 and 0.7.3 that
+      were incorporated by Rob Hartill on the main branch while Robert Thau
+      worked on the Shambhala rewrite above.  Most were merged into the
+      Shambala architecture after Apache 0.8.0.
+
+Changes with Apache 0.6.4                                        13 May 1995
+
+   *) Patches by Rob Hartill, Cliff Skolnick, Randy Terbush, Robert Thau,
+      and others.
+
+Changes with Apache 0.5.1                                        10 Apr 1995
+
+Changes with Apache 0.4                                          02 Apr 1995
 
   *) Patches by Brian Behlendorf, Andrew Wilson, Robert Thau,
      and Rob Hartill.
 
-Changes with 0.3                                          24 Mar 1995
+Changes with Apache 0.3                                          24 Mar 1995
 
   *) Patches by Robert Thau, David Robinson, Rob Hartill, and
-     Carlos Varela
+     Carlos Varela.
 
-Changes with 0.2                                          18 Mar 1995
+Changes with Apache 0.2                                          18 Mar 1995
 
   *) Based on NCSA httpd 1.3 by Rob McCool and patches by CERT,
      Roy Fielding, Robert Thau, Nicolas Pioch, David Robinson,
-     Brian Behlendorf, Rob Hartill, and Cliff Skolnick
+     Brian Behlendorf, Rob Hartill, and Cliff Skolnick.

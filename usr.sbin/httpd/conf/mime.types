@@ -31,6 +31,7 @@ application/index.cmd
 application/index.obj
 application/index.response
 application/index.vnd
+application/iotp
 application/ipp
 application/mac-binhex40	hqx
 application/mac-compactpro	cpt
@@ -61,7 +62,6 @@ application/prs.cww
 application/prs.nprend
 application/remote-printing
 application/riscos
-application/rtf			rtf
 application/sdp
 application/set-payment
 application/set-payment-initiation
@@ -81,6 +81,9 @@ application/vnd.anser-web-certificate-issue-initiation
 application/vnd.anser-web-funds-transfer-initiation
 application/vnd.audiograph
 application/vnd.businessobjects
+application/vnd.bmi
+application/vnd.canon-cpdl
+application/vnd.canon-lips
 application/vnd.claymore
 application/vnd.commerce-battelle
 application/vnd.commonspace
@@ -89,6 +92,7 @@ application/vnd.cosmocaller
 application/vnd.cups-postscript
 application/vnd.cups-raster
 application/vnd.cups-raw
+application/vnd.ctc-posml
 application/vnd.cybank
 application/vnd.dna
 application/vnd.dpgraph
@@ -105,6 +109,8 @@ application/vnd.epson.msf
 application/vnd.epson.quickanime
 application/vnd.epson.salt
 application/vnd.epson.ssf
+application/vnd.ericsson.quickcall
+application/vnd.eudora.data
 application/vnd.fdf
 application/vnd.ffsns
 application/vnd.framemaker
@@ -113,13 +119,22 @@ application/vnd.fujitsu.oasys2
 application/vnd.fujitsu.oasys3
 application/vnd.fujitsu.oasysgp
 application/vnd.fujitsu.oasysprs
+application/vnd.fujixerox.ddd
 application/vnd.fujixerox.docuworks
+application/vnd.fujixerox.docuworks.binder
 application/vnd.fut-misnet
+application/vnd.grafeq
+application/vnd.groove-account
+application/vnd.groove-identity-message
+application/vnd.groove-injector
+application/vnd.groove-tool-message
+application/vnd.groove-tool-template
 application/vnd.hp-HPGL
 application/vnd.hp-PCL
 application/vnd.hp-PCLXL
 application/vnd.hp-hpid
 application/vnd.hp-hps
+application/vnd.hzn-3d-crossword
 application/vnd.ibm.MiniPay
 application/vnd.ibm.modcap
 application/vnd.intercon.formnet
@@ -189,6 +204,7 @@ application/vnd.powerbuilder75-s
 application/vnd.previewsystems.box
 application/vnd.publishare-delta-tree
 application/vnd.rapid
+application/vnd.s3sms
 application/vnd.seemail
 application/vnd.shana.informed.formdata
 application/vnd.shana.informed.formtemplate
@@ -198,6 +214,7 @@ application/vnd.street-stream
 application/vnd.svd
 application/vnd.swiftview-ics
 application/vnd.triscape.mxs
+application/vnd.trueapp
 application/vnd.truedoc
 application/vnd.ufdl
 application/vnd.uplanet.alert
@@ -214,10 +231,13 @@ application/vnd.uplanet.listcmd
 application/vnd.uplanet.listcmd-wbxml
 application/vnd.uplanet.signal
 application/vnd.vcx
+application/vnd.vectorworks
 application/vnd.visio
-application/vnd.wap.wbxml
-application/vnd.wap.wmlc
-application/vnd.wap.wmlscriptc
+application/vnd.wap.sic
+application/vnd.wap.slc
+application/vnd.wap.wbxml	wbxml
+application/vnd.wap.wmlc	wmlc
+application/vnd.wap.wmlscriptc	wmlsc
 application/vnd.webturbo
 application/vnd.wrq-hp3000-labelled
 application/vnd.wt.stf
@@ -269,6 +289,7 @@ audio/mpeg			mpga mp2 mp3
 audio/vnd.cns.anp1
 audio/vnd.cns.inf1
 audio/vnd.digital-winds
+audio/vnd.everad.plj
 audio/vnd.lucent.voice
 audio/vnd.nortel.vbk
 audio/vnd.octel.sbc
@@ -297,10 +318,12 @@ image/vnd.dwg
 image/vnd.dxf
 image/vnd.fastbidsheet
 image/vnd.fpx
+image/vnd.fujixerox.edmics-mmr
+image/vnd.fujixerox.edmics-rlc
 image/vnd.mix
 image/vnd.net-fpx
 image/vnd.svf
-image/vnd.wap.wbmp
+image/vnd.wap.wbmp		wbmp
 image/vnd.xiff
 image/x-cmu-raster		ras
 image/x-portable-anymap		pnm
@@ -323,7 +346,11 @@ model/iges			igs iges
 model/mesh			msh mesh silo
 model/vnd.dwf
 model/vnd.flatland.3dml
+model/vnd.gdl
+model/vnd.gs-gdl
 model/vnd.gtw
+model/vnd.mts
+model/vnd.vtu
 model/vrml			wrl vrml
 multipart/alternative
 multipart/appledouble
@@ -350,6 +377,7 @@ text/richtext			rtx
 text/rtf			rtf
 text/sgml			sgml sgm
 text/tab-separated-values	tsv
+text/t140
 text/uri-list
 text/vnd.abc
 text/vnd.flatland.3dml
@@ -359,8 +387,11 @@ text/vnd.in3d.3dml
 text/vnd.in3d.spot
 text/vnd.latex-z
 text/vnd.motorola.reflex
-text/vnd.wap.wml
-text/vnd.wap.wmlscript
+text/vnd.ms-mediapackage
+text/vnd.wap.si
+text/vnd.wap.sl
+text/vnd.wap.wml		wml
+text/vnd.wap.wmlscript		wmls
 text/x-setext			etx
 text/xml			xml
 video/mpeg			mpeg mpg mpe

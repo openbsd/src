@@ -71,7 +71,8 @@ So here are all the details on how to get Apache and how to get it where it need
        <br><br>
    <li>Extract the archived files necessary for compiling Apache:  
        <ul>
-           <li><tt><b>pax -rvkf <i>open_edition_filename.tar</i> -o from=ISO8859-1,to=IBM-1047 "*/src"</b></tt>
+           <li><tt><b>pax -rvkf <i>open_edition_filename.tar</i> -o from=ISO8859-1,to=IBM-1047 "*/src"</b></tt><br>
+               (any errors extracting files outside of the "src" directory can be ignored)
            <li>switch to the source code subdirectory of the newly extracted apache directory: <tt><b>cd <i>apache-1.3</i>/src</b></tt>
            <li>remove unnecessary subdirectories:
                <tt><b>rm -r os/bs2000 os/mpeix os/netware os/os2 os/os390 os/win32</b></tt>
@@ -117,7 +118,7 @@ are case sensitive, and must be made from the "src" directory.
         if you feel so inclined.
     <BR><BR>
     <LI>Comment out (by preceding the line with a "#") lines corresponding
-        to those modules you DO&nbsp;NOT wish to include.
+        to those modules you do&nbsp;not wish to include.
     <BR><BR>
     <LI>Uncomment (by removing the initial "#", if present) lines
         corresponding to those optional modules you wish
@@ -135,20 +136,24 @@ HREF="http://www.apache.org/dist/contrib/modules/">http://www.apache.org/dist/co
     There are instructions on that page for linking these modules into the core Apache
     code.
     <BR><BR>
-<LI>Set the TPF environment variables:
+<LI><A NAME="export"></A>Set the TPF environment variables:
     <TT><STRONG>.&nbsp;os/tpf/TPFExport</STRONG></TT>
     <BR>
-    (The initial period and blank on the command are required to ensure
-    the environment variables exist beyond the scope of the shell script.)
+    <br><font color=red size=4>TIP:</font>
+    The initial period and blank on the command are required to ensure
+    the environment variables exist beyond the scope of the shell script.
+    <BR><BR>
     This script will set the environment variables required to compile the
     programs for TPF.  Verify that the export variables are valid for your
     installation, in particular, the system include file directories.  The
     system include files must reside on your Open Edition system in the
     appropriate file structure similar to /usr/include and /usr/include/sys.
-    DO&nbsp;NOT modify the <TT>TPF=YES</TT> export variable.  If this is
+    If your system header files contain line numbers in columns 72-80, you must truncate them.
+    <BR><BR>
+    Do&nbsp;not modify the <TT>TPF=YES</TT> export variable.  If this is
     changed, the "Configure" script will not recognize TPF.
     <BR><BR>
-<LI>Run the "Configure" script:
+<LI><A NAME="configure"></A>Run the "Configure" script:
     <TT><STRONG>Configure</STRONG></TT>
     <BR>
     This generates modules.c, include/ap_config_auto.h, and necessary Makefiles:
@@ -166,16 +171,17 @@ HREF="http://www.apache.org/dist/contrib/modules/">http://www.apache.org/dist/co
       Creating Makefile in os/tpf
       Creating Makefile in ap
       Creating Makefile in main
+      Creating Makefile in lib/expat-lite
       Creating Makefile in modules/standard
       $ _
       </PRE>
     If you want to maintain multiple configurations, you can
     say, <EM>e.g.</EM>,
     <BR>
-    <TT><STRONG>Configure -file Configuration.ai</STRONG></TT>
+    <TT><STRONG>Configure -file Configuration.2nd</STRONG></TT>
     <BR>
       <PRE>
-      Using config file: Configuration.ai
+      Using config file: Configuration.2nd
       Creating Makefile
        + configured for &lt;whatever&gt; platform
        + setting C compiler to &lt;whatever&gt;
@@ -216,25 +222,48 @@ HREF="http://www.apache.org/dist/contrib/modules/">http://www.apache.org/dist/co
     This change will only take effect after Apache is (re)compiled.
 
 <A NAME="daemon"></A><br>&nbsp;<br>
-<LI>Edit include/ap_config.h if you plan on using the ZINET DAEMON model instead of the NOLISTEN model.<br>
+<LI>Determine if you will use the ZINET DAEMON model instead of the default NOLISTEN model.<br>
     The default behavior is to let Apache check the server status (active/inactive) with ZINET
-    and shut itself down when appropriate.  The default behavior also includes checking Apache's activation number.
-    Available with PUT11 (PJ25761) ZINET can perform these functions instead of Apache by using the DAEMON model.
+    and shut itself down when appropriate.  This default behavior also includes checking the activation number.
+    ZINET can now perform these functions instead of Apache by using the DAEMON model
+    <i>(PUT12 with APARs PJ25761 &amp; PJ27363 required).</i>
     This model offers increased reliability and is preferred over the NOLISTEN model.
-    If Apache goes down while running under the NOLISTEN model ZINET will not reactivate it nor alert the operator.
-    To use the DAEMON model you must modify the default behavior of Apache by uncommenting or adding the directive
-    <tt><b>#define&nbsp;USE_TPF_DAEMON</b></tt> within the TPF section in ap_config.h.
-    This directive is also recommend when starting Apache from the command line (APAR PJ26515).
-    This change will only take effect after Apache is (re)compiled.
-    <br><br>
+    If Apache goes down while running under the NOLISTEN model, ZINET will not reactivate it nor alert
+    the operator.<br><br>
+    To use the DAEMON model you must do the following:<br><br>
+    <ul>
+    <li>Modify the default behavior of Apache by uncommenting or adding the directive
+        <code><b>#define&nbsp;USE_TPF_DAEMON</b></code> within the TPF section of include/ap_config.h.
+        This change will only take effect after Apache is (re)compiled.<br><br>
+    <li>Insert these four lines of code immediately prior to the <code>#endif</code> line in the
+        <code>os_check_server</code> function in os/tpf/os.c (if they are not already there):<br><br><code><ul>
+            #else<br>
+            if (getppid() == 1) {<br>
+                <ul>return 1;<br></ul>
+            }<br><br></ul></code>
+    </ul>
 
 
 <LI>Now compile the programs: <TT><STRONG>make</STRONG></TT><BR>
     Besides compiling, <tt>make</tt> also runs main/gen_test_char.c and main/gen_uri_delims.c
     in order to create main/test_char.h and main/uri_delims.h respectively<BR><BR>
+
     If during compilation you get a warning about a missing 'regex.h', set
     <TT>WANTHSREGEX=yes</TT> in the src/Configuration file and start back at the
-    <TT><STRONG>Configure</STRONG></TT> step.
+    <A HREF="#configure"><TT><STRONG>Configure</STRONG></TT></A> step.<br><br>
+
+    If you get a <tt>'Duplicate&nbsp;type&nbsp;specifier&nbsp;"long"&nbsp;ignored'</tt> error,
+    append the following line to the os/tpf/TPFExport file and start back at the
+    <A HREF="#export"><TT><STRONG>export</STRONG></TT></A> step:<br><br>
+    <ul><tt>export _C89_OPTIONS="-W 0,langlvl(extended)"</tt></ul><br>
+
+    The following compilation warnings are expected and can be ignored:<br><br>
+    <ul>
+    <li>util_uri.c:&nbsp;&nbsp;&nbsp;<tt>Function argument assignment between types "unsigned char*" and "const unsigned char*" is not allowed.</tt>
+    <li>mod_put.c:&nbsp;&nbsp;&nbsp;<tt>#include file "ap_vercompat.h" not found</tt>
+    <li>mod_tpf_shm_static.c:&nbsp;&nbsp;&nbsp;<tt>#include file &lt;sys/mman.h&gt; not found</tt>
+    <li>mod_usertrack.c:&nbsp;&nbsp;&nbsp;<tt>#include file &lt;sys/time.h&gt; not found</tt>
+
 </OL>
 
 <A NAME="installation">&nbsp;</A>
@@ -248,12 +277,14 @@ HREF="http://www.apache.org/dist/contrib/modules/">http://www.apache.org/dist/co
        <li>Add/remove <TT>mod_<EM>xxx</EM>.o</TT> files so they correspond to the
            <TT>mod_<EM>xxx</EM>.o</TT> lines in your src/Configuration file.
     </ul>
-  <br><font color=red size=4>TIP: </font>
-  Do NOT include gen_test_char.o or gen_uri_delims.o in the link JCL since these files are only
+  <br><font color=red size=4>TIP:</font>
+  Do not include gen_test_char.o or gen_uri_delims.o in the link JCL since these files are only
   used during the <tt>make</tt> step.
   <br><br>
 <LI>Create a loadset.  Sample loadset JCL has been included as src/os/tpf/samples/loadset.jcl.
     You will need to modify this JCL for your particular site.
+  <br><br>
+    A JCL condition code of 4 is expected since the C load module will contain no link map data.
   <br><br>
 <LI>Load (<tt>ZOLDR LOAD</tt>) and activate (<tt>ZOLDR ACT</tt>) the loadset on your test system.
   <br><br>
@@ -293,12 +324,17 @@ HREF="http://www.apache.org/dist/contrib/modules/">http://www.apache.org/dist/co
      /usr/local/apache/logs
      /usr/local/apache/icons
      /usr/local/apache/htdocs</PRE>
-    All gif, jpg, and zip files should be TFTP'd as binary; conf files and html pages should be TFTP'd as text.
-    <br>The logs directory must exist in order to avoid an <CODE>fopen</CODE> error while running Apache.
+    All gif, jpg, and zip files should be TFTP'd as binary; conf files and html pages should be TFTP'd as text.<br>
+    <br>The logs directory must exist in order to avoid an <CODE>fopen</CODE> error while running Apache:<br><br>
+    <ul>
     If you're running a PUT10 or higher version of TPF make the directory using the
     <tt><b>zfile mkdir /usr/local/apache/logs</b></tt> functional entry.
-    If you're running TPF version PUT09 TFTP an empty file into the logs subdirectory to create it.  
     <br><br>
+    If you're running TPF version PUT09, TFTP an empty file into the logs subdirectory to create it.
+    <br><br>
+    Regardless of your TPF version, make sure Apache can write into the logs subdirectory by doing a
+       <tt><b>zfile chmod</b></tt> on it with the appropriate permission settings.
+    </ul><br>
 <LI>Start the server using the <tt><b>ZINET START S-APACHE</b></tt> command.
 </OL>
 <A NAME="visualage">&nbsp;</A>

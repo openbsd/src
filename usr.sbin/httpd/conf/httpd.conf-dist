@@ -86,12 +86,12 @@ PidFile logs/httpd.pid
 ScoreBoardFile logs/apache_runtime_status
 
 #
-# In the standard configuration, the server will process this file,
-# srm.conf, and access.conf in that order.  The latter two files are
-# now distributed empty, as it is recommended that all directives
-# be kept in a single file for simplicity.  The commented-out values
-# below are the built-in defaults.  You can have the server ignore
-# these files altogether by using "/dev/null" (for Unix) or
+# In the standard configuration, the server will process httpd.conf (this 
+# file, specified by the -f command line option), srm.conf, and access.conf 
+# in that order.  The latter two files are now distributed empty, as it is 
+# recommended that all directives be kept in a single file for simplicity.  
+# The commented-out values below are the built-in defaults.  You can have the 
+# server ignore these files altogether by using "/dev/null" (for Unix) or
 # "nul" (for Win32) for the arguments to the directives.
 #
 #ResourceConfig conf/srm.conf
@@ -195,7 +195,7 @@ MaxRequestsPerChild 0
 # built-in (statically linked and thus always available) modules in your httpd
 # binary.
 #
-# Note: The order is which modules are loaded is important.  Don't change
+# Note: The order in which modules are loaded is important.  Don't change
 # the order below without expert advice.
 #
 # Example:
@@ -277,6 +277,10 @@ ServerAdmin you@your.address
 # If your host doesn't have a registered DNS name, enter its IP address here.
 # You will have to access it by its address (e.g., http://123.45.67.89/)
 # anyway, and this will make redirections work in a sensible way.
+#
+# 127.0.0.1 is the TCP/IP local loop-back address, often named localhost. Your 
+# machine always knows itself by this address. If you use Apache strictly for 
+# local testing and development, you may use 127.0.0.1 as the server name.
 #
 #ServerName new.host.name
 
@@ -678,9 +682,11 @@ ServerSignature On
     #
     # Danish (da) - Dutch (nl) - English (en) - Estonian (ee)
     # French (fr) - German (de) - Greek-Modern (el)
-    # Italian (it) - Portugese (pt) - Luxembourgeois* (ltz)
+    # Italian (it) - Korean (kr) - Norwegian (no)
+    # Portugese (pt) - Luxembourgeois* (ltz)
     # Spanish (es) - Swedish (sv) - Catalan (ca) - Czech(cz)
     # Polish (pl) - Brazilian Portuguese (pt-br) - Japanese (ja)
+    # Russian (ru)
     #
     AddLanguage da .dk
     AddLanguage nl .nl
@@ -689,9 +695,14 @@ ServerSignature On
     AddLanguage fr .fr
     AddLanguage de .de
     AddLanguage el .el
+    AddLanguage he .he
+    AddCharset ISO-8859-8 .iso8859-8
     AddLanguage it .it
     AddLanguage ja .ja
     AddCharset ISO-2022-JP .jis
+    AddLanguage kr .kr
+    AddCharset ISO-2022-KR .iso-kr
+    AddLanguage no .no
     AddLanguage pl .po
     AddCharset ISO-8859-2 .iso-pl
     AddLanguage pt .pt
@@ -701,6 +712,16 @@ ServerSignature On
     AddLanguage es .es
     AddLanguage sv .se
     AddLanguage cz .cz
+    AddLanguage ru .ru
+    AddLanguage tw .tw
+    AddCharset Big5         .Big5    .big5
+    AddCharset WINDOWS-1251 .cp-1251
+    AddCharset CP866        .cp866
+    AddCharset ISO-8859-5   .iso-ru
+    AddCharset KOI8-R       .koi8-r
+    AddCharset UCS-2        .ucs2
+    AddCharset UCS-4        .ucs4
+    AddCharset UTF-8        .utf8
 
     # LanguagePriority allows you to give precedence to some languages
     # in case of a tie during content negotiation.
@@ -709,7 +730,7 @@ ServerSignature On
     # more or less alphabetized them here. You probably want to change this.
     #
     <IfModule mod_negotiation.c>
-        LanguagePriority en da nl et fr de el it ja pl pt pt-br ltz ca es sv
+        LanguagePriority en da nl et fr de el it ja kr no pl pt pt-br ru ltz ca es sv tw
     </IfModule>
 
     #
@@ -793,7 +814,7 @@ ServerSignature On
 #
 #    1) plain text
 #ErrorDocument 500 "The server made a boo boo.
-#  n.b.  the (") marks it as text, it does not get output
+#  n.b.  the single leading (") marks it as text, it does not get output
 #
 #    2) local redirects
 #ErrorDocument 404 /missing.html
@@ -832,6 +853,7 @@ ServerSignature On
     BrowserMatch "JDK/1\.0" force-response-1.0
 
 </IfModule>
+# End of browser customization directives
 
 #
 # Allow server status reports, with the URL of http://servername/server-status
@@ -846,7 +868,7 @@ ServerSignature On
 
 #
 # Allow remote server configuration reports, with the URL of
-#  http://servername/server-info (requires that mod_info.c be loaded).
+# http://servername/server-info (requires that mod_info.c be loaded).
 # Change the ".your_domain.com" to match your domain to enable.
 #
 #<Location /server-info>
@@ -873,32 +895,32 @@ ServerSignature On
 # enable the proxy server:
 #
 #<IfModule mod_proxy.c>
-    #ProxyRequests On
-    #
-    #<Directory proxy:*>
-    #    Order deny,allow
-    #    Deny from all
-    #    Allow from .your_domain.com
-    #</Directory>
+#    ProxyRequests On
+
+#    <Directory proxy:*>
+#        Order deny,allow
+#        Deny from all
+#        Allow from .your_domain.com
+#    </Directory>
 
     #
     # Enable/disable the handling of HTTP/1.1 "Via:" headers.
     # ("Full" adds the server version; "Block" removes all outgoing Via: headers)
     # Set to one of: Off | On | Full | Block
     #
-    #ProxyVia On
+#    ProxyVia On
 
     #
     # To enable the cache as well, edit and uncomment the following lines:
     # (no cacheing without CacheRoot)
     #
-    #CacheRoot "@@ServerRoot@@/proxy"
-    #CacheSize 5
-    #CacheGcInterval 4
-    #CacheMaxExpire 24
-    #CacheLastModifiedFactor 0.1
-    #CacheDefaultExpire 1
-    #NoCache a_domain.com another_domain.edu joes.garage_sale.com
+#    CacheRoot "@@ServerRoot@@/proxy"
+#    CacheSize 5
+#    CacheGcInterval 4
+#    CacheMaxExpire 24
+#    CacheLastModifiedFactor 0.1
+#    CacheDefaultExpire 1
+#    NoCache a_domain.com another_domain.edu joes.garage_sale.com
 
 #</IfModule>
 # End of proxy directives.
@@ -906,29 +928,33 @@ ServerSignature On
 ### Section 3: Virtual Hosts
 #
 # VirtualHost: If you want to maintain multiple domains/hostnames on your
-# machine you can setup VirtualHost containers for them.
+# machine you can setup VirtualHost containers for them. Most configurations
+# use only name-based virtual hosts so the server doesn't need to worry about
+# IP addresses. This is indicated by the asterisks in the directives below.
+#
 # Please see the documentation at <URL:http://www.apache.org/docs/vhosts/>
 # for further details before you try to setup virtual hosts.
+#
 # You may use the command line option '-S' to verify your virtual host
 # configuration.
 
 #
-# If you want to use name-based virtual hosts you need to define at
-# least one IP address (and port number) for them.
+# Use name-based virtual hosting.
 #
-#NameVirtualHost 12.34.56.78:80
-#NameVirtualHost 12.34.56.78
+#NameVirtualHost *
 
 #
 # VirtualHost example:
 # Almost any Apache directive may go into a VirtualHost container.
+# The first VirtualHost section is used for requests without a known
+# server name.
 #
-#<VirtualHost ip.address.of.host.some_domain.com>
-#    ServerAdmin webmaster@host.some_domain.com
-#    DocumentRoot /www/docs/host.some_domain.com
-#    ServerName host.some_domain.com
-#    ErrorLog logs/host.some_domain.com-error_log
-#    CustomLog logs/host.some_domain.com-access_log common
+#<VirtualHost *>
+#    ServerAdmin webmaster@dummy-host.example.com
+#    DocumentRoot /www/docs/dummy-host.example.com
+#    ServerName dummy-host.example.com
+#    ErrorLog logs/dummy-host.example.com-error_log
+#    CustomLog logs/dummy-host.example.com-access_log common
 #</VirtualHost>
 
 #<VirtualHost _default_:*>

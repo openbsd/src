@@ -21,16 +21,40 @@
 
 <H1 ALIGN="CENTER">Module mod_status</H1>
 
-The Status Module is only available in Apache 1.1 and later.<P>
+<p>This module provides information on server activity and
+performance.</p>
 
-<H2>Function</H2>
+<P><A
+HREF="module-dict.html#Status"
+REL="Help"
+><STRONG>Status:</STRONG></A> Base
+<BR>
+<A
+HREF="module-dict.html#SourceFile"
+REL="Help"
+><STRONG>Source File:</STRONG></A> mod_status.c
+<BR>
+<A
+HREF="module-dict.html#ModuleIdentifier"
+REL="Help"
+><STRONG>Module Identifier:</STRONG></A> status_module
+<BR>
+<A
+HREF="module-dict.html#Compatibility"
+REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.1 and later.
+</P>
 
-The Status module allows a server administrator to find out how well
+
+<H2>Summary</H2>
+
+<p>The Status module allows a server administrator to find out how well
 their server is performing.  A HTML page is presented that gives
 the current server statistics in an easily readable form.  If required
 this page can be made to automatically refresh (given a compatible
 browser).  Another page gives a simple machine-readable list of the current
-server state.
+server state.</p>
+
 <P>
 The details given are:
 <UL>
@@ -49,9 +73,59 @@ Apache (*)
 <LI>The current hosts and requests being processed (*)
 </UL>
 
-A compile-time option must be used to display the details marked "(*)" as
-the instrumentation required for obtaining these statistics does not
-exist within standard Apache.
+<P>Details marked "(*)" are only available with
+<CODE>ExtendedStatus On</CODE>.
+
+<h2>Directives</h2>
+
+<ul>
+<li><a href="#extendedstatus">ExtendedStatus</a></li>
+</ul>
+
+
+<H2>Enabling Status Support</H2>
+
+To enable status reports only for browsers from the foo.com
+domain add this code to your <CODE>access.conf</CODE> configuration file
+<PRE>
+    &lt;Location /server-status&gt;
+    SetHandler server-status
+
+    Order Deny,Allow
+    Deny from all
+    Allow from .foo.com
+    &lt;/Location&gt;
+</PRE>
+<P>
+You can now access server statistics by using a Web browser to access the
+page <CODE>http://your.server.name/server-status</CODE>
+<P>
+Note that mod_status will only work when you are running Apache in
+<A HREF="core.html#servertype">standalone</A> mode and not
+<A HREF="core.html#servertype">inetd</A> mode.
+
+<H3>Automatic Updates</H3>
+You can get the status page to update itself automatically if you have
+a browser that supports "refresh".  Access the page
+<CODE>http://your.server.name/server-status?refresh=N</CODE> to refresh the
+page every N seconds.
+<H3>Machine Readable Status File</H3>
+A machine-readable version of the status file is available by accessing the
+page <CODE>http://your.server.name/server-status?auto</CODE>.  This is useful
+when automatically run, see the Perl program in the <CODE>/support</CODE>
+directory of Apache, <CODE>log_server_status</CODE>.
+
+<BLOCKQUOTE>
+ <STRONG>
+  It should be noted that if <SAMP>mod_status</SAMP> is compiled into
+  the server, its handler capability is available in <EM>all</EM>
+  configuration files, including <EM>per</EM>-directory files
+  (<EM>e.g.</EM>, <SAMP>.htaccess</SAMP>).  This may have
+  security-related ramifications for your site.
+ </STRONG>
+</BLOCKQUOTE>
+
+<hr>
 
 <H2><A NAME="extendedstatus">ExtendedStatus directive</A></H2>
 <!--%plaintext &lt;?INDEX {\tt ExtendedStatus} directive&gt; -->
@@ -91,47 +165,6 @@ This setting applies to the entire server, and cannot be enabled or
 disabled on a virtualhost-by-virtualhost basis.
 </P>
 
-<H2>Enabling Status Support</H2>
-
-To enable status reports only for browsers from the foo.com
-domain add this code to your <CODE>access.conf</CODE> configuration file
-<PRE>
-    &lt;Location /server-status&gt;
-    SetHandler server-status
-
-    order deny,allow
-    deny from all
-    allow from .foo.com
-    &lt;/Location&gt;
-</PRE>
-<P>
-You can now access server statistics by using a Web browser to access the
-page <CODE>http://your.server.name/server-status</CODE>
-<P>
-Note that mod_status will only work when you are running Apache in
-<A HREF="core.html#servertype">standalone</A> mode and not
-<A HREF="core.html#servertype">inetd</A> mode.
-
-<H3>Automatic Updates</H3>
-You can get the status page to update itself automatically if you have
-a browser that supports "refresh".  Access the page
-<CODE>http://your.server.name/server-status?refresh=N</CODE> to refresh the
-page every N seconds.
-<H3>Machine Readable Status File</H3>
-A machine-readable version of the status file is available by accessing the
-page <CODE>http://your.server.name/server-status?auto</CODE>.  This is useful
-when automatically run, see the Perl program in the <CODE>/support</CODE>
-directory of Apache, <CODE>log_server_status</CODE>.
-
-<BLOCKQUOTE>
- <STRONG>
-  It should be noted that if <SAMP>mod_status</SAMP> is compiled into
-  the server, its handler capability is available in <EM>all</EM>
-  configuration files, including <EM>per</EM>-directory files
-  (<EM>e.g.</EM>, <SAMP>.htaccess</SAMP>).  This may have
-  security-related ramifications for your site.
- </STRONG>
-</BLOCKQUOTE>
 <HR>
 
 <H3 ALIGN="CENTER">

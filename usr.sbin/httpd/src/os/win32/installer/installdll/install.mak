@@ -52,13 +52,14 @@ CLEAN :
 	-@erase "$(OUTDIR)\install.dll"
 	-@erase "$(OUTDIR)\install.exp"
 	-@erase "$(OUTDIR)\install.lib"
+	-@erase "$(OUTDIR)\install.map"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../../../../include" /D "WIN32" /D\
- "NDEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\install.pch" /YX /Fo"$(INTDIR)\\"\
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "..\..\..\..\include" /I\
+ "..\..\..\..\os\win32" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\"\
  /Fd"$(INTDIR)\\" /FD /c 
 CPP_OBJS=.\Release/
 CPP_SBRS=.
@@ -103,8 +104,9 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib wsock32.lib /nologo /subsystem:windows /dll\
- /incremental:no /pdb:"$(OUTDIR)\install.pdb" /machine:I386 /def:".\install.def"\
- /out:"$(OUTDIR)\install.dll" /implib:"$(OUTDIR)\install.lib" 
+ /incremental:no /pdb:"$(OUTDIR)\install.pdb" /map:"$(INTDIR)\install.map"\
+ /machine:I386 /def:".\install.def" /out:"$(OUTDIR)\install.dll"\
+ /implib:"$(OUTDIR)\install.lib" 
 DEF_FILE= \
 	".\install.def"
 LINK32_OBJS= \
@@ -143,6 +145,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\install.exp"
 	-@erase "$(OUTDIR)\install.ilk"
 	-@erase "$(OUTDIR)\install.lib"
+	-@erase "$(OUTDIR)\install.map"
 	-@erase "$(OUTDIR)\install.pdb"
 
 "$(OUTDIR)" :
@@ -150,8 +153,7 @@ CLEAN :
 
 CPP=cl.exe
 CPP_PROJ=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "../../../../include" /D "WIN32"\
- /D "_DEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\install.pch" /YX /Fo"$(INTDIR)\\"\
- /Fd"$(INTDIR)\\" /FD /c 
+ /D "_DEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 CPP_OBJS=.\Debug/
 CPP_SBRS=.
 
@@ -195,8 +197,8 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib wsock32.lib /nologo /subsystem:windows /dll\
- /incremental:yes /pdb:"$(OUTDIR)\install.pdb" /debug /machine:I386\
- /def:".\install.def" /out:"$(OUTDIR)\install.dll"\
+ /incremental:yes /pdb:"$(OUTDIR)\install.pdb" /map:"$(INTDIR)\install.map"\
+ /debug /machine:I386 /def:".\install.def" /out:"$(OUTDIR)\install.dll"\
  /implib:"$(OUTDIR)\install.lib" /pdbtype:sept 
 DEF_FILE= \
 	".\install.def"
@@ -219,8 +221,8 @@ SOURCE=..\..\..\..\ap\ap_snprintf.c
 !IF  "$(CFG)" == "install - Win32 Release"
 
 DEP_CPP_AP_SN=\
-	"..\..\..\..\include\alloc.h"\
 	"..\..\..\..\include\ap.h"\
+	"..\..\..\..\include\ap_alloc.h"\
 	"..\..\..\..\include\ap_config.h"\
 	"..\..\..\..\include\ap_ctype.h"\
 	"..\..\..\..\include\ap_mmn.h"\
@@ -231,6 +233,11 @@ DEP_CPP_AP_SN=\
 	"..\..\os.h"\
 	"..\..\readdir.h"\
 	
+NODEP_CPP_AP_SN=\
+	"..\..\..\..\include\ap_config_auto.h"\
+	"..\..\..\..\include\ebcdic.h"\
+	"..\..\..\..\include\sfio.h"\
+	
 
 "$(INTDIR)\ap_snprintf.obj" : $(SOURCE) $(DEP_CPP_AP_SN) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
@@ -239,8 +246,8 @@ DEP_CPP_AP_SN=\
 !ELSEIF  "$(CFG)" == "install - Win32 Debug"
 
 DEP_CPP_AP_SN=\
-	"..\..\..\..\include\alloc.h"\
 	"..\..\..\..\include\ap.h"\
+	"..\..\..\..\include\ap_alloc.h"\
 	"..\..\..\..\include\ap_config.h"\
 	"..\..\..\..\include\ap_ctype.h"\
 	"..\..\..\..\include\ap_mmn.h"\
@@ -250,6 +257,12 @@ DEP_CPP_AP_SN=\
 	"..\..\..\..\include\util_uri.h"\
 	"..\..\os.h"\
 	"..\..\readdir.h"\
+	
+NODEP_CPP_AP_SN=\
+	"..\..\..\..\include\ap_config_auto.h"\
+	"..\..\..\..\include\ebcdic.h"\
+	"..\..\..\..\include\os.h"\
+	"..\..\..\..\include\sfio.h"\
 	
 
 "$(INTDIR)\ap_snprintf.obj" : $(SOURCE) $(DEP_CPP_AP_SN) "$(INTDIR)"
@@ -271,6 +284,9 @@ DEP_CPP_INSTA=\
 	"..\..\..\..\include\hsregex.h"\
 	"..\..\os.h"\
 	
+NODEP_CPP_INSTA=\
+	"..\..\..\..\include\ap_config_auto.h"\
+	
 
 "$(INTDIR)\install.obj" : $(SOURCE) $(DEP_CPP_INSTA) "$(INTDIR)"
 
@@ -285,6 +301,10 @@ DEP_CPP_INSTA=\
 	"..\..\..\..\include\conf.h"\
 	"..\..\..\..\include\hsregex.h"\
 	"..\..\os.h"\
+	
+NODEP_CPP_INSTA=\
+	"..\..\..\..\include\ap_config_auto.h"\
+	"..\..\..\..\include\os.h"\
 	
 
 "$(INTDIR)\install.obj" : $(SOURCE) $(DEP_CPP_INSTA) "$(INTDIR)"

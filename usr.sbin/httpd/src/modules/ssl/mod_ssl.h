@@ -85,6 +85,14 @@
 #ifndef SSL_EXPERIMENTAL_PROXY_IGNORE
 #define SSL_EXPERIMENTAL_PROXY
 #endif
+#ifdef SSL_ENGINE
+#ifndef SSL_EXPERIMENTAL_ENGINE_IGNORE
+#define SSL_EXPERIMENTAL_ENGINE
+#endif
+#endif
+#ifndef SSL_EXPERIMENTAL_SHMCB_IGNORE
+#define SSL_EXPERIMENTAL_SHMCB
+#endif
 #endif /* SSL_EXPERIMENTAL */
 
 /*
@@ -116,6 +124,9 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#ifdef SSL_EXPERIMENTAL_ENGINE
+#include <openssl/engine.h>
+#endif
 
 /* Apache headers */
 #define CORE_PRIVATE
@@ -476,16 +487,11 @@ typedef enum {
     SSL_SCMODE_UNSET = UNSET,
     SSL_SCMODE_NONE  = 0,
     SSL_SCMODE_DBM   = 1,
-    SSL_SCMODE_SHM   = 2
+    SSL_SCMODE_SHMHT = 2
+#ifdef SSL_EXPERIMENTAL_SHMCB
+   ,SSL_SCMODE_SHMCB = 3
+#endif
 } ssl_scmode_t;
-
-typedef struct {
-    UCHAR *ucaKey;
-    int    nKey;
-    UCHAR *ucaData;
-    int    nData;
-    time_t tExpiresAt;
-} ssl_scinfo_t;
 
 /*
  * Define the SSL mutex modes
@@ -558,6 +564,9 @@ typedef struct {
     void           *pTmpKeys[SSL_TKPIDX_MAX];
     ssl_ds_table   *tPublicCert;
     ssl_ds_table   *tPrivateKey;
+#ifdef SSL_EXPERIMENTAL_ENGINE
+    char           *szCryptoDevice;
+#endif
     struct {
         void *pV1, *pV2, *pV3, *pV4, *pV5, *pV6, *pV7, *pV8, *pV9, *pV10;
     } rCtx;
@@ -652,6 +661,7 @@ void        *ssl_config_perdir_create(pool *, char *);
 void        *ssl_config_perdir_merge(pool *, void *, void *);
 const char  *ssl_cmd_SSLMutex(cmd_parms *, char *, char *);
 const char  *ssl_cmd_SSLPassPhraseDialog(cmd_parms *, char *, char *);
+const char  *ssl_cmd_SSLCryptoDevice(cmd_parms *, char *, char *);
 const char  *ssl_cmd_SSLRandomSeed(cmd_parms *, char *, char *, char *, char *);
 const char  *ssl_cmd_SSLEngine(cmd_parms *, char *, int);
 const char  *ssl_cmd_SSLCipherSuite(cmd_parms *, SSLDirConfigRec *, char *);
@@ -686,6 +696,7 @@ const char  *ssl_cmd_SSLProxyMachineCertificateFile(cmd_parms *, char *, char *)
 /*  module initialization  */
 void         ssl_init_Module(server_rec *, pool *);
 void         ssl_init_SSLLibrary(void);
+void         ssl_init_Engine(server_rec *, pool *);
 void         ssl_init_TmpKeysHandle(int, server_rec *, pool *);
 void         ssl_init_ConfigureServer(server_rec *, pool *, SSLSrvConfigRec *);
 void         ssl_init_CheckServers(server_rec *, pool *);
@@ -723,26 +734,35 @@ void         ssl_callback_LogTracingState(SSL *, int, int);
 /*  Session Cache Support  */
 void         ssl_scache_init(server_rec *, pool *);
 void         ssl_scache_kill(server_rec *);
-BOOL         ssl_scache_store(server_rec *, SSL_SESSION *, int);
+BOOL         ssl_scache_store(server_rec *, UCHAR *, int, time_t, SSL_SESSION *);
 SSL_SESSION *ssl_scache_retrieve(server_rec *, UCHAR *, int);
-void         ssl_scache_remove(server_rec *, SSL_SESSION *);
-void         ssl_scache_expire(server_rec *, time_t);
+void         ssl_scache_remove(server_rec *, UCHAR *, int);
+void         ssl_scache_expire(server_rec *);
 void         ssl_scache_status(server_rec *, pool *, void (*)(char *, void *), void *);
 char        *ssl_scache_id2sz(UCHAR *, int);
 void         ssl_scache_dbm_init(server_rec *, pool *);
 void         ssl_scache_dbm_kill(server_rec *);
-BOOL         ssl_scache_dbm_store(server_rec *, ssl_scinfo_t *);
-void         ssl_scache_dbm_retrieve(server_rec *, ssl_scinfo_t *);
-void         ssl_scache_dbm_remove(server_rec *, ssl_scinfo_t *);
-void         ssl_scache_dbm_expire(server_rec *, time_t);
+BOOL         ssl_scache_dbm_store(server_rec *, UCHAR *, int, time_t, SSL_SESSION *);
+SSL_SESSION *ssl_scache_dbm_retrieve(server_rec *, UCHAR *, int);
+void         ssl_scache_dbm_remove(server_rec *, UCHAR *, int);
+void         ssl_scache_dbm_expire(server_rec *);
 void         ssl_scache_dbm_status(server_rec *, pool *, void (*)(char *, void *), void *);
-void         ssl_scache_shm_init(server_rec *, pool *);
-void         ssl_scache_shm_kill(server_rec *);
-BOOL         ssl_scache_shm_store(server_rec *, ssl_scinfo_t *);
-void         ssl_scache_shm_retrieve(server_rec *, ssl_scinfo_t *);
-void         ssl_scache_shm_remove(server_rec *, ssl_scinfo_t *);
-void         ssl_scache_shm_expire(server_rec *, time_t);
-void         ssl_scache_shm_status(server_rec *, pool *, void (*)(char *, void *), void *);
+void         ssl_scache_shmht_init(server_rec *, pool *);
+void         ssl_scache_shmht_kill(server_rec *);
+BOOL         ssl_scache_shmht_store(server_rec *, UCHAR *, int, time_t, SSL_SESSION *);
+SSL_SESSION *ssl_scache_shmht_retrieve(server_rec *, UCHAR *, int);
+void         ssl_scache_shmht_remove(server_rec *, UCHAR *, int);
+void         ssl_scache_shmht_expire(server_rec *);
+void         ssl_scache_shmht_status(server_rec *, pool *, void (*)(char *, void *), void *);
+#ifdef SSL_EXPERIMENTAL_SHMCB
+void         ssl_scache_shmcb_init(server_rec *, pool *);
+void         ssl_scache_shmcb_kill(server_rec *);
+BOOL         ssl_scache_shmcb_store(server_rec *, UCHAR *, int, time_t, SSL_SESSION *);
+SSL_SESSION *ssl_scache_shmcb_retrieve(server_rec *, UCHAR *, int);
+void         ssl_scache_shmcb_remove(server_rec *, UCHAR *, int);
+void         ssl_scache_shmcb_expire(server_rec *);
+void         ssl_scache_shmcb_status(server_rec *, pool *, void (*)(char *, void *), void *);
+#endif
 
 /*  Pass Phrase Support  */
 void         ssl_pphrase_Handle(server_rec *, pool *);

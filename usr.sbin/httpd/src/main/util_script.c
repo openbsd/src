@@ -267,16 +267,16 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
 #endif
 
 #ifdef OS2
-    if (env_temp = getenv("COMSPEC")) {
+    if ((env_temp = getenv("COMSPEC")) != NULL) {
         ap_table_addn(e, "COMSPEC", env_temp);            
     }
-    if (env_temp = getenv("ETC")) {
+    if ((env_temp = getenv("ETC")) != NULL) {
         ap_table_addn(e, "ETC", env_temp);            
     }
-    if (env_temp = getenv("DPATH")) {
+    if ((env_temp = getenv("DPATH")) != NULL) {
         ap_table_addn(e, "DPATH", env_temp);            
     }
-    if (env_temp = getenv("PERLLIB_PREFIX")) {
+    if ((env_temp = getenv("PERLLIB_PREFIX")) != NULL) {
         ap_table_addn(e, "PERLLIB_PREFIX", env_temp);            
     }
 #endif
@@ -649,6 +649,63 @@ API_EXPORT(int) ap_scan_script_header_err_buff(request_rec *r, BUFF *fb,
     return ap_scan_script_header_err_core(r, buffer, getsfunc_BUFF, fb);
 }
 
+struct vastrs {
+    va_list args;
+    int arg;
+    const char *curpos;
+};
+
+static int getsfunc_STRING(char *w, int len, void *pvastrs)
+{
+    struct vastrs *strs = (struct vastrs*) pvastrs;
+    char *p;
+    int t;
+    
+    if (!strs->curpos || !*strs->curpos) 
+        return 0;
+    p = strchr(strs->curpos, '\n');
+    if (p)
+        ++p;
+    else
+        p = strchr(strs->curpos, '\0');
+    t = p - strs->curpos;
+    if (t > len)
+        t = len;
+    strncpy (w, strs->curpos, t);
+    w[t] = '\0';
+    if (!strs->curpos[t]) {
+        ++strs->arg;
+        strs->curpos = va_arg(strs->args, const char *);
+    }
+    else
+        strs->curpos += t;
+    return t;    
+}
+
+/* ap_scan_script_header_err_strs() accepts additional const char* args...
+ * each is treated as one or more header lines, and the first non-header
+ * character is returned to **arg, **data.  (The first optional arg is
+ * counted as 0.)
+ */
+API_EXPORT_NONSTD(int) ap_scan_script_header_err_strs(request_rec *r, 
+                                                      char *buffer, 
+                                                      const char **termch,
+                                                      int *termarg, ...)
+{
+    struct vastrs strs;
+    int res;
+
+    va_start(strs.args, termarg);
+    strs.arg = 0;
+    strs.curpos = va_arg(strs.args, char*);
+    res = ap_scan_script_header_err_core(r, buffer, getsfunc_STRING, (void *) &strs);
+    if (termch)
+        *termch = strs.curpos;
+    if (termarg)
+        *termarg = strs.arg;
+    va_end(strs.args);
+    return res;
+}
 
 API_EXPORT(void) ap_send_size(size_t size, request_rec *r)
 {
@@ -673,7 +730,7 @@ API_EXPORT(void) ap_send_size(size_t size, request_rec *r)
     }
 }
 
-#if defined(OS2) || defined(WIN32)
+#if defined(WIN32)
 static char **create_argv_cmd(pool *p, char *av0, const char *args, char *path)
 {
     register int x, n;
@@ -988,21 +1045,11 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
                 pCommand = ap_pstrcat(r->pool, quoted_filename, " ", arguments, NULL);
             }
 
-         } else {
-
-            char *shell_cmd = "CMD.EXE /C ";
-            OSVERSIONINFO osver;
-            osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-         
-            /*
-             * Use CMD.EXE for NT, COMMAND.COM for WIN95
-             */
-            if (GetVersionEx(&osver)) {
-                if (osver.dwPlatformId != VER_PLATFORM_WIN32_NT) {
-                    shell_cmd = "COMMAND.COM /C ";
-                }
-            }       
-            pCommand = ap_pstrcat(r->pool, shell_cmd, argv0, NULL);
+        } else {
+            char *shellcmd = getenv("COMSPEC");
+            if (!shellcmd)
+                shellcmd = SHELL_PATH;
+            pCommand = ap_pstrcat(r->pool, shellcmd, " /C ", argv0, NULL);
         }
 
         /*

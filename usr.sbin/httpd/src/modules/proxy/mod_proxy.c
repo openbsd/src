@@ -347,7 +347,7 @@ static int proxy_handler(request_rec *r)
 
     if (r->method_number == M_TRACE &&
 	(maxfwd_str = ap_table_get(r->headers_in, "Max-Forwards")) != NULL) {
-	int maxfwd = strtol(maxfwd_str, NULL, 10);
+	long maxfwd = strtol(maxfwd_str, NULL, 10);
 	if (maxfwd < 1) {
 	    int access_status;
 	    r->proxyreq = NOT_PROXY;
@@ -358,7 +358,7 @@ static int proxy_handler(request_rec *r)
 	    return OK;
 	}
 	ap_table_setn(r->headers_in, "Max-Forwards", 
-		      ap_psprintf(r->pool, "%d", (maxfwd > 0) ? maxfwd-1 : 0));
+		      ap_psprintf(r->pool, "%ld", (maxfwd > 0) ? maxfwd-1 : 0));
     }
 
     if ((rc = ap_setup_client_block(r, REQUEST_CHUNKED_ERROR)))
@@ -1028,9 +1028,3 @@ module MODULE_VAR_EXPORT proxy_module =
 };
 
 
-#ifdef NETWARE
-int main(int argc, char *argv[]) 
-{
-    ExitThread(TSR_THREAD, 0);
-}
-#endif

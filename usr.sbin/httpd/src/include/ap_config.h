@@ -135,8 +135,16 @@ int gethostname (char *name, int namelen);
 #define NO_WRITEV
 #define HAVE_SHMGET 1
 #define USE_SHMGET_SCOREBOARD
-#define SHM_R 0400  /* Read permission */
-#define SHM_W 0200  /* Write permission */
+/* 
+   UID/GID isn't a native concept for MPE, and it's definitely not a 100%
+   Unix implementation.  There isn't a traditional superuser concept either,
+   so we're forced to liberalize SHM security a bit so the parent & children
+   can communicate when they're running with different UIDs within the same
+   GID (the GID will *always* be the same on MPE).  Thus the weird SHM_R and
+   SHM_W below.
+*/
+#define SHM_R 0440  /* Read permission */
+#define SHM_W 0220  /* Write permission */
 #define NEED_INITGROUPS
 #define NEED_STRCASECMP
 #define NEED_STRDUP
@@ -149,6 +157,7 @@ extern char *inet_ntoa();
 #define S_IREAD  S_IRUSR
 #define S_IWRITE S_IWUSR
 #define PF_INET  AF_INET
+#define USE_FCNTL_SERIALIZED_ACCEPT
 
 #elif defined(SUNOS4)
 #define HAVE_GMTOFF 1
@@ -268,7 +277,9 @@ typedef int rlim_t;
 #ifdef NEED_RLIM_T
 typedef int rlim_t;
 #endif
+#if !defined(USE_PTHREAD_SERIALIZED_ACCEPT)
 #define USE_FCNTL_SERIALIZED_ACCEPT
+#endif
 #ifdef USEBCOPY
 #define memmove(a,b,c) bcopy(b,a,c)
 #endif
@@ -409,13 +420,9 @@ typedef int pid_t;
 #define DYLD_CANT_UNLOAD
 #endif
 
-#elif defined(MAC_OS) || defined(MAC_OS_X_SERVER) /* Mac OS (>= 10.0) and Mac OS X Server (<= 5.x) */
+#elif defined(DARWIN) /* Darwin (Mac OS) */
 #undef PLATFORM
-#ifdef MAC_OS_X_SERVER
-#define PLATFORM "Mac OS X Server"
-#else
-#define PLATFORM "Mac OS"
-#endif
+#define PLATFORM "Darwin"
 #define HAVE_DYLD
 #define HAVE_GMTOFF
 #define HAVE_MMAP
@@ -743,6 +750,9 @@ typedef quad_t rlim_t;
 #define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
 #define HAVE_SYSLOG 1
 #define SYS_SIGLIST sys_siglist
+#if (defined(__FreeBSD_version) && (__FreeBSD_version >= 400000))
+#define NET_SIZE_T socklen_t
+#endif
 
 #elif defined(QNX)
 #ifndef crypt
@@ -812,6 +822,7 @@ typedef int rlim_t;
 #define NO_RELIABLE_PIPED_LOGS
 #define USE_OS2SEM_SERIALIZED_ACCEPT
 #define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
+#define NO_SLACK
 #define FOPEN_REQUIRES_T
 
 #elif defined(__MACHTEN__)
@@ -885,11 +896,15 @@ typedef int rlim_t;
 #define NEED_STRDUP
 
 #elif defined(BEOS)
+#undef PLATFORM
+#define PLATFORM "BeOS"
 #include <stddef.h>
 
 #define NO_WRITEV
 #define NO_KILLPG
 #define NEED_INITGROUPS
+#define PF_INET AF_INET
+#define S_IEXEC S_IXUSR
 
 #elif defined(_CX_SX)
 #define JMP_BUF sigjmp_buf
@@ -955,7 +970,8 @@ typedef int rlim_t;
 #define HAVE_SHMGET
 #define USE_SHMGET_SCOREBOARD
 #define USE_MMAP_FILES
-#define USE_FCNTL_SERIALIZED_ACCEPT
+#define NEED_UNION_SEMUN
+#define USE_SYSVSEM_SERIALIZED_ACCEPT
 #define _POSIX_SOURCE
 #include <signal.h>
 #ifdef SIGDUMP  /* SIGDUMP is not defined by OS/390 v1r2 */
@@ -1028,12 +1044,12 @@ typedef int rlim_t;
 #define CORE_EXPORT_NONSTD	API_EXPORT_NONSTD
 #endif
 
-/* On Mac OS X Server, symbols that conflict with loaded dylibs
+/* On Darwin, symbols that conflict with loaded dylibs
  * (eg. System framework) need to be declared as private symbols with
  * __private_extern__.
  * For other systems, make that a no-op.
  */
-#if (defined(MAC_OS) || defined(MAC_OS_X_SERVER)) && defined(__DYNAMIC__)
+#if defined(DARWIN) && defined(__DYNAMIC__)
 #define ap_private_extern __private_extern__
 #else
 #define ap_private_extern
@@ -1129,7 +1145,7 @@ typedef int rlim_t;
 #undef NSIG
 #endif
 #include <errno.h>
-#if !defined(QNX) && !defined(CONVEXOS11) && !defined(NEXT) && !defined(TPF) && !defined(NETWARE)
+#if !defined(QNX) && !defined(CONVEXOS11) && !defined(NEXT) && !defined(TPF) && !defined(NETWARE) && !defined(MPE)
 #include <memory.h>
 #endif
 
@@ -1231,7 +1247,7 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #endif
 
 /* Majority of os's want to verify FD_SETSIZE */
-#if !defined(WIN32) && !defined(TPF)
+#if !defined(WIN32) && !defined(TPF) && !defined(NETWARE)
 #define CHECK_FD_SETSIZE
 #endif
 
@@ -1403,7 +1419,7 @@ int gethostname(char *name, int namelen);
 void syslog(int, char *,...);
 char *mktemp(char *);
 
-long vfprintf(FILE *, const char *, va_list);
+int vfprintf(FILE *, const char *, va_list);
 
 #endif /* SUNOS_LIB_PROTOTYPES */
 

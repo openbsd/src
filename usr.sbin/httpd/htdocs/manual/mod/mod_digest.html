@@ -21,19 +21,63 @@
 
 <H1 ALIGN="CENTER">Module mod_digest</H1>
 
-This module is contained in the <CODE>mod_digest.c</CODE> file, and is
-not compiled in by default. It is only available in Apache 1.1 and
-later. It provides for user authentication using MD5 Digest
+<P>This module provides for user authentication using MD5 Digest
 Authentication.
 
+<P><A
+HREF="module-dict.html#Status"
+REL="Help"
+><STRONG>Status:</STRONG></A> Extension
+<BR>
+<A
+HREF="module-dict.html#SourceFile"
+REL="Help"
+><STRONG>Source File:</STRONG></A> mod_digest.c
+<BR>
+<A
+HREF="module-dict.html#ModuleIdentifier"
+REL="Help"
+><STRONG>Module Identifier:</STRONG></A> digest_module
+<BR>
+<A
+HREF="module-dict.html#Compatibility"
+REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.1 and later.
+</P>
 
-<MENU>
+<h2>Summary</h2>
+
+<P>This module implements an older
+version of the MD5 Digest Authentication specification which will
+probably not work with modern browsers.  Please see <A
+HREF="mod_auth_digest.html">mod_auth_digest</A> for a module which implements
+the most recent version of the standard.
+
+<h2>Directives</h2>
+
+<ul>
 <LI><A HREF="#authdigestfile">AuthDigestFile</A>
-</MENU>
+</ul>
+
+
+<H2>Using Digest Authentication</H2>
+
+<P>Using MD5 Digest authentication is very simple. Simply set up
+authentication normally. However, use "AuthType Digest" and
+"AuthDigestFile" instead of the normal "AuthType Basic" and
+"AuthUserFile". Everything else should remain the same.</P>
+
+<P>MD5 authentication provides a more secure password system, but only
+works with supporting browsers. As of this writing (July 1996), the
+majority of browsers do not support digest authentication. Therefore, we
+do not recommend using this feature on a large Internet site. However, for
+personal and intra-net use, where browser users can be controlled, it is
+ideal.</P>
+
 <HR>
 
 
-<H2><A NAME="authdigestfile">AuthDigestFile</A></H2>
+<H2><A NAME="authdigestfile">AuthDigestFile</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -64,21 +108,7 @@ is the absolute path to the user file.</P>
 created using the "htdigest" utility found in the support/ subdirectory of
 the Apache distribution.</P>
 
-<HR>
 
-<H3>Using Digest Authentication</H3>
-
-<P>Using MD5 Digest authentication is very simple. Simply set up
-authentication normally. However, use "AuthType Digest" and
-"AuthDigestFile" instead of the normal "AuthType Basic" and
-"AuthUserFile". Everything else should remain the same.</P>
-
-<P>MD5 authentication provides a more secure password system, but only
-works with supporting browsers. As of this writing (July 1996), the
-majority of browsers do not support digest authentication. Therefore, we
-do not recommend using this feature on a large Internet site. However, for
-personal and intra-net use, where browser users can be controlled, it is
-ideal.</P>
 
 <HR>
 

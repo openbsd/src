@@ -1,58 +1,60 @@
 /* ====================================================================
- * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 /******************************************************************************
@@ -88,6 +90,10 @@
 #include "ap_md5.h"
 #include "ap_sha1.h"
 
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
 #ifdef WIN32
 #include <conio.h>
 #include "../os/win32/getopt.h"
@@ -120,6 +126,16 @@
  * access it.
  */
 static char *tempfilename;
+/*
+ * If our platform knows about the tmpnam() external buffer size, create
+ * a buffer to pass in.  This is needed in a threaded environment, or
+ * one that thinks it is (like HP-UX).
+ */
+#ifdef L_tmpnam
+static char tname_buf[L_tmpnam];
+#else
+static char *tname_buf = NULL;
+#endif
 
 /*
  * Get a line of input from the user, not including any terminating
@@ -241,14 +257,17 @@ static int usage(void)
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, "\thtpasswd [-cmdps] passwordfile username\n");
     fprintf(stderr, "\thtpasswd -b[cmdps] passwordfile username password\n\n");
+    fprintf(stderr, "\thtpasswd -n[mdps] username\n");
+    fprintf(stderr, "\thtpasswd -nb[mdps] username password\n");
     fprintf(stderr, " -c  Create a new file.\n");
+    fprintf(stderr, " -n  Don't update file; display results on stdout.\n");
     fprintf(stderr, " -m  Force MD5 encryption of the password"
-#if defined(WIN32) || defined(TPF)
+#if defined(WIN32) || defined(TPF) || defined(NETWARE)
 	" (default)"
 #endif
 	".\n");
     fprintf(stderr, " -d  Force CRYPT encryption of the password"
-#if (!(defined(WIN32) || defined(TPF)))
+#if (!(defined(WIN32) || defined(TPF) || defined(NETWARE)))
 	    " (default)"
 #endif
 	    ".\n");
@@ -257,7 +276,7 @@ static int usage(void)
     fprintf(stderr, " -b  Use the password from the command line rather "
 	    "than prompting for it.\n");
     fprintf(stderr,
-	    "On Windows and TPF systems the '-m' flag is used by default.\n");
+	    "On Windows, TPF and NetWare systems the '-m' flag is used by default.\n");
     fprintf(stderr,
 	    "On all other systems, the '-p' flag will probably not work.\n");
     return ERR_SYNTAX;
@@ -354,6 +373,7 @@ int main(int argc, char *argv[])
     int found = 0;
     int alg = ALG_CRYPT;
     int newfile = 0;
+    int nofile = 0;
     int noninteractive = 0;
     int i;
     int args_left = 2;
@@ -382,6 +402,10 @@ int main(int argc, char *argv[])
 	while (*++arg != '\0') {
 	    if (*arg == 'c') {
 		newfile++;
+	    }
+	    else if (*arg == 'n') {
+		nofile++;
+		args_left--;
 	    }
 	    else if (*arg == 'm') {
 		alg = ALG_APMD5;
@@ -413,15 +437,24 @@ int main(int argc, char *argv[])
     if ((argc - i) != args_left) {
 	return usage();
     }
-    if (strlen(argv[i]) > (sizeof(pwfilename) - 1)) {
-	fprintf(stderr, "%s: filename too long\n", argv[0]);
-	return ERR_OVERFLOW;
+    if (newfile && nofile) {
+	fprintf(stderr, "%s: -c and -n options conflict\n", argv[0]);
+	return ERR_SYNTAX;
     }
-    strcpy(pwfilename, argv[i]);
-    if (strlen(argv[i + 1]) > (sizeof(user) - 1)) {
-	fprintf(stderr, "%s: username too long (>%d)\n", argv[0],
-		sizeof(user) - 1);
-	return ERR_OVERFLOW;
+    if (nofile) {
+	i--;
+    }
+    else {
+	if (strlen(argv[i]) > (sizeof(pwfilename) - 1)) {
+	    fprintf(stderr, "%s: filename too long\n", argv[0]);
+	    return ERR_OVERFLOW;
+	}
+	strcpy(pwfilename, argv[i]);
+	if (strlen(argv[i + 1]) > (sizeof(user) - 1)) {
+	    fprintf(stderr, "%s: username too long (>%d)\n", argv[0],
+		    sizeof(user) - 1);
+	    return ERR_OVERFLOW;
+	}
     }
     strcpy(user, argv[i + 1]);
     if ((arg = strchr(user, ':')) != NULL) {
@@ -443,62 +476,68 @@ int main(int argc, char *argv[])
 	alg = ALG_APMD5;
 	fprintf(stderr, "Automatically using MD5 format on Windows.\n");
     }
-#elif defined(TPF)
+#elif defined(TPF) || defined(NETWARE)
     if (alg == ALG_CRYPT) {
         alg = ALG_APMD5;
         fprintf(stderr, "Automatically using MD5 format.\n");
      }
 #endif
 
-#if (!(defined(WIN32) || defined(TPF)))
+#if (!(defined(WIN32) || defined(TPF) || defined(NETWARE)))
     if (alg == ALG_PLAIN) {
 	fprintf(stderr,"Warning: storing passwords as plain text might "
 		"just not work on this platform.\n");
     }
 #endif
-    /*
-     * Verify that the file exists if -c was omitted.  We give a special
-     * message if it doesn't.
-     */
-    if ((! newfile) && (! exists(pwfilename))) {
-	fprintf(stderr, "%s: cannot modify file %s; use '-c' to create it\n",
-		argv[0], pwfilename);
-	perror("fopen");
-	exit(ERR_FILEPERM);
-    }
-    /*
-     * Verify that we can read the existing file in the case of an update
-     * to it (rather than creation of a new one).
-     */
-    if ((! newfile) && (! readable(pwfilename))) {
-	fprintf(stderr, "%s: cannot open file %s for read access\n",
-		argv[0], pwfilename);
-	perror("fopen");
-	exit(ERR_FILEPERM);
-    }
-    /*
-     * Now check to see if we can preserve an existing file in case
-     * of password verification errors on a -c operation.
-     */
-    if (newfile && exists(pwfilename) && (! readable(pwfilename))) {
-	fprintf(stderr, "%s: cannot open file %s for read access\n"
-		"%s: existing auth data would be lost on password mismatch",
-		argv[0], pwfilename, argv[0]);
-	perror("fopen");
-	exit(ERR_FILEPERM);
-    }
-    /*
-     * Now verify that the file is writable!
-     */
-    if (! writable(pwfilename)) {
-	fprintf(stderr, "%s: cannot open file %s for write access\n",
-		argv[0], pwfilename);
-	perror("fopen");
-	exit(ERR_FILEPERM);
+    if (! nofile) {
+	/*
+	 * Only do the file checks if we're supposed to frob it.
+	 *
+	 * Verify that the file exists if -c was omitted.  We give a special
+	 * message if it doesn't.
+	 */
+	if ((! newfile) && (! exists(pwfilename))) {
+	    fprintf(stderr,
+		    "%s: cannot modify file %s; use '-c' to create it\n",
+		    argv[0], pwfilename);
+	    perror("fopen");
+	    exit(ERR_FILEPERM);
+	}
+	/*
+	 * Verify that we can read the existing file in the case of an update
+	 * to it (rather than creation of a new one).
+	 */
+	if ((! newfile) && (! readable(pwfilename))) {
+	    fprintf(stderr, "%s: cannot open file %s for read access\n",
+		    argv[0], pwfilename);
+	    perror("fopen");
+	    exit(ERR_FILEPERM);
+	}
+	/*
+	 * Now check to see if we can preserve an existing file in case
+	 * of password verification errors on a -c operation.
+	 */
+	if (newfile && exists(pwfilename) && (! readable(pwfilename))) {
+	    fprintf(stderr, "%s: cannot open file %s for read access\n"
+		    "%s: existing auth data would be lost on "
+		    "password mismatch",
+		    argv[0], pwfilename, argv[0]);
+	    perror("fopen");
+	    exit(ERR_FILEPERM);
+	}
+	/*
+	 * Now verify that the file is writable!
+	 */
+	if (! writable(pwfilename)) {
+	    fprintf(stderr, "%s: cannot open file %s for write access\n",
+		    argv[0], pwfilename);
+	    perror("fopen");
+	    exit(ERR_FILEPERM);
+	}
     }
 
     /*
-     * All the file access checks have been made.  Time to go to work;
+     * All the file access checks (if any) have been made.  Time to go to work;
      * try to create the record for the username in question.  If that
      * fails, there's no need to waste any time on file manipulations.
      * Any error message text is returned in the record buffer, since
@@ -511,15 +550,30 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "%s: %s\n", argv[0], record);
 	exit(i);
     }
+    if (nofile) {
+	printf("%s\n", record);
+	exit(0);
+    }
 
     /*
      * We can access the files the right way, and we have a record
      * to add or update.  Let's do it..
      */
-    tempfilename = tmpnam(NULL);
+    errno = 0;
+    tempfilename = tmpnam(tname_buf);
+    if ((tempfilename == NULL) || (*tempfilename == '\0')) {
+	fprintf(stderr, "%s: unable to generate temporary filename\n",
+		argv[0]);
+	if (errno == 0) {
+	    errno = ENOENT;
+	}
+	perror("tmpnam");
+	exit(ERR_FILEPERM);
+    }
     ftemp = fopen(tempfilename, "w+");
     if (ftemp == NULL) {
-	fprintf(stderr, "%s: unable to create temporary file\n", argv[0]);
+	fprintf(stderr, "%s: unable to create temporary file '%s'\n", argv[0],
+		tempfilename);
 	perror("fopen");
 	exit(ERR_FILEPERM);
     }

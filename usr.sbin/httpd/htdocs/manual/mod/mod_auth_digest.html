@@ -21,19 +21,41 @@
 
 <H1 ALIGN="CENTER">Module mod_auth_digest</H1>
 
-This module is contained in the <CODE>mod_auth_digest.c</CODE> file, and is
-not compiled in by default. It is only available in Apache 1.3.8 and
-later. It provides for user authentication using MD5 Digest
-Authentication.
+<p>This module provides for user authentication using MD5 Digest
+Authentication.</p>
 
-<P>Note this is an updated version of <A
+<P><A
+HREF="module-dict.html#Status"
+REL="Help"
+><STRONG>Status:</STRONG></A> Experimental
+<BR>
+<A
+HREF="module-dict.html#SourceFile"
+REL="Help"
+><STRONG>Source File:</STRONG></A> mod_auth_digest.c
+<BR>
+<A
+HREF="module-dict.html#ModuleIdentifier"
+REL="Help"
+><STRONG>Module Identifier:</STRONG></A> digest_auth_module
+<BR>
+<A
+HREF="module-dict.html#Compatibility"
+REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.3.8 and later.
+</P>
+
+<h2>Summary</h2>
+
+<P>This is an updated version of <A
 HREF="mod_digest.html">mod_digest</A>. However, it has not been
-extensively tested and is therefore marked experimental. If you use this
-module, you must make sure to <em>not</em> use mod_digest (because they
-share some of the same configuration directives).
+extensively tested and is therefore marked experimental. If you use
+this module, you must make sure to <em>not</em> use mod_digest
+(because they share some of the same configuration directives).
 
+<h2>Directives</h2>
 
-<MENU>
+<ul>
 <LI><A HREF="#authdigestfile">AuthDigestFile</A>
 <LI><A HREF="#authdigestgroupfile">AuthDigestGroupFile</A>
 <LI><A HREF="#authdigestqop">AuthDigestQop</A>
@@ -42,12 +64,47 @@ share some of the same configuration directives).
 <LI><A HREF="#authdigestnccheck">AuthDigestNcCheck</A>
 <LI><A HREF="#authdigestalgorithm">AuthDigestAlgorithm</A>
 <LI><A HREF="#authdigestdomain">AuthDigestDomain</A>
-<LI><A HREF="#usingdigest">Using Digest Authentication</A>
-</MENU>
+</ul>
+
+<p>See also: <a href="core.html#require">Require</a> and
+<a href="core.html#satisfy">Satisfy</a>.
+
+<H3><A NAME="usingdigest">Using Digest Authentication</A></H3>
+
+<P>Using MD5 Digest authentication is very simple. Simply set up
+authentication normally, using "AuthType Digest" and "AuthDigestFile"
+instead of the normal "AuthType Basic" and "AuthUserFile"; also,
+replace any "AuthGroupFile" with "AuthDigestGroupFile". Then add a
+"AuthDigestDomain" directive containing at least the root URI(s) for
+this protection space. Example:
+
+<PRE>
+  &lt;Location /private/&gt;
+  AuthType Digest
+  AuthName "private area"
+  AuthDigestDomain /private/ http://mirror.my.dom/private2/
+  AuthDigestFile /web/auth/.digest_pw
+  Require valid-user
+  &lt;/Location&gt;
+</PRE>
+
+<P><strong>Note:</strong> MD5 authentication provides a more secure
+password system than Basic authentication, but only works with supporting
+browsers. As of this writing (July 1999), the only major browsers which
+support digest authentication are <A
+HREF="http://www.microsoft.com/windows/ie/">Internet Explorer 5.0</A> and
+<A HREF="http://www.w3.org/Amaya/">Amaya</A>. Therefore, we do not
+recommend using this feature on a large Internet site. However, for
+personal and intra-net use, where browser users can be controlled, it is
+ideal.
+
+
 <HR>
 
 
-<H2><A NAME="authdigestfile">AuthDigestFile</A></H2>
+
+
+<H2><A NAME="authdigestfile">AuthDigestFile</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -63,7 +120,7 @@ share some of the same configuration directives).
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -79,7 +136,7 @@ the Apache distribution.
 
 <HR>
 
-<H2><A NAME="authdigestgroupfile">AuthDigestGroupFile</A></H2>
+<H2><A NAME="authdigestgroupfile">AuthDigestGroupFile</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -95,7 +152,7 @@ the Apache distribution.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -121,7 +178,7 @@ AuthGroupFile.
 
 <HR>
 
-<H2><A NAME="authdigestqop">AuthDigestQop</A></H2>
+<H2><A NAME="authdigestqop">AuthDigestQop</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -141,7 +198,7 @@ AuthGroupFile.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -165,7 +222,8 @@ does not like the challenge it receives otherwise.
 
 <HR>
 
-<H2><A NAME="authdigestnoncelifetime">AuthDigestNonceLifetime</A></H2>
+<H2><A NAME="authdigestnoncelifetime">AuthDigestNonceLifetime</A> 
+directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -185,7 +243,7 @@ does not like the challenge it receives otherwise.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -219,7 +277,7 @@ do not make sense here.
 -->
 
 <HR>
-<H2><A NAME="authdigestnonceformat">AuthDigestNonceFormat</A></H2>
+<H2><A NAME="authdigestnonceformat">AuthDigestNonceFormat</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -239,7 +297,7 @@ do not make sense here.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -256,7 +314,7 @@ generated.
 -->
 
 <HR>
-<H2><A NAME="authdigestnccheck">AuthDigestNcCheck</A></H2>
+<H2><A NAME="authdigestnccheck">AuthDigestNcCheck</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -276,7 +334,7 @@ generated.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -301,7 +359,7 @@ impact performance.
 -->
 
 <HR>
-<H2><A NAME="authdigestalgorithm">AuthDigestAlgorithm</A></H2>
+<H2><A NAME="authdigestalgorithm">AuthDigestAlgorithm</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -321,7 +379,7 @@ impact performance.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -341,7 +399,7 @@ the challenge and response hashes.
 -->
 
 <HR>
-<H2><A NAME="authdigestdomain">AuthDigestDomain</A></H2>
+<H2><A NAME="authdigestdomain">AuthDigestDomain</A> directive</H2>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
@@ -357,7 +415,7 @@ the challenge and response hashes.
 <A
  HREF="directive-dict.html#Status"
  REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
+><STRONG>Status:</STRONG></A> Experimental<BR>
 <A
  HREF="directive-dict.html#Module"
  REL="Help"
@@ -384,37 +442,6 @@ have a detrimental effect on performance if "AuthDigestNcCheck" is on.
 clients (which understand this) will then share username/password info
 across multiple servers without prompting the user each time.
 
-
-<HR>
-
-<H3><A NAME="usingdigest">Using Digest Authentication</A></H3>
-
-<P>Using MD5 Digest authentication is very simple. Simply set up
-authentication normally, using "AuthType Digest" and "AuthDigestFile"
-instead of the normal "AuthType Basic" and "AuthUserFile"; also,
-replace any "AuthGroupFile" with "AuthDigestGroupFile". Then add a
-"AuthDigestDomain" directive containing at least the root URI(s) for
-this protection space. Example:
-
-<PRE>
-  &lt;Location /private/&gt;
-  AuthType Digest
-  AuthName "private area"
-  AuthDigestDomain /private/ http://mirror.my.dom/private2/
-  AuthDigestFile /web/auth/.digest_pw
-  require valid-user
-  &lt;/Location&gt;
-</PRE>
-
-<P><strong>Note:</strong> MD5 authentication provides a more secure
-password system than Basic authentication, but only works with supporting
-browsers. As of this writing (July 1999), the only major browsers which
-support digest authentication are <A
-HREF="http://www.microsoft.com/windows/ie/">Internet Explorer 5.0</A> and
-<A HREF="http://www.w3.org/Amaya/">Amaya</A>. Therefore, we do not
-recommend using this feature on a large Internet site. However, for
-personal and intra-net use, where browser users can be controlled, it is
-ideal.
 
 <HR>
 

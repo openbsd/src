@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD>
+<TITLE>New features with Apache 2.0</TITLE>
+</HEAD>
+
+<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000FF" 
+      VLINK="#000080" ALINK="#FF0000">
+<DIV ALIGN="CENTER">
+ <IMG SRC="images/sub.gif" ALT="[APACHE DOCUMENTATION]">
+ <H3>
+  Apache HTTP Server
+ </H3>
+</DIV>
+
+<H1 ALIGN="CENTER">Overview of New Features in Apache 2.0</H1>
+
+<P>New features with this release, as extensions of the Apache
+functionality. Because the core code has changed so
+significantly, there are certain liberties that earlier versions of
+Apache (and the NCSA daemon) took that recent Apache versions are
+pickier about - when Apache 2.0 is released, there will be more notes
+on how to correct those issues.
+
+<P>Enhancements: <A HREF="#core">Core</A> |
+<A HREF="#performance">Performance</A> |
+<A HREF="#config">Configuration</A> |
+<A HREF="#mod">Modules</A> |
+<A HREF="#api">API</A> |
+<A HREF="#misc">Misc</A>
+
+<P><HR>
+
+<H2><A NAME="core">Core Enhancements:</A></H2>
+
+<DL>
+<DT><STRONG>New Build System</STRONG>
+<DD>The entire build system has been completely redesigned to take
+    advantage of autoconf and libtool.  This makes it more likely that
+    DSO's will work on more systems.
+
+<DT><STRONG>Improved Portability</STRONG>
+<DD>Apache now takes advantage of native system calls on all supported
+    platforms.  This improves performance and reduces bugs.
+
+<DT><STRONG>Multi-Threading</STRONG>
+<DD>Apache 2.0 has the option of being multi-process and multi-threaded
+    on most platforms.
+
+<DT><STRONG>Apache Portable Runtime</STRONG>
+<DD>The Apache Portable Runtime allow Apache to easily port to more and more
+    systems.  This has however caused a major code re-organization.
+</DL>
+
+<P><HR>
+
+<HR>
+ <H3 ALIGN="CENTER">
+  Apache HTTP Server
+ </H3>
+
+<A HREF="./"><IMG SRC="images/index.gif" ALT="Index"></A>
+
+</BODY>
+</HTML>
+

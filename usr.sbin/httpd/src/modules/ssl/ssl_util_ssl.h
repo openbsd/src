@@ -83,6 +83,13 @@
 #endif
 #define SSL_set_state(ssl,val) (ssl)->state = val
 
+/*
+ *  Maximum length of a DER encoded session.
+ *  FIXME: There is no define in OpenSSL, but OpenSSL uses 1024*10,
+ *         so this value should be ok. Although we have no warm feeling.
+ */
+#define SSL_SESSION_MAX_DER 1024*10
+
 /*  
  *  Additional Functions
  */
@@ -103,5 +110,6 @@ BOOL        SSL_load_CrtAndKeyInfo_file(pool *, STACK_OF(X509_INFO) *, char *);
 BOOL        SSL_load_CrtAndKeyInfo_path(pool *, STACK_OF(X509_INFO) *, char *);
 #endif /* SSL_EXPERIMENTAL_PROXY */
 int         SSL_CTX_use_certificate_chain(SSL_CTX *, char *, int, int (*)());
+char       *SSL_SESSION_id2sz(unsigned char *, int);
 
 #endif /* SSL_UTIL_SSL_H */
