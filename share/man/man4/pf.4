@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.41 2003/12/15 00:02:03 mcbride Exp $
+.\"	$OpenBSD: pf.4,v 1.42 2003/12/15 05:18:40 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -644,7 +644,7 @@ number until the ioctl returns EBUSY.
 .Bd -literal
 struct pfioc_src_nodes {
         int     psn_len;
-        union { 
+        union {
                 caddr_t          psu_buf;
                 struct pf_src_node      *psu_src_nodes;
         } psn_u;
@@ -660,7 +660,7 @@ and
 options.
 The ioctl must be called once with
 .Va psn_len
-set to 0,
+set to 0.
 If the ioctl returns without error,
 .Va psn_len
 will be set to the size of the buffer required to hold all the
