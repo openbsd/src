@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.98 1999/11/13 20:54:25 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.99 1999/12/08 22:54:50 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -72,7 +72,6 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "AZT2001", "mpu" },
 	{ "CSC0003", "mpu" },
 	{ "OPT0002", "mpu" },
-	{ "@@@0001", "sb" },
 	{ "@@@2001", "sb" },
 	{ "@X@0001", "sb" },
 	{ "ADS7150", "sb" },
