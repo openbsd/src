@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.6 2004/11/01 19:14:26 espie Exp $
+# $OpenBSD: Update.pm,v 1.7 2004/11/01 19:48:58 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -123,10 +123,11 @@ sub can_do
 {
 	my ($toreplace, $replacement, $state) = @_;
 
+	my $wantlist = [];
 	my $r = OpenBSD::RequiredBy->new($toreplace);
 	my $okay = 1;
 	if (-f $$r) {
-		my $wantlist = $r->list();
+		$wantlist = $r->list();
 		my $done_wanted = {};
 		for my $wanting (@$wantlist) {
 			next if defined $done_wanted->{$wanting};
@@ -146,7 +147,25 @@ sub can_do
 	if ($@) {
 		return 0;
 	}
+
+	$plist->{wantlist} = $wantlist;
 	
 	return $okay ? $plist : $okay;
+}
+
+sub adjust_dependency
+{
+	my ($dep, $from, $into) = @_;
+
+	my $contents = installed_info($dep).CONTENTS;
+	my $plist = OpenBSD::PackingList->fromfile($contents);
+	my $items = [];
+	for my $item (@{$plist->{pkgdep}}) {
+		next if $item->{'name'} eq $from;
+		push(@$items, $item);
+	}
+	$plist->{pkgdep} = $items;
+	OpenBSD::PackingElement::PkgDep->add($plist, $into);
+	$plist->tofile($contents);
 }
 1;
