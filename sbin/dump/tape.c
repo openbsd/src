@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.21 2004/11/04 20:10:07 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.22 2005/01/23 18:33:12 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.21 2004/11/04 20:10:07 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.22 2005/01/23 18:33:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ static const char rcsid[] = "$OpenBSD: tape.c,v 1.21 2004/11/04 20:10:07 deraadt
 
 #include <errno.h>
 #include <fcntl.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,10 +120,6 @@ static int tapea_volume;	/* value of spcl.c_tapea at volume start */
 int master;		/* pid of master, for sending error signals */
 int tenths;		/* length of tape used per block written */
 static int caught;	/* have we caught the signal to proceed? */
-static int ready;	/* have we reached the lock point without having */
-			/* received the SIGUSR2 signal from the prev slave? */
-static jmp_buf jmpbuf;	/* where to jump to if we are ready when the */
-			/* SIGUSR2 arrives from the previous slave */
 
 int
 alloctape(void)
@@ -723,9 +718,6 @@ Exit(int status)
 void
 proceed(int signo)
 {
-
-	if (ready)
-		longjmp(jmpbuf, 1);
 	caught++;
 }
 
@@ -795,10 +787,8 @@ killall(void)
 static void
 doslave(int cmd, int slave_number)
 {
-	int nread;
-	int nextslave, size, eot_count;
-	volatile int wrote;
-	sigset_t sigset;
+	int nread, nextslave, size, wrote, eot_count;
+	sigset_t nsigset, osigset;
 
 	/*
 	 * Need our own seek pointer.
@@ -833,13 +823,14 @@ doslave(int cmd, int slave_number)
 				       quit("master/slave protocol botched.\n");
 			}
 		}
-		if (setjmp(jmpbuf) == 0) {
-			ready = 1;
-			if (!caught)
-				(void) pause();
-		}
-		ready = 0;
+
+		sigemptyset(&nsigset);
+		sigaddset(&nsigset, SIGUSR2);
+		sigprocmask(SIG_BLOCK, &nsigset, &osigset);
+		while (!caught)
+			sigsuspend(&osigset);
 		caught = 0;
+		sigprocmask(SIG_SETMASK, &osigset, NULL);
 
 		/* Try to write the data... */
 		eot_count = 0;
@@ -883,9 +874,9 @@ doslave(int cmd, int slave_number)
 
 		if (size < 0) {
 			(void) kill(master, SIGUSR1);
-			sigemptyset(&sigset);
+			sigemptyset(&nsigset);
 			for (;;)
-				sigsuspend(&sigset);
+				sigsuspend(&nsigset);
 		} else {
 			/*
 			 * pass size of write back to master
