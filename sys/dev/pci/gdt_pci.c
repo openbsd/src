@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.11 2001/06/12 15:40:30 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.12 2001/07/30 01:28:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -158,6 +158,9 @@ gdt_pci_probe(parent, match, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX &&
 	    PCI_PRODUCT(pa->pa_id) >= 0x100 && PCI_PRODUCT(pa->pa_id) <= 0x2ff)
 		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GDT_RAID2)
+		return (1);
 	return (0);
 }
 
@@ -186,63 +189,68 @@ gdt_pci_attach(parent, self, aux)
 	printf(": ");
 
 	gdt->sc_class = 0;
-	prod = PCI_PRODUCT(pa->pa_id);
-	switch (prod) {
-	case PCI_PRODUCT_VORTEX_GDT_60x0:
-	case PCI_PRODUCT_VORTEX_GDT_6000B:
-		gdt->sc_class = GDT_PCI;
-		break;
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX) {
+		prod = PCI_PRODUCT(pa->pa_id);
+		switch (prod) {
+		case PCI_PRODUCT_VORTEX_GDT_60x0:
+		case PCI_PRODUCT_VORTEX_GDT_6000B:
+			gdt->sc_class = GDT_PCI;
+			break;
 
-	case PCI_PRODUCT_VORTEX_GDT_6x10:
-	case PCI_PRODUCT_VORTEX_GDT_6x20:
-	case PCI_PRODUCT_VORTEX_GDT_6530:
-	case PCI_PRODUCT_VORTEX_GDT_6550:
-	case PCI_PRODUCT_VORTEX_GDT_6x17:
-	case PCI_PRODUCT_VORTEX_GDT_6x27:
-	case PCI_PRODUCT_VORTEX_GDT_6537:
-	case PCI_PRODUCT_VORTEX_GDT_6557:
-	case PCI_PRODUCT_VORTEX_GDT_6x15:
-	case PCI_PRODUCT_VORTEX_GDT_6x25:
-	case PCI_PRODUCT_VORTEX_GDT_6535:
-	case PCI_PRODUCT_VORTEX_GDT_6555:
-		gdt->sc_class = GDT_PCINEW;
-		break;
+		case PCI_PRODUCT_VORTEX_GDT_6x10:
+		case PCI_PRODUCT_VORTEX_GDT_6x20:
+		case PCI_PRODUCT_VORTEX_GDT_6530:
+		case PCI_PRODUCT_VORTEX_GDT_6550:
+		case PCI_PRODUCT_VORTEX_GDT_6x17:
+		case PCI_PRODUCT_VORTEX_GDT_6x27:
+		case PCI_PRODUCT_VORTEX_GDT_6537:
+		case PCI_PRODUCT_VORTEX_GDT_6557:
+		case PCI_PRODUCT_VORTEX_GDT_6x15:
+		case PCI_PRODUCT_VORTEX_GDT_6x25:
+		case PCI_PRODUCT_VORTEX_GDT_6535:
+		case PCI_PRODUCT_VORTEX_GDT_6555:
+			gdt->sc_class = GDT_PCINEW;
+			break;
 
-	case PCI_PRODUCT_VORTEX_GDT_6x17RP:
-	case PCI_PRODUCT_VORTEX_GDT_6x27RP:
-	case PCI_PRODUCT_VORTEX_GDT_6537RP:
-	case PCI_PRODUCT_VORTEX_GDT_6557RP:
-	case PCI_PRODUCT_VORTEX_GDT_6x11RP:
-	case PCI_PRODUCT_VORTEX_GDT_6x21RP:
-	case PCI_PRODUCT_VORTEX_GDT_6x17RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x27RD:
-	case PCI_PRODUCT_VORTEX_GDT_6537RD:
-	case PCI_PRODUCT_VORTEX_GDT_6557RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x11RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x21RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x18RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x28RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x38RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x58RD:
-	case PCI_PRODUCT_VORTEX_GDT_6518RS:
-	case PCI_PRODUCT_VORTEX_GDT_7x18RN:
-	case PCI_PRODUCT_VORTEX_GDT_7x28RN:
-	case PCI_PRODUCT_VORTEX_GDT_7x38RN:
-	case PCI_PRODUCT_VORTEX_GDT_7x58RN:
-	case PCI_PRODUCT_VORTEX_GDT_6x19RD:
-	case PCI_PRODUCT_VORTEX_GDT_6x29RD:
-	case PCI_PRODUCT_VORTEX_GDT_7x19RN:
-	case PCI_PRODUCT_VORTEX_GDT_7x29RN:
-	case PCI_PRODUCT_VORTEX_GDT_7x43RN:
+		case PCI_PRODUCT_VORTEX_GDT_6x17RP:
+		case PCI_PRODUCT_VORTEX_GDT_6x27RP:
+		case PCI_PRODUCT_VORTEX_GDT_6537RP:
+		case PCI_PRODUCT_VORTEX_GDT_6557RP:
+		case PCI_PRODUCT_VORTEX_GDT_6x11RP:
+		case PCI_PRODUCT_VORTEX_GDT_6x21RP:
+		case PCI_PRODUCT_VORTEX_GDT_6x17RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x27RD:
+		case PCI_PRODUCT_VORTEX_GDT_6537RD:
+		case PCI_PRODUCT_VORTEX_GDT_6557RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x11RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x21RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x18RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x28RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x38RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x58RD:
+		case PCI_PRODUCT_VORTEX_GDT_6518RS:
+		case PCI_PRODUCT_VORTEX_GDT_7x18RN:
+		case PCI_PRODUCT_VORTEX_GDT_7x28RN:
+		case PCI_PRODUCT_VORTEX_GDT_7x38RN:
+		case PCI_PRODUCT_VORTEX_GDT_7x58RN:
+		case PCI_PRODUCT_VORTEX_GDT_6x19RD:
+		case PCI_PRODUCT_VORTEX_GDT_6x29RD:
+		case PCI_PRODUCT_VORTEX_GDT_7x19RN:
+		case PCI_PRODUCT_VORTEX_GDT_7x29RN:
+		case PCI_PRODUCT_VORTEX_GDT_7x43RN:
+			gdt->sc_class = GDT_MPR;
+		}
+
+		/* If we don't recognize it, determine class heuristically.  */
+		if (gdt->sc_class == 0)
+			gdt->sc_class = prod < 0x100 ? GDT_PCINEW : GDT_MPR;
+
+		if (prod >= GDT_PCI_PRODUCT_FC)
+			gdt->sc_class |= GDT_FC;
+
+	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
 		gdt->sc_class = GDT_MPR;
 	}
-
-	/* If we don't recognize it, determine class heuristically.  */
-	if (gdt->sc_class == 0)
-		gdt->sc_class = prod < 0x100 ? GDT_PCINEW : GDT_MPR;
-
-	if (prod >= GDT_PCI_PRODUCT_FC)
-		gdt->sc_class |= GDT_FC;
 
 	if (pci_mapreg_map(pa,
 	    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM : GDT_PCI_DPMEM,
