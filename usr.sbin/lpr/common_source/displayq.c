@@ -1,3 +1,4 @@
+/*	$NetBSD: displayq.c,v 1.5.2.1 1995/11/19 00:41:30 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -165,16 +166,16 @@ displayq(format)
 				cp++;
 			*cp = '\0';
 			i = atoi(current);
-			if (i <= 0)
+			if (i <= 0) {
 				ret = -1;
-			else {
+			} else {
 				seteuid(euid);
 				ret = kill(i, 0);
 				seteuid(uid);
 			}
-			if (ret < 0)
+			if (ret < 0) {
 				warn();
-			else {
+			} else {
 				/* read current file name */
 				cp = current;
 				while ((*cp = getc(fp)) != EOF && *cp != '\n')
