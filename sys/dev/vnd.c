@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.44 2004/03/03 22:03:23 miod Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.45 2004/03/04 01:22:50 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -814,11 +814,13 @@ vndioctl(dev, cmd, addr, flag, p)
 			return (error);
 		}
 
-		if (vio->vnd_keylen) {
-			char *key;
+		if (vio->vnd_keylen > 0) {
+			char key[128];
 
-			key = malloc(vio->vnd_keylen, M_TEMP, M_WAITOK);
-			if ((error = copyin((caddr_t)vio->vnd_key, key,
+			if (vio->vnd_keylen > sizeof(key))
+				vio->vnd_keylen = sizeof(key);
+
+			if ((error = copyin(vio->vnd_key, key,
 			    vio->vnd_keylen)) != 0) {
 				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
 				    p->p_ucred, p);
@@ -830,7 +832,6 @@ vndioctl(dev, cmd, addr, flag, p)
 			    M_WAITOK);
 			blf_key(vnd->sc_keyctx, key, vio->vnd_keylen);
 			bzero(key, vio->vnd_keylen);
-			free((caddr_t)key, M_TEMP);
 		} else
 			vnd->sc_keyctx = NULL;
 
@@ -881,8 +882,8 @@ vndioctl(dev, cmd, addr, flag, p)
 #endif
 		/* Free crypto key */
 		if (vnd->sc_keyctx) {
-			bzero(vnd->sc_keyctx, vio->vnd_keylen);
-			free((caddr_t)vnd->sc_keyctx, M_DEVBUF);
+			bzero(vnd->sc_keyctx, sizeof(*vnd->sc_keyctx));
+			free(vnd->sc_keyctx, M_DEVBUF);
 		}
 
 		/* Detatch the disk. */
