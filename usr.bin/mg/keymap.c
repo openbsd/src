@@ -1,7 +1,7 @@
-/*	$OpenBSD: keymap.c,v 1.10 2001/05/23 22:36:14 art Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.11 2001/05/23 22:56:52 mickey Exp $	*/
 
 /*
- * Keyboard maps.  This is character set dependent.  The terminal specific 
+ * Keyboard maps.  This is character set dependent.  The terminal specific
  * parts of building the keymap has been moved to a better place.
  */
 
@@ -11,7 +11,7 @@
 static int	 name_fent	__P((char *, int));
 
 /*
- * initial keymap declarations, deepest first 
+ * initial keymap declarations, deepest first
  */
 
 #ifndef NO_HELP
@@ -656,7 +656,7 @@ name_map(name)
  * in name_function.)  If the function is NULL, it must be listed with the
  * same name in the map_table above.
  */
-FUNCTNAMES functnames[] = {
+const FUNCTNAMES functnames[] = {
 #ifndef	NO_HELP
 	{apropos_command, "apropos"},
 #endif /* !NO_HELP */
@@ -875,7 +875,7 @@ name_fent(fname, flag)
 	do {
 		/* + can be used instead of | here if more efficent.	 */
 		if ((try = base | x) < NFUNCT) {
-			if ((notit = strcmp(fname, functnames[try].n_name)) 
+			if ((notit = strcmp(fname, functnames[try].n_name))
 			    >= 0) {
 				if (!notit)
 					return try;
@@ -918,7 +918,7 @@ complete_function_list(fname, c)
 		if (++i >= NFUNCT)
 			/* no match */
 			return NULL;
-		for (j = 0; (l = fname[j]) && functnames[i].n_name[j] == l; 
+		for (j = 0; (l = fname[j]) && functnames[i].n_name[j] == l;
 		    j++);
 		if (fname[j] != '\0')
 			/* no match */
@@ -951,7 +951,7 @@ char *
 function_name(fpoint)
 	PF fpoint;
 {
-	FUNCTNAMES	*fnp = &functnames[0];
+	const FUNCTNAMES	*fnp = &functnames[0];
 
 	if (fpoint == NULL)
 		/* ambiguous */
