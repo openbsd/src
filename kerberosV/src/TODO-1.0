@@ -1,0 +1,12 @@
+- sort out hprop:ing
+- figure out hostname case sensitive issues
+- verify_user: handle non-secure verification failing because of
+  host->realm mapping
+- gssapi rc4 mechanism
+- PAM?
+- kadmin: make it happy with reading and parsing kdc.conf
+- handle readline hiding in readline/readline.h
+- berkeley db circus
+- v4->v5 conversion in kdc
+
+include TODO-shadow

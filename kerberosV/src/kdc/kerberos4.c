@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: kerberos4.c,v 1.36 2001/01/30 01:44:08 assar Exp $");
+RCSID("$KTH: kerberos4.c,v 1.38 2001/08/21 23:00:16 assar Exp $");
 
 #ifdef KRB4
 
@@ -109,9 +109,10 @@ db_fetch4(const char *name, const char *instance, const char *realm,
 }
 
 krb5_error_code
-get_des_key(hdb_entry *principal, krb5_boolean prefer_afs_key, Key **ret_key)
+get_des_key(hdb_entry *principal, krb5_boolean is_server, 
+	    krb5_boolean prefer_afs_key, Key **ret_key)
 {
-    Key *v5_key = NULL, *v4_key = NULL, *afs_key = NULL;
+    Key *v5_key = NULL, *v4_key = NULL, *afs_key = NULL, *server_key = NULL;
     int i;
     krb5_enctype etypes[] = { ETYPE_DES_CBC_MD5, 
 			      ETYPE_DES_CBC_MD4, 
@@ -119,7 +120,8 @@ get_des_key(hdb_entry *principal, krb5_boolean prefer_afs_key, Key **ret_key)
 
     for(i = 0;
 	i < sizeof(etypes)/sizeof(etypes[0])
-	    && (v5_key == NULL || v4_key == NULL || afs_key == NULL);
+	    && (v5_key == NULL || v4_key == NULL || 
+		afs_key == NULL || server_key == NULL);
 	++i) {
 	Key *key = NULL;
 	while(hdb_next_enctype2key(context, principal, etypes[i], &key) == 0) {
@@ -133,7 +135,8 @@ get_des_key(hdb_entry *principal, krb5_boolean prefer_afs_key, Key **ret_key)
 	    } else if(key->salt->type == hdb_afs3_salt) {
 		if(afs_key == NULL)
 		    afs_key = key;
-	    }
+	    } else if(server_key == NULL)
+		server_key = key;
 	}
     }
 
@@ -144,6 +147,8 @@ get_des_key(hdb_entry *principal, krb5_boolean prefer_afs_key, Key **ret_key)
 	    *ret_key = v4_key;
 	else if(v5_key)
 	    *ret_key = v5_key;
+	else if(is_server && server_key)
+	    *ret_key = server_key;
 	else
 	    return KERB_ERR_NULL_KEY;
     } else {
@@ -153,6 +158,8 @@ get_des_key(hdb_entry *principal, krb5_boolean prefer_afs_key, Key **ret_key)
 	    *ret_key = afs_key;
 	else  if(v5_key)
 	    *ret_key = v5_key;
+	else if(is_server && server_key)
+	    *ret_key = server_key;
 	else
 	    return KERB_ERR_NULL_KEY;
     }
@@ -267,12 +274,11 @@ do_version4(unsigned char *buf,
 	    goto out1;
 	}
 
-	ret = get_des_key(client, FALSE, &ckey);
+	ret = get_des_key(client, FALSE, FALSE, &ckey);
 	if(ret){
-	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
-	    /* XXX */
+	    kdc_log(0, "no suitable DES key for client");
 	    make_err_reply(reply, KDC_NULL_KEY, 
-			   "No DES key in database (client)");
+			   "no suitable DES key for client");
 	    goto out1;
 	}
 
@@ -290,12 +296,12 @@ do_version4(unsigned char *buf,
 	}
 #endif
 	
-	ret = get_des_key(server, FALSE, &skey);
+	ret = get_des_key(server, TRUE, FALSE, &skey);
 	if(ret){
-	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
+	    kdc_log(0, "no suitable DES key for server");
 	    /* XXX */
 	    make_err_reply(reply, KDC_NULL_KEY, 
-			   "No DES key in database (server)");
+			   "no suitable DES key for server");
 	    goto out1;
 	}
 
@@ -375,12 +381,12 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	ret = get_des_key(tgt, FALSE, &tkey);
+	ret = get_des_key(tgt, TRUE, FALSE, &tkey);
 	if(ret){
-	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
+	    kdc_log(0, "no suitable DES key for krbtgt");
 	    /* XXX */
 	    make_err_reply(reply, KDC_NULL_KEY, 
-			   "No DES key in database (krbtgt)");
+			   "no suitable DES key for krbtgt");
 	    goto out2;
 	}
 
@@ -463,12 +469,12 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	ret = get_des_key(server, FALSE, &skey);
+	ret = get_des_key(server, TRUE, FALSE, &skey);
 	if(ret){
-	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
+	    kdc_log(0, "no suitable DES key for server");
 	    /* XXX */
 	    make_err_reply(reply, KDC_NULL_KEY, 
-			   "No DES key in database (server)");
+			   "no suitable DES key for server");
 	    goto out2;
 	}
 

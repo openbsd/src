@@ -36,7 +36,7 @@
 #define O_BINARY 0
 #endif
 
-RCSID("$KTH: mkey.c,v 1.8 2001/01/30 01:20:57 assar Exp $");
+RCSID("$KTH: mkey.c,v 1.11 2001/07/13 06:30:41 assar Exp $");
 
 struct hdb_master_key_data {
     krb5_keytab_entry keytab;
@@ -63,26 +63,29 @@ hdb_process_master_key(krb5_context context,
 		       hdb_master_key *mkey)
 {
     krb5_error_code ret;
+
     *mkey = calloc(1, sizeof(**mkey));
-    if(*mkey == NULL)
+    if(*mkey == NULL) {
+	krb5_set_error_string(context, "malloc: out of memory");
 	return ENOMEM;
+    }
     (*mkey)->keytab.vno = kvno;
     ret = krb5_parse_name(context, "K/M", &(*mkey)->keytab.principal);
+    if(ret)
+	goto fail;
     ret = krb5_copy_keyblock_contents(context, key, &(*mkey)->keytab.keyblock);
-    if(ret) {
-	free(*mkey);
-	*mkey = NULL;
-	return ret;
-    }
+    if(ret)
+	goto fail;
     if(etype != 0)
 	(*mkey)->keytab.keyblock.keytype = etype;
     (*mkey)->keytab.timestamp = time(NULL);
     ret = krb5_crypto_init(context, key, etype, &(*mkey)->crypto);
-    if(ret) {
-	krb5_free_keyblock_contents(context, &(*mkey)->keytab.keyblock);
-	free(*mkey);
-	*mkey = NULL;
-    }
+    if(ret)
+	goto fail;
+    return 0;
+ fail:
+    hdb_free_master_key(context, *mkey);
+    *mkey = NULL;
     return ret;
 }
 
@@ -148,8 +151,12 @@ read_master_mit(krb5_context context, const char *filename,
     krb5_keyblock key;
 	       
     fd = open(filename, O_RDONLY | O_BINARY);
-    if(fd < 0)
-	return errno;
+    if(fd < 0) {
+	int save_errno = errno;
+	krb5_set_error_string(context, "failed to open %s: %s", filename,
+			      strerror(save_errno));
+	return save_errno;
+    }
     sp = krb5_storage_from_fd(fd);
     if(sp == NULL) {
 	close(fd);
@@ -163,6 +170,8 @@ read_master_mit(krb5_context context, const char *filename,
 #else
     ret = krb5_ret_int16(sp, &enctype);
     if((htons(enctype) & 0xff00) == 0x3000) {
+	krb5_set_error_string(context, "unknown keytype in %s: %#x, expected %#x", 
+			      filename, htons(enctype), 0x3000);
 	ret = HEIM_ERR_BAD_MKEY;
 	goto out;
     }
@@ -191,13 +200,21 @@ read_master_encryptionkey(krb5_context context, const char *filename,
     ssize_t len;
 	       
     fd = open(filename, O_RDONLY | O_BINARY);
-    if(fd < 0)
-	return errno;
+    if(fd < 0) {
+	int save_errno = errno;
+	krb5_set_error_string(context, "failed to open %s: %s", 
+			      filename, strerror(save_errno));
+	return save_errno;
+    }
     
     len = read(fd, buf, sizeof(buf));
     close(fd);
-    if(len < 0)
-	return errno;
+    if(len < 0) {
+	int save_errno = errno;
+	krb5_set_error_string(context, "error reading %s: %s", 
+			      filename, strerror(save_errno));
+	return save_errno;
+    }
 
     ret = decode_EncryptionKey(buf, len, &key, &len);
     memset(buf, 0, sizeof(buf));
@@ -229,13 +246,25 @@ read_master_krb4(krb5_context context, const char *filename,
     ssize_t len;
 	       
     fd = open(filename, O_RDONLY | O_BINARY);
-    if(fd < 0)
-	return errno;
+    if(fd < 0) {
+	int save_errno = errno;
+	krb5_set_error_string(context, "failed to open %s: %s", 
+			      filename, strerror(save_errno));
+	return save_errno;
+    }
     
     len = read(fd, buf, sizeof(buf));
     close(fd);
-    if(len < 0)
-	return errno;
+    if(len < 0) {
+	int save_errno = errno;
+	krb5_set_error_string(context, "error reading %s: %s", 
+			      filename, strerror(save_errno));
+	return save_errno;
+    }
+    if(len != 8) {
+	krb5_set_error_string(context, "bad contents of %s", filename);
+	return HEIM_ERR_EOF; /* XXX file might be too large */
+    }
 
     memset(&key, 0, sizeof(key));
     key.keytype = ETYPE_DES_PCBC_NONE;
@@ -265,10 +294,15 @@ hdb_read_master_key(krb5_context context, const char *filename,
 	filename = HDB_DB_DIR "/m-key";
 
     f = fopen(filename, "r");
-    if(f == NULL)
-	return errno;
+    if(f == NULL) {
+	int save_errno = errno;
+	krb5_set_error_string(context, "failed to open %s: %s", 
+			      filename, strerror(save_errno));
+	return save_errno;
+    }
     
     if(fread(buf, 1, 2, f) != 2) {
+	krb5_set_error_string(context, "end of file reading %s", filename);
 	fclose(f);
 	return HEIM_ERR_EOF;
     }

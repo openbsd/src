@@ -1,11 +1,14 @@
-# $KTH: Makefile.am,v 1.44 2001/01/30 01:56:00 assar Exp $
+# $KTH: Makefile.am,v 1.48 2001/08/27 23:00:13 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
-libkadm5srv_la_LDFLAGS = -version-info 7:3:0
-libkadm5clnt_la_LDFLAGS = -version-info 6:1:2
+libkadm5srv_la_LDFLAGS = -version-info 7:4:0
+libkadm5clnt_la_LDFLAGS = -version-info 6:2:2
 sbin_PROGRAMS = dump_log replay_log truncate_log
+
+libkadm5srv_la_LIBADD = ../krb5/libkrb5.la ../hdb/libhdb.la ../roken/libroken.la
+libkadm5clnt_la_LIBADD = ../krb5/libkrb5.la ../hdb/libhdb.la ../roken/libroken.la
 
 libexec_PROGRAMS = ipropd-master ipropd-slave
 
@@ -28,7 +31,7 @@ install-build-headers:: $(kadm5include_HEADERS)
 		fi ; \
 	done
 
-C_SOURCES =					\
+SOURCES_client =					\
 	admin.h					\
 	chpass_c.c				\
 	common_glue.c				\
@@ -50,7 +53,7 @@ C_SOURCES =					\
 	rename_c.c				\
 	send_recv.c
 
-S_SOURCES =					\
+SOURCES_server =					\
 	acl.c					\
 	admin.h					\
 	bump_pw_expire.c			\
@@ -81,8 +84,8 @@ S_SOURCES =					\
 	set_modifier.c				\
 	password_quality.c
 
-libkadm5srv_la_SOURCES = $(S_SOURCES) server_glue.c
-libkadm5clnt_la_SOURCES = $(C_SOURCES) client_glue.c
+libkadm5srv_la_SOURCES = $(SOURCES_server) server_glue.c
+libkadm5clnt_la_SOURCES = $(SOURCES_client) client_glue.c
 
 dump_log_SOURCES = dump_log.c kadm5_locl.h
 

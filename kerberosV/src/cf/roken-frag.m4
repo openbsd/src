@@ -1,4 +1,4 @@
-dnl $KTH: roken-frag.m4,v 1.21 2001/05/11 13:58:21 joda Exp $
+dnl $KTH: roken-frag.m4,v 1.30 2001/08/27 23:06:50 assar Exp $
 dnl
 dnl some code to get roken working
 dnl
@@ -49,16 +49,12 @@ AC_CHECK_HEADERS([\
 	arpa/nameser.h				\
 	config.h				\
 	crypt.h					\
-	dbm.h					\
-	db.h					\
 	dirent.h				\
 	errno.h					\
 	err.h					\
 	fcntl.h					\
-	gdbm/ndbm.h				\
 	grp.h					\
 	ifaddrs.h				\
-	ndbm.h					\
 	net/if.h				\
 	netdb.h					\
 	netinet/in.h				\
@@ -69,7 +65,6 @@ AC_CHECK_HEADERS([\
 	paths.h					\
 	pwd.h					\
 	resolv.h				\
-	rpcsvc/dbm.h				\
 	rpcsvc/ypclnt.h				\
 	shadow.h				\
 	sys/bswap.h				\
@@ -94,7 +89,6 @@ AC_CHECK_HEADERS([\
 	usersec.h				\
 	util.h					\
 	vis.h					\
-	winsock.h				\
 ])
 	
 AC_REQUIRE([CHECK_NETINET_IP_AND_TCP])
@@ -167,7 +161,11 @@ AC_CHECK_FUNCS([				\
 	getprogname				\
 	getrlimit				\
 	getspnam				\
+	initstate				\
+	issetugid				\
+	random					\
 	setprogname				\
+	setstate				\
 	strsvis					\
 	strunvis				\
 	strvis					\
@@ -259,19 +257,40 @@ AC_FIND_FUNC_NO_LIBS(pidfile,util,
 #include <util.h>
 #endif],0)
 
+AC_FIND_IF_NOT_BROKEN(getaddrinfo,,
+[#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif],[0,0,0,0])
+
+AC_FIND_IF_NOT_BROKEN(getnameinfo,,
+[#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif],[0,0,0,0,0,0,0])
+
+AC_FIND_IF_NOT_BROKEN(freeaddrinfo,,
+[#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif],[0])
+
+AC_FIND_IF_NOT_BROKEN(gai_strerror,,
+[#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif],[0])
+
 AC_BROKEN([					\
 	chown					\
 	copyhostent				\
 	daemon					\
+	ecalloc					\
+	emalloc					\
+	erealloc				\
+	estrdup					\
 	err					\
 	errx					\
 	fchown					\
 	flock					\
 	fnmatch					\
-	freeaddrinfo				\
 	freehostent				\
-	gai_strerror				\
-	getaddrinfo				\
 	getcwd					\
 	getdtablesize				\
 	getegid					\
@@ -281,7 +300,6 @@ AC_BROKEN([					\
 	getifaddrs				\
 	getipnodebyaddr				\
 	getipnodebyname				\
-	getnameinfo				\
 	getopt					\
 	gettimeofday				\
 	getuid					\
@@ -383,6 +401,13 @@ if test "$ac_cv_func_getnameinfo" = "yes"; then
   rk_BROKEN_GETNAMEINFO
   if test "$ac_cv_func_getnameinfo_broken" = yes; then
     LIBOBJS="$LIBOBJS getnameinfo.o"
+  fi
+fi
+
+if test "$ac_cv_func_getaddrinfo" = "yes"; then
+  rk_BROKEN_GETADDRINFO
+  if test "$ac_cv_func_getaddrinfo_numserv" = no; then
+    LIBOBJS="$LIBOBJS getaddrinfo.o"
   fi
 fi
 

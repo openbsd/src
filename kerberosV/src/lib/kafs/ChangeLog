@@ -1,3 +1,28 @@
+2001-08-26  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am: handle both krb5 and krb4 cases
+
+2001-07-19  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (libkafs_la_LDFLAGS): set version to 3:0:3
+
+2001-07-12  Assar Westerlund  <assar@sics.se>
+
+	* common.c: look in /etc/openafs for debian openafs
+	* kafs.h: add paths for openafs debian (/etc/openafs)
+
+	* Makefile.am: add required library dependencies
+
+2001-07-03  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (libkafs_la_LDFLAGS): set versoin to 2:4:2
+
+2001-06-19  Assar Westerlund  <assar@sics.se>
+
+	* common.c (_kafs_realm_of_cell): changed to first try exact match
+	in CellServDB, then exact match in DNS, and finally in-exact match
+	in CellServDB
+
 2001-05-18  Johan Danielsson  <joda@pdc.kth.se>
 
 	* Makefile.am: only build resolve.c if doing renaming

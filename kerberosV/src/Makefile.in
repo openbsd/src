@@ -69,26 +69,36 @@ CANONICAL_HOST = @CANONICAL_HOST@
 CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
+COMPILE_ET = @COMPILE_ET@
 CPP = @CPP@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
 DEPDIR = @DEPDIR@
+DIR_com_err = @DIR_com_err@
 DIR_des = @DIR_des@
 DIR_roken = @DIR_roken@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
 INCLUDES_roken = @INCLUDES_roken@
 INCLUDE_ = @INCLUDE_@
+INCLUDE_des = @INCLUDE_des@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
 LIB_ = @LIB_@
 LIB_AUTH_SUBDIRS = @LIB_AUTH_SUBDIRS@
+LIB_NDBM = @LIB_NDBM@
+LIB_com_err = @LIB_com_err@
+LIB_com_err_a = @LIB_com_err_a@
+LIB_com_err_so = @LIB_com_err_so@
 LIB_des = @LIB_des@
+LIB_des_a = @LIB_des_a@
 LIB_des_appl = @LIB_des_appl@
+LIB_des_so = @LIB_des_so@
 LIB_kdb = @LIB_kdb@
 LIB_otp = @LIB_otp@
 LIB_roken = @LIB_roken@
@@ -120,20 +130,18 @@ install_sh = @install_sh@
 # $KTH: Makefile.am.common,v 1.3 1999/04/01 14:58:43 joda Exp $
 
 
-# $KTH: Makefile.am.common,v 1.26 2001/05/21 13:27:48 joda Exp $
+# $KTH: Makefile.am.common,v 1.31 2001/09/01 11:12:18 assar Exp $
 
 
-AUTOMAKE_OPTIONS = foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies 1.4b
 
 SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
 INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken)
 
-AM_CFLAGS =  $(WFLAGS)
+AM_CFLAGS = $(WFLAGS)
 
 CP = cp
-
-COMPILE_ET = $(top_builddir)/lib/com_err/compile_et
 
 buildinclude = $(top_builddir)/include
 
@@ -152,8 +160,8 @@ LIB_getsockopt = @LIB_getsockopt@
 LIB_logout = @LIB_logout@
 LIB_logwtmp = @LIB_logwtmp@
 LIB_odm_initialize = @LIB_odm_initialize@
+LIB_openpty = @LIB_openpty@
 LIB_pidfile = @LIB_pidfile@
-LIB_readline = @LIB_readline@
 LIB_res_search = @LIB_res_search@
 LIB_setpcred = @LIB_setpcred@
 LIB_setsockopt = @LIB_setsockopt@
@@ -175,6 +183,7 @@ INCLUDE_openldap = @INCLUDE_openldap@
 LIB_openldap = @LIB_openldap@
 
 INCLUDE_readline = @INCLUDE_readline@
+LIB_readline = @LIB_readline@
 
 LEXLIB = @LEXLIB@
 
@@ -227,28 +236,30 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 $(ACLOCAL_M4):  configure.in  acinclude.m4 cf/aix.m4 cf/auth-modules.m4 \
-		cf/broken-getnameinfo.m4 cf/broken-glob.m4 \
-		cf/broken-realloc.m4 cf/broken-snprintf.m4 cf/broken.m4 \
-		cf/broken2.m4 cf/c-attribute.m4 cf/c-function.m4 \
-		cf/capabilities.m4 cf/check-declaration.m4 \
+		cf/broken-getaddrinfo.m4 cf/broken-getnameinfo.m4 \
+		cf/broken-glob.m4 cf/broken-realloc.m4 \
+		cf/broken-snprintf.m4 cf/broken.m4 cf/broken2.m4 \
+		cf/c-attribute.m4 cf/c-function.m4 cf/capabilities.m4 \
+		cf/check-compile-et.m4 cf/check-declaration.m4 \
 		cf/check-getpwnam_r-posix.m4 cf/check-man.m4 \
 		cf/check-netinet-ip-and-tcp.m4 cf/check-type-extra.m4 \
-		cf/check-var.m4 cf/check-x.m4 cf/check-xau.m4 cf/db.m4 \
-		cf/find-func-no-libs.m4 cf/find-func-no-libs2.m4 \
-		cf/find-func.m4 cf/find-if-not-broken.m4 \
-		cf/grok-type.m4 cf/have-pragma-weak.m4 \
-		cf/have-struct-field.m4 cf/have-type.m4 \
-		cf/have-types.m4 cf/krb-bigendian.m4 cf/krb-find-db.m4 \
-		cf/krb-func-getcwd-broken.m4 cf/krb-func-getlogin.m4 \
-		cf/krb-ipv6.m4 cf/krb-irix.m4 cf/krb-prog-ln-s.m4 \
-		cf/krb-prog-ranlib.m4 cf/krb-prog-yacc.m4 \
-		cf/krb-readline.m4 cf/krb-struct-spwd.m4 \
-		cf/krb-struct-winsize.m4 cf/krb-sys-aix.m4 \
-		cf/krb-sys-nextstep.m4 cf/krb-version.m4 cf/mips-abi.m4 \
-		cf/misc.m4 cf/need-proto.m4 cf/osfc2.m4 \
-		cf/proto-compat.m4 cf/retsigtype.m4 cf/roken-frag.m4 \
-		cf/roken.m4 cf/shared-libs.m4 cf/test-package.m4 \
-		cf/wflags.m4
+		cf/check-var.m4 cf/check-x.m4 cf/check-xau.m4 \
+		cf/crypto.m4 cf/db.m4 cf/find-func-no-libs.m4 \
+		cf/find-func-no-libs2.m4 cf/find-func.m4 \
+		cf/find-if-not-broken.m4 cf/grok-type.m4 \
+		cf/have-pragma-weak.m4 cf/have-struct-field.m4 \
+		cf/have-type.m4 cf/have-types.m4 cf/krb-bigendian.m4 \
+		cf/krb-find-db.m4 cf/krb-func-getcwd-broken.m4 \
+		cf/krb-func-getlogin.m4 cf/krb-ipv6.m4 cf/krb-irix.m4 \
+		cf/krb-prog-ln-s.m4 cf/krb-prog-ranlib.m4 \
+		cf/krb-prog-yacc.m4 cf/krb-readline.m4 \
+		cf/krb-struct-spwd.m4 cf/krb-struct-winsize.m4 \
+		cf/krb-sys-aix.m4 cf/krb-sys-nextstep.m4 \
+		cf/krb-version.m4 cf/mips-abi.m4 cf/misc.m4 \
+		cf/need-proto.m4 cf/osfc2.m4 cf/proto-compat.m4 \
+		cf/retsigtype.m4 cf/roken-frag.m4 cf/roken.m4 \
+		cf/shared-libs.m4 cf/test-package.m4 cf/wflags.m4 \
+		cf/with-all.m4
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)

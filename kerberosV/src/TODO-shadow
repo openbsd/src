@@ -1,0 +1,6 @@
+-krb5_fwd_tgt_creds() is still broken
+-the 4 to 5 principal thing
+-gss_acquire_cred still doesn't allow an alternate keytab
+-and the db lib versus headers thing
+
+/afs/andrew.cmu.edu/usr/shadow/ka2heim.txt

@@ -69,26 +69,36 @@ CANONICAL_HOST = @CANONICAL_HOST@
 CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
+COMPILE_ET = @COMPILE_ET@
 CPP = @CPP@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
 DEPDIR = @DEPDIR@
+DIR_com_err = @DIR_com_err@
 DIR_des = @DIR_des@
 DIR_roken = @DIR_roken@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
 INCLUDES_roken = @INCLUDES_roken@
 INCLUDE_ = @INCLUDE_@
+INCLUDE_des = @INCLUDE_des@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
 LIB_ = @LIB_@
 LIB_AUTH_SUBDIRS = @LIB_AUTH_SUBDIRS@
+LIB_NDBM = @LIB_NDBM@
+LIB_com_err = @LIB_com_err@
+LIB_com_err_a = @LIB_com_err_a@
+LIB_com_err_so = @LIB_com_err_so@
 LIB_des = @LIB_des@
+LIB_des_a = @LIB_des_a@
 LIB_des_appl = @LIB_des_appl@
+LIB_des_so = @LIB_des_so@
 LIB_kdb = @LIB_kdb@
 LIB_otp = @LIB_otp@
 LIB_roken = @LIB_roken@
@@ -114,26 +124,24 @@ dpagaix_CFLAGS = @dpagaix_CFLAGS@
 dpagaix_LDADD = @dpagaix_LDADD@
 install_sh = @install_sh@
 
-# $KTH: Makefile.am,v 1.44 2001/01/30 01:56:00 assar Exp $
+# $KTH: Makefile.am,v 1.48 2001/08/27 23:00:13 assar Exp $
 
 
 # $KTH: Makefile.am.common,v 1.3 1999/04/01 14:58:43 joda Exp $
 
 
-# $KTH: Makefile.am.common,v 1.26 2001/05/21 13:27:48 joda Exp $
+# $KTH: Makefile.am.common,v 1.31 2001/09/01 11:12:18 assar Exp $
 
 
-AUTOMAKE_OPTIONS = foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies 1.4b
 
 SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
 INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken)
 
-AM_CFLAGS =  $(WFLAGS)
+AM_CFLAGS = $(WFLAGS)
 
 CP = cp
-
-COMPILE_ET = $(top_builddir)/lib/com_err/compile_et
 
 buildinclude = $(top_builddir)/include
 
@@ -152,8 +160,8 @@ LIB_getsockopt = @LIB_getsockopt@
 LIB_logout = @LIB_logout@
 LIB_logwtmp = @LIB_logwtmp@
 LIB_odm_initialize = @LIB_odm_initialize@
+LIB_openpty = @LIB_openpty@
 LIB_pidfile = @LIB_pidfile@
-LIB_readline = @LIB_readline@
 LIB_res_search = @LIB_res_search@
 LIB_setpcred = @LIB_setpcred@
 LIB_setsockopt = @LIB_setsockopt@
@@ -175,6 +183,7 @@ INCLUDE_openldap = @INCLUDE_openldap@
 LIB_openldap = @LIB_openldap@
 
 INCLUDE_readline = @INCLUDE_readline@
+LIB_readline = @LIB_readline@
 
 LEXLIB = @LEXLIB@
 
@@ -191,9 +200,12 @@ NROFF_MAN = groff -mandoc -Tascii
 CHECK_LOCAL = $(PROGRAMS)
 
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
-libkadm5srv_la_LDFLAGS = -version-info 7:3:0
-libkadm5clnt_la_LDFLAGS = -version-info 6:1:2
+libkadm5srv_la_LDFLAGS = -version-info 7:4:0
+libkadm5clnt_la_LDFLAGS = -version-info 6:2:2
 sbin_PROGRAMS = dump_log replay_log truncate_log
+
+libkadm5srv_la_LIBADD = ../krb5/libkrb5.la ../hdb/libhdb.la ../roken/libroken.la
+libkadm5clnt_la_LIBADD = ../krb5/libkrb5.la ../hdb/libhdb.la ../roken/libroken.la
 
 libexec_PROGRAMS = ipropd-master ipropd-slave
 
@@ -204,7 +216,7 @@ kadm5include_HEADERS = kadm5_err.h admin.h private.h \
 	kadm5-protos.h kadm5-private.h
 
 
-C_SOURCES = \
+SOURCES_client = \
 	admin.h					\
 	chpass_c.c				\
 	common_glue.c				\
@@ -227,7 +239,7 @@ C_SOURCES = \
 	send_recv.c
 
 
-S_SOURCES = \
+SOURCES_server = \
 	acl.c					\
 	admin.h					\
 	bump_pw_expire.c			\
@@ -259,8 +271,8 @@ S_SOURCES = \
 	password_quality.c
 
 
-libkadm5srv_la_SOURCES = $(S_SOURCES) server_glue.c
-libkadm5clnt_la_SOURCES = $(C_SOURCES) client_glue.c
+libkadm5srv_la_SOURCES = $(SOURCES_server) server_glue.c
+libkadm5clnt_la_SOURCES = $(SOURCES_client) client_glue.c
 
 dump_log_SOURCES = dump_log.c kadm5_locl.h
 
@@ -299,13 +311,15 @@ X_CFLAGS = @X_CFLAGS@
 X_LIBS = @X_LIBS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_PRE_LIBS = @X_PRE_LIBS@
-libkadm5clnt_la_LIBADD = 
+libkadm5clnt_la_DEPENDENCIES =  ../krb5/libkrb5.la ../hdb/libhdb.la \
+../roken/libroken.la
 am_libkadm5clnt_la_OBJECTS =  chpass_c.lo common_glue.lo create_c.lo \
 delete_c.lo destroy_c.lo flush_c.lo free.lo get_c.lo get_princs_c.lo \
 init_c.lo kadm5_err.lo marshall.lo modify_c.lo privs_c.lo randkey_c.lo \
 rename_c.lo send_recv.lo client_glue.lo
 libkadm5clnt_la_OBJECTS =  $(am_libkadm5clnt_la_OBJECTS)
-libkadm5srv_la_LIBADD = 
+libkadm5srv_la_DEPENDENCIES =  ../krb5/libkrb5.la ../hdb/libhdb.la \
+../roken/libroken.la
 am_libkadm5srv_la_OBJECTS =  acl.lo bump_pw_expire.lo chpass_s.lo \
 common_glue.lo context_s.lo create_s.lo delete_s.lo destroy_s.lo \
 ent_setup.lo error.lo flush_s.lo free.lo get_princs_s.lo get_s.lo \

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken.h.in,v 1.157 2001/05/18 18:00:12 assar Exp $ */
+/* $KTH: roken.h.in,v 1.159 2001/08/21 15:32:05 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,9 +94,6 @@ struct sockaddr_dl;
 #endif
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
-#endif
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -565,6 +562,19 @@ strftime (char *buf, size_t maxsize, const char *format,
 #ifndef HAVE_STRPTIME
 char *
 strptime (const char *buf, const char *format, struct tm *timeptr);
+#endif
+
+#ifndef HAVE_EMALLOC
+void *emalloc (size_t);
+#endif
+#ifndef HAVE_ECALLOC
+void *ecalloc(size_t num, size_t sz);
+#endif
+#ifndef HAVE_EREALLOC
+void *erealloc (void *, size_t);
+#endif
+#ifndef HAVE_ESTRDUP
+char *estrdup (const char *);
 #endif
 
 /*

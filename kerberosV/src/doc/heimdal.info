@@ -288,15 +288,6 @@ following options:
      You will need a fairly recent version of our Kerberos 4
      distribution for `rshd' and `popper' to support version 4 clients.
 
-`--enable-kaserver'
-     Enables experimental kaserver support in the KDC. This is the
-     protocol used by the "KDC" in AFS. Requires Kerberos 4 support.
-
-`--enable-kaserver-db'
-     Enables experimental support for reading kaserver databases in
-     hprop.  This is useful when migrating from a kaserver to a Heimdal
-     KDC.
-
 `--enable-dce'
      Enables support for getting DCE credentials and tokens.  See the
      README files in `appl/dceutils' for more information.
@@ -543,6 +534,10 @@ Access to the admin server is controlled by an acl-file, (default
 following syntax:
      principal       [priv1,priv2,...]       [glob-pattern]
 
+The matching is from top to bottom for matching principal (and if given,
+glob-pattern).  When there is a match, the rights of that lines are
+used.
+
 The privileges you can assign to a principal are: `add',
 `change-password' (or `cpw' for short), `delete', `get', `list', and
 `modify', or the special privilege `all'. All of these roughly
@@ -602,9 +597,10 @@ and if so return `NULL'.  If it is deemed to be of low quality, it
 should return a string explaining why that password should not be used.
 
 Code for a password quality checking function that uses the cracklib
-library can be found in `kpasswd/sample_password_check.c' in the source
-code distribution.  It requires the cracklib library built with the
-patch available at <ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch>.
+library can be found in `lib/kadm5/sample_password_check.c' in the
+source code distribution.  It requires the cracklib library built with
+the patch available at
+<ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch>.
 
 If no password quality checking function is configured, it is only
 verified that it is at least six characters of length.
@@ -718,12 +714,21 @@ Salting
 
 Salting is used to make it harder to precalculate all possible keys.
 Using a salt increases the search space to make it almost impossible to
-precalculate all keys. In salting you just append the salt to the
-password, or somehow merge the password with the salt.
+precalculate all keys. Salting is the process of mixing a public string
+(the salt) with the password, then sending it through an
+encryption-type specific string-to-key function that will output the
+fixed size encryption key.
 
-In Kerberos 5 the salting is determined by the encryption-type, except
-in case of `des'. In `des' there is the kerberos 4 salting (none at
-all) or the afs-salting (using the cell (realm in afs-lingo)).
+In Kerberos 5 the salt is determined by the encryption-type, except in
+some special cases.
+
+In `des' there is the Kerberos 4 salt (none at all) or the afs-salt
+(using the cell (realm in afs-lingo)).
+
+In `arcfour' (the encryption type that Microsoft Windows 2000 uses)
+there is no salt. This is to be compatible with NTLM keys in Windows NT
+4.
+
 `[kadmin]default_keys' in `krb5.conf' controls what salting to use,
 
 The syntax of `[kadmin]default_keys' is
@@ -826,8 +831,8 @@ Kerberos 4 issues
 If compiled with version 4 support, the KDC can serve requests from a
 Kerberos 4 client. There are a few things you must do for this to work.
 
-You might also want use the built in kaserver emulation in the kdc when
-you have AFS-clients that use `klog'.
+The KDC will also have kaserver emulation and be able to handle
+AFS-clients that use `klog'.
 
 * Menu:
 
@@ -987,12 +992,12 @@ The database conversion is done with `hprop'. You can run this command
 to propagate the database to the machine called `slave-server' (which
 should be running a `hpropd').
 
-     hprop --source=krb4-db -E slave-server
+     hprop --source=krb4-db --master-key=/.m slave-server
 
 This command can also be to use for converting the v4 database on the
 server:
 
-     hprop -n --source=krb4-db -d /var/kerberos/principal -E | hpropd -n
+     hprop -n --source=krb4-db -d /var/kerberos/principal --master-key=/.m | hpropd -n
 
 Version 4 Kadmin
 ================
@@ -1027,7 +1032,7 @@ contains a minimalistic Rx implementation.
 There are three parts of the kaserver; KAA (Authentication), KAT (Ticket
 Granting), and KAM (Maintenance). The KAA interface and KAT interface
 both passes over DES encrypted data-blobs (just like the
-Kerberos-protocol) and thus o not need any other protection.  The KAM
+Kerberos-protocol) and thus do not need any other protection.  The KAM
 interface uses `rxkad' (Kerberos authentication layer for Rx) for
 security and data protection, and is used for example for changing
 passwords.  This part is not implemented in the kdc.
@@ -1173,7 +1178,7 @@ understand Kerberos 4 salted hashes you might need to turn off anything
 similar to the following if you have it, at least while adding the
 principals that are going to share keys with Windows 2000.
 
-     	[kadmin]default_keys = des3:pw-salt des:pw-salt des:pw-salt:
+     	[kadmin]default_keys = v5 v4
 
 You must also set:
 
@@ -1288,6 +1293,10 @@ File: heimdal.info,  Node: Useful links when reading about the Windows 2000,  Pr
 
 Useful links when reading about the Windows 2000
 ================================================
+
+See also our paper presented at the 2001 usenix Annual Technical
+Conference, available in the proceedings or at
+<http://www.usenix.org/publications/library/proceedings/usenix01/freenix01/westerlund.html>.
 
 There are lots of text about Kerberos on Microsoft's web site, here is a
 short list of the interesting documents that we have managed to find.
@@ -1718,36 +1727,36 @@ Node: Top210
 Node: Introduction565
 Node: What is Kerberos?3207
 Node: Building and Installing8281
-Node: Setting up a realm12015
-Node: Configuration file12676
-Node: Creating the database15366
-Node: keytabs17869
-Node: Remote administration18703
-Node: Password changing20457
-Node: Testing clients and servers22264
-Node: Slave Servers22584
-Node: Incremental propagation24216
-Node: Salting26744
-Node: Things in search for a better place28133
-Node: Kerberos 4 issues31018
-Node: Principal conversion issues31537
-Ref: Principal conversion issues-Footnote-133760
-Ref: Principal conversion issues-Footnote-233828
-Node: Converting a version 4 database33881
-Node: kaserver38881
-Node: Windows 2000 compatability40619
-Node: Configuring Windows 2000 to use a Heimdal KDC41805
-Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC43557
-Node: Create account mappings46037
-Node: Encryption types46627
-Node: Authorization data47368
-Node: Quirks of Windows 2000 KDC48512
-Node: Useful links when reading about the Windows 200049753
-Node: Programming with Kerberos51581
-Node: Kerberos 5 API Overview51994
-Node: Walkthru a sample Kerberos 5 client53546
-Node: Validating a password in a server application61362
-Node: Migration61643
-Node: Acknowledgments62897
+Node: Setting up a realm11684
+Node: Configuration file12345
+Node: Creating the database15035
+Node: keytabs17538
+Node: Remote administration18372
+Node: Password changing20274
+Node: Testing clients and servers22083
+Node: Slave Servers22403
+Node: Incremental propagation24035
+Node: Salting26563
+Node: Things in search for a better place28198
+Node: Kerberos 4 issues31083
+Node: Principal conversion issues31585
+Ref: Principal conversion issues-Footnote-133808
+Ref: Principal conversion issues-Footnote-233876
+Node: Converting a version 4 database33929
+Node: kaserver38957
+Node: Windows 2000 compatability40696
+Node: Configuring Windows 2000 to use a Heimdal KDC41882
+Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC43634
+Node: Create account mappings46082
+Node: Encryption types46672
+Node: Authorization data47413
+Node: Quirks of Windows 2000 KDC48557
+Node: Useful links when reading about the Windows 200049798
+Node: Programming with Kerberos51832
+Node: Kerberos 5 API Overview52245
+Node: Walkthru a sample Kerberos 5 client53797
+Node: Validating a password in a server application61613
+Node: Migration61894
+Node: Acknowledgments63148
 
 End Tag Table

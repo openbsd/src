@@ -69,26 +69,36 @@ CANONICAL_HOST = @CANONICAL_HOST@
 CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
+COMPILE_ET = @COMPILE_ET@
 CPP = @CPP@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
 DEPDIR = @DEPDIR@
+DIR_com_err = @DIR_com_err@
 DIR_des = @DIR_des@
 DIR_roken = @DIR_roken@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
 INCLUDES_roken = @INCLUDES_roken@
 INCLUDE_ = @INCLUDE_@
+INCLUDE_des = @INCLUDE_des@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
 LIB_ = @LIB_@
 LIB_AUTH_SUBDIRS = @LIB_AUTH_SUBDIRS@
+LIB_NDBM = @LIB_NDBM@
+LIB_com_err = @LIB_com_err@
+LIB_com_err_a = @LIB_com_err_a@
+LIB_com_err_so = @LIB_com_err_so@
 LIB_des = @LIB_des@
+LIB_des_a = @LIB_des_a@
 LIB_des_appl = @LIB_des_appl@
+LIB_des_so = @LIB_des_so@
 LIB_kdb = @LIB_kdb@
 LIB_otp = @LIB_otp@
 LIB_roken = @LIB_roken@
@@ -114,26 +124,24 @@ dpagaix_CFLAGS = @dpagaix_CFLAGS@
 dpagaix_LDADD = @dpagaix_LDADD@
 install_sh = @install_sh@
 
-# $KTH: Makefile.am,v 1.125 2001/05/16 23:51:50 assar Exp $
+# $KTH: Makefile.am,v 1.138 2001/09/06 12:19:16 assar Exp $
 
 
 # $KTH: Makefile.am.common,v 1.3 1999/04/01 14:58:43 joda Exp $
 
 
-# $KTH: Makefile.am.common,v 1.26 2001/05/21 13:27:48 joda Exp $
+# $KTH: Makefile.am.common,v 1.31 2001/09/01 11:12:18 assar Exp $
 
 
-AUTOMAKE_OPTIONS = foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies 1.4b
 
 SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
-INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken)
+INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken) $(INCLUDE_krb4) $(INCLUDE_des) -I../com_err
 
-AM_CFLAGS =  $(WFLAGS)
+AM_CFLAGS = $(WFLAGS)
 
 CP = cp
-
-COMPILE_ET = $(top_builddir)/lib/com_err/compile_et
 
 buildinclude = $(top_builddir)/include
 
@@ -152,8 +160,8 @@ LIB_getsockopt = @LIB_getsockopt@
 LIB_logout = @LIB_logout@
 LIB_logwtmp = @LIB_logwtmp@
 LIB_odm_initialize = @LIB_odm_initialize@
+LIB_openpty = @LIB_openpty@
 LIB_pidfile = @LIB_pidfile@
-LIB_readline = @LIB_readline@
 LIB_res_search = @LIB_res_search@
 LIB_setpcred = @LIB_setpcred@
 LIB_setsockopt = @LIB_setsockopt@
@@ -175,6 +183,7 @@ INCLUDE_openldap = @INCLUDE_openldap@
 LIB_openldap = @LIB_openldap@
 
 INCLUDE_readline = @INCLUDE_readline@
+LIB_readline = @LIB_readline@
 
 LEXLIB = @LEXLIB@
 
@@ -192,10 +201,10 @@ CHECK_LOCAL = $(PROGRAMS)
 
 bin_PROGRAMS = verify_krb5_conf
 
-noinst_PROGRAMS = dump_config test_get_addrs
+noinst_PROGRAMS = dump_config test_get_addrs krbhst-test
 
 check_PROGRAMS = n-fold-test string-to-key-test derived-key-test store-test
-TESTS = n-fold-test string-to-key-test derived-key-test store-test
+TESTS = n-fold-test string-to-key-test derived-key-test store-test 
 
 LDADD = libkrb5.la \
 	$(LIB_des) \
@@ -212,13 +221,12 @@ libkrb5_la_LIBADD = \
 
 lib_LTLIBRARIES = libkrb5.la
 
-ERR_FILES = krb5_err.c heim_err.c
+ERR_FILES = krb5_err.c heim_err.c k524_err.c
 
 libkrb5_la_SOURCES = \
 	acl.c					\
 	add_et_list.c				\
 	addr_families.c				\
-	address.c				\
 	aname_to_localname.c			\
 	appdefault.c				\
 	asn1_glue.c				\
@@ -312,7 +320,7 @@ libkrb5_la_SOURCES = \
 	$(ERR_FILES)
 
 
-libkrb5_la_LDFLAGS = -version-info 16:0:0
+libkrb5_la_LDFLAGS = -version-info 18:2:1
 
 #libkrb5_la_LIBADD = ../com_err/error.lo ../com_err/com_err.lo
 
@@ -321,24 +329,33 @@ man_MANS = \
 	krb5.conf.5				\
 	krb5_425_conv_principal.3		\
 	krb5_appdefault.3			\
+	krb5_auth_context.3			\
 	krb5_build_principal.3			\
 	krb5_config.3				\
+	krb5_context.3				\
+	krb5_create_checksum.3			\
+	krb5_crypto_init.3			\
+	krb5_encrypt.3				\
 	krb5_free_principal.3			\
+	krb5_get_all_client_addrs.3		\
+	krb5_get_krbhst.3			\
+	krb5_init_context.3			\
+	krb5_keytab.3				\
+	krb5_krbhst_init.3			\
 	krb5_openlog.3				\
 	krb5_parse_name.3			\
+	krb5_principal_get_realm.3		\
 	krb5_sname_to_principal.3		\
+	krb5_timeofday.3			\
 	krb5_unparse_name.3			\
+	krb5_verify_user.3			\
 	krb5_warn.3				\
-	verify_krb5_conf.8			\
-	krb5_auth_context.3			\
-	krb5_context.3				\
-	krb5_init_context.3			\
-	krb5_keytab.3
+	verify_krb5_conf.8
 
 
-include_HEADERS = krb5.h krb5-protos.h krb5-private.h krb5_err.h heim_err.h
+include_HEADERS = krb5.h krb5-protos.h krb5-private.h krb5_err.h heim_err.h k524_err.h
 
-CLEANFILES = krb5_err.c krb5_err.h heim_err.c heim_err.h
+CLEANFILES = krb5_err.c krb5_err.h heim_err.c heim_err.h k524_err.c k524_err.h
 subdir = lib/krb5
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../include/config.h
@@ -356,31 +373,32 @@ X_PRE_LIBS = @X_PRE_LIBS@
 libkrb5_la_DEPENDENCIES =  ../com_err/error.lo ../com_err/com_err.lo \
 $(top_builddir)/lib/asn1/libasn1.la
 am_libkrb5_la_OBJECTS =  acl.lo add_et_list.lo addr_families.lo \
-address.lo aname_to_localname.lo appdefault.lo asn1_glue.lo \
-auth_context.lo build_ap_req.lo build_auth.lo cache.lo changepw.lo \
-codec.lo config_file.lo config_file_netinfo.lo convert_creds.lo \
-constants.lo context.lo copy_host_realm.lo crc.lo creds.lo crypto.lo \
-data.lo eai_to_heim_errno.lo error_string.lo expand_hostname.lo \
-fcache.lo free.lo free_host_realm.lo generate_seq_number.lo \
-generate_subkey.lo get_addrs.lo get_cred.lo get_default_principal.lo \
-get_default_realm.lo get_for_creds.lo get_host_realm.lo get_in_tkt.lo \
-get_in_tkt_pw.lo get_in_tkt_with_keytab.lo get_in_tkt_with_skey.lo \
-get_port.lo init_creds.lo init_creds_pw.lo keyblock.lo keytab.lo \
-keytab_any.lo keytab_file.lo keytab_memory.lo keytab_keyfile.lo \
-keytab_krb4.lo krbhst.lo kuserok.lo log.lo mcache.lo misc.lo \
-mk_error.lo mk_priv.lo mk_rep.lo mk_req.lo mk_req_ext.lo mk_safe.lo \
-net_read.lo net_write.lo n-fold.lo padata.lo principal.lo prog_setup.lo \
-prompter_posix.lo rd_cred.lo rd_error.lo rd_priv.lo rd_rep.lo rd_req.lo \
-rd_safe.lo read_message.lo recvauth.lo replay.lo send_to_kdc.lo \
-sendauth.lo set_default_realm.lo sock_principal.lo store.lo \
-store_emem.lo store_fd.lo store_mem.lo ticket.lo time.lo transited.lo \
-verify_init.lo verify_user.lo version.lo warn.lo write_message.lo \
-krb5_err.lo heim_err.lo
+aname_to_localname.lo appdefault.lo asn1_glue.lo auth_context.lo \
+build_ap_req.lo build_auth.lo cache.lo changepw.lo codec.lo \
+config_file.lo config_file_netinfo.lo convert_creds.lo constants.lo \
+context.lo copy_host_realm.lo crc.lo creds.lo crypto.lo data.lo \
+eai_to_heim_errno.lo error_string.lo expand_hostname.lo fcache.lo \
+free.lo free_host_realm.lo generate_seq_number.lo generate_subkey.lo \
+get_addrs.lo get_cred.lo get_default_principal.lo get_default_realm.lo \
+get_for_creds.lo get_host_realm.lo get_in_tkt.lo get_in_tkt_pw.lo \
+get_in_tkt_with_keytab.lo get_in_tkt_with_skey.lo get_port.lo \
+init_creds.lo init_creds_pw.lo keyblock.lo keytab.lo keytab_any.lo \
+keytab_file.lo keytab_memory.lo keytab_keyfile.lo keytab_krb4.lo \
+krbhst.lo kuserok.lo log.lo mcache.lo misc.lo mk_error.lo mk_priv.lo \
+mk_rep.lo mk_req.lo mk_req_ext.lo mk_safe.lo net_read.lo net_write.lo \
+n-fold.lo padata.lo principal.lo prog_setup.lo prompter_posix.lo \
+rd_cred.lo rd_error.lo rd_priv.lo rd_rep.lo rd_req.lo rd_safe.lo \
+read_message.lo recvauth.lo replay.lo send_to_kdc.lo sendauth.lo \
+set_default_realm.lo sock_principal.lo store.lo store_emem.lo \
+store_fd.lo store_mem.lo ticket.lo time.lo transited.lo verify_init.lo \
+verify_user.lo version.lo warn.lo write_message.lo krb5_err.lo \
+heim_err.lo k524_err.lo
 libkrb5_la_OBJECTS =  $(am_libkrb5_la_OBJECTS)
 bin_PROGRAMS =  verify_krb5_conf$(EXEEXT)
 check_PROGRAMS =  n-fold-test$(EXEEXT) string-to-key-test$(EXEEXT) \
 derived-key-test$(EXEEXT) store-test$(EXEEXT)
-noinst_PROGRAMS =  dump_config$(EXEEXT) test_get_addrs$(EXEEXT)
+noinst_PROGRAMS =  dump_config$(EXEEXT) test_get_addrs$(EXEEXT) \
+krbhst-test$(EXEEXT)
 PROGRAMS =  $(bin_PROGRAMS) $(noinst_PROGRAMS)
 
 derived_key_test_SOURCES = derived-key-test.c
@@ -395,6 +413,12 @@ dump_config_LDADD = $(LDADD)
 dump_config_DEPENDENCIES =  libkrb5.la \
 $(top_builddir)/lib/asn1/libasn1.la
 dump_config_LDFLAGS = 
+krbhst_test_SOURCES = krbhst-test.c
+krbhst_test_OBJECTS =  krbhst-test.$(OBJEXT)
+krbhst_test_LDADD = $(LDADD)
+krbhst_test_DEPENDENCIES =  libkrb5.la \
+$(top_builddir)/lib/asn1/libasn1.la
+krbhst_test_LDFLAGS = 
 n_fold_test_SOURCES = n-fold-test.c
 n_fold_test_OBJECTS =  n-fold-test.$(OBJEXT)
 n_fold_test_LDADD = $(LDADD)
@@ -431,8 +455,8 @@ CFLAGS = @CFLAGS@
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 DIST_SOURCES =  $(libkrb5_la_SOURCES) derived-key-test.c dump_config.c \
-n-fold-test.c store-test.c string-to-key-test.c test_get_addrs.c \
-verify_krb5_conf.c
+krbhst-test.c n-fold-test.c store-test.c string-to-key-test.c \
+test_get_addrs.c verify_krb5_conf.c
 man3dir = $(mandir)/man3
 man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
@@ -446,8 +470,8 @@ DIST_COMMON =  $(include_HEADERS) Makefile.am Makefile.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
 GZIP_ENV = --best
-SOURCES = $(libkrb5_la_SOURCES) derived-key-test.c dump_config.c n-fold-test.c store-test.c string-to-key-test.c test_get_addrs.c verify_krb5_conf.c
-OBJECTS = $(am_libkrb5_la_OBJECTS) derived-key-test.$(OBJEXT) dump_config.$(OBJEXT) n-fold-test.$(OBJEXT) store-test.$(OBJEXT) string-to-key-test.$(OBJEXT) test_get_addrs.$(OBJEXT) verify_krb5_conf.$(OBJEXT)
+SOURCES = $(libkrb5_la_SOURCES) derived-key-test.c dump_config.c krbhst-test.c n-fold-test.c store-test.c string-to-key-test.c test_get_addrs.c verify_krb5_conf.c
+OBJECTS = $(am_libkrb5_la_OBJECTS) derived-key-test.$(OBJEXT) dump_config.$(OBJEXT) krbhst-test.$(OBJEXT) n-fold-test.$(OBJEXT) store-test.$(OBJEXT) string-to-key-test.$(OBJEXT) test_get_addrs.$(OBJEXT) verify_krb5_conf.$(OBJEXT)
 
 all: all-redirect
 .SUFFIXES:
@@ -563,6 +587,10 @@ derived-key-test$(EXEEXT): $(derived_key_test_OBJECTS) $(derived_key_test_DEPEND
 dump_config$(EXEEXT): $(dump_config_OBJECTS) $(dump_config_DEPENDENCIES)
 	@rm -f dump_config$(EXEEXT)
 	$(LINK) $(dump_config_LDFLAGS) $(dump_config_OBJECTS) $(dump_config_LDADD) $(LIBS)
+
+krbhst-test$(EXEEXT): $(krbhst_test_OBJECTS) $(krbhst_test_DEPENDENCIES)
+	@rm -f krbhst-test$(EXEEXT)
+	$(LINK) $(krbhst_test_LDFLAGS) $(krbhst_test_OBJECTS) $(krbhst_test_LDADD) $(LIBS)
 
 n-fold-test$(EXEEXT): $(n_fold_test_OBJECTS) $(n_fold_test_DEPENDENCIES)
 	@rm -f n-fold-test$(EXEEXT)
@@ -1065,13 +1093,15 @@ $(srcdir)/krb5-protos.h:
 $(srcdir)/krb5-private.h:
 	cd $(srcdir); perl ../../cf/make-proto.pl -p krb5-private.h $(libkrb5_la_SOURCES) || rm -f krb5-private.h
 
-$(libkrb5_la_OBJECTS): krb5_err.h heim_err.h
+$(libkrb5_la_OBJECTS): krb5_err.h heim_err.h k524_err.h
 
 # to help stupid solaris make
 
 krb5_err.h: krb5_err.et
 
 heim_err.h: heim_err.et
+
+k524_err.h: k524_err.et
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

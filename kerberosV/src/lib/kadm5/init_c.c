@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,7 +37,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-RCSID("$KTH: init_c.c,v 1.40 2000/12/31 08:00:23 assar Exp $");
+RCSID("$KTH: init_c.c,v 1.41 2001/06/29 16:45:34 joda Exp $");
 
 static void
 set_funcs(kadm5_client_context *c)
@@ -145,6 +145,13 @@ get_new_cache(krb5_context context,
     krb5_ccache id;
     
     krb5_get_init_creds_opt_init (&opt);
+
+    krb5_get_init_creds_opt_set_default_flags(context, "kadmin", 
+					      krb5_principal_get_realm(context, 
+								       client), 
+					      &opt);
+
+
     krb5_get_init_creds_opt_set_forwardable (&opt, FALSE);
     krb5_get_init_creds_opt_set_proxiable (&opt, FALSE);
 

@@ -33,7 +33,7 @@
 
 #include "iprop.h"
 
-RCSID("$KTH: ipropd_master.c,v 1.22 2001/02/14 23:00:16 assar Exp $");
+RCSID("$KTH: ipropd_master.c,v 1.23 2001/08/30 15:15:50 nectar Exp $");
 
 static krb5_log_facility *log_facility;
 
@@ -380,6 +380,7 @@ main(int argc, char **argv)
 	exit(0);
     }
 
+    pidfile (NULL);
     krb5_openlog (context, "ipropd-master", &log_facility);
     krb5_set_warn_dest(context, log_facility);
 

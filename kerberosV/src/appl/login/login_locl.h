@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: login_locl.h,v 1.20 2000/08/22 14:05:35 joda Exp $ */
+/* $KTH: login_locl.h,v 1.21 2001/07/06 17:36:48 assar Exp $ */
 
 #ifndef __LOGIN_LOCL_H__
 #define __LOGIN_LOCL_H__
@@ -88,6 +88,12 @@
 
 #ifdef OTP
 #include <otp.h>
+#endif
+
+#ifdef HAVE_OSFC2
+#define getargs OSFgetargs
+#include <prot.h>
+#undef getargs
 #endif
 
 #ifndef _PATH_BSHELL

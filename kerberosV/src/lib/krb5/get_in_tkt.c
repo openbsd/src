@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: get_in_tkt.c,v 1.100 2001/05/14 06:14:48 assar Exp $");
+RCSID("$KTH: get_in_tkt.c,v 1.102 2001/07/02 22:30:48 joda Exp $");
 
 krb5_error_code
 krb5_init_etype (krb5_context context,
@@ -505,8 +505,13 @@ init_as_req (krb5_context context,
 
 	if (addrs)
 	    ret = krb5_copy_addresses(context, addrs, a->req_body.addresses);
-	else
+	else {
 	    ret = krb5_get_all_client_addrs (context, a->req_body.addresses);
+	    if(ret == 0 && a->req_body.addresses->len == 0) {
+		free(a->req_body.addresses);
+		a->req_body.addresses = NULL;
+	    }
+	}
 	if (ret)
 	    return ret;
     }
@@ -726,6 +731,7 @@ krb5_get_in_cred(krb5_context context,
 		    done = 0;
 		    preauth = my_preauth;
 		    krb5_free_error_contents(context, &error);
+		    krb5_clear_error_string(context);
 		    continue;
 		}
 		if(ret_as_reply)

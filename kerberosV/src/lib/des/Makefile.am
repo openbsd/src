@@ -1,4 +1,4 @@
-# $KTH: Makefile.am,v 1.25 2001/05/16 23:50:14 assar Exp $
+# $KTH: Makefile.am,v 1.26 2001/08/04 03:10:23 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -58,6 +58,8 @@ libdes_la_SOURCES =	\
 
 EXTRA_libdes_la_SOURCES = dllmain.c passwd_dialog.aps passwd_dialog.clw \
 	passwd_dialog.rc passwd_dialog.res passwd_dlg.c passwd_dlg.h resource.h
+
+man_MANS = des.1 des_crypt.3
 
 ## this is an awful lot of junk, but it's just as well to include everything
 EXTRA_DIST =		\

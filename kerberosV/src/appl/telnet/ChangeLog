@@ -1,3 +1,25 @@
+2001-08-26  Assar Westerlund  <assar@sics.se>
+
+	* telnetd/Makefile.am: also link with the library for logout
+
+2001-08-22  Assar Westerlund  <assar@sics.se>
+
+	* telnetd/sys_term.c: include libutil.h if it exists
+
+2001-08-10  Assar Westerlund  <assar@sics.se>
+
+	* telnetd/sys_term.c (getpty): call openpty if it exists
+
+2001-07-19  Assar Westerlund  <assar@sics.se>
+
+	* telnetd/global.c (output_data): make sure of not forwarding
+	`nfrontp' too far, thereby allowing writes after the end of
+	`netobuf'
+
+2001-06-18  Assar Westerlund  <assar@sics.se>
+
+	* libtelnet/kerberos5.c: update to new krb5_auth_con* names
+
 2001-04-25  Assar Westerlund  <assar@sics.se>
 
 	* telnetd/sys_term.c (start_login): give the correct error if exec

@@ -1,3 +1,7 @@
+2001-08-13  Johan Danielsson  <joda@pdc.kth.se>
+
+	* popper.8: rewritten man page
+
 2000-12-31  Assar Westerlund  <assar@sics.se>
 
 	* pop_init.c (pop_init): handle krb5_init_context failure
