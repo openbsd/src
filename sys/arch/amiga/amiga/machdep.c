@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1998/02/22 20:34:03 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1998/03/01 14:35:42 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -409,12 +409,13 @@ again:
 	 * 5% of remaining. Insure a minimum of 16 buffers.
 	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
 	 */
-  	if (bufpages == 0)
+  	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
 			    (20 * CLSIZE);
+	}
 
 	if (nbuf == 0) {
 		nbuf = bufpages;
@@ -1549,13 +1550,14 @@ remove_isr(isr)
 				while (isr_exter_lowipl++ < 6 &&
 				    isr_exter[isr_exter_lowipl] == NULL)
 					;
-				if (isr_exter_lowipl == 7)
+				if (isr_exter_lowipl == 7) {
 #ifdef DRACO
 					if (is_draco())
 						*draco_intena &= ~DRIRQ_INT6;
 					else
 #endif
 						custom.intena = INTF_EXTER;
+				}
 			}
 			if (isr->isr_mapped_ipl == isr_exter_highipl)
 				while (isr_exter_highipl-- > 0 &&
@@ -1803,7 +1805,7 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 #ifdef COMPAT_SUNOS
 	{
-		extern sunos_exec_aout_makecmds
+		extern int sunos_exec_aout_makecmds
 		    __P((struct proc *, struct exec_package *));
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 			return(0);
