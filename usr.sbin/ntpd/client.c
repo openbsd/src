@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.20 2004/07/10 18:42:51 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.21 2004/07/10 18:47:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -178,7 +178,7 @@ client_dispatch(struct ntp_peer *p)
 			abs_offset = p->update.offset * -1;
 		else
 			abs_offset = p->update.offset;
-log_debug("offset %f, abs_offset %f", p->update.offset, abs_offset);
+
 		if (!p->update.good)
 			interval = INTERVAL_QUERY_NORMAL;
 		else if (abs_offset > QSCALE_OFF_MAX)
