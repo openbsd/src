@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.9 1998/07/12 05:27:04 todd Exp $	*/
+/*	$OpenBSD: tip.c,v 1.10 2000/01/09 05:38:47 jason Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.9 1998/07/12 05:27:04 todd Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.10 2000/01/09 05:38:47 jason Exp $";
 #endif /* not lint */
 
 /*
@@ -207,6 +207,17 @@ cucommon:
 	 * From here down the code is shared with
 	 * the "cu" version of tip.
 	 */
+
+	i = fcntl(FD, F_GETFL);
+	if (i == -1) {
+		perror("fcntl");
+		cleanup();
+	}
+	i = fcntl(FD, F_SETFL, i & ~O_NONBLOCK);
+	if (i == -1) {
+		perror("fcntl");
+		cleanup();
+	}
 
 	tcgetattr(0, &defterm);
 	term = defterm;
