@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.33 1999/08/16 19:06:15 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.34 1999/09/02 01:23:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -746,7 +746,7 @@ dointr()
 	long inttotal;
 	time_t uptime;
 	int intrstray[16];
-	char iname[17];
+	char iname[17], fname[31];
 	int i;
 
 	iname[16] = '\0';
@@ -763,7 +763,9 @@ dointr()
 				errx(1, "vmstat: ih: %s", kvm_geterr(kd));
 			if (kvm_read(kd, (u_long)ih.ih_what, iname, 16) != 16)
 				errx(1, "vmstat: ih_what: %s", kvm_geterr(kd));
-			printf("%-16.16s %10ld %8ld\n", iname, ih.ih_count, ih.ih_count / uptime);
+			snprintf(fname, sizeof fname, "irq%d/%s", i, iname);
+			printf("%-16.16s %10ld %8ld\n", fname, ih.ih_count,
+			    ih.ih_count / uptime);
 			inttotal += ih.ih_count;
 			ihp = ih.ih_next;
 		}
