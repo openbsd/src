@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.37 2002/05/18 17:54:15 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.38 2002/05/19 22:01:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.37 2002/05/18 17:54:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.38 2002/05/19 22:01:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,8 +60,9 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.37 2002/05/18 17:54:15 deraadt Exp $
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
 #include <sys/mount.h>
-#include <crypto/cryptodev.h>
 #define	_KERNEL
+#include <crypto/cryptodev.h>
+#include <dev/systrace.h>
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -121,10 +122,10 @@ typedef struct devs {
 } DEVS;
 DEVS *devs;
 
-int 	fsflg,	/* show files on same filesystem as file(s) argument */
+int	fsflg,	/* show files on same filesystem as file(s) argument */
 	pflg,	/* show files open by a particular pid */
 	uflg;	/* show files open by a particular (effective) user */
-int 	checkfile; /* true if restricting to particular files or filesystems */
+int	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	oflg;	/* display file offset */
 int	vflg;	/* display errors in locating kernel data objects etc... */
@@ -164,7 +165,7 @@ int getfname(char *);
 void pipetrans(struct pipe *, int);
 void kqueuetrans(struct kqueue *, int);
 void cryptotrans(void *, int i);
-void systracetrans(void *, int i);
+void systracetrans(struct fsystrace *, int i);
 
 int
 main(argc, argv)
@@ -222,7 +223,6 @@ main(argc, argv)
 		case 'v':
 			vflg = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -320,7 +320,6 @@ dofiles(kp)
 #define	filed	filed0.fd_fd
 	struct proc *p = &kp->kp_proc;
 	struct eproc *ep = &kp->kp_eproc;
-
 	extern char *user_from_uid();
 
 	Uname = user_from_uid(ep->e_ucred.cr_uid, 0);
@@ -375,7 +374,8 @@ dofiles(kp)
 			continue;
 		}
 		if (file.f_type == DTYPE_VNODE)
-			vtrans((struct vnode *)file.f_data, i, file.f_flag, file.f_offset);
+			vtrans((struct vnode *)file.f_data, i, file.f_flag,
+			    file.f_offset);
 		else if (file.f_type == DTYPE_SOCKET) {
 			if (checkfile == 0)
 				socktrans((struct socket *)file.f_data, i);
@@ -390,7 +390,7 @@ dofiles(kp)
 				cryptotrans(file.f_data, i);
 		} else if (file.f_type == DTYPE_SYSTRACE) {
 			if (checkfile == 0)
-				systracetrans((void *)file.f_data, i);
+				systracetrans((struct fsystrace *)file.f_data, i);
 		} else {
 			dprintf("unknown file type %d for file %d of pid %d",
 				file.f_type, i, Pid);
@@ -778,12 +778,10 @@ pipetrans(pipe, i)
 	 */
 	maxaddr = MAX(pipe, pi.pipe_peer);
 
-	printf("pipe %p state: %s%s%s", maxaddr,
+	printf("pipe %p state: %s%s%s\n", maxaddr,
 	    (pi.pipe_state & PIPE_WANTR) ? "R" : "",
 	    (pi.pipe_state & PIPE_WANTW) ? "W" : "",
 	    (pi.pipe_state & PIPE_EOF) ? "E" : "");
-
-	printf("\n");
 	return;
 bad:
 	printf("* error\n");
@@ -806,11 +804,9 @@ kqueuetrans(kq, i)
 		goto bad;
 	}
 
-	printf("kqueue %p %d state: %s%s", kq, kqi.kq_count,
+	printf("kqueue %p %d state: %s%s\n", kq, kqi.kq_count,
 	    (kqi.kq_state & KQ_SEL) ? "S" : "",
 	    (kqi.kq_state & KQ_SLEEP) ? "W" : "");
-
-	printf("\n");
 	return;
 bad:
 	printf("* error\n");
@@ -825,9 +821,7 @@ cryptotrans(f, i)
 
 	printf(" ");
 
-	printf("crypto %p", f);
-
-	printf("\n");
+	printf("crypto %p\n", f);
 	return;
 bad:
 	printf("* error\n");
@@ -835,16 +829,22 @@ bad:
 
 void
 systracetrans(f, i)
-	void *f;
+	struct fsystrace *f;
 	int i;
 {
+	struct fsystrace fi;
+
 	PREFIX(i);
 
 	printf(" ");
 
-	printf("systrace %p", f);
+	/* fill it in */
+	if (!KVM_READ(f, &fi, sizeof(fi))) {
+		dprintf("can't read fsystrace at %p", f);
+		goto bad;
+	}
 
-	printf("\n");
+	printf("systrace %p npol %d\n", f, fi.npolicies);
 	return;
 bad:
 	printf("* error\n");
@@ -870,12 +870,12 @@ inet6_addrstr(p)
 	if (IN6_IS_ADDR_LINKLOCAL(p) &&
 	    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
 		sin6.sin6_scope_id =
-			ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
+		    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
 		sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
 	}
 
 	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-			hbuf, sizeof(hbuf), NULL, 0, niflags))
+	    hbuf, sizeof(hbuf), NULL, 0, niflags))
 		return "invalid";
 
 	return hbuf;
@@ -889,7 +889,7 @@ socktrans(sock, i)
 {
 	static char *stypename[] = {
 		"unused",	/* 0 */
-		"stream", 	/* 1 */
+		"stream",	/* 1 */
 		"dgram",	/* 2 */
 		"raw",		/* 3 */
 		"rdm",		/* 4 */
@@ -931,8 +931,7 @@ socktrans(sock, i)
 	    sizeof(dname) - 1)) != sizeof(dname) -1) {
 		dprintf("can't read domain name at %p", dom.dom_name);
 		dname[0] = '\0';
-	}
-	else
+	} else
 		dname[len] = '\0';
 
 	if ((u_short)so.so_type > STYPEMAX)
@@ -1131,7 +1130,7 @@ getfname(filename)
 void
 usage()
 {
-	(void)fprintf(stderr,
- "usage: fstat [-fnv] [-p pid] [-u user] [-N system] [-M core] [file ...]\n");
+	fprintf(stderr, "usage: fstat [-fnv] [-p pid] [-u user] "
+	    "[-N system] [-M core] [file ...]\n");
 	exit(1);
 }
