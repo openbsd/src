@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1997/04/05 20:32:49 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 1997/04/05 20:44:25 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -508,6 +508,7 @@ int sigpid = 0;
 #define SDB_FPSTATE	0x04
 #endif
 
+#if 0				/* in m68k */
 /*
  * Send an interrupt to process.
  */
@@ -795,6 +796,7 @@ sys_sigreturn(p, v, retval)
 #endif
 	return (EJUSTRETURN);
 }
+#endif
 
 
 /*
