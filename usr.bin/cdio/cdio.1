@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.8 1997/03/09 01:34:26 angelos Exp $
+.\" $OpenBSD: cdio.1,v 1.9 1998/04/25 04:41:28 millert Exp $
 .Dd July 3, 1995
 .Dt CDIO 1
 .Os OpenBSD 2.0
@@ -118,6 +118,12 @@ Print the list of available commands.
 Enable the debugging mode of the CD device driver.
 .It Cm debug Ar off
 Disable the driver debugging mode.
+.It Cm device Ar devname
+Make
+.Ar devname
+the current CD device.  This is the equivalent of quitting
+.Nm
+and restarting with a different device.
 .It Cm reset
 Perform the hardware reset of the device.
 .It Cm set Ar msf

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.8 1997/05/01 12:40:28 downsj Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.9 1998/04/25 04:41:29 millert Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -27,7 +27,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <err.h>
 #include <errno.h>
+#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
@@ -46,22 +48,23 @@
 #endif
 
 #define CMD_DEBUG       1
-#define CMD_EJECT       2
-#define CMD_HELP        3
-#define CMD_INFO        4
-#define CMD_PAUSE       5
-#define CMD_PLAY        6
-#define CMD_QUIT        7
-#define CMD_RESUME      8
-#define CMD_STOP        9
-#define CMD_VOLUME      10
-#define CMD_CLOSE       11
-#define CMD_RESET       12
-#define CMD_SET         13
-#define CMD_STATUS      14
-#define CMD_NEXT	15
-#define CMD_PREV	16
-#define CMD_REPLAY	17
+#define CMD_DEVICE      2
+#define CMD_EJECT       3
+#define CMD_HELP        4
+#define CMD_INFO        5
+#define CMD_PAUSE       6
+#define CMD_PLAY        7
+#define CMD_QUIT        8
+#define CMD_RESUME      9
+#define CMD_STOP        10
+#define CMD_VOLUME      11
+#define CMD_CLOSE       12
+#define CMD_RESET       13
+#define CMD_SET         14
+#define CMD_STATUS      15
+#define CMD_NEXT	16
+#define CMD_PREV	17
+#define CMD_REPLAY	18
 
 struct cmdtab {
 	int command;
@@ -71,6 +74,7 @@ struct cmdtab {
 } cmdtab[] = {
 { CMD_CLOSE,    "close",        1, "" },
 { CMD_DEBUG,    "debug",        1, "on | off" },
+{ CMD_DEVICE,   "device",       1, "devname" },
 { CMD_EJECT,    "eject",        1, "" },
 { CMD_HELP,     "?",            1, 0 },
 { CMD_HELP,     "help",         1, "" },
@@ -108,7 +112,7 @@ int             play_msf __P((int, int, int, int, int, int));
 int             play_track __P((int, int, int, int));
 int             get_vol __P((int *, int *));
 int             status __P((int *, int *, int *, int *));
-int             open_cd __P((void));
+int             open_cd __P((char *));
 int             play __P((char *arg));
 int             info __P((char *arg));
 int             pstatus __P((char *arg));
@@ -237,7 +241,7 @@ int main (argc, argv)
 		arg = input (&cmd);
 		if (run (cmd, arg) < 0) {
 			if (verbose)
-				perror (__progname);
+				warn (NULL);
 			close (fd);
 			fd = -1;
 		}
@@ -250,6 +254,7 @@ int run (cmd, arg)
 	char *arg;
 {
 	int l, r, rc;
+	static char newcdname[MAXPATHLEN];
 
 	switch (cmd) {
 
@@ -257,31 +262,31 @@ int run (cmd, arg)
 		exit (0);
 
 	case CMD_INFO:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		return info (arg);
 
 	case CMD_STATUS:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		return pstatus (arg);
 
 	case CMD_PAUSE:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		return ioctl (fd, CDIOCPAUSE);
 
 	case CMD_RESUME:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		return ioctl (fd, CDIOCRESUME);
 
 	case CMD_STOP:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		rc = ioctl (fd, CDIOCSTOP);
@@ -291,7 +296,7 @@ int run (cmd, arg)
 		return (rc);
 
 	case CMD_RESET:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		rc = ioctl (fd, CDIOCRESET);
@@ -302,7 +307,7 @@ int run (cmd, arg)
 		return (0);
 
 	case CMD_DEBUG:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		if (! strcasecmp (arg, "on"))
@@ -315,8 +320,24 @@ int run (cmd, arg)
 
 		return (0);
 
+	case CMD_DEVICE:
+		/* close old device */
+		if (fd > -1) {
+			(void) ioctl (fd, CDIOCALLOW);
+			close(fd);
+			fd = -1;
+		}
+
+		/* open new device */
+		if (!open_cd (arg))
+			return (0);
+		(void) strncpy(newcdname, arg, sizeof(newcdname) - 1);
+		newcdname[sizeof(newcdname) - 1] = '\0';
+		cdname = newcdname;
+		return (1);
+
 	case CMD_EJECT:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		(void) ioctl (fd, CDIOCALLOW);
@@ -331,7 +352,7 @@ int run (cmd, arg)
 
 	case CMD_CLOSE:
 #if defined(CDIOCCLOSE)
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		(void) ioctl (fd, CDIOCALLOW);
@@ -347,7 +368,7 @@ int run (cmd, arg)
 #endif
 
 	case CMD_PLAY:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return (0);
 
 		while (isspace (*arg))
@@ -365,7 +386,7 @@ int run (cmd, arg)
 		return (0);
 
 	case CMD_VOLUME:
-		if (fd < 0 && !open_cd ())
+		if (fd < 0 && !open_cd (cdname))
 			return (0);
 
 		if (! strncasecmp (arg, "left", strlen(arg)))
@@ -391,19 +412,19 @@ int run (cmd, arg)
 		return setvol (l, r);
 
         case CMD_NEXT:
-                if (fd < 0 && ! open_cd ())
+                if (fd < 0 && ! open_cd (cdname))
                         return (0);
 
                 return play_next (arg);
 
         case CMD_PREV:
-                if (fd < 0 && ! open_cd ())
+                if (fd < 0 && ! open_cd (cdname))
                         return (0);
 
                 return play_prev (arg);
 
 	case CMD_REPLAY:
-		if (fd < 0 && ! open_cd ())
+		if (fd < 0 && ! open_cd (cdname))
 			return 0;
 
 		return play_same (arg);
@@ -716,7 +737,7 @@ int play_prev (arg)
                 rc = ioctl (fd, CDIOREADTOCHEADER, &h);
                 if (rc < 0)
                 {
-                        perror ("getting toc header");
+                        warn ("getting toc header");
                         return (rc);
                 }
 
@@ -741,7 +762,7 @@ int play_same (arg)
                 rc = ioctl (fd, CDIOREADTOCHEADER, &h);
                 if (rc < 0)
                 {
-                        perror ("getting toc header");
+                        warn ("getting toc header");
                         return (rc);
                 }
 
@@ -763,7 +784,7 @@ int play_next (arg)
 		rc = ioctl (fd, CDIOREADTOCHEADER, &h);
 		if (rc < 0)
 		{
-			perror ("getting toc header");
+			warn ("getting toc header");
 			return (rc);
 		}
 
@@ -807,13 +828,13 @@ int pstatus (arg)
 	int rc, trk, m, s, f;
 
 	rc = status (&trk, &m, &s, &f);
-	if (rc >= 0)
+	if (rc >= 0) {
 		if (verbose)
 			printf ("Audio status = %d<%s>, current track = %d, current position = %d:%02d.%02d\n",
 				rc, strstatus (rc), trk, m, s, f);
 		else
 			printf ("%d %d %d:%02d.%02d\n", rc, trk, m, s, f);
-	else
+	} else
 		printf ("No current status info available\n");
 
 	bzero (&ss, sizeof (ss));
@@ -834,13 +855,13 @@ int pstatus (arg)
 		printf("No media catalog info available\n");
 
 	rc = ioctl (fd, CDIOCGETVOL, &v);
-	if (rc >= 0)
+	if (rc >= 0) {
 		if (verbose)
 			printf ("Left volume = %d, right volume = %d\n",
 				v.vol[0], v.vol[1]);
 		else
 			printf ("%d %d\n", v.vol[0], v.vol[1]);
-	else
+	} else
 		printf ("No volume level info available\n");
 	return(0);
 }
@@ -860,7 +881,7 @@ int info (arg)
 			printf ("%d %d %d\n", h.starting_track,
 				h.ending_track, h.len);
 	} else {
-		perror ("getting toc header");
+		warn ("getting toc header");
 		return (rc);
 	}
 
@@ -1134,24 +1155,25 @@ char *parse (buf, cmd)
 	return p;
 }
 
-int open_cd ()
-{
+int open_cd (dev)
 	char *dev;
+{
+	char *realdev;
 
 	if (fd > -1)
 		return (1);
 
-	fd = opendev(cdname, O_RDONLY, OPENDEV_PART, &dev);
+	fd = opendev(dev, O_RDONLY, OPENDEV_PART, &realdev);
 	if (fd < 0) {
 		if ((errno == ENXIO) || (errno == EIO)) {
 			/*  ENXIO has an overloaded meaning here.
 			 *  The original "Device not configured" should
 			 *  be interpreted as "No disc in drive %s". */
-			fprintf (stderr, "%s: No disc in drive %s.\n", __progname, dev);
+			warnx ("No disc in drive %s.", realdev);
 			return (0);
 		}
-		perror (dev);
-		exit (1);
+		warn ("Can't open %s", realdev);
+		return (0);
 	}
 	return (1);
 }
