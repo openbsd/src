@@ -1,10 +1,9 @@
-#	$OpenBSD: dynamic-forward.sh,v 1.3 2004/02/28 12:16:57 dtucker Exp $
+#	$OpenBSD: dynamic-forward.sh,v 1.4 2004/06/22 22:55:56 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="dynamic forwarding"
 
-PORT=4242
-FWDPORT=4243
+FWDPORT=`expr $PORT + 1`
 
 if [ -x "`which nc`" ] && nc -h 2>&1 | grep "proxy address" >/dev/null; then
 	proxycmd="nc -x 127.0.0.1:$FWDPORT -X"
