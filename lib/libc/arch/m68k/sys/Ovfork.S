@@ -37,7 +37,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.2 1996/08/19 08:15:31 tholo Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.3 1999/01/06 23:14:17 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -58,7 +58,7 @@
  * with a ret off this stack... we do the ret before we vfork!
  */
 
-ENTRY(vfork)
+SYSENTRY(vfork)
 	movl	sp@+,a0
 	movl	#SYS_vfork,d0
 	trap	#0

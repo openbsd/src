@@ -34,30 +34,67 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.3 1997/04/17 14:57:31 gvf Exp $
+ *	$OpenBSD: SYS.h,v 1.4 1999/01/06 23:14:17 d Exp $
  */
 
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#ifdef __STDC__
-
 #define _IMMEDIATE_	#
 
-#define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
-			movl _IMMEDIATE_ SYS_ ## x,d0; trap _IMMEDIATE_ 0; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); rts
-#define	PSEUDO(x,y)	ENTRY(x); movl _IMMEDIATE_ SYS_ ## y,d0; trap _IMMEDIATE_ 0; rts
+#ifdef __STDC__
+# define	__ENTRY(p,x)	ENTRY(p##x)
+# define	__DO_SYSCALL(x)					\
+				movl _IMMEDIATE_ SYS_##x, d0;	\
+				trap _IMMEDIATE_ 0
+# define	__LABEL2(p,x)	_C_LABEL(p##x)
+#else
+# define	__ENTRY(p,x)	ENTRY(p/**/x)
+# define	__DO_SYSCALL(x)					\
+				movl _IMMEDIATE_ SYS_/**/x, d0;	\
+				trap _IMMEDIATE_ 0
+# define	__LABEL2(p,x)	_C_LABEL(p/**/x)
+#endif
 
-#undef _IMMEDIATE_
-#else /* !__STDC__ */
+/* perform a syscall, set errno */
 
-#define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
-			movl #SYS_/**/x,d0; trap #0; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); rts
-#define	PSEUDO(x,y)	ENTRY(x); movl #SYS_/**/y,d0; trap #0; rts
+#define		__SYSCALL(p,x)					\
+				.even;				\
+			err:	jra	cerror;			\
+			__ENTRY(p,x);				\
+				__DO_SYSCALL(x);		\
+				jcs err
 
-#endif /* !__STDC__ */
+/* perform a syscall, set errno, return */
+
+#define		__RSYSCALL(p,x)	__SYSCALL(p,x); rts
+
+/* perform a syscall, return */
+
+#define		__PSEUDO(p,x,y)					\
+			__ENTRY(p,x);				\
+				__DO_SYSCALL(y);		\
+				rts
+
+#ifdef _THREAD_SAFE
+/*
+ * For the thread_safe versions, we prepend _thread_sys_ to the function
+ * name so that the 'C' wrapper can go around the real name.
+ */
+# define SYSCALL(x)     __SYSCALL(_thread_sys_,x)
+# define RSYSCALL(x)    __RSYSCALL(_thread_sys_,x)
+# define PSEUDO(x,y)    __PSEUDO(_thread_sys_,x,y)
+# define SYSENTRY(x)    __ENTRY(_thread_sys_,x)
+#else _THREAD_SAFE
+/*
+ * The non-threaded library defaults to traditional syscalls where
+ * the function name matches the syscall name.
+ */
+# define SYSCALL(x)     __SYSCALL(,x)
+# define RSYSCALL(x)    __RSYSCALL(,x)
+# define PSEUDO(x,y)    __PSEUDO(,x,y)
+# define SYSENTRY(x)    __ENTRY(,x)
+#endif _THREAD_SAFE
 
 #define	ASMSTR		.asciz
 

@@ -37,7 +37,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.2 1996/08/19 08:15:44 tholo Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.3 1999/01/06 23:14:17 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -47,12 +47,13 @@
  */
 #ifdef PROF
 #undef ENTRY
+/* XXX should bring into line with __ENTRY in SYS.h */
 #define	ENTRY(x) \
 	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,sp@-; .data; \
 	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
 	moveml sp@+,#0x0303
 #endif PROF
 
-ENTRY(sigreturn)
+SYSENTRY(sigreturn)
 	trap	#1		/* signals sigreturn() */
 	jra	cerror
