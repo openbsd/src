@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.13 2000/04/15 11:45:51 aaron Exp $
+.\"	$OpenBSD: tun.4,v 1.14 2000/05/23 05:04:37 deraadt Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os
@@ -118,7 +118,7 @@ the extra data will be silently dropped.
 .Pp
 The first u_int32_t of data will always be the address family (eg,
 .Dv AF_INET )
-of the packet in host byte order.  By default, the packet data follows
+of the packet in network byte order.  By default, the packet data follows
 immediately, but if
 the
 .Dv PREPADDR
@@ -137,10 +137,15 @@ on the pseudo-interface.  Each
 call supplies exactly one packet; the packet length is taken from the
 amount of data provided to
 .Fn write .
-The first u_int32_t must be the address family of the packet in host byte order,
-much as in packets returned by
+The first u_int32_t must be the address family of the packet in network 
+byte order, much as in packets returned by
 .Fn read ;
 the packet data always follows immediately.
+A
+.Fn write 
+with an invalid address family (eg. not specified or in the wrong byte 
+order) will return 
+.Er ENOSUPPORT .
 A large number of
 .Xr ioctl 2
 calls are also supported.  They are defined in
@@ -362,5 +367,7 @@ bit set.)
 Very old versions of the tunnel device did not include the address
 family at the start of the packet.  More recent versions passed the
 address family as a single byte, but this caused problems with bpf,
-hence the current version passes a u_int32_t of address family.
+hence the current version passes a u_int32_t of address family.  This was
+initially pass in host byte order, but the current version now uses
+network byte order.
 
