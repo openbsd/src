@@ -10,26 +10,20 @@ A lot of code has been removed and a lot of new code has been added to
 create a monolithic kernel that uses OpenFirmware or any other boot plattform
 as little possible.
 
-The current kernel supports only V.I Power.4e PowerPC 604 based VME board.
-More will come in the future.
+The current kernel supports MCG Powerstack family of machines DT-604, MT-604,
+Series E, Powerstack Pro[234]000 and V.I Power.4e PowerPC 604 based VME board.
+More will come in the future. Openfirmware is required for all systems.
+Powerstack family machines with 603 processor will only work with certain
+versions of openfirmware, not the latest versions however, older versions.
 
 Support for Openfirmware drivers was reintroduced, in a manner which
-should be compatible with "real" drivers. It is yet to be seen if
-a kernel can have both OF drivers and real drivers. But at least
-both versions can be built.
-
-Other notes:
-	libexec/ftpd (ftpd.o) does not compile with optimization.
-	`cc: Internal compiler error: program cc1 got fatal signal 11'
-	Real cause unknown. will compile and work correctly
-	if compiled without -O.
-	(worked around with a makefile change)
-
-	This probably has changed with the introduction of gcc 2.8.X.X
-	but not completely verified (yet).
+is compatible with "real" drivers.
+If done carefully OF drivers and hardware drivers can be mixed, if
+however a hardware driver is configured, then OF tries to access the 
+device, it can hang the system.
 
 TODO:
-	ptrace support (that works)
+	ptrace support finished (gdb can breakpoint, but not step)
 	fp (setround, getround, getmask, setmask, setsticky, getsticky)
 
 Dale
