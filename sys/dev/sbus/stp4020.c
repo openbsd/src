@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.2 2002/06/19 20:57:15 fgsch Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.3 2002/06/20 02:43:23 deraadt Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -129,19 +129,19 @@ struct stp4020_softc {
 
 
 int	stp4020print(void *, const char *);
-int	stp4020match(struct device *, void *, void *);
-void	stp4020attach(struct device *, struct device *, void *);
+int	stpmatch(struct device *, void *, void *);
+void	stpattach(struct device *, struct device *, void *);
 int	stp4020_iointr(void *);
 int	stp4020_statintr(void *);
 void	stp4020_map_window(struct stp4020_socket *, int, int);
 void	stp4020_calc_speed(int, int, int *, int *);
 
-struct cfattach nell_ca = {
-	sizeof(struct stp4020_softc), stp4020match, stp4020attach
+struct cfattach stp_ca = {
+	sizeof(struct stp4020_softc), stpmatch, stpattach
 };
 
-struct cfdriver nell_cd = {
-	NULL, "nell", DV_DULL
+struct cfdriver stp_cd = {
+	NULL, "stp", DV_DULL
 };
 
 #ifdef STP4020_DEBUG
@@ -257,7 +257,7 @@ stp4020print(aux, busname)
 }
 
 int
-stp4020match(parent, match, aux)
+stpmatch(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
@@ -271,7 +271,7 @@ stp4020match(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-stp4020attach(parent, self, aux)
+stpattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.19 2002/06/19 22:07:17 fgsch Exp $
+#	$OpenBSD: files.sbus,v 1.20 2002/06/20 02:43:23 deraadt Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -93,8 +93,8 @@ attach apio at sbus
 attach lpt at apio with lpt_apio
 file	dev/sbus/apio.c			apio | lpt_apio needs-flag
 
-# STP4020 SBus to PCMCIA bridge (`nell' to her friends)
-device	nell: pcmciabus
-attach	nell at sbus
-file	dev/sbus/stp4020.c		nell
+# STP4020 SBus to PCMCIA bridge
+device	stp: pcmciabus
+attach	stp at sbus
+file	dev/sbus/stp4020.c		stp
 
