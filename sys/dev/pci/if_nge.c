@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.11 2001/09/21 17:55:44 miod Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.12 2001/09/26 14:23:27 peter Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -77,6 +77,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -921,6 +922,9 @@ void nge_attach(parent, self, aux)
 	ifp->if_snd.ifq_maxlen = NGE_TX_LIST_CNT - 1;
 	ifp->if_capabilities =
 	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+#endif
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1554,6 +1558,7 @@ int nge_encap(sc, m_head, txidx)
 	 * Card handles checksumming on a packet by packet
 	 * basis.
 	 */
+	sc->nge_ldata->nge_tx_list[*txidx].nge_extsts = 0;
 	if (m_head->m_pkthdr.csum) {
 		if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT) 
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
@@ -1743,8 +1748,9 @@ void nge_init(xsc)
 	 * and strip VLAN tag info from received frames. The tag
 	 * will be provided in the extsts field in the RX descriptors.
 	 */
-	NGE_SETBIT(sc, NGE_VLAN_IP_RXCTL,
-	    NGE_VIPRXCTL_TAG_DETECT_ENB|NGE_VIPRXCTL_TAG_STRIP_ENB);
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		NGE_SETBIT(sc, NGE_VLAN_IP_RXCTL,
+		    NGE_VIPRXCTL_TAG_DETECT_ENB|NGE_VIPRXCTL_TAG_STRIP_ENB);
 #endif
 
 	/* Set TX configuration */
@@ -1762,7 +1768,8 @@ void nge_init(xsc)
 	 * VLAN tags on a per-packet basis as dictated by the
 	 * code in the frame encapsulation routine.
 	 */
-	NGE_SETBIT(sc, NGE_VLAN_IP_TXCTL, NGE_VIPTXCTL_TAG_PER_PKT);
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		NGE_SETBIT(sc, NGE_VLAN_IP_TXCTL, NGE_VIPTXCTL_TAG_PER_PKT);
 #endif
 
 	/* Set full/half duplex mode. */
