@@ -1,3 +1,4 @@
+/*	$OpenBSD: mtree.c,v 1.2 1996/12/08 01:13:41 niklas Exp $	*/
 /*	$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $	*/
 
 /*-
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.2 1996/12/08 01:13:41 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +57,7 @@ static char rcsid[] = "$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $";
 #include "mtree.h"
 #include "extern.h"
 
-extern int crc_total;
+extern u_int32_t crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
 int cflag, dflag, eflag, rflag, sflag, uflag;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: extern.h,v 1.2 1996/12/08 01:13:39 niklas Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/07 21:12:07 cgd Exp $	*/
 
 /*-
@@ -36,7 +37,7 @@
  */
 
 int	 compare __P((char *, NODE *, FTSENT *));
-int	 crc __P((int, u_long *, u_long *));
+int	 crc __P((int, u_int32_t *, u_int32_t *));
 void	 cwalk __P((void));
 void	 err __P((const char *, ...));
 char	*inotype __P((u_int));

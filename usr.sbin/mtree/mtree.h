@@ -1,3 +1,4 @@
+/*	$OpenBSD: mtree.h,v 1.2 1996/12/08 01:13:42 niklas Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -48,7 +49,7 @@ typedef struct _node {
 	struct _node	*prev, *next;		/* left, right */
 	off_t	st_size;			/* size */
 	struct timespec	st_mtimespec;		/* last modification time */
-	u_long	cksum;				/* check sum */
+	u_int32_t cksum;				/* check sum */
 	char	*slink;				/* symbolic link reference */
 	uid_t	st_uid;				/* uid */
 	gid_t	st_gid;				/* gid */

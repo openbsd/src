@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.9 1995/10/22 20:12:07 pk Exp $	*/
-/*	$OpenBSD: compare.c,v 1.3 1996/03/02 00:46:00 tholo Exp $	*/
+/*	$OpenBSD: compare.c,v 1.4 1996/12/08 01:13:38 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -77,7 +77,7 @@ compare(name, s, p)
 	register FTSENT *p;
 {
 	extern int uflag;
-	u_long len, val;
+	u_int32_t len, val;
 	int fd, label;
 	char *cp, *tab;
 
@@ -202,7 +202,7 @@ typeerr:		LABEL;
 			(void)close(fd);
 			if (s->cksum != val) {
 				LABEL;
-				(void)printf("%scksum (%lu, %lu)\n", 
+				(void)printf("%scksum (%u, %u)\n", 
 				    tab, s->cksum, val);
 			}
 			tab = "\t";

@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.9 1995/03/07 21:12:06 cgd Exp $	*/
-/*	$OpenBSD: create.c,v 1.2 1996/03/02 00:46:02 tholo Exp $	*/
+/*	$OpenBSD: create.c,v 1.3 1996/12/08 01:13:39 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -59,7 +59,8 @@ static char rcsid[] = "$NetBSD: create.c,v 1.9 1995/03/07 21:12:06 cgd Exp $";
 #define	INDENTNAMELEN	15
 #define	MAXLINELEN	80
 
-extern int crc_total, ftsoptions;
+extern u_int32_t crc_total;
+extern int ftsoptions;
 extern int dflag, sflag;
 extern u_short keys;
 extern char fullpath[MAXPATHLEN];
@@ -117,7 +118,7 @@ cwalk()
 	(void)fts_close(t);
 	if (sflag && keys & F_CKSUM)
 		(void)fprintf(stderr,
-		    "mtree: %s checksum: %lu\n", fullpath, crc_total);
+		    "mtree: %s checksum: %u\n", fullpath, crc_total);
 }
 
 static void
@@ -126,7 +127,7 @@ statf(p)
 {
 	struct group *gr;
 	struct passwd *pw;
-	u_long len, val;
+	u_int32_t len, val;
 	int fd, indent;
 
 	if (S_ISDIR(p->fts_statp->st_mode))
@@ -166,7 +167,7 @@ statf(p)
 		    crc(fd, &val, &len))
 			err("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);
-		output(&indent, "cksum=%lu", val);
+		output(&indent, "cksum=%u", val);
 	}
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))

@@ -1,3 +1,4 @@
+/*	$OpenBSD: verify.c,v 1.2 1996/12/08 01:13:42 niklas Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $";
+static char rcsid[] = "$OpenBSD: verify.c,v 1.2 1996/12/08 01:13:42 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +53,8 @@ static char rcsid[] = "$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $";
 #include "mtree.h"
 #include "extern.h"
 
-extern int crc_total, ftsoptions;
+extern int32_t crc_total;
+extern int ftsoptions;
 extern int dflag, eflag, rflag, sflag, uflag;
 extern char fullpath[MAXPATHLEN];
 
@@ -147,7 +149,7 @@ vwalk()
 	(void)fts_close(t);
 	if (sflag)
 		(void)fprintf(stderr,
-		    "mtree: %s checksum: %lu\n", fullpath, crc_total);
+		    "mtree: %s checksum: %u\n", fullpath, crc_total);
 	return (rval);
 }
 
