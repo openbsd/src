@@ -1,5 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.6 1998/06/29 22:38:18 angelos Exp $	*/
-
+/*	$OpenBSD: kvm.c,v 1.7 1998/06/29 22:44:57 deraadt Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
