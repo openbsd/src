@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.4 2000/11/06 01:34:18 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.5 2001/01/29 01:14:26 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -47,10 +47,15 @@ The
 driver registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
 and SHA1-HMAC96 operations in
 .Xr ipsec 4 .
+On models which support it, this driver also registers itself to
+provide random data to the
+.Xr random 4
+subsystem.
 .Sh SEE ALSO
 .Xr crypto 9 ,
 .Xr crypt 3 ,
-.Xr ipsec 4
+.Xr ipsec 4 ,
+.Xr random 4
 .Sh HISTORY
 The
 .Nm
