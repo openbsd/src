@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyper.c,v 1.2 2005/01/15 21:08:37 miod Exp $	*/
+/*	$OpenBSD: hyper.c,v 1.3 2005/01/16 00:16:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -566,9 +566,6 @@ void
 hypercnprobe(struct consdev *cp)
 {
 	int maj;
-	caddr_t va;
-	struct diofbreg *fbr;
-	int force = 0;
 
 	/* Abort early if console is already forced. */
 	if (conforced)
@@ -584,36 +581,6 @@ hypercnprobe(struct consdev *cp)
 
 	cp->cn_dev = makedev(maj, 0);
 	cp->cn_pri = CN_DEAD;
-
-	/* Look for "internal" framebuffer. */
-	va = (caddr_t)IIOV(GRFIADDR);
-	fbr = (struct diofbreg *)va;
-	if (!badaddr(va) &&
-	    (fbr->id == GRFHWID && fbr->id2 == GID_HYPERION)) {
-		cp->cn_pri = CN_INTERNAL;
-
-#ifdef CONSCODE
-		if (CONSCODE == -1) {
-			force = conforced = 1;
-		}
-#endif
-
-		/*
-		 * If our priority is higher than the currently
-		 * remembered console, stash our priority, and
-		 * unmap whichever device might be currently mapped.
-		 * Since we're internal, we set the saved size to 0
-		 * so they don't attempt to unmap our fixed VA later.
-		 */
-		if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri || force) {
-			cn_tab = cp;
-			if (convasize)
-				iounmap(conaddr, convasize);
-			conscode = -1;
-			conaddr = va;
-			convasize = 0;
-		}
-	}
 
 	console_scan(hyper_console_scan, cp, HP300_BUS_DIO);
 }
