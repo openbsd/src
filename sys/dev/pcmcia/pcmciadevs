@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.37 2000/06/20 04:54:40 niklas Exp $
+	$OpenBSD: pcmciadevs,v 1.38 2000/06/26 06:14:49 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -287,6 +287,7 @@ product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL }
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL }
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL }
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL }
+product LINKSYS COMBO_ECARD_2	{ "Linksys", "Combo&spPCMCIA&spEthernetCard&sp(EC2T)", "2.0", NULL }
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL }
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL }
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL }
