@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.15 2000/01/11 22:27:07 millert Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.16 2000/02/03 17:19:07 millert Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1309,10 +1309,12 @@ rtfindlib(name, major, minor, usehints, ipath)
 				    ipath ? ipath : "");
 
 		while ((cp = strsep(&dp, ":")) != NULL) {
-			cp = findhint(name, major, minor, cp);
-			if (cp) {
-				free(lpath);
-				return cp;
+			if (*cp) {
+				cp = findhint(name, major, minor, cp);
+				if (cp) {
+					free(lpath);
+					return cp;
+				}
 			}
 		}
 		free(lpath);
