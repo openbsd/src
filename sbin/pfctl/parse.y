@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.216 2002/11/26 19:14:14 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.217 2002/11/26 21:10:45 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2513,6 +2513,9 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 {
 	struct	node_queue *n;
 	u_int8_t	added = 0;
+
+	if (bwspec.bw_absolute == 0 && bwspec.bw_percent == 0)
+		bwspec.bw_percent = 100;
 
 	LOOP_THROUGH(struct node_queue, tqueue, queues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
