@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.20 2000/05/31 17:09:17 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.21 2000/09/18 03:45:27 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.20 2000/05/31 17:09:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.21 2000/09/18 03:45:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ int	dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
 char	*kernel;
-char	*dirname;			/* directory to save dumps in */
+char	*dirn;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 dev_t	dumpdev;			/* dump device */
 int	dumpfd;				/* read/write descriptor on block dev */
@@ -185,7 +185,7 @@ main(argc, argv)
 	if (!clear) {
 		if (argc != 1 && argc != 2)
 			usage();
-		dirname = argv[0];
+		dirn = argv[0];
 	}
 	if (argc == 2)
 		kernel = argv[1];
@@ -403,7 +403,7 @@ save_core()
 	 * Get the current number and update the bounds file.  Do the update
 	 * now, because may fail later and don't want to overwrite anything.
 	 */
-	(void)snprintf(path, sizeof(path), "%s/bounds", dirname);
+	(void)snprintf(path, sizeof(path), "%s/bounds", dirn);
 	if ((fp = fopen(path, "r")) == NULL)
 		goto err1;
 	if (fgets(buf, sizeof(buf), fp) == NULL) {
@@ -423,7 +423,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 
 	/* Create the core file. */
 	(void)snprintf(path, sizeof(path), "%s%s.%d.core%s",
-	    dirname, _PATH_UNIX, bounds, compress ? ".Z" : "");
+	    dirn, _PATH_UNIX, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
@@ -485,7 +485,7 @@ err2:			syslog(LOG_WARNING,
 	/* Copy the kernel. */
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
 	(void)snprintf(path, sizeof(path), "%s%s.%d%s",
-	    dirname, _PATH_UNIX, bounds, compress ? ".Z" : "");
+	    dirn, _PATH_UNIX, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
@@ -614,13 +614,13 @@ check_space()
 		exit(1);
 	}
 	kernelsize = st.st_blocks * S_BLKSIZE;
-	if (statfs(dirname, &fsbuf) < 0) {
-		syslog(LOG_ERR, "%s: %m", dirname);
+	if (statfs(dirn, &fsbuf) < 0) {
+		syslog(LOG_ERR, "%s: %m", dirn);
 		exit(1);
 	}
  	spacefree = (fsbuf.f_bavail * fsbuf.f_bsize) / 1024;
 
-	(void)snprintf(path, sizeof(path), "%s/minfree", dirname);
+	(void)snprintf(path, sizeof(path), "%s/minfree", dirn);
 	if ((fp = fopen(path, "r")) == NULL)
 		minfree = 0;
 	else {
