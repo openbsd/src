@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.18 2000/03/10 19:07:22 aaron Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.19 2000/06/02 19:39:33 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -220,6 +220,12 @@ Specify a command to run instead of sending a signal to the process.
 The command must be enclosed in double quotes
 .Pq Ql \&" ) .
 You cannot specify both a command and a PID file.
+.Em NOTE: 
+If you specify a command to be run,
+.Nm
+will not send a
+.Dv SIGHUP to
+.Xr syslogd 8 .
 .El
 .Sh FILES
 .Bl -tag -width /etc/newsyslog.conf
