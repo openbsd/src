@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.35 2004/12/07 02:11:24 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.36 2004/12/08 15:38:41 markus Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -45,25 +46,35 @@
 
 int pcimatch(struct device *, void *, void *);
 void pciattach(struct device *, struct device *, void *);
+void pcipower(int, void *);
 
-#ifdef USER_PCICONF
 struct pci_softc {
 	struct device sc_dev;
 	pci_chipset_tag_t sc_pc;
+	void *sc_powerhook;
+	LIST_HEAD(, pci_dev) sc_devs;
+#ifdef USER_PCICONF
 	int sc_bus;		/* PCI configuration space bus # */
-};
 #endif
+};
+
+#define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
+struct pci_dev {
+	LIST_ENTRY(pci_dev) pd_next;
+	struct device *pd_dev;
+	pcitag_t pd_tag;        /* pci register tag */
+	pcireg_t pd_csr;
+	pcireg_t pd_bhlc;
+	pcireg_t pd_int;
+	pcireg_t pd_map[NMAPREG];
+};
 
 #ifdef APERTURE
 extern int allowaperture;
 #endif
 
 struct cfattach pci_ca = {
-#ifndef USER_PCICONF
-	sizeof(struct device), pcimatch, pciattach
-#else
 	sizeof(struct pci_softc), pcimatch, pciattach
-#endif
 };
 
 struct cfdriver pci_cd = {
@@ -135,9 +146,9 @@ pciattach(parent, self, aux)
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, maxndevs, function, nfunctions;
-#ifdef USER_PCICONF
 	struct pci_softc *sc = (struct pci_softc *)self;
-#endif
+	struct pci_dev *pd;
+	struct device *dev;
 #ifdef __PCI_BUS_DEVORDER
 	char devs[32];
 	int i;
@@ -156,8 +167,10 @@ pciattach(parent, self, aux)
 	bus = pba->pba_bus;
 	maxndevs = pci_bus_maxdevs(pc, bus);
 
-#ifdef USER_PCICONF
 	sc->sc_pc = pba->pba_pc;
+	LIST_INIT(&sc->sc_devs);
+	sc->sc_powerhook = powerhook_establish(pcipower, sc);
+#ifdef USER_PCICONF
 	sc->sc_bus = bus;
 #endif
 
@@ -275,7 +288,62 @@ pciattach(parent, self, aux)
 			}
 			pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
 
-			config_found_sm(self, &pa, pciprint, pcisubmatch);
+			if ((dev = config_found_sm(self, &pa, pciprint,
+			    pcisubmatch))) {
+				pcireg_t reg;
+
+				/* skip header type != 0 */
+				reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+				if (PCI_HDRTYPE_TYPE(reg) != 0)
+					continue;
+				if (pci_get_capability(pc, tag,
+				    PCI_CAP_PWRMGMT, NULL, NULL) == 0)
+					continue;
+				if (!(pd = malloc(sizeof *pd, M_DEVBUF,
+				    M_NOWAIT)))
+					continue;
+				pd->pd_tag = tag;
+				pd->pd_dev = dev;
+				LIST_INSERT_HEAD(&sc->sc_devs, pd, pd_next);
+			}
+		}
+	}
+}
+
+/* save and restore the pci config space */
+void
+pcipower(int why, void *arg)
+{
+	struct pci_softc *sc = (struct pci_softc *)arg;
+	struct pci_dev *pd;
+	pcireg_t reg;
+	int i;
+
+	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
+		if (why != PWR_RESUME) {
+			for (i = 0; i < NMAPREG; i++)
+			       pd->pd_map[i] = pci_conf_read(sc->sc_pc,
+				   pd->pd_tag, PCI_MAPREG_START + (i * 4));
+			pd->pd_csr = pci_conf_read(sc->sc_pc, pd->pd_tag,
+			   PCI_COMMAND_STATUS_REG);
+			pd->pd_bhlc = pci_conf_read(sc->sc_pc, pd->pd_tag,
+			   PCI_BHLC_REG);
+			pd->pd_int = pci_conf_read(sc->sc_pc, pd->pd_tag,
+			   PCI_INTERRUPT_REG);
+		} else {
+			for (i = 0; i < NMAPREG; i++)
+				pci_conf_write(sc->sc_pc, pd->pd_tag,
+				    PCI_MAPREG_START + (i * 4),
+					pd->pd_map[i]);
+			reg = pci_conf_read(sc->sc_pc, pd->pd_tag,
+			    PCI_COMMAND_STATUS_REG);
+			pci_conf_write(sc->sc_pc, pd->pd_tag,
+			    PCI_COMMAND_STATUS_REG,
+			    (reg & 0xffff0000) | (pd->pd_csr & 0x0000ffff));
+			pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_BHLC_REG,
+			    pd->pd_bhlc);
+			pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_INTERRUPT_REG,
+			    pd->pd_int);
 		}
 	}
 }
