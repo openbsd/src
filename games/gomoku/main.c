@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2003/04/25 21:21:28 tdeval Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2003/04/25 21:21:28 tdeval Exp $";
 #endif
 #endif /* not lint */
 
@@ -462,9 +462,11 @@ top:
 				break;
 		n += sp->s_frame[d2] - frames;
 		str = fmtbuf;
-		sprintf(str, "overlap %s%c,", stoc(s1), pdir[d1]);
+		snprintf(str, fmtbuf + sizeof fmtbuf - str,
+		    "overlap %s%c,", stoc(s1), pdir[d1]);
 		str += strlen(str);
-		sprintf(str, "%s%c = %x", stoc(s2), pdir[d2], overlap[n]);
+		snprintf(str, fmtbuf + sizeof fmtbuf - str,
+		    "%s%c = %x", stoc(s2), pdir[d2], overlap[n]);
 		dlog(fmtbuf);
 		goto top;
 	case 'p':
