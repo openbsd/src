@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2002/06/11 22:15:12 wilfried Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -282,7 +282,7 @@ pagemove(from, to, size)
 		size -= PAGE_SIZE;
 	}
 #if defined(I386_CPU)
-	if (cpu_class != CPUCLASS_386)
+	if (cpu_class == CPUCLASS_386)
 		tlbflush();		
 #endif
 }
