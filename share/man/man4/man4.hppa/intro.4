@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.18 2004/01/14 09:43:31 mickey Exp $
+.\" $OpenBSD: intro.4,v 1.1 2004/01/15 13:26:42 mickey Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -145,67 +145,65 @@ Below a list of
 models targetted for support is listed, including basic
 system characteristics.
 .Pp
-.in +\n(dIu
-.TS
-tab (:) ;
-l l l l l
-_ _ _ _ _
-l l l l l .
-Model:MHz:CPU:Caches, KB:Expansion
-705:35:7000:32/64:N/A
-710:50:7000:32/64:N/A
-720:50:7000:128/256:1 EISA, 1 GSC
-730:66:7000:128/256:1 EISA, 1 GSC
-750:66:7000:256/256:4 EISA, 2 SGC
-715:33/50:7100:64/64:1 EISA/SGC
-715:75:7100:256/256:1 EISA/SGC
-725:50:7100:64/64:3 EISA, 1 EISA/SGC
-725:75:7100:256/256:3 EISA, 1 EISA/SGC
-735:100:7100:256/256:1 EISA, 1 SGC
-742i:50:7100:64/64:N/A
-745i:50:7100:64/64:4 EISA
-745i:100:7100:256/256:4 EISA
-747i:50:7100:64/64:2 EISA, 1 SGC, 6 VME
-747i:100:7100:256/256:2 EISA, 1 SGC, 6 VME
-755:100:7100:256/256:4 EISA, 2 SGC
-735:125:7150:256/256:1 EISA, 1 SGC
-755:125:7150:256/256:4 EISA, 2 SGC
-712:60:7100LC:64:1 GIO, 1 TSIO
-712:80/100:7100LC:128/128:1 GIO, 1 TSIO
-715:64:7100LC:128/128:1 EISA/GSC
-715:80/100:7100LC:128/128:1 EISA/GSC
-715/XC:100:7100LC:512/512:1 EISA/GSC
-725:64/100:7100LC:128/128:1 EISA, 3 EISA/GSC
-743i:64/100:7100LC:256:2 GSC-M/2(4) PMC, VME
-748i:64/100:7100LC:256:2 GSC-M/2(4) PMC, 4 EISA/4 PCI, 6 VME
-SAIC:60:7100LC:64:1 GIO, 1 TSIO, 2 PCMCIA
-SAIC:80:7100LC:256:1 GIO, 1 TSIO, 2 PCMCIA
-J200:100:7200:256/256:1 GSC, 2 EISA, 2 EISA/GSC
-J210:120:7200:256/256:1 GSC, 2 EISA, 2 EISA/GSC
-J210XC:120:7200:1024/1024:1 GSC, 2 EISA, 2 EISA/GSC
-C100:100:7200:256/256:1 GSC, 3 EISA/GSC
-C110:120:7200:256/256:1 GSC, 3 EISA/GSC
-744:132:7300LC:64/64:2 GSC-M/2(4) PMC, VME
-744:165:7300LC:64/64+512:2 GSC-M/2(4) PMC, VME
-745:132:7300LC:64/64:2 GSC-M/2(4) PMC, 4 EISA/4 PCI
-745:165:7300LC:64/64+512:2 GSC-M/2(4) PMC, 4 EISA/4 PCI
-748:132:7300LC:64/64:2 GSC-M/2(4) PMC, 4 EISA/4 PCI, 6 VME
-748:165:7300LC:64/64+512:2 GSC-M/2(4) PMC, 4 EISA/4 PCI, 6 VME
-A180:180:7300LC:64/64:2 HSC/PCI
-A180C:180:7300LC:64/64+1024:2 HSC/PCI
-B132L:132:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
-B132L+:132:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
-B160L:160:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
-B180L+:180:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
-C132L:132:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA,
- : : : :2 GSC/EISA
-C160L:160:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA,
- : : : :2 GSC/EISA
-RDI:132:7300LC:64/64(+1024):2 CardBus
-RDI:160:7300LC:64/64(+1024):2 CardBus
-RDI:180:7300LC:64/64(+1024):2 CardBus
-.TE
-.in -\n(dIu
+.Bl -column "J210XC" "200" "7300LC" "64/64(+1MB)" "Expansion" -offset left
+.It "Model" Ta "MHz" Ta "CPU" Ta "Caches, KB" Ta "Expansion"
+.It 705  Ta  35 Ta 7000 Ta "32/64" Ta "N/A"
+.It 710  Ta  50 Ta 7000 Ta "32/64" Ta "N/A"
+.It 720  Ta  50 Ta 7000 Ta 128/256 Ta "EISA, GSC"
+.It 730  Ta  66 Ta 7000 Ta 128/256 Ta "EISA, GSC"
+.It 750  Ta  66 Ta 7000 Ta 256/256 Ta "4 EISA, 2 SGC"
+.It 715  Ta  33 Ta 7100 Ta 64/64 Ta "EISA/SGC"
+.It 715  Ta  50 Ta 7100 Ta 64/64 Ta "EISA/SGC"
+.It 715  Ta  75 Ta 7100 Ta 256/256 Ta "EISA/SGC"
+.It 725  Ta  50 Ta 7100 Ta 64/64 Ta "3 EISA, EISA/SGC"
+.It 725  Ta  75 Ta 7100 Ta 256/256 Ta "3 EISA, EISA/SGC"
+.It 735  Ta 100 Ta 7100 Ta 256/256 Ta "EISA, SGC"
+.It 742i Ta  50 Ta 7100 Ta 64/64 Ta "N/A"
+.It 745i Ta  50 Ta 7100 Ta 64/64 Ta "4 EISA"
+.It 745i Ta 100 Ta 7100 Ta 256/256 Ta "4 EISA"
+.It 747i Ta  50 Ta 7100 Ta 64/64 Ta "2 EISA, SGC, 6 VME"
+.It 747i Ta 100 Ta 7100 Ta 256/256 Ta "2 EISA, SGC, 6 VME"
+.It 755  Ta 100 Ta 7100 Ta 256/256 Ta "4 EISA, 2 SGC"
+.It 735  Ta 125 Ta 7150 Ta 256/256 Ta "EISA, SGC"
+.It 755  Ta 125 Ta 7150 Ta 256/256 Ta "4 EISA, 2 SGC"
+.It 712  Ta  60 Ta 7100LC Ta 32/32 Ta "GIO, TSIO"
+.It 712  Ta  80 Ta 7100LC Ta 128/128 Ta "GIO, TSIO"
+.It 712  Ta 100 Ta 7100LC Ta 128/128 Ta "GIO, TSIO"
+.It 715  Ta  64 Ta 7100LC Ta 128/128 Ta "EISA/GSC"
+.It 715  Ta  80 Ta 7100LC Ta 128/128 Ta "EISA/GSC"
+.It 715  Ta 100 Ta 7100LC Ta 128/128 Ta "EISA/GSC"
+.It 715XC Ta 100 Ta 7100LC Ta 512/512 Ta "EISA/GSC"
+.It 725  Ta  64 Ta 7100LC Ta 128/128 Ta "EISA, 3 EISA/GSC"
+.It 725  Ta 100 Ta 7100LC Ta 128/128 Ta "EISA, 3 EISA/GSC"
+.It 743i Ta  64 Ta 7100LC Ta 128/128 Ta "2 GSC-M/2(4), VME"
+.It 743i Ta 100 Ta 7100LC Ta 128/128 Ta "2 GSC-M/2(4), VME"
+.It 748i Ta  64 Ta 7100LC Ta 128/128 Ta "2 GSC-M/2(4), 4 EISA/PCI, 6 VME"
+.It 748i Ta 100 Ta 7100LC Ta 128/128 Ta "2 GSC-M/2(4), 4 EISA/PCI, 6 VME"
+.It SAIC Ta  60 Ta 7100LC Ta 32/32 Ta "GIO, TSIO, 2 PCMCIA"
+.It SAIC Ta  80 Ta 7100LC Ta 128/128 Ta "GIO, TSIO, 2 PCMCIA"
+.It J200 Ta 100 Ta 7200 Ta 256/256 Ta "GSC, 2 EISA, 2 EISA/GSC"
+.It J210 Ta 120 Ta 7200 Ta 256/256 Ta "GSC, 2 EISA, 2 EISA/GSC"
+.It J210XC Ta 120 Ta 7200 Ta 1MB/1MB Ta "GSC, 2 EISA, 2 EISA/GSC"
+.It C100 Ta 100 Ta 7200 Ta 256/256 Ta "GSC, 3 EISA/GSC"
+.It C110 Ta 120 Ta 7200 Ta 256/256 Ta "GSC, 3 EISA/GSC"
+.It 744  Ta 132 Ta 7300LC Ta 64/64 Ta "2 GSC-M/2(4), VME"
+.It 744  Ta 165 Ta 7300LC Ta 64/64+512 Ta "2 GSC-M/2(4), VME"
+.It 745  Ta 132 Ta 7300LC Ta 64/64 Ta "2 GSC-M/2(4), 4 EISA/PCI"
+.It 745  Ta 165 Ta 7300LC Ta 64/64+512 Ta "2 GSC-M/2(4), 4 EISA/PCI"
+.It 748  Ta 132 Ta 7300LC Ta 64/64 Ta "2 GSC-M/2(4), 4 EISA/PCI, 6 VME"
+.It 748  Ta 165 Ta 7300LC Ta 64/64+512 Ta "2 GSC-M/2(4), 4 EISA/PCI, 6 VME"
+.It A180 Ta 180 Ta 7300LC Ta 64/64 Ta "2 HSC/PCI"
+.It A180C Ta 180 Ta 7300LC Ta 64/64+1MB Ta "2 HSC/PCI"
+.It B132L Ta 132 Ta 7300LC Ta 64/64(+1MB) Ta "GSC/PCI, GSC/PCI/EISA"
+.It B132L+ Ta 132 Ta 7300LC Ta 64/64(+1MB) Ta "GSC/PCI, GSC/PCI/EISA"
+.It B160L Ta 160 Ta 7300LC Ta 64/64(+1MB) Ta "GSC/PCI, GSC/PCI/EISA"
+.It B180L+ Ta 180 Ta 7300LC Ta 64/64(+1MB) Ta "GSC/PCI, GSC/PCI/EISA"
+.It C132L Ta 132 Ta 7300LC Ta 64/64(+1MB) Ta "2 GSC/PCI/EISA, 2 GSC/EISA"
+.It C160L Ta 160 Ta 7300LC Ta 64/64(+1MB) Ta "2 GSC/PCI/EISA, 2 GSC/EISA"
+.It RDI  Ta 132 Ta 7300LC Ta 64/64(+1MB) Ta "2 CardBus"
+.It RDI  Ta 160 Ta 7300LC Ta 64/64(+1MB) Ta "2 CardBus"
+.It RDI  Ta 180 Ta 7300LC Ta 64/64(+1MB) Ta "2 CardBus"
+.El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.
@@ -221,13 +219,21 @@ Most of I/O is still on external chips though.
 The RS-232 ports.
 .It Xr cpu 4
 The Central Processor itself, makes sure the machine does something useful.
+.It Xr dc 4
+.Tn DEC/Intel 21140, 21143, 21145
+and clone 10/100 Ethernet conroller.
+.It Xr dino 4
+The
+.Xr pci 4
+bridge on most of the newer systems.
 .It Xr harmony 4
 CS4215/AD1849 audio.
 .It Xr hil 4
 Human Interface Loop, sporting several input devices,
 e.g. keyboards, mice, tablets and such.
 .It Xr ie 4
-i82596 CA/DX LAN coprocessor.
+.Tn i82596 CA/DX
+LAN controller.
 Found in every 700, either included in the MBA
 or on an external chip on mainboard.
 .It Xr lasi 4
@@ -243,7 +249,7 @@ The
 bus controller on most of the older 700 machines.
 .It Xr osiop 4
 The
-.Tn SCSI
+.Tn NCR 53c7x0 SCSI
 I/O processor.
 .It Xr pdc 4
 The PROM interface, allows to call the routines in the machine's
@@ -251,6 +257,9 @@ PROM for things like initial console output and such.
 .It Xr power 4
 The power button interface allowing graceful shutdown of the
 system should being depressed on the running system.
+.It Xr siop 4
+.Tn LSI/Symbios Logic/NCR 53c8xx SCSI
+I/O processor.
 .It Xr sti 4
 The system graphics driver.
 .It Xr wax 4
