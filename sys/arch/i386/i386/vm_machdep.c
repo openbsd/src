@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 1996/04/21 22:16:43 deraadt Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.59 1996/04/03 08:24:17 mycroft Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 1996/05/02 13:40:28 deraadt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60 1996/04/25 01:15:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -150,11 +150,11 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_long pc;
+	void (*pc) __P((struct proc *));
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
 
-	sf->sf_esi = pc;
+	sf->sf_esi = (int) pc;
 }
 
 void
@@ -287,7 +287,7 @@ setredzone(pte, vaddr)
 void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register pt_entry_t *fpte, *tpte;
 
