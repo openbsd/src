@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.23 1999/03/03 22:51:51 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.24 1999/05/07 21:24:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,13 +31,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.25 1999/02/26 08:39:24 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.35 1999/05/04 20:52:30 wpaul Exp $
  */
 
 /*
  * 3Com 3c90x Etherlink XL PCI NIC driver
  *
- * Supports the 3Com "boomerang" and "cyclone" PCI
+ * Supports the 3Com "boomerang", "cyclone", and "hurricane" PCI
  * bus-master chips (3c90x cards and embedded controllers) including
  * the following:
  *
@@ -47,10 +47,13 @@
  * 3Com 3c905-T4	10/100Mbps/RJ-45
  * 3Com 3c900B-TPO	10Mbps/RJ-45
  * 3Com 3c900B-COMBO	10Mbps/RJ-45,AUI,BNC
+ * 3Com 3c900B-TPC	10Mbps/RJ-45,BNC
+ * 3Com 3c900B-FL	10Mbps/Fiber-optic
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
  * 3Com 3c900-FL	10Mbps FL Fiber-optic
  * 3Com 3c980-TX	10/100Mbps server adapter
  * 3Com 3c905B-FX	100Mbs FX Fiber-optic
+ * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell Precision on-board 3c905B 10/100Mbps/RJ-45
  * Dell Latitude laptop docking station embedded 3c905-TX
@@ -142,6 +145,11 @@
 #include <vm/pmap.h>            /* for vtophys */
 
 #ifdef __FreeBSD__
+#include "opt_bdg.h"
+#ifdef BRIDGE
+#include <net/bridge.h>
+#endif
+
 #include <pci/pcireg.h>
 #include <pci/pcivar.h>
 #endif
@@ -193,7 +201,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.25 1999/02/26 08:39:24 wpaul Exp $";
+	"$FreeBSD: if_xl.c,v 1.35 1999/05/04 20:52:30 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -202,25 +210,33 @@ static const char rcsid[] =
  */
 static struct xl_type xl_devs[] = {
 	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_10BT,
-		"3Com 3c900 Etherlink XL 10BaseT" },
+		"3Com 3c900-TPO Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_10BT_COMBO,
-		"3Com 3c900 Etherlink XL 10BaseT Combo" },
+		"3Com 3c900-COMBO Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_10_100BT,
-		"3Com 3c905 Fast Etherlink XL 10/100BaseTX" },
+		"3Com 3c905-TX Fast Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_100BT4,
-		"3Com 3c905 Fast Etherlink XL 10/100BaseT4" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10BT,
-		"3Com 3c900B Etherlink XL 10BaseT" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10BT_COMBO,
-		"3Com 3c900B Etherlink XL 10BaseT Combo" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT,
-		"3Com 3c905B Fast Etherlink XL 10/100BaseTX" },
+		"3Com 3c905-T4 Fast Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_KRAKATOA_10BT,
+		"3Com 3c900B-TPO Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_KRAKATOA_10BT_COMBO,
+		"3Com 3c900B-COMBO Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_KRAKATOA_10BT_TPC,
+		"3Com 3c900B-TPC Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10FL,
+		"3Com 3c900B-FL Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_HURRICANE_10_100BT,
+		"3Com 3c905B-TX Fast Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT4,
-		"3Com 3c905B Fast Etherlink XL 10/100BaseT4" },
+		"3Com 3c905B-T4 Fast Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100FX,
-		"3Com 3c905B Fast Etherlink XL 10/100BaseFX/SC" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT_SERV,
-		"3Com 3c980 Fast Etherlink XL 10/100BaseTX" },
+		"3Com 3c905B-FX/SC Fast Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100_COMBO,
+		"3Com 3c905B-COMBO Fast Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_HURRICANE_10_100BT_SERV,
+		"3Com 3c980 Fast Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_HURRICANE_SOHO100TX,
+		"3Com 3cSOHO100-TX OfficeConnect" },
 	{ 0, 0, NULL }
 };
 
@@ -316,6 +332,7 @@ static void xl_wait(sc)
 		if (!(CSR_READ_2(sc, XL_STATUS) & XL_STAT_CMDBUSY))
 			break;
 	}
+
 	if (i == XL_TIMEOUT)
 		printf("xl%d: command never completed!\n", sc->xl_unit);
 
@@ -493,8 +510,6 @@ static int xl_mii_writereg(sc, frame)
 	
 {
 	int			s;
-
-
 
 	s = splimp();
 	/*
@@ -823,6 +838,21 @@ static void xl_autoneg_xmit(sc)
 	struct xl_softc		*sc;
 {
 	u_int16_t		phy_sts;
+	u_int32_t		icfg;
+
+	xl_reset(sc);
+	XL_SEL_WIN(3);
+	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
+	icfg &= ~XL_ICFG_CONNECTOR_MASK;
+	if (sc->xl_media & XL_MEDIAOPT_MII ||
+	    sc->xl_media & XL_MEDIAOPT_BT4)
+		icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
+	if (sc->xl_media & XL_MEDIAOPT_BTX)
+		icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
+	if (sc->xl_media & XL_MEDIAOPT_BFX)
+		icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
+	CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
 
 	xl_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
 	DELAY(500);
@@ -1183,9 +1213,18 @@ static void xl_setmode(sc, media)
 		}
 	}
 
-	if (sc->xl_media & XL_MEDIAOPT_AUI) {
+	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
 		if (IFM_SUBTYPE(media) == IFM_10_5) {
 			printf("AUI port, ");
+			sc->xl_xcvr = XL_XCVR_AUI;
+			icfg &= ~XL_ICFG_CONNECTOR_MASK;
+			icfg |= (XL_XCVR_AUI << XL_ICFG_CONNECTOR_BITS);
+			mediastat &= ~(XL_MEDIASTAT_LINKBEAT|
+					XL_MEDIASTAT_JABGUARD);
+			mediastat |= ~XL_MEDIASTAT_SQEENB;
+		}
+		if (IFM_SUBTYPE(media) == IFM_10_FL) {
+			printf("10baseFL transceiver, ");
 			sc->xl_xcvr = XL_XCVR_AUI;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_AUI << XL_ICFG_CONNECTOR_BITS);
@@ -1235,9 +1274,17 @@ static void xl_setmode(sc, media)
 static void xl_reset(sc)
 	struct xl_softc		*sc;
 {
+	register int		i;
+
 	XL_SEL_WIN(0);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET);
 	xl_wait(sc);
+
+	for (i = 0; i < XL_TIMEOUT; i++) {
+		DELAY(10);
+		if (!(CSR_READ_2(sc, XL_STATUS) & XL_STAT_CMDBUSY))
+			break;
+	}
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -1295,9 +1342,9 @@ static void xl_mediacheck(sc)
 	 */
 	if (sc->xl_media & (XL_MEDIAOPT_MASK & ~XL_MEDIAOPT_VCO)) {
 		/*
-	 	* Check the XCVR value. If it's not in the normal range
-	 	* of values, we need to fake it up here.
-	 	*/
+	 	 * Check the XCVR value. If it's not in the normal range
+	 	 * of values, we need to fake it up here.
+	 	 */
 		if (sc->xl_xcvr <= XL_XCVR_AUTO)
 			return;
 		else {
@@ -1307,6 +1354,9 @@ static void xl_mediacheck(sc)
 				"on card type\n", sc->xl_unit);
 		}
 	} else {
+		if (sc->xl_type == XL_TYPE_905B &&
+		    sc->xl_media & XL_MEDIAOPT_10FL)
+			return;
 		printf("xl%d: WARNING: no media options bits set in "
 			"the media options register!!\n", sc->xl_unit);
 		printf("xl%d: this could be a manufacturing defect in "
@@ -1324,17 +1374,27 @@ static void xl_mediacheck(sc)
 	xl_read_eeprom(sc, (caddr_t)&devid, XL_EE_PRODID, 1, 0);
 
 	switch(devid) {
-	case TC_DEVICEID_BOOMERANG_10BT:	/* 3c900-TP */
-	case TC_DEVICEID_CYCLONE_10BT:		/* 3c900B-TP */
+	case TC_DEVICEID_BOOMERANG_10BT:	/* 3c900-TPO */
+	case TC_DEVICEID_KRAKATOA_10BT:		/* 3c900B-TPO */
 		sc->xl_media = XL_MEDIAOPT_BT;
 		sc->xl_xcvr = XL_XCVR_10BT;
 		printf("xl%d: guessing 10BaseT transceiver\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10BT_COMBO:	/* 3c900-COMBO */
-	case TC_DEVICEID_CYCLONE_10BT_COMBO:	/* 3c900B-COMBO */
+	case TC_DEVICEID_KRAKATOA_10BT_COMBO:	/* 3c900B-COMBO */
 		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
 		sc->xl_xcvr = XL_XCVR_10BT;
 		printf("xl%d: guessing COMBO (AUI/BNC/TP)\n", sc->xl_unit);
+		break;
+	case TC_DEVICEID_KRAKATOA_10BT_TPC:	/* 3c900B-TPC */
+		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC;
+		sc->xl_xcvr = XL_XCVR_10BT;
+		printf("xl%d: guessing TPC (BNC/TP)\n", sc->xl_unit);
+		break;
+	case TC_DEVICEID_CYCLONE_10FL:		/* 3c900B-FL */
+		sc->xl_media = XL_MEDIAOPT_10FL;
+		sc->xl_xcvr = XL_XCVR_AUI;
+		printf("xl%d: guessing 10baseFL\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10_100BT:	/* 3c905-TX */
 		sc->xl_media = XL_MEDIAOPT_MII;
@@ -1347,11 +1407,17 @@ static void xl_mediacheck(sc)
 		sc->xl_xcvr = XL_XCVR_MII;
 		printf("xl%d: guessing 100BaseT4/MII\n", sc->xl_unit);
 		break;
-	case TC_DEVICEID_CYCLONE_10_100BT:	/* 3c905B-TX */
-	case TC_DEVICEID_CYCLONE_10_100BT_SERV:	/* 3c980-TX */
+	case TC_DEVICEID_HURRICANE_10_100BT:	/* 3c905B-TX */
+	case TC_DEVICEID_HURRICANE_10_100BT_SERV:/* 3c980-TX */
+	case TC_DEVICEID_HURRICANE_SOHO100TX:	/* 3c980-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
 		sc->xl_xcvr = XL_XCVR_AUTO;
 		printf("xl%d: guessing 10/100 internal\n", sc->xl_unit);
+		break;
+	case TC_DEVICEID_CYCLONE_10_100_COMBO:	/* 3c905B-COMBO */
+		sc->xl_media = XL_MEDIAOPT_BTX|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
+		sc->xl_xcvr = XL_XCVR_AUTO;
+		printf("xl%d: guessing 10/100 plus BNC/AUI\n", sc->xl_unit);
 		break;
 	default:
 		printf("xl%d: unknown device ID: %x -- "
@@ -1392,7 +1458,7 @@ xl_attach(config_id, unit)
 	sc = malloc(sizeof(struct xl_softc), M_DEVBUF, M_NOWAIT);
 	if (sc == NULL) {
 		printf("xl%d: no memory for softc struct!\n", unit);
-		return;
+		goto fail;
 	}
 	bzero(sc, sizeof(struct xl_softc));
 
@@ -1453,8 +1519,23 @@ xl_attach(config_id, unit)
 		free(sc, M_DEVBUF);
 		goto fail;
 	}
+	if (!pci_map_port(config_id, XL_PCI_LOIO,
+				(u_short *)&(sc->xl_bhandle))) {
+		printf ("xl%d: couldn't map port\n", unit);
+		printf ("xl%d: WARNING: this shouldn't happen! "
+		    "Possible PCI support code bug!", unit);
+		printf ("xl%d: attempting to map iobase manually", unit);
+		sc->xl_bhandle =
+		    pci_conf_read(config_id, XL_PCI_LOIO) & 0xFFFFFFE0;
+		/*goto fail;*/
+	}
 
-	sc->iobase = pci_conf_read(config_id, XL_PCI_LOIO) & 0xFFFFFFE0;
+#ifdef __i386__
+	sc->xl_btag = I386_BUS_SPACE_IO;
+#endif
+#ifdef __alpha__
+	sc->xl_btag = ALPHA_BUS_SPACE_IO;
+#endif
 #else
 	if (!(command & PCIM_CMD_MEMEN)) {
 		printf("xl%d: failed to enable memory mapping!\n", unit);
@@ -1465,7 +1546,13 @@ xl_attach(config_id, unit)
 		printf ("xl%d: couldn't map memory\n", unit);
 		goto fail;
 	}
-	sc->csr = (volatile caddr_t)vbase;
+	sc->xl_bhandle = vbase;
+#ifdef __i386__
+	sc->btag = I386_BUS_SPACE_MEM;
+#endif
+#ifdef __alpha__
+	sc->btag = ALPHA_BUS_SPACE_MEM;
+#endif
 #endif
 
 	/* Allocate interrupt */
@@ -1500,11 +1587,11 @@ xl_attach(config_id, unit)
 	if (sc->xl_ldata_ptr == NULL) {
 		free(sc, M_DEVBUF);
 		printf("xl%d: no memory for list buffers!\n", unit);
-		return;
+		goto fail;
 	}
 
 	sc->xl_ldata = (struct xl_list_data *)sc->xl_ldata_ptr;
-	round = (unsigned int)sc->xl_ldata_ptr & 0xF;
+	round = (uintptr_t)sc->xl_ldata_ptr & 0xF;
 	roundptr = sc->xl_ldata_ptr;
 	for (i = 0; i < 8; i++) {
 		if (round % 8) {
@@ -1615,11 +1702,28 @@ xl_attach(config_id, unit)
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
 			ifmedia_add(&sc->ifmedia,
-				IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+			    IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 	}
 
-	if (sc->xl_media & XL_MEDIAOPT_AUI) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
+	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
+		/*
+		 * Check for a 10baseFL board in disguise.
+		 */
+		if (sc->xl_type == XL_TYPE_905B &&
+		    sc->xl_media == XL_MEDIAOPT_10FL) {
+			if (bootverbose)
+				printf("xl%d: found 10baseFL\n", sc->xl_unit);
+			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL, 0, NULL);
+			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL|IFM_HDX,
+			    0, NULL);
+			if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
+				ifmedia_add(&sc->ifmedia,
+				    IFM_ETHER|IFM_10_FL|IFM_FDX, 0, NULL);
+		} else {
+			if (bootverbose)
+				printf("xl%d: found AUI\n", sc->xl_unit);
+			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
+		}
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
@@ -1664,8 +1768,14 @@ xl_attach(config_id, unit)
 		xl_setmode(sc, media);
 		break;
 	case XL_XCVR_AUI:
-		media = IFM_ETHER|IFM_10_5;
-		xl_setmode(sc, media);
+		if (sc->xl_type == XL_TYPE_905B &&
+		    sc->xl_media == XL_MEDIAOPT_10FL) {
+			media = IFM_ETHER|IFM_10_FL;
+			xl_setmode(sc, media);
+		} else {
+			media = IFM_ETHER|IFM_10_5;
+			xl_setmode(sc, media);
+		}
 		break;
 	case XL_XCVR_COAX:
 		media = IFM_ETHER|IFM_10_2;
@@ -1898,6 +2008,7 @@ again:
 			continue;
 		}
 
+		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 #if NBPFILTER > 0
@@ -1981,9 +2092,9 @@ static void xl_txeof(sc)
 			break;
 		}
 		sc->xl_cdata.xl_tx_head = cur_tx->xl_next;
-
 		m_freem(cur_tx->xl_mbuf);
 		cur_tx->xl_mbuf = NULL;
+		ifp->if_opackets++;
 
 		cur_tx->xl_next = sc->xl_cdata.xl_tx_free;
 		sc->xl_cdata.xl_tx_free = cur_tx;
@@ -2033,6 +2144,8 @@ static void xl_txeoc(sc)
 			 * first generation 3c90X chips.
 			 */
 			CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
+			CSR_WRITE_2(sc, XL_COMMAND,
+			    XL_CMD_TX_SET_START|XL_MIN_FRAMELEN);
 			if (sc->xl_type == XL_TYPE_905B) {
 				CSR_WRITE_2(sc, XL_COMMAND,
 				XL_CMD_SET_TX_RECLAIM|(XL_PACKET_SIZE >> 4));
@@ -2074,7 +2187,6 @@ static void xl_intr(arg)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB);
 
 	for (;;) {
-
 		status = CSR_READ_2(sc, XL_STATUS);
 
 		if ((status & XL_INTRS) == 0)
@@ -2084,30 +2196,23 @@ static void xl_intr(arg)
 		claimed = 1;
 #endif
 
-		if (status & XL_STAT_UP_COMPLETE) {
-			xl_rxeof(sc);
-			CSR_WRITE_2(sc, XL_COMMAND,
-				XL_CMD_INTR_ACK|XL_STAT_UP_COMPLETE);
-		}
+		CSR_WRITE_2(sc, XL_COMMAND,
+		    XL_CMD_INTR_ACK|(status & XL_INTRS));
 
-		if (status & XL_STAT_DOWN_COMPLETE) {
+		if (status & XL_STAT_UP_COMPLETE)
+			xl_rxeof(sc);
+
+		if (status & XL_STAT_DOWN_COMPLETE)
 			xl_txeof(sc);
-			CSR_WRITE_2(sc, XL_COMMAND,
-				XL_CMD_INTR_ACK|XL_STAT_DOWN_COMPLETE);
-		}
 
 		if (status & XL_STAT_TX_COMPLETE) {
 			ifp->if_oerrors++;
 			xl_txeoc(sc);
-			CSR_WRITE_2(sc, XL_COMMAND,
-				XL_CMD_INTR_ACK|XL_STAT_TX_COMPLETE);
 		}
 
 		if (status & XL_STAT_ADFAIL) {
 			xl_reset(sc);
 			xl_init(sc);
-			CSR_WRITE_2(sc, XL_COMMAND,
-				XL_CMD_INTR_ACK|XL_STAT_ADFAIL);
 		}
 
 		if (status & XL_STAT_STATSOFLOW) {
@@ -2115,9 +2220,6 @@ static void xl_intr(arg)
 			xl_stats_update(sc);
 			sc->xl_stats_no_timeout = 0;
 		}
-
-		CSR_WRITE_2(sc, XL_STATUS, XL_CMD_INTR_ACK|XL_STAT_INTREQ|
-							XL_STAT_INTLATCH);
 	}
 
 	/* Re-enable interrupts. */
@@ -2125,9 +2227,8 @@ static void xl_intr(arg)
 
 	XL_SEL_WIN(7);
 
-	if (ifp->if_snd.ifq_head != NULL) {
+	if (ifp->if_snd.ifq_head != NULL)
 		xl_start(ifp);
-	}
 
 #ifdef __OpenBSD__
 	return claimed;
@@ -2157,9 +2258,6 @@ static void xl_stats_update(xsc)
 
 	for (i = 0; i < 16; i++)
 		*p++ = CSR_READ_1(sc, XL_W6_CARRIER_LOST + i);
-
-	ifp->if_ipackets += xl_rx_goodframes(xl_stats);
-	ifp->if_opackets += xl_tx_goodframes(xl_stats);
 
 	ifp->if_ierrors += xl_stats.xl_rx_overrun;
 
@@ -2276,7 +2374,6 @@ static int xl_encap(sc, c, m_head)
  * copy of the pointers since the transmit list fragment pointers are
  * physical addresses.
  */
-
 static void xl_start(ifp)
 	struct ifnet		*ifp;
 {
@@ -2473,6 +2570,9 @@ static void xl_init(xsc)
 	 */
 	CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
 
+	/* Set the TX start threshold for best performance. */
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_SET_START|XL_MIN_FRAMELEN);
+
 	/*
 	 * If this is a 3c905B, also set the tx reclaim threshold.
 	 * This helps cut down on the number of tx reclaim errors
@@ -2607,6 +2707,17 @@ static int xl_ifmedia_upd(ifp)
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return(EINVAL);
 
+	switch(IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_100_FX:
+	case IFM_10_2:
+	case IFM_10_5:
+		xl_setmode(sc, ifm->ifm_media);
+		return (0);
+		break;
+	default:
+		break;
+	}
+
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
 		|| sc->xl_media & XL_MEDIAOPT_BT4) {
 		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
@@ -2648,7 +2759,15 @@ static void xl_ifmedia_sts(ifp, ifmr)
 			ifmr->ifm_active |= IFM_HDX;
 		break;
 	case XL_XCVR_AUI:
-		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
+		if (sc->xl_type == XL_TYPE_905B &&
+		    sc->xl_media == XL_MEDIAOPT_10FL) {
+			ifmr->ifm_active = IFM_ETHER|IFM_10_FL;
+			if (CSR_READ_1(sc, XL_W3_MAC_CTRL) & XL_MACCTRL_DUPLEX)
+				ifmr->ifm_active |= IFM_FDX;
+			else
+				ifmr->ifm_active |= IFM_FDX;
+		} else
+			ifmr->ifm_active = IFM_ETHER|IFM_10_5;
 		break;
 	case XL_XCVR_COAX:
 		ifmr->ifm_active = IFM_ETHER|IFM_10_2;
@@ -2895,7 +3014,11 @@ static struct pci_device xl_device = {
 	&xl_count,
 	NULL
 };
+#ifdef COMPAT_PCI_DRIVER
+COMPAT_PCI_DRIVER(xl, xl_device);
+#else
 DATA_SET(pcidevice_set, xl_device);
+#endif /* COMPAT_PCI_DRIVER */
 #endif
 
 #ifdef __OpenBSD__
@@ -2911,16 +3034,20 @@ xl_probe(parent, match, aux)
 		return (0);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_3COM_3CSOHO100TX:
 	case PCI_PRODUCT_3COM_3C900TPO:
 	case PCI_PRODUCT_3COM_3C900COMBO:
 	case PCI_PRODUCT_3COM_3C900B:
 	case PCI_PRODUCT_3COM_3C900BCOMBO:
+	case PCI_PRODUCT_3COM_3C900BTPC:
+	case PCI_PRODUCT_3COM_3C900BFL:
 	case PCI_PRODUCT_3COM_3C905TX:
 	case PCI_PRODUCT_3COM_3C905T4:
 	case PCI_PRODUCT_3COM_3C905BTX:
 	case PCI_PRODUCT_3COM_3C905BT4:
-	case PCI_PRODUCT_3COM_3C980TX:
+	case PCI_PRODUCT_3COM_3C905BCOMBO:
 	case PCI_PRODUCT_3COM_3C905BFX:
+	case PCI_PRODUCT_3COM_3C980TX:
 		return (1);
 	}
 					
@@ -3016,11 +3143,11 @@ xl_attach(parent, self, aux)
 		printf(": can't find i/o space\n");
 		return;
 	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sc_sh)) {
+	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->xl_bhandle)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-	sc->sc_st = pa->pa_iot;
+	sc->xl_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
@@ -3030,11 +3157,11 @@ xl_attach(parent, self, aux)
 		printf(": can't find mem space\n");
 		return;
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
+	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->xl_bhandle)) {
 		printf(": can't map mem space\n");
 		return;
 	}
-	sc->sc_st = pa->pa_memt;
+	sc->xl_btag = pa->pa_memt;
 #endif
 
 	/*
@@ -3179,11 +3306,24 @@ xl_attach(parent, self, aux)
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
 			ifmedia_add(&sc->ifmedia,
-				IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+			    IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 	}
 
-	if (sc->xl_media & XL_MEDIAOPT_AUI) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
+	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
+		/*
+		 * Check for a 10baseFL board in disguise.
+		 */
+		if (sc->xl_type == XL_TYPE_905B &&
+		    sc->xl_media == XL_MEDIAOPT_10FL) {
+			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL, 0, NULL);
+			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL|IFM_HDX,
+			    0, NULL);
+			if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
+				ifmedia_add(&sc->ifmedia,
+				    IFM_ETHER|IFM_10_FL|IFM_FDX, 0, NULL);
+		} else {
+			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
+		}
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
@@ -3228,8 +3368,14 @@ xl_attach(parent, self, aux)
 		xl_setmode(sc, media);
 		break;
 	case XL_XCVR_AUI:
-		media = IFM_ETHER|IFM_10_5;
-		xl_setmode(sc, media);
+		if (sc->xl_type == XL_TYPE_905B &&
+		    sc->xl_media == XL_MEDIAOPT_10FL) {
+			media = IFM_ETHER|IFM_10_FL;
+			xl_setmode(sc, media);
+		} else {
+			media = IFM_ETHER|IFM_10_5;
+			xl_setmode(sc, media);
+		}
 		break;
 	case XL_XCVR_COAX:
 		media = IFM_ETHER|IFM_10_2;

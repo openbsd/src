@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.10 1999/03/03 22:51:52 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.11 1999/05/07 21:24:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xlreg.h,v 1.9 1998/12/10 16:18:43 wpaul Exp $
+ *	$FreeBSD: if_xlreg.h,v 1.14 1999/04/30 16:15:43 wpaul Exp $
  */
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
@@ -166,7 +166,7 @@
 #define XL_STAT_INTREQ		0x0040  /* 6 */
 #define XL_STAT_STATSOFLOW	0x0080  /* 7 */
 #define XL_STAT_DMADONE		0x0100	/* 8 first generation */
-#define XL_STAT_LINKSTAT	0x0100	/* 8 3c905B */
+#define XL_STAT_LINKSTAT	0x0100	/* 8 3c509B */
 #define XL_STAT_DOWN_COMPLETE	0x0200	/* 9 */
 #define XL_STAT_UP_COMPLETE	0x0400	/* 10 */
 #define XL_STAT_DMABUSY		0x0800	/* 11 first generation */
@@ -439,8 +439,8 @@ struct xl_list_onefrag {
 };
 
 #define XL_MAXFRAGS		63
-#define XL_RX_LIST_CNT		16
-#define XL_TX_LIST_CNT		16
+#define XL_RX_LIST_CNT		32
+#define XL_TX_LIST_CNT		32
 #define XL_MIN_FRAMELEN		60
 
 struct xl_list_data {
@@ -542,15 +542,11 @@ struct xl_softc {
 #ifdef __OpenBSD__
 	struct device		sc_dev;		/* generic device structure */
 	void *			sc_ih;		/* interrupt handler cookie */
-	bus_space_tag_t		sc_st;		/* bus space tag */
-	bus_space_handle_t	sc_sh;		/* bus space handle */
 #endif
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
-	u_int32_t		iobase;		/* pointer to PIO space */
-#if defined(XL_USEIOSPACE) && defined(__FreeBSD__)
-	volatile caddr_t	csr;		/* pointer to register map */
-#endif
+	bus_space_handle_t	xl_bhandle;
+	bus_space_tag_t		xl_btag;
 	struct xl_type		*xl_info;	/* 3Com adapter info */
 	u_int8_t		xl_hasmii;	/* whether we have mii or not */
 	u_int8_t		xl_unit;	/* interface number */
@@ -596,53 +592,19 @@ struct xl_stats {
 /*
  * register space access macros
  */
-#ifdef __FreeBSD__
-#ifdef XL_USEIOSPACE
 #define CSR_WRITE_4(sc, reg, val)	\
-	outl(sc->iobase + (u_int32_t)(reg), val)
+	bus_space_write_4(sc->xl_btag, sc->xl_bhandle, reg, val)
 #define CSR_WRITE_2(sc, reg, val)	\
-	outw(sc->iobase + (u_int32_t)(reg), val)
+	bus_space_write_2(sc->xl_btag, sc->xl_bhandle, reg, val)
 #define CSR_WRITE_1(sc, reg, val)	\
-	outb(sc->iobase + (u_int32_t)(reg), val)
+	bus_space_write_1(sc->xl_btag, sc->xl_bhandle, reg, val)
 
-#define CSR_READ_4(sc, reg)	\
-	inl(sc->iobase + (u_int32_t)(reg))
-#define CSR_READ_2(sc, reg)	\
-	inw(sc->iobase + (u_int32_t)(reg))
-#define CSR_READ_1(sc, reg)	\
-	inb(sc->iobase + (u_int32_t)(reg))
-#else
-#define CSR_WRITE_4(sc, reg, val)	\
-	((*(u_int32_t*)((sc)->csr + (u_int32_t)(reg))) = (u_int32_t)(val))
-#define CSR_WRITE_2(sc, reg, val)	\
-	((*(u_int16_t*)((sc)->csr + (u_int32_t)(reg))) = (u_int16_t)(val))
-#define CSR_WRITE_1(sc, reg, val)	\
-	((*(u_int8_t*)((sc)->csr + (u_int32_t)(reg))) = (u_int8_t)(val))
-
-#define CSR_READ_4(sc, reg)	\
-	(*(u_int32_t *)((sc)->csr + (u_int32_t)(reg)))
-#define CSR_READ_2(sc, reg)	\
-	(*(u_int16_t *)((sc)->csr + (u_int32_t)(reg)))
-#define CSR_READ_1(sc, reg)	\
-	(*(u_int8_t *)((sc)->csr + (u_int32_t)(reg)))
-#endif
-#endif
-
-#if defined(__OpenBSD__)
-#define CSR_WRITE_4(sc, csr, val) \
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, csr, (val))
-#define CSR_WRITE_2(sc, csr, val) \
-	bus_space_write_2((sc)->sc_st, (sc)->sc_sh, csr, (val))
-#define CSR_WRITE_1(sc, csr, val) \
-	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, csr, (val))
-
-#define CSR_READ_4(sc, csr) \
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, csr)
-#define CSR_READ_2(sc, csr) \
-	bus_space_read_2((sc)->sc_st, (sc)->sc_sh, csr)
-#define CSR_READ_1(sc, csr) \
-	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, csr)
-#endif /* __OpenBSD__ */
+#define CSR_READ_4(sc, reg)		\
+	bus_space_read_4(sc->xl_btag, sc->xl_bhandle, reg)
+#define CSR_READ_2(sc, reg)		\
+	bus_space_read_2(sc->xl_btag, sc->xl_bhandle, reg)
+#define CSR_READ_1(sc, reg)		\
+	bus_space_read_1(sc->xl_btag, sc->xl_bhandle, reg)
 
 #define XL_SEL_WIN(x)	\
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_WINSEL | x)
@@ -662,11 +624,16 @@ struct xl_stats {
 #define TC_DEVICEID_BOOMERANG_10BT_COMBO	0x9001
 #define TC_DEVICEID_BOOMERANG_10_100BT		0x9050
 #define TC_DEVICEID_BOOMERANG_100BT4		0x9051
-#define TC_DEVICEID_CYCLONE_10BT		0x9004
-#define TC_DEVICEID_CYCLONE_10BT_COMBO		0x9005
-#define TC_DEVICEID_CYCLONE_10_100BT		0x9055
+#define TC_DEVICEID_KRAKATOA_10BT		0x9004
+#define TC_DEVICEID_KRAKATOA_10BT_COMBO		0x9005
+#define TC_DEVICEID_KRAKATOA_10BT_TPC		0x9006
+#define TC_DEVICEID_CYCLONE_10FL		0x900A
+#define TC_DEVICEID_HURRICANE_10_100BT		0x9055
 #define TC_DEVICEID_CYCLONE_10_100BT4		0x9056
-#define TC_DEVICEID_CYCLONE_10_100BT_SERV	0x9800
+#define TC_DEVICEID_CYCLONE_10_100_COMBO	0x9058
+#define TC_DEVICEID_CYCLONE_10_100FX		0x905A
+#define TC_DEVICEID_HURRICANE_10_100BT_SERV	0x9800
+#define TC_DEVICEID_HURRICANE_SOHO100TX		0x7646
 
 /*
  * Texas Instruments PHY identifiers
