@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.207 2001/06/25 03:28:01 csapuntz Exp $
+#	$OpenBSD: files,v 1.208 2001/06/25 20:48:15 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -278,6 +278,7 @@ pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device enc: ifnet
+pseudo-device pflog: ifnet
 pseudo-device bridge: ifnet, ether
 pseudo-device vlan: ifnet, ether
 pseudo-device sppp: ifnet
@@ -563,6 +564,7 @@ file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			enc			needs-count
+file net/if_pflog.c			pflog			needs-count
 file net/if_gre.c			gre			needs-count
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
