@@ -7,3 +7,15 @@ Subject: Welcome to OpenBSD 2.3
 
 This message will contain more information for system administrators who
 just installed OpenBSD.
+
+For more information on how to setup your OpenBSD system, refer to the
+"afterboot" man page.  If you are not familiar with how to read man pages,
+type "man man" at a shell prompt and read the entire thing.  The GNU "info"
+subsystem is also installed with further documentation resources; to read
+info pages type "info".
+
+Binary packages of emacs 20.2, bash 2.01.1, tcsh--6.07.02, and pine-3.96
+are available on most architectures. The files are in the directory
+        ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
+Select your architecture and download the tarballs of your choice.  To
+install issue the command `pkg_add <pkg-name>' as root.
