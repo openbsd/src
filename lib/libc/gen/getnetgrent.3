@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetgrent.3,v 1.5 1997/06/13 13:03:25 deraadt Exp $
+.\"	$OpenBSD: getnetgrent.3,v 1.6 1997/07/09 00:56:56 millert Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 4, 1993
+.Dd July 8, 1997
 .Dt GETNETGRENT 3
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nm endnetgrent
 .Nd netgroup database operations
 .Sh SYNOPSIS
+.Fd #include <netgroup.h>                                                       
 .Ft int
 .Fn getnetgrent "const char **host" "const char **user" "const char **domain"
 .Ft int
