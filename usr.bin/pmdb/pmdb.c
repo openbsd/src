@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.6 2002/03/19 23:17:58 fgsch Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.7 2002/06/05 18:02:27 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/endian.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,12 +37,11 @@
 #include <errno.h>
 #include <string.h>
 
-#include <sys/endian.h>
-
 #include "pmdb.h"
 #include "symbol.h"
 #include "clit.h"
 #include "break.h"
+#include "core.h"
 
 static int cmd_show_registers(int, char **, void *);
 static int cmd_show_backtrace(int, char **, void *);
@@ -76,21 +76,44 @@ struct clit cmds[] = {
 
 #define NCMDS	sizeof(cmds)/sizeof(cmds[0])
 
+void
+usage()
+{
+	extern char *__progname;
+
+	fprintf(stderr, "Usage: %s [-c core] <program> args\n", __progname);
+	exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
-	extern const char *__progname;
 	struct pstate ps;
-	int i;
+	int i, c;
 	int status;
 	void *cm;
-	char *pmenv;
+	char *pmenv, *core;
 	int level;
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <program> args\n", __progname);
-		exit(1);
+		usage();
 	}
+
+	core = NULL;
+
+	while ((c = getopt(argc, argv, "c:")) != -1) {
+		switch(c) {
+			case 'c':
+				core = optarg;
+				break;
+			case '?':
+			default:
+				usage();
+				/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	if ((pmenv = getenv("IN_PMDB")) != NULL) {
 		level = atoi(pmenv);
@@ -105,8 +128,8 @@ main(int argc, char **argv)
 
 	ps.ps_pid = 0;
 	ps.ps_state = NONE;
-	ps.ps_argc = --argc;
-	ps.ps_argv = ++argv;
+	ps.ps_argc = argc;
+	ps.ps_argv = argv;
 	ps.ps_flags = 0;
 	ps.ps_signum = 0;
 	ps.ps_npc = 1;
@@ -123,6 +146,9 @@ main(int argc, char **argv)
 	init_sigstate(&ps);
 
 	process_load(&ps);
+
+	if (core != NULL)
+		read_core(core, &ps);
 
 	cm = cmdinit(cmds, NCMDS);
 	while (ps.ps_state != TERMINATED) {
@@ -210,8 +236,13 @@ cmd_show_registers(int argc, char **argv, void *arg)
 	reg *rg;
 
 	if (ps->ps_state != STOPPED) {
+		if (ps->ps_flags & PSF_CORE) {
+			/* dump registers from core */
+			core_printregs(ps->ps_core);
+			return (0);
+		}
 		fprintf(stderr, "process not stopped\n");
-		return 0;
+		return (0);
 	}
 
 	rg = alloca(sizeof(*rg) * md_def.nregs);
@@ -222,7 +253,7 @@ cmd_show_registers(int argc, char **argv, void *arg)
 		printf("%s:\t0x%.*lx\t%s\n", md_def.md_reg_names[i],
 		    (int)(sizeof(reg) * 2), (long)rg[i],
 		    sym_print(ps, rg[i], buf, sizeof(buf)));
-	return 0;
+	return (0);
 }
 
 static int
@@ -233,7 +264,7 @@ cmd_show_backtrace(int argc, char **argv, void *arg)
 
 	if (ps->ps_state != STOPPED) {
 		fprintf(stderr, "process not stopped\n");
-		return 0;
+		return (0);
 	}
 
 	/* no more than 100 frames */
@@ -268,7 +299,8 @@ cmd_show_backtrace(int argc, char **argv, void *arg)
 			printf(")+0x%lx\n", offs);
 		}
 	}
-	return 0;
+
+	return (0);
 }
 
 static int
@@ -344,7 +376,7 @@ cmd_complt(char *buf, size_t buflen)
 }
 
 /*
- * The "stadard" wrapper
+ * The "standard" wrapper
  */
 void *
 emalloc(size_t sz)

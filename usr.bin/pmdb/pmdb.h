@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.h,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: pmdb.h,v 1.3 2002/06/05 18:02:27 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -27,6 +27,8 @@
 #include <sys/signal.h>		/* for NSIG */
 #include <sys/queue.h>
 #include <sys/ptrace.h>
+#include <sys/stat.h>
+
 #include <err.h>
 
 /* XXX - ugh, yuck, bleah. */
@@ -40,6 +42,7 @@
 
 struct breakpoint;
 struct callback;
+struct corefile;
 struct sym_table;
 struct sym_ops;
 
@@ -59,6 +62,8 @@ struct pstate {
 	TAILQ_HEAD(,sym_table) ps_syms;	/* all symbols tables in a list */
 	struct sym_table *ps_sym_exe;	/* symbol table for the executable */
 	struct sym_ops *ps_sops;	/* operations on symbol tables */
+	struct stat exec_stat;		/* stat of the exec file */
+	struct corefile *ps_core;	/* core file data */
 	TAILQ_HEAD(,breakpoint) ps_bkpts; /* breakpoints */
 	TAILQ_HEAD(,callback) ps_sstep_cbs; /* single step actions */
 };
@@ -67,6 +72,8 @@ struct pstate {
 #define PSF_SYMBOLS	0x02		/* basic symbols loaded */
 #define PSF_KILL	0x04		/* kill this process asap */
 #define PSF_STEP	0x08		/* next continue should sstep */
+#define PSF_CORE	0x10		/* core file loaded */
+#define PSF_ATCH	0x20		/* process attached with PT_ATTACH */
 
 /* ps_sigstate */
 #define SS_STOP		0x00
