@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.50 2003/05/14 18:08:27 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.51 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include "init.h"
 #include "libcrypto.h"
 #include "log.h"
+#include "monitor.h"
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
@@ -238,7 +239,7 @@ report (void)
   mode_t old_umask;
 
   old_umask = umask (S_IRWXG | S_IRWXO);
-  rfp = fopen (report_file, "w");
+  rfp = monitor_fopen (report_file, "w");
   umask (old_umask);
 
   if (!rfp)
@@ -252,7 +253,7 @@ report (void)
   log_to (rfp);
   ui_report ("r");
   log_to (old);
-  fclose (rfp);
+  monitor_fclose (rfp);
 
   sigusr1ed = 0;
 }
@@ -339,15 +340,15 @@ write_pid_file (void)
 {
   FILE *fp;
 
-  /* Ignore errors.  */
+  /* Ignore errors. XXX Will fail with USE_PRIVSEP.  */
   unlink (pid_file);
 
-  fp = fopen (pid_file, "w");
+  fp = monitor_fopen (pid_file, "w");
   if (fp != NULL)
     {
       /* XXX Error checking!  */
       fprintf (fp, "%ld\n", (long) getpid ());
-      fclose (fp);
+      monitor_fclose (fp);
     }
   else
     log_fatal ("main: fopen (\"%s\", \"w\") failed", pid_file);
@@ -369,6 +370,27 @@ main (int argc, char *argv[])
   /* Log cmd line parsing and initialization errors to stderr.  */
   log_to (stderr);
   parse_args (argc, argv);
+  log_init ();
+
+  /* Do a clean daemon shutdown on TERM reception. (Needed by monitor).  */
+  signal (SIGTERM, daemon_shutdown_now);
+
+#if defined (USE_PRIVSEP)
+  if (monitor_init ())
+    {
+      /* The parent, with privileges.  */
+      if (!debug)
+	if (daemon (0, 0))
+	  log_fatal ("main [priv]: daemon (0, 0) failed");
+
+      /* Enter infinite monitor loop.  */
+      monitor_loop (debug);
+      exit (0); /* Never reached.  */
+    }
+
+  /* Child process only from this point on, no privileges left.  */
+#endif
+
   init ();
 
   if (!debug)
@@ -390,10 +412,7 @@ main (int argc, char *argv[])
   /* Rehash soft expiration timers on USR2 reception.  */
   signal (SIGUSR2, sigusr2);
 
-  /* Do a clean daemon shutdown on TERM reception.  */
-  signal (SIGTERM, daemon_shutdown_now);
-
-#ifdef USE_DEBUG
+#if defined (USE_DEBUG)
   /* If we wanted IKE packet capture to file, initialize it now.  */
   if (pcap_file != 0)
     log_packet_init (pcap_file);

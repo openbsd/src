@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.20 2002/08/07 13:19:20 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.21 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 void
 init (void)
 {
-  log_init ();
   app_init ();
   doi_init ();
   exchange_init ();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2003/03/13 10:31:44 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.33 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 
 #include "log.h"
 #include "message.h"
+#include "monitor.h"
 #include "sysdep.h"
 #include "transport.h"
 #include "util.h"
@@ -499,12 +500,12 @@ check_file_secrecy (char *name, size_t *file_size)
 {
   struct stat st;
 
-  if (stat (name, &st) == -1)
+  if (monitor_stat (name, &st) == -1)
     {
       log_error ("check_file_secrecy: stat (\"%s\") failed", name);
       return -1;
     }
-  if (st.st_uid != geteuid () && st.st_uid != getuid ())
+  if (st.st_uid != 0 && st.st_uid != getuid ())
     {
       log_print ("check_file_secrecy: "
 		 "not loading %s - file owner is not process user", name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.30 2002/08/08 13:25:28 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.31 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -63,15 +63,17 @@
 #include <string.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "isakmp_num.h"
 #include "log.h"
+#include "monitor.h"
 
 static void _log_print (int, int, const char *, va_list, int, int);
 
 static FILE *log_output;
 
-#ifdef USE_DEBUG
+#if defined (USE_DEBUG)
 static int log_level[LOG_ENDCLASS];
 
 #define TCPDUMP_MAGIC	0xa1b2c3d4
@@ -163,8 +165,11 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
       else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
 	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s ", tm->tm_hour,
 		  tm->tm_min, tm->tm_sec, now.tv_usec,
-		  class == LOG_PRINT ? "Default" : "Report>");	
+		  class == LOG_PRINT ? "Default" : "Report>");
       strlcat (nbuf, buffer, LOG_SIZE + 32);
+#if defined (USE_PRIVSEP)
+      strlcat (nbuf, getuid() ? "" : " [priv]", LOG_SIZE + 32);
+#endif
       strlcat (nbuf, "\n", LOG_SIZE + 32);
 
       if (fwrite (nbuf, strlen (nbuf), 1, log_output) == 0)
@@ -181,7 +186,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	  if (fileno (log_output) != -1
 	      && fileno (stdout) == fileno (log_output))
 	    fclose (stdout);
-	  fclose (log_output);
+	  fclose (log_output); /* XXX monitor_fclose ? */
 
 	  /* Fallback to syslog.  */
 	  log_to (0);
@@ -379,7 +384,7 @@ log_packet_init (char *newname)
     mode = "w";
 
   old_umask = umask (S_IRWXG | S_IRWXO);
-  packet_log = fopen (pcaplog_file, mode);
+  packet_log = monitor_fopen (pcaplog_file, mode);
   umask (old_umask);
 
   if (!packet_log)
@@ -432,7 +437,7 @@ log_packet_stop (void)
   /* Stop capture.  */
   if (packet_log)
     {
-      fclose (packet_log);
+      monitor_fclose (packet_log);
       log_print ("log_packet_stop: stopped capture");
     }
   packet_log = 0;
@@ -639,3 +644,4 @@ in_cksum (const u_int16_t *w, int len)
 }
 
 #endif /* USE_DEBUG */
+  

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.69 2003/05/14 18:11:19 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.70 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #include "libcrypto.h"
 #include "log.h"
 #include "message.h"
+#include "monitor.h"
 #include "prf.h"
 #include "transport.h"
 #include "util.h"
@@ -149,6 +150,11 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 #if defined (USE_X509)
   BIO *keyh;
   RSA *rsakey;
+  size_t fsize;
+#if defined (USE_PRIVSEP)
+  int fd;
+  char *fdata;
+#endif
 #endif
 #endif
 
@@ -287,7 +293,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       /* Otherwise, try X.509 */
       keyfile = conf_get_str ("X509-certificates", "Private-key");
 
-      if (check_file_secrecy (keyfile, 0))
+      if (check_file_secrecy (keyfile, &fsize))
 	return 0;
 
       keyh = BIO_new (BIO_s_file ());
@@ -297,6 +303,44 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 		     "BIO_new (BIO_s_file ()) failed");
 	  return 0;
 	}
+#if defined (USE_PRIVSEP)
+      /* XXX Try to find a BIO_read_fd() function instead of this.  */
+      fd = monitor_open (keyfile, O_RDONLY, 0);
+      if (fd < 0)
+	{
+	  log_print ("ike_auth_get_key: open(\"%s\") failed", keyfile);
+	  BIO_free (keyh);
+	  return 0;
+	}
+      fdata = (char *)malloc (fsize);
+      if (!fdata)
+	{
+	  log_error ("ike_auth_get_get: malloc (%d) failed", fsize);
+	  monitor_close (fd);
+	  BIO_free (keyh);
+	  return 0;
+	}
+      if (read (fd, fdata, fsize) != fsize)
+	{
+	  log_error ("ike_auth_get_key: short read");
+	  monitor_close (fd);
+	  BIO_free (keyh);
+	  memset (fdata, 0, fsize);
+	  free (fdata);
+	  return 0;
+	}
+      monitor_close (fd);
+      if (BIO_read (keyh, fdata, fsize) == -1)
+	{
+	  log_print ("ike_auth_get_key: BIO_read () failed");
+	  BIO_free (keyh);
+	  memset (fdata, 0, fsize);
+	  free (fdata);
+	  return 0;
+	}
+      memset (fdata, 0, fsize);
+      free (fdata);
+#else
       if (BIO_read_filename (keyh, keyfile) == -1)
 	{
 	  log_print ("ike_auth_get_key: "
@@ -305,6 +349,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  BIO_free (keyh);
 	  return 0;
 	}
+#endif /* USE_PRIVSEP */
 
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
       rsakey = PEM_read_bio_RSAPrivateKey (keyh, NULL, NULL, NULL);

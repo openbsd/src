@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 2003/05/14 18:11:18 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.52 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include "app.h"
 #include "conf.h"
 #include "log.h"
+#include "monitor.h"
 #include "util.h"
 
 static char *conf_get_trans_str (int, char *, char *);
@@ -589,7 +590,7 @@ conf_reinit (void)
       if (check_file_secrecy (conf_path, &sz))
 	return;
 
-      fd = open (conf_path, O_RDONLY);
+      fd = monitor_open (conf_path, O_RDONLY, 0);
       if (fd == -1)
         {
 	  log_error ("conf_reinit: open (\"%s\", O_RDONLY) failed", conf_path);
@@ -610,7 +611,7 @@ conf_reinit (void)
 		       fd, new_conf_addr, (unsigned long)sz);
 	    goto fail;
 	}
-      close (fd);
+      monitor_close (fd);
 
       trans = conf_begin ();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.31 2003/04/27 11:16:24 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.32 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include "init.h"
 #include "isakmp.h"
 #include "log.h"
+#include "monitor.h"
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
@@ -90,10 +91,10 @@ ui_init (void)
 
       /* No need to know about errors.  */
       unlink (ui_fifo);
-      if (mkfifo (ui_fifo, 0600) == -1)
+      if (monitor_mkfifo (ui_fifo, 0600) == -1)
 	log_fatal ("ui_init: mkfifo (\"%s\", 0600) failed", ui_fifo);
 
-      ui_socket = open (ui_fifo, O_RDWR | O_NONBLOCK, 0);
+      ui_socket = monitor_open (ui_fifo, O_RDWR | O_NONBLOCK, 0);
       if (ui_socket == -1)
 	log_fatal ("ui_init: open (\"%s\", O_RDWR | O_NONBLOCK, 0) failed",
 		   ui_fifo);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.60 2003/05/14 18:10:30 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.61 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -66,6 +66,7 @@
 #include "transport.h"
 #include "log.h"
 #include "message.h"
+#include "monitor.h"
 #include "util.h"
 #include "policy.h"
 #include "x509.h"
@@ -1808,7 +1809,7 @@ policy_init (void)
     log_fatal ("policy_init: cannot read %s", policy_file);
 
   /* Open policy file.  */
-  fd = open (policy_file, O_RDONLY);
+  fd = monitor_open (policy_file, O_RDONLY, 0);
   if (fd == -1)
     log_fatal ("policy_init: open (\"%s\", O_RDONLY) failed", policy_file);
 
@@ -1828,7 +1829,7 @@ policy_init (void)
     }
 
   /* We're done with this.  */
-  close (fd);
+  monitor_close (fd);
 
   /* Parse buffer, break up into individual policies.  */
   asserts = kn_read_asserts (ptr, sz, &i);

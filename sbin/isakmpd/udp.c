@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.58 2003/02/12 15:11:31 markus Exp $	*/
+/*	$OpenBSD: udp.c,v 1.59 2003/05/15 00:28:53 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
+#include "monitor.h"
 #include "sysdep.h"
 #include "transport.h"
 #include "udp.h"
@@ -190,7 +191,7 @@ udp_make (struct sockaddr *laddr)
 
   t->transport.vtbl = &udp_transport_vtbl;
   t->src = laddr;
-  if (bind (s, t->src, sysdep_sa_len (t->src)))
+  if (monitor_bind (s, t->src, sysdep_sa_len (t->src)))
     {
       char *tstr;
       if (sockaddr2text (t->src, &tstr, 0))
