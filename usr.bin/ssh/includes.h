@@ -13,7 +13,7 @@ This file includes most of the needed system headers.
 
 */
 
-/* RCSID("$Id: includes.h,v 1.1 1999/09/26 20:53:36 deraadt Exp $"); */
+/* RCSID("$Id: includes.h,v 1.2 1999/09/29 12:59:13 provos Exp $"); */
 
 #ifndef INCLUDES_H
 #define INCLUDES_H
@@ -211,10 +211,6 @@ struct	sockaddr_un {
 
 #ifdef HAVE_SETRLIMIT
 #include <sys/resource.h>
-#endif
-
-#ifndef HAVE_VSNPRINTF
-#define vsnprintf(buf, len, fmt, args) vsprintf(buf, fmt, args)
 #endif
 
 /* These POSIX macros are not defined in every system. */
