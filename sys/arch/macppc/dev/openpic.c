@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.24 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.25 2003/10/19 21:57:35 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -346,7 +346,7 @@ intr_calculatemasks()
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
+	for (level = IPL_NONE; level < IPL_NUM; level++) {
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (o_intrlevel[irq] & (1 << level))
