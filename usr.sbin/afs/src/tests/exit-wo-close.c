@@ -94,7 +94,7 @@ parent (const char *filename, pid_t child_pid)
     if (ret != 3)
 	errx (1, "short read from %s", filename);
     if (memcmp (buf, "hej", 3) != 0)
-	errx (1, "bad contents of %s = `%.3s'\n", filename, buf);
+	errx (1, "bad contents of %s = `%.3s'", filename, buf);
     close (fd);
     return 0;
 }

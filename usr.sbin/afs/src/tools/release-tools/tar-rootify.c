@@ -100,7 +100,7 @@ main(int argc, char **argv)
 
 	if (strcmp(p->magic, TMAGIC) != 0
 	    && strcmp(p->magic, OLDGNU_MAGIC) != 0)
-	    errx(1, "bad magic in #%d  '%.*s'\n", rec, 
+	    errx(1, "bad magic in #%d  '%.*s'", rec, 
 		 (int)sizeof(p->magic), p->magic);
 
 	cksum = 256;

@@ -60,7 +60,7 @@ main(int argc, char **argv)
 			   sizeof(dbservers)/sizeof(dbservers[0]),
 			   &dbnum, &lowest_ttl);
     if (ret)
-	errx(1, "_ko_resolve_cell failed with %d\n", ret);
+	errx(1, "_ko_resolve_cell failed with %d", ret);
 
     printf("cell %s, lowest_ttl %d\n", cell, lowest_ttl);
 
@@ -74,7 +74,7 @@ main(int argc, char **argv)
 
     ret = _ko_resolve_host(dbservers[0].name, &dbservers[0]);
     if (ret)
-	errx(1, "_ko_resolve_host failed with %d\n", ret);
+	errx(1, "_ko_resolve_host failed with %d", ret);
     
     print_host(&dbservers[0]);
 

@@ -656,7 +656,7 @@ main (int argc, char **argv)
     
     ret = bosserver_init();
     if (ret)
-	errx (1, "bosserver_init: error %d\n", ret);
+	errx(1, "bosserver_init: error %d", ret);
 
     printf("Milko bosserver %s-%s started\n", PACKAGE, VERSION);
 

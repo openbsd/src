@@ -51,7 +51,7 @@ _ko_resolve_init(void)
     status = DnsAcquireContextHandle_A(FALSE, NULL, &dns_handle);
 
     if (status)
-	errx(1, "DnsAcquireContextHandle returned 0x%x\n", status);
+	errx(1, "DnsAcquireContextHandle returned 0x%x", status);
 #endif
 }
 

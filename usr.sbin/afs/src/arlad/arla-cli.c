@@ -973,7 +973,7 @@ arla_start (char *device_file, const char *cache_dir, int argc, char **argv)
     if (argc > 0) {
 	error = sl_command(cmds, argc, argv);
 	if (error == -1)
-	    errx (1, "%s: Unknown command\n", argv[0]); 
+	    errx(1, "%s: Unknown command", argv[0]); 
     } else {
 	sl_loop(cmds, "arla> ");
     }

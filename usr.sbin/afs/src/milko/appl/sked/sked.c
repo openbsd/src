@@ -381,7 +381,7 @@ volls_cmd (int argc, char **argv)
 
 	ret = vld_open_vnode (volh, &n, &m);
 	if (ret)
-	    errx (1, "volls: vld_open_vnode failed with %d\n", ret);
+	    errx (1, "volls: vld_open_vnode failed with %d", ret);
 #else
 	abort();
 #endif
