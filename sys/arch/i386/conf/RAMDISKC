@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.45 2005/01/03 21:46:00 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.46 2005/01/06 21:32:57 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -119,7 +119,7 @@ isapnp0	at isa?
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-wskbd*		at pckbd?
+wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.138 2005/01/04 01:22:40 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.139 2005/01/06 21:32:56 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -340,9 +340,9 @@ audio*	at uaudio?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
-wskbd*		at	pckbd?
-wsmouse*	at	pms?
-wsmouse*	at	pmsi?
+wskbd*		at	pckbd? mux 1
+wsmouse*	at	pms? mux 0
+wsmouse*	at	pmsi? mux 0
 
 # crypto support
 hifn*	at pci?				# Hi/fn 7751 crypto card
@@ -353,4 +353,4 @@ hifn*	at pci?				# Hi/fn 7751 crypto card
 pseudo-device	crypto		1
 pseudo-device	sequencer	1
 #pseudo-device	hotplug		1	# devices hot plugging
-#pseudo-device	wsmux		2
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.48 2005/01/04 01:22:40 jsg Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.49 2005/01/06 21:32:56 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -293,10 +293,10 @@ scsibus* at atapiscsi?
 #wsdisplay*	at sfb?
 wsdisplay*	at vga?
 wsdisplay*	at tga?
-wskbd*		at pckbd?
-wsmouse*	at pms?
+wskbd*		at pckbd? mux 1
+wsmouse*	at pms? mux 0
 
 pseudo-device	bpfilter	1
 pseudo-device	loop
 pseudo-device	rd		1
-#pseudo-device	wsmux		2
+pseudo-device	wsmux		2

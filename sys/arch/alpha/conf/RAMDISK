@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.62 2004/11/05 16:29:18 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.63 2005/01/06 21:32:56 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -143,8 +143,9 @@ sd*	at scsibus?			# SCSI disk drives
 # Workstation Console attachments
 wsdisplay*	at vga?
 wsdisplay*	at tga?
-wskbd*          at pckbd?
+wskbd*          at pckbd? mux 1
 
 #pseudo-device	bpfilter	1
 pseudo-device	loop
 pseudo-device	rd		1
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2005/01/03 23:43:42 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2005/01/06 21:32:56 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -97,7 +97,7 @@ wskbd*	at ukbd? mux 1
 
 pckbc0		at isa?		# PC keyboard controller
 pckbd*		at pckbc?	# PC keyboard
-wskbd*		at pckbd?
+wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
 wsdisplay*	at vga?

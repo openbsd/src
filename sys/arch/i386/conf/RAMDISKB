@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.76 2004/11/25 22:02:08 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.77 2005/01/06 21:32:57 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -83,7 +83,7 @@ isapnp0	at isa?
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-wskbd*		at pckbd?
+wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -295,3 +295,4 @@ pseudo-device	loop	1		# network loopback
 #pseudo-device	ppp	1		# PPP
 pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk
+pseudo-device	wsmux	2

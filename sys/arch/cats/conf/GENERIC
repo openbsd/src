@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2004/12/19 16:09:17 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.18 2005/01/06 21:32:56 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -243,8 +243,8 @@ isa*	at pcib?		# ISA bus
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-wskbd*		at pckbd?
-wsmouse*	at pms?
+wskbd*		at pckbd? mux 1
+wsmouse*	at pms? mux 0
 
 pcppi0	at isa?
 sysbeep0	at pcppi?

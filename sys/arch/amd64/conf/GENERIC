@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2005/01/02 20:06:22 martin Exp $
+#	$OpenBSD: GENERIC,v 1.49 2005/01/06 21:32:56 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -164,7 +164,7 @@ pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 vga0		at isa?
 vga*		at pci?
 wsdisplay*	at vga?
-wskbd*		at pckbd?
+wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
