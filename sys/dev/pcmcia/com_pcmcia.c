@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.1 1996/11/30 13:39:24 niklas Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.2 1997/07/07 17:04:18 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -255,7 +255,7 @@ com_pcmcia_probe(parent, match, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	if (needioh)
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 
