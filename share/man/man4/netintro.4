@@ -290,7 +290,19 @@ field should be initially set to the size of the buffer
 pointed to by 
 .Ar ifc_buf .
 On return it will contain the length, in bytes, of the
-configuration list.
+configuration list.  Alternately, if the
+.Ar ifc_len
+passed in is set to 0,
+.Dv SIOCGIFCONF
+will set
+.Ar ifc_len
+to the size that
+.Ar ifc_buf
+needs to be to fit the entire configuration list and not
+fill in the other paramaters.
+This is useful for determining the exact size that
+.Ar ifc_buf
+needs to be in advance.
 .El
 .Bd -literal
 /*
