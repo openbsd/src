@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.55 2003/03/13 09:09:26 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.56 2003/03/14 00:51:15 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1095,14 +1095,15 @@ add_expdir(struct dirlist **dpp, char *cp, int len)
 {
 	struct dirlist *dp;
 
-	dp = (struct dirlist *)malloc(sizeof (struct dirlist) + len + 1);
+	/* do not need +1 because of dp_dirp[1] */
+	dp = (struct dirlist *)malloc(sizeof (struct dirlist) + len);
 	if (dp == NULL)
 		out_of_mem();
 	dp->dp_left = *dpp;
 	dp->dp_right = NULL;
 	dp->dp_flag = 0;
 	dp->dp_hosts = NULL;
-	strlcpy(dp->dp_dirp, cp, len);	/* might be 1 byte extra */
+	strlcpy(dp->dp_dirp, cp, len);
 	*dpp = dp;
 	return (dp->dp_dirp);
 }
