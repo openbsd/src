@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.29 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.30 2000/05/01 06:16:47 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_nat.c,v 2.2.2.13 2000/03/08 14:17:26 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_nat.c,v 2.2.2.15 2000/04/25 16:21:13 darrenr Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -32,7 +32,7 @@ static const char rcsid[] = "@(#)$IPFilter: ip_nat.c,v 2.2.2.13 2000/03/08 14:17
 # include <string.h>
 # include <stdlib.h>
 #endif
-#if defined(KERNEL) && (__FreeBSD_version >= 220000)
+#if (defined(KERNEL) || defined(_KERNEL)) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
 # include <sys/fcntl.h>
 #else
@@ -1458,6 +1458,8 @@ maskloop:
 
 				if (udp->uh_sum)
 					csump = &udp->uh_sum;
+			} else if (ip->ip_p == IPPROTO_ICMP) {
+				nat->nat_age = fr_defnaticmpage;
 			}
 			if (csump) {
 				if (nat->nat_dir == NAT_OUTBOUND)
@@ -1638,6 +1640,8 @@ maskloop:
 
 				if (udp->uh_sum)
 					csump = &udp->uh_sum;
+			} else if (ip->ip_p == IPPROTO_ICMP) {
+				nat->nat_age = fr_defnaticmpage;
 			}
 			if (csump) {
 				if (nat->nat_dir == NAT_OUTBOUND)

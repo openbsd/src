@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.15 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.16 2000/05/01 06:16:47 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $IPFilter: ip_compat.h,v 2.1.2.5 2000/02/15 08:02:43 darrenr Exp $
+ * $IPFilter: ip_compat.h,v 2.1.2.6 2000/04/25 16:21:11 darrenr Exp $
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -210,7 +210,7 @@ typedef unsigned long   u_32_t;
 #define	IPOPT_FINN	205	/* FINN */
 
 
-#if defined(__FreeBSD__) && defined(KERNEL)
+#if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
 # if __FreeBSD__ < 3
 #  include <machine/spl.h>
 # endif

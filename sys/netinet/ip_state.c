@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.20 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.21 2000/05/01 06:16:47 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.22 2000/02/23 15:23:24 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.23 2000/04/25 16:21:16 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -30,7 +30,7 @@ static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.22 2000/02/23 15:
 #  include <linux/module.h>
 # endif
 #endif
-#if defined(KERNEL) && (__FreeBSD_version >= 220000)
+#if (defined(KERNEL) || defined(_KERNEL)) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
 # include <sys/fcntl.h>
 # if (__FreeBSD_version >= 300000) && !defined(IPFILTER_LKM)

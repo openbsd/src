@@ -1,4 +1,4 @@
-/*	$OpenBSD: natparse.c,v 1.4 2000/03/13 23:40:19 kjell Exp $	*/
+/*	$OpenBSD: natparse.c,v 1.5 2000/05/01 06:16:48 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -55,7 +55,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: natparse.c,v 1.2.2.1 1999/11/20 22:50:30 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: natparse.c,v 1.2.2.2 2000/03/25 00:37:37 darrenr Exp $";
 #endif
 
 
@@ -538,21 +538,21 @@ int linenum;
 			return NULL;
 		ipn.in_outmsk = n_hostmask(snetm);
 		if (!(s = strtok(NULL, " \t"))) {
-			ipn.in_flags = IPN_TCP; /* XXX- TCP only by default */
+			ipn.in_flags |= IPN_TCP; /* XXX- TCP only by default */
 			proto = "tcp";
 		} else {
 			if (!strcasecmp(s, "tcp"))
-				ipn.in_flags = IPN_TCP;
+				ipn.in_flags |= IPN_TCP;
 			else if (!strcasecmp(s, "udp"))
-				ipn.in_flags = IPN_UDP;
+				ipn.in_flags |= IPN_UDP;
 			else if (!strcasecmp(s, "tcp/udp"))
-				ipn.in_flags = IPN_TCPUDP;
+				ipn.in_flags |= IPN_TCPUDP;
 			else if (!strcasecmp(s, "tcpudp"))
-				ipn.in_flags = IPN_TCPUDP;
+				ipn.in_flags |= IPN_TCPUDP;
 			else if (!strcasecmp(s, "ip"))
-				ipn.in_flags = IPN_ANY;
+				ipn.in_flags |= IPN_ANY;
 			else {
-				ipn.in_flags = IPN_ANY;
+				ipn.in_flags |= IPN_ANY;
 				if ((pr = getprotobyname(s)))
 					ipn.in_p = pr->p_proto;
 				else
@@ -651,13 +651,13 @@ int linenum;
 	if (!(s = strtok(NULL, " \t")))
 		return NULL;
 	if (!strcasecmp(s, "tcp"))
-		ipn.in_flags = IPN_TCP;
+		ipn.in_flags |= IPN_TCP;
 	else if (!strcasecmp(s, "udp"))
-		ipn.in_flags = IPN_UDP;
+		ipn.in_flags |= IPN_UDP;
 	else if (!strcasecmp(s, "tcpudp"))
-		ipn.in_flags = IPN_TCPUDP;
+		ipn.in_flags |= IPN_TCPUDP;
 	else if (!strcasecmp(s, "tcp/udp"))
-		ipn.in_flags = IPN_TCPUDP;
+		ipn.in_flags |= IPN_TCPUDP;
 	else {
 		fprintf(stderr,
 			"%d: expected protocol name - got \"%s\"\n",

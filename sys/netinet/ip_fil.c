@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.33 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.34 2000/05/01 06:16:47 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.19 2000/03/07 14:41:39 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.20 2000/04/18 16:31:27 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -765,12 +765,9 @@ caddr_t data;
 	}
 
 	if (!f) {
-		if (req != SIOCINAFR && req != SIOCINIFR)
-			while ((f = *ftail))
-				ftail = &f->fr_next;
-		else {
+		if (req == SIOCINAFR || req == SIOCINIFR) {
+			ftail = fprev;
 			if (fp->fr_hits) {
-				ftail = fprev;
 				while (--fp->fr_hits && (f = *ftail))
 					ftail = &f->fr_next;
 			}

@@ -1,4 +1,4 @@
-#	$OpenBSD: HISTORY,v 1.6 2000/04/05 05:35:28 kjell Exp $
+#	$OpenBSD: HISTORY,v 1.7 2000/05/01 06:16:48 kjell Exp $
 #
 # NOTE: Quite a few patches and suggestions come from other sources, to whom
 #       I'm greatly indebted, even if no names are mentioned.
@@ -21,6 +21,16 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.3.13	26/04/2000 - Released
+
+Fix parsing of "range" with "portmap"
+
+Relax checking of ftp replies, slightly.
+
+Fix NAT timeouts for ICMP packets
+
+SunOS4 patches for ICMP redirects from Jurgen Keil (jk@tools.de)
+
 3.3.12	16/03/2000 - Released
 
 tighten up ftp proxy behaviour.  sigh.  yuck.  hate.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_auth.c,v 1.12 2000/03/13 23:40:17 kjell Exp $	*/
+/*	$OpenBSD: ip_auth.c,v 1.13 2000/05/01 06:16:47 kjell Exp $	*/
 
 /*
  * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.1.2.2 2000/01/16 10:12:14 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.1.2.3 2000/04/25 16:21:12 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -21,7 +21,7 @@ static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.1.2.2 2000/01/16 10:12
 # include <stdlib.h>
 # include <string.h>
 #endif
-#if defined(KERNEL) && (__FreeBSD_version >= 220000)
+#if (defined(KERNEL) || defined(_KERNEL)) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
 # include <sys/fcntl.h>
 #else
