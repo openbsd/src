@@ -1,4 +1,4 @@
-/*	$OpenBSD: stub.c,v 1.1 1996/02/25 19:20:26 mickey Exp $ */
+/*	$OpenBSD: stub.c,v 1.2 1996/08/23 20:54:17 niklas Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7,7 +7,7 @@
 #include <sys/exec.h>
 #include <sys/lkm.h>
 
-static cdev_decl(ipl);
+cdev_decl(ipl);
 static struct cdevsw	ipl_cdevsw = cdev_gen_ipf(1,ipl);
 MOD_DEV("ipl", LM_DT_CHAR, -1, &ipl_cdevsw );
 
