@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.80 2003/02/19 12:48:11 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.81 2003/02/19 21:50:16 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -33,16 +33,15 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdehnNqrRvzO
+.Op Fl AdehnNqrROvz
 .Op Fl a Ar anchor[:ruleset]
 .Op Fl D Ar macro=value
-.Op Fl F Ar modifier
 .Op Fl f Ar file
+.Op Fl F Ar modifier
 .Op Fl k Ar host
 .Op Fl s Ar modifier
+.Op Fl t Ar table [-T command [addresses]*]
 .Op Fl x Ar level
-.Op Fl t Ar table
-.Op Fl T Ar command
 .Ek
 .Sh DESCRIPTION
 The
