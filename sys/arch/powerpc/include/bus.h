@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2001/06/25 06:21:18 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2001/06/26 05:17:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -70,6 +70,12 @@ void	bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
+int	bus_space_alloc __P((bus_space_tag_t tag, bus_addr_t rstart,
+	    bus_addr_t rend, bus_size_t size, bus_size_t alignment,
+	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_space_handle_t *handlep));
+void	bus_space_free __P((bus_space_tag_t tag, bus_space_handle_t handle,
+	    bus_size_t size));
 
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \

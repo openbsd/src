@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2001/06/25 23:30:03 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2001/06/26 05:17:04 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1262,6 +1262,30 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	}
 	return 0;
 }
+
+int
+bus_space_alloc(tag, rstart, rend, size, alignment, boundary, cacheable, addrp, handlep)
+	bus_space_tag_t tag;
+	bus_addr_t rstart, rend;
+	bus_size_t size, alignment, boundary;
+	int cacheable;
+	bus_addr_t *addrp;
+        bus_space_handle_t *handlep;
+{
+
+	panic("bus_space_alloc: unimplemented");
+}
+
+void
+bus_space_free(tag, handle, size)
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
+	bus_size_t size;
+{
+
+	panic("bus_space_free: unimplemented");
+}
+
 void *
 mapiodev(pa, len)
 	paddr_t pa;
