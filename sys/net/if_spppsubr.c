@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.9 2001/06/27 06:07:43 kjc Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.10 2001/07/10 11:09:07 espie Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1624,6 +1624,7 @@ sppp_up_event(const struct cp *cp, struct sppp *sp)
 		/* printf(SPP_FMT "%s illegal up in state %s\n",
 		       SPP_ARGS(ifp), cp->name,
 		       sppp_state_name(sp->state[cp->protoidx])); */
+		break;
 	}
 }
 
@@ -1660,6 +1661,7 @@ sppp_down_event(const struct cp *cp, struct sppp *sp)
 		/* printf(SPP_FMT "%s illegal down in state %s\n",
 		       SPP_ARGS(ifp), cp->name,
 		       sppp_state_name(sp->state[cp->protoidx])); */
+		break;
 	}
 }
 
@@ -3974,7 +3976,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		return EFAULT;
 
 	switch (spr.cmd) {
-	case SPPPIOGDEFS:
+	case (int)SPPPIOGDEFS:
 		if (cmd != SIOCGIFGENERIC)
 			return EINVAL;
 		/*
@@ -3991,7 +3993,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		bzero(spr.defs.hisauth.challenge, AUTHKEYLEN);
 		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
 
-	case SPPPIOSDEFS:
+	case (int)SPPPIOSDEFS:
 		if (cmd != SIOCSIFGENERIC)
 			return EINVAL;
 		/*
