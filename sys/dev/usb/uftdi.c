@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.12 2003/05/19 00:33:26 nate Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.13 2003/10/04 01:01:34 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -193,6 +193,11 @@ USB_ATTACH(uftdi)
 		sc->sc_hdrlen = 0;
 		break;
 
+	case USB_PRODUCT_FTDI_LCD_LK202_24_USB:
+		sc->sc_type = UFTDI_TYPE_8U232AM;
+		sc->sc_hdrlen = 0;
+		break;
+	
 	default:		/* Can't happen */
 		goto bad;
 	}
