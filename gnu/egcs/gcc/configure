@@ -3072,8 +3072,9 @@ for machine in $build $host $target; do
 		# default x-alpha is only appropriate for dec-osf.
 		target_cpu_default="MASK_GAS"
 		tmake_file="alpha/t-ieee"
+		gas=yes gnu_ld=yes
 		;;
-		
+
 	alpha*-dec-osf*)
 		if test x$stabs = xyes
 		then
