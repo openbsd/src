@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.39 2004/01/27 22:11:23 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.40 2004/01/29 12:02:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	}
 	close(fd);
 
-	exit (0);
+	exit(0);
 }
 
 void
