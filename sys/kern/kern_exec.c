@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.21 1998/07/02 09:03:42 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.22 1998/07/08 22:28:56 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -495,7 +495,8 @@ sys_execve(p, v, retval)
 					continue;
 				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
 				    "/dev/null", p);
-				if ((error = vn_open(&nd, FREAD, 0)) != 0) {
+				if ((error = vn_open(&nd, FREAD |
+				    (i == 0 ? 0 : FWRITE), 0)) != 0) {
 					ffree(fp);
 					p->p_fd->fd_ofiles[indx] = NULL;
 					break;
