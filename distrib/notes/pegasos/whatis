@@ -1,4 +1,2 @@
-dnl	$OpenBSD: whatis,v 1.1 2003/10/31 03:57:47 drahn Exp $
-For MACHINE, OpenBSD OSREV adds support for Pegasos based powerpc systems.
-dnl	$OpenBSD: whatis,v 1.1 2003/10/31 03:57:47 drahn Exp $
+dnl	$OpenBSD: whatis,v 1.2 2003/11/03 13:58:38 miod Exp $
 For MACHINE, OpenBSD OSREV adds support for Pegasos based powerpc systems.
