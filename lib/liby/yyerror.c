@@ -1,4 +1,4 @@
-/*	$OpenBSD: yyerror.c,v 1.4 2003/06/02 20:18:42 millert Exp $	*/
+/*	$OpenBSD: yyerror.c,v 1.5 2004/05/29 06:59:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,14 +31,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yyerror.c	5.2 (Berkeley) 5/15/90";*/
-static char rcsid[] = "$OpenBSD: yyerror.c,v 1.4 2003/06/02 20:18:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: yyerror.c,v 1.5 2004/05/29 06:59:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 
 int
-yyerror(msg)
-	char *msg;
+yyerror(char *msg)
 {
 	(void)fprintf(stderr, "%s\n", msg);
 	return(0);
