@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_glue.c,v 1.3 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: db_glue.c,v 1.4 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_glue.c	4.4 (Berkeley) 6/1/90";
 static char rcsid[] = "$From: db_glue.c,v 8.16 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_glue.c,v 1.3 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: db_glue.c,v 1.4 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -534,7 +534,7 @@ rm_name(np, pp, pnp)
 	  || (np->n_hash && (msg = "hash"))
 	    ) {
 		syslog(LOG_ERR,
-		       "rm_name(%#lx(%s)): non-nil %s pointer\n",
+		       "rm_name(%#lx(%s)): non-nil %s pointer",
 		       (u_long)np, NAME(*np), msg);
 		panic(-1, "rm_name");
 	}
@@ -570,7 +570,7 @@ getname(np, buf, buflen)
 		i = (int) NAMELEN(*np);
 		if (i + 1 >= buflen) {
 			*cp = '\0';
-			syslog(LOG_INFO, "domain name too long: %s...\n", buf);
+			syslog(LOG_INFO, "domain name too long: %s...", buf);
 			strcpy(buf, "Name_Too_Long");
 			return;
 		}

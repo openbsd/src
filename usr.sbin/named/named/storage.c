@@ -1,4 +1,4 @@
-/*	$OpenBSD: storage.c,v 1.4 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: storage.c,v 1.5 2002/06/09 01:58:54 kjell Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -125,7 +125,7 @@ unsigned int cnt;
 			mp->mdb_str = "???";
 			goto ok;
 		}
-		syslog(LOG_ERR, "rt_malloc:  memdebug overflow\n");
+		syslog(LOG_ERR, "rt_malloc:  memdebug overflow");
 	}
 ok:	;
 	{

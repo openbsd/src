@@ -1,10 +1,10 @@
-/*	$OpenBSD: db_secure.c,v 1.3 1998/05/22 00:47:36 millert Exp $	*/
+/*	$OpenBSD: db_secure.c,v 1.4 2002/06/09 01:58:54 kjell Exp $	*/
 
 #ifndef LINT
 #if 0
 static char rcsid[] = "$From: db_secure.c,v 8.6 1996/05/17 09:10:46 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_secure.c,v 1.3 1998/05/22 00:47:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: db_secure.c,v 1.4 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif
 
@@ -124,7 +124,7 @@ build_secure_netlist(zp)
 		/* Check for duplicates */
 		if (addr_on_netlist(ntp->my_addr, *netlistp)) {
 			syslog(LOG_INFO, 
-			   "build_secure_netlist (%s): duplicate address %s\n",
+			   "build_secure_netlist (%s): duplicate address %s",
 			       zp->z_origin, inet_ntoa(ntp->my_addr));
 			errs++;
 			continue;

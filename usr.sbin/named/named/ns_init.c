@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_init.c,v 1.8 2002/02/17 19:42:37 millert Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.9 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: ns_init.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_init.c,v 1.8 2002/02/17 19:42:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.9 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,7 @@ boot_read(filename, includefile)
 #endif
 		} else {
 			syslog(LOG_NOTICE,
-			       "%s: line %d: unknown directive '%s'\n",
+			       "%s: line %d: unknown directive '%s'",
 			       filename, lineno, buf);
 			endline(fp);
 			continue;
@@ -373,14 +373,14 @@ boot_read(filename, includefile)
 		 * read zone origin
 		 */
 		if (!getword(obuf, sizeof(obuf), fp, 1)) {
-			syslog(LOG_NOTICE, "%s: line %d: missing origin\n",
+			syslog(LOG_NOTICE, "%s: line %d: missing origin",
 			    filename, lineno);
 			continue;
 		}
 		i = strlen(obuf);
 		if ((obuf[i-1] == '.') && (i != 1))
 			syslog(LOG_INFO,
-			       "%s: line %d: zone \"%s\" has trailing dot\n",
+			       "%s: line %d: zone \"%s\" has trailing dot",
 			       filename, lineno, obuf);
 		while ((--i >= 0) && (obuf[i] == '.'))
 			obuf[i] = '\0';
@@ -389,7 +389,7 @@ boot_read(filename, includefile)
 		 * Read source file or host address.
 		 */
 		if (!getword(buf, sizeof(buf), fp, 0)) {
-			syslog(LOG_NOTICE, "%s: line %d: missing %s\n",
+			syslog(LOG_NOTICE, "%s: line %d: missing %s",
 				filename, lineno, 
 #ifdef STUBS
 			   (type == Z_SECONDARY || type == Z_STUB)
@@ -457,14 +457,14 @@ boot_read(filename, includefile)
 				zp->z_refresh = atoi(buf);
 				if (zp->z_refresh <= 0) {
 					syslog(LOG_NOTICE,
-				"%s: line %d: bad refresh time '%s', ignored\n",
+				"%s: line %d: bad refresh time '%s', ignored",
 						filename, lineno, buf);
 					zp->z_refresh = 0;
 				} else if (cache_file == NULL)
 					cache_file = source;
 #else
 				syslog(LOG_NOTICE,
-				       "%s: line %d: cache refresh ignored\n",
+				       "%s: line %d: cache refresh ignored",
 				       filename, lineno);
 #endif
 				endline(fp);

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_forw.c,v 1.6 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_forw.c,v 1.7 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.6 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.7 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -545,7 +545,7 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 			    (dp->d_ttl < curtime) &&
 			    !(dp->d_flags & DB_F_HINT) )
 		        {
-				syslog(LOG_DEBUG, "nslookup: stale '%s'\n",
+				syslog(LOG_DEBUG, "nslookup: stale '%s'",
 				       NAME(*np));
 				n = oldn;
 				found_arr = 0;

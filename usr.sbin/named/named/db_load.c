@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_load.c,v 1.7 2002/02/17 19:42:37 millert Exp $	*/
+/*	$OpenBSD: db_load.c,v 1.8 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: db_load.c,v 8.33 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_load.c,v 1.7 2002/02/17 19:42:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: db_load.c,v 1.8 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,7 @@ db_load(filename, in_origin, zp, def_domain)
 				do {
 				    if (n > (INT_MAX - (*cp - '0')) / 10) {
 					syslog(LOG_INFO, 
-					   "%s: line %d: number > %lu\n",
+					   "%s: line %d: number > %lu",
 					   filename, lineno, (u_long)INT_MAX);
 					n = INT_MAX;
 					cp++;
@@ -332,7 +332,7 @@ db_load(filename, in_origin, zp, def_domain)
 				if (*cp != '\0') {
 					errs++;
 					syslog(LOG_INFO,
-					       "%s: Line %d: bad TTL: %s.\n",
+					       "%s: Line %d: bad TTL: %s.",
 					       filename, lineno, buf);
 					break;
 				}
@@ -364,7 +364,7 @@ db_load(filename, in_origin, zp, def_domain)
 			    dprintf(1, (ddt, "%s: Line %d: Unknown type: %s.\n",
 					    filename, lineno, buf));
 				errs++;
-			    syslog(LOG_INFO, "%s: Line %d: Unknown type: %s.\n",
+			    syslog(LOG_INFO, "%s: Line %d: Unknown type: %s.",
 					filename, lineno, buf);
 				break;
 			}
@@ -374,7 +374,7 @@ db_load(filename, in_origin, zp, def_domain)
 				       domain, inaddr_any)) {
 				errs++;
 				syslog(LOG_NOTICE,
-				       "%s:%d: owner name error\n",
+				       "%s:%d: owner name error",
 				       filename, lineno);
 				break;
 			}
@@ -1462,7 +1462,7 @@ gettoken(fp, src)
 					return (ORIGIN);
 			}
 			syslog(LOG_NOTICE,
-			       "%s: line %d: Unknown $ option: $%s\n", 
+			       "%s: line %d: Unknown $ option: $%s", 
 			       src, lineno, op);
 			return (ERROR);
 
@@ -1881,7 +1881,7 @@ makename_ok(name, origin, class, transport, context, owner, filename, lineno)
 
 	makename(name, origin);
 	if (!ns_nameok(name, class, transport, context, owner, inaddr_any)) {
-		syslog(LOG_INFO, "%s:%d: database naming error\n",
+		syslog(LOG_INFO, "%s:%d: database naming error",
 		       filename, lineno);
 		ret = 0;
 	}

@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_update.c,v 1.3 1998/05/22 00:47:37 millert Exp $	*/
+/*	$OpenBSD: db_update.c,v 1.4 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_update.c	4.28 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: db_update.c,v 8.19 1997/06/01 20:34:34 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_update.c,v 1.3 1998/05/22 00:47:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: db_update.c,v 1.4 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,7 @@ db_update(name, odp, newdp, flags, htp)
 #endif /*NCACHE*/
 				    zones[odp->d_zone].z_type != Z_CACHE) {
 					syslog(LOG_INFO,
-				     "%s has CNAME and other data (invalid)\n",
+				     "%s has CNAME and other data (invalid)",
 					    name);
 					goto skip;
 				}

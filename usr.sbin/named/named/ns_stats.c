@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_stats.c,v 1.5 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_stats.c,v 1.6 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
 static char rcsid[] = "$From: ns_stats.c,v 8.8 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_stats.c,v 1.5 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_stats.c,v 1.6 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,10 +123,10 @@ ns_stats()
 	register FILE *f;
 	register int i;
 
-	syslog(LOG_NOTICE, "dumping nameserver stats\n");
+	syslog(LOG_NOTICE, "dumping nameserver stats");
 
 	if (!(f = fopen(statsfile, "a"))) {
-		syslog(LOG_NOTICE, "cannot open stat file, \"%s\"\n",
+		syslog(LOG_NOTICE, "cannot open stat file, \"%s\"",
 		       statsfile);
 		return;
 	}
@@ -155,7 +155,7 @@ ns_stats()
 	fprintf(f, "--- Statistics Dump --- (%ld) %s",
 		(long)timenow, ctime(&timenow));
 	(void) my_fclose(f);
-	syslog(LOG_NOTICE, "done dumping nameserver stats\n");
+	syslog(LOG_NOTICE, "done dumping nameserver stats");
 }
 
 void

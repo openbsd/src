@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.19 2002/05/28 01:23:13 deraadt Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.20 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.19 2002/05/28 01:23:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.20 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -738,7 +738,7 @@ main(argc, argv, envp)
 		       group_name);
 	}
 
-	syslog(LOG_NOTICE, "Ready to answer queries.\n");
+	syslog(LOG_NOTICE, "Ready to answer queries.");
 	prime_cache();
 #ifdef NeXT
 	old_sigmask = sigblock(sigmask(SIGCHLD));
@@ -988,7 +988,7 @@ main(argc, argv, envp)
 #ifdef DEBUG
 			if (debug)
 				syslog(LOG_DEBUG,
-				       "IP/TCP connection from %s (fd %d)\n",
+				       "IP/TCP connection from %s (fd %d)",
 				       sin_ntoa(&sp->s_from), rfd);
 #endif
 		}

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_maint.c,v 1.5 2002/05/28 01:23:13 deraadt Exp $	*/
+/*	$OpenBSD: ns_maint.c,v 1.6 2002/06/09 01:58:54 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: ns_maint.c,v 8.18 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.5 2002/05/28 01:23:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.6 2002/06/09 01:58:54 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ qserial_answer(qp, serial)
 	} else if (SEQ_GT(zp->z_serial, serial)) {
 		if (!haveComplained((char*)zp, "went backward")) {
 			syslog(LOG_NOTICE,
-   "Zone \"%s\" (class %d) SOA serial# (%lu) rcvd from [%s] is < ours (%lu)\n",
+   "Zone \"%s\" (class %d) SOA serial# (%lu) rcvd from [%s] is < ours (%lu)",
 			       zp->z_origin, zp->z_class, (u_long)serial,
 			       inet_ntoa(from_addr.sin_addr),
 			       (u_long)zp->z_serial);
@@ -931,7 +931,7 @@ endxfer()
 			if (WIFSIGNALED(status)) {
 				if (WTERMSIG(status) != SIGKILL) {
 					syslog(LOG_NOTICE,
-				  "named-xfer \"%s\" exited with signal %d\n",
+				  "named-xfer \"%s\" exited with signal %d",
 					  zp->z_origin[0]?zp->z_origin:".",
 					  WTERMSIG(status));
 				}
