@@ -1,6 +1,7 @@
-/*	$OpenBSD: machdep.c,v 1.2 2004/02/23 01:19:52 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2004/03/21 21:37:41 tom Exp $	*/
 
 /*
+ * Copyright (c) 2004 Tom Cosgrove
  * Copyright (c) 1997-1999 Michael Shalayeff
  * All rights reserved.
  *
@@ -38,21 +39,25 @@ volatile struct BIOS_regs	BIOS_regs;
 #define CKPT(c) /* c */
 #endif
 
-extern int debug;
-int ps2model;
-
 void
 machdep(void)
 {
-	/* here */	CKPT('0');
-	printf("probing:");
-	/* probe for a model number, gateA20() neds ps2model */
-	gateA20(1);	CKPT('1');
-	/* initialise a console (and probe for com* devices) */
-	cninit();	CKPT('2');
-	memprobe();	CKPT('3');
-	printf("\n");
+	int i, j;
+	struct i386_boot_probes *pr;
 
-	diskprobe();	CKPT('4');
-			CKPT('Z');
+	/*
+	 * The list of probe routines is now in conf.c.
+	 */
+	for (i = 0; i < nibprobes; i++) {
+		pr = &probe_list[i];
+		if (pr != NULL) {
+			printf("%s:", pr->name);
+
+			for (j = 0; j < pr->count; j++) {
+				(*(pr->probes)[j])();
+			}
+
+			printf("\n");
+		}
+	}
 }
