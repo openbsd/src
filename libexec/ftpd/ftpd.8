@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.61 2003/11/20 12:32:34 jmc Exp $
+.\"	$OpenBSD: ftpd.8,v 1.62 2004/11/21 23:54:48 jmc Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -68,7 +68,11 @@ is specified, forces
 .Nm
 to use IPv6 addresses only.
 .It Fl A
-Permit only anonymous ftp connections, accounts listed in
+Permit only anonymous ftp connections
+(unless the
+.Fl n
+option is specified),
+accounts listed in
 .Pa /etc/ftpchroot
 or users in a login class with the
 .Dq ftp-chroot
