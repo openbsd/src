@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2002/03/07 09:41:50 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.11 2004/03/31 19:05:37 mickey Exp $
 #	$NetBSD: Makefile,v 1.13 1995/04/23 07:58:46 cgd Exp $
 
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
@@ -14,7 +14,7 @@ ld.o:
 
 .if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
 CPPFLAGS+=	-DCROSS_LINKER -DXHOST=$(MACHINE_ARCH) \
-	  	-Icross-include
+	  	-idirafter cross-include -U__ELF__
 beforedepend:
 	mkdir -p cross-include
 	-rm cross-include/${TARGET_MACHINE_ARCH}

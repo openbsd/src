@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.30 2003/08/15 23:13:06 deraadt Exp $	*/
+/*	$OpenBSD: ld.c,v 1.31 2004/03/31 19:05:38 mickey Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -3332,7 +3332,7 @@ void
 write_syms(void)
 {
 	/* Number of symbols written so far.  */
-	int		syms_written = 0;
+	int		strsize, syms_written = 0;
 	struct nlist	nl;
 
 	/*
@@ -3585,8 +3585,8 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 
 	if (fseek(outstream, strtab_offset, SEEK_SET) != 0)
 		err(1, "write_syms: fseek");
-	strtab_size = md_swap_long(strtab_size);
-	mywrite(&strtab_size, 1, sizeof(int), outstream);
+	strsize = md_swap_long(strtab_size);
+	mywrite(&strsize, 1, sizeof(int), outstream);
 }
 
 
