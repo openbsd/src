@@ -752,6 +752,7 @@
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getty.0
 ./usr/share/man/cat8/halt.0
+./usr/share/man/cat8/httpd.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
 ./usr/share/man/cat8/inetd.0
