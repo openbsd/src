@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.21 1999/07/06 08:18:26 deraadt Exp $
+.\"	$OpenBSD: init.8,v 1.22 1999/07/20 18:35:36 aaron Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -287,6 +287,8 @@ terminal initialization information file
 system startup commands
 .It Pa /etc/rc.securelevel
 commands that run before the security level changes
+.It Pa /etc/rc.shutdown
+script run at shutdown time
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
@@ -298,6 +300,7 @@ commands that run before the security level changes
 .Xr getty 8 ,
 .Xr halt 8 ,
 .Xr rc 8 ,
+.Xr rc.shutdown 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8
 .Sh HISTORY

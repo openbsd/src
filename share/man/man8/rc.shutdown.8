@@ -1,0 +1,27 @@
+.\"	$OpenBSD: rc.shutdown.8,v 1.1 1999/07/20 18:35:35 aaron Exp $
+.Dd July 20, 1999
+.Dt RC.SHUTDOWN 8
+.Os
+.Sh NAME
+.Nm /etc/rc.shutdown
+.Nd command script run at system shutdown
+.Sh DESCRIPTION
+When the system is administratively shut down using either the
+.Xr reboot 8
+or
+.Xr halt 8
+command, either of these programs checks for the existence of a
+.Pa /etc/rc.shutdown
+script to run before halting the system. It will also be executed by
+.Xr init 8
+if a keyboard-requested halt is issued (for architectures that support this).
+.Pp
+Currently, the
+.Nm
+script does nothing but save part of the entropy pool for reuse on reboot, but
+extra commands may be added by the system administrator.
+.Sh SEE ALSO
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr rc 8 ,
+.Xr reboot 8
