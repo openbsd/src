@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2003/07/10 00:00:57 david Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2004/09/16 09:53:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -45,7 +45,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s -l  or  %s [-q] name\n",
-		__progname, __progname);
+	    __progname, __progname);
 	exit(1);
 }
 
@@ -53,33 +53,25 @@ int
 main(int argc, char *argv[])
 {
 	char *optstring = "lq";
-	int ch, list_tables, verbose;
-
-	list_tables = 0;
-	verbose = 1;
+	int ch, list_tables = 0, verbose = 1;
 
 	while ((ch = getopt(argc, argv, optstring)) != -1)
 		switch (ch) {
 		case 'l':
 			list_tables = 1;
 			break;
-
 		case 'q':
 			verbose = 0;
 			break;
-
-		case '?':
 		default:
 			usage();
 		}
 	if (argc != optind + list_tables ? 0 : 1)
 		usage();
 
-	if (list_tables) {
+	if (list_tables)
 		kbd_list();
-	} else {
+	else
 		kbd_set(argv[optind], verbose);
-	}
-
 	exit(0);
 }
