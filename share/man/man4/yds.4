@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yds.4,v 1.7 2004/12/20 12:29:39 deraadt Exp $
+.\"	$OpenBSD: yds.4,v 1.8 2004/12/20 23:28:44 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Aaron Campbell.
 .\" All rights reserved.
@@ -51,8 +51,8 @@ but is disabled by default because it is known to break
 .Xr apm 4
 support.
 .Sh FILES
-The driver needs a firmware files which is loaded on
-demand when the device is attached.
+The driver needs a firmware file,
+which is loaded on demand when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/yds
