@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.14 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: size.c,v 1.15 2003/03/30 20:47:15 deraadt Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.14 2002/02/16 21:27:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.15 2003/03/30 20:47:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -210,12 +210,12 @@ show_archive(count, fname, fp)
 		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
 		 * first <namelen> bytes of the file
 		 */
-		if (		(ar_head.ar_name[0] == '#') &&
-				(ar_head.ar_name[1] == '1') &&
-				(ar_head.ar_name[2] == '/') && 
-				(isdigit(ar_head.ar_name[3]))) {
-
+		if ((ar_head.ar_name[0] == '#') &&
+		    (ar_head.ar_name[1] == '1') &&
+		    (ar_head.ar_name[2] == '/') && 
+		    (isdigit(ar_head.ar_name[3]))) {
 			int len = atoi(&ar_head.ar_name[3]);
+
 			if (len > namelen) {
 				p -= (long)name;
 				if ((name = realloc(name, baselen+len)) == NULL)
