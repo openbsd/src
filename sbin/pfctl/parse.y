@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.189 2002/11/18 23:13:32 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.190 2002/11/18 23:28:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -555,12 +555,12 @@ queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
 
 			memset(&a, 0, sizeof(a));
 
-			if (strlen($2) >= PF_QNAME_SIZE) {
+			if (strlcpy(a.qname, $2, sizeof(a.qname)) >=
+			    PF_QNAME_SIZE) {
 				yyerror("queue name too long (max "
 				    "%d chars)", PF_QNAME_SIZE-1);
 				YYERROR;
 			}
-			strlcpy(a.qname, $2, sizeof(a.qname));
 			if ($4 > 255) {
 				yyerror("priority out of range: max 255");
 				YYERROR;
