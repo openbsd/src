@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.7 2003/07/10 08:00:28 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.8 2003/07/18 22:58:56 david Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -36,13 +36,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.7 2003/07/10 08:00:28 deraadt Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.8 2003/07/18 22:58:56 david Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <netdb.h>
 #include <unistd.h>

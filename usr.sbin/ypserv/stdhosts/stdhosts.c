@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.11 2003/06/02 21:58:26 maja Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.12 2003/07/18 22:58:56 david Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.11 2003/06/02 21:58:26 maja Exp $";
+static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.12 2003/07/18 22:58:56 david Exp $";
 #endif
 
 #include <sys/types.h>
@@ -35,6 +35,7 @@ static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.11 2003/06/02 21:58:26 maj
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <err.h>

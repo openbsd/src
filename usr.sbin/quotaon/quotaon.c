@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.19 2003/06/26 19:47:09 deraadt Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.20 2003/07/18 22:58:56 david Exp $";
 #endif /* not lint */
 
 /*
@@ -48,9 +48,12 @@ static char *rcsid = "$Id: quotaon.c,v 1.19 2003/06/26 19:47:09 deraadt Exp $";
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <ufs/ufs/quota.h>
+#include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fstab.h>
+#include <unistd.h>
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;

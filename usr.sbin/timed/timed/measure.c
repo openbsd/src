@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.10 2003/06/12 21:09:48 deraadt Exp $	*/
+/*	$OpenBSD: measure.c,v 1.11 2003/07/18 22:58:56 david Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <signal.h>
 
 #define MSEC_DAY	(SECDAY*1000)
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.7 2002/02/16 21:28:10 millert Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.8 2003/07/18 22:58:56 david Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -34,6 +34,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>

@@ -32,11 +32,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_svc.c,v 1.6 2003/06/02 23:36:52 millert Exp $
+ *	$Id: amq_svc.c,v 1.7 2003/07/18 22:58:56 david Exp $
  *
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <syslog.h>
 
 #include "am.h"

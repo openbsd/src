@@ -1,6 +1,6 @@
 /* $NetBSD: $ */ 
 /* $FreeBSD: $ */
-/* $OpenBSD: getencstat.c,v 1.3 2002/02/16 21:28:09 millert Exp $ */
+/* $OpenBSD: getencstat.c,v 1.4 2003/07/18 22:58:56 david Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include SESINC

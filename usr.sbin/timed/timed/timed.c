@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.21 2003/06/26 15:56:51 mickey Exp $	*/
+/*	$OpenBSD: timed.c,v 1.22 2003/07/18 22:58:56 david Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -51,6 +51,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #include <sys/queue.h>
 #include <sys/times.h>
 #include <netgroup.h>
+#include <err.h>
 
 int trace = 0;
 int sock, sock_raw = -1;
