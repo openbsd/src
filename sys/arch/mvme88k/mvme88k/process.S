@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.6 2001/01/12 07:29:26 smurph Exp $	*/
+/*	$OpenBSD: process.S,v 1.7 2001/03/07 23:40:35 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -29,17 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef ASSEMBLER
-#define ASSEMBLER
-#endif
 
 #include "assym.s"
 #include "machine/asm.h"
 #include "machine/psl.h"
-
-#ifndef NBPG
-#define	NBPG 4096
-#endif /* NBPG */
 
 	data
 	align 4
@@ -344,3 +337,4 @@ ENTRY(savectx)
 	st	r2, r10, PCB_IPL	/* save interrupt mask */
 	jmp.n	r1
 	or	r2,r0,r0
+

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.10 2001/02/01 03:38:20 smurph Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.11 2001/03/07 23:40:35 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -35,10 +35,6 @@
  * HISTORY
  *
  **************************************************************RCS*****/
-
-#ifndef ASSEMBLER
-# define ASSEMBLER
-#endif
 
 #include "assym.s"
 #include <machine/trap.h>
