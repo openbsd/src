@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.5 1996/06/25 12:09:35 mickey Exp $	*/
+/*	$OpenBSD: process.c,v 1.6 1996/07/02 04:07:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.5 1996/06/25 12:09:35 mickey Exp $";
+static char rcsid[] = "$Id: process.c,v 1.6 1996/07/02 04:07:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -196,9 +196,9 @@ find_user(name, tty)
 	FILE *fd;
 	char ftty[20];
 	time_t	idle, now;
-	time(&now);
-	idle = now;
 
+	time(&now);
+	idle = INT_MAX;
 	if ((fd = fopen(_PATH_UTMP, "r")) == NULL) {
 		fprintf(stderr, "talkd: can't read %s.\n", _PATH_UTMP);
 		return (FAILED);
@@ -211,17 +211,16 @@ find_user(name, tty)
 			if (*tty == '\0') {
 				/* no particular tty was requested */
 				struct stat statb;
+
 				strcpy(ftty+sizeof(_PATH_DEV)-1, ubuf.ut_line);
-				if (stat(ftty,&statb) == 0) {
+				if (stat(ftty, &statb) == 0) {
 					if (!(statb.st_mode & S_IWGRP)) {
-						if (status != SUCCESS)
+						if (status == NOT_HERE)
 							status = PERMISSION_DENIED;
-					} else {
-						if ((now - statb.st_atime) < idle) {
-							idle = now - statb.st_atime;
-							status = SUCCESS;
-							ubuf1 = ubuf;
-						}
+					} else if (statb.st_atime - now < idle) {
+						idle = now - statb.st_atime;
+						status = SUCCESS;
+						ubuf1 = ubuf;
 					}
 				}
 			} else if (strcmp(ubuf.ut_line, tty) == 0) {
@@ -230,7 +229,7 @@ find_user(name, tty)
 			}
 		}
 	fclose(fd);
-	if (*tty != '\0' && status == SUCCESS)
+	if (*tty == '\0' && status == SUCCESS)
 		strcpy(tty, ubuf1.ut_line);
 	return (status);
 }
