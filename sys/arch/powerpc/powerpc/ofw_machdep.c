@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.14 2000/03/23 04:04:21 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.15 2000/09/06 02:45:12 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -48,6 +48,8 @@
 
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
+
+#include <ukbd.h>
 
 void OF_exit __P((void)) __attribute__((__noreturn__));
 void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
@@ -122,15 +124,21 @@ static struct {
 } ofw_mapping[256];
 
 int OF_stdout;
+int OF_stdin;
 int
 save_ofw_mapping()
 {
 	int mmui, mmu;
 	int chosen;
-	int stdout;
+	int stdout, stdin;
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		return 0;
 	}
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof stdin) != sizeof stdin)
+	{
+		return 0;
+	}
+	OF_stdin = stdin;
 	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout) != sizeof stdout)
 	{
 		return 0;
@@ -312,8 +320,12 @@ ofwtrysercon(char *name, int qhandle)
 		ppc_console_serfreq=freq;
 	}
 }
+
+#include <dev/pci/pcivar.h>
+#include <arch/powerpc/pci/vgafb_pcivar.h>
+
 static
-u_int32_t 
+pcitag_t 
 ofw_make_tag(cpv, bus, dev, fnc)
         void *cpv;
         int bus, dev, fnc;
@@ -329,42 +341,143 @@ ofwenablepcimemio(char *name, int qhandle)
 	 * on MCG, VI machines.
 	 */
 }
-#include <machine/bat.h>
-/* HACK */
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <powerpc/pci/pcibrvar.h>
-#include <powerpc/pci/mpc106reg.h>
+#define       OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
+#define       OFW_PCI_PHYS_HI_BUSSHIFT        16
+#define       OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
+#define       OFW_PCI_PHYS_HI_DEVICESHIFT     11
+#define       OFW_PCI_PHYS_HI_FUNCTIONMASK    0x00000700
+#define       OFW_PCI_PHYS_HI_FUNCTIONSHIFT   8
+   
+#define pcibus(x) \
+	(((x) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
+#define pcidev(x) \
+	(((x) & OFW_PCI_PHYS_HI_DEVICEMASK) >> OFW_PCI_PHYS_HI_DEVICESHIFT)
+#define pcifunc(x) \
+	(((x) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
+
+
+struct ppc_bus_space ppc_membus;
+int cons_displaytype=0;
+bus_space_tag_t cons_membus = &ppc_membus;
+bus_space_handle_t cons_display_mem_h;
+bus_space_handle_t cons_display_ctl_h;
+int cons_height, cons_width, cons_linebytes, cons_depth;
+
+#include "vgafb_pci.h"
+
 void
 ofwconprobe()
 {
-	int qhandle, phandle;
+#if NVGAFB_PCI > 0
 	char name[32];
-	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0)
-		{
-			if (strcmp (name, "serial") == 0) {
-				ofwtrysercon (name, qhandle);
+	char iname[32];
+	int len;
+	int stdout_node, stdin_node;
+	int parent;
+	int err;
+	u_int32_t memtag, iotag;
+	struct ppc_pci_chipset pa;
+	struct {
+		u_int32_t phys_hi, phys_mid, phys_lo;
+		u_int32_t size_hi, size_lo;
+	} addr [8];
+
+	pa.pc_make_tag = &ofw_make_tag;
+
+	stdout_node = OF_instance_to_package(OF_stdout);
+	len = OF_getprop(stdout_node, "name", name, 20);
+	name[len] = 0;
+	/*
+	printf("console out [%s]", name);
+	*/
+	cons_displaytype=1;
+	err = OF_getprop(stdout_node, "width", &cons_width, 4);
+	if ( err != 4) {
+		cons_width = 0;
+	}
+	err = OF_getprop(stdout_node, "linebytes", &cons_linebytes, 4);
+	if ( err != 4) {
+		cons_linebytes = cons_width;
+	}
+	err = OF_getprop(stdout_node, "height", &cons_height, 4);
+	if ( err != 4) {
+		cons_height = 0;
+	}
+	err = OF_getprop(stdout_node, "depth", &cons_depth, 4);
+	if ( err != 4) {
+		cons_depth = 0;
+	}
+
+	stdin_node = OF_instance_to_package(OF_stdin);
+	len = OF_getprop(stdin_node, "name", iname, 20);
+	iname[len] = 0;
+	printf("console in [%s]", iname);
+	/* what to do about serial console? */
+	if (strcmp ("keyboard", iname) == 0) {
+		int node;
+		char type[20];
+		/* ok we have a keyboard, is it usb or adb? */
+		/* TODO */
+		/* configure usb if UKBD exists */
+#if NUKBD > 0
+		printf("USB");
+		ukbd_cnattach();
+#endif
+	}
+
+	len = OF_getprop(stdout_node, "assigned-addresses", addr, sizeof(addr));
+	if (len < sizeof(addr[0])) {
+		printf(": no address\n");
+		return;
+	}
+	memtag = ofw_make_tag(NULL, pcibus(addr[0].phys_hi),
+		pcidev(addr[0].phys_hi),
+		pcifunc(addr[0].phys_hi));
+	iotag = ofw_make_tag(NULL, pcibus(addr[1].phys_hi),
+		pcidev(addr[1].phys_hi),
+		pcifunc(addr[1].phys_hi));
+
+	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
+	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
+	printf(": memtag %x, iotag %x", memtag, iotag);
+	printf(": cons_width %d cons_linebytes %d cons_height %d\n",
+		cons_width, cons_linebytes, cons_height);
+
+	if (addr[0].size_lo > 0x100000) {
+		addr[0].size_lo = 0x100000;
+	}
+
+
+	{
+		int i,j;
+
+		cons_membus->bus_base = 0x80000000;
+		cons_membus->bus_reverse = 1;
+#if 0
+		err = bus_space_map( cons_membus, addr[0].phys_lo, addr[0].size_lo,
+			0, &cons_display_mem_h);
+		printf("mem map err %x",err);
+		bus_space_map( cons_membus, addr[1].phys_lo, addr[1].size_lo,
+			0, &cons_display_ctl_h);
+#endif
+
+		vgafb_pci_console(cons_membus,
+			addr[1].phys_lo, addr[1].size_lo,
+			cons_membus, 
+			addr[0].phys_lo, addr[0].size_lo,
+			&pa, pcibus(addr[1].phys_hi), pcidev(addr[1].phys_hi),
+			pcifunc(addr[1].phys_hi));
+
+
+#if 0
+		for (j = 2; j < 4; j++) {
+			for (i = 0; i < cons_width * cons_height; i++) {
+				bus_space_write_1(cons_membus,
+					cons_display_mem_h, i, j);
+
 			}
 		}
-
-		if (phandle = OF_child(qhandle))
-			continue;
-		while (qhandle) {
-			if (phandle = OF_peer(qhandle))
-				break;
-			qhandle = OF_parent(qhandle);
-		}
-	}
-	/* setup pci/isa as necessary to found map io area */
-#if 0
-	printf("found desired console address %x qhandle %x serfreq %x\n",
-		ppc_console_addr, ppc_console_qhandle,
-		ppc_console_serfreq);
 #endif
-		
-	/* do this from probed values, not from constants */
-	addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I); 
-	addbatmap(0xB0000000, 0xB0000000, BAT_I);  /* map interrupt vector */  
+	}
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2000/06/15 03:12:46 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 2000/09/06 02:45:11 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -110,19 +110,13 @@ cdev_decl(ofrtc);
 cdev_decl(kbd);
 cdev_decl(ms);
 
-#if 0
 #include "wsdisplay.h"
-#include "wskdb.h"
+#include "wskbd.h"
 #include "wsmouse.h"
-#else
-#define NWSKBD 0
-#define NWSDISPLAY 0
-#define NWSMOUSE 0
 
 cdev_decl(wsdisplay);
-cdev_decl(wskdb);
+cdev_decl(wskbd);
 cdev_decl(wsmouse);
-#endif
 
 #include <sd.h>
 #include <st.h>
@@ -168,6 +162,23 @@ cdev_decl(lkm);
 #endif  
 #include "ksyms.h"
 cdev_decl(ksyms);
+#include "usb.h"
+cdev_decl(usb);
+#include "uhid.h"
+cdev_decl(uhid);
+#include "ugen.h"
+cdev_decl(ugen);
+#include "ulpt.h"
+cdev_decl(ulpt);
+#include "urio.h"
+cdev_decl(urio);
+#include "ucom.h"
+cdev_decl(ucom);
+
+#include "raid.h"
+cdev_decl(raid);
+#include "wsmux.h"
+cdev_decl(wsmux);
 
 
 struct cdevsw cdevsw[] = {
@@ -196,21 +207,12 @@ struct cdevsw cdevsw[] = {
         cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
         cdev_bpftun_init(NTUN,tun),     /* 23: network tunnel */
         cdev_lkm_init(NLKM,lkm),        /* 24: loadable module driver */
-	#if 0
-	cdev_wsdisplay_init(NWSDISPLAY,wscons), /* 25: workstation console */
-	#else
         cdev_notdef(),                  /* 25 */
-	#endif
         cdev_notdef(),                  /* 26 */
         cdev_notdef(),                  /* 27 */
         cdev_notdef(),                  /* 28 */
-	#if 0
-        cdev_mouse_init(NWSKDB,wskbd),   /* 29 /dev/kbd XX */
-        cdev_mouse_init(NWSMOUSE,msmouse),    /* 30 /dev/mouse XXX */
-	#else
         cdev_notdef(),                  /* 29 */
         cdev_notdef(),                  /* 30 */
-	#endif
         cdev_notdef(),                  /* 31 */
         cdev_notdef(),                  /* 32 */
         cdev_lkm_dummy(),               /* 33 */
@@ -236,7 +238,29 @@ struct cdevsw cdevsw[] = {
 #else
         cdev_notdef(),                  /* 51 */
 #endif
-	/* If adding devs, don't forget to expand 'chrtoblktbl' below! */
+        cdev_notdef(),                  /* 52 */ 
+        cdev_notdef(),                  /* 53 */ 
+	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
+        cdev_notdef(),                  /* 55 */ 
+	/* The following slots are reserved for isdn4bsd. */
+	cdev_notdef(),			/* 56: i4b main device */
+	cdev_notdef(),			/* 57: i4b control device */
+	cdev_notdef(),			/* 58: i4b raw b-channel access */
+	cdev_notdef(),			/* 59: i4b trace device */
+	cdev_notdef(),			/* 60: i4b phone device */
+	/* End of reserved slots for isdn4bsd. */
+	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
+	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
+	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
+	cdev_wsdisplay_init(NWSDISPLAY,	/* 67: frame buffers, etc. */
+		wsdisplay),
+	cdev_mouse_init(NWSKBD, wskbd),	/* 68: keyboards */
+	cdev_mouse_init(NWSMOUSE,	/* 69: mice */
+		wsmouse),
+	cdev_mouse_init(NWSMUX, wsmux),	/* 70: ws multiplexor */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -327,17 +351,14 @@ blktochr(dev)
 }
 
 #include <dev/cons.h>
+#include <vgafb_pci.h>
 
 cons_decl(com);
 cons_decl(ofc);
-/* cons_decl(wscons); */
 
 struct consdev constab[] = {
 #if NOFCONS > 0
 	cons_init(ofc),
-#endif
-#if NWSCONS1 > 0
-	cons_init(wscons),
 #endif
 #if NCOM > 0
 	cons_init(com),

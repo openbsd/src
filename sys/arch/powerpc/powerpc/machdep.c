@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2000/07/14 03:45:27 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 2000/09/06 02:45:11 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/pio.h>
+#include "adb.h"
 
 /*
  * Global variables used here and there
@@ -329,9 +330,15 @@ where = 3;
 			case 'd':
 				boothowto |= RB_KDB;
 				break;
+			case 'c':
+				boothowto |= RB_CONFIG;
+				break;
 			}
 		}
 	}			
+#if 0
+	ddb_init((int)(esym - (&_end)), &_end, esym);
+#endif
 
 	/*
 	 * Set up extents for pci mappings
@@ -355,16 +362,20 @@ where = 3;
 		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
 		EX_NOCOALESCE|EX_NOWAIT);
 
-	ofwconprobe();
-
 	/*
 	 * Now we can set up the console as mapping is enabled.
          */
 	consinit();
+	printf("inited\n");
+	/* while using openfirmware, run userconfig */
+	if (boothowto & RB_CONFIG) {
+		user_config();
+	}
+	/*
+	 * Replace with real console.
+	 */
+	ofwconprobe();
 
-#if 0
-	dump_avail();
-#endif
 #if NIPKDB > 0
 	/*
 	 * Now trap to IPKDB
@@ -881,6 +892,14 @@ boot(howto)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#if NADB > 0
+			delay(1000000);
+			adb_poweroff();
+			printf("WARNING: powerdown failed!\n");
+#endif
+		}
+
 		printf("halted\n\n");
 		(fw->exit)();
 	}
@@ -888,25 +907,11 @@ boot(howto)
 		dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
-#if 0
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
+
+#if NADB > 0
+	adb_restart();  /* not return */
 #endif
+
 	OF_exit();
 	(fw->boot)(str);
 	printf("boot failed, spinning\n");
