@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.1.1.1 1995/10/18 10:39:19 deraadt Exp $
+ *      $Id: trap.c,v 1.2 1995/10/28 23:09:43 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -69,8 +69,6 @@
 #include <vm/vm_page.h>
 
 #include <pica/pica/pica.h>
-
-#include <le.h>
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
