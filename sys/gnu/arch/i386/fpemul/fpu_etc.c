@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_etc.c,v 1.1 1996/08/27 10:32:48 downsj Exp $	*/
+/*	$OpenBSD: fpu_etc.c,v 1.2 2003/07/30 21:30:31 jason Exp $	*/
 /*
  *  fpu_etc.c
  *
@@ -63,6 +63,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <machine/cpu.h>
 #include <machine/pcb.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_entry.c,v 1.3 2003/07/30 20:24:03 jason Exp $	*/
+/*	$OpenBSD: fpu_entry.c,v 1.4 2003/07/30 21:30:31 jason Exp $	*/
 /*
  *  fpu_entry.c
  *
@@ -76,6 +76,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/user.h>
 
 #include <machine/cpu.h>
 #include <machine/pcb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_address.c,v 1.3 2003/01/09 22:27:11 miod Exp $	*/
+/*	$OpenBSD: get_address.c,v 1.4 2003/07/30 21:30:31 jason Exp $	*/
 /*
  *  get_address.c
  *
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/user.h>
 #include <machine/cpu.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
