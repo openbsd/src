@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.58 2004/03/30 12:21:34 krw Exp $
+#	$OpenBSD: special,v 1.59 2004/04/24 19:28:38 beck Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -74,6 +74,7 @@ sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
+spamd.conf	type=file mode=0644 uname=root gname=wheel optional
 spwd.db		type=file mode=0640 uname=root gname=_shadow
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel

@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.35 2004/02/26 22:01:17 david Exp $
+#	$OpenBSD: changelist,v 1.36 2004/04/24 19:28:37 beck Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -86,6 +86,7 @@
 /etc/shosts.equiv
 /etc/slip.hosts
 /etc/slip.login
+/etc/spamd.conf
 /etc/ssh/ssh_config
 +/etc/ssh/ssh_host_dsa_key
 /etc/ssh/ssh_host_dsa_key.pub
