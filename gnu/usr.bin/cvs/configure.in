@@ -295,9 +295,9 @@ if test "$ac_cv_header_krb5_h" = "yes" &&
   includeopt="${includeopt} -I$GSSAPI/include/kerberosV"
   # FIXME: This is ugly, but these things don't seem to be standardized.
   if test "$ac_cv_header_gssapi_h" = "yes"; then
-    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb -lkrb5 -lasn1 -lcrypto -ldes -lcom_err -lkafs"
+    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb5 -lasn1 -lcrypto -ldes -lcom_err"
   else
-    LIBS="$LIBS -L$GSSAPI/lib -lgssapi_krb5 -lkrb -lkrb5 -lcrypto -ldes -lcom_err -lkafs"
+    LIBS="$LIBS -L$GSSAPI/lib -lgssapi_krb5 -lkrb5 -lcrypto -ldes -lcom_err"
   fi
   save_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-I$GSSAPI/include/kerberosV $CPPFLAGS"
