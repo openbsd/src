@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.51 2003/11/08 09:01:04 jmc Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.52 2003/11/09 07:35:25 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -809,7 +809,7 @@ main(int argc, char *argv[])
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	while ((ch = getopt(argc, argv, "45c:p:dr:s:n:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "45c:p:dr:s:n:vw:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
