@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.10 1996/05/07 12:21:36 mickey Exp $
+#	$OpenBSD: Makefile.i386,v 1.11 1996/05/10 12:13:19 mickey Exp $
 #	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
 
 # Makefile for OpenBSD
@@ -142,7 +142,7 @@ links:
 	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
 	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
 # depend on APM
