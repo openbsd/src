@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 1996/06/27 06:13:44 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 1996/09/12 21:54:41 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -345,6 +345,9 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
 	/*
 	 * Determine how many buffers to allocate.  We use 10% of the
 	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
@@ -356,7 +359,7 @@ allocsys(v)
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    (20 * CLSIZE);
+			    ((100/BUFCACHEPERCENT) * CLSIZE);
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
