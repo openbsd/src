@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.4 2004/03/20 03:54:16 krw Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.5 2004/04/04 03:24:32 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -1231,7 +1231,10 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 
 		/* XXX MU correct place the call to fw_upload? */
 		if (mpt->upload_fw) {
-			mpt_prt(mpt, "firmware upload required.");
+			if (mpt->verbose > 1) {
+				mpt_prt(mpt, "firmware upload required.");
+			}
+
 			if (mpt_do_upload(mpt)) {
 				/* XXX MP should we panic? */
 				mpt_prt(mpt, "firmware upload failure!\n");
@@ -1239,7 +1242,9 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			/* continue; */
 		}
 		else {
-			mpt_prt(mpt, "firmware upload not required.");
+			if (mpt->verbose > 1) {
+				mpt_prt(mpt, "firmware upload not required.");
+			}
 		}
 
 		/*
