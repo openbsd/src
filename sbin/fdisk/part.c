@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.36 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.37 2004/07/10 08:43:36 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,97 +44,96 @@ int	PRT_check_chs(prt_t *partn);
 static const struct part_type {
 	int	type;
 	char	sname[14];
-	char	*lname;
 } part_types[] = {
-	{ 0x00, "unused      ", "unused"},
-	{ 0x01, "DOS FAT-12  ", "Primary DOS with 12 bit FAT"},
-	{ 0x02, "XENIX /     ", "XENIX / filesystem"},
-	{ 0x03, "XENIX /usr  ", "XENIX /usr filesystem"},
-	{ 0x04, "DOS FAT-16  ", "Primary DOS with 16 bit FAT"},
-	{ 0x05, "Extended DOS", "Extended DOS"},
-	{ 0x06, "DOS > 32MB  ", "Primary 'big' DOS (> 32MB)"},
-	{ 0x07, "HPFS/QNX/AUX", "OS/2 HPFS, QNX-2 or Advanced UNIX"},
-	{ 0x08, "AIX fs      ", "AIX filesystem"},
-	{ 0x09, "AIX/Coherent", "AIX boot partition or Coherent"},
-	{ 0x0A, "OS/2 Bootmgr", "OS/2 Boot Manager or OPUS"},
-	{ 0x0B, "Win95 FAT-32", "Primary Win95 w/ 32-bit FAT"},
-	{ 0x0C, "Win95 FAT32L", "Primary Win95 w/ 32-bit FAT LBA-mapped"},
-	{ 0x0E, "DOS FAT-16  ", "Primary DOS w/ 16-bit FAT, CHS-mapped"},
-	{ 0x0F, "Extended LBA", "Extended DOS LBA-mapped"},
-	{ 0x10, "OPUS        ", "OPUS"},
-	{ 0x11, "OS/2 hidden ", "OS/2 BM: hidden DOS 12-bit FAT"},
-	{ 0x12, "Compaq Diag.", "Compaq Diagnostics"},
-	{ 0x14, "OS/2 hidden ", "OS/2 BM: hidden DOS 16-bit FAT <32M or Novell DOS 7.0 bug"},
-	{ 0x16, "OS/2 hidden ", "OS/2 BM: hidden DOS 16-bit FAT >=32M"},
-	{ 0x17, "OS/2 hidden ", "OS/2 BM: hidden IFS"},
-	{ 0x18, "AST swap    ", "AST Windows swapfile"},
-	{ 0x19, "Willowtech  ", "Willowtech Photon coS"},
-	{ 0x1C, "Thinkpad Rec", "IBM Thinkpad recovery partition"},
-	{ 0x20, "Willowsoft  ", "Willowsoft OFS1"},
-	{ 0x24, "NEC DOS     ", "NEC DOS"},
-	{ 0x38, "Theos       ", "Theos"},
-	{ 0x39, "Plan 9      ",	"Plan 9"},
-	{ 0x40, "VENIX 286   ", "VENIX 286 or LynxOS"},
-	{ 0x41, "Lin/Minux DR", "Linux/MINIX (sharing disk with DRDOS) or Personal RISC boot"},
-	{ 0x42, "LinuxSwap DR", "SFS or Linux swap (sharing disk with DRDOS)"},
-	{ 0x43, "Linux DR    ", "Linux native (sharing disk with DRDOS)"},
-	{ 0x4D, "QNX 4.2 Pri ", "QNX 4.2 Primary"},
-	{ 0x4E, "QNX 4.2 Sec ", "QNX 4.2 Secondary"},
-	{ 0x4F, "QNX 4.2 Ter ", "QNX 4.2 Tertiary"},
-	{ 0x50, "DM          ", "DM (disk manager)"},
-	{ 0x51, "DM          ", "DM6 Aux1 (or Novell)"},
-	{ 0x52, "CP/M or SysV", "CP/M or Microport SysV/AT"},
-	{ 0x53, "DM          ", "DM6 Aux3"},
-	{ 0x54, "Ontrack     ", "Ontrack"},
-	{ 0x55, "EZ-Drive    ", "EZ-Drive (disk manager)"},
-	{ 0x56, "Golden Bow  ", "Golden Bow (disk manager)"},
-	{ 0x5C, "Priam       ", "Priam Edisk (disk manager)"},
-	{ 0x61, "SpeedStor   ", "SpeedStor"},
-	{ 0x63, "ISC, HURD, *", "ISC, System V/386, GNU HURD or Mach"},
-	{ 0x64, "Netware 2.xx", "Novell Netware 2.xx"},
-	{ 0x65, "Netware 3.xx", "Novell Netware 3.xx"},
-	{ 0x66, "Netware 386 ", "Novell 386 Netware"},
-	{ 0x67, "Novell      ", "Novell"},
-	{ 0x68, "Novell      ", "Novell"},
-	{ 0x69, "Novell      ", "Novell"},
-	{ 0x70, "DiskSecure  ", "DiskSecure Multi-Boot"},
-	{ 0x75, "PCIX        ", "PCIX"},
-	{ 0x80, "Minix (old) ", "Minix 1.1 ... 1.4a"},
-	{ 0x81, "Minix (new) ", "Minix 1.4b ... 1.5.10"},
-	{ 0x82, "Linux swap  ", "Linux swap"},
-	{ 0x83, "Linux files*", "Linux filesystem"},
-	{ 0x84, "OS/2 hidden ", "OS/2 hidden C: drive"},
-	{ 0x85, "Linux ext.  ", "Linux extended"},
-	{ 0x86, "NT FAT VS   ", "NT FAT volume set"},
-	{ 0x87, "NTFS VS     ", "NTFS volume set or HPFS mirrored"},
-	{ 0x93, "Amoeba FS   ", "Amoeba filesystem"},
-	{ 0x94, "Amoeba BBT  ", "Amoeba bad block table"},
-	{ 0x99, "Mylex       ", "Mylex EISA SCSI"},
-	{ 0x9F, "BSDI        ", "BSDI BSD/OS"},
-	{ 0xA0, "NotebookSave", "Phoenix NoteBIOS save-to-disk"},
-	{ 0xA5, "FreeBSD     ",	"FreeBSD"},
-	{ 0xA6, "OpenBSD     ", "OpenBSD"},
-	{ 0xA7, "NEXTSTEP    ", "NEXTSTEP"},
-	{ 0xA8, "MacOS X     ",	"MacOS X main partition"},
-	{ 0xA9, "NetBSD      ",	"NetBSD"},
-	{ 0xAB, "MacOS X boot",	"MacOS X boot partition"},
-	{ 0xB7, "BSDI filesy*", "BSDI BSD/386 filesystem"},
-	{ 0xB8, "BSDI swap   ", "BSDI BSD/386 swap"},
-	{ 0xC0, "CTOS        ", "CTOS"},
-	{ 0xC1, "DRDOSs FAT12", "DRDOS/sec (FAT-12)"},
-	{ 0xC4, "DRDOSs < 32M", "DRDOS/sec (FAT-16, < 32M)"},
-	{ 0xC6, "DRDOSs >=32M", "DRDOS/sec (FAT-16, >= 32M)"},
-	{ 0xC7, "HPFS Disbled", "Syrinx (Cyrnix?) or HPFS disabled"},
-	{ 0xDB, "CPM/C.DOS/C*", "Concurrent CPM or C.DOS or CTOS"},
-	{ 0xDE, "Dell Maint  ", "Dell maintenance partition"},
-	{ 0xE1, "SpeedStor   ", "DOS access or SpeedStor 12-bit FAT extended partition"},
-	{ 0xE3, "SpeedStor   ", "DOS R/O or SpeedStor or Storage Dimensions"},
-	{ 0xE4, "SpeedStor   ", "SpeedStor 16-bit FAT extended partition < 1024 cyl."},
-	{ 0xEB, "BeOS/i386   ", "BeOS for Intel"},
-	{ 0xF1, "SpeedStor   ", "SpeedStor or Storage Dimensions"},
-	{ 0xF2, "DOS 3.3+ Sec", "DOS 3.3+ Secondary"},
-	{ 0xF4, "SpeedStor   ", "SpeedStor >1024 cyl. or LANstep or IBM PS/2 IML"},
-	{ 0xFF, "Xenix BBT   ", "Xenix Bad Block Table"},
+	{ 0x00, "unused      "},   /* unused */
+	{ 0x01, "DOS FAT-12  "},   /* Primary DOS with 12 bit FAT */
+	{ 0x02, "XENIX /     "},   /* XENIX / filesystem */
+	{ 0x03, "XENIX /usr  "},   /* XENIX /usr filesystem */
+	{ 0x04, "DOS FAT-16  "},   /* Primary DOS with 16 bit FAT */
+	{ 0x05, "Extended DOS"},   /* Extended DOS */
+	{ 0x06, "DOS > 32MB  "},   /* Primary 'big' DOS (> 32MB) */
+	{ 0x07, "HPFS/QNX/AUX"},   /* OS/2 HPFS, QNX-2 or Advanced UNIX */
+	{ 0x08, "AIX fs      "},   /* AIX filesystem */
+	{ 0x09, "AIX/Coherent"},   /* AIX boot partition or Coherent */
+	{ 0x0A, "OS/2 Bootmgr"},   /* OS/2 Boot Manager or OPUS */
+	{ 0x0B, "Win95 FAT-32"},   /* Primary Win95 w/ 32-bit FAT */
+	{ 0x0C, "Win95 FAT32L"},   /* Primary Win95 w/ 32-bit FAT LBA-mapped */
+	{ 0x0E, "DOS FAT-16  "},   /* Primary DOS w/ 16-bit FAT, CHS-mapped */
+	{ 0x0F, "Extended LBA"},   /* Extended DOS LBA-mapped */
+	{ 0x10, "OPUS        "},   /* OPUS */
+	{ 0x11, "OS/2 hidden "},   /* OS/2 BM: hidden DOS 12-bit FAT */
+	{ 0x12, "Compaq Diag."},   /* Compaq Diagnostics */
+	{ 0x14, "OS/2 hidden "},   /* OS/2 BM: hidden DOS 16-bit FAT <32M or Novell DOS 7.0 bug */
+	{ 0x16, "OS/2 hidden "},   /* OS/2 BM: hidden DOS 16-bit FAT >=32M */
+	{ 0x17, "OS/2 hidden "},   /* OS/2 BM: hidden IFS */
+	{ 0x18, "AST swap    "},   /* AST Windows swapfile */
+	{ 0x19, "Willowtech  "},   /* Willowtech Photon coS */
+	{ 0x1C, "Thinkpad Rec"},   /* IBM Thinkpad recovery partition */
+	{ 0x20, "Willowsoft  "},   /* Willowsoft OFS1 */
+	{ 0x24, "NEC DOS     "},   /* NEC DOS */
+	{ 0x38, "Theos       "},   /* Theos */
+	{ 0x39, "Plan 9      "},   /* Plan 9 */
+	{ 0x40, "VENIX 286   "},   /* VENIX 286 or LynxOS */
+	{ 0x41, "Lin/Minux DR"},   /* Linux/MINIX (sharing disk with DRDOS) or Personal RISC boot */
+	{ 0x42, "LinuxSwap DR"},   /* SFS or Linux swap (sharing disk with DRDOS) */
+	{ 0x43, "Linux DR    "},   /* Linux native (sharing disk with DRDOS) */
+	{ 0x4D, "QNX 4.2 Pri "},   /* QNX 4.2 Primary */
+	{ 0x4E, "QNX 4.2 Sec "},   /* QNX 4.2 Secondary */
+	{ 0x4F, "QNX 4.2 Ter "},   /* QNX 4.2 Tertiary */
+	{ 0x50, "DM          "},   /* DM (disk manager) */
+	{ 0x51, "DM          "},   /* DM6 Aux1 (or Novell) */
+	{ 0x52, "CP/M or SysV"},   /* CP/M or Microport SysV/AT */
+	{ 0x53, "DM          "},   /* DM6 Aux3 */
+	{ 0x54, "Ontrack     "},   /* Ontrack */
+	{ 0x55, "EZ-Drive    "},   /* EZ-Drive (disk manager) */
+	{ 0x56, "Golden Bow  "},   /* Golden Bow (disk manager) */
+	{ 0x5C, "Priam       "},   /* Priam Edisk (disk manager) */
+	{ 0x61, "SpeedStor   "},   /* SpeedStor */
+	{ 0x63, "ISC, HURD, *"},   /* ISC, System V/386, GNU HURD or Mach */
+	{ 0x64, "NetWare 2.xx"},   /* Novell NetWare 2.xx */
+	{ 0x65, "NetWare 3.xx"},   /* Novell NetWare 3.xx */
+	{ 0x66, "NetWare 386 "},   /* Novell 386 NetWare */
+	{ 0x67, "Novell      "},   /* Novell */
+	{ 0x68, "Novell      "},   /* Novell */
+	{ 0x69, "Novell      "},   /* Novell */
+	{ 0x70, "DiskSecure  "},   /* DiskSecure Multi-Boot */
+	{ 0x75, "PCIX        "},   /* PCIX */
+	{ 0x80, "Minix (old) "},   /* Minix 1.1 ... 1.4a */
+	{ 0x81, "Minix (new) "},   /* Minix 1.4b ... 1.5.10 */
+	{ 0x82, "Linux swap  "},   /* Linux swap */
+	{ 0x83, "Linux files*"},   /* Linux filesystem */
+	{ 0x84, "OS/2 hidden "},   /* OS/2 hidden C: drive */
+	{ 0x85, "Linux ext.  "},   /* Linux extended */
+	{ 0x86, "NT FAT VS   "},   /* NT FAT volume set */
+	{ 0x87, "NTFS VS     "},   /* NTFS volume set or HPFS mirrored */
+	{ 0x93, "Amoeba FS   "},   /* Amoeba filesystem */
+	{ 0x94, "Amoeba BBT  "},   /* Amoeba bad block table */
+	{ 0x99, "Mylex       "},   /* Mylex EISA SCSI */
+	{ 0x9F, "BSDI        "},   /* BSDI BSD/OS */
+	{ 0xA0, "NotebookSave"},   /* Phoenix NoteBIOS save-to-disk */
+	{ 0xA5, "FreeBSD     "},   /* FreeBSD */
+	{ 0xA6, "OpenBSD     "},   /* OpenBSD */
+	{ 0xA7, "NEXTSTEP    "},   /* NEXTSTEP */
+	{ 0xA8, "MacOS X     "},   /* MacOS X main partition */
+	{ 0xA9, "NetBSD      "},   /* NetBSD */
+	{ 0xAB, "MacOS X boot"},   /* MacOS X boot partition */
+	{ 0xB7, "BSDI filesy*"},   /* BSDI BSD/386 filesystem */
+	{ 0xB8, "BSDI swap   "},   /* BSDI BSD/386 swap */
+	{ 0xC0, "CTOS        "},   /* CTOS */
+	{ 0xC1, "DRDOSs FAT12"},   /* DRDOS/sec (FAT-12) */
+	{ 0xC4, "DRDOSs < 32M"},   /* DRDOS/sec (FAT-16, < 32M) */
+	{ 0xC6, "DRDOSs >=32M"},   /* DRDOS/sec (FAT-16, >= 32M) */
+	{ 0xC7, "HPFS Disbled"},   /* Syrinx (Cyrnix?) or HPFS disabled */
+	{ 0xDB, "CPM/C.DOS/C*"},   /* Concurrent CPM or C.DOS or CTOS */
+	{ 0xDE, "Dell Maint  "},   /* Dell maintenance partition */
+	{ 0xE1, "SpeedStor   "},   /* DOS access or SpeedStor 12-bit FAT extended partition */
+	{ 0xE3, "SpeedStor   "},   /* DOS R/O or SpeedStor or Storage Dimensions */
+	{ 0xE4, "SpeedStor   "},   /* SpeedStor 16-bit FAT extended partition < 1024 cyl. */
+	{ 0xEB, "BeOS/i386   "},   /* BeOS for Intel */
+	{ 0xF1, "SpeedStor   "},   /* SpeedStor or Storage Dimensions */
+	{ 0xF2, "DOS 3.3+ Sec"},   /* DOS 3.3+ Secondary */
+	{ 0xF4, "SpeedStor   "},   /* SpeedStor >1024 cyl. or LANstep or IBM PS/2 IML */
+	{ 0xFF, "Xenix BBT   "},   /* Xenix Bad Block Table */
 };
 
 void
