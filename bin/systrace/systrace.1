@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.39 2004/01/23 20:51:18 sturm Exp $
+.\"	$OpenBSD: systrace.1,v 1.40 2004/02/01 17:34:10 jmc Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -93,9 +93,21 @@ if the
 .Fl e
 flag is specified.
 .It Fl C
-Run systrace in cradle mode; if a cradle server is not running, one is
-launched.
-This decouples UIs from systrace, allowing for re-attaching UIs.
+Run
+.Nm
+in cradle mode;
+currently, when multiple processes are started with systrace protection, each
+.Nm
+starts its own UI
+.Pq user interface
+process.
+Cradle mode allows a user to attach all
+.Nm
+processes to one UI.
+This may be useful, for example, in scenarios where
+.Nm
+is being heavily used.
+If a cradle server is not running, one is launched.
 .It Fl c Ar uid:gid
 Specifies the
 .Va uid
