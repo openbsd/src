@@ -1,2 +1,2 @@
-PATH=/bin:/usr/bin:/usr/new:/usr/local:/usr/games:/usr/old:.
+PATH=/bin:/usr/bin:/usr/host:/usr/local/bin:/usr/games:.
 export PATH HOME TERM
