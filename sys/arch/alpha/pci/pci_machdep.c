@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.7 1997/01/24 19:57:52 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.8 1997/04/19 21:51:29 tholo Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -63,7 +63,10 @@ pci_display_console(iot, memt, pc, bus, device, function)
 {
 	pcitag_t tag;
 	pcireg_t id, class;
-	int match, nmatch;
+	int match;
+#if NVGA_PCI || NTGA
+	int nmatch;
+#endif
 	void (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 	    int, int, int));
 
