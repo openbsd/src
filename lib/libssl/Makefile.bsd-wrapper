@@ -51,11 +51,13 @@ SSL_SRC=src-patent
 SSL_SRC=src
 .endif 	  
 
-all: 	${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h 
+all: 	prereq
 	(cd ${.OBJDIR}; ${MAKE})
 
-includes: ${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h
+includes: prereq
 	(cd ${.OBJDIR}; ${MAKE} includes)
+
+prereq:	${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h
 
 install:
 	(cd ${.OBJDIR}; ${MAKE} install)
