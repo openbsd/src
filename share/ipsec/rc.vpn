@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-#    $OpenBSD: rc.vpn,v 1.5 1999/11/30 12:10:40 ho Exp $
+#    $OpenBSD: rc.vpn,v 1.6 1999/12/04 23:30:31 angelos Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -86,7 +86,7 @@ $DEBUG $ipsecadm new esp -src $GW_PEER -dst $GW_LOCAL \
 
 # Gateway to gateway
 $DEBUG $ipsecadm flow -proto esp -dst $GW_PEER -spi $SPI_OUT \
-    -addr 0.0.0.0 0xffffffff $GW_PEER 0xffffffff
+    -addr $GW_LOCAL 0xffffffff $GW_PEER 0xffffffff
 
 # Flows from each local, to each remote, subnet
 mycount=0
@@ -132,7 +132,7 @@ do
     if [ "${remote_net}" != "0x0" ]; then
 	$DEBUG $ipsecadm flow \
 	    -proto esp -dst $GW_PEER -spi $SPI_OUT \
-	    -addr 0.0.0.0 0xffffffff $remote_net $remote_mask
+	    -addr $GW_LOCAL 0xffffffff $remote_net $remote_mask
 	peercount=$(($peercount + 1))
     else
 	break;
