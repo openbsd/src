@@ -31,11 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.1 1995/10/24 14:43:20 deraadt Exp $
-#
-#	from:
-#	hp300/MAKEDEV (1/15/94), from:
-#	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
+#	$Id: MAKEDEV,v 1.2 1995/10/31 19:12:45 deraadt Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -54,9 +50,6 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #
-# Console ports:
-#	ttye*	ite bitmapped consoles
-#
 # Terminal ports:
 #	ttya,b,c,d	standard serial port.
 #	tty0?		cl-cd serial ports
@@ -72,6 +65,14 @@
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
+#
+# Machine specific devices:
+#	sram	static ram available on some models.
+#	nvram	non-volatile ram
+#	flash	flash ram available on some models.
+#	bugtty	(depricated)
+#	vmel	32-bit vme interface
+#	vmes	16-bit vme interface
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -86,11 +87,7 @@ all)
 	sh MAKEDEV vnd5 vnd6 cd0 bpf0 bpf1 bpf2 bpf3
 	#sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV tun0 tun1 lp0 lptwo0 lkm local
-	;;
-
-floppy)
-	sh MAKEDEV std st0 ttya ttyb ttyc ttyd tty00 tty01 tty02 tty03
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0
+	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
 	;;
 
 std)
@@ -206,8 +203,9 @@ cd*)
 	case $unit in
 	0|1|2|3|4|5|6)
 		mknod ${name}${unit}a   b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}d   b $blk `expr $unit '*' 8 + 3`
+		mknod ${name}${unit}c   b $blk `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}a  c $chr `expr $unit '*' 8 + 0`
+		mknod r${name}${unit}c  c $chr `expr $unit '*' 8 + 2`
 		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
@@ -218,34 +216,30 @@ cd*)
 	umask 77
 	;;
 
-tty0*|ttyA*)
-	type=`expr $i : 'tty\(.\).'`
-	unit=`expr $i : 'tty.\(.\)'`
-	rm -f ser${unit} tty0${unit} ttym${unit}
+tty0*|ttya|ttyb|ttyc|ttyd)
+	type=`expr $i : 'tty\(.\)'`
 	case $type in
-	0)	case $unit in
-		0)	
-			rm -f tty0${unit} ttym${unit}
-			mknod tty0${unit} c 12 0
-			mknod ttym${unit} c 12 128
-			chown uucp:wheel tty0${unit} ttym${unit}
+	0)
+		unit=`expr $i : 'tty.\(.\)'`
+		case $unit in
+		0)
+			rm -f tty0${unit} cua0${unit}
+			mknod tty0${unit} c 13 ${unit}
+			mknod cua0${unit} c 13 `expr 128 + ${unit}`
+			chown uucp:wheel tty0${unit} cua0${unit}
 			;;
 		*)
 			echo bad unit for tty0 in: $i
 			;;
 		esac
 		;;
-	A)	case $unit in
-		0|1)
-			rm -f ttyA${unit} ttyM${unit}
-			mknod ttyA${unit} c 17 $unit
-			mknod ttyM${unit} c 17 `expr 128 + $unit`
-			chown uucp:wheel ttyA${unit} ttyM${unit}
-			;;
-		*)
-			echo bad unit for ttyA in: $i
-			;;
-		esac
+	a|b|c|d)
+		unit=${type}
+		num=`echo ${unit} | tr abcd 0123`
+		rm -f tty${unit} cua${unit}
+		mknod tty${unit} c 12 ${num}
+		mknod cua${unit} c 12 `expr 128 + ${num}`
+		chown uucp:wheel tty${unit} cua${unit}
 		;;
 	*)
 		echo bad type for tty in: $i
@@ -258,24 +252,10 @@ lp*)
 	rm -f par${unit}
 	case $unit in
 	0)
-		mknod par${unit} c 11 ${unit}
+		mknod par${unit} c 28 ${unit}
 		;;
 	*)
 		echo bad unit for par in: $i
-		;;
-	esac
-	;;
-
-ttye*)
-	unit=`expr $i : 'ttye\(.*\)'`
-	rm -f ttye${unit}
-	rm -f ite*
-	case $unit in
-	0|1|2|3|4)
-		mknod ttye${unit} c 13 ${unit}
-		;;
-	*)
-		echo bad unit for ttye in: $i
 		;;
 	esac
 	;;
@@ -316,7 +296,7 @@ bpf*)
 tun*)
 	unit=`expr $i : 'tun\(.*\)'`
 	rm -f tun$unit
-	mknod tun$unit c 40 $unit
+	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
 	;;
@@ -327,6 +307,20 @@ lkm)
         chown root:kmem lkm
         chmod 640 lkm
         ;;
+
+sram*|nvram*|flash*|vmel*|vmes*)
+        rm -f $i
+	case $i in
+	sram*) maj=7;;
+	nvram*) maj=10;;
+	flash*) maj=11;;
+	vmel*) maj=31;;
+	vmes*) maj=32;;
+	esac
+        mknod $i c ${maj} 0
+        chown root:kmem $i
+        chmod 640 $i
+	;;
 
 local)
 	umask 0
