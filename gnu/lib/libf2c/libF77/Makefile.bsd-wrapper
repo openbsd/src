@@ -1,0 +1,8 @@
+# $OpenBSD: Makefile.bsd-wrapper,v 1.1 2004/02/29 19:32:33 drahn Exp $
+
+# This needs to be separate from libg2c to allow for  mixed
+# Fortran/other language programs.
+LIB=frtbegin
+SRCS=main.c
+
+.include <bsd.lib.mk>
