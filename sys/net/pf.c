@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.207 2002/05/12 00:54:56 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.208 2002/05/12 02:21:14 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -100,15 +100,6 @@ struct pf_port_node {
 	u_int16_t			port;
 };
 LIST_HEAD(pf_port_list, pf_port_node);
-
-/* structure for ipsec and ipv6 option header template */
-struct _opt6 {
-	u_int8_t	opt6_nxt;	/* next header */
-	u_int8_t	opt6_hlen;	/* header extension length */
-	u_int16_t       _pad;
-	u_int32_t       ah_spi;		/* security parameter index
-					   for authentication header */
-};
 
 /*
  * Global variables
@@ -4757,7 +4748,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				case IPPROTO_ROUTING:
 				case IPPROTO_DSTOPTS: {
 					/* get next header and header length */
-					struct _opt6 opt6;
+					struct ip6_ext opt6;
 
 					if (!pf_pull_hdr(m, off2, &opt6,
 					    sizeof(opt6), NULL, NULL, pd2.af)) {
@@ -4765,8 +4756,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 						    ("pf:  ICMPv6 short opt\n"));
 						return(PF_DROP);
 					}
-					pd2.proto = opt6.opt6_nxt;
-					off2 += (opt6.opt6_hlen + 1) * 8;
+					if (pd2.proto == IPPROTO_AH)
+						off2 += (opt6.ip6e_len + 2) * 4;
+					else
+						off2 += (opt6.ip6e_len + 1) * 8;
+					pd2.proto = opt6.ip6e_nxt;
 					/* goto the next header */
 					break;
 				}
@@ -5694,7 +5688,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		case IPPROTO_ROUTING:
 		case IPPROTO_DSTOPTS: {
 			/* get next header and header length */
-			struct _opt6 opt6;
+			struct ip6_ext opt6;
 
 			if (!pf_pull_hdr(m, off, &opt6, sizeof(opt6),
 			    NULL, NULL, pd.af)) {
@@ -5705,8 +5699,11 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 				log = 1;
 				goto done;
 			}
-			pd.proto = opt6.opt6_nxt;
-			off += (opt6.opt6_hlen + 1) * 8;
+			if (pd.proto == IPPROTO_AH)
+				off += (opt6.ip6e_len + 2) * 4;
+			else
+				off += (opt6.ip6e_len + 1) * 8;
+			pd.proto = opt6.ip6e_nxt;
 			/* goto the next header */
 			break;
 		}
