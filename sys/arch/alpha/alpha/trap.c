@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1997/07/19 21:05:04 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 1997/07/24 05:57:53 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ sigfpe:			i = SIGFPE;
 	case ALPHA_KENTRY_IF:
 		/*
 		 * These are always fatal in kernel, and should never
-		 * happen.
+		 * happen, unless they're breakpoints of course.
 		 */
 		if (!user)
 			goto we_re_toast;
