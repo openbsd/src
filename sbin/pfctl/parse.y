@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.450 2004/04/14 11:16:42 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.451 2004/04/22 08:34:30 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -505,7 +505,7 @@ option		: SET OPTIMIZATION STRING		{
 				YYERROR;
 			}
 			if (pfctl_set_hostid(pf, $3) != 0) {
-				yyerror("error setting loginterface %08x", $3);
+				yyerror("error setting hostid %08x", $3);
 				YYERROR;
 			}
 		}
