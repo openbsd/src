@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.21 2002/10/09 03:52:10 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.22 2002/12/09 07:22:53 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -522,7 +522,7 @@ systrace_policyprocess(struct policy *policy, char *p)
 	char *name, *emulation, *rule;
 	struct filter *filter, *parsed;
 	short action, future;
-	int  resolved = 0, res;
+	int  resolved = 0, res, isvalid;
 
 	/* Delay predicate evaluation if we are root */
 
@@ -536,6 +536,9 @@ systrace_policyprocess(struct policy *policy, char *p)
 	name = strsep(&p, ":");
 	if (p == NULL || *p != ' ')
 		return (-1);
+
+	isvalid = intercept_isvalidsystemcall(emulation, name);
+
 	p++;
 	rule = p;
 
@@ -550,6 +553,16 @@ systrace_policyprocess(struct policy *policy, char *p)
 		}
 	} else if (filter_parse_simple(rule, &action, &future) == 0)
 		resolved = 1;
+
+	/* For now, everything that does not seem to be a valid syscall
+	 * does not get fast kernel policies even though the aliasing
+	 * system supports it.
+	 */
+	if (resolved && !isvalid) {
+		resolved = 0;
+		snprintf(line, sizeof(line), "true then %s", rule);
+		rule = line;
+	}
 
 	/* If the simple parser did not match, try real parser */
 	if (!resolved) {

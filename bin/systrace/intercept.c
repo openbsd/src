@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.36 2002/11/26 03:48:07 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.37 2002/12/09 07:22:53 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -872,4 +872,19 @@ intercept_ugid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
 
 	icpid->uid = uid;
 	icpid->gid = gid;
+}
+
+/*
+ * Checks if the given emulation has a certain system call.
+ * This is a very slow function.
+ */
+
+int
+intercept_isvalidsystemcall(char *emulation, char *name)
+{
+	int res;
+
+	res = intercept.getsyscallnumber(emulation, name);
+
+	return (res != -1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.22 2002/11/15 22:33:27 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.23 2002/12/09 07:22:52 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -472,13 +472,16 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
     char *output, short *pfuture, struct intercept_pid *icpid)
 {
 	char line[2*MAXPATHLEN], *p;
+	char compose[2*MAXPATHLEN];
 	struct filter *filter;
 	struct policy *policy;
 	short action;
-	int first = 1;
+	int first = 1, isalias;
 
 	*pfuture = ICPOLICY_ASK;
 	icpid->uflags = 0;
+
+	isalias = systrace_find_reverse(emulation, name) != NULL;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
 		errx(1, "%s:%d: no policy %d", __func__, __LINE__, policynr);
@@ -489,8 +492,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 		/* Automatically allow */
 		if (tls != NULL) {
 			struct intercept_translate *tl;
-			char compose[2*MAXPATHLEN], *l;
-			char *lst = NULL;
+			char *l, *lst = NULL;
 			int set = 0;
 
 			/* Explicitly match every component */
@@ -591,7 +593,15 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 		if (filter_parse_simple(line, &action, pfuture) != -1) {
 			if (*pfuture == ICPOLICY_ASK)
 				goto out;
-			break;
+			/* We have a policy decision */
+			if (!isalias)
+				break;
+
+			/* No in-kernel policy for aliases */
+			strlcpy(compose, line, sizeof(compose));
+			
+			/* Change into userland rule */
+			snprintf(line, sizeof(line), "true then %s", compose);
 		}
 
 		if (fls == NULL) {
