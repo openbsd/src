@@ -20,7 +20,7 @@
              local/global/function naming conventions
              withing the packet alising module.
 
-    $OpenBSD: alias_irc.c,v 1.3 2000/02/27 01:38:24 brian Exp $
+    $OpenBSD: alias_irc.c,v 1.4 2000/11/02 00:53:47 brian Exp $
 */
 
 /* Includes */
@@ -216,10 +216,9 @@ lFOUND_CTCP:
 			 /* Steal the FTP_DATA_PORT - it doesn't really matter, and this
 				 would probably allow it through at least _some_
 				 firewalls. */
-			 dcc_link = FindUdpTcpOut (true_addr,
-											destaddr,
-										   true_port,
-											0, IPPROTO_TCP);
+			 dcc_link = FindUdpTcpOut(true_addr, destaddr,
+						  true_port, 0,
+						  IPPROTO_TCP, 1);
 			 DBprintf(("Got a DCC link\n"));
 			 if ( dcc_link ) {
 				 struct in_addr alias_address;	/* Address from aliasing */

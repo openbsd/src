@@ -41,7 +41,7 @@
 
     See HISTORY file for record of revisions.
 
-    $OpenBSD: alias_ftp.c,v 1.7 2000/06/23 09:47:05 brian Exp $
+    $OpenBSD: alias_ftp.c,v 1.8 2000/11/02 00:53:47 brian Exp $
 */
 
 /* Includes */
@@ -443,7 +443,7 @@ NewFtpMessage(struct ip *pip,
 
 /* Establish link to address and port found in FTP control message. */
     ftp_link = FindUdpTcpOut(true_addr, GetDestAddress(link),
-                             htons(true_port), 0, IPPROTO_TCP);
+                             htons(true_port), 0, IPPROTO_TCP, 1);
 
     if (ftp_link != NULL)
     {

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: alias_cuseeme.c,v 1.3 2000/10/06 00:26:43 brian Exp $
+ *	$OpenBSD: alias_cuseeme.c,v 1.4 2000/11/02 00:53:47 brian Exp $
  */
 
 #include <sys/types.h>
@@ -79,7 +79,7 @@ AliasHandleCUSeeMeOut(struct ip *pip, struct alias_link *link)
       cu->addr = (u_int32_t)GetAliasAddress(link).s_addr;
 
     cu_link = FindUdpTcpOut(pip->ip_src, GetDestAddress(link),
-                            ud->uh_dport, 0, IPPROTO_UDP);
+                            ud->uh_dport, 0, IPPROTO_UDP, 1);
                          
 #ifndef NO_FW_PUNCH
     if (cu_link)

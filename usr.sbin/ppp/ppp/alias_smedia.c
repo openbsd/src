@@ -62,7 +62,7 @@
  *          Junichi SATOH <junichi@astec.co.jp>
  *                        <junichi@junichi.org>
  *
- * $FreeBSD: src/lib/libalias/alias_smedia.c,v 1.1 2000/07/26 23:15:46 archie Exp $
+ * $OpenBSD: alias_smedia.c,v 1.3 2000/11/02 00:53:47 brian Exp $
  */
 
 /*
@@ -343,7 +343,7 @@ alias_pna_out(struct ip *pip,
 	if ((ntohs(msg_id) == 1) || (ntohs(msg_id) == 7)) {
 	    memcpy((char*)&port, (char*)work, 2);
 	    pna_links = FindUdpTcpOut(pip->ip_src, GetDestAddress(link),
-				      port, 0, IPPROTO_UDP);
+				      port, 0, IPPROTO_UDP, 1);
 	    if (pna_links != NULL) {
 #ifndef NO_FW_PUNCH
 		/* Punch hole in firewall */
