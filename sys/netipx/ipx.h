@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.12 2000/01/17 00:34:00 fgsch Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.13 2000/09/22 14:56:22 millert Exp $	*/
 
 /*-
  *
@@ -245,5 +245,12 @@ int	ipx_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	ipx_printhost __P((struct ipx_addr *addr));
 
 #endif /* _KERNEL */
+
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+struct	ipx_addr ipx_addr __P((const char *));
+char	*ipx_ntoa __P((struct ipx_addr));
+__END_DECLS
 
 #endif /* !_NETIPX_IPX_H_ */
