@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.c,v 1.35 2000/08/10 05:50:27 kjell Exp $	*/
+/*	$OpenBSD: parse.c,v 1.36 2001/01/17 05:00:59 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 1993-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -36,56 +36,35 @@
 #include <resolv.h>
 #include <ctype.h>
 #include <syslog.h>
-#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "facpri.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.14 2000/06/21 14:50:52 darrenr Exp $";
+static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.8 1999/12/28 10:49:46 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
 extern	int	opts;
+#ifdef	USE_INET6
+extern	int	use_inet6;
+#endif
 
-int	portnum __P((char *, u_short *, int));
-u_char	tcp_flags __P((char *, u_char *, int));
 int	addicmp __P((char ***, struct frentry *, int));
 int	extras __P((char ***, struct frentry *, int));
-char    ***seg;
-u_long  *sa, *msk;
-u_short *pp, *tp;
-u_char  *cp;
 
-int	hostmask __P((char ***, u_32_t *, u_32_t *, u_short *, u_char *,
-		      u_short *, int));
-int	ports __P((char ***, u_short *, u_char *, u_short *, int));
 int	icmpcode __P((char *)), addkeep __P((char ***, struct frentry *, int));
 int	to_interface __P((frdest_t *, char *, int));
 void	print_toif __P((char *, frdest_t *));
 void	optprint __P((u_short *, u_long, u_long));
-int	countbits __P((u_32_t));
-char	*portname __P((int, int));
-int	ratoi __P((char *, int *, int, int));
-int	loglevel __P((char **, u_short *, int));
+int	loglevel __P((char **, u_int *, int));
 void	printlog __P((frentry_t *));
-#if defined(__OpenBSD__)
-extern int     if_addr __P((char *, struct in_addr *));
-#endif
 
-
-char	*proto = NULL;
-char	flagset[] = "FSRPAU";
-u_char	flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH, TH_ACK, TH_URG };
-
-static	char	thishost[MAXHOSTNAMELEN];
-
-
-void initparse()
-{
-	gethostname(thishost, sizeof(thishost));
-}
+extern	char	*proto;
+extern	char	flagset[];
+extern	u_char	flags[];
 
 
 /* parse()
@@ -99,8 +78,8 @@ int     linenum;
 	static	struct	frentry	fil;
 	struct	protoent	*p = NULL;
 	char	*cps[31], **cpp, *endptr;
-	u_char	ch;
-	int	i, cnt = 1, j;
+	int	i, cnt = 1, j, ch;
+	u_int	k;
 
 	while (*line && isspace(*line))
 		line++;
@@ -109,7 +88,11 @@ int     linenum;
 
 	bzero((char *)&fil, sizeof(fil));
 	fil.fr_mip.fi_v = 0xf;
+#ifdef	USE_INET6
+	fil.fr_ip.fi_v = use_inet6 ? 6 : 4;
+#else
 	fil.fr_ip.fi_v = 4;
+#endif
 	fil.fr_loglevel = 0xffff;
 
 	/*
@@ -176,8 +159,8 @@ int     linenum;
 		 fil.fr_flags |= FR_PREAUTH;
 	} else if (!strcasecmp("skip", *cpp)) {
 		cpp++;
-		if (ratoi(*cpp, &i, 0, USHRT_MAX))
-			fil.fr_skip = i;
+		if (ratoui(*cpp, &k, 0, UINT_MAX))
+			fil.fr_skip = k;
 		else {
 			fprintf(stderr, "%d: integer must follow skip\n",
 				linenum);
@@ -262,43 +245,6 @@ int     linenum;
 				return NULL;
 			}
 			fil.fr_flags |= FR_LOGORBLOCK;
-			cpp++;
-		}
-		if (*cpp && !strcasecmp(*cpp, "level")) {
-			int fac, pri;
-			char *s;
-
-			fac = 0;
-			pri = 0;
-			if (!*++cpp) {
-				fprintf(stderr, "%d: %s\n", linenum,
-					"missing identifier after level");
-				return NULL;
-			}
-			s = index(*cpp, '.');
-			if (s) {
-				*s++ = '\0';
-				fac = fac_findname(*cpp);
-				if (fac == -1) {
-					fprintf(stderr, "%d: %s %s\n", linenum,
-						"Unknown facility", *cpp);
-					return NULL;
-				}
-				pri = pri_findname(s);
-				if (pri == -1) {
-					fprintf(stderr, "%d: %s %s\n", linenum,
-						"Unknown priority", s);
-					return NULL;
-				}
-			} else {
-				pri = pri_findname(*cpp);
-				if (pri == -1) {
-					fprintf(stderr, "%d: %s %s\n", linenum,
-						"Unknown priority", *cpp);
-					return NULL;
-				}
-			}
-			fil.fr_loglevel = fac|pri;
 			cpp++;
 		}
 		if (*cpp && !strcasecmp(*cpp, "level")) {
@@ -450,16 +396,17 @@ int     linenum;
 				linenum);
 			return NULL;
 		}
-		ch = 0;
 		if (**cpp == '!') {
 			fil.fr_flags |= FR_NOTSRCIP;
 			(*cpp)++;
 		}
+		ch = 0;
 		if (hostmask(&cpp, (u_32_t *)&fil.fr_src,
 			     (u_32_t *)&fil.fr_smsk, &fil.fr_sport, &ch,
 			     &fil.fr_stop, linenum)) {
 			return NULL;
 		}
+
 		fil.fr_scmp = ch;
 		if (!*cpp) {
 			fprintf(stderr, "%d: missing to fields\n", linenum);
@@ -521,7 +468,8 @@ int     linenum;
 	/*
 	 * extras...
 	 */
-	if (*cpp && (!strcasecmp(*cpp, "with") || !strcasecmp(*cpp, "and")))
+	if ((fil.fr_v == 4) && *cpp && (!strcasecmp(*cpp, "with") ||
+	     !strcasecmp(*cpp, "and")))
 		if (extras(&cpp, &fil, linenum))
 			return NULL;
 
@@ -556,8 +504,8 @@ int     linenum;
 			fprintf(stderr, "%d: head without group #\n", linenum);
 			return NULL;
 		}
-		if (ratoi(*cpp, &i, 0, USHRT_MAX))
-			fil.fr_grhead = i;
+		if (ratoui(*cpp, &k, 0, UINT_MAX))
+			fil.fr_grhead = (u_32_t)k;
 		else {
 			fprintf(stderr, "%d: invalid group (%s)\n",
 				linenum, *cpp);
@@ -575,8 +523,8 @@ int     linenum;
 				linenum);
 			return NULL;
 		}
-		if (ratoi(*cpp, &i, 0, USHRT_MAX))
-			fil.fr_group = i;
+		if (ratoui(*cpp, &k, 0, UINT_MAX))
+			fil.fr_group = k;
 		else {
 			fprintf(stderr, "%d: invalid group (%s)\n",
 				linenum, *cpp);
@@ -630,7 +578,7 @@ int     linenum;
 
 int loglevel(cpp, facpri, linenum)
 char **cpp;
-u_short *facpri;
+u_int *facpri;
 int linenum;
 {
 	int fac, pri;
@@ -677,15 +625,13 @@ frdest_t *fdp;
 char *to;
 int linenum;
 {
-	int	r = 0;
-	char	*s;
+	char *s;
 
 	s = index(to, ':');
 	fdp->fd_ifp = NULL;
 	if (s) {
 		*s++ = '\0';
-		fdp->fd_ip.s_addr = hostnum(s, &r, linenum);
-		if (r == -1)
+		if (hostnum((u_32_t *)&fdp->fd_ip, s, linenum) == -1)
 			return -1;
 	}
 	(void) strncpy(fdp->fd_ifname, to, sizeof(fdp->fd_ifname) - 1);
@@ -703,279 +649,6 @@ frdest_t *fdp;
 	if (fdp->fd_ip.s_addr)
 		printf(":%s", inet_ntoa(fdp->fd_ip));
 	putchar(' ');
-}
-
-
-/*
- * returns -1 if neither "hostmask/num" or "hostmask mask addr" are
- * found in the line segments, there is an error processing this information,
- * or there is an error processing ports information.
- */
-int	hostmask(seg, sa, msk, pp, cp, tp, linenum)
-char	***seg;
-u_32_t	*sa, *msk;
-u_short	*pp, *tp;
-u_char	*cp;
-int     linenum;
-{
-	char	*s, *endptr;
-	int	bits = -1, resolved;
-	struct	in_addr	maskaddr;
-
-	/*
-	 * is it possibly hostname/num ?
-	 */
-	if ((s = index(**seg, '/')) || (s = index(**seg, ':'))) {
-		*s++ = '\0';
-		if (index(s, '.') || index(s, 'x')) {
-			/* possibly of the form xxx.xxx.xxx.xxx
-			 * or 0xYYYYYYYY */
-			if (inet_aton(s, &maskaddr) == 0) {
-				fprintf(stderr, "%d: bad mask (%s)\n",
-					linenum, s);
-				return -1;
-			} 
-			*msk = maskaddr.s_addr;
-		} else {
-			/*
-			 * set x most significant bits
-			 */
-			bits = (int)strtol(s, &endptr, 0);
-			if (*endptr != '\0' || bits > 32 || bits < 0) {
-				fprintf(stderr, "%d: bad mask (/%s)\n",
-					linenum, s);
-				return -1;
-			}
-			if (bits == 0)
-				*msk = 0;
-			else
-				*msk = htonl(0xffffffff << (32 - bits));
-		}
-		*sa = hostnum(**seg, &resolved, linenum) & *msk;
-		if (resolved == -1) {
-			fprintf(stderr, "%d: bad host (%s)\n", linenum, **seg);
-			return -1;
-		}
-		(*seg)++;
-		return ports(seg, pp, cp, tp, linenum);
-	}
-
-	/*
-	 * look for extra segments if "mask" found in right spot
-	 */
-	if (*(*seg+1) && *(*seg+2) && !strcasecmp(*(*seg+1), "mask")) {
-		*sa = hostnum(**seg, &resolved, linenum);
-		if (resolved == -1) {
-			fprintf(stderr, "%d: bad host (%s)\n", linenum, **seg);
-			return -1;
-		}
-		(*seg)++;
-		(*seg)++;
-		if (inet_aton(**seg, &maskaddr) == 0) {
-			fprintf(stderr, "%d: bad mask (%s)\n", linenum, **seg);
-			return -1;
-		}
-		*msk = maskaddr.s_addr;
-		(*seg)++;
-		*sa &= *msk;
-		return ports(seg, pp, cp, tp, linenum);
-	}
-
-	if (**seg) {
-		*sa = hostnum(**seg, &resolved, linenum);
-		if (resolved == -1) {
-			fprintf(stderr, "%d: bad host (%s)\n", linenum, **seg);
-			return -1;
-		}
-		(*seg)++;
-		*msk = (*sa ? inet_addr("255.255.255.255") : 0L);
-		*sa &= *msk;
-		return ports(seg, pp, cp, tp, linenum);
-	}
-	fprintf(stderr, "%d: bad host (%s)\n", linenum, **seg);
-	return -1;
-}
-
-/*
- * returns an ip address as a long var as a result of either a DNS lookup or
- * straight inet_addr() call
- */
-u_32_t	hostnum(host, resolved, linenum)
-char	*host;
-int	*resolved;
-int     linenum;
-{
-	struct	hostent	*hp;
-	struct	netent	*np;
-	struct	in_addr	ip;
-#if defined(__OpenBSD__)
-        struct in_addr  addr;
-#endif
-
-	*resolved = 0;
-	if (!strcasecmp("any", host))
-		return 0;
-	if (isdigit(*host) && inet_aton(host, &ip))
-		return ip.s_addr;
-
-	if (!strcasecmp("<thishost>", host))
-		host = thishost;
-
-#if defined(__OpenBSD__)
-        /* attempt a map from interface name to address */
-        if (if_addr(host, &addr))
-                return (u_32_t)addr.s_addr;
-#endif
-
-	if (!(hp = gethostbyname(host))) {
-		if (!(np = getnetbyname(host))) {
-			*resolved = -1;
-			fprintf(stderr, "%d: can't resolve hostname: %s\n",
-				linenum, host);
-			return 0;
-		}
-		return htonl(np->n_net);
-	}
-	return *(u_32_t *)hp->h_addr;
-}
-
-/*
- * check for possible presence of the port fields in the line
- */
-int	ports(seg, pp, cp, tp, linenum)
-char	***seg;
-u_short	*pp, *tp;
-u_char	*cp;
-int     linenum;
-{
-	int	comp = -1;
-
-	if (!*seg || !**seg || !***seg)
-		return 0;
-	if (!strcasecmp(**seg, "port") && *(*seg + 1) && *(*seg + 2)) {
-		(*seg)++;
-		if (isdigit(***seg) && *(*seg + 2)) {
-			if (portnum(**seg, pp, linenum) == 0)
-				return -1;
-			(*seg)++;
-			if (!strcmp(**seg, "<>"))
-				comp = FR_OUTRANGE;
-			else if (!strcmp(**seg, "><"))
-				comp = FR_INRANGE;
-			else {
-				fprintf(stderr,
-					"%d: unknown range operator (%s)\n",
-					linenum, **seg);
-				return -1;
-			}
-			(*seg)++;
-			if (**seg == NULL) {
-				fprintf(stderr, "%d: missing 2nd port value\n",
-					linenum);
-				return -1;
-			}
-			if (portnum(**seg, tp, linenum) == 0)
-				return -1;
-		} else if (!strcmp(**seg, "=") || !strcasecmp(**seg, "eq"))
-			comp = FR_EQUAL;
-		else if (!strcmp(**seg, "!=") || !strcasecmp(**seg, "ne"))
-			comp = FR_NEQUAL;
-		else if (!strcmp(**seg, "<") || !strcasecmp(**seg, "lt"))
-			comp = FR_LESST;
-		else if (!strcmp(**seg, ">") || !strcasecmp(**seg, "gt"))
-			comp = FR_GREATERT;
-		else if (!strcmp(**seg, "<=") || !strcasecmp(**seg, "le"))
-			comp = FR_LESSTE;
-		else if (!strcmp(**seg, ">=") || !strcasecmp(**seg, "ge"))
-			comp = FR_GREATERTE;
-		else {
-			fprintf(stderr, "%d: unknown comparator (%s)\n",
-					linenum, **seg);
-			return -1;
-		}
-		if (comp != FR_OUTRANGE && comp != FR_INRANGE) {
-			(*seg)++;
-			if (portnum(**seg, pp, linenum) == 0)
-				return -1;
-		}
-		*cp = comp;
-		(*seg)++;
-	}
-	return 0;
-}
-
-/*
- * find the port number given by the name, either from getservbyname() or
- * straight atoi(). Return 1 on success, 0 on failure
- */
-int	portnum(name, port, linenum)
-char	*name;
-u_short	*port;
-int     linenum;
-{
-	struct	servent	*sp, *sp2;
-	u_short	p1 = 0;
-	int i;
-	if (isdigit(*name)) {
-		if (ratoi(name, &i, 0, USHRT_MAX)) {
-			*port = (u_short)i;
-			return 1;
-		}
-		fprintf(stderr, "%d: unknown port \"%s\"\n", linenum, name);
-		return 0;
-	}
-	if (proto != NULL && strcasecmp(proto, "tcp/udp") != 0) {
-		sp = getservbyname(name, proto);
-		if (sp) {
-			*port = ntohs(sp->s_port);
-			return 1;
-		}
-		fprintf(stderr, "%d: unknown service \"%s\".\n", linenum, name);
-		return 0;
-	}
-	sp = getservbyname(name, "tcp");
-	if (sp) 
-		p1 = sp->s_port;
-	sp2 = getservbyname(name, "udp");
-	if (!sp || !sp2) {
-		fprintf(stderr, "%d: unknown tcp/udp service \"%s\".\n",
-			linenum, name);
-		return 0;
-	}
-	if (p1 != sp2->s_port) {
-		fprintf(stderr, "%d: %s %d/tcp is a different port to ",
-			linenum, name, p1);
-		fprintf(stderr, "%d: %s %d/udp\n", linenum, name, sp->s_port);
-		return 0;
-	}
-	*port = ntohs(p1);
-	return 1;
-}
-
-
-u_char tcp_flags(flgs, mask, linenum)
-char *flgs;
-u_char *mask;
-int    linenum;
-{
-	u_char tcpf = 0, tcpfm = 0, *fp = &tcpf;
-	char *s, *t;
-
-	for (s = flgs; *s; s++) {
-		if (*s == '/' && fp == &tcpf) {
-			fp = &tcpfm;
-			continue;
-		}
-		if (!(t = index(flagset, *s))) {
-			fprintf(stderr, "%d: unknown flag (%c)\n", linenum, *s);
-			return 0;
-		}
-		*fp |= flags[t - flagset];
-	}
-	if (!tcpfm)
-		tcpfm = 0xff;
-	*mask = tcpfm;
-	return tcpf;
 }
 
 
@@ -1000,8 +673,8 @@ int     linenum;
 		return -1;
 
 	while (**cp && (!strncasecmp(**cp, "ipopt", 5) ||
-	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 4) ||
-	       !strncasecmp(**cp, "frag", 3) || !strncasecmp(**cp, "no", 2) ||
+	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 3) ||
+	       !strncasecmp(**cp, "frag", 4) || !strncasecmp(**cp, "no", 2) ||
 	       !strncasecmp(**cp, "short", 5))) {
 		if (***cp == 'n' || ***cp == 'N') {
 			notopt = 1;
@@ -1327,6 +1000,9 @@ struct	frentry	*fp;
 int     linenum; 
 {
 	if (fp->fr_proto != IPPROTO_TCP && fp->fr_proto != IPPROTO_UDP &&
+#ifdef	USE_INET6
+	    fp->fr_proto != IPPROTO_ICMPV6 &&
+#endif
 	    fp->fr_proto != IPPROTO_ICMP && !(fp->fr_ip.fi_fl & FI_TCPUDP)) {
 		fprintf(stderr, "%d: Can only use keep with UDP/ICMP/TCP\n",
 			linenum);
@@ -1339,8 +1015,7 @@ int     linenum;
 			linenum);
 		return -1;
 	}
-
-	if (**cp && strcasecmp(**cp, "state") && strcasecmp(**cp, "frags")) {
+	if (strcasecmp(**cp, "state") && strcasecmp(**cp, "frags")) {
 		fprintf(stderr, "%d: Unrecognised state keyword \"%s\"\n",
 			linenum, **cp);
 		return -1;
@@ -1356,77 +1031,16 @@ int     linenum;
 
 
 /*
- * count consecutive 1's in bit mask.  If the mask generated by counting
- * consecutive 1's is different to that passed, return -1, else return #
- * of bits.
- */
-int	countbits(ip)
-u_32_t	ip;
-{
-	u_32_t	ipn;
-	int	cnt = 0, i, j;
-
-	ip = ipn = ntohl(ip);
-	for (i = 32; i; i--, ipn *= 2)
-		if (ipn & 0x80000000)
-			cnt++;
-		else
-			break;
-	ipn = 0;
-	for (i = 32, j = cnt; i; i--, j--) {
-		ipn *= 2;
-		if (j > 0)
-			ipn++;
-	}
-	if (ipn == ip)
-		return cnt;
-	return -1;
-}
-
-
-char	*portname(pr, port)
-int	pr, port;
-{
-	static	char	buf[32];
-	struct	protoent	*p = NULL;
-	struct	servent	*sv = NULL, *sv1 = NULL;
-
-	if (pr == -1) {
-		if ((sv = getservbyport(htons(port), "tcp"))) {
-			strncpy(buf, sv->s_name, sizeof(buf)-1);
-			buf[sizeof(buf)-1] = '\0';
-			sv1 = getservbyport(htons(port), "udp");
-			sv = strncasecmp(buf, sv->s_name, strlen(buf)) ?
-			     NULL : sv1;
-		}
-		if (sv)
-			return buf;
-	} else if (pr && (p = getprotobynumber(pr))) {
-		if ((sv = getservbyport(htons(port), p->p_name))) {
-			strncpy(buf, sv->s_name, sizeof(buf)-1);
-			buf[sizeof(buf)-1] = '\0';
-			return buf;
-		}
-	}
-
-	(void) sprintf(buf, "%d", port);
-	return buf;
-}
-
-
-/*
  * print the filter structure in a useful way
  */
 void	printfr(fp)
 struct	frentry	*fp;
 {
-	static	char	*pcmp1[] = { "*", "=", "!=", "<", ">", "<=", ">=",
-				    "<>", "><"};
-	struct	protoent	*p;
-	int	ones = 0, pr;
-	char	*s;
-	u_char	*t;
+	struct protoent	*p;
 	u_short	sec[2];
+	char *s;
+	u_char *t;
+	int pr;
 
 	if (fp->fr_flags & FR_PASS)
 		printf("pass");
@@ -1467,6 +1081,7 @@ struct	frentry	*fp;
 		printlog(fp);
 		putchar(' ');
 	}
+
 	if (fp->fr_flags & FR_QUICK)
 		printf("quick ");
 
@@ -1496,42 +1111,17 @@ struct	frentry	*fp;
 	}
 
 	printf("from %s", fp->fr_flags & FR_NOTSRCIP ? "!" : "");
-	if (!fp->fr_src.s_addr && !fp->fr_smsk.s_addr)
-		printf("any ");
-	else {
-		printf("%s", inet_ntoa(fp->fr_src));
-		if ((ones = countbits(fp->fr_smsk.s_addr)) == -1)
-			printf("/%s ", inet_ntoa(fp->fr_smsk));
-		else
-			printf("/%d ", ones);
-	}
-	if (fp->fr_scmp) {
-		if (fp->fr_scmp == FR_INRANGE || fp->fr_scmp == FR_OUTRANGE)
-			printf("port %d %s %d ", fp->fr_sport,
-				     pcmp1[fp->fr_scmp], fp->fr_stop);
-		else
-			printf("port %s %s ", pcmp1[fp->fr_scmp],
-				     portname(pr, fp->fr_sport));
-	}
+	printhostmask(fp->fr_v, (u_32_t *)&fp->fr_src.s_addr,
+		      (u_32_t *)&fp->fr_smsk.s_addr);
+	if (fp->fr_scmp)
+		printportcmp(pr, &fp->fr_tuc.ftu_src);
 
-	printf("to %s", fp->fr_flags & FR_NOTDSTIP ? "!" : "");
-	if (!fp->fr_dst.s_addr && !fp->fr_dmsk.s_addr)
-		printf("any");
-	else {
-		printf("%s", inet_ntoa(fp->fr_dst));
-		if ((ones = countbits(fp->fr_dmsk.s_addr)) == -1)
-			printf("/%s", inet_ntoa(fp->fr_dmsk));
-		else
-			printf("/%d", ones);
-	}
-	if (fp->fr_dcmp) {
-		if (fp->fr_dcmp == FR_INRANGE || fp->fr_dcmp == FR_OUTRANGE)
-			printf(" port %d %s %d", fp->fr_dport,
-				     pcmp1[fp->fr_dcmp], fp->fr_dtop);
-		else
-			printf(" port %s %s", pcmp1[fp->fr_dcmp],
-				     portname(pr, fp->fr_dport));
-	}
+	printf(" to %s", fp->fr_flags & FR_NOTDSTIP ? "!" : "");
+	printhostmask(fp->fr_v, (u_32_t *)&fp->fr_dst.s_addr,
+		      (u_32_t *)&fp->fr_dmsk.s_addr);
+	if (fp->fr_dcmp)
+		printportcmp(pr, &fp->fr_tuc.ftu_dst);
+
 	if ((fp->fr_ip.fi_fl & ~FI_TCPUDP) ||
 	    (fp->fr_mip.fi_fl & ~FI_TCPUDP) ||
 	    fp->fr_ip.fi_optmsk || fp->fr_mip.fi_optmsk ||
@@ -1575,14 +1165,20 @@ struct	frentry	*fp;
 	}
 	if (fp->fr_proto == IPPROTO_TCP && (fp->fr_tcpf || fp->fr_tcpfm)) {
 		printf(" flags ");
-		for (s = flagset, t = flags; *s; s++, t++)
-			if (fp->fr_tcpf & *t)
-				(void)putchar(*s);
+		if (fp->fr_tcpf & ~TCPF_ALL)
+			printf("0x%x", fp->fr_tcpf);
+		else
+			for (s = flagset, t = flags; *s; s++, t++)
+				if (fp->fr_tcpf & *t)
+					(void)putchar(*s);
 		if (fp->fr_tcpfm) {
 			(void)putchar('/');
-			for (s = flagset, t = flags; *s; s++, t++)
-				if (fp->fr_tcpfm & *t)
-					(void)putchar(*s);
+			if (fp->fr_tcpfm & ~TCPF_ALL)
+				printf("0x%x", fp->fr_tcpfm);
+			else
+				for (s = flagset, t = flags; *s; s++, t++)
+					if (fp->fr_tcpfm & *t)
+						(void)putchar(*s);
 		}
 	}
 
@@ -1644,19 +1240,4 @@ frentry_t *fp;
 		else
 			printf("%s", u);
 	}
-}
-
-
-int	ratoi(ps, pi, min, max)
-char 	*ps;
-int	*pi, min, max;
-{
-	int i;
-	char *pe;
-
-	i = (int)strtol(ps, &pe, 0);
-	if (*pe != '\0' || i < min || i > max)
-		return 0;
-	*pi = i;
-	return 1;
 }
