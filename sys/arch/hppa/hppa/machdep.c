@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1999/11/25 18:46:07 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1999/12/17 06:24:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -439,7 +439,7 @@ cpu_startup()
 			UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_NONE,
 			    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL,
 			    UVM_FLAG_FIXED)) != KERN_SUCCESS)
-			panic("cpu_startup: cannot allocate VM for buffers");
+			panic("cpu_startup: cannot allocate VM for graphics");
 	}
 #endif
 
