@@ -339,7 +339,7 @@ telrcv(void)
 	    continue;
 
 	default:
-	    syslog(LOG_ERR, "telnetd: panic state=%d\n", state);
+	    syslog(LOG_ERR, "telnetd: panic state=%d", state);
 	    printf("telnetd: panic state=%d\n", state);
 	    exit(1);
 	}
