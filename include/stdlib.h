@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.12 2000/04/03 23:23:48 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.13 2001/06/18 18:11:12 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -144,6 +144,7 @@ int	 cgetmatch __P((char *, const char *));
 int	 cgetnext __P((char **, char **));
 int	 cgetnum __P((char *, const char *, long *));
 int	 cgetset __P((const char *));
+int	 cgetusedb __P((int));
 int	 cgetstr __P((char *, const char *, char **));
 int	 cgetustr __P((char *, const char *, char **));
 

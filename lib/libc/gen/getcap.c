@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.17 2000/11/22 19:12:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.18 2001/06/18 18:11:14 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,23 @@ static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 static int	cdbget __P((DB *, char **, const char *));
 static int 	getent __P((char **, u_int *, char **, int, const char *, int, char *));
 static int	nfcmp __P((const char *, char *));
+
+static int	usedb = 1;
+
+/*
+ * Cgetusedb() allows the user to specify whether or not to use a .db
+ * version of the database file (if it exists) in preference to the
+ * text version.  By default, the getcap(3) routines will use a .db file.
+ */
+int
+cgetusedb(new_usedb)
+	int new_usedb;
+{
+	int old_usedb = usedb;
+
+	usedb = new_usedb;
+	return(old_usedb);
+}
 
 /*
  * Cgetset() allows the addition of a user specified buffer to be added
@@ -253,9 +270,10 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 			opened++;
 		} else {
 			char *dbrecord;
+
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
-			     != NULL) {
+			if (usedb &&
+			    (capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))) {
 				opened++;
 				retval = cdbget(capdbp, &dbrecord, name);
 				if (retval < 0) {

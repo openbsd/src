@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.20 2000/12/24 00:30:47 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.21 2001/06/18 18:11:14 millert Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,8 @@
 .Nm cgetustr ,
 .Nm cgetfirst ,
 .Nm cgetnext ,
-.Nm cgetclose
+.Nm cgetclose ,
+.Nm cgetusedb
 .Nd capability database access routines
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
@@ -71,6 +72,8 @@
 .Fn cgetnext "char **buf" "char **db_array"
 .Ft int
 .Fn cgetclose "void"
+.Ft int
+.Fn cgetusedb "int usedb"
 .Sh DESCRIPTION
 The
 .Fn cgetent
@@ -256,6 +259,25 @@ closes the sequential access and frees any memory and file descriptors
 being used.
 Note that it does not erase the buffer pushed by a call to
 .Fn cgetset .
+.Pp
+.Fn cgetusedb 
+allows the user to specify whether use or ignore database files ending in
+.Dq .db .
+If
+.Ar usedb
+is zero, files ending in
+.Dq .db
+will be ignored.
+If
+.Ar usedb
+is non-zero, files ending in
+.Dq .db
+will be used in preference to the text version.
+The default is to process
+.Dq .db
+files.
+.Fn cgetusedb
+returns the previous setting.
 .Ss Capability database syntax
 Capability databases are normally
 .Tn ASCII
