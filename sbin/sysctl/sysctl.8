@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.85 2002/06/07 15:33:36 itojun Exp $
+.\"	$OpenBSD: sysctl.8,v 1.86 2002/06/08 23:30:38 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -145,12 +145,15 @@ privilege can change the value.
 .It kern.tty.tk_nout	int64_t	no
 .It kern.tty.tk_rawcc	int64_t	no
 .It kern.tty.tk_cancc	int64_t	no
-.It kern.fscale	int	no
+.It kern.fscale	integer	no
 .It kern.ccpu	u_int	no
-.It kern.nprocs	int	no
-.It kern.stackgap_random	int	yes
-.It kern.usercrypto	int	yes
-.It kern.cryptodevallowsoft	int	yes
+.It kern.nprocs	integer	no
+.It kern.stackgap_random	integer	yes
+.It kern.usercrypto	integer	yes
+.It kern.cryptodevallowsoft	integer	yes
+.It kern.nfiles	integer	no
+.It kern.ttycount	integer	no
+.It kern.numvnodes	integer	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
 .It vm.swapencrypt.enable	integer	yes
