@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.99 2002/11/20 21:33:37 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.100 2002/11/24 19:39:19 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -714,15 +714,14 @@ pciide_chipen(sc, pa)
 	struct pci_attach_args *pa;
 {
 	pcireg_t csr;
-	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
-		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PCI_COMMAND_STATUS_REG);
-		printf("%s: device disabled (at %s)\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname,
-		    (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
-		    "device" : "bridge");
+
+	csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0 ) {
+		printf("\n%s: device disabled\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return 0;
 	}
+
 	return 1;
 }
 
