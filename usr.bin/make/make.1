@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.16 1999/02/23 18:24:51 espie Exp $
+.\"	$OpenBSD: make.1,v 1.17 1999/03/17 17:35:01 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1094,6 +1094,25 @@ system makefile directory
 default 
 .Ev MAKEOBJDIRPREFIX directory.
 .El
+.Sh BUGS
+The evaluation of
+.Ar expression
+in a test is very simple-minded. Currently, the only form that works is
+.Ql .if ${VAR} op something
+For instance, you should write tests as
+.Ql .if ${VAR} = "string"
+not the other way around, which doesn't work.
+.Pp
+For loops are expanded before tests, so a fragment such as:
+.Bd -literal
+\&.for TMACHINE in ${SHARED_ARCHS}
+\&.if ${TMACHINE} = ${MACHINE}
+     ...
+\&.endif
+\&.fi
+.Ed
+won't work, and should be rewritten the other way around.
+
 .Sh SEE ALSO
 .Xr mkdep 1
 .Sh HISTORY
