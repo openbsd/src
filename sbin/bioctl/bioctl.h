@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.h,v 1.3 2005/04/05 19:45:06 marco Exp $       */
+/* $OpenBSD: bioctl.h,v 1.4 2005/04/05 20:25:50 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -76,7 +76,7 @@ void		bio_blink(char *, u_int8_t, u_int8_t);
 void		bio_ping(void);
 void		bio_startstop(char *, u_int8_t, u_int8_t);
 void		bio_status(void);
-u_int64_t	bio_pt_readcap(u_int8_t, u_int8_t);
+u_int64_t	bio_pt_readcap(u_int8_t, u_int8_t, u_int8_t);
 u_int32_t	bio_pt_inquire(u_int8_t, u_int8_t, u_int8_t, u_int8_t *);
 u_int32_t	bio_pt_tur(u_int8_t, u_int8_t);
 void		bio_pt_enum(void);

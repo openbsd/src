@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.5 2005/04/05 19:45:06 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.6 2005/04/05 20:25:50 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 				if (subfunc & F_READCAP) {
 					SLIST_FOREACH(delm, &ul, next) {
 						bio_pt_readcap(delm->channel,
-						    delm->target);
+						    delm->target, F_NOISY);
 					}
 				}
 
@@ -567,7 +567,7 @@ bio_status(void)
 
 /* read capacity for disk c,t */
 u_int64_t
-bio_pt_readcap(u_int8_t c, u_int8_t t)
+bio_pt_readcap(u_int8_t c, u_int8_t t, u_int8_t flags)
 {
 	bioc_scsicmd bpt;
 	struct read_cap rc;
@@ -594,7 +594,8 @@ bio_pt_readcap(u_int8_t c, u_int8_t t)
 		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
 			print_sense(&bpt.sensebuf[0], bpt.senselen);
 		else
-			printf("read capacity failed without sense data\n");
+			printf("channel: %d target: %2d READ CAPACITY failed "
+			    "without sense data\n", c, t);
 
 		return (0);
 	}
@@ -605,8 +606,15 @@ bio_pt_readcap(u_int8_t c, u_int8_t t)
 	size = (u_int64_t)rc.maxlba * (u_int64_t)rc.bsize;
 
 	if (debug)
-		printf("READ CAPACITY: %lu * %lu = %llu\n",
+		printf("\nREAD CAPACITY: %lu * %lu = %llu\n",
 		    rc.maxlba, rc.bsize, size);
+
+	if (flags & F_NOISY) {
+		printf("channel: %d target: %2d READ CAPACITY  %llu", c, t,
+		    size);
+		print_cap(size);
+		printf("\n");
+	}
 
 	return (size);
 }
@@ -650,6 +658,9 @@ bio_pt_inquire(u_int8_t c, u_int8_t t, u_int8_t flags, u_int8_t *inq)
 	printf("channel: %u target: %2u ", c, t);
 	print_inquiry(flags, inq, bpt.datalen);
 
+	if (flags & F_NOISY)
+		printf("\n");
+
 	return 1;
 }
 
@@ -680,13 +691,13 @@ bio_pt_tur(u_int8_t c, u_int8_t t)
 		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
 			print_sense(&bpt.sensebuf[0], bpt.senselen);
 		else
-			printf("tur failed without sense data\n");
+			printf("channel: %d target: %2d: TUR failed without "
+			    "sense data\n", c, t);
 
 		return (0);
 	}
 
-	if (debug)
-		printf("tur completed\n");
+	printf("channel: %d target: %2d: TUR completed\n", c, t);
 
 	return (1);
 }
@@ -719,12 +730,9 @@ bio_pt_enum(void)
 				delm->type = inq[0];
 				if (delm->type == T_DIRECT) {
 					/* FIXME check the return value */
-					if (debug)
-						printf("\n");
-
 					delm->capacity = bio_pt_readcap(
-					    delm->channel, delm->target);
-					printf(" ");
+					    delm->channel, delm->target,
+					    F_SILENCE);
 					print_cap(delm->capacity);
 				}
 				printf("\n");
