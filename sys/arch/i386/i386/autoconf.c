@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.41 2001/12/10 00:58:04 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.42 2002/01/09 23:08:34 nordin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -56,8 +56,11 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/gdt.h>
 #include <machine/biosvar.h>
 
 #include <dev/cons.h>
@@ -85,6 +88,8 @@ cpu_configure()
 {
 
 	startrtclock();
+
+	gdt_init();		/* XXX - pcibios uses gdt stuff */
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("cpu_configure: mainbus not configured");
