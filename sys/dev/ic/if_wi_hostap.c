@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.21 2003/01/14 23:29:50 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.22 2003/01/21 16:26:40 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -94,6 +94,7 @@ void wihap_sta_disassoc(struct wi_softc *sc, u_int8_t sta_addr[],
 void wihap_disassoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
     caddr_t pkt, int len);
 
+#ifndef SMALL_KERNEL
 /*
  * take_hword()
  *
@@ -1261,3 +1262,41 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 
 	return (error);
 }
+
+#else
+void
+wihap_init(struct wi_softc *sc)
+{
+	return;
+}
+
+void
+wihap_shutdown(struct wi_softc *sc)
+{
+	return;
+}
+
+void
+wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
+{
+	return;
+}
+
+int
+wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
+{
+	return (0);
+}
+
+int
+wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
+{
+	return (EINVAL);
+}
+
+int
+wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
+{
+	return (0);
+}
+#endif

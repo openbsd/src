@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.89 2003/01/10 21:38:02 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.90 2003/01/21 16:26:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.89 2003/01/10 21:38:02 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.90 2003/01/21 16:26:40 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -265,7 +265,9 @@ wi_attach(sc)
 	case WI_INTERSIL:
 		sc->wi_flags |= WI_FLAGS_HAS_ROAMING;
 		if (sc->sc_sta_firmware_ver >= 800) {
+#ifndef SMALL_KERNEL
 			sc->wi_flags |= WI_FLAGS_HAS_HOSTAP;
+#endif
 			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
 			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
 		}
