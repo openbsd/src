@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrouplist.c,v 1.6 1997/08/19 16:24:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getgrouplist.c,v 1.7 1997/08/19 19:13:27 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,6 +52,7 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	register struct group *grp;
 	register int i, ngroups;
 	int ret, maxgroups;
+	int bail;
 
 	ret = 0;
 	ngroups = 0;
@@ -73,10 +74,10 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	while ((grp = getgrent())) {
 		if (grp->gr_gid == agroup)
 			continue;
-		for (i = 0; i < ngroups; i++)
+		for (bail = 0, i = 0; bail == 0 && i < ngroups; i++)
 			if (groups[i] == grp->gr_gid)
-				break;
-		if (groups[i] == grp->gr_gid)
+				bail = 1;
+		if (bail)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
