@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.19 1999/07/20 15:57:13 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.20 1999/07/21 04:39:09 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.17 1999/07/20 15:57:10 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.18 1999/07/21 04:36:39 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -145,6 +145,9 @@
 #define	PCMCIA_CIS_IBM_INFOMOVER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_INFOMOVER	0x0002
 #define	PCMCIA_STR_IBM_INFOMOVER	"National Semiconductor InfoMover"
+#define	PCMCIA_CIS_IBM_PORTABLE_CDROM_DRIVE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE	0x002d
+#define	PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE	"Portable CD-ROM Drive"
 #define	PCMCIA_CIS_IBM_HOME_AND_AWAY	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x002e
 #define	PCMCIA_STR_IBM_HOME_AND_AWAY	"IBM Home and Away"
