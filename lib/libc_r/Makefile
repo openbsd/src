@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1999/05/26 03:37:32 d Exp $
+#	$OpenBSD: Makefile,v 1.9 1999/11/28 11:32:55 d Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -15,9 +15,11 @@
 
 .include <bsd.own.mk>
 
+#DEBUG=		-ggdb -Wall
 LIB=		c_r
 LINTFLAGS=	-z
 CFLAGS+=	-DPTHREAD_KERNEL -D_POSIX_THREADS -D_THREAD_SAFE 
+CFLAGS+=	-D_PTHREADS_INVARIANTS
 CFLAGS+=	-DNOPOLL -I${.CURDIR}/uthread
 CFLAGS+=	-I${.CURDIR}/include
 
@@ -40,6 +42,8 @@ HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	socket.o socketpair.o wait4.o write.o writev.o \
 	_exit.o 
 
+.include "${.CURDIR}/uthread/Makefile.inc"
+
 LIBCSRCDIR = ${.CURDIR}/../libc
 .include "${LIBCSRCDIR}/Makefile.inc"
 
@@ -48,7 +52,6 @@ MAN=
 MLINKS=
 
 .include "${.CURDIR}/man/Makefile.inc"
-.include "${.CURDIR}/uthread/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 
 AINC+=	-I${.CURDIR}/uthread
