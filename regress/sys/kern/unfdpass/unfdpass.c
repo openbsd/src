@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.10 2004/04/27 18:51:17 millert Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.11 2004/07/28 19:35:39 millert Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -187,7 +187,6 @@ main(int argc, char *argv[])
 	if (msg.msg_flags & MSG_CTRUNC)
 		errx(1, "lost control message data");
 
-	cmp = CMSG_FIRSTHDR(&msg);
 	for (cmp = CMSG_FIRSTHDR(&msg); cmp != NULL;
 	    cmp = CMSG_NXTHDR(&msg, cmp)) {
 		if (cmp->cmsg_level != SOL_SOCKET)
