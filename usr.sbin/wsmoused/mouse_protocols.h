@@ -1,12 +1,12 @@
-/* $OpenBSD: mouse_protocols.h,v 1.1 2001/04/14 04:47:41 aaron Exp $ */
+/* $OpenBSD: mouse_protocols.h,v 1.2 2002/02/15 02:18:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
- * 
+ *
  * Copyright (c) 1998 by Kazutaka Yokota
  *
  * Copyright (c) 1995 Michael Smith
- * 
+ *
  * Copyright (c) 1993 by David Dawes <dawes@xfree86.org>
  *
  * Copyright (c) 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -14,12 +14,12 @@
  * All rights reserved.
  *
  * Most of this code was taken from the FreeBSD moused daemon, written by
- * Michael Smith. The FreeBSD moused daemon already contained code from the 
+ * Michael Smith. The FreeBSD moused daemon already contained code from the
  * Xfree Project, written by David Dawes and Thomas Roell and Kazutaka Yokota.
  *
  * Adaptation to OpenBSD was done by Jean-Baptiste Marchand, Julien Montagne
  * and Jerome Verdon.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -78,13 +78,13 @@
 #define MOUSE_BUTTONS		0x00FF
 #define MOUSE_POSCHANGED	0x0100
 
-/* 
- * List of all the protocols parameters 
+/*
+ * List of all the protocols parameters
  * The parameters are :
  * - size of the packet
- * - synchronization mask 
+ * - synchronization mask
  * - synchronization value (must be equal to data ANDed with SYNCMASK)
- * - mask of buttons 
+ * - mask of buttons
  * - mask of each button separetely
  */
 
@@ -146,23 +146,23 @@
 
 /* Mouse resolutions */
 
-#define MOUSE_RES_DEFAULT	254	
+#define MOUSE_RES_DEFAULT	254
 #define MOUSE_RES_UNKNOWN	255
-#define MOUSE_RES_LOW		0	
+#define MOUSE_RES_LOW		0
 #define MOUSE_RES_MEDIUMLOW	1
 #define MOUSE_RES_MEDIUMHIGH	2
 #define MOUSE_RES_HIGH		3
 
 /* Mouse report rates */
 
-#define MOUSE_RATE_UNKNOWN	255	
+#define MOUSE_RATE_UNKNOWN	255
 #define MOUSE_RATE_DEFAULT	80
 #define MOUSE_RATE_VERY_LOW	20
 #define MOUSE_RATE_LOW		40
 #define MOUSE_RATE_MEDIUM_LOW	60
 #define MOUSE_RATE_MEDIUM_HIGH	80
 #define MOUSE_RATE_HIGH		100
-#define MOUSE_RATE_VERY_HIGH	200	
+#define MOUSE_RATE_VERY_HIGH	200
 
 /* serial PnP ID string */
 typedef struct {

@@ -1,12 +1,12 @@
-/* $OpenBSD: wsmoused.c,v 1.8 2002/01/12 01:15:37 miod Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.9 2002/02/15 02:18:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
- * 
+ *
  * Copyright (c) 1998 by Kazutaka Yokota
  *
  * Copyright (c) 1995 Michael Smith
- * 
+ *
  * Copyright (c) 1993 by David Dawes <dawes@xfree86.org>
  *
  * Copyright (c) 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -14,12 +14,12 @@
  * All rights reserved.
  *
  * Most of this code was taken from the FreeBSD moused daemon, written by
- * Michael Smith. The FreeBSD moused daemon already contained code from the 
+ * Michael Smith. The FreeBSD moused daemon already contained code from the
  * Xfree Project, written by David Dawes and Thomas Roell and Kazutaka Yokota.
  *
  * Adaptation to OpenBSD was done by Jean-Baptiste Marchand, Julien Montagne
  * and Jerome Verdon.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -55,7 +55,7 @@
 #include <sys/time.h>
 #include <sys/tty.h>
 #include <dev/wscons/wsconsio.h>
- 
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -72,10 +72,10 @@
 
 #include "mouse_protocols.h"
 #include "wsmoused.h"
- 
+
 extern char *__progname;
 extern char *mouse_names[];
- 
+
 int debug = 0;
 int nodaemon = FALSE;
 int background = FALSE;
@@ -83,29 +83,29 @@ int identify = FALSE;
 char *pidfile = "/var/run/wsmoused.pid";
 
 mouse_t mouse = {
-    flags : 0, 
-    portname : NULL,
-    proto : P_UNKNOWN,
-    baudrate : 1200, 
-    old_baudrate : 1200,
-    rate : MOUSE_RATE_UNKNOWN,
-    resolution : MOUSE_RES_UNKNOWN, 
-    zmap : 0,
-    wmode : 0,
-    mfd : -1,
-    clickthreshold : 500,	/* 0.5 sec */
+	flags : 0,
+	portname : NULL,
+	proto : P_UNKNOWN,
+	baudrate : 1200,
+	old_baudrate : 1200,
+	rate : MOUSE_RATE_UNKNOWN,
+	resolution : MOUSE_RES_UNKNOWN,
+	zmap : 0,
+	wmode : 0,
+	mfd : -1,
+	clickthreshold : 500,	/* 0.5 sec */
 };
 
 /* identify the type of a wsmouse supported mouse */
-void 
+void
 wsmouse_identify(void)
 {
 	unsigned int type;
-	
+
 	if (mouse.mfd != -1) {
 		if (ioctl(mouse.mfd, WSMOUSEIO_GTYPE, &type) == -1)
 			err(1, "can't detect mouse type");
-	       	printf("wsmouse supported mouse: ");
+		printf("wsmouse supported mouse: ");
 		switch (type) {
 		case WSMOUSE_TYPE_VSXXX:
 			printf("DEC serial\n");
@@ -138,20 +138,17 @@ wsmouse_identify(void)
 	} else
 		warnx("unable to open %s\n", mouse.portname);
 }
-				
-
 
 /* wsmouse_init : init a wsmouse compatible mouse */
 void
 wsmouse_init(void)
 {
 	unsigned int res = WSMOUSE_RES_MIN;
-	unsigned int rate = WSMOUSE_RATE_DEFAULT;	
+	unsigned int rate = WSMOUSE_RATE_DEFAULT;
 
 	ioctl(mouse.mfd, WSMOUSEIO_SRES, &res);
 	ioctl(mouse.mfd, WSMOUSEIO_SRATE, &rate);
-}	
-
+}
 
 /*
  * Buttons remapping
@@ -162,11 +159,11 @@ static int p2l[MOUSE_MAXBUTTON] = {
 	MOUSE_BUTTON1,	MOUSE_BUTTON2,	MOUSE_BUTTON3,	MOUSE_BUTTON4,
 	MOUSE_BUTTON5,	MOUSE_BUTTON6,	MOUSE_BUTTON7,	MOUSE_BUTTON8,
 };
-    
+
 static char *
 skipspace(char *s)
 {
-	while(isspace(*s))
+	while (isspace(*s))
 		++s;
 	return s;
 }
@@ -203,7 +200,6 @@ mouse_installmap(char *arg)
 			return FALSE;
 		p2l[pbutton - 1] = lbutton - 1;
 	}
-
 	return TRUE;
 }
 
@@ -212,7 +208,7 @@ static void
 mouse_map(struct wscons_event *orig, struct wscons_event *mapped)
 {
 	mapped->type = orig->type;
-	mapped->value = p2l[orig->value]; 	
+	mapped->value = p2l[orig->value];
 }
 
 /* terminate signals handler */
@@ -240,9 +236,9 @@ static struct {
 	struct timeval tv;	/* timestamp on the last `up' event */
 } buttonstate[MOUSE_MAXBUTTON];
 
-/* 
- * handle button click 
- * Note that an ioctl is sent for each button 
+/*
+ * handle button click
+ * Note that an ioctl is sent for each button
  */
 static void
 mouse_click(struct wscons_event *event)
@@ -252,12 +248,12 @@ mouse_click(struct wscons_event *event)
 	struct timeval delay;
 	struct timezone tz;
 	int i = event->value; /* button number */
-    
-	gettimeofday(&now, &tz); 
+
+	gettimeofday(&now, &tz);
 	delay.tv_sec = mouse.clickthreshold / 1000;
 	delay.tv_usec = (mouse.clickthreshold % 1000) * 1000;
-	timersub(&now, &delay, &max_date); 
-    
+	timersub(&now, &delay, &max_date);
+
 	if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
 		if (timercmp(&max_date, &buttonstate[i].tv, >)) {
 			buttonstate[i].tv.tv_sec = 0;
@@ -271,10 +267,10 @@ mouse_click(struct wscons_event *event)
 		buttonstate[i].tv.tv_sec = now.tv_sec;
 		buttonstate[i].tv.tv_usec = now.tv_usec;
 	}
-	    
-	/* 
+
+	/*
 	 * we use the time field of wscons_event structure to put the number
-	 * of multiple clicks 
+	 * of multiple clicks
 	 */
 	if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
 		event->time.tv_sec = buttonstate[i].count;
@@ -286,7 +282,6 @@ mouse_click(struct wscons_event *event)
 	}
 	ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
 }
-
 
 /* workaround for cursor speed on serial mice */
 static void
@@ -302,7 +297,7 @@ normalize_event(struct wscons_event *event)
 	case WSCONS_EVENT_MOUSE_DELTA_X:
 		dx = abs(event->value);
 		while (dx > 2) {
-			two_power++; 
+			two_power++;
 			dx = dx / 2;
 		}
 		event->value = event->value / (NORMALIZE_DIVISOR * two_power);
@@ -311,7 +306,7 @@ normalize_event(struct wscons_event *event)
 		two_power = 1;
 		dy = abs(event->value);
 		while (dy > 2) {
-			two_power++; 
+			two_power++;
 			dy = dy / 2;
 		}
 		event->value = event->value / (NORMALIZE_DIVISOR * two_power);
@@ -320,7 +315,7 @@ normalize_event(struct wscons_event *event)
 }
 
 /* send a wscons_event to the kernel */
-static void 
+static void
 treat_event(struct wscons_event *event)
 {
 	struct wscons_event mapped_event;
@@ -333,9 +328,8 @@ treat_event(struct wscons_event *event)
 	}
 }
 
-
 /* split a full mouse event into multiples wscons events */
-static void 
+static void
 split_event(mousestatus_t *act)
 {
 	struct wscons_event event;
@@ -359,8 +353,8 @@ split_event(mousestatus_t *act)
 		treat_event(&event);
 	}
 
-	/* buttons state */	
-	mask = act->flags & MOUSE_BUTTONS; 
+	/* buttons state */
+	mask = act->flags & MOUSE_BUTTONS;
 	if (mask == 0)
 		/* no button modified */
 		return;
@@ -376,7 +370,6 @@ split_event(mousestatus_t *act)
 		button <<= 1;
 		mask >>= 1;
 	}
-
 }
 
 /* main function */
@@ -407,18 +400,18 @@ wsmoused(void)
 		logerr(1, "cannot open /dev/ttyCcfg");
 
 	/* initialization */
-    
+
 	event.type = WSCONS_EVENT_WSMOUSED_ON;
 	res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
 	if (res != 0) {
 		/* the display driver has no getchar() method */
 		logerr(1, "this display driver has no support for wsmoused");
 	}
-    
+
 	bzero(&action, sizeof(action));
 	bzero(&event, sizeof(event));
 	bzero(&buttonstate, sizeof(buttonstate));
-    
+
 	pfd[0].fd = mouse.mfd;
 	pfd[0].events = POLLIN;
 
@@ -429,11 +422,11 @@ wsmoused(void)
 		if (IS_WSMOUSE_DEV(mouse.portname)) {
 			/* wsmouse supported mouse */
 			read(mouse.mfd, &event, sizeof(event));
-			treat_event(&event);	
+			treat_event(&event);
 		} else {
 			/* serial mouse (not wsmouse supported) */
 			res = read(mouse.mfd, &b, 1);
-	
+
 			/* if we have a full mouse event */
 			if (mouse_protocol(b, &action))
 				/* split it as multiple wscons_event */
@@ -441,9 +434,9 @@ wsmoused(void)
 		}
 	}
 }
-	
 
-static void 
+
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-2df] [-t protocol] [-C threshold] [-I file] \
@@ -452,7 +445,7 @@ usage(void)
 	exit(1);
 }
 
-int 
+int
 main(int argc, char **argv)
 {
 	int opt;
@@ -500,7 +493,7 @@ main(int argc, char **argv)
 		case 'C':
 #define MAX_CLICKTHRESHOLD 2000 /* max delay for double click */
 			mouse.clickthreshold = atoi(optarg);
-			if (mouse.clickthreshold < 0 || 
+			if (mouse.clickthreshold < 0 ||
 			    mouse.clickthreshold > MAX_CLICKTHRESHOLD) {
 				warnx("invalid threshold `%s': max value is %d\n",
 				    optarg, MAX_CLICKTHRESHOLD);
@@ -523,7 +516,7 @@ main(int argc, char **argv)
 	if (mouse.portname == NULL)
 		/* default is /dev/wsmouse */
 		mouse.portname = WSMOUSE_DEV;
-		
+
 	if (!nodaemon)
 		openlog(__progname, LOG_PID, LOG_DAEMON);
 
@@ -532,8 +525,8 @@ main(int argc, char **argv)
 		signal(SIGQUIT, terminate);
 		signal(SIGTERM, terminate);
 		signal(SIGKILL, terminate);
-		if ((mouse.mfd = open(mouse.portname, 
-		    O_RDONLY | O_NONBLOCK, 0)) == -1) 
+		if ((mouse.mfd = open(mouse.portname,
+		    O_RDONLY | O_NONBLOCK, 0)) == -1)
 			logerr(1, "unable to open %s", mouse.portname);
 		if (IS_SERIAL_DEV(mouse.portname)) {
 			if (mouse_identify() == P_UNKNOWN) {
@@ -544,15 +537,15 @@ main(int argc, char **argv)
 		}
 
 		if (identify == TRUE) {
-			if (IS_WSMOUSE_DEV(mouse.portname)) 
+			if (IS_WSMOUSE_DEV(mouse.portname))
 				wsmouse_identify();
-			else 
+			else
 				printf("serial mouse: %s type\n",
 				    (char *)mouse_name(mouse.proto));
 			exit(0);
 		}
 
-		mouse_init(); 
+		mouse_init();
 		wsmoused();
 	}
 }
