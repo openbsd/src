@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.16 2001/06/23 07:04:19 pjanzen Exp $
+.\"     $OpenBSD: intro.4,v 1.17 2001/08/21 00:30:18 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -175,11 +175,12 @@ with the following modules with only one CPU:
 85 Mhz SuperSPARC II with 1MB SuperCACHE
 .It SM100
 Dual 40Mhz Cypress CY7C605/601 (only one processor will be used)
+.It HyperSPARC
+ROSS HyperSPARC Mbus modules
 .El
 .Pp
 .Ox
-does not yet support multiprocessor systems and does not support
-ROSS HyperSPARC Mbus modules.
+does not yet support multiprocessor systems.
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.  Devices are indicated by their functional interface.
@@ -284,8 +285,6 @@ sun4m power management is recognized but unused
 SBus wide ESP scsi controller
 .It antares
 SBus Antares serial board
-.It hypersparc
-ROSS Mbus HyperSPARC modules
 .El
 .Sh HISTORY
 The
