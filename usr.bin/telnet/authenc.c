@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenc.c,v 1.6 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: authenc.c,v 1.7 2005/02/27 15:46:42 otto Exp $	*/
 /*	$NetBSD: authenc.c,v 1.5 1996/02/28 21:03:52 thorpej Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 /*
-RCSID("$Id: authenc.c,v 1.6 2003/06/03 02:56:18 millert Exp $");
+RCSID("$Id: authenc.c,v 1.7 2005/02/27 15:46:42 otto Exp $");
 */
 
 #include "telnet_locl.h"
@@ -80,7 +80,7 @@ telnet_spin()
 telnet_getenv(val)
 	const char *val;
 {
-	return((char *)env_getvalue((unsigned char *)val));
+	return((char *)env_getvalue((unsigned char *)val, 0));
 }
 
 	char *

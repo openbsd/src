@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.18 2003/11/08 19:17:29 jmc Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.19 2005/02/27 15:46:42 otto Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -446,7 +446,7 @@ dooption(option)
 #endif
 
 	    case TELOPT_XDISPLOC:	/* X Display location */
-		if (env_getvalue((unsigned char *)"DISPLAY"))
+		if (env_getvalue((unsigned char *)"DISPLAY", 0))
 		    new_state_ok = 1;
 		break;
 
@@ -682,7 +682,7 @@ gettermname()
 		resettermname = 0;
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
-		if ((tname = (char *)env_getvalue((unsigned char *)"TERM")) &&
+		if ((tname = (char *)env_getvalue((unsigned char *)"TERM", 0)) &&
 				(setupterm(tname, 1, &errret) == OK)) {
 			tnamep = mklist(ttytype, tname);
 		} else {
@@ -859,7 +859,7 @@ suboption()
 	    unsigned char temp[50], *dp;
 	    int len;
 
-	    if ((dp = env_getvalue((unsigned char *)"DISPLAY")) == NULL) {
+	    if ((dp = env_getvalue((unsigned char *)"DISPLAY", 0)) == NULL) {
 		/*
 		 * Something happened, we no longer have a DISPLAY
 		 * variable.  So, turn off the option.
@@ -1331,17 +1331,25 @@ slc_check()
 }
 
 
-unsigned char slc_reply[128];
-unsigned char *slc_replyp;
+static unsigned char slc_reply[2 * SUBBUFSIZE];
+static unsigned char *slc_replyp;
+
+	unsigned char
+slc_add(unsigned char ch)
+{
+	if (slc_replyp == slc_reply + sizeof(slc_reply))
+		return ch;
+	return *slc_replyp++ = ch;
+}
 
 	void
 slc_start_reply()
 {
 	slc_replyp = slc_reply;
-	*slc_replyp++ = IAC;
-	*slc_replyp++ = SB;
-	*slc_replyp++ = TELOPT_LINEMODE;
-	*slc_replyp++ = LM_SLC;
+	slc_add(IAC);
+	slc_add(SB);
+	slc_add(TELOPT_LINEMODE);
+	slc_add(LM_SLC);
 }
 
 	void
@@ -1350,12 +1358,16 @@ slc_add_reply(func, flags, value)
 	unsigned char flags;
 	cc_t value;
 {
-	if ((*slc_replyp++ = func) == IAC)
-		*slc_replyp++ = IAC;
-	if ((*slc_replyp++ = flags) == IAC)
-		*slc_replyp++ = IAC;
-	if ((*slc_replyp++ = (unsigned char)value) == IAC)
-		*slc_replyp++ = IAC;
+	if (slc_replyp + 6 >= slc_reply + sizeof(slc_reply)) {
+		printf("slc_add_reply: not enough room\n");
+		return;
+	}
+	if (slc_add(func) == IAC)
+		slc_add(IAC);
+	if (slc_add(flags) == IAC)
+		slc_add(IAC);
+	if (slc_add((unsigned char)value) == IAC)
+		slc_add(IAC);
 }
 
     void
@@ -1363,8 +1375,13 @@ slc_end_reply()
 {
     int len;
 
-    *slc_replyp++ = IAC;
-    *slc_replyp++ = SE;
+    if (slc_replyp + 2 >= slc_reply + sizeof(slc_reply)) {
+	printf("slc_end_reply: not enough room\n");
+	return;
+    }
+
+    slc_add(IAC);
+    slc_add(SE);
     len = slc_replyp - slc_reply;
     if (len <= 6)
 	return;
@@ -1482,11 +1499,18 @@ env_opt(buf, len)
 	}
 }
 
-#define	OPT_REPLY_SIZE	256
-unsigned char *opt_reply;
-unsigned char *opt_replyp;
-unsigned char *opt_replyend;
+#define	OPT_REPLY_SIZE	(2 * SUBBUFSIZE)
+static unsigned char *opt_reply;
+static unsigned char *opt_replyp;
+static unsigned char *opt_replyend;
 
+	void
+opt_add(unsigned char ch)
+{
+	if (opt_replyp == opt_replyend)
+		return;
+	*opt_replyp++ = ch;
+}
 	void
 env_opt_start()
 {
@@ -1506,10 +1530,10 @@ env_opt_start()
 	}
 	opt_replyp = opt_reply;
 	opt_replyend = opt_reply + OPT_REPLY_SIZE;
-	*opt_replyp++ = IAC;
-	*opt_replyp++ = SB;
-	*opt_replyp++ = telopt_environ;
-	*opt_replyp++ = TELQUAL_IS;
+	opt_add(IAC);
+	opt_add(SB);
+	opt_add(telopt_environ);
+	opt_add(TELQUAL_IS);
 }
 
 	void
@@ -1541,57 +1565,60 @@ env_opt_add(ep)
 			env_opt_add(ep);
 		return;
 	}
-	vp = env_getvalue(ep);
-	if (opt_replyp + (vp ? strlen((char *)vp) : 0) +
-				strlen((char *)ep) + 6 > opt_replyend)
+	vp = env_getvalue(ep, 1);
+	if (opt_replyp + 2 * (vp ? strlen((char *)vp) : 0) +
+				2 * strlen((char *)ep) + 6 > opt_replyend)
 	{
-		int len;
+		size_t len;
 		unsigned char *p;
-		opt_replyend += OPT_REPLY_SIZE;
+
 		len = opt_replyend - opt_reply;
+		len += OPT_REPLY_SIZE + 2 * strlen(ep);
+		if (vp)
+			len += 2 * strlen(vp);
 		p = (unsigned char *)realloc(opt_reply, len);
-		if (p == NULL)
+		if (p == NULL) {
 			free(opt_reply);
-		opt_reply = p;
-		if (opt_reply == NULL) {
 /*@*/			printf("env_opt_add: realloc() failed!!!\n");
 			opt_reply = opt_replyp = opt_replyend = NULL;
 			return;
 		}
-		opt_replyp = opt_reply + len - (opt_replyend - opt_replyp);
-		opt_replyend = opt_reply + len;
+		opt_replyp = p + (opt_replyp - opt_reply);
+		opt_replyend = p + len;
+		opt_reply = p;
 	}
 	if (opt_welldefined((char *)ep))
 #ifdef	OLD_ENVIRON
 		if (telopt_environ == TELOPT_OLD_ENVIRON)
-			*opt_replyp++ = old_env_var;
+			opt_add(old_env_var);
 		else
 #endif
-			*opt_replyp++ = NEW_ENV_VAR;
+			opt_add(NEW_ENV_VAR);
 	else
-		*opt_replyp++ = ENV_USERVAR;
+		opt_add(ENV_USERVAR);
+
 	for (;;) {
 		while ((c = *ep++)) {
 			switch(c&0xff) {
 			case IAC:
-				*opt_replyp++ = IAC;
+				opt_add(IAC);
 				break;
 			case NEW_ENV_VAR:
 			case NEW_ENV_VALUE:
 			case ENV_ESC:
 			case ENV_USERVAR:
-				*opt_replyp++ = ENV_ESC;
+				opt_add(ENV_ESC);
 				break;
 			}
-			*opt_replyp++ = c;
+			opt_add(c);
 		}
 		if ((ep = vp)) {
 #ifdef	OLD_ENVIRON
 			if (telopt_environ == TELOPT_OLD_ENVIRON)
-				*opt_replyp++ = old_env_value;
+				opt_add(old_env_value);
 			else
 #endif
-				*opt_replyp++ = NEW_ENV_VALUE;
+				opt_add(NEW_ENV_VALUE);
 			vp = NULL;
 		} else
 			break;
@@ -1619,8 +1646,8 @@ env_opt_end(emptyok)
 
 	len = opt_replyp - opt_reply + 2;
 	if (emptyok || len > 6) {
-		*opt_replyp++ = IAC;
-		*opt_replyp++ = SE;
+		opt_add(IAC);
+		opt_add(SE);
 		if (NETROOM() > len) {
 			ring_supply_data(&netoring, opt_reply, len);
 			printsub('>', &opt_reply[2], len - 2);
@@ -2197,7 +2224,7 @@ telnet(user)
 	send_will(TELOPT_LINEMODE, 1);
 	send_will(TELOPT_NEW_ENVIRON, 1);
 	send_do(TELOPT_STATUS, 1);
-	if (env_getvalue((unsigned char *)"DISPLAY"))
+	if (env_getvalue((unsigned char *)"DISPLAY", 0))
 	    send_will(TELOPT_XDISPLOC, 1);
 	if (binary)
 	    tel_enter_binary(binary);

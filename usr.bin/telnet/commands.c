@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.47 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: commands.c,v 1.48 2005/02/27 15:46:42 otto Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1821,12 +1821,13 @@ env_default(init, welldefined)
 }
 
 	unsigned char *
-env_getvalue(var)
+env_getvalue(var, exported_only)
 	unsigned char *var;
+	int exported_only;
 {
 	struct env_lst *ep;
 
-	if ((ep = env_find(var)))
+	if ((ep = env_find(var)) && (!exported_only || ep->export))
 		return(ep->value);
 	return(NULL);
 }

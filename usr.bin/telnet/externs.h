@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.13 2004/01/03 23:36:14 pvalchev Exp $	*/
+/*	$OpenBSD: externs.h,v 1.14 2005/02/27 15:46:42 otto Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -204,7 +204,7 @@ void env_unexport (unsigned char *);
 void env_send (unsigned char *);
 void env_list (void);
 unsigned char * env_default(int init, int welldefined);
-unsigned char * env_getvalue(unsigned char *var);
+unsigned char * env_getvalue(unsigned char *var, int exported_only);
 
 void set_escape_char(char *s);
 unsigned long sourceroute(char *arg, char **cpp, int *lenp);
@@ -336,7 +336,7 @@ void     env_opt_add (unsigned char *);
 void     env_opt_end (int);
 
 unsigned char     *env_default (int, int);
-unsigned char     *env_getvalue (unsigned char *);
+unsigned char     *env_getvalue (unsigned char *, int);
 
 int get_status (void);
 int dosynch (void);
