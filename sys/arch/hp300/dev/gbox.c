@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.2 2005/01/15 21:08:36 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.3 2005/01/15 21:19:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -405,7 +405,7 @@ gbox_console_scan(int scode, caddr_t va, void *arg)
 	struct consdev *cp = arg;
 	int force = 0, pri;
 
-	if (fbr->id != GRFHWID || fbr->id2 == GID_GATORBOX)
+	if (fbr->id != GRFHWID || fbr->id2 != GID_GATORBOX)
 		return (0);
 
 	pri = CN_NORMAL;
