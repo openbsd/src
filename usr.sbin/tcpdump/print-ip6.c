@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.3 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.4 2003/01/27 10:00:40 henning Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -165,6 +165,8 @@ ip6_print(register const u_char *bp, register int length)
 			(void)printf("ip-proto-%d %d", ip6->ip6_nxt, len);
 			goto end;
 		}
+		if (hlen == 0)
+			break;
 	}
 
  end:
