@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.368 2004/06/05 15:06:22 grange Exp $
+#	$OpenBSD: GENERIC,v 1.369 2004/06/05 22:29:19 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -407,6 +407,7 @@ em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+re*	at pci? dev ? function ?		# Realtek 8139C+/8169/8169S/8110S
 stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 hme*	at pci? dev ? function ?		# Sun Happy Meal
@@ -444,6 +445,7 @@ eephy* at mii? phy ?				# Marvell 88E1000 series PHY
 xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 nsgphy*	at mii? phy ?				# NS gigabit PHYs
 urlphy*	at mii? phy ?				# Realtek RTL8150L internal PHY
+rgephy*	at mii? phy ?				# Realtek 8169S/8110S PHY
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
