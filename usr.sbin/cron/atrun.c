@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.7 2003/03/15 00:39:01 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.8 2003/04/14 15:58:13 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.7 2003/03/15 00:39:01 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.8 2003/04/14 15:58:13 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -249,6 +249,10 @@ run_job(atjob *job, char *atfile)
 	}
 	unlink(atfile);
 
+	/* We don't want the atjobs dir in the log messages. */
+	if ((cp = strrchr(atfile, '/')) != NULL)
+		atfile = cp + 1;
+
 	/* Fork so other pending jobs don't have to wait for us to finish. */
 	switch (fork()) {
 	case 0:
@@ -373,18 +377,8 @@ run_job(atjob *job, char *atfile)
 		_exit(ERROR_EXIT);
 	}
 
-#ifdef CAPITALIZE_FOR_PS
-	/* mark ourselves as different to PS command watchers by upshifting
-	 * our program name.  This has no effect on some kernels.
-	 * XXX - really want to set proc title to at job name instead
-	 */
-	/*local*/{
-		char *pch;
-
-		for (pch = ProgramName; *pch; pch++)
-			*pch = MkUpper(*pch);
-	}
-#endif /* CAPITALIZE_FOR_PS */
+	/* mark ourselves as different to PS command watchers */
+	setproctitle("atrun %s", atfile);
 
 	pipe(output_pipe);	/* child's stdout/stderr */
 	

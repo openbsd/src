@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.23 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.24 2003/04/14 15:58:13 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.23 2003/02/20 20:38:08 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.24 2003/04/14 15:58:13 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -69,17 +69,8 @@ child_process(entry *e, user *u) {
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd))
 
-#ifdef CAPITALIZE_FOR_PS
-	/* mark ourselves as different to PS command watchers by upshifting
-	 * our program name.  This has no effect on some kernels.
-	 */
-	/*local*/{
-		char	*pch;
-
-		for (pch = ProgramName;  *pch;  pch++)
-			*pch = MkUpper(*pch);
-	}
-#endif /* CAPITALIZE_FOR_PS */
+	/* mark ourselves as different to PS command watchers */
+	setproctitle("running job");
 
 	/* discover some useful and important environment settings
 	 */
