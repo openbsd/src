@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.18 2003/08/07 00:28:45 deraadt Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.19 2004/12/22 17:33:25 otto Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -164,6 +164,8 @@ bcrypt_gensalt(u_int8_t log_rounds)
 
 	if (log_rounds < 4)
 		log_rounds = 4;
+	else if (log_rounds > 31)
+		log_rounds = 31;
 
 	encode_salt(gsalt, csalt, BCRYPT_MAXSALT, log_rounds);
 	return gsalt;
@@ -212,7 +214,10 @@ bcrypt(const char *key, const char *salt)
 		return error;
 
 	/* Computer power doesn't increase linear, 2^x should be fine */
-	if ((rounds = (u_int32_t) 1 << (logr = atoi(salt))) < BCRYPT_MINROUNDS)
+	logr = atoi(salt);
+	if (logr > 31)
+		return error;
+	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
 		return error;
 
 	/* Discard num rounds + "$" identifier */
