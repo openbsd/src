@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.35 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.36 2000/06/23 16:21:44 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.35 2000/06/23 16:20:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.36 2000/06/23 16:21:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,10 @@ VarFind(name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Lst_Find(ctxt, VarCmp, name);
+    if (ctxt != NULL)
+	var = Lst_Find(ctxt, VarCmp, name);
+    else
+    	var = NULL;
 
     if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
 	var = Lst_Find(VAR_CMD, VarCmp, name);
@@ -1541,7 +1544,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	if (v == NULL) {
 	    *lengthPtr = 2;
 
-	    if ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
+	    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL || ctxt == NULL) {
 		/*
 		 * If substituting a local variable in a non-local context,
 		 * assume it's for dynamic source stuff. We have to handle
@@ -1600,8 +1603,9 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	*tstr = '\0';
 
 	v = VarFind (str + 2, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
-	    ((tstr-str) == 4) && (str[3] == 'F' || str[3] == 'D'))
+	if (v == NULL && ctxt != VAR_CMD && ctxt != VAR_GLOBAL &&
+	    ctxt != NULL &&
+	    (tstr-str) == 4 && (str[3] == 'F' || str[3] == 'D'))
 	{
 	    /*
 	     * Check for bogus D and F forms of local variables since we're
@@ -1653,10 +1657,10 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	}
 
 	if (v == NULL) {
-	    if ((((tstr-str) == 3) ||
-		 ((((tstr-str) == 4) && (str[3] == 'F' ||
+	    if ((tstr-str == 3 ||
+		 ((tstr-str == 4 && (str[3] == 'F' ||
 					 str[3] == 'D')))) &&
-		((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
+		(ctxt == VAR_CMD || ctxt == VAR_GLOBAL || ctxt == NULL))
 	    {
 		/*
 		 * If substituting a local variable in a non-local context,
@@ -1677,7 +1681,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 		}
 	    } else if (((tstr-str) > 4) && (str[2] == '.') &&
 		       isupper((unsigned char) str[3]) &&
-		       ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
+		       (ctxt == VAR_CMD || ctxt == VAR_GLOBAL || ctxt == NULL))
 	    {
 		int	len;
 

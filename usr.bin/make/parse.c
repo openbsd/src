@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.47 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.48 2000/06/23 16:21:43 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.47 2000/06/23 16:20:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.48 2000/06/23 16:21:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -838,7 +838,7 @@ ParseDoDependency (line)
 		Boolean	freeIt;
 		char	*result;
 
-		result=Var_Parse(cp, VAR_CMD, TRUE, &length, &freeIt);
+		result=Var_Parse(cp, NULL, TRUE, &length, &freeIt);
 
 		if (freeIt) {
 		    free(result);
@@ -858,7 +858,7 @@ ParseDoDependency (line)
 	     * went well and FAILURE if there was an error in the
 	     * specification. On error, line should remain untouched.
 	     */
-	    if (Arch_ParseArchive(&line, &targets, VAR_CMD) != SUCCESS) {
+	    if (Arch_ParseArchive(&line, &targets, NULL) != SUCCESS) {
 		Parse_Error (PARSE_FATAL,
 			     "Error in archive specification: \"%s\"", line);
 		return;
@@ -1246,7 +1246,7 @@ ParseDoDependency (line)
 				 	 * expansion */
 
 		Lst_Init(&sources);
-		if (Arch_ParseArchive(&line, &sources, VAR_CMD) != SUCCESS) {
+		if (Arch_ParseArchive(&line, &sources, NULL) != SUCCESS) {
 		    Parse_Error (PARSE_FATAL,
 				 "Error in source archive spec \"%s\"", line);
 		    return;
@@ -1526,7 +1526,7 @@ Parse_DoVar (line, ctxt)
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done, so set freeCmd to TRUE.
 	     */
-	    cp = Var_Subst(cp, VAR_CMD, TRUE);
+	    cp = Var_Subst(cp, NULL, TRUE);
 	    freeCmd = TRUE;
 	}
 
@@ -1691,7 +1691,7 @@ ParseDoInclude (file)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    file = Var_Subst(file, VAR_CMD, FALSE);
+    file = Var_Subst(file, NULL, FALSE);
 
     /*
      * Now we know the file's name and its search path, we attempt to
@@ -1893,7 +1893,7 @@ ParseTraditionalInclude (file)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    file = Var_Subst(file, VAR_CMD, FALSE);
+    file = Var_Subst(file, NULL, FALSE);
 
     /*
      * Now we know the file's name, we attempt to find the durn thing.
@@ -2561,7 +2561,7 @@ Parse_File(name, stream)
 #endif
 		    ParseFinishLine();
 
-		    cp = Var_Subst(line, VAR_CMD, TRUE);
+		    cp = Var_Subst(line, NULL, TRUE);
 		    free (line);
 		    line = cp;
 

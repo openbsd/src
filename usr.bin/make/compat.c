@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.30 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.31 2000/06/23 16:21:43 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.30 2000/06/23 16:20:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.31 2000/06/23 16:21:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -601,11 +601,11 @@ CompatMake(gnp, pgnp)
 	} else {
 	    if (gn->lineno)
 		printf("\n\nStop in %s (line %lu of %s).\n", 
-			Var_Value(".CURDIR", &gn->context), 
+			Var_Value(".CURDIR", VAR_GLOBAL), 
 			(unsigned long)gn->lineno,
 			gn->fname);
 	    else
-		printf("\n\nStop in %s.\n", Var_Value(".CURDIR", &gn->context));
+		printf("\n\nStop in %s.\n", Var_Value(".CURDIR", VAR_GLOBAL));
 	    exit (1);
 	}
     } else if (gn->made == ERROR) {

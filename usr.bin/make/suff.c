@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.33 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.34 2000/06/23 16:21:43 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.33 2000/06/23 16:20:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.34 2000/06/23 16:21:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1595,10 +1595,6 @@ SuffFindArchiveDeps(gn, slst)
     char    	*eoarch;    /* End of archive portion */
     char    	*eoname;    /* End of member portion */
     GNode   	*mem;	    /* Node for member */
-    static char	*copy[] = { /* Variables to be copied from the member node */
-	TARGET,	    	    /* Must be first */
-	PREFIX,	    	    /* Must be second */
-    };
     int	    	i;  	    /* Index into copy and vals */
     Suff    	*ms;	    /* Suffix descriptor for member */
     char    	*name;	    /* Start of member's name */
@@ -1636,13 +1632,9 @@ SuffFindArchiveDeps(gn, slst)
 	gn->unmade += 1;
     }
 
-    /*
-     * Copy in the variables from the member node to this one.
-     */
-    for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
-	Var_Set(copy[i], Var_Value(copy[i], &mem->context), &gn->context);
-
-    }
+    /* Copy variables from member node to this one.  */
+    Varq_Set(TARGET_INDEX, Varq_Value(TARGET_INDEX, mem), gn);
+    Varq_Set(PREFIX_INDEX, Varq_Value(PREFIX_INDEX, mem), gn);
 
     ms = mem->suffix;
     if (ms == NULL) {

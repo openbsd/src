@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.23 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.24 2000/06/23 16:21:43 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.23 2000/06/23 16:20:01 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.24 2000/06/23 16:21:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -224,14 +224,14 @@ TargFreeGN(gnp)
 
     free(gn->name);
     efree(gn->path);
-    Lst_Destroy(&gn->iParents, NOFRE);
-    Lst_Destroy(&gn->cohorts, NOFRE);
-    Lst_Destroy(&gn->parents, NOFRE);
-    Lst_Destroy(&gn->children, NOFRE);
-    Lst_Destroy(&gn->successors, NOFRE);
-    Lst_Destroy(&gn->preds, NOFRE);
-    Lst_Destroy(&gn->context, NOFRE);
-    Lst_Destroy(&gn->commands, NOFRE);
+    Lst_Destroy(&gn->iParents, NOFREE);
+    Lst_Destroy(&gn->cohorts, NOFREE);
+    Lst_Destroy(&gn->parents, NOFREE);
+    Lst_Destroy(&gn->children, NOFREE);
+    Lst_Destroy(&gn->successors, NOFREE);
+    Lst_Destroy(&gn->preds, NOFREE);
+    Lst_Destroy(&gn->context, NOFREE);
+    Lst_Destroy(&gn->commands, NOFREE);
     free(gn);
 }
 #endif

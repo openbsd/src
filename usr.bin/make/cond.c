@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.18 2000/06/17 14:38:14 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.19 2000/06/23 16:21:43 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.18 2000/06/17 14:38:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.19 2000/06/23 16:21:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ CondGetArg(linePtr, argPtr, argLen, func, parens)
 	    size_t	len;
 	    Boolean	doFree;
 
-	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, &len, &doFree);
+	    cp2 = Var_Parse(cp, NULL, TRUE, &len, &doFree);
 
 	    Buf_AddString(&buf, cp2);
 	    if (doFree) {
@@ -291,7 +291,7 @@ CondDoDefined(argLen, arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Var_Value(arg, VAR_CMD) != NULL)
+    if (Var_Value(arg, NULL) != NULL)
 	result = TRUE;
     else
 	result = FALSE;
@@ -528,7 +528,7 @@ CondToken(doEval)
 		 * value in lhs.
 		 */
 		t = Err;
-		lhs = Var_Parse(condExpr, VAR_CMD, doEval,&varSpecLen,&doFree);
+		lhs = Var_Parse(condExpr, NULL, doEval,&varSpecLen,&doFree);
 		if (lhs == var_Error) {
 		    /*
 		     * Even if !doEval, we still report syntax errors, which
@@ -632,7 +632,7 @@ do_string_compare:
 			    size_t  len;
 			    Boolean freeIt;
 
-			    cp2 = Var_Parse(cp, VAR_CMD, doEval,&len, &freeIt);
+			    cp2 = Var_Parse(cp, NULL, doEval,&len, &freeIt);
 			    if (cp2 != var_Error) {
 				Buf_AddString(&buf, cp2);
 				if (freeIt) {
@@ -685,7 +685,7 @@ do_string_compare:
 			size_t 	len;
 			Boolean	freeIt;
 
-			string = Var_Parse(rhs, VAR_CMD, doEval,&len,&freeIt);
+			string = Var_Parse(rhs, NULL, doEval,&len,&freeIt);
 			if (string == var_Error) {
 			    right = 0.0;
 			} else {
@@ -817,7 +817,7 @@ error:
 			continue;
 
 		    if (condExpr[arglen] != '\0') {
-			val = Var_Parse(&condExpr[arglen - 1], VAR_CMD,
+			val = Var_Parse(&condExpr[arglen - 1], NULL,
 					doEval, &length, &doFree);
 			if (val == var_Error) {
 			    t = Err;
