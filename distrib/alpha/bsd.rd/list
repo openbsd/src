@@ -6,6 +6,7 @@ LINK	instbin					sbin/dhclient
 COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
 
 SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 SPECIAL	chmod 755 sbin/dhclient-script

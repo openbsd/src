@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.7 2004/11/22 19:09:35 deraadt Exp $
+# $OpenBSD: list.local,v 1.8 2004/12/15 05:34:49 mcbride Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/wicontrol
@@ -13,3 +13,4 @@ LINK	instbin					sbin/apmd
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
