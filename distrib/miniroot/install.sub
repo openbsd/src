@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.366 2005/03/26 05:08:26 krw Exp $
+#	$OpenBSD: install.sub,v 1.367 2005/03/26 15:40:21 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -348,7 +348,7 @@ isin() {
 
 	shift
 	for _b; do
-		[ "$_a" = "$_b" ] && return 0
+		[[ $_a == $_b ]] && return 0
 	done
 	return 1
 }
@@ -371,7 +371,7 @@ rmel() {
 
 	shift
 	for _b; do
-		[ "$_a" != "$_b" ] && echo -n "$_b "
+		[[ $_a != $_b ]] && echo -n "$_b "
 	done
 }
 
@@ -677,9 +677,7 @@ v4_defroute() {
 
 	while :; do
 		ask_until "$_prompt" "$_dr"
-		case $resp in
-		none|dhcp) break ;;
-		esac
+		[[ $resp == @(none|dhcp) ]] && break
 		route delete -inet default > /dev/null 2>&1
 		route -n add -inet -host default "$resp" && { echo "$resp" >/tmp/mygate ; break ; }
 		# Put the old default route back. The new one did not work.
@@ -1054,18 +1052,13 @@ install_mounted_fs() {
 
 	while :; do
 		ask_until "Pathname to the sets? (or 'done')" "$_dir"
-		case $resp in
-		done)	return
-			;;
-		*)
-			# Accept a valid $_mp relative path.
-			[[ -d $_mp/$resp ]] && { _dir=$_mp/$resp ; break ; }
-			# Accept a valid absolute path.
-			[[ -d /$resp ]] && { _dir=/$resp ; break ; }
-			# Otherwise ask again, with original default dir.
-			echo "The directory '$resp' does not exist."
-			;;
-		esac
+		[[ $resp == done ]] && return
+		# Accept a valid $_mp relative path.
+		[[ -d $_mp/$resp ]] && { _dir=$_mp/$resp ; break ; }
+		# Accept a valid absolute path.
+		[[ -d /$resp ]] && { _dir=/$resp ; break ; }
+		# Otherwise ask again, with original default dir.
+		echo "The directory '$resp' does not exist."
 	done
 
 	install_files "file://$_dir" "$(ls -l $_dir)"
