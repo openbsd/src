@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.11 1999/12/20 07:45:09 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.12 2000/01/09 23:00:13 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.11 1999/12/20 07:45:09 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.12 2000/01/09 23:00:13 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -408,16 +408,16 @@ encap_print(rtm)
         	printf("%s/", buffer);
 		inet_ntop(AF_INET, &sen1->sen_ip_dst, buffer, sizeof(buffer));
         	printf("%-15s %-5u/%-5u/%-5u ", buffer, sen1->sen_proto,
-		       sen1->sen_sport, sen1->sen_dport);
+		       ntohs(sen1->sen_sport), ntohs(sen1->sen_dport));
 	}
 
 #ifdef INET6
 	if (sen1->sen_type == SENT_IP6) {
 		inet_ntop(AF_INET6, &sen1->sen_ip6_src, buffer, sizeof(buffer));
-        	printf("%s/", buffer, sen1->sen_ip6_sport);
+        	printf("%s/", buffer);
 		inet_ntop(AF_INET6, &sen1->sen_ip6_dst, buffer, sizeof(buffer));
         	printf("%-39s %-5u/%-5u/%-5u ", buffer, sen1->sen_ip6_proto,
-		       sen1->sen_ip6_sport, sen1->sen_ip6_dport);
+		       ntohs(sen1->sen_ip6_sport), ntohs(sen1->sen_ip6_dport));
 	}
 
 	if (sen3->sen_type == SENT_IPSP6)
