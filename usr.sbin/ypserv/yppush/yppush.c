@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.18 2002/11/21 21:01:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.18 2002/11/21 21:01:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 	struct ypall_callback ypcb;
 	extern char *optarg;
 	extern int optind;
-	char	*domain, *map, *hostname, *parallel, *timeout;
+	char	*domain, *map, *hostname;
 	int c, r, i;
 	char *ypmap = "ypservers";
 	CLIENT *client;
@@ -249,12 +249,6 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			hostname = optarg;
-			break;
-		case 'p':
-			parallel = optarg;
-			break;
-		case 't':
-			timeout = optarg;
 			break;
 		case 'v':
 			Verbose = 1;
