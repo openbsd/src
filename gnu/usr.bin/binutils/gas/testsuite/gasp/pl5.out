@@ -1,0 +1,32 @@
+!! test of literal text operator
+	! test of literal text operator
+!	.ALTERNATE
+!foop	MACRO	str1,str2
+!	SDATA	"str1"
+!	SDATA	str2
+!	ENDM
+!
+
+!
+
+!	
+!	foop	this< is a <string> with angle brackets>
+!	SDATA	"this"
+	.byte	116,104,105,115
+!	SDATA	" is a <string> with angle brackets"
+	.byte	32,105,115,32,97,32,60,115,116,114,105,110,103,62,32,119,105,116,104,32,97,110,103,108,101,32,98,114,97,99,107,101,116,115
+!	foop 	this< is a string with spaces>
+!	SDATA	"this"
+	.byte	116,104,105,115
+!	SDATA	" is a string with spaces"
+	.byte	32,105,115,32,97,32,115,116,114,105,110,103,32,119,105,116,104,32,115,112,97,99,101,115
+!	foop	this < is a string with a !>>
+!	SDATA	"this"
+	.byte	116,104,105,115
+!	SDATA	" is a string with a >"
+	.byte	32,105,115,32,97,32,115,116,114,105,110,103,32,119,105,116,104,32,97,32,62
+!
+
+!
+
+!	END

@@ -1,0 +1,113 @@
+#   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+load_lib util-defs.exp
+load_lib utils-lib.exp
+
+if ![info exists AS] then {
+    set AS [findfile $base_dir/../gas/as.new $base_dir/../gas/as.new [transform as]]
+}
+if ![info exists ASFLAGS] then {
+    set ASFLAGS ""
+}
+
+if ![info exists NM] then {
+    set NM [findfile $base_dir/nm.new $base_dir/nm.new [transform nm]]
+}
+if ![info exists NMFLAGS] then {
+    set NMFLAGS ""
+}
+
+if ![info exists SIZE] then {
+    set SIZE [findfile $base_dir/size]
+}
+if ![info exists SIZEFLAGS] then {
+    set SIZEFLAGS ""
+}
+
+if ![info exists OBJDUMP] then {
+    set OBJDUMP [findfile $base_dir/objdump]
+}
+if ![info exists OBJDUMPFLAGS] then {
+    set OBJDUMPFLAGS ""
+}
+
+if ![info exists OBJCOPY] then {
+    set OBJCOPY [findfile $base_dir/objcopy]
+}
+if ![info exists OBJCOPYFLAGS] then {
+    set OBJCOPYFLAGS ""
+}
+
+if ![info exists AR] then {
+    set AR [findfile $base_dir/ar]
+}
+
+if ![info exists STRIP] then {
+    set STRIP [findfile $base_dir/strip.new $base_dir/strip.new [transform strip]]
+}
+if ![info exists STRIPFLAGS] then {
+    set STRIPFLAGS ""
+}
+
+if ![file isdirectory tmpdir] {catch "exec mkdir tmpdir" status}
+
+#
+# binutils_run
+#	run a program, returning the output
+#	sets binutils_run_failed if the program does not exist
+#
+proc binutils_run { prog progargs } {
+    default_binutils_run $prog $progargs
+}
+
+#
+# binutils_assemble
+#	assemble a file
+#
+proc binutils_assemble { as source object } {
+    default_binutils_assemble $as $source $object
+}
+
+#
+# binutils_compile
+#	compile a file
+#
+proc binutils_compile { cc flags source object } {
+    default_binutils_compile $cc $flags $source $object
+}
+
+#
+# binutils_remove
+#	remove a file
+#
+proc binutils_remove { file } {
+    default_binutils_remove $file
+}
+
+#
+# add some basic error trapping. These mostly catch programming error's
+# within the tests themselves
+#
+expect_before {
+    buffer_full		   { perror "internal buffer is full." }
+    "can't open '*'" { perror "Can't open test file." }
+}

@@ -1,0 +1,8 @@
+;	irpc	dummy,1234
+;	dc.l	dummy
+;	endr
+	dc.l	1
+	dc.l	2
+	dc.l	3
+	dc.l	4
+;

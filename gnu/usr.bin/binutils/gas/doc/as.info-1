@@ -1,0 +1,1338 @@
+This is Info file as.info, produced by Makeinfo-1.55 from the input
+file ./as.texinfo.
+
+START-INFO-DIR-ENTRY
+* As: (as).                     The GNU assembler.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU Assembler "as".
+
+   Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation,
+Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: as.info,  Node: Top,  Next: Overview,  Prev: (DIR),  Up: (DIR)
+
+Using as
+********
+
+   This file is a user guide to the GNU assembler `as'.
+
+* Menu:
+
+* Overview::                    Overview
+* Invoking::                    Command-Line Options
+* Syntax::                      Syntax
+* Sections::                    Sections and Relocation
+* Symbols::                     Symbols
+* Expressions::                 Expressions
+* Pseudo Ops::                  Assembler Directives
+* Machine Dependencies::        Machine Dependent Features
+* Acknowledgements::            Who Did What
+* Index::                       Index
+
+
+File: as.info,  Node: Overview,  Next: Invoking,  Prev: Top,  Up: Top
+
+Overview
+********
+
+   Here is a brief summary of how to invoke `as'.  For details, *note
+Comand-Line Options: Invoking..
+
+     as [ -a[dhlns][=file] ] [ -D ]  [ --defsym SYM=VAL ]
+      [ -f ] [ --help ] [ -I DIR ] [ -J ] [ -K ] [ -L ]
+      [ -o OBJFILE ] [ -R ] [ --statistics ] [ -v ] [ -version ]
+      [ --version ] [ -W ] [ -w ] [ -x ] [ -Z ]
+      [ -Av6 | -Av7 | -Av8 | -Av9 | -Asparclite | -bump ]
+      [ -ACA | -ACA_A | -ACB | -ACC | -AKA | -AKB | -AKC | -AMC ]
+      [ -b ] [ -no-relax ]
+      [ -l ] [ -m68000 | -m68010 | -m68020 | ... ]
+      [ -nocpp ] [ -EL ] [ -EB ] [ -G NUM ] [ -mcpu=CPU ]
+      [ -mips1 ] [ -mips2 ] [ -mips3 ] [ -m4650 ] [ -no-m4650 ]
+      [ --trap ] [ --break ]
+      [ --emulation=NAME ]
+      [ -- | FILES ... ]
+
+`-a[dhlns]'
+     Turn on listings, in any of a variety of ways:
+
+    `-ad'
+          omit debugging directives
+
+    `-ah'
+          include high-level source
+
+    `-al'
+          include assembly
+
+    `-an'
+          omit forms processing
+
+    `-as'
+          include symbols
+
+    `=file'
+          set the name of the listing file
+
+     You may combine these options; for example, use `-aln' for assembly
+     listing without forms processing.  The `=file' option, if used,
+     must be the last one.  By itself, `-a' defaults to `-ahls'--that
+     is, all listings turned on.
+
+`-D'
+     Ignored.  This option is accepted for script compatibility with
+     calls to other assemblers.
+
+`--defsym SYM=VALUE'
+     Define the symbol SYM to be VALUE before assembling the input file.
+     vALUE must be an integer constant.  As in C, a leading `0x'
+     indicates a hexadecimal value, and a leading `0' indicates an
+     octal value.
+
+`-f'
+     "fast"--skip whitespace and comment preprocessing (assume source is
+     compiler output).
+
+`--help'
+     Print a summary of the command line options and exit.
+
+`-I DIR'
+     Add directory DIR to the search list for `.include' directives.
+
+`-J'
+     Don't warn about signed overflow.
+
+`-K'
+     Issue warnings when difference tables altered for long
+     displacements.
+
+`-L'
+     Keep (in the symbol table) local symbols, starting with `L'.
+
+`-o OBJFILE'
+     Name the object-file output from `as' OBJFILE.
+
+`-R'
+     Fold the data section into the text section.
+
+`--statistics'
+     Print the maximum space (in bytes) and total time (in seconds)
+     used by assembly.
+
+`-v'
+`-version'
+     Print the `as' version.
+
+`--version'
+     Print the `as' version and exit.
+
+`-W'
+     Suppress warning messages.
+
+`-w'
+     Ignored.
+
+`-x'
+     Ignored.
+
+`-Z'
+     Generate an object file even after errors.
+
+`-- | FILES ...'
+     Standard input, or source files to assemble.
+
+   The following options are available when as is configured for the
+Intel 80960 processor.
+
+`-ACA | -ACA_A | -ACB | -ACC | -AKA | -AKB | -AKC | -AMC'
+     Specify which variant of the 960 architecture is the target.
+
+`-b'
+     Add code to collect statistics about branches taken.
+
+`-no-relax'
+     Do not alter compare-and-branch instructions for long
+     displacements; error if necessary.
+
+   The following options are available when as is configured for the
+Motorola 68000 series.
+
+`-l'
+     Shorten references to undefined symbols, to one word instead of
+     two.
+
+`-m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040'
+`| -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -mcpu32'
+     Specify what processor in the 68000 family is the target.  The
+     default is normally the 68020, but this can be changed at
+     configuration time.
+
+`-m68881 | -m68882 | -mno-68881 | -mno-68882'
+     The target machine does (or does not) have a floating-point
+     coprocessor.  The default is to assume a coprocessor for 68020,
+     68030, and cpu32.  Although the basic 68000 is not compatible with
+     the 68881, a combination of the two can be specified, since it's
+     possible to do emulation of the coprocessor instructions with the
+     main processor.
+
+`-m68851 | -mno-68851'
+     The target machine does (or does not) have a memory-management
+     unit coprocessor.  The default is to assume an MMU for 68020 and
+     up.
+
+   The following options are available when `as' is configured for the
+SPARC architecture:
+
+`-Av6 | -Av7 | -Av8 | -Av9 | -Asparclite'
+     Explicitly select a variant of the SPARC architecture.
+
+`-bump'
+     Warn when the assembler switches to another architecture.
+
+   The following options are available when as is configured for a MIPS
+processor.
+
+`-G NUM'
+     This option sets the largest size of an object that can be
+     referenced implicitly with the `gp' register.  It is only accepted
+     for targets that use ECOFF format, such as a DECstation running
+     Ultrix.  The default value is 8.
+
+`-EB'
+     Generate "big endian" format output.
+
+`-EL'
+     Generate "little endian" format output.
+
+`-mips1'
+`-mips2'
+`-mips3'
+     Generate code for a particular MIPS Instruction Set Architecture
+     level.  `-mips1' corresponds to the R2000 and R3000 processors,
+     `-mips2' to the R6000 processor, and `-mips3' to the R4000
+     processor.
+
+`-m4650'
+`-no-m4650'
+     Generate code for the MIPS R4650 chip.  This tells the assembler
+     to accept the `mad' and `madu' instruction, and to not schedule
+     `nop' instructions around accesses to the `HI' and `LO' registers.
+     `-no-m4650' turns off this option.
+
+`-mcpu=CPU'
+     Generate code for a particular MIPS cpu.  This has little effect
+     on the assembler, but it is passed by `gcc'.
+
+`--emulation=NAME'
+     This option causes `as' to emulated `as' configured for some other
+     target, in all respects, including output format (choosing between
+     ELF and ECOFF only), handling of pseudo-opcodes which may generate
+     debugging information or store symbol table information, and
+     default endianness.  The available configuration names are:
+     `mipsecoff', `mipself', `mipslecoff', `mipsbecoff', `mipslelf',
+     `mipsbelf'.  The first two do not alter the default endianness
+     from that of the primary target for which the assembler was
+     configured; the others change the default to little- or big-endian
+     as indicated by the `b' or `l' in the name.  Using `-EB' or `-EL'
+     will override the endianness selection in any case.
+
+     This option is currently supported only when the primary target
+     `as' is configured for is a MIPS ELF or ECOFF target.
+     Furthermore, the primary target or others specified with
+     `--enable-targets=...' at configuration time must include support
+     for the other format, if both are to be available.  For example,
+     the Irix 5 configuration includes support for both.
+
+     Eventually, this option will support more configurations, with more
+     fine-grained control over the assembler's behavior, and will be
+     supported for more processors.
+
+`-nocpp'
+     `as' ignores this option.  It is accepted for compatibility with
+     the native tools.
+
+`--trap'
+`--no-trap'
+`--break'
+`--no-break'
+     Control how to deal with multiplication overflow and division by
+     zero.  `--trap' or `--no-break' (which are synonyms) take a trap
+     exception (and only work for Instruction Set Architecture level 2
+     and higher); `--break' or `--no-trap' (also synonyms, and the
+     default) take a break exception.
+
+* Menu:
+
+* Manual::                      Structure of this Manual
+* GNU Assembler::               as, the GNU Assembler
+* Object Formats::              Object File Formats
+* Command Line::                Command Line
+* Input Files::                 Input Files
+* Object::                      Output (Object) File
+* Errors::                      Error and Warning Messages
+
+
+File: as.info,  Node: Manual,  Next: GNU Assembler,  Up: Overview
+
+Structure of this Manual
+========================
+
+   This manual is intended to describe what you need to know to use GNU
+`as'.  We cover the syntax expected in source files, including notation
+for symbols, constants, and expressions; the directives that `as'
+understands; and of course how to invoke `as'.
+
+   This manual also describes some of the machine-dependent features of
+various flavors of the assembler.
+
+   On the other hand, this manual is *not* intended as an introduction
+to programming in assembly language--let alone programming in general!
+In a similar vein, we make no attempt to introduce the machine
+architecture; we do *not* describe the instruction set, standard
+mnemonics, registers or addressing modes that are standard to a
+particular architecture.  You may want to consult the manufacturer's
+machine architecture manual for this information.
+
+
+File: as.info,  Node: GNU Assembler,  Next: Object Formats,  Prev: Manual,  Up: Overview
+
+as, the GNU Assembler
+=====================
+
+   GNU `as' is really a family of assemblers.  If you use (or have
+used) the GNU assembler on one architecture, you should find a fairly
+similar environment when you use it on another architecture.  Each
+version has much in common with the others, including object file
+formats, most assembler directives (often called "pseudo-ops") and
+assembler syntax.
+
+   `as' is primarily intended to assemble the output of the GNU C
+compiler `gcc' for use by the linker `ld'.  Nevertheless, we've tried
+to make `as' assemble correctly everything that other assemblers for
+the same machine would assemble.  Any exceptions are documented
+explicitly (*note Machine Dependencies::.).  This doesn't mean `as'
+always uses the same syntax as another assembler for the same
+architecture; for example, we know of several incompatible versions of
+680x0 assembly language syntax.
+
+   Unlike older assemblers, `as' is designed to assemble a source
+program in one pass of the source file.  This has a subtle impact on the
+`.org' directive (*note `.org': Org.).
+
+
+File: as.info,  Node: Object Formats,  Next: Command Line,  Prev: GNU Assembler,  Up: Overview
+
+Object File Formats
+===================
+
+   The GNU assembler can be configured to produce several alternative
+object file formats.  For the most part, this does not affect how you
+write assembly language programs; but directives for debugging symbols
+are typically different in different file formats.  *Note Symbol
+Attributes: Symbol Attributes.
+
+
+File: as.info,  Node: Command Line,  Next: Input Files,  Prev: Object Formats,  Up: Overview
+
+Command Line
+============
+
+   After the program name `as', the command line may contain options
+and file names.  Options may appear in any order, and may be before,
+after, or between file names.  The order of file names is significant.
+
+   `--' (two hyphens) by itself names the standard input file
+explicitly, as one of the files for `as' to assemble.
+
+   Except for `--' any command line argument that begins with a hyphen
+(`-') is an option.  Each option changes the behavior of `as'.  No
+option changes the way another option works.  An option is a `-'
+followed by one or more letters; the case of the letter is important.
+All options are optional.
+
+   Some options expect exactly one file name to follow them.  The file
+name may either immediately follow the option's letter (compatible with
+older assemblers) or it may be the next command argument (GNU
+standard).  These two command lines are equivalent:
+
+     as -o my-object-file.o mumble.s
+     as -omy-object-file.o mumble.s
+
+
+File: as.info,  Node: Input Files,  Next: Object,  Prev: Command Line,  Up: Overview
+
+Input Files
+===========
+
+   We use the phrase "source program", abbreviated "source", to
+describe the program input to one run of `as'.  The program may be in
+one or more files; how the source is partitioned into files doesn't
+change the meaning of the source.
+
+   The source program is a concatenation of the text in all the files,
+in the order specified.
+
+   Each time you run `as' it assembles exactly one source program.  The
+source program is made up of one or more files.  (The standard input is
+also a file.)
+
+   You give `as' a command line that has zero or more input file names.
+The input files are read (from left file name to right).  A command
+line argument (in any position) that has no special meaning is taken to
+be an input file name.
+
+   If you give `as' no file names it attempts to read one input file
+from the `as' standard input, which is normally your terminal.  You may
+have to type ctl-D to tell `as' there is no more program to assemble.
+
+   Use `--' if you need to explicitly name the standard input file in
+your command line.
+
+   If the source is empty, `as' produces a small, empty object file.
+
+Filenames and Line-numbers
+--------------------------
+
+   There are two ways of locating a line in the input file (or files)
+and either may be used in reporting error messages.  One way refers to
+a line number in a physical file; the other refers to a line number in a
+"logical" file.  *Note Error and Warning Messages: Errors.
+
+   "Physical files" are those files named in the command line given to
+`as'.
+
+   "Logical files" are simply names declared explicitly by assembler
+directives; they bear no relation to physical files.  Logical file names
+help error messages reflect the original source file, when `as' source
+is itself synthesized from other files.  *Note `.app-file': App-File.
+
+
+File: as.info,  Node: Object,  Next: Errors,  Prev: Input Files,  Up: Overview
+
+Output (Object) File
+====================
+
+   Every time you run `as' it produces an output file, which is your
+assembly language program translated into numbers.  This file is the
+object file.  Its default name is `a.out', or `b.out' when `as' is
+configured for the Intel 80960.  You can give it another name by using
+the `-o' option.  Conventionally, object file names end with `.o'.  The
+default name is used for historical reasons: older assemblers were
+capable of assembling self-contained programs directly into a runnable
+program.  (For some formats, this isn't currently possible, but it can
+be done for the `a.out' format.)
+
+   The object file is meant for input to the linker `ld'.  It contains
+assembled program code, information to help `ld' integrate the
+assembled program into a runnable file, and (optionally) symbolic
+information for the debugger.
+
+
+File: as.info,  Node: Errors,  Prev: Object,  Up: Overview
+
+Error and Warning Messages
+==========================
+
+   `as' may write warnings and error messages to the standard error
+file (usually your terminal).  This should not happen when  a compiler
+runs `as' automatically.  Warnings report an assumption made so that
+`as' could keep assembling a flawed program; errors report a grave
+problem that stops the assembly.
+
+   Warning messages have the format
+
+     file_name:NNN:Warning Message Text
+
+(where NNN is a line number).  If a logical file name has been given
+(*note `.app-file': App-File.) it is used for the filename, otherwise
+the name of the current input file is used.  If a logical line number
+was given (*note `.line': Line.) then it is used to calculate the
+number printed, otherwise the actual line in the current source file is
+printed.  The message text is intended to be self explanatory (in the
+grand Unix tradition).
+
+   Error messages have the format
+     file_name:NNN:FATAL:Error Message Text
+   The file name and line number are derived as for warning messages.
+The actual message text may be rather less explanatory because many of
+them aren't supposed to happen.
+
+
+File: as.info,  Node: Invoking,  Next: Syntax,  Prev: Overview,  Up: Top
+
+Command-Line Options
+********************
+
+   This chapter describes command-line options available in *all*
+versions of the GNU assembler; *note Machine Dependencies::., for
+options specific to particular machine architectures.
+
+   If you are invoking `as' via the GNU C compiler (version 2), you can
+use the `-Wa' option to pass arguments through to the assembler.  The
+assembler arguments must be separated from each other (and the `-Wa')
+by commas.  For example:
+
+     gcc -c -g -O -Wa,-alh,-L file.c
+
+emits a listing to standard output with high-level and assembly source.
+
+   Usually you do not need to use this `-Wa' mechanism, since many
+compiler command-line options are automatically passed to the assembler
+by the compiler.  (You can call the GNU compiler driver with the `-v'
+option to see precisely what options it passes to each compilation
+pass, including the assembler.)
+
+* Menu:
+
+* a::             -a[dhlns] enable listings
+* D::             -D for compatibility
+* f::             -f to work faster
+* I::             -I for .include search path
+
+* K::             -K for difference tables
+
+* L::             -L to retain local labels
+* M::		  -M or -mri to assemble in MRI compatibility mode
+* o::             -o to name the object file
+* R::             -R to join data and text sections
+* statistics::    -statistics to see statistics about assembly
+* v::             -v to announce version
+* W::             -W to suppress warnings
+* Z::             -Z to make object file even after errors
+
+
+File: as.info,  Node: a,  Next: D,  Up: Invoking
+
+Enable Listings: `-a[dhlns]'
+============================
+
+   These options enable listing output from the assembler.  By itself,
+`-a' requests high-level, assembly, and symbols listing.  You can use
+other letters to select specific options for the list: `-ah' requests a
+high-level language listing, `-al' requests an output-program assembly
+listing, and `-as' requests a symbol table listing.  High-level
+listings require that a compiler debugging option like `-g' be used,
+and that assembly listings (`-al') be requested also.
+
+   Use the `-ad' option to omit debugging directives from the listing.
+
+   Once you have specified one of these options, you can further control
+listing output and its appearance using the directives `.list',
+`.nolist', `.psize', `.eject', `.title', and `.sbttl'.  The `-an'
+option turns off all forms processing.  If you do not request listing
+output with one of the `-a' options, the listing-control directives
+have no effect.
+
+   The letters after `-a' may be combined into one option, *e.g.*,
+`-aln'.
+
+
+File: as.info,  Node: D,  Next: f,  Prev: a,  Up: Invoking
+
+`-D'
+====
+
+   This option has no effect whatsoever, but it is accepted to make it
+more likely that scripts written for other assemblers also work with
+`as'.
+
+
+File: as.info,  Node: f,  Next: I,  Prev: D,  Up: Invoking
+
+Work Faster: `-f'
+=================
+
+   `-f' should only be used when assembling programs written by a
+(trusted) compiler.  `-f' stops the assembler from doing whitespace and
+comment preprocessing on the input file(s) before assembling them.
+*Note Preprocessing: Preprocessing.
+
+     *Warning:* if you use `-f' when the files actually need to be
+     preprocessed (if they contain comments, for example), `as' does
+     not work correctly.
+
+
+File: as.info,  Node: I,  Next: K,  Prev: f,  Up: Invoking
+
+`.include' search path: `-I' PATH
+=================================
+
+   Use this option to add a PATH to the list of directories `as'
+searches for files specified in `.include' directives (*note
+`.include': Include.).  You may use `-I' as many times as necessary to
+include a variety of paths.  The current working directory is always
+searched first; after that, `as' searches any `-I' directories in the
+same order as they were specified (left to right) on the command line.
+
+
+File: as.info,  Node: K,  Next: L,  Prev: I,  Up: Invoking
+
+Difference Tables: `-K'
+=======================
+
+   `as' sometimes alters the code emitted for directives of the form
+`.word SYM1-SYM2'; *note `.word': Word..  You can use the `-K' option
+if you want a warning issued when this is done.
+
+
+File: as.info,  Node: L,  Next: M,  Prev: K,  Up: Invoking
+
+Include Local Labels: `-L'
+==========================
+
+   Labels beginning with `L' (upper case only) are called "local
+labels". *Note Symbol Names::.  Normally you do not see such labels when
+debugging, because they are intended for the use of programs (like
+compilers) that compose assembler programs, not for your notice.
+Normally both `as' and `ld' discard such labels, so you do not normally
+debug with them.
+
+   This option tells `as' to retain those `L...' symbols in the object
+file.  Usually if you do this you also tell the linker `ld' to preserve
+symbols whose names begin with `L'.
+
+   By default, a local label is any label beginning with `L', but each
+target is allowed to redefine the local label prefix.  On the HPPA
+local labels begin with `L$'.
+
+
+File: as.info,  Node: M,  Next: o,  Prev: L,  Up: Invoking
+
+Assemble in MRI Compatibility Mode: `-M'
+========================================
+
+   The `-M' or `--mri' option selects MRI compatibility mode.  This
+changes the syntax and pseudo-op handling of `as' to make it compatible
+with the `ASM68K' or the `ASM960' (depending upon the configured
+target) assembler from Microtec Research.  The exact nature of the MRI
+syntax will not be documented here; see the MRI manuals for more
+information.  The purpose of this option is to permit assembling
+existing MRI assembler code using `as'.
+
+   The MRI compatibility is not complete.  Certain operations of the
+MRI assembler depend upon its object file format, and can not be
+supported using other object file formats.  Supporting these would
+require enhancing each object file format individually.  These are:
+
+   * global symbols in common section
+
+     The m68k MRI assembler supports common sections which are merged
+     by the linker.  Other object file formats do not support this.
+     `as' handles common sections by treating them as a single common
+     symbol.  It permits local symbols to be defined within a common
+     section, but it can not support global symbols, since it has no
+     way to describe them.
+
+   * complex relocations
+
+     The MRI assemblers support relocations against a negated section
+     address, and relocations which combine the start addresses of two
+     or more sections.  These are not support by other object file
+     formats.
+
+   * `END' pseudo-op specifying start address
+
+     The MRI `END' pseudo-op permits the specification of a start
+     address.  This is not supported by other object file formats.  The
+     start address may instead be specified using the `-e' option to
+     the linker, or in a linker script.
+
+   * `IDNT', `.ident' and `NAME' pseudo-ops
+
+     The MRI `IDNT', `.ident' and `NAME' pseudo-ops assign a module
+     name to the output file.  This is not supported by other object
+     file formats.
+
+   * `ORG' pseudo-op
+
+     The m68k MRI `ORG' pseudo-op begins an absolute section at a given
+     address.  This differs from the usual `as' `.org' pseudo-op, which
+     changes the location within the current section.  Absolute
+     sections are not supported by other object file formats.  The
+     address of a section may be assigned within a linker script.
+
+   There are some other features of the MRI assembler which are not
+supported by `as', typically either because they are difficult or
+because they seem of little consequence.  Some of these may be
+supported in future releases.
+
+   * EBCDIC strings
+
+     EBCDIC strings are not supported.
+
+   * packed binary coded decimal
+
+     Packed binary coded decimal is not supported.  This means that the
+     `DC.P' and `DCB.P' pseudo-ops are not supported.
+
+   * `FEQU' pseudo-op
+
+     The m68k `FEQU' pseudo-op is not supported.
+
+   * `NOOBJ' pseudo-op
+
+     The m68k `NOOBJ' pseudo-op is not supported.
+
+   * `OPT' branch control options
+
+     The m68k `OPT' branch control options--`B', `BRS', `BRB', `BRL',
+     and `BRW'--are ignored.  `as' automatically relaxes all branches,
+     whether forward or backward, to an appropriate size, so these
+     options serve no purpose.
+
+   * `OPT' list control options
+
+     The following m68k `OPT' list control options are ignored: `C',
+     `CEX', `CL', `CRE', `E', `G', `I', `M', `MEX', `MC', `MD', `X'.
+
+   * other `OPT' options
+
+     The following m68k `OPT' options are ignored: `NEST', `O', `OLD',
+     `OP', `P', `PCO', `PCR', `PCS', `R'.
+
+   * `OPT' `D' option is default
+
+     The m68k `OPT' `D' option is the default, unlike the MRI assembler.
+     `OPT NOD' may be used to turn it off.
+
+   * `XREF' pseudo-op.
+
+     The m68k `XREF' pseudo-op is ignored.
+
+   * `.debug' pseudo-op
+
+     The i960 `.debug' pseudo-op is not supported.
+
+   * `.extended' pseudo-op
+
+     The i960 `.extended' pseudo-op is not supported.
+
+   * `.list' pseudo-op.
+
+     The various options of the i960 `.list' pseudo-op are not
+     supported.
+
+   * `.optimize' pseudo-op
+
+     The i960 `.optimize' pseudo-op is not supported.
+
+   * `.output' pseudo-op
+
+     The i960 `.output' pseudo-op is not supported.
+
+   * `.setreal' pseudo-op
+
+     The i960 `.setreal' pseudo-op is not supported.
+
+
+File: as.info,  Node: o,  Next: R,  Prev: M,  Up: Invoking
+
+Name the Object File: `-o'
+==========================
+
+   There is always one object file output when you run `as'.  By
+default it has the name `a.out' (or `b.out', for Intel 960 targets
+only).  You use this option (which takes exactly one filename) to give
+the object file a different name.
+
+   Whatever the object file is called, `as' overwrites any existing
+file of the same name.
+
+
+File: as.info,  Node: R,  Next: statistics,  Prev: o,  Up: Invoking
+
+Join Data and Text Sections: `-R'
+=================================
+
+   `-R' tells `as' to write the object file as if all data-section data
+lives in the text section.  This is only done at the very last moment:
+your binary data are the same, but data section parts are relocated
+differently.  The data section part of your object file is zero bytes
+long because all its bytes are appended to the text section.  (*Note
+Sections and Relocation: Sections.)
+
+   When you specify `-R' it would be possible to generate shorter
+address displacements (because we do not have to cross between text and
+data section).  We refrain from doing this simply for compatibility with
+older versions of `as'.  In future, `-R' may work this way.
+
+   When `as' is configured for COFF output, this option is only useful
+if you use sections named `.text' and `.data'.
+
+   `-R' is not supported for any of the HPPA targets.  Using `-R'
+generates a warning from `as'.
+
+
+File: as.info,  Node: statistics,  Next: v,  Prev: R,  Up: Invoking
+
+Display Assembly Statistics: `--statistics'
+===========================================
+
+   Use `--statistics' to display two statistics about the resources
+used by `as': the maximum amount of space allocated during the assembly
+(in bytes), and the total execution time taken for the assembly (in CPU
+seconds).
+
+
+File: as.info,  Node: v,  Next: W,  Prev: statistics,  Up: Invoking
+
+Announce Version: `-v'
+======================
+
+   You can find out what version of as is running by including the
+option `-v' (which you can also spell as `-version') on the command
+line.
+
+
+File: as.info,  Node: W,  Next: Z,  Prev: v,  Up: Invoking
+
+Suppress Warnings: `-W'
+=======================
+
+   `as' should never give a warning or error message when assembling
+compiler output.  But programs written by people often cause `as' to
+give a warning that a particular assumption was made.  All such
+warnings are directed to the standard error file.  If you use this
+option, no warnings are issued.  This option only affects the warning
+messages: it does not change any particular of how `as' assembles your
+file.  Errors, which stop the assembly, are still reported.
+
+
+File: as.info,  Node: Z,  Prev: W,  Up: Invoking
+
+Generate Object File in Spite of Errors: `-Z'
+=============================================
+
+   After an error message, `as' normally produces no output.  If for
+some reason you are interested in object file output even after `as'
+gives an error message on your program, use the `-Z' option.  If there
+are any errors, `as' continues anyways, and writes an object file after
+a final warning message of the form `N errors, M warnings, generating
+bad object file.'
+
+
+File: as.info,  Node: Syntax,  Next: Sections,  Prev: Invoking,  Up: Top
+
+Syntax
+******
+
+   This chapter describes the machine-independent syntax allowed in a
+source file.  `as' syntax is similar to what many other assemblers use;
+it is inspired by the BSD 4.2 assembler, except that `as' does not
+assemble Vax bit-fields.
+
+* Menu:
+
+* Preprocessing::              Preprocessing
+* Whitespace::                  Whitespace
+* Comments::                    Comments
+* Symbol Intro::                Symbols
+* Statements::                  Statements
+* Constants::                   Constants
+
+
+File: as.info,  Node: Preprocessing,  Next: Whitespace,  Up: Syntax
+
+Preprocessing
+=============
+
+   The `as' internal preprocessor:
+   * adjusts and removes extra whitespace.  It leaves one space or tab
+     before the keywords on a line, and turns any other whitespace on
+     the line into a single space.
+
+   * removes all comments, replacing them with a single space, or an
+     appropriate number of newlines.
+
+   * converts character constants into the appropriate numeric values.
+
+   It does not do macro processing, include file handling, or anything
+else you may get from your C compiler's preprocessor.  You can do
+include file processing with the `.include' directive (*note
+`.include': Include.).  You can use the GNU C compiler driver to get
+other "CPP" style preprocessing, by giving the input file a `.S'
+suffix.  *Note Options Controlling the Kind of Output:
+(gcc.info)Overall Options.
+
+   Excess whitespace, comments, and character constants cannot be used
+in the portions of the input text that are not preprocessed.
+
+   If the first line of an input file is `#NO_APP' or if you use the
+`-f' option, whitespace and comments are not removed from the input
+file.  Within an input file, you can ask for whitespace and comment
+removal in specific portions of the by putting a line that says `#APP'
+before the text that may contain whitespace or comments, and putting a
+line that says `#NO_APP' after this text.  This feature is mainly
+intend to support `asm' statements in compilers whose output is
+otherwise free of comments and whitespace.
+
+
+File: as.info,  Node: Whitespace,  Next: Comments,  Prev: Preprocessing,  Up: Syntax
+
+Whitespace
+==========
+
+   "Whitespace" is one or more blanks or tabs, in any order.
+Whitespace is used to separate symbols, and to make programs neater for
+people to read.  Unless within character constants (*note Character
+Constants: Characters.), any whitespace means the same as exactly one
+space.
+
+
+File: as.info,  Node: Comments,  Next: Symbol Intro,  Prev: Whitespace,  Up: Syntax
+
+Comments
+========
+
+   There are two ways of rendering comments to `as'.  In both cases the
+comment is equivalent to one space.
+
+   Anything from `/*' through the next `*/' is a comment.  This means
+you may not nest these comments.
+
+     /*
+       The only way to include a newline ('\n') in a comment
+       is to use this sort of comment.
+     */
+     
+     /* This sort of comment does not nest. */
+
+   Anything from the "line comment" character to the next newline is
+considered a comment and is ignored.  The line comment character is `#'
+on the Vax; `#' on the i960; `!' on the SPARC; `|' on the 680x0; `;'
+for the AMD 29K family; `;' for the H8/300 family; `!' for the H8/500
+family; `;' for the HPPA; `!' for the Hitachi SH; `!' for the Z8000;
+see *Note Machine Dependencies::.
+
+   On some machines there are two different line comment characters.
+One character only begins a comment if it is the first non-whitespace
+character on a line, while the other always begins a comment.
+
+   To be compatible with past assemblers, lines that begin with `#'
+have a special interpretation.  Following the `#' should be an absolute
+expression (*note Expressions::.): the logical line number of the *next*
+line.  Then a string (*note Strings: Strings.) is allowed: if present
+it is a new logical file name.  The rest of the line, if any, should be
+whitespace.
+
+   If the first non-whitespace characters on the line are not numeric,
+the line is ignored.  (Just like a comment.)
+
+                               # This is an ordinary comment.
+     # 42-6 "new_file_name"    # New logical file name
+                               # This is logical line # 36.
+   This feature is deprecated, and may disappear from future versions
+of `as'.
+
+
+File: as.info,  Node: Symbol Intro,  Next: Statements,  Prev: Comments,  Up: Syntax
+
+Symbols
+=======
+
+   A "symbol" is one or more characters chosen from the set of all
+letters (both upper and lower case), digits and the three characters
+`_.$'.  On most machines, you can also use `$' in symbol names;
+exceptions are noted in *Note Machine Dependencies::.  No symbol may
+begin with a digit.  Case is significant.  There is no length limit:
+all characters are significant.  Symbols are delimited by characters
+not in that set, or by the beginning of a file (since the source
+program must end with a newline, the end of a file is not a possible
+symbol delimiter).  *Note Symbols::.
+
+
+File: as.info,  Node: Statements,  Next: Constants,  Prev: Symbol Intro,  Up: Syntax
+
+Statements
+==========
+
+   A "statement" ends at a newline character (`\n') or line separator
+character.  (The line separator is usually `;', unless this conflicts
+with the comment character; *note Machine Dependencies::..)  The
+newline or separator character is considered part of the preceding
+statement.  Newlines and separators within character constants are an
+exception: they do not end statements.
+
+   It is an error to end any statement with end-of-file:  the last
+character of any input file should be a newline.
+
+   You may write a statement on more than one line if you put a
+backslash (`\') immediately in front of any newlines within the
+statement.  When `as' reads a backslashed newline both characters are
+ignored.  You can even put backslashed newlines in the middle of symbol
+names without changing the meaning of your source program.
+
+   An empty statement is allowed, and may include whitespace.  It is
+ignored.
+
+   A statement begins with zero or more labels, optionally followed by a
+key symbol which determines what kind of statement it is.  The key
+symbol determines the syntax of the rest of the statement.  If the
+symbol begins with a dot `.' then the statement is an assembler
+directive: typically valid for any computer.  If the symbol begins with
+a letter the statement is an assembly language "instruction": it
+assembles into a machine language instruction.  Different versions of
+`as' for different computers recognize different instructions.  In
+fact, the same symbol may represent a different instruction in a
+different computer's assembly language.
+
+   A label is a symbol immediately followed by a colon (`:').
+Whitespace before a label or after a colon is permitted, but you may not
+have whitespace between a label's symbol and its colon. *Note Labels::.
+
+   For HPPA targets, labels need not be immediately followed by a
+colon, but the definition of a label must begin in column zero.  This
+also implies that only one label may be defined on each line.
+
+     label:     .directive    followed by something
+     another_label:           # This is an empty statement.
+                instruction   operand_1, operand_2, ...
+
+
+File: as.info,  Node: Constants,  Prev: Statements,  Up: Syntax
+
+Constants
+=========
+
+   A constant is a number, written so that its value is known by
+inspection, without knowing any context.  Like this:
+     .byte  74, 0112, 092, 0x4A, 0X4a, 'J, '\J # All the same value.
+     .ascii "Ring the bell\7"                  # A string constant.
+     .octa  0x123456789abcdef0123456789ABCDEF0 # A bignum.
+     .float 0f-314159265358979323846264338327\
+     95028841971.693993751E-40                 # - pi, a flonum.
+
+* Menu:
+
+* Characters::                  Character Constants
+* Numbers::                     Number Constants
+
+
+File: as.info,  Node: Characters,  Next: Numbers,  Up: Constants
+
+Character Constants
+-------------------
+
+   There are two kinds of character constants.  A "character" stands
+for one character in one byte and its value may be used in numeric
+expressions.  String constants (properly called string *literals*) are
+potentially many bytes and their values may not be used in arithmetic
+expressions.
+
+* Menu:
+
+* Strings::                     Strings
+* Chars::                       Characters
+
+
+File: as.info,  Node: Strings,  Next: Chars,  Up: Characters
+
+Strings
+.......
+
+   A "string" is written between double-quotes.  It may contain
+double-quotes or null characters.  The way to get special characters
+into a string is to "escape" these characters: precede them with a
+backslash `\' character.  For example `\\' represents one backslash:
+the first `\' is an escape which tells `as' to interpret the second
+character literally as a backslash (which prevents `as' from
+recognizing the second `\' as an escape character).  The complete list
+of escapes follows.
+
+`\b'
+     Mnemonic for backspace; for ASCII this is octal code 010.
+
+`\f'
+     Mnemonic for FormFeed; for ASCII this is octal code 014.
+
+`\n'
+     Mnemonic for newline; for ASCII this is octal code 012.
+
+`\r'
+     Mnemonic for carriage-Return; for ASCII this is octal code 015.
+
+`\t'
+     Mnemonic for horizontal Tab; for ASCII this is octal code 011.
+
+`\ DIGIT DIGIT DIGIT'
+     An octal character code.  The numeric code is 3 octal digits.  For
+     compatibility with other Unix systems, 8 and 9 are accepted as
+     digits: for example, `\008' has the value 010, and `\009' the
+     value 011.
+
+`\`x' HEX-DIGIT HEX-DIGIT'
+     A hex character code.  The numeric code is 2 hexadecimal digits.
+     Either upper or lower case `x' works.
+
+`\\'
+     Represents one `\' character.
+
+`\"'
+     Represents one `"' character.  Needed in strings to represent this
+     character, because an unescaped `"' would end the string.
+
+`\ ANYTHING-ELSE'
+     Any other character when escaped by `\' gives a warning, but
+     assembles as if the `\' was not present.  The idea is that if you
+     used an escape sequence you clearly didn't want the literal
+     interpretation of the following character.  However `as' has no
+     other interpretation, so `as' knows it is giving you the wrong
+     code and warns you of the fact.
+
+   Which characters are escapable, and what those escapes represent,
+varies widely among assemblers.  The current set is what we think the
+BSD 4.2 assembler recognizes, and is a subset of what most C compilers
+recognize.  If you are in doubt, do not use an escape sequence.
+
+
+File: as.info,  Node: Chars,  Prev: Strings,  Up: Characters
+
+Characters
+..........
+
+   A single character may be written as a single quote immediately
+followed by that character.  The same escapes apply to characters as to
+strings.  So if you want to write the character backslash, you must
+write `'\\' where the first `\' escapes the second `\'.  As you can
+see, the quote is an acute accent, not a grave accent.  A newline
+immediately following an acute accent is taken as a literal character
+and does not count as the end of a statement.  The value of a character
+constant in a numeric expression is the machine's byte-wide code for
+that character.  `as' assumes your character code is ASCII: `'A' means
+65, `'B' means 66, and so on.
+
+
+File: as.info,  Node: Numbers,  Prev: Characters,  Up: Constants
+
+Number Constants
+----------------
+
+   `as' distinguishes three kinds of numbers according to how they are
+stored in the target machine.  *Integers* are numbers that would fit
+into an `int' in the C language.  *Bignums* are integers, but they are
+stored in more than 32 bits.  *Flonums* are floating point numbers,
+described below.
+
+* Menu:
+
+* Integers::                    Integers
+* Bignums::                     Bignums
+* Flonums::                     Flonums
+
+
+File: as.info,  Node: Integers,  Next: Bignums,  Up: Numbers
+
+Integers
+........
+
+   A binary integer is `0b' or `0B' followed by zero or more of the
+binary digits `01'.
+
+   An octal integer is `0' followed by zero or more of the octal digits
+(`01234567').
+
+   A decimal integer starts with a non-zero digit followed by zero or
+more digits (`0123456789').
+
+   A hexadecimal integer is `0x' or `0X' followed by one or more
+hexadecimal digits chosen from `0123456789abcdefABCDEF'.
+
+   Integers have the usual values.  To denote a negative integer, use
+the prefix operator `-' discussed under expressions (*note Prefix
+Operators: Prefix Ops.).
+
+
+File: as.info,  Node: Bignums,  Next: Flonums,  Prev: Integers,  Up: Numbers
+
+Bignums
+.......
+
+   A "bignum" has the same syntax and semantics as an integer except
+that the number (or its negative) takes more than 32 bits to represent
+in binary.  The distinction is made because in some places integers are
+permitted while bignums are not.
+
+
+File: as.info,  Node: Flonums,  Prev: Bignums,  Up: Numbers
+
+Flonums
+.......
+
+   A "flonum" represents a floating point number.  The translation is
+indirect: a decimal floating point number from the text is converted by
+`as' to a generic binary floating point number of more than sufficient
+precision.  This generic floating point number is converted to a
+particular computer's floating point format (or formats) by a portion
+of `as' specialized to that computer.
+
+   A flonum is written by writing (in order)
+   * The digit `0'.  (`0' is optional on the HPPA.)
+
+   * A letter, to tell `as' the rest of the number is a flonum.  `e' is
+     recommended.  Case is not important.
+
+     On the H8/300, H8/500, Hitachi SH, and AMD 29K architectures, the
+     letter must be one of the letters `DFPRSX' (in upper or lower
+     case).
+
+     On the Intel 960 architecture, the letter must be one of the
+     letters `DFT' (in upper or lower case).
+
+     On the HPPA architecture, the letter must be `E' (upper case only).
+
+   * An optional sign: either `+' or `-'.
+
+   * An optional "integer part": zero or more decimal digits.
+
+   * An optional "fractional part": `.' followed by zero or more
+     decimal digits.
+
+   * An optional exponent, consisting of:
+
+        * An `E' or `e'.
+
+        * Optional sign: either `+' or `-'.
+
+        * One or more decimal digits.
+
+   At least one of the integer part or the fractional part must be
+present.  The floating point number has the usual base-10 value.
+
+   `as' does all processing using integers.  Flonums are computed
+independently of any floating point hardware in the computer running
+`as'.
+
+
+File: as.info,  Node: Sections,  Next: Symbols,  Prev: Syntax,  Up: Top
+
+Sections and Relocation
+***********************
+
+* Menu:
+
+* Secs Background::             Background
+* Ld Sections::                 ld Sections
+* As Sections::                 as Internal Sections
+* Sub-Sections::                Sub-Sections
+* bss::                         bss Section
+
+
+File: as.info,  Node: Secs Background,  Next: Ld Sections,  Up: Sections
+
+Background
+==========
+
+   Roughly, a section is a range of addresses, with no gaps; all data
+"in" those addresses is treated the same for some particular purpose.
+For example there may be a "read only" section.
+
+   The linker `ld' reads many object files (partial programs) and
+combines their contents to form a runnable program.  When `as' emits an
+object file, the partial program is assumed to start at address 0.
+`ld' assigns the final addresses for the partial program, so that
+different partial programs do not overlap.  This is actually an
+oversimplification, but it suffices to explain how `as' uses sections.
+
+   `ld' moves blocks of bytes of your program to their run-time
+addresses.  These blocks slide to their run-time addresses as rigid
+units; their length does not change and neither does the order of bytes
+within them.  Such a rigid unit is called a *section*.  Assigning
+run-time addresses to sections is called "relocation".  It includes the
+task of adjusting mentions of object-file addresses so they refer to
+the proper run-time addresses.  For the H8/300 and H8/500, and for the
+Hitachi SH, `as' pads sections if needed to ensure they end on a word
+(sixteen bit) boundary.
+
+   An object file written by `as' has at least three sections, any of
+which may be empty.  These are named "text", "data" and "bss" sections.
+
+   When it generates COFF output, `as' can also generate whatever other
+named sections you specify using the `.section' directive (*note
+`.section': Section.).  If you do not use any directives that place
+output in the `.text' or `.data' sections, these sections still exist,
+but are empty.
+
+   When `as' generates SOM or ELF output for the HPPA, `as' can also
+generate whatever other named sections you specify using the `.space'
+and `.subspace' directives.  See `HP9000 Series 800 Assembly Language
+Reference Manual' (HP 92432-90001) for details on the `.space' and
+`.subspace' assembler directives.
+
+   Additionally, `as' uses different names for the standard text, data,
+and bss sections when generating SOM output.  Program text is placed
+into the `$CODE$' section, data into `$DATA$', and BSS into `$BSS$'.
+
+   Within the object file, the text section starts at address `0', the
+data section follows, and the bss section follows the data section.
+
+   When generating either SOM or ELF output files on the HPPA, the text
+section starts at address `0', the data section at address `0x4000000',
+and the bss section follows the data section.
+
+   To let `ld' know which data changes when the sections are relocated,
+and how to change that data, `as' also writes to the object file
+details of the relocation needed.  To perform relocation `ld' must
+know, each time an address in the object file is mentioned:
+   * Where in the object file is the beginning of this reference to an
+     address?
+
+   * How long (in bytes) is this reference?
+
+   * Which section does the address refer to?  What is the numeric
+     value of
+          (ADDRESS) - (START-ADDRESS OF SECTION)?
+
+   * Is the reference to an address "Program-Counter relative"?
+
+   In fact, every address `as' ever uses is expressed as
+     (SECTION) + (OFFSET INTO SECTION)
+
+Further, most expressions `as' computes have this section-relative
+nature.  (For some object formats, such as SOM for the HPPA, some
+expressions are symbol-relative instead.)
+
+   In this manual we use the notation {SECNAME N} to mean "offset N
+into section SECNAME."
+
+   Apart from text, data and bss sections you need to know about the
+"absolute" section.  When `ld' mixes partial programs, addresses in the
+absolute section remain unchanged.  For example, address `{absolute 0}'
+is "relocated" to run-time address 0 by `ld'.  Although the linker
+never arranges two partial programs' data sections with overlapping
+addresses after linking, *by definition* their absolute sections must
+overlap.  Address `{absolute 239}' in one part of a program is always
+the same address when the program is running as address `{absolute
+239}' in any other part of the program.
+
+   The idea of sections is extended to the "undefined" section.  Any
+address whose section is unknown at assembly time is by definition
+rendered {undefined U}--where U is filled in later.  Since numbers are
+always defined, the only way to generate an undefined address is to
+mention an undefined symbol.  A reference to a named common block would
+be such a symbol: its value is unknown at assembly time so it has
+section *undefined*.
+
+   By analogy the word *section* is used to describe groups of sections
+in the linked program.  `ld' puts all partial programs' text sections
+in contiguous addresses in the linked program.  It is customary to
+refer to the *text section* of a program, meaning all the addresses of
+all partial programs' text sections.  Likewise for data and bss
+sections.
+
+   Some sections are manipulated by `ld'; others are invented for use
+of `as' and have no meaning except during assembly.
+

@@ -1,0 +1,1225 @@
+This is Info file standards.info, produced by Makeinfo-1.55 from the
+input file ./standards.texi.
+
+START-INFO-DIR-ENTRY
+* Standards: (standards).        GNU coding standards.
+END-INFO-DIR-ENTRY
+
+   GNU Coding Standards Copyright (C) 1992, 1993, 1994 Free Software
+Foundation
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
+
+
+File: standards.info,  Node: Top,  Next: Reading Non-Free Code,  Prev: (dir),  Up: (dir)
+
+Version
+*******
+
+   Last updated 28 March 1994.
+
+* Menu:
+
+* Reading Non-Free Code::	Referring to Proprietary Programs
+* Contributions::		Accepting Contributions
+* Change Logs::			Recording Changes
+* Compatibility::		Compatibility with Other Implementations
+* Makefile Conventions::	Makefile Conventions
+* Configuration::		How Configuration Should Work
+* Source Language::		Using Languages Other Than C
+* Formatting::			Formatting Your Source Code
+* Comments::			Commenting Your Work
+* Syntactic Conventions::	Clean Use of C Constructs
+* Names::			Naming Variables and Functions
+* Using Extensions::		Using Non-standard Features
+* System Functions::            Portability and "standard" library functions
+* Semantics::			Program Behavior for All Programs
+* Errors::			Formatting Error Messages
+* Libraries::			Library Behavior
+* Portability::			Portability As It Applies to GNU
+* User Interfaces::		Standards for Command Line Interfaces
+* Documentation::		Documenting Programs
+* Releases::			Making Releases
+
+
+File: standards.info,  Node: Reading Non-Free Code,  Next: Contributions,  Prev: Top,  Up: Top
+
+Referring to Proprietary Programs
+*********************************
+
+   Don't in any circumstances refer to Unix source code for or during
+your work on GNU!  (Or to any other proprietary programs.)
+
+   If you have a vague recollection of the internals of a Unix program,
+this does not absolutely mean you can't write an imitation of it, but
+do try to organize the imitation internally along different lines,
+because this is likely to make the details of the Unix version
+irrelevant and dissimilar to your results.
+
+   For example, Unix utilities were generally optimized to minimize
+memory use; if you go for speed instead, your program will be very
+different.  You could keep the entire input file in core and scan it
+there instead of using stdio.  Use a smarter algorithm discovered more
+recently than the Unix program.  Eliminate use of temporary files.  Do
+it in one pass instead of two (we did this in the assembler).
+
+   Or, on the contrary, emphasize simplicity instead of speed.  For some
+applications, the speed of today's computers makes simpler algorithms
+adequate.
+
+   Or go for generality.  For example, Unix programs often have static
+tables or fixed-size strings, which make for arbitrary limits; use
+dynamic allocation instead.  Make sure your program handles NULs and
+other funny characters in the input files.  Add a programming language
+for extensibility and write part of the program in that language.
+
+   Or turn some parts of the program into independently usable
+libraries.  Or use a simple garbage collector instead of tracking
+precisely when to free memory, or use a new GNU facility such as
+obstacks.
+
+
+File: standards.info,  Node: Contributions,  Next: Change Logs,  Prev: Reading Non-Free Code,  Up: Top
+
+Accepting Contributions
+***********************
+
+   If someone else sends you a piece of code to add to the program you
+are working on, we need legal papers to use it--the same sort of legal
+papers we will need to get from you.  *Each* significant contributor to
+a program must sign some sort of legal papers in order for us to have
+clear title to the program.  The main author alone is not enough.
+
+   So, before adding in any contributions from other people, tell us so
+we can arrange to get the papers.  Then wait until we tell you that we
+have received the signed papers, before you actually use the
+contribution.
+
+   This applies both before you release the program and afterward.  If
+you receive diffs to fix a bug, and they make significant change, we
+need legal papers for it.
+
+   You don't need papers for changes of a few lines here or there, since
+they are not significant for copyright purposes.  Also, you don't need
+papers if all you get from the suggestion is some ideas, not actual code
+which you use.  For example, if you write a different solution to the
+problem, you don't need to get papers.
+
+   I know this is frustrating; it's frustrating for us as well.  But if
+you don't wait, you are going out on a limb--for example, what if the
+contributor's employer won't sign a disclaimer?  You might have to take
+that code out again!
+
+   The very worst thing is if you forget to tell us about the other
+contributor.  We could be very embarrassed in court some day as a
+result.
+
+
+File: standards.info,  Node: Change Logs,  Next: Compatibility,  Prev: Contributions,  Up: Top
+
+Change Logs
+***********
+
+   Keep a change log for each directory, describing the changes made to
+source files in that directory.  The purpose of this is so that people
+investigating bugs in the future will know about the changes that might
+have introduced the bug.  Often a new bug can be found by looking at
+what was recently changed.  More importantly, change logs can help
+eliminate conceptual inconsistencies between different parts of a
+program; they can give you a history of how the conflicting concepts
+arose.
+
+   Use the Emacs command `M-x add-change' to start a new entry in the
+change log.  An entry should have an asterisk, the name of the changed
+file, and then in parentheses the name of the changed functions,
+variables or whatever, followed by a colon.  Then describe the changes
+you made to that function or variable.
+
+   Separate unrelated entries with blank lines.  When two entries
+represent parts of the same change, so that they work together, then
+don't put blank lines between them.  Then you can omit the file name
+and the asterisk when successive entries are in the same file.
+
+   Here are some examples:
+
+     * register.el (insert-register): Return nil.
+     (jump-to-register): Likewise.
+     
+     * sort.el (sort-subr): Return nil.
+     
+     * tex-mode.el (tex-bibtex-file, tex-file, tex-region):
+     Restart the tex shell if process is gone or stopped.
+     (tex-shell-running): New function.
+     
+     * expr.c (store_one_arg): Round size up for move_block_to_reg.
+     (expand_call): Round up when emitting USE insns.
+     * stmt.c (assign_parms): Round size up for move_block_from_reg.
+
+   It's important to name the changed function or variable in full.
+Don't abbreviate them; don't combine them.  Subsequent maintainers will
+often search for a function name to find all the change log entries that
+pertain to it; if you abbreviate the name, they won't find it when they
+search.  For example, some people are tempted to abbreviate groups of
+function names by writing `* register.el ({insert,jump-to}-register)';
+this is not a good idea, since searching for `jump-to-register' or
+`insert-register' would not find the entry.
+
+   There's no need to describe the full purpose of the changes or how
+they work together.  It is better to put such explanations in comments
+in the code.  That's why just "New function" is enough; there is a
+comment with the function in the source to explain what it does.
+
+   However, sometimes it is useful to write one line to describe the
+overall purpose of a large batch of changes.
+
+   You can think of the change log as a conceptual "undo list" which
+explains how earlier versions were different from the current version.
+People can see the current version; they don't need the change log to
+tell them what is in it.  What they want from a change log is a clear
+explanation of how the earlier version differed.
+
+   When you change the calling sequence of a function in a simple
+fashion, and you change all the callers of the function, there is no
+need to make individual entries for all the callers.  Just write in the
+entry for the function being called, "All callers changed."
+
+   When you change just comments or doc strings, it is enough to write
+an entry for the file, without mentioning the functions.  Write just,
+"Doc fix."  There's no need to keep a change log for documentation
+files.  This is because documentation is not susceptible to bugs that
+are hard to fix.  Documentation does not consist of parts that must
+interact in a precisely engineered fashion; to correct an error, you
+need not know the history of the erroneous passage.
+
+
+File: standards.info,  Node: Compatibility,  Next: Makefile Conventions,  Prev: Change Logs,  Up: Top
+
+Compatibility with Other Implementations
+****************************************
+
+   With certain exceptions, utility programs and libraries for GNU
+should be upward compatible with those in Berkeley Unix, and upward
+compatible with ANSI C if ANSI C specifies their behavior, and upward
+compatible with POSIX if POSIX specifies their behavior.
+
+   When these standards conflict, it is useful to offer compatibility
+modes for each of them.
+
+   ANSI C and POSIX prohibit many kinds of extensions.  Feel free to
+make the extensions anyway, and include a `--ansi' or `--compatible'
+option to turn them off.  However, if the extension has a significant
+chance of breaking any real programs or scripts, then it is not really
+upward compatible.  Try to redesign its interface.
+
+   Many GNU programs suppress extensions that conflict with POSIX if the
+environment variable `POSIXLY_CORRECT' is defined (even if it is
+defined with a null value).  Please make your program recognize this
+variable if appropriate.
+
+   When a feature is used only by users (not by programs or command
+files), and it is done poorly in Unix, feel free to replace it
+completely with something totally different and better.  (For example,
+vi is replaced with Emacs.)  But it is nice to offer a compatible
+feature as well.  (There is a free vi clone, so we offer it.)
+
+   Additional useful features not in Berkeley Unix are welcome.
+Additional programs with no counterpart in Unix may be useful, but our
+first priority is usually to duplicate what Unix already has.
+
+
+File: standards.info,  Node: Makefile Conventions,  Next: Configuration,  Prev: Compatibility,  Up: Top
+
+Makefile Conventions
+********************
+
+   This chapter describes conventions for writing the Makefiles for GNU
+programs.
+
+* Menu:
+
+* Makefile Basics::
+* Utilities in Makefiles::
+* Standard Targets::
+* Command Variables::
+* Directory Variables::
+
+
+File: standards.info,  Node: Makefile Basics,  Next: Utilities in Makefiles,  Up: Makefile Conventions
+
+General Conventions for Makefiles
+=================================
+
+   Every Makefile should contain this line:
+
+     SHELL = /bin/sh
+
+to avoid trouble on systems where the `SHELL' variable might be
+inherited from the environment.  (This is never a problem with GNU
+`make'.)
+
+   Don't assume that `.' is in the path for command execution.  When
+you need to run programs that are a part of your package during the
+make, please make sure that it uses `./' if the program is built as
+part of the make or `$(srcdir)/' if the file is an unchanging part of
+the source code.  Without one of these prefixes, the current search
+path is used.
+
+   The distinction between `./' and `$(srcdir)/' is important when
+using the `--srcdir' option to `configure'.  A rule of the form:
+
+     foo.1 : foo.man sedscript
+             sed -e sedscript foo.man > foo.1
+
+will fail when the current directory is not the source directory,
+because `foo.man' and `sedscript' are not in the current directory.
+
+   When using GNU `make', relying on `VPATH' to find the source file
+will work in the case where there is a single dependency file, since
+the `make' automatic variable `$<' will represent the source file
+wherever it is.  (Many versions of `make' set `$<' only in implicit
+rules.)  A makefile target like
+
+     foo.o : bar.c
+             $(CC) -I. -I$(srcdir) $(CFLAGS) -c bar.c -o foo.o
+
+should instead be written as
+
+     foo.o : bar.c
+             $(CC) $(CFLAGS) $< -o $@
+
+in order to allow `VPATH' to work correctly.  When the target has
+multiple dependencies, using an explicit `$(srcdir)' is the easiest way
+to make the rule work well.  For example, the target above for `foo.1'
+is best written as:
+
+     foo.1 : foo.man sedscript
+             sed -s $(srcdir)/sedscript $(srcdir)/foo.man > foo.1
+
+
+File: standards.info,  Node: Utilities in Makefiles,  Next: Standard Targets,  Prev: Makefile Basics,  Up: Makefile Conventions
+
+Utilities in Makefiles
+======================
+
+   Write the Makefile commands (and any shell scripts, such as
+`configure') to run in `sh', not in `csh'.  Don't use any special
+features of `ksh' or `bash'.
+
+   The `configure' script and the Makefile rules for building and
+installation should not use any utilities directly except these:
+
+     cat cmp cp echo egrep expr grep
+     ln mkdir mv pwd rm rmdir sed test touch
+
+   Stick to the generally supported options for these programs.  For
+example, don't use `mkdir -p', convenient as it may be, because most
+systems don't support it.
+
+   The Makefile rules for building and installation can also use
+compilers and related programs, but should do so via `make' variables
+so that the user can substitute alternatives.  Here are some of the
+programs we mean:
+
+     ar bison cc flex install ld lex
+     make makeinfo ranlib texi2dvi yacc
+
+   When you use `ranlib', you should test whether it exists, and run it
+only if it exists, so that the distribution will work on systems that
+don't have `ranlib'.
+
+   If you use symbolic links, you should implement a fallback for
+systems that don't have symbolic links.
+
+   It is ok to use other utilities in Makefile portions (or scripts)
+intended only for particular systems where you know those utilities to
+exist.
+
+
+File: standards.info,  Node: Standard Targets,  Next: Command Variables,  Prev: Utilities in Makefiles,  Up: Makefile Conventions
+
+Standard Targets for Users
+==========================
+
+   All GNU programs should have the following targets in their
+Makefiles:
+
+`all'
+     Compile the entire program.  This should be the default target.
+     This target need not rebuild any documentation files; Info files
+     should normally be included in the distribution, and DVI files
+     should be made only when explicitly asked for.
+
+`install'
+     Compile the program and copy the executables, libraries, and so on
+     to the file names where they should reside for actual use.  If
+     there is a simple test to verify that a program is properly
+     installed, this target should run that test.
+
+     The commands should create all the directories in which files are
+     to be installed, if they don't already exist.  This includes the
+     directories specified as the values of the variables `prefix' and
+     `exec_prefix', as well as all subdirectories that are needed.  One
+     way to do this is by means of an `installdirs' target as described
+     below.
+
+     Use `-' before any command for installing a man page, so that
+     `make' will ignore any errors.  This is in case there are systems
+     that don't have the Unix man page documentation system installed.
+
+     The way to install Info files is to copy them into `$(infodir)'
+     with `$(INSTALL_DATA)' (*note Command Variables::.), and then run
+     the `install-info' program if it is present.  `install-info' is a
+     script that edits the Info `dir' file to add or update the menu
+     entry for the given Info file; it will be part of the Texinfo
+     package.  Here is a sample rule to install an Info file:
+
+          $(infodir)/foo.info: foo.info
+          # There may be a newer info file in . than in srcdir.
+                  -if test -f foo.info; then d=.; \
+                   else d=$(srcdir); fi; \
+                  $(INSTALL_DATA) $$d/foo.info $@; \
+          # Run install-info only if it exists.
+          # Use `if' instead of just prepending `-' to the
+          # line so we notice real errors from install-info.
+          # We use `$(SHELL) -c' because some shells do not
+          # fail gracefully when there is an unknown command.
+                  if $(SHELL) -c 'install-info --version' \
+                     >/dev/null 2>&1; then \
+                    install-info --infodir=$(infodir) $$d/foo.info; \
+                  else true; fi
+
+`uninstall'
+     Delete all the installed files that the `install' target would
+     create (but not the noninstalled files such as `make all' would
+     create).
+
+`clean'
+     Delete all files from the current directory that are normally
+     created by building the program.  Don't delete the files that
+     record the configuration.  Also preserve files that could be made
+     by building, but normally aren't because the distribution comes
+     with them.
+
+     Delete `.dvi' files here if they are not part of the distribution.
+
+`distclean'
+     Delete all files from the current directory that are created by
+     configuring or building the program.  If you have unpacked the
+     source and built the program without creating any other files,
+     `make distclean' should leave only the files that were in the
+     distribution.
+
+`mostlyclean'
+     Like `clean', but may refrain from deleting a few files that people
+     normally don't want to recompile.  For example, the `mostlyclean'
+     target for GCC does not delete `libgcc.a', because recompiling it
+     is rarely necessary and takes a lot of time.
+
+`realclean'
+     Delete everything from the current directory that can be
+     reconstructed with this Makefile.  This typically includes
+     everything deleted by `distclean', plus more: C source files
+     produced by Bison, tags tables, Info files, and so on.
+
+     One exception, however: `make realclean' should not delete
+     `configure' even if `configure' can be remade using a rule in the
+     Makefile.  More generally, `make realclean' should not delete
+     anything that needs to exist in order to run `configure' and then
+     begin to build the program.
+
+`TAGS'
+     Update a tags table for this program.
+
+`info'
+     Generate any Info files needed.  The best way to write the rules
+     is as follows:
+
+          info: foo.info
+          
+          foo.info: foo.texi chap1.texi chap2.texi
+                  $(MAKEINFO) $(srcdir)/foo.texi
+
+     You must define the variable `MAKEINFO' in the Makefile.  It should
+     run the `makeinfo' program, which is part of the Texinfo
+     distribution.
+
+`dvi'
+     Generate DVI files for all TeXinfo documentation.  For example:
+
+          dvi: foo.dvi
+          
+          foo.dvi: foo.texi chap1.texi chap2.texi
+                  $(TEXI2DVI) $(srcdir)/foo.texi
+
+     You must define the variable `TEXI2DVI' in the Makefile.  It should
+     run the program `texi2dvi', which is part of the Texinfo
+     distribution.  Alternatively, write just the dependencies, and
+     allow GNU Make to provide the command.
+
+`dist'
+     Create a distribution tar file for this program.  The tar file
+     should be set up so that the file names in the tar file start with
+     a subdirectory name which is the name of the package it is a
+     distribution for.  This name can include the version number.
+
+     For example, the distribution tar file of GCC version 1.40 unpacks
+     into a subdirectory named `gcc-1.40'.
+
+     The easiest way to do this is to create a subdirectory
+     appropriately named, use `ln' or `cp' to install the proper files
+     in it, and then `tar' that subdirectory.
+
+     The `dist' target should explicitly depend on all non-source files
+     that are in the distribution, to make sure they are up to date in
+     the distribution.  *Note Making Releases: (standards)Releases.
+
+`check'
+     Perform self-tests (if any).  The user must build the program
+     before running the tests, but need not install the program; you
+     should write the self-tests so that they work when the program is
+     built but not installed.
+
+   The following targets are suggested as conventional names, for
+programs in which they are useful.
+
+`installcheck'
+     Perform installation tests (if any).  The user must build and
+     install the program before running the tests.  You should not
+     assume that `$(bindir)' is in the search path.
+
+`installdirs'
+     It's useful to add a target named `installdirs' to create the
+     directories where files are installed, and their parent
+     directories.  There is a script called `mkinstalldirs' which is
+     convenient for this; find it in the Texinfo package.You can use a
+     rule like this:
+
+          # Make sure all installation directories (e.g. $(bindir))
+          # actually exist by making them if necessary.
+          installdirs: mkinstalldirs
+                  $(srcdir)/mkinstalldirs $(bindir) $(datadir) \
+                                          $(libdir) $(infodir) \
+                                          $(mandir)
+
+
+File: standards.info,  Node: Command Variables,  Next: Directory Variables,  Prev: Standard Targets,  Up: Makefile Conventions
+
+Variables for Specifying Commands
+=================================
+
+   Makefiles should provide variables for overriding certain commands,
+options, and so on.
+
+   In particular, you should run most utility programs via variables.
+Thus, if you use Bison, have a variable named `BISON' whose default
+value is set with `BISON = bison', and refer to it with `$(BISON)'
+whenever you need to use Bison.
+
+   File management utilities such as `ln', `rm', `mv', and so on, need
+not be referred to through variables in this way, since users don't
+need to replace them with other programs.
+
+   Each program-name variable should come with an options variable that
+is used to supply options to the program.  Append `FLAGS' to the
+program-name variable name to get the options variable name--for
+example, `BISONFLAGS'.  (The name `CFLAGS' is an exception to this
+rule, but we keep it because it is standard.)  Use `CPPFLAGS' in any
+compilation command that runs the preprocessor, and use `LDFLAGS' in
+any compilation command that does linking as well as in any direct use
+of `ld'.
+
+   If there are C compiler options that *must* be used for proper
+compilation of certain files, do not include them in `CFLAGS'.  Users
+expect to be able to specify `CFLAGS' freely themselves.  Instead,
+arrange to pass the necessary options to the C compiler independently
+of `CFLAGS', by writing them explicitly in the compilation commands or
+by defining an implicit rule, like this:
+
+     CFLAGS = -g
+     ALL_CFLAGS = -I. $(CFLAGS)
+     .c.o:
+             $(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
+
+   Do include the `-g' option in `CFLAGS', because that is not
+*required* for proper compilation.  You can consider it a default that
+is only recommended.  If the package is set up so that it is compiled
+with GCC by default, then you might as well include `-O' in the default
+value of `CFLAGS' as well.
+
+   Put `CFLAGS' last in the compilation command, after other variables
+containing compiler options, so the user can use `CFLAGS' to override
+the others.
+
+   Every Makefile should define the variable `INSTALL', which is the
+basic command for installing a file into the system.
+
+   Every Makefile should also define the variables `INSTALL_PROGRAM'
+and `INSTALL_DATA'.  (The default for each of these should be
+`$(INSTALL)'.)  Then it should use those variables as the commands for
+actual installation, for executables and nonexecutables respectively.
+Use these variables as follows:
+
+     $(INSTALL_PROGRAM) foo $(bindir)/foo
+     $(INSTALL_DATA) libfoo.a $(libdir)/libfoo.a
+
+Always use a file name, not a directory name, as the second argument of
+the installation commands.  Use a separate command for each file to be
+installed.
+
+
+File: standards.info,  Node: Directory Variables,  Prev: Command Variables,  Up: Makefile Conventions
+
+Variables for Installation Directories
+======================================
+
+   Installation directories should always be named by variables, so it
+is easy to install in a nonstandard place.  The standard names for these
+variables are:
+
+`prefix'
+     A prefix used in constructing the default values of the variables
+     listed below.  The default value of `prefix' should be `/usr/local'
+     (at least for now).
+
+`exec_prefix'
+     A prefix used in constructing the default values of some of the
+     variables listed below.  The default value of `exec_prefix' should
+     be `$(prefix)'.
+
+     Generally, `$(exec_prefix)' is used for directories that contain
+     machine-specific files (such as executables and subroutine
+     libraries), while `$(prefix)' is used directly for other
+     directories.
+
+`bindir'
+     The directory for installing executable programs that users can
+     run.  This should normally be `/usr/local/bin', but write it as
+     `$(exec_prefix)/bin'.
+
+`libdir'
+     The directory for installing executable files to be run by the
+     program rather than by users.  Object files and libraries of
+     object code should also go in this directory.  The idea is that
+     this directory is used for files that pertain to a specific
+     machine architecture, but need not be in the path for commands.
+     The value of `libdir' should normally be `/usr/local/lib', but
+     write it as `$(exec_prefix)/lib'.
+
+`datadir'
+     The directory for installing read-only data files which the
+     programs refer to while they run.  This directory is used for
+     files which are independent of the type of machine being used.
+     This should normally be `/usr/local/lib', but write it as
+     `$(prefix)/lib'.
+
+`statedir'
+     The directory for installing data files which the programs modify
+     while they run.  These files should be independent of the type of
+     machine being used, and it should be possible to share them among
+     machines at a network installation.  This should normally be
+     `/usr/local/lib', but write it as `$(prefix)/lib'.
+
+`includedir'
+     The directory for installing header files to be included by user
+     programs with the C `#include' preprocessor directive.  This
+     should normally be `/usr/local/include', but write it as
+     `$(prefix)/include'.
+
+     Most compilers other than GCC do not look for header files in
+     `/usr/local/include'.  So installing the header files this way is
+     only useful with GCC.  Sometimes this is not a problem because some
+     libraries are only really intended to work with GCC.  But some
+     libraries are intended to work with other compilers.  They should
+     install their header files in two places, one specified by
+     `includedir' and one specified by `oldincludedir'.
+
+`oldincludedir'
+     The directory for installing `#include' header files for use with
+     compilers other than GCC.  This should normally be `/usr/include'.
+
+     The Makefile commands should check whether the value of
+     `oldincludedir' is empty.  If it is, they should not try to use
+     it; they should cancel the second installation of the header files.
+
+     A package should not replace an existing header in this directory
+     unless the header came from the same package.  Thus, if your Foo
+     package provides a header file `foo.h', then it should install the
+     header file in the `oldincludedir' directory if either (1) there
+     is no `foo.h' there or (2) the `foo.h' that exists came from the
+     Foo package.
+
+     To tell whether `foo.h' came from the Foo package, put a magic
+     string in the file--part of a comment--and grep for that string.
+
+`mandir'
+     The directory for installing the man pages (if any) for this
+     package.  It should include the suffix for the proper section of
+     the manual--usually `1' for a utility.  It will normally be
+     `/usr/local/man/man1', but you should write it as
+     `$(prefix)/man/man1'.
+
+`man1dir'
+     The directory for installing section 1 man pages.
+
+`man2dir'
+     The directory for installing section 2 man pages.
+
+`...'
+     Use these names instead of `mandir' if the package needs to
+     install man pages in more than one section of the manual.
+
+     *Don't make the primary documentation for any GNU software be a
+     man page.  Write a manual in Texinfo instead.  Man pages are just
+     for the sake of people running GNU software on Unix, which is a
+     secondary application only.*
+
+`manext'
+     The file name extension for the installed man page.  This should
+     contain a period followed by the appropriate digit; it should
+     normally be `.1'.
+
+`man1ext'
+     The file name extension for installed section 1 man pages.
+
+`man2ext'
+     The file name extension for installed section 2 man pages.
+
+`...'
+     Use these names instead of `manext' if the package needs to
+     install man pages in more than one section of the manual.
+
+`infodir'
+     The directory for installing the Info files for this package.  By
+     default, it should be `/usr/local/info', but it should be written
+     as `$(prefix)/info'.
+
+`srcdir'
+     The directory for the sources being compiled.  The value of this
+     variable is normally inserted by the `configure' shell script.
+
+   For example:
+
+     # Common prefix for installation directories.
+     # NOTE: This directory must exist when you start the install.
+     prefix = /usr/local
+     exec_prefix = $(prefix)
+     # Where to put the executable for the command `gcc'.
+     bindir = $(exec_prefix)/bin
+     # Where to put the directories used by the compiler.
+     libdir = $(exec_prefix)/lib
+     # Where to put the Info files.
+     infodir = $(prefix)/info
+
+   If your program installs a large number of files into one of the
+standard user-specified directories, it might be useful to group them
+into a subdirectory particular to that program.  If you do this, you
+should write the `install' rule to create these subdirectories.
+
+   Do not expect the user to include the subdirectory name in the value
+of any of the variables listed above.  The idea of having a uniform set
+of variable names for installation directories is to enable the user to
+specify the exact same values for several different GNU packages.  In
+order for this to be useful, all the packages must be designed so that
+they will work sensibly when the user does so.
+
+
+File: standards.info,  Node: Configuration,  Next: Source Language,  Prev: Makefile Conventions,  Up: Top
+
+How Configuration Should Work
+*****************************
+
+   Each GNU distribution should come with a shell script named
+`configure'.  This script is given arguments which describe the kind of
+machine and system you want to compile the program for.
+
+   The `configure' script must record the configuration options so that
+they affect compilation.
+
+   One way to do this is to make a link from a standard name such as
+`config.h' to the proper configuration file for the chosen system.  If
+you use this technique, the distribution should *not* contain a file
+named `config.h'.  This is so that people won't be able to build the
+program without configuring it first.
+
+   Another thing that `configure' can do is to edit the Makefile.  If
+you do this, the distribution should *not* contain a file named
+`Makefile'.  Instead, include a file `Makefile.in' which contains the
+input used for editing.  Once again, this is so that people won't be
+able to build the program without configuring it first.
+
+   If `configure' does write the `Makefile', then `Makefile' should
+have a target named `Makefile' which causes `configure' to be rerun,
+setting up the same configuration that was set up last time.  The files
+that `configure' reads should be listed as dependencies of `Makefile'.
+
+   All the files which are output from the `configure' script should
+have comments at the beginning explaining that they were generated
+automatically using `configure'.  This is so that users won't think of
+trying to edit them by hand.
+
+   The `configure' script should write a file named `config.status'
+which describes which configuration options were specified when the
+program was last configured.  This file should be a shell script which,
+if run, will recreate the same configuration.
+
+   The `configure' script should accept an option of the form
+`--srcdir=DIRNAME' to specify the directory where sources are found (if
+it is not the current directory).  This makes it possible to build the
+program in a separate directory, so that the actual source directory is
+not modified.
+
+   If the user does not specify `--srcdir', then `configure' should
+check both `.' and `..' to see if it can find the sources.  If it finds
+the sources in one of these places, it should use them from there.
+Otherwise, it should report that it cannot find the sources, and should
+exit with nonzero status.
+
+   Usually the easy way to support `--srcdir' is by editing a
+definition of `VPATH' into the Makefile.  Some rules may need to refer
+explicitly to the specified source directory.  To make this possible,
+`configure' can add to the Makefile a variable named `srcdir' whose
+value is precisely the specified directory.
+
+   The `configure' script should also take an argument which specifies
+the type of system to build the program for.  This argument should look
+like this:
+
+     CPU-COMPANY-SYSTEM
+
+   For example, a Sun 3 might be `m68k-sun-sunos4.1'.
+
+   The `configure' script needs to be able to decode all plausible
+alternatives for how to describe a machine.  Thus, `sun3-sunos4.1'
+would be a valid alias.  So would `sun3-bsd4.2', since SunOS is
+basically BSD and no other BSD system is used on a Sun.  For many
+programs, `vax-dec-ultrix' would be an alias for `vax-dec-bsd', simply
+because the differences between Ultrix and BSD are rarely noticeable,
+but a few programs might need to distinguish them.
+
+   There is a shell script called `config.sub' that you can use as a
+subroutine to validate system types and canonicalize aliases.
+
+   Other options are permitted to specify in more detail the software
+or hardware present on the machine, and include or exclude optional
+parts of the package:
+
+`--enable-FEATURE[=PARAMETER]'
+     Configure the package to build and install an optional user-level
+     facility called FEATURE.  This allows users to choose which
+     optional features to include.  Giving an optional PARAMETER of
+     `no' should omit FEATURE, if it is built by default.
+
+     No `--enable' option should *ever* cause one feature to replace
+     another.  No `--enable' option should ever substitute one useful
+     behavior for another useful behavior.  The only proper use for
+     `--enable' is for questions of whether to build part of the program
+     or exclude it.
+
+`--with-PACKAGE'
+     The package PACKAGE will be installed, so configure this package
+     to work with PACKAGE.
+
+     Possible values of PACKAGE include `x', `x-toolkit', `gnu-as' (or
+     `gas'), `gnu-ld', `gnu-libc', and `gdb'.
+
+     Do not use a `--with' option to specify the file name to use to
+     find certain files.  That is outside the scope of what `--with'
+     options are for.
+
+`--nfp'
+     The target machine has no floating point processor.
+
+`--gas'
+     The target machine assembler is GAS, the GNU assembler.  This is
+     obsolete; users should use `--with-gnu-as' instead.
+
+`--x'
+     The target machine has the X Window System installed.  This is
+     obsolete; users should use `--with-x' instead.
+
+   All `configure' scripts should accept all of these "detail" options,
+whether or not they make any difference to the particular package at
+hand.  In particular, they should accept any option that starts with
+`--with-' or `--enable-'.  This is so users will be able to configure
+an entire GNU source tree at once with a single set of options.
+
+   You will note that the categories `--with-' and `--enable-' are
+narrow: they *do not* provide a place for any sort of option you might
+think of.  That is deliberate.  We want to limit the possible
+configuration options in GNU software.  We do not want GNU programs to
+have idiosyncratic configuration options.
+
+   Packages that perform part of compilation may support
+cross-compilation.  In such a case, the host and target machines for
+the program may be different.  The `configure' script should normally
+treat the specified type of system as both the host and the target,
+thus producing a program which works for the same type of machine that
+it runs on.
+
+   The way to build a cross-compiler, cross-assembler, or what have
+you, is to specify the option `--host=HOSTTYPE' when running
+`configure'.  This specifies the host system without changing the type
+of target system.  The syntax for HOSTTYPE is the same as described
+above.
+
+   Bootstrapping a cross-compiler requires compiling it on a machine
+other than the host it will run on.  Compilation packages accept a
+configuration option `--build=HOSTTYPE' for specifying the
+configuration on which you will compile them, in case that is different
+from the host.
+
+   Programs for which cross-operation is not meaningful need not accept
+the `--host' option, because configuring an entire operating system for
+cross-operation is not a meaningful thing.
+
+   Some programs have ways of configuring themselves automatically.  If
+your program is set up to do this, your `configure' script can simply
+ignore most of its arguments.
+
+
+File: standards.info,  Node: Source Language,  Next: Formatting,  Prev: Configuration,  Up: Top
+
+Using Languages Other Than C
+****************************
+
+   Using a language other than C is like using a non-standard feature:
+it will cause trouble for users.  Even if GCC supports the other
+language, users may find it inconvenient to have to install the
+compiler for that other language in order to build your program.  So
+please write in C.
+
+   There are three exceptions for this rule:
+
+   * It is okay to use a special language if the same program contains
+     an interpreter for that language.
+
+     Thus, it is not a problem that GNU Emacs contains code written in
+     Emacs Lisp, because it comes with a Lisp interpreter.
+
+   * It is okay to use another language in a tool specifically intended
+     for use with that language.
+
+     This is okay because the only people who want to build the tool
+     will be those who have installed the other language anyway.
+
+   * If an application is not of extremely widespread interest, then
+     perhaps it's not important if the application is inconvenient to
+     install.
+
+
+File: standards.info,  Node: Formatting,  Next: Comments,  Prev: Source Language,  Up: Top
+
+Formatting Your Source Code
+***************************
+
+   It is important to put the open-brace that starts the body of a C
+function in column zero, and avoid putting any other open-brace or
+open-parenthesis or open-bracket in column zero.  Several tools look
+for open-braces in column zero to find the beginnings of C functions.
+These tools will not work on code not formatted that way.
+
+   It is also important for function definitions to start the name of
+the function in column zero.  This helps people to search for function
+definitions, and may also help certain tools recognize them.  Thus, the
+proper format is this:
+
+     static char *
+     concat (s1, s2)        /* Name starts in column zero here */
+          char *s1, *s2;
+     {                     /* Open brace in column zero here */
+       ...
+     }
+
+or, if you want to use ANSI C, format the definition like this:
+
+     static char *
+     concat (char *s1, char *s2)
+     {
+       ...
+     }
+
+   In ANSI C, if the arguments don't fit nicely on one line, split it
+like this:
+
+     int
+     lots_of_args (int an_integer, long a_long, short a_short,
+                   double a_double, float a_float)
+     ...
+
+   For the body of the function, we prefer code formatted like this:
+
+     if (x < foo (y, z))
+       haha = bar[4] + 5;
+     else
+       {
+         while (z)
+           {
+             haha += foo (z, z);
+             z--;
+           }
+         return ++x + bar ();
+       }
+
+   We find it easier to read a program when it has spaces before the
+open-parentheses and after the commas.  Especially after the commas.
+
+   When you split an expression into multiple lines, split it before an
+operator, not after one.  Here is the right way:
+
+     if (foo_this_is_long && bar > win (x, y, z)
+         && remaining_condition)
+
+   Try to avoid having two operators of different precedence at the same
+level of indentation.  For example, don't write this:
+
+     mode = (inmode[j] == VOIDmode
+             || GET_MODE_SIZE (outmode[j]) > GET_MODE_SIZE (inmode[j])
+             ? outmode[j] : inmode[j]);
+
+   Instead, use extra parentheses so that the indentation shows the
+nesting:
+
+     mode = ((inmode[j] == VOIDmode
+              || (GET_MODE_SIZE (outmode[j]) > GET_MODE_SIZE (inmode[j])))
+             ? outmode[j] : inmode[j]);
+
+   Insert extra parentheses so that Emacs will indent the code properly.
+For example, the following indentation looks nice if you do it by hand,
+but Emacs would mess it up:
+
+     v = rup->ru_utime.tv_sec*1000 + rup->ru_utime.tv_usec/1000
+         + rup->ru_stime.tv_sec*1000 + rup->ru_stime.tv_usec/1000;
+
+   But adding a set of parentheses solves the problem:
+
+     v = (rup->ru_utime.tv_sec*1000 + rup->ru_utime.tv_usec/1000
+          + rup->ru_stime.tv_sec*1000 + rup->ru_stime.tv_usec/1000);
+
+   Format do-while statements like this:
+
+     do
+       {
+         a = foo (a);
+       }
+     while (a > 0);
+
+   Please use formfeed characters (control-L) to divide the program into
+pages at logical places (but not within a function).  It does not matter
+just how long the pages are, since they do not have to fit on a printed
+page.  The formfeeds should appear alone on lines by themselves.
+
+
+File: standards.info,  Node: Comments,  Next: Syntactic Conventions,  Prev: Formatting,  Up: Top
+
+Commenting Your Work
+********************
+
+   Every program should start with a comment saying briefly what it is
+for.  Example: `fmt - filter for simple filling of text'.
+
+   Please put a comment on each function saying what the function does,
+what sorts of arguments it gets, and what the possible values of
+arguments mean and are used for.  It is not necessary to duplicate in
+words the meaning of the C argument declarations, if a C type is being
+used in its customary fashion.  If there is anything nonstandard about
+its use (such as an argument of type `char *' which is really the
+address of the second character of a string, not the first), or any
+possible values that would not work the way one would expect (such as,
+that strings containing newlines are not guaranteed to work), be sure
+to say so.
+
+   Also explain the significance of the return value, if there is one.
+
+   Please put two spaces after the end of a sentence in your comments,
+so that the Emacs sentence commands will work.  Also, please write
+complete sentences and capitalize the first word.  If a lower-case
+identifer comes at the beginning of a sentence, don't capitalize it!
+Changing the spelling makes it a different identifier.  If you don't
+like starting a sentence with a lower case letter, write the sentence
+differently (e.g., "The identifier lower-case is ...").
+
+   The comment on a function is much clearer if you use the argument
+names to speak about the argument values.  The variable name itself
+should be lower case, but write it in upper case when you are speaking
+about the value rather than the variable itself.  Thus, "the inode
+number NODE_NUM" rather than "an inode".
+
+   There is usually no purpose in restating the name of the function in
+the comment before it, because the reader can see that for himself.
+There might be an exception when the comment is so long that the
+function itself would be off the bottom of the screen.
+
+   There should be a comment on each static variable as well, like this:
+
+     /* Nonzero means truncate lines in the display;
+        zero means continue them.  */
+     int truncate_lines;
+
+   Every `#endif' should have a comment, except in the case of short
+conditionals (just a few lines) that are not nested.  The comment should
+state the condition of the conditional that is ending, *including its
+sense*.  `#else' should have a comment describing the condition *and
+sense* of the code that follows.  For example:
+
+     #ifdef foo
+       ...
+     #else /* not foo */
+       ...
+     #endif /* not foo */
+
+but, by contrast, write the comments this way for a `#ifndef':
+
+     #ifndef foo
+       ...
+     #else /* foo */
+       ...
+     #endif /* foo */
+
+
+File: standards.info,  Node: Syntactic Conventions,  Next: Names,  Prev: Comments,  Up: Top
+
+Clean Use of C Constructs
+*************************
+
+   Please explicitly declare all arguments to functions.  Don't omit
+them just because they are `int's.
+
+   Declarations of external functions and functions to appear later in
+the source file should all go in one place near the beginning of the
+file (somewhere before the first function definition in the file), or
+else should go in a header file.  Don't put `extern' declarations inside
+functions.
+
+   It used to be common practice to use the same local variables (with
+names like `tem') over and over for different values within one
+function.  Instead of doing this, it is better declare a separate local
+variable for each distinct purpose, and give it a name which is
+meaningful.  This not only makes programs easier to understand, it also
+facilitates optimization by good compilers.  You can also move the
+declaration of each local variable into the smallest scope that includes
+all its uses.  This makes the program even cleaner.
+
+   Don't use local variables or parameters that shadow global
+identifiers.
+
+   Don't declare multiple variables in one declaration that spans lines.
+Start a new declaration on each line, instead.  For example, instead of
+this:
+
+     int    foo,
+            bar;
+
+write either this:
+
+     int foo, bar;
+
+or this:
+
+     int foo;
+     int bar;
+
+(If they are global variables, each should have a comment preceding it
+anyway.)
+
+   When you have an `if'-`else' statement nested in another `if'
+statement, always put braces around the `if'-`else'.  Thus, never write
+like this:
+
+     if (foo)
+       if (bar)
+         win ();
+       else
+         lose ();
+
+always like this:
+
+     if (foo)
+       {
+         if (bar)
+           win ();
+         else
+           lose ();
+       }
+
+   If you have an `if' statement nested inside of an `else' statement,
+either write `else if' on one line, like this,
+
+     if (foo)
+       ...
+     else if (bar)
+       ...
+
+with its `then'-part indented like the preceding `then'-part, or write
+the nested `if' within braces like this:
+
+     if (foo)
+       ...
+     else
+       {
+         if (bar)
+           ...
+       }
+
+   Don't declare both a structure tag and variables or typedefs in the
+same declaration.  Instead, declare the structure tag separately and
+then use it to declare the variables or typedefs.
+
+   Try to avoid assignments inside `if'-conditions.  For example, don't
+write this:
+
+     if ((foo = (char *) malloc (sizeof *foo)) == 0)
+       fatal ("virtual memory exhausted");
+
+instead, write this:
+
+     foo = (char *) malloc (sizeof *foo);
+     if (foo == 0)
+       fatal ("virtual memory exhausted");
+
+   Don't make the program ugly to placate `lint'.  Please don't insert
+any casts to `void'.  Zero without a cast is perfectly fine as a null
+pointer constant.
+
+
+File: standards.info,  Node: Names,  Next: Using Extensions,  Prev: Syntactic Conventions,  Up: Top
+
+Naming Variables and Functions
+******************************
+
+   Please use underscores to separate words in a name, so that the Emacs
+word commands can be useful within them.  Stick to lower case; reserve
+upper case for macros and `enum' constants, and for name-prefixes that
+follow a uniform convention.
+
+   For example, you should use names like `ignore_space_change_flag';
+don't use names like `iCantReadThis'.
+
+   Variables that indicate whether command-line options have been
+specified should be named after the meaning of the option, not after
+the option-letter.  A comment should state both the exact meaning of
+the option and its letter.  For example,
+
+     /* Ignore changes in horizontal whitespace (-b).  */
+     int ignore_space_change_flag;
+
+   When you want to define names with constant integer values, use
+`enum' rather than `#define'.  GDB knows about enumeration constants.
+
+   Use file names of 14 characters or less, to avoid creating gratuitous
+problems on System V.  You can use the program `doschk' to test for
+this.  `doschk' also tests for potential name conflicts if the files
+were loaded onto an MS-DOS file system--something you may or may not
+care about.
+

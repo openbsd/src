@@ -1,0 +1,124 @@
+# This is the linker target specific file.  This is invoked by the
+# autoconf generated configure script.  Putting it in a separate shell
+# file lets us skip running autoconf when modifying target specific
+# information.
+
+# This file switches on the shell variable ${targ}, and sets the
+# following shell variables:
+#  targ_emul		name of linker emulation to use
+#  targ_extra_emuls	additional linker emulations to provide
+
+targ_extra_emuls=
+
+case "${targ}" in
+arm-*-pe)		targ_emul=armpe ;;
+sparc-sun-sunos4*) 	targ_emul=sun4 ;;
+sparclite*-*-coff)	targ_emul=coff_sparc ;;
+sparclite*-fujitsu-*)	targ_emul=sun4 ;;
+sparc*-*-aout)		targ_emul=sun4 ;;
+sparc*-*-coff)		targ_emul=coff_sparc ;;
+sparc64-*-elf*)		targ_emul=elf64_sparc ;;
+sparc64*)		targ_emul=sun4 ;;
+sparc*-*-elf)		targ_emul=elf32_sparc ;;
+sparc*-*-lynxos*)	targ_emul=sparclynx ;;
+sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
+sparc*-*-solaris2*)	targ_emul=elf32_sparc ;;
+sparc*-wrs-vxworks*)	targ_emul=sun4 ;;
+i960-wrs-vxworks5.0*)	targ_emul=gld960 ;;
+i960-wrs-vxworks5*)	targ_emul=gld960coff ;;
+i960-wrs-vxworks*)	targ_emul=gldi960 ;;
+i960-*-coff)		targ_emul=gld960coff ;;
+i960-intel-nindy)	targ_emul=gldi960 ;;
+m68*-sun-sunos[34]*)	targ_emul=sun3 ;;
+m68*-wrs-vxworks*)	targ_emul=sun3 ;;
+m68*-ericsson-ose)	targ_emul=sun3 ;;
+*-tandem-none)		targ_emul=st2000 ;;
+i[345]86-*-vsta)	targ_emul=vsta ;;
+i[345]86-*-go32)	targ_emul=i386go32 ;;
+i[345]86-*-aix*)	targ_emul=i386coff ;;
+i[345]86-*-sco*)	targ_emul=i386coff ;;
+i[345]86-*-lynxos*)	targ_emul=i386lynx ;;
+i[345]86-*-coff)	targ_emul=i386coff ;;
+i[345]86-*-bsd)		targ_emul=i386bsd ;;
+i[345]86-*-bsd386)	targ_emul=i386bsd ;;
+i[345]86-*-bsdi*)	targ_emul=i386bsd ;;
+i[345]86-*-aout)	targ_emul=i386aout ;;
+i[345]86-*-linuxaout*)	targ_emul=i386linux; targ_extra_emuls=elf_i386 ;;
+i[345]86-*-linuxoldld)	targ_emul=i386linux; targ_extra_emuls=elf_i386 ;;
+i[345]86-*-linux*)	targ_emul=elf_i386; targ_extra_emuls=i386linux ;;
+i[345]86-*-sysv4*)	targ_emul=elf_i386 ;;
+i[345]86-*-unixware)	targ_emul=elf_i386 ;;
+i[345]86-*-netbsd*)	targ_emul=i386nbsd ;;
+i[345]86-*-netware)	targ_emul=i386nw ;;
+i[345]86-*-elf*)	targ_emul=elf_i386 ;;
+i[345]86-*-sysv*)	targ_emul=i386coff ;;
+i[345]86-*-ptx*)	targ_emul=i386coff ;;
+i[345]86-*-mach*)	targ_emul=i386mach ;;
+i[345]86-*-gnu*)	targ_emul=elf_i386; targ_extra_emuls=i386mach ;;
+i[345]86-*-msdos*)	targ_emul=i386msdos; targ_extra_emuls=i386aout ;;
+i[345]86-*-moss*)	targ_emul=i386moss; targ_extra_emuls=i386msdos ;;
+i[345]86-*-winnt)	targ_emul=i386pe ;;
+i[345]86-*-pe)		targ_emul=i386pe ;;
+i[345]86-*-win32)	targ_emul=i386pe ;;
+m8*-*-*)		targ_emul=m88kbcs ;;
+a29k-*-udi)		targ_emul=sa29200 ;;
+a29k-*-ebmon)		targ_emul=ebmon29k ;;
+a29k-*-*)		targ_emul=a29k ;;
+#  arm-*-riscix*)		targ_emul=riscix ;;
+arm-*-aout | armel-*-aout) targ_emul=armaoutl ;;
+armeb-*-aout)		targ_emul=armaoutb ;;
+arm-*-coff)		targ_emul=armcoff ;;
+h8300-*-hms)		targ_emul=h8300; targ_extra_emuls=h8300h ;;
+h8500-*-hms)		targ_emul=h8500
+			targ_extra_emuls="h8500s h8500b h8500m h8500c"
+			;;
+sh-*-*)			targ_emul=sh; targ_extra_emuls=shl ;;
+m68k-sony-*)		targ_emul=news ;;
+m68k-hp-bsd*)		targ_emul=hp300bsd ;;
+m68*-motorola-sysv*)	targ_emul=delta68 ;;
+m68*-*-aout)		targ_emul=m68kaout ;;
+m68*-*-coff)		targ_emul=m68kcoff ;;
+m68*-*-elf)		targ_emul=m68kelf ;;
+m68*-*-hpux*)		targ_emul=hp3hpux ;;
+m68*-*-lynxos*)		targ_emul=m68klynx ;;
+m68*-hp*-netbsd*)	targ_emul=m68k4knbsd ;;
+m68*-*-netbsd*)		targ_emul=m68knbsd ;;
+hppa*-*-*elf*)		targ_emul=hppaelf ;;
+hppa*-*-lites*)		targ_emul=hppaelf ;;
+vax-dec-ultrix* | vax-dec-bsd*) targ_emul=vax ;;
+mips*-dec-ultrix*)	targ_emul=mipslit ;;
+mips*-sgi-irix5*)	targ_emul=elf32bmip ;;
+mips*-sgi-irix*)	targ_emul=mipsbig ;;
+mips*el-*-ecoff*)	targ_emul=mipsidtl ;;
+mips*-*-ecoff*)		targ_emul=mipsidt ;;
+mips*-dec-bsd*)		targ_emul=mipsbsd ;;
+mips*-dec-netbsd*)	targ_emul=elf32lmip ;;
+mips*-*-bsd*)		targ_emul=mipsbig ;;
+mips*vr4300el-*-elf*)	targ_emul=elf32l4300 ;;
+mips*vr4300-*-elf*)	targ_emul=elf32b4300 ;;
+mips*el-*-elf*)		targ_emul=elf32lmip ;;
+mips*-*-elf*)		targ_emul=elf32bmip ;;
+alpha-*-linux*)		targ_emul=alpha ;;
+alpha-*-osf*)		targ_emul=alpha ;;
+alpha-*-netware*)	targ_emul=alpha ;;
+z8k-*-coff) 		targ_emul=z8002; targ_extra_emuls=z8001 ;;
+ns32k-pc532-mach* | ns32k-pc532-ux*)	targ_emul=pc532machaout ;;
+ns32k-pc532-netbsd* | ns32k-pc532-lites*) targ_emul=ns32knbsd ;;
+powerpc-*-elf* | powerpc-*-eabi*)	targ_emul=elf32ppc ;;
+powerpcle-*-elf* | powerpcle-*-eabi*)	targ_emul=elf32lppc ;;
+powerpc-*-netware*)	targ_emul=ppcnw ;;
+powerpcle-*-pe)         targ_emul=ppcpe ;;
+powerpcle-*-winnt*)     targ_emul=ppcpe ;;
+powerpc-*-aix*)		targ_emul=aixppc ;;
+rs6000-*-aix*)		targ_emul=aixrs6 ;;
+w65-*-*)		targ_emul=w65 ;;
+*-*-aout)		targ_emul=${target_cpu}-${target_vendor} ;;
+*-*-coff)		targ_emul=${target_cpu}-${target_vendor} ;;
+*-*-netware)		targ_emul=${target_cpu}-nw ;;
+
+*)
+  echo 2>&1 "*** ld does not support target ${targ}"
+  echo 2>&1 "*** see ld/configure.tgt for supported targets"
+  exit 1
+
+esac

@@ -1,0 +1,7 @@
+* rcsid's should be conspicuously absent until someone explains to me
+  how to use them constructively without affecting diffs from remote
+  sites.  If you can, then I will become an active supporter of
+  rcsid's.
+
+* "diff -u" patches preferred.  "diff -c" patches accepted.  All other
+  patches will be returned.

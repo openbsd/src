@@ -1,0 +1,741 @@
+This is Info file as.info, produced by Makeinfo-1.55 from the input
+file ./as.texinfo.
+
+START-INFO-DIR-ENTRY
+* As: (as).                     The GNU assembler.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU Assembler "as".
+
+   Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation,
+Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: as.info,  Node: i386-jumps,  Next: i386-Float,  Prev: i386-Memory,  Up: i386-Dependent
+
+Handling of Jump Instructions
+-----------------------------
+
+   Jump instructions are always optimized to use the smallest possible
+displacements.  This is accomplished by using byte (8-bit) displacement
+jumps whenever the target is sufficiently close.  If a byte displacement
+is insufficient a long (32-bit) displacement is used.  We do not support
+word (16-bit) displacement jumps (i.e. prefixing the jump instruction
+with the `addr16' opcode prefix), since the 80386 insists upon masking
+`%eip' to 16 bits after the word displacement is added.
+
+   Note that the `jcxz', `jecxz', `loop', `loopz', `loope', `loopnz'
+and `loopne' instructions only come in byte displacements, so that if
+you use these instructions (`gcc' does not use them) you may get an
+error message (and incorrect code).  The AT&T 80386 assembler tries to
+get around this problem by expanding `jcxz foo' to
+
+              jcxz cx_zero
+              jmp cx_nonzero
+     cx_zero: jmp foo
+     cx_nonzero:
+
+
+File: as.info,  Node: i386-Float,  Next: i386-16bit,  Prev: i386-jumps,  Up: i386-Dependent
+
+Floating Point
+--------------
+
+   All 80387 floating point types except packed BCD are supported.
+(BCD support may be added without much difficulty).  These data types
+are 16-, 32-, and 64- bit integers, and single (32-bit), double
+(64-bit), and extended (80-bit) precision floating point.  Each
+supported type has an opcode suffix and a constructor associated with
+it.  Opcode suffixes specify operand's data types.  Constructors build
+these data types into memory.
+
+   * Floating point constructors are `.float' or `.single', `.double',
+     and `.tfloat' for 32-, 64-, and 80-bit formats.  These correspond
+     to opcode suffixes `s', `l', and `t'.  `t' stands for temporary
+     real, and that the 80387 only supports this format via the `fldt'
+     (load temporary real to stack top) and `fstpt' (store temporary
+     real and pop stack) instructions.
+
+   * Integer constructors are `.word', `.long' or `.int', and `.quad'
+     for the 16-, 32-, and 64-bit integer formats.  The corresponding
+     opcode suffixes are `s' (single), `l' (long), and `q' (quad).  As
+     with the temporary real format the 64-bit `q' format is only
+     present in the `fildq' (load quad integer to stack top) and
+     `fistpq' (store quad integer and pop stack) instructions.
+
+   Register to register operations do not require opcode suffixes, so
+that `fst %st, %st(1)' is equivalent to `fstl %st, %st(1)'.
+
+   Since the 80387 automatically synchronizes with the 80386 `fwait'
+instructions are almost never needed (this is not the case for the
+80286/80287 and 8086/8087 combinations).  Therefore, `as' suppresses
+the `fwait' instruction whenever it is implicitly selected by one of
+the `fn...' instructions.  For example, `fsave' and `fnsave' are
+treated identically.  In general, all the `fn...' instructions are made
+equivalent to `f...' instructions.  If `fwait' is desired it must be
+explicitly coded.
+
+
+File: as.info,  Node: i386-16bit,  Next: i386-Notes,  Prev: i386-Float,  Up: i386-Dependent
+
+Writing 16-bit Code
+-------------------
+
+   While GAS normally writes only "pure" 32-bit i386 code, it has
+limited support for writing code to run in real mode or in 16-bit
+protected mode code segments.  To do this, insert a `.code16' directive
+before the assembly language instructions to be run in 16-bit mode.
+You can switch GAS back to writing normal 32-bit code with the
+`.code32' directive.
+
+   GAS understands exactly the same assembly language syntax in 16-bit
+mode as in 32-bit mode.  The function of any given instruction is
+exactly the same regardless of mode, as long as the resulting object
+code is executed in the mode for which GAS wrote it.  So, for example,
+the `ret' mnemonic produces a 32-bit return instruction regardless of
+whether it is to be run in 16-bit or 32-bit mode.  (If GAS is in 16-bit
+mode, it will add an operand size prefix to the instruction to force it
+to be a 32-bit return.)
+
+   This means, for one thing, that you can use GNU CC to write code to
+be run in real mode or 16-bit protected mode.  Just insert the statement
+`asm(".code16");' at the beginning of your C source file, and while GNU
+CC will still be generating 32-bit code, GAS will automatically add all
+the necessary size prefixes to make that code run in 16-bit mode.  Of
+course, since GNU CC only writes small-model code (it doesn't know how
+to attach segment selectors to pointers like native x86 compilers do),
+any 16-bit code you write with GNU CC will essentially be limited to a
+64K address space.  Also, there will be a code size and performance
+penalty due to all the extra address and operand size prefixes GAS has
+to add to the instructions.
+
+   Note that placing GAS in 16-bit mode does not mean that the resulting
+code will necessarily run on a 16-bit pre-80386 processor.  To write
+code that runs on such a processor, you would have to refrain from using
+*any* 32-bit constructs which require GAS to output address or operand
+size prefixes.  At the moment this would be rather difficult, because
+GAS currently supports *only* 32-bit addressing modes: when writing
+16-bit code, it *always* outputs address size prefixes for any
+instruction that uses a non-register addressing mode.  So you can write
+code that runs on 16-bit processors, but only if that code never
+references memory.
+
+
+File: as.info,  Node: i386-Notes,  Prev: i386-16bit,  Up: i386-Dependent
+
+Notes
+-----
+
+   There is some trickery concerning the `mul' and `imul' instructions
+that deserves mention.  The 16-, 32-, and 64-bit expanding multiplies
+(base opcode `0xf6'; extension 4 for `mul' and 5 for `imul') can be
+output only in the one operand form.  Thus, `imul %ebx, %eax' does
+*not* select the expanding multiply; the expanding multiply would
+clobber the `%edx' register, and this would confuse `gcc' output.  Use
+`imul %ebx' to get the 64-bit product in `%edx:%eax'.
+
+   We have added a two operand form of `imul' when the first operand is
+an immediate mode expression and the second operand is a register.
+This is just a shorthand, so that, multiplying `%eax' by 69, for
+example, can be done with `imul $69, %eax' rather than `imul $69, %eax,
+%eax'.
+
+
+File: as.info,  Node: Z8000-Dependent,  Next: MIPS-Dependent,  Prev: Sparc-Dependent,  Up: Machine Dependencies
+
+Z8000 Dependent Features
+========================
+
+   The Z8000 as supports both members of the Z8000 family: the
+unsegmented Z8002, with 16 bit addresses, and the segmented Z8001 with
+24 bit addresses.
+
+   When the assembler is in unsegmented mode (specified with the
+`unsegm' directive), an address takes up one word (16 bit) sized
+register.  When the assembler is in segmented mode (specified with the
+`segm' directive), a 24-bit address takes up a long (32 bit) register.
+*Note Assembler Directives for the Z8000: Z8000 Directives, for a list
+of other Z8000 specific assembler directives.
+
+* Menu:
+
+* Z8000 Options::               No special command-line options for Z8000
+* Z8000 Syntax::                Assembler syntax for the Z8000
+* Z8000 Directives::            Special directives for the Z8000
+* Z8000 Opcodes::               Opcodes
+
+
+File: as.info,  Node: Z8000 Options,  Next: Z8000 Syntax,  Up: Z8000-Dependent
+
+Options
+-------
+
+   `as' has no additional command-line options for the Zilog Z8000
+family.
+
+
+File: as.info,  Node: Z8000 Syntax,  Next: Z8000 Directives,  Prev: Z8000 Options,  Up: Z8000-Dependent
+
+Syntax
+------
+
+* Menu:
+
+* Z8000-Chars::                Special Characters
+* Z8000-Regs::                 Register Names
+* Z8000-Addressing::           Addressing Modes
+
+
+File: as.info,  Node: Z8000-Chars,  Next: Z8000-Regs,  Up: Z8000 Syntax
+
+Special Characters
+..................
+
+   `!' is the line comment character.
+
+   You can use `;' instead of a newline to separate statements.
+
+
+File: as.info,  Node: Z8000-Regs,  Next: Z8000-Addressing,  Prev: Z8000-Chars,  Up: Z8000 Syntax
+
+Register Names
+..............
+
+   The Z8000 has sixteen 16 bit registers, numbered 0 to 15.  You can
+refer to different sized groups of registers by register number, with
+the prefix `r' for 16 bit registers, `rr' for 32 bit registers and `rq'
+for 64 bit registers.  You can also refer to the contents of the first
+eight (of the sixteen 16 bit registers) by bytes.  They are named `rNh'
+and `rNl'.
+
+*byte registers*
+     r0l r0h r1h r1l r2h r2l r3h r3l
+     r4h r4l r5h r5l r6h r6l r7h r7l
+*word registers*
+     r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+*long word registers*
+     rr0 rr2 rr4 rr6 rr8 rr10 rr12 rr14
+*quad word registers*
+     rq0 rq4 rq8 rq12
+
+
+File: as.info,  Node: Z8000-Addressing,  Prev: Z8000-Regs,  Up: Z8000 Syntax
+
+Addressing Modes
+................
+
+   as understands the following addressing modes for the Z8000:
+
+`rN'
+     Register direct
+
+`@rN'
+     Indirect register
+
+`ADDR'
+     Direct: the 16 bit or 24 bit address (depending on whether the
+     assembler is in segmented or unsegmented mode) of the operand is
+     in the instruction.
+
+`address(rN)'
+     Indexed: the 16 or 24 bit address is added to the 16 bit register
+     to produce the final address in memory of the operand.
+
+`rN(#IMM)'
+     Base Address: the 16 or 24 bit register is added to the 16 bit sign
+     extended immediate displacement to produce the final address in
+     memory of the operand.
+
+`rN(rM)'
+     Base Index: the 16 or 24 bit register rN is added to the sign
+     extended 16 bit index register rM to produce the final address in
+     memory of the operand.
+
+`#XX'
+     Immediate data XX.
+
+
+File: as.info,  Node: Z8000 Directives,  Next: Z8000 Opcodes,  Prev: Z8000 Syntax,  Up: Z8000-Dependent
+
+Assembler Directives for the Z8000
+----------------------------------
+
+   The Z8000 port of as includes these additional assembler directives,
+for compatibility with other Z8000 assemblers.  As shown, these do not
+begin with `.' (unlike the ordinary as directives).
+
+`segm'
+     Generates code for the segmented Z8001.
+
+`unsegm'
+     Generates code for the unsegmented Z8002.
+
+`name'
+     Synonym for `.file'
+
+`global'
+     Synonym for `.global'
+
+`wval'
+     Synonym for `.word'
+
+`lval'
+     Synonym for `.long'
+
+`bval'
+     Synonym for `.byte'
+
+`sval'
+     Assemble a string.  `sval' expects one string literal, delimited by
+     single quotes.  It assembles each byte of the string into
+     consecutive addresses.  You can use the escape sequence `%XX'
+     (where XX represents a two-digit hexadecimal number) to represent
+     the character whose ASCII value is XX.  Use this feature to
+     describe single quote and other characters that may not appear in
+     string literals as themselves.  For example, the C statement
+     `char *a = "he said \"it's 50% off\"";' is represented in Z8000
+     assembly language (shown with the assembler output in hex at the
+     left) as
+
+          68652073    sval    'he said %22it%27s 50%25 off%22%00'
+          61696420
+          22697427
+          73203530
+          25206F66
+          662200
+
+`rsect'
+     synonym for `.section'
+
+`block'
+     synonym for `.space'
+
+`even'
+     special case of `.align'; aligns output to even byte boundary.
+
+
+File: as.info,  Node: Z8000 Opcodes,  Prev: Z8000 Directives,  Up: Z8000-Dependent
+
+Opcodes
+-------
+
+   For detailed information on the Z8000 machine instruction set, see
+`Z8000 Technical Manual'.
+
+   The following table summarizes the opcodes and their arguments:
+
+                 rs   16 bit source register
+                 rd   16 bit destination register
+                 rbs   8 bit source register
+                 rbd   8 bit destination register
+                 rrs   32 bit source register
+                 rrd   32 bit destination register
+                 rqs   64 bit source register
+                 rqd   64 bit destination register
+                 addr 16/24 bit address
+                 imm  immediate data
+     
+     adc rd,rs               clrb addr               cpsir @rd,@rs,rr,cc
+     adcb rbd,rbs            clrb addr(rd)           cpsirb @rd,@rs,rr,cc
+     add rd,@rs              clrb rbd                dab rbd
+     add rd,addr             com @rd                 dbjnz rbd,disp7
+     add rd,addr(rs)         com addr                dec @rd,imm4m1
+     add rd,imm16            com addr(rd)            dec addr(rd),imm4m1
+     add rd,rs               com rd                  dec addr,imm4m1
+     addb rbd,@rs            comb @rd                dec rd,imm4m1
+     addb rbd,addr           comb addr               decb @rd,imm4m1
+     addb rbd,addr(rs)       comb addr(rd)           decb addr(rd),imm4m1
+     addb rbd,imm8           comb rbd                decb addr,imm4m1
+     addb rbd,rbs            comflg flags            decb rbd,imm4m1
+     addl rrd,@rs            cp @rd,imm16            di i2
+     addl rrd,addr           cp addr(rd),imm16       div rrd,@rs
+     addl rrd,addr(rs)       cp addr,imm16           div rrd,addr
+     addl rrd,imm32          cp rd,@rs               div rrd,addr(rs)
+     addl rrd,rrs            cp rd,addr              div rrd,imm16
+     and rd,@rs              cp rd,addr(rs)          div rrd,rs
+     and rd,addr             cp rd,imm16             divl rqd,@rs
+     and rd,addr(rs)         cp rd,rs                divl rqd,addr
+     and rd,imm16            cpb @rd,imm8            divl rqd,addr(rs)
+     and rd,rs               cpb addr(rd),imm8       divl rqd,imm32
+     andb rbd,@rs            cpb addr,imm8           divl rqd,rrs
+     andb rbd,addr           cpb rbd,@rs             djnz rd,disp7
+     andb rbd,addr(rs)       cpb rbd,addr            ei i2
+     andb rbd,imm8           cpb rbd,addr(rs)        ex rd,@rs
+     andb rbd,rbs            cpb rbd,imm8            ex rd,addr
+     bit @rd,imm4            cpb rbd,rbs             ex rd,addr(rs)
+     bit addr(rd),imm4       cpd rd,@rs,rr,cc        ex rd,rs
+     bit addr,imm4           cpdb rbd,@rs,rr,cc      exb rbd,@rs
+     bit rd,imm4             cpdr rd,@rs,rr,cc       exb rbd,addr
+     bit rd,rs               cpdrb rbd,@rs,rr,cc     exb rbd,addr(rs)
+     bitb @rd,imm4           cpi rd,@rs,rr,cc        exb rbd,rbs
+     bitb addr(rd),imm4      cpib rbd,@rs,rr,cc      ext0e imm8
+     bitb addr,imm4          cpir rd,@rs,rr,cc       ext0f imm8
+     bitb rbd,imm4           cpirb rbd,@rs,rr,cc     ext8e imm8
+     bitb rbd,rs             cpl rrd,@rs             ext8f imm8
+     bpt                     cpl rrd,addr            exts rrd
+     call @rd                cpl rrd,addr(rs)        extsb rd
+     call addr               cpl rrd,imm32           extsl rqd
+     call addr(rd)           cpl rrd,rrs             halt
+     calr disp12             cpsd @rd,@rs,rr,cc      in rd,@rs
+     clr @rd                 cpsdb @rd,@rs,rr,cc     in rd,imm16
+     clr addr                cpsdr @rd,@rs,rr,cc     inb rbd,@rs
+     clr addr(rd)            cpsdrb @rd,@rs,rr,cc    inb rbd,imm16
+     clr rd                  cpsi @rd,@rs,rr,cc      inc @rd,imm4m1
+     clrb @rd                cpsib @rd,@rs,rr,cc     inc addr(rd),imm4m1
+     inc addr,imm4m1         ldb rbd,rs(rx)          mult rrd,addr(rs)
+     inc rd,imm4m1           ldb rd(imm16),rbs       mult rrd,imm16
+     incb @rd,imm4m1         ldb rd(rx),rbs          mult rrd,rs
+     incb addr(rd),imm4m1    ldctl ctrl,rs           multl rqd,@rs
+     incb addr,imm4m1        ldctl rd,ctrl           multl rqd,addr
+     incb rbd,imm4m1         ldd @rs,@rd,rr          multl rqd,addr(rs)
+     ind @rd,@rs,ra          lddb @rs,@rd,rr         multl rqd,imm32
+     indb @rd,@rs,rba        lddr @rs,@rd,rr         multl rqd,rrs
+     inib @rd,@rs,ra         lddrb @rs,@rd,rr        neg @rd
+     inibr @rd,@rs,ra        ldi @rd,@rs,rr          neg addr
+     iret                    ldib @rd,@rs,rr         neg addr(rd)
+     jp cc,@rd               ldir @rd,@rs,rr         neg rd
+     jp cc,addr              ldirb @rd,@rs,rr        negb @rd
+     jp cc,addr(rd)          ldk rd,imm4             negb addr
+     jr cc,disp8             ldl @rd,rrs             negb addr(rd)
+     ld @rd,imm16            ldl addr(rd),rrs        negb rbd
+     ld @rd,rs               ldl addr,rrs            nop
+     ld addr(rd),imm16       ldl rd(imm16),rrs       or rd,@rs
+     ld addr(rd),rs          ldl rd(rx),rrs          or rd,addr
+     ld addr,imm16           ldl rrd,@rs             or rd,addr(rs)
+     ld addr,rs              ldl rrd,addr            or rd,imm16
+     ld rd(imm16),rs         ldl rrd,addr(rs)        or rd,rs
+     ld rd(rx),rs            ldl rrd,imm32           orb rbd,@rs
+     ld rd,@rs               ldl rrd,rrs             orb rbd,addr
+     ld rd,addr              ldl rrd,rs(imm16)       orb rbd,addr(rs)
+     ld rd,addr(rs)          ldl rrd,rs(rx)          orb rbd,imm8
+     ld rd,imm16             ldm @rd,rs,n            orb rbd,rbs
+     ld rd,rs                ldm addr(rd),rs,n       out @rd,rs
+     ld rd,rs(imm16)         ldm addr,rs,n           out imm16,rs
+     ld rd,rs(rx)            ldm rd,@rs,n            outb @rd,rbs
+     lda rd,addr             ldm rd,addr(rs),n       outb imm16,rbs
+     lda rd,addr(rs)         ldm rd,addr,n           outd @rd,@rs,ra
+     lda rd,rs(imm16)        ldps @rs                outdb @rd,@rs,rba
+     lda rd,rs(rx)           ldps addr               outib @rd,@rs,ra
+     ldar rd,disp16          ldps addr(rs)           outibr @rd,@rs,ra
+     ldb @rd,imm8            ldr disp16,rs           pop @rd,@rs
+     ldb @rd,rbs             ldr rd,disp16           pop addr(rd),@rs
+     ldb addr(rd),imm8       ldrb disp16,rbs         pop addr,@rs
+     ldb addr(rd),rbs        ldrb rbd,disp16         pop rd,@rs
+     ldb addr,imm8           ldrl disp16,rrs         popl @rd,@rs
+     ldb addr,rbs            ldrl rrd,disp16         popl addr(rd),@rs
+     ldb rbd,@rs             mbit                    popl addr,@rs
+     ldb rbd,addr            mreq rd                 popl rrd,@rs
+     ldb rbd,addr(rs)        mres                    push @rd,@rs
+     ldb rbd,imm8            mset                    push @rd,addr
+     ldb rbd,rbs             mult rrd,@rs            push @rd,addr(rs)
+     ldb rbd,rs(imm16)       mult rrd,addr           push @rd,imm16
+     push @rd,rs             set addr,imm4           subl rrd,imm32
+     pushl @rd,@rs           set rd,imm4             subl rrd,rrs
+     pushl @rd,addr          set rd,rs               tcc cc,rd
+     pushl @rd,addr(rs)      setb @rd,imm4           tccb cc,rbd
+     pushl @rd,rrs           setb addr(rd),imm4      test @rd
+     res @rd,imm4            setb addr,imm4          test addr
+     res addr(rd),imm4       setb rbd,imm4           test addr(rd)
+     res addr,imm4           setb rbd,rs             test rd
+     res rd,imm4             setflg imm4             testb @rd
+     res rd,rs               sinb rbd,imm16          testb addr
+     resb @rd,imm4           sinb rd,imm16           testb addr(rd)
+     resb addr(rd),imm4      sind @rd,@rs,ra         testb rbd
+     resb addr,imm4          sindb @rd,@rs,rba       testl @rd
+     resb rbd,imm4           sinib @rd,@rs,ra        testl addr
+     resb rbd,rs             sinibr @rd,@rs,ra       testl addr(rd)
+     resflg imm4             sla rd,imm8             testl rrd
+     ret cc                  slab rbd,imm8           trdb @rd,@rs,rba
+     rl rd,imm1or2           slal rrd,imm8           trdrb @rd,@rs,rba
+     rlb rbd,imm1or2         sll rd,imm8             trib @rd,@rs,rbr
+     rlc rd,imm1or2          sllb rbd,imm8           trirb @rd,@rs,rbr
+     rlcb rbd,imm1or2        slll rrd,imm8           trtdrb @ra,@rb,rbr
+     rldb rbb,rba            sout imm16,rs           trtib @ra,@rb,rr
+     rr rd,imm1or2           soutb imm16,rbs         trtirb @ra,@rb,rbr
+     rrb rbd,imm1or2         soutd @rd,@rs,ra        trtrb @ra,@rb,rbr
+     rrc rd,imm1or2          soutdb @rd,@rs,rba      tset @rd
+     rrcb rbd,imm1or2        soutib @rd,@rs,ra       tset addr
+     rrdb rbb,rba            soutibr @rd,@rs,ra      tset addr(rd)
+     rsvd36                  sra rd,imm8             tset rd
+     rsvd38                  srab rbd,imm8           tsetb @rd
+     rsvd78                  sral rrd,imm8           tsetb addr
+     rsvd7e                  srl rd,imm8             tsetb addr(rd)
+     rsvd9d                  srlb rbd,imm8           tsetb rbd
+     rsvd9f                  srll rrd,imm8           xor rd,@rs
+     rsvdb9                  sub rd,@rs              xor rd,addr
+     rsvdbf                  sub rd,addr             xor rd,addr(rs)
+     sbc rd,rs               sub rd,addr(rs)         xor rd,imm16
+     sbcb rbd,rbs            sub rd,imm16            xor rd,rs
+     sc imm8                 sub rd,rs               xorb rbd,@rs
+     sda rd,rs               subb rbd,@rs            xorb rbd,addr
+     sdab rbd,rs             subb rbd,addr           xorb rbd,addr(rs)
+     sdal rrd,rs             subb rbd,addr(rs)       xorb rbd,imm8
+     sdl rd,rs               subb rbd,imm8           xorb rbd,rbs
+     sdlb rbd,rs             subb rbd,rbs            xorb rbd,rbs
+     sdll rrd,rs             subl rrd,@rs
+     set @rd,imm4            subl rrd,addr
+     set addr(rd),imm4       subl rrd,addr(rs)
+
+
+File: as.info,  Node: MIPS-Dependent,  Next: i386-Dependent,  Prev: Z8000-Dependent,  Up: Machine Dependencies
+
+MIPS Dependent Features
+=======================
+
+   GNU `as' for MIPS architectures supports the MIPS R2000, R3000,
+R4000 and R6000 processors.  For information about the MIPS instruction
+set, see `MIPS RISC Architecture', by Kane and Heindrich
+(Prentice-Hall).  For an overview of MIPS assembly conventions, see
+"Appendix D: Assembly Language Programming" in the same work.
+
+* Menu:
+
+* MIPS Opts::   Assembler options
+* MIPS Object:: ECOFF object code
+* MIPS Stabs::  Directives for debugging information
+* MIPS ISA::    Directives to override the ISA level
+
+
+File: as.info,  Node: MIPS Opts,  Next: MIPS Object,  Up: MIPS-Dependent
+
+Assembler options
+-----------------
+
+   The MIPS configurations of GNU `as' support these special options:
+
+`-G NUM'
+     This option sets the largest size of an object that can be
+     referenced implicitly with the `gp' register.  It is only accepted
+     for targets that use ECOFF format.  The default value is 8.
+
+`-EB'
+`-EL'
+     Any MIPS configuration of `as' can select big-endian or
+     little-endian output at run time (unlike the other GNU development
+     tools, which must be configured for one or the other).  Use `-EB'
+     to select big-endian output, and `-EL' for little-endian.
+
+`-mips1'
+`-mips2'
+`-mips3'
+     Generate code for a particular MIPS Instruction Set Architecture
+     level.  `-mips1' corresponds to the R2000 and R3000 processors,
+     `-mips2' to the R6000 processor, and `-mips3' to the R4000
+     processor.  You can also switch instruction sets during the
+     assembly; see *Note Directives to override the ISA level: MIPS ISA.
+
+`-m4650'
+`-no-m4650'
+     Generate code for the MIPS R4650 chip.  This tells the assembler
+     to accept the `mad' and `madu' instruction, and to not schedule
+     `nop' instructions around accesses to the `HI' and `LO' registers.
+     `-no-m4650' turns off this option.
+
+`-m4010'
+`-no-m4010'
+     Generate code for the LSI R4010 chip.  This tells the assembler to
+     accept the R4010 specific instructions (`addciu', `ffc', etc.),
+     and to not schedule `nop' instructions around accesses to the `HI'
+     and `LO' registers.  `-no-m4010' turns off this option.
+
+`-mcpu=CPU'
+     Generate code for a particular MIPS cpu.  This has little effect
+     on the assembler, but it is passed by `gcc'.
+
+`-nocpp'
+     This option is ignored.  It is accepted for command-line
+     compatibility with other assemblers, which use it to turn off C
+     style preprocessing.  With GNU `as', there is no need for
+     `-nocpp', because the GNU assembler itself never runs the C
+     preprocessor.
+
+`--trap'
+`--no-break'
+     `as' automatically macro expands certain division and
+     multiplication instructions to check for overflow and division by
+     zero.  This option causes `as' to generate code to take a trap
+     exception rather than a break exception when an error is detected.
+     The trap instructions are only supported at Instruction Set
+     Architecture level 2 and higher.
+
+`--break'
+`--no-trap'
+     Generate code to take a break exception rather than a trap
+     exception when an error is detected.  This is the default.
+
+
+File: as.info,  Node: MIPS Object,  Next: MIPS Stabs,  Prev: MIPS Opts,  Up: MIPS-Dependent
+
+MIPS ECOFF object code
+----------------------
+
+   Assembling for a MIPS ECOFF target supports some additional sections
+besides the usual `.text', `.data' and `.bss'.  The additional sections
+are `.rdata', used for read-only data, `.sdata', used for small data,
+and `.sbss', used for small common objects.
+
+   When assembling for ECOFF, the assembler uses the `$gp' (`$28')
+register to form the address of a "small object".  Any object in the
+`.sdata' or `.sbss' sections is considered "small" in this sense.  For
+external objects, or for objects in the `.bss' section, you can use the
+`gcc' `-G' option to control the size of objects addressed via `$gp';
+the default value is 8, meaning that a reference to any object eight
+bytes or smaller uses `$gp'.  Passing `-G 0' to `as' prevents it from
+using the `$gp' register on the basis of object size (but the assembler
+uses `$gp' for objects in `.sdata' or `sbss' in any case).  The size of
+an object in the `.bss' section is set by the `.comm' or `.lcomm'
+directive that defines it.  The size of an external object may be set
+with the `.extern' directive.  For example, `.extern sym,4' declares
+that the object at `sym' is 4 bytes in length, whie leaving `sym'
+otherwise undefined.
+
+   Using small ECOFF objects requires linker support, and assumes that
+the `$gp' register is correctly initialized (normally done
+automatically by the startup code).  MIPS ECOFF assembly code must not
+modify the `$gp' register.
+
+
+File: as.info,  Node: MIPS Stabs,  Next: MIPS ISA,  Prev: MIPS Object,  Up: MIPS-Dependent
+
+Directives for debugging information
+------------------------------------
+
+   MIPS ECOFF `as' supports several directives used for generating
+debugging information which are not support by traditional MIPS
+assemblers.  These are `.def', `.endef', `.dim', `.file', `.scl',
+`.size', `.tag', `.type', `.val', `.stabd', `.stabn', and `.stabs'.
+The debugging information generated by the three `.stab' directives can
+only be read by GDB, not by traditional MIPS debuggers (this
+enhancement is required to fully support C++ debugging).  These
+directives are primarily used by compilers, not assembly language
+programmers!
+
+
+File: as.info,  Node: MIPS ISA,  Prev: MIPS Stabs,  Up: MIPS-Dependent
+
+Directives to override the ISA level
+------------------------------------
+
+   GNU `as' supports an additional directive to change the MIPS
+Instruction Set Architecture level on the fly: `.set mipsN'.  N should
+be a number from 0 to 3.  A value from 1 to 3 makes the assembler
+accept instructions for the corresponding ISA level, from that point on
+in the assembly.  `.set mipsN' affects not only which instructions are
+permitted, but also how certain macros are expanded.  `.set mips0'
+restores the ISA level to its original level: either the level you
+selected with command line options, or the default for your
+configuration.  You can use this feature to permit specific R4000
+instructions while assembling in 32 bit mode.  Use this directive with
+care!
+
+   Traditional MIPS assemblers do not support this directive.
+
+
+File: as.info,  Node: Acknowledgements,  Next: Index,  Prev: Machine Dependencies,  Up: Top
+
+Acknowledgements
+****************
+
+   If you have contributed to `as' and your name isn't listed here, it
+is not meant as a slight.  We just don't know about it.  Send mail to
+the maintainer, and we'll correct the situation.  Currently the
+maintainer is Ken Raeburn (email address `raeburn@cygnus.com').
+
+   Dean Elsner wrote the original GNU assembler for the VAX.(1)
+
+   Jay Fenlason maintained GAS for a while, adding support for
+GDB-specific debug information and the 68k series machines, most of the
+preprocessing pass, and extensive changes in `messages.c',
+`input-file.c', `write.c'.
+
+   K. Richard Pixley maintained GAS for a while, adding various
+enhancements and many bug fixes, including merging support for several
+processors, breaking GAS up to handle multiple object file format back
+ends (including heavy rewrite, testing, an integration of the coff and
+b.out back ends), adding configuration including heavy testing and
+verification of cross assemblers and file splits and renaming,
+converted GAS to strictly ANSI C including full prototypes, added
+support for m680[34]0 and cpu32, did considerable work on i960
+including a COFF port (including considerable amounts of reverse
+engineering), a SPARC opcode file rewrite, DECstation, rs6000, and
+hp300hpux host ports, updated "know" assertions and made them work,
+much other reorganization, cleanup, and lint.
+
+   Ken Raeburn wrote the high-level BFD interface code to replace most
+of the code in format-specific I/O modules.
+
+   The original VMS support was contributed by David L. Kashtan.  Eric
+Youngdale has done much work with it since.
+
+   The Intel 80386 machine description was written by Eliot Dresselhaus.
+
+   Minh Tran-Le at IntelliCorp contributed some AIX 386 support.
+
+   The Motorola 88k machine description was contributed by Devon Bowen
+of Buffalo University and Torbjorn Granlund of the Swedish Institute of
+Computer Science.
+
+   Keith Knowles at the Open Software Foundation wrote the original
+MIPS back end (`tc-mips.c', `tc-mips.h'), and contributed Rose format
+support (which hasn't been merged in yet).  Ralph Campbell worked with
+the MIPS code to support a.out format.
+
+   Support for the Zilog Z8k and Hitachi H8/300 and H8/500 processors
+(tc-z8k, tc-h8300, tc-h8500), and IEEE 695 object file format
+(obj-ieee), was written by Steve Chamberlain of Cygnus Support.  Steve
+also modified the COFF back end to use BFD for some low-level
+operations, for use with the H8/300 and AMD 29k targets.
+
+   John Gilmore built the AMD 29000 support, added `.include' support,
+and simplified the configuration of which versions accept which
+directives.  He updated the 68k machine description so that Motorola's
+opcodes always produced fixed-size instructions (e.g. `jsr'), while
+synthetic instructions remained shrinkable (`jbsr').  John fixed many
+bugs, including true tested cross-compilation support, and one bug in
+relaxation that took a week and required the proverbial one-bit fix.
+
+   Ian Lance Taylor of Cygnus Support merged the Motorola and MIT
+syntax for the 68k, completed support for some COFF targets (68k, i386
+SVR3, and SCO Unix), added support for MIPS ECOFF and ELF targets, and
+made a few other minor patches.
+
+   Steve Chamberlain made `as' able to generate listings.
+
+   Hewlett-Packard contributed support for the HP9000/300.
+
+   Jeff Law wrote GAS and BFD support for the native HPPA object format
+(SOM) along with a fairly extensive HPPA testsuite (for both SOM and
+ELF object formats).  This work was supported by both the Center for
+Software Science at the University of Utah and Cygnus Support.
+
+   Support for ELF format files has been worked on by Mark Eichin of
+Cygnus Support (original, incomplete implementation for SPARC), Pete
+Hoogenboom and Jeff Law at the University of Utah (HPPA mainly),
+Michael Meissner of the Open Software Foundation (i386 mainly), and Ken
+Raeburn of Cygnus Support (sparc, and some initial 64-bit support).
+
+   Several engineers at Cygnus Support have also provided many small
+bug fixes and configuration enhancements.
+
+   Many others have contributed large or small bugfixes and
+enhancements.  If you have contributed significant work and are not
+mentioned on this list, and want to be, let us know.  Some of the
+history has been lost; we are not intentionally leaving anyone out.
+
+   ---------- Footnotes ----------
+
+   (1)  Any more details?
+

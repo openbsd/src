@@ -1,0 +1,17 @@
+# Some generic SPARC and SPARC64 tests
+
+# FIXME: The tests here aren't really bullet proof.  A mistake in the opcode
+# table can slip through since we use the same table for assembly and
+# disassembly.  The way to fix this is to include a hex dump of the insns
+# and test that as well.  Later.
+
+if [istarget sparc*-*-*] then {
+    set sparc64 [istarget sparc64*-*-*]
+
+    if $sparc64 { run_dump_test "asi" }
+    if $sparc64 { run_dump_test "membar" }
+    if $sparc64 { run_dump_test "prefetch" }
+    if $sparc64 { run_dump_test "synth64" }
+    if $sparc64 { run_dump_test "rdpr" }
+    if $sparc64 { run_dump_test "wrpr" }
+}

@@ -1,0 +1,28 @@
+	.SPACE $PRIVATE$
+	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
+	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
+	.SPACE $TEXT$
+	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
+	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
+	.IMPORT $global$,DATA
+	.IMPORT $$dyncall,MILLICODE
+; gcc_compiled.:
+	.EXPORT intVec_error_handler,DATA
+	.SPACE $PRIVATE$
+	.SUBSPA $DATA$
+
+intVec_error_handler:
+	.word P%default_intVec_error_handler__FPCc
+	.SPACE $TEXT$
+	.SUBSPA $CODE$
+
+	.align 4
+	.EXPORT foo,CODE
+	.EXPORT foo,ENTRY,PRIV_LEV=3
+foo:
+	.PROC
+	.CALLINFO FRAME=0
+	.ENTRY
+	.stabd 68,0,41
+	.EXIT
+	.PROCEND

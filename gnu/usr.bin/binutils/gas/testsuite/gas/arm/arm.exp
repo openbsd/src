@@ -1,0 +1,26 @@
+#
+# Some ARM tests
+#
+if [istarget arm-*-*] then {
+    gas_test "inst.s" "" $stdoptlist "Basic instruction set"
+
+    gas_test "arm3.s" "" $stdoptlist "Arm 3 instructions"
+
+    gas_test "arm6.s" "" $stdoptlist "Arm 6 instructions"
+
+    gas_test "arm7dm.s" "" $stdoptlist "Arm 7DM instructions"
+
+    gas_test "copro.s" "" $stdoptlist "Co processor instructions"
+
+    gas_test "float.s" "" $stdoptlist "Core floating point instructions"
+}
+
+# Not all arm targets are bi-endian, so only run this test on ones
+# we know that are.  FIXME: We should probably also key off armeb/armel.
+
+if [istarget arm-*-pe] {
+    run_dump_test "le-fpconst"
+
+    # Since big-endian numbers have the normal format, this doesn't exist.
+    #run_dump_test "be-fpconst"
+}

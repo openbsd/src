@@ -1,0 +1,24 @@
+;exists	macro	arg1,arg2
+;	ifne	==arg2
+;	move	arg1,arg2
+;	elsec
+;	push	arg1
+;	endc
+;	endm
+;
+
+;	exists	foo,bar
+;	ifne	-1
+;	move	foo,bar
+	move	foo,bar
+;	elsec
+;	push	foo
+;	endc
+;	exists	foo
+;	ifne	0
+;	move	foo,
+;	elsec
+;	push	foo
+	push	foo
+;	endc
+;

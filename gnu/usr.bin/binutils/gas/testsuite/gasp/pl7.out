@@ -1,0 +1,26 @@
+!	.ALTERNATE
+!! test of string operators
+	! test of string operators
+!define	MACRO	str1,str2
+!	SDATA	str1
+!	SDATA	"str2"
+!ENDM
+!	define	one" way to get "spaces,0
+!	SDATA	one" way to get "spaces
+	.byte	111,110,101,34,32,119,97,121,32,116,111,32,103,101,116,32,34,115,112,97,99,101,115
+!	SDATA	"0"
+	.byte	48
+!	define	"lot's! of <special>,chars%", 0
+!	SDATA	"lot's of <special>,chars%"
+	.byte	108,111,116,39,115,32,111,102,32,60,115,112,101,99,105,97,108,62,44,99,104,97,114,115,37
+!	SDATA	"0"
+	.byte	48
+!
+
+!
+
+!
+
+!
+
+!

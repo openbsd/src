@@ -1,0 +1,15 @@
+!
+
+!
+
+!foo	.REG	(r1)
+!	add	foo,foo
+	add	r1,r1
+!
+
+!bar	.reg	(r2)
+!	add	bar,foo
+	add	r2,r1
+!
+
+!	.END

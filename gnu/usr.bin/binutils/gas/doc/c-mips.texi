@@ -1,0 +1,173 @@
+@c Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+@c This is part of the GAS manual.
+@c For copying conditions, see the file as.texinfo.
+@ifset GENERIC
+@page
+@node MIPS-Dependent
+@chapter MIPS Dependent Features
+@end ifset
+@ifclear GENERIC
+@node Machine Dependencies
+@chapter MIPS Dependent Features
+@end ifclear
+
+@cindex MIPS R2000
+@cindex MIPS R3000
+@cindex MIPS R4000
+@cindex MIPS R6000
+@sc{gnu} @code{@value{AS}} for @sc{mips} architectures supports the @sc{mips}
+@sc{r2000}, @sc{r3000}, @sc{r4000} and @sc{r6000} processors.  For information
+about the @sc{mips} instruction set, see @cite{MIPS RISC Architecture}, by Kane
+and Heindrich (Prentice-Hall).  For an overview of @sc{mips} assembly
+conventions, see ``Appendix D: Assembly Language Programming'' in the same
+work.
+
+@menu
+* MIPS Opts::   Assembler options
+* MIPS Object:: ECOFF object code
+* MIPS Stabs::  Directives for debugging information
+* MIPS ISA::    Directives to override the ISA level
+@end menu
+
+@node MIPS Opts
+@section Assembler options
+
+The @sc{mips} configurations of @sc{gnu} @code{@value{AS}} support these
+special options:
+
+@table @code
+@cindex @code{-G} option (MIPS)
+@item -G @var{num}
+This option sets the largest size of an object that can be referenced
+implicitly with the @code{gp} register.  It is only accepted for targets
+that use @sc{ecoff} format.  The default value is 8.
+
+@cindex @code{-EB} option (MIPS)
+@cindex @code{-EL} option (MIPS)
+@cindex MIPS big-endian output
+@cindex MIPS little-endian output
+@cindex big-endian output, MIPS
+@cindex little-endian output, MIPS
+@item -EB
+@itemx -EL
+Any @sc{mips} configuration of @code{@value{AS}} can select big-endian or
+little-endian output at run time (unlike the other @sc{gnu} development
+tools, which must be configured for one or the other).  Use @samp{-EB}
+to select big-endian output, and @samp{-EL} for little-endian.
+
+@cindex MIPS architecture options
+@item -mips1
+@itemx -mips2
+@itemx -mips3
+Generate code for a particular MIPS Instruction Set Architecture level.
+@samp{-mips1} corresponds to the @sc{r2000} and @sc{r3000} processors,
+@samp{-mips2} to the @sc{r6000} processor, and @samp{-mips3} to the @sc{r4000}
+processor.  You can also switch instruction sets during the assembly; see
+@ref{MIPS ISA,, Directives to override the ISA level}.
+
+@item -m4650
+@item -no-m4650
+Generate code for the MIPS @sc{r4650} chip.  This tells the assembler to accept
+the @samp{mad} and @samp{madu} instruction, and to not schedule @samp{nop}
+instructions around accesses to the @samp{HI} and @samp{LO} registers.
+@samp{-no-m4650} turns off this option.
+
+@item -m4010
+@item -no-m4010
+Generate code for the LSI @sc{r4010} chip.  This tells the assembler to
+accept the @sc{r4010} specific instructions (@samp{addciu}, @samp{ffc},
+etc.), and to not schedule @samp{nop} instructions around accesses to
+the @samp{HI} and @samp{LO} registers.  @samp{-no-m4010} turns off this
+option.
+
+@item -mcpu=@var{CPU}
+Generate code for a particular MIPS cpu.  This has little effect on the
+assembler, but it is passed by @code{@value{GCC}}.
+
+@cindex @code{-nocpp} ignored (MIPS)
+@item -nocpp
+This option is ignored.  It is accepted for command-line compatibility with
+other assemblers, which use it to turn off C style preprocessing.  With
+@sc{gnu} @code{@value{AS}}, there is no need for @samp{-nocpp}, because the
+@sc{gnu} assembler itself never runs the C preprocessor.
+
+@item --trap
+@itemx --no-break
+@c FIXME!  (1) reflect these options (next item too) in option summaries;
+@c         (2) stop teasing, say _which_ instructions expanded _how_.
+@code{@value{AS}} automatically macro expands certain division and
+multiplication instructions to check for overflow and division by zero.  This
+option causes @code{@value{AS}} to generate code to take a trap exception
+rather than a break exception when an error is detected.  The trap instructions
+are only supported at Instruction Set Architecture level 2 and higher.
+
+@item --break
+@itemx --no-trap
+Generate code to take a break exception rather than a trap exception when an
+error is detected.  This is the default.
+@end table
+
+@node MIPS Object
+@section MIPS ECOFF object code
+
+@cindex ECOFF sections
+@cindex MIPS ECOFF sections
+Assembling for a @sc{mips} @sc{ecoff} target supports some additional sections
+besides the usual @code{.text}, @code{.data} and @code{.bss}.  The
+additional sections are @code{.rdata}, used for read-only data,
+@code{.sdata}, used for small data, and @code{.sbss}, used for small
+common objects.
+
+@cindex small objects, MIPS ECOFF
+@cindex @code{gp} register, MIPS
+When assembling for @sc{ecoff}, the assembler uses the @code{$gp} (@code{$28})
+register to form the address of a ``small object''.  Any object in the
+@code{.sdata} or @code{.sbss} sections is considered ``small'' in this sense.
+For external objects, or for objects in the @code{.bss} section, you can use
+the @code{@value{GCC}} @samp{-G} option to control the size of objects addressed via
+@code{$gp}; the default value is 8, meaning that a reference to any object
+eight bytes or smaller uses @code{$gp}.  Passing @samp{-G 0} to
+@code{@value{AS}} prevents it from using the @code{$gp} register on the basis
+of object size (but the assembler uses @code{$gp} for objects in @code{.sdata}
+or @code{sbss} in any case).  The size of an object in the @code{.bss} section
+is set by the @code{.comm} or @code{.lcomm} directive that defines it.  The
+size of an external object may be set with the @code{.extern} directive.  For
+example, @samp{.extern sym,4} declares that the object at @code{sym} is 4 bytes
+in length, whie leaving @code{sym} otherwise undefined.
+
+Using small @sc{ecoff} objects requires linker support, and assumes that the
+@code{$gp} register is correctly initialized (normally done automatically by
+the startup code).  @sc{mips} @sc{ecoff} assembly code must not modify the
+@code{$gp} register.
+
+@node MIPS Stabs
+@section Directives for debugging information
+
+@cindex MIPS debugging directives
+@sc{mips} @sc{ecoff} @code{@value{AS}} supports several directives used for
+generating debugging information which are not support by traditional @sc{mips}
+assemblers.  These are @code{.def}, @code{.endef}, @code{.dim}, @code{.file},
+@code{.scl}, @code{.size}, @code{.tag}, @code{.type}, @code{.val},
+@code{.stabd}, @code{.stabn}, and @code{.stabs}.  The debugging information
+generated by the three @code{.stab} directives can only be read by @sc{gdb},
+not by traditional @sc{mips} debuggers (this enhancement is required to fully
+support C++ debugging).  These directives are primarily used by compilers, not
+assembly language programmers!
+
+@node MIPS ISA
+@section Directives to override the ISA level
+
+@cindex MIPS ISA override
+@kindex @code{.set mips@var{n}}
+@sc{gnu} @code{@value{AS}} supports an additional directive to change the
+@sc{mips} Instruction Set Architecture level on the fly: @code{.set
+mips@var{n}}.  @var{n} should be a number from 0 to 3.  A value from 1 to 3
+makes the assembler accept instructions for the corresponding @sc{isa} level,
+from that point on in the assembly.  @code{.set mips@var{n}} affects not only
+which instructions are permitted, but also how certain macros are expanded.
+@code{.set mips0} restores the @sc{isa} level to its original level: either the
+level you selected with command line options, or the default for your
+configuration.  You can use this feature to permit specific @sc{r4000}
+instructions while assembling in 32 bit mode.  Use this directive with care!
+
+Traditional @sc{mips} assemblers do not support this directive.  

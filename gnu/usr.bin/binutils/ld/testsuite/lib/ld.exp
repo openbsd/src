@@ -1,0 +1,337 @@
+#
+# default_ld_version 
+#	extract and print the version number of ld
+#
+proc default_ld_version { ld } {
+    global host_triplet
+
+    if { [which $ld] == 0 } then {
+	perror "$ld does not exist"
+	exit 1
+    }
+    
+    catch "exec $ld --version" tmp
+    set tmp [prune_system_crud $host_triplet $tmp]
+    regexp "version.*$" $tmp version
+    
+    if [info exists version] then {
+	clone_output "$ld $version\n"
+    }
+}
+
+#
+# default_ld_relocate 
+#	link an object using relocation
+#
+proc default_ld_relocate { ld target objects } {
+    global HOSTING_EMU
+    global host_triplet
+    
+    if { [which $ld] == 0 } then {
+	perror "$ld does not exist"
+	return 0
+    }
+    
+    send_log "$ld $HOSTING_EMU -o $target -r $objects\n"
+    verbose "$ld $HOSTING_EMU -o $target -r $objects"
+    
+    catch "exec $ld $HOSTING_EMU -o $target -r $objects" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if [string match "" $exec_output] then {
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	return 0
+    }
+}
+
+
+#
+# default_ld_link 
+#	link a program using ld
+#
+proc default_ld_link { ld target objects } {
+    global HOSTING_EMU
+    global HOSTING_CRT0
+    global HOSTING_LIBS
+    global host_triplet
+    
+    set objs "$HOSTING_CRT0 $objects"
+    set libs "$HOSTING_LIBS"
+    
+    if { [which $ld] == 0 } then {
+	perror "$ld does not exist"
+	return 0
+    }
+    
+    send_log "$ld $HOSTING_EMU -o $target $objs $libs\n"
+    verbose "$ld $HOSTING_EMU -o $target $objs $libs"
+    
+    catch "exec $ld $HOSTING_EMU -o $target $objs $libs" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if [string match "" $exec_output] then {
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	return 0
+    }
+}
+
+#
+# default_ld_simple_link 
+#	link a program using ld, without including any libraries
+#
+proc default_ld_simple_link { ld target objects } {
+    global host_triplet
+    
+    if { [which $ld] == 0 } then {
+	perror "$ld does not exist"
+	return 0
+    }
+    
+    send_log "$ld -o $target $objects\n"
+    verbose "$ld -o $target $objects"
+    
+    catch "exec $ld -o $target $objects" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+
+    # We don't care if we get a warning about a non-existent start
+    # symbol, since the default linker script might use ENTRY.
+    regsub -all "(^|\n)($ld: warning: cannot find entry symbol\[^\n\]*\n?)" $exec_output "\\1" exec_output
+
+    if [string match "" $exec_output] then {
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	return 0
+    }
+}
+
+#
+# default_ld_compile 
+#	compile an object using cc
+#
+proc default_ld_compile { cc source object } {
+    global CFLAGS
+    global srcdir
+    global subdir
+    global host_triplet
+
+    set cc_prog $cc
+    if {[llength $cc_prog] > 1} then {
+	set cc_prog [lindex $cc_prog 0]
+    }
+    if {[which $cc_prog] == 0} then {
+	perror "$cc_prog does not exist"
+	return 0
+    }
+
+    catch "exec rm -f $object" exec_output
+
+    send_log "$cc -I$srcdir$subdir -c $CFLAGS $source -o $object\n"
+    verbose "$cc -I$srcdir$subdir -c $CFLAGS $source -o $object"
+
+    catch "exec $cc -I$srcdir$subdir -c $CFLAGS $source -o $object" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if [string match "" $exec_output] then {
+	if {![file exists $object]} then {
+	    regexp ".*/(\[^/\]*)$" $source all dobj
+	    regsub "\\.c" $dobj ".o" realobj
+	    verbose "looking for $realobj"
+	    if {[file exists $realobj]} then {
+		send_log "mv $realobj $object\n"
+		verbose "mv $realobj $object"
+		catch "exec mv $realobj $object" exec_output
+		set exec_output [prune_system_crud $host_triplet $exec_output]
+		if {![string match "" $exec_output]} then {
+		    send_log "$exec_output\n"
+		    verbose "$exec_output"
+		    perror "could not move $realobj to $object"
+		    return 0
+		}
+	    } else {
+		perror "$object not found after compilation"
+		return 0
+	    }
+	}
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	perror "$source: compilation failed"
+	return 0
+    }
+}
+
+#
+# default_ld_assemble
+#	assemble a file
+#
+proc default_ld_assemble { as source object } {
+    global ASFLAGS
+    global host_triplet
+    
+    if {[which $as] == 0} then {
+	perror "$as does not exist"
+	return 0
+    }
+
+    if ![info exists ASFLAGS] { set ASFLAGS "" }
+
+    send_log "$as $ASFLAGS -o $object $source\n"
+    verbose "$as $ASFLAGS -o $object $source"
+
+    catch "exec $as $ASFLAGS -o $object $source" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if [string match "" $exec_output] then {
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	perror "$source: assembly failed"
+	return 0
+    }
+}
+
+#
+# default_ld_nm
+#	run nm on a file, putting the result in the array nm_output
+#
+proc default_ld_nm { nm object } {
+    global NMFLAGS
+    global nm_output
+    global host_triplet
+
+    if {[which $nm] == 0} then {
+	perror "$nm does not exist"
+	return 0
+    }
+
+    if ![info exists NMFLAGS] { set NMFLAGS "" }
+
+    send_log "$nm $NMFLAGS $object >tmpdir/nm.out\n"
+    verbose "$nm $NMFLAGS $object >tmpdir/nm.out"
+
+    catch "exec $nm $NMFLAGS $object >tmpdir/nm.out" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if [string match "" $exec_output] then {
+	set file [open tmpdir/nm.out r]
+	while { [gets $file line] != -1 } {
+	    verbose "$line" 2
+	    if [regexp "^(\[0-9a-fA-F\]+) \[a-zA-Z0-9\] (.+)$" $line whole value name] {
+		verbose "Setting nm_output($name) to 0x$value" 2
+		set nm_output($name) 0x$value
+	    }
+	}
+	close $file
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose $exec_output
+	perror "$object: nm failed"
+	return 0
+    }
+}
+
+#
+# simple_diff
+#	compares two files line-by-line
+#	returns differences if exist
+#	returns null if file(s) cannot be opened
+#
+proc simple_diff { file_1 file_2 } {
+    global target
+	
+    set eof -1
+    set differences 0
+    
+    if [file exists $file_1] then {
+	set file_a [open $file_1 r]
+    } else {
+	warning "$file_1 doesn't exist"
+	return
+    }
+    
+    if [file exists $file_2] then {
+	set file_b [open $file_2 r]
+    } else {
+	fail "$file_2 doesn't exist"
+	return
+    }
+    
+    verbose "# Diff'ing: $file_1 $file_2\n" 2
+    
+    while { [gets $file_a line] != $eof } {
+	if [regexp "^#.*$" $line] then {
+	    continue
+	} else {
+	    lappend list_a $line
+	}
+    }
+    close $file_a
+    
+    while { [gets $file_b line] != $eof } {
+	if [regexp "^#.*$" $line] then {
+	    continue
+	} else {
+	    lappend list_b $line
+	}
+    }
+    close $file_b
+
+    for { set i 0 } { $i < [llength $list_a] } { incr i } {
+	set line_a [lindex $list_a $i]
+	set line_b [lindex $list_b $i]
+
+	verbose "\t$file_1: $i: $line_a\n" 3
+	verbose "\t$file_2: $i: $line_b\n" 3
+	if [string compare $line_a $line_b] then {
+	    verbose "\t$file_1: $i: $line_a\n" 1
+	    verbose "\t$file_2: $i: $line_b\n" 1
+
+	    send_log "\t$file_1: $i: $line_a\n"
+	    send_log "\t$file_2: $i: $line_b\n"
+
+	    fail "Test: $target"
+	    return
+	}
+    }
+    
+    if { [llength $list_a] != [llength $list_b] } {
+	fail "Test: $target"
+	return
+    }
+
+    if $differences<1 then {
+	pass "Test: $target"
+    }
+}
+
+# This definition is taken from an unreleased version of DejaGnu.  Once
+# that version gets released, and has been out in the world for a few
+# months at least, it may be safe to delete this copy.
+if ![string length [info proc prune_system_crud]] {
+    #
+    # prune_system_crud -- delete various system verbosities from TEXT on SYSTEM
+    #
+    # An example is:
+    # ld.so: warning: /usr/lib/libc.so.1.8.1 has older revision than expected 9
+    #
+    # SYSTEM is typical $target_triplet or $host_triplet.
+    #
+    # This is useful when trying to do pattern matches on program output.
+    # Sites with particular verbose os's may wish to override this in site.exp.
+    #
+    proc prune_system_crud { system text } {
+	# This is from sun4's.  Do it for all machines for now.
+	# The "\\1" is to try to preserve a "\n" but only if necessary.
+	regsub -all "(^|\n)(ld.so: warning:\[^\n\]*\n?)+" $text "\\1" text
+
+	# It might be tempting to get carried away and delete blank lines, etc.
+	# Just delete *exactly* what we're ask to, and that's it.
+	return $text
+    }
+}

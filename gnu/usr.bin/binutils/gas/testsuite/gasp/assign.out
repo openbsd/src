@@ -1,0 +1,22 @@
+!
+
+!foo:	.ASSIGNC	"hello"
+!BAR:	.ASSIGNA	12+34
+!
+
+!	\&foo'foo
+	hellofoo
+!	\&foo\&foo\&foo 
+	hellohellohello 
+!	\&foo \&foo \&foo 
+	hello hello hello 
+!	\&BAR\&bar\&BAR
+	4646
+!
+
+!
+
+!
+
+!	
+!	.END

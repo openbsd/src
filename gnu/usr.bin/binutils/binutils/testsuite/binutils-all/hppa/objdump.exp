@@ -1,0 +1,53 @@
+#   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# This file was written by Rob Savoye <rob@cygnus.com>
+# and rewritten by Ian Lance Taylor <ian@cygnus.com>
+
+if ![istarget hppa*-*-*] then {
+  return
+}
+
+if {[which $OBJDUMP] == 0} then {
+    perror "$OBJDUMP does not exist"
+    return
+}
+
+send_user "Version [binutil_version $OBJDUMP]"
+
+if {![binutils_assemble $AS $srcdir$subdir/addendbug.s tmpdir/addendbug.o]} then {
+    return
+}
+
+# Make sure the SOM BFD code sign extends constants in R_DATA_OVERRIDE fixups.
+
+set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -r tmpdir/addendbug.o"]
+
+if [istarget hppa*-*-*elf*] then {
+  set want "00000000 R_PARISC_DPREL21L\[ 	\]+is_idchar\\+0xffffffe0.*"
+} else {
+  set want "00000000 R_DP_RELATIVE\[ 	\]+is_idchar\\+0xffffffe0.*"
+}
+
+
+if [regexp $want $got] then {
+    pass "addendbug test"
+} else {
+    fail "addendbug test"
+}

@@ -1,0 +1,277 @@
+Wed Nov 15 17:42:48 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: New tests.
+	* ld-srec/sr1.c, ld-srec/sr2.c, ld-srec/sr3.cc: New files.
+	* lib/ld.exp (ld_simple_link): Discard warnings about not being
+	able to find the entry symbol.
+
+Tue Nov 14 20:03:54 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-sh/sh2.c (__main): Define.
+
+Mon Nov  6 14:39:18 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-empic/empic.exp: Accept a . in the address symbol.
+
+	* ld-shared/shared.exp: Run tests on rs6000*-*-aix* and
+	powerpc*-*-aix*.  Add code to create appropriate exports files,
+	and pass appropriate compilation flags, and test against
+	appropriate expected output.
+	* ld-shared/xcoff.dat: New file.
+	* ld-shared/main.c: Put #ifndef XCOFF_TEST around tests that can
+	not be linked using XCOFF.  Use shlib_shlibvar1 as a sample
+	function pointer, rather than shlib_mainvar.
+	* ld-shared/sh1.c: Likewise.
+	* ld-shared/shared.dat: Update for change from using shlib_mainvar
+	to using shlib_shlibvar1.
+	* ld-shared/sun4.dat: Likewise.
+
+Sat Oct 28 01:54:25 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/script.t: Put .pr in .text, and .rw in .data, for
+	convenience when testing XCOFF.
+
+Thu Oct 26 22:53:17 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-bootstrap/bootstrap.exp: On AIX, pass -bI/lib/syscalls.exp
+	along with --static.
+
+	* ld-scripts/script.s: Make symbols global.
+
+Fri Oct 20 12:22:16 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-undefined/undefined.exp: Add setup_xfails for arm*-*-pe*.
+
+Fri Sep 29 11:06:10 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-undefined/undefined.exp: Use -e when invoking the linker, to
+	prevent the SunOS linker from trying to create a shared library.
+
+Thu Sep 28 12:37:14 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-shared/shared.exp: Run the tests on sparc*-*-sunos4*.  Add
+	appropriate modifications and setup_xfails.
+	* ld-shared/sun4.dat: New file.
+
+Mon Sep 18 14:12:56 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/ld.exp (default_ld_version): Call prune_system_crud.
+	(default_ld_relocate, default_ld_link): Likewise.
+	(default_ld_simple_link, default_ld_compile): Likewise.
+	(default_ld_assemble, default_ld_nm): Likewise.
+
+Fri Sep  8 17:15:38 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-cdtest/cdtest.exp: If the compiler does not exist, mark the
+	tests as untested rather than unresolved.
+
+Wed Aug 23 10:46:38 1995  Ian Lance Taylor  (ian@cygnus.com)
+
+	* ld-sh/sh.exp: Call prune_system_crud on the output of cmp.
+
+Tue Aug 15 17:35:35 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/script.exp: Split script verification into a proc.
+	Add simple test of MRI script.
+	* ld-scripts/scriptm.t: New file.
+
+Wed Jul 26 11:38:58 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-sh/sh.exp: Mark `SH confirm relaxing' test unresolved when
+	appropriate.
+
+Mon Jul 24 15:34:31 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/default.exp: Define objcopy if it is not defined.
+	* ld-sh/*: New tests for SH relaxing.
+
+	* ld-empic/empic.exp: If $CC does not exist, call untested rather
+	than unresolved.
+
+Thu Jul 20 15:09:26 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-undefined/undefined.exp: If $CC does not exist, mark the
+	tests as untested rather than unresolved.  Clear ELF xfails for
+	mips*, not just mips.
+
+Tue Jul 18 12:00:41 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-undefined/undefined.exp: Add setup_xfail for sh-*-* for
+	undefined line test.
+
+Fri Jul 14 13:07:48 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-undefined/undefined.exp: New test, to check reporting of
+	undefined symbols.
+	* ld-undefined/undefined.c: New file.
+
+Mon Jul 10 11:13:39 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-versados/versados.exp: If a test fails, report it correctly:
+	don't try to run the next test, and don't report a pass as well as
+	a fail.
+
+Mon Jul  3 14:26:37 1995  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* ld/testsuite/versados/(t1,t2).ld: End in newlines.
+
+Mon May 22 20:19:38 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* lib/ld.exp (default_ld_compile): If cc argument is multiple
+	words, use only the first when trying to verify the availability
+	of the compiler.
+
+Mon Feb  6 11:46:49 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/defined.t: Mention .data and .bss explicitly.
+
+Tue Jan 24 14:51:48 1995  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* ld-bootstrap/bootstrap.exp: If not in the ld build directory,
+	call untested for each test, rather than ignoring it.  If one test
+	fails, go on to the next one instead of returning.
+	* ld-cdtest/cdtest.exp: If compilations fail, mark tests as
+	unresolved.
+	* ld-empic/empic.exp: Likewise.  Also, always pass the same test
+	name to pass or fail.
+	* ld-shared/shared.exp: Likewise.  Also, always run all tests.
+	* ld-scripts/defined.exp: If as or nm fail, mark test as
+	unresolved.  Always pass the same test name to pass or fail.
+	* ld-scripts/script.exp: Likewise.
+	* ld-scripts/sizeof.exp: Likewise.
+
+Wed Jan 11 11:48:31 1995  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* ld-scripts/sizeof.exp: New test, based on bug report from
+	anders.blomdell@control.lth.se.
+	* ld-scripts/sizeof.s: New file.
+	* ld-scripts/sizeof.t: New file.
+
+Wed Jan  4 18:56:27 1995  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* lib/ld.exp: Use [which $ld] rather than [file exists $ld] to see
+	if the linker exists.
+
+Wed Dec 14 16:39:03 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* lib/ld.exp (prune_system_crud): Define if not already defined,
+	in case the user isn't using the newest DejaGnu version that we
+	haven't released to the net yet.
+
+Fri Dec  2 14:17:02 1994  Ian Lance Taylor  <ian@rtl.cygnus.com>
+
+	* config/default.exp: Define objdump if it is not defined.
+	* ld-empic/*: New tests to test -membedded-pic code.
+
+Mon Nov 28 11:24:36 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* ld-bootstrap/bootstrap.exp: Pass cmp output through
+	prune_system_crud.
+	* ld-cdtest/cdtest.exp: Pass diff output through
+	prune_system_crud.
+	* ld-shared/shared.exp: Likewise.
+
+	* config/default.exp: Remove unused and useless proc ld_load.
+
+Sun Oct 30 13:02:34 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* lib/ld.exp (default_ld_compile): Remove the output file before
+	compiling.
+
+	* ld-shared/shared.exp: Move common test code into a procedure.
+	Add tests for compiling the non shared code PIC.
+	* ld-shared/main.c (main): Call main_called, and print the result.
+	* ld-shared/shared.dat: Adjust accordingly.
+
+Thu Oct 27 17:30:12 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* ld-shared: New directory, with new files to test generating ELF
+	shared libraries.
+
+	* lib/ld.exp (default_ld_compile): If the compilation worked, but
+	no object file was created, check to see if the compiler foolishly
+	ignored the -o switch when compiling, and move the resulting
+	object if it did.
+
+Thu Sep 29 12:36:51 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* VMS does not permits `.' in directory names.  Renamed
+	ld.bootstrap to ld-bootstrap, ld.cdtest to ld-cdtest, and
+	ld.scripts to ld-scripts.
+
+Wed Sep 28 12:18:54 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* config/default.exp: Set variables as and nm.  Create tmpdir if
+	it does not already exist.
+	* ld.bootstrap/bootstrap.exp: Don't create tmpdir here.
+	* ld.cdtest/cdtest.exp: Likewise.
+	* ld.scripts/defined.exp: Likewise.  Also, don't set as and nm
+	here.  Change perror for no variables found to fail.
+	* ld.scripts/script.exp: New test.
+	* ld.scripts/script.t, ld.scripts/script.s: New files.
+
+Tue Sep 27 14:59:51 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* ld.scripts: New directory.
+	* ld.scripts/defined.exp, ld.scripts/defined.s: New files.
+	* ld.scripts/defined.t: New file.
+	* lib/ld.exp (default_ld_simple_link): New function.
+	(default_ld_assemble, default_ld_nm): New functions.
+	* config/default.exp: Rename from unix-ld.exp.
+	(ld_simple_link, ld_assemble, ld_nm): New functions.
+
+	* config/unix-ld.exp: Set ld using findfile.
+	* lib/ld.exp (default_ld_relocate): Return a value.  Change format
+	of log messages.
+	(default_ld_compile): Likewise.
+	(default_ld_link): Likewise.  Also, don't include $BFDLIB and
+	$LIBIBERTY in link.
+	* ld.bootstrap/bootstrap.exp: Rewrite.
+	* ld.cdtest/cdtest.exp: Rewrite.
+	* ld.cdtest/cdtest-foo.cc: Update from top level ld directory.
+	* ld.cdtest/cdtest-foo.h: Likewise.
+	* ld.cdtest/cdtest-main.cc: Likewise.
+
+Fri May 27 09:35:04 1994  Ken Raeburn  (raeburn@cygnus.com)
+
+	* ld.cdtest/cdtest.exp: Don't look for $result before it's
+	defined.
+
+Tue May 17 15:06:49 1994  Bill Cox  (bill@rtl.cygnus.com)
+
+	* ld.bootstrap/bootstrap.exp, lib/ld.exp: Replace error proc
+	  calls with perror calls.
+
+Wed May 11 16:47:46 1994  Ken Raeburn  (raeburn@rtl.cygnus.com)
+
+	* ld.cdtest/cdtest-bar.cc: Renamed from cdtest-func.cc.
+	* ld.cdtest/cdtest.exp: Adjusted.
+
+Fri Jan 28 13:25:41 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* lib/ld.exp (simple_diff): Indicate failure if files have
+	different numbers of lines.  Don't muck with $differences to avoid
+	indicating a pass, just return.
+
+	* testsuite/ld.cdtest/{cdtest-foo.h,cdtest-foo.cc,cdtest-main.cc}:
+	Fix test case to be valid ANSI C++.  Don't require use of header
+	files, so "../gcc/xgcc -B../gcc/" can be used for CXX.
+	* testsuite/ld.cdtest/cdtest.exp: Combine "rm" lines.  Add some
+	commentary on things that are still broken with this test case.
+
+Fri Sep 10 09:58:23 1993  Jeffrey Wheat  (cassidy@cygnus.com)
+
+	* testsuite/ld.cdtest/cdtest.exp: Added CXXFLAGS to compile stage.
+
+Thu Aug 12 16:05:37 1993  Jeffrey Wheat  (cassidy@cygnus.com)
+
+	* testsuite/lib/ld.exp: add compiler and linker support
+	* testsuite/config/unix-ld.exp: add compiler and linker support
+	* testsuite/ld.bootstrap/bootstrap.exp: fixed to do partial links
+	* testsuite/ld.cdtest/cdtest.exp: constructor/destructor testscase
+
+Wed Aug  4 21:00:18 1993  Jeffrey Wheat  (cassidy@cygnus.com)
+
+	* testsuite/lib/ld.exp: new file
+	* testsuite/config/unix-ld.exp: new file
+	* testsuite/ld.bootstrap/bootstrap.exp: new file

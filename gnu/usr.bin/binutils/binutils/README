@@ -1,0 +1,95 @@
+This is a beta release of a completely rewritten binutils distribution.
+(Rewritten since binutils 1.x, that is.)
+
+The linker (ld) has been moved into a separate directory, which should be
+../ld.  Linker-specific notes are in ../ld/README.
+
+As of version 2.5, the assembler (as) is also included in this package, in
+../gas.  Assembler-specific notes can be found in ../gas/README.
+
+These programs have been tested on various architectures.
+However, since this is a beta release taken directly from an
+evolving source tree, there might be some problems.  In particular,
+the programs have not been ported to as many machines as the
+old binutils.  There are also features of the old versions
+that are missing on the new programs.  We would appreciate
+patches to make things run on other machines; especially welcome
+are fixes for what used to work on the old programs!
+(See ./TODO, as well a ../bfd/TODO and ../ld/TODO.)
+
+Recent changes are in ./NEWS, ../ld/NEWS, and ../gas/NEWS.
+
+Unpacking and Installation -- quick overview
+==========================
+
+In this release, the binary utilities, the linker, the generic GNU include
+files, the BFD ("binary file description") library, gprof, and getopt all
+have directories of their own underneath the binutils-2.5 directory.
+The idea is that a variety of GNU tools can
+share a common copy of these things.  Configuration scripts and
+makefiles exist to cruise up and down this directory tree and
+automatically build all the pieces in the right order.
+
+When you unpack the binutils-2.5.tar.gz file, you'll get a directory
+called something like `binutils-2.5', which contains:
+
+	COPYING          bfd/             configure*       libiberty/
+	COPYING.LIB      binutils/        configure.in     move-if-change*
+	CYGNUS           build-all.mk     etc/             opcodes/
+	ChangeLog        config/          gprof/           test-build.mk
+	Makefile.in      config.guess*    inc
+
+To build binutils, you can just do:
+
+	cd binutils-2.5
+	./configure [ --enable-targets='target1,target2...' ]
+	make
+	make install # copies the programs files into /usr/local/bin
+		     # by default.
+
+This will configure and build all the libraries as well as binutils
+and the linker.
+
+The --enable-targets option adds support for more binary file
+formats besides the default.  By default, support for only the
+selected target file format is compiled in.  To add support for more
+formats, list them as the argument to --enable-targets, separated by
+commas.  For example:
+
+	./configure --enable-targets=sun3,rs6000-aix,decstation
+
+The name 'all' compiles in support for all valid BFD targets (this was
+the default in previous releases):
+
+	./configure --enable-targets=all
+
+The binutils can be used in a cross-development environment.
+The file etc/configure.texi contains more information.
+
+Porting
+=======
+Binutils-2.5 supports many different architectures, but there
+are many more not supported, including some that were supported
+by earlier versions.  We are hoping for volunteers to
+improve this situation.
+
+The major effort in porting binutils to a new host and/or target
+architecture involves the BFD library.  There is some documentation
+in ../bfd/doc.  The file ../gdb/doc/gdbint.texinfo (distributed
+with gdb-4.x) may also be of help.
+
+If your system uses some variant of old-style a.out-format,
+you can start with a copy of bfd/newsos3.c, and edit it to fit.
+(You may also need to tweak bfd/aout-target.h.)
+Alternatively, you could use the host-aout.c target.  This is a
+special kludge that only works for native (non-cross) configurations.
+
+Reporting bugs
+==============
+If you can't track down a bug and send suggestions/patches
+for fixes, you should probably *not* be using this release.
+We have little time to spend tracking down whatever random bugs you
+may run into (except for configurations that Cygnus supports for
+its customers).  The general place to send bug reports or patches
+is to bug-gnu-utils@ai.mit.edu; you can also send them directly to
+raeburn@cygnus.com or ian@cygnus.com.

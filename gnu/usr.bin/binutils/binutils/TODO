@@ -1,0 +1,20 @@
+o - size
+    Currently assumes that the only relevant sections are named .text,
+    .data and either .bss or .stack.  This is not very general, and it
+    doesn't work for ECOFF.
+
+o - strip
+    Make faster by using ftruncate if available (and format is suitable).
+
+o - nm, objdump
+    Add option to demangle C++ names.
+
+o - nm, BFD
+    Print more information about the symbols for more object file formats.
+    Print the symbol size in POSIX format.
+
+o - See also ../ld/TODO and ../bfd/TODO.
+
+o - ar q is flakey: e.g., doesn't handle long file names properly.
+
+o - objdump -d:  Print relocatable addresses intelligently.

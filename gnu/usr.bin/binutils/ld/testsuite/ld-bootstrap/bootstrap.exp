@@ -1,0 +1,88 @@
+# Expect script for LD Bootstrap Tests
+#   Copyright (C) 1993,1994,1995 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Written by Jeffrey Wheat (cassidy@cygnus.com)
+# Rewritten by Ian Lance Taylor (ian@cygnus.com)
+#
+
+# Make sure that ld can bootstrap itself.
+
+# This test can only be run if ld generates native executables.
+if ![isnative] {
+    return
+}
+
+# Bootstrap ld.  First link the object files together using -r, in
+# order to test -r.  Then link the result into an executable, ld1, to
+# really test -r.  Use ld1 to link a fresh ld, ld2.  Use ld2 to link a
+# new ld, ld3.  ld2 and ld3 should be identical.
+
+foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
+    if {"$flags" != ""} { 
+	set testname "bootstrap with $flags"
+    } else {
+	set testname "bootstrap"
+    }
+
+    # On AIX, you need to specify an import list when using --static.
+    if [istarget "*-*-aix*"] {
+	if {"$flags" == "--static"} {
+	    set flags "--static -bI:/lib/syscalls.exp"
+	}
+    }
+
+    # This test can only be run if we have the ld build directory,
+    # since we need the object files.
+    if {$ld != "$objdir/ld.new"} {
+	untested $testname
+	continue
+    }
+
+    if ![ld_relocate $ld tmpdir/ld-partial.o "$flags $OFILES"] {
+	fail $testname
+	continue
+    }
+
+    if ![ld_link $ld tmpdir/ld1 "$flags tmpdir/ld-partial.o $BFDLIB $LIBIBERTY"] {
+	fail $testname
+	continue
+    }
+
+    if ![ld_link tmpdir/ld1 tmpdir/ld2 "$flags $OFILES $BFDLIB $LIBIBERTY"] {
+	fail $testname
+	continue
+    }
+
+    if ![ld_link tmpdir/ld2 tmpdir/ld3 "$flags $OFILES $BFDLIB $LIBIBERTY"] {
+	fail $testname
+	continue
+    }
+
+    send_log "cmp tmpdir/ld2 tmpdir/ld3\n"
+    verbose "cmp tmpdir/ld2 tmpdir/ld3"
+    catch "exec cmp tmpdir/ld2 tmpdir/ld3" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+
+    if [string match "" $exec_output] then {
+	pass $testname
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output" 1
+
+	fail $testname
+    }
+}

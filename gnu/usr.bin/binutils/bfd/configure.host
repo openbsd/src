@@ -1,0 +1,86 @@
+# This file is a shell script that overrides some of the tools and
+# flags used on a host specific basis.
+
+# Since the "bfd/hosts" directory is shared by the bfd, opcodes, and
+# binutils directories (at least), the index to it is also shared.
+# This is that index.  Each configure.in file should source this file
+# in its per-host part.
+
+# This sets the following shell variables:
+#  CC			compiler to use (only if needed and not already set)
+#  CFLAGS		override CFLAGS (only if needed and not already set)
+#  LDFLAGS		override LDFLAGS (only if needed and not already set)
+#  AR			archiver to use (only if needed and not already set)
+#  RANLIB		ranlib to use (only if needed and not already set)
+#  HDEFINES		host specific compiler options
+#  host64		set to true if this is a 64 bit host
+#  HOST_64BIT_TYPE	host 64 bit type
+
+HDEFINES=
+host64=false
+HOST_64BIT_TYPE=
+
+case "${host}" in
+# WHEN ADDING ENTRIES TO THIS MATRIX:
+#  Make sure that the left side always has two dashes.  Otherwise you
+#  can get spurious matches.  Even for unambiguous cases, do this as a
+#  convention, else the table becomes a real mess to understand and maintain.
+#
+# Note that these entries cannot be fully alphabetical.  Don't try.
+# The order of matching is critical when multiple lines could match.
+
+alpha-*-*)		host64=true; HOST_64BIT_TYPE=long ;;
+
+a29k-*-*)		CC=${CC-u3cc}; AR=${AR-u3ar} ;;
+
+hppa*-*-hpux*)		HDEFINES=-DHOST_HPPAHPUX ;;
+hppa*-*-hiux*)		HDEFINES=-DHOST_HPPAHPUX ;;
+hppa*-*-bsd*)		HDEFINES=-DHOST_HPPABSD ;;
+hppa*-*-osf*)		HDEFINES=-DHOST_HPPAOSF ;;
+
+i[345]86-sequent-bsd*)	HDEFINES=-Dshared=genshared ;;
+i[345]86-sequent-sysv4*) ;;
+i[345]86-sequent-sysv*)	HDEFINES=-Dshared=genshared ;;
+i[345]86-ncr*-sysv4*)	CC=${CC-/usr/ccs/ATT/cc}
+			test -z "$CFLAGS" && CFLAGS=" "
+			;;
+i[345]86-*-go32*)	test -z "$CC" && CC="i386-go32-gcc -fno-omit-frame-pointer -O2 -Wl,-S"
+			AR=${AR-i386-go32-ar}
+			RANLIB=${RANLIB-i386-go32-ranlib}
+			;;
+i[345]86-*-win32)	test -z "$CC" && CC="i386-win32-gcc -O2"
+			AR=${AR-i386-win32-ar}
+			RANLIB=${RANLIB-i386-win32-ranlib}
+			;;
+
+mips-dec-netbsd*)	;;
+mips-dec-*)		HDEFINES="-G 4"	;;
+mips-sgi-irix3*)	HDEFINES="-G 4"
+			test -z "$LDFLAGS" && LDFLAGS=-lmalloc
+			;;
+mips-sgi-irix4*)	HDEFINES="-G 4"
+			test -z "$LDFLAGS" && LDFLAGS=-lmalloc
+			;;
+mips-*-sysv4*)		;;
+mips-*-sysv*)		HDEFINES="-G 4" ;;
+mips-*-riscos*)		HDEFINES="-G 4" ;;
+
+m68*-apollo*-sysv*)	# sef@cygnus.com says this is how to compile
+			# on an apollo in the SysV environment.
+			test -z "$CC" && CC="cc -A nansi -A cpu,3000 -A runtype,any -A systype,any -DSHORT_ENUM_BUG -DUSG -U__STDC__ -Dm68000=mc68000"
+			;;
+m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
+
+m88*-*-dgux*)		test -z "$CC" && CC="gcc -Wall -ansi -D__using_DGUX"
+			;;
+
+romp-*-*)		# hc/pcc just can't cut it
+			CC=${CC-gcc}
+			;;
+
+rs6000-*-aix4)		HDEFINES=-DHOST_AIX ;;
+rs6000-*-*)		HDEFINES=-DHOST_AIX ;;
+powerpc-*-aix4*)	HDEFINES=-DHOST_AIX ;;
+powerpc-*-aix*)		HDEFINES=-DHOST_AIX ;;
+
+esac

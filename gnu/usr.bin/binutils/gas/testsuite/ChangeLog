@@ -1,0 +1,949 @@
+Sun Nov 12 21:28:11 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/hppa/unsorted/brlenbug.s: New test.
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+Sun Nov  5 12:49:27 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/beq.s: Declare text_label global.
+	* gas/mips/jal.s: Likewise.
+
+Fri Nov  3 12:35:07 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/m68k/link.s: Use "&" instead of "#" for immediate values.
+
+	* gas/m68k/fmoveml.s, gas/m68k/fmoveml.d: New test.
+	* gas/m68k/all.exp: Run it.
+
+Thu Nov  2 23:11:05 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/m68k/link.s, gas/m68k/link.d: New test.
+	* gas/m68k/all.exp: Run it.
+
+Tue Oct 24 10:57:20 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/hppa/basic/basic.exp: Test lci and syncdma instructions.
+	* gas/hppa/basic/system.s: Corresponding changes.
+
+Fri Oct  6 17:13:35 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* gas/m68k/operands.d: Don't require a fixed number of leading
+	zeros in any number.
+
+	* gas/m68k/operands.s, gas/m68k/bitfield.s: Use "&" instead of "#"
+	for immediate values.
+
+Fri Oct  6 10:54:13 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/arm/arm.exp: Renamed from gas.exp.
+	* gas/arm/le-fpconst.[sd]: New testcase.
+
+Fri Sep 29 15:12:10 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/mri.exp: Only run tests for m68k target.
+
+Mon Sep 25 12:31:46 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/mri.exp: Add setup_xfail for arm*-*-* for constants
+	test.
+
+Mon Sep 18 14:04:34 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/gas-defs.exp (gas_run): Call prune_system_crud.
+	(run_dump_test, objdump): Likewise.
+
+Thu Sep 14 13:10:10 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/{wrdr.[ds],rdpr.[ds]}: New tests.
+	* gas/sparc/sparc.exp: Run them.
+
+Wed Sep 13 16:35:51 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in, configure.in: Remove; the testsuite is now run
+	directly from the gas Makefile.
+
+Mon Sep 11 11:44:23 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/empty.s: New file.
+	* gas/mri/mri.exp: Test assembling empty.s.
+	* gas/mri/comment.s: Add a couple more comment variants.
+
+	* gas/mri/mri.exp: Add xfail for the expr test for all hppa
+	targets.
+
+Wed Sep  6 21:39:23 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/comment.s, gas/mri/comment.d: New test.
+	* gas/mri/mri.exp: Run it.
+	* gas/mri/expr.s: Remove whitespace in operand field.
+	* gas/mri/for.s: Add comments for further testing.
+	* gas/macros/test2.s: Put in an upper case ELSE to test case
+	insensitivity.
+
+Wed Aug 30 16:12:03 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/{prefetch.[ds],synth64.[ds]}: New tests.
+
+Tue Aug 29 18:59:33 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/sparc.exp: New file.
+	* gas/sparc/{asi.[ds],membar.[ds]}: New tests.
+
+Mon Aug 21 14:39:29 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/macros/*: New tests for macros.
+
+	* gas/mri/common.s: Use data, not .data.
+
+	* gasp/pl3.out: Update for changes in commented source output when
+	LOCAL is used.
+
+Sat Aug 19 17:36:17 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gasp/gasp.exp (gasp_test): Call prune_system_crud on the output
+	of diff.
+	* lib/gas-defs.exp: Define prune_system_crud if it is not already
+	defined.
+
+Fri Aug 18 11:09:38 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gasp/mri/*.out: Use ;, not !, for the comment character.
+
+Wed Aug 16 12:24:12 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/mri.exp: Change hppa*-*-* expected failures to only
+	expect failure for targets which use SOM.
+
+	* lib/gas-defs.exp (run_dump_test): If the program to run does not
+        exist, mark the test as untested.
+
+	* gas/mri/mri.exp: Add setup_xfail for i960 b.out targets for
+	common test.
+
+	* lib/gas-defs.exp (run_dump_test): Name the output file dump.o,
+	rather than using an implicit a.out.
+
+	* gas/mri/for.s: Add nop to round out to four byte boundary.
+	* gas/mri/repeat.s: Likewise.
+	* gas/mri/while.s: Likewise.
+	* gas/mri/for.d: Expected added nop.
+	* gas/mri/repeat.d: Likewise.
+	* gas/mri/while.d: Likewise.
+
+	* gas/mips/*.d: Change all test names to say MIPS.
+
+Tue Aug 15 15:42:33 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/for.d, gas/mri/for.s: New test.
+	* gas/mri/if.d, gas/mri/if.s: New test.
+	* gas/mri/repeat.d, gas/mri/repeat.s: New test.
+	* gas/mri/while.d, gas/mri/while.s: New test.
+	* gas/mri/mri.exp: Run the new tests.
+
+Mon Aug 14 16:03:07 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/expr.d: Permit leading zeroes, in case we're using a
+        64-bit BFD.
+
+	* gasp/mri/*: New tests.
+	* gasp/gasp.exp: Run them.  Also, clean up the test names used in
+	pass and fail.
+
+Thu Aug 10 00:46:21 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/char.d: Fix for little endian machines.
+	* gas/mri/float.d: Likewise.
+
+Wed Aug  9 15:34:36 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/all/struct.s, gas/all/struct.d: New test.
+	* gas/all/gas.exp: Run it.
+
+Tue Aug  8 17:11:39 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/common.s, gas/mri/common.d: New test.
+	* gas/mri/mri.exp: Run it.
+
+Mon Aug  7 22:39:28 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/mri.exp: Add setup_xfail for a29k*-*-* for constants
+	test.
+
+	* gasp/crash1.out, gasp/macro.out, gasp/sfunc.out: Complete
+	truncated files, so that the tests pass.
+
+	* gas/mri/mri.exp: Add setup_xfail for hppa*-*-* for equ,
+	constants, and expr.
+
+	* gas/m68k/all.exp: Run schwab test on hpux*, not just hpux.  Run
+	on vxworks*, not just vxworks5.1.
+
+	* lib/gas-defs.exp (fail_phase, pass_phase): Remove.
+	(run_dump_test): Just call pass or fail.
+
+	* gas/m68k/operands.s, gas/m68k/operands.d: New test.
+	* gas/m68k/op68000.d: New test.
+	* gas/m68k/cas.s, gas/m68k/cas.d: New test.
+	* gas/m68k/bitfield.s, gas/m68k/bitfield.d: New test.
+	* gas/m68k/schwab.d: Run objdump with -j .text.  Adjust for
+	changes to disassembler.
+	* gas/m68k/all.exp: Run new tests.  Run schwab test for
+	m68k-*-coff*.
+
+Tue Aug  1 18:02:47 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/*: New tests for MRI mode.
+
+	* lib/gas-defs.exp (run_dump_test): Support using objcopy.  Dump
+	program executions to the log file before running them.  Use the
+	simple program name, rather than the path to the binary being run,
+	in pass/fail messages.
+	(regexp_diff): If the regexp file has the special comment #pass,
+	stop checking at that point.
+	* config/default.exp: Set NM, NMFLAGS, OBJCOPY, and OBJCOPYFLAGS,
+	if they are not already set.
+
+Tue Aug  1 11:41:30 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* Makefile.in: Remove superfluous runtest gasp.
+
+Mon Jul 31 18:19:26 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+ 	* gasp/*: New.
+	* Makefile.in: Use gasp tests.
+	* config/default.exp: Add gasp stuff.
+
+Thu Jul 20 18:56:48 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/all/gas.exp: Disable tests that are not appropriate for
+	the PA.
+
+Thu Jul 13 18:22:49 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* gas/m68k/all.exp: Run schwab test for m68k vxworks5.1.
+
+Wed Jun 21 21:28:57 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/m68k/schwab.*: New test based on a test case from Andreas
+	Schwab.
+	* gas/m68k/all.exp: Run it for some aout configurations.
+
+Mon Jun 12 22:27:18 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/parse/badfmpyadd.s: New test.
+	* gas/hppa/parse/parse.exp: Run it.
+
+Sun May 21 20:26:18 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/unsorted.exp: Disable align4 tests for
+	ELF targets.
+
+Wed May 10 14:28:16 1995 Richard Earnshaw (rearnsha@armltd.co.uk)	
+
+	* arm/arm7dm.s: New file -- tests for ARM7DM instructions.
+	* arm/arm6.s: Correct bogus tests.
+	* arm/gas.exp (arm6.s): Is now a valid test.
+	(arm7dm.s): New test.
+	* arm/float.s: Add load/store multiple floating point instruction 
+	tests.
+
+Wed May  3 13:14:44 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/longcall.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+Tue May  2 16:37:48 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/mips/ld.d: Modified for gas delay-slot fixes.
+
+Sat Apr 29 23:35:18 1995  Doug Evans  <dje@chestnut.cygnus.com>
+
+	* lib/gas-dg.exp: New file.
+
+Tue Apr 11 13:57:52 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/mips/mips4.d: Allow more than exactly 8 zeros in bc1*
+	targets.
+
+Mon Apr 10 15:36:39 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* lib/gas-defs.exp (pass_phase): New proc.
+	(run_dump_test): Note passing or failing of each phase of this
+	test, instead of failure of phases or passing of complete test.
+	Ensure test file name is in reported message.
+
+Sat Apr  8 12:46:33 1995  Doug Evans  <dje@chestnut.cygnus.com>
+
+
+	* lib/gas-defs.exp (run_dump_test): Handle arguments with paths.
+	Always resolve testcase status before returning.
+	If `slurp_options' fails, return and don't do test.
+	(slurp_options): Fix "can't open" error message.
+	Return -1 to indicate error.
+
+Mon Mar 20 22:45:30 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/common.s: New test.
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+Fri Mar 10 19:07:09 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/h8300/ffxx1.s: Add .word 0 at the end to eliminate
+	uncertainty as to whether there should be trailing bytes in the
+	output file.
+	* gas/h8300/ffxx1.d: Adjust reloc values to permit an addend value
+	of 0x00000000ffffffff on 64-bit hosts.  (I'm not sure if this is
+	correct.)  End with "..." to match trailing zero bytes.
+
+Wed Mar  8 15:50:34 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/mips4.d, gas/mips/mips4.s: New files.
+	* gas/mips/mips.exp: Run new test.
+
+Thu Feb 23 17:58:50 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/basic/fmemLRbug.s: Add indexing variants.
+	* gas/hppa/basic/basic.exp: Test them.
+
+Wed Feb 15 15:43:26 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/uld.d: New file.
+	* gas/mips/uld.s: New file.
+	* gas/mips/usd.d: New file.
+	* gas/mips/usd.s: New file.
+	* gas/mips/mips.exp: Run new tests.
+
+Thu Feb  9 10:57:39 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/applybug.s: New test.
+	* gas/hppa/reloc/reloc.exp (do_applybug_test): Run it.
+
+Thu Feb  2 00:34:55 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+        * gas/hppa/reloc/picreloc.s: New test.
+	* gas/hppa/reloc/reloc.exp (do_pic_relocation_test): Run it.
+
+Fri Jan 27 14:02:02 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/h8300/ffxx1.d, gas/h8300/ffxx1.s, gas/h8300/cmpsi2.s,
+	gas/h8300/h8300.exp: New tests.
+
+Mon Jan 23 21:44:26 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/basic/basic.exp (do_system): Update.
+
+Wed Jan 11 17:20:25 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/mips/mips.exp: Don't run the memory-access tests if the
+	format is a.out, because the generated code is different from what
+	is used with other formats.
+
+Tue Jan 10 11:42:13 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/unsorted.exp (align4.s): Fix glitch in
+	regexp to avoid losing without a controlling tty.
+
+Fri Dec 30 18:08:20 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/i386/pushw.l: Fixed whitespace to match current listing
+	style.
+
+	* gas/all/gas.exp: Mark test p1480.s expected to pass, even with
+	listings enabled.
+
+Thu Dec 15 18:14:27 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* Makefile.in (AS_FOR_TARGET, OBJDUMP_FOR_TARGET): Don't set.
+	(uninstall): Don't set OBJDUMP and OBJDUMPFLAGS in site.exp.
+	* config/default.exp: Default OBJDUMP and OBJDUMPFLAGS.  Use
+	findfile and transform procedures to determine objdump program
+	name.
+
+	* gas/mips/abs.s, gas/mips/div.s: Force some padding at the end,
+	in case the format doesn't automatically require it.
+	* gas/mips/beq.d, gas/mips/jal.d: Handle MIPS_JMP as an alternate
+	name for the reloc type.
+
+	* lib/gas-defs.exp (file_contents, verbose_eval): New procs.
+	(run_dump_test): If verbosity level is over 3, print out dump
+	command and its output.
+
+Tue Dec 13 18:21:09 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* gas/mips/jal-svr4pic.d: Fix 0-strings to work with 64-bit hosted
+	disassembly.
+
+Fri Dec  9 19:54:04 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/all/gas.exp (comment.s test): Make the "\r" optional, since
+	it depends on tty modes.
+
+	* lib/gas-defs.exp (gas_start): Try using -nottycopy instead of
+	-nottyinit.
+
+	* gas/arm/gas.exp: The arm6 test should report errors, for now.
+
+Thu Dec  8 20:19:09 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* lib/gas-defs.exp: Use -i in expect_after command.
+
+Wed Dec  7 16:49:14 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/mips/mul.d,jal.d: Fix 0-strings to work with 64-bit hosted
+	disassembly.
+
+	* gas/ieee-fp: Renamed from ieee.fp.
+
+	* lib/gas-defs.exp: Make sure timeout is at least 2 minutes.
+
+Wed Nov 30 10:48:00 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/parse: Renamed from gas/hppa/more.parse.
+
+Mon Nov 28 00:40:26 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/parse.exp (nosubspace.s): No longer expected
+	to fail.  Fix comments for the test.  Tweak test name.
+
+Tue Nov 22 23:38:20 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: Minor tweaks to match current PA ELF
+	output. 
+
+Fri Nov 18 17:56:57 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* gas/mips/ld.d: Adjust to work for both big and little endian
+	code.
+	* gas/mips/ld.s, gas/mips/lif-empic.d: Likewise.
+	* gas/mips/lifloat.d, gas/mips/ulh-empic.d: Likewise.
+	* gas/mips/ulh.d, gas/mips/ulw.d, gas/mips/ush.d: Likewise.
+	* gas/mips/usw.d: Likewise.
+
+Tue Nov 15 11:09:57 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/align4.s: New test.
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+	* gas/hppa/unsorted/unsorted.exp (importbug): Tweak to match
+	current expected PA ELF output.
+	* gas/hppa/reloc/reloc.exp (do_r_no_reloc): Likewise.
+	(do_plabel_relocation_test): Likewise.
+
+Thu Nov  3 18:14:09 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* gas/all/p1480.s: Use larger constant, so expression can have a
+	positive value.
+	* gas/all/gas.exp: Expect p1480.s without listings to pass.
+
+Thu Nov  3 15:43:46 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* gas/mips/ulh.d, gas/mips/ulw.d, gas/mips/ush.d, gas/mips/usw.d:
+	Correct test cases.
+
+Thu Oct 20 00:55:13 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/blebug3.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+Mon Oct 17 02:33:53 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reduce3.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+Sun Oct 16 22:25:56 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp (r_no_reloc): Tweak output to match
+	current reality.
+
+Wed Sep 28 21:21:34 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reduce.s: Renamed from relocreduce.s
+	* gas/hppa/reloc/reduce2.s: Renamed from relocreduce2.s
+	* gas/hppa/reloc/r_no_reloc.s: Renamed from r_no_relocbug.s
+	* gas/hppa/reloc/reloc.exp: Changed accordingly.
+
+Wed Sep 28 13:25:10 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* gas/mips/beq.d, gas/mips/beq.s: Test that unconditional branch
+	overflows are correctly converted to jumps.
+
+Mon Sep 26 17:41:43 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* gas/mips: Add test cases for PIC code, both SVR4 style and
+	-membedded-pic style.
+
+Fri Sep 23 14:45:42 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* gas/mips: New directory with MIPS specific test cases.
+
+	* lib/gas-defs.exp (run_dump_test): Permit the .d file to specify
+	the name of the source file to assemble.
+	(regexp_diff): Put the reason for failure in the log file.
+
+Wed Sep 21 13:44:21 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* lib/gas-defs.exp: Don't try to use shell redirection, since TCL
+	doesn't support it.  Redirect stdout using > instead of 1>, and
+	don't bother to redirect stderr since TCL redirects it anyhow.
+	(run_dump_test): Pass appropriate arguments to program, defaulting
+	to -r.
+
+Sat Sep 17 01:04:56 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* gas/vax: New directory.
+	* gas/vax/{quad.s,quad.exp}: New test, for immediate quadword
+	values.
+
+Mon Sep 12 22:19:11 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/r_no_relocbug.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+	* gas/hppa/reloc/reloc.exp (do_function_reloc_bug): Update
+	expected output.
+
+Sun Sep 04 17:58:10 1994  Richard Earnshaw (rwe@pegasus.esprit.ec.org)
+
+	* gas/arm/*: New subtree.  Add ARM tests.
+
+Mon Aug  8 12:13:31 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/unsorted.exp: Accept any character
+	between foo's type and foo itself.
+
+Fri Jul 15 19:09:25 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* lib/gas-defs.exp (run_dump_test): New routine for running the
+	assembler, running objdump or nm (not fully supported) on the
+	resulting object file, and comparing the results against a file of
+	regular expressions in the test suite, all in one command.
+	Options for the assembler and objdump are read from comments at
+	the start of the .d file.
+	(fail_phase, slurp_options): New auxiliary routines.
+	(regexp_diff): Always return a value.  Fix bugs in actually doing
+	the regexp test.
+
+	* gas/sun4/addend.exp: Use run_dump_test.
+	* gas/sun4/addend.d: Fix regular expressions so that they work.
+
+Thu Jul  7 11:55:33 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/relocreduce2.s: More relocation reduction tests.
+	* gas/hppa/reloc/reloc.exp: Run them.
+
+Thu Jun 30 18:49:25 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* config/default.exp: Look for "as.new" in "$base_dir/..", where
+	it got compiled, not in "$base_dir".
+	* config/unknown.exp: Deleted.
+
+Sun Jun 26 13:23:54 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/lib/gas-defs.exp (gas_finish): Call "close" and "wait"
+	before exiting.  Enclose both calls inside a "catch".
+	(objdump_finish): Likewise.
+
+Fri Jun 10 10:23:35 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp (roundmode test): Tweak expected output
+	for SOM to match current testcase.
+
+Thu Jun  2 19:46:58 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* gas/i386/{pushw.s,pushw.l}: New test.
+	* gas/i386/all.exp: Run it.
+
+	* Makefile.in (distclean): Remove site config files and gas.sum.
+
+Fri May 27 12:24:18 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* gas/m68k/disperr.s: Use % for registers.
+
+	* gas/m68k-coff/gas.exp: Expect failure for p2389a.s.
+
+Tue May 17 14:53:08 1994  Bill Cox  (bill@rtl.cygnus.com)
+
+	* lib/gas-defs.exp: Replace error proc calls with perror calls.
+
+Mon May 16 13:19:16 1994  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: Tweak expected output to match new
+	ELF code.
+	* gas/hppa/reloc/roundmode.s: Avoid "S" and "D" modes, ELF does
+	not support them.
+	* gas/hppa/unsorted/unsorted.exp: Tweak expected output to match
+	new ELF code.
+
+Thu May  5 17:27:54 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* config/default.exp: Renamed from unix-gas.exp.
+
+Mon Apr 11 10:31:00 1994  Bill Cox  (bill@rtl.cygnus.com)
+
+	* Makefile.in (check): Set TCL_LIBRARY for runtest.
+
+Mon Apr 11 07:54:10 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/callinfobug.s: Add missing name for
+	procedure.
+
+	* gas/hppa/reloc/funcrelocbug.s: Place the trampoline in the
+	$DATA$ rather than $LIT$ subspace.
+
+Sun Mar 27 14:05:33 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/funcrelocbug.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+Thu Mar 17 13:38:04 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/importbug.s: New test.
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+Wed Mar 16 11:57:07 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/regpopbug.s: Add trivial .equ test.
+
+	* gas/hppa/unsorted/globalbug.s: New test (expected to fail).
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+	* gas/hppa/more.parse/callinfobug.s: New test.
+	* gas/hppa/omre.parse/parse.exp: Run it.
+
+	* gas/hppa/more.parse/regpopbug.s: New test.
+	* gas/hppa/more.parse/parse.exp: Run it.
+
+Mon Feb 28 14:10:04 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* lib/gas-defs.exp (objdump): New proc.
+	(objdump_start): Deleted unused proc.
+	(objdump_start_common): Merged into objdump_start_no_subdir.
+
+	* gas/alpha/fp.exp: Use objdump instead of
+	objdump_start_no_subdir, since the former actually waits for
+	objdump to finish.  Specify .rdata section only.  Make comment
+	indicate Alpha architecture rather than SPARC.
+	* gas/alpha/fp.d: Omit .reginfo patterns.  Just use "." to match
+	against ASCII code 0x2a ("*", special in regexp).
+	* gas/sun4/addend.exp: Use objdump instead of
+	objdump_start_no_subdir.
+
+Thu Feb 24 07:11:57 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+        * gas/hppa/more.parse/parse.exp (no subspace test): Only expect
+	a failure if gas is not producing an ELF object.
+
+Mon Feb 14 09:24:03 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/basic/fmemLRbug.s: New test.
+	* gas/hppa/basic/basic.exp: Run it.
+
+Thu Feb 10 00:34:26 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* gas/alpha/fp.*: New files.
+	* lib/gas-defs.exp (regexp_diff): Report noted mismatch at
+	verbosity level 3 or above only.
+
+Mon Feb  7 15:53:10 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/*/*.exp: Change xfails to check for PA ELF rather than
+	PA OSF1.
+
+Fri Feb  4 23:42:14 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/xmpyubug.s: New test.
+	* gas/hppa/more.parse/parse.exp: Run it.
+
+Fri Feb  4 17:13:20 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* lib/gas-defs.exp (regexp_diff): New procedure, vaguely based on
+	"simple_diff" from linker test suite.
+	* gas/sun4/addend.exp: Use it.
+	* gas/sun4/addend.d: New file.
+
+Sun Jan 30 23:34:58 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* gas/all/gas.exp: Adjust regexp for x930509.s for current listing
+	format.
+
+Thu Jan 20 16:44:51 1994  Rob Savoye  (rob@darkstar.cygnus.com)
+
+	* gas/all/gas.exp, lib/gas-defs.exp, sun4/addend.exp,
+	sparc-solaris/addend.exp: Tweaked to fix a few bugs and to run
+	well under either version of expect.
+
+Mon Jan 17 00:25:03 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/basic/fp_misc.s: Delete copr instruction.  It's tested
+	elsewhere now.
+	* gas/hppa/basic/{copr, coprmem, spop}.s: New tests.
+	* gas/hppa/basic/basic.exp: Run them.
+
+Thu Jan 13 11:59:22 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/all/gas.exp: No longer expect difference of forward
+	references to fail.
+	* gas/all/x930509.s: Fix testcase to match how the expect code was
+	written.
+
+Wed Jan 12 13:41:10 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: Fix typo in last change.  Latest test
+	for cross-subspace call bugs is no longer expected to fail.
+
+	* gas/hppa/more.parse/procbug.s: Add test for another bug relating
+	to having a function's label follow the .PROC directive.
+
+Tue Jan 11 21:47:48 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: Add test for cross-subspace call bug
+	found while working on multiple $CODE$ subspace support.
+
+Mon Jan 10 09:54:15 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/parse.exp: procbug.s is no longer expected
+	to fail.
+	* gas/hppa/more.parse/procbug.s: Add missing .procend.
+
+Mon Jan  3 10:07:47 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/labelbug.s: Add testcase for bug in last
+	app.c change.
+
+Wed Dec 29 11:32:39 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/labelbug.s: Add more colonless label tests.
+
+Wed Dec 15 08:24:31 1993  Ken Raeburn  (raeburn@rtl.cygnus.com)
+
+	* Makefile.in (site.exp): Don't set ASFLAGS.  Quote value of
+	OBJDUMPFLAGS in case it's empty.  Use temporary names until the
+	end; make creating site.exp the final step.
+	(check): Pass in ASFLAGS.
+
+	* gas/all/gas.exp: Use all_ones proc.  Change regexp for matching
+	C comments to avoid bugs in latest expect code.
+
+Wed Dec  8 14:30:14 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/m68k/disperr.s: New test.
+	* gas/m68k/all.exp: Run it.
+
+Sun Dec  5 19:24:57 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/roundmode.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.  Fix typo in last change.
+
+Wed Dec  1 10:44:18 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: Run the first half of bogus R_EXIT
+	test for ELF.  
+
+Tue Nov 30 13:43:21 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/parse.exp: Test for error on for subspace
+	directive is an XFAIL for SOM assmeblers.
+
+	* gas/hppa/reloc/reloc.exp: Remove XFAIL for relocation on
+	cross-subspace call test.
+
+Sun Nov 28 12:12:50 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/appbug.s: New test.
+	* gas/hppa/more.parse/parse.exp: Run it.
+
+	* gas/hppa/unsorted/align3.s: New test.
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+Sat Nov 27 22:50:01 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/all/p2425.s: Insert a tab before assembler directives so
+	that the directives are not interpreted as labels.
+
+	* gas/hppa/basic/weird.s: Sync with GDB version.
+
+	* gas/hppa/more.parse/labelbug.s: New test.
+
+	* gas/hppa/more.parse/parse.exp: Run it.
+
+Wed Nov 24 01:25:03 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/fixupbug.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+	* gas/hppa/reloc/exitbug.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+Sun Nov 21 22:11:10 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: Minor fixes so that SOM & ELF can
+	share the same test code.
+	* gas/hppa/reloc/relocreduce.s: Likewise.
+
+	* gas/hppa/basic/fmem.s: Add quadword FP store instructions.
+	* gas/hppa/basic/basic.exp: Test quadword FP store instructions.
+
+Sun Nov  7 00:31:41 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp: No longer expect failure for
+	field selector on ble instruction test.
+
+	* gas/hppa/basic/basic.exp: No longer expect failures for
+	system instruction tests now that probei is fixed.
+
+Sat Nov  6 22:45:08 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/selectorbug.s: New test.
+	* gas/hppa/reloc/reloc.exp: Run it.
+
+Thu Nov  4 17:01:30 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/fragbug.s: New test.
+	* gas/hppa/unsorted/unsorted.exp: Run it.
+
+Thu Nov 04 09:09:49 1993  Jeffrey Wheat  (cassidy@cygnus.com)
+
+	* Makefile.in: Changed RUNTESTFLAGS to RUNTEST_FLAGS
+
+Tue Nov  2 22:12:30 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/{defbug.s, stdreg.s}: New tests.
+	* gas/hppa/more.parse/parse.exp: Run them.
+
+Mon Nov  1 23:37:58 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/reloc/reloc.exp (reloc_reduce): Correct offsets at
+	which specific relocations are expected to be found.
+	
+Sat Oct 30 14:12:31 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/unsorted/unsorted.exp (ss_align): Remove OSF xfail.
+
+	* gas/hppa/more.parse/parse.exp: Add new test.
+	* gas/hppa/more.parse/ssbug.s: New test to make sure non-default
+	sections are handled correctly.
+
+	* gas/all/gas.exp: Disable (and fail) p1480.s for all PA targets.
+
+Fri Oct 29 16:29:06 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/more.parse/calldatabug.s: Colonize.
+	* gas/hppa/more.parse/parse.exp: Fix typos.
+
+Thu Oct 28 21:40:06 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
+
+	* gas/hppa/{basic, more.parse, reloc, unsorted}: New directories.
+	* gas/hppa/*/*.exp: New test drivers.
+	* gas/hppa/*/*.s: New test files.
+
+Mon Oct 25 09:40:59 1993  Ken Raeburn  (raeburn@cygnus.com)
+
+	* gas/sun4: New directory.
+	* gas/sun4/addend.s,addend.exp: New test case.
+	* gas/sparc-solaris/addend.s,addend.exp: Solaris version of same
+	test case.
+
+	* gas/all/gas.exp: Check `*' in C comments.
+
+	* lib/gas-defs.exp (all_ones): New procedure, for a predicate to
+	simplify some tests.
+	(want_no_output): Return zero or nonzero, depending on success or
+	failure.
+	(gas_test_old): Return value from want_no_output.
+	(objdump_start_common): Split off from objdump_start.
+	(objdump_start_no_subdir): New procedure.
+
+Wed Oct 20 07:25:48 1993  Ken Raeburn  (raeburn@rover.cygnus.com)
+
+	* gas/all/diff1.s, gas/m68k/pic1.s: New tests.
+	* gas/all/gas.exp, gas/m68k/all.exp: Run them.
+
+	* Makefile.in (OBJDUMP_FOR_TARGET): Define similar to
+	AS_FOR_TARGET.
+	(check): Don't pass ASFLAGS variable.
+	(site.exp): Put ASFLAGS, OBJDUMP, OBJDUMPFLAGS into site.exp.
+
+	From Jeff Law:
+
+	* lib/gas-defs.exp (objdump_start, objdump_finish): New functions
+	so that tests can parse the output of objdump looking for errors
+	in relocation entires, file headers and the like.
+
+Thu Sep 23 16:20:34 1993  Ken Raeburn  (raeburn@cambridge.cygnus.com)
+
+	* gas/ieee.fp/x930509a.exp: Currently expected to fail always.
+	* gas/all/gas.exp (p1480.s, x930509.s): Ditto.  Break up gas_test
+	call so it no longer performs multiple tests.
+	* gas/m68k/all.exp (t2.s): Don't bother with listings.
+	(p2410.s): Don't pass unwanted arguments to gas_test_error.
+
+Wed Aug 25 16:50:08 1993  Ken Raeburn  (raeburn@cambridge.cygnus.com)
+
+	* lib/do*: Remove RCS id strings.
+
+Mon May 17 15:09:45 1993  Ken Raeburn  (raeburn@deneb.cygnus.com)
+
+	* gas/all/float.s, gas/all/p1480.s, gas/m68k/p2410.s: New tests.
+	* gas/all/gas.exp, gas/m68k/all.exp: Run them.
+	* gas/i386: New directory.
+
+Mon May 10 14:50:20 1993  Ken Raeburn  (raeburn@deneb.cygnus.com)
+
+	* Added directory structure, to categorize tests by targets.
+	* Added new tests all/x930509.s, ieee.fp/x930509a.s, m68k/p2663.s,
+	and refined some to examine the assembler listing output.
+	* lib/gas-defs.exp: Renamed gas_start to gas_run.  Added some
+	expect_after patterns.
+	(gas_start, gas_finish): New procs, for tests that examine process
+	output.
+	* config/unix-gas.exp: Invoke gas_init directly, instead of
+	requiring test .exp files do it.
+
+Wed Apr 21 01:24:16 1993  Ken Raeburn  (raeburn@cambridge.cygnus.com)
+
+	* gas/gas.exp: Handle new tests, and changes to testing procs.
+
+	* lib/gas-defs.exp (want_no_output): New proc; success iff output
+	is empty.
+	(gas_test_old): Functionally same as old gas_test.
+	(gas_test_ignore_stdout): Rewritten to use want_no_output.
+	(gas_test): New argument lists set of options to be tried in
+	combinations.  Option with trailing ">" indicates standard output
+	should be ignored.
+
+	* gas/p2425a.s: Use %-form for registers, so this test can be run
+	on m68k-coff targets too.
+
+	* gas/p2430a.s: New test case, whitespace &c matches customer
+	report more closely.  Gets different results from p2430.s; this is
+	bad, and not yet tested for.
+
+Mon Apr  5 12:27:19 1993  Ken Raeburn  (raeburn@cygnus.com)
+
+	* gas/p2389a.s, gas/p2411.s, gas/t2.s: New test cases.
+	* lib/run: New script.
+	* gas/gas-defs.exp (gas_start): Takes new args, assembler options
+	and redirection options.  Use "run" script so redirection works.
+	(gas_test): Now takes assembler options as separate arg from input
+	file name.
+	(gas_test_ignore_stdout): New proc.  Discards output.
+	(gas_test_error): New proc.  Expects assembler to generate output.
+	(target_cpu_family setting): Handle i486->i386 also.
+
+	* lib/do*: Scripts moved here from gas/testscripts.  May be useful
+	someday for writing more test cases; not currently used.
+
+Tue Mar 30 11:45:27 1993  Ken Raeburn  (raeburn@cambridge.cygnus.com)
+
+	* gas/sol-gcc.s, gas/sol-cc.s, gas/p2425a.s, gas/p2389.s: New test
+	cases.
+	* gas/gas.exp: Enable them for appropriate targets.  Removed some
+	useless comments &c.  Changed m68k target test to be more general.
+
+	* lib/gas-defs.exp (gas_exit, gas_init): New procs.
+	* gas/gas.exp: Call gas_init.
+
+Mon Mar 29 00:00:00 1993  Ken Raeburn  (raeburn@kr-pc.cygnus.com)
+
+	* Test suite created.
+

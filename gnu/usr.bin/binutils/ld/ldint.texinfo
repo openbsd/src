@@ -1,0 +1,303 @@
+\input texinfo
+@setfilename ldint.info
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* Ld-Internals: (ldint).	The GNU linker internals.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+@ifinfo
+This file documents the internals of the GNU linker ld.
+
+Copyright (C) 1992 Free Software Foundation, Inc.
+Contributed by Cygnus Support.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through Tex and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy or distribute modified versions of this
+manual under the terms of the GPL (for which purpose this text may be
+regarded as a program in the language TeX).
+@end ifinfo
+
+@iftex
+@finalout
+@setchapternewpage off
+@settitle GNU Linker Internals
+@titlepage
+@title{A guide to the internals of the GNU linker}
+@author Per Bothner, Steve Chamberlain
+@author Cygnus Support
+@page
+
+@tex
+\def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
+\xdef\manvers{\$Revision: 1.1.1.1 $}  % For use in headers, footers too
+{\parskip=0pt
+\hfill Cygnus Support\par
+\hfill \manvers\par
+\hfill \TeX{}info \texinfoversion\par
+}
+@end tex
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1992 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@end titlepage
+@end iftex
+
+@node Top, README, (dir), (dir)
+
+This file documents the internals of the GNU linker @code{ld}.  It is a
+collection of miscellaneous information with little form at this point.
+Mostly, it is a repository into which you can put information about
+GNU @code{ld} as you discover it (or as you design changes to @code{ld}).
+
+@menu
+* README::			The README File
+* Emulations::			How linker emulations are generated
+* Porting::			Porting the linker
+@end menu
+
+@node README, Emulations, Top, Top
+@chapter The @file{README} File
+
+Check the @file{README} file; it often has useful information that does not
+appear anywhere else in the directory.
+
+@node Emulations, Porting, README, Top
+@chapter How linker emulations are generated
+
+The linker is controlled by linker scripts written in a linker
+control language.  A linker emulation gives the personality of
+the linker, and is mainly defined by certain linker scripts.
+If you want to understand how these scripts are generated,
+the main file to look at is the @file{genscripts.sh} shell script,
+which is invoked by the @file{Makefile} for each ``emulation''
+to generate a set of 5 linker scripts.
+
+For example, for the sun3 emulation used by ld68k, @file{genscripts.sh}
+sources the file @file{emulparams/sun3.sh}, which sets the emulation
+parameters, and specifies that the format is a.out, and to use
+@file{scripttempl/aout.sc} to generate the linker scripts.
+
+@code{genscripts.sh} generates 5 different linker scripts, one for each
+of the @code{ld} options @samp{-z} (default), @samp{-n}, @samp{-N},
+@samp{-r} and @samp{-Ur}, where each script is slightly different and is
+generated using the template in @file{scripttempl/aout.sc} (for the sun3).
+
+@node Porting, , Emulations, Top
+@chapter Porting the linker
+
+Before porting @code{ld} itself, you will need to port the BFD library;
+see @file{../bfd/PORTING}.
+
+The @dfn{host} is the system a tool runs @emph{on}.
+The @dfn{target} is the system a tool runs @emph{for}; i.e.,
+a tool can read and write the binaries of the target.
+Most often, host==target, but @code{ld} supports cross-linking
+(and to some extent the same @code{ld} binary can be used a linker
+for multiple target architectures).
+
+@menu
+* New host:: Porting to a new host
+* New target:: Porting to a new target
+* New emulation:: Porting to a new emulation target
+* Emulation script:: Writing @var{emulation}.sh
+* Linker scripts:: Writing a new @var{script}.sc
+* -n and -N options:: Handling -n and -N style binaries in your linker script
+@end menu
+
+@node New host, New target, , Porting
+@section Porting to a new host
+
+Pick a name for your host. Call that @var{host-type}.
+You need to create the file @file{config/@var{host-type}.mh}.
+
+@node New target, New emulation, New host, Porting
+@section Porting to a new target
+
+Pick a name for your target. Call that @var{target}.
+You need to create at least @file{config/@var{target}.mt}.
+It should contain
+
+@example
+EMUL=@var{emulation}
+@end example
+
+An @dfn{emulation} controls the ``personality'' of @code{ld},
+such as the default linker script.  Usually, the
+@var{emulation} will have the same name as the @var{target},
+and you will need to create a new @var{emulation} (see below).
+
+You also need to edit @file{Makefile.in} and possibly @file{configure.in}.
+To see how to do that, search for existing examples (e.g., @code{sun3},
+@code{sun4}, @code{hp300bsd}).
+
+@node New emulation, Emulation script, New target, Porting
+@section Porting to a new emulation target
+
+Pick a name for your target. Call that @var{emulation}.
+Usually, @var{emulation} and @var{target} are the same.
+You need to create at least @file{emulparams/@var{emulation}.sh}.
+You also need to edit @file{Makefile.in}.
+To see how to do that, search for existing examples.
+
+The file @file{emulparams/@var{emulation}.sh} defines a set of
+parameters that are used to generate the emulation.  Its syntax is that
+of a Bourne shell script.  It is ``sourced'' by @file{genscripts.sh}.
+
+@node Emulation script, Linker scripts, New emulation, Porting
+@section Writing @file{@var{emulation}.sh}
+
+Usually, @file{@var{emulation}.sh} contains:
+@example
+EMULATION_NAME=@var{emulation}
+SCRIPT_NAME=@var{script}
+OUTPUT_FORMAT="@var{target-name}"
+TEXT_START_ADDR=@var{text-start-addr}
+TARGET_PAGE_SIZE=@var{page-size}
+SEGMENT_SIZE=@var{segment-size}  # If different from TARGET_PAGE_SIZE.
+ARCH=@var{arch}
+@end example
+
+Here:
+@table @code
+@item @var{target-name}
+Matches the @code{filename} field of the @code{bfd_target} you want
+to use.  (This is a string, and currently the first field.)
+For an a.out target, @var{target-name} matches the @code{TARGETNAME}
+defined in @file{../bfd/@var{target}.c}.
+
+@item @var{arch}
+The architecture: e.g., @code{m68k}, @code{sparc}, @dots{}.
+
+@item @var{script}
+The file @file{scripttempl/@var{script}.sc} is a shell script which,
+when evaluated (by @file{genscripts.sh}), writes a linker script file to
+standard output.  You may need to write a new script.  If you use the
+a.out format or something similar, you can probably set
+@example
+SCRIPT_NAME=aout
+@end example
+
+@item @var{text-start-addr}
+@itemx @var{page-size}
+@itemx @var{segment-size}
+These set the shell variables @code{TEXT_START_ADDR}, @code{TARGET_PAGE_SIZE},
+and @code{SEGMENT_SIZE} for use by @file{scripttempl/@var{script}.sc}.
+If @code{SEGMENT_SIZE} is not defined, it defaults to @code{TARGET_PAGE_SIZE},
+if that is defined.  If your script doesn't use these variables, you
+don't have to define them.  For emulations using a.out files, you can
+get these values from @file{../bfd/@var{target}.c}.
+@end table
+
+In some cases, you may need more more definitions.
+For example, if you can't use @file{emultempl/generic.em},
+you may need to add:
+@example
+TEMPLATE_NAME=@var{emulation}
+@end example
+and write your own @file{emultempl/@var{emulation}.em} file.
+
+@node Linker scripts, -n and -N options, Emulation script, Porting
+@section Writing a new linker script @file{scripttempl/@var{script}.sc}
+
+You may need to write a new script file for your emulation.
+
+Your script can use the shell variable @code{LD_FLAG}, which has the value:
+@table @code
+@item LD_FLAG=
+when building a script to be used by default
+@item LD_FLAG=n
+when building a script to be used for @samp{ld -n}
+@item LD_FLAG=N
+when building a script to be used for @samp{ld -N}
+@item LD_FLAG=r
+when building a script to be used for @samp{ld -r}
+@item LD_FLAG=u
+when building a script to be used for @samp{ld -Ur}
+@end table
+
+The variable @code{RELOCATING} is only set if relocation is happening
+(i.e., unless the linker is invoked with @samp{-r}).
+Thus your script should has an action @code{@var{ACTION}}
+that should only be done when relocating,
+express that as:
+@example
+$@{RELOCATING+ ACTION@}
+@end example
+This is the case for most assignments, which should look like:
+@example
+$@{RELOCATING+ _end = .@}
+@end example
+
+Also, you should assign absolute addresses to sections only
+when relocating, so:
+@example
+.text $@{RELOCATING+ $@{TEXT_START_ADDR@}@}:
+@end example
+
+The form:
+@example
+	 .section @{ ... @} > section
+@end example
+should be:
+@example
+	 .section @{ ... @} > $@{RELOCATING+ section@}
+@end example
+
+@code{RELOCATING} is set except when @code{LD_FLAG=r} or @code{LD_FLAG=u}.
+@code{CONSTRUCTING} is set except when @code{LD_FLAG=u}.
+
+Alignment of the data segments is controlled by the variables
+@code{DATA_ALIGNMENT_} (note trailing underscore),
+@code{DATA_ALIGNMENT_n}, @code{DATA_ALIGNMENT_N},
+@code{DATA_ALIGNMENT_r}, or @code{DATA_ALIGNMENT_u} depending on the
+value of @code{LD_FLAGS}.  Normally, the default value works (this is
+@code{"ALIGN($@{SEGMENT_SIZE@})"} for the @samp{_n}, and @samp{__}
+(default) variants; @code{"."} for the @samp{_N}, variant; and @code{""}
+for the @samp{_r} and @samp{_u} variants).
+
+@node -n and -N options, , Linker scripts, Porting
+@section Handling @samp{-n} and @samp{-N} style binaries in your linker script
+
+The @samp{-n} linker option requests the linker to create a binary
+with a write-protected text segment, but not demand-pagable (@code{NMAGIC}).
+SunOS starts the text segment for demand-paged binaries at 0x2020
+and other binaries at 0x2000, since the exec header (0x20 bytes)
+is paged in with the text.  Some other Unix variants do the same.
+
+In that case, the @file{emulparams/@var{emulation}.sh} should define:
+@table @code
+@item NONPAGED_TEXT_START_ADDR
+The text start address to use when linking with @samp{-n} or @samp{-N} options.
+@end table
+
+For example, on a sun4:
+@example
+TEXT_START_ADDR=0x2020
+NONPAGED_TEXT_START_ADDR=0x2000
+@end example
+
+The @samp{-N} linker option creates a binary with a non-write-protected
+text segment (@code{NMAGIC}).  This is like @samp{-n}, except that the
+data segment needs not be page-aligned.
+
+@contents
+@bye

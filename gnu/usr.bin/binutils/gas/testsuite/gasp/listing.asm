@@ -1,0 +1,15 @@
+
+
+	.HEADING	" ""QUOTE"" "
+	.PAGE
+	.PRINT LIST
+	foo		
+	.PRINT NOLIST
+	foo
+
+
+	.FORM	LIN=12
+	.FORM	COL=90
+	.FORM	LIN=123 COL=23
+	
+	.END

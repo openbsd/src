@@ -1,0 +1,15 @@
+# Run some tests of gas macros.
+
+if ![istarget hppa*-*-*] {
+    run_dump_test test1
+}
+
+run_dump_test test2
+
+run_dump_test test3
+
+run_dump_test irp
+
+run_dump_test rept
+
+gas_test_error "err.s" "" "macro infinite recursion"

@@ -1,0 +1,187 @@
+#   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# This file was written by Rob Savoye <rob@cygnus.com>
+# and extended by Ian Lance Taylor <ian@cygnus.com>
+
+proc binutil_version { prog } {
+    if {[which $prog] == 0} then {
+	perror "$prog can't be run, file not found."
+	return ""
+    }
+    catch "exec $prog --version" tmp
+    # Should find a way to discard constant parts, keep whatever's
+    # left, so the version string could be almost anything at all...
+    regexp "version (cygnus-|)\[-0-9.a-zA-Z-\]+" $tmp version
+    if ![info exists version] then {
+        return "[which $prog] (no version number)\n"
+    }
+    set tmp $version
+    return "[which $prog] $version\n"
+}
+
+#
+# default_binutils_run
+#	run a program, returning the output
+#	sets binutils_run_failed if the program does not exist
+#
+proc default_binutils_run { prog progargs } {
+    global binutils_run_failed
+    global host_triplet
+
+    set binutils_run_failed 0
+
+    if {[which $prog] == 0} then {
+	perror "$prog does not exist"
+	set binutils_run_failed 1
+	return ""
+    }
+
+    send_log "$prog $progargs\n"
+    verbose "$prog $progargs"
+
+    # This used to be
+    # catch "exec $prog $progargs" exec_output
+    # but that would evaluate $progargs twice, which would fail if
+    # any arguments started with `$'.  This is a dismal hack to avoid
+    # this problem.  I tried using
+    # catch { exec $prog $progargs } exec_output
+    # but that failed because $progargs was not split into words by
+    # exec.  I don't know if this operation can be done correctly.  No
+    # matter how hard I try, I can not convince myself that TCL is a
+    # language.
+    regsub -all "\\$" $progargs "\\$" progq
+    catch "exec $prog $progq" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if {![string match "" $exec_output]} then {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+    }
+    return $exec_output
+}
+
+#
+# default_binutils_assemble
+#	assemble a file
+#
+proc default_binutils_assemble { as source object } {
+    global ASFLAGS
+    global srcdir
+    global host_triplet
+
+    if {[which $as] == 0} then {
+	perror "$as does not exist"
+	return 0
+    }
+
+    if ![info exists ASFLAGS] { set ASFLAGS "" }
+
+    # The HPPA assembler syntax is a little different than most, to make
+    # the test source file assemble we need to run it through sed.
+    #
+    # This is a hack in that it won't scale well if other targets need
+    # similar transformations to assemble.  We'll generalize the hack
+    # if/when other targets need similar handling.
+    if [istarget "hppa*-*-*" ] then {
+	send_log "sed -f $srcdir/config/hppa.sed < $source | $as $ASFLAGS -o $object\n"
+	verbose "sed -f $srcdir/config/hppa.sed < $source | $as $ASFLAGS -o $object"
+	catch "exec sed -f $srcdir/config/hppa.sed < $source | $as $ASFLAGS -o $object" exec_output
+    } else {
+	send_log "$as $ASFLAGS -o $object $source\n"
+	verbose "$as $ASFLAGS -o $object $source"
+	catch "exec $as $ASFLAGS -o $object $source" exec_output
+    }
+
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+
+    if [string match "" $exec_output] then {
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	perror "$source: assembly failed"
+	return 0
+    }
+}
+
+#
+# default_binutils_compile
+#	compile a file
+#
+proc default_binutils_compile { cc flags source object } {
+    global CFLAGS
+    global srcdir
+    global host_triplet
+
+    if {[which $cc] == 0} then {
+	perror "$cc does not exist"
+	return 0
+    }
+
+    if ![info exists CFLAGS] { set CFLAGS "" }
+
+    send_log "$cc $flags $CFLAGS -o $object $source\n"
+    verbose "$cc $flags $CFLAGS -o $object $source"
+    catch "exec $cc $flags $CFLAGS -o $object $source" exec_output
+
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+
+    if [string match "" $exec_output] then {
+	return 1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	perror "$source: assembly failed"
+	return 0
+    }
+}
+
+#
+# default_binutils_remove
+#	remove a file
+#
+proc default_binutils_remove { file } {
+    catch "exec rm -f $file" exec_output
+}
+
+# This definition is taken from an unreleased version of DejaGnu.  Once
+# that version gets released, and has been out in the world for a few
+# months at least, it may be safe to delete this copy.
+if ![string length [info proc prune_system_crud]] {
+    #
+    # prune_system_crud -- delete various system verbosities from TEXT on SYSTEM
+    #
+    # An example is:
+    # ld.so: warning: /usr/lib/libc.so.1.8.1 has older revision than expected 9
+    #
+    # SYSTEM is typical $target_triplet or $host_triplet.
+    #
+    # This is useful when trying to do pattern matches on program output.
+    # Sites with particular verbose os's may wish to override this in site.exp.
+    #
+    proc prune_system_crud { system text } {
+	# This is from sun4's.  Do it for all machines for now.
+	# The "\\1" is to try to preserve a "\n" but only if necessary.
+	regsub -all "(^|\n)(ld.so: warning:\[^\n\]*\n?)+" $text "\\1" text
+
+	# It might be tempting to get carried away and delete blank lines, etc.
+	# Just delete *exactly* what we're ask to, and that's it.
+	return $text
+    }
+}

@@ -1,0 +1,49 @@
+!	
+!	.ALTERNATE
+!
+
+!alloc 	MACRO val1,val2
+!	DB	val1
+!	DB 	val2
+!	ENDM
+!
+
+!	alloc	"that's" 'show biz'
+!	DB	"that's"
+	.byte	116,104,97,116,39,115
+!	DB 	"show biz"
+	.byte	115,104,111,119,32,98,105,122
+!	alloc	0,1
+!	DB	0
+	.byte	0
+!	DB 	1
+	.byte	1
+!	alloc	0 1
+!	DB	0
+	.byte	0
+!	DB 	1
+	.byte	1
+!	alloc	0	1
+!	DB	0
+	.byte	0
+!	DB 	1
+	.byte	1
+!	alloc	,1
+!	DB	
+	.byte	
+!	DB 	1
+	.byte	1
+!
+
+!
+
+!	
+!
+
+!
+
+!
+
+!
+
+!

@@ -1,0 +1,401 @@
+#   Copyright (C) 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# Written by Ian Lance Taylor <ian@cygnus.com>
+
+if {[which $OBJCOPY] == 0} then {
+    perror "$OBJCOPY does not exist"
+    return
+}
+
+send_user "Version [binutil_version $OBJCOPY]"
+
+if {![binutils_assemble $AS $srcdir$subdir/bintest.s tmpdir/bintest.o]} then {
+    unresolved "objcopy (simple copy)"
+    return
+}
+
+# Test that objcopy does not modify a file when copying it.
+
+set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS tmpdir/bintest.o tmpdir/copy.o"]
+
+if ![string match "" $got] then {
+    fail "objcopy (simple copy)"
+} else {
+    send_log "cmp tmpdir/bintest.o tmpdir/copy.o\n"
+    verbose "cmp tmpdir/bintest.o tmpdir/copy.o"
+    catch "exec cmp tmpdir/bintest.o tmpdir/copy.o" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+
+    # On some systems the result of objcopy will not be identical.
+    # Usually this is just because gas isn't using bfd to write the files
+    # in the first place, and may order things a little differently.
+    # Those systems should use setup_xfail here.
+
+    setup_xfail "sh-*-coff" "sh-*-hms" 
+    setup_xfail "arm-*-pe" 
+    setup_xfail "m68*-*-hpux*" "m68*-*-sunos*" "m68*-*-coff" "m68*-*-vxworks*"
+    setup_xfail "m68*-ericsson-ose" "m68k*-motorola-sysv*"
+    setup_xfail "i*86-*-linuxaout*" "i*86-*-aout*"
+    setup_xfail "i*86-*-sysv3" "i*86-*-isc*" "i*86-*-sco*" "i*86-*-coff"
+    setup_xfail "i*86-*-aix*" "i*86-*-go32*"
+    setup_xfail "a29k-*-udi" "a29k-*-coff" "a29k-*-vxworks*"
+    setup_xfail "i960-*-vxworks*" "i960-*-coff"
+    setup_xfail "h8300-*-hms" "h8300-*-coff"
+    setup_xfail "h8500-*-hms" "h8500-*-coff"
+    setup_xfail "hppa*-*-*"
+    clear_xfail "hppa*-*-*elf*"
+    setup_xfail "m88*-*-coff" "m88*-motorola-sysv*"
+    setup_xfail "z8*-*-coff"
+
+    if [string match "" $exec_output] then {
+	pass "objcopy (simple copy)"
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output" 1
+
+	fail "objcopy (simple copy)"
+    }
+}
+
+# Test generating S records.
+
+set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec tmpdir/bintest.o tmpdir/copy.srec"]
+
+if ![string match "" $got] then {
+    fail "objcopy -O srec"
+} else {
+    set file [open tmpdir/copy.srec r]
+
+    # The first S record is fixed by the file name we are using.
+    gets $file line
+    send_log "$line\n"
+    verbose $line
+    if ![string match $line "S0130000746D706469722F636F70792E7372656397\r"] {
+	fail "objcopy -O srec (bad header)"
+    } else {
+	while {[gets $file line] != -1 \
+	       && [regexp "^S\[123\]\[0-9a-fA-F\]+\r$" $line]} {
+	    send_log "$line\n"
+	    verbose $line
+	    set line "**EOF**"
+	}
+	send_log "$line\n"
+	verbose $line
+	if ![regexp "^S\[789\]\[0-9a-fA-F\]+\r$" $line] then {
+	    fail "objcopy -O srec (bad trailer)"
+	} else {
+	    if {[gets $file line] != -1} then {
+		send_log "$line\n"
+		verbose $line
+		fail "objcopy -O srec (garbage at end)"
+	    } else {
+		set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f tmpdir/copy.srec"]
+		if ![regexp "file format srec" $got] then {
+		    fail "objcopy -O srec (objdump failed)"
+		} else {
+		    pass "objcopy -O srec"
+		}
+	    }
+	}
+    }
+
+    close $file
+}
+
+# Test setting and adjusting the start address.  We only test this
+# while generating S records, because we may not be able to set the
+# start address for other object file formats, and the S record case
+# is the only useful one anyhow.
+
+set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f tmpdir/bintest.o"]
+if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
+    perror "objdump can not recognize bintest.o"
+    set origstart ""
+} else {
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec tmpdir/bintest.o tmpdir/copy.srec --set-start 0x7654"]
+    if ![string match "" $got] then {
+	fail "objcopy --set-start"
+    } else {
+	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f tmpdir/copy.srec"]
+	if ![regexp "file format srec.*start address (\[0-9a-fA-FxX\]+)" $got all srecstart] then {
+	    fail "objcopy --set-start"
+	} else {
+	    if {$srecstart != 0x7654} then {
+		fail "objcopy --set-start ($srecstart != 0x7654)"
+	    } else {
+		pass "objcopy --set-start"
+	    }
+	}
+    }
+
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec tmpdir/bintest.o tmpdir/copy.srec --adjust-start 0x123"]
+    if ![string match "" $got] then {
+	fail "objcopy --adjust-start"
+    } else {
+	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f tmpdir/copy.srec"]
+	if ![regexp "file format srec.*start address (\[0-9a-fA-FxX\]+)" $got all srecstart] then {
+	    fail "objcopy --adjust-start"
+	} else {
+	    if {$srecstart != $origstart + 0x123} then {
+		fail "objcopy --adjust-start ($srecstart != $origstart + 0x123)"
+	    } else {
+		pass "objcopy --adjust-start"
+	    }
+	}
+    }
+}
+
+# Test adjusting the overall VMA, and adjusting the VMA of a
+# particular section.  We again only test this when # generating S
+# records.
+
+set low ""
+set lowname ""
+
+set headers [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h tmpdir/bintest.o"]
+
+set headers_regexp "SECTION\[ 	0-9\]+\\\[(\[^\]\]*)\\\]\[^\n\r\]*size\[ 	\]*(\[0-9a-fA-F\]+)\[ 	\]*vma\[ 	\]*(\[0-9a-fA-F\]+)(.*)"
+
+set got $headers
+while {[regexp $headers_regexp $got all name size vma rest]} {
+    set vma 0x$vma
+    if {$low == "" || $vma < $low} then {
+        set low $vma
+	set lowname $name
+    }
+    set got $rest
+}
+
+if {$low == "" || $origstart == ""} then {
+    perror "objdump can not recognize bintest.o"
+} else {
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec tmpdir/bintest.o tmpdir/copy.srec --adjust-vma 0x123"]
+    if ![string match "" $got] then {
+        fail "objcopy --adjust-vma"
+    } else {
+	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -fh tmpdir/copy.srec"]
+	set want "file format srec.*start address\[ 	\]*(\[0-9a-fA-FxX\]+).*vma\[ 	\]*(\[0-9a-fA-F\]+)"
+	if ![regexp $want $got all start vma] then {
+	    fail "objcopy --adjust-vma"
+	} else {
+	    set vma 0x$vma
+	    if {$vma != $low + 0x123} then {
+		fail "objcopy --adjust-vma ($vma != $low + 0x123)"
+	    } else {
+		if {$start != $origstart + 0x123} then {
+		    fail "objcopy --adjust-vma ($start != $origstart + 0x123)"
+		} else {
+		    pass "objcopy --adjust-vma"
+		}
+	    }
+	}
+    }
+
+    set arg ""
+    set got $headers
+    while {[regexp $headers_regexp $got all name size vma rest]} {
+	set vma 0x$vma
+	if {$vma == $low} then {
+	    set arg "$arg --adjust-section-vma $name+4"
+	}
+	set got $rest
+    }
+
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec tmpdir/bintest.o tmpdir/copy.srec $arg"]
+    if ![string match "" $got] then {
+	fail "objcopy --adjust-section-vma +"
+    } else {
+	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h tmpdir/copy.srec"]
+	set want "file format srec.*SECTION\[ 	\]*0\[^\n\r\]*vma\[ 	\]*(\[0-9a-fA-F\]+)"
+	if ![regexp $want $got all vma] then {
+	    fail "objcopy --adjust-section-vma +"
+	} else {
+	    set vma 0x$vma
+	    if {$vma != $low + 4} then {
+		fail "objcopy --adjust-section-vma + ($vma != $low + 4)"
+	    } else {
+		pass "objcopy --adjust-section-vma +"
+	    }
+	}
+    }
+
+    regsub -all "\\+4" $arg "=[expr $low + 4]" argeq
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec tmpdir/bintest.o tmpdir/copy.srec $argeq"]
+    if ![string match "" $got] then {
+	fail "objcopy --adjust-section-vma ="
+    } else {
+	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h tmpdir/copy.srec"]
+	set want "file format srec.*SECTION\[ 	\]*0\[^\n\r\]*vma\[ 	\]*(\[0-9a-fA-F\]+)"
+	if ![regexp $want $got all vma] then {
+	    fail "objcopy --adjust-section-vma ="
+	} else {
+	    set vma 0x$vma
+	    if {$vma != $low + 4} then {
+		fail "objcopy --adjust-section-vma = ($vma != $low + 4)"
+	    } else {
+		pass "objcopy --adjust-section-vma ="
+	    }
+	}
+    }
+}
+
+# Test stripping an object.
+
+proc strip_test { } {
+    global CC
+    global STRIP
+    global STRIPFLAGS
+    global NM
+    global NMFLAGS
+    global srcdir
+    global subdir
+
+    set test "strip"
+
+    if { [which $CC] == 0 } {
+	untested $test
+	return
+    }
+
+    if ![binutils_compile $CC "-g -c" $srcdir/$subdir/testprog.c tmpdir/testprog.o] {
+	unresolved $test
+	return
+    }
+
+    set exec_output [binutils_run $STRIP "$STRIPFLAGS tmpdir/testprog.o"]
+    if ![string match "" $exec_output] {
+	fail $test
+	return
+    }
+
+    set exec_output [binutils_run $NM "-a $NMFLAGS tmpdir/testprog.o"]
+    if ![string match "No symbols in *" $exec_output] {
+	fail $test
+	return
+    }
+
+    pass $test
+}
+
+strip_test
+
+# Build a final executable.
+
+proc copy_setup { } {
+    global CC
+    global srcdir
+    global subdir
+
+    if ![isnative] {
+	return 1
+    }
+
+    if { [which $CC] == 0 } {
+	return 2
+    }
+
+    if ![binutils_compile $CC "-g" $srcdir/$subdir/testprog.c tmpdir/testprog] {
+	return 3
+    }
+
+    set exec_output [binutils_run tmpdir/testprog ""]
+    if ![string match "ok" $exec_output] {
+	return 3
+    }
+
+    return 0
+}
+
+# Test copying an executable.
+
+proc copy_executable { prog flags test1 test2 } {
+
+    set exec_output [binutils_run $prog "$flags tmpdir/testprog tmpdir/copyprog"]
+    if ![string match "" $exec_output] {
+	fail $test1
+	fail $test2
+	return
+    }
+
+    set exec_output [binutils_run "cmp" "tmpdir/testprog tmpdir/copyprog"]
+
+    if [string match "" $exec_output] then {
+	pass $test1
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output"
+	# This will fail for many reasons.  For example, it will most
+	# likely fail if the system linker is used.  Therefore, we do
+	# not insist that it pass.  If you are using an assembler and
+	# linker based on the same BFD as objcopy, it is worth
+	# investigating to see why this failure occurs.
+	setup_xfail "*-*-*"
+	fail $test1
+    }
+
+    set exec_output [binutils_run tmpdir/copyprog ""]
+    if ![string match "ok" $exec_output] {
+	fail $test2
+    } else {
+	pass $test2
+    }
+}
+
+# Test stripping an executable
+
+proc strip_executable { prog flags test } {
+
+    set exec_output [binutils_run $prog "$flags tmpdir/copyprog"]
+    if ![string match "" $exec_output] {
+	fail $test
+	return
+    }
+
+    set exec_output [binutils_run tmpdir/copyprog ""]
+    if ![string match "ok" $exec_output] {
+	fail $test
+    } else {
+	pass $test
+    }
+}
+
+set test1 "simple objcopy of executable"
+set test2 "run objcopy of executable"
+set test3 "run stripped executable"
+
+switch [copy_setup] {
+    "1" {
+	# do nothing
+    }
+    "2" {
+	untested $test1
+	untested $test2
+	untested $test3
+    }
+    "3" {
+	unresolved $test1
+	unresolved $test2
+	unresolved $test3
+    }
+    "0" {
+	copy_executable "$OBJCOPY" "$OBJCOPYFLAGS" "$test1" "$test2"
+	strip_executable "$STRIP" "$STRIPFLAGS" "$test3"
+    }
+}

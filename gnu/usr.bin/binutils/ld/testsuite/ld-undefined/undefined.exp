@@ -1,0 +1,86 @@
+# Test that the linker reports undefined symbol errors correctly.
+# By Ian Lance Taylor, Cygnus Support
+#
+#   Copyright (C) 1995 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+set testund "undefined"
+set testfn "undefined function"
+set testline "undefined line"
+
+if { [which $CC] == 0 } {
+    untested $testund
+    untested $testfn
+    untested $testline
+    return
+}
+
+if ![ld_compile "$CC -g" $srcdir$subdir/undefined.c tmpdir/undefined.o] {
+    unresolved $testund
+    unresolved $testfn
+    unresolved $testline
+    return
+}
+
+catch "exec rm -f tmpdir/undefined" exec_output
+
+# Using -e start prevents the SunOS linker from trying to build a
+# shared library.
+send_log "$ld -e start -o tmpdir/undefined tmpdir/undefined.o\n"
+verbose "$ld -e start -o tmpdir/undefined tmpdir/undefined.o"
+
+catch "exec $ld -e start -o tmpdir/undefined tmpdir/undefined.o" exec_output
+send_log "$exec_output\n"
+verbose "$exec_output"
+
+proc checkund { string testname } {
+    global exec_output
+
+    if [string match "*$string*" $exec_output] {
+	pass $testname
+    } else {
+	fail $testname
+    }
+}
+
+set mu "undefined reference to `this_function_is_not_defined'"
+checkund $mu $testund
+
+# ARM PE defaults to using stabs debugging, which we can't handle for
+# a COFF file.
+setup_xfail "arm*-*-pe*"
+
+set mf "tmpdir/undefined.o: In function `function':"
+checkund $mf $testfn
+
+# ELF targets currently can not get line number information (except
+# for MIPS ELF).
+setup_xfail "*-*-elf*" "*-*-sysv4*" "*-*-unixware*" "*-*-solaris*" "*-*-gnu*"
+setup_xfail "hppa*-*-lites*" "m88*-harris-cxux*" "m88*-*-dgux*"
+setup_xfail "powerpc*-*-eabi*" "*-stratus-*" "*-cbm-*" "*-ncr-*"
+clear_xfail "mips*-*-elf*" "mips*-*-sysv4*" "mips*-*-gnu*"
+
+# COFF SH gets this test wrong--it reports line 10, because although
+# the jump is at line 9, the function address, and the reloc, is
+# stored at the end of the function.
+setup_xfail "sh-*-*"
+
+# ARM PE defaults to using stabs debugging, which we can't handle for
+# a COFF file.
+setup_xfail "arm*-*-pe*"
+
+set ml "undefined.c:9: undefined reference to `this_function_is_not_defined'"
+checkund $ml $testline

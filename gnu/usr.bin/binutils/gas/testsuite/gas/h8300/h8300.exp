@@ -1,0 +1,11 @@
+#
+# Some H8/300 tests
+#
+if [istarget h8300*-*-*] then {
+    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] ]
+    set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
+    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*]]
+
+    run_dump_test "ffxx1"
+    gas_test "cmpsi2.s" "" "" "cmpsi2.s"
+}

@@ -1,0 +1,9 @@
+;embed	macro	label
+;addr&&label	dc.l	label
+;	endm
+;
+
+;	embed	foo
+;addrfoo	dc.l	foo
+addrfoo:	dc.l	foo
+;

@@ -1,0 +1,148 @@
+#	@(#)Makefile	5.17 (Berkeley) 5/11/90
+
+.SUFFIXES : .m
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+prefix = @prefix@
+
+exec_prefix 	= $(prefix)
+program_transform_name = @program_transform_name@
+
+bindir 	= $(exec_prefix)/bin
+libdir 	= $(exec_prefix)/lib
+tooldir = $(libdir)
+mandir 	= $(prefix)/man
+man1dir = $(mandir)/man1
+
+infodir	= $(prefix)/info
+datadir = $(prefix)/lib
+
+SHELL = /bin/sh
+
+INSTALL = `cd $(srcdir); pwd`/../install.sh -c
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL)
+INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
+INSTALL_XFORM1 = $(INSTALL_XFORM) -b=.1
+MAKEINFO	= makeinfo
+TEX		= tex
+TEXINDEX	= texindex
+
+# this is the directory we look in to find Texinfo
+texidir		= $(srcdir)/../texinfo
+
+MY_TARGET=	@MY_TARGET@
+
+PROG=	gprof
+SRCS=	$(MY_TARGET).c basic_blocks.c call_graph.c \
+	cg_arcs.c cg_dfn.c cg_print.c core.c \
+	gmon_io.c gprof.c hertz.c hist.c source.c search_list.c symtab.c \
+	sym_ids.c utils.c
+
+LIBS = ../bfd/libbfd.a ../libiberty/libiberty.a
+
+OBJS=	$(MY_TARGET).o basic_blocks.o bsd_callg_bl.o call_graph.o \
+	cg_arcs.o cg_dfn.o cg_print.o core.o flat_bl.o fsf_callg_bl.o \
+	gmon_io.o gprof.o hertz.o hist.o source.o search_list.o symtab.o \
+	sym_ids.o utils.o
+
+# Files that can be generated, but should be included in distribution.
+GEN_FILES = flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
+
+CFLAGS=-g -DDEBUG
+LDFLAGS=
+.c.o:
+	$(CC) -c $(CFLAGS) -I. -I$(srcdir) -I../bfd -I$(srcdir)/../include -I$(srcdir)/../bfd -DMACHINE_H=\"$(MY_TARGET).h\" $(TCFLAGS) $(HCFLAGS) $<
+
+all:	$(GEN_FILES) $(PROG)
+
+.PHONY: check installcheck info install-info
+.SUFFIXES: .m
+
+.m.c:
+	awk -f $(srcdir)/gen-c-prog.awk > ./$*.c \
+	    FUNCTION=`(echo $*|sed -e 's/_bl//')`_blurb \
+	    FILE=$*.m $(srcdir)/$*.m
+
+diststuff: $(GEN_FILES) info
+
+gprof.info: gprof.texi
+	$(MAKEINFO) -o gprof.info $(srcdir)/gprof.texi
+
+gprof.dvi: gprof.texi
+	TEXINPUTS=${TEXIDIR}:$(srcdir):$$TEXINPUTS $(TEX) $(srcdir)/gprof.texi
+	$(TEXINDEX) gprof.??
+	TEXINPUTS=${TEXIDIR}:$(srcdir):$$TEXINPUTS $(TEX) $(srcdir)/gprof.texi
+
+info: gprof.info
+
+dvi: gprof.dvi
+
+check:
+installcheck:
+
+TAGS:
+	etags $(srcdir)/*.[ch]
+tags:	TAGS
+
+install-info: gprof.info
+	if [ -r gprof.info ]; then \
+	  dir=. ; \
+	else \
+	  dir=$(srcdir) ; \
+	fi ; \
+	for i in `cd $$dir; echo gprof.info*` ; do \
+		$(INSTALL_DATA) $$dir/$$i $(infodir)/$$i ; \
+	done
+
+install: all
+	$(INSTALL_XFORM) gprof $(bindir)/gprof
+	$(INSTALL_XFORM1) $(srcdir)/gprof.1 $(man1dir)/gprof.1
+
+gprof:	$(OBJS) $(LIBS)
+	$(CC) -o $(PROG) $(LDFLAGS) $(OBJS) $(LIBS)
+
+mostlyclean:
+	-rm -f *.o core gprof nohup.out \
+	gprof.cps  gprof.fns  gprof.log  gprof.ps   gprof.tps\
+	gprof.aux  gprof.dvi  gprof.ky   gprof.pg   gprof.toc  gprof.vr\
+	gprof.cp   gprof.fn   gprof.kys  gprof.pgs  gprof.tp   gprof.vrs
+clean: mostlyclean
+	-rm -f gprof
+distclean: clean
+	-rm -f config.cache config.log config.status Makefile
+maintainer-clean realclean: distclean
+	-rm -f $(GEN_FILES) *.info*
+
+Makefile: Makefile.in config.status
+	$(SHELL) config.status
+
+config.status: configure
+	$(SHELL) config.status --recheck
+
+$(OBJS): ../bfd/bfd.h call_graph.h cg_arcs.h cg_print.h core.h gmon_io.h \
+	 gmon_out.h gprof.h hertz.h hist.h search_list.h source.h sym_ids.h \
+	 symtab.h utils.h $(srcdir)/../include/libiberty.h \
+	 $(srcdir)/../bfd/sysdep.h $(MY_TARGET).h
+
+# These get around a bug in Sun Make in SunOS 4.1.1 and Solaris 2
+$(MY_TARGET).o: $(MY_TARGET).c
+basic_blocks.o: basic_blocks.c
+bsd_call_bl.o: bsd_call_bl.c
+call_graph.o: call_graph.c
+cg_arcs.o: cg_arcs.c
+cg_dfn.o: cg_dfn.c
+cg_print.o: cg_print.c
+core.o: core.c
+flat_bl.o: flat_bl.c
+fsf_callg_bl.o: fsf_callg_bl.c
+gmon_io.o: gmon_io.c
+gprof.o: gprof.c
+hertz.o: hertz.c
+hist.o: hist.c
+search_list.o: search_list.c
+source.o: source.c
+symtab.o: symtab.c
+sym_ids.o: sym_ids.c
+utils.o: utils.c

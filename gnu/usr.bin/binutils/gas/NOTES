@@ -1,0 +1,142 @@
+-*- text -*-
+
+PORTING:
+
+Sorry, no description of the interfaces is written up yet.  Look at existing
+back ends and work from there.
+
+New hosts: If your host system has a strange header file setup, create a
+config/ho-foo.h file for it and include the appropriate header files or
+definitions there.  If your host has a broken compiler, or some broken macros
+in header files, create a host-specific file and repair the damage there.
+(See, for example, ho-rs6000.h.  The "assert" macro on that system doesn't work
+right, and a flag is set to rewrite an expression in tc-m68k.c that the native
+compiler mis-compiles.)
+
+New target formats: Look at the BFD_ASSEMBLER code.  The a.out code might be a
+fair example.  There are no "good" examples yet, unfortunately, nor any good
+documentation of the changes.
+
+New target processors: Check first to see if the BFD_ASSEMBLER interface is
+supported by the file format code you need to use.
+
+New environments: ???
+
+DOCUMENTATION:
+
+The internals of gas need documenting.
+
+The documentation should also contain a "Trouble" section similar to gcc's
+manual: real bugs, common problems, incompatibilities, etc.
+
+Anyone want to offer to maintain a man page?
+
+BFD CONVERSION:
+
+The "#ifdef BFD_ASSEMBLER" code is on its way in; the "#ifndef BFD_ASSEMBLER"
+code is on its way out.  The new code uses BFD data structures, and calls BFD
+for anything that needs to be written to the output file.  The old code did all
+the writing itself, or in a couple of cases, used BFD as a slightly higher
+level than stdio (i.e., bfd_seek, bfd_write -- these are not the preferred
+interface).
+
+Because of this, some of this code is messy.  Lots of ifdef's, and the
+non-BFD_ASSEMBLER version often has multiple conditional tests inside it for
+various processors or formats.  As the various targets get converted over,
+these will gradually go away.
+
+As of the moment I'm editing this file, only the "sun4" and "decstation-bsd"
+targets can really use the BFD code.  Other back ends still need merging or
+touching up.
+
+TO DO:
+
+Remove DONTDEF code, commented-out code.
+
+Eliminate, as much as possible, anything not in config that is conditionalized
+on a CPU, format, or environment.
+
+Merge COFF support into one version, supporting all the pseudo-ops used in
+either versions now, but using BFD for high-level operations.  (See second
+following item.)  Currently there are two versions (plus the new BFD code),
+which support different features, and are used on different targets.
+
+Convert remaining a.out/b.out targets to using the BFD_ASSEMBLER code by
+default.
+
+Finish conversion to using BFD for all object file writing.  (This is the
+BFD_ASSEMBLER code, not BFD or BFD_HEADERS.)  VMS might be the tough one here,
+since there's no BFD support for it at all yet.  Eliminate the old code.  Some
+of this can be done target by target, so doing a target where the CPU or
+format already supports BFD_ASSEMBLER mode may be easiest.
+
+Fix lots of uses of empty strings to use null pointers.  Will improve
+efficiency, and should make code clearer too.
+
+Clean up comments; lots of 'em are one previous maintainer griping about
+another previous maintainer, unrelated to the code.  (And with no names,
+they're not so fun to read. :-)
+
+For sparc: "call 0" becomes "jmpl %g0,%l7", and similarly for absolute
+addresses in -4096...4095.  (Solaris assembler does this.  No
+relocation required, no absolute symbol needed.)  For addresses
+outside the range, for COFF, keep generating an absolute symbol to use
+for relocs.
+
+Get Steve to document H8/500 stuff (and others).
+
+Improve test suite.  Incorporate more reported net bugs, and non-confidential
+Cygnus customer bugs, and anything else.
+
+Add support for i386/i486 16-bit mode, so operating system initialization code
+doesn't require a separate assembler nor lots of `.byte' directives.
+
+See if it's more maintainable (and not too much of a performance loss) to use
+a yacc grammar for parsing input.  The lexer will have to be flexible, and the
+grammar will have to contain any construct used on any platform, but it may be
+easier to maintain, instead of having code in most of the back ends.
+
+PIC support.
+
+Torbjorn Granlund <tege@cygnus.com> writes, regarding alpha .align:
+
+   Please make sure the .align directive works as in digital's assembler.
+   They fill the space with a sequence of "bis $31,$31,$31;ldq_u $31,0($30)"
+   since these two instructions can dual-issue.  Since .align is ued a lot by
+   gcc, it is an important optimization.
+
+Torbjorn Granlund <tege@cygnus.com> writes, regarding i386/i486/pentium:
+
+   In a new publication from Intel, "Optimization for Intel's 32 bit
+   Processors", they recommended code alignment on a 16 byte boundary if that
+   requires less than 8 bytes of fill instructions.  The Pentium is not
+   affected by such alignment, the 386 wants alignment on a 4 byte boundary.
+   It is the 486 that is most helped by large alignment.
+
+   Recommended nop instructions:
+   1 byte:  90                     xchg %eax,%eax
+   2 bytes: 8b c0                  movl %eax,%eax
+   3 bytes: 8d 76 00               leal 0(%esi),%esi
+   4 bytes: 8d 74 26 00            leal 0(%esi),%esi
+   5 bytes: 8b c0 8d 76 00         movl %eax,%eax; leal 0(%esi),%esi
+   6 bytes: 8d b6 00 00 00 00      leal 0(%esi),%esi
+   7 bytes: 8d b4 26 00 00 00 00   leal 0(%esi),%esi
+
+   Note that `leal 0(%esi),%esi' has a few different encodings...
+
+   There are faster instructions for certain lengths, that are not true nops.
+   If you can determine that a register and the condition code is dead (by
+   scanning forwards for a register that is written before it is read, and
+   similar for cc) you can use a `incl reg' for a 3 times faster 1 cycle nop...
+
+(From old "NOTES" file to-do list, not really reviewed:)
+
+fix relocation types for i860, perhaps by adding a ref pointer to fixS?
+
+remove the ifdef's from fx_callj tests?
+
+space tighten sparc alignment?
+
+md_ => tc_
+
+share b.out with a.out.

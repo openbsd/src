@@ -1,0 +1,38 @@
+;loop	macro	arg1,arg2,arg3
+;	dc.l	NARG
+;	ifne	NARG
+;	dc.l	arg1
+;	loop	arg2,arg3
+;	endc
+;	endm
+;
+
+;	loop	1,2,3
+;	dc.l	3
+	dc.l	3
+;	ifne	3
+;	dc.l	1
+	dc.l	1
+;	loop	2,3
+;	dc.l	2
+	dc.l	2
+;	ifne	2
+;	dc.l	2
+	dc.l	2
+;	loop	3,
+;	dc.l	1
+	dc.l	1
+;	ifne	1
+;	dc.l	3
+	dc.l	3
+;	loop	,
+;	dc.l	0
+	dc.l	0
+;	ifne	0
+;	dc.l	
+;	loop	,
+;	endc
+;	endc
+;	endc
+;	endc
+;

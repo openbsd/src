@@ -1,0 +1,273 @@
+# Test handling of MIT and Motorola syntax operands
+# If you change this file, see also op68000.d.
+	.text
+	.globl	foo
+foo:	
+	| Data register direct
+	tstl	%d0
+
+	| Address register direct
+	tstl	%a0
+
+	| Address register indirect
+	tstl	%a0@
+	tstl	(%a0)
+
+	| Address register indirect with postincrement
+	tstl	%a0@+
+	tstl	(%a0)+
+
+	| Address register indirect with predecrement
+	tstl	%a0@-
+	tstl	-(%a0)
+
+	| Address register indirect with displacement
+	tstl	%a0@(8)
+	tstl	(8,%a0)
+	tstl	8(%a0)
+
+	| Address register indirect with index (8-bit displacement)
+	tstl	%a0@(8,%d0)
+	tstl	%a0@(8,%d0:w)
+	tstl	%a0@(8,%d0:w:1)
+	tstl	%a0@(8,%d0:w:2)
+	tstl	%a0@(8,%d0:w:4)
+	tstl	%a0@(8,%d0:w:8)
+	tstl	%a0@(8,%d0:l)
+	tstl	%a0@(8,%d0:l:1)
+	tstl	%a0@(8,%d0:l:2)
+	tstl	%a0@(8,%d0:l:4)
+	tstl	%a0@(8,%d0:l:8)
+	tstl	%a0@(%d0:w:2)
+	tstl	(8,%a0,%d0)
+	tstl	(8,%a0,%d0*1)
+	tstl	(8,%a0,%d0*2)
+	tstl	(8,%a0,%d0*4)
+	tstl	(8,%a0,%d0*8)
+	tstl	(8,%a0,%d0.w)
+	tstl	(8,%a0,%d0.w*1)
+	tstl	(8,%a0,%d0.w*2)
+	tstl	(8,%a0,%d0.w*4)
+	tstl	(8,%a0,%d0.w*8)
+	tstl	(8,%a0,%d0.l)
+	tstl	(8,%a0,%d0.l*1)
+	tstl	(8,%a0,%d0.l*2)
+	tstl	(8,%a0,%d0.l*4)
+	tstl	(8,%a0,%d0.l*8)
+	tstl	(8,%d0,%a0)
+	tstl	(8,%a1.w*2,%a0)
+	tstl	(8,%a1,%a0)
+	tstl	8(%a0,%d0.w*2)
+	tstl	8(%d0.w*2,%a0)
+	tstl	8(%a1.w*2,%a0)
+	tstl	(%a0,%d0.w*2)
+	tstl	(%d0.w*2,%a0)
+
+	| Address register indirect with index (base displacement)
+	tstl	%a0@(1000,%d0:w:2)
+	tstl	@(1000,%d0:w:2)
+	tstl	@(%d0:w:2)
+	tstl	@(1000)
+	tstl	%a0@(100000)
+	tstl	(1000,%a0,%d0.w*2)
+	tstl	(1000,%d0,%a0)
+	tstl	(1000,%a1.w*2,%a0)
+	tstl	1000(%a0,%d0.w*2)
+	tstl	1000(%d0,%a0)
+	tstl	(1000,%d0.w*2)
+	tstl	1000(%d0.w*2)
+	tstl	(%d0.w*2)
+	tstl	(100000,%a0)
+	tstl	100000(%a0)
+	tstl	%za1@(1000,%d0:w:2)
+	tstl	%za1@(100000)
+	tstl	(1000,%za1,%d0.w*2)
+	tstl	(1000,%d0,%za1)
+	tstl	(1000,%a1.w*2,%za1)
+	tstl	1000(%za1,%d0.w*2)
+	tstl	1000(%d0,%za1)
+	tstl	(100000,%za1)
+	tstl	100000(%za1)
+	tstl	%a0@(1000,%zd1:w:2)
+	tstl	@(1000,%zd1:w:2)
+	tstl	@(%zd1:w:2)
+	tstl	(1000,%a0,%zd1.w*2)
+	tstl	(1000,%zd1,%a0)
+	tstl	(1000,%za1.w*2,%a0)
+	tstl	1000(%a0,%zd1.w*2)
+	tstl	1000(%zd1,%a0)
+	tstl	(1000,%zd1.w*2)
+	tstl	1000(%zd1.w*2)
+	tstl	(%zd1.w*2)
+
+	| Memory indirect postindexed
+	tstl	%a0@(1000)@(2000,%d0:w:2)
+	tstl	%a0@(1000)@(%d0:w:2)
+	tstl	%a0@(1000)@(2000)
+	tstl	@(1000)@(2000,%d0:w:2)
+	tstl	@(1000)@(%d0:w:2)
+	tstl	@(1000)@(2000)
+	tstl	%a0@(0)@(2000,%d0:w:2)
+	tstl	%a0@(0)@(%d0:w:2)
+	tstl	%a0@(0)@(2000)
+	tstl	@(0)@(2000,%d0:w:2)
+	tstl	@(0)@(%d0:w:2)
+	tstl	@(0)@(2000)
+	tstl	([1000,%a0],%d0:w:2,2000)
+	tstl	([1000,%a0],%d0:w:2)
+	tstl	([1000,%a0],2000)
+	tstl	([1000],%d0:w:2,2000)
+	tstl	([1000],%d0:w:2)
+	tstl	([1000],2000)
+	tstl	([%a0],%d0:w:2,2000)
+	tstl	([%a0],%d0:w:2)
+	tstl	([%a0],2000)
+	tstl	([0],%d0:w:2,2000)
+	tstl	([0],%d0:w:2)
+	tstl	([0],2000)
+
+	| Memory indirect preindexed
+	tstl	%a0@(1000,%d0:w:2)@(2000)
+	tstl	%a0@(1000,%d0:w:2)@(0)
+	tstl	@(1000,%d0:w:2)@(2000)
+	tstl	@(1000,%d0:w:2)@(0)
+	tstl	%a0@(%d0:w:2)@(2000)
+	tstl	%a0@(%d0:w:2)@(0)
+	tstl	@(%d0:w:2)@(2000)
+	tstl	@(%d0:w:2)@(0)
+	tstl	([1000,%a0,%d0:w:2],2000)
+	tstl	([1000,%d0:w:2,%a0],2000)
+	tstl	([1000,%d0,%a0],2000)
+	tstl	([1000,%a1,%a0],2000)
+	tstl	([1000,%a1:w:2,%a0],2000)
+	tstl	([1000,%a0,%d0:w:2])
+	tstl	([1000,%d0,%a0])
+	tstl	([1000,%d0:w:2],2000)
+	tstl	([1000,%d0:w:2])
+	tstl	([%a0,%d0:w:2],2000)
+	tstl	([%d0,%a0],2000)
+	tstl	([%a0,%d0:w:2])
+	tstl	([%d0,%a0])
+	tstl	([%d0:w:2],2000)
+	tstl	([%d0:w:2])
+
+	| Program counter indirect with displacement
+	tstl	%pc@(8)
+	tstl	(8,%pc)
+	tstl	8(%pc)
+	tstl	foo
+
+	| Program counter indirect with index (8-bit displacement)
+	tstl	%pc@(8,%d0:w:2)
+	tstl	%pc@(%d0:w:2)
+	tstl	(8,%pc,%d0.w*2)
+	tstl	(8,%d0,%pc)
+	tstl	(8,%a0,%pc)
+	tstl	8(%pc,%d0.w*2)
+	tstl	8(%d0,%pc)
+	tstl	8(%a0,%pc)
+	tstl	(%pc,%d0.w*2)
+	tstl	(%d0,%pc)
+	tstl	(%a0,%pc)
+
+	| Program counter indirect with index (base displacement)
+	tstl	%pc@(1000,%d0:w:2)
+	tstl	%pc@(100000)
+	tstl	(1000,%pc,%d0.w*2)
+	tstl	(1000,%d0,%pc)
+	tstl	(1000,%a1.w*2,%pc)
+	tstl	(1000,%a1,%pc)
+	tstl	1000(%pc,%d0.w*2)
+	tstl	1000(%d0,%pc)
+	tstl	1000(%a1,%pc)
+	tstl	(100000,%pc)
+	tstl	100000(%pc)
+	tstl	%zpc@(1000,%d0:w:2)
+	tstl	%zpc@(100000)
+	tstl	(1000,%zpc,%d0.w*2)
+	tstl	(1000,%d0,%zpc)
+	tstl	(1000,%a1.w*2,%zpc)
+	tstl	(1000,%a1,%zpc)
+	tstl	1000(%zpc,%d0.w*2)
+	tstl	1000(%d0,%zpc)
+	tstl	1000(%a1,%zpc)
+	tstl	(100000,%zpc)
+	tstl	100000(%zpc)
+
+	| Program counter memory indirect postindexed
+	tstl	%pc@(1000)@(2000,%d0:w:2)
+	tstl	%pc@(1000)@(%d0:w:2)
+	tstl	%pc@(1000)@(2000)
+	tstl	%pc@(0)@(2000,%d0:w:2)
+	tstl	%pc@(0)@(%d0:w:2)
+	tstl	%pc@(0)@(2000)
+	tstl	([1000,%pc],%d0:w:2,2000)
+	tstl	([1000,%pc],%d0:w:2)
+	tstl	([1000,%pc],2000)
+	tstl	([%pc],%d0:w:2,2000)
+	tstl	([%pc],%d0:w:2)
+	tstl	([%pc],2000)
+	tstl	%zpc@(1000)@(2000,%d0:w:2)
+	tstl	%zpc@(1000)@(%d0:w:2)
+	tstl	%zpc@(1000)@(2000)
+	tstl	%zpc@(0)@(2000,%d0:w:2)
+	tstl	%zpc@(0)@(%d0:w:2)
+	tstl	%zpc@(0)@(2000)
+	tstl	([1000,%zpc],%d0:w:2,2000)
+	tstl	([1000,%zpc],%d0:w:2)
+	tstl	([1000,%zpc],2000)
+	tstl	([%zpc],%d0:w:2,2000)
+	tstl	([%zpc],%d0:w:2)
+	tstl	([%zpc],2000)
+
+	| Program counter memory indirect preindexed
+	tstl	%pc@(1000,%d0:w:2)@(2000)
+	tstl	%pc@(1000,%d0:w:2)@(0)
+	tstl	%pc@(%d0:w:2)@(2000)
+	tstl	%pc@(%d0:w:2)@(0)
+	tstl	([1000,%pc,%d0:w:2],2000)
+	tstl	([1000,%d0:w:2,%pc],2000)
+	tstl	([1000,%d0,%pc],2000)
+	tstl	([1000,%a1,%pc],2000)
+	tstl	([1000,%pc,%a1],2000)
+	tstl	([1000,%a1:w:2,%pc],2000)
+	tstl	([1000,%pc,%d0:w:2])
+	tstl	([1000,%d0,%pc])
+	tstl	([1000,%a1,%pc])
+	tstl	([%pc,%d0:w:2],2000)
+	tstl	([%pc,%a0],2000)
+	tstl	([%pc,%d0:w:2])
+	tstl	([%d0,%pc])
+	tstl	%zpc@(1000,%d0:w:2)@(2000)
+	tstl	%zpc@(1000,%d0:w:2)@(0)
+	tstl	%zpc@(%d0:w:2)@(2000)
+	tstl	%zpc@(%d0:w:2)@(0)
+	tstl	([1000,%zpc,%d0:w:2],2000)
+	tstl	([1000,%d0:w:2,%zpc],2000)
+	tstl	([1000,%d0,%zpc],2000)
+	tstl	([1000,%a1,%zpc],2000)
+	tstl	([1000,%zpc,%a1],2000)
+	tstl	([1000,%a1:w:2,%zpc],2000)
+	tstl	([1000,%zpc,%d0:w:2])
+	tstl	([1000,%d0,%zpc])
+	tstl	([1000,%a1,%zpc])
+	tstl	([%zpc,%d0:w:2],2000)
+	tstl	([%zpc,%a0],2000)
+	tstl	([%zpc,%d0:w:2])
+	tstl	([%d0,%zpc])
+
+	| Absolute short
+	tstl	4
+	tstl	4.w
+	tstl	(4).w
+
+	| Absolute long
+	tstl	100000
+	tstl	8.l
+	tstl	(8).l
+
+	| Immediate
+	addib	&1,%d0
+	addiw	&1,%d0
+	addil	&1,%d0
+	addqb	&1,%d0

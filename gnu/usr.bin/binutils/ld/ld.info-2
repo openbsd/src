@@ -1,0 +1,924 @@
+This is Info file ld.info, produced by Makeinfo-1.55 from the input
+file ./ld.texinfo.
+
+START-INFO-DIR-ENTRY
+* Ld: (ld).                       The GNU linker.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU linker LD.
+
+   Copyright (C) 1991, 92, 93, 94, 1995 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: ld.info,  Node: Section Definition,  Next: Section Placement,  Up: SECTIONS
+
+Section Definitions
+-------------------
+
+   The most frequently used statement in the `SECTIONS' command is the
+"section definition", which specifies the properties of an output
+section: its location, alignment, contents, fill pattern, and target
+memory region.  Most of these specifications are optional; the simplest
+form of a section definition is
+     SECTIONS { ...
+       SECNAME : {
+         CONTENTS
+       }
+     ... }
+
+SECNAME is the name of the output section, and CONTENTS a specification
+of what goes there--for example, a list of input files or sections of
+input files (*note Section Placement::.).  As you might assume, the
+whitespace shown is optional.  You do need the colon `:' and the braces
+`{}', however.
+
+   SECNAME must meet the constraints of your output format.  In formats
+which only support a limited number of sections, such as `a.out', the
+name must be one of the names supported by the format (`a.out', for
+example, allows only `.text', `.data' or `.bss'). If the output format
+supports any number of sections, but with numbers and not names (as is
+the case for Oasys), the name should be supplied as a quoted numeric
+string.  A section name may consist of any sequence of characters, but
+any name which does not conform to the standard `ld' symbol name syntax
+must be quoted.  *Note Symbol Names: Symbols.
+
+   The linker will not create output sections which do not have any
+contents.  This is for convenience when referring to input sections that
+may or may not exist.  For example,
+     .foo { *(.foo }
+   will only create a `.foo' section in the output file if there is a
+`.foo' section in at least one input file.
+
+
+File: ld.info,  Node: Section Placement,  Next: Section Data Expressions,  Prev: Section Definition,  Up: SECTIONS
+
+Section Placement
+-----------------
+
+   In a section definition, you can specify the contents of an output
+section by listing particular input files, by listing particular
+input-file sections, or by a combination of the two.  You can also place
+arbitrary data in the section, and define symbols relative to the
+beginning of the section.
+
+   The CONTENTS of a section definition may include any of the
+following kinds of statement.  You can include as many of these as you
+like in a single section definition, separated from one another by
+whitespace.
+
+`FILENAME'
+     You may simply name a particular input file to be placed in the
+     current output section; *all* sections from that file are placed
+     in the current section definition.  If the file name has already
+     been mentioned in another section definition, with an explicit
+     section name list, then only those sections which have not yet
+     been allocated are used.
+
+     To specify a list of particular files by name:
+          .data : { afile.o bfile.o cfile.o }
+
+     The example also illustrates that multiple statements can be
+     included in the contents of a section definition, since each file
+     name is a separate statement.
+
+`FILENAME( SECTION )'
+`FILENAME( SECTION, SECTION, ... )'
+`FILENAME( SECTION SECTION ... )'
+     You can name one or more sections from your input files, for
+     insertion in the current output section.  If you wish to specify a
+     list of input-file sections inside the parentheses, you may
+     separate the section names by either commas or whitespace.
+
+`* (SECTION)'
+`* (SECTION, SECTION, ...)'
+`* (SECTION SECTION ...)'
+     Instead of explicitly naming particular input files in a link
+     control script, you can refer to *all* files from the `ld' command
+     line: use `*' instead of a particular file name before the
+     parenthesized input-file section list.
+
+     If you have already explicitly included some files by name, `*'
+     refers to all *remaining* files--those whose places in the output
+     file have not yet been defined.
+
+     For example, to copy sections `1' through `4' from an Oasys file
+     into the `.text' section of an `a.out' file, and sections `13' and
+     `14' into the `.data' section:
+          SECTIONS {
+            .text :{
+              *("1" "2" "3" "4")
+            }
+          
+            .data :{
+              *("13" "14")
+            }
+          }
+
+     `[ SECTION ... ]' used to be accepted as an alternate way to
+     specify named sections from all unallocated input files.  Because
+     some operating systems (VMS) allow brackets in file names, that
+     notation is no longer supported.
+
+`FILENAME`( COMMON )''
+`*( COMMON )'
+     Specify where in your output file to place uninitialized data with
+     this notation.  `*(COMMON)' by itself refers to all uninitialized
+     data from all input files (so far as it is not yet allocated);
+     FILENAME`(COMMON)' refers to uninitialized data from a particular
+     file.  Both are special cases of the general mechanisms for
+     specifying where to place input-file sections: `ld' permits you to
+     refer to uninitialized data as if it were in an input-file section
+     named `COMMON', regardless of the input file's format.
+
+   For example, the following command script arranges the output file
+into three consecutive sections, named `.text', `.data', and `.bss',
+taking the input for each from the correspondingly named sections of
+all the input files:
+
+     SECTIONS {
+       .text : { *(.text) }
+       .data : { *(.data) }
+       .bss :  { *(.bss)  *(COMMON) }
+     }
+
+   The following example reads all of the sections from file `all.o'
+and places them at the start of output section `outputa' which starts
+at location `0x10000'. All of section `.input1' from file `foo.o'
+follows immediately, in the same output section.  All of section
+`.input2' from `foo.o' goes into output section `outputb', followed by
+section `.input1' from `foo1.o'.  All of the remaining `.input1' and
+`.input2' sections from any files are written to output section
+`outputc'.
+
+     SECTIONS {
+       outputa 0x10000 :
+         {
+         all.o
+         foo.o (.input1)
+         }
+       outputb :
+         {
+         foo.o (.input2)
+         foo1.o (.input1)
+         }
+       outputc :
+         {
+         *(.input1)
+         *(.input2)
+         }
+     }
+
+
+File: ld.info,  Node: Section Data Expressions,  Next: Section Options,  Prev: Section Placement,  Up: SECTIONS
+
+Section Data Expressions
+------------------------
+
+   The foregoing statements arrange, in your output file, data
+originating from your input files.  You can also place data directly in
+an output section from the link command script.  Most of these
+additional statements involve expressions; *note Expressions::..
+Although these statements are shown separately here for ease of
+presentation, no such segregation is needed within a section definition
+in the `SECTIONS' command; you can intermix them freely with any of the
+statements we've just described.
+
+`CREATE_OBJECT_SYMBOLS'
+     Create a symbol for each input file in the current section, set to
+     the address of the first byte of data written from that input
+     file.  For instance, with `a.out' files it is conventional to have
+     a symbol for each input file.  You can accomplish this by defining
+     the output `.text' section as follows:
+          SECTIONS {
+            .text 0x2020 :
+               {
+              CREATE_OBJECT_SYMBOLS
+              *(.text)
+              _etext = ALIGN(0x2000);
+              }
+            ...
+          }
+
+     If `sample.ld' is a file containing this script, and `a.o', `b.o',
+     `c.o', and `d.o' are four input files with contents like the
+     following--
+          /* a.c */
+          
+          afunction() { }
+          int adata=1;
+          int abss;
+
+     `ld -M -T sample.ld a.o b.o c.o d.o' would create a map like this,
+     containing symbols matching the object file names:
+          00000000 A __DYNAMIC
+          00004020 B _abss
+          00004000 D _adata
+          00002020 T _afunction
+          00004024 B _bbss
+          00004008 D _bdata
+          00002038 T _bfunction
+          00004028 B _cbss
+          00004010 D _cdata
+          00002050 T _cfunction
+          0000402c B _dbss
+          00004018 D _ddata
+          00002068 T _dfunction
+          00004020 D _edata
+          00004030 B _end
+          00004000 T _etext
+          00002020 t a.o
+          00002038 t b.o
+          00002050 t c.o
+          00002068 t d.o
+
+`SYMBOL = EXPRESSION ;'
+`SYMBOL F= EXPRESSION ;'
+     SYMBOL is any symbol name (*note Symbols::.).  "F=" refers to any
+     of the operators `&= += -= *= /=' which combine arithmetic and
+     assignment.
+
+     When you assign a value to a symbol within a particular section
+     definition, the value is relative to the beginning of the section
+     (*note Assignment::.).  If you write
+
+          SECTIONS {
+            abs = 14 ;
+            ...
+            .data : { ... rel = 14 ; ... }
+            abs2 = 14 + ADDR(.data);
+            ...
+          }
+
+     `abs' and `rel' do not have the same value; `rel' has the same
+     value as `abs2'.
+
+`BYTE(EXPRESSION)'
+`SHORT(EXPRESSION)'
+`LONG(EXPRESSION)'
+`QUAD(EXPRESSION)'
+     By including one of these four statements in a section definition,
+     you can explicitly place one, two, four, or eight bytes
+     (respectively) at the current address of that section.  `QUAD' is
+     only supported when using a 64 bit host or target.
+
+     Multiple-byte quantities are represented in whatever byte order is
+     appropriate for the output file format (*note BFD::.).
+
+`FILL(EXPRESSION)'
+     Specify the "fill pattern" for the current section.  Any otherwise
+     unspecified regions of memory within the section (for example,
+     regions you skip over by assigning a new value to the location
+     counter `.') are filled with the two least significant bytes from
+     the EXPRESSION argument.  A `FILL' statement covers memory
+     locations *after* the point it occurs in the section definition; by
+     including more than one `FILL' statement, you can have different
+     fill patterns in different parts of an output section.
+
+
+File: ld.info,  Node: Section Options,  Prev: Section Data Expressions,  Up: SECTIONS
+
+Optional Section Attributes
+---------------------------
+
+   Here is the full syntax of a section definition, including all the
+optional portions:
+
+     SECTIONS {
+     ...
+     SECNAME START BLOCK(ALIGN) (NOLOAD) : AT ( LDADR )
+       { CONTENTS } >REGION =FILL
+     ...
+     }
+
+   SECNAME and CONTENTS are required.  *Note Section Definition::, and
+*note Section Placement::. for details on CONTENTS.  The remaining
+elements--START, `BLOCK(ALIGN)', `(NOLOAD)', `AT ( LDADR )', `>REGION',
+and `=FILL'--are all optional.
+
+`START'
+     You can force the output section to be loaded at a specified
+     address by specifying START immediately following the section name.
+     sTART can be represented as any expression. The following example
+     generates section OUTPUT at location `0x40000000':
+
+          SECTIONS {
+            ...
+            output 0x40000000: {
+              ...
+              }
+            ...
+          }
+
+`BLOCK(ALIGN)'
+     You can include `BLOCK()' specification to advance the location
+     counter `.' prior to the beginning of the section, so that the
+     section will begin at the specified alignment.  ALIGN is an
+     expression.
+
+`(NOLOAD)'
+     Use `(NOLOAD)' to prevent a section from being loaded into memory
+     each time it is accessed.  For example, in the script sample
+     below, the `ROM' segment is addressed at memory location `0' and
+     does not need to be loaded into each object file:
+
+          SECTIONS {
+            ROM  0  (NOLOAD)  : { ... }
+            ...
+          }
+
+`AT ( LDADR )'
+     The expression LDADR that follows the `AT' keyword specifies the
+     load address of the section.  The default (if you do not use the
+     `AT' keyword) is to make the load address the same as the
+     relocation address.  This feature is designed to make it easy to
+     build a ROM image.  For example, this `SECTIONS' definition
+     creates two output sections: one called `.text', which starts at
+     `0x1000', and one called `.mdata', which is loaded at the end of
+     the `.text' section even though its relocation address is
+     `0x2000'.  The symbol `_data' is defined with the value `0x2000':
+
+          SECTIONS
+            {
+            .text 0x1000 : { *(.text) _etext = . ; }
+            .mdata 0x2000 :
+              AT ( ADDR(.text) + SIZEOF ( .text ) )
+              { _data = . ; *(.data); _edata = . ;  }
+            .bss 0x3000 :
+              { _bstart = . ;  *(.bss) *(COMMON) ; _bend = . ;}
+          }
+
+     The run-time initialization code (for C programs, usually `crt0')
+     for use with a ROM generated this way has to include something like
+     the following, to copy the initialized data from the ROM image to
+     its runtime address:
+
+          char *src = _etext;
+          char *dst = _data;
+          
+          /* ROM has data at end of text; copy it. */
+          while (dst < _edata) {
+            *dst++ = *src++;
+          }
+          
+          /* Zero bss */
+          for (dst = _bstart; dst< _bend; dst++)
+            *dst = 0;
+
+`>REGION'
+     Assign this section to a previously defined region of memory.
+     *Note MEMORY::.
+
+`=FILL'
+     Including `=FILL' in a section definition specifies the initial
+     fill value for that section.  You may use any expression to
+     specify FILL.  Any unallocated holes in the current output section
+     when written to the output file will be filled with the two least
+     significant bytes of the value, repeated as necessary.  You can
+     also change the fill value with a `FILL' statement in the CONTENTS
+     of a section definition.
+
+
+File: ld.info,  Node: Entry Point,  Next: Option Commands,  Prev: SECTIONS,  Up: Commands
+
+The Entry Point
+===============
+
+   The linker command language includes a command specifically for
+defining the first executable instruction in an output file (its "entry
+point").  Its argument is a symbol name:
+     ENTRY(SYMBOL)
+
+   Like symbol assignments, the `ENTRY' command may be placed either as
+an independent command in the command file, or among the section
+definitions within the `SECTIONS' command--whatever makes the most
+sense for your layout.
+
+   `ENTRY' is only one of several ways of choosing the entry point.
+You may indicate it in any of the following ways (shown in descending
+order of priority: methods higher in the list override methods lower
+down).
+   * the `-e' ENTRY command-line option;
+
+   * the `ENTRY(SYMBOL)' command in a linker control script;
+
+   * the value of the symbol `start', if present;
+
+   * the address of the first byte of the `.text' section, if present;
+
+   * The address `0'.
+
+   For example, you can use these rules to generate an entry point with
+an assignment statement: if no symbol `start' is defined within your
+input files, you can simply define it, assigning it an appropriate
+value--
+
+     start = 0x2020;
+
+The example shows an absolute address, but you can use any expression.
+For example, if your input object files use some other symbol-name
+convention for the entry point, you can just assign the value of
+whatever symbol contains the start address to `start':
+
+     start = other_symbol ;
+
+
+File: ld.info,  Node: Option Commands,  Prev: Entry Point,  Up: Commands
+
+Option Commands
+===============
+
+   The command language includes a number of other commands that you can
+use for specialized purposes.  They are similar in purpose to
+command-line options.
+
+`CONSTRUCTORS'
+     This command ties up C++ style constructor and destructor records.
+     The details of the constructor representation vary from one
+     object format to another, but usually lists of constructors and
+     destructors appear as special sections.  The `CONSTRUCTORS'
+     command specifies where the linker is to place the data from these
+     sections, relative to the rest of the linked output.  Constructor
+     data is marked by the symbol `__CTOR_LIST__' at the start, and
+     `__CTOR_LIST_END' at the end; destructor data is bracketed
+     similarly, between `__DTOR_LIST__' and `__DTOR_LIST_END'.  (The
+     compiler must arrange to actually run this code; GNU C++ calls
+     constructors from a subroutine `__main', which it inserts
+     automatically into the startup code for `main', and destructors
+     from `_exit'.)
+
+`FLOAT'
+`NOFLOAT'
+     These keywords were used in some older linkers to request a
+     particular math subroutine library.  `ld' doesn't use the
+     keywords, assuming instead that any necessary subroutines are in
+     libraries specified using the general mechanisms for linking to
+     archives; but to permit the use of scripts that were written for
+     the older linkers, the keywords `FLOAT' and `NOFLOAT' are accepted
+     and ignored.
+
+`FORCE_COMMON_ALLOCATION'
+     This command has the same effect as the `-d' command-line option:
+     to make `ld' assign space to common symbols even if a relocatable
+     output file is specified (`-r').
+
+`INPUT ( FILE, FILE, ... )'
+`INPUT ( FILE FILE ... )'
+     Use this command to include binary input files in the link, without
+     including them in a particular section definition.  Specify the
+     full name for each FILE, including `.a' if required.
+
+     `ld' searches for each FILE through the archive-library search
+     path, just as for files you specify on the command line.  See the
+     description of `-L' in *Note Command Line Options: Options.
+
+     If you use `-lFILE', `ld' will transform the name to `libFILE.a'
+     as with the command line argument `-l'.
+
+`GROUP ( FILE, FILE, ... )'
+`GROUP ( FILE FILE ... )'
+     This command is like `INPUT', except that the named files should
+     all be archives, and they are searched repeatedly until no new
+     undefined references are created.  See the description of `-(' in
+     *Note Command Line Options: Options.
+
+`OUTPUT ( FILENAME )'
+     Use this command to name the link output file FILENAME.  The
+     effect of `OUTPUT(FILENAME)' is identical to the effect of
+     `-o FILENAME', which overrides it.  You can use this command to
+     supply a default output-file name other than `a.out'.
+
+`OUTPUT_ARCH ( BFDNAME )'
+     Specify a particular output machine architecture, with one of the
+     names used by the BFD back-end routines (*note BFD::.).  This
+     command is often unnecessary; the architecture is most often set
+     implicitly by either the system BFD configuration or as a side
+     effect of the `OUTPUT_FORMAT' command.
+
+`OUTPUT_FORMAT ( BFDNAME )'
+     When `ld' is configured to support multiple object code formats,
+     you can use this command to specify a particular output format.
+     bFDNAME is one of the names used by the BFD back-end routines
+     (*note BFD::.).  The effect is identical to the effect of the
+     `-oformat' command-line option.  This selection affects only the
+     output file; the related command `TARGET' affects primarily input
+     files.
+
+`SEARCH_DIR ( PATH )'
+     Add PATH to the list of paths where `ld' looks for archive
+     libraries.  `SEARCH_DIR(PATH)' has the same effect as `-LPATH' on
+     the command line.
+
+`STARTUP ( FILENAME )'
+     Ensure that FILENAME is the first input file used in the link
+     process.
+
+`TARGET ( FORMAT )'
+     When `ld' is configured to support multiple object code formats,
+     you can use this command to change the input-file object code
+     format (like the command-line option `-b' or its synonym
+     `-format').  The argument FORMAT is one of the strings used by BFD
+     to name binary formats.  If `TARGET' is specified but
+     `OUTPUT_FORMAT' is not, the last `TARGET' argument is also used as
+     the default format for the `ld' output file.  *Note BFD::.
+
+     If you don't use the `TARGET' command, `ld' uses the value of the
+     environment variable `GNUTARGET', if available, to select the
+     output file format.  If that variable is also absent, `ld' uses
+     the default format configured for your machine in the BFD
+     libraries.
+
+
+File: ld.info,  Node: Machine Dependent,  Next: BFD,  Prev: Commands,  Up: Top
+
+Machine Dependent Features
+**************************
+
+   `ld' has additional features on some platforms; the following
+sections describe them.  Machines where `ld' has no additional
+functionality are not listed.
+
+* Menu:
+
+* H8/300::                      `ld' and the H8/300
+* i960::                        `ld' and the Intel 960 family
+
+
+File: ld.info,  Node: H8/300,  Next: i960,  Up: Machine Dependent
+
+`ld' and the H8/300
+===================
+
+   For the H8/300, `ld' can perform these global optimizations when you
+specify the `-relax' command-line option.
+
+*relaxing address modes*
+     `ld' finds all `jsr' and `jmp' instructions whose targets are
+     within eight bits, and turns them into eight-bit program-counter
+     relative `bsr' and `bra' instructions, respectively.
+
+*synthesizing instructions*
+     `ld' finds all `mov.b' instructions which use the sixteen-bit
+     absolute address form, but refer to the top page of memory, and
+     changes them to use the eight-bit address form.  (That is: the
+     linker turns `mov.b `@'AA:16' into `mov.b `@'AA:8' whenever the
+     address AA is in the top page of memory).
+
+
+File: ld.info,  Node: i960,  Prev: H8/300,  Up: Machine Dependent
+
+`ld' and the Intel 960 family
+=============================
+
+   You can use the `-AARCHITECTURE' command line option to specify one
+of the two-letter names identifying members of the 960 family; the
+option specifies the desired output target, and warns of any
+incompatible instructions in the input files.  It also modifies the
+linker's search strategy for archive libraries, to support the use of
+libraries specific to each particular architecture, by including in the
+search loop names suffixed with the string identifying the architecture.
+
+   For example, if your `ld' command line included `-ACA' as well as
+`-ltry', the linker would look (in its built-in search paths, and in
+any paths you specify with `-L') for a library with the names
+
+     try
+     libtry.a
+     tryca
+     libtryca.a
+
+The first two possibilities would be considered in any event; the last
+two are due to the use of `-ACA'.
+
+   You can meaningfully use `-A' more than once on a command line, since
+the 960 architecture family allows combination of target architectures;
+each use will add another pair of name variants to search for when `-l'
+specifies a library.
+
+   `ld' supports the `-relax' option for the i960 family.  If you
+specify `-relax', `ld' finds all `balx' and `calx' instructions whose
+targets are within 24 bits, and turns them into 24-bit program-counter
+relative `bal' and `cal' instructions, respectively.  `ld' also turns
+`cal' instructions into `bal' instructions when it determines that the
+target subroutine is a leaf routine (that is, the target subroutine does
+not itself call any subroutines).
+
+
+File: ld.info,  Node: BFD,  Next: MRI,  Prev: Machine Dependent,  Up: Top
+
+BFD
+***
+
+   The linker accesses object and archive files using the BFD libraries.
+These libraries allow the linker to use the same routines to operate on
+object files whatever the object file format.  A different object file
+format can be supported simply by creating a new BFD back end and adding
+it to the library.  To conserve runtime memory, however, the linker and
+associated tools are usually configured to support only a subset of the
+object file formats available.  You can use `objdump -i' (*note
+objdump: (binutils.info)objdump.) to list all the formats available for
+your configuration.
+
+   As with most implementations, BFD is a compromise between several
+conflicting requirements. The major factor influencing BFD design was
+efficiency: any time used converting between formats is time which
+would not have been spent had BFD not been involved. This is partly
+offset by abstraction payback; since BFD simplifies applications and
+back ends, more time and care may be spent optimizing algorithms for a
+greater speed.
+
+   One minor artifact of the BFD solution which you should bear in mind
+is the potential for information loss.  There are two places where
+useful information can be lost using the BFD mechanism: during
+conversion and during output. *Note BFD information loss::.
+
+* Menu:
+
+* BFD outline::                 How it works: an outline of BFD
+
+
+File: ld.info,  Node: BFD outline,  Up: BFD
+
+How it works: an outline of BFD
+===============================
+
+   When an object file is opened, BFD subroutines automatically
+determine the format of the input object file.  They then build a
+descriptor in memory with pointers to routines that will be used to
+access elements of the object file's data structures.
+
+   As different information from the the object files is required, BFD
+reads from different sections of the file and processes them.  For
+example, a very common operation for the linker is processing symbol
+tables.  Each BFD back end provides a routine for converting between
+the object file's representation of symbols and an internal canonical
+format. When the linker asks for the symbol table of an object file, it
+calls through a memory pointer to the routine from the relevant BFD
+back end which reads and converts the table into a canonical form.  The
+linker then operates upon the canonical form. When the link is finished
+and the linker writes the output file's symbol table, another BFD back
+end routine is called to take the newly created symbol table and
+convert it into the chosen output format.
+
+* Menu:
+
+* BFD information loss::	Information Loss
+* Canonical format::		The BFD	canonical object-file format
+
+
+File: ld.info,  Node: BFD information loss,  Next: Canonical format,  Up: BFD outline
+
+Information Loss
+----------------
+
+   *Information can be lost during output.* The output formats
+supported by BFD do not provide identical facilities, and information
+which can be described in one form has nowhere to go in another format.
+One example of this is alignment information in `b.out'. There is
+nowhere in an `a.out' format file to store alignment information on the
+contained data, so when a file is linked from `b.out' and an `a.out'
+image is produced, alignment information will not propagate to the
+output file. (The linker will still use the alignment information
+internally, so the link is performed correctly).
+
+   Another example is COFF section names. COFF files may contain an
+unlimited number of sections, each one with a textual section name. If
+the target of the link is a format which does not have many sections
+(e.g., `a.out') or has sections without names (e.g., the Oasys format),
+the link cannot be done simply. You can circumvent this problem by
+describing the desired input-to-output section mapping with the linker
+command language.
+
+   *Information can be lost during canonicalization.* The BFD internal
+canonical form of the external formats is not exhaustive; there are
+structures in input formats for which there is no direct representation
+internally.  This means that the BFD back ends cannot maintain all
+possible data richness through the transformation between external to
+internal and back to external formats.
+
+   This limitation is only a problem when an application reads one
+format and writes another.  Each BFD back end is responsible for
+maintaining as much data as possible, and the internal BFD canonical
+form has structures which are opaque to the BFD core, and exported only
+to the back ends. When a file is read in one format, the canonical form
+is generated for BFD and the application. At the same time, the back
+end saves away any information which may otherwise be lost. If the data
+is then written back in the same format, the back end routine will be
+able to use the canonical form provided by the BFD core as well as the
+information it prepared earlier.  Since there is a great deal of
+commonality between back ends, there is no information lost when
+linking or copying big endian COFF to little endian COFF, or `a.out' to
+`b.out'.  When a mixture of formats is linked, the information is only
+lost from the files whose format differs from the destination.
+
+
+File: ld.info,  Node: Canonical format,  Prev: BFD information loss,  Up: BFD outline
+
+The BFD canonical object-file format
+------------------------------------
+
+   The greatest potential for loss of information occurs when there is
+the least overlap between the information provided by the source
+format, that stored by the canonical format, and that needed by the
+destination format. A brief description of the canonical form may help
+you understand which kinds of data you can count on preserving across
+conversions.
+
+*files*
+     Information stored on a per-file basis includes target machine
+     architecture, particular implementation format type, a demand
+     pageable bit, and a write protected bit.  Information like Unix
+     magic numbers is not stored here--only the magic numbers' meaning,
+     so a `ZMAGIC' file would have both the demand pageable bit and the
+     write protected text bit set.  The byte order of the target is
+     stored on a per-file basis, so that big- and little-endian object
+     files may be used with one another.
+
+*sections*
+     Each section in the input file contains the name of the section,
+     the section's original address in the object file, size and
+     alignment information, various flags, and pointers into other BFD
+     data structures.
+
+*symbols*
+     Each symbol contains a pointer to the information for the object
+     file which originally defined it, its name, its value, and various
+     flag bits.  When a BFD back end reads in a symbol table, it
+     relocates all symbols to make them relative to the base of the
+     section where they were defined.  Doing this ensures that each
+     symbol points to its containing section.  Each symbol also has a
+     varying amount of hidden private data for the BFD back end.  Since
+     the symbol points to the original file, the private data format
+     for that symbol is accessible.  `ld' can operate on a collection
+     of symbols of wildly different formats without problems.
+
+     Normal global and simple local symbols are maintained on output,
+     so an output file (no matter its format) will retain symbols
+     pointing to functions and to global, static, and common variables.
+     Some symbol information is not worth retaining; in `a.out', type
+     information is stored in the symbol table as long symbol names.
+     This information would be useless to most COFF debuggers; the
+     linker has command line switches to allow users to throw it away.
+
+     There is one word of type information within the symbol, so if the
+     format supports symbol type information within symbols (for
+     example, COFF, IEEE, Oasys) and the type is simple enough to fit
+     within one word (nearly everything but aggregates), the
+     information will be preserved.
+
+*relocation level*
+     Each canonical BFD relocation record contains a pointer to the
+     symbol to relocate to, the offset of the data to relocate, the
+     section the data is in, and a pointer to a relocation type
+     descriptor. Relocation is performed by passing messages through
+     the relocation type descriptor and the symbol pointer. Therefore,
+     relocations can be performed on output data using a relocation
+     method that is only available in one of the input formats. For
+     instance, Oasys provides a byte relocation format.  A relocation
+     record requesting this relocation type would point indirectly to a
+     routine to perform this, so the relocation may be performed on a
+     byte being written to a 68k COFF file, even though 68k COFF has no
+     such relocation type.
+
+*line numbers*
+     Object formats can contain, for debugging purposes, some form of
+     mapping between symbols, source line numbers, and addresses in the
+     output file.  These addresses have to be relocated along with the
+     symbol information.  Each symbol with an associated list of line
+     number records points to the first record of the list.  The head
+     of a line number list consists of a pointer to the symbol, which
+     allows finding out the address of the function whose line number
+     is being described. The rest of the list is made up of pairs:
+     offsets into the section and line numbers. Any format which can
+     simply derive this information can pass it successfully between
+     formats (COFF, IEEE and Oasys).
+
+
+File: ld.info,  Node: MRI,  Next: Index,  Prev: BFD,  Up: Top
+
+MRI Compatible Script Files
+***************************
+
+   To aid users making the transition to GNU `ld' from the MRI linker,
+`ld' can use MRI compatible linker scripts as an alternative to the
+more general-purpose linker scripting language described in *Note
+Command Language: Commands.  MRI compatible linker scripts have a much
+simpler command set than the scripting language otherwise used with
+`ld'.  GNU `ld' supports the most commonly used MRI linker commands;
+these commands are described here.
+
+   In general, MRI scripts aren't of much use with the `a.out' object
+file format, since it only has three sections and MRI scripts lack some
+features to make use of them.
+
+   You can specify a file containing an MRI-compatible script using the
+`-c' command-line option.
+
+   Each command in an MRI-compatible script occupies its own line; each
+command line starts with the keyword that identifies the command (though
+blank lines are also allowed for punctuation).  If a line of an
+MRI-compatible script begins with an unrecognized keyword, `ld' issues
+a warning message, but continues processing the script.
+
+   Lines beginning with `*' are comments.
+
+   You can write these commands using all upper-case letters, or all
+lower case; for example, `chip' is the same as `CHIP'.  The following
+list shows only the upper-case form of each command.
+
+`ABSOLUTE SECNAME'
+`ABSOLUTE SECNAME, SECNAME, ... SECNAME'
+     Normally, `ld' includes in the output file all sections from all
+     the input files.  However, in an MRI-compatible script, you can
+     use the `ABSOLUTE' command to restrict the sections that will be
+     present in your output program.  If the `ABSOLUTE' command is used
+     at all in a script, then only the sections named explicitly in
+     `ABSOLUTE' commands will appear in the linker output.  You can
+     still use other input sections (whatever you select on the command
+     line, or using `LOAD') to resolve addresses in the output file.
+
+`ALIAS OUT-SECNAME, IN-SECNAME'
+     Use this command to place the data from input section IN-SECNAME
+     in a section called OUT-SECNAME in the linker output file.
+
+     IN-SECNAME may be an integer.
+
+`ALIGN SECNAME = EXPRESSION'
+     Align the section called SECNAME to EXPRESSION.  The EXPRESSION
+     should be a power of two.
+
+`BASE EXPRESSION'
+     Use the value of EXPRESSION as the lowest address (other than
+     absolute addresses) in the output file.
+
+`CHIP EXPRESSION'
+`CHIP EXPRESSION, EXPRESSION'
+     This command does nothing; it is accepted only for compatibility.
+
+`END'
+     This command does nothing whatever; it's only accepted for
+     compatibility.
+
+`FORMAT OUTPUT-FORMAT'
+     Similar to the `OUTPUT_FORMAT' command in the more general linker
+     language, but restricted to one of these output formats:
+
+       1. S-records, if OUTPUT-FORMAT is `S'
+
+       2. IEEE, if OUTPUT-FORMAT is `IEEE'
+
+       3. COFF (the `coff-m68k' variant in BFD), if OUTPUT-FORMAT is
+          `COFF'
+
+`LIST ANYTHING...'
+     Print (to the standard output file) a link map, as produced by the
+     `ld' command-line option `-M'.
+
+     The keyword `LIST' may be followed by anything on the same line,
+     with no change in its effect.
+
+`LOAD FILENAME'
+`LOAD FILENAME, FILENAME, ... FILENAME'
+     Include one or more object file FILENAME in the link; this has the
+     same effect as specifying FILENAME directly on the `ld' command
+     line.
+
+`NAME OUTPUT-NAME'
+     OUTPUT-NAME is the name for the program produced by `ld'; the
+     MRI-compatible command `NAME' is equivalent to the command-line
+     option `-o' or the general script language command `OUTPUT'.
+
+`ORDER SECNAME, SECNAME, ... SECNAME'
+`ORDER SECNAME SECNAME SECNAME'
+     Normally, `ld' orders the sections in its output file in the order
+     in which they first appear in the input files.  In an
+     MRI-compatible script, you can override this ordering with the
+     `ORDER' command.  The sections you list with `ORDER' will appear
+     first in your output file, in the order specified.
+
+`PUBLIC NAME=EXPRESSION'
+`PUBLIC NAME,EXPRESSION'
+`PUBLIC NAME EXPRESSION'
+     Supply a value (EXPRESSION) for external symbol NAME used in the
+     linker input files.
+
+`SECT SECNAME, EXPRESSION'
+`SECT SECNAME=EXPRESSION'
+`SECT SECNAME EXPRESSION'
+     You can use any of these three forms of the `SECT' command to
+     specify the start address (EXPRESSION) for section SECNAME.  If
+     you have more than one `SECT' statement for the same SECNAME, only
+     the *first* sets the start address.
+

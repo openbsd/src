@@ -1,0 +1,158 @@
+#   Copyright (C) 1995 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# Written by Ian Lance Taylor <ian@cygnus.com>
+
+if {[which $AR] == 0} then {
+    perror "$AR does not exist"
+    return
+}
+
+# send_user "Version [binutil_version $AR]"
+
+# Test long file name support
+
+proc long_filenames { } {
+    global AR
+    global host_triplet
+
+    set testname "ar long file names"
+
+    set n1 "abcdefghijklmnopqrstuvwxyz1"
+    set n2 "abcdefghijklmnopqrstuvwxyz2"
+
+    binutils_remove tmpdir/$n1
+    set f [open tmpdir/$n1 w]
+    puts $f "first"
+    close $f
+
+    binutils_remove tmpdir/$n2
+    set f [open tmpdir/$n2 w]
+    puts $f "second"
+    close $f
+
+    binutils_remove tmpdir/artest.a
+    set got [binutils_run $AR "rc tmpdir/artest.a tmpdir/$n1 tmpdir/$n2"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    binutils_remove tmpdir/$n1
+    binutils_remove tmpdir/$n2
+
+    set got [binutils_run $AR "t tmpdir/artest.a"]
+    if ![string match "$n1*$n2" $got] {
+	fail $testname
+	return
+    }
+
+    send_log "cd tmpdir; $AR x artest.a\n"
+    verbose "cd tmpdir; $AR x artest.a"
+    catch "exec /bin/sh -c \"cd tmpdir; $AR x artest.a\"" exec_output
+    set exec_output [prune_system_crud $host_triplet $exec_output]
+    if ![string match "" $exec_output] {
+	send_log "$exec_output\n"
+	verbose $exec_output
+	fail $testname
+	return
+    }
+
+    if ![file exists tmpdir/$n1] {
+	send_log "tmpdir/$n1 does not exist\n"
+	verbose "tmpdir/$n1 does not exist"
+	fail $testname
+	return
+    }
+    if ![file exists tmpdir/$n2] {
+	send_log "tmpdir/$n2 does not exist\n"
+	verbose "tmpdir/$n2 does not exist"
+	fail $testname
+	return
+    }
+
+    set f [open tmpdir/$n1 r]
+    if { [gets $f line] == -1 || $line != "first" } {
+	send_log "tmpdir/$n1 contents:\n"
+	verbose "tmpdir/$n1 contents:"
+	send_log "$line\n"
+	verbose "$line"
+	close $f
+	fail $testname
+	return
+    }
+    close $f
+
+    set f [open tmpdir/$n2 r]
+    if { [gets $f line] == -1 || $line != "second" } {
+	send_log "tmpdir/$n2 contents:\n"
+	verbose "tmpdir/$n2 contents:"
+	send_log "$line\n"
+	verbose "$line"
+	close $f
+	fail $testname
+	return
+    }
+    close $f
+
+    pass $testname
+}
+
+# Test building the symbol table.
+
+proc symbol_table { } {
+    global AR
+    global AS
+    global NM
+    global srcdir
+    global subdir
+
+    set testname "ar symbol table"
+
+    if ![binutils_assemble $AS $srcdir/$subdir/bintest.s tmpdir/bintest.o] {
+	unresolved $testname
+	return
+    }
+
+    binutils_remove tmpdir/artest.a
+
+    set got [binutils_run $AR "rc tmpdir/artest.a tmpdir/bintest.o"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    set got [binutils_run $NM "--print-armap tmpdir/artest.a"]
+    if { ![string match "*text_symbol in bintest.o*" $got] \
+	 || ![string match "*data_symbol in bintest.o*" $got] \
+	 || ![string match "*common_symbol in bintest.o*" $got] \
+	 || [string match "*static_text_symbol in bintest.o*" $got] \
+	 || [string match "*static_data_symbol in bintest.o*" $got] \
+	 || [string match "*external_symbol in bintest.o*" $got] } {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
+# Run the tests.
+
+long_filenames
+symbol_table

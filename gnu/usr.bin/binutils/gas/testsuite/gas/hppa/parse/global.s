@@ -1,0 +1,15 @@
+	.SPACE $PRIVATE$
+	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
+	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
+	.SPACE $TEXT$
+	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
+	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
+
+	.SPACE $TEXT$
+	.SUBSPA $CODE$
+	.IMPORT foo,data
+
+	.align 4
+; Official gas code will not accept sym-$global$.
+	addil L%foo-$global$,%r27
+

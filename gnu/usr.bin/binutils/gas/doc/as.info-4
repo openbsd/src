@@ -1,0 +1,1388 @@
+This is Info file as.info, produced by Makeinfo-1.55 from the input
+file ./as.texinfo.
+
+START-INFO-DIR-ENTRY
+* As: (as).                     The GNU assembler.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU Assembler "as".
+
+   Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation,
+Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: as.info,  Node: HPPA Directives,  Next: HPPA Opcodes,  Prev: HPPA Floating Point,  Up: HPPA-Dependent
+
+HPPA Assembler Directives
+-------------------------
+
+   `as' for the HPPA supports many additional directives for
+compatibility with the native assembler.  This section describes them
+only briefly.  For detailed information on HPPA-specific assembler
+directives, see `HP9000 Series 800 Assembly Language Reference Manual'
+(HP 92432-90001).
+
+   `as' does *not* support the following assembler directives described
+in the HP manual:
+
+     .endm           .liston
+     .enter          .locct
+     .leave          .macro
+     .listoff
+
+   Beyond those implemented for compatibility, `as' supports one
+additional assembler directive for the HPPA: `.param'.  It conveys
+register argument locations for static functions.  Its syntax closely
+follows the `.export' directive.
+
+   These are the additional directives in `as' for the HPPA:
+
+`.block N'
+`.blockz N'
+     Reserve N bytes of storage, and initialize them to zero.
+
+`.call'
+     Mark the beginning of a procedure call.  Only the special case
+     with *no arguments* is allowed.
+
+`.callinfo [ PARAM=VALUE, ... ]  [ FLAG, ... ]'
+     Specify a number of parameters and flags that define the
+     environment for a procedure.
+
+     PARAM may be any of `frame' (frame size), `entry_gr' (end of
+     general register range), `entry_fr' (end of float register range),
+     `entry_sr' (end of space register range).
+
+     The values for FLAG are `calls' or `caller' (proc has
+     subroutines), `no_calls' (proc does not call subroutines),
+     `save_rp' (preserve return pointer), `save_sp' (proc preserves
+     stack pointer), `no_unwind' (do not unwind this proc), `hpux_int'
+     (proc is interrupt routine).
+
+`.code'
+     Assemble into the standard section called `$TEXT$', subsection
+     `$CODE$'.
+
+`.copyright "STRING"'
+     In the SOM object format, insert STRING into the object code,
+     marked as a copyright string.
+
+`.copyright "STRING"'
+     In the ELF object format, insert STRING into the object code,
+     marked as a version string.
+
+`.enter'
+     Not yet supported; the assembler rejects programs containing this
+     directive.
+
+`.entry'
+     Mark the beginning of a procedure.
+
+`.exit'
+     Mark the end of a procedure.
+
+`.export NAME [ ,TYP ]  [ ,PARAM=R ]'
+     Make a procedure NAME available to callers.  TYP, if present, must
+     be one of `absolute', `code' (ELF only, not SOM), `data', `entry',
+     `data', `entry', `millicode', `plabel', `pri_prog', or `sec_prog'.
+
+     PARAM, if present, provides either relocation information for the
+     procedure arguments and result, or a privilege level.  PARAM may be
+     `argwN' (where N ranges from `0' to `3', and indicates one of four
+     one-word arguments); `rtnval' (the procedure's result); or
+     `priv_lev' (privilege level).  For arguments or the result, R
+     specifies how to relocate, and must be one of `no' (not
+     relocatable), `gr' (argument is in general register), `fr' (in
+     floating point register), or `fu' (upper half of float register).
+     For `priv_lev', R is an integer.
+
+`.half N'
+     Define a two-byte integer constant N; synonym for the portable
+     `as' directive `.short'.
+
+`.import NAME [ ,TYP ]'
+     Converse of `.export'; make a procedure available to call.  The
+     arguments use the same conventions as the first two arguments for
+     `.export'.
+
+`.label NAME'
+     Define NAME as a label for the current assembly location.
+
+`.leave'
+     Not yet supported; the assembler rejects programs containing this
+     directive.
+
+`.origin LC'
+     Advance location counter to LC. Synonym for the `{No Value For
+     "as"}' portable directive `.org'.
+
+`.param NAME [ ,TYP ]  [ ,PARAM=R ]'
+     Similar to `.export', but used for static procedures.
+
+`.proc'
+     Use preceding the first statement of a procedure.
+
+`.procend'
+     Use following the last statement of a procedure.
+
+`LABEL .reg EXPR'
+     Synonym for `.equ'; define LABEL with the absolute expression EXPR
+     as its value.
+
+`.space SECNAME [ ,PARAMS ]'
+     Switch to section SECNAME, creating a new section by that name if
+     necessary.  You may only use PARAMS when creating a new section,
+     not when switching to an existing one.  SECNAME may identify a
+     section by number rather than by name.
+
+     If specified, the list PARAMS declares attributes of the section,
+     identified by keywords.  The keywords recognized are `spnum=EXP'
+     (identify this section by the number EXP, an absolute expression),
+     `sort=EXP' (order sections according to this sort key when linking;
+     EXP is an absolute expression), `unloadable' (section contains no
+     loadable data), `notdefined' (this section defined elsewhere), and
+     `private' (data in this section not available to other programs).
+
+`.spnum SECNAM'
+     Allocate four bytes of storage, and initialize them with the
+     section number of the section named SECNAM.  (You can define the
+     section number with the HPPA `.space' directive.)
+
+`.string "STR"'
+     Copy the characters in the string STR to the object file.  *Note
+     Strings: Strings, for information on escape sequences you can use
+     in `as' strings.
+
+     *Warning!* The HPPA version of `.string' differs from the usual
+     `as' definition: it does *not* write a zero byte after copying STR.
+
+`.stringz "STR"'
+     Like `.string', but appends a zero byte after copying STR to object
+     file.
+
+`.subspa NAME [ ,PARAMS ]'
+`.nsubspa NAME [ ,PARAMS ]'
+     Similar to `.space', but selects a subsection NAME within the
+     current section.  You may only specify PARAMS when you create a
+     subsection (in the first instance of `.subspa' for this NAME).
+
+     If specified, the list PARAMS declares attributes of the
+     subsection, identified by keywords.  The keywords recognized are
+     `quad=EXPR' ("quadrant" for this subsection), `align=EXPR'
+     (alignment for beginning of this subsection; a power of two),
+     `access=EXPR' (value for "access rights" field), `sort=EXPR'
+     (sorting order for this subspace in link), `code_only' (subsection
+     contains only code), `unloadable' (subsection cannot be loaded
+     into memory), `common' (subsection is common block), `dup_comm'
+     (initialized data may have duplicate names), or `zero' (subsection
+     is all zeros, do not write in object file).
+
+     `.nsubspa' always creates a new subspace with the given name, even
+     if one with the same name already exists.
+
+`.version "STR"'
+     Write STR as version identifier in object code.
+
+
+File: as.info,  Node: HPPA Opcodes,  Prev: HPPA Directives,  Up: HPPA-Dependent
+
+Opcodes
+-------
+
+   For detailed information on the HPPA machine instruction set, see
+`PA-RISC Architecture and Instruction Set Reference Manual' (HP
+09740-90039).
+
+
+File: as.info,  Node: SH-Dependent,  Next: i960-Dependent,  Prev: HPPA-Dependent,  Up: Machine Dependencies
+
+Hitachi SH Dependent Features
+=============================
+
+* Menu:
+
+* SH Options::              Options
+* SH Syntax::               Syntax
+* SH Floating Point::       Floating Point
+* SH Directives::           SH Machine Directives
+* SH Opcodes::              Opcodes
+
+
+File: as.info,  Node: SH Options,  Next: SH Syntax,  Up: SH-Dependent
+
+Options
+-------
+
+   `as' has no additional command-line options for the Hitachi SH
+family.
+
+
+File: as.info,  Node: SH Syntax,  Next: SH Floating Point,  Prev: SH Options,  Up: SH-Dependent
+
+Syntax
+------
+
+* Menu:
+
+* SH-Chars::                Special Characters
+* SH-Regs::                 Register Names
+* SH-Addressing::           Addressing Modes
+
+
+File: as.info,  Node: SH-Chars,  Next: SH-Regs,  Up: SH Syntax
+
+Special Characters
+..................
+
+   `!' is the line comment character.
+
+   You can use `;' instead of a newline to separate statements.
+
+   Since `$' has no special meaning, you may use it in symbol names.
+
+
+File: as.info,  Node: SH-Regs,  Next: SH-Addressing,  Prev: SH-Chars,  Up: SH Syntax
+
+Register Names
+..............
+
+   You can use the predefined symbols `r0', `r1', `r2', `r3', `r4',
+`r5', `r6', `r7', `r8', `r9', `r10', `r11', `r12', `r13', `r14', and
+`r15' to refer to the SH registers.
+
+   The SH also has these control registers:
+
+`pr'
+     procedure register (holds return address)
+
+`pc'
+     program counter
+
+`mach'
+`macl'
+     high and low multiply accumulator registers
+
+`sr'
+     status register
+
+`gbr'
+     global base register
+
+`vbr'
+     vector base register (for interrupt vectors)
+
+
+File: as.info,  Node: SH-Addressing,  Prev: SH-Regs,  Up: SH Syntax
+
+Addressing Modes
+................
+
+   `as' understands the following addressing modes for the SH.  `RN' in
+the following refers to any of the numbered registers, but *not* the
+control registers.
+
+`RN'
+     Register direct
+
+`@RN'
+     Register indirect
+
+`@-RN'
+     Register indirect with pre-decrement
+
+`@RN+'
+     Register indirect with post-increment
+
+`@(DISP, RN)'
+     Register indirect with displacement
+
+`@(R0, RN)'
+     Register indexed
+
+`@(DISP, GBR)'
+     `GBR' offset
+
+`@(R0, GBR)'
+     GBR indexed
+
+`ADDR'
+`@(DISP, PC)'
+     PC relative address (for branch or for addressing memory).  The
+     `as' implementation allows you to use the simpler form ADDR
+     anywhere a PC relative address is called for; the alternate form
+     is supported for compatibility with other assemblers.
+
+`#IMM'
+     Immediate data
+
+
+File: as.info,  Node: SH Floating Point,  Next: SH Directives,  Prev: SH Syntax,  Up: SH-Dependent
+
+Floating Point
+--------------
+
+   The SH family has no hardware floating point, but the `.float'
+directive generates IEEE floating-point numbers for compatibility with
+other development tools.
+
+
+File: as.info,  Node: SH Directives,  Next: SH Opcodes,  Prev: SH Floating Point,  Up: SH-Dependent
+
+SH Machine Directives
+---------------------
+
+   `as' has no machine-dependent directives for the SH.
+
+
+File: as.info,  Node: SH Opcodes,  Prev: SH Directives,  Up: SH-Dependent
+
+Opcodes
+-------
+
+   For detailed information on the SH machine instruction set, see
+`SH-Microcomputer User's Manual' (Hitachi Micro Systems, Inc.).
+
+   `as' implements all the standard SH opcodes.  No additional
+pseudo-instructions are needed on this family.  Note, however, that
+because `as' supports a simpler form of PC-relative addressing, you may
+simply write (for example)
+
+     mov.l  bar,r0
+
+where other assemblers might require an explicit displacement to `bar'
+from the program counter:
+
+     mov.l  @(DISP, PC)
+
+   Here is a summary of SH opcodes:
+
+     Legend:
+     Rn        a numbered register
+     Rm        another numbered register
+     #imm      immediate data
+     disp      displacement
+     disp8     8-bit displacement
+     disp12    12-bit displacement
+     
+     add #imm,Rn                    lds.l @Rn+,PR
+     add Rm,Rn                      mac.w @Rm+,@Rn+
+     addc Rm,Rn                     mov #imm,Rn
+     addv Rm,Rn                     mov Rm,Rn
+     and #imm,R0                    mov.b Rm,@(R0,Rn)
+     and Rm,Rn                      mov.b Rm,@-Rn
+     and.b #imm,@(R0,GBR)           mov.b Rm,@Rn
+     bf disp8                       mov.b @(disp,Rm),R0
+     bra disp12                     mov.b @(disp,GBR),R0
+     bsr disp12                     mov.b @(R0,Rm),Rn
+     bt disp8                       mov.b @Rm+,Rn
+     clrmac                         mov.b @Rm,Rn
+     clrt                           mov.b R0,@(disp,Rm)
+     cmp/eq #imm,R0                 mov.b R0,@(disp,GBR)
+     cmp/eq Rm,Rn                   mov.l Rm,@(disp,Rn)
+     cmp/ge Rm,Rn                   mov.l Rm,@(R0,Rn)
+     cmp/gt Rm,Rn                   mov.l Rm,@-Rn
+     cmp/hi Rm,Rn                   mov.l Rm,@Rn
+     cmp/hs Rm,Rn                   mov.l @(disp,Rn),Rm
+     cmp/pl Rn                      mov.l @(disp,GBR),R0
+     cmp/pz Rn                      mov.l @(disp,PC),Rn
+     cmp/str Rm,Rn                  mov.l @(R0,Rm),Rn
+     div0s Rm,Rn                    mov.l @Rm+,Rn
+     div0u                          mov.l @Rm,Rn
+     div1 Rm,Rn                     mov.l R0,@(disp,GBR)
+     exts.b Rm,Rn                   mov.w Rm,@(R0,Rn)
+     exts.w Rm,Rn                   mov.w Rm,@-Rn
+     extu.b Rm,Rn                   mov.w Rm,@Rn
+     extu.w Rm,Rn                   mov.w @(disp,Rm),R0
+     jmp @Rn                        mov.w @(disp,GBR),R0
+     jsr @Rn                        mov.w @(disp,PC),Rn
+     ldc Rn,GBR                     mov.w @(R0,Rm),Rn
+     ldc Rn,SR                      mov.w @Rm+,Rn
+     ldc Rn,VBR                     mov.w @Rm,Rn
+     ldc.l @Rn+,GBR                 mov.w R0,@(disp,Rm)
+     ldc.l @Rn+,SR                  mov.w R0,@(disp,GBR)
+     ldc.l @Rn+,VBR                 mova @(disp,PC),R0
+     lds Rn,MACH                    movt Rn
+     lds Rn,MACL                    muls Rm,Rn
+     lds Rn,PR                      mulu Rm,Rn
+     lds.l @Rn+,MACH                neg Rm,Rn
+     lds.l @Rn+,MACL                negc Rm,Rn
+     
+     nop                            stc VBR,Rn
+     not Rm,Rn                      stc.l GBR,@-Rn
+     or #imm,R0                     stc.l SR,@-Rn
+     or Rm,Rn                       stc.l VBR,@-Rn
+     or.b #imm,@(R0,GBR)            sts MACH,Rn
+     rotcl Rn                       sts MACL,Rn
+     rotcr Rn                       sts PR,Rn
+     rotl Rn                        sts.l MACH,@-Rn
+     rotr Rn                        sts.l MACL,@-Rn
+     rte                            sts.l PR,@-Rn
+     rts                            sub Rm,Rn
+     sett                           subc Rm,Rn
+     shal Rn                        subv Rm,Rn
+     shar Rn                        swap.b Rm,Rn
+     shll Rn                        swap.w Rm,Rn
+     shll16 Rn                      tas.b @Rn
+     shll2 Rn                       trapa #imm
+     shll8 Rn                       tst #imm,R0
+     shlr Rn                        tst Rm,Rn
+     shlr16 Rn                      tst.b #imm,@(R0,GBR)
+     shlr2 Rn                       xor #imm,R0
+     shlr8 Rn                       xor Rm,Rn
+     sleep                          xor.b #imm,@(R0,GBR)
+     stc GBR,Rn                     xtrct Rm,Rn
+     stc SR,Rn
+
+
+File: as.info,  Node: i960-Dependent,  Next: M68K-Dependent,  Prev: SH-Dependent,  Up: Machine Dependencies
+
+Intel 80960 Dependent Features
+==============================
+
+* Menu:
+
+* Options-i960::                i960 Command-line Options
+* Floating Point-i960::         Floating Point
+* Directives-i960::             i960 Machine Directives
+* Opcodes for i960::            i960 Opcodes
+
+
+File: as.info,  Node: Options-i960,  Next: Floating Point-i960,  Up: i960-Dependent
+
+i960 Command-line Options
+-------------------------
+
+`-ACA | -ACA_A | -ACB | -ACC | -AKA | -AKB | -AKC | -AMC'
+     Select the 80960 architecture.  Instructions or features not
+     supported by the selected architecture cause fatal errors.
+
+     `-ACA' is equivalent to `-ACA_A'; `-AKC' is equivalent to `-AMC'.
+     Synonyms are provided for compatibility with other tools.
+
+     If you do not specify any of these options, `as' generates code
+     for any instruction or feature that is supported by *some* version
+     of the 960 (even if this means mixing architectures!).  In
+     principle, `as' attempts to deduce the minimal sufficient
+     processor type if none is specified; depending on the object code
+     format, the processor type may be recorded in the object file.  If
+     it is critical that the `as' output match a specific architecture,
+     specify that architecture explicitly.
+
+`-b'
+     Add code to collect information about conditional branches taken,
+     for later optimization using branch prediction bits.  (The
+     conditional branch instructions have branch prediction bits in the
+     CA, CB, and CC architectures.)  If BR represents a conditional
+     branch instruction, the following represents the code generated by
+     the assembler when `-b' is specified:
+
+                  call    INCREMENT ROUTINE
+                  .word   0       # pre-counter
+          Label:  BR
+                  call    INCREMENT ROUTINE
+                  .word   0       # post-counter
+
+     The counter following a branch records the number of times that
+     branch was *not* taken; the differenc between the two counters is
+     the number of times the branch *was* taken.
+
+     A table of every such `Label' is also generated, so that the
+     external postprocessor `gbr960' (supplied by Intel) can locate all
+     the counters.  This table is always labelled `__BRANCH_TABLE__';
+     this is a local symbol to permit collecting statistics for many
+     separate object files.  The table is word aligned, and begins with
+     a two-word header.  The first word, initialized to 0, is used in
+     maintaining linked lists of branch tables.  The second word is a
+     count of the number of entries in the table, which follow
+     immediately: each is a word, pointing to one of the labels
+     illustrated above.
+
+           +------------+------------+------------+ ... +------------+
+           |            |            |            |     |            |
+           |  *NEXT     |  COUNT: N  | *BRLAB 1   |     | *BRLAB N   |
+           |            |            |            |     |            |
+           +------------+------------+------------+ ... +------------+
+          
+                         __BRANCH_TABLE__ layout
+
+     The first word of the header is used to locate multiple branch
+     tables, since each object file may contain one. Normally the links
+     are maintained with a call to an initialization routine, placed at
+     the beginning of each function in the file.  The GNU C compiler
+     generates these calls automatically when you give it a `-b' option.
+     For further details, see the documentation of `gbr960'.
+
+`-no-relax'
+     Normally, Compare-and-Branch instructions with targets that require
+     displacements greater than 13 bits (or that have external targets)
+     are replaced with the corresponding compare (or `chkbit') and
+     branch instructions.  You can use the `-no-relax' option to
+     specify that `as' should generate errors instead, if the target
+     displacement is larger than 13 bits.
+
+     This option does not affect the Compare-and-Jump instructions; the
+     code emitted for them is *always* adjusted when necessary
+     (depending on displacement size), regardless of whether you use
+     `-no-relax'.
+
+
+File: as.info,  Node: Floating Point-i960,  Next: Directives-i960,  Prev: Options-i960,  Up: i960-Dependent
+
+Floating Point
+--------------
+
+   `as' generates IEEE floating-point numbers for the directives
+`.float', `.double', `.extended', and `.single'.
+
+
+File: as.info,  Node: Directives-i960,  Next: Opcodes for i960,  Prev: Floating Point-i960,  Up: i960-Dependent
+
+i960 Machine Directives
+-----------------------
+
+`.bss SYMBOL, LENGTH, ALIGN'
+     Reserve LENGTH bytes in the bss section for a local SYMBOL,
+     aligned to the power of two specified by ALIGN.  LENGTH and ALIGN
+     must be positive absolute expressions.  This directive differs
+     from `.lcomm' only in that it permits you to specify an alignment.
+     *Note `.lcomm': Lcomm.
+
+`.extended FLONUMS'
+     `.extended' expects zero or more flonums, separated by commas; for
+     each flonum, `.extended' emits an IEEE extended-format (80-bit)
+     floating-point number.
+
+`.leafproc CALL-LAB, BAL-LAB'
+     You can use the `.leafproc' directive in conjunction with the
+     optimized `callj' instruction to enable faster calls of leaf
+     procedures.  If a procedure is known to call no other procedures,
+     you may define an entry point that skips procedure prolog code
+     (and that does not depend on system-supplied saved context), and
+     declare it as the BAL-LAB using `.leafproc'.  If the procedure
+     also has an entry point that goes through the normal prolog, you
+     can specify that entry point as CALL-LAB.
+
+     A `.leafproc' declaration is meant for use in conjunction with the
+     optimized call instruction `callj'; the directive records the data
+     needed later to choose between converting the `callj' into a `bal'
+     or a `call'.
+
+     CALL-LAB is optional; if only one argument is present, or if the
+     two arguments are identical, the single argument is assumed to be
+     the `bal' entry point.
+
+`.sysproc NAME, INDEX'
+     The `.sysproc' directive defines a name for a system procedure.
+     After you define it using `.sysproc', you can use NAME to refer to
+     the system procedure identified by INDEX when calling procedures
+     with the optimized call instruction `callj'.
+
+     Both arguments are required; INDEX must be between 0 and 31
+     (inclusive).
+
+
+File: as.info,  Node: Opcodes for i960,  Prev: Directives-i960,  Up: i960-Dependent
+
+i960 Opcodes
+------------
+
+   All Intel 960 machine instructions are supported; *note i960
+Command-line Options: Options-i960. for a discussion of selecting the
+instruction subset for a particular 960 architecture.
+
+   Some opcodes are processed beyond simply emitting a single
+corresponding instruction: `callj', and Compare-and-Branch or
+Compare-and-Jump instructions with target displacements larger than 13
+bits.
+
+* Menu:
+
+* callj-i960::                  `callj'
+* Compare-and-branch-i960::     Compare-and-Branch
+
+
+File: as.info,  Node: callj-i960,  Next: Compare-and-branch-i960,  Up: Opcodes for i960
+
+`callj'
+.......
+
+   You can write `callj' to have the assembler or the linker determine
+the most appropriate form of subroutine call: `call', `bal', or
+`calls'.  If the assembly source contains enough information--a
+`.leafproc' or `.sysproc' directive defining the operand--then `as'
+translates the `callj'; if not, it simply emits the `callj', leaving it
+for the linker to resolve.
+
+
+File: as.info,  Node: Compare-and-branch-i960,  Prev: callj-i960,  Up: Opcodes for i960
+
+Compare-and-Branch
+..................
+
+   The 960 architectures provide combined Compare-and-Branch
+instructions that permit you to store the branch target in the lower 13
+bits of the instruction word itself.  However, if you specify a branch
+target far enough away that its address won't fit in 13 bits, the
+assembler can either issue an error, or convert your Compare-and-Branch
+instruction into separate instructions to do the compare and the branch.
+
+   Whether `as' gives an error or expands the instruction depends on
+two choices you can make: whether you use the `-no-relax' option, and
+whether you use a "Compare and Branch" instruction or a "Compare and
+Jump" instruction.  The "Jump" instructions are *always* expanded if
+necessary; the "Branch" instructions are expanded when necessary
+*unless* you specify `-no-relax'--in which case `as' gives an error
+instead.
+
+   These are the Compare-and-Branch instructions, their "Jump" variants,
+and the instruction pairs they may expand into:
+
+             Compare and
+          Branch      Jump       Expanded to
+          ------    ------       ------------
+             bbc                 chkbit; bno
+             bbs                 chkbit; bo
+          cmpibe    cmpije       cmpi; be
+          cmpibg    cmpijg       cmpi; bg
+         cmpibge   cmpijge       cmpi; bge
+          cmpibl    cmpijl       cmpi; bl
+         cmpible   cmpijle       cmpi; ble
+         cmpibno   cmpijno       cmpi; bno
+         cmpibne   cmpijne       cmpi; bne
+          cmpibo    cmpijo       cmpi; bo
+          cmpobe    cmpoje       cmpo; be
+          cmpobg    cmpojg       cmpo; bg
+         cmpobge   cmpojge       cmpo; bge
+          cmpobl    cmpojl       cmpo; bl
+         cmpoble   cmpojle       cmpo; ble
+         cmpobne   cmpojne       cmpo; bne
+
+
+File: as.info,  Node: M68K-Dependent,  Next: Sparc-Dependent,  Prev: i960-Dependent,  Up: Machine Dependencies
+
+M680x0 Dependent Features
+=========================
+
+* Menu:
+
+* M68K-Opts::                   M680x0 Options
+* M68K-Syntax::                 Syntax
+* M68K-Moto-Syntax::            Motorola Syntax
+* M68K-Float::                  Floating Point
+* M68K-Directives::             680x0 Machine Directives
+* M68K-opcodes::                Opcodes
+
+
+File: as.info,  Node: M68K-Opts,  Next: M68K-Syntax,  Up: M68K-Dependent
+
+M680x0 Options
+--------------
+
+   The Motorola 680x0 version of `as' has a few machine dependent
+options.
+
+   You can use the `-l' option to shorten the size of references to
+undefined symbols.  If you do not use the `-l' option, references to
+undefined symbols are wide enough for a full `long' (32 bits).  (Since
+`as' cannot know where these symbols end up, `as' can only allocate
+space for the linker to fill in later.  Since `as' does not know how
+far away these symbols are, it allocates as much space as it can.)  If
+you use this option, the references are only one word wide (16 bits).
+This may be useful if you want the object file to be as small as
+possible, and you know that the relevant symbols are always less than
+17 bits away.
+
+   For some configurations, especially those where the compiler normally
+does not prepend an underscore to the names of user variables, the
+assembler requires a `%' before any use of a register name.  This is
+intended to let the assembler distinguish between C variables and
+functions named `a0' through `a7', and so on.  The `%' is always
+accepted, but is not required for certain configurations, notably
+`sun3'.  The `--register-prefix-optional' option may be used to permit
+omitting the `%' even for configurations for which it is normally
+required.  If this is done, it will generally be impossible to refer to
+C variables and functions with the same names as register names.
+
+   `as' can assemble code for several different members of the Motorola
+680x0 family.  The default depends upon how `as' was configured when it
+was built; normally, the default is to assemble code for the 68020
+microprocessor.  The following options may be used to change the
+default.  These options control which instructions and addressing modes
+are permitted.  The members of the 680x0 family are very similar.  For
+detailed information about the differences, see the Motorola manuals.
+
+`-m68000'
+`-m68008'
+`-m68302'
+     Assemble for the 68000.  `-m68008' and `-m68302' are synonyms for
+     `-m68000', since the chips are the same from the point of view of
+     the assembler.
+
+`-m68010'
+     Assemble for the 68010.
+
+`-m68020'
+     Assemble for the 68020.  This is normally the default.
+
+`-m68030'
+     Assemble for the 68030.
+
+`-m68040'
+     Assemble for the 68040.
+
+`-m68060'
+     Assemble for the 68060.
+
+`-mcpu32'
+`-m68331'
+`-m68332'
+`-m68333'
+`-m68340'
+`-m68360'
+     Assemble for the CPU32 family of chips.
+
+`-m68881'
+`-m68882'
+     Assemble 68881 floating point instructions.  This is the default
+     for the 68020, 68030, and the CPU32.  The 68040 and 68060 always
+     support floating point instructions.
+
+`-mno-68881'
+     Do not assemble 68881 floating point instructions.  This is the
+     default for 68000 and the 68010.  The 68040 and 68060 always
+     support floating point instructions, even if this option is used.
+
+`-m68851'
+     Assemble 68851 MMU instructions.  This is the default for the
+     68020, 68030, and 68060.  The 68040 accepts a somewhat different
+     set of MMU instructions; `-m68851' and `-m68040' should not be used
+     together.
+
+`-mno-68851'
+     Do not assemble 68851 MMU instructions.  This is the default for
+     the 68000, 68010, and the CPU32.  The 68040 accepts a somewhat
+     different set of MMU instructions.
+
+
+File: as.info,  Node: M68K-Syntax,  Next: M68K-Moto-Syntax,  Prev: M68K-Opts,  Up: M68K-Dependent
+
+Syntax
+------
+
+   This syntax for the Motorola 680x0 was developed at MIT.
+
+   The 680x0 version of `as' uses instructions names and syntax
+compatible with the Sun assembler.  Intervening periods are ignored;
+for example, `movl' is equivalent to `mov.l'.
+
+   In the following table APC stands for any of the address registers
+(`%a0' through `%a7'), the program counter (`%pc'), the zero-address
+relative to the program counter (`%zpc'), a suppressed address register
+(`%za0' through `%za7'), or it may be omitted entirely.  The use of
+SIZE means one of `w' or `l', and it may be omitted, along with the
+leading colon, unless a scale is also specified.  The use of SCALE
+means one of `1', `2', `4', or `8', and it may always be omitted along
+with the leading colon.
+
+   The following addressing modes are understood:
+"Immediate"
+     `#NUMBER'
+
+"Data Register"
+     `%d0' through `%d7'
+
+"Address Register"
+     `%a0' through `%a7'
+     `%a7' is also known as `%sp', i.e. the Stack Pointer.  `%a6' is
+     also known as `%fp', the Frame Pointer.
+
+"Address Register Indirect"
+     `%a0@' through `%a7@'
+
+"Address Register Postincrement"
+     `%a0@+' through `%a7@+'
+
+"Address Register Predecrement"
+     `%a0@-' through `%a7@-'
+
+"Indirect Plus Offset"
+     `APC@(NUMBER)'
+
+"Index"
+     `APC@(NUMBER,REGISTER:SIZE:SCALE)'
+
+     The NUMBER may be omitted.
+
+"Postindex"
+     `APC@(NUMBER)@(ONUMBER,REGISTER:SIZE:SCALE)'
+
+     The ONUMBER or the REGISTER, but not both, may be omitted.
+
+"Preindex"
+     `APC@(NUMBER,REGISTER:SIZE:SCALE)@(ONUMBER)'
+
+     The NUMBER may be omitted.  Omitting the REGISTER produces the
+     Postindex addressing mode.
+
+"Absolute"
+     `SYMBOL', or `DIGITS', optionally followed by `:b', `:w', or `:l'.
+
+
+File: as.info,  Node: M68K-Moto-Syntax,  Next: M68K-Float,  Prev: M68K-Syntax,  Up: M68K-Dependent
+
+Motorola Syntax
+---------------
+
+   The standard Motorola syntax for this chip differs from the syntax
+already discussed (*note Syntax: M68K-Syntax.).  `as' can accept
+Motorola syntax for operands, even if MIT syntax is used for other
+operands in the same instruction.  The two kinds of syntax are fully
+compatible.
+
+   In the following table APC stands for any of the address registers
+(`%a0' through `%a7'), the program counter (`%pc'), the zero-address
+relative to the program counter (`%zpc'), or a suppressed address
+register (`%za0' through `%za7').  The use of SIZE means one of `w' or
+`l', and it may always be omitted along with the leading dot.  The use
+of SCALE means one of `1', `2', `4', or `8', and it may always be
+omitted along with the leading asterisk.
+
+   The following additional addressing modes are understood:
+
+"Address Register Indirect"
+     `(%a0)' through `(%a7)'
+     `%a7' is also known as `%sp', i.e. the Stack Pointer.  `%a6' is
+     also known as `%fp', the Frame Pointer.
+
+"Address Register Postincrement"
+     `(%a0)+' through `(%a7)+'
+
+"Address Register Predecrement"
+     `-(%a0)' through `-(%a7)'
+
+"Indirect Plus Offset"
+     `NUMBER(%A0)' through `NUMBER(%A7)', or `NUMBER(%PC)'.
+
+     The NUMBER may also appear within the parentheses, as in
+     `(NUMBER,%A0)'.  When used with the PC, the NUMBER may be omitted
+     (with an address register, omitting the NUMBER produces Address
+     Register Indirect mode).
+
+"Index"
+     `NUMBER(APC,REGISTER.SIZE*SCALE)'
+
+     The NUMBER may be omitted, or it may appear within the
+     parentheses.  The APC may be omitted.  The REGISTER and the APC
+     may appear in either order.  If both APC and REGISTER are address
+     registers, and the SIZE and SCALE are omitted, then the first
+     register is taken as the base register, and the second as the
+     index register.
+
+"Postindex"
+     `([NUMBER,APC],REGISTER.SIZE*SCALE,ONUMBER)'
+
+     The ONUMBER, or the REGISTER, or both, may be omitted.  Either the
+     NUMBER or the APC may be omitted, but not both.
+
+"Preindex"
+     `([NUMBER,APC,REGISTER.SIZE*SCALE],ONUMBER)'
+
+     The NUMBER, or the APC, or the REGISTER, or any two of them, may
+     be omitted.  The ONUMBER may be omitted.  The REGISTER and the APC
+     may appear in either order.  If both APC and REGISTER are address
+     registers, and the SIZE and SCALE are omitted, then the first
+     register is taken as the base register, and the second as the
+     index register.
+
+
+File: as.info,  Node: M68K-Float,  Next: M68K-Directives,  Prev: M68K-Moto-Syntax,  Up: M68K-Dependent
+
+Floating Point
+--------------
+
+   Packed decimal (P) format floating literals are not supported.  Feel
+free to add the code!
+
+   The floating point formats generated by directives are these.
+
+`.float'
+     `Single' precision floating point constants.
+
+`.double'
+     `Double' precision floating point constants.
+
+   There is no directive to produce regions of memory holding extended
+precision numbers, however they can be used as immediate operands to
+floating-point instructions.  Adding a directive to create extended
+precision numbers would not be hard, but it has not yet seemed
+necessary.
+
+
+File: as.info,  Node: M68K-Directives,  Next: M68K-opcodes,  Prev: M68K-Float,  Up: M68K-Dependent
+
+680x0 Machine Directives
+------------------------
+
+   In order to be compatible with the Sun assembler the 680x0 assembler
+understands the following directives.
+
+`.data1'
+     This directive is identical to a `.data 1' directive.
+
+`.data2'
+     This directive is identical to a `.data 2' directive.
+
+`.even'
+     This directive is a special case of the `.align' directive; it
+     aligns the output to an even byte boundary.
+
+`.skip'
+     This directive is identical to a `.space' directive.
+
+
+File: as.info,  Node: M68K-opcodes,  Prev: M68K-Directives,  Up: M68K-Dependent
+
+Opcodes
+-------
+
+* Menu:
+
+* M68K-Branch::                 Branch Improvement
+* M68K-Chars::                  Special Characters
+
+
+File: as.info,  Node: M68K-Branch,  Next: M68K-Chars,  Up: M68K-opcodes
+
+Branch Improvement
+..................
+
+   Certain pseudo opcodes are permitted for branch instructions.  They
+expand to the shortest branch instruction that reach the target.
+Generally these mnemonics are made by substituting `j' for `b' at the
+start of a Motorola mnemonic.
+
+   The following table summarizes the pseudo-operations.  A `*' flags
+cases that are more fully described after the table:
+
+               Displacement
+               +-------------------------------------------------
+               |                68020   68000/10
+     Pseudo-Op |BYTE    WORD    LONG    LONG      non-PC relative
+               +-------------------------------------------------
+          jbsr |bsrs    bsr     bsrl    jsr       jsr
+           jra |bras    bra     bral    jmp       jmp
+     *     jXX |bXXs    bXX     bXXl    bNXs;jmpl bNXs;jmp
+     *    dbXX |dbXX    dbXX        dbXX; bra; jmpl
+     *    fjXX |fbXXw   fbXXw   fbXXl             fbNXw;jmp
+     
+     XX: condition
+     NX: negative of condition XX
+
+                    `*'--see full description below
+
+`jbsr'
+`jra'
+     These are the simplest jump pseudo-operations; they always map to
+     one particular machine instruction, depending on the displacement
+     to the branch target.
+
+`jXX'
+     Here, `jXX' stands for an entire family of pseudo-operations,
+     where XX is a conditional branch or condition-code test.  The full
+     list of pseudo-ops in this family is:
+           jhi   jls   jcc   jcs   jne   jeq   jvc
+           jvs   jpl   jmi   jge   jlt   jgt   jle
+
+     For the cases of non-PC relative displacements and long
+     displacements on the 68000 or 68010, `as' issues a longer code
+     fragment in terms of NX, the opposite condition to XX.  For
+     example, for the non-PC relative case:
+              jXX foo
+     gives
+               bNXs oof
+               jmp foo
+           oof:
+
+`dbXX'
+     The full family of pseudo-operations covered here is
+           dbhi   dbls   dbcc   dbcs   dbne   dbeq   dbvc
+           dbvs   dbpl   dbmi   dbge   dblt   dbgt   dble
+           dbf    dbra   dbt
+
+     Other than for word and byte displacements, when the source reads
+     `dbXX foo', `as' emits
+               dbXX oo1
+               bra oo2
+           oo1:jmpl foo
+           oo2:
+
+`fjXX'
+     This family includes
+           fjne   fjeq   fjge   fjlt   fjgt   fjle   fjf
+           fjt    fjgl   fjgle  fjnge  fjngl  fjngle fjngt
+           fjnle  fjnlt  fjoge  fjogl  fjogt  fjole  fjolt
+           fjor   fjseq  fjsf   fjsne  fjst   fjueq  fjuge
+           fjugt  fjule  fjult  fjun
+
+     For branch targets that are not PC relative, `as' emits
+               fbNX oof
+               jmp foo
+           oof:
+     when it encounters `fjXX foo'.
+
+
+File: as.info,  Node: M68K-Chars,  Prev: M68K-Branch,  Up: M68K-opcodes
+
+Special Characters
+..................
+
+   The immediate character is `#' for Sun compatibility.  The
+line-comment character is `|'.  If a `#' appears at the beginning of a
+line, it is treated as a comment unless it looks like `# line file', in
+which case it is treated normally.
+
+
+File: as.info,  Node: Sparc-Dependent,  Next: Z8000-Dependent,  Prev: M68K-Dependent,  Up: Machine Dependencies
+
+SPARC Dependent Features
+========================
+
+* Menu:
+
+* Sparc-Opts::                  Options
+* Sparc-Float::                 Floating Point
+* Sparc-Directives::            Sparc Machine Directives
+
+
+File: as.info,  Node: Sparc-Opts,  Next: Sparc-Float,  Up: Sparc-Dependent
+
+Options
+-------
+
+   The SPARC chip family includes several successive levels (or other
+variants) of chip, using the same core instruction set, but including a
+few additional instructions at each level.
+
+   By default, `as' assumes the core instruction set (SPARC v6), but
+"bumps" the architecture level as needed: it switches to successively
+higher architectures as it encounters instructions that only exist in
+the higher levels.
+
+`-Av6 | -Av7 | -Av8 | -Av9 | -Asparclite'
+     Use one of the `-A' options to select one of the SPARC
+     architectures explicitly.  If you select an architecture
+     explicitly, `as' reports a fatal error if it encounters an
+     instruction or feature requiring a higher level.
+
+`-bump'
+     Permit the assembler to "bump" the architecture level as required,
+     but warn whenever it is necessary to switch to another level.
+
+
+File: as.info,  Node: Sparc-Float,  Next: Sparc-Directives,  Prev: Sparc-Opts,  Up: Sparc-Dependent
+
+Floating Point
+--------------
+
+   The Sparc uses IEEE floating-point numbers.
+
+
+File: as.info,  Node: Sparc-Directives,  Prev: Sparc-Float,  Up: Sparc-Dependent
+
+Sparc Machine Directives
+------------------------
+
+   The Sparc version of `as' supports the following additional machine
+directives:
+
+`.align'
+     This must be followed by the desired alignment in bytes.
+
+`.common'
+     This must be followed by a symbol name, a positive number, and
+     `"bss"'.  This behaves somewhat like `.comm', but the syntax is
+     different.
+
+`.half'
+     This is functionally identical to `.short'.
+
+`.proc'
+     This directive is ignored.  Any text following it on the same line
+     is also ignored.
+
+`.reserve'
+     This must be followed by a symbol name, a positive number, and
+     `"bss"'.  This behaves somewhat like `.lcomm', but the syntax is
+     different.
+
+`.seg'
+     This must be followed by `"text"', `"data"', or `"data1"'.  It
+     behaves like `.text', `.data', or `.data 1'.
+
+`.skip'
+     This is functionally identical to the `.space' directive.
+
+`.word'
+     On the Sparc, the `.word' directive produces 32 bit values,
+     instead of the 16 bit values it produces on many other machines.
+
+`.xword'
+     On the Sparc V9 processor, the `.xword' directive produces 64 bit
+     values.
+
+
+File: as.info,  Node: i386-Dependent,  Prev: MIPS-Dependent,  Up: Machine Dependencies
+
+80386 Dependent Features
+========================
+
+* Menu:
+
+* i386-Options::                Options
+* i386-Syntax::                 AT&T Syntax versus Intel Syntax
+* i386-Opcodes::                Opcode Naming
+* i386-Regs::                   Register Naming
+* i386-prefixes::               Opcode Prefixes
+* i386-Memory::                 Memory References
+* i386-jumps::                  Handling of Jump Instructions
+* i386-Float::                  Floating Point
+* i386-16bit::                  Writing 16-bit Code
+* i386-Notes::                  Notes
+
+
+File: as.info,  Node: i386-Options,  Next: i386-Syntax,  Up: i386-Dependent
+
+Options
+-------
+
+   The 80386 has no machine dependent options.
+
+
+File: as.info,  Node: i386-Syntax,  Next: i386-Opcodes,  Prev: i386-Options,  Up: i386-Dependent
+
+AT&T Syntax versus Intel Syntax
+-------------------------------
+
+   In order to maintain compatibility with the output of `gcc', `as'
+supports AT&T System V/386 assembler syntax.  This is quite different
+from Intel syntax.  We mention these differences because almost all
+80386 documents used only Intel syntax.  Notable differences between
+the two syntaxes are:
+
+   * AT&T immediate operands are preceded by `$'; Intel immediate
+     operands are undelimited (Intel `push 4' is AT&T `pushl $4').
+     AT&T register operands are preceded by `%'; Intel register operands
+     are undelimited.  AT&T absolute (as opposed to PC relative)
+     jump/call operands are prefixed by `*'; they are undelimited in
+     Intel syntax.
+
+   * AT&T and Intel syntax use the opposite order for source and
+     destination operands.  Intel `add eax, 4' is `addl $4, %eax'.  The
+     `source, dest' convention is maintained for compatibility with
+     previous Unix assemblers.
+
+   * In AT&T syntax the size of memory operands is determined from the
+     last character of the opcode name.  Opcode suffixes of `b', `w',
+     and `l' specify byte (8-bit), word (16-bit), and long (32-bit)
+     memory references.  Intel syntax accomplishes this by prefixes
+     memory operands (*not* the opcodes themselves) with `byte ptr',
+     `word ptr', and `dword ptr'.  Thus, Intel `mov al, byte ptr FOO'
+     is `movb FOO, %al' in AT&T syntax.
+
+   * Immediate form long jumps and calls are `lcall/ljmp $SECTION,
+     $OFFSET' in AT&T syntax; the Intel syntax is `call/jmp far
+     SECTION:OFFSET'.  Also, the far return instruction is `lret
+     $STACK-ADJUST' in AT&T syntax; Intel syntax is `ret far
+     STACK-ADJUST'.
+
+   * The AT&T assembler does not provide support for multiple section
+     programs.  Unix style systems expect all programs to be single
+     sections.
+
+
+File: as.info,  Node: i386-Opcodes,  Next: i386-Regs,  Prev: i386-Syntax,  Up: i386-Dependent
+
+Opcode Naming
+-------------
+
+   Opcode names are suffixed with one character modifiers which specify
+the size of operands.  The letters `b', `w', and `l' specify byte,
+word, and long operands.  If no suffix is specified by an instruction
+and it contains no memory operands then `as' tries to fill in the
+missing suffix based on the destination register operand (the last one
+by convention).  Thus, `mov %ax, %bx' is equivalent to `movw %ax, %bx';
+also, `mov $1, %bx' is equivalent to `movw $1, %bx'.  Note that this is
+incompatible with the AT&T Unix assembler which assumes that a missing
+opcode suffix implies long operand size.  (This incompatibility does
+not affect compiler output since compilers always explicitly specify
+the opcode suffix.)
+
+   Almost all opcodes have the same names in AT&T and Intel format.
+There are a few exceptions.  The sign extend and zero extend
+instructions need two sizes to specify them.  They need a size to
+sign/zero extend *from* and a size to zero extend *to*.  This is
+accomplished by using two opcode suffixes in AT&T syntax.  Base names
+for sign extend and zero extend are `movs...' and `movz...' in AT&T
+syntax (`movsx' and `movzx' in Intel syntax).  The opcode suffixes are
+tacked on to this base name, the *from* suffix before the *to* suffix.
+Thus, `movsbl %al, %edx' is AT&T syntax for "move sign extend *from*
+%al *to* %edx."  Possible suffixes, thus, are `bl' (from byte to long),
+`bw' (from byte to word), and `wl' (from word to long).
+
+   The Intel-syntax conversion instructions
+
+   * `cbw' -- sign-extend byte in `%al' to word in `%ax',
+
+   * `cwde' -- sign-extend word in `%ax' to long in `%eax',
+
+   * `cwd' -- sign-extend word in `%ax' to long in `%dx:%ax',
+
+   * `cdq' -- sign-extend dword in `%eax' to quad in `%edx:%eax',
+
+are called `cbtw', `cwtl', `cwtd', and `cltd' in AT&T naming.  `as'
+accepts either naming for these instructions.
+
+   Far call/jump instructions are `lcall' and `ljmp' in AT&T syntax,
+but are `call far' and `jump far' in Intel convention.
+
+
+File: as.info,  Node: i386-Regs,  Next: i386-prefixes,  Prev: i386-Opcodes,  Up: i386-Dependent
+
+Register Naming
+---------------
+
+   Register operands are always prefixes with `%'.  The 80386 registers
+consist of
+
+   * the 8 32-bit registers `%eax' (the accumulator), `%ebx', `%ecx',
+     `%edx', `%edi', `%esi', `%ebp' (the frame pointer), and `%esp'
+     (the stack pointer).
+
+   * the 8 16-bit low-ends of these: `%ax', `%bx', `%cx', `%dx', `%di',
+     `%si', `%bp', and `%sp'.
+
+   * the 8 8-bit registers: `%ah', `%al', `%bh', `%bl', `%ch', `%cl',
+     `%dh', and `%dl' (These are the high-bytes and low-bytes of `%ax',
+     `%bx', `%cx', and `%dx')
+
+   * the 6 section registers `%cs' (code section), `%ds' (data
+     section), `%ss' (stack section), `%es', `%fs', and `%gs'.
+
+   * the 3 processor control registers `%cr0', `%cr2', and `%cr3'.
+
+   * the 6 debug registers `%db0', `%db1', `%db2', `%db3', `%db6', and
+     `%db7'.
+
+   * the 2 test registers `%tr6' and `%tr7'.
+
+   * the 8 floating point register stack `%st' or equivalently
+     `%st(0)', `%st(1)', `%st(2)', `%st(3)', `%st(4)', `%st(5)',
+     `%st(6)', and `%st(7)'.
+
+
+File: as.info,  Node: i386-prefixes,  Next: i386-Memory,  Prev: i386-Regs,  Up: i386-Dependent
+
+Opcode Prefixes
+---------------
+
+   Opcode prefixes are used to modify the following opcode.  They are
+used to repeat string instructions, to provide section overrides, to
+perform bus lock operations, and to give operand and address size
+(16-bit operands are specified in an instruction by prefixing what would
+normally be 32-bit operands with a "operand size" opcode prefix).
+Opcode prefixes are usually given as single-line instructions with no
+operands, and must directly precede the instruction they act upon.  For
+example, the `scas' (scan string) instruction is repeated with:
+             repne
+             scas
+
+   Here is a list of opcode prefixes:
+
+   * Section override prefixes `cs', `ds', `ss', `es', `fs', `gs'.
+     These are automatically added by specifying using the
+     SECTION:MEMORY-OPERAND form for memory references.
+
+   * Operand/Address size prefixes `data16' and `addr16' change 32-bit
+     operands/addresses into 16-bit operands/addresses.  Note that
+     16-bit addressing modes (i.e. 8086 and 80286 addressing modes) are
+     not supported (yet).
+
+   * The bus lock prefix `lock' inhibits interrupts during execution of
+     the instruction it precedes.  (This is only valid with certain
+     instructions; see a 80386 manual for details).
+
+   * The wait for coprocessor prefix `wait' waits for the coprocessor
+     to complete the current instruction.  This should never be needed
+     for the 80386/80387 combination.
+
+   * The `rep', `repe', and `repne' prefixes are added to string
+     instructions to make them repeat `%ecx' times.
+
+
+File: as.info,  Node: i386-Memory,  Next: i386-jumps,  Prev: i386-prefixes,  Up: i386-Dependent
+
+Memory References
+-----------------
+
+   An Intel syntax indirect memory reference of the form
+
+     SECTION:[BASE + INDEX*SCALE + DISP]
+
+is translated into the AT&T syntax
+
+     SECTION:DISP(BASE, INDEX, SCALE)
+
+where BASE and INDEX are the optional 32-bit base and index registers,
+DISP is the optional displacement, and SCALE, taking the values 1, 2,
+4, and 8, multiplies INDEX to calculate the address of the operand.  If
+no SCALE is specified, SCALE is taken to be 1.  SECTION specifies the
+optional section register for the memory operand, and may override the
+default section register (see a 80386 manual for section register
+defaults). Note that section overrides in AT&T syntax *must* have be
+preceded by a `%'.  If you specify a section override which coincides
+with the default section register, `as' does *not* output any section
+register override prefixes to assemble the given instruction.  Thus,
+section overrides can be specified to emphasize which section register
+is used for a given memory operand.
+
+   Here are some examples of Intel and AT&T style memory references:
+
+AT&T: `-4(%ebp)', Intel:  `[ebp - 4]'
+     BASE is `%ebp'; DISP is `-4'. SECTION is missing, and the default
+     section is used (`%ss' for addressing with `%ebp' as the base
+     register).  INDEX, SCALE are both missing.
+
+AT&T: `foo(,%eax,4)', Intel: `[foo + eax*4]'
+     INDEX is `%eax' (scaled by a SCALE 4); DISP is `foo'.  All other
+     fields are missing.  The section register here defaults to `%ds'.
+
+AT&T: `foo(,1)'; Intel `[foo]'
+     This uses the value pointed to by `foo' as a memory operand.  Note
+     that BASE and INDEX are both missing, but there is only *one* `,'.
+     This is a syntactic exception.
+
+AT&T: `%gs:foo'; Intel `gs:foo'
+     This selects the contents of the variable `foo' with section
+     register SECTION being `%gs'.
+
+   Absolute (as opposed to PC relative) call and jump operands must be
+prefixed with `*'.  If no `*' is specified, `as' always chooses PC
+relative addressing for jump/call labels.
+
+   Any instruction that has a memory operand *must* specify its size
+(byte, word, or long) with an opcode suffix (`b', `w', or `l',
+respectively).
+

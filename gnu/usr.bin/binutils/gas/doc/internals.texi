@@ -1,0 +1,788 @@
+\input texinfo
+@setfilename internals.info
+@node Assembler Internals
+@chapter Assembler Internals
+@cindex internals
+
+This documentation is not ready for prime time yet.  Not even close.  It's not
+so much documentation as random blathering of mine intended to be notes to
+myself that may eventually be turned into real documentation.
+
+I take no responsibility for any negative effect it may have on your
+professional, personal, or spiritual life.  Read it at your own risk.  Caveat
+emptor.  Delete before reading.  Abandon all hope, ye who enter here.
+
+However, enhancements will be gratefully accepted.
+
+@menu
+* Data types::		Data types
+@end menu
+
+@node foo
+@section foo
+
+BFD_ASSEMBLER
+BFD, MANY_SECTIONS, BFD_HEADERS
+
+
+@node Data types
+@section Data types
+@cindex internals, data types
+
+@subsection Symbols
+@cindex internals, symbols
+@cindex symbols, internal
+
+... `local' symbols ... flags ...
+
+The definition for @code{struct symbol}, also known as @code{symbolS}, is
+located in @file{struc-symbol.h}.  Symbol structures can contain the following
+fields:
+
+@table @code
+@item sy_value
+This is an @code{expressionS} that describes the value of the symbol.  It might
+refer to another symbol; if so, its true value may not be known until
+@code{foo} is called.
+
+More generally, however, ... undefined? ... or an offset from the start of a
+frag pointed to by the @code{sy_frag} field.
+
+@item sy_resolved
+This field is non-zero if the symbol's value has been completely resolved.  It
+is used during the final pass over the symbol table.
+
+@item sy_resolving
+This field is used to detect loops while resolving the symbol's value.
+
+@item sy_used_in_reloc
+This field is non-zero if the symbol is used by a relocation entry.  If a local
+symbol is used in a relocation entry, it must be possible to redirect those
+relocations to other symbols, or this symbol cannot be removed from the final
+symbol list.
+
+@item sy_next
+@itemx sy_previous
+These pointers to other @code{symbolS} structures describe a singly or doubly
+linked list.  (If @code{SYMBOLS_NEED_BACKPOINTERS} is not defined, the
+@code{sy_previous} field will be omitted.)  These fields should be accessed
+with @code{symbol_next} and @code{symbol_previous}.
+
+@item sy_frag
+This points to the @code{fragS} that this symbol is attached to.
+
+@item sy_used
+Whether the symbol is used as an operand or in an expression.  Note: Not all of
+the backends keep this information accurate; backends which use this bit are
+responsible for setting it when a symbol is used in backend routines.
+
+@item bsym
+If @code{BFD_ASSEMBLER} is defined, this points to the @code{asymbol} that will
+be used in writing the object file.
+
+@item sy_name_offset
+(Only used if @code{BFD_ASSEMBLER} is not defined.)  This is the position of
+the symbol's name in the symbol table of the object file.  On some formats,
+this will start at position 4, with position 0 reserved for unnamed symbols.
+This field is not used until @code{write_object_file} is called.
+
+@item sy_symbol
+(Only used if @code{BFD_ASSEMBLER} is not defined.)  This is the
+format-specific symbol structure, as it would be written into the object file.
+
+@item sy_number
+(Only used if @code{BFD_ASSEMBLER} is not defined.)  This is a 24-bit symbol
+number, for use in constructing relocation table entries.
+
+@item sy_obj
+This format-specific data is of type @code{OBJ_SYMFIELD_TYPE}.  If no macro by
+that name is defined in @file{obj-format.h}, this field is not defined.
+
+@item sy_tc
+This processor-specific data is of type @code{TC_SYMFIELD_TYPE}.  If no macro
+by that name is defined in @file{targ-cpu.h}, this field is not defined.
+
+@item TARGET_SYMBOL_FIELDS
+If this macro is defined, it defines additional fields in the symbol structure.
+This macro is obsolete, and should be replaced when possible by uses of
+@code{OBJ_SYMFIELD_TYPE} and @code{TC_SYMFIELD_TYPE}.
+
+@end table
+
+Access with S_SET_SEGMENT, S_SET_VALUE, S_GET_VALUE, S_GET_SEGMENT, etc., etc.
+
+@subsection Expressions
+@cindex internals, expressions
+@cindex expressions, internal
+
+Expressions are stored as a combination of operator, symbols, blah.
+
+@subsection Fixups
+@cindex internals, fixups
+@cindex fixups
+
+@subsection Frags
+@cindex internals, frags
+@cindex frags
+
+The frag is the basic unit for storing section contents.
+
+@table @code
+
+@item fr_address
+The address of the frag.  This is not set until the assembler rescans the list
+of all frags after the entire input file is parsed.  The function
+@code{relax_segment} fills in this field.
+
+@item fr_next
+Pointer to the next frag in this (sub)section.
+
+@item fr_fix
+Fixed number of characters we know we're going to emit to the output file.  May
+be zero.
+
+@item fr_var
+Variable number of characters we may output, after the initial @code{fr_fix}
+characters.  May be zero.
+
+@item fr_symbol
+@itemx fr_offset
+Foo.
+
+@item fr_opcode
+Points to the lowest-addressed byte of the opcode, for use in relaxation.
+
+@item line
+Holds line-number info.
+
+@item fr_type
+Relaxation state.  This field indicates the interpretation of @code{fr_offset},
+@code{fr_symbol} and the variable-length tail of the frag, as well as the
+treatment it gets in various phases of processing.  It does not affect the
+initial @code{fr_fix} characters; they are always supposed to be output
+verbatim (fixups aside).  See below for specific values this field can have.
+
+@item fr_subtype
+Relaxation substate.  If the macro @code{md_relax_frag} isn't defined, this is
+assumed to be an index into @code{md_relax_table} for the generic relaxation
+code to process.  (@xref{Relaxation}.)  If @code{md_relax_frag} is defined,
+this field is available for any use by the CPU-specific code.
+
+@item align_mask
+@itemx align_offset
+These fields are not used yet.  They are intended to keep track of the
+alignment of the current frag within its section, even if the exact offset
+isn't known.  In many cases, we should be able to avoid creating extra frags
+when @code{.align} directives are given; instead, the number of bytes needed
+may be computable when the @code{.align} directive is processed.  Hmm.  Is this
+the right place for these, or should they be in the @code{frchainS} structure?
+
+@item fr_pcrel_adjust
+@itemx fr_bsr
+These fields are only used in the NS32k configuration.  But since @code{struct
+frag} is defined before the CPU-specific header files are included, they must
+unconditionally be defined.
+
+@item fr_literal
+Declared as a one-character array, this last field grows arbitrarily large to
+hold the actual contents of the frag.
+
+@end table
+
+These are the possible relaxation states, provided in the enumeration type
+@code{relax_stateT}, and the interpretations they represent for the other
+fields:
+
+@table @code
+
+@item rs_align
+The start of the following frag should be aligned on some boundary.  In this
+frag, @code{fr_offset} is the logarithm (base 2) of the alignment in bytes.
+(For example, if alignment on an 8-byte boundary were desired, @code{fr_offset}
+would have a value of 3.)  The variable characters indicate the fill pattern to
+be used.  (More than one?)
+
+@item rs_broken_word
+This indicates that ``broken word'' processing should be done.  @xref{Broken
+Words,,Broken Words}.  If broken word processing is not necessary on the target
+machine, this enumerator value will not be defined.
+
+@item rs_fill
+The variable characters are to be repeated @code{fr_offset} times.  If
+@code{fr_offset} is 0, this frag has a length of @code{fr_fix}.
+
+@item rs_machine_dependent
+Displacement relaxation is to be done on this frag.  The target is indicated by
+@code{fr_symbol} and @code{fr_offset}, and @code{fr_subtype} indicates the
+particular machine-specific addressing mode desired.  @xref{Relaxation}.
+
+@item rs_org
+The start of the following frag should be pushed back to some specific offset
+within the section.  (Some assemblers use the value as an absolute address; the
+@sc{gnu} assembler does not handle final absolute addresses, it requires that
+the linker set them.)  The offset is given by @code{fr_symbol} and
+@code{fr_offset}; one character from the variable-length tail is used as the
+fill character.
+
+@end table
+
+A chain of frags is built up for each subsection.  The data structure
+describing a chain is called a @code{frchainS}, and contains the following
+fields:
+
+@table @code
+@item frch_root
+Points to the first frag in the chain.  May be null if there are no frags in
+this chain.
+@item frch_last
+Points to the last frag in the chain, or null if there are none.
+@item frch_next
+Next in the list of @code{frchainS} structures.
+@item frch_seg
+Indicates the section this frag chain belongs to.
+@item frch_subseg
+Subsection (subsegment) number of this frag chain.
+@item fix_root, fix_tail
+(Defined only if @code{BFD_ASSEMBLER} is defined.)  Point to first and last
+@code{fixS} structures associated with this subsection.
+@item frch_obstack
+Not currently used.  Intended to be used for frag allocation for this
+subsection.  This should reduce frag generation caused by switching sections.
+@end table
+
+A @code{frchainS} corresponds to a subsection; each section has a list of
+@code{frchainS} records associated with it.  In most cases, only one subsection
+of each section is used, so the list will only be one element long, but any
+processing of frag chains should be prepared to deal with multiple chains per
+section.
+
+After the input files have been completely processed, and no more frags are to
+be generated, the frag chains are joined into one per section for further
+processing.  After this point, it is safe to operate on one chain per section.
+
+@node Broken Words
+@subsection Broken Words
+@cindex internals, broken words
+@cindex broken words
+@cindex promises, promises
+
+The ``broken word'' idea derives from the fact that some compilers, including
+@code{gcc}, will sometimes emit switch tables specifying 16-bit @code{.word}
+displacements to branch targets, and branch instructions that load entries from
+that table to compute the target address.  If this is done on a 32-bit machine,
+there is a chance (at least with really large functions) that the displacement
+will not fit in 16 bits.  Thus the ``broken word'' idea is well named, since
+there is an implied promise that the 16-bit field will in fact hold the
+specified displacement.
+
+If the ``broken word'' processing is enabled, and a situation like this is
+encountered, the assembler will insert a jump instruction into the instruction
+stream, close enough to be reached with the 16-bit displacement.  This jump
+instruction will transfer to the real desired target address.  Thus, as long as
+the @code{.word} value really is used as a displacement to compute an address
+to jump to, the net effect will be correct (minus a very small efficiency
+cost).  If @code{.word} directives with label differences for values are used
+for other purposes, however, things may not work properly.  I think there is a
+command-line option to turn on warnings when a broken word is discovered.
+
+This code is turned off by the @code{WORKING_DOT_WORD} macro.  It isn't needed
+if @code{.word} emits a value large enough to contain an address (or, more
+correctly, any possible difference between two addresses).
+
+@node What Happens?
+@section What Happens?
+
+Blah blah blah, initialization, argument parsing, file reading, whitespace
+munging, opcode parsing and lookup, operand parsing.  Now it's time to write
+the output file.
+
+In @code{BFD_ASSEMBLER} mode, processing of relocations and symbols and
+creation of the output file is initiated by calling @code{write_object_file}.
+
+@node Target Dependent Definitions
+@section Target Dependent Definitions
+
+@subsection Format-specific definitions
+
+@defmac obj_sec_sym_ok_for_reloc (section)
+(@code{BFD_ASSEMBLER} only.)
+Is it okay to use this section's section-symbol in a relocation entry?  If not,
+a new internal-linkage symbol is generated and emitted if such a relocation
+entry is needed.  (Default: Always use a new symbol.)
+
+@end defmac
+
+@defmac obj_adjust_symtab
+(@code{BFD_ASSEMBLER} only.)
+If this macro is defined, it is invoked just before setting the symbol table of
+the output BFD.  Any finalizing changes needed in the symbol table should be
+done here.  For example, in the COFF support, if there is no @code{.file}
+symbol defined already, one is generated at this point.  If no such adjustments
+are needed, this macro need not be defined.
+
+@end defmac
+
+@defmac EMIT_SECTION_SYMBOLS
+(@code{BFD_ASSEMBLER} only.)
+Should section symbols be included in the symbol list if they're used in
+relocations?  Some formats can generate section-relative relocations, and thus
+don't need symbols emitted for them.  (Default: 1.)
+@end defmac
+
+@defmac obj_app_file (string)
+This macro is invoked when a @code{.file} directive is seen, or a
+@code{#@var{line}} directive with a file name.  Currently it is defined only
+for COFF and ELF.  (Default: No action.)
+@end defmac
+
+@defmac obj_frob_file
+Any final cleanup needed before writing out the BFD may be done here.  For
+example, ECOFF formats (and MIPS ELF format) may do some work on the MIPS-style
+symbol table with its integrated debug information.  The symbol table should
+not be modified at this time.
+@end defmac
+
+@subsection CPU-specific definitions
+
+@defmac TARGET_BYTES_BIG_ENDIAN
+Define as one or zero, depending on whether the default configuration for this
+processor uses big-endian byte order.  The variable @var{target_big_endian} is
+initialized with this variable, but can be changed while processing
+command-line options for processors that can utilize either byte order.
+(Default: 0.)
+
+Currently some CPU support does not examine this value, and therefore does not
+bother setting it.  Eventually, all CPU backend files should set it.
+@end defmac
+
+@node Relaxation
+@subsubsection Relaxation
+@cindex Relaxation
+
+If @code{md_relax_frag} isn't defined, and @code{TC_GENERIC_RELAX_TABLE} is,
+the assembler will perform some relaxation on @code{rs_machine_dependent} frags
+based on the frag subtype and the displacement to some specified target
+address.  The basic idea is that many machines have different addressing modes
+for instructions that can specify different ranges of values, with successive
+modes able to access wider ranges, including the entirety of the previous
+range.  Smaller ranges are assumed to be more desirable (perhaps the
+instruction requires one word instead of two or three); if this is not the
+case, don't describe the smaller-range, inferior mode.
+
+The @code{fr_subtype} and the field of a frag is an index into a CPU-specific
+relaxation table.  That table entry indicates the range of values that can be
+stored, the number of bytes that will have to be added to the frag to
+accomodate the addressing mode, and the index of the next entry to examine if
+the value to be stored is outside the range accessible by the current
+addressing mode.  The @code{fr_symbol} field of the frag indicates what symbol
+is to be accessed; the @code{fr_offset} field is added in.
+
+If the @code{fr_pcrel_adjust} field is set, which currently should only happen
+for the NS32k family, the @code{TC_PCREL_ADJUST} macro is called on the frag to
+compute an adjustment to be made to the displacement.
+
+The value fitted by the relaxation code is always assumed to be a displacement
+from the current frag.  (More specifically, from @code{fr_fix} bytes into the
+frag.)  This seems kinda silly.  What about fitting small absolute values?  I
+suppose @code{md_assemble} is supposed to take care of that, but if the operand
+is a difference between symbols, it might not be able to, if the difference was
+not computable yet.
+
+The end of the relaxation sequence is indicated by a ``next'' value of 0.  This
+is kinda silly too, since it means that the first entry in the table can't be
+used.  I think -1 would make a more logical sentinel value.
+
+The table @code{md_relax_table} from @file{targ-cpu.c} describes the relaxation
+modes available.  Currently this must always be provided, even on machines for
+which this type of relaxation isn't possible or practical.  Probably fewer than
+half the machines gas supports used it; it ought to be made conditional on some
+CPU-specific macro.  Currently, also that table must be declared ``const;'' on
+some machines, though, it might make sense to keep it writeable, so it can be
+modified depending on which CPU of a family is specified.  For example, in the
+m68k family, the 68020 has some addressing modes that are not available on the
+68000.
+
+For some configurations, the linker can do relaxing within a section of an
+object file.  If call instructions of various sizes exist, the linker can
+determine which should be used in each instance, when a symbol's value is
+resolved.  In order for the linker to avoid wasting space and having to insert
+no-op instructions, it must be able to expand or shrink the section contents
+while still preserving intra-section references and meeting alignment
+requirements.
+
+For the i960 using b.out format, no expansion is done; instead, each
+@samp{.align} directive causes extra space to be allocated, enough that when
+the linker is relaxing a section and removing unneeded space, it can discard
+some or all of this extra padding and cause the following data to be correctly
+aligned.
+
+For the H8/300, I think the linker expands calls that can't reach, and doesn't
+worry about alignment issues; the cpu probably never needs any significant
+alignment beyond the instruction size.  But I'm not sure; check with Steve.
+
+The relaxation table type contains these fields:
+
+@table @code
+@item long rlx_forward
+Forward reach, must be non-negative.
+@item long rlx_backward
+Backward reach, must be zero or negative.
+@item rlx_length
+Length in bytes of this addressing mode.
+@item rlx_more
+Index of the next-longer relax state, or zero if there is no ``next''
+relax state.
+@end table
+
+The relaxation is done in @code{relax_segment} in @file{write.c}.  The
+difference in the length fields between the original mode and the one finally
+chosen by the relaxing code is taken as the size by which the current frag will
+be increased in size.  For example, if the initial relaxing mode has a length
+of 2 bytes, and because of the size of the displacement, it gets upgraded to a
+mode with a size of 6 bytes, it is assumed that the frag will grow by 4 bytes.
+(The initial two bytes should have been part of the fixed portion of the frag,
+since it is already known that they will be output.)  This growth must be
+effected by @code{md_convert_frag}; it should increase the @code{fr_fix} field
+by the appropriate size, and fill in the appropriate bytes of the frag.
+(Enough space for the maximum growth should have been allocated in the call to
+frag_var as the second argument.)
+
+If relocation records are needed, they should be emitted by
+@code{md_estimate_size_before_relax}.
+
+These are the machine-specific definitions associated with the relaxation
+mechanism:
+
+@deftypefun int md_estimate_size_before_relax (fragS *@var{frag}, segT @var{sec})
+This function should examine the target symbol of the supplied frag and correct
+the @code{fr_subtype} of the frag if needed.  When this function is called, if
+the symbol has not yet been defined, it will not become defined later; however,
+its value may still change if the section it is in gets relaxed.
+
+Usually, if the symbol is in the same section as the frag (given by the
+@var{sec} argument), the narrowest likely relaxation mode is stored in
+@code{fr_subtype}, and that's that.
+
+If the symbol is undefined, or in a different section (and therefore moveable
+to an arbitrarily large distance), the largest available relaxation mode is
+specified, @code{fix_new} is called to produce the relocation record,
+@code{fr_fix} is increased to include the relocated field (remember, this
+storage was allocated when @code{frag_var} was called), and @code{frag_wane} is
+called to convert the frag to an @code{rs_fill} frag with no variant part.
+Sometimes changing addressing modes may also require rewriting the instruction.
+It can be accessed via @code{fr_opcode} or @code{fr_fix}.
+
+Sometimes @code{fr_var} is increased instead, and @code{frag_wane} is not
+called.  I'm not sure, but I think this is to keep @code{fr_fix} referring to
+an earlier byte, and @code{fr_subtype} set to @code{rs_machine_dependent} so
+that @code{md_convert_frag} will get called.
+@end deftypefun
+
+@defmac TC_GENERIC_RELAX_TABLE
+This macro should return a value appropriate for assignment to a variable of
+type @code{const struct relax_type *}.  Typically, it will simply expand to
+@code{md_relax_table}, declared in @file{targ-cpu.h} as an array of
+(@code{const} or non-@code{const}) @code{struct relax_type} elements.
+@end defmac
+
+@defmac md_relax_frag (@var{frag})
+This macro, if defined, overrides all of the processing described above.  It's
+only defined for the MIPS target CPU, and there it doesn't do anything; it's
+used solely to disable the relaxing code and free up the @code{fr_subtype}
+field for use by the CPU-specific code.
+@end defmac
+
+@defmac LINKER_RELAXING_SHRINKS_ONLY
+If this macro is defined, and the @samp{linkrelax} flag is turned on, a
+@samp{.align} directive will cause extra space to be allocated.  The linker can
+then discard this space when relaxing the section.
+@end defmac
+
+@defmac WORKING_DOT_WORD
+This may be defined in the target cpu header file if @code{.word} directives
+will never need the ``broken word'' processing performed.
+
+It is also defined by @file{obj-coff.h} if @code{BFD_ASSEMBLER} is not defined,
+but I'm not sure why.
+@end defmac
+
+@defmac tc_frob_file
+Like @code{obj_frob_file}, this macro handles miscellaneous last-minute
+cleanup.  Currently only used on PowerPC/POWER support, for setting up a
+@code{.debug} section.  This macro should not cause the symbol table to be
+modified.
+
+@end defmac
+
+@node Broken words
+@subsubsection Broken words
+@cindex broken words
+@cindex words, broken
+
+If @code{WORKING_DOT_WORD} is not defined, this code is enabled.
+
+It makes use of at least two target-specific variables:
+
+@deftypevar  int md_short_jump_size
+@deftypevarx int md_long_jump_size
+These variables indicate, oh, something or other.  If @code{WORKING_DOT_WORD}
+is not defined, they do not need to be defined.
+@end deftypevar
+
+@node Source File Summary
+@section Source File Summary
+
+@subsection File Format Descriptions
+
+@subheading a.out
+
+The @code{a.out} format is described by @file{obj-aout.*}.
+
+@subheading b.out
+
+The @code{b.out} format, described by @file{obj-bout.*}, is similar to
+@code{a.out} format, except for a few additional fields in the file header
+describing section alignment and address.
+
+@subheading COFF
+
+Originally, @file{obj-coff} was a purely non-BFD version, and
+@file{obj-coffbfd} was created to use BFD for low-level byte-swapping.  When
+the @code{BFD_ASSEMBLER} conversion started, the first COFF target to be
+converted was using @file{obj-coff}, and the two files had diverged somewhat,
+and I didn't feel like first converting the support of that target over to use
+the low-level BFD interface.
+
+So @file{obj-coff} got converted, and to simplify certain things,
+@file{obj-coffbfd} got ``merged'' in with a brute-force approach.
+Specifically, preprocessor conditionals testing for @code{BFD_ASSEMBLER}
+effectively split the @file{obj-coff} files into the two separate versions.  It
+isn't pretty.  They will be merged more thoroughly, and eventually only the
+higher-level interface will be used.
+
+@subheading ECOFF
+
+All ECOFF configurations use BFD for writing object files.
+
+@subheading ELF
+
+ELF is a fairly reasonable format, without many of the deficiencies the other
+object file formats have.  (It's got some of its own, but not as bad as the
+others.)  All ELF configurations use BFD for writing object files.
+
+@subheading EVAX
+
+This is the format used on VMS.  Yes, someone has actually written BFD support
+for it.  The code hasn't been integrated yet though.
+
+@subheading HP300?
+
+@subheading IEEE?
+
+@subheading SOM
+
+@subheading XCOFF
+
+The XCOFF configuration is based on the COFF cofiguration (using the
+higher-level BFD interface).  In fact, it uses the same files in the assembler.
+
+@subheading VMS
+
+This is the old Vax VMS support.  It doesn't use BFD.
+
+@subsection Processor Descriptions
+
+Foo: a29k, alpha, h8300, h8500, hppa, i386, i860, i960, m68k, m88k, mips,
+ns32k, ppc, sh, sparc, tahoe, vax, z8k.
+
+@node M68k
+@subsubsection M68k
+
+The operand syntax handling is atrocious.  There is no clear specification of
+the operand syntax.  I'm looking into using a Bison grammar to replace much of
+it.
+
+Operands on the 68k series processors can have two displacement values
+specified, plus a base register and a (possibly scaled) index register of which
+only some bits might be used.  Thus a single 68k operand requires up to two
+expressions, two register numbers, and size and scale factors.  The
+@code{struct m68k_op} type also includes a field indicating the mode of the
+operand, and an @code{error} field indicating a problem encountered while
+parsing the operand.
+
+An instruction on the 68k may have up to 6 operands, although most of them have
+to be simple register operands.  Up to 11 (16-bit) words may be required to
+express the instruction.
+
+A @code{struct m68k_exp} expression contains an @code{expressionS}, pointers to
+the first and last characters of the input that produced the expression, an
+indication of the section to which the expression belongs, and a size field.
+I'm not sure what the size field describes.
+
+@subsubheading M68k addressing modes
+
+Many instructions used the low six bits of the first instruction word to
+describe the location of the operand, or how to compute the location.  The six
+bits are typically split into three for a ``mode'' and three for a ``register''
+value.  The interpretation of these values is as follows:
+
+@example
+Mode    Register        Operand addressing mode
+0       Dn              data register
+1       An              address register
+2       An              indirect
+3       An              indirect, post-increment
+4       An              indirect, pre-decrement
+5       An              indirect with displacement
+6       An              indirect with optional displacement and index;
+                        may involve multiple indirections and two
+                        displacements
+7       0               16-bit address follows
+7       1               32-bit address follows
+7       2               PC indirect with displacement
+7       3               PC indirect with optional displacements and index
+7       4               immediate 16- or 32-bit
+7       5,6,7           Reserved
+@end example
+
+On the 68000 and 68010, support for modes 6 and 7.3 are incomplete; the
+displacement must fit in 8 bits, and no scaling or index suppression is
+permitted.
+
+@subsubheading M68k relaxation modes
+
+The relaxation modes used on the 68k are:
+
+@table @code
+@item ABRANCH
+Case @samp{g} except when @code{BCC68000} is applicable.
+@item FBRANCH
+Coprocessor branches.
+@item PCREL
+Mode 7.2 -- program counter indirect with 16-bit displacement.  This is
+available on all processors.  Widens to 32-bit absolute.  Used only if the
+original code used @code{ABSL} mode, and the CPU is not a 68000 or 68010.
+(Why?  Those processors support mode 7.2.)
+@item BCC68000
+A conditional branch instruction, on the 68000 or 68010.  These instructions
+support only 16-bit displacements on these processors.  If a larger
+displacement is needed, the condition is negated and turned into a short branch
+around a jump instruction to the specified target.  This jump will have an
+long absolute addressing mode.
+@item DBCC
+Like @code{BCC68000}, but for @code{dbCC} (decrement and branch on condition)
+instructions.
+@item PCLEA
+Not currently used??  Short form is mode 7.2 (program counter indirect, 16-bit
+displacement); long form is 7.3/0x0170 (program counter indirect, suppressed
+index register, 32-bit displacement).  Used in progressive-930331 for mode
+@code{AOFF} with a PC-relative addressing mode and a displacement that won't
+fit in 16 bits, or which is variable and is not specified to have a size other
+than long.
+@item PCINDEX
+Newly added.  PC indirect with index.  An 8-bit displacement is supported on
+the 68000 and 68010, wider displacements on later processors.
+@end table
+
+@subsection ``Emulation'' Descriptions
+
+These are the @file{te-*.h} files.
+
+@node Foo
+@section Foo
+
+@subsection Warning and Error Messages
+
+@deftypefun  int had_warnings (void)
+@deftypefunx int had_errors (void)
+
+Returns non-zero if any warnings or errors, respectively, have been printed
+during this invocation.
+
+@end deftypefun
+
+@deftypefun void as_perror (const char *@var{gripe}, const char *@var{filename})
+
+Displays a BFD or system error, then clears the error status.
+
+@end deftypefun
+
+@deftypefun  void as_tsktsk (const char *@var{format}, ...)
+@deftypefunx void as_warn (const char *@var{format}, ...)
+@deftypefunx void as_bad (const char *@var{format}, ...)
+@deftypefunx void as_fatal (const char *@var{format}, ...)
+
+These functions display messages about something amiss with the input file, or
+internal problems in the assembler itself.  The current file name and line
+number are printed, followed by the supplied message, formatted using
+@code{vfprintf}, and a final newline.
+
+An error indicated by @code{as_bad} will result in a non-zero exit status when
+the assembler has finished.  Calling @code{as_fatal} will result in immediate
+termination of the assembler process.
+
+@end deftypefun
+
+@deftypefun  void as_warn_where (char *@var{file}, unsigned int @var{line}, const char *@var{format}, ...)
+@deftypefunx void as_bad_where (char *@var{file}, unsigned int @var{line}, const char *@var{format}, ...)
+
+These variants permit specification of the file name and line number, and are
+used when problems are detected when reprocessing information saved away when
+processing some earlier part of the file.  For example, fixups are processed
+after all input has been read, but messages about fixups should refer to the
+original filename and line number that they are applicable to.
+
+@end deftypefun
+
+@deftypefun  void fprint_value (FILE *@var{file}, valueT @var{val})
+@deftypefunx void sprint_value (char *@var{buf}, valueT @var{val})
+
+These functions are helpful for converting a @code{valueT} value into printable
+format, in case it's wider than modes that @code{*printf} can handle.  If the
+type is narrow enough, a decimal number will be produced; otherwise, it will be
+in hexadecimal (FIXME: currently without `0x' prefix).  The value itself is not
+examined to make this determination.
+
+@end deftypefun
+
+@node Writing a new target
+@section Writing a new target
+
+@node Test suite
+@section Test suite
+@cindex test suite
+
+The test suite is kind of lame for most processors.  Often it only checks to
+see if a couple of files can be assembled without the assembler reporting any
+errors.  For more complete testing, write a test which either examines the
+assembler listing, or runs @code{objdump} and examines its output.  For the
+latter, the TCL procedure @code{run_dump_test} may come in handy.  It takes the
+base name of a file, and looks for @file{@var{file}.d}.  This file should
+contain as its initial lines a set of variable settings in @samp{#} comments,
+in the form:
+
+@example
+        #@var{varname}: @var{value}
+@end example
+
+The @var{varname} may be @code{objdump}, @code{nm}, or @code{as}, in which case
+it specifies the options to be passed to the specified programs.  Exactly one
+of @code{objdump} or @code{nm} must be specified, as that also specifies which
+program to run after the assembler has finished.  If @var{varname} is
+@code{source}, it specifies the name of the source file; otherwise,
+@file{@var{file}.s} is used.  If @var{varname} is @code{name}, it specifies the
+name of the test to be used in the @code{pass} or @code{fail} messages.
+
+The non-commented parts of the file are interpreted as regular expressions, one
+per line.  Blank lines in the @code{objdump} or @code{nm} output are skipped,
+as are blank lines in the @code{.d} file; the other lines are tested to see if
+the regular expression matches the program output.  If it does not, the test
+fails.
+
+Note that this means the tests must be modified if the @code{objdump} output
+style is changed.
+
+@bye
+@c Local Variables:
+@c fill-column: 79
+@c End:
