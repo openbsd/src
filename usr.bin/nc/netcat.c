@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.28 2001/06/26 23:25:22 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.29 2001/06/27 02:45:08 smart Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -37,6 +37,7 @@
 
 #include <netinet/in.h>
 #include <arpa/telnet.h>
+
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
@@ -64,26 +65,35 @@ int timeout;
 int family = AF_UNSPEC;
 char *portlist[65535];
 
-void atelnet __P((int, unsigned char *, unsigned int));
-void build_ports __P((char *));
-void help __P((void));
-int local_listen __P((char *, char *, struct addrinfo));
-void readwrite __P((int));
-int remote_connect __P((char *, char *, struct addrinfo));
-int udptest __P((int));
-void usage __P((int));
+ssize_t	atomicio __P((ssize_t (*)(), int, void *, size_t));
+
+void	atelnet __P((int, unsigned char *, unsigned int));
+void	build_ports __P((char *));
+void	help __P((void));
+int	local_listen __P((char *, char *, struct addrinfo));
+void	readwrite __P((int));
+int	remote_connect __P((char *, char *, struct addrinfo));
+int	udptest __P((int));
+void	usage __P((int));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, s, ret = 1;
+	int ch, s, ret;
 	char *host, *uport, *endp;
 	struct addrinfo hints;
-	struct servent *sv = 0;
+	struct servent *sv;
 	socklen_t len;
 	struct sockaddr *cliaddr;
+
+	ret = 1;
+	s = 0;
+	host = NULL;
+	uport = NULL;
+	endp = NULL;
+	sv = NULL;
 
 	while ((ch = getopt(argc, argv, "46hi:klnp:rs:tuvw:z")) != -1) {
 		switch (ch) {
@@ -179,7 +189,7 @@ main(argc, argv)
 		/* Allow only one connection at a time, but stay alive */
 		for (;;) {
 			if ((s = local_listen(host, uport, hints)) < 0)
-				errx(1, NULL);
+				exit(1);
 			/*
 			 * For UDP, we will use recvfrom() initially
 			 * to wait for a caller, then use the regular
@@ -360,7 +370,7 @@ local_listen(host, port, hints)
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
-			errx(1, NULL);
+			exit(1);
 
 		if (bind(s, (struct sockaddr *)res0->ai_addr,
 						res0->ai_addrlen) == 0)
