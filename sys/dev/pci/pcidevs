@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.115 1999/01/16 08:39:06 fgsch Exp $
+$OpenBSD: pcidevs,v 1.116 1999/02/03 08:55:34 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -769,6 +769,10 @@ product CONTAQ SIO		0xc693	CY82C693U PCI-ISA
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
+
+/* Creative Labs */
+product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
+product CREATIVELABS DIGIN	0x7002	SoundBlaster Digital Input
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
