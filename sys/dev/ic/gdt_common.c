@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.25 2003/06/03 20:49:28 deraadt Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.26 2003/06/28 23:56:40 avsm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -392,7 +392,7 @@ gdt_attach(gdt)
 
 #if NBIO > 0
 	if (bio_register(&gdt->sc_dev, gdt_ioctl) != 0)
-		panic("%s: controller registration failed");
+		panic("%s: controller registration failed", gdt->sc_dev.dv_xname);
 #endif
 	gdt_cnt++;
 
