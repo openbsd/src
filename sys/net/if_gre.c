@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.2 2000/01/07 21:55:05 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.3 2000/01/07 23:25:21 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -107,7 +107,7 @@ struct gre_softc gre_softc[NGRE];
 int gre_allow = 0;
 int ip_mobile_allow = 0;
 
-void gre_compute_route(struct gre_softc *sc);
+static void gre_compute_route(struct gre_softc *sc);
 
 void
 greattach(void)
@@ -137,7 +137,7 @@ greattach(void)
 		if_attach(&sc->sc_if);
 
 #if NBPFILTER > 0
-		bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_RAW,
+		bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_RAW,
 			  sizeof(u_int32_t) );
 #endif
 	}
@@ -161,7 +161,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct mobile_h mob_h;
 
 #if NBPFILTER >0
-	if (sc->gre_bpf) {
+	if (ifp->if_bpf) {
                 /*
                  * We need to prepend the address family as
                  * a four byte field.  Cons up a fake header
@@ -501,7 +501,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * at least a default route which matches.
  */
 
-void
+static void
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;

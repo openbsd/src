@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.1 2000/01/07 21:37:30 angelos Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.2 2000/01/07 23:25:22 angelos Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -46,7 +46,6 @@ struct gre_softc {
 	int gre_flags;
 	struct    in_addr g_src;  /* source address of gre packets */
 	struct    in_addr g_dst;  /* destination address of gre packets */
-	caddr_t	gre_bpf;
 	struct route route;	/* routing entry that determines, where a
                                    encapsulated packet should go */
 	u_char g_proto;		/* protocol of encapsulator */
