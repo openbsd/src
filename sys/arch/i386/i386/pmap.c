@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2000/02/22 19:27:48 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2000/05/04 18:55:06 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -290,7 +290,6 @@ pmap_bootstrap(virtual_start)
 	 */
 	virtual_avail = reserve_dumppages(virtual_avail);
 
-#if !defined(UVM)
 	/* flawed, no mappings?? */
 	if (ctob(physmem) > 31*1024*1024 && MAXKPDE != NKPDE) {
 		vm_offset_t p;
@@ -304,7 +303,6 @@ pmap_bootstrap(virtual_start)
 			PTD[KPTDI+i] = (pd_entry_t)p |
 			    PG_V | PG_KW;
 	}
-#endif
 }
 
 void
