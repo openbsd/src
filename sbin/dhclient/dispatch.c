@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.6 2004/02/07 11:40:17 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.7 2004/02/10 13:12:48 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -682,4 +682,36 @@ remove_protocol(struct protocol *proto)
 			free(p);
 		}
 	}
+}
+
+int
+interface_link_status(char *ifname)
+{
+	int sock;
+	struct ifmediareq ifmr;
+
+	if ((sock = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
+		error("Can't create socket");
+
+	memset(&ifmr, 0, sizeof(ifmr));
+	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
+	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
+		/* EINVAL -> link state unknown. treat as active */
+		if (errno != EINVAL)
+			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
+			    ifname);
+		close(sock);
+		return (1);
+	}
+	close(sock);
+
+	if (ifmr.ifm_status & IFM_AVALID)
+		if ((ifmr.ifm_active & IFM_NMASK) == IFM_ETHER) {
+			if (ifmr.ifm_status & IFM_ACTIVE)
+				return (1);
+			else
+				return (0);
+		}
+
+	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.8 2004/02/07 14:03:48 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.9 2004/02/10 13:12:48 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -223,6 +223,7 @@ main(int argc, char *argv[])
 	int seed;
 	int quiet = 0;
 	char *s;
+	int ifs = 0;
 
 	s = strrchr(argv[0], '/');
 	if (!s)
@@ -343,12 +344,20 @@ main(int argc, char *argv[])
 					     INTERFACE_AUTOMATIC)) !=
 			     INTERFACE_REQUESTED))
 				continue;
+			if (!interface_link_status(ip->name))
+				continue;
+			ifs++;
 			script_init(ip, "PREINIT", NULL);
 			if (ip->client->alias)
 				script_write_params(ip, "alias_",
 						     ip->client->alias);
 			script_go(ip);
 		}
+	}
+
+	if (ifs == 0) {
+		note("No active interfaces found - exiting.");
+		exit(0);
 	}
 
 	routefd = socket(PF_ROUTE, SOCK_RAW, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.5 2004/02/10 13:12:48 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -701,6 +701,7 @@ void add_timeout(TIME, void (*)(void *), void *);
 void cancel_timeout(void (*)(void *), void *);
 void add_protocol(char *, int, void (*)(struct protocol *), void *);
 void remove_protocol(struct protocol *);
+int interface_link_status(char *);
 
 /* hash.c */
 struct hash_table *new_hash(void);
