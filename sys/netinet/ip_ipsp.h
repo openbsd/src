@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.85 2001/05/05 00:31:20 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.86 2001/05/21 03:02:19 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -154,6 +154,14 @@ struct sockaddr_encap
 
 #define SENT_LEN        sizeof(struct sockaddr_encap)
 
+struct ipsec_ref
+{
+    int ref_type;		/* Subtype of data */
+    int ref_len;		/* Length of data following */
+    int ref_count;		/* Reference count */
+    int ref_malloctype;		/* malloc(9) type, for free'ing purposes */
+};
+
 struct ipsec_acquire
 {
     union sockaddr_union       ipa_addr;
@@ -188,16 +196,9 @@ struct ipsec_policy
 
     struct tdb          *ipo_tdb;   /* Cached entry */
 
-    u_int16_t            ipo_srcid_len;
-    u_int16_t            ipo_dstid_len;
-    u_int16_t            ipo_local_cred_len;
-    u_int16_t            ipo_srcid_type;
-    u_int16_t            ipo_dstid_type;
-    u_int16_t            ipo_local_cred_type;
-
-    u_int8_t            *ipo_srcid;
-    u_int8_t            *ipo_dstid;
-    u_int8_t            *ipo_local_cred;
+    struct ipsec_ref    *ipo_srcid;
+    struct ipsec_ref    *ipo_dstid;
+    struct ipsec_ref    *ipo_local_cred;
 
     TAILQ_ENTRY(ipsec_policy) ipo_tdb_next; /* List of policies on TDB */
     TAILQ_ENTRY(ipsec_policy) ipo_list; /* List of all policy entries */
@@ -298,20 +299,14 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_amxkeylen;    /* Raw authentication key length */
     u_int16_t         tdb_emxkeylen;    /* Raw encryption key length */
     u_int16_t         tdb_ivlen;        /* IV length */
-    u_int16_t         tdb_local_cred_len; /* size of tdb_local_cred */
-    u_int16_t         tdb_remote_cred_len; /* size of tdb_remote_cred */
     u_int8_t	      tdb_sproto;	/* IPsec protocol */
     u_int8_t          tdb_wnd;          /* Replay window */
     u_int8_t          tdb_satype;       /* SA type (RFC2367, PF_KEY) */
-    u_int8_t          tdb_local_cred_type;/* type of tdb_local_cred */
-    u_int8_t          tdb_remote_cred_type;/* type of tdb_remote_cred */
 
     union sockaddr_union tdb_dst;	/* Destination address for this SA */
     union sockaddr_union tdb_src;	/* Source address for this SA */
     union sockaddr_union tdb_proxy;
 
-    u_int8_t         *tdb_srcid;        /* Source ID for this SA */
-    u_int8_t         *tdb_dstid;        /* Destination ID for this SA */
     u_int8_t         *tdb_amxkey;       /* Raw authentication key */
     u_int8_t         *tdb_emxkey;       /* Raw encryption key */
 
@@ -320,15 +315,13 @@ struct tdb				/* tunnel descriptor block */
     u_int32_t         tdb_initial;	/* Initial replay value */
 
     u_int32_t         tdb_epoch;	/* Used by the kernfs interface */
-    u_int16_t         tdb_srcid_len;
-    u_int16_t         tdb_dstid_len;
-    u_int16_t         tdb_srcid_type;
-    u_int16_t         tdb_dstid_type;
 
     u_int8_t          tdb_iv[4];        /* Used for HALF-IV ESP */
 
-    caddr_t           tdb_local_cred;
-    caddr_t           tdb_remote_cred;
+    struct ipsec_ref *tdb_local_cred;
+    struct ipsec_ref *tdb_remote_cred;
+    struct ipsec_ref *tdb_srcid;        /* Source ID for this SA */
+    struct ipsec_ref *tdb_dstid;        /* Destination ID for this SA */
 
     TAILQ_HEAD(tdb_inp_head_in, inpcb) tdb_inp_in;
     TAILQ_HEAD(tdb_inp_head_out, inpcb) tdb_inp_out;
@@ -601,5 +594,6 @@ extern void ipsp_delete_acquire(struct ipsec_acquire *);
 extern void ipsp_clear_acquire(struct tdb *);
 extern void *ipsp_copy_ident(void *);
 extern int ipsp_is_unspecified(union sockaddr_union);
+extern void ipsp_reffree(struct ipsec_ref *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

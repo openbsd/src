@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.59 2001/05/05 00:33:46 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.60 2001/05/21 03:02:17 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -489,28 +489,25 @@ export_address(void **p, struct sockaddr *sa)
 void
 import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
 {
+    struct ipsec_ref **ipr;
+
     if (!sadb_cred)
       return;
 
     if (dstcred)
-    {
-	tdb->tdb_remote_cred_len = EXTLEN(sadb_cred) -
-				   sizeof(struct sadb_cred);
-	tdb->tdb_remote_cred_type = sadb_cred->sadb_cred_type;
-	MALLOC(tdb->tdb_remote_cred, caddr_t, tdb->tdb_remote_cred_len,
-	       M_CREDENTIALS, M_WAITOK);
-	bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
-	      tdb->tdb_remote_cred, tdb->tdb_remote_cred_len);
-    }
+      ipr = &tdb->tdb_remote_cred;
     else
-    {
-	tdb->tdb_local_cred_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
-	tdb->tdb_local_cred_type = sadb_cred->sadb_cred_type;
-	MALLOC(tdb->tdb_local_cred, caddr_t, tdb->tdb_local_cred_len,
-	       M_CREDENTIALS, M_WAITOK);
-	bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
-	      tdb->tdb_local_cred, tdb->tdb_local_cred_len);
-    }
+      ipr = &tdb->tdb_local_cred;
+
+    MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_cred) -
+	   sizeof(struct sadb_cred) + sizeof(struct ipsec_ref),
+	   M_CREDENTIALS, M_WAITOK);
+    (*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
+    (*ipr)->ref_type = sadb_cred->sadb_cred_type;
+    (*ipr)->ref_count = 1;
+    (*ipr)->ref_malloctype = M_CREDENTIALS;
+    bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
+	  (*ipr) + 1, (*ipr)->ref_len);
 }
 
 /*
@@ -519,83 +516,63 @@ import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
 void
 import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 {
+    struct ipsec_ref **ipr;
+
     if (!sadb_ident)
       return;
 
     if (type == PFKEYV2_IDENTITY_SRC)
-    {
-	tdb->tdb_srcid_len = EXTLEN(sadb_ident) -
-			     sizeof(struct sadb_ident);
-	tdb->tdb_srcid_type = sadb_ident->sadb_ident_type;
-	MALLOC(tdb->tdb_srcid, u_int8_t *, tdb->tdb_srcid_len, M_CREDENTIALS,
-	       M_WAITOK);
-	bcopy((void *) sadb_ident + sizeof(struct sadb_ident),
-	      tdb->tdb_srcid, tdb->tdb_srcid_len);
-    }
+      ipr = &tdb->tdb_srcid;
     else
-    {
-	tdb->tdb_dstid_len = EXTLEN(sadb_ident) -
-			     sizeof(struct sadb_ident);
-	tdb->tdb_dstid_type = sadb_ident->sadb_ident_type;
-	MALLOC(tdb->tdb_dstid, u_int8_t *, tdb->tdb_dstid_len, M_CREDENTIALS,
-	       M_WAITOK);
-	bcopy((void *) sadb_ident + sizeof(struct sadb_ident),
-	      tdb->tdb_dstid, tdb->tdb_dstid_len);
-    }
+      ipr = &tdb->tdb_dstid;
+
+    MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_ident) -
+	   sizeof(struct sadb_ident) + sizeof(struct ipsec_ref), M_CREDENTIALS,
+	   M_WAITOK);
+    (*ipr)->ref_len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
+    (*ipr)->ref_type = sadb_ident->sadb_ident_type;
+    (*ipr)->ref_count = 1;
+    (*ipr)->ref_malloctype = M_CREDENTIALS;
+    bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*ipr) + 1,
+	  (*ipr)->ref_len);
 }
 
 void
 export_credentials(void **p, struct tdb *tdb, int dstcred)
 {
+    struct ipsec_ref **ipr;
     struct sadb_cred *sadb_cred = (struct sadb_cred *) *p;
 
     if (dstcred)
-    {
-	sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
-				    PADUP(tdb->tdb_remote_cred_len)) /
-				   sizeof(uint64_t);
-	sadb_cred->sadb_cred_type = tdb->tdb_remote_cred_type;
-	*p += sizeof(struct sadb_cred);
-	bcopy(tdb->tdb_remote_cred, *p, tdb->tdb_remote_cred_len);
-	*p += PADUP(tdb->tdb_remote_cred_len);
-    }
+      ipr = &tdb->tdb_remote_cred;
     else
-    {
-	sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
-				    PADUP(tdb->tdb_local_cred_len)) /
-				   sizeof(uint64_t);
-	sadb_cred->sadb_cred_type = tdb->tdb_local_cred_type;
-	*p += sizeof(struct sadb_cred);
-	bcopy(tdb->tdb_local_cred, *p, tdb->tdb_local_cred_len);
-	*p += PADUP(tdb->tdb_local_cred_len);
-    }
+      ipr = &tdb->tdb_local_cred;
+
+    sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
+				PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+    sadb_cred->sadb_cred_type = (*ipr)->ref_type;
+    *p += sizeof(struct sadb_cred);
+    bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
+    *p += PADUP((*ipr)->ref_len);
 }
 
 void
 export_identity(void **p, struct tdb *tdb, int type)
 {
+    struct ipsec_ref **ipr;
     struct sadb_ident *sadb_ident = (struct sadb_ident *) *p;
 
     if (type == PFKEYV2_IDENTITY_SRC)
-    {
-	sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
-				      PADUP(tdb->tdb_srcid_len)) /
-				     sizeof(uint64_t);
-	sadb_ident->sadb_ident_type = tdb->tdb_srcid_type;
-	*p += sizeof(struct sadb_ident);
-	bcopy(tdb->tdb_srcid, *p, tdb->tdb_srcid_len);
-	*p += PADUP(tdb->tdb_srcid_len);
-    }
+      ipr = &tdb->tdb_srcid;
     else
-    {
-	sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
-				      PADUP(tdb->tdb_dstid_len)) /
-				     sizeof(uint64_t);
-	sadb_ident->sadb_ident_type = tdb->tdb_dstid_type;
-	*p += sizeof(struct sadb_ident);
-	bcopy(tdb->tdb_dstid, *p, tdb->tdb_dstid_len);
-	*p += PADUP(tdb->tdb_dstid_len);
-    }
+      ipr = &tdb->tdb_dstid;
+
+    sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
+				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+    sadb_ident->sadb_ident_type = (*ipr)->ref_type;
+    *p += sizeof(struct sadb_ident);
+    bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
+    *p += PADUP((*ipr)->ref_len);
 }
 
 /* ... */
@@ -991,11 +968,11 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
     if (sa->tdb_proxy.sa.sa_family)
       i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_proxy.sa));
 
-    if (sa->tdb_srcid_len)
-      i += PADUP(sa->tdb_srcid_len) + sizeof(struct sadb_ident);
+    if (sa->tdb_srcid)
+      i += PADUP(sa->tdb_srcid->ref_len) + sizeof(struct sadb_ident);
 
-    if (sa->tdb_dstid_len)
-      i += PADUP(sa->tdb_dstid_len) + sizeof(struct sadb_ident);
+    if (sa->tdb_dstid)
+      i += PADUP(sa->tdb_dstid->ref_len) + sizeof(struct sadb_ident);
 
     if (!(p = malloc(i, M_PFKEY, M_DONTWAIT)))
     {
@@ -1046,14 +1023,14 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
     }
 
     /* Export source identity, if present */
-    if (sa->tdb_srcid_len)
+    if (sa->tdb_srcid)
     {
 	headers[SADB_EXT_IDENTITY_SRC] = p;
 	export_identity(&p, sa, PFKEYV2_IDENTITY_SRC);
     }
 
     /* Export destination identity, if present */
-    if (sa->tdb_dstid_len)
+    if (sa->tdb_dstid)
     {
 	headers[SADB_EXT_IDENTITY_DST] = p;
 	export_identity(&p, sa, PFKEYV2_IDENTITY_DST);
@@ -1991,23 +1968,26 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    ipo->ipo_sproto = SADB_GETSPROTO(smsg->sadb_msg_satype);
 	    if (ipo->ipo_srcid)
 	    {
-		FREE(ipo->ipo_srcid, M_CREDENTIALS);
+	        ipsp_reffree(ipo->ipo_srcid);
 		ipo->ipo_srcid = NULL;
 	    }
 
 	    if (ipo->ipo_dstid)
 	    {
-		FREE(ipo->ipo_dstid, M_CREDENTIALS);
+		ipsp_reffree(ipo->ipo_dstid);
 		ipo->ipo_dstid = NULL;
 	    }
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_SRC]) != NULL)
 	    {
-		ipo->ipo_srcid_type = sid->sadb_ident_type;
-		ipo->ipo_srcid_len = (sid->sadb_ident_len * sizeof(u_int64_t)) - sizeof(struct sadb_ident);
+	        int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) - sizeof(struct sadb_ident);
+		MALLOC(ipo->ipo_srcid, struct ipsec_ref *, clen +
+		       sizeof(struct ipsec_ref), M_CREDENTIALS, M_DONTWAIT);
+		ipo->ipo_srcid->ref_type = sid->sadb_ident_type;
+		ipo->ipo_srcid->ref_len = clen;
+		ipo->ipo_srcid->ref_count = 1;
+		ipo->ipo_srcid->ref_malloctype = M_CREDENTIALS;
 
-		MALLOC(ipo->ipo_srcid, u_int8_t *, ipo->ipo_srcid_len,
-		       M_CREDENTIALS, M_DONTWAIT);
 		if (ipo->ipo_srcid == NULL)
 		{
 		    if (exists)
@@ -2022,17 +2002,20 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    goto ret;
 		}
 
-		bcopy(sid + 1, ipo->ipo_srcid, ipo->ipo_srcid_len);
+		bcopy(sid + 1, ipo->ipo_srcid + 1, ipo->ipo_srcid->ref_len);
 	    }
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_DST]) != NULL)
 	    {
-		ipo->ipo_dstid_type = sid->sadb_ident_type;
-		ipo->ipo_dstid_len = (sid->sadb_ident_len * sizeof(u_int64_t)) -
-				     sizeof(struct sadb_ident);
+	        int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) - sizeof(struct sadb_ident);
 
-		MALLOC(ipo->ipo_dstid, u_int8_t *, ipo->ipo_dstid_len,
-		       M_CREDENTIALS, M_DONTWAIT);
+		MALLOC(ipo->ipo_dstid, struct ipsec_ref *, clen +
+		       sizeof(struct ipsec_ref), M_CREDENTIALS, M_DONTWAIT);
+		ipo->ipo_dstid->ref_type = sid->sadb_ident_type;
+		ipo->ipo_dstid->ref_len = clen;
+		ipo->ipo_dstid->ref_count = 1;
+		ipo->ipo_dstid->ref_malloctype = M_CREDENTIALS;
+
 		if (ipo->ipo_dstid == NULL)
 		{
 		    if (exists)
@@ -2044,7 +2027,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    else
 		    {
 			if (ipo->ipo_dstid)
-			  FREE(ipo->ipo_dstid, M_CREDENTIALS);
+			  ipsp_reffree(ipo->ipo_dstid);
 			FREE(ipo, M_IPSEC_POLICY);
 		    }
 
@@ -2052,7 +2035,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    goto ret;
 		}
 
-		bcopy(sid + 1, ipo->ipo_dstid, ipo->ipo_dstid_len);
+		bcopy(sid + 1, ipo->ipo_dstid + 1, ipo->ipo_dstid->ref_len);
 	    }
 
 	    /* Flow type */
@@ -2075,9 +2058,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    }
 
 		    if (ipo->ipo_srcid)
-		      FREE(ipo->ipo_srcid, M_CREDENTIALS);
+		      ipsp_reffree(ipo->ipo_srcid);
 		    if (ipo->ipo_dstid)
-		      FREE(ipo->ipo_dstid, M_CREDENTIALS);
+		      ipsp_reffree(ipo->ipo_dstid);
 		    FREE(ipo, M_IPSEC_POLICY); /* Free policy entry */
 		    goto ret;
 		}
@@ -2220,10 +2203,10 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
         sizeof(struct sadb_prop) + 1 * sizeof(struct sadb_comb);
 
     if (ipo->ipo_srcid)
-      i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid_len);
+      i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
 
     if (ipo->ipo_dstid)
-      i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid_len);
+      i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
 
     /* Allocate */
     if (!(p = malloc(i, M_PFKEY, M_DONTWAIT)))
@@ -2276,27 +2259,27 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
     if (ipo->ipo_srcid)
     {
 	headers[SADB_EXT_IDENTITY_SRC] = p;
-	p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid_len);
+	p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
 	srcid = (struct sadb_ident *) headers[SADB_EXT_IDENTITY_SRC];
 	srcid->sadb_ident_len = (sizeof(struct sadb_ident) +
-				 PADUP(ipo->ipo_srcid_len)) /
+				 PADUP(ipo->ipo_srcid->ref_len)) /
 				sizeof(u_int64_t);
-	srcid->sadb_ident_type = ipo->ipo_srcid_type;
-	bcopy(ipo->ipo_srcid, headers[SADB_EXT_IDENTITY_SRC] +
-	      sizeof(struct sadb_ident), ipo->ipo_srcid_len);
+	srcid->sadb_ident_type = ipo->ipo_srcid->ref_type;
+	bcopy(ipo->ipo_srcid + 1, headers[SADB_EXT_IDENTITY_SRC] +
+	      sizeof(struct sadb_ident), ipo->ipo_srcid->ref_len);
     }
 
     if (ipo->ipo_dstid)
     {
 	headers[SADB_EXT_IDENTITY_DST] = p;
-	p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid_len);
+	p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
 	dstid = (struct sadb_ident *) headers[SADB_EXT_IDENTITY_DST];
 	dstid->sadb_ident_len = (sizeof(struct sadb_ident) +
-				 PADUP(ipo->ipo_dstid_len)) /
+				 PADUP(ipo->ipo_dstid->ref_len)) /
 				sizeof(u_int64_t);
-	dstid->sadb_ident_type = ipo->ipo_dstid_type;
-	bcopy(ipo->ipo_dstid, headers[SADB_EXT_IDENTITY_DST] +
-	      sizeof(struct sadb_ident), ipo->ipo_dstid_len);
+	dstid->sadb_ident_type = ipo->ipo_dstid->ref_type;
+	bcopy(ipo->ipo_dstid + 1, headers[SADB_EXT_IDENTITY_DST] +
+	      sizeof(struct sadb_ident), ipo->ipo_dstid->ref_len);
     }
 
     headers[SADB_EXT_PROPOSAL] = p;

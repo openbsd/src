@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.50 2001/03/28 20:03:02 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.51 2001/05/21 03:02:18 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -560,6 +560,14 @@ in_pcbdetach(v)
 	if (inp->inp_tdb_out)
 	        TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out, inp,
 			     inp_tdb_out_next);
+	if (inp->inp_ipsec_localid)
+		ipsp_reffree(inp->inp_ipsec_localid);
+	if (inp->inp_ipsec_remoteid)
+		ipsp_reffree(inp->inp_ipsec_remoteid);
+	if (inp->inp_ipsec_localcred)
+		ipsp_reffree(inp->inp_ipsec_localcred);
+	if (inp->inp_ipsec_remotecred)
+		ipsp_reffree(inp->inp_ipsec_remotecred);
 	splx(s);
 #endif
 	s = splnet();

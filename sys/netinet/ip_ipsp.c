@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.114 2001/05/05 00:31:19 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.115 2001/05/21 03:02:19 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -317,10 +317,11 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_srcid != NULL)
 	      {
-		  if ((tdbp->tdb_srcid_type != ipo->ipo_srcid_type) ||
-		      (tdbp->tdb_srcid_len != ipo->ipo_srcid_len) ||
-		      (bcmp(tdbp->tdb_srcid, ipo->ipo_srcid,
-			    ipo->ipo_srcid_len)))
+		  if ((tdbp->tdb_srcid->ref_type !=
+		       ipo->ipo_srcid->ref_type) ||
+		      (tdbp->tdb_srcid->ref_len != ipo->ipo_srcid->ref_len) ||
+		      (bcmp(tdbp->tdb_srcid + 1, ipo->ipo_srcid + 1,
+			    ipo->ipo_srcid->ref_len)))
 		    continue;
 	      }
 
@@ -334,10 +335,11 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_dstid != NULL)
 	      {
-		  if ((tdbp->tdb_dstid_type != ipo->ipo_dstid_type) ||
-		      (tdbp->tdb_dstid_len != ipo->ipo_dstid_len) ||
-		      (bcmp(tdbp->tdb_dstid, ipo->ipo_dstid,
-			    ipo->ipo_dstid_len)))
+		  if ((tdbp->tdb_dstid->ref_type !=
+		       ipo->ipo_dstid->ref_type) ||
+		      (tdbp->tdb_dstid->ref_len != ipo->ipo_dstid->ref_len) ||
+		      (bcmp(tdbp->tdb_dstid + 1, ipo->ipo_dstid + 1,
+			    ipo->ipo_dstid->ref_len)))
 		    continue;
 	      }
 
@@ -352,11 +354,12 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_local_cred != NULL)
 	      {
-		  if ((tdbp->tdb_local_cred_type !=
-		       ipo->ipo_local_cred_type) ||
-		      (tdbp->tdb_local_cred_len != ipo->ipo_local_cred_len) ||
-		      (bcmp(tdbp->tdb_local_cred, ipo->ipo_local_cred,
-			    ipo->ipo_local_cred_len)))
+		  if ((tdbp->tdb_local_cred->ref_type !=
+		       ipo->ipo_local_cred->ref_type) ||
+		      (tdbp->tdb_local_cred->ref_len !=
+		       ipo->ipo_local_cred->ref_len) ||
+		      (bcmp(tdbp->tdb_local_cred + 1, ipo->ipo_local_cred + 1,
+			    ipo->ipo_local_cred->ref_len)))
 		    continue;
 	      }
 	      else
@@ -407,10 +410,11 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_srcid != NULL)
 	      {
-		  if ((tdbp->tdb_srcid_type != ipo->ipo_srcid_type) ||
-		      (tdbp->tdb_srcid_len != ipo->ipo_srcid_len) ||
-		      (bcmp(tdbp->tdb_srcid, ipo->ipo_srcid,
-			    ipo->ipo_srcid_len)))
+		  if ((tdbp->tdb_srcid->ref_type !=
+		       ipo->ipo_srcid->ref_type) ||
+		      (tdbp->tdb_srcid->ref_len != ipo->ipo_srcid->ref_len) ||
+		      (bcmp(tdbp->tdb_srcid + 1, ipo->ipo_srcid + 1,
+			    ipo->ipo_srcid->ref_len)))
 		    continue;
 	      }
 
@@ -424,10 +428,11 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_dstid != NULL)
 	      {
-		  if ((tdbp->tdb_dstid_type != ipo->ipo_dstid_type) ||
-		      (tdbp->tdb_dstid_len != ipo->ipo_dstid_len) ||
-		      (bcmp(tdbp->tdb_dstid, ipo->ipo_dstid,
-			    ipo->ipo_dstid_len)))
+		  if ((tdbp->tdb_dstid->ref_type !=
+		       ipo->ipo_dstid->ref_type) ||
+		      (tdbp->tdb_dstid->ref_len != ipo->ipo_dstid->ref_len) ||
+		      (bcmp(tdbp->tdb_dstid + 1, ipo->ipo_dstid + 1,
+			    ipo->ipo_dstid->ref_len)))
 		    continue;
 	      }
 
@@ -442,11 +447,12 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_local_cred != NULL)
 	      {
-		  if ((tdbp->tdb_local_cred_type !=
-		       ipo->ipo_local_cred_type) ||
-		      (tdbp->tdb_local_cred_len != ipo->ipo_local_cred_len) ||
-		      (bcmp(tdbp->tdb_local_cred, ipo->ipo_local_cred,
-			    ipo->ipo_local_cred_len)))
+		  if ((tdbp->tdb_local_cred->ref_type !=
+		       ipo->ipo_local_cred->ref_type) ||
+		      (tdbp->tdb_local_cred->ref_len !=
+		       ipo->ipo_local_cred->ref_len) ||
+		      (bcmp(tdbp->tdb_local_cred, ipo->ipo_local_cred + 1,
+			    ipo->ipo_local_cred->ref_len)))
 		    continue;
 	      }
 	      else
@@ -808,25 +814,25 @@ tdb_delete(struct tdb *tdbp)
 
     if (tdbp->tdb_srcid)
     {
-      	FREE(tdbp->tdb_srcid, M_CREDENTIALS);
+	ipsp_reffree(tdbp->tdb_srcid);
 	tdbp->tdb_srcid = NULL;
     }
 
     if (tdbp->tdb_dstid)
     {
-      	FREE(tdbp->tdb_dstid, M_CREDENTIALS);
+	ipsp_reffree(tdbp->tdb_dstid);
 	tdbp->tdb_dstid = NULL;
     }
 
     if (tdbp->tdb_local_cred)
     {
-	FREE(tdbp->tdb_local_cred, M_CREDENTIALS);
+	ipsp_reffree(tdbp->tdb_local_cred);
 	tdbp->tdb_local_cred = NULL;
     }
 
     if (tdbp->tdb_remote_cred)
     {
-	FREE(tdbp->tdb_remote_cred, M_CREDENTIALS);
+	ipsp_reffree(tdbp->tdb_remote_cred);
 	tdbp->tdb_local_cred = NULL;
     }
 
@@ -1274,7 +1280,7 @@ ipsp_copy_ident(void *arg)
     return (void *) tdbii;
 }
 
-/* Check whether an IP{4,6} address is unspecified */
+/* Check whether an IP{4,6} address is unspecified. */
 int
 ipsp_is_unspecified(union sockaddr_union addr)
 {
@@ -1300,4 +1306,16 @@ ipsp_is_unspecified(union sockaddr_union addr)
 	default:
 	    return 1;
     }
+}
+
+/* Free reference-counted structure. */
+void
+ipsp_reffree(struct ipsec_ref *ipr)
+{
+#ifdef DIAGNOSTIC
+    if (ipr->ref_count <= 0)
+      printf("ipsp_reffree: illegal reference count %d for object %p (len = %d, malloctype = %d)\n", ipr->ref_count, ipr, ipr->ref_len, ipr->ref_malloctype);
+#endif
+    if (--ipr->ref_count <= 0)
+      FREE(ipr, ipr->ref_malloctype);
 }
