@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.8 1999/07/04 11:53:52 aaron Exp $
+.\"	$OpenBSD: compress.1,v 1.9 1999/10/05 17:09:11 aaron Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -47,7 +47,7 @@
 .Nd compress and expand data
 .Sh SYNOPSIS
 .Nm compress
-.Op Fl cftgOqv
+.Op Fl cdftgOqv
 .Op Fl b Ar bits
 .Op Fl o Ar filename
 .Op Ar
@@ -56,7 +56,9 @@
 .Op Fl o Ar filename
 .Op Ar
 .Sh DESCRIPTION
+The
 .Nm
+utility
 reduces the size of the named files using adaptive Lempel-Ziv coding.
 Each
 .Ar file
@@ -69,9 +71,10 @@ If compression would not reduce the size of a
 .Ar file ,
 the file is ignored.
 .Pp
+The
 .Nm uncompress
-restores the compressed files to their original form, renaming the
-files by deleting the
+utility restores compressed files to their original form, renaming the
+files by removing the
 .Dq .Z
 extension.
 .Pp
@@ -83,7 +86,7 @@ are not overwritten.
 .Pp
 If no files are specified, the standard input is compressed or uncompressed
 to the standard output.
-If either the input and output files are not regular files, the checks for
+If either the input or output files are not regular files, the checks for
 reduction in size and file overwriting are not performed, the input file is
 not removed, and the attributes of the input file are not retained.
 .Pp
@@ -124,9 +127,9 @@ When code 512 is reached, the algorithm switches to 10-bit codes and
 continues to use more bits until the
 limit specified by the
 .Fl b
-flag is reached (the default is 16).
+flag is reached.
 .Ar bits
-must be between 9 and 16.
+must be between 9 and 16 (the default is 16).
 .Pp
 After the
 .Ar bits
@@ -171,7 +174,7 @@ utility exits 0 on success, 1 if an error occurred, or 2 if one or
 more files were not compressed because they would have grown in
 size (and
 .Fl f
-was not specifed).
+was not specified).
 .Sh SEE ALSO
 .Rs
 .%A Welch, Terry A.
