@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 1997/03/12 13:37:00 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 1997/03/15 05:51:15 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2474,6 +2474,8 @@ setmachdep()
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		if (cputype == CPU_68040)
+			mac68k_machine.sonic = 1;
 		break;
 	case MACH_CLASSDUO:
 		/*
@@ -2496,11 +2498,11 @@ setmachdep()
 		mac68k_vidlog = mac68k_vidphys = 0xf9000000;
 		/* Not really, but using too little memory would be wrong */
 		mac68k_vidlen = 2 * 1024 * 1024;
+		mac68k_machine.sonic = 1;
 	case MACH_CLASSAV:
 		VIA2 = 1;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
-		mac68k_machine.sonic = 1;
 		mac68k_machine.scsi96 = 1;
 		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
