@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.8 2003/01/24 08:54:09 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.9 2003/01/24 10:22:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -61,6 +61,7 @@ union class_stats {
 struct queue_stats {
 	union class_stats	 data;
 	struct timeval		 timestamp;
+	u_int8_t		 valid;
 };
 
 struct pf_altq_node {
@@ -78,8 +79,9 @@ struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
 			    const char *, const char *);
 void			 pfctl_print_altq_node(int, const struct pf_altq_node *,
 			     unsigned, int);
-void			 print_cbqstats(class_stats_t);
-void			 print_priqstats(struct priq_classstats);
+void			 print_cbqstats(struct queue_stats, struct queue_stats);
+void			 print_priqstats(struct queue_stats,
+			     struct queue_stats);
 void			 pfctl_free_altq_node(struct pf_altq_node *);
 void			 pfctl_print_altq_nodestat(int,
 			    const struct pf_altq_node *);
@@ -134,6 +136,7 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 				warn("DIOCGETQSTATS");
 				return (-1);
 			}
+			qstats.valid = 1;
 			gettimeofday(&qstats.timestamp, NULL);
 			if ((node = pfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
@@ -246,34 +249,39 @@ pfctl_print_altq_nodestat(int dev, const struct pf_altq_node *a)
 
 	switch (a->altq.scheduler) {
 	case ALTQT_CBQ:
-		print_cbqstats(a->qstats.data.cbq_stats);
+		print_cbqstats(a->qstats, a->qstats_last);
 		break;
 	case ALTQT_PRIQ:
-		print_priqstats(a->qstats.data.priq_stats);
+		print_priqstats(a->qstats, a->qstats_last);
 		break;
 	}
 }
 
 void
-print_cbqstats(class_stats_t qstats)
+print_cbqstats(struct queue_stats cur, struct queue_stats last)
 {
 	printf("[ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
-	    qstats.xmit_cnt.packets, qstats.xmit_cnt.bytes,
-	    qstats.drop_cnt.packets, qstats.drop_cnt.bytes);
+	    cur.data.cbq_stats.xmit_cnt.packets,
+	    cur.data.cbq_stats.xmit_cnt.bytes,
+	    cur.data.cbq_stats.drop_cnt.packets,
+	    cur.data.cbq_stats.drop_cnt.bytes);
 	printf("[ qlength: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
-	    qstats.qcnt, qstats.qmax, qstats.borrows, qstats.delays);
+	    cur.data.cbq_stats.qcnt, cur.data.cbq_stats.qmax,
+	    cur.data.cbq_stats.borrows, cur.data.cbq_stats.delays);
 }
 
 void
-print_priqstats(struct priq_classstats qstats)
+print_priqstats(struct queue_stats cur, struct queue_stats last)
 {
 	printf("[ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
-	    qstats.xmitcnt.packets, qstats.xmitcnt.bytes,
-	    qstats.dropcnt.packets, qstats.dropcnt.bytes);
+	    cur.data.priq_stats.xmitcnt.packets,
+	    cur.data.priq_stats.xmitcnt.bytes,
+	    cur.data.priq_stats.dropcnt.packets,
+	    cur.data.priq_stats.dropcnt.bytes);
 	printf("[ qlength: %3d/%3d ]\n",
-	    qstats.qlength, qstats.qlimit);
+	    cur.data.priq_stats.qlength, cur.data.priq_stats.qlimit);
 }
 
 void
