@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.3 1997/11/06 05:59:15 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.4 1998/01/12 00:45:06 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
 /* 
@@ -202,11 +202,7 @@ ext2fs_readdir(v)
 		if(dstd.d_reclen > uio->uio_resid) {
 			break;
 		}
-		if ((error = uiomove((caddr_t)&dstd, dstd.d_reclen, uio)) != 0) {
-			FREE(ap->a_ncookies, M_TEMP);
-			*ap->a_cookies = 0;
-			
-			goto err_exit;
+		if ((error = uiomove((caddr_t)&dstd, dstd.d_reclen, uio)) != 0) {			goto err_exit;
 		}
 
 		off = off + dp->e2d_reclen;
@@ -221,6 +217,12 @@ ext2fs_readdir(v)
 
 err_exit:
 	FREE(dirbuf, M_TEMP);
+
+	if (error && cookies) {
+		FREE(ap->a_cookies, M_TEMP);
+		*ap->a_cookies = 0;
+		*ap->a_ncookies = 0;
+	}
 	*ap->a_eofflag = VTOI(ap->a_vp)->i_e2fs_size <= uio->uio_offset;
 	uio->uio_resid += lost;
 	
