@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.5 1996/09/02 22:15:02 millert Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.6 1996/09/15 20:14:08 millert Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
 
 /*-
@@ -158,10 +158,10 @@ rmtgetconn()
 	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
+
 	maxseg = 1024;
-	if (getuid() == 0 && setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
-	    &maxseg, sizeof (maxseg)) < 0)
-		perror("TCP_MAXSEG setsockopt");
+	(void)setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG, &maxseg,
+		sizeof (maxseg));
 
 #ifdef notdef
 	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) < 0)
@@ -193,7 +193,7 @@ rmtopen(tape, mode)
 {
 	char buf[256];
 
-	(void)snprintf(buf, sizeof buf, "O%s\n%d\n", tape, mode);
+	(void)snprintf(buf, sizeof (buf), "O%s\n%d\n", tape, mode);
 	rmtstate = TS_OPEN;
 	return (rmtcall(tape, buf));
 }
@@ -217,7 +217,7 @@ rmtread(buf, count)
 	int n, i, cc;
 	extern errno;
 
-	(void)sprintf(line, "R%d\n", count);
+	(void)snprintf(line, sizeof (line), "R%d\n", count);
 	n = rmtcall("read", line);
 	if (n < 0) {
 		errno = n;
@@ -239,7 +239,7 @@ rmtwrite(buf, count)
 {
 	char line[30];
 
-	(void)sprintf(line, "W%d\n", count);
+	(void)snprintf(line, sizeof (line), "W%d\n", count);
 	write(rmtape, line, strlen(line));
 	write(rmtape, buf, count);
 	return (rmtreply("write"));
@@ -251,7 +251,7 @@ rmtwrite0(count)
 {
 	char line[30];
 
-	(void)sprintf(line, "W%d\n", count);
+	(void)snprintf(line, sizeof (line), "W%d\n", count);
 	write(rmtape, line, strlen(line));
 }
 
@@ -277,7 +277,7 @@ rmtseek(offset, pos)
 {
 	char line[80];
 
-	(void)sprintf(line, "L%d\n%d\n", offset, pos);
+	(void)snprintf(line, sizeof (line), "L%d\n%d\n", offset, pos);
 	return (rmtcall("seek", line));
 }
 
@@ -305,7 +305,7 @@ rmtioctl(cmd, count)
 
 	if (count < 0)
 		return (-1);
-	(void)sprintf(buf, "I%d\n%d\n", cmd, count);
+	(void)snprintf(buf, sizeof (buf), "I%d\n%d\n", cmd, count);
 	return (rmtcall("ioctl", buf));
 }
 
