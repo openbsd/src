@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.142 2002/08/20 06:32:17 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.143 2002/09/02 19:40:31 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -435,8 +435,13 @@ pfrule		: action dir logquick interface route af proto fromto
 			if ($5.rt) {
 				r.rt = $5.rt;
 				if ($5.string) {
-					memcpy(r.rt_ifname, $5.string,
-					    sizeof(r.rt_ifname));
+					strlcpy(r.rt_ifname, $5.string,
+					    IFNAMSIZ);
+					if (!ifa_exists(r.rt_ifname)) {
+						yyerror("unknown interface %s", 
+						    r.rt_ifname);
+						YYERROR;
+					}
 					free($5.string);
 				}
 				if ($5.addr) {
