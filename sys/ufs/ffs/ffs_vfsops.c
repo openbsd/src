@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.59 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.60 2003/10/04 18:47:08 mickey Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -119,18 +119,27 @@ ffs_mountroot()
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */
+	swapdev_vp = NULL;
 	if ((error = bdevvp(swapdev, &swapdev_vp)) ||
 	    (error = bdevvp(rootdev, &rootvp))) {
 		printf("ffs_mountroot: can't setup bdevvp's");
+		if (swapdev_vp)
+			vrele(swapdev_vp);
 		return (error);
 	}
 
-	if ((error = vfs_rootmountalloc("ffs", "root_device", &mp)) != 0)
+	if ((error = vfs_rootmountalloc("ffs", "root_device", &mp)) != 0) {
+		vrele(swapdev_vp);
+		vrele(rootvp);
 		return (error);
+	}
+
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp, p);
 		free(mp, M_MOUNT);
+		vrele(swapdev_vp);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
