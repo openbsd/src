@@ -1,4 +1,8 @@
 /*
+ * $OpenBSD: sigret.c,v 1.2 2001/12/17 03:31:11 marc Exp $
+ *
+ * Public Domain
+ *
  * Playing games with sigreturn.   Check if calling sigreturn from a
  * signal handler screws anything up.
  *
