@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.20 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.21 2003/01/31 20:41:29 art Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -102,10 +102,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	int error = 0;
 	size_t size;
-	struct vnode *rvp;
-	struct kern_target *kt;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount(mp = %p)\n", mp);
@@ -117,17 +114,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	kt = kernfs_findtarget(".", 1);
-	error = kernfs_allocvp(kt, mp, &rvp);
-	if (error)
-		return (error);
-
-	rvp->v_type = VDIR;
-	rvp->v_flag |= VROOT;
-
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t)rvp;
-	vrele(rvp);
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -171,12 +158,8 @@ kernfs_unmount(mp, mntflags, p)
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_unmount: calling vflush\n");
 #endif
-
-	if ((error = vflush(mp, 0, flags)) != 0) {
+	if ((error = vflush(mp, 0, flags)) != 0)
 		return (error);
-	}
-
-	mp->mnt_data = 0;
 
 	return (0);
 }
@@ -186,14 +169,17 @@ kernfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	struct vnode *vp = (struct vnode *)mp->mnt_data;
+	struct kern_target *kt;
+	int error;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_root(mp = %p)\n", mp);
 #endif
-
-	vget(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
-	*vpp = vp;
+	kt = kernfs_findtarget(".", 1);
+	error = kernfs_allocvp(kt, mp, vpp);
+	if (error)
+		return (error);
+	vn_lock(*vpp, LK_EXCLUSIVE, curproc);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.16 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.17 2003/01/31 20:41:29 art Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ struct procfs_args {
 struct procfsmount {
 	void *pmnt_exechook;
 	int pmnt_flags;
-	struct vnode *rvp;
 };
 
 #define VFSTOPROC(mp)	((struct procfsmount *)(mp)->mnt_data)
