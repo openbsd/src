@@ -1,5 +1,6 @@
-/*	$OpenBSD: usb_port.h,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
-/*	$NetBSD: usb_port.h,v 1.21 2000/02/02 07:34:00 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
+/*	$NetBSD: usb_port.h,v 1.23 2000/03/24 22:03:32 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,12 +81,14 @@ typedef struct device *device_ptr_t;
 		u_int offs; \
 	} usb_dma_t
 
-#define usb_timeout(f, d, t, h) timeout((f), (d), (t))
-#define usb_untimeout(f, d, h) untimeout((f), (d))
+typedef struct callout usb_callout_t;
+#define usb_callout_init(h)	callout_init(&(h))
+#define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
+#define	usb_uncallout(h, f, d)	callout_stop(&(h))
 
 #define logprintf printf
 
-#define USB_DECLARE_DRIVER_(dname)  \
+#define USB_DECLARE_DRIVER(dname)  \
 int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
 void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
 int __CONCAT(dname,_detach) __P((struct device *, int)); \
@@ -171,15 +174,29 @@ __CONCAT(dname,_detach)(self, flags) \
 #define KUE_DEBUG 1
 #endif
 
-typedef struct device *device_ptr_t;
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
+#define kthread_create1		kthread_create
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
 
+#define powerhook_establish(fn, sc) (fn)
+#define powerhook_disestablish(hdl)
+#define PWR_RESUME 0
+
+#define logprintf printf
+
+#define swap_bytes_change_sign16_le swap_bytes_change_sign16
+#define change_sign16_swap_bytes_le change_sign16_swap_bytes
+#define change_sign16_le change_sign16
+
+#define realloc usb_realloc
+void *usb_realloc __P((void *, u_int, int, int));
+
+typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
@@ -194,11 +211,13 @@ typedef struct device *device_ptr_t;
 		u_int offs; \
 	} usb_dma_t
 
-#define usb_timeout(f, d, t, h) timeout((f), (d), (t))
-#define usb_untimeout(f, d, h) untimeout((f), (d))
+typedef char usb_callout_t;
+#define usb_callout_init(h)
+#define usb_callout(h, t, f, d) timeout((f), (d), (t))
+#define usb_uncallout(h, f, d) untimeout((f), (d))
 
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match)  __P((struct device *, void *, void *)); \
+int __CONCAT(dname,_match) __P((struct device *, void *, void *)); \
 void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
 int __CONCAT(dname,_detach) __P((struct device *, int)); \
 int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
@@ -294,8 +313,10 @@ __CONCAT(dname,_detach)(self, flags) \
 #define kthread_create(create_function, sc)
 #define kthread_exit(err)
 
-#define usb_timeout(f, d, t, h) ((h) = timeout((f), (d), (t)))
-#define usb_untimeout(f, d, h) untimeout((f), (d), (h))
+typedef struct callout_handle usb_callout_t;
+#define usb_callout_init(h) callout_handle_init(&(h))
+#define usb_callout(h, t, f, d) ((h) = timeout((f), (d), (t)))
+#define usb_uncallout(h, f, d) uncallout((f), (d), (h))
 
 #define clalloc(p, s, x) (clist_alloc_cblocks((p), (s), (s)), 0)
 #define clfree(p) clist_free_cblocks((p))
@@ -320,12 +341,13 @@ static device_method_t __CONCAT(dname,_methods)[] = { \
 }; \
 \
 static driver_t __CONCAT(dname,_driver) = { \
-	#dname, \
+        #dname, \
         __CONCAT(dname,_methods), \
         sizeof(struct __CONCAT(dname,_softc)) \
 }
 #define METHODS_NONE			{0,0}
 #define USB_DECLARE_DRIVER(dname)	USB_DECLARE_DRIVER_INIT(dname, METHODS_NONE)
+
 
 #define USB_MATCH(dname) \
 static int \

@@ -1,8 +1,14 @@
 Some things that need to be done in no particular order:
 --------------------------------------------------------
 
-Find race condition in UHCI driver.  Rarely (under heavy USB load) you get a
-"uhci_idone: ii=0x%x is done!".  This "cannot happen".
+Before 1.5:
+-----------
+
+Add isoc to OHCI driver.
+
+Port FreeBSD umass driver.
+
+-----------
 
 Add lots of bus_dmamap_sync().
 
@@ -28,11 +34,7 @@ Rotate the QHs for bulk transport to get fairer scheduling.
 Change HC drivers to queue multiple request for an endpoint
 to get better performance.
 
-Add generic ucom layer for serial adapters.
-
-Add isoc to OHCI driver.
-
-Do memory deallocation when HC driver is deactivated.
+Do memory deallocation when HC driver is detached.
 
 uaudio problems:
 	mixer names are awful, use some heuristics.
@@ -48,4 +50,15 @@ Document device driver API.
 
 Document HC driver API.
 
-Handle CLEAR_ENPOINT_STALL centrally.
+Handle CLEAR_ENDPOINT_STALL centrally.
+
+Use splsoftusb() or a thread to deliver callbacks.
+
+Add threads to the Ethernet drivers.
+
+Change what's done at watchdog timeout inb if_{a,c,k}ue.c; what we have
+now doesn't work because it's done in an interrupt context.
+
+Rewrite HID driver to handle report IDs properly.  Perhaps there should
+be a hiddev to which hid with different IDs can attach?
+

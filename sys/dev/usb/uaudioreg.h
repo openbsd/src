@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudioreg.h,v 1.2 2000/03/26 08:39:45 aaron Exp $	*/
+/*	$OpenBSD: uaudioreg.h,v 1.3 2000/03/28 19:37:49 aaron Exp $ */
 /*	$NetBSD: uaudioreg.h,v 1.4 2000/01/16 09:32:56 augustss Exp $	*/
 
 /*
@@ -284,38 +284,32 @@ struct usb_audio_extension_unit_1 {
 #define FORMAT_TYPE_II 2
 #define FORMAT_TYPE_III 3
 
-#define UA_PROC_MASK(n)  (1 << ((n)-1))
+#define UA_PROC_MASK(n) (1<< ((n)-1))
 #define PROCESS_UNDEFINED		0
-#define XX_ENABLE_CONTROL		1
-
+#define  XX_ENABLE_CONTROL			1
 #define UPDOWNMIX_PROCESS		1
-#define UD_ENABLE_CONTROL		1
-#define UD_MODE_SELECT_CONTROL		2
-
+#define  UD_ENABLE_CONTROL			1
+#define  UD_MODE_SELECT_CONTROL			2
 #define DOLBY_PROLOGIC_PROCESS		2
-#define DP_ENABLE_CONTROL		1
-#define DP_MODE_SELECT_CONTROL		2
-
+#define  DP_ENABLE_CONTROL			1
+#define  DP_MODE_SELECT_CONTROL			2
 #define P3D_STEREO_EXTENDER_PROCESS	3
-#define P3D_ENABLE_CONTROL		1
-#define P3D_SPACIOUSNESS_CONTROL	2
-
+#define  P3D_ENABLE_CONTROL			1
+#define  P3D_SPACIOUSNESS_CONTROL		2
 #define REVERBATION_PROCESS		4
-#define RV_ENABLE_CONTROL		1
-#define RV_LEVEL_CONTROL		2
-#define RV_TIME_CONTROL			3
-#define RV_FEEDBACK_CONTROL		4
-
+#define  RV_ENABLE_CONTROL			1
+#define  RV_LEVEL_CONTROL			2
+#define  RV_TIME_CONTROL			3
+#define  RV_FEEDBACK_CONTROL			4
 #define CHORUS_PROCESS			5
-#define CH_ENABLE_CONTROL		1
-#define CH_LEVEL_CONTROL		2
-#define CH_RATE_CONTROL			3
-#define CH_DEPTH_CONTROL		4
-
+#define  CH_ENABLE_CONTROL			1
+#define  CH_LEVEL_CONTROL			2
+#define  CH_RATE_CONTROL			3
+#define  CH_DEPTH_CONTROL			4
 #define DYN_RANGE_COMP_PROCESS		6
-#define DR_ENABLE_CONTROL		1
-#define DR_COMPRESSION_RATE_CONTROL	2
-#define DR_MAXAMPL_CONTROL		3
-#define DR_THRESHOLD_CONTROL		4
-#define DR_ATTACK_TIME_CONTROL		5
-#define DR_RELEASE_TIME_CONTROL		6
+#define  DR_ENABLE_CONTROL			1
+#define  DR_COMPRESSION_RATE_CONTROL		2
+#define  DR_MAXAMPL_CONTROL			3
+#define  DR_THRESHOLD_CONTROL			4
+#define  DR_ATTACK_TIME_CONTROL			5
+#define  DR_RELEASE_TIME_CONTROL		6

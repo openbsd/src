@@ -1,5 +1,6 @@
-/*	$OpenBSD: ohci.c,v 1.8 2000/03/26 08:39:45 aaron Exp $	*/
-/*	$NetBSD: ohci.c,v 1.78 2000/03/20 00:37:00 augustss Exp $	*/
+/*	$OpenBSD: ohci.c,v 1.9 2000/03/28 19:37:48 aaron Exp $ */
+/*	$NetBSD: ohci.c,v 1.81 2000/03/25 18:02:32 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,114 +102,122 @@ int ohcidebug = 0;
  * The OHCI controller is little endian, so on big endian machines
  * the data strored in memory needs to be swapped.
  */
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
-#define LE(x) (bswap32(x))
+#define htole32(x) (bswap32(x))
+#define le32toh(x) (bswap32(x))
 #else
-#define LE(x) (x)
+#define htole32(x) (x)
+#define le32toh(x) (x)
+#endif
 #endif
 
 struct ohci_pipe;
 
-ohci_soft_ed_t *ohci_alloc_sed __P((ohci_softc_t *));
-void		ohci_free_sed __P((ohci_softc_t *, ohci_soft_ed_t *));
+static ohci_soft_ed_t  *ohci_alloc_sed __P((ohci_softc_t *));
+static void		ohci_free_sed __P((ohci_softc_t *, ohci_soft_ed_t *));
 
-ohci_soft_td_t *ohci_alloc_std __P((ohci_softc_t *));
-void		ohci_free_std __P((ohci_softc_t *, ohci_soft_td_t *));
+static ohci_soft_td_t  *ohci_alloc_std __P((ohci_softc_t *));
+static void		ohci_free_std __P((ohci_softc_t *, ohci_soft_td_t *));
 
-ohci_soft_itd_t *ohci_alloc_sitd __P((ohci_softc_t *));
-void ohci_free_sitd __P((ohci_softc_t *, ohci_soft_itd_t *));
+static ohci_soft_itd_t *ohci_alloc_sitd __P((ohci_softc_t *));
+static void		ohci_free_sitd __P((ohci_softc_t *,ohci_soft_itd_t *));
 
 #if 0
-void		ohci_free_std_chain __P((ohci_softc_t *, 
-					 ohci_soft_td_t *, ohci_soft_td_t *));
+static void		ohci_free_std_chain __P((ohci_softc_t *, 
+			    ohci_soft_td_t *, ohci_soft_td_t *));
 #endif
-usbd_status	ohci_alloc_std_chain __P((struct ohci_pipe *, ohci_softc_t *,
-					  int, int, usbd_xfer_handle,
-					  ohci_soft_td_t *,
-					  ohci_soft_td_t **));
+static usbd_status	ohci_alloc_std_chain __P((struct ohci_pipe *,
+			    ohci_softc_t *, int, int, usbd_xfer_handle,
+			    ohci_soft_td_t *, ohci_soft_td_t **));
 
-void		ohci_shutdown __P((void *v));
-void		ohci_power __P((int, void *));
-usbd_status	ohci_open __P((usbd_pipe_handle));
-void		ohci_poll __P((struct usbd_bus *));
-void		ohci_softintr __P((struct usbd_bus *));
-void		ohci_waitintr __P((ohci_softc_t *, usbd_xfer_handle));
-void		ohci_rhsc __P((ohci_softc_t *, usbd_xfer_handle));
+static void		ohci_shutdown __P((void *v));
+static void		ohci_power __P((int, void *));
+static usbd_status	ohci_open __P((usbd_pipe_handle));
+static void		ohci_poll __P((struct usbd_bus *));
+static void		ohci_softintr __P((struct usbd_bus *));
+static void		ohci_waitintr __P((ohci_softc_t *,
+			    usbd_xfer_handle));
+static void		ohci_rhsc __P((ohci_softc_t *, usbd_xfer_handle));
 
-usbd_status	ohci_device_request __P((usbd_xfer_handle xfer));
-void		ohci_add_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
-void		ohci_rem_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
-void		ohci_hash_add_td __P((ohci_softc_t *, ohci_soft_td_t *));
-void		ohci_hash_rem_td __P((ohci_softc_t *, ohci_soft_td_t *));
-ohci_soft_td_t *ohci_hash_find_td __P((ohci_softc_t *, ohci_physaddr_t));
+static usbd_status	ohci_device_request __P((usbd_xfer_handle xfer));
+static void		ohci_add_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
+static void		ohci_rem_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
+static void		ohci_hash_add_td __P((ohci_softc_t *, 
+			    ohci_soft_td_t *));
+static void		ohci_hash_rem_td __P((ohci_softc_t *,
+			    ohci_soft_td_t *));
+static ohci_soft_td_t  *ohci_hash_find_td __P((ohci_softc_t *,
+			    ohci_physaddr_t));
 
-usbd_status	ohci_setup_isoc __P((usbd_pipe_handle pipe));
-void		ohci_device_isoc_enter __P((usbd_xfer_handle));
+static usbd_status	ohci_setup_isoc __P((usbd_pipe_handle pipe));
+static void		ohci_device_isoc_enter __P((usbd_xfer_handle));
 
-usbd_status	ohci_allocm __P((struct usbd_bus *, usb_dma_t *, u_int32_t));
-void		ohci_freem __P((struct usbd_bus *, usb_dma_t *));
+static usbd_status	ohci_allocm __P((struct usbd_bus *, usb_dma_t *,
+			    u_int32_t));
+static void		ohci_freem __P((struct usbd_bus *, usb_dma_t *));
 
-usbd_xfer_handle ohci_allocx __P((struct usbd_bus *));
-void		ohci_freex __P((struct usbd_bus *, usbd_xfer_handle));
+static usbd_xfer_handle	ohci_allocx __P((struct usbd_bus *));
+static void		ohci_freex __P((struct usbd_bus *, usbd_xfer_handle));
 
-usbd_status	ohci_root_ctrl_transfer __P((usbd_xfer_handle));
-usbd_status	ohci_root_ctrl_start __P((usbd_xfer_handle));
-void		ohci_root_ctrl_abort __P((usbd_xfer_handle));
-void		ohci_root_ctrl_close __P((usbd_pipe_handle));
-void		ohci_root_ctrl_done __P((usbd_xfer_handle));
+static usbd_status	ohci_root_ctrl_transfer __P((usbd_xfer_handle));
+static usbd_status	ohci_root_ctrl_start __P((usbd_xfer_handle));
+static void		ohci_root_ctrl_abort __P((usbd_xfer_handle));
+static void		ohci_root_ctrl_close __P((usbd_pipe_handle));
+static void		ohci_root_ctrl_done  __P((usbd_xfer_handle));
 
-usbd_status	ohci_root_intr_transfer __P((usbd_xfer_handle));
-usbd_status	ohci_root_intr_start __P((usbd_xfer_handle));
-void		ohci_root_intr_abort __P((usbd_xfer_handle));
-void		ohci_root_intr_close __P((usbd_pipe_handle));
-void		ohci_root_intr_done  __P((usbd_xfer_handle));
+static usbd_status	ohci_root_intr_transfer __P((usbd_xfer_handle));
+static usbd_status	ohci_root_intr_start __P((usbd_xfer_handle));
+static void		ohci_root_intr_abort __P((usbd_xfer_handle));
+static void		ohci_root_intr_close __P((usbd_pipe_handle));
+static void		ohci_root_intr_done  __P((usbd_xfer_handle));
 
-usbd_status	ohci_device_ctrl_transfer __P((usbd_xfer_handle));
-usbd_status	ohci_device_ctrl_start __P((usbd_xfer_handle));
-void		ohci_device_ctrl_abort __P((usbd_xfer_handle));
-void		ohci_device_ctrl_close __P((usbd_pipe_handle));
-void		ohci_device_ctrl_done  __P((usbd_xfer_handle));
+static usbd_status	ohci_device_ctrl_transfer __P((usbd_xfer_handle));
+static usbd_status	ohci_device_ctrl_start __P((usbd_xfer_handle));
+static void		ohci_device_ctrl_abort __P((usbd_xfer_handle));
+static void		ohci_device_ctrl_close __P((usbd_pipe_handle));
+static void		ohci_device_ctrl_done  __P((usbd_xfer_handle));
 
-usbd_status	ohci_device_bulk_transfer __P((usbd_xfer_handle));
-usbd_status	ohci_device_bulk_start __P((usbd_xfer_handle));
-void		ohci_device_bulk_abort __P((usbd_xfer_handle));
-void		ohci_device_bulk_close __P((usbd_pipe_handle));
-void		ohci_device_bulk_done  __P((usbd_xfer_handle));
+static usbd_status	ohci_device_bulk_transfer __P((usbd_xfer_handle));
+static usbd_status	ohci_device_bulk_start __P((usbd_xfer_handle));
+static void		ohci_device_bulk_abort __P((usbd_xfer_handle));
+static void		ohci_device_bulk_close __P((usbd_pipe_handle));
+static void		ohci_device_bulk_done  __P((usbd_xfer_handle));
 
-usbd_status	ohci_device_intr_transfer __P((usbd_xfer_handle));
-usbd_status	ohci_device_intr_start __P((usbd_xfer_handle));
-void		ohci_device_intr_abort __P((usbd_xfer_handle));
-void		ohci_device_intr_close __P((usbd_pipe_handle));
-void		ohci_device_intr_done  __P((usbd_xfer_handle));
+static usbd_status	ohci_device_intr_transfer __P((usbd_xfer_handle));
+static usbd_status	ohci_device_intr_start __P((usbd_xfer_handle));
+static void		ohci_device_intr_abort __P((usbd_xfer_handle));
+static void		ohci_device_intr_close __P((usbd_pipe_handle));
+static void		ohci_device_intr_done  __P((usbd_xfer_handle));
 
-usbd_status	ohci_device_isoc_transfer __P((usbd_xfer_handle));
-usbd_status	ohci_device_isoc_start __P((usbd_xfer_handle));
-void		ohci_device_isoc_abort __P((usbd_xfer_handle));
-void		ohci_device_isoc_close __P((usbd_pipe_handle));
-void		ohci_device_isoc_done  __P((usbd_xfer_handle));
+static usbd_status	ohci_device_isoc_transfer __P((usbd_xfer_handle));
+static usbd_status	ohci_device_isoc_start __P((usbd_xfer_handle));
+static void		ohci_device_isoc_abort __P((usbd_xfer_handle));
+static void		ohci_device_isoc_close __P((usbd_pipe_handle));
+static void		ohci_device_isoc_done  __P((usbd_xfer_handle));
 
-usbd_status	ohci_device_setintr __P((ohci_softc_t *sc, 
-					 struct ohci_pipe *pipe, int ival));
+static usbd_status	ohci_device_setintr __P((ohci_softc_t *sc, 
+			    struct ohci_pipe *pipe, int ival));
 
-int		ohci_str __P((usb_string_descriptor_t *, int, char *));
+static int		ohci_str __P((usb_string_descriptor_t *, int, char *));
 
-void		ohci_timeout __P((void *));
-void		ohci_rhsc_able __P((ohci_softc_t *, int));
+static void		ohci_timeout __P((void *));
+static void		ohci_rhsc_able __P((ohci_softc_t *, int));
 
-void		ohci_close_pipe __P((usbd_pipe_handle pipe, 
-				     ohci_soft_ed_t *head));
-void		ohci_abort_xfer __P((usbd_xfer_handle xfer,
-					usbd_status status));
-void		ohci_abort_xfer_end __P((void *));
+static void		ohci_close_pipe __P((usbd_pipe_handle pipe, 
+			    ohci_soft_ed_t *head));
+static void		ohci_abort_xfer __P((usbd_xfer_handle xfer,
+			    usbd_status status));
+static void		ohci_abort_xfer_end __P((void *));
 
-void		ohci_device_clear_toggle __P((usbd_pipe_handle pipe));
-void		ohci_noop __P((usbd_pipe_handle pipe));
+static void		ohci_device_clear_toggle __P((usbd_pipe_handle pipe));
+static void		ohci_noop __P((usbd_pipe_handle pipe));
 
 #ifdef OHCI_DEBUG
-void		ohci_dumpregs __P((ohci_softc_t *));
-void		ohci_dump_tds __P((ohci_soft_td_t *));
-void		ohci_dump_td __P((ohci_soft_td_t *));
-void		ohci_dump_ed __P((ohci_soft_ed_t *));
+static void		ohci_dumpregs __P((ohci_softc_t *));
+static void		ohci_dump_tds __P((ohci_soft_td_t *));
+static void		ohci_dump_td __P((ohci_soft_td_t *));
+static void		ohci_dump_ed __P((ohci_soft_ed_t *));
 #endif
 
 #define OWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
@@ -249,7 +258,6 @@ struct ohci_pipe {
 		} bulk;
 		/* Iso pipe */
 		struct iso {
-			int xxxxx;
 			int next, inuse;
 		} iso;
 	} u;
@@ -257,7 +265,7 @@ struct ohci_pipe {
 
 #define OHCI_INTR_ENDPT 1
 
-struct usbd_bus_methods ohci_bus_methods = {
+static struct usbd_bus_methods ohci_bus_methods = {
 	ohci_open,
 	ohci_softintr,
 	ohci_poll,
@@ -267,7 +275,7 @@ struct usbd_bus_methods ohci_bus_methods = {
 	ohci_freex,
 };
 
-struct usbd_pipe_methods ohci_root_ctrl_methods = {	
+static struct usbd_pipe_methods ohci_root_ctrl_methods = {	
 	ohci_root_ctrl_transfer,
 	ohci_root_ctrl_start,
 	ohci_root_ctrl_abort,
@@ -276,7 +284,7 @@ struct usbd_pipe_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_done,
 };
 
-struct usbd_pipe_methods ohci_root_intr_methods = {	
+static struct usbd_pipe_methods ohci_root_intr_methods = {	
 	ohci_root_intr_transfer,
 	ohci_root_intr_start,
 	ohci_root_intr_abort,
@@ -285,7 +293,7 @@ struct usbd_pipe_methods ohci_root_intr_methods = {
 	ohci_root_intr_done,
 };
 
-struct usbd_pipe_methods ohci_device_ctrl_methods = {	
+static struct usbd_pipe_methods ohci_device_ctrl_methods = {	
 	ohci_device_ctrl_transfer,
 	ohci_device_ctrl_start,
 	ohci_device_ctrl_abort,
@@ -294,7 +302,7 @@ struct usbd_pipe_methods ohci_device_ctrl_methods = {
 	ohci_device_ctrl_done,
 };
 
-struct usbd_pipe_methods ohci_device_intr_methods = {	
+static struct usbd_pipe_methods ohci_device_intr_methods = {	
 	ohci_device_intr_transfer,
 	ohci_device_intr_start,
 	ohci_device_intr_abort,
@@ -303,7 +311,7 @@ struct usbd_pipe_methods ohci_device_intr_methods = {
 	ohci_device_intr_done,
 };
 
-struct usbd_pipe_methods ohci_device_bulk_methods = {	
+static struct usbd_pipe_methods ohci_device_bulk_methods = {	
 	ohci_device_bulk_transfer,
 	ohci_device_bulk_start,
 	ohci_device_bulk_abort,
@@ -312,7 +320,7 @@ struct usbd_pipe_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_done,
 };
 
-struct usbd_pipe_methods ohci_device_isoc_methods = {
+static struct usbd_pipe_methods ohci_device_isoc_methods = {
 	ohci_device_isoc_transfer,
 	ohci_device_isoc_start,
 	ohci_device_isoc_abort,
@@ -356,8 +364,10 @@ ohci_detach(sc, flags)
 	if (rv != 0)
 		return (rv);
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	powerhook_disestablish(sc->sc_powerhook);
 	shutdownhook_disestablish(sc->sc_shutdownhook);
+#endif
 
 	/* free data structures XXX */
 
@@ -377,7 +387,7 @@ ohci_alloc_sed(sc)
 	if (sc->sc_freeeds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
-				 OHCI_ED_ALIGN, &dma);
+			  OHCI_ED_ALIGN, &dma);
 		if (err)
 			return (0);
 		for(i = 0; i < OHCI_SED_CHUNK; i++) {
@@ -417,7 +427,7 @@ ohci_alloc_std(sc)
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
-				 OHCI_TD_ALIGN, &dma);
+			  OHCI_TD_ALIGN, &dma);
 		if (err)
 			return (0);
 		s = splusb();
@@ -479,8 +489,8 @@ ohci_alloc_std_chain(opipe, sc, alen, rd, xfer, sp, ep)
 	cur = sp;
 	dataphys = DMAADDR(dma);
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
-	tdflags = LE(
-	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
+	tdflags = htole32(
+	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) | 
 	    (flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
@@ -512,10 +522,10 @@ ohci_alloc_std_chain(opipe, sc, alen, rd, xfer, sp, ep)
 		len -= curlen;
 
 		cur->td.td_flags = tdflags;
-		cur->td.td_cbp = LE(dataphys);
+		cur->td.td_cbp = htole32(dataphys);
 		cur->nexttd = next;
-		cur->td.td_nexttd = LE(next->physaddr);
-		cur->td.td_be = LE(dataphys + curlen - 1);
+		cur->td.td_nexttd = htole32(next->physaddr);
+		cur->td.td_be = htole32(dataphys + curlen - 1);
 		cur->len = curlen;
 		cur->flags = OHCI_ADD_LEN;
 		cur->xfer = xfer;
@@ -539,7 +549,7 @@ ohci_alloc_std_chain(opipe, sc, alen, rd, xfer, sp, ep)
 		cur->td.td_flags = tdflags;
 		cur->td.td_cbp = 0; /* indicate 0 length packet */
 		cur->nexttd = next;
-		cur->td.td_nexttd = LE(next->physaddr);
+		cur->td.td_nexttd = htole32(next->physaddr);
 		cur->td.td_be = ~0;
 		cur->len = 0;
 		cur->flags = 0;
@@ -550,13 +560,13 @@ ohci_alloc_std_chain(opipe, sc, alen, rd, xfer, sp, ep)
 
 	return (USBD_NORMAL_COMPLETION);
 
-nomem:
+ nomem:
 	/* XXX free chain */
 	return (USBD_NOMEM);
 }
 
 #if 0
-void
+static void
 ohci_free_std_chain(sc, std, stdend)
 	ohci_softc_t *sc;
 	ohci_soft_td_t *std;
@@ -586,7 +596,7 @@ ohci_alloc_sitd(sc)
 			  OHCI_TD_ALIGN, &dma);
 		if (err)
 			return (0);
-		for (i = 0; i < OHCI_STD_CHUNK; i++) {
+		for(i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
 			sitd = (ohci_soft_itd_t *)((char*)KERNADDR(&dma)+offs);
 			sitd->physaddr = DMAADDR(&dma) + offs;
@@ -628,6 +638,7 @@ ohci_init(sc)
 	rev = OREAD4(sc, OHCI_REVISION);
 	printf(" OHCI version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
+
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
 		printf("%s: unsupported OHCI revision\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
@@ -658,7 +669,7 @@ ohci_init(sc)
 		err = USBD_NOMEM;
 		goto bad1;
 	}
-	sc->sc_ctrl_head->ed.ed_flags |= LE(OHCI_ED_SKIP);
+	sc->sc_ctrl_head->ed.ed_flags |= htole32(OHCI_ED_SKIP);
 
 	/* Allocate dummy ED that starts the bulk list. */
 	sc->sc_bulk_head = ohci_alloc_sed(sc);
@@ -666,7 +677,7 @@ ohci_init(sc)
 		err = USBD_NOMEM;
 		goto bad2;
 	}
-	sc->sc_bulk_head->ed.ed_flags |= LE(OHCI_ED_SKIP);
+	sc->sc_bulk_head->ed.ed_flags |= htole32(OHCI_ED_SKIP);
 
 	/* Allocate dummy ED that starts the isochronous list. */
 	sc->sc_isoc_head = ohci_alloc_sed(sc);
@@ -674,7 +685,7 @@ ohci_init(sc)
 		err = USBD_NOMEM;
 		goto bad3;
 	}
-	sc->sc_isoc_head->ed.ed_flags |= LE(OHCI_ED_SKIP);
+	sc->sc_isoc_head->ed.ed_flags |= htole32(OHCI_ED_SKIP);
 
 	/* Allocate all the dummy EDs that make up the interrupt tree. */
 	for (i = 0; i < OHCI_NO_EDS; i++) {
@@ -687,13 +698,13 @@ ohci_init(sc)
 		}
 		/* All ED fields are set to 0. */
 		sc->sc_eds[i] = sed;
-		sed->ed.ed_flags |= LE(OHCI_ED_SKIP);
+		sed->ed.ed_flags |= htole32(OHCI_ED_SKIP);
 		if (i != 0)
 			psed = sc->sc_eds[(i-1) / 2];
 		else
-			psed = sc->sc_isoc_head;
+			psed= sc->sc_isoc_head;
 		sed->next = psed;
-		sed->ed.ed_nexted = LE(psed->physaddr);
+		sed->ed.ed_nexted = htole32(psed->physaddr);
 	}
 	/* 
 	 * Fill HCCA interrupt table.  The bit reversal is to get
@@ -701,7 +712,7 @@ ohci_init(sc)
 	 */
 	for (i = 0; i < OHCI_NO_INTRS; i++)
 		sc->sc_hcca->hcca_interrupt_table[revbits[i]] = 
-			LE(sc->sc_eds[OHCI_NO_EDS-OHCI_NO_INTRS+i]->physaddr);
+		    htole32(sc->sc_eds[OHCI_NO_EDS-OHCI_NO_INTRS+i]->physaddr);
 
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 15) {
@@ -820,8 +831,10 @@ ohci_init(sc)
 	sc->sc_bus.methods = &ohci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
+#endif
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -873,7 +886,7 @@ ohci_allocx(bus)
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL)
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);	
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
 	else
 		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
 	if (xfer != NULL)
@@ -881,7 +894,8 @@ ohci_allocx(bus)
 	return (xfer);
 }
 
-void ohci_freex(bus, xfer)
+void
+ohci_freex(bus, xfer)
 	struct usbd_bus *bus;
 	usbd_xfer_handle xfer;
 {
@@ -890,6 +904,9 @@ void ohci_freex(bus, xfer)
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
+/*
+ * Shut down the controller when the system is going down.
+ */
 void
 ohci_shutdown(v)
 	void *v;
@@ -904,7 +921,7 @@ ohci_shutdown(v)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an interrupt context.  This is all right since we
+ * called from an intterupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
@@ -958,12 +975,12 @@ ohci_dumpregs(sc)
 		 OREAD4(sc, OHCI_RH_PORT_STATUS(1)),
 		 OREAD4(sc, OHCI_RH_PORT_STATUS(2))));
 	DPRINTF(("         HCCA: frame_number=0x%04x done_head=0x%08x\n",
-		 LE(sc->sc_hcca->hcca_frame_number),
-		 LE(sc->sc_hcca->hcca_done_head)));
+		 le32toh(sc->sc_hcca->hcca_frame_number),
+		 le32toh(sc->sc_hcca->hcca_done_head)));
 }
 #endif
 
-int ohci_intr1 __P((ohci_softc_t *));
+static int ohci_intr1 __P((ohci_softc_t *));
 
 int
 ohci_intr(p)
@@ -979,10 +996,10 @@ ohci_intr(p)
 		return (0);
 	}
 
-	return (ohci_intr1(sc));
+	return (ohci_intr1(sc)); 
 }
 
-int
+static int
 ohci_intr1(sc)
 	ohci_softc_t *sc;
 {
@@ -998,9 +1015,8 @@ ohci_intr1(sc)
 	}
 
         intrs = 0;
-	done = LE(sc->sc_hcca->hcca_done_head);
+	done = le32toh(sc->sc_hcca->hcca_done_head);
 	if (done != 0) {
-		sc->sc_hcca->hcca_done_head = 0;
 		if (done & ~OHCI_DONE_INTRS)
 			intrs = OHCI_WDH;
 		if (done & OHCI_DONE_INTRS)
@@ -1019,7 +1035,7 @@ ohci_intr1(sc)
 
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
-	DPRINTFN(7, ("ohci_intr: sc=%p intrs=0x%x(0x%x) eintr=0x%x\n", 
+	DPRINTFN(7, ("ohci_intr: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n", 
 		     sc, (u_int)intrs, OREAD4(sc, OHCI_INTERRUPT_STATUS),
 		     (u_int)eintrs));
 
@@ -1033,14 +1049,14 @@ ohci_intr1(sc)
 		if (sc->sc_done == 0)
 			sc->sc_done = done;
 		else {
-			/* Tack on at end of the sc_dne. */
+			/* Tack on at the end of sc_done. */
 			ohci_physaddr_t ldone;
 			ohci_soft_td_t *std;
 
-			for (ldone = sc->sc_done; ldone != 0;
-			     ldone = LE(std->td.td_nexttd))
+			for (ldone = sc->sc_done; ldone != 0; 
+			     ldone = le32toh(std->td.td_nexttd))
 				std = ohci_hash_find_td(sc, ldone);
-			std->td.td_nexttd = LE(done);
+			std->td.td_nexttd = htole32(done);
 		}
 		sc->sc_hcca->hcca_done_head = 0;
 		usb_schedsoftintr(&sc->sc_bus);
@@ -1107,7 +1123,7 @@ char *ohci_cc_strs[] = {
 	"BUFFER_UNDERRUN",
 	"reserved",
 	"reserved",
-	"NOT ACCESSED",
+	"NOT_ACCESSED",
 	"NOT_ACCESSED",
 };
 #endif
@@ -1132,7 +1148,7 @@ ohci_softintr(bus)
 	DPRINTFN(10,("ohci_process_done: done=0x%08lx\n", (u_long)done));
 
 	/* Reverse the done list. */
-	for (sdone = NULL; done != 0; done = LE(std->td.td_nexttd)) {
+	for (sdone = NULL; done != 0; done = le32toh(std->td.td_nexttd)) {
 		std = ohci_hash_find_td(sc, done);
 		std->dnext = sdone;
 		sdone = std;
@@ -1150,8 +1166,15 @@ ohci_softintr(bus)
 		stdnext = std->dnext;
 		DPRINTFN(10, ("ohci_process_done: std=%p xfer=%p hcpriv=%p\n",
 				std, xfer, xfer ? xfer->hcpriv : 0));
-		cc = OHCI_TD_GET_CC(LE(std->td.td_flags));
-		usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
+		if (xfer == NULL) {
+			/* xfer == NULL: There seems to be no xfer associated
+			 * with this TD. It is tailp that happened to end up on
+			 * the done queue.
+			 */
+			continue;
+		}
+		cc = OHCI_TD_GET_CC(le32toh(std->td.td_flags));
+		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 		if (xfer->status == USBD_CANCELLED ||
 		    xfer->status == USBD_TIMEOUT) {
 			DPRINTF(("ohci_process_done: cancel/timeout %p\n",
@@ -1160,8 +1183,8 @@ ohci_softintr(bus)
 		} else if (cc == OHCI_CC_NO_ERROR) {
 			len = std->len;
 			if (std->td.td_cbp != 0)
-				len -= LE(std->td.td_be) -
-				       LE(std->td.td_cbp) + 1;
+				len -= le32toh(std->td.td_be) -
+				       le32toh(std->td.td_cbp) + 1;
 			DPRINTFN(10, ("ohci_process_done: len=%d, flags=0x%x\n",
 				      len, std->flags));
 			if (std->flags & OHCI_ADD_LEN)
@@ -1181,9 +1204,9 @@ ohci_softintr(bus)
 			struct ohci_pipe *opipe = 
 				(struct ohci_pipe *)xfer->pipe;
 
-			DPRINTF(("ohci_process_done: error cc=%d (%s)\n",
-			 OHCI_TD_GET_CC(LE(std->td.td_flags)),
-			 ohci_cc_strs[OHCI_TD_GET_CC(LE(std->td.td_flags))]));
+			DPRINTFN(15,("ohci_process_done: error cc=%d (%s)\n",
+			  OHCI_TD_GET_CC(le32toh(std->td.td_flags)),
+			  ohci_cc_strs[OHCI_TD_GET_CC(le32toh(std->td.td_flags))]));
 
 			/* remove TDs */
 			for (p = std; p->xfer == xfer; p = n) {
@@ -1192,7 +1215,7 @@ ohci_softintr(bus)
 			}
 
 			/* clear halt */
-			opipe->sed->ed.ed_headp = LE(p->physaddr);
+			opipe->sed->ed.ed_headp = htole32(p->physaddr);
 			OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 
 			if (cc == OHCI_CC_STALL)
@@ -1229,6 +1252,7 @@ ohci_device_intr_done(xfer)
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *data, *tail;
 
+
 	DPRINTFN(10,("ohci_intr_done: xfer=%p, actlen=%d\n", 
 		     xfer, xfer->actlen));
 
@@ -1243,22 +1267,23 @@ ohci_device_intr_done(xfer)
 		}
 		tail->xfer = NULL;
 		
-		data->td.td_flags = LE(
+		data->td.td_flags = htole32(
 			OHCI_TD_IN | OHCI_TD_NOCC | 
 			OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 		if (xfer->flags & USBD_SHORT_XFER_OK)
-			data->td.td_flags |= LE(OHCI_TD_R);
-		data->td.td_cbp = LE(DMAADDR(&xfer->dmabuf));
+			data->td.td_flags |= htole32(OHCI_TD_R);
+		data->td.td_cbp = htole32(DMAADDR(&xfer->dmabuf));
 		data->nexttd = tail;
-		data->td.td_nexttd = LE(tail->physaddr);
-		data->td.td_be = LE(LE(data->td.td_cbp) + xfer->length - 1);
+		data->td.td_nexttd = htole32(tail->physaddr);
+		data->td.td_be = htole32(le32toh(data->td.td_cbp) +
+			xfer->length - 1);
 		data->len = xfer->length;
 		data->xfer = xfer;
 		data->flags = OHCI_CALL_DONE | OHCI_ADD_LEN;
 		xfer->hcpriv = data;
 		xfer->actlen = 0;
 
-		sed->ed.ed_tailp = LE(tail->physaddr);
+		sed->ed.ed_tailp = htole32(tail->physaddr);
 		opipe->tail.td = tail;
 	}
 }
@@ -1270,7 +1295,7 @@ ohci_device_bulk_done(xfer)
 	DPRINTFN(10,("ohci_bulk_done: xfer=%p, actlen=%d\n", 
 		     xfer, xfer->actlen));
 
-	xfer->hcpriv = 0;
+	xfer->hcpriv = NULL;
 }
 
 void
@@ -1288,7 +1313,7 @@ ohci_rhsc(sc, xfer)
 	DPRINTF(("ohci_rhsc: sc=%p xfer=%p hstatus=0x%08x\n", 
 		 sc, xfer, hstatus));
 
-	if (xfer == 0) {
+	if (xfer == NULL) {
 		/* Just ignore the change. */
 		return;
 	}
@@ -1415,8 +1440,8 @@ ohci_device_request(xfer)
 	/* Update device address and length since they may have changed. */
 	/* XXX This only needs to be done once, but it's too early in open. */
 	/* XXXX Should not touch ED here! */
-	sed->ed.ed_flags = LE(
-	 (LE(sed->ed.ed_flags) & ~(OHCI_ED_ADDRMASK | OHCI_ED_MAXPMASK)) |
+	sed->ed.ed_flags = htole32(
+	 (le32toh(sed->ed.ed_flags) & ~(OHCI_ED_ADDRMASK | OHCI_ED_MAXPMASK)) |
 	 OHCI_ED_SET_FA(addr) |
 	 OHCI_ED_SET_MAXP(UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize)));
 
@@ -1427,34 +1452,34 @@ ohci_device_request(xfer)
 		ohci_soft_td_t *std = stat;
 
 		err = ohci_alloc_std_chain(opipe, sc, len, isread, xfer,
-			    std, &stat);
+			  std, &stat);
 		stat = stat->nexttd; /* point at free TD */
 		if (err)
 			goto bad3;
 		/* Start toggle at 1 and then use the carried toggle. */
-		std->td.td_flags &= LE(~OHCI_TD_TOGGLE_MASK);
-		std->td.td_flags |= LE(OHCI_TD_TOGGLE_1);
+		std->td.td_flags &= htole32(~OHCI_TD_TOGGLE_MASK);
+		std->td.td_flags |= htole32(OHCI_TD_TOGGLE_1);
 	}
 
 	memcpy(KERNADDR(&opipe->u.ctl.reqdma), req, sizeof *req);
 
-	setup->td.td_flags = LE(OHCI_TD_SETUP | OHCI_TD_NOCC |
-				 OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
-	setup->td.td_cbp = LE(DMAADDR(&opipe->u.ctl.reqdma));
+	setup->td.td_flags = htole32(OHCI_TD_SETUP | OHCI_TD_NOCC |
+				     OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
+	setup->td.td_cbp = htole32(DMAADDR(&opipe->u.ctl.reqdma));
 	setup->nexttd = next;
-	setup->td.td_nexttd = LE(next->physaddr);
-	setup->td.td_be = LE(LE(setup->td.td_cbp) + sizeof *req - 1);
+	setup->td.td_nexttd = htole32(next->physaddr);
+	setup->td.td_be = htole32(le32toh(setup->td.td_cbp) + sizeof *req - 1);
 	setup->len = 0;
 	setup->xfer = xfer;
 	setup->flags = 0;
 	xfer->hcpriv = setup;
 
-	stat->td.td_flags = LE(
+	stat->td.td_flags = htole32(
 		(isread ? OHCI_TD_OUT : OHCI_TD_IN) |
 		OHCI_TD_NOCC | OHCI_TD_TOGGLE_1 | OHCI_TD_SET_DI(1));
 	stat->td.td_cbp = 0;
 	stat->nexttd = tail;
-	stat->td.td_nexttd = LE(tail->physaddr);
+	stat->td.td_nexttd = htole32(tail->physaddr);
 	stat->td.td_be = 0;
 	stat->flags = OHCI_CALL_DONE;
 	stat->len = 0;
@@ -1470,12 +1495,12 @@ ohci_device_request(xfer)
 
 	/* Insert ED in schedule */
 	s = splusb();
-	sed->ed.ed_tailp = LE(tail->physaddr);
+	sed->ed.ed_tailp = htole32(tail->physaddr);
 	opipe->tail.td = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_timeout(ohci_timeout, xfer,
-			    MS_TO_TICKS(xfer->timeout), xfer->timo_handle);
+                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+			    ohci_timeout, xfer);
 	}
 	splx(s);
 
@@ -1511,7 +1536,7 @@ ohci_add_ed(sed, head)
 	sed->next = head->next;
 	sed->ed.ed_nexted = head->ed.ed_nexted;
 	head->next = sed;
-	head->ed.ed_nexted = LE(sed->physaddr);
+	head->ed.ed_nexted = htole32(sed->physaddr);
 }
 
 /*
@@ -1527,7 +1552,7 @@ ohci_rem_ed(sed, head)
 	SPLUSBCHECK;
 
 	/* XXX */
-	for (p = head; p != NULL && p->next != sed; p = p->next)
+	for (p = head; p == NULL && p->next != sed; p = p->next)
 		;
 	if (p == NULL)
 		panic("ohci_rem_ed: ED not found\n");
@@ -1579,7 +1604,7 @@ ohci_hash_find_td(sc, a)
 	ohci_soft_td_t *std;
 
 	for (std = LIST_FIRST(&sc->sc_hash_tds[h]); 
-	     std != NULL; 
+	     std != NULL;
 	     std = LIST_NEXT(std, hnext))
 		if (std->physaddr == a)
 			return (std);
@@ -1618,13 +1643,14 @@ ohci_dump_td(std)
 	DPRINTF(("TD(%p) at %08lx: %b delay=%d ec=%d cc=%d\ncbp=0x%08lx "
 		 "nexttd=0x%08lx be=0x%08lx\n", 
 		 std, (u_long)std->physaddr,
-		 (int)LE(std->td.td_flags),
+		 (int)le32toh(std->td.td_flags),
 		 "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
-		 OHCI_TD_GET_DI(LE(std->td.td_flags)),
-		 OHCI_TD_GET_EC(LE(std->td.td_flags)),
-		 OHCI_TD_GET_CC(LE(std->td.td_flags)),
-		 (u_long)LE(std->td.td_cbp),
-		 (u_long)LE(std->td.td_nexttd), (u_long)LE(std->td.td_be)));
+		 OHCI_TD_GET_DI(le32toh(std->td.td_flags)),
+		 OHCI_TD_GET_EC(le32toh(std->td.td_flags)),
+		 OHCI_TD_GET_CC(le32toh(std->td.td_flags)),
+		 (u_long)le32toh(std->td.td_cbp),
+		 (u_long)le32toh(std->td.td_nexttd),
+		 (u_long)le32toh(std->td.td_be)));
 }
 
 void
@@ -1632,18 +1658,18 @@ ohci_dump_ed(sed)
 	ohci_soft_ed_t *sed;
 {
 	DPRINTF(("ED(%p) at 0x%08lx: addr=%d endpt=%d maxp=%d %b\ntailp=0x%08lx "
-		 "headsflags=%b headp=%b nexted=0x%08lx\n",
+		 "headflags=%b headp=0x%08lx nexted=0x%08lx\n",
 		 sed, (u_long)sed->physaddr, 
-		 OHCI_ED_GET_FA(LE(sed->ed.ed_flags)),
-		 OHCI_ED_GET_EN(LE(sed->ed.ed_flags)),
-		 OHCI_ED_GET_MAXP(LE(sed->ed.ed_flags)),
-		 (int)LE(sed->ed.ed_flags),
+		 OHCI_ED_GET_FA(le32toh(sed->ed.ed_flags)),
+		 OHCI_ED_GET_EN(le32toh(sed->ed.ed_flags)),
+		 OHCI_ED_GET_MAXP(le32toh(sed->ed.ed_flags)),
+		 (int)le32toh(sed->ed.ed_flags),
 		 "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
-		 (u_long)LE(sed->ed.ed_tailp),
-		 (u_long)LE(sed->ed.ed_headp),
+		 (u_long)le32toh(sed->ed.ed_tailp),
+		 (u_long)le32toh(sed->ed.ed_headp),
 		 "\20\1HALT\2CARRY",
-		 (u_long)LE(sed->ed.ed_headp),
-		 (u_long)LE(sed->ed.ed_nexted)));
+		 (u_long)le32toh(sed->ed.ed_headp),
+		 (u_long)le32toh(sed->ed.ed_nexted)));
 }
 #endif
 
@@ -1668,6 +1694,7 @@ ohci_open(pipe)
 
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+
 	if (addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
@@ -1691,7 +1718,7 @@ ohci_open(pipe)
 				goto bad1;
 			}
 			opipe->tail.itd = sitd;
-			tdphys = LE(sitd->physaddr);
+			tdphys = sitd->physaddr;
 			fmt = OHCI_ED_FORMAT_ISO;
 		} else {
 			std = ohci_alloc_std(sc);
@@ -1700,23 +1727,23 @@ ohci_open(pipe)
 				goto bad1;
 			}
 			opipe->tail.td = std;
-			tdphys = LE(std->physaddr);
+			tdphys = std->physaddr;
 			fmt = OHCI_ED_FORMAT_GEN;
 		}
-		sed->ed.ed_flags = LE(
+		sed->ed.ed_flags = htole32(
 			OHCI_ED_SET_FA(addr) | 
 			OHCI_ED_SET_EN(ed->bEndpointAddress) |
 			OHCI_ED_DIR_TD | 
 			(dev->lowspeed ? OHCI_ED_SPEED : 0) | fmt |
 			OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
-		sed->ed.ed_headp = sed->ed.ed_tailp = tdphys;
+		sed->ed.ed_headp = sed->ed.ed_tailp = htole32(tdphys);
 
 		switch (xfertype) {
 		case UE_CONTROL:
 			pipe->methods = &ohci_device_ctrl_methods;
 			err = usb_allocmem(&sc->sc_bus, 
-					 sizeof(usb_device_request_t), 
-					 0, &opipe->u.ctl.reqdma);
+				  sizeof(usb_device_request_t), 
+				  0, &opipe->u.ctl.reqdma);
 			if (err)
 				goto bad;
 			s = splusb();
@@ -1767,10 +1794,10 @@ ohci_close_pipe(pipe, head)
 
 	s = splusb();
 #ifdef DIAGNOSTIC
-	sed->ed.ed_flags |= LE(OHCI_ED_SKIP);
-	if ((sed->ed.ed_tailp & LE(OHCI_HEADMASK)) != 
-	    (sed->ed.ed_headp & LE(OHCI_HEADMASK))) {
-		ohci_physaddr_t td = sed->ed.ed_headp;
+	sed->ed.ed_flags |= htole32(OHCI_ED_SKIP);
+	if ((le32toh(sed->ed.ed_tailp) & OHCI_HEADMASK) != 
+	    (le32toh(sed->ed.ed_headp) & OHCI_HEADMASK)) {
+		ohci_physaddr_t td = le32toh(sed->ed.ed_headp);
 		ohci_soft_td_t *std;
 		for (std = LIST_FIRST(&sc->sc_hash_tds[HASH(td)]); 
 		     std != NULL;
@@ -1779,11 +1806,12 @@ ohci_close_pipe(pipe, head)
 			break;
 		printf("ohci_close_pipe: pipe not empty sed=%p hd=0x%x "
 		       "tl=0x%x pipe=%p, std=%p\n", sed,
-		       (int)LE(sed->ed.ed_headp), (int)LE(sed->ed.ed_tailp),
+		       (int)le32toh(sed->ed.ed_headp),
+		       (int)le32toh(sed->ed.ed_tailp),
 		       pipe, std);
 		usb_delay_ms(&sc->sc_bus, 2);
-		if ((sed->ed.ed_tailp & LE(OHCI_HEADMASK)) !=
-		    (sed->ed.ed_headp & LE(OHCI_HEADMASK)))
+		if ((le32toh(sed->ed.ed_tailp) & OHCI_HEADMASK) != 
+		    (le32toh(sed->ed.ed_headp) & OHCI_HEADMASK))
 			printf("ohci_close_pipe: pipe still not empty\n");
 	}
 #endif
@@ -1814,20 +1842,21 @@ ohci_abort_xfer(xfer, status)
 
 	xfer->status = status;
 
-	usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
+	usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 
 	sed = opipe->sed;
 	DPRINTFN(1,("ohci_abort_xfer: stop ed=%p\n", sed));
-	sed->ed.ed_flags |= LE(OHCI_ED_SKIP); /* force hardware skip */
+	sed->ed.ed_flags |= htole32(OHCI_ED_SKIP); /* force hardware skip */
 
 #if 1
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(ohci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		usb_callout(xfer->pipe->abort_handle,
+		    hz / USB_FRAMES_PER_SECOND, ohci_abort_xfer_end, xfer);
 	} else {
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
 		KASSERT(intr_nesting_level == 0,
-			("ohci_abort_req in interrupt context"));
+	        	("ohci_abort_req in interrupt context"));
 #endif
 		usb_delay_ms(opipe->pipe.device->bus, 1);
 		ohci_abort_xfer_end(xfer);
@@ -1865,9 +1894,9 @@ ohci_abort_xfer_end(v)
 
 	sed = opipe->sed;
 	DPRINTFN(2,("ohci_abort_xfer: set hd=%x, tl=%x\n",
-		    (int)LE(p->physaddr), (int)LE(sed->ed.ed_tailp)));
-	sed->ed.ed_headp = p->physaddr; /* unlink TDs */
-	sed->ed.ed_flags &= LE(~OHCI_ED_SKIP); /* remove hardware skip */
+		    (int)p->physaddr, (int)le32toh(sed->ed.ed_tailp)));
+	sed->ed.ed_headp = htole32(p->physaddr); /* unlink TDs */
+	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP); /* remove hardware skip */
 
 	usb_transfer_complete(xfer);
 
@@ -1877,7 +1906,7 @@ ohci_abort_xfer_end(v)
 /*
  * Data structures and routines to emulate the root hub.
  */
-usb_device_descriptor_t ohci_devd = {
+static usb_device_descriptor_t ohci_devd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE,		/* type */
 	{0x00, 0x01},		/* USB version */
@@ -1890,7 +1919,7 @@ usb_device_descriptor_t ohci_devd = {
 	1			/* # of configurations */
 };
 
-usb_config_descriptor_t ohci_confd = {
+static usb_config_descriptor_t ohci_confd = {
 	USB_CONFIG_DESCRIPTOR_SIZE,
 	UDESC_CONFIG,
 	{USB_CONFIG_DESCRIPTOR_SIZE +
@@ -1903,7 +1932,7 @@ usb_config_descriptor_t ohci_confd = {
 	0			/* max power */
 };
 
-usb_interface_descriptor_t ohci_ifcd = {
+static usb_interface_descriptor_t ohci_ifcd = {
 	USB_INTERFACE_DESCRIPTOR_SIZE,
 	UDESC_INTERFACE,
 	0,
@@ -1915,7 +1944,7 @@ usb_interface_descriptor_t ohci_ifcd = {
 	0
 };
 
-usb_endpoint_descriptor_t ohci_endpd = {
+static usb_endpoint_descriptor_t ohci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
 	UE_DIR_IN | OHCI_INTR_ENDPT,
@@ -1924,7 +1953,7 @@ usb_endpoint_descriptor_t ohci_endpd = {
 	255
 };
 
-usb_hub_descriptor_t ohci_hubd = {
+static usb_hub_descriptor_t ohci_hubd = {
 	USB_HUB_DESCRIPTOR_SIZE,
 	UDESC_HUB,
 	0,
@@ -1934,7 +1963,7 @@ usb_hub_descriptor_t ohci_hubd = {
 	{0},
 };
 
-int
+static int
 ohci_str(p, l, s)
 	usb_string_descriptor_t *p;
 	int l;
@@ -1957,7 +1986,7 @@ ohci_str(p, l, s)
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
-usbd_status
+static usbd_status
 ohci_root_ctrl_transfer(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -1972,7 +2001,7 @@ ohci_root_ctrl_transfer(xfer)
 	return (ohci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-usbd_status
+static usbd_status
 ohci_root_ctrl_start(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2272,7 +2301,7 @@ ohci_root_ctrl_start(xfer)
 }
 
 /* Abort a root control request. */
-void
+static void
 ohci_root_ctrl_abort(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2280,7 +2309,7 @@ ohci_root_ctrl_abort(xfer)
 }
 
 /* Close the root pipe. */
-void
+static void
 ohci_root_ctrl_close(pipe)
 	usbd_pipe_handle pipe;
 {
@@ -2288,7 +2317,7 @@ ohci_root_ctrl_close(pipe)
 	/* Nothing to do. */
 }
 
-usbd_status
+static usbd_status
 ohci_root_intr_transfer(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2303,7 +2332,7 @@ ohci_root_intr_transfer(xfer)
 	return (ohci_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-usbd_status
+static usbd_status
 ohci_root_intr_start(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2316,7 +2345,7 @@ ohci_root_intr_start(xfer)
 }
 
 /* Abort a root interrupt request. */
-void
+static void
 ohci_root_intr_abort(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2333,7 +2362,7 @@ ohci_root_intr_abort(xfer)
 }
 
 /* Close the root pipe. */
-void
+static void
 ohci_root_intr_close(pipe)
 	usbd_pipe_handle pipe;
 {
@@ -2346,7 +2375,7 @@ ohci_root_intr_close(pipe)
 
 /************************/
 
-usbd_status
+static usbd_status
 ohci_device_ctrl_transfer(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2361,7 +2390,7 @@ ohci_device_ctrl_transfer(xfer)
 	return (ohci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-usbd_status
+static usbd_status
 ohci_device_ctrl_start(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2386,7 +2415,7 @@ ohci_device_ctrl_start(xfer)
 }
 
 /* Abort a device control request. */
-void
+static void
 ohci_device_ctrl_abort(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2395,7 +2424,7 @@ ohci_device_ctrl_abort(xfer)
 }
 
 /* Close a device control pipe. */
-void
+static void
 ohci_device_ctrl_close(pipe)
 	usbd_pipe_handle pipe;
 {
@@ -2409,22 +2438,22 @@ ohci_device_ctrl_close(pipe)
 
 /************************/
 
-void
+static void
 ohci_device_clear_toggle(pipe)
 	usbd_pipe_handle pipe;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 
-	opipe->sed->ed.ed_headp &= LE(~OHCI_TOGGLECARRY);
+	opipe->sed->ed.ed_headp &= htole32(~OHCI_TOGGLECARRY);
 }
 
-void
+static void
 ohci_noop(pipe)
 	usbd_pipe_handle pipe;
 {
 }
 
-usbd_status
+static usbd_status
 ohci_device_bulk_transfer(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2439,7 +2468,7 @@ ohci_device_bulk_transfer(xfer)
 	return (ohci_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-usbd_status
+static usbd_status
 ohci_device_bulk_start(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2473,16 +2502,17 @@ ohci_device_bulk_start(xfer)
 	opipe->u.bulk.length = len;
 
 	/* Update device address */
-	sed->ed.ed_flags = LE(
-		(LE(sed->ed.ed_flags) & ~OHCI_ED_ADDRMASK) |
+	sed->ed.ed_flags = htole32(
+		(le32toh(sed->ed.ed_flags) & ~OHCI_ED_ADDRMASK) |
 		OHCI_ED_SET_FA(addr));
 
 	/* Allocate a chain of new TDs (including a new tail). */
 	data = opipe->tail.td;
-	err = ohci_alloc_std_chain(opipe, sc, len, isread,  xfer, data, &tail);
+	err = ohci_alloc_std_chain(opipe, sc, len, isread, xfer,
+		  data, &tail);
 	/* We want interrupt at the end of the transfer. */
-	tail->td.td_flags &= LE(~OHCI_TD_INTR_MASK);
-	tail->td.td_flags |= LE(OHCI_TD_SET_DI(1));
+	tail->td.td_flags &= htole32(~OHCI_TD_INTR_MASK);
+	tail->td.td_flags |= htole32(OHCI_TD_SET_DI(1));
 	tail->flags |= OHCI_CALL_DONE;
 	tail = tail->nexttd;	/* point at sentinel */
 	if (err)
@@ -2493,8 +2523,10 @@ ohci_device_bulk_start(xfer)
 
 	DPRINTFN(4,("ohci_device_bulk_start: ed_flags=0x%08x td_flags=0x%08x "
 		    "td_cbp=0x%08x td_be=0x%08x\n",
-		    (int)LE(sed->ed.ed_flags), (int)LE(data->td.td_flags),
-		    (int)LE(data->td.td_cbp), (int)LE(data->td.td_be)));
+		    (int)le32toh(sed->ed.ed_flags),
+		    (int)le32toh(data->td.td_flags),
+		    (int)le32toh(data->td.td_cbp),
+		    (int)le32toh(data->td.td_be)));
 
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 5) {
@@ -2508,13 +2540,13 @@ ohci_device_bulk_start(xfer)
 	for (tdp = data; tdp != tail; tdp = tdp->nexttd) {
 		tdp->xfer = xfer;
 	}
-	sed->ed.ed_tailp = LE(tail->physaddr);
+	sed->ed.ed_tailp = htole32(tail->physaddr);
 	opipe->tail.td = tail;
-	sed->ed.ed_flags &= LE(~OHCI_ED_SKIP);
+	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_timeout(ohci_timeout, xfer,
-			    MS_TO_TICKS(xfer->timeout), xfer->timo_handle);
+                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+			    ohci_timeout, xfer);
 	}
 
 #if 0
@@ -2533,7 +2565,7 @@ ohci_device_bulk_start(xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-void
+static void
 ohci_device_bulk_abort(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2544,7 +2576,7 @@ ohci_device_bulk_abort(xfer)
 /* 
  * Close a device bulk pipe.
  */
-void
+static void
 ohci_device_bulk_close(pipe)
 	usbd_pipe_handle pipe;
 {
@@ -2558,7 +2590,7 @@ ohci_device_bulk_close(pipe)
 
 /************************/
 
-usbd_status
+static usbd_status
 ohci_device_intr_transfer(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2573,7 +2605,7 @@ ohci_device_intr_transfer(xfer)
 	return (ohci_device_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-usbd_status
+static usbd_status
 ohci_device_intr_start(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2602,15 +2634,15 @@ ohci_device_intr_start(xfer)
 		return (USBD_NOMEM);
 	tail->xfer = NULL;
 
-	data->td.td_flags = LE(
+	data->td.td_flags = htole32(
 		OHCI_TD_IN | OHCI_TD_NOCC | 
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
-		data->td.td_flags |= LE(OHCI_TD_R);
-	data->td.td_cbp = LE(DMAADDR(&xfer->dmabuf));
+		data->td.td_flags |= htole32(OHCI_TD_R);
+	data->td.td_cbp = htole32(DMAADDR(&xfer->dmabuf));
 	data->nexttd = tail;
-	data->td.td_nexttd = LE(tail->physaddr);
-	data->td.td_be = LE(LE(data->td.td_cbp) + len - 1);
+	data->td.td_nexttd = htole32(tail->physaddr);
+	data->td.td_be = htole32(le32toh(data->td.td_cbp) + len - 1);
 	data->len = len;
 	data->xfer = xfer;
 	data->flags = OHCI_CALL_DONE | OHCI_ADD_LEN;
@@ -2626,9 +2658,9 @@ ohci_device_intr_start(xfer)
 
 	/* Insert ED in schedule */
 	s = splusb();
-	sed->ed.ed_tailp = LE(tail->physaddr);
+	sed->ed.ed_tailp = htole32(tail->physaddr);
 	opipe->tail.td = tail;
-	sed->ed.ed_flags &= LE(~OHCI_ED_SKIP);
+	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
 
 #if 0
 /*
@@ -2650,7 +2682,7 @@ ohci_device_intr_start(xfer)
 }
 
 /* Abort a device control request. */
-void
+static void
 ohci_device_intr_abort(xfer)
 	usbd_xfer_handle xfer;
 {
@@ -2662,7 +2694,7 @@ ohci_device_intr_abort(xfer)
 }
 
 /* Close a device interrupt pipe. */
-void
+static void
 ohci_device_intr_close(pipe)
 	usbd_pipe_handle pipe;
 {
@@ -2677,9 +2709,9 @@ ohci_device_intr_close(pipe)
 	DPRINTFN(1,("ohci_device_intr_close: pipe=%p nslots=%d pos=%d\n",
 		    pipe, nslots, pos));
 	s = splusb();
-	sed->ed.ed_flags |= LE(OHCI_ED_SKIP);
-	if ((sed->ed.ed_tailp & LE(OHCI_HEADMASK)) != 
-	    (sed->ed.ed_headp & LE(OHCI_HEADMASK)))
+	sed->ed.ed_flags |= htole32(OHCI_ED_SKIP);
+	if ((le32toh(sed->ed.ed_tailp) & OHCI_HEADMASK) != 
+	    (le32toh(sed->ed.ed_headp) & OHCI_HEADMASK))
 		usb_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
@@ -2699,7 +2731,7 @@ ohci_device_intr_close(pipe)
 	ohci_free_sed(sc, opipe->sed);
 }
 
-usbd_status
+static usbd_status
 ohci_device_setintr(sc, opipe, ival)
 	ohci_softc_t *sc;
 	struct ohci_pipe *opipe;
@@ -2752,7 +2784,7 @@ ohci_device_setintr(sc, opipe, ival)
 	sed->next = hsed->next;
 	sed->ed.ed_nexted = hsed->ed.ed_nexted;
 	hsed->next = sed;
-	hsed->ed.ed_nexted = LE(sed->physaddr);
+	hsed->ed.ed_nexted = htole32(sed->physaddr);
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
@@ -2783,7 +2815,7 @@ ohci_device_isoc_transfer(xfer)
 
 	/* XXX should check inuse here */
 
-	/* insert into schedule */
+	/* insert into schedule, */
 	ohci_device_isoc_enter(xfer);
 
 	/* and put on interrupt list if the pipe wasn't running */
@@ -2802,7 +2834,7 @@ ohci_device_isoc_enter(xfer)
 	ohci_softc_t *sc = (ohci_softc_t *)dev->bus;
 	ohci_soft_ed_t *sed = opipe->sed;
 	struct iso *iso = &opipe->u.iso;
-	ohci_soft_itd_t *sitd, *nsitd;
+	ohci_soft_itd_t *sitd, *nsitd;	
 	ohci_physaddr_t buf, offs;
 	int i, ncur, nframes;
 	int ncross;
@@ -2811,34 +2843,37 @@ ohci_device_isoc_enter(xfer)
 	s = splusb();
 	sitd = opipe->tail.itd;
 	buf = DMAADDR(&xfer->dmabuf);
-	sitd->itd.itd_bp0 = LE(buf & OHCI_ITD_PAGE_MASK);
+	sitd->itd.itd_bp0 = htole32(buf & OHCI_ITD_PAGE_MASK);
 	nframes = xfer->nframes;
 	offs = buf & OHCI_ITD_OFFSET_MASK;
 	ncross = 0;
-	for (i = ncur = 0; i < nframes; i ++, ncur++) {
-		if (ncur == OHCI_ITD_NOFFSET || /* all offsets used */
-		    ncross > 1) {		/* too many page crossings */
+	for (i = ncur = 0; i < nframes; i++, ncur++) {
+		if (ncur == OHCI_ITD_NOFFSET ||	/* all offsets used */
+		    ncross > 1) {	/* too many page crossings */
+			
 			nsitd = ohci_alloc_sitd(sc);
 			if (nsitd == NULL) {
 				/* XXX what now? */
 				return;
 			}
 			sitd->nextitd = nsitd;
-			sitd->itd.itd_nextitd = LE(nsitd->physaddr);
-			sitd->itd.itd_flags = LE(
-				OHCI_ITD_NOCC |
+			sitd->itd.itd_nextitd = htole32(nsitd->physaddr);
+			sitd->itd.itd_flags = htole32(
+				OHCI_ITD_NOCC | 
 				OHCI_ITD_SET_SF(iso->next) |
 				OHCI_ITD_NOINTR |
 				OHCI_ITD_SET_FC(OHCI_ITD_NOFFSET));
-			sitd->itd.itd_be = LE(LE(sitd->itd.itd_bp0) + offs - 1);
-			nsitd->itd.itd_bp0 = LE((buf + offs) & OHCI_ITD_PAGE_MASK);
+			sitd->itd.itd_be = htole32(
+				le32toh(sitd->itd.itd_bp0) + offs - 1);
+			nsitd->itd.itd_bp0 = htole32(
+				(buf + offs) & OHCI_ITD_PAGE_MASK);
 			sitd = nsitd;
-			iso->next = iso->next + ncur;
+			iso->next = iso->next + ncur; 
 			ncur = 0;
 			ncross = 0;
 		}
 		/* XXX byte order */
-		sitd->itd.itd_offset[i] =
+		sitd->itd.itd_offset[i] = 
 		    offs | (ncross == 1 ? OHCI_ITD_PAGE_SELECT : 0);
 		offs += xfer->frlengths[i];
 		/* XXX update ncross */
@@ -2849,17 +2884,17 @@ ohci_device_isoc_enter(xfer)
 		return;
 	}
 	sitd->nextitd = nsitd;
-	sitd->itd.itd_nextitd = LE(nsitd->physaddr);
-	sitd->itd.itd_flags = LE(
-		OHCI_ITD_NOCC |
+	sitd->itd.itd_nextitd = htole32(nsitd->physaddr);
+	sitd->itd.itd_flags = le32toh(
+		OHCI_ITD_NOCC | 
 		OHCI_ITD_SET_SF(iso->next) |
 		OHCI_ITD_SET_DI(0) |
 		OHCI_ITD_SET_FC(ncur));
-	sitd->itd.itd_be = LE(LE(sitd->itd.itd_bp0) + offs - 1);
+	sitd->itd.itd_be = htole32(le32toh(sitd->itd.itd_bp0) + offs - 1);
 	iso->next = iso->next + ncur;
 
 	opipe->tail.itd = nsitd;
-	sed->ed.ed_tailp = LE(nsitd->physaddr);
+	sed->ed.ed_tailp = htole32(nsitd->physaddr);
 	/* XXX update ED */
 	splx(s);
 }
@@ -2909,4 +2944,3 @@ ohci_device_isoc_close(pipe)
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 	ohci_free_sitd(sc, opipe->tail.itd);
 }
-

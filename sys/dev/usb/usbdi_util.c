@@ -1,5 +1,6 @@
-/*	$OpenBSD: usbdi_util.c,v 1.6 2000/03/26 08:39:46 aaron Exp $	*/
+/*	$OpenBSD: usbdi_util.c,v 1.7 2000/03/28 19:37:52 aaron Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.28 2000/02/22 11:25:06 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,12 +94,12 @@ usbd_get_config_desc(dev, confidx, d)
 	usbd_status err;
 
 	DPRINTFN(3,("usbd_get_config_desc: confidx=%d\n", confidx));
-	err = usbd_get_desc(dev, UDESC_CONFIG, confidx,
+	err = usbd_get_desc(dev, UDESC_CONFIG, confidx, 
 			    USB_CONFIG_DESCRIPTOR_SIZE, d);
 	if (err)
 		return (err);
 	if (d->bDescriptorType != UDESC_CONFIG) {
-		DPRINTFN(-1,("usbd_get_config_desc: confidx=%d, bad desc ",
+		DPRINTFN(-1,("usbd_get_config_desc: confidx=%d, bad desc "
 			     "len=%d type=%d\n",
 			     confidx, d->bLength, d->bDescriptorType));
 		return (USBD_INVAL);
@@ -484,7 +485,7 @@ usbd_get_config(dev, conf)
 	return (usbd_do_request(dev, &req, conf));
 }
 
-static void usbd_bulk_transfer_cb __P((usbd_xfer_handle xfer,
+static void usbd_bulk_transfer_cb __P((usbd_xfer_handle xfer, 
 		usbd_private_handle priv, usbd_status status));
 static void
 usbd_bulk_transfer_cb(xfer, priv, status)
@@ -526,7 +527,7 @@ usbd_bulk_transfer(xfer, pipe, flags, timeout, buf, size, lbl)
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
 	DPRINTFN(1,("usbd_bulk_transfer: transferred %d\n", *size));
-	if (err != USBD_NORMAL_COMPLETION) {
+	if (err) {
 		DPRINTF(("usbd_bulk_transfer: error=%d\n", err));
 		usbd_clear_endpoint_stall(pipe);
 	}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.c,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
-/*	$NetBSD: usb_mem.c,v 1.17 1999/12/18 22:47:11 augustss Exp $	*/
+/*	$OpenBSD: usb_mem.c,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
+/*	$NetBSD: usb_mem.c,v 1.18 2000/03/27 08:27:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,10 +86,11 @@ static usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
 						usb_dma_block_t **));
 static void		usb_block_freemem  __P((usb_dma_block_t *));
 
-LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
+static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
+int usb_blk_nfree = 0;
 /* XXX should have different free list for different tags (for speed) */
-LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
+static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
 static usbd_status
@@ -103,7 +104,7 @@ usb_block_allocmem(tag, size, align, dmap)
         usb_dma_block_t *p;
 	int s;
 
-	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n",
+	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n", 
 		     (u_long)size, (u_long)align));
 
 #ifdef DIAGNOSTIC
@@ -118,6 +119,7 @@ usb_block_allocmem(tag, size, align, dmap)
 	for (p = LIST_FIRST(&usb_blk_freelist); p; p = LIST_NEXT(p, next)) {
 		if (p->tag == tag && p->size >= size && p->align >= align) {
 			LIST_REMOVE(p, next);
+			usb_blk_nfree--;
 			splx(s);
 			*dmap = p;
 			DPRINTFN(6,("usb_block_allocmem: free list size=%lu\n",
@@ -207,6 +209,7 @@ usb_block_freemem(p)
 	DPRINTFN(6, ("usb_block_freemem: size=%lu\n", (u_long)p->size));
 	s = splusb();
 	LIST_INSERT_HEAD(&usb_blk_freelist, p, next);
+	usb_blk_nfree++;
 	splx(s);
 }
 
@@ -243,7 +246,7 @@ usb_allocmem(bus, size, align, p)
 			break;
 	if (f == NULL) {
 		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
-		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL, &b);
+		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL,&b);
 		if (err) {
 			splx(s);
 			return (err);

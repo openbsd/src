@@ -1,5 +1,6 @@
-/*	$OpenBSD: usbdi.h,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
-/*	$NetBSD: usbdi.h,v 1.31 2000/03/02 12:37:51 augustss Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.8 2000/03/28 19:37:52 aaron Exp $ */
+/*	$NetBSD: usbdi.h,v 1.41 2000/03/02 12:37:51 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +78,7 @@ typedef void (*usbd_callback) __P((usbd_xfer_handle, usbd_private_handle,
 #define USBD_EXCLUSIVE_USE	0x01
 
 /* Use default (specified by ep. desc.) interval on interrupt pipe */
-#define USBD_DEFAULT_INTERVAL 	(-1)
+#define USBD_DEFAULT_INTERVAL	(-1)
 
 /* Request flags */
 #define USBD_NO_COPY		0x01	/* do not copy data to DMA buffer */
@@ -100,7 +101,7 @@ usbd_status usbd_open_pipe
 	     u_int8_t flags, usbd_pipe_handle *pipe));
 usbd_status usbd_close_pipe	__P((usbd_pipe_handle pipe));
 usbd_status usbd_transfer	__P((usbd_xfer_handle req));
-usbd_xfer_handle usbd_alloc_xfer	__P((usbd_device_handle));
+usbd_xfer_handle usbd_alloc_xfer __P((usbd_device_handle));
 usbd_status usbd_free_xfer	__P((usbd_xfer_handle xfer));
 void usbd_setup_xfer
 	__P((usbd_xfer_handle xfer, usbd_pipe_handle pipe,
@@ -112,7 +113,7 @@ void usbd_setup_default_xfer
 	     usbd_private_handle priv, u_int32_t timeout,
 	     usb_device_request_t *req,  void *buffer,
 	     u_int32_t length, u_int16_t flags, usbd_callback));
-void usbd_setup_isoc_xfer
+void usbd_setup_isoc_xfer	
 	__P((usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	     usbd_private_handle priv, u_int16_t *frlengths,
 	     u_int32_t nframes, u_int16_t flags, usbd_callback));
@@ -261,4 +262,3 @@ int usbd_driver_load    __P((module_t mod, int what, void *arg));
 #define splhardusb splbio
 #define IPL_USB IPL_BIO
 /* XXX */
-

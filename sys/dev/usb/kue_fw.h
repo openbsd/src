@@ -1,4 +1,5 @@
-/*	$OpenBSD: kue_fw.h,v 1.1 2000/03/26 19:09:17 aaron Exp $ */
+/*	$OpenBSD: kue_fw.h,v 1.2 2000/03/28 19:37:48 aaron Exp $ */
+/*	$NetBSD: kue_fw.h,v 1.1 2000/01/17 01:38:43 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -76,7 +77,7 @@
  */
 #define KUE_QTBTYPE_WRITE_WITH_INTR	0x07
 /* Cause data from stream to be written using specified QT interrupt. */
-#define KUE_QTBTYPE_WRITE_STR_WITH_INTR	0x08
+#define KUE_QTBTYPE_WRITE_STR_WITH_INTR 0x08
 /* Cause data to be written to config locations. */
 /* Addresses assume 0xc000 offset. */
 #define KUE_QTBTYPE_WRITE_CONFIG	0x09
@@ -90,9 +91,9 @@ static unsigned char kue_code_seg[] =
 {
     /******************************************/
     /* NOTE: B6/C3 is data header signature   */
-    /*       0xAA/0xBB is data length = total */
-    /*       bytes - 7, 0xCC is type, 0xDD is */
-    /*       interrupt to use.                */
+    /*	     0xAA/0xBB is data length = total */
+    /*	     bytes - 7, 0xCC is type, 0xDD is */
+    /*	     interrupt to use.		      */
     /******************************************/
     0xB6, 0xC3, 0xf7, 0x0e, 0x02, 0x64,
     0x9f, 0xcf, 0xbc, 0x08, 0xe7, 0x57, 0x00, 0x00,
@@ -574,7 +575,7 @@ static unsigned char kue_code_seg[] =
     0x43, 0x04, 0x21, 0x04, 0xe0, 0x00, 0x43, 0x04,
     0x21, 0x04, 0xe0, 0x00, 0xc1, 0x07, 0x01, 0x00,
     0xc9, 0x05, 0xc8, 0x05, 0x97, 0xcf,
-    0,    0
+    0,	  0
 };
 
 /* Firmware fixup (data?) segment */
@@ -582,9 +583,9 @@ static unsigned char kue_fix_seg[] =
 {
     /******************************************/
     /* NOTE: B6/C3 is data header signature   */
-    /*       0xAA/0xBB is data length = total */
-    /*       bytes - 7, 0xCC is type, 0xDD is */
-    /*       interrupt to use.                */
+    /*	     0xAA/0xBB is data length = total */
+    /*	     bytes - 7, 0xCC is type, 0xDD is */
+    /*	     interrupt to use.		      */
     /******************************************/
     0xB6, 0xC3, 0xc9, 0x02, 0x03, 0x64,
     0x02, 0x00, 0x08, 0x00, 0x24, 0x00, 0x2e, 0x00,
@@ -676,11 +677,11 @@ static unsigned char kue_fix_seg[] =
     0xd4, 0x0d, 0xdc, 0x0d, 0x1e, 0x0e, 0x2c, 0x0e,
     0x3e, 0x0e, 0x4c, 0x0e, 0x50, 0x0e, 0x5e, 0x0e,
     0xae, 0x0e, 0xb8, 0x0e, 0xc6, 0x0e, 0xca, 0x0e,
-    0,    0
+    0,	  0
 };
 
 /* Fixup command. */
 #define KUE_TRIGCMD_OFFSET	5
 static unsigned char kue_trig_seg[] = {
-0xb6, 0xc3, 0x01, 0x00, 0x06, 0x64, 0x00, 0x00
+    0xb6, 0xc3, 0x01, 0x00, 0x06, 0x64, 0x00, 0x00
 };

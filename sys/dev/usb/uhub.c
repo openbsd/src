@@ -1,5 +1,6 @@
-/*	$OpenBSD: uhub.c,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
+/*	$OpenBSD: uhub.c,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
 /*	$NetBSD: uhub.c,v 1.40 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,13 +80,14 @@ struct uhub_softc {
 	u_char			sc_running;
 };
 
-usbd_status uhub_init_port __P((struct usbd_port *));
-usbd_status uhub_explore __P((usbd_device_handle hub));
-void uhub_intr __P((usbd_xfer_handle, usbd_private_handle, usbd_status));
+static usbd_status uhub_init_port __P((struct usbd_port *));
+static usbd_status uhub_explore __P((usbd_device_handle hub));
+static void uhub_intr __P((usbd_xfer_handle, usbd_private_handle,usbd_status));
 
 #if defined(__FreeBSD__)
 static bus_child_detached_t uhub_child_detached;
 #endif
+
 
 /* 
  * We need two attachment points:
@@ -102,9 +104,9 @@ struct cfattach uhub_uhub_ca = {
 	uhub_detach, uhub_activate
 };
 #elif defined(__FreeBSD__)
-USB_DECLARE_DRIVER_INIT(uhub.
+USB_DECLARE_DRIVER_INIT(uhub,
 			DEVMETHOD(bus_child_detached, uhub_child_detached));
-
+			
 /* Create the driver instance for the hub connected to usb case. */
 devclass_t uhubroot_devclass;
 
@@ -235,8 +237,8 @@ USB_ATTACH(uhub)
 	}
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
-	    USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status,
-	    sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
+		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status, 
+		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n", 
 		       USBDEVNAME(sc->sc_dev));
@@ -363,6 +365,7 @@ uhub_explore(dev)
 		DPRINTFN(3,("uhub_explore: port %d status 0x%04x 0x%04x\n",
 			    port, status, change));
 		if (change & UPS_C_PORT_ENABLED) {
+			DPRINTF(("uhub_explore: C_PORT_ENABLED\n"));
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
 			if (status & UPS_PORT_ENABLED) {
 				printf("%s: illegal enable change, port %d\n",
@@ -430,8 +433,8 @@ uhub_explore(dev)
 
 		/* Get device info and set its address. */
 		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
-				    dev->depth + 1, status & UPS_LOW_SPEED, 
-				    port, up);
+			  dev->depth + 1, status & UPS_LOW_SPEED, 
+			  port, up);
 		/* XXX retry a few times? */
 		if (err) {
 			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
@@ -519,10 +522,10 @@ USB_DETACH(uhub)
 		if (rup->device)
 			usb_disconnect_port(rup, self);
 	}
-
+	
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
 			   USBDEV(sc->sc_dev));
-	
+
 	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
 
@@ -533,34 +536,35 @@ USB_DETACH(uhub)
 /* Called when a device has been detached from it */
 static void
 uhub_child_detached(self, child)
-	device_t self;
-	device_t child;
+       device_t self;
+       device_t child;
 {
-	struct uhub_softc *sc = device_get_softc(self);
-	usbd_device_handle devhub = sc->sc_hub;
-	usbd_device_handle dev;
-	int nports;
-	int port;
-	int i;
+       struct uhub_softc *sc = device_get_softc(self);
+       usbd_device_handle devhub = sc->sc_hub;
+       usbd_device_handle dev;
+       int nports;
+       int port;
+       int i;
 
-	if (!devhub->hub)
-		/* should never happen; children are only created after init */
-		panic("hub not fully initialised, but child deleted?");
+       if (!devhub->hub)  
+               /* should never happen; children are only created after init */
+               panic("hub not fully initialised, but child deleted?");
 
-	nports = devhub->hub->hubdesc.bNbrPorts;
-	for (port = 0; port < nports; port++) {
-		dev = devhub->hub->ports[port].device;
-		if (dev && dev->subdevs) {
-			for (i = 0; dev->subdevs[i]; i++) {
-				if (dev->subdevs[i] == child) {
-					dev->subdevs[i] = NULL;
-					return;
-				}
-			}
-		}
-	}
+       nports = devhub->hub->hubdesc.bNbrPorts;
+       for (port = 0; port < nports; port++) {
+               dev = devhub->hub->ports[port].device;
+               if (dev && dev->subdevs) {
+                       for (i = 0; dev->subdevs[i]; i++) {
+                               if (dev->subdevs[i] == child) {
+                                       dev->subdevs[i] = NULL;
+                                       return;
+                               }
+                       }
+               }
+       }
 }
 #endif
+
 
 /*
  * Hub interrupt.

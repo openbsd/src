@@ -1,5 +1,6 @@
-/*	$OpenBSD: uhid.c,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
 /*	$NetBSD: uhid.c,v 1.35 2000/03/19 22:23:28 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,11 +148,13 @@ static struct cdevsw uhid_cdevsw = {
 };
 #endif
 
-void uhid_intr __P((usbd_xfer_handle, usbd_private_handle, usbd_status));
+static void uhid_intr __P((usbd_xfer_handle, usbd_private_handle,
+			   usbd_status));
 
-int uhid_do_read __P((struct uhid_softc *, struct uio *uio, int));
-int uhid_do_write __P((struct uhid_softc *, struct uio *uio, int));
-int uhid_do_ioctl __P((struct uhid_softc *, u_long, caddr_t, int, struct proc *));
+static int uhid_do_read __P((struct uhid_softc *, struct uio *uio, int));
+static int uhid_do_write __P((struct uhid_softc *, struct uio *uio, int));
+static int uhid_do_ioctl __P((struct uhid_softc *, u_long, caddr_t, int,
+			      struct proc *));
 
 USB_DECLARE_DRIVER(uhid);
 
@@ -178,7 +181,7 @@ USB_ATTACH(uhid)
 	void *desc;
 	usbd_status err;
 	char devinfo[1024];
-
+	
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
@@ -327,10 +330,10 @@ uhid_intr(xfer, addr, status)
 #ifdef UHID_DEBUG
 	if (uhiddebug > 5) {
 		u_int32_t cc, i;
-
+		
 		usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 		DPRINTF(("uhid_intr: status=%d cc=%d\n", status, cc));
-		DPRINTF(("uhid_intr: data="));
+		DPRINTF(("uhid_intr: data ="));
 		for (i = 0; i < cc; i++)
 			DPRINTF((" %02x", sc->sc_ibuf[i]));
 		DPRINTF(("\n"));
@@ -387,8 +390,8 @@ uhidopen(dev, flag, mode, p)
 
 	/* Set up interrupt pipe. */
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
-	    USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, sc->sc_ibuf,
-	    sc->sc_isize, uhid_intr, USBD_DEFAULT_INTERVAL);
+		  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, sc->sc_ibuf, 
+		  sc->sc_isize, uhid_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
 			 "error=%d\n",err));
@@ -537,10 +540,10 @@ uhid_do_write(sc, uio, flag)
 	if (!error) {
 		if (sc->sc_oid)
 			err = usbd_set_report(sc->sc_iface, UHID_OUTPUT_REPORT,
-			    sc->sc_obuf[0], sc->sc_obuf+1, size-1);
+				  sc->sc_obuf[0], sc->sc_obuf+1, size-1);
 		else
 			err = usbd_set_report(sc->sc_iface, UHID_OUTPUT_REPORT,
-			    0, sc->sc_obuf, size);
+				  0, sc->sc_obuf, size);
 		if (err)
 			error = EIO;
 	}
@@ -600,7 +603,7 @@ uhid_do_ioctl(sc, cmd, addr, flag, p)
 		if (*(int *)addr) {
 			/* XXX should read into ibuf, but does it matter? */
 			err = usbd_get_report(sc->sc_iface, UHID_INPUT_REPORT,
-			    sc->sc_iid, sc->sc_ibuf, sc->sc_isize);
+				  sc->sc_iid, sc->sc_ibuf, sc->sc_isize);
 			if (err)
 				return (EOPNOTSUPP);
 
@@ -628,10 +631,11 @@ uhid_do_ioctl(sc, cmd, addr, flag, p)
 			return (EINVAL);
 		}
 		err = usbd_get_report(sc->sc_iface, re->report, id, re->data,
-		    size);
+			  size);
 		if (err)
 			return (EIO);
 		break;
+
 	case USB_SET_REPORT:
 		re = (struct usb_ctl_report *)addr;
 		switch (re->report) {
@@ -651,7 +655,7 @@ uhid_do_ioctl(sc, cmd, addr, flag, p)
 			return (EINVAL);
 		}
 		err = usbd_set_report(sc->sc_iface, re->report, id, re->data,
-		    size);
+			  size);
 		if (err)
 			return (EIO);
 		break;

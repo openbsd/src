@@ -1,5 +1,6 @@
-/*	$OpenBSD: hid.c,v 1.4 2000/03/26 08:39:45 aaron Exp $	*/
+/*	$OpenBSD: hid.c,v 1.5 2000/03/28 19:37:46 aaron Exp $ */
 /*	$NetBSD: hid.c,v 1.12 2000/03/17 18:16:18 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
 #include <sys/kernel.h>
 #endif
 #include <sys/malloc.h>
@@ -370,7 +371,7 @@ hid_get_item(s, h)
 	}
 }
 
-int 
+int
 hid_report_size(buf, len, k, idp)
 	void *buf;
 	int len;

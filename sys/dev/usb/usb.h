@@ -1,5 +1,6 @@
-/*	$OpenBSD: usb.h,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
-/*	$NetBSD: usb.h,v 1.42 2000/03/19 22:23:28 augustss Exp $	*/
+/*	$OpenBSD: usb.h,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
+/*	$NetBSD: usb.h,v 1.43 2000/03/24 22:16:42 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -336,77 +337,77 @@ typedef struct {
 } usb_port_status_t;
 
 /* Device class codes */
-#define UDCLASS_AUDIO			0x00
-#define UDCLASS_COMM			0x02
-#define UDCLASS_HID			0x00
-#define UDCLASS_HUB			0x09
-#define	UDSUBCLASS_HUB			0
-#define UDCLASS_MASS			0x00
+#define UDCLASS_AUDIO		0x00
+#define UDCLASS_COMM		0x02
+#define UDCLASS_HID		0x00
+#define UDCLASS_HUB		0x09
+#define  UDSUBCLASS_HUB		0
+#define UDCLASS_MASS		0x00
 
 /* Interface class codes */
-#define UICLASS_UNSPEC			0x00
+#define UICLASS_UNSPEC		0x00
 
-#define UICLASS_AUDIO			0x01
-#define	UISUBCLASS_AUDIOCONTROL		1
-#define	UISUBCLASS_AUDIOSTREAM		2
-#define	UISUBCLASS_MIDISTREAM		3
+#define UICLASS_AUDIO		0x01
+#define  UISUBCLASS_AUDIOCONTROL	1
+#define  UISUBCLASS_AUDIOSTREAM		2
+#define  UISUBCLASS_MIDISTREAM		3
 
-#define UICLASS_CDC			0x02 /* communication */
-#define	UI_SUBCLASS_DIRECT_LINE_CONTROL_MODEL		1
-#define	UI_SUBCLASS_ABSTRACT_CONTROL_MODEL		2
-#define	UI_SUBCLASS_TELEPHONE_CONTROL_MODEL		3
-#define	UI_SUBCLASS_MULTICHANNEL_CONTROL_MODEL		4
-#define	UI_SUBCLASS_CAPI_CONTROL_MODEL			5
-#define	UI_SUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL	6
-#define	UI_SUBCLASS_ATM_NETWORKING_CONTROL_MODEL	7
-#define	UIPROTO_CDC_AT			1
+#define UICLASS_CDC		0x02 /* communication */
+#define	 UISUBCLASS_DIRECT_LINE_CONTROL_MODEL	1
+#define  UISUBCLASS_ABSTRACT_CONTROL_MODEL	2
+#define	 UISUBCLASS_TELEPHONE_CONTROL_MODEL	3
+#define	 UISUBCLASS_MULTICHANNEL_CONTROL_MODEL	4
+#define	 UISUBCLASS_CAPI_CONTROLMODEL		5
+#define	 UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
+#define	 UISUBCLASS_ATM_NETWORKING_CONTROL_MODEL 7
+#define   UIPROTO_CDC_AT			1
 
-#define UICLASS_HID			0x03
-#define	UI_SUBCLASS_BOOT		1
-#define	UIPROTO_BOOT_KEYBOARD		1
+#define UICLASS_HID		0x03
+#define  UISUBCLASS_BOOT	1
+#define  UIPROTO_BOOT_KEYBOARD	1
 
-#define UICLASS_PHYSICAL		0x05
+#define UICLASS_PHYSICAL	0x05
 
-#define UICLASS_PRINTER			0x07
-#define UISUBCLASS_PRINTER		1
-#define UIPROTO_PRINTER_UNI		1
-#define UIPROTO_PRINTER_BI		2
+#define UICLASS_PRINTER		0x07
+#define  UISUBCLASS_PRINTER	1
+#define  UIPROTO_PRINTER_UNI	1
+#define  UIPROTO_PRINTER_BI	2
 
-#define UICLASS_MASS			0x08
-#define	UISUBCLASS_RBC			1
-#define	UISUBCLASS_SFF8020I		2
-#define	UISUBCLASS_QIC157		3
-#define	UISUBCLASS_UFI			4
-#define	UISUBCLASS_SFF8070I		5
-#define	UISUBCLASS_SCSI			6
-#define	UIPROTO_MASS_CBI_I		0
-#define	UIPROTO_MASS_CBI		1
-#define	UIPROTO_MASS_BULK		2
-#define	UIPROTO_MASS_BULK_P		80
+#define UICLASS_MASS		0x08
+#define  UISUBCLASS_RBC		1
+#define  UISUBCLASS_SFF8020I	2
+#define  UISUBCLASS_QIC157	3
+#define  UISUBCLASS_UFI		4
+#define  UISUBCLASS_SFF8070I	5
+#define  UISUBCLASS_SCSI	6
+#define  UIPROTO_MASS_CBI_I	0
+#define  UIPROTO_MASS_CBI	1
+#define  UIPROTO_MASS_BBB	2
+#define  UIPROTO_MASS_BBB_P	80	/* 'P' for the Iomega Zip drive */
 
-#define	UICLASS_HUB			0x09
-#define UISUBCLASS_HUB			0
+#define UICLASS_HUB		0x09
+#define  UISUBCLASS_HUB		0
 
-#define UICLASS_CDC_DATA		0x0a
-#define UISUBCLASS_DATA			0
-#define UIPROTO_DATA_ISDNBRI		0x30
-#define	UIPROTO_DATA_HDLC		0x31
-#define UIPROTO_DATA_TRANSPARENT	0x32
-#define UIPROTO_DATA_Q921M		0x50
-#define UIPROTO_DATA_Q921		0x51
-#define UIPROTO_DATA_Q921TM		0x52
-#define UIPROTO_DATA_V42BIS		0x90
-#define UIPROTO_DATA_Q931		0x91
-#define UIPROTO_DATA_V120		0x92
-#define UIPROTO_DATA_CAPI		0x93
-#define UIPROTO_DATA_HOST_BASED		0xfd
-#define UIPROTO_DATA_PUF		0xfe
-#define UIPROTO_DATA_VENDOR		0xff
+#define UICLASS_CDC_DATA	0x0a
+#define  UISUBCLASS_DATA		0
+#define   UIPROTO_DATA_ISDNBRI		0x30    /* Physical iface */
+#define   UIPROTO_DATA_HDLC		0x31    /* HDLC */
+#define   UIPROTO_DATA_TRANSPARENT	0x32    /* Transparent */
+#define   UIPROTO_DATA_Q921M		0x50    /* Management for Q921 */
+#define   UIPROTO_DATA_Q921		0x51    /* Data for Q921 */
+#define   UIPROTO_DATA_Q921TM		0x52    /* TEI multiplexer for Q921 */
+#define   UIPROTO_DATA_V42BIS		0x90    /* Data compression */  
+#define   UIPROTO_DATA_Q931		0x91    /* Euro-ISDN */
+#define   UIPROTO_DATA_V120		0x92    /* V.24 rate adaption */
+#define   UIPROTO_DATA_CAPI		0x93    /* CAPI 2.0 commands */
+#define   UIPROTO_DATA_HOST_BASED	0xfd    /* Host based driver */
+#define   UIPROTO_DATA_PUF		0xfe    /* see Prot. Unit Func. Desc.*/
+#define   UIPROTO_DATA_VENDOR		0xff    /* Vendor specific */
 
-#define UICLASS_FIRM_UPD		0x0c
+#define UICLASS_FIRM_UPD	0x0c
 
-#define UICLASS_APPL_SPEC		0xfe
-#define UICLASS_VENDOR			0xff
+#define UICLASS_APPL_SPEC	0xfe
+#define UICLASS_VENDOR		0xff
 
 
 #define USB_HUB_MAX_DEPTH 5
@@ -555,8 +556,8 @@ struct usb_event {
 		struct usb_device_info		ue_device;
 		struct {
 			usb_event_cookie_t	ue_cookie;
-			char			ue_devname[USB_MAX_DEVNAMELEN];
-		} ue_driver;
+			char			ue_devname[16];
+		} ue_driver;			
 	} u;
 };
 

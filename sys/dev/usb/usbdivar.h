@@ -1,5 +1,6 @@
-/*	$OpenBSD: usbdivar.h,v 1.7 2000/03/26 08:39:46 aaron Exp $	*/
-/*	$NetBSD: usbdivar.h,v 1.47 2000/02/22 11:30:56 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.8 2000/03/28 19:37:53 aaron Exp $ */
+/*	$NetBSD: usbdivar.h,v 1.52 2000/03/25 18:02:33 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +38,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+#include <sys/callout.h>
+#else
+#include <sys/timeout.h>
+#endif
 
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
@@ -105,11 +112,11 @@ struct usbd_bus {
 	struct usb_device_stats	stats;
 	int 			intr_context;
 	u_int			no_intrs;
-	int			usbrev; /* USB revision */
-#define USBREV_UNKNOWN 0
-#define USBREV_PRE_1_0 1
-#define USBREV_1_0     2
-#define USBREV_1_1     3
+	int			usbrev;	/* USB revision */
+#define USBREV_UNKNOWN	0
+#define USBREV_PRE_1_0	1
+#define USBREV_1_0	2
+#define USBREV_1_1	3
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1" }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -118,26 +125,26 @@ struct usbd_bus {
 };
 
 struct usbd_device {
-	struct usbd_bus	       *bus;		/* our controller */
-	struct usbd_pipe       *default_pipe;	/* pipe 0 */
-	u_int8_t		address;	/* device address */
-	u_int8_t		config;		/* current configuration # */
-	u_int8_t		depth;		/* distance from root hub */
-	u_int8_t		lowspeed;	/* lowspeed flag */
-	u_int8_t		self_powered;	/* flag for self powered */
-	u_int16_t		power;		/* mA the device uses */
-	int16_t			langid;		/* language for strings */
+	struct usbd_bus	       *bus;           /* our controller */
+	struct usbd_pipe       *default_pipe;  /* pipe 0 */
+	u_int8_t		address;       /* device addess */
+	u_int8_t		config;	       /* current configuration # */
+	u_int8_t		depth;         /* distance from root hub */
+	u_int8_t		lowspeed;      /* lowspeed flag */
+	u_int8_t		self_powered;  /* flag for self powered */
+	u_int16_t		power;         /* mA the device uses */
+	int16_t			langid;	       /* language for strings */
 #define USBD_NOLANG (-1)
-	usb_event_cookie_t	cookie;		/* unique connection id */
-	struct usbd_port       *powersrc;	/* upstream hub port, or 0 */
-	struct usbd_endpoint	def_ep;		/* for pipe 0 */
-	usb_endpoint_descriptor_t def_ep_desc;	/* for pipe 0 */
-	struct usbd_interface  *ifaces;		/* array of all interfaces */
-	usb_device_descriptor_t ddesc;		/* device descriptor */
-	usb_config_descriptor_t *cdesc;		/* full config descr */
-	struct usbd_quirks     *quirks;		/* device quirks, always set */
-	struct usbd_hub	       *hub;		/* only if this is a hub */
-	device_ptr_t	       *subdevs;	/* sub-devices, 0 terminated */
+	usb_event_cookie_t	cookie;	       /* unique connection id */
+	struct usbd_port       *powersrc;      /* upstream hub port, or 0 */
+	struct usbd_endpoint	def_ep;	       /* for pipe 0 */
+	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
+	struct usbd_interface  *ifaces;        /* array of all interfaces */
+	usb_device_descriptor_t ddesc;         /* device descriptor */
+	usb_config_descriptor_t *cdesc;	       /* full config descr */
+	struct usbd_quirks     *quirks;        /* device quirks, always set */
+	struct usbd_hub	       *hub;           /* only if this is a hub */
+	device_ptr_t	       *subdevs;       /* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
@@ -163,6 +170,8 @@ struct usbd_pipe {
 	char			repeat;
 	int			interval;
 
+	usb_callout_t		abort_handle;
+
 	/* Filled by HC driver. */
 	struct usbd_pipe_methods *methods;
 };
@@ -178,6 +187,11 @@ struct usbd_xfer {
 	usbd_status		status;
 	usbd_callback		callback;
 	__volatile char		done;
+#ifdef DIAGNOSTIC
+	u_int32_t		busy_free;
+#define XFER_FREE 0x46524545
+#define XFER_BUSY 0x42555357
+#endif
 
 	/* For control pipe */
 	usb_device_request_t	request;
@@ -198,11 +212,8 @@ struct usbd_xfer {
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
-	int			hcprivint;
 
-#if defined(__FreeBSD__)
-	struct callout_handle  timo_handle;
-#endif
+	usb_callout_t		timeout_handle;
 };
 
 void usbd_init __P((void));
@@ -243,7 +254,7 @@ void		usb_schedsoftintr __P((struct usbd_bus *));
 	     extern int cold; \
              if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
 				   _s, _su, __FILE__, __LINE__); \
-             splx(_s); \
+	     splx(_s); \
         } while (0)
 #else
 #define SPLUSBCHECK

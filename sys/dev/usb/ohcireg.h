@@ -1,5 +1,7 @@
-/*	$OpenBSD: ohcireg.h,v 1.4 2000/03/26 08:39:45 aaron Exp $	*/
+/*	$OpenBSD: ohcireg.h,v 1.5 2000/03/28 19:37:48 aaron Exp $ */
 /*	$NetBSD: ohcireg.h,v 1.15 2000/03/19 22:24:58 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
+
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,26 +206,27 @@ typedef struct {
 	u_int32_t	itd_flags;
 #define OHCI_ITD_GET_SF(x)	((x) & 0x0000ffff)
 #define OHCI_ITD_SET_SF(x)	((x) & 0xffff)
-#define OHCI_ITD_GET_DI(x)	(((x) >> 21) & 7)	/* Delay interrupt */
+#define OHCI_ITD_GET_DI(x)	(((x) >> 21) & 7)	/* Delay Interrupt */
 #define OHCI_ITD_SET_DI(x)	((x) << 21)
-#define OHCI_ITD_NOINTR		0x00e00000
+#define  OHCI_ITD_NOINTR	0x00e00000
 #define OHCI_ITD_GET_FC(x)	((((x) >> 24) & 7)+1)	/* Frame Count */
 #define OHCI_ITD_SET_FC(x)	(((x)-1) << 24)
 #define OHCI_ITD_GET_CC(x)	((x) >> 28)		/* Condition Code */
-#define OHCI_ITD_NOCC		0xf0000000
-	ohci_physaddr_t itd_bp0;			/* Buffer Page 0 */
+#define  OHCI_ITD_NOCC		0xf0000000
+	ohci_physaddr_t	itd_bp0;			/* Buffer Page 0 */
 #define OHCI_ITD_OFFSET_MASK	0x00000fff
 #define OHCI_ITD_PAGE_MASK	(~OHCI_ITD_OFFSET_MASK)
-	ohci_physaddr_t itd_nextitd;			/* Next ITD */
-	ohci_physaddr_t itd_be;				/* Buffer End */
+	ohci_physaddr_t	itd_nextitd;			/* Next ITD */
+	ohci_physaddr_t	itd_be;				/* Buffer End */
 	u_int16_t	itd_offset[OHCI_ITD_NOFFSET];	/* Buffer offsets */
-#define itd_pswn itd_offset				/* Packet Status Word */
+#define itd_pswn itd_offset				/* Packet Status Word*/
 #define OHCI_ITD_PAGE_SELECT	0x00001000
 #define OHCI_ITD_PSW_LENGTH(x)	((x) & 0xfff)		/* Transfer length */
 #define OHCI_ITD_PSW_GET_CC(x)	((x) >> 12)		/* Condition Code */
 } ohci_itd_t;
 /* #define OHCI_ITD_SIZE 32 */
 #define OHCI_ITD_ALIGN 32
+	
 
 #define OHCI_CC_NO_ERROR		0
 #define OHCI_CC_CRC			1
