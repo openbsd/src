@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.8 2000/04/29 16:06:08 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.9 2000/05/02 07:32:44 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -57,6 +57,7 @@ struct Session {
 Session *session_new(void);
 void	session_set_fds(Session *s, int fdin, int fdout, int fderr);
 void	session_pty_cleanup(Session *s);
+void	session_proctitle(Session *s);
 void	do_exec_pty(Session *s, const char *command, struct passwd * pw);
 void	do_exec_no_pty(Session *s, const char *command, struct passwd * pw);
 
@@ -392,7 +393,7 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 	if (s == NULL)
 		fatal("do_exec_no_pty: no session");
 
-	setproctitle("%s@notty", pw->pw_name);
+	session_proctitle(s);
 
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
@@ -518,7 +519,6 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 		last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
 						      buf, sizeof(buf));
 	}
-	setproctitle("%s@%s", pw->pw_name, strrchr(s->tty, '/') + 1);
 
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
@@ -1184,6 +1184,8 @@ session_pty_req(Session *s)
 	/* Get window size from the packet. */
 	pty_change_window_size(s->ptyfd, s->row, s->col, s->xpixel, s->ypixel);
 
+	session_proctitle(s);
+
 	/* XXX parse and set terminal modes */
 	xfree(term_modes);
 	return 1;
@@ -1426,6 +1428,7 @@ session_close(Session *s)
 {
 	session_pty_cleanup(s);
 	session_free(s);
+	session_proctitle(s);
 }
 
 void
@@ -1467,6 +1470,34 @@ session_close_by_channel(int id, void *arg)
 			error("session_close_by_channel: kill %d: %s",
 			    s->pid, strerror(errno));
 	}
+}
+
+char *
+session_tty_list(void)
+{
+	static char buf[1024];
+	int i;
+	buf[0] = '\0';
+	for(i = 0; i < MAX_SESSIONS; i++) {
+		Session *s = &sessions[i];
+		if (s->used && s->ttyfd != -1) {
+			if (buf[0] != '\0')
+				strlcat(buf, ",", sizeof buf);
+			strlcat(buf, strrchr(s->tty, '/') + 1, sizeof buf);
+		}
+	}
+	if (buf[0] == '\0')
+		strlcpy(buf, "notty", sizeof buf);
+	return buf;
+}
+
+void
+session_proctitle(Session *s)
+{
+	if (s->pw == NULL)
+		error("no user for session %d", s->self);
+	else
+		setproctitle("%s@%s", s->pw->pw_name, session_tty_list());
 }
 
 void
