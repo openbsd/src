@@ -518,13 +518,13 @@ invalid:
 #ifndef NOLOG
 		if (lappend(logfile)<0)  /* append to file */
 			{
+			seteuid(euid);
 			if (lcreat(logfile)<0) /* and can't create new log file */
-		    	{
+		    		{
 				lcreat((char*)0);
 				lprcat("\nCan't open record file:  I can't post your score.\n");
 				sncbr();  resetscroll();  lflush();  exit();
 				}
-			seteuid(euid);
 			chmod(logfile,0660);
 			seteuid(uid);
 			}

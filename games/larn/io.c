@@ -454,11 +454,13 @@ char *lgetl()
 lcreat(str)
 	char *str;
 	{
+	extern int errno;
 	lpnt = lpbuf;	lpend = lpbuf+BUFBIG;
 	if (str==NULL) return(lfd=1);
 	if ((lfd=creat(str,0644)) < 0) 
 		{
-		lfd=1; lprintf("error creating file <%s>\n",str); lflush(); return(-1);
+		lfd=1; lprintf("error (%s) creating file <%s>\n",
+			       strerror(errno), str); lflush(); return(-1);
 		}
 	return(lfd);
 	}
