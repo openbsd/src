@@ -3098,8 +3098,11 @@ get_program_header_size (abfd)
       return elf_tdata (abfd)->program_header_size;
     }
 
-  /* Assume we will need exactly two PT_LOAD segments: one for text
-     and one for data.  */
+  /* We used to assume that two PT_LOAD segments would be enough,
+     code and data, with the change to pad the PLT and GOT, this is no
+     longer true. Now there can be several PT_LOAD sections. 6 seems
+     to be enough with BSS_PLT, where we have text, data, GOT, dynamic,
+     PLT, bss */
   segs = 6;
 
   s = bfd_get_section_by_name (abfd, ".interp");
