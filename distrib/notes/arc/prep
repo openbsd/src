@@ -11,10 +11,10 @@ Changing the size of partitions after you've installed is difficult. If
 you do not have a spare bootable disk, it may be simpler to re-install
 OpenBSD again from scratch.
 
-Asumming a classic partition scheme with root (`/') and /usr filesystems,
+Assuming a classic partition scheme with root (`/') and /usr filesystems,
 a comfortable size for the OpenBSD root filesystem partition (a) is about
-32Mb. The install will take ~18Mb of that. Hovever it has shown that 60M
-is not a bad choise when more packages are to be installed. It is recommended
+32Mb. The install will take ~18Mb of that. However it has shown that 60M
+is not a bad choice when more packages are to be installed. It is recommended
 that the 'a' partition and the MSDOS (i) partition uses the first 64Mb.
 A good initial size for the swap (b) partition is twice the amount of physical
 memory in your machine or at least 64M.

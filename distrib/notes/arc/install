@@ -11,7 +11,7 @@ Installing using the OpenBSD ramdisk kernel.
 The ramdisk kernel is a self-contained OpenBSD filesystem including all
 utilities necessary to install OpenBSD on a local disk, embedded in a
 GENERIC kernel image. It is distributed as a plain ECOFF executable file
-designed to be loaded into the system by the ARC firmaware.
+designed to be loaded into the system by the ARC firmware.
 
 Loading the ramdisk kernel into your system is done with the appropriate
 BIOS Run command on Your system. Usually this is done by typing in the
@@ -56,14 +56,14 @@ The installation script goes through the following phases:
 
 The installation program will guide you through the installation. There is
 one area of complexity that you should be very careful about and that is
-how to install the requiered MBR (Msdos Boot Record) and MSDOS FAT partition.
+how to install the required MBR (Msdos Boot Record) and MSDOS FAT partition.
 
 OpenBSD will coexist with other operating systems with help from the MSDOS
 partition table. Because the ARC Bios only knows how to boot from a FAT
 formatted disk there must always exist a small or big (depending on your
 needs) MSDOS FAT partition on the disk. Install will initialize the install
 target disk with a proper MBR and an empty 5Mb MSDOS partition it that is
-desired. Or it will keep the curent MBR and partitioning. In the later case
+desired. Or it will keep the current MBR and partitioning. In the later case
 you will need to fill in the MBR with a usable OpenBSD partition.
 
 

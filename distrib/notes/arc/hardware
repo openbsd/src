@@ -15,7 +15,7 @@ X or compile the system, 32Mb of RAM and ~1G of disk is recommended.
 
 Supported devices include:
 	graphics:
-		built-in S3 VGA graphics adatper on PICA.
+		built-in S3 VGA graphics adapter on PICA.
 		Standard VGA graphics adapter on rPC44 and Tyne.
 		Note that X11R6 currently supports only S3 boards.
 
