@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.9 2001/12/12 19:18:23 jason Exp $	*/
+/*	$OpenBSD: dma.c,v 1.10 2001/12/31 17:03:59 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -140,20 +140,22 @@ _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
+	pmap_t pmap;
 	int seg;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
 
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
 	for (seg = *segp; buflen > 0; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
-			    vaddr, (paddr_t *)&curaddr);
-		else
-			curaddr = vtophys(vaddr);
+		(void) pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
