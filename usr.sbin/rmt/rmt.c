@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.9 2002/07/04 05:05:29 millert Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.10 2002/11/08 05:07:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.9 2002/07/04 05:05:29 millert Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.10 2002/11/08 05:07:34 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -80,9 +80,7 @@ void	getstring(char *, int);
 void	error(int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	off_t orval;
 	int rval;
@@ -99,7 +97,7 @@ main(argc, argv)
 top:
 	errno = 0;
 	rval = 0;
-	if (read(0, &c, 1) != 1)
+	if (read(STDIN_FILENO, &c, 1) != 1)
 		exit(0);
 	switch (c) {
 
@@ -138,7 +136,7 @@ top:
 		DEBUG1("rmtd: W %s\n", count);
 		record = checkbuf(record, n);
 		for (i = 0; i < n; i += cc) {
-			cc = read(0, &record[i], n - i);
+			cc = read(STDIN_FILENO, &record[i], n - i);
 			if (cc <= 0) {
 				DEBUG("rmtd: premature eof\n");
 				exit(2);
@@ -158,8 +156,8 @@ top:
 		if (rval < 0)
 			goto ioerror;
 		(void) snprintf(resp, sizeof resp, "A%d\n", rval);
-		(void) write(1, resp, strlen(resp));
-		(void) write(1, record, rval);
+		(void) write(STDOUT_FILENO, resp, strlen(resp));
+		(void) write(STDOUT_FILENO, record, rval);
 		goto top;
 
 	case 'I':
@@ -182,8 +180,8 @@ top:
 			goto ioerror;
 		  rval = sizeof (mtget);
 		  (void) snprintf(resp, sizeof resp, "A%d\n", rval);
-		  (void) write(1, resp, strlen(resp));
-		  (void) write(1, (char *)&mtget, sizeof (mtget));
+		  (void) write(STDOUT_FILENO, resp, strlen(resp));
+		  (void) write(STDOUT_FILENO, (char *)&mtget, sizeof (mtget));
 		  goto top;
 		}
 
@@ -194,7 +192,7 @@ top:
 respond:
 	DEBUG1("rmtd: A %d\n", rval);
 	(void) snprintf(resp, sizeof resp, "A%d\n", rval);
-	(void) write(1, resp, strlen(resp));
+	(void) write(STDOUT_FILENO, resp, strlen(resp));
 	goto top;
 ioerror:
 	error(errno);
@@ -202,24 +200,20 @@ ioerror:
 }
 
 void
-getstring(bp, size)
-	char *bp;
-	int size;
+getstring(char *bp, int size)
 {
 	char *cp = bp;
 	char *ep = bp + size - 1;
 
 	do {
-		if (read(0, cp, 1) != 1)
+		if (read(STDIN_FILENO, cp, 1) != 1)
 			exit(0);
 	} while (*cp != '\n' && ++cp < ep);
 	*cp = '\0';
 }
 
 char *
-checkbuf(record, size)
-	char *record;
-	int size;
+checkbuf(char *record, int size)
 {
 	if (size <= maxrecsize)
 		return (record);
@@ -238,11 +232,10 @@ checkbuf(record, size)
 }
 
 void
-error(num)
-	int num;
+error(int num)
 {
 
 	DEBUG2("rmtd: E %d (%s)\n", num, strerror(num));
 	(void) snprintf(resp, sizeof (resp), "E%d\n%s\n", num, strerror(num));
-	(void) write(1, resp, strlen(resp));
+	(void) write(STDOUT_FILENO, resp, strlen(resp));
 }
