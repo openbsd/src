@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.5 1997/07/29 07:49:31 deraadt Exp $
+**	$Id: identd.c,v 1.6 1997/08/01 19:08:42 deraadt Exp $
 **
 ** identd.c			  A TCP/IP link identification protocol server
 **
@@ -223,27 +223,12 @@ int main(argc,argv)
   char *bind_address = NULL;
   int set_uid = 0;
   int set_gid = 0;
-  int inhibit_default_config = 0;
   int opt_count = 0;		/* Count of option flags */
   
 #ifdef __convex__
   argc--;    /* get rid of extra argument passed by inetd */
 #endif
 
-  /*
-  ** Prescan the arguments for "-f<config-file>" switches
-  */
-  inhibit_default_config = 0;
-  for (i = 1; i < argc && argv[i][0] == '-'; i++)
-    if (argv[i][1] == 'f')
-      inhibit_default_config = 1;
-
-  /*
-  ** Parse the default config file - if it exists
-  */
-  if (!inhibit_default_config)
-    parse_config(NULL, 1);
-  
   /*
   ** Parse the command line arguments
   */
