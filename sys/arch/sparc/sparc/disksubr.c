@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1997/01/02 06:28:43 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 1997/04/02 18:28:09 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -52,6 +52,10 @@
 #endif
 
 #include <sparc/dev/sbusvar.h>
+
+#if MAXPARTITIONS != 16
+#warn beware: Sun disklabel compatibility assumes MAXPARTITIONS == 16
+#endif
 
 static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
@@ -293,7 +297,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) (minor(dev) & (MAXPARTITIONS-1))
+#define dkpart(dev) DISKPART(dev)
 
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
 	int maxsz = p->p_size;
