@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/07/09 01:35:33 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2001/07/09 02:07:49 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ void trap __P((struct trapframe *frame));
 volatile int want_resched;
 
 #ifdef DDB
-u_int32_t db_dumpframe(u_int32_t);
 void ppc_dumpbt __P((struct trapframe *frame));
 
 void
