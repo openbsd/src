@@ -349,7 +349,7 @@ int MAIN(int argc, char **argv)
 				{
 				size_t len = strlen(name)+strlen(argv[i])+5;
 				tmp=tofree=OPENSSL_malloc(len);
-				snprintf(tmp,len,"%s(%s)= ",name,argv[i]);
+				BIO_snprintf(tmp,len,"%s(%s)= ",name,argv[i]);
 				}
 			else
 				tmp="";

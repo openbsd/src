@@ -75,56 +75,56 @@ long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
 	if (BIO_CB_RETURN & cmd)
 		r=ret;
 
-	snprintf(buf,sizeof buf,"BIO[%08lX]:",(unsigned long)bio);
+	BIO_snprintf(buf,sizeof buf,"BIO[%08lX]:",(unsigned long)bio);
 	p= &(buf[14]);
 	p_maxlen = sizeof buf - 14;
 	switch (cmd)
 		{
 	case BIO_CB_FREE:
-		snprintf(p,p_maxlen,"Free - %s\n",bio->method->name);
+		BIO_snprintf(p,p_maxlen,"Free - %s\n",bio->method->name);
 		break;
 	case BIO_CB_READ:
 		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
-			snprintf(p,p_maxlen,"read(%d,%d) - %s fd=%d\n",
+			BIO_snprintf(p,p_maxlen,"read(%d,%d) - %s fd=%d\n",
 				 bio->num,argi,bio->method->name,bio->num);
 		else
-			snprintf(p,p_maxlen,"read(%d,%d) - %s\n",
+			BIO_snprintf(p,p_maxlen,"read(%d,%d) - %s\n",
 				 bio->num,argi,bio->method->name);
 		break;
 	case BIO_CB_WRITE:
 		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
-			snprintf(p,p_maxlen,"write(%d,%d) - %s fd=%d\n",
+			BIO_snprintf(p,p_maxlen,"write(%d,%d) - %s fd=%d\n",
 				 bio->num,argi,bio->method->name,bio->num);
 		else
-			snprintf(p,p_maxlen,"write(%d,%d) - %s\n",
+			BIO_snprintf(p,p_maxlen,"write(%d,%d) - %s\n",
 				 bio->num,argi,bio->method->name);
 		break;
 	case BIO_CB_PUTS:
-		snprintf(p,p_maxlen,"puts() - %s\n",bio->method->name);
+		BIO_snprintf(p,p_maxlen,"puts() - %s\n",bio->method->name);
 		break;
 	case BIO_CB_GETS:
-		snprintf(p,p_maxlen,"gets(%d) - %s\n",argi,bio->method->name);
+		BIO_snprintf(p,p_maxlen,"gets(%d) - %s\n",argi,bio->method->name);
 		break;
 	case BIO_CB_CTRL:
-		snprintf(p,p_maxlen,"ctrl(%d) - %s\n",argi,bio->method->name);
+		BIO_snprintf(p,p_maxlen,"ctrl(%d) - %s\n",argi,bio->method->name);
 		break;
 	case BIO_CB_RETURN|BIO_CB_READ:
-		snprintf(p,p_maxlen,"read return %ld\n",ret);
+		BIO_snprintf(p,p_maxlen,"read return %ld\n",ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_WRITE:
-		snprintf(p,p_maxlen,"write return %ld\n",ret);
+		BIO_snprintf(p,p_maxlen,"write return %ld\n",ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_GETS:
-		snprintf(p,p_maxlen,"gets return %ld\n",ret);
+		BIO_snprintf(p,p_maxlen,"gets return %ld\n",ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_PUTS:
-		snprintf(p,p_maxlen,"puts return %ld\n",ret);
+		BIO_snprintf(p,p_maxlen,"puts return %ld\n",ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_CTRL:
-		snprintf(p,p_maxlen,"ctrl return %ld\n",ret);
+		BIO_snprintf(p,p_maxlen,"ctrl return %ld\n",ret);
 		break;
 	default:
-		snprintf(p,p_maxlen,"bio callback - unknown type (%d)\n",cmd);
+		BIO_snprintf(p,p_maxlen,"bio callback - unknown type (%d)\n",cmd);
 		break;
 		}
 

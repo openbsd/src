@@ -200,7 +200,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 		return(NULL);
 
 	p=(char *)s->data;
-	if ((p == NULL) || (s->length < len))
+	if ((p == NULL) || ((size_t)s->length < len))
 		{
 		p=OPENSSL_malloc(len);
 		if (p == NULL) return(NULL);
@@ -209,8 +209,8 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 		s->data=(unsigned char *)p;
 		}
 
-	snprintf(p,len,"%02d%02d%02d%02d%02d%02dZ",ts->tm_year%100,
-		 ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
+	BIO_snprintf(p,len,"%02d%02d%02d%02d%02d%02dZ",ts->tm_year%100,
+		     ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
 	s->length=strlen(p);
 	s->type=V_ASN1_UTCTIME;
 #ifdef CHARSET_EBCDIC_not

@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+/* We need to define this to get macros like S_IFBLK and S_IFCHR */
+#define _XOPEN_SOURCE 1
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +67,7 @@
 #include "e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
+#include <openssl/buffer.h>
 
 #ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
@@ -106,6 +110,7 @@ int RAND_load_file(const char *file, long bytes)
 
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
+#if defined(S_IFBLK) && defined(S_IFCHR)
 	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
 	  /* this file is a device. we don't want read an infinite number
 	   * of bytes from a random device, nor do we want to use buffered
@@ -114,6 +119,7 @@ int RAND_load_file(const char *file, long bytes)
 	  bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
 	  setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
 	}
+#endif
 	for (;;)
 		{
 		if (bytes > 0)
@@ -147,6 +153,7 @@ int RAND_write_file(const char *file)
 	
 	i=stat(file,&sb);
 	if (i != -1) { 
+#if defined(S_IFBLK) && defined(S_IFCHR)
 	  if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
 	    /* this file is a device. we don't write back to it. 
 	     * we "succeed" on the assumption this is some sort 
@@ -155,6 +162,7 @@ int RAND_write_file(const char *file)
 	     */
 	    return(1); 
 	  }
+#endif
 	}
 
 #if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)
@@ -219,13 +227,15 @@ const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
 	int ok = 0;
+#ifdef __OpenBSD__
 	struct stat sb;
+#endif
 
 	if (issetugid() == 0)
 		s=getenv("RANDFILE");
 	if (s != NULL && *s && strlen(s) + 1 < size)
 		{
-		if (strlcpy(buf,s,size) >= size)
+		if (BUF_strlcpy(buf,s,size) >= size)
 			return NULL;
 		}
 	else
@@ -240,11 +250,11 @@ const char *RAND_file_name(char *buf, size_t size)
 #endif
 		if (s && *s && strlen(s)+strlen(RFILE)+2 < size)
 			{
-			strlcpy(buf,s,size);
+			BUF_strlcpy(buf,s,size);
 #ifndef OPENSSL_SYS_VMS
-			strlcat(buf,"/",size);
+			BUF_strlcat(buf,"/",size);
 #endif
-			strlcat(buf,RFILE,size);
+			BUF_strlcat(buf,RFILE,size);
 			ok = 1;
 			}
 		else
@@ -260,11 +270,11 @@ const char *RAND_file_name(char *buf, size_t size)
 	 */
 
 	if (!ok)
-		if (strlcpy(buf,"/dev/arandom",size) >= size) {
+		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
 			return(NULL);
 		}	
 	if (stat(buf,&sb) == -1)
-		if (strlcpy(buf,"/dev/arandom",size) >= size) {
+		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
 			return(NULL);
 		}	
 

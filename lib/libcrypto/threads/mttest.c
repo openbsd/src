@@ -243,7 +243,7 @@ bad:
 		goto end;
 		}
 
-	if (cipher == NULL && issetugid() == 0)
+	if (cipher == NULL && OPENSSL_issetugid() == 0)
 		cipher=getenv("SSL_CIPHER");
 
 	SSL_load_error_strings();
