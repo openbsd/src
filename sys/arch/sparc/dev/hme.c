@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.13 1998/11/11 00:26:00 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.14 1998/12/14 17:37:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -196,7 +196,12 @@ hmeattach(parent, self, aux)
 	else if (sc->sc_rev != 0xa0)
 		sc->sc_flags = HME_FLAG_NOT_A0;
 
-	sc->sc_burst = ((struct sbus_softc *)parent)->sc_burst;
+	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
+	if (sc->sc_burst == -1)
+		sc->sc_burst = ((struct sbus_softc *)parent)->sc_burst;
+
+        /* Clamp at parent's burst sizes */
+	sc->sc_burst &= ((struct sbus_softc *)parent)->sc_burst;
 
 	hme_meminit(sc);
 
