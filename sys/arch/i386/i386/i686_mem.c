@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.2 1999/11/23 22:42:13 deraadt Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.3 1999/11/24 01:43:32 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -512,11 +512,11 @@ i686_mrinit(sc)
 	
 	/* For now, bail out if MTRRs are not enabled */
 	if (!(mtrrdef & 0x800)) {
-		printf("mmtr: CPU supports MTRRs but not enabled\n");
+		printf("mtrr: CPU supports MTRRs but not enabled\n");
 		return;
 	}
 	nmdesc = mtrrcap & 0xff;
-	printf("mmtr: Pentium Pro MTRR support\n");
+	printf("mtrr: Pentium Pro MTRR support\n");
 	
 	/* If fixed MTRRs supported and enabled */
 	if ((mtrrcap & 0x100) && (mtrrdef & 0x400)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.2 1999/11/23 22:42:14 deraadt Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.3 1999/11/24 01:43:32 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -131,7 +131,7 @@ k6_mrinit(sc)
 			sc->mr_desc[d].mr_flags |= MDF_UNCACHEABLE;
 	}
 	
-	printf("mmtr: K6-family MTRR support (%d registers)\n", sc->mr_ndesc);
+	printf("mtrr: K6-family MTRR support (%d registers)\n", sc->mr_ndesc);
 }
 
 int
