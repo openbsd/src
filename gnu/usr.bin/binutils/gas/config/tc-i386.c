@@ -924,6 +924,7 @@ md_begin ()
     identifier_chars['@'] = '@';
 #endif
     digit_chars['-'] = '-';
+    mnemonic_chars['-'] = '-';
     identifier_chars['_'] = '_';
     identifier_chars['.'] = '.';
 
