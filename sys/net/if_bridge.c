@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.68 2001/06/27 06:07:39 kjc Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.69 2001/06/27 06:26:43 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1043,7 +1043,7 @@ bridgeintr_frame(sc, m)
 		return;
 	}
 
-#if defined(INET) && defined(IPFILTER)
+#if NPF > 0
 	m = bridge_filter(sc, src_if, &eh, m);
 	if (m == NULL)
 		return;
