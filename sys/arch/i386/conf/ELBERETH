@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.16 1998/08/24 20:52:45 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.17 1998/09/25 16:10:41 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -33,9 +33,9 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
-option		COMPAT_10	# NetBSD 1.0,
-option		COMPAT_11	# NetBSD 1.1,
+#option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
+#option		COMPAT_10	# NetBSD 1.0,
+#option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
