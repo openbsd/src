@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.98 2000/04/06 08:55:22 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.99 2000/04/07 09:17:39 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -341,12 +341,15 @@ sshd_exchange_identification(int sock_in, int sock_out)
 			/* note that this disables agent-forwarding */
 			enable_compat13();
 		}
-		break;
+		if (remote_minor != 99)
+		       break;
+		/* FALLTHROUGH */
 	case 2:
 		if (allow_ssh2) {
 			enable_compat20();
 			break;
 		}
+		/* FALLTHROUGH */
 	default: 
 		s = "Protocol major versions differ.\n";
 		(void) atomicio(write, sock_out, s, strlen(s));
