@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.2 2005/01/10 17:47:15 espie Exp $
+# $OpenBSD: Makefile.cross,v 1.3 2005/01/12 00:06:28 espie Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -187,13 +187,13 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
     ${TARGET} == "hppa" || ${TARGET} == "hppa64" || \
     ${TARGET} == "i386" || \
     ${TARGET} == "sparc64" || ${TARGET} == "sgi"
-USE_GCC3=yes
+TARGET_USE_GCC3=Yes
 .else
-USE_GCC3=no
+TARGET_USE_GCC3=No
 .endif
 
 ${CROSSGCC}:		${CROSSBINUTILS}
-.if ${USE_GCC3:L} == "yes"
+.if ${TARGET_USE_GCC3:L} == "yes"
 	(cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} CROSSDIR=${CROSSDIR} \
