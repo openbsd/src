@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.17 2004/03/21 19:47:59 miod Exp $
+.\"	$OpenBSD: vnd.4,v 1.18 2005/01/11 09:12:09 jmc Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -82,9 +82,89 @@ There is a run-time utility that is used for configuring
 See
 .Xr vnconfig 8
 for more information.
+.Pp
+The following
+.Xr ioctl 2
+calls are defined in
+.Aq Pa dev/vndioctl.h :
+.Bl -tag -width Ds
+.It Dv VNDIOCSET Fa "struct vnd_ioctl *"
+Associate the file
+.Va vnd_file
+with a
+.Nm
+pseudo device, optionally encrypted using the Blowfish cipher and the key
+specified in
+.Va vnd_key
+of length
+.Va vnd_keylen .
+Encryption only works with
+.Nm svnd .
+The size of the configured
+.Nm
+device is returned in
+.Va vnd_size .
+.Bd -literal -offset indent
+struct vnd_ioctl {
+	char	*vnd_file;
+	off_t	vnd_size;
+	u_char	*vnd_key;
+	int	vnd_keylen;
+};
+.Ed
+.It Dv VNDIOCCLR Fa "struct vnd_ioctl *"
+Deassociate a
+.Nm
+device.
+.It Dv VNDIOCGET Fa "struct vnd_user *"
+Get the associated file name, device, inode, and unit number of a
+.Nm
+device.
+If
+.Va vnu_unit
+is \-1, information on the
+.Nm
+device corresponding to the file descriptor passed to
+.Xr ioctl 2
+will be returned.
+Otherwise,
+.Va vnu_unit
+may contain the unit number of another
+.Nm
+device.
+This allows for opening just vnd0 and querying all available
+.Nm
+devices, as is done in
+.Xr vnconfig 8 .
+.Bd -literal -offset indent
+struct vnd_user {
+	char	vnufile[VNDNLEN];
+	int	vnu_unit;
+	dev_t	vnu_dev;
+	ino_t	vnu_ino;
+};
+.Ed
+.El
+.Pp
+Additionally, some
+.Xr disklabel 8
+related
+.Xr ioctl 2
+calls defined in
+.Aq Pa sys/disklabel.h
+are available:
+.Dv DIOCGDINFO ,
+.Dv DIOCSDINFO ,
+.Dv DIOCWDINFO ,
+and
+.Dv DIOCWLABEL .
+They are documented in
+.Xr sd 4 .
 .Sh FILES
-/dev/{,r}{,s}vnd* - vnd device special files.
+/dev/{,r}{,s}vnd* \- vnd device special files.
 .Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr sd 4 ,
 .Xr disklabel 5 ,
 .Xr MAKEDEV 8 ,
 .Xr config 8 ,
