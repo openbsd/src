@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2004/05/23 02:59:05 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 2004/05/30 21:52:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -353,7 +353,8 @@ setregs(p, pack, stack, retval)
 	struct fpstate *fs;
 	int psr;
 
-	/* Setup the process StackGhost cookie which will be XORed into
+	/*
+	 * Setup the process StackGhost cookie which will be XORed into
 	 * the return pointer as register windows are over/underflowed
 	 */
 	p->p_addr->u_pcb.pcb_wcookie = arc4random();
@@ -372,7 +373,6 @@ setregs(p, pack, stack, retval)
 			(p->p_addr->u_pcb.pcb_wcookie & ~0x3);
 		break;
 	}
-
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
