@@ -1,5 +1,5 @@
-/*	$OpenBSD: iso_chksum.c,v 1.3 1996/04/21 22:29:27 deraadt Exp $	*/
-/*	$NetBSD: iso_chksum.c,v 1.7 1996/04/13 01:34:52 cgd Exp $	*/
+/*	$OpenBSD: iso_chksum.c,v 1.4 1996/05/01 14:06:28 deraadt Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.8 1996/04/22 01:43:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -218,7 +218,7 @@ iso_gen_csum(m, n, l)
 				xloc = loc + mtod(m, u_char *);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_CHKSUM]) {
-					printf("1: zeroing xloc %p loc %p\n",
+					printf("1: zeroing xloc %p loc 0x%x\n",
 					    xloc, loc);
 				}
 #endif
