@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.16 2002/02/22 20:15:28 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.17 2002/02/22 20:29:09 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1304,7 +1304,6 @@ gem_mediastatus(ifp, ifmr)
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 }
 
-int gem_ioctldebug = 0;
 /*
  * Process an ioctl request.
  */
@@ -1320,6 +1319,11 @@ gem_ioctl(ifp, cmd, data)
 	int s, error = 0;
 
 	s = splimp();
+
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
 
 	switch (cmd) {
 
