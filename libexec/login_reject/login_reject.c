@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.4 2002/06/02 01:27:15 deraadt Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.5 2002/06/28 01:14:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -59,7 +59,7 @@ main(argc, argv)
 {
 	FILE *back;
 	char passbuf[1];
-    	int c;
+	int c;
 	struct rlimit rl;
 	int mode = 0;
 
@@ -71,7 +71,7 @@ main(argc, argv)
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
-    	while ((c = getopt(argc, argv, "v:s:")) != -1)
+	while ((c = getopt(argc, argv, "v:s:")) != -1)
 		switch (c) {
 		case 'v':
 			break;

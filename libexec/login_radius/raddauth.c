@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.8 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.9 2002/06/28 01:14:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -42,9 +42,9 @@
  * Eugene OR 97440-1244 USA
  *
  * This contains unpublished proprietary source code of tfm associates.
- * The copyright notice above does not evidence any 
+ * The copyright notice above does not evidence any
  * actual or intended publication of such source code.
- * 
+ *
  * A license is granted to Berkeley Software Design, Inc. by
  * tfm associates to modify and/or redistribute this software under the
  * terms and conditions of the software License Agreement provided with this
@@ -352,7 +352,7 @@ rad_request(pid_t id, char *name, char *password, int port, char *vector,
 	*ptr++ = p * AUTH_VECTOR_LEN + 2;
 
 	memset(pass_buf, 0, sizeof(pass_buf));		/* must zero fill */
-	strlcpy(pass_buf, password, sizeof(pass_buf));	
+	strlcpy(pass_buf, password, sizeof(pass_buf));
 
 	/* Calculate the md5 digest */
 	secretlen = strlen(auth_secret);
@@ -469,7 +469,7 @@ get_ipaddr(char *host)
 	struct hostent *hp;
 
 	if ((hp = gethostbyname(host)) == NULL)
-        	return (0);
+		return (0);
 
 	return (((struct in_addr *)hp->h_addr)->s_addr);
 }
@@ -480,7 +480,7 @@ get_ipaddr(char *host)
 void
 getsecret(void)
 {
-    	FILE *servfd;
+	FILE *servfd;
 	char *host, *secret, buffer[MAXPATHLEN];
 	size_t len;
 

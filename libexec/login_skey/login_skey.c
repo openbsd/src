@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.9 2002/06/02 01:27:15 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.10 2002/06/28 01:14:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -69,8 +69,8 @@ main(argc, argv)
 	char **argv;
 {
 	FILE *back = NULL;
-    	char *class = 0;
-    	char *username = 0;
+	char *class = 0;
+	char *username = 0;
 	char skeyprompt[SKEY_MAX_CHALLENGE+17];
 	char passbuf[SKEY_MAX_PW_LEN+1];
 	int c, haskey;
@@ -86,7 +86,7 @@ main(argc, argv)
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
-    	while ((c = getopt(argc, argv, "ds:v:")) != -1)
+	while ((c = getopt(argc, argv, "ds:v:")) != -1)
 		switch (c) {
 		case 'd':	/* to remain undocumented */
 			back = stdout;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.8 2002/06/02 01:27:15 deraadt Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.9 2002/06/28 01:14:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -96,10 +96,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-    	struct rlimit rl;
-    	char *username;
-    	char *instance;
-    	int c;
+	struct rlimit rl;
+	char *username;
+	char *instance;
+	int c;
 
 	rl.rlim_cur = 0;
 	rl.rlim_max = 0;
@@ -109,7 +109,7 @@ main(argc, argv)
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
-    	while ((c = getopt(argc, argv, "s:v:")) != -1)
+	while ((c = getopt(argc, argv, "s:v:")) != -1)
 		switch (c) {
 		case 'v':
 			break;
@@ -141,7 +141,7 @@ main(argc, argv)
 		*instance++ = '\0';
 	else
 		instance = "";
-	
+
 #ifdef KERBEROS
 	if (krb_get_lrealm(realm, 0) == KSUCCESS)
 		krb_chpass(username, instance, argv);
@@ -236,7 +236,7 @@ yp_chpass(username)
 
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	= pw->pw_name;
-	yppasswd.newpw.pw_uid 	= pw->pw_uid;
+	yppasswd.newpw.pw_uid	= pw->pw_uid;
 	yppasswd.newpw.pw_gid	= pw->pw_gid;
 	yppasswd.newpw.pw_gecos = pw->pw_gecos;
 	yppasswd.newpw.pw_dir	= pw->pw_dir;
@@ -321,7 +321,7 @@ krb_chpass(username, instance, argv)
 	}
 
 	rval = kadm_init_link (PWSERV_NAME, KRB_MASTER, principal.realm);
-	if (rval != KADM_SUCCESS) 
+	if (rval != KADM_SUCCESS)
 		com_err(argv[0], rval, "while initializing");
 	else {
 		des_cblock newkey;
@@ -347,6 +347,6 @@ krb_chpass(username, instance, argv)
 
 	if (rval == 0)
 		(void)writev(BACK_CHANNEL, iov, 2);
-    	exit(rval);
+	exit(rval);
 }
 #endif
