@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.15 1998/05/15 03:16:35 art Exp $	*/
+/*	$OpenBSD: commands.c,v 1.16 1998/05/23 12:15:20 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2561,8 +2561,11 @@ tn(argc, argv)
 	}
 
 	if (connect(net, sa, sa_size) < 0) {
+	    int retry = 0;
+
 	    if (host && host->h_addr_list[1]) {
 		int oerrno = errno;
+	        retry = 1;
 
 		switch(family) {
 		case AF_INET :
@@ -2573,7 +2576,7 @@ tn(argc, argv)
 #if defined(AF_INET6) && defined(HAVE_STRUCT_SOCKADDR_IN6)
 		case AF_INET6: {
 		    char buf[INET6_ADDRSTRLEN];
-		    
+
 		    fprintf(stderr, "telnet: connect to address %s: ",
 			    inet_ntop(AF_INET6, &sin6.sin6_addr, buf,
 				      sizeof(buf)));
@@ -2587,9 +2590,22 @@ tn(argc, argv)
                    
 		errno = oerrno;
 		perror(NULL);
-		host->h_addr_list++;
-		memmove((caddr_t)&sin.sin_addr,
-			host->h_addr_list[0], host->h_length);
+
+		switch(family) {
+		case AF_INET :
+			printf("Trying %s...\r\n", inet_ntoa(sin.sin_addr));
+			break;
+#if defined(AF_INET6) && defined(HAVE_STRUCT_SOCKADDR_IN6)
+		case AF_INET6: {
+		    printf("Trying %s...\r\n", inet_ntop(AF_INET6,
+					     &sin6.sin6_addr,
+					     buf,
+					     sizeof(buf)));
+		    break;
+		}
+#endif
+		}
+		
 		(void) NetClose(net);
 		continue;
 	    }
