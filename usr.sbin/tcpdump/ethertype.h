@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertype.h,v 1.4 1996/07/13 11:01:09 mickey Exp $	*/
+/*	$OpenBSD: ethertype.h,v 1.5 1996/11/12 07:54:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -59,7 +59,9 @@
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000
 #endif
-
+#ifndef ETHERTYPE_8022
+#define ETHERTYPE_8022		0x0004
+#endif
 #ifndef ETHERTYPE_ATALK
 #define ETHERTYPE_ATALK		0x809b
 #endif
