@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.6 1996/09/02 21:36:58 millert Exp $
+.\"	$OpenBSD: rcmd.3,v 1.7 1996/09/05 02:39:34 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,11 +54,13 @@
 The
 .Fn rcmd
 function
-is used by the super-user to execute a command on
-a remote machine using an authentication scheme based
-on reserved port numbers.  If the
+is used by the super-user to execute a command on a remote
+machine using an authentication scheme based on reserved
+port numbers.  If the calling process is not setuid and the
 .Li RSH
-environmental variable is set and inport is
+environmental variable is set and
+.Fa inport
+is
 .Li shell/tcp ,
 .Xr rcmdsh 3
 is called instead with the value of
