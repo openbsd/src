@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.2 2003/12/19 19:24:08 deraadt Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.3 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -199,8 +199,7 @@ pt_lookup(struct in_addr prefix)
  * XXX A nicer upcall interface wouldn't be luxus too.
  */
 void
-pt_dump(void (*upcall)(struct pt_entry *, int, int *, void *),
-    int fd, int *w, void *arg)
+pt_dump(void (*upcall)(struct pt_entry *, void *), void *arg)
 {
 	struct pt_entry	*p;
 	int		 i;
@@ -210,7 +209,7 @@ pt_dump(void (*upcall)(struct pt_entry *, int, int *, void *),
 	for (i = MAX_PREFIX; i >= MIN_PREFIX; i--) {
 		for (j = 0; j < pthashsize[i]; j++)
 			LIST_FOREACH(p, &pttable[i].pt_hashtbl[j], pt_l)
-				upcall(p, fd, w, arg);
+				upcall(p, arg);
 	}
 }
 

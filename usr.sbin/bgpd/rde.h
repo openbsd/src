@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.4 2003/12/21 16:11:34 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.5 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com> and
@@ -244,8 +244,7 @@ struct pt_entry	*pt_get(struct in_addr, int);
 struct pt_entry *pt_add(struct in_addr, int);
 void		 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct in_addr);
-void		 pt_dump(void (*)(struct pt_entry *, int, int *, void *),
-			    int, int *, void *);
+void		 pt_dump(void (*)(struct pt_entry *, void *), void *);
 
 
 #endif /* __RDE_H__ */

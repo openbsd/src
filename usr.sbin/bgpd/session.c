@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.24 2003/12/21 18:21:24 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.25 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,6 @@ int	parse_update(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_keepalive(struct peer *);
 void	session_dispatch_imsg(int, int);
-void	session_write_imsg(int fd);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
 
@@ -82,8 +81,7 @@ struct peer	*getpeerbyip(in_addr_t);
 struct bgpd_config	*conf = NULL, *nconf = NULL;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
-int			 s2r_queued_writes = 0;
-int			 s2r_sock = -1;
+struct msgbuf		 msgbuf_rde;
 
 void
 session_sighdlr(int sig)
@@ -172,10 +170,11 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 	signal(SIGTERM, session_sighdlr);
 	logit(LOG_INFO, "session engine ready");
-	s2r_sock = pipe_s2r[0];
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
 	init_conf(conf);
+	msgbuf_init(&msgbuf_rde);
+	msgbuf_rde.sock = pipe_s2r[0];
 	init_imsg_buf();
 	init_peers();
 
@@ -187,7 +186,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		pfd[PFD_PIPE_ROUTE].fd = pipe_s2r[0];
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
-		if (s2r_queued_writes > 0)
+		if (msgbuf_rde.queued > 0)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
 
 		nextaction = time(NULL) + 240;	/* loop every 240s at least */
@@ -244,7 +243,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 				nextaction = p->StartTimer;
 
 			/* are we waiting for a write? */
-			if (p->queued_writes > 0)
+			if (p->wbuf.queued > 0)
 				p->events |= POLLOUT;
 
 			/* poll events */
@@ -275,7 +274,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			session_write_imsg(pfd[PFD_PIPE_ROUTE].fd);
+			if (msgbuf_write(&msgbuf_rde) == -1)
+				fatal("pipe write error", 0);
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
@@ -338,6 +338,9 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				fatal(NULL, errno);
 			peer->rbuf->wptr = peer->rbuf->buf;
 			peer->rbuf->pkt_len = MSGSIZE_HEADER;
+
+			/* init write buffer */
+			msgbuf_init(&peer->wbuf);
 
 			change_state(peer, STATE_CONNECT, event);
 			session_connect(peer);
@@ -554,6 +557,7 @@ session_close_connection(struct peer *peer)
 		shutdown(peer->sock, SHUT_RDWR);
 		close(peer->sock);
 		peer->sock = -1;
+		peer->wbuf.sock = -1;
 	}
 }
 
@@ -586,10 +590,9 @@ change_state(struct peer *peer, enum session_state state,
 		peer->KeepaliveTimer = 0;
 		peer->HoldTimer = 0;
 		session_close_connection(peer);
-		buf_peer_remove(peer);
+		msgbuf_clear(&peer->wbuf);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
-		peer->queued_writes = 0;
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
 		if (event != EVNT_STOP) {
@@ -649,6 +652,7 @@ session_accept(int listenfd)
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
 		p->sock = connfd;
+		p->wbuf.sock = connfd;
 		if (session_setup_socket(p)) {
 			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
@@ -677,6 +681,8 @@ session_connect(struct peer *peer)
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
 	}
+
+	peer->wbuf.sock = peer->sock;
 
 	/* if update source is set we need to bind() */
 	if (peer->conf.local_addr.sin_addr.s_addr)
@@ -762,7 +768,7 @@ session_open(struct peer *peer)
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
 	msg.optparamlen = 0;
 
-	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
+	if ((buf = buf_open(len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	errs += buf_add(buf, &msg.header.marker, sizeof(msg.header.marker));
 	errs += buf_add(buf, &msg.header.len, sizeof(msg.header.len));
@@ -774,7 +780,7 @@ session_open(struct peer *peer)
 	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (errs == 0) {
-		if (buf_close(buf) == -1) {
+		if (buf_close(&peer->wbuf, buf) == -1) {
 			buf_free(buf);
 			bgp_fsm(peer, EVNT_CON_FATAL);
 		}
@@ -798,7 +804,7 @@ session_keepalive(struct peer *peer)
 	msg.len = htons(len);
 	msg.type = KEEPALIVE;
 
-	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
+	if ((buf = buf_open(len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
 	errs += buf_add(buf, &msg.len, sizeof(msg.len));
@@ -810,7 +816,7 @@ session_keepalive(struct peer *peer)
 		return;
 	}
 
-	if (buf_close(buf) == -1) {
+	if (buf_close(&peer->wbuf, buf) == -1) {
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 		return;
@@ -839,7 +845,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	msg.len = htons(len);
 	msg.type = NOTIFICATION;
 
-	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
+	if ((buf = buf_open(len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
 	errs += buf_add(buf, &msg.len, sizeof(msg.len));
@@ -856,7 +862,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		return;
 	}
 
-	if (buf_close(buf) == -1) {
+	if (buf_close(&peer->wbuf, buf) == -1) {
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
@@ -906,8 +912,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 		return (1);
 	}
 
-	if (pfd->revents & POLLOUT && peer->queued_writes) {
-		if (buf_peer_write(peer))
+	if (pfd->revents & POLLOUT && peer->wbuf.queued) {
+		if (msgbuf_write(&peer->wbuf))
 			bgp_fsm(peer, EVNT_CON_FATAL);
 		if (!(pfd->revents & POLLIN))
 			return (1);
@@ -1153,8 +1159,7 @@ parse_update(struct peer *peer)
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 
-	s2r_queued_writes += imsg_compose(s2r_sock, IMSG_UPDATE,
-	    peer->conf.id, p, datalen);
+	imsg_compose(&msgbuf_rde, IMSG_UPDATE, peer->conf.id, p, datalen);
 
 	return (0);
 }
@@ -1301,26 +1306,16 @@ getpeerbyip(in_addr_t ip)
 }
 
 void
-session_write_imsg(int fd)
-{
-	int	n;
-
-	if ((n = buf_sock_write(fd)) == -1)
-		fatal("pipe write error", errno);
-	s2r_queued_writes -= n;
-}
-
-void
 session_down(struct peer *peer)
 {
 	if (!session_quit)
-		s2r_queued_writes += imsg_compose(s2r_sock, IMSG_SESSION_DOWN,
-		    peer->conf.id, NULL, 0);
+		imsg_compose(&msgbuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
+		    NULL, 0);
 }
 
 void
 session_up(struct peer *peer)
 {
-	s2r_queued_writes += imsg_compose(s2r_sock, IMSG_SESSION_UP,
-	    peer->conf.id, &peer->remote_bgpid, sizeof(peer->remote_bgpid));
+	imsg_compose(&msgbuf_rde, IMSG_SESSION_UP, peer->conf.id,
+	    &peer->remote_bgpid, sizeof(peer->remote_bgpid));
 }

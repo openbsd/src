@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.15 2003/12/20 21:43:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.16 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -51,10 +51,9 @@ void		 peer_down(u_int32_t);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
-int			 se_queued_writes = 0;
-int			 se_sock;
-int			 main_queued_writes = 0;
 struct rde_peer_head	 peerlist;
+struct msgbuf		 msgbuf_se;
+struct msgbuf		 msgbuf_main;
 
 void
 rde_sighdlr(int sig)
@@ -117,49 +116,50 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	path_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	pt_init();
+	msgbuf_init(&msgbuf_se);
+	msgbuf_se.sock = pipe_s2r[1];
+	msgbuf_init(&msgbuf_main);
+	msgbuf_main.sock = pipe_m2r[1];
 	init_imsg_buf();
-	se_sock = pipe_s2r[1];
 
 	logit(LOG_INFO, "route decision engine ready");
 
 	while (rde_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
-		pfd[PFD_PIPE_MAIN].fd = pipe_m2r[1];
+		pfd[PFD_PIPE_MAIN].fd = msgbuf_main.sock;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
-		if (main_queued_writes > 0)
+		if (msgbuf_main.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
-		pfd[PFD_PIPE_SESSION].fd = pipe_s2r[1];
+		pfd[PFD_PIPE_SESSION].fd = msgbuf_se.sock;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
-		if (se_queued_writes > 0)
+		if (msgbuf_se.queued  > 0)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
 
 		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
 			if (errno != EINTR)
 				fatal("poll error", errno);
 
-		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
-			rde_dispatch_imsg(pfd[PFD_PIPE_MAIN].fd,
-			    PFD_PIPE_MAIN);
-		}
-		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
+		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN)
+			rde_dispatch_imsg(pfd[PFD_PIPE_MAIN].fd, PFD_PIPE_MAIN);
+
+		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN)
 			rde_dispatch_imsg(pfd[PFD_PIPE_SESSION].fd,
 			    PFD_PIPE_SESSION);
-		}
+
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
-		    main_queued_writes) {
+		    msgbuf_main.queued) {
 			nfds--;
-			if ((n = buf_sock_write(pfd[PFD_PIPE_MAIN].fd)) == -1)
+			if ((n = msgbuf_write(&msgbuf_main)) == -1)
 				fatal("pipe write error", errno);
-			main_queued_writes -= n;
 		}
+
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
-		    se_queued_writes) {
+		    msgbuf_se.queued) {
 			nfds--;
-			if ((n = buf_sock_write(pfd[PFD_PIPE_SESSION].fd)) ==
+			if ((n = msgbuf_write(&msgbuf_se)) ==
 			    -1)
 				fatal("pipe write error", errno);
-			se_queued_writes -= n;
 		}
 	}
 
@@ -171,6 +171,7 @@ void
 rde_dispatch_imsg(int fd, int idx)
 {
 	struct imsg		 imsg;
+	struct mrt		 mrtdump;
 	struct peer_config	*pconf;
 	struct rde_peer		*p, *np;
 	u_int32_t		 rid;
@@ -234,7 +235,7 @@ rde_dispatch_imsg(int fd, int idx)
 				fatal("session msg not from session engine", 0);
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rid))
 				fatal("incorrect size of session request", 0);
-			rid = *(u_int32_t *)imsg.data;
+			memcpy(&rid, imsg.data, sizeof(rid));
 			peer_up(imsg.hdr.peerid, rid);
 			break;
 		case IMSG_SESSION_DOWN:
@@ -245,14 +246,15 @@ rde_dispatch_imsg(int fd, int idx)
 		case IMSG_MRT_REQ:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("mrt request not from parent", 0);
-			pt_dump(mrt_dump_upcall, fd, &main_queued_writes,
-			    &imsg.hdr.peerid);
+			mrtdump.id = imsg.hdr.peerid;
+			mrtdump.msgbuf = &msgbuf_main;
+			pt_dump(mrt_dump_upcall, &mrtdump);
 			/* FALLTHROUGH */
 		case IMSG_MRT_END:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("mrt request not from parent", 0);
 			/* ignore end message because a dump is atomic */
-			main_queued_writes += imsg_compose(fd, IMSG_MRT_END,
+			imsg_compose(&msgbuf_main, IMSG_MRT_END,
 			    imsg.hdr.peerid, NULL, 0);
 			break;
 		default:
@@ -504,7 +506,7 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 	u_int8_t	errcode;
 
 	errcode = errorcode;
-	se_queued_writes += imsg_compose(se_sock, IMSG_UPDATE_ERR, peerid,
+	imsg_compose(&msgbuf_se, IMSG_UPDATE_ERR, peerid,
 	    &errcode, sizeof(errcode));
 }
 

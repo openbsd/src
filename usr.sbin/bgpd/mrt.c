@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.6 2003/12/21 16:11:33 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.7 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -38,8 +38,8 @@
  * XXX imsg_create(), imsg_add(), imsg_close() ...
  */
 
-static int	mrt_dump_entry(int, struct prefix *, u_int16_t,
-		    struct peer_config *, u_int32_t);
+static int	mrt_dump_entry(struct mrt *, struct prefix *, u_int16_t,
+		    struct peer_config *);
 static void	mrt_dump_header(struct buf *, u_int16_t, u_int16_t, u_int32_t);
 static int	mrt_open(struct mrtdump_config *);
 
@@ -74,7 +74,7 @@ static int	mrt_open(struct mrtdump_config *);
 	} while (0)
 
 int
-mrt_dump_bgp_msg(int fd, u_char *pkg, u_int16_t pkglen, int type,
+mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen, int type,
     struct peer_config *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
@@ -86,8 +86,8 @@ mrt_dump_bgp_msg(int fd, u_char *pkg, u_int16_t pkglen, int type,
 
 	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
 	hdr.type = IMSG_MRT_MSG;
-	hdr.peerid = peer->id;
-	buf = buf_open(NULL, fd, hdr.len);
+	hdr.peerid = mrt->id;
+	buf = buf_open(hdr.len);
 	if (buf == NULL)
 		fatal("mrt_dump_bgp_msg", errno);
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1)
@@ -113,15 +113,15 @@ mrt_dump_bgp_msg(int fd, u_char *pkg, u_int16_t pkglen, int type,
 	if (buf_add(buf, pkg, pkglen) == -1)
 		fatal("buf_add error", 0);
 
-	if ((n = buf_close(buf)) == -1)
+	if ((n = buf_close(mrt->msgbuf, buf)) == -1)
 		fatal("buf_close error", 0);
 
 	return (n);
 }
 
 static int
-mrt_dump_entry(int fd, struct prefix *p, u_int16_t snum,
-    struct peer_config *peer, u_int32_t id)
+mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
+    struct peer_config *peer)
 {
 	struct buf	*buf;
 	void		*bptr;
@@ -134,8 +134,8 @@ mrt_dump_entry(int fd, struct prefix *p, u_int16_t snum,
 
 	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
 	hdr.type = IMSG_MRT_MSG;
-	hdr.peerid = id;
-	buf = buf_open(NULL, fd, hdr.len);
+	hdr.peerid = mrt->id;
+	buf = buf_open(hdr.len);
 	if (buf == NULL)
 		fatal("mrt_dump_entry", errno);
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1)
@@ -159,7 +159,7 @@ mrt_dump_entry(int fd, struct prefix *p, u_int16_t snum,
 	if (attr_dump(bptr, attr_len, &p->aspath->flags) == -1)
 		fatal("attr_dump error", 0);
 
-	if ((n = buf_close(buf)) == -1)
+	if ((n = buf_close(mrt->msgbuf, buf)) == -1)
 		fatal("buf_close error", 0);
 
 	return (n);
@@ -174,11 +174,10 @@ mrt_clear_seq(void)
 }
 
 void
-mrt_dump_upcall(struct pt_entry *pt, int fd, int *wait, void *arg)
+mrt_dump_upcall(struct pt_entry *pt, void *ptr)
 {
+	struct mrt	*mrtbuf = ptr;
 	struct prefix	*p;
-	u_int32_t	*idp = arg;
-	u_int32_t	 id = *idp;
 
 	/*
 	 * dump all prefixes even the inactive ones. That is the way zebra
@@ -186,7 +185,7 @@ mrt_dump_upcall(struct pt_entry *pt, int fd, int *wait, void *arg)
 	 * be dumped p should be set to p = pt->active.
 	 */
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-	    *wait += mrt_dump_entry(fd, p, sequencenum++, &p->peer->conf, id);
+		mrt_dump_entry(mrtbuf, p, sequencenum++, &p->peer->conf);
 }
 
 static void
@@ -216,21 +215,22 @@ mrt_open(struct mrtdump_config *conf)
 	if (strftime(conf->file, sizeof(conf->file), conf->name,
 		    localtime(&now)) == 0) {
 		logit(LOG_CRIT, "mrt_open strftime failed");
-		conf->fd = -1;
+		conf->msgbuf.sock = -1;
 		return -1;
 	}
 
-	conf->fd = open(conf->file, O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
-	if (conf->fd == -1)
+	conf->msgbuf.sock = open(conf->file,
+	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
+	if (conf->msgbuf.sock == -1)
 		logit(LOG_CRIT, "mrt_open %s: %s",
 		    conf->file, strerror(errno));
 
-	return conf->fd;
+	return conf->msgbuf.sock;
 }
 
 int
 mrt_state(struct mrtdump_config *m, enum imsg_type type,
-    int rfd, int *rwait /*, int sfd, int *swait */)
+    struct msgbuf *rde /*, struct msgbuf *se */)
 {
 	switch (m->state) {
 	case MRT_STATE_DONE:
@@ -240,12 +240,11 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		switch (type) {
 		case IMSG_NONE:
 			if (m->type == MRT_TABLE_DUMP)
-				*rwait += imsg_compose(rfd, IMSG_MRT_END,
-				    m->id, NULL, 0);
+				imsg_compose(rde, IMSG_MRT_END, m->id, NULL, 0);
 			return (0);
 		case IMSG_MRT_END:
 			/* dump no longer valid */
-			close(m->fd);
+			close(m->msgbuf.sock);
 			LIST_REMOVE(m, list);
 			free(m);
 			return (0);
@@ -257,16 +256,14 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		switch (type) {
 		case IMSG_NONE:
 			if (m->type == MRT_TABLE_DUMP)
-				*rwait += imsg_compose(rfd, IMSG_MRT_END,
-				    m->id, NULL, 0);
+				imsg_compose(rde, IMSG_MRT_END, m->id, NULL, 0);
 			return (0);
 		case IMSG_MRT_END:
-			if (m->fd != -1)
-				close(m->fd);
+			if (m->msgbuf.sock != -1)
+				close(m->msgbuf.sock);
 			m->state = MRT_STATE_OPEN;
 			if (m->type == MRT_TABLE_DUMP)
-				*rwait += imsg_compose(rfd, IMSG_MRT_REQ,
-				    m->id, NULL, 0);
+				imsg_compose(rde, IMSG_MRT_REQ, m->id, NULL, 0);
 			return (0);
 		default:
 			break;
@@ -276,8 +273,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		switch (type) {
 		case IMSG_NONE:
 			if (m->type == MRT_TABLE_DUMP)
-				*rwait += imsg_compose(rfd, IMSG_MRT_REQ,
-				    m->id, NULL, 0);
+				imsg_compose(rde, IMSG_MRT_REQ, m->id, NULL, 0);
 			return (0);
 		case IMSG_MRT_MSG:
 			mrt_open(m);
@@ -294,8 +290,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 }
 
 int
-mrt_usr1(struct mrt_config *conf, int rfd, int *rwait
-    /*, int sfd, int *swait */)
+mrt_usr1(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
 {
 	struct mrtdump_config	*m;
 	time_t			 now;
@@ -310,13 +305,11 @@ mrt_usr1(struct mrt_config *conf, int rfd, int *rwait
 				break;
 			case MRT_STATE_DONE:
 				m->state = MRT_STATE_OPEN;
-				*rwait += imsg_compose(rfd, IMSG_MRT_REQ,
-				    m->id, NULL, 0);
+				imsg_compose(rde, IMSG_MRT_REQ, m->id, NULL, 0);
 				break;
 			default:
 				m->state = MRT_STATE_REOPEN;
-				*rwait += imsg_compose(rfd, IMSG_MRT_END,
-				    m->id, NULL, 0);
+				imsg_compose(rde, IMSG_MRT_END, m->id, NULL, 0);
 				break;
 			}
 
@@ -333,8 +326,7 @@ mrt_usr1(struct mrt_config *conf, int rfd, int *rwait
 }
 
 int
-mrt_alrm(struct mrt_config *conf, int rfd, int *rwait
-    /*, int sfd, int *swait */)
+mrt_alrm(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
 {
 	struct mrtdump_config	*m;
 	time_t			 now;
@@ -352,14 +344,14 @@ mrt_alrm(struct mrt_config *conf, int rfd, int *rwait
 			case MRT_STATE_DONE:
 				m->state = MRT_STATE_OPEN;
 				if (m->type == MRT_TABLE_DUMP)
-					*rwait += imsg_compose(rfd,
-					    IMSG_MRT_REQ, m->id, NULL, 0);
+					imsg_compose(rde, IMSG_MRT_REQ, m->id,
+					    NULL, 0);
 				break;
 			default:
 				m->state = MRT_STATE_REOPEN;
 				if (m->type == MRT_TABLE_DUMP)
-					*rwait += imsg_compose(rfd,
-					    IMSG_MRT_END, m->id, NULL, 0);
+					imsg_compose(rde, IMSG_MRT_END, m->id,
+					    NULL, 0);
 				break;
 			}
 

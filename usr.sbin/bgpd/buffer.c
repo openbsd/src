@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.5 2003/12/21 18:04:08 claudio Exp $ */
+/*	$OpenBSD: buffer.c,v 1.6 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -27,13 +27,12 @@
 
 #include "bgpd.h"
 
-TAILQ_HEAD(bufs, buf) bufs = TAILQ_HEAD_INITIALIZER(bufs);
-
-void	buf_enqueue(struct buf *);
-void	buf_dequeue(struct buf *);
+int	buf_write(int, struct buf *);
+void	buf_enqueue(struct msgbuf *, struct buf *);
+void	buf_dequeue(struct msgbuf *, struct buf *);
 
 struct buf *
-buf_open(struct peer *peer, int sock, ssize_t len)
+buf_open(ssize_t len)
 {
 	struct buf	*buf;
 
@@ -45,8 +44,6 @@ buf_open(struct peer *peer, int sock, ssize_t len)
 	}
 
 	buf->size = len;
-	buf->peer = peer;
-	buf->sock = sock;
 
 	return (buf);
 }
@@ -76,7 +73,7 @@ buf_reserve(struct buf *buf, ssize_t len)
 }
 
 int
-buf_close(struct buf *buf)
+buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
 	/*
 	 * we first try to write out directly
@@ -85,8 +82,8 @@ buf_close(struct buf *buf)
 
 	int	n;
 
-	if (buf->peer != NULL && buf->peer->queued_writes == 0) {
-		if ((n = buf_write(buf)) == -1)
+	if (msgbuf->queued == 0) {
+		if ((n = buf_write(msgbuf->sock, buf)) == -1)
 			return (-1);
 
 		if (n == 1) {		/* all data written out */
@@ -96,25 +93,23 @@ buf_close(struct buf *buf)
 	}
 
 	/* we have to queue */
-	buf_enqueue(buf);
+	buf_enqueue(msgbuf, buf);
 	return (1);
 }
 
 int
-buf_write(struct buf *buf)
+buf_write(int sock, struct buf *buf)
 {
 	ssize_t	n;
 
-	if ((n = write(buf->sock, buf->buf + buf->rpos,
+	if ((n = write(sock, buf->buf + buf->rpos,
 	    buf->size-buf->rpos)) == -1) {
 		if (errno == EAGAIN)	/* cannot write immediately */
 			return (0);
 		else {
-			if (buf->peer != NULL)
-				log_err(buf->peer, "write error");
-			else
-				logit(LOG_CRIT, "pipe write error: %s",
-				    strerror(errno));
+			/* XXX better let caller log with info which sock etc */
+			logit(LOG_CRIT, "buf_write: write error: %s",
+			    strerror(errno));
 			return (-1);
 		}
 	}
@@ -134,19 +129,28 @@ buf_free(struct buf *buf)
 }
 
 void
-buf_peer_remove(struct peer *peer)
+msgbuf_init(struct msgbuf *msgbuf)
+{
+	msgbuf->queued = 0;
+	msgbuf->sock = -1;
+	TAILQ_INIT(&msgbuf->bufs);
+}
+
+void
+msgbuf_clear(struct msgbuf *msgbuf)
 {
 	struct buf	*buf, *next;
 
-	for (buf = TAILQ_FIRST(&bufs); buf != NULL; buf = next) {
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL; buf = next) {
 		next = TAILQ_NEXT(buf, entries);
-		if (buf->peer == peer)
-			buf_dequeue(buf);
+		buf_dequeue(msgbuf, buf);
 	}
+	msgbuf->queued = 0;
+	msgbuf->sock = -1;
 }
 
 int
-buf_peer_write(struct peer *peer)
+msgbuf_write(struct msgbuf *msgbuf)
 {
 	/*
 	 * possible race here
@@ -157,61 +161,30 @@ buf_peer_write(struct peer *peer)
 	struct buf	*buf, *next;
 	int		 n;
 
-	for (buf = TAILQ_FIRST(&bufs); buf != NULL; buf = next) {
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL; buf = next) {
 		next = TAILQ_NEXT(buf, entries);
-		if (buf->peer == peer) {
-			if ((n = buf_write(buf)) == -1)
-				return (-1);
-			if (n == 1)	/* everything written out */
-				buf_dequeue(buf);
-			else
-				return (0);
-		}
+		if ((n = buf_write(msgbuf->sock, buf)) == -1)
+			return (-1);
+		if (n == 1)	/* everything written out */
+			buf_dequeue(msgbuf, buf);
+		else
+			return (0);
 	}
 	return (0);
 }
 
-int
-buf_sock_write(int sock)
-{
-	/*
-	 * possible race here
-	 * when we cannot write out data completely from a buffer,
-	 * we MUST return and NOT try to write out stuff from later buffers -
-	 * the socket might have become writeable again
-	 */
-	struct buf	*buf, *next;
-	int		 n, cleared = 0;
-
-	for (buf = TAILQ_FIRST(&bufs); buf != NULL; buf = next) {
-		next = TAILQ_NEXT(buf, entries);
-		if (buf->sock == sock) {
-			if ((n = buf_write(buf)) == -1)
-				return (-1);
-			if (n == 1) {	/* everything written out */
-				buf_dequeue(buf);
-				cleared++;
-			} else
-				return (cleared);
-		}
-	}
-	return (cleared);
-}
-
 void
-buf_enqueue(struct buf *buf)
+buf_enqueue(struct msgbuf *msgbuf, struct buf *buf)
 {
 	/* might want a tailq per peer w/ pointers to the bufs */
-	TAILQ_INSERT_TAIL(&bufs, buf, entries);
-	if (buf->peer != NULL)
-		buf->peer->queued_writes++;
+	TAILQ_INSERT_TAIL(&msgbuf->bufs, buf, entries);
+	msgbuf->queued++;
 }
 
 void
-buf_dequeue(struct buf *buf)
+buf_dequeue(struct msgbuf *msgbuf, struct buf *buf)
 {
-	TAILQ_REMOVE(&bufs, buf, entries);
-	if (buf->peer != NULL)
-		buf->peer->queued_writes--;
+	TAILQ_REMOVE(&msgbuf->bufs, buf, entries);
+	msgbuf->queued--;
 	buf_free(buf);
 }

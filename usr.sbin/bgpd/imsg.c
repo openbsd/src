@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.5 2003/12/20 21:19:40 claudio Exp $ */
+/*	$OpenBSD: imsg.c,v 1.6 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -84,7 +84,7 @@ get_imsg(int fd, struct imsg *imsg)
 }
 
 int
-imsg_compose(int fd, int type, u_int32_t peerid, void *data,
+imsg_compose(struct msgbuf *msgbuf, int type, u_int32_t peerid, void *data,
     u_int16_t datalen)
 {
 	struct buf	*wbuf;
@@ -94,16 +94,16 @@ imsg_compose(int fd, int type, u_int32_t peerid, void *data,
 	hdr.len = datalen + IMSG_HEADER_SIZE;
 	hdr.type = type;
 	hdr.peerid = peerid;
-	wbuf = buf_open(NULL, fd, hdr.len);
+	wbuf = buf_open(hdr.len);
 	if (wbuf == NULL)
-		fatal("buf_open error", 0);
+		fatal("imsg_compose: buf_open error", 0);
 	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1)
-		fatal("buf_add error", 0);
+		fatal("imsg_compose: buf_add error", 0);
 	if (datalen)
 		if (buf_add(wbuf, data, datalen) == -1)
-			fatal("buf_add error", 0);
-	if ((n = buf_close(wbuf)) == -1)
-		fatal("buf_close error", 0);
+			fatal("imsg_compose: buf_add error", 0);
+	if ((n = buf_close(msgbuf, wbuf)) == -1)
+		fatal("imsg_compose: buf_close error", 0);
 
 	return (n);
 }

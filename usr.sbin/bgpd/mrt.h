@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.2 2003/12/17 18:11:31 henning Exp $ */
+/*	$OpenBSD: mrt.h,v 1.3 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -221,14 +221,18 @@ struct mrt_bgp_state_header {
 /* pseudo predeclarations */
 struct prefix;
 struct pt_entry;
+struct mrt {
+	struct msgbuf	*msgbuf;
+	u_int32_t	 id;
+};
 
 /* prototypes */
-int	mrt_dump_bgp_msg(int, u_char *, u_int16_t, int, struct peer_config *,
-	    struct bgpd_config *);
+int	mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t, int,
+    struct peer_config *, struct bgpd_config *);
 void	mrt_clear_seq(void);
-void	mrt_dump_upcall(struct pt_entry *, int, int *, void *);
-int	mrt_state(struct mrtdump_config *, enum imsg_type, int, int *);
-int	mrt_alrm(struct mrt_config *, int, int *);
-int	mrt_usr1(struct mrt_config *, int, int *);
+void	mrt_dump_upcall(struct pt_entry *, void *);
+int	mrt_state(struct mrtdump_config *, enum imsg_type, struct msgbuf *);
+int	mrt_alrm(struct mrt_config *, struct msgbuf *);
+int	mrt_usr1(struct mrt_config *, struct msgbuf *);
 
 #endif

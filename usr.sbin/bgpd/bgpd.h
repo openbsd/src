@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.8 2003/12/21 18:21:24 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.9 2003/12/21 22:16:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -78,6 +78,20 @@ enum reconf_action {
 	RECONF_DELETE
 };
 
+struct buf {
+	TAILQ_ENTRY(buf)	 entries;
+	u_char			*buf;
+	ssize_t			 size;
+	ssize_t			 wpos;
+	ssize_t			 rpos;
+};
+
+struct msgbuf {
+	u_int32_t		 queued;
+	int			 sock;
+	TAILQ_HEAD(bufs, buf)	 bufs;
+};
+
 struct bgpd_config {
 	int			 opts;
 	u_int16_t		 as;
@@ -120,8 +134,7 @@ struct peer {
 	u_int			 StartTimerInterval;
 	int			 sock;
 	int			 events;
-	int			 queued_writes;
-	int			 queued_imsg_writes;
+	struct msgbuf		 wbuf;
 	struct peer_buf_read	*rbuf;
 	struct peer		*next;
 };
@@ -151,25 +164,14 @@ LIST_HEAD(mrt_config, mrtdump_config);
 struct mrtdump_config {
 	enum mrtdump_type	 type;
 	u_int32_t		 id;
-	int			 fd;
+	struct msgbuf		 msgbuf;
 	char			 name[MRT_FILE_LEN];	/* base file name */
 	char			 file[MRT_FILE_LEN];	/* actual file name */
 	time_t			 ReopenTimer;
 	time_t			 ReopenTimerInterval;
-	int			 queued_writes;
 	enum mrtdump_state	 state;
 	LIST_ENTRY(mrtdump_config)
 				 list;
-};
-
-struct buf {
-	TAILQ_ENTRY(buf)	 entries;
-	struct peer		*peer;
-	int			 sock;
-	u_char			*buf;
-	ssize_t			 size;
-	ssize_t			 wpos;
-	ssize_t			 rpos;
 };
 
 /* ipc messages */
@@ -232,15 +234,15 @@ enum suberr_update {
 int		 session_main(struct bgpd_config *, int[2], int[2]);
 
 /* buffer.c */
-struct buf	*buf_open(struct peer *, int, ssize_t);
+struct buf	*buf_open(ssize_t);
 int		 buf_add(struct buf *, void *, ssize_t);
 void		*buf_reserve(struct buf *, ssize_t);
-int		 buf_close(struct buf *);
-int		 buf_write(struct buf *);
-void		 buf_free(struct buf *buf);
-void		 buf_peer_remove(struct peer *);
-int		 buf_peer_write(struct peer *);
-int		 buf_sock_write(int);
+int		 buf_close(struct msgbuf *, struct buf *);
+void		 buf_free(struct buf *);
+void		 msgbuf_init(struct msgbuf *);
+void		 msgbuf_clear(struct msgbuf *);
+int		 msgbuf_write(struct msgbuf *);
+
 
 /* log.c */
 void		 log_init(int);
@@ -266,7 +268,7 @@ int	 merge_config(struct bgpd_config *, struct bgpd_config *);
 /* imsg.c */
 void	 init_imsg_buf(void);
 int	 get_imsg(int, struct imsg *);
-int	 imsg_compose(int, int, u_int32_t, void *, u_int16_t);
+int	 imsg_compose(struct msgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
 
 /* rde.c */
