@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.5 1996/12/23 14:29:46 robin Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.6 1997/02/16 05:59:43 deraadt Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.5 1996/12/23 14:29:46 robin Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.6 1997/02/16 05:59:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1853,6 +1853,7 @@ scrub_env()
 		if (strncmp(*cpp, "LD_", 3) &&
 		    strncmp(*cpp, "_RLD_", 5) &&
 		    strncmp(*cpp, "LIBPATH=", 8) &&
+		    strncmp(*cpp, "ENV=", 4) &&
 		    strncmp(*cpp, "IFS=", 4))
 			*cpp2++ = *cpp;
 	}
