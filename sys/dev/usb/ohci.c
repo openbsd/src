@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.48 2004/08/11 04:17:22 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.49 2004/08/11 04:18:34 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2248,7 +2248,9 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	for (; p->xfer == xfer; p = n) {
 		hit |= headp == p->physaddr;
 		n = p->nexttd;
-		ohci_free_std(sc, p);
+		if (OHCI_TD_GET_CC(le32toh(p->td.td_flags)) ==
+		    OHCI_CC_NOT_ACCESSED)
+			ohci_free_std(sc, p);
 	}
 	/* Zap headp register if hardware pointed inside the xfer. */
 	if (hit) {
