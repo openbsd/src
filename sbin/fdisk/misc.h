@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.9 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: misc.h,v 1.10 2004/09/18 23:22:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,18 +34,12 @@
 
 /* typedefs */
 
-static const struct unit_type {
+const struct unit_type {
 	char	*abbr;
 	int	conversion;
 	char	*lname;
-} unit_types[] = {
-	{"b", 1			, "Bytes"},
-	{" ", DEV_BSIZE		, "Sectors"},
-	{"K", 1024		, "Kilobytes"},
-	{"M", 1024 * 1024	, "Megabytes"},
-	{"G", 1024 * 1024 *1024	, "Gigabytes"},
-	{NULL, 0		, NULL },
 };
+extern const struct unit_type unit_types[];
 
 /* Constants */
 #define ASK_HEX 0x01

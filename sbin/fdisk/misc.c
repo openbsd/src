@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.14 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.15 2004/09/18 23:22:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,6 +34,15 @@
 #include <sys/disklabel.h>
 #include <limits.h>
 #include "misc.h"
+
+const struct unit_type unit_types[] = {
+	{"b", 1			, "Bytes"},
+	{" ", DEV_BSIZE		, "Sectors"},
+	{"K", 1024		, "Kilobytes"},
+	{"M", 1024 * 1024	, "Megabytes"},
+	{"G", 1024 * 1024 *1024	, "Gigabytes"},
+	{NULL, 0		, NULL },
+};
 
 int
 unit_lookup(char *units)

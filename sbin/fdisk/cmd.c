@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.35 2004/07/13 06:00:33 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.36 2004/09/18 23:22:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,6 +60,7 @@ Xreinit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_DIRTY);
 }
 
+/* ARGSUSED */
 int
 Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -92,6 +93,7 @@ Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_CONT);
 }
 
+/* ARGSUSED */
 int
 Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -177,6 +179,7 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (ret);
 }
 
+/* ARGSUSED */
 int
 Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -212,6 +215,8 @@ Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 #undef EDIT
 	return (ret);
 }
+
+/* ARGSUSED */
 int
 Xselect(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -250,6 +255,7 @@ Xselect(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_CONT);
 }
 
+/* ARGSUSED */
 int
 Xprint(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -261,6 +267,7 @@ Xprint(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_CONT);
 }
 
+/* ARGSUSED */
 int
 Xwrite(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -276,6 +283,7 @@ Xwrite(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_CLEAN);
 }
 
+/* ARGSUSED */
 int
 Xquit(cmd, disk, r, tt, offset)
 	cmd_t *cmd;
@@ -289,6 +297,7 @@ Xquit(cmd, disk, r, tt, offset)
 	return (CMD_SAVE);
 }
 
+/* ARGSUSED */
 int
 Xabort(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -299,6 +308,7 @@ Xabort(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 }
 
 
+/* ARGSUSED */
 int
 Xexit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -307,6 +317,7 @@ Xexit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_EXIT);
 }
 
+/* ARGSUSED */
 int
 Xhelp(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -319,6 +330,7 @@ Xhelp(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_CONT);
 }
 
+/* ARGSUSED */
 int
 Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -330,6 +342,7 @@ Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_DIRTY);
 }
 
+/* ARGSUSED */
 int
 Xflag(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
@@ -359,6 +372,7 @@ Xflag(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	return (CMD_DIRTY);
 }
 
+/* ARGSUSED */
 int
 Xmanual(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
