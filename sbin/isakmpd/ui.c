@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.30 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: ui.c,v 1.31 2003/04/27 11:16:24 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ ui_teardown_all (char *cmd)
 static void
 ui_config (char *cmd)
 {
-  char subcmd[81], section[81], tag[81], value[81];
-  int override, trans = 0;
+  char subcmd[81], section[81], tag[81], value[81], tmp[81];
+  int trans = 0, items;
 
   if (sscanf (cmd, "C %80s", subcmd) != 1)
     goto fail;
@@ -161,10 +161,11 @@ ui_config (char *cmd)
   trans = conf_begin ();
   if (strcasecmp (subcmd, "set") == 0)
     {
-      if (sscanf (cmd, "C %*s [%80[^]]]:%80[^=]=%80s %d", section, tag, value,
-		  &override) != 4)
+      items = sscanf (cmd, "C %*s [%80[^]]]:%80[^=]=%80s %80s", section, tag,
+		      value, tmp);
+      if (!(items == 3 || items == 4))
 	goto fail;
-      conf_set (trans, section, tag, value, override, 0);
+      conf_set (trans, section, tag, value, items == 4 ? 1 : 0, 0);
     }
   else if (strcasecmp (subcmd, "rm") == 0)
     {
