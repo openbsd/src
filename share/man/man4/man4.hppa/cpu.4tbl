@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.4 2002/04/22 00:42:48 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.5 2002/05/15 03:51:59 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -57,8 +57,8 @@ _ _ _ _ _ _ _ _
 l l l l l l l l .
 CPU:PA:CLK:FPU:Caches:TLB:BTLB:Models
    :  :Mhz:y/n:  KB  :   :    :
-7000:1.1a:66 :No : 256 L1I:96:4 I:705,710,720
-    :    :   :   : 256 L1D:   :4 D:730,750
+7000:1.1a:66 :No : 256 L1I:96I:4 I:705,710,720
+    :    :   :   : 256 L1D:96D:4 D:730,750
 7100:1.1b:100:Yes:1024 L1I:120:16:715/33/50/75
     :    :   :   :2048 L1D:   :  :725/50/75
     :    :   :   :        :   :  :{735,755}/100
@@ -105,7 +105,8 @@ PCXL:712/60/80/100
 .in -\n(dIu
 .Pp
 .Sh SUPERSCALAR EXECUTION
-The following table summarizes the superscalar execution capabilities of 32-bit
+The following table summarizes the superscalar execution capabilities 
+of 32-bit
 .Tn PA-RISC
 processors.
 .Pp
@@ -116,40 +117,103 @@ l l l
 _ _ _
 l l l .
 CPU:Units:Bundles
-7100:1INT,1FP:load-store/fp
-    :        :int/fp 
-    :        :branch/*
-7100LC:2INT,1FP:load-store/int
-      :        :load-store/fp
-      :        :int/fp
-      :        :branch/*
-7200:2INT,1FP:load-store/int
-    :        :load-store/fp
+7100:1 integer ALU:load-store/fp
+    :1 FP         :int/fp 
+    :             :branch/*
+7100LC:2 integer ALU:load-store/int
+      :1 FP	    :load-store/fp
+      :             :int/fp
+      :             :branch/*
+7200:2 integer ALU:load-store/int
+    :1 FP         :load-store/fp
     :        :int/int
     :        :int/fp 
     :        :branch/*
-7300LC:2INT,1FP:load-store/int
-      :        :load-store/fp
+7300LC:2 integer ALU:load-store/int
+      :1 FP         :load-store/fp
       :        :int/fp
       :        :branch/*
 .TE
 .in -\n(dIu
 .Pp
 Concluding, all of the above CPUs are dual-issue, or 2-way superscalar,
-with the exception that on CPUs with two INT units only one of these units 
-is capable of doing shift, load/store and test operations.
-Additionally there are several kinds of restrictions placed upon the superscalar
-execution:
+with the exception that on CPUs with two integer ALUs only one of these
+units  is capable of doing shift, load/store and test operations.
+Additionally there are several kinds of restrictions placed upon the
+superscalar execution:
+.Pp
+For the purpose of showing which instructions are allowed to proceed
+together through the pipeline, they are divided into classes:
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;   
+l l 
+_ _
+l l .
+Class:Description
+flop:floating point operation
+ldst:loads and stores
+flex:integer ALU
+mm:shifts, extracts and deposits
+nul:might nullify successor
+bv:BV, BE
+br:other branches
+fsys:FTEST and FP status/exception
+sys:system control instructions
+.TE
+.in -\n(dIu
+.Pp
+For CPUs with two integer ALUs (7100LC, 7200, 7300LC), the following 
+table lists the instructions which are allowed to be executed 
+concurrently:
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;   
+l l 
+_ _
+l l .
+First:Second instruction
+flop: + ldst/flex/mm/nul/bv/br
+ldst: + flop/flex/mm/nul/br
+flex: + flop/ldst/flex/mm/nul/br/fsys
+mm: + flop/ldst/flex/fsys
+nul: + flop
+sys: never bundled
+.TE
+.in -\n(dIu
+.Pp
+ldst + ldst is also possible under certain circumstances, which is then 
+called "double word load/store".
+.Pp
+The following restructions are placed upon the superscalar execution:
 .Pp
 .Bl -bullet -compact
 .It
-functional unit contention
+an instruction that modifies a register will not be bundled with another
+instruction that takes this register as operand. Exception: a flop can
+be bundled with a FP store of the flop's result register.
 .It
-data dependency restrictions
+a FP load to one word of a doubleword register will not be bundled with
+a flop that uses the other doubleword of this register.
 .It
-control flow restrictions
+a flop will not be bundled with a FP load if both instructions have the
+same target register.
 .It
-special intruction restrictions
+an instruction that could set the carry/borrow bits will not be bundled
+with an instruction that uses
+carry/borrow bits.
+.It
+an instruction which is in the delay slot of a branch is never bundled
+with other instructions.
+.It
+an instruction which is at an odd word address and executed as a target
+of a taken branch is never bundled.
+.It
+an instruction which might nullify its successor is never bundled with
+this successor. Only if the successor is a flop instruction this bundle
+is allowed.
 .El
 .Pp
 .Sh PERFORMANCE MONITOR COPROCESSOR
