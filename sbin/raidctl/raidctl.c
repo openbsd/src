@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.15 2002/02/22 14:56:58 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.16 2002/03/29 14:26:59 tdeval Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -107,7 +107,7 @@ main(argc, argv)
 {
 	int ch;
 	int num_options;
-	unsigned long action;
+	unsigned int action;
 	char config_filename[PATH_MAX];
 	char name[PATH_MAX];
 	char component[PATH_MAX];
@@ -116,11 +116,9 @@ main(argc, argv)
 	int do_recon;
 	int do_rewrite;
 	int serial_number;
- 	struct stat st;
 	int i, nfd;
 	fdidpair *fds;
 	int force;
-	int rawpart;
 	u_long meter;
 	const char *actionstr;
 
@@ -131,7 +129,9 @@ main(argc, argv)
 	do_recon = 0;
 	do_rewrite = 0;
 	do_all = 0;
+	serial_number = 0;
 	force = 0;
+	actionstr = NULL;
 
 	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:r:R:sSpPuv")) 
 	       != -1)
@@ -947,17 +947,12 @@ check_status(fds, nfd, meter)
 		/* These 3 should be mutually exclusive at this point */
 		if (do_recon) {
 			printf("Reconstruction status:\n");
-			do_meter(fds, nfd,
-				 RAIDFRAME_CHECK_RECON_STATUS_EXT);
 		} else if (do_parity) {
 			printf("Parity Re-write status:\n");
-			do_meter(fds, nfd,
-				 RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 		} else if (do_copyback) {
 			printf("Copyback status:\n");
-			do_meter(fds, nfd,
-				 RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
 		}
+		do_meter(fds, nfd, meter);
 	}
 }
 
@@ -993,6 +988,7 @@ do_meter(fds, nfd, option)
 	percent_done = 0;
 	tbit_value = 0;
 	start_value = 0;
+	last_eta = 0;
 	progress_total = progress_completed = 0;
 	progressInfo = malloc(nfd * sizeof(RF_ProgressInfo_t));
 	memset(&progressInfo[0], 0, nfd * sizeof(RF_ProgressInfo_t));
@@ -1165,7 +1161,7 @@ open_device(devfd, name)
 	fdidpair **devfd;
 	char *name;
 {
-	int nfd, rawpart, i;
+	int nfd, i;
  	struct stat st;
 	char **devname;
 
@@ -1182,9 +1178,8 @@ open_device(devfd, name)
 			strlcpy(devname[0], name, PATH_MAX);
 		} else {
 			if (isdigit(name[strlen(name) - 1])) {
-				rawpart = getrawpartition();
 				snprintf(devname[0], PATH_MAX, "%s%s%c",
-				    _PATH_DEV, name, 'a' + rawpart);		
+				    _PATH_DEV, name, 'a' + getrawpartition());		
 			} else {
 				snprintf(devname[0], PATH_MAX, "%s%s",
 				    _PATH_DEV, name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.5 2001/12/29 21:54:57 tdeval Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.6 2002/03/29 14:26:59 tdeval Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ansidecl.h>
 #include <errno.h>
 #include <strings.h>
 #include <sys/types.h>
@@ -134,9 +135,9 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
 	return (p);
 }
 
-static int rf_search_file_for_start_of(const char *string, char *buf,
+int rf_search_file_for_start_of(const char *string, char *buf,
     int len, FILE * fp);
-static int rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
+int rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
     const char *errmsg);
 
 /*
@@ -305,9 +306,9 @@ out:
  */
 int 
 rf_MakeLayoutSpecificNULL(fp, cfgPtr, ignored)
-  FILE         *fp;
+  FILE         *fp				ATTRIBUTE_UNUSED;
   RF_Config_t  *cfgPtr;
-  void         *ignored;
+  void         *ignored				ATTRIBUTE_UNUSED;
 {
   cfgPtr->layoutSpecificSize = 0;
   cfgPtr->layoutSpecific     = NULL;
@@ -405,7 +406,7 @@ rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
   while (fscanf(fp,"%d",&val) == 1)
     *p++ = (char) val;
   fclose(fp);
-  if (p - cfgBuf != cfgPtr->layoutSpecificSize) {
+  if ((unsigned int)(p - cfgBuf) != cfgPtr->layoutSpecificSize) {
       RF_ERRORMSG2("Size mismatch creating layout specific data: is %d sb %d bytes\n",(int)(p-cfgBuf),(int)(6*sizeof(int)+b*k));
       return(EINVAL);
   }
@@ -438,7 +439,7 @@ rf_find_white(char *p)
  * searches a file for a line that says "START string", where string is
  * specified as a parameter
  */
-static int 
+int 
 rf_search_file_for_start_of(string, buf, len, fp)
 	const char *string;
   char  *buf;
@@ -464,7 +465,7 @@ rf_search_file_for_start_of(string, buf, len, fp)
 int 
 rf_get_next_nonblank_line(buf, len, fp, errmsg)
   char  *buf;
-  int    len;
+  int    len					ATTRIBUTE_UNUSED;
   FILE  *fp;
 	const char *errmsg;
 {
