@@ -1,4 +1,4 @@
-#	$OpenBSD: keycap.src,v 1.7 2000/05/27 02:30:20 hugh Exp $
+#	$OpenBSD: keycap.src,v 1.8 2000/05/27 03:37:27 hugh Exp $
 
 # Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis, Joerg Wunsch and
 #                                Holger Veit.
@@ -650,23 +650,43 @@ koi8:koi8-r:ru-koi8:ru:dummy cyrillic keymap:\
 	:A51=\324:A52=\330:A53=\302:A54=\300:A55=\243:
 
 # Simple Dvorak keymap - Maps QWERTY keyboard into Dvorak 
-# contributed by Trevor Schroeder?
-# not rigorously tested 
+# Contributed by: Adam Rogoyski
 
-dvorak|Dvorak Keyboard:\
-:K12=[:C12=^[:S12={:K13=]:C13=^]:S13=}:\
-:K17=':S17=":C17=^':K18=,:S18=<:K19=.:S19=>:K20=p:\
-:C20=^p:S20=P:K21=y:C21=^y:S21=Y:K22=f:C22=^f:S22=F:\
-:K23=g:C23=^g:S23=G:K24=c:C24=^c:S24=C:K25=r:C25=^r:\
-:S25=R:K26=l:c26=^l:S26=L:K27=/:S27=?:K28==:S28=+:\
-:K31=a:C31=^a:S31=A:K32=o:C32=^o:S32=O:K33=e:C33=^e:\
-:S33=E:K34=u:C34=^u:S34=U:K35=i:K35=^i:S35=I:K36=d:\
-:C36=^d:S36=D:K37=h:C37:=^h:S37=H:K38=t:C38=^t:\
-:S38=T:K39=n:C39=^n:S39=N:K40=s:C40=^s:S40=S:K41=-:\
-:S41=_:\
-:K46=;:S46=\::K47=q:C47=^q:S47=Q:K48=j:C48=^j:\
-:S48=J:K49=k:C49=^k:S49=K:K50=x:C50=^x:S50=X:K51=b:\
-:C51=^b:S51=B:K52=m:C52=^m:S52=M:K53=w:C53=^w:S53=W:\
-:K54=v:C54=^v:S54=V:K55=z:C55=^z:S55=Z:
+dvorak:us-dvorak|Dvorak mapping:\
+	:K12=[:S12={:C12=\033:\
+	:K13=]:S13=}:C13=\035:\
+	:K17=':S17=":C17=':\
+	:K18=,:S18=<:C18=,:\
+	:K19=.:S19=>:C19=.:\
+	:K20=p:S20=P:C20=\020:\
+	:K21=y:S21=Y:C21=\031:\
+	:K22=f:S22=F:C22=\006:\
+	:K23=g:S23=G:C23=\007:\
+	:K24=c:S24=C:C24=\003:\
+	:K25=r:S25=R:C25=\022:\
+	:K26=l:S26=L:C26=\014:\
+	:K27=/:S27=?:C27=/:\
+	:K28==:S28=+:C28==:\
+	:K31=a:S31=A:C31=\001:\
+	:K32=o:S32=O:C32=\017:\
+	:K33=e:S33=E:C33=\005:\
+	:K34=u:S34=U:C34=\025:\
+	:K35=i:S35=I:C35=\011:\
+	:K36=d:S36=D:C36=\004:\
+	:K37=h:S37=H:C37=\010:\
+	:K38=t:S38=T:C38=\024:\
+	:K39=n:S39=N:C39=\016:\
+	:K40=s:S40=S:C40=\023:\
+	:K41=-:S41=_:C41=\037:\
+	:K46=;:S46=\::C46=;:\
+	:K47=q:S47=Q:C47=\021:\
+	:K48=j:S48=J:C48=\012:\
+	:K49=k:S49=K:C49=\013:\
+	:K50=x:S50=X:C50=\030:\
+	:K51=b:S51=B:C51=\002:\
+	:K52=m:S52=M:C52=\015:\
+	:K53=w:S53=W:C53=\027:\
+	:K54=v:S54=V:C54=\026:\
+	:K55=z:S55=Z:C55=\032:
 
 # EOF
