@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.7 1999/11/05 01:18:01 mickey Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.8 2000/09/26 14:01:39 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -99,13 +99,12 @@ vmcmdset_extend(evsp)
 	evsp->evs_cnt += ocnt ? ocnt : EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
-	MALLOC(nvcp, struct exec_vmcmd *, 
-	    (evsp->evs_cnt * sizeof(struct exec_vmcmd)), M_EXEC, M_WAITOK);
-
+	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd), M_EXEC,
+		      M_WAITOK);
 	/* free the old struct, if there was one, and record the new one */
 	if (ocnt) {
 		bcopy(evsp->evs_cmds, nvcp, (ocnt * sizeof(struct exec_vmcmd)));
-		FREE(evsp->evs_cmds, M_EXEC);
+		free(evsp->evs_cmds, M_EXEC);
 	}
 	evsp->evs_cmds = nvcp;
 }
@@ -126,7 +125,7 @@ kill_vmcmds(evsp)
 			vrele(vcp->ev_vp);
 	}
 	evsp->evs_used = evsp->evs_cnt = 0;
-	FREE(evsp->evs_cmds, M_EXEC);
+	free(evsp->evs_cmds, M_EXEC);
 }
 
 /*

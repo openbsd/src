@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.42 2000/04/20 10:03:42 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.43 2000/09/26 14:01:39 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ sys_execve(p, v, retval)
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = (char *)SCARG(uap, path);
-	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -305,7 +305,7 @@ sys_execve(p, v, retval)
 				*dp++ = *cp++;
 			dp++;
 
-			FREE(*tmpfap, M_EXEC);
+			free(*tmpfap, M_EXEC);
 			tmpfap++; argc++;
 		}
 		FREE(pack.ep_fa, M_EXEC);
@@ -601,7 +601,7 @@ sys_execve(p, v, retval)
 		psignal(p, SIGTRAP);
 
 	p->p_emul = pack.ep_emul;
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
@@ -628,7 +628,7 @@ bad:
 #endif
 
 freehdr:
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	return (error);
 
 exec_abort:
@@ -656,7 +656,7 @@ exec_abort:
 #endif
 
 free_pack_abort:
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);
 

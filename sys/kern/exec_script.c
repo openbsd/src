@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.10 2000/02/01 04:03:14 assar Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.11 2000/09/26 14:01:38 art Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -191,13 +191,13 @@ check_shell:
 	/* and set up the fake args list, for later */
 	MALLOC(shellargp, char **, 4 * sizeof(char *), M_EXEC, M_WAITOK);
 	tmpsap = shellargp;
-	MALLOC(*tmpsap, char *, shellnamelen + 1, M_EXEC, M_WAITOK);
+	*tmpsap = malloc(shellnamelen + 1, M_EXEC, M_WAITOK);
 	strcpy(*tmpsap++, shellname);
 	if (shellarg != NULL) {
-		MALLOC(*tmpsap, char *, shellarglen + 1, M_EXEC, M_WAITOK);
+		*tmpsap = malloc(shellarglen + 1, M_EXEC, M_WAITOK);
 		strcpy(*tmpsap++, shellarg);
 	}
-	MALLOC(*tmpsap, char *, MAXPATHLEN, M_EXEC, M_WAITOK);
+	*tmpsap = malloc(MAXPATHLEN, M_EXEC, M_WAITOK);
 #ifdef FDSCRIPTS
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
 #endif
@@ -281,7 +281,7 @@ fail:
 	/* free the fake arg list, because we're not returning it */
 	tmpsap = shellargp;
 	while (*tmpsap != NULL) {
-		FREE(*tmpsap, M_EXEC);
+		free(*tmpsap, M_EXEC);
 		tmpsap++;
 	}
 	FREE(shellargp, M_EXEC);
