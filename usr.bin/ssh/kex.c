@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: kex.c,v 1.2 2000/04/12 06:37:02 markus Exp $");
+RCSID("$Id: kex.c,v 1.3 2000/04/12 07:03:05 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -74,8 +74,36 @@ kex_init(char *myproposal[PROPOSAL_MAX])
 
 /* diffie-hellman-group1-sha1 */
 
+int
+dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
+{
+	int i;
+	int n = BN_num_bits(dh_pub);
+	int bits_set = 0;
+
+	/* we only accept g==2 */
+	if (!BN_is_word(dh->g, 2)) {
+		log("invalid DH base != 2");
+		return 0;
+	}
+	if (dh_pub->neg) {
+		log("invalid public DH value: negativ");
+		return 0;
+	}
+	for (i = 0; i <= n; i++)
+		if (BN_is_bit_set(dh_pub, i))
+			bits_set++;
+	debug("bits set: %d/%d", bits_set, BN_num_bits(dh->p));
+
+	/* if g==2 and bits_set==1 then computing log_g(dh_pub) is trivial */
+	if (bits_set > 1 && (BN_cmp(dh_pub, dh->p) == -1))
+		return 1;
+	log("invalid public DH value (%d/%d)", bits_set, BN_num_bits(dh->p));
+	return 0;
+}
+
 DH *
-new_dh_group1()
+dh_new_group1()
 {
 	static char *group1 =
 	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
@@ -85,19 +113,23 @@ new_dh_group1()
 	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE65381"
 	    "FFFFFFFF" "FFFFFFFF";
 	DH *dh;
-	int ret;
+	int ret, tries = 0;
 	dh = DH_new();
 	if(dh == NULL)
 		fatal("DH_new");
-	ret = BN_hex2bn(&dh->p,group1);
+	ret = BN_hex2bn(&dh->p, group1);
 	if(ret<0)
 		fatal("BN_hex2bn");
 	dh->g = BN_new();
 	if(dh->g == NULL)
 		fatal("DH_new g");
-	BN_set_word(dh->g,2);
-	if (DH_generate_key(dh) == 0)
-		fatal("DH_generate_key");
+	BN_set_word(dh->g, 2);
+	do {
+		if (DH_generate_key(dh) == 0)
+			fatal("DH_generate_key");
+		if (tries++ > 10)
+			fatal("dh_new_group1: too many bad keys: giving up");
+	} while (!dh_pub_is_valid(dh, dh->pub_key));
 	return dh;
 }
 

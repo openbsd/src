@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.62 2000/04/12 06:36:48 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.63 2000/04/12 07:03:06 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1393,7 +1393,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	debug("Sending SSH2_MSG_KEXDH_INIT.");
 
 	/* generate and send 'e', client DH public key */
-	dh = new_dh_group1();
+	dh = dh_new_group1();
 	packet_start(SSH2_MSG_KEXDH_INIT);
 	packet_put_bignum2(dh->pub_key);
 	packet_send();
@@ -1439,6 +1439,9 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 
 	/* signed H */
 	signature = packet_get_string(&slen);
+
+	if (!dh_pub_is_valid(dh, dh_server_pub))
+		packet_disconnect("bad server public DH value");
 
 	klen = DH_size(dh);
 	kbuf = xmalloc(klen);

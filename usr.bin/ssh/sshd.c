@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.100 2000/04/12 06:37:02 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.101 2000/04/12 07:03:06 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1166,7 +1166,7 @@ do_ssh2_kex()
 #endif
 
 	/* generate DH key */
-	dh = new_dh_group1();			/* XXX depends on 'kex' */
+	dh = dh_new_group1();			/* XXX depends on 'kex' */
 
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "\np= ");
@@ -1177,6 +1177,8 @@ do_ssh2_kex()
 	bignum_print(dh->pub_key);
 	fprintf(stderr, "\n");
 #endif
+	if (!dh_pub_is_valid(dh, dh_client_pub))
+		packet_disconnect("bad client public DH value");
 
 	klen = DH_size(dh);
 	kbuf = xmalloc(klen);
