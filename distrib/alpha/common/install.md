@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.3 2001/12/23 01:51:52 krw Exp $
+#       $OpenBSD: install.md,v 1.4 2002/03/31 17:30:30 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,15 +34,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
 
-ARCH=ARCH
-
 # Machine-dependent install sets
 MDSETS=kernel
+ARCH=ARCH
 
 md_set_term() {
 	test -n "$TERM" && return
@@ -126,14 +124,11 @@ md_prep_disklabel()
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		;;
-	1)
-		echo WARNING: Disk $_disk has no label. You will be creating a new one.
+	0)	;;
+	1)	echo WARNING: Disk $_disk has no label. You will be creating a new one.
 		echo
 		;;
-	2)
-		echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
+	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
 		echo
 		;;
 	esac

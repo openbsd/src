@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.23 2001/12/23 01:51:52 krw Exp $
+#	$OpenBSD: install.md,v 1.24 2002/03/31 17:30:30 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script
 #
 
 # Machine-dependent install sets
-MDSETS="kernel"
+MDSETS=kernel
 ARCH=ARCH
 
 md_set_term() {
@@ -151,12 +150,8 @@ __scsi_label_1
 	echo -n	"Review boot messages now? [y] "
 	getresp "y"
 	case "$resp" in
-		y*|Y*)
-			dmesg | less -rsS
-			;;
-
-		*)
-			;;
+	y*|Y*)	dmesg | less -rsS
+		;;
 	esac
 
 	echo	""
@@ -306,15 +301,12 @@ hp300_init_label_hpib_disk() {
 		echo -n	"Try a different method? [y] "
 		getresp "y"
 		case "$resp" in
-			y*|Y*)
-				hp300_init_label_scsi_disk $1
-				return
-				;;
-
-			*)
-				rval="1"
-				return
-				;;
+		y*|Y*)	hp300_init_label_scsi_disk $1
+			return
+			;;
+		*)	rval="1"
+			return
+			;;
 		esac
 	fi
 
@@ -329,14 +321,11 @@ md_prep_disklabel()
 	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		;;
-	1)
-		echo "WARNING: Disk $_disk has no label. You will be creating a new one."
+	0)	;;
+	1)	echo "WARNING: Disk $_disk has no label. You will be creating a new one."
 		echo
 		;;
-	2)
-		echo "WARNING: Label on disk $_disk is corrupted. You will be repairing."
+	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing."
 		echo
 		;;
 	esac

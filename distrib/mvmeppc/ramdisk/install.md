@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2002/02/14 03:26:05 deraadt Exp $
+#	$OpenBSD: install.md,v 1.5 2002/03/31 17:30:31 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,13 +35,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
 
 # Machine-dependent install sets
-MDSETS="kernel"
+MDSETS=kernel
+ARCH=ARCH
 
 md_set_term() {
 	test -n "$TERM" && return
@@ -55,10 +55,6 @@ md_makerootwritable() {
 	:
 }
 
-md_machine_arch() {
-	cat /kern/machine
-}
-
 md_get_diskdevs() {
 	# return available disk devices
 	bsort `cat /kern/msgbuf | egrep -a "^[sw]d[0-9]+ " | cutword 1`
@@ -70,8 +66,8 @@ md_get_cddevs() {
 }
 
 md_get_partition_range() {
-    # return range of valid partition letters
-    echo [a-p]
+	# return range of valid partition letters
+	echo [a-p]
 }
 
 md_questions() {
@@ -79,11 +75,11 @@ md_questions() {
 }
 
 md_installboot() {
-	if [[ $disklabeltype = "HFS" ]] 
+	if [[ $disklabeltype = "HFS" ]]
 	then
 		echo "the 'ofwboot' program needs to be copied to the first HFS partition"
 		echo "of the disk to allow booting of OpenBSD"
-	elif [[ $disklabeltype = "MBR" ]] 
+	elif [[ $disklabeltype = "MBR" ]]
 	then
 		echo "Installing boot in the msdos partition /dev/${1}i"
 		if mount -t msdos /dev/${1}i /mnt2 ; then
@@ -96,11 +92,11 @@ md_installboot() {
 }
 
 md_native_fstype() {
-    echo "msdos"
+	echo "msdos"
 }
 
 md_native_fsopts() {
-    echo "ro"
+	echo "ro"
 }
 
 md_init_mbr() {
@@ -120,10 +116,8 @@ md_init_mbr() {
 	echo -n "Do you want to init the MBR and the MSDOS partition? [y] "
 	getresp "y"
 	case "$resp" in
-	n*|N*)
-		exit 0;;
-	*)
-		echo
+	n*|N*)	exit 0;;
+	*)	echo
 		echo "An MBR record with an OpenBSD usable partition table will now be copied"
 		echo "to your disk. Unless you have special requirements you will not need"
 		echo "to edit this MBR. After the MBR is copied an empty 1MB MSDOS partition"
@@ -136,12 +130,12 @@ md_init_mbr() {
 		echo "This will take a minute or two..."
 		sleep 2
 		echo -n "Creating Master Boot Record (MBR)..."
-		fdisk -i -f /usr/mdec/mbr $1 
+		fdisk -i -f /usr/mdec/mbr $1
 		echo "..done."
 		echo -n "Copying 1MB MSDOS partition to disk..."
 		gunzip < /usr/mdec/msdos1mb.gz | dd of=/dev/r$1c bs=512 seek=1 >/dev/null 2>&1
 		echo "..done."
-	;;
+		;;
 	esac
 }
 
@@ -169,13 +163,11 @@ md_checkfordisklabel() {
 	echo -n "Do you want to choose (H)FS labeling or (M)BR labeling [H] "
 	getresp "h"
 	case "$resp" in
-	m*|M*)
-		export disklabeltype=MBR
+	m*|M*)	export disklabeltype=MBR
 		md_checkforMBRdisklabel $1
 		rval=$?
 		;;
-	*)
-		export disklabeltype=HFS
+	*)	export disklabeltype=HFS
 		md_init_hfs $1
 		rval=$?
 		;;
@@ -188,20 +180,15 @@ md_checkforMBRdisklabel() {
 	echo -n "Is this correct? [n] "
 	getresp "n"
 	case "$resp" in
-	n*|N*)
-		echo "aborting install"
+	n*|N*)	echo "aborting install"
 		exit 0;;
-	*)
-		;;
 	esac
 
 	echo -n "Have you initialized an MSDOS partition using OpenFirmware? [n] "
 	getresp "n"
 	case "$resp" in
-	n*|N*)
-		md_init_mbr $1;;
-	*)
-		echo
+	n*|N*)	md_init_mbr $1;;
+	*)	echo
 		echo "You may keep your current setup if you want to be able to use any"
 		echo "already loaded OS. However you will be asked to prepare an empty"
 		echo "partition for OpenBSD later. There must also be at least ~0.5MB free space"
@@ -213,12 +200,9 @@ md_checkforMBRdisklabel() {
 		echo -n "Do you want to keep the current MSDOS partition setup? [y]"
 		getresp "y"
 		case "$resp" in
-		n*|N*)
-			md_init_mbr $1;;
-		*)
-		;;
+		n*|N*)	md_init_mbr $1;;
 		esac
-	;;
+		;;
 	esac
 
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
@@ -294,8 +278,8 @@ __md_prep_fdisk_1
 		getresp "n"
 
 		case "$resp" in
-		n*|N*) ;;
-		*) _done=1 ;;
+		n*|N*)	;;
+		*)	_done=1 ;;
 		esac
 	done
 
@@ -316,24 +300,20 @@ md_prep_disklabel()
 	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		echo -n "Do you wish to edit the disklabel on $_disk? [y] "
+	0)	echo -n "Do you wish to edit the disklabel on $_disk? [y] "
 		;;
-	1)
-		md_prep_fdisk ${_disk}
+	1)	md_prep_fdisk ${_disk}
 		echo "WARNING: Disk $_disk has no label"
 		echo -n "Do you want to create one with the disklabel editor? [y] "
 		;;
-	2)
-		echo "WARNING: Label on disk $_disk is corrupted"
+	2)	echo "WARNING: Label on disk $_disk is corrupted"
 		echo -n "Do you want to try and repair the damage using the disklabel editor? [y] "
 		;;
-
 	esac
 
 	getresp "y"
 	case "$resp" in
-	y*|Y*) ;;
+	y*|Y*)	;;
 	*)	return ;;
 	esac
 
@@ -341,7 +321,7 @@ md_prep_disklabel()
 	cat << \__md_prep_disklabel_1
 
 Disk partition sizes and offsets are in sector (most likely 512 bytes) units.
-You may set these size/offset pairs on cylinder boundaries 
+You may set these size/offset pairs on cylinder boundaries
      (the number of sector per cylinder is given in )
      (the `sectors/cylinder' entry, which is not shown here)
 Also, you *must* make sure that the 'i' partition points at the MSDOS
@@ -366,10 +346,10 @@ Do not change any parameters except the partition layout and the label name.
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
-	if [[ $disklabeltype = "HFS" ]] 
+	if [[ $disklabeltype = "HFS" ]]
 	then
 		disklabel -c -f /tmp/fstab.${_disk} -E ${_disk}
-	elif [[ $disklabeltype = "MBR" ]] 
+	elif [[ $disklabeltype = "MBR" ]]
 	then
 		disklabel -W ${_disk}
 		disklabel ${_disk} >/tmp/label.$$
@@ -442,12 +422,4 @@ installed system, enter reboot at the command prompt.  Once the machine
 has rebooted, use Open Firmware to boot into OpenBSD.
 
 __EOT
-}
-
-hostname() {
-	case $# in
-		0)      cat /kern/hostname ;;
-		1)      echo "$1" > /kern/hostname ;;
-		*)      echo usage: hostname [name-of-host]
-	esac
 }

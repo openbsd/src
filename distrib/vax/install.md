@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2002/03/19 08:43:56 hugh Exp $
+#	$OpenBSD: install.md,v 1.9 2002/03/31 17:30:31 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -36,7 +36,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -79,8 +78,8 @@ md_get_cddevs() {
 }
 
 md_get_partition_range() {
-    # return range of valid partition letters
-    echo [a-p]
+	# return range of valid partition letters
+	echo [a-p]
 }
 
 md_questions() {
@@ -124,14 +123,11 @@ md_prep_disklabel()
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		;;
-	1)
-		echo WARNING: Label on disk $_disk has no label. You will be creating a new one.
+	0)	;;
+	1)	echo WARNING: Label on disk $_disk has no label. You will be creating a new one.
 		echo
 		;;
-	2)
-		echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
+	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
 		echo
 		;;
 	esac

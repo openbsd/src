@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2002/02/14 03:34:14 deraadt Exp $
+#	$OpenBSD: install.md,v 1.12 2002/03/31 17:30:30 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -36,13 +36,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
 
 # Machine-dependent install sets
-MDSETS="kernel"
+MDSETS=kernel
 ARCH=ARCH
 
 md_set_term() {
@@ -66,8 +65,8 @@ md_get_cddevs() {
 }
 
 md_get_partition_range() {
-    # return range of valid partition letters
-    echo "[a-p]"
+	# return range of valid partition letters
+	echo "[a-p]"
 }
 
 md_questions() {
@@ -110,14 +109,11 @@ md_prep_disklabel()
 	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		;;
-	1)
-		echo "ERROR: Disk $_disk is not partitioned, read the"
+	0)	;;
+	1)	echo "ERROR: Disk $_disk is not partitioned, read the"
 		echo "preparation document on how to go about doing this."
 		;;
-	2)
-		echo "WARNING: Label on disk $_disk is corrupted.  Maybe"
+	2)	echo "WARNING: Label on disk $_disk is corrupted.  Maybe"
 		echo "you should interrupt the install process and recheck"
 		echo "your disk partitioning in AmigaOS?"
 		;;

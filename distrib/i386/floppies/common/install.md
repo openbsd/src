@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2002/02/14 03:26:05 deraadt Exp $
+#	$OpenBSD: install.md,v 1.16 2002/03/31 17:30:30 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -63,8 +62,8 @@ md_get_cddevs() {
 }
 
 md_get_partition_range() {
-    # return range of valid partition letters
-    echo [a-p]
+	# return range of valid partition letters
+	echo [a-p]
 }
 
 md_questions() {
@@ -72,11 +71,9 @@ md_questions() {
 	echo -n "Do you expect to run the X Window System? [y] "
 	getresp y
 	case "$resp" in
-		y*|Y*)
-			xfree86=y
-			;;
-		*)
-			;;
+	y*|Y*)
+		xfree86=y
+		;;
 	esac
 	echo
 }
@@ -97,11 +94,11 @@ q' | ed /mnt/etc/sysctl.conf 2> /dev/null
 }
 
 md_native_fstype() {
-    echo msdos
+	echo msdos
 }
 
 md_native_fsopts() {
-    echo "ro,-l"
+	echo "ro,-l"
 }
 
 md_checkfordisklabel() {
@@ -167,8 +164,8 @@ md_prep_disklabel()
 	echo -n 'Do you want to use the *entire* disk for OpenBSD? [no] '
 	getresp "no"
 	case $resp in
-		y*|Y*)	md_prep_fdisk ${_disk} Y ;;
-		*)	md_prep_fdisk ${_disk} ;;
+	y*|Y*)	md_prep_fdisk ${_disk} Y ;;
+	*)	md_prep_fdisk ${_disk} ;;
 	esac
 
 	cat << __EOT
@@ -184,14 +181,11 @@ __EOT
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		;;
-	1)
-		echo WARNING: Disk $_disk has no label. You will be creating a new one.
+	0)	;;
+	1)	echo WARNING: Disk $_disk has no label. You will be creating a new one.
 		echo
 		;;
-	2)
-		echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
+	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
 		echo
 		;;
 	esac

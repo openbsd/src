@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.8 2002/02/14 03:34:15 deraadt Exp $
+#       $OpenBSD: install.md,v 1.9 2002/03/31 17:30:31 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -33,11 +33,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
 #
+
+# Machine-dependent install sets
+MDSETS=kernel
+ARCH=ARCH
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -57,8 +60,8 @@ md_get_cddevs() {
 	dmesg | egrep -a "^cd[0-9] "
 }
 
-md_get_ifdevs() {                                                         
-        # return available network devices                               
+md_get_ifdevs() {
+	# return available network devices
 	dmesg | egrep "(^ie[0-9] )|(^le[0-9] )" | cut -d" " -f1 | sort -u
 }
 
@@ -120,22 +123,19 @@ md_prep_disklabel()
 	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		echo -n "Do you wish to edit the disklabel on $_disk? [y] "
+	0)	echo -n "Do you wish to edit the disklabel on $_disk? [y] "
 		;;
-	1)
-		echo "WARNING: Disk $_disk has no label"
+	1)	echo "WARNING: Disk $_disk has no label"
 		echo -n "Do you want to create one with the disklabel editor? [y] "
 		;;
-	2)
-		echo "WARNING: Label on disk $_disk is corrupted"
+	2)	echo "WARNING: Label on disk $_disk is corrupted"
 		echo -n "Do you want to try and repair the damage using the disklabel editor? [y] "
 		;;
 	esac
 
 	getresp "y"
 	case "$resp" in
-	y*|Y*) ;;
+	y*|Y*)	;;
 	*)	return ;;
 	esac
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.36 2002/02/14 03:34:15 deraadt Exp $
+#	$OpenBSD: install.md,v 1.37 2002/03/31 17:30:31 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -36,13 +36,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script.
 #
 
 # Machine-dependent install sets
-MDSETS="kernel xbin xman xinc xcon"
+MDSETS=kernel
 ARCH=ARCH
 
 md_set_term() {
@@ -57,19 +56,19 @@ md_get_msgbuf() {
 	# Only want to see one boot's worth of info
 	dmesg > /tmp/msgbuf
 	sed -n -f /dev/stdin /tmp/msgbuf <<- OOF
-                /^OpenBSD /h
-                /^OpenBSD /!H
-                \${
-                        g
-                        p
-                }
+		/^OpenBSD /h
+		/^OpenBSD /!H
+		\${
+			g
+			p
+		}
 	OOF
 }
 
 md_get_diskdevs() {
 	# return available disk devices
 	md_get_msgbuf | sed -n 	-e '/^sd[0-9] /{s/ .*//;p;}' \
-				-e '/^x[dy][0-9] /{s/ .*//;p;}' 
+	    -e '/^x[dy][0-9] /{s/ .*//;p;}'
 }
 
 md_get_cddevs() {
@@ -78,8 +77,8 @@ md_get_cddevs() {
 }
 
 md_get_partition_range() {
-    # return range of valid partition letters
-    echo [a-p]
+	# return range of valid partition letters
+	echo [a-p]
 }
 
 md_questions() {
@@ -104,7 +103,7 @@ md_installboot() {
 		echo No boot block prototypes found, you must run installboot manually.
 		return
 	fi
-		
+
 	echo Installing boot block...
 	cp ${_prefix}/boot /mnt/boot
 	sync; sync; sync
@@ -142,14 +141,11 @@ md_prep_disklabel()
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)
-		;;
-	1)
-		echo WARNING: Label on disk $_disk has no label. You will be creating a new one.
+	0)	;;
+	1)	echo WARNING: Label on disk $_disk has no label. You will be creating a new one.
 		echo
 		;;
-	2)
-		echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
+	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
 		echo
 		;;
 	esac

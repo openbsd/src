@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.6 2001/12/23 01:51:52 krw Exp $
+#	$OpenBSD: install.md,v 1.7 2002/03/31 17:30:30 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 #
 # machine dependent section of installation/upgrade script
 #
 
 # Machine-dependent install sets
-MDSETS="kernel"
-ARCH=
+MDSETS=kernel
+ARCH=ARCH
 
 md_set_term() {
 	echo -n "Specify terminal type [vt220]: "
