@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.93 1999/08/18 07:46:33 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.94 1999/08/19 07:40:08 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -408,6 +408,7 @@ le		CSI2203	# Cabletron E22xx Adapter
 #ne		@@@9519	# ACCTON EN166X MPX2 ETHERNET CAR (PNP80D6)
 #ne		RTL8019	# Realtek Plug & Play Ethernet Ca (PNP80D6)
 #ne		EDI0119	# PLUG & PLAY ETHERNET CARD (PNP80D6)
+#ne		AXE2011	# NETGEAR EA201 Ethernet Card (PNP80D6)
 #ne		AXE2201	# Ethernet PnP ISA Card /S (PNP80D6)
 ne		@@@1980	# OvisLink LE-8019R
 we		SMC8416 # SMC EtherEZ
