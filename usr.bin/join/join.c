@@ -1,4 +1,4 @@
-/* $Id: join.c,v 1.11 1998/11/16 06:09:12 deraadt Exp $	*/
+/* $Id: join.c,v 1.12 1999/07/23 23:37:34 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static char rcsid[] = "$Id: join.c,v 1.11 1998/11/16 06:09:12 deraadt Exp $";
+static char rcsid[] = "$Id: join.c,v 1.12 1999/07/23 23:37:34 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -505,7 +505,7 @@ outfield(lp, fieldno, out_empty)
 	if (needsep++)
 		putchar((int)*tabchar);
 	if (!ferror(stdout)) {
-		if (lp->fieldcnt < fieldno || out_empty) {
+		if (lp->fieldcnt <= fieldno || out_empty) {
 			if (empty != NULL)
 				fputs(empty, stdout);
 		} else {
