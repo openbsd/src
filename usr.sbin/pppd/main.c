@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2002/05/06 19:35:26 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.34 2002/02/19 19:39:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.35 2002/05/06 19:35:26 deraadt Exp $";
 #endif
 #endif
 
@@ -331,7 +331,9 @@ main(argc, argv)
     SIGNAL(SIGILL, bad_signal);
     SIGNAL(SIGPIPE, bad_signal);
     SIGNAL(SIGQUIT, bad_signal);
+#if 0
     SIGNAL(SIGSEGV, bad_signal);
+#endif
 #ifdef SIGBUS
     SIGNAL(SIGBUS, bad_signal);
 #endif

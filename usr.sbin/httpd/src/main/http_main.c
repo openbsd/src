@@ -3309,8 +3309,10 @@ static void set_signals(void)
 #elif defined(SA_RESETHAND)
 	sa.sa_flags = SA_RESETHAND;
 #endif
+#ifdef SIGSEGV_CHECK
 	if (sigaction(SIGSEGV, &sa, NULL) < 0)
 	    ap_log_error(APLOG_MARK, APLOG_WARNING, server_conf, "sigaction(SIGSEGV)");
+#endif /* SIGSEGV_CHECK */
 #ifdef SIGBUS
 	if (sigaction(SIGBUS, &sa, NULL) < 0)
 	    ap_log_error(APLOG_MARK, APLOG_WARNING, server_conf, "sigaction(SIGBUS)");
@@ -3362,7 +3364,9 @@ static void set_signals(void)
 	ap_log_error(APLOG_MARK, APLOG_WARNING, server_conf, "sigaction(SIGUSR1)");
 #else
     if (!one_process) {
+#ifdef SIGSEGV_CHECK
 	signal(SIGSEGV, sig_coredump);
+#endif /* SIGSEGV_CHECK */
 #ifdef SIGBUS
 	signal(SIGBUS, sig_coredump);
 #endif /* SIGBUS */
