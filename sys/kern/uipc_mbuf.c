@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.5 1996/09/06 07:21:41 niklas Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.6 1997/08/20 05:42:26 millert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -555,7 +555,7 @@ m_split(m0, len0, wait)
 	int len0, wait;
 {
 	register struct mbuf *m, *n;
-	unsigned len = len0, remain;
+	unsigned len = len0, remain, olen;
 
 	for (m = m0; m && len > m->m_len; m = m->m_next)
 		len -= m->m_len;
@@ -577,6 +577,7 @@ m_split(m0, len0, wait)
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == 0) {
 				(void) m_free(n);
+				m0->m_pkthdr.len = olen;
 				return (0);
 			} else
 				return (n);
