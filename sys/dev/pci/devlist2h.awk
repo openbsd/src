@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.3 1997/11/07 08:07:26 niklas Exp $
+#	$OpenBSD: devlist2h.awk,v 1.4 1998/07/21 20:35:18 mickey Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 BEGIN {
-	nproducts = nvendors = 0
+	nproducts = nvendor_dup = nvendors = 0
 	dfile="pcidevs_data.h"
 	hfile="pcidevs.h"
 }
@@ -59,6 +59,11 @@ NR == 1 {
 }
 $1 == "vendor" {
 	nvendors++
+
+	if ($2 in vendorindex) {
+		printf("duplicate vendor name %s\n", $2);
+		nvendor_dup++;
+	}
 
 	vendorindex[$2] = nvendors;		# record index for this name, for later.
 	vendors[nvendors, 1] = $2;		# name
@@ -158,6 +163,9 @@ END {
 	# print out the match tables
 
 	printf("\n") > dfile
+
+	if (nvendor_dup > 0)
+		exit(1);
 
 	printf("struct pci_knowndev pci_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
