@@ -7,6 +7,11 @@ of the ones that have been tried and seem to work are:
 	I/O Formatter from Diversified (?)
 	Silverlining from LaCie
 
+You can get "HD SC Setup" from <ftp://ftphqx.info.apple.com/Apple_Support_Area/
+Apple_Software_Updates/US/Macintosh/Utilities/Apple_HD_SC_Setup_7.3.5.sea.hqx>.
+This utility ignores non-Apple hard disks unless you patch it with the 
+application found at <http://www.euronet.nl/users/ernstoud/hdpatch.html>.
+
 ** First, be sure you have a reliable backup of any data
 ** which you may want to keep.  All information on the hard
 ** drive you will be repartitioning will be lost.
