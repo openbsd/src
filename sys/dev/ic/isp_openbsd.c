@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.10 2000/07/06 05:31:48 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.11 2000/07/07 19:00:47 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -59,7 +59,23 @@ static void isp_wdog __P((void *));
 static void isp_requeue(void *);
 static void isp_internal_restart(void *);
 
-#define	_XT(xs)	((((xs)->timeout + 999)/1000) + (2 * hz))
+/*
+ * Set a timeout for the watchdogging of a command.
+ *
+ * The dimensional analysis is
+ *
+ *	milliseconds * (seconds/millisecond) * (ticks/second) = ticks
+ *
+ *			=
+ *
+ *	(milliseconds / 1000) * hz = ticks
+ *
+ *
+ * For timeouts less than 1 second, we'll get zero. Because of this, and
+ * because we want to establish *our* timeout to be longer than what the
+ * firmware might do, we just add 3 seconds at the back end.
+ */
+#define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
 struct cfdriver isp_cd = {
 	NULL, "isp", DV_DULL
