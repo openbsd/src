@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2000/01/14 05:42:16 rahnds Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2000/02/03 05:44:09 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -168,6 +168,7 @@ bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 #define	BUS_DMA_NOWAIT		0x01
 #define	BUS_DMA_ALLOCNOW	0x02
 #define	BUS_DMAMEM_NOSYNC	0x04
+#define	BUS_DMA_COHERENT	0x04
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
