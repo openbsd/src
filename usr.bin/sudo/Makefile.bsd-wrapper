@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/11/18 19:09:13 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/11/19 05:07:03 millert Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
 CONFIGURE_OPTS=	--prefix=/usr --with-devel --with-insults \
-		--with-env-editor --with-logfac=authpriv
+		--with-env-editor --disable-path-info --with-logfac=authpriv
 
 .include <bsd.own.mk>
 
