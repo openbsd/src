@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.3 1996/06/10 08:01:13 downsj Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.4 1996/07/22 03:35:42 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -491,12 +491,12 @@ atapi_test_unit_ready(ad_link, flags)
 	int flags;
 {	
 	int ret;
-	struct test_unit_ready cmd;
+	struct atapi_test_unit_ready cmd;
 
 	ATAPI_DEBUG_FCTN_PRINT(("atapi_test_unit_ready: "));
 
 	bzero(&cmd, sizeof(cmd));
-	cmd.operation_code = ATAPI_TEST_UNIT_READY;
+	cmd.opcode = ATAPI_TEST_UNIT_READY;
 
 	ret = atapi_exec_cmd(ad_link, &cmd, sizeof(cmd), 0, 0, 0, flags);
 
@@ -511,13 +511,13 @@ atapi_start_stop(ad_link, how, flags)
 	int how;
 	int flags;
 {
-	struct start_stop_unit cmd;
+	struct atapi_start_stop_unit cmd;
 	int ret;
 		
 	ATAPI_DEBUG_FCTN_PRINT(("atapi_start_stop: "));
 
 	bzero(&cmd, sizeof(cmd));
-	cmd.operation_code = ATAPI_START_STOP_UNIT;
+	cmd.opcode = ATAPI_START_STOP_UNIT;
 	cmd.how = how;
 
 	ret = atapi_exec_cmd(ad_link, &cmd, sizeof(cmd), 0,0,0,flags);
@@ -532,13 +532,13 @@ atapi_prevent(ad_link, how)
 	struct at_dev_link *ad_link;
 	int how;
 {
-	struct prevent_allow_medium_removal cmd;
+	struct atapi_prevent_allow_medium_removal cmd;
 	int ret;
 
 	ATAPI_DEBUG_FCTN_PRINT(("atapi_prevent: "));
 
 	bzero(&cmd, sizeof(cmd));
-	cmd.operation_code = ATAPI_PREVENT_ALLOW_MEDIUM_REMOVAL;
+	cmd.opcode = ATAPI_PREVENT_ALLOW_MEDIUM_REMOVAL;
 	cmd.how = how & 0xff;
 
 	ret = atapi_exec_cmd(ad_link, &cmd, sizeof(cmd), 0,0,0,0);

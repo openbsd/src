@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi.h,v 1.3 1996/06/10 08:01:11 downsj Exp $	*/
+/*	$OpenBSD: atapi.h,v 1.4 1996/07/22 03:35:42 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -38,8 +38,8 @@
  */
 #define ATAPI_TEST_UNIT_READY		0x00
 
-struct test_unit_ready {
-	u_int8_t	operation_code;
+struct atapi_test_unit_ready {
+	u_int8_t	opcode;
 	u_int8_t	reserved1[15];
 };
 
@@ -48,8 +48,8 @@ struct test_unit_ready {
  */ 
 #define ATAPI_START_STOP_UNIT		0x1b
  
-struct start_stop_unit {
-	u_int8_t	operation_code;
+struct atapi_start_stop_unit {
+	u_int8_t	opcode;
 	u_int8_t	flags;
 #define START_STOP_IMMED	0x01
 	u_int8_t	reserved2[2]; 
@@ -65,8 +65,8 @@ struct start_stop_unit {
  */ 
 #define ATAPI_PREVENT_ALLOW_MEDIUM_REMOVAL 0x1e
  
-struct prevent_allow_medium_removal {
-	u_int8_t	operation_code;
+struct atapi_prevent_allow_medium_removal {
+	u_int8_t	opcode;
 	u_int8_t	reserved1[3];
 	u_int8_t	how;	
 #define PR_PREVENT	0x01
@@ -80,8 +80,8 @@ struct prevent_allow_medium_removal {
  */
 #define ATAPI_READ_CD_CAPACITY		0x25
 
-struct read_cd_capacity {
-	u_int8_t	operation_code;
+struct atapi_read_cd_capacity {
+	u_int8_t	opcode;
 	u_int8_t	reserved1[7];
 	u_int8_t	len;
 	u_int8_t	reserved2[7];
@@ -90,7 +90,7 @@ struct read_cd_capacity {
 /* 
  * Volume size info.
  */
-struct read_cd_capacity_data {
+struct atapi_read_cd_capacity_data {
 	u_long	size;		/* Volume size in blocks */
 	u_long	blksize;	/* Block size in bytes */
 };
@@ -100,8 +100,8 @@ struct read_cd_capacity_data {
  */  
 #define ATAPI_READ			0x28  
 
-struct read {    
-	u_int8_t	operation_code;
+struct atapi_read {
+	u_int8_t	opcode;
 	u_int8_t	reserved1;
 	u_int8_t	lba[4];
 	u_int8_t	reserved2;
@@ -109,13 +109,91 @@ struct read {
 	u_int8_t	reserved3[7];
 }; 
 
+/*
+ * READ_SUBCHANNEL
+ */
+#define ATAPI_READ_SUBCHANNEL		0x42
+
+struct atapi_read_subchannel {
+	u_int8_t	opcode;
+	u_int8_t	flags[2];
+#define SUBCHAN_MSF	0x02
+#define SUBCHAN_SUBQ	0x40
+	u_int8_t	subchan_format;
+	u_int8_t	reserved5[2];
+	u_int8_t	track;
+	u_int8_t	length[2];
+	u_int8_t	reserved6[3];
+};
+
+/*
+ * READ_TOC
+ */
+#define ATAPI_READ_TOC			0x43
+
+struct atapi_read_toc {
+	u_int8_t	opcode;
+	u_int8_t	flags;
+#define TOC_MSF		0x02
+	u_int8_t	reserved3[4];
+	u_int8_t	track;
+	u_int8_t	length[2];
+	u_int8_t	format_flag;
+#define TOC_FORMAT	0x40
+	u_int8_t	reserved5[2];
+};
+
+/*
+ * PLAY AUDIO (10)
+ */
+#define ATAPI_PLAY_AUDIO		0x45
+
+struct atapi_play {
+	u_int8_t	opcode;
+	u_int8_t	reserved1;
+	u_int8_t	lba[4];
+	u_int8_t	reserved2;
+	u_int8_t	length[2];
+	u_int8_t	reserved3[7];
+};
+
+/*
+ * PLAY AUDIO (12)
+ */
+#define ATAPI_PLAY_BIG			0xa5
+
+struct atapi_play_big {
+	u_int8_t	opcode;
+	u_int8_t	reserved1;
+	u_int8_t	lba[4];
+	u_int8_t	length[4];
+	u_int8_t	reserved2[6];
+};
+
+/*
+ * PLAY MSF
+ */
+#define ATAPI_PLAY_MSF			0x47
+
+struct atapi_play_msf {
+	u_int8_t	opcode;
+	u_int8_t	reserved1[2];
+	u_int8_t	start_m;
+	u_int8_t	start_s;
+	u_int8_t	start_f;
+	u_int8_t	end_m;
+	u_int8_t	end_s;
+	u_int8_t	end_f;
+	u_int8_t	reserved3[3];
+};
+
 /* 
  * PAUSE/RESUME (optional) 
  */ 
 #define ATAPI_PAUSE_RESUME		0x4b
  
-struct pause_resume {
-	u_int8_t	operation_code;
+struct atapi_pause_resume {
+	u_int8_t	opcode;
 	u_int8_t	reserved1[7];
 	u_int8_t	resume;
 #define PA_PAUSE	0x00
@@ -124,12 +202,28 @@ struct pause_resume {
 };
 
 /*
+ * MODE SELECT
+ */
+#define ATAPI_MODE_SELECT		0x55
+
+struct atapi_mode_select {
+	u_int8_t	opcode;
+	u_int8_t	flags;
+#define MODE_SAVEPAGE	0x01;
+#define MODE_BIT	0x10;
+	u_int8_t	page;
+	u_int8_t	reserved3[4];
+	u_int8_t	length[2];
+	u_int8_t	reserved4[7];
+};
+
+/*
  * MODE SENSE (mandatory)
  */
 #define ATAPI_MODE_SENSE        0x5a
 
-struct mode_sense {
-	u_int8_t	operation_code;
+struct atapi_mode_sense {
+	u_int8_t	opcode;
 	u_int8_t	reserved1;
 	u_int8_t	page_code_control;
 #define PAGE_CODE_MASK		0x3f
@@ -139,29 +233,11 @@ struct mode_sense {
 	u_int8_t	reserved3[7];
 };
 
-struct cappage {
-	/* Mode data header */
-	u_int8_t	data_length[2];
-	u_int8_t	medium_type;
-#define MDT_UNKNOWN	0x00        
-#define MDT_DATA_120	0x01
-#define MDT_AUDIO_120	0x02
-#define MDT_COMB_120	0x03    
-#define MDT_PHOTO_120	0x04    
-#define MDT_DATA_80	0x05
-#define MDT_AUDIO_80	0x06
-#define MDT_COMB_80	0x07 
-#define MDT_PHOTO_80	0x08
-#define MDT_NO_DISC	0x70
-#define MDT_DOOR_OPEN	0x71
-#define MDT_FMT_ERROR	0x72
-	u_int8_t	reserved1[5];
-
+struct atapi_cappage {
 	/* Capabilities page */
 	u_int8_t	page_code;
-#define CAP_PAGE	0x2a
-	u_int8_t param_len;
-	u_int8_t reserved2[2];
+	u_int8_t	param_len;
+	u_int8_t	reserved2[2];
 
 	u_int8_t	format_cap;
 #define FORMAT_AUDIO_PLAY	0x01	/* audio play supported */
@@ -218,6 +294,77 @@ struct cappage {
 
 	u_int8_t	reserved4[2];
 };
+
+struct atapi_audiopage {
+	u_int8_t	page;
+	u_int8_t	length;
+	u_int8_t	flags;
+#define ATAPI_PA_SOTC	0x2
+#define ATAPI_PA_IMMED	0x4
+	u_int8_t	reserved4[3];
+	u_int8_t	lbaps[2];
+	struct port {
+#define CHANNEL_0	0x1
+#define CHANNEL_1	0x2
+#define CHANNEL_2	0x4
+#define CHANNEL_3	0x8
+#define MUTE_CHANNEL	0x0
+#define LEFT_CHANNEL	0x1
+#define RIGHT_CHANNEL	0x2
+#define BOTH_CHANNEL	0x3
+#define LEFT2_CHANNEL	0x4
+#define RIGHT2_CHANNEL	0x8
+		u_int8_t	channels;	/* first four bits */
+		u_int8_t	volume;
+	} port[4];
+};
+
+struct atapi_cdrompage {
+	u_int8_t	page;
+	u_int8_t	length;
+	u_int8_t	reserved1;
+	u_int8_t	inact_mult;		/* first four bits */
+	u_int16_t	spm;
+	u_int16_t	fps;
+};
+
+struct atapi_mode_data {
+	struct mode_header {
+		u_int8_t	length[2];
+		u_int8_t	medium;
+#define MDT_UNKNOWN	0x00
+#define MDT_DATA_120	0x01
+#define MDT_AUDIO_120	0x02
+#define MDT_COMB_120	0x03
+#define MDT_PHOTO_120	0x04
+#define MDT_DATA_80	0x05
+#define MDT_AUDIO_80	0x06
+#define MDT_COMB_80	0x07
+#define MDT_PHOTO_80	0x08
+#define MDT_NO_DISC	0x70
+#define MDT_DOOR_OPEN	0x71
+#define MDT_FMT_ERROR	0x72
+		u_int8_t	reserved[5];
+	} header;
+#define ATAPI_CDROM_PAGE	0x0d
+#define ATAPI_AUDIO_PAGE	0x0e
+#define ATAPI_AUDIO_PAGE_MASK	0x4e
+#define ATAPI_CAP_PAGE		0x2a
+	union {
+		u_int8_t		atapi_page_code;
+		struct atapi_cdrompage	atapi_page_cdrom;
+		struct atapi_cappage	atapi_page_cap;
+		struct atapi_audiopage	atapi_page_audio;
+	} page;
+#define page_code	page.atapi_page_code
+#define page_cdrom	page.atapi_page_cdrom
+#define	page_cap	page.atapi_page_cap
+#define page_audio	page.atapi_page_audio
+};
+
+#define AUDIOPAGESIZE	sizeof(struct atapi_audiopage)+sizeof(struct mode_header)
+#define CDROMPAGESIZE	sizeof(struct atapi_cdrompage)+sizeof(struct mode_header)
+#define CAPPAGESIZE	sizeof(struct atapi_cappage)+sizeof(struct mode_header)
 
 /* ATAPI error codes */
 #define ATAPI_SK_NO_SENSE		0x0

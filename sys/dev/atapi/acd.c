@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.5 1996/06/10 08:01:06 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.6 1996/07/22 03:35:41 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -55,6 +55,15 @@
 #define	CDPART(z)			DISKPART(z)
 #define	MAKECDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
+#define MAXTRACK	99
+#define CD_BLOCK_OFFSET	150
+#define CD_FRAMES	75
+#define CD_SECS		60
+struct cd_toc {
+	struct ioc_toc_header hdr;
+	struct cd_toc_entry tab[MAXTRACK+1];	/* One extra for the leadout */
+};
+
 #ifdef ACD_DEBUG
 #define ACD_DEBUG_PRINT(args)		printf args
 #else
@@ -77,7 +86,8 @@ struct acd_softc {
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 	struct	at_dev_link *ad_link;	/* contains our drive number, etc ... */
-	struct	cappage cap;		/* drive capabilities */
+	struct	atapi_mode_data mode_page;	/* drive capabilities */
+
 	struct	cd_parms {
 		int	blksize;
 		u_long	disksize;	/* total number sectors */
@@ -104,6 +114,18 @@ int	acd_pause __P((struct acd_softc *, int));
 void	acdminphys __P((struct buf*));
 u_long	acd_size __P((struct acd_softc*, int));
 int	acddone __P((struct atapi_command_packet *));
+int	acd_get_mode __P((struct acd_softc *, struct atapi_mode_data *, int, int, int));
+int	acd_set_mode __P((struct acd_softc *, struct atapi_mode_data *, int));
+int	acd_setchan __P((struct acd_softc *, u_char, u_char, u_char, u_char));
+int	acd_play __P((struct acd_softc *, int, int));
+int	acd_play_big __P((struct acd_softc *, int, int));
+int	acd_load_toc __P((struct acd_softc *, struct cd_toc *));
+int	acd_play_tracks __P((struct acd_softc *, int, int, int, int));
+int	acd_play_msf __P((struct acd_softc *, int, int, int, int, int, int));
+int	acd_read_subchannel __P((struct acd_softc *, int, int, int, struct cd_sub_channel_info *, int));
+int	acd_read_toc __P((struct acd_softc *, int, int, void *, int));
+u_long	msf2lba __P((u_char, u_char, u_char ));
+
 
 struct dkdriver acddkdriver = { acdstrategy };
 
@@ -124,6 +146,7 @@ acdmatch(parent, match, aux)
 	    sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK);
 #endif
 
+	/* XXX!!! */
 	if (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
 	    ATAPI_DEVICE_TYPE_CD) ||
 	   (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
@@ -144,7 +167,7 @@ acdattach(parent, self, aux)
 {
 	struct acd_softc *acd = (void *)self;
 	struct at_dev_link *sa = aux;
-	struct mode_sense cmd;
+	struct atapi_cappage *cap;
 
 	printf("\n");
 
@@ -164,43 +187,34 @@ acdattach(parent, self, aux)
 
 	dk_establish(&acd->sc_dk, &acd->sc_dev);   
 
-	(void)atapi_test_unit_ready(sa, A_POLLED | A_SILENT); 
-	delay(1000);
-	(void)atapi_test_unit_ready(sa, A_POLLED | A_SILENT);
+	if (atapi_test_unit_ready(sa, A_POLLED | A_SILENT) != 0) {
+		/* To clear media change, etc ...*/
+		delay(1000);
+		(void)atapi_test_unit_ready(sa, A_POLLED | A_SILENT);
+	}
 
-	/* To clear media change, etc ...*/
-	bzero(&cmd, sizeof(cmd));
-	cmd.operation_code = ATAPI_MODE_SENSE;
-	cmd.page_code_control = CAP_PAGE;
-	_lto2b(sizeof(struct cappage), cmd.length);
-	if (atapi_exec_cmd(sa, &cmd , sizeof(cmd), &acd->cap,
-	    sizeof(struct cappage), B_READ, A_POLLED) != 0) {
-		printf("%s: can't MODE SENSE: atapi_exec_cmd failed\n",
-		    self->dv_xname);
+	if (acd_get_mode(acd, &acd->mode_page, ATAPI_CAP_PAGE, CAPPAGESIZE,
+			 A_POLLED) != 0) {
+		printf("%s: can't MODE SENSE: acd_get_mode failed\n",
+		       self->dv_xname);
 		return;
 	}
 
 	/*
-	 * Fix cappage entries in place.
-	 */
-	acd->cap.max_speed = _2btos((u_int8_t *)&acd->cap.max_speed);
-	acd->cap.max_vol_levels = _2btos((u_int8_t *)&acd->cap.max_vol_levels);
-	acd->cap.buf_size = _2btos((u_int8_t *)&acd->cap.buf_size);
-	acd->cap.cur_speed = _2btos((u_int8_t *)&acd->cap.cur_speed);
-
-	/*
 	 * Display useful information about the drive (not media!).
 	 */
+	cap = &acd->mode_page.page_cap;
+
 	printf ("%s: ", self->dv_xname);
-	if (acd->cap.cur_speed != acd->cap.max_speed)
-		printf ("%d/", acd->cap.cur_speed * 1000 / 1024);
-	printf ("%dKb/sec", acd->cap.max_speed * 1000 / 1024);
-	if (acd->cap.buf_size)
-		printf (", %dKb cache", acd->cap.buf_size);
-	if (acd->cap.format_cap & FORMAT_AUDIO_PLAY)
+	if (cap->cur_speed != cap->max_speed)
+		printf ("%d/", cap->cur_speed * 1000 / 1024);
+	printf ("%dKb/sec", cap->max_speed * 1000 / 1024);
+	if (cap->buf_size)
+		printf (", %dKb cache", cap->buf_size);
+	if (cap->format_cap & FORMAT_AUDIO_PLAY)
 		printf (", audio play");
-	if (acd->cap.max_vol_levels)
-		printf (", %d volume levels", acd->cap.max_vol_levels);
+	if (cap->max_vol_levels)
+		printf (", %d volume levels", cap->max_vol_levels);
 	printf ("\n");
 }
 
@@ -264,14 +278,15 @@ acdopen(dev, flag, fmt)
 
 	ad_link = acd->ad_link;
 
-	if ((error = atapi_test_unit_ready(ad_link,0)) != 0) {
+	if ((error = atapi_test_unit_ready(ad_link, 0)) != 0) {
 		if (error != UNIT_ATTENTION)
 			return EIO;
 		if ((ad_link->flags & ADEV_OPEN) != 0)
 			return EIO;
 	}
 
-	if (error = acdlock(acd))
+	error = acdlock(acd);
+	if (error)
 		return error;
 
 	if (acd->sc_dk.dk_openmask != 0) {
@@ -486,7 +501,7 @@ acdstart(acd)
 	struct at_dev_link *ad_link;
 	struct buf *bp = 0;
 	struct buf *dp;
-	struct read cmd;
+	struct atapi_read cmd;
 	u_int32_t blkno, nblks;
 	struct partition *p;
 
@@ -498,7 +513,7 @@ acdstart(acd)
 		return;
 	}
 #endif
-		
+
 	ad_link = acd->ad_link;
 
 #ifdef DIAGNOSTIC
@@ -574,7 +589,7 @@ acdstart(acd)
 		 *  Fill out the atapi command
 		 */
 		bzero(&cmd, sizeof(cmd));
-		cmd.operation_code = ATAPI_READ;
+		cmd.opcode = ATAPI_READ;
 		_lto4b(blkno, cmd.lba);
 		_lto2b(nblks, cmd.length);
 
@@ -606,6 +621,31 @@ acdwrite(dev, uio)
 {
 
 	return (physio(acdstrategy, NULL, dev, B_WRITE, acdminphys, uio));
+}
+
+/*
+ * conversion between minute-seconde-frame and logical block adress
+ * adresses format
+ */
+void
+lba2msf (lba, m, s, f)
+	u_long lba;
+	u_char *m, *s, *f;
+{
+	u_long tmp;
+	tmp = lba + CD_BLOCK_OFFSET;	/* offset of first logical frame */
+	tmp &= 0xffffff;		/* negative lbas use only 24 bits */
+	*m = tmp / (CD_SECS * CD_FRAMES);
+	tmp %= (CD_SECS * CD_FRAMES);
+	*s = tmp / CD_FRAMES;
+	*f = tmp % CD_FRAMES;
+}
+
+u_long
+msf2lba (m, s, f)
+	u_char m, s, f;
+{
+	return (((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET;
 }
 
 /*
@@ -663,236 +703,154 @@ acdioctl(dev, cmd, addr, flag, p)
 	case DIOCWLABEL:
 		return EROFS;
 
-#ifdef notyet
-	case CDIOCPLAYTRACKS:
-		{
+	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
-		struct acd_mode_data data;
-		if (error = acd_get_mode(acd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.flags &= ~CD_PA_SOTC;
-		data.page.audio.flags |= CD_PA_IMMED;
-		if (error = acd_set_mode(acd, &data))
-			return error;
+
 		return acd_play_tracks(acd, args->start_track,
-		    args->start_index, args->end_track, args->end_index);
+				       args->start_index, args->end_track,
+				       args->end_index);
 	}
-#endif
 
-#ifdef notyet
-	case CDIOCPLAYMSF:
-		{
-		struct ioc_play_msf *args
-		= (struct ioc_play_msf *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.flags &= ~CD_PA_SOTC;
-		data.page.audio.flags |= CD_PA_IMMED;
-		if (error = cd_set_mode(cd, &data))
-			return error;
-		return cd_play_msf(cd, args->start_m, args->start_s,
-		    args->start_f, args->end_m, args->end_s, args->end_f);
+	case CDIOCPLAYMSF: {
+		struct ioc_play_msf *args = (struct ioc_play_msf *)addr;
+
+		return acd_play_msf(acd, args->start_m, args->start_s,
+				    args->start_f, args->end_m, args->end_s,
+				    args->end_f);
 	}
-#endif
 
-#ifdef notyet
-	case CDIOCPLAYBLOCKS:
-	{
-		struct ioc_play_blocks *args
-		= (struct ioc_play_blocks *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.flags &= ~CD_PA_SOTC;
-		data.page.audio.flags |= CD_PA_IMMED;
-		if (error = cd_set_mode(cd, &data))
-			return error;
-		return cd_play(cd, args->blk, args->len);
+	case CDIOCPLAYBLOCKS: {
+		struct ioc_play_blocks *args = (struct ioc_play_blocks *)addr;
+
+		return acd_play(acd, args->blk, args->len);
 	}
-#endif
 
-#ifdef notyet 
-	case CDIOCREADSUBCHANNEL:
-	{
+	case CDIOCREADSUBCHANNEL: {
 		struct ioc_read_subchannel *args
-		= (struct ioc_read_subchannel *)addr;
+				= (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
 		int len = args->data_len;
+
 		if (len > sizeof(data) ||
 		    len < sizeof(struct cd_sub_channel_header))
 			return EINVAL;
-		if (error = cd_read_subchannel(cd, args->address_format,
-		    args->data_format, args->track, &data, len))
+
+		if (error = acd_read_subchannel(acd, args->address_format,
+		    				args->data_format, args->track,
+						&data, len))
 			return error;
-		len = min(len, ((data.header.data_len[0] << 8) +
-		    data.header.data_len[1] +
-		    sizeof(struct cd_sub_channel_header)));
 		return copyout(&data, args->data, len);
 	}
-#endif
 
-#ifdef notyet
-	case CDIOREADTOCHEADER:
-	{
-		struct ioc_toc_header th;
-		if (error = cd_read_toc(cd, 0, 0, &th, sizeof(th)))
+	case CDIOREADTOCHEADER: {
+		struct ioc_toc_header hdr;
+
+		if (error = acd_read_toc(acd, 0, 0, &hdr, sizeof(hdr)))
 			return error;
-		th.len = ntohs(th.len);
-		bcopy(&th, addr, sizeof(th));
+		hdr.len = ntohs(hdr.len);
+		bcopy(&hdr, addr, sizeof(hdr));
 		return 0;
 	}
-#endif
 
-#ifdef notyet
-	case CDIOREADTOCENTRYS:
-	{
-		struct cd_toc {
-			struct ioc_toc_header header;
-			struct cd_toc_entry entries[65];
-		} data;
+	case CDIOREADTOCENTRYS: {
 		struct ioc_read_toc_entry *te =
-		(struct ioc_read_toc_entry *)addr;
-		struct ioc_toc_header *th;
+				(struct ioc_read_toc_entry *)addr;
+		struct cd_toc toc;
+		struct ioc_toc_header *th = &toc.hdr;
 		int len = te->data_len;
-		th = &data.header;
+		int ntracks;
 
-		if (len > sizeof(data.entries) ||
+		if (len > sizeof(toc.tab) ||
 		    len < sizeof(struct cd_toc_entry))
 			return EINVAL;
-		if (error = cd_read_toc(cd, te->address_format,
-		    te->starting_track, (struct cd_toc_entry *)&data,
-		    len + sizeof(struct ioc_toc_header)))
-			return error;
-		len = min(len, ntohs(th->len) - (sizeof(th->starting_track) +
-		    sizeof(th->ending_track)));
-		return copyout(data.entries, te->data, len);
-	}
-#endif
 
-#ifdef notyet
-	case CDIOCSETPATCH:
-	{
+		if (error = acd_read_toc(acd, te->address_format,
+		    			 te->starting_track, &toc,
+		    			 len + sizeof(struct ioc_toc_header)))
+			return error;
+
+		if (te->address_format == CD_LBA_FORMAT) {
+		    for (ntracks = th->ending_track - th->starting_track + 1;
+		         ntracks >= 0; ntracks--) {
+			toc.tab[ntracks].addr_type = CD_LBA_FORMAT;
+			(u_int32_t)(*toc.tab[ntracks].addr.addr) =
+				ntohl((u_int32_t)(*toc.tab[ntracks].addr.addr));
+		    }
+		}
+		th->len = ntohs(th->len);
+
+		len = min(len, th->len - sizeof(struct ioc_toc_header));
+		return copyout(toc.tab, te->data, len);
+	}
+
+	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.port[LEFT_PORT].channels = arg->patch[0];
-		data.page.audio.port[RIGHT_PORT].channels = arg->patch[1];
-		data.page.audio.port[2].channels = arg->patch[2];
-		data.page.audio.port[3].channels = arg->patch[3];
-		return cd_set_mode(cd, &data);
-	}
-#endif
 
-#ifdef notyet
-	case CDIOCGETVOL:
-	{
+		return acd_setchan(acd, arg->patch[0], arg->patch[1],
+				   arg->patch[2], arg->patch[3]);
+	}
+
+	case CDIOCGETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
+		struct atapi_mode_data data;
+		if (error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
+					   AUDIOPAGESIZE, 0))
 			return error;
-		arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
-		arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
-		arg->vol[2] = data.page.audio.port[2].volume;
-		arg->vol[3] = data.page.audio.port[3].volume;
+		arg->vol[0] = data.page_audio.port[0].volume;
+		arg->vol[1] = data.page_audio.port[1].volume;
+		arg->vol[2] = data.page_audio.port[2].volume;
+		arg->vol[3] = data.page_audio.port[3].volume;
 		return 0;
 	}
-#endif
 
-#ifdef notyet
-	case CDIOCSETVOL:
-	{
+	case CDIOCSETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
-		data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
-		data.page.audio.port[RIGHT_PORT].channels = CHANNEL_1;
-		data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
-		data.page.audio.port[2].volume = arg->vol[2];
-		data.page.audio.port[3].volume = arg->vol[3];
-		return cd_set_mode(cd, &data);
-	}
-#endif
+		struct atapi_mode_data data, mask;
 
-#ifdef notyet
-	case CDIOCSETMONO:
-	{
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
+		if (error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
+					 AUDIOPAGESIZE, 0))
 			return error;
-		data.page.audio.port[LEFT_PORT].channels =
-		    LEFT_CHANNEL | RIGHT_CHANNEL | 4 | 8;
-		data.page.audio.port[RIGHT_PORT].channels =
-		    LEFT_CHANNEL | RIGHT_CHANNEL;
-		data.page.audio.port[2].channels = 0;
-		data.page.audio.port[3].channels = 0;
-		return cd_set_mode(cd, &data);
-	}
-#endif
 
-#ifdef notyet
-	case CDIOCSETSTEREO:
-	{
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
+		if (error = acd_get_mode(acd, &mask, ATAPI_AUDIO_PAGE_MASK,
+					 AUDIOPAGESIZE, 0))
 			return error;
-		data.page.audio.port[LEFT_PORT].channels = LEFT_CHANNEL;
-		data.page.audio.port[RIGHT_PORT].channels = RIGHT_CHANNEL;
-		data.page.audio.port[2].channels = 0;
-		data.page.audio.port[3].channels = 0;
-		return cd_set_mode(cd, &data);
-	}
-#endif
 
-#ifdef notyet
-	case CDIOCSETMUTE:
-	{
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.port[LEFT_PORT].channels = 0;
-		data.page.audio.port[RIGHT_PORT].channels = 0;
-		data.page.audio.port[2].channels = 0;
-		data.page.audio.port[3].channels = 0;
-		return cd_set_mode(cd, &data);
-	}
-#endif
+		data.page_audio.port[0].volume = arg->vol[0] &
+		    mask.page_audio.port[0].volume;
+		data.page_audio.port[1].volume = arg->vol[1] &
+		    mask.page_audio.port[1].volume;
+		data.page_audio.port[2].volume = arg->vol[2] &
+		    mask.page_audio.port[2].volume;
+		data.page_audio.port[3].volume = arg->vol[3] &
+		    mask.page_audio.port[3].volume;
 
-#ifdef notyet
-	case CDIOCSETLEFT:
-	{
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.port[LEFT_PORT].channels = LEFT_CHANNEL;
-		data.page.audio.port[RIGHT_PORT].channels = LEFT_CHANNEL;
-		data.page.audio.port[2].channels = 0;
-		data.page.audio.port[3].channels = 0;
-		return cd_set_mode(cd, &data);
+		return acd_set_mode(acd, &data, AUDIOPAGESIZE);
 	}
-#endif
 
-#ifdef notyet
-	case CDIOCSETRIGHT:
-	{
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
-		struct cd_mode_data data;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
-			return error;
-		data.page.audio.port[LEFT_PORT].channels = RIGHT_CHANNEL;
-		data.page.audio.port[RIGHT_PORT].channels = RIGHT_CHANNEL;
-		data.page.audio.port[2].channels = 0;
-		data.page.audio.port[3].channels = 0;
-		return cd_set_mode(cd, &data);
+	case CDIOCSETMONO: {
+		return acd_setchan(acd, BOTH_CHANNEL, BOTH_CHANNEL,
+				   MUTE_CHANNEL, MUTE_CHANNEL);
 	}
-#endif
+
+	case CDIOCSETSTEREO: {
+		return acd_setchan(acd, LEFT_CHANNEL, RIGHT_CHANNEL,
+				   MUTE_CHANNEL, MUTE_CHANNEL);
+	}
+
+	case CDIOCSETMUTE: {
+		return acd_setchan(acd, MUTE_CHANNEL, MUTE_CHANNEL,
+				   MUTE_CHANNEL, MUTE_CHANNEL);
+	}
+
+	case CDIOCSETLEFT: {
+		return acd_setchan(acd, LEFT_CHANNEL, LEFT_CHANNEL,
+				   MUTE_CHANNEL, MUTE_CHANNEL);
+	}
+
+	case CDIOCSETRIGHT: {
+		return acd_setchan(acd, RIGHT_CHANNEL, RIGHT_CHANNEL,
+				   MUTE_CHANNEL, MUTE_CHANNEL);
+	}
 
 	case CDIOCRESUME:
 		return acd_pause(acd, PA_RESUME);
@@ -932,7 +890,7 @@ acdioctl(dev, cmd, addr, flag, p)
 	}
 
 #ifdef DIAGNOSTIC
-	panic("cdioctl: impossible");
+	panic("acdioctl: impossible");
 #endif
 }
 
@@ -992,8 +950,8 @@ acd_size(cd, flags)
 	struct acd_softc *cd;
 	int flags;
 {
-	struct read_cd_capacity_data rdcap;
-	struct read_cd_capacity cmd;
+	struct atapi_read_cd_capacity_data rdcap;
+	struct atapi_read_cd_capacity cmd;
 	u_long blksize;
 	u_long size;
 
@@ -1002,7 +960,7 @@ acd_size(cd, flags)
 	 * it for you.
 	 */
 	bzero(&cmd, sizeof(cmd));
-	cmd.operation_code = ATAPI_READ_CD_CAPACITY;
+	cmd.opcode = ATAPI_READ_CD_CAPACITY;
 	cmd.len = sizeof(rdcap);
 
 	/*
@@ -1029,132 +987,209 @@ acd_size(cd, flags)
 	return size;
 }
 
-#ifdef notyet
 /*
  * Get the requested page into the buffer given
  */
 int
-cd_get_mode(cd, data, page)
-	struct acd_softc *cd;
-	struct cd_mode_data *data;
-	int page;
+acd_get_mode(acd, data, page, len, flags)
+	struct acd_softc *acd;
+	struct atapi_mode_data *data;
+	int page, len, flags;
 {
-	struct scsi_mode_sense scsi_cmd;
+	struct atapi_mode_sense atapi_cmd;
 	int error;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	bzero(data, sizeof(*data));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = page;
-	scsi_cmd.length = sizeof(*data) & 0xff;
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
-	    NULL, SCSI_DATA_IN);
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+	bzero(data, sizeof(struct atapi_mode_data));
+	atapi_cmd.opcode = ATAPI_MODE_SENSE;
+	atapi_cmd.page_code_control = page;
+	_lto2b(len, atapi_cmd.length);
+
+	error = atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
+			       data, len, B_READ, flags);
+	if (!error) {
+		switch(page) {
+		case ATAPI_CAP_PAGE: {
+			struct atapi_cappage *fix = &data->page_cap;
+        		/*
+	         	 * Fix cappage entries in place.
+			 */
+			fix->max_speed = _2btos((u_int8_t *)&fix->max_speed);
+			fix->max_vol_levels = _2btos((u_int8_t *)&fix->max_vol_levels);
+			fix->buf_size = _2btos((u_int8_t *)&fix->buf_size);
+			fix->cur_speed = _2btos((u_int8_t *)&fix->cur_speed);
+			} break;
+		}
+	}
+
+	return(error);
 }
 
 /*
  * Get the requested page into the buffer given
  */
 int
-cd_set_mode(cd, data)
-	struct acd_softc *cd;
-	struct cd_mode_data *data;
+acd_set_mode(acd, data, len)
+	struct acd_softc *acd;
+	struct atapi_mode_data *data;
+	int len;
 {
-	struct scsi_mode_select scsi_cmd;
+	struct atapi_mode_select atapi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SELECT;
-	scsi_cmd.byte2 |= SMS_PF;
-	scsi_cmd.length = sizeof(*data) & 0xff;
-	data->header.data_length = 0;
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
-	    NULL, SCSI_DATA_OUT);
+	bzero(&data->header.length, sizeof(data->header.length));
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+
+	atapi_cmd.opcode = ATAPI_MODE_SELECT;
+	atapi_cmd.flags |= MODE_BIT;
+	atapi_cmd.page = data->page_code;
+	_lto2b(len, atapi_cmd.length);
+
+	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
+			      data, len, B_WRITE, 0);
+}
+
+int
+acd_setchan(acd, c0, c1, c2, c3)
+	struct acd_softc *acd;
+	u_char c0, c1, c2, c3;
+{
+	struct atapi_mode_data data;
+	int error;
+
+	error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE, AUDIOPAGESIZE, 0);
+	if (error)
+		return error;
+
+	data.page_audio.port[0].channels = c0;
+	data.page_audio.port[1].channels = c1;
+	data.page_audio.port[2].channels = c2;
+	data.page_audio.port[3].channels = c3;
+
+	return acd_set_mode(acd, &data, AUDIOPAGESIZE);
 }
 
 /*
- * Get scsi driver to send a "start playing" command
+ * Get atapi driver to send a "start playing" command
  */
 int
-cd_play(cd, blkno, nblks)
-	struct acd_softc *cd;
+acd_play(acd, blkno, nblks)
+	struct acd_softc *acd;
 	int blkno, nblks;
 {
-	struct scsi_play scsi_cmd;
+	struct atapi_play atapi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = PLAY;
-	_lto4b(blkno, scsi_cmd.blk_addr);
-	_lto2b(nblks, scsi_cmd.xfer_len);
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+	atapi_cmd.opcode = ATAPI_PLAY_AUDIO;
+	_lto4b(blkno, atapi_cmd.lba);
+	_lto2b(nblks, atapi_cmd.length);
 
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 200000, NULL, 0);
+	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
+			      NULL, 0, 0, 0);
 }
 
 /*
- * Get scsi driver to send a "start playing" command
+ * Get atapi driver to send a "start playing" command
  */
 int
-cd_play_big(cd, blkno, nblks)
-	struct acd_softc *cd;
+acd_play_big(acd, blkno, nblks)
+	struct acd_softc *acd;
 	int blkno, nblks;
 {
-	struct scsi_play_big scsi_cmd;
+	struct atapi_play_big atapi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = PLAY_BIG;
-	_lto4b(blkno, scsi_cmd.blk_addr);
-	_lto4b(nblks, scsi_cmd.xfer_len);
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+	atapi_cmd.opcode = ATAPI_PLAY_BIG;
+	_lto4b(blkno, atapi_cmd.lba);
+	_lto4b(nblks, atapi_cmd.length);
 
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 20000, NULL, 0);
+	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
+			      NULL, 0, 0, 0);
+}
+
+int
+acd_load_toc(acd, toc)
+	struct acd_softc *acd;
+	struct cd_toc *toc;
+{
+	int i, ntracks, len, error;
+	u_int32_t *lba;
+
+	error = acd_read_toc(acd, 0, 0, toc, sizeof(toc->hdr));
+	if (error)
+		return error;
+
+	ntracks = toc->hdr.ending_track-toc->hdr.starting_track + 1;
+	len = (ntracks+1) * sizeof(struct cd_toc_entry) + sizeof(toc->hdr);
+	error = acd_read_toc(acd, CD_MSF_FORMAT, 0, toc, len);
+	if (error)
+		return(error);
+	for (i = 0; i <= ntracks; i++) {
+		lba = (u_int32_t*)toc->tab[i].addr.addr;
+		*lba = msf2lba(toc->tab[i].addr.addr[1],
+			       toc->tab[i].addr.addr[2],
+			       toc->tab[i].addr.addr[3]);
+	}
+	return 0;
 }
 
 /*
- * Get scsi driver to send a "start playing" command
+ * Get atapi driver to send a "start playing" command
  */
 int
-cd_play_tracks(cd, strack, sindex, etrack, eindex)
-	struct acd_softc *cd;
+acd_play_tracks(acd, strack, sindex, etrack, eindex)
+	struct acd_softc *acd;
 	int strack, sindex, etrack, eindex;
 {
-	struct scsi_play_track scsi_cmd;
+	u_int32_t *start, *end, len;
+	struct cd_toc toc;
+	int error;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = PLAY_TRACK;
-	scsi_cmd.start_track = strack;
-	scsi_cmd.start_index = sindex;
-	scsi_cmd.end_track = etrack;
-	scsi_cmd.end_index = eindex;
+	if (!etrack)
+		return EIO;
+	if (strack > etrack)
+		return EINVAL;
 
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 20000, NULL, 0);
+	error = acd_load_toc(acd, &toc);
+	if (error)
+		return error;
+
+	if (++etrack > (toc.hdr.ending_track + 1))
+		etrack = toc.hdr.ending_track + 1;
+
+	strack -= toc.hdr.starting_track;
+	etrack -= toc.hdr.starting_track;
+	if (strack < 0)
+		return EINVAL;
+
+	start = (u_int32_t*)toc.tab[strack].addr.addr;
+	end = (u_int32_t*)toc.tab[etrack].addr.addr;
+	len = *end - *start;
+
+	return acd_play_big(acd, *start, len);
 }
 
 /*
- * Get scsi driver to send a "play msf" command
+ * Get atapi driver to send a "play msf" command
  */
 int
-cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
-	struct acd_softc *cd;
+acd_play_msf(acd, startm, starts, startf, endm, ends, endf)
+	struct acd_softc *acd;
 	int startm, starts, startf, endm, ends, endf;
 {
-	struct scsi_play_msf scsi_cmd;
+	struct atapi_play_msf atapi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = PLAY_MSF;
-	scsi_cmd.start_m = startm;
-	scsi_cmd.start_s = starts;
-	scsi_cmd.start_f = startf;
-	scsi_cmd.end_m = endm;
-	scsi_cmd.end_s = ends;
-	scsi_cmd.end_f = endf;
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+	atapi_cmd.opcode = ATAPI_PLAY_MSF;
+	atapi_cmd.start_m = startm;
+	atapi_cmd.start_s = starts;
+	atapi_cmd.start_f = startf;
+	atapi_cmd.end_m = endm;
+	atapi_cmd.end_s = ends;
+	atapi_cmd.end_f = endf;
 
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 2000, NULL, 0);
+	return atapi_exec_cmd(acd->ad_link, (struct atapi_generic *)&atapi_cmd,
+			      sizeof(atapi_cmd), NULL, 0, 0, 0);
 }
-
-#endif  /* notyet */
 
 /*
  * Get atapi driver to send a "start up" command
@@ -1164,10 +1199,10 @@ acd_pause(acd, go)
 	struct acd_softc *acd;
 	int go;
 {
-	struct pause_resume cmd;
+	struct atapi_pause_resume cmd;
 
 	bzero(&cmd, sizeof(cmd));
-	cmd.operation_code = ATAPI_PAUSE_RESUME;
+	cmd.opcode = ATAPI_PAUSE_RESUME;
 	cmd.resume = go & 0xff;
 
 	return atapi_exec_cmd(acd->ad_link, &cmd , sizeof(cmd), 0, 0, 0, 0);
@@ -1187,65 +1222,56 @@ acd_reset(acd)
 #endif
 }
 
-#ifdef notyet
 /*
  * Read subchannel
  */
 int
-cd_read_subchannel(cd, mode, format, track, data, len)
-	struct acd_softc *cd;
+acd_read_subchannel(acd, mode, format, track, data, len)
+	struct acd_softc *acd;
 	int mode, format, len;
 	struct cd_sub_channel_info *data;
 {
-	struct scsi_read_subchannel scsi_cmd;
+	struct atapi_read_subchannel atapi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_SUBCHANNEL;
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+
+	atapi_cmd.opcode = ATAPI_READ_SUBCHANNEL;
 	if (mode == CD_MSF_FORMAT)
-		scsi_cmd.byte2 |= CD_MSF;
-	scsi_cmd.byte3 = SRS_SUBQ;
-	scsi_cmd.subchan_format = format;
-	scsi_cmd.track = track;
-	_lto2b(len, scsi_cmd.data_len);
+		atapi_cmd.flags[0] |= SUBCHAN_MSF;
+	if (len > sizeof(struct cd_sub_channel_header))
+		atapi_cmd.flags[1] |= SUBCHAN_SUBQ;
+	atapi_cmd.subchan_format = format;
+	atapi_cmd.track = track;
+	_lto2b(len, atapi_cmd.length);
 
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(struct scsi_read_subchannel), (u_char *)data, len,
-	    CDRETRIES, 5000, NULL, SCSI_DATA_IN);
+	return atapi_exec_cmd(acd->ad_link, (struct atapi_generic *)&atapi_cmd,
+			      sizeof(struct atapi_read_subchannel),
+			      (u_char *)data, len, B_READ, 0);
 }
 
 /*
  * Read table of contents
  */
 int
-cd_read_toc(cd, mode, start, data, len)
-	struct acd_softc *cd;
+acd_read_toc(acd, mode, start, data, len)
+	struct acd_softc *acd;
 	int mode, start, len;
-	struct cd_toc_entry *data;
+	void *data;
 {
-	struct scsi_read_toc scsi_cmd;
-	int ntoc;
+	struct atapi_read_toc atapi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-#if 0
-	if (len != sizeof(struct ioc_toc_header))
-		ntoc = ((len) - sizeof(struct ioc_toc_header)) /
-		    sizeof(struct cd_toc_entry);
-	else
-#endif
-		ntoc = len;
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
 
-	scsi_cmd.opcode = READ_TOC;
+	atapi_cmd.opcode = ATAPI_READ_TOC;
 	if (mode == CD_MSF_FORMAT)
-		scsi_cmd.byte2 |= CD_MSF;
-	scsi_cmd.from_track = start;
-	_lto2b(ntoc, scsi_cmd.data_len);
+		atapi_cmd.flags |= TOC_MSF;
+	atapi_cmd.track = start;
+	_lto2b(len, atapi_cmd.length);
 
-	return scsi_scsi_cmd(cd->ad_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(struct scsi_read_toc), (u_char *)data, len, CDRETRIES,
-	    5000, NULL, SCSI_DATA_IN);
+	return atapi_exec_cmd(acd->ad_link, (struct atapi_generic *)&atapi_cmd,
+			      sizeof(struct atapi_read_toc), data,
+			      len, B_READ, 0);
 }
-
-#endif /* notyet */
 
 /*
  * Get the atapi driver to send a full inquiry to the device and use the
