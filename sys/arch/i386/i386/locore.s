@@ -1269,7 +1269,7 @@ ENTRY(fuword)
 	ret
 	
 /*
- * fusword(caddr_t uaddr);
+ * fusword(u_short *uaddr);
  * Fetch a short from the user's address space.
  */
 ENTRY(fusword)
@@ -1378,7 +1378,7 @@ ENTRY(suword)
 	ret
 	
 /*
- * susword(caddr_t uaddr, short x);
+ * susword(u_short *uaddr, short x);
  * Store a short in the user's address space.
  */
 ENTRY(susword)
