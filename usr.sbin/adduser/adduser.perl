@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.46 2003/06/14 23:23:08 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.47 2003/06/17 00:58:30 jsyn Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -91,7 +91,7 @@ sub variables {
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "auto";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.46 2003/06/14 23:23:08 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.47 2003/06/17 00:58:30 jsyn Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -355,7 +355,7 @@ sub group_read {
 	($g_groupname, $pw, $g_gid, $memb) = (split(/:/, $_))[0..3];
 
 	$groupmembers{$g_gid} = $memb;
-	warn "Groupname exists twice: $g_groupname:$g_gid ->  $g_groupname:$groupname{$g_groupname}\n"
+	warn "Groupname exists twice: $g_groupname:$g_gid -> $g_groupname:$groupname{$g_groupname}\n"
 	    if $groupname{$g_groupname} && $verbose;
 	$groupname{$g_groupname} = $g_gid;
 	warn "Groupid exists twice:   $g_groupname:$g_gid -> $gid{$g_gid}:$g_gid\n"
