@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.14 1998/03/20 05:18:27 todd Exp $	*/
+/*	$OpenBSD: fb.c,v 1.15 1999/09/05 18:51:08 jason Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -403,7 +403,7 @@ fbrcons_init(fb)
 	rc->rc_height = fb->fb_type.fb_height;
 	rc->rc_depth = fb->fb_type.fb_depth;
 	/* Setup the static font, use a small font if display is < 800x600 */
-	if(rc->rc_height * rc->rc_width < 800*600)
+	if(rc->rc_height * rc->rc_width <= 800*600)
 		rc->rc_font = &console_font_fixed;
 	else
 		rc->rc_font = &console_font;
