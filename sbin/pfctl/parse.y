@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.220 2002/11/27 15:49:16 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.221 2002/11/27 16:06:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2457,7 +2457,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			if (pf->opts & PF_OPT_VERBOSE) {
 				print_altq(&pf->paltq->altq, 0);
 				if (nqueues && nqueues->tail) {
-					printf(" queue { ");
+					printf("queue { ");
 					LOOP_THROUGH(struct node_queue, queue,
 					    nqueues,
 						printf("%s ",
@@ -2547,7 +2547,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 			if (pf->opts & PF_OPT_VERBOSE) {
 				print_altq(&pf->paltq->altq, 0);
 				if (nqueues && nqueues->tail) {
-					printf(" { ");
+					printf("{ ");
 					LOOP_THROUGH(struct node_queue, queue,
 					    nqueues,
 						printf("%s ", queue->queue);

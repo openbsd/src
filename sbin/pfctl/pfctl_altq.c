@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.10 2002/11/27 15:00:41 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.11 2002/11/27 16:06:20 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -142,16 +142,16 @@ print_altq(const struct pf_altq *a, unsigned level)
 		return;
 	}
 
-	printf("altq on %s scheduler", a->ifname);
+	printf("altq on %s scheduler ", a->ifname);
 
 	switch(a->scheduler) {
 	case ALTQT_CBQ:
 		print_cbq_opts(a);
 		if (!a->pq_u.cbq_opts.flags)
-			printf(" cbq");
+			printf("cbq ");
 	}
 
-	printf(" bandwidth %s tbrsize %u", rate2str((double)a->ifbandwidth),
+	printf("bandwidth %s tbrsize %u ", rate2str((double)a->ifbandwidth),
 	    a->tbrsize);
 }
 
@@ -163,8 +163,10 @@ print_queue(const struct pf_altq *a, unsigned level)
 	printf("queue ");
 	for (i = 0; i < level; ++i)
 		printf(" ");
-	printf("%s bandwidth %s priority %u", a->qname,
-	    rate2str((double)a->bandwidth), a->priority);
+	printf("%s ", a->qname);
+	printf("bandwidth %s ", rate2str((double)a->bandwidth));
+	if (a->priority != DEFAULT_PRIORITY)
+		printf("priority %u ", a->priority);
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
 		print_cbq_opts(a);
@@ -440,7 +442,7 @@ print_cbq_opts(const struct pf_altq *a)
 */
 
 	if (opts->flags) {
-		printf(" cbq(");
+		printf("cbq(");
 		if (opts->flags & CBQCLF_RED)
 			printf(" red");
 		if (opts->flags & CBQCLF_ECN)
@@ -461,7 +463,7 @@ print_cbq_opts(const struct pf_altq *a)
 			printf(" root");
 		if (opts->flags & CBQCLF_DEFCLASS)
 			printf(" default");
-		printf(" )");
+		printf(" ) ");
 	}
 }
 
@@ -535,7 +537,7 @@ pfctl_print_altq_node(const struct pf_altq_node *node, unsigned level)
 	print_altq(&node->altq, level);
 
 	if (node->children != NULL) {
-		printf(" {");
+		printf("{");
 		for (child = node->children; child != NULL;
 		    child = child->next) {
 			printf("%s", child->altq.qname);
