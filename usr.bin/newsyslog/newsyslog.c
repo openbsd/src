@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.57 2002/09/21 23:19:43 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.58 2002/11/07 15:25:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.57 2002/09/21 23:19:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.58 2002/11/07 15:25:13 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -134,7 +134,7 @@ static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.57 2002/09/21 23:19:43 mi
 #define CE_FOLLOW	0x10		/* Follow symbolic links */
 
 #define	MIN_PID		4		/* Don't touch pids lower than this */
-#define	MIN_SIZE	512		/* Don't rotate if smaller than this */
+#define	MIN_SIZE	256		/* Don't rotate if smaller (in bytes) */
 
 #define	DPRINTF(x)	do { if (verbose) printf x ; } while (0)
 
@@ -145,7 +145,7 @@ struct conf_entry {
 	uid_t   uid;		/* Owner of log */
 	gid_t   gid;		/* Group of log */
 	int     numlogs;	/* Number of logs to keep */
-	int     size;		/* Size cutoff to trigger trimming the log */
+	off_t   size;		/* Size cutoff to trigger trimming the log */
 	int     hours;		/* Hours between log trimming */
 	int     permissions;	/* File permissions on the log */
 	int	signal;		/* Signal to send (defaults to SIGHUP) */
@@ -180,7 +180,7 @@ char *missing_field(char *, char *);
 void dotrim(struct conf_entry *);
 int log_trim(char *);
 void compress_log(struct conf_entry *);
-int sizefile(char *);
+off_t sizefile(char *);
 int age_old_log(struct conf_entry *);
 char *sob(char *);
 char *son(char *);
@@ -301,7 +301,8 @@ main(int argc, char **argv)
 void
 do_entry(struct conf_entry *ent)
 {
-	int modtime, size;
+	int modtime;
+	off_t size;
 	struct stat sb;
 
 	if (lstat(ent->log, &sb) != 0)
@@ -323,7 +324,8 @@ do_entry(struct conf_entry *ent)
 		DPRINTF(("does not exist.\n"));
 	} else {
 		if (ent->size > 0)
-			DPRINTF(("size (Kb): %d [%d] ", size, ent->size));
+			DPRINTF(("size (KB): %.2f [%d] ", size / 1024.0,
+			    (int)(ent->size / 1024)));
 		if (ent->hours > 0)
 			DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
 		if (monitormode && ent->flags & CE_MONITOR)
@@ -553,7 +555,7 @@ parse_file(int *nentries)
 		q = parse = missing_field(sob(++parse), errline);
 		*(parse = son(parse)) = '\0';
 		if (isdigit(*q))
-			working->size = atoi(q);
+			working->size = atoi(q) * 1024;
 		else
 			working->size = -1;
 		
@@ -842,14 +844,19 @@ compress_log(struct conf_entry *ent)
 }
 
 /* Return size in kilobytes of a file */
-int
+off_t
 sizefile(char *file)
 {
 	struct stat sb;
 
 	if (stat(file, &sb) < 0)
 		return (-1);
-	return (sb.st_blocks / (1024.0 / DEV_BSIZE));
+
+	/* For sparse files, return the size based on number of blocks used. */
+	if (sb.st_size / DEV_BSIZE > sb.st_blocks)
+		return (sb.st_blocks * DEV_BSIZE);
+	else
+		return (sb.st_size);
 }
 
 /* Return the age (in hours) of old log file (file.0), or -1 if none */
