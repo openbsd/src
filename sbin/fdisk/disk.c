@@ -1,7 +1,7 @@
-/*	$OpenBSD: disk.c,v 1.12 2001/05/21 22:47:53 angelos Exp $	*/
+/*	$OpenBSD: disk.c,v 1.13 2001/06/23 01:54:37 kjell Exp $	*/
 
 /*
- * Copyright (c) 1997 Tobias Weingartner
+ * Copyright (c) 1997, 2001 Tobias Weingartner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,9 @@ DISK_open(disk, mode)
 	struct stat st;
 
 	fd = opendev(disk, mode, OPENDEV_PART, NULL);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, "%s", disk);
-	if (fstat(fd, &st) < 0)
+	if (fstat(fd, &st) == -1)
 		err(1, "%s", disk);
 	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
 		err(1, "%s is not a character device or a regular file", disk);
@@ -89,10 +89,10 @@ DISK_getlabelmetrics(name)
 	int fd;
 
 	/* Get label metrics */
-	if ((fd = DISK_open(name, O_RDONLY)) >= 0) {
+	if ((fd = DISK_open(name, O_RDONLY)) != -1) {
 		lm = malloc(sizeof(DISK_metrics));
 
-		if (ioctl(fd, DIOCGDINFO, &dl) < 0) {
+		if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
 			warn("DIOCGDINFO");
 			free(lm);
 			lm = NULL;
@@ -125,7 +125,7 @@ DISK_getbiosmetrics(name)
 	int mib[4], size, fd;
 	dev_t devno;
 
-	if ((fd = DISK_open(name, O_RDONLY)) < 0)
+	if ((fd = DISK_open(name, O_RDONLY)) == -1)
 		return (NULL);
 	fstat(fd, &st);
 	DISK_close(fd);
@@ -135,7 +135,7 @@ DISK_getbiosmetrics(name)
 	mib[1] = CPU_CHR2BLK;
 	mib[2] = st.st_rdev;
 	size = sizeof(devno);
-	if (sysctl(mib, 3, &devno, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 3, &devno, &size, NULL, 0) == -1) {
 		warn("sysctl(machdep.chr2blk)");
 		return (NULL);
 	}
@@ -146,8 +146,8 @@ DISK_getbiosmetrics(name)
 	mib[2] = BIOS_DISKINFO;
 	mib[3] = devno;
 	size = sizeof(di);
-	if (sysctl(mib, 4, &di, &size, NULL, 0) < 0) {
-		warn("sysctl(machedep.bios.diskinfo)");
+	if (sysctl(mib, 4, &di, &size, NULL, 0) == -1) {
+		warn("sysctl(machdep.bios.diskinfo)");
 		return (NULL);
 	}
 
@@ -195,22 +195,33 @@ DISK_getmetrics(disk, user)
 		return (0);
 	}
 
-	/* If we have BIOS geometry, use that */
+	/* Fixup bios metrics to include cylinders past 1023 boundary */
+	if(disk->label && disk->bios){
+		int cyls, secs;
+
+		cyls = disk->label->size / (disk->bios->heads * disk->bios->sectors);
+		secs = cyls * (disk->bios->heads * disk->bios->sectors);
+		if ((disk->label->size - secs) < 0)
+			errx(1, "BIOS fixup botch (%d sectors)", disk->label->size - secs);
+		disk->bios->cylinders = cyls;
+		disk->bios->size = secs;
+	}
+
+	/* If we have a (fixed) BIOS geometry, use that */
 	if (disk->bios) {
 		disk->real = disk->bios;
 		return (0);
 	}
 
-
 	/* If we have a label, use that */
-	if (!disk->real && disk->label)
+	if (disk->label) {
 		disk->real = disk->label;
+		return (0);
+	}
 
 	/* Can not get geometry, punt */
-	if (disk->real == NULL)
-		return (1);
-
-	return (0);
+	disk->real = NULL;
+	return (1);
 }
 
 int

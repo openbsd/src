@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.31 2000/01/08 04:51:16 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.32 2001/06/23 01:54:38 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,6 +42,9 @@
 #include "user.h"
 
 #define _PATH_MBR _PATH_BOOTDIR "mbr"
+static unsigned char builtin_mbr[] = {
+#include "mbrcode.h"
+};
 
 
 void
@@ -139,10 +142,14 @@ main(argc, argv)
 		exit(USER_print_disk(&disk));
 
 	/* Parse mbr template, to pass on later */
-	if ((fd = open(mbrfile, O_RDONLY)) < 0)
-		err(1, "open mbr file");
-	MBR_read(fd, 0, mbr_buf);
-	close(fd);
+	if ((fd = open(mbrfile, O_RDONLY)) == -1) {
+		warn("Can not open MBR file");
+		warnx("using builtin MBR");
+		memcpy(mbr_buf, builtin_mbr, sizeof(mbr_buf));
+	} else {
+		MBR_read(fd, 0, mbr_buf);
+		close(fd);
+	}
 	MBR_parse(&disk, mbr_buf, 0, 0, &mbr);
 
 	/* Punt if no i or m */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.21 2001/05/18 20:22:02 mickey Exp $	*/
+/*	$OpenBSD: part.c,v 1.22 2001/06/23 01:54:38 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -208,10 +208,10 @@ PRT_make(partn, offset, reloff, prt)
 
 	tmp.shead = partn->shead;
 	tmp.ssect = partn->ssect;
-	tmp.scyl = (partn->scyl > 1024)? 1023: partn->scyl; 
+	tmp.scyl = (partn->scyl > 1023)? 1023: partn->scyl; 
 	tmp.ehead = partn->ehead;
 	tmp.esect = partn->ssect;
-	tmp.ecyl = (partn->ecyl > 1024)? 1023: partn->ecyl; 
+	tmp.ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl; 
 	if (!PRT_check_chs(partn) && PRT_check_chs(&tmp)) {
 		partn->shead = tmp.shead;
 		partn->ssect = tmp.ssect;
@@ -286,6 +286,12 @@ PRT_fix_BN(disk, part, pn)
 	int start = 0;
 	int end = 0;
 
+	/* Zero out entry if not used */
+	if (part->id == DOSPTYP_UNUSED ) {
+		memset(part, 0, sizeof(*part));
+		return;
+	}
+
 	/* Disk metrics */
 	spt = disk->real->sectors;
 	tpc = disk->real->heads;
@@ -316,6 +322,12 @@ PRT_fix_CHS(disk, part, pn)
 	int spt, tpc, spc;
 	int start, end, size;
 	int cyl, head, sect;
+
+	/* Zero out entry if not used */
+	if (part->id == DOSPTYP_UNUSED ) {
+		memset(part, 0, sizeof(*part));
+		return;
+	}
 
 	/* Disk metrics */
 	spt = disk->real->sectors;
