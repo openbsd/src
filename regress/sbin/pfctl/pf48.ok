@@ -1,0 +1,14 @@
+scrub in from <regress.1> to any fragment reassemble 
+scrub in from ! <regress.2> to any fragment reassemble 
+scrub out from any to ! <regress.1> fragment reassemble 
+scrub out from any to <regress.2> fragment reassemble 
+nat on lo0 inet from <regress.1> to <regress.2> -> 127.0.0.1
+nat on ! lo0 inet from ! <regress.1> to <regress.2> -> 127.0.0.1
+rdr on lo0 inet from <regress.1> to <regress.2> -> 127.0.0.1
+rdr on ! lo0 inet from ! <regress.1> to <regress.2> -> 127.0.0.1
+pass in from <regress> to any 
+pass out from any to <regress> 
+pass in from <regress.1> to any 
+pass in from <regress.2> to any 
+pass out from any to ! <regress.1> 
+pass out from any to ! <regress.2> 
