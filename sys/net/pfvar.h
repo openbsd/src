@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.11 2001/06/25 22:08:03 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.12 2001/06/25 22:53:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -80,7 +80,7 @@ struct pf_state_peer {
 };
 
 struct pf_state {
-	struct pf_state	*next;
+	TAILQ_ENTRY(pf_state)	entries;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
@@ -97,7 +97,7 @@ struct pf_state {
 struct pf_nat {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
-	struct pf_nat	*next;
+	TAILQ_ENTRY(pf_nat)	entries;
 	u_int32_t	 saddr;
 	u_int32_t	 smask;
 	u_int32_t	 daddr;
@@ -108,7 +108,7 @@ struct pf_nat {
 struct pf_rdr {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
-	struct pf_rdr	*next;
+	TAILQ_ENTRY(pf_rdr)	entries;
 	u_int32_t	 daddr;
 	u_int32_t	 dmask;
 	u_int32_t	 raddr;

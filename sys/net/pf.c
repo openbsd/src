@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.37 2001/06/25 22:08:03 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.38 2001/06/25 22:53:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -79,13 +79,15 @@ struct pf_tree_node {
  */
 
 TAILQ_HEAD(pf_rulequeue, pf_rule)	pf_rules[2];
+TAILQ_HEAD(pf_natqueue, pf_nat)		pf_nats[2];
+TAILQ_HEAD(pf_rdrqueue, pf_rdr)		pf_rdrs[2];
+TAILQ_HEAD(pf_statequeue, pf_state)	pf_states;
 struct pf_rulequeue	*pf_rules_active;
 struct pf_rulequeue	*pf_rules_inactive;
-struct pf_nat		*pf_nathead_active;
-struct pf_nat		*pf_nathead_inactive;
-struct pf_rdr		*pf_rdrhead_active;
-struct pf_rdr		*pf_rdrhead_inactive;
-struct pf_state		*pf_statehead;
+struct pf_natqueue	*pf_nats_active;
+struct pf_natqueue	*pf_nats_inactive;
+struct pf_rdrqueue	*pf_rdrs_active;
+struct pf_rdrqueue	*pf_rdrs_inactive;
 struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
 struct timeval		 pftv;
 struct pf_status	 pf_status;
@@ -422,8 +424,7 @@ insert_state(struct pf_state *state)
 			printf("pf: ERROR! insert failed\n");
 	}
 
-	state->next = pf_statehead;
-	pf_statehead = state;
+	TAILQ_INSERT_TAIL(&pf_states, state, entries);
 
 	pf_status.state_inserts++;
 	pf_status.states++;
@@ -433,8 +434,9 @@ void
 purge_expired_states(void)
 {
 	struct pf_tree_key key;
-	struct pf_state *cur = pf_statehead, *prev = NULL;
+	struct pf_state *cur, *next;
 
+	cur = TAILQ_FIRST(&pf_states);
 	while (cur != NULL) {
 		if (cur->expire <= pftv.tv_sec) {
 			key.proto = cur->proto;
@@ -458,15 +460,14 @@ purge_expired_states(void)
 			tree_remove(&tree_ext_gwy, &key);
 			if (find_state(tree_ext_gwy, &key) != NULL)
 				printf("pf: ERROR! remove failed\n");
-			(prev ? prev->next : pf_statehead) = cur->next;
+			next = TAILQ_NEXT(cur, entries);
+			TAILQ_REMOVE(&pf_states, cur, entries);
 			pool_put(&pf_state_pl, cur);
-			cur = (prev ? prev->next : pf_statehead);
+			cur = next;
 			pf_status.state_removals++;
 			pf_status.states--;
-		} else {
-			prev = cur;
-			cur = cur->next;
-		}
+		} else
+			cur = TAILQ_NEXT(cur, entries);
 	}
 }
 
@@ -546,8 +547,16 @@ pfattach(int num)
                 0, NULL, NULL, 0);
 	TAILQ_INIT(&pf_rules[0]);
 	TAILQ_INIT(&pf_rules[1]);
+	TAILQ_INIT(&pf_nats[0]);
+	TAILQ_INIT(&pf_nats[1]);
+	TAILQ_INIT(&pf_rdrs[0]);
+	TAILQ_INIT(&pf_rdrs[1]);
 	pf_rules_active = &pf_rules[0];
 	pf_rules_inactive = &pf_rules[1];
+	pf_nats_active = &pf_nats[0];
+	pf_nats_inactive = &pf_nats[1];
+	pf_rdrs_active = &pf_rdrs[0];
+	pf_rdrs_inactive = &pf_rdrs[1];
 }
 
 int
@@ -714,11 +723,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCBEGINNATS: {
 		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_nat *nat;
 
-		while (pf_nathead_inactive != NULL) {
-			struct pf_nat *next = pf_nathead_inactive->next;
-			pool_put(&pf_nat_pl, pf_nathead_inactive);
-			pf_nathead_inactive = next;
+		while ((nat = TAILQ_FIRST(pf_nats_inactive)) != NULL) {
+			TAILQ_REMOVE(pf_nats_inactive, nat, entries);
+			pool_put(&pf_nat_pl, nat);
 		}
 		*ticket = ++ticket_nats_inactive;
 		break;
@@ -744,28 +753,33 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		nat->next = pf_nathead_inactive;
-		pf_nathead_inactive = nat;
+		TAILQ_INSERT_TAIL(pf_nats_inactive, nat, entries);
 		break;
 	}
 
 	case DIOCCOMMITNATS: {
 		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_natqueue *old_nats;
+		struct pf_nat *nat;
 
 		if (*ticket != ticket_nats_inactive) {
 			error = EBUSY;
 			break;
 		}
+
+		/* Swap nats, keep the old. */
 		s = splsoftnet();
-		while (pf_nathead_active != NULL) {
-			struct pf_nat *next = pf_nathead_active->next;
-			pool_put(&pf_nat_pl, pf_nathead_active);
-			pf_nathead_active = next;
-		}
-		pf_nathead_active = pf_nathead_inactive;
-		pf_nathead_inactive = NULL;
+		old_nats = pf_nats_active;
+		pf_nats_active = pf_nats_inactive;
+		pf_nats_inactive = old_nats;
 		ticket_nats_active = ticket_nats_inactive;
 		splx(s);
+
+		/* Purge the old nat list */
+		while ((nat = TAILQ_FIRST(old_nats)) != NULL) {
+			TAILQ_REMOVE(old_nats, nat, entries);
+			pool_put(&pf_nat_pl, nat);
+		}
 		break;
 	}
 
@@ -774,11 +788,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_nat *nat;
 
 		s = splsoftnet();
-		nat = pf_nathead_active;
 		pn->nr = 0;
+		nat = TAILQ_FIRST(pf_nats_active);
 		while (nat != NULL) {
 			pn->nr++;
-			nat = nat->next;
+			nat = TAILQ_NEXT(nat, entries);
 		}
 		pn->ticket = ticket_nats_active;
 		splx(s);
@@ -795,10 +809,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		s = splsoftnet();
-		nat = pf_nathead_active;
 		nr = 0;
+		nat = TAILQ_FIRST(pf_nats_active);
 		while ((nat != NULL) && (nr < pn->nr)) {
-			nat = nat->next;
+			nat = TAILQ_NEXT(nat, entries);
 			nr++;
 		}
 		if (nat == NULL) {
@@ -813,11 +827,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCBEGINRDRS: {
 		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_rdr *rdr;
 
-		while (pf_rdrhead_inactive != NULL) {
-			struct pf_rdr *next = pf_rdrhead_inactive->next;
-			pool_put(&pf_rdr_pl, pf_rdrhead_inactive);
-			pf_rdrhead_inactive = next;
+		while ((rdr = TAILQ_FIRST(pf_rdrs_inactive)) != NULL) {
+			TAILQ_REMOVE(pf_rdrs_inactive, rdr, entries);
+			pool_put(&pf_rdr_pl, rdr);
 		}
 		*ticket = ++ticket_rdrs_inactive;
 		break;
@@ -843,28 +857,33 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		rdr->next = pf_rdrhead_inactive;
-		pf_rdrhead_inactive = rdr;
+		TAILQ_INSERT_TAIL(pf_rdrs_inactive, rdr, entries);
 		break;
 	}
 
 	case DIOCCOMMITRDRS: {
 		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_rdrqueue *old_rdrs;
+		struct pf_rdr *rdr;
 
 		if (*ticket != ticket_rdrs_inactive) {
 			error = EBUSY;
 			break;
 		}
+
+		/* Swap rdrs, keep the old. */
 		s = splsoftnet();
-		while (pf_rdrhead_active != NULL) {
-			struct pf_rdr *next = pf_rdrhead_active->next;
-			pool_put(&pf_rdr_pl, pf_rdrhead_active);
-			pf_rdrhead_active = next;
-		}
-		pf_rdrhead_active = pf_rdrhead_inactive;
-		pf_rdrhead_inactive = NULL;
+		old_rdrs = pf_rdrs_active;
+		pf_rdrs_active = pf_rdrs_inactive;
+		pf_rdrs_inactive = old_rdrs;
 		ticket_rdrs_active = ticket_rdrs_inactive;
 		splx(s);
+
+		/* Purge the old rdr list */
+		while ((rdr = TAILQ_FIRST(old_rdrs)) != NULL) {
+			TAILQ_REMOVE(old_rdrs, rdr, entries);
+			pool_put(&pf_rdr_pl, rdr);
+		}
 		break;
 	}
 
@@ -873,11 +892,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rdr *rdr;
 
 		s = splsoftnet();
-		rdr = pf_rdrhead_active;
 		pr->nr = 0;
+		rdr = TAILQ_FIRST(pf_rdrs_active);
 		while (rdr != NULL) {
 			pr->nr++;
-			rdr = rdr->next;
+			rdr = TAILQ_NEXT(rdr, entries);
 		}
 		pr->ticket = ticket_rdrs_active;
 		splx(s);
@@ -894,10 +913,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		s = splsoftnet();
-		rdr = pf_rdrhead_active;
 		nr = 0;
+		rdr = TAILQ_FIRST(pf_rdrs_active);
 		while ((rdr != NULL) && (nr < pr->nr)) {
-			rdr = rdr->next;
+			rdr = TAILQ_NEXT(rdr, entries);
 			nr++;
 		}
 		if (rdr == NULL) {
@@ -911,10 +930,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state *state = pf_statehead;
+		struct pf_state *state = TAILQ_FIRST(&pf_states);
 		while (state != NULL) {
 			state->expire = 0;
-			state = state->next;
+			state = TAILQ_NEXT(state, entries);
 		}
 		purge_expired_states();
 		break;
@@ -925,10 +944,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state *state;
 		u_int32_t nr;
 
-		state = pf_statehead;
 		nr = 0;
+		state = TAILQ_FIRST(&pf_states);
 		while ((state != NULL) && (nr < ps->nr)) {
-			state = state->next;
+			state = TAILQ_NEXT(state, entries);
 			nr++;
 		}
 		if (state == NULL) {
@@ -1148,15 +1167,16 @@ match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 struct pf_nat *
 get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 {
-	struct pf_nat *n = pf_nathead_active, *nm = NULL;
+	struct pf_nat *n, *nm = NULL;
 
+	n = TAILQ_FIRST(pf_nats_active);
 	while (n && nm == NULL) {
 		if (n->ifp == ifp &&
 		    (!n->proto || n->proto == proto) &&
 		    match_addr(n->not, n->saddr, n->smask, addr))
 			nm = n;
 		else
-			n = n->next;
+			n = TAILQ_NEXT(n, entries);
 	}
 	return (nm);
 }
@@ -1164,7 +1184,9 @@ get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 struct pf_rdr *
 get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 {
-	struct pf_rdr *r = pf_rdrhead_active, *rm = NULL;
+	struct pf_rdr *r, *rm = NULL;
+
+	r = TAILQ_FIRST(pf_rdrs_active);
 	while (r && rm == NULL) {
 		if (r->ifp == ifp &&
 		    (!r->proto || r->proto == proto) &&
@@ -1172,7 +1194,7 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 		    r->dport == port)
 			rm = r;
 		else
-			r = r->next;
+			r = TAILQ_NEXT(r, entries);
 	}
 	return (rm);
 }
