@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.111 1998/12/25 20:18:13 tholo Exp 
+ *	OpenBSD: pcidevs,v 1.112 1998/12/28 21:19:55 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1254,3 +1254,6 @@
 
 /* Ziatech products */
 #define	PCI_PRODUCT_ZIATECH_ZT8905	0x8905		/* PCI-ST32 */
+
+/* Zoran products */
+#define	PCI_PRODUCT_ZORAN_ZR36120	0x6120		/* Video */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.111 1998/12/25 20:18:13 tholo Exp 
+ *	OpenBSD: pcidevs,v 1.112 1998/12/28 21:19:55 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2989,6 +2989,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ziatech",
 	    "PCI-ST32",
+	},
+	{
+	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120,
+	    0,
+	    "Zoran",
+	    "Video",
 	},
 	{
 	    PCI_VENDOR_MARTINMARIETTA, 0,
