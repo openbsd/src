@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.20 2005/01/16 06:18:12 dlg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.21 2005/01/28 22:35:16 djm Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ uplcom_dtr(struct uplcom_softc *sc, int onoff)
 	if (sc->sc_dtr != -1 && !sc->sc_dtr == !onoff)
 		return;
 
-	sc->sc_dtr = !onoff;
+	sc->sc_dtr = !!onoff;
 
 	uplcom_set_line_state(sc);
 }
@@ -534,10 +534,10 @@ uplcom_rts(struct uplcom_softc *sc, int onoff)
 {
 	DPRINTF(("uplcom_rts: onoff=%d\n", onoff));
 
-	if (sc->sc_rts == -1 && !sc->sc_dtr == !onoff)
+	if (sc->sc_rts == -1 && !sc->sc_rts == !onoff)
 		return;
 
-	sc->sc_rts = !onoff;
+	sc->sc_rts = !!onoff;
 
 	uplcom_set_line_state(sc);
 }
