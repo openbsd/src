@@ -1911,6 +1911,8 @@
 ./usr/sbin/zzz
 ./usr/share/misc/pcvtfonts
 ./usr/share/misc/pcvtfonts/iso8859-1-euro.816
+./usr/share/misc/pcvtfonts/iso8859-13.808
+./usr/share/misc/pcvtfonts/iso8859-13.810
 ./usr/share/misc/pcvtfonts/iso8859-13.816
 ./usr/share/misc/pcvtfonts/koi8-r-8x08
 ./usr/share/misc/pcvtfonts/koi8-r-8x10
