@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.25 2004/02/09 20:48:39 jmc Exp $
+.\"	$OpenBSD: calendar.1,v 1.26 2004/12/10 15:00:27 mickey Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -89,6 +89,17 @@ To handle national Easter names in the calendars,
 (for Catholic Easter) or
 .Dq Paskha=<national_name>
 (for Orthodox Easter) can be used.
+.Pp
+.Dq CALENDAR
+variable can be used to specify the style.
+Only
+.Sq Julian
+and
+.Sq Gregorian
+styles are currently supported.
+Use
+.Dq CALENDAR=
+to return to the default (Gregorian).
 .Pp
 To enforce special date calculation mode for Cyrillic calendars
 you should specify

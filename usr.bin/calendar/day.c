@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.15 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.16 2004/12/10 15:00:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.15 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.16 2004/12/10 15:00:27 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ static char rcsid[] = "$OpenBSD: day.c,v 1.15 2003/06/03 02:56:06 millert Exp $"
 struct tm *tp;
 int *cumdays, offset;
 char dayname[10];
+enum calendars calendar;
+u_long julian;
 
 
 /* 1-based month, 0-based days, cumulative */
@@ -238,6 +240,26 @@ time_t Mktime (date)
     return(mktime(&tm));
 }
 
+void
+adjust_calendar(int *day, int *month)
+{
+	switch (calendar) {
+	case GREGORIAN:
+		break;
+
+	case JULIAN:
+		*day += julian;
+		if (*day > (cumdays[*month + 1] - cumdays[*month])) {
+			*day -= (cumdays[*month + 1] - cumdays[*month]);
+			if (++*month > 12)
+				*month = 1;
+		}
+		break;
+	case LUNAR:
+		break;
+	}
+}
+
 /*
  * Possible date formats include any combination of:
  *	3-charmonth			(January, Jan, Jan)
@@ -312,7 +334,8 @@ isnow(endp, bodun)
 		if (month == -1) {
 			month = tp->tm_mon + 1;
 			interval = MONTHLY;
-		}
+		} else if (calendar)
+			adjust_calendar(&day, &month);
 		if ((month > 12) || (month < 1))
 			return (NULL);
 	}
@@ -330,8 +353,11 @@ isnow(endp, bodun)
 			day = 1;
 		/* If a weekday was spelled out without an ordering,
 		 * assume the first of that day in the month */
-		if ((flags & F_ISDAY) && (day >= 1) && (day <=7))
-			day += 10;
+		if ((flags & F_ISDAY)) {
+			if ((day >= 1) && (day <=7))
+				day += 10;
+		} else if (calendar)
+			adjust_calendar(&day, &month);
 	}
 
 	/* Hm ... */
@@ -348,7 +374,8 @@ isnow(endp, bodun)
 			if (month == -1) {
 				month = tp->tm_mon + 1;
 				interval = MONTHLY;
-			}
+			} else if (calendar)
+				adjust_calendar(&day, &month);
 		}
 
 		/* {Month} {Weekday,Day} ...  */
@@ -357,8 +384,11 @@ isnow(endp, bodun)
 			month = v1;
 			/* if no recognizable day, assume the first */
 			day = v2 ? v2 : 1;
-			if ((flags & F_ISDAY) && (day >= 1) && (day <= 7))
-				day += 10;
+			if ((flags & F_ISDAY)) {
+				if ((day >= 1) && (day <= 7))
+					day += 10;
+			} else
+				adjust_calendar(&day, &month);
 		}
 	}
 
@@ -450,8 +480,7 @@ isnow(endp, bodun)
 			tmp->next  = NULL;
 			return(tmp);
 		}
-	}
-	else {
+	} else {
 		varp = 1;
 		/* Set up v1 to the event number and ... */
 		v1 = vwd % (NUMEV + 1) - 1;

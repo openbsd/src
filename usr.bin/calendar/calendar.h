@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.9 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.10 2004/12/10 15:00:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -104,6 +104,10 @@ extern int f_dayBefore;	/* days before current date */
 #define EASTERNAMELEN (sizeof(EASTER) - 1)
 #define PASKHA "paskha"
 #define PASKHALEN (sizeof(PASKHA) - 1)
+
+/* calendars */
+extern enum calendars { GREGORIAN = 0, JULIAN, LUNAR } calendar;
+extern u_long julian;
 
 #define NUMEV 2	/* Total number of such special events */
 extern struct specialev spev[NUMEV];

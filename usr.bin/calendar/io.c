@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.26 2004/06/02 14:58:46 tom Exp $	*/
+/*	$OpenBSD: io.c,v 1.27 2004/12/10 15:00:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.26 2004/06/02 14:58:46 tom Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.27 2004/12/10 15:00:27 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,13 +118,31 @@ cal(void)
 			} else
 				bodun_maybe = 0;
 			continue;
-		}
-		if (bodun_maybe && strncmp(buf, "BODUN=", 6) == 0) {
+		} else if (strncmp(buf, "CALENDAR=", 9) == 0) {
+			char *ep;
+
+			if (buf[9] == '\0')
+				calendar = 0;
+			else if (!strcasecmp(buf + 9, "julian")) {
+				calendar = JULIAN;
+				errno = 0;
+				julian = strtoul(buf + 14, &ep, 10);
+				if (buf[0] == '\0' || *ep != '\0')
+					julian = 13;
+				if ((errno == ERANGE && julian == ULONG_MAX) ||
+				    julian > 14)
+					errx(1, "Julian calendar offset is too large");
+			} else if (!strcasecmp(buf + 9, "gregorian"))
+				calendar = GREGORIAN;
+			else if (!strcasecmp(buf + 9, "lunar"))
+				calendar = LUNAR;
+		} else if (bodun_maybe && strncmp(buf, "BODUN=", 6) == 0) {
 			bodun++;
 			if (prefix)
 				free(prefix);
 			if ((prefix = strdup(buf + 6)) == NULL)
 				err(1, NULL);
+			continue;
 		}
 		/* User defined names for special events */
 		if ((p = strchr(buf, '='))) {
