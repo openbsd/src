@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.6 1995/06/28 10:22:35 jonathan Exp $	*/
+/*	$NetBSD: sd.c,v 1.6 1995/06/28 10:22:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rz.c	8.1 (Berkeley) 6/10/93
+ *	@(#)sd.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <stdarg.h>
@@ -44,7 +44,11 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 
-struct	rz_softc {
+int prom_seek __P((int, long, int));
+int disk_read __P((int, char *, int, int));
+int disk_open __P((char *, int));
+
+struct	sd_softc {
 	int	sc_fd;			/* PROM file id */
 	int	sc_ctlr;		/* controller number */
 	int	sc_unit;		/* disk unit number */
@@ -53,7 +57,7 @@ struct	rz_softc {
 };
 
 int
-rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
+sdstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	void *devdata;
 	int rw;
 	daddr_t bn;
@@ -61,17 +65,13 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	char *addr;
 	u_int *cnt;	/* out: number of bytes transfered */
 {
-	register struct rz_softc *sc = (struct rz_softc *)devdata;
-	register int part = sc->sc_part;
-	register struct partition *pp = &sc->sc_label.d_partitions[part];
-	register int s;
+	struct sd_softc *sc = (struct sd_softc *)devdata;
+	int part = sc->sc_part;
+	struct partition *pp = &sc->sc_label.d_partitions[part];
+	int s;
 	long offset;
 
 	offset = bn * DEV_BSIZE;
-
-#ifdef DEBUG
-/*XXX*/printf("rz:%x %d\n", offset, reqcnt);
-#endif
 
 	/*
 	 * Partial-block transfers not handled.
@@ -83,28 +83,30 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 
 	offset += pp->p_offset * DEV_BSIZE;
 
-	if (Bios_Seek(sc->sc_fd, &offset, 0) != 0)
+	s = disk_read(sc->sc_fd, addr, offset, reqcnt);
+#if 0 /* XXX error code not returned yet... */
+	if (s <= 0)
 		return (EIO);
-	s = Bios_Read(sc->sc_fd, addr, reqcnt, &reqcnt);
-	if (s != 0)
-		return (EIO);
+#endif
 
 	*cnt = reqcnt;
 	return (0);
 }
 
 int
-rzopen(struct open_file *f, ...)
+sdopen(struct open_file *f, ...)
 {
 	int ctlr, unit, part;
 
-	struct rz_softc *sc;
+	struct sd_softc *sc;
 	struct disklabel *lp;
+	struct dos_partition dp, *dp2;
 	int i, fd;
 	char *msg;
 	char buf[DEV_BSIZE];
 	int cnt;
-	static char device[] = "scsi()disk(0)rdisk()";
+	daddr_t labelsector;
+	static char device[] = "sd(0)";
 	va_list ap;
 
 	va_start(ap, f);
@@ -112,21 +114,17 @@ rzopen(struct open_file *f, ...)
 	ctlr = va_arg(ap, int);
 	unit = va_arg(ap, int);
 	part = va_arg(ap, int);
-	if (unit >= 8 || part >= 8)
+	if (unit >= 7 || part >= 16)
 		return (ENXIO);
-#if 0
-	device[5] = '0' + unit;
-#endif
-	/* NOTE: only support reads for now */
 
-	i = Bios_Open(device, 0, &fd);
-	if (i != 0) {
-		printf("boot init failed error code %d\n", i);
+	device[3] = unit + '0';
+	fd = disk_open(device, 0);
+	if (fd < 0) {
 		return (ENXIO);
 	}
 
-	sc = alloc(sizeof(struct rz_softc));
-	bzero(sc, sizeof(struct rz_softc));
+	sc = alloc(sizeof(struct sd_softc));
+	bzero(sc, sizeof(struct sd_softc));
 	f->f_devdata = (void *)sc;
 
 	sc->sc_fd = fd;
@@ -134,41 +132,63 @@ rzopen(struct open_file *f, ...)
 	sc->sc_unit = unit;
 	sc->sc_part = part;
 
-	/* try to read disk label and partition table information */
 	lp = &sc->sc_label;
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_secpercyl = 1;
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_partitions[part].p_offset = 0;
 	lp->d_partitions[part].p_size = 0x7fffffff;
-	i = rzstrategy(sc, F_READ, (daddr_t)LABELSECTOR, DEV_BSIZE, buf, &cnt);
+
+	/* First check for any DOS partition table */
+	i = sdstrategy(sc, F_READ, (daddr_t)DOSBBSECTOR, DEV_BSIZE, buf, &cnt);
 	if (i || cnt != DEV_BSIZE) {
-		printf("rz%d: error reading disk label\n", unit);
+		printf("sd%d: error reading disk label\n", unit);
 		goto bad;
-	} else {
-		msg = getdisklabel(buf, lp);
-		if (msg) {
-			printf("rz%d: %s\n", unit, msg);
-			goto bad;
+	}
+	labelsector = 0;
+	bcopy(buf + DOSPARTOFF, &dp, NDOSPART * sizeof(dp));
+	for (dp2=&dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_size && dp2->dp_typ == DOSPTYP_OPENBSD) {
+			labelsector = dp2->dp_start;
+			break;
 		}
+	}
+	for (dp2=&dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_size && dp2->dp_typ == DOSPTYP_386BSD) {
+			labelsector = dp2->dp_start;
+			break;
+		}
+	}
+
+
+	/* try to read disk label and partition table information */
+	labelsector += LABELSECTOR;
+	i = sdstrategy(sc, F_READ, (daddr_t)labelsector, DEV_BSIZE, buf, &cnt);
+	if (i || cnt != DEV_BSIZE) {
+		printf("sd%d: error reading disk label\n", unit);
+		goto bad;
+	}
+	msg = getdisklabel(buf, lp);
+	if (msg) {
+		printf("sd%d: %s\n", unit, msg);
+		goto bad;
 	}
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 	bad:
 #ifndef SMALL
-		free(sc, sizeof(struct rz_softc));
+		free(sc, sizeof(struct sd_softc));
 #endif
 		return (ENXIO);
 	}
 	return (0);
 }
 
-#ifndef SMALL
-rzclose(f)
+int
+sdclose(f)
 	struct open_file *f;
 {
-	free(f->f_devdata, sizeof(struct rz_softc));
+	free(f->f_devdata, sizeof(struct sd_softc));
 	f->f_devdata = (void *)0;
 	return (0);
 }
-#endif

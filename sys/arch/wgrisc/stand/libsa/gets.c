@@ -1,11 +1,9 @@
-/*	$NetBSD: conf.c,v 1.5 1995/01/18 06:53:39 mellon Exp $	*/
+/*	$OpenBSD: gets.c,v 1.1 1997/05/11 16:17:56 pefo Exp $	*/
+/*	$NetBSD: gets.c,v 1.5.2.1 1995/10/13 19:54:26 pk Exp $	*/
 
-/*
- * Copyright (c) 1992, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,36 +33,48 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	8.1 (Berkeley) 6/10/93
+ *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <stand.h>
+#include "stand.h"
 
-int	errno;
+void
+gets(buf)
+	char *buf;
+{
+	register int c;
+	register char *lp;
 
-extern void	nullsys();
-extern int	nodev(), noioctl();
+	for (lp = buf;;)
+		switch (c = getchar() & 0177) {
+		case '\n':
+		case '\r':
+			*lp = '\0';
+			return;
+		case '\b':
+		case '\177':
+			if (lp > buf) {
+				lp--;
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+			}
+			break;
+		case 'r'&037: {
+			register char *p;
 
-int	rzstrategy(), rzopen();
-#ifdef SMALL
-#define rzclose 0
-#else	/*!SMALL*/
-int	 rzclose();
-#endif	/*!SMALL*/
-
-#define	rzioctl		noioctl
-
-#ifndef BOOT
-int	tzstrategy(), tzopen(), tzclose();
-#endif
-#define	tzioctl		noioctl
-
-
-struct devsw devsw[] = {
-	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/
-#ifndef BOOT
-	{ "tz",	tzstrategy,	tzopen,	tzclose,	tzioctl }, /*1*/
-#endif
-};
-
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+			putchar('\n');
+			for (p = buf; p < lp; ++p)
+				putchar(*p);
+			break;
+		}
+		case 'u'&037:
+		case 'w'&037:
+			lp = buf;
+			putchar('\n');
+			break;
+		default:
+			*lp++ = c;
+		}
+	/*NOTREACHED*/
+}

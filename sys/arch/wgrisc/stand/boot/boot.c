@@ -39,12 +39,21 @@
  */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <stand.h>
+#include <errno.h>
 
 
 char	line[1024];
+void gets __P((char *));
+ssize_t read __P((int, void *, size_t));
+int close __P((int));
+void prom_write __P((int, char *, int));
 
+int main __P((int, char **));
+int loadfile __P((char *));
 /*
  * This gets arguments from the PROM, calls other routines to open
  * and load the program to boot, and then transfers execution to that
@@ -58,57 +67,83 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *cp;
+	char *cp = 0;
 	int   ask, entry;
-	int   i;
 
 	ask = 1;
 
-	for(i = 0; i < argc; i++)
-		printf("Arg %d:%s\n",i,argv[i]);
-
-	do {
-		printf("Boot: ");
-		if (ask) {
-			gets(line);
-			cp = line;
-			argv[0] = cp;
-			argc = 1;
-		} else
-			printf("%s\n", cp);
-	} while(ask && line[0] == '\0');
-
-	entry = loadfile(cp);
-	if (entry == -1) {
-		gets(line);
-		return 0;
+	if(strcmp(argv[0], "man") != 0) {
+		cp = argv[0];
+		ask = 0;
 	}
+	while(1) {
+		do {
+			printf("Boot: ");
+			if (ask) {
+				gets(line);
+				cp = line;
+				argv[0] = cp;
+				argc = 1;
+			} else
+				printf("%s\n", cp);
+		} while(ask && line[0] == '\0');
 
-	printf("Starting at 0x%x\n\n", entry);
-	((void (*)())entry)(argc, argv, 0, 0);
+		entry = loadfile(cp);
+		if (entry != -1) {
+			printf("Starting at 0x%x\n\n", entry);
+			((void (*)())entry)(argc, argv, 0, 0);
+		}
+	}
+	return(0);
 }
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
+int
 loadfile(fname)
 	register char *fname;
 {
-	struct devices *dp;
-	int fd, i, n;
-	struct exec aout;
+	int fd, i;
+	Elf32_Ehdr eh;
+	Elf32_Phdr *ph;
+	u_long phsize;
 
-	if ((fd = open(fname, 0)) < 0) {
+	if ((fd = oopen(fname, 0)) < 0) {
 		printf("open(%s) failed: %d\n", fname, errno);
 		goto err;
 	}
 
-	/* read the exec header */
-	i = read(fd, (char *)&aout, sizeof(aout));
+	/* read the elf header */
+	if(oread(fd, (char *)&eh, sizeof(eh)) != sizeof(eh)) {
+		goto serr;
+	}
 
-cerr:
-	(void) close(fd);
+	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
+	ph = (Elf32_Phdr *) alloc(phsize);
+	olseek(fd, eh.e_phoff, 0);
+	if(oread(fd, (char *)ph, phsize) != phsize) {
+		goto serr;
+	}
+
+	for(i = 0; i < eh.e_phnum; i++) {
+		switch (ph[i].p_type) {
+		case PT_LOAD:
+			olseek(fd, ph[i].p_offset, 0);
+			if(oread(fd, (char *)ph[i].p_paddr, ph[i].p_filesz) !=  ph[i].p_filesz) {
+				goto serr;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	(void) oclose(fd);
+	return(eh.e_entry);
+serr:
+	printf("Read size error\n");
 err:
 	printf("Can't boot '%s'\n", fname);
+	(void) oclose(fd);
 	return (-1);
 }

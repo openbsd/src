@@ -1,6 +1,6 @@
-/*	$NetBSD: devopen.c,v 1.5 1995/01/18 06:53:54 mellon Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1995/01/18 06:53:39 mellon Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -35,82 +35,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)devopen.c	8.1 (Berkeley) 6/10/93
+ *	@(#)conf.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <lib/libsa/stand.h>
+#include <stand.h>
 
-/*
- * Decode the string 'fname', open the device and return the remaining
- * file name if any.
- */
-int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;	/* out */
-{
-	const char *cp;
-	char *ncp;
-	struct devsw *dp;
-	int c, i;
-	int ctlr = 0, unit = 0, part = 0;
-	char namebuf[20];
-	int rc;
+int	errno;
 
-	cp = fname;
-	ncp = namebuf;
+extern void	nullsys();
+extern int	nodev();
+extern int	noioctl();
 
-		/* expect a string like 'sd(0,0,0)vmunix' */
-		while ((c = *cp) != '\0') {
-			if (c == '(') {
-				cp++;
-				break;
-			}
-			if (ncp < namebuf + sizeof(namebuf) - 1)
-				*ncp++ = c;
-			cp++;
-		}
+int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int	sdopen __P((struct open_file *, ...));
+int	sdclose __P((struct open_file *));
 
-		/* get controller number */
-		if ((c = *cp) >= '0' && c <= '9') {
-			ctlr = c - '0';
-			c = *++cp;
-		}
+#define	sdioctl		noioctl
 
-		if (c == ',') {
-			/* get SCSI device number */
-			if ((c = *++cp) >= '0' && c <= '9') {
-				unit = c - '0';
-				c = *++cp;
-			}
+struct devsw devsw[] = {
+	{ "sd",	sdstrategy,	sdopen,	sdclose,	sdioctl }, /*0*/
+};
 
-			if (c == ',') {
-				/* get partition number */
-				if ((c = *++cp) >= '0' && c <= '9') {
-					part = c - '0';
-					c = *++cp;
-				}
-			}
-		}
-		if (c != ')')
-			return (ENXIO);
-		cp++;
-	*ncp = '\0';
-
-	if (strcmp (namebuf, "sd")) {
-		printf ("Unknown device: %s\n", namebuf);
-		return ENXIO;
-	}
-	dp = devsw;
-	i = 0;
-
-	rc = (dp->dv_open)(f, ctlr, unit, part);
-	if (rc)
-		return (rc);
-
-	f->f_dev = dp;
-	if (file && *cp != '\0')
-		*file = (char *)cp;
-	return (0);
-}
+int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));

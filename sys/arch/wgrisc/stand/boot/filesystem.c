@@ -33,8 +33,8 @@
  *	filesystem.c
  */
 
-#include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
+#include <stand.h>
+#include <ufs.h>
  
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
