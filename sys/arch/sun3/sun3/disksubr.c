@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.14 1999/01/08 04:29:10 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.15 2000/07/02 17:51:35 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
@@ -52,10 +52,12 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
+#include <machine/cpu.h>
 #include <machine/sun_disklabel.h>
-
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkpart(dev)		(minor(dev) & 7)
+ 
+#if MAXPARTITIONS != 16
+#warn beware: Sun disklabel compatibility assumes MAXPARTITIONS == 16
+#endif
 
 #define	b_cylin	b_resid
 
@@ -63,8 +65,9 @@
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-static char * disklabel_sun_to_bsd(char *, struct disklabel *);
-static int disklabel_bsd_to_sun(struct disklabel *, char *);
+static char * disklabel_sun_to_bsd __P((char *, struct disklabel *));
+static int disklabel_bsd_to_sun __P((struct disklabel *, char *));
+static __inline u_long sun_extended_sum __P((struct sun_disklabel *));
 
 /*
  * Attempt to read a disk label from a device
@@ -89,22 +92,26 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	struct buf *bp;
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error;
+	int error, i;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
+	lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
-
-	/* obtain buffer to probe drive with */
-	bp = geteblk((int)lp->d_secsize);
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
 		return (NULL);
+
+	/* obtain buffer to probe drive with */
+	bp = geteblk((int)lp->d_secsize);
 
 	/* next, dig out disk label */
 	bp->b_dev = dev;
@@ -116,7 +123,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 
 	/* if successful, locate disk label within block and validate */
 	error = biowait(bp);
-	if (!error) {
+	if (error == 0) {
 		/* Save the whole block in case it has info we need. */
 		bcopy(bp->b_un.b_addr, clp->cd_block, sizeof(clp->cd_block));
 	}
@@ -127,15 +134,14 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 
 	/* Check for a Sun disk label (for PROM compatibility). */
 	slp = (struct sun_disklabel *) clp->cd_block;
-	if (slp->sl_magic == SUN_DKMAGIC) {
-		return(disklabel_sun_to_bsd(clp->cd_block, lp));
-	}
+	if (slp->sl_magic == SUN_DKMAGIC)
+		return (disklabel_sun_to_bsd(clp->cd_block, lp));
 
-	/* Check for a OpenBSD disk label (PROM can not boot it). */
+	/* Check for a native disk label (PROM can not boot it). */
 	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
-			return("OpenBSD disk label corrupted");
+			return("disk label corrupted");
 		*lp = *dlp; 	/* struct assignment */
 		return(NULL);
 	}
@@ -177,8 +183,8 @@ setdisklabel(olp, nlp, openmask, clp)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while (openmask != 0) {
-		i = ffs(openmask) - 1;
+	while ((i = ffs((long)openmask)) != 0) {
+		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
 			return (EBUSY);
@@ -213,7 +219,7 @@ writedisklabel(dev, strat, lp, clp)
 	if (error)
 		return(error);
 
-#if 0	/* XXX - Allow writing OpenBSD disk labels? */
+#if 0	/* XXX - Allow writing native disk labels? */
 	{
 		struct disklabel *dlp;
 		dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
@@ -251,7 +257,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	int wlabel;
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* avoid division by zero */
@@ -262,7 +268,8 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	/* XXX PR#2598: labelsect is always sector zero. */
+	/* XXX this assumes everything <=LABELSECTOR is label! */
+	/*     But since LABELSECTOR is 0, that's ok for now. */
 	if (((bp->b_blkno + blockpersec(p->p_offset, lp)) <= LABELSECTOR) &&
 	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0)) {
 		bp->b_error = EROFS;
@@ -286,7 +293,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_resid = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return(1);
 
@@ -318,7 +325,7 @@ dk_establish(dk, dev)
 
 /* What partition types to assume for Sun disklabels: */
 static u_char
-sun_fstypes[8] = {
+sun_fstypes[16] = {
 	FS_BSDFFS,	/* a */
 	FS_SWAP,	/* b */
 	FS_UNUSED,	/* c - whole disk */
@@ -327,8 +334,37 @@ sun_fstypes[8] = {
 	FS_BSDFFS,	/* f */
 	FS_BSDFFS,	/* g */
 	FS_BSDFFS,	/* h */
+	FS_BSDFFS,	/* i */
+	FS_BSDFFS,	/* j */
+	FS_BSDFFS,	/* k */
+	FS_BSDFFS,	/* l */
+	FS_BSDFFS,	/* m */
+	FS_BSDFFS,	/* n */
+	FS_BSDFFS,	/* o */
+	FS_BSDFFS 	/* p */
 };
 
+/*
+ * Given a struct sun_disklabel, assume it has an extended partition
+ * table and compute the correct value for sl_xpsum.
+ */
+static __inline u_long
+sun_extended_sum(sl)
+	struct sun_disklabel *sl;
+{
+	u_long lsum;
+	u_long *xp;
+	u_long *ep;
+
+	xp = (u_long *) &sl->sl_xpmag;
+	ep = (u_long *) &sl->sl_xxx1[0];
+
+	lsum = 0;
+	for (; xp < ep; xp++)
+		lsum += *xp;
+	return(lsum);
+}
+	
 /*
  * Given a SunOS disk label, set lp to a BSD disk label.
  * Returns NULL on success, else an error string.
@@ -376,7 +412,7 @@ disklabel_sun_to_bsd(cp, lp)
 	lp->d_rpm          = sl->sl_rpm;
 	lp->d_interleave   = sl->sl_interleave;
 
-	lp->d_npartitions = 8;
+	lp->d_npartitions = MAXPARTITIONS;
 	/* These are as defined in <ufs/ffs/fs.h> */
 	lp->d_bbsize = 8192;	/* XXX */
 	lp->d_sbsize = 8192;	/* XXX */
@@ -386,18 +422,47 @@ disklabel_sun_to_bsd(cp, lp)
 		npp = &lp->d_partitions[i];
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
-		if (npp->p_size == 0)
+		if (npp->p_size == 0) {
 			npp->p_fstype = FS_UNUSED;
-		else {
-			/* Partition has non-zero size.  Set type, etc. */
+		} else {
 			npp->p_fstype = sun_fstypes[i];
-			/*
-			 * The sun label does not store the FFS fields,
-			 * so just set them with default values here.
-			 * XXX: This keeps newfs from trying to rewrite
-			 * XXX: the disk label in the most common case.
-			 * XXX: (Should remove that code from newfs...)
-			 */
+			if (npp->p_fstype == FS_BSDFFS) {
+				/*
+				 * The sun label does not store the FFS fields,
+				 * so just set them with default values here.
+				 */
+				npp->p_fsize = 1024;
+				npp->p_frag = 8;
+				npp->p_cpg = 16;
+			}
+		}
+	}
+	
+	/* Clear "extended" partition info, tentatively */
+	for (i = 0; i < SUNXPART; i++) {
+		npp = &lp->d_partitions[i+8];
+		npp->p_offset = 0;
+		npp->p_size = 0;
+		npp->p_fstype = FS_UNUSED;
+	}
+	
+	/* Check to see if there's an "extended" partition table */
+	if (sl->sl_xpmag == SL_XPMAG &&
+	    sun_extended_sum(sl) == sl->sl_xpsum) {	/* ...yes! */
+		/*
+		 * There is.  Copy over the "extended" partitions.
+		 * This code parallels the loop for partitions a-h.
+		 */
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			npp->p_offset = spp->sdkp_cyloffset * secpercyl;
+			npp->p_size = spp->sdkp_nsectors;
+			if (npp->p_size == 0) {
+				npp->p_fstype = FS_UNUSED;
+				continue;
+			}
+			npp->p_fstype = sun_fstypes[i+8];
 			if (npp->p_fstype == FS_BSDFFS) {
 				npp->p_fsize = 1024;
 				npp->p_frag = 8;
@@ -408,8 +473,7 @@ disklabel_sun_to_bsd(cp, lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-
-	return(NULL);
+	return (NULL);
 }
 
 /*
@@ -429,16 +493,17 @@ disklabel_bsd_to_sun(lp, cp)
 	int i, secpercyl;
 	u_short cksum, *sp1, *sp2;
 
-	if (lp->d_secsize != 512)
-	    return (EINVAL);
+	/* Enforce preconditions */
+	if (lp->d_secsize != 512 || lp->d_nsectors == 0 || lp->d_ntracks == 0)
+		return (EINVAL);
 
 	sl = (struct sun_disklabel *)cp;
 
 	/* Format conversion. */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
 	sl->sl_rpm = lp->d_rpm;
-	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
 	sl->sl_sparespercyl = lp->d_sparespercyl;
+	sl->sl_pcylinders   = lp->d_ncylinders + lp->d_acylinders; /* XXX */
 	sl->sl_interleave   = lp->d_interleave;
 	sl->sl_ncylinders   = lp->d_ncylinders;
 	sl->sl_acylinders   = lp->d_acylinders;
@@ -456,6 +521,40 @@ disklabel_bsd_to_sun(lp, cp)
 		spp->sdkp_nsectors = npp->p_size;
 	}
 	sl->sl_magic = SUN_DKMAGIC;
+
+	/*
+	 * The reason we store the extended table stuff only conditionally
+	 * is so that a label that doesn't need it will have NULs there, like
+	 * a "traditional" Sun label.  Since Suns seem to ignore everything
+	 * between sl_text and sl_rpm, this probably doesn't matter, but it
+	 * certainly doesn't hurt anything and it's easy to do.
+	 */
+	for (i = 0; i < SUNXPART; i++) {
+		if (lp->d_partitions[i+8].p_offset ||
+		    lp->d_partitions[i+8].p_size)
+			break;
+	}
+	/* We do need to load the extended table? */
+	if (i < SUNXPART) {
+		sl->sl_xpmag = SL_XPMAG;
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			if (npp->p_offset % secpercyl)
+				return (EINVAL);
+			sl->sl_xpart[i].sdkp_cyloffset =
+			    npp->p_offset / secpercyl;
+			sl->sl_xpart[i].sdkp_nsectors = npp->p_size;
+		}
+		sl->sl_xpsum = sun_extended_sum(sl);
+	} else {
+		sl->sl_xpmag = 0;
+		for (i = 0; i < SUNXPART; i++) {
+			sl->sl_xpart[i].sdkp_cyloffset = 0;
+			sl->sl_xpart[i].sdkp_nsectors = 0;
+		}
+		sl->sl_xpsum = 0;
+	}
 
 	/* Correct the XOR check. */
 	sp1 = (u_short *)sl;
