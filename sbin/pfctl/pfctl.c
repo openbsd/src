@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.4 2001/06/24 23:20:57 provos Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.5 2001/06/24 23:44:07 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -130,9 +130,9 @@ int
 main(int argc, char *argv[])
 {
 	int dev;
-	struct ioctlbuffer *ub;
+	struct pfioc *ub;
 	u_int16_t n = 0;
-	ub = malloc(sizeof(struct ioctlbuffer));
+	ub = malloc(sizeof(struct pfioc));
 	if (ub == NULL) {
 		printf("ERROR: malloc() failed\n");
 		return (1);
