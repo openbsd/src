@@ -292,6 +292,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	pid_t pid;
 	int argc, i, status;
 	char *optbuf, execname[MAXPATHLEN + 1], mntpath[MAXPATHLEN];
+	char mountname[MAXPATHLEN];
 
 	if (realpath(name, mntpath) == NULL) {
 		warn("realpath %s", name);
@@ -369,6 +370,9 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		do {
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/mount_%s", *edir, vfstype);
+			(void)snprintf(mountname,
+			    sizeof(mountname), "mount_%s", vfstype);
+			argv[0] = mountname;
 			execv(execname, (char * const *)argv);
 			if (errno != ENOENT)
 				warn("exec %s for %s", execname, name);
