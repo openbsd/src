@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.8 2004/11/06 12:22:33 espie Exp $
+# $OpenBSD: Add.pm,v 1.9 2004/11/06 19:48:24 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -162,7 +162,7 @@ sub install
 	my $fullname = $self->fullname();
 	my $destdir = $state->{destdir};
 
-	if (defined $state->{replacing}) {
+	if ($state->{replacing}) {
 
 		if (defined $self->{link}) {
 			link($destdir.$self->{link}, $destdir.$fullname);
