@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.8 2005/01/14 08:27:22 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.9 2005/01/14 15:32:44 drahn Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -221,11 +221,19 @@ find_rd_root_image(file, eh, ph)
 	kernel_start = ph->p_paddr;
 	kernel_size = ph->p_filesz;
 
-	rd_root_size_off = wantsyms[0].n_value - kernel_start;
-	rd_root_image_off     = wantsyms[1].n_value - kernel_start;
+	rd_root_size_off	= wantsyms[0].n_value - kernel_start;
+	rd_root_size_off	-= (ph->p_vaddr - ph->p_paddr);
+	rd_root_image_off	= wantsyms[1].n_value - kernel_start;
+	rd_root_image_off	-= (ph->p_vaddr - ph->p_paddr);
 
 #ifdef DEBUG
 	printf("rd_root_size_off = 0x%x\n", rd_root_size_off);
+	if ((ph->p_vaddr - ph->p_paddr) != 0)
+		printf("root_off v %x p %x, diff %x altered %x\n",
+			ph->p_vaddr, ph->p_paddr,
+			(ph->p_vaddr - ph->p_paddr),
+			rd_root_size_off - (ph->p_vaddr - ph->p_paddr));
+		
 	printf("rd_root_image_off = 0x%x\n", rd_root_image_off);
 #endif
 
