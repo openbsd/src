@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.19 2005/02/24 12:56:15 jsg Exp $	*/
+/*	$OpenBSD: apply.c,v 1.20 2005/03/25 16:54:17 jaredy Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: apply.c,v 1.19 2005/02/24 12:56:15 jsg Exp $";
+static const char rcsid[] = "$OpenBSD: apply.c,v 1.20 2005/03/25 16:54:17 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 			if (nargs != -1)
 				errx(1,
 				    "only one -# argument may be specified.");
-			nargs = optopt - '0';
+			nargs = ch - '0';
 			break;
 		default:
 			usage();

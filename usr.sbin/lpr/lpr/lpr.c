@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.36 2004/05/10 16:09:06 otto Exp $ */
+/*	$OpenBSD: lpr.c,v 1.37 2005/03/25 16:54:17 jaredy Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.36 2004/05/10 16:09:06 otto Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.37 2005/03/25 16:54:17 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 		case '3':
 		case '2':
 		case '1':
-			fonts[optopt - '1'] = optarg;
+			fonts[ch - '1'] = optarg;
 			break;
 
 		case 'C':		/* classification spec */
@@ -203,7 +203,7 @@ main(int argc, char **argv)
 		case 'p':		/* print using ``pr'' */
 		case 't':		/* print troff output (cat files) */
 		case 'v':		/* print vplot output */
-			format = optopt;
+			format = ch;
 			break;
 
 		case 'f':		/* print fortran output */

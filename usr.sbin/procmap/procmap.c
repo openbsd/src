@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.17 2004/07/09 19:30:52 tdeval Exp $ */
+/*	$OpenBSD: procmap.c,v 1.18 2005/03/25 16:54:17 jaredy Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 		case 'x':
-			errx(1, "-%c option not implemented, sorry", optopt);
+			errx(1, "-%c option not implemented, sorry", ch);
 			/*NOTREACHED*/
 		case '?':
 		default:
