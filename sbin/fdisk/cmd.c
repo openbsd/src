@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.7 1997/10/16 10:35:05 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.8 1997/10/18 11:52:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,7 +42,7 @@
 #include "user.h"
 #include "part.h"
 #include "cmd.h"
-
+#define MAX(a, b) ((a) >= (b) ? (a) : (b))
 
 int
 Xreinit(cmd, disk, mbr, tt, offset)
@@ -177,11 +177,13 @@ Xedit(cmd, disk, mbr, tt, offset)
 		/* Fix up off/size values */
 		PRT_fix_BN(disk, pp);
 	}else{
+		u_int m;
 		/* Get data */
 		EDIT("Partition offset", ASK_DEC, pp->bs, 0,
 		    disk->real->size, NULL);
+		m = MAX(pp->ns, disk->real->size - pp->bs);
 		EDIT("Partition size", ASK_DEC, pp->ns, 1,
-		     disk->real->size - pp->bs, NULL);
+		    m, NULL);
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
