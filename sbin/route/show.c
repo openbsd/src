@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.8 1999/02/24 22:56:02 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.9 1999/09/22 05:10:04 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.8 1999/02/24 22:56:02 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.9 1999/09/22 05:10:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,10 @@ extern char *routename __P((struct sockaddr *));
 extern char *netname __P((struct sockaddr *));
 extern char *ns_print __P((struct sockaddr_ns *));
 extern int nflag;
+
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
  * Definitions for showing gateway flags.
@@ -209,9 +213,7 @@ p_rtentry(rtm)
 		p_sockaddr(sa, 0, 36);
 	else {
 		p_sockaddr(sa, rtm->rtm_flags, 16);
-		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(in_addr_t);
-		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
+		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}
 	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.28 1999/06/26 21:21:46 ho Exp $	*/
+/*	$OpenBSD: route.c,v 1.29 1999/09/22 05:10:04 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.28 1999/06/26 21:21:46 ho Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.29 1999/09/22 05:10:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,11 @@ static char *rcsid = "$OpenBSD: route.c,v 1.28 1999/06/26 21:21:46 ho Exp $";
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
 
+/* alignment constraint for routing socket */
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
 /*
  * Definitions for showing gateway flags.
  */
@@ -108,6 +113,7 @@ struct bits {
 static union {
 	struct		sockaddr u_sa;
 	u_int32_t	u_data[64];
+	int		u_dummy;	/* force word-alignment */
 } pt_u;
 
 int	do_rtent = 0;
@@ -389,9 +395,7 @@ np_rtentry(rtm)
 		p_sockaddr(sa, 0, 0, 36);
 	else {
 		p_sockaddr(sa, 0, rtm->rtm_flags, 16);
-		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(in_addr_t);
-		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
+		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
 		p_sockaddr(sa, 0, 0, 18);
 	}
 	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
