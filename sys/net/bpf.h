@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.7 1998/06/10 23:57:09 provos Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.8 1998/06/26 09:13:11 deraadt Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ typedef u_int32_t	bpf_u_int32;
 #define BPF_WORDALIGN(x) (((x) + (BPF_ALIGNMENT - 1)) & ~(BPF_ALIGNMENT - 1))
 
 #define BPF_MAXINSNS 512
-#define BPF_MAXBUFSIZE 0x8000
+#define BPF_MAXBUFSIZE 0x80000
 #define BPF_MINBUFSIZE 32
 
 /*
@@ -267,5 +267,8 @@ u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
 #define BPF_MEMWORDS 16
+
+extern int ticks;	/* from kern/kern_clock.c; incremented each */
+			/* clock tick. */
 
 #endif /* _NET_BPF_H_ */

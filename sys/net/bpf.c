@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.12 1997/09/30 02:31:04 millert Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.13 1998/06/26 09:13:10 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ caddr_t bpf_alloc();
 #define UIOMOVE(cp, len, code, uio) uiomove(cp, len, uio)
 #endif
 
-#define PRINET  26			/* interruptible */
+#define PRINET  6			/* interruptible */
 
 /*
  * The default read buffer size is patchable.
@@ -450,6 +450,16 @@ bpfread(dev, uio, ioflag)
 		return (EINVAL);
 
 	s = splimp();
+
+	/*
+	 * bd_rdStart is tagged when we start the read, iff there's a timeout.
+	 * we can then figure out when we're done reading.
+	 */
+	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+		d->bd_rdStart = ticks;
+	else
+		d->bd_rdStart = 0;
+
 	/*
 	 * If the hold buffer is empty, then do a timed sleep, which
 	 * ends when the timeout expires or when enough packets
@@ -465,11 +475,16 @@ bpfread(dev, uio, ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_rtout != -1)
+		if ((d->bd_rtout != -1) || (d->bd_rdStart + d->bd_rtout) < ticks) {
 			error = BPF_SLEEP((caddr_t)d, PRINET|PCATCH, "bpf",
-					  d->bd_rtout);
-		else
-			error = EWOULDBLOCK; /* User requested non-blocking I/O */
+			    d->bd_rtout);
+		} else {
+			if (d->bd_rtout == -1) {
+				/* User requested non-blocking I/O */
+				error = EWOULDBLOCK;
+			} else
+				error = 0;
+		}
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
 			return (error);
@@ -996,6 +1011,13 @@ bpfselect(dev, rw)
 	register dev_t dev;
 	int rw;
 {
+	/*
+	 * if there isn't data waiting, and there's a timeout,
+	 * mark the time we started waiting.
+	 */
+	if (b->db_rtout != -1 && (d->bd_rdStart == 0)
+		d->bd_rdStart = ticks;
+			    
 	return (bpf_select(dev, rw, u.u_procp));
 }
 #endif
@@ -1030,6 +1052,14 @@ bpf_select(dev, rw, p)
 		splx(s);
 		return (1);
 	}
+
+	/*
+	 * if there isn't data waiting, and there's a timeout,
+	 * mark the time we started waiting.
+	 */
+	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+		d->bd_rdStart = ticks;
+			    
 #if BSD >= 199103
 	selrecord(p, &d->bd_sel);
 #else
@@ -1183,12 +1213,13 @@ bpf_catchpacket(d, pkt, pktlen, snaplen, cpfn)
 		bpf_wakeup(d);
 		curlen = 0;
 	}
-	else if (d->bd_immediate)
+	else if (d->bd_immediate) {
 		/*
 		 * Immediate mode is set.  A packet arrived so any
 		 * reads should be woken up.
 		 */
 		bpf_wakeup(d);
+	}
 
 	/*
 	 * Append the bpf header.
@@ -1208,6 +1239,20 @@ bpf_catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	 */
 	(*cpfn)(pkt, (u_char *)hp + hdrlen, (hp->bh_caplen = totlen - hdrlen));
 	d->bd_slen = curlen + totlen;
+
+	if (d->bd_rdStart && (d->bd_rtout + d->bd_rdStart < ticks)) {
+		/*
+		 * we could be selecting on the bpf, and we
+		 * may have timeouts set.  We got here by getting
+		 * a packet, so wake up the reader.
+		 */
+		if (d->bd_fbuf) {
+			d->bd_rdStart = 0;
+			ROTATE_BUFFERS(d);
+			bpf_wakeup(d);
+			curlen = 0;
+		}
+	}
 }
 
 /*
