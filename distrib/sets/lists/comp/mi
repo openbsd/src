@@ -4854,6 +4854,10 @@
 ./usr/share/man/cat9/kthread_create_deferred.0
 ./usr/share/man/cat9/kthread_exit.0
 ./usr/share/man/cat9/lock.0
+./usr/share/man/cat9/lockinit.0
+./usr/share/man/cat9/lockmgr.0
+./usr/share/man/cat9/lockmgr_printinfo.0
+./usr/share/man/cat9/lockstatus.0
 ./usr/share/man/cat9/log.0
 ./usr/share/man/cat9/m_adj.0
 ./usr/share/man/cat9/m_apply.0
@@ -4914,9 +4918,14 @@
 ./usr/share/man/cat9/setdisklabel.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
 ./usr/share/man/cat9/shutdownhook_establish.0
+./usr/share/man/cat9/simple_lock.0
+./usr/share/man/cat9/simple_lock_init.0
+./usr/share/man/cat9/simple_lock_try.0
+./usr/share/man/cat9/simple_unlock.0
 ./usr/share/man/cat9/sleep.0
 ./usr/share/man/cat9/spl.0
 ./usr/share/man/cat9/spl0.0
+./usr/share/man/cat9/splassert.0
 ./usr/share/man/cat9/splbio.0
 ./usr/share/man/cat9/splclock.0
 ./usr/share/man/cat9/splhigh.0
