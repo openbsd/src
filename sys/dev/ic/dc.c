@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.45 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: dc.c,v 1.46 2002/02/17 07:38:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2461,19 +2461,25 @@ int dc_intr(arg)
 		if (status & DC_ISR_TX_UNDERRUN) {
 			u_int32_t		cfg;
 
+#if 0
 			printf("dc%d: TX underrun -- ", sc->dc_unit);
+#endif
 			if (DC_IS_DAVICOM(sc) || DC_IS_INTEL(sc))
 				dc_init(sc);
 			cfg = CSR_READ_4(sc, DC_NETCFG);
 			cfg &= ~DC_NETCFG_TX_THRESH;
 			if (sc->dc_txthresh == DC_TXTHRESH_160BYTES) {
+#if 0
 				printf("using store and forward mode\n");
+#endif
 				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_STORENFWD);
 			} else if (sc->dc_flags & DC_TX_STORENFWD) {
 				printf("resetting\n");
 			} else {
 				sc->dc_txthresh += 0x4000;
+#if 0
 				printf("increasing TX threshold\n");
+#endif
 				CSR_WRITE_4(sc, DC_NETCFG, cfg);
 				DC_SETBIT(sc, DC_NETCFG, sc->dc_txthresh);
 				DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_STORENFWD);
