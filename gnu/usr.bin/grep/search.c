@@ -1,5 +1,5 @@
 /* search.c - searching subroutines using dfa, kwset and regex for grep.
-   Copyright (C) 1992 Free Software Foundation, Inc.
+   Copyright 1992, 1998, 2000 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,84 +13,37 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
-   Written August 1992 by Mike Haertel. */
+/* Written August 1992 by Mike Haertel. */
 
-#ifndef lint
-static char rcsid[] = "$Id: search.c,v 1.1.1.1 1995/10/18 08:40:18 deraadt Exp $";
-#endif /* not lint */
-
-#include <ctype.h>
-
-#ifdef STDC_HEADERS
-#include <limits.h>
-#include <stdlib.h>
-#else
-#define UCHAR_MAX 255
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
 #include <sys/types.h>
-extern char *malloc();
-#endif
-
-#ifdef HAVE_MEMCHR
-#include <string.h>
-#ifdef NEED_MEMORY_H
-#include <memory.h>
-#endif
-#else
-#ifdef __STDC__
-extern void *memchr();
-#else
-extern char *memchr();
-#endif
-#endif
-
-#if defined(HAVE_STRING_H) || defined(STDC_HEADERS)
-#undef bcopy
-#define bcopy(s, d, n) memcpy((d), (s), (n))
-#endif
-
-#ifdef isascii
-#define ISALNUM(C) (isascii(C) && isalnum(C))
-#define ISUPPER(C) (isascii(C) && isupper(C))
-#else
-#define ISALNUM(C) isalnum(C)
-#define ISUPPER(C) isupper(C)
-#endif
-
-#define TOLOWER(C) (ISUPPER(C) ? tolower(C) : (C))
-
+#include "system.h"
 #include "grep.h"
+#include "regex.h"
 #include "dfa.h"
 #include "kwset.h"
-#include "regex.h"
 
 #define NCHAR (UCHAR_MAX + 1)
 
-#if __STDC__
-static void Gcompile(char *, size_t);
-static void Ecompile(char *, size_t);
-static char *EGexecute(char *, size_t, char **);
-static void Fcompile(char *, size_t);
-static char *Fexecute(char *, size_t, char **);
-#else
-static void Gcompile();
-static void Ecompile();
-static char *EGexecute();
-static void Fcompile();
-static char *Fexecute();
-#endif
+static void Gcompile PARAMS((char *, size_t));
+static void Ecompile PARAMS((char *, size_t));
+static char *EGexecute PARAMS((char *, size_t, char **));
+static void Fcompile PARAMS((char *, size_t));
+static char *Fexecute PARAMS((char *, size_t, char **));
+static void kwsinit PARAMS((void));
 
 /* Here is the matchers vector for the main program. */
 struct matcher matchers[] = {
   { "default", Gcompile, EGexecute },
   { "grep", Gcompile, EGexecute },
-  { "ggrep", Gcompile, EGexecute },
   { "egrep", Ecompile, EGexecute },
-  { "posix-egrep", Ecompile, EGexecute },
-  { "gegrep", Ecompile, EGexecute },
+  { "awk", Ecompile, EGexecute },
   { "fgrep", Fcompile, Fexecute },
-  { "gfgrep", Fcompile, Fexecute },
   { 0, 0, 0 },
 };
 
@@ -101,7 +54,7 @@ struct matcher matchers[] = {
 static struct dfa dfa;
 
 /* Regex compiled regexp. */
-static struct re_pattern_buffer regex;
+static struct re_pattern_buffer regexbuf;
 
 /* KWset compiled pattern.  For Ecompile and Gcompile, we compile
    a list of strings, at least one of which is known to occur in
@@ -114,14 +67,13 @@ static kwset_t kwset;
 static int lastexact;
 
 void
-dfaerror(mesg)
-     char *mesg;
+dfaerror (char const *mesg)
 {
   fatal(mesg, 0);
 }
 
 static void
-kwsinit()
+kwsinit (void)
 {
   static char trans[NCHAR];
   int i;
@@ -132,14 +84,14 @@ kwsinit()
 
   if (!(kwset = kwsalloc(match_icase ? trans : (char *) 0)))
     fatal("memory exhausted", 0);
-}  
+}
 
 /* If the DFA turns out to have some set of fixed strings one of
    which must occur in the match, then we build a kwset matcher
    to find those strings, and thus quickly filter out impossible
    matches. */
 static void
-kwsmusts()
+kwsmusts (void)
 {
   struct dfamust *dm;
   char *err;
@@ -173,22 +125,15 @@ kwsmusts()
 }
 
 static void
-Gcompile(pattern, size)
-     char *pattern;
-     size_t size;
+Gcompile (char *pattern, size_t size)
 {
-#ifdef __STDC__
-  const
-#endif
-  char *err;
+  const char *err;
 
   re_set_syntax(RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE);
-  dfasyntax(RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE, match_icase);
+  dfasyntax(RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE, match_icase, eolbyte);
 
-  if ((err = re_compile_pattern(pattern, size, &regex)) != 0)
+  if ((err = re_compile_pattern(pattern, size, &regexbuf)) != 0)
     fatal(err, 0);
-
-  dfainit(&dfa);
 
   /* In the match_words and match_lines cases, we use a different pattern
      for the DFA matcher that will quickly throw out cases that won't work.
@@ -200,7 +145,8 @@ Gcompile(pattern, size)
 	 (^|[^A-Za-z_])(userpattern)([^A-Za-z_]|$).
 	 In the whole-line case, we use the pattern:
 	 ^(userpattern)$.
-	 BUG: Using [A-Za-z_] is locale-dependent!  */
+	 BUG: Using [A-Za-z_] is locale-dependent!
+	 So will use [:alnum:] */
 
       char *n = malloc(size + 50);
       int i = 0;
@@ -210,14 +156,14 @@ Gcompile(pattern, size)
       if (match_lines)
 	strcpy(n, "^\\(");
       if (match_words)
-	strcpy(n, "\\(^\\|[^0-9A-Za-z_]\\)\\(");
+	strcpy(n, "\\(^\\|[^[:alnum:]_]\\)\\(");
 
       i = strlen(n);
-      bcopy(pattern, n + i, size);
+      memcpy(n + i, pattern, size);
       i += size;
 
       if (match_words)
-	strcpy(n + i, "\\)\\([^0-9A-Za-z_]\\|$\\)");
+	strcpy(n + i, "\\)\\([^[:alnum:]_]\\|$\\)");
       if (match_lines)
 	strcpy(n + i, "\\)$");
 
@@ -231,30 +177,23 @@ Gcompile(pattern, size)
 }
 
 static void
-Ecompile(pattern, size)
-     char *pattern;
-     size_t size;
+Ecompile (char *pattern, size_t size)
 {
-#ifdef __STDC__
-  const
-#endif
-  char *err;
+  const char *err;
 
-  if (strcmp(matcher, "posix-egrep") == 0)
+  if (strcmp(matcher, "awk") == 0)
     {
-      re_set_syntax(RE_SYNTAX_POSIX_EGREP);
-      dfasyntax(RE_SYNTAX_POSIX_EGREP, match_icase);
+      re_set_syntax(RE_SYNTAX_AWK);
+      dfasyntax(RE_SYNTAX_AWK, match_icase, eolbyte);
     }
   else
     {
-      re_set_syntax(RE_SYNTAX_EGREP);
-      dfasyntax(RE_SYNTAX_EGREP, match_icase);
+      re_set_syntax (RE_SYNTAX_POSIX_EGREP);
+      dfasyntax (RE_SYNTAX_POSIX_EGREP, match_icase, eolbyte);
     }
 
-  if ((err = re_compile_pattern(pattern, size, &regex)) != 0)
+  if ((err = re_compile_pattern(pattern, size, &regexbuf)) != 0)
     fatal(err, 0);
-
-  dfainit(&dfa);
 
   /* In the match_words and match_lines cases, we use a different pattern
      for the DFA matcher that will quickly throw out cases that won't work.
@@ -266,7 +205,8 @@ Ecompile(pattern, size)
 	 (^|[^A-Za-z_])(userpattern)([^A-Za-z_]|$).
 	 In the whole-line case, we use the pattern:
 	 ^(userpattern)$.
-	 BUG: Using [A-Za-z_] is locale-dependent!  */
+	 BUG: Using [A-Za-z_] is locale-dependent!
+	 so will use the char class */
 
       char *n = malloc(size + 50);
       int i = 0;
@@ -276,14 +216,14 @@ Ecompile(pattern, size)
       if (match_lines)
 	strcpy(n, "^(");
       if (match_words)
-	strcpy(n, "(^|[^0-9A-Za-z_])(");
+	strcpy(n, "(^|[^[:alnum:]_])(");
 
       i = strlen(n);
-      bcopy(pattern, n + i, size);
+      memcpy(n + i, pattern, size);
       i += size;
 
       if (match_words)
-	strcpy(n + i, ")([^0-9A-Za-z_]|$)");
+	strcpy(n + i, ")([^[:alnum:]_]|$)");
       if (match_lines)
 	strcpy(n + i, ")$");
 
@@ -297,12 +237,10 @@ Ecompile(pattern, size)
 }
 
 static char *
-EGexecute(buf, size, endp)
-     char *buf;
-     size_t size;
-     char **endp;
+EGexecute (char *buf, size_t size, char **endp)
 {
   register char *buflim, *beg, *end, save;
+  char eol = eolbyte;
   int backref, start, len;
   struct kwsmatch kwsm;
   static struct re_registers regs; /* This is static on account of a BRAIN-DEAD
@@ -320,10 +258,10 @@ EGexecute(buf, size, endp)
 	    goto failure;
 	  /* Narrow down to the line containing the candidate, and
 	     run it through DFA. */
-	  end = memchr(beg, '\n', buflim - beg);
+	  end = memchr(beg, eol, buflim - beg);
 	  if (!end)
 	    end = buflim;
-	  while (beg > buf && beg[-1] != '\n')
+	  while (beg > buf && beg[-1] != eol)
 	    --beg;
 	  save = *end;
 	  if (kwsm.index < lastexact)
@@ -347,10 +285,10 @@ EGexecute(buf, size, endp)
 	  if (!beg)
 	    goto failure;
 	  /* Narrow down to the line we've found. */
-	  end = memchr(beg, '\n', buflim - beg);
+	  end = memchr(beg, eol, buflim - beg);
 	  if (!end)
 	    end = buflim;
-	  while (beg > buf && beg[-1] != '\n')
+	  while (beg > buf && beg[-1] != eol)
 	    --beg;
 	  /* Successful, no backreferences encountered! */
 	  if (!backref)
@@ -358,11 +296,12 @@ EGexecute(buf, size, endp)
 	}
       /* If we've made it to this point, this means DFA has seen
 	 a probable match, and we need to run it through Regex. */
-      regex.not_eol = 0;
-      if ((start = re_search(&regex, beg, end - beg, 0, end - beg, &regs)) >= 0)
+      regexbuf.not_eol = 0;
+      if ((start = re_search(&regexbuf, beg, end - beg, 0, end - beg, &regs)) >= 0)
 	{
 	  len = regs.end[0] - start;
-	  if (!match_lines && !match_words || match_lines && len == end - beg)
+	  if ((!match_lines && !match_words)
+	      || (match_lines && len == end - beg))
 	    goto success;
 	  /* If -w, check if the match aligns with word boundaries.
 	     We do this iteratively because:
@@ -373,15 +312,16 @@ EGexecute(buf, size, endp)
 	  if (match_words)
 	    while (start >= 0)
 	      {
-		if ((start == 0 || !WCHAR(beg[start - 1]))
-		    && (len == end - beg || !WCHAR(beg[start + len])))
+		if ((start == 0 || !WCHAR ((unsigned char) beg[start - 1]))
+		    && (len == end - beg
+			|| !WCHAR ((unsigned char) beg[start + len])))
 		  goto success;
 		if (len > 0)
 		  {
 		    /* Try a shorter length anchored at the same place. */
 		    --len;
-		    regex.not_eol = 1;
-		    len = re_match(&regex, beg, start + len, start, &regs);
+		    regexbuf.not_eol = 1;
+		    len = re_match(&regexbuf, beg, start + len, start, &regs);
 		  }
 		if (len <= 0)
 		  {
@@ -389,8 +329,8 @@ EGexecute(buf, size, endp)
 		    if (start == end - beg)
 		      break;
 		    ++start;
-		    regex.not_eol = 0;
-		    start = re_search(&regex, beg, end - beg,
+		    regexbuf.not_eol = 0;
+		    start = re_search(&regexbuf, beg, end - beg,
 				      start, end - beg - start, &regs);
 		    len = regs.end[0] - start;
 		  }
@@ -407,9 +347,7 @@ EGexecute(buf, size, endp)
 }
 
 static void
-Fcompile(pattern, size)
-     char *pattern;
-     size_t size;
+Fcompile (char *pattern, size_t size)
 {
   char *beg, *lim, *err;
 
@@ -432,13 +370,11 @@ Fcompile(pattern, size)
 }
 
 static char *
-Fexecute(buf, size, endp)
-     char *buf;
-     size_t size;
-     char **endp;
+Fexecute (char *buf, size_t size, char **endp)
 {
   register char *beg, *try, *end;
   register size_t len;
+  char eol = eolbyte;
   struct kwsmatch kwsmatch;
 
   for (beg = buf; beg <= buf + size; ++beg)
@@ -448,9 +384,9 @@ Fexecute(buf, size, endp)
       len = kwsmatch.size[0];
       if (match_lines)
 	{
-	  if (beg > buf && beg[-1] != '\n')
+	  if (beg > buf && beg[-1] != eol)
 	    continue;
-	  if (beg + len < buf + size && beg[len] != '\n')
+	  if (beg + len < buf + size && beg[len] != eol)
 	    continue;
 	  goto success;
 	}
@@ -474,7 +410,7 @@ Fexecute(buf, size, endp)
   return 0;
 
  success:
-  if ((end = memchr(beg + len, '\n', (buf + size) - (beg + len))) != 0)
+  if ((end = memchr(beg + len, eol, (buf + size) - (beg + len))) != 0)
     ++end;
   else
     end = buf + size;

@@ -1,5 +1,5 @@
 /* grep.h - interface to grep driver for searching subroutines.
-   Copyright (C) 1992 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,14 +13,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
-	$Id: grep.h,v 1.1.1.1 1995/10/18 08:40:17 deraadt Exp $
-*/
+#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6) || __STRICT_ANSI__
+# define __attribute__(x)
+#endif
 
-#if __STDC__
-
-extern void fatal(const char *, int);
+extern void fatal PARAMS ((const char *, int)) __attribute__((noreturn));
+extern char *xmalloc PARAMS ((size_t size));
+extern char *xrealloc PARAMS ((char *ptr, size_t size));
 
 /* Grep.c expects the matchers vector to be terminated
    by an entry with a NULL name, and to contain at least
@@ -29,28 +31,16 @@ extern void fatal(const char *, int);
 extern struct matcher
 {
   char *name;
-  void (*compile)(char *, size_t);
-  char *(*execute)(char *, size_t, char **);
+  void (*compile) PARAMS ((char *, size_t));
+  char *(*execute) PARAMS ((char *, size_t, char **));
 } matchers[];
 
-#else
-
-extern void fatal();
-
-extern struct matcher
-{
-  char *name;
-  void (*compile)();
-  char *(*execute)();
-} matchers[];
-
-#endif
-
-/* Exported from grep.c. */
-extern char *matcher;
+/* Exported from fgrepmat.c, egrepmat.c, grepmat.c.  */
+extern char const *matcher;
 
 /* The following flags are exported from grep for the matchers
    to look at. */
 extern int match_icase;		/* -i */
 extern int match_words;		/* -w */
 extern int match_lines;		/* -x */
+extern unsigned char eolbyte;	/* -z */
