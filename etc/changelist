@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.37 2004/05/04 23:37:04 deraadt Exp $
+#	$OpenBSD: changelist,v 1.38 2004/06/17 21:43:14 todd Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -39,6 +39,8 @@
 /etc/hosts.equiv
 /etc/hosts.lpd
 /etc/inetd.conf
++/etc/isakmpd/private/local.key
+/etc/isakmpd/private/local.pub
 /etc/ksh.kshrc
 /etc/locate.rc
 /etc/login.conf
