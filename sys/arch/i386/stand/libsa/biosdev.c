@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.46 1997/10/28 23:33:49 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.47 1997/11/01 16:35:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -114,7 +114,7 @@ bios_getinfo(dev, pdi)
 			pdi->bios_edd = bm & 0xffff;
 		else
 			pdi->bios_edd = -1;
-	}else
+	} else
 		pdi->bios_edd = -1;
 #else
 	pdi->bios_edd = -1;
@@ -123,13 +123,16 @@ bios_getinfo(dev, pdi)
 	/*
 	 * NOTE: This seems to hang on certain machines.  Use function #8
 	 * first, and verify with #21 IFF #8 succeeds first.
+	 * don't try this for floppies.
 	 */
-	__asm __volatile (DOINT(0x13) "; setc %b0"
-		: "=a" (rv) : "0" (0x1500), "d" (dev) : "%ecx", "cc");
-	if(!(rv & 0xff00))
-		return(1);
-	if(rv & 0xff)
-		return(1);
+	if (dev & 0x80) {
+		__asm __volatile (DOINT(0x13) "; setc %b0"
+			: "=a" (rv) : "0" (0x1500), "d" (dev) : "%ecx", "cc");
+		if(!(rv & 0xff00))
+			return(1);
+		if(rv & 0xff)
+			return(1);
+	}
 
 	return(0);
 }
