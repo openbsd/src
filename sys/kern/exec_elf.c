@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.22 1998/07/28 00:13:02 millert Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.23 1999/01/11 05:12:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -471,7 +471,7 @@ exec_elf_makecmds(p, epp)
 	if (epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return (ETXTBSY);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.7 1997/11/06 05:58:13 csapuntz Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.8 1999/01/11 05:12:22 millert Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ check_shell:
 		    (size_t *)0);
 #ifdef DIAGNOSTIC
 		if (error != 0)
-			panic("exec_script: copyinstr couldn't fail\n");
+			panic("exec_script: copyinstr couldn't fail");
 #endif
 #ifdef FDSCRIPTS
 	} else

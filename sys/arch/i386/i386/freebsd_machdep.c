@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_machdep.c,v 1.9 1997/02/01 21:53:18 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_machdep.c,v 1.10 1999/01/11 05:11:23 millert Exp $	*/
 /*	$NetBSD: freebsd_machdep.c,v 1.10 1996/05/03 19:42:05 christos Exp $	*/
 
 /*-
@@ -293,7 +293,7 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 #ifdef DIAGNOSTIC
 	if (sizeof(fregs->freebsd_ptrace_fpregs.sv_pad) <
 	    sizeof(nframe->sv_ex_tw) + sizeof(nframe->sv_pad)) {
-		panic("netbsd_to_freebsd_ptrace_regs: %s\n",
+		panic("netbsd_to_freebsd_ptrace_regs: %s",
 		      "sizeof(freebsd_save87) >= sizeof(save87)");
 	}
 #endif

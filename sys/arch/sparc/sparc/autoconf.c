@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 1998/04/17 18:18:02 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 1999/01/11 05:11:58 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -850,7 +850,7 @@ configure()
 		node = findroot();
 		cp = getpropstring(node, "device_type");
 		if (strcmp(cp, "cpu") != 0)
-			panic("PROM root device type = %s (need CPU)\n", cp);
+			panic("PROM root device type = %s (need CPU)", cp);
 	}
 #endif
 #if defined(SUN4M)

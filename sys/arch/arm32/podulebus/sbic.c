@@ -2100,7 +2100,7 @@ sbicmsgin(dev)
 					      !(asr & SBIC_ASR_DBR|SBIC_ASR_INT) )
 						GET_SBIC_asr(regs, asr);
 					if( asr & SBIC_ASR_DBR )
-						panic("msgin: jammed again!\n");
+						panic("msgin: jammed again!");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e',csr,asr,dev->target);
 					if( csr & 0x07 != MESG_OUT_PHASE ) {

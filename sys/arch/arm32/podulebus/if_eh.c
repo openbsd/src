@@ -309,10 +309,10 @@ ehprobe(parent, match, aux)
 			char *read_buffer;
 			MALLOC(test_data, char *, NLEN, M_TEMP, M_NOWAIT);
 			if (test_data == NULL)
-				panic("Cannot allocate temporary memory for buffer test (1)\n");
+				panic("Cannot allocate temporary memory for buffer test (1)");
 			MALLOC(read_buffer, char *, NLEN, M_TEMP, M_NOWAIT);
 			if (read_buffer == NULL)
-				panic("Cannot allocate temporary memory for buffer test (1)\n");
+				panic("Cannot allocate temporary memory for buffer test (1)");
 
 			printf("1.");
 

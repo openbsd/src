@@ -193,7 +193,7 @@ void mips_vector_init()
 #endif /* MIPS3 */
 
 	default:
-		panic("Unconfigured or unsupported MIPS cpu\n");
+		panic("Unconfigured or unsupported MIPS cpu");
 
 	}
 }

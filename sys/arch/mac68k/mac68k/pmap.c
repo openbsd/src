@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1998/05/03 07:16:51 gene Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 1999/01/11 05:11:36 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.28 1996/10/21 05:42:27 scottr Exp $	*/
 
 /* 
@@ -364,7 +364,7 @@ pmap_init()
 			   mac68k_ptob(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE),
 			   FALSE);
 	if (addr != (vm_offset_t)IOBase)
-		panic("pmap_init: I/O space not mapped!\n");
+		panic("pmap_init: I/O space not mapped!");
 
 	addr = (vm_offset_t) Sysmap;
 	vm_object_reference(kernel_object);
@@ -376,7 +376,7 @@ pmap_init()
 	 * page table map.   Need to adjust pmap_size() in mac68k_init.c.
 	 */
 	if (addr != (vm_offset_t)Sysmap)
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {

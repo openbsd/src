@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.3 1996/12/23 02:42:41 deraadt Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.4 1999/01/11 05:12:21 millert Exp $	*/
 /*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ exec_aout_prep_zmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

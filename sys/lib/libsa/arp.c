@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.6 1998/02/23 20:32:18 niklas Exp $	*/
+/*	$OpenBSD: arp.c,v 1.7 1999/01/11 05:12:25 millert Exp $	*/
 /*	$NetBSD: arp.c,v 1.15 1996/10/13 02:28:58 christos Exp $	*/
 
 /*
@@ -126,8 +126,7 @@ arpwhohas(d, addr)
 	    arpsend, &wbuf.data, sizeof(wbuf.data),
 	    arprecv, &rbuf.data, sizeof(rbuf.data));
 	if (i == -1) {
-		panic("arp: no response for %s\n",
-			  inet_ntoa(addr));
+		panic("arp: no response for %s", inet_ntoa(addr));
 	}
 
 	/* Store ethernet address in cache */

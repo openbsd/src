@@ -1424,7 +1424,7 @@ idprom_etheraddr(ether)
   int i;
 
   if (ea == NULL)
-    panic ("ERROR: ethernet address not set!\n");
+    panic ("ERROR: ethernet address not set!");
 
   for (i = 0; i < 6; i++)
     {
@@ -1435,7 +1435,7 @@ idprom_etheraddr(ether)
       else if (*ea >= 'A' && *ea <= 'F')
         c = *ea - 'A' + 10;
       else
-        panic ("Bad character for enet addr (%s)\n", ea);
+        panic ("Bad character for enet addr (%s)", ea);
       ea++;
       if (i == 5 && *ea == 0)
 	break;
@@ -1453,10 +1453,10 @@ idprom_etheraddr(ether)
       else if (*ea >= 'A' && *ea <= 'F')
         c |= *ea - 'A' + 10;
       else
-        panic ("Bad character for enet addr (%s)\n", ea);
+        panic ("Bad character for enet addr (%s)", ea);
       ea++;
       if (i != 5 && *ea != ':')
-        panic ("Bad character for enet addr (%s)\n", ea);
+        panic ("Bad character for enet addr (%s)", ea);
       ea++;
       *ether++ = c;
     }

@@ -391,7 +391,7 @@ pmap_init(phys_start, phys_end)
 	 * page table map.   Need to adjust pmap_size() in atari_init.c.
 	 */
 	if (addr != (vm_offset_t)Sysmap)
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %x, Sysmap %x, Sysptmap %x\n",

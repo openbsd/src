@@ -902,7 +902,7 @@ kbdinit(sc)
 	sc->sc_ih.ih_level = IPL_TTY;
 	sc->sc_ih.ih_name = "kbd rx";
 	if (irq_claim(IRQ_KBDRX, &sc->sc_ih))
-		panic("Cannot claim IRQ for kbd%d\n", sc->sc_device.dv_unit);
+		panic("Cannot claim IRQ for kbd%d", sc->sc_device.dv_unit);
 
 	modifiers = 0;
 	kbdsetleds((modifiers >> 3) & 7);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.4 1996/06/11 10:15:16 deraadt Exp $ */
+/*	$OpenBSD: nvram.c,v 1.5 1999/01/11 05:11:38 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -96,7 +96,7 @@ nvramattach(parent, self, args)
 /*X*/		sc->sc_vaddr = mapiodev((void *)sc->sc_paddr,
 /*X*/		    max(sc->sc_len, NBPG));
 /*X*/	if (sc->sc_vaddr == NULL)
-/*X*/		panic("failed to map!\n");
+/*X*/		panic("failed to map!");
 
 	sc->sc_regs = (struct clockreg *)(sc->sc_vaddr + sc->sc_len -
 	    sizeof(struct clockreg));

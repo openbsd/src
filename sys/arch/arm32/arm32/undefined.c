@@ -187,7 +187,7 @@ undefinedinstruction(frame)
     pcb = &p->p_addr->u_pcb;
     if (pcb == 0)
       {
-        panic("no pcb ... we're toast !\n");
+        panic("no pcb ... we're toast !");
       }
 #endif
 
@@ -318,7 +318,7 @@ resethandler(frame)
 	validate_trapframe(frame, 4);
 #endif
 #else
-	panic("Branch through zero..... were dead\n");
+	panic("Branch through zero..... were dead");
 #endif
 }
 

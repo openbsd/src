@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.6 1997/01/16 04:03:51 kstailey Exp $	*/
+/*	$OpenBSD: obio.c,v 1.7 1999/01/11 05:12:02 millert Exp $	*/
 /*	$NetBSD: obio.c,v 1.23 1996/11/20 18:56:56 gwr Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ obio_submatch(parent, vcf, aux)
 	/* Now call the match function of the potential child. */
 	submatch = cf->cf_attach->ca_match;
 	if (submatch == NULL)
-		panic("obio_submatch: no match function for: %s\n",
+		panic("obio_submatch: no match function for: %s",
 			  cf->cf_driver->cd_name);
 
 	return ((*submatch)(parent, vcf, aux));

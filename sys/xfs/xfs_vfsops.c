@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_vfsops.c,v 1.3 1998/09/06 01:48:58 art Exp $	*/
+/*	$OpenBSD: xfs_vfsops.c,v 1.4 1999/01/11 05:12:40 millert Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -418,7 +418,7 @@ make_dead_vnode(struct mount *mp)
 	XFSDEB(XDEBNODE, ("make_dead_vnode mp = 0x%x\n", (u_int) mp));
 
 	if ((error = getnewvnode(VT_NON, mp, dead_vnodeop_p, &dead)))
-		panic("make_dead_vnode: getnewvnode failed: error = %d\n",
+		panic("make_dead_vnode: getnewvnode failed: error = %d",
 		      error);
 
 	return dead;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.24 1999/01/10 01:45:31 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.25 1999/01/11 05:12:23 millert Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ __assert(t, f, l, e)
 	int l;
 {
 
-	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d\n",
+	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d",
 		t, e, f, l);
 }
 

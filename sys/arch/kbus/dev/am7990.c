@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.1.1.1 1997/10/14 07:25:29 gingold Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.2 1999/01/11 05:11:27 millert Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -325,7 +325,7 @@ am7990_init(sc)
 		ifp->if_timer = 0;
 		am7990_start(ifp);
 	} else
-		panic("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+		panic("%s: card failed to initialize", sc->sc_dev.dv_xname);
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
 }

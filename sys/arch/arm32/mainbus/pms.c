@@ -267,7 +267,7 @@ pmsattach(parent, self, aux)
 #ifdef RC7500
 		sc->sc_ih.ih_num = IRQ_MSDRX;
 #else
-		panic("pms: No IRQ specified for pms interrupt handler\n");
+		panic("pms: No IRQ specified for pms interrupt handler");
 #endif
 }
 
@@ -302,7 +302,7 @@ pmsopen(dev, flag, mode, p)
 	sc->lastb = -1;
 
 	if (irq_claim(IRQ_INSTRUCT, &sc->sc_ih) == -1)
-		panic("Cannot claim MOUSE IRQ\n");
+		panic("Cannot claim MOUSE IRQ");
 
 	return 0;
 }
@@ -317,7 +317,7 @@ pmsclose(dev, flag, mode, p)
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
 	if (irq_release(IRQ_INSTRUCT, &sc->sc_ih) != 0)
-		panic("Cannot release MOUSE IRQ\n");
+		panic("Cannot release MOUSE IRQ");
  
 	sc->proc = NULL;
 	sc->sc_state &= ~PMS_OPEN;

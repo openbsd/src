@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 1998/03/04 10:58:18 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 1999/01/11 05:12:06 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -1026,7 +1026,7 @@ pv_changepte(head, set_bits, clear_bits)
 #ifdef	DIAGNOSTIC
 	/* This function should only clear these bits: */
 	if (clear_bits & ~(PG_WRITE | PG_NC | PG_REF | PG_MOD))
-		panic("pv_changepte: clear=0x%x\n");
+		panic("pv_changepte: clear=0x%x");
 #endif
 
 	s = splpmap();
@@ -1086,7 +1086,7 @@ pv_changepte(head, set_bits, clear_bits)
 		 * XXX - Make sure pv_unlink() was done...
 		 */
 		if ((pte & PG_VALID) == 0)
-			panic("pv_changepte: not PG_VALID at va=0x%x\n", va);
+			panic("pv_changepte: not PG_VALID at va=0x%x", va);
 #endif
 		/* Get these while it's easy. */
 		if (pte & PG_MODREF) {
@@ -1190,7 +1190,7 @@ pv_syncflags(head)
 		 * XXX - Make sure pv_unlink() was done...
 		 */
 		if ((pte & PG_VALID) == 0)
-			panic("pv_syncflags: not PG_VALID at va=0x%x\n", va);
+			panic("pv_syncflags: not PG_VALID at va=0x%x", va);
 #endif
 		/* OK, do what we came here for... */
 		if (pte & PG_MODREF) {
@@ -2782,7 +2782,7 @@ pmap_extract(pmap, va)
 	pa = PG_PA(pte);
 #ifdef	DIAGNOSTIC
 	if (pte & PG_TYPE) {
-		panic("pmap_extract: not main mem, va=0x%x\n", va);
+		panic("pmap_extract: not main mem, va=0x%x", va);
 	}
 #endif
 	return (pa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_output.c,v 1.2 1996/03/04 07:36:31 niklas Exp $	*/
+/*	$OpenBSD: llc_output.c,v 1.3 1999/01/11 05:12:29 millert Exp $	*/
 /*	$NetBSD: llc_output.c,v 1.3 1996/02/13 22:04:47 christos Exp $	*/
 
 /* 
@@ -158,7 +158,7 @@ llc_resend(linkp, cmdrsp, pollfinal)
 	if (linkp->llcl_slotsfree < linkp->llcl_window)
 		/* assert lock between nr_received & V(S) */
 		if (linkp->llcl_nr_received != linkp->llcl_vs)
-			panic("llc: V(S) != N(R) received\n");
+			panic("llc: V(S) != N(R) received");
 
 	for (slot = llc_seq2slot(linkp, linkp->llcl_vs);
 	     slot != linkp->llcl_freeslot;

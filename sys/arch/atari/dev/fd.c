@@ -702,7 +702,7 @@ int	drive, head, dense;
 			DMA->dma_drvmode = (FDC_HDSET|FDC_HDSIG);
 			break;
 		default:
-			panic("fdselect: unknown density code\n");
+			panic("fdselect: unknown density code");
 	}
 	if(i != selected) {
 		sps = splhigh();

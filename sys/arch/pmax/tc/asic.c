@@ -188,7 +188,7 @@ asicattach(parent, self, aux)
 	extern int cputype;
 
 	if (asic_slots == NULL)
-		panic("asicattach: no asic_slot map\n");
+		panic("asicattach: no asic_slot map");
 
 	IOASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
 
@@ -225,7 +225,7 @@ asicattach(parent, self, aux)
 		       i, sc->sc_base));
 
                 nca = &asic_slots[i].as_ca;
-		if (nca == NULL) panic ("bad asic table\n");
+		if (nca == NULL) panic ("bad asic table");
 		if (nca->ca_name == NULL || nca->ca_name[0] == 0)
 			break;
 		nca->ca_addr = ((u_int)sc->sc_base) + nca->ca_offset;
@@ -325,7 +325,7 @@ asic_intr_disestablish(ca)
 {
 
 #ifdef pmax
-	panic("asic_intr_disestablish: shouldn't ever be called\n");
+	panic("asic_intr_disestablish: shouldn't ever be called");
 #else
 	if (ca->ca_slot == IOASIC_SLOT_RTC)
 	        panic("asic_intr_disestablish: can't do clock interrupt");
@@ -396,7 +396,7 @@ asic_intrnull(val)
 	intr_arg_t val;
 {
 
-        panic("uncaught IOCTL ASIC intr for slot %ld\n", (long)val);
+        panic("uncaught IOCTL ASIC intr for slot %ld", (long)val);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.9 1998/05/03 07:16:52 gene Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.10 1999/01/11 05:11:37 millert Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.30 1997/01/07 07:44:01 scottr Exp $	*/
 
 /* 
@@ -186,7 +186,7 @@ pmap_bootstrap(nextpa, firstpa)
 		printf("You're hosed!  Try booting with 32-bit addressing ");
 		printf("enabled in the memory control panel.\n");
 		printf("Older machines may need Mode32 to get that option.\n");
-		panic("Cannot work with the current memory mappings.\n");
+		panic("Cannot work with the current memory mappings.");
 	}
 
 	/*
@@ -612,7 +612,7 @@ bootstrap_mac68k(tc)
 		printf("Pmap bootstrapped.\n");
 
 	if (!vidlen)
-		panic("Don't know how to relocate video!\n");
+		panic("Don't know how to relocate video!");
 
 	if (mac68k_machine.do_graybars)
 		printf("Moving ROMBase from %p to %p.\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.9 1998/12/31 00:23:34 niklas Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.10 1999/01/11 05:12:19 millert Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -498,7 +498,7 @@ com_attach(sc)
 		break;
 #endif
 	default:
-		panic("comattach: bad fifo type\n");
+		panic("comattach: bad fifo type");
 	}
 
 	/* clear and disable fifo */

@@ -118,7 +118,7 @@ int	rcaller;
 	 * Create a request...
 	 */
 	if(dma_free.tqh_first == NULL)
-		panic("st_dmagrab: Too many outstanding requests\n");
+		panic("st_dmagrab: Too many outstanding requests");
 	req = dma_free.tqh_first;
 	TAILQ_REMOVE(&dma_free, dma_free.tqh_first, entries);
 	req->call_func = call_func;
@@ -164,7 +164,7 @@ int	*lock_stat;
 	 * Some validity checks first.
 	 */
 	if((req = dma_active.tqh_first) == NULL)
-		panic("st_dmafree: empty active queue\n");
+		panic("st_dmafree: empty active queue");
 	if(req->softc != softc)
 		printf("Caller of st_dmafree is not lock-owner!\n");
 

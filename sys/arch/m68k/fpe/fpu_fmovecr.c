@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_fmovecr.c,v 1.4 1997/01/13 11:51:05 niklas Exp $	*/
+/*	$OpenBSD: fpu_fmovecr.c,v 1.5 1999/01/11 05:11:33 millert Exp $	*/
 /*	$NetBSD: fpu_fmovecr.c,v 1.6 1996/10/13 03:19:13 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ fpu_const(fp, offset)
 
 #ifdef DEBUG
     if (fp == NULL) {
-	panic("fpu_const: NULL pointer passed\n");
+	panic("fpu_const: NULL pointer passed");
     }
 #endif
     if (offset == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.11 1998/05/03 07:13:03 gene Exp $	*/
+/*	$OpenBSD: zs.c,v 1.12 1999/01/11 05:11:35 millert Exp $	*/
 /*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ zsc_attach(parent, self, aux)
 
 	/* Make sure everything's inited ok. */
 	if (zsaddr[zsc_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zsc_unit);
+		panic("zs_attach: zs%d not mapped", zsc_unit);
 
 	/*
 	 * Initialize software state for each channel.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.10 1998/07/01 05:32:41 angelos Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.11 1999/01/11 05:11:03 millert Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 
 	kn20aa_irq += buspin - 1;
 	if (kn20aa_irq > KN20AA_MAX_IRQ)
-		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)\n",
+		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)",
 		    kn20aa_irq);
 
 	*ihp = kn20aa_irq;
@@ -182,7 +182,7 @@ dec_kn20aa_intr_string(ccv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > KN20AA_MAX_IRQ)
-		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%x\n", ih);
+		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%x", ih);
 
         sprintf(irqstr, "kn20aa irq %ld", ih);
         return (irqstr);
@@ -199,7 +199,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
 	void *cookie;
 
         if (ih > KN20AA_MAX_IRQ)
-                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x\n",
+                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(kn20aa_pci_intr, ih, IST_LEVEL,
@@ -227,7 +227,7 @@ kn20aa_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (KN20AA_MAX_IRQ << 4))
-			panic("kn20aa_iointr: vec 0x%x out of range\n", vec);
+			panic("kn20aa_iointr: vec 0x%x out of range", vec);
 		irq = (vec - 0x900) >> 4;
 
 #ifdef EVCNT_COUNTERS
@@ -253,7 +253,7 @@ kn20aa_iointr(framep, vec)
 		return;
 	} 
 #endif
-	panic("kn20aa_iointr: weird vec 0x%x\n", vec);
+	panic("kn20aa_iointr: weird vec 0x%x", vec);
 }
 
 void

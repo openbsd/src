@@ -1,4 +1,4 @@
-/*	$OpenBSD: tga_bt485.c,v 1.4 1997/01/24 19:58:01 niklas Exp $	*/
+/*	$OpenBSD: tga_bt485.c,v 1.5 1999/01/11 05:11:03 millert Exp $	*/
 /*	$NetBSD: tga_bt485.c,v 1.4 1996/11/13 21:13:35 cgd Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ tga_bt485_wr_d(tgaregs, btreg, val)
 {
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_bt485_wr_d: reg %d out of range\n", btreg);
+		panic("tga_bt485_wr_d: reg %d out of range", btreg);
 
 	tgaregs[TGA_REG_EPDR] = (btreg << 9) | (0 << 8 ) | val; /* XXX */
 	alpha_mb();
@@ -446,7 +446,7 @@ tga_bt485_rd_d(tgaregs, btreg)
 	tga_reg_t rdval;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_bt485_rd_d: reg %d out of range\n", btreg);
+		panic("tga_bt485_rd_d: reg %d out of range", btreg);
 
 	tgaregs[TGA_REG_EPSR] = (btreg << 1) | 0x1;		/* XXX */
 	alpha_mb();

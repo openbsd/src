@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.3 1998/11/11 00:50:31 jason Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.4 1999/01/11 05:11:56 millert Exp $	*/
 /*	$NetBSD: isp_sbus.c,v 1.8 1997/08/27 11:24:19 bouyer Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 
 	if (rq->req_handle > RQUEST_QUEUE_LEN(isp) ||
 	    rq->req_handle < 1) {
-		panic("%s: bad handle (%d) in isp_sbus_dmasetup\n",
+		panic("%s: bad handle (%d) in isp_sbus_dmasetup",
 			isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
 	}
@@ -296,7 +296,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 
 	if (sbc->sbus_kdma_allocs[rq->req_handle - 1] != (vm_offset_t) 0) {
-		panic("%s: kdma handle already allocated\n", isp->isp_name);
+		panic("%s: kdma handle already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	sbc->sbus_kdma_allocs[rq->req_handle - 1] = kdvma;
@@ -325,12 +325,12 @@ isp_sbus_dmateardown(isp, xs, handle)
 	}
 
 	if (handle >= RQUEST_QUEUE_LEN(isp)) {
-		panic("%s: bad handle (%d) in isp_sbus_dmateardown\n",
+		panic("%s: bad handle (%d) in isp_sbus_dmateardown",
 			isp->isp_name, handle);
 		/* NOTREACHED */
 	}
 	if (sbc->sbus_kdma_allocs[handle] == (vm_offset_t) 0) {
-		panic("%s: kdma handle not already allocated\n", isp->isp_name);
+		panic("%s: kdma handle not already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	kdvma = sbc->sbus_kdma_allocs[handle];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_eb164.c,v 1.2 1998/07/01 05:32:40 angelos Exp $	*/
+/*	$OpenBSD: pci_eb164.c,v 1.3 1999/01/11 05:11:03 millert Exp $	*/
 /*	$NetBSD: pci_eb164.c,v 1.4 1996/11/25 03:47:05 cgd Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
         }
          
 	if (line > EB164_MAX_IRQ)
-		panic("dec_eb164_map_int: eb164_irq too large (%d)\n",
+		panic("dec_eb164_map_int: eb164_irq too large (%d)",
 		    line);
 
 	*ihp = line;
@@ -211,7 +211,7 @@ dec_eb164_intr_string(ccv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > EB164_MAX_IRQ)
-                panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%x\n", ih);
+                panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%x", ih);
         sprintf(irqstr, "eb164 irq %d", ih);
         return (irqstr);
 }
@@ -227,7 +227,7 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg, name)
 	void *cookie;
 
 	if (ih > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%x\n", ih);
+		panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%x", ih);
 
 	cookie = alpha_shared_intr_establish(eb164_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, name);
@@ -286,7 +286,7 @@ eb164_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (EB164_MAX_IRQ << 4))
-			panic("eb164_iointr: vec 0x%x out of range\n", vec);
+			panic("eb164_iointr: vec 0x%x out of range", vec);
 		irq = (vec - 0x900) >> 4;
 
 #ifdef EVCNT_COUNTERS
@@ -313,7 +313,7 @@ eb164_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("eb164_iointr: weird vec 0x%x\n", vec);
+	panic("eb164_iointr: weird vec 0x%x", vec);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb164_intr.S. */

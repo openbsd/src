@@ -207,7 +207,7 @@ cpu_fork(p1, p2)
 #endif
 
 	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0) {
-		panic("Failed to fault in system page PT\n");
+		panic("Failed to fault in system page PT");
 	}
 
 #ifdef DEBUG_VMMACHDEP

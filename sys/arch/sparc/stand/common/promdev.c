@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.1 1997/09/17 10:46:19 downsj Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.2 1999/01/11 05:12:00 millert Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -756,12 +756,12 @@ prom_mapin(physaddr, length, maptype)
 	int i, pa, pte, va;
 
 	if (length > (4*NBPG))
-		panic("prom_mapin: length=%d\n", length);
+		panic("prom_mapin: length=%d", length);
 
 	for (i = 0; i < prom_mapinfo_cnt; i++)
 		if (prom_mapinfo[i].maptype == maptype)
 			goto found;
-	panic("prom_mapin: invalid maptype %d\n", maptype);
+	panic("prom_mapin: invalid maptype %d", maptype);
 found:
 
 	pte = prom_mapinfo[i].pgtype;

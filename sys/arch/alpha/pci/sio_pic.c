@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.12 1998/07/01 05:32:42 angelos Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.13 1999/01/11 05:11:03 millert Exp $	*/
 /*	$NetBSD: sio_pic.c,v 1.16 1996/11/17 02:05:26 cgd Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ sio_intr_string(v, irq)
 	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("sio_intr_string: bogus isa irq 0x%x\n", irq);
+		panic("sio_intr_string: bogus isa irq 0x%x", irq);
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.9 1997/01/16 04:03:46 kstailey Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.10 1999/01/11 05:12:01 millert Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.15 1996/10/30 00:24:33 gwr Exp $ */
 
 /*-
@@ -1174,7 +1174,7 @@ iereset(sc)
 
 #ifdef notdef
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
-		panic("ie disappeared!\n");
+		panic("ie disappeared!");
 #endif
 
 	sc->sc_arpcom.ac_if.if_flags |= IFF_UP;
@@ -1345,7 +1345,7 @@ setup_bufs(sc)
 
 	sc->nframes = n / r;
 	if (sc->nframes <= 0)
-		panic("ie: bogus buffer calc\n");
+		panic("ie: bogus buffer calc");
 	if (sc->nframes > MXFRAMES)
 		sc->nframes = MXFRAMES;
 

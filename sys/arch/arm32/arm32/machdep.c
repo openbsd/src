@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 1998/03/01 00:37:27 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 1999/01/11 05:11:11 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.6 1996/03/13 21:32:39 mark Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ initarm(bootconf)
 /* Check to make sure the page size is correct */
 
 	if (NBPG != bootconfig.pagesize)
-		panic("Page size is not %d bytes\n", NBPG);
+		panic("Page size is not %d bytes", NBPG);
 
 /*
  * Ok now we have the hard bit.
@@ -617,10 +617,10 @@ initarm(bootconf)
  */
 
 	if ((bootconfig.scratchphysicalbase & 0x3fff) != 0)
-		panic("initarm: Scratch area not aligned on 16KB boundry\n");
+		panic("initarm: Scratch area not aligned on 16KB boundry");
 
 	if ((bootconfig.scratchsize < 0xc000) != 0)
-		panic("initarm: Scratch area too small (need >= 48KB)\n");
+		panic("initarm: Scratch area too small (need >= 48KB)");
 
 /*
  * Ok start the primary bootstrap.
@@ -841,7 +841,7 @@ initarm(bootconf)
 /* This should never be able to happen but better confirm that. */
 
 	if ((kernel_pt_table[0] & (PD_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic("initarm: Failed to align the kernel page directory");
 
 /* Update the address of the first free page of physical memory */
 
@@ -1506,7 +1506,7 @@ allocsys(v)
 
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
-		panic("bufpages = 0\n");
+		panic("bufpages = 0");
 #endif
 
 	if (nbuf == 0) {
@@ -1539,7 +1539,7 @@ map_section(pagetable, va, pa)
 	vm_offset_t pa; 
 {
 	if ((va & 0xfffff) != 0)
-		panic("initarm: Cannot allocate 1MB section on non 1MB boundry\n");
+		panic("initarm: Cannot allocate 1MB section on non 1MB boundry");
 
 	((u_int *)pagetable)[(va >> 20)] = L1_SEC((pa & PD_MASK));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 1998/08/22 18:32:00 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 1999/01/11 05:11:54 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -929,7 +929,7 @@ pmap_remove_pv(pm, pteidx, va, pind, pte)
 		}
 #ifdef	DIAGNOSTIC
 		else
-			panic("pmap_remove_pv: not on list\n");
+			panic("pmap_remove_pv: not on list");
 #endif
 	}
 }

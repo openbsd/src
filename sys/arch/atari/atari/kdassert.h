@@ -36,18 +36,18 @@
 #if defined (__STDC__)
 #if defined (__GNUC__)
 #define KDASSERT(x) if (!(x)) panic ("kernel assertion:\"%s\" failed\nfile: %s\n" \
-	"func: %s\nline: %d\n", #x , __FILE__, __FUNCTION__, __LINE__)
+	"func: %s\nline: %d", #x , __FILE__, __FUNCTION__, __LINE__)
 #else /* !__GNUC__ */
 #define KDASSERT(x) if (!(x)) panic ("kernel assertion:\"%s\" failed\nfile: %s\n" \
-	"line: %d\n", #x, __FILE__, __LINE__)
+	"line: %d", #x, __FILE__, __LINE__)
 #endif /* !__GNUC__ */
 #else /* !__STDC__ */
 #if defined (__GNUC__)
 #define KDASSERT(x) if (!(x)) panic ("kernel assertion:\"%s\" failed\nfile: %s\n" \
-	"func: %s\nline: %d\n", "x", __FILE__, __FUNCTION__, __LINE__)
+	"func: %s\nline: %d", "x", __FILE__, __FUNCTION__, __LINE__)
 #else /* !__GNUC__ */
 #define KDASSERT(x) if (!(x)) panic ("kernel assertion:\"%s\" failed\nfile: %s\n" \
-	"line: %d\n", "x", __FILE__, __LINE__)
+	"line: %d", "x", __FILE__, __LINE__)
 #endif /* !__GNUC__ */
 #endif /* !__STDC__ */
 #else /* !DEBUG */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.12 1998/05/03 07:12:59 gene Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.13 1999/01/11 05:11:34 millert Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ scsi_mach_init(sc)
 	static int	initted = 0;
 
 	if (initted++)
-		panic("scsi_mach_init called again.\n");
+		panic("scsi_mach_init called again.");
 
 	ncr		= (volatile u_char *)
 			  (SCSIBase + (u_long) ncr);
@@ -312,7 +312,7 @@ extern	u_char	ncr5380_no_parchk;
 			return 1;
 		} else {
 			scsi_show();
-			panic("Spurious interrupt during PDMA xfer.\n");
+			panic("Spurious interrupt during PDMA xfer.");
 		}
 	} else
 		PID("pdma_ready4");
@@ -609,7 +609,7 @@ transfer_pdma(phasep, data, count)
 	 */
 	switch (*phasep) {
 	default:
-		panic("Unexpected phase in transfer_pdma.\n");
+		panic("Unexpected phase in transfer_pdma.");
 	case PH_DATAOUT:
 		pdma_5380_dir = 1;
 		SET_5380_REG(NCR5380_ICOM, GET_5380_REG(NCR5380_ICOM)|SC_ADTB);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.3 1997/09/10 12:04:46 maja Exp $ */
+/*	$OpenBSD: ka43.c,v 1.4 1999/01/11 05:12:08 millert Exp $ */
 /*	$NetBSD: ka43.c,v 1.5 1997/04/18 18:53:38 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -172,7 +172,7 @@ ka43_mchk(addr)
 	 */
 	if (mfpr(PR_PCSTS) & KA43_PCS_TRAP2) {
 		printf("TRAP2 (double error) in ka43_mchk.\n");
-		panic("unrecoverable state in ka43_mchk.\n");
+		panic("unrecoverable state in ka43_mchk.");
 		return (-1);
 	}
 	if ((mcf->mc43_code & KA43_MC_RESTART) || 

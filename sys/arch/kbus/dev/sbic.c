@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.1.1.1 1997/10/14 07:25:29 gingold Exp $	*/
+/*	$OpenBSD: sbic.c,v 1.2 1999/01/11 05:11:27 millert Exp $	*/
 /*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
 
 /*
@@ -2059,7 +2059,7 @@ sbicmsgin(dev)
 					      !(asr & SBIC_ASR_DBR|SBIC_ASR_INT) )
 						GET_SBIC_asr(regs, asr);
 					if( asr & SBIC_ASR_DBR )
-						panic("msgin: jammed again!\n");
+						panic("msgin: jammed again!");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e',csr,asr,dev->target);
 					if( csr & 0x07 != MESG_OUT_PHASE ) {

@@ -232,7 +232,7 @@ comattach(parent, self, aux)
  	sc->sc_ih.ih_name = "serial";
  	if (mb->mb_irq != IRQUNK)
  		if (irq_claim(mb->mb_irq, &sc->sc_ih))
-			panic("Cannot claim IRQ %d for com%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
+			panic("Cannot claim IRQ %d for com%d", mb->mb_irq, sc->sc_dev.dv_unit);
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {

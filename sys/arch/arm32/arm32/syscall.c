@@ -154,7 +154,7 @@ syscall(frame, code)
 #endif
 		return;
 #else
-		panic("syscall in kernel mode !\n");
+		panic("syscall in kernel mode !");
 #endif
 	}
 #endif
@@ -231,7 +231,7 @@ syscall(frame, code)
 		if (frame->tf_r0 != 0)
 			panic((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2,
 			    frame->tf_r3);
-		panic("SYSCALL 0x1004 panic\n");
+		panic("SYSCALL 0x1004 panic");
 		break;*/
 
 /*	case 0x1007:

@@ -457,7 +457,7 @@ pmap_modify_pv(pmap, va, pind, bic_mask, eor_mask)
 #ifdef DIAGNOSTIC
 	if (pind > 0x00010000 || pind < 0) {
 		traceback();
-		panic("pmap_modify_pv: pind out of range pind = %08x va=%08x\n", pind, va);
+		panic("pmap_modify_pv: pind out of range pind = %08x va=%08x", pind, va);
 	}      
 #endif
 
@@ -926,7 +926,7 @@ pmap_freepagedir(pmap)
 
 	index = (((u_int) pmap->pm_pdir) - PAGE_DIRS_BASE - PD_SIZE) / PD_SIZE;
 	if (pagedirectories[index] != pmap)
-		panic("pm_pdir inconsistancy found\n");
+		panic("pm_pdir inconsistancy found");
 
 	pagedirectories[index] = 0;
 
@@ -1377,7 +1377,7 @@ pmap_remove(pmap, sva, eva)
 #ifdef DIAGNOSTIC
 			if (pind > 0x00010000 || pind < 0) {
 				printf("eerk ! pind=%08x pa=%08x\n", pind, (int) pa);
-				panic("The axe has fallen, were dead\n");
+				panic("The axe has fallen, were dead");
 			}
 #endif
 			if (pmap_remove_pv(pmap, sva, pind) & PT_W)
@@ -1580,7 +1580,7 @@ pmap_protect(pmap, sva, eva, prot)
 /* Get the physical page index */
 
 		if ((pind = pmap_page_index(pa)) == -1)
-			panic("pmap_protect: pmap_page_index failed for pte %08x\n", pte); 
+			panic("pmap_protect: pmap_page_index failed for pte %08x", pte); 
 
 /* Clear write flag */
 
@@ -1651,7 +1651,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pte) {
 		printf("pmap_enter: pde = %08x\n", (u_int) pmap_pde(pmap, va));
 		printf("pmap_enter: pte = %08x\n", (u_int) pmap_pte(pmap, va));
-		panic("Failure 01 in pmap_enter (V%08x P%08x)\n", (u_int) va, (u_int) pa);                                               
+		panic("Failure 01 in pmap_enter (V%08x P%08x)", (u_int) va, (u_int) pa);                                               
 	}
 
 /* More debugging info */
@@ -1823,7 +1823,7 @@ if (va == 0 && (prot & VM_PROT_WRITE))
 
      if (*pte == 0)
        {
-         panic("oopss: *pte = 0 in pmap_enter() npte=%08x\n", npte);
+         panic("oopss: *pte = 0 in pmap_enter() npte=%08x", npte);
        }
 
      if (pind != -1)
@@ -2431,7 +2431,7 @@ pmap_modified_emulation(pmap, va)
 	if (pmap_attributes)
 		pmap_attributes[pind] |= PT_M;
 
-/*	panic("pmap_modified_emulation: Not yet completed\n");*/
+/*	panic("pmap_modified_emulation: Not yet completed");*/
 
 /* Return, indicating the problem has been dealt with */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.11 1998/07/01 05:32:37 angelos Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.12 1999/01/11 05:11:02 millert Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			panic("dec_2100_a50_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -159,7 +159,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			panic("dec_2100_a50_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -179,7 +179,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			panic("dec_2100_a50_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};

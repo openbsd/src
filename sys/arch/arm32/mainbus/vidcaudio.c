@@ -204,7 +204,7 @@ vidcaudio_attach(parent, self, aux)
 
 	ag.silence = kmem_alloc(kernel_map, NBPG);
 	if (ag.silence == NULL)
-		panic("vidcaudio: Cannot allocate memory\n");
+		panic("vidcaudio: Cannot allocate memory");
 
 	bzero((char *)ag.silence, NBPG);
 	bcopy((char *)beep_waveform, (char *)ag.silence, sizeof(beep_waveform));

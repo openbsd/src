@@ -1,4 +1,4 @@
-/*	$OpenBSD: dec_kn20aa.c,v 1.6 1997/01/24 19:56:30 niklas Exp $	*/
+/*	$OpenBSD: dec_kn20aa.c,v 1.7 1999/01/11 05:10:59 millert Exp $	*/
 /*	$NetBSD: dec_kn20aa.c,v 1.16 1996/11/25 03:59:22 cgd Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ dec_kn20aa_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %d\n",
+		panic("consinit: unknown console type %d",
 		    ctb->ctb_term_type);
 	}
 }

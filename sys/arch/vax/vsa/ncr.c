@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.3 1997/09/10 12:08:37 maja Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.4 1999/01/11 05:12:09 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.8 1997/02/26 22:29:12 gwr Exp $	*/
 
 /* #define DEBUG	/* */
@@ -439,7 +439,7 @@ si_attach(parent, self, aux)
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
 	sc->sc_dma = (struct si_dma_handle *) malloc(i);
 	if (sc->sc_dma == NULL)
-		panic("si: dvma_malloc failed\n");
+		panic("si: dvma_malloc failed");
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
@@ -646,7 +646,7 @@ si_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("si_dma_alloc: xlen=0x%x\n", xlen);
+		panic("si_dma_alloc: xlen=0x%x", xlen);
 
 	/*
 	 * Never attempt single transfers of more than 63k, because

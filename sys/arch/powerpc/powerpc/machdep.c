@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 1999/01/07 23:16:06 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 1999/01/11 05:11:54 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -884,7 +884,7 @@ ppc_intr_establish(lcv, ih, level, func, arg, name)
 	void *arg;
 	char *name;
 {
-	panic("ppc_intr_establish called before interrupt controller configured: driver %s\n", name);
+	panic("ppc_intr_establish called before interrupt controller configured: driver %s", name);
 }
 
 intr_establish_t *intr_establish_func = ppc_intr_establish;;

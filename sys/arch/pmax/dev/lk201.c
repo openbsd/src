@@ -331,7 +331,7 @@ LKgetc(dev)
 #endif
 
 	if (raw_kbd_getc == NULL) {
-		panic("Reading from LK-201 before keyboard driver diverted\n");
+		panic("Reading from LK-201 before keyboard driver diverted");
 		return (-1);
 	}
 

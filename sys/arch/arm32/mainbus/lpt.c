@@ -324,7 +324,7 @@ lptattach(parent, self, aux)
 		sc->sc_ih.ih_name = "lpt";
 #endif
 		if (irq_claim(mb->mb_irq, &sc->sc_ih))
-			panic("Cannot claim IRQ %d for lpt%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
+			panic("Cannot claim IRQ %d for lpt%d", mb->mb_irq, sc->sc_dev.dv_unit);
 
 	}
 #if defined(INET) && defined(PLIP)

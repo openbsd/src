@@ -1,4 +1,4 @@
-/*	$Id: if_ie.c,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+/*	$Id: if_ie.c,v 1.3 1999/01/11 05:11:42 millert Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -1416,7 +1416,7 @@ iereset(sc)
 
 #ifdef notdef
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
-		panic("ie disappeared!\n");
+		panic("ie disappeared!");
 #endif
 
 	sc->sc_arpcom.ac_if.if_flags |= IFF_UP;
@@ -1606,7 +1606,7 @@ setup_bufs(sc)
 
 	sc->nframes = n / r;
 	if (sc->nframes <= 0)
-		panic("ie: bogus buffer calc\n");
+		panic("ie: bogus buffer calc");
 	if (sc->nframes > MXFRAMES)
 		sc->nframes = MXFRAMES;
 

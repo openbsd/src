@@ -203,7 +203,7 @@ quadmouseopen(dev, flag, mode, p)
 	WriteByte(IOMD_T1GO, 0);
 	
 	if (irq_claim(IRQ_TIMER1, &sc->sc_ih))
-		panic("Cannot claim TIMER1 IRQ for quadmouse%d\n", sc->sc_device.dv_unit);
+		panic("Cannot claim TIMER1 IRQ for quadmouse%d", sc->sc_device.dv_unit);
 
 	return(0);
 }
@@ -220,7 +220,7 @@ quadmouseclose(dev, flag, mode, p)
 	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[unit];
     
 	if (irq_release(IRQ_TIMER1, &sc->sc_ih) != 0)
-		panic("Cannot release IRA\n");
+		panic("Cannot release IRA");
 
 	sc->proc = NULL;
 	sc->sc_state = 0;

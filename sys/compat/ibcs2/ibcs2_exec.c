@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.8 1998/07/28 00:13:24 millert Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.9 1999/01/11 05:12:12 millert Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ n	 */
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k4k_exec.c,v 1.1 1997/01/13 11:07:52 niklas Exp $	*/
+/*	$OpenBSD: m68k4k_exec.c,v 1.2 1999/01/11 05:12:14 millert Exp $	*/
 /*	$NetBSD: m68k4k_exec.c,v 1.1 1996/09/10 22:01:20 thorpej Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

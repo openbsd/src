@@ -229,11 +229,11 @@ data_abort_handler(frame)
 		base = (fault_instruction >> 16) & 0x0f;
 		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
+			panic("Abort handler cannot fix this :-(");
 		}
 		if (base == 15) {
 			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
+			panic("Abort handler cannot fix this :-(");
 		}
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >=0)
@@ -255,7 +255,7 @@ data_abort_handler(frame)
 			offset = fault_instruction & 0x0f;
 			if (offset == base) {
 				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
+				panic("Abort handler cannot fix this :-(");
 			}
                 
 /* Register offset - hard we have to cope with shifts ! */
@@ -266,12 +266,12 @@ data_abort_handler(frame)
 			else {
 				if ((fault_instruction & (1 << 7)) != 0) {
 					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
+					panic("Abort handler cannot fix this :-(");
 				}
 				shift = ((fault_instruction >> 8) & 0xf);
 				if (base == shift) {
 					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
+					panic("Abort handler cannot fix this :-(");
 				}
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >=0)
@@ -297,7 +297,7 @@ data_abort_handler(frame)
 				break;
 			case 3 : /* Rotate right */
 				disassemble(fault_pc);
-				panic("Abort handler cannot fix this yet :-(\n");
+				panic("Abort handler cannot fix this yet :-(");
 				break;
 			}
 
@@ -340,7 +340,7 @@ data_abort_handler(frame)
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
 				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
+				panic("Abort handler cannot fix this :-(");
 			}
 			count = 0;
 			for (loop = 0; loop < 16; ++loop) {
@@ -387,11 +387,11 @@ data_abort_handler(frame)
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
+				panic("Abort handler cannot fix this :-(");
 			}
 			if (base == 15) {
 				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
+				panic("Abort handler cannot fix this :-(");
 			}
 
 			offset = (fault_instruction & 0xff) << 2;
@@ -461,7 +461,7 @@ data_abort_handler(frame)
 			return;
 		if (pmap_modified_emulation(kernel_pmap, va))
 			return;
-		panic("no pcb ... we're toast !\n");
+		panic("no pcb ... we're toast !");
 	}
 
 	if (pcb != curpcb) {
@@ -503,7 +503,7 @@ copyfault:
 		++onfault_count;
 		if (onfault_count > 10) {
 			traceback();
-			panic("Eaten by zombies\n");
+			panic("Eaten by zombies");
 		}
 		return;
 	}
@@ -528,7 +528,7 @@ copyfault:
 	case FAULT_WRTBUF_1:              /* Write Buffer Fault */
 /* If this happens forget it no point in continuing */
 
-		panic("Write Buffer Fault - Halting\n");
+		panic("Write Buffer Fault - Halting");
 		break;
 
 	case FAULT_ALIGN_0 | FAULT_USER: /* Alignment Fault */
@@ -543,7 +543,7 @@ copyfault:
  * register in the CPU. Might as well panic as the kernel was not compiled
  * for aligned accesses.
  */
-		panic("Alignment fault - Halting\n");
+		panic("Alignment fault - Halting");
 /*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);*/
 		break;
           
@@ -559,7 +559,7 @@ copyfault:
 /* What will accutally cause a bus error ? */
 /* Real bus errors are not a process problem but hardware */
  
-		panic("Bus Error - Halting\n");
+		panic("Bus Error - Halting");
 /*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);*/
 		break;
           
@@ -577,7 +577,7 @@ copyfault:
  * PTE's but if this happens it implies a kernel problem.
  */
  
-		panic("Domain Error - Halting\n");
+		panic("Domain Error - Halting");
 /*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);*/
 		break;
 
@@ -630,7 +630,7 @@ copyfault:
 			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 			    fault_pc);
 			postmortem(frame);
-			panic("permission fault in kernel by kernel\n");
+			panic("permission fault in kernel by kernel");
 		} else
 			map = &vm->vm_map;
 
@@ -661,7 +661,7 @@ copyfault:
 			ftype |= VM_PROT_WRITE; 
 
 /*		if (!(ftype & VM_PROT_WRITE)) {
-			panic("permission fault on a read !\n");
+			panic("permission fault on a read !");
 		}*/
 
 		if (pmap_modified_emulation(map->pmap, va))
@@ -683,7 +683,7 @@ copyfault:
 			break;
 		}
 	}            
-/*		panic("Page Permission Fault - Halting\n");*/
+/*		panic("Page Permission Fault - Halting");*/
 		break;
 
 #if 0          
@@ -705,7 +705,7 @@ copyfault:
 		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 		    fault_pc);
 		postmortem(frame);
-		panic("Page Permission Fault - (in SVC mode) Halting\n");
+		panic("Page Permission Fault - (in SVC mode) Halting");
 		break;
 #endif
 
@@ -723,7 +723,7 @@ copyfault:
 		trapsignal(p, SIGBUS, FAULT_PERM_S);
 		break;
 
-/*		panic("Section Permission Fault - Halting\n");
+/*		panic("Section Permission Fault - Halting");
 		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);
 		break;*/
 
@@ -735,7 +735,7 @@ copyfault:
  * These faults imply that the PTE is corrupt. Likely to be a kernel
  * fault so we had better stop.
  */
-		panic("Bus Error Translation - Halting\n");
+		panic("Bus Error Translation - Halting");
 		break;
 /*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);
 		break;*/
@@ -826,7 +826,7 @@ copyfault:
 
 /*
 		if (*(((pt_entry_t **)(PROCESS_PAGE_TBLS_BASE + va >> (PD_SHIFT+2)))[]) == 0)
-			panic("vm_fault: Page table is needed first\n")
+			panic("vm_fault: Page table is needed first")
 */
 
 		rv = vm_fault(map, va, ftype, FALSE);
@@ -862,7 +862,7 @@ nogo:
 		trapsignal(p, SIGSEGV, FAULT_TRANS_P);
 		break;
 		}            
-/*		panic("Page Fault - Halting\n");*/
+/*		panic("Page Fault - Halting");*/
 		break;
           
 	case FAULT_TRANS_S:              /* Section Translation Fault */
@@ -978,7 +978,7 @@ nogo1:
 		trapsignal(p, SIGSEGV, FAULT_TRANS_S);
 		break;
 		}            
-/*		panic("Section Fault - Halting\n");
+/*		panic("Section Fault - Halting");
 		break;*/
           
 	default :
@@ -992,7 +992,7 @@ we_re_toast:
 
 		postmortem(frame);
 
-		panic("Fault cannot be handled\n");
+		panic("Fault cannot be handled");
 		break;
 	}
 
@@ -1043,7 +1043,7 @@ prefetch_abort_handler(frame)
 		postmortem(frame);
 		pmap_debug_level = 0;
 		(void)splx(s);
-		panic("Fault handler not in SVC mode\n");
+		panic("Fault handler not in SVC mode");
 	}
 
 
@@ -1076,7 +1076,7 @@ prefetch_abort_handler(frame)
 
 	pcb = &p->p_addr->u_pcb;
 	if (pcb == 0)
-		panic("no pcb ... we're toast !\n");
+		panic("no pcb ... we're toast !");
 
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
@@ -1116,7 +1116,7 @@ prefetch_abort_handler(frame)
 		validate_trapframe(frame, 4);
 #endif
 #else
-	        panic("Prefetch abort in SVC mode\n");
+	        panic("Prefetch abort in SVC mode");
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.13 1998/07/09 19:26:42 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.14 1999/01/11 05:11:26 millert Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -461,7 +461,7 @@ pci_intr_string(pc, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -478,7 +478,7 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 {
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, what);
 }

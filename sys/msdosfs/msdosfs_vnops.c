@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.19 1999/01/10 23:21:19 art Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.20 1999/01/11 05:12:28 millert Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1205,7 +1205,7 @@ abortit:
 		cn = ip->de_StartCluster;
 		if (cn == MSDOSFSROOT) {
 			/* this should never happen */
-			panic("msdosfs_rename: updating .. in root directory?\n");
+			panic("msdosfs_rename: updating .. in root directory?");
 		} else
 			bn = cntobn(pmp, cn);
 		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,

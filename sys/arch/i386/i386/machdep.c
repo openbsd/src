@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 1999/01/06 01:31:20 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.97 1999/01/11 05:11:24 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -795,7 +795,7 @@ identifycpu()
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
 		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
-			panic("unknown cpu type %d\n", cpu);
+			panic("unknown cpu type %d", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
 		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;

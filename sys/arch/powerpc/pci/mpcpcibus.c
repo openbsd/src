@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.8 1998/08/25 08:20:23 pefo Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.9 1999/01/11 05:11:53 millert Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -484,7 +484,7 @@ mpc_intr_establish(lcv, ih, level, func, arg, name)
 	char *name;
 {
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return isabr_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, name);
 }

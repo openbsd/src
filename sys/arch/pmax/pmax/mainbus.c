@@ -204,7 +204,7 @@ kn01_attach(parent, self, aux)
 		}
 
 		if (nca->ca_name == NULL) {
-			panic("No name for mainbus device\n");
+			panic("No name for mainbus device");
 		}
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)

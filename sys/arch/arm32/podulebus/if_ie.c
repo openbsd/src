@@ -452,7 +452,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	{
 	    sc->sc_irqmode = 0;
 	    printf ( " POLLED" );
-	    panic("Cannot install IRQ handler\n");
+	    panic("Cannot install IRQ handler");
 	}
 	else
 	{
@@ -1306,7 +1306,7 @@ int ieintr ( void *arg )
 
     if ( in_intr==1 )
     {
-	panic ( "ie: INTERRUPT REENTERED\n" );
+	panic ( "ie: INTERRUPT REENTERED" );
     }
 
     /* Clear the interrrupt */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_inode.c,v 1.6 1997/05/30 08:34:39 downsj Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.7 1999/01/11 05:12:38 millert Exp $	*/
 /*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ lfs_update(v)
 	if (lastseg != -1) { \
 		LFS_SEGENTRY(sup, fs, lastseg, sup_bp); \
 		if (num > sup->su_nbytes) \
-			panic("lfs_truncate: negative bytes in segment %d\n", \
+			panic("lfs_truncate: negative bytes in segment %d", \
 			    lastseg); \
 		sup->su_nbytes -= num; \
 		e1 = VOP_BWRITE(sup_bp); \
@@ -324,7 +324,7 @@ lfs_truncate(v)
 	if (ip->i_ffs_blocks < fragstodb(fs, fragsreleased)) {
 		printf("lfs_truncate: frag count < 0\n");
 		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
-		panic("lfs_truncate: frag count < 0\n");
+		panic("lfs_truncate: frag count < 0");
 	}
 #endif
 	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
@@ -360,7 +360,7 @@ lfs_truncate(v)
 		printf("lfs_inode: Warning! %s\n",
 		    "more frags released from inode than are in inode");
 		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
-		panic("lfs_inode: Warning.  More frags released\n");
+		panic("lfs_inode: Warning.  More frags released");
 	}
 #endif
 	fs->lfs_bfree += fragstodb(fs, fragsreleased);

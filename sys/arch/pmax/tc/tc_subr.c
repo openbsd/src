@@ -307,7 +307,7 @@ cpu_tcdesc(cpu)
 		printf("tcattach: Mipsfair (5100), no turbochannel\n");
 		return NULL;
 	} else {
-		panic("cpu_tc: Unrecognized bus type 0x%x\n", cpu);
+		panic("cpu_tc: Unrecognized bus type 0x%x", cpu);
 	}
 }
 
@@ -458,7 +458,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 
 #ifdef DIAGNOSTIC
 	if (tc_enable_interrupt == NULL)
-	    panic("tc_intr_establish: tc_enable not set\n");
+	    panic("tc_intr_establish: tc_enable not set");
 #endif
 
 #ifdef DEBUG

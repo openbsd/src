@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.6 1997/01/24 19:56:34 niklas Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.7 1999/01/11 05:10:59 millert Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.14 1996/11/13 22:20:54 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ interrupt(a0, a1, a2, framep)
 		 *	0	Interprocessor interrupt
 		 *	4	Performance counter
 		 */
-		panic("unexpected interrupt: type 0x%lx, vec 0x%lx\n",
+		panic("unexpected interrupt: type 0x%lx, vec 0x%lx",
 		    a0, a1);
 	}
 }
@@ -210,7 +210,7 @@ badaddr(addr, size)
 		break;
 
 	default:
-		panic("badaddr: invalid size (%ld)\n", size);
+		panic("badaddr: invalid size (%ld)", size);
 	}
 	alpha_mb();
 

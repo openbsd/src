@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 1998/03/30 18:56:10 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 1999/01/11 05:11:05 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -495,7 +495,7 @@ pmap_init(phys_start, phys_end)
 	addr = amigahwaddr;
 	(void)vm_map_find(kernel_map, NULL, 0, &addr, ptoa(namigahwpg), FALSE);
 	if (addr != amigahwaddr)
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 
 	addr = (vm_offset_t)Sysmap;
 	vm_object_reference(kernel_object);
@@ -507,7 +507,7 @@ pmap_init(phys_start, phys_end)
 	 * page table map.   Need to adjust pmap_size() in amiga_init.c.
 	 */
 	if (addr != (vm_offset_t)Sysmap)
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",

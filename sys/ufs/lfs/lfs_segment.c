@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.7 1997/11/06 05:59:22 csapuntz Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.8 1999/01/11 05:12:39 millert Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -593,7 +593,7 @@ lfs_updatemeta(sp)
 	vp = sp->vp;
 	nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
 	if (nblocks < 0)
-		panic("This is a bad thing\n");
+		panic("This is a bad thing");
 	if (vp == NULL || nblocks == 0) 
 		return;
 
@@ -1077,7 +1077,7 @@ lfs_callback(bp)
 	fs = (struct lfs *)bp->b_saveaddr;
 #ifdef DIAGNOSTIC
 	if (fs->lfs_iocount == 0)
-		panic("lfs_callback: zero iocount\n");
+		panic("lfs_callback: zero iocount");
 #endif
 	if (--fs->lfs_iocount == 0)
 		wakeup(&fs->lfs_iocount);

@@ -328,7 +328,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih.ih_level = IPL_BIO;
 	fdc->sc_ih.ih_name = "fdc";
 	if (irq_claim(mb->mb_irq, &fdc->sc_ih))
-		panic("Cannot claim IRQ %d for fdc%d\n", mb->mb_irq, parent->dv_unit);
+		panic("Cannot claim IRQ %d for fdc%d", mb->mb_irq, parent->dv_unit);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
@@ -973,7 +973,7 @@ loop:
 		fiqhandler.fh_r13 = fdc->sc_drq;
 		fiqhandler.fh_mask = 0x01;
 		if (fiq_claim(&fiqhandler) == -1)
-			panic("Cannot claim FIQ vector\n");
+			panic("Cannot claim FIQ vector");
 
 		outb(iobase + fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -1026,7 +1026,7 @@ loop:
 		isa_dmaabort(fdc->sc_drq);
 #endif*/
 		if (fiq_release(&fiqhandler) == -1)
-			panic("Cannot release FIQ vector\n");
+			panic("Cannot release FIQ vector");
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1042,7 +1042,7 @@ loop:
 			isa_dmaabort(fdc->sc_drq);
 #endif*/
 		if (fiq_release(&fiqhandler) == -1)
-			panic("Cannot release FIQ vector\n");
+			panic("Cannot release FIQ vector");
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -1060,7 +1060,7 @@ loop:
 		    fdc->sc_drq);
 #endif*/
 		if (fiq_release(&fiqhandler) == -1)
-			panic("Cannot release FIQ vector\n");
+			panic("Cannot release FIQ vector");
 
 		if (fdc->sc_errors) {
 /*			diskerr(bp, "fd", "soft error", LOG_PRINTF,
@@ -1319,7 +1319,7 @@ load_ramdisc_from_floppy(rd, dev)
 		fdstrategy(bp);
 
 		if (biowait(bp))
-			panic("Cannot load floppy image\n");
+			panic("Cannot load floppy image");
                                                  
 		bcopy((caddr_t)bp->b_data, (caddr_t)rd->rd_addr
 		    + loop * fd_types[type].sectrac * DEV_BSIZE,

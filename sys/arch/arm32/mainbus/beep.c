@@ -137,9 +137,9 @@ beepattach(parent, self, aux)
     
 	sc->sc_buffer0 = kmem_alloc(kernel_map, NBPG);
 	if (sc->sc_buffer0 == 0) 
-		panic("beep: Cannot allocate buffer memory\n");
+		panic("beep: Cannot allocate buffer memory");
 	if ((sc->sc_buffer0 & (NBPG -1)) != 0)
-		panic("beep: Cannot allocate page aligned buffer\n");
+		panic("beep: Cannot allocate page aligned buffer");
 	sc->sc_buffer1 = sc->sc_buffer0;
 
 	sc->sc_sound_cur0 = pmap_extract(kernel_pmap,
@@ -168,7 +168,7 @@ beepattach(parent, self, aux)
 	sc->sc_ih.ih_name = "dma snd ch 0";
 
 	if (irq_claim(IRQ_DMASCH0, &sc->sc_ih))
-		panic("Cannot claim DMASCH0 IRQ for beep%d\n", parent->dv_unit);
+		panic("Cannot claim DMASCH0 IRQ for beep%d", parent->dv_unit);
 
 	disable_irq(IRQ_DMASCH0);
 

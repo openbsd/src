@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.7 1997/09/07 14:05:20 kstailey Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.8 1999/01/11 05:12:05 millert Exp $	*/
 /*	$NetBSD: dvma.c,v 1.5 1996/11/20 18:57:29 gwr Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ dvma_kvtopa(kva, bustype)
 	long mask;
 
 	if (kva < DVMA_SPACE_START || kva >= DVMA_SPACE_END)
-		panic("dvma_kvtopa: bad dmva addr=0x%x\n", kva);
+		panic("dvma_kvtopa: bad dmva addr=0x%x", kva);
 
 	switch (bustype) {
 	case BUS_OBIO:
@@ -163,7 +163,7 @@ dvma_kvtopa(kva, bustype)
 		mask = DVMA_VME_SLAVE_MASK;
 		break;
 	default:
-		panic("dvma_kvtopa: bad bus type %d\n", bustype);
+		panic("dvma_kvtopa: bad bus type %d", bustype);
 	}
 
 	return(kva & mask);

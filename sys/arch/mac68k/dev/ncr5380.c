@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.14 1997/03/08 16:16:55 briggs Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.15 1999/01/11 05:11:35 millert Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ struct ncr_softc *sc;
 #else
 			    if (pdma_ready())
 				return;
-			    panic("Got DMA interrupt without DMA\n");
+			    panic("Got DMA interrupt without DMA");
 #endif
 			}
 			scsi_clr_ipend();

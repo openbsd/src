@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.8 1999/01/10 21:12:08 art Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.9 1999/01/11 05:12:39 millert Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ mfs_badop(v)
 	void *v;
 {
 
-	panic("mfs_badop called\n");
+	panic("mfs_badop called");
 	/* NOTREACHED */
 }
 

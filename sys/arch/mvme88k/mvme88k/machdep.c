@@ -1175,7 +1175,7 @@ intr_establish(int vec, struct intrhand *ihand)
 
 	if (vec < 0 || vec > 255) {
 #if DIAGNOSTIC
-		panic("intr_establish: vec (%x) not between 0 and 0xff\n",
+		panic("intr_establish: vec (%x) not between 0 and 0xff",
 			vec);
 #endif /* DIAGNOSTIC */
 		return (INTR_EST_BADVEC);
@@ -1184,7 +1184,7 @@ intr_establish(int vec, struct intrhand *ihand)
 	if (intr = intr_handlers[vec]) {
 		if (intr->ih_ipl != ihand->ih_ipl) {
 #if DIAGNOSTIC
-			panic("intr_establish: there are other handlers with vec (%x) at ipl %x, but you want it at %x\n",
+			panic("intr_establish: there are other handlers with vec (%x) at ipl %x, but you want it at %x",
 				intr->ih_ipl, vec, ihand->ih_ipl);
 #endif /* DIAGNOSTIC */
 			return (INTR_EST_BADIPL);
@@ -1260,7 +1260,7 @@ ext_int(u_int v, struct m88100_saved_state *eframe)
 	asm volatile("st.b	%1,%0" : "=m" (*pcc2intr_mask) :  "r" (level));
 #endif
 	if (level > 7 || (char)level < 0) {
-		panic("int level (%x) is not between 0 and 7\n", level);
+		panic("int level (%x) is not between 0 and 7", level);
 	}
 
 	/* generate IACK and get the vector */
@@ -1292,7 +1292,7 @@ ext_int(u_int v, struct m88100_saved_state *eframe)
 	/*vec = xxxvec;*/
 
 	if (vec > 0xFF) {
-		panic("interrupt vector %x greater than 255\n", vec);
+		panic("interrupt vector %x greater than 255", vec);
 	}
 
 	enable_interrupt();
@@ -1302,7 +1302,7 @@ ext_int(u_int v, struct m88100_saved_state *eframe)
 			level, vec);
 	}
 	if (intr && intr->ih_ipl != level) {
-		panic("Handler ipl %x not the same as level %x\n",
+		panic("Handler ipl %x not the same as level %x",
 			intr->ih_ipl, level);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.7 1998/12/28 19:13:04 art Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.8 1999/01/11 05:12:22 millert Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -199,7 +199,7 @@ lockmgr(lkp, flags, interlkp, p)
 			panic("lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
 		    lkp->lk_lockholder != pid)
-			panic("lockmgr: non-release on draining lock: %d\n",
+			panic("lockmgr: non-release on draining lock: %d",
 			    flags & LK_TYPE_MASK);
 		lkp->lk_flags &= ~LK_DRAINING;
 		if ((flags & LK_REENABLE) == 0)

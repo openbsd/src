@@ -837,9 +837,9 @@ ipv6_nsolicit(outifp,outgoing,newrt)
   DPRINTF(GROSSEVENT,("dq:\n"));
   DDO(GROSSEVENT,dump_discq(dq));
   DDO(IDL_ERROR,if (dq == NULL) \
-                        panic("dq == NULL in nsolicit().\n"); \
+                        panic("dq == NULL in nsolicit()."); \
                       if (dq->dq_rt != newrt)\
-                        panic("dq <-> rt mismatch in nsolicit.\n");\
+                        panic("dq <-> rt mismatch in nsolicit.");\
                       {\
 		       struct sockaddr_dl *sdl = (struct sockaddr_dl *)\
 			                          newrt->rt_gateway;\

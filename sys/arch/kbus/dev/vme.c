@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.1.1.1 1997/10/14 07:25:29 gingold Exp $	*/
+/*	$OpenBSD: vme.c,v 1.2 1999/01/11 05:11:28 millert Exp $	*/
 /*	$NetBSD: vme.c,v 1.6 1996/11/20 18:57:02 gwr Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ vmeintr_establish(vec, level, ih)
 	struct intrhand *ihs;
 
 	if (vec == -1)
-		panic("vmeintr_establish: uninitialized vec\n");
+		panic("vmeintr_establish: uninitialized vec");
 
 	if (vmeints[vec] == NULL)
 		vmeints[vec] = ih;

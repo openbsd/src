@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.1 1997/07/14 08:14:16 downsj Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.2 1999/01/11 05:11:21 millert Exp $	*/
 /*	$NetBSD: if_le.c,v 1.9 1997/01/30 10:32:54 thorpej Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ le_error(unit, str, stat)
 {
 
 	if (stat & LE_BABL)
-		panic("le%d: been babbling, found by '%s'\n", unit, str);
+		panic("le%d: been babbling, found by '%s'", unit, str);
 	if (stat & LE_CERR)
 		le_stats[unit].collision_error++;
 	if (stat & LE_MISS)
@@ -488,7 +488,7 @@ le_poll(desc, pkt, len)
 		goto cleanup;
 	}
 	if ((cdm->flags & (LE_STP|LE_ENP)) != (LE_STP|LE_ENP))
-		panic("le_poll: chained packet\n");
+		panic("le_poll: chained packet");
 
 	length = cdm->mcnt;
 #ifdef LE_DEBUG
@@ -497,7 +497,7 @@ le_poll(desc, pkt, len)
 #endif
 	if (length >= BUFSIZE) {
 		length = 0;
-		panic("csr0 when bad things happen: %x\n", stat);
+		panic("csr0 when bad things happen: %x", stat);
 		goto cleanup;
 	}
 	if (!length)

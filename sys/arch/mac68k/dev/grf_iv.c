@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.17 1998/05/03 07:12:55 gene Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.18 1999/01/11 05:11:34 millert Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ grfiv_match(parent, vcf, aux)
 
 		if (bus_space_map(oa->oa_tag, QUADRA_DAFB_BASE, 0x1000,
 					0, &bsh)) {
-			panic("failed to map space for DAFB regs.\n");
+			panic("failed to map space for DAFB regs.");
 		}
 
 		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1C, 4) == 0) {
@@ -161,7 +161,7 @@ grfiv_attach(parent, self, aux)
 		sc->sc_tag = oa->oa_tag;
 		if (bus_space_map(sc->sc_tag, QUADRA_DAFB_BASE, 0x1000,
 					0, &sc->sc_regh)) {
-			panic("failed to map space for DAFB regs.\n");
+			panic("failed to map space for DAFB regs.");
 		}
 		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
 		break;

@@ -590,7 +590,7 @@ ispscsicmd(xs)
 			break;
 	}
 	if (i == RQUEST_QUEUE_LEN) {
-		panic("%s: ran out of xflist pointers\n", isp->isp_name);
+		panic("%s: ran out of xflist pointers", isp->isp_name);
 		/* NOTREACHED */
 	} else {
 		isp->isp_xflist[i] = xs;

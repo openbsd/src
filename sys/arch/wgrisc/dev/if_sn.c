@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.1.1.1 1997/02/06 16:02:42 pefo Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.2 1999/01/11 05:12:10 millert Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -847,7 +847,7 @@ camprogram(sc)
 		continue;
 	if (timeout == 0) {
 		/* XXX */
-		panic("sonic: CAM initialisation failed\n");
+		panic("sonic: CAM initialisation failed");
 	}
 	timeout = 10000;
 	while ((csr->s_isr & ISR_LCD) == 0 && timeout--)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.5 1998/07/28 00:13:14 millert Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.6 1999/01/11 05:12:37 millert Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
 /* 
@@ -104,7 +104,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 	 * XXX Rigth now this can't happen, but if one day
 	 * MAXNAMLEN != E2FS_MAXNAMLEN we should handle this more gracefully !
 	 */
-	if (e2dir->e2d_namlen > MAXNAMLEN) panic("ext2fs: e2dir->e2d_namlen\n");
+	if (e2dir->e2d_namlen > MAXNAMLEN) panic("ext2fs: e2dir->e2d_namlen");
 #endif
 	strncpy(ffsdir->d_name, e2dir->e2d_name, ffsdir->d_namlen);
 

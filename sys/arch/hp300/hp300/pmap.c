@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 1997/11/06 19:42:38 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 1999/01/11 05:11:20 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
 
 /* 
@@ -385,7 +385,7 @@ pmap_init(phys_start, phys_end)
 	 */
 	if (addr != (vm_offset_t)Sysmap)
 bogons:
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {

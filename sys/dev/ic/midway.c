@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.23 1999/01/11 02:30:59 aaron Exp $	*/
+/*	$OpenBSD: midway.c,v 1.24 1999/01/11 05:12:17 millert Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -2671,7 +2671,7 @@ defer:					/* defer processing */
     llc = (aal5 && (sc->rxslot[slot].atm_flags & ATM_PH_LLCSNAP)) ? 1 : 0;
     rbd = EN_READ(sc, cur);
     if (MID_RBD_ID(rbd) != MID_RBD_STDID) 
-      panic("en_service: id mismatch\n");
+      panic("en_service: id mismatch");
 
     if (rbd & MID_RBD_T) {
       mlen = 0;			/* we've got trash */

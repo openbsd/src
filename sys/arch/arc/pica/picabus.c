@@ -1,4 +1,4 @@
-/*	$OpenBSD: picabus.c,v 1.10 1998/03/16 09:38:52 pefo Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ int
 pica_intrnull(val)
 	void *val;
 {
-	panic("uncaught PICA intr for slot %d\n", val);
+	panic("uncaught PICA intr for slot %d", val);
 }
 
 /*

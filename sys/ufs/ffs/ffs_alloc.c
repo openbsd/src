@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.13 1998/03/27 11:51:01 pefo Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.14 1999/01/11 05:12:37 millert Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 		panic("ffs_alloc: bad size");
 	}
 	if (cred == NOCRED)
-		panic("ffs_alloc: missing credential\n");
+		panic("ffs_alloc: missing credential");
 #endif /* DIAGNOSTIC */
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
@@ -187,7 +187,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		panic("ffs_realloccg: bad size");
 	}
 	if (cred == NOCRED)
-		panic("ffs_realloccg: missing credential\n");
+		panic("ffs_realloccg: missing credential");
 #endif /* DIAGNOSTIC */
 	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
@@ -1426,7 +1426,7 @@ ffs_freefile(ap)
 	pip = VTOI(ap->a_pvp);
 	fs = pip->i_fs;
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s\n",
+		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 		    pip->i_dev, ino, fs->fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),

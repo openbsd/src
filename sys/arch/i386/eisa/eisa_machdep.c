@@ -155,7 +155,7 @@ eisa_intr_string(ec, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_string: bogus handle 0x%x\n", ih);
+		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -172,7 +172,7 @@ eisa_intr_establish(ec, ih, type, level, func, arg, what)
 {
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_establish: bogus handle 0x%x\n", ih);
+		panic("eisa_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, type, level, func, arg, what);
 }

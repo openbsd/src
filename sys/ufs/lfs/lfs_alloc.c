@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.6 1997/05/30 08:34:33 downsj Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.7 1999/01/11 05:12:38 millert Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ lfs_vfree(v)
 		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < sizeof(struct dinode))
-			panic("lfs_vfree: negative byte count (segment %d)\n",
+			panic("lfs_vfree: negative byte count (segment %d)",
 			    datosn(fs, old_iaddr));
 #endif
 		sup->su_nbytes -= sizeof(struct dinode);

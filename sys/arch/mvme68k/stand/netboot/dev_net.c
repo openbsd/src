@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.6 1996/05/16 02:55:36 chuck Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.7 1999/01/11 05:11:41 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -191,7 +191,7 @@ machdep_common_ether(ether)
 		ea = (u_char *) ETHER_ADDR_147;
 
 		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
-			panic("ERROR: ethernet address not set!\r\n");
+			panic("ERROR: ethernet address not set!");
 		ether[0] = 0x08;
 		ether[1] = 0x00;
 		ether[2] = 0x3e;
@@ -202,7 +202,7 @@ machdep_common_ether(ether)
 		ea = (u_char *) ETHER_ADDR_16X;
 
 		if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
-			panic("ERROR: ethernet address not set!\r\n");
+			panic("ERROR: ethernet address not set!");
 		ether[0] = ea[0];
 		ether[1] = ea[1];
 		ether[2] = ea[2];

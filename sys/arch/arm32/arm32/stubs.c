@@ -117,7 +117,7 @@ do_mountroot()
 
 	if (major(rootdev) == 18 && bootrd) {
 		if (load_ramdisc_from_floppy(bootrd, makedev(17, minor(rootdev))) != 0)
-			panic("Failed to load ramdisc\n");
+			panic("Failed to load ramdisc");
 		boothowto |= RB_SINGLE;
 		rootdev = makedev(major(rootdev), 0);
 	}

@@ -237,7 +237,7 @@ irq_claim(irq, handler)
  */
 
 	if (irq >= IRQ_EXPCARD0 && irqhandlers[IRQ_PODULE] == NULL)
-		panic("Podule IRQ %d claimed but no podulebus handler installed\n",
+		panic("Podule IRQ %d claimed but no podulebus handler installed",
 		    irq);
 
 	enable_irq(irq);
@@ -408,7 +408,7 @@ void
 stray_irqhandler(mask)
 	u_int mask;
 {
-/*	panic("Stray IRQ received (%08x)\n", mask);*/
+/*	panic("Stray IRQ received (%08x)", mask);*/
 	static u_int stray_irqs = 0;
 
 	if (++stray_irqs <= 8)

@@ -995,7 +995,7 @@ pmap_bootstrap(vm_offset_t	load_start,	/* IN */
 	panic("pmap_bootstrap: VM page size < MACHINE page size");
     }
     if (!PAGE_ALIGNED(load_start)) {
-	panic("pmap_bootstrap : \"load_start\" not on the m88k page boundary : 0x%x\n", load_start);
+	panic("pmap_bootstrap : \"load_start\" not on the m88k page boundary : 0x%x", load_start);
     }
 
     /*
@@ -5155,7 +5155,7 @@ pmap_set_batc(
     register batc_template_t batctmp;
 
     if (i < 0 || i > (BATC_MAX - 1)) {
-        panic("pmap_set_batc: illegal batc number\n");
+        panic("pmap_set_batc: illegal batc number");
         /* bad number */
         return;
     }

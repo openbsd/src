@@ -687,7 +687,7 @@ ipv6_rtrequest(req, rt, sa)
        */
 
       if (rt->rt_gateway == NULL)
-	panic("ipv6_rtrequest():  No rt_gateway at the RTM_RESOLVE code.\n");
+	panic("ipv6_rtrequest():  No rt_gateway at the RTM_RESOLVE code.");
 
       /*
        * Order of bit checking is very important.  I check TUNNEL first,

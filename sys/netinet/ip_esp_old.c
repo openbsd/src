@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.24 1999/01/08 21:40:27 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.25 1999/01/11 05:12:30 millert Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -404,7 +404,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	    do {
 		mi = (mo = mi)->m_next;
 		if (mi == NULL)
-		    panic("esp_old_input(): bad chain (i)\n");
+		    panic("esp_old_input(): bad chain (i)");
 	    } while (mi->m_len == 0);
 
 	    if (mi->m_len < blks - rest)
@@ -700,7 +700,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    do {
 		mi = (mo = mi)->m_next;
 		if (mi == NULL)
-		    panic("esp_old_output(): bad chain (i)\n");
+		    panic("esp_old_output(): bad chain (i)");
 	    } while (mi->m_len == 0);
 
 	    if (mi->m_len < blks - rest)

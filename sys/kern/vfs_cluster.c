@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.15 1998/10/13 00:28:32 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.16 1999/01/11 05:12:24 millert Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -292,7 +292,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 
 #ifdef DIAGNOSTIC
 	if (size != vp->v_mount->mnt_stat.f_iosize)
-		panic("cluster_rbuild: size %ld != filesize %ld\n",
+		panic("cluster_rbuild: size %ld != filesize %ld",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
 	if ((u_quad_t)size * (u_quad_t)(lbn + run + 1) > filesize)
@@ -612,7 +612,7 @@ cluster_wbuild(vp, last_bp, size, start_lbn, len, lbn)
 
 #ifdef DIAGNOSTIC
 	if (size != vp->v_mount->mnt_stat.f_iosize)
-		panic("cluster_wbuild: size %ld != filesize %ld\n",
+		panic("cluster_wbuild: size %ld != filesize %ld",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
 redo:

@@ -145,7 +145,7 @@ view_t *v;
 	if (mode->current_view == v) {
 #if 0
 		if (v->flags & VF_DISPLAY)
-			panic("Cannot shutdown display\n"); /* XXX */
+			panic("Cannot shutdown display"); /* XXX */
 #endif
 		mode->current_view = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvax.c,v 1.3 1997/09/10 12:04:52 maja Exp $ */
+/*	$OpenBSD: uvax.c,v 1.4 1999/01/11 05:12:08 millert Exp $ */
 /*	$NetBSD: uvax.c,v 1.4 1997/02/19 10:04:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -99,7 +99,7 @@ uvax_phys2virt(phys)
 
 #ifdef DIAGNOSTIC
 	if (virt == 0)
-		panic("invalid argument %p to uvax_phys2virt()\n", phys);
+		panic("invalid argument %p to uvax_phys2virt()", phys);
 #endif
 	return (virt);
 }

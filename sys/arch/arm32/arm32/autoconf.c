@@ -150,7 +150,7 @@ set_root_device()
 	}
 
 	if (rootdev == NODEV)
-		panic("No root device specified in boot config\n");
+		panic("No root device specified in boot config");
 }
 
 

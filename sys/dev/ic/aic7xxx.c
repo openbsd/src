@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.17 1997/07/03 17:46:53 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.18 1999/01/11 05:12:15 millert Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.17 1996/10/21 22:34:04 thorpej Exp $	*/
 
 /*
@@ -991,7 +991,7 @@ ahc_intr(arg)
 		int num_errors =  sizeof(hard_error)/sizeof(hard_error[0]);
 		for(i = 0; error != 1 && i < num_errors; i++)
 			error >>= 1;
-                panic("%s: brkadrint, %s at seqaddr = 0x%x\n",
+                panic("%s: brkadrint, %s at seqaddr = 0x%x",
 		      ahc_name(ahc), hard_error[i].errmesg,
 		      (AHC_INB(ahc, SEQADDR1) << 8) |
 		      AHC_INB(ahc, SEQADDR0));

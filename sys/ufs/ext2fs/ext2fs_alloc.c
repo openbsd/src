@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.3 1997/06/12 21:09:31 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.4 1999/01/11 05:12:35 millert Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.1 1997/06/11 09:33:41 bouyer Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 	fs = ip->i_e2fs;
 #ifdef DIAGNOSTIC
 	if (cred == NOCRED)
-		panic("ext2fs_alloc: missing credential\n");
+		panic("ext2fs_alloc: missing credential");
 #endif /* DIAGNOSTIC */
 	if (fs->e2fs.e2fs_fbcount == 0)
 		goto nospace;
@@ -557,7 +557,7 @@ ext2fs_vfree(v)
 	pip = VTOI(ap->a_pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s\n",
+		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),

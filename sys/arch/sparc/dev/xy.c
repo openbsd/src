@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.11 1998/10/03 21:18:58 millert Exp $	*/
+/*	$OpenBSD: xy.c,v 1.12 1999/01/11 05:11:57 millert Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1390,7 +1390,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 	if (iopb == NULL) { /* nothing doing? */
 		if (type == XY_SUB_NORM || type == XY_SUB_NOQ)
 			return(XY_ERR_AOK);
-		panic("xyc_submit_iorq: xyc_chain failed!\n");
+		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 	iopbaddr = (u_long) iopb - DVMA_BASE;
 

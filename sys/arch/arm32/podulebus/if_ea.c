@@ -508,7 +508,7 @@ ea_claimirq(sc)
 
 	dprintf(("ea_claimirq(%d)\n", sc->sc_irq));
 	if (irq_claim(sc->sc_irq, &sc->sc_ih))
-		panic("Cannot install IRQ handler for IRQ %d\n", sc->sc_irq);
+		panic("Cannot install IRQ handler for IRQ %d", sc->sc_irq);
 
 	sc->sc_irqclaimed = 1;
 }
@@ -526,7 +526,7 @@ ea_releaseirq(sc)
 
 	dprintf(("ea_releaseirq(%d)\n", sc->sc_irq));
 	if (irq_release(sc->sc_irq, &sc->sc_ih))
-		panic("Cannot release IRQ handler for IRQ %d\n", sc->sc_irq);
+		panic("Cannot release IRQ handler for IRQ %d", sc->sc_irq);
 
 	sc->sc_irqclaimed = 0;
 }

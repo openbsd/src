@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbus.c,v 1.1.1.1 1997/10/14 07:25:29 gingold Exp $	*/
+/*	$OpenBSD: kbus.c,v 1.2 1999/01/11 05:11:27 millert Exp $	*/
 /*	$NetBSD: kbus.c,v 1.23 1996/11/20 18:56:56 gwr Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ kbus_attach(parent, self, aux)
 	    ioasic = (struct ioasic_reg *)
 	      bus_mapin (BUS_KBUS, IOASIC_ADDR, IOASIC_SIZE);
 	    if (!ioasic)
-	      panic ("Cannot map IOASIC\n");
+	      panic ("Cannot map IOASIC");
 	    intr_establish (INTR_IOASIC, 0, &ioasic_intrhand);
 	  }
 

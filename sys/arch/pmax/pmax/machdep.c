@@ -1615,7 +1615,7 @@ kn02_enable_intr(slotno, handler, sc, on)
 #endif
 
 	if (slotno > TC_MAX_LOGICAL_SLOTS)
-		panic("kn02_enable_intr: bogus slot %d\n", slotno);
+		panic("kn02_enable_intr: bogus slot %d", slotno);
 
 	if (on)  {
 		/*printf("kn02: slot %d handler 0x%x\n", slotno, handler);*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.8 1998/07/28 00:13:23 millert Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.9 1999/01/11 05:12:12 millert Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ exec_linux_aout_prep_qmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return (ETXTBSY);
 	}

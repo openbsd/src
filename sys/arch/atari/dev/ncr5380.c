@@ -713,7 +713,7 @@ struct ncr_softc *sc;
 #else
 			    if (pdma_ready())
 				return;
-			    panic("Got DMA interrupt without DMA\n");
+			    panic("Got DMA interrupt without DMA");
 #endif
 			}
 			scsi_clr_ipend();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.11 1998/08/06 21:28:45 csapuntz Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.12 1999/01/11 05:12:27 millert Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ null_bypass(v)
 	 */
 	if (descp->vdesc_vp_offsets == NULL ||
 	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
-		panic ("null_bypass: no vp's in map.\n");
+		panic ("null_bypass: no vp's in map.");
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.15 1998/08/07 01:56:11 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.16 1999/01/11 05:12:24 millert Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -694,7 +694,7 @@ relookup(dvp, vpp, cnp)
 	 * Check for symbolic link
 	 */
 	if (dp->v_type == VLNK && (cnp->cn_flags & FOLLOW))
-		panic ("relookup: symlink found.\n");
+		panic ("relookup: symlink found.");
 #endif
 
 	/*

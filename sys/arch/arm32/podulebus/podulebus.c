@@ -198,7 +198,7 @@ podulebusprint(aux, podulebus)
 		else if (pa->pa_podule->slottype == SLOT_NET)
 			printf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
 		else
-			panic("Invalid slot type\n");
+			panic("Invalid slot type");
 	}
 
 /* XXXX print flags */
@@ -535,7 +535,7 @@ podulebusattach(parent, self, aux)
 	poduleirq.ih_name = "podulebus";
 
 	if (irq_claim(IRQ_PODULE, &poduleirq))
-		panic("Cannot claim IRQ for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
+		panic("Cannot claim IRQ for podulebus%d", IRQ_PODULE, parent->dv_unit);
 
 /* Find out what hardware is bolted on */
 

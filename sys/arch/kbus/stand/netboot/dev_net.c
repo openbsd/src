@@ -1,4 +1,4 @@
-/*	$Id: dev_net.c,v 1.1.1.1 1997/10/14 07:25:32 gingold Exp $ */
+/*	$Id: dev_net.c,v 1.2 1999/01/11 05:11:30 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -189,7 +189,7 @@ machdep_common_ether(ether)
   int i;
 
   if (ea == NULL)
-    panic ("ERROR: ethernet address not set!\n");
+    panic ("ERROR: ethernet address not set!");
   else
     printf ("Try to parse %s\n", ea);
 
@@ -202,7 +202,7 @@ machdep_common_ether(ether)
       else if (*ea >= 'A' && *ea <= 'F')
 	c = *ea - 'A' + 10;
       else
-	panic ("Bad character for enet addr (%s)\n", ea);
+	panic ("Bad character for enet addr (%s)", ea);
       ea++;
       if (i == 5 && *ea == 0)
 	break;
@@ -220,10 +220,10 @@ machdep_common_ether(ether)
       else if (*ea >= 'A' && *ea <= 'F')
 	c |= *ea - 'A' + 10;
       else
-	panic ("Bad character for enet addr (%s)\n", ea);
+	panic ("Bad character for enet addr (%s)", ea);
       ea++;
       if (i != 5 && *ea != ':')
-	panic ("Bad character for enet addr (%s)\n", ea);
+	panic ("Bad character for enet addr (%s)", ea);
       ea++;
       *ether++ = c;
     }

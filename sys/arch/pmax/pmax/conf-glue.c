@@ -165,7 +165,7 @@ pmax_add_scsi(dp, unit)
 {
 	struct pmax_ctlr *cp  = &pmax_scsi_table[nscsi++];
 	if (nscsi > MAX_SCSI) {
-		panic("Too many old-style SCSI adaptors\n");
+		panic("Too many old-style SCSI adaptors");
 	}
 	cp->pmax_driver = dp;
 	cp->pmax_unit = unit;
@@ -244,7 +244,7 @@ noattach(parent, self, aux)
 	       ca->ca_name, self->dv_unit,
 	       parent->dv_xname);
 #else
-	panic("Can't do new-config attach of old device %s%d\n",
+	panic("Can't do new-config attach of old device %s%d",
 	      ca->ca_name, self->dv_unit);
 #endif
 	return;

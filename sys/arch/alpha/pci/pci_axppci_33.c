@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.10 1998/07/01 05:32:38 angelos Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.11 1999/01/11 05:11:03 millert Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -158,7 +158,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -178,7 +178,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.3 1996/11/28 23:37:39 niklas Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.4 1999/01/11 05:11:24 millert Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -357,7 +357,7 @@ ahc_isa_attach(parent, self, aux)
 		model = EISA_PRODUCT_ADP7757;
 		type = AHC_284;
 	} else {
-		panic("ahc_isa_attach: Unknown device type %s\n", idstring);
+		panic("ahc_isa_attach: Unknown device type %s", idstring);
 	}
 	printf(": %s\n", model);
 

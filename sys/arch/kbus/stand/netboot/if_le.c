@@ -1,4 +1,4 @@
-/*	$Id: if_le.c,v 1.1.1.1 1997/10/14 07:25:32 gingold Exp $ */
+/*	$Id: if_le.c,v 1.2 1999/01/11 05:11:30 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -170,7 +170,7 @@ le_error(nif, str, ler1)
 	printf ("le_error (%s) C0: %b\n", str, ler1->ler1_rdp, LE_C0_BITS);
 	/* ler1->ler1_rap = LE_CSRO done in caller */
 	if (ler1->ler1_rdp & LE_C0_BABL)
-		panic("le%d: been babbling, found by '%s'\n",
+		panic("le%d: been babbling, found by '%s'",
 		      nif->nif_unit, str);
 	if (ler1->ler1_rdp & LE_C0_CERR) {
 		le_stats.collision_error++;
@@ -314,12 +314,12 @@ le_poll(desc, pkt, len)
 		goto cleanup;
 	}
 	if ((rmd->rmd1_bits & (LE_R1_STP | LE_R1_ENP)) != (LE_R1_STP | LE_R1_ENP))
-		panic("le_poll: chained packet\n");
+		panic("le_poll: chained packet");
 
 	length = rmd->rmd3;
 	if (length >= LEMTU) {
 		length = 0;
-		panic("csr0 when bad things happen: %x\n", ler1->ler1_rdp);
+		panic("csr0 when bad things happen: %x", ler1->ler1_rdp);
 		goto cleanup;
 	}
 	if (!length)

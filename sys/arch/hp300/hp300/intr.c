@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.3 1999/01/07 23:15:57 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.4 1999/01/11 05:11:20 millert Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1997/05/01 16:24:26 thorpej Exp $	*/
 
 /*-
@@ -253,7 +253,7 @@ intr_dispatch(evec)
 
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
-		panic("isrdispatch: bad vec 0x%x\n", vec);
+		panic("isrdispatch: bad vec 0x%x", vec);
 	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;

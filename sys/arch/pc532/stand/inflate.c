@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inflate.c,v 1.1.1.1 1995/10/18 08:51:23 deraadt Exp $
+ *	$Id: inflate.c,v 1.2 1999/01/11 05:11:48 millert Exp $
  */
 
 #include <sys/param.h>
@@ -205,7 +205,7 @@ void nextstate()
   switch (state) {
   case 0:
 	if (N_BADMAG(x))
-		panic("Bad exec format\n");
+		panic("Bad exec format");
 	load = addr = (uch *)(x.a_entry & 0x00ffff00);
 	printf("Uncompressing @ 0x%x\n", addr);
 	bsize = x.a_text;

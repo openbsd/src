@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_3000_300.c,v 1.5 1996/10/30 22:41:16 niklas Exp $	*/
+/*	$OpenBSD: tc_3000_300.c,v 1.6 1999/01/11 05:11:04 millert Exp $	*/
 /*	$NetBSD: tc_3000_300.c,v 1.12 1996/10/13 03:00:37 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ tc_3000_300_intrnull(val)
 	void *val;
 {
 
-	panic("tc_3000_300_intrnull: uncaught TC intr for cookie %ld\n",
+	panic("tc_3000_300_intrnull: uncaught TC intr for cookie %ld",
 	    (u_long)val);
 }
 

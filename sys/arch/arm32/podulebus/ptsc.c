@@ -196,7 +196,7 @@ ptscattach(pdp, dp, auxp)
 #if PTSC_POLL == 0
 	if (irq_claim(IRQ_PODULE /*IRQ_EXPCARD0 + sc->sc_specific.sc_podule_number */,
 		      &sc->sc_softc.sc_ih))
-	    panic("ptsc: Cannot install IRQ handler\n");
+	    panic("ptsc: Cannot install IRQ handler");
 #endif
 	
 	printf("\n");

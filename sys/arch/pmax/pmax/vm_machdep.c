@@ -390,7 +390,7 @@ kvtophys(vm_offset_t kva)
 		printf("Virtual address %lx: cannot map to physical\n",
 		       kva);
                 phys = 0;
-		/*panic("non-kernel address to kvtophys\n");*/
+		/*panic("non-kernel address to kvtophys");*/
 		return(kva); /* XXX -- while debugging ASC */
         }
         return(phys);

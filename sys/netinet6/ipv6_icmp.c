@@ -958,7 +958,7 @@ int ipv6_icmp_send(struct socket *so, int req, struct mbuf *m,
 
   M_PREPEND(m,sizeof(struct ipv6),M_WAIT);
   if (m == NULL)
-    panic("M_PREPEND died in ipv6_icmp_usrreq().\n");
+    panic("M_PREPEND died in ipv6_icmp_usrreq().");
 
   DPRINTF(EVENT,("Before m_pullup() for %d bytes.\n",\
 			   sizeof(struct ipv6) + ICMPV6_MINLEN));

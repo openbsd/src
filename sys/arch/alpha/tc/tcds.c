@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcds.c,v 1.7 1997/01/24 19:58:22 niklas Exp $	*/
+/*	$OpenBSD: tcds.c,v 1.8 1999/01/11 05:11:05 millert Exp $	*/
 /*	$NetBSD: tcds.c,v 1.16 1996/12/05 01:39:45 cgd Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ tcds_intrnull(val)
 	void *val;
 {
 
-	panic("tcds_intrnull: uncaught TCDS intr for cookie %ld\n",
+	panic("tcds_intrnull: uncaught TCDS intr for cookie %ld",
 	    (u_long)val);
 }
 
