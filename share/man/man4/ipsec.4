@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.20 1999/05/16 19:56:26 alex Exp $
+.\" $OpenBSD: ipsec.4,v 1.21 1999/07/03 20:41:20 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -35,6 +35,19 @@
 .Sh NAME
 .Tn IPsec
 .Nd IP Security Protocol
+.Sh NOTE
+.Tn IPSec
+is enabled with the following
+.Xr sysctl 3
+variables in
+.Pa /etc/sysctl.conf :
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
+.It net.inet.esp.enable
+Enable the ESP IPSec protocol
+.It net.inet.ah.enable
+Enable the AH IPSec protocol
+.El
+.Pp
 .Sh DESCRIPTION
 .Tn IPSec
 is a pair of protocols,
