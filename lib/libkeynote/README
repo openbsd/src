@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.4 1999/10/01 01:08:29 angelos Exp $
+# $OpenBSD: README,v 1.5 1999/10/11 00:09:33 angelos Exp $
 
 This is release 2.0 of the KeyNote trust management library reference
 implementation (in case you are wondering, there was never an official 1.0
@@ -28,13 +28,15 @@ The Makefile creates the libkeynote.a library and the keynote program.
 
 There is a man page for the library calls (keynote.3) and one for the command
 line tool (keynote.1), in the man/ directory. There is also a man page
-about KeyNote itself (keynote.4), which contains some text from the spec.
+about KeyNote itself (keynote.4) and one about assertion syntax
+(keynote.5) which contain some text from the spec.
 
 To view them, use:
 
   nroff -mandoc keynote.1 | more
   nroff -mandoc keynote.3 | more
   nroff -mandoc keynote.4 | more
+  nroff -mandoc keynote.5 | more
 
 Alternatively, you can just install them in your manpath. If your
 nroff does not support the -mandoc flag, use -man instead. For those
