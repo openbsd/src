@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.30 1999/06/21 08:27:07 niklas Exp $	*/
+/*	$OpenBSD: mount.h,v 1.31 1999/07/02 23:35:53 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ struct iso_args {
 #define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
 #define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
 #define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
+#define	ISOFSMNT_NOJOLIET 0x00000008	/* disable Joliet Ext.*/
 
 /*
  * Arguments to mount NFS
