@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.10 1998/08/18 22:58:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 1999/09/26 18:09:03 smurph Exp $
 
-RELOC=0x3F0000 
+RELOC=0xCF0000 
 
 S=	${.CURDIR}/../../../..
 DEFS= 
@@ -18,7 +18,8 @@ CLEANFILES+=bootsd
 
 SRCS=   boot.c conf.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} libgcc.a
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} 
+#libgcc.a
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
