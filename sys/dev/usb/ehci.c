@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.24 2004/10/20 12:45:31 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.25 2004/10/27 12:07:48 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -49,20 +49,17 @@
 
 /*
  * TODO:
- * 1) hold off explorations by companion controllers until ehci has started.
+ * 1) Hold off explorations by companion controllers until ehci has started.
  *
- * 2) The EHCI driver lacks support for interrupt isochronous transfers, so
- *    devices using them don't work.
- *    Interrupt transfers are not difficult, it's just not done. 
- *
- * 3) The meaty part to implement is the support for USB 2.0 hubs.
- *    They are quite compolicated since the need to be able to do
- *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
+ * 2) The meaty part to implement is isochronous transactions. They are
+ *    needed for USB 1 devices below USB 2.0 hubs. They are quite complicated
+ *    since they need to be able to do "transaction translation", ie,
+ *    converting to/from USB 2 and USB 1.
  *    So the hub driver needs to handle and schedule these things, to
  *    assign place in frame where different devices get to go. See chapter
- *    on hubs in USB 2.0 for details. 
+ *    on hubs in USB 2.0 for details.
  *
- * 4) command failures are not recovered correctly
+ * 3) Command failures are not recovered correctly.
 */
 
 #include <sys/cdefs.h>
