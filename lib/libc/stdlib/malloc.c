@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.9 1996/09/06 16:14:36 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.10 1996/09/11 03:04:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -526,8 +526,9 @@ malloc_init ()
     malloc_junk = 1;
 #endif /* EXTRA_SANITY */
 
-    for (p=getenv("MALLOC_OPTIONS"); p && *p; p++) {
-	switch (*p) {
+    if (issetugid() == 0) {
+        for (p=getenv("MALLOC_OPTIONS"); p && *p; p++) {
+	    switch (*p) {
 	    case 'a': malloc_abort   = 0; break;
 	    case 'A': malloc_abort   = 1; break;
 #ifdef MALLOC_STATS
@@ -544,6 +545,7 @@ malloc_init ()
 		wrtwarning("(Init): Unknown char in MALLOC_OPTIONS\n");
 		p = 0;
 		break;
+	    }
 	}
     }
 
