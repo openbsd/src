@@ -1,4 +1,4 @@
-/*	$OpenBSD: hosts_access.c,v 1.10 2002/12/31 02:29:17 itojun Exp $	*/
+/*	$OpenBSD: hosts_access.c,v 1.11 2003/04/19 18:31:48 avsm Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -23,7 +23,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.10 2002/12/31 02:29:17 itojun Exp $";
+static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.11 2003/04/19 18:31:48 avsm Exp $";
 #endif
 #endif
 
@@ -42,6 +42,9 @@ static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.10 2002/12/31 02:29:17 itoju
 #include <errno.h>
 #include <setjmp.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <limits.h>
 #ifdef NETGROUP
 #include <netgroup.h>
 #endif

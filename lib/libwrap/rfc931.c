@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.8 2002/06/03 12:04:08 deraadt Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.9 2003/04/19 18:31:48 avsm Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.8 2002/06/03 12:04:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.9 2003/04/19 18:31:48 avsm Exp $";
 #endif
 
 #include <stdio.h>
@@ -73,11 +73,11 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 	size_t dsize;
 	int ident_timeout_time;
 {
-	u_short rmt_port, our_port;
+	in_port_t rmt_port, our_port;
 	int s, i, gotit, salen;
 	char *cp;
-	u_short *rmt_portp;
-	u_short *our_portp;
+	in_port_t *rmt_portp;
+	in_port_t *our_portp;
 	fd_set *readfds = NULL;
 	fd_set *writefds = NULL;
 	struct sockaddr_storage rmt_query_sin;
@@ -240,7 +240,7 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 			goto out;
 	}
 	
-	if ((sscanf(tbuf,"%u , %u : USERID :%*[^:]:%255s", &rmt_port,
+	if ((sscanf(tbuf,"%hu , %hu : USERID :%*[^:]:%255s", &rmt_port,
 	    &our_port, user) == 3) &&
 	    (ntohs(*rmt_portp) == rmt_port) &&
 	    (ntohs(*our_portp) == our_port)) {
