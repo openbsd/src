@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.18 1998/01/06 23:37:56 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.19 1998/04/04 21:53:53 don Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -255,7 +255,7 @@ file	arch/alpha/alpha/pmap.c			new_pmap
 file	arch/alpha/alpha/pmap.old.c		!new_pmap
 file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/prom.c
-#file	arch/alpha/alpha/support.c
+file	arch/alpha/alpha/support.c
 file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
