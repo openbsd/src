@@ -673,9 +673,13 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		fst = NULL;
 		if (!error && (strp = p->p_systrace) != NULL) {
 			/* XXX - do I need to lock here? */
-			if (strp->answer == SYSTR_POLICY_NEVER)
+			if (strp->answer == SYSTR_POLICY_NEVER) {
 				error = strp->error;
-			else {
+				if (strp->replace != NULL) {
+					free(strp->replace, M_XDATA);
+					strp->replace = NULL;
+				}
+			} else {
 				if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
 					CLR(strp->flags, STR_PROC_SYSCALLRES);
 					report = 1;
