@@ -28,10 +28,10 @@ Boston, MA 02111-1307, USA.  */
    written by AT&T, but I have never seen it.  */
 
 ifobjc
-%expect 48
+/* %expect 48 - OpenBSD comment out as Yacc doesn't support it. */
 end ifobjc
 ifc
-%expect 34
+/* %expect 34 - OpenBSD comment out as Yacc doesn't support it. */
 
 /* These are the 23 conflicts you should get in parse.output;
    the state numbers may vary if minor changes in the grammar are made.
