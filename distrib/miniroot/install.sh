@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: install.sh,v 1.4 1997/04/30 18:52:43 niklas Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +37,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	NetBSD installation script.
+#	OpenBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 

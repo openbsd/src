@@ -1,3 +1,4 @@
+#	$OpenBSD: makeconf.awk,v 1.4 1997/04/30 18:52:48 niklas Exp $
 #	$NetBSD: makeconf.awk,v 1.3 1996/05/04 15:45:32 pk Exp $
 
 #
