@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgaio.h,v 1.3 1999/01/13 07:26:07 niklas Exp $	*/
+/*	$OpenBSD: vgaio.h,v 1.4 1999/02/09 13:01:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Joerg Wunsch
@@ -32,41 +32,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * $Header
- * The author may be reached unter <joerg_wunsch@uriah.sax.de>
- *
- * $Log: vgaio.h,v $
- * Revision 1.3  1999/01/13 07:26:07  niklas
- * RCSIds
- *
- * Revision 1.2  1996/03/19 21:09:52  mickey
- * Merging w/ NetBSD 021796.
- * speaker upgraded to the current.
- * some changes to the VM stuff (ie kern_thread.c added and so).
- *
- * Revision 1.1.1.1  1996/02/16 18:59:24  niklas
- * Checkin of the NetBSD src/, supped 960203
- *
- * Revision 1.3  1995/10/07 21:46:02  jtc
- * Overlay our pcvt with pcvt 3.32 sources.  All of our fixes have been
- * incorporated into the master sources, so it is unnecessary to resolve
- * all the conflicts that would occur if we let CVS "merge" the versions.
- *
- * Revision 1.2  1995/03/05  22:46:27  joerg
- * Upgrade to beta 3.20/b22
- *
- * Revision 1.1  1994/03/29  02:47:25  mycroft
- * pcvt 3.0, with some performance enhancements by Joerg Wunsch and me.
- *
- * Revision 1.2  1994/01/08  17:42:58  j
- * cleanup
- * made multiple commands per line work
- * wrote man page
- *
- *
  */
 
 /* common structure to hold the definition for a VGA register */
