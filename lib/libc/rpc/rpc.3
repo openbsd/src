@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.8 1998/02/25 12:21:16 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.9 1998/02/25 12:23:17 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -812,13 +812,6 @@ to svc_getreqset() or any creation routines.
 Do not pass its address to
 .Xr select 2 !
 Instead, pass the address of a copy.
-.br
-As well, note that if the process has descriptor limits
-which are extended beyond
-.Fa FD_SETSIZE ,
-this variable will only be usable for the first
-.Fa FD_SETSIZE
-descriptors.
 .Pp
 .Fa svc_fdset
 is similar to
