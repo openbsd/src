@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.20 1999/08/16 07:57:02 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.21 1999/10/03 19:17:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.20 1999/08/16 07:57:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.21 1999/10/03 19:17:31 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -669,12 +669,13 @@ fts_build(sp, type)
 	 * If not changing directories set a pointer so that can just append
 	 * each new name into the path.
 	 */
-	maxlen = sp->fts_pathlen - cur->fts_pathlen - 1;
 	len = NAPPEND(cur);
 	if (ISSET(FTS_NOCHDIR)) {
 		cp = sp->fts_path + len;
 		*cp++ = '/';
 	}
+	len++;
+	maxlen = sp->fts_pathlen - len;
 
 	level = cur->fts_level + 1;
 
@@ -686,9 +687,9 @@ fts_build(sp, type)
 
 		if ((p = fts_alloc(sp, dp->d_name, (int)dp->d_namlen)) == NULL)
 			goto mem1;
-		if (dp->d_namlen > maxlen) {
+		if (dp->d_namlen >= maxlen) {	/* include space for NUL */
 			oldaddr = sp->fts_path;
-			if (fts_palloc(sp, (size_t)dp->d_namlen)) {
+			if (fts_palloc(sp, dp->d_namlen +len + 1)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -699,20 +700,38 @@ mem1:				saved_errno = errno;
 					free(p);
 				fts_lfree(head);
 				(void)closedir(dirp);
-				errno = saved_errno;
 				cur->fts_info = FTS_ERR;
 				SET(FTS_STOP);
+				errno = saved_errno;
 				return (NULL);
 			}
 			/* Did realloc() change the pointer? */
-			if (oldaddr != sp->fts_path)
+			if (oldaddr != sp->fts_path) {
 				doadjust = 1;
-			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
+				if (ISSET(FTS_NOCHDIR))
+					cp = sp->fts_path + len;
+			}
+			maxlen = sp->fts_pathlen - len;
 		}
 
-		p->fts_pathlen = len + dp->d_namlen + 1;
-		p->fts_parent = sp->fts_cur;
+		if (len + dp->d_namlen >= USHRT_MAX) {
+			/*
+			 * In an FTSENT, fts_pathlen is a u_short so it is
+			 * possible to wraparound here.  If we do, free up
+			 * the current structure and the structures already
+			 * allocated, then error out with ENAMETOOLONG.
+			 */
+			free(p);
+			fts_lfree(head);
+			(void)closedir(dirp);
+			cur->fts_info = FTS_ERR;
+			SET(FTS_STOP);
+			errno = ENAMETOOLONG;
+			return (NULL);
+		}
 		p->fts_level = level;
+		p->fts_parent = sp->fts_cur;
+		p->fts_pathlen = len + dp->d_namlen;
 
 #ifdef FTS_WHITEOUT
 		if (dp->d_type == DT_WHT)
@@ -912,7 +931,7 @@ fts_sort(sp, head, nitems)
 
 		sp->fts_nitems = nitems + 40;
 		if ((a = realloc(sp->fts_array,
-		    (size_t)(sp->fts_nitems * sizeof(FTSENT *)))) == NULL) {
+		    sp->fts_nitems * sizeof(FTSENT *))) == NULL) {
 			if (sp->fts_array)
 				free(sp->fts_array);
 			sp->fts_array = NULL;
@@ -996,7 +1015,19 @@ fts_palloc(sp, more)
 	char *p;
 
 	sp->fts_pathlen += more + 256;
-	p = realloc(sp->fts_path, (size_t)sp->fts_pathlen);
+	/*
+	 * Check for possible wraparound.  In an FTS, fts_pathlen is
+	 * a signed int but in an FTSENT it is an unsigned short.
+	 * We limit fts_pathlen to USHRT_MAX to be safe in both cases.
+	 */
+	if (sp->fts_pathlen < 0 || sp->fts_pathlen >= USHRT_MAX) {
+		if (sp->fts_path)
+			free(sp->fts_path);
+		sp->fts_path = NULL;
+		errno = ENAMETOOLONG;
+		return (1);
+	}
+	p = realloc(sp->fts_path, sp->fts_pathlen);
 	if (p == NULL) {
 		if (sp->fts_path)
 			free(sp->fts_path);
@@ -1017,7 +1048,7 @@ fts_padjust(sp, head)
 	FTSENT *head;
 {
 	FTSENT *p;
-	void *addr = sp->fts_path;
+	char *addr = sp->fts_path;
 
 #define	ADJUST(p) {							\
 	if ((p)->fts_accpath != (p)->fts_name) {			\
@@ -1030,16 +1061,10 @@ fts_padjust(sp, head)
 	for (p = sp->fts_child; p; p = p->fts_link)
 		ADJUST(p);
 
-	/* Adjust the rest of the tree. */
-	for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
+	/* Adjust the rest of the tree, including the current level. */
+	for (p = head; p->fts_level >= FTS_ROOTLEVEL;) {
 		ADJUST(p);
 		p = p->fts_link ? p->fts_link : p->fts_parent;
-	}
-
-	/* Adjust entries in the dir list as needed */
-	for (p = head; p; p = p->fts_link) {
-		if (p->fts_path != addr)
-			ADJUST(p);
 	}
 }
 
@@ -1052,7 +1077,7 @@ fts_maxarglen(argv)
 	for (max = 0; *argv; ++argv)
 		if ((len = strlen(*argv)) > max)
 			max = len;
-	return (max);
+	return (max + 1);
 }
 
 /*
