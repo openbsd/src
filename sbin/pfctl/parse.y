@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.357 2003/04/13 17:01:12 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.358 2003/04/13 19:36:00 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -139,20 +139,6 @@ struct node_queue {
 	struct node_queue	*next;
 	struct node_queue	*tail;
 }	*queues = NULL;
-
-struct node_queue_opt {
-	int			 qtype;
-	union {
-		struct cbq_opts		cbq_opts;
-		struct priq_opts	priq_opts;
-		struct hfsc_opts	hfsc_opts;
-	}			 data;
-};
-
-struct node_queue_bw {
-	u_int32_t	bw_absolute;
-	u_int16_t	bw_percent;
-};
 
 struct node_qassign {
 	char		*qname;
@@ -3106,6 +3092,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	struct pf_altq		 pa, pb;
 	char			 qname[PF_QNAME_SIZE];
 	struct node_queue	*n;
+	struct node_queue_bw	 bw;
 	int			 errs = 0;
 
 	if ((pf->loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) == 0) {
@@ -3124,8 +3111,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			yyerror("altq on ! <interface> is not supported");
 			errs++;
 		} else {
-			if (eval_pfaltq(pf, &pa, bwspec.bw_absolute,
-			    bwspec.bw_percent))
+			if (eval_pfaltq(pf, &pa, &bwspec))
 				errs++;
 			else
 				if (pfctl_add_altq(pf, &pa))
@@ -3168,7 +3154,9 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 					pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
 				if (pa.scheduler == ALTQT_HFSC)
 					pb.pq_u.hfsc_opts = pa.pq_u.hfsc_opts;
-				if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
+				bw.bw_absolute = pa.ifbandwidth;
+				bw.bw_percent = 0;
+				if (eval_pfqueue(pf, &pb, &bw))
 					errs++;
 				else
 					if (pfctl_add_altq(pf, &pb))
@@ -3276,8 +3264,7 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 				    sizeof(pa.parent)) >= sizeof(pa.parent))
 					errx(1, "expand_queue: strlcpy");
 
-				if (eval_pfqueue(pf, &pa, bwspec.bw_absolute,
-				    bwspec.bw_percent))
+				if (eval_pfqueue(pf, &pa, &bwspec))
 					errs++;
 				else
 					if (pfctl_add_altq(pf, &pa))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.58 2003/04/12 19:08:40 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.59 2003/04/13 19:36:00 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -232,13 +232,12 @@ print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent,
  * eval_pfaltq computes the discipline parameters.
  */
 int
-eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
-    u_int16_t bw_percent)
+eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw)
 {
 	u_int	rate, size, errors = 0;
 
-	if (bw_absolute > 0)
-		pa->ifbandwidth = bw_absolute;
+	if (bw->bw_absolute > 0)
+		pa->ifbandwidth = bw->bw_absolute;
 	else
 		if ((rate = getifspeed(pa->ifname)) == 0) {
 			fprintf(stderr, "cannot determine interface bandwidth "
@@ -246,8 +245,8 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 			    pa->ifname);
 			errors++;
 		} else
-			if (bw_percent > 0)
-				pa->ifbandwidth = rate / 100 * bw_percent;
+			if (bw->bw_percent > 0)
+				pa->ifbandwidth = rate / 100 * bw->bw_percent;
 			else
 				pa->ifbandwidth = rate;
 
@@ -302,8 +301,7 @@ check_commit_altq(int dev, int opts)
  * eval_pfqueue computes the queue parameters.
  */
 int
-eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
-    u_int16_t bw_percent)
+eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw)
 {
 	/* should be merged with expand_queue */
 	struct pf_altq	*if_pa, *parent;
@@ -338,13 +336,14 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 		pa->qlimit = DEFAULT_QLIMIT;
 
 	if (pa->scheduler == ALTQT_CBQ || pa->scheduler == ALTQT_HFSC) {
-		if (bw_absolute > 0)
-			pa->bandwidth = bw_absolute;
-		else if (bw_percent > 0 && parent != NULL)
-			pa->bandwidth = parent->bandwidth / 100 * bw_percent;
+		if (bw->bw_absolute > 0)
+			pa->bandwidth = bw->bw_absolute;
+		else if (bw->bw_percent > 0 && parent != NULL)
+			pa->bandwidth = parent->bandwidth / 100 *
+			    bw->bw_percent;
 		else {
 			fprintf(stderr, "bandwidth for %s invalid (%d / %d)\n",
-			    pa->qname, bw_absolute, bw_percent);
+			    pa->qname, bw->bw_absolute, bw->bw_percent);
 			return (1);
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.53 2003/04/05 23:56:32 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.54 2003/04/13 19:36:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,6 +93,20 @@ struct node_host {
 	struct node_host	*tail;
 };
 
+struct node_queue_opt {
+	int			 qtype;
+	union {
+		struct cbq_opts		cbq_opts;
+		struct priq_opts	priq_opts;
+		struct hfsc_opts	hfsc_opts;
+	}			 data;
+};
+
+struct node_queue_bw {
+	u_int32_t	bw_absolute;
+	u_int16_t	bw_percent;
+};
+
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
@@ -110,8 +124,8 @@ void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_rule(struct pf_rule *, int);
 void	print_status(struct pf_status *);
 
-int	eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
-int	eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
+int	eval_pfaltq(struct pfctl *, struct pf_altq *, struct node_queue_bw *);
+int	eval_pfqueue(struct pfctl *, struct pf_altq *, struct node_queue_bw *);
 
 void	pfctl_begin_table(void);
 void	pfctl_append_addr(char *, int, int);
