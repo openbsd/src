@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 1999/08/12 07:25:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.112 1999/08/20 10:33:34 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -676,9 +676,11 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, "Pentium", "Pentium (P54C)",
-				"Pentium (P24T)", "Pentium/MMX", "Pentium", 0,
-				"Pentium (P54C)", 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium (P5 A-step)", "Pentium (P5)",
+				"Pentium (P54C)", "Pentium (P24T)",
+				"Pentium/MMX", "Pentium", 0,
+				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
+				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
 			intel586_cpu_setup
@@ -687,8 +689,10 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "Pentium Pro", 0, "Pentium II",
-				"Pentium Pro", "Pentium II", "Celeron",
+				"Pentium Pro (A-step)", "Pentium Pro", 0,
+				"Pentium II (Klamath)", "Pentium Pro",
+				"Pentium II (Deschutes)",
+				"Pentium II (Celeron)",
 				"Pentium III", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			},
@@ -723,13 +727,13 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL
 		},
-		/* Family 6, not yet available from AMD */
+		/* Family 6 */
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
+				0, "K7 (Athlon)", 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"686 class"		/* Default */
+				"K7 (Athlon)"		/* Default */
 			},
 			NULL
 		} }
@@ -794,6 +798,41 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL
 		},
 		/* Family 6, not yet available from IDT */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"686 class"		/* Default */
+			},
+			NULL
+		} }
+	},
+	{
+		"RiseRiseRise",
+		CPUVENDOR_RISE,
+		"Rise",
+		/* Family 4, not yet available from Rise */
+		{ {
+			CPUCLASS_486, 
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 class"		/* Default */
+			},
+			NULL
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				"mP6", 0, "mP6", 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"mP6"			/* Default */
+			},
+			NULL
+		},
+		/* Family 6, not yet available from Rise */
 		{
 			CPUCLASS_686,
 			{
