@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.6 1998/07/20 01:15:24 deraadt Exp $
+.\"	$OpenBSD: man.1,v 1.7 1998/09/14 05:43:47 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,7 @@
 .Ar name Ar ...
 .Nm man
 .Fl k Ar keyword
+.Nm man
 .Fl f Ar filename
 .Sh DESCRIPTION
 The
@@ -63,6 +64,27 @@ manual pages entitled
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl k
+Locate manpages matching
+.Ar keyword
+in much the same way as
+.Xr apropos 1
+works (in fact, it runs
+.Xr apropos 1
+for you).
+This can be used to find which man page applies to a particular subsystem
+you are interested in, for instance
+.Pp
+.Nm man Fl k Em compat
+.Pp
+will list all man-pages which contain your
+.Ar keyword
+in the
+.Em NAME
+line of the man page
+(ie.
+.Em Nm man - display the on-line manual pages
+above).
 .It Fl a
 Display all of the manual pages for a specified
 .Ar section
@@ -133,14 +155,6 @@ would display for the specified
 and
 .Ar name
 combination.
-.It Fl k
-Locate manpages matching
-.Ar keyword
-in much the same way as
-.Xr apropos 1
-works (in fact, it runs
-.Xr apropos 1
-for you).
 .It Fl f
 Locate manpages matching the
 .Ar command
