@@ -622,7 +622,8 @@ int ssl_hook_Handler(request_rec *r)
         if (!ap_is_default_port(port, r))
             thisport = ap_psprintf(r->pool, ":%u", port);
         thisurl = ap_psprintf(r->pool, "https://%s%s/",
-                              ap_get_server_name(r), thisport);
+                              ap_escape_html(r->pool, ap_get_server_name(r)),
+			      thisport);
 
         ap_table_setn(r->notes, "error-notes", ap_psprintf(r->pool,
                       "Reason: You're speaking plain HTTP to an SSL-enabled server port.<BR>\n"

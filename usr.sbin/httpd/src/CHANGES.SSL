@@ -23,6 +23,12 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.12 (04-Oct-2002 to 23-Oct-2002)
+
+   *) Fixed potential Cross-Site-Scripting bug.
+
+   *) Allow also 8192 bytes of shared memory data size.
+
   Changes with mod_ssl 2.8.11 (24-Jun-2002 to 04-Oct-2002)
    
    *) Upgraded to Apache 1.3.27.

@@ -756,7 +756,7 @@ const char *ssl_cmd_SSLSessionCache(
                 return "SSLSessionCache: Invalid argument: no closing parenthesis";
             *cp2 = NUL;
             mc->nSessionCacheDataSize = atoi(cp);
-            if (mc->nSessionCacheDataSize <= 8192)
+            if (mc->nSessionCacheDataSize < 8192)
                 return "SSLSessionCache: Invalid argument: size has to be >= 8192 bytes";
             maxsize = ap_mm_core_maxsegsize();
             if (mc->nSessionCacheDataSize >= maxsize)
@@ -778,7 +778,7 @@ const char *ssl_cmd_SSLSessionCache(
                 return "SSLSessionCache: Invalid argument: no closing parenthesis";
             *cp2 = NUL;
             mc->nSessionCacheDataSize = atoi(cp);
-            if (mc->nSessionCacheDataSize <= 8192)
+            if (mc->nSessionCacheDataSize < 8192)
                 return "SSLSessionCache: Invalid argument: size has to be >= 8192 bytes";
             maxsize = ap_mm_core_maxsegsize();
             if (mc->nSessionCacheDataSize >= maxsize)
