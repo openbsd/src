@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.471 2004/12/07 18:02:03 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.472 2004/12/10 22:13:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5116,6 +5116,49 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 	}
 
 	return (0);
+}
+
+int
+pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw)
+{
+	struct sockaddr_in	*dst;
+#ifdef INET6
+	struct sockaddr_in6	*dst6;
+	struct route_in6	 ro;
+#else
+	struct route		 ro;
+#endif
+	int			 ret = 0;
+
+	bzero(&ro, sizeof(ro));
+	switch (af) {
+	case AF_INET:
+		dst = satosin(&ro.ro_dst);
+		dst->sin_family = AF_INET;
+		dst->sin_len = sizeof(*dst);
+		dst->sin_addr = addr->v4;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
+		dst6->sin6_family = AF_INET6;
+		dst6->sin6_len = sizeof(*dst6);
+		dst6->sin6_addr = addr->v6;
+		break;
+#endif /* INET6 */
+	default:
+		return (0);
+	}
+
+	rtalloc_noclone((struct route *)&ro, NO_CLONING);
+
+	if (ro.ro_rt != NULL) {
+		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
+			ret = 1;
+		RTFREE(ro.ro_rt);
+	}
+
+	return (ret);
 }
 
 #ifdef INET

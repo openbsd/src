@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.135 2004/12/07 18:02:04 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.136 2004/12/10 22:13:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -121,6 +121,9 @@ TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
 static u_int16_t	 tagname2tag(struct pf_tags *, char *);
 static void		 tag2tagname(struct pf_tags *, u_int16_t, char *);
 static void		 tag_unref(struct pf_tags *, u_int16_t);
+int			 pf_rtlabel_add(struct pf_addr_wrap *);
+void			 pf_rtlabel_remove(struct pf_addr_wrap *);
+void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
@@ -593,6 +596,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		pf_qid_unref(rule->pqid);
 	pf_qid_unref(rule->qid);
 #endif
+	pf_rtlabel_remove(&rule->src.addr);
+	pf_rtlabel_remove(&rule->dst.addr);
 	pfi_dynaddr_remove(&rule->src.addr);
 	pfi_dynaddr_remove(&rule->dst.addr);
 	if (rulequeue == NULL) {
@@ -700,6 +705,37 @@ void
 pf_tag_unref(u_int16_t tag)
 {
 	return (tag_unref(&pf_tags, tag));
+}
+
+int
+pf_rtlabel_add(struct pf_addr_wrap *a)
+{
+	if (a->type == PF_ADDR_RTLABEL &&
+	    (a->v.rtlabel = rtlabel_name2id(a->v.rtlabelname)) == 0)
+		return (-1);
+	return (0);
+}
+
+void
+pf_rtlabel_remove(struct pf_addr_wrap *a)
+{
+	if (a->type == PF_ADDR_RTLABEL)
+		rtlabel_unref(a->v.rtlabel);
+}
+
+void
+pf_rtlabel_copyout(struct pf_addr_wrap *a)
+{
+	const char	*name;
+
+	if (a->type == PF_ADDR_RTLABEL && a->v.rtlabel) {
+		if ((name = rtlabel_id2name(a->v.rtlabel)) == NULL)
+			strlcpy(a->v.rtlabelname, "?",
+			    sizeof(a->v.rtlabelname));
+		else
+			strlcpy(a->v.rtlabelname, name,
+			    sizeof(a->v.rtlabelname));
+	}
 }
 
 #ifdef ALTQ
@@ -1168,6 +1204,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EBUSY;
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
+		if (pf_rtlabel_add(&rule->src.addr) ||
+		    pf_rtlabel_add(&rule->dst.addr))
+			error = EBUSY;
 		if (pfi_dynaddr_setup(&rule->src.addr, rule->af))
 			error = EINVAL;
 		if (pfi_dynaddr_setup(&rule->dst.addr, rule->af))
@@ -1273,6 +1312,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pfi_dynaddr_copyout(&pr->rule.dst.addr);
 		pf_tbladdr_copyout(&pr->rule.src.addr);
 		pf_tbladdr_copyout(&pr->rule.dst.addr);
+		pf_rtlabel_copyout(&pr->rule.src.addr);
+		pf_rtlabel_copyout(&pr->rule.dst.addr);
 		for (i = 0; i < PF_SKIP_COUNT; ++i)
 			if (rule->skip[i].ptr == NULL)
 				pr->rule.skip[i].nr = -1;
@@ -1384,9 +1425,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if ((newrule->match_tag = pf_tagname2tag(
 				    newrule->match_tagname)) == 0)
 					error = EBUSY;
-
 			if (newrule->rt && !newrule->direction)
 				error = EINVAL;
+			if (pf_rtlabel_add(&newrule->src.addr) ||
+			    pf_rtlabel_add(&newrule->dst.addr))
+				error = EBUSY;
 			if (pfi_dynaddr_setup(&newrule->src.addr, newrule->af))
 				error = EINVAL;
 			if (pfi_dynaddr_setup(&newrule->dst.addr, newrule->af))
@@ -2058,6 +2101,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(pa, &pp->addr, sizeof(struct pf_pooladdr));
 		pfi_dynaddr_copyout(&pp->addr.addr);
 		pf_tbladdr_copyout(&pp->addr.addr);
+		pf_rtlabel_copyout(&pp->addr.addr);
 		break;
 	}
 

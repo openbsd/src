@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.468 2004/12/08 01:27:23 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.469 2004/12/10 22:13:26 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -406,7 +406,7 @@ typedef struct {
 %token	LOAD
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
-%token	TAGGED TAG IFBOUND GRBOUND FLOATING STATEPOLICY
+%token	TAGGED TAG IFBOUND GRBOUND FLOATING STATEPOLICY ROUTE
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
@@ -2252,6 +2252,21 @@ host		: STRING			{
 			    sizeof($$->addr.v.tblname))
 				errx(1, "host: strlcpy");
 			free($2);
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| ROUTE	STRING		{
+			$$ = calloc(1, sizeof(struct node_host));
+			if ($$ == NULL)
+				err(1, "host: calloc");
+			$$->addr.type = PF_ADDR_RTLABEL;
+			if (strlcpy($$->addr.v.rtlabelname, $2,
+			    sizeof($$->addr.v.rtlabelname)) >=
+			    sizeof($$->addr.v.rtlabelname)) {
+				yyerror("route label too long, max %u chars",
+				    sizeof($$->addr.v.rtlabelname) - 1);
+				YYERROR;
+			}
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -4545,6 +4560,7 @@ lookup(char *s)
 		{ "return-icmp6",	RETURNICMP6},
 		{ "return-rst",		RETURNRST},
 		{ "round-robin",	ROUNDROBIN},
+		{ "route",		ROUTE},
 		{ "route-to",		ROUTETO},
 		{ "rule",		RULE},
 		{ "scrub",		SCRUB},
