@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_le_dec.c,v 1.5 2002/03/14 01:27:03 millert Exp $	*/
-/*	$NetBSD: if_le_dec.c,v 1.3 1996/10/13 01:38:38 christos Exp $	*/
+/*	$OpenBSD: if_le_dec.c,v 1.1 2002/05/02 22:56:02 miod Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.12 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Jonathan Stone. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +41,6 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -63,13 +62,15 @@
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
+#include <machine/bus.h>
+
 /* access LANCE registers */
 void le_dec_writereg(volatile u_short *regptr, u_short val);
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
-hide void le_dec_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-hide u_int16_t le_dec_rdcsr(struct am7990_softc *, u_int16_t);  
+void le_dec_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t le_dec_rdcsr(struct am7990_softc *, u_int16_t);
 
 void
 dec_le_common_attach(sc, eap)
@@ -97,7 +98,7 @@ dec_le_common_attach(sc, eap)
 	am7990_config(sc);
 }
 
-hide void
+void
 le_dec_wrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
@@ -108,7 +109,7 @@ le_dec_wrcsr(sc, port, val)
 	LERDWR(port, val, ler1->ler1_rdp);
 }
 
-hide u_int16_t
+u_int16_t
 le_dec_rdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
@@ -152,7 +153,7 @@ le_dec_writereg(regptr, val)
  * 3 ways:
  * - contiguous (for the 3max and turbochannel option card)
  * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
- *   spaces (for the pmax)
+ *   spaces (for the pmax, vax 3400, and ioasic LANCE descriptors)
  * - gap16, which means 16bytes interspersed with 16byte spaces
  *   for buffers which must begin on a 32byte boundary (for 3min, maxine,
  *   and alpha)

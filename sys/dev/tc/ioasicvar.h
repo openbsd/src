@@ -1,5 +1,5 @@
-/*	$OpenBSD: ioasicvar.h,v 1.5 2002/03/14 03:16:08 millert Exp $	*/
-/*	$NetBSD: ioasicvar.h,v 1.2 1996/03/17 21:37:45 jonathan Exp $	*/
+/*	$OpenBSD: ioasicvar.h,v 1.6 2002/05/02 22:56:06 miod Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.14 2000/10/17 09:45:49 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -28,11 +28,16 @@
  * rights to redistribute these changes.
  */
 
-/*
- * IOASIC subdevice attachment information.
- */
+#ifndef _DEV_TC_IOASICVAR_H_
+#define _DEV_TC_IOASICVAR_H_
 
-/* Attachment arguments. */
+struct ioasic_dev {
+	char		*iad_modname;
+	tc_offset_t	iad_offset;
+	void		*iad_cookie;
+	u_int32_t	iad_intrbits;
+};
+
 struct ioasicdev_attach_args {
 	char	iada_modname[TC_ROM_LLEN];
 	tc_offset_t iada_offset;
@@ -45,30 +50,28 @@ struct ioasicdev_attach_args {
 
 #define	IOASIC_OFFSET_UNKNOWN	-1
 
-/*
- * The IOASIC (bus) cfdriver, so that subdevices can more
- * easily tell what bus they're on.
- */
-extern struct cfdriver ioasic_cd;
+struct ioasic_softc {
+	struct	device sc_dv;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	bus_dma_tag_t sc_dmat;
 
+	tc_addr_t sc_base;		/* XXX offset XXX */
+};
+
+extern struct cfdriver ioasic_cd;
 
 /*
  * XXX Some drivers need direct access to IOASIC registers.
  */
 extern tc_addr_t ioasic_base;
 
-
-/*
- * Interrupt establishment/disestablishment functions
- */
-void    ioasic_intr_establish(struct device *, void *, tc_intrlevel_t,
-	    int (*)(void *), void *);
+const struct evcnt *ioasic_intr_evcnt(struct device *, void *);
+void    ioasic_intr_establish(struct device *, void *,
+	    int, int (*)(void *), void *);
 void    ioasic_intr_disestablish(struct device *, void *);
+int	ioasic_submatch(void *, struct ioasicdev_attach_args *);
+void	ioasic_attach_devs(struct ioasic_softc *,
+	    struct ioasic_dev *, int);
 
-
-/*
- * Miscellaneous helper functions.
- */
-int	ioasic_submatch(struct cfdata *, struct ioasicdev_attach_args *);
-char	*ioasic_lance_ether_address(void);
-void	ioasic_lance_dma_setup(void *);
+#endif /* _DEV_TC_IOASICVAR_ */

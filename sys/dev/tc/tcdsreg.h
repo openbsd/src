@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcdsreg.h,v 1.4 2002/03/14 01:26:28 millert Exp $	*/
-/*	$NetBSD: tcdsreg.h,v 1.2 1996/07/09 00:55:42 cgd Exp $	*/
+/* $OpenBSD: tcdsreg.h,v 1.1 2002/05/02 22:56:06 miod Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.1 2000/07/04 02:22:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,6 +37,9 @@
 /*
  * TCDS register offsets, bit masks.
  */
+#define	TCDS_EEPROM		  0x000000	/* EEPROM offset */
+#define	TCDS_EEPROM_IDS		  0x000008	/* SCSI IDs offset in EEPROM */
+
 #define	TCDS_CIR		  0x040000	/* CIR offset */
 
 /*
@@ -48,7 +51,7 @@
 #define	TCDS_CIR_STD		0x00000008	/* Serial transmit disable */
 #define	TCDS_CIR_GPI_0		0x00000010	/* Not used */
 #define	TCDS_CIR_GPI_1		0x00000020	/* Not used */
-#define	TCDS_CIR_GPI_2		0x00000040	/* Not used */
+#define	TCDS_CIR_GPI_2		0x00000040	/* 1 = 25MHz, 0 = 40MHz */
 #define	TCDS_CIR_GPI_3		0x00000080	/* Not used */
 #define TCDS_CIR_SCSI0_DMAENA	0x00000100	/* SCSI 0 DMA enable */
 #define TCDS_CIR_SCSI1_DMAENA	0x00000200	/* SCSI 1 DMA enable */
@@ -132,7 +135,7 @@ void tcds_scsi_reset(int);
 
 /*
  * XXX
- * Start of MACH #defines, minimal changes to port to {Net/Open}BSD.
+ * Start of MACH #defines, minimal changes to port to NetBSD.
  * 
  * The following register is the SCSI control interrupt register.  It
  * starts, stops and resets scsi DMA.  It takes over the SCSI funtions

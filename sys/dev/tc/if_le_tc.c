@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le_tc.c,v 1.5 2002/03/14 01:27:03 millert Exp $	*/
-/*	$NetBSD: if_le_tc.c,v 1.2 1996/05/07 02:24:57 thorpej Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.6 2002/05/02 22:56:06 miod Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -71,8 +71,7 @@ le_tc_match(parent, match, aux)
 {
 	struct tc_attach_args *d = aux;
 
-	if (strncmp("PMAD-AA ", d->ta_modname, TC_ROM_LLEN) &&
-	    strncmp("PMAD-BA ", d->ta_modname, TC_ROM_LLEN))
+	if (strncmp("PMAD-AA ", d->ta_modname, TC_ROM_LLEN) != 0)
 		return (0);
 
 	return (1);
@@ -83,8 +82,8 @@ le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *lesc = (void *)self;
-	register struct am7990_softc *sc = &lesc->sc_am7990;
+	struct le_softc *lesc = (void *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct tc_attach_args *d = aux;
 
 	/*
@@ -106,7 +105,8 @@ le_tc_attach(parent, self, aux)
 	 * so  DMA setup is not required.
 	 */
 
-	dec_le_common_attach(sc, (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
+	dec_le_common_attach(&lesc->sc_am7990,
+			     (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
 
 	tc_intr_establish(parent, d->ta_cookie, TC_IPL_NET, am7990_intr, sc);
 }

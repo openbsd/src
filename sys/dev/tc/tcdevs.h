@@ -1,10 +1,12 @@
+/*	$OpenBSD: tcdevs.h,v 1.6 2002/05/02 22:56:06 miod Exp $	*/
+
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: tcdevs,v 1.5 1998/06/23 23:26:18 deraadt Exp 
+ *	OpenBSD
  */
-/*	$NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp $	*/
+/* $NetBSD: tcdevs,v 1.17 2000/12/17 13:56:05 ad Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -37,6 +39,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	TC_DEVICE_AV01B_AA	"lofi"
+#define	TC_DESCRIPTION_AV01B_AA	"DecAudio \"LoFi\" audio/isdn"
+
+#define	TC_DEVICE_AV300_AA	"???"
+#define	TC_DESCRIPTION_AV300_AA	"Video capture option card"
+
 #define	TC_DEVICE_DGLTA_FA	"otto"
 #define	TC_DESCRIPTION_DGLTA_FA	"DGLTA ATM"
 
@@ -47,16 +55,16 @@
 #define	TC_DESCRIPTION_KZTSA_AA	"TZA FWD SCSI"
 
 #define	TC_DEVICE_OTTO	"otto"
-#define	TC_DESCRIPTION_OTTO	"DEC SRC OTTO ATM"
+#define	TC_DESCRIPTION_OTTO	"DEC SRC \"OTTO\" ATM"
 
 #define	TC_DEVICE_PMAD_AA	"le"
 #define	TC_DESCRIPTION_PMAD_AA	"LANCE Ethernet"
 
 #define	TC_DEVICE_PMAF_AA	"fza"
-#define	TC_DESCRIPTION_PMAF_AA	"DEFZA FDDI"
+#define	TC_DESCRIPTION_PMAF_AA	"DEC FDDIcontroller 700 (DEFZA; fiber optic)"
 
-#define	TC_DEVICE_PMAF_F	"fta"
-#define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI"
+#define	TC_DEVICE_PMAF_FA	"fta"
+#define	TC_DESCRIPTION_PMAF_FA	"DEFTA FDDI"
 
 #define	TC_DEVICE_PMAG_AA	"mfb"
 #define	TC_DESCRIPTION_PMAG_AA	"Monochrome Frame Buffer"
@@ -64,17 +72,29 @@
 #define	TC_DEVICE_PMAG_BA	"cfb"
 #define	TC_DESCRIPTION_PMAG_BA	"Color Frame Buffer"
 
-#define	TC_DEVICE_PMAG_CA	"ga"
-#define	TC_DESCRIPTION_PMAG_CA	"2D Graphics"
+#define	TC_DEVICE_PMAG_CA	"px"
+#define	TC_DESCRIPTION_PMAG_CA	"2D Graphics (PX 2DA)"
 
-#define	TC_DEVICE_PMAG_DA	"gq"
-#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (LM)"
+#define	TC_DEVICE_PMAG_DA	"pxg"
+#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (PXG LM-3DA)"
+
+#define	TC_DEVICE_PMAG_FA	"pxg"
+#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (PXG HE-3DA)"
+
+#define	TC_DEVICE_PMAG_FB	"pxg"
+#define	TC_DESCRIPTION_PMAG_FB	"3D Graphics (PXG HE+3DA)"
+
+#define	TC_DEVICE_PMAGB_FA	"pxg"
+#define	TC_DESCRIPTION_PMAGB_FA	"3D Graphics (PXG HE+3DA)"
+
+#define	TC_DEVICE_PMAGB_FB	"pxg"
+#define	TC_DESCRIPTION_PMAGB_FB	"3D Graphics (PXG HE+3DA)"
 
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"
 
-#define	TC_DEVICE_PMAG_FA	"gq"
-#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (HE)"
+#define	TC_DEVICE_PMAG_JA	"???"
+#define	TC_DESCRIPTION_PMAG_JA	"24-plane True Color Frame Buffer (TX)"
 
 #define	TC_DEVICE_PMAGB_BA	"sfb"
 #define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
@@ -100,11 +120,29 @@
 #define	TC_DEVICE_PMAZB_AA	"tcds"
 #define	TC_DESCRIPTION_PMAZB_AA	"53c94 TCDS SCSI option card"
 
+#define	TC_DEVICE_PMAZB_AB	"tcds"
+#define	TC_DESCRIPTION_PMAZB_AB	"53c94 TCDS SCSI option card"
+
 #define	TC_DEVICE_PMAZC_AA	"tcds"
 #define	TC_DESCRIPTION_PMAZC_AA	"53c94 TCDS Fast SCSI option card"
+
+#define	TC_DEVICE_PMTNV_AA	"???"
+#define	TC_DESCRIPTION_PMTNV_AA	"Non-volatile RAM option card"
 
 #define	TC_DEVICE_T1D4PKT	"ds"
 #define	TC_DESCRIPTION_T1D4PKT	"DECWRL Turbochannel T1"
 
 #define	TC_DEVICE_T3PKT	"tt"
 #define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"
+
+#define	TC_DEVICE_PMAT_AA	"tra"
+#define	TC_DESCRIPTION_PMAT_AA	"DEC TurboChannel Token Ring Controller"
+
+#define	TC_DEVICE_PMABV_AA	"vba"
+#define	TC_DESCRIPTION_PMABV_AA	"VME Adapter"
+
+#define	TC_DEVICE_PMAP_AA	"???"
+#define	TC_DESCRIPTION_PMAP_AA	"Prestoserve"
+
+#define	TC_DEVICE_KWS_TD	"???"
+#define	TC_DESCRIPTION_KWS_TD	"Kubota Denali"

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sccvar.h,v 1.4 1997/01/24 19:58:16 niklas Exp $	*/
-/*	$NetBSD: sccvar.h,v 1.4 1996/11/16 00:40:14 cgd Exp $	*/
+/* $OpenBSD: sccvar.h,v 1.5 2002/05/02 22:56:06 miod Exp $ */
+/* $NetBSD: sccvar.h,v 1.7 2001/08/26 16:39:56 simonb Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -100,6 +100,15 @@ typedef struct {
 #define	scc_set_datum(d, v) \
 	do { (d) = (volatile unsigned int)(v) << 8; alpha_mb(); DELAY(5); } while (0)
 
+/* From <pmax/dev/pdma.h>. */
+struct pdma {
+	void	*p_addr;
+	char	*p_mem;
+	char	*p_end;
+	int	p_arg;
+	void	(*p_fcn)(struct tty *tp);
+};
+
 /*
  * Minor device numbers for scc.  Weird because B channel comes first and
  * the A channels are wired for keyboard/mouse and the B channels for the
@@ -109,3 +118,5 @@ typedef struct {
 #define	SCCMOUSE_PORT	0x1
 #define	SCCCOMM3_PORT	0x2
 #define	SCCKBD_PORT	0x3
+
+int	alpha_donot_kludge_scc;

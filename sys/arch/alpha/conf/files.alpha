@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.57 2002/04/28 20:55:14 pvalchev Exp $
+#	$OpenBSD: files.alpha,v 1.58 2002/05/02 22:56:06 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -60,55 +60,50 @@ include "dev/wsfont/files.wsfont"
 include "dev/wscons/files.wscons"
 
 #
-# TurboChannel Devices
+# Bus-independent support for DEC devices
+#
+include "dev/dec/files.dec"
+
+#
+# TURBOchannel Devices
 #
 
 include "dev/tc/files.tc"
+
+# TC attachment is MD
+attach	tc at tcbus
 
 device	tcasic: tcbus
 attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_bus_mem.c	tcasic
+file	arch/alpha/tc/tc_dma.c		tcasic
+file	arch/alpha/tc/tc_dma_3000_300.c	tcasic & dec_3000_300
+file	arch/alpha/tc/tc_dma_3000_500.c	tcasic & dec_3000_500
+file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
-# the TurboChannel IOCTL ASIC
-device	ioasic { offset = -1 }
-attach	ioasic at tc
+# the TURBOchannel IOCTL ASIC
+# IOASIC device and attachment defined in sys/dev/tc/files.tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
-# Color Frame buffer
+# PMAG-B CX
 device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
-file	arch/alpha/tc/cfb.c		cfb
+file	arch/alpha/tc/cfb.c		cfb		needs-flag
 
-# Smart Frame buffer
+# PMAGB-B HX or CXT
 device	sfb: wsemuldisplaydev, wsrasteremulops
 attach	sfb at tc
-file	arch/alpha/tc/sfb.c		sfb
+file	arch/alpha/tc/sfb.c		sfb		needs-flag
 
 # 8530 UARTs
 device	scc
 attach	scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
-# the TCDS ASIC
-device	tcds { slot = -1 }
-attach	tcds at tc
-file	arch/alpha/tc/tcds.c		tcds		needs-count
-
-# 53C[F]90 SCSI
-device asc: scsi
-attach	asc at tcds
-file	arch/alpha/tc/asc.c		asc		needs-count
-file	arch/alpha/tc/tcds_dma.c	asc
-
-# Baseboard Lance ethernet.
-attach	le at ioasic with le_ioasic
-attach	le at tc with le_tc
-file	dev/tc/if_le_dec.c		(le_ioasic | le_tc)
-file	dev/tc/if_le_ioasic.c		le_ioasic	needs-flag #for le_iomem
-file	dev/tc/if_le_tc.c		le_tc
+# TC and baseboard ioasic Lance ethernet are in files.tc
 
 #
 # ISA Bus support

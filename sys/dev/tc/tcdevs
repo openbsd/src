@@ -1,5 +1,5 @@
-$OpenBSD: tcdevs,v 1.5 1998/06/23 23:26:18 deraadt Exp $
-/*	$NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp $	*/
+$OpenBSD: tcdevs,v 1.6 2002/05/02 22:56:06 miod Exp $
+/* $NetBSD: tcdevs,v 1.17 2000/12/17 13:56:05 ad Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,21 +32,26 @@ $OpenBSD: tcdevs,v 1.5 1998/06/23 23:26:18 deraadt Exp $
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-+device AV01B-AA        lofi    DecAudio LoFi audio/isdn
+device	AV01B-AA	lofi	DecAudio \"LoFi\" audio/isdn
+device	AV300-AA	???	Video capture option card
 device	DGLTA-FA	otto	DGLTA ATM
 device	FORE_ATM	fa	Fore TCA-100 ATM
 device	KZTSA-AA	tza	TZA FWD SCSI
-device	OTTO		otto	DEC SRC OTTO ATM
+device	OTTO		otto	DEC SRC \"OTTO\" ATM
 device	PMAD-AA		le	LANCE Ethernet
-device	PMAF-AA		fza	DEFZA FDDI
-device	PMAF-F		fta	DEFTA FDDI
+device	PMAF-AA		fza	DEC FDDIcontroller 700 (DEFZA; fiber optic)
+device	PMAF-FA		fta	DEFTA FDDI
 device	PMAG-AA		mfb	Monochrome Frame Buffer
 device	PMAG-BA		cfb	Color Frame Buffer
-device	PMAG-CA		ga	2D Graphics
-device	PMAG-DA		gq	3D Graphics (LM)
+device	PMAG-CA		px	2D Graphics (PX 2DA)
+device	PMAG-DA		pxg	3D Graphics (PXG LM-3DA)
+device	PMAG-FA		pxg	3D Graphics (PXG HE-3DA)
+device	PMAG-FB		pxg	3D Graphics (PXG HE+3DA)
+device	PMAGB-FA	pxg	3D Graphics (PXG HE+3DA)
+device	PMAGB-FB	pxg	3D Graphics (PXG HE+3DA)
 # the following entry may be incorrect
 device	PMAG-DV		xcfb	Maxine Color Frame Buffer
-device	PMAG-FA		gq	3D Graphics (HE)
+device	PMAG-JA		???	24-plane True Color Frame Buffer (TX)
 device	PMAGB-BA	sfb	Smart Frame Buffer
 device	PMAGD		sfbp	Smart Frame Buffer Plus, unknown bpp
 device	PMAGD-AA	sfbp	Smart Frame Buffer Plus, 8bpp
@@ -55,6 +60,25 @@ device	PMAZ-AA		asc	53c94 SCSI
 device	PMAZ-DS		tcds	53c94 TCDS SCSI (baseboard)
 device	PMAZ-FS		tcds	53c94 TCDS Fast SCSI (baseboard)
 device	PMAZB-AA	tcds	53c94 TCDS SCSI option card
+device	PMAZB-AB	tcds	53c94 TCDS SCSI option card
 device	PMAZC-AA	tcds	53c94 TCDS Fast SCSI option card
+device	PMTNV-AA	???	Non-volatile RAM option card
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
+device	PMAT-AA 	tra	DEC TurboChannel Token Ring Controller
+device	PMABV-AA	vba	VME Adapter
+device	PMAP-AA		???	Prestoserve
+device	KWS_TD		???	Kubota Denali
+
+# the following entries are unconfirmed
+#device	PMAD-AB		le	LANCE Ethernet
+#device	PMAF-CA		fza	DEC FDDIcontroller 700C (DEFZA; copper)
+#device	PMAG-DB		???	8-plane 3D Grahpics (PXG)
+#device	PMAG-AB		???	Monochrome Graphics Adapter (MX)
+#device	PMAG-JB		???	24-plane True Color Frame Buffer (TX)
+#device	PMAGB-BB	???	8-plane Color/Grayscale 2D SFB (HX)
+#device	PMAGB-BC	???	8-plane Color/Grayscale 2D SFB (HX)
+#define	PMAGB-BD	???	8-plane Color/Grayscale 2D SFB (HX)
+#define	PMAGB-BE	???	8-plane Color/Grayscale 2D SFB (HX)
+#device	PMAGB-JB	???	24-plane True Color Frame Buffer (TX)
+#device	PMAZ-AB		asc	53c94 SCSI

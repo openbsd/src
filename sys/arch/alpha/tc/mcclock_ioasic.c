@@ -1,5 +1,5 @@
-/*	$OpenBSD: mcclock_ioasic.c,v 1.5 2002/03/14 01:26:28 millert Exp $	*/
-/*	$NetBSD: mcclock_ioasic.c,v 1.3 1996/12/05 01:39:42 cgd Exp $	*/
+/* $OpenBSD: mcclock_ioasic.c,v 1.6 2002/05/02 22:56:06 miod Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.9 2000/07/04 02:37:51 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,10 +33,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <alpha/alpha/clockvar.h>
-#include <alpha/alpha/mcclockvar.h>
+#include <dev/dec/clockvar.h>
+#include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
-#include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h> 
 #include <dev/tc/ioasicvar.h>                   /* XXX */
 
@@ -51,11 +50,7 @@ struct mcclock_ioasic_softc {
 	struct mcclock_ioasic_clockdatum *sc_dp;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	mcclock_ioasic_match(struct device *, void *, void *);
-#else
-int	mcclock_ioasic_match(struct device *, struct cfdata *, void *);
-#endif
 void	mcclock_ioasic_attach(struct device *, struct device *, void *);
 
 struct cfattach mcclock_ioasic_ca = {
@@ -73,12 +68,7 @@ const struct mcclock_busfns mcclock_ioasic_busfns = {
 int
 mcclock_ioasic_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
-	void *aux;
+	void *match, *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
 

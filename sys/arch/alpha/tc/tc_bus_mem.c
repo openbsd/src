@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.12 2002/03/14 01:26:28 millert Exp $	*/
-/*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
+/* $OpenBSD: tc_bus_mem.c,v 1.13 2002/05/02 22:56:06 miod Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,10 +37,13 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <dev/tc/tcvar.h>
+
+#define	__C(A,B)	__CONCAT(A,B)
 
 /* mapping/unmapping */
 int		tc_mem_map(void *, bus_addr_t, bus_size_t, int,
@@ -136,32 +139,16 @@ void		tc_mem_set_region_8(void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t);
 
 /* copy */
-void		tc_mem_copy_1(void *, bus_space_handle_t,
+void		tc_mem_copy_region_1(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
-void		tc_mem_copy_2(void *, bus_space_handle_t,
+void		tc_mem_copy_region_2(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
-void		tc_mem_copy_4(void *, bus_space_handle_t,
+void		tc_mem_copy_region_4(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
-void		tc_mem_copy_8(void *, bus_space_handle_t,
+void		tc_mem_copy_region_8(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
-/* read multiple raw */
-void		tc_mem_read_raw_multi_2(void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t);
-void		tc_mem_read_raw_multi_4(void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t);
-void		tc_mem_read_raw_multi_8(void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t);
-
-/* write multiple raw */
-void		tc_mem_write_raw_multi_2(void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t);
-void		tc_mem_write_raw_multi_4(void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t);
-void		tc_mem_write_raw_multi_8(void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t);
-
-static struct alpha_bus_space tc_mem_space = {
+struct alpha_bus_space tc_mem_space = {
 	/* cookie */
 	NULL,
 
@@ -226,20 +213,10 @@ static struct alpha_bus_space tc_mem_space = {
 	tc_mem_set_region_8,
 
 	/* copy */
-	tc_mem_copy_1,
-	tc_mem_copy_2,
-	tc_mem_copy_4,
-	tc_mem_copy_8,
-
-	/* write multiple raw */
-	tc_mem_read_raw_multi_2,
-	tc_mem_read_raw_multi_4,
-	tc_mem_read_raw_multi_8,
-	
-	/* write multiple raw*/
-	tc_mem_write_raw_multi_2,
-	tc_mem_write_raw_multi_4,
-	tc_mem_write_raw_multi_8,
+	tc_mem_copy_region_1,
+	tc_mem_copy_region_2,
+	tc_mem_copy_region_4,
+	tc_mem_copy_region_8,
 };
 
 bus_space_tag_t
@@ -252,6 +229,7 @@ tc_bus_mem_init(memv)
 	return (h);
 }
 
+/* ARGSUSED */
 int
 tc_mem_map(v, memaddr, memsize, cacheable, memhp)
 	void *v;
@@ -270,6 +248,7 @@ tc_mem_map(v, memaddr, memsize, cacheable, memhp)
 	return (0);
 }
 
+/* ARGSUSED */
 void
 tc_mem_unmap(v, memh, memsize)
 	void *v;
@@ -300,11 +279,11 @@ tc_mem_subregion(v, memh, offset, size, nmemh)
 }
 
 int
-tc_mem_alloc(v, rstart, rend, size, align, boundary, cacheable, addrp, bshp)
+tc_mem_alloc(v, rstart, rend, size, align, boundary, flags, addrp, bshp)
 	void *v;
 	bus_addr_t rstart, rend, *addrp;
 	bus_size_t size, align, boundary;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 
@@ -331,9 +310,9 @@ tc_mem_barrier(v, h, o, l, f)
 	int f;
 {
 
-	if ((f & BUS_BARRIER_READ) != 0)
+	if ((f & BUS_SPACE_BARRIER_READ) != 0)
 		alpha_mb();
-	else if ((f & BUS_BARRIER_WRITE) != 0)
+	else if ((f & BUS_SPACE_BARRIER_WRITE) != 0)
 		alpha_wmb();
 }
 
@@ -408,7 +387,7 @@ tc_mem_read_8(v, memh, off)
 
 #define	tc_mem_read_multi_N(BYTES,TYPE)					\
 void									\
-__abs_c(tc_mem_read_multi_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_read_multi_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -416,8 +395,8 @@ __abs_c(tc_mem_read_multi_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		tc_mem_barrier(v, h, o, sizeof *a, BUS_BARRIER_READ);	\
-		*a++ = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
+		tc_mem_barrier(v, h, o, sizeof *a, BUS_SPACE_BARRIER_READ); \
+		*a++ = __C(tc_mem_read_,BYTES)(v, h, o);		\
 	}								\
 }
 tc_mem_read_multi_N(1,u_int8_t)
@@ -427,7 +406,7 @@ tc_mem_read_multi_N(8,u_int64_t)
 
 #define	tc_mem_read_region_N(BYTES,TYPE)				\
 void									\
-__abs_c(tc_mem_read_region_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_read_region_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -435,7 +414,7 @@ __abs_c(tc_mem_read_region_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		*a++ = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
+		*a++ = __C(tc_mem_read_,BYTES)(v, h, o);		\
 		o += sizeof *a;						\
 	}								\
 }
@@ -541,7 +520,7 @@ tc_mem_write_8(v, memh, off, val)
 
 #define	tc_mem_write_multi_N(BYTES,TYPE)				\
 void									\
-__abs_c(tc_mem_write_multi_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_write_multi_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -549,8 +528,8 @@ __abs_c(tc_mem_write_multi_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a++);		\
-		tc_mem_barrier(v, h, o, sizeof *a, BUS_BARRIER_WRITE);	\
+		__C(tc_mem_write_,BYTES)(v, h, o, *a++);		\
+		tc_mem_barrier(v, h, o, sizeof *a, BUS_SPACE_BARRIER_WRITE); \
 	}								\
 }
 tc_mem_write_multi_N(1,u_int8_t)
@@ -560,7 +539,7 @@ tc_mem_write_multi_N(8,u_int64_t)
 
 #define	tc_mem_write_region_N(BYTES,TYPE)				\
 void									\
-__abs_c(tc_mem_write_region_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_write_region_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -568,7 +547,7 @@ __abs_c(tc_mem_write_region_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a++);		\
+		__C(tc_mem_write_,BYTES)(v, h, o, *a++);		\
 		o += sizeof *a;						\
 	}								\
 }
@@ -579,7 +558,7 @@ tc_mem_write_region_N(8,u_int64_t)
 
 #define	tc_mem_set_multi_N(BYTES,TYPE)					\
 void									\
-__abs_c(tc_mem_set_multi_,BYTES)(v, h, o, val, c)			\
+__C(tc_mem_set_multi_,BYTES)(v, h, o, val, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -587,8 +566,8 @@ __abs_c(tc_mem_set_multi_,BYTES)(v, h, o, val, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, val);		\
-		tc_mem_barrier(v, h, o, sizeof val, BUS_BARRIER_WRITE);	\
+		__C(tc_mem_write_,BYTES)(v, h, o, val);			\
+		tc_mem_barrier(v, h, o, sizeof val, BUS_SPACE_BARRIER_WRITE); \
 	}								\
 }
 tc_mem_set_multi_N(1,u_int8_t)
@@ -598,7 +577,7 @@ tc_mem_set_multi_N(8,u_int64_t)
 
 #define	tc_mem_set_region_N(BYTES,TYPE)					\
 void									\
-__abs_c(tc_mem_set_region_,BYTES)(v, h, o, val, c)			\
+__C(tc_mem_set_region_,BYTES)(v, h, o, val, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -606,7 +585,7 @@ __abs_c(tc_mem_set_region_,BYTES)(v, h, o, val, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, val);		\
+		__C(tc_mem_write_,BYTES)(v, h, o, val);			\
 		o += sizeof val;					\
 	}								\
 }
@@ -615,84 +594,33 @@ tc_mem_set_region_N(2,u_int16_t)
 tc_mem_set_region_N(4,u_int32_t)
 tc_mem_set_region_N(8,u_int64_t)
 
-#define	tc_mem_copy_N(BYTES)						\
+#define	tc_mem_copy_region_N(BYTES)					\
 void									\
-__abs_c(tc_mem_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
+__C(tc_mem_copy_region_,BYTES)(v, h1, o1, h2, o2, c)			\
 	void *v;							\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
 {									\
-	bus_size_t i, o;						\
+	bus_size_t o;							\
 									\
 	if ((h1 & TC_SPACE_SPARSE) != 0 &&				\
 	    (h2 & TC_SPACE_SPARSE) != 0) {				\
-		bcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES);	\
+		bcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES); \
 		return;							\
 	}								\
 									\
-	/* Circumvent a common case of overlapping problems */		\
-	if (h1 == h2 && o2 > o1)					\
-		for (i = 0, o = (c - 1) * BYTES; i < c; i++, o -= BYTES)\
-			__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,	\
-			    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));\
+	if (h1 + o1 >= h2 + o2)						\
+		/* src after dest: copy forward */			\
+		for (o = 0; c > 0; c--, o += BYTES)			\
+			__C(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
+			    __C(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
 	else								\
-		for (i = 0, o = 0; i < c; i++, o += BYTES)		\
-			__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,	\
-			    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));\
+		/* dest after src: copy backwards */			\
+		for (o = (c - 1) * BYTES; c > 0; c--, o -= BYTES)	\
+			__C(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
+			    __C(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
 }
-tc_mem_copy_N(1)
-tc_mem_copy_N(2)
-tc_mem_copy_N(4)
-tc_mem_copy_N(8)
-
-#define tc_mem_read_raw_multi_N(BYTES,TYPE)				\
-void									\
-__abs_c(tc_mem_read_raw_multi_,BYTES)(v, h, o, a, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	u_int8_t *a;							\
-{									\
-	TYPE temp;							\
-	int i;								\
-									\
-	while (c > 0) {							\
-		tc_mem_barrier(v, h, o, BYTES, BUS_BARRIER_READ);	\
-		temp = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
-		for (i = 0; i < BYTES; i++) {				\
-			*a++ = temp & 0xff;				\
-			temp >>= 8;					\
-		}							\
-		c -= BYTES;						\
-	}								\
-}
-tc_mem_read_raw_multi_N(2,u_int16_t)
-tc_mem_read_raw_multi_N(4,u_int32_t)
-tc_mem_read_raw_multi_N(8,u_int64_t)
-
-#define tc_mem_write_raw_multi_N(BYTES,TYPE)				\
-void									\
-__abs_c(tc_mem_write_raw_multi_,BYTES)(v, h, o, a, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	const u_int8_t *a;						\
-{									\
-	TYPE temp;							\
-	int i;								\
-									\
-	while (c > 0) {							\
-		temp = 0;						\
-		for (i = BYTES - 1; i >= 0; i--) {			\
-			temp <<= 8;					\
-			temp |= *(a + i);				\
-		}							\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, temp);		\
-		tc_mem_barrier(v, h, o, BYTES, BUS_BARRIER_WRITE);	\
-		c -= BYTES;						\
-		a += BYTES;						\
-	}								\
-}
-tc_mem_write_raw_multi_N(2,u_int16_t)
-tc_mem_write_raw_multi_N(4,u_int32_t)
-tc_mem_write_raw_multi_N(8,u_int64_t)
+tc_mem_copy_region_N(1)
+tc_mem_copy_region_N(2)
+tc_mem_copy_region_N(4)
+tc_mem_copy_region_N(8)

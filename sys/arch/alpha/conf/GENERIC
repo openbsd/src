@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.105 2002/04/26 20:13:11 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.106 2002/05/02 22:56:06 miod Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -82,24 +82,24 @@ ugen*	at uhub? port ? configuration ? # USB Generic driver
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0
 
-# TurboChannel host bus adapter support
+# TURBOchannel host bus adapter support
 tcasic*	at	mainbus0
 
-# TurboChannel bus support
+# TURBOchannel bus support
 tc*	at	tcasic?
 
-# TurboChannel devices
+# TURBOchannel devices
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
-tcds0	at	tc? slot ? offset ?
-asc0	at	tcds? slot ?
-asc1	at	tcds? slot ?
+tcds*	at	tc? slot ? offset ?
+asc*	at	tcds? chip ?
 scsibus* at asc?
-cfb*	at	tc? slot ? offset ?
-sfb*	at	tc? slot ? offset ?
+asc*	at	tc? slot ? offset ?
+#cfb*	at	tc? slot ? offset ?
+#sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
@@ -298,8 +298,8 @@ audio*	at uaudio?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
-wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
+#wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?

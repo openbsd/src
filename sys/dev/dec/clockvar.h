@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcreg.h,v 1.3 2002/05/02 22:56:06 miod Exp $	*/
-/*	$NetBSD: tcreg.h,v 1.1 1995/12/20 00:48:36 cgd Exp $	*/
+/* $OpenBSD: clockvar.h,v 1.1 2002/05/02 22:56:02 miod Exp $ */
+/* $NetBSD: clockvar.h,v 1.4 1997/06/22 08:02:18 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,35 +28,36 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __DEV_TC_TCREG_H__
-#define __DEV_TC_TCREG_H__
-
 /*
- * TurboChannel bus and register definitions.
+ * Definitions for cpu-independent clock handling for the alpha and pmax.
  */
 
-#define	TC_ROM_LLEN		8
-#define	TC_ROM_SLEN		4
-#define	TC_ROM_TEST_SIZE	16
-
-#define	TC_SLOT_ROM		0x000003e0
-#define	TC_SLOT_PROTOROM	0x003c03e0
-
-typedef struct tc_padchar {
-	u_int8_t	v;
-	u_int8_t	pad[3];
-} tc_padchar_t;
-
-struct tc_rommap {
-	tc_padchar_t	tcr_width;
-	tc_padchar_t	tcr_stride;
-	tc_padchar_t	tcr_rsize;
-	tc_padchar_t	tcr_ssize;
-	u_int8_t	tcr_test[TC_ROM_TEST_SIZE];
-	tc_padchar_t	tcr_rev[TC_ROM_LLEN];
-	tc_padchar_t	tcr_vendname[TC_ROM_LLEN];
-	tc_padchar_t	tcr_modname[TC_ROM_LLEN];
-	tc_padchar_t	tcr_firmtype[TC_ROM_SLEN];
+/*
+ * clocktime structure:
+ *
+ * structure passed to TOY clocks when setting them.  broken out this
+ * way, so that the time_t -> field conversion can be shared.
+ */
+struct clocktime {
+	int	year;			/* year - 1900 */
+	int	mon;			/* month (1 - 12) */
+	int	day;			/* day (1 - 31) */
+	int	hour;			/* hour (0 - 23) */
+	int	min;			/* minute (0 - 59) */
+	int	sec;			/* second (0 - 59) */
+	int	dow;			/* day of week (0 - 6; 0 = Sunday) */
 };
 
-#endif /* __DEV_TC_TCREG_H__ */
+/*
+ * clockfns structure:
+ *
+ * function switch used by chip-independent clock code, to access
+ * chip-dependent routines.
+ */
+struct clockfns {
+	void	(*cf_init)(struct device *);
+	void	(*cf_get)(struct device *, time_t, struct clocktime *);
+	void	(*cf_set)(struct device *, struct clocktime *);
+};
+
+void clockattach(struct device *, const struct clockfns *);

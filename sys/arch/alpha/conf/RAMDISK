@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.56 2002/04/28 20:55:14 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.57 2002/05/02 22:56:06 miod Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -137,9 +137,7 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
-#wsdisplay*	at	cfb?
 wsdisplay*	at	vga?
-#wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*          at      pckbd?
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc.c,v 1.11 2002/03/14 03:16:08 millert Exp $	*/
-/*	$NetBSD: tc.c,v 1.20 1996/10/22 21:37:29 cgd Exp $	*/
+/*	$OpenBSD: tc.c,v 1.12 2002/05/02 22:56:06 miod Exp $	*/
+/*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -36,19 +36,6 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
 
-#include <machine/autoconf.h>	/* for the proto of badaddr() */
-
-struct tc_softc {
-	struct	device sc_dv;
-
-	int	sc_speed;
-	int	sc_nslots;
-	struct tc_slotdesc *sc_slots;
-
-	void	(*sc_intr_establish)(struct device *, void *,
-		    tc_intrlevel_t, int (*)(void *), void *);
-	void	(*sc_intr_disestablish)(struct device *, void *);
-};
 
 /* Definition of the driver for autoconfig. */
 int	tcmatch(struct device *, void *, void *);
@@ -68,13 +55,12 @@ int	tc_checkslot(tc_addr_t, char *);
 void	tc_devinfo(const char *, char *);
 
 int
-tcmatch(parent, cfdata, aux)
+tcmatch(parent, vcf, aux)
 	struct device *parent;
-	void *cfdata;
-	void *aux;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct tcbus_attach_args *tba = aux;
+	struct cfdata *cf = vcf;
 
 	if (strcmp(tba->tba_busname, cf->cf_driver->cd_name))
 		return (0);
@@ -105,8 +91,10 @@ tcattach(parent, self, aux)
 	sc->sc_speed = tba->tba_speed;
 	sc->sc_nslots = tba->tba_nslots;
 	sc->sc_slots = tba->tba_slots;
+	sc->sc_intr_evcnt = tba->tba_intr_evcnt;
 	sc->sc_intr_establish = tba->tba_intr_establish;
 	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
+	sc->sc_get_dma_tag = tba->tba_get_dma_tag;
 
 	/*
 	 * Try to configure each built-in device
@@ -131,9 +119,8 @@ tcattach(parent, self, aux)
 		 * Set up the device attachment information.
 		 */
 		strncpy(ta.ta_modname, builtin->tcb_modname, TC_ROM_LLEN);
-#ifdef __alpha__ /* XXX */
 		ta.ta_memt = tba->tba_memt;
-#endif
+		ta.ta_dmat = (*sc->sc_get_dma_tag)(builtin->tcb_slot);
 		ta.ta_modname[TC_ROM_LLEN] = '\0';
 		ta.ta_slot = builtin->tcb_slot;
 		ta.ta_offset = builtin->tcb_offset;
@@ -174,6 +161,8 @@ tcattach(parent, self, aux)
 		/*
 		 * Set up the rest of the attachment information.
 		 */
+		ta.ta_memt = tba->tba_memt;
+		ta.ta_dmat = (*sc->sc_get_dma_tag)(i);
 		ta.ta_slot = i;
 		ta.ta_offset = 0;
 		ta.ta_addr = tcaddr;
@@ -209,12 +198,12 @@ tcprint(aux, pnp)
 }
 
 int
-tcsubmatch(parent, match, aux)
+tcsubmatch(parent, vcf, aux)
 	struct device *parent;
-	void *match, *aux;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
 	struct tc_attach_args *d = aux;
+	struct cfdata *cf = vcf;
 
 	if ((cf->tccf_slot != TCCF_SLOT_UNKNOWN) &&
 	    (cf->tccf_slot != d->ta_slot))
@@ -223,7 +212,7 @@ tcsubmatch(parent, match, aux)
 	    (cf->tccf_offset != d->ta_offset))
 		return 0;
 
-	return ((*cf->cf_attach->ca_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 
@@ -273,17 +262,24 @@ tc_checkslot(slotbase, namep)
 	return (0);
 }
 
+const struct evcnt *
+tc_intr_evcnt(struct device *dev, void *cookie)
+{
+	struct tc_softc *sc = tc_cd.cd_devs[0];
+
+	return ((*sc->sc_intr_evcnt)(dev, cookie));
+}
+
 void
 tc_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie, *arg;
-	tc_intrlevel_t level;
+	int level;
 	int (*handler)(void *);
 {
-	struct tc_softc *sc = (struct tc_softc *)dev;
+	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	(*sc->sc_intr_establish)(sc->sc_dv.dv_parent, cookie, level,
-	    handler, arg);
+	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
 }
 
 void
@@ -291,9 +287,9 @@ tc_intr_disestablish(dev, cookie)
 	struct device *dev;
 	void *cookie;
 {
-	struct tc_softc *sc = (struct tc_softc *)dev;
+	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	(*sc->sc_intr_disestablish)(sc->sc_dv.dv_parent, cookie);
+	(*sc->sc_intr_disestablish)(dev, cookie);
 }
 
 #ifdef TCVERBOSE
