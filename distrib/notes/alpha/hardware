@@ -22,7 +22,7 @@ Supported hardware:
 			Other TurboChannel option boards.
 			The ISDN/Audio chip.
 
-	AlphaStation {200,250,255,400,500,500} and AXPpci systems
+	AlphaStation {200,250,255,400,500} and AXPpci systems
 	    (including the Multia) using the following peripherals:
 
 		Supported hardware:
