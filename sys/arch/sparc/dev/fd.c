@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.28 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: fd.c,v 1.29 2002/05/29 08:28:36 art Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -718,7 +718,9 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 void
@@ -1780,7 +1782,9 @@ fdformat(dev, finfo, p)
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
 		rv = EIO;
+		s = splbio();
 		biodone(bp);
+		splx(s);
 	}
 	if (bp->b_flags & B_ERROR) {
 		rv = bp->b_error;
