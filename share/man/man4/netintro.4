@@ -1,3 +1,4 @@
+.\"	$OpenBSD: netintro.4,v 1.7 1998/09/03 23:08:10 jason Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -33,7 +34,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd November 30, 1993
+.Dd Sept 3, 1994
 .Dt NETINTRO 4
 .Os BSD 4.2
 .Sh NAME
@@ -208,6 +209,7 @@ struct	ifreq {
 #define ifr_broadaddr ifr_ifru.ifru_broadaddr /* broadcast address */
 #define ifr_flags     ifr_ifru.ifru_flags   /* flags */
 #define ifr_metric    ifr_ifru.ifru_metric  /* metric */
+#define ifr_media     ifr_ifru.ifru_metric  /* media options (overload) */
 #define ifr_data      ifr_ifru.ifru_data    /* for use by interface */
 };
 .Ed
@@ -245,6 +247,14 @@ some interfaces may be reset so that incoming packets are no longer received.
 When marked up again, the interface is reinitialized.
 .It Dv SIOCGIFFLAGS
 Get interface flags.
+.It Dv SIOCSIFMEDIA
+Set interface media. See
+.Xr ifmedia 4
+for possible values.
+.It Dv SIOCGIFMEDIA
+Get interface media. See
+.Xr ifmedia 4
+for interpretting this value.
 .It Dv SIOCSIFMETRIC
 Set interface routing metric.
 The metric is used only by user-level routers.
@@ -338,6 +348,7 @@ struct ifconf {
 .Xr ioctl 2 ,
 .Xr intro 4 ,
 .Xr config 8 ,
+.Xr ifmedia 4 ,
 .Xr routed 8
 .Sh HISTORY
 The

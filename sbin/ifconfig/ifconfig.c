@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.19 1998/09/03 06:24:18 jason Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.20 1998/09/03 23:08:09 jason Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.19 1998/09/03 06:24:18 jason Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.20 1998/09/03 23:08:09 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -1557,10 +1557,12 @@ usage()
 	fprintf(stderr, "usage: ifconfig interface\n%s",
 		"\t[ [af] [ address [ dest_addr ] ] [ up ] [ down ] "
 		"[ netmask mask ] ]\n"
+		"\t[media media_type] [mediaopt media_option]\n"
 		"\t[ metric n ]\n"
 		"\t[ arp | -arp ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       ifconfig [-a | -A] [ af ]\n");
+		"       ifconfig [-a | -A | -am | -Am] [ af ]\n"
+		"       ifconfig -m interface [af]\n");
 	exit(1);
 }

@@ -1,0 +1,190 @@
+.\"	$OpenBSD: ifmedia.4,v 1.1 1998/09/03 23:08:10 jason Exp $
+.\"	$NetBSD: ifmedia.4,v 1.1 1998/08/09 00:37:17 thorpej Exp $
+.\"
+.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+.\" NASA Ames Research Center.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 8, 1998
+.Dt IFMEDIA 4
+.Os OpenBSD
+.Sh NAME
+.Nm ifmedia
+.Nd network interface media settings
+.Sh SYNOPSIS
+.Fd #include <sys/socket.h>
+.Fd #include <net/if.h>
+.Fd #include <net/if_media.h>
+.Sh DESCRIPTION
+The
+.Nm
+interface provides a consistent method for querying and setting
+network inerface media and media options.  The media is typically
+set using the
+.Xr ifconfig 8
+command.
+.Pp
+There are currently three link types supported by
+.Nm Ns :
+.Bl -tag -offset indent -width IFM_ETHER
+.It IFM_ETHER
+Ethernet
+.It IFM_TOKEN
+Token Ring
+.It IFM_FDDI
+FDDI
+.El
+.Pp
+The following sections describe the possible media settings for each
+link type.  Not all of these are supported by every device; refer to
+your device's manual page for more information.
+.Pp
+The lists below provide the possible names of each media type or option.
+The first name in the list is the canonical name of the media type or
+option.  Additional names are acceptable aliases for the media type or
+option.
+.Sh COMMON MEDIA TYPES AND OPTIONS
+The followng media types are shared by all link types:
+.Bl -tag -offset indent -width IFM_MANUAL
+.It IFM_AUTO
+Autoselect the best media.  [autoselect, auto]
+.It IFM_MANUAL
+Jumper or switch on device selects media.  [manual]
+.It IFM_NONE
+Deselect all media.  [none]
+.El
+.Pp
+The following media options are shared by all link types:
+.Bl -tag -offset indent -width IFM_FLAG0
+.It IFM_FDX
+Place the device into full-duplex mode.  This option only has meaning
+if the device is normally not full-duplex.  [full-duplex, fdx]
+.It IFM_HDX
+Place the device into half-duplex mode.  This option only has meaning
+if the device is normally not half-duplex.  [half-duplex, hdx]
+.It IFM_FLAG0
+Driver-defined flag.  [flag0]
+.It IFM_FLAG1
+Driver-defined flag.  [flag1]
+.It IFM_FLAG2
+Driver-defined flag.  [flag2]
+.It IFM_LOOP
+Place the device into hardware loopback mode.  [loopback, hw-loopback, loop]
+.El
+.Sh MEDIA TYPES AND OPTIONS FOR ETHERNET
+The following media types are defined for Ethernet:
+.Bl -tag -offset indent -width IFM_1000_FX
+.It IFM_10_T
+10baseT, 10Mb/s over unshielded twisted pair, RJ45 connector.  [10baseT,
+UTP, 10UTP]
+.It IFM_10_2
+10base2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
+[10base2, BNC, 10BNC]
+.It IFM_10_5
+10base5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
+[10base5, AUI, 10AUI]
+.It IFM_100_TX
+100baseTX, 100Mb/s over unshielded twisted pair, RJ45 connector.  [100baseTX,
+100TX]
+.It IFM_100_FX
+100baseFX, 100Mb/s over fiber optic cables.  [100baseFX, 100FX]
+.It IFM_100_T4
+100baseT4, 100Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
+connector.  [100baseT4, 100T4]
+.It IFM_100_VG
+100baseVG AnyLAN.  [100baseVG, 100VG]
+.It IFM_100_T2
+100baseT2.  [100baseT2, 100T2]
+.It IFM_1000_FX
+1000baseFX, 1Gb/s over fiber optic cables.  [1000baseFX, 1000FX]
+.It IFM_10_STP
+10baseSTP, 10Mb/s over shielded twisted pair, DB9 connector.  [10baseSTP,
+STP, 10STP]
+.It IFM_10_FL
+10baseFL, 10Mb/s over fiber optic cables.  [10baseFL, FL, 10FL]
+.El
+.Pp
+There are no link type-specific options defined for Ethernet.
+.Sh MEDIA TYPES AND OPTIONS FOR TOKEN RING
+The following media types are defined for Token Ring:
+.Bl -tag -offset indent -width IFM_TOK_UTP16
+.It IFM_TOK_STP4
+4Mb/s, shielded twisted pair, DB9 connector.  [DB9/4Mbit, 4STP]
+.It IFM_TOK_STP16
+16Mb/s, shielded twisted pair, DB9 connector.  [DB9/16Mbit, 16STP]
+.It IFM_TOK_UTP4
+4Mb/s, unshielded twisted pair, RJ45 connector.  [UTP/4Mbit, 4UTP]
+.It IFM_TOK_UTP16
+16Mb/s, unshielded twisted pair, RJ45 connector.  [UTP/16Mbit, 16UTP]
+.El
+.Pp
+The following media options are defined for Token Ring:
+.Bl -tag -offset indent -width IFM_TOK_SRCRT
+.It IFM_TOK_ETR
+Early token release.  [EarlyTokenRelease, ETR]
+.It IFM_TOK_SRCRT
+Enable source routing features.  [SourceRouting, SRCRT]
+.It IFM_TOK_ALLR
+All routes vs. single route broadcast.  [AllRoutes, ALLR]
+.El
+.Sh MEDIA TYPES AND OPTIONS FOR FDDI
+The following media types are defined for FDDI:
+.Bl -tag -offset indent -width IFM_FDDI_SMF
+.It IFM_FDDI_SMF
+Single-mode fiber.  [Single-mode, SMF]
+.It IFM_FDDI_MMF
+Multi-mode fiber.  [Multi-mode, MMF]
+.It IFM_FDDI_UTP
+Unshielded twisted pair, RJ45 connector.  [UTP, CDDI]
+.El
+.Pp
+The following media options are defined for FDDI:
+.Bl -tag -offset indent -width IFM_FDDI_DA
+.It IFM_FDDI_DA
+Dual-attached station vs. Single-attached station.  [dual-attach, das]
+.El
+.Sh SEE ALSO
+.Xr ifconfig 8 ,
+.Xr netintro 4
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Bsx 3.0 .
+The implementation that appeared in
+.Nx 1.3
+was written by Jonathan Stone and Jason R. Thorpe to be compatible with
+the BSDI API.  It has since gone through several revisions which have
+extended the API while maintaining backwards compatibility with the
+original API.
