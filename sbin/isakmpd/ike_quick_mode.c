@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.53 2001/07/01 20:11:53 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.54 2001/08/15 13:06:53 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(USE_POLICY) || defined(USE_KEYNOTE)
+#if defined (USE_POLICY) || defined (USE_KEYNOTE)
 #include <sys/types.h>
 #include <regex.h>
 #include <keynote.h>

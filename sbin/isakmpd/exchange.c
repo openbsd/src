@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.59 2001/08/11 05:27:36 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.60 2001/08/15 13:06:53 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1208,7 +1208,7 @@ exchange_free_aux (void *v_exch)
   if (exchange->keynote_key)
     free (exchange->keynote_key); /* This is just a string */
 
-#if defined(POLICY) || defined(KEYNOTE)
+#if defined (POLICY) || defined (KEYNOTE)
   if (exchange->policy_id != -1)
     LK (kn_close, (exchange->policy_id));
 #endif

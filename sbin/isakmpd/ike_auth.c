@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.53 2001/08/15 09:16:29 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.54 2001/08/15 13:06:53 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
-#if defined(USE_KEYNOTE)
+#if defined (USE_KEYNOTE)
 #include <keynote.h>
 #endif
 #include <policy.h>
@@ -56,7 +56,7 @@
 #include "cert.h"
 #include "conf.h"
 #include "constants.h"
-#if defined(USE_DNSSEC)
+#if defined (USE_DNSSEC)
 #include "dnssec.h"
 #endif
 #include "exchange.h"
@@ -84,7 +84,7 @@ static u_int8_t *pre_shared_gen_skeyid (struct exchange *, size_t *);
 static int pre_shared_decode_hash (struct message *);
 static int pre_shared_encode_hash (struct message *);
 
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
 static u_int8_t *sig_gen_skeyid (struct exchange *, size_t *);
 static int rsa_sig_decode_hash (struct message *);
 static int rsa_sig_encode_hash (struct message *);
@@ -108,7 +108,7 @@ static struct ike_auth ike_auth[] = {
     pre_shared_encode_hash
   },
 #endif
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
   {
     IKE_AUTH_RSA_SIG, sig_gen_skeyid, rsa_sig_decode_hash,
     rsa_sig_encode_hash
@@ -145,9 +145,9 @@ static void *
 ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 {
   char *key, *buf;
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
   char *keyfile;
-#if defined(USE_X509)
+#if defined (USE_X509)
   BIO *keyh;
   RSA *rsakey;
 #endif
@@ -192,12 +192,12 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       break;
 
     case IKE_AUTH_RSA_SIG:
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
 #ifdef HAVE_DLOPEN
       if (!libcrypto)
 	return 0;
 #endif
-#if defined(USE_KEYNOTE)
+#if defined (USE_KEYNOTE)
       if (local_id &&
 	  (keyfile = conf_get_str ("KeyNote", "Credential-directory")) != 0)
         {
@@ -429,7 +429,7 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   return skeyid;
 }
 
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
 /* Both DSS & RSA signature authentication use this algorithm.  */
 static u_int8_t *
 sig_gen_skeyid (struct exchange *exchange, size_t *sz)
@@ -561,7 +561,7 @@ pre_shared_decode_hash (struct message *msg)
   return 0;
 }
 
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
 /* Decrypt the HASH in SIG, we already need a parsed ID payload.  */
 static int
 rsa_sig_decode_hash (struct message *msg)
@@ -582,7 +582,7 @@ rsa_sig_decode_hash (struct message *msg)
   u_int32_t *id_cert_len;
   size_t id_len;
   int found = 0, n, i, id_found;
-#if defined(USE_DNSSEC)
+#if defined (USE_DNSSEC)
   u_int8_t *rawkey = 0;
   u_int32_t rawkeylen;
 #endif
@@ -614,7 +614,7 @@ rsa_sig_decode_hash (struct message *msg)
       return -1;
     }
 
-#if defined(USE_POLICY) || defined(USE_KEYNOTE)
+#if defined (USE_POLICY) || defined (USE_KEYNOTE)
   /*
    * We need the policy session initialized now, so we can add
    * credentials etc.
@@ -652,7 +652,7 @@ rsa_sig_decode_hash (struct message *msg)
 			    handler->id));
 		  exchange->recv_cert = cert;
 		  exchange->recv_certtype = handler->id;
-#if defined(USE_POLICY)
+#if defined (USE_POLICY)
 		  x509_generate_kn (exchange->policy_id, cert);
 #endif /* USE_POLICY */
 		}
@@ -745,7 +745,7 @@ rsa_sig_decode_hash (struct message *msg)
       exchange->recv_cert = cert;
       exchange->recv_certtype = GET_ISAKMP_CERT_ENCODING (p->p);
 
-#if defined(USE_POLICY) || defined(USE_KEYNOTE)
+#if defined (USE_POLICY) || defined (USE_KEYNOTE)
       if (exchange->recv_certtype == ISAKMP_CERTENC_KEYNOTE)
         {
 	  struct keynote_deckey dc;
@@ -782,7 +782,7 @@ rsa_sig_decode_hash (struct message *msg)
       found++;
     }
 
-#if defined(USE_DNSSEC)
+#if defined (USE_DNSSEC)
   /* If no certificate provided a key, try to find a validated DNSSEC KEY.  */
   if (!found)
     {
@@ -893,7 +893,7 @@ pre_shared_encode_hash (struct message *msg)
   return 0;
 }
 
-#if defined(USE_X509) || defined(USE_KEYNOTE)
+#if defined (USE_X509) || defined (USE_KEYNOTE)
 /* Encrypt the HASH into a SIG type.  */
 static int
 rsa_sig_encode_hash (struct message *msg)
