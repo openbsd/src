@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.55 1999/02/27 01:32:37 fgsch Exp $
+#	$OpenBSD: pnpdevs,v 1.56 1999/02/27 01:52:38 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -413,6 +413,7 @@ joy		CSC0101	# On Board Audio Chip
 joy		CTL7001	# Creative SB16 PnP joy
 joy		CTL7002	# Creative SB AWE64 PnP
 joy		ESS0001	# ESS ES1869 Plug and Play AudioD
+joy		ESS0005	# ESS ES1878 Plug and Play AudioD
 joy		OPT0001	# OPTi Audio 16
 sb		@X@0001	# CMI8330. Audio Adapter
 sb		ADS7150	# AD1815
@@ -433,4 +434,3 @@ sb		ESS1878	# ESS ES1878 Plug and Play AudioD
 sb		OPT9310	# OPTi Audio 16 (possibly a wss instead of sb)
 ym		@@@1001 # ALS100+
 ym		YMH0021	# OPL3-SA2 Sound Board
-ym		YMH0021 # OPL3-SA2 Sound Board
