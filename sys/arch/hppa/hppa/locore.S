@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.141 2004/09/18 07:21:27 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.142 2004/10/26 20:18:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -85,6 +85,8 @@
 #define	MFCPU_T(r,x)	.word	0x14001400 | ((r) << 21) | (x)
 #define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
 #define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
+#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
+#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
 
 	.import	$global$, data
 	.import pdc, data
@@ -1405,7 +1407,7 @@ $dtlb_done_l
 #endif /* HP7100LC_CPU */
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
-	.level	2.0
+	.level	2.0w
 
 	/* xlate 32bit->64bit pte */
 #define	TLB_PCX2PCXU \
@@ -1888,9 +1890,13 @@ EXIT(desidhash_l)
 #endif /* HP7100LC_CPU */
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+	.level	2.0w
 LEAF_ENTRY(desidhash_u)
+	MFCPU_U(2,28)
+	depdi	0, 54, 1, r28
+	MTCPU_U(28,2)
 	bv	r0(rp)
-	nop
+	copy	r0, ret0	/* XXX dunno how to get chip rev */
 EXIT(desidhash_u)
 
 LEAF_ENTRY(ibtlb_u)
@@ -1904,6 +1910,7 @@ LEAF_ENTRY(pbtlb_u)
 	bv	0(rp)
 	nop
 EXIT(pbtlb_u)
+	.level	1.1
 #endif /* HP8000_CPU */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.138 2004/10/14 18:30:49 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.139 2004/10/26 20:18:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -219,7 +219,6 @@ int desidhash_s(void);
 int desidhash_t(void);
 int desidhash_l(void);
 int desidhash_u(void);
-int desidhash_g(void);
 const struct hppa_cpu_typed {
 	char name[8];
 	enum hppa_cpu_type type;
@@ -255,15 +254,15 @@ const struct hppa_cpu_typed {
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B,
-	  4, desidhash_g, ibtlb_u, NULL, pbtlb_g },
+	  4, desidhash_u, ibtlb_u, NULL, pbtlb_g },
 #endif
 #ifdef HP8200_CPU
 	{ "PCXU+", hpcxu2,HPPA_CPU_PCXUP, HPPA_FTRS_W32B,
-	  4, desidhash_g, ibtlb_u, NULL, pbtlb_u },
+	  4, desidhash_u, ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8500_CPU
 	{ "PCXW",  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B,
-	  4, desidhash_g, ibtlb_u, NULL, pbtlb_u },
+	  4, desidhash_u, ibtlb_u, NULL, pbtlb_u },
 #endif
 	{ "", 0 }
 };
@@ -856,14 +855,6 @@ ptlball(void)
 		}
 		sp += pdc_cache.dt_sp_stride;
 	}
-}
-
-int
-desidhash_g(void)
-{
-	/* TODO call PDC to disable SID hashing in the cache index */
-
-	return 0;
 }
 
 int
