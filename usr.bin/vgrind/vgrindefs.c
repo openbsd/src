@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgrindefs.c,v 1.5 2003/02/19 07:33:34 deraadt Exp $	*/
+/*	$OpenBSD: vgrindefs.c,v 1.6 2003/02/19 07:38:50 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.5 2003/02/19 07:33:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.6 2003/02/19 07:38:50 deraadt Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -74,14 +74,10 @@ char	*tgetstr();
  * from the termcap file.  Parse is very rudimentary;
  * we just notice escaped newlines.
  */
-tgetent(bp, name, file)
-	char *bp, *name, *file;
+tgetent(char *bp, char *name, char *file)
 {
-	char *cp;
-	int c;
-	int i = 0, cnt = 0;
-	char ibuf[BUFSIZ];
-	char *cp2;
+	char ibuf[BUFSIZ], *cp, *cp2;
+	int i = 0, cnt = 0, c;
 	int tf;
 
 	tbuf = bp;
@@ -134,7 +130,7 @@ tgetent(bp, name, file)
  * entries to say "like an HP2621 but doesn't turn on the labels".
  * Note that this works because of the left to right scan.
  */
-tnchktc()
+tnchktc(void)
 {
 	char *p, *q;
 	char tcname[16];	/* name of similar terminal */
@@ -181,8 +177,7 @@ tnchktc()
  * against each such name.  The normal : terminator after the last
  * name (before the first field) stops us.
  */
-tnamatch(np)
-	char *np;
+tnamatch(char *np)
 {
 	char *Np, *Bp;
 
@@ -208,8 +203,7 @@ tnamatch(np)
  * into the termcap file in octal.
  */
 static char *
-tskip(bp)
-	char *bp;
+tskip(char *bp)
 {
 
 	while (*bp && *bp != ':')
@@ -227,8 +221,7 @@ tskip(bp)
  * a # character.  If the option is not found we return -1.
  * Note that we handle octal numbers beginning with 0.
  */
-tgetnum(id)
-	char *id;
+tgetnum(char *id)
 {
 	int i, base;
 	char *bp = tbuf;
@@ -260,8 +253,7 @@ tgetnum(id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
-tgetflag(id)
-	char *id;
+tgetflag(char *id)
 {
 	char *bp = tbuf;
 
@@ -287,8 +279,7 @@ tgetflag(id)
  * No checking on area overflow.
  */
 char *
-tgetstr(id, area)
-	char *id, **area;
+tgetstr(char *id, char **area)
 {
 	char *bp = tbuf;
 
@@ -312,9 +303,7 @@ tgetstr(id, area)
  * string capability escapes.
  */
 static char *
-tdecode(str, area)
-	char *str;
-	char **area;
+tdecode(char *str, char **area)
 {
 	char *cp;
 	int c;

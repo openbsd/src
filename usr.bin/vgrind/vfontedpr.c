@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfontedpr.c,v 1.7 2003/02/19 07:32:36 deraadt Exp $	*/
+/*	$OpenBSD: vfontedpr.c,v 1.8 2003/02/19 07:38:49 deraadt Exp $	*/
 /*	$NetBSD: vfontedpr.c,v 1.7 1998/12/19 23:41:53 christos Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.7 2003/02/19 07:32:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.8 2003/02/19 07:38:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -132,9 +132,7 @@ char	*language = "c";	/* the language indicator */
 #define	ps(x)	printf("%s", x)
 
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     char *fname = "";
     struct stat stbuf;
@@ -353,8 +351,7 @@ main(argc, argv)
 #define isidchr(c) (isalnum(c) || (c) == '_')
 
 static void
-putScp(os)
-    char *os;
+putScp(char *os)
 {
     char *s = os;			/* pointer to unmatched string */
     char dummy[BUFSIZ];			/* dummy to be used by expmatch */
@@ -534,10 +531,7 @@ skip:
 }
 
 static void
-putKcp (start, end, force)
-    char	*start;		/* start of string to write */
-    char	*end;		/* end of string to write */
-    boolean	force;		/* true if we should force nokeyw */
+putKcp(char *start, char *end, boolean force)
 {
     int i;
     int xfld = 0;
@@ -584,16 +578,14 @@ putKcp (start, end, force)
 
 
 static int
-tabs(s, os)
-    char *s, *os;
+tabs(char *s, char *os)
 {
 
     return (width(s, os) / 8);
 }
 
 static int
-width(s, os)
-	char *s, *os;
+width(char *s, char *os)
 {
 	int i = 0;
 
@@ -613,8 +605,7 @@ width(s, os)
 }
 
 static void
-putcp(c)
-	int c;
+putcp(int c)
 {
 
 	switch(c) {
@@ -678,8 +669,7 @@ putcp(c)
  *	look for a process beginning on this line
  */
 static boolean
-isproc(s)
-    char *s;
+isproc(char *s)
 {
     pname[0] = NULL;
     if (!l_toplex || blklevel == 0)
@@ -694,8 +684,7 @@ isproc(s)
  */
 
 static int
-iskw(s)
-	char *s;
+iskw(char *s)
 {
 	char **ss = l_keywds;
 	int i = 1;
