@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.72 2001/11/06 21:51:33 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.73 2001/11/06 21:52:26 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -387,7 +387,7 @@ product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" }
 product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spAdapter", NULL, NULL }
 product ZOOM AIR4000		{ "Zoom", "Air-4000", NULL, NULL }
 product TAMARACK NE2000		{ "TAMARACK", "Ethernet", NULL, NULL }
-product LINKSYS PCM100		{ "Linksys", "EtherFast&sp10/100&spIntegrated&spPC&spCard&sp(PCM100)", "Ver&sp1.0, NULL }
+product LINKSYS PCM100		{ "Linksys", "EtherFast&sp10/100&spIntegrated&spPC&spCard&sp(PCM100)", "Ver&sp1.0", NULL }
 product SARAMNCOM NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
 product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version&sp01.02", NULL }
 product ADDTRON AWP100		{ "Addtron", "AWP-100&spWireless&spPCMCIA", "Version&sp01.02", NULL }
