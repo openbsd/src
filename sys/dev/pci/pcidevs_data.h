@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.302 2000/08/10 16:00:26 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.303 2000/08/11 16:57:28 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2449,6 +2449,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IRE",
 	    "ADSP 2141",
+	},
+	{
+	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8330G,
+	    0,
+	    "ITExpress",
+	    "IT8330G",
 	},
 	{
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
@@ -8040,6 +8046,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DAVICOM, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Davicom Technologies",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ITEXPRESS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ITExpress",
 	    NULL,
 	},
 	{

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.302 2000/08/10 16:00:26 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.303 2000/08/11 16:57:28 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -505,6 +505,7 @@
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Technologies */
+#define	PCI_VENDOR_ITEXPRESS	0x1283		/* ITExpress */
 #define	PCI_VENDOR_LUXSONOR	0x1287		/* LuxSonor */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
@@ -1111,6 +1112,9 @@
 
 /* IRE */
 #define	PCI_PRODUCT_IRE_ADSP2141	0x2f44		/* ADSP 2141 */
+
+/* ITExpress */
+#define	PCI_PRODUCT_ITEXPRESS_IT8330G	0x8330		/* IT8330G */
 
 /* KTI */
 #define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
