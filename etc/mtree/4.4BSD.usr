@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.9 1996/08/23 15:30:17 etheisen Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.10 1996/08/28 04:16:31 deraadt Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -533,13 +533,6 @@ cat3            type=dir uname=root gname=wheel mode=0755
 
 # ./local/man/cat4
 cat4            type=dir uname=root gname=wheel mode=0755
-
-# ./local/man/cat4/i386
-/set type=file gname=bin uname=root mode=0444
-i386            type=dir uname=root gname=wheel mode=0755
-# ./local/man/cat4/i386
-..
-
 # ./local/man/cat4
 ..
 
