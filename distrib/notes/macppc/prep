@@ -101,7 +101,7 @@ default.
 To boot in MacOS with this setup (works on most supported machines)
 press and hold down the Alt/Option key during reboot, and select which
 (MacOS/MacOS X) partition to boot in the graphical boot selector
-presentes. Note that OpenBSD does not currently show up in this boot
+presented. Note that OpenBSD does not currently show up in this boot
 selector except for the installation CD. This works on most machines
 this has been tested with, but does not work on a Rev C (333MHz) iMac,
 perhaps this feature was added to the Openfirmware ROM after that
