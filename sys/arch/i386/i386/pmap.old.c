@@ -1,3 +1,4 @@
+/*	$OpenBSD: pmap.old.c,v 1.6 1996/04/17 05:18:55 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.34 1995/12/09 07:39:02 mycroft Exp $	*/
 
 /*
@@ -1537,7 +1538,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 /*
  * Miscellaneous support routines follow
  */
-
+void
 i386_protection_init()
 {
 

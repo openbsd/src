@@ -1,4 +1,5 @@
-/*	$NetBSD: pio.h,v 1.12 1995/12/20 07:53:09 mycroft Exp $	*/
+/*	$OpenBSD: pio.h,v 1.3 1996/04/17 05:19:03 mickey Exp $	*/
+/*	$NetBSD: pio.h,v 1.13 1996/03/08 20:15:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995 Charles M. Hannum.  All rights reserved.
@@ -28,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _I386_PIO_H_
+#define _I386_PIO_H_
 
 /*
  * Functions to provide access to i386 programmed I/O instructions.
@@ -205,3 +209,5 @@ outsl(int port, void *addr, int cnt)
 			 "d" (port), "S" (addr), "c" (cnt)	:
 			 "%esi", "%ecx");
 }
+
+#endif /* _I386_PIO_H_ */

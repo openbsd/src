@@ -1,4 +1,5 @@
-/*	$NetBSD: ansi.h,v 1.5 1994/10/27 04:15:54 cgd Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.2 1996/04/17 05:19:01 mickey Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6 1996/03/16 01:31:50 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -69,6 +70,7 @@
  * defined for ctype.h.
  */
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define _BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
 
 #endif	/* _ANSI_H_ */

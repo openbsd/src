@@ -1,7 +1,8 @@
-/*	$NetBSD: process_machdep.c,v 1.20 1996/01/13 06:14:44 mycroft Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 1996/04/17 05:18:56 mickey Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.21 1996/04/11 07:47:48 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1995, 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
  * All rights reserved.
@@ -110,9 +111,7 @@ process_read_regs(p, regs)
 		regs->r_fs = tf->tf_vm86_fs;
 		regs->r_es = tf->tf_vm86_es;
 		regs->r_ds = tf->tf_vm86_ds;
-		regs->r_eflags = tf->tf_eflags;
-		SETFLAGS(regs->r_eflags, VM86_EFLAGS(p),
-			 VM86_FLAGMASK(p)|PSL_VIF);
+		regs->r_eflags = get_vflags(p);
 	} else
 #endif
 	{
@@ -166,22 +165,13 @@ process_write_regs(p, regs)
 	struct trapframe *tf = process_frame(p);
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	/*
-	 * Check for security violations.
-	 */
-	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs->r_cs, regs->r_eflags))
-		return (EINVAL);
-
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		tf->tf_vm86_gs = regs->r_gs;
 		tf->tf_vm86_fs = regs->r_fs;
 		tf->tf_vm86_es = regs->r_es;
 		tf->tf_vm86_ds = regs->r_ds;
-		tf->tf_eflags = regs->r_eflags;
-		SETFLAGS(VM86_EFLAGS(p), regs->r_eflags,
-			 VM86_FLAGMASK(p)|PSL_VIF);
+		set_vflags(p, regs->r_eflags);
 	} else
 #endif
 	{
@@ -200,6 +190,13 @@ process_write_regs(p, regs)
 				      verr_gdt(IDXSEL(sel)))
 #define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
 #define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
+
+		/*
+		 * Check for security violations.
+		 */
+		if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(regs->r_cs, regs->r_eflags))
+			return (EINVAL);
 
 		if ((regs->r_gs != pcb->pcb_gs && \
 		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||

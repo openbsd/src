@@ -121,6 +121,7 @@ int	want_resched;		/* resched() was called */
 		} \
 	} while (0)
 #endif
+void	delay __P((int));
 
 /*
  * pull in #defines for kinds of processors

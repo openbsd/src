@@ -1,32 +1,40 @@
-/*	$NetBSD: vm86.c,v 1.3 1996/01/08 22:23:35 mycroft Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.2 1996/04/17 05:18:59 mickey Exp $	*/
+/*	$NetBSD: vm86.c,v 1.8 1996/04/11 10:07:17 mycroft Exp $	*/
 
-/*
- *  Copyright (c) 1995 John T. Kohl
- *  All rights reserved.
- * 
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by John T. Kohl and Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
  */
 
 #include <sys/param.h>
@@ -64,13 +72,11 @@
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
-static void return_to_32bit __P((struct proc *, int));
 static void fast_intxx __P((struct proc *, int));
 
-#define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
-#define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
-
+#define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
+#define	SS(tf)		(*(u_short *)&tf->tf_ss)
 #define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
 
@@ -154,57 +160,6 @@ is_bitset(nr, bitmap)
 }
 
 
-static __inline__ void
-set_vif(p)
-	struct proc *p;
-{
-
-	VM86_EFLAGS(p) |= PSL_VIF;
-	if (VM86_EFLAGS(p) & PSL_VIP)
-		return_to_32bit(p, VM86_STI);
-}
-
-static __inline__ void
-set_vflags(p, flags)
-	struct proc *p;
-	int flags;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-
-	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p));
-	SETFLAGS(tf->tf_eflags, flags, SETDIRECT);
-	if (flags & PSL_I)
-		set_vif(p);
-}
-
-static __inline__ void
-set_vflags_short(p, flags)
-	struct proc *p;
-	int flags;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-
-	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p) & 0xffff);
-	SETFLAGS(tf->tf_eflags, flags, SETDIRECT);
-	if (flags & PSL_I)
-		set_vif(p);
-}
-
-static __inline__ int
-get_vflags(p)
-	struct proc *p;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-	int flags = 0;
-
-	SETFLAGS(flags, VM86_EFLAGS(p), VM86_FLAGMASK(p));
-	SETFLAGS(flags, tf->tf_eflags, GETDIRECT);
-	if (VM86_EFLAGS(p) & PSL_VIF)
-		flags |= PSL_I;
-	return (flags);
-}
-
-
 #define V86_AH(regs)	(((u_char *)&((regs)->tf_eax))[1])
 #define V86_AL(regs)	(((u_char *)&((regs)->tf_eax))[0])
 
@@ -237,7 +192,7 @@ fast_intxx(p, intrno)
 	 * requested special handling, return to user space with indication
 	 * of which INT was requested.
 	 */
-	cs = tf->tf_cs;
+	cs = CS(tf);
 	if (cs == BIOSSEG || is_bitset(intrno, &u_vm86p->int_byuser[0]))
 		goto vector;
 
@@ -263,33 +218,33 @@ fast_intxx(p, intrno)
 	 * Otherwise, push flags, cs, eip, and jump to handler to
 	 * simulate direct INT call.
 	 */
-	ss = tf->tf_ss << 4;
+	ss = SS(tf) << 4;
 	sp = SP(tf);
 
-	putword(ss, sp, get_vflags(p));
-	putword(ss, sp, tf->tf_cs);
+	putword(ss, sp, get_vflags_short(p));
+	putword(ss, sp, CS(tf));
 	putword(ss, sp, IP(tf));
 	SP(tf) = sp;
 
 	IP(tf) = ihand.ip;
-	tf->tf_cs = ihand.cs;
+	CS(tf) = ihand.cs;
 
 	/* disable further "hardware" interrupts, turn off any tracing. */
-	VM86_EFLAGS(p) &= ~PSL_VIF;
-	tf->tf_eflags &= ~PSL_VIF|PSL_T;
+	tf->tf_eflags &= ~PSL_T;
+	clr_vif(p);
 	return;
 
 vector:
-	return_to_32bit(p, VM86_MAKEVAL(VM86_INTx, intrno));
+	vm86_return(p, VM86_MAKEVAL(VM86_INTx, intrno));
 	return;
 
 bad:
-	return_to_32bit(p, VM86_UNKNOWN);
+	vm86_return(p, VM86_UNKNOWN);
 	return;
 }
 
-static void
-return_to_32bit(p, retval)
+void
+vm86_return(p, retval)
 	struct proc *p;
 	int retval;
 {
@@ -297,7 +252,7 @@ return_to_32bit(p, retval)
 	/*
 	 * We can't set the virtual flags in our real trap frame,
 	 * since it's used to jump to the signal handler.  Instead we
-	 * let sendsig() pull in the VM86_EFLAGS bits.
+	 * let sendsig() pull in the vm86_eflags bits.
 	 */
 	if (p->p_sigmask & sigmask(SIGURG)) {
 #ifdef DIAGNOSTIC
@@ -339,22 +294,21 @@ vm86_gpfault(p, type)
 	u_char tmpbyte;
 	u_long cs, ip, ss, sp;
 
-	cs = tf->tf_cs << 4;
+	cs = CS(tf) << 4;
 	ip = IP(tf);
-	ss = tf->tf_ss << 4;
+	ss = SS(tf) << 4;
 	sp = SP(tf);
 
 	/*
 	 * For most of these, we must set all the registers before calling
-	 * macros/functions which might do a return_to_32bit.
+	 * macros/functions which might do a vm86_return.
 	 */
 	tmpbyte = getbyte(cs, ip);
 	IP(tf) = ip;
 	switch (tmpbyte) {
 	case CLI:
 		/* simulate handling of IF */
-		VM86_EFLAGS(p) &= ~PSL_VIF;
-		tf->tf_eflags &= ~PSL_VIF;
+		clr_vif(p);
 		break;
 
 	case STI:
@@ -373,13 +327,13 @@ vm86_gpfault(p, type)
 		break;
 
 	case PUSHF:
-		putword(ss, sp, get_vflags(p));
+		putword(ss, sp, get_vflags_short(p));
 		SP(tf) = sp;
 		break;
 
 	case IRET:
 		IP(tf) = getword(ss, sp);
-		tf->tf_cs = getword(ss, sp);
+		CS(tf) = getword(ss, sp);
 	case POPF:
 		set_vflags_short(p, getword(ss, sp));
 		SP(tf) = sp;
@@ -390,15 +344,15 @@ vm86_gpfault(p, type)
 		IP(tf) = ip;
 		switch (tmpbyte) {
 		case PUSHF:
-			putdword(ss, sp, get_vflags(p));
+			putdword(ss, sp, get_vflags(p) & ~PSL_VM);
 			SP(tf) = sp;
 			break;
 
 		case IRET:
 			IP(tf) = getdword(ss, sp);
-			tf->tf_cs = getdword(ss, sp);
+			CS(tf) = getdword(ss, sp);
 		case POPF:
-			set_vflags(p, getdword(ss, sp));
+			set_vflags(p, getdword(ss, sp) | PSL_VM);
 			SP(tf) = sp;
 			break;
 
@@ -416,7 +370,7 @@ vm86_gpfault(p, type)
 	return;
 
 bad:
-	return_to_32bit(p, VM86_UNKNOWN);
+	vm86_return(p, VM86_UNKNOWN);
 	return;
 }
 
@@ -427,13 +381,36 @@ i386_vm86(p, args, retval)
 	register_t *retval;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vm86_kern vm86s;
 	int err;
 
 	if (err = copyin(args, &vm86s, sizeof(vm86s)))
 		return err;
 
-	p->p_addr->u_pcb.vm86_userp = (void *)args;
+	pcb->vm86_userp = (void *)args;
+
+	/*
+	 * Keep mask of flags we simulate to simulate a particular type of
+	 * processor.
+	 */
+	switch (vm86s.ss_cpu_type) {
+	case VCPU_086:
+	case VCPU_186:
+	case VCPU_286:
+		pcb->vm86_flagmask = 0;
+		break;
+	case VCPU_386:
+		pcb->vm86_flagmask = PSL_NT|PSL_IOPL;
+		break;
+	case VCPU_486:
+		pcb->vm86_flagmask = PSL_AC|PSL_NT|PSL_IOPL;
+		break;
+	case VCPU_586:
+	default:
+		pcb->vm86_flagmask = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
+		break;
+	}
 
 #define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
 #define DOREG(reg) tf->tf_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
@@ -457,34 +434,10 @@ i386_vm86(p, args, retval)
 #undef	DOVREG
 #undef	DOREG
 
-	SETFLAGS(VM86_EFLAGS(p), vm86s.regs.vmsc.sc_eflags, VM86_FLAGMASK(p)|PSL_VIF);
-	SETFLAGS(tf->tf_eflags, vm86s.regs.vmsc.sc_eflags, SETDIRECT);
-	tf->tf_eflags |= PSL_VM;
-
-	/*
-	 * Keep mask of flags we simulate to simulate a particular type of
-	 * processor.
-	 */
-	switch (vm86s.ss_cpu_type) {
-	case VCPU_086:
-	case VCPU_186:
-	case VCPU_286:
-		VM86_FLAGMASK(p) = 0;
-		break;
-	case VCPU_386:
-		VM86_FLAGMASK(p) = PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_486:
-		VM86_FLAGMASK(p) = PSL_AC|PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_586:
-	default:
-		VM86_FLAGMASK(p) = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
-		break;
-	}
-
 	/* Going into vm86 mode jumps off the signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	set_vflags(p, vm86s.regs.vmsc.sc_eflags | PSL_VM);
 
 	return (EJUSTRETURN);
 }

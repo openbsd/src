@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_machdep.c,v 1.20 1996/01/04 22:22:04 jtc Exp $	 */
+/*	$OpenBSD: svr4_machdep.c,v 1.3 1996/04/17 05:18:57 mickey Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.21 1996/04/11 07:47:50 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -52,6 +53,7 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
+#include <machine/vm86.h>
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
@@ -79,6 +81,8 @@ svr4_getcontext(p, uc, mask, oonstack)
 		r[SVR4_X86_FS] = tf->tf_vm86_fs;
 		r[SVR4_X86_ES] = tf->tf_vm86_es;
 		r[SVR4_X86_DS] = tf->tf_vm86_ds;
+		r[SVR4_X86_EFL] = get_vflags(p);
+		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
 	{
@@ -86,6 +90,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 		__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
 		r[SVR4_X86_ES] = tf->tf_es;
 		r[SVR4_X86_DS] = tf->tf_ds;
+		r[SVR4_X86_EFL] = tf->tf_eflags;
 	}
 	r[SVR4_X86_EDI] = tf->tf_edi;
 	r[SVR4_X86_ESI] = tf->tf_esi;
@@ -99,7 +104,6 @@ svr4_getcontext(p, uc, mask, oonstack)
 	r[SVR4_X86_ERR] = 0;
 	r[SVR4_X86_EIP] = tf->tf_eip;
 	r[SVR4_X86_CS] = tf->tf_cs;
-	r[SVR4_X86_EFL] = tf->tf_eflags;
 	r[SVR4_X86_UESP] = 0;
 	r[SVR4_X86_SS] = tf->tf_ss;
 
@@ -155,11 +159,44 @@ svr4_setcontext(p, uc)
 	tf = p->p_md.md_regs;
 
 	/*
-	 * Check for security violations.
+	 * Restore register context.
 	 */
-	if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
-		return (EINVAL);
+#ifdef VM86
+	if (r[SVR4_X86_EFL] & PSL_VM) {
+		tf->tf_vm86_gs = r[SVR4_X86_GS];
+		tf->tf_vm86_fs = r[SVR4_X86_FS];
+		tf->tf_vm86_es = r[SVR4_X86_ES];
+		tf->tf_vm86_ds = r[SVR4_X86_DS];
+		set_vflags(p, r[SVR4_X86_EFL]);
+	} else
+#endif
+	{
+		/*
+		 * Check for security violations.  If we're returning to
+		 * protected mode, the CPU will validate the segment registers
+		 * automatically and generate a trap on violations.  We handle
+		 * the trap, rather than doing all of the checking here.
+		 */
+		if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
+			return (EINVAL);
+
+		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_es = r[SVR4_X86_ES];
+		tf->tf_ds = r[SVR4_X86_DS];
+		tf->tf_eflags = r[SVR4_X86_EFL];
+	}
+	tf->tf_edi = r[SVR4_X86_EDI];
+	tf->tf_esi = r[SVR4_X86_ESI];
+	tf->tf_ebp = r[SVR4_X86_EBP];
+	tf->tf_ebx = r[SVR4_X86_EBX];
+	tf->tf_edx = r[SVR4_X86_EDX];
+	tf->tf_ecx = r[SVR4_X86_ECX];
+	tf->tf_eax = r[SVR4_X86_EAX];
+	tf->tf_eip = r[SVR4_X86_EIP];
+	tf->tf_cs = r[SVR4_X86_CS];
+	tf->tf_ss = r[SVR4_X86_SS];
+	tf->tf_esp = r[SVR4_X86_ESP];
 
 	/*
 	 * restore signal stack
@@ -171,35 +208,6 @@ svr4_setcontext(p, uc)
 	 */
 	svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
 	p->p_sigmask = mask & ~sigcantmask;
-
-	/*
-	 * Restore register context.
-	 */
-#ifdef VM86
-	if (r[SVR4_X86_EFL] & PSL_VM) {
-		tf->tf_vm86_gs = r[SVR4_X86_GS];
-		tf->tf_vm86_fs = r[SVR4_X86_FS];
-		tf->tf_vm86_es = r[SVR4_X86_ES];
-		tf->tf_vm86_ds = r[SVR4_X86_DS];
-	} else
-#endif
-	{
-		/* %fs and %gs were restored by the trampoline. */
-		tf->tf_es = r[SVR4_X86_ES];
-		tf->tf_ds = r[SVR4_X86_DS];
-	}
-	tf->tf_edi = r[SVR4_X86_EDI];
-	tf->tf_esi = r[SVR4_X86_ESI];
-	tf->tf_ebp = r[SVR4_X86_EBP];
-	tf->tf_ebx = r[SVR4_X86_EBX];
-	tf->tf_edx = r[SVR4_X86_EDX];
-	tf->tf_ecx = r[SVR4_X86_ECX];
-	tf->tf_eax = r[SVR4_X86_EAX];
-	tf->tf_eip = r[SVR4_X86_EIP];
-	tf->tf_cs = r[SVR4_X86_CS];
-	tf->tf_eflags = r[SVR4_X86_EFL];
-	tf->tf_ss = r[SVR4_X86_SS];
-	tf->tf_esp = r[SVR4_X86_ESP];
 
 	return EJUSTRETURN;
 }

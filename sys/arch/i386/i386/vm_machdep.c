@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1996/03/19 21:09:24 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 1996/04/17 05:19:00 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.58 1996/02/05 02:00:35 christos Exp $	*/
 
 /*-
@@ -262,6 +262,7 @@ cpu_coredump(p, vp, cred, chdr)
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
+void
 setredzone(pte, vaddr)
 	u_short *pte;
 	caddr_t vaddr;
@@ -281,6 +282,7 @@ setredzone(pte, vaddr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;

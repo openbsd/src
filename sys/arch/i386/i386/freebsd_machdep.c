@@ -1,7 +1,8 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.5 1996/01/04 22:21:55 jtc Exp $	*/
+/*	$OpenBSD: freebsd_machdep.c,v 1.3 1996/04/17 05:18:51 mickey Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.7 1996/04/11 07:47:44 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -44,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 
@@ -52,6 +54,7 @@
 #include <machine/cpufunc.h>
 #include <machine/npx.h>
 #include <machine/reg.h>
+#include <machine/vm86.h>
 #include <machine/freebsd_machdep.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
@@ -119,25 +122,27 @@ freebsd_sendsig(catcher, sig, mask, code)
 	if (tf->tf_eflags & PSL_VM) {
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
+		frame.sf_sc.sc_eflags = get_vflags(p);
+		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
 	{
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
+		frame.sf_sc.sc_eflags = tf->tf_eflags;
 	}
-	frame.sf_sc.sc_edi    = tf->tf_edi;
-	frame.sf_sc.sc_esi    = tf->tf_esi;
-	frame.sf_sc.sc_ebp    = tf->tf_ebp;
-	frame.sf_sc.sc_isp    = 0; /* don't have to pass kernel sp to user. */
-	frame.sf_sc.sc_ebx    = tf->tf_ebx;
-	frame.sf_sc.sc_edx    = tf->tf_edx;
-	frame.sf_sc.sc_ecx    = tf->tf_ecx;
-	frame.sf_sc.sc_eax    = tf->tf_eax;
-	frame.sf_sc.sc_eip    = tf->tf_eip;
-	frame.sf_sc.sc_cs     = tf->tf_cs;
-	frame.sf_sc.sc_eflags = tf->tf_eflags;
-	frame.sf_sc.sc_esp    = tf->tf_esp;
-	frame.sf_sc.sc_ss     = tf->tf_ss;
+	frame.sf_sc.sc_edi = tf->tf_edi;
+	frame.sf_sc.sc_esi = tf->tf_esi;
+	frame.sf_sc.sc_ebp = tf->tf_ebp;
+	frame.sf_sc.sc_isp = 0; /* don't have to pass kernel sp to user. */
+	frame.sf_sc.sc_ebx = tf->tf_ebx;
+	frame.sf_sc.sc_edx = tf->tf_edx;
+	frame.sf_sc.sc_ecx = tf->tf_ecx;
+	frame.sf_sc.sc_eax = tf->tf_eax;
+	frame.sf_sc.sc_eip = tf->tf_eip;
+	frame.sf_sc.sc_cs = tf->tf_cs;
+	frame.sf_sc.sc_esp = tf->tf_esp;
+	frame.sf_sc.sc_ss = tf->tf_ss;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -151,15 +156,12 @@ freebsd_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_esp = (int)fp;
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - 
 	     (freebsd_esigcode - freebsd_sigcode));
-#ifdef VM86
-	tf->tf_eflags &= ~PSL_VM;
-#endif
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
@@ -173,6 +175,7 @@ freebsd_sendsig(catcher, sig, mask, code)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
+int
 freebsd_sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -196,47 +199,48 @@ freebsd_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/*
-	 * Check for security violations.  If we're returning to protected
-	 * mode, the CPU will validate the segment registers automatically
-	 * and generate a trap on violations.  We handle the trap, rather
-	 * than doing all of the checking here.
-	 */
-	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_cs, context.sc_eflags))
-		return (EINVAL);
-
-	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
-
-	/*
 	 * Restore signal context.
 	 */
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
+		set_vflags(p, context.sc_eflags);
 	} else
 #endif
 	{
+		/*
+		 * Check for security violations.  If we're returning to
+		 * protected mode, the CPU will validate the segment registers
+		 * automatically and generate a trap on violations.  We handle
+		 * the trap, rather than doing all of the checking here.
+		 */
+		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(context.sc_cs, context.sc_eflags))
+			return (EINVAL);
+
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
+		tf->tf_eflags = context.sc_eflags;
 	}
-	tf->tf_edi    = context.sc_edi;
-	tf->tf_esi    = context.sc_esi;
-	tf->tf_ebp    = context.sc_ebp;
+	tf->tf_edi = context.sc_edi;
+	tf->tf_esi = context.sc_esi;
+	tf->tf_ebp = context.sc_ebp;
 	/* FreeBSD's context.sc_isp is useless. (`popal' ignores it.) */
-	tf->tf_ebx    = context.sc_ebx;
-	tf->tf_edx    = context.sc_edx;
-	tf->tf_ecx    = context.sc_ecx;
-	tf->tf_eax    = context.sc_eax;
-	tf->tf_eip    = context.sc_eip;
-	tf->tf_cs     = context.sc_cs;
-	tf->tf_eflags = context.sc_eflags;
-	tf->tf_esp    = context.sc_esp;
-	tf->tf_ss     = context.sc_ss;
+	tf->tf_ebx = context.sc_ebx;
+	tf->tf_edx = context.sc_edx;
+	tf->tf_ecx = context.sc_ecx;
+	tf->tf_eax = context.sc_eax;
+	tf->tf_eip = context.sc_eip;
+	tf->tf_cs = context.sc_cs;
+	tf->tf_esp = context.sc_esp;
+	tf->tf_ss = context.sc_ss;
+
+	if (context.sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
 }

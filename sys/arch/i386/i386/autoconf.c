@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.c,v 1.5 1996/04/17 05:18:49 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:48 thorpej Exp $	*/
 
 /*-
@@ -68,6 +69,7 @@ extern int	cold;		/* cold start flag initialized in locore.s */
 /*
  * Determine i/o configuration for a machine.
  */
+void
 configure()
 {
 
@@ -102,6 +104,7 @@ configure()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -138,6 +141,7 @@ static	char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+void
 setroot()
 {
 	int  majdev, mindev, unit, part, adaptor;

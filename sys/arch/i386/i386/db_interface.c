@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.2 1996/03/11 11:16:42 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 1996/04/17 05:18:50 mickey Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.18 1995/10/10 04:45:03 mycroft Exp $	*/
 
 /* 
@@ -194,7 +194,7 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-int
+void
 Debugger()
 {
 	asm("int $3");
