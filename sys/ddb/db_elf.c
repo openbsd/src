@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.5 2002/03/14 03:16:03 millert Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.6 2003/06/01 16:19:00 art Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -158,6 +158,28 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
 	shstrtab = (char *)symtab + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
+		if (shp[i].sh_type == SHT_SYMTAB) {
+			int j;
+
+			if (shp[i].sh_offset == 0)
+				continue;
+			symtab_start = (Elf_Sym *)((char *)symtab +
+			    shp[i].sh_offset);
+			symtab_end = (Elf_Sym *)((char *)symtab +
+			    shp[i].sh_offset + shp[i].sh_size);
+			j = shp[i].sh_link;
+			if (shp[j].sh_offset == 0)
+				continue;
+			strtab_start = (char *)symtab + shp[j].sh_offset;
+			strtab_end = (char *)symtab + shp[j].sh_offset +
+			    shp[j].sh_size;
+			break;
+		}
+
+		/*
+		 * This is the old way of doing things.
+		 * XXX - verify that it's not needed.
+		 */
 		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0) {
 			strtab_start = (char *)symtab + shp[i].sh_offset;
 			strtab_end = (char *)symtab + shp[i].sh_offset +
@@ -218,6 +240,8 @@ db_elf_find_strtab(stab)
 
 	shstrtab = (char *)elf + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
+		if (shp[i].sh_type == SHT_SYMTAB)
+			return ((char *)elf + shp[shp[i].sh_link].sh_offset);
 		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0)
 			return ((char *)elf + shp[i].sh_offset);
 	}
