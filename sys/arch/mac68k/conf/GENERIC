@@ -1,9 +1,9 @@
-#	$OpenBSD: GENERIC,v 1.12 1996/10/30 05:38:42 briggs Exp $
+#	$OpenBSD: GENERIC,v 1.13 1997/01/01 04:04:48 briggs Exp $
 #	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # GENERIC
 
-include	"std.mac68k"
+include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 

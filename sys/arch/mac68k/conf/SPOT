@@ -1,9 +1,9 @@
-#	$OpenBSD: SPOT,v 1.8 1996/10/28 14:19:09 briggs Exp $
+#	$OpenBSD: SPOT,v 1.9 1997/01/01 04:04:49 briggs Exp $
 #	$NetBSD: SPOT,v 1.11 1996/08/05 01:52:17 scottr Exp $
 #
 # SPOT
 
-include	"std.mac68k"
+include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 

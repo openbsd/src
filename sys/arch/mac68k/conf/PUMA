@@ -1,9 +1,9 @@
-#	$OpenBSD: PUMA,v 1.10 1996/10/14 02:43:51 briggs Exp $
+#	$OpenBSD: PUMA,v 1.11 1997/01/01 04:04:48 briggs Exp $
 #	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
 #
 # PUMA
 
-include	"std.mac68k"
+include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
