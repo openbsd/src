@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.16 2003/06/12 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: indent.c,v 1.17 2003/06/26 21:43:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.16 2003/06/12 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.17 2003/06/26 21:43:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ char       *out_name = "Standard Output";	/* will always point to name
 						 * of output file */
 char        bakfile[MAXPATHLEN] = "";
 
-void bakcopy();
+void bakcopy(void);
 
 int
 main(int argc, char **argv)
