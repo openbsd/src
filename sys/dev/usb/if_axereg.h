@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.3 2004/10/01 04:08:46 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.4 2004/11/11 12:47:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -84,6 +84,10 @@
 #define AXE_CMD_WRITE_MONITOR_MODE		0x011D
 #define AXE_CMD_READ_GPIO			0x101E
 #define AXE_CMD_WRITE_GPIO			0x011F
+
+#define AXE_MEDIA_FULL_DUPLEX			0x02
+#define AXE_MEDIA_TX_ABORT_ALLOW		0x04
+#define AXE_MEDIA_FLOW_CONTROL_EN		0x10
 
 #define AXE_RXCMD_PROMISC			0x0001
 #define AXE_RXCMD_ALLMULTI			0x0002
