@@ -1,4 +1,3 @@
-# $OpenBSD: Makefile.in,v 1.1 1999/10/01 01:08:29 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -21,8 +20,6 @@
 VERSION = 2.0
 DISTFILE = keynote-${VERSION}.tar.gz
 KNSUBDIR = KeyNote-${VERSION}
-
-srcdir = @srcdir@
 
 LEX = @LEX@
 CC = @CC@
@@ -49,10 +46,10 @@ RMFLAGS2 = -rf
 RMFLAGS = -f
 NROFFFLAGS = -mandoc
 
-SSLCONF = ${srcdir}/testsuite/openssl.cnf
-SSLCERT = ${srcdir}/testsuite/test.cert.pem
-SSLKEY = ${srcdir}/testsuite/test.key.pem
-SIGN_ASSERT = ${srcdir}/testsuite/test-assertion1-signed
+SSLCONF = testsuite/openssl.cnf
+SSLCERT = testsuite/test.cert.pem
+SSLKEY = testsuite/test.key.pem
+SIGN_ASSERT = testsuite/test-assertion1-signed
 
 # No-crypto compile/link flags and definitions
 NOCRYPTODEFS = @DEFS@
@@ -87,31 +84,19 @@ $(TARGET2): $(TARGET) $(OBJS2)
 	$(CC) $(CFLAGS) -o $(TARGET2) $(OBJS2) $(LIBS)
 
 k.tab.c: keynote.y keynote.h assertion.h config.h
-	$(YACC) $(YACCFLAGS) ${srcdir}/keynote.y
+	$(YACC) $(YACCFLAGS) keynote.y
 
 z.tab.c: keynote-ver.y keynote.h header.h config.h
-	$(YACC) $(YACCFLAGS2) ${srcdir}/keynote-ver.y
+	$(YACC) $(YACCFLAGS2) keynote-ver.y
 
 lex.kn.c: keynote.l k.tab.h keynote.h assertion.h config.h
-	$(LEX) $(LEXFLAGS) ${srcdir}/keynote.l
+	$(LEX) $(LEXFLAGS) keynote.l
 
 lex.kv.c: keynote-ver.l z.tab.h keynote.h header.h config.h
-	$(LEX) $(LEXFLAGS2) ${srcdir}/keynote-ver.l
+	$(LEX) $(LEXFLAGS2) keynote-ver.l
 
 .c.o:
 	$(CC) $(CFLAGS) $(DEFS) $(INC) -c $<
-
-aux.o: ${srcdir}/aux.c
-parse_assertion.o: ${srcdir}/parse_assertion.c
-environment.o: ${srcdir}/environment.c
-keynote-verify.o: ${srcdir}/keynote-verify.c
-signature.o: ${srcdir}/signature.c
-keynote-keygen.o: ${srcdir}/keynote-keygen.c
-keynote-sign.o: ${srcdir}/keynote-sign.c
-keynote-sigver.o: ${srcdir}/keynote-sigver.c
-keynote-main.o: ${srcdir}/keynote-main.c
-base64.o: ${srcdir}/base64.c
-getopt.o: ${srcdir}/getopt.c
 
 aux.c: keynote.h assertion.h signature.h config.h
 parse_assertion.c: keynote.h assertion.h signature.h config.h
@@ -152,17 +137,17 @@ test-sig: all $(SSLCERT) $(SSLKEY)
 	./$(TARGET2) sigver $(SIGN_ASSERT)
  
 test: all
-	./$(TARGET2) verify -e ${srcdir}/testsuite/test-env \
+	./$(TARGET2) verify -e testsuite/test-env \
 		-r false,maybe,probably,true \
-		-k ${srcdir}/testsuite/auth1 -k ${srcdir}/testsuite/auth2 \
-		-k ${srcdir}/testsuite/auth3 -k ${srcdir}/testsuite/auth4 \
-		-l ${srcdir}/testsuite/test-assertion1 \
-		-l ${srcdir}/testsuite/test-assertion2 \
-		-l ${srcdir}/testsuite/test-assertion3 \
-		-l ${srcdir}/testsuite/test-assertion4 \
-		-l ${srcdir}/testsuite/test-assertion5 \
-		-l ${srcdir}/testsuite/test-assertion6 \
-		-l ${srcdir}/testsuite/test-assertion7 || ${TRUE}
+		-k testsuite/auth1 -k testsuite/auth2 \
+		-k testsuite/auth3 -k testsuite/auth4 \
+		-l testsuite/test-assertion1 \
+		-l testsuite/test-assertion2 \
+		-l testsuite/test-assertion3 \
+		-l testsuite/test-assertion4 \
+		-l testsuite/test-assertion5 \
+		-l testsuite/test-assertion6 \
+		-l testsuite/test-assertion7 || ${TRUE}
 
 manpages: mankeynote mansystem manutility
 
