@@ -78,9 +78,9 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&siidriver,	2,	0,	2,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	3,	0,	3,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	4,	0,	4,	0,	1,	0x0 },
-{ &rzdriver,	&siidriver,	5,	0,	5,	0,	1,	0x0 },
-{ &rzdriver,	&siidriver,	6,	0,	6,	0,	1,	0x0 },
-# endif /* NTZ */
+{ &rzdriver,    &siidriver,     5,      0,      5,      0,      1,      0x0 },
+{ &rzdriver,    &siidriver,     6,      0,      6,      0,      1,      0x0 },
+# endif /* NRZ */
 
 # if NTZ > 0
 { &tzdriver,	&siidriver,	0,	0,	5,	0,	0,	0x0 },
@@ -98,11 +98,26 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&ascdriver,	4,	0,	4,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	5,	0,	5,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	6,	0,	6,	0,	1,	0x0 },
+
+# if NRZ > 7
+{ &rzdriver,    &ascdriver,     8,      1,      0,      0,      1,      0x0 },
+{ &rzdriver,    &ascdriver,     9,      1,      1,      0,      1,      0x0 },
+{ &rzdriver,    &ascdriver,     10,     1,      2,      0,      1,      0x0 },
+{ &rzdriver,    &ascdriver,     11,     1,      3,      0,      1,      0x0 },
+{ &rzdriver,    &ascdriver,     12,     1,      4,      0,      1,      0x0 },
+{ &rzdriver,    &ascdriver,     13,     1,      5,      0,      1,      0x0 },
+{ &rzdriver,    &ascdriver,     14,     1,      6,      0,      1,      0x0 },
+# endif /* NRZ > 7 */
 # endif /* NRZ */
 
 # if NTZ > 0
 { &tzdriver,	&ascdriver,	0,	0,	5,	0,	0,	0x0 },
 { &tzdriver,	&ascdriver,	1,	0,	6,	0,	0,	0x0 },
+
+# if NTZ > 2
+{ &tzdriver,    &ascdriver,     2,      1,      5,      0,      0,      0x0 },
+{ &tzdriver,    &ascdriver,     3,      1,      6,      0,      0,      0x0 },
+# endif /* NTZ > 2 */
 # endif /* NTZ */
 #endif /* NASC */
 
