@@ -1,8 +1,8 @@
-;	$OpenBSD: syscalls.master,v 1.1 1999/09/12 14:15:17 kstailey Exp $
+;	$OpenBSD: syscalls.master,v 1.2 1999/09/12 14:34:18 kstailey Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
-; OpenBSD COMPAT_FREEBSD system call name/number "master" file.
+; OpenBSD COMPAT_NETBSD system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]
@@ -464,8 +464,8 @@
 224	NOARGS		{ int sys_omsgctl(int msqid, int cmd, \
 			    struct omsqid_ds *buf); }
 225	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
-226	NOARGS		{ int sys_msgsnd(int msqid, const void *msgp, size_t msgsz, \
-			    int msgflg); }
+226	NOARGS		{ int sys_msgsnd(int msqid, const void *msgp, \
+			    size_t msgsz, int msgflg); }
 227	NOARGS		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
 			    long msgtyp, int msgflg); }
 #else
@@ -520,24 +520,9 @@
 254	UNIMPL
 255	UNIMPL
 256	UNIMPL
-#ifdef SYSVSEM
-257	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
-			    union semun *arg); }
-#else
 257	UNIMPL
-#endif
-#ifdef SYSVSHM
-258	NOARGS		{ int sys_shmctl(int shmid, int cmd, \
-			    struct shmid_ds *buf); }
-#else
 258	UNIMPL
-#endif
-#ifdef SYSVMSG
-259	NOARGS		{ int sys_msgctl(int msqid, int cmd, \
-			    struct msqid_ds *buf); }
-#else
 259	UNIMPL
-#endif
 260	UNIMPL
 261	UNIMPL
 262	UNIMPL
