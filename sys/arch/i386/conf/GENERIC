@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.202 2000/08/17 20:15:32 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.203 2000/08/18 15:57:08 marc Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -71,7 +71,7 @@ pcic*	at pci? dev? function ?
 pcmcia*	at pcic? controller ? socket ?
 #pcmcia* at tcic? controller ? socket ?
 
-# CardBus bus support (also see NOTE below)
+# CardBus bus support
 cardbus*	at cardslot?
 pcmcia*		at cardslot?
 cbb*		at pci? dev ? function ?
