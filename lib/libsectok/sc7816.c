@@ -1,13 +1,42 @@
+/* $Id: sc7816.c,v 1.3 2001/06/08 15:04:04 rees Exp $ */
+
+/*
+copyright 2000
+the regents of the university of michigan
+all rights reserved
+
+permission is granted to use, copy, create derivative works
+and redistribute this software and such derivative works
+for any purpose, so long as the name of the university of
+michigan is not used in any advertising or publicity
+pertaining to the use or distribution of this software
+without specific, written prior authorization.  if the
+above copyright notice or any other identification of the
+university of michigan is included in any copy of any
+portion of this software, then the disclaimer below must
+also be included.
+
+this software is provided as is, without representation
+from the university of michigan as to its fitness for any
+purpose, and without warranty by the university of
+michigan of any kind, either express or implied, including
+without limitation the implied warranties of
+merchantability and fitness for a particular purpose. the
+regents of the university of michigan shall not be liable
+for any damages, including special, indirect, incidental, or
+consequential damages, with respect to any claim arising
+out of or in connection with the use of the software, even
+if it has been or is hereafter advised of the possibility of
+such damages.
+*/
+
 /*
  * sc7816 library for use with pc/sc ifd drivers
- *
- * See copyright notice at end of file
  *
  * Jim Rees
  * Mukesh Agrawal
  * University of Michigan CITI, August 2000
  */
-static char *rcsid = "$Id: sc7816.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -404,11 +433,6 @@ scwrite(int ttyn, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, 
 
     sprintf (scperf_buf, "scwrite (ins %02x, p3 %02x) start", ins, p3);
     SetTime(scperf_buf);
-
-    /* Ihis does not free scperf.  It looks like memory leak ...
-       and it is, but it is actually the right behavior.
-       print_time() will print the messages later, so the buffer
-       must be there. */
 #endif /* SCPERF */
     rv = scrw(ttyn, cla, ins, p1, p2, p3, buf, 0, NULL, sw1p, sw2p);
 
@@ -429,11 +453,6 @@ scread(int ttyn, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, i
 
     sprintf (scperf_buf, "scread (ins %02x, p3 %02x) start", ins, p3);
     SetTime(scperf_buf);
-
-    /* Ihis does not free scperf.  It looks like memory leak ...
-       and it is, but it is actually the right behavior.
-       print_time() will print the messages later, so the buffer
-       must be there. */
 #endif /* SCPERF */
     rv = scrw(ttyn, cla, ins, p1, p2, 0, NULL, p3, buf, sw1p, sw2p);
 
@@ -474,33 +493,3 @@ lookupSym(void *handle, char *name)
 #endif
 }
 #endif /* DL_READERS */
-
-/*
-copyright 2000
-the regents of the university of michigan
-all rights reserved
-
-permission is granted to use, copy, create derivative works
-and redistribute this software and such derivative works
-for any purpose, so long as the name of the university of
-michigan is not used in any advertising or publicity
-pertaining to the use or distribution of this software
-without specific, written prior authorization.  if the
-above copyright notice or any other identification of the
-university of michigan is included in any copy of any
-portion of this software, then the disclaimer below must
-also be included.
-
-this software is provided as is, without representation
-from the university of michigan as to its fitness for any
-purpose, and without warranty by the university of
-michigan of any kind, either express or implied, including
-without limitation the implied warranties of
-merchantability and fitness for a particular purpose. the
-regents of the university of michigan shall not be liable
-for any damages, including special, indirect, incidental, or
-consequential damages, with respect to any claim arising
-out of or in connection with the use of the software, even
-if it has been or is hereafter advised of the possibility of
-such damages.
-*/
