@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.10 2003/10/18 20:33:48 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.11 2003/10/22 12:15:20 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.10 2003/10/18 20:33:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.11 2003/10/22 12:15:20 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -35,6 +35,8 @@ BIGNUM		zero;
 
 #define MAX_ARRAY_INDEX		2048
 #define MAX_RECURSION		100
+
+#define NO_ELSE			-2	/* -1 is EOF */
 
 struct bmachine {
 	struct stack		stack;
@@ -1237,19 +1239,23 @@ not_greater(void)
 static void
 compare(enum bcode_compare type)
 {
-	int		index;
+	int		index, elseindex;
 	struct number	*a, *b;
 	u_int		scale;
 	int		cmp;
 	bool		ok;
 	struct value	*v;
 
+	elseindex = NO_ELSE;
 	index = readch();
+	if (readch() == 'e')
+		elseindex = readch();
+	else
+		unreadch();
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1289,10 +1295,15 @@ compare(enum bcode_compare type)
 		break;
 	}
 
-	if (ok) {
+	if (!ok && elseindex != NO_ELSE)
+		index = elseindex;
+
+	if (index < 0 || index > UCHAR_MAX)
+		warnx("internal error: reg num = %d", index);
+	else if (ok || (!ok && elseindex != NO_ELSE)) {
 		v = stack_tos(&bmachine.reg[index]);
 		if (v == NULL)
-			warn("stack empty");
+			warnx("register '%c' (0%o) is empty", index, index);
 		else {
 			switch(v->type) {
 			case BCODE_NONE:
