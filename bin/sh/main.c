@@ -91,6 +91,7 @@ extern int etext();
 
 STATIC void read_profile __P((char *));
 STATIC char *find_dot_file __P((char *));
+STATIC void getpwd __P((void));
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute
@@ -159,6 +160,7 @@ main(argc, argv)
 	init();
 	setstackmark(&smark);
 	procargs(argc, argv);
+	getpwd();
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");

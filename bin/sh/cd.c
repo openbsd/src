@@ -328,10 +328,8 @@ pwdcmd(argc, argv)
 
 
 /*
- * Run /bin/pwd to find out what the current directory is.  We suppress
- * interrupts throughout most of this, but the user can still break out
- * of it by killing the pwd program.  If we already know the current
- * directory, this routine returns immediately.
+ * If we already know the current directory, this routine returns
+ * immediately.
  */
 
 #define MAXPWD 256
@@ -347,36 +345,7 @@ getpwd() {
 
 	if (curdir)
 		return;
-	INTOFF;
-	if (pipe(pip) < 0)
-		error("Pipe call failed");
-	jp = makejob((union node *)NULL, 1);
-	if (forkshell(jp, (union node *)NULL, FORK_NOJOB) == 0) {
-		close(pip[0]);
-		if (pip[1] != 1) {
-			close(1);
-			copyfd(pip[1], 1);
-			close(pip[1]);
-		}
-		execl("/bin/pwd", "pwd", (char *)0);
-		error("Cannot exec /bin/pwd");
-	}
-	close(pip[1]);
-	pip[1] = -1;
-	p = buf;
-	while ((i = read(pip[0], p, buf + MAXPWD - p)) > 0
-	     || (i == -1 && errno == EINTR)) {
-		if (i > 0)
-			p += i;
-	}
-	close(pip[0]);
-	pip[0] = -1;
-	status = waitforjob(jp);
-	if (status != 0)
-		error((char *)0);
-	if (i < 0 || p == buf || p[-1] != '\n')
-		error("pwd command failed");
-	p[-1] = '\0';
+	if (getcwd(buf, sizeof(buf)) == NULL)
+		error("getcwd() failed");
 	curdir = savestr(buf);
-	INTON;
 }
