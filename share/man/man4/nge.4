@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nge.4,v 1.6 2001/09/05 20:20:09 nate Exp $
+.\"	$OpenBSD: nge.4,v 1.7 2001/10/05 19:08:14 nate Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@bsdi.com>. All rights reserved.
@@ -95,13 +95,13 @@ as the NIC cannot handle this case.
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width 10baseTXUTP
+.Bl -tag -width 1000baseTX
 .It Cm autoselect
 Enable autoselection of the media type and options.
 The user can manually override
 the autoselected mode by adding media options to
 .Xr rc.conf 5 .
-.It Cm 10baseT/UTP
+.It Cm 10baseT
 Set 10Mbps operation.
 The
 .Xr ifconfig 8
