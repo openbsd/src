@@ -1,9 +1,10 @@
-/*	$OpenBSD: faithd.c,v 1.4 2000/02/25 10:25:46 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.5 2000/05/31 03:09:22 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.18 2000/05/31 03:06:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -131,8 +132,6 @@ main(int argc, char *argv[])
 #ifdef FAITH_NS
 	char *ns;
 #endif /* FAITH_NS */
-	extern int optind;
-	extern char *optarg;
 
 	/*
 	 * Initializing stuff
@@ -202,10 +201,10 @@ main(int argc, char *argv[])
 		if (serverargc > MAXARGV)
 			exit_error("too many augments");
 
-		serverpath = malloc(strlen(argv[NUMPRG]));
+		serverpath = malloc(strlen(argv[NUMPRG]) + 1);
 		strcpy(serverpath, argv[NUMPRG]);
 		for (i = 0; i < serverargc; i++) {
-			serverarg[i] = malloc(strlen(argv[i + NUMARG]));
+			serverarg[i] = malloc(strlen(argv[i + NUMARG]) + 1);
 			strcpy(serverarg[i], argv[i + NUMARG]);
 		}
 		serverarg[i] = NULL;
@@ -225,7 +224,7 @@ main(int argc, char *argv[])
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
 	error = getaddrinfo(NULL, service, &hints, &res);
-	if (error) 
+	if (error)
 		exit_error("getaddrinfo: %s", gai_strerror(error));
 
 	s_wld = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -358,7 +357,7 @@ again:
 static void
 play_child(int s_src, struct sockaddr *srcaddr)
 {
-	struct sockaddr_storage dstaddr6; 
+	struct sockaddr_storage dstaddr6;
 	struct sockaddr_storage dstaddr4;
 	char src[MAXHOSTNAMELEN];
 	char dst6[MAXHOSTNAMELEN];

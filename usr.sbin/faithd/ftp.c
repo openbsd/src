@@ -1,9 +1,10 @@
-/*	$OpenBSD: ftp.c,v 1.2 1999/12/20 16:32:53 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.3 2000/05/31 03:09:22 itojun Exp $	*/
+/*	$KAME: ftp.c,v 1.7 2000/05/31 03:06:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -555,10 +556,10 @@ passivefail:
 			p = (char *)&sin6->sin6_port;
 			n = snprintf(sbuf, sizeof(sbuf),
 "228 Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)\r\n",
-				6, 16, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]), 
-				UC(a[4]), UC(a[5]), UC(a[6]), UC(a[7]), 
-				UC(a[8]), UC(a[9]), UC(a[10]), UC(a[11]), 
-				UC(a[12]), UC(a[13]), UC(a[14]), UC(a[15]), 
+				6, 16, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
+				UC(a[4]), UC(a[5]), UC(a[6]), UC(a[7]),
+				UC(a[8]), UC(a[9]), UC(a[10]), UC(a[11]),
+				UC(a[12]), UC(a[13]), UC(a[14]), UC(a[15]),
 				2, UC(p[0]), UC(p[1]));
 			write(dst, sbuf, n);
 			passivemode = 1;
@@ -676,7 +677,7 @@ passivefail2:
 			p = (char *)&sin->sin_port;
 			n = snprintf(sbuf, sizeof(sbuf),
 "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n",
-				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]), 
+				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				UC(p[0]), UC(p[1]));
 			write(dst, sbuf, n);
 			passivemode = 1;

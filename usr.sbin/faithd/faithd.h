@@ -1,9 +1,10 @@
-/*	$OpenBSD: faithd.h,v 1.2 1999/12/20 16:32:53 itojun Exp $	*/
+/*	$OpenBSD: faithd.h,v 1.3 2000/05/31 03:09:22 itojun Exp $	*/
+/*	$KAME: faithd.h,v 1.2 2000/05/31 03:06:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
