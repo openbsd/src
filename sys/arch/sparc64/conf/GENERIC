@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.92 2004/05/30 08:11:26 grange Exp $
+#	$OpenBSD: GENERIC,v 1.93 2004/06/20 18:15:24 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -266,6 +266,9 @@ wsdisplay*	at cgsix?
 
 cgthree*	at sbus?			# cg3, sbus color framebuffer
 wsdisplay*	at cgthree?
+
+zx*		at sbus?			# Sun Leo (ZX) framebuffer
+wsdisplay*	at zx?
 
 audiocs*	at sbus?
 

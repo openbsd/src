@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.6 2004/06/20 18:15:21 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.1 2004/06/20 18:15:25 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/conf.h>
 
@@ -93,7 +94,7 @@
 #include <machine/fbvar.h>
 
 #include <dev/sbus/zxreg.h>
-#include <sparc/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 
 #define	ZX_WID_SHARED_8		0
 #define	ZX_WID_SHARED_24	1
@@ -113,7 +114,9 @@ struct zx_cmap {
 struct zx_softc {
 	struct	sunfb	sc_sunfb;
 	struct	sbusdev	sc_sd;
-	struct	rom_reg	sc_phys;
+
+	bus_space_tag_t	sc_bustag;
+	bus_addr_t	sc_paddr;
 
 	struct	zx_cmap	sc_cmap;	/* shadow color map for overlay plane */
 
@@ -202,10 +205,9 @@ struct cfdriver zx_cd = {
 int
 zx_match(struct device *parent, void *vcf, void *aux)
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 	
-	if (strcmp(ra->ra_name, "SUNW,leo") == 0)
+	if (strcmp(sa->sa_name, "SUNW,leo") == 0)
 		return (1);
 
 	return (0);
@@ -215,39 +217,62 @@ void
 zx_attach(struct device *parent, struct device *self, void *args)
 {
 	struct zx_softc *sc = (struct zx_softc *)self;
-	struct confargs *ca = args;
+	struct sbus_attach_args *sa = args;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
+	bus_space_tag_t bt;
+	bus_space_handle_t bh;
 	int node, isconsole = 0;
 	const char *nam;
 
+	bt = sa->sa_bustag;
 	ri = &sc->sc_sunfb.sf_ro;
-	node = ca->ca_ra.ra_node;
+	node = sa->sa_node;
 
 	/*
 	 * Map the various parts of the card.
 	 */
-	sc->sc_phys = ca->ca_ra.ra_reg[0];
+	sc->sc_bustag = bt;
+	sc->sc_paddr = sbus_bus_addr(bt, sa->sa_slot, sa->sa_offset);
 
-	sc->sc_zc = (struct zx_command *)
-	    mapiodev(ca->ca_ra.ra_reg, ZX_OFF_LC_SS0_USR,
-	        sizeof(struct zx_command));
-	sc->sc_zd_ss0 = (struct zx_draw *)
-	    mapiodev(ca->ca_ra.ra_reg, ZX_OFF_LD_SS0,
-	        sizeof(struct zx_draw));
-	sc->sc_zd_ss1 = (struct zx_draw_ss1 *)
-	    mapiodev(ca->ca_ra.ra_reg, ZX_OFF_LD_SS1,
-	        sizeof(struct zx_draw_ss1));
-	sc->sc_zx = (struct zx_cross *)
-	    mapiodev(ca->ca_ra.ra_reg, ZX_OFF_LX_CROSS,
-	        sizeof(struct zx_cross));
-	sc->sc_zcu = (struct zx_cursor *)
-	    mapiodev(ca->ca_ra.ra_reg, ZX_OFF_LX_CURSOR,
-	        sizeof(struct zx_cursor));
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LC_SS0_USR,
+	    sizeof(struct zx_command), BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+		printf(": couldn't map command registers\n");
+		return;
+	}
+	sc->sc_zc = (struct zx_command *)bus_space_vaddr(bt, bh);
+
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS0,
+	    sizeof(struct zx_draw), BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+		printf(": couldn't map ss0 drawing registers\n");
+		return;
+	}
+	sc->sc_zd_ss0 = (struct zx_draw *)bus_space_vaddr(bt, bh);
+
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS1,
+	    sizeof(struct zx_draw_ss1), BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+		printf(": couldn't map ss1 drawing registers\n");
+		return;
+	}
+	sc->sc_zd_ss1 = (struct zx_draw_ss1 *)bus_space_vaddr(bt, bh);
+
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LX_CROSS,
+	    sizeof(struct zx_cross), BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+		printf(": couldn't map cross registers\n");
+		return;
+	}
+	sc->sc_zx = (struct zx_cross *)bus_space_vaddr(bt, bh);
+
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LX_CURSOR,
+	    sizeof(struct zx_cursor), BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+		printf(": couldn't map cursor registers\n");
+		return;
+	}
+	sc->sc_zcu = (struct zx_cursor *)bus_space_vaddr(bt, bh);
 
 	nam = getpropstring(node, "model");
 	if (*nam == '\0')
-		nam = ca->ca_ra.ra_name;
+		nam = sa->sa_name;
 	printf(": %s", nam);
 
 	isconsole = node == fbnode;
@@ -268,8 +293,13 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	printf(", %d x %d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
-	ri->ri_bits = mapiodev(ca->ca_ra.ra_reg,
-	    ZX_OFF_SS0, round_page(sc->sc_sunfb.sf_fbsize));
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
+	    round_page(sc->sc_sunfb.sf_fbsize), BUS_SPACE_MAP_LINEAR,
+	    0, &bh) != 0) {
+		printf("%s: couldn't map video memory\n", self->dv_xname);
+		return;
+	}
+	ri->ri_bits = bus_space_vaddr(bt, bh);
 	ri->ri_hw = sc;
 
 	/*
@@ -405,7 +435,8 @@ zx_mmap(void *v, off_t offset, int prot)
 
 	/* Allow mapping as a dumb framebuffer from offset 0 */
 	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
-		return (REG2PHYS(&sc->sc_phys, ZX_OFF_SS0 + offset) | PMAP_NC);
+		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
+		    ZX_OFF_SS0 + offset, prot, BUS_SPACE_MAP_LINEAR));
 	}
 
 	return (-1);
