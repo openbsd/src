@@ -1,5 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.9 1999/12/05 06:56:35 art Exp $  */
-
+/*       $OpenBSD: vfs_sync.c,v 1.10 1999/12/05 07:19:28 art Exp $  */
 
 /*
  *  Portions of this code are:
@@ -129,10 +128,15 @@ vn_syncer_add_to_worklist(vp, delay)
 	int s, slot;
 
 	s = splbio();
+
+	if (vp->v_flag & VONSYNCLIST)
+		LIST_REMOVE(vp, v_synclist);
+
 	if (delay > syncer_maxdelay)
 		delay = syncer_maxdelay;
 	slot = (syncer_delayno + delay) % syncer_last;
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
+	vp->v_flag |= VONSYNCLIST;
 	splx(s);
 }
 
@@ -177,7 +181,6 @@ sched_sync(p)
 				/*
 				 * Move ourselves to the back of the sync list.
 				 */
-				LIST_REMOVE(vp, v_synclist);
 				vn_syncer_add_to_worklist(vp, syncdelay);
 			}
 		}
@@ -330,7 +333,6 @@ sync_fsync(v)
 	/*
 	 * Move ourselves to the back of the sync list.
 	 */
-	LIST_REMOVE(syncvp, v_synclist);
 	vn_syncer_add_to_worklist(syncvp, syncdelay);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.21 1999/08/08 00:34:38 niklas Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.22 1999/12/05 07:19:28 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -147,6 +147,7 @@ struct vnode {
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define VONFREELIST     0x2000  /* Vnode is on a free list */
 #define VLOCKSWORK      0x4000  /* FS supports locking discipline */
+#define VONSYNCLIST	0x8000	/* Vnode is on syncer worklist */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
