@@ -4154,8 +4154,10 @@ pushdecl (x)
 
 	  /* Warn if shadowing an argument at the top level of the body.  */
 	  else if (oldlocal != NULL_TREE && !DECL_EXTERNAL (x)
-	      && TREE_CODE (oldlocal) == PARM_DECL
-	      && TREE_CODE (x) != PARM_DECL)
+		   && TREE_CODE (oldlocal) == PARM_DECL
+		   /* Don't complain if it's from an enclosing function.  */
+		   && DECL_CONTEXT (oldlocal) == current_function_decl
+		   && TREE_CODE (x) != PARM_DECL)
 	    {
 	      /* Go to where the parms should be and see if we
 		 find them there.  */
@@ -5815,6 +5817,7 @@ lookup_name_real (name, prefer_type, nonclass, namespaces_only)
 	    {
 	      struct tree_binding b;
 	      val = binding_init (&b);
+	      flags |= LOOKUP_COMPLAIN;
 	      if (!qualified_lookup_using_namespace (name, type, val, flags))
 		return NULL_TREE;
 	      val = select_decl (val, flags);
@@ -7339,6 +7342,13 @@ start_decl (declarator, declspecs, initialized, attributes, prefix_attributes)
       DECL_INITIAL (decl) = error_mark_node;
     }
 
+#ifdef SET_DEFAULT_DECL_ATTRIBUTES
+  SET_DEFAULT_DECL_ATTRIBUTES (decl, attributes);
+#endif
+  
+  /* Set attributes here so if duplicate decl, will have proper attributes.  */
+  cplus_decl_attributes (decl, attributes, prefix_attributes);
+
   if (context && TYPE_SIZE (complete_type (context)) != NULL_TREE)
     {
       push_nested_class (context, 2);
@@ -7395,13 +7405,6 @@ start_decl (declarator, declspecs, initialized, attributes, prefix_attributes)
 	cp_pedwarn ("declaration of `%#D' outside of class is not definition",
 		    decl);
     }
-
-#ifdef SET_DEFAULT_DECL_ATTRIBUTES
-  SET_DEFAULT_DECL_ATTRIBUTES (decl, attributes);
-#endif
-  
-  /* Set attributes here so if duplicate decl, will have proper attributes.  */
-  cplus_decl_attributes (decl, attributes, prefix_attributes);
 
   /* Add this decl to the current binding level, but not if it
      comes from another scope, e.g. a static member variable.
@@ -10387,10 +10390,8 @@ grokdeclarator (declarator, declspecs, decl_context, initialized, attrlist)
 			  size = t;
 		      }
 
-		    itype = make_node (INTEGER_TYPE);
-		    TYPE_MIN_VALUE (itype) = size_zero_node;
-		    TYPE_MAX_VALUE (itype) = build_min
-		      (MINUS_EXPR, sizetype, size, integer_one_node);
+		    itype = build_index_type (build_min
+		      (MINUS_EXPR, sizetype, size, integer_one_node));
 		    goto dont_grok_size;
 		  }
 
