@@ -4978,6 +4978,9 @@
 ./usr/share/man/cat9/dopowerhooks.0
 ./usr/share/man/cat9/doshutdownhooks.0
 ./usr/share/man/cat9/dostartuphooks.0
+./usr/share/man/cat9/evcount.0
+./usr/share/man/cat9/evcount_attach.0
+./usr/share/man/cat9/evcount_detach.0
 ./usr/share/man/cat9/extattr.0
 ./usr/share/man/cat9/extent.0
 ./usr/share/man/cat9/extent_alloc.0
