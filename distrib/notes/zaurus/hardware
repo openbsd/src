@@ -1,13 +1,138 @@
-dnl	$OpenBSD: hardware,v 1.3 2005/02/18 06:53:10 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.4 2005/03/18 03:20:03 jsg Exp $
 dnl When more than one models is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 only at the moment.
 Support for the C-760 and C-860 is under development.
 
 Supported devices {:-include-:}:
 	Ethernet Adapters
-		CF ne3000 (untested)
+		ADMtek AN986-based USB adapters, including:
+		    Abocom UFE1000
+		    Abocom DSB650TX
+		    Accton USB320-EC
+		    Accton SpeedStream Ethernet
+		    Admtek Pegasus, Pegasus II
+		    Billionton Systems USB100
+		    Corega FEther USB-TX
+		    D-Link DSB-650, 650TX, 650TX-PNA
+		    Elecom LD-USB
+		    Elsa Microlink USB2Ethernet
+		    I/O Data USB ETTX
+		    Kingston KNU101TX
+		    LinkSys USB100TX, USB100H1 and USB10TA
+		    Melco Inc. LUA-TX
+		    Siemens SpeedStream USB
+		    SmartBridges smartNIC 2
+		    SMC 2202USB
+		    SMC EZ Connect USB
+		    SOHOware NUB100
+		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		    ATEN UC210T
+		    Billionton Systems USB2AR
+		    Buffalo(MELCO) LUA-U2-KTX
+		    Corega FEther USB2-TX
+		    D-Link DUB-E100
+		    Hawking UF200
+		    Intellinet USB 2.0 to Ethernet (rev A)
+		    JVC MP-PRX1
+		    LinkSys USB200M
+		    Netgear FA120
+		    Sitecom LN-029
+		    SnapPort USB 2.0 LAN Adapter
+		    ST Lab USB 2.0 Fast Ethernet
+		    Surecom EP-1427X-2
+		    System TALKS SGC-X2UL
+		    TRENDnet TU2-ET100
+		CATC USB-EL1210A-based USB adapters, including:
+		    CATC Netmate and Netmate II
+		    Belkin F5U011/F5U111
+		Davicom DM9601 based USB adapters, including:
+		    Corega FEther USB-TXC
+		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
+		    3Com 3c19250
+		    3Com 3c460 HomeConnect
+		    AboCom Systems URE450 Ethernet
+		    ADS Technologies USB-10T
+		    Aox USB101
+		    Asante USB to Ethernet
+		    ATen DSB-650C
+		    ATen UC10T
+		    Corega USB-T
+		    D-Link DSB-650C
+		    Entegra NET-USB-E45
+		    I/O Data USB-ET/T
+		    Jaton USB XpressNet
+		    Kawasaki USB101
+		    Kingston Ethernet
+		    LinkSys USB10T
+		    Mobility Ethernet
+		    Netgear EA101
+		    Peracom USB
+		    Portgear Ethernet
+		    Portsmith Express Ethernet
+		    Psion Dacom Gold Port Ethernet
+		    Shark Pocket Adapter
+		    Silicom U2E
+		    SMC 2102/2104USB
+		NE2000 compatible CF Ethernet adapters
+		    Billionton Systems CFLT2-10N
+		    Buffalo LanCard
+		RealTek RTL8150L based USB adapters, including:
+		    Abocom RTL8151
+		    GreenHouse GH-USB100B
+		    GreenHouse GH-USB100B with HomePNA
+		    Linksys USB100M
+		    Longshine LCS-8138TX
+		    Melco Inc. LUA-KTX
+		    Micronet SP128AR
+		    SMC 2208USB/ETH
+		    TrendNet TU-ET100C
+		    Zt USB10/100
 	Wireless Ethernet Adapters
-		USB Adapters
+		Atmel AT76C50x based USB IEEE 802.11b adapters
+		    3Com 3CRSHEW696
+		    AboCom BWU613
+		    Accton 2664W
+		    Acer Peripherals AWL300
+		    Acer Peripherals AWL400
+		    Actiontec 802UAT1
+		    Addtron AWU120
+		    Aincomm AWU2000B
+		    Askey Computer Voyager 1010
+		    Askey Computer WLL013 (Intersil Radio)
+		    Askey Computer WLL013 (RFMD Radio)
+		    Belkin F5D6050
+		    Bluetake BW002
+		    Compaq iPAQ h54xx/h55xx Internal WLAN
+		    Conceptronic C11U
+		    Conceptronic WL210
+		    Corega WLAN USB Stick 11
+		    Dick Smith Electronics CHUSB 611G
+		    Dick Smith Electronics WL200U
+		    Dick Smith Electronics WL240U
+		    Dick Smith Electronics XH1153
+		    D-Link DWL-120 rev E
+		    Geowave GW-US11S
+		    Gigabyte GN-WLBM101
+		    Gigaset WLAN
+		    Hewlett-Packard HN210W
+		    Intel AP310 AnyPoint II
+		    I/O DATA USB WN-B11
+		    Lexar 2662W-AR
+		    Linksys WUSB11
+		    Linksys WUSB11 v2.8
+		    MSI WLAN
+		    Netgear MA101
+		    Netgear MA101 rev B
+		    Ovislink AirLive WL-1120USB
+		    OvisLink AirLive WL-1130USB
+		    Planex Communications GW-US11S
+		    Samsung SWL2100W
+		    Siemens WLL013
+		    SMC 2662W-AR
+		    SMC 2662W-V4
+		    Tekram U-300C
+		    Z-Com M4Y-750
+		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b
@@ -39,6 +164,12 @@ Supported devices {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
+		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
+		    Buffalo AirStation
+		    D-Link DCF-660W
+		    ELSA XI800
+		    Linksys WCF12
+		    Netgear MA701
 	Serial ports
 		Onboard serial (pxacom) port
 	Universal Serial Bus (USB) Devices
