@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.10 2004/11/14 01:25:14 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.11 2004/11/18 01:33:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -311,9 +311,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		ahd_set_transaction_status(scb, XS_SENSE);
 #endif
 	}
-	if (scb->flags & SCB_FREEZE_QUEUE) {
-                scb->flags &= ~SCB_FREEZE_QUEUE;
-        }
 #if 0	/* MU: no such settings in ahc */
 	if (scb->flags & SCB_REQUEUE)
                 ahd_set_transaction_status(scb, XS_REQUEUE);
@@ -932,13 +929,7 @@ ahd_release_simq(struct ahd_softc *ahd)
 void
 ahd_freeze_scb(struct scb *scb)
 {
-	struct scsi_xfer *xs = scb->xs;
-	int target;
-
-	target = xs->sc_link->target;
-	if (!(scb->flags & SCB_FREEZE_QUEUE)) {
-		scb->flags |= SCB_FREEZE_QUEUE;
-	}
+        /* do nothing for now */
 }
 
 void

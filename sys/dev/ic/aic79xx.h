@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.12 2004/11/14 01:25:14 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.13 2004/11/18 01:33:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -631,12 +631,10 @@ typedef enum {
 					   * don't want to upset the user.  This
 					   * flag is typically used during DV.
 					   */
-	SCB_TIMEDOUT		= 0x20000,/*
+	SCB_TIMEDOUT		= 0x20000/*
 					  * SCB has timed out and is on the
 					  * timedout list.
 					  */
-	SCB_FREEZE_QUEUE        = 0x40000,
-        SCB_REQUEUE             = 0x80000,
 } scb_flag;
 
 struct scb {
@@ -1096,7 +1094,6 @@ struct ahd_softc {
 	struct device		sc_dev;
 	struct scsi_link	sc_channel;
 	struct device *		sc_child;
-	struct scsi_adapter	sc_adapter;
 
 	bus_space_tag_t		tags[2];
 	bus_space_handle_t	bshs[2];

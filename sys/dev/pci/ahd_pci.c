@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.8 2004/11/14 02:32:08 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.9 2004/11/18 01:33:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -365,9 +365,6 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	memset(ahd->seep_config, 0, sizeof(*ahd->seep_config));
 
 	LIST_INIT(&ahd->pending_scbs);
-
-	timeout_set(&ahd->reset_timer, ahd_reset_poll, ahd);
-	timeout_set(&ahd->stat_timer, ahd_stat_timer, ahd);
 
 	ahd->flags = AHD_SPCHK_ENB_A|AHD_RESET_BUS_A|AHD_TERM_ENB_A
 	    | AHD_EXTENDED_TRANS_A|AHD_STPWLEVEL_A;

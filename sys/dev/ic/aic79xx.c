@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.14 2004/11/14 01:25:14 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.15 2004/11/18 01:33:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -235,6 +235,8 @@ void		ahd_add_scb_to_free_list(struct ahd_softc *ahd,
 u_int		ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
 				     u_int prev, u_int next, u_int tid);
 void		ahd_reset_current_bus(struct ahd_softc *ahd);
+ahd_callback_t	ahd_reset_poll;
+ahd_callback_t	ahd_stat_timer;
 #ifdef AHD_DUMP_SEQ
 void		ahd_dumpseq(struct ahd_softc *ahd);
 #endif
@@ -5220,6 +5222,15 @@ ahd_sglist_allocsize(struct ahd_softc *ahd)
 	return (best_list_size);
 }
 
+int
+ahd_softc_init(struct ahd_softc *ahd)
+{
+
+	ahd->unpause = 0;
+	ahd->pause = PAUSE; 
+	return (0);
+}
+
 void
 ahd_softc_insert(struct ahd_softc *ahd)
 {
@@ -5286,14 +5297,6 @@ ahd_find_softc(struct ahd_softc *ahd)
 			return (ahd);
 	}
 	return (NULL);
-}
-
-int
-ahd_softc_init(struct ahd_softc *ahd)
-{
-	ahd->unpause = 0;
-	ahd->pause = PAUSE; 
-	return (0);
 }
 
 void
@@ -5885,7 +5888,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 	struct map_node *hscb_map;
 	struct map_node *sg_map;
 	struct map_node *sense_map;
-	uint8_t         *segs;
+	uint8_t		*segs;
 	uint8_t		*sense_data;
 	bus_addr_t	 hscb_busaddr;
 	bus_addr_t	 sg_busaddr;
@@ -5911,7 +5914,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 
 		if (hscb_map == NULL)
 			return;
-	
+
 		/* Allocate the next batch of hardware SCBs */
 		if (ahd_createdmamem(ahd, PAGE_SIZE, hscb_map,
 		    "hardware SCB structures") < 0) {
@@ -6002,7 +6005,6 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 	scb_data->sense_left -= newcount;
 	scb_data->scbs_left -= newcount;
 	scb_data->sgs_left -= newcount;
-
 	for (i = 0; i < newcount; i++) {
 		struct scb_platform_data *pdata;
 		u_int col_tag;
@@ -6153,12 +6155,11 @@ ahd_init(struct ahd_softc *ahd)
 	 * the incoming target command fifo.
 	 */
 	driver_data_size = AHD_SCB_MAX * sizeof(*ahd->qoutfifo)
-			  + sizeof(struct hardware_scb);
-        if ((ahd->features & AHD_TARGETMODE) != 0)
-                driver_data_size += AHD_TMODE_CMDS * sizeof(struct target_cmd);
-        if ((ahd->bugs & AHD_PKT_BITBUCKET_BUG) != 0)
-                driver_data_size += PKT_OVERRUN_BUFSIZE;
-
+			 + sizeof(struct hardware_scb);
+	if ((ahd->features & AHD_TARGETMODE) != 0)
+		driver_data_size += AHD_TMODE_CMDS * sizeof(struct target_cmd);
+	if ((ahd->bugs & AHD_PKT_BITBUCKET_BUG) != 0)
+		driver_data_size += PKT_OVERRUN_BUFSIZE;
         if (ahd_createdmamem(ahd, driver_data_size, &ahd->shared_data_map,
 	    "shared data") < 0)
                 return (ENOMEM);
@@ -8332,7 +8333,7 @@ ahd_loadseq(struct ahd_softc *ahd)
 	u_int	sg_prefetch_cnt_limit;
 	u_int	sg_prefetch_align;
 	u_int	sg_size;
-	u_int   cacheline_mask;
+	u_int	cacheline_mask;
 	uint8_t	download_consts[DOWNLOAD_CONST_COUNT];
 
 	if (bootverbose)

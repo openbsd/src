@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.7 2004/11/14 01:25:14 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.8 2004/11/18 01:33:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -160,9 +160,6 @@ typedef struct timeout ahd_timer_t;
 void ahd_timeout(void*);
 void ahd_timer_reset(ahd_timer_t *, u_int, ahd_callback_t *, void *);
 void ahd_scb_timer_reset(struct scb *, u_int);
-
-ahd_callback_t  ahd_reset_poll;
-ahd_callback_t  ahd_stat_timer;
 
 #define ahd_timer_init callout_init
 #define ahd_timer_stop callout_stop
