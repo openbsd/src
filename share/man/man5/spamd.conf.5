@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.11 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.12 2004/01/29 17:44:29 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -50,7 +50,7 @@ follows the syntax of configuration databases as documented in
 Example:
 .Bd -literal -offset indent
 all:\e
-	:spews1:white:myblack:\e
+	:spews1:white:myblack:
 
 spews1:\e
 	:black:\e
@@ -62,13 +62,13 @@ spews1:\e
 white:\e
 	:white:\e
 	:method=file:\e
-	:file=/var/mail/mywhite.txt:\e
+	:file=/var/mail/mywhite.txt:
 
 myblack:\e
 	:black:\e
 	:msg=/var/mail/myblackmsg.txt:\e
 	:method=file:\e
-	:file=/var/mail/myblack.txt
+	:file=/var/mail/myblack.txt:
 .Ed
 .Pp
 The default configuration file must include the entry
@@ -97,7 +97,7 @@ from
 the configuration
 .Bd -literal -offset indent
 all:\e
-	:spews1:white:myblack:white:\e
+	:spews1:white:myblack:white:
 .Ed
 .Pp
 would be used instead.
