@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.3 1998/05/11 06:13:46 deraadt Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.4 1998/05/11 16:40:45 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ sys_msgsnd(p, v, retval)
 		syscallarg(int) msgflg;
 	} */ *uap = v;
 	int msqid = SCARG(uap, msqid);
-	char *user_msgp = SCARG(uap, msgp);
+	const char *user_msgp = SCARG(uap, msgp);
 	size_t msgsz = SCARG(uap, msgsz);
 	int msgflg = SCARG(uap, msgflg);
 	int segs_needed, eval;
