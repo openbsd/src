@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.12 2000/10/07 16:15:11 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.13 2000/10/13 15:02:02 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -847,9 +847,10 @@ void xl_reset(sc, hard)
 	register int		i;
 
 	XL_SEL_WIN(0);
-	if (hard)
+	if (hard || (sc->xl_flags & XL_FLAG_WEIRDRESET)) {
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET |
 		    ((sc->xl_flags & XL_FLAG_WEIRDRESET)?0xFF:0));
+	}
 	else
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET | 0x0010);
 	xl_wait(sc);
