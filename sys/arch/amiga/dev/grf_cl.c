@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.10 1997/09/18 13:39:47 niklas Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.11 1998/02/23 08:55:43 niklas Exp $	*/
 /*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ void	cl_memset __P((unsigned char *, unsigned char, int));
 static struct grfvideo_mode monitor_def[24] = {
 	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
 	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}
 };
 static struct grfvideo_mode *monitor_current = &monitor_def[0];
 
@@ -154,7 +155,7 @@ unsigned char clconscolors[3][3] = {	/* background, foreground, hilite */
 };
 
 int	cltype = 0;		/* Picasso, Spectrum or Piccolo */
-int	cl_64bit = 0;
+int	cl_64bit = 0;		/* PiccoloSD64 or PicassoIV */
 unsigned char pass_toggle;	/* passthru status tracker */
 
 /*
@@ -403,7 +404,7 @@ grfclattach(pdp, dp, auxp)
 
 				/* determine used Gfx/chipset (crest) */
 				vgaw(gp->g_regkva, CRT_ADDRESS, 0x27);
-				switch(vgar(gp->g_regkva, CRT_ADDRESS_R)>>2) {
+				switch (vgar(gp->g_regkva, CRT_ADDRESS_R)>>2) {
 				    case 0x24:
 					printf(" (with CL-GD5426)");
 					break;
@@ -1295,6 +1296,7 @@ denom = 0x00 - 0x1f (1) 0x20 - 0x3e (even)
 				d = 0x0f;
 			}
 		}
+		*clkdoub = 0;
 	}
 
 	*num = minn;
