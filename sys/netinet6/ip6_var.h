@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.12 2001/02/08 18:46:23 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.13 2001/05/28 05:28:48 angelos Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -203,7 +203,6 @@ struct	ip6stat {
 /* flags passed to ip6_output as last parameter */
 #define	IPV6_DADOUTPUT		0x01	/* DAD */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
-#define	IPV6_ENCAPSULATED	0x04	/* encapsulated already */
 
 extern struct	ip6stat ip6stat;	/* statistics */
 extern u_int32_t ip6_id;		/* fragment identifier */
