@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.70 2003/01/25 01:01:04 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.71 2003/01/28 10:40:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -32,6 +32,7 @@
 .Nd control the packet filter (PF) and network address translation (NAT) device
 .Sh SYNOPSIS
 .Nm pfctl
+.Bk -words
 .Op Fl AdehnNqrRvzO
 .Op Fl a Ar anchor[:ruleset]
 .Op Fl F Ar modifier
@@ -41,6 +42,7 @@
 .Op Fl x Ar level
 .Op Fl t Ar table
 .Op Fl T Ar command
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -78,9 +80,9 @@ The packet filter does not itself forward packets between interfaces.
 Forwarding can be enabled by setting the
 .Xr sysctl 8
 variables
-.Li net.inet.ip.forwarding
+.Em net.inet.ip.forwarding
 and/or
-.Li net.inet6.ip6.forwarding ,
+.Em net.inet6.ip6.forwarding ,
 to 1. Set them permanently in
 .Xr sysctl.conf 5 .
 .Pp
@@ -144,13 +146,13 @@ A second
 .Fl k Ar host
 option may be specified, which will kill all the state entries
 from the first host to the second host.
-.Bd -literal
+.Bd -literal -offset indent
 Example:
-      Kill all of the state entries from host
-    # pfctl -k host
-
-      Kill all of the state entries from host1 to host2
-    # pfctl -k host1 -k host2
+Kill all of the state entries from host
+.Ic # pfctl -k host
+.Pp
+Kill all of the state entries from host1 to host2
+.Ic # pfctl -k host1 -k host2
 .Ed
 .It Fl h
 Help.
@@ -158,7 +160,7 @@ Help.
 Do not actually load rules, just parse them.
 .It Fl N
 Load only the NAT rules present in the rule file. Filter rules and options are
-ignored
+ignored.
 .It Fl q
 Only print errors and warnings.
 .It Fl r
@@ -177,8 +179,11 @@ Modifier names may be abbreviated:
 Show the currently loaded NAT rules.
 .It Fl s Ar queue
 Show the currently loaded queue rules.
-When used together with -v, per-queue statistics are also shown.
-When used together with -v -v,
+When used together with
+.Fl v ,
+per-queue statistics are also shown.
+When used together with
+.Fl v v ,
 .Nm
 will loop and show updated queue statistics every five seconds, including
 measured bandwidth and packets per second.
@@ -242,9 +247,10 @@ Clear all the statistics of a table.
 Load only the table definitions from pf.conf.
 Used in "pfctl -Tl -f pf.conf".
 .El
+.Pp
 For the
-.Ar add
-.Ar delete
+.Ar add ,
+.Ar delete ,
 .Ar replace
 and
 .Ar test
@@ -253,11 +259,14 @@ line and/or in an unformatted text file, using the
 .Fl f
 flag.
 #-starting comments are allowed in the text file.
-With theses commands, the
+With these commands, the
 .Fl v
-flag can also be used once or twice, in which case pfctl will print the
+flag can also be used once or twice, in which case
+.Nm pfctl
+will print the
 detailed result of the operation for each individual address, prefixed by
-one of the following letter:
+one of the following letters:
+.Pp
 .Bl -tag -width XXX -compact
 .It A
 The address/network has been added.

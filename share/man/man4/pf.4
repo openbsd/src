@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.27 2003/01/20 17:50:41 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.28 2003/01/28 10:40:20 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -36,7 +36,9 @@
 .Cd "pseudo-device pf 1"
 .Sh DESCRIPTION
 Packet filtering takes place in the kernel.
-A pseudo-device, /dev/pf, allows userland processes to control the
+A pseudo-device,
+.Pa /dev/pf ,
+allows userland processes to control the
 behavior of the packet filter through an
 .Xr ioctl 2
 interface.
@@ -72,7 +74,7 @@ Starts the ALTQ bandwidth control system.
 Stops the ALTQ bandwidth control system.
 .It Dv DIOCBEGINADDRS  Fa "u_int32_t"
 Clears the buffer address pool
-and returns ticket for subsequent DIOCADDADDR, DIOCADDRULE and
+and returns a ticket for subsequent DIOCADDADDR, DIOCADDRULE and
 DIOCCHANGERULE calls.
 .It Dv DIOCADDADDR     Fa "struct pfioc_pooladdr"
 .Bd -literal
@@ -98,7 +100,7 @@ All other members of the structure are ignored.
 .It Dv DIOCBEGINRULES  Fa "u_int32_t"
 Clears the inactive ruleset for the type of rule indicated by
 .Va rule.action
-and returns ticket for subsequent
+and returns a ticket for subsequent
 DIOCADDRULE and DIOCCOMMITRULES calls.
 .It Dv DIOCADDRULE     Fa "struct pfioc_rule"
 .Bd -literal
@@ -136,7 +138,7 @@ Switch inactive to active filter ruleset.
 Requires
 .Va ticket .
 .It Dv DIOCBEGINALTQS  Fa "u_int32_t"
-Clears the inactive list of queues and returns ticket for subsequent
+Clears the inactive list of queues and returns a ticket for subsequent
 DIOCADDALTQ and DIOCCOMMITALTQS calls.
 .It Dv DIOCADDALTQ     Fa "struct pfioc_altq"
 Adds
@@ -406,7 +408,7 @@ On entry, pfrio_buffer[pfrio_size] contains a valid writeable buffer for
 pfr_table structures.
 On exit, pfrio_size contains the number of tables written into the buffer.
 If the buffer is too small, the kernel does not store anything but just
-return the required buffer size, without error.
+returns the required buffer size, without error.
 .It Dv DIOCRGETTSTATS Fa "struct pfioc_table"
 Like 
 .Dv DIOCRGETTABLES, but returns an array of pfr_tstats structures.
@@ -436,7 +438,7 @@ On entry, pfrio_table contains the table to clear.
 On exit, pfrio_ndel contains the number of addresses removed.
 .It Dv DIOCRADDADDRS Fa "struct pfioc_table"
 Add one or more addresses to a table.
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains the list of pfr_addr structures to add.
 On exit, pfrio_nadd contains the number of addresses effectively added.
 .Bd -literal
@@ -455,24 +457,24 @@ struct pfr_addr {
 .Ed
 .It Dv DIOCRDELADDRS Fa "struct pfioc_table"
 Delete one or more addresses from a table.
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains the list of pfr_addr structures to delete.
 On exit, pfrio_ndel contains the number of addresses effectively deleted.
 .It Dv DIOCRSETADDRS Fa "struct pfioc_table"
 Replace the content of a table by a new address list.
 This is the most complicated command, which uses all the structure members.
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains the new list of pfr_addr structures.
 In addition to that, if size2 is nonzero, pfrio_buffer[pfrio_size..pfrio_size2]
 must be a writeable buffer, into which the kernel can copy the addresses that
 have been deleted during the replace operation.
-On exit, pfrio_ndel, pfrio_nadd and pfrio_nchange contains the number of
+On exit, pfrio_ndel, pfrio_nadd and pfrio_nchange contain the number of
 addresses deleted, added and changed by the kernel. if pfrio_size2 was set on
 entry, pfrio_size2 will point to the size of the buffer used, exactly like
 .Dv DIOCRGETADDRS.
 .It Dv DIOCRGETADDRS Fa "struct pfioc_table"
 Get all the addresses of a table.
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains a valid writeable buffer for pfr_addr structures.
 On exit, pfrio_size contains the number of addresses written into the buffer.
 If the buffer was too small, the kernel does not store anything but just
@@ -492,14 +494,14 @@ struct pfr_astats {
 .Ed
 .It Dv DIOCRCLRASTATS Fa "struct pfioc_table"
 Clears the statistics of one or more addresses. 
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains a table of pfr_addr structures to clear.
 On exit, pfrio_nzero contains the number of addresses effectively cleared.
 .It Dv DIOCRTSTADDRS Fa "struct pfioc_table"
 Test if the given addresses match a table.
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains a table of pfr_addr structures to test.
-On exit, the kernel update the pfr_addr table by setting the pfra_fback
+On exit, the kernel updates the pfr_addr table by setting the pfra_fback
 member appropriately.
 .It Dv DIOCRSETTFLAGS Fa "struct pfioc_table"
 Change the
@@ -508,27 +510,27 @@ or
 .Va persist
 flag of a table. 
 On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures,
-and pfrio_setflag contain the flags to add, while pfrio_clrflag the flags to
-remove.
-On exit, pfrio_nchange and pfrio_ndel contains the number of tables altered
-or deleted by the kernel. Yes, tables can be deleted if one remove the
+and pfrio_setflag contains the flags to add, while pfrio_clrflag contains the
+flags to remove.
+On exit, pfrio_nchange and pfrio_ndel contain the number of tables altered
+or deleted by the kernel. Yes, tables can be deleted if one removes the
 .Va persist
 flag of an unreferenced table.
 .It Dv DIOCRINABEGIN Fa "struct pfioc_table"
 Starts a transaction with the inactive set of tables. Cleans up any leftover
-from a previous aborted transaction, and returns a new ticket.
+from a previously aborted transaction, and returns a new ticket.
 On exit, pfrio_ndel contains the number of leftover table deleted, and
-pfrio_ticket contain a valid ticket to use for the following two IOCTLs.
+pfrio_ticket contains a valid ticket to use for the following two IOCTLs.
 .It Dv DIOCRINACOMMIT Fa "struct pfioc_table"
 Commit the inactive set of tables into the active set. While copying the
 addresses, do a best effort to keep statistics for addresses present before
 and after the commit.
 On entry, io->pfrio_ticket takes a valid ticket.
-On exit, io->pfrio_nadd and io->pfrio_nchange contains the number of tables
+On exit, io->pfrio_nadd and io->pfrio_nchange contain the number of tables
 added and altered by the commit operation.
 .It Dv DIOCRINADEFINE Fa "struct pfioc_table"
 Defines a table in the inactive set.
-On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
 contains the list of pfr_addr structures to put in the table. A valid ticket
 must also be supplied to pfrio_ticket.
 On exit, pfrio_nadd contains 0 if the table was already defined in the
@@ -600,8 +602,8 @@ main(int argc, char *argv[])
 }
 .Ed
 .Sh SEE ALSO
-.Xr bridge 4 ,
 .Xr ioctl 2 ,
+.Xr bridge 4 ,
 .Xr pflog 4 ,
 .Xr pfsync 4 ,
 .Xr pfctl 8

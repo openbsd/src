@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.13 2002/06/29 23:30:07 naddy Exp $
+.\"	$OpenBSD: bpf.4,v 1.14 2003/01/28 10:40:20 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -45,7 +45,7 @@ After opening the device, the file descriptor must be bound to a specific
 network interface with the
 .Dv BIOSETIF
 ioctl.
-A given interface can be shared between multiple listeners and the filter
+A given interface can be shared between multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
 The total number of open files is limited to the value given in the kernel
 configuration; the example given in the
@@ -211,7 +211,7 @@ which must respond to messages in real time.
 The default for a new file is off.
 .It Dv BIOCSETF Pf ( Li "struct bpf_program" Ns No )
 Sets the filter program used by the kernel to discard uninteresting packets.
-An array of instructions and its length is passed in using the following
+An array of instructions and its length are passed in using the following
 structure:
 .Pp
 .Bd -literal -offset indent
@@ -223,7 +223,7 @@ struct bpf_program {
 .Pp
 The filter program is pointed to by the
 .Fa bf_insns
-field while its length in units of
+field, while its length in units of
 .Li struct bpf_insn
 is given by the
 .Fa bf_len
@@ -434,7 +434,7 @@ There are eight classes of instructions:
 and
 .Dv BPF_MISC .
 Various other mode and operator bits are logically OR'd into the class to
-given the actual instructions.
+give the actual instructions.
 The classes and modes are defined in
 .Aq Pa net/bpf.h .
 Below are the semantics for each defined
@@ -773,7 +773,7 @@ of packet to accept (i.e., they return the truncation amount).
 A return value of zero indicates that the packet should be ignored.
 The return value is either a constant
 .Pf ( Dv BPF_K )
-of the accumulator
+or the accumulator
 .Pf ( Dv BPF_A ) .
 .Pp
 .Bl -tag -width 32n -compact

@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.20 2002/12/29 22:23:37 dhartmei Exp $
+.\" $OpenBSD: authpf.8,v 1.21 2003/01/28 10:40:20 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -50,7 +50,7 @@ different places.
 .Nm
 logs the successful start and end of a session to
 .Xr syslog 8 .
-This, combined with properly set up filter rules and secure switches
+This, combined with properly set up filter rules and secure switches,
 can be used to ensure users are held accountable for their network traffic.
 .Pp
 .Nm
@@ -70,8 +70,8 @@ On startup,
 retrieves the client's connecting IP address via the
 .Ev SSH_CLIENT
 environment variable and, after performing additional access checks,
-reads a template file to determine what filter and translation (if
-any) rules to add.
+reads a template file to determine what filter and translation rules
+(if any) to add.
 On session exit the same rules that were added at startup are removed.
 .Pp
 Each
@@ -93,10 +93,10 @@ in order to cause evaluation of any
 .Nm
 rules:
 .Bd -literal
-nat-anchor authpf
-rdr-anchor authpf
-binat-anchor authpf
-anchor authpf
+.Ic nat-anchor authpf
+.Ic rdr-anchor authpf
+.Ic binat-anchor authpf
+.Ic anchor authpf
 .Ed
 .Pp
 .Sh FILTER AND TRANSLATION RULES
@@ -106,7 +106,7 @@ use the same format described in
 .Xr pf.conf 5 .
 The only difference is that these rules may (and probably should) use
 the macro
-.Em user_ip
+.Em user_ip ,
 which is assigned the connecting ip address whenever
 .Nm
 is run.
@@ -147,7 +147,7 @@ file.
 If the file is empty or does not exist, defaults are used for all
 configuration options.
 The file consists of pairs of the form
-.Li name=value
+.Li name=value ,
 one per line.
 Currently, the allowed values are as follows:
 .Bl -tag -width Ds
@@ -211,10 +211,10 @@ to ensure the security of the session, and to ensure that the network
 through which users connect is secure.
 .Xr sshd 8
 should be configured to use the
-.Dv ClientAliveInterval
+.Ar ClientAliveInterval
 and
-.Dv ClientAliveCountMax
-parameters to ensure that an ssh session is terminated quickly if
+.Ar ClientAliveCountMax
+parameters to ensure that a ssh session is terminated quickly if
 it becomes unresponsive, or if arp or address spoofing is used to
 hijack the session.
 Note that TCP keepalives are not sufficient for
@@ -279,7 +279,7 @@ the file
 containing a message about why he has been banned from using the network.
 Once bob has done suitable penance, his access may be restored by moving or
 removing the file
-.Pa /etc/authpf/banned/bob.
+.Pa /etc/authpf/banned/bob .
 .Pp
 Now consider a workgroup containing alice, bob, carol and dave.
 They have a
@@ -311,21 +311,21 @@ To make that happen,
 .Xr login.conf 5
 should have entries that look something like this:
 .Bd -literal
-shell-default:shell=/bin/csh
-
-default:\\
-	...
-	:shell=/usr/sbin/authpf
-
-daemon:\\
-	...
-	:shell=/bin/csh:\\
-	:tc=default:
-
-staff:\\
-	...
-	:shell=/bin/csh:\\
-	:tc=default:
+.Ic shell-default:shell=/bin/csh
+.Pp
+.Ic default:\e
+.Ic \  \  \  \  ...
+.Ic \  \  \  \  :shell=/usr/sbin/authpf
+.Pp
+.Ic daemon:\e
+.Ic \  \  \  \  ...
+.Ic \  \  \  \  :shell=/bin/csh:\e
+.Ic \  \  \  \  :tc=default:
+.Pp
+.Ic staff:\e
+.Ic \  \  \  \  ...
+.Ic \  \  \  \  :shell=/bin/csh:\e
+.Ic \  \  \  \  :tc=default:
 .Ed
 .Pp
 Using a default password file, all users will get
@@ -337,10 +337,10 @@ as their shell except for root who will get
 .Xr sshd 8
 must be properly configured to detect and defeat network attacks.
 To that end, the following options should be added to
-.Pa sshd_config :
+.Xr sshd_config 5 :
 .Bd -literal
-ClientAliveInterval 15
-ClientAliveCountMax 3
+.Ic ClientAliveInterval 15
+.Ic ClientAliveCountMax 3
 .Ed
 .Pp
 This ensures that unresponsive or spoofed sessions are terminated within a
@@ -348,27 +348,35 @@ minute, since a hijacker should not be able to spoof ssh keepalive messages.
 .Pp
 .Pp
 \fBBanners\fP - Once authenticated, the user is shown the contents of
-.Pa /etc/authpf/authpf.message.
+.Pa /etc/authpf/authpf.message .
 This message may be a screen-full of the appropriate use policy, the contents
 of
 .Pa /etc/motd
 or something as simple as the following:
-.Bd -literal
-    This means you will be held accountable by the powers that be
-    for traffic originating from your machine, so please play nice.
+.Bd -literal -offset indent
+.Xo Ic This means you will be held accountable\ 
+.Ic by the powers that be
+.Xc
+.Xo Ic for traffic originating from your machine,\ 
+.Ic so please play nice.
+.Xc
 .Ed
 .Pp
 To tell the user where to go when the system is broken,
 .Pa /etc/authpf/authpf.problem
 could contain something like this:
-.Bd -literal
-    Sorry, there appears to be some system problem. To report this
-    problem so we can fix it, please phone 1-900-314-1597 or send
-    an email to remove@bulkmailerz.net.
+.Bd -literal -offset indent
+.Xo Ic Sorry, there appears to be some system\ 
+.Ic problem. To report this
+.Xc
+.Xo Ic problem so we can fix it, please\ 
+.Ic phone 1-900-314-1597 or send
+.Xc
+.Ic an email to remove@bulkmailerz.net.
 .Ed
 .Pp
 \fBPacket Filter Rules\fP - In areas where this gateway is used to protect a
-wireless network (a hub with several hundred ports) the default rule set as
+wireless network (a hub with several hundred ports), the default rule set as
 well as the per-user rules should probably allow very few things beyond
 encrypted protocols like
 .Xr ssh 1 ,
@@ -386,30 +394,36 @@ Example
 .Bd -literal
 # by default we allow internal clients to talk to us using
 # ssh and use us as a dns server.
-internal_if="fxp1"
-gateway_addr="10.0.1.1"
-nat-anchor authpf
-rdr-anchor authpf
-binat-anchor authpf
-block in on $internal_if from any to any
-pass in quick on $internal_if proto tcp from any to $gateway_addr \\
- port = ssh
-pass in quick on $internal_if proto udp from any to $gateway_addr \\
- port = domain
-anchor authpf
+.Ic internal_if=\&"fxp1\&"
+.Ic gateway_addr=\&"10.0.1.1\&"
+.Ic nat-anchor authpf
+.Ic rdr-anchor authpf
+.Ic binat-anchor authpf
+.Ic block in on $internal_if from any to any
+.Xo Ic pass in quick on $internal_if proto tcp\ 
+.Ic from any to $gateway_addr \e
+.Xc
+.Ic \  \  port = ssh
+.Xo Ic pass in quick on $internal_if proto udp\ 
+.Ic from any to $gateway_addr \e
+.Xc
+.Ic \  \  port = domain
+.Ic anchor authpf
 .Ed
 .Pp
 Example
 .Pa /etc/authpf/authpf.rules :
 .Bd -literal
 # no real restrictions here, basically turn the network jack off or on.
-
-external_if = "xl0"
-internal_if = "fxp0"
-
-pass in log quick on $internal_if proto tcp from $user_ip to any \\
- keep state
-pass in quick on $internal_if from $user_ip to any
+.Pp
+.Ic external_if = \&"xl0\&"
+.Ic internal_if = \&"fxp0\&"
+.Pp
+.Xo Ic pass in log quick on $internal_if proto\ 
+.Ic tcp from $user_ip to any \e
+.Xc
+.Ic \  \  keep state
+.Ic pass in quick on $internal_if from $user_ip to any
 .Ed
 .Pp
 Another example
@@ -417,22 +431,30 @@ Another example
 for an insecure network (such as a public wireless network) where
 we might need to be a bit more restrictive.
 .Bd -literal
-internal_if="fxp1"
-ipsec_gw="10.2.3.4"
-
+.Ic internal_if=\&"fxp1\&"
+.Ic ipsec_gw=\&"10.2.3.4\&"
+.Pp
 # rdr ftp for proxying by ftp-proxy(8)
-rdr on $internal_if proto tcp from $user_ip to any port 21 \\
- -> 127.0.0.1 port 8081
-
+.Xo Ic rdr on $internal_if proto tcp from\ 
+.Ic $user_ip to any port 21 \e
+.Xc
+.Ic \  \  -> 127.0.0.1 port 8081
+.Pp
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
-pass in log quick on $internal_if proto tcp from $user_ip to any \\
- port { 21, 22, 80, 443 } flags S/SA
-pass in quick on $internal_if proto tcp from $user_ip to any \\
- port { 21, 22, 80, 443 }
-pass in quick proto udp from $user_ip to $ipsec_gw port = isakmp \\
- keep state
-pass in quick proto esp from $user_ip to $ipsec_gw
+.Xo Ic pass in log quick on $internal_if\ 
+.Ic proto tcp from $user_ip to any \e
+.Xc
+.Ic \  \  port { 21, 22, 80, 443 } flags S/SA
+.Xo Ic pass in quick on $internal_if proto\ 
+.Ic tcp from $user_ip to any \e
+.Xc
+.Ic \  \  port { 21, 22, 80, 443 }
+.Xo Ic pass in quick proto udp from $user_ip\ 
+.Ic to $ipsec_gw port = isakmp \e
+.Xc
+.Ic \  \  keep state
+.Ic pass in quick proto esp from $user_ip to $ipsec_gw
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/authpf/authpf.conf" -compact
@@ -455,7 +477,8 @@ The authenticating
 .Xr ssh 1
 connection may be secured, but if the network is not secured the user may
 expose insecure protocols to attackers on the same network, or enable other
-attackers on network to pretend to be the user by spoofing their IP address.
+attackers on the network to pretend to be the user by spoofing their IP
+address.
 .Pp
 .Nm
 is not designed to prevent users from denying service to other users.
