@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 1998/12/13 06:36:54 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 1998/12/13 07:08:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -114,9 +114,15 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 		*(a++) = *((volatile u_int32_t *)h)++;
 }
 
-#if 0
-#define	bus_space_read_multi_8
-#endif
+static __inline void
+bus_space_read_multi_8(bus_space_tag_t t, bus_space_handle_t h,
+		       bus_size_t o, u_int64_t *a, size_t c)
+{
+	h += o;
+	while (c--)
+		*(a++) = *((volatile u_int64_t *)h)++;
+}
+
 
 #define	bus_space_read_raw_multi_2(t, h, o, a, c) \
     bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
@@ -155,18 +161,42 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 #define	bus_space_write_8(t, h, o, v)	\
 	((void)(t), *((volatile u_int64_t *)((h) + (o))) = (v))
 
-#if 0
-#define	bus_space_write_multi_1(t, h, o, a, c) do {		\
-} while (0)
+static __inline void
+bus_space_write_multi_1(bus_space_tag_t t, bus_space_handle_t h,
+		       bus_size_t o, const u_int8_t *a, size_t c)
+{
+	h += o;
+	while (c--)
+		*((volatile u_int8_t *)h)++ = *(a++);
+}
 
-#define bus_space_write_multi_2(t, h, o, a, c) do {		\
-} while (0)
+static __inline void
+bus_space_write_multi_2(bus_space_tag_t t, bus_space_handle_t h,
+		       bus_size_t o, const u_int16_t *a, size_t c)
+{
+	h += o;
+	while (c--)
+		*((volatile u_int16_t *)h)++ = *(a++);
+}
 
-#define bus_space_write_multi_4(t, h, o, a, c) do {		\
-} while (0)
+static __inline void
+bus_space_write_multi_4(bus_space_tag_t t, bus_space_handle_t h,
+		       bus_size_t o, const u_int32_t *a, size_t c)
+{
+	h += o;
+	while (c--)
+		*((volatile u_int32_t *)h)++ = *(a++);
+}
 
-#define	bus_space_write_multi_8(t, h, o, a, c)
-#endif
+static __inline void
+bus_space_write_multi_8(bus_space_tag_t t, bus_space_handle_t h,
+		       bus_size_t o, const u_int64_t *a, size_t c)
+{
+	h += o;
+	while (c--)
+		*((volatile u_int64_t *)h)++ = *(a++);
+}
+
 
 #define	bus_space_write_raw_multi_2(t, h, o, a, c) \
     bus_space_write_multi_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
