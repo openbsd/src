@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.4 2003/03/06 04:19:45 david Exp $
+#	$OpenBSD: README,v 1.5 2003/07/09 07:44:29 tedu Exp $
 #
 # Copyright (c) 1993 Terrence R. Lambert.
 # All rights reserved.
@@ -82,10 +82,10 @@
 
 4.0	Loadable module types supported
 
-	There are 6 loadable modules types supported; 5 of these are
+	There are six loadable modules types supported; five of these are
 	specific module types; the sixth is to allow the user to make
 	their own loader as part of the module and allow them to replace
-	or extend apropriate tables in the kernel.
+	or extend appropriate tables in the kernel.
 
 
 4.1	System call modules
@@ -102,15 +102,15 @@
 	If the system call slot is specified, it will replace that
 	specific call (assuming it is in range of the entries in the
 	sysent[] table).  Care should be taken when replacing system
-	calls.  Good candiates are calls which the user is attempting
+	calls.  Good candidates are calls that the user is attempting
 	to repair or make POSIX compliant.  It is possible to replace
 	all calls, although care should be taken with the "ioctl()"
 	call, as it is the interface for the lkm loader.
 
 	When unloaded, the system call module replaces the previous
-	contents of the call slot it was loaded in.  If this was an
-	allocable slot, it is now reallocable; if it was a particular
-	call slot, the previous function is restored.
+	contents of the call slot.  If this was an allocable slot, it
+	is now reallocable; if it was a particular call slot, the
+	previous function is restored.
 
 	The directory ./sample/syscall contains a sample implementation
 	of a loadable system call.
@@ -135,7 +135,7 @@
 	means that there are changes to vfssw[] and mount coming
 	down the road (which will end up incrementing the lkm version
 	and introducing an incompatibility as far as file system modules
-	are converned).
+	are concerned).
 
 	The directory ./sample/vfs contains the sample implementation
 	of the loadable kernfs vfs.
@@ -144,11 +144,11 @@
 4.3	Device driver modules
 
 	The major issue to deal with when creating device drivers is
-	insuring the creation of the device node.  The current approach
+	ensuring the creation of the device node.  The current approach
 	to this is executing a module specific shell script upon a
 	successful load.
 
-	A potentially better soloution is encoding the device name in
+	A potentially better solution is encoding the device name in
 	the device switch, or, better, providing a functional interface
 	to the init routine, and then using a "/devices" file system
 	to export devices to the file system name space.  Of course,
@@ -163,7 +163,7 @@
 4.4	Streams modules
 
 	Streams module support has been removed from this release; when
-	the streams implementation is ready, it wil be restored as a
+	the streams implementation is ready, it will be restored as a
 	patch.
 
 	Please do not ask me for early availability on my streams
@@ -176,16 +176,15 @@
 
 	Execution interpreters allow loading of programs with magic
 	numbers other than the default numbers supported by NetBSD.
-	The reasoning behind this is to effectively allow user space
-	development of changes in exec format to support, among
-	other things, shared libraries.
+	This allows user space development of changes in exec format
+	to support, among other things, shared libraries.
 
-	Another portential use requires changing the references to
+	Another potential use requires changing the references to
 	the "sysent[]" system call table from direct references to
 	indirect through a pointer in the proc struct.  This allows
 	the execution interpreter to, among other things, support
 	(statically linked) executables from other environments,
-	like Xenix, SVR3, SVR4, and Linux.
+	like XENIX, SVR3, SVR4, and Linux.
 
 	There is no example of a loadable execution interpreter
 	provided with this distribution.
@@ -194,14 +193,14 @@
 4.6	Miscellaneous modules
 
 	Miscellaneous modules are modules for which there is not a
-	current, well defined, or well used interface for extension.
+	current, well-defined, or well-used interface for extension.
 	They are provided for extension, and the user is expected to
 	write their own loader to handle the kernel pointer/table
 	manipulation to "wire in" their loaded module (and "unwire"
-	it on uload).
+	it on unload).
 
 	One example of a "miscellaneous module" might be a loader for
-	card-specific VGA drivers or alternate terminal emualtions in
+	card-specific VGA drivers or alternate terminal emulations in
 	an appropriately layered console driver.
 
 	The table manipulations required are specific to the console
