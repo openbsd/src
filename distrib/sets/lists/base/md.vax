@@ -9,6 +9,9 @@
 ./usr/lib/scrt0.o
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stivar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/ip6_mroute.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/ip6_var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/ip6protosw.ph
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
 ./usr/mdec/rdboot

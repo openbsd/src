@@ -497,6 +497,9 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netgroup.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6_mroute.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6_var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/nl_types.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/nlist.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/obstack.ph

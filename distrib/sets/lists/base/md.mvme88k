@@ -390,6 +390,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_ieee80211.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_vlan_var.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_mroute.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_var.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph

@@ -439,6 +439,9 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_vlan_var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6_mroute.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6_var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ataio.ph

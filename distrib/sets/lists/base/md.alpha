@@ -465,6 +465,9 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netgroup.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/ip6_mroute.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/ip6_var.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/nl_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/nlist.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/obstack.ph
