@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwnode.c,v 1.4 2002/12/13 02:52:04 tdeval Exp $	*/
+/*	$OpenBSD: fwnode.c,v 1.5 2002/12/13 21:35:11 tdeval Exp $	*/
 /*	$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $	*/
 
 /*
@@ -88,8 +88,12 @@ int fwnode_oldlog;
 	fwnode_oldlog = log_open; log_open = 1;				\
 	addlog x; log_open = fwnode_oldlog;				\
 } while (0)
+#ifdef	FW_MALLOC_DEBUG
 #define	MPRINTF(x,y)	DPRINTF(("%s[%d]: %s 0x%08x\n",			\
 			    __func__, __LINE__, (x), (u_int32_t)(y)))
+#else	/* !FW_MALLOC_DEBUG */
+#define	MPRINTF(x,y)
+#endif	/* FW_MALLOC_DEBUG */
 
 int	fwnodedebug = 0;
 #else	/* FWNODE_DEBUG */
@@ -135,14 +139,14 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 #ifdef M_ZERO
 	MALLOC(ab, struct ieee1394_abuf *, sizeof(*ab),
 	    M_1394DATA, M_WAITOK|M_ZERO);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab);
+	MPRINTF("MALLOC(1394DATA)", ab);
 #else
 	MALLOC(ab, struct ieee1394_abuf *, sizeof(*ab), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab);
+	MPRINTF("MALLOC(1394DATA)", ab);
 	bzero(ab, sizeof(*ab));
 #endif
 	ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+	MPRINTF("malloc(1394DATA)", ab->ab_data);
 	ab->ab_data[0] = 0;
 
 	sc->sc_sc1394.sc1394_node_id = fwa->nodeid;
@@ -184,14 +188,14 @@ fwnode_detach(struct device *self, int flags)
 			children++;
 		}
 		free(sc->sc_children, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", sc->sc_children);
+		MPRINTF("free(DEVBUF)", sc->sc_children);
 		sc->sc_children = NULL;
 	}
 
 	if (sc->sc_sc1394.sc1394_configrom &&
 	    sc->sc_sc1394.sc1394_configrom_len) {
 		free(sc->sc_sc1394.sc1394_configrom, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", sc->sc_sc1394.sc1394_configrom);
+		MPRINTF("free(1394DATA)", sc->sc_sc1394.sc1394_configrom);
 		sc->sc_sc1394.sc1394_configrom = NULL;
 	}
 
@@ -235,14 +239,14 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 #endif	/* FWNODE_DEBUG */
 		if (cc != NULL) {
 			FREE(cc, M_1394DATA);
-			//MPRINTF_OLD("FREE(1394DATA)", cc);
+			MPRINTF("FREE(1394DATA)", cc);
 			cc = NULL;	/* XXX */
 		}
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
@@ -252,10 +256,10 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		    "%d. Not attaching\n", sc->sc_sc1394.sc1394_dev.dv_xname,
 		    ab->ab_length, ab->ab_retlen));
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
@@ -263,10 +267,10 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		DPRINTF(("%s: configrom read of invalid length: %d\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, ab->ab_retlen));
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
@@ -287,13 +291,13 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 			return;
 		} else {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;
 			ab->ab_data = &cc->cc_buf[0];
 			ab->ab_retlen = cc->cc_retlen;
 			ab->ab_length = cc->cc_retlen * 4;
 			FREE(cc, M_1394DATA);
-			//MPRINTF_OLD("FREE(1394DATA)", cc);
+			MPRINTF("FREE(1394DATA)", cc);
 			cc = NULL;	/* XXX */
 			ab->ab_cbarg = NULL;
 		}
@@ -303,10 +307,10 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		DPRINTF(("%s: configrom parse error\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname));
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;	/* XXX */
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
@@ -322,26 +326,26 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 			DPRINTF(("%s: cbarg not NULL\n",
 			    sc->sc_sc1394.sc1394_dev.dv_xname));
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;	/* XXX */
 			FREE(ab, M_1394DATA);
-			//MPRINTF_OLD("FREE(1394DATA)", ab);
+			MPRINTF("FREE(1394DATA)", ab);
 			ab = NULL;	/* XXX */
 			return;
 		}
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;	/* XXX */
 
 		if (ab->ab_length == 4) {	/* reread whole rom */
 #ifdef	M_ZERO
 			ab->ab_data = malloc(ab->ab_retlen * 4, M_1394DATA,
 			    M_WAITOK|M_ZERO);
-			//MPRINTF_OLD("malloc(1394DATA)",ab->ab_data);
+			MPRINTF("malloc(1394DATA)",ab->ab_data);
 #else
 			ab->ab_data = malloc(ab->ab_retlen * 4,
 			    M_1394DATA, M_WAITOK);
-			//MPRINTF_OLD("malloc(1394DATA)",ab->ab_data);
+			MPRINTF("malloc(1394DATA)",ab->ab_data);
 			bzero(ab->ab_data, ab->ab_retlen * 4);
 #endif
 
@@ -359,17 +363,17 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 #ifdef	M_ZERO
 			cbuf = malloc(ab->ab_retlen * 4, M_1394DATA,
 			    M_WAITOK|M_ZERO);
-			//MPRINTF_OLD("malloc(1394DATA)", cbuf);
+			MPRINTF("malloc(1394DATA)", cbuf);
 			MALLOC(cc, struct cfgrom_cbarg *, sizeof(*cc),
 			    M_1394DATA, M_WAITOK|M_ZERO);
-			//MPRINTF_OLD("MALLOC(1394DATA)", cc);
+			MPRINTF("MALLOC(1394DATA)", cc);
 #else
 			cbuf = malloc(ab->ab_retlen * 4, M_1394DATA, M_WAITOK);
-			//MPRINTF_OLD("malloc(1394DATA)", cbuf);
+			MPRINTF("malloc(1394DATA)", cbuf);
 			bzero(cbuf, ab->ab_retlen * 4);
 			MALLOC(cc, struct cfgrom_cbarg *, sizeof(*cc),
 			    M_1394DATA, M_WAITOK);
-			//MPRINTF_OLD("MALLOC(1394DATA)", cc);
+			MPRINTF("MALLOC(1394DATA)", cc);
 			bzero(cc, sizeof(*cc));
 #endif
 			cc->cc_type = 0x31333934;
@@ -378,7 +382,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 			cc->cc_buf = cbuf;
 
 			ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
-			//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+			MPRINTF("malloc(1394DATA)", ab->ab_data);
 			ab->ab_data[0] = 0;
 			ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM;
 			ab->ab_length = 4;
@@ -395,7 +399,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		ab->ab_data = NULL;
 
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 
 		/*
@@ -420,7 +424,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 			if (sc->sc_configrom)
 				p1212_free(sc->sc_configrom);
 			free(sc->sc_sc1394.sc1394_configrom, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", sc->sc_sc1394.sc1394_configrom);
+			MPRINTF("free(1394DATA)", sc->sc_sc1394.sc1394_configrom);
 			sc->sc_sc1394.sc1394_configrom = NULL;
 			sc->sc_sc1394.sc1394_configrom_len = 0;
 			return;
@@ -436,7 +440,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 #endif	/* FWNODE_DEBUG */
 			p1212_free(sc->sc_configrom);
 			free(sc->sc_sc1394.sc1394_configrom, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", sc->sc_sc1394.sc1394_configrom);
+			MPRINTF("free(1394DATA)", sc->sc_sc1394.sc1394_configrom);
 			sc->sc_sc1394.sc1394_configrom = NULL;
 			sc->sc_sc1394.sc1394_configrom_len = 0;
 			return;

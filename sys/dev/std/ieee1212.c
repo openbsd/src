@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1212.c,v 1.3 2002/12/13 02:52:11 tdeval Exp $	*/
+/*	$OpenBSD: ieee1212.c,v 1.4 2002/12/13 21:35:11 tdeval Exp $	*/
 /*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
 
 /*
@@ -74,8 +74,12 @@ int p1212_oldlog;
 	p1212_oldlog = log_open; log_open = 1;				\
 	addlog x; log_open = p1212_oldlog;				\
 } while (0)
+#ifdef	FW_MALLOC_DEBUG
 #define	MPRINTF(x,y)	DPRINTF(("%s[%d]: %s 0x%08x\n",			\
 			    __func__, __LINE__, (x), (u_int32_t)(y)))
+#else	/* !FW_MALLOC_DEBUG */
+#define	MPRINTF(x,y)
+#endif	/* FW_MALLOC_DEBUG */
 
 int	p1212debug = 0;
 #else	/* P1212_DEBUG */
@@ -253,11 +257,11 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 #else	/* __NetBSD__ */
 				p = malloc(sizeof(int) * (numdirs + 1),
 				    M_DEVBUF, M_WAITOK);
-				//MPRINTF_OLD("malloc(DEVBUF)", p);
+				MPRINTF("malloc(DEVBUF)", p);
 				if (dirs != NULL) {
 					bcopy(dirs, p, sizeof(int) * numdirs);
 					free(dirs, M_DEVBUF);
-					//MPRINTF_OLD("free(DEVBUF)", dirs);
+					MPRINTF("free(DEVBUF)", dirs);
 					dirs = NULL;	/* XXX */
 				}
 				dirs = p;
@@ -275,7 +279,7 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 			/* Cleanup. */
 			if (dirs) {
 				free(dirs, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", dirs);
+				MPRINTF("free(DEVBUF)", dirs);
 				dirs = NULL;	/* XXX */
 			}
 			break;
@@ -289,15 +293,15 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 #else	/* __NetBSD__ */
 				p = malloc(sizeof(int) * numdirs,
 				    M_DEVBUF, M_WAITOK);
-				//MPRINTF_OLD("malloc(DEVBUF)", p);
+				MPRINTF("malloc(DEVBUF)", p);
 				bcopy(dirs, p, sizeof(int) * numdirs);
 				free(dirs, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", dirs);
+				MPRINTF("free(DEVBUF)", dirs);
 				dirs = p;
 #endif	/* ! __NetBSD__ */
 			} else {
 				free(dirs, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", dirs);
+				MPRINTF("free(DEVBUF)", dirs);
 				dirs = NULL;
 			}
 		} else
@@ -359,14 +363,14 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	/* Get the initial offset for the root dir. */
 
 	MALLOC(rom, struct p1212_rom *, sizeof(*rom), M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", rom);
+	MPRINTF("MALLOC(DEVBUF)", rom);
 	rom->len = P1212_ROMFMT_GET_INFOLEN((ntohl(t[0])));
 	next = rom->len + 1;
 
 	if ((rom->len < 1) || (rom->len > size)) {
 		DPRINTF(("Invalid ROM info length: %d\n", rom->len));
 		FREE(rom, M_DEVBUF);
-		//MPRINTF_OLD("FREE(DEVBUF)", rom);
+		MPRINTF("FREE(DEVBUF)", rom);
 		rom = NULL;	/* XXX */
 		return NULL;
 	}
@@ -377,7 +381,7 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	if (rom->len) {
 		rom->data = malloc(sizeof(u_int32_t) * rom->len, M_DEVBUF,
 		    M_WAITOK);
-		//MPRINTF_OLD("malloc(DEVBUF)", rom->data);
+		MPRINTF("malloc(DEVBUF)", rom->data);
 		/* Add 2 to account for info/crc and bus name skipped. */
 		for (i = 0; i < rom->len; i++)
 			rom->data[i] = t[i + 2];
@@ -395,11 +399,11 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 #ifdef	M_ZERO
 	MALLOC(rom->root, struct p1212_dir *, sizeof(*rom->root),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", rom->root);
+	MPRINTF("MALLOC(DEVBUF)", rom->root);
 #else	/* M_ZERO */
 	MALLOC(rom->root, struct p1212_dir *, sizeof(*rom->root),
 	    M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", rom->root);
+	MPRINTF("MALLOC(DEVBUF)", rom->root);
 	bzero(rom->root, sizeof(*rom->root));
 #endif	/* ! M_ZERO */
 	rom->root->com.key.key_type = P1212_KEYTYPE_Directory;
@@ -681,12 +685,12 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 #else	/* __NetBSD__ */
 					p = malloc(size * (com->textcnt + 1),
 					    M_DEVBUF, M_WAITOK);
-					//MPRINTF_OLD("malloc(DEVBUF)", p);
+					MPRINTF("malloc(DEVBUF)", p);
 					if (com->text != NULL) {
 						bcopy(com->text, p,
 						    size * com->textcnt);
 						free(com->text, M_DEVBUF);
-						//MPRINTF_OLD("free(DEVBUF)", com->text);
+						MPRINTF("free(DEVBUF)", com->text);
 						com->text = NULL;	/* XXX */
 					}
 					com->text = p;
@@ -699,7 +703,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 						    "offset 0x%0x\n",
 						    &t[leafoff]-&addr[0]));
 						free(com->text, M_DEVBUF);
-						//MPRINTF_OLD("free(DEVBUF)", com->text);
+						MPRINTF("free(DEVBUF)", com->text);
 						com->text = NULL;	/* XXX */
 						return 1;
 					}
@@ -719,11 +723,11 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 #ifdef	M_ZERO
 				MALLOC(data, struct p1212_data *, sizeof(*data),
 				    M_DEVBUF, M_WAITOK|M_ZERO);
-				//MPRINTF_OLD("MALLOC(DEVBUF)", data);
+				MPRINTF("MALLOC(DEVBUF)", data);
 #else	/* M_ZERO */
 				MALLOC(data, struct p1212_data *, sizeof(*data),
 				    M_DEVBUF, M_WAITOK);
-				//MPRINTF_OLD("MALLOC(DEVBUF)", data);
+				MPRINTF("MALLOC(DEVBUF)", data);
 				bzero(data, sizeof(struct p1212_data));
 #endif	/* ! M_ZERO */
 				data->com.key.key_type = type;
@@ -763,11 +767,11 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 #ifdef	M_ZERO
 				MALLOC(sdir, struct p1212_dir *, sizeof(*sdir),
 					M_DEVBUF, M_WAITOK|M_ZERO);
-				//MPRINTF_OLD("MALLOC(DEVBUF)", sdir);
+				MPRINTF("MALLOC(DEVBUF)", sdir);
 #else	/* M_ZERO */
 				MALLOC(sdir, struct p1212_dir *, sizeof(*sdir),
 					M_DEVBUF, M_WAITOK);
-				//MPRINTF_OLD("MALLOC(DEVBUF)", sdir);
+				MPRINTF("MALLOC(DEVBUF)", sdir);
 				bzero(sdir, sizeof(struct p1212_dir));
 #endif	/* ! M_ZERO */
 				sdir->parent = dir;
@@ -867,10 +871,10 @@ p1212_parse_leaf(u_int32_t *t)
 
 	MALLOC(leafdata, struct p1212_leafdata *, sizeof(*leafdata),
 	    M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", leafdata);
+	MPRINTF("MALLOC(DEVBUF)", leafdata);
 	leafdata->data = malloc((sizeof(u_int32_t) * crclen), M_DEVBUF,
 	    M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", leafdata->data);
+	MPRINTF("malloc(DEVBUF)", leafdata->data);
 	leafdata->len = crclen;
 	for (i = 0; i < crclen; i++)
 		leafdata->data[i] = ntohl(t[i]);
@@ -933,12 +937,12 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 		    M_DEVBUF, M_WAITOK);
 #else	/* __NetBSD__ */
 		p = malloc(size * (com->textcnt + 1), M_DEVBUF, M_WAITOK);
-		//MPRINTF_OLD("malloc(DEVBUF)", p);
+		MPRINTF("malloc(DEVBUF)", p);
 		bzero(&p[com->textcnt], size);
 		if (com->text != NULL) {
 			bcopy(com->text, p, size * (com->textcnt));
 			free(com->text, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", com->text);
+			MPRINTF("free(DEVBUF)", com->text);
 			com->text = NULL;	/* XXX */
 		}
 		com->text = p;
@@ -947,7 +951,7 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 			DPRINTF(("Got an error parsing text descriptor.\n"));
 			if (com->textcnt == 0) {
 				free(com->text, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", com->text);
+				MPRINTF("free(DEVBUF)", com->text);
 				com->text = NULL;	/* XXX */
 			}
 			return 1;
@@ -993,7 +997,7 @@ p1212_parse_text_desc(u_int32_t *addr)
 	t++;
 	MALLOC(text, struct p1212_textdata *, sizeof(*text), M_DEVBUF,
 	    M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", text);
+	MPRINTF("MALLOC(DEVBUF)", text);
 	text->spec_type = P1212_TEXT_GET_Spec_Type((ntohl(t[0])));
 	text->spec_id = P1212_TEXT_GET_Spec_Id((ntohl(t[0])));
 	text->lang_id = ntohl(t[1]);
@@ -1005,10 +1009,10 @@ p1212_parse_text_desc(u_int32_t *addr)
 
 #ifdef	M_ZERO
 	text->text = malloc(size + 1, M_DEVBUF, M_WAITOK|M_ZERO);
-	//MPRINTF_OLD("malloc(DEVBUF)", text->text);
+	MPRINTF("malloc(DEVBUF)", text->text);
 #else	/* M_ZERO */
 	text->text = malloc(size + 1, M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", text->text);
+	MPRINTF("malloc(DEVBUF)", text->text);
 	bzero(text->text, size + 1);
 #endif	/* ! M_ZERO */
 
@@ -1073,12 +1077,12 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 #else	/* __NetBSD__ */
 					p = malloc(sizeof(struct p1212_key *) *
 					    (numkeys + 1), M_DEVBUF, M_WAITOK);
-					//MPRINTF_OLD("malloc(DEVBUF)", p);
+					MPRINTF("malloc(DEVBUF)", p);
 					if (retkeys != NULL) {
 						bcopy(retkeys, p, numkeys *
 						    sizeof(struct p1212_key *));
 						free(retkeys, M_DEVBUF);
-						//MPRINTF_OLD("free(DEVBUF)", retkeys);
+						MPRINTF("free(DEVBUF)", retkeys);
 						retkeys = NULL;	/* XXX */
 					}
 					retkeys = p;
@@ -1106,12 +1110,12 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 #else	/* __NetBSD__ */
 					p = malloc(sizeof(struct p1212_key *) *
 					    (numkeys + 1), M_DEVBUF, M_WAITOK);
-					//MPRINTF_OLD("malloc(DEVBUF)", p);
+					MPRINTF("malloc(DEVBUF)", p);
 					if (retkeys != NULL) {
 						bcopy(retkeys, p, numkeys *
 						    sizeof(struct p1212_key *));
 						free(retkeys, M_DEVBUF);
-						//MPRINTF_OLD("free(DEVBUF)", retkeys);
+						MPRINTF("free(DEVBUF)", retkeys);
 						retkeys = NULL;	/* XXX */
 					}
 					retkeys = p;
@@ -1333,29 +1337,29 @@ p1212_free(struct p1212_rom *rom)
 			if (data->leafdata) {
 				if (data->leafdata->data) {
 					free(data->leafdata->data, M_DEVBUF);
-					//MPRINTF_OLD("free(DEVBUF)", data->leafdata->data);
+					MPRINTF("free(DEVBUF)", data->leafdata->data);
 					data->leafdata->data = NULL;	/* XXX */
 				}
 				FREE(data->leafdata, M_DEVBUF);
-				//MPRINTF_OLD("FREE(DEVBUF)", data->leafdata);
+				MPRINTF("FREE(DEVBUF)", data->leafdata);
 				data->leafdata = NULL;	/* XXX */
 			}
 			TAILQ_REMOVE(&dir->data_root, data, data);
 			if (data->com.textcnt) {
 				for (i = 0; i < data->com.textcnt; i++) {
 					free(data->com.text[i]->text, M_DEVBUF);
-					//MPRINTF_OLD("free(DEVBUF)", data->com.text[i]->text);
+					MPRINTF("free(DEVBUF)", data->com.text[i]->text);
 					data->com.text[i]->text = NULL;	/* XXX */
 					FREE(data->com.text[i], M_DEVBUF);
-					//MPRINTF_OLD("FREE(DEVBUF)", data->com.text[i]);
+					MPRINTF("FREE(DEVBUF)", data->com.text[i]);
 					data->com.text[i] = NULL;	/* XXX */
 				}
 				free(data->com.text, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", data->com.text);
+				MPRINTF("free(DEVBUF)", data->com.text);
 				data->com.text = NULL;	/* XXX */
 			}
 			FREE(data, M_DEVBUF);
-			//MPRINTF_OLD("FREE(DEVBUF)", data);
+			MPRINTF("FREE(DEVBUF)", data);
 			data = NULL;	/* XXX */
 		}
 		sdir = dir;
@@ -1366,24 +1370,24 @@ p1212_free(struct p1212_rom *rom)
 		if (sdir->com.textcnt) {
 			for (i = 0; i < sdir->com.textcnt; i++) {
 				FREE(sdir->com.text[i], M_DEVBUF);
-				//MPRINTF_OLD("FREE(DEVBUF)", sdir->com.text[i]);
+				MPRINTF("FREE(DEVBUF)", sdir->com.text[i]);
 				sdir->com.text[i] = NULL;	/* XXX */
 			}
 			free(sdir->com.text, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", sdir->com.text);
+			MPRINTF("free(DEVBUF)", sdir->com.text);
 			sdir->com.text = NULL;	/* XXX */
 		}
 		FREE(sdir, M_DEVBUF);
-		//MPRINTF_OLD("FREE(DEVBUF)", sdir);
+		MPRINTF("FREE(DEVBUF)", sdir);
 		sdir = NULL;	/* XXX */
 	}
 	if (rom->len) {
 		free(rom->data, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", rom->data);
+		MPRINTF("free(DEVBUF)", rom->data);
 		rom->data = NULL;	/* XXX */
 	}
 	FREE(rom, M_DEVBUF);
-	//MPRINTF_OLD("FREE(DEVBUF)", rom);
+	MPRINTF("FREE(DEVBUF)", rom);
 	rom = NULL;	/* XXX */
 }
 
@@ -1459,7 +1463,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 
 	numdev = 0;
 	devret = malloc(sizeof(struct device *) * 2, M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", devret);
+	MPRINTF("malloc(DEVBUF)", devret);
 	devret[0] = devret[1] = NULL;
 
 	udirs = (struct p1212_dir **)p1212_find(dir, P1212_KEYTYPE_Directory,
@@ -1478,11 +1482,11 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 #else	/* __NetBSD__ */
 				p = malloc(sizeof(struct device *) *
 				    (numdev + 2), M_DEVBUF, M_WAITOK);
-				//MPRINTF_OLD("malloc(DEVBUF)", p);
+				MPRINTF("malloc(DEVBUF)", p);
 				bcopy(devret, p,
 				    numdev * sizeof(struct device *));
 				free(devret, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", devret);
+				MPRINTF("free(DEVBUF)", devret);
 				devret = p;
 #endif	/* ! __NetBSD__ */
 				devret[numdev++] = dev;
@@ -1494,12 +1498,12 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 		} while (udirs[++i]);
 
 		free(udirs, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", udirs);
+		MPRINTF("free(DEVBUF)", udirs);
 		udirs = NULL;	/* XXX */
 	}
 	if (numdev == 0) {
 		free(devret, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", devret);
+		MPRINTF("free(DEVBUF)", devret);
 		devret = NULL;	/* XXX */
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbp2.c,v 1.1 2002/12/13 02:57:56 tdeval Exp $	*/
+/*	$OpenBSD: sbp2.c,v 1.2 2002/12/13 21:35:11 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -89,12 +89,6 @@ void sbp2_login_send(struct ieee1394_abuf *, int);
 void sbp2_status_resp(struct ieee1394_abuf *, int);
 void sbp2_command_send(struct ieee1394_abuf *, int);
 
-#ifdef	MALLOC_DEBUG
-#include <dev/ieee1394/malloc_debug.h>		/* MPRINTF(x,y) */
-#else	/* !MALLOC_DEBUG */
-#define	MPRINTF(x,y)
-#endif	/* MALLOC_DEBUG */
-
 #ifdef	SBP2_DEBUG
 #include <sys/syslog.h>
 extern int log_open;
@@ -111,10 +105,18 @@ int sbp2_oldlog;
 		addlog x; log_open = sbp2_oldlog;			\
 	}								\
 } while (0)
+#ifdef	FW_MALLOC_DEBUG
+#define	MPRINTF(x,y)	DPRINTF(("%s[%d]: %s 0x%08x\n",			\
+			    __func__, __LINE__, (x), (u_int32_t)(y)))
+#else	/* !FW_MALLOC_DEBUG */
+#define	MPRINTF(x,y)
+#endif	/* FW_MALLOC_DEBUG */
+
 int	sbp2debug = 0;
 #else	/* SBP2_DEBUG */
 #define	DPRINTF(x)
 #define	DPRINTFN(n,x)
+#define	MPRINTF(x,y)
 #endif	/* ! SBP2_DEBUG */
 
 typedef struct sbp2_orb_element {
@@ -274,7 +276,7 @@ sbp2_init(struct fwnode_softc *sc, struct p1212_dir *unitdir)
 	}
 
 	MALLOC(ac, struct sbp2_account *, sizeof(*ac), M_1394CTL, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394CTL)", ac);
+	MPRINTF("MALLOC(1394CTL)", ac);
 	bzero(ac, sizeof(*ac));
 
 	loc = key[0]->val;
@@ -285,7 +287,7 @@ sbp2_init(struct fwnode_softc *sc, struct p1212_dir *unitdir)
 	    sc->sc_sc1394.sc1394_guid[4], sc->sc_sc1394.sc1394_guid[5],
 	    sc->sc_sc1394.sc1394_guid[6], sc->sc_sc1394.sc1394_guid[7]));
 	free(key, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", key);
+	MPRINTF("free(DEVBUF)", key);
 	key = NULL;	/* XXX */
 
 	ac->ac_softc = sc;
@@ -297,20 +299,20 @@ sbp2_init(struct fwnode_softc *sc, struct p1212_dir *unitdir)
 	    SBP2_KEYVALUE_Logical_Unit_Number, 0)) != NULL) {
 		ac->ac_lun = (*key)->val & 0xffff;
 		free(key, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", key);
+		MPRINTF("free(DEVBUF)", key);
 		key = NULL;	/* XXX */
 	} else if ((key = p1212_find(unitdir, P1212_KEYTYPE_Directory,
 	    SBP2_KEYVALUE_Logical_Unit_Directory, 0)) != NULL) {
 		dir = (struct p1212_dir *)*key;
 		free(key, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", key);
+		MPRINTF("free(DEVBUF)", key);
 		key = NULL;	/* XXX */
 		key = p1212_find(dir, P1212_KEYTYPE_Immediate,
 		    SBP2_KEYVALUE_Logical_Unit_Number, 0);
 		if (key != NULL) {
 			ac->ac_lun = (*key)->val & 0xffff;
 			free(key, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", key);
+			MPRINTF("free(DEVBUF)", key);
 			key = NULL;	/* XXX */
 		}
 	}
@@ -351,7 +353,7 @@ sbp2_clean(struct fwnode_softc *sc, struct p1212_dir *unitdir, int logout)
 					TAILQ_REMOVE(&ac->ac_orb_head, elm,
 					    elm_chain);
 					FREE(elm, M_1394CTL);
-					//MPRINTF_OLD("FREE(1394CTL)", elm);
+					MPRINTF("FREE(1394CTL)", elm);
 					//elm = NULL;	/* XXX */
 				}
 			}
@@ -360,20 +362,20 @@ sbp2_clean(struct fwnode_softc *sc, struct p1212_dir *unitdir, int logout)
 			if (ac->ac_status_ab) {
 				sc->sc1394_unreg(ac->ac_status_ab, FALSE);
 				FREE(ac->ac_status_ab, M_1394DATA);
-				//MPRINTF_OLD("FREE(1394DATA)", ac->ac_status_ab);
+				MPRINTF("FREE(1394DATA)", ac->ac_status_ab);
 				ac->ac_status_ab = NULL;	/* XXX */
 			}
 			if (ac->ac_status_block) {
 				FREE(ac->ac_status_block, M_1394DATA);
-				//MPRINTF_OLD("FREE(1394DATA)", ac->ac_status_block);
+				MPRINTF("FREE(1394DATA)", ac->ac_status_block);
 				ac->ac_status_block = NULL;	/* XXX */
 			}
 			FREE(ac, M_1394CTL);
-			//MPRINTF_OLD("FREE(1394CTL)", ac);
+			MPRINTF("FREE(1394CTL)", ac);
 			ac = NULL;	/* XXX */
 		}
 		free(key, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", key);
+		MPRINTF("free(DEVBUF)", key);
 		key = NULL;	/* XXX */
 	} else if ((key = p1212_find(unitdir, P1212_KEYTYPE_Directory,
 	    SBP2_KEYVALUE_Logical_Unit_Directory, 0)) != NULL) {
@@ -392,7 +394,7 @@ sbp2_clean(struct fwnode_softc *sc, struct p1212_dir *unitdir, int logout)
 					    elm_chain) {
 						if (elm != NULL) {
 							FREE(elm, M_1394CTL);
-							//MPRINTF_OLD("FREE(1394CTL)", elm);
+							MPRINTF("FREE(1394CTL)", elm);
 							elm = NULL;	/* XXX */
 						}
 					}
@@ -403,27 +405,27 @@ sbp2_clean(struct fwnode_softc *sc, struct p1212_dir *unitdir, int logout)
 						    ->ac_status_ab, FALSE);
 						FREE(ac->ac_status_ab,
 						    M_1394DATA);
-						//MPRINTF_OLD("FREE(1394DATA)", ac->ac_status_ab);
+						MPRINTF("FREE(1394DATA)", ac->ac_status_ab);
 						ac->ac_status_ab = NULL;	/* XXX */
 					}
 					if (ac->ac_status_block) {
 						FREE(ac->ac_status_block,
 						    M_1394DATA);
-						//MPRINTF_OLD("FREE(1394DATA)", ac->ac_status_block);
+						MPRINTF("FREE(1394DATA)", ac->ac_status_block);
 						ac->ac_status_block = NULL;	/* XXX */
 					}
 					FREE(ac, M_1394CTL);
-					//MPRINTF_OLD("FREE(1394CTL)", ac);
+					MPRINTF("FREE(1394CTL)", ac);
 					ac = NULL;	/* XXX */
 				}
 				free(key, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", key);
+				MPRINTF("free(DEVBUF)", key);
 				key = NULL;	/* XXX */
 			}
 			d = dir[i++];
 		}
 		free(dir, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", dir);
+		MPRINTF("free(DEVBUF)", dir);
 		dir = NULL;	/* XXX */
 	} else {
 		DPRINTF(("%s: no LUN in configrom 0x%08x ???\n", __func__,
@@ -454,10 +456,10 @@ sbp2_login(struct fwnode_softc *sc, struct sbp2_login_orb *orb,
 	}
 
 	MALLOC(ab, struct ieee1394_abuf *, sizeof(*ab), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab);
+	MPRINTF("MALLOC(1394DATA)", ab);
 	bzero(ab, sizeof(*ab));
 	MALLOC(ab2, struct ieee1394_abuf *, sizeof(*ab2), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab2);
+	MPRINTF("MALLOC(1394DATA)", ab2);
 	bzero(ab2, sizeof(*ab2));
 
 	ab->ab_req = (struct ieee1394_softc *)sc;
@@ -469,7 +471,7 @@ sbp2_login(struct fwnode_softc *sc, struct sbp2_login_orb *orb,
 	ab->ab_tcode = IEEE1394_TCODE_WRITE_REQUEST_DATABLOCK;
 
 	ab->ab_data = malloc(8, M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+	MPRINTF("malloc(1394DATA)", ab->ab_data);
 	ab->ab_data[0] = htonl((u_int32_t)(SBP2_LOGIN_ORB >> 32));
 	ab->ab_data[1] = htonl((u_int32_t)(SBP2_LOGIN_ORB & 0xFFFFFFFF));
 	DPRINTF((" CSR = 0x%016qx", ac->ac_mgmt_agent));
@@ -507,38 +509,38 @@ sbp2_login_send(struct ieee1394_abuf *ab, int rcode)
 		DPRINTF(("%s: Bad return code: %d\n", __func__, rcode));
 		if (ab->ab_data) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;	/* XXX */
 		}
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
 
 	MALLOC(orb_ab, struct ieee1394_abuf *, sizeof(*orb_ab),
 	    M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", orb_ab);
+	MPRINTF("MALLOC(1394DATA)", orb_ab);
 	bcopy(ab, orb_ab, sizeof(*orb_ab));
 
 	sc->sc1394_unreg(ab, FALSE);
 
 	if (ab->ab_data) {
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;	/* XXX */
 		orb_ab->ab_data = NULL;
 	}
 	FREE(ab, M_1394DATA);
-	//MPRINTF_OLD("FREE(1394DATA)", ab);
+	MPRINTF("FREE(1394DATA)", ab);
 	ab = NULL;	/* XXX */
 
 	MALLOC(resp_ab, struct ieee1394_abuf *, sizeof(*resp_ab),
 	    M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", resp_ab);
+	MPRINTF("MALLOC(1394DATA)", resp_ab);
 	MALLOC(stat_ab, struct ieee1394_abuf *, sizeof(*stat_ab),
 	    M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", stat_ab);
+	MPRINTF("MALLOC(1394DATA)", stat_ab);
 	bzero(resp_ab, sizeof(*resp_ab));
 	bzero(stat_ab, sizeof(*stat_ab));
 
@@ -587,7 +589,7 @@ sbp2_login_send(struct ieee1394_abuf *ab, int rcode)
 	DPRINTF((", STATUS_ORB = 0x%016qx", SBP2_LOGIN_STATUS));
 
 	orb_ab->ab_data = malloc(sizeof(*login_orb), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", orb_ab->ab_data);
+	MPRINTF("malloc(1394DATA)", orb_ab->ab_data);
 	bcopy(login_orb, orb_ab->ab_data, sizeof(*login_orb));
 #ifdef	SBP2_DEBUG
 	for (i = 0; i < (sizeof(*login_orb) / 4); i++) {
@@ -625,12 +627,12 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 		DPRINTF(("%s: Bad return code: %d\n", __func__, rcode));
 		if (ab->ab_data) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;	/* XXX */
 		}
 		if (ab->ab_addr != SBP2_LOGIN_STATUS) {
 			FREE(ab, M_1394DATA);
-			//MPRINTF_OLD("FREE(1394DATA)", ab);
+			MPRINTF("FREE(1394DATA)", ab);
 			ab = NULL;	/* XXX */
 		}
 		return;
@@ -665,7 +667,7 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 	if (ab->ab_addr == SBP2_LOGIN_STATUS) {
 		MALLOC(cmd_status, struct sbp2_status_block *,
 		    sizeof(*cmd_status), M_1394DATA, M_WAITOK);
-		//MPRINTF_OLD("MALLOC(1394DATA)", cmd_status);
+		MPRINTF("MALLOC(1394DATA)", cmd_status);
 		bzero(cmd_status, sizeof(*cmd_status));
 		bcopy(ab->ab_data, cmd_status, ab->ab_retlen);
 
@@ -692,24 +694,24 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 				    " 0x%08x\n", __func__,
 				    (u_int32_t)(csr & 0xFFFFFFFF)));
 				FREE(cmd_status, M_1394DATA);
-				//MPRINTF_OLD("FREE(1394DATA)", cmd_status);
+				MPRINTF("FREE(1394DATA)", cmd_status);
 				cmd_status = NULL;	/* XXX */
 				goto leave;
 			}
 			MALLOC(status_notify, struct sbp2_status_notification *,
 			    sizeof(*status_notify), M_1394CTL, M_WAITOK);
-			//MPRINTF_OLD("MALLOC(1394CTL)", status_notify);
+			MPRINTF("MALLOC(1394CTL)", status_notify);
 			status_notify->origin = elm->elm_orb;
 			status_notify->status = cmd_status;
 			elm->elm_cb(elm->elm_cbarg, status_notify);
 			FREE(status_notify, M_1394CTL);
-			//MPRINTF_OLD("FREE(1394CTL)", status_notify);
+			MPRINTF("FREE(1394CTL)", status_notify);
 			status_notify = NULL;	/* XXX */
 		} else if (((src & 2) == 0) && (resp == 0) && (dead == 0) &&
 		    (status == 0) && (csr == SBP2_LOGIN_ORB)) {
 			if (ac->ac_status_block) {
 				FREE(ac->ac_status_block, M_1394DATA);
-				//MPRINTF_OLD("FREE(1394DATA)", ac->ac_status_block);
+				MPRINTF("FREE(1394DATA)", ac->ac_status_block);
 				ac->ac_status_block = NULL;	/* XXX */
 			}
 			ac->ac_status_block = cmd_status;
@@ -717,7 +719,7 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 			ac->ac_valid |= 2;
 		} else {
 			FREE(cmd_status, M_1394DATA);
-			//MPRINTF_OLD("FREE(1394DATA)", cmd_status);
+			MPRINTF("FREE(1394DATA)", cmd_status);
 			cmd_status = NULL;	/* XXX */
 		}
 	}
@@ -726,12 +728,12 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 		if (ac->ac_cb != NULL) {
 			MALLOC(status_notify, struct sbp2_status_notification *,
 			    sizeof(*status_notify), M_1394CTL, M_WAITOK);
-			//MPRINTF_OLD("MALLOC(1394CTL)", status_notify);
+			MPRINTF("MALLOC(1394CTL)", status_notify);
 			status_notify->origin = ac->ac_mgmt_orb;
 			status_notify->status = cmd_status;
 			ac->ac_cb(ac->ac_cbarg, status_notify);
 			FREE(status_notify, M_1394CTL);
-			//MPRINTF_OLD("FREE(1394CTL)", status_notify);
+			MPRINTF("FREE(1394CTL)", status_notify);
 			status_notify = NULL;	/* XXX */
 		}
 		ac->ac_valid |= 4;
@@ -745,14 +747,14 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 leave:
 	if (ab->ab_data != NULL) {
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;
 	}
 
 	if (ab->ab_addr != SBP2_LOGIN_STATUS) {
 		sc->sc1394_unreg(ab, FALSE);
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 	}
 
@@ -795,7 +797,7 @@ sbp2_command_add(struct fwnode_softc *sc, int lun,
 
 	MALLOC(elm, struct sbp2_orb_element *, sizeof(*elm),
 	    M_1394CTL, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394CTL)", elm);
+	MPRINTF("MALLOC(1394CTL)", elm);
 	bzero(elm, sizeof(*elm));
 	elm->elm_hash = ehash;
 	elm->elm_orb = orb;
@@ -807,7 +809,7 @@ sbp2_command_add(struct fwnode_softc *sc, int lun,
 	TAILQ_INSERT_TAIL(&ac->ac_orb_head, elm, elm_chain);
 
 	MALLOC(ab2, struct ieee1394_abuf *, sizeof(*ab2), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab2);
+	MPRINTF("MALLOC(1394DATA)", ab2);
 	bzero(ab2, sizeof(*ab2));
 
 	ab2->ab_length = sizeof(u_int32_t) * qlen;
@@ -827,7 +829,7 @@ sbp2_command_add(struct fwnode_softc *sc, int lun,
 	} else {
 		MALLOC(ab, struct ieee1394_abuf *, sizeof(*ab),
 		    M_1394DATA, M_WAITOK);
-		//MPRINTF_OLD("MALLOC(1394DATA)", ab);
+		MPRINTF("MALLOC(1394DATA)", ab);
 		bzero(ab, sizeof(*ab));
 
 		ab->ab_req = (struct ieee1394_softc *)sc;
@@ -839,7 +841,7 @@ sbp2_command_add(struct fwnode_softc *sc, int lun,
 		ab->ab_tcode = IEEE1394_TCODE_WRITE_REQUEST_DATABLOCK;
 
 		ab->ab_data = malloc(8, M_1394DATA, M_WAITOK);
-		//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+		MPRINTF("malloc(1394DATA)", ab->ab_data);
 		ab->ab_data[0] = htonl((u_int32_t)(SBP2_CMD_ORB >> 32));
 		ab->ab_data[1] = htonl(ehash);
 		DPRINTF((" CSR = 0x%016qx", ab->ab_addr));
@@ -884,17 +886,17 @@ sbp2_command_del(struct fwnode_softc *sc, int lun, struct sbp2_command_orb *orb)
 		sc->sc1394_unreg(elm->elm_orb_ab, FALSE);
 		if (elm->elm_orb_ab->ab_data != NULL) {
 			free(elm->elm_orb_ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", elm->elm_orb_ab->ab_data);
+			MPRINTF("free(1394DATA)", elm->elm_orb_ab->ab_data);
 			elm->elm_orb_ab->ab_data = NULL;	/* XXX */
 		}
 		FREE(elm->elm_orb_ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", elm->elm_orb_ab);
+		MPRINTF("FREE(1394DATA)", elm->elm_orb_ab);
 		elm->elm_orb_ab = NULL;	/* XXX */
 	}
 
 	TAILQ_REMOVE(&ac->ac_orb_head, elm, elm_chain);
 	FREE(elm, M_1394CTL);
-	//MPRINTF_OLD("FREE(1394CTL)", elm);
+	MPRINTF("FREE(1394CTL)", elm);
 	elm = NULL;	/* XXX */
 
 	if (TAILQ_EMPTY(&ac->ac_orb_head))
@@ -919,18 +921,18 @@ sbp2_command_send(struct ieee1394_abuf *ab, int rcode)
 #endif	/* SBP2_DEBUG */
 		if (ab->ab_data) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;	/* XXX */
 		}
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
 
 	if (ab->ab_data != NULL) {
 		free(ab->ab_data, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+		MPRINTF("free(1394DATA)", ab->ab_data);
 		ab->ab_data = NULL;
 	}
 
@@ -942,11 +944,11 @@ sbp2_command_send(struct ieee1394_abuf *ab, int rcode)
 #endif	/* SBP2_DEBUG */
 		if (ab->ab_data != NULL) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;	/* XXX */
 		}
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 		return;
 	}
@@ -958,7 +960,7 @@ sbp2_command_send(struct ieee1394_abuf *ab, int rcode)
 
 	MALLOC(cmd_ab, struct ieee1394_abuf *, sizeof(*cmd_ab),
 	    M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", cmd_ab);
+	MPRINTF("MALLOC(1394DATA)", cmd_ab);
 	bcopy(ab, cmd_ab, sizeof(*cmd_ab));
 
 	/* Fill in a command packet. */
@@ -982,7 +984,7 @@ sbp2_command_send(struct ieee1394_abuf *ab, int rcode)
 	cmd_ab->ab_length = ab->ab_retlen;
 
 	cmd_ab->ab_data = malloc(elm->elm_orblen * 4, M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", cmd_ab->ab_data);
+	MPRINTF("malloc(1394DATA)", cmd_ab->ab_data);
 	bcopy(cmd_orb, cmd_ab->ab_data, elm->elm_orblen * 4);
 	for (i = 0; i < elm->elm_orblen; i++) {
 		if ((i % 8) == 0) DPRINTF(("   "));
@@ -1008,7 +1010,7 @@ sbp2_agent_reset(struct fwnode_softc *sc, int lun)
 	DPRINTF(("%s:", __func__));
 
 	MALLOC(ab, struct ieee1394_abuf *, sizeof(*ab), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab);
+	MPRINTF("MALLOC(1394DATA)", ab);
 	bzero(ab, sizeof(*ab));
 
 	ab->ab_req = (struct ieee1394_softc *)sc;
@@ -1020,7 +1022,7 @@ sbp2_agent_reset(struct fwnode_softc *sc, int lun)
 	ab->ab_tcode = IEEE1394_TCODE_WRITE_REQUEST_QUADLET;
 
 	ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+	MPRINTF("malloc(1394DATA)", ab->ab_data);
 	ab->ab_data[0] = 0;
 	DPRINTF((" CSR = 0x%016qx\n", ab->ab_addr));
 
@@ -1044,7 +1046,7 @@ sbp2_agent_tickle(struct fwnode_softc *sc, int lun)
 	DPRINTF(("%s:", __func__));
 
 	MALLOC(ab, struct ieee1394_abuf *, sizeof(*ab), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(1394DATA)", ab);
+	MPRINTF("MALLOC(1394DATA)", ab);
 	bzero(ab, sizeof(*ab));
 
 	ab->ab_req = (struct ieee1394_softc *)sc;
@@ -1056,7 +1058,7 @@ sbp2_agent_tickle(struct fwnode_softc *sc, int lun)
 	ab->ab_tcode = IEEE1394_TCODE_WRITE_REQUEST_QUADLET;
 
 	ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+	MPRINTF("malloc(1394DATA)", ab->ab_data);
 	ab->ab_data[0] = 0;
 	DPRINTF((" CSR = 0x%016qx\n", ab->ab_addr));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.1 2002/12/13 02:57:50 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.2 2002/12/13 21:35:11 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -60,12 +60,6 @@
 #include <dev/ieee1394/fwnodevar.h>
 #include <dev/ieee1394/fwnodereg.h>
 
-#ifdef	MALLOC_DEBUG
-#include <dev/ieee1394/malloc_debug.h>		/* MPRINTF(x,y) */
-#else	/* !MALLOC_DEBUG */
-#define	MPRINTF(x,y)
-#endif	/* MALLOC_DEBUG */
-
 #ifdef	FWSCSI_DEBUG
 #include <sys/syslog.h>
 extern int log_open;
@@ -78,11 +72,18 @@ int fwscsi_oldlog;
 	fwscsi_oldlog = log_open; log_open = 1;				\
 	addlog x; log_open = fwscsi_oldlog;				\
 } while (0)
+#ifdef	FW_MALLOC_DEBUG
+#define	MPRINTF(x,y)	DPRINTF(("%s[%d]: %s 0x%08x\n",			\
+			    __func__, __LINE__, (x), (u_int32_t)(y)))
+#else	/* !FW_MALLOC_DEBUG */
+#define	MPRINTF(x,y)
+#endif	/* FW_MALLOC_DEBUG */
 int	fwscsidebug = 0;
 #else	/* FWSCSI_DEBUG */
 #define	DPRINTF(x)
 #define	DPRINTFN(n,x)
-#endif	/* ! FWSCSI_DEBUG */
+#define	MPRINTF(x,y)
+#endif	/* !FWSCSI_DEBUG */
 
 #ifdef	__NetBSD__
 int  fwscsi_match(struct device *, struct cfdata *, void *);
@@ -224,13 +225,13 @@ fwscsi_match(struct device *parent, void *match, void *aux)
 	if (!key || key[0]->val != SBP2_UNIT_SPEC_ID) {
 		if (key != NULL) {
 			free(key, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", key);
+			MPRINTF("free(DEVBUF)", key);
 			key = NULL;	/* XXX */
 		}
 		return 0;
 	}
 	free(key, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", key);
+	MPRINTF("free(DEVBUF)", key);
 	key = NULL;	/* XXX */
 
 	key = p1212_find(*udirs, P1212_KEYTYPE_Immediate,
@@ -238,13 +239,13 @@ fwscsi_match(struct device *parent, void *match, void *aux)
 	if (!key || key[0]->val != SBP2_UNIT_SW_VERSION) {
 		if (key != NULL) {
 			free(key, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", key);
+			MPRINTF("free(DEVBUF)", key);
 			key = NULL;	/* XXX */
 		}
 		return 0;
 	}
 	free(key, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", key);
+	MPRINTF("free(DEVBUF)", key);
 	key = NULL;	/* XXX */
 
 	key = p1212_find(*udirs, P1212_KEYTYPE_Immediate,
@@ -252,13 +253,13 @@ fwscsi_match(struct device *parent, void *match, void *aux)
 	if (!key || key[0]->val != 0x00609E) {
 		if (key != NULL) {
 			free(key, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", key);
+			MPRINTF("free(DEVBUF)", key);
 			key = NULL;	/* XXX */
 		}
 		return 0;
 	}
 	free(key, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", key);
+	MPRINTF("free(DEVBUF)", key);
 	key = NULL;	/* XXX */
 
 	key = p1212_find(*udirs, P1212_KEYTYPE_Immediate,
@@ -266,13 +267,13 @@ fwscsi_match(struct device *parent, void *match, void *aux)
 	if (!key || key[0]->val != 0x0104D8) {
 		if (key != NULL) {
 			free(key, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", key);
+			MPRINTF("free(DEVBUF)", key);
 			key = NULL;	/* XXX */
 		}
 		return 0;
 	}
 	free(key, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", key);
+	MPRINTF("free(DEVBUF)", key);
 	key = NULL;	/* XXX */
 
 	return 1;
@@ -329,7 +330,7 @@ fwscsi_attach(struct device *parent, struct device *self, void *aux)
 	while (udir[n++]) {};
 	sc->sc_unitdir = malloc(n * sizeof(*sc->sc_unitdir), M_DEVBUF,
 	    M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", sc->sc_unitdir);
+	MPRINTF("malloc(DEVBUF)", sc->sc_unitdir);
 	bcopy(udir, sc->sc_unitdir, n * sizeof(*sc->sc_unitdir));
 
 	sc->sc_speed = psc->sc1394_link_speed;
@@ -373,7 +374,7 @@ fwscsi_init(void *aux)
 #endif	/* FWSCSI_DEBUG */
 
 	login_orb = malloc(sizeof(struct sbp2_login_orb), M_1394DATA, M_WAITOK);
-	//MPRINTF_OLD("malloc(1394DATA)", login_orb);
+	MPRINTF("malloc(1394DATA)", login_orb);
 	bzero(login_orb, sizeof(struct sbp2_login_orb));
 
 	login_orb->lun = htons(sc->sc_lun);
@@ -409,7 +410,7 @@ fwscsi_login_cb(void *arg, struct sbp2_status_notification *notification)
 
 	if (login_orb != NULL) {
 		free(login_orb, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", login_orb);
+		MPRINTF("free(1394DATA)", login_orb);
 		login_orb = NULL;	/* XXX */
 	}
 
@@ -454,7 +455,7 @@ fwscsi_config_thread(void *arg)
 	if (error == EWOULDBLOCK) {
 		DPRINTF(("%s: SBP Login failure\n", __func__));
 		free(login_orb, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", login_orb);
+		MPRINTF("free(1394DATA)", login_orb);
 		login_orb = NULL;	/* XXX */
 		kthread_exit(1);
 	}
@@ -463,12 +464,12 @@ fwscsi_config_thread(void *arg)
 	status = ((struct sbp2_status_block **)login_orb)[0];
 	if (status != NULL) {
 		free(status, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", status);
+		MPRINTF("free(1394DATA)", status);
 		status = NULL;	/* XXX */
 	}
 #endif
 	free(login_orb, M_1394DATA);
-	//MPRINTF_OLD("free(1394DATA)", login_orb);
+	MPRINTF("free(1394DATA)", login_orb);
 	login_orb = NULL;	/* XXX */
 
 	TAILQ_INIT(&sc->sc_data);
@@ -529,7 +530,7 @@ fwscsi_detach(struct device *self, int flags)
 	}
 	sbp2_clean(sc->sc_fwnode, *sc->sc_unitdir, 0);
 	free(sc->sc_unitdir, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", sc->sc_unitdir);
+	MPRINTF("free(DEVBUF)", sc->sc_unitdir);
 	sc->sc_unitdir = NULL;	/* XXX */
 
 	return (rv);
@@ -648,7 +649,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		splx(s);
 		return (TRY_AGAIN_LATER);
 	}
-	//MPRINTF_OLD("malloc(1394DATA)", cmd_orb);
+	MPRINTF("malloc(1394DATA)", cmd_orb);
 	bzero(cmd_orb, sizeof(struct sbp2_command_orb) + 8);
 
 	options = 0x8000 | ((fwsc->sc_sc1394.sc1394_link_speed & 0x7) << 8);
@@ -673,14 +674,14 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 
 		MALLOC(data_elm, struct fwscsi_orb_data *, sizeof(*data_elm),
 		    M_1394CTL, M_NOWAIT);
-		//MPRINTF_OLD("MALLOC(1394CTL)", data_elm);
+		MPRINTF("MALLOC(1394CTL)", data_elm);
 		if (data_elm == NULL) {
 			printf("%s: can't alloc data_elm for target %d lun"
 			    " %d\n", sc->sc_dev.dv_xname, xs->sc_link->target,
 			    xs->sc_link->lun);
 			xs->error = XS_DRIVER_STUFFUP;
 			free(cmd_orb, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", cmd_orb);
+			MPRINTF("free(1394DATA)", cmd_orb);
 			splx(s);
 			return (TRY_AGAIN_LATER);
 		}
@@ -692,16 +693,16 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 
 		MALLOC(data_ab, struct ieee1394_abuf *, sizeof(*data_ab),
 		    M_1394DATA, M_NOWAIT);
-		//MPRINTF_OLD("MALLOC(1394DATA)", data_ab);
+		MPRINTF("MALLOC(1394DATA)", data_ab);
 		if (data_ab == NULL) {
 			printf("%s: can't alloc data_ab for target %d lun"
 			    " %d\n", sc->sc_dev.dv_xname, xs->sc_link->target,
 			    xs->sc_link->lun);
 			xs->error = XS_DRIVER_STUFFUP;
 			free(data_elm, M_1394CTL);
-			//MPRINTF_OLD("FREE(1394CTL)", data_elm);
+			MPRINTF("FREE(1394CTL)", data_elm);
 			free(cmd_orb, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", cmd_orb);
+			MPRINTF("free(1394DATA)", cmd_orb);
 			splx(s);
 			return (TRY_AGAIN_LATER);
 		}
@@ -872,11 +873,11 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 			sc->sc_fwnode->sc1394_unreg(data_ab, TRUE);
 			if ((void *)data_ab->ab_data > (void *)1) { /* XXX */
 				free(data_ab->ab_data, M_1394DATA);
-				//MPRINTF_OLD("free(1394DATA)", data_ab->ab_data);
+				MPRINTF("free(1394DATA)", data_ab->ab_data);
 				data_ab->ab_data = NULL;	/* XXX */
 			}
 			FREE(data_ab, M_1394DATA);
-			//MPRINTF_OLD("FREE(1394DATA)", data_ab);
+			MPRINTF("FREE(1394DATA)", data_ab);
 			data_ab = NULL;	/* XXX */
 		}
 
@@ -885,7 +886,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		TAILQ_REMOVE(&sc->sc_data, data_elm, data_chain);
 		splx(s);
 		FREE(data_elm, M_1394CTL);
-		//MPRINTF_OLD("FREE(1394CTL)", data_elm);
+		MPRINTF("FREE(1394CTL)", data_elm);
 		data_elm = NULL;	/* XXX */
 	}
 
@@ -950,11 +951,11 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		}
 
 		FREE(status, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", status);
+		MPRINTF("FREE(1394DATA)", status);
 		status = NULL;	/* XXX */
 		sbp2_command_del(sc->sc_fwnode, sc->sc_lun, cmd_orb);
 		free(cmd_orb, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", cmd_orb);
+		MPRINTF("free(1394DATA)", cmd_orb);
 		cmd_orb = NULL;	/* XXX */
 
 		s = splbio();
@@ -992,7 +993,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		DPRINTF(("%s: Free status(0x%08x)\n", __func__,
 		    (u_int32_t)status));
 		FREE(status, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", status);
+		MPRINTF("FREE(1394DATA)", status);
 		status = NULL;	/* XXX */
 	}
 	if (cmd_orb != NULL) {
@@ -1001,7 +1002,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		cmd_orb->options = htons(SBP2_DUMMY_TYPE);
 		sbp2_command_del(sc->sc_fwnode, sc->sc_lun, cmd_orb);
 		free(cmd_orb, M_1394DATA);
-		//MPRINTF_OLD("free(1394DATA)", cmd_orb);
+		MPRINTF("free(1394DATA)", cmd_orb);
 		cmd_orb = NULL;	/* XXX */
 	}
 
@@ -1037,7 +1038,7 @@ fwscsi_command_data(struct ieee1394_abuf *ab, int rcode)
 #endif	/* FWSCSI_DEBUG */
 		if ((void *)ab->ab_data > (void *)1) {		/* XXX */
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;
 		}
 		return;
@@ -1059,7 +1060,7 @@ fwscsi_command_data(struct ieee1394_abuf *ab, int rcode)
 #endif	/* FWSCSI_DEBUG */
 		if ((void *)ab->ab_data > (void *)1) {		/* XXX */
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;
 		}
 		return;
@@ -1076,11 +1077,11 @@ fwscsi_command_data(struct ieee1394_abuf *ab, int rcode)
 
 		MALLOC(data_ab, struct ieee1394_abuf *, sizeof(*data_ab),
 		    M_1394DATA, M_WAITOK);
-		//MPRINTF_OLD("MALLOC(1394DATA)", data_ab);
+		MPRINTF("MALLOC(1394DATA)", data_ab);
 		bcopy(ab, data_ab, sizeof(*data_ab));
 
 		data_ab->ab_data = malloc(datalen, M_1394DATA, M_WAITOK);
-		//MPRINTF_OLD("malloc(1394DATA)", data_ab->ab_data);
+		MPRINTF("malloc(1394DATA)", data_ab->ab_data);
 		bzero(data_ab->ab_data, datalen);
 		bcopy(dataptr, data_ab->ab_data,
 		    MIN(data_elm->data_len, datalen));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.5 2002/12/13 02:52:04 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.6 2002/12/13 21:35:11 tdeval Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*
@@ -212,8 +212,12 @@ int fwohci_oldlog;
 	fwohci_oldlog = log_open; log_open = 1;				\
 	addlog x; log_open = fwohci_oldlog;				\
 } while (0)
+#ifdef	FW_MALLOC_DEBUG
 #define	MPRINTF(x,y)	DPRINTF(("%s[%d]: %s 0x%08x\n",			\
 			    __func__, __LINE__, (x), (u_int32_t)(y)))
+#else	/* !FW_MALLOC_DEBUG */
+#define	MPRINTF(x,y)
+#endif	/* FW_MALLOC_DEBUG */
 
 int	fwohcidebug = 0;
 int	fwintr = 0;
@@ -325,7 +329,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 #endif
 
 	MALLOC(sc->sc_dying, int *, sizeof(int), M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", sc->sc_dying);
+	MPRINTF("MALLOC(DEVBUF)", sc->sc_dying);
 	DPRINTF(("%s: sc_dying 0x%08x\n", __func__, (u_int32_t)sc->sc_dying));
 	*sc->sc_dying = 0;
 	sc->sc_nodeid = 0xffff;		/* invalid */
@@ -591,7 +595,7 @@ fwohci_thread_init(void *arg)
 	    OHCI_CTX_ASYNC_TX_RESPONSE, FWOHCI_CTX_ASYNC);
 	sc->sc_ctx_ir = malloc(sizeof(sc->sc_ctx_ir[0]) * sc->sc_isoctx,
 	    M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", sc->sc_ctx_ir);
+	MPRINTF("malloc(DEVBUF)", sc->sc_ctx_ir);
 	for (i = 0; i < sc->sc_isoctx; i++)
 		sc->sc_ctx_ir[i] = NULL;
 
@@ -627,7 +631,7 @@ fwohci_thread_init(void *arg)
 
 	if (sc->sc_uidtbl != NULL) {
 		free(sc->sc_uidtbl, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", sc->sc_uidtbl);
+		MPRINTF("free(DEVBUF)", sc->sc_uidtbl);
 		sc->sc_uidtbl = NULL;
 	}
 
@@ -635,7 +639,7 @@ fwohci_thread_init(void *arg)
 	fwohci_buf_free(sc, &sc->sc_buf_cnfrom);
 
 	free(sc->sc_ctx_ir, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", sc->sc_ctx_ir);
+	MPRINTF("free(DEVBUF)", sc->sc_ctx_ir);
 	sc->sc_ctx_ir = NULL;	/* XXX */
 	fwohci_ctx_free(sc, sc->sc_ctx_atrs);
 	fwohci_ctx_free(sc, sc->sc_ctx_atrq);
@@ -697,7 +701,7 @@ fwohci_event_thread(struct fwohci_softc *sc)
 //			splx(s);
 			if (sc->sc_uidtbl != NULL) {
 				free(sc->sc_uidtbl, M_DEVBUF);
-				//MPRINTF_OLD("free(DEVBUF)", sc->sc_uidtbl);
+				MPRINTF("free(DEVBUF)", sc->sc_uidtbl);
 				sc->sc_uidtbl = NULL;
 			}
 
@@ -799,7 +803,7 @@ fwohci_event_dispatch(struct fwohci_softc *sc)
 //		splx(s);
 		if (sc->sc_uidtbl != NULL) {
 			free(sc->sc_uidtbl, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", sc->sc_uidtbl);
+			MPRINTF("free(DEVBUF)", sc->sc_uidtbl);
 			sc->sc_uidtbl = NULL;
 		}
 
@@ -892,7 +896,7 @@ fwohci_dmamem_alloc(struct fwohci_softc *sc, int size, int alignment,
 	    segs, 1, &nsegs, flags);
 	if (error)
 		goto cleanup;
-	//MPRINTF_OLD("bus_dmamem_alloc", segs->ds_addr);
+	MPRINTF("bus_dmamem_alloc", segs->ds_addr);
 
 	steps = 1;
 	error = bus_dmamem_map(sc->sc_dmat, segs, nsegs, segs[0].ds_len,
@@ -905,7 +909,7 @@ fwohci_dmamem_alloc(struct fwohci_softc *sc, int size, int alignment,
 		    size, flags, mapp);
 	if (error)
 		goto cleanup;
-	//MPRINTF_OLD("bus_dmamap_create", mapp);
+	MPRINTF("bus_dmamap_create", mapp);
 
 	if (error == 0)
 		error = bus_dmamap_load(sc->sc_dmat, *mapp, *kvap, size, NULL,
@@ -917,7 +921,7 @@ fwohci_dmamem_alloc(struct fwohci_softc *sc, int size, int alignment,
 	switch (steps) {
 	case 1:
 		bus_dmamem_free(sc->sc_dmat, segs, nsegs);
-		//MPRINTF_OLD("bus_dmamem_free", segs->ds_addr);
+		MPRINTF("bus_dmamem_free", segs->ds_addr);
 	}
 
 	return error;
@@ -1212,10 +1216,10 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	mapsize = howmany(sc->sc_descsize, NBBY);
 #ifdef	M_ZERO
 	sc->sc_descmap = malloc(mapsize, M_DEVBUF, M_WAITOK|M_ZERO);
-	//MPRINTF_OLD("malloc(DEVBUF)", sc->sc_descmap);
+	MPRINTF("malloc(DEVBUF)", sc->sc_descmap);
 #else
 	sc->sc_descmap = malloc(mapsize, M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", sc->sc_descmap);
+	MPRINTF("malloc(DEVBUF)", sc->sc_descmap);
 	bzero(sc->sc_descmap, mapsize);
 #endif
 
@@ -1229,7 +1233,7 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 		    "error = %d\n", sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_0;
 	}
-	//MPRINTF_OLD("bus_dmamap_create", sc->sc_ddmamap);
+	MPRINTF("bus_dmamap_create", sc->sc_ddmamap);
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dsize, PAGE_SIZE, 0,
 	    &sc->sc_dseg, 1, &sc->sc_dnseg, BUS_DMA_WAITOK)) != 0) {
@@ -1237,7 +1241,7 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 		    sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_1;
 	}
-	//MPRINTF_OLD("bus_dmamem_alloc", sc->sc_dseg.ds_addr);
+	MPRINTF("bus_dmamem_alloc", sc->sc_dseg.ds_addr);
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg,
 	    dsize, (caddr_t *)&sc->sc_desc, BUS_DMA_COHERENT | BUS_DMA_WAITOK))
@@ -1265,10 +1269,10 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_desc, dsize);
   fail_2:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg);
-	//MPRINTF_OLD("bus_dmamem_free", sc->sc_dseg.ds_addr);
+	MPRINTF("bus_dmamem_free", sc->sc_dseg.ds_addr);
   fail_1:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ddmamap);
-	//MPRINTF_OLD("bus_dmamap_destroy", sc->sc_ddmamap);
+	MPRINTF("bus_dmamap_destroy", sc->sc_ddmamap);
   fail_0:
 	return error;
 }
@@ -1281,12 +1285,12 @@ fwohci_desc_free(struct fwohci_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_ddmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_desc, dsize);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg);
-	//MPRINTF_OLD("bus_dmamem_free", sc->sc_dseg.ds_addr);
+	MPRINTF("bus_dmamem_free", sc->sc_dseg.ds_addr);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ddmamap);
-	//MPRINTF_OLD("bus_dmamap_destroy", sc->sc_ddmamap);
+	MPRINTF("bus_dmamap_destroy", sc->sc_ddmamap);
 
 	free(sc->sc_descmap, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", sc->sc_descmap);
+	MPRINTF("free(DEVBUF)", sc->sc_descmap);
 	sc->sc_descmap = NULL;	/* XXX */
 }
 
@@ -1345,10 +1349,10 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 
 #ifdef	M_ZERO
 	MALLOC(fc, struct fwohci_ctx *, sizeof(*fc), M_DEVBUF, M_WAITOK|M_ZERO);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", fc);
+	MPRINTF("MALLOC(DEVBUF)", fc);
 #else
 	MALLOC(fc, struct fwohci_ctx *, sizeof(*fc), M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", fc);
+	MPRINTF("MALLOC(DEVBUF)", fc);
 	bzero(fc, sizeof(*fc));
 #endif
 	LIST_INIT(&fc->fc_handler);
@@ -1357,10 +1361,10 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 #ifdef	M_ZERO
 	fc->fc_buffers = fb = malloc(sizeof(*fb) * bufcnt,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
-	//MPRINTF_OLD("malloc(DEVBUF)", fc->fc_buffers);
+	MPRINTF("malloc(DEVBUF)", fc->fc_buffers);
 #else
 	fc->fc_buffers = fb = malloc(sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", fc->fc_buffers);
+	MPRINTF("malloc(DEVBUF)", fc->fc_buffers);
 	bzero(fb, sizeof(*fb) * bufcnt);
 #endif
 	fc->fc_bufcnt = bufcnt;
@@ -1438,7 +1442,7 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 		fwohci_buf_free(sc, fb);
 	}
 	FREE(fc, M_DEVBUF);
-	//MPRINTF_OLD("FREE(DEVBUF)", fc);
+	MPRINTF("FREE(DEVBUF)", fc);
 	fc = NULL;	/* XXX */
 	return error;
 }
@@ -1477,10 +1481,10 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	}
 #endif	/* DOUBLEBUF */
 	free(fc->fc_buffers, M_DEVBUF);
-	//MPRINTF_OLD("free(DEVBUF)", fc->fc_buffers);
+	MPRINTF("free(DEVBUF)", fc->fc_buffers);
 	fc->fc_buffers = NULL;	/* XXX */
 	FREE(fc, M_DEVBUF);
-	//MPRINTF_OLD("FREE(DEVBUF)", fc);
+	MPRINTF("FREE(DEVBUF)", fc);
 	fc = NULL;	/* XXX */
 }
 
@@ -1570,7 +1574,7 @@ fwohci_buf_alloc(struct fwohci_softc *sc, struct fwohci_buf *fb)
 		    error);
 		goto fail_0;
 	}
-	//MPRINTF_OLD("bus_dmamap_create", fb->fb_dmamap);
+	MPRINTF("bus_dmamap_create", fb->fb_dmamap);
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE,
 	    PAGE_SIZE, &fb->fb_seg, 1, &fb->fb_nseg, BUS_DMA_WAITOK)) != 0) {
@@ -1578,7 +1582,7 @@ fwohci_buf_alloc(struct fwohci_softc *sc, struct fwohci_buf *fb)
 		    sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_1;
 	}
-	//MPRINTF_OLD("bus_dmamem_alloc", fb->fb_seg.ds_addr);
+	MPRINTF("bus_dmamem_alloc", fb->fb_seg.ds_addr);
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &fb->fb_seg,
 	    fb->fb_nseg, PAGE_SIZE, &fb->fb_buf,
@@ -1608,10 +1612,10 @@ fwohci_buf_alloc(struct fwohci_softc *sc, struct fwohci_buf *fb)
 	bus_dmamem_unmap(sc->sc_dmat, fb->fb_buf, PAGE_SIZE);
   fail_2:
 	bus_dmamem_free(sc->sc_dmat, &fb->fb_seg, fb->fb_nseg);
-	//MPRINTF_OLD("bus_dmamem_free", fb->fb_seg.ds_addr);
+	MPRINTF("bus_dmamem_free", fb->fb_seg.ds_addr);
   fail_1:
 	bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
-	//MPRINTF_OLD("bus_dmamap_destroy", fb->fb_dmamap);
+	MPRINTF("bus_dmamap_destroy", fb->fb_dmamap);
   fail_0:
 	return error;
 }
@@ -1623,9 +1627,9 @@ fwohci_buf_free(struct fwohci_softc *sc, struct fwohci_buf *fb)
 	bus_dmamap_unload(sc->sc_dmat, fb->fb_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, fb->fb_buf, PAGE_SIZE);
 	bus_dmamem_free(sc->sc_dmat, &fb->fb_seg, fb->fb_nseg);
-	//MPRINTF_OLD("bus_dmamem_free", fb->fb_seg.ds_addr);
+	MPRINTF("bus_dmamem_free", fb->fb_seg.ds_addr);
 	bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
-	//MPRINTF_OLD("bus_dmamap_destroy", fb->fb_dmamap);
+	MPRINTF("bus_dmamap_destroy", fb->fb_dmamap);
 }
 
 void
@@ -2075,7 +2079,7 @@ fwohci_handler_set(struct fwohci_softc *sc, int tcode, u_int32_t key1,
 		if (fh != NULL) {
 			LIST_REMOVE(fh, fh_list);
 			FREE(fh, M_DEVBUF);
-			//MPRINTF_OLD("FREE(DEVBUF)", fh);
+			MPRINTF("FREE(DEVBUF)", fh);
 			fh = NULL;	/* XXX */
 		}
 		if (tcode == IEEE1394_TCODE_ISOCHRONOUS_DATABLOCK) {
@@ -2090,7 +2094,7 @@ fwohci_handler_set(struct fwohci_softc *sc, int tcode, u_int32_t key1,
 	if (fh == NULL) {
 		MALLOC(fh, struct fwohci_handler *, sizeof(*fh),
 		    M_DEVBUF, M_WAITOK);
-		//MPRINTF_OLD("MALLOC(DEVBUF)", fh);
+		MPRINTF("MALLOC(DEVBUF)", fh);
 		bzero(fh, sizeof(*fh));
 	}
 	fh->fh_tcode = tcode;
@@ -2228,7 +2232,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 				(*fh->fh_handler)(sc, fh->fh_handarg, &pkt);
 				LIST_REMOVE(fh, fh_list);
 				FREE(fh, M_DEVBUF);
-				//MPRINTF_OLD("FREE(DEVBUF)", fh);
+				MPRINTF("FREE(DEVBUF)", fh);
 				fh = NULL;	/* XXX */
 				break;
 			}
@@ -2388,7 +2392,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 			for (off = 0; off < pkt->fp_dlen; off += len) {
 				if (m0 == NULL) {
 					MGETHDR(m0, M_DONTWAIT, MT_DATA);
-					//MPRINTF_OLD("MGETHDR", m0);
+					MPRINTF("MGETHDR", m0);
 					if (m0 != NULL) {
 #ifdef	__NetBSD__
 						M_COPY_PKTHDR(m0, pkt->fp_m);
@@ -2399,14 +2403,14 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 					m = m0;
 				} else {
 					MGET(m->m_next, M_DONTWAIT, MT_DATA);
-					//MPRINTF_OLD("MGET", m->m_next);
+					MPRINTF("MGET", m->m_next);
 					m = m->m_next;
 				}
 				if (m != NULL)
 					MCLGET(m, M_DONTWAIT);
 				if (m == NULL || (m->m_flags & M_EXT) == 0) {
 					m_freem(m0);
-					//MPRINTF_OLD("m_freem", m0);
+					MPRINTF("m_freem", m0);
 					return ENOMEM;
 				}
 				len = pkt->fp_dlen - off;
@@ -2418,7 +2422,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 				ndesc++;
 			}
 			m_freem(pkt->fp_m);
-			//MPRINTF_OLD("m_freem", pkt->fp_m);
+			MPRINTF("m_freem", pkt->fp_m);
 			pkt->fp_m = m0;
 		}
 	} else
@@ -2431,12 +2435,12 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		return ENOBUFS;
 
 	fb = malloc(sizeof(*fb), M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("malloc(DEVBUF)", fb);
+	MPRINTF("malloc(DEVBUF)", fb);
 	fb->fb_nseg = ndesc;
 	fb->fb_desc = fwohci_desc_get(sc, ndesc);
 	if (fb->fb_desc == NULL) {
 		free(fb, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", fb);
+		MPRINTF("free(DEVBUF)", fb);
 		fb = NULL;	/* XXX */
 		return ENOBUFS;
 	}
@@ -2452,11 +2456,11 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		    PAGE_SIZE, 0, BUS_DMA_WAITOK, &fb->fb_dmamap)) != 0) {
 			fwohci_desc_put(sc, fb->fb_desc, ndesc);
 			free(fb, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", fb);
+			MPRINTF("free(DEVBUF)", fb);
 			fb = NULL;	/* XXX */
 			return error;
 		}
-		//MPRINTF_OLD("bus_dmamap_create", fb->fb_dmamap);
+		MPRINTF("bus_dmamap_create", fb->fb_dmamap);
 
 		if (pkt->fp_m != NULL)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, fb->fb_dmamap,
@@ -2466,10 +2470,10 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 			    &pkt->fp_uio, BUS_DMA_WAITOK);
 		if (error != 0) {
 			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
-			//MPRINTF_OLD("bus_dmamap_destroy", fb->fb_dmamap);
+			MPRINTF("bus_dmamap_destroy", fb->fb_dmamap);
 			fwohci_desc_put(sc, fb->fb_desc, ndesc);
 			free(fb, M_DEVBUF);
-			//MPRINTF_OLD("free(DEVBUF)", fb);
+			MPRINTF("free(DEVBUF)", fb);
 			fb = NULL;	/* XXX */
 			return error;
 		}
@@ -2603,7 +2607,7 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 		fwohci_desc_put(sc, fb->fb_desc, fb->fb_nseg);
 		if (fb->fb_nseg > 2) {
 			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
-			//MPRINTF_OLD("bus_dmamap_destroy", fb->fb_dmamap);
+			MPRINTF("bus_dmamap_destroy", fb->fb_dmamap);
 		}
 		fc->fc_bufcnt--;
 		if (fb->fb_callback) {
@@ -2611,10 +2615,10 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 			fb->fb_callback = NULL;
 		} else if (fb->fb_m != NULL) {
 			m_freem(fb->fb_m);
-			//MPRINTF_OLD("m_freem", fb->fb_m);
+			MPRINTF("m_freem", fb->fb_m);
 		}
 		free(fb, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", fb);
+		MPRINTF("free(DEVBUF)", fb);
 		fb = NULL;	/* XXX */
 	}
 }
@@ -3164,17 +3168,17 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 
 	if (sc->sc_uidtbl != NULL) {
 		free(sc->sc_uidtbl, M_DEVBUF);
-		//MPRINTF_OLD("free(DEVBUF)", sc->sc_uidtbl);
+		MPRINTF("free(DEVBUF)", sc->sc_uidtbl);
 		sc->sc_uidtbl = NULL;	/* XXX */
 	}
 #ifdef	M_ZERO
 	sc->sc_uidtbl = malloc(sizeof(*fu) * (sc->sc_rootid + 1), M_DEVBUF,
 	    M_NOWAIT|M_ZERO);	/* XXX M_WAITOK requires locks. */
-	//MPRINTF_OLD("malloc(DEVBUF)", sc->sc_uidtbl);
+	MPRINTF("malloc(DEVBUF)", sc->sc_uidtbl);
 #else
 	sc->sc_uidtbl = malloc(sizeof(*fu) * (sc->sc_rootid + 1), M_DEVBUF,
 	    M_NOWAIT);		/* XXX M_WAITOK requires locks. */
-	//MPRINTF_OLD("malloc(DEVBUF)", sc->sc_uidtbl);
+	MPRINTF("malloc(DEVBUF)", sc->sc_uidtbl);
 #endif
 	if (sc->sc_uidtbl == NULL)
 		return;
@@ -3420,7 +3424,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			//MPRINTF_OLD("m_freem", m);
+			MPRINTF("m_freem", m);
 			return IEEE1394_RCODE_COMPLETE;
 		}
 	}
@@ -3430,7 +3434,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		printf("%s: packet from unknown node: phy id %d\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, n);
 		m_freem(m);
-		//MPRINTF_OLD("m_freem", m);
+		MPRINTF("m_freem", m);
 		fwohci_uid_req(sc, n);
 		return IEEE1394_RCODE_COMPLETE;
 	}
@@ -3517,7 +3521,7 @@ fwohci_if_input_iso(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			//MPRINTF_OLD("m_freem", m);
+			MPRINTF("m_freem", m);
 			return IEEE1394_RCODE_COMPLETE;
 		}
 	}
@@ -3531,7 +3535,7 @@ fwohci_if_input_iso(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 			printf("%s: packet from unknown node: phy id %d\n",
 			    sc->sc_sc1394.sc1394_dev.dv_xname, n);
 			m_freem(m);
-			//MPRINTF_OLD("m_freem", m);
+			MPRINTF("m_freem", m);
 			return IEEE1394_RCODE_COMPLETE;
 		}
 		bcopy(sc->sc_uidtbl[n].fu_uid, mtod(m, caddr_t), 8);
@@ -3695,7 +3699,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 			(*callback)(sc->sc_sc1394.sc1394_if, m0);
 		} else {
 			m_freem(m0);
-			//MPRINTF_OLD("m_freem", m0);
+			MPRINTF("m_freem", m0);
 		}
 	}
 	return error;
@@ -3765,7 +3769,7 @@ fwohci_read(struct ieee1394_abuf *ab)
 		return -1;
 
 	MALLOC(fcb, struct fwohci_cb *, sizeof(*fcb), M_DEVBUF, M_WAITOK);
-	//MPRINTF_OLD("MALLOC(DEVBUF)", fcb);
+	MPRINTF("MALLOC(DEVBUF)", fcb);
 	fcb->ab = ab;
 	fcb->count = 0;
 	fcb->abuf_valid = 1;
@@ -3931,7 +3935,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		if (fcb->abuf_valid == 0) {
 			if (fcb->count == 0) {
 				FREE(fcb, M_DEVBUF);
-				//MPRINTF_OLD("FREE(DEVBUF)", fcb);
+				MPRINTF("FREE(DEVBUF)", fcb);
 				fcb = NULL;	/* XXX */
 			}
 			return IEEE1394_RCODE_COMPLETE;
@@ -4051,7 +4055,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	fcb->abuf_valid = 0;
 	if (fcb->count == 0) {
 		FREE(fcb, M_DEVBUF);
-		//MPRINTF_OLD("FREE(DEVBUF)", fcb);
+		MPRINTF("FREE(DEVBUF)", fcb);
 		fcb = NULL;
 	}
 	return IEEE1394_RCODE_COMPLETE;
@@ -4145,7 +4149,7 @@ fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
 	fcb->abuf_valid = 0;
 	if (fcb->count == 0) {
 		FREE(fcb, M_DEVBUF);
-		//MPRINTF_OLD("FREE(DEVBUF)", fcb);
+		MPRINTF("FREE(DEVBUF)", fcb);
 		fcb = NULL;
 	}
 	return IEEE1394_RCODE_COMPLETE;
@@ -4170,11 +4174,11 @@ fwohci_write_ack(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	else {
 		if (ab->ab_data) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;	/* XXX */
 		}
 		FREE(ab, M_1394DATA);
-		//MPRINTF_OLD("FREE(1394DATA)", ab);
+		MPRINTF("FREE(1394DATA)", ab);
 		ab = NULL;	/* XXX */
 	}
 	return IEEE1394_RCODE_COMPLETE;
@@ -4307,7 +4311,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 		if ((caddr_t)ab->ab_data > (caddr_t)1) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;
 		}
 		break;
@@ -4333,11 +4337,11 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 		if ((caddr_t)ab->ab_data > (caddr_t)1) {
 			free(ab->ab_data, M_1394DATA);
-			//MPRINTF_OLD("free(1394DATA)", ab->ab_data);
+			MPRINTF("free(1394DATA)", ab->ab_data);
 			ab->ab_data = NULL;
 		}
 		ab->ab_data = malloc(ab->ab_retlen, M_1394DATA, M_WAITOK);
-		//MPRINTF_OLD("malloc(1394DATA)", ab->ab_data);
+		MPRINTF("malloc(1394DATA)", ab->ab_data);
 
 		if (ab->ab_tcode == IEEE1394_TCODE_WRITE_REQUEST_QUADLET)
 			ab->ab_data[0] = pkt->fp_hdr[3];
@@ -4406,7 +4410,7 @@ fwohci_detach(struct fwohci_softc *sc, int flags)
 	tsleep(sc->sc_dying, PZERO, "detach", 3 * hz);
 	DPRINTF(("%s: woken up...\n", __func__));
 	FREE(sc->sc_dying, M_DEVBUF);
-	//MPRINTF_OLD("FREE(DEVBUF)", sc->sc_dying);
+	MPRINTF("FREE(DEVBUF)", sc->sc_dying);
 	sc->sc_dying = NULL;	/* XXX */
 
 	if (sc->sc_sc1394.sc1394_if != NULL) {
