@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.25 2004/09/24 23:25:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.26 2004/09/25 02:33:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -840,7 +840,7 @@ __find_arguments(fmt0, ap, argtable, argtablesiz)
 #define ADDTYPE(type) \
 	((nextarg >= tablesize) ? \
 		__grow_type_table(&typetable, &tablesize) : 0, \
-	(nextarg > tablemax) ? tablemax = nextarg : 0,
+	(nextarg > tablemax) ? tablemax = nextarg : 0, \
 	typetable[nextarg++] = type)
 
 #define	ADDSARG() \
