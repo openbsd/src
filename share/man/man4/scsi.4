@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.14 2003/04/03 11:02:36 jmc Exp $
+.\"	$OpenBSD: scsi.4,v 1.15 2004/03/08 18:24:35 miod Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -49,6 +49,7 @@
 .Cd "scsibus at ioprbs?"
 .Cd "scsibus at iopsp?"
 .Cd "scsibus at isp?"
+.Cd "scsibus at mpt?"
 .Cd "scsibus at ncr?"
 .Cd "scsibus at pcscp?"
 .Cd "scsibus at siop?"
@@ -218,6 +219,7 @@ shows more detailed information including DMA scatter-gather logs.
 .Xr ioprbs 4 ,
 .Xr iopsp 4 ,
 .Xr isp 4 ,
+.Xr mpt 4 ,
 .Xr ncr 4 ,
 .Xr pcscp 4 ,
 .Xr sd 4 ,
