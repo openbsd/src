@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.5 1999/06/01 17:54:31 pefo Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.6 1999/09/13 22:35:44 niklas Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -85,11 +85,11 @@
 	} \
 }
 
-static int m_xword __P((struct mbuf *, int, int *));
-static int m_xhalf __P((struct mbuf *, int, int *));
+int	bpf_m_xword __P((struct mbuf *, int, int *));
+int	bpf_m_xhalf __P((struct mbuf *, int, int *));
 
-static int
-m_xword(m, k, err)
+int
+bpf_m_xword(m, k, err)
 	register struct mbuf *m;
 	register int k, *err;
 {
@@ -124,8 +124,8 @@ m_xword(m, k, err)
 	return 0;
 }
 
-static int
-m_xhalf(m, k, err)
+int
+bpf_m_xhalf(m, k, err)
 	register struct mbuf *m;
 	register int k, *err;
 {
@@ -198,7 +198,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xword((struct mbuf *)p, k, &merr);
+				A = bpf_m_xword((struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -217,7 +217,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xhalf((struct mbuf *)p, k, &merr);
+				A = bpf_m_xhalf((struct mbuf *)p, k, &merr);
 				continue;
 #else
 				return 0;
@@ -262,7 +262,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xword((struct mbuf *)p, k, &merr);
+				A = bpf_m_xword((struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -281,7 +281,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xhalf((struct mbuf *)p, k, &merr);
+				A = bpf_m_xhalf((struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
