@@ -1,0 +1,42 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/08/12 04:07:32 millert Exp $
+
+MAN=	man/ci.1 man/co.1 man/ident.1 man/merge.1 man/rcs.1 man/rcsclean.1 \
+        man/rcsdiff.1 man/rcsfile.5 man/rcsfreeze.1 man/rcsintro.1 \
+        man/rcsmerge.1 man/rlog.1
+GNUCFLAGS=	CFLAGS="${CFLAGS}"
+CLEANFILES=	man/rcsfile.5 src/conf.h
+
+all:	config.status
+	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
+
+.FORCE:	.IGNORE
+
+config: .FORCE
+	-rm -f config.cache
+	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr
+
+config.status:
+	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr
+
+install: maninstall
+	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
+		bindir=${DESTDIR}/usr/bin INSTALL_MAN= install
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${.CURDIR}/src/rcsfreeze.sh ${DESTDIR}/usr/bin/rcsfreeze
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>

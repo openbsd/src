@@ -1,0 +1,262 @@
+# Configure template for RCS
+#	$Id: configure.in,v 1.1 1996/08/12 04:07:37 millert Exp $
+# Copyright 1995 Paul Eggert
+# Process this file with autoconf to produce a configure script.
+
+AC_INIT(src/rcsbase.h)
+
+# Set up simple `diff' test.
+echo 0 >conftest0
+echo 0 >conftest0c
+echo 1 >conftest1
+cat >conftestok <<'EOF'
+d1 1
+a1 1
+1
+EOF
+
+AC_ARG_WITH(diffutils,
+  [  --with-diffutils        assume GNU diffutils is similarly installed],
+  [with_diffutils=$withval],
+  [with_diffutils=no]
+)
+
+case $with_diffutils in
+yes)
+  : ${DIFF='$(bindir)/diff'}
+  : ${DIFF3=${DIFF}3}
+  : ${DIFF3_BIN=1}
+  : ${DIFFFLAGS=-an}
+  : ${DIFF_FAILURE=1}
+  : ${DIFF_L=1}
+  : ${DIFF_SUCCESS=0}
+  : ${DIFF_TROUBLE=2}
+esac
+
+# Set DIFF to the name of the `diff' program to be run.
+# On some systems, the RCS-compatible diff program is called `rdiff';
+# use it if it works and `diff' doesn't.
+AC_SUBST(DIFF)
+AC_MSG_CHECKING([diff basename])
+AC_CACHE_VAL(rcs_cv_prog_diff, [
+  rcs_cv_prog_diff=$DIFF
+  case $rcs_cv_prog_diff in
+  '')
+    for i in diff /usr/lib/rdiff rdiff
+    do
+      sh -c "exec $i -n conftest0 conftest1" >conftestout 2>/dev/null
+      case $? in
+      1)
+	if cmp -s conftestok conftestout
+	then rcs_cv_prog_diff=$i; break
+	fi
+	;;
+      esac
+    done
+    ;;
+  esac
+])
+DIFF=$rcs_cv_prog_diff
+case $DIFF in
+'') AC_MSG_ERROR(cannot find RCS-compatible diff);;
+esac
+AC_MSG_RESULT($DIFF)
+AC_PATH_PROG(DIFF, $DIFF, $DIFF)
+
+# Set DIFF_SUCCESS, DIFF_FAILURE, DIFF_TROUBLE to diff's exit status
+# when it finds no differences, some differences, or trouble.
+AC_SUBST(DIFF_SUCCESS)
+AC_MSG_CHECKING([diff success status])
+AC_CACHE_VAL(rcs_cv_status_diff_success, [
+  rcs_cv_status_diff_success=$DIFF_SUCCESS
+  case $rcs_cv_status_diff_success in
+  '')
+    # We can't use `$DIFF conftest0 conftest0',
+    # since buggy NEXTSTEP 3.0 diff silently yields exit status 2 for this.
+    $DIFF conftest0 conftest0c >/dev/null 2>&1
+    rcs_cv_status_diff_success=$?
+    ;;
+  esac
+])
+DIFF_SUCCESS=$rcs_cv_status_diff_success
+AC_MSG_RESULT($DIFF_SUCCESS)
+#
+AC_SUBST(DIFF_FAILURE)
+AC_MSG_CHECKING([diff failure status])
+AC_CACHE_VAL(rcs_cv_status_diff_failure, [
+  rcs_cv_status_diff_failure=$DIFF_FAILURE
+  case $rcs_cv_status_diff_failure in
+  '')
+    $DIFF conftest0 conftest1 >/dev/null 2>&1
+    rcs_cv_status_diff_failure=$?
+    ;;
+  esac
+])
+DIFF_FAILURE=$rcs_cv_status_diff_failure
+AC_MSG_RESULT($DIFF_FAILURE)
+#
+AC_SUBST(DIFF_TROUBLE)
+AC_MSG_CHECKING([diff trouble status])
+AC_CACHE_VAL(rcs_cv_status_diff_trouble, [
+  rcs_cv_status_diff_trouble=$DIFF_TROUBLE
+  case $rcs_cv_status_diff_trouble in
+  '')
+    $DIFF conftest0 no/such/file >/dev/null 2>&1
+    rcs_cv_status_diff_trouble=$?
+    ;;
+  esac
+])
+DIFF_TROUBLE=$rcs_cv_status_diff_trouble
+AC_MSG_RESULT($DIFF_TROUBLE)
+
+# Set DIFFFLAGS to the options of the `diff' program to be run.
+# Use -an if possible, -n otherwise.
+AC_SUBST(DIFFFLAGS)
+AC_MSG_CHECKING([diff options for RCS])
+AC_CACHE_VAL(rcs_cv_options_diff, [
+  rcs_cv_options_diff=$DIFFFLAGS
+  case $rcs_cv_options_diff in
+  '')
+    rcs_cv_options_diff=-n
+    $DIFF -an conftest0 conftest1 >conftestout 2>conftestout2
+    case $? in
+    1)
+      if cmp -s conftestok conftestout && test ! -s conftestout2
+      then rcs_cv_options_diff=-an
+      fi
+      ;;
+    esac
+    ;;
+  esac
+])
+DIFFFLAGS=$rcs_cv_options_diff
+AC_MSG_RESULT($DIFFFLAGS)
+
+# Set DIFF_L to 1 if diff understands the L option, 0 otherwise.
+AC_SUBST(DIFF_L)
+AC_MSG_CHECKING([diff -L])
+AC_CACHE_VAL(rcs_cv_options_diff_l, [
+  rcs_cv_options_diff_l=$DIFF_L
+  case $rcs_cv_options_diff_l in
+  '')
+    rcs_cv_options_diff_l=0
+    $DIFF -c -L 0 -L 1 conftest0 conftest1 >conftestout 2>/dev/null
+    case $? in
+    1)
+      if cmp -s - conftestout <<'EOF'
+*** 0
+--- 1
+***************
+*** 1 ****
+! 0
+--- 1 ----
+! 1
+EOF
+      then rcs_cv_options_diff_l=1
+      fi
+      ;;
+    esac
+    ;;
+  esac
+])
+DIFF_L=$rcs_cv_options_diff_l
+case $DIFF_L in
+1) AC_MSG_RESULT(yes);;
+*) AC_MSG_RESULT(no);;
+esac
+
+# Set DIFF3 to the name of the diff3 program.
+# In some systems (e.g. BSD/OS 2.0), diffutils diff3 lives in /usr/libexec.
+diff3PATH=$PATH:/usr/libexec
+AC_SUBST(DIFF3)
+AC_MSG_CHECKING([diff3 -m])
+AC_CACHE_VAL(rcs_cv_prog_diff3_bin, [
+  rcs_cv_prog_diff3_bin=$DIFF3
+  case $rcs_cv_prog_diff3_bin in
+  '')
+    PATH=$diff3PATH sh -c "exec diff3 -E -m -L 0 -L 1 -L 2 conftest0 conftest1 /dev/null" >conftestout 2>/dev/null
+    case $? in
+    1)
+      if cmp -s - conftestout <<'EOF'
+<<<<<<< 0
+0
+=======
+>>>>>>> 2
+EOF
+      then rcs_cv_prog_diff3_bin=diff3
+      fi
+      ;;
+    esac
+  ;;
+  esac
+])
+case $rcs_cv_prog_diff3_bin in
+?*)
+  AC_MSG_RESULT(yes)
+  ac_save_path=$PATH
+  PATH=$diff3PATH
+  AC_PATH_PROG(DIFF3, $rcs_cv_prog_diff3_bin, $rcs_cv_prog_diff3_bin)
+  PATH=$ac_save_path
+  ;;
+'')
+  AC_MSG_RESULT(no)
+  AC_MSG_CHECKING([diff3 library program])
+  dnl We can't use AC_PATH_PROG since we don't want to inspect /bin,
+  dnl and AC_PATH_PROG uses `test'.
+  AC_CACHE_VAL(rcs_cv_path_diff3_lib, [
+    $DIFF conftest0 conftest1 >conftest01
+    $DIFF /dev/null conftest1 >conftestn1
+    for i in /usr/*lib*/*diff3*; do
+      sh -c "exec $i -E conftest01 conftestn1 conftest0 /dev/null conftest1" >conftestout 2>/dev/null
+      # The exit status is arbitrary!  Test the output a bit.
+      if
+	grep '^<<* *conftest0$' conftestout >/dev/null 2>&1 &&
+	grep '^>>* *conftest1$' conftestout >/dev/null 2>&1 &&
+	grep '^0a$' conftestout >/dev/null 2>&1
+      then
+	rcs_cv_path_diff3_lib=$i
+	break
+      fi
+    done
+  ])
+  DIFF3=$rcs_cv_path_diff3_lib
+  case $DIFF3 in
+  '') AC_MSG_ERROR(cannot find a working diff3 library program);;
+  ?*) AC_MSG_RESULT($DIFF3);;
+  esac
+  ;;
+esac
+
+AC_SUBST(DIFF3_BIN)
+case $DIFF3_BIN in
+'')
+  case $rcs_cv_prog_diff3_bin in
+  '') DIFF3_BIN=0;;
+  ?*) DIFF3_BIN=1;;
+  esac
+  ;;
+esac
+
+# Clean up simple `diff' test.
+rm -f conftest*
+
+AC_PATH_PROG(ED, ed, ed)
+
+ac_save_path=$PATH
+PATH=/usr/lib:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+AC_PATH_PROGS(SENDMAIL, sendmail mail mailx)
+PATH=$ac_save_path
+case $SENDMAIL in
+?*) SENDMAIL=\"$SENDMAIL\"
+esac
+
+# Use the GNU pic -n option if available; it avoids GNU extensions,
+# which is need for proper operation to generate a portable man page.
+# Similarly, if using traditional pic, use its -D option.
+AC_CHECK_PROGS(PIC, "pic -n" "gpic -n" "pic -D" "pic", pic)
+
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+AC_OUTPUT(Makefile man/Makefile src/Makefile)
