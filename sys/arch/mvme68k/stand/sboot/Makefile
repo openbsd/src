@@ -1,19 +1,39 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/07/25 23:12:28 chuck Exp $
+#	$NetBSD: Makefile,v 1.2 1995/07/03 02:53:55 gwr Exp $
 
-#
-# sboot needs GNU ld because it can generate S-Records
-#
+S=	${.CURDIR}/../../../..
+INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
+COPTS?= ${DEFS} ${INCL}
 
-COMPILE.s= $(AS) $(ASFLAGS) -o $*.o
-GNU_LD=/usr/local/bin/ld
-LDFLAGS=-oformat srec -x -N -Ttext 0x4000 -e start
-NOMAN=
-PROG=	sboot
-SRCS=	start.s clock.c console.c etherfun.c le_poll.c libc_sa.c \
-		oc_cksum.s sboot.c
+.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
 
-${PROG}: ${OBJS}
-	${GNU_LD} ${LDFLAGS} -o ${.TARGET} ${OBJS}
+SRCS=   sboot.c clock.c etherfun.c if_le.c
+
+OBJS=	${SRCS:S/.c/.o/g}
+CLEANFILES+=XBUG.o XSRT0.o oc_cksum.o sboot.tmp rboot.tmp srec sboot rboot
+MDEC_DIR?=/usr/mdec
+
+all:	sboot rboot
+
+sboot.tmp:	XSRT0.o oc_cksum.o ${OBJS} ${LIBSA}
+	ld -N -s -static -T 0x4000 XSRT0.o ${OBJS} oc_cksum.o -o sboot.tmp ${LIBSA}
+
+rboot.tmp:	XBUG.o XSRT0.o oc_cksum.o ${OBJS} ${LIBSA}
+	ld -N -s -static -Ttext 0xffa00000 -Tdata 0x4000 XBUG.o XSRT0.o \
+	    ${OBJS} oc_cksum.o -o rboot.tmp ${LIBSA}
+
+srec:	srec.c
+	${CC} ${.CURDIR}/srec.c -o srec
+
+sboot: sboot.tmp srec
+	dd ibs=32 skip=1 if=sboot.tmp | ${.OBJDIR}/srec 4 0x4000 sboot > sboot
+
+rboot: rboot.tmp srec
+	dd ibs=32 skip=1 if=rboot.tmp | ${.OBJDIR}/srec 4 0x4000 rboot > rboot
+
+install:
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    sboot ${DESTDIR}${MDEC_DIR}/sboot
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    rboot ${DESTDIR}${MDEC_DIR}/rboot
 
 .include <bsd.prog.mk>
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.2.1 1995/10/12 22:39:29 chuck Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.8 1995/04/22 20:25:54 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,24 +46,20 @@
 #include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
-#include <sys/mount.h>
 
 #include <vm/vm.h>
-
-#include <sys/syscallargs.h>
 
 #ifdef TRACE
 int	nvualarm;
 
-vtrace(p, v, retval)
+vtrace(p, uap, retval)
 	struct proc *p;
-	void *v;
-	register_t *retval;
-{
 	register struct vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
-	} */ *uap = v;
+	} */ *uap;
+	register_t *retval;
+{
 	int vdoualarm();
 
 	switch (SCARG(uap, request)) {
@@ -227,21 +223,11 @@ cachectl(req, addr, len)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP370)
-		if (ectype == EC_PHYS)
-			PCIA();
-		/* fall into... */
-#endif
 	case CC_PURGE:
 	case CC_FLUSH:
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP370)
-		if (ectype == EC_PHYS)
-			PCIA();
-		else
-#endif
 		DCIU();
 		/* fall into... */
 	case CC_IPURGE:
@@ -255,15 +241,57 @@ cachectl(req, addr, len)
 }
 
 int
-sys_sysarch(p, v, retval)
+sysarch(p, uap, retval)
 	struct proc *p;
-	void *v;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
 	register_t *retval;
 {
-	struct sysarch_args /* {
-		syscallarg(int) op; 
-		syscallarg(char *) parms;
-	} */ *uap = v;
-
 	return ENOSYS;
+}
+
+/*
+ * DMA cache control
+ */
+/*ARGSUSED1*/
+dma_cachectl(addr, len)
+	caddr_t	addr;
+	int len;
+{
+#ifdef M68040
+	if (mmutype == MMU_68040) {
+		register int inc = 0;
+		int pa = 0;
+		caddr_t end;
+
+		end = addr + len;
+		if (len <= 1024) {
+			addr = (caddr_t)((int)addr & ~0xF);
+			inc = 16;
+		} else {
+			addr = (caddr_t)((int)addr & ~PGOFSET);
+			inc = NBPG;
+		}
+		do {
+			/*
+			 * Convert to physical address.
+			 */
+			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
+				pa = kvtop ((vm_offset_t)addr);
+			}
+			if (inc == 16) {
+				DCFL(pa);
+				ICPL(pa);
+			} else {
+				DCFP(pa);
+				ICPP(pa);
+			}
+			pa += inc;
+			addr += inc;
+		} while (addr < end);
+	}
+#endif	/* M68040 */
+	return(0);
 }

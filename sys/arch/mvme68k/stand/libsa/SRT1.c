@@ -1,6 +1,7 @@
-/*	$NetBSD: SRT1.c,v 1.1.1.1.2.1 1995/10/12 22:47:53 chuck Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.2 1995/06/09 22:21:00 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
  *
@@ -35,22 +36,28 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
+#include "config.h"
+
 extern int edata[], end[];
+extern int * getvbr();
 extern volatile void abort();
-extern void main();
-char *_cmd_buf = (char *)0;
 
 volatile void
 exit()
 {
+#if 0
+	mon_exit_to_mon();
+#endif
 	abort();
 }
+
+struct brdid brdid;
+int cputyp;
 
 /*
  * This is called by SRT0.S
  * to do final prep for main
  */
-void
 _start()
 {
 	register int *p;
@@ -60,12 +67,21 @@ _start()
 	do *p++ = 0;
 	while (p < end);
 
-	main(_cmd_buf);
+#if 0
+	/* Set the vector for trap 0 used by abort. */
+	p = getvbr();
+	p[32] = (int)romp->abortEntry;
+#endif
+
+	asm("clrl sp@-; trap #15; .short 0x70; movl sp@+, %0" : "&=d" (p));
+	bcopy(p, &brdid, sizeof brdid);
+	cputyp = brdid.model;
+
+	main(0);
 	exit();
 }
 
 /*
  * Boot programs in C++ ?  Not likely!
  */
-void
 __main() {}

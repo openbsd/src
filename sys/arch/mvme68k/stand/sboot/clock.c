@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.1 1995/07/25 23:12:28 chuck Exp $ */
+/*	$NetBSD: clock.c,v 1.20 1995/02/16 21:51:38 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,11 +47,13 @@
  */
 
 /*
- * Clock driver.  
+ * Clock driver.
  */
 
+#include <sys/cdefs.h>
 #include "sboot.h"
 #include "clockreg.h"
+
 static struct clockreg *clockreg = (struct clockreg *) CLOCK_ADDR;
 
 /*
@@ -69,9 +71,10 @@ static struct clockreg *clockreg = (struct clockreg *) CLOCK_ADDR;
  * Will Unix still be here then??
  */
 const short dayyr[12] =
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+    {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-static u_long chiptotime(sec, min, hour, day, mon, year)
+static u_long 
+chiptotime(sec, min, hour, day, mon, year)
 	register int sec, min, hour, day, mon, year;
 {
 	register int days, yr;
@@ -82,7 +85,8 @@ static u_long chiptotime(sec, min, hour, day, mon, year)
 	day = FROMBCD(day);
 	mon = FROMBCD(mon);
 	year = FROMBCD(year) + YEAR0;
-	if (year < 70) year = 70;
+	if (year < 70)
+		year = 70;
 
 	/* simple sanity checks */
 	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31)
@@ -100,18 +104,19 @@ static u_long chiptotime(sec, min, hour, day, mon, year)
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
-u_long time()
+u_long 
+time()
 {
 	register struct clockreg *cl = clockreg;
-	int sec, min, hour, day, mon, year;
+	int     sec, min, hour, day, mon, year;
 
-	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
+	cl->cl_csr |= CLK_READ;	/* enable read (stop time) */
 	sec = cl->cl_sec;
 	min = cl->cl_min;
 	hour = cl->cl_hour;
 	day = cl->cl_mday;
 	mon = cl->cl_month;
 	year = cl->cl_year;
-	cl->cl_csr &= ~CLK_READ;	/* time wears on */
-	return(chiptotime(sec, min, hour, day, mon, year));
+	cl->cl_csr &= ~CLK_READ;/* time wears on */
+	return (chiptotime(sec, min, hour, day, mon, year));
 }

@@ -25,7 +25,7 @@ stackdump(dummy)
 
 	printf("stackdump:\n");
 	for (ip = &dummy; ip < _estack; ip += 4) {
-		printf("%08x: %08x %08x %08x %08x\n",
+		printf("%x: %x %x %x %x\n",
 			   (int)ip, ip[0], ip[1], ip[2], ip[3]);
 	}
 }

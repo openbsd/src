@@ -42,83 +42,83 @@
 #define OPCODE_REPLY 4     /* Optype is REVARP reply   */
 
 /* ip header */
-#define  IPP_UDP 17        /* IP Protocol is UDP       */
-#define  IP_VERSION 4      /* IP version number        */
-#define  IP_HLEN 5         /* IP header length is a fixed 50 bytes */
+#define  IPP_UDP 17	/* IP Protocol is UDP       */
+#define  IP_VERSION 4      /* IP version number	*/
+#define  IP_HLEN 5	 /* IP header length is a fixed 50 bytes */
 #define N 1536
 
 /* tftp header */
 #define FTPOP_ACKN 4      /* Opcode is acknowledge     */
 #define FTPOP_ERR 5       /* Opcode is Error	       */
 #define FTP_PORT 69       /* Standard TFTP port number */
-#define MSG "\0\1xxxxxxxx.147\0octet\0" /* implicit NULL */
+#define MSG "\0\1xxxxxxxx.mvme68k\0octet\0" /* implicit NULL */
 
 /* data structures */
 
 struct  ether_header {
-        u_char  ether_dhost[6];
-        u_char  ether_shost[6];
-        u_short ether_type;
+	u_char  ether_dhost[6];
+	u_char  ether_shost[6];
+	u_short ether_type;
 };
 
 struct  ether_arp {
-        u_short ar_hrd;       /* format of hardware address */
-	u_short ar_pro;       /* format of protocol address */
-        u_char  ar_hln;       /* length of hardware address */
-        u_char  ar_pln;       /* length of protocol address */
-        u_short ar_op;
-        u_char  arp_sha[6];     /* sender hardware address */
-        u_char  arp_spa[4];     /* sender protocol address */
-        u_char  arp_tha[6];     /* target hardware address */
-        u_char  arp_tpa[4];     /* target protocol address */
+	u_short ar_hrd;		/* format of hardware address */
+	u_short ar_pro;		/* format of protocol address */
+	u_char  ar_hln;		/* length of hardware address */
+	u_char  ar_pln;		/* length of protocol address */
+	u_short ar_op;
+	u_char  arp_sha[6];	/* sender hardware address */
+	u_char  arp_spa[4];	/* sender protocol address */
+	u_char  arp_tha[6];	/* target hardware address */
+	u_char  arp_tpa[4];	/* target protocol address */
 };
 
 struct ip {
-        u_char  ip_v:4,                 /* version */
-                ip_hl:4;                /* header length */
-        u_char  ip_tos;                 /* type of service */
-        short   ip_len;                 /* total length */
-        u_short ip_id;                  /* identification */
-        short   ip_off;                 /* fragment offset field */
-#define IP_DF 0x4000                    /* dont fragment flag */
-#define IP_MF 0x2000                    /* more fragments flag */
-#define IP_OFFMASK 0x1fff               /* mask for fragmenting bits */
-        u_char  ip_ttl;                 /* time to live */
-        u_char  ip_p;                   /* protocol */
-        u_short ip_sum;                 /* checksum */
+	u_char  ip_v:4,		/* version */
+		ip_hl:4;	/* header length */
+	u_char  ip_tos;		/* type of service */
+	short   ip_len;		/* total length */
+	u_short ip_id;		/* identification */
+	short   ip_off;		/* fragment offset field */
+#define IP_DF 0x4000		/* dont fragment flag */
+#define IP_MF 0x2000		/* more fragments flag */
+#define IP_OFFMASK 0x1fff	/* mask for fragmenting bits */
+	u_char  ip_ttl;		/* time to live */
+	u_char  ip_p;		/* protocol */
+	u_short ip_sum;		/* checksum */
 	u_char  ip_src[4];
-        u_char  ip_dst[4];              /* source and dest address */
+	u_char  ip_dst[4];	/* source and dest address */
 };
 
 struct udp {
-        u_short uh_sport;
+	u_short uh_sport;
 	u_short uh_dport;
 	short uh_ulen;
 	u_short uh_sum;
 };
 
 struct tftph {
-  u_short op_code;
-  u_short block;
+	u_short	op_code;
+	u_short	block;
 };
 
 struct tftphr {
-  struct tftph info;
-  char data[1];
+	struct tftph info;
+	char	data[1];
 };
 
 /* globals */
 int last_ack;
 char buf[N];
 struct ether_header *eh = (struct ether_header *)buf;
-struct ether_arp *rarp = 
-  (struct ether_arp *)(buf + sizeof(struct ether_header));
+struct ether_arp *rarp = (struct ether_arp *)
+	(buf + sizeof(struct ether_header));
 struct ip *iph = (struct ip *)(buf + sizeof(struct ether_header));
-struct udp *udph = (struct udp *)(buf + sizeof(struct ether_header) + 
-  sizeof(struct ip));
+struct udp *udph = (struct udp *)
+	(buf + sizeof(struct ether_header) + sizeof(struct ip));
 char *tftp_r = buf + sizeof(struct ether_header) + sizeof(struct ip) + 
-  sizeof(struct udp);
+	sizeof(struct udp);
 struct tftph *tftp_a = (struct tftph *)(buf + sizeof(struct ether_header) + 
-  sizeof(struct ip) + sizeof(struct udp));
+	sizeof(struct ip) + sizeof(struct udp));
 struct tftphr *tftp = (struct tftphr *)(buf + sizeof(struct ether_header) + 
-  sizeof(struct ip) + sizeof(struct udp));
+	sizeof(struct ip) + sizeof(struct udp));

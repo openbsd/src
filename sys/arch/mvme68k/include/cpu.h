@@ -1,6 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1995/07/25 23:12:13 chuck Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1995/03/28 18:15:31 jtc Exp $	*/
 
 /*
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -57,7 +58,7 @@
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the mvme68k, we use
+ * machine state in an opaque clockframe.  One the m68k, we use
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
@@ -86,7 +87,7 @@ struct clockframe {
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the hp300, request an ast to send us
+ * buffer pages are invalid.  On the m68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
 #define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
@@ -112,11 +113,9 @@ extern unsigned char ssir;
 #define SIR_CLOCK	0x2
 
 #define setsoftint(x)	ssir |= (x)
-#define siroff(x)	ssir &= ~(x)
 #define setsoftnet()	ssir |= SIR_NET
 #define setsoftclock()	ssir |= SIR_CLOCK
-
-extern unsigned long allocate_sir();
+u_long	allocate_sir __P((void (*proc)(), void *arg));
 
 /*
  * CTL_MACHDEP definitions.
@@ -139,23 +138,25 @@ extern unsigned long allocate_sir();
 #define	EC_NONE		0	/* no external cache */
 #define	EC_VIRT		1	/* external virtual address cache */
 
-#define	MHZ_16		2	/* XXX kill */
-
-
 #ifdef _KERNEL
 extern	int mmutype, ectype;
-extern	int cpuspeed;			/* XXX kill */
 extern	char *intiobase, *intiolimit;
+extern	char *iiomapbase;
+extern	int iiomapsize;
 #endif
 
 /* physical memory sections for mvme147 */
-#define	INTIOBASE	(0xfffe0000)
-#define	INTIOTOP	(0xfffe5000)
+#define	INTIOBASE_147	(0xfffe0000)
+#define	INTIOTOP_147	(0xfffe5000)
+#define	INTIOSIZE_147	((INTIOTOP_147-INTIOBASE_147)/NBPG)
+
+/* physical memory sections for mvme16x */
+#define	INTIOBASE_162	(0xfff00000)
+#define	INTIOTOP_162	(0xfffd0000)		/* was 0xfff50000 */
+#define	INTIOSIZE_162	((INTIOTOP_162-INTIOBASE_162)/NBPG)
 
 /*
- * Internal IO space:
- *
- * Ranges from 0x800000 to 0x1000000 (IIOMAPSIZE).
+ * Internal IO space (iiomapsize).
  *
  * Internal IO space is mapped in the kernel from ``intiobase'' to
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
@@ -163,10 +164,9 @@ extern	char *intiobase, *intiolimit;
  */
 #define	ISIIOVA(va) \
 	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
-#define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
-#define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 1mb */
+#define	IIOV(pa)	((int)(pa)-(int)iiomapbase+(int)intiobase)
+#define	IIOP(va)	((int)(va)-(int)intiobase+(int)iiomapbase)
+#define	IIOPOFF(pa)	((int)(pa)-(int)iiomapbase)
 
 /*
  * 68851 and 68030 MMU
@@ -223,8 +223,30 @@ extern	char *intiobase, *intiolimit;
 #define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
 
 /* 68040 cache control register */
-#define	IC4_ENABLE	0x8000		/* instruction cache enable bit */
+#define	IC4_ENABLE	0x00008000	/* instruction cache enable bit */
 #define	DC4_ENABLE	0x80000000	/* data cache enable bit */
 
 #define	CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
 #define	CACHE4_OFF	(0)
+
+extern int	cputyp;
+#define CPU_147			0x147
+#define CPU_162			0x162
+#define CPU_166			0x166
+#define CPU_167			0x167
+#define CPU_172			0x172
+#define CPU_177			0x177
+
+struct intrhand {
+	struct	intrhand *ih_next;
+	int	(*ih_fn)();
+	void	*ih_arg;
+	int	ih_ipl;
+	int	ih_wantframe;
+};
+
+struct haltvec {
+	struct haltvec *hv_next;
+	void	(*hv_fn) __P((void));
+	int	hv_pri;
+};

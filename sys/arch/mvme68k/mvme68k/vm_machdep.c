@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1995/08/10 19:46:45 chuck Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1995/05/25 01:11:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,15 +49,13 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/user.h>
-#include <sys/core.h>
-#include <sys/exec.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -126,29 +124,28 @@ cpu_exit(p)
 
 	vmspace_free(p->p_vmspace);
 
-	(void) splhigh();
+	(void) splimp();
 	cnt.v_swtch++;
 	switch_exit(p);
 	/* NOTREACHED */
 }
 
+void
+cpu_cleanup(p)
+	struct proc *p;
+{
+
+}
+
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
-struct md_core {
-	struct reg intreg;
-	struct fpreg freg;
-};
 int
-cpu_coredump(p, vp, cred, chdr)
+cpu_coredump(p, vp, cred)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
-	struct core *chdr;
 {
-	struct md_core md_core;
-	struct coreseg cseg;
-	int error;
 
 #ifdef COMPAT_HPUX
 	extern struct emul emul_hpux;
@@ -161,40 +158,9 @@ cpu_coredump(p, vp, cred, chdr)
 	if (p->p_emul == &emul_hpux)
 		return (hpux_dumpu(vp, cred));
 #endif
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
-
-	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
-	if (error)
-		return error;
-
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
-	if (error)
-		return error;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    (int *)0, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-	return 0;
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, USPACE,
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
+	    p));
 }
 
 /*

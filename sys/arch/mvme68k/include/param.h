@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1995/08/13 00:27:11 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1995/03/28 18:15:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,7 @@
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
+#define KERNTEXTOFF	0x00010000	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
@@ -80,7 +81,7 @@
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-#define	UPAGES		3		/* pages of u-area */
+#define	UPAGES		2		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 /*
@@ -111,12 +112,12 @@
 #endif
 
 /* pages ("clicks") to disk blocks */
-#define		ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define		dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define		ctob(x)		((x) << PGSHIFT)
-#define		btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
@@ -145,40 +146,36 @@
 
 #define _spl(s) \
 ({ \
-        register int _spl_r; \
+	register int _spl_r; \
 \
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
+	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
+		"&=d" (_spl_r) : "di" (s)); \
+	_spl_r; \
 })
 
 /* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
+#define	spl1()	_spl(PSL_S|PSL_IPL1)
+#define	spl2()	_spl(PSL_S|PSL_IPL2)
+#define	spl3()	_spl(PSL_S|PSL_IPL3)
+#define	spl4()	_spl(PSL_S|PSL_IPL4)
+#define	spl5()	_spl(PSL_S|PSL_IPL5)
+#define	spl6()	_spl(PSL_S|PSL_IPL6)
+#define	spl7()	_spl(PSL_S|PSL_IPL7)
 
-#define splsoftclock()  spl1()
-#define splsoftnet()    spl1()
-#define splbio()        spl2()
-#define splnet()        spl3()
-#define spltty()        spl3()
-#define splimp()        spl3()
-#define splclock()      spl5()
-#define splstatclock()	spl5()
-#define splvm()         spl5()
-#define splhigh()       spl7()
-#define splsched()      spl7()
+#define	splsoftclock()	spl1()
+#define	splsoftnet()	spl1()
+#define	splbio()	spl2()
+#define	splnet()	spl3()
+#define	splimp()	spl3()
+#define	spltty()	spl3()
+#define	splclock()	spl5()
+#define	splstatclock()	spl5()
+#define	splhigh()	spl7()
+#define	splsched()	spl7()
 
 /* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
+#define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
 
 #ifdef _KERNEL
-#ifndef LOCORE
-int	cpuspeed;
-#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
-#endif
+#define DELAY(n)	delay(n)
 #endif

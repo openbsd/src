@@ -1,6 +1,7 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1.1.1 1995/07/25 23:12:02 chuck Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6 1995/05/12 12:54:56 mycroft Exp $	*/
 
 /* 
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -42,9 +43,9 @@
 #include <sys/param.h>
 #include <sys/msgbuf.h>
 #include <machine/pte.h>
-#include <mvme68k/mvme68k/clockreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 
 #include <vm/vm.h>
 
@@ -53,6 +54,8 @@
 extern char *etext;
 extern int Sysptsize;
 extern char *extiobase, *proc0paddr;
+char *iiomapbase;
+int iiomapsize;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
@@ -60,9 +63,6 @@ extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
-#ifdef HAVEVAC
-extern int pmap_aliasmask;
-#endif
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -75,7 +75,9 @@ extern int pmap_aliasmask;
  */
 caddr_t		CADDR1, CADDR2, vmmap, ledbase;
 struct msgbuf	*msgbufp;
-extern void *ledatabuf; /* XXXCDC */
+#define ETHERPAGES 16
+void	*etherbuf;
+int	etherlen;
 
 /*
  * Bootstrap the VM system.
@@ -108,12 +110,12 @@ pmap_bootstrap(nextpa, firstpa)
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
 	 *	iiopa		internal IO space
-	 *			PT pages		IIOMAPSIZE pages
+	 *			PT pages		iiomapsize pages
 	 *
 	 *	eiopa		external IO space
 	 *			PT pages		EIOMAPSIZE pages
 	 *
-	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
+	 * [ Sysptsize is the number of pages of PT, iiomapsize and
 	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
@@ -134,20 +136,19 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(RELOC(iiomapsize, int) + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
 	eiopa = nextpa - EIOMAPSIZE * sizeof(pt_entry_t);
-	iiopa = eiopa - IIOMAPSIZE * sizeof(pt_entry_t);
+	iiopa = eiopa - RELOC(iiomapsize, int) * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-	{ /* XXXCDC */
-		ledatabuf = (void *)nextpa;
-		nextpa += 4 * NBPG;
-	} /* XXXCDC */
+
+	RELOC(etherbuf, void *) = (void *)nextpa;
+	nextpa += ETHERPAGES * NBPG;
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -244,6 +245,13 @@ pmap_bootstrap(nextpa, firstpa)
 			*pte++ = protopte;
 			protopte += NBPG;
 		}
+		/*
+		 * Invalidate all but the last remaining entries in both.
+		 */
+		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		while (pte < epte) {
+			*pte++ = PG_NV;
+		}
 		pte = &((u_int *)kptmpa)[NPTEPG-1];
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else {
@@ -309,6 +317,8 @@ pmap_bootstrap(nextpa, firstpa)
 #else
 	protopte = firstpa | PG_RO | PG_V;
 #endif
+	*pte++ = firstpa | PG_NV;		/* make *NULL fail in the kernel */
+	protopte += NBPG;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -329,14 +339,19 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
-	{ /* XXXCDC -- uncache lebuf */
-		u_int *lepte = &((u_int *)kptpa)[m68k_btop(ledatabuf)];
 
-		lepte[0] = lepte[0] | PG_CI;
-		lepte[1] = lepte[1] | PG_CI;
-		lepte[2] = lepte[2] | PG_CI;
-		lepte[3] = lepte[3] | PG_CI;
-	} /* XXXCDC yuck */
+	pte = &((u_int *)kptpa)[m68k_btop(etherbuf)];
+	epte = pte + ETHERPAGES;
+	if (RELOC(mmutype, int) == MMU_68040)
+		while (pte < epte) {
+			*pte = (*pte & ~PG_CMASK) | PG_CIS;
+			pte++;
+		}
+	else
+		while (pte < epte) {
+			*pte++ |= PG_CI;
+		}
+	RELOC(etherlen, int) = ETHERPAGES * NBPG;
 
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
@@ -347,7 +362,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = (u_int *)iiopa;
 	epte = (u_int *)eiopa;
-	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
+	protopte = RELOC(iiomapbase, int) | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -374,13 +389,13 @@ pmap_bootstrap(nextpa, firstpa)
 		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
 	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
-	 * IIOMAPSIZE pages prior to external IO space at end of static
+	 * iiomapsize pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(intiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
-	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+	RELOC(intiobase, char *) = (char *)
+		m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
+	RELOC(intiolimit, char *) = (char *)
+		m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.
@@ -418,17 +433,6 @@ pmap_bootstrap(nextpa, firstpa)
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
-
-#ifdef HAVEVAC
-	/*
-	 * Determine VA aliasing distance if any
-	 */
-	if (RELOC(ectype, int) == EC_VIRT)
-		if (RELOC(machineid, int) == HP_320)
-			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-		else if (RELOC(machineid, int) == HP_350)
-			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
-#endif
 
 	/*
 	 * Initialize protection array.

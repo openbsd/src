@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.1.1.1 1995/07/25 23:12:15 chuck Exp $	*/
+/*	$NetBSD: exec.h,v 1.5 1995/03/28 18:15:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou

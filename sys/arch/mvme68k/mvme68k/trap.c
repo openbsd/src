@@ -1,6 +1,7 @@
-/*	$NetBSD: trap.c,v 1.2.2.1 1995/10/12 00:43:38 chuck Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 1995/05/12 18:24:53 mycroft Exp $	*/
 
 /*
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,15 +62,16 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
+#ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
+extern struct emul emul_sunos;
+#endif
+
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
-#endif
-#ifdef COMPAT_SUNOS
-#include <compat/sunos/sunos_syscall.h>
-	extern struct emul emul_sunos;
 #endif
 
 char	*trap_type[] = {
@@ -128,10 +130,10 @@ int mmupid = -1;
 #define MDB_ISPID(p)	(p) == mmupid
 #endif
 
-#define NSIR	32
+#define NSIR	8
 void (*sir_routines[NSIR])();
 void *sir_args[NSIR];
-int next_sir;
+u_char next_sir;
 
 /*
  * trap and syscall both need the following work done before returning
@@ -225,7 +227,7 @@ trap(type, code, v, frame)
 {
 	extern char fubail[], subail[];
 #ifdef DDB
-	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
+	extern int trap0, trap1, trap2, trap12, trap15, illinst;
 #endif
 	register struct proc *p;
 	register int i;
@@ -235,6 +237,9 @@ trap(type, code, v, frame)
 	extern struct emul emul_hpux;
 #endif
 	int bit;
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
 
 	cnt.v_trap++;
 	p = curproc;
@@ -260,7 +265,7 @@ dopanic:
 		panic("trap");
 
 	case T_BUSERR:		/* kernel bus error */
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (!p || !p->p_addr->u_pcb.pcb_onfault)
 			goto dopanic;
 		/*
 		 * If we have arranged to catch this fault in any of the
@@ -407,12 +412,9 @@ copyfault:
 	case T_TRAP15:		/* SUN trace trap */
 #ifdef DDB
 		if (type == T_TRAP15 ||
-		    ((caddr_t)frame.f_pc != trap0 &&
-		     (caddr_t)frame.f_pc != trap1 &&
-		     (caddr_t)frame.f_pc != trap2 &&
-		     (caddr_t)frame.f_pc != trap12 &&
-		     (caddr_t)frame.f_pc != trap15 &&
-		     (caddr_t)frame.f_pc != illinst)) {
+		    (frame.f_pc != trap0 && frame.f_pc != trap1 &&
+		     frame.f_pc != trap2 && frame.f_pc != trap12 &&
+		     frame.f_pc != trap15 && frame.f_pc != illinst)) {
 			if (kdb_trap(type, &frame))
 				return;
 		}
@@ -423,6 +425,18 @@ copyfault:
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
+#ifdef COMPAT_SUNOS
+		/*
+		 * XXX This comment/code is not consistent XXX
+		 * SunOS seems to use Trap #2 for some obscure
+		 * fpu operations.  So far, just ignore it, but
+		 * DONT trap on it..
+		 */
+		if (p->p_emul == &emul_sunos) {
+			userret(p, frame.f_pc, sticks);
+			return;
+		}
+#endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -452,7 +466,6 @@ copyfault:
 			if (sir_routines[bit])
 				sir_routines[bit](sir_args[bit]);
 		}
-
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
@@ -472,19 +485,23 @@ copyfault:
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == subail)
+		if (p && (p->p_addr->u_pcb.pcb_onfault == fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == subail))
 			goto copyfault;
 		/* fall into ... */
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
 		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
+		register struct vmspace *vm = NULL;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
+
+		/* vmspace only significant if T_USER */
+		if (p)
+			vm = p->p_vmspace;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -500,7 +517,7 @@ copyfault:
 		 * argument space is lazy-allocated.
 		 */
 		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
+		    ((p && !p->p_addr->u_pcb.pcb_onfault) || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
@@ -509,12 +526,11 @@ copyfault:
 		else
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
-#ifdef DEBUG
+
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", v);
 			goto dopanic;
 		}
-#endif
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
 			vm_offset_t bva;
@@ -562,7 +578,7 @@ copyfault:
 			goto out;
 		}
 		if (type == T_MMUFLT) {
-			if (p->p_addr->u_pcb.pcb_onfault)
+			if (p && p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
@@ -908,6 +924,9 @@ syscall(code, frame)
 	size_t argsize;
 	register_t args[8], rval[2];
 	u_quad_t sticks;
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
 
 	cnt.v_syscall++;
 	if (!USERMODE(frame.f_sr))
@@ -937,7 +956,7 @@ syscall(code, frame)
 		 * on the stack to skip, the argument follows the syscall
 		 * number without a gap.
 		 */
-		if (code != SUNOS_SYS_sigreturn) {
+		if (code != SUNOS_SYS_sunos_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP,
@@ -1051,7 +1070,7 @@ child_return(p, frame)
 	frame.f_sr &= ~PSL_C;
 	frame.f_format = FMT0;
 
-	userret(p, &frame, p->p_sticks, (u_int)0, 0);
+	userret(p, &frame, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
@@ -1068,7 +1087,7 @@ allocate_sir(proc, arg)
 {
 	int bit;
 
-	if( next_sir >= NSIR )
+	if (next_sir >= NSIR)
 		panic("allocate_sir: none left");
 	bit = next_sir++;
 	sir_routines[bit] = proc;
@@ -1085,3 +1104,105 @@ init_sir()
 	sir_routines[1] = softclock;
 	next_sir = 2;
 }
+
+struct intrhand *intrs[256];
+
+/*
+ * XXX
+ * This is an EXTREMELY good candidate for rewriting in assembly!!
+ */
+#ifndef INTR_ASM
+int
+hardintr(pc, evec, frame)
+	int pc;
+	int evec;
+	void *frame;
+{
+	int vec = (evec & 0xfff) >> 2;	/* XXX should be m68k macro? */
+	extern u_long intrcnt[];	/* XXX from locore */
+	struct intrhand *ih;
+	int r;
+
+	cnt.v_intr++;
+/*	intrcnt[level]++; */
+	for (ih = intrs[vec]; ih; ih = ih->ih_next) {
+		r = (*ih->ih_fn)(ih->ih_wantframe ? frame : ih->ih_arg);
+		if (r > 0)
+			return;
+	}
+	return (straytrap(pc, evec));
+}
+#endif /* !INTR_ASM */
+
+/*
+ * Chain the interrupt handler in. But first check if the vector
+ * offset chosen is legal. It either must be a badtrap (not allocated
+ * for a `system' purpose), or it must be a hardtrap (ie. already
+ * allocated to deal with chained interrupt handlers).
+ */
+int
+intr_establish(vec, ih)
+	int vec;
+	struct intrhand *ih;
+{
+	extern u_long *vectab[], hardtrap, badtrap;
+	struct intrhand *ihx;
+
+	if (vectab[vec] != &badtrap && vectab[vec] != &hardtrap) {
+		printf("intr_establish: vec %d unavailable\n", vec);
+		return (-1);
+	}
+	vectab[vec] = &hardtrap;
+
+	ih->ih_next = NULL;	/* just in case */
+
+	/* attach at tail */
+	if (ihx = intrs[vec]) {
+		while (ihx->ih_next)
+			ihx = ihx->ih_next;
+		ihx->ih_next = ih;
+	} else
+		intrs[vec] = ih;
+	return (0);
+}
+
+/*
+ * find a useable vector for devices that don't specify one
+ */
+int
+intr_freevec()
+{
+	extern u_long *vectab[], hardtrap, badtrap;
+	int i;
+
+	for (i = 255; i; --i)
+		if (vectab[i] == &badtrap)
+			return (i);
+	for (i = 255; i; --i)
+		if (vectab[i] == &hardtrap)
+			return (i);
+	return (-1);
+}
+
+#ifdef DDB
+#include <sys/reboot.h>
+#include <machine/db_machdep.h>
+#include <ddb/db_command.h>
+
+void
+db_prom_cmd()
+{
+	doboot();
+}
+
+struct db_command db_machine_cmds[] = {
+	{ "prom",	db_prom_cmd,	0,	0 },
+	{ (char *)0, }
+};
+
+void
+db_machine_init()
+{
+	db_machine_commands_install(db_machine_cmds);
+}
+#endif /* DDB */

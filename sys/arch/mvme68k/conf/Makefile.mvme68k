@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.mvme68k,v 1.3 1995/09/19 23:50:22 thorpej Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.6 1995/03/23 19:46:32 jtc Exp $
 
-#	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
+#	@(#)Makefile.mvme68k	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
 #
@@ -9,7 +9,7 @@
 # Most changes should be made in the machine description
 #	/sys/arch/mvme68k/conf/``machineid''
 # after which you should do
-#	 config.new machineid
+#	 config machineid
 # Machine generic makefile changes should be made in
 #	/sys/arch/mvme68k/conf/Makefile.mvme68k
 # after which config should be rerun for all machines of that type.
@@ -24,19 +24,19 @@
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=     as ${DEBUG}
-AWK=	awk
 CC=     cc ${DEBUG}
 CPP=    cpp
 LD=     ld
 TOUCH=	touch -f -c
+AWK=	awk
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 MVME68K=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmvme68k -DFPCOPROC
-CFLAGS=	-O -Werror -fno-builtin ${COPTS}
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmvme68k
+CFLAGS=	-O ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -49,9 +49,9 @@ LIBKERN=	${KERNLIB_PROF}
 ### find out what to use for libcompat
 .include "$S/compat/common/Makefile.inc"
 .ifndef PROF
-LIBCOMPAT=    ${COMPATLIB}
+LIBCOMPAT=	${COMPATLIB}
 .else
-LIBCOMPAT=    ${COMPATLIB_PROF}
+LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
 ### for the Motorola 68040 Floating Point Software Product
@@ -91,11 +91,11 @@ LDX=-X
 .else
 LDX=-x
 .endif
-SYSTEM_OBJ=	locore.o ${FPSP} vnode_if.o ${OBJS} param.o ioconf.o \
-	${LIBKERN} ${LIBCOMPAT}
+SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o ${FPSP} \
+		${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	@${LD} ${LDX} -Ttext 0x8000 -n -o $@ -e start \
+SYSTEM_LD=	@${LD} ${LDX} -Ttext 0x10000 -z -o $@ -e start \
 		    ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@echo rearranging symbols; size $@; chmod 755 $@
 

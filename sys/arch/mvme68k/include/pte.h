@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1.1.1 1995/07/25 23:12:17 chuck Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 1994/10/26 07:26:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,12 +132,12 @@ typedef int	pt_entry_t;	/* Mach page table entry */
 #define	PG_CIN		0x00000060	/* cache inhibited nonserialized */
 #define	PG_SO		0x00000080	/* supervisor only */
 
-#define HP_STSIZE	(MAXUL2SIZE*SG4_LEV2SIZE*sizeof(st_entry_t))
+#define M68K_STSIZE	(MAXUL2SIZE*SG4_LEV2SIZE*sizeof(st_entry_t))
 					/* user process segment table size */
-#define HP_MAX_PTSIZE	0x400000	/* max size of UPT */
-#define HP_MAX_KPTSIZE	0x100000	/* max memory to allocate to KPT */
-#define HP_PTBASE	0x10000000	/* UPT map base address */
-#define HP_PTMAXSIZE	0x70000000	/* UPT map maximum size */
+#define M68K_MAX_PTSIZE	0x400000	/* max size of UPT */
+#define M68K_MAX_KPTSIZE 0x100000	/* max memory to allocate to KPT */
+#define M68K_PTBASE	0x10000000	/* UPT map base address */
+#define M68K_PTMAXSIZE	0x70000000	/* UPT map maximum size */
 
 /*
  * Kernel virtual address to page table entry and to physical address.

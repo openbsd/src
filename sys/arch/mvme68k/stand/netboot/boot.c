@@ -1,6 +1,7 @@
-/*	$NetBSD: boot.c,v 1.1.1.1.2.1 1995/10/12 20:38:57 chuck Exp $ */
+/*	$NetBSD: boot.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $ */
 
 /*-
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,39 +40,52 @@
 #include <sys/reboot.h>
 
 #include "stand.h"
+#include "promboot.h"
 
 /*
  * Boot device is derived from ROM provided information.
  */
-#define LOADADDR	0x8000
+#define LOADADDR	0x10000
 
-extern	char *version;
-extern	char *cmd_parse();
+extern char		*version;
 char	defname[32] = "netbsd";
 char	line[80];
-int 	boothowto;
 
+#if 0
+u_int	bootdev = MAKEBOOTDEV(0, sdmajor, 0, 0, 0);	/* disk boot */
+#endif
+u_int	bootdev = MAKEBOOTDEV(1, 0, 0, 0, 0);		/* network boot */
 
-main(cline)
-char *cline;
+main()
 {
 	char *cp, *file;
 	int	io;
+	extern int cputyp;
+	extern char *oparg, *opargend;
+	int ask = 0;
 
 	printf(">> NetBSD netboot [%s]\n", version);
-	file = cmd_parse(cline, &boothowto);
-	if (file == NULL)
-		file = defname;
+	printf("model MVME%x\n", cputyp);
+
+	*opargend = '\0';
+	prom_get_boot_info();
+	file = defname;
+
+	cp = prom_bootfile;
+	if (cp && *cp)
+		file = cp;
 
 	for (;;) {
-		if (boothowto & RB_ASKNAME) {
+		if (ask) {
 			printf("boot: ");
 			gets(line);
-			if (line[0])
-				file = line;
+			if (line[0]) {
+				oparg = line;
+				prom_get_boot_info();
+			}
 		}
-		exec_mvme(file, LOADADDR, boothowto);
-		printf("boot: %s: %s\n", file, strerror(errno));
-		boothowto |= RB_ASKNAME;
+		exec_sun(file, (char *)LOADADDR, prom_boothow);
+		printf("boot: %s\n", strerror(errno));
+		ask = 1;
 	}
 }

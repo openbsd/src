@@ -1,5 +1,6 @@
-|	$NetBSD: SRT0.S,v 1.1.1.1 1995/07/25 23:12:21 chuck Exp $
+|	$NetBSD: SRT0.S,v 1.1.1.2 1995/06/01 20:37:55 gwr Exp $
 
+| Copyright (c) 1995 Theo de Raadt
 | Copyright (c) 1995 Gordon W. Ross
 | All rights reserved.
 |
@@ -29,58 +30,73 @@
 | THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 |	SRT0.S - Stand-alone Run-Time startup code, part 0
-	.file	"SRT0.S"
-	.text
-	.globl	__estack
+		.file	"SRT0.S"
+		.text
+		.globl	__estack
 __estack:
-	.globl	start
+		.globl	start
 start:
 | Check to see if the code is located correctly.
 | This SHOULD do a PC-relative load into a0, but...
-|	lea	start, a0	| current location (0x4000)
+|		lea	start, a0	| current location (0x4000)
 | XXX - GAS version 1.93 gets the above lea wrong!
-	.word	0x41fa
-	.word	0xfffe
+		.word	0x41fa
+		.word	0xfffe
 | Now force a long (not PC-relative) load to a1 and compare.
-	lea	start:l, a1	| desired location (LINKADDR)
-	cmpl	a0, a1
-	beqs	restart
+		lea	start:l, a1	| desired location (LINKADDR)
+		cmpl	a0, a1
+		beqs	restart
 
 | Relocate the code and data to where they belong.
-	movl	#_edata,d0	| Desired end of program
-	subl	a1,d0		| Calculate length, round up.
-	lsrl	#2,d0
-Lcp:
-	movl	a0@+, a1@+
-	dbra	d0, Lcp
+		movl	#_edata,d2	| Desired end of program
+		subl	a1,d2		| Calculate length, round up.
+		lsrl	#2,d2
+Lcp:		movl	a0@+, a1@+
+		dbra	d2, Lcp
 
 | Force a long jump to the relocated code (not pc-relative)
-	lea	restart:l, a0
-	jmp	a0@
+		lea	restart:l, a0
+		jmp	a0@
 
 restart:
 | now in the relocated code
 
-	movl	a6@(8), __cmd_buf	| get cmd_line from sboot
-
 | Set up stack (just before relocated text)
-	lea	__estack:l, a0
-	movl	a0, sp
-	subl	a6, a6
+		lea	__estack:l, a0
+		movl	a0, sp
+		subl	a6, a6
+
+		movl	d0, _devlun
+		movl	d1, _ctrlun
+		movl	a3, _oparg
+		movl	a4, _opargend
 
 | Call the run-time startup C code, which will:
 |   initialize, call main, call exit
-	jsr	__start:l
+		jsr	__start:l
 
 | If _start returns, fall into abort.
-	.globl	_abort
+		.globl	_abort
 _abort:
-	jsr	0x4000
+		trap	#0
 
 | If abort returns, fall into reset.
-	.globl	_reset
+		.globl	_reset
 _reset:
-	reset
-	jmp	_reset
+		reset
+		jmp	_reset
+
+| function to get the vector base register
+		.globl	_getvbr
+_getvbr:
+		movc	vbr, d0
+		rts
 
 | The end.
+
+		.data
+		.globl	_devlun, _ctrlun, _oparg, _opargend
+_devlun:	.long	0
+_ctrlun:	.long	0
+_oparg:		.long	0
+_opargend:	.long	0

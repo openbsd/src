@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1.1.1 1995/07/25 23:12:09 chuck Exp $ */
+/*	$NetBSD: if_le.c,v 1.20 1995/04/12 08:47:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -81,9 +81,9 @@
 #endif
 
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <machine/pmap.h>
 
-#include <mvme68k/dev/iio.h>
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/pccreg.h>
 
@@ -118,6 +118,7 @@ struct le_softc {
 	struct	device sc_dev;		/* base device */
 	struct	evcnt sc_intrcnt;	/* # of interrupts, per le */
 	struct	evcnt sc_errcnt;	/* # of errors, per le */
+	struct	intrhand sc_ih;
 
 	struct	arpcom sc_ac;		/* common Ethernet structures */
 #define	sc_if	sc_ac.ac_if		/* network-visible interface */
@@ -166,7 +167,7 @@ void	leerror(struct le_softc *, int);
 void	lererror(struct le_softc *, char *);
 void	lexerror(struct le_softc *);
 
-void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
+extern void *etherbuf;
 
 int
 lematch(parent, vcf, args)
@@ -174,9 +175,9 @@ lematch(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct cfdata *cf = vcf;
-	struct iioargs *ia = args;
+	struct confargs *ca = args;
 
-	return !badbaddr((caddr_t) IIO_CFLOC_ADDR(cf));
+	return (!badvaddr(ca->ca_vaddr, 2));
 }
 
 /*
@@ -193,24 +194,25 @@ leattach(parent, self, args)
 	register struct le_softc *sc = (struct le_softc *)self;
 	register struct lereg2 *ler2;
 	struct ifnet *ifp = &sc->sc_if;
+	struct confargs *ca = args;
 	register int a;
-	int pri = IIO_CFLOC_LEVEL(self->dv_cfdata);
+	int pri = ca->ca_ipl;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
 
-	iio_print(self->dv_cfdata);
-
 	/* connect the interrupt */
-	pccintr_establish(PCCV_LE, leintr, pri, sc);
+	sc->sc_ih.ih_fn = leintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_ipl = pri;
+	pccintr_establish(PCCV_LE, &sc->sc_ih);
 
-	sc->sc_r1 = (struct lereg1 *) IIO_CFLOC_ADDR(self->dv_cfdata);
+	sc->sc_r1 = (struct lereg1 *)ca->ca_vaddr;
 
-
-	ler2 = sc->sc_r2 = (struct lereg2 *) ledatabuf;
+	ler2 = sc->sc_r2 = (struct lereg2 *) etherbuf;
 
 	myetheraddr(sc->sc_addr);
-	printf(" ler2 0x%x address %s\n", ler2, ether_sprintf(sc->sc_addr));
+	printf(": address %s\n", ether_sprintf(sc->sc_addr));
 
 	/*
 	 * Setup for transmit/receive
@@ -253,8 +255,8 @@ leattach(parent, self, args)
 #endif
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	sys_pcc->le_int = pri | PCC_IENABLE;
 
+	((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
 }
 
 /*

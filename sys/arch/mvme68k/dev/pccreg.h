@@ -1,8 +1,7 @@
-/* $Id: pccreg.h,v 1.1.1.1 1995/10/18 08:51:10 deraadt Exp $ */
+/*	$NetBSD$ */
 
 /*
- *
- * Copyright (c) 1995 Charles D. Cranor
+ * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor.
+ *      This product includes software developed by Theo de Raadt
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -32,99 +31,127 @@
  */
 
 /*
- * peripheral channel controller (at pa fffe1000)
+ * MVME147 PCC chip
  */
-
-struct pcc {
-  volatile u_long dma_taddr;		/* dma table address */
-  volatile u_long dma_daddr;		/* dma data address */
-  volatile u_long dma_bcnt;		/* dma byte count */
-  volatile u_long dma_hold;		/* dma data hold register */
-  volatile u_short t1_pload;		/* timer1 preload */
-  volatile u_short t1_count;		/* timer1 count */
-  volatile u_short t2_pload;		/* timer2 preload */
-  volatile u_short t2_count;		/* timer2 count */
-  volatile u_char t1_int;		/* timer1 interrupt ctrl */
-  volatile u_char t1_cr;		/* timer1 ctrl reg */
-  volatile u_char t2_int;		/* timer2 interrupt ctrl */
-  volatile u_char t2_cr;		/* timer2 ctrl reg */
-  volatile u_char acf_int;		/* acfail intr reg */
-  volatile u_char dog_int;		/* watchdog intr reg */
-  volatile u_char pr_int;		/* printer intr reg */
-  volatile u_char pr_cr;		/* printer ctrl */
-  volatile u_char dma_int;		/* dma interrupt control */
-  volatile u_char dma_csr;		/* dma csr */
-  volatile u_char bus_int;		/* bus error interrupt */
-  volatile u_char dma_sr;		/* dma status register */
-  volatile u_char abrt_int;		/* abort interrupt control reg */
-  volatile u_char ta_fcr;		/* table address function code reg */
-  volatile u_char zs_int;		/* serial interrupt reg */
-  volatile u_char gen_cr;		/* general control register */
-  volatile u_char le_int;		/* ethernet interrupt */
-  volatile u_char gen_sr;		/* general status */
-  volatile u_char scsi_int;		/* scsi interrupt reg */
-  volatile u_char slave_ba;		/* slave base addr reg */
-  volatile u_char sw1_int;		/* software interrupt #1 cr */
-  volatile u_char int_vectr;		/* interrupt base vector register */
-  volatile u_char sw2_int;		/* software interrupt #2 cr */
-  volatile u_char pcc_rev;		/* revision level */
+struct pccreg {
+	volatile u_long		pcc_dmataddr;	/* dma table address */
+	volatile u_long		pcc_dmadaddr;	/* dma data address */
+	volatile u_long		pcc_dmabcnt;	/* dma byte count */
+	volatile u_long		pcc_dmahold;	/* dma data hold register */
+	volatile u_short	pcc_t1pload;	/* timer1 preload */
+	volatile u_short	pcc_t1count;	/* timer1 count */
+	volatile u_short	pcc_t2pload;	/* timer2 preload */
+	volatile u_short	pcc_t2count;	/* timer2 count */
+	volatile u_char		pcc_t1irq;	/* timer1 interrupt ctrl */
+	volatile u_char		pcc_t1ctl;	/* timer1 ctrl reg */
+	volatile u_char		pcc_t2irq;	/* timer2 interrupt ctrl */
+	volatile u_char		pcc_t2ctl;	/* timer2 ctrl reg */
+	volatile u_char		pcc_acfirq;	/* acfail intr reg */
+	volatile u_char		pcc_dogirq;	/* watchdog intr reg */
+	volatile u_char		pcc_lpirq;	/* printer intr reg */
+	volatile u_char		pcc_lpctl;	/* printer ctrl */
+	volatile u_char		pcc_dmairq;	/* dma interrupt control */
+	volatile u_char		pcc_dmacsr;	/* dma csr */
+	volatile u_char		pcc_busirq;	/* bus error interrupt */
+	volatile u_char		pcc_dmasr;	/* dma status register */
+	volatile u_char		pcc_abortirq;	/* abort interrupt control reg */
+	volatile u_char		pcc_tafcr;	/* table address function code reg */
+	volatile u_char		pcc_zsirq;	/* serial interrupt reg */
+	volatile u_char		pcc_genctl;	/* general control register */
+	volatile u_char		pcc_leirq;	/* ethernet interrupt */
+	volatile u_char		pcc_gensr;	/* general status */
+	volatile u_char		pcc_sbicirq;	/* sbic interrupt reg */
+	volatile u_char		pcc_slavebase;	/* slave base addr reg */
+	volatile u_char		pcc_sw1inq;	/* software interrupt #1 cr */
+	volatile u_char		pcc_vecbase;	/* interrupt base vector register */
+	volatile u_char		pcc_sw2irq;	/* software interrupt #2 cr */
+	volatile u_char		pcc_chiprev;	/* revision level */
 };
-
-
-/*
- * points to system's PCC
- */
-
-extern struct pcc *sys_pcc;
+#define PCCSPACE_PCCCHIP_OFF	0x1000
 
 /*
- * we lock off our interrupt vector at 0x40.  if this is changed 
- * we'll need to change vector.s
+ * points to system's PCC. This is not active until the pcc0 device
+ * has been attached.
  */
-
-#define PCC_VECBASE 0x40
-#define PCC_NVEC 12
+extern struct pccreg *sys_pcc;
 
 /*
- * vectors we use
+ * We lock off our interrupt vector at 0x40.
  */
+#define PCC_VECBASE	0x40
+#define PCC_NVEC	12
 
+/*
+ * Vectors we use
+ */
 #define PCCV_ACFAIL	0
 #define PCCV_BERR	1
 #define PCCV_ABORT	2
 #define PCCV_ZS		3
 #define PCCV_LE		4
-#define PCCV_SCSIP	5
-#define PCCV_SCSID	6
+#define PCCV_SBIC	5
+#define PCCV_DMA	6
 #define PCCV_PRINTER	7
 #define PCCV_TIMER1	8
 #define PCCV_TIMER2	9
 #define PCCV_SOFT1	10
 #define PCCV_SOFT2	11
 
+#define PCC_DMABCNT_MAKEFC(fcn)	((fcn) << 24)
+#define PCC_DMABCNT_FCMASK	0x07000000
+#define PCC_DMABCNT_L		0x80000000
+#define PCC_DMABCNT_CNTMASK	0x00ffffff
+
+#define PCC_DMACSR_DONE		0x80
+#define PCC_DMACSR_ERR8BIT	0x40
+#define PCC_DMACSR_TNOT32	0x20
+#define PCC_DMACSR_DMAERRDATA	0x10
+#define PCC_DMACSR_DMAERRTABLE	0x08
+#define PCC_DMACSR_TOSCSI	0x04
+#define PCC_DMACSR_USETABLE	0x02
+#define PCC_DMACSR_DEN		0x01
+
+#define PCC_SBIC_RESETIRQ	0x40
+#define PCC_SBIC_RESETABS	0x20
+
 /*
- * enable interrupt
+ * Fairly standard irq register bits.
  */
+#define PCC_IRQ_IPL	0x07
+#define PCC_IRQ_IEN	0x08
+#define PCC_IRQ_INT	0x80
 
-#define PCC_IENABLE 0x08
-
-/*
- * interrupt mask
- */
-
-#define PCC_IMASK 0x7
+#define PCC_LPIRQ_ACK	0x20
 
 /*
  * clock/timer
  */
+#define PCC_TIMERACK	0x80	/* ack intr */
+#define PCC_TIMERCLEAR	0x00	/* reset and clear timer */
+#define PCC_TIMERSTART	0x03	/* start timer */
 
-#define PCC_TIMERACK 0x80	/* ack intr */
-#define PCC_TIMER100HZ 63936	/* load value for 100Hz */
-#define PCC_TIMERCLEAR 0x0	/* reset and clear timer */
-#define PCC_TIMERSTART 0x3      /* start timer */
+#define	pcc_timer_hz2lim(hz)	(65536 - (160000/(hz)))
+#define	pcc_timer_us2lim(us)	(65536 - (160000/(1000000/(us))))
 
 /*
  * serial control
  */
+#define PCC_ZS_PCCVEC	0x10	/* let PCC supply vector */
 
-#define PCC_ZSEXTERN 0x10	/* let PCC supply vector */
+/*
+ * abort switch
+ */
+#define PCC_ABORT_IEN	0x08	/* enable interrupt */
+#define PCC_ABORT_ABS	0x40	/* current state of switch */
+#define PCC_ABORT_ACK	0x80	/* intr active; or write to ack */
+
+/*
+ * for the console we need zs phys addr
+ */
+#define ZS0_PHYS_147	(INTIOBASE_147 + 0x3000)
+#define ZS1_PHYS_147	(INTIOBASE_147 + 0x3800)
+
+/* XXX */
+int	pccintr_establish __P((int vec, struct intrhand *ih));
+
+#define PCC_GENCTL_IEN	0x10

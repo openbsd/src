@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.2.2.1 1995/10/12 20:39:02 chuck Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -58,34 +58,15 @@
 #include "stand.h"
 #include "net.h"
 #include "netif.h"
+#include "config.h"
 #include "bootparam.h"
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
-/*
- * Various globals needed by the network code:
- */
-
-/* for arp.c, rarp.c */
-u_char bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-
-struct	in_addr myip;		/* my ip address */
-struct	in_addr rootip;		/* root ip address */
-struct	in_addr gateip;		/* swap ip address */
-n_long	netmask;		/* subnet or net mask */
-
+u_int32_t myip, rootip, gateip, mask;
 char rootpath[FNAME_SIZE];
 
-int hostnamelen;
-char hostname[FNAME_SIZE];
-
-int domainnamelen;
-char domainname[FNAME_SIZE];
-
-/*
- * Local things...
- */
-static int netdev_sock = -1;
+int netdev_sock = -1;
 static int open_count;
 
 /*
@@ -154,43 +135,77 @@ net_mountroot(f, devname)
 	 */
 
 #ifdef	SUN_BOOTPARAMS
+	/* Get boot info using RARP and Sun bootparams. */
+
 	/* Get our IP address.  (rarp.c) */
-	if (rarp_getipaddress(netdev_sock))
+	if ((myip = rarp_getipaddress(netdev_sock)) == 0)
 		return (EIO);
-#else	/* BOOTPARAMS */
-	/*
-	 * Get boot info using BOOTP. (RFC951, RFC1048)
-	 * This also gets the server IP address, gateway,
-	 * root path, etc.
-	 */
-	bootp(netdev_sock);	/* XXX - Error return? */
-#endif	/* BOOTPARAMS */
+	printf("boot: client IP address: %s\n", intoa(myip));
 
-	printf("boot: client addr: %s\n", inet_ntoa(myip));
-
-#ifdef	SUN_BOOTPARAMS
-	/* Get our hostname, server IP address, gateway. */
+	/* Get our hostname, server IP address. */
 	if (bp_whoami(netdev_sock))
 		return (EIO);
-#endif	/* BOOTPARAMS */
-
 	printf("boot: client name: %s\n", hostname);
-	if (gateip.s_addr) {
-		printf("boot: subnet mask: %s\n", intoa(netmask));
-		printf("boot: net gateway: %s\n", inet_ntoa(gateip));
-	}
 
-#ifdef	SUN_BOOTPARAMS
 	/* Get the root pathname. */
 	if (bp_getfile(netdev_sock, "root", &rootip, rootpath))
 		return (EIO);
-#endif	/* BOOTPARAMS */
 
-	printf("boot: server addr: %s\n", inet_ntoa(rootip));
-	printf("boot: server path: %s\n", rootpath);
+#else
+
+	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
+	bootp(netdev_sock);
+
+	printf("Using IP address: %s\n", intoa(myip));
+
+	printf("myip: %s (%s)", hostname, intoa(myip));
+	if (gateip)
+		printf(", gateip: %s", intoa(gateip));
+	if (mask)
+		printf(", mask: %s", intoa(mask));
+	printf("\n");
+
+#endif
+
+	printf("root addr=%s path=%s\n", intoa(rootip), rootpath);
 
 	/* Get the NFS file handle (mount). */
 	error = nfs_mount(netdev_sock, rootip, rootpath);
 
 	return (error);
+}
+
+/*
+ * machdep_common_ether: get ethernet address
+ */
+void
+machdep_common_ether(ether)
+	u_char *ether;
+{
+	u_char *ea;
+	extern int cputyp;
+
+	if (cputyp == CPU_147) {
+		ea = (u_char *) ETHER_ADDR_147;
+
+		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
+			panic("ERROR: ethernet address not set!\r\n");
+		ether[0] = 0x08;
+		ether[1] = 0x00;
+		ether[2] = 0x3e;
+		ether[3] = ea[0];
+		ether[4] = ea[1];
+		ether[5] = ea[2];
+	} else {
+		ea = (u_char *) ETHER_ADDR_16X;
+
+		if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
+			panic("ERROR: ethernet address not set!\r\n");
+		ether[0] = ea[0];
+		ether[1] = ea[1];
+		ether[2] = ea[2];
+		ether[3] = ea[3];
+		ether[4] = ea[4];
+		ether[5] = ea[5];
+	}
 }

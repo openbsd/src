@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.1.1.1 1995/07/25 23:12:21 chuck Exp $	*/
+/*	$NetBSD: gets.c,v 1.1.1.2 1995/06/01 20:37:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,6 @@
  * characters will be followed by a newline, so it doesn't matter.
  * (Most terminals will not show them anyway.)
  */
-#define	GETS_MUST_ECHO	/* Preserved in case someone wants it... */
 
 void
 gets(buf)
@@ -62,9 +61,7 @@ top:
 	for (;;) {
 		c = getchar() & 0177;
 
-#ifdef	GETS_MUST_ECHO	/* Preserved in case someone wants it... */
 		putchar(c);
-#endif
 
 		switch (c) {
 
@@ -84,7 +81,6 @@ top:
 				lp--;
 			continue;
 
-#ifdef	GETS_REPRINT
 		/*
 		 * This is not very useful in a boot program.
 		 * (It costs you 52 bytes on m68k, gcc -O3).
@@ -96,7 +92,6 @@ top:
 				putchar(*p);
 			continue;
 		}
-#endif
 
 		case '@':
 		case 'u'&037:

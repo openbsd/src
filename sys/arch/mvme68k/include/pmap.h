@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.1.1 1995/07/25 23:12:16 chuck Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 1995/05/11 16:53:03 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,13 +46,13 @@
 #include <machine/pte.h>
 
 #if defined(M68040)
-#define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
+#define M68K_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
 #else
-#define HP_SEG_SIZE	NBSEG
+#define M68K_SEG_SIZE	NBSEG
 #endif
 
-#define m68k_trunc_seg(x)	(((unsigned)(x)) & ~(HP_SEG_SIZE-1))
-#define m68k_round_seg(x)	m68k_trunc_seg((unsigned)(x) + HP_SEG_SIZE-1)
+#define m68k_trunc_seg(x)	(((unsigned)(x)) & ~(M68K_SEG_SIZE-1))
+#define m68k_round_seg(x)	m68k_trunc_seg((unsigned)(x) + M68K_SEG_SIZE-1)
 
 /*
  * Pmap stuff
@@ -138,7 +138,6 @@ struct pv_page {
 #ifdef	_KERNEL
 
 extern struct pmap	kernel_pmap_store;
-extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \

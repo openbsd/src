@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.1.1.1 1995/07/25 23:12:24 chuck Exp $ */
+/*	$NetBSD: clockreg.h,v 1.5 1994/11/20 20:54:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,19 +48,18 @@
  * Mostek MK48T02 clock.
  */
 struct clockreg {
-	volatile u_char	cl_csr;		/* control register */
-	volatile u_char	cl_sec;		/* seconds (0..59; BCD) */
-	volatile u_char	cl_min;		/* minutes (0..59; BCD) */
-	volatile u_char	cl_hour;	/* hour (0..23; BCD) */
-	volatile u_char	cl_wday;	/* weekday (1..7) */
-	volatile u_char	cl_mday;	/* day in month (1..31; BCD) */
-	volatile u_char	cl_month;	/* month (1..12; BCD) */
-	volatile u_char	cl_year;	/* year (0..99; BCD) */
+	volatile u_char cl_csr;	/* control register */
+	volatile u_char cl_sec;	/* seconds (0..59; BCD) */
+	volatile u_char cl_min;	/* minutes (0..59; BCD) */
+	volatile u_char cl_hour;/* hour (0..23; BCD) */
+	volatile u_char cl_wday;/* weekday (1..7) */
+	volatile u_char cl_mday;/* day in month (1..31; BCD) */
+	volatile u_char cl_month;	/* month (1..12; BCD) */
+	volatile u_char cl_year;/* year (0..99; BCD) */
 };
-
 /* bits in cl_csr */
-#define	CLK_WRITE	0x80		/* want to write */
-#define	CLK_READ	0x40		/* want to read (freeze clock) */
+#define	CLK_WRITE	0x80	/* want to write */
+#define	CLK_READ	0x40	/* want to read (freeze clock) */
 
 /*
  * Sun chose the year `68' as their base count, so that
@@ -68,4 +67,5 @@ struct clockreg {
  */
 #define	YEAR0	68
 
-#define CLOCK_ADDR (0xfffe07f8) /* VME147 PA of clock */
+#define CLOCK_ADDR_147 (0xfffe07f8)	/* PA of clock */
+#define CLOCK_ADDR_16x (0xfffc1ff8)	/* PA of clock */

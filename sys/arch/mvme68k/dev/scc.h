@@ -1,6 +1,7 @@
-/*	$NetBSD: scc.h,v 1.1.1.1 1995/07/25 23:12:07 chuck Exp $	*/
+/*	$NetBSD: scc.h,v 1.2 1994/10/26 02:33:24 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1993 Paul Mackerras.
  * All rights reserved.
  *
@@ -30,25 +31,50 @@
  * SCC I/O register definitions
  */
 
-#define PCLK_FREQ	8333333		/* XXX */
+#define PCLK_FREQ_147	5000000
+#define PCLK_FREQ_162	10000000
 
-struct scc {
-	unsigned char cr;
-	unsigned char dr;
+/*
+ * physical layout in memory of the SCC chips on the MVME147
+ */
+struct scc_147 {
+	u_char cr;
+	u_char dr;
+};
+
+/*
+ * physical layout in memory of the SCC chips on the MVME162
+ * (and possibly the MVME172 as well?)
+ */
+struct scc_162 {
+	u_char xx1;
+	u_char cr;
+	u_char xx2;
+	u_char dr;
 };
 
 struct sccregs {
-	volatile struct scc *s_adr;
-	unsigned char s_val[16];
+	volatile u_char *s_cr;
+	volatile u_char *s_dr;
+	u_char s_val[16];
 };
 
-#define ZREAD0(scc)	((scc)->s_adr->cr)
-#define ZREAD(scc, n)	((scc)->s_adr->cr = n, (scc)->s_adr->cr)
-#define ZREADD(scc)	((scc)->s_adr->dr)
+#define ZREAD0(scc)	((*((scc)->s_cr)))
+#define ZREAD(scc, n)	((*((scc)->s_cr)) = n, (*((scc)->s_cr)))
+#if 1
+#define ZREADD(scc)	(ZWRITE0((scc), 8), ZREAD0((scc)))
+#else
+#define ZREADD(scc)	((*((scc)->s_dr)))
+#endif
 
-#define ZWRITE0(scc, v)	((scc)->s_adr->cr = v)
-#define ZWRITE(scc, n, v) (ZWRITE0(scc, n), ZWRITE0(scc, (scc)->s_val[n] = v))
-#define ZWRITED(scc, v)	((scc)->s_adr->dr = v)
+#define ZWRITE0(scc, v)	((*((scc)->s_cr)) = (u_char)(v))
+#define ZWRITE(scc, n, v) (ZWRITE0(scc, (u_char)n), \
+	    ZWRITE0(scc, (scc)->s_val[n] = (u_char)(v)))
+#if 1
+#define ZWRITED(scc, v)	(ZWRITE0((scc), 8), ZWRITE0((scc), (u_char)(v)))
+#else
+#define ZWRITED(scc, v)	((*((scc)->s_dr)) = (u_char)(v))
+#endif
 
 #define ZBIS(scc, n, v)	(ZWRITE(scc, n, (scc)->s_val[n] | (v)))
 #define ZBIC(scc, n, v)	(ZWRITE(scc, n, (scc)->s_val[n] & ~(v)))

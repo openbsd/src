@@ -1,32 +1,89 @@
-#	$NetBSD: files.mvme68k,v 1.1.1.1 1995/07/25 23:12:05 chuck Exp $
+#	$NetBSD$
 
 # config file for mvme68k
 
-# maxpartitions must be first item in files.${ARCH}.newconf
-maxpartitions 8
+# maxpartitions must be first item in files.${ARCH}
+maxpartitions 16
 
-device mainbus at root { }
+device mainbus at root { [addr = -1] }
 
-device iio at mainbus { offset = -1, [ ipl = 0 ] }
-file arch/mvme68k/dev/iio.c			iio
+device pcc at mainbus { [offset = -1], [ ipl = 0 ] }
+file arch/mvme68k/dev/pcc.c			pcc needs-count
 
-device clock at iio
-file arch/mvme68k/mvme68k/clock.c		clock
+device pcctwo at mainbus { [offset = -1], [ ipl = 0 ] }
+file arch/mvme68k/dev/pcctwo.c			pcctwo needs-count
 
-device zs at iio: tty
+device mc at mainbus { [offset = -1], [ ipl = 0 ] }
+file arch/mvme68k/dev/mc.c			mc needs-count
+
+device clock at pcc, mc, pcctwo
+file arch/mvme68k/dev/clock.c			clock
+
+device zs at pcc, mc: tty
 file arch/mvme68k/dev/zs.c			zs needs-count
 
-device pcc at iio
-file arch/mvme68k/dev/pcc.c			pcc
+device cl at pcctwo: tty
+file arch/mvme68k/dev/cl.c			cl needs-count
 
-device le at iio: ifnet, ether
+device bugtty at mainbus: tty
+file arch/mvme68k/dev/bugtty.c			bugtty needs-count
+file arch/mvme68k/dev/bug.c			bugtty
+
+device le at pcc: ifnet, ether
 file    arch/mvme68k/dev/if_le.c		le
+
+device ie at mc, pcctwo: ifnet, ether
+file    arch/mvme68k/dev/if_ie.c		ie
 
 include "../../../scsi/files.scsi"
 
-major { sd = 7 }
-major { cd = 18 }
-major { vnd = 6 }
+device sbic at pcc: scsi
+file	arch/mvme68k/dev/sbic.c			sbic
+file	arch/mvme68k/dev/sbicdma.c		sbic
+
+device ipic at mc { manu = -1, prod = -1, [vec = -1], [ipl = 0] }
+file	arch/mvme68k/dev/ipic.c			ipic
+
+device fooip at ipic
+file	arch/mvme68k/dev/fooip.c		fooip
+
+device siop at mc, pcctwo: scsi
+file	arch/mvme68k/dev/siopdma.c		siop
+file	arch/mvme68k/dev/siop.c			siop
+
+device memc at mc, pcctwo
+file	arch/mvme68k/dev/memc.c			memc
+
+device flash at mainbus
+file	arch/mvme68k/dev/flash.c		flash needs-count
+
+device sram at mainbus
+device nvram at pcc, mc, pcctwo
+file	arch/mvme68k/dev/sram.c			sram needs-count
+file	arch/mvme68k/dev/nvram.c		nvram needs-count
+file	arch/mvme68k/dev/memdevs.c		nvram sram
+
+device lp at pcc
+file	arch/mvme68k/dev/lp.c			lp needs-count
+
+device lptwo at pcctwo
+file	arch/mvme68k/dev/lptwo.c		lptwo needs-count
+
+device vme at pcc, mc, pcctwo { }
+device vmes at vme { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
+device vmel at vme { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
+file	arch/mvme68k/dev/vme.c			vme vmes vmel
+file	arch/mvme68k/dev/vmes.c			vmes needs-count
+file	arch/mvme68k/dev/vmel.c			vmel needs-count
+
+device xdc at vmel {target = -1}
+device xd at xdc: disk
+file	arch/mvme68k/dev/xd.c			xd needs-flag
+
+major { sd = 4 }
+major { cd = 6 }
+major { vnd = 8 }
+major { xd = 10 }
 
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/conf.c
@@ -43,7 +100,8 @@ file arch/m68k/m68k/copy.s
 file dev/cons.c
 file dev/cninit.c
 
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
-file    arch/m68k/m68k/sunos_machdep.c  compat_sunos
+# Compatibility modules
 
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include	"../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c		compat_sunos

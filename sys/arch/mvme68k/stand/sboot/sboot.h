@@ -1,5 +1,4 @@
 /*
- *
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
  * All rights reserved.
  *
@@ -44,48 +43,48 @@ extern caddr_t end;
 
 #define NULL ((char *)0)
 
-void bcopy(const void *, void *, size_t); /* libc_sa */
-void *memset(void *, int, size_t); /* libc_sa */
-void printf(const char *, ...); /* libc_sa */
+void bcopy __P((const void *, void *, size_t));		/* libc_sa */
+void *memset __P((void *, int, size_t));		/* libc_sa */
+int printf __P((const char *, ...));			/* libc_sa */
 
 /* console */
-void puts(char *);
-void putchar(char);
-char cngetc();
-void ngets(char *, int);
+void puts __P((char *));
+void putchar __P((char));
+char cngetc __P((void));
+void ngets __P((char *, int));
 
 /* sboot */
-void callrom();
-void do_cmd(char *);
+void callrom __P((void));
+void do_cmd __P((char *));
 
 /* le */
 #define LANCE_ADDR 0xfffe0778
 #define ERAM_ADDR  0xfffe0774
 #define LANCE_REG_ADDR 0xfffe1800
-void le_end(void);
-void le_init(void);
-int le_get(u_char *, size_t, u_long);
-int le_put(u_char *, size_t);
+void le_end __P((void));
+void le_init __P((void));
+int le_get __P((u_char *, size_t, u_long));
+int le_put __P((u_char *, size_t));
 
 /* etherfun */
 #define READ 0
 #define ACKN 1 
-void do_rev_arp();
-int get_rev_arp();
-int rev_arp();
-void do_send_tftp( int );
-int do_get_file(); 
-void tftp_file(char *, u_long);
+void do_rev_arp __P((void));
+int get_rev_arp __P((void));
+int rev_arp __P((void));
+void do_send_tftp __P((int));
+int do_get_file __P((void)); 
+void tftp_file __P((char *, u_long));
 
 /* clock */
-u_long time(void);
+u_long time __P((void));
 
 /* checksum */
-u_long oc_cksum (void *, u_long, u_long);
+u_long oc_cksum __P((void *, u_long, u_long));
 
 #define CONS_ZS_ADDR (0xfffe3002)
 #define CLOCK_ADDR (0xfffe07f8)
-#define LOAD_ADDR 0x8000 
+#define LOAD_ADDR 0x7000 
 
 unsigned char myea[6];                /* my ether addr */
 unsigned char myip[4];

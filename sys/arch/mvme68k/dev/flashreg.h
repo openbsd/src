@@ -1,0 +1,63 @@
+/*	$NetBSD$ */
+
+/*
+ * Copyright (c) 1995 Theo de Raadt
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Theo de Raadt
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#define FLCMD_RESET		0xff
+#define FLCMD_READII		0x90
+#define FLCMD_READSTAT		0x70
+#define FLCMD_CLEARSTAT		0x50
+#define FLCMD_ESETUP		0x20
+#define FLCMD_ECONFIRM		0xd0
+#define FLCMD_ESUSPEND		0xb0
+#define FLCMD_ERESUME		0xd0
+#define FLCMD_WSETUP		0x40
+#define FLCMD_AWSETUP		0x10
+
+#define FLSR_WSMS		0x80
+#define FLSR_ESS		0x40
+#define FLSR_ES			0x20
+#define FLSR_BWS		0x10
+#define FLSR_VPPS		0x08
+
+/* manufacturers */
+#define FLMANU_INTEL		0x89
+
+/* intel parts */
+#define FLII_INTEL_28F020	0xbd
+#define FLII_INTEL_28F008SA	0xa1
+#define FLII_INTEL_28F008SA_L	0xa2
+
+struct flashii {
+	char	*name;
+	u_char	ii;
+	int	size;
+	int	zonesize;
+};

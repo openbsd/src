@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.1.1.1 1995/07/25 23:11:57 chuck Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.4 1994/10/26 07:25:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

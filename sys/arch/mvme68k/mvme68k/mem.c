@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.1 1995/07/25 23:11:58 chuck Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 1995/04/10 13:10:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -118,7 +118,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram) {
+			if (v >= 0xFFFFFFFC || v < lowram || v < NBPG) {
 				error = EFAULT;
 				goto unlock;
 			}
@@ -216,7 +216,8 @@ mmmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
+	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC ||
+	    (unsigned)off < NBPG)
 		return (-1);
 	return (m68k_btop(off));
 }

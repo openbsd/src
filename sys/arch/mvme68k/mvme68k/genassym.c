@@ -1,6 +1,7 @@
-/*	$NetBSD: genassym.c,v 1.1.1.1 1995/07/25 23:11:57 chuck Exp $	*/
+/*	$NetBSD: genassym.c,v 1.14 1995/05/16 22:24:43 jtc Exp $	*/
 
 /*
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -53,9 +54,11 @@
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
+#include <machine/nvram.h>
 #include <machine/reg.h>
+#include <machine/autoconf.h>
+#include <machine/prom.h>
 #include <machine/pte.h>
-#include <mvme68k/mvme68k/clockreg.h>
 #include <vm/vm.h>
 
 #include <errno.h>
@@ -65,6 +68,24 @@
 #include <unistd.h>
 
 extern int errno;
+
+#if defined(MVME162) || defined(MVME167)
+#ifndef M68040
+#error	"MVME162/MVME167 requires M68040 support"
+#endif
+#endif
+
+#if defined(MVME147)
+#ifndef M68030
+#error	"MVME147 requires M68030 support"
+#endif
+#endif
+
+#if defined(MVME172) || defined(MVME177)
+#ifndef M68060
+#error	"MVME172/MVME177 requires M68060 support"
+#endif
+#endif
 
 void
 def(what, val)
@@ -158,8 +179,6 @@ main()
 
 	/* magic */
 	def("FC_USERD", FC_USERD);
-	def("INTIOBASE", INTIOBASE);
-	def("IIOMAPSIZE", IIOMAPSIZE);
 	def("EIOMAPSIZE", EIOMAPSIZE);
 	def("CACHE_ON", CACHE_ON);
 	def("CACHE_OFF", CACHE_OFF);
@@ -189,6 +208,7 @@ main()
 	off("PCB_ONFAULT", struct pcb, pcb_onfault);
 	off("PCB_FPCTX", struct pcb, pcb_fpregs);
 	def("SIZEOF_PCB", sizeof(struct pcb));
+	def("SIZEOF_TRAPFRAME", sizeof(struct trapframe));
 
 	/* exception frame offset/sizes */
 	off("FR_SP", struct frame, f_regs[15]);
@@ -203,6 +223,36 @@ main()
 	/* errno */
 	def("EFAULT", EFAULT);
 	def("ENAMETOOLONG", ENAMETOOLONG);
+
+	def("SIZEOF_MVMEPROM_BRDID", sizeof(struct mvmeprom_brdid));
+	off("MVMEPROM_BRDID_MODEL", struct mvmeprom_brdid, model);
+
+	off("NVRAM_147_ETHER", struct nvram_147, ether);
+	off("NVRAM_147_EMEM", struct nvram_147, emem);
+
+	off("NVRAM_16X_ETHER", struct nvram_16x, conf.ether);
+
+	def("INTIOBASE_147", INTIOBASE_147);
+	def("INTIOBASE_162", INTIOBASE_162);
+	def("INTIOSIZE_147", INTIOSIZE_147);
+	def("INTIOSIZE_162", INTIOSIZE_162);
+
+	def("CPU_147", CPU_147);
+	def("CPU_162", CPU_162);
+	def("CPU_166", CPU_166);
+	def("CPU_167", CPU_167);
+	def("CPU_172", CPU_172);
+	def("CPU_177", CPU_177);
+
+	def("MMU_68851", MMU_68851);
+	def("MMU_68030", MMU_68030);
+	def("MMU_68040", MMU_68040);
+
+	off("NETCTRL_DEV", struct prom_netctrl, dev);
+	off("NETCTRL_CTRL", struct prom_netctrl, ctrl);
+	off("NETCTRL_CMD", struct prom_netctrl, cmd);
+	off("NETCTRL_ADDR", struct prom_netctrl, addr);
+	off("NETCTRL_LEN", struct prom_netctrl, len);
 
 	exit(0);
 }
