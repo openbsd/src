@@ -1,5 +1,5 @@
-/*	$OpenBSD: file.c,v 1.2 1996/06/23 14:19:22 deraadt Exp $	*/
-/*	$NetBSD: file.c,v 1.10 1995/03/21 18:35:39 mycroft Exp $	*/
+/*	$OpenBSD: file.c,v 1.3 1996/12/04 17:46:07 millert Exp $	*/
+/*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.2 1996/06/23 14:19:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.3 1996/12/04 17:46:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,9 +154,9 @@ back_to_col_1()
     tty_normal = tty;
     tty.c_iflag &= ~INLCR;
     tty.c_oflag &= ~ONLCR;
-    (void) tcsetattr(SHOUT, TCSANOW, &tty);
+    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
     (void) write(SHOUT, "\r", 1);
-    (void) tcsetattr(SHOUT, TCSANOW, &tty_normal);
+    (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
     sigprocmask(SIG_SETMASK, &osigset, NULL);
 }
 
@@ -178,11 +178,11 @@ pushback(string)
     (void) tcgetattr(SHOUT, &tty);
     tty_normal = tty;
     tty.c_lflag &= ~(ECHOKE | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOCTL);
-    (void) tcsetattr(SHOUT, TCSANOW, &tty);
+    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
 
     for (p = string; (c = *p) != '\0'; p++)
 	(void) ioctl(SHOUT, TIOCSTI, (ioctl_t) & c);
-    (void) tcsetattr(SHOUT, TCSANOW, &tty_normal);
+    (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
     sigprocmask(SIG_SETMASK, &osigset, NULL);
 }
 
@@ -333,7 +333,7 @@ retype()
 
     (void) tcgetattr(SHOUT, &tty);
     tty.c_lflag |= PENDIN;
-    (void) tcsetattr(SHOUT, TCSANOW, &tty);
+    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
 }
 
 static void
