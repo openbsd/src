@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.1 1999/01/02 00:02:43 niklas Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.2 1999/01/02 00:58:12 niklas Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -27,7 +27,12 @@
 
 cdev_decl(spkr);
 
+#define __BROKEN_INDIRECT_CONFIG /* XXX */
+#ifdef __BROKEN_INDIRECT_CONFIG
+int spkrprobe __P((struct device *, void *, void *));
+#else
 int spkrprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void spkrattach __P((struct device *, struct device *, void *));
 
 struct spkr_softc {
@@ -36,6 +41,10 @@ struct spkr_softc {
 
 struct cfattach spkr_ca = {
 	sizeof(struct spkr_softc), spkrprobe, spkrattach
+};
+
+struct cfdriver spkr_cd = {
+	NULL, "spkr", DV_DULL
 };
 
 static pcppi_tag_t ppicookie;
@@ -367,7 +376,11 @@ static int spkr_attached = 0;
 int
 spkrprobe (parent, match, aux)
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
 	struct cfdata *match;
+#endif
 	void *aux;
 {
 	return (!spkr_attached);
