@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2000/09/19 05:26:34 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 2000/10/19 03:13:57 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -370,7 +370,6 @@ where = 3;
 	 * Now we can set up the console as mapping is enabled.
          */
 	consinit();
-	printf("inited\n");
 	/* while using openfirmware, run userconfig */
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG
