@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.11 2000/03/16 20:39:23 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.12 2000/03/17 20:31:30 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -73,14 +73,17 @@ void	hifn_reset_board	__P((struct hifn_softc *));
 int	hifn_enable_crypto	__P((struct hifn_softc *, pcireg_t));
 void	hifn_init_dma	__P((struct hifn_softc *));
 void	hifn_init_pci_registers __P((struct hifn_softc *));
-int	hifn_checkram __P((struct hifn_softc *));
+int	hifn_sramsize __P((struct hifn_softc *));
+int	hifn_dramsize __P((struct hifn_softc *));
+int	hifn_checkramaddr __P((struct hifn_softc *, int));
+void	hifn_sessions __P((struct hifn_softc *));
 int	hifn_intr		__P((void *));
 u_int	hifn_write_command __P((const struct hifn_command_buf_data *,
-	    u_int8_t *));
+    u_int8_t *));
 int	hifn_build_command __P((const struct hifn_command * cmd,
-	    struct hifn_command_buf_data *));
+    struct hifn_command_buf_data *));
 int	hifn_mbuf __P((struct mbuf *, int *np, long *pp, int *lp, int maxp,
-	    int *nicealign));
+    int *nicealign));
 u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 
 /*
@@ -159,34 +162,34 @@ hifn_attach(parent, self, aux)
 #endif
 
 	sc->sc_dmat = pa->pa_dmat;
-        if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
-            &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-                printf(": can't alloc dma buffer\n", sc->sc_dv.dv_xname);
-                return;
+	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf(": can't alloc dma buffer\n", sc->sc_dv.dv_xname);
+		return;
         }
-        if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
-            BUS_DMA_NOWAIT)) {
-                printf(": can't map dma buffers (%d bytes)\n",
-                    sc->sc_dv.dv_xname, sizeof(*sc->sc_dma));
-                bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-                return;
-        }
-        if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
-            sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
-                printf(": can't create dma map\n", sc->sc_dv.dv_xname);
-                bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
-                bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-                return;
-        }
-        if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
-            NULL, BUS_DMA_NOWAIT)) {
-                printf(": can't load dma map\n", sc->sc_dv.dv_xname);
-                bus_dmamap_destroy(sc->sc_dmat, dmamap);
-                bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
-                bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-                return;
-        }
-        sc->sc_dma = (struct hifn_dma *)kva;
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
+	    BUS_DMA_NOWAIT)) {
+		printf(": can't map dma buffers (%d bytes)\n",
+		    sc->sc_dv.dv_xname, sizeof(*sc->sc_dma));
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
+	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
+		printf(": can't create dma map\n", sc->sc_dv.dv_xname);
+		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
+	    NULL, BUS_DMA_NOWAIT)) {
+		printf(": can't load dma map\n", sc->sc_dv.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmat, dmamap);
+		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	sc->sc_dma = (struct hifn_dma *)kva;
 	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
 
 	hifn_reset_board(sc);
@@ -199,8 +202,13 @@ hifn_attach(parent, self, aux)
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
 
-	if (hifn_checkram(sc) != 0)
+	if (hifn_checkramaddr(sc, 0) != 0)
 		sc->sc_drammodel = 1;
+
+	if (sc->sc_drammodel == 0)
+		hifn_sramsize(sc);
+	else
+		hifn_dramsize(sc);
 
 	/*
 	 * Reinitialize again, since the DRAM/SRAM detection shifted our ring
@@ -230,7 +238,11 @@ hifn_attach(parent, self, aux)
 	hifn_devices[hifn_num_devices] = sc;
 	hifn_num_devices++;
 
-	printf(", %s\n", intrstr);
+	hifn_sessions(sc);
+
+	printf(", %dk %cram, %d sessions, %s\n",
+	    sc->sc_ramsize/1024, sc->sc_drammodel ? 'd' : 's',
+	    sc->sc_maxses, intrstr);
 }
 
 /*
@@ -464,6 +476,76 @@ hifn_init_pci_registers(sc)
 }
 
 /*
+ * The maximum number of sessions supported by the card
+ * is dependent on the amount of context ram, which
+ * encryption algorithms are enabled, and how compression
+ * is configured.  This should be configured before this
+ * routine is called.
+ */
+void
+hifn_sessions(sc)
+	struct hifn_softc *sc;
+{
+	u_int32_t pucnfg;
+	int ctxsize;
+
+	pucnfg = READ_REG_0(sc, HIFN_0_PUCNFG);
+
+	if (pucnfg & HIFN_PUCNFG_COMPSING) {
+		if (pucnfg & HIFN_PUCNFG_ENCCNFG)
+			ctxsize = 128;
+		else
+			ctxsize = 512;
+		sc->sc_maxses = 1 +
+		    ((sc->sc_ramsize - 32768) / ctxsize);
+	}
+	else
+		sc->sc_maxses = sc->sc_ramsize / 16384;
+}
+
+/*
+ * For sram boards, just write/read memory until it fails.
+ */
+int
+hifn_sramsize(sc)
+	struct hifn_softc *sc;
+{
+	u_int32_t a = 0, end;
+
+	hifn_reset_board(sc);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
+	end = 1 << 21;	/* 2MB */
+	for (a = 0; a < end; a += 16384) {
+		if (hifn_checkramaddr(sc, a) < 0)
+			return (0);
+		hifn_reset_board(sc);
+		hifn_init_dma(sc);
+		hifn_init_pci_registers(sc);
+		sc->sc_ramsize = a + 16384;
+	}
+	return (0);
+}
+
+/*
+ * XXX For dram boards, one should really try all of the
+ * HIFN_PUCNFG_DSZ_*'s.  This just assumes that PUCNFG
+ * is already set up correctly.
+ */
+int
+hifn_dramsize(sc)
+	struct hifn_softc *sc;
+{
+	u_int32_t cnfg;
+
+	cnfg = READ_REG_0(sc, HIFN_0_PUCNFG) &
+	    HIFN_PUCNFG_DRAMMASK;
+	sc->sc_ramsize = 1 << ((cnfg >> 13) + 18);
+	return (0);
+}
+
+
+/*
  * There are both DRAM and SRAM models of the hifn board.
  * A bit in the "ram configuration register" needs to be
  * set according to the model.  The driver will guess one
@@ -472,16 +554,26 @@ hifn_init_pci_registers(sc)
  * 0: RAM setting okay,  -1: Current RAM setting in error
  */
 int 
-hifn_checkram(sc)
+hifn_checkramaddr(sc, addr)
 	struct hifn_softc *sc;
+	int addr;
 {
-	hifn_base_command_t write_command = {(0x3 << 13), 0, 8, 0};
-	hifn_base_command_t read_command = {(0x2 << 13), 0, 0, 8};
+	hifn_base_command_t write_command,read_command;
 	u_int8_t data[8] = {'1', '2', '3', '4', '5', '6', '7', '8'};
 	u_int8_t *source_buf, *dest_buf;
 	struct hifn_dma *dma = sc->sc_dma;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST |
 	    HIFN_D_MASKDONEIRQ;
+
+	write_command.masks = 3 << 13;
+	write_command.session_num = addr >> 14;
+	write_command.total_source_count = 8;
+	write_command.total_dest_count = addr & 0x3fff;;
+
+	read_command.masks = 2 << 13;
+	read_command.session_num = addr >> 14;
+	read_command.total_source_count = addr & 0x3fff;
+	read_command.total_dest_count = 8;
 
 #if (HIFN_D_RSIZE < 3)
 #error "descriptor ring size too small DRAM/SRAM check"
@@ -727,24 +819,24 @@ hifn_build_command(const struct hifn_command *cmd,
 			mac_cmd->masks |= HIFN_MAC_CMD_TRUNC;
 
 		/*
-	         * We always use HMAC mode, assume MAC values are appended to the
-	         * source buffer on decodes and we append them to the dest buffer
-	         * on encodes, and order auth/encryption engines as needed by
-	         * IPSEC
-	         */
+		 * We always use HMAC mode, assume MAC values are appended to the
+		 * source buffer on decodes and we append them to the dest buffer
+		 * on encodes, and order auth/encryption engines as needed by
+		 * IPSEC
+		 */
 		mac_cmd->masks |= HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_APPEND |
 		    HIFN_MAC_CMD_POS_IPSEC;
 
 		/*
-	         * Setup to send new MAC key if needed.
-	         */
+		 * Setup to send new MAC key if needed.
+		 */
 		if (flags & HIFN_MAC_NEW_KEY) {
 			mac_cmd->masks |= HIFN_MAC_CMD_NEW_KEY;
 			cmd_buf_data->mac = cmd->mac;
 		}
 		/*
-	         * Set the mac header skip and source count.
-	         */
+		 * Set the mac header skip and source count.
+		 */
 		mac_cmd->header_skip = cmd->mac_header_skip;
 		mac_cmd->source_count = cmd->src_npa - cmd->mac_header_skip;
 		if (flags & HIFN_DECODE)
@@ -753,8 +845,8 @@ hifn_build_command(const struct hifn_command *cmd,
 
 	if (HIFN_USING_CRYPT(flags)) {
 		/*
-	         * Set the encryption algorithm bits.
-	         */
+		 * Set the encryption algorithm bits.
+		 */
 		crypt_cmd->masks |= (flags & HIFN_CRYPT_DES) ?
 		    HIFN_CRYPT_CMD_ALG_DES : HIFN_CRYPT_CMD_ALG_3DES;
 
@@ -763,15 +855,15 @@ hifn_build_command(const struct hifn_command *cmd,
 		crypt_cmd->masks |= HIFN_CRYPT_CMD_MODE_CBC | HIFN_CRYPT_CMD_NEW_IV;
 
 		/*
-	         * Setup to send new encrypt key if needed.
-	         */
+		 * Setup to send new encrypt key if needed.
+		 */
 		if (flags & HIFN_CRYPT_CMD_NEW_KEY) {
 			crypt_cmd->masks |= HIFN_CRYPT_CMD_NEW_KEY;
 			cmd_buf_data->ck = cmd->ck;
 		}
 		/*
-	         * Set the encrypt header skip and source count.
-	         */
+		 * Set the encrypt header skip and source count.
+		 */
 		crypt_cmd->header_skip = cmd->crypt_header_skip;
 		crypt_cmd->source_count = cmd->src_npa - cmd->crypt_header_skip;
 		if (flags & HIFN_DECODE)
