@@ -1185,6 +1185,7 @@
 ./usr/include/ohash.h
 ./usr/include/olf_abi.h
 ./usr/include/openssl
+./usr/include/openssl/acss.h
 ./usr/include/openssl/aes.h
 ./usr/include/openssl/asn1.h
 ./usr/include/openssl/asn1_mac.h
@@ -2736,6 +2737,8 @@
 ./usr/share/man/cat3/acosf.0
 ./usr/share/man/cat3/acosh.0
 ./usr/share/man/cat3/acoshf.0
+./usr/share/man/cat3/acss.0
+./usr/share/man/cat3/acss_setkey.0
 ./usr/share/man/cat3/addch.0
 ./usr/share/man/cat3/addchnstr.0
 ./usr/share/man/cat3/addchstr.0

@@ -38,7 +38,7 @@
 ./usr/lib/libasn1.so.13.0
 ./usr/lib/libc.so.30.3
 ./usr/lib/libcom_err.so.13.0
-./usr/lib/libcrypto.so.10.1
+./usr/lib/libcrypto.so.10.2
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
 ./usr/lib/libdes.so.8.0
@@ -1738,6 +1738,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ohash.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl
+./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/aes.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/asn1.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/asn1_mac.ph
