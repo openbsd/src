@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2001/06/25 08:06:04 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2001/08/07 14:39:27 hugh Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2001/06/25 08:06:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2001/08/07 14:39:27 hugh Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,14 +63,17 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2001/06/25 08:06:04 deraadt Exp $"
 void
 summary()
 {
-	time_t secs;
+	struct timeval nowtv;
 	char buf[4][100];
 	struct iovec iov[4];
+	double microsecs;
 	int i = 0;
 
-	(void)time(&secs);
-	if ((secs -= st.start) == 0)
-		secs = 1;
+	(void)gettimeofday(&nowtv, (struct timezone *)NULL);
+	timersub(&nowtv, &st.startv, &nowtv);
+	if ((microsecs = (nowtv.tv_sec * 1000000) + nowtv.tv_usec) == 0)
+		microsecs = 1;
+
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf[0], sizeof(buf[0]),
 	    "%u+%u records in\n%u+%u records out\n",
@@ -93,8 +96,10 @@ summary()
 		iov[i++].iov_len = strlen(buf[2]);
 	}
 	(void)snprintf(buf[3], sizeof(buf[3]),
-	    "%qd bytes transferred in %ld secs (%qd bytes/sec)\n",
-	    st.bytes, (long)secs, st.bytes / secs);
+	    "%qd bytes transferred in %ld.%03ld secs (%0.0f bytes/sec)\n",
+	    (long long)st.bytes, nowtv.tv_sec, nowtv.tv_usec / 1000,
+	    ((double)st.bytes * 1000000) / microsecs);
+
 	iov[i].iov_base = buf[3];
 	iov[i++].iov_len = strlen(buf[3]);
 

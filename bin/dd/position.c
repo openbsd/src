@@ -1,4 +1,4 @@
-/*	$OpenBSD: position.c,v 1.3 1997/02/14 07:05:22 millert Exp $	*/
+/*	$OpenBSD: position.c,v 1.4 2001/08/07 14:39:27 hugh Exp $	*/
 /*	$NetBSD: position.c,v 1.4 1995/03/21 09:04:12 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: position.c,v 1.3 1997/02/14 07:05:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: position.c,v 1.4 2001/08/07 14:39:27 hugh Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: position.c,v 1.3 1997/02/14 07:05:22 millert Ex
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>

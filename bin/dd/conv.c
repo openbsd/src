@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.7 2001/01/17 00:27:14 pjanzen Exp $	*/
+/*	$OpenBSD: conv.c,v 1.8 2001/08/07 14:39:27 hugh Exp $	*/
 /*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
@@ -42,11 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: conv.c,v 1.7 2001/01/17 00:27:14 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: conv.c,v 1.8 2001/08/07 14:39:27 hugh Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <string.h>
