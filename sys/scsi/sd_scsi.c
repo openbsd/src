@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.5 2003/06/24 22:42:07 mickey Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.6 2003/06/25 02:18:35 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -126,11 +126,11 @@ sd_scsibus_get_optparms(sd, dp, flags)
 {
 	struct scsi_mode_sense scsi_cmd;
 	struct sd_scsibus_mode_sense_data scsi_sense;
-	u_long sectors;
 	int error;
 
 	dp->blksize = 512;
-	if ((sectors = scsi_size(sd->sc_link, flags)) == 0)
+	dp->disksize = scsi_size(sd->sc_link, flags);
+	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	/* XXX
@@ -160,8 +160,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	 */
 	dp->heads = 64;
 	dp->sectors = 32;
-	dp->cyls = sectors / (dp->heads * dp->sectors);
-	dp->disksize = sectors;
+	dp->cyls = dp->disksize / (dp->heads * dp->sectors);
 
 	return (SDGP_RESULT_OK);
 }
@@ -178,9 +177,8 @@ sd_scsibus_get_parms(sd, dp, flags)
 {
 	struct sd_scsibus_mode_sense_data scsi_sense;
 	union scsi_disk_pages *sense_pages;
-	u_long sectors;
-	int page, error;
 	u_int16_t rpm;
+	int page, error;
 
 	dp->rot_rate = 3600;
 
@@ -227,10 +225,12 @@ sd_scsibus_get_parms(sd, dp, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = scsi_size(sd->sc_link, flags);
-		dp->disksize = sectors;
-		sectors /= (dp->heads * dp->cyls);
-		dp->sectors = sectors;	/* XXX dubious on SCSI */
+		dp->disksize = scsi_size(sd->sc_link, flags);
+		if (dp->disksize == 0)
+			return (SDGP_RESULT_OFFLINE);
+
+		/* XXX dubious on SCSI */
+		dp->sectors = dp->disksize / (dp->heads * dp->cyls);
 
 		return (SDGP_RESULT_OK);
 	}
@@ -242,7 +242,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 		     (size_t)scsi_sense.header.blk_desc_len);
 		dp->heads = sense_pages->flex_geometry.nheads;
 		dp->cyls = _2btol(sense_pages->flex_geometry.ncyl);
-		rpm  = _2btol(scsi_sense.pages.flex_geometry.rpm);
+		rpm = _2btol(scsi_sense.pages.flex_geometry.rpm);
 		if (rpm)
 			dp->rot_rate = rpm;
 		if (scsi_sense.header.blk_desc_len >= 8)
@@ -254,10 +254,8 @@ sd_scsibus_get_parms(sd, dp, flags)
 		dp->disksize = dp->heads * dp->cyls * dp->sectors;
 		if (dp->disksize == 0)
 			goto fake_it;
-
 		if (dp->blksize == 0)
 			dp->blksize = 512;
-
 		return (SDGP_RESULT_OK);
 	}
 
@@ -303,12 +301,14 @@ fake_it:
 	 * this depends on which controller (e.g. 1542C is
 	 * different. but we have to put SOMETHING here..)
 	 */
-	sectors = scsi_size(sd->sc_link, flags);
+	dp->disksize = scsi_size(sd->sc_link, flags);
 	dp->heads = 64;
 	dp->sectors = 32;
-	dp->cyls = sectors / (64 * 32);
+	dp->cyls = dp->disksize / (64 * 32);
 	dp->blksize = 512;
-	dp->disksize = sectors;
+
+	if (dp->disksize == 0)
+		return (SDGP_RESULT_OFFLINE);
 
 	return (SDGP_RESULT_OK);
 }

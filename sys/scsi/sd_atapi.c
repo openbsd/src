@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.3 2003/05/13 00:53:32 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.4 2003/06/25 02:18:35 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	struct atapi_capacity_descriptor *descp;
 	struct atapi_sd_mode_data sense_data;
 	char capacity_data[ATAPI_CAP_DESC_SIZE(1)];
+	u_int16_t rpm;
 	int error;
 
 	bzero(&scsi_cmd, sizeof scsi_cmd);
@@ -112,35 +113,37 @@ sd_atapibus_get_parms(sd, dp, flags)
 		break;
 	}
 
-	dp->disksize = _4btol(descp->nblks);
-	dp->blksize = _3btol(descp->blklen);
-
 	/*
-	 * First, set up standard fictitious geometry, a la sd_scsi.c.
-	 */
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = dp->disksize / (64 * 32);
-	dp->rot_rate = 3600;
-
-	/*
-	 * Then try to get something better.  If we can't, that's
-	 * still OK.
+	 * Try to determine disk size, block size and geometry.  If disk size
+	 * (in sectors) can be determined, then fake the rest if necessary.
 	 *
 	 * XXX Rigid geometry page?
 	 */
+	dp->rot_rate = 3600;
+	dp->blksize = _3btol(descp->blklen);
+	if (dp->blksize == 0)
+		dp->blksize = 512;
+	dp->disksize = _4btol(descp->nblks);
+	if (dp->disksize == 0)
+		return (SDGP_RESULT_OFFLINE);
+
 	error = atapi_mode_sense(sd->sc_link, ATAPI_FLEX_GEOMETRY_PAGE,
 	    (struct atapi_mode_header *)&sense_data, FLEXGEOMETRYPAGESIZE,
 	    flags, SDRETRIES, 20000);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));
-	if (error != 0)
-		return (SDGP_RESULT_OK);
-
-	dp->heads = sense_data.pages.flex_geometry.nheads;
-	dp->sectors = sense_data.pages.flex_geometry.ph_sec_tr;
-	dp->cyls = _2btol(sense_data.pages.flex_geometry.ncyl);
-	dp->rot_rate = _2btol(sense_data.pages.flex_geometry.rot_rate);
+	if (error == 0) {
+		dp->heads = sense_data.pages.flex_geometry.nheads;
+		dp->sectors = sense_data.pages.flex_geometry.ph_sec_tr;
+		dp->cyls = _2btol(sense_data.pages.flex_geometry.ncyl);
+		rpm = _2btol(sense_data.pages.flex_geometry.rot_rate);
+		if (rpm)
+			dp->rot_rate = rpm;
+	} else {
+		dp->heads = 64;
+		dp->sectors = 32;
+		dp->cyls = dp->disksize / (64 * 32);
+	}
 	
 	return (SDGP_RESULT_OK);
 }
