@@ -1,6 +1,3 @@
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/eapreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieee.ph
 ./dev/scan0
 ./sbin/ldconfig
 ./usr/bin/c++filt
@@ -765,6 +762,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/czreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/fmsvar.ph
@@ -1200,6 +1198,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/frame.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
@@ -1231,6 +1230,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/grfioctl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/iteioctl.ph

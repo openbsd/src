@@ -1,4 +1,3 @@
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/eapreg.ph
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
@@ -13,6 +12,7 @@
 ./sbin/wsconsctl
 ./usr/bin/ldd
 ./usr/include/alpha
+./usr/include/alpha/ieee.h
 ./usr/include/readline
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.9
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.9/2.95.3
@@ -426,6 +426,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/frame.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieee.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieee.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieeefp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intrcnt.ph
@@ -808,6 +809,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/czreg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/fmsvar.ph

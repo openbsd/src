@@ -1,5 +1,3 @@
-./usr/include/m68k/ieee.h
-./usr/include/amiga/ieee.h
 ./usr/bin/c++filt
 ./usr/bin/gdb
 ./usr/bin/objdump
@@ -17,6 +15,7 @@
 ./usr/include/amiga/fbio.h
 ./usr/include/amiga/float.h
 ./usr/include/amiga/frame.h
+./usr/include/amiga/ieee.h
 ./usr/include/amiga/ieeefp.h
 ./usr/include/amiga/intr.h
 ./usr/include/amiga/joystick.h
@@ -61,6 +60,7 @@
 ./usr/include/m68k/exec.h
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
+./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h

@@ -1,5 +1,3 @@
-./usr/include/m68k/ieee.h
-./usr/include/mvme68k/ieee.h
 ./usr/bin/gdb
 ./usr/bin/objdump
 ./usr/include/ansidecl.h
@@ -23,6 +21,7 @@
 ./usr/include/m68k/exec.h
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
+./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
@@ -51,6 +50,7 @@
 ./usr/include/mvme68k/float.h
 ./usr/include/mvme68k/frame.h
 ./usr/include/mvme68k/hpux_machdep.h
+./usr/include/mvme68k/ieee.h
 ./usr/include/mvme68k/ieeefp.h
 ./usr/include/mvme68k/intr.h
 ./usr/include/mvme68k/kcore.h

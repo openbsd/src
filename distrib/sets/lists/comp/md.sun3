@@ -1,5 +1,3 @@
-./usr/include/m68k/ieee.h
-./usr/include/sun3/ieee.h
 ./usr/bin/gdb
 ./usr/bin/objdump
 ./usr/include/ansidecl.h
@@ -23,6 +21,7 @@
 ./usr/include/m68k/exec.h
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
+./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
@@ -62,6 +61,7 @@
 ./usr/include/sun3/float.h
 ./usr/include/sun3/frame.h
 ./usr/include/sun3/idprom.h
+./usr/include/sun3/ieee.h
 ./usr/include/sun3/ieeefp.h
 ./usr/include/sun3/kbd.h
 ./usr/include/sun3/kbio.h

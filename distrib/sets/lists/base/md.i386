@@ -1,4 +1,3 @@
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/eapreg.ph
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
@@ -15,6 +14,7 @@
 ./usr/bin/ldd
 ./usr/bin/pctr
 ./usr/include/i386
+./usr/include/i386/ieee.h
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so
@@ -775,6 +775,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/czreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/fmsvar.ph
@@ -1169,6 +1170,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/frame.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/freebsd_machdep.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/gdt.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/ieee.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ieeefp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/intr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ioctl_fd.ph

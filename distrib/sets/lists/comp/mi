@@ -1,4 +1,3 @@
-./usr/include/dev/pci/eapreg.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -374,6 +373,7 @@
 ./usr/include/dev/pci/cy82c693reg.h
 ./usr/include/dev/pci/cy82c693var.h
 ./usr/include/dev/pci/czreg.h
+./usr/include/dev/pci/eapreg.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/fmsvar.h

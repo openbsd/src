@@ -1,4 +1,3 @@
-./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/doc/html
 ./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
@@ -569,9 +568,9 @@
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/sparc
-./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/sparc/fdformat.0
 ./usr/share/man/cat1/sparc/screenblank.0
+./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/splain.0
 ./usr/share/man/cat1/split.0
 ./usr/share/man/cat1/ssh-add.0
@@ -1159,7 +1158,6 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sparc
-./usr/share/man/cat4/sparc64
 ./usr/share/man/cat4/sparc/audioamd.0
 ./usr/share/man/cat4/sparc/audiocs.0
 ./usr/share/man/cat4/sparc/autoconf.0
@@ -1200,6 +1198,8 @@
 ./usr/share/man/cat4/sparc/xd.0
 ./usr/share/man/cat4/sparc/xy.0
 ./usr/share/man/cat4/sparc/zs.0
+./usr/share/man/cat4/sparc64
+./usr/share/man/cat4/sparc64/autoconf.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0
@@ -1835,12 +1835,13 @@
 ./usr/share/man/cat8/snkadm.0
 ./usr/share/man/cat8/snkinit.0
 ./usr/share/man/cat8/sparc
-./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/boot_sparc.0
 ./usr/share/man/cat8/sparc/eeprom.0
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/makedev.0
+./usr/share/man/cat8/sparc64
+./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
