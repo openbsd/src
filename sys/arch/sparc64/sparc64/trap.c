@@ -489,7 +489,7 @@ trap(tf, type, pc, tstate)
 	u_quad_t sticks;
 	union sigval sv;
 
-	sv.sival_int = pc;
+	sv.sival_ptr = (void *)pc;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -1018,7 +1018,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 #endif
 	union sigval sv;
 
-	sv.sival_int = pc;
+	sv.sival_ptr = (void *)pc;
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("data_access_fault: tpc %lx == tnpc %lx\n", 
@@ -1267,7 +1267,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 #endif
 	union sigval sv;
 
-	sv.sival_int = pc;
+	sv.sival_ptr = (void *)pc;
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1415,7 +1415,7 @@ text_access_fault(tf, type, pc, sfsr)
 	u_quad_t sticks;
 	union sigval sv;
 
-	sv.sival_int = pc;
+	sv.sival_ptr = (void *)pc;
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1509,7 +1509,7 @@ text_access_fault(tf, type, pc, sfsr)
 			Debugger();
 		}
 #endif
-		sv.sival_int = va;
+		sv.sival_ptr = (void *)va;
 		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
@@ -1557,7 +1557,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 #endif
 	char buf[768];
 	
-	sv.sival_int = pc;
+	sv.sival_ptr = (void *)pc;
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("text_access_error: tpc %p == tnpc %p\n",
@@ -1688,7 +1688,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			Debugger();
 		}
 #endif
-		sv.sival_int = va;
+		sv.sival_ptr = (void *)va;
 		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 	}
 out:

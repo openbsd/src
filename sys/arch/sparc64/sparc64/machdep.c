@@ -496,12 +496,13 @@ int sigpid = 0;
 
 struct sigframe {
 	int	sf_signo;		/* signal number */
-	int	sf_code;		/* code */
+	siginfo_t *sf_sip;		/* points to siginfo_t */
 #ifndef __arch64__
 	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 #endif
 	struct	sigcontext sf_sc;	/* actual sigcontext */
+	siginfo_t sf_si;
 };
 
 /*
@@ -569,9 +570,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	panic("sendsig");
-#if XXX
 	struct proc *p = curproc;
+	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
 	vaddr_t addr; 
@@ -580,7 +580,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct rwindow tmpwin;
 #endif
 	struct sigframe sf;
-	int onstack;
+	int onstack, oonstack;
+	extern char sigcode[], esigcode[];
+#define	szsigcode	(esigcode - sigcode)
 
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
@@ -589,14 +591,13 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
+	if (onstack) {
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size);
+		psp->ps_sigstk.ss_flags = SS_ONSTACK;
+	} else
 		fp = (struct sigframe *)oldsp;
 	/* Allocate an aligned sigframe */
 	fp = (struct sigframe *)((long)(fp - 1) & ~0x0f);
@@ -618,7 +619,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = code;
+	sf.sf_sip = NULL;
 #ifndef __arch64__
 	sf.sf_scp = 0;
 	sf.sf_addr = 0;			/* XXX */
@@ -627,8 +628,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-	sf.sf_sc.sc_mask = *mask;
+	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_mask = mask;
 #ifdef COMPAT_13
 	/*
 	 * XXX We always have to save an old style signal mask because
@@ -650,6 +651,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
+	if (psp->ps_siginfo & sigmask(sig)) {
+		sf.sf_sip = &fp->sf_si;
+		initsiginfo(&sf.sf_si, sig, code, type, val);
+	}
+
 	/*
 	 * Put the stack in a consistent state before we whack away
 	 * at it.  Note that write_user_windows may just dump the
@@ -667,6 +673,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
 		   (void *)(unsigned long)tf->tf_out[6]);
 #endif
+	/* XXX do not copyout siginfo if not needed */
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 #ifdef NOT_DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
@@ -699,15 +706,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+	addr = (vaddr_t)PS_STRINGS - szsigcode;
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
@@ -717,7 +720,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
 	}
-#endif
 #endif
 }
 
@@ -828,9 +830,9 @@ printf("sigreturn: pid %d nsaved %d\n",
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
