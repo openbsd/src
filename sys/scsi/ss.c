@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.24 1997/03/11 00:45:19 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.25 1997/03/11 03:19:16 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ ss_identify_scanner(ss, inqbuf)
 		}
 		printf("%s\n", ss->quirkdata->name);
 	} else {
-		printf("generic scanner\n"); /* good luck 8c{)] */
+		printf(" generic scanner\n"); /* good luck 8c{)] */
 	}
 }
 
@@ -501,8 +501,8 @@ ssstrategy(bp)
 
 	/*
 	 * Place it in the queue of activities for this scanner
-	 * at the end (a bit silly because we only have on user..
-	 * (but it could fork()))
+	 * at the end (a bit silly because we only have on user..)
+	 * (but it could fork() or dup())
 	 */
 	dp = &ss->buf_queue;
 	bp->b_actf = NULL;
