@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.11 2004/08/05 19:12:32 miod Exp $	*/
+/*	$OpenBSD: read.c,v 1.12 2004/12/06 20:17:04 miod Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.11 2004/08/05 19:12:32 miod Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.12 2004/12/06 20:17:04 miod Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -425,7 +425,9 @@ char *name;
 					SKIP_WHITESPACE();
 					
 					
-				} else if (c == '=' || input_line_pointer[1] == '=') { /* JF deal with FOO=BAR */
+				} else if (c == '=' ||
+				    ((input_line_pointer + 1) < buffer_limit &&
+				      input_line_pointer[1] == '=')) { /* JF deal with FOO=BAR */
 					equals(s);
 					demand_empty_rest_of_line();
 				} else {		/* expect pseudo-op or machine instruction */
