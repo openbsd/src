@@ -47,6 +47,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/msgbuf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -117,11 +118,13 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < MACH_CACHED_MEMORY_ADDR)
 				return (EFAULT);
-			if (v + c > MACH_PHYS_TO_CACHED(avail_end) &&
+			if (v + c > MACH_PHYS_TO_CACHED(avail_end +
+							sizeof (struct msgbuf)) &&
 			    (v < MACH_KSEG2_ADDR ||
 			    !kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
 				return (EFAULT);
+
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
