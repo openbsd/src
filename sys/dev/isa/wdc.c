@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.10 1996/09/16 02:38:20 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.11 1996/09/22 05:16:40 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -676,6 +676,8 @@ wdcintr(arg)
 	struct wdc_xfer *xfer;
 
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) == 0) {
+		DELAY(100);
+
 		/* Clear the pending interrupt and abort. */
 		u_char s = bus_io_read_1(bc, ioh, wd_status);
 #ifdef ATAPI_DEBUG_WDC
