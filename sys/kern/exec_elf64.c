@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.10 2001/01/16 15:46:20 art Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.11 2001/01/22 14:25:03 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -552,7 +552,7 @@ exec_elf64_makecmds(p, epp)
 #ifndef NATIVE_EXEC_ELF
 	else
 		goto bad;
-#endif /* NATIVE_ELF */
+#endif /* NATIVE_EXEC_ELF */
 
 	/*
 	 * Load all the necessary sections
