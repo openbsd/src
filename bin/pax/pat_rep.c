@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.18 2002/06/09 02:35:27 itojun Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.19 2002/06/09 18:39:48 itojun Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.18 2002/06/09 02:35:27 itojun Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.19 2002/06/09 18:39:48 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -990,7 +990,7 @@ rep_name(char *name, int *nlen, int prnt)
 		 */
 		if (*nname == '\0')
 			return(1);
-		*nlen = strlcpy(name, nname, sizeof(name));
+		*nlen = strlcpy(name, nname, *nlen);
 	}
 	return(0);
 }
