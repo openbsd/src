@@ -42,7 +42,7 @@ options		COMPAT_11
 # Loadable Kernel Modules
 options		LKM
 
-config		netbsd	root on nfs swap on nfs
+config		bsd	root on nfs swap on nfs
 
 mainbus0 at	root
 

@@ -51,7 +51,7 @@ options		LKM
 # Misc. options
 options		PCIVERBOSE	# recognize "unknown" PCI devices
 
-config		netbsd	swap generic
+config		bsd	swap generic
 
 mainbus0 at	root
 cpu*	at	mainbus0
