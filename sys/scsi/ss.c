@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.23 1997/03/10 03:20:30 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.24 1997/03/11 00:45:19 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -463,6 +463,8 @@ ssread(dev, uio, flag)
 			error = (ss->special.trigger_scanner)(ss);
 			if (error)
 				return (error);
+		} else {
+			/* XXX addd code for generic trigger */
 		}
 		ss->flags |= SSF_TRIGGERED;
 	}
@@ -763,8 +765,8 @@ ss_set_window(ss, sio)
 
 	if (ss->quirkdata->quirks & SS_Q_BIT_ORDERING)
 		_lto2l(ss->quirkdata->bit_ordering, window_data.bit_ordering);
-
 	/* else leave bit_ordering set to zero. */
+
 	/* leave compression type & argument set to zero. */
 
 #undef window_data
