@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.6 1999/02/24 22:05:15 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.7 1999/03/08 23:47:25 downsj Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@
 #define CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define CPUID_DE	0x00000004	/* has debugging extension */
-#define CPUID_PSE	0x00000008	/* has page 4MB page size extension */
+#define CPUID_PSE	0x00000008	/* has 4MB page size extension */
 #define CPUID_TSC	0x00000010	/* has time stamp counter */
 #define CPUID_MSR	0x00000020	/* has mode specific registers */
 #define CPUID_PAE	0x00000040	/* has phys address extension */
@@ -101,15 +101,19 @@
 #define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
 #define CPUID_APIC	0x00000200	/* has enabled APIC */
 #define CPUID_SYS1	0x00000400	/* has SYSCALL/SYSRET inst. (Cyrix) */
-#define CPUID_SYS2	0x00000800	/* has SYSCALL/SYSRET inst. (AMD) */
+#define CPUID_SYS2	0x00000800	/* has SYSCALL/SYSRET inst. (AMD/Intel) */
 #define CPUID_MTRR	0x00001000	/* has memory type range register */
 #define CPUID_PGE	0x00002000	/* has page global extension */
 #define CPUID_MCA	0x00004000	/* has machine check architecture */
 #define CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
+#define CPUID_PAT	0x00010000	/* has page attribute table */
+#define CPUID_PSE36	0x00020000	/* has 36bit page size extension */
+#define CPUID_SER	0x00040000	/* has processor serial number */
 #define CPUID_MMX	0x00800000	/* has MMX instructions */
-#define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix) */
-#define CPUID_3D	0x80000000	/* has AMD-3D instructions (AMD) */
-#define CPUID_MMX2	0x02000000	/* has Intel MMX-2 instructions */
+#define CPUID_FXSR	0x01000000	/* has FXRSTOR instruction (Intel) */
+#define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix; obsolete) */
+#define CPUID_SIMD	0x02000000	/* has SIMD instructions (Intel) */
+#define CPUID_3DNOW	0x80000000	/* has 3DNow! instructions (AMD) */
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.47 1999/02/26 04:34:31 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.48 1999/03/08 23:47:26 downsj Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -141,16 +141,21 @@
 	.data
 
 	.globl	_cpu,_cpu_id,_cpu_vendor,_cpuid_level,_cpu_feature
+	.globl	_cpu_cache_eax,_cpu_cache_ebx,_cpu_cache_ecx,_cpu_cache_edx
 	.globl	_cold,_cnvmem,_extmem,_esym
 	.globl	_boothowto,_bootdev,_atdevbase
 	.globl	_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
 	.globl	_bootapiver, _bootargc, _bootargv
 
 _cpu:		.long	0	# are we 386, 386sx, 486, 586 or 686
-_cpu_id:	.long	0	# saved from `cpuid' instruction
+_cpu_id:	.long	0	# saved from 'cpuid' instruction
 _cpu_feature:	.long	0	# feature flags from 'cpuid' instruction
 _cpuid_level:	.long	-1	# max. level accepted by 'cpuid' instruction
-_cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
+_cpu_cache_eax:	.long	0
+_cpu_cache_ebx:	.long	0
+_cpu_cache_ecx:	.long	0
+_cpu_cache_edx:	.long	0
+_cpu_vendor:	.space	16	# vendor string returned by 'cpuid' instruction
 _cold:		.long	1	# cold till we are not
 _esym:		.long	0	# ptr to end of syms
 _cnvmem:	.long	0	# conventional memory size
@@ -375,6 +380,22 @@ try586:	/* Use the `cpuid' instruction. */
 	cpuid
 	movl	%eax,RELOC(_cpu_id)	# store cpu_id and features
 	movl	%edx,RELOC(_cpu_feature)
+
+	movl	$RELOC(_cpuid_level),%eax
+	cmp	$2,%eax
+	jl	2f
+
+	movl	$2,%eax
+	cpuid
+/*
+	cmp	$1,%al
+	jne	2f
+*/
+
+	movl	%eax,RELOC(_cpu_cache_eax)
+	movl	%ebx,RELOC(_cpu_cache_ebx)
+	movl	%ecx,RELOC(_cpu_cache_ecx)
+	movl	%edx,RELOC(_cpu_cache_edx)
 
 2:
 	/*

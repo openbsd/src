@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.102 1999/02/26 04:41:13 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.103 1999/03/08 23:47:26 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -251,8 +251,10 @@ int allowaperture = 0;
 #endif
 #endif
 
-void	cyrix6x86_cpu_setup __P((const char *, int));
-void	intel586_cpu_setup __P((const char *, int));
+void	cyrix6x86_cpu_setup __P((const char *, int, int));
+void	intel586_cpu_setup __P((const char *, int, int));
+void	intel686_cpu_setup __P((const char *, int, int));
+char *	intel686_cpu_name __P((int));
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -688,11 +690,11 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_686,
 			{
 				0, "Pentium Pro", 0, "Pentium II",
-				"Pentium Pro", "Pentium II", "Pentium II",
+				"Pentium Pro", "Pentium II", "Celeron",
 				"Pentium III", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			},
-			NULL
+			intel686_cpu_setup
 		} }
 	},
 	{
@@ -788,16 +790,19 @@ struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_PGE,	"PGE" },
 	{ CPUID_MCA,	"MCA" },
 	{ CPUID_CMOV,	"CMOV" },
+	{ CPUID_PAT,	"PAT" },
+	{ CPUID_PSE36,	"PSE36" },
+	{ CPUID_SER,	"SER" },
 	{ CPUID_MMX,	"MMX" },
-	{ CPUID_EMMX,	"EMMX" },
-	{ CPUID_3D,	"AMD3D" },
-	{ CPUID_MMX2,	"MMX2" }
+	{ CPUID_FXSR,	"FXSR" },
+	{ CPUID_SIMD,	"SIMD" },
+	{ CPUID_3DNOW,	"3DNOW" },
 };
 
 void
-cyrix6x86_cpu_setup(cpu_device, model)
+cyrix6x86_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
-	int model;
+	int model, step;
 {
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	extern int cpu_feature;
@@ -828,9 +833,9 @@ cyrix6x86_cpu_setup(cpu_device, model)
 }
 
 void
-intel586_cpu_setup(cpu_device, model)
+intel586_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
-	int model;
+	int model, step;
 {
 #if defined(I586_CPU)
 	fix_f00f();
@@ -839,17 +844,78 @@ intel586_cpu_setup(cpu_device, model)
 }
 
 void
+intel686_cpu_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+	extern int cpu_feature;
+
+	/*
+	 * Original PPro returns SYSCALL in CPUID but is non-functional.
+	 * From Intel Application Note #485.
+	 */
+	if ((model == 1) && (step < 3))
+		cpu_feature &= ~CPUID_SYS2;
+}
+
+char *
+intel686_cpu_name(model)
+	int model;
+{
+	extern int cpu_cache_edx;
+	char *ret = NULL;
+
+	switch (model) {
+	case 5:
+		switch (cpu_cache_edx & 0xFF) {
+		case 0x40:
+		case 0x41:
+			ret = "Celeron";
+			break;
+		/* 0x42 should not exist in this model. */
+		case 0x43:
+			ret = "Pentium II";
+			break;
+		case 0x44:
+		case 0x45:
+			ret = "Pentium II Xeon";
+			break;
+		}
+		break;
+	case 7:
+		switch (cpu_cache_edx & 0xFF) {
+		/* 0x40 - 0x42 should not exist in this model. */
+		case 0x43:
+			ret = "Pentium III";
+			break;
+		case 0x44:
+		case 0x45:
+			ret = "Pentium III Xeon";
+			break;
+		}
+		break;
+	}
+
+	return (ret);
+}
+
+void
 identifycpu()
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
 	extern int cpu_feature;
+#ifdef CPUDEBUG
+	extern int cpu_cache_eax, cpu_cache_ebx, cpu_cache_ecx, cpu_cache_edx;
+#else
+	extern int cpu_cache_edx;
+#endif
 	const char *name, *modifier, *vendorname, *token;
 	const char *cpu_device = "cpu0";
 	int class = CPUCLASS_386, vendor, i, max;
-	int family, model, step, modif;
+	int family, model, step, modif, cachesize;
 	struct cpu_cpuid_nameclass *cpup = NULL;
-	void (*cpu_setup) __P((const char *, int));
+	void (*cpu_setup) __P((const char *, int, int));
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -875,6 +941,9 @@ identifycpu()
 #ifdef CPUDEBUG
 		printf("%s: family %x model %x step %x\n", cpu_device, family,
 			model, step);
+		printf("%s: cpuid level %d cache eax %x ebx %x ecx %x edx %x\n",
+			cpu_device, cpuid_level, cpu_cache_eax, cpu_cache_ebx,
+			cpu_cache_ecx, cpu_cache_edx);
 #endif
 
 		for (i = 0; i < max; i++) {
@@ -909,7 +978,13 @@ identifycpu()
 			} else if (model > CPU_MAXMODEL)
 				model = CPU_DEFMODEL;
 			i = family - CPU_MINFAMILY;
-			name = cpup->cpu_family[i].cpu_models[model];
+
+			/* Special hack for the PentiumII/III series. */
+			if ((vendor == CPUVENDOR_INTEL) && (family == 6)
+				&& ((model == 5) || (model == 7))) {
+				name = intel686_cpu_name(model);
+			} else
+				name = cpup->cpu_family[i].cpu_models[model];
 			if (name == NULL)
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
@@ -917,16 +992,31 @@ identifycpu()
 		}
 	}
 
-	if (*token)
-		sprintf(cpu_model, "%s %s%s (\"%s\" %s-class)", vendorname,
-			modifier, name, token, classnames[class]);
-	else
-		sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier,
-			name, classnames[class]);
+	/* Find the amount of on-chip L2 cache.  Add support for AMD K6-3...*/
+	cachesize = -1;
+	if ((vendor == CPUVENDOR_INTEL) && (cpuid_level >= 2)) {
+		int intel_cachetable[] = { 0, 128, 256, 512, 1024, 2048 };
+		if ((cpu_cache_edx & 0xFF) >= 0x40
+		    && (cpu_cache_edx & 0xFF) <= 0x45) {
+			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
+		}
+	}
+
+	if (cachesize > -1) {
+		sprintf(cpu_model, "%s %s%s (%s%s%s%s-class, %dKB L2 cache)",
+			vendorname, modifier, name,
+			((*token) ? "\"" : ""), ((*token) ? token : ""),
+			((*token) ? "\" " : ""), classnames[class], cachesize);
+	} else {
+		sprintf(cpu_model, "%s %s%s (%s%s%s%s-class)",
+			vendorname, modifier, name,
+			((*token) ? "\"" : ""), ((*token) ? token : ""),
+			((*token) ? "\" " : ""), classnames[class]);
+	}
 
 	/* configure the CPU if needed */
 	if (cpu_setup != NULL)
-		cpu_setup(cpu_device, model);
+		cpu_setup(cpu_device, model, step);
 
 	printf("%s: %s", cpu_device, cpu_model);
 
