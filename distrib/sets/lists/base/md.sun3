@@ -1705,7 +1705,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/dkio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/dkstat.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/dmap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/errno.ph
@@ -1874,7 +1873,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_swap_encrypt.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs
@@ -1909,3 +1907,5 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
+./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/genfs/genfs.ph

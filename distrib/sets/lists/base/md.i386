@@ -1681,7 +1681,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/dkio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/dkstat.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/dmap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/errno.ph
@@ -1850,7 +1849,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_swap_encrypt.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/xfs
@@ -1909,3 +1907,5 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/genfs/genfs.ph

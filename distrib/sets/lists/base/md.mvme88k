@@ -265,7 +265,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/dkbad.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/dkio.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/dkstat.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/dmap.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/domain.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/endian.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/errno.ph
@@ -593,3 +592,5 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/genfs/genfs.ph

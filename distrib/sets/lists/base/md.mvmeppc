@@ -1651,7 +1651,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dkbad.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dkio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dkstat.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dmap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/errno.ph
@@ -1820,7 +1819,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_swap_encrypt.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs
@@ -1853,3 +1851,5 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs/genfs.ph
