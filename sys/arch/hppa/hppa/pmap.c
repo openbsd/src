@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.68 2002/03/27 21:39:25 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.69 2002/04/01 16:15:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -817,7 +817,11 @@ pmap_remove(pmap, sva, eva)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 
-			if (pte & PTE_PROT(pte))
+			/* TODO measure here the speed tradeoff
+			 * for flushing whole 4M vs per-page
+			 * in case of non-complete pde fill
+			 */
+			if (pte & PTE_PROT(TLB_EXECUTE))
 				ficache(pmap->pm_space, sva, PAGE_SIZE);
 			pitlb(pmap->pm_space, sva);
 			fdcache(pmap->pm_space, sva, PAGE_SIZE);
@@ -828,11 +832,11 @@ pmap_remove(pmap, sva, eva)
 			bank = vm_physseg_find(atop(pte), &off);
 			if (pmap_initialized && bank != -1) {
 				pvh = &vm_physmem[bank].pmseg.pvhead[off];
-				pve = pmap_pv_remove(pvh, pmap, sva);
-				if (pve) {
-					pvh->pvh_attrs |= pmap_pvh_attrs(pte);
+				simple_lock(&pvh->pvh_lock);
+				pvh->pvh_attrs |= pmap_pvh_attrs(pte);
+				if ((pve = pmap_pv_remove(pvh, pmap, sva)))
 					pmap_pv_free(pve);
-				}
+				simple_unlock(&pvh->pvh_lock);
 			}
 		}
 	}
@@ -1188,8 +1192,11 @@ pmap_kremove(va, size)
 	vaddr_t va;
 	vsize_t size;
 {
-	pt_entry_t *pde, pte;
+	struct pv_entry *pve;
+	struct pv_head *pvh;
 	vaddr_t eva = va + size, pdemask;
+	pt_entry_t *pde, pte;
+	int bank, off;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 	    ("pmap_kremove(%x, %x)\n", va, size));
@@ -1218,6 +1225,16 @@ pmap_kremove(va, size)
 		pdtlb(HPPA_SID_KERNEL, va);
 
 		pmap_pte_set(pde, va, 0);
+		bank = vm_physseg_find(atop(pte), &off);
+		if (pmap_initialized && bank != -1) {
+			pvh = &vm_physmem[bank].pmseg.pvhead[off];
+			simple_lock(&pvh->pvh_lock);
+			pvh->pvh_attrs |= pmap_pvh_attrs(pte);
+			/* just in case we have enter/kenter mismatch */
+			if ((pve = pmap_pv_remove(pvh, pmap_kernel(), va)))
+				pmap_pv_free(pve);
+			simple_unlock(&pvh->pvh_lock);
+		}
 	}
 
 	simple_unlock(&pmap->pm_obj.vmobjlock);
