@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.7 2001/09/13 13:55:08 fgsch Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.8 2001/09/13 14:07:14 fgsch Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -520,7 +520,7 @@ sys_semop(p, v, retval)
 		syscallarg(u_int) nsops;
 	} */ *uap = v;
 	int semid = SCARG(uap, semid);
-	size_t nsops = SCARG(uap, nsops);
+	u_int nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];
 	register struct semid_ds *semaptr;
 	register struct sembuf *sopptr = NULL;
