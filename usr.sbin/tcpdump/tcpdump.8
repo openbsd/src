@@ -1,4 +1,4 @@
-.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.8 1998/09/07 16:44:34 aaron Exp $ (LBL)
+.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.9 1998/09/13 03:50:23 aaron Exp $ (LBL)
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,7 @@ Dump packet-matching code as a
 program fragment.
 .TP
 .B \-ddd
-Dump packet-matching code as a decimal numbers (preceded with a count).
+Dump packet-matching code as decimal numbers (preceded with a count).
 .TP
 .B \-e
 Print the link-level header on each dump line.
@@ -149,7 +149,7 @@ if you suspect a bug in the optimizer.
 \fIDon't\fP put the interface
 into promiscuous mode.  Note that the interface might be in promiscuous
 mode for some other reason; hence, `-p' cannot be used as an abbreviation for
-`ether host {local-hw-addr} or ether broadcast'.
+`ether host {local-hw-addr}' or `ether broadcast'.
 .TP
 .B \-q
 Quick (quiet?) output.  Print less protocol information so output
@@ -174,7 +174,7 @@ lost.  You should limit \fIsnaplen\fP to the smallest number that will
 capture the protocol information you're interested in.
 .TP
 .B \-T
-Force packets selected by "\fIexpression\fP" to be interpreted the
+Force packets selected by "\fIexpression\fP" to be interpreted as the
 specified \fItype\fR. Currently known types are
 \fBrpc\fR (Remote Procedure Call),
 \fBrtp\fR (Real-Time Applications protocol),
@@ -221,7 +221,7 @@ The \fIexpression\fP consists of one or more
 Primitives usually consist of an
 .I id
 (name or number) preceded by one or more qualifiers.  There are three
-different kinds of qualifier:
+different kinds of qualifiers:
 .IP \fItype\fP
 qualifiers say what kind of thing the id name or number refers to.
 Possible types are
@@ -643,7 +643,7 @@ and packet length are printed.
 On FDDI networks, the  '-e' option causes \fItcpdump\fP to print
 the `frame control' field,  the source and destination addresses,
 and the packet length.  (The `frame control' field governs the
-interpretation of the rest of the packet.  Normal packets (such
+interpretation of the rest of the packet.)  Normal packets (such
 as those containing IP datagrams) are `async' packets, with a priority
 value between 0 and 7; for example, `\fBasync4\fR'.  Such packets
 are assumed to contain an 802.2 Logical Link Control (LLC) packet;
@@ -684,7 +684,7 @@ data and 6 bytes of compressed header:
 ARP/RARP Packets
 .LP
 Arp/rarp output shows the type of request and its arguments.  The
-format is intended to be self explanatory.
+format is intended to be self-explanatory.
 Here is a short sample taken from the start of an `rlogin' from
 host \fIrtsg\fP to host \fIcsam\fP:
 .RS
@@ -800,7 +800,7 @@ feature, causing the original sequence numbers to be output.
 On the 6th line, rtsg sends csam 19 bytes of data (bytes 2 through 20
 in the rtsg \(-> csam side of the conversation).
 The PUSH flag is set in the packet.
-On the 7th line, csam says its received data sent by rtsg up to
+On the 7th line, csam says it's received data sent by rtsg up to
 but not including byte 21.  Most of this data is apparently sitting in the
 socket buffer since csam's receive window has gotten 19 bytes smaller.
 Csam also sends one byte of data to rtsg in this packet.
@@ -938,8 +938,8 @@ generation number.)
 .LP
 In the third line, \fIsushi\fP asks \fIwrl\fP to lookup the name
 `\fIxcolors\fP' in directory file 9,74/4096.6878.  Note that the data printed
-depends on the operation type.  The format is intended to be self
-explanatory if read in conjunction with
+depends on the operation type.  The format is intended to be self-explanatory
+if read in conjunction with
 an NFS protocol spec.
 .LP
 If the \-v (verbose) flag is given, additional information is printed.
@@ -1084,7 +1084,7 @@ is the value of the `userdata' field in the request.
 .LP
 Helios responds with 8 512-byte packets.  The `:digit' following the
 transaction id gives the packet sequence number in the transaction
-and the number in parens is the amount of data in the packet,
+and the number in parentheses is the amount of data in the packet,
 excluding the atp header.  The `*' on packet 7 indicates that the
 EOM bit was set.
 .LP
@@ -1203,7 +1203,7 @@ networks so we'd would have no way of testing this code.
 A packet trace that crosses a daylight savings time change will give
 skewed time stamps (the time change is ignored).
 .LP
-Filters expressions that manipulate FDDI headers assume that all FDDI
+Filter expressions that manipulate FDDI headers assume that all FDDI
 packets are encapsulated Ethernet packets.  This is true for IP, ARP,
 and DECNET Phase IV, but is not true for protocols such as ISO CLNS.
 Therefore, the filter may inadvertently accept certain packets that
