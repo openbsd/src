@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.84 2004/01/30 23:07:36 tdeval Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.85 2004/02/07 22:39:16 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -302,14 +302,22 @@ scsi_probe_bus(bus, target, lun)
 		maxlun = scsi->adapter_link->luns - 1;
 		minlun = 0;
 	} else {
-		if (lun < 0 || lun > 7)
+		if (lun < 0 || lun >= scsi->adapter_link->luns)
 			return EINVAL;
-		maxlun = minlun = lun;
+		maxlun = lun;
+		if (lun == 0 || scsi->sc_link[target][0] == NULL)
+			minlun = 0;
+		else
+			minlun = lun;
 	}
 
 	for (target = mintarget; target <= maxtarget; target++)
 		if (target != scsi_addr) {
 			bzero(&inqbuflun0, sizeof inqbuflun0);
+			if (minlun != 0 &&
+			    (scsi_inquire(scsi->sc_link[target][0], &inqbuflun0,
+			    0) != 0))
+				continue;
 			for (lun = minlun; lun <= maxlun; lun++)
 				if (scsi_probedev(scsi, &inqbuflun0, target,
 				    lun) == EINVAL)
@@ -673,13 +681,6 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 #endif /* SCSI_2_DEF */
 
 	/* Now go ask the device all about itself. */
-	bzero(&inqbuf, sizeof(inqbuf));
-
-	memset(&inqbuf.vendor, ' ', sizeof inqbuf.vendor);
-	memset(&inqbuf.product, ' ', sizeof inqbuf.product);
-	memset(&inqbuf.revision, ' ', sizeof inqbuf.revision);
-	memset(&inqbuf.extra, ' ', sizeof inqbuf.extra);
-
 	rslt = scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
 
 	if (lun == 0 && rslt != 0) {
