@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.1 2002/06/04 19:38:10 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.2 2002/06/04 19:51:08 provos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Op Fl ait
+.Op Fl g Ar gui
 .Op Fl f Ar file
 .Ar command ...
 .Sh DESCRIPTION
@@ -58,6 +59,8 @@ not covered by policy is denied.
 Uses text mode to ask for interactive policy generation.
 .It Fl i
 Inherits the policy of the first executed binary to all children.
+.It Fl g Ar gui
+Specifies an alternative location for the notification user interface.
 .It Fl f Ar file
 The polcifies specified in
 .Ar file
