@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.13 1999/10/03 22:01:39 provos Exp $");
+RCSID("$Id: sshconnect.c,v 1.14 1999/10/04 19:46:30 provos Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1104,15 +1104,17 @@ void ssh_login(int host_key_valid,
      and the user will get bogus HOST_CHANGED warnings.  This essentially
      disables host authentication for localhost; however, this is probably
      not a real problem. */
-  if (strcmp(host, "localhost") == 0 ||
-      strcmp(host, "127.0.0.1") == 0)
+  if (strcmp(inet_ntoa(hostaddr->sin_addr), "127.0.0.1") == 0)
     {
       debug("Forcing accepting of host key for localhost.");
       host_status = HOST_OK;
     }
 
-  /* Also perform check for the ip address */
-  if (options->check_host_ip && strcmp(host, inet_ntoa(hostaddr->sin_addr))) {
+  /* Also perform check for the ip address, skip the check if we are
+     localhost or the hostname was an ip address to begin with */
+  if (options->check_host_ip &&
+      strcmp(inet_ntoa(hostaddr->sin_addr), "127.0.0.1") && 
+      strcmp(host, inet_ntoa(hostaddr->sin_addr))) {
     RSA *ip_key = RSA_new();
     ip_key->n = BN_new();
     ip_key->e = BN_new();
