@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.7 1999/07/14 13:37:24 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.8 1999/11/14 22:04:02 d Exp $	*/
 
 /*
  *	vi command editing
@@ -65,6 +65,7 @@ static void 	x_vi_zotc ARGS((int c));
 static void	vi_pprompt ARGS((int full));
 static void	vi_error ARGS((void));
 static void	vi_macro_reset ARGS((void));
+static int	x_vi_putbuf	ARGS((const char *s, size_t len));
 
 #define C_	0x1		/* a valid command that isn't a M_, E_, U_ */
 #define M_	0x2		/* movement command (h, l, etc.) */
@@ -1472,6 +1473,17 @@ edit_reset(buf, len)
 	holdlen = 0;
 }
 
+/*
+ * this is used for calling x_escape() in complete_word()
+ */
+static int
+x_vi_putbuf(s, len)
+	const char *s;
+	size_t len;
+{
+	return putbuf(s, len, 0);
+}
+
 static int
 putbuf(buf, len, repl)
 	const char *buf;
@@ -2070,9 +2082,12 @@ complete_word(command, count)
 	buf = save_edstate(es);
 	del_range(start, end);
 	es->cursor = start;
-	if (putbuf(match, match_len, 0) != 0)
-		rval = -1;
-	else if (is_unique) {
+
+	/* escape all shell-sensitive characters and put the result into
+	 * command buffer */
+	rval = x_escape(match, match_len, x_vi_putbuf);
+
+	if (rval == 0 && is_unique) {
 		/* If exact match, don't undo.  Allows directory completions
 		 * to be used (ie, complete the next portion of the path).
 		 */
