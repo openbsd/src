@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.7 1997/11/11 13:50:13 niklas Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.8 1997/11/14 23:40:55 csapuntz Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ sys_ktrace(curp, v, retval)
 		syscallarg(int) pid;
 	} */ *uap = v;
 	register struct vnode *vp = NULL;
-	register struct proc *p = curproc;	/* XXX */
+	struct proc *p = NULL;
 	struct pgrp *pg;
 	int facs = SCARG(uap, facs) & ~((unsigned) KTRFAC_ROOT);
 	int ops = KTROP(SCARG(uap, ops));
@@ -294,8 +294,7 @@ sys_ktrace(curp, v, retval)
 		}
 		vp = nd.ni_vp;
 
-		/* FIXME: Should be curp?? */
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, 0, curp);
 		if (vp->v_type != VREG) {
 			(void) vn_close(vp, FREAD|FWRITE, curp->p_ucred, curp);
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
