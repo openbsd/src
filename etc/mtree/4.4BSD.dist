@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.4 1995/12/15 02:32:09 deraadt Exp $
+#	$Id: 4.4BSD.dist,v 1.5 1995/12/15 15:38:01 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1309,7 +1309,7 @@ yp.no		mode=775
 ..
 
 # ./var/crash
-crash		mode=775
+crash		mode=770
 # ./var/crash
 ..
 
