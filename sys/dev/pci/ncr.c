@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.43 1999/03/21 01:07:36 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.44 1999/03/30 21:53:38 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -168,10 +168,9 @@
 **    The maximum number of jobs scheduled for starting.
 **    There should be one slot per target, and one slot
 **    for each tag of each target in use.
-**    The calculation below is actually quite silly ...
 */
 
-#define MAX_START   (MAX_TARGET + (MAX_TARGET - 1) * SCSI_NCR_DFLT_TAGS)
+#define MAX_START   (256)
 
 /*
 **    The maximum number of segments a transfer is split into.
@@ -1466,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.43 1999/03/21 01:07:36 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.44 1999/03/30 21:53:38 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
