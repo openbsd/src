@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.131 2004/05/05 02:18:43 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.132 2004/05/25 22:14:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2909,6 +2909,11 @@ EXIT(switch_trampoline)
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
 ENTRY(sigcode,0)
+	bb,>=,n	arg3, 30, sigcode_call
+	dep	r0, 31, 2, arg3
+	ldw	4(arg3), r19
+	ldw	0(arg3), arg3
+sigcode_call
 	.call
 	ble	0(sr0, arg3)
 	copy	r31, rp
