@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.7 1998/07/28 00:13:00 millert Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.8 2000/03/23 11:26:28 art Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/timeout.h>
 
 #include <sys/syscallargs.h>
 
@@ -106,6 +107,7 @@ sys_acct(p, v, retval)
 	} */ *uap = v;
 	struct nameidata nd;
 	int error;
+	static struct timeout acct_timeout;
 
 	/* Make sure that the caller is root. */
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -132,7 +134,7 @@ sys_acct(p, v, retval)
 	 * close the file, and (if no new file was specified, leave).
 	 */
 	if (acctp != NULLVP || savacctp != NULLVP) {
-		untimeout(acctwatch, NULL);
+		timeout_del(&acct_timeout);
 		error = vn_close((acctp != NULLVP ? acctp : savacctp), FWRITE,
 		    p->p_ucred, p);
 		acctp = savacctp = NULLVP;
@@ -145,7 +147,9 @@ sys_acct(p, v, retval)
 	 * free space watcher.
 	 */
 	acctp = nd.ni_vp;
-	acctwatch(NULL);
+	if (!timeout_initialized(&acct_timeout))
+		timeout_set(&acct_timeout, acctwatch, &acct_timeout);
+	acctwatch(&acct_timeout);
 	return (error);
 }
 
@@ -269,9 +273,10 @@ encode_comp_t(s, us)
  */
 /* ARGSUSED */
 void
-acctwatch(a)
-	void *a;
+acctwatch(arg)
+	void *arg;
 {
+	struct timeout *to = (struct timeout *)arg;
 	struct statfs sb;
 
 	if (savacctp != NULLVP) {
@@ -300,5 +305,5 @@ acctwatch(a)
 		}
 	} else
 		return;
-	timeout(acctwatch, NULL, acctchkfreq * hz);
+	timeout_add(to, acctchkfreq * hz);
 }
