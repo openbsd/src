@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1996/09/14 03:26:01 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1997/04/16 04:09:22 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.8 1995/03/18 14:55:06 cgd Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 
 #include <paths.h>
 
-#define	_PATH_DEFTAPE	"/dev/rmt8"
 #define	_PATH_DTMP	"/etc/dtmp"
 #define	_PATH_DUMPDATES	"/etc/dumpdates"
 #define	_PATH_LOCK	"/tmp/dumplockXXXXXX"

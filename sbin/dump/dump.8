@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.5 1997/02/10 04:19:55 millert Exp $
+.\"	$OpenBSD: dump.8,v 1.6 1997/04/16 04:09:20 millert Exp $
 .\"	$NetBSD: dump.8,v 1.14 1996/02/05 23:59:37 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -137,7 +137,7 @@ Write the backup to
 .Ar file
 may be a special device file
 like
-.Pa /dev/rmt12
+.Pa /dev/rst0
 (a tape drive),
 .Pa /dev/rsd1c
 (a disk drive),
@@ -323,7 +323,7 @@ After several months or so, the daily and weekly tapes should get
 rotated out of the dump cycle and fresh tapes brought in.
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
-.It Pa /dev/rmt8
+.It Pa /dev/rst0
 default tape unit to dump to
 .It Pa /dev/rst*
 Raw SCSI tape interface
