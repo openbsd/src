@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.10 2001/01/29 02:07:47 niklas Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.11 2001/03/02 09:07:39 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.23 1999/05/25 01:34:13 thorpej Exp $	*/
 
 /* 
@@ -331,8 +331,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * step 7: init reserve thresholds
 	 * XXXCDC - values may need adjusting
 	 */
-	uvmexp.reserve_pagedaemon = 1;
-	uvmexp.reserve_kernel = 5;
+	uvmexp.reserve_pagedaemon = 4;
+	uvmexp.reserve_kernel = 6;
 
 	/*
 	 * done!
