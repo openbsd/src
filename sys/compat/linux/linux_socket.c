@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.5 1997/11/26 08:51:08 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.6 1997/11/27 00:57:28 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -224,9 +224,7 @@ linux_connect(p, uap, retval)
 			return error;
 		if ((error = copyin(status, &stat, sizeof stat)))
 			return error;
-		if (stat)
-			return stat;
-		return EISCONN;
+		return stat;
 	}
 	return error;
 }
