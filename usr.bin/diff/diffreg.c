@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.41 2003/07/22 01:16:01 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.42 2003/07/23 22:01:36 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.41 2003/07/22 01:16:01 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.42 2003/07/23 22:01:36 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1171,7 +1171,7 @@ int
 asciifile(FILE *f)
 {
 	char buf[BUFSIZ], *cp;
-	int cnt;
+	int i, cnt;
 
 	if (aflag || f == NULL)
 		return (1);
@@ -1179,8 +1179,8 @@ asciifile(FILE *f)
 	rewind(f);
 	cnt = fread(buf, 1, sizeof(buf), f);
 	cp = buf;
-	while (--cnt >= 0)
-		if (*cp++ & 0200)
+	for (i = 0; i < cnt; i++)
+		if (!isprint(*cp) && !isspace(*cp))
 			return (0);
 	return (1);
 }
