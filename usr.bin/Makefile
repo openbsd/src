@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.79 2002/07/24 01:08:56 art Exp $
+#	$OpenBSD: Makefile,v 1.80 2003/05/12 04:20:26 hin Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes \
+SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
+	basename bdes \
 	biff cal calendar cap_mkdb cdio checknr chpass cksum cmp col \
 	colcrt colrm column comm compile_et compress cpp crontab ctags cut \
 	deroff dirname du elf2olf encrypt env error expand false file file2c \
