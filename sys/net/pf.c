@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.95 2001/07/02 19:19:49 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.96 2001/07/03 03:34:41 beck Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1136,7 +1136,50 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_status.states = states;
 		break;
 	}
+	case DIOCNATLOOK: {
+		struct pf_natlook *pnl = (struct pf_natlook *)addr;
+		struct pf_state *st;
+		struct pf_tree_key key;
+		int direction;
+		
+		direction   = pnl->direction;
+		key.proto   = pnl->proto;
 
+		/* userland gives us source and dest of connetion, reverse
+		 * the lookup so we ask for what happens with the return 
+		 * traffic, enabling us to find it in the state tree.
+		 */
+		key.addr[1].s_addr = pnl->saddr;
+		key.port[1] = pnl->sport;
+		key.addr[0].s_addr = pnl->daddr;
+		key.port[0] = pnl->dport;
+		
+		if (!pnl->proto || !pnl->saddr || !pnl->daddr 
+		    || !pnl->dport || !pnl->sport)
+			error = EINVAL;
+		else {
+			s = splsoftnet();
+			st = pf_find_state((direction == PF_IN) ? 
+					   tree_ext_gwy : tree_lan_ext, &key);
+			if (st != NULL) {
+				if (direction  == PF_IN) {
+					pnl->rsaddr = st->lan.addr;
+					pnl->rsport = st->lan.port;
+					pnl->rdaddr = pnl->daddr;
+					pnl->rdport = pnl->dport;
+				}
+				else {
+					pnl->rdaddr = st->gwy.addr;
+					pnl->rdport = st->gwy.port;
+					pnl->rsaddr = pnl->saddr;
+					pnl->rsport = pnl->sport;
+				}
+			} else 
+				error = ENOENT;
+			splx(s);
+		}
+		break;
+	}
 	default:
 		error = ENODEV;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.28 2001/07/01 23:04:44 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.29 2001/07/03 03:34:42 beck Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -102,6 +102,20 @@ struct pf_state {
 	u_int8_t	 direction;
 	u_int8_t	 log;
 };
+
+struct pf_natlook {
+	u_int32_t	saddr;
+	u_int32_t	daddr;
+	u_int32_t	rsaddr;
+	u_int32_t	rdaddr;
+	u_int16_t	sport;
+	u_int16_t	dport;
+	u_int16_t	rsport;
+	u_int16_t	rdport;
+	u_int8_t	proto;
+	u_int8_t	direction;
+};
+	
 
 struct pf_nat {
 	char		 ifname[IFNAMSIZ];
@@ -231,6 +245,7 @@ struct pfioc_if {
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
 #define DIOCCLRSTATUS	_IO  ('D', 22)
+#define DIOCNATLOOK	_IOWR('D', 23, struct pf_natlook)
 
 #ifdef _KERNEL
 
