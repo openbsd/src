@@ -74,16 +74,18 @@ u_char	dbg_target_mask = 0x7f;
  */
 u_char	ncr5380_no_parchk = 0xff;
 
-#ifdef	AUTO_SENSE
-
 /*
- * Bit masks of targets that accept linked commands, and those
- * that we've already checked out
+ * Flags to allow binpatching of which devices to allow or disallow
+ * issuance of linked commands.  disallowance is favored over allowance,
+ * so if the same bit is set in either, the driver will not issue linked
+ * commands to the corresponding target.
+ * SCSI-2 devices can report whether or not they will accept linked
+ * commands.  If that reports that a device supports linked commands,
+ * then it is treated as if the corresponding bit in ncr5380_allow_linked
+ * is set.
  */
-u_char	ncr_will_link = 0x00;
-u_char	ncr_test_link = 0x00;
-
-#endif	/* AUTO_SENSE */
+u_char	ncr5380_allow_linked = 0x80;
+u_char	ncr5380_disallow_linked = 0x80;
 
 /*
  * This is the default sense-command we send.
@@ -405,46 +407,14 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		} while (tmp->next && (tmp = tmp->next));
 		tmp->next = reqp;
 #ifdef AUTO_SENSE
-		if (link && (ncr_will_link & (1<<reqp->targ_id))) {
+		if (link && (   (xs->sc_link->inquiry_flags & SID_Linked)
+			     || ((1<<reqp->targ_id) & ncr5380_allow_linked))
+			 && !((1<<reqp->targ_id) & ncr5380_disallow_linked)) {
 			link->link = reqp;
 			link->xcmd.bytes[link->xs->cmdlen-2] |= 1;
 		}
 #endif
 	}
-#ifdef AUTO_SENSE
-	/*
-	 * If we haven't already, check the target for link support.
-	 * Do this by prefixing the current command with a dummy
-	 * Request_Sense command, link the dummy to the current
-	 * command, and insert the dummy command at the head of the
-	 * issue queue.  Set the DRIVER_LINKCHK flag so that we'll
-	 * ignore the results of the dummy command, since we only
-	 * care about whether it was accepted or not.
-	 */
-	if (!link && !(ncr_test_link & (1<<reqp->targ_id)) &&
-	    (tmp = free_head) && !(reqp->dr_flag & DRIVER_NOINT)) {
-		free_head = tmp->next;
-		tmp->dr_flag = (reqp->dr_flag & ~DRIVER_DMAOK) | DRIVER_LINKCHK;
-		tmp->phase = NR_PHASE;
-		tmp->msgout = MSG_NOOP;
-		tmp->status = SCSGOOD;
-		tmp->xs = reqp->xs;
-		tmp->targ_id = reqp->targ_id;
-		tmp->targ_lun = reqp->targ_lun;
-		bcopy(sense_cmd, &tmp->xcmd, sizeof(sense_cmd));
-		tmp->xdata_ptr = (u_char *)&tmp->xs->sense;
-		tmp->xdata_len = sizeof(tmp->xs->sense);
-		ncr_test_link |= 1<<tmp->targ_id;
-		tmp->link = reqp;
-		tmp->xcmd.bytes[sizeof(sense_cmd)-2] |= 1;
-		tmp->next = issue_q;
-		issue_q = tmp;
-#ifdef DBG_REQ
-		if (dbg_target_mask & (1 << tmp->targ_id))
-			show_request(tmp, "LINKCHK");
-#endif
-	}
-#endif
 	splx(sps);
 
 #ifdef DBG_REQ
@@ -893,8 +863,6 @@ SC_REQ	*reqp;
 			reqp->xs->error      = code ? code : XS_SELTIMEOUT;
 			DBG_SELPRINT ("Target %d not responding to sel\n",
 								reqp->targ_id);
-			if (reqp->dr_flag & DRIVER_LINKCHK)
-				ncr_test_link &= ~(1<<reqp->targ_id);
 			finish_req(reqp);
 			PID("scsi_select8");
 			return (0);
@@ -1583,18 +1551,6 @@ int	linked;
 {
 	int	sps;
 
-	/*
-	 * If this is the driver's Link Check for this target, ignore
-	 * the results of the command.  All we care about is whether we
-	 * got here from a LINK_CMD_COMPLETE or CMD_COMPLETE message.
-	 */
-	PID("linkcheck");
-	if (reqp->dr_flag & DRIVER_LINKCHK) {
-		if (linked)
-			ncr_will_link |= 1<<reqp->targ_id;
-		else ncr_tprint(reqp, "Does not support linked commands\n");
-		return (0);
-	}
 	/*
 	 * If we not executing an auto-sense and the status code
 	 * is request-sense, we automatically issue a request
