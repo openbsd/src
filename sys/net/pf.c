@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.474 2004/12/14 03:49:06 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.475 2004/12/17 17:32:28 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2166,7 +2166,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		 * similar 2 portloop in in_pcbbind
 		 */
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP)) {
-			key.gwy.port = 0;
+			key.gwy.port = dport;
 			if (pf_find_state_all(&key, PF_EXT_GWY, NULL) == NULL)
 				return (0);
 		} else if (low == 0 && high == 0) {
@@ -3351,7 +3351,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nr = pf_get_translation(pd, m, off, PF_OUT, kif, &nsn,
-		    saddr, 0, daddr, 0, &pd->naddr, NULL)) != NULL) {
+		    saddr, icmpid, daddr, icmpid, &pd->naddr, NULL)) != NULL) {
 			PF_ACPY(&pd->baddr, saddr, af);
 			switch (af) {
 #ifdef INET
@@ -3375,7 +3375,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	} else {
 		/* check incoming packet for BINAT/RDR */
 		if ((nr = pf_get_translation(pd, m, off, PF_IN, kif, &nsn,
-		    saddr, 0, daddr, 0, &pd->naddr, NULL)) != NULL) {
+		    saddr, icmpid, daddr, icmpid, &pd->naddr, NULL)) != NULL) {
 			PF_ACPY(&pd->baddr, daddr, af);
 			switch (af) {
 #ifdef INET
