@@ -1,0 +1,2 @@
+stdin:3: interface nonexistant0 does not exist
+pfctl: Syntax error in file: pf rules not loaded
