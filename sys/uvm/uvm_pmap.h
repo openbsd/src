@@ -106,7 +106,9 @@ void		 pmap_activate(struct proc *);
 #ifndef	pmap_deactivate
 void		 pmap_deactivate(struct proc *);
 #endif
+#ifndef	pmap_unwire
 void		 pmap_unwire(pmap_t, vaddr_t);
+#endif
 
 #if !defined(pmap_clear_modify)
 boolean_t	 pmap_clear_modify(struct vm_page *);
