@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.208 2000/01/03 23:38:25 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.209 2000/01/10 02:21:05 jason Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -510,6 +510,7 @@ vendor ADMTEK		0x1317	ADMtek
 vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
+vendor HIFN		0x13a3	Hi/Fn
 vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor INVERTEX		0x14e1	Invertex
@@ -917,6 +918,9 @@ product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 
 /* Hewlett-Packard products */
 product HP J2585A		0x1030	J2585A
+
+/* Hi/Fn products */
+product HIFN 7751		0x0005	7751
 
 /* IBM products */
 product IBM 0x0002 		0x0002	MCA
