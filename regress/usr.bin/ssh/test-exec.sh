@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.17 2004/06/13 13:51:02 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.18 2004/06/13 15:04:08 djm Exp $
 #	Placed in the Public Domain.
 
 PORT=4242
@@ -35,6 +35,7 @@ unset SSH_AUTH_SOCK
 # defaults
 SSH=ssh
 SSHD=sshd
+SCP=scp
 SSHAGENT=ssh-agent
 SSHADD=ssh-add
 SSHKEYGEN=ssh-keygen
@@ -48,6 +49,9 @@ if [ "x$TEST_SSH_SSH" != "x" ]; then
 fi
 if [ "x$TEST_SSH_SSHD" != "x" ]; then
 	SSHD="${TEST_SSH_SSHD}"
+fi
+if [ "x$TEST_SSH_SCP" != "x" ]; then
+	SCP="${TEST_SSH_SCP}"
 fi
 if [ "x$TEST_SSH_SSHAGENT" != "x" ]; then
 	SSHAGENT="${TEST_SSH_SSHAGENT}"
@@ -136,6 +140,7 @@ cat << EOF > $OBJ/sshd_config
 	LogLevel		QUIET
 	AcceptEnv		_XXX_TEST_*
 	AcceptEnv		_XXX_TEST
+	Subsystem	sftp	$SFTPSERVER
 EOF
 
 # server config for proxy connects

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2004/06/13 13:51:02 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.30 2004/06/13 15:04:08 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -33,7 +33,8 @@ LTESTS= 	connect \
 		sftp-batch \
 		reconfigure \
 		dynamic-forward \
-		forwarding
+		forwarding \
+		multiplex
 
 USER!=		id -un
 CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
