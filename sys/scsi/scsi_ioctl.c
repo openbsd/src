@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.7 1997/04/14 04:09:11 downsj Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.8 1997/08/31 07:41:52 downsj Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -290,24 +290,15 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
-	/* Check for the safe-ness of this request. */
-	switch (cmd) {
-	case SCIOCIDENTIFY:
-		break;
-
-	default:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-	}
+	/* If we don't have write access, just skip to the safe ones. */
+	if ((flag & FWRITE) == 0)
+		return scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p);
 
 	switch(cmd) {
 	case SCIOCCOMMAND: {
 		scsireq_t *screq = (scsireq_t *)addr;
 		struct scsi_ioctl *si;
 		int len;
-
-		if ((flag & FWRITE) == 0)
-			return EBADF;
 
 		si = si_get();
 		si->si_screq = *screq;
@@ -344,8 +335,6 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
 
-		if ((flag & FWRITE) == 0)
-			return EBADF;
 		SC_DEBUG(sc_link, SDEV_DB3, ("debug set to %d\n", level));
 		sc_link->flags &= ~SDEV_DBX; /* clear debug bits */
 		if (level & 1)
@@ -361,8 +350,6 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCREPROBE: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
-		if ((flag & FWRITE) == 0)
-			return EBADF;
 		return scsi_probe_busses(sca->scbus, sca->target, sca->lun);
 	}
 	case SCIOCRECONFIG:
@@ -404,6 +391,14 @@ scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
 		sca->lun = sc_link->lun;
 		return 0;
 	}
+	case SCIOCCOMMAND:
+	case SCIOCDEBUG:
+	case SCIOCREPROBE:
+	case SCIOCRESET:
+		return EBADF;
+	case SCIOCRECONFIG:
+	case SCIOCDECONFIG:
+		return EINVAL;
 	default:
 		return ENOTTY;
 	}
