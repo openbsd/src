@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.5 2004/09/15 18:58:59 grange Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.6 2004/10/08 18:57:38 drahn Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -91,7 +91,10 @@ hotplug_put_event(struct hotplug_event *he)
 
 	evqueue[evqueue_head] = *he;
 	evqueue_head = EVQUEUE_NEXT(evqueue_head);
-	evqueue_count++;
+	if (evqueue_count == HOTPLUG_MAXEVENTS)
+		evqueue_tail = EVQUEUE_NEXT(evqueue_tail);
+	else 
+		evqueue_count++;
 	wakeup(&evqueue);
 	selwakeup(&hotplug_sel);
 	KNOTE(&hotplug_sel.si_note, 0);
