@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.48 2001/06/11 10:50:09 itojun Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.49 2001/06/28 21:41:58 angelos Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -441,6 +441,12 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
   memcpy (key, exchange->nonce_i, exchange->nonce_i_len);
   memcpy (key + exchange->nonce_i_len, exchange->nonce_r,
 	  exchange->nonce_r_len);
+
+  LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: PRF type %d, hash %d",
+      ie->prf_type, ie->hash->type));
+  LOG_DBG_BUF((LOG_NEGOTIATION, 80, "sig_gen_skeyid: SKEYID initialized with:",
+      key, exchange->nonce_i_len + exchange->nonce_r_len));
+
   prf = prf_alloc (ie->prf_type, ie->hash->type, key,
 		   exchange->nonce_i_len + exchange->nonce_r_len);
   free (key);
@@ -455,6 +461,11 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
       prf_free (prf);
       return 0;
     }
+
+  LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: g^xy length %d",
+      ie->g_x_len));
+  LOG_DBG_BUF((LOG_NEGOTIATION, 80,
+      "sig_gen_skeyid: SKEYID fed with g^xy:", ie->g_xy, ie->g_x_len));
 
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
