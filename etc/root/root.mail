@@ -28,7 +28,7 @@ ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
    # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.4/packages/i386/emacs-20.3.tgz
-or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/i386/emacs-20.2.tgz
+or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/i386/emacs-20.3.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
