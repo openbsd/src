@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.2 2003/04/15 18:07:32 mickey Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.3 2003/04/17 12:15:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -37,9 +37,12 @@
 #include <sys/stat.h>
 #include <libsa.h>
 #include <lib/libsa/cd9660.h>
+#include <lib/libsa/loadfile.h>
 #include <dev/cons.h>
+#include <machine/pdc.h>
+#include <stand/boot/bootarg.h>
+#include "dev_hppa.h"
 
-char path[128];
 dev_t bootdev;
 int debug = 1;
 
@@ -60,10 +63,16 @@ struct consdev	constab[] = {
 };
 struct consdev *cn_tab;
 
+typedef void (*startfuncp) __P((int, int, int, int, int, int, caddr_t))
+    __attribute__ ((noreturn));
+
 void
 boot(dev)
 	dev_t	dev;
 {
+	u_long marks[MARK_MAX];
+	char path[128];
+
 	pdc_init();
 	cninit();
 	devboot(dev, path);
@@ -71,5 +80,17 @@ boot(dev)
 	printf(">> OpenBSD/" MACHINE " CDBOOT 0.1\n"
 	    "booting %s: ", path);
 
-	exec(path, (void *)DEFAULT_KERNEL_ADDRESS, 0);
+	marks[MARK_START] = (u_long)DEFAULT_KERNEL_ADDRESS;
+	if (!loadfile(path, marks, LOAD_KERNEL)) {
+		marks[MARK_END] = ALIGN(marks[MARK_END] -
+		    (u_long)DEFAULT_KERNEL_ADDRESS);
+		fcacheall();
+
+		__asm("mtctl %r0, %cr17");
+		__asm("mtctl %r0, %cr17");
+		(*(startfuncp)(marks[MARK_ENTRY]))((int)pdc, 0, bootdev,
+		    marks[MARK_END], BOOTARG_APIVER, BOOTARG_LEN,
+		    (caddr_t)BOOTARG_OFF);
+		/* not reached */
+	}
 }
