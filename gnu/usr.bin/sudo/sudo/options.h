@@ -17,7 +17,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Id: options.h,v 1.5 1997/03/02 05:16:20 millert Exp $
+ *  $Id: options.h,v 1.6 1997/10/06 06:00:26 millert Exp $
  */
 
 #ifndef _SUDO_OPTIONS_H
@@ -44,7 +44,7 @@
 #define SHORT_MESSAGE		/* short sudo message, no copyright printed */
 /*#define NO_MESSAGE		/* no sudo "lecture" message */
 #define TIMEOUT 5		/* minutes before sudo asks for passwd again */
-#define PASSWORD_TIMEOUT 0	/* passwd prompt timeout (in minutes) */
+#define PASSWORD_TIMEOUT 5	/* passwd prompt timeout (in minutes) */
 #define TRIES_FOR_PASSWORD 3	/* number of tries to enter passwd correctly */
 #define USE_INSULTS		/* insult the user for incorrect passwords */
 #define CLASSIC_INSULTS		/* sudo "classic" insults--need USE_INSULTS */
