@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.3 2003/01/06 00:05:04 deraadt Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.4 2003/01/22 01:38:10 deraadt Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -35,7 +35,7 @@ case $# in
 esac
 
 filter() {
-	grep -v '#' | sed 's/ .*$//g' | sort
+	grep -v '#' | cut -d' ' -f1 | sort
 }
 
 pfcmd() {
