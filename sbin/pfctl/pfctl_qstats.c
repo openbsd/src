@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.18 2003/04/15 11:51:42 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.19 2003/05/18 20:32:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -249,7 +249,7 @@ pfctl_print_altq_node(int dev, const struct pf_altq_node *node, unsigned level,
 		pfctl_print_altq_nodestat(dev, node);
 
 	if (opts & PF_OPT_DEBUG)
-		printf("[ qid=%u ifname=%s ifbandwidth=%s ]\n", node->altq.qid,
+		printf("  [ qid=%u ifname=%s ifbandwidth=%s ]\n", node->altq.qid,
 		    node->altq.ifname, rate2str(node->altq.ifbandwidth));
 
 	for (child = node->children; child != NULL;
@@ -281,13 +281,13 @@ print_cbqstats(struct queue_stats cur, struct queue_stats last)
 {
 	double	interval;
 
-	printf("[ pkts: %10llu  bytes: %10llu  "
+	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.cbq_stats.xmit_cnt.packets,
 	    cur.data.cbq_stats.xmit_cnt.bytes,
 	    cur.data.cbq_stats.drop_cnt.packets,
 	    cur.data.cbq_stats.drop_cnt.bytes);
-	printf("[ qlength: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
+	printf("  [ qlength: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
 	    cur.data.cbq_stats.qcnt, cur.data.cbq_stats.qmax,
 	    cur.data.cbq_stats.borrows, cur.data.cbq_stats.delays);
 
@@ -295,7 +295,7 @@ print_cbqstats(struct queue_stats cur, struct queue_stats last)
 		return;
 
 	interval = calc_interval(&cur.timestamp, &last.timestamp);
-	printf("[ measured: %7.1f packets/s, %s/s ]\n",
+	printf("  [ measured: %7.1f packets/s, %s/s ]\n",
 	    calc_pps(cur.data.cbq_stats.xmit_cnt.packets,
 		last.data.cbq_stats.xmit_cnt.packets, interval),
 	    rate2str(calc_rate(cur.data.cbq_stats.xmit_cnt.bytes,
@@ -307,20 +307,20 @@ print_priqstats(struct queue_stats cur, struct queue_stats last)
 {
 	double	interval;
 
-	printf("[ pkts: %10llu  bytes: %10llu  "
+	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.priq_stats.xmitcnt.packets,
 	    cur.data.priq_stats.xmitcnt.bytes,
 	    cur.data.priq_stats.dropcnt.packets,
 	    cur.data.priq_stats.dropcnt.bytes);
-	printf("[ qlength: %3d/%3d ]\n",
+	printf("  [ qlength: %3d/%3d ]\n",
 	    cur.data.priq_stats.qlength, cur.data.priq_stats.qlimit);
 
 	if (!last.valid)
 		return;
 
 	interval = calc_interval(&cur.timestamp, &last.timestamp);
-	printf("[ measured: %7.1f packets/s, %s/s ]\n",
+	printf("  [ measured: %7.1f packets/s, %s/s ]\n",
 	    calc_pps(cur.data.priq_stats.xmitcnt.packets,
 		last.data.priq_stats.xmitcnt.packets, interval),
 	    rate2str(calc_rate(cur.data.priq_stats.xmitcnt.bytes,
@@ -332,20 +332,20 @@ print_hfscstats(struct queue_stats cur, struct queue_stats last)
 {
 	double	interval;
 
-	printf("[ pkts: %10llu  bytes: %10llu  "
+	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.hfsc_stats.xmit_cnt.packets,
 	    cur.data.hfsc_stats.xmit_cnt.bytes,
 	    cur.data.hfsc_stats.drop_cnt.packets,
 	    cur.data.hfsc_stats.drop_cnt.bytes);
-	printf("[ qlength: %3d/%3d ]\n",
+	printf("  [ qlength: %3d/%3d ]\n",
 	    cur.data.hfsc_stats.qlength, cur.data.hfsc_stats.qlimit);
 
 	if (!last.valid)
 		return;
 
 	interval = calc_interval(&cur.timestamp, &last.timestamp);
-	printf("[ measured: %7.1f packets/s, %s/s ]\n",
+	printf("  [ measured: %7.1f packets/s, %s/s ]\n",
 	    calc_pps(cur.data.hfsc_stats.xmit_cnt.packets,
 		last.data.hfsc_stats.xmit_cnt.packets, interval),
 	    rate2str(calc_rate(cur.data.hfsc_stats.xmit_cnt.bytes,
