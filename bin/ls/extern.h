@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2000/07/19 19:27:36 mickey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/03/21 09:06:24 cgd Exp $	*/
 
 /*-
@@ -35,6 +35,8 @@
  *
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
+
+extern char *__progname;
 
 int	 acccmp __P((const FTSENT *, const FTSENT *));
 int	 revacccmp __P((const FTSENT *, const FTSENT *));

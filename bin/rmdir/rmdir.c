@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.4 2001/05/20 08:51:32 mickey Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.5 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: rmdir.c,v 1.4 2001/05/20 08:51:32 mickey Exp $";
+static char rcsid[] = "$OpenBSD: rmdir.c,v 1.5 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: rmdir.c,v 1.4 2001/05/20 08:51:32 mickey Exp $"
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
+
+extern char *__progname;
 
 int rm_path __P((char *));
 void usage __P((void));
@@ -127,7 +129,6 @@ rm_path(path)
 void
 usage()
 {
-	extern char *__progname;
 	fprintf(stderr, "usage: %s [-p] directory ...\n", __progname);
 	exit(1);
 }

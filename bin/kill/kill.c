@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.3 1997/02/06 13:29:08 deraadt Exp $	*/
+/*	$OpenBSD: kill.c,v 1.4 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.3 1997/02/06 13:29:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: kill.c,v 1.4 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: kill.c,v 1.3 1997/02/06 13:29:08 deraadt Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+extern	char *__progname;
 
 void nosig __P((char *));
 void printsignals __P((FILE *));
@@ -184,10 +186,12 @@ printsignals(fp)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: kill [-s signal_name] pid ...\n");
-	(void)fprintf(stderr, "       kill -l [exit_status]\n");
-	(void)fprintf(stderr, "       kill -signal_name pid ...\n");
-	(void)fprintf(stderr, "       kill -signal_number pid ...\n");
+	(void)fprintf(stderr, "usage: %s [-s signal_name] pid ...\n",
+            __progname);
+	(void)fprintf(stderr, "       %s -l [exit_status]\n", __progname);
+	(void)fprintf(stderr, "       %s -signal_name pid ...\n",
+            __progname);
+	(void)fprintf(stderr, "       %s -signal_number pid ...\n",
+            __progname);
 	exit(1);
 }

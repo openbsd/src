@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1996/06/23 14:21:50 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/05/07 18:20:06 jtc Exp $	*/
 
 /*-
@@ -35,6 +35,8 @@
  *
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
+
+extern char *__progname;
 
 int	c_cchars __P((const void *, const void *));
 int	c_modes __P((const void *, const void *));

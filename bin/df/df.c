@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.29 2001/07/09 22:37:56 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.30 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.29 2001/07/09 22:37:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.30 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ static char rcsid[] = "$OpenBSD: df.c,v 1.29 2001/07/09 22:37:56 millert Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+extern	char *__progname;
 
 int	 bread __P((int, off_t, void *, int));
 char	*getmntpt __P((char *));
@@ -532,6 +534,8 @@ bread(rfd, off, buf, cnt)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: df [-hiklnP] [-t type] [file | file_system ...]\n");
+	(void)fprintf(stderr,
+            "usage: %s [-hiklnP] [-t type] [file | file_system ...]\n",
+             __progname);
 	exit(1);
 }

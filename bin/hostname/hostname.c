@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostname.c,v 1.3 1996/08/02 12:40:55 deraadt Exp $	*/
+/*	$OpenBSD: hostname.c,v 1.4 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: hostname.c,v 1.10 1995/09/07 06:28:40 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: hostname.c,v 1.3 1996/08/02 12:40:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hostname.c,v 1.4 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: hostname.c,v 1.3 1996/08/02 12:40:55 deraadt Ex
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+extern	char *__progname;
 
 void usage __P((void));
 
@@ -97,7 +99,6 @@ main(argc, argv)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: hostname [-s] [name-of-host]\n");
+	(void)fprintf(stderr, "usage: %s [-s] [name-of-host]\n", __progname);
 	exit(1);
 }

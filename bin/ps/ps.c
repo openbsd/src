@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.21 2001/06/03 04:48:15 angelos Exp $	*/
+/*	$OpenBSD: ps.c,v 1.22 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.21 2001/06/03 04:48:15 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.22 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ static char rcsid[] = "$OpenBSD: ps.c,v 1.21 2001/06/03 04:48:15 angelos Exp $";
 #include <limits.h>
 
 #include "ps.h"
+
+extern char *__progname;
 
 KINFO *kinfo;
 struct varent *vhead, *vtail;
@@ -519,11 +521,11 @@ kludge_oldps_options(s)
 static void
 usage()
 {
-
 	(void)fprintf(stderr,
-	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-][aChjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]",
-	    "[-M core] [-N system] [-W swap]",
-	    "ps [-L]");
+            "usage: %s [-][aChjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]\n",
+	     __progname);	
+	(void)fprintf(stderr,
+	    "%-*s[-M core] [-N system] [-W swap]\n", strlen(__progname) + 8, "");
+	(void)fprintf(stderr, "       %s [-L]\n", __progname);
 	exit(1);
 }

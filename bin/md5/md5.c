@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.13 2001/06/03 18:04:16 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.14 2001/09/06 13:29:08 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -264,7 +264,6 @@ digest_test(struct hash_functions *hf)
 static void
 usage()
 {
-
 	fprintf(stderr, "usage: %s [-p | -t | -x | -s string | file ...]\n",
 	    __progname);
 	exit(1);

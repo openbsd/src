@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.c,v 1.5 1997/01/15 23:40:24 millert Exp $	*/
+/*	$OpenBSD: pwd.c,v 1.6 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: pwd.c,v 1.5 1997/01/15 23:40:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: pwd.c,v 1.6 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ static char rcsid[] = "$OpenBSD: pwd.c,v 1.5 1997/01/15 23:40:24 millert Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+extern	char *__progname;
 
 void usage __P((void));
 
@@ -92,7 +94,6 @@ main(argc, argv)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: pwd\n");
+	(void)fprintf(stderr, "usage: %s\n", __progname);
 	exit(1);
 }

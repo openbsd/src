@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.9 2000/02/02 05:09:01 ericj Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.10 2001/09/06 13:29:08 mpech Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.9 2000/02/02 05:09:01 ericj Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.10 2001/09/06 13:29:08 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,8 @@ static char rcsid[] = "$OpenBSD: mkdir.c,v 1.9 2000/02/02 05:09:01 ericj Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+extern char *__progname;
 
 int	mkpath __P((char *, mode_t, mode_t));
 void	usage __P((void));
@@ -182,7 +184,6 @@ mkpath(path, mode, dir_mode)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: mkdir [-p] [-m mode] dirname ...\n");
+	(void)fprintf(stderr, "usage: %s [-p] [-m mode] dirname ...\n", __progname);
 	exit(1);
 }
