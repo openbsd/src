@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.34 1998/09/28 12:34:06 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.35 1998/09/28 12:34:51 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -418,33 +418,33 @@ case "$resp" in
 			fi
 		fi
 
-		ns="none"
+		resp="none"
 		if [ -f /etc/resolv.conf ]; then
-			ns=""
+			resp=""
 			for n in `grep '^nameserver ' /etc/resolv.conf | \
 			    sed -e 's/^nameserver //'`; do
-				if [ "X${ns}" = "X" ]; then
-					ns="$n"
+				if [ "X${resp}" = "X" ]; then
+					resp="$n"
 				else
-					ns="$ns $n"
+					resp="$resp $n"
 				fi
 			done
 		elif [ -f /tmp/resolv.conf ]; then
-			ns=""
+			resp=""
 			for n in `grep '^nameserver ' /tmp/resolv.conf | \
 			    sed -e 's/^nameserver //'`; do
-				if [ "X${ns}" = "X" ]; then
-					ns="$n"
+				if [ "X${resp}" = "X" ]; then
+					resp="$n"
 				else
-					ns="$ns $n"
+					resp="$resp $n"
 				fi
 			done
 		fi
-		echo -n	"Enter IP address of primary nameserver: [$ns] "
-		getresp "$ns"
-		if [ "X${ns}" != X"none" ]; then
+		echo -n	"Enter IP address of primary nameserver: [$resp] "
+		getresp "$resp"
+		if [ "X${resp}" != X"none" ]; then
 			echo "search $FQDN" >> /tmp/resolv.conf
-			for n in `echo ${ns}`; do
+			for n in `echo ${resp}`; do
 				echo "nameserver $n" >> /tmp/resolv.conf
 			done
 			echo "lookup file bind" >> /tmp/resolv.conf
