@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.163 2003/01/09 10:40:44 cedric Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.164 2003/01/10 10:08:54 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1659,7 +1659,7 @@ rdr-rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ( interface-name | "{" interface-list "}" ) [ af ]
 
-table-rule     = "table "<" tablename ">" [ "persist" ] [ "const" ]
+table-rule     = "table" "<" tablename ">" [ "persist" ] [ "const" ]
 		 [ "{" [ table-address [ "," ] ]* "}" ]
 
 altq-rule      = "altq" "on" interface-name queueopts-list
