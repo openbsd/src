@@ -1,6 +1,6 @@
-#!/usr/bin/perl
+_#!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.44 2004/09/20 07:31:42 espie Exp $
+# $OpenBSD: pkg_delete,v 1.45 2004/09/21 09:42:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -39,27 +39,27 @@ sub ensure_ldconfig
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
 
-sub erase_alldirrms
+sub record_all_shared_items
 {
 	my $db = {};
 	my @list = installed_packages();
 	for my $e (@list) {
 		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
 		for my $item (@{$plist->{items}}) {
-			$item->erase_dir($e, $db);
+			$item->record_shared_item($e, $db);
 		}
 	}
 	return $db;
 }
 
-sub remove_dirs
+sub cleanup_shared_items
 {
 	my $state = shift;
 
 	my $h = $state->{dirs_to_rm};
 	return unless defined $h;
 
-	my $remaining = erase_alldirrms();
+	my $remaining = record_all_shared_items();
 
 	for my $d (sort {$b cmp $a} keys %$h) {
 		my $realname = $state->{destdir}.$d;
@@ -84,7 +84,7 @@ sub delete
 {
 }
 
-sub erase_dir
+sub record_shared_item
 {
 }
 
@@ -108,7 +108,7 @@ sub log_pkgname
 
 
 package OpenBSD::PackingElement::DirBase;
-sub erase_dir
+sub record_shared_item
 {
 	my ($self, $pkgname, $db) = @_;
 	my $k = $self->fullname();
@@ -133,9 +133,9 @@ sub delete
 }
 
 package OpenBSD::PackingElement::DirRm;
-sub erase_dir
+sub record_shared_item
 {
-	&OpenBSD::PackingElement::DirBase::erase_dir;
+	&OpenBSD::PackingElement::DirBase::record_shared_item;
 }
 
 sub delete
@@ -650,7 +650,7 @@ my $dielater = $@;
 
 ensure_ldconfig($opt_v) unless $opt_n;
 # delayed directory removal
-remove_dirs($state);
+cleanup_shared_items($state);
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 
 my $logname = OpenBSD::Logger::logname();
