@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     $Id: getaddrinfo.3,v 1.1 1999/07/03 20:22:21 deraadt Exp $
+.\"     $Id: getaddrinfo.3,v 1.2 1999/07/03 20:26:55 deraadt Exp $
 .\"
 .Dd May 25, 1995
 .Dt GETADDRINFO 3
@@ -54,11 +54,11 @@
 The
 .Fn getaddrinfo
 function is defined for protocol-independent nodename-to-address translation.
-It performs functionality of 
+It performs the functionality of
 .Xr gethostbyname 3
 and
 .Xr getservbyname 3 ,
-in more sophisticated manner.
+but in a more sophisticated manner.
 .Pp
 The addrinfo structure is defined as a result of including the
 .Li <netdb.h>
@@ -256,7 +256,7 @@ Otherwise an error of
 .Dv EAI_NONAME
 is returned.
 This flag prevents any type of name resolution service (e.g., the DNS)
-from being called.                                               
+from being called.
 .Pp
 All of the information returned by
 .Fn getaddrinfo
@@ -299,7 +299,7 @@ indicate an unknown error.
 .It Pa /etc/resolv.conf
 .El
 .Sh DIAGNOSTICS
-Error return status from 
+Error return status from
 .Fn getaddrinfo
 is zero on success and non-zero on errors.
 Non-zero error codes are defined in
@@ -307,7 +307,7 @@ Non-zero error codes are defined in
 and as follows:
 .Pp
 .Bl -tag -width EAI_ADDRFAMILY -compact
-.It Dv EAI_ADDRFAMILY 
+.It Dv EAI_ADDRFAMILY
 address family for nodename not supported
 .It Dv EAI_AGAIN
 temporary failure in name resolution
