@@ -1,4 +1,4 @@
-.\" $OpenBSD: keyconv.8,v 1.2 2001/08/22 15:37:55 ho Exp $
+.\" $OpenBSD: keyconv.8,v 1.3 2001/08/22 16:24:44 ho Exp $
 .\"
 .\" Copyright (c) 2001 Hakan Olsson.  All rights reserved.
 .\"
@@ -34,11 +34,8 @@
 .Nd DNSSEC/OpenSSL private key converter
 .Sh SYNOPSIS
 .Nm keyconv
-.Fl d 
-infile outfile
-.Nm keyconv
-.Fl o 
-infile outfile
+.Fl do
+.Ar infile Ar outfile
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,20 +55,31 @@ For proper operation,
 is expected to contain the private key.
 .Pp
 The mode of operation is determined as follows:
-.Bl -tag -width abcd
+.Bl -tag -width abc
 .It Fl d
-Convert from DNSSEC to OpenSSL format.
+Convert from
+.Pa DNSSEC
+to
+.Pa OpenSSL
+format.
 .It Fl o
-Convert from OpenSSL to DNSSEC format. In this mode, 
+Convert from
+.Pa OpenSSL
+to
+.Pa DNSSEC
+format. In this mode, 
 .Nm
-outputs both the DNSSEC private key, plus a "outfile.pubkey"
-file containing the public key in a format suitable for inclusion
-in a DNS database.
+outputs both the private key, plus a 
+.Em outfile.pubkey
+file containing the public key in DNS KEY format.
 .El
 .Pp
 The
 .Nm dnssec-keygen
-command is supplied as part of BIND version 8 and 9.
+command is supplied as part of BIND version 8 and 9 and can currently
+be found in the
+.Ox
+ports collection.
 .Sh EXAMPLES
 Create a new RSA key for usage both in
 .Xr isakmpd 8
@@ -83,10 +91,8 @@ $ keyconv -d testkey.ssl testkey.dns
 .Ed
 .Sh SEE ALSO
 .Xr isakmpd 8 ,
-.Xr openssl 1 ,
-.Xr dnssec-keygen 8
+.Xr openssl 1
 .Sh HISTORY
 This command first appeared in
-.Ox 
-3.0.
+.Ox 3.0 .
 
