@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1995/12/09 04:37:48 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 1996/01/12 04:16:59 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,7 +239,7 @@ pagemove(from, to, size)
 	register vm_offset_t	pa;
 
 #ifdef DEBUG
-	if (size & CLOFFSET)
+	if (size % PAGE_SIZE)
 		panic("pagemove");
 #endif
 	while (size > 0) {
