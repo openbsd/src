@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips.c,v 1.5 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: mips64.c,v 1.1 2004/08/11 11:25:16 pefo Exp $	*/
 /*	$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mips.c,v 1.5 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: mips64.c,v 1.1 2004/08/11 11:25:16 pefo Exp $";
 #endif
 #endif /* not lint */
 

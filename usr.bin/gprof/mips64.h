@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips.h,v 1.3 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: mips64.h,v 1.1 2004/08/11 11:25:16 pefo Exp $	*/
 /*	$NetBSD: mips.h,v 1.3 1995/04/19 07:16:12 cgd Exp $	*/
 
 /*-
