@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.6 1998/07/06 18:28:18 deraadt Exp $
+.\"	$OpenBSD: recv.2,v 1.7 1998/07/28 04:49:31 millert Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd February 21, 1994
+.Dd July 27, 1998
 .Dt RECV 2
 .Os BSD 4.3r
 .Sh NAME
@@ -226,7 +226,11 @@ is returned to indicate that expedited or out-of-band data were received.
 These calls return the number of bytes received, or -1
 if an error occurred.
 .Sh ERRORS
-The calls fail if:
+.Fn Recv ,
+.Fn recvfrom ,
+and
+.Fn recvmsg
+fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The argument
@@ -253,6 +257,18 @@ any data were available.
 .It Bq Er EFAULT
 The receive buffer pointer(s) point outside the process's
 address space.
+.El
+.Pp
+In addition, 
+.Fn recvmsg
+may return following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The sum of the
+.Fa iov_len
+values in the
+.Fa msg_iov
+array overflowed an unsigned 32-bit integer.
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
