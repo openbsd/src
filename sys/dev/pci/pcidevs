@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.514 2002/06/02 10:07:54 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.515 2002/06/03 16:13:21 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -566,7 +566,7 @@ vendor ADDTRON		0x4033	Addtron
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic
-vendor GUILLEMOT	0x5046	Guillemot
+vendor GEMTEK		0x5046	Gemtek
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower
 vendor C4T		0x6374	c't Magazin
@@ -1195,7 +1195,7 @@ product GLOBALSUN GL24110P	0x1101	GL24110P
 product GLOBALSUN GL24110P02	0x1102	GL24110P02
 
 /* Guillemot products */
-product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
+product GEMTEK PR103		0x1001	PR103
 
 /* Hewlett-Packard products */
 product HP A4977A		0x1005	A4977A Visualize EG

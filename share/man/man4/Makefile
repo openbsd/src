@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.209 2002/06/03 02:58:42 jason Exp $
+#	$OpenBSD: Makefile,v 1.210 2002/06/03 16:13:21 mickey Exp $
 
 MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 ami.4 amphy.4 \
 	an.4 aria.4 ast.4 atalk.4 atapiscsi.4 \
@@ -9,13 +9,13 @@ MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 ami.4 amphy.4 \
 	cue.4 cy.4 cz.4 dc.4 ddb.4 de.4 dpt.4 drum.4 eap.4 ec.4 \
 	eephy.4 ef.4 eg.4 eisa.4 el.4 emu.4 enc.4 ep.4 esa.4 esis.4 \
 	eso.4 ess.4 exphy.4 fd.4 fdc.4 fpa.4 \
-	fms.4 fxp.4 gdt.4 gre.4 gx.4 hifn.4 hsq.4 icmp.4 icsphy.4 \
+	fms.4 fxp.4 gdt.4 gre.4 gtp.4 gx.4 hifn.4 hsq.4 icmp.4 icsphy.4 \
 	idp.4 iha.4 ifmedia.4 \
 	inet.4 inphy.4 iop.4 iopsp.4 ioprbs.4 iophy.4 ip.4 ipcomp.4 ipsec.4 \
 	isa.4 isapnp.4 ises.4 iso.4 isp.4 \
 	ksyms.4 kue.4 \
 	lc.4 lge.4 lkm.4 lmc.4 lo.4 lofn.4 lpt.4 lxtphy.4 \
-	maestro.4 midi.4 mii.4 mtdphy.4 mr.4 mtio.4 \
+	maestro.4 midi.4 mii.4 mtdphy.4 mtio.4 \
 	ncr.4 ne.4 neo.4 netintro.4 nge.4 noct.4 nofn.4 ns.4 nsip.4 nsgphy.4 \
 	nsphy.4 nsphyter.4 null.4 \
 	ohci.4 opl.4 options.4 pcdisplay.4 pchb.4 pckbc.4 pckbd.4 \

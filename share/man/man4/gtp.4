@@ -1,7 +1,6 @@
-.\"	$OpenBSD: mr.4,v 1.4 2002/01/07 18:37:45 mickey Exp $
-.\"	$RuOBSD: mr.4,v 1.3 2001/10/26 05:38:43 form Exp $
+.\"	$OpenBSD: gtp.4,v 1.1 2002/06/03 16:13:21 mickey Exp $
 .\"
-.\" Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
+.\" Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,31 +23,36 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 8, 2001
-.Dt MR 4
+.Dd June 2, 2002
+.Dt GTP 4
 .Os
 .Sh NAME
-.Nm mr
-.Nd Guillemot Maxi Radio FM 2000 FM radio device driver
+.Nm gtp
+.Nd Gemtek PCI FM radio device driver
 .Sh SYNOPSIS
-.Cd "mr*   at pci? flags 0x00"
-.Cd "radio* at mr?"
+.Cd "gtp*   at pci? flags 0x00"
+.Cd "radio* at gtp?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Maxi Radio FM radio tuners.
+driver provides support for the Gemtek PCI and Guillemot MaxiRadio FM2000
+FM radio tuners.
 .Pp
-The Maxi Radio cards are stereo FM tuners that allow to tune in the range
-87.5 - 108.0 MHz, report signal status on the current frequency, force
-audio output to mono, perform hardware signal search, and have an internal
-AFC.
+The Gemtek PCI cards are stereo FM tuners that allow to tune in the range
+87.5 - 108.0 MHz, report signal status and stereo/mono on the current
+frequency, force audio output to mono, perform hardware signal search,
+and have an internal AFC.
 .Pp
 The card is based on the TEA5757 chip, see
 .Xr radio 4
 for details.
 .Pp
 The flags control the driver behavior. For example, with flags 0x01 the driver
-will assume that there is a TEA5759 chip is used.
+will assume that a TEA5759 chip is used.
+.Sh BUGS
+It is impossible to determine which frequency the card is tuned to.
+Thus, the driver will report an internally stored value even if it is not
+correct (changed by some program that uses direct port access).
 .Sh SEE ALSO
 .Xr pci 4 ,
 .Xr radio 4 ,
@@ -56,14 +60,10 @@ will assume that there is a TEA5759 chip is used.
 .Sh AUTHORS
 The
 .Nm
-driver was written by
-.An Vladimir Popov Aq jumbo@narod.ru
-and
-.An Maxim Tsyplakov Aq tm@oganer.net .
-The man page was written by
+driver and the man page was written by
 .An Vladimir Popov Aq jumbo@narod.ru .
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
-.Ox 3.0 .
+.Ox 3.2 .

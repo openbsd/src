@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.135 2002/06/02 18:15:03 jason Exp $
+#	$OpenBSD: files.pci,v 1.136 2002/06/03 16:13:21 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -407,10 +407,10 @@ device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
 
-# Guillemot Maxi Radio FM 2000 Radio Card
-device	mr: radiobus
-attach	mr at pci
-file	dev/pci/maxiradio.c		mr
+# Gemtek/Guillemot PCI Radio Card
+device	gtp: tea5757, radiobus
+attach	gtp at pci
+file	dev/pci/gtp.c			gtp
 
 # National Semiconductor DP83820/DP83821 based GigE
 device	nge: ether, ifnet, mii, ifmedia, mii_phy
