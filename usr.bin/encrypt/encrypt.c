@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.9 1999/05/20 00:05:39 alex Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.10 1999/08/16 19:46:38 art Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <ctype.h>
 
 /*
  * Very simple little program, for encrypting passwords from the command
@@ -78,7 +79,8 @@ void print_passwd(char *string, int operation, void *extra)
      char msalt[3], *salt;
      struct passwd pwd;
      extern char *bcrypt_gensalt __P((int));
-     extern pwd_gensalt __P((char *, int, struct passwd *, char));
+     extern int pwd_gensalt __P((char *, int, struct passwd *, char));
+     extern void to64 __P((char *, int32_t, int n));
 
      switch(operation) {
      case DO_MAKEKEY:
