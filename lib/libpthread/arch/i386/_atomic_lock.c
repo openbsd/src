@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.5 2000/10/03 02:58:58 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.6 2001/03/13 00:05:51 d Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -14,7 +14,7 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 
 	/*
 	 * Use the eXCHanGe instruction to swap the lock value with
-	 * a local variable containg the locked state.
+	 * a local variable containing the locked state.
 	 */
 	old = _SPINLOCK_LOCKED;
 	__asm__("xchg %0,%1"
