@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.63 2002/12/20 06:00:53 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.64 2003/01/27 22:23:45 miod Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -93,8 +93,7 @@
 #define	M_SEM		31	/* SVID compatible semaphores */
 /* 32-33 - free */
 #define	M_VMPMAP	34	/* VM pmap */
-#define	M_VMPVENT	35	/* VM phys-virt mapping entry */
-/* 36-37 - free */
+/* 35-37 - free */
 #define	M_FILE		38	/* Open file structure */
 #define	M_FILEDESC	39	/* Open file descriptor table */
 #define	M_LOCKF		40	/* Byte-range locking structures */
@@ -205,7 +204,7 @@
 	NULL, \
 	NULL, \
 	"VM pmap",	/* 34 M_VMPMAP */ \
-	"VM pvmap",	/* 35 M_VMPVENT */ \
+	NULL,	/* 35 */ \
 	NULL,	/* 36 */ \
 	NULL,	/* 37 */ \
 	"file",		/* 38 M_FILE */ \
