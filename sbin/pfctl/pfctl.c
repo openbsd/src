@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.62 2002/05/19 21:08:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.63 2002/05/19 21:09:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -924,8 +924,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hk:l:m:nN:O:rR:s:t:vx:z")) != -1)
-	{
+	while ((ch = getopt(argc, argv, "deqF:hk:l:m:nN:O:rR:s:t:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
