@@ -485,14 +485,12 @@ lptintr(arg)
 	struct lpt_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 
-#if 0
-	if ((sc->sc_state & LPT_OPEN) == 0)
+	if (((sc->sc_state & LPT_OPEN) == 0 && sc->sc_count == 0) || (sc->sc_flags & LPT_NOINTR))
 		return 0;
-#endif
 
 	/* is printer online and ready for output */
 	if (NOT_READY() && NOT_READY_ERR())
-		return 0;
+		return -1;
 
 	if (sc->sc_count) {
 		u_char control = sc->sc_control;
