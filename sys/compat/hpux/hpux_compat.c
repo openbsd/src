@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.19 2002/03/14 20:31:31 mickey Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.20 2002/08/02 18:06:25 millert Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -417,10 +417,14 @@ hpux_sys_utssys(p, v, retval)
 	/* gethostname */
 	case 5:
 		/* SCARG(uap, dev) is length */
-		if (SCARG(uap, dev) > hostnamelen + 1)
-			SCARG(uap, dev) = hostnamelen + 1;
-		error = copyout((caddr_t)hostname, (caddr_t)SCARG(uap, uts),
-				SCARG(uap, dev));
+		i = SCARG(uap, dev);
+		if (i < 0) {
+			error = EINVAL;
+			break;
+		}
+		if (i > hostnamelen + 1)
+			i = hostnamelen + 1;
+		error = copyout((caddr_t)hostname, (caddr_t)SCARG(uap, uts), i);
 		break;
 
 	case 1:	/* ?? */

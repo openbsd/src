@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_stat.c,v 1.9 2002/03/14 20:31:31 mickey Exp $	*/
+/*	$OpenBSD: ibcs2_stat.c,v 1.10 2002/08/02 18:06:25 millert Exp $	*/
 /*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 
 /*
@@ -83,6 +83,11 @@ cvt_statfs(sp, buf, len)
 	int len;
 {
 	struct ibcs2_statfs ssfs;
+
+	if (len < 0)
+		return (EINVAL);
+	if (len > sizeof(ssfs))
+		len = sizeof(ssfs);
 
 	bzero(&ssfs, sizeof ssfs);
 	ssfs.f_fstyp = 0;
