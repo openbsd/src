@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/02/06 02:53:49 downsj Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/02/16 19:16:27 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -109,10 +109,10 @@ install:
 	    ${DESTDIR}/usr/mdec
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
 	    ${DESTDIR}/usr/mdec
-	rm -f ${DESTDIR}/usr/mdec/rdboot
-	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rdboot
-	rm -f ${DESTDIR}/usr/mdec/bootrd
-	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/bootrd
+	rm -f ${DESTDIR}/usr/mdec/hdboot
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/hdboot
+	rm -f ${DESTDIR}/usr/mdec/boothd
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/boothd
 	rm -f ${DESTDIR}/usr/mdec/sdboot
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/sdboot
 	rm -f ${DESTDIR}/usr/mdec/bootsd
