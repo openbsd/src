@@ -288,7 +288,7 @@ AddModule modules/standard/mod_actions.o
 ## The UserDir module for selecting resource directories by user name
 ## and a common prefix, e.g., /~<user> , /usr/web/<user> , etc.
 
-# AddModule modules/standard/mod_userdir.o
+AddModule modules/standard/mod_userdir.o
 
 ## The proxy module enables the server to act as a proxy for outside
 ## http and ftp services. It's not as complete as it could be yet.
