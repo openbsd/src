@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 1999/05/27 23:52:03 art Exp $
+#	$OpenBSD: GENERIC,v 1.50 1999/06/08 01:30:13 provos Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -39,7 +39,7 @@ option		MFS		# memory file system
 #option		XFS		# xfs filesystem
 
 option		TCP_SACK	# Selective Acknowledgements for TCP
-option		TCP_FACK	# Forward Acknowledgements for TCP
+#option		TCP_FACK	# Forward Acknowledgements for TCP
 
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
