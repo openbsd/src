@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.5 2002/02/16 21:28:02 millert Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.6 2002/12/09 11:24:31 miod Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -229,7 +229,7 @@ op_dump()
 		 * of opio1.  If the length of the name is 0, there
 		 * are no more properties left.
 		 */
-		sprintf(opio2.op_name, opio1.op_buf);
+		strlcpy(opio2.op_name, opio1.op_buf, sizeof(buf3));
 		opio2.op_namelen = strlen(opio2.op_name);
 
 		if (opio2.op_namelen == 0) {
@@ -258,7 +258,7 @@ op_dump()
 		 */
 		bzero(opio1.op_name, sizeof(buf1));
 		bzero(opio1.op_buf, sizeof(buf2));
-		sprintf(opio1.op_name, opio2.op_name);
+		strlcpy(opio1.op_name, opio2.op_name, sizeof(buf1));
 	}
 	/* NOTREACHED */
 }
