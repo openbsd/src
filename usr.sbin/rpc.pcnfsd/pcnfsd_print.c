@@ -18,7 +18,7 @@
 **=====================================================================
 */
 #include "pcnfsd.h"
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <pwd.h>
 #include <sys/file.h>
