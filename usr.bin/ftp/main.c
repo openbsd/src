@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 1998/09/19 20:47:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 1998/11/21 02:58:37 d Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.42 1998/09/19 20:47:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.43 1998/11/21 02:58:37 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -724,7 +724,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adeginptvV] [-r <seconds>] [host [port]]\n"
+	    "usage: %s [-adegimnptvV] [-r <seconds>] [host [port]]\n"
 	    "       %s host:path[/]\n"
 	    "       %s ftp://host[:port]/path[/]\n"
 	    "       %s http://host[:port]/file\n",
