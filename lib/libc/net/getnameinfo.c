@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.5 1999/12/30 08:54:20 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.6 2000/01/05 04:50:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -180,7 +180,11 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
+#if 0
 		if (v4a == 0 || v4a == IN_LOOPBACKNET)
+#else
+		if (v4a == 0)
+#endif
 			flags |= NI_NUMERICHOST;			
 		break;
 #ifdef INET6
