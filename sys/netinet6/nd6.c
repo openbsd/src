@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.54 2002/08/19 23:23:39 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.55 2002/09/04 07:24:59 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1993,13 +1993,13 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	case ICMPV6CTL_ND6_DRLIST:
 		error = fill_drlist(p, oldlenp, ol);
 		if (!error && p && oldp)
-			copyout(p, oldp, *oldlenp);
+			error = copyout(p, oldp, *oldlenp);
 		break;
 
 	case ICMPV6CTL_ND6_PRLIST:
 		error = fill_prlist(p, oldlenp, ol);
 		if (!error && p && oldp)
-			copyout(p, oldp, *oldlenp);
+			error = copyout(p, oldp, *oldlenp);
 		break;
 
 	default:
