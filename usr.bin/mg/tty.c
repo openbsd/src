@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.9 2001/05/24 03:05:26 mickey Exp $	*/
+/*	$OpenBSD: tty.c,v 1.10 2002/01/10 12:13:35 art Exp $	*/
 
 /*
  * Terminfo display driver
@@ -27,17 +27,25 @@
 
 #include "def.h"
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
 #include <term.h>
-
-#ifdef NO_RESIZE
-static int	 setttysize	__P((void));
-#endif /* NO_RESIZE */
+#include <signal.h>
 
 static int	 charcost	__P((char *));
 
 static int	 cci;
 static int	 insdel;	/* Do we have both insert & delete line? */
 static char	*scroll_fwd;	/* How to scroll forward. */
+
+static void	winchhandler(int);
+
+static void
+winchhandler(int sig)
+{
+	refresh(0,0);
+}
 
 /*
  * Initialize the terminal when the editor
@@ -61,6 +69,7 @@ ttinit()
 		panic(p);
 	}
 
+	signal(SIGWINCH, winchhandler);
 	scroll_fwd = scroll_forward;
 	if (scroll_fwd == NULL || *scroll_fwd == '\0') {
 		/* this is what GNU Emacs does */
@@ -112,7 +121,7 @@ ttinit()
 		/* enter application mode */
 		putpad(enter_ca_mode, 1);
 
-	setttysize();
+	ttresize();
 }
 
 /*
@@ -129,7 +138,7 @@ ttreinit()
 		/* turn on keypad */
 		putpad(keypad_xmit, 1);
 
-	setttysize();
+	ttresize();
 }
 
 /*
@@ -399,28 +408,26 @@ ttcolor(color)
 void
 ttresize()
 {
-	/* found in "ttyio.c" */
-	setttysize();
+#ifdef	TIOCGWINSZ
+	struct	winsize winsize;
 
-	/* ask OS for tty size and check limits */
-	if (nrow < 1)
-		nrow = 1;
-	else if (nrow > NROW)
+	if (ioctl(0, TIOCGWINSZ, (char *) &winsize) == 0) {
+		nrow = winsize.ws_row;
+		ncol = winsize.ws_col;
+	} else nrow = 0;
+#endif
+	if ((nrow <= 0 || ncol <= 0) &&
+	    ((nrow = lines) <= 0 || (ncol = columns) <= 0)) {
+		nrow = 24;
+		ncol = 80;
+	}
+
+	/* Enforce maximum screen size. */
+	if (nrow > NROW)
 		nrow = NROW;
-	if (ncol < 1)
-		ncol = 1;
-	else if (ncol > NCOL)
+	if (ncol > NCOL)
 		ncol = NCOL;
 }
-
-#ifdef NO_RESIZE
-static
-setttysize()
-{
-	nrow = lines;
-	ncol = columns;
-}
-#endif /* NO_RESIZE */
 
 /*
  * fake char output for charcost()
