@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.1,v 1.14 2003/10/19 18:58:58 jmc Exp $
+.\"	$OpenBSD: crunchgen.1,v 1.15 2004/08/24 09:11:39 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -33,13 +33,15 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm crunchgen
-.Op Fl fqE
-.Op Fl m Ar makefile-name
+.Bk -words
+.Op Fl Efq
 .Op Fl c Ar c-file-name
-.Op Fl e Ar exec-file-name
 .Op Fl D Ar src-root
+.Op Fl e Ar exec-file-name
 .Op Fl L Ar lib-dir
-.Op Ar conf-file
+.Op Fl m Ar makefile-name
+.Ar conf-file
+.Ek
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
 together into a single executable.
@@ -85,6 +87,13 @@ Set output C file name to
 .Ar c-file-name .
 The default name is
 .Dq Ao conf-name Ac Ns \&.c .
+.It Fl D Ar src-root
+Assume that relative source directory specifications begin with
+.Ar src-root .
+.It Fl E
+Don't prepend stub names with an underscore.
+Used for architectures that don't have underscore prepended to symbol names.
+Example mips ELF.
 .It Fl e Ar exec-file-name
 Set crunched binary executable file name to
 .Ar exec-file-name .
@@ -93,6 +102,9 @@ The default name is
 .It Fl f
 Flush cache.
 Forces the recalculation of cached parameters.
+.It Fl L Ar lib-dir
+Try to obtain libraries from
+.Ar lib-dir .
 .It Fl m Ar makefile-name
 Set output Makefile name to
 .Ar makefile-name .
@@ -101,16 +113,6 @@ The default name is
 .It Fl q
 Quiet operation.
 Status messages are suppressed.
-.It Fl E
-Don't prepend stub names with an underscore.
-Used for architectures that don't have underscore prepended to symbol names.
-Example mips ELF.
-.It Fl D Ar src-root
-Assume that relative source directory specifications begin with
-.Ar src-root .
-.It Fl L Ar lib-dir
-Try to obtain libraries from
-.Ar lib-dir .
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
 .Nm
@@ -238,7 +240,6 @@ line.
 The crunched binary
 .Dq kcopy
 can be built as follows:
-.Pp
 .Bd -literal -offset indent
 % crunchgen -m Makefile kcopy.conf    # gen Makefile and kcopy.c
 % make objs		# build the component programs' .o files
