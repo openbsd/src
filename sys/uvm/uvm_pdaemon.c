@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.10 2001/07/18 10:47:05 art Exp $	*/
-/*	$NetBSD: uvm_pdaemon.c,v 1.18 1999/09/12 01:17:41 chs Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.11 2001/07/18 14:27:07 art Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.19 1999/11/04 21:51:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -111,7 +111,7 @@ static void		uvmpd_tune __P((void));
 
 void
 uvm_wait(wmsg)
-	char *wmsg;
+	const char *wmsg;
 {
 	int timo = 0;
 	int s = splbio();
