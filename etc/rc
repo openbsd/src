@@ -93,16 +93,30 @@ rm -f /var/spool/uucp/STST/*
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
 
-if [ -d /var/yp/`domainname`]; then
-	echo -n 'ypserv';		ypserv -d
-	#echo -n 'ypxfrd';		ypxfrd
-	if [ `ypwhich -m passwd` = `hostname`]; then
-		echo -n 'rpc.yppasswdd'; rpc.yppasswdd
-	fi
-fi
-
-if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
+if [ -d /var/yp ]; then
 	echo -n ' ypbind';		ypbind
+
+	if [ -d /var/yp/`domainname` ]; then
+		# yp server capabilities needed...
+		echo -n 'ypserv';		ypserv -d
+		#echo -n 'ypxfrd';		ypxfrd
+
+		# if we are the master server, run rpc.yppasswdd
+		_host1=`ypwhich -m passwd 2> /dev/null`
+		_host2=`hostname`
+		if grep '^lookup' /etc/resolv.conf | grep yp | wc; then
+			_host1=`ypmatch $_host1 hosts | cut -d'	' -f2`
+			_host2=`ypmatch $_host2 hosts | cut -d'	' -f2 | head -1`
+		else
+			_host1=`nslookup $_host1 | grep '^Name: ' | \
+			    sed -e 's/^Name:    //'`
+			_host2=`nslookup $_host2 | grep '^Name: ' | \
+			    sed -e 's/^Name:    //'`
+		fi
+		if [ "$host2" = "$host1" ]; then
+			echo -n 'rpc.yppasswdd'; rpc.yppasswdd
+		fi
+	fi
 fi
 
 # $nfs_server is imported from /etc/netstart;
