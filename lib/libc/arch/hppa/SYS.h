@@ -1,7 +1,7 @@
-/*	$OpenBSD: SYS.h,v 1.10 2001/10/24 03:17:05 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.11 2002/10/31 20:06:46 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,19 +36,20 @@
 #define _LOCORE
 #include <machine/frame.h>
 #include <machine/vmparam.h>
+#undef _LOCORE
 
-#define	__ENTRY(p,x)	ENTRY(__CONCAT(p,x),0)
-#define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
+#define SYSENTRY(x)				!\
+ENTRY(__CONCAT(_thread_sys_,x),0)		!\
+	.weak x ! .set x, __CONCAT(_thread_sys_,x)
 
-
-#define	__SYSCALL(p,x)				!\
-	.import	errno, data			!\
+#define	SYSCALL(x)				!\
 	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
 	ldil	L%SYSCALLGATE, r1		!\
 	ble	4(sr7, r1)			!\
 	ldi	__CONCAT(SYS_,x), t1		!\
 	ldw	HPPA_FRAME_ERP(sr0,sp), rp	!\
 	comb,=,n r0, t1, __CONCAT(x,$noerr)	!\
+	.import	errno, data			!\
 	ldil	L%errno, r1			!\
 	stw	t1, R%errno(r1)			!\
 	ldi	-1, ret0			!\
@@ -56,22 +57,15 @@
 	ldi	-1, ret1			!\
 	.label	__CONCAT(x,$noerr)
 
-#define	__RSYSCALL(p,x)				!\
-__ENTRY(p,x)					!\
-	__SYSCALL(p,x)				!\
+#define	PSEUDO(x,y)				!\
+SYSENTRY(x)					!\
+	SYSCALL(y)				!\
 	bv	r0(rp)				!\
 	nop					!\
-__EXIT(p,x)
+EXIT(__CONCAT(_thread_sys_,x))
 
-#define	__PSEUDO(p,x,y)				!\
-__ENTRY(p,x)					!\
-	__SYSCALL(p,y)				!\
-	bv	r0(rp)				!\
-	nop					!\
-__EXIT(p,x)
-
-#define	__PSEUDO_NOERROR(p,x,y)			!\
-__ENTRY(p,x)					!\
+#define	PSEUDO_NOERROR(x,y)			!\
+SYSENTRY(x)					!\
 	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
 	ldil	L%SYSCALLGATE, r1		!\
 	ble	4(sr7, r1)			!\
@@ -79,34 +73,7 @@ __ENTRY(p,x)					!\
 	ldw	HPPA_FRAME_ERP(sr0,sp), rp	!\
 	bv	r0(rp)				!\
 	nop					!\
-__EXIT(p,x)
+EXIT(__CONCAT(_thread_sys_,x))
 
-/*
- * Design note:
- *
- * When the syscalls need to be renamed so they can be handled
- * specially by the threaded library, these macros insert `_thread_sys_'
- * in front of their name. This avoids the need to #ifdef _THREAD_SAFE 
- * everywhere that the renamed function needs to be called.
- */
-#ifdef _THREAD_SAFE
-/*
- * For the thread_safe versions, we prepend _thread_sys_ to the function
- * name so that the 'C' wrapper can go around the real name.
- */
-# define SYSCALL(x)		__SYSCALL(_thread_sys_,x)
-# define RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
-# define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
-# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
-/*# define SYSENTRY(x)		__ENTRY(_thread_sys_,x)*/
-#else /* _THREAD_SAFE */
-/*
- * The non-threaded library defaults to traditional syscalls where
- * the function name matches the syscall name.
- */
-# define SYSCALL(x)		__SYSCALL(,x)
-# define RSYSCALL(x)		__RSYSCALL(,x)
-# define PSEUDO(x,y)		__PSEUDO(,x,y)
-# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
-/*# define SYSENTRY(x)		__ENTRY(,x)*/
-#endif /* _THREAD_SAFE */
+#define	RSYSCALL(x)	PSEUDO(x,x)
+
