@@ -1,0 +1,17 @@
+# test af detection logic
+
+nat on lo0 from any to 127.0.0.1 -> lo0
+nat on lo0 from 127.0.0.1 to any -> lo0
+nat on lo0 from any to lo0 -> 127.0.0.1
+
+nat on lo0 from any to 127.0.0.1 -> (lo0)
+nat on lo0 from 127.0.0.1 to any -> (lo0)
+nat on lo0 from any to (lo0) -> 127.0.0.1
+
+rdr on lo0 from any to 127.0.0.1 -> lo0
+rdr on lo0 from 127.0.0.1 to any -> lo0
+rdr on lo0 from any to lo0 -> 127.0.0.1
+
+rdr on lo0 from any to 127.0.0.1 -> (lo0)
+rdr on lo0 from 127.0.0.1 to any -> (lo0)
+rdr on lo0 from any to (lo0) -> 127.0.0.1
