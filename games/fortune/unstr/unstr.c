@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.5 2001/01/28 23:41:41 niklas Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.6 2001/03/30 04:47:33 pjanzen Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -60,14 +60,12 @@ static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
  *	Ken Arnold		Aug 13, 1978
  */
 
-# include	<sys/param.h>
-# include	"strfile.h"
-# include	<stdio.h>
-# include	<ctype.h>
-
-# ifndef MAXPATHLEN
-# define	MAXPATHLEN	1024
-# endif	/* MAXPATHLEN */
+#include	<sys/param.h>
+#include	<ctype.h>
+#include	<err.h>
+#include	<stdio.h>
+#include	<string.h>
+#include	"strfile.h"
 
 char	*Infile,			/* name of input file */
 	Datafile[MAXPATHLEN],		/* name of data file */
@@ -75,34 +73,30 @@ char	*Infile,			/* name of input file */
 
 FILE	*Inf, *Dataf;
 
-char	*strcat(), *strcpy();
+void getargs __P((char *[]));
+void order_unstr __P((STRFILE *));
 
 /* ARGSUSED */
+int
 main(ac, av)
-int	ac;
-char	**av;
+	int	ac;
+	char	**av;
 {
 	static STRFILE	tbl;		/* description table */
 
 	getargs(av);
-	if ((Inf = fopen(Infile, "r")) == NULL) {
-		perror(Infile);
-		exit(1);
-	}
-	if ((Dataf = fopen(Datafile, "r")) == NULL) {
-		perror(Datafile);
-		exit(1);
-	}
+	if ((Inf = fopen(Infile, "r")) == NULL)
+		err(1, "fopen `%s'", Infile);
+	if ((Dataf = fopen(Datafile, "r")) == NULL)
+		err(1, "fopen `%s'", Datafile);
 	(void) fread(&tbl.str_version,  sizeof(tbl.str_version),  1, Dataf);
 	(void) fread(&tbl.str_numstr,   sizeof(tbl.str_numstr),   1, Dataf);
 	(void) fread(&tbl.str_longlen,  sizeof(tbl.str_longlen),  1, Dataf);
 	(void) fread(&tbl.str_shortlen, sizeof(tbl.str_shortlen), 1, Dataf);
 	(void) fread(&tbl.str_flags,    sizeof(tbl.str_flags),    1, Dataf);
 	(void) fread( tbl.stuff,	sizeof(tbl.stuff),	  1, Dataf);
-	if (!(tbl.str_flags & (STR_ORDERED | STR_RANDOM))) {
-		fprintf(stderr, "nothing to do -- table in file order\n");
-		exit(1);
-	}
+	if (!(tbl.str_flags & (STR_ORDERED | STR_RANDOM)))
+		errx(1, "nothing to do -- table in file order");
 	Delimch = tbl.str_delim;
 	order_unstr(&tbl);
 	(void) fclose(Inf);
@@ -110,29 +104,32 @@ char	**av;
 	exit(0);
 }
 
+void
 getargs(av)
-register char	*av[];
+	char	*av[];
 {
 	if (!*++av) {
 		(void) fprintf(stderr, "usage: unstr datafile\n");
 		exit(1);
 	}
 	Infile = *av;
-	(void) strcpy(Datafile, Infile);
-	(void) strcat(Datafile, ".dat");
+	(void) strlcpy(Datafile, Infile, sizeof(Datafile));
+	if (strlcat(Datafile, ".dat", sizeof(Datafile)) >= MAXPATHLEN)
+		errx(1, "`%s': filename too long", Infile);
 }
 
+void
 order_unstr(tbl)
-register STRFILE	*tbl;
+	STRFILE	*tbl;
 {
-	register int	i;
-	register char	*sp;
-	auto int32_t	pos;
-	char		buf[BUFSIZ];
+	unsigned int	i;
+	char	*sp;
+	int32_t	pos;
+	char	buf[BUFSIZ];
 
 	for (i = 0; i < tbl->str_numstr; i++) {
 		(void) fread((char *) &pos, 1, sizeof pos, Dataf);
-		(void) fseek(Inf, ntohl(pos), 0);
+		(void) fseek(Inf, ntohl(pos), SEEK_SET);
 		if (i != 0)
 			(void) printf("%c\n", Delimch);
 		for (;;) {
