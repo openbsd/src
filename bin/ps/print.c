@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.14 1997/11/30 05:43:12 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.15 2000/05/04 17:26:25 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.14 1997/11/30 05:43:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.15 2000/05/04 17:26:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -530,6 +530,7 @@ getpcpu(k)
 {
 	struct proc *p;
 	static int failure;
+	double d;
 
 	if (!nlistread)
 		failure = donlist();
@@ -544,8 +545,14 @@ getpcpu(k)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
+
+	d = p->p_swtime * log(fxtofl(ccpu));
+	if (d < -700.0)
+		d = 0.0;		/* avoid IEEE underflow */
+	else
+		d = exp(d);
 	return (100.0 * fxtofl(p->p_pctcpu) /
-		(1.0 - exp(p->p_swtime * log(fxtofl(ccpu)))));
+		(1.0 - d));
 }
 
 void
