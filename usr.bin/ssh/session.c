@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.9 2000/05/02 07:32:44 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.10 2000/05/02 08:05:32 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -235,6 +235,8 @@ do_authenticated(struct passwd * pw)
 			/* Get tty modes from the packet. */
 			tty_parse_modes(s->ttyfd, &n_bytes);
 			packet_integrity_check(plen, 4 + dlen + 4 * 4 + n_bytes, type);
+
+			session_proctitle(s);
 
 			/* Indicate that we now have a pty. */
 			success = 1;
