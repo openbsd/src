@@ -1,7 +1,7 @@
-/*	$OpenBSD: pen.c,v 1.5 1997/07/14 14:13:17 graichen Exp $	*/
+/*	$OpenBSD: pen.c,v 1.6 1998/04/25 05:09:07 millert Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pen.c,v 1.5 1997/07/14 14:13:17 graichen Exp $";
+static const char *rcsid = "$OpenBSD: pen.c,v 1.6 1998/04/25 05:09:07 millert Exp $";
 #endif
 
 /*
@@ -74,36 +74,18 @@ find_play_pen(char *pen, size_t sz)
 char *
 make_playpen(char *pen, size_t sz)
 {
-    char *tmp;
-    int i = 0;
-    mode_t um;
 
-    um = umask(S_IWGRP|S_IWOTH);
-    while (1) {
-	if (!find_play_pen(pen, sz)) {
-	    umask(um);
-	    return NULL;
-	}
-
-        if (!mktemp(pen)) {
-	    barf("Can't mktemp '%s'.", pen);
-	    umask(um);
-	    return NULL;
-        }
-
-        if (mkdir(pen, 0755) == FAIL) {
-	    if (i++ < 100) {
-	        /* try again! */
-	        continue;
-	    }
-	} else
-	    break;
-
-        barf("Can't mkdir '%s'.", pen);
-        umask(um);
+    if (!find_play_pen(pen, sz)) {
 	return NULL;
     }
-    umask(um);
+    if (!mkdtemp(pen)) {
+	barf("Can't mkdtemp '%s'.", pen);
+	return NULL;
+    }
+    if (chmod(pen, 0755) == FAIL) {
+	barf("Can't chmod 0755 '%s'.", pen);
+	return NULL;
+    }
 
     if (Verbose) {
 	if (sz)

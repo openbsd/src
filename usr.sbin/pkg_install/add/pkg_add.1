@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.3 1998/04/13 14:26:15 millert Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.4 1998/04/25 05:09:06 millert Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -116,7 +116,7 @@ options).
 Use
 .Ar template
 as the input to 
-.Xr mktemp 3 
+.Xr mkdtemp 3 
 when creating a ``staging area.''
 By default, this is the string
 .Pa /var/tmp/instmp.XXXXXX ,
@@ -125,7 +125,7 @@ space in your
 .Pa /tmp
 directory is limited.  Be sure to leave some number of `X' characters
 for
-.Xr mktemp 3
+.Xr mkdtemp 3
 to fill in with a unique ID.
 .Pp
 You can get a performance boost by setting the staging area
@@ -345,7 +345,7 @@ flag to
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pkg_info 1 ,
-.Xr mktemp 3 ,
+.Xr mkdtemp 3 ,
 .Xr sysconf 3 ,
 .Xr mtree 8 ,
 .Xr pkg_create 1 ,
