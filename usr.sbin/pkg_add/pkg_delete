@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.59 2004/10/18 12:03:19 espie Exp $
+# $OpenBSD: pkg_delete,v 1.60 2004/10/19 09:43:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -46,11 +46,16 @@ sub record_all_shared_items
 {
 	my $db = {dirs=>{}, users=>{}, groups=>{}};
 	my @list = installed_packages();
+	my $total = @list;
+	OpenBSD::ProgressMeter::set_header("Read shared items");
+	my $done = 0;
 	for my $e (@list) {
+		OpenBSD::ProgressMeter::show($done, $total);
 		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
 		for my $item (@{$plist->{users}}, @{$plist->{groups}}, @{$plist->{items}}) {
 			$item->record_shared_item($e, $db);
 		}
+		$done++;
 	}
 	return $db;
 }
@@ -65,8 +70,19 @@ sub cleanup_shared_items
 	return unless defined $h or defined $u or defined $g;
 	my $remaining = record_all_shared_items();
 
+	OpenBSD::ProgressMeter::clear();
+	OpenBSD::ProgressMeter::set_header("Clean shared items");
+	my $total = 0;
+	$total += keys %$h if defined $h;
+	if ($state->{extra}) {
+		$total += keys %$u if defined $u;
+		$total += keys %$g if defined $g;
+	}
+	my $done = 0;
+
 	if (defined $h) {
 		for my $d (sort {$b cmp $a} keys %$h) {
+			OpenBSD::ProgressMeter::show($done, $total);
 			my $realname = $state->{destdir}.$d;
 			if ($remaining->{dirs}->{$realname}) {
 				for my $i (@{$h->{$d}}) {
@@ -80,21 +96,28 @@ sub cleanup_shared_items
 					print "Error deleting directory $realname: $!\n";
 				}
 			}
+			$done++;
 		}
 	}
-	return unless $state->{extra};
-	if (defined $u) {
-		for my $user (keys %$u) {
-			next if $remaining->{users}->{$user};
-			System("/usr/sbin/userdel", $user);
+	if ($state->{extra}) {
+		if (defined $u) {
+			for my $user (keys %$u) {
+				OpenBSD::ProgressMeter::show($done, $total);
+				next if $remaining->{users}->{$user};
+				System("/usr/sbin/userdel", $user);
+				$done++;
+			}
+		}
+		if (defined $g) {
+			for my $group (keys %$g) {
+				OpenBSD::ProgressMeter::show($done, $total);
+				next if $remaining->{groups}->{$group};
+				System("/usr/sbin/groupdel", $group);
+				$done++;
+			}
 		}
 	}
-	if (defined $g) {
-		for my $group (keys %$g) {
-			next if $remaining->{groups}->{$group};
-			System("/usr/sbin/groupdel", $group);
-		}
-	}
+	OpenBSD::ProgressMeter::next();
 }
 
 
