@@ -1,0 +1,210 @@
+.TH PDISK 8 "26 September 1997" "MkLinux DR2" "Linux Programmer's Manual"
+.SH NAME
+pdisk \- Apple partition table editor for Linux
+.SH SYNOPSIS
+.B pdisk
+.B "[\-h|\--help]"
+.br
+.B pdisk
+.B "[\-i|\--interactive]"
+.br
+.B pdisk
+.B "[\-l|\--list [name ...]]"
+.br
+.B pdisk
+device ...
+.br
+.B pdisk
+.B "[\-v|\--version] [\-r|\--readonly] [\-abbr] [\--logical] [\-c|\--compute_size]"
+.SH DESCRIPTION
+.B pdisk
+is a menu driven program which partitions disks using the standard Apple
+disk partitioning scheme described in "Inside Macintosh: Devices".
+It does not support the intel/dos partitioning scheme supported by 
+.BR fdisk .
+The
+.I device
+is usually one of the following:
+
+.nf
+.RS
+/dev/sda
+/dev/sdb
+/dev/sdc
+/dev/sdd
+/dev/sde
+/dev/sdf
+/dev/sdg
+/dev/hda
+/dev/hdb
+
+.RE
+.fi
+MkLinux interprets device names differently than standard Linux.
+In MkLinux /dev/sda is the device at SCSI id 0, /dev/sdb is the device at SCSI
+id 1, and so on.
+In standard Linux /dev/sda is the first hard disk on the SCSI bus (i.e. the
+one with the lowest id), /dev/sdb is the second hard disk, and so on.
+The
+.I partition
+is a
+.I device
+name followed by a partition number.
+The partition number is the index (starting from one) of the partition
+map entry in the partition map.
+For example,
+.B /dev/sda2
+is the partition described by the second entry in the partiton map on /dev/sda.
+
+.SH OPTIONS
+.TP
+.B \-v | \--version
+Prints version number of the
+.B pdisk
+program.
+.TP
+.B \-h | \--help
+Prints a rather lame set of help messages for the
+.B pdisk
+program.
+.TP
+.B \-i | \--interactive
+Causes
+.B pdisk
+to go into an interactive mode similar to the MacOS version of the program.
+.TP
+.B \-l | \--list
+If no
+.IR name s
+are present then lists the partition tables for
+.BR /dev/sda ,
+.BR /dev/sdb ,
+.BR /dev/sdc ,
+.BR /dev/sdd ,
+.BR /dev/sde ,
+.BR /dev/sdf ,
+and
+.BR /dev/sdg .
+Otherwise, lists the partition tables for the specified
+.IR name s.
+.TP
+.B \-r | \--readonly
+Prevents
+.B pdisk
+from writing to the device.
+.TP
+.B \-c | \--compute_size
+Causes
+.B pdisk
+to always ignore the device size listed in the partition table
+and compute the device size by other means.
+.SH "Editing Partition Tables"
+An argument which is simply the name of a
+.I device
+indicates that
+.B pdisk
+should edit the partition table of that device.
+
+The current top level editing commands are:
+
+.nf
+.RS
+h    command help
+p    print the partition table
+P    (print ordered by base address)
+i    initialize partition map
+s    change size of partition map
+c    create new partition (standard MkLinux type)
+C    (create with type also specified)
+n    (re)name a partition
+d    delete a partition
+r    reorder partition entry in map
+w    write the partition table
+q    quit editing (don't save changes)
+
+.RE
+.fi
+Commands which take arguments prompt for each argument in turn.
+You can also type any number of the arguments separated by spaces
+and those prompts will be skipped.
+The only exception to typeahead are the confirmation prompts on the
+.B i
+and
+.B w
+commands.
+The idea being that if we expect you to confirm the decision we
+shouldn't undermine that by allowing you to be precipitate about it.
+
+Partitions are always specified by their number,
+which the index of the partition entry in the partition map.
+Most of the commands will change the index numbers of all partitions
+after the affected partition.
+You are advised to print the table as frequently as necessary.
+
+Creating more than fifteen partitions is not advised.
+There is currently a bug in the some (all?) of the kernels which causes
+access to the whole disk fail if more than fifteen partitions are in the map.
+
+The
+.B c
+(create new partition) command is the only one with complicated arguments.
+The first argument is the base address (in blocks) of the partition.
+Besides a raw number, you can also specify a partition number followed
+by the letter 'p' to indicate that the first block of the new partition should
+be the same as the first block of that existing free  space partition.
+The second argument is the length of the partition in blocks.
+This can be a raw number or can be a partition number followed by the
+letter 'p' to use the size of that partition or can be a number followed
+by 'k', 'm', or 'g' to indicate the size in kilobytes, megabytes, or gigabytes
+respectively.
+(These are powers of 1024, of course, not powers of 1000.)
+The last argument is the name of the partition.
+This can be a single word without quotes, or a string surrounded by
+single or double quotes.
+The type of the created partition is the correct type for MkLinux.
+
+The
+.B C
+command is identical to the
+.B c
+command, with the addition of a partition type argument after the
+other arguments.
+
+The
+.B n
+(name) command allows the name of a partition to be changed.
+Note that the various "Apple_Driver" partitions depend
+on the name field for proper functioning.
+I am not aware of any other partition types with this limitation.
+
+The
+.B r
+(reorder) command allows the index number of partitions to be changed.
+The index numbers are constrained to be a contiguous sequence.
+
+The
+.B i
+(initalize) command prompts for the size of the device.
+This was done to get around a bug in the kernel where it reports the wrong
+size for the device.
+
+The
+.B w
+(write) command does write the partition map out,
+but there is currently a bug in the interaction between MkLinux and Mach
+which causes the partition map not to be reinterpreted.
+In order to use the new partition map you must reboot.
+
+.SH BUGS
+Some people believe there should really be just one disk partitioning utility.
+.br
+.B pdisk
+should be able to create HFS partitions that work.
+.br
+Even more help should be available during user input.
+.SH "SEE ALSO"
+.BR fdisk (8), 
+.BR mkswap (8),
+.BR mkfs (8)
+.SH AUTHOR
+Eryk Vershen (eryk@apple.com)
