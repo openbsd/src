@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.15 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.16 2001/08/22 06:58:00 niklas Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -131,17 +131,18 @@ int
 sysdep_cleartext (int fd, int af)
 {
   int level, sw;
-  struct 
-  { 
+  struct { 
     int ip_proto;		/* IP protocol */
     int auth_level;
     int esp_trans_level;
     int esp_network_level;
-  } optsw[] = 
+    int ipcomp_level;
+  } optsw[] =
     { 
-      { IPPROTO_IP, IP_AUTH_LEVEL, IP_ESP_TRANS_LEVEL, IP_ESP_NETWORK_LEVEL },
+      { IPPROTO_IP, IP_AUTH_LEVEL, IP_ESP_TRANS_LEVEL, IP_ESP_NETWORK_LEVEL,
+	IP_IPCOMP_LEVEL },
       { IPPROTO_IPV6, IPV6_AUTH_LEVEL, IPV6_ESP_TRANS_LEVEL,
-	IPV6_ESP_NETWORK_LEVEL },
+	IPV6_ESP_NETWORK_LEVEL, IPV6_IPCOMP_LEVEL },
     };
   
   if (app_none)
@@ -186,6 +187,14 @@ sysdep_cleartext (int fd, int af)
     {
       log_error("sysdep_cleartext: "
 		"setsockopt (%d, %d, IP_ESP_NETWORK_LEVEL, ...) failed", fd,
+		optsw[sw].ip_proto);
+      return -1;
+    }
+  if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].ipcomp_level,
+		  (char *)&level, sizeof level) == -1)
+    {
+      log_error("sysdep_cleartext: "
+		"setsockopt (%d, %d, IP_IPCOMP_LEVEL, ...) failed", fd,
 		optsw[sw].ip_proto);
       return -1;
     }
