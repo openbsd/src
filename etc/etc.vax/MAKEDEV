@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.12 1997/09/08 06:12:26 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 1997/09/20 14:36:58 maja Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/01/07 16:53:15 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -17,6 +17,7 @@
 #	mt*	massbus tu78
 #	ut*	unibus tu45 emulations (e.g.si 9700)
 #	uu*	tu58 cassettes on dl11 controller
+#	st*	SCSI tapes
 # Disks:
 #	hp*	massbus rm??
 #	hk*	unibus rk06 and rk07
@@ -28,6 +29,9 @@
 #	rx*	unibus rx211 floppy disk 
 #	ccd*	"concatenated" pseudo-disks
 #	vnd*	"file" pseudo-disks
+#	hd*	HDC9224 rd disks on VS2000
+#	sd*	SCSI disks
+#	cd*	SCSI CD-ROM
 # Terminal multiplexors:
 #	dz*	unibus dz11 and dz32
 #	dh*	unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
@@ -60,8 +64,9 @@ case $i in
 
 all)
 	sh MAKEDEV std vnd0 ccd0 pty0 lkm ipl
-	sh MAKEDEV tms0 ts0
+	sh MAKEDEV tms0 ts0 st0 st1
 	sh MAKEDEV ra0 ra1 ra2 ra3 ra4 ra5 ra6 ra7 hp0 hp1 random
+	sh MAKEDEV sd0 sd1 sd2 sd3 hd0 hd1 hd2
 	;;
 
 std)
@@ -92,7 +97,7 @@ std)
 	chmod 666 fd/*
 	;;
 
-ht*|tm*|tms*|ts*|ut*)
+ht*|tm*|tms*|ts*|ut*|st*)
 	umask 0 ; unit=`expr $i : '[^0-9]*\(.*\)'`
 	case $i in
 	ht*) name=ht; blk=1; chr=5 ;;
@@ -100,6 +105,7 @@ ht*|tm*|tms*|ts*|ut*)
 	tm*) name=tm; blk=5; chr=14;;
 	ts*) name=ts; blk=6; chr=16;;
 	ut*) name=ut; blk=10; chr=17;;
+	st*) name=st; blk=21; chr=60;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|7)
@@ -176,7 +182,7 @@ mt*)
 	umask 77
 	;;
 
-hp*|hk*|up*|ra*|kra*|rl*|rb*|ccd*)
+hp*|hk*|up*|ra*|kra*|rl*|rb*|ccd*|hd*|sd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	hp*) name=hp; blk=0; chr=4;;
@@ -187,6 +193,8 @@ hp*|hk*|up*|ra*|kra*|rl*|rb*|ccd*)
 	rb*) name=rb; blk=11; chr=23;;
 	rl*) name=rl; blk=14; chr=32;;
 	ccd*) name=ccd; blk=17; chr=54;;
+	hd*) name=hd; blk=19; chr=58;;
+	sd*) name=sd; blk=20; chr=59;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|\
@@ -248,6 +256,21 @@ vnd*)
 		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	done
+	umask 77
+	;;
+
+cd*)
+	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
+	case $i in
+	cd*) name=cd; blk=22; chr=61;;
+	esac
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
+	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;
 
