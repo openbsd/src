@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.14 2002/03/25 16:46:28 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.15 2003/02/19 19:30:13 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.14 2002/03/25 16:46:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.15 2003/02/19 19:30:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 	
-	if ((pidset && *argv) || (!pidset && !*argv))
+	if ((pidset && *argv) || (!pidset && !*argv && clear != CLEAR))
 		usage();
 			
 	if (inherit)
@@ -195,7 +195,7 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage:\tktrace [-aCcid] [-f trfile] [-g pgid] [-p pid] [-t [cenis]\n\tktrace [-aCcid] [-f trfile] [-t [cenis] command\n");
+"usage:\tktrace [-aCcdi] [-f trfile] [-g pgid] [-p pid] [-t [ceinsw]]\n\tktrace [-adi] [-f trfile] [-t [ceinsw]] command\n");
 	exit(1);
 }
 
@@ -206,7 +206,7 @@ no_ktrace(sig)
 	char buf[8192];
 
 	snprintf(buf, sizeof(buf),
-"error:\tktrace() system call not supported in the running kernel\n\tre-compile kernel with 'options KTRACE'\n");
+"error:\tktrace() system call not supported in the running kernel\n\tre-compile kernel with 'option KTRACE'\n");
 	write(STDERR_FILENO, buf, strlen(buf));
 	_exit(1);
 }
