@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2001/01/25 05:37:20 art Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2001/02/03 23:08:41 art Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2001/01/25 05:37:20 art Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.5 2001/02/03 23:08:41 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -97,7 +97,6 @@ __start(sp, cleanup, obj)
 #endif
 
 #ifndef ECOFF_COMPAT
-	atexit(__fini);
 	__init();
 #endif /* ECOFF_COMPAT */
 
