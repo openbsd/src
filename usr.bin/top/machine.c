@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.46 2004/11/22 15:26:53 pat Exp $	 */
+/* $OpenBSD: machine.c,v 1.47 2004/12/06 15:57:04 markus Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -104,7 +104,7 @@ static long     cp_diff[CPUSTATES];
 int process_states[8];
 char *procstatenames[] = {
 	"", " starting, ", " running, ", " idle, ",
-	" stopped, ", " zombie, ", "dead, ", " on processor, ",
+	" stopped, ", " zombie, ", " dead, ", " on processor, ",
 	NULL
 };
 
