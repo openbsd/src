@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.4 1995/04/10 07:05:56 mycroft Exp $	*/
+/*	$NetBSD: bw2.c,v 1.4.2.1 1995/11/10 22:12:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,12 +108,14 @@ bw2match(parent, vcf, args)
 	struct confargs *ca = args;
 	int x;
 
+#if 0	/* XXX - Assume only one is in use anyway... */
 	/*
 	 * This driver only supports one unit because the
 	 * system enable register is used for blanking.
 	 */
 	if (cf->cf_unit != 0)
 		return (0);
+#endif
 
 	if (ca->ca_paddr == -1) {
 		if (cpu_machine_id == SUN3_MACH_50)
