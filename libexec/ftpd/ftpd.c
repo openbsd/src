@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.63 1999/12/08 13:15:21 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.64 1999/12/09 09:03:08 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2173,6 +2173,8 @@ long_passive(char *cmd, int pf)
 		}
 	}
  		
+	if (pdata >= 0)
+		close(pdata);
 	pdata = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
 	if (pdata < 0) {
 		perror_reply(425, "Can't open passive connection");
