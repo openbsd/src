@@ -295,7 +295,7 @@ systracef_ioctl(fp, cmd, data, p)
 			ret = EINVAL;
 		else
 			ret = systrace_attach(fst, pid);
-		DPRINTF(("%s: attach to %d: %d\n", __func__, pid, ret));
+		DPRINTF(("%s: attach to %u: %d\n", __func__, pid, ret));
 		break;
 	case STRIOCDETACH:
 		ret = systrace_detach(strp);
@@ -789,8 +789,8 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 {
 	int error = 0;
 
-	DPRINTF(("%s: %d: policy %d\n", __func__,
-		    ans->stra_pid, ans->stra_policy));
+	DPRINTF(("%s: %u: policy %d\n", __func__,
+	    ans->stra_pid, ans->stra_policy));
 
 	if (!POLICY_VALID(ans->stra_policy)) {
 		error = EINVAL;
@@ -869,7 +869,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		break;
 	case SYSTR_POLICY_MODIFY:
 		DPRINTF(("%s: %d: code %d -> policy %d\n", __func__,
-			    pol->strp_num, pol->strp_code, pol->strp_policy));
+		    pol->strp_num, pol->strp_code, pol->strp_policy));
 		if (!POLICY_VALID(pol->strp_policy))
 			return (EINVAL);
 		TAILQ_FOREACH(strpol, &fst->policies, next)
@@ -941,8 +941,8 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	struct iovec iov;
 	int error = 0;
 
-	DPRINTF(("%s: %d: %p(%d)\n", __func__,
-		    io->strio_pid, io->strio_offs, io->strio_len));
+	DPRINTF(("%s: %u: %p(%d)\n", __func__,
+	    io->strio_pid, io->strio_offs, io->strio_len));
 
 	switch (io->strio_op) {
 	case SYSTR_READ:
