@@ -476,10 +476,13 @@ else
     ;;
 
   openbsd*)
-    archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'
-    hardcode_libdir_flag_spec='-R$libdir'
+    archive_cmds='$CC $pic_flag -shared $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $lib'
+    archive_expsym_cmds='$CC $pic_flag -shared $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $lib'
+    hardcode_libdir_flag_spec='${wl}-R$libdir'
     hardcode_direct=yes
     hardcode_shlibpath_var=no
+    remove_lgcc=yes
+    output_verbose_link_cmds='$CC $ac_cv_prog_cc_pic -shared $CFLAGS -v conftest.$objext 2>&1 | egrep "\-L"'
     ;;
 
   os2*)

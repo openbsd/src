@@ -625,7 +625,12 @@ old_postuninstall_cmds=
 
 if test -n "$RANLIB"; then
   old_archive_cmds="$old_archive_cmds~\$RANLIB \$oldlib"
-  old_postinstall_cmds="\$RANLIB \$oldlib~$old_postinstall_cmds"
+  case $host_os in
+  openbsd*)
+      old_postinstall_cmds="\$RANLIB -t \$oldlib~$old_postinstall_cmds";;
+  *)
+      old_postinstall_cmds="\$RANLIB \$oldlib~$old_postinstall_cmds";;
+  esac
 fi
 
 # Source the script associated with the $tagname tag configuration.
@@ -1281,6 +1286,9 @@ openbsd*)
   library_names_spec='${libname}${release}.so$versuffix ${libname}.so$versuffix'
   finish_cmds='PATH="\$PATH:/sbin" ldconfig -m $libdir'
   shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=yes
+  deplib_check_method=pass_all
+  sys_lib_dlsearch_path_spec='/usr/lib /usr/local/lib /usr/X11R6/lib'
   ;;
 
 os2*)

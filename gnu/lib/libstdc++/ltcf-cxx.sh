@@ -407,6 +407,19 @@ case $host_os in
   netbsd*)
     # NetBSD uses g++ - do we need to do anything?
     ;;
+  openbsd*)
+    if test "$with_gcc" = yes && test "$with_gnu_ld" = no; then
+      # MM: OpenBSD 2.7 uses G++, but not GNU ld
+      archive_cmds='$CC $pic_flag -shared $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $lib'
+      archive_expsym_cmds='$CC $pic_flag -shared $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $lib'
+      old_archive_cmds="$old_archive_cmds~"'$RANLIB $oldlib'
+      hardcode_libdir_flag_spec='${wl}-R$libdir'
+      hardcode_direct=yes
+      hardcode_shlibpath_var=no
+      remove_lgcc=yes
+      output_verbose_link_cmds='$CC $ac_cv_prog_cc_pic -shared $CFLAGS -v conftest.$objext 2>&1 | egrep "\-L"'
+    fi
+    ;;
   osf3*)
     case $cc_basename in
       KCC)
