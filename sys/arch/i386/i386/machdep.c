@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.205 2002/05/16 15:33:05 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.206 2002/05/17 18:55:41 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1041,6 +1041,7 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 	int model, step;
 {
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
+	extern int clock_broken_latch;
 
 	switch (model) {
 	case -1: /* M1 w/o cpuid */
@@ -1060,6 +1061,10 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 
 		printf("%s: xchg bug workaround performed\n", cpu_device);
 		break;	/* fallthrough? */
+	case 0x440:
+	case 0x540:
+		clock_broken_latch = 1;
+		break;
 	}
 #endif
 }

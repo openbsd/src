@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2002/05/16 15:33:10 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.27 2002/05/17 18:55:41 mickey Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ void	rtcdrain(void *);
 u_int mc146818_read(void *, u_int);
 void mc146818_write(void *, u_int, u_int);
 
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 int pentium_mhz, clock_broken_latch;
 #endif
 
@@ -227,21 +227,6 @@ initrtclock()
 	/* Correct rounding will buy us a better precision in timekeeping */
 	outb(IO_TIMER1, TIMER_DIV(hz) % 256);
 	outb(IO_TIMER1, TIMER_DIV(hz) / 256);
-
-#if defined(CPU_I586) || defined(CPU_I686)
-	{
-		extern int cpu_id;
-		switch (cpu_id) {
-		case 0x440:	/* Cyrix MediaGX */
-		case 0x540:	/* Cyrix GXm */
-			clock_broken_latch = 1;
-			break;
-		default:
-			clock_broken_latch = 0;
-			break;
-		}
-	}
-#endif
 }
 
 int
