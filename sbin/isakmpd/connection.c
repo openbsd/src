@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.7 2000/04/07 22:05:29 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.20 2000/04/04 13:52:43 provos Exp $	*/
+/*	$OpenBSD: connection.c,v 1.8 2000/08/03 07:25:39 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.23 2000/07/02 18:47:15 provos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -44,9 +44,10 @@
 
 #include "conf.h"
 #include "connection.h"
+#include "doi.h"
 #include "ipsec.h"
 
-/* XXX isakmp.h only required for compare_ids() and decode_ids().  */
+/* XXX isakmp.h only required for compare_ids().  */
 #include "isakmp.h"
 
 #include "log.h"
@@ -421,63 +422,15 @@ connection_passive_teardown (char *name)
   free (conn);
 }
 
-#ifdef USE_DEBUG
-/* 
- * XXX Perhaps move this outside connection.c (ipsec.c?)
- * Perhaps rewrite without the duplicated code.
- */
-static char *
-decode_ids (char *fmt, u_int8_t *id1, u_int8_t *id2)
-{
-  int id_type;
-  static char result[1024];
-  char s_id1[256], s_id2[256];
-
-  id_type = GET_ISAKMP_ID_TYPE (id1);
-  switch (id_type)
-    {
-    case IPSEC_ID_IPV4_ADDR:
-      snprintf (s_id1, 256, "%08x", decode_32 (id1 + ISAKMP_ID_DATA_OFF));
-      break;
-    case IPSEC_ID_IPV4_ADDR_SUBNET:
-      snprintf (s_id1, 256, "%08x", decode_32 (id1 + ISAKMP_ID_DATA_OFF));
-      snprintf (s_id1 + strlen(s_id1), 256, "/%08x",
-	       decode_32 (id1 + ISAKMP_ID_DATA_OFF + 4));
-      break;
-    /* XXX - IPV6 et al */
-    default:
-      strcpy (s_id1, "<notype>");
-      break;
-    }
-
-  id_type = GET_ISAKMP_ID_TYPE (id2);
-  switch (id_type)
-    {
-    case IPSEC_ID_IPV4_ADDR:
-      snprintf (s_id2, 256, "%08x", decode_32 (id2 + ISAKMP_ID_DATA_OFF));
-      break;
-    case IPSEC_ID_IPV4_ADDR_SUBNET:
-      snprintf (s_id2, 256, "%08x", decode_32 (id2 + ISAKMP_ID_DATA_OFF));
-      snprintf (s_id2 + strlen(s_id2), 256, "/%08x",
-	       decode_32 (id2 + ISAKMP_ID_DATA_OFF + 4));
-      break;
-    /* XXX - IPV6 et al */
-    default:
-      strcpy (s_id2, "<notype>");
-      break;
-    }
-
-  snprintf (result, 1024, fmt, s_id1, s_id2);
-  return result;
-}
-#endif /* USE_DEBUG */
-
 void
 connection_report (void)
 {
   struct connection *conn;
   struct connection_passive *pconn;
   struct timeval now;
+#ifdef USE_DEBUG
+  struct doi *doi = doi_lookup(ISAKMP_DOI_ISAKMP);
+#endif
 
   gettimeofday (&now, 0);
   for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
@@ -485,12 +438,15 @@ connection_report (void)
 	      "connection_report: connection %s next check %ld seconds",
 	      (conn->name ? conn->name : "<unnamed>"),
 	      conn->ev->expiration.tv_sec - now.tv_sec));
+#ifdef USE_DEBUG
   for (pconn = TAILQ_FIRST (&connections_passive); pconn; 
        pconn = TAILQ_NEXT (pconn, link))
     LOG_DBG ((LOG_REPORT, 0,
 	      "connection_report: passive connection %s %s", pconn->name, 
-	      decode_ids ("local_id %s remote_id %s", pconn->local_id,
-			  pconn->remote_id)));
+	      doi->decode_ids ("local_id: %s, remote_id: %s",
+				pconn->local_id, pconn->local_sz,
+				pconn->remote_id, pconn->remote_sz, 1)));
+#endif
 }
 
 /* Reinit all connections (SIGHUP handling).  */
