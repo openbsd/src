@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.14 1996/12/08 14:25:50 niklas Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.15 1997/03/06 12:44:42 kstailey Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #define SCANJET_RETRIES 4
 
-int scanjet_get_params __P((struct ss_softc *));
 int scanjet_set_params __P((struct ss_softc *, struct scan_io *));
 int scanjet_trigger_scanner __P((struct ss_softc *));
 int scanjet_read __P((struct ss_softc *, struct buf *));
@@ -76,7 +75,7 @@ __inline static char *strchr __P((/* const */ char *, char));
 struct ss_special scanjet_special = {
 	scanjet_set_params,
 	scanjet_trigger_scanner,
-	scanjet_get_params,
+	NULL,
 	NULL,			/* no special minphys */
 	scanjet_read,		/* scsi 6-byte read */
 	NULL,			/* no "rewind" code (yet?) */
@@ -149,14 +148,6 @@ scanjet_attach(ss, sa)
 	}
 
 	printf("\n");
-}
-
-int
-scanjet_get_params(ss)
-	struct ss_softc *ss;
-{
-
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.9 1997/02/27 06:20:23 tholo Exp $	*/
+/*	$OpenBSD: ss.c,v 1.10 1997/03/06 12:44:41 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -78,6 +78,8 @@ struct cfdriver ss_cd = {
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
 void	ssminphys __P((struct buf *));
+
+static int ss_set_window __P((struct ss_softc *, struct scan_io *));
 
 struct scsi_device ss_switch = {
 	NULL,
@@ -445,9 +447,6 @@ ssioctl(dev, cmd, addr, flag, p)
 			error = (ss->special->get_params)(ss);
 			if (error)
 				return (error);
-		} else {
-			/* XXX add code for SCSI2 scanner, if any */
-			return (EOPNOTSUPP);
 		}
 		bcopy(&ss->sio, addr, sizeof(struct scan_io));
 		break;
@@ -460,8 +459,12 @@ ssioctl(dev, cmd, addr, flag, p)
 			if (error)
 				return (error);
 		} else {
-			/* XXX add code for SCSI2 scanner, if any */
+#ifdef NOTYET
+			/* add routine to validate paramters */
+			ss_set_window(ss, sio);
+#else
 			return (EOPNOTSUPP);
+#endif
 		}
 		break;
 	case SCIOCRESTART:
@@ -487,3 +490,28 @@ ssioctl(dev, cmd, addr, flag, p)
 	}
 	return (error);
 }
+
+#ifdef NOTYET
+static int
+ss_set_window(sc, sio)
+	struct ss_softc *;
+	struct scan_io *;
+{
+	struct scsi_set_window		window_cmd;
+	struct scsi_window_header	window_header;
+	struct scsi_window_data		window_data;
+
+	bzero(&window_cmd, sizeof(window_cmd));
+	window_cmd.opcode = SET_WINDOW;
+	_lto3l(sizeof(window_data), window_cmd.length);
+
+	bzero(&window_header, sizeof(window_header));
+	_lto2l(, window_header.len);
+
+	bzero(&window_data, sizeof(window_data));
+	_lto2l(sio->sio.scan_x_resolution, window_data.x_res);
+	_lto2l(sio->sio.scan_y_resolution, window_data.y_res);
+	_lto2l(sio->, window_data.x_org);
+	_lto2l(sio->, window_data.y_org);
+}
+#endif

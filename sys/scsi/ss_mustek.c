@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.5 1996/05/10 12:31:40 deraadt Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.6 1997/03/06 12:44:42 kstailey Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -69,7 +69,6 @@
 
 #define MUSTEK_RETRIES 4
 
-int mustek_get_params __P((struct ss_softc *));
 int mustek_set_params __P((struct ss_softc *, struct scan_io *));
 int mustek_trigger_scanner __P((struct ss_softc *));
 void mustek_minphys __P((struct ss_softc *, struct buf *));
@@ -86,7 +85,7 @@ void mustek_compute_sizes __P((struct ss_softc *));
 struct ss_special mustek_special = {
 	mustek_set_params,
 	mustek_trigger_scanner,
-	mustek_get_params,
+	NULL,
 	mustek_minphys,
 	mustek_read,
 	mustek_rewind_scanner,
@@ -143,14 +142,6 @@ mustek_attach(ss, sa)
 	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
 	mustek_compute_sizes(ss);
-}
-
-int
-mustek_get_params (ss)
-	struct ss_softc *ss;
-{
-
-	return (0);
 }
 
 /*
