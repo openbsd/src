@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.28 2001/05/16 19:38:27 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.29 2001/05/24 04:12:04 angelos Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -280,6 +280,10 @@ wsscreen_attach(sc, console, emul, type, cookie, ccol, crow, defattr)
 	} else { /* not console */
 		dconf = malloc(sizeof(struct wsscreen_internal),
 			       M_DEVBUF, M_NOWAIT);
+		if (dconf == NULL) {
+			free(scr, M_DEVBUF);
+			return (NULL);
+		}
 		dconf->emulops = type->textops;
 		dconf->emulcookie = cookie;
 		if (dconf->emulops) {
