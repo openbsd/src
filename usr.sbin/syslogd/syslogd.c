@@ -949,7 +949,7 @@ init(signo)
 		/*
 		 * check for end-of-section, comments, strip off trailing
 		 * spaces and newline character. #!prog  and !prog are treated
-                 * specially: the following lines apply only to that program.
+		 * specially: the following lines apply only to that program.
 		 */
 		for (p = cline; isspace(*p); ++p)
 			continue;
