@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.13 1998/05/08 19:32:35 deraadt Exp $	*/
+/*	$OpenBSD: utility.c,v 1.14 1998/05/08 19:43:44 deraadt Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.13 1998/05/08 19:32:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.14 1998/05/08 19:43:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ fatal(f, msg)
 		 */
 		encrypt_send_end();
 		netflush();
-		}
+	}
 #endif
 	write(f, buf, (int)strlen(buf));
 
