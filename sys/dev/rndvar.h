@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.7 1997/06/17 19:42:01 mickey Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.8 1997/06/21 04:59:37 flipk Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -46,27 +46,7 @@
 #define RND_ARND	4	/* aRC4 based random number generator */
 #define RND_NODEV	5	/* First invalid minor device number */
 
-struct rndstats {
-	u_long rnd_total; /* total bits of entropy generated */
-	u_long rnd_used;  /* strong data bits read so far */
-	u_long arc4_reads;/* aRC4 data bytes read so far */
-
-	u_long rnd_timer; /* timer calls */
-	u_long rnd_mouse; /* mouse calls */
-	u_long rnd_tty;   /* tty calls */
-	u_long rnd_disk;  /* block devices calls */
-	u_long rnd_net;   /* net calls */
-
-	u_long rnd_reads; /* strong read calls */
-	u_long rnd_waits; /* sleep for data */
-	u_long rnd_enqs;  /* enqueue calls */
-	u_long rnd_deqs;  /* dequeue calls */
-	u_long rnd_drops; /* queue-full drops */
-	u_long rnd_drople;/* queue low watermark low entropy drops */
-};
-
 #ifdef _KERNEL
-extern struct rndstats rndstats;
 
 extern void add_mouse_randomness __P((u_int32_t));
 extern void add_net_randomness __P((int));
