@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mx.c,v 1.4 1999/02/27 19:15:26 jason Exp $	*/
+/*	$OpenBSD: if_mx.c,v 1.5 1999/03/03 22:51:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -92,29 +92,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#define bootverbose 0
 
 #define MX_USEIOSPACE
 
 /* #define MX_BACKGROUND_AUTONEG */
 
 #include <dev/pci/if_mxreg.h>
-
-/*
- * Various supported PHY vendors/types and their names. Note that
- * this driver will work with pretty much any MII-compliant PHY,
- * so failure to positively identify the chip is not a fatal error.
- */
-
-static struct mx_type mx_phys[] = {
-	{ TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
-	{ TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
-	{ NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
-	{ LEVEL1_PHY_VENDORID, LEVEL1_PHY_LXT970, "<Level 1 LXT970>" }, 
-	{ INTEL_PHY_VENDORID, INTEL_PHY_82555, "<Intel 82555>" },
-	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
-	{ 0, 0, "<MII-compliant physical interface>" }
-};
 
 static int mx_probe	__P((struct device *, void *, void *));
 static void mx_attach	__P((struct device *, struct device *self, void *aux));
@@ -870,34 +853,23 @@ static void mx_getmode_mii(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	bmsr = mx_phy_readreg(sc, PHY_BMSR);
-	if (bootverbose)
-		printf("mx%d: PHY status word: %x\n", sc->mx_unit, bmsr);
 
 	/* fallback */
 	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
 
 	if (bmsr & PHY_BMSR_10BTHALF) {
-		if (bootverbose)
-			printf("mx%d: 10Mbps half-duplex mode supported\n",
-								sc->mx_unit);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 	}
 
 	if (bmsr & PHY_BMSR_10BTFULL) {
-		if (bootverbose)
-			printf("mx%d: 10Mbps full-duplex mode supported\n",
-								sc->mx_unit);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
 	}
 
 	if (bmsr & PHY_BMSR_100BTXHALF) {
-		if (bootverbose)
-			printf("mx%d: 100Mbps half-duplex mode supported\n",
-								sc->mx_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -906,9 +878,6 @@ static void mx_getmode_mii(sc)
 	}
 
 	if (bmsr & PHY_BMSR_100BTXFULL) {
-		if (bootverbose)
-			printf("mx%d: 100Mbps full-duplex mode supported\n",
-								sc->mx_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
@@ -917,23 +886,16 @@ static void mx_getmode_mii(sc)
 
 	/* Some also support 100BaseT4. */
 	if (bmsr & PHY_BMSR_100BT4) {
-		if (bootverbose)
-			printf("mx%d: 100baseT4 mode supported\n", sc->mx_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
 #ifdef FORCE_AUTONEG_TFOUR
-		if (bootverbose)
-			printf("mx%d: forcing on autoneg support for BT4\n",
-							 sc->mx_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 #endif
 	}
 
 	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		if (bootverbose)
-			printf("mx%d: autoneg supported\n", sc->mx_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 	}
@@ -1487,7 +1449,7 @@ static void mx_txeoc(sc)
 		sc->mx_cdata.mx_tx_tail = NULL;
 		if (sc->mx_want_auto) {
 			if (sc->mx_type == MX_TYPE_98713 &&
-						sc->mx_pinfo != NULL)
+						sc->mx_hasmii != 0)
 				mx_autoneg_mii(sc, MX_FLAG_DELAYTIMEO, 1);
 			else
 				mx_autoneg(sc, MX_FLAG_DELAYTIMEO, 1);
@@ -1772,7 +1734,7 @@ static void mx_init(xsc)
 
 	s = splimp();
 
-	if (sc->mx_pinfo != NULL)
+	if (sc->mx_hasmii != 0)
 		phy_bmcr = mx_phy_readreg(sc, PHY_BMCR);
 
 	/*
@@ -1805,7 +1767,7 @@ static void mx_init(xsc)
 	else
 		MX_SETBIT(sc, MX_MAGICPACKET, MX_MAGIC_98715);
 
-	if (sc->mx_pinfo != NULL) {
+	if (sc->mx_hasmii != 0) {
 		MX_SETBIT(sc, MX_WATCHDOG, MX_WDOG_JABBERDIS);
 		mx_setcfg(sc, mx_phy_readreg(sc, PHY_BMCR));
 	} else
@@ -1821,8 +1783,7 @@ static void mx_init(xsc)
 
 	/* Init circular RX list. */
 	if (mx_list_rx_init(sc) == ENOBUFS) {
-		printf("mx%d: initialization failed: no "
-			"memory for rx buffers\n", sc->mx_unit);
+		printf("mx%d: no memory for rx buffers\n", sc->mx_unit);
 		mx_stop(sc);
 		(void)splx(s);
 		return;
@@ -1854,7 +1815,7 @@ static void mx_init(xsc)
 	CSR_WRITE_4(sc, MX_RXSTART, 0xFFFFFFFF);
 
 	/* Restore state of BMCR */
-	if (sc->mx_pinfo != NULL)
+	if (sc->mx_hasmii != 0)
 		mx_phy_writereg(sc, PHY_BMCR, phy_bmcr);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -1880,7 +1841,7 @@ static int mx_ifmedia_upd(ifp)
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return(EINVAL);
 
-	if (sc->mx_type == MX_TYPE_98713 && sc->mx_pinfo != NULL) {
+	if (sc->mx_type == MX_TYPE_98713 && sc->mx_hasmii != 0) {
 		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
 			mx_autoneg_mii(sc, MX_FLAG_SCHEDDELAY, 1);
 		else
@@ -1910,7 +1871,7 @@ static void mx_ifmedia_sts(ifp, ifmr)
 
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (sc->mx_type != MX_TYPE_98713 || sc->mx_pinfo == NULL) {
+	if (sc->mx_type != MX_TYPE_98713 || sc->mx_hasmii == 0) {
 		media = CSR_READ_4(sc, MX_NETCFG);
 		if (media & MX_NETCFG_PORTSEL)
 			ifmr->ifm_active = IFM_ETHER|IFM_100_TX;
@@ -2025,7 +1986,7 @@ static void mx_watchdog(ifp)
 	sc = ifp->if_softc;
 
 	if (sc->mx_autoneg) {
-		if (sc->mx_type == MX_TYPE_98713 && sc->mx_pinfo != NULL)
+		if (sc->mx_type == MX_TYPE_98713 && sc->mx_hasmii != 0)
 			mx_autoneg_mii(sc, MX_FLAG_DELAYTIMEO, 1);
 		else
 			mx_autoneg(sc, MX_FLAG_DELAYTIMEO, 1);
@@ -2035,7 +1996,7 @@ static void mx_watchdog(ifp)
 	ifp->if_oerrors++;
 	printf("mx%d: watchdog timeout\n", sc->mx_unit);
 
-	if (sc->mx_pinfo == NULL) {
+	if (sc->mx_hasmii == 0) {
 		if (!(CSR_READ_4(sc, MX_10BTSTAT) & MX_TSTAT_LS10) ||
 			!(CSR_READ_4(sc, MX_10BTSTAT) & MX_TSTAT_LS100))
 			printf("mx%d: no carrier - transceiver "
@@ -2140,7 +2101,6 @@ mx_attach(parent, self, aux)
 	u_int32_t command;
 	u_int16_t phy_sts, phy_did, phy_vid, mac_offset = 0;
 	int s, i, media;
-	struct mx_type *p = NULL;
 
 	s = splimp();
 
@@ -2150,15 +2110,15 @@ mx_attach(parent, self, aux)
 
 #ifdef MX_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
+		printf(": failed to enable i/o ports\n");
 		goto fail;
 	}
 	if (pci_io_find(pc, pa->pa_tag, MX_PCI_LOIO, &iobase, &iosize)) {
-		printf(": failed to find i/o space\n");
+		printf(": can't find i/o space\n");
 		goto fail;
 	}
 	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->mx_bhandle)) {
-		printf(": failed map i/o space\n");
+		printf(": can't map i/o space\n");
 		goto fail;
 	}
 	sc->mx_btag = pa->pa_iot;
@@ -2168,11 +2128,11 @@ mx_attach(parent, self, aux)
 		goto fail;
 	}
 	if (pci_mem_find(pc, pa->pa_tag, MX_PCI_LOMEM, &iobase, &iosize)) {
-		printf(": failed to find memory space\n");
+		printf(": can't find mem space\n");
 		goto fail;
 	}
 	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->mx_bhandle)) {
-		printf(": failed map memory space\n");
+		printf(": can't map mem space\n");
 		goto fail;
 	}
 	sc->mx_btag = pa->pa_memt;
@@ -2258,17 +2218,7 @@ mx_attach(parent, self, aux)
 		if (phy_sts) {
 			phy_vid = mx_phy_readreg(sc, PHY_VENID);
 			phy_did = mx_phy_readreg(sc, PHY_DEVID);
-			p = mx_phys;
-			while (p->mx_vid) {
-				if (phy_vid == p->mx_vid &&
-				    (phy_did|0xf) == p->mx_did) {
-					sc->mx_pinfo = p;
-					break;
-				}
-				p++;
-			}
-			if (sc->mx_pinfo == NULL)
-				sc->mx_pinfo = &mx_phys[PHY_UNKNOWN];
+			sc->mx_hasmii = 1;
 		}
 		else {
 			printf("%s: MII without any phy!\n",
@@ -2278,7 +2228,7 @@ mx_attach(parent, self, aux)
 	}
 
 	ifmedia_init(&sc->ifmedia, 0, mx_ifmedia_upd, mx_ifmedia_sts);
-	if (sc->mx_type == MX_TYPE_98713 && sc->mx_pinfo != NULL) {
+	if (sc->mx_type == MX_TYPE_98713 && sc->mx_hasmii != 0) {
 		mx_getmode_mii(sc);
 		mx_autoneg_mii(sc, MX_FLAG_FORCEDELAY, 1);
 	} else {

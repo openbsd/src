@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.22 1999/03/02 02:25:39 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.23 1999/03/03 22:51:51 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -114,8 +114,6 @@
 
 #elif defined(__OpenBSD__)
 
-#define bootverbose 0
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
@@ -225,7 +223,6 @@ static struct xl_type xl_devs[] = {
 		"3Com 3c980 Fast Etherlink XL 10/100BaseTX" },
 	{ 0, 0, NULL }
 };
-#endif
 
 /*
  * Various supported PHY vendors/types and their names. Note that
@@ -242,6 +239,7 @@ static struct xl_type xl_phys[] = {
 	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
 	{ 0, 0, "<MII-compliant physical interface>" }
 };
+#endif
 
 #if defined(__FreeBSD__)
 static unsigned long xl_count = 0;
@@ -1013,34 +1011,23 @@ static void xl_getmode_mii(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	bmsr = xl_phy_readreg(sc, PHY_BMSR);
-	if (bootverbose)
-		printf("xl%d: PHY status word: %x\n", sc->xl_unit, bmsr);
 
 	/* fallback */
 	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
 
 	if (bmsr & PHY_BMSR_10BTHALF) {
-		if (bootverbose)
-			printf("xl%d: 10Mbps half-duplex mode supported\n",
-								sc->xl_unit);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 	}
 
 	if (bmsr & PHY_BMSR_10BTFULL) {
-		if (bootverbose)
-			printf("xl%d: 10Mbps full-duplex mode supported\n",
-								sc->xl_unit);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
 	}
 
 	if (bmsr & PHY_BMSR_100BTXHALF) {
-		if (bootverbose)
-			printf("xl%d: 100Mbps half-duplex mode supported\n",
-								sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -1049,9 +1036,6 @@ static void xl_getmode_mii(sc)
 	}
 
 	if (bmsr & PHY_BMSR_100BTXFULL) {
-		if (bootverbose)
-			printf("xl%d: 100Mbps full-duplex mode supported\n",
-								sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
@@ -1060,23 +1044,16 @@ static void xl_getmode_mii(sc)
 
 	/* Some also support 100BaseT4. */
 	if (bmsr & PHY_BMSR_100BT4) {
-		if (bootverbose)
-			printf("xl%d: 100baseT4 mode supported\n", sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
 #ifdef FORCE_AUTONEG_TFOUR
-		if (bootverbose)
-			printf("xl%d: forcing on autoneg support for BT4\n",
-							 sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 #endif
 	}
 
 	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		if (bootverbose)
-			printf("xl%d: autoneg supported\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 	}
@@ -1571,9 +1548,6 @@ xl_attach(config_id, unit)
 	 */
 	XL_SEL_WIN(3);
 	sc->xl_media = CSR_READ_2(sc, XL_W3_MEDIA_OPT);
-	if (bootverbose)
-		printf("xl%d: media options word: %x\n", sc->xl_unit,
-							 sc->xl_media);
 
 	xl_read_eeprom(sc, (char *)&sc->xl_xcvr, XL_EE_ICFG_0, 2, 0);
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
@@ -1603,12 +1577,7 @@ xl_attach(config_id, unit)
 			icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
 		CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
 
-		if (bootverbose)
-			printf("xl%d: probing for a PHY\n", sc->xl_unit);
 		for (i = XL_PHYADDR_MIN; i < XL_PHYADDR_MAX + 1; i++) {
-			if (bootverbose)
-				printf("xl%d: checking address: %d\n",
-							sc->xl_unit, i);
 			sc->xl_phy_addr = i;
 			xl_phy_writereg(sc, XL_PHY_GENCTL, PHY_BMCR_RESET);
 			DELAY(500);
@@ -1620,12 +1589,6 @@ xl_attach(config_id, unit)
 		if (phy_sts) {
 			phy_vid = xl_phy_readreg(sc, XL_PHY_VENID);
 			phy_did = xl_phy_readreg(sc, XL_PHY_DEVID);
-			if (bootverbose)
-				printf("xl%d: found PHY at address %d, ",
-						sc->xl_unit, sc->xl_phy_addr);
-			if (bootverbose)
-				printf("vendor id: %x device id: %x\n",
-					phy_vid, phy_did);
 			p = xl_phys;
 			while(p->xl_vid) {
 				if (phy_vid == p->xl_vid &&
@@ -1637,9 +1600,6 @@ xl_attach(config_id, unit)
 			}
 			if (sc->xl_pinfo == NULL)
 				sc->xl_pinfo = &xl_phys[PHY_UNKNOWN];
-			if (bootverbose)
-				printf("xl%d: PHY type: %s\n",
-					sc->xl_unit, sc->xl_pinfo->xl_name);
 		} else {
 			printf("xl%d: MII without any phy!\n", sc->xl_unit);
 		}
@@ -1651,8 +1611,6 @@ xl_attach(config_id, unit)
 	ifmedia_init(&sc->ifmedia, 0, xl_ifmedia_upd, xl_ifmedia_sts);
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
-		if (bootverbose)
-			printf("xl%d: found 10baseT\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
@@ -1661,14 +1619,10 @@ xl_attach(config_id, unit)
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_AUI) {
-		if (bootverbose)
-			printf("xl%d: found AUI\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
-		if (bootverbose)
-			printf("xl%d: found BNC\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_2, 0, NULL);
 	}
 
@@ -1679,8 +1633,6 @@ xl_attach(config_id, unit)
 	 * do it and get it over with.
 	 */
 	if (sc->xl_media & XL_MEDIAOPT_BTX) {
-		if (bootverbose)
-			printf("xl%d: found 100baseTX\n", sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -1688,13 +1640,11 @@ xl_attach(config_id, unit)
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
 			ifmedia_add(&sc->ifmedia,
 				IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		if (sc->xl_pinfo != NULL)
+		if (sc->xl_hasmii != 0)
 			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BFX) {
-		if (bootverbose)
-			printf("xl%d: found 100baseFX\n", sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX, 0, NULL);
 	}
@@ -1704,8 +1654,6 @@ xl_attach(config_id, unit)
 	 * separately.
 	 */
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BT4) {
-		if (bootverbose)
-			printf("xl%d: found MII\n", sc->xl_unit);
 		xl_getmode_mii(sc);
 	}
 
@@ -2477,7 +2425,7 @@ static void xl_init(xsc)
 	 * to preserve it. (For 3c905 cards with real external PHYs,
 	 * the BMCR register doesn't change, but this doesn't hurt.)
 	 */
-	if (sc->xl_pinfo != NULL)
+	if (sc->xl_hasmii != 0)
 		phy_bmcr = xl_phy_readreg(sc, PHY_BMCR);
 
 	/*
@@ -2624,7 +2572,7 @@ static void xl_init(xsc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_ENABLE);
 
 	/* Restore state of BMCR */
-	if (sc->xl_pinfo != NULL)
+	if (sc->xl_hasmii != 0)
 		xl_phy_writereg(sc, PHY_BMCR, phy_bmcr);
 
 	/* Select window 7 for normal operations. */
@@ -2998,7 +2946,6 @@ xl_attach(parent, self, aux)
 	caddr_t roundptr;
 	u_int round;
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	struct xl_type *p;
 
 	sc->xl_unit = sc->sc_dev.dv_unit;
 
@@ -3172,9 +3119,6 @@ xl_attach(parent, self, aux)
 
 	XL_SEL_WIN(3);
 	sc->xl_media = CSR_READ_2(sc, XL_W3_MEDIA_OPT);
-	if (bootverbose)
-		printf("xl%d: media options word: %x\n",
-		    sc->xl_unit, sc->xl_media);
 
 	xl_read_eeprom(sc, (char *)&sc->xl_xcvr, XL_EE_ICFG_0, 2, 0);
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
@@ -3216,26 +3160,7 @@ xl_attach(parent, self, aux)
 		if (phy_sts) {
 			phy_vid = xl_phy_readreg(sc, XL_PHY_VENID);
 			phy_did = xl_phy_readreg(sc, XL_PHY_DEVID);
-			if (bootverbose)
-				printf("xl%d: found PHY at address %d, ",
-						sc->xl_unit, sc->xl_phy_addr);
-			if (bootverbose)
-				printf("vendor id: %x device id: %x\n",
-					phy_vid, phy_did);
-			p = xl_phys;
-			while(p->xl_vid) {
-				if (phy_vid == p->xl_vid &&
-					(phy_did | 0x000F) == p->xl_did) {
-					sc->xl_pinfo = p;
-					break;
-				}
-				p++;
-			}
-			if (sc->xl_pinfo == NULL)
-				sc->xl_pinfo = &xl_phys[PHY_UNKNOWN];
-			if (bootverbose)
-				printf("xl%d: PHY type: %s\n",
-					sc->xl_unit, sc->xl_pinfo->xl_name);
+			sc->xl_hasmii = 1;
 		}
 		else {
 			printf("%s: MII without any phy!\n",
@@ -3250,8 +3175,6 @@ xl_attach(parent, self, aux)
 	ifmedia_init(&sc->ifmedia, 0, xl_ifmedia_upd, xl_ifmedia_sts);
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
-		if (bootverbose)
-			printf("xl%d: found 10baseT\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
@@ -3260,14 +3183,10 @@ xl_attach(parent, self, aux)
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_AUI) {
-		if (bootverbose)
-			printf("xl%d: found AUI\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
-		if (bootverbose)
-			printf("xl%d: found BNC\n", sc->xl_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_2, 0, NULL);
 	}
 
@@ -3278,8 +3197,6 @@ xl_attach(parent, self, aux)
 	 * do it and get it over with.
 	 */
 	if (sc->xl_media & XL_MEDIAOPT_BTX) {
-		if (bootverbose)
-			printf("xl%d: found 100baseTX\n", sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -3287,13 +3204,11 @@ xl_attach(parent, self, aux)
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
 			ifmedia_add(&sc->ifmedia,
 				IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		if (sc->xl_pinfo != NULL)
+		if (sc->xl_hasmii != 0)
 			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BFX) {
-		if (bootverbose)
-			printf("xl%d: found 100baseFX\n", sc->xl_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX, 0, NULL);
 	}
@@ -3303,8 +3218,6 @@ xl_attach(parent, self, aux)
 	 * separately.
 	 */
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BT4) {
-		if (bootverbose)
-			printf("xl%d: found MII\n", sc->xl_unit);
 		xl_getmode_mii(sc);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pn.c,v 1.3 1999/02/27 18:44:58 jason Exp $	*/
+/*	$OpenBSD: if_pn.c,v 1.4 1999/03/03 22:51:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -92,7 +92,6 @@
 #endif /* FreeBSD */
 
 #ifdef __OpenBSD__
-#define bootverbose 0
 #include <vm/vm.h>		/* for vtophys */
 #include <vm/pmap.h>		/* for vtophys */
 #include <sys/device.h>
@@ -512,34 +511,23 @@ static void pn_getmode_mii(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	bmsr = pn_phy_readreg(sc, PHY_BMSR);
-	if (bootverbose)
-		printf("pn%d: PHY status word: %x\n", sc->pn_unit, bmsr);
 
 	/* fallback */
 	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
 
 	if (bmsr & PHY_BMSR_10BTHALF) {
-		if (bootverbose)
-			printf("pn%d: 10Mbps half-duplex mode supported\n",
-								sc->pn_unit);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 	}
 
 	if (bmsr & PHY_BMSR_10BTFULL) {
-		if (bootverbose)
-			printf("pn%d: 10Mbps full-duplex mode supported\n",
-								sc->pn_unit);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
 	}
 
 	if (bmsr & PHY_BMSR_100BTXHALF) {
-		if (bootverbose)
-			printf("pn%d: 100Mbps half-duplex mode supported\n",
-								sc->pn_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -548,9 +536,6 @@ static void pn_getmode_mii(sc)
 	}
 
 	if (bmsr & PHY_BMSR_100BTXFULL) {
-		if (bootverbose)
-			printf("pn%d: 100Mbps full-duplex mode supported\n",
-								sc->pn_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
@@ -559,23 +544,16 @@ static void pn_getmode_mii(sc)
 
 	/* Some also support 100BaseT4. */
 	if (bmsr & PHY_BMSR_100BT4) {
-		if (bootverbose)
-			printf("pn%d: 100baseT4 mode supported\n", sc->pn_unit);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
 #ifdef FORCE_AUTONEG_TFOUR
-		if (bootverbose)
-			printf("pn%d: forcing on autoneg support for BT4\n",
-							 sc->pn_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 #endif
 	}
 
 	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		if (bootverbose)
-			printf("pn%d: autoneg supported\n", sc->pn_unit);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 	}
@@ -1003,12 +981,7 @@ pn_attach(config_id, unit)
 	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = PN_TX_LIST_CNT - 1;
 
-	if (bootverbose)
-		printf("pn%d: probing for a PHY\n", sc->pn_unit);
 	for (i = PN_PHYADDR_MIN; i < PN_PHYADDR_MAX + 1; i++) {
-		if (bootverbose)
-			printf("pn%d: checking address: %d\n",
-						sc->pn_unit, i);
 		sc->pn_phy_addr = i;
 		pn_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
 		DELAY(500);
@@ -1020,12 +993,6 @@ pn_attach(config_id, unit)
 	if (phy_sts) {
 		phy_vid = pn_phy_readreg(sc, PHY_VENID);
 		phy_did = pn_phy_readreg(sc, PHY_DEVID);
-		if (bootverbose)
-			printf("pn%d: found PHY at address %d, ",
-					sc->pn_unit, sc->pn_phy_addr);
-		if (bootverbose)
-			printf("vendor id: %x device id: %x\n",
-				phy_vid, phy_did);
 		p = pn_phys;
 		while(p->pn_vid) {
 			if (phy_vid == p->pn_vid &&
@@ -1037,9 +1004,6 @@ pn_attach(config_id, unit)
 		}
 		if (sc->pn_pinfo == NULL)
 			sc->pn_pinfo = &pn_phys[PHY_UNKNOWN];
-		if (bootverbose)
-			printf("pn%d: PHY type: %s\n",
-				sc->pn_unit, sc->pn_pinfo->pn_name);
 	} else {
 		printf("pn%d: MII without any phy!\n", sc->pn_unit);
 		goto fail;

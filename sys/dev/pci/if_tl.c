@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.8 1999/02/27 19:05:43 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.9 1999/03/03 22:51:50 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -225,8 +225,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#define bootverbose 0
 #endif
 
 /*
@@ -331,7 +329,6 @@ static struct tl_type tl_devs[] = {
 		"Olicom OC-2326 10/100 TX UTP" },
 	{ 0, 0, NULL }
 };
-#endif
 
 /*
  * Various supported PHY vendors/types and their names. Note that
@@ -348,6 +345,7 @@ static struct tl_type tl_phys[] = {
 	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
 	{ 0, 0, "<MII-compliant physical interface>" }
 };
+#endif
 
 #ifdef __FreeBSD__
 static unsigned long		tl_count;
@@ -1470,7 +1468,6 @@ static int tl_attach_phy(sc)
 	struct tl_softc		*sc;
 {
 	int			phy_ctl;
-	struct tl_type		*p = tl_phys;
 	int			media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	struct ifnet		*ifp;
 
@@ -1481,22 +1478,6 @@ static int tl_attach_phy(sc)
 	sc->tl_phy_sts = tl_phy_readreg(sc, TL_PHY_GENSTS);
 	phy_ctl = tl_phy_readreg(sc, TL_PHY_GENCTL);
 
-	/*
-	 * PHY revision numbers tend to vary a bit. Our algorithm here
-	 * is to check everything but the 8 least significant bits.
-	 */
-	while(p->tl_vid) {
-		if (sc->tl_phy_vid  == p->tl_vid &&
-			(sc->tl_phy_did | 0x000F) == p->tl_did) {
-			sc->tl_pinfo = p;
-			break;
-		}
-		p++;
-	}
-	if (sc->tl_pinfo == NULL) {
-		sc->tl_pinfo = &tl_phys[PHY_UNKNOWN];
-	}
-
 	if (sc->tl_phy_sts & PHY_BMSR_100BT4 ||
 		sc->tl_phy_sts & PHY_BMSR_100BTXFULL ||
 		sc->tl_phy_sts & PHY_BMSR_100BTXHALF)
@@ -1504,47 +1485,23 @@ static int tl_attach_phy(sc)
 	else
 		ifp->if_baudrate = 10000000;
 
-	if (bootverbose) {
-		printf("tl%d: phy at mii address %d\n", sc->tl_unit,
-							sc->tl_phy_addr);
-
-		printf("tl%d: %s ", sc->tl_unit, sc->tl_pinfo->tl_name);
-	}
-
 	if (sc->tl_phy_sts & PHY_BMSR_100BT4 ||
 		sc->tl_phy_sts & PHY_BMSR_100BTXHALF ||
 		sc->tl_phy_sts & PHY_BMSR_100BTXHALF) {
-		if (bootverbose)
-			printf("10/100Mbps ");
 	} else {
 		media &= ~IFM_100_TX;
 		media |= IFM_10_T;
-		if (bootverbose)
-			printf("10Mbps ");
 	}
 
 	if (sc->tl_phy_sts & PHY_BMSR_100BTXFULL ||
 		sc->tl_phy_sts & PHY_BMSR_10BTFULL) {
-		if (bootverbose)
-			printf("full duplex ");
 	} else {
-		if (bootverbose)
-			printf("half duplex ");
 		media &= ~IFM_FDX;
 	}
 
 	if (sc->tl_phy_sts & PHY_BMSR_CANAUTONEG) {
 		media = IFM_ETHER|IFM_AUTO;
-		if (bootverbose)
-			printf("autonegotiating\n");
-	} else
-		if (bootverbose)
-			printf("\n");
-
-	/* If this isn't a known PHY, print the PHY indentifier info. */
-	if (sc->tl_pinfo->tl_vid == 0 && bootverbose)
-		printf("tl%d: vendor id: %04x product id: %04x\n",
-			sc->tl_unit, sc->tl_phy_vid, sc->tl_phy_did);
+	}
 
 	/* Set up ifmedia data and callbacks. */
 	ifmedia_init(&sc->ifmedia, 0, tl_ifmedia_upd, tl_ifmedia_sts);
@@ -1813,14 +1770,10 @@ tl_attach(config_id, unit)
 
 	for (i = TL_PHYADDR_MIN; i < TL_PHYADDR_MAX + 1; i++) {
 		sc->tl_phy_addr = i;
-		if (bootverbose)
-			printf("tl%d: looking for phy at addr %x\n", unit, i);
 		tl_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
 		DELAY(500);
 		while(tl_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_RESET);
 		sc->tl_phy_sts = tl_phy_readreg(sc, PHY_BMSR);
-		if (bootverbose)
-			printf("tl%d: status: %x\n", unit, sc->tl_phy_sts);
 		if (!sc->tl_phy_sts)
 			continue;
 		if (tl_attach_phy(sc)) {
@@ -3196,16 +3149,10 @@ tl_attach(parent, self, aux)
 
 	for (i = TL_PHYADDR_MIN; i < TL_PHYADDR_MAX + 1; i++) {
 		sc->tl_phy_addr = i;
-		if (bootverbose)
-			printf("%s: looking for phy at addr %x\n",
-			    sc->sc_dev.dv_xname, i);
 		tl_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
 		DELAY(500);
 		while(tl_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_RESET);
 		sc->tl_phy_sts = tl_phy_readreg(sc, PHY_BMSR);
-		if (bootverbose)
-			printf("%s: status: %x\n", sc->sc_dev.dv_xname,
-			    sc->tl_phy_sts);
 		if (!sc->tl_phy_sts)
 			continue;
 		if (tl_attach_phy(sc)) {

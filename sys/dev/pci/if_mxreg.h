@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mxreg.h,v 1.1 1999/01/08 04:43:18 jason Exp $	*/
+/*	$OpenBSD: if_mxreg.h,v 1.2 1999/03/03 22:51:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -487,7 +487,7 @@ struct mx_softc {
 	bus_space_handle_t	mx_bhandle;	/* bus space handle */
 	bus_space_tag_t		mx_btag;	/* bus space tag */
 	struct mx_type		*mx_info;	/* Macronix adapter info */
-	struct mx_type		*mx_pinfo;	/* phy info */
+	u_int8_t		mx_hasmii;	/* whether we have mii */
 	u_int8_t		mx_unit;	/* interface number */
 	u_int8_t		mx_type;
 	u_int8_t		mx_phy_addr;	/* PHY address */

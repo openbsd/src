@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.13 1999/02/26 21:25:44 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.14 1999/03/03 22:51:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -143,7 +143,6 @@
  * so failure to positively identify the chip is not a fatal error.
  */
 
-#define bootverbose 0
 static int rl_probe	__P((struct device *, void *, void *));
 static void rl_attach	__P((struct device *, struct device *, void *));
 static int rl_intr	__P((void *));
@@ -1392,12 +1391,12 @@ rl_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, RL_RXBUFLEN + 16, PAGE_SIZE, 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("\n%s: cannot alloc rx buffers\n", sc->sc_dev.dv_xname);
+		printf("\n%s: can't alloc rx buffers\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, RL_RXBUFLEN + 16, &kva,
 	    BUS_DMA_NOWAIT | BUS_DMAMEM_NOSYNC)) {
-		printf("\n%s: cannot map dma buffers (%d bytes)\n",
+		printf("\n%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, RL_RXBUFLEN + 16);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
@@ -1405,14 +1404,14 @@ rl_attach(parent, self, aux)
 	sc->sc_dma_mapsize = RL_RXBUFLEN + 16;
 	if (bus_dmamap_create(sc->sc_dmat, RL_RXBUFLEN + 16, 1,
 	    RL_RXBUFLEN + 16, 0, BUS_DMA_NOWAIT, &sc->sc_dma_mem)) {
-		printf("\n%s: cannot create dma map\n");
+		printf("\n%s: can't create dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 16);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_mem, kva,
 	    RL_RXBUFLEN + 16, NULL, BUS_DMA_NOWAIT)) {
-		printf("\n%s: cannot load dma map\n");
+		printf("\n%s: can't load dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 16);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_mem);
