@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.11 1999/05/01 22:58:02 niklas Exp $
-$EOM: TO-DO,v 1.36 1999/05/01 22:37:29 niklas Exp $
+$OpenBSD: TO-DO,v 1.12 1999/05/03 22:45:24 niklas Exp $
+$EOM: TO-DO,v 1.37 1999/05/03 07:59:34 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -102,3 +102,5 @@ the program is far from ready in any area.
 * Handle notifications showing the peer did not want to continue this exchange.
 
 * Flexible identification.
+
+* Remove referring flows when a SPI is removed.
