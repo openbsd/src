@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.79 2001/01/30 08:30:57 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.80 2001/03/15 17:53:09 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.79 2001/01/30 08:30:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.80 2001/03/15 17:53:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -463,19 +463,19 @@ main(argc, argv, envp)
 	    }
 	    bcopy(allsockp, readablep, allsockn);
 
-	    if (wantretry) {
-		doretry();
-		wantretry = 0;
-		continue;
-	    }
-	    if (wantconfig) {
-		doconfig();
-		wantconfig = 0;
-		continue;
-	    }
-	    if (wantreap) {
-		doreap();
-		wantreap = 0;
+	    if (wantretry || wantconfig || wantreap) {
+		if (wantretry) {
+		    doretry();
+		    wantretry = 0;
+		}
+		if (wantconfig) {
+		    doconfig();
+		    wantconfig = 0;
+		}
+		if (wantreap) {
+		    doreap();
+		    wantreap = 0;
+		}
 		continue;
 	    }
 
