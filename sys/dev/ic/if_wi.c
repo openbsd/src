@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.25 2002/03/28 18:21:06 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.26 2002/03/29 02:43:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.25 2002/03/28 18:21:06 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.26 2002/03/29 02:43:34 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -270,35 +270,40 @@ wi_attach(sc, print_cis)
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 	    IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
-	    IFM_IEEE80211_HOSTAP, 0), 0);
+	if (sc->sc_prism2)
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+		    IFM_IEEE80211_HOSTAP, 0), 0);
 	if (sc->wi_supprates & WI_SUPPRATES_1M) {
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-		    IFM_IEEE80211_HOSTAP, 0), 0);
+		if (sc->sc_prism2)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
 	if (sc->wi_supprates & WI_SUPPRATES_2M) {
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-		    IFM_IEEE80211_HOSTAP, 0), 0);
+		if (sc->sc_prism2)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
 	if (sc->wi_supprates & WI_SUPPRATES_5M) {
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-		    IFM_IEEE80211_HOSTAP, 0), 0);
+		if (sc->sc_prism2)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
 	if (sc->wi_supprates & WI_SUPPRATES_11M) {
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-		    IFM_IEEE80211_HOSTAP, 0), 0);
+		if (sc->sc_prism2)
+			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+			    IFM_IEEE80211_HOSTAP, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
 	}
 #undef ADD
@@ -481,12 +486,12 @@ wi_rxeof(sc)
 		m->m_pkthdr.len = m->m_len =
 		    letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN;
 
-		bcopy((char *)&rx_frame.wi_addr1,
+		bcopy((char *)&rx_frame.wi_dst_addr,
 		    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
-		bcopy((char *)&rx_frame.wi_addr2,
+		bcopy((char *)&rx_frame.wi_src_addr,
 		    (char *)&eh->ether_shost, ETHER_ADDR_LEN);
 		bcopy((char *)&rx_frame.wi_type,
-		    (char *)&eh->ether_type, sizeof(u_int16_t));
+		    (char *)&eh->ether_type, ETHER_TYPE_LEN);
 
 		if (wi_read_data(sc, id, WI_802_11_OFFSET,
 		    mtod(m, caddr_t) + sizeof(struct ether_header),
@@ -1474,12 +1479,12 @@ wi_init(xsc)
 	/* Enable desired port */
 	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0);
 
-	if (wi_alloc_nicmem(sc, 1518 + sizeof(struct wi_frame) + 8, &id))
+	if (wi_alloc_nicmem(sc, ETHER_MAX_LEN + sizeof(struct wi_frame) + 8, &id))
 		printf(WI_PRT_FMT ": tx buffer allocation failed\n",
 		    WI_PRT_ARG(sc));
 	sc->wi_tx_data_id = id;
 
-	if (wi_alloc_nicmem(sc, 1518 + sizeof(struct wi_frame) + 8, &id))
+	if (wi_alloc_nicmem(sc, ETHER_MAX_LEN + sizeof(struct wi_frame) + 8, &id))
 		printf(WI_PRT_FMT ": mgmt. buffer allocation failed\n",
 		    WI_PRT_ARG(sc));
 	sc->wi_tx_mgmt_id = id;
@@ -1535,6 +1540,7 @@ nextpkt:
 		return;
 
 	bzero((char *)&tx_frame, sizeof(tx_frame));
+	tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA);
 	id = sc->wi_tx_data_id;
 	eh = mtod(m0, struct ether_header *);
 
@@ -1578,7 +1584,6 @@ nextpkt:
 		    (char *)&tx_frame.wi_src_addr, ETHER_ADDR_LEN);
 
 		tx_frame.wi_dat_len = htole16(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
-		tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA);
 		tx_frame.wi_dat[0] = htons(WI_SNAP_WORD0);
 		tx_frame.wi_dat[1] = htons(WI_SNAP_WORD1);
 		tx_frame.wi_len = htons(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
