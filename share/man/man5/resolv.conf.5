@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.19 2001/10/04 10:28:20 wilfried Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.20 2003/01/21 19:59:09 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -167,7 +167,7 @@ attach OPT pseudo-RR for ENDS0 extension specified in RFC2671,
 to inform DNS server of our receive buffer size.
 The option will allow DNS servers to take advantage of non-default receive
 buffer size, and to send larger replies.
-DNS query packets with EDNS0 extension is not compatible with
+DNS query packets with EDNS0 extension are not compatible with
 non-EDNS0 DNS servers.
 The option must be used only when all the DNS servers listed in
 .Sy nameserver
@@ -180,7 +180,7 @@ Use of this option is discouraged, and meaningless on
 .Ox .
 .It Sy insecure1
 Do not require IP source address on the reply packet to be equal to the
-servers' address.
+server's address.
 .It Sy insecure2
 Do not check if the query section of the reply packet is equal
 to that of the query packet.

@@ -34,7 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.24 2001/12/05 09:49:39 deraadt Exp $
+.\"	$OpenBSD: malloc.3,v 1.25 2003/01/21 19:59:09 jmc Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -223,7 +223,7 @@ This can substantially aid in compacting memory.
 .Pp
 .It Cm X
 .Dq xmalloc .
-rather than return failure,
+Rather than return failure,
 .Xr abort 3
 the program with a diagnostic message on stderr.
 It is the intention that this option be set at compile time by
@@ -256,7 +256,7 @@ The
 .Cm J
 and
 .Cm Z
-is mostly for testing and debugging.
+flags are mostly for testing and debugging.
 If a program changes behavior if either of these options are used,
 it is buggy.
 .Pp

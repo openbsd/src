@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.165 2003/01/15 23:19:19 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.166 2003/01/21 19:59:09 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -48,7 +48,7 @@ User-defined variables may be defined and later used, simplifying
 the configuration file.
 .It Options
 Options tune the behaviour of the packet filtering engine.
-.It Traffic Normalization (e.g. Pa scrub No )
+.It Traffic Normalization (e.g. Pa scrub Ns )
 Traffic normalization protects internal machines against inconsistencies
 in Internet protocols and implementations.
 .It Queueing
@@ -135,7 +135,7 @@ the connection.
 Increasing tcp.finwait (and possibly tcp.closing) can prevent blocking of
 such packets.
 .It Pa tcp.closed
-The state after one endpoint sends a RST.
+The state after one endpoint sends an RST.
 .El
 .Pp
 ICMP and UDP are handled in a fashion similar to TCP, but with a much more
@@ -221,10 +221,10 @@ Optimize the engine for one of the following network environments:
 A normal network environment.
 Suitable for almost all networks.
 .It Pa high-latency
-A high-latency environment (such as a satellite connection)
+A high-latency environment (such as a satellite connection).
 .It Pa satellite
 Alias for
-.Pa high-latency
+.Pa high-latency .
 .It Pa aggressive
 Aggressively expire connections.
 This can greatly reduce the memory usage of the firewall at the cost of
@@ -482,12 +482,12 @@ below).
     queue std bandwidth 10% cbq(default)
     queue http bandwidth 60% priority 2 cbq(borrow red) \\
         { employees, developers }
-    queue  developers bandwidth 75% cbq(borrow)
-    queue  employees bandwidth 15%
+    queue developers bandwidth 75% cbq(borrow)
+    queue employees bandwidth 15%
     queue mail bandwidth 10% priority 0 cbq(borrow ecn)
     queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-    queue  ssh_interactive priority 7
-    queue  ssh_bulk priority 0
+    queue ssh_interactive priority 7
+    queue ssh_bulk priority 0
 
     block return out on dc0 inet all queue std
     pass out on dc0 inet proto tcp from $developerhosts to any port 80 \\
@@ -850,7 +850,7 @@ Flag SYN is set.
 The other flags are ignored.
 .It Pa flags S/SA
 Out of SYN and ACK, exactly SYN may be set.
-SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST do not.
+SYN, SYN+PSH and SYN+RST match, but SYN+ACK, ACK and ACK+RST do not.
 This is more restrictive than the previous example.
 .It Pa flags /SFRA
 If the first set is not specified, it defaults to none.
@@ -1128,7 +1128,7 @@ For instance:
 .Ed
 .Pp
 This ruleset blocks everything by default.
-Only outgoing connections and incoming connection to port 25 are allowed.
+Only outgoing connections and incoming connections to port 25 are allowed.
 The initial packet of each connection has the SYN flag set, will be passed
 and creates state.
 All further packets of these connections are passed if they match a state.
@@ -1162,9 +1162,8 @@ For example,
     pass out inet proto icmp all icmp-type echoreq keep state
 .Ed
 .Pp
-allows echo requests,
-e.g as created by
-.Xr ping 8 ,
+allows echo requests (such as those created by
+.Xr ping 8 )
 out, creates state, and matches incoming echo replies correctly to states.
 .Pp
 Note:
@@ -1211,7 +1210,7 @@ shift the sequencing of each side of a connection
 .Po
 add a random number to each side.
 .Pc
-Both sides of the connection will notice, that its peer has suddenly
+Both sides of the connection will notice that its peer has suddenly
 shifted its sequence by a random amount.
 Neither side
 will be able to recover and the connection will stall and eventually close.
@@ -1320,7 +1319,7 @@ For instance, the rule
 .Ed
 .Pp 
 never applies to a fragment, even if the fragment is part of a TCP
-packet with destination port 80, because without reassembly, this information
+packet with destination port 80, because without reassembly this information
 is not available for each fragment.
 This also means that fragments cannot create new or match existing
 state table entries, which makes stateful filtering and address
