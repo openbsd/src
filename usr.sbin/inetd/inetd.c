@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.40 1997/09/19 12:21:27 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.41 1997/11/14 03:40:02 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.40 1997/09/19 12:21:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.41 1997/11/14 03:40:02 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -167,7 +167,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.40 1997/09/19 12:21:27 deraadt Exp 
 #include <rpc/pmap_clnt.h>
 #include "pathnames.h"
 
-#define	TOOMANY		40		/* don't start more than TOOMANY */
+#define	TOOMANY		160		/* don't start more than TOOMANY */
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
 
