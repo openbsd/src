@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.8 2002/11/26 06:01:28 nate Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.9 2003/05/14 05:09:43 nate Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -76,12 +76,6 @@ int
 eephymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
-	u_int32_t id;
-
-	id = ((ma->mii_id1 << 16) | ma->mii_id2) & E1000_ID_MASK;
-	if (id == E1000_ID_88E1000 || id == E1000_ID_88E1000S) {
-		return(10);
-	}
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxMARVELL &&
 	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxMARVELL_E1000_3 ||
@@ -91,6 +85,8 @@ eephymatch(struct device *parent, void *match, void *aux)
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    (MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_4 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_5 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_6))
 		return (10);
 
