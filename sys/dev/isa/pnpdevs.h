@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.72 1999/06/03 14:43:34 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.73 1999/06/16 06:57:51 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -96,6 +96,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "AKY0000", "pccom" },
 	{ "BRI3400", "com" },
 	{ "BRI3400", "pccom" },
+	{ "BRI1500", "com" },
+	{ "BRI1500", "pccom" },
 	{ "CSI2203", "le" },
 	{ "@@@1980", "ne" },
 	{ "SMC8416", "we" },
