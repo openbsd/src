@@ -590,6 +590,7 @@
 ./usr/include/net/if_arp.h
 ./usr/include/net/if_atm.h
 ./usr/include/net/if_dl.h
+./usr/include/net/if_enc.h
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_ppp.h

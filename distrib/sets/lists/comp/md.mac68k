@@ -48,10 +48,10 @@
 ./usr/include/machine/frame.h
 ./usr/include/machine/grfioctl.h
 ./usr/include/machine/ieeefp.h
+./usr/include/machine/intr.h
 ./usr/include/machine/iteioctl.h
 ./usr/include/machine/keyboard.h
 ./usr/include/machine/limits.h
-./usr/include/machine/macinfo.h
 ./usr/include/machine/param.h
 ./usr/include/machine/pcb.h
 ./usr/include/machine/pio.h
