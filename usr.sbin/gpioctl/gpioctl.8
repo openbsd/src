@@ -1,0 +1,160 @@
+.\"	$OpenBSD: gpioctl.8,v 1.1 2004/06/03 19:13:24 grange Exp $
+.\"
+.\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 3, 2004
+.Dt GPIOCTL 8
+.Os
+.Sh NAME
+.Nm gpioctl
+.Nd control GPIO devices
+.Sh SYNOPSIS
+.Nm gpioctl
+.Op Fl hq
+.Op Fl d Ar device
+.Op Ar pin
+.Op Ar 0 | Ar 1 | Ar 2
+.Nm gpioctl
+.Op Fl hq
+.Op Fl d Ar device
+.Fl c
+.Ar pin
+.Op Ar flags
+.Sh DESCRIPTION
+The
+.Nm
+program allows to manipulate
+.Tn GPIO
+(General Purpose Input/Output) devices pins.
+Such devices can be either part of the chipset or embedded
+.Tn CPU ,
+or the separate chip.
+The usual way of using
+.Tn GPIO
+is to connect some simple devices such as leds, 1-wire termal sensors,
+etc to its pins.
+.Pp
+Each
+.Tn GPIO
+device has associated device file in the
+.Pa /dev
+directory.
+By default
+.Nm
+uses file
+.Pa /dev/gpio0
+which corresponds to the first found
+.Tn GPIO
+device in the system.
+If more than one
+.Tn GPIO
+devices present alternative device file can be specified with the
+.Fl d
+option
+in order to access particular
+.Tn GPIO
+device.
+.Pp
+When executed without any arguments
+.Nm
+program reads information about the
+.Tn GPIO
+device and displays it.
+.Pp
+.Tn GPIO
+pins can be either ``read'' or ``written'' with the values of
+logical 0 or 1.
+If only
+.Ar pin
+number is specified in the command line pin state will be read
+from the
+.Tn GPIO
+controller and dispalyed.
+To write to a pin a value must be specified after the
+.Ar pin
+number.
+Values can be either 0 or 1.
+Value of 2 has a special meaning to ``toggle'' the pin, i.e. change its
+state to the opposite.
+.Pp
+Each pin can be configured with the different flags with the
+.Fl c
+option.
+The following configuration flags are supported by the
+.Tn GPIO
+framework:
+.Pp
+.Bl -tag -width XXXXX -compact
+.It in
+input direction
+.It out
+output direction
+.It inout
+bi-directional
+.It od
+open-drain output
+.It pp
+push-pull output
+.It tri
+tri-state (output disabled)
+.It pu
+internal pull-up enabled
+.El
+.Pp
+Note that not all the flags can be supported by the particular
+.Tn GPIO
+controller.
+The list of supported flags is always displayed when executing
+.Nm
+program with the
+.Fl c
+option.
+If only
+.Ar pin
+number is specified in the command line current pin flags will be
+dispalyed.
+To change pin flags new flags set separated with the spaces must be
+specified after the
+.Ar pin
+number.
+.Sh FILES
+.Bl -tag -width "/dev/gpiou" -compact
+.It /dev/gpio Ns Ar u
+GPIO device unit
+.Ar u
+file.
+.El
+.Sh EXAMPLES
+.Li # gpioctl -c 20 out pp
+.Pp
+Configures pin 20 to have push-pull output.
+.Pp
+.Li # gpioctl 20 1
+.Pp
+Writes logical 1 to the pin 20.
+.Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr gscpcib 4 ,
+.Xr nsclpcsio 4
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 3.6 .
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Alexander Yurchenko Aq grange@openbsd.org .
