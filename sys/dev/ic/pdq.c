@@ -1,5 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.5 1996/08/21 22:27:39 deraadt Exp $	*/
-/*	$NetBSD: pdq.c,v 1.5.4.1 1996/06/08 00:17:44 cgd Exp $	*/
+/*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -170,13 +169,13 @@ pdq_print_fddi_chars(
     const char hexchars[] = "0123456789abcdef";
 
     printf(
-#if !defined(__bsdi__) && !(defined(__NetBSD__) || defined(__OpenBSD__))
+#if !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
 	   PDQ_OS_PREFIX
 #else
 	   ": "
 #endif
 	   "DEC %s FDDI %s Controller\n",
-#if !defined(__bsdi__) && !(defined(__NetBSD__) || defined(__OpenBSD__))
+#if !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
 	   PDQ_OS_PREFIX_ARGS,
 #endif
 	   pdq_descriptions[pdq->pdq_type],
@@ -539,6 +538,7 @@ pdq_queue_commands(
 	    pdq_os_addr_fill(pdq, addr, 61);
 	    break;
 	}
+	default:
     }
     /*
      * At this point the command is done.  All that needs to be done is to
@@ -759,7 +759,7 @@ pdq_process_received_data(
 		       dataptr[PDQ_RX_FC_OFFSET+5],
 		       dataptr[PDQ_RX_FC_OFFSET+6]);
 		/* rx->rx_badcrc++; */
-	    } else if (status.rxs_fsc == 0 | status.rxs_fsb_e == 1) {
+	    } else if (status.rxs_fsc == 0 || status.rxs_fsb_e == 1) {
 		/* rx->rx_frame_status_errors++; */
 	    } else {
 		/* hardware fault */
@@ -1244,6 +1244,7 @@ pdq_run(
 	}
 	case PDQS_RING_MEMBER: {
 	}
+	default:
     }
 }
 

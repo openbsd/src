@@ -1,5 +1,4 @@
-/*	$OpenBSD: pdqvar.h,v 1.6 1996/08/21 22:27:42 deraadt Exp $	*/
-/*	$NetBSD: pdqvar.h,v 1.6.4.1 1996/06/08 00:17:49 cgd Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.8 1996/07/10 18:55:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -61,7 +60,8 @@ enum _pdq_type_t {
 
 #if defined(PDQTEST)
 #include <pdq_os_test.h>
-#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__NetBSD__) \
+    || defined(__OpenBSD__)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
 #if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
-#define	PDQ_OS_VA_TO_PA(pdq, p)		(vtophys(p) | (pdq->pdq_type == PDQ_DEFTA ? 0 : 0x40000000))
+#define	PDQ_OS_VA_TO_PA(pdq, p)		(vtophys((vm_offset_t)p) | (pdq->pdq_type == PDQ_DEFTA ? 0 : 0x40000000))
 #else
 #define	PDQ_OS_VA_TO_PA(pdq, p)		vtophys(p)
 #endif
