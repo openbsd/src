@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.27 1999/01/07 21:50:51 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.28 1999/01/08 07:47:22 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -59,6 +59,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#ifdef INET6
+#include <sys/domain.h>
+#endif /* INET6 */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -490,7 +493,6 @@ in_pcbdisconnect(v)
 
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6) {
-		DPRINTF(IDL_FINISHED,("In INET6 disconnect!"));
 		inp->inp_faddr6 = in6addr_any;
 		/* Disconnected AF_INET6 sockets cannot be "v4-mapped" */
 		inp->inp_flags &= ~INP_IPV6_MAPPED;
@@ -737,8 +739,8 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 		wildcard = 0;
 #ifdef INET6
 		if (flags & INPLOOKUP_IPV6) {
-			struct in6_addr *laddr6 = (struct in6_addr *)laddr_arg;
-			struct in6_addr *faddr6 = (struct in6_addr *)faddr_arg;
+			struct in6_addr *laddr6 = (struct in6_addr *)laddrp;
+			struct in6_addr *faddr6 = (struct in6_addr *)faddrp;
 
 			/* 
 			 * Always skip AF_INET sockets when looking for AF_INET6
@@ -883,11 +885,6 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	register struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
-	DPRINTF(IDL_FINISHED,
-	    ("in6_pcbhashlookup(table=%08x, faddr=%08x, fport_arg=%x, "
-	    "laddr=%08x, lport_arg=%x)\n", OSDEP_PCAST(table),
-	    OSDEP_PCAST(faddr), fport_arg, OSDEP_PCAST(laddr), lport_arg));
-
 	head = IN6PCBHASH(table, faddr, fport, laddr, lport);
 	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
 		if (!(inp->inp_flags & INP_IPV6))
@@ -910,9 +907,7 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
 		printf("in6_pcblookup_connect: faddr=");
-		DDO(IDL_MAJOR_EVENT, dump_in6_addr(faddr));
 		printf(" fport=%d laddr=", ntohs(fport));
-		DDO(IDL_MAJOR_EVENT, dump_in6_addr(laddr));
 		printf(" lport=%d\n", ntohs(lport));
 	}
 #endif
