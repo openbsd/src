@@ -1,6 +1,8 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
+# $OpenBSD: config.over,v 1.7 1999/08/26 14:45:46 millert Exp $
+#
 
 # We use a different architecture name than the default
 archname="`arch -s`-${osname}"
