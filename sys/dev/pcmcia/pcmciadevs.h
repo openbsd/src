@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.86 2002/03/29 18:54:45 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.87 2002/04/02 03:57:21 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.85 2002/03/29 18:54:07 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.86 2002/04/02 03:57:05 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -112,6 +112,8 @@
 /* 3COM */
 #define	PCMCIA_CIS_3COM_3CRWE737A	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CRWE737A	0x0001
+#define	PCMCIA_CIS_3COM_3CRWE777A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWE777A	0x0777
 #define	PCMCIA_CIS_3COM_3CXM056BNW	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CXM056BNW	0x002f
 #define	PCMCIA_CIS_3COM_3CXEM556	{ NULL, NULL, NULL, NULL }
