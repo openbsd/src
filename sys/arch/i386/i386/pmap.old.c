@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.6 1996/04/17 05:18:55 mickey Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.7 1996/04/18 04:04:54 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.34 1995/12/09 07:39:02 mycroft Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
+void	i386_protection_init __P((void));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 #if BSDVM_COMPAT

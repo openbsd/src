@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 1996/04/17 05:18:54 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 1996/04/18 04:04:57 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.191 1996/03/01 21:49:49 scottr Exp $	*/
 
 /*-
@@ -139,6 +139,7 @@ static	vm_offset_t avail_next;
 caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
 void cpu_reset __P((void));
+void identifycpu __P((void));
 
 /*
  * Machine-dependent startup code
