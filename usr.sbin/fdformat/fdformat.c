@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.4 1997/08/18 03:11:30 millert Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.5 1997/09/21 00:30:11 millert Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -47,6 +47,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
+#include <util.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -244,8 +245,7 @@ main(argc, argv)
         if(optind != argc - 1)
                 usage();
 
-	fd = opendev(argv[optind], O_RDWR, 0, &devname);
-	if (fd < 0)
+	if ((fd = opendev(argv[optind], O_RDWR, OPENDEV_PART, &devname)) < 0)
 		err(1, devname);
 
         if(ioctl(fd, FD_GTYPE, &fdt) < 0)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.3 1997/09/21 00:10:43 millert Exp $
+.\"	$OpenBSD: fdformat.1,v 1.4 1997/09/21 00:30:11 millert Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -55,11 +55,7 @@ should be a character device; it may be given either with a full path
 name of a raw device node for a floppy disk drive
 .Pq e.\ g. Pa /dev/rfd0c ,
 or default name in an abbreviated form
-.Pq e.\ g. Em fd0c .
-In the latter case, the name is constructed by prepending
-.Pa /dev/r
-to the
-.Ar device_name .
+.Pq e.\ g. Em fd0 .
 Note that any geometry constraints of the device node
 .Pq minor device number
 are meaningless, since they're overridden by
