@@ -772,7 +772,7 @@ int flag_instrument_function_entry_exit = 0;
 
 int flag_no_ident = 0;
 
-#ifdef STACK_PROTECTOR
+#if defined(STACK_PROTECTOR) && defined(STACK_GROWS_DOWNWARD)
 /* Nonzero means use propolice as a stack protection method */
 int flag_propolice_protection = 1;
 #else
