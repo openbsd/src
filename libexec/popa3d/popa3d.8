@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popa3d.8,v 1.1 2001/08/16 19:39:15 ericj Exp $
+.\"	$OpenBSD: popa3d.8,v 1.2 2001/08/16 20:07:15 camield Exp $
 .Dd August 15, 2001
 .Dt POPA3D 8
 .Os
@@ -7,7 +7,6 @@
 .Nd "Post Office Protocol server"
 .Sh SYNOPSIS
 .Nm popa3d
-.Op Fl i
 .Sh DESCRIPTION
 .Nm
 is a POP3 server. It offers remote access to user mailboxes.
@@ -20,15 +19,6 @@ and listens at the port specified in the
 .Dq pop3
 service specification; see
 .Xr services 5 .
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl i
-Allow startup of
-.Nm
-via
-.Xr inetd 8 .
-.El
 .Sh FILES
 .Bl -tag -width /var/mail -compact
 .It Pa /var/mail
