@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.7 2001/08/19 15:37:01 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.8 2001/08/19 17:20:34 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -1008,7 +1008,7 @@ main(int argc, char **argv)
 		if (server_iob.fd > maxfd)
 			maxfd = server_iob.fd;
 		if (server_listen_socket > maxfd)
-			maxfd = server_data_socket;
+			maxfd = server_listen_socket;
 		if (server_data_socket > maxfd)
 			maxfd = server_data_socket;
 		
