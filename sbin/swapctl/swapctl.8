@@ -1,0 +1,224 @@
+.\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
+.\"
+.\" Copyright (c) 1997 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd June 12, 1997
+.Dt SWAPCTL 8
+.Os NetBSD
+.Sh NAME
+.Nm swapctl ,
+.Nm swapon
+.Nd system swap management tool
+.Sh SYNOPSIS
+.Nm
+.Fl A
+.Op Fl p Ar priority
+.Op Fl t Ar blk|noblk
+.Nm ""
+.Fl a
+.Op Fl p Ar priority
+.Ar path
+.Nm ""
+.Fl c
+.Fl p Ar priority
+.Ar path
+.Nm ""
+.Fl d
+.Ar path
+.Nm ""
+.Fl l | Fl s
+.Op Fl k
+.Nm swapon
+.Fl a | Ar path
+.Nm swapoff
+.Ar path
+.Sh DESCRIPTION
+The
+.Nm
+program adds, removes,
+lists and prioritizes swap devices and files for the system.
+The
+.Nm swapon
+program acts the same as the
+.Nm
+program, as if called with the
+.Fl a
+option, except if
+.Nm swapon
+itself is called with
+.Fl a
+in which case,
+.Nm swapon
+acts as 
+.Nm
+with the
+.Fl A
+option.
+.Sh OPTIONS
+The following options are available:
+.Bl -tag -width 123456
+.It Fl A
+This option causes
+.Nm
+to read the
+.Pa /etc/fstab
+file for devices and files with a ``sw'' type, and adds all these entries
+as swap devices.  If no swap devices are configured,
+.Nm
+will exit with an error code.
+.It Fl a
+The
+.Fl a
+option requires that a
+.Ar path
+also be in the argument list.  The
+.Ar path
+is added to the kernel's list of swap devices using the
+.Xr swapctl 2
+system call.  When using the
+.Nm swapon
+form of this command, the
+.Fl a
+option is treated the same as the
+.Fl A
+option, for backwards compatibility.
+.It Fl c
+The
+.Fl c
+option changes the priority of the listed swap device or file.
+.It Fl d
+The
+.Fl d
+option removes the listed
+.Ar path
+from the kernel's list of swap devices or files.
+.It Fl l
+The
+.Fl l
+option lists the current swap devices and files, and their usage statistics.
+.It Fl s
+The
+.Fl s
+option displays a single line summary of current swap statistics.
+.It Fl p
+The
+.Fl p
+option sets the priority of swap devices or files to the
+.Ar priority
+argument.  This works with the
+.\" .Fl d ,
+.Fl a ,
+.Fl c
+and
+.Fl l
+options.
+.It Fl k
+The
+.Fl k
+option uses 1024 byte blocks instead of the default 512 byte.
+.It Fl t
+This flag modifies the function of the
+.Fl A
+option.
+The
+.Fl t
+option allows the type of device to add to be specified.  An argument of
+.Ar blk
+causes all block devices in
+.Pa /etc/fstab
+to be added.  An argument of
+.Ar noblk
+causes all non-block devices in
+.Pa /etc/fstab
+to be added.  This option is useful in early system startup, where swapping
+may be needed before all file systems are available, such as during
+disk checks of large file systems.
+.El
+.Sh SWAP OPTIONS
+When parsing the
+.Pa /etc/fstab
+file for swap devices, the following options are recognized:
+.Pp
+.Bl -tag -width nfsmntpt=/path -compact
+.It priority=N
+This option sets the priority of the specified swap device to N.  The
+highest priority is 0, second priority is 1, etc.
+.It nfsmntpt=/path
+This option is useful for swapping to NFS files.  It specifies
+the local mount point to mount an NFS filesystem.  Typically, once
+this mount has succeeded, the file to be used for swapping on will
+be available under this point mount.  For example:
+.Bd -literal 
+server:/export/swap/client none swap sw,nfsmntpt=/swap
+.Ed
+.El
+.Sh WARNINGS
+If no swap information is specified in
+.Pa /etc/fstab ,
+the system startup scripts (see
+.Xr rc 8 )
+will configure no swap space and your machine will behave very badly
+if (more likely when) it runs out of real memory.
+.Pp
+Local and remote swap files cannot be configured until after the file
+systems they reside on are mounted read/write.  The system startup
+scripts need to
+.Xr fsck 8
+all local file systems before this can happen. This process requires
+substantial amounts of memory on some systems.  If you configure no
+local block swap devices on a machine that has local file systems to
+check and rely only on swap files, the machine will have no swap space
+at all during system
+.Xr fsck 8
+and may run out of real memory, causing fsck to abnormally exit and
+startup scripts to fail.
+.Sh HISTORY
+The
+.Nm
+program was first made available in
+.Nx 1.3 .
+The original
+.Nm swapon
+program, provided for backwards compatibility, appeared in
+.Bx 4.0 .
+.Sh AUTHOR
+The
+.Nm
+program was written by Matthew R. Green <mrg@eterna.com.au>.
+.Sh BUGS
+The
+.Nm swapoff
+command and the
+.Fl d
+option of
+.Nm
+are not currently supported by
+.Nx .
+.Sh SEE ALSO
+.Xr swapctl 2 ,
+.Xr fstab 5 ,
+.Xr mount_nfs 8
