@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.44 2004/12/25 20:39:36 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.45 2005/01/03 21:46:00 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -313,3 +313,4 @@ pseudo-device	loop	1		# network loopback
 #pseudo-device	ppp	1		# PPP
 pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk
+pseudo-device	wsmux	2
