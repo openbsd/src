@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.4 2002/03/27 21:48:12 drahn Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -32,6 +32,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/timeout.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
@@ -87,6 +89,8 @@ int akbd_enable(void *, int);
 void akbd_set_leds(void *, int);
 int akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int akbd_intr(adb_event_t *event);
+void akbd_rawrepeat(void *v);
+
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -246,6 +250,11 @@ akbdattach(parent, self, aux)
 	if (adb_debug)
 		printf("akbd: returned %d from SetADBInfo\n", error);
 #endif
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	timeout_set(&sc->sc_rawrepeat_ch, akbd_rawrepeat, sc);
+#endif
+
 
 	a.console = akbd_is_console;
 	a.keymap = &akbd_keymapdata;
@@ -450,6 +459,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	struct akbd_softc *sc = v;
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
@@ -460,11 +470,36 @@ akbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0;
 		return 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		printf("akbd_ioctl: set raw = %d\n", *(int *)data);
+		/*
+		*/
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		timeout_del(&sc->sc_rawrepeat_ch);
+		return (0);
+#endif
+
 	}
 	/* kbdioctl(...); */
 
 	return -1;
 }
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+void
+akbd_rawrepeat(void *v)
+{
+	struct akbd_softc *sc = v;
+	int s;
+
+	s = spltty();   
+	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
+	splx(s);
+	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
+}
+#endif
+
 
 static int polledkey;
 extern int adb_polling;
@@ -475,6 +510,7 @@ akbd_intr(event)
 {
 	int key, press, val;
 	int type;
+	int s;
 
 	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
@@ -502,10 +538,44 @@ akbd_intr(event)
 #endif
 	}
 
-	if (adb_polling)
+	if (adb_polling) {
 		polledkey = key;
-	else
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	} else if (sc->sc_rawkbd) {
+		char cbuf[MAXKEYS *2];
+		int c, j; 
+		int npress;
+
+		j = npress = 0;
+
+		c = keyboard[val][3];
+		if (c == 0) {
+			return 0; /* XXX */
+		}
+		if (c & 0x80)
+			cbuf[j++] = 0xe0;
+		cbuf[j] = c & 0x7f;
+		if (type == WSCONS_EVENT_KEY_UP) {
+			cbuf[j] |= 0x80;
+		} else {
+			/* this only records last key pressed */
+			if (c & 0x80)
+				sc->sc_rep[npress++] = 0xe0;
+			sc->sc_rep[npress++] = c & 0x7f;
+		}
+		j++;
+		s = spltty();
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		splx(s);
+		timeout_del(&sc->sc_rawrepeat_ch);
+		sc->sc_nrep = npress;
+		if (npress != 0)
+			timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAY1/1000);
+		return 0;
+#endif
+	} else {
 		wskbd_input(sc->sc_wskbddev, type, val);
+	}
 
 	return 0;
 }
