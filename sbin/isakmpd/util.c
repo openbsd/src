@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.6 1999/08/05 22:40:37 niklas Exp $	*/
-/*	$EOM: util.c,v 1.15 1999/08/05 15:00:04 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2000/10/07 06:59:39 niklas Exp $	*/
+/*	$EOM: util.c,v 1.16 2000/10/04 16:36:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sysdep.h"
 
