@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.47 2002/06/09 00:40:29 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.48 2002/06/09 02:36:03 itojun Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.47 2002/06/09 00:40:29 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.48 2002/06/09 02:36:03 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,7 @@ getreply(expecteof)
 			if (len > sizeof(reply_string))
 				len = sizeof(reply_string);
 
-			(void)strlcpy(reply_string, current_line, len + 1);
+			(void)strlcpy(reply_string, current_line, len);
 		}
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)

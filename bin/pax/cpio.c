@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.9 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.10 2002/06/09 02:35:27 itojun Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.9 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: cpio.c,v 1.10 2002/06/09 02:35:27 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ cpio_endwr(void)
 	last.nlen = sizeof(TRAILER) - 1;
 	last.type = PAX_REG;
 	last.sb.st_nlink = 1;
-	(void)strcpy(last.name, TRAILER);
+	(void)strlcpy(last.name, TRAILER, sizeof(last.name));
 	return((*frmt->wr)(&last));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.23 2002/06/09 02:15:54 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.24 2002/06/09 02:39:17 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
 
 /*
@@ -1159,7 +1159,7 @@ packet_ok(mhdr, cc, seq)
 
 		if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 		    sbuf, sizeof(sbuf), NULL, 0, NI_NUMERICHOST) != 0)
-			strlcpy(sbuf, "invalid", sizeof(hbuf));
+			strlcpy(sbuf, "invalid", sizeof(sbuf));
 		printf("\n%d bytes from %s to %s", cc, sbuf,
 		    rcvpktinfo ? inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
 		    dbuf, sizeof(dbuf)) : "?");

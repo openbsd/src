@@ -99,7 +99,7 @@ server_get_key(void *appl, int kvno, des_cblock *key)
 	     * Try also afs.realm@REALM
 	     */
 
-	    strlcpy(cell_name, realm_name, sizeof(realm_name));
+	    strlcpy(cell_name, realm_name, sizeof(cell_name));
 	    strlwr (cell_name);
 	    ret = read_service_key("afs", cell_name, realm_name, 
 				   0, srvtab_filename,

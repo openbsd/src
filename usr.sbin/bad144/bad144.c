@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.12 2002/05/29 09:47:20 deraadt Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.13 2002/06/09 02:38:11 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -153,7 +153,7 @@ usage:
 		(void)snprintf(name, sizeof(name), "%sr%s%c", _PATH_DEV,
 		    argv[0], 'a' + RAW_PART);
 	else
-		strlcpy(name, argv[0], MAXPATHLEN);
+		strlcpy(name, argv[0], sizeof(name));
 	f = open(name, argc == 1? O_RDONLY : O_RDWR);
 	if (f < 0)
 		Perror(name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.17 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.18 2002/06/09 02:35:27 itojun Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.17 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.18 2002/06/09 02:35:27 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -880,7 +880,7 @@ rep_name(char *name, int *nlen, int prnt)
 	 * (the user already saw that substitution go by)
 	 */
 	pt = rephead;
-	(void)strcpy(buf1, name);
+	(void)strlcpy(buf1, name, sizeof(buf1));
 	inpt = buf1;
 	outpt = nname;
 	endpt = outpt + PAXPATHLEN;
@@ -990,7 +990,7 @@ rep_name(char *name, int *nlen, int prnt)
 		 */
 		if (*nname == '\0')
 			return(1);
-		*nlen = strlcpy(name, nname, sizeof(nname));
+		*nlen = strlcpy(name, nname, sizeof(name));
 	}
 	return(0);
 }
