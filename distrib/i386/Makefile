@@ -1,5 +1,11 @@
-#	$OpenBSD: Makefile,v 1.4 1997/09/18 17:18:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/04/22 02:40:02 deraadt Exp $
 
-SUBDIR=	floppies
+SUBDIR= ramdisk_cd ramdiskA ramdiskB ramdiskC
+
+unconfig:
+	cd ramdisk_cd; ${MAKE} unconfig
+	cd ramdiskA; ${MAKE} unconfig
+	cd ramdiskB; ${MAKE} unconfig
+	cd ramdiskC; ${MAKE} unconfig
 
 .include <bsd.subdir.mk>

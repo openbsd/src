@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.28 2002/04/21 17:09:49 deraadt Exp $
+#	$OpenBSD: list,v 1.1 2002/04/22 02:40:02 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -65,8 +65,8 @@ COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
-COPY	${CURDIR}/../../../miniroot/protocols etc/protocols
-COPY	${CURDIR}/../../../miniroot/services  etc/services
+COPY	${CURDIR}/../../miniroot/protocols etc/protocols
+COPY	${CURDIR}/../../miniroot/services  etc/services
 
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
@@ -80,9 +80,9 @@ COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
 COPY	${CURDIR}/../common/termcap.vt		usr/share/misc/termcap
 
 # and the installation tools
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../common/dot.profile	 > .profile
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/dot.profile	 > .profile
 SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${CURDIR}/../common/install.md	 > install.md
-SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../../miniroot/upgrade.sh > upgrade
-SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../../miniroot/install.sh > install
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../../miniroot/install.sub > install.sub
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade

@@ -1,4 +1,4 @@
-#       $OpenBSD: list_floppy,v 1.1 1999/08/06 20:49:08 deraadt Exp $
+#       $OpenBSD: list_floppy,v 1.1 2002/04/22 02:40:02 deraadt Exp $
 
 COPY	${DESTDIR}/usr/mdec/boot	boot
 SPECIAL	strip boot

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2002/03/30 20:35:31 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.1 2002/04/22 02:40:02 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,10 +61,10 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 
 
 bsd:
-	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config ${RAMDISK}
-	cd ${.CURDIR}/../../../../sys/arch/i386/compile/${RAMDISK} && \
+	cd ${.CURDIR}/../../../sys/arch/i386/conf && config ${RAMDISK}
+	cd ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK} && \
 	    make clean && make depend && COPTS=-Os make
-	cp ${.CURDIR}/../../../../sys/arch/i386/compile/${RAMDISK}/bsd bsd
+	cp ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK}/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
@@ -83,8 +83,8 @@ rd_teardown:
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
-rdsetroot:	${TOP}/../../common/rdsetroot.c
-	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/../../common/rdsetroot.c
+rdsetroot:	${TOP}/../common/rdsetroot.c
+	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/../common/rdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
