@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.56 2001/05/17 00:18:19 fgsch Exp $	*/
+/*	$OpenBSD: locore.s,v 1.57 2001/08/26 17:45:00 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2063,7 +2063,7 @@ calltrap:
 	pushl	$4f
 	call	_printf
 	addl	$4,%esp
-#ifdef DDB
+#if defined(DDB) && 0
 	int	$3
 #endif /* DDB */
 	movl	%ebx,_cpl
@@ -2118,7 +2118,7 @@ syscall1:
 	pushl	$4f
 	call	_printf
 	addl	$4,%esp
-#ifdef DDB
+#if defined(DDB) && 0
 	int	$3
 #endif /* DDB */
 	movl	%ebx,_cpl
