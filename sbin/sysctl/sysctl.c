@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.96 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.97 2003/08/24 01:30:26 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.96 2003/08/21 18:56:07 tedu Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.97 2003/08/24 01:30:26 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -1969,13 +1969,13 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 }
 
 char	**emul_names;
-int	emul_num;
+int	emul_num, nemuls;
 void	emul_init(void);
 
 int
 sysctl_emul(char *string, char *newval, int flags)
 {
-	int mib[4], enabled, i, old, found = 0;
+	int mib[4], enabled, i, old, print, found = 0;
 	char *head, *target;
 	size_t len;
 
@@ -1992,10 +1992,12 @@ sysctl_emul(char *string, char *newval, int flags)
 			return (1);
 		}
 		if (nflag)
-			printf("%d\n", emul_num);
+			printf("%d\n", nemuls);
 		else
-			printf("%snemuls = %d\n", head, emul_num);
+			printf("%snemuls = %d\n", head, nemuls);
 		for (i = 0; i < emul_num; i++) {
+			if (emul_names[i] == NULL)
+				continue;
 			mib[2] = i + 1;
 			len = sizeof(int);
 			if (sysctl(mib, 4, &enabled, &len, NULL, 0) == -1) {
@@ -2019,13 +2021,18 @@ sysctl_emul(char *string, char *newval, int flags)
 			return (1);
 		}
 		if (nflag)
-			printf("%d\n", emul_num);
+			printf("%d\n", nemuls);
 		else
-			printf("%snemuls = %d\n", head, emul_num);
+			printf("%snemuls = %d\n", head, nemuls);
 		return (0);
 	}
 	for (i = 0; i < emul_num; i++) {
-		if (strcmp(target, emul_names[i]))
+		print = 1;
+		if (!emul_names[i]) {
+			print = 0;
+			if (strcmp(target, emul_names[i-1]))
+				continue;
+		} else if (strcmp(target, emul_names[i]))
 			continue;
 		found = 1;
 		mib[2] = i + 1;
@@ -2036,20 +2043,25 @@ sysctl_emul(char *string, char *newval, int flags)
 				warn("%s", string);
 				continue;
 			}
-			if (nflag)
-				printf("%d\n", enabled);
-			else
-				printf("%s%s: %d -> %d\n", head, target, old,
-				    enabled);
+			if (print) {
+				if (nflag)
+					printf("%d\n", enabled);
+				else
+					printf("%s%s: %d -> %d\n", head,
+					    target, old, enabled);
+			}
 		} else {
 			if (sysctl(mib, 4, &enabled, &len, NULL, 0) == -1) {
 				warn("%s", string);
 				continue;
 			}
-			if (nflag)
-				printf("%d\n", enabled);
-			else
-				printf("%s%s = %d\n", head, target, enabled);
+			if (print) {
+				if (nflag)
+					printf("%d\n", enabled);
+				else
+					printf("%s%s = %d\n", head, target,
+					    enabled);
+			}
 		}
 	}
 	if (!found)
@@ -2079,18 +2091,24 @@ emul_init(void)
 	if (sysctl(mib, 3, &emul_num, &len, NULL, 0) == -1)
 		return;
 
-	emul_names = malloc(emul_num * sizeof(char *));
+	emul_names = calloc(emul_num, sizeof(char *));
 	if (emul_names == NULL) {
 		warn("emul_init");
 		return;
 	}
 
+	nemuls = emul_num;
 	for (i = 0; i < emul_num; i++) {
 		mib[2] = i + 1;
-		mib[3] = 0;
+		mib[3] = KERN_EMUL_NAME;
 		len = sizeof(string);
 		if (sysctl(mib, 4, string, &len, NULL, 0) == -1)
 			break;
+		if (i > 0 && emul_names[i - 1] &&
+		    strcmp(string, emul_names[i - 1]) == 0) {
+			nemuls--;
+			continue;
+		}
 		emul_names[i] = strdup(string);
 	}
 }
