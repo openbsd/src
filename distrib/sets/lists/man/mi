@@ -1,4 +1,5 @@
 ./usr/share/doc/html
+./usr/share/doc/html/bind
 ./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
 ./usr/share/doc/html/curses/ncurses-intro.html
