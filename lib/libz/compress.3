@@ -1,6 +1,6 @@
-.\"	$OpenBSD: compress.3,v 1.5 2004/12/03 02:20:21 jmc Exp $
+.\"	$OpenBSD: compress.3,v 1.6 2004/12/03 23:31:48 jmc Exp $
 .\"
-.\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
+.\"  Copyright (C) 1995-2004 Jean-loup Gailly and Mark Adler
 .\"
 .\"  This software is provided 'as-is', without any express or implied
 .\"  warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.\" This page corresponds to zlib version 1.2.1
+.\" This page corresponds to zlib version 1.2.2
 .\"
 .Dd September 17, 2003
 .Dt COMPRESS 3
@@ -144,7 +144,7 @@ Checksum functions
 .Sh DESCRIPTION
 This manual page describes the
 .Nm zlib
-general purpose compression library, version 1.2.1.
+general purpose compression library, version 1.2.2.
 .Pp
 The
 .Nm zlib
@@ -163,7 +163,7 @@ and/or consume the output
 .Pq providing more output space
 before each call.
 .Pp
-The compressed data format used by the in-memory functions is the
+The compressed data format used by default by the in-memory functions is the
 .Nm zlib
 format, which is a zlib wrapper documented in RFC 1950,
 wrapped around a deflate stream, which is itself documented in RFC 1951.
@@ -177,18 +177,13 @@ using the functions that start with
 .Qq gz .
 The gzip format is different from the zlib format.
 gzip is a gzip wrapper, documented in RFC 1952, wrapped around a deflate stream.
+This library can optionally read and write gzip streams in memory as well.
 .Pp
 The zlib format was designed to be compact and fast for use in memory
 and on communications channels.
 The gzip format was designed for single-file compression on file systems,
 has a larger header than zlib to maintain directory information,
 and uses a different, slower, check method than zlib.
-.Pp
-This library does not provide any functions to write gzip files in memory.
-However such functions could be easily written using zlib's
-.Fn deflate
-function, the documentation in the gzip RFC, and the examples in
-.Pa gzio.c .
 .Pp
 The library does not install any signal handler.
 The decoder checks the consistency of the compressed data,
@@ -721,7 +716,7 @@ If a preset dictionary is needed after this call (see
 .Fn inflateSetDictionary
 below),
 .Fn inflate
-sets strm-adler to the Adler-32 checksum of the dictionary
+sets strm-\*(Gtadler to the Adler-32 checksum of the dictionary
 chosen by the compressor and returns Z_NEED_DICT; otherwise it sets
 strm-\*(Gtadler to the Adler-32 checksum of all output produced so far
 (that is,
@@ -861,6 +856,8 @@ no modification time
 .Pq set to zero ,
 no header crc, and the operating system will be set to 255
 .Pq unknown .
+If a gzip stream is being written,
+strm-\*(Gtadler is a crc32 instead of an adler32.
 .Pp
 The
 .Fa memLevel
@@ -1189,6 +1186,8 @@ Add 32 to windowBits to enable zlib and gzip decoding with automatic header
 detection, or add 16 to decode only the gzip format
 (the zlib format will return a
 .Dv Z_DATA_ERROR ) .
+If a gzip stream is being decoded,
+strm-\*(Gtadler is a crc32 instead of an adler32.
 .Pp
 .Fn inflateInit2
 returns
