@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.14 2000/10/18 02:38:21 aaron Exp $
+.\"	$OpenBSD: audio.4,v 1.15 2001/01/09 16:51:53 espie Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 .Nd device-independent audio driver layer
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
+.Fd #include <sys/ioctl.h>
+.Fd #include <string.h>
 .Fd #include <sys/audioio.h>
 .Sh DESCRIPTION
 The
