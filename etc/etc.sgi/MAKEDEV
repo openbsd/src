@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.8 2004/12/13 17:06:17 miod Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.9 2005/01/02 20:07:57 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -53,6 +53,7 @@
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Special purpose devices:
+#	audio*	Audio devices
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
@@ -265,6 +266,17 @@ bpf*)
 	M bpf$U c 12 $U 600
 	;;
 
+audio*)
+	M sound$U	c 44 $U
+	M mixer$U	c 44 $(($U+16))
+	M audio$U	c 44 $(($U+128))
+	M audioctl$U	c 44 $(($U+192))
+	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
+	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
+	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
+	;;
+
 wsmouse*)
 	M wsmouse$U c 27 $U 600
 	;;
@@ -372,8 +384,8 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
-	R local wscons pci uk0 random tty00 tty01 tty02 tty03 crypto
-	R pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R local wscons pci audio0 uk0 random tty00 tty01 tty02 tty03
+	R crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
