@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.7 2000/02/28 18:04:09 provos Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.8 2000/04/24 06:26:23 provos Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -55,8 +55,9 @@
 #define NDENTRIES	32		/* 32 fds per entry */
 #define NDENTRYMASK	(NDENTRIES - 1)
 #define NDENTRYSHIFT	5		/* bits per entry */
-#define NDLOSLOTS(x)	(((x) + NDENTRIES - 1) >> NDENTRYSHIFT)
-#define NDHISLOTS(x)	((NDLOSLOTS(x) + NDENTRIES - 1) >> NDENTRYSHIFT)
+#define NDREDUCE(x)	(((x) + NDENTRIES - 1) >> NDENTRYSHIFT)
+#define NDHISLOTS(x)	(NDREDUCE(NDREDUCE(x)))
+#define NDLOSLOTS(x)	(NDHISLOTS(x) << NDENTRYSHIFT)
 
 struct filedesc {
 	struct	file **fd_ofiles;	/* file structures for open files */
