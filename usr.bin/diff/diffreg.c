@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.38 2003/07/21 21:59:58 henning Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.39 2003/07/22 00:15:55 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.38 2003/07/21 21:59:58 henning Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.39 2003/07/22 00:15:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -196,7 +196,6 @@ static struct context_vec *context_vec_end;
 static struct context_vec *context_vec_ptr;
 
 static FILE *opentemp(const char *);
-static void fetch(long *, int, int, FILE *, char *, int);
 static void output(char *, FILE *, char *, FILE *);
 static void check(char *, FILE *, char *, FILE *);
 static void range(int, int, char *);
@@ -211,6 +210,7 @@ static void unsort(struct line *, int, int *);
 static void change(char *, FILE *, char *, FILE *, int, int, int, int);
 static void sort(struct line *, int);
 static int  asciifile(FILE *);
+static int  fetch(long *, int, int, FILE *, char *, int);
 static int  newcand(int, int, int);
 static int  search(int *, int, int);
 static int  skipline(FILE *);
@@ -935,7 +935,9 @@ static void
 change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 {
 	static size_t max_context = 64;
+	int i;
 
+restart:
 	if (format != D_IFDEF && a > b && c > d)
 		return;
 	if (format == D_CONTEXT || format == D_UNIFIED) {
@@ -1010,7 +1012,21 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 		if (a <= b && c <= d && format == D_NORMAL)
 			puts("---");
 	}
-	fetch(ixnew, c, d, f2, format == D_NORMAL ? "> " : "", 0);
+	i = fetch(ixnew, c, d, f2, format == D_NORMAL ? "> " : "", 0);
+	if (i != 0 && format == D_EDIT) {
+		/*
+		 * A non-zero return value for D_EDIT indicates that the
+		 * last line printed was a bare dot (".") that has been
+		 * escaped as ".." to prevent ed(1) from misinterpreting
+		 * it.  We have to add a substitute command to change this
+		 * back and restart where we left off.
+		 */
+		puts(".");
+		printf("%ds/^\\.\\././\n", a);
+		a += i;
+		c += i;
+		goto restart;
+	}
 	if ((format == D_EDIT || format == D_REVERSE) && c <= d)
 		puts(".");
 	if (inifdef) {
@@ -1019,10 +1035,10 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 	}
 }
 
-static void
+static int
 fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 {
-	int i, j, c, col, nc;
+	int i, j, c, lastc, col, nc;
 
 	/*
 	 * When doing #ifdef's, copy down to current line
@@ -1036,7 +1052,7 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 			putchar(getc(lb));
 	}
 	if (a > b)
-		return;
+		return (0);
 	if (format == D_IFDEF) {
 		if (inifdef) {
 			printf("#else /* %s%s */\n",
@@ -1055,21 +1071,34 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 		if (format != D_IFDEF)
 			fputs(s, stdout);
 		col = 0;
-		for (j = 0; j < nc; j++) {
+		for (j = 0, lastc = '\0'; j < nc; j++, lastc = c) {
 			if ((c = getc(lb)) == EOF) {
 				puts("\n\\ No newline at end of file");
-				return;
+				return (0);;
 			}
 			if (c == '\t' && tflag) {
 				do {
 					putchar(' ');
 				} while (++col & 7);
 			} else {
+				if (format == D_EDIT && j == 1 && c == '\n'
+				    && lastc == '.') {
+					/*
+					 * Don't print a bare "." line
+					 * since that will confuse ed(1).
+					 * Print ".." instead and return,
+					 * giving the caller an offset
+					 * from which to restart.
+					 */
+					puts(".");
+					return (i - a + 1);
+				}
 				putchar(c);
 				col++;
 			}
 		}
 	}
+	return (0);
 }
 
 #define HASHMASK (16 - 1)	/* for masking out 16 bytes */
