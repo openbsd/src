@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.3,v 1.1 2001/06/23 21:34:40 millert Exp $
+.\" $OpenBSD: skey.3,v 1.2 2001/06/23 21:42:39 millert Exp $
 .\"
 .\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -107,7 +107,7 @@
 .Ft int
 .Fn skeyverify "struct skey *rec" "char *response"
 .Ft int
-.Fn skeyzero "struct skey *" "char *user"
+.Fn skeyzero "struct skey *"
 .Ft char *
 .Fn skipspace "char *"
 .Sh DESCRIPTION
@@ -363,14 +363,12 @@ The database is always closed by a call to
 The
 .Fn skeyzero
 function zeroes out the entry in the S/Key database specified by
-.Fa rec
-and
-.Fa user .
+.Fa rec .
 The
 .Fn skeyzero
 function returns 0 on success and -1 if there was an error updating
 the database.
-The database is always closed by a call to
+The S/Key database is always closed by a call to
 .Fn skeyzero .
 .Sh SEE ALSO
 .Xr skey 1 ,
@@ -390,3 +388,5 @@ the original Bellcore S/Key distribution:
 .Fn skey_set_algorithm ,
 .Fn skey_unlock ,
 .Fn skeyzero .
+.Pp
+S/Key is a Trademark of Bellcore.
