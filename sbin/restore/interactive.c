@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.14 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.15 2003/04/04 22:12:35 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.14 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.15 2003/04/04 22:12:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ struct arglist {
 static char	*copynext(char *, char *);
 static int	 fcmp(const void *, const void *);
 static void	 formatf(struct afile *, int);
-static void	 getcmd(char *, char *, char *, struct arglist *);
+static void	 getcmd(char *, char *, size_t, char *, size_t, struct arglist *);
 struct dirent	*glob_readdir(RST_DIR *dirp);
 static int	 glob_stat(const char *, struct stat *);
 static void	 mkentry(char *, struct direct *, struct afile *);
@@ -117,7 +117,7 @@ runcmdshell()
 	arglist.glob.gl_closedir = (void *)rst_closedir;
 	arglist.glob.gl_lstat = glob_stat;
 	arglist.glob.gl_stat = glob_stat;
-	canon("/", curdir);
+	canon("/", curdir, sizeof curdir);
 loop:
 	if (setjmp(reset) != 0) {
 		if (arglist.freeglob != 0) {
@@ -129,7 +129,7 @@ loop:
 		volno = 0;
 	}
 	runshell = 1;
-	getcmd(curdir, cmd, name, &arglist);
+	getcmd(curdir, cmd, sizeof cmd, name, sizeof name, &arglist);
 	switch (cmd[0]) {
 	/*
 	 * Add elements to the extraction list.
@@ -308,8 +308,11 @@ loop:
  * eliminate any embedded ".." components.
  */
 static void
-getcmd(curdir, cmd, name, ap)
-	char *curdir, *cmd, *name;
+getcmd(curdir, cmd, cmdlen, name, namelen, ap)
+	char *curdir, *cmd;
+	size_t cmdlen;
+	char *name;
+	size_t namelen;
 	struct arglist *ap;
 {
 	char *cp;
@@ -334,7 +337,7 @@ getcmd(curdir, cmd, name, ap)
 		(void)fgets(input, BUFSIZ, terminal);
 	} while (!feof(terminal) && input[0] == '\n');
 	if (feof(terminal)) {
-		(void)strcpy(cmd, "quit");
+		(void)strlcpy(cmd, "quit", cmdlen);
 		return;
 	}
 	for (cp = &input[strlen(input) - 2]; *cp == ' ' || *cp == '\t'; cp--)
@@ -366,14 +369,14 @@ getnext:
 	 * If it is an absolute pathname, canonicalize it and return it.
 	 */
 	if (rawname[0] == '/') {
-		canon(rawname, name);
+		canon(rawname, name, namelen);
 	} else {
 		/*
 		 * For relative pathnames, prepend the current directory to
 		 * it then canonicalize and return it.
 		 */
 		snprintf(output, sizeof(output), "%s/%s", curdir, rawname);
-		canon(output, name);
+		canon(output, name, namelen);
 	}
 	if ((globretval = glob(name, GLOB_ALTDIRFUNC | GLOB_NOESCAPE,
 	    NULL, &ap->glob)) < 0) {
@@ -463,18 +466,19 @@ copynext(input, output)
  * remove any imbedded "." and ".." components.
  */
 void
-canon(rawname, canonname)
+canon(rawname, canonname, canonnamelen)
 	char *rawname, *canonname;
+	size_t canonnamelen;
 {
 	char *cp, *np;
 
 	if (strcmp(rawname, ".") == 0 || strncmp(rawname, "./", 2) == 0)
-		(void)strcpy(canonname, "");
+		(void)strlcpy(canonname, "", canonnamelen);
 	else if (rawname[0] == '/')
-		(void)strcpy(canonname, ".");
+		(void)strlcpy(canonname, ".", canonnamelen);
 	else
-		(void)strcpy(canonname, "./");
-	(void)strlcat(canonname, rawname, MAXPATHLEN);
+		(void)strlcpy(canonname, "./", canonnamelen);
+	(void)strlcat(canonname, rawname, canonnamelen);
 	/*
 	 * Eliminate multiple and trailing '/'s
 	 */

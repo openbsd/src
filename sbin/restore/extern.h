@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2002/02/17 19:42:29 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2003/04/04 22:12:35 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ struct entry	*addentry(char *, ino_t, int);
 long		 addfile(char *, ino_t, int);
 int		 addwhiteout(char *);
 void		 badentry(struct entry *, char *);
-void	 	 canon(char *, char *);
+void	 	 canon(char *, char *, size_t);
 void		 checkrestore(void);
 void 		 cleanup(void);
 void		 closemt(void);

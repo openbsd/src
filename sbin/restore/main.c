@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2003/04/04 22:12:35 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ main(argc, argv)
 		extractdirs(0);
 		initsymtable(NULL);
 		while (argc--) {
-			canon(*argv++, name);
+			canon(*argv++, name, sizeof name);
 			ino = dirlookup(name);
 			if (ino == 0)
 				continue;
@@ -270,7 +270,7 @@ main(argc, argv)
 		extractdirs(1);
 		initsymtable(NULL);
 		while (argc--) {
-			canon(*argv++, name);
+			canon(*argv++, name, sizeof name);
 			ino = dirlookup(name);
 			if (ino == 0)
 				continue;
@@ -312,6 +312,7 @@ obsolete(argcp, argvp)
 {
 	int argc, flags;
 	char *ap, **argv, *flagsp, **nargv, *p;
+	size_t len;
 
 	/* Setup. */
 	argv = *argvp;
@@ -339,11 +340,12 @@ obsolete(argcp, argvp)
 				warnx("option requires an argument -- %c", *ap);
 				usage();
 			}
-			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
+			len = strlen(*argv) + 2 + 1;
+			if ((nargv[0] = malloc(len)) == NULL)
 				err(1, NULL);
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
-			(void)strcpy(&nargv[0][2], *argv);
+			(void)strlcpy(&nargv[0][2], *argv, len-2);
 			++argv;
 			++nargv;
 			break;
