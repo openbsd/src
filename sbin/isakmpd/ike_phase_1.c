@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.16 2000/02/28 22:48:34 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.23 2000/02/28 22:52:46 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.17 2000/03/08 08:43:04 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.24 2000/03/07 20:40:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1161,7 +1161,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
       if (!life_conf)
 	{
 	  /* Life attributes given, but not in our policy.  */
-	  log_print ("attribute_unacceptable: received unexpected life attribute");
+	  log_print ("attribute_unacceptable: "
+		     "received unexpected life attribute");
 	  return 1;
 	}
 
