@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.68 2004/03/01 00:37:08 tedu Exp $ */
+/* $OpenBSD: netcat.c,v 1.69 2004/03/03 06:45:54 tedu Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -750,6 +750,7 @@ help(void)
 	fprintf(stderr, "\tCommand Summary:\n\
 	\t-4		Use IPv4\n\
 	\t-6		Use IPv6\n\
+	\t-d		Detach from stdin\n\
 	\t-h		This help text\n\
 	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
 	\t-k		Keep inbound sockets open for multiple connects\n\
@@ -774,7 +775,7 @@ help(void)
 void
 usage(int ret)
 {
-	fprintf(stderr, "usage: nc [-46hklnrStUuvz] [-i interval] [-p source_port] [-s source_ip_address]\n");
+	fprintf(stderr, "usage: nc [-46dhklnrStUuvz] [-i interval] [-p source_port] [-s source_ip_address]\n");
 	fprintf(stderr, "\t  [-w timeout] [-X socks_version] [-x proxy_address[:port]] [hostname]\n");
 	fprintf(stderr, "\t  [port[s]]\n");
 	if (ret)
