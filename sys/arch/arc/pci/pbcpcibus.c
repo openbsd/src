@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbcpcibus.c,v 1.2 1997/03/23 11:34:35 pefo Exp $ */
+/*	$OpenBSD: pbcpcibus.c,v 1.3 1997/04/10 16:29:31 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -121,12 +121,11 @@ pbcpcibrattach(parent, self, aux)
 
 		lcp = sc->sc_pcibr = &pbc_config;
 
-		sc->sc_bus_space.isa_io_base = V96X_PCI_MEM_SPACE;
-		sc->sc_bus_space.isa_mem_base = V96X_PCI_MEM_SPACE;
-		sc->sc_bus_space.isa_io_sparse1 = 0;
-		sc->sc_bus_space.isa_io_sparse2 = 0;
-		sc->sc_bus_space.isa_io_sparse4 = 0;
-		sc->sc_bus_space.isa_io_sparse8 = 0;
+		sc->sc_bus_space.bus_base = V96X_PCI_MEM_SPACE;
+		sc->sc_bus_space.bus_sparse1 = 0;
+		sc->sc_bus_space.bus_sparse2 = 0;
+		sc->sc_bus_space.bus_sparse4 = 0;
+		sc->sc_bus_space.bus_sparse8 = 0;
 
 		lcp->lc_pc.pc_conf_v = lcp;
 		lcp->lc_pc.pc_attach_hook = pbc_attach_hook;

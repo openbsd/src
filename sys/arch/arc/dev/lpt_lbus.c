@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_lbus.c,v 1.2 1997/03/23 11:34:34 pefo Exp $	*/
+/*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -101,7 +101,7 @@ lpt_localbus_probe(parent, match, aux)
 	if(!BUS_MATCHNAME(ca, "lpt"))
 		 return(0);
 
-	iot = &arc_bus;
+	iot = &arc_bus_io;
 	base = (bus_addr_t)BUS_CVTADDR(ca);
 	ioh = (bus_space_handle_t)base;
 
@@ -146,7 +146,7 @@ lpt_localbus_attach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_state = 0;
-	iot = sc->sc_iot = &arc_bus;
+	iot = sc->sc_iot = &arc_bus_io;
 	sc->sc_ioh = (bus_space_handle_t)BUS_CVTADDR(ca);
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: isa_machdep.h,v 1.3 1997/03/12 19:16:58 pefo Exp $  */
+/*      $OpenBSD: isa_machdep.h,v 1.4 1997/04/10 16:29:27 pefo Exp $  */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -40,8 +40,8 @@ typedef struct arc_isa_bus *isa_chipset_tag_t;
  *      However, the cpu executes an instruction every 7.5ns
  *      so the bus is much slower so it doesn't matter, really.
  */
-#define isa_outb(x,y)   outb(arc_bus.isa_io_base + (x), y)
-#define isa_inb(x)      inb(arc_bus.isa_io_base + (x))
+#define isa_outb(x,y)   outb(arc_bus_io.bus_base + (x), y)
+#define isa_inb(x)      inb(arc_bus_io.bus_base + (x))
  
 struct arc_isa_bus {
         void    *ic_data;

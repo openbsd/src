@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1997/03/23 11:34:30 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 1997/04/10 16:29:08 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.23 1997/03/23 11:34:30 pefo Exp $
+ *      $Id: machdep.c,v 1.24 1997/04/10 16:29:08 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -126,7 +126,8 @@ int	cputype;		/* Mother board type */
 int	num_tlbentries = 48;	/* Size of the CPU tlb */
 int	ncpu = 1;		/* At least one cpu in the system */
 int	CONADDR;		/* Well, ain't it just plain stupid... */
-struct arc_bus_space arc_bus;	/* Bus tag for bus.h macros */
+struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
+struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
 char   **environment;		/* On some arches, pointer to environment */
 char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
 
@@ -194,11 +195,6 @@ mips_init(argc, argv, envv)
 	 * entries as possible to do something useful :-).
 	 */
 
-	arc_bus.isa_io_sparse1 = 0;
-	arc_bus.isa_io_sparse2 = 0;
-	arc_bus.isa_io_sparse4 = 0;
-	arc_bus.isa_io_sparse8 = 0;
-
 	switch (cputype) {
 	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
 	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
@@ -208,8 +204,8 @@ mips_init(argc, argv, envv)
 		else {
 			strcpy(cpu_model, "Acer Pica-61");
 		}
-		arc_bus.isa_io_base = PICA_V_ISA_IO;
-		arc_bus.isa_mem_base = PICA_V_ISA_MEM;
+		arc_bus_io.bus_base = PICA_V_ISA_IO;
+		arc_bus_mem.bus_base = PICA_V_ISA_MEM;
 		CONADDR = PICA_SYS_COM1;
 
 		/*
@@ -226,15 +222,15 @@ mips_init(argc, argv, envv)
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-		arc_bus.isa_io_base = 0xb0000000;		/*XXX*/
-		arc_bus.isa_mem_base = 0xa0000000;		/*XXX*/
+		arc_bus_io.bus_base = 0xb0000000;		/*XXX*/
+		arc_bus_mem.bus_base = 0xa0000000;		/*XXX*/
 		CONADDR = 0; /* Don't screew the mouse... */
 		break;
 
 	case DESKSTATION_TYNE:
 		strcpy(cpu_model, "Deskstation Tyne");
-		arc_bus.isa_io_base = TYNE_V_ISA_IO;
-		arc_bus.isa_mem_base = TYNE_V_ISA_MEM;
+		arc_bus_io.bus_base = TYNE_V_ISA_IO;
+		arc_bus_mem.bus_base = TYNE_V_ISA_MEM;
 		CONADDR = 0; /* Don't screew the mouse... */
 		break;
 
@@ -242,33 +238,40 @@ mips_init(argc, argv, envv)
 			/* of other options. Systems not having an ARC Bios  */
 
 			/* Make this more fancy when more comes in here */
+		environment = envv;
 		cputype = ALGOR_P4032;
 		strcpy(cpu_model, "Algorithmics P-4032");
-		arc_bus.isa_io_base = 0;
-		arc_bus.isa_io_sparse1 = 2;
-		arc_bus.isa_io_sparse2 = 1;
-		arc_bus.isa_io_sparse4 = 0;
-		arc_bus.isa_io_sparse8 = 0;
-		arc_bus.isa_mem_base = 0;
+		arc_bus_io.bus_sparse1 = 2;
+		arc_bus_io.bus_sparse2 = 1;
+		arc_bus_io.bus_sparse4 = 0;
+		arc_bus_io.bus_sparse8 = 0;
 		CONADDR = P4032_COM1;
-		num_tlbentries = 32;
 
 		mem_layout[0].mem_start = 0;
 		mem_layout[0].mem_size = mips_trunc_page(CACHED_TO_PHYS(kernel_start));
 		mem_layout[1].mem_start = CACHED_TO_PHYS((int)sysend);
-		i = get_simm_size((int *)0, 128*1024*1024);
-		mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
-		physmem = i;
+		if(getenv("memsize") != 0) {
+			i = atoi(getenv("memsize"), 10);
+			i = 1024 * 1024 * i;
+			mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
+			physmem = i;
+		}
+		else {
+			i = get_simm_size((int *)0, 128*1024*1024);
+			mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
+			physmem = i;
 /*XXX Ouch!!! */
-		mem_layout[2].mem_start = i;
-		mem_layout[2].mem_size = get_simm_size((int *)(i), 0);
-		physmem += mem_layout[2].mem_size;
-		mem_layout[3].mem_start = i+i/2;
-		mem_layout[3].mem_size = get_simm_size((int *)(i+i/2), 0);
-		physmem += mem_layout[3].mem_size;
+			mem_layout[2].mem_start = i;
+			mem_layout[2].mem_size = get_simm_size((int *)(i), 0);
+			physmem += mem_layout[2].mem_size;
+			mem_layout[3].mem_start = i+i/2;
+			mem_layout[3].mem_size = get_simm_size((int *)(i+i/2), 0);
+			physmem += mem_layout[3].mem_size;
+		}
 /*XXX*/
-		environment = envv;
 		argv[0] = getenv("bootdev");
+		if(argv[0] == 0)
+			argv[0] = "unknown";
 
 
 		break;
@@ -334,6 +337,16 @@ mips_init(argc, argv, envv)
 	 * Now its time to abandon the BIOS and be self supplying.
 	 * Start with cleaning out the TLB. Bye bye Microsoft....
 	 */
+	cpucfg = R4K_ConfigCache();
+	switch(cpu_id.cpu.cp_imp) {
+	case MIPS_R4300:
+		num_tlbentries = 32;
+		break;
+	default:
+		num_tlbentries = 48;
+		break;
+	}
+
 	R4K_SetWIRED(0);
 	R4K_TLBFlush(num_tlbentries);
 	R4K_SetWIRED(VMWIRED_ENTRIES);
@@ -409,7 +422,6 @@ mips_init(argc, argv, envv)
 	/*
 	 * Clear out the I and D caches.
 	 */
-	cpucfg = R4K_ConfigCache();
 	R4K_FlushCache();
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.2 1997/03/23 11:34:33 pefo Exp $	*/
+/*	$OpenBSD: com_lbus.c,v 1.3 1997/04/10 16:29:15 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -99,7 +99,7 @@ com_localbus_probe(parent, match, aux)
 	if(!BUS_MATCHNAME(ca, "com"))
 		return(0);
 	iobase = (long)BUS_CVTADDR(ca);
-	iot = &arc_bus;
+	iot = &arc_bus_io;
 	needioh = 1;
 
 	/* if it's in use as console, it's there. */
@@ -133,7 +133,7 @@ com_localbus_attach(parent, self, aux)
 	sc->sc_swflags = 0;
 	sc->sc_iobase = iobase = (bus_addr_t)BUS_CVTADDR(ca);
 	sc->sc_ioh = ioh = (bus_space_handle_t)iobase;
-	sc->sc_iot = iot = &arc_bus;
+	sc->sc_iot = iot = &arc_bus_io;
 
 	if (iobase == comconsaddr) {
 		comconsattached = 1;

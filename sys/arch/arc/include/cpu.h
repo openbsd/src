@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 1997/03/23 11:34:34 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 1997/04/10 16:29:24 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -376,7 +376,8 @@ union cpuprid {
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define	MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
-#define	MIPS_R3NKK	0x23	/* NKK R3000 based CPU		ISA I   */
+#define	MIPS_R5000	0x23	/* MIPS R5000 based CPU		ISA IV  */
+#define	MIPS_RM5230	0x28	/* QED RM5230 based CPU		ISA IV  */
 
 /*
  * MIPS FPU types
@@ -395,7 +396,8 @@ union cpuprid {
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define	MIPS_R3SONY	0x21	/* Sony R3000 based FPU		ISA I   */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
-#define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
+#define	MIPS_R5010	0x23	/* MIPS R5000 based FPU		ISA IV  */
+#define	MIPS_RM5230	0x28	/* QED RM5230 based FPU		ISA IV  */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 union	cpuprid cpu_id;

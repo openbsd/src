@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 1997/03/23 11:34:29 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 1997/04/10 16:29:06 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.10 1997/03/23 11:34:29 pefo Exp $
+ *	$Id: locore.S,v 1.11 1997/04/10 16:29:06 pefo Exp $
  */
 
 /*
@@ -94,15 +94,14 @@ start:
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
 
 	li	t0, SR_COP_1_BIT		# Disable interrupts and
-	mtc0	t0, COP_0_STATUS_REG	#   enable the fp coprocessor
+	mtc0	t0, COP_0_STATUS_REG		#   enable the fp coprocessor
 	li	sp, KERNELSTACK - START_FRAME	# switch to standard stack
-	mfc0	t0, COP_0_PRID		# read processor ID register
 	nop
+	nop					# wait for new status to
 	nop					# wait for new status to
 	nop					# to be effective
 	nop
 	cfc1	t1, FPC_ID			# read FPU ID register
-	sw	t0, cpu_id			# save PRID register
 	sw	t1, fpu_id			# save FPU ID register
 	jal	main				# main(regs)
 	move	a0, zero
@@ -2571,11 +2570,18 @@ END(MachFPTrap)
  *	The size of the data cache is stored into CpuPrimaryDataCacheSize.
  *	The size of instruction cache is stored into CpuPrimaryInstCacheSize.
  *	Alignment mask for cache aliasing test is stored in CpuCacheAliasMask.
+ *	cpu_id is set for later decision testing.
+
+XXX Needs support for Cpu controlled L2 caches (SC cpus). XXX
+
  *
  *----------------------------------------------------------------------------
  */
 LEAF(R4K_ConfigCache)
 	.set	noreorder
+	mfc0	t0, COP_0_PRID			# read processor ID register
+	nop
+	sw	t0, cpu_id			# save PRID register
 	mfc0	v0, COP_0_CONFIG		# Get configuration register
 	mfc0	v1, COP_0_PRID
 	srl	t1, v0, 9			# Get I cache size.
@@ -2602,9 +2608,17 @@ LEAF(R4K_ConfigCache)
 	addu	t2, t2, 16
 	sw	t2, CpuPrimaryDataCacheLSize
 	and	v1, 0xff00
-	li	t1, (MIPS_R4600 << 8)
+	li	t2, 1				# Recognize CPU's with
+	li	t1, (MIPS_R4600 << 8)		# two way associative caches.
+	beq	v1, t1, 1f
+	li	t1, (MIPS_R4700 << 8)
+	beq	v1, t1, 1f
+	li	t1, (MIPS_R5000 << 8)
+	beq	v1, t1, 1f
+	li	t1, (MIPS_RM5230 << 8)
+	beq	v1, t1, 1f
 	li	t2, 1
-	bnel	v1, t1, 1f
+
 	li	t2, 0
 1:
 	sw	t2, CpuTwoWayCache

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.8 1997/03/12 19:16:59 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.9 1997/04/10 16:29:28 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -193,8 +193,8 @@ isabrattach(parent, self, aux)
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
 	iba.iba_busname = "isa";
-	iba.iba_iot = (bus_space_tag_t)&arc_bus;
-	iba.iba_memt = (bus_space_tag_t)&arc_bus;
+	iba.iba_iot = (bus_space_tag_t)&arc_bus_io;
+	iba.iba_memt = (bus_space_tag_t)&arc_bus_mem;
 	iba.iba_ic = &sc->arc_isa_cs;
 	config_found(self, &iba, isabrprint);
 }
@@ -209,7 +209,7 @@ isabrprint(aux, pnp)
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
         printf(" isa_io_base 0x%lx isa_mem_base 0x%lx",
-		arc_bus.isa_io_base, arc_bus.isa_mem_base);
+		arc_bus_io.bus_base, arc_bus_mem.bus_base);
         return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 1997/03/23 11:34:32 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.14 1997/04/10 16:29:11 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -61,6 +61,7 @@ option          IPFILTER        # IP packet filter for security
 
 # Special options
 options 	MACHINE_NONCONTIG # Support noncontigous memory.
+options 	PCIVERBOSE	# Show as much info about pci as possible.
 
 # Specify storage configuration (its a joke..)
 config		bsd	swap generic

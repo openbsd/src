@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 1997/03/26 14:44:38 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 1997/04/10 16:29:22 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -42,8 +42,6 @@
 #define CAT3(a,b,c)	a/**/b/**/c
 #endif
 
-#define HIT_FLUSH_DCACHE(addr, len)    R4K_HitFlushDCache(addr, len)
-
 /*
  * Bus access types.
  */
@@ -60,7 +58,7 @@ struct arc_bus_space {
 	u_int8_t	bus_sparse8;	/* Sparse addressing shift count */
 };
 
-extern struct arc_bus_space arc_bus;
+extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
 /*
  * Access methods for bus resources

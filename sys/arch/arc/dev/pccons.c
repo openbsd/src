@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.12 1997/03/12 19:16:52 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.13 1997/04/10 16:29:19 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -858,12 +858,12 @@ pccninit(cp)
 		break;
 
 	case DESKSTATION_RPC44:
-		mono_base += arc_bus.isa_io_base;
-		mono_buf += arc_bus.isa_mem_base;
-		cga_base += arc_bus.isa_io_base;
-		cga_buf = arc_bus.isa_mem_base + 0xa0000;
-		kbd_cmdp = arc_bus.isa_io_base + 0x64;
-		kbd_datap = arc_bus.isa_io_base + 0x60;
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf = arc_bus_mem.bus_base + 0xa0000;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 	}

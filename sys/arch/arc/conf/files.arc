@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.13 1997/03/23 11:34:32 pefo Exp $
+#	$OpenBSD: files.arc,v 1.14 1997/04/10 16:29:12 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -147,6 +147,11 @@ file	arch/arc/dev/lpt_lbus.c		lpt & (lpt_pica | lpt_algor)
 #
 #	PCI Bus support
 #
+
+# PCI VGA display driver
+device	pcivga: tty
+attach	pcivga at pci
+file	arch/arc/pci/pci_vga.c		pcivga
 
 #
 #	Common files
