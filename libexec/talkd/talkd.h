@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.h,v 1.1 1996/04/28 23:57:46 mickey Exp $	*/
+/*	$OpenBSD: talkd.h,v 1.2 1996/07/15 05:10:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,6 +38,7 @@ extern int	debug;
 extern char	hostname[];
 
 /* table.c */
+void	init_table __P((void));
 CTL_MSG *find_request __P((CTL_MSG *));
 CTL_MSG *find_match __P((CTL_MSG *));
 void	insert_table __P((CTL_MSG *, CTL_RESPONSE *));

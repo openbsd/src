@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 1996/04/28 23:56:20 mickey Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 1996/07/15 05:10:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
+static char rcsid[] = "$Id: table.c,v 1.3 1996/07/15 05:10:11 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -49,6 +49,7 @@ static char rcsid[] = "$Id: table.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 #include <protocols/talkd.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -59,8 +60,6 @@ static char rcsid[] = "$Id: table.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
 
 #define MAX_ID 16000	/* << 2^15 so I don't have sign troubles */
 
-#define NIL ((TABLE_ENTRY *)0)
-
 struct	timeval tp;
 struct	timezone txp;
 
@@ -68,13 +67,21 @@ typedef struct table_entry TABLE_ENTRY;
 
 struct table_entry {
 	CTL_MSG request;
-	long	time;
-	TABLE_ENTRY *next;
-	TABLE_ENTRY *last;
+	time_t	time;
+	TAILQ_ENTRY(table_entry) list;
 };
-TABLE_ENTRY	*table = NIL;
+TAILQ_HEAD(, table_entry)	table;
 
 static void	delete __P((register TABLE_ENTRY *));
+
+/*
+ * Init the table
+ */
+void
+init_table()
+{
+	TAILQ_INIT(&table);
+}
 
 /*
  * Look in the table for an invitation that matches the current
@@ -91,8 +98,8 @@ find_match(request)
 	current_time = tp.tv_sec;
 	if (debug)
 		print_request("find_match", request);
-	for (ptr = table; ptr != NIL; ptr = ptr->next) {
-		if ((ptr->time - current_time) > MAX_LIFE) {
+	for (ptr = table.tqh_first; ptr != NULL; ptr = ptr->list.tqe_next) {
+		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			if (debug)
 				print_request("deleting expired entry",
@@ -132,8 +139,8 @@ find_request(request)
 	 */
 	if (debug)
 		print_request("find_request", request);
-	for (ptr = table; ptr != NIL; ptr = ptr->next) {
-		if ((ptr->time - current_time) > MAX_LIFE) {
+	for (ptr = table.tqh_first; ptr != NULL; ptr = ptr->list.tqe_next) {
+		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			if (debug)
 				print_request("deleting expired entry",
@@ -171,17 +178,13 @@ insert_table(request, response)
 	response->id_num = htonl(request->id_num);
 	/* insert a new entry into the top of the list */
 	ptr = (TABLE_ENTRY *)malloc(sizeof(TABLE_ENTRY));
-	if (ptr == NIL) {
+	if (ptr == NULL) {
 		syslog(LOG_ERR, "insert_table: Out of memory");
 		_exit(1);
 	}
 	ptr->time = current_time;
 	ptr->request = *request;
-	ptr->next = table;
-	if (ptr->next != NIL)
-		ptr->next->last = ptr;
-	ptr->last = NIL;
-	table = ptr;
+	TAILQ_INSERT_HEAD(&table, ptr, list);
 }
 
 /*
@@ -208,16 +211,15 @@ delete_invite(id_num)
 {
 	register TABLE_ENTRY *ptr;
 
-	ptr = table;
 	if (debug)
 		syslog(LOG_DEBUG, "delete_invite(%d)", id_num);
-	for (ptr = table; ptr != NIL; ptr = ptr->next) {
+	for (ptr = table.tqh_first; ptr != NULL; ptr = ptr->list.tqe_next) {
 		if (ptr->request.id_num == id_num)
 			break;
 		if (debug)
 			print_request("", &ptr->request);
 	}
-	if (ptr != NIL) {
+	if (ptr != NULL) {
 		delete(ptr);
 		return (SUCCESS);
 	}
@@ -234,11 +236,6 @@ delete(ptr)
 
 	if (debug)
 		print_request("delete", &ptr->request);
-	if (table == ptr)
-		table = ptr->next;
-	else if (ptr->last != NIL)
-		ptr->last->next = ptr->next;
-	if (ptr->next != NIL)
-		ptr->next->last = ptr->last;
+	TAILQ_REMOVE(&table, ptr, list);
 	free((char *)ptr);
 }

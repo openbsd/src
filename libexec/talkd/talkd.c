@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.2 1996/04/28 23:56:22 mickey Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.3 1996/07/15 05:10:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.2 1996/04/28 23:56:22 mickey Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.3 1996/07/15 05:10:12 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -93,6 +93,7 @@ main(argc, argv)
 	}
 	if (argc > 1 && strcmp(argv[1], "-d") == 0)
 		debug = 1;
+	init_table();
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);
 	for (;;) {
