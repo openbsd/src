@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.2 2002/06/26 15:52:13 tdeval Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $");
 #endif
 
 #define DOUBLEBUF 1
-#define NO_THREAD 1
+#define NO_THREAD 0
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -96,103 +96,104 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $");
 static const char * const ieee1394_speeds[] = { IEEE1394_SPD_STRINGS };
 
 #if 0
-static int fwohci_dnamem_alloc(struct fwohci_softc *sc, int size,
+int fwohci_dnamem_alloc(struct fwohci_softc *sc, int size,
     int alignment, bus_dmamap_t *mapp, caddr_t *kvap, int flags);
 #endif
-static void fwohci_create_event_thread(void *);
-static void fwohci_thread_init(void *);
+void fwohci_create_event_thread(void *);
+void fwohci_thread_init(void *);
 
-static void fwohci_event_thread(struct fwohci_softc *);
-static void fwohci_hw_init(struct fwohci_softc *);
-static void fwohci_power(int, void *);
-static void fwohci_shutdown(void *);
+void fwohci_event_thread(struct fwohci_softc *);
+void fwohci_hw_init(struct fwohci_softc *);
+void fwohci_power(int, void *);
+void fwohci_shutdown(void *);
 
-static int  fwohci_desc_alloc(struct fwohci_softc *);
-static struct fwohci_desc *fwohci_desc_get(struct fwohci_softc *, int);
-static void fwohci_desc_put(struct fwohci_softc *, struct fwohci_desc *, int);
+int  fwohci_desc_alloc(struct fwohci_softc *);
+struct fwohci_desc *fwohci_desc_get(struct fwohci_softc *, int);
+void fwohci_desc_put(struct fwohci_softc *, struct fwohci_desc *, int);
 
-static int  fwohci_ctx_alloc(struct fwohci_softc *, struct fwohci_ctx **,
+int  fwohci_ctx_alloc(struct fwohci_softc *, struct fwohci_ctx **,
     int, int, int);
-static void fwohci_ctx_free(struct fwohci_softc *, struct fwohci_ctx *);
-static void fwohci_ctx_init(struct fwohci_softc *, struct fwohci_ctx *);
+void fwohci_ctx_free(struct fwohci_softc *, struct fwohci_ctx *);
+void fwohci_ctx_init(struct fwohci_softc *, struct fwohci_ctx *);
 
-static int  fwohci_buf_alloc(struct fwohci_softc *, struct fwohci_buf *);
-static void fwohci_buf_free(struct fwohci_softc *, struct fwohci_buf *);
-static void fwohci_buf_init_rx(struct fwohci_softc *);
-static void fwohci_buf_start_rx(struct fwohci_softc *);
-static void fwohci_buf_stop_tx(struct fwohci_softc *);
-static void fwohci_buf_stop_rx(struct fwohci_softc *);
-static void fwohci_buf_next(struct fwohci_softc *, struct fwohci_ctx *);
-static int  fwohci_buf_pktget(struct fwohci_softc *, struct fwohci_buf **,
+int  fwohci_buf_alloc(struct fwohci_softc *, struct fwohci_buf *);
+void fwohci_buf_free(struct fwohci_softc *, struct fwohci_buf *);
+void fwohci_buf_init_rx(struct fwohci_softc *);
+void fwohci_buf_start_rx(struct fwohci_softc *);
+void fwohci_buf_stop_tx(struct fwohci_softc *);
+void fwohci_buf_stop_rx(struct fwohci_softc *);
+void fwohci_buf_next(struct fwohci_softc *, struct fwohci_ctx *);
+int  fwohci_buf_pktget(struct fwohci_softc *, struct fwohci_buf **,
     caddr_t *, int);
-static int  fwohci_buf_input(struct fwohci_softc *, struct fwohci_ctx *,
+int  fwohci_buf_input(struct fwohci_softc *, struct fwohci_ctx *,
     struct fwohci_pkt *);
-static int  fwohci_buf_input_ppb(struct fwohci_softc *, struct fwohci_ctx *,
+int  fwohci_buf_input_ppb(struct fwohci_softc *, struct fwohci_ctx *,
     struct fwohci_pkt *);
 
-static u_int8_t fwohci_phy_read(struct fwohci_softc *, u_int8_t);
-static void fwohci_phy_write(struct fwohci_softc *, u_int8_t, u_int8_t);
-static void fwohci_phy_busreset(struct fwohci_softc *);
-static void fwohci_phy_input(struct fwohci_softc *, struct fwohci_pkt *);
+u_int8_t fwohci_phy_read(struct fwohci_softc *, u_int8_t);
+void fwohci_phy_write(struct fwohci_softc *, u_int8_t, u_int8_t);
+void fwohci_phy_busreset(struct fwohci_softc *);
+void fwohci_phy_input(struct fwohci_softc *, struct fwohci_pkt *);
 
-static int  fwohci_handler_set(struct fwohci_softc *, int, u_int32_t, u_int32_t,
+int  fwohci_handler_set(struct fwohci_softc *, int, u_int32_t, u_int32_t,
     int (*)(struct fwohci_softc *, void *, struct fwohci_pkt *), void *);
 
-static void fwohci_arrq_input(struct fwohci_softc *, struct fwohci_ctx *);
-static void fwohci_arrs_input(struct fwohci_softc *, struct fwohci_ctx *);
-static void fwohci_ir_input(struct fwohci_softc *, struct fwohci_ctx *);
+void fwohci_arrq_input(struct fwohci_softc *, struct fwohci_ctx *);
+void fwohci_arrs_input(struct fwohci_softc *, struct fwohci_ctx *);
+void fwohci_ir_input(struct fwohci_softc *, struct fwohci_ctx *);
 
-static int  fwohci_at_output(struct fwohci_softc *, struct fwohci_ctx *,
+int  fwohci_at_output(struct fwohci_softc *, struct fwohci_ctx *,
     struct fwohci_pkt *);
-static void fwohci_at_done(struct fwohci_softc *, struct fwohci_ctx *, int);
-static void fwohci_atrs_output(struct fwohci_softc *, int, struct fwohci_pkt *,
-    struct fwohci_pkt *);
-
-static int  fwohci_guidrom_init(struct fwohci_softc *);
-static void fwohci_configrom_init(struct fwohci_softc *);
-static int  fwohci_configrom_input(struct fwohci_softc *, void *,
-    struct fwohci_pkt *);
-static void fwohci_selfid_init(struct fwohci_softc *);
-static int  fwohci_selfid_input(struct fwohci_softc *);
-
-static void fwohci_csr_init(struct fwohci_softc *);
-static int  fwohci_csr_input(struct fwohci_softc *, void *,
+void fwohci_at_done(struct fwohci_softc *, struct fwohci_ctx *, int);
+void fwohci_atrs_output(struct fwohci_softc *, int, struct fwohci_pkt *,
     struct fwohci_pkt *);
 
-static void fwohci_uid_collect(struct fwohci_softc *);
-static void fwohci_uid_req(struct fwohci_softc *, int);
-static int  fwohci_uid_input(struct fwohci_softc *, void *,
+int  fwohci_guidrom_init(struct fwohci_softc *);
+void fwohci_configrom_init(struct fwohci_softc *);
+int  fwohci_configrom_input(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
-static int  fwohci_uid_lookup(struct fwohci_softc *, const u_int8_t *);
-static void fwohci_check_nodes(struct fwohci_softc *);
+void fwohci_selfid_init(struct fwohci_softc *);
+int  fwohci_selfid_input(struct fwohci_softc *);
 
-static int  fwohci_if_inreg(struct device *, u_int32_t, u_int32_t,
+void fwohci_csr_init(struct fwohci_softc *);
+int  fwohci_csr_input(struct fwohci_softc *, void *,
+    struct fwohci_pkt *);
+
+void fwohci_uid_collect(struct fwohci_softc *);
+void fwohci_uid_req(struct fwohci_softc *, int);
+int  fwohci_uid_input(struct fwohci_softc *, void *,
+    struct fwohci_pkt *);
+int  fwohci_uid_lookup(struct fwohci_softc *, const u_int8_t *);
+void fwohci_check_nodes(struct fwohci_softc *);
+
+int  fwohci_if_inreg(struct device *, u_int32_t, u_int32_t,
     void (*)(struct device *, struct mbuf *));
-static int  fwohci_if_input(struct fwohci_softc *, void *, struct fwohci_pkt *);
-static int  fwohci_if_input_iso(struct fwohci_softc *, void *, struct fwohci_pkt *);
-static int  fwohci_if_output(struct device *, struct mbuf *,
+int  fwohci_if_input(struct fwohci_softc *, void *, struct fwohci_pkt *);
+int  fwohci_if_input_iso(struct fwohci_softc *, void *, struct fwohci_pkt *);
+int  fwohci_if_output(struct device *, struct mbuf *,
     void (*)(struct device *, struct mbuf *));
-static int fwohci_if_setiso(struct device *, u_int32_t, u_int32_t, u_int32_t,
+int fwohci_if_setiso(struct device *, u_int32_t, u_int32_t, u_int32_t,
     void (*)(struct device *, struct mbuf *));
-static int  fwohci_read(struct ieee1394_abuf *);
-static int  fwohci_write(struct ieee1394_abuf *);
-static int  fwohci_read_resp(struct fwohci_softc *, void *, struct fwohci_pkt *);
-static int  fwohci_write_ack(struct fwohci_softc *, void *, struct fwohci_pkt *);
-static int  fwohci_read_multi_resp(struct fwohci_softc *, void *,
+int  fwohci_read(struct ieee1394_abuf *);
+int  fwohci_write(struct ieee1394_abuf *);
+int  fwohci_read_resp(struct fwohci_softc *, void *, struct fwohci_pkt *);
+int  fwohci_write_ack(struct fwohci_softc *, void *, struct fwohci_pkt *);
+int  fwohci_read_multi_resp(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
-static int  fwohci_inreg(struct ieee1394_abuf *, int);
-static int  fwohci_unreg(struct ieee1394_abuf *, int);
-static int  fwohci_parse_input(struct fwohci_softc *, void *,
+int  fwohci_inreg(struct ieee1394_abuf *, int);
+int  fwohci_unreg(struct ieee1394_abuf *, int);
+int  fwohci_parse_input(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
 #ifdef __NetBSD__
-static int  fwohci_submatch(struct device *, struct cfdata *, void *);
+int  fwohci_submatch(struct device *, struct cfdata *, void *);
 #else
-static int  fwohci_submatch(struct device *, void *, void *);
+int  fwohci_submatch(struct device *, void *, void *);
 #endif
+u_int16_t fwohci_crc16(u_int32_t *, int);
 
 #ifdef FW_DEBUG
-static void fwohci_show_intr(struct fwohci_softc *, u_int32_t);
-static void fwohci_show_phypkt(struct fwohci_softc *, u_int32_t);
+void fwohci_show_intr(struct fwohci_softc *, u_int32_t);
+void fwohci_show_phypkt(struct fwohci_softc *, u_int32_t);
 
 /* 1 is normal debug, 2 is verbose debug, 3 is complete (packet dumps). */
 
@@ -305,12 +306,17 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 #ifdef __NetBSD__
 	kthread_create(fwohci_create_event_thread, sc);
 #else
-	kthread_create_deferred(fwohci_create_event_thread, sc);
+	if (initproc == NULL)
+		kthread_create_deferred(fwohci_create_event_thread, sc);
+	else				/* late binding, threads
+					   already running */
+		fwohci_create_event_thread(sc);
 #endif
+
 	return 0;
 }
 
-static int
+int
 fwohci_if_setiso(struct device *self, u_int32_t channel, u_int32_t tag,
     u_int32_t direction, void (*handler)(struct device *, struct mbuf *))
 {
@@ -434,7 +440,7 @@ fwohci_intr(void *arg)
 	}
 }
 
-static void
+void
 fwohci_create_event_thread(void *arg)
 {
 	struct fwohci_softc  *sc = arg;
@@ -453,7 +459,7 @@ fwohci_create_event_thread(void *arg)
 	}
 }
 
-static void
+void
 fwohci_thread_init(void *arg)
 {
 	struct fwohci_softc *sc = arg;
@@ -522,7 +528,7 @@ fwohci_thread_init(void *arg)
 	kthread_exit(0);
 }
 
-static void
+void
 fwohci_event_thread(struct fwohci_softc *sc)
 {
 	int i, s;
@@ -614,7 +620,7 @@ fwohci_event_thread(struct fwohci_softc *sc)
 }
 
 #if 0
-static int
+int
 fwohci_dnamem_alloc(struct fwohci_softc *sc, int size, int alignment,
     bus_dmamap_t *mapp, caddr_t *kvap, int flags)
 {
@@ -665,7 +671,7 @@ fwohci_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-static void
+void
 fwohci_hw_init(struct fwohci_softc *sc)
 {
 	int i;
@@ -694,6 +700,7 @@ fwohci_hw_init(struct fwohci_softc *sc)
 #else
 	val &= ~(OHCI_BusOptions_BMC | OHCI_BusOptions_IRMC);
 #endif
+	val &= ~(OHCI_BusOptions_PMC);
 	OHCI_CSR_WRITE(sc, OHCI_REG_BusOptions, val);
 	for (i = 0; i < sc->sc_isoctx; i++) {
 		OHCI_SYNC_RX_DMA_WRITE(sc, i, OHCI_SUBREG_ContextControlClear,
@@ -747,7 +754,7 @@ fwohci_hw_init(struct fwohci_softc *sc)
 	fwohci_buf_start_rx(sc);
 }
 
-static void
+void
 fwohci_power(int why, void *arg)
 {
 	struct fwohci_softc *sc = arg;
@@ -773,7 +780,7 @@ fwohci_power(int why, void *arg)
 	splx(s);
 }
 
-static void
+void
 fwohci_shutdown(void *arg)
 {
 	struct fwohci_softc *sc = arg;
@@ -805,14 +812,15 @@ fwohci_shutdown(void *arg)
 /*
  * read the PHY Register.
  */
-static u_int8_t
+u_int8_t
 fwohci_phy_read(struct fwohci_softc *sc, u_int8_t reg)
 {
 	int i;
 	u_int32_t val;
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_PhyControl,
-	    OHCI_PhyControl_RdReg | (reg << OHCI_PhyControl_RegAddr_BITPOS));
+	    OHCI_PhyControl_RdReg |
+	    ((reg & 0xf) << OHCI_PhyControl_RegAddr_BITPOS));
 	for (i = 0; i < OHCI_LOOP; i++) {
 		if (OHCI_CSR_READ(sc, OHCI_REG_PhyControl) &
 		    OHCI_PhyControl_RdDone)
@@ -826,13 +834,13 @@ fwohci_phy_read(struct fwohci_softc *sc, u_int8_t reg)
 /*
  * write the PHY Register.
  */
-static void
+void
 fwohci_phy_write(struct fwohci_softc *sc, u_int8_t reg, u_int8_t val)
 {
 	int i;
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_PhyControl, OHCI_PhyControl_WrReg |
-	    (reg << OHCI_PhyControl_RegAddr_BITPOS) |
+	    ((reg & 0xf) << OHCI_PhyControl_RegAddr_BITPOS) |
 	    (val << OHCI_PhyControl_WrData_BITPOS));
 	for (i = 0; i < OHCI_LOOP; i++) {
 		if (!(OHCI_CSR_READ(sc, OHCI_REG_PhyControl) &
@@ -845,7 +853,7 @@ fwohci_phy_write(struct fwohci_softc *sc, u_int8_t reg, u_int8_t val)
 /*
  * Initiate Bus Reset
  */
-static void
+void
 fwohci_phy_busreset(struct fwohci_softc *sc)
 {
 	int s;
@@ -871,7 +879,7 @@ fwohci_phy_busreset(struct fwohci_softc *sc)
 /*
  * PHY Packet
  */
-static void
+void
 fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 {
 	u_int32_t val;
@@ -898,7 +906,7 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 /*
  * Descriptor for context DMA.
  */
-static int
+int
 fwohci_desc_alloc(struct fwohci_softc *sc)
 {
 	int error, mapsize, dsize;
@@ -960,7 +968,7 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	return error;
 }
 
-static struct fwohci_desc *
+struct fwohci_desc *
 fwohci_desc_get(struct fwohci_softc *sc, int ndesc)
 {
 	int i, n;
@@ -979,7 +987,7 @@ fwohci_desc_get(struct fwohci_softc *sc, int ndesc)
 	return NULL;
 }
 
-static void
+void
 fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
 {
 	int i, n;
@@ -997,7 +1005,7 @@ fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
 /*
  * Asyncronous/Isochronous Transmit/Receive Context
  */
-static int
+int
 fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
     int bufcnt, int ctx, int ctxtype)
 {
@@ -1022,7 +1030,7 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	fc->fc_buffers = fb = malloc(sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK|M_ZERO);
 #else
 	fc->fc_buffers = fb = malloc(sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK);
-	bzero(fb, sizeof(*fb));
+	bzero(fb, sizeof(*fb) * bufcnt);
 #endif
 	fc->fc_bufcnt = bufcnt;
 #if DOUBLEBUF
@@ -1092,7 +1100,7 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	return error;
 }
 
-static void
+void
 fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	struct fwohci_buf *fb;
@@ -1129,7 +1137,7 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	free(fc, M_DEVBUF);
 }
 
-static void
+void
 fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	struct fwohci_buf *fb, *nfb;
@@ -1190,7 +1198,7 @@ fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 /*
  * DMA data buffer
  */
-static int
+int
 fwohci_buf_alloc(struct fwohci_softc *sc, struct fwohci_buf *fb)
 {
 	int error;
@@ -1238,7 +1246,7 @@ fwohci_buf_alloc(struct fwohci_softc *sc, struct fwohci_buf *fb)
 	return error;
 }
 
-static void
+void
 fwohci_buf_free(struct fwohci_softc *sc, struct fwohci_buf *fb)
 {
 
@@ -1248,7 +1256,7 @@ fwohci_buf_free(struct fwohci_softc *sc, struct fwohci_buf *fb)
 	bus_dmamem_free(sc->sc_dmat, &fb->fb_seg, fb->fb_nseg);
 }
 
-static void
+void
 fwohci_buf_init_rx(struct fwohci_softc *sc)
 {
 	int i;
@@ -1268,7 +1276,7 @@ fwohci_buf_init_rx(struct fwohci_softc *sc)
 	}
 }
 
-static void
+void
 fwohci_buf_start_rx(struct fwohci_softc *sc)
 {
 	int i;
@@ -1284,7 +1292,7 @@ fwohci_buf_start_rx(struct fwohci_softc *sc)
 	}
 }
 
-static void
+void
 fwohci_buf_stop_tx(struct fwohci_softc *sc)
 {
 	int i;
@@ -1315,7 +1323,7 @@ fwohci_buf_stop_tx(struct fwohci_softc *sc)
 	fwohci_at_done(sc, sc->sc_ctx_atrs, 1);
 }
 
-static void
+void
 fwohci_buf_stop_rx(struct fwohci_softc *sc)
 {
 	int i;
@@ -1330,7 +1338,7 @@ fwohci_buf_stop_rx(struct fwohci_softc *sc)
 	}
 }
 
-static void
+void
 fwohci_buf_next(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	struct fwohci_buf *fb, *tfb;
@@ -1374,7 +1382,7 @@ fwohci_buf_next(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 #endif
 }
 
-static int
+int
 fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_buf **fbp, caddr_t *pp,
     int len)
 {
@@ -1410,7 +1418,7 @@ fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_buf **fbp, caddr_t *pp,
 	return len;
 }
 
-static int
+int
 fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
     struct fwohci_pkt *pkt)
 {
@@ -1518,7 +1526,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	return 1;
 }
 
-static int
+int
 fwohci_buf_input_ppb(struct fwohci_softc *sc, struct fwohci_ctx *fc,
     struct fwohci_pkt *pkt)
 {
@@ -1589,7 +1597,7 @@ fwohci_buf_input_ppb(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	return 1;
 }
 
-static int
+int
 fwohci_handler_set(struct fwohci_softc *sc,
     int tcode, u_int32_t key1, u_int32_t key2,
     int (*handler)(struct fwohci_softc *, void *, struct fwohci_pkt *),
@@ -1695,7 +1703,7 @@ fwohci_handler_set(struct fwohci_softc *sc,
 /*
  * Asyncronous Receive Requests input frontend.
  */
-static void
+void
 fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	int rcode;
@@ -1748,7 +1756,7 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 /*
  * Asynchronous Receive Response input frontend.
  */
-static void
+void
 fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	struct fwohci_pkt pkt;
@@ -1786,7 +1794,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 /*
  * Isochronous Receive input frontend.
  */
-static void
+void
 fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	int rcode, chan, tag;
@@ -1883,7 +1891,7 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 /*
  * Asynchronous Transmit common routine.
  */
-static int
+int
 fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
     struct fwohci_pkt *pkt)
 {
@@ -2062,7 +2070,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	return 0;
 }
 
-static void
+void
 fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 {
 	struct fwohci_buf *fb;
@@ -2126,7 +2134,7 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 /*
  * Asynchronous Transmit Reponse -- in response of request packet.
  */
-static void
+void
 fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
     struct fwohci_pkt *res)
 {
@@ -2174,7 +2182,7 @@ fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
 /*
  * Retrieve Global UID from GUID ROM
  */
-static int
+int
 fwohci_guidrom_init(struct fwohci_softc *sc)
 {
 	int i, n, off;
@@ -2281,7 +2289,7 @@ do {									\
 	CFR_PUT_CRC(cfr, (cfr)->curunit);				\
 } while (0 /* CONSTCOND */)
 
-static u_int16_t
+u_int16_t
 fwohci_crc16(u_int32_t *ptr, int len)
 {
 	int shift;
@@ -2299,7 +2307,7 @@ fwohci_crc16(u_int32_t *ptr, int len)
 	return crc;
 }
 
-static void
+void
 fwohci_configrom_init(struct fwohci_softc *sc)
 {
 	int i, val;
@@ -2439,7 +2447,7 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 		    fwohci_configrom_input, NULL);
 }
 
-static int
+int
 fwohci_configrom_input(struct fwohci_softc *sc, void *arg,
     struct fwohci_pkt *pkt)
 {
@@ -2468,7 +2476,7 @@ fwohci_configrom_input(struct fwohci_softc *sc, void *arg,
 /*
  * SelfID buffer (no DMA context)
  */
-static void
+void
 fwohci_selfid_init(struct fwohci_softc *sc)
 {
 	struct fwohci_buf *fb;
@@ -2488,7 +2496,7 @@ fwohci_selfid_init(struct fwohci_softc *sc)
 	    fb->fb_dmamap->dm_segs[0].ds_addr);
 }
 
-static int
+int
 fwohci_selfid_input(struct fwohci_softc *sc)
 {
 	int i;
@@ -2583,7 +2591,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 /*
  * some CSRs are handled by driver.
  */
-static void
+void
 fwohci_csr_init(struct fwohci_softc *sc)
 {
 	int i;
@@ -2603,7 +2611,7 @@ fwohci_csr_init(struct fwohci_softc *sc)
 	sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] = 31;	/*XXX*/
 }
 
-static int
+int
 fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	struct fwohci_pkt res;
@@ -2644,7 +2652,7 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
  * Track old mappings and simply update their devices with the new id's when
  * they match an existing EUI. This allows proper renumeration of the bus.
  */
-static void
+void
 fwohci_uid_collect(struct fwohci_softc *sc)
 {
 	int i;
@@ -2688,7 +2696,7 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 		fwohci_check_nodes(sc);
 }
 
-static void
+void
 fwohci_uid_req(struct fwohci_softc *sc, int phyid)
 {
 	struct fwohci_pkt pkt;
@@ -2715,7 +2723,7 @@ fwohci_uid_req(struct fwohci_softc *sc, int phyid)
 	fwohci_at_output(sc, sc->sc_ctx_atrq, &pkt);
 }
 
-static int
+int
 fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 {
 	struct fwohci_uidtbl *fu;
@@ -2787,7 +2795,7 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 	return 0;
 }
 
-static void
+void
 fwohci_check_nodes(struct fwohci_softc *sc)
 {
 	struct device *detach = NULL;
@@ -2816,7 +2824,7 @@ fwohci_check_nodes(struct fwohci_softc *sc)
 		config_detach(detach, 0);
 }
 
-static int
+int
 fwohci_uid_lookup(struct fwohci_softc *sc, const u_int8_t *uid)
 {
 	struct fwohci_uidtbl *fu;
@@ -2851,7 +2859,7 @@ fwohci_uid_lookup(struct fwohci_softc *sc, const u_int8_t *uid)
 /*
  * functions to support network interface
  */
-static int
+int
 fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
     void (*handler)(struct device *, struct mbuf *))
 {
@@ -2866,7 +2874,7 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 	return 0;
 }
 
-static int
+int
 fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	int n, len;
@@ -2953,7 +2961,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	return IEEE1394_RCODE_COMPLETE;
 }
 
-static int
+int
 fwohci_if_input_iso(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	int n, len;
@@ -3051,7 +3059,7 @@ fwohci_if_input_iso(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 
 
-static int
+int
 fwohci_if_output(struct device *self, struct mbuf *m0,
     void (*callback)(struct device *, struct mbuf *))
 {
@@ -3221,7 +3229,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
  * it unregisters).
  */
  
-static int
+int
 fwohci_read(struct ieee1394_abuf *ab)
 {
 	struct fwohci_pkt pkt;
@@ -3278,7 +3286,7 @@ fwohci_read(struct ieee1394_abuf *ab)
 	return rv;
 }
 
-static int
+int
 fwohci_write(struct ieee1394_abuf *ab)
 {
 	struct fwohci_pkt pkt;
@@ -3363,7 +3371,7 @@ fwohci_write(struct ieee1394_abuf *ab)
 	return rv;
 }
 
-static int
+int
 fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	struct fwohci_cb *fcb = arg;
@@ -3515,7 +3523,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	return IEEE1394_RCODE_COMPLETE;
 }
 
-static int
+int
 fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
     struct fwohci_pkt *pkt)
 {
@@ -3603,7 +3611,7 @@ fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
 	return IEEE1394_RCODE_COMPLETE;
 }
 
-static int
+int
 fwohci_write_ack(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	struct ieee1394_abuf *ab = arg;
@@ -3627,7 +3635,7 @@ fwohci_write_ack(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	return IEEE1394_RCODE_COMPLETE;
 }
 
-static int
+int
 fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 {
 	struct ieee1394_softc *sc = ab->ab_req;
@@ -3693,7 +3701,7 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 	return rv;
 }
 
-static int
+int
 fwohci_unreg(struct ieee1394_abuf *ab, int allow)
 {
 	void *save;
@@ -3706,7 +3714,7 @@ fwohci_unreg(struct ieee1394_abuf *ab, int allow)
 	return rv;
 }
 
-static int
+int
 fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
@@ -3776,10 +3784,10 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 }
 
 #ifdef __NetBSD__
-static int
+int
 fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 #else
-static int
+int
 fwohci_submatch(struct device *parent, void *vcf, void *aux)
 #endif
 {
@@ -3844,7 +3852,7 @@ fwohci_activate(struct device *self, enum devact act)
 }
 
 #ifdef FW_DEBUG
-static void
+void
 fwohci_show_intr(struct fwohci_softc *sc, u_int32_t intmask)
 {
 
@@ -3897,7 +3905,7 @@ fwohci_show_intr(struct fwohci_softc *sc, u_int32_t intmask)
 	printf("\n");
 }
 
-static void
+void
 fwohci_show_phypkt(struct fwohci_softc *sc, u_int32_t val)
 {
 	u_int8_t key, phyid;
