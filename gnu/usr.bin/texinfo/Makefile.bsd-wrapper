@@ -1,11 +1,11 @@
-#	$Id: Makefile.bsd-wrapper,v 1.1 1995/12/22 18:12:36 niklas Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.2 1995/12/27 10:42:07 niklas Exp $
 
 MAN=		info/info.1
 SUBDIRS=	libtxi makeinfo info util
 FSFMAKE=	${MAKE} SUBDIRS="$(SUBDIRS)"
 
 all:	config.status
-	${FSFMAKE}
+	${FSFMAKE} LDFLAGS=${LDSTATIC}
 
 .FORCE:	.IGNORE
 
@@ -16,8 +16,8 @@ config.status:
 	/bin/sh ${.CURDIR}/configure --prefix=/usr
 
 install:	maninstall
-	${FSFMAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
-		   mandir= INSTALL_MAN= install
+	${FSFMAKE} prefix=${DESTDIR}/usr bindir=${DESTDIR}${BINDIR} \
+	infodir=${DESTDIR}/usr/share/info mandir= INSTALL_MAN= install
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${FSFMAKE} distclean; fi

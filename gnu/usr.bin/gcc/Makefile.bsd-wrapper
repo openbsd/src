@@ -1,10 +1,10 @@
-#	$Id: Makefile.bsd-wrapper,v 1.1 1995/12/21 01:16:07 niklas Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.2 1995/12/27 10:41:48 niklas Exp $
 
 MAN=	cccp.1 gcc.1 cp/g++.1
 MLINKS=	gcc.1 cc.1
 
 all:	config.status
-	${MAKE} BISON=yacc
+	${MAKE} BISON=yacc LDFLAGS=${LDSTATIC}
 
 .FORCE:	.IGNORE
 
@@ -19,8 +19,8 @@ config.status:
 install:	maninstall
 	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
-		install
-	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
+		bindir=${DESTDIR}${BINDIR} install
+	ln -f ${DESTDIR}${BINDIR}/gcc ${DESTDIR}${BINDIR}/cc
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
