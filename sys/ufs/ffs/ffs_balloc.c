@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.10 2000/04/20 14:41:57 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.11 2001/03/15 11:43:20 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -72,9 +72,8 @@ ffs_balloc(v)
 		int a_size;
 		struct ucred *a_cred;
 		int a_flags;
-		struct buf *a_bpp;
-        } */ *ap = v;
-
+		struct buf **a_bpp;
+	} */ *ap = v;
 	struct inode *ip;
 	daddr_t lbn;
 	int size;
@@ -229,18 +228,18 @@ ffs_balloc(v)
 		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 
-                if (DOINGSOFTDEP(vp)) {
-                        softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
-                            newb, 0, fs->fs_bsize, 0, bp);
-                        bdwrite(bp);
-                } else {
-                        /*
-                         * Write synchronously so that indirect blocks
-                         * never point at garbage.
-                         */
-                        if ((error = bwrite(bp)) != 0)
-                                goto fail;
-                }
+		if (DOINGSOFTDEP(vp)) {
+			softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
+			    newb, 0, fs->fs_bsize, 0, bp);
+			bdwrite(bp);
+		} else {
+			/*
+			 * Write synchronously so that indirect blocks
+			 * never point at garbage.
+			 */
+			if ((error = bwrite(bp)) != 0)
+				goto fail;
+		}
 		allocib = &ip->i_ffs_ib[indirs[0].in_off];
 		*allocib = nb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -259,7 +258,7 @@ ffs_balloc(v)
 		nb = bap[indirs[i].in_off];
 		if (i == num)
 			break;
-		i += 1;
+		i++;
 		if (nb != 0) {
 			brelse(bp);
 			continue;
@@ -278,19 +277,19 @@ ffs_balloc(v)
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 
-                if (DOINGSOFTDEP(vp)) {
-                        softdep_setup_allocindir_meta(nbp, ip, bp,
-                            indirs[i - 1].in_off, nb);
-                        bdwrite(nbp);
-                } else {
-                        /*
-                         * Write synchronously so that indirect blocks
-                         * never point at garbage.
-                         */
-                        if ((error = bwrite(nbp)) != 0) {
-                                brelse(bp);
-                                goto fail;
-                        }
+		if (DOINGSOFTDEP(vp)) {
+			softdep_setup_allocindir_meta(nbp, ip, bp,
+			    indirs[i - 1].in_off, nb);
+			bdwrite(nbp);
+		} else {
+			/*
+			 * Write synchronously so that indirect blocks
+			 * never point at garbage.
+			 */
+			if ((error = bwrite(nbp)) != 0) {
+				brelse(bp);
+				goto fail;
+			}
 		}
 		bap[indirs[i - 1].in_off] = nb;
 		if (allocib == NULL && unwindidx < 0)
@@ -383,7 +382,7 @@ fail:
 		/*
 		 * Restore user's disk quota because allocation failed.
 		 */
-		(void) chkdq(ip, (long)-btodb(deallocated), cred, FORCE);
+		(void)chkdq(ip, (long)-btodb(deallocated), cred, FORCE);
 #endif
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
