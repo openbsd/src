@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.38 2002/10/29 19:51:04 mickey Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.39 2002/11/23 05:16:58 mcbride Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -809,12 +809,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != h->ip_p)
 			r = r->skip[PF_SKIP_PROTO];
-		else if (!PF_AZERO(&r->src.mask, AF_INET) &&
-		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.mask,
+		else if (!PF_AZERO(&r->src.addr.mask, AF_INET) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.addr.mask,
 		    (struct pf_addr *)&h->ip_src.s_addr, AF_INET))
 			r = r->skip[PF_SKIP_SRC_ADDR];
-		else if (!PF_AZERO(&r->dst.mask, AF_INET) &&
-		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.mask,
+		else if (!PF_AZERO(&r->dst.addr.mask, AF_INET) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.addr.mask,
 		    (struct pf_addr *)&h->ip_dst.s_addr, AF_INET))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else
@@ -1012,8 +1012,8 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 			r = r->skip[PF_SKIP_PROTO];
 		else if (r->src.noroute && pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
-		else if (!r->src.noroute && !PF_AZERO(&r->src.mask, af) &&
-		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.mask,
+		else if (!r->src.noroute && !PF_AZERO(&r->src.addr.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.addr.mask,
 			    pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
@@ -1021,8 +1021,8 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 			r = r->skip[PF_SKIP_SRC_PORT];
 		else if (r->dst.noroute && pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
-		else if (!r->dst.noroute && !PF_AZERO(&r->dst.mask, af) &&
-		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.mask,
+		else if (!r->dst.noroute && !PF_AZERO(&r->dst.addr.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.addr.mask,
 			    pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,

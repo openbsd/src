@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.101 2002/11/02 16:56:50 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.102 2002/11/23 05:16:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -53,6 +53,13 @@ enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_OTHER_MULTIPLE=13, PFTM_FRAG=14, PFTM_INTERVAL=15, PFTM_MAX=16 };
 enum	{ PF_FASTROUTE=1, PF_ROUTETO=2, PF_DUPTO=3, PF_REPLYTO=4 };
 enum	{ PF_LIMIT_STATES=0, PF_LIMIT_FRAGS=1, PF_LIMIT_MAX=2 };
+enum    { PF_POOL_RULE_RT=0, PF_POOL_NAT_R=1, PF_POOL_RDR_R=2 }; 
+#define PF_POOL_IDMASK		0x0f
+#define PF_POOL_LAST		0x10
+enum	{ PF_POOL_NONE=0, PF_POOL_BITMASK=1, PF_POOL_RANDOM=2,
+	  PF_POOL_SRCHASH=3, PF_POOL_SRCKEYHASH=4, PF_POOL_ROUNDROBIN=5 };
+#define PF_POOL_TYPEMASK	0x0f
+#define PF_POOL_STATICPORT	0x10
 
 struct pf_addr {
 	union {
@@ -72,6 +79,7 @@ struct pf_addr {
 
 struct pf_addr_wrap {
 	struct pf_addr		 addr;
+	struct pf_addr		 mask;
 	struct pf_addr_dyn	*addr_dyn;
 };
 
@@ -142,12 +150,16 @@ struct pf_addr_dyn {
 #define PF_ACPY(a, b, f) \
 	pf_addrcpy(a, b, f)
 
+#define PF_AINC(a, f) \
+	pf_addr_inc(a, f)
+
 #define PF_POOLMASK(a, b, c, d, f) \
 	pf_poolmask(a, b, c, d, f)
 
 #else
 
 /* Just IPv6 */
+
 #ifdef PF_INET6_ONLY
 
 #define PF_AEQ(a, b, c) \
@@ -174,6 +186,9 @@ struct pf_addr_dyn {
 #define PF_ACPY(a, b, f) \
 	pf_addrcpy(a, b, f)
 
+#define PF_AINC(a, f) \
+	pf_addr_inc(a, f)
+
 #define PF_POOLMASK(a, b, c, d, f) \
 	pf_poolmask(a, b, c, d, f)
 
@@ -197,11 +212,16 @@ struct pf_addr_dyn {
 #define PF_ACPY(a, b, f) \
 	(a)->v4.s_addr = (b)->v4.s_addr
 
+#define PF_AINC(a, f) \
+	do { \
+		(a)->addr32[0] = htonl(ntohl((a)->addr32[0]) + 1); \
+	} while (0)
+
 #define PF_POOLMASK(a, b, c, d, f) \
-       do { \
-               (a)->addr32[0] = ((b)->addr32[0] & (c)->addr32[0]) | \
-               (((c)->addr32[0] ^ 0xffffffff ) & (d)->addr32[0]); \
-       } while (0)
+	do { \
+		(a)->addr32[0] = ((b)->addr32[0] & (c)->addr32[0]) | \
+		(((c)->addr32[0] ^ 0xffffffff ) & (d)->addr32[0]); \
+	} while (0)
 
 #endif /* PF_INET_ONLY */
 #endif /* PF_INET6_ONLY */
@@ -219,11 +239,38 @@ struct pf_rule_gid {
 
 struct pf_rule_addr {
 	struct pf_addr_wrap	 addr;
-	struct pf_addr		 mask;
 	u_int16_t		 port[2];
 	u_int8_t		 not;
 	u_int8_t		 port_op;
 	u_int8_t		 noroute;
+};
+
+struct pf_pooladdr {
+	struct pf_addr_wrap	 	 addr;
+	TAILQ_ENTRY(pf_pooladdr)	 entries;
+	char				 ifname[IFNAMSIZ];
+	struct ifnet			*ifp;
+};
+
+TAILQ_HEAD(pf_palist, pf_pooladdr);
+
+struct pf_poolhashkey {
+	union {
+		u_int8_t		key8[16];
+		u_int16_t		key16[8];
+		u_int32_t		key32[4];
+	} pfk;		    /* 128-bit hash key */
+#define key8	pfk.key8
+#define key16	pfk.key16
+#define key32	pfk.key32
+};
+
+struct pf_pool {
+	struct pf_palist	 list;
+	struct pf_pooladdr	*cur;
+	struct pf_poolhashkey	 key;
+	struct pf_addr		 counter;
+	u_int8_t		 opts;
 };
 
 struct pf_rule {
@@ -243,23 +290,22 @@ struct pf_rule {
 #define PF_RULE_LABEL_SIZE	 64
 	char			 label[PF_RULE_LABEL_SIZE];
 	u_int32_t		 timeout[PFTM_MAX];
-	struct pf_addr		 rt_addr;
 #define PF_QNAME_SIZE		 16
 	char			 ifname[IFNAMSIZ];
-	char			 rt_ifname[IFNAMSIZ];
 	char			 qname[PF_QNAME_SIZE];
 	TAILQ_ENTRY(pf_rule)	 entries;
+	struct pf_pool		 rt_pool;
 
 	u_int64_t		 evaluations;
 	u_int64_t		 packets;
 	u_int64_t		 bytes;
 
 	struct ifnet		*ifp;
-	struct ifnet		*rt_ifp;
 
 	u_int32_t		 states;
 	u_int32_t		 max_states;
 	u_int32_t		 qid;
+	u_int32_t		 rt_listid;
 
 	u_int16_t		 nr;
 	u_int16_t		 return_icmp;
@@ -327,6 +373,8 @@ struct pf_state {
 		struct pf_rule	*ptr;
 		u_int16_t	 nr;
 	} rule;
+	struct pf_addr	 rt_addr;
+	struct ifnet	*rt_ifp;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	u_int32_t	 packets;
@@ -352,10 +400,12 @@ struct pf_tree_node {
 struct pf_nat {
 	struct pf_rule_addr	 src;
 	struct pf_rule_addr	 dst;
-	struct pf_addr_wrap	 raddr;
+	struct pf_pool		 rpool;
+	struct pf_pooladdr	*rcur;
 	char			 ifname[IFNAMSIZ];
 	struct ifnet		*ifp;
 	TAILQ_ENTRY(pf_nat)	 entries;
+	u_int32_t		 rlistid;
 	u_int16_t		 proxy_port[2];
 	sa_family_t		 af;
 	u_int8_t		 proto;
@@ -370,9 +420,6 @@ struct pf_binat {
 	struct pf_addr_wrap	 saddr;
 	struct pf_addr_wrap	 daddr;
 	struct pf_addr_wrap	 raddr;
-	struct pf_addr		 smask;
-	struct pf_addr		 dmask;
-	struct pf_addr		 rmask;
 	sa_family_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 dnot;
@@ -385,9 +432,9 @@ struct pf_rdr {
 	TAILQ_ENTRY(pf_rdr)	 entries;
 	struct pf_addr_wrap	 saddr;
 	struct pf_addr_wrap	 daddr;
-	struct pf_addr_wrap	 raddr;
-	struct pf_addr		 smask;
-	struct pf_addr		 dmask;
+	struct pf_pool		 rpool;
+	struct pf_pooladdr	*rcur;
+	u_int32_t		 rlistid;
 	u_int16_t		 dport;
 	u_int16_t		 dport2;
 	u_int16_t		 rport;
@@ -566,6 +613,24 @@ struct pf_altq {
  * ioctl parameter structures
  */
 
+struct pfioc_pooladdr {
+	u_int32_t		 ticket;
+	u_int32_t	 	 nr;
+	u_int32_t		 r_num;
+	u_int8_t		 r_id;
+	u_int8_t		 af;
+	struct pf_pooladdr	 addr;
+};
+
+struct pfioc_changeaddr {
+	u_int32_t	 	 action;
+	u_int32_t		 r_num;
+	u_int8_t		 r_id;
+	u_int8_t		 af;
+	struct pf_pooladdr	 newaddr;	
+	struct pf_pooladdr	 oldaddr;	
+};
+
 struct pfioc_rule {
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
@@ -573,9 +638,9 @@ struct pfioc_rule {
 };
 
 struct pfioc_changerule {
-	u_int32_t	 action;
-	struct pf_rule	 oldrule;
-	struct pf_rule	 newrule;
+	u_int32_t		 action;
+	struct pf_rule		 oldrule;
+	struct pf_rule		 newrule;
 };
 
 struct pfioc_nat {
@@ -739,6 +804,11 @@ struct pfioc_qstats {
 #define DIOCGETALTQ	_IOWR('D', 48, struct pfioc_altq)
 #define DIOCCHANGEALTQ	_IOWR('D', 49, struct pfioc_altq)
 #define DIOCGETQSTATS	_IOWR('D', 50, struct pfioc_qstats)
+#define DIOCBEGINADDRS	_IOWR('D', 51, u_int32_t)
+#define DIOCADDADDR	_IOWR('D', 52, struct pfioc_pooladdr)
+#define DIOCGETADDRS	_IOWR('D', 53, struct pfioc_pooladdr)
+#define DIOCGETADDR	_IOWR('D', 54, struct pfioc_pooladdr)
+#define DIOCCHANGEADDR	_IOWR('D', 55, struct pfioc_pooladdr)
 
 
 #ifdef _KERNEL
@@ -753,8 +823,11 @@ TAILQ_HEAD(pf_binatqueue, pf_binat);
 extern struct pf_binatqueue		 pf_binats[2];
 TAILQ_HEAD(pf_rdrqueue, pf_rdr);
 extern struct pf_rdrqueue		 pf_rdrs[2];
+TAILQ_HEAD(pf_poolqueue, pf_pool);
+extern struct pf_poolqueue		 pf_pools[2];
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		 pf_altqs[2];
+extern struct pf_palist			 pf_pabuf;
 
 
 extern u_int32_t		 ticket_rules_active;
@@ -769,6 +842,7 @@ extern u_int32_t		 ticket_rdrs_inactive;
 extern u_int32_t		 ticket_rules_inactive;
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
+extern u_int32_t		 ticket_pabuf;
 extern struct pf_rulequeue	*pf_rules_active;
 extern struct pf_rulequeue	*pf_rules_inactive;
 extern struct pf_natqueue	*pf_nats_active;
@@ -779,6 +853,8 @@ extern struct pf_rdrqueue	*pf_rdrs_active;
 extern struct pf_rdrqueue	*pf_rdrs_inactive;
 extern struct pf_altqqueue	*pf_altqs_active;
 extern struct pf_altqqueue	*pf_altqs_inactive;
+extern struct pf_poolqueue	*pf_pools_active;
+extern struct pf_poolqueue	*pf_pools_inactive;
 extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
 extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
 				    u_int8_t);
@@ -788,6 +864,7 @@ extern struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl;
 extern struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl,
 				    pf_addr_pl;
 extern struct pool		 pf_altq_pl;
+extern struct pool		 pf_pooladdr_pl;
 extern void			 pf_purge_timeout(void *);
 extern int			 pftm_interval;
 extern void			 pf_purge_expired_states(void);
