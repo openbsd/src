@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.8 1998/08/19 07:42:24 pjanzen Exp $	*/
+/*	$OpenBSD: worms.c,v 1.9 1999/10/29 03:59:06 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.8 1998/08/19 07:42:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.9 1999/10/29 03:59:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ static char rcsid[] = "$OpenBSD: worms.c,v 1.8 1998/08/19 07:42:24 pjanzen Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <term.h>
+#include <time.h>
 #include <unistd.h>
 
 static struct options {
@@ -254,6 +255,7 @@ main(argc, argv)
 			exit(1);
 		}
 
+	srandom(time((time_t *)NULL));
 	if (!(term = getenv("TERM"))) {
 		(void)fprintf(stderr, "worms: no TERM environment variable.\n");
 		exit(1);

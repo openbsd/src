@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.7 1998/09/15 05:29:48 pjanzen Exp $	*/
+/*	$OpenBSD: rain.c,v 1.8 1999/10/29 03:59:01 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rain.c,v 1.7 1998/09/15 05:29:48 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rain.c,v 1.8 1999/10/29 03:59:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$OpenBSD: rain.c,v 1.7 1998/09/15 05:29:48 pjanzen Exp $"
 #include <string.h>
 #include <term.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, fputchar)
@@ -109,6 +110,7 @@ main(argc, argv)
 			exit(1);
 		}
 
+	srandom(time((time_t *)NULL));
 	if (!(term = getenv("TERM")))
 		errx(1, "TERM: parameter not set");
 	if (!(mp = malloc((u_int)1024)))
