@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.10 1996/12/20 06:25:15 kstailey Exp $
+#	$Id: Makefile.inc,v 1.11 1996/12/21 05:20:21 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -21,14 +21,14 @@ MTREE=		${COMMONDIR}/mtree.conf
 all: ${CBIN}
 .ifndef FLOPPY3
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
-	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${REALIMAGE} floppy5
-	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	newfs -t ffs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy5
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy5
+	newfs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy5
 .else
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
-	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${REALIMAGE} floppy3
-	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	newfs -t ffs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy3
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy3
+	newfs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy3
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
@@ -38,14 +38,14 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND}
 	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1996/10/18 23:35:36 deraadt Exp $
+#	$Id: Makefile,v 1.5 1996/12/21 05:20:38 deraadt Exp $
 
 .include "../Makefile.inc"
 
@@ -22,11 +22,9 @@ bsd:
 all:	bsd
 .if ${VND} == vnd0
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
-	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	# fuck, disklabeling completely fails
-.else
-	disklabel -w ${VND_RDEV} floppy
+	vnconfig -v -c ${VND} ${REALIMAGE}
 .endif
+	disklabel -w ${VND} floppy
 	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy
 	mount ${VND_DEV} ${MOUNT_POINT}
 	sync; /usr/mdec/binstall -v ffs ${MOUNT_POINT}
@@ -36,7 +34,7 @@ all:	bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 .if ${VND} == vnd0
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND}
 	cat /bin/* > /dev/null		# flush buffer cache (yuck)
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
@@ -48,7 +46,9 @@ all:	bsd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+.if ${VND} == vnd0
+	-vnconfig -u ${VND}
+.endif
 	-/bin/rm -f ${IMAGE}
 
 clean cleandir:
