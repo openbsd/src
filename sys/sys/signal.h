@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 1996/10/29 01:35:57 tholo Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 1997/01/27 01:15:30 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ struct	sigaction {
 #endif
 #endif
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
+#define SA_SIGINFO	0x0040	/* generate siginfo_t */
 
 /*
  * Flags for sigprocmask:
@@ -183,6 +184,8 @@ struct	sigstack {
 #define sigmask(m)	(1 << ((m)-1))
 
 #define	BADSIG		SIG_ERR
+
+#include <sys/siginfo.h>
 
 #endif	/* !_POSIX_SOURCE */
 #endif	/* !_ANSI_SOURCE */

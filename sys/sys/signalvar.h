@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.3 1996/05/02 13:14:58 deraadt Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.4 1997/01/27 01:15:30 deraadt Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ struct	sigacts {
 	sigset_t ps_sigonstack;		/* signals to take on sigstack */
 	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
 	sigset_t ps_sigreset;		/* signals that reset when caught */
+	sigset_t ps_siginfo;		/* signals that provide siginfo */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
 	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
