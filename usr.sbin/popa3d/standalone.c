@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.6 2004/06/20 20:46:27 itojun Exp $ */
+/* $OpenBSD: standalone.c,v 1.7 2004/07/17 20:54:24 brad Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
@@ -17,8 +17,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <errno.h>
-#include <netdb.h>
-#include <poll.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -38,7 +36,6 @@ int deny_severity = SYSLOG_PRI_HI;
 extern int log_error(char *s);
 extern int do_pop_startup(void);
 extern int do_pop_session(void);
-extern int af;
 
 typedef volatile sig_atomic_t va_int;
 
@@ -49,7 +46,7 @@ typedef volatile sig_atomic_t va_int;
  * information about sessions that we could have allowed to proceed.
  */
 static struct {
-	char addr[NI_MAXHOST];		/* Source IP address */
+	struct in_addr addr;		/* Source IP address */
 	volatile int pid;		/* PID of the server, or 0 for none */
 	clock_t start;			/* When the server was started */
 	clock_t log;			/* When we've last logged a failure */
@@ -58,15 +55,13 @@ static struct {
 static va_int child_blocked;		/* We use blocking to avoid races */
 static va_int child_pending;		/* Are any dead children waiting? */
 
-int handle(int);
-
 /*
  * SIGCHLD handler.
  */
 static void handle_child(int signum)
 {
 	int saved_errno;
-	int pid;
+	pid_t pid;
 	int i;
 
 	saved_errno = errno;
@@ -77,11 +72,11 @@ static void handle_child(int signum)
 		child_pending = 0;
 
 		while ((pid = waitpid(0, NULL, WNOHANG)) > 0)
-		for (i = 0; i < MAX_SESSIONS; i++)
-		if (sessions[i].pid == pid) {
-			sessions[i].pid = 0;
-			break;
-		}
+			for (i = 0; i < MAX_SESSIONS; i++)
+				if (sessions[i].pid == pid) {
+					sessions[i].pid = 0;
+					break;
+				}
 	}
 
 	signal(SIGCHLD, handle_child);
@@ -116,75 +111,32 @@ int main(void)
 #endif
 {
 	int true = 1;
-	int *fds, new, sock;
-	struct pollfd *pfds;
-	int i, n;
-	struct addrinfo hints, *res, *res0;
-	char sbuf[NI_MAXSERV];
-	int error;
+	int sock, new;
+	struct sockaddr_in addr;
+	socklen_t addrlen;
+	pid_t pid;
+	struct tms buf;
+	clock_t now, log;
+	int i, j, n;
 
 	if (do_pop_startup()) return 1;
 
-	snprintf(sbuf, sizeof(sbuf), "%u", DAEMON_PORT);
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_family = af;
-	hints.ai_flags = AI_PASSIVE;
-	error = getaddrinfo(NULL, sbuf, &hints, &res0);
-	if (error)
-		return log_error("getaddrinfo");
-
-	i = 0;
-	for (res = res0; res; res = res->ai_next)
-		i++;
-
-	fds = malloc(i * sizeof(fds[0]));
-	if (!fds)
-		return log_error("malloc");
-	pfds = malloc(i * sizeof(pfds[0]));
-	if (!pfds)
-		return log_error("malloc");
-
-	i = 0;
-	for (res = res0; res; res = res->ai_next) {
-		if ((fds[i] = socket(res->ai_family, res->ai_socktype,
-		    res->ai_protocol)) < 0)
-			continue;
-
-		if (setsockopt(fds[i], SOL_SOCKET, SO_REUSEADDR,
-		    (void *)&true, sizeof(true))) {
-			close(fds[i]);
-			continue;
-		}
-
-#ifdef IPV6_V6ONLY
-		if (res->ai_family == AF_INET6)
-			(void)setsockopt(fds[i], IPPROTO_IPV6, IPV6_V6ONLY,
-			    (void *)&true, sizeof(true));
-#endif
-
-		if (bind(fds[i], res->ai_addr, res->ai_addrlen)) {
-			close(fds[i]);
-			continue;
-		}
-
-		if (listen(fds[i], MAX_BACKLOG)) {
-			close(fds[i]);
-			continue;
-		}
-
-		memset(&pfds[i], 0, sizeof(pfds[i]));
-		pfds[i].fd = fds[i];
-		pfds[i].events = POLLIN;
-
-		i++;
-	}
-	freeaddrinfo(res0);
-
-	if (i == 0)
+	if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
 		return log_error("socket");
 
-	n = i;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+	    (void *)&true, sizeof(true)))
+		return log_error("setsockopt");
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr(DAEMON_ADDR);
+	addr.sin_port = htons(DAEMON_PORT);
+	if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)))
+		return log_error("bind");
+
+	if (listen(sock, MAX_BACKLOG))
+		return log_error("listen");
 
 	chdir("/");
 	setsid();
@@ -207,49 +159,19 @@ int main(void)
 	signal(SIGCHLD, handle_child);
 
 	memset((void *)sessions, 0, sizeof(sessions));
+	log = 0;
 
 	new = 0;
 
 	while (1) {
 		child_blocked = 0;
-		if (child_pending)
-			raise(SIGCHLD);
+		if (child_pending) raise(SIGCHLD);
 
-		i = poll(pfds, n, INFTIM);
+		if (new > 0)
+		if (close(new)) return log_error("close");
 
-		if (i < 0)
-			log_error("poll");
-
-		sock = -1;
-		for (i = 0; i < n; i++)
-			if (pfds[i].revents & POLLIN)
-				handle(pfds[i].fd);
-	}
-}
-
-int
-handle(int sock)
-{
-	clock_t now, log;
-	int new;
-	char hbuf[NI_MAXHOST];
-	struct sockaddr_storage addr;
-	int addrlen;
-	int pid;
-	struct tms buf;
-	int error;
-	int j, n, i;
-
-	log = 0;
-	new = 0;
-
-	addrlen = sizeof(addr);
-	new = accept(sock, (struct sockaddr *)&addr, &addrlen);
-
-	error = getnameinfo((struct sockaddr *)&addr, addrlen,
-	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
-	if (error)
-		; /* XXX */
+		addrlen = sizeof(addr);
+		new = accept(sock, (struct sockaddr *)&addr, &addrlen);
 
 /*
  * I wish there was a portable way to classify errno's... In this case,
@@ -257,76 +179,75 @@ handle(int sock)
  * rather than risk terminating the entire service because of a minor
  * temporary error having to do with one particular connection attempt.
  */
-	if (new < 0)
-		return 0;
+		if (new < 0) continue;
 
-	now = times(&buf);
-	if (!now)
-		now = 1;
+		now = times(&buf);
+		if (!now) now = 1;
 
-	child_blocked = 1;
+		child_blocked = 1;
 
-	j = -1;
-	n = 0;
-	for (i = 0; i < MAX_SESSIONS; i++) {
-		if (sessions[i].start > now)
-			sessions[i].start = 0;
-		if (sessions[i].pid ||
-		    (sessions[i].start &&
-		    now - sessions[i].start < MIN_DELAY * CLK_TCK)) {
-			if (strcmp(sessions[i].addr, hbuf) == 0)
-				if (++n >= MAX_SESSIONS_PER_SOURCE)
-					break;
-		} else if (j < 0)
-			j = i;
-	}
-
-	if (n >= MAX_SESSIONS_PER_SOURCE) {
-		if (!sessions[i].log ||
-		    now < sessions[i].log ||
-		    now - sessions[i].log >= MIN_DELAY * CLK_TCK) {
-			syslog(SYSLOG_PRI_HI,
-				"%s: per source limit reached",
-				hbuf);
-			sessions[i].log = now;
+		j = -1; n = 0;
+		for (i = 0; i < MAX_SESSIONS; i++) {
+			if (sessions[i].start > now)
+				sessions[i].start = 0;
+			if (sessions[i].pid ||
+			    (sessions[i].start &&
+			    now - sessions[i].start < MIN_DELAY * CLK_TCK)) {
+				if (sessions[i].addr.s_addr ==
+				    addr.sin_addr.s_addr)
+				if (++n >= MAX_SESSIONS_PER_SOURCE) break;
+			} else
+			if (j < 0) j = i;
 		}
-		return 0;
-	}
 
-	if (j < 0) {
-		if (!log ||
-		    now < log || now - log >= MIN_DELAY * CLK_TCK) {
-			syslog(SYSLOG_PRI_HI,
-			    "%s: sessions limit reached", hbuf);
-			log = now;
+		if (n >= MAX_SESSIONS_PER_SOURCE) {
+			if (!sessions[i].log ||
+			    now < sessions[i].log ||
+			    now - sessions[i].log >= MIN_DELAY * CLK_TCK) {
+				syslog(SYSLOG_PRI_HI,
+					"%s: per source limit reached",
+					inet_ntoa(addr.sin_addr));
+				sessions[i].log = now;
+			}
+			continue;
 		}
-		return 0;
-	}
 
-	switch ((pid = fork())) {
-	case -1:
-		syslog(SYSLOG_PRI_ERROR, "%s: fork: %m", hbuf);
-		break;
+		if (j < 0) {
+			if (!log ||
+			    now < log || now - log >= MIN_DELAY * CLK_TCK) {
+				syslog(SYSLOG_PRI_HI,
+					"%s: sessions limit reached",
+					inet_ntoa(addr.sin_addr));
+				log = now;
+			}
+			continue;
+		}
 
-	case 0:
-		if (close(sock)) return log_error("close");
+		switch ((pid = fork())) {
+		case -1:
+			syslog(SYSLOG_PRI_ERROR, "%s: fork: %m",
+				inet_ntoa(addr.sin_addr));
+			break;
+
+		case 0:
+			if (close(sock)) return log_error("close");
 #if DAEMON_LIBWRAP
-		check_access(new);
+			check_access(new);
 #endif
-		syslog(SYSLOG_PRI_LO, "Session from %s",
-			hbuf);
-		if (dup2(new, 0) < 0) return log_error("dup2");
-		if (dup2(new, 1) < 0) return log_error("dup2");
-		if (dup2(new, 2) < 0) return log_error("dup2");
-		if (close(new)) return log_error("close");
-		return do_pop_session();
+			syslog(SYSLOG_PRI_LO, "Session from %s",
+				inet_ntoa(addr.sin_addr));
+			if (dup2(new, 0) < 0) return log_error("dup2");
+			if (dup2(new, 1) < 0) return log_error("dup2");
+			if (dup2(new, 2) < 0) return log_error("dup2");
+			if (close(new)) return log_error("close");
+			return do_pop_session();
 
-	default:
-		strlcpy(sessions[j].addr, hbuf,
-			sizeof(sessions[j].addr));
-		(va_int)sessions[j].pid = pid;
-		sessions[j].start = now;
-		sessions[j].log = 0;
+		default:
+			sessions[j].addr = addr.sin_addr;
+			sessions[j].pid = pid;
+			sessions[j].start = now;
+			sessions[j].log = 0;
+		}
 	}
 }
 

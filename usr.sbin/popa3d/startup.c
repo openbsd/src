@@ -1,4 +1,4 @@
-/* $OpenBSD: startup.c,v 1.4 2004/06/26 10:46:55 jmc Exp $ */
+/* $OpenBSD: startup.c,v 1.5 2004/07/17 20:54:24 brad Exp $ */
 
 /*
  * Command line option parsing.
@@ -8,8 +8,6 @@
 
 #if POP_OPTIONS
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,11 +30,9 @@ extern char *__progname;
 static char *progname;
 #endif
 
-int af = PF_UNSPEC;
-
 static void usage(void)
 {
-	fprintf(stderr, "Usage: %s [-46DV]\n", progname);
+	fprintf(stderr, "Usage: %s [-D] [-V]\n", progname);
 	exit(1);
 }
 
@@ -56,18 +52,10 @@ int main(int argc, char **argv)
 		progname = POP_SERVER;
 #endif
 
-	while ((c = getopt(argc, argv, "DV46")) != -1) {
+	while ((c = getopt(argc, argv, "DV")) != -1) {
 		switch (c) {
 		case 'D':
 			standalone++;
-			break;
-
-		case '4':
-			af = AF_INET;
-			break;
-
-		case '6':
-			af = AF_INET6;
 			break;
 
 		case 'V':
