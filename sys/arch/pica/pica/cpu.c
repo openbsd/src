@@ -37,8 +37,13 @@
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, void *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
-struct cfdriver cpucd =
-    { NULL, "cpu", cpumatch, cpuattach, DV_DULL, sizeof (struct device) };
+
+struct cfattach cpu_ca = {
+	sizeof(struct device), cpumatch, cpuattach
+};
+struct cfdriver cpu_cd = {
+	NULL, "cpu", DV_DULL, NULL, 0
+};
 
 static int	cpuprint __P((void *, char *pnp));
 
@@ -52,7 +57,7 @@ cpumatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpucd.cd_name) != 0)
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
 
 	return (1);

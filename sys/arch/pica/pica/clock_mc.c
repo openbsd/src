@@ -48,6 +48,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 #include <pica/pica/clockvar.h>
 #include <pica/pica/picatype.h>

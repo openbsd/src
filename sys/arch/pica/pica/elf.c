@@ -132,17 +132,30 @@ pmax_elf_makecmds (p, epp)
 					epp->ep_daddr = vaddr;
 				epp->ep_dsize += ph.memsz;
 				/* Read the data from the file... */
+#if 1
+				offset -= (vaddr & (NBPG - 1));
+				length += (vaddr & (NBPG - 1));
+				vaddr &= ~(NBPG - 1);
 				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 					  length, vaddr,
 					  epp->ep_vp, offset, prot);
+				length = roundup (length, NBPG);
 				if (residue) {
-					vaddr &= ~(NBPG - 1);
-					offset &= ~(NBPG - 1);
-					length = roundup (length + ph.vaddr
-							  - vaddr, NBPG);
 					residue = (ph.vaddr + ph.memsz)
 						  - (vaddr + length);
 				}
+#else
+				offset -= (vaddr & (NBPG - 1));
+				vaddr &= ~(NBPG - 1);
+				length = roundup (length + ph.vaddr - vaddr, NBPG);
+				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn,
+					  length, vaddr, epp->ep_vp,
+					  offset, prot);
+				if (residue) {
+					residue = (ph.vaddr + ph.memsz)
+						  - (vaddr + length);
+				}
+#endif
 			} else {
 				vaddr &= ~(NBPG - 1);
 				offset &= ~(NBPG - 1);

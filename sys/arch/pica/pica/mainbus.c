@@ -44,9 +44,13 @@ struct mainbus_softc {
 static int	mbmatch __P((struct device *, void *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, char *));
-struct cfdriver mainbuscd =
-    { NULL, "mainbus", mbmatch, mbattach, DV_DULL,
-	sizeof (struct mainbus_softc) };
+
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mbmatch, mbattach
+};
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL, NULL, 0
+};
 
 void	mb_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	mb_intr_disestablish __P((struct confargs *));

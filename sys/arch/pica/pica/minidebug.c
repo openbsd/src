@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.1.1.1 1995/10/18 10:39:18 deraadt Exp $
+ *      $Id: minidebug.c,v 1.2 1996/05/01 18:16:13 pefo Exp $
  */
 
 /*
@@ -532,6 +532,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 			
 		default:
+			cnputc('\a');
 			break;
 		}
 		printf("\n# ");
@@ -548,7 +549,12 @@ mdbsetsstep()
 	int i;
 
 	/* compute next address after current location */
-	va = MachEmulateBranch(locr0, locr0[PC], 0, 1);
+	if(mdbpeek(locr0[PC]) != 0) {
+		va = MachEmulateBranch(locr0, locr0[PC], 0, mdbpeek(locr0[PC]));
+	}
+	else {
+		va = locr0[PC] + 4;
+	}
 	if (mdb_ss_addr) {
 		printf("mdbsetsstep: breakpoint already set at %x (va %x)\n",
 			mdb_ss_addr, va);

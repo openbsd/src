@@ -49,7 +49,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.2 1995/10/30 13:38:02 deraadt Exp $
+ *	$Id: locore.S,v 1.3 1996/05/01 18:16:05 pefo Exp $
  */
 
 /*
@@ -62,8 +62,8 @@
 
 #include <machine/param.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/machAsmDefs.h>
+#include <machine/asm.h>
+#include <machine/regnum.h>
 #include <machine/pte.h>
 
 #include "assym.h"
@@ -149,14 +149,6 @@ start:
 	lw	ra, UADDR+U_PCB_REGS+(RA * 4)
 	eret
 	.set	at
-
-/*
- * GCC2 seems to want to call __main in main() for some reason.
- */
-LEAF(__main)
-	j	ra
-	nop
-END(__main)
 
 /*
  * Primitives
@@ -350,19 +342,6 @@ smallclr:
 	nop
 END(bzero)
 
-/*
- * fillw(pat, addr, count)
- */
-LEAF(fillw)
-1:
-	addiu	a2, a2, -1
-	sh	a0, 0(a1)
-	bne	a2,zero, 1b
-	addiu	a1, a1, 2
-
-	jr	ra
-	nop
-END(fillw)
 /*
  * bcmp(s1, s2, n)
  */
@@ -558,6 +537,20 @@ LEAF(copystr)
 	j	ra
 	move	v0, zero
 END(copystr)
+
+/*
+ * fillw(pat, addr, count)
+ */
+LEAF(fillw)
+1:
+	addiu	a2, a2, -1
+	sh	a0, 0(a1)
+	bne	a2,zero, 1b
+	addiu	a1, a1, 2
+
+	jr	ra
+	nop
+END(fillw)
 
 /*
  * Copy a null terminated string from the user address space into
@@ -2952,6 +2945,7 @@ END(MachFlushDCache)
  *----------------------------------------------------------------------------
  */
 LEAF(MachHitFlushDCache)
+	beq	a1, zero, 2f
 	addu	a1, 127		# Align
 	addu	a1, a1, a0
 	and	a0, a0, -128
@@ -2970,6 +2964,7 @@ LEAF(MachHitFlushDCache)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
+2:
 	j	ra
 	nop
 END(MachHitFlushDCache)

@@ -45,7 +45,7 @@ extern struct device *bootdv;
 /* was this the boot device ? */
 int
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
 #ifdef NOTDEF

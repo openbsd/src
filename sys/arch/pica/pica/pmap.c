@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.1.1.1 1995/10/18 10:39:18 deraadt Exp $
+ *      $Id: pmap.c,v 1.2 1996/05/01 18:16:17 pefo Exp $
  */
 
 /*
@@ -160,7 +160,6 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
-int		picapagesperpage;	/* PAGE_SIZE / NBPG */
 #ifdef ATTR
 char		*pmap_attributes;	/* reference and modify bits */
 #endif
@@ -223,7 +222,6 @@ pmap_bootstrap(firstaddr)
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 	/* XXX need to decide how to set cnt.v_page_size */
-	picapagesperpage = 1;
 
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
@@ -357,7 +355,7 @@ pmap_pinit(pmap)
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
 			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
-		i = picapagesperpage * (NBPG / sizeof(struct segtab));
+		i = NBPG / sizeof(struct segtab);
 		s = splimp();
 		while (--i != 0) {
 			stp++;
@@ -926,13 +924,14 @@ pmap_enter(pmap, va, pa, prot, wired)
 			 * Check if they are cache index compatible. If not
 			 * remove all mappings, flush the cache and set page
 			 * to be mapped uncached. Caching will be restored
-			 * when pages are mapped compatible again.
+			 * when pages are mapped compatible again. NOT!
 			 */
 				for (npv = pv; npv; npv = npv->pv_next) {
 					/*
 					 * Check cache aliasing incompatibility
 					 */
 					if((npv->pv_va & machCacheAliasMask) != (va & machCacheAliasMask)) {
+						printf("pmap_enter: creating uncached mapping.\n");
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						npte = (npte & ~PG_CACHEMODE) | PG_UNCACHED;
@@ -1023,28 +1022,22 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte = kvtopte(va);
 		npte |= vad_to_pfn(pa) | PG_ROPAGE | PG_G;
 		if (wired) {
-			pmap->pm_stats.wired_count += picapagesperpage;
+			pmap->pm_stats.wired_count++;
 			npte |= PG_WIRED;
 		}
-		i = picapagesperpage;
-		do {
-			if (!(pte->pt_entry & PG_V)) {
-				pmap->pm_stats.resident_count++;
-			} else {
+		if (!(pte->pt_entry & PG_V)) {
+			pmap->pm_stats.resident_count++;
+		} else {
 #ifdef DIAGNOSTIC
-				if (pte->pt_entry & PG_WIRED)
-					panic("pmap_enter: kernel wired");
+			if (pte->pt_entry & PG_WIRED)
+				panic("pmap_enter: kernel wired");
 #endif
-			}
-			/*
-			 * Update the same virtual address entry.
-			 */
-			j = MachTLBUpdate(va, npte);
-			pte->pt_entry = npte;
-			va += NBPG;
-			npte += vad_to_pfn(NBPG);
-			pte++;
-		} while (--i != 0);
+		}
+		/*
+		 * Update the same virtual address entry.
+		 */
+		j = MachTLBUpdate(va, npte);
+		pte->pt_entry = npte;
 		return;
 	}
 
@@ -1069,7 +1062,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 	npte |= vad_to_pfn(pa);
 	if (wired) {
-		pmap->pm_stats.wired_count += picapagesperpage;
+		pmap->pm_stats.wired_count++;
 		npte |= PG_WIRED;
 	}
 #ifdef DEBUG
@@ -1080,16 +1073,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 		printf("\n");
 	}
 #endif
-	i = picapagesperpage;
-	do {
-		pte->pt_entry = npte;
-		if (pmap->pm_tlbgen == tlbpid_gen)
-			j = MachTLBUpdate(va | (pmap->pm_tlbpid <<
-				VMMACH_TLB_PID_SHIFT), npte);
-		va += NBPG;
-		npte += vad_to_pfn(NBPG);
-		pte++;
-	} while (--i != 0);
+	if (!(pte->pt_entry & PG_V)) {
+		pmap->pm_stats.resident_count++;
+	}
+	pte->pt_entry = npte;
+	if (pmap->pm_tlbgen == tlbpid_gen)
+		j = MachTLBUpdate(va | (pmap->pm_tlbpid <<
+			VMMACH_TLB_PID_SHIFT), npte);
 }
 
 /*
@@ -1134,16 +1124,13 @@ pmap_change_wiring(pmap, va, wired)
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
-	i = picapagesperpage;
 	if (!(pte->pt_entry & PG_WIRED) && p)
-		pmap->pm_stats.wired_count += i;
+		pmap->pm_stats.wired_count++;
 	else if ((pte->pt_entry & PG_WIRED) && !p)
-		pmap->pm_stats.wired_count -= i;
-	do {
-		if (pte->pt_entry & PG_V)
-			pte->pt_entry = (pte->pt_entry & ~PG_WIRED) | p;
-		pte++;
-	} while (--i != 0);
+		pmap->pm_stats.wired_count--;
+
+	if (pte->pt_entry & PG_V)
+		pte->pt_entry = (pte->pt_entry & ~PG_WIRED) | p;
 }
 
 /*
@@ -1624,3 +1611,23 @@ vm_page_free1(mem)
 		splx(spl);
 	}
 }
+
+/*
+ * Find first virtual address >= *vap that doesn't cause
+ * a cache alias conflict.
+ */
+void
+pmap_prefer(foff, vap)
+	register vm_offset_t foff;
+	register vm_offset_t *vap;
+{
+	register vm_offset_t	va = *vap;
+	register long		m, d;
+
+	m = 0x10000;		/* Max aliased cache size */
+
+	d = foff - va;
+	d &= (m-1);
+	*vap = va + d;
+}
+

@@ -77,7 +77,11 @@ cpu_exec_aout_makecmds(p, epp)
 		/* If it's not a.out, maybe it's ELF.  (This wants to
 		   be moved up to the machine independent code as soon
 		   as possible.)  XXX */
+#if 0
 		return pmax_elf_makecmds (p, epp);
+#else
+		return ENOEXEC;
+#endif
 
 #ifdef COMPAT_09
 	epp -> ep_taddr = 0x1000;

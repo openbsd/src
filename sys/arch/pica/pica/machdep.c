@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.5 1996/01/05 16:18:09 deraadt Exp $
+ *      $Id: machdep.c,v 1.6 1996/05/01 18:16:09 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -78,6 +78,7 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
@@ -196,10 +197,8 @@ mips_init(argc, argv, code)
 		break;
 	}
 
-#if 0
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
-#endif
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -214,29 +213,31 @@ mips_init(argc, argv, code)
 #endif
 	if (argc > 1) {
 		for (i = 1; i < argc; i++) {
-			for (cp = argv[i]; *cp; cp++) {
-				switch (*cp) {
-				case 'a': /* autoboot */
-					boothowto &= ~RB_SINGLE;
-					break;
+			if(strncmp("OSLOADOPTIONS=",argv[i],14) == 0) {
+				for (cp = argv[i]+14; *cp; cp++) {
+					switch (*cp) {
+					case 'a': /* autoboot */
+						boothowto &= ~RB_SINGLE;
+						break;
 
-				case 'd': /* use compiled in default root */
-					boothowto |= RB_DFLTROOT;
-					break;
+					case 'd': /* use compiled in default root */
+						boothowto |= RB_DFLTROOT;
+						break;
 
-				case 'm': /* mini root present in memory */
-					boothowto |= RB_MINIROOT;
-					break;
+					case 'm': /* mini root present in memory */
+						boothowto |= RB_MINIROOT;
+						break;
 
-				case 'n': /* ask for names */
-					boothowto |= RB_ASKNAME;
-					break;
+					case 'n': /* ask for names */
+						boothowto |= RB_ASKNAME;
+						break;
 
-				case 'N': /* don't ask for names */
-					boothowto &= ~RB_ASKNAME;
-					break;
+					case 'N': /* don't ask for names */
+						boothowto &= ~RB_ASKNAME;
+						break;
+					}
+
 				}
-
 			}
 		}
 	}
@@ -665,10 +666,12 @@ setregs(p, pack, stack, retval)
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
+	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall req */
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
+	p->p_md.md_ss_addr = 0;
 }
 
 /*
@@ -777,6 +780,7 @@ sendsig(catcher, sig, mask, code)
 	regs[A3] = (int)catcher;
 
 	regs[PC] = (int)catcher;
+	regs[T9] = (int)catcher;
 	regs[SP] = (int)fp;
 	/*
 	 * Signal trampoline code is at base of user stack.

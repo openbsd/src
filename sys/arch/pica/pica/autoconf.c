@@ -38,7 +38,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.1.1.1 1995/10/18 10:39:17 deraadt Exp $
+ *      $Id: autoconf.c,v 1.2 1996/05/01 18:15:48 pefo Exp $
  */
 
 /*
@@ -115,7 +115,7 @@ swapconf()
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
-	's','d',	/* 0 = rz */
+	's','d',	/* 0 = sd */
 	'x','x',	/* 1 = unused */
 	'x','x',	/* 2 = unused */
 	'x','x',	/* 3 = unused */
@@ -187,55 +187,44 @@ setroot()
 
 /*
  * Look at the string 'cp' and decode the boot device.
- * Boot names can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
+ * Boot names look like: scsi()disk(n)rdisk()partition(1)\bsd
  */
 void
 makebootdev(cp)
-	register char *cp;
+	char *cp;
 {
 	int majdev, unit, part, ctrl;
+	char dv[8];
 
-	if (*cp >= '0' && *cp <= '9') {
-		/* XXX should be able to specify controller */
-		if (cp[1] != '/' || cp[4] < '0' || cp[4] > '9')
-			goto defdev;
-		unit = cp[4] - '0';
-		if (cp[5] >= 'a' && cp[5] <= 'h')
-			part = cp[5] - 'a';
-		else
-			part = 0;
-		cp += 2;
-		for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]);
-		    majdev++) {
-			if (cp[0] == devname[majdev][0] &&
-			    cp[1] == devname[majdev][1]) {
-				bootdev = MAKEBOOTDEV(majdev, 0, 0, unit, part);
-				return;
-			}
-		}
-		goto defdev;
-	}
-	for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]); majdev++)
-		if (cp[0] == devname[majdev][0] &&
-		    cp[1] == devname[majdev][1] &&
-		    cp[2] == '(')
-			goto fndmaj;
-defdev:
 	bootdev = B_DEVMAGIC;
-	return;
 
-fndmaj:
-	for (ctrl = 0, cp += 3; *cp >= '0' && *cp <= '9'; )
-		ctrl = ctrl * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (unit = 0; *cp >= '0' && *cp <= '9'; )
-		unit = unit * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (part = 0; *cp >= '0' && *cp <= '9'; )
-		part = part * 10 + *cp++ - '0';
-	if (*cp != ')')
-		goto defdev;
-	bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit, part);
+	dv[0] = *cp;
+	ctrl = getpno(&cp);
+	if(*cp++ == ')') {
+		dv[1] = *cp;
+		unit = getpno(&cp);
+
+		for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]); majdev++)
+			if (dv[0] == devname[majdev][0] &&
+			    dv[1] == devname[majdev][1] && cp[0] == ')')
+				bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit,0);
+	}
+}
+getpno(cp)
+	char **cp;
+{
+	int val = 0;
+	char *cx = *cp;
+
+	while(*cx && *cx != '(')
+		cx++;
+	if(*cx == '(') {
+		cx++;
+		while(*cx && *cx != ')') {
+			val = val * 10 + *cx - '0';
+			cx++;
+		}
+	}
+	*cp = cx;
+	return val;
 }

@@ -38,7 +38,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.1.1.1 1995/10/18 10:39:17 deraadt Exp $
+ *      $Id: clock.c,v 1.2 1996/05/01 18:15:51 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -57,9 +57,13 @@ extern int cputype;	/* What kind of cpu we are running on */
 /* Definition of the driver for autoconfig. */
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd =
-    { NULL, "clock", clockmatch, clockattach, DV_DULL,
-	sizeof(struct clock_softc) };
+
+struct cfattach clock_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL, NULL, 0
+};
 
 void	mcclock_attach __P((struct device *, struct device *, void *));
 
@@ -156,7 +160,7 @@ delay(n)
 cpu_initclocks()
 {
 	extern int tickadj;
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 
 	hz = 100;		/* 100 Hz */
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
@@ -196,7 +200,7 @@ inittodr(base)
 	time_t base;
 {
 	struct tod_time c;
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 	register int days, yr;
 	long deltat;
 	int badbase, s;
@@ -266,7 +270,7 @@ void
 resettodr()
 {
 	struct tod_time c;
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 	register int t, t2;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1996/02/21 12:53:51 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 1996/05/01 18:15:55 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.3 1996/02/21 12:53:51 mickey Exp $
+ *      $Id: conf.c,v 1.4 1996/05/01 18:15:55 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -59,23 +59,21 @@ bdev_decl(vnd);
 bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
+#include "cd.h"
+bdev_decl(cd);
 #include "fdc.h"
-#define fdopen Fdopen
 bdev_decl(fd);
-#undef fdopen
 
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
 	bdev_swap_init(1,sw),		/* 1: should be here swap pseudo-dev */
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
-	bdev_notdef(),			/* 3:  */
+	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_notdef(),			/* 4:  */
 	bdev_notdef(),			/* 5:  */
 	bdev_notdef(),			/* 6:  */
-#define fdopen Fdopen
 	bdev_disk_init(NFDC,fd),	/* 7: Floppy disk driver */
-#undef fdopen
 	bdev_notdef(),			/* 8:  */
 	bdev_notdef(),			/* 9:  */
 	bdev_notdef(),			/* 10:  */
@@ -129,9 +127,7 @@ cdev_decl(fd);
 #include "st.h"
 cdev_decl(st);
 #include "fdc.h"
-#define fdopen Fdopen
 bdev_decl(fd);
-#undef fdopen
 cdev_decl(vnd);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -143,9 +139,18 @@ cdev_decl(sd);
 #include "pc.h"
 cdev_decl(pc);
 cdev_decl(pms);
+cdev_decl(cd);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
+<<<<<<< 1.2
+#define	cdev_gen_ipf(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+=======
+>>>>>>> 1.3
 #ifdef IPFILTER
 #define NIPF 1
 #else
@@ -162,14 +167,12 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
-	cdev_notdef(),			/* 8: SCSI CD */
+	cdev_disk_init(NCD,cd),		/* 8: SCSI CD */
 	cdev_disk_init(NSD,sd),		/* 9: SCSI disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
-#define fdopen Fdopen
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
-#undef fdopen
 	cdev_pc_init(1,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
 	cdev_lpt_init(NLPT,lpt),	/* 16: lpt paralell printer interface */

@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.4 1996/01/12 16:45:19 deraadt Exp $
+ *      $Id: trap.c,v 1.5 1996/05/01 18:16:22 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/cpu.h>
+#include <machine/pio.h>
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
@@ -616,6 +617,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[V0] = i;
 			locr0[A3] = 1;
 		}
+		if(code == SYS_ptrace)
+			MachFlushCache();
 	done:
 #ifdef SYSCALL_DEBUG
 		scdebug_ret(p, code, i, rval);
@@ -630,6 +633,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_BREAK+T_USER:
 	    {
 		register unsigned va, instr;
+		struct uio uio;
+		struct iovec iov;
 
 		/* compute address of break instruction */
 		va = pc;
@@ -643,35 +648,30 @@ trap(statusReg, causeReg, vadr, pc, args)
 			p->p_comm, p->p_pid, instr, pc,
 			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
-#ifdef DEBUG
-		if (instr == MACH_BREAK_BRKPT || instr == MACH_BREAK_SSTEP)
-			goto err;
-#endif
 		if (p->p_md.md_ss_addr != va || instr != MACH_BREAK_SSTEP) {
 			i = SIGTRAP;
 			break;
 		}
 
-		/* restore original instruction and clear BP  */
-		i = suiword((caddr_t)va, p->p_md.md_ss_instr);
-		if (i < 0) {
-			vm_offset_t sa, ea;
-			int rv;
+		/*
+		 * Restore original instruction and clear BP
+		 */
+		iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
+		iov.iov_len = sizeof(int); 
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1; 
+		uio.uio_offset = (off_t)va;
+		uio.uio_resid = sizeof(int);
+		uio.uio_segflg = UIO_SYSSPACE;
+		uio.uio_rw = UIO_WRITE;
+		uio.uio_procp = curproc;
+		i = procfs_domem(p, p, NULL, &uio);
+		MachFlushCache();
 
-			sa = trunc_page((vm_offset_t)va);
-			ea = round_page((vm_offset_t)va+sizeof(int)-1);
-			rv = vm_map_protect(&p->p_vmspace->vm_map, sa, ea,
-				VM_PROT_DEFAULT, FALSE);
-			if (rv == KERN_SUCCESS) {
-				i = suiword((caddr_t)va, p->p_md.md_ss_instr);
-				(void) vm_map_protect(&p->p_vmspace->vm_map,
-					sa, ea, VM_PROT_READ|VM_PROT_EXECUTE,
-					FALSE);
-			}
-		}
 		if (i < 0)
 			printf("Warning: can't restore instruction at %x: %x\n",
 				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
+
 		p->p_md.md_ss_addr = 0;
 		i = SIGTRAP;
 		break;
@@ -1044,10 +1044,17 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	InstFmt inst;
 	unsigned retAddr;
 	int condition;
-	extern unsigned GetBranchDest();
+
+#define GetBranchDest(InstPtr, inst) \
+	((unsigned)InstPtr + 4 + ((short)inst.IType.imm << 2))
 
 
-	inst = *(InstFmt *)instPC;
+	if(allowNonBranch == 0) {
+		inst = *(InstFmt *)instPC;
+	}
+	else {
+		inst = *(InstFmt *)&allowNonBranch;
+	}
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
@@ -1075,7 +1082,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		case OP_BLTZAL:
 		case OP_BLTZALL:
 			if ((int)(regsPtr[inst.RType.rs]) < 0)
-				retAddr = GetBranchDest((InstFmt *)instPC);
+				retAddr = GetBranchDest(instPC, inst);
 			else
 				retAddr = instPC + 8;
 			break;
@@ -1085,7 +1092,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		case OP_BGEZAL:
 		case OP_BGEZALL:
 			if ((int)(regsPtr[inst.RType.rs]) >= 0)
-				retAddr = GetBranchDest((InstFmt *)instPC);
+				retAddr = GetBranchDest(instPC, inst);
 			else
 				retAddr = instPC + 8;
 			break;
@@ -1104,7 +1111,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	case OP_BEQ:
 	case OP_BEQL:
 		if (regsPtr[inst.RType.rs] == regsPtr[inst.RType.rt])
-			retAddr = GetBranchDest((InstFmt *)instPC);
+			retAddr = GetBranchDest(instPC, inst);
 		else
 			retAddr = instPC + 8;
 		break;
@@ -1112,7 +1119,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	case OP_BNE:
 	case OP_BNEL:
 		if (regsPtr[inst.RType.rs] != regsPtr[inst.RType.rt])
-			retAddr = GetBranchDest((InstFmt *)instPC);
+			retAddr = GetBranchDest(instPC, inst);
 		else
 			retAddr = instPC + 8;
 		break;
@@ -1120,7 +1127,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	case OP_BLEZ:
 	case OP_BLEZL:
 		if ((int)(regsPtr[inst.RType.rs]) <= 0)
-			retAddr = GetBranchDest((InstFmt *)instPC);
+			retAddr = GetBranchDest(instPC, inst);
 		else
 			retAddr = instPC + 8;
 		break;
@@ -1128,7 +1135,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	case OP_BGTZ:
 	case OP_BGTZL:
 		if ((int)(regsPtr[inst.RType.rs]) > 0)
-			retAddr = GetBranchDest((InstFmt *)instPC);
+			retAddr = GetBranchDest(instPC, inst);
 		else
 			retAddr = instPC + 8;
 		break;
@@ -1142,7 +1149,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 			else
 				condition = !(fpcCSR & MACH_FPC_COND_BIT);
 			if (condition)
-				retAddr = GetBranchDest((InstFmt *)instPC);
+				retAddr = GetBranchDest(instPC, inst);
 			else
 				retAddr = instPC + 8;
 			break;
@@ -1165,13 +1172,6 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	return (retAddr);
 }
 
-unsigned
-GetBranchDest(InstPtr)
-	InstFmt *InstPtr;
-{
-	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
-}
-
 /*
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
@@ -1183,38 +1183,73 @@ cpu_singlestep(p)
 	register unsigned va;
 	register int *locr0 = p->p_md.md_regs;
 	int i;
+	int bpinstr = MACH_BREAK_SSTEP;
+	int curinstr;
+	struct uio uio;
+	struct iovec iov;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&curinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)locr0[PC];
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
 
 	/* compute next address after current location */
-	va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], 1);
-	if (p->p_md.md_ss_addr || p->p_md.md_ss_addr == va ||
-	    !useracc((caddr_t)va, 4, B_READ)) {
+	if(curinstr != 0) {
+		va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
+	}
+	else {
+		va = locr0[PC] + 4;
+	}
+	if (p->p_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
 		return (EFAULT);
 	}
 	p->p_md.md_ss_addr = va;
-	p->p_md.md_ss_instr = fuiword((caddr_t)va);
-	i = suiword((caddr_t)va, MACH_BREAK_SSTEP);
-	if (i < 0) {
-		vm_offset_t sa, ea;
-		int rv;
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
 
-		sa = trunc_page((vm_offset_t)va);
-		ea = round_page((vm_offset_t)va+sizeof(int)-1);
-		rv = vm_map_protect(&p->p_vmspace->vm_map, sa, ea,
-			VM_PROT_DEFAULT, FALSE);
-		if (rv == KERN_SUCCESS) {
-			i = suiword((caddr_t)va, MACH_BREAK_SSTEP);
-			(void) vm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
-		}
-	}
+	/*
+	 * Store breakpoint instruction at the "next" location now.
+	 */
+	iov.iov_base = (caddr_t)&bpinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = curproc;
+	i = procfs_domem(curproc, p, NULL, &uio);
+	MachFlushCache();
+
 	if (i < 0)
 		return (EFAULT);
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
-		p->p_md.md_ss_instr, locr0[PC], fuword((caddr_t)va)); /* XXX */
+		p->p_md.md_ss_instr, locr0[PC], curinstr); /* XXX */
 #endif
 	return (0);
 }
