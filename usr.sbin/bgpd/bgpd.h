@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.97 2004/02/16 17:24:04 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.98 2004/02/24 15:43:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,6 +125,15 @@ enum announce_type {
 	ANNOUNCE_ALL
 };
 
+struct filter_set {
+	u_int8_t	flags;
+	u_int32_t	localpref;
+	u_int32_t	med;
+	struct in_addr	nexthop;
+	struct in6_addr	nexthop6;
+	u_int8_t	prepend;
+};
+
 struct peer_config {
 	u_int32_t		 id;
 	u_int32_t		 groupid;
@@ -139,6 +148,7 @@ struct peer_config {
 	u_int8_t		 passive;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
+	struct filter_set	 attrset;
 	enum announce_type	 announce_type;
 	char			 tcp_md5_key[TCP_MD5_KEY_LEN];
 	enum reconf_action	 reconf_action;
@@ -316,6 +326,7 @@ enum as_spec {
 enum comp_ops {
 	OP_NONE,
 	OP_RANGE,
+	OP_XRANGE,
 	OP_EQ,
 	OP_NE,
 	OP_LE,
@@ -342,6 +353,7 @@ struct filter_match {
 		u_int8_t		len;
 	} prefix;
 	struct {
+		sa_family_t		af;
 		enum comp_ops		op;
 		u_int8_t		len_min;
 		u_int8_t		len_max;
@@ -350,15 +362,6 @@ struct filter_match {
 		u_int16_t		as;
 		enum as_spec		type;
 	} as;
-};
-
-struct filter_set {
-	u_int8_t	flags;
-	u_int32_t	localpref;
-	u_int32_t	med;
-	struct in_addr	nexthop;
-	struct in6_addr	nexthop6;
-	u_int8_t	prepend;
 };
 
 TAILQ_HEAD(filter_head, filter_rule);

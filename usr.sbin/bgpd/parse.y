@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2004/02/19 13:54:58 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.58 2004/02/24 15:43:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -115,9 +115,9 @@ typedef struct {
 %type	<v.addr>		address
 %type	<v.u8>			action quick direction
 %type	<v.filter_peers>	filter_peer
-%type	<v.filter_match>	filter_match
+%type	<v.filter_match>	filter_match prefixlenop
 %type	<v.filter_set>		filter_set filter_set_l filter_set_opt
-%type	<v.u8>			unaryop filter_as
+%type	<v.u8>			unaryop binaryop filter_as
 %%
 
 grammar		: /* empty */
@@ -419,6 +419,10 @@ peeropts	: REMOTEAS number	{
 				    strtoul(s, NULL, 16);
 			}
 		}
+		| filter_set		{
+			memcpy(&curpeer->conf.attrset, &$1,
+			    sizeof(curpeer->conf.attrset));
+		}
 		;
 
 filterrule	: action quick direction filter_peer filter_match filter_set
@@ -431,6 +435,20 @@ filterrule	: action quick direction filter_peer filter_match filter_set
 			r.dir = $3;
 
 			if (expand_rule(&r, &$4, &$5, &$6) == -1)
+				YYERROR;
+		}
+		| action quick direction filter_peer filter_match
+		{
+			struct filter_rule	r;
+			struct filter_set	set;
+
+			bzero(&r, sizeof(r));
+			bzero(&set, sizeof(set));
+			r.action = $1;
+			r.quick = $2;
+			r.dir = $3;
+
+			if (expand_rule(&r, &$4, &$5, &set) == -1)
 				YYERROR;
 		}
 		;
@@ -490,14 +508,26 @@ filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
 			}
 			$$.prefix.len = $4;
 		}
-		| PREFIXLEN unaryop number	{
+		| PREFIX address '/' number PREFIXLEN prefixlenop	{
 			bzero(&$$, sizeof($$));
-			if ($3 > 128) {
-				yyerror("prefixlen must be < 128");
+			memcpy(&$$.prefix.addr, &$2, sizeof($$.prefix.addr));
+			if ($4 > 32) {
+				yyerror("prefixlength must be <= 32");
 				YYERROR;
 			}
-			$$.prefixlen.op = $2;
-			$$.prefixlen.len_min = $3;
+			$$.prefix.len = $4;
+			$$.prefixlen = $6.prefixlen;
+			$$.prefixlen.af = AF_INET;
+			if ($$.prefixlen.len_max > 32 ||
+			    $$.prefixlen.len_min > 32) {
+				yyerror("prefixlength must be <= 32");
+				YYERROR;
+			}
+		}
+		| PREFIXLEN prefixlenop		{
+			bzero(&$$, sizeof($$));
+			$$.prefixlen = $2.prefixlen;
+			$$.prefixlen.af = AF_INET;
 		}
 		| filter_as number		{
 			bzero(&$$, sizeof($$));
@@ -510,16 +540,38 @@ filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
 		}
 		;
 
+prefixlenop	: unaryop number		{
+			bzero(&$$, sizeof($$));
+			if ($2 > 128) {
+				yyerror("prefixlen must be < 128");
+				YYERROR;
+			}
+			$$.prefixlen.op = $1;
+			$$.prefixlen.len_min = $2;
+		}
+		| number binaryop number	{
+			bzero(&$$, sizeof($$));
+			if ($1 > 128 || $3 > 128) {
+				yyerror("prefixlen must be < 128");
+				YYERROR;
+			}
+			if ($1 >= $3) {
+				yyerror("start prefixlen is bigger that end");
+				YYERROR;
+			}
+			$$.prefixlen.op = $2;
+			$$.prefixlen.len_min = $1;
+			$$.prefixlen.len_max = $3;
+		}
+		;
+
 filter_as	: AS		{ $$ = AS_ALL; }
 		| SOURCEAS	{ $$ = AS_SOURCE; }
 		| TRANSITAS	{ $$ = AS_TRANSIT; }
 		;
 
-filter_set	: /* empty */				{
-			bzero(&$$, sizeof($$));
-		}
-		| SET filter_set_opt			{ $$ = $2; }
-		| SET "{" filter_set_l "}"		{ $$ = $3; }
+filter_set	: SET filter_set_opt				{ $$ = $2; }
+		| SET optnl "{" optnl filter_set_l optnl "}"	{ $$ = $5; }
 		;
 
 filter_set_l	: filter_set_l comma filter_set_opt	{
@@ -575,6 +627,10 @@ unaryop		: '='		{ $$ = OP_EQ; }
 		| '<'		{ $$ = OP_LT; }
 		| '>' '='	{ $$ = OP_GE; }
 		| '>'		{ $$ = OP_GT; }
+		;
+
+binaryop	: '-'		{ $$ = OP_RANGE; }
+		| '>' '<'	{ $$ = OP_XRANGE; }
 		;
 
 %%

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2004/02/09 23:16:46 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.5 2004/02/24 15:43:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,6 +31,12 @@ void
 print_op(enum comp_ops op)
 {
 	switch (op) {
+	case OP_RANGE:
+		printf("-");
+		break;
+	case OP_XRANGE:
+		printf("><");
+		break;
 	case OP_EQ:
 		printf("=");
 		break;
@@ -124,6 +130,20 @@ print_peer(struct peer_config *p)
 		printf("%s\tannounce ???\n", c);
 	if (p->tcp_md5_key[0])
 		printf("%s\ttcp md5sig\n", c);
+	if (p->attrset.flags) {
+		printf("%s\tset {\n", c);
+		if (p->attrset.flags & SET_LOCALPREF)
+			printf("%s\t\tlocalpref %u\n", c, p->attrset.localpref);
+		if (p->attrset.flags & SET_MED)
+			printf("%s\t\tmed %u\n", c, p->attrset.med);
+		if (p->attrset.flags & SET_NEXTHOP)
+			printf("%s\t\tnexthop %s\n",
+			    c, inet_ntoa(p->attrset.nexthop));
+		if (p->attrset.flags & SET_PREPEND)
+			printf("%s\t\tprepend-self %u\n",
+			    c, p->attrset.prepend);
+		printf("%s\t}\n", c);
+	}
 	printf("%s}\n", c);
 	if (p->group[0])
 		printf("}\n");
@@ -175,10 +195,12 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		    r->match.prefix.len);
 
 	if (r->match.prefixlen.op) {
-		if (r->match.prefixlen.op == OP_RANGE)
-			printf("prefixlen %u - %u ", r->match.prefixlen.len_min,
-			    r->match.prefixlen.len_max);
-		else {
+		if (r->match.prefixlen.op == OP_RANGE ||
+		    r->match.prefixlen.op == OP_XRANGE) {
+			printf("prefixlen %u ", r->match.prefixlen.len_min);
+			print_op(r->match.prefixlen.op);
+			printf(" %u ", r->match.prefixlen.len_max);
+		} else {
 			printf("prefixlen ");
 			print_op(r->match.prefixlen.op);
 			printf(" %u ", r->match.prefixlen.len_min);

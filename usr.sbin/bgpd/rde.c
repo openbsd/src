@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.84 2004/02/23 17:19:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.85 2004/02/24 15:43:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -455,7 +455,10 @@ rde_update_dispatch(struct imsg *imsg)
 		attr_optfree(&attrs);
 		return (0);
 	}
-	
+
+	/* apply default overrides */
+	rde_apply_set(&attrs, &peer->conf.attrset);
+
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
@@ -476,7 +479,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 		p += pos;
 		nlri_len -= pos;
-		
+
 		/* input filter */
 		/*
 		 * XXX we need to copy attrs befor calling the filter

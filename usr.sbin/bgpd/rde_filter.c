@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.1 2004/02/19 23:07:00 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.2 2004/02/24 15:43:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -110,6 +110,9 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 		case OP_RANGE:
 			return ((plen >= f->match.prefixlen.len_min) &&
 			    (plen <= f->match.prefixlen.len_max));
+		case OP_XRANGE:
+			return ((plen < f->match.prefixlen.len_min) ||
+			    (plen > f->match.prefixlen.len_max));
 		case OP_EQ:
 			return (plen == f->match.prefixlen.len_min);
 		case OP_NE:
@@ -126,16 +129,20 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 		/* NOTREACHED */
 	} else if (f->match.prefixlen.op != OP_NONE) {
 		/* only prefixlen without a prefix */
-		/*
-		 * XXX IPv4 and IPv6 will cause trouble here.
-		 * XXX need to store the af.
-		 */
+
+		if (f->match.prefixlen.af != prefix->af)
+			/* don't use IPv4 rules for IPv6 and vice versa */
+			return (0);
+
 		switch (f->match.prefixlen.op) {
 		case OP_NONE:
 			fatalx("internal filter bug");
 		case OP_RANGE:
 			return ((plen >= f->match.prefixlen.len_min) &&
 			    (plen <= f->match.prefixlen.len_max));
+		case OP_XRANGE:
+			return ((plen < f->match.prefixlen.len_min) ||
+			    (plen > f->match.prefixlen.len_max));
 		case OP_EQ:
 			return (plen == f->match.prefixlen.len_min);
 		case OP_NE:
