@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.3 1997/01/15 23:43:37 millert Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.4 1997/11/30 05:30:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 11/26/93";
 #include "../man/config.h"
 #include "../man/pathnames.h"
 
-#define	MAXLINELEN	256			/* max line handled */
+#define	MAXLINELEN	8192			/* max line handled */
 
 static int *found, foundman;
 
@@ -138,15 +138,15 @@ whatis(argv, path, buildpath)
 {
 	register char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
+	char hold[MAXPATHLEN];
 
 	for (name = path; name; name = end) {	/* through name list */
 		if (end = strchr(name, ':'))
 			*end++ = '\0';
 
 		if (buildpath) {
-			char hold[MAXPATHLEN + 1];
-
-			(void)sprintf(hold, "%s/%s", name, _PATH_WHATIS);
+			(void)snprintf(hold, sizeof hold, "%s/%s",
+			    name, _PATH_WHATIS);
 			name = hold;
 		}
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: apropos.c,v 1.5 1997/09/11 11:24:53 deraadt Exp $      */
+/*      $OpenBSD: apropos.c,v 1.6 1997/11/30 05:30:36 deraadt Exp $      */
 /*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: apropos.c,v 1.5 1997/09/11 11:24:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apropos.c,v 1.6 1997/11/30 05:30:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ static char rcsid[] = "$OpenBSD: apropos.c,v 1.5 1997/09/11 11:24:53 deraadt Exp
 #include "../man/pathnames.h"
 
 static int *found, foundman;
+
+#define	MAXLINELEN	8192		/* max line handled */
 
 void apropos __P((char **, char *, int));
 void lowstr __P((char *, char *));
@@ -140,15 +142,14 @@ apropos(argv, path, buildpath)
 	int buildpath;
 {
 	char *end, *name, **p;
-	char buf[LINE_MAX + 1], wbuf[LINE_MAX + 1];
+	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
+	char hold[MAXPATHLEN];
 
 	for (name = path; name; name = end) {	/* through name list */
 		if ((end = strchr(name, ':')))
 			*end++ = '\0';
 
 		if (buildpath) {
-			char hold[MAXPATHLEN + 1];
-
 			(void)snprintf(hold, sizeof(hold), "%s/%s", name,
 			    _PATH_WHATIS);
 			name = hold;
