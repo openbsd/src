@@ -1,4 +1,4 @@
-/*	$Id: machdep.c,v 1.3 1995/11/07 08:50:20 deraadt Exp $ */
+/*	$Id: machdep.c,v 1.4 1995/11/28 01:24:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1192,18 +1192,6 @@ dumpsys()
 
 initcpu()
 {
-#ifdef MAPPEDCOPY
-	extern u_int mappedcopysize;
-
-	/*
-	 * Initialize lower bound for doing copyin/copyout using
-	 * page mapping (if not already set).  We don't do this on
-	 * VAC machines as it loses big time.
-	 */
-	if (mappedcopysize == 0) {
-		mappedcopysize = NBPG;
-	}
-#endif
 }
 
 straytrap(pc, evec)
