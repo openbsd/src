@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.3 1997/03/12 15:59:01 briggs Exp $
+#	$OpenBSD: GENERICSBC,v 1.4 1997/04/03 03:53:26 briggs Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
@@ -59,6 +59,7 @@ options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		ZS_CONSOLE_ABORT
 options		DISABLE_EXT_CACHE # Don't use IIci external cache
+options		DISABLE_ADB_WITH_SERIAL_CONSOLE
 options		HWDIRECT
 
 config		bsd	swap generic

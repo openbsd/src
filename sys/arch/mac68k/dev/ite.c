@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.11 1997/03/12 13:26:38 briggs Exp $	*/
+/*	$OpenBSD: ite.c,v 1.12 1997/04/03 03:53:27 briggs Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ static void	ite_putchar __P((char));
 static int	ite_pollforchar __P((void));
 static int	itematch __P((struct device *, void *, void *));
 static void	iteattach __P((struct device *, struct device *, void *));
+static int	ite_init __P((void));
 
 #define dprintf if (0) printf
 
@@ -877,6 +878,7 @@ iteattach(parent, self, aux)
 	void	*aux;
 {
 	printf(" (minimal console)\n");
+	(void) ite_init();
 }
 
 
@@ -1161,6 +1163,15 @@ itecnprobe(struct consdev * cp)
 int
 itecninit(struct consdev * cp)
 {
+	return ite_init();
+}
+
+int
+ite_init()
+{
+	if (ite_initted)
+		return 0;
+
 	ite_initted = 1;
 	width = videosize & 0xffff;
 	height = (videosize >> 16) & 0xffff;
@@ -1193,7 +1204,7 @@ itecninit(struct consdev * cp)
 
 	vt100_reset();
 
-	return iteon(cp->cn_dev, 0);
+	return iteon((dev_t) 0, 0);
 }
 
 int

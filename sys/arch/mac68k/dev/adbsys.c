@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.c,v 1.7 1997/02/23 06:04:54 briggs Exp $	*/
+/*	$OpenBSD: adbsys.c,v 1.8 1997/04/03 03:53:27 briggs Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
 
 /*-
@@ -176,10 +176,12 @@ adb_init()
 	int error;
 	char buffer[9];
 
+#ifdef DISABLE_ADB_WHEN_SERIAL_CONSOLE
 	if ((mac68k_machine.serial_console & 0x03)) {
 		printf("adb: using serial console\n");
 		return;
 	}
+#endif
 
 #ifndef HWDIRECT		/* We don't care about ADB ROM driver if we are
 				 * using the HWDIRECT method for ADB/PRAM/RTC. */
