@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.712 2004/02/24 19:32:15 markus Exp $
+$OpenBSD: pcidevs,v 1.713 2004/02/25 23:31:10 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2051,7 +2051,7 @@ product SIS 6205		0x6205	6205
 product SIS 6300		0x6300	6300
 product SIS 530_VGA		0x6306	530 VGA
 product SIS 650_VGA		0x6325	650 VGA
-product SIS 6326		0x6326	6326 AGP Video
+product SIS 6326		0x6326	6326 VGA
 product SIS 5597_USB		0x7001	5597/5598 USB
 product SIS 7002		0x7002	7002 USB
 product SIS 7007		0x7007	7007 FireWire
