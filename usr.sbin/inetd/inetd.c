@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.76 2001/01/29 21:06:43 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.77 2001/01/29 21:07:36 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.76 2001/01/29 21:06:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.77 2001/01/29 21:07:36 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -595,7 +595,7 @@ main(argc, argv, envp)
 					    sep->se_user);
 					if (sep->se_socktype != SOCK_STREAM)
 						recv(0, buf, sizeof (buf), 0);
-					_exit(1);
+					exit(1);
 				}
 				if (setsid() <0)
 					syslog(LOG_ERR, "%s: setsid: %m",
@@ -607,12 +607,12 @@ main(argc, argv, envp)
 					    sep->se_group);
 					if (sep->se_socktype != SOCK_STREAM)
 						recv(0, buf, sizeof (buf), 0);
-					_exit(1);
+					exit(1);
 				}
 				if (uid != 0) {
 					/* a user running private inetd */
 					if (uid != pwd->pw_uid)
-						_exit(1);
+						exit(1);
 				} else {
 					tmpint = LOGIN_SETALL &
 					    ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
@@ -644,7 +644,7 @@ main(argc, argv, envp)
 				if (sep->se_socktype != SOCK_STREAM)
 					recv(0, buf, sizeof (buf), 0);
 				syslog(LOG_ERR, "execv %s: %m", sep->se_server);
-				_exit(1);
+				exit(1);
 			}
 		}
 		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
@@ -1659,7 +1659,7 @@ dupconfig(sep)
 
 	if (newtab == NULL) {
 		syslog(LOG_ERR, "malloc: %m");
-		exit (-1);
+		exit(1);
 	}
 
 	memset((char *)newtab, 0, sizeof(struct servtab));
