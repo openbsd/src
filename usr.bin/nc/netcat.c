@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.12 2000/09/26 02:51:22 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.13 2000/09/26 05:03:31 ericj Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -47,6 +47,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -75,15 +76,7 @@ int     jval = 0;		/* timer crud */
 int     netfd = -1;
 int     ofd = 0;		/* hexdump output fd */
 
-extern int h_errno;
-/* stolen almost wholesale from bsd herror.c */
-static char *h_errs[] = {
-	"Error 0",				/* but we *don't* use this */
-	"Unknown host",				/* 1 HOST_NOT_FOUND */
-	"Host name lookup failure",		/* 2 TRY_AGAIN */
-	"Unknown server error",			/* 3 NO_RECOVERY */
-	"No address associated with name",	/* 4 NO_ADDRESS */
-};
+/* extern int h_errno; */
 
 int     gatesidx = 0;		/* LSRR hop count */
 int     gatesptr = 4;		/* initial LSRR pointer, settable */
@@ -118,8 +111,9 @@ unsigned int o_wait = 0;
 u_short  o_zero = 0;
 
 /* Function Prototype's */
-void	usage	__P((int));
 void	help	__P(());
+void	usage	__P((int));
+void	nlog __P((int, char *, ...));
 
 /* 
  * support routines -- the bulk of this thing.  Placed in such an order that
@@ -135,8 +129,8 @@ catch()
 {
 	errno = 0;
 	if (o_verbose > 1)	/* normally we don't care */
-		errx(1, "Sent %i Rcvd %i", wrote_net, wrote_out);
-	errx(1, " punt!");
+		nlog(1, "Sent %i Rcvd %i", wrote_net, wrote_out);
+	nlog(1, " punt!");
 }
 
 /* timeout and other signal handling cruft */
@@ -146,7 +140,7 @@ tmtravel()
 	signal(SIGALRM, SIG_IGN);
 	alarm(0);
 	if (jval == 0)
-		errx(1, "spurious timer interrupt!");
+		nlog(1, "spurious timer interrupt!");
 	longjmp(jbuf, jval);
 }
 
@@ -214,7 +208,7 @@ comparehosts(hinfo, hp)
 	errno = 0;
 	h_errno = 0;
 	if (strcasecmp(hinfo->name, hp->h_name) != 0) {
-		warn("DNS fwd/rev mismatch: %s != %s", hinfo->name, hp->h_name);
+		nlog(0, "DNS fwd/rev mismatch: %s != %s", hinfo->name, hp->h_name);
 		return (1);
 	}
 	return (0);
@@ -243,12 +237,12 @@ gethinfo(name, numeric)
 		hinfo = (struct host_info *) calloc(1, sizeof(struct host_info));
 
 	if (!hinfo)
-		errx(1, "error obtaining host information");
+		nlog(1, "error obtaining host information");
 
 	strlcpy(hinfo->name, "(UNKNOWN)", sizeof(hinfo->name));
 	if (inet_aton(name, &iaddr) == 0) {
 		if (numeric)
-			errx(1, "Can't parse %s as an IP address", name);
+			nlog(1, "Can't parse %s as an IP address", name);
 
 		/*
 		 * failure to look up a name is fatal, 
@@ -256,7 +250,7 @@ gethinfo(name, numeric)
 		 */
 		hostent = gethostbyname(name);
 		if (!hostent)
-			errx(1, "%s: forward host lookup failed: ", name);
+			nlog(1, "%s: forward host lookup failed: ", name);
 
 		strlcpy(hinfo->name, hostent->h_name, MAXHOSTNAMELEN);
 		for (x = 0; hostent->h_addr_list[x] && (x < 8); x++) {
@@ -278,7 +272,7 @@ gethinfo(name, numeric)
 			hostent = gethostbyaddr((char *) &hinfo->iaddrs[x],
 			    sizeof(struct in_addr), AF_INET);
 			if ((!hostent) || (!hostent->h_name))
-				warn("Warning: inverse host lookup failed for %s: ",
+				nlog(0, "Warning: inverse host lookup failed for %s: ",
 				    hinfo->addrs[x]);
 			else
 				(void) comparehosts(hinfo, hostent);
@@ -303,12 +297,12 @@ gethinfo(name, numeric)
 		 * *not* considered fatal 
 		 */
 		if (!hostent)
-			warn("%s: inverse host lookup failed: ", name);
+			nlog(0, "%s: inverse host lookup failed: ", name);
 		else {
 			strlcpy(hinfo->name, hostent->h_name, MAXHOSTNAMELEN);
 			hostent = gethostbyname(hinfo->name);
 			if ((!hostent) || (!hostent->h_addr_list[0]))
-				warn("Warning: forward host lookup failed for %s: ",
+				nlog(0, "Warning: forward host lookup failed for %s: ",
 				    hinfo->name);
 			else
 				(void) comparehosts(hinfo, hostent);
@@ -364,7 +358,7 @@ getpinfo(pstring, pnum)
 		if (servent) {
 			y = ntohs(servent->s_port);
 			if (x != y)	/* "never happen" */
-				warn("Warning: port-bynum mismatch, %d != %d", x, y);
+				nlog(0, "Warning: port-bynum mismatch, %d != %d", x, y);
 			strlcpy(pinfo->name, servent->s_name,
 			    sizeof(pinfo->name));
 		}
@@ -466,9 +460,9 @@ loadports(block, lo, hi)
 	u_short  x;
 
 	if (!block)
-		errx(1, "loadports: no block?!");
+		nlog(1, "loadports: no block?!");
 	if ((!lo) || (!hi))
-		errx(1, "loadports: bogus values %d, %d", lo, hi);
+		nlog(1, "loadports: bogus values %d, %d", lo, hi);
 	x = hi;
 	while (lo <= x) {
 		block[x] = 1;
@@ -505,13 +499,13 @@ newskt:
 	else
 		nnetfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (nnetfd < 0)
-		errx(1, "Can't get socket");
+		nlog(1, "Can't get socket");
 	if (nnetfd == 0)	/* if stdin was closed this might *be* 0, */
 		goto newskt;	/* so grab another.  See text for why... */
 	x = 1;
 	rr = setsockopt(nnetfd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x));
 	if (rr == -1)
-		errx(1, NULL);
+		nlog(1, NULL);
 
 	/* fill in all the right sockaddr crud */
 	lclend->sin_family = AF_INET;
@@ -538,14 +532,14 @@ newskt:
 			if (errno != EADDRINUSE)
 				break;
 			else {
-				warn("retrying local %s:%d", inet_ntoa(lclend->sin_addr), lp);
+				nlog(0, "retrying local %s:%d", inet_ntoa(lclend->sin_addr), lp);
 				sleep(2);
 				errno = 0;	/* clear from sleep */
 			}
 		}
 	}
 	if (rr)
-		errx(1, "Can't grab %s:%d with bind",
+		nlog(1, "Can't grab %s:%d with bind",
 		    inet_ntoa(lclend->sin_addr), lp);
 
 	if (o_listen)
@@ -601,18 +595,18 @@ dolisten(rad, rp, lad, lp)
 		return (-1);
 	if (o_udpmode) {
 		if (!lp)
-			errx(1, "UDP listen needs -p arg");
+			nlog(1, "UDP listen needs -p arg");
 	} else {
 		rr = listen(nnetfd, 1);
 		if (rr < 0)	
-			errx(1, "error listening");
+			nlog(1, "error listening");
 	}
 
 	if (o_verbose) {
 		x = sizeof(struct sockaddr);
 		rr = getsockname(nnetfd, (struct sockaddr *) lclend, &x);
 		if (rr < 0)
-			warn("local getsockname failed");
+			nlog(0, "local getsockname failed");
 		strcpy(bigbuf_net, "listening on [");	/* buffer reuse... */
 		if (lclend->sin_addr.s_addr)
 			strcat(bigbuf_net, inet_ntoa(lclend->sin_addr));
@@ -620,7 +614,7 @@ dolisten(rad, rp, lad, lp)
 			strcat(bigbuf_net, "any");
 		strcat(bigbuf_net, "] %d ...");
 		z = ntohs(lclend->sin_port);
-		warn("%s %d", bigbuf_net, z);
+		nlog(0, "%s %d", bigbuf_net, z);
 	}			/* verbose -- whew!! */
 	/*
 	 * UDP is a speeeeecial case -- we have to do I/O *and* get the
@@ -671,7 +665,7 @@ whoisit:
 	x = sizeof(struct sockaddr);
 	rr = getsockname(nnetfd, (struct sockaddr *) lclend, &x);
 	if (rr < 0 && o_verbose)
-		warn("post-rcv getsockname failed");
+		nlog(0, "post-rcv getsockname failed");
 	strcpy(cp, inet_ntoa(lclend->sin_addr));
 
 	z = ntohs(remend->sin_port);
@@ -688,11 +682,11 @@ whoisit:
 			x = 1;
 	}
 	if (x) {
-		errx(1, "invalid connection to [%s] from %s [%s] %d",
+		nlog(1, "invalid connection to [%s] from %s [%s] %d",
 		    cp, whozis->name, whozis->addrs[0], z);
 	}
 	if (o_verbose) {
-		warn("connect to [%s] from %s [%s] %d",	
+		nlog(0, "connect to [%s] from %s [%s] %d",	
 	    		cp, whozis->name, whozis->addrs[0], z);
 	}
 	return (nnetfd);
@@ -724,7 +718,7 @@ udptest(fd, where)
 
 	rr = write(fd, bigbuf_in, 1);
 	if (rr != 1 && o_verbose)
-		warn("udptest first write failed?! errno %d", errno);
+		nlog(0, "udptest first write failed?! errno %d", errno);
 	if (o_wait)
 		sleep(o_wait);
 	else {
@@ -772,7 +766,7 @@ oprint(which, buf, n)
 	unsigned int y;
 
 	if (!ofd)
-		errx(1, "oprint called with no open fd?!");
+		nlog(1, "oprint called with no open fd?!");
 	if (n == 0)
 		return;
 
@@ -835,7 +829,7 @@ oprint(which, buf, n)
 		*a = '\n';	/* finish the line */
 		x = write(ofd, stage, soc);
 		if (x < 0)
-			errx(1, "ofd write err");
+			nlog(1, "ofd write err");
 	}
 }
 
@@ -915,7 +909,7 @@ readwrite(fd)
 	 * *ds1 |= (1 << fd), etc.
 	 */
 	if (fd > FD_SETSIZE) {
-		warn("Preposterous fd value %d", fd);
+		nlog(0, "Preposterous fd value %d", fd);
 		return (1);
 	}
 	FD_SET(fd, &fds1);
@@ -955,7 +949,7 @@ readwrite(fd)
 		rr = select(getdtablesize(), &fds2, 0, 0, tv);
 		if (rr < 0) {
 			if (errno != EINTR) {
-				warn("Select Failure");
+				nlog(0, "Select Failure");
 				close(fd);
 				return (1);
 			}
@@ -970,7 +964,7 @@ readwrite(fd)
 			if (!netretry) {
 				if (o_verbose)	/* normally we don't
 							 * care */
-					warn("net timeout");
+					nlog(0, "net timeout");
 				close(fd);
 				return (0);	/* not an error! */
 			}
@@ -1024,7 +1018,7 @@ shovel:
 		}
 		/* net write retries sometimes happen on UDP connections */
 		if (!wretry) {	/* is something hung? */
-			warn("too many output retries");
+			nlog(0, "too many output retries");
 			return (1);
 		}
 		if (rnleft) {
@@ -1126,7 +1120,7 @@ main(argc, argv)
 						 * here */
 		cp[BIGSIZ-1] = '\0';
 		if (insaved <= 0)
-			errx(1, "wrong");
+			nlog(1, "wrong");
 		x = findline(cp, insaved);
 		if (x)
 			insaved -= x;	/* remaining chunk size to be sent */
@@ -1167,11 +1161,11 @@ main(argc, argv)
 			if ((x) && (x == (x & 0x1c)))
 				gatesptr = x;
 			else
-				errx(1, "invalid hop pointer %d, must be multiple of 4 <= 28", x);
+				nlog(1, "invalid hop pointer %d, must be multiple of 4 <= 28", x);
 			break;
 		case 'g':			/* srcroute hop[s] */
 			if (gatesidx > 8)
-				errx(1, "Too many -g hops!");
+				nlog(1, "Too many -g hops!");
 			if (gates == NULL)
 				gates = (struct host_info **) calloc(1, 
 						sizeof(struct host_info *) * 10);
@@ -1186,7 +1180,7 @@ main(argc, argv)
 		case 'i':			/* line-interval time */
 			o_interval = atoi(optarg) & 0xffff;
 			if (!o_interval)
-				errx(1, "invalid interval time %s", optarg);
+				nlog(1, "invalid interval time %s", optarg);
 			break;
 		case 'l':			/* listen mode */
 			o_listen++;
@@ -1201,7 +1195,7 @@ main(argc, argv)
 		case 'p':			/* local source port */
 			o_lport = getpinfo(optarg, 0);
 			if (o_lport == 0)
-				errx(1, "invalid local port %s", optarg);
+				nlog(1, "invalid local port %s", optarg);
 			break;
 		case 'r':			/* randomize various things */
 			o_random++;
@@ -1230,7 +1224,7 @@ main(argc, argv)
 		case 'w':			/* wait time */
 			o_wait = atoi(optarg);
 			if (o_wait <= 0)
-				errx(1, "invalid wait-time %s", optarg);
+				nlog(1, "invalid wait-time %s", optarg);
 			timer1.tv_sec = o_wait;
 			timer1.tv_usec = 0;
 			break;
@@ -1251,7 +1245,7 @@ main(argc, argv)
 	if (o_wfile) {
 		ofd = open(stage, O_WRONLY | O_CREAT | O_TRUNC, 0664);
 		if (ofd <= 0)	/* must be > extant 0/1/2 */
-			errx(1, "Can't open %s", stage);
+			nlog(1, "Can't open %s", stage);
 		stage = (unsigned char *) calloc(1, 100);
 	}
 	/* optind is now index of first non -x arg */
@@ -1275,22 +1269,22 @@ main(argc, argv)
 		if (argv[optind]) {
 			curport = getpinfo(argv[optind], 0);
 			if (curport == 0)
-				errx(1, "invalid port %s", argv[optind]);
+				nlog(1, "invalid port %s", argv[optind]);
 		}
 		netfd = dolisten(themaddr, curport, ouraddr, o_lport);
 		if (netfd > 0) {
 			x = readwrite(netfd);
 			if (o_verbose)
-				warn("Sent %i Rcvd %i", wrote_net, wrote_out);
+				nlog(0, "Sent %i Rcvd %i", wrote_net, wrote_out);
 			exit(x);
 		} else	
-			errx(1, "no connection");
+			nlog(1, "no connection");
 	}
 	/* fall thru to outbound connects.  Now we're more picky about args... */
 	if (!themaddr)
-		errx(1, "no destination");
+		nlog(1, "no destination");
 	if (argv[optind] == NULL)
-		errx(1, "no port[s] to connect to");
+		nlog(1, "no port[s] to connect to");
 	if (argv[optind + 1])
 		Single = 0;
 	ourport = o_lport;
@@ -1303,11 +1297,11 @@ main(argc, argv)
 			cp++;
 			hiport = getpinfo(cp, 0);
 			if (hiport == 0)
-				errx(1, "invalid port %s", cp);
+				nlog(1, "invalid port %s", cp);
 		}		/* if found a dash */
 		loport = getpinfo(argv[optind], 0);
 		if (loport == 0)
-			errx(1, "invalid port %s", argv[optind]);
+			nlog(1, "invalid port %s", argv[optind]);
 		if (hiport > loport) {	/* was it genuinely a range? */
 			Single = 0;	/* multi-mode, case B */
 			if (o_random) {	/* maybe populate the random array */
@@ -1330,7 +1324,7 @@ main(argc, argv)
 			if (netfd > 0) {
 				x = 0;
 				if (o_verbose) {
-					warn("%s [%s] %d (%s) open",
+					nlog(0, "%s [%s] %d (%s) open",
 				    		whereto->name, 
 						whereto->addrs[0], curport, 
 						pinfo->name);
@@ -1341,9 +1335,9 @@ main(argc, argv)
 				x = 1;
 				if ((Single || (o_verbose > 1)) 
 				   || (errno != ECONNREFUSED)) {
-					warn("%s [%s] %d (%s)",
-					    whereto->name, whereto->addrs[0], 
-							curport, pinfo->name);
+					nlog(0, "%s [%s] %d (%s)",
+					     whereto->name, whereto->addrs[0], 
+					     curport, pinfo->name);
 				}
 			}
 			close(netfd);
@@ -1358,11 +1352,34 @@ main(argc, argv)
 	}
 
 	errno = 0;
-	if (o_verbose > 1)
-		warn("Sent %i Rcvd %i", wrote_net, wrote_out);
+	nlog(0, "Sent %i Rcvd %i", wrote_net, wrote_out);
 	if (Single)
 		exit(x);
 	exit(0);
+}
+
+/*
+ * nlog:
+ * dual purpose function, does both warn() and err()
+ * and pays attention to o_verbose.
+ */
+void
+nlog(doexit, fmt)
+        char *fmt;
+{
+        va_list args;
+
+        if (o_verbose || doexit) {
+                va_start(args, fmt);
+                vfprintf(stderr, fmt, args);
+                if (h_errno)
+                        herror(NULL);
+                else
+                        putc('\n', stderr);
+        }
+ 
+        if (doexit)
+                exit(1);
 }
 
 void
