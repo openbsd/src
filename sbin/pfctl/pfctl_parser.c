@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.135 2003/01/30 15:03:49 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.136 2003/01/30 15:41:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1155,8 +1155,8 @@ host(char *s, int mask)
 			fprintf(stderr, "invalid netmask\n");
 			return (NULL);
 		}
-		if (asprintf(&buf, "%s", s) == -1)
-			err(1, "host: asprintf");
+		if ((buf = strdup(s)) == NULL)
+			err(1, "host: strdup");
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: malloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
@@ -1172,8 +1172,8 @@ host(char *s, int mask)
 			    "extra netmask given\n");
 			return (NULL);
 		}
-		if (asprintf(&buf, "%s", s) == -1)
-			err(1, "host: asprintf");
+		if ((buf = strdup(s)) == NULL)
+			err(1, "host: strdup");
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: malloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
