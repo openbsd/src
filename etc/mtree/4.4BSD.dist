@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.147 2003/03/12 05:06:06 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.148 2003/03/13 07:05:49 jmc Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -919,11 +919,6 @@ atc
 # ./usr/share/games/boggle
 boggle
 # ./usr/share/games/boggle
-..
-
-# ./usr/share/games/ching
-ching
-# ./usr/share/games/ching
 ..
 
 # ./usr/share/games/fortune
