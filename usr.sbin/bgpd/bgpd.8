@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.2 2003/12/22 15:07:05 henning Exp $
+.\" $OpenBSD: bgpd.8,v 1.3 2003/12/23 12:17:33 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -34,8 +34,6 @@ daemon implements the Border Gateway Protocol version 4 as described
 in RFC 1771.
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
-Do not daemonize and log to stderr.
 .It Fl D Ar macro=value
 Define
 .Ar macro
@@ -45,6 +43,8 @@ on the command line.
 Overrides the definition of
 .Ar macro
 in the configuration file.
+.It Fl d
+Do not daemonize and log to stderr.
 .It Fl f Ar file
 Specify an alternate location,
 .Ar file ,
