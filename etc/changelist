@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.6 1998/02/19 01:49:07 gene Exp $
+#	$OpenBSD: changelist,v 1.7 1999/03/15 22:41:31 todd Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -41,6 +41,7 @@
 /etc/shosts.equiv
 /etc/slip.hosts
 /etc/slip.login
+/etc/sshd_config
 /etc/syslog.conf
 /etc/sysctl.conf
 /etc/ttys
@@ -52,3 +53,9 @@
 /root/.profile
 /root/.rhosts
 /root/.shosts
+/root/.ssh/authorized_keys
+/var/named/named.boot
+/var/www/conf/httpd.conf
+/var/www/conf/srm.conf
+/var/www/conf/access.conf
+/var/www/conf/mime.types
