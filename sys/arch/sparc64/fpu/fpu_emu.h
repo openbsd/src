@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emu.h,v 1.2 2001/09/10 16:00:30 jason Exp $	*/
+/*	$OpenBSD: fpu_emu.h,v 1.3 2001/10/05 17:43:09 jason Exp $	*/
 /*	$NetBSD: fpu_emu.h,v 1.4 2000/08/03 18:32:07 eeh Exp $ */
 
 /*
@@ -186,6 +186,7 @@ void	fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
 #ifdef DEBUG
 #define	FPE_INSN	0x1
 #define	FPE_REG		0x2
+#define	FPE_STATE	0x4
 extern int fpe_debug;
 void	fpu_dumpfpn(struct fpn *);
 void	fpu_dumpstate(struct fpstate64 *);
