@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.146 2004/08/03 08:05:05 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.147 2004/09/15 19:05:29 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -304,7 +304,6 @@ cases) from the fake installation.
 Involves creating packaging information from templates
 (see
 .Ev COMMENT ,
-.Ev SED_PLIST ,
 .Ev SUBST_VARS
 among others) and invoking
 .Xr pkg_create 1
@@ -1378,13 +1377,6 @@ The corresponding packages will be built at
 stage, and
 .Xr pkg_add 1
 will take care of installing them.
-.It Ev SED_PLIST
-Pipeline of commands used to create the actual packing list from the
-PLIST template (usually ${PKGDIR}/PLIST).
-.Nm
-appends to it substitution commands corresponding to the port's
-FLAVOR and variables from SUBST_VARS.
-${SED_PLIST} is invoked as a pipeline after inserting PFRAG.shared fragments.
 .It Ev SCRIPTDIR
 Location for scripts related to the current port (default: scripts.${ARCH}
 or scripts).
@@ -1912,6 +1904,10 @@ Port has cryptographic issues.
 focuses on
 .Ev PERMIT_PACKAGE_{FTP,CDROM}
 instead.
+.It Ev SED_PLIST
+old pipeline for creating packing-lists at the ports level.
+Necessary functionality has been integrated directly into
+.Xr pkg_create 1 .
 .It Ev USE_AUTOCONF
 Use
 .Ev CONFIGURE_STYLE
@@ -2127,10 +2123,8 @@ e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
 .Sq -no_map-gfx .
 .It
 Generate the actual PLIST from the template ${PLIST},
-by inserting shared/no-shared fragments, applying a possible user-supplied
-pipeline, merging other fragments, applying the same variable
-substitutions as other packing information, and finally handling
-dynamic libraries macros.
+by inserting shared/no-shared fragments, merging other fragments, 
+and applying the same variable substitutions as other packing information.
 .El
 .Pp
 Note that ${COMMENT} is currently not substituted, to speed up
@@ -2158,30 +2152,29 @@ will trigger the inclusion of
 (resp.
 .Pa ${PKGDIR}/PFRAG.no-flav1${SUBPACKAGE} )
 in the packing-list.
-Fragments that cannot be handled by these simple rules
-can always be specified in a custom SED_PLIST.
+Other fragments can be defined by simply adding
+.Li "-Dfrag=1"
+or
+.Li "-Dfrag=0"
+to
+.Ev PKG_ARGS
 .Pp
-The constructs
-.Li "DYNLIBDIR(directory)"
-and
-.Li "NEWDYNLIBDIR(directory)"
-should be used in
-.Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
-to register directories that hold dynamic libraries (see
-.Xr ldconfig 8 ) .
-.Li "NEWDYNLIBDIR"
-is meant for directories that will go away when the package is deleted.
-If possible, it should not be used, because users also have to edit
-.Pa rc.conf
-to add the directory.
-It is usually better to also let libraries be visible as a link
+.Xr pkg_add 1
+now calls
+.Xr ldconfig 8
+directly, provided dynamic libraries have been annotated with
+.Li "@lib libthingy.so.5.0" .
+Adding new directories to the dynamic loader cache has been
+deprecated.
+It is often better to let libraries be visible as a link
 under ${LOCALBASE}.
 Having a separate directory is enough to trick
 .Xr ld 1
 into grabbing the right version.
-Note that libraries used only for
+Libraries used only for
 .Xr dlopen 3
-do not need NEWDYNLIBDIR.
+do not need to be visible.
+Some programs will prefer to use rpath to find their own libraries.
 .Pp
 The special
 .Ar update-plist
