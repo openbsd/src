@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.2 1996/03/03 12:11:44 niklas Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.3 1996/11/03 06:35:20 deraadt Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -96,8 +96,8 @@
 #define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
 #endif
 
-/* defined by POSIX 1003.1; BSD default, so no bit required */
-#define	O_NOCTTY	0		/* don't assign controlling terminal */
+/* defined by POSIX 1003.1; BSD default, this bit is not required */
+#define	O_NOCTTY	0x8000		/* don't assign controlling terminal */
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
