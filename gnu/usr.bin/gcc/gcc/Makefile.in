@@ -263,7 +263,7 @@ PARTITION_H = $(LIBIBERTY_INCLUDES)/partition.h
 # Default native SYSTEM_HEADER_DIR, to be overridden by targets.
 NATIVE_SYSTEM_HEADER_DIR = /usr/include
 # Default cross SYSTEM_HEADER_DIR, to be overridden by targets.
-CROSS_SYSTEM_HEADER_DIR = $(build_tooldir)/sys-include
+CROSS_SYSTEM_HEADER_DIR = @CROSS_SYSTEM_HEADER_DIR@
 
 # autoconf sets SYSTEM_HEADER_DIR to one of the above.
 SYSTEM_HEADER_DIR = @SYSTEM_HEADER_DIR@
@@ -274,6 +274,10 @@ STMP_FIXINC = @STMP_FIXINC@
 
 # Test to see whether <limits.h> exists in the system header files.
 LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
+
+# Directory for prefix to system directories, for
+# each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
+TARGET_SYSTEM_ROOT = @TARGET_SYSTEM_ROOT@
 
 target=@target@
 target_alias=@target_alias@
@@ -1285,6 +1289,7 @@ DRIVER_DEFINES = \
   -DDEFAULT_TARGET_MACHINE=\"$(target_alias)\" \
   -DSTANDARD_BINDIR_PREFIX=\"$(bindir)/\" \
   -DTOOLDIR_BASE_PREFIX=\"$(unlibsubdir)/../\" \
+  @TARGET_SYSTEM_ROOT_DEFINE@ \
   $(VALGRIND_DRIVER_DEFINES) \
   `test "X$${SHLIB_LINK}" = "X" || test "@enable_shared@" != "yes" || echo "-DENABLE_SHARED_LIBGCC"` \
   `test "X$${SHLIB_MULTILIB}" = "X" || echo "-DNO_SHARED_LIBGCC_MULTILIB"`
@@ -1511,7 +1516,7 @@ cselib.o : cselib.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) $(REGS_H) \
    output.h function.h cselib.h $(GGC_H) $(TM_P_H) gt-cselib.h
 cse.o : cse.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) $(REGS_H) hard-reg-set.h flags.h \
    real.h insn-config.h $(RECOG_H) $(EXPR_H) toplev.h output.h function.h \
-   $(BASIC_BLOCK_H) $(GGC_H) $(TM_P_H) $(TIMEVAR_H)
+   $(BASIC_BLOCK_H) $(GGC_H) $(TM_P_H) $(TIMEVAR_H) $(TARGET_H)
 gcse.o : gcse.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) $(REGS_H) hard-reg-set.h \
    flags.h real.h insn-config.h ggc.h $(RECOG_H) $(EXPR_H) $(BASIC_BLOCK_H) \
    function.h output.h toplev.h $(TM_P_H) $(PARAMS_H) except.h gt-gcse.h
@@ -1543,7 +1548,7 @@ profile.o : profile.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) $(TREE_H) flags.h \
 loop.o : loop.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) flags.h $(LOOP_H) \
    insn-config.h $(REGS_H) hard-reg-set.h $(RECOG_H) $(EXPR_H) \
    real.h $(PREDICT_H) $(BASIC_BLOCK_H) function.h \
-   toplev.h varray.h except.h cselib.h $(OPTABS_H) $(TM_P_H)
+   toplev.h varray.h except.h cselib.h $(OPTABS_H) $(TM_P_H) $(GGC_H)
 doloop.o : doloop.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) flags.h $(LOOP_H) \
    $(EXPR_H) hard-reg-set.h $(BASIC_BLOCK_H) $(TM_P_H) toplev.h
 unroll.o : unroll.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) insn-config.h function.h \
@@ -2199,8 +2204,9 @@ PREPROCESSOR_DEFINES = \
   -DGPLUSPLUS_TOOL_INCLUDE_DIR=\"$(gcc_gxx_include_dir)/$(target_alias)\" \
   -DGPLUSPLUS_BACKWARD_INCLUDE_DIR=\"$(gcc_gxx_include_dir)/backward\" \
   -DLOCAL_INCLUDE_DIR=\"$(local_includedir)\" \
-  -DCROSS_INCLUDE_DIR=\"$(gcc_tooldir)/sys-include\" \
-  -DTOOL_INCLUDE_DIR=\"$(gcc_tooldir)/include\"
+  -DCROSS_INCLUDE_DIR=\"$(CROSS_SYSTEM_HEADER_DIR)\" \
+  -DTOOL_INCLUDE_DIR=\"$(gcc_tooldir)/include\" \
+  @TARGET_SYSTEM_ROOT_DEFINE@
 
 LIBCPP_OBJS =	cpplib.o cpplex.o cppmacro.o cppexp.o cppfiles.o cpptrad.o \
 		cpphash.o cpperror.o cppinit.o cppdefault.o cppmain.o \
@@ -2360,12 +2366,23 @@ fixinc.sh: $(FIXINCSRCDIR)/mkfixinc.sh $(FIXINCSRCDIR)/fixincl.c \
 	$(FIXINCSRCDIR)/server.h $(FIXINCSRCDIR)/inclhack.def specs.ready
 	(MAKE="$(MAKE)"; srcdir=`cd $(srcdir)/fixinc && ${PWD_COMMAND}` ; \
 	CC="$(HOST_CC)"; CFLAGS="$(HOST_CFLAGS)"; LDFLAGS="$(HOST_LDFLAGS)"; \
-	WARN_CFLAGS="$(WARN_CFLAGS)"; \
-	export MAKE srcdir CC CFLAGS LDFLAGS WARN_CFLAGS; cd ./fixinc && \
+	WARN_CFLAGS="$(WARN_CFLAGS)"; LIBERTY=`pwd`/"$(BUILD_LIBIBERTY)"; \
+	export MAKE srcdir CC CFLAGS LDFLAGS WARN_CFLAGS LIBERTY; \
+	cd ./fixinc && \
 	$(SHELL) $${srcdir}/mkfixinc.sh $(build_canonical) $(target))
+
+.PHONY: install-gcc-tooldir
+install-gcc-tooldir:
+	$(SHELL) ${srcdir}/mkinstalldirs $(gcc_tooldir)
 
 # Build fixed copies of system files.
 stmp-fixinc: fixinc.sh gsyslimits.h
+	@if test ! -d ${SYSTEM_HEADER_DIR}; then \
+	  echo The directory that should contain system headers does not exist: >&2 ; \
+	  echo "  ${SYSTEM_HEADER_DIR}" >&2 ; \
+	  if test "x${SYSTEM_HEADER_DIR}" = "x${gcc_tooldir}/sys-include"; \
+	  then sleep 1; else exit 1; fi; \
+	fi
 	rm -rf include; mkdir include
 	-chmod a+rx include
 	(TARGET_MACHINE='$(target)'; srcdir=`cd $(srcdir); ${PWD_COMMAND}`; \
@@ -2379,20 +2396,6 @@ stmp-fixinc: fixinc.sh gsyslimits.h
 	  cp $(srcdir)/gsyslimits.h include/syslimits.h; \
 	fi; \
 	chmod a+r include/syslimits.h)
-# If $(SYSTEM_HEADER_DIR) is $(build_tooldir)/sys-include, and
-# that directory exists, then make sure that $(libsubdir) exists.
-# This is because cpp is compiled to find $(gcc_tooldir)/include via
-# $(libsubdir)/$(unlibsubdir), which will only work if $(libsubdir)
-# exists.
-# ??? Better would be to use -isystem $(build_tooldir)/sys-include,
-# but fixincludes does not take such arguments.
-	if [ "$(SYSTEM_HEADER_DIR)" = "$(build_tooldir)/sys-include" ] \
-	   && [ -d $(build_tooldir)/sys-include ]; then \
-	  if [ -d $(libdir) ] ; then true ; else mkdir $(libdir) ; fi; \
-	  if [ -d $(libdir)/gcc-lib ] ; then true ; else mkdir $(libdir)/gcc-lib; fi; \
-	  if [ -d $(libdir)/gcc-lib/$(target_alias) ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target_alias) ; fi; \
-	  if [ -d $(libdir)/gcc-lib/$(target_alias)/$(version) ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target_alias)/$(version) ; fi; \
-	else true; fi
 	$(STAMP) stmp-fixinc
 
 # Files related to the fixproto script.
@@ -2401,7 +2404,7 @@ stmp-fixinc: fixinc.sh gsyslimits.h
 # libiberty.a.
 
 deduced.h: $(GCC_PASSES) $(srcdir)/scan-types.sh stmp-int-hdrs
-	if [ -d $(SYSTEM_HEADER_DIR) ]; \
+	if [ -d "$(SYSTEM_HEADER_DIR)" ]; \
 	then \
 	  CC="$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(ALL_CPPFLAGS) -I. -I$(srcdir) -isystem include -isystem ${SYSTEM_HEADER_DIR}"; \
 	  export CC; \
@@ -2467,7 +2470,7 @@ stmp-fixproto: fixhdr.ready fixproto stmp-int-hdrs
 	  FIXPROTO_DEFINES="$(FIXPROTO_DEFINES)"; export FIXPROTO_DEFINES; \
 	  mkinstalldirs="$(SHELL) $(srcdir)/mkinstalldirs"; \
 	    export mkinstalldirs; \
-	  if [ -d $(SYSTEM_HEADER_DIR) ] ; then \
+	  if [ -d "$(SYSTEM_HEADER_DIR)" ]; then \
 	    $(SHELL) ${srcdir}/fixproto include include $(SYSTEM_HEADER_DIR); \
 	    if [ $$? -eq 0 ] ; then true ; else exit 1 ; fi ; \
 	  else true; fi; \
@@ -3045,7 +3048,7 @@ install-mkheaders: stmp-int-hdrs $(STMP_FIXPROTO) install-include-dir \
 		$(DESTDIR)$(itoolsdir)/fix-header$(build_exeext) ; \
 	else :; fi
 	$(INSTALL_PROGRAM) mkheaders $(DESTDIR)$(itoolsdir)/mkheaders
-	echo 'SYSTEM_HEADER_DIR="$(SYSTEM_HEADER_DIR)"' \
+	echo 'SYSTEM_HEADER_DIR="'"$(SYSTEM_HEADER_DIR)"'"' \
 		> $(DESTDIR)$(itoolsdir)/mkheaders.conf
 	echo 'OTHER_FIXINCLUDES_DIRS="$(OTHER_FIXINCLUDES_DIRS)"' \
 		>> $(DESTDIR)$(itoolsdir)/mkheaders.conf
@@ -3559,7 +3562,7 @@ stage1-start:
 	-if [ -f as$(exeext) ] ; then (cd stage1 && $(LN_S) ../as$(exeext) .) ; else true ; fi
 	-if [ -f ld$(exeext) ] ; then (cd stage1 && $(LN_S) ../ld$(exeext) .) ; else true ; fi
 	-if [ -f collect-ld$(exeext) ] ; then (cd stage1 && $(LN_S) ../collect-ld$(exeext) .) ; else true ; fi
-	-rm -f stage1/libgcc.a stage1/libgcc_eh.a
+	-rm -f stage1/libgcc.a stage1/libgcc_eh.a stage1/libgcc_s*$(SHLIB_EXT)
 	-cp libgcc.a stage1
 	-if $(RANLIB_TEST_FOR_TARGET) ; then \
 	  $(RANLIB_FOR_TARGET) stage1/libgcc.a; \
@@ -3568,6 +3571,7 @@ stage1-start:
 	  if $(RANLIB_TEST_FOR_TARGET) ; then \
 	   $(RANLIB_FOR_TARGET) stage1/libgcc_eh.a; \
 	  else true; fi; fi
+	-cp libgcc_s*$(SHLIB_EXT) stage1/
 	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
 	  cp stage1/$${f} . ; \
 	else true; \
@@ -3588,7 +3592,7 @@ stage2-start:
 	-if [ -f as$(exeext) ] ; then (cd stage2 && $(LN_S) ../as$(exeext) .) ; else true ; fi
 	-if [ -f ld$(exeext) ] ; then (cd stage2 && $(LN_S) ../ld$(exeext) .) ; else true ; fi
 	-if [ -f collect-ld$(exeext) ] ; then (cd stage2 && $(LN_S) ../collect-ld$(exeext) .) ; else true ; fi
-	-rm -f stage2/libgcc.a stage2/libgcc_eh.a
+	-rm -f stage2/libgcc.a stage2/libgcc_eh.a stage2/libgcc_s*$(SHLIB_EXT)
 	-cp libgcc.a stage2
 	-if $(RANLIB_TEST_FOR_TARGET) ; then \
 	  $(RANLIB_FOR_TARGET) stage2/libgcc.a; \
@@ -3597,6 +3601,7 @@ stage2-start:
 	  if $(RANLIB_TEST_FOR_TARGET) ; then \
 	   $(RANLIB_FOR_TARGET) stage2/libgcc_eh.a; \
 	  else true; fi; fi
+	-cp libgcc_s*$(SHLIB_EXT) stage2/
 	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
 	  cp stage2/$${f} . ; \
 	else true; \
@@ -3617,7 +3622,7 @@ stage3-start:
 	-if [ -f as$(exeext) ] ; then (cd stage3 && $(LN_S) ../as$(exeext) .) ; else true ; fi
 	-if [ -f ld$(exeext) ] ; then (cd stage3 && $(LN_S) ../ld$(exeext) .) ; else true ; fi
 	-if [ -f collect-ld$(exeext) ] ; then (cd stage3 && $(LN_S) ../collect-ld$(exeext) .) ; else true ; fi
-	-rm -f stage3/libgcc.a stage3/libgcc_eh.a
+	-rm -f stage3/libgcc.a stage3/libgcc_eh.a stage3/libgcc_s*$(SHLIB_EXT)
 	-cp libgcc.a stage3
 	-if $(RANLIB_TEST_FOR_TARGET) ; then \
 	  $(RANLIB_FOR_TARGET) stage3/libgcc.a; \
@@ -3626,6 +3631,7 @@ stage3-start:
 	  if $(RANLIB_TEST_FOR_TARGET) ; then \
 	   $(RANLIB_FOR_TARGET) stage3/libgcc_eh.a; \
 	  else true; fi; fi
+	-cp libgcc_s*$(SHLIB_EXT) stage3/
 	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
 	  cp stage3/$${f} . ; \
 	else true; \
@@ -3646,7 +3652,7 @@ stage4-start:
 	-if [ -f as$(exeext) ] ; then (cd stage4 && $(LN_S) ../as$(exeext) .) ; else true ; fi
 	-if [ -f ld$(exeext) ] ; then (cd stage4 && $(LN_S) ../ld$(exeext) .) ; else true ; fi
 	-if [ -f collect-ld$(exeext) ] ; then (cd stage4 && $(LN_S) ../collect-ld$(exeext) .) ; else true ; fi
-	-rm -f stage4/libgcc.a stage4/libgcc_eh.a
+	-rm -f stage4/libgcc.a stage4/libgcc_eh.a stage4/libgcc_s*$(SHLIB_EXT)
 	-cp libgcc.a stage4
 	-if $(RANLIB_TEST_FOR_TARGET) ; then \
 	  $(RANLIB_FOR_TARGET) stage4/libgcc.a; \
@@ -3655,6 +3661,7 @@ stage4-start:
 	  if $(RANLIB_TEST_FOR_TARGET) ; then \
 	   $(RANLIB_FOR_TARGET) stage4/libgcc_eh.a; \
 	  else true; fi; fi
+	-cp libgcc_s*$(SHLIB_EXT) stage4/
 	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
 	  cp stage4/$${f} . ; \
 	else true; \

@@ -2353,7 +2353,7 @@ expand_builtin_bzero (exp)
   return result;
 }
 
-/* Expand expression EXP, which is a call to the memcmp or the strcmp builtin.
+/* Expand expression EXP, which is a call to the memcmp built-in function.
    ARGLIST is the argument list for this call.  Return 0 if we failed and the
    caller should emit a normal call, otherwise try to get the result in
    TARGET, if convenient (and in mode MODE, if that's convenient).  */
@@ -2418,7 +2418,7 @@ expand_builtin_memcmp (exp, arglist, target, mode)
       return expand_expr (result, target, mode, EXPAND_NORMAL);
     }
 
-#ifdef HAVE_cmpstrsi
+#if defined HAVE_cmpmemsi || defined HAVE_cmpstrsi
   {
     rtx arg1_rtx, arg2_rtx, arg3_rtx;
     rtx result;
@@ -2428,8 +2428,19 @@ expand_builtin_memcmp (exp, arglist, target, mode)
       = get_pointer_alignment (arg1, BIGGEST_ALIGNMENT) / BITS_PER_UNIT;
     int arg2_align
       = get_pointer_alignment (arg2, BIGGEST_ALIGNMENT) / BITS_PER_UNIT;
-    enum machine_mode insn_mode
-      = insn_data[(int) CODE_FOR_cmpstrsi].operand[0].mode;
+    enum machine_mode insn_mode;
+
+#ifdef HAVE_cmpmemsi
+    if (HAVE_cmpmemsi)
+      insn_mode = insn_data[(int) CODE_FOR_cmpmemsi].operand[0].mode;
+    else
+#endif
+#ifdef HAVE_cmpstrsi
+    if (HAVE_cmpstrsi)
+      insn_mode = insn_data[(int) CODE_FOR_cmpstrsi].operand[0].mode;
+    else
+#endif
+      return 0;     
 
     /* If we don't have POINTER_TYPE, call the function.  */
     if (arg1_align == 0 || arg2_align == 0)
@@ -2445,11 +2456,19 @@ expand_builtin_memcmp (exp, arglist, target, mode)
     arg1_rtx = get_memory_rtx (arg1);
     arg2_rtx = get_memory_rtx (arg2);
     arg3_rtx = expand_expr (len, NULL_RTX, VOIDmode, 0);
-    if (!HAVE_cmpstrsi)
-      insn = NULL_RTX;
+#ifdef HAVE_cmpmemsi
+    if (HAVE_cmpmemsi)
+      insn = gen_cmpmemsi (result, arg1_rtx, arg2_rtx, arg3_rtx,
+			   GEN_INT (MIN (arg1_align, arg2_align)));
     else
+#endif
+#ifdef HAVE_cmpstrsi
+    if (HAVE_cmpstrsi)
       insn = gen_cmpstrsi (result, arg1_rtx, arg2_rtx, arg3_rtx,
 			   GEN_INT (MIN (arg1_align, arg2_align)));
+    else
+#endif
+      abort ();
 
     if (insn)
       emit_insn (insn);
@@ -2490,7 +2509,7 @@ expand_builtin_strcmp (exp, target, mode)
      enum machine_mode mode;
 {
   tree arglist = TREE_OPERAND (exp, 1);
-  tree arg1, arg2, len, len2, fn;
+  tree arg1, arg2;
   const char *p1, *p2;
 
   if (!validate_arglist (arglist, POINTER_TYPE, POINTER_TYPE, VOID_TYPE))
@@ -2526,51 +2545,89 @@ expand_builtin_strcmp (exp, target, mode)
       return expand_expr (result, target, mode, EXPAND_NORMAL);
     }
 
-  len = c_strlen (arg1);
-  len2 = c_strlen (arg2);
-
-  if (len)
-    len = size_binop (PLUS_EXPR, ssize_int (1), len);
-
-  if (len2)
-    len2 = size_binop (PLUS_EXPR, ssize_int (1), len2);
-
-  /* If we don't have a constant length for the first, use the length
-     of the second, if we know it.  We don't require a constant for
-     this case; some cost analysis could be done if both are available
-     but neither is constant.  For now, assume they're equally cheap
-     unless one has side effects.
-
-     If both strings have constant lengths, use the smaller.  This
-     could arise if optimization results in strcpy being called with
-     two fixed strings, or if the code was machine-generated.  We should
-     add some code to the `memcmp' handler below to deal with such
-     situations, someday.  */
-
-  if (!len || TREE_CODE (len) != INTEGER_CST)
+#ifdef HAVE_cmpstrsi
+  if (HAVE_cmpstrsi)
     {
-      if (len2 && !TREE_SIDE_EFFECTS (len2))
+      tree len, len1, len2;
+      rtx arg1_rtx, arg2_rtx, arg3_rtx;
+      rtx result, insn;
+
+      int arg1_align
+	= get_pointer_alignment (arg1, BIGGEST_ALIGNMENT) / BITS_PER_UNIT;
+      int arg2_align
+	= get_pointer_alignment (arg2, BIGGEST_ALIGNMENT) / BITS_PER_UNIT;
+      enum machine_mode insn_mode
+	= insn_data[(int) CODE_FOR_cmpstrsi].operand[0].mode;
+
+      len1 = c_strlen (arg1);
+      len2 = c_strlen (arg2);
+
+      if (len1)
+	len1 = size_binop (PLUS_EXPR, ssize_int (1), len1);
+      if (len2)
+	len2 = size_binop (PLUS_EXPR, ssize_int (1), len2);
+
+      /* If we don't have a constant length for the first, use the length
+	 of the second, if we know it.  We don't require a constant for
+	 this case; some cost analysis could be done if both are available
+	 but neither is constant.  For now, assume they're equally cheap
+	 unless one has side effects.  If both strings have constant lengths,
+	 use the smaller.  */
+
+      if (!len1)
 	len = len2;
-      else if (len == 0)
+      else if (!len2)
+	len = len1;
+      else if (TREE_SIDE_EFFECTS (len1))
+	len = len2;
+      else if (TREE_SIDE_EFFECTS (len2))
+	len = len1;
+      else if (TREE_CODE (len1) != INTEGER_CST)
+	len = len2;
+      else if (TREE_CODE (len2) != INTEGER_CST)
+	len = len1;
+      else if (tree_int_cst_lt (len1, len2))
+	len = len1;
+      else
+	len = len2;
+
+      /* If both arguments have side effects, we cannot optimize.  */
+      if (!len || TREE_SIDE_EFFECTS (len))
 	return 0;
+
+      /* If we don't have POINTER_TYPE, call the function.  */
+      if (arg1_align == 0 || arg2_align == 0)
+	return 0;
+
+      /* Make a place to write the result of the instruction.  */
+      result = target;
+      if (! (result != 0
+	     && GET_CODE (result) == REG
+	     && GET_MODE (result) == insn_mode
+	     && REGNO (result) >= FIRST_PSEUDO_REGISTER))
+	result = gen_reg_rtx (insn_mode);
+
+      arg1_rtx = get_memory_rtx (arg1);
+      arg2_rtx = get_memory_rtx (arg2);
+      arg3_rtx = expand_expr (len, NULL_RTX, VOIDmode, 0);
+      insn = gen_cmpstrsi (result, arg1_rtx, arg2_rtx, arg3_rtx,
+			   GEN_INT (MIN (arg1_align, arg2_align)));
+      if (!insn)
+	return 0;
+
+      emit_insn (insn);
+
+      /* Return the value in the proper mode for this function.  */
+      mode = TYPE_MODE (TREE_TYPE (exp));
+      if (GET_MODE (result) == mode)
+	return result;
+      if (target == 0)
+	return convert_to_mode (mode, result, 0);
+      convert_move (target, result, 0);
+      return target;
     }
-  else if (len2 && TREE_CODE (len2) == INTEGER_CST
-	   && tree_int_cst_lt (len2, len))
-    len = len2;
-
-  /* If both arguments have side effects, we cannot optimize.  */
-  if (TREE_SIDE_EFFECTS (len))
-    return 0;
-
-  fn = built_in_decls[BUILT_IN_MEMCMP];
-  if (!fn)
-    return 0;
-
-  arglist = build_tree_list (NULL_TREE, len);
-  arglist = tree_cons (NULL_TREE, arg2, arglist);
-  arglist = tree_cons (NULL_TREE, arg1, arglist);
-  return expand_expr (build_function_call_expr (fn, arglist),
-		      target, mode, EXPAND_NORMAL);
+#endif
+  return 0;
 }
 
 /* Expand expression EXP, which is a call to the strncmp builtin.  Return 0
@@ -2584,7 +2641,6 @@ expand_builtin_strncmp (exp, target, mode)
      enum machine_mode mode;
 {
   tree arglist = TREE_OPERAND (exp, 1);
-  tree fn, newarglist, len = 0;
   tree arg1, arg2, arg3;
   const char *p1, *p2;
 
@@ -2638,41 +2694,94 @@ expand_builtin_strncmp (exp, target, mode)
     }
 
   /* If c_strlen can determine an expression for one of the string
-     lengths, and it doesn't have side effects, then call
-     expand_builtin_memcmp() using length MIN(strlen(string)+1, arg3).  */
+     lengths, and it doesn't have side effects, then emit cmpstrsi
+     using length MIN(strlen(string)+1, arg3).  */
+#ifdef HAVE_cmpstrsi
+  if (HAVE_cmpstrsi)
+    {
+      tree len, len1, len2;
+      rtx arg1_rtx, arg2_rtx, arg3_rtx;
+      rtx result, insn;
 
-  /* Perhaps one of the strings is really constant, if so prefer
-     that constant length over the other string's length.  */
-  if (p1)
-    len = c_strlen (arg1);
-  else if (p2)
-    len = c_strlen (arg2);
+      int arg1_align
+	= get_pointer_alignment (arg1, BIGGEST_ALIGNMENT) / BITS_PER_UNIT;
+      int arg2_align
+	= get_pointer_alignment (arg2, BIGGEST_ALIGNMENT) / BITS_PER_UNIT;
+      enum machine_mode insn_mode
+	= insn_data[(int) CODE_FOR_cmpstrsi].operand[0].mode;
 
-  /* If we still don't have a len, try either string arg as long
-     as they don't have side effects.  */
-  if (!len && !TREE_SIDE_EFFECTS (arg1))
-    len = c_strlen (arg1);
-  if (!len && !TREE_SIDE_EFFECTS (arg2))
-    len = c_strlen (arg2);
-  /* If we still don't have a length, punt.  */
-  if (!len)
-    return 0;
+      len1 = c_strlen (arg1);
+      len2 = c_strlen (arg2);
 
-  fn = built_in_decls[BUILT_IN_MEMCMP];
-  if (!fn)
-    return 0;
+      if (len1)
+	len1 = size_binop (PLUS_EXPR, ssize_int (1), len1);
+      if (len2)
+	len2 = size_binop (PLUS_EXPR, ssize_int (1), len2);
 
-  /* Add one to the string length.  */
-  len = fold (size_binop (PLUS_EXPR, len, ssize_int (1)));
+      /* If we don't have a constant length for the first, use the length
+	 of the second, if we know it.  We don't require a constant for
+	 this case; some cost analysis could be done if both are available
+	 but neither is constant.  For now, assume they're equally cheap,
+	 unless one has side effects.  If both strings have constant lengths,
+	 use the smaller.  */
 
-  /* The actual new length parameter is MIN(len,arg3).  */
-  len = fold (build (MIN_EXPR, TREE_TYPE (len), len, arg3));
+      if (!len1)
+	len = len2;
+      else if (!len2)
+	len = len1;
+      else if (TREE_SIDE_EFFECTS (len1))
+	len = len2;
+      else if (TREE_SIDE_EFFECTS (len2))
+	len = len1;
+      else if (TREE_CODE (len1) != INTEGER_CST)
+	len = len2;
+      else if (TREE_CODE (len2) != INTEGER_CST)
+	len = len1;
+      else if (tree_int_cst_lt (len1, len2))
+	len = len1;
+      else
+	len = len2;
 
-  newarglist = build_tree_list (NULL_TREE, len);
-  newarglist = tree_cons (NULL_TREE, arg2, newarglist);
-  newarglist = tree_cons (NULL_TREE, arg1, newarglist);
-  return expand_expr (build_function_call_expr (fn, newarglist),
-		      target, mode, EXPAND_NORMAL);
+      /* If both arguments have side effects, we cannot optimize.  */
+      if (!len || TREE_SIDE_EFFECTS (len))
+	return 0;
+
+      /* The actual new length parameter is MIN(len,arg3).  */
+      len = fold (build (MIN_EXPR, TREE_TYPE (len), len, arg3));
+
+      /* If we don't have POINTER_TYPE, call the function.  */
+      if (arg1_align == 0 || arg2_align == 0)
+	return 0;
+
+      /* Make a place to write the result of the instruction.  */
+      result = target;
+      if (! (result != 0
+	     && GET_CODE (result) == REG
+	     && GET_MODE (result) == insn_mode
+	     && REGNO (result) >= FIRST_PSEUDO_REGISTER))
+	result = gen_reg_rtx (insn_mode);
+
+      arg1_rtx = get_memory_rtx (arg1);
+      arg2_rtx = get_memory_rtx (arg2);
+      arg3_rtx = expand_expr (len, NULL_RTX, VOIDmode, 0);
+      insn = gen_cmpstrsi (result, arg1_rtx, arg2_rtx, arg3_rtx,
+			   GEN_INT (MIN (arg1_align, arg2_align)));
+      if (!insn)
+	return 0;
+
+      emit_insn (insn);
+
+      /* Return the value in the proper mode for this function.  */
+      mode = TYPE_MODE (TREE_TYPE (exp));
+      if (GET_MODE (result) == mode)
+	return result;
+      if (target == 0)
+	return convert_to_mode (mode, result, 0);
+      convert_move (target, result, 0);
+      return target;
+    }
+#endif
+  return 0;
 }
 
 /* Expand expression EXP, which is a call to the strcat builtin.
@@ -3573,30 +3682,24 @@ expand_builtin_expect_jump (exp, if_false_label, if_true_label)
   if (TREE_CODE (TREE_TYPE (arg1)) == INTEGER_TYPE
       && (integer_zerop (arg1) || integer_onep (arg1)))
     {
-      int num_jumps = 0;
-      rtx insn;
-
-      /* If we fail to locate an appropriate conditional jump, we'll
-	 fall back to normal evaluation.  Ensure that the expression
-	 can be re-evaluated.  */
-      switch (unsafe_for_reeval (arg0))
-	{
-	case 0: /* Safe.  */
-	  break;
-
-	case 1: /* Mildly unsafe.  */
-	  arg0 = unsave_expr (arg0);
-	  break;
-
-	case 2: /* Wildly unsafe.  */
-	  return NULL_RTX;
-	}
+      rtx insn, drop_through_label;
 
       /* Expand the jump insns.  */
       start_sequence ();
       do_jump (arg0, if_false_label, if_true_label);
       ret = get_insns ();
+
+      drop_through_label = get_last_insn ();
+      if (drop_through_label && GET_CODE (drop_through_label) == NOTE)
+	drop_through_label = prev_nonnote_insn (drop_through_label);
+      if (drop_through_label && GET_CODE (drop_through_label) != CODE_LABEL)
+	drop_through_label = NULL_RTX;
       end_sequence ();
+
+      if (! if_true_label)
+	if_true_label = drop_through_label;
+      if (! if_false_label)
+	if_false_label = drop_through_label;
 
       /* Now that the __builtin_expect has been validated, go through and add
 	 the expect's to each of the conditional jumps.  If we run into an
@@ -3659,18 +3762,12 @@ expand_builtin_expect_jump (exp, if_false_label, if_true_label)
 	      else if (label != if_true_label)
 		goto do_next_insn;
 
-	      num_jumps++;
 	      predict_insn_def (insn, PRED_BUILTIN_EXPECT, taken);
 	    }
 
 	do_next_insn:
 	  insn = next;
 	}
-
-      /* If no jumps were modified, fail and do __builtin_expect the normal
-	 way.  */
-      if (num_jumps == 0)
-	ret = NULL_RTX;
     }
 
   return ret;

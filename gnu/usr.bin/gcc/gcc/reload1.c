@@ -790,8 +790,18 @@ reload (first, global)
 		     that is not a legitimate memory operand.  As later
 		     stages of reload assume that all addresses found
 		     in the reg_equiv_* arrays were originally legitimate,
-		     we ignore such REG_EQUIV notes.  */
-		  if (memory_operand (x, VOIDmode))
+		     we ignore such REG_EQUIV notes.
+
+		     It also can happen that a REG_EQUIV note contains a MEM
+		     that carries the /u flag, for example when GCSE turns
+		     the load of a constant into a move from a pseudo that
+		     already contains the constant and attaches a REG_EQUAL
+		     note to the insn, which is later promoted to REQ_EQUIV
+		     by local-alloc.  If the destination pseudo happens not
+		     to be assigned to a hard reg, it will be replaced by
+		     the MEM as the destination of the move, thus generating
+		     a store to a possibly read-only memory location.  */
+		  if (memory_operand (x, VOIDmode) && ! RTX_UNCHANGING_P (x))
 		    {
 		      /* Always unshare the equivalence, so we can
 			 substitute into this insn without touching the
@@ -1291,6 +1301,14 @@ reload (first, global)
      created shared rtx.  Subsequent passes would get confused
      by this, so unshare everything here.  */
   unshare_all_rtl_again (first);
+
+#ifdef STACK_BOUNDARY
+  /* init_emit has set the alignment of the hard frame pointer
+     to STACK_BOUNDARY.  It is very likely no longer valid if
+     the hard frame pointer was used for register allocation.  */
+  if (!frame_pointer_needed)
+    REGNO_POINTER_ALIGN (HARD_FRAME_POINTER_REGNUM) = BITS_PER_UNIT;
+#endif
 
   return failure;
 }
@@ -4390,6 +4408,7 @@ reload_reg_free_p (regno, opnum, type)
       /* In use for anything means we can't use it for RELOAD_OTHER.  */
       if (TEST_HARD_REG_BIT (reload_reg_used_in_other_addr, regno)
 	  || TEST_HARD_REG_BIT (reload_reg_used_in_op_addr, regno)
+	  || TEST_HARD_REG_BIT (reload_reg_used_in_op_addr_reload, regno)
 	  || TEST_HARD_REG_BIT (reload_reg_used_in_insn, regno))
 	return 0;
 
@@ -4571,6 +4590,7 @@ reload_reg_reaches_end_p (regno, opnum, type)
 	  return 0;
 
       return (! TEST_HARD_REG_BIT (reload_reg_used_in_op_addr, regno)
+	      && ! TEST_HARD_REG_BIT (reload_reg_used_in_op_addr_reload, regno)
 	      && ! TEST_HARD_REG_BIT (reload_reg_used_in_insn, regno)
 	      && ! TEST_HARD_REG_BIT (reload_reg_used, regno));
 
@@ -8066,6 +8086,19 @@ reload_cse_simplify (insn, testreg)
       int count = 0;
       rtx value = NULL_RTX;
 
+      /* Registers mentioned in the clobber list for an asm cannot be reused
+	 within the body of the asm.  Invalidate those registers now so that
+	 we don't try to substitute values for them.  */
+      if (asm_noperands (body) >= 0)
+	{
+	  for (i = XVECLEN (body, 0) - 1; i >= 0; --i)
+	    {
+	      rtx part = XVECEXP (body, 0, i);
+	      if (GET_CODE (part) == CLOBBER && REG_P (XEXP (part, 0)))
+		cselib_invalidate_rtx (XEXP (part, 0));
+	    }
+	}
+
       /* If every action in a PARALLEL is a noop, we can delete
 	 the entire PARALLEL.  */
       for (i = XVECLEN (body, 0) - 1; i >= 0; --i)
@@ -8356,6 +8389,8 @@ reload_cse_simplify_operands (insn, testreg)
     {
       cselib_val *v;
       struct elt_loc_list *l;
+      rtx op;
+      enum machine_mode mode;
 
       CLEAR_HARD_REG_SET (equiv_regs[i]);
 
@@ -8367,7 +8402,52 @@ reload_cse_simplify_operands (insn, testreg)
 	      && recog_data.operand_mode[i] == VOIDmode))
 	continue;
 
-      v = cselib_lookup (recog_data.operand[i], recog_data.operand_mode[i], 0);
+      op = recog_data.operand[i];
+      mode = GET_MODE (op);
+#ifdef LOAD_EXTEND_OP
+      if (GET_CODE (op) == MEM
+	  && GET_MODE_BITSIZE (mode) < BITS_PER_WORD
+	  && LOAD_EXTEND_OP (mode) != NIL)
+	{
+	  rtx set = single_set (insn);
+
+	  /* We might have multiple sets, some of which do implict
+	     extension.  Punt on this for now.  */
+	  if (! set)
+	    continue;
+	  /* If the destination is a also MEM or a STRICT_LOW_PART, no
+	     extension applies.
+	     Also, if there is an explicit extension, we don't have to
+	     worry about an implicit one.  */
+	  else if (GET_CODE (SET_DEST (set)) == MEM
+		   || GET_CODE (SET_DEST (set)) == STRICT_LOW_PART
+		   || GET_CODE (SET_SRC (set)) == ZERO_EXTEND
+		   || GET_CODE (SET_SRC (set)) == SIGN_EXTEND)
+	    ; /* Continue ordinary processing.  */
+	  /* If this is a straight load, make the extension explicit.  */
+	  else if (GET_CODE (SET_DEST (set)) == REG
+		   && recog_data.n_operands == 2
+		   && SET_SRC (set) == op
+		   && SET_DEST (set) == recog_data.operand[1-i])
+	    {
+	      validate_change (insn, recog_data.operand_loc[i],
+			       gen_rtx_fmt_e (LOAD_EXTEND_OP (mode),
+					      word_mode, op),
+			       1);
+	      validate_change (insn, recog_data.operand_loc[1-i],
+			       gen_rtx_REG (word_mode, REGNO (SET_DEST (set))),
+			       1);
+	      if (!apply_change_group ())
+		return 0;
+	      return reload_cse_simplify_operands (insn, testreg);
+	    }
+	  else
+	    /* ??? There might be arithmetic operations with memory that are
+	       safe to optimize, but is it worth the trouble?  */
+	    continue;
+	}
+#endif /* LOAD_EXTEND_OP */
+      v = cselib_lookup (op, recog_data.operand_mode[i], 0);
       if (! v)
 	continue;
 

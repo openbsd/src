@@ -3436,6 +3436,40 @@ prepare_cmp_insn (px, py, pcomparison, size, pmode, punsignedp, purpose)
 
       if (size == 0)
 	abort ();
+#ifdef HAVE_cmpmemqi
+      if (HAVE_cmpmemqi
+	  && GET_CODE (size) == CONST_INT
+	  && INTVAL (size) < (1 << GET_MODE_BITSIZE (QImode)))
+	{
+	  result_mode = insn_data[(int) CODE_FOR_cmpmemqi].operand[0].mode;
+	  result = gen_reg_rtx (result_mode);
+	  emit_insn (gen_cmpmemqi (result, x, y, size, opalign));
+	}
+      else
+#endif
+#ifdef HAVE_cmpmemhi
+      if (HAVE_cmpmemhi
+	  && GET_CODE (size) == CONST_INT
+	  && INTVAL (size) < (1 << GET_MODE_BITSIZE (HImode)))
+	{
+	  result_mode = insn_data[(int) CODE_FOR_cmpmemhi].operand[0].mode;
+	  result = gen_reg_rtx (result_mode);
+	  emit_insn (gen_cmpmemhi (result, x, y, size, opalign));
+	}
+      else
+#endif
+#ifdef HAVE_cmpmemsi
+      if (HAVE_cmpmemsi)
+	{
+	  result_mode = insn_data[(int) CODE_FOR_cmpmemsi].operand[0].mode;
+	  result = gen_reg_rtx (result_mode);
+	  size = protect_from_queue (size, 0);
+	  emit_insn (gen_cmpmemsi (result, x, y,
+				   convert_to_mode (SImode, size, 1),
+				   opalign));
+	}
+      else
+#endif
 #ifdef HAVE_cmpstrqi
       if (HAVE_cmpstrqi
 	  && GET_CODE (size) == CONST_INT
@@ -3494,6 +3528,16 @@ prepare_cmp_insn (px, py, pcomparison, size, pmode, punsignedp, purpose)
       *py = const0_rtx;
       *pmode = result_mode;
       return;
+    }
+
+  /* Don't allow operands to the compare to trap, as that can put the
+     compare and branch in different basic blocks.  */
+  if (flag_non_call_exceptions)
+    {
+      if (may_trap_p (x))
+	x = force_reg (mode, x);
+      if (may_trap_p (y))
+	y = force_reg (mode, y);
     }
 
   *px = x;

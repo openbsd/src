@@ -298,11 +298,11 @@ xscale-*-*)
 	;;
 i[34567]86-*-*)
 	cpu_type=i386
-	extra_headers="mmintrin.h xmmintrin.h"
+	extra_headers="mmintrin.h xmmintrin.h emmintrin.h pmmintrin.h"
 	;;
 x86_64-*-*)
 	cpu_type=i386
-	extra_headers="mmintrin.h xmmintrin.h"
+	extra_headers="mmintrin.h xmmintrin.h emmintrin.h pmmintrin.h"
 	;;
 ia64-*-*)
 	extra_headers=ia64intrin.h
@@ -715,7 +715,7 @@ arm*-*-netbsd*)
 	use_collect2=yes
 	;;
 arm*-*-linux*)			# ARM GNU/Linux with ELF
-	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/linux-gas.h arm/linux-elf.h"
+	tm_file="dbxelf.h elfos.h arm/elf.h arm/linux-gas.h arm/linux-elf.h arm/aout.h arm/arm.h"
 	tmake_file="t-slibgcc-elf-ver t-linux arm/t-linux"
 	extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	gnu_ld=yes
@@ -809,7 +809,7 @@ frv-*-elf)
 	;;
 h8300-*-rtems*)
 	xm_defines=POSIX
-	tmake_file="h8300/t-h8300 t-rtems"
+	tmake_file="h8300/t-h8300 t-rtems h8300/t-rtems"
 	tm_file="h8300/h8300.h h8300/rtems.h rtems.h"
 	if test x$enable_threads = xyes; then
 	  thread_file='rtems'
@@ -2153,7 +2153,7 @@ powerpc-*-eabi*)
 powerpc-*-rtems*)
 	xm_defines=POSIX
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h rs6000/eabi.h rs6000/rtems.h rtems.h"
-	tmake_file="rs6000/t-rtems t-rtems rs6000/t-ppccomm"
+	tmake_file="rs6000/t-fprules rs6000/t-rtems t-rtems rs6000/t-ppccomm"
 	if test x$enable_threads = xyes; then
 	  thread_file='rtems'
 	fi
@@ -2347,7 +2347,7 @@ sh-*-rtems*)
 	fi
 	;;
 sh-*-linux* | sh[2346lbe]*-*-linux*)
-	tmake_file="sh/t-sh sh/t-elf"
+	tmake_file="sh/t-sh sh/t-elf t-slibgcc-elf-ver t-linux"
 	case $machine in
 	sh*be-*-* | sh*eb-*-*) ;;
 	*)
@@ -2874,7 +2874,25 @@ x86_64-*-*)
 	# We should have hammer chip here, but it does not exist yet and
 	# thus it is not supported.  Athlon_SSE is probably equivalent feature
 	# wise to hammer from our point of view except for 64bit mode.
-	target_cpu_default2=TARGET_CPU_DEFAULT_athlon_sse
+	case "x$with_cpu" in
+		x)
+			target_cpu_default2=TARGET_CPU_DEFAULT_athlon_sse
+			;;
+		xnocona)
+			target_cpu_default2=TARGET_CPU_DEFAULT_pentium4
+			;;
+		xyes|xno)
+			echo "--with-cpu must be passed a value" 1>&2
+			exit 1
+			;;
+		*)
+			if test x$pass2done = xyes
+			then
+				echo "Unknown cpu used with --with-cpu=$with_cpu" 1>&2
+				exit 1
+			fi
+			;;
+	esac
 	;;
 alpha*-*-*)
 	case $machine in

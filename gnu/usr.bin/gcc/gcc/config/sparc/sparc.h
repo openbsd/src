@@ -1,8 +1,8 @@
 /* Definitions of target machine for GNU compiler, for Sun SPARC.
    Copyright (C) 1987, 1988, 1989, 1992, 1994, 1995, 1996, 1997, 1998, 1999
-   2000, 2001, 2002 Free Software Foundation, Inc.
+   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com).
-   64 bit SPARC V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
+   64-bit SPARC-V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
    at Cygnus Support.
 
 This file is part of GNU CC.
@@ -2586,10 +2586,18 @@ do {                                                                    \
 #define LTTF2_LIBCALL "_Q_flt"
 #define LETF2_LIBCALL "_Q_fle"
 
+/* These functions were added in SCD 2.3, so not necessarily all targets
+   support them.  */
+#define FLOATDITF2_LIBCALL "_Q_lltoq"
+#define FIX_TRUNCTFDI2_LIBCALL "_Q_qtoll"
+#define FIXUNS_TRUNCTFDI2_LIBCALL "_Q_qtoull"
+
+#define DITF_CONVERSION_LIBFUNCS	0
+
 /* Assume by default that the _Qp_* 64-bit libcalls are implemented such
    that the inputs are fully consumed before the output memory is clobbered.  */
 
-#define TARGET_BUGGY_QP_LIB	0
+#define TARGET_BUGGY_QP_LIB		0
 
 /* We can define the TFmode sqrt optab only if TARGET_FPU.  This is because
    with soft-float, the SFmode and DFmode sqrt instructions will be absent,
@@ -2623,6 +2631,13 @@ do {                                                                    \
 	fixtfsi_libfunc = init_one_libfunc (FIX_TRUNCTFSI2_LIBCALL);	\
 	fixunstfsi_libfunc						\
 	  = init_one_libfunc (FIXUNS_TRUNCTFSI2_LIBCALL);		\
+	if (DITF_CONVERSION_LIBFUNCS)					\
+	  {								\
+	    floatditf_libfunc = init_one_libfunc (FLOATDITF2_LIBCALL);	\
+	    fixtfdi_libfunc = init_one_libfunc (FIX_TRUNCTFDI2_LIBCALL);\
+	    fixunstfdi_libfunc						\
+	      = init_one_libfunc (FIXUNS_TRUNCTFDI2_LIBCALL);		\
+	  }								\
 	if (TARGET_FPU)							\
 	  sqrt_optab->handlers[(int) TFmode].libfunc			\
 	    = init_one_libfunc ("_Q_sqrt");				\
@@ -3044,6 +3059,7 @@ do {									\
 {"uns_arith_operand", {SUBREG, REG, CONST_INT}},			\
 {"clobbered_register", {REG}},						\
 {"input_operand", {SUBREG, REG, CONST_INT, MEM, CONST}},		\
+{"compare_operand", {SUBREG, REG, ZERO_EXTRACT}},			\
 {"const64_operand", {CONST_INT, CONST_DOUBLE}},				\
 {"const64_high_operand", {CONST_INT, CONST_DOUBLE}},
 

@@ -197,6 +197,19 @@ static int target_help_flag;
 
 static int report_times;
 
+/* Nonzero means place this string before uses of /, so that include
+   and library files can be found in an alternate location.  */
+
+#ifdef TARGET_SYSTEM_ROOT
+static const char *target_system_root = TARGET_SYSTEM_ROOT;
+#else
+static const char *target_system_root = 0;
+#endif
+
+/* Nonzero means pass the updated target_system_root to the compiler.  */
+
+static int target_system_root_changed;
+
 /* Nonzero means write "temp" files in source directory
    and use the source file's name in them, and don't delete them.  */
 
@@ -279,6 +292,8 @@ static char *find_a_file	PARAMS ((struct path_prefix *, const char *,
 					 int, int));
 static void add_prefix		PARAMS ((struct path_prefix *, const char *,
 					 const char *, int, int, int *, int));
+static void add_sysrooted_prefix PARAMS ((struct path_prefix *, const char *,
+					  const char *, int, int, int *, int));
 static void translate_options	PARAMS ((int *, const char *const **));
 static char *skip_whitespace	PARAMS ((char *));
 static void delete_if_ordinary	PARAMS ((const char *));
@@ -313,7 +328,7 @@ static void display_help 	PARAMS ((void));
 static void add_preprocessor_option	PARAMS ((const char *, int));
 static void add_assembler_option	PARAMS ((const char *, int));
 static void add_linker_option		PARAMS ((const char *, int));
-static void process_command		PARAMS ((int, const char *const *));
+static void process_command		PARAMS ((int, const char **));
 static int execute			PARAMS ((void));
 static void alloc_args			PARAMS ((void));
 static void clear_args			PARAMS ((void));
@@ -414,7 +429,9 @@ or with constant text in a single argument.
  %P	like %p, but puts `__' before and after the name of each macro.
 	(Except macros that already have __.)
 	This is for ANSI C.
- %I	Substitute a -iprefix option made from GCC_EXEC_PREFIX.
+ %I	Substitute any of -iprefix (made from GCC_EXEC_PREFIX), -isysroot
+	(made from TARGET_SYSTEM_ROOT), and -isystem (made from COMPILER_PATH
+	and -B options) as necessary.
  %s     current argument is the name of a library or startup file of some sort.
         Search for that file in a standard list of directories
 	and substitute the full name found.
@@ -715,7 +732,7 @@ static const char *cpp_debug_options = "%{d*}";
 static const char *cc1_options =
 "%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
  %1 %{!Q:-quiet} -dumpbase %B %{d*} %{m*} %{a*}\
- -auxbase%{c|S:%{o*:-strip %*}%{!o*: %b}}%{!c:%{!S: %b}}\
+ %{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}%{!c:%{!S:-auxbase %b}}\
  %{g*} %{O*} %{W*&pedantic*} %{w} %{std*} %{ansi}\
  %{v:-version} %{pg:-p} %{p} %{f*} %{undef}\
  %{Qn:-fno-ident} %{--help:--help}\
@@ -1314,9 +1331,6 @@ static const char *gcc_exec_prefix;
 #ifndef STANDARD_EXEC_PREFIX
 #define STANDARD_EXEC_PREFIX "/usr/local/lib/gcc-lib/"
 #endif
-#ifndef STANDARD_STARTFILE_PREFIX
-#define STANDARD_STARTFILE_PREFIX "/usr/local/lib/"
-#endif
 #ifndef TOOLDIR_BASE_PREFIX
 #define TOOLDIR_BASE_PREFIX "/usr/local/"
 #endif
@@ -1454,6 +1468,12 @@ init_gcc_specs (obstack, shared_name, static_name, eh_name)
 
   buf = concat ("%{static|static-libgcc:", static_name, " ", eh_name,
 		"}%{!static:%{!static-libgcc:",
+#ifdef HAVE_LD_AS_NEEDED
+		"%{!shared-libgcc:", static_name,
+		" --as-needed ", shared_name, " --no-as-needed}"
+		"%{shared-libgcc:", shared_name, "%{!shared: ", static_name,
+		"}",
+#else
 		"%{!shared:%{!shared-libgcc:", static_name, " ",
 		eh_name, "}%{shared-libgcc:", shared_name, " ",
 		static_name, "}}%{shared:",
@@ -1462,6 +1482,7 @@ init_gcc_specs (obstack, shared_name, static_name, eh_name)
 		"}%{!shared-libgcc:", static_name, "}",
 #else
 		shared_name,
+#endif
 #endif
 		"}}}", NULL);
 
@@ -1556,12 +1577,14 @@ init_spec ()
 #else
 			    "-lgcc_s%M"
 #endif
+			    ,
+			    "-lgcc",
+			    "-lgcc_eh"
 #ifdef USE_LIBUNWIND_EXCEPTIONS
 			    " -lunwind"
 #endif
-			    ,
-			    "-lgcc",
-			    "-lgcc_eh");
+			    );
+
 	    p += 5;
 	    in_sep = 0;
 	  }
@@ -1577,7 +1600,11 @@ init_spec ()
 #endif
 			    ,
 			    "libgcc.a%s",
-			    "libgcc_eh.a%s");
+			    "libgcc_eh.a%s"
+#ifdef USE_LIBUNWIND_EXCEPTIONS
+			    "libunwind.a%s"
+#endif
+			    );
 	    p += 10;
 	    in_sep = 0;
 	  }
@@ -2503,6 +2530,33 @@ add_prefix (pprefix, prefix, component, priority, require_machine_suffix,
   pl->next = (*prev);
   (*prev) = pl;
 }
+
+/* Same as add_prefix, but prepending target_system_root to prefix.  */
+static void
+add_sysrooted_prefix (pprefix, prefix, component, priority,
+		      require_machine_suffix, warn, os_multilib)
+     struct path_prefix *pprefix;
+     const char *prefix;
+     const char *component;
+     /* enum prefix_priority */ int priority;
+     int require_machine_suffix;
+     int *warn;
+     int os_multilib;
+{
+  if (!IS_ABSOLUTE_PATHNAME (prefix))
+    abort ();
+
+  if (target_system_root)
+    {
+      prefix = concat (target_system_root, prefix, NULL);
+      /* We have to override this because GCC's notion of sysroot
+	 moves along with GCC.  */
+      component = "GCC";
+    }
+
+  add_prefix (pprefix, prefix, component, priority,
+	      require_machine_suffix, warn, os_multilib);
+}
 
 /* Execute the command specified by the arguments on the current line of spec.
    When using pipes, this includes several piped-together commands
@@ -2604,7 +2658,14 @@ execute ()
 	}
       fflush (stderr);
       if (verbose_only_flag != 0)
-	return 0;
+        {
+	  /* verbose_only_flag should act as if the spec was
+	     executed, so increment execution_count before
+	     returning.  Theis prevent spurious warnings about
+	     unused linker input files, etc.  */
+	  execution_count++;
+	  return 0;
+        }
 #ifdef DEBUG
       notice ("\nGo ahead? (y or n) ");
       fflush (stderr);
@@ -2996,7 +3057,7 @@ add_linker_option (option, len)
 static void
 process_command (argc, argv)
      int argc;
-     const char *const *argv;
+     const char **argv;
 {
   int i;
   const char *temp;
@@ -3225,10 +3286,10 @@ process_command (argc, argv)
     }
 
   /* Convert new-style -- options to old-style.  */
-  translate_options (&argc, &argv);
+  translate_options (&argc, (const char *const **) &argv);
 
   /* Do language-specific adjustment/addition of flags.  */
-  lang_specific_driver (&argc, &argv, &added_libraries);
+  lang_specific_driver (&argc, (const char *const **) &argv, &added_libraries);
 
   /* Scan argv twice.  Here, the first time, just count how many switches
      there will be in their vector, and how many input files in theirs.
@@ -3676,6 +3737,24 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
   add_prefix (&startfile_prefixes,
 	      concat (tooldir_prefix, "lib", dir_separator_str, NULL),
 	      "BINUTILS", PREFIX_PRIORITY_LAST, 0, NULL, 1);
+
+#if defined(TARGET_SYSTEM_ROOT_RELOCATABLE) && !defined(VMS)
+  /* If the normal TARGET_SYSTEM_ROOT is inside of $exec_prefix,
+     then consider it to relocate with the rest of the GCC installation
+     if GCC_EXEC_PREFIX is set.
+     ``make_relative_prefix'' is not compiled for VMS, so don't call it.  */
+  if (target_system_root && gcc_exec_prefix)
+    {
+      char *tmp_prefix = make_relative_prefix (argv[0],
+					       standard_bindir_prefix,
+					       target_system_root);
+      if (tmp_prefix && access_check (tmp_prefix, F_OK) == 0)
+	{
+	  target_system_root = tmp_prefix;
+	  target_system_root_changed = 1;
+	}
+    }
+#endif
 
   /* More prefixes are enabled in main, after we read the specs file
      and determine whether this is cross-compilation or not.  */
@@ -4559,6 +4638,15 @@ do_spec_1 (spec, inswitch, soft_matched_part)
 		  do_spec_1 (" ", 0, NULL);
 		}
 
+	      if (target_system_root_changed)
+		{
+		  do_spec_1 ("-isysroot", 1, NULL);
+		  /* Make this a separate argument.  */
+		  do_spec_1 (" ", 0, NULL);
+		  do_spec_1 (target_system_root, 1, NULL);
+		  do_spec_1 (" ", 0, NULL);
+		}
+
 	      for (; pl; pl = pl->next)
 		{
 		  do_spec_1 ("-isystem", 1, NULL);
@@ -4905,6 +4993,14 @@ do_spec_1 (spec, inswitch, soft_matched_part)
 	      if (value != 0)
 		return value;
 	    }
+	    break;
+
+	  case 'R':
+	    /* We assume there is a directory
+	       separator at the end of this string.  */
+	    if (target_system_root)
+	      obstack_grow (&obstack, target_system_root, 
+			    strlen (target_system_root));
 	    break;
 
 	  case 'S':
@@ -5828,12 +5924,12 @@ fatal_error (signum)
   kill (getpid (), signum);
 }
 
-extern int main PARAMS ((int, const char *const *));
+extern int main PARAMS ((int, const char **));
 
 int
 main (argc, argv)
      int argc;
-     const char *const *argv;
+     const char **argv;
 {
   size_t i;
   int value;
@@ -5980,35 +6076,47 @@ main (argc, argv)
   if (access (specs_file, R_OK) == 0)
     read_specs (specs_file, TRUE);
 
-  /* If not cross-compiling, look for startfiles in the standard places.
-     Similarly, don't add the standard prefixes if startfile handling
-     will be under control of startfile_prefix_spec.  */
-  if (*cross_compile == '0' && *startfile_prefix_spec == 0)
+  /* If not cross-compiling, look for executables in the standard
+     places.  */
+  if (*cross_compile == '0')
     {
       if (*md_exec_prefix)
 	{
 	  add_prefix (&exec_prefixes, md_exec_prefix, "GCC",
 		      PREFIX_PRIORITY_LAST, 0, NULL, 0);
-	  add_prefix (&startfile_prefixes, md_exec_prefix, "GCC",
-		      PREFIX_PRIORITY_LAST, 0, NULL, 0);
 	}
+    }
+
+  /* Look for startfiles in the standard places.  */
+  if (*startfile_prefix_spec != 0
+      && do_spec_2 (startfile_prefix_spec) == 0
+      && do_spec_1 (" ", 0, NULL) == 0)
+    {
+      int ndx;
+      for (ndx = 0; ndx < argbuf_index; ndx++)
+	add_sysrooted_prefix (&startfile_prefixes, argbuf[ndx], "BINUTILS",
+			      PREFIX_PRIORITY_LAST, 0, NULL, 1);
+    }
+  /* We should eventually get rid of all these and stick to
+     startfile_prefix_spec exclusively.  */
+  else if (*cross_compile == '0' || target_system_root)
+    {
+      if (*md_exec_prefix)
+	add_sysrooted_prefix (&startfile_prefixes, md_exec_prefix, "GCC",
+			      PREFIX_PRIORITY_LAST, 0, NULL, 1);
 
       if (*md_startfile_prefix)
-	add_prefix (&startfile_prefixes, md_startfile_prefix, "GCC",
-		    PREFIX_PRIORITY_LAST, 0, NULL, 1);
+	add_sysrooted_prefix (&startfile_prefixes, md_startfile_prefix,
+			      "GCC", PREFIX_PRIORITY_LAST, 0, NULL, 1);
 
       if (*md_startfile_prefix_1)
-	add_prefix (&startfile_prefixes, md_startfile_prefix_1, "GCC",
-		    PREFIX_PRIORITY_LAST, 0, NULL, 1);
+	add_sysrooted_prefix (&startfile_prefixes, md_startfile_prefix_1,
+			      "GCC", PREFIX_PRIORITY_LAST, 0, NULL, 1);
 
-      /* If standard_startfile_prefix is relative, base it on
-	 standard_exec_prefix.  This lets us move the installed tree
-	 as a unit.  If GCC_EXEC_PREFIX is defined, base
-	 standard_startfile_prefix on that as well.  */
-      if (IS_ABSOLUTE_PATHNAME (standard_startfile_prefix))
-	add_prefix (&startfile_prefixes, standard_startfile_prefix, "BINUTILS",
-		    PREFIX_PRIORITY_LAST, 0, NULL, 1);
-      else
+      /* Base standard_startfile_prefix (unlibsubdir) on standard_exec_prefix.
+	 This lets us move the installed tree as a unit.  If GCC_EXEC_PREFIX
+	 is defined, base standard_startfile_prefix on that as well.  */
+      if (*cross_compile == '0')
 	{
 	  if (gcc_exec_prefix)
 	    add_prefix (&startfile_prefixes,
@@ -6022,33 +6130,14 @@ main (argc, argv)
 		      NULL, PREFIX_PRIORITY_LAST, 0, NULL, 1);
 	}
 
-      add_prefix (&startfile_prefixes, standard_startfile_prefix_1,
-		  "BINUTILS", PREFIX_PRIORITY_LAST, 0, NULL, 1);
-      add_prefix (&startfile_prefixes, standard_startfile_prefix_2,
-		  "BINUTILS", PREFIX_PRIORITY_LAST, 0, NULL, 1);
+      add_sysrooted_prefix (&startfile_prefixes, standard_startfile_prefix_1,
+			    "BINUTILS", PREFIX_PRIORITY_LAST, 0, NULL, 1);
+      add_sysrooted_prefix (&startfile_prefixes, standard_startfile_prefix_2,
+			    "BINUTILS", PREFIX_PRIORITY_LAST, 0, NULL, 1);
 #if 0 /* Can cause surprises, and one can use -B./ instead.  */
       add_prefix (&startfile_prefixes, "./", NULL,
 		  PREFIX_PRIORITY_LAST, 1, NULL, 0);
 #endif
-    }
-  else
-    {
-      if (!IS_ABSOLUTE_PATHNAME (standard_startfile_prefix)
-	  && gcc_exec_prefix)
-	add_prefix (&startfile_prefixes,
-		    concat (gcc_exec_prefix, machine_suffix,
-			    standard_startfile_prefix, NULL),
-		    "BINUTILS", PREFIX_PRIORITY_LAST, 0, NULL, 1);
-    }
-
-  if (*startfile_prefix_spec != 0
-      && do_spec_2 (startfile_prefix_spec) == 0
-      && do_spec_1 (" ", 0, NULL) == 0)
-    {
-      int ndx;
-      for (ndx = 0; ndx < argbuf_index; ndx++)
-	add_prefix (&startfile_prefixes, argbuf[ndx], "BINUTILS",
-		    PREFIX_PRIORITY_LAST, 0, NULL, 1);
     }
 
   /* Process any user specified specs in the order given on the command

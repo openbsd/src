@@ -1091,15 +1091,19 @@ convert_class_to_reference (t, s, expr)
 					   LOOKUP_NORMAL);
 	  
 	  if (cand)
-	    /* Build a standard conversion sequence indicating the
-	       binding from the reference type returned by the
-	       function to the desired REFERENCE_TYPE.  */
-	    cand->second_conv
-	      = (direct_reference_binding 
-		 (reference_type, 
-		  build1 (IDENTITY_CONV, 
-			  TREE_TYPE (TREE_TYPE (TREE_TYPE (cand->fn))),
-			  NULL_TREE)));
+            {
+              /* Build a standard conversion sequence indicating the
+                 binding from the reference type returned by the
+                 function to the desired REFERENCE_TYPE.  */
+              cand->second_conv
+                = (direct_reference_binding 
+                   (reference_type, 
+                    build1 (IDENTITY_CONV, 
+                            TREE_TYPE (TREE_TYPE (TREE_TYPE (cand->fn))),
+                            NULL_TREE)));
+              ICS_BAD_FLAG (cand->second_conv)
+                |= ICS_BAD_FLAG (TREE_VEC_ELT (cand->convs, 0));
+            }
 	}
       conversions = TREE_CHAIN (conversions);
     }
@@ -3238,11 +3242,27 @@ build_conditional_expr (arg1, arg2, arg3)
 	   type of the other and is an rvalue.
 
 	 --Both the second and the third operands have type void; the
-	   result is of type void and is an rvalue.  */
-      if ((TREE_CODE (arg2) == THROW_EXPR)
-	  ^ (TREE_CODE (arg3) == THROW_EXPR))
-	result_type = ((TREE_CODE (arg2) == THROW_EXPR) 
-		       ? arg3_type : arg2_type);
+	   result is of type void and is an rvalue.  
+
+         We must avoid calling force_rvalue for expressions of type
+	 "void" because it will complain that their value is being
+	 used.   */
+      if (TREE_CODE (arg2) == THROW_EXPR 
+	  && TREE_CODE (arg3) != THROW_EXPR)
+	{
+	  if (!VOID_TYPE_P (arg3_type))
+	    arg3 = force_rvalue (arg3);
+	  arg3_type = TREE_TYPE (arg3);
+	  result_type = arg3_type;
+	}
+      else if (TREE_CODE (arg2) != THROW_EXPR 
+	       && TREE_CODE (arg3) == THROW_EXPR)
+	{
+	  if (!VOID_TYPE_P (arg2_type))
+	    arg2 = force_rvalue (arg2);
+	  arg2_type = TREE_TYPE (arg2);
+	  result_type = arg2_type;
+	}
       else if (VOID_TYPE_P (arg2_type) && VOID_TYPE_P (arg3_type))
 	result_type = void_type_node;
       else
@@ -4093,7 +4113,7 @@ convert_like_real (tree convs, tree expr, tree fn, int argnum, int inner,
   
   if (issue_conversion_warnings)
     expr = dubious_conversion_warnings
-             (totype, expr, "argument", fn, argnum);
+             (totype, expr, "converting", fn, argnum);
   switch (TREE_CODE (convs))
     {
     case USER_CONV:
@@ -4308,14 +4328,18 @@ convert_arg_to_ellipsis (arg)
 
   arg = require_complete_type (arg);
   
-  if (arg != error_mark_node && ! pod_type_p (TREE_TYPE (arg)))
+  if (arg != error_mark_node
+      && !pod_type_p (TREE_TYPE (arg)))
     {
       /* Undefined behavior [expr.call] 5.2.2/7.  We used to just warn
 	 here and do a bitwise copy, but now cp_expr_size will abort if we
-	 try to do that.  */
-      warning ("cannot pass objects of non-POD type `%#T' through `...'; \
-call will abort at runtime",
-	       TREE_TYPE (arg));
+	 try to do that.
+	 If the call appears in the context of a sizeof expression,
+	 there is no need to emit a warning, since the expression won't be
+	 evaluated. We keep the builtin_trap just as a safety check.  */
+      if (!skip_evaluation)
+	warning ("cannot pass objects of non-POD type `%#T' through `...'; "
+		 "call will abort at runtime", TREE_TYPE (arg));
       arg = call_builtin_trap ();
     }
 
@@ -4882,14 +4906,23 @@ build_special_member_call (tree instance, tree name, tree args,
 	  || name == deleting_dtor_identifier)
 	my_friendly_assert (args == NULL_TREE, 20020712);
 
-      /* We must perform the conversion here so that we do not
-	 subsequently check to see whether BINFO is an accessible
-	 base.  (It is OK for a constructor to call a constructor in
-	 an inaccessible base as long as the constructor being called
-	 is accessible.)  */
+      /* Convert to the base class, if necessary.  */
       if (!same_type_ignoring_top_level_qualifiers_p 
 	  (TREE_TYPE (instance), BINFO_TYPE (binfo)))
-	instance = convert_to_base_statically (instance, binfo);
+	{
+	  if (name != ansi_assopname (NOP_EXPR))
+	    /* For constructors and destructors, either the base is
+	       non-virtual, or it is virtual but we are doing the
+	       conversion from a constructor or destructor for the
+	       complete object.  In either case, we can convert
+	       statically.  */
+	    instance = convert_to_base_statically (instance, binfo);
+	  else
+	    /* However, for assignment operators, we must convert
+	       dynamically if the base is virtual.  */
+	    instance = build_base_path (PLUS_EXPR, instance,
+					binfo, /*nonnull=*/1);
+	}
     }
   
   my_friendly_assert (instance != NULL_TREE, 20020712);
@@ -6168,7 +6201,10 @@ initialize_reference (type, expr, decl, cleanup)
       else
 	base_conv_type = NULL_TREE;
       /* Perform the remainder of the conversion.  */
-      expr = convert_like (conv, expr);
+      expr = convert_like_real (conv, expr,
+				/*fn=*/NULL_TREE, /*argnum=*/0,
+				/*inner=*/-1,
+				/*issue_conversion_warnings=*/true);
       if (!real_non_cast_lvalue_p (expr))
 	{
 	  tree init;
@@ -6178,6 +6214,16 @@ initialize_reference (type, expr, decl, cleanup)
 	  type = TREE_TYPE (expr);
 	  var = make_temporary_var_for_ref_to_temp (decl, type);
 	  layout_decl (var, 0);
+	  /* If the rvalue is the result of a function call it will be
+	     a TARGET_EXPR.  If it is some other construct (such as a
+	     member access expression where the underlying object is
+	     itself the result of a function call), turn it into a
+	     TARGET_EXPR here.  It is important that EXPR be a
+	     TARGET_EXPR below since otherwise the INIT_EXPR will
+	     attempt to make a bitwise copy of EXPR to intialize
+	     VAR. */
+	  if (TREE_CODE (expr) != TARGET_EXPR)
+	    expr = get_target_expr (expr);
 	  /* Create the INIT_EXPR that will initialize the temporary
 	     variable.  */
 	  init = build (INIT_EXPR, type, var, expr);

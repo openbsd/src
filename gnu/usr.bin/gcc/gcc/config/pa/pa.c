@@ -1401,14 +1401,17 @@ emit_move_sequence (operands, mode, scratch_reg)
     operand1 = gen_rtx_MEM (GET_MODE (operand1), tem);
 
   /* Handle secondary reloads for loads/stores of FP registers from
-     REG+D addresses where D does not fit in 5 bits, including
+     REG+D addresses where D does not fit in 5 or 14 bits, including
      (subreg (mem (addr))) cases.  */
   if (fp_reg_operand (operand0, mode)
       && ((GET_CODE (operand1) == MEM
-	   && ! memory_address_p (DFmode, XEXP (operand1, 0)))
+	   && !memory_address_p ((GET_MODE_SIZE (mode) == 4 ? SFmode : DFmode),
+				 XEXP (operand1, 0)))
 	  || ((GET_CODE (operand1) == SUBREG
 	       && GET_CODE (XEXP (operand1, 0)) == MEM
-	       && !memory_address_p (DFmode, XEXP (XEXP (operand1, 0), 0)))))
+	       && !memory_address_p ((GET_MODE_SIZE (mode) == 4
+				      ? SFmode : DFmode),
+				     XEXP (XEXP (operand1, 0), 0)))))
       && scratch_reg)
     {
       if (GET_CODE (operand1) == SUBREG)
@@ -1437,10 +1440,14 @@ emit_move_sequence (operands, mode, scratch_reg)
     }
   else if (fp_reg_operand (operand1, mode)
 	   && ((GET_CODE (operand0) == MEM
-		&& ! memory_address_p (DFmode, XEXP (operand0, 0)))
+		&& !memory_address_p ((GET_MODE_SIZE (mode) == 4
+				       ? SFmode : DFmode),
+				      XEXP (operand0, 0)))
 	       || ((GET_CODE (operand0) == SUBREG)
 		   && GET_CODE (XEXP (operand0, 0)) == MEM
-		   && !memory_address_p (DFmode, XEXP (XEXP (operand0, 0), 0))))
+		   && !memory_address_p ((GET_MODE_SIZE (mode) == 4
+					  ? SFmode : DFmode),
+					 XEXP (XEXP (operand0, 0), 0))))
 	   && scratch_reg)
     {
       if (GET_CODE (operand0) == SUBREG)
@@ -1706,6 +1713,7 @@ emit_move_sequence (operands, mode, scratch_reg)
 		  operands[1] = force_const_mem (mode, operand1);
 		  operands[1] = legitimize_pic_address (XEXP (operands[1], 0),
 							mode, temp);
+		  operands[1] = gen_rtx_MEM (mode, operands[1]);
 		  emit_move_sequence (operands, mode, temp);
 		}
 	      else
@@ -6931,7 +6939,15 @@ output_indirect_call (insn, call_dest)
      No need to check target flags as the length uniquely identifies
      the remaining cases.  */
   if (attr_length_indirect_call (insn) == 8)
-    return ".CALL\tARGW0=GR\n\t{bl|b,l} $$dyncall,%%r31\n\tcopy %%r31,%%r2";
+    {
+      /* The HP linker substitutes a BLE for millicode calls using
+	 the short PIC PCREL form.  Thus, we must use %r31 as the
+	 link register when generating PA 1.x code.  */
+      if (TARGET_PA_20)
+	return ".CALL\tARGW0=GR\n\tb,l $$dyncall,%%r2\n\tcopy %%r2,%%r31";
+      else
+	return ".CALL\tARGW0=GR\n\tbl $$dyncall,%%r31\n\tcopy %%r31,%%r2";
+    }
 
   /* Long millicode call, but we are not generating PIC or portable runtime
      code.  */
