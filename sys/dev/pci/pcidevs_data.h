@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.430 2001/08/20 22:28:25 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.431 2001/08/21 21:37:11 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3899,6 +3899,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CyberBlade i7 AGP",
 	},
 	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADEI1,
+	    "CyberBlade i1",
+	},
+	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
 	    "TGUI 9320",
 	},
@@ -4135,6 +4139,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C598 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8601,
+	    "VT8601 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605,
 	    "VT8605 Host-PCI",
 	},
@@ -4217,6 +4225,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_AGP,
 	    "VT8501 PCI-AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C601,
+	    "VT82C601 PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
