@@ -2,7 +2,7 @@ pass in quick on enc0 fastroute all
 pass in quick on enc0 fastroute inet all
 pass in quick on enc0 fastroute inet6 all
 
-pass out quick on tun0 route-to tun1 all
+pass out quick on tun0 route-to tun1 inet all
 pass out quick on tun0 route-to tun1 from any to 192.168.1.1
 pass out quick on tun0 route-to tun1 from any to fec0::1
 

@@ -1,7 +1,7 @@
 @0 pass in quick on enc0 fastroute all 
 @1 pass in quick on enc0 fastroute inet all 
 @2 pass in quick on enc0 fastroute inet6 all 
-@3 pass out quick on tun0 route-to tun1 all 
+@3 pass out quick on tun0 route-to tun1 inet all 
 @4 pass out quick on tun0 route-to tun1 inet from any to 192.168.1.1 
 @5 pass out quick on tun0 route-to tun1 inet6 from any to fec0::1 
 @6 block in on tun0 dup-to (tun1 192.168.1.1) inet proto tcp from any to any port = ftp 
