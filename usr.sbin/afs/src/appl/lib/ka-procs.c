@@ -396,8 +396,8 @@ ka_auth (const char *user, const char *instance, const char *cell,
     req_challange = tv.tv_sec;
 
     des_set_key (key, schedule);
-    des_pcbc_encrypt ((unsigned char *)&f, 
-		      (unsigned char *)buf,
+    des_pcbc_encrypt ((des_cblock *)&f, 
+		      (des_cblock *)&buf,
 		      sizeof(f), 
 		      schedule,
 		      key, 
@@ -440,8 +440,8 @@ ka_auth (const char *user, const char *instance, const char *cell,
      */
 
     des_set_key (key, schedule);
-    des_pcbc_encrypt ((unsigned char *)answer.Seq.val,
-		      (unsigned char *)answer.Seq.val,
+    des_pcbc_encrypt ((des_cblock *)answer.Seq.val,
+		      (des_cblock *)answer.Seq.val,
 		      answer.Seq.len,
 		      schedule,
 		      key,
@@ -552,8 +552,8 @@ ka_getticket (const char *suser, const char *sinstance, const char *srealm,
 
     /* decrypt it */
     des_set_key (&adata->sessionkey, schedule);
-    des_pcbc_encrypt ((unsigned char *)answer.Seq.val,
-		      (unsigned char *)answer.Seq.val,
+    des_pcbc_encrypt ((des_cblock *)answer.Seq.val,
+		      (des_cblock *)answer.Seq.val,
 		      answer.Seq.len,
 		      schedule,
 		      &adata->sessionkey,

@@ -46,7 +46,6 @@ RCSID("$KTH: koerror.c,v 1.20 2001/01/08 16:48:03 lha Exp $");
 #include <pts.h>
 #include <bos.h>
 #include <ubik.h>
-#include <ka.h>
 #include <rx/rx.h>
 #include <rx/rxgencon.h>
 #ifdef KERBEROS
@@ -54,6 +53,7 @@ RCSID("$KTH: koerror.c,v 1.20 2001/01/08 16:48:03 lha Exp $");
 #include <des.h>
 #include <rxkad.h>
 #endif
+#include <ka.h>
 #include <ko.h>
 #include <fs_errors.h>
 

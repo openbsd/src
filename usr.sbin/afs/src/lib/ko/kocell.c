@@ -274,7 +274,7 @@ dns_lookup_cell (const char *cell, cell_entry *c)
     struct resource_record *rr;
     int dbnum = 0;
     cell_db_entry dbservers[256];
-    int lowest_ttl;
+    int lowest_ttl = INT_MAX;
     int i;
     struct timeval tv;
 
@@ -300,7 +300,7 @@ dns_lookup_cell (const char *cell, cell_entry *c)
 	    if (dbnum >= sizeof (dbservers) / sizeof(*dbservers)) {
 	        break;
 	    }
-	    if (lowest_ttl > rr->ttl || lowest_ttl == 0)
+	    if (lowest_ttl > rr->ttl)
 		lowest_ttl = rr->ttl;
 	    dbservers[dbnum].name = strdup (mx->domain);
 	    if (dbservers[dbnum].name == NULL)
@@ -322,6 +322,9 @@ dns_lookup_cell (const char *cell, cell_entry *c)
     }
     dns_free_data(r);
 
+    if (lowest_ttl == INT_MAX)
+	lowest_ttl = 0;
+    
     /* catch the hosts that didn't fit in additional rr */
     c->timeout = lowest_ttl + tv.tv_sec;
     updatehosts (c, dbnum, dbservers);

@@ -62,6 +62,8 @@ RCSID("$KTH: log.c,v 1.28.2.2 2001/04/30 02:55:41 lha Exp $");
 #include <err.h>
 #include "log.h"
 
+extern char *__progname;
+
 /*
  * The structure for each logging method.
  */

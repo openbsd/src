@@ -38,6 +38,8 @@ RCSID("$KTH: sl.c,v 1.8 2000/03/07 22:08:48 assar Exp $");
 
 #include "sl_locl.h"
 
+extern char *__progname;
+
 static size_t __attribute__ ((unused))
 print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
 {

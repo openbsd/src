@@ -433,6 +433,8 @@ arlalib_get_viceid_servers (const char *username, const char *cellname,
 	    *viceId = ilist.val[0];
 	    return 0;
 	}
+    } else {
+	return ENETDOWN;
     }
 
     return res;

@@ -42,6 +42,8 @@ RCSID("$KTH: agetarg.c,v 1.8.2.3 2001/05/17 07:38:30 lha Exp $");
 
 #define ISFLAG(X) ((X)->type == aarg_flag || (X)->type == aarg_negative_flag)
 
+extern char *__progname;
+
 static size_t
 print_arg (FILE *stream, int mdoc, int longp, struct agetargs *arg,
 	   int style)

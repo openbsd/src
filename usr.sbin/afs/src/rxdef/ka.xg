@@ -112,7 +112,9 @@ struct EncryptionKey {
 
 const MAXKANAMELEN	= 64;
 #define MAXKANAMELEN	64
+%#ifndef MAXKTCTICKETLEN
 const MAXKTCTICKETLEN = 344;
+%#endif
 const KA_LABELSIZE    = 4;
 
 typedef string kaname<MAXKANAMELEN>;

@@ -2555,7 +2555,7 @@ write_attr (FCacheEntry *entry,
     if (connected_mode == CONNECTED) {
 	ConnCacheEntry *conn;
 	fs_server_context context;
-	u_int32_t host;
+	u_int32_t host = 0;
 
 	for (conn = find_first_fs (entry, ce, &context);
 	     conn != NULL;
