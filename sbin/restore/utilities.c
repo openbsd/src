@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.8 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.9 2002/02/23 21:18:11 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.8 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.9 2002/02/23 21:18:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -386,7 +386,7 @@ int
 reply(question)
 	char *question;
 {
-	char c;
+	int c;
 
 	do	{
 		fprintf(stderr, "%s? [yn] ", question);
