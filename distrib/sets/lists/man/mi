@@ -27,6 +27,11 @@
 ./usr/share/doc/html/lynx_help/lynx-dev.html
 ./usr/share/doc/html/lynx_help/lynx_help_main.html
 ./usr/share/doc/html/lynx_help/lynx_url_support.html
+./usr/share/info/amdref.info
+./usr/share/info/amdref.info-1
+./usr/share/info/amdref.info-2
+./usr/share/info/amdref.info-3
+./usr/share/info/amdref.info-4
 ./usr/share/info/bfd.info
 ./usr/share/info/bfd.info-1
 ./usr/share/info/bfd.info-2
@@ -148,6 +153,15 @@
 ./usr/share/info/texinfo-7
 ./usr/share/info/texinfo-8
 ./usr/share/info/texinfo-9
+./usr/share/info/uucp.info
+./usr/share/info/uucp.info-1
+./usr/share/info/uucp.info-2
+./usr/share/info/uucp.info-3
+./usr/share/info/uucp.info-4
+./usr/share/info/uucp.info-5
+./usr/share/info/uucp.info-6
+./usr/share/info/uucp.info-7
+./usr/share/info/uucp.info-8
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/a2p.0
@@ -659,6 +673,10 @@
 ./usr/share/man/cat2/kevent.0
 ./usr/share/man/cat2/kqueue.0
 ./usr/share/man/cat3
+./usr/share/man/cat3/FD_CLR.0
+./usr/share/man/cat3/FD_ISSET.0
+./usr/share/man/cat3/FD_SET.0
+./usr/share/man/cat3/FD_ZERO.0
 ./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amiga
 ./usr/share/man/cat3/arc
@@ -673,6 +691,12 @@
 ./usr/share/man/cat3/powerpc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sun3
+./usr/share/man/cat3/svc_getreqset2.0
+./usr/share/man/cat3/timeradd.0
+./usr/share/man/cat3/timerclear.0
+./usr/share/man/cat3/timercmp.0
+./usr/share/man/cat3/timerisset.0
+./usr/share/man/cat3/timersub.0
 ./usr/share/man/cat3/vax
 ./usr/share/man/cat3/vw_scanw.0
 ./usr/share/man/cat3p
@@ -926,6 +950,7 @@
 ./usr/share/man/cat4/atapiscsi.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
+./usr/share/man/cat4/auich.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bpf.0
@@ -1029,7 +1054,6 @@
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
 ./usr/share/man/cat4/i386/xf86.0
-./usr/share/man/cat4/ich.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/icmp6.0
 ./usr/share/man/cat4/icsphy.0
@@ -1528,7 +1552,6 @@
 ./usr/share/man/cat8/fsck_ffs.0
 ./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
-./usr/share/man/cat8/fsinfo.0
 ./usr/share/man/cat8/fsirand.0
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/getNAME.0
@@ -1638,7 +1661,6 @@
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
 ./usr/share/man/cat8/mount_tcfs.0
-./usr/share/man/cat8/mount_ufs.0
 ./usr/share/man/cat8/mount_umap.0
 ./usr/share/man/cat8/mount_union.0
 ./usr/share/man/cat8/mount_xfs.0
@@ -2002,3 +2024,11 @@
 ./usr/share/man/ps9/sparc
 ./usr/share/man/ps9/sun3
 ./usr/share/man/ps9/vax
+./var/www/htdocs/manual/configuring.html
+./var/www/htdocs/manual/misc/tutorials.html
+./var/www/htdocs/manual/mod/index-bytype.html
+./var/www/htdocs/manual/mod/module-dict.html
+./var/www/htdocs/manual/mpeix.html
+./var/www/htdocs/manual/new_features_2_0.html
+./var/www/htdocs/manual/win_compiling.html
+./var/www/htdocs/manual/win_service.html

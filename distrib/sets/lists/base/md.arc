@@ -498,3 +498,5 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/ssl/md4.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ssl/obj_mac.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ssl/symhacks.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/maestro_reg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/readline/history.ph

@@ -1687,3 +1687,5 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/md4.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/obj_mac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/symhacks.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/maestro_reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/readline/history.ph

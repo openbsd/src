@@ -1366,7 +1366,6 @@
 ./usr/include/xfs/xfs_vopdefs.h
 ./usr/include/zconf.h
 ./usr/include/zlib.h
-./usr/lib/apache/include/alloc.h
 ./usr/lib/apache/include/ap.h
 ./usr/lib/apache/include/ap_compat.h
 ./usr/lib/apache/include/ap_config.h
@@ -4043,3 +4042,6 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/dev/pci/maestro_reg.h
+./usr/include/readline/history.h
+./usr/lib/apache/include/ap_alloc.h

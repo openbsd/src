@@ -117,7 +117,6 @@
 ./sbin/mount_portal
 ./sbin/mount_procfs
 ./sbin/mount_tcfs
-./sbin/mount_ufs
 ./sbin/mount_umap
 ./sbin/mount_union
 ./sbin/mount_xfs
@@ -1153,7 +1152,6 @@
 ./usr/sbin/ext_srvtab
 ./usr/sbin/faithd
 ./usr/sbin/fs
-./usr/sbin/fsinfo
 ./usr/sbin/getencstat
 ./usr/sbin/group
 ./usr/sbin/groupadd

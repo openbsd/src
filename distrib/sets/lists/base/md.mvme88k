@@ -442,3 +442,5 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/md4.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/obj_mac.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/symhacks.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/readline/history.ph
