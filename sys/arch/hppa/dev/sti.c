@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.1 1998/12/31 03:20:44 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.2 1999/07/13 21:13:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define STIDEBUG
+#undef	STIDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@
 
 #include <hppa/dev/cpudevs.h>
 
+#define	STI_SIZE	0x1000000
+
 struct sti_softc {
 	struct device sc_dev;
 
@@ -63,7 +65,7 @@ struct sti_softc {
 	int sc_attr;
 	struct sti_config sti_config;
 	struct sti_fontcfg sti_fontcfg;
-	vm_offset_t sc_code;			/* code region allocated */
+	vaddr_t sc_code;			/* code region allocated */
 	void	(*sti_init)   __P((struct sti_initflags *,
 				   struct sti_initin *,
 				   struct sti_initout *,
@@ -122,8 +124,7 @@ struct wscons_emulfuncs	sti_emulfuncs = {
 	sti_set_attr
 };
 
-u_int stiload __P((vm_offset_t dst, vm_offset_t scode,
-		   vm_offset_t ecode, int t));
+u_int stiload __P((vaddr_t dst, vaddr_t scode, vaddr_t ecode, int t));
 int sti_init __P((struct sti_softc *sc, int mode));
 int sti_inqcfg __P((struct sti_softc *sc, struct sti_inquireout *out));
 void sti_bmove __P((struct sti_softc *sc, int, int, int, int, int, int,
@@ -138,6 +139,7 @@ stiprobe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct confargs *ca = aux;
+	bus_space_handle_t ioh, rioh;
 	u_int rom;
 	u_char devtype;
 	int rv = 0;
@@ -147,14 +149,24 @@ stiprobe(parent, match, aux)
 	     ca->ca_type.iodc_sv_model != HPPA_FIO_SGC))
 		return 0;
 
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa, STI_SIZE, 0, &ioh))
+		return 0;
+
 	/*
 	 * Locate STI ROM.
 	 * On some machines it may not be part of the HPA space.
 	 */
-	if (!PAGE0->pd_resv2[1])
+	if (!PAGE0->pd_resv2[1]) {
 		rom = ca->ca_hpa;
-	else
+		rioh = ioh;
+	} else
 		rom = PAGE0->pd_resv2[1];
+
+	if (rom != ca->ca_hpa &&
+	    bus_space_map(ca->ca_iot, rom, IOMOD_HPASIZE, 0, &rioh)) {
+		bus_space_unmap(ca->ca_iot, ioh,  STI_SIZE);
+		return 0;
+	}
 
 	devtype = STI_DEVTYP(STI_TYPE_BWGRF, rom);
 	if ((ca->ca_type.iodc_sv_model == HPPA_FIO_SGC &&
@@ -166,6 +178,9 @@ stiprobe(parent, match, aux)
 	} else
 		rv = 1;
 
+	bus_space_unmap(ca->ca_iot, ioh,  STI_SIZE);
+	if (ioh != rioh)
+		bus_space_unmap(ca->ca_iot, rioh, IOMOD_HPASIZE);
 	return rv;
 }
 
@@ -265,6 +280,7 @@ stiattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	bus_space_handle_t ioh;
 	struct wscons_attach_args waa;
 	struct sti_inquireout cfg;
 	register struct sti_softc *sc = (void *)self;
@@ -272,6 +288,9 @@ stiattach(parent, self, aux)
 	register struct wscons_odev_spec *wo;
 	register u_int dt, addr;
 	int error;
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa, STI_SIZE, 0, &ioh))
+		return;
 
 	sc->sc_regs = ca->ca_hpa;
 	if (!PAGE0->pd_resv2[1])
@@ -293,7 +312,8 @@ stiattach(parent, self, aux)
 		u_int t;
 		t = STI_EADDR(dt, sc->sc_rom) - STI_IGADDR(dt, sc->sc_rom);
 		t = hppa_round_page(t);
-		if (!(sc->sc_code = kmem_malloc(kmem_map, t, 0))) {
+		if (!(sc->sc_code = uvm_km_kmemalloc(kmem_map,
+						uvmexp.kmem_object, t, 0))) {
 			printf(": cannot allocate %d bytes for code\n", t);
 			return;
 		} else
@@ -332,6 +352,9 @@ stiattach(parent, self, aux)
 		register u_int *p;
 		register u_int *q = (u_int *)STI_MMAP(dt, sc->sc_rom);
 
+#ifdef STIDEBUG
+		printf ("stregions @%p:\n", q);
+#endif
 		for (p = sc->sti_config.regions;
 		     p < &sc->sti_config.regions[STI_REGIONS]; p++) {
 			struct sti_region r;
@@ -417,10 +440,10 @@ stiattach(parent, self, aux)
 
 u_int
 stiload(dst, scode, ecode, t)
-	vm_offset_t dst, scode, ecode;
+	vaddr_t dst, scode, ecode;
 	int t;
 {
-	vm_offset_t sdst = dst;
+	vaddr_t sdst = dst;
 
 #ifdef STIDEBUG
 	printf("stiload(%x, %x, %x, %d)\n", dst, scode, ecode, t);
