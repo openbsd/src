@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.18 1997/02/21 11:17:38 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.19 1997/03/27 11:52:07 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.52 1996/12/01 12:10:07 veego Exp $
 
 # Makefile for OpenBSD
@@ -38,8 +38,8 @@ AMIGA=	$S/arch/amiga
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
 
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-		-Wno-format
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format
 
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68020
@@ -85,8 +85,6 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${PARAM} -c $<
-
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
@@ -130,14 +128,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${HOSTCC} -o $@ genassym.o
-
-genassym.o: ${AMIGA}/amiga/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${AMIGA}/amiga/genassym.cf
+	sh $S/kern/genassym.sh ${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	    ${PARAM} < ${AMIGA}/amiga/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -169,22 +163,21 @@ tags:
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	    sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	    sort -u | comm -23 - dontlink | \
+	    sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' \
+	    > makelinks
 	sh makelinks && rm -f dontlink
 
 SRCS=	${AMIGA}/amiga/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
+
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${AMIGA}/amiga/genassym.c
-
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -193,7 +186,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
 amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile
