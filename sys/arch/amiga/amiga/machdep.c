@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1996/05/29 10:14:29 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1996/07/27 11:40:26 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.72 1996/05/19 14:55:31 is Exp $	*/
 
 /*
@@ -541,6 +541,13 @@ again:
 	/*
 	 * Configure the system.
 	 */
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 #ifdef DEBUG
 	printf("survived configure...\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 1996/07/16 07:46:12 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 1996/07/27 11:40:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.2 1996/07/16 07:46:12 pefo Exp $
+ *      $Id: machdep.c,v 1.3 1996/07/27 11:40:29 deraadt Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -618,6 +618,13 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 }
 

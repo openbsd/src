@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1996/06/11 10:15:54 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.12 1996/07/27 11:40:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -392,6 +392,13 @@ again:
 	/*
 	 * Configure the system.
 	 */
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 }
 

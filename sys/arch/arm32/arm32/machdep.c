@@ -1433,6 +1433,13 @@ cpu_startup()
  * Configure the hardware
  */
  
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 
 /* Set the root, swap and dump devices from the boot args */
