@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.138 2004/12/12 11:26:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.139 2004/12/13 18:29:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -308,8 +308,8 @@ sub really_add($$)
 			} catchall {
 				Warn $_;
 				$errors++;
-				last;
 			};
+			last if $errors;
 			push(@{$plist->{done}}, $item);
 			if (defined $item->{size}) {
 				$donesize += $item->{size};
