@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hp300.8,v 1.7 1999/07/08 19:58:30 deraadt Exp $
+.\"	$OpenBSD: boot_hp300.8,v 1.8 1999/07/08 20:21:27 deraadt Exp $
 .\"	$NetBSD: boot_hp300.8,v 1.3 1995/04/23 10:33:34 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -59,12 +59,15 @@ from an
 format directory at the beginning of an attached disk.
 The
 .Pa /usr/mdec
-directory contains a disk boot program which should be placed in a
-new pack automatically by
-.Xr newfs 8
+directory contains a disk boot program
+.Pa ( /usr/mdec/bootsd
+or
+.Pa /usr/mdec/boothd )
+which is placed on a
+new disk automatically by
+.Xr disklabel 8
 when the
-.Dq a
-partition file system on the pack is created.
+partitions of the disk are setup.
 .Pp
 This boot program
 finds the corresponding file on the given device
@@ -121,6 +124,7 @@ format boot block
 program to install boot blocks
 .El
 .Sh SEE ALSO
+.Xr disklabel 8 ,
 .Xr halt 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8
