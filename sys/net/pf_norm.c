@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.91 2004/06/25 00:42:58 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.92 2004/06/25 11:04:03 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1138,8 +1138,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 				 * the fragment have already passed the
 				 * "scrub in".  no need to go to reass code
 				 */
-				terminal = 1;
-				break;
+				goto frag_scrub;
 			}
 			goto fragment;
 			break;
@@ -1223,6 +1222,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	if (r->min_ttl && h->ip6_hlim < r->min_ttl)
 		h->ip6_hlim = r->min_ttl;
 
+ frag_scrub:
 	return (PF_PASS);
 
  fragment:

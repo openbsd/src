@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.455 2004/06/25 00:42:58 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.456 2004/06/25 11:04:03 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6044,9 +6044,8 @@ done:
 
 			m_freem(*m0);
 			*m0 = NULL;
-			return (PF_PASS);
-		} else
-			break;
+		}
+		return (PF_PASS);
 
 	case PF_OUT:
 		if (frag) {
