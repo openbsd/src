@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.16 2001/07/09 18:55:21 millert Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.17 2001/07/30 11:56:39 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -199,6 +199,9 @@ elf64_check_header(ehdr, type)
 	if (ehdr->e_type != type)
 		return (ENOEXEC);
 
+	if (ehdr->e_phnum > 128)
+		return (ENOEXEC);
+
 	return (0);
 }
 
@@ -240,6 +243,10 @@ os_ok:
 
 	/* Check the type */
 	if (ehdr->e_type != type)
+		return (ENOEXEC);
+
+	/* Don't allow an insane amount of sections. */
+	if (ehdr->e_phnum > 128)
 		return (ENOEXEC);
 
 	*os = ehdr->e_ident[OI_OS];
@@ -399,11 +406,6 @@ elf64_load_file(p, path, epp, ap, last)
 	}
 
 	phsize = eh.e_phnum * sizeof(Elf64_Phdr);
-	if (phsize > 8192) {
-		/* XXX - this is not the way we want to fix this, but ... */
-		error = EINVAL;
-		goto bad1;
-	}
 	ph = (Elf64_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = elf64_read_from(p, nd.ni_vp, eh.e_phoff, (caddr_t)ph,
@@ -792,10 +794,6 @@ elf64_os_pt_note(p, epp, eh, os_name, name_size, desc_size)
 	int error;
 
 	phsize = eh->e_phnum * sizeof(Elf64_Phdr);
-	if (phsize > 8192) {
-		/* XXX - this is not the way we want to fix this, but ... */
-		return EINVAL;
-	}
 	hph = (Elf64_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 	if ((error = elf64_read_from(p, epp->ep_vp, eh->e_phoff,
 	    (caddr_t)hph, phsize)) != 0)
