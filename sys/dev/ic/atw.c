@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.10 2004/07/15 12:18:57 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.49 2004/07/15 06:38:46 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.11 2004/07/15 12:22:02 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.49 2004/07/15 06:38:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -1103,13 +1103,14 @@ atw_init(struct ifnet *ifp)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < ATW_NTXDESC; i++) {
+		sc->sc_txdescs[i].at_ctl = 0;
 		/* no transmit chaining */
-		sc->sc_txdescs[i].at_ctl = 0 /* ATW_TXFLAG_TCH */;
+		sc->sc_txdescs[i].at_flags = 0 /* ATW_TXFLAG_TCH */;
 		sc->sc_txdescs[i].at_buf2 =
 		    htole32(ATW_CDTXADDR(sc, ATW_NEXTTX(i)));
 	}
 	/* use ring mode */
-	sc->sc_txdescs[ATW_NTXDESC - 1].at_ctl |= ATW_TXFLAG_TER;
+	sc->sc_txdescs[ATW_NTXDESC - 1].at_flags |= htole32(ATW_TXFLAG_TER);
 	ATW_CDTXSYNC(sc, 0, ATW_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = ATW_NTXDESC;
@@ -1906,17 +1907,17 @@ atw_write_bssid(struct atw_softc *sc)
 
 	bssid = ic->ic_bss->ni_bssid;
 
-	ATW_WRITE(sc, ATW_ABDA1,
-	    (ATW_READ(sc, ATW_ABDA1) &
-	    ~(ATW_ABDA1_BSSIDB4_MASK|ATW_ABDA1_BSSIDB5_MASK)) |
-	    LSHIFT(bssid[4], ATW_ABDA1_BSSIDB4_MASK) |
-	    LSHIFT(bssid[5], ATW_ABDA1_BSSIDB5_MASK));
-
 	ATW_WRITE(sc, ATW_BSSID0,
 	    LSHIFT(bssid[0], ATW_BSSID0_BSSIDB0_MASK) |
 	    LSHIFT(bssid[1], ATW_BSSID0_BSSIDB1_MASK) |
 	    LSHIFT(bssid[2], ATW_BSSID0_BSSIDB2_MASK) |
 	    LSHIFT(bssid[3], ATW_BSSID0_BSSIDB3_MASK));
+
+	ATW_WRITE(sc, ATW_ABDA1,
+	    (ATW_READ(sc, ATW_ABDA1) &
+	    ~(ATW_ABDA1_BSSIDB4_MASK|ATW_ABDA1_BSSIDB5_MASK)) |
+	    LSHIFT(bssid[4], ATW_ABDA1_BSSIDB4_MASK) |
+	    LSHIFT(bssid[5], ATW_ABDA1_BSSIDB5_MASK));
 
 	DPRINTF(sc, ("%s: BSSID %s -> ", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_bssid)));
@@ -2132,9 +2133,7 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 
 	ic->ic_flags &= ~IEEE80211_F_SIBSS;
 
-#if 0
 	atw_tsf(sc);
-#endif
 
 	/* negotiate rates with new IBSS */
 	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
@@ -2168,14 +2167,17 @@ void
 atw_write_ssid(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	/* 34 bytes are reserved in ADM8211 SRAM for the SSID */
+	/* 34 bytes are reserved in ADM8211 SRAM for the SSID, but
+	 * it only expects the element length, not its ID.
+	 */
 	u_int8_t buf[roundup(1 /* length */ + IEEE80211_NWID_LEN, 2)];
 
 	memset(buf, 0, sizeof(buf));
 	buf[0] = ic->ic_bss->ni_esslen;
 	memcpy(&buf[1], ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen);
 
-	atw_write_sram(sc, ATW_SRAM_ADDR_SSID, buf, sizeof(buf));
+	atw_write_sram(sc, ATW_SRAM_ADDR_SSID, buf,
+	    roundup(1 + ic->ic_bss->ni_esslen, 2));
 }
 
 /* Write the supported rates in the ieee80211com to the SRAM of the ADM8211.
