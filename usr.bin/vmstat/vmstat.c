@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.25 1998/07/08 22:14:18 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.26 1999/03/15 15:38:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -847,9 +847,9 @@ domem()
 	}
 
 	(void)printf(
-	   "\nMemory statistics by type                          Type  Kern\n");
+	   "\nMemory statistics by type                           Type  Kern\n");
 	(void)printf(
-"         Type InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
+"          Type InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
 		if (ks->ks_calls == 0)
 			continue;
