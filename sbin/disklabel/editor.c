@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.31 1998/02/28 02:52:08 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.32 1998/04/08 02:42:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.31 1998/02/28 02:52:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.32 1998/04/08 02:42:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ void	editor_modify __P((struct disklabel *, u_int32_t *, char *));
 void	editor_delete __P((struct disklabel *, u_int32_t *, char *));
 void	editor_display __P((struct disklabel *, u_int32_t *, char));
 void	editor_change __P((struct disklabel *, u_int32_t *, char *));
+void	editor_countfree __P((struct disklabel *, u_int32_t *));
 char	*getstring __P((struct disklabel *, char *, char *, char *));
 u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, int));
 int	has_overlap __P((struct disklabel *, u_int32_t *, int));
@@ -115,7 +116,6 @@ editor(lp, f)
 	u_int32_t freesectors;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
-	int i;
 
 	/* Don't allow disk type of "unknown" */
 	getdisktype(&label, "You need to specify a disk type for this disk.");
@@ -124,15 +124,7 @@ editor(lp, f)
 	find_bounds(&label);
 
 	/* Set freesectors based on bounds and initial label */
-	freesectors = ending_sector - starting_sector;
-	for (i = 0; i < label.d_npartitions; i++) {
-		pp = &label.d_partitions[i];
-		if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-		    pp->p_size > 0 && 
-		    pp->p_offset + pp->p_size <= ending_sector &&
-		    pp->p_offset >= starting_sector)
-			freesectors -= pp->p_size;
-	}
+	editor_countfree(&label, &freesectors);
 
 	/* Make sure there is no partition overlap. */
 	if (has_overlap(&label, &freesectors, 1))
@@ -189,6 +181,7 @@ editor(lp, f)
 			puts("\tc [part]   - change partition size.");
 			puts("\td [part]   - delete partition.");
 			puts("\tm [part]   - modify existing partition.");
+			puts("\tr          - recalculate free space.");
 			puts("\tu          - undo last change.");
 			puts("\ts [path]   - save label to file.");
 			puts("\tw          - write label to disk.");
@@ -275,6 +268,12 @@ editor(lp, f)
 			/* NOTREACHED */
 			break;
 
+		case 'r':
+		    /* Recalculate free space */
+		    editor_countfree(&label, &freesectors);
+		    puts("Recalculated free space.");
+		    break;
+
 		case 's':
 			if (arg == NULL) {
 				arg = getstring(lp, "Filename",
@@ -298,6 +297,8 @@ editor(lp, f)
 				tmplabel = label;
 				label = lastlabel;
 				lastlabel = tmplabel;
+				/* Recalculate free space */
+				editor_countfree(&label, &freesectors);
 				puts("Last change undone.");
 			}
 			break;
@@ -1628,8 +1629,6 @@ set_bounds(lp, freep)
 	u_int32_t *freep;
 {
 	u_int32_t ui, start_temp;
-	int i;
-	struct partition *pp;
 
 	/* Starting sector */
 	do {
@@ -1658,15 +1657,7 @@ set_bounds(lp, freep)
 	starting_sector = start_temp;
 	
 	/* Recalculate the free sectors */
-	*freep = ending_sector - starting_sector;
-	for (i = 0; i < lp->d_npartitions; i++) {
-		pp = &lp->d_partitions[i];
-		if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-		    pp->p_size > 0 && 
-		    pp->p_offset + pp->p_size <= ending_sector &&
-		    pp->p_offset >= starting_sector)
-			*freep -= pp->p_size;
-	}
+	editor_countfree(lp, freep);
 }
 
 /*
@@ -1756,4 +1747,26 @@ find_bounds(lp)
 		 */
 	}
 #endif
+}
+
+/*
+ * Calculate free space.
+ */
+void
+editor_countfree(lp, freep)
+    struct disklabel *lp;
+    u_int32_t *freep;
+{
+    struct partition *pp;
+    int i;
+
+    *freep = ending_sector - starting_sector;
+    for (i = 0; i < lp->d_npartitions; i++) {
+	pp = &lp->d_partitions[i];
+	if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
+	    pp->p_size > 0 && 
+	    pp->p_offset + pp->p_size <= ending_sector &&
+	    pp->p_offset >= starting_sector)
+	    *freep -= pp->p_size;
+    }
 }
