@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.2 1997/02/14 18:40:18 provos Exp $ */
+/* $OpenBSD: blowfish.c,v 1.3 1997/02/16 20:58:17 provos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Theo de Raadt.
+ *      This product includes software developed by Niels Provos.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -55,12 +55,6 @@
 #endif				/* !__GNUC__ */
 
 static inline u_int32_t F __P((blf_ctx * bc, u_int32_t x));
-
-/* Standard Blowfish */
-
-void blf_key __P((blf_ctx * c, u_int8_t * k, u_int16_t len));
-void blf_enc __P((blf_ctx * c, u_int32_t * data, u_int16_t blocks));
-void blf_dec __P((blf_ctx * c, u_int32_t * data, u_int16_t blocks));
 
 /* Function for Feistel Networks */
 
@@ -449,7 +443,7 @@ Blowfish_initstate(c)
 
 u_int32_t
 Blowfish_stream2word(data, databytes, current)
-	u_int8_t *data;
+	const u_int8_t *data;
 	u_int16_t databytes;
 	u_int16_t *current;
 {
@@ -473,7 +467,7 @@ Blowfish_stream2word(data, databytes, current)
 void
 Blowfish_expand0state(c, key, keybytes)
         blf_ctx *c;
-        u_int8_t *key;
+        const u_int8_t *key;
         u_int16_t keybytes;
 {
         u_int16_t i;
@@ -515,9 +509,9 @@ Blowfish_expand0state(c, key, keybytes)
 void
 Blowfish_expandstate(c, data, databytes, key, keybytes)
 	blf_ctx *c;
-	u_int8_t *data;
+	const u_int8_t *data;
 	u_int16_t databytes;
-	u_int8_t *key;
+	const u_int8_t *key;
 	u_int16_t keybytes;
 {
 	u_int16_t i;
@@ -562,7 +556,7 @@ Blowfish_expandstate(c, data, databytes, key, keybytes)
 void
 blf_key(c, k, len)
 	blf_ctx *c;
-	u_int8_t *k;
+	const u_int8_t *k;
 	u_int16_t len;
 {
 	/* Initalize S-boxes and subkeys with Pi */

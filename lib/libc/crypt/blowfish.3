@@ -1,0 +1,84 @@
+.\" $OpenBSD: blowfish.3,v 1.1 1997/02/16 20:58:16 provos Exp $
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd February 13, 1997
+.Dt BLOWFISH 3
+.Os "OpenBSD 2.0"
+.Sh NAME
+.Nm blf_key,
+.Nm blf_enc,
+.Nm blf_dec
+.Nd Blowfish encryption
+.Sh SYNOPSIS
+.Fd #include <blf.h>
+.Ft void
+.Fn blf_key "blf_ctx *state" "const u_int8_t *key" "u_int16_t keylen"
+.Ft void
+.Fn blf_enc "blf_ctx *state" "u_int32_t *data" "u_int16_t datalen"
+.Ft void
+.Fn blf_dec "blf_ctx *state" "u_int32_t *data" "u_int16_t datalen"
+.Sh DESCRIPTION
+.Pa Blowfish
+is a fast unpatented block cipher designed by Bruce Schneier.
+It basically consists of a 16 times iterated Feistel network.
+The block size is 64 bit and the key size is maximal 448 bit.
+.Pp
+The
+.Fn blf_key
+function initializes the 4 8bit S-boxes and the 18 Subkeys with
+the hexadecimal digits of Pi. The key is used for further randomization.
+The first argument to
+.Fn blf_enc
+is the initalized state derived from
+.Fn blf_key .
+The stream of data is encrypted in Electronic Cookbook Mode (ECB) and
+.Pa datalen
+must be even.
+.Fn blf_dec
+is used for decrypting Blowfish encrypted blocks.
+.Pp
+The functions
+.Fn Blowfish_initstate ,
+.Fn Blowfish_expand0state ,
+.Fn Blowfish_expandstate ,
+.Fn Blowfish_encipher
+and
+.Fn Blowfish_decipher
+are used for customization of the
+.Pa Blowfish
+cipher, i.e. for the blowfish password hashing function or for
+implementation of Cipher Block Chaining Mode (CBC).
+.Sh SEE ALSO
+.Xr crypt 3 ,
+.Xr passwd 1 ,
+.Xr passwd 5
+.Sh AUTHOR
+Niels Provos <provos@physnet.uni-hamburg.de>

@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt.c,v 1.2 1997/02/14 18:40:14 provos Exp $ */
+/* $OpenBSD: bcrypt.c,v 1.3 1997/02/16 20:58:15 provos Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Theo de Raadt.
+ *      This product includes software developed by Niels Provos.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -37,7 +37,7 @@
  * REPEAT rounds:
  *	state := ExpandKey (state, 0, salt)
  *      state := ExpandKey(state, 0, password)
- * 4. ctext := "OpenBSDbcrypthashfunc"
+ * 4. ctext := "OrpheanBeholderScryDoubt"
  * 5. REPEAT 64:
  * 	ctext := Encrypt_ECB (state, ctext);
  * 6. RETURN Concatenate (salt, ctext);
@@ -187,7 +187,7 @@ bcrypt(key, salt)
 	u_int32_t rounds, i, k;
 	u_int16_t j;
 	u_int8_t key_len, salt_len, logr;
-	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OpenBSDbcrypthashfunc";
+	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
 	/* Discard "$" identifier */
