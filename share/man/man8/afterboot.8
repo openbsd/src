@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.101 2004/12/13 14:00:07 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.102 2005/02/17 14:47:36 espie Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -782,6 +782,13 @@ yet, or because licensing restrictions make binary redistribution
 impossible.
 Sometimes checking the mailing lists for
 past problems that people have encountered will result in a fix posted.
+.Ss Check the running system
+You can use
+.Xr ps 1 ,
+.Xr netstat 1 ,
+.Xr fstat 1
+to check on running processes, network connections, and opened files,
+respectively.
 .Sh COMPILING A KERNEL
 First, review the system message buffer using the
 .Xr dmesg 8
