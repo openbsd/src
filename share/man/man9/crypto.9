@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.18 2002/06/29 23:30:07 naddy Exp $
+.\"	$OpenBSD: crypto.9,v 1.19 2002/07/16 06:31:57 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -459,6 +459,14 @@ Typically, drivers for
 .Xr pcmcia 4
 crypto cards that are being ejected will invoke this routine for all
 algorithms supported by the card.
+If called with
+.Dv CRYPTO_ALGORITHM_ALL ,
+all algorithms registered for a driver will be unregistered in one go
+and the driver will be disabled (no new sessions will be allocated on
+that driver, and any existing sessions will be migrated to other
+drivers).
+The same will be done if all algorithms associated with a driver are
+unregistered one by one.
 .Pp
 The calling convention for the three driver-supplied routines is:
 .Bd -literal
