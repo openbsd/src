@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snvar.h,v 1.2 1997/03/14 14:11:36 briggs Exp $       */
+/*      $OpenBSD: if_snvar.h,v 1.3 1997/03/29 23:26:50 briggs Exp $       */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -7,7 +7,7 @@
  */
 
 /*
- * if_sonic.h -- National Semiconductor DP83932BVF (SONIC)
+ * if_snvar.h -- National Semiconductor DP83932BVF (SONIC) NetBSD/mac68k vars
  */
 
 /*
@@ -20,6 +20,23 @@
 			     (*(u_int16_t *)((u_int16_t *)a + o) = (x)))
 #define	SRO(m, a, o)	(m ? (*(u_int32_t *)((u_int32_t *)a + o) & 0xffff) : \
 			     (*(u_int16_t *)((u_int16_t *)a + o) & 0xffff))
+
+/*
+ * Register access macros. We use bus_space_* to talk to the Sonic
+ * registers. A mapping table is used in case a particular configuration
+ * hooked the regs up at non-word offsets.
+ */
+#define	NIC_GET(sc, reg)	(bus_space_read_2((sc)->sc_regt,	\
+					(sc)->sc_regh,			\
+					((sc)->sc_reg_map[reg])))
+#define	NIC_PUT(sc, reg, val)	(bus_space_write_2((sc)->sc_regt,	\
+					(sc)->sc_regh,			\
+					((sc)->sc_reg_map[reg]),	\
+					(val)))
+#define	SN_REGSIZE	SN_NREGS*4
+
+/* mac68k does not have any write buffers to flush... */
+#define	wbflush()
 
 /*
  * buffer sizes in 32 bit mode
@@ -51,6 +68,8 @@
  */
 #define NTXB    10      /* Number of xmit buffers */
 #define TXBSIZE 1536    /* 6*2^8 -- the same size as the 8390 TXBUF */
+
+#define	SN_NPAGES	1 + 8 + 5
 
 /*
  * Statistics collected over time
@@ -102,12 +121,13 @@ typedef struct sn_softc {
 	struct sn_stats	sc_sum;
 	short		sc_iflags;
 	unsigned short	bitmode;	/* 32 bit mode == 1, 16 == 0 */
+	bus_size_t	sc_reg_map[SN_NREGS];	/* register offsets */
 
-	unsigned int	s_dcr;		/* DCR for this instance */
+	u_int16_t	snr_dcr;	/* DCR for this instance */
+	u_int16_t	snr_dcr2;	/* DCR2 for this instance */
 	int	slotno;			/* Slot number */
-	struct sonic_reg *sc_csr;	/* hardware pointer */
-	int	sc_rxmark;		/* pos. in rx ring for reading buffs */
 
+	int	sc_rxmark;		/* pos. in rx ring for reading buffs */
 	int	sc_rramark;		/* index into p_rra of wp */
 	void *p_rra[NRRA];		/* RX resource descs */
 	int	v_rra[NRRA];		/* DMA addresses of p_rra */
@@ -119,7 +139,6 @@ typedef struct sn_softc {
 
 	caddr_t	rbuf[NRBA];
 
-	int	sc_txhead;		/*XXX idx of first TDA passed to chip */
 	int	sc_missed;		/* missed packet counter */
 
 	int	txb_cnt;		/* total number of xmit buffers */
@@ -142,7 +161,7 @@ typedef struct sn_softc {
 	void		*p_cda;
 	int		v_cda;
 
-	unsigned char	space[(1 + 1 + 8 + 5) * NBPG];
+	unsigned char	*space;
 } sn_softc_t;
 
 /*
@@ -217,4 +236,5 @@ typedef struct sn_softc {
 #define	CDA_ENABLE	64	/* mask enabling CAM entries */
 #define	CDA_SIZE(sc)	((4*16 + 1) * ((sc->bitmode) ? 4 : 2))
 
-void	snsetup __P((struct sn_softc *sc));
+int	snsetup __P((struct sn_softc *sc));
+void	snintr __P((void *, int));

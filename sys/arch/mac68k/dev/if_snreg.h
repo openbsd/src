@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snreg.h,v 1.1 1997/03/12 13:20:33 briggs Exp $       */
+/*      $OpenBSD: if_snreg.h,v 1.2 1997/03/29 23:26:50 briggs Exp $       */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -13,74 +13,72 @@
 /*
  * SONIC registers as seen by the processor
  */
-struct sonic_reg {
-        volatile u_long s_cr;           /* 00: Command */
-        volatile u_long s_dcr;          /* 01: Data Configuration */
-        volatile u_long s_rcr;          /* 02: Receive Control */
-        volatile u_long s_tcr;          /* 03: Transmit Control */
-        volatile u_long s_imr;          /* 04: Interrupt Mask */
-        volatile u_long s_isr;          /* 05: Interrupt Status */
-        volatile u_long s_utda;         /* 06: Upper Transmit Descriptor Address */
-        volatile u_long s_ctda;         /* 07: Current Transmit Descriptor Address */
-        volatile u_long _s_tps;         /* 08* Transmit Packet Size */
-        volatile u_long _s_tfc;         /* 09* Transmit Fragment Count */
-        volatile u_long _s_tsa0;        /* 0a* Transmit Start Address 0 */
-        volatile u_long _s_tsa1;        /* 0b* Transmit Start Address 1 */
-        volatile u_long _s_tfs;         /* 0c* Transmit Fragment Size */
-        volatile u_long s_urda;         /* 0d: Upper Receive Descriptor Address */
-        volatile u_long s_crda;         /* 0e: Current Receive Descriptor Address */
-        volatile u_long _s_crba0;       /* 0f* Current Receive Buffer Address 0 */
-        volatile u_long _s_crba1;       /* 10* Current Receive Buffer Address 1 */
-        volatile u_long _s_rbwc0;       /* 11* Remaining Buffer Word Count 0 */
-        volatile u_long _s_rbwc1;       /* 12* Remaining Buffer Word Count 1 */
-        volatile u_long s_eobc;         /* 13: End Of Buffer Word Count */
-        volatile u_long s_urra;         /* 14: Upper Receive Resource Address */
-        volatile u_long s_rsa;          /* 15: Resource Start Address */
-        volatile u_long s_rea;          /* 16: Resource End Address */
-        volatile u_long s_rrp;          /* 17: Resource Read Pointer */
-        volatile u_long s_rwp;          /* 18: Resource Write Pointer */
-        volatile u_long _s_trba0;       /* 19* Temporary Receive Buffer Address 0 */
-        volatile u_long _s_trba1;       /* 1a* Temporary Receive Buffer Address 1 */
-        volatile u_long _s_tbwc0;       /* 1b* Temporary Buffer Word Count 0 */
-        volatile u_long _s_tbwc1;       /* 1c* Temporary Buffer Word Count 1 */
-        volatile u_long _s_addr0;       /* 1d* Address Generator 0 */
-        volatile u_long _s_addr1;       /* 1e* Address Generator 1 */
-        volatile u_long _s_llfa;        /* 1f* Last Link Field Address */
-        volatile u_long _s_ttda;        /* 20* Temp Transmit Descriptor Address */
-        volatile u_long s_cep;          /* 21: CAM Entry Pointer */
-        volatile u_long s_cap2;         /* 22: CAM Address Port 2 */
-        volatile u_long s_cap1;         /* 23: CAM Address Port 1 */
-        volatile u_long s_cap0;         /* 24: CAM Address Port 0 */
-        volatile u_long s_ce;           /* 25: CAM Enable */
-        volatile u_long s_cdp;          /* 26: CAM Descriptor Pointer */
-        volatile u_long s_cdc;          /* 27: CAM Descriptor Count */
-        volatile u_long s_sr;           /* 28: Silicon Revision */
-        volatile u_long s_wt0;          /* 29: Watchdog Timer 0 */
-        volatile u_long s_wt1;          /* 2a: Watchdog Timer 1 */
-        volatile u_long s_rsc;          /* 2b: Receive Sequence Counter */
-        volatile u_long s_crct;         /* 2c: CRC Error Tally */
-        volatile u_long s_faet;         /* 2d: FAE Tally */
-        volatile u_long s_mpt;          /* 2e: Missed Packet Tally */
-        volatile u_long _s_mdt;         /* 2f* Maximum Deferral Timer */
-        volatile u_long _s_rtc;         /* 30* Receive Test Control */
-        volatile u_long _s_ttc;         /* 31* Transmit Test Control */
-        volatile u_long _s_dtc;         /* 32* DMA Test Control */
-        volatile u_long _s_cc0;         /* 33* CAM Comparison 0 */
-        volatile u_long _s_cc1;         /* 34* CAM Comparison 1 */
-        volatile u_long _s_cc2;         /* 35* CAM Comparison 2 */
-        volatile u_long _s_cm;          /* 36* CAM Match */
-        volatile u_long :32;            /* 37* reserved */
-        volatile u_long :32;            /* 38* reserved */
-        volatile u_long _s_rbc;         /* 39* Receiver Byte Count */
-        volatile u_long :32;            /* 3a* reserved */
-        volatile u_long _s_tbo;         /* 3b* Transmitter Backoff Counter */
-        volatile u_long _s_trc;         /* 3c* Transmitter Random Counter */
-        volatile u_long _s_tbm;         /* 3d* Transmitter Backoff Mask */
-        volatile u_long :32;            /* 3e* Reserved */
-        volatile u_long s_dcr2;         /* 3f Data Configuration 2 (AVF) */
-};
+#define	SNR_CR		0x00	/* Command */
+#define	SNR_DCR		0x01	/* Data Configuration */
+#define	SNR_RCR		0x02	/* Receive Control */
+#define	SNR_TCR		0x03	/* Transmit Control */
+#define	SNR_IMR		0x04	/* Interrupt Mask */
+#define	SNR_ISR		0x05	/* Interrupt Status */
+#define	SNR_UTDA	0x06	/* Upper Transmit Descriptor Address */
+#define	SNR_CTDA	0x07	/* Current Transmit Descriptor Address */
+#define	SNR_TPS		0x08	/* Transmit Packet Size */
+#define	SNR_TFC		0x09	/* Transmit Fragment Count */
+#define	SNR_TSA0	0x0a	/* Transmit Start Address 0 */
+#define	SNR_TSA1	0x0b	/* Transmit Start Address 1 */
+#define	SNR_TFS		0x0c	/* Transmit Fragment Size */
+#define	SNR_URDA	0x0d	/* Upper Receive Descriptor Address */
+#define	SNR_CRDA	0x0e	/* Current Receive Descriptor Address */
+#define	SNR_CRBA0	0x0f	/* Current Receive Buffer Address 0 */
+#define	SNR_CRBA1	0x10	/* Current Receive Buffer Address 1 */
+#define	SNR_RBWC0	0x11	/* Remaining Buffer Word Count 0 */
+#define	SNR_RBWC1	0x12	/* Remaining Buffer Word Count 1 */
+#define	SNR_EOBC	0x13	/* End Of Buffer Word Count */
+#define	SNR_URRA	0x14	/* Upper Receive Resource Address */
+#define	SNR_RSA		0x15	/* Resource Start Address */
+#define	SNR_REA		0x16	/* Resource End Address */
+#define	SNR_RRP		0x17	/* Resource Read Pointer */
+#define	SNR_RWP		0x18	/* Resource Write Pointer */
+#define	SNR_TRBA0	0x19	/* Temporary Receive Buffer Address 0 */
+#define	SNR_TRBA1	0x1a	/* Temporary Receive Buffer Address 1 */
+#define	SNR_TBWC0	0x1b	/* Temporary Buffer Word Count 0 */
+#define	SNR_TBWC1	0x1c	/* Temporary Buffer Word Count 1 */
+#define	SNR_ADDR0	0x1d	/* Address Generator 0 */
+#define	SNR_ADDR1	0x1e	/* Address Generator 1 */
+#define	SNR_LLFA	0x1f	/* Last Link Field Address */
+#define	SNR_TTDA	0x20	/* Temp Transmit Descriptor Address */
+#define	SNR_CEP		0x21	/* CAM Entry Pointer */
+#define	SNR_CAP2	0x22	/* CAM Address Port 2 */
+#define	SNR_CAP1	0x23	/* CAM Address Port 1 */
+#define	SNR_CAP0	0x24	/* CAM Address Port 0 */
+#define	SNR_CE		0x25	/* CAM Enable */
+#define	SNR_CDP		0x26	/* CAM Descriptor Pointer */
+#define	SNR_CDC		0x27	/* CAM Descriptor Count */
+#define	SNR_SR		0x28	/* Silicon Revision */
+#define	SNR_WT0		0x29	/* Watchdog Timer 0 */
+#define	SNR_WT1		0x2a	/* Watchdog Timer 1 */
+#define	SNR_RSC		0x2b	/* Receive Sequence Counter */
+#define	SNR_CRCT	0x2c	/* CRC Error Tally */
+#define	SNR_FAET	0x2d	/* FAE Tally */
+#define	SNR_MPT		0x2e	/* Missed Packet Tally */
+#define	SNR_MDT		0x2f	/* Maximum Deferral Timer */
+#define	SNR_RTC		0x30	/* Receive Test Control */
+#define	SNR_TTC		0x31	/* Transmit Test Control */
+#define	SNR_DTC		0x32	/* DMA Test Control */
+#define	SNR_CC0		0x33	/* CAM Comparison 0 */
+#define	SNR_CC1		0x34	/* CAM Comparison 1 */
+#define	SNR_CC2		0x35	/* CAM Comparison 2 */
+#define	SNR_CM		0x36	/* CAM Match */
+#define	SNR_RES1	0x37	/* reserved */
+#define	SNR_RES2	0x38	/* reserved */
+#define	SNR_RBC		0x39	/* Receiver Byte Count */
+#define	SNR_RES3	0x3a	/* reserved */
+#define	SNR_TBO		0x3b	/* Transmitter Backoff Counter */
+#define	SNR_TRC		0x3c	/* Transmitter Random Counter */
+#define	SNR_TBM		0x3d	/* Transmitter Backoff Mask */
+#define	SNR_RES4	0x3e	/* Reserved */
+#define	SNR_DCR2	0x3f	/* Data Configuration 2 (AVF) */
 
-#define SN_REGSIZE	(0x40 * 4)
+#define	SN_NREGS	0x40
 
 /*
  * Register Interpretations

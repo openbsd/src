@@ -1,5 +1,5 @@
 /*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.16 1997/03/25 05:02:39 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.17 1997/03/29 23:26:48 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -28,6 +28,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/netisr.h>
 #include <net/route.h>
 
@@ -57,23 +58,10 @@ typedef unsigned char uchar;
 #include <mac68k/dev/if_snreg.h>
 #include <mac68k/dev/if_snvar.h>
 
-#include	"nubus.h"
-
-/*
- * Register access macros:
- * SWR is "Sonic Write Register"
- * SRD is "Sonic Read Register"
- */
-#define SWR(a, x) 	(a) = (x)
-#define SRD(a)		((a) & 0xffff)
-
-#define wbflush()
-
 static void snwatchdog __P((struct ifnet *));
 static int sninit __P((struct sn_softc *sc));
 static int snstop __P((struct sn_softc *sc));
 static int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
-static void snintr __P((void *, int));
 static int snioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
 static void snstart __P((struct ifnet *ifp));
 static void snreset __P((struct sn_softc *sc));
@@ -117,7 +105,7 @@ int ethdebug = 0;
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-void
+int
 snsetup(sc)
 	struct sn_softc	*sc;
 {
@@ -126,21 +114,30 @@ snsetup(sc)
 	unsigned char	*pp;
 	int		i;
 
-	sc->sc_csr = (struct sonic_reg *) sc->sc_regh;
 
 	/*
-	 * Disable caching on the SONIC's data space.
+	 * XXX if_sn.c is intended to be MI. Should it allocate memory
+	 * for its descriptor areas, or expect the MD attach code
+	 * to do that?
 	 */
-	physaccess((caddr_t) sc->space, (caddr_t) kvtop((caddr_t) sc->space),
-		sizeof(sc->space), PG_V | PG_RW | PG_CI);
+	sc->space = malloc((SN_NPAGES + 1) * NBPG, M_DEVBUF, M_WAITOK);
+	if (sc->space == NULL) {
+		printf ("%s: memory allocation for descriptors failed\n",
+			sc->sc_dev.dv_xname);
+		return (1);
+	}
 
 	/*
-	 * Put the pup in reset mode (sninit() will fix it later)
-	 * and clear any interrupts.
+	 * Put the pup in reset mode (sninit() will fix it later),
+	 * stop the timer, disable all interrupts and clear any interrupts.
 	 */
-	sc->sc_csr->s_cr = CR_RST;
+	NIC_PUT(sc, SNR_CR, CR_RST);
 	wbflush();
-	sc->sc_csr->s_isr = 0x7fff;
+	NIC_PUT(sc, SNR_CR, CR_STP);
+	wbflush();
+	NIC_PUT(sc, SNR_IMR, 0);
+	wbflush();
+	NIC_PUT(sc, SNR_ISR, ISR_ALL);
 	wbflush();
 
 	/*
@@ -148,8 +145,20 @@ snsetup(sc)
 	 * a higher buffer address to a 16 bit offset--this will cause wrap
 	 * around problems near the end of 64k !!
 	 */
-	p = &sc->space[0];
+	p = sc->space;
 	pp = (unsigned char *)ROUNDUP ((int)p, NBPG);
+	p = pp;
+
+	/*
+	 * Disable caching on the SONIC's data space.
+	 * The pages might not be physically contiguous, so set
+	 * each page individually.
+	 */
+	for (i = 0; i < SN_NPAGES; i++) {
+		physaccess (p, (caddr_t) kvtop(p), NBPG,
+			PG_V | PG_RW | PG_CI);
+		p += NBPG;
+	}
 	p = pp;
 
 	for (i = 0; i < NRRA; i++) {
@@ -185,14 +194,15 @@ snsetup(sc)
 	p = (unsigned char *)SOALIGN(sc, p);
 
 	if ((p - pp) > NBPG) {
-		printf ("sn: sizeof RRA (%ld) + CDA (%ld) +"
+		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
 			"RDA (%ld) + TDA (%ld) > NBPG (%d). Punt!\n",
+			sc->sc_dev.dv_xname,
 			(ulong)sc->p_cda - (ulong)sc->p_rra[0],
 			(ulong)sc->p_rda[0] - (ulong)sc->p_cda,
 			(ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_rda[0],
 			(ulong)p - (ulong)sc->mtda[0].mtd_txp,
 			NBPG);
-		return;
+		return(1);
 	}
 
 	p = pp + NBPG;
@@ -225,7 +235,8 @@ printf("sonic buffers: rra=%p cda=0x%x rda=0x%x tda=0x%x\n",
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
 	ifp->if_start = snstart;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = 
+		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -233,7 +244,7 @@ printf("sonic buffers: rra=%p cda=0x%x rda=0x%x tda=0x%x\n",
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	add_nubus_intr(sc->slotno, snintr, (void *) sc);
+	return (0);
 }
 
 static int
@@ -242,10 +253,10 @@ snioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ifaddr *ifa;
-	struct sn_softc *sc = ifp->if_softc;
-	int     s = splnet(), err = 0;
-	int	temp;
+	struct ifaddr	*ifa;
+	struct sn_softc	*sc = ifp->if_softc;
+	int		s = splnet(), err = 0;
+	int		temp;
 
 	switch (cmd) {
 
@@ -317,8 +328,6 @@ snioctl(ifp, cmd, data)
 
 /*
  * Encapsulate a packet of type family for the local net.
- * Use trailer local net encapsulation if enough data in first
- * packet leaves a multiple of 512 bytes of data in remainder.
  */
 static void
 snstart(ifp)
@@ -385,13 +394,13 @@ outloop:
  * This is called from sonicioctl() when /etc/ifconfig is run to set
  * the address or switch the i/f on.
  */
-void caminitialise __P((struct sn_softc *));
-void camentry __P((struct sn_softc *, int, unsigned char *ea));
-void camprogram __P((struct sn_softc *));
-void initialise_tda __P((struct sn_softc *));
-void initialise_rda __P((struct sn_softc *));
-void initialise_rra __P((struct sn_softc *));
-void initialise_tba __P((struct sn_softc *));
+static void caminitialise __P((struct sn_softc *));
+static void camentry __P((struct sn_softc *, int, unsigned char *ea));
+static void camprogram __P((struct sn_softc *));
+static void initialise_tda __P((struct sn_softc *));
+static void initialise_rda __P((struct sn_softc *));
+static void initialise_rra __P((struct sn_softc *));
+static void initialise_tba __P((struct sn_softc *));
 
 /*
  * reset and restart the SONIC.  Called in case of fatal
@@ -401,7 +410,6 @@ static void
 snreset(sc)
 	struct sn_softc *sc;
 {
-	printf("snreset\n");
 	snstop(sc);
 	sninit(sc);
 }
@@ -410,8 +418,8 @@ static int
 sninit(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr = sc->sc_csr;
-	int s;
+	int			s;
+	unsigned long		s_rcr;
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		/* already running */
@@ -419,20 +427,28 @@ sninit(sc)
 
 	s = splnet();
 
-	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
+	NIC_PUT(sc, SNR_CR, CR_RST);	/* DCR only accessable in reset mode! */
 
 	/* config it */
-	csr->s_dcr = sc->s_dcr | (sc->bitmode ? DCR_DW32 : DCR_DW16);
-	csr->s_rcr = RCR_BRD | RCR_LBNONE;
-	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_LCDEN;
+	NIC_PUT(sc, SNR_DCR, sc->snr_dcr);
+	NIC_PUT(sc, SNR_DCR2, sc->snr_dcr2);
+
+	s_rcr = RCR_BRD | RCR_LBNONE;
+	if (sc->sc_if.if_flags & IFF_PROMISC)
+		s_rcr |= RCR_PRO;
+	if (sc->sc_if.if_flags & IFF_ALLMULTI)
+		s_rcr |= RCR_AMC;
+	NIC_PUT(sc, SNR_RCR, s_rcr);
+
+	NIC_PUT(sc, SNR_IMR, (IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_LCDEN));
 
 	/* clear pending interrupts */
-	csr->s_isr = 0x7fff;
+	NIC_PUT(sc, SNR_ISR, ISR_ALL);
 
 	/* clear tally counters */
-	csr->s_crct = -1;
-	csr->s_faet = -1;
-	csr->s_mpt = -1;
+	NIC_PUT(sc, SNR_CRCT, -1);
+	NIC_PUT(sc, SNR_FAET, -1);
+	NIC_PUT(sc, SNR_MPT, -1);
 
 	initialise_tda(sc);
 	initialise_rda(sc);
@@ -440,22 +456,20 @@ sninit(sc)
 	initialise_tba(sc);
 
 	/* enable the chip */
-	csr->s_cr = 0;
+	NIC_PUT(sc, SNR_CR, 0);
 	wbflush();
 
-	/* program the CAM with our address */
-	caminitialise(sc);
-	camentry(sc, 0, sc->sc_enaddr);
+	/* program the CAM */
 	camprogram(sc);
 
 	/* get it to read resource descriptors */
-	csr->s_cr = CR_RRRA;
+	NIC_PUT(sc, SNR_CR, CR_RRRA);
 	wbflush();
-	while (csr->s_cr & CR_RRRA)
+	while ((NIC_GET(sc, SNR_CR)) & CR_RRRA)
 		continue;
 
 	/* enable rx */
-	csr->s_cr = CR_RXEN;
+	NIC_PUT(sc, SNR_CR, CR_RXEN);
 	wbflush();
 
 	/* flag interface as "running" */
@@ -478,7 +492,7 @@ snstop(sc)
 	int s = splnet();
 
 	/* stick chip in reset */
-	sc->sc_csr->s_cr = CR_RST;
+	NIC_PUT(sc, SNR_CR, CR_RST);
 	wbflush();
 
 	/* free all receive buffers (currently static so nothing to do) */
@@ -534,7 +548,6 @@ sonicput(sc, m0)
 	struct sn_softc *sc;
 	struct mbuf *m0;
 {
-	struct sonic_reg	*csr = sc->sc_csr;
 	unsigned char		*buff, *buffer;
 	void			*txp;
 	struct mtd		*mtdp;
@@ -545,7 +558,7 @@ sonicput(sc, m0)
 	int			mtd_next;
 	int			txb_new = sc->txb_new;
 
-	if (sc->sc_csr->s_cr & CR_TXP) {
+	if (NIC_GET(sc, SNR_CR) & CR_TXP) {
 		return (0);
 	}
 
@@ -610,36 +623,42 @@ sonicput(sc, m0)
 
 	/* make sure chip is running */
 	wbflush();
-	csr->s_cr = CR_TXP;
+	NIC_PUT(sc, SNR_CR, CR_TXP);
 	wbflush();
 	sc->sc_if.if_timer = 5;	/* 5 seconds to watch for failing to transmit */
 
 	return (totlen);
 }
 
-void sonictxint __P((struct sn_softc *));
-void sonicrxint __P((struct sn_softc *));
+static void sonictxint __P((struct sn_softc *));
+static void sonicrxint __P((struct sn_softc *));
 
-int sonic_read __P((struct sn_softc *, caddr_t, int));
-struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
+static int sonic_read __P((struct sn_softc *, caddr_t, int));
+static struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
 
 /*
  * CAM support
  */
-void 
+static void 
 caminitialise(sc)
 	struct sn_softc *sc;
 {
 	int    	i;
 	void	*p_cda = sc->p_cda;
 	int	bitmode = sc->bitmode;
+	int	camoffset;
 
-	for (i = 0; i < MAXCAM; i++)
-		SWO(bitmode, p_cda, (CDA_CAMDESC * i + CDA_CAMEP), i);
+	for (i = 0; i < MAXCAM; i++) {
+		camoffset = i * CDA_CAMDESC;
+		SWO(bitmode, p_cda, (camoffset + CDA_CAMEP), i);
+		SWO(bitmode, p_cda, (camoffset + CDA_CAMAP2), 0);
+		SWO(bitmode, p_cda, (camoffset + CDA_CAMAP1), 0);
+		SWO(bitmode, p_cda, (camoffset + CDA_CAMAP0), 0);
+	}
 	SWO(bitmode, p_cda, CDA_ENABLE, 0);
 }
 
-void 
+static void 
 camentry(sc, entry, ea)
 	int entry;
 	unsigned char *ea;
@@ -647,30 +666,73 @@ camentry(sc, entry, ea)
 {
 	int	bitmode = sc->bitmode;
 	void	*p_cda = sc->p_cda;
-	int		camoffset = entry * CDA_CAMDESC;
+	int	camoffset = entry * CDA_CAMDESC;
 
 	SWO(bitmode, p_cda, camoffset + CDA_CAMEP, entry);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP2, (ea[5] << 8) | ea[4]);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP1, (ea[3] << 8) | ea[2]);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP0, (ea[1] << 8) | ea[0]);
-	SWO(bitmode, p_cda, CDA_ENABLE, (1 << entry));
+	SWO(bitmode, p_cda, CDA_ENABLE, 
+		(SRO(bitmode, p_cda, CDA_ENABLE) | (1 << entry)));
 }
 
-void 
+static void 
 camprogram(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr;
-	int     timeout;
+	int			timeout;
+	int			mcount = 0;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	struct ifnet		*ifp;
 
-	csr = sc->sc_csr;
-	csr->s_cdp = LOWER(sc->v_cda);
-	csr->s_cdc = MAXCAM;
-	csr->s_cr = CR_LCAM;
+	caminitialise(sc);
+
+	ifp = &sc->sc_if;
+
+	/* Always load our own address first. */
+	camentry (sc, 0, sc->sc_enaddr);
+	mcount++;
+
+	/* Assume we won't need allmulti bit. */
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	mcount++;
+	/* Loop through multicast addresses */
+	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
+	while (enm != NULL) {
+		if (mcount == MAXCAM) {
+			 ifp->if_flags |= IFF_ALLMULTI;
+			 break;
+		}
+
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+				sizeof(enm->enm_addrlo)) != 0) {
+			/*
+			 * SONIC's CAM is programmed with specific
+			 * addresses. It has no way to specify a range.
+			 * (Well, thats not exactly true. If the
+			 * range is small one could program each addr
+			 * within the range as a seperate CAM entry)
+			 */
+			ifp->if_flags |= IFF_ALLMULTI;
+			break;
+		}
+
+		/* program the CAM with the specified entry */
+		camentry(sc, mcount, enm->enm_addrlo);
+		mcount++;
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	NIC_PUT(sc, SNR_CDP, LOWER(sc->v_cda));
+	NIC_PUT(sc, SNR_CDC, MAXCAM);
+	NIC_PUT(sc, SNR_CR, CR_LCAM);
 	wbflush();
 
 	timeout = 10000;
-	while (csr->s_cr & CR_LCAM && timeout--)
+	while ((NIC_GET(sc, SNR_CR) & CR_LCAM) && timeout--)
 		continue;
 	if (timeout == 0) {
 		/* XXX */
@@ -678,53 +740,49 @@ camprogram(sc)
 		    sc->sc_dev.dv_xname);
 	}
 	timeout = 10000;
-	while ((csr->s_isr & ISR_LCD) == 0 && timeout--)
+	while (((NIC_GET(sc, SNR_ISR) & ISR_LCD) == 0) && timeout--)
 		continue;
 
-	if (csr->s_isr & ISR_LCD)
-		csr->s_isr = ISR_LCD;
+	if (NIC_GET(sc, SNR_ISR) & ISR_LCD)
+		NIC_PUT(sc, SNR_ISR, ISR_LCD);
 	else
 		printf("%s: CAM initialisation without interrupt\n",
 		    sc->sc_dev.dv_xname);
 }
 
 #if 0
-void 
+static void 
 camdump(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr = sc->sc_csr;
 	int i;
 
 	printf("CAM entries:\n");
-	csr->s_cr = CR_RST;
+	NIC_PUT(sc, SNR_CR, CR_RST);
 	wbflush();
 
 	for (i = 0; i < 16; i++) {
 		ushort  ap2, ap1, ap0;
-		csr->s_cep = i;
+		NIC_PUT(sc, SNR_CEP, i);
 		wbflush();
-		ap2 = csr->s_cap2;
-		ap1 = csr->s_cap1;
-		ap0 = csr->s_cap0;
+		ap2 = NIC_GET(sc, SNR_CAP2);
+		ap1 = NIC_GET(sc, SNR_CAP1);
+		ap0 = NIC_GET(sc, SNR_CAP0);
 		printf("%d: ap2=0x%x ap1=0x%x ap0=0x%x\n", i, ap2, ap1, ap0);
 	}
-	printf("CAM enable 0x%lx\n", csr->s_cep);
+	printf("CAM enable 0x%x\n", NIC_GET(sc, SNR_CE));
 
-	csr->s_cr = 0;
+	NIC_PUT(sc, SNR_CR, 0);
 	wbflush();
 }
 #endif
 
-void 
+static void 
 initialise_tda(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr;
 	struct mtd *mtd;
 	int     i;
-
-	csr = sc->sc_csr;
 
 	for (i = 0; i < NTDA; i++) {
 		mtd = &sc->mtda[i];
@@ -736,19 +794,16 @@ initialise_tda(sc)
 	sc->mtd_free = 0;
 	sc->mtd_tlinko = TXP_FRAGOFF + 1*TXP_FRAGSIZE + TXP_FPTRLO;
 
-	csr->s_utda = UPPER(sc->mtda[0].mtd_vtxp);
-	csr->s_ctda = LOWER(sc->mtda[0].mtd_vtxp);
+	NIC_PUT(sc, SNR_UTDA, UPPER(sc->mtda[0].mtd_vtxp));
+	NIC_PUT(sc, SNR_CTDA, LOWER(sc->mtda[0].mtd_vtxp));
 }
 
-void 
+static void
 initialise_rda(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr;
 	int	bitmode = sc->bitmode;
 	int     i;
-
-	csr = sc->sc_csr;
 
 	/* link the RDA's together into a circular list */
 	for (i = 0; i < (NRDA - 1); i++) {
@@ -763,31 +818,28 @@ initialise_rda(sc)
 
 	sc->sc_rxmark = 0;
 
-	SWR(csr->s_urda, UPPER(sc->v_rda[0]));
-	SWR(csr->s_crda, LOWER(sc->v_rda[0]));
+	NIC_PUT(sc, SNR_URDA, UPPER(sc->v_rda[0]));
+	NIC_PUT(sc, SNR_CRDA, LOWER(sc->v_rda[0]));
 	wbflush();
 }
 
-void 
+static void
 initialise_rra(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr;
 	int     	i;
 	unsigned int	v;
 	int		bitmode = sc->bitmode;
 
-	csr = sc->sc_csr;
-
-	if (bitmode)
-		csr->s_eobc = RBASIZE(sc) / 2 - 2; /* must be >= MAXETHERPKT */
+	if (bitmode)	/* eobc must be >= MAXETHERPKT */
+		NIC_PUT(sc, SNR_EOBC, RBASIZE(sc) / 2 - 2);
 	else
-		csr->s_eobc = RBASIZE(sc) / 2 - 1; /* must be >= MAXETHERPKT */
-	csr->s_urra = UPPER(sc->v_rra[0]);
-	csr->s_rsa = LOWER(sc->v_rra[0]);
+		NIC_PUT(sc, SNR_EOBC, RBASIZE(sc) / 2 - 1);
+	NIC_PUT(sc, SNR_URRA, UPPER(sc->v_rra[0]));
+	NIC_PUT(sc, SNR_RSA, LOWER(sc->v_rra[0]));
 	/* rea must point just past the end of the rra space */
-	csr->s_rea = LOWER(sc->v_rea);
-	csr->s_rrp = LOWER(sc->v_rra[0]);
+	NIC_PUT(sc, SNR_REA, LOWER(sc->v_rea));
+	NIC_PUT(sc, SNR_RRP, LOWER(sc->v_rra[0]));
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
@@ -798,11 +850,11 @@ initialise_rra(sc)
 		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(RBASIZE(sc) / 2));
 	}
 	sc->sc_rramark = NRBA;
-	csr->s_rwp = LOWER(sc->v_rra[sc->sc_rramark]);
+	NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[sc->sc_rramark]));
 	wbflush();
 }
 
-void 
+static void
 initialise_tba(sc)
 	struct sn_softc *sc;
 {
@@ -811,18 +863,17 @@ initialise_tba(sc)
 	sc->txb_new = 0;
 }
 
-static void
+void
 snintr(arg, slot)
 	void	*arg;
 	int	slot;
 {
 	struct sn_softc	*sc = (struct sn_softc *)arg;
-	struct sonic_reg *csr = sc->sc_csr;
 	int	isr;
 
-	while ((isr = (csr->s_isr & ISR_ALL)) != 0) {
+	while ((isr = (NIC_GET(sc, SNR_ISR) & ISR_ALL)) != 0) {
 		/* scrub the interrupts that we are going to service */
-		csr->s_isr = isr;
+		NIC_PUT(sc, SNR_ISR, isr);
 		wbflush();
 
 		if (isr & (ISR_BR | ISR_LCD | ISR_PINT | ISR_TC))
@@ -877,19 +928,16 @@ snintr(arg, slot)
 /*
  * Transmit interrupt routine
  */
-void 
+static void 
 sonictxint(sc)
 	struct sn_softc *sc;
 {
 	void		*txp;
-	struct sonic_reg *csr;
 	struct mtd	*mtd;
 	/* XXX DG make mtd_hw a local var */
 
 	if (sc->mtd_hw == sc->mtd_free)
 		return;
-
-	csr = sc->sc_csr;
 
 	while (sc->mtd_hw != sc->mtd_free) {
 		mtd = &sc->mtda[sc->mtd_hw];
@@ -927,8 +975,8 @@ sonictxint(sc)
 			if (sc->mtd_hw != sc->mtd_free) {
 				printf("resubmitting remaining packets\n");
 				mtd = &sc->mtda[sc->mtd_hw];
-				csr->s_ctda = LOWER(mtd->mtd_vtxp);
-				csr->s_cr = CR_TXP;
+				NIC_PUT(sc, SNR_CTDA, LOWER(mtd->mtd_vtxp));
+				NIC_PUT(sc, SNR_CR, CR_TXP);
 				wbflush();
 				return;
 			}
@@ -939,11 +987,10 @@ sonictxint(sc)
 /*
  * Receive interrupt routine
  */
-void 
+static void 
 sonicrxint(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg	*csr = sc->sc_csr;
 	void			*rda;
 	int     		orra;
 	int			len;
@@ -1002,7 +1049,7 @@ sonicrxint(sc)
 		SWO(bitmode, tmp2, RXRSRC_WCLO, 0);
 
 		sc->sc_rramark = (++rramark) & RRAMASK;
-		csr->s_rwp = LOWER(sc->v_rra[rramark]);
+		NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[rramark]));
 		wbflush();
 
 		/*
@@ -1027,7 +1074,7 @@ sonicrxint(sc)
  * sonic_read -- pull packet off interface and forward to
  * appropriate protocol handler
  */
-int 
+static int 
 sonic_read(sc, pkt, len)
 	struct sn_softc *sc;
 	caddr_t pkt;
@@ -1039,9 +1086,6 @@ sonic_read(sc, pkt, len)
 
 	/*
          * Get pointer to ethernet header (in input buffer).
-         * Deal with trailer protocol: if type is PUP trailer
-         * get true type from first 16-bit word past data.
-         * Remember that type was trailer by setting off.
          */
 	et = (struct ether_header *)pkt;
 
@@ -1087,7 +1131,7 @@ sonic_read(sc, pkt, len)
  * because we are using stupid buffer management this
  * is slow.
  */
-struct mbuf *
+static struct mbuf *
 sonic_get(sc, eh, datalen)
 	struct sn_softc *sc;
 	struct ether_header *eh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_nubus.c,v 1.3 1997/03/17 04:16:59 briggs Exp $	*/
+/*	$OpenBSD: if_sn_nubus.c,v 1.4 1997/03/29 23:26:49 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -124,8 +124,9 @@ sn_nubus_attach(parent, self, aux)
 
         switch (sn_nb_card_vendor(na)) {
 	case AE_VENDOR_DAYNA:
-                sc->s_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_USR1 |
-                         DCR_DW32 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+                sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
+			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
 
 		if (bus_space_subregion(bst, bsh, 0x00180000, SN_REGSIZE,
 					&sc->sc_regh)) {
@@ -141,6 +142,11 @@ sn_nubus_attach(parent, self, aux)
 
 		/*
 		 * Copy out the ethernet address from the card's ROM
+		 *
+		 * See if_sn_obio.c for a discussion of bit reversal
+		 * in Apple's MAC address PROMs. As far as I can tell
+		 * Dayna stores their Mac address in ethernet format,
+		 * not Token Ring.
 		 */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
 			sc->sc_arpcom.ac_enaddr[i] =
@@ -156,8 +162,9 @@ sn_nubus_attach(parent, self, aux)
                  * for a new card, the following defaults are a
                  * good starting point.
                  */
-                sc->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 |
-                         DCR_DW32 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+                sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
+			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
                 return;
         }
 
@@ -167,6 +174,20 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	snsetup(sc);
+	/* Regs are addressed as words, big endian. */
+	for (i = 0; i < SN_NREGS; i++) {
+		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + 2);
+	}
+
+	/* snsetup returns 1 if something fails */
+	if (snsetup(sc)) {
+		bus_space_unmap(bst, bsh, NBMEMSIZE);
+		return;
+	}
+
+	add_nubus_intr(sc->slotno, snintr, (void *)sc);
+
+	return;
 }
 
 static int
@@ -204,6 +225,9 @@ sn_nb_card_vendor(na)
 				vendor = AE_VENDOR_DAYNA;
 			break;
 		}
+		break;
+	case NUBUS_DRSW_DAYNA:
+		vendor = AE_VENDOR_DAYNA;
 		break;
 	default:
 #ifdef DIAGNOSTIC
