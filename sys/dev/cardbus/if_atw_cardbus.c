@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.4 2004/07/25 13:50:49 millert Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.5 2004/07/28 13:12:29 millert Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -143,6 +143,9 @@ const struct atw_cardbus_product {
 } atw_cardbus_products[] = {
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM8211,
 	  "ADMtek ADM8211 802.11 MAC/BBP" },
+
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3CRSHPW796,
+	  "3Com 3CRSHPW796 802.11b" },
 
 	{ 0,				0,	NULL },
 };
