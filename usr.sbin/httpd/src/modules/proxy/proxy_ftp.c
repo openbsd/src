@@ -430,7 +430,7 @@ static long int send_dir(BUFF *data, request_rec *r, cache_req *c, char *cwd)
         }
         /* else??? What about other OS's output formats? */
         else {
-            strcat(buf, "\n");  /* re-append the newline char */
+            strlcat(buf, buf_size, "\n");  /* re-append the newline char */
             ap_cpystrn(buf, ap_escape_html(p, buf), buf_size);
         }
 

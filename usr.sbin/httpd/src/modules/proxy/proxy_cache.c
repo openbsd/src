@@ -292,6 +292,7 @@ static int should_proxy_garbage_coll(request_rec *r)
 
     const char *cachedir = conf->root;
     char *filename;
+    size_t fnlen;
     struct stat buf;
     int timefd;
     time_t every = conf->gcinterval;
@@ -300,7 +301,8 @@ static int should_proxy_garbage_coll(request_rec *r)
     if (cachedir == NULL || every == -1)
         return 0;
 
-    filename = ap_palloc(r->pool, strlen(cachedir) + strlen(DOT_TIME) + 1);
+    fnlen = strlen(cachedir) + strlen(DOT_TIME) + 1;
+    filename = ap_palloc(r->pool, fnlen);
 
     garbage_now = time(NULL);
     /*
@@ -312,8 +314,8 @@ static int should_proxy_garbage_coll(request_rec *r)
     if (garbage_now != -1 && lastcheck != BAD_DATE && garbage_now < lastcheck + every)
         return 0;
 
-    strcpy(filename, cachedir);
-    strcat(filename, DOT_TIME);
+    strlcpy(filename, cachedir, fnlen);
+    strlcat(filename, DOT_TIME, fnlen);
 
     /*
      * At this point we have a bit of an engineering compromise. We could
@@ -391,7 +393,7 @@ static void help_proxy_garbage_coll(request_rec *r)
 
     for (i = 0; i < files->nelts; i++) {
         fent = &((struct gc_ent *) files->elts)[i];
-        sprintf(filename, "%s%s", cachedir, fent->file);
+        snprintf(filename, sizeof(fent->file), "%s%s", cachedir, fent->file);
         ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server, "GC Unlinking %s (expiry %ld, garbage_now %ld)", filename, (long)fent->expire, (long)garbage_now);
 #if TESTING
         fprintf(stderr, "Would unlink %s\n", filename);
@@ -432,9 +434,11 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
     struct gc_ent *fent;
     int nfiles = 0;
     char *filename;
+    size_t fnlen;
 
     ap_snprintf(cachedir, sizeof(cachedir), "%s%s", cachebasedir, cachesubdir);
-    filename = ap_palloc(r->pool, strlen(cachedir) + HASH_LEN + 2);
+    fnlen = strlen(cachedir) + HASH_LEN + 2;
+    filename = ap_palloc(r->pool, fnlen);
     ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server, "GC Examining directory %s", cachedir);
     dir = opendir(cachedir);
     if (dir == NULL) {
@@ -446,7 +450,7 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
     while ((ent = readdir(dir)) != NULL) {
         if (ent->d_name[0] == '.')
             continue;
-        sprintf(filename, "%s%s", cachedir, ent->d_name);
+        snprintf(filename, fnlen, "%s%s", cachedir, ent->d_name);
         ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server, "GC Examining file %s", filename);
 /* is it a temporary file? */
         if (strncmp(ent->d_name, "tmp", 3) == 0) {
@@ -610,8 +614,8 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
         fent = (struct gc_ent *) ap_push_array(files);
         fent->len = buf.st_size;
         fent->expire = garbage_expire;
-        strcpy(fent->file, cachesubdir);
-        strcat(fent->file, ent->d_name);
+        strlcpy(fent->file, cachesubdir, sizeof(fent->file));
+        strlcat(fent->file, ent->d_name, sizeof(fent->file));
 
 /* accumulate in blocks, to cope with directories > 4Gb */
         add_long61(&curbytes, ROUNDUP2BLOCKS(buf.st_size));
@@ -1338,6 +1342,7 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
     (proxy_server_conf *)ap_get_module_config(sconf, &proxy_module);
     const char *cc_resp;
     table *req_hdrs;
+    size_t tflen;
 
     cc_resp = ap_table_get(resp_hdrs, "Cache-Control");
 
@@ -1617,9 +1622,10 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
             c = ap_proxy_cache_error(c);
             break;
         }
-        c->tempfile = ap_palloc(r->pool, strlen(conf->cache.root) + sizeof(TMPFILESTR));
-        strcpy(c->tempfile, conf->cache.root);
-        strcat(c->tempfile, TMPFILESTR);
+        tflen = strlen(conf->cache.root) + sizeof(TMPFILESTR);
+        c->tempfile = ap_palloc(r->pool, tflen);
+        strlcpy(c->tempfile, conf->cache.root, tflen);
+        strlcat(c->tempfile, TMPFILESTR, tflen);
 #undef TMPFILESTR
         p = mktemp(c->tempfile);
 #else
@@ -1627,11 +1633,12 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
             c = ap_proxy_cache_error(c);
             break;
         }
-        c->tempfile = ap_palloc(r->pool, strlen(conf->cache.root) + 1 + L_tmpnam);
-        strcpy(c->tempfile, conf->cache.root);
-        strcat(c->tempfile, "/");
+        tflen = strlen(conf->cache.root) + 1 + L_tmpnam;
+        c->tempfile = ap_palloc(r->pool, tflen);
+        strlcpy(c->tempfile, conf->cache.root, tflen);
+        strlcat(c->tempfile, "/", tflen);
         p = tmpnam(NULL);
-        strcat(c->tempfile, p);
+        strlcat(c->tempfile, p, tflen);
 #endif
         if (p == NULL) {
             c = ap_proxy_cache_error(c);
