@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 14:26:17 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/06/18 00:21:57 espie Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -28,7 +28,8 @@ CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/stl -I$(.CURDIR)/../libio -I$(IO_OBJDIR)
 LDADD+=		-lm
 
 # stdc++ sources/objs
-STD_SRCS=	cstringi.cc stdexcepti.cc cstdlibi.cc cmathi.cc stlinst.cc
+STD_SRCS=	cstringi.cc stdexcepti.cc cstdlibi.cc cmathi.cc stlinst.cc \
+valarray.cc
 SPEC_OBJS=	cstrmain.o cstrio.o fcomplex.o fcomio.o dcomplex.o dcomio.o \
 		ldcomplex.o ldcomio.o
 STD_OBJS=	$(STD_SRCS:N*.h:R:S/$/.o/g) $(SPEC_OBJS)
@@ -86,7 +87,7 @@ includes:
 	@test -d $(GXX_INCDIR)/std || \
 		install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(GXX_INCDIR) $(GXX_INCDIR)/std
 	@-cd $(.CURDIR); for i in `${MAKE} -f Makefile.in -V HEADERS` \
-		*.h stl/*.h std/*.h std/*.cc; do \
+		*.h stl/*.h std/*.h std/*.cc std/*.tcc; do \
 		[ -f stl/$$i ] && i=stl/$$i; \
 		case $$i in stl*) j=`basename $$i`;; *) j=$$i;; esac; \
 		cmp -s $(GXX_INCDIR)/$$j $$i || \
