@@ -1,4 +1,4 @@
-.\" $OpenBSD: strdup.3,v 1.9 2000/04/21 15:27:40 aaron Exp $
+.\" $OpenBSD: strdup.3,v 1.10 2000/04/21 15:32:15 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,6 +68,13 @@ if ((p = strdup("foobar")) == NULL) {
 	exit(1);
 }
 .Ed
+.Sh ERRORS
+The
+.Fn strdup
+function may fail and set the external variable
+.Va errno
+for any of the errors specified for the library function
+.Xr malloc 3 .
 .Sh SEE ALSO
 .Xr free 3 ,
 .Xr malloc 3 ,
