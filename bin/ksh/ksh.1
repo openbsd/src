@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.91 2005/02/08 17:28:52 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.92 2005/02/08 17:39:33 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -381,8 +381,8 @@ operators are
 For example, both of these commands will print only
 .Qq bar :
 .Bd -literal -offset indent
-false && echo foo || echo bar
-true || echo foo && echo bar
+$ false && echo foo || echo bar
+$ true || echo foo && echo bar
 .Ed
 .Pp
 The
@@ -445,14 +445,14 @@ that are followed by reserved words must end with a semicolon, a newline, or
 a (syntactically correct) reserved word.
 For example, the following are all valid:
 .Bd -literal -offset indent
-{ echo foo; echo bar; }
-{ echo foo; echo bar\*(Ltnewline\*(Gt }
-{ { echo foo; echo bar; } }
+$ { echo foo; echo bar; }
+$ { echo foo; echo bar\*(Ltnewline\*(Gt }
+$ { { echo foo; echo bar; } }
 .Ed
 .Pp
 This is not valid:
 .Pp
-.Dl { echo foo; echo bar }
+.Dl $ { echo foo; echo bar }
 .Bl -tag -width Ds
 .It Pq Ar list
 Execute
@@ -749,7 +749,7 @@ is evaluated if and only if the file
 .Pa foo
 exists and is readable:
 .Pp
-.Dl Ic "[[ -r foo && $(\*(Lt foo) = b*r ]]"
+.Dl [[ -r foo && $(\*(Lt foo) = b*r ]]
 .El
 .El
 .Ss Quoting
