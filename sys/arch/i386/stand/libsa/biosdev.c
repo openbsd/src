@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.59 2003/06/27 05:13:19 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.60 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -70,8 +70,7 @@ struct EDD_CB {
  * reset disk system
  */
 static int
-biosdreset(dev)
-	int dev;
+biosdreset(int dev)
 {
 	int rv;
 	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
@@ -85,9 +84,7 @@ biosdreset(dev)
  * Return 1 if not ok.
  */
 int
-bios_getdiskinfo(dev, pdi)
-	int dev;
-	bios_diskinfo_t *pdi;
+bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 {
 	u_int rv;
 
@@ -161,12 +158,10 @@ bios_getdiskinfo(dev, pdi)
  * Read/Write a block from given place using the BIOS.
  */
 static __inline int
-CHS_rw(rw, dev, cyl, head, sect, nsect, buf)
-	int rw, dev, cyl, head;
-	int sect, nsect;
-	void * buf;
+CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 {
 	int rv;
+
 	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
 	__asm __volatile ("movb %b7, %h1\n\t"
 			  "movb %b6, %%dh\n\t"
@@ -188,11 +183,7 @@ CHS_rw(rw, dev, cyl, head, sect, nsect, buf)
 }
 
 static __inline int
-EDD_rw(rw, dev, daddr, nblk, buf)
-	int rw, dev;
-	u_int64_t daddr;
-	u_int32_t nblk;
-	void *buf;
+EDD_rw(int rw, int dev, u_int64_t daddr, u_int32_t nblk, void *buf)
 {
 	int rv;
 	volatile static struct EDD_CB cb;
@@ -224,12 +215,7 @@ EDD_rw(rw, dev, daddr, nblk, buf)
  * Read given sector, handling retry/errors/etc.
  */
 int
-biosd_io(rw, bd, off, nsect, buf)
-	int rw;
-	bios_diskinfo_t *bd;
-	daddr_t off;
-	int nsect;
-	void* buf;
+biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 {
 	int dev = bd->bios_number;
 	int j, error;
@@ -310,9 +296,7 @@ biosd_io(rw, bd, off, nsect, buf)
  * Try to read the bsd label on the given BIOS device
  */
 const char *
-bios_getdisklabel(bd, label)
-	bios_diskinfo_t *bd;
-	struct disklabel *label;
+bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 {
 	daddr_t off = LABELSECTOR;
 	char *buf;
@@ -514,8 +498,7 @@ const u_char bidos_errs[] =
 		"\x00" "\0";
 
 static const char *
-biosdisk_err(error)
-	u_int error;
+biosdisk_err(u_int error)
 {
 	register const u_char *p = bidos_errs;
 
@@ -543,9 +526,9 @@ const struct biosdisk_errors {
 	{ 0x32, ENXIO },
 	{ 0x00, EIO }
 };
+
 static int
-biosdisk_errno(error)
-	u_int error;
+biosdisk_errno(u_int error)
 {
 	register const struct biosdisk_errors *p;
 
@@ -558,13 +541,8 @@ biosdisk_errno(error)
 }
 
 int
-biosstrategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+biosstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct diskinfo *dip = (struct diskinfo *)devdata;
 	bios_diskinfo_t *bd = &dip->bios_info;
@@ -594,18 +572,14 @@ biosstrategy(devdata, rw, blk, size, buf, rsize)
 }
 
 int
-biosclose(f)
-	struct open_file *f;
+biosclose(struct open_file *f)
 {
 	f->f_devdata = NULL;
 	return 0;
 }
 
 int
-biosioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+biosioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return 0;
 }

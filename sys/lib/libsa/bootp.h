@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.h,v 1.4 1996/12/08 15:15:46 niklas Exp $	*/
+/*	$OpenBSD: bootp.h,v 1.5 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: bootp.h,v 1.3 1996/09/26 23:22:01 cgd Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ struct cmu_vend {
 	unsigned char	v_unused[25];	/* currently unused */
 };
 
-
 /* v_flags values */
 #define VF_SMASK	1	/* Subnet mask field contains valid data */
+
+void	bootp(int);

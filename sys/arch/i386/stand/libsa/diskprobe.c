@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.20 2003/06/04 17:04:05 deraadt Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.21 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,7 +56,7 @@ extern int debug;
 
 /* Probe for all BIOS floppies */
 static void
-floppyprobe()
+floppyprobe(void)
 {
 	struct diskinfo *dip;
 	int i;
@@ -92,7 +92,7 @@ floppyprobe()
 
 /* Probe for all BIOS hard disks */
 static void
-hardprobe()
+hardprobe(void)
 {
 	struct diskinfo *dip;
 	int i;
@@ -156,7 +156,7 @@ hardprobe()
 /* Probe for all BIOS supported disks */
 u_int32_t bios_cksumlen;
 void
-diskprobe()
+diskprobe(void)
 {
 	struct diskinfo *dip;
 	int i;
@@ -201,8 +201,7 @@ diskprobe()
 
 /* Find info on given BIOS disk */
 struct diskinfo *
-dklookup(dev)
-	int dev;
+dklookup(int dev)
 {
 	struct diskinfo *dip;
 
@@ -214,7 +213,7 @@ dklookup(dev)
 }
 
 void
-dump_diskinfo()
+dump_diskinfo(void)
 {
 	struct diskinfo *dip;
 
@@ -238,8 +237,7 @@ dump_diskinfo()
  * XXX - Use dklookup() instead.
  */
 bios_diskinfo_t *
-bios_dklookup(dev)
-	register int dev;
+bios_dklookup(int dev)
 {
 	struct diskinfo *dip;
 
@@ -257,8 +255,7 @@ bios_dklookup(dev)
  * as it is quick, small, and available.
  */
 int
-disksum(blk)
-	int blk;
+disksum(int blk)
 {
 	struct diskinfo *dip, *dip2;
 	int st, reprobe = 0;

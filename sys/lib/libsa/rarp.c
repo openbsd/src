@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarp.c,v 1.9 2003/06/01 17:00:33 deraadt Exp $	*/
+/*	$OpenBSD: rarp.c,v 1.10 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
@@ -58,11 +58,10 @@ static ssize_t rarprecv(struct iodesc *, void *, size_t, time_t);
  * Ethernet (Reverse) Address Resolution Protocol (see RFC 903, and 826).
  */
 int
-rarp_getipaddress(sock)
-	int sock;
+rarp_getipaddress(int sock)
 {
 	struct iodesc *d;
-	register struct ether_arp *ap;
+	struct ether_arp *ap;
 	struct {
 		u_char header[ETHER_SIZE];
 		struct {
@@ -132,10 +131,7 @@ rarp_getipaddress(sock)
  * Broadcast a RARP request (i.e. who knows who I am)
  */
 static ssize_t
-rarpsend(d, pkt, len)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+rarpsend(struct iodesc *d, void *pkt, size_t len)
 {
 
 #ifdef RARP_DEBUG
@@ -151,14 +147,10 @@ rarpsend(d, pkt, len)
  * else -1 (and errno == 0)
  */
 static ssize_t
-rarprecv(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
-	time_t tleft;
+rarprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 {
-	register ssize_t n;
-	register struct ether_arp *ap;
+	ssize_t n;
+	struct ether_arp *ap;
 	u_int16_t etype;	/* host order */
 
 #ifdef RARP_DEBUG

@@ -1,4 +1,4 @@
-/* $OpenBSD: strtol.c,v 1.5 2003/07/05 17:03:07 deraadt Exp $ */
+/* $OpenBSD: strtol.c,v 1.6 2003/08/11 06:23:09 deraadt Exp $ */
 /* Modified strtol() from stdlib */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/param.h>
+#include "stand.h"
 
 /*
  * Convert a string to a long integer.

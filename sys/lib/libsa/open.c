@@ -1,4 +1,4 @@
-/*	$OpenBSD: open.c,v 1.9 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: open.c,v 1.10 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: open.c,v 1.12 1996/09/30 16:01:21 ws Exp $	*/
 
 /*-
@@ -71,15 +71,13 @@ struct open_file files[SOPEN_MAX];
 
 int
 #ifndef __INTERNAL_LIBSA_CREAD
-open(fname, mode)
+open(const char *fname, int mode)
 #else
-oopen(fname, mode)
+oopen(const char *fname, int mode)
 #endif
-	const char *fname;
-	int mode;
 {
-	register struct open_file *f;
-	register int fd, i, error;
+	struct open_file *f;
+	int fd, i, error;
 	char *file;
 
 	/* find a free file descriptor */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciprobe.c,v 1.6 2003/06/04 17:04:05 deraadt Exp $	*/
+/*	$OpenBSD: pciprobe.c,v 1.7 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,7 +35,7 @@
 #define PCI_SIG 0x20494350		/* PCI Signature */
 
 void
-pciprobe()
+pciprobe(void)
 {
 	bios_pciinfo_t bpi;
 	u_int32_t hw_chars, rev, rc, sig;

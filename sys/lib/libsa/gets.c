@@ -1,4 +1,4 @@
-/*	$OpenBSD: gets.c,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: gets.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: gets.c,v 1.5.2.1 1995/10/13 19:54:26 pk Exp $	*/
 
 /*-
@@ -35,11 +35,10 @@
 #include "stand.h"
 
 void
-gets(buf)
-	char *buf;
+gets(char *buf)
 {
-	register int c;
-	register char *lp;
+	int c;
+	char *lp;
 
 	for (lp = buf;;)
 		switch (c = getchar() & 0177) {
@@ -64,7 +63,7 @@ gets(buf)
 			break;
 #endif
 		case 'r'&037: {
-			register char *p;
+		char *p;
 
 			putchar('\n');
 			for (p = buf; p < lp; ++p)

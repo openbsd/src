@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.41 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: stand.h,v 1.42 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -63,9 +63,9 @@ struct fs_ops {
 	int	(*open)(char *path, struct open_file *f);
 	int	(*close)(struct open_file *f);
 	int	(*read)(struct open_file *f, void *buf,
-			     size_t size, size_t *resid);
+		    size_t size, size_t *resid);
 	int	(*write)(struct open_file *f, void *buf,
-			     size_t size, size_t *resid);
+		    size_t size, size_t *resid);
 	off_t	(*seek)(struct open_file *f, off_t offset, int where);
 	int	(*stat)(struct open_file *f, struct stat *sb);
 	int	(*readdir)(struct open_file *f, char *);
@@ -190,6 +190,8 @@ int	cnspeed(dev_t, int);
 u_int	sleep(u_int);
 void	usleep(u_int);
 char *ctime(const time_t *);
+
+int	ioctl(int, u_long, char *);
 
 void	putchar(int);
 int	getchar(void);

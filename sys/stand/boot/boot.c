@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.28 2003/06/02 20:22:44 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.29 2003/08/11 06:23:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -49,11 +49,10 @@ struct cmd_state cmd;
 int bootprompt = 1;
 
 void
-boot(bootdev)
-	dev_t	bootdev;
+boot(dev_t bootdev)
 {
-	register const char *bootfile = kernels[0];
-	register int i = 0, try = 0, st;
+	const char *bootfile = kernels[0];
+	int i = 0, try = 0, st;
 	u_long marks[MARK_MAX];
 
 	machdep();

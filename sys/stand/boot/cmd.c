@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.50 2003/06/02 20:20:54 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.51 2003/08/11 06:23:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -68,17 +68,17 @@ const struct cmd_table cmd_table[] = {
 	{NULL, 0},
 };
 
-static void ls(char *, register struct stat *);
-static int readline(register char *, size_t, int);
-char *nextword(register char *);
-static char *whatcmd(register const struct cmd_table **ct, register char *);
+static void ls(char *, struct stat *);
+static int readline(char *, size_t, int);
+char *nextword(char *);
+static char *whatcmd(const struct cmd_table **ct, char *);
 static int docmd(void);
 static char *qualify(char *);
 
 char cmd_buf[133];
 
 int
-getcmd()
+getcmd(void)
 {
 	cmd.cmd = NULL;
 
@@ -89,7 +89,7 @@ getcmd()
 }
 
 int
-read_conf()
+read_conf(void)
 {
 #ifndef INSECURE
 	struct stat sb;
@@ -114,7 +114,7 @@ read_conf()
 #endif
 
 	do {
-		register char *p = cmd_buf;
+		char *p = cmd_buf;
 
 		cmd.cmd = NULL;
 
@@ -134,9 +134,9 @@ read_conf()
 }
 
 static int
-docmd()
+docmd(void)
 {
-	register char *p = NULL;
+	char *p = NULL;
 	const struct cmd_table *ct = cmd_table, *cs;
 
 	cmd.argc = 1;
@@ -188,12 +188,10 @@ docmd()
 }
 
 static char *
-whatcmd(ct, p)
-	register const struct cmd_table **ct;
-	register char *p;
+whatcmd(const struct cmd_table **ct, char *p)
 {
-	register char *q;
-	register int l;
+	char *q;
+	int l;
 
 	q = nextword(p);
 
@@ -210,15 +208,12 @@ whatcmd(ct, p)
 }
 
 static int
-readline(buf, n, to)
-	register char *buf;
-	size_t n;
-	int	to;
+readline(char *buf, size_t n, int to)
 {
 #ifdef DEBUG
 	extern int debug;
 #endif
-	register char *p = buf, ch;
+	char *p = buf, ch;
 
 	/* Only do timeout if greater than 0 */
 	if (to > 0) {
@@ -283,8 +278,7 @@ readline(buf, n, to)
  * next word, or NULL if there is no next word.
  */
 char *
-nextword(p)
-	register char *p;
+nextword(char *p)
 {
 	/* skip blanks */
 	while (*p && *p != '\t' && *p != ' ')
@@ -300,8 +294,7 @@ nextword(p)
 }
 
 static void
-print_help(ct)
-	register const struct cmd_table *ct;
+print_help(const struct cmd_table *ct)
 {
 	for (; ct->cmd_name != NULL; ct++)
 		printf(" %s", ct->cmd_name);
@@ -309,7 +302,7 @@ print_help(ct)
 }
 
 static int
-Xhelp()
+Xhelp(void)
 {
 	printf("commands:");
 	print_help(cmd_table);
@@ -322,7 +315,7 @@ Xhelp()
 
 #ifdef MACHINE_CMD
 static int
-Xmachine()
+Xmachine(void)
 {
 	printf("machine:");
 	print_help(MACHINE_CMD);
@@ -331,9 +324,10 @@ Xmachine()
 #endif
 
 static int
-Xecho()
+Xecho(void)
 {
-	register int i;
+	int i;
+
 	for (i = 1; i < cmd.argc; i++)
 		printf("%s ", cmd.argv[i]);
 	putchar('\n');
@@ -341,10 +335,10 @@ Xecho()
 }
 
 static int
-Xstty()
+Xstty(void)
 {
-	register int sp;
-	register char *cp;
+	int sp;
+	char *cp;
 	dev_t dev;
 
 	if (cmd.argc == 1)
@@ -370,7 +364,7 @@ Xstty()
 }
 
 static int
-Xtime()
+Xtime(void)
 {
 	time_t tt = getsecs();
 
@@ -383,10 +377,10 @@ Xtime()
 }
 
 static int
-Xls()
+Xls(void)
 {
 	struct stat sb;
-	register char *p;
+	char *p;
 	int fd;
 
 	if (stat(qualify((cmd.argv[1]? cmd.argv[1]: "/.")), &sb) < 0) {
@@ -427,9 +421,7 @@ Xls()
 	putchar ((mode) & S_IXOTH? *(s): (s)[1]);
 
 static void
-ls(name, sb)
-	register char *name;
-	register struct stat *sb;
+ls(char *name, struct stat *sb)
 {
 	putchar("-fc-d-b---l-s-w-"[(sb->st_mode & S_IFMT) >> 12]);
 	lsrwx(sb->st_mode >> 6, (sb->st_mode & S_ISUID? "sS" : "x-"));
@@ -444,7 +436,7 @@ ls(name, sb)
 int doboot = 1;
 
 static int
-Xnop()
+Xnop(void)
 {
 	if (doboot) {
 		doboot = 0;
@@ -455,7 +447,7 @@ Xnop()
 }
 
 static int
-Xboot()
+Xboot(void)
 {
 	if (cmd.argc > 1 && cmd.argv[1][0] != '-') {
 		qualify((cmd.argv[1]? cmd.argv[1]: cmd.image));
@@ -476,10 +468,9 @@ Xboot()
  */
 
 static char *
-qualify(name)
-	char *name;
+qualify(char *name)
 {
-	register char *p;
+	char *p;
 
 	for (p = name; *p; p++)
 		if (*p == ':')
@@ -493,7 +484,7 @@ qualify(name)
 }
 
 static int
-Xreboot()
+Xreboot(void)
 {
 	printf("Rebooting...\n");
 	exit();

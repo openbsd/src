@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.6 2003/06/01 17:00:33 deraadt Exp $	*/
+/*	$OpenBSD: net.h,v 1.7 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
@@ -95,6 +95,7 @@ extern struct iodesc sockets[SOPEN_MAX];
 u_char	*arpwhohas(struct iodesc *, struct in_addr);
 void	arp_reply(struct iodesc *, void *);
 int	rarp_getipaddress(int);
+n_long	ip_convertaddr(char *);
 
 /* Link functions: */
 ssize_t sendether(struct iodesc *d, void *pkt, size_t len,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.10 2003/06/01 17:00:32 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.11 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
@@ -65,11 +65,10 @@ static	void vend_rfc1048(u_char *, u_int);
 
 /* Fetch required bootp infomation */
 void
-bootp(sock)
-	int sock;
+bootp(int sock)
 {
 	struct iodesc *d;
-	register struct bootp *bp;
+	struct bootp *bp;
 	struct {
 		u_char header[HEADER_SIZE];
 		struct bootp wbootp;
@@ -121,12 +120,9 @@ bootp(sock)
 
 /* Transmit a bootp request */
 static ssize_t
-bootpsend(d, pkt, len)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+bootpsend(struct iodesc *d, void *pkt, size_t len)
 {
-	register struct bootp *bp;
+	struct bootp *bp;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -146,14 +142,10 @@ bootpsend(d, pkt, len)
 
 /* Returns 0 if this is the packet we're waiting for else -1 (and errno == 0) */
 static ssize_t
-bootprecv(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
-	time_t tleft;
+bootprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 {
-	register ssize_t n;
-	register struct bootp *bp;
+	ssize_t n;
+	struct bootp *bp;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -269,10 +261,9 @@ bad:
 }
 
 static void
-vend_cmu(cp)
-	u_char *cp;
+vend_cmu(u_char *cp)
 {
-	register struct cmu_vend *vp;
+	struct cmu_vend *vp;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -280,22 +271,18 @@ vend_cmu(cp)
 #endif
 	vp = (struct cmu_vend *)cp;
 
-	if (vp->v_smask.s_addr != 0) {
+	if (vp->v_smask.s_addr != 0)
 		smask = vp->v_smask.s_addr;
-	}
-	if (vp->v_dgate.s_addr != 0) {
+	if (vp->v_dgate.s_addr != 0)
 		gateip = vp->v_dgate;
-	}
 }
 
 static void
-vend_rfc1048(cp, len)
-	register u_char *cp;
-	u_int len;
+vend_rfc1048(u_char *cp, u_int len)
 {
-	register u_char *ep;
-	register int size;
-	register u_char tag;
+	u_char *ep;
+	int size;
+	u_char tag;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -312,18 +299,14 @@ vend_rfc1048(cp, len)
 		if (tag == TAG_END)
 			break;
 
-		if (tag == TAG_SUBNET_MASK) {
+		if (tag == TAG_SUBNET_MASK)
 			bcopy(cp, &smask, sizeof(smask));
-		}
-		if (tag == TAG_GATEWAY) {
+		if (tag == TAG_GATEWAY)
 			bcopy(cp, &gateip.s_addr, sizeof(gateip.s_addr));
-		}
-		if (tag == TAG_SWAPSERVER) {
+		if (tag == TAG_SWAPSERVER)
 			bcopy(cp, &swapip.s_addr, sizeof(swapip.s_addr));
-		}
-		if (tag == TAG_DOMAIN_SERVER) {
+		if (tag == TAG_DOMAIN_SERVER)
 			bcopy(cp, &nameip.s_addr, sizeof(nameip.s_addr));
-		}
 		if (tag == TAG_ROOTPATH) {
 			strncpy(rootpath, (char *)cp, sizeof(rootpath));
 			rootpath[size] = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.6 2003/06/02 20:20:53 mickey Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.7 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -39,13 +39,8 @@
 #include <lib/libsa/unixdev.h>
 
 int
-unixstrategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+unixstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	int	rc = 0;
 
@@ -69,9 +64,9 @@ unixstrategy(devdata, rw, blk, size, buf, rsize)
 int
 unixopen(struct open_file *f, ...)
 {
-	register int fd;
-	register va_list ap;
-	register char **file, *p = NULL;
+	char **file, *p = NULL;
+	va_list ap;
+	int fd;
 
 	va_start(ap, f);
 	file = va_arg(ap, char **);
@@ -99,34 +94,26 @@ unixopen(struct open_file *f, ...)
 }
 
 int
-unixclose(f)
-	struct open_file *f;
+unixclose(struct open_file *f)
 {
 	return uclose((int)f->f_devdata);
 }
 
 int
-unixioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+unixioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return uioctl((int)f->f_devdata, cmd, data);
 }
 
 off_t
-ulseek( fd, off, wh)
-	int fd;
-	off_t off;
-	int wh;
+ulseek(int fd, off_t off, int wh)
 {
 	return __syscall((quad_t)SYS_lseek, fd, 0, off, wh);
 }
 
 
 void
-unix_probe(cn)
-	struct consdev *cn;
+unix_probe(struct consdev *cn)
 {
 	cn->cn_pri = CN_INTERNAL;
 	cn->cn_dev = makedev(0,0);
@@ -134,22 +121,18 @@ unix_probe(cn)
 }
 
 void
-unix_init(cn)
-	struct consdev *cn;
+unix_init(struct consdev *cn)
 {
 }
 
 void
-unix_putc(dev, c)
-	dev_t dev;
-	int c;
+unix_putc(dev_t dev, int c)
 {
 	uwrite(1, &c, 1);
 }
 
 int
-unix_getc(dev)
-	dev_t dev;
+unix_getc(dev_t dev)
 {
 	if (dev & 0x80) {
 		struct timeval tv;
@@ -173,31 +156,28 @@ unix_getc(dev)
 }
 
 time_t
-getsecs()
+getsecs(void)
 {
 	return 1;
 }
 
 void
-time_print()
+time_print(void)
 {
 }
 
 void
-atexit()
+atexit(void)
 {
 }
 
 int
-cnspeed(dev, sp)
-	dev_t dev;
-	int sp;
+cnspeed(dev_t dev, int sp)
 {
 	return 9600;
 }
 
 void
-__main()
+__main(void)
 {
 }
-

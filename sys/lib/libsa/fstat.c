@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.3 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
 /*-
@@ -35,11 +35,9 @@
 #include "stand.h"
 
 int
-fstat(fd, sb)
-	int fd;
-	struct stat *sb;
+fstat(int fd, struct stat *sb)
 {
-	register struct open_file *f = &files[fd];
+	struct open_file *f = &files[fd];
 
 	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;

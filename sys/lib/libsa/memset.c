@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.3 2003/08/08 03:36:07 deraadt Exp $	*/
+/*	$OpenBSD: memset.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,8 @@
 void *
 memset(void *s1, int c, size_t n)
 {
-	register char *p = s1;
+	char *p = s1;
+
 	while (n--)
 		*p++ = c;
 	return s1;

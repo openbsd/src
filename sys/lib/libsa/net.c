@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.12 2003/06/01 17:00:33 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.13 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -59,16 +59,13 @@
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
-sendudp(d, pkt, len)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+sendudp(struct iodesc *d, void *pkt, size_t len)
 {
-	register ssize_t cc;
-	register struct ip *ip;
-	register struct udpiphdr *ui;
-	register struct udphdr *uh;
-	register u_char *ea;
+	ssize_t cc;
+	struct ip *ip;
+	struct udpiphdr *ui;
+	struct udphdr *uh;
+	u_char *ea;
 	struct ip tip;
 
 #ifdef NET_DEBUG
@@ -129,17 +126,13 @@ sendudp(d, pkt, len)
  * Caller leaves room for the headers (Ether, IP, UDP)
  */
 ssize_t
-readudp(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
-	time_t tleft;
+readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 {
-	register ssize_t n;
-	register size_t hlen;
-	register struct ip *ip;
-	register struct udphdr *uh;
-	register struct udpiphdr *ui;
+	ssize_t n;
+	size_t hlen;
+	struct ip *ip;
+	struct udphdr *uh;
+	struct udpiphdr *ui;
 	struct ip tip;
 	u_int16_t etype;	/* host order */
 
@@ -276,17 +269,13 @@ readudp(d, pkt, len, tleft)
  * zero errno to indicate it isn't done yet.
  */
 ssize_t
-sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
-	register struct iodesc *d;
-	register ssize_t (*sproc)(struct iodesc *, void *, size_t);
-	register void *sbuf;
-	register size_t ssize;
-	register ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t);
-	register void *rbuf;
-	register size_t rsize;
+sendrecv(struct iodesc *d, ssize_t (*sproc)(struct iodesc *, void *, size_t),
+    void *sbuf, size_t ssize,
+    ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t),
+    void *rbuf, size_t rsize)
 {
-	register ssize_t cc;
-	register time_t t, tmo, tlast;
+	ssize_t cc;
+	time_t t, tmo, tlast;
 	long tleft;
 
 #ifdef NET_DEBUG
@@ -333,14 +322,13 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
  * Return values are in network order.
  */
 n_long
-inet_addr(cp)
-	char *cp;
+inet_addr(char *cp)
 {
-	register u_long val;
-	register int n;
-	register char c;
+	u_long val;
+	int n;
+	char c;
 	u_int parts[4];
-	register u_int *pp = parts;
+	u_int *pp = parts;
 
 	for (;;) {
 		/*
@@ -411,20 +399,18 @@ inet_addr(cp)
 }
 
 char *
-inet_ntoa(ia)
-	struct in_addr ia;
+inet_ntoa(struct in_addr ia)
 {
 	return (intoa(ia.s_addr));
 }
 
 /* Similar to inet_ntoa() */
 char *
-intoa(addr)
-	register n_long addr;
+intoa(n_long addr)
 {
-	register char *cp;
-	register u_int byte;
-	register int n;
+	char *cp;
+	u_int byte;
+	int n;
 	static char buf[sizeof(".255.255.255.255")];
 
 	NTOHL(addr);
@@ -450,9 +436,7 @@ intoa(addr)
 }
 
 static char *
-number(s, n)
-	char *s;
-	int *n;
+number(char *s, int *n)
 {
 	for (*n = 0; isdigit(*s); s++)
 		*n = (*n * 10) + *s - '0';
@@ -460,8 +444,7 @@ number(s, n)
 }
 
 n_long
-ip_convertaddr(p)
-	char *p;
+ip_convertaddr(char *p)
 {
 #define IP_ANYADDR	0
 	n_long addr = 0, n;

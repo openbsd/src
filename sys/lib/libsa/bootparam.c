@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.10 2002/03/14 03:16:09 millert Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.11 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.10 1996/10/14 21:16:55 thorpej Exp $	*/
 
 /*
@@ -100,8 +100,7 @@ int xdr_string_decode(char **p, char *str, int *len_p);
  * know about us (don't want to broadcast a getport call).
  */
 int
-bp_whoami(sockfd)
-	int sockfd;
+bp_whoami(int sockfd)
 {
 	/* RPC structures for PMAPPROC_CALLIT */
 	struct args {
@@ -160,8 +159,8 @@ bp_whoami(sockfd)
 	/* rpc_call will set d->destport */
 
 	len = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_CALLIT,
-				  args, send_tail - (char *)args,
-				  repl, sizeof(*repl));
+	    args, send_tail - (char *)args,
+	    repl, sizeof(*repl));
 	if (len < 8) {
 		printf("bootparamd: 'whoami' call failed\n");
 		return (-1);
@@ -181,10 +180,8 @@ bp_whoami(sockfd)
 	    inet_ntoa(bp_server_addr), ntohs(bp_server_port)));
 
 	/* We have just done a portmap call, so cache the portnum. */
-	rpc_pmap_putcache(bp_server_addr,
-			  BOOTPARAM_PROG,
-			  BOOTPARAM_VERS,
-			  (int)ntohs(bp_server_port));
+	rpc_pmap_putcache(bp_server_addr, BOOTPARAM_PROG, BOOTPARAM_VERS,
+	    (int)ntohs(bp_server_port));
 
 	/*
 	 * Parse the encapsulated results from bootparam/whoami
@@ -229,11 +226,7 @@ bp_whoami(sockfd)
  *	server pathname
  */
 int
-bp_getfile(sockfd, key, serv_addr, pathname)
-	int sockfd;
-	char *key;
-	char *pathname;
-	struct in_addr *serv_addr;
+bp_getfile(int sockfd, char *key, struct in_addr *serv_addr, char *pathname)
 {
 	struct {
 		n_long	h[RPC_HEADER_WORDS];
@@ -323,12 +316,8 @@ bp_getfile(sockfd, key, serv_addr, pathname)
  * (but with non-standard args...)
  */
 
-
 int
-xdr_string_encode(pkt, str, len)
-	char **pkt;
-	char *str;
-	int len;
+xdr_string_encode(char **pkt, char *str, int len)
 {
 	u_int32_t *lenp;
 	char *datap;
@@ -347,10 +336,7 @@ xdr_string_encode(pkt, str, len)
 }
 
 int
-xdr_string_decode(pkt, str, len_p)
-	char **pkt;
-	char *str;
-	int *len_p;		/* bufsize - 1 */
+xdr_string_decode(char **pkt, char *str, int *len_p)
 {
 	u_int32_t *lenp;
 	char *datap;
@@ -375,11 +361,8 @@ xdr_string_decode(pkt, str, len_p)
 	return (0);
 }
 
-
 int
-xdr_inaddr_encode(pkt, ia)
-	char **pkt;
-	struct in_addr ia;		/* network order */
+xdr_inaddr_encode(char **pkt, struct in_addr ia)
 {
 	struct xdr_inaddr *xi;
 	u_char *cp;
@@ -410,9 +393,7 @@ xdr_inaddr_encode(pkt, ia)
 }
 
 int
-xdr_inaddr_decode(pkt, ia)
-	char **pkt;
-	struct in_addr *ia;		/* network order */
+xdr_inaddr_decode(char **pkt, struct in_addr *ia)
 {
 	struct xdr_inaddr *xi;
 	u_char *cp;

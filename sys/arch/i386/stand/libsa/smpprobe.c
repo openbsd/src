@@ -1,4 +1,4 @@
-/*	$OpenBSD: smpprobe.c,v 1.4 2003/06/04 17:04:05 deraadt Exp $	*/
+/*	$OpenBSD: smpprobe.c,v 1.5 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -48,9 +48,7 @@ typedef struct _mp_float {
 
 
 static __inline int
-mp_checksum(ptr, len)
-	u_int8_t *ptr;
-	int len;
+mp_checksum(u_int8_t *ptr, int len)
 {
 	register int i, sum = 0;
 
@@ -66,9 +64,7 @@ mp_checksum(ptr, len)
 
 
 static mp_float_t *
-mp_probefloat(ptr, len)
-	u_int8_t *ptr;
-	int len;
+mp_probefloat(u_int8_t *ptr, int len)
 {
 	mp_float_t *mpp = NULL;
 	int i;
@@ -79,6 +75,7 @@ mp_probefloat(ptr, len)
 #endif
 	for(i = 0; i < 1024; i++){
 		mp_float_t *tmp = (mp_float_t*)(ptr + i);
+
 		if(tmp->signature == MP_FLOAT_SIG){
 			printf("Found possible MP signature at: %p\n", ptr);
 
@@ -86,7 +83,7 @@ mp_probefloat(ptr, len)
 			break;
 		}
 		if((tmp->signature == MP_FLOAT_SIG) &&
-			mp_checksum(tmp, tmp->length*16)){
+			mp_checksum((u_int8_t *)tmp, tmp->length*16)){
 #ifdef DEBUG
 			if (debug)
 				printf("Found valid MP signature at: %p\n", ptr);
@@ -101,7 +98,7 @@ mp_probefloat(ptr, len)
 
 
 void
-smpprobe()
+smpprobe(void)
 {
 	mp_float_t *mp = NULL;
 

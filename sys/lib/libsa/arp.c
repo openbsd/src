@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.10 2003/06/01 17:00:32 deraadt Exp $	*/
+/*	$OpenBSD: arp.c,v 1.11 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: arp.c,v 1.15 1996/10/13 02:28:58 christos Exp $	*/
 
 /*
@@ -69,13 +69,11 @@ static	ssize_t arprecv(struct iodesc *, void *, size_t, time_t);
 
 /* Broadcast an ARP packet, asking who has addr on interface d */
 u_char *
-arpwhohas(d, addr)
-	register struct iodesc *d;
-	struct in_addr addr;
+arpwhohas(struct iodesc *d, struct in_addr addr)
 {
-	register int i;
-	register struct ether_arp *ah;
-	register struct arp_list *al;
+	int i;
+	struct ether_arp *ah;
+	struct arp_list *al;
 	struct {
 		struct ether_header eh;
 		struct {
@@ -146,10 +144,7 @@ arpwhohas(d, addr)
 }
 
 static ssize_t
-arpsend(d, pkt, len)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+arpsend(struct iodesc *d, void *pkt, size_t len)
 {
 
 #ifdef ARP_DEBUG
@@ -165,14 +160,10 @@ arpsend(d, pkt, len)
  * else -1 (and errno == 0)
  */
 static ssize_t
-arprecv(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
-	time_t tleft;
+arprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 {
-	register ssize_t n;
-	register struct ether_arp *ah;
+	ssize_t n;
+	struct ether_arp *ah;
 	u_int16_t etype;	/* host order */
 
 #ifdef ARP_DEBUG
@@ -204,8 +195,7 @@ arprecv(d, pkt, len, tleft)
 	if (ah->arp_hrd != htons(ARPHRD_ETHER) ||
 	    ah->arp_pro != htons(ETHERTYPE_IP) ||
 	    ah->arp_hln != sizeof(ah->arp_sha) ||
-	    ah->arp_pln != sizeof(ah->arp_spa) )
-	{
+	    ah->arp_pln != sizeof(ah->arp_spa)) {
 #ifdef ARP_DEBUG
 		if (debug)
 			printf("bad hrd/pro/hln/pln\n");
@@ -231,9 +221,8 @@ arprecv(d, pkt, len, tleft)
 	}
 
 	/* Is the reply from the source we want? */
-	if (bcmp(&arp_list[arp_num].addr,
-			 ah->arp_spa, sizeof(ah->arp_spa)))
-	{
+	if (bcmp(&arp_list[arp_num].addr, ah->arp_spa,
+	    sizeof(ah->arp_spa))) {
 #ifdef ARP_DEBUG
 		if (debug)
 			printf("unwanted address\n");
@@ -255,17 +244,14 @@ arprecv(d, pkt, len, tleft)
  * Notes:  Re-uses buffer.  Pad to length = 46.
  */
 void
-arp_reply(d, pkt)
-	register struct iodesc *d;
-	register void *pkt;		/* the request */
+arp_reply(struct iodesc *d, void *pkt)
 {
 	struct ether_arp *arp = pkt;
 
 	if (arp->arp_hrd != htons(ARPHRD_ETHER) ||
 	    arp->arp_pro != htons(ETHERTYPE_IP) ||
 	    arp->arp_hln != sizeof(arp->arp_sha) ||
-	    arp->arp_pln != sizeof(arp->arp_spa) )
-	{
+	    arp->arp_pln != sizeof(arp->arp_spa)) {
 #ifdef ARP_DEBUG
 		if (debug)
 			printf("arp_reply: bad hrd/pro/hln/pln\n");
@@ -304,5 +290,5 @@ arp_reply(d, pkt)
 	 * requestor will just ask again.
 	 */
 	(void) sendether(d, pkt, sizeof(*arp) + 18,
-	                 arp->arp_tha, ETHERTYPE_ARP);
+	    arp->arp_tha, ETHERTYPE_ARP);
 }

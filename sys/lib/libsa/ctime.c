@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctime.c,v 1.4 2003/06/02 20:20:53 mickey Exp $	*/
+/*	$OpenBSD: ctime.c,v 1.5 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -31,8 +31,7 @@
 #define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
 
 char *
-ctime(clock)
-	const time_t	*clock;
+ctime(const time_t *clock)
 {
 	static const char wdays[][4] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -46,7 +45,7 @@ ctime(clock)
 	};
 	static char buf[64];
 	int ss, mm, hh, wday, month, year;
-	register time_t tt = *clock;
+	time_t tt = *clock;
 
 	ss = tt % 60;
 	tt /= 60;	/* minutes */
@@ -69,8 +68,8 @@ ctime(clock)
 
 	/* no field widths in printf() */
 	snprintf(buf, sizeof buf, "%s %s %d %d:%d:%d %d\n",
-		((wday  < 0 || wday  >=  7)? "???": wdays[wday]),
-		((month < 0 || month >= 12)? "???": months[month]),
-		(int)tt, hh, mm, ss, year);
+	    ((wday  < 0 || wday  >=  7)? "???": wdays[wday]),
+	    ((month < 0 || month >= 12)? "???": months[month]),
+	    (int)tt, hh, mm, ss, year);
 	return buf;
 }

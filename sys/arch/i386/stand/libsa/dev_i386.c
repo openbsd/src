@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.26 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.27 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -87,9 +87,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 }
 
 void
-devboot(bootdev, p)
-	dev_t bootdev;
-	char *p;
+devboot(dev_t bootdev, char *p)
 {
 #ifdef _TEST
 	*p++ = '/';
@@ -112,8 +110,7 @@ devboot(bootdev, p)
 int pch_pos = 0;
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	switch(c) {
 	case '\177':	/* DEL erases */
@@ -142,7 +139,7 @@ putchar(c)
 }
 
 int
-getchar()
+getchar(void)
 {
 	register int c = cngetc();
 
@@ -158,9 +155,9 @@ getchar()
 }
 
 char ttyname_buf[8];
+
 char *
-ttyname(fd)
-	int fd;
+ttyname(int fd)
 {
 	snprintf(ttyname_buf, sizeof ttyname_buf, "%s%d",
 	    cdevs[major(cn_tab->cn_dev)],
@@ -169,8 +166,7 @@ ttyname(fd)
 }
 
 dev_t
-ttydev(name)
-	char *name;
+ttydev(char *name)
 {
 	int i, unit = -1;
 	char *no = name + strlen(name) - 1;
@@ -186,9 +182,7 @@ ttydev(name)
 }
 
 int
-cnspeed(dev, sp)
-	dev_t	dev;
-	int	sp;
+cnspeed(dev_t dev, int sp)
 {
 	if (major(dev) == 8)	/* comN */
 		return comspeed(dev, sp);

@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.6 2003/06/02 23:28:09 millert Exp $ */
+/* $OpenBSD: loadfile.c,v 1.7 2003/08/11 06:23:09 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,10 +108,7 @@ static int aout_exec(int, struct exec *, u_long *, int);
  * Fill in marks
  */
 int
-loadfile(fname, marks, flags)
-	const char *fname;
-	u_long *marks;
-	int flags;
+loadfile(const char *fname, u_long *marks, int flags)
 {
 	union {
 #ifdef BOOT_ECOFF
@@ -177,11 +174,7 @@ err:
 
 #ifdef BOOT_ECOFF
 static int
-coff_exec(fd, coff, marks, flags)
-	int fd;
-	struct ecoff_exechdr *coff;
-	u_long *marks;
-	int flags;
+coff_exec(int fd, struct ecoff_exechdr *coff, u_long *marks, int flags)
 {
 	paddr_t offset = marks[MARK_START];
 	paddr_t minp = ~0, maxp = 0, pos;
@@ -263,11 +256,7 @@ coff_exec(fd, coff, marks, flags)
 
 #ifdef BOOT_ELF
 static int
-elf_exec(fd, elf, marks, flags)
-	int fd;
-	Elf_Ehdr *elf;
-	u_long *marks;
-	int flags;
+elf_exec(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf_Shdr *shp;
 	Elf_Off off;
@@ -434,11 +423,7 @@ elf_exec(fd, elf, marks, flags)
 
 #ifdef BOOT_AOUT
 static int
-aout_exec(fd, x, marks, flags)
-	int fd;
-	struct exec *x;
-	u_long *marks;
-	int flags;
+aout_exec(int fd, struct exec *x, u_long *marks, int flags)
 {
 	u_long entry = x->a_entry;
 	paddr_t aoutp = 0;

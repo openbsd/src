@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.13 2003/06/03 20:22:12 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.14 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,8 +40,7 @@
  * Convert from bcd (packed) to int
  */
 static __inline u_int8_t
-bcdtoint(c)
-	register u_int8_t c;
+bcdtoint(u_int8_t c)
 {
 
 	return ((c & 0xf0) / 8) * 5 + (c & 0x0f);
@@ -54,10 +53,10 @@ const u_short monthcount[] = {
 	0, 0, 31, 59, 90, 120, 151, 181,
 	212, 243, 273, 304, 334, 365
 };
+
 static __inline time_t
-compute(year, month, day, hour, min, sec)
-	int year;
-	u_int8_t month, day, hour, min, sec;
+compute(int year, u_int8_t month, u_int8_t day, u_int8_t hour,
+    u_int8_t min, u_int8_t sec)
 {
 	/* Number of days per month */
 	register time_t tt;
@@ -77,9 +76,7 @@ compute(year, month, day, hour, min, sec)
 }
 
 static int
-bios_time_date(f, b)
-	int f;
-	register u_int8_t *b;
+bios_time_date(int f, u_int8_t *b)
 {
 	__asm __volatile(DOINT(0x1a) "\n\t"
 		       "setc %b0\n\t"
@@ -101,15 +98,13 @@ bios_time_date(f, b)
 }
 
 static __inline int
-biosdate(b)
-	register u_int8_t *b;
+biosdate(u_int8_t *b)
 {
 	return bios_time_date(4 << 8, b);
 }
 
 static __inline int
-biostime(b)
-	register u_int8_t *b;
+biostime(u_int8_t *b)
 {
 	return bios_time_date(2 << 8, b);
 }
@@ -140,8 +135,7 @@ getsecs(void)
 }
 
 u_int
-sleep(i)
-	u_int i;
+sleep(u_int i)
 {
 	register time_t t;
 

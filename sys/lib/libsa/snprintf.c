@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.2 2003/06/04 17:38:24 millert Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.3 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -48,8 +48,7 @@ static char *sbuf, *sbuf_end;
 static size_t sbuf_len;
 
 void
-sputchar(c)
-	int c;
+sputchar(int c)
 {
 	if (sbuf < sbuf_end)
 		*sbuf = c;

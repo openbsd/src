@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.c,v 1.3 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: strlen.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,12 +36,12 @@
 #include "stand.h"
 
 size_t
-strlen(str)
-	const char *str;
+strlen(const char *str)
 {
-	register const char *s;
+	const char *s;
 
-	for (s = str; *s; ++s);
-	return(s - str);
+	for (s = str; *s; ++s)
+		;
+	return (s - str);
 }
 

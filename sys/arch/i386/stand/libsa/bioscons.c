@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.23 2003/07/07 07:42:51 weingart Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.24 2003/08/11 06:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -37,6 +37,7 @@
 #include <dev/cons.h>
 #include <lib/libsa/stand.h>
 #include "debug.h"
+#include "biosdev.h"
 
 /* XXX cannot trust NVRAM on this.  Maybe later we make a real probe.  */
 #if 0
@@ -46,8 +47,7 @@
 #endif
 
 void
-pc_probe(cn)
-	struct consdev *cn;
+pc_probe(struct consdev *cn)
 {
 	cn->cn_pri = CN_INTERNAL;
 	cn->cn_dev = makedev(12, 0);
@@ -65,14 +65,12 @@ pc_probe(cn)
 }
 
 void
-pc_init(cn)
-	struct consdev *cn;
+pc_init(struct consdev *cn)
 {
 }
 
 int
-pc_getc(dev)
-	dev_t dev;
+pc_getc(dev_t dev)
 {
 	register int rv;
 
@@ -88,9 +86,7 @@ pc_getc(dev)
 }
 
 void
-pc_putc(dev, c)
-	dev_t dev;
-	int c;
+pc_putc(dev_t dev, int c)
 {
 	__asm __volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (1) :
 	    "%ecx", "%edx", "cc" );
@@ -99,8 +95,7 @@ pc_putc(dev, c)
 const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 
 void
-com_probe(cn)
-	struct consdev *cn;
+com_probe(struct consdev *cn)
 {
 	register int i, n;
 
@@ -118,8 +113,7 @@ com_probe(cn)
 }
 
 void
-com_init(cn)
-	struct consdev *cn;
+com_init(struct consdev *cn)
 {
 	register int unit = minor(cn->cn_dev);
 
@@ -129,8 +123,7 @@ com_init(cn)
 }
 
 int
-com_getc(dev)
-	dev_t dev;
+com_getc(dev_t dev)
 {
 	register int rv;
 
@@ -151,9 +144,7 @@ com_getc(dev)
 /* call with sp == 0 to query the current speed */
 int com_speed = 9600;  /* default speed is 9600 baud */
 int
-comspeed(dev, sp)
-	dev_t dev;
-	int sp;
+comspeed(dev_t dev, int sp)
 {
 	int i, newsp;
         int err;
@@ -206,9 +197,7 @@ comspeed(dev, sp)
 }
 
 void
-com_putc(dev, c)
-	dev_t dev;
-	int c;
+com_putc(dev_t dev, int c)
 {
 	register int rv;
 

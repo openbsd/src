@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.2 1996/09/23 14:18:55 mickey Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.3 2003/08/11 06:23:09 deraadt Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -41,6 +41,15 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+
+#include <netinet/if_ether.h>
+#include <netinet/in_systm.h>
+
+#include "stand.h"
+#include "net.h"
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -49,12 +58,10 @@
  * In particular, it should not be this one.
  */
 int
-in_cksum(p, len)
-	register void *p;
-	register int len;
+in_cksum(void *p, int len)
 {
-	register int sum = 0, oddbyte = 0, v = 0;
-	register u_char *cp = p;
+	int sum = 0, oddbyte = 0, v = 0;
+	u_char *cp = p;
 
 	/* we assume < 2^16 bytes being summed */
 	while (len > 0) {
