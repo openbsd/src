@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.39 2004/07/14 18:32:34 pedro Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.40 2004/12/10 19:55:21 millert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -238,18 +238,15 @@ nfs_connect(nmp, rep)
 		}
 		splx(s);
 	}
-	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT)) {
-		so->so_rcv.sb_timeo = (5 * hz);
+	/*
+	 * Always set receive timeout to detect server crash and reconnect.
+	 * Otherwise, we can get stuck in soreceive forever.
+	 */
+	so->so_rcv.sb_timeo = (5 * hz);
+	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT))
 		so->so_snd.sb_timeo = (5 * hz);
-	} else {
-		/*
-		 * enable receive timeout to detect server crash and
-		 * reconnect.  otherwise, we can be stuck in soreceive
-		 * forever.
-		 */
-		so->so_rcv.sb_timeo = (5 * hz);
+	else
 		so->so_snd.sb_timeo = 0;
-	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
 		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
 		rcvreserve = max(nmp->nm_rsize, nmp->nm_readdirsize) +
