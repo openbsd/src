@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.6 2002/02/15 21:13:47 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/02/16 05:13:33 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -122,7 +122,7 @@ ht*|tm*|mt*|ts*|ut*)
 		M n$n$U		b $b $four	660 operator;: sanity w/pdp11 v7
 		M n$n$eight	b $b $twelve	660 operator;: ditto
 		M nr$n$U	c $c $four	660 operator;: ditto
-		M nr$n$twelve	c $c $twelve	660 operator;: ditto
+		M nr$n$eight	c $c $twelve	660 operator;: ditto
 		M r$n$U		c $c $U		660 operator
 		M r$n$four	c $c $four	660 operator
 		M r$n$eight	c $c $eight	660 operator
@@ -132,10 +132,6 @@ ht*|tm*|mt*|ts*|ut*)
 			M $n$twenty	b $b $twenty 660 operator
 			M r$n$twenty	c $b $twenty 660 operator
 		fi
-		#RMlist="$RMlist mt$U mt$four mt$eight mt$twelve"
-		#RMlist="$RMlist nmt$U nmt$eight nrmt$eight"
-		#RMlist="$RMlist nrmt$unit nrmt$eight"
-		#RMlist="$RMlist rmt$unit rmt$four rmt$eight rmt$twelve"
 		;;
 	*)
 		echo bad unit for tape in: $i
