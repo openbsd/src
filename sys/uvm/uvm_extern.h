@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.51 2004/04/19 22:52:33 tedu Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.52 2004/04/28 02:20:58 markus Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -357,7 +357,6 @@ struct uvmexp {
 
 	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;
-	struct uvm_object *mb_object;
 };
 
 #ifdef _KERNEL

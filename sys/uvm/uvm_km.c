@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.37 2004/04/20 09:39:36 markus Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.38 2004/04/28 02:20:58 markus Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -109,7 +109,7 @@
  * most kernel private memory lives in kernel_object.   the only exception
  * to this is for memory that belongs to submaps that must be protected
  * by splvm().    each of these submaps has their own private kernel 
- * object (e.g. kmem_object, mb_object).
+ * object (e.g. kmem_object).
  *
  * note that just because a kernel object spans the entire kernel virtual
  * address space doesn't mean that it has to be mapped into the entire space.
@@ -128,8 +128,8 @@
  *   then that means that the page at offset 0x235000 in kernel_object is
  *   mapped at 0xf8235000.   
  *
- * note that the offsets in kmem_object and mb_object also follow this
- * rule.   this means that the offsets for kmem_object must fall in the
+ * note that the offsets in kmem_object also follow this rule.
+ * this means that the offsets for kmem_object must fall in the
  * range of [vm_map_min(kmem_object) - vm_map_min(kernel_map)] to
  * [vm_map_max(kmem_object) - vm_map_min(kernel_map)], so the offsets
  * in those objects will typically not start at zero.
@@ -163,7 +163,6 @@ simple_lock_data_t vmi_list_slock;
 
 static struct vm_map		kernel_map_store;
 static struct uvm_object	kmem_object_store;
-static struct uvm_object	mb_object_store;
 
 /*
  * All pager operations here are NULL, but the object must have
@@ -214,19 +213,6 @@ uvm_km_init(start, end)
 	/* we are special.  we never die */
 	kmem_object_store.uo_refs = UVM_OBJ_KERN_INTRSAFE; 
 	uvmexp.kmem_object = &kmem_object_store;
-
-	/*
-	 * mb_object: for mbuf cluster pages on platforms which use the
-	 * mb_map.  Memory is always wired, and this object (and the mb_map)
-	 * can be accessed at interrupt time.
-	 */
-	simple_lock_init(&mb_object_store.vmobjlock);
-	mb_object_store.pgops = &km_pager;
-	TAILQ_INIT(&mb_object_store.memq);
-	mb_object_store.uo_npages = 0;
-	/* we are special.  we never die */
-	mb_object_store.uo_refs = UVM_OBJ_KERN_INTRSAFE; 
-	uvmexp.mb_object = &mb_object_store;
 
 	/*
 	 * init the map and reserve already allocated kernel space 
