@@ -1590,11 +1590,16 @@
 ./usr/lib/apache/include/http_request.h
 ./usr/lib/apache/include/http_vhost.h
 ./usr/lib/apache/include/httpd.h
+./usr/lib/apache/include/mod_ssl.h
 ./usr/lib/apache/include/multithread.h
 ./usr/lib/apache/include/os-inline.c
 ./usr/lib/apache/include/os.h
 ./usr/lib/apache/include/rfc1413.h
 ./usr/lib/apache/include/scoreboard.h
+./usr/lib/apache/include/ssl_expr.h
+./usr/lib/apache/include/ssl_util_sdbm.h
+./usr/lib/apache/include/ssl_util_ssl.h
+./usr/lib/apache/include/ssl_util_table.h
 ./usr/lib/apache/include/util_date.h
 ./usr/lib/apache/include/util_md5.h
 ./usr/lib/apache/include/util_script.h
