@@ -30,6 +30,10 @@ Boston, MA 02111-1307, USA.  */
 #include "objc-api.h"
 #include "encoding.h"
 
+#ifdef __vax__
+#define target_flags TARGET_DEFAULT
+#endif
+
 #define MAX(X, Y)                    \
   ({ typeof(X) __x = (X), __y = (Y); \
      (__x > __y ? __x : __y); })
