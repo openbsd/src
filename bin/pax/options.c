@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.34 1998/09/20 02:22:22 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.35 1998/12/07 23:45:46 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.34 1998/09/20 02:22:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.35 1998/12/07 23:45:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1452,18 +1452,18 @@ void
 pax_usage()
 #endif
 {
-	(void)fputs("usage: pax [-cdnv] [-E limit] [-f archive] ", stderr);
+	(void)fputs("usage: pax [-cdnvz] [-E limit] [-f archive] ", stderr);
 	(void)fputs("[-s replstr] ... [-U user] ...", stderr);
 	(void)fputs("\n           [-G group] ... ", stderr);
 	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
 	(void)fputs("[pattern ...]\n", stderr);
-	(void)fputs("       pax -r [-cdiknuvDYZ] [-E limit] ", stderr);
+	(void)fputs("       pax -r [-cdiknuvzDYZ] [-E limit] ", stderr);
 	(void)fputs("[-f archive] [-o options] ... \n", stderr);
 	(void)fputs("           [-p string] ... [-s replstr] ... ", stderr);
 	(void)fputs("[-U user] ... [-G group] ...\n	      ", stderr);
 	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
 	(void)fputs(" [pattern ...]\n", stderr);
-	(void)fputs("       pax -w [-dituvHLPX] [-b blocksize] ", stderr);
+	(void)fputs("       pax -w [-dituvzHLPX] [-b blocksize] ", stderr);
 	(void)fputs("[ [-a] [-f archive] ] [-x format] \n", stderr);
 	(void)fputs("           [-B bytes] [-s replstr] ... ", stderr);
 	(void)fputs("[-o options] ... [-U user] ...", stderr);

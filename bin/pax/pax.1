@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.9 1998/11/28 03:20:34 aaron Exp $
+.\"	$OpenBSD: pax.1,v 1.10 1998/12/07 23:45:46 deraadt Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -46,7 +46,7 @@
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdnv
+.Op Fl cdnvz
 .Bk -words
 .Op Fl f Ar archive
 .Ek
@@ -73,7 +73,7 @@
 .Op Ar pattern ...
 .Nm
 .Fl r
-.Op Fl cdiknuvDYZ
+.Op Fl cdiknuvzDYZ
 .Bk -words
 .Op Fl f Ar archive
 .Ek
@@ -109,7 +109,7 @@
 .Op Ar pattern ...
 .Nm
 .Fl w
-.Op Fl dituvHLPX
+.Op Fl dituvzHLPX
 .Bk -words
 .Op Fl b Ar blocksize
 .Ek
@@ -758,6 +758,12 @@ The individual archive formats may impose additional restrictions on use.
 Typical archive format restrictions include (but are not limited to):
 file pathname length, file size, link pathname length, and the type of the
 file.
+.It Fl z
+Use
+.Xr gzip 1
+to compress (decompress) the archive while writing (reading). 
+Incompatible with
+.Fl a .
 .It Fl B Ar bytes
 Limit the number of bytes written to a single archive volume to
 .Ar bytes .
