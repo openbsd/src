@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.29 1999/11/15 01:03:28 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.30 2000/01/27 05:21:12 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -78,7 +78,7 @@ int	check_all;
 int	log_success;		/* If TRUE, log all successful accesses */
 int	sent_null;
 
-void	 doit __P((struct sockaddr_in *));
+void	 doit __P((struct sockaddr *));
 void	 error __P((const char *, ...));
 void	 getstr __P((char *, int, char *));
 int	 local_domain __P((char *));
@@ -119,7 +119,7 @@ main(argc, argv)
 	extern int __check_rhosts_file;
 	struct linger linger;
 	int ch, on = 1, fromlen;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 
 	openlog("rshd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
 
@@ -189,7 +189,7 @@ main(argc, argv)
 	if (setsockopt(0, SOL_SOCKET, SO_LINGER, (char *)&linger,
 	    sizeof (linger)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
-	doit(&from);
+	doit((struct sockaddr *)&from);
 	/* NOTREACHED */
 	return 0;
 }
@@ -205,12 +205,14 @@ char	**environ;
 
 void
 doit(fromp)
-	struct sockaddr_in *fromp;
+	struct sockaddr *fromp;
 {
 	extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
-	struct hostent *hp;
+	struct addrinfo hints, *res, *res0;
+	int gaierror;
 	struct passwd *pwd;
 	u_short port;
+	in_port_t *portp;
 	fd_set ready, readfrom;
 	int cc, nfd, pv[2], pid, s = 0;
 	int one = 1;
@@ -219,12 +221,21 @@ doit(fromp)
 	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
 	char remotehost[2 * MAXHOSTNAMELEN + 1];
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
+	char naddr[NI_MAXHOST];
+	char saddr[NI_MAXHOST];
+	char raddr[NI_MAXHOST];
+	char pbuf[NI_MAXSERV];
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
+#endif
 
 #ifdef	KERBEROS
 	AUTH_DAT	*kdata = (AUTH_DAT *) NULL;
 	KTEXT		ticket = (KTEXT) NULL;
 	char		instance[INST_SZ], version[VERSION_SIZE];
-	struct		sockaddr_in	fromaddr;
+	struct		sockaddr_storage fromaddr;
 	int		rc;
 	long		authopts;
 #ifdef CRYPT
@@ -232,7 +243,12 @@ doit(fromp)
 	fd_set		wready, writeto;
 #endif
 
-	fromaddr = *fromp;
+	if (sizeof(fromaddr) < fromp->sa_len) {
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)",
+		    fromp->sa_family);
+		exit(1);
+	}
+	memcpy(&fromaddr, fromp, fromp->sa_len);
 #endif
 
 	(void) signal(SIGINT, SIG_DFL);
@@ -246,13 +262,27 @@ doit(fromp)
 	  }
 	}
 #endif
-	fromp->sin_port = ntohs((u_short)fromp->sin_port);
-	if (fromp->sin_family != AF_INET) {
+	switch (fromp->sa_family) {
+	case AF_INET:
+		portp = &((struct sockaddr_in *)fromp)->sin_port;
+		break;
+	case AF_INET6:
+		portp = &((struct sockaddr_in6 *)fromp)->sin6_port;
+		break;
+	default:
 		syslog(LOG_ERR, "malformed \"from\" address (af %d)",
-		    fromp->sin_family);
+		    fromp->sa_family);
 		exit(1);
 	}
+	if (getnameinfo(fromp, fromp->sa_len, naddr, sizeof(naddr),
+	    pbuf, sizeof(pbuf), niflags) != 0) {
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)",
+		    fromp->sa_family);
+		exit(1);
+	}
+
 #ifdef IP_OPTIONS
+	if (fromp->sa_family == AF_INET)
       {
 	struct ipoption opts;
 	int optsize = sizeof(opts), ipproto, i;
@@ -280,12 +310,11 @@ doit(fromp)
 #ifdef	KERBEROS
 	if (!use_kerberos)
 #endif
-		if (fromp->sin_port >= IPPORT_RESERVED ||
-		    fromp->sin_port < IPPORT_RESERVED/2) {
+		if (ntohs(*portp) >= IPPORT_RESERVED ||
+		    ntohs(*portp) < IPPORT_RESERVED/2) {
 			syslog(LOG_NOTICE|LOG_AUTH,
 			    "Connection from %s on illegal port %u",
-			    inet_ntoa(fromp->sin_addr),
-			    fromp->sin_port);
+			    naddr, ntohs(*portp));
 			exit(1);
 		}
 
@@ -315,14 +344,14 @@ doit(fromp)
 				syslog(LOG_ERR, "2nd port not reserved");
 				exit(1);
 			}
-		fromp->sin_port = htons(port);
+		*portp = htons(port);
 		lport = IPPORT_RESERVED - 1;
-		s = rresvport(&lport);
+		s = rresvport_af(&lport, fromp->sa_family);
 		if (s < 0) {
 			syslog(LOG_ERR, "can't get stderr port: %m");
 			exit(1);
 		}
-		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0) {
+		if (connect(s, (struct sockaddr *)fromp, fromp->sa_len) < 0) {
 			syslog(LOG_INFO, "connect second port %d: %m", port);
 			exit(1);
 		}
@@ -342,55 +371,69 @@ doit(fromp)
 	dup2(f, 2);
 #endif
 	errorstr = NULL;
-	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof (struct in_addr),
-		fromp->sin_family);
-	if (hp) {
+	if (getnameinfo(fromp, fromp->sa_len, saddr, sizeof(saddr),
+			NULL, 0, NI_NAMEREQD)== 0) {
 		/*
 		 * If name returned by gethostbyaddr is in our domain,
 		 * attempt to verify that we haven't been fooled by someone
 		 * in a remote net; look up the name and check that this
 		 * address corresponds to the name.
 		 */
-		hostname = hp->h_name;
+		hostname = saddr;
 #ifdef	KERBEROS
 		if (!use_kerberos)
 #endif
-		if (check_all || local_domain(hp->h_name)) {
-			strncpy(remotehost, hp->h_name, sizeof(remotehost) - 1);
+		if (check_all || local_domain(saddr)) {
+			strncpy(remotehost, saddr, sizeof(remotehost) - 1);
 			remotehost[sizeof(remotehost) - 1] = 0;
 			errorhost = remotehost;
-			hp = gethostbyname(remotehost);
-			if (hp == NULL) {
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = fromp->sa_family;
+			hints.ai_socktype = SOCK_STREAM;
+			hints.ai_flags = AI_CANONNAME;
+			gaierror = getaddrinfo(remotehost, pbuf, &hints, &res0);
+			if (gaierror) {
 				syslog(LOG_INFO,
-				    "Couldn't look up address for %s",
-				    remotehost);
+				    "Couldn't look up address for %s: %s",
+				    remotehost, gai_strerror(gaierror));
 				errorstr =
 				"Couldn't look up address for your host (%s)\n";
-				hostname = inet_ntoa(fromp->sin_addr);
-			} else for (; ; hp->h_addr_list++) {
-				if (hp->h_addr_list[0] == NULL) {
+				hostname = naddr;
+			} else {
+				for (res = res0; res; res = res->ai_next) {
+					if (res->ai_family != fromp->sa_family)
+						continue;
+					if (res->ai_addrlen != fromp->sa_len)
+						continue;
+					if (getnameinfo(res->ai_addr,
+						res->ai_addrlen,
+						raddr, sizeof(raddr), NULL, 0,
+						niflags) == 0
+					 && strcmp(naddr, raddr) == 0) {
+						hostname = res->ai_canonname
+							? res->ai_canonname
+							: saddr;
+						break;
+					}
+				}
+				if (res == NULL) {
 					syslog(LOG_NOTICE,
 					  "Host addr %s not listed for host %s",
-					    inet_ntoa(fromp->sin_addr),
-					    hp->h_name);
+					    naddr, res0->ai_canonname
+							? res0->ai_canonname
+							: saddr);
 					errorstr =
 					    "Host address mismatch for %s\n";
-					hostname = inet_ntoa(fromp->sin_addr);
-					break;
+					hostname = naddr;
 				}
-				if (!bcmp(hp->h_addr_list[0],
-				    (caddr_t)&fromp->sin_addr,
-				    sizeof(fromp->sin_addr))) {
-					hostname = hp->h_name;
-					break;
-				}
+				freeaddrinfo(res);
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
 		    sizeof(hostnamebuf) - 1);
 	} else
 		errorhost = hostname = strncpy(hostnamebuf,
-		    inet_ntoa(fromp->sin_addr), sizeof(hostnamebuf) - 1);
+		    naddr, sizeof(hostnamebuf) - 1);
 
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 #ifdef	KERBEROS
@@ -475,7 +518,7 @@ doit(fromp)
 #endif
 	if (errorstr ||
 	    (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
-	    iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
+	    iruserok_sa(fromp, fromp->sa_len, pwd->pw_uid == 0,
 	    remuser, locuser) < 0)) {
 		if (__rcmd_errstr)
 			syslog(LOG_INFO|LOG_AUTH,
