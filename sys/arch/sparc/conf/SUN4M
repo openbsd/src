@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.64 2004/09/27 19:32:38 miod Exp $
+#	$OpenBSD: SUN4M,v 1.65 2005/01/10 06:42:42 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -111,6 +111,8 @@ options ISP_COMPILE_1000_FW=1
 # specialized DMA glue
 ledma0	at sbus0					# sun4m on-board
 le0	at ledma0					#
+ledma*	at sbus0					# Anteres sbus
+le*	at ledma?					#
 
 # Additional SBus LANCE devices - glued on by lebuffer
 lebuffer0	at sbus0				# sun4m SBus

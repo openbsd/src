@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.52 2004/09/16 09:14:04 mickey Exp $
+# 	$OpenBSD: RAMDISK,v 1.53 2005/01/10 06:42:42 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -147,6 +147,8 @@ esp*	at dma? flags 0xff0f				# depending on model
 # sun4m Ethernet - an AMD 7990 LANCE behind specialized DMA glue
 ledma0	at sbus?					# sun4m on-board
 le0	at ledma0					#
+ledma*	at sbus?					# Anteres sbus
+le*	at ledma?					#
 
 # Additional SBus LANCE devices - glued on by lebuffer
 lebuffer0	at sbus0				# sun4m SBus
