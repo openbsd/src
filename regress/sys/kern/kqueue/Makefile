@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2003/12/07 15:45:57 markus Exp $
+#	$OpenBSD: Makefile,v 1.12 2003/12/07 15:52:52 markus Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
@@ -20,8 +20,8 @@ kq-tun: ${PROG}
 	@EVENT_SHOW_METHOD=yes EVENT_NOPOLL=yes EVENT_NOSELECT=yes ${SUDO} ./${PROG} -t
 	@EVENT_SHOW_METHOD=yes EVENT_NOPOLL=yes EVENT_NOKQUEUE=yes ${SUDO} ./${PROG} -t
 	@EVENT_SHOW_METHOD=yes EVENT_NOSELECT=yes EVENT_NOKQUEUE=yes ${SUDO} ./${PROG} -t
-	@-${SUDO} ifconfig tun98 delete
-	@-${SUDO} ifconfig tun99 delete
+	@-${SUDO} ifconfig tun98 destroy
+	@-${SUDO} ifconfig tun99 destroy
 	@-${SUDO} rm -f /dev/tun98 /dev/tun99
 kq-pty: ${PROG}
 	${SUDO} ./${PROG} -T
