@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.13 2000/10/16 01:01:58 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.14 2000/10/16 22:45:01 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -539,15 +539,12 @@ isp_pci_attach(parent, self, aux)
 #ifdef	ISP_LOGDEFAULT
 	isp->isp_dblev = ISP_LOGDEFAULT;
 #else
-	isp->isp_dblev = ISP_LOGCONFIG|ISP_LOGWARN|ISP_LOGERR;
+	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
 #ifdef	SCSIDEBUG
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0;
-#endif
-#ifdef	DIAGNOSTIC
-	isp->isp_dblev |= ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGCONFIG|ISP_LOGINFO;
 #endif
 #endif
 
@@ -577,7 +574,7 @@ isp_pci_attach(parent, self, aux)
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
-	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
+	isp_prt(isp, ISP_LOGCONFIG, "interrupting at %s", intrstr);
 
 	if (IS_FC(isp)) {
 		DEFAULT_NODEWWN(isp) = 0x400000007F000002;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.13 2000/10/16 01:01:57 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.14 2000/10/16 22:45:02 mjacob Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -219,15 +219,12 @@ isp_sbus_attach(parent, self, aux)
 #ifdef	ISP_LOGDEFAULT
 	isp->isp_dblev = ISP_LOGDEFAULT;
 #else
-	isp->isp_dblev = ISP_LOGCONFIG|ISP_LOGWARN|ISP_LOGERR;
+	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
 #ifdef	SCSIDEBUG
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0;
-#endif
-#ifdef	DIAGNOSTIC
-	isp->isp_dblev |= ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGCONFIG|ISP_LOGINFO;
 #endif
 #endif
 

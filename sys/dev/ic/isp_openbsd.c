@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.12 2000/10/16 01:02:00 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.13 2000/10/16 22:45:00 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -143,8 +143,6 @@ isp_attach(isp)
 		/*
 		 * wait for the bus to settle.
 		 */
-		printf("%s: waiting 4 seconds for bus reset settling\n",
-		    isp->isp_name);
 		delay(4 * 1000000);
 	} else {
 		int defid;
