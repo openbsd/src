@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.16 2000/11/11 16:23:30 drahn Exp $ */
+/*	$OpenBSD: ohci.c,v 1.17 2001/01/22 23:24:32 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.93 2000/08/17 23:18:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -637,8 +637,11 @@ ohci_init(ohci_softc_t *sc)
 	printf("%s:", USBDEVNAME(sc->sc_bus.bdev));
 #endif
 	rev = OREAD4(sc, OHCI_REVISION);
-	printf(" OHCI version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
+	printf(" OHCI version %d.%d%s", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
+#if !defined(__OpenBSD__)
+	printf("\n");
+#endif
 
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
 		printf("%s: unsupported OHCI revision\n", 
