@@ -1,7 +1,7 @@
-/*	$OpenBSD: pl.c,v 1.6 2000/04/26 15:25:29 espie Exp $	*/
+/*	$OpenBSD: pl.c,v 1.7 2001/06/06 20:03:08 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pl.c,v 1.6 2000/04/26 15:25:29 espie Exp $";
+static const char *rcsid = "$OpenBSD: pl.c,v 1.7 2001/06/06 20:03:08 espie Exp $";
 #endif
 
 /*
@@ -54,7 +54,8 @@ check_list(char *home, package_t *pkg)
 			there = p->name;
 			break;
 		case PLIST_COMMENT:
-			if (strcmp(p->name, "no checksum") == 0)
+			if (p->name != NULL && 
+			    strcmp(p->name, "no checksum") == 0)
 				p = p->next;
 			break;
 		case PLIST_FILE:
