@@ -113,8 +113,6 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/include/va-v850.h
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/include/varargs.h
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/libgcc.a
-./usr/lib/lib45_pic.a
-./usr/lib/libacl_pic.a
 ./usr/lib/libalpha.a
 ./usr/lib/libalpha_p.a
 ./usr/lib/libasn1_pic.a
@@ -133,11 +131,8 @@
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkadm5clnt_pic.a
 ./usr/lib/libkadm5srv_pic.a
-./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
-./usr/lib/libkdb_pic.a
 ./usr/lib/libkrb5_pic.a
-./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libmenu_pic.a
@@ -158,7 +153,6 @@
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_pic.a
-./usr/lib/libtelnet_pic.a
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libtermlib_pic.a
 ./usr/lib/libusbhid_pic.a

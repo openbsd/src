@@ -78,7 +78,6 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/libgcc.a
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/soft-float
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/soft-float/libgcc.a
-./usr/lib/libacl_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
@@ -91,10 +90,7 @@
 ./usr/lib/libfrtbegin_pic.a
 ./usr/lib/libg2c_pic.a
 ./usr/lib/libiberty_pic.a
-./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
-./usr/lib/libkdb_pic.a
-./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libmenu_pic.a
@@ -115,7 +111,6 @@
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_pic.a
-./usr/lib/libtelnet_pic.a
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libtermlib_pic.a
 ./usr/lib/libusbhid_pic.a

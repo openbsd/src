@@ -107,7 +107,6 @@
 ./usr/share/info/info-stnd.info-2
 ./usr/share/info/info-stnd.info-3
 ./usr/share/info/info.info
-./usr/share/info/kth-krb.info
 ./usr/share/info/mmalloc.info
 ./usr/share/info/readline.info
 ./usr/share/info/stabs.info
@@ -231,7 +230,6 @@
 ./usr/share/man/cat1/fold.0
 ./usr/share/man/cat1/foreach.0
 ./usr/share/man/cat1/from.0
-./usr/share/man/cat1/fs.0
 ./usr/share/man/cat1/fsplit.0
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
@@ -485,7 +483,6 @@
 ./usr/share/man/cat1/psbb.0
 ./usr/share/man/cat1/psed.0
 ./usr/share/man/cat1/pstruct.0
-./usr/share/man/cat1/pts.0
 ./usr/share/man/cat1/purgestat.0
 ./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
@@ -1314,6 +1311,7 @@
 ./usr/share/man/cat4/sparc/ledma.0
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
+./usr/share/man/cat4/sparc/mgx.0
 ./usr/share/man/cat4/sparc/openprom.0
 ./usr/share/man/cat4/sparc/pnozz.0
 ./usr/share/man/cat4/sparc/presto.0
@@ -1489,13 +1487,8 @@
 ./usr/share/man/cat4/zero.0
 ./usr/share/man/cat5
 ./usr/share/man/cat5/.rhosts.0
-./usr/share/man/cat5/CellServDB.0
-./usr/share/man/cat5/DynRootDB.0
-./usr/share/man/cat5/SuidCells.0
-./usr/share/man/cat5/ThisCell.0
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
-./usr/share/man/cat5/afsd.conf.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
 ./usr/share/man/cat5/bootparams.0
@@ -1546,10 +1539,6 @@
 ./usr/share/man/cat5/isakmpd.conf.0
 ./usr/share/man/cat5/isakmpd.policy.0
 ./usr/share/man/cat5/keynote.0
-./usr/share/man/cat5/krb.conf.0
-./usr/share/man/cat5/krb.equiv.0
-./usr/share/man/cat5/krb.extra.0
-./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
@@ -1651,7 +1640,6 @@
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/activadm.0
 ./usr/share/man/cat8/activinit.0
-./usr/share/man/cat8/afsd.0
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot_alpha.0
@@ -1678,7 +1666,6 @@
 ./usr/share/man/cat8/bootpef.0
 ./usr/share/man/cat8/bootpgw.0
 ./usr/share/man/cat8/bootptest.0
-./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/certpatch.0
@@ -1715,7 +1702,6 @@
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/editmap.0
 ./usr/share/man/cat8/edquota.0
-./usr/share/man/cat8/ext_srvtab.0
 ./usr/share/man/cat8/extattrctl.0
 ./usr/share/man/cat8/faithd.0
 ./usr/share/man/cat8/faq.0
@@ -1785,18 +1771,9 @@
 ./usr/share/man/cat8/isakmpd.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
-./usr/share/man/cat8/kauthd.0
-./usr/share/man/cat8/kdb_destroy.0
-./usr/share/man/cat8/kdb_edit.0
-./usr/share/man/cat8/kdb_init.0
-./usr/share/man/cat8/kdb_util.0
 ./usr/share/man/cat8/kdc.0
 ./usr/share/man/cat8/kgmon.0
 ./usr/share/man/cat8/kpasswdd.0
-./usr/share/man/cat8/kprop.0
-./usr/share/man/cat8/kpropd.0
-./usr/share/man/cat8/ksrvutil.0
-./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/ktutil.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/lmccontrol.0
@@ -2051,7 +2028,6 @@
 ./usr/share/man/cat8/visudo.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
-./usr/share/man/cat8/vos.0
 ./usr/share/man/cat8/vpn.0
 ./usr/share/man/cat8/wicontrol.0
 ./usr/share/man/cat8/yp.0

@@ -820,15 +820,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/cd9660_rrip.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/iso_rrip.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/acl.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/kadm.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/kadm_err.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb-protos.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb_db.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb_err.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/prot.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/admin.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/asn1-common.ph
@@ -900,6 +891,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/bpfdesc.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/net/ethertypes.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_arp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_atm.ph

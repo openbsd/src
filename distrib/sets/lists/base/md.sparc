@@ -28,8 +28,6 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.3/2.95.3/cpp0
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.3/2.95.3/include
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.3/2.95.3/specs
-./usr/lib/lib45.so.2.0
-./usr/lib/libacl.so.6.0
 ./usr/lib/libasn1.so.3.1
 ./usr/lib/libc.so.30.0
 ./usr/lib/libcrypto.so.10.0
@@ -41,11 +39,8 @@
 ./usr/lib/libg2c.so.7.0
 ./usr/lib/libgssapi.so.2.0
 ./usr/lib/libiberty.so.5.0
-./usr/lib/libkadm.so.8.0
-./usr/lib/libkafs.so.11.0
-./usr/lib/libkdb.so.7.0
-./usr/lib/libkrb.so.11.0
-./usr/lib/libkrb5.so.5.1
+./usr/lib/libkafs.so.12.0
+./usr/lib/libkrb5.so.5.2
 ./usr/lib/libkvm.so.7.0
 ./usr/lib/libm.so.1.0
 ./usr/lib/libmenu.so.2.0
@@ -66,7 +61,7 @@
 ./usr/lib/libtermcap.so.9.0
 ./usr/lib/libtermlib.so.9.0
 ./usr/lib/libusbhid.so.1.0
-./usr/lib/libutil.so.8.0
+./usr/lib/libutil.so.8.1
 ./usr/lib/libwrap.so.3.0
 ./usr/lib/libz.so.2.0
 ./usr/libdata/perl5/site_perl/sparc-openbsd
@@ -882,15 +877,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/isofs/cd9660/cd9660_rrip.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/isofs/cd9660/iso_rrip.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/acl.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/kadm.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/kadm_err.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/krb-protos.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/krb.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/krb_db.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/krb_err.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosIV/prot.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosV
 ./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosV/admin.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/kerberosV/asn1-common.ph
@@ -962,6 +948,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpfdesc.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/ethertypes.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_arp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_atm.ph

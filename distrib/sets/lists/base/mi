@@ -1413,7 +1413,6 @@
 ./usr/libdata/ssh
 ./usr/libdata/ssh/Ssh.bin
 ./usr/libexec
-./usr/libexec/afsd
 ./usr/libexec/auth
 ./usr/libexec/auth/login_activ
 ./usr/libexec/auth/login_chpass
@@ -1456,10 +1455,8 @@
 ./usr/libexec/ipropd-master
 ./usr/libexec/ipropd-slave
 ./usr/libexec/kadmind
-./usr/libexec/kauthd
 ./usr/libexec/kdc
 ./usr/libexec/kpasswdd
-./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
 ./usr/libexec/locate.concatdb
@@ -1540,7 +1537,6 @@
 ./usr/sbin/bootpef
 ./usr/sbin/bootpgw
 ./usr/sbin/bootptest
-./usr/sbin/bos
 ./usr/sbin/certpatch
 ./usr/sbin/chat
 ./usr/sbin/chgrp
@@ -1556,10 +1552,8 @@
 ./usr/sbin/dig
 ./usr/sbin/editmap
 ./usr/sbin/edquota
-./usr/sbin/ext_srvtab
 ./usr/sbin/extattrctl
 ./usr/sbin/faithd
-./usr/sbin/fs
 ./usr/sbin/getencstat
 ./usr/sbin/getextattr
 ./usr/sbin/group
@@ -1572,13 +1566,6 @@
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/kadmin
-./usr/sbin/kdb_destroy
-./usr/sbin/kdb_edit
-./usr/sbin/kdb_init
-./usr/sbin/kdb_util
-./usr/sbin/kprop
-./usr/sbin/ksrvutil
-./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/logresolve
@@ -1625,7 +1612,6 @@
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
 ./usr/sbin/pstat
-./usr/sbin/pts
 ./usr/sbin/pwd_mkdb
 ./usr/sbin/quot
 ./usr/sbin/quotaoff
@@ -1690,7 +1676,6 @@
 ./usr/sbin/vipw
 ./usr/sbin/visudo
 ./usr/sbin/vnconfig
-./usr/sbin/vos
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
 ./usr/sbin/yppoll
