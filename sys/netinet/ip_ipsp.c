@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.33 1999/02/24 23:45:51 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.34 1999/02/25 20:21:07 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -891,8 +891,15 @@ ipsp_kern(int off, char **bufp, int len)
 			   tdb->tdb_inext->tdb_sproto);
 
 	    if (tdb->tdb_flow)
-	      l+= sprintf(buffer + l, "\tUsed by at least one flow\n");
+	      l+= sprintf(buffer + l,
+			  "\tCurrently used by at least one flow\n");
 
+	    l += sprintf(buffer + l, "\t\tCurrently %qu bytes processed\n",
+			 tdb->tdb_cur_bytes);
+	    
+	    l += sprintf(buffer + l, "\t\t%u flows processed so far\n",
+			 tdb->tdb_cur_allocations);
+	    
 	    l += sprintf(buffer + l, "\tExpirations:\n");
 
 	    if (tdb->tdb_flags & TDBF_TIMER)
@@ -913,11 +920,6 @@ ipsp_kern(int off, char **bufp, int len)
 	      l += sprintf(buffer + l, "\t\tSoft expiration after %qu bytes\n",
 			   tdb->tdb_soft_bytes);
 
-	    if ((tdb->tdb_flags & TDBF_BYTES) ||
-		(tdb->tdb_flags & TDBF_SOFT_BYTES))
-	    l += sprintf(buffer + l, "\t\tCurrently %qu bytes processed\n",
-			 tdb->tdb_cur_bytes);
-	    
 	    if (tdb->tdb_flags & TDBF_ALLOCATIONS)
 	      l += sprintf(buffer + l,
 			   "\t\tHard expiration after %u flows\n",
@@ -928,11 +930,6 @@ ipsp_kern(int off, char **bufp, int len)
 			   "\t\tSoft expiration after %u flows\n",
 			   tdb->tdb_soft_allocations);
 
-	    if ((tdb->tdb_flags & TDBF_ALLOCATIONS) ||
-		(tdb->tdb_flags & TDBF_SOFT_ALLOCATIONS))
-	      l += sprintf(buffer + l, "\t\tCurrently %u flows processed\n",
-			   tdb->tdb_cur_allocations);
-	    
 	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
 	    {
 		if (tdb->tdb_first_use)
@@ -946,16 +943,17 @@ ipsp_kern(int off, char **bufp, int len)
 			     "use\n", tdb->tdb_exp_first_use);
 	    }
 
-	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
-	      if (tdb->tdb_first_use)
-		l += sprintf(buffer + l,
-			     "\t\tSoft expiration(2) in %qu seconds\n",
-			     (tdb->tdb_first_use + tdb->tdb_soft_first_use) -
-			     time.tv_sec);
-	      else
-		l += sprintf(buffer + l,
-			     "\t\tSoft expiration in %qu seconds after first "
-			     "use\n", tdb->tdb_soft_first_use);
+	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+	    {
+	        if (tdb->tdb_first_use)
+		  l += sprintf(buffer + l,
+			       "\t\tSoft expiration(2) in %qu seconds\n",
+			       (tdb->tdb_first_use + tdb->tdb_soft_first_use) -
+			       time.tv_sec);
+	        else
+		  l += sprintf(buffer + l,
+			       "\t\tSoft expiration in %qu seconds after first "
+			       "use\n", tdb->tdb_soft_first_use);
 	    }
 
 	    if (!(tdb->tdb_flags & (TDBF_TIMER | TDBF_SOFT_TIMER | TDBF_BYTES |
