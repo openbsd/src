@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/06/02 05:44:18 tholo Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/10/12 21:27:50 niklas Exp $
 #	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -8,7 +8,7 @@ DPADD=	${LIBM} ${LIBCURSES} ${LIBTERMLIB} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
 MAN=	phantasia.6
-CLEANFILES+=map setup setup.o
+CLEANFILES+=map setup setup.o phantglobs.o.bld
 
 all: setup phantasia
 
