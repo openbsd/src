@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)telnetd.8	8.3 (Berkeley) 3/1/94
-.\"	$Id: telnetd.8,v 1.1.1.1 1995/10/18 08:43:24 deraadt Exp $
+.\"	$Id: telnetd.8,v 1.2 1996/01/11 17:49:42 deraadt Exp $
 .\"
 .Dd March 1, 1994
 .Dt TELNETD 8
@@ -42,7 +42,7 @@
 protocol server
 .Sh SYNOPSIS
 .Nm /usr/libexec/telnetd
-.Op Fl BUhlkns
+.Op Fl Uhlkns
 .Op Fl D Ar debugmode
 .Op Fl I Ns Ar initid
 .Op Fl S Ar tos
@@ -136,17 +136,6 @@ All user verification will happen through the
 .Xr login 1
 program.
 .El
-.It Fl B
-Specifies bftp server mode.  In this mode,
-.Nm telnetd
-causes login to start a
-.Xr bftp 1
-session rather than the user's
-normal shell.  In bftp daemon mode normal
-logins are not supported, and it must be used
-on a port other than the normal
-.Tn TELNET
-port.
 .It Fl D Ar debugmode
 This option may be used for debugging purposes.
 This allows
@@ -528,13 +517,9 @@ the data stream.
 .Pa /etc/iptos
 (if supported)
 .br
-.Pa /usr/ucb/bftp
-(if supported)
 .Sh "SEE ALSO"
 .Xr telnet 1 ,
 .Xr login 1 ,
-.Xr bftp 1
-(if supported)
 .Sh STANDARDS
 .Bl -tag -compact -width RFC-1572
 .It Cm RFC-854
