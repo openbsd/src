@@ -63,7 +63,7 @@ Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
 .It Fl u
 Select the historical ``insecure'' mode, in which syslogd will
-open a UDP socket and accept input over it as well.
+accept input from the UDP port.
 Some software wants this, but you can be subjected to a variety of
 attacks over the network, including attackers remotely filling logs.
 .It Fl p
@@ -80,12 +80,18 @@ see
 .Xr syslog.conf 5 .
 .Pp
 .Nm Syslogd
-reads messages from the
+opens an Internet domain socket as specified
+in
+.Pa /etc/services .
+Normally
+.Nm syslogd
+will only use this socket to send messages outwards, but in
+`insecure'' mode it will also read messages from this socket.
+.Nm Syslogd
+also opens and reads messages from the
 .Tn UNIX
 domain socket
 .Pa /dev/log ,
-from an Internet domain socket specified in
-.Pa /etc/services ,
 and from the special device
 .Pa /dev/klog
 (to read kernel messages).
