@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.94 1998/10/10 06:59:32 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.95 1998/10/10 07:03:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2028,7 +2028,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
 	    0,
 	    "Silicon Integrated System",
-	    "85C601 EIDE Controller",
+	    "85C601 EIDE",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
@@ -2046,7 +2046,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5513,
 	    0,
 	    "Silicon Integrated System",
-	    "5513 EIDE Controller",
+	    "5513 EIDE",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5581,
@@ -2316,13 +2316,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8673F,
 	    0,
 	    "United Microelectronics",
-	    "UM8673F EIDE Controller",
+	    "UM8673F EIDE",
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8881,
 	    0,
 	    "United Microelectronics",
-	    "UM8881 HB4 486 PCI Chipset",
+	    "UM8881 HB4 486 PCI",
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C891,
@@ -2436,7 +2436,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    0,
 	    "VIA Technologies",
-	    "VT82C586 (Apollo VP) IDE Controller",
+	    "VT82C586 (Apollo VP) IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
@@ -2478,7 +2478,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
 	    0,
 	    "VIA Technologies",
-	    "VT86C926 Amazon PCI-Ethernet Controller",
+	    "VT86C926 Amazon Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M,
