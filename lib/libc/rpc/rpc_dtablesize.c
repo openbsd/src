@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_dtablesize.c,v 1.2 1996/07/20 06:12:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_dtablesize.c,v 1.3 1996/08/13 06:37:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_dtablesize.c,v 1.3 1995/02/25 03:01:55 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.2 1996/07/20 06:12:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.3 1996/08/13 06:37:42 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -46,13 +46,7 @@ _rpc_dtablesize()
 {
 	static int size;
 	
-	if (size == 0) {
+	if (size == 0)
 		size = getdtablesize();
-#ifdef FD_SETSIZE
-		/* prevent select() from breaking */
-		if (size > FD_SETSIZE)
-			size = FD_SETSIZE;
-#endif
-	}
 	return (size);
 }
