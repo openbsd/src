@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.6 1998/04/17 19:31:08 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.7 1998/05/02 09:03:03 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -354,7 +354,7 @@ updatefats(pmp, bp, fatbn)
 			 * The cluster indicated in FSInfo isn't free
 			 * any longer.  Got get a new free one.
 			 */
-			for (cn = 0; cn < pmp->pm_maxcluster;)
+			for (cn = 0; cn < pmp->pm_maxcluster; cn++)
 				if (pmp->pm_inusemap[cn / N_INUSEBITS] != (u_int)-1)
 					break;
 			pmp->pm_nxtfree = cn
