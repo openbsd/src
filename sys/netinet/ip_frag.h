@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_frag.h,v 1.14 2001/04/07 01:06:28 fgsch Exp $	*/
+/*	$OpenBSD: ip_frag.h,v 1.15 2001/04/08 20:30:05 smart Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -67,4 +67,4 @@ extern	void	ipfr_slowtimer __P((void *));
 extern	int	ipfr_slowtimer __P((void));
 #endif /* (BSD >= 199306) || SOLARIS */
 
-#endif	/* __IP_FIL_H__ */
+#endif	/* __IP_FRAG_H__ */
