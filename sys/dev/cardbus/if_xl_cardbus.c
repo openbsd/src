@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.1 2000/04/08 05:50:52 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.2 2000/06/09 00:45:25 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -155,6 +155,13 @@ const struct xl_cardbus_product {
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  XL_3C575B,
 	  "3c575C-TX Ethernet" },
+
+	{ CARDBUS_PRODUCT_3COM_3CCFE656B,
+	  /* XL_CONF_90XB|XL_CONF_MII, */ 0,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  XL_3C575B,
+	  "3c656-TX Ethernet" },
 
 	{ 0,
 	  0,
