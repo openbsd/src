@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.5 1999/02/26 05:13:22 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.6 1999/11/05 01:19:13 mickey Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -302,7 +302,7 @@ getphysbuf()
 #else
 
 	bp = malloc(sizeof(*bp), M_TEMP, M_WAITOK);
-	memset(bp, 0, sizeof(*bp));
+	bzero(bp, sizeof(*bp));
 
 	/* XXXCDC: are the following two lines necessary? */
 	bp->b_rcred = bp->b_wcred = NOCRED;
