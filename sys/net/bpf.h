@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.16 2001/06/25 23:02:17 provos Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.17 2001/10/02 18:04:35 deraadt Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -116,11 +116,16 @@ struct bpf_version {
 #define BIOCGHDRCMPLT	_IOR('B',116, u_int)
 #define BIOCSHDRCMPLT	_IOW('B',117, u_int)
 
+struct bpf_timeval {
+	u_int32_t	tv_sec;
+	u_int32_t	tv_usec;
+};
+
 /*
  * Structure prepended to each packet.
  */
 struct bpf_hdr {
-	struct timeval	bh_tstamp;	/* time stamp */
+	struct bpf_timeval bh_tstamp;	/* time stamp */
 	u_int32_t	bh_caplen;	/* length of captured portion */
 	u_int32_t	bh_datalen;	/* original length of packet */
 	u_int16_t	bh_hdrlen;	/* length of bpf header (this struct

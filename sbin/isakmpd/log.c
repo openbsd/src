@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.22 2001/08/18 20:50:02 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.23 2001/10/02 18:04:35 deraadt Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -467,6 +467,7 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
   struct packhdr hdr;
   struct udphdr udp;
   int off, datalen, hdrlen, i;
+  struct timeval tv;
 
   for (i = 0, datalen = 0; i < iovcnt; i++)
     datalen += iov[i].iov_len;
@@ -540,7 +541,9 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
   hdrlen += sizeof hdr.sa_family;
 
   /* pcap file packet header */
-  gettimeofday (&hdr.pcap.ts, 0);
+  gettimeofday (&tv, 0);
+  hdr.pcap.ts.tv_sec = tv.tv_sec;
+  hdr.pcap.ts.tv_usec = tv.tv_usec;
   hdr.pcap.caplen = datalen + hdrlen;
   hdr.pcap.len = datalen + hdrlen;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.8 2000/04/26 21:25:53 jakob Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.9 2001/10/02 18:04:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.8 2000/04/26 21:25:53 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.9 2001/10/02 18:04:35 deraadt Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -84,7 +84,7 @@ struct pcap_file_header {
  * packet interfaces.
  */
 struct pcap_pkthdr {
-	struct timeval ts;	/* time stamp */
+	struct bpf_timeval ts;	/* time stamp */
 	bpf_u_int32 caplen;	/* length of portion present */
 	bpf_u_int32 len;	/* length this packet (off wire) */
 };

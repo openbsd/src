@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.10 2001/06/23 07:03:52 pjanzen Exp $
+.\"	$OpenBSD: bpf.4,v 1.11 2001/10/02 18:04:35 deraadt Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -328,11 +328,12 @@ The following structure is prepended to each packet returned by
 .Xr read 2 :
 .Pp
 .Bd -literal -offset indent
+
 struct bpf_hdr {
-	struct timeval bh_tstamp;
-	u_long bh_caplen;
-	u_long bh_datalen;
-	u_short bh_hdrlen;
+	struct bpf_timeval bh_tstamp;
+	u_int32_t	bh_caplen;
+	u_int32_t	bh_datalen;
+	u_int16_t	bh_hdrlen;
 };
 .Ed
 .Pp
@@ -406,10 +407,10 @@ The following structure defines the instruction format:
 .Pp
 .Bd -literal -offset indent
 struct bpf_insn {
-	u_short code;
-	u_char jt;
-	u_char jf;
-	long k;
+	u_int16_t	code;
+	u_char		jt;
+	u_char		jf;
+	u_int32_t	k;
 };
 .Ed
 .Pp
@@ -910,10 +911,3 @@ packets.
 .Pp
 Data link protocols with variable length headers are not currently supported.
 .Pp
-Under SunOS, if a
-.Nm
-application reads more than 2^31 bytes of data, read will fail with
-.Er EINVAL .
-You can either fix the bug in SunOS, or lseek to 0 when read fails for this
-reason.
-

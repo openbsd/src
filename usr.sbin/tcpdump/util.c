@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2001/09/03 13:25:53 jakob Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2001/10/02 18:04:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.12 2001/09/03 13:25:53 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.13 2001/10/02 18:04:36 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -121,7 +121,7 @@ fn_printn(register const u_char *s, register u_int n,
  * Print the timestamp
  */
 void
-ts_print(register const struct timeval *tvp)
+ts_print(register const struct bpf_timeval *tvp)
 {
 	register int s;
 #define TSBUFLEN 32

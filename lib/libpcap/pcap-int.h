@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-int.h,v 1.8 2000/04/26 21:25:53 jakob Exp $	*/
+/*	$OpenBSD: pcap-int.h,v 1.9 2001/10/02 18:04:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap-int.h,v 1.8 2000/04/26 21:25:53 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap-int.h,v 1.9 2001/10/02 18:04:35 deraadt Exp $ (LBL)
  */
 
 #ifndef pcap_int_h
@@ -100,22 +100,11 @@ struct pcap {
 };
 
 /*
- * This is a timeval as stored in disk in a dumpfile.
- * It has to use the same types everywhere, independent of the actual
- * `struct timeval'
- */
-
-struct pcap_timeval {
-    bpf_int32 tv_sec;		/* seconds */
-    bpf_int32 tv_usec;		/* microseconds */
-};
-
-/*
  * How a `pcap_pkthdr' is actually stored in the dumpfile.
  */
 
 struct pcap_sf_pkthdr {
-    struct pcap_timeval ts;	/* time stamp */
+    struct bpf_timeval ts;	/* time stamp */
     bpf_u_int32 caplen;		/* length of portion present */
     bpf_u_int32 len;		/* length this packet (off wire) */
 };

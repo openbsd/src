@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.27 2001/06/25 23:05:17 provos Exp $	*/
+/*	$OpenBSD: interface.h,v 1.28 2001/10/02 18:04:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.27 2001/06/25 23:05:17 provos Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.28 2001/10/02 18:04:35 deraadt Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -138,9 +138,10 @@ extern const u_char *snapend;
 
 #ifdef __STDC__
 struct timeval;
+struct bpf_timeval;
 #endif
 
-extern void ts_print(const struct timeval *);
+extern void ts_print(const struct bpf_timeval *);
 
 extern int fn_print(const u_char *, const u_char *);
 extern int fn_printn(const u_char *, u_int, const u_char *);
