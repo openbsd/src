@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.16 2003/05/07 04:33:33 deraadt Exp $	*/
+/*	$OpenBSD: urio.c,v 1.17 2003/05/17 17:23:39 nate Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ static const struct usb_devno urio_devs[] = {
 	{ USB_VENDOR_DIAMOND, USB_PRODUCT_DIAMOND_RIO500USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO600USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO800USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_PSAPLAY120},
 };
 #define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
 
