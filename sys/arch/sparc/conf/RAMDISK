@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.50 2004/03/09 15:24:27 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.51 2004/03/12 06:04:01 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -194,6 +194,21 @@ xd*	at xdc? drive ?
 xyc0	at vmes0 addr 0xffffee40 level 3 vect 0x48
 xyc1	at vmes0 addr 0xffffee48 level 3 vect 0x49
 xy*	at xyc? drive ?
+
+# Sun PCMCIA bridge
+#stp*	at sbus?
+#pcmcia* at stp? socket ?
+
+# PCMCIA controller found on Tadpole SPARCbook
+#tslot*	at sbus?
+#pcmcia* at tslot? socket ?
+
+# PCMCIA devices
+#wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
+#an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
+#ne*	at pcmcia? function ?			# NE2000-compat ethernet
+#ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
+#com*	at pcmcia? function ?			# PCMCIA modems/serial ports
 
 # NCR5380-based "Sun SCSI 3" VME SCSI controller.
 # This driver has several flags which may be enabled by OR'ing
