@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.38 2000/11/24 14:38:57 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.39 2000/11/27 18:43:52 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.38 2000/11/24 14:38:57 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.39 2000/11/27 18:43:52 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,6 +189,7 @@ static void ArchFree __P((Arch *));
 #endif
 static TIMESTAMP ArchMTimeMember __P((const char *, const char *, Boolean));
 static FILE *ArchFindMember __P((const char *, const char *, struct ar_hdr *, const char *));
+static void ArchTouch __P((const char *, const char *));
 #if defined(__svr4__) || defined(__SVR4) || \
     (defined(__OpenBSD__) && defined(__mips__)) || \
     (defined(__OpenBSD__) && defined(__powerpc))
@@ -963,15 +964,30 @@ skip:
     return (NULL);
 }
 
+static void
+ArchTouch(archive, member)
+    const char	  *archive;   /* Path to the archive */
+    const char	  *member;    /* Name of member. */
+{
+    FILE *arch;
+    struct ar_hdr arh;
+
+    arch = ArchFindMember(archive, member, &arh, "r+");
+    if (arch != NULL) {
+	snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long)
+	    timestamp2time_t(now));
+	(void)fwrite(&arh, sizeof(struct ar_hdr), 1, arch);
+	fclose(arch);
+    }
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Arch_Touch --
  *	Touch a member of an archive.
  *
- * Results:
- *	The 'time' field of the member's header is updated.
- *
  * Side Effects:
+ *	The 'time' field of the member's header is updated.
  *	The modification time of the entire archive is also changed.
  *	For a library, this could necessitate the re-ranlib'ing of the
  *	whole thing.
@@ -979,21 +995,10 @@ skip:
  *-----------------------------------------------------------------------
  */
 void
-Arch_Touch (gn)
+Arch_Touch(gn)
     GNode	  *gn;	  /* Node of member to touch */
 {
-    FILE *	  arch;	  /* Stream open to archive, positioned properly */
-    struct ar_hdr arh;	  /* Current header describing member */
-
-    arch = ArchFindMember(Varq_Value(ARCHIVE_INDEX, gn),
-			  Varq_Value(MEMBER_INDEX, gn),
-			  &arh, "r+");
-    sprintf(arh.ar_date, "%-12ld", (long) timestamp2time_t(now));
-
-    if (arch != NULL) {
-	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
-	fclose (arch);
-    }
+    ArchTouch(Varq_Value(ARCHIVE_INDEX, gn), Varq_Value(MEMBER_INDEX, gn));
 }
 
 /*-
@@ -1002,9 +1007,6 @@ Arch_Touch (gn)
  *	Given a node which represents a library, touch the thing, making
  *	sure that the table of contents also is touched.
  *
- * Results:
- *	None.
- *
  * Side Effects:
  *	Both the modification time of the library and of the RANLIBMAG
  *	member are set to 'now'.
@@ -1012,20 +1014,12 @@ Arch_Touch (gn)
  *-----------------------------------------------------------------------
  */
 void
-Arch_TouchLib (gn)
+Arch_TouchLib(gn)
     GNode	    *gn;      	/* The node of the library to touch */
 {
 #ifdef RANLIBMAG
-    FILE *	    arch;	/* Stream open to archive */
-    struct ar_hdr   arh;      	/* Header describing table of contents */
-
-    arch = ArchFindMember (gn->path, RANLIBMAG, &arh, "r+");
-    sprintf(arh.ar_date, "%-12ld", (long) timestamp2time_t(now));
-
-    if (arch != NULL) {
-	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
-	fclose (arch);
-
+    if (gn->path != NULL) {
+    	ArchTouch(gn->path, RANLIBMAG);
 	set_times(gn->path);
     }
 #endif
