@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.14 2002/05/16 10:46:34 jakob Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.1 2002/05/16 10:46:34 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.14 2002/05/16 10:46:34 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.1 2002/05/16 10:46:34 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -53,107 +53,66 @@ static const char rcsid[] = "$OpenBSD: rdate.c,v 1.14 2002/05/16 10:46:34 jakob 
 #include <err.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <util.h>
 #include <time.h>
 
-void rfc868time_client (const char *, struct timeval *, struct timeval *);
-void ntp_client (const char *, struct timeval *, struct timeval *);
+/* seconds from midnight Jan 1900 - 1970 */
+#define DIFFERENCE 2208988800UL
 
-
-extern char    *__progname;
 
 void
-usage()
+rfc868time_client (const char *hostname,
+	     struct timeval *new, struct timeval *adjust)
 {
-	(void) fprintf(stderr, "Usage: %s [-npsa] host\n", __progname);
-	(void) fprintf(stderr, "  -n: use SNTP instead of RFC868 time protocol\n");
-	(void) fprintf(stderr, "  -p: just print, don't set\n");
-	(void) fprintf(stderr, "  -s: just set, don't print\n");
-	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
-}
+	struct hostent *hp;
+	struct servent *sp, ssp;
+	struct protoent *pp, ppp;
+	struct sockaddr_in sin;
 
-int
-main(int argc, char **argv)
-{
-	int             pr = 0, silent = 0, ntp = 0;
-	int		slidetime = 0;
-	char           *hname;
-	extern int      optind;
-	int             c;
+	int s;
+	struct timeval old;
+	time_t tim;
 
-	struct timeval new, adjust;
+	if ((hp = gethostbyname(hostname)) == NULL)
+		errx(1, "%s: %s", hostname, hstrerror(h_errno));
 
-	while ((c = getopt(argc, argv, "psan")) != -1)
-		switch (c) {
-		case 'p':
-			pr++;
-			break;
-
-		case 's':
-			silent++;
-			break;
-
-		case 'a':
-			slidetime++;
-			break;
-
-		case 'n':
-			ntp++;
-			break;
-
-		default:
-			usage();
-			return 1;
-		}
-
-	if (argc - 1 != optind) {
-		usage();
-		return 1;
+	if ((sp = getservbyname("time", "tcp")) == NULL) {
+		sp = &ssp;
+		sp->s_port = 37;
+		sp->s_proto = "tcp";
 	}
-	hname = argv[optind];
-
-	if (ntp)
-		ntp_client(hname, &new, &adjust);
-	else
-		rfc868time_client(hname, &new, &adjust);
-
-	if (!pr) {
-		if (!slidetime) {
-			logwtmp("|", "date", "");
-			if (settimeofday(&new, NULL) == -1)
-				err(1, "Could not set time of day");
-			logwtmp("{", "date", "");
-		} else {
-			if (adjtime(&adjust, NULL) == -1)
-				err(1, "Could not adjust time of day");
-		}
+	if ((pp = getprotobyname(sp->s_proto)) == NULL) {
+		pp = &ppp;
+		pp->p_proto = 6;
 	}
+	if ((s = socket(AF_INET, SOCK_STREAM, pp->p_proto)) == -1)
+		err(1, "Could not create socket");
 
-	if (!silent) {
-		struct tm      *ltm;
-		char		buf[80];
-		time_t		tim = new.tv_sec;
-		double		adjsec;
+	bzero(&sin, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_port = sp->s_port;
 
-		ltm = localtime(&tim);
-		(void) strftime(buf, sizeof buf, "%a %b %e %H:%M:%S %Z %Y\n", ltm);
-		(void) fputs(buf, stdout);
+	(void) memcpy(&(sin.sin_addr.s_addr), hp->h_addr, hp->h_length);
 
+	if (connect(s, (struct sockaddr *) &sin, sizeof(sin)) == -1)
+		err(1, "Could not connect socket");
 
-		adjsec  = adjust.tv_sec + adjust.tv_usec / 1.0e6;
+	if (read(s, &tim, sizeof(time_t)) != sizeof(time_t))
+		err(1, "Could not read data");
 
-		if (slidetime) {
-			if (ntp)
-				(void) fprintf(stdout, 
-				   "%s: adjust local clock by %.6f seconds\n",
-				   __progname, adjsec);
-			else
-				(void) fprintf(stdout, 
-				   "%s: adjust local clock by %ld seconds\n",
-				   __progname, adjust.tv_sec);
-		}
-	}
+	(void) close(s);
+	tim = ntohl(tim) - DIFFERENCE;
 
-	return 0;
+	if (gettimeofday(&old, NULL) == -1)
+		err(1, "Could not get local time of day");
+
+	adjust->tv_sec = tim - old.tv_sec;
+	adjust->tv_usec = 0;
+
+	new->tv_sec = tim;
+	new->tv_usec = 0;
 }

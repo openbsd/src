@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.13 2001/08/03 16:03:02 mpech Exp $
+.\"	$OpenBSD: rdate.8,v 1.14 2002/05/16 10:46:34 jakob Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -37,7 +37,7 @@
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
 .Nm rdate
-.Op Fl psa
+.Op Fl npsa
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -49,6 +49,8 @@ protocol which is usually implemented as a built-in service of
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl n
+Use SNTP (RFC1361) instead RFC868 time protocol
 .It Fl p
 Do not set, just print the remote time
 .It Fl s
