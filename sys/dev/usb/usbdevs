@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.54 2002/07/29 03:10:15 nate Exp $
+$OpenBSD: usbdevs,v 1.55 2002/07/29 03:31:10 nate Exp $
 /* $NetBSD: usbdevs,v 1.261 2002/07/16 09:19:29 abs Exp $ */
 
 /*
@@ -485,6 +485,7 @@ product AVISION 1200U		0x0268	1200U scanner
 /*product BELKIN F5U111		0x????	F5U111 Ethernet */
 product BELKIN2 F5U002		0x0002	F5U002 Parallel adapter
 product BELKIN SCSI		0x0115	SCSI Adaptor
+product BELKIN USB2LAN		0x0121	USB to LAN Converter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 Ethernet
