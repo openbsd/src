@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.9 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: proc.h,v 1.10 2003/12/25 00:26:25 miod Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,6 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: proc.h,v 1.6 92/11/26 02:04:41 torek Exp  (LBL)
- * $Id: proc.h,v 1.9 2003/06/02 23:27:52 millert Exp $
  */
 
 #ifndef __MACHINE_PROC_H__

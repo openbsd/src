@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.11 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: limits.h,v 1.12 2003/12/25 00:26:25 miod Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	8.3 (Berkeley) 1/4/94
- *      $Id: limits.h,v 1.11 2003/06/02 23:27:52 millert Exp $
  */
 
 #ifndef _MACHINE_LIMITS_H_

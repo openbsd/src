@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.7 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: ptrace.h,v 1.8 2003/12/25 00:26:25 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1992, 1993
@@ -40,7 +40,6 @@
  *	@(#)ptrace.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ptrace.h,v 1.6 92/11/26 02:04:43 torek Exp  (LBL)
- * $Id: ptrace.h,v 1.7 2003/06/02 23:27:52 millert Exp $
  */
 
 /*
