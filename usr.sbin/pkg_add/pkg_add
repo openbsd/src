@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.78 2004/10/17 09:32:21 espie Exp $
+# $OpenBSD: pkg_add,v 1.79 2004/10/18 09:38:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -914,7 +914,7 @@ while (my $pkg = shift @todo) {
 }
 };
 
-my $dielater = @_;
+my $dielater = $@;
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 manpages_index($state);
@@ -929,5 +929,5 @@ if (defined $state->{display}) {
 	System("$pager ".$state->{displayname});
 }
 if ($dielater) {
-	die $@;
+	die $dielater;
 }
