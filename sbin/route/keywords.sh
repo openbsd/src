@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.8 2004/06/25 01:26:01 henning Exp $
+# $OpenBSD: keywords.sh,v 1.9 2004/08/03 11:23:11 henning Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -29,6 +29,7 @@ ifp
 inet
 inet6
 ipx
+label
 link
 llinfo
 lock

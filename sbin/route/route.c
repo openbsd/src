@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.71 2004/06/25 01:26:01 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.72 2004/08/03 11:23:11 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.71 2004/06/25 01:26:01 henning Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.72 2004/08/03 11:23:11 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,8 @@ union	sockunion {
 	struct	sockaddr_dl sdl;
 	struct	sockaddr_x25 sx25;
 	struct	sockaddr_rtin rtin;
-} so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_src, so_srcmask;
+	struct	sockaddr_rtlabel rtlabel;
+} so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_src, so_srcmask, so_label;
 
 typedef union sockunion *sup;
 pid_t	pid;
@@ -120,6 +121,7 @@ void	quit(char *);
 void	set_metric(char *, int);
 void	inet_makenetandmask(u_int32_t, struct sockaddr_in *, int, int);
 void	interfaces(void);
+void	getlabel(char *);
 
 __dead void
 usage(char *cp)
@@ -479,6 +481,11 @@ newroute(int argc, char **argv)
 				if (!--argc)
 					usage(1+*argv);
 				(void) getaddr(RTA_SRCMASK, *++argv, 0);
+				break;
+			case K_LABEL:
+				if (!--argc)
+					usage(1+*argv);
+				(void) getlabel(*++argv);
 				break;
 			case K_NETMASK:
 				if (!--argc)
@@ -1068,6 +1075,7 @@ rtmsg(int cmd, int flags)
 	NEXTADDR(RTA_IFA, so_ifa);
 	NEXTADDR(RTA_SRC, so_src);
 	NEXTADDR(RTA_SRCMASK, so_srcmask);
+	NEXTADDR(RTA_LABEL, so_label);
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
 	if (verbose)
 		print_rtmsg(&rtm, l);
@@ -1152,7 +1160,7 @@ char routeflags[] =
 char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
 char addrnames[] =
-"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\012SRCMASK";
+"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\012SRCMASK\13LABEL";
 
 void
 print_rtmsg(struct rt_msghdr *rtm, int msglen)
@@ -1224,6 +1232,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL;
 	struct sockaddr *src = NULL, *srcmask = NULL;
 	struct sockaddr_dl *ifp = NULL;
+	struct sockaddr_rtlabel *sa_rl = NULL;
 	struct sockaddr *sa;
 	char *cp;
 	int i;
@@ -1271,6 +1280,9 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 					   ((struct sockaddr_dl *)sa)->sdl_nlen)
 						ifp = (struct sockaddr_dl *)sa;
 					break;
+				case RTA_LABEL:
+					sa_rl = (struct sockaddr_rtlabel *)sa;
+					break;
 				}
 				ADVANCE(cp, sa);
 			}
@@ -1303,11 +1315,14 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    ifp->sdl_nlen, ifp->sdl_data);
 	(void)printf("      flags: ");
 	bprintf(stdout, rtm->rtm_flags, routeflags);
+	printf("\n");
+	if (sa_rl != NULL)
+		printf("      label: %s\n", sa_rl->sr_label);
 
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
 #define msec(u)	(((u) + 500) / 1000)		/* usec to msec */
 
-	(void) printf("\n%s\n", "\
+	(void) printf("%s\n", "\
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
 	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
 	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
@@ -1480,4 +1495,16 @@ sockaddr(char *addr, struct sockaddr *sa)
 		break;
 	} while (cp < cplim);
 	sa->sa_len = cp - (char *)sa;
+}
+
+void
+getlabel(char *name)
+{
+	so_label.rtlabel.sr_len = sizeof(so_label.rtlabel);
+	so_label.rtlabel.sr_family = AF_UNSPEC;
+	if (strlcpy(so_label.rtlabel.sr_label, name,
+	    sizeof(so_label.rtlabel.sr_label)) >=
+	    sizeof(so_label.rtlabel.sr_label))
+		err(1, "label too long");
+	rtm_addrs |= RTA_LABEL;
 }
