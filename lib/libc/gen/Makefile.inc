@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.32 2002/03/16 05:50:45 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.33 2002/06/08 04:52:55 fgsch Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -21,8 +21,7 @@ SRCS+=	alarm.c assert.c auth_subr.c authenticate.c login_cap.c basename.c \
 	warnx.c vwarn.c vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
-	_verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
+SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
