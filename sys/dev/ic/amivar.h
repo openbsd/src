@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.1 2001/03/09 11:14:22 mickey Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.2 2001/04/30 15:43:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -40,6 +40,7 @@ struct ami_ccb {
 	struct ami_sgent	*ccb_sglist;
 	paddr_t			ccb_sglistpa;
 	struct scsi_xfer	*ccb_xs;
+	struct ami_ccb		*ccb_ccb1;	/* for passthrough */
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 	enum {
 		AMI_CCB_FREE, AMI_CCB_READY, AMI_CCB_QUEUED, AMI_CCB_PREQUEUED
@@ -51,17 +52,22 @@ struct ami_ccb {
 
 typedef TAILQ_HEAD(ami_queue_head, ami_ccb)	ami_queue_head;
 
+struct ami_rawsoftc {
+	struct scsi_link sc_link;
+	struct ami_softc *sc_softc;
+	u_int8_t	sc_channel;
+};
+
 struct ami_softc {
 	struct device	sc_dev;
 	void		*sc_ih;
 	struct scsi_link sc_link;
-	struct scsi_link sc_link_raw;
 
 	u_int	sc_flags;
 
 	/* low-level interface */
 	int (*sc_init) __P((struct ami_softc *sc));
-	int (*sc_exec) __P((struct ami_softc *sc));
+	int (*sc_exec) __P((struct ami_softc *sc, struct ami_iocmd *));
 	int (*sc_done) __P((struct ami_softc *sc, struct ami_iocmd *));
 
 	bus_space_tag_t	iot;
@@ -83,6 +89,7 @@ struct ami_softc {
 
 	int		sc_timeout;
 	struct timeout	sc_requeue_tmo;
+	struct timeout	sc_poll_tmo;
 
 	char	sc_fwver[16];
 	char	sc_biosver[16];
@@ -101,6 +108,7 @@ struct ami_softc {
 		u_int8_t	hd_stat;
 		u_int32_t	hd_size;
 	} sc_hdr[AMI_BIG_MAX_LDRIVES];
+	struct ami_rawsoftc *sc_rawsoftcs;
 };
 
 /* XXX These have to become spinlocks in case of SMP */
@@ -112,10 +120,10 @@ int  ami_attach __P((struct ami_softc *sc));
 int  ami_intr __P((void *));
 
 int ami_quartz_init __P((struct ami_softc *sc));
-int ami_quartz_exec __P((struct ami_softc *sc));
+int ami_quartz_exec __P((struct ami_softc *sc, struct ami_iocmd *));
 int ami_quartz_done __P((struct ami_softc *sc, struct ami_iocmd *));
 
 int ami_schwartz_init __P((struct ami_softc *sc));
-int ami_schwartz_exec __P((struct ami_softc *sc));
+int ami_schwartz_exec __P((struct ami_softc *sc, struct ami_iocmd *));
 int ami_schwartz_done __P((struct ami_softc *sc, struct ami_iocmd *));
 
