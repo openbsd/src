@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.87 2000/04/11 20:10:22 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.88 2000/04/25 20:52:50 jakob Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -82,6 +82,11 @@ mtree
 # ./etc/ppp
 ppp
 # ./etc/ppp
+..
+
+# ./etc/skel
+skel
+# ./etc/skel
 ..
 
 # ./etc/sliphome

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.108 2000/04/07 02:33:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.109 2000/04/25 20:52:47 jakob Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -83,6 +83,17 @@ distribution-etc-root-var: distrib-dirs
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
+	(cd skel; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
+		    ${DESTDIR}/etc/skel/.cshrc; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.login \
+		    ${DESTDIR}/etc/skel/.login; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.mailrc \
+		    ${DESTDIR}/etc/skel/.mailrc; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
+		    ${DESTDIR}/etc/skel/.profile; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.rhosts \
+		    ${DESTDIR}/etc/skel/.rhosts)
 	(cd kerberosIV; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/kerberosIV; \
