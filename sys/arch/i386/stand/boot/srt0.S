@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.6 1997/04/11 19:12:58 weingart Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.7 1997/04/18 01:30:03 mickey Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 	.globl	_Gdtr
 	.globl	_Idtr_prot
 	.globl  _Idtr_reset
-	.globl	_codeseg
+	.globl	idt_init
 
 	.text
 	.globl	start_boot
@@ -71,6 +71,8 @@ start_boot:
 	movl	%ax, %es
 	movl	%ax, %fs
 	movl	%ax, %gs
+	/* init idt */
+	call	idt_init
 	/* load idtr for interrupts */
 	lidt	_Idtr_prot
 
