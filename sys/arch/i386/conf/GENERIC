@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.313 2002/07/12 21:35:48 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.314 2002/07/20 15:54:37 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -265,7 +265,7 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
-fd*	at fdc? drive ?
+fd*	at fdc? drive ? flags 0x00
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
