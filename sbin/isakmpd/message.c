@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.23 2000/01/26 15:20:56 niklas Exp $	*/
-/*	$EOM: message.c,v 1.137 1999/12/17 17:10:23 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.24 2000/01/30 09:47:55 niklas Exp $	*/
+/*	$EOM: message.c,v 1.139 2000/01/30 09:52:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -868,7 +868,9 @@ message_recv (struct message *msg)
 	{
 	  msg->exchange
 	    = exchange_lookup_from_icookie (buf + ISAKMP_HDR_ICOOKIE_OFF);
-	  if (msg->exchange)
+	  if (msg->exchange
+	      && zero_test (msg->exchange->cookies + ISAKMP_HDR_RCOOKIE_OFF,
+			    ISAKMP_HDR_RCOOKIE_LEN))
 	    exchange_upgrade_p1 (msg);
 	  else
 	    {
