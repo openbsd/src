@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_q.c,v 1.1 2003/07/21 18:41:30 jason Exp $	*/
+/*	$OpenBSD: fpu_q.c,v 1.2 2004/02/03 17:18:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -155,37 +155,37 @@ _Q_qtou(long double a)
 	return (v);
 }
 
-long double
+int
 _Q_feq(long double a, long double b)
 {
 	return (_Qp_feq(&a, &b));
 }
 
-long double
+int
 _Q_fne(long double a, long double b)
 {
 	return (_Qp_fne(&a, &b));
 }
 
-long double
+int
 _Q_fge(long double a, long double b)
 {
 	return (_Qp_fge(&a, &b));
 }
 
-long double
+int
 _Q_fgt(long double a, long double b)
 {
 	return (_Qp_fgt(&a, &b));
 }
 
-long double
+int
 _Q_flt(long double a, long double b)
 {
 	return (_Qp_flt(&a, &b));
 }
 
-long double
+int
 _Q_fle(long double a, long double b)
 {
 	return (_Qp_fle(&a, &b));

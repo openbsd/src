@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_q.h,v 1.1 2003/07/21 18:41:30 jason Exp $	*/
+/*	$OpenBSD: fpu_q.h,v 1.2 2004/02/03 17:18:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -40,12 +40,12 @@ long double _Q_mul(long double, long double);
 long double _Q_div(long double, long double);
 long double _Q_sub(long double, long double);
 long double _Q_add(long double, long double);
-long double _Q_feq(long double, long double);
-long double _Q_fne(long double, long double);
-long double _Q_fge(long double, long double);
-long double _Q_fgt(long double, long double);
-long double _Q_flt(long double, long double);
-long double _Q_fle(long double, long double);
+int _Q_feq(long double, long double);
+int _Q_fne(long double, long double);
+int _Q_fge(long double, long double);
+int _Q_fgt(long double, long double);
+int _Q_flt(long double, long double);
+int _Q_fle(long double, long double);
 
 void _Qp_add(long double *, long double *, long double *);
 void _Qp_div(long double *, long double *, long double *);
