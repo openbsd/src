@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.74 2001/09/01 16:03:18 drahn Exp $
+#	$OpenBSD: Makefile,v 1.75 2001/09/03 16:26:02 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -118,6 +118,9 @@ CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
 CROSSENV+= CPPFLAGS=-D__arch64__
 CPPFLAGS=-D__arch64__
 .endif
+
+cross-env:
+	@echo ${CROSSENV} DESTDIR=${CROSSDIR}
 
 cross-helpers:
 	@-mkdir -p ${CROSSDIR}
@@ -297,7 +300,7 @@ cross-gcc:	cross-dirs
 	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-gcc \
 	    ${CROSSDIR}/usr/bin/cc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${CROSSDIR}/usr/obj/gnu/egcs/gcc/cccp \
+	    ${CROSSDIR}/usr/obj/gnu/egcs/gcc/cpp \
 	    ${CROSSDIR}/usr/libexec/cpp
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/libexec/cpp#' \
 	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
