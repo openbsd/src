@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.1 2001/10/05 18:57:28 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.2 2001/10/09 20:34:54 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -117,7 +117,7 @@
 
 #include <dev/pci/if_bgereg.h>
 
-#define BGE_CHECKSUM
+/* #define BGE_CHECKSUM */
 
 int bge_probe		__P((struct device *, void *, void *));
 void bge_attach		__P((struct device *, struct device *, void *));
