@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.2 2003/09/26 07:23:06 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.3 2003/09/26 19:00:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.2 2003/09/26 07:23:06 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.3 2003/09/26 19:00:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -403,7 +403,7 @@ argument_list	: expression
 		| argument_list COMMA LETTER LBRACKET RBRACKET
 			{
 				$$ = node($1, cs("l"), ARRAY_NODE($3),
-					  END_NODE);
+				    END_NODE);
 			}
 		;
 
