@@ -35,6 +35,7 @@
 ./usr/lib/libutil.so.4.1
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
+./usr/lib/perl5/site_perl/sparc-openbsd
 ./usr/lib/perl5/sparc-openbsd
 ./usr/lib/perl5/sparc-openbsd/5.00404
 ./usr/lib/perl5/sparc-openbsd/5.00404/CORE
@@ -279,7 +280,6 @@
 ./usr/lib/perl5/sparc-openbsd/5.00404/overload.pm
 ./usr/lib/perl5/sparc-openbsd/5.00404/pod
 ./usr/lib/perl5/sparc-openbsd/5.00404/pod/perldiag.pod
-./usr/lib/perl5/site_perl/sparc-openbsd
 ./usr/libexec/ld.so
 ./usr/mdec/binstall
 ./usr/mdec/boot

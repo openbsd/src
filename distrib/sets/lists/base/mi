@@ -686,7 +686,6 @@
 ./usr/libexec/getNAME
 ./usr/libexec/getty
 ./usr/libexec/identd
-./usr/libexec/kpasswdd
 ./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
@@ -710,6 +709,8 @@
 ./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
 ./usr/libexec/safe_finger
+./usr/libexec/smtpd
+./usr/libexec/smtpfwdd
 ./usr/libexec/tcpd
 ./usr/libexec/telnetd
 ./usr/libexec/tftpd
@@ -1800,5 +1801,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/libexec/smtpd
-./usr/libexec/smtpfwdd

@@ -714,7 +714,6 @@
 ./usr/share/man/cat8/kdb_init.0
 ./usr/share/man/cat8/kdb_util.0
 ./usr/share/man/cat8/kerberos.0
-./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/kprop.0
 ./usr/share/man/cat8/kpropd.0
 ./usr/share/man/cat8/ksrvutil.0
@@ -842,6 +841,8 @@
 ./usr/share/man/cat8/sliplogin.0
 ./usr/share/man/cat8/slstats.0
 ./usr/share/man/cat8/smrsh.0
+./usr/share/man/cat8/smtpd.0
+./usr/share/man/cat8/smtpfwdd.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/stdethers.0
@@ -909,5 +910,3 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat8/smtpd.0
-./usr/share/man/cat8/smtpfwdd.0

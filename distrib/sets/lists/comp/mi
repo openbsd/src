@@ -560,6 +560,7 @@
 ./usr/include/kerberosIV/kadm_err.h
 ./usr/include/kerberosIV/kafs.h
 ./usr/include/kerberosIV/kparse.h
+./usr/include/kerberosIV/krb-protos.h
 ./usr/include/kerberosIV/krb.h
 ./usr/include/kerberosIV/krb_db.h
 ./usr/include/kerberosIV/krb_err.h
@@ -2287,4 +2288,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/kerberosIV/krb-protos.h
