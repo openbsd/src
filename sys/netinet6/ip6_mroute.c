@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.12 2001/02/16 14:58:12 itojun Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.40 2001/02/16 08:37:03 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.13 2001/03/07 22:50:44 itojun Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.41 2001/03/07 22:47:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -1443,8 +1443,10 @@ phyint_send(ip6, mifp, m)
 	if (mb_copy &&
 	    (M_HASCL(mb_copy) || mb_copy->m_len < sizeof(struct ip6_hdr)))
 		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
-	if (mb_copy == NULL)
+	if (mb_copy == NULL) {
+		splx(s);
 		return;
+	}
 	/* set MCAST flag to the outgoing packet */
 	mb_copy->m_flags |= M_MCAST;
 
