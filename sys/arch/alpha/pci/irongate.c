@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate.c,v 1.5 2001/12/14 00:44:59 nate Exp $	*/
+/*	$OpenBSD: irongate.c,v 1.6 2004/07/18 02:18:26 deraadt Exp $	*/
 /* $NetBSD: irongate.c,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -157,7 +157,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	icp = sc->sc_icp = &irongate_configuration;
 	irongate_init(icp, 1);
 
-	printf(": AMD 751 Core Logic + AGP Chipset, rev. %d\n", icp->ic_rev);
+	printf(": rev. %d\n", icp->ic_rev);
 
 	irongate_dma_init(icp);
 

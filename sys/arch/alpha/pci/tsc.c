@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.8 2003/09/02 17:25:21 miod Exp $ */
+/* $OpenBSD: tsc.c,v 1.9 2004/07/18 02:18:26 deraadt Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -121,7 +121,7 @@ void tscattach(parent, self, aux)
 	csc = LDQP(TS_C_CSC);
 
 	nbus = 1 + (CSC_BC(csc) >= 2);
-	printf(": 21272 Core Logic Chipset, Cchip rev %d\n"
+	printf(": 21272 Chipset, Cchip rev %d\n"
 		"%s%d: %c Dchips, %d memory bus%s of %d bytes\n",
 		(int)MISC_REV(LDQP(TS_C_MISC)),
 		ma->ma_name, ma->ma_slot, "2448"[CSC_BC(csc)],
