@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2003/07/10 19:16:22 dhartmei Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2003/07/20 19:19:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -400,8 +400,8 @@ grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch
 		}
 	} else if (fg->reversedSearch) {
 		/* Quick Search algorithm. */
-		j = dataLen;
-		do {
+		for (j = dataLen; j >= fg->patternLen;
+		    j -= fg->qsBc[data[j - fg->patternLen - 1]]) {
 			if (grep_cmp(fg->pattern, data + j - fg->patternLen,
 			    fg->patternLen) == -1) {
 				rtrnVal = 0;
@@ -409,12 +409,7 @@ grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch
 				pmatch->rm_eo = j;
 				break;
 			}
-
-			/* Shift if within bounds, otherwise, we are done. */
-			if (j - fg->patternLen - 1 < 0)
-				break;
-			j -= fg->qsBc[data[j - fg->patternLen - 1]];
-		} while (j >= 0);
+		}
 	} else {
 		/* Quick Search algorithm. */
 		j = 0;
