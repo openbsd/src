@@ -1,5 +1,5 @@
-/*	$OpenBSD: opti82c558.c,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
-/*	$NetBSD: opti82c558.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
+/*	$OpenBSD: opti82c558.c,v 1.4 2000/08/02 02:42:50 mickey Exp $	*/
+/*	$NetBSD: opti82c558.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: via82c586.c,v 1.3 2000/03/28 03:38:00 mickey Exp $	*/
-/*	$NetBSD: via82c586.c,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$OpenBSD: via82c586.c,v 1.4 2000/08/02 02:42:50 mickey Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
