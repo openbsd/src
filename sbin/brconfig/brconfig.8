@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.37 2002/07/12 17:49:02 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.38 2002/09/06 21:36:52 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -197,8 +197,6 @@ If appropriate security associations (SAs) exist, they will be used to
 encrypt or decrypt the packets.
 Otherwise, any key management daemons such as
 .Xr isakmpd 8
-or
-.Xr photurisd 8
 that are running on the bridge will be invoked to establish the
 necessary SAs.
 These daemons have to be configured as if they were running on the
@@ -414,8 +412,7 @@ commands are used to add and delete span ports to and from a bridge.
 .Xr bridgename.if 5 ,
 .Xr ifconfig 8 ,
 .Xr ipsecadm 8 ,
-.Xr isakmpd 8 ,
-.Xr photurisd 8
+.Xr isakmpd 8
 .Sh AUTHORS
 The
 .Xr brconfig 8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.h,v 1.6 2002/08/23 18:17:17 ho Exp $	*/
+/*	$OpenBSD: crypto.h,v 1.7 2002/09/06 21:36:52 deraadt Exp $	*/
 /*	$EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ enum cryptoerr {
   EOKAY,			/* No error */
   ENOCRYPTO,			/* A none crypto related error, see errno */
   EWEAKKEY,			/* A weak key was found in key setup */
-  EKEYLEN,			/* The key length was invalid for the cipher */
+  EKEYLEN			/* The key length was invalid for the cipher */
 };
 
 struct crypto_xf {
