@@ -1,9 +1,23 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:57 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/05/19 21:48:32 niklas Exp $
+
+IO_DIR=		$(.CURDIR)/../../libio
+
+.if defined(OBJMACHINE)
+OBJDIR=	obj.${MACHINE}
+.else
+OBJDIR=	obj
+.endif
+
+IO_OBJDIR!=	if [ -d $(IO_DIR)/$(OBJDIR) ]; then \
+			echo $(IO_DIR)/$(OBJDIR); \
+		else \
+			echo $(IO_DIR); \
+		fi
 
 LIB=	stl
 CXXFLAGS+=	-fno-implicit-templates -nostdinc++
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/.. -I$(.CURDIR)/../../libio \
-		-I$(.OBJDIR)/../../libio
+		-I$(IO_OBJDIR)
 
 CLEANFILES+=	stl.list
 

@@ -1,4 +1,26 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/26 00:27:38 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/05/19 21:48:28 niklas Exp $
+
+.if defined(OBJMACHINE)
+OBJDIR=	obj.${MACHINE}
+.else
+OBJDIR=	obj
+.endif
+
+RX_DIR=		$(.CURDIR)/../librx
+
+RX_OBJDIR!=	if [ -d $(RX_DIR)/$(OBJDIR) ]; then \
+			echo $(RX_DIR)/$(OBJDIR); \
+		else \
+			echo $(RX_DIR); \
+		fi
+
+LIBIO_DIR=	$(.CURDIR)/../libio
+
+LIBIO_OBJDIR!=	if [ -d $(LIBIO_DIR)/$(OBJDIR) ]; then \
+			echo $(LIBIO_DIR)/$(OBJDIR); \
+		else \
+			echo $(LIBIO_DIR); \
+		fi
 
 VERSION = 2.7.1
 LIBG++_DIST_VERSION = 2.7.1
@@ -10,7 +32,7 @@ SUBDIR+=	gperf genclass
 LIB=		g++
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I. -I$(.CURDIR)/src -I$(.CURDIR)/../libio \
-		-I$(.CURDIR)/../libstdc++ -I../libio
+		-I$(.CURDIR)/../libstdc++ -I$(LIBIO_OBJDIR)
 LDADD+=		-lcurses
 
 CXXSRCS=	AllocRing.cc Obstack.cc builtin.cc $(REGEX_OBJ) Regex.cc \
@@ -28,29 +50,7 @@ CSRCS=		bitand.c bitany.c bitblt.c bitclear.c bitcopy.c bitcount.c \
 COBJS=		$(CSRCS:N*.h:R:S/$/.o/g)
 GXXOBJS=	$(CXXOBJS) $(COBJS)
 
-.if defined(OBJMACHINE)
-OBJDIR=	obj.${MACHINE}
-.else
-OBJDIR=	obj
-.endif
-
-RX_DIR=		$(.CURDIR)/../librx
-
-RX_OBJDIR!=	if [ -d $(RX_DIR)/$(OBJDIR) ]; then \
-			echo $(RX_DIR)/$(OBJDIR); \
-		else \
-			echo $(RX_DIR); \
-		fi
-
 RXOBJ=		$(RX_OBJDIR)/rx.o
-
-LIBIO_DIR=	$(.CURDIR)/../libio
-
-LIBIO_OBJDIR!=	if [ -d $(LIBIO_DIR)/$(OBJDIR) ]; then \
-			echo $(LIBIO_DIR)/$(OBJDIR); \
-		else \
-			echo $(LIBIO_DIR); \
-		fi
 
 G_CFG_H=	$(LIBIO_OBJDIR)/_G_config.h
 
