@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2004/07/26 17:29:49 jfb Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/03/09 15:42:30 xsa Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= cvs cvsd
+SUBDIR= cvs cvsd rcs
 
 .include <bsd.subdir.mk>
