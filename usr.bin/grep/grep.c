@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.32 2005/04/03 19:12:40 otto Exp $	*/
+/*	$OpenBSD: grep.c,v 1.33 2005/04/03 19:18:33 jaredy Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/limits.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -97,6 +98,12 @@ enum {
 int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
 int	 lead;		/* number of lines in leading context queue */
+
+struct patfile {
+	const char		*pf_file;
+	SLIST_ENTRY(patfile)	 pf_next;
+};
+SLIST_HEAD(, patfile)		 patfilelh;
 
 extern char *__progname;
 
@@ -199,7 +206,7 @@ add_pattern(char *pat, size_t len)
 }
 
 static void
-read_patterns(char *fn)
+read_patterns(const char *fn)
 {
 	FILE *f;
 	char *line;
@@ -230,9 +237,11 @@ int
 main(int argc, char *argv[])
 {
 	int c, lastc, prevoptind, newarg, i;
+	struct patfile *patfile, *pf_next;
 	long l;
 	char *ep;
 
+	SLIST_INIT(&patfilelh);
 	switch (__progname[0]) {
 	case 'e':
 		Eflag++;
@@ -355,7 +364,9 @@ main(int argc, char *argv[])
 			add_pattern(optarg, strlen(optarg));
 			break;
 		case 'f':
-			read_patterns(optarg);
+			patfile = grep_malloc(sizeof(*patfile));
+			patfile->pf_file = optarg;
+			SLIST_INSERT_HEAD(&patfilelh, patfile, pf_next);
 			break;
 		case 'h':
 			oflag = 0;
@@ -419,6 +430,13 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	for (patfile = SLIST_FIRST(&patfilelh); patfile != NULL;
+	    patfile = pf_next) {
+		pf_next = SLIST_NEXT(patfile, pf_next);
+		read_patterns(patfile->pf_file);
+		free(patfile);
+	}
 
 	if (argc == 0 && patterns == 0)
 		usage();
