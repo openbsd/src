@@ -249,7 +249,6 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/ioctl.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/ioctl_compat.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/ipc.ph
-./usr/lib/perl5/alpha-openbsd/5.003/sys/isdnio.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/kcore.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/kernel.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/ktrace.ph
