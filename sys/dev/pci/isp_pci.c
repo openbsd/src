@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.16 2001/03/02 08:58:09 deraadt Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.17 2001/03/09 17:39:12 nate Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -231,7 +231,11 @@ static struct ispmdvec mdvec_2200 = {
 #define	PCI_DFLT_LNSZ	0x10
 
 #ifndef SCSI_ISP_PREFER_MEM_MAP
+#ifdef __alpha__
+#define SCSI_ISP_PREFER_MEM_MAP 1
+#else
 #define SCSI_ISP_PREFER_MEM_MAP 0
+#endif
 #endif
 
 #ifndef	BUS_DMA_COHERENT
