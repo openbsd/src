@@ -1,7 +1,7 @@
-/*	$OpenBSD: auich.c,v 1.6 2001/01/11 21:40:05 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.7 2001/03/09 09:26:45 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2000,2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 
 /* #define	AUICH_DEBUG */
 /*
- * AC'97 audio found on Intel 810/820/440MX chipsets.
+ * AC'97 audio found on Intel 810/815/820/440MX chipsets.
  *	http://developer.intel.com/design/chipsets/datashts/290655.htm
  *	http://developer.intel.com/design/chipsets/manuals/298028.htm
  */
@@ -910,7 +910,7 @@ auich_intr(v)
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 
 		if (sts & AUICH_FIFOE) {
-			printf("%s: fifo overrun # %u\n",
+			printf("%s: in fifo overrun # %u\n",
 			    sc->sc_dev.dv_xname, ++sc->pcmi_fifoe);
 		}
 
@@ -959,7 +959,7 @@ auich_intr(v)
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 		if (sts & AUICH_FIFOE)
-			printf("%s: fifo overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: mic fifo overrun\n", sc->sc_dev.dv_xname);
 
 		/* TODO mic input dma */
 
