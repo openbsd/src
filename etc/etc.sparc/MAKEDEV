@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.25 2005/03/01 18:22:32 miod Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.26 2005/03/29 16:26:40 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -64,6 +64,7 @@
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Special purpose devices:
+#	apm	Power management device
 #	audio*	Audio devices
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes for fdescfs
@@ -300,6 +301,11 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+apm*)
+	M apm	c 30 0 644
+	M apmctl	c 30 8 644
+	;;
+
 wsmouse*)
 	M wsmouse$U c 80 $U 600
 	;;
@@ -499,8 +505,8 @@ all)
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
 	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa cuab cuac
 	R cuad ttya ttyb ttyc ttyd ptm local wscons audio0 uk0 random
-	R lkm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std
-	R st0 st1 fd
+	R lkm apm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3
+	R std st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*|raid*|ccd*)
