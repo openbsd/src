@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.18 2004/07/10 13:08:41 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.19 2004/07/12 15:30:28 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -752,9 +752,9 @@ ehci_idone(struct ehci_xfer *ex)
 
 	/* If there are left over TDs we need to update the toggle. */
 	if (sqtd != NULL) {
-		if (!(xfer->rqflags & URQ_REQUEST))
-			printf("ehci_idone: need toggle update\n");
-		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(status);
+		DPRINTF(("ehci_idone: need toggle update status=%08x "
+		    "nstatus=%08x\n", status, nstatus));
+		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
 
 	status &= EHCI_QTD_STATERRS;
@@ -769,7 +769,7 @@ ehci_idone(struct ehci_xfer *ex)
 				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
 				 "\3MISSED", sbuf, sizeof(sbuf));
 
-		DPRINTFN((status == EHCI_QTD_HALTED)*/*10*/2,
+		DPRINTFN((status & EHCI_QTD_HALTED) ? 2 : 0,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
 			  xfer->pipe->device->address,
