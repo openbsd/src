@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.9 2003/06/13 19:21:21 henric Exp $ */
+/* $OpenBSD: if_em.c,v 1.10 2003/06/29 21:42:53 avsm Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1841,8 +1841,8 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmammem_alloc failed; "
-			"size %ju, error %d\n", sc->sc_dv.dv_xname,
-			size, r);
+			"size %lu, error %d\n", sc->sc_dv.dv_xname,
+			(unsigned long)size, r);
 		goto fail_1;
 	}
 
@@ -1850,8 +1850,8 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmammem_map failed; "
-			"size %ju, error %d\n", sc->sc_dv.dv_xname,
-			size, r);
+			"size %lu, error %d\n", sc->sc_dv.dv_xname,
+			(unsigned long)size, r);
 		goto fail_2;
 	}
 
