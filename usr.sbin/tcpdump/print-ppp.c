@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.9 1999/09/16 17:36:33 brad Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.10 2000/02/18 14:39:35 jason Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.9 1999/09/16 17:36:33 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.10 2000/02/18 14:39:35 jason Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -58,6 +58,7 @@ struct rtentry;
 #include <net/ppp_defs.h>
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 
 struct protonames {
 	u_short protocol;
@@ -211,6 +212,29 @@ static int print_lcp_config_options(u_char *p);
 static int handle_chap(const u_char *p, int length);
 static int handle_ipcp(const u_char *p, int length);
 static int handle_pap(const u_char *p, int length);
+
+struct pppoe_header {
+	u_int8_t vertype;	/* PPPoE version/type */
+	u_int8_t code;		/* PPPoE code (packet type) */
+	u_int16_t sessionid;	/* PPPoE session id */
+	u_int16_t len;		/* PPPoE payload length */
+};
+#define	PPPOE_CODE_SESSION	0x00	/* Session */
+#define	PPPOE_CODE_PADO		0x07	/* Active Discovery Offer */
+#define	PPPOE_CODE_PADI		0x09	/* Active Discovery Initiation */
+#define	PPPOE_CODE_PADR		0x19	/* Active Discovery Request */
+#define	PPPOE_CODE_PADS		0x65	/* Active Discovery Session-Confirm */
+#define	PPPOE_CODE_PADT		0xa7	/* Active Discovery Terminate */
+#define	PPPOE_TAG_END_OF_LIST		0x0000	/* End Of List */
+#define	PPPOE_TAG_SERVICE_NAME		0x0101	/* Service Name */
+#define	PPPOE_TAG_AC_NAME		0x0102	/* Access Concentrator Name */
+#define	PPPOE_TAG_HOST_UNIQ		0x0103	/* Host Uniq */
+#define	PPPOE_TAG_AC_COOKIE		0x0104	/* Access Concentratr Cookie */
+#define	PPPOE_TAG_VENDOR_SPEC		0x0105	/* Vendor Specific */
+#define	PPPOE_TAG_RELAY_SESSION		0x0110	/* Relay Session Id */
+#define	PPPOE_TAG_SERVICE_NAME_ERROR	0x0201	/* Service Name Error */
+#define	PPPOE_TAG_AC_SYSTEM_ERROR	0x0202	/* Acc. Concentrator Error */
+#define	PPPOE_TAG_GENERIC_ERROR		0x0203	/* Generic Error */
 
 void
 ppp_hdlc_print(p, length)
@@ -539,6 +563,169 @@ ppp_if_print(user, h, p)
 			      caplen - PPP_HDRLEN);
 out:
 	putchar('\n');
+}
+
+int
+pppoe_if_print(ethertype, p, length, caplen)
+	u_short ethertype;
+	const u_char *p;
+	u_int length, caplen;
+{
+	u_int16_t pppoe_sid, pppoe_len;
+
+	if (ethertype == ETHERTYPE_PPPOEDISC)
+		printf("PPPoE-Discovery");
+	else
+		printf("PPPoE-Session");
+
+	if (length < sizeof(sizeof(struct pppoe_header))) {
+		printf("[|pppoe]");
+		return (1);
+	}
+
+	printf("\n\tcode ");
+	switch (p[1]) {
+	case PPPOE_CODE_PADI:
+		printf("Initiation");
+		break;
+	case PPPOE_CODE_PADO:
+		printf("Offer");
+		break;
+	case PPPOE_CODE_PADR:
+		printf("Request");
+		break;
+	case PPPOE_CODE_PADS:
+		printf("Confirm");
+		break;
+	case PPPOE_CODE_PADT:
+		printf("Terminate");
+		break;
+	case PPPOE_CODE_SESSION:
+		printf("Session");
+		break;
+	default:
+		printf("Unknown(0x%02x)", p[1]);
+		break;
+	}
+
+	pppoe_sid = EXTRACT_16BITS(p + 2);
+	pppoe_len = EXTRACT_16BITS(p + 4);
+	printf(", version %d, type %d, id 0x%04x, length %d",
+	    (p[0] & 0xf), (p[0] & 0xf0) >> 4, pppoe_sid, pppoe_len);
+
+	length -= sizeof(struct pppoe_header);
+	caplen -= sizeof(struct pppoe_header);
+	p += sizeof(struct pppoe_header);
+
+	if (pppoe_len > caplen)
+		pppoe_len = caplen;
+
+	if (ethertype == ETHERTYPE_PPPOEDISC) {
+		while (pppoe_len > 0) {
+			u_int16_t t_type, t_len;
+
+			if (pppoe_len < 4) {
+				printf("\n\t[|pppoe]");
+				break;
+			}
+			t_type = EXTRACT_16BITS(p);
+			t_len = EXTRACT_16BITS(p + 2);
+
+			pppoe_len -= 4;
+			p += 4;
+
+			if (pppoe_len < t_len) {
+				printf("\n\t[|pppoe]");
+				break;
+			}
+
+			printf("\n\ttag ");
+			switch (t_type) {
+			case PPPOE_TAG_END_OF_LIST:
+				printf("End-Of-List");
+				break;
+			case PPPOE_TAG_SERVICE_NAME:
+				printf("Service-Name");
+				break;
+			case PPPOE_TAG_AC_NAME:
+				printf("AC-Name");
+				break;
+			case PPPOE_TAG_HOST_UNIQ:
+				printf("Host-Uniq");
+				break;
+			case PPPOE_TAG_AC_COOKIE:
+				printf("AC-Cookie");
+				break;
+			case PPPOE_TAG_VENDOR_SPEC:
+				printf("Vendor-Specific");
+				break;
+			case PPPOE_TAG_RELAY_SESSION:
+				printf("Relay-Session");
+				break;
+			case PPPOE_TAG_SERVICE_NAME_ERROR:
+				printf("Service-Name-Error");
+				break;
+			case PPPOE_TAG_AC_SYSTEM_ERROR:
+				printf("AC-System-Error");
+				break;
+			case PPPOE_TAG_GENERIC_ERROR:
+				printf("Generic-Error");
+				break;
+			default:
+				printf("Unknown(0x%04x)", t_type);
+			}
+			printf(", length %u", t_len);
+
+			if (t_len) {
+				printf(", value %02x", p[0]);
+				for (t_type = 1; t_type < t_len; t_type++)
+					printf(":%02x", p[t_type]);
+			}
+			pppoe_len -= t_len;
+			p += t_len;
+		}
+	}
+	else if (ethertype == ETHERTYPE_PPPOE) {
+		u_int16_t proto;
+		int i;
+
+		if (pppoe_len < 2) {
+			printf("[|pppoe]");
+			return (1);
+		}
+		proto = EXTRACT_16BITS(p);
+
+		for (i = sizeof(protonames)/sizeof(protonames[0]) - 1; i >= 0;
+		     i--) {
+			if (proto == protonames[i].protocol) {
+				printf("\n\t%s: ", protonames[i].name);
+				switch (proto) {
+				case PPP_LCP:
+					handle_lcp(p - 2, pppoe_len + 2);
+					break;
+				case PPP_CHAP:
+					handle_chap(p - 2, pppoe_len + 2);
+					break;
+				case PPP_PAP:
+					handle_pap(p - 2, pppoe_len + 2);
+					break;
+				case PPP_IPCP:
+					handle_ipcp(p - 2, pppoe_len + 2);
+					break;
+				case PPP_IP:
+					ip_print(p + 2, pppoe_len - 2);
+					break;
+				case PPP_IPX:
+					ipx_print(p + 2, pppoe_len - 2);
+				}
+				break;
+			}
+		}
+		if (i < 0)
+			printf("\n\t%04x: ", proto);
+	}
+
+	return (1);
 }
 
 #else
