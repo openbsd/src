@@ -1,4 +1,4 @@
-/*	$OpenBSD: nightfile.c,v 1.8 2000/09/21 00:23:11 pjanzen Exp $	*/
+/*	$OpenBSD: nightfile.c,v 1.9 2000/09/24 21:56:28 pjanzen Exp $	*/
 /*	$NetBSD: nightfile.c,v 1.3 1995/03/21 15:07:41 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightfile.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: nightfile.c,v 1.8 2000/09/21 00:23:11 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: nightfile.c,v 1.9 2000/09/24 21:56:28 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ bed of coals and ti leaves are spread with poi and tropical fruits.  Several\n\
 natives have come over to you and want you to join in the festivities.\n\
 There is a light burning in a bungalow +.***\n", {0} },
 	/* 93 */
-	{ "You are at the sea plane dock.",
+	{ "You are at the sea=plane dock.",
 		{ 121, 122, 123, 124, 82, 0, 0, 0 },
 "The clearing is deserted.  The grass is wet with the evening dew +.*\n\
 There is something set up +.*\n", {0} },

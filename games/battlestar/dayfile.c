@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayfile.c,v 1.8 2000/09/21 00:23:10 pjanzen Exp $	*/
+/*	$OpenBSD: dayfile.c,v 1.9 2000/09/24 21:56:28 pjanzen Exp $	*/
 /*	$NetBSD: dayfile.c,v 1.3 1995/03/21 15:07:18 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dayfile.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: dayfile.c,v 1.8 2000/09/21 00:23:10 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dayfile.c,v 1.9 2000/09/24 21:56:28 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -523,7 +523,7 @@ deafening.* The water is +. The road continues - and -.\n", {0} },
 comely natives in a tropical paradise all make this a fantasy come true.\n\
 There is an open bungalow +.*  The road continues - and -.\n", {0} },
 	/* 93 */
-	{ "You are at the sea plane dock.",
+	{ "You are at the sea=plane dock.",
 		{ 121, 122, 123, 124, 82, 0, 0, 0 },
 "Native girls with skin of gold, clad only in fragrant leis and lavalavas,\n\
 line the dockside to greet you. A couple of ukulele=plucking islanders and a\n\
