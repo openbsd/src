@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include <isc/entropy.h>
-#include <isc/lfsr.h>
+#include <isc/lcg.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/print.h>
