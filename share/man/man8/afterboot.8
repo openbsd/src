@@ -14,18 +14,25 @@ a warm fuzzy feeling that something obvious has not been missed.
 .Pp
 Complete instructions for correcting and fixing items is not provided.
 There are man pages and other methodologies available for doing that.
+For example, to view the manual page on the
+.Xr ls 1
+command, type:
+.Ic man 1 ls
+.\" 
+.\" XXX This should be an enumerated list
+.\"
 \!\"--------------------------------------------------------------------------
 .Ss Login
-Login on console as
-.Ql Xr root .
+Login on the console as
+.Ql Ic root .
 There is no password initially.
-You will not be able to login over the network, only the console.
+You will not be able to login over the network \(em only on the console.
 \!\"--------------------------------------------------------------------------
 .Ss System Date
 Check the system date with the
-.Nm date
+.Xr date 1
 command.
-If needed, set the system date, and/or change the symbolic link of
+If needed, change the date, and/or change the symbolic link of
 .Pa /etc/localtime
 to the correct time zone in the
 .Pa /usr/share/zoneinfo
@@ -34,25 +41,26 @@ directory.
 .Ss Root password
 Set the password for the root login.
 Choose a password that has numbers, digits, and special characters (not space)
-as well as the upper and lower case alphabet.  Do not choose any word in any
+as well as from the upper and lower case alphabet.
+Do not choose any word in any
 language.  It is common for an intruder to use dictionary attacks.
-Use the
-.Nm /usr/bin/passwd
-command to change it.  It is a good idea to always specify the full path
+Type the command
+.Ic /usr/bin/passwd
+to change it.  It is a good idea to always specify the full path
 name for both the
-.Nm passwd
+.Xr passwd 1
 and the
-.Nm su
-commands.  This inhibits the possibility of files placed in your execution
+.Xr su 1
+commands as this inhibits the possibility of files placed in your execution
 .Ev PATH
 for most shells.
 \!\"--------------------------------------------------------------------------
 .Ss Check hostname
-Type the
-.Nm hostname
+Use the
+.Xr hostname 1
 command to verify that the name of your machine is correct.
 See the man page for
-.Nm hostname
+.Xr hostname
 if you need to change it.
 You will also need to edit the
 .Pa /etc/myname
@@ -60,12 +68,17 @@ file to have it stick around for the next reboot.
 \!\"--------------------------------------------------------------------------
 .Ss Verify network interfaces configured correctly
 The first thing to do is an
-.Nm ifconfig -a
+.Ic ifconfig -a
 to see if the network interfaces are properly configured.
 Correct by editing
-.Pa /etc/hostname.{INTERFACE}
-and via
-.Nm ifconfig
+.Pa /etc/hostname. Ns Ar interface
+(where
+.Ar interface
+is the interface name, e.g.
+.Ic le0 )
+and then using
+.Xr ifconfig 8
+to manually configure it
 if you do not wish to reboot.
 The loopback interface will look something like:
 .Bd -literal -offset indent
@@ -73,26 +86,32 @@ lo0: flags=8009<UP,LOOPBACK,MULTICAST>
 	inet 127.0.0.1 netmask 0xff000000
 .Ed
 .Pp
-An ethernet interface something like:
+an ethernet interface something like:
 .Bd -literal -offset indent
 le0: flags=9863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
 	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
 .Ed
+.Pp
+and, a PPP interface something like:
+.Bd -literal -offset indent
+ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
+        inet 203.3.131.108 --> 198.181.0.253 netmask 0xffff0000
+.Ed
 \!\"--------------------------------------------------------------------------
-\!\" Will someone else fill in the ppp and slip interfaces.
+\!\" Will someone else fill in the slip interface.
 \!\"--------------------------------------------------------------------------
 .Pp
 You may wish to turn off multicast routing in
 .Pa /etc/netstart
-by commenting out the line (placing a # sign at the start of a line):
+by commenting it out, i.e. by placing a # sign at the start of the line:
 .Bd -literal -offset indent
 # route add -net 224.0.0.0 -interface $hostname
 .Ed
 .Pp
 \!\"--------------------------------------------------------------------------
-.Ss Check for routing correct
+.Ss Check for correct routing
 Do a
-.Nm netstat -r -n
+.Ic netstat -r -n
 command.  The output will look something like:
 .Bd -literal -offset indent
 Routing tables
@@ -111,26 +130,28 @@ default        192.168.4.254     UGS      0 11098028    -  le0
 Fix by editing the file
 .Pa /etc/mygate
 and using
-.Nm route delete
+.Ic route delete
 and
-.Nm route add
+.Ic route add
 if you do not wish to reboot.
+See
+.Xr route 8 .
 .Pp
 If you wish to route packets between interfaces you do that by putting
 .Bd -literal -offset indent
-# sysctl -w net.inet.ip.forwarding=1
+net.inet.ip.forwarding=1
 .Ed
 .Pp
-early on in the boot process (ie. start of
-.Pa /etc/netstart ,
-or by compiling a new kernel with the option GATEWAY.
+in
+.Pa /etc/sysctl.conf ,
+or by compiling a new kernel with the GATEWAY option.)
 Packets are not forwarded by default, due to RFC requirements.
 .Pp
 You can add new "virtual interfaces" by adding the required entries to
 .Pa /etc/ifaliases .
 \!\"--------------------------------------------------------------------------
-.Ss Bind Name Server
-If you are using the Bind Name Server (DNS), check the
+.Ss BIND Name Server (DNS)
+If you are using the BIND Name Server, check the
 .Pa /etc/resolv.conf
 file.  It may look something like:
 .Bd -literal -offset indent
@@ -142,189 +163,169 @@ lookup file bind
 .Ed
 .Pp
 If using a caching name server add the line "nameserver 127.0.0.1" first.
-(Of course, you need to change "named_flags" in
+For a local caching name server to run
+you will need to set "named_flags" in
 .Pa /etc/rc.conf
-and add the
+and create the
 .Pa named.boot
-file in the appropriate place.  The same holds true if this is the
-name server for your domain.  In addition, make sure that
-.Nm named
-is running.
-[Otherwise there are long waits while timeouts happen.])
+file in the appropriate place for
+.Xr named 8 .
+The same holds true if the machine is going to be a
+name server for your domain.  In both these cases, make sure that
+.Xr named 8
+is running
+(otherwise there are long waits for resolver timeouts).
 \!\"--------------------------------------------------------------------------
-.Ss YP verification
-Check the domainname with the
-.Nm domainname
+.Ss YP verification (NIS)
+Check the YP domain name with the
+.Xr domainname 1
 command, and edit
 .Pa /etc/defaultdomain
-to correct.  You may change the running system with the
-.Nm domainname
+to correct it.  You may change the running system's YP domain name with the
+.Xr domainname
 command.
 To start YP client services, simply run
-.Nm ypbind .
-Then perform the remaining
+.Ic ypbind ,
+then perform the remaining
 YP activation as described in
 .Xr passwd 5 ,
 and
 .Xr group 5 .
 There are many more YP man pages on the system.  You can find more information
-by starting at
+by starting with
 .Xr yp 8 .
-.Ss Check disks are mounted correctly.
+\!\"--------------------------------------------------------------------------
+.Ss Check disks are mounted correctly
 Check that the disks are mounted correctly by
-checking file
+comparing the file
 .Pa /etc/fstab
 against the output of the
-.Nm mount
-and the
-.Nm df
+.Xr mount 8
+and
+.Xr df 1
 commands.
 Example:
 .Bd -literal -offset indent
-# cat /etc/fstab
+.Li # Ic cat /etc/fstab
 /dev/sd0a / ffs rw 1 1
 /dev/sd0b none swap sw 0 0
 /dev/sd0d /usr ffs rw,nodev 1 2
 /dev/sd0e /var ffs rw,nodev,noexec 1 2
 /dev/sd0g /tmp ffs rw,nodev,noexec,nosuid 1 2
 /dev/sd0h /home ffs rw,nodev,nosuid 1 2
-# mount
+.Li # Ic mount
 /dev/sd0a on / type ffs (local)
 /dev/sd0d on /usr type ffs (local, nodev)
 /dev/sd0e on /var type ffs (local, nodev, noexec)
 /dev/sd0g on /tmp type ffs (local, nodev, noexec, nosuid)
 /dev/sd0h on /home type ffs (local, nodev, nosuid)
-# df
+.Li # Ic df
 Filesystem  1024-blocks     Used    Avail Capacity  Mounted on
 /dev/sd0a         22311    14589     6606    69%    /
 /dev/sd0d        203399   150221    43008    78%    /usr
 /dev/sd0e         10447      682     9242     7%    /var
 /dev/sd0g         18823        2    17879     0%    /tmp
 /dev/sd0h          7519     5255     1888    74%    /home
+.Li # Ic pstat -s
+Device      512-blocks     Used    Avail Capacity  Type
+/dev/sd0b       131072    84656    46416    65%    Interleaved
 .Ed
 .Pp
 Edit
 .Pa /etc/fstab
 and use the
-.Nm umount
+.Xr umount 8
 and
-.Nm mount
-commands as appropriate.  (See man pages.)
+.Xr mount 8
+commands as appropriate.
 .Pp
-You may wish to do NFS partitions later, but you may do them now.
+You may wish to do NFS partitions now too, or you can do them later.
 \!\"--------------------------------------------------------------------------
 .Ss Concatenated disks (ccd)
-If you are using concatenated disks, edit
+If you are using
+.Xr ccd 4
+concatenated disks, edit
 .Pa /etc/ccd.conf
 and use the
-.Nm ccdconfig -U
+.Ic ccdconfig -U
 command to unload, and the
-.Nm ccdconfig -C
+.Ic ccdconfig -C
 command to create tables internal to the kernel for the concatenated disks.
 You then
-.Nm mount
-and
-.Nm umount
+.Xr mount 8 ,
+.Xr umount 8
 and edit
 .Pa /etc/fstab
 as needed.
 \!\"--------------------------------------------------------------------------
-.Ss AMD
-Go into the
+.Ss Automounter daemon (AMD)
+If using the
+.Xr amd 8
+package,
+go into the
 .Pa /etc/amd
-directory if using this package and set it up by
+directory and set it up by
 renaming
-.Pa amd.home.sample
+.Pa master.sample
 to
-.Pa amd.home .
-You may wish to create a file
-.Pa amd.home
-in this directory, or alternatively supply your amd.home map via YP.
-\!\"--------------------------------------------------------------------------
-.Sh COMPILING A KERNEL
-To compile your own kernel off a CDROM do the following:
-.Bd -literal -offset indent
-# cd /somewhere
-# cp /usr/src/sys/arch/$ARCH/conf/SOMEFILE .
-# edit SOMEFILE (to make any changes you want)
-# config -s /usr/src/sys -b . SOMEFILE
-# make
-.Ed
-.Pp
-To compile a kernel inside a writable source tree, do the following:
-.Bd -literal -offset indent
-# cd /sys/arch/$ARCH/conf
-# edit SOMEFILE (to make any changes you want)
-# config SOMEFILE
-# cd ../compile/SOMEFILE
-# make
-.Ed
-.Pp
-$ARCH should be the architecture (e.g. i386).  You can do a
-.Nm make depend
-so that you will have dependencies there the next time you do a compile.
-.Pp
-After either of these two steps, you can place the new kernel (called
-.Pa bsd )
-in
-.Pa /
-(i.e. /bsd) and the system will boot it next time.
-Most people save their backup kernels as
-.Pa /bsd.1 ,
-.Pa /bsd.2 ...
+.Pa master
+and editing it and creating other maps as needed.
+Alternatively, you can get your maps with YP.
 \!\"--------------------------------------------------------------------------
 .Sh CHANGING /ETC FILES
 The system should be usable now, but you may wish to do more customizing,
-such as adding of users, etc.  Many of the following sections may be skipped
-if you are not using that package (for example
-.Pa kerberos
-section).  My suggestions are to
-.Nm cd /etc
-and edit most files.
+such as adding users, etc.  Many of the following sections may be skipped
+if you are not using that package (for example the
+.Sx Kerberos
+section).  My suggestion is to
+.Ic cd /etc
+and edit most of the files in that directory.
 \!\"--------------------------------------------------------------------------
 .Ss /etc/motd
-Edit motd to make lawyers comfortable and make sure that no mention
+Edit
+.Pa motd
+to make lawyers comfortable and make sure that no mention
 of the word "Welcome" appears.  (Some U.S. lawyers have stated that
 the word "Welcome" is an invitation to come on in.)
 \!\"--------------------------------------------------------------------------
 .Ss Add new users
-Add users.  There is a
-.Nm adduser
+Add users.  There is an
+.Xr adduser 8
 script.
 You may use
-.Nm vipw
+.Xr vipw 8
 to add users to the
 .Pa /etc/passwd
 file
 and edit
 .Pa /etc/group
-by hand if you desire.
+by hand to add new groups.
+The manual page for
 .Xr su 8 ,
 tells you to make sure to put people in
-.Pa /etc/group
-under the
-.Pa wheel
-group if they need root access (non-kerberos).  Something like:
+the
+.Sq wheel
+group if they need root access (non-Kerberos).  For example:
 .Bd -literal -offset indent
 wheel:*:0:root,myself
 .Ed
 .Pp
 Follow instructions for
-.Pa kerberos
+.Xr kerberos 1
 if using
-.Pa kerberos
+Kerberos
 for authentication.
 \!\"--------------------------------------------------------------------------
 .Ss rc.conf, netstart, rc.local, rc.securelevel
 Check for any local changes needed in the files:
-.Pa /etc/rc.conf, /etc/netstart, /etc/rc.local, rc.securelevel.
+.Pa /etc/rc.conf , /etc/netstart , /etc/rc.local , rc.securelevel .
 Turning on something like the Network Time Protocol in
 .Pa /etc/rc.securelevel
 requires:
 a) making sure the package is installed,
 b) uncommenting the lines in
-.Pa rc.securelevel
-(delete the # signs):
+.Pa rc.securelevel ,
+i.e. delete the leading # signs of:
 .Bd -literal -offset indent
 if [ -x /usr/local/sbin/xntpd ]; then
      /usr/local/sbin/tickadj -Aq
@@ -334,6 +335,11 @@ fi
 \!\"--------------------------------------------------------------------------
 .Ss Printers
 Edit /etc/printcap and /etc/hosts.lpd to get any printers set up.
+Consult
+.Xr lpd 8
+and
+.Xr printcap 5
+if needed.
 \!\"--------------------------------------------------------------------------
 .Ss Tighten up security
 You might wish to tighten up security more by editing
@@ -346,13 +352,12 @@ and only add things that are really needed.
 \!\"--------------------------------------------------------------------------
 .Ss Kerberos
 If you are going to use
-.Pa kerberos
+.Xr kerberos 1
 for authentication, and you already have a
-.Pa kerberos
+Kerberos
 master, go into the directory
 .Pa /etc/kerberosIV
-and configure
-.Pa kerberos.
+and configure.
 Remember to get a
 .Pa srvtab
 from the master so that the remote commands work.
@@ -371,7 +376,7 @@ operator:	sysadm
 .Ed
 .Pp
 Run
-.Nm newaliases
+.Xr newaliases 1
 after changes.
 \!\"--------------------------------------------------------------------------
 .Ss Sendmail
@@ -388,16 +393,16 @@ and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
 for information on generating your own sendmail configuration files.
 \!\"--------------------------------------------------------------------------
-.Ss Bootp server
+.Ss BOOTP server
 If this is a
-.Pa bootp
+BOOTP
 server, edit
 .Pa /etc/bootptab
 as needed.  You will have to turn it on in
 .Pa /etc/inetd.conf
 or run
-.Nm bootpd
-in stand-a-lone mode.
+.Xr bootpd 8
+in its standalone mode.
 \!\"--------------------------------------------------------------------------
 .Ss NFS server
 If this is an NFS server
@@ -411,9 +416,9 @@ nfs_server=YES
 Edit
 .Pa /etc/exports
 and get it correct.
-It is probably easier to reboot than get the daemons running, manually,
+It is probably easier to reboot than to get the daemons running manually,
 but you can get the order correct by looking at
-.Pa /etc/netstart.
+.Pa /etc/netstart .
 \!\"--------------------------------------------------------------------------
 .Ss HP remote boot server
 Edit
@@ -423,13 +428,13 @@ If you do not have HP computers doing remote booting, do not enable this.
 \!\"--------------------------------------------------------------------------
 .Ss Daily, Weekly, Monthly scripts
 Look at and possibly edit the
-.Pa /etc/daily, /etc/weekly,
+.Pa /etc/daily , /etc/weekly ,
 and
 .Pa /etc/monthly
 scripts.  Your site specific things should go into
-.Pa /etc/daily.local, /etc/weekly.local,
+.Pa /etc/daily.local , /etc/weekly.local ,
 and
-.Pa /etc/monthly.local.
+.Pa /etc/monthly.local .
 .Pp
 These scripts have been limited so as to keep the system running without
 filling up disk space from normal running processes and database updates.
@@ -438,57 +443,62 @@ filling up disk space from normal running processes and database updates.
 .Ss Other files in /etc
 Look at the other files in
 .Pa /etc
-and edit as needed.
+and edit them as needed.
 (Do not edit files ending in
 .Pa .db
--- like
-.Pa aliases.db, pwd.db, spwd.db,
+\(em like
+.Pa aliases.db , pwd.db , spwd.db ,
 nor
-.Pa localtime,
+.Pa localtime ,
 nor
-.Pa rmt,
+.Pa rmt ,
 nor any directories.)
 \!\"--------------------------------------------------------------------------
 .Ss Crontab (background running processes)
-Check what is running via
-.Nm crontab -l
-to see if anything unexpected is present.
-Do you need anything else?  Do you wish to change things?  I do not
-like root getting standard output of the daily scripts, only the security
-scripts that are mailed internally:
+Check what is running by typing
+.Ic crontab -l
+as root
+and see if anything unexpected is present.
+Do you need anything else?  Do you wish to change things?  e.g. if you do not
+like root getting standard output of the daily scripts, and want only 
+the security scripts that are mailed internally, you can type
+.Ic crontab -e
+and change some of the lines to read:
 .Bd -literal -offset indent
 30  1  *  *  *   /bin/sh /etc/daily 2>&1 > /var/log/daily.out
 30  3  *  *  6   /bin/sh /etc/weekly 2>&1 > /var/log/weekly.out
 30  5  1  *  *   /bin/sh /etc/monthly 2>&1 > /var/log/monthly.out
 .Ed
+See
+.Xr crontab 5 .
 \!\"--------------------------------------------------------------------------
 .Ss Next day cleanup
-After the first nights security run, change ownerships and permissions
+After the first night's security run, change ownerships and permissions
 on things.  The best bet is to have permissions as in the security list.
 (The first of the two listed permissions, and the first group number of
 the two).
 Use
-.Nm chmod ,
-.Nm chgrp ,
+.Xr chmod 1 ,
+.Xr chgrp 1 ,
 and
-.Nm chown
+.Xr chown 8
 as needed.
 \!\"--------------------------------------------------------------------------
-.Ss Install packages
+.Ss Packages
 Install your own packages.
 The simple way is to copy source and compile and link/load.
 .Pp
 Copy vendor binaries and install them.  You will need to install any
 shared libraries, etc.
 (Hint:
-.Nm man -k compat
+.Ic man -k compat
 to find out how to install and use compatibility mode.)
 .Pp
 Install any of a large group of Third-Party Software that is available
 in source form.  See
 .Pa http://www.openbsd.org
 under
-.Pa Ports: a Nice Way to Get Third-Party Software.
+.Sq Ports: a Nice Way to Get Third-Party Software .
 .Pp
 You may have some difficulty installing due to various compiling errors.
 Don't get discouraged easily!  Sometimes checking the mailing lists for
@@ -496,8 +506,93 @@ past problems that people have encountered will result in a fix posted.
 One recent item says to delete
 .Pa -lcrypt
 from
-.Pa Makefiles
-as the routines are present in the normal libraries.
+.Pa Makefile
+.Ns s
+as the crypt routines are now present in the standard libraries.
+\!\"--------------------------------------------------------------------------
+.Sh COMPILING A KERNEL
+To compile your own kernel off a CDROM do the following:
+.Sm off
+.Bd -literal -offset indent
+.Li #\  Xo
+.Ic cd\ /
+.Ar somedir
+.Xc
+.Li #\  Xo
+.Ic cp\ /usr/src/sys/arch/
+.Ar somearch
+.Ic /conf/
+.Ar SOMEFILE
+.Ic \ .
+.Xc
+.Li #\  Xo
+.Ic vi\ \&
+.Ar SOMEFILE
+.No \ \ \ (to\ make\ any\ changes)
+.Xc
+.Li #\  Xo
+.Ic config\ -s\ /usr/src/sys\ -b\ .\ \&
+.Ar SOMEFILE
+.Xc
+.Li #\  Xo
+.Ic make
+.Xc
+.Ed
+.Sm on
+.Pp
+To compile a kernel inside a writable source tree, do the following:
+.Sm off
+.Bd -literal -offset indent
+.Li #\  Xo
+.Ic cd\ /usr/src/sys/arch/
+.Ar somearch
+.Ic /conf
+.Xc
+.Li #\  Xo
+.Ic vi\ \&
+.Ar SOMEFILE
+.No \ \ \ (to\ make\ any\ changes)
+.Xc
+.Li #\  Xo
+.Ic config\ \&
+.Ar SOMEFILE
+.Xc
+.Li #\  Xo
+.Ic cd\ ../compile/
+.Ar SOMEFILE
+.Xc
+.Li #\  Xo
+.Ic make
+.Xc
+.Ed
+.Sm on
+.Pp
+where
+.Ar somedir
+is a writable directory,
+.Ar somearch
+is the architecture (e.g.
+.Ic i386 ) ,
+and
+.Ar SOMEFILE
+should be a name indicative of a particular configuration (often
+that of the hostname.)
+You can also do a
+.Ic make depend
+so that you will have dependencies there the next time you do a compile.
+.Pp
+After either of these two methods, you can place the new kernel (called
+.Pa bsd )
+in
+.Pa /
+(i.e.
+.Pa /bsd )
+and the system will boot it next time.
+Most people save their backup kernels as
+.Pa /bsd.1 ,
+.Pa /bsd.2 ,
+etc.
+\!\"--------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr adduser 8 ,
 .Xr aliases 5 ,
