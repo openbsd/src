@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.4 2003/06/10 02:42:58 brad Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.5 2004/01/10 22:47:54 pvalchev Exp $	*/
 /*	$NetBSD: srt0.s,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
 _esym:	.word	0			/* end of symbol table */
 	.globl	_C_LABEL(romp)
 	.align	8
+	.register %g2,	#scratch
+	.register %g3,	#scratch
 _C_LABEL(romp):	.xword	0		/* openfirmware entry point */
 
 /*
