@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/04/28 10:58:09 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.6 1996/05/04 18:50:49 mickey Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -89,12 +89,6 @@ bdev_decl(xd);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
-
-#ifdef LKM
-int	lkmenodev();
-#else
-#define	lkmenodev	enodev
-#endif
 
 struct bdevsw	bdevsw[] =
 {

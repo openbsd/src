@@ -56,12 +56,6 @@
 
 int     ttselect        __P((dev_t, int, struct proc *));
 
-#ifndef LKM
-#define lkmenodev       enodev
-#else
-int     lkmenodev();
-#endif
-
 #include "wdc.h"
 bdev_decl(wd);
 bdev_decl(sw);

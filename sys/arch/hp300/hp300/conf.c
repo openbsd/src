@@ -45,12 +45,6 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
-#endif
-
 #include "ct.h"
 bdev_decl(ct);
 #include "mt.h"

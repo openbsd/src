@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1996/04/29 14:12:41 hvozda Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 1996/05/04 18:50:44 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.74 1996/03/30 07:30:33 mycroft Exp $	*/
 
 /*
@@ -39,12 +39,6 @@
 #include <sys/vnode.h>
 
 int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
-#endif
 
 #include "wdc.h"
 bdev_decl(wd);
@@ -172,11 +166,6 @@ cdev_decl(bpf);
 cdev_decl(pcmcia);
 #include "spkr.h"
 cdev_decl(spkr);
-#ifdef LKM
-#define	NLKM	1
-#else
-#define	NLKM	0
-#endif
 cdev_decl(lkm);
 #include "mms.h"
 cdev_decl(mms);

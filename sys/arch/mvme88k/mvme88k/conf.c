@@ -63,12 +63,6 @@ bdev_decl(xd);
 #include "vnd.h"
 bdev_decl(vnd);
 
-#ifdef LKM
-int	lkmenodev();
-#else
-#define	lkmenodev	enodev
-#endif
-
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1996/02/21 12:53:42 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1996/05/04 18:50:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -49,12 +49,6 @@
 #endif
 
 int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
-#endif
 
 #define	bdev_rd_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,strategy), \
