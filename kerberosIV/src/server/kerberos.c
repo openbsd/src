@@ -559,6 +559,10 @@ mksocket(struct descr *d, struct in_addr addr, int type,
     memset(d, 0, sizeof(struct descr));
     if ((sock = socket(AF_INET, type, 0)) < 0)
 	err (1, "socket");
+    if (sock >= FD_SETSIZE) {
+	errno = EMFILE;
+        errx(1, "aborting: too many descriptors");
+    }
 #if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
 		   sizeof(on)) < 0)
@@ -1026,7 +1030,7 @@ loop(struct descr *fds, int nfds)
 		    if(accepted) continue;
 		    accepted = 1;
 		    s = accept(n->s, NULL, 0);
-		    if(minfree == NULL){
+		    if (minfree == NULL || s >= FD_SETSIZE) {
 			kerb_err_reply(s, NULL, KFAILURE, "Out of memory");
 			close(s);
 		    }else{
