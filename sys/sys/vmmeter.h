@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.10 2001/05/11 06:36:59 angelos Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.11 2001/06/27 04:51:49 art Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -43,57 +43,6 @@
  * System wide statistics counters.  Look in <uvm/uvm_extern.h> for the
  * UVM equivalent.
  */
-#if !defined(UVM)
-struct vmmeter {
-	/*
-	 * General system activity.
-	 */
-	u_int v_swtch;		/* context switches */
-	u_int v_trap;		/* calls to trap */
-	u_int v_syscall;	/* calls to syscall() */
-	u_int v_intr;		/* device interrupts */
-	u_int v_soft;		/* software interrupts */
-	u_int v_faults;		/* total faults taken */
-	/*
-	 * Virtual memory activity.
-	 */
-	u_int v_lookups;	/* object cache lookups */
-	u_int v_hits;		/* object cache hits */
-	u_int v_vm_faults;	/* number of address memory faults */
-	u_int v_cow_faults;	/* number of copy-on-writes */
-	u_int v_swpin;		/* swapins */
-	u_int v_swpout;		/* swapouts */
-	u_int v_pswpin;		/* pages swapped in */
-	u_int v_pswpout;	/* pages swapped out */
-	u_int v_pageins;	/* number of pageins */
-	u_int v_pageouts;	/* number of pageouts */
-	u_int v_pgpgin;		/* pages paged in */
-	u_int v_pgpgout;	/* pages paged out */
-	u_int v_intrans;	/* intransit blocking page faults */
-	u_int v_reactivated;	/* number of pages reactivated from free list */
-	u_int v_rev;		/* revolutions of the hand */
-	u_int v_scan;		/* scans in page out daemon */
-	u_int v_dfree;		/* pages freed by daemon */
-	u_int v_pfree;		/* pages freed by exiting processes */
-	u_int v_zfod;		/* pages zero filled on demand */
-	u_int v_nzfod;		/* number of zfod's created */
-	/*
-	 * Distribution of page usages.
-	 */
-	u_int v_page_size;	/* page size in bytes */
-	u_int v_kernel_pages;	/* number of pages in use by kernel */
-	u_int v_free_target;	/* number of pages desired free */
-	u_int v_free_min;	/* minimum number of pages desired free */
-	u_int v_free_count;	/* number of pages free */
-	u_int v_wire_count;	/* number of pages wired down */
-	u_int v_active_count;	/* number of pages active */
-	u_int v_inactive_target; /* number of pages desired inactive */
-	u_int v_inactive_count;  /* number of pages inactive */
-};
-#ifdef _KERNEL
-struct	vmmeter cnt;
-#endif
-#endif
 
 /* systemwide totals computed every five seconds */
 struct vmtotal

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.34 2001/06/22 14:11:01 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.35 2001/06/27 04:51:49 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -39,13 +39,13 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/select.h>
-#ifdef UVM			/* XXX: clean up includes later */
+
+/* XXX: clean up includes later */
 #include <vm/pglist.h>		/* XXX */
 #include <vm/vm_param.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_vnode.h>	/* XXX */
-#endif /* UVM */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -87,9 +87,7 @@ LIST_HEAD(buflists, buf);
  */
 
 struct vnode {
-#ifdef UVM
 	struct uvm_vnode v_uvm;			/* uvm data */
-#endif
 	int	(**v_op) __P((void *));		/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
 	u_int	v_flag;				/* vnode flags (see below) */

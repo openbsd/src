@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.h,v 1.3 2001/03/09 03:13:47 deraadt Exp $	*/
+/*	$OpenBSD: swap.h,v 1.4 2001/06/27 04:51:48 art Exp $	*/
 /*	$NetBSD: swap.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -63,11 +63,5 @@ struct swapent {
 #define SWF_ENABLE	0x00000002	/* enabled: we can swap here */
 #define SWF_BUSY	0x00000004	/* busy: I/O happening here */
 #define SWF_FAKE	0x00000008	/* fake: still being built */
-
-#if defined(_KERNEL) && !defined(UVM)
-daddr_t swap_alloc __P((int size));
-void swap_free __P((int size, daddr_t addr));
-void swapinit __P((void));
-#endif
 
 #endif /* _SYS_SWAP_H_ */

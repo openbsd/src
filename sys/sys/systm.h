@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.39 2001/06/24 20:53:40 mickey Exp $	*/
+/*	$OpenBSD: systm.h,v 1.40 2001/06/27 04:51:49 art Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -81,10 +81,6 @@ extern int cold;		/* cold start flag initialized in locore */
 
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
-#if !defined(UVM)
-extern int nswdev;		/* number of swap devices */
-extern int nswap;		/* size of swap space */
-#endif
 
 extern int selwait;		/* select timeout address */
 
@@ -178,9 +174,7 @@ void	ttyprintf __P((struct tty *, const char *, ...))
 
 void	tablefull __P((const char *));
 
-#if defined(UVM)
 int	kcopy __P((const void *, void *, size_t));
-#endif
 
 void	bcopy __P((const void *, void *, size_t));
 void	ovbcopy __P((const void *, void *, size_t));
