@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.25 2003/06/05 03:39:51 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.26 2004/07/02 12:59:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -58,7 +58,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.25 2003/06/05 03:39:51 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.26 2004/07/02 12:59:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -424,6 +424,8 @@ argscan(char *s)
 		case 'u':
 			ul_opt = 0;
 			break;
+		case 'X':
+		case 'E':
 		case '-':
 		case ' ':
 		case '\t':
