@@ -91,14 +91,14 @@ tgetent(bp, name)
 	p = pathbuf;
 	cp = getenv("TERMCAP");
 	/*
-	 * TERMCAP can have one of two things in it. It can be the
-	 * name of a file to use instead of /etc/termcap. In this
+	 * TERMCAP can have one of two things in it. It can be the name
+	 * of a file to use instead of /usr/share/misc/termcap. In this
 	 * case it better start with a "/". Or it can be an entry to
 	 * use so we don't have to read the file. In this case it
 	 * has to already have the newlines crunched out.  If TERMCAP
 	 * does not hold a file name then a path of names is searched
-	 * instead.  The path is found in the TERMPATH variable, or
-	 * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
+	 * instead.  The path is found in the TERMPATH variable, or becomes
+	 * "$HOME/.termcap /usr/share/misc/termcap" if no TERMPATH exists.
 	 */
 	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != NULL)
