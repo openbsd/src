@@ -181,7 +181,7 @@ random_password(char *pw, size_t len);
 
 /* kadm_conn.c */
 
-extern sig_atomic_t term_flag, doing_useful_work;
+extern volatile sig_atomic_t term_flag, doing_useful_work;
 
 void parse_ports(krb5_context, const char*);
 int start_server(krb5_context);

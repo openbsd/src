@@ -109,7 +109,7 @@ copy_packets (int tundev, int netdev, int mtu, des_cblock *iv,
 
 RETSIGTYPE childhandler (int);
 
-extern sig_atomic_t disconnect;
+extern volatile sig_atomic_t disconnect;
 extern int isserver;
 
 int

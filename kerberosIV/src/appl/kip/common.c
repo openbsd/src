@@ -35,7 +35,7 @@
 
 RCSID("$KTH: common.c,v 1.13.2.4 2000/10/18 23:31:51 assar Exp $");
 
-sig_atomic_t disconnect = 0;
+volatile sig_atomic_t disconnect = 0;
 int isserver = 0;
 
 /*

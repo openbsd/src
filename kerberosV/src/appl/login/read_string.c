@@ -35,7 +35,7 @@
 
 RCSID("$KTH: read_string.c,v 1.4 2000/06/21 02:09:36 assar Exp $");
 
-static sig_atomic_t intr_flag;
+static volatile sig_atomic_t intr_flag;
 
 static void
 intr(int sig)

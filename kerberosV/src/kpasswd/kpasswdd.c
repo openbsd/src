@@ -41,7 +41,7 @@ RCSID("$KTH: kpasswdd.c,v 1.51 2001/05/14 06:18:56 assar Exp $");
 static krb5_context context;
 static krb5_log_facility *log_facility;
 
-static sig_atomic_t exit_flag = 0;
+static volatile sig_atomic_t exit_flag = 0;
 
 static void
 send_reply (int s,

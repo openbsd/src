@@ -35,7 +35,7 @@
 
 RCSID("$KTH: main.c,v 1.25 2001/02/20 01:44:50 assar Exp $");
 
-sig_atomic_t exit_flag = 0;
+volatile sig_atomic_t exit_flag = 0;
 krb5_context context;
 
 static RETSIGTYPE

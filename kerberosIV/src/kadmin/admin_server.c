@@ -60,7 +60,7 @@ doexit(int sig)
     SIGRETURN(0);
 }
    
-static sig_atomic_t do_wait;
+static volatile sig_atomic_t do_wait;
 
 static
 RETSIGTYPE

@@ -43,7 +43,7 @@
 extern krb5_context context;
 
 extern int require_preauth;
-extern sig_atomic_t exit_flag;
+extern volatile sig_atomic_t exit_flag;
 extern size_t max_request;
 extern time_t kdc_warn_pwexpire;
 extern struct dbinfo {

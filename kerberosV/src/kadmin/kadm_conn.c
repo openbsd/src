@@ -91,7 +91,7 @@ parse_ports(krb5_context context, const char *str)
 }
 
 static pid_t pgrp;
-sig_atomic_t term_flag, doing_useful_work;
+volatile sig_atomic_t term_flag, doing_useful_work;
 
 static RETSIGTYPE
 sigchld(int sig)
