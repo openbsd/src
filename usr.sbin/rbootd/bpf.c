@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.5 2001/01/17 00:33:03 pjanzen Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.6 2002/02/19 21:04:09 miod Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.5 2001/01/17 00:33:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.6 2002/02/19 21:04:09 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ BpfOpen()
 
 	if (BpfFd < 0) {
 		syslog(LOG_ERR, "bpf: no available devices: %m");
-		Exit(0);
+		DoExit();
 	}
 
 	/*
@@ -113,7 +113,7 @@ BpfOpen()
 	(void) strncpy(ifr.ifr_name, IntfName, sizeof(ifr.ifr_name));
 	if (ioctl(BpfFd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCSETIF,%s): %m", IntfName);
-		Exit(0);
+		DoExit();
 	}
 
 	/*
@@ -121,12 +121,12 @@ BpfOpen()
 	 */
 	if (ioctl(BpfFd, BIOCGDLT, (caddr_t)&n) < 0) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCGDLT): %m");
-		Exit(0);
+		DoExit();
 	}
 	if (n != DLT_EN10MB) {
 		syslog(LOG_ERR,"bpf: %s: data-link type %d unsupported",
 		       IntfName, n);
-		Exit(0);
+		DoExit();
 	}
 
 	/*
@@ -135,7 +135,7 @@ BpfOpen()
 	n = 1;
 	if (ioctl(BpfFd, BIOCIMMEDIATE, (caddr_t)&n) < 0) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCIMMEDIATE): %m");
-		Exit(0);
+		DoExit();
 	}
 
 	/*
@@ -155,7 +155,7 @@ BpfOpen()
 
 		if (ioctl(BpfFd, BIOCPROMISC, (caddr_t)0) < 0) {
 			syslog(LOG_ERR, "bpf: can't set promiscuous mode: %m");
-			Exit(0);
+			DoExit();
 		}
 	}
 
@@ -164,7 +164,7 @@ BpfOpen()
 	 */
 	if (ioctl(BpfFd, BIOCGBLEN, (caddr_t)&BpfLen) < 0) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCGBLEN): %m");
-		Exit(0);
+		DoExit();
 	}
 	if (BpfPkt == NULL)
 		BpfPkt = (u_int8_t *)malloc(BpfLen);
@@ -172,7 +172,7 @@ BpfOpen()
 	if (BpfPkt == NULL) {
 		syslog(LOG_ERR, "bpf: out of memory (%u bytes for bpfpkt)",
 		       BpfLen);
-		Exit(0);
+		DoExit();
 	}
 
 	/*
@@ -198,7 +198,7 @@ BpfOpen()
 
 		if (ioctl(BpfFd, BIOCSETF, (caddr_t)&bpf_pgm) < 0) {
 			syslog(LOG_ERR, "bpf: ioctl(BIOCSETF): %m");
-			Exit(0);
+			DoExit();
 		}
 	}
 
@@ -390,41 +390,4 @@ BpfWrite(rconn)
 	}
 
 	return(1);
-}
-
-/*
-**  BpfClose -- Close a BPF device.
-**
-**	Parameters:
-**		None.
-**
-**	Returns:
-**		Nothing.
-**
-**	Side Effects:
-**		None.
-*/
-void
-BpfClose()
-{
-	struct ifreq ifr;
-
-	if (BpfPkt != NULL) {
-		free((char *)BpfPkt);
-		BpfPkt = NULL;
-	}
-
-	if (BpfFd == -1)
-		return;
-
-#ifdef MSG_EOR
-	ifr.ifr_addr.sa_len = RMP_ADDRLEN + 2;
-#endif
-	ifr.ifr_addr.sa_family = AF_UNSPEC;
-	bcopy(&RmpMcastAddr[0], (char *)&ifr.ifr_addr.sa_data[0], RMP_ADDRLEN);
-	if (ioctl(BpfFd, SIOCDELMULTI, (caddr_t)&ifr) < 0)
-		(void) ioctl(BpfFd, BIOCPROMISC, (caddr_t)0);
-
-	(void) close(BpfFd);
-	BpfFd = -1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.4 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.5 2002/02/19 21:04:09 miod Exp $	*/
 /*	$NetBSD: defs.h,v 1.5 1995/10/06 05:12:14 thorpej Exp $	*/
 
 /*
@@ -152,18 +152,13 @@ extern	u_int8_t RmpMcastAddr[];	/* RMP multicast address */
 
 void	 AddConn(RMPCONN *);
 int	 BootDone(RMPCONN *);
-void	 BpfClose(void);
 char	*BpfGetIntfName(char **);
 int	 BpfOpen(void);
 int	 BpfRead(RMPCONN *, int);
 int	 BpfWrite(RMPCONN *);
-void	 DebugOff(int);
-void	 DebugOn(int);
 void	 DispPkt(RMPCONN *, int);
-void	 DoTimeout(void);
+void	 DoExit(void);
 void	 DspFlnm(u_int, char *);
-void	 Exit(int);
-CLIENT	*FindClient(RMPCONN *);
 RMPCONN	*FindConn(RMPCONN *);
 void	 FreeClients(void);
 void	 FreeConn(RMPCONN *);
@@ -176,7 +171,6 @@ char	*NewStr(char *);
 u_int8_t *ParseAddr(char *);
 int	 ParseConfig(void);
 void	 ProcessPacket(RMPCONN *, CLIENT *);
-void	 ReConfig(int);
 void	 RemoveConn(RMPCONN *);
 int	 SendBootRepl(struct rmp_packet *, RMPCONN *, char *[]);
 int	 SendFileNo(struct rmp_packet *, RMPCONN *, char *[]);
