@@ -1,5 +1,5 @@
-/*	$OpenBSD: uplcom.c,v 1.3 2002/05/07 18:08:04 nate Exp $	*/
-/*	$NetBSD: uplcom.c,v 1.27 2002/03/16 16:10:19 ichiro Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.4 2002/05/07 18:29:18 nate Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.20 2001/07/31 12:33:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -131,7 +131,7 @@ Static	void uplcom_break(struct uplcom_softc *, int);
 Static	void uplcom_set_line_state(struct uplcom_softc *);
 Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 #if TODO
-Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
 #endif
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
@@ -148,7 +148,10 @@ struct	ucom_methods uplcom_methods = {
 	NULL,
 };
 
-static const struct usb_devno uplcom_devs[] = {
+static const struct uplcom_product {
+	uint16_t	vendor;
+	uint16_t	product;
+} uplcom_products [] = {
 	/* I/O DATA USB-RSAQ2 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
 	/* I/O DATA USB-RSAQ */
@@ -157,28 +160,26 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 	/* IOGEAR/ATEN UC-232A */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
-	/* ELECOM UC-SGT */
-	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
-	/* RATOC REX-USB60 */
-	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
-	/* TDK USB-PHS Adapter UHA6400 */
-	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
-	/* TDK USB-PDC Adapter UPA9664 */
-	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
+	{ 0, 0 }
 };
-#define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
 USB_DECLARE_DRIVER(uplcom);
 
 USB_MATCH(uplcom)
 {
 	USB_MATCH_START(uplcom, uaa);
+	int i;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	for (i = 0; uplcom_products[i].vendor != 0; i++) {
+		if (uplcom_products[i].vendor == uaa->vendor &&
+ 		    uplcom_products[i].product == uaa->product) {
+			return (UMATCH_VENDOR_PRODUCT);
+		}
+	}
+	return (UMATCH_NONE);
 }
 
 USB_ATTACH(uplcom)
@@ -714,7 +715,7 @@ uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 #if TODO
 int
 uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     usb_proc_ptr p)
+	     struct proc *p)
 {
 	struct uplcom_softc *sc = addr;
 	int error = 0;

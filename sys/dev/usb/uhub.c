@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhub.c,v 1.15 2002/05/07 18:08:04 nate Exp $ */
-/*	$NetBSD: uhub.c,v 1.57 2001/11/20 16:08:37 augustss Exp $	*/
+/*	$OpenBSD: uhub.c,v 1.16 2002/05/07 18:29:18 nate Exp $ */
+/*	$NetBSD: uhub.c,v 1.52 2001/10/26 17:53:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -268,7 +268,6 @@ USB_ATTACH(uhub)
 	 *  For all ports
 	 *     get port status
 	 *     if device connected
-	 *        wait 100 ms
 	 *        turn on reset
 	 *        wait
 	 *        clear C_PORT_RESET
@@ -324,7 +323,6 @@ uhub_explore(usbd_device_handle dev)
 	struct uhub_softc *sc = dev->hub->hubsoftc;
 	struct usbd_port *up;
 	usbd_status err;
-	int speed;
 	int port;
 	int change, status;
 
@@ -425,38 +423,15 @@ uhub_explore(usbd_device_handle dev)
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->status)) {
-			printf("%s: port %d reset failed\n",
-			       USBDEVNAME(sc->sc_dev), port);
-			continue;
-		}
-		/* Get port status again, it might have changed during reset */
-		err = usbd_get_port_status(dev, port, &up->status);
-		if (err) {
-			DPRINTF(("uhub_explore: get port status failed, "
-				 "error=%s\n", usbd_errstr(err)));
-			continue;
-		}
-		status = UGETW(up->status.wPortStatus);
-		change = UGETW(up->status.wPortChange);
-		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
-			/* Nothing connected, just ignore it. */
-#ifdef DIAGNOSTIC
-			printf("%s: port %d, device disappeared after reset\n",
-			       USBDEVNAME(sc->sc_dev), port);
-#endif
+			printf("uhub_explore: port=%d reset failed\n",
+				 port);
 			continue;
 		}
 
-		/* Figure out device speed */
-		if (status & UPS_HIGH_SPEED)
-			speed = USB_SPEED_HIGH;
-		else if (status & UPS_LOW_SPEED)
-			speed = USB_SPEED_LOW;
-		else
-			speed = USB_SPEED_FULL;
 		/* Get device info and set its address. */
 		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
-			  dev->depth + 1, speed, port, up);
+			  dev->depth + 1, status & UPS_LOW_SPEED, 
+			  port, up);
 		/* XXX retry a few times? */
 		if (err) {
 			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "

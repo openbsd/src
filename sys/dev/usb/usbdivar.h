@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdivar.h,v 1.15 2002/05/07 18:08:05 nate Exp $ */
-/*	$NetBSD: usbdivar.h,v 1.69 2001/12/27 18:43:46 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.16 2002/05/07 18:29:19 nate Exp $ */
+/*	$NetBSD: usbdivar.h,v 1.63 2001/01/21 19:00:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct usbd_port {
 	u_int8_t		portno;
 	u_int8_t		restartcnt;
 #define USBD_RESTART_MAX 5
-	struct usbd_device     *device;	/* Connected device */
+	struct usbd_device     *device;
 	struct usbd_device     *parent;	/* The ports hub */
 };
 
@@ -117,11 +117,13 @@ struct usbd_bus {
 #define USBREV_2_0	4
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0" }
 
+#if 0
 #ifdef USB_USE_SOFTINTR
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void		       *soft; /* soft interrupt cookie */
 #else
-	usb_callout_t		softi;
+	struct callout		softi;
+#endif
 #endif
 #endif
 
@@ -136,15 +138,13 @@ struct usbd_device {
 	u_int8_t		address;       /* device addess */
 	u_int8_t		config;	       /* current configuration # */
 	u_int8_t		depth;         /* distance from root hub */
-	u_int8_t		speed;         /* low/full/high speed */
+	u_int8_t		lowspeed;      /* lowspeed flag */
 	u_int8_t		self_powered;  /* flag for self powered */
 	u_int16_t		power;         /* mA the device uses */
 	int16_t			langid;	       /* language for strings */
 #define USBD_NOLANG (-1)
 	usb_event_cookie_t	cookie;	       /* unique connection id */
 	struct usbd_port       *powersrc;      /* upstream hub port, or 0 */
-	struct usbd_device     *myhub; 	       /* upstream hub */
-	struct usbd_device     *myhighhub;     /* closest high speed hub */
 	struct usbd_endpoint	def_ep;	       /* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
 	struct usbd_interface  *ifaces;        /* array of all interfaces */
@@ -179,6 +179,8 @@ struct usbd_pipe {
 	char			repeat;
 	int			interval;
 
+	usb_callout_t		abort_handle;
+
 	/* Filled by HC driver. */
 	struct usbd_pipe_methods *methods;
 };
@@ -197,8 +199,7 @@ struct usbd_xfer {
 #ifdef DIAGNOSTIC
 	u_int32_t		busy_free;
 #define XFER_FREE 0x46524545
-#define XFER_BUSY 0x42555359
-#define XFER_ONQU 0x4f4e5155
+#define XFER_BUSY 0x42555357
 #endif
 
 	/* For control pipe */
@@ -226,14 +227,6 @@ struct usbd_xfer {
 
 void usbd_init(void);
 void usbd_finish(void);
-
-#ifdef USB_DEBUG
-void usbd_dump_iface(struct usbd_interface *iface);
-void usbd_dump_device(struct usbd_device *dev);
-void usbd_dump_endpoint(struct usbd_endpoint *endp);
-void usbd_dump_queue(usbd_pipe_handle pipe);
-void usbd_dump_pipe(usbd_pipe_handle pipe);
-#endif
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);

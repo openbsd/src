@@ -1,5 +1,5 @@
-/*	$OpenBSD: umodem.c,v 1.8 2002/05/07 18:08:04 nate Exp $ */
-/*	$NetBSD: umodem.c,v 1.41 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$OpenBSD: umodem.c,v 1.9 2002/05/07 18:29:18 nate Exp $ */
+/*	$NetBSD: umodem.c,v 1.40 2001/03/25 23:02:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Static void	umodem_rts(struct umodem_softc *, int);
 Static void	umodem_break(struct umodem_softc *, int);
 Static void	umodem_set_line_state(struct umodem_softc *);
 Static int	umodem_param(void *, int, struct termios *);
-Static int	umodem_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+Static int	umodem_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
 Static int	umodem_open(void *, int portno);
 Static void	umodem_close(void *, int portno);
 Static void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -524,7 +524,7 @@ umodem_param(void *addr, int portno, struct termios *t)
 
 int
 umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     usb_proc_ptr p)
+	     struct proc *p)
 {
 	struct umodem_softc *sc = addr;
 	int error = 0;
