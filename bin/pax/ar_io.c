@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.11 1997/02/27 23:32:56 michaels Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.12 1997/03/02 20:42:56 tholo Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.11 1997/02/27 23:32:56 michaels Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.12 1997/03/02 20:42:56 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -405,7 +405,9 @@ ar_close()
 		return;
 	}
 
-	if (strcmp(NM_TAR, argv0) != 0 && strcmp(NM_CPIO, argv0) != 0)
+	if (strcmp(NM_CPIO, argv0) == 0)
+		(void)fprintf(outf, "%qu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
+	else if (strcmp(NM_TAR, argv0) != 0)
 		(void)fprintf(outf,
 #	ifdef NET2_STAT
 		    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
