@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.31 1999/03/24 17:00:46 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.32 1999/05/12 21:11:42 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -505,7 +505,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct ip *ip, ipo;
     int i, ilen, ohlen, nh, rlen, plen, padding, rest;
     u_int32_t spi;
-    struct mbuf *mi, *mo;
+    struct mbuf *mi, *mo = (struct mbuf *)NULL;
     u_char *pad, *idat, *odat, *ivp;
     u_char iv[ESP_3DES_IVS], blk[ESP_3DES_IVS], opts[40];
     int iphlen, blks;
@@ -513,6 +513,39 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     blks = espx->blocksize;
 
     espstat.esps_output++;
+
+    /*
+     * Loop through mbuf chain; if we find an M_EXT mbuf with 
+     * more than one reference, replace the rest of the chain. 
+     */
+    mi = m;
+    while (mi != NULL && 
+	   (!(mi->m_flags & M_EXT) || 
+	    mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1))
+    {
+      mo = mi;
+      mi = mi->m_next;
+    }
+     
+    if (mi != NULL)
+    {
+      /* Replace the rest of the mbuf chain. */
+      struct mbuf *n = m_copym2 (mi, 0, M_COPYALL, M_DONTWAIT);
+      
+      if (n == NULL)
+      {
+	espstat.esps_hdrops++;
+	m_freem(m);
+	return ENOBUFS;
+      }
+
+      if (mo != NULL)
+	mo->m_next = n;
+      else
+	m = n;
+
+      m_freem(mi);
+    }
 
     m = m_pullup(m, sizeof(struct ip));
     if (m == NULL)
