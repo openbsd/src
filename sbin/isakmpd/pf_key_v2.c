@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.108 2002/06/10 20:54:51 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.109 2002/06/11 18:04:28 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -779,7 +779,10 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
     goto cleanup;
   /* XXX This is ugly.  */
   if (proto == IPSEC_PROTO_IPCOMP)
-    *(u_int16_t *)spi = (u_int16_t)sa->sadb_sa_spi;
+    {
+      u_int32_t tspi = ntohl (sa->sadb_sa_spi);
+      *(u_int16_t *)spi = htons ((u_int16_t)tspi);
+    }
   else
     memcpy (spi, &sa->sadb_sa_spi, *sz);
 
