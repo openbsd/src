@@ -102,6 +102,16 @@
 @ISC_PLATFORM_NEEDSTRSEP@
 
 /*
+ * If the system needs strlcpy(), ISC_PLATFORM_NEEDSTRLCPY will be defined.
+ */
+@ISC_PLATFORM_NEEDSTRLCPY@
+
+/*
+ * If the system needs strlcat(), ISC_PLATFORM_NEEDSTRLCAT will be defined.
+ */
+@ISC_PLATFORM_NEEDSTRLCAT@
+
+/*
  * Define either ISC_PLATFORM_BSD44MSGHDR or ISC_PLATFORM_BSD43MSGHDR.
  */
 @ISC_PLATFORM_MSGHDRFLAVOR@

@@ -51,6 +51,22 @@ isc_string_separate(char **stringp, const char *delim);
 #define strsep isc_string_separate
 #endif
 
+size_t
+isc_string_strlcpy(char *dst, const char *src, size_t size);
+
+
+#ifdef ISC_PLATFORM_NEEDSTRLCPY
+#define strlcpy isc_string_strlcpy
+#endif
+
+
+size_t
+isc_string_strlcat(char *dst, const char *src, size_t size);
+
+#ifdef ISC_PLATFORM_NEEDSTRLCAT
+#define strlcat isc_string_strlcat
+#endif
+
 ISC_LANG_ENDDECLS
 
 #endif /* ISC_STRING_H */
