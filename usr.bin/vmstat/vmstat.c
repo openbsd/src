@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.87 2004/06/28 01:45:51 aaron Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.88 2004/06/28 21:49:35 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.87 2004/06/28 01:45:51 aaron Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.88 2004/06/28 21:49:35 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1216,7 +1216,7 @@ kread(int nlx, void *addr, size_t size)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-fimst] [-c count] [-M core] "
+	(void)fprintf(stderr, "usage: %s [-fimstvz] [-c count] [-M core] "
 	    "[-N system] [-w wait] [disks]\n", __progname);
 	exit(1);
 }
