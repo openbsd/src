@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.29 2004/03/09 19:12:13 tom Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.30 2004/03/19 13:48:18 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -53,6 +53,9 @@ run_loadfile(u_long *marks, int howto)
 	caddr_t av = (caddr_t)BOOTARG_OFF;
 	bios_consdev_t cd;
 	extern int com_speed; /* from bioscons.c */
+
+	if (sa_cleanup != NULL)
+		(*sa_cleanup)();
 
 	cd.consdev = cn_tab->cn_dev;
 	cd.conspeed = com_speed;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2003/08/08 07:38:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.43 2004/03/19 13:48:18 tom Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,7 +22,7 @@ CLEANFILES+=	gidt.o debug_i386.o alloca.o \
 SRCS+=	gidt.S debug_i386.S alloca.S \
 	biosdev.c bioscons.c gateA20.c apmprobe.c \
 	memprobe.c diskprobe.c pciprobe.c smpprobe.c \
-	time.c biosprobe.c
+	time.c biosprobe.c ps2probe.c pxe.c pxe_net.c pxe_call.S
 CLEANFILES+=	unixdev.o unixsys.o nullfs.o
 .endif
 
@@ -42,7 +42,7 @@ SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 SRCS+=	bootp.c bootparam.c rarp.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c cd9660.c
+SRCS+=	ufs.c nfs.c tftp.c cd9660.c
 
 # debugger
 SRCS+=	debug.c

@@ -1,6 +1,7 @@
-/*	$OpenBSD: machdep.c,v 1.34 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 2004/03/19 13:48:18 tom Exp $	*/
 
 /*
+ * Copyright (c) 2004 Tom Cosgrove
  * Copyright (c) 1997-1999 Michael Shalayeff
  * All rights reserved.
  *
@@ -29,8 +30,6 @@
 #include "libsa.h"
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
-#include "debug.h"
-#include "ps2probe.h"
 
 volatile struct BIOS_regs	BIOS_regs;
 
@@ -40,30 +39,25 @@ volatile struct BIOS_regs	BIOS_regs;
 #define CKPT(c) /* c */
 #endif
 
-extern int debug;
-int ps2model;
-
 void
 machdep(void)
 {
-	/* here */	CKPT('0');
-	printf("probing:");
-#ifndef _TEST
-	/* probe for a model number, gateA20() neds ps2model */
-	ps2probe();	CKPT('1');
-	gateA20(1);	CKPT('2');
-	debug_init();	CKPT('3');
-#endif
-	/* call console init before doing any io */
-	cninit();	CKPT('4');
-#ifndef _TEST
-	apmprobe();	CKPT('5');
-	pciprobe();	CKPT('6');
-/*	smpprobe();	CKPT('7'); */
-	memprobe();	CKPT('8');
-	printf("\n");
+	int i, j;
+	struct i386_boot_probes *pr;
 
-	diskprobe();	CKPT('9');
-#endif
-			CKPT('Z');
+	/*
+	 * The list of probe routines is now in conf.c.
+	 */
+	for (i = 0; i < nibprobes; i++) {
+		pr = &probe_list[i];
+		if (pr != NULL) {
+			printf("%s:", pr->name);
+
+			for (j = 0; j < pr->count; j++) {
+				(*(pr->probes)[j])();
+			}
+
+			printf("\n");
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gateA20.c,v 1.9 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: gateA20.c,v 1.10 2004/03/19 13:48:18 tom Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -40,6 +40,16 @@
 					   enable output buffer full interrupt
 					   enable data line
 					   enable clock line */
+
+
+/*
+ * "Probe"-style routine (no parameters) to turn A20 on
+ */
+void
+gateA20on(void)
+{
+	gateA20(1);
+}
 
 
 /*

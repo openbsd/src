@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.38 2003/06/03 20:22:12 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.39 2004/03/19 13:48:18 tom Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -33,9 +33,19 @@
 
 #define	DEFAULT_KERNEL_ADDRESS	0
 
+struct i386_boot_probes {
+	char *name;
+	void (**probes)(void);
+	int count;
+};
+
+extern void (*sa_cleanup)(void);
+
 void gateA20(int);
+void gateA20on(void);
 
 void smpprobe(void);
+void ps2probe(void);
 void pciprobe(void);
 void memprobe(void);
 void diskprobe(void);
@@ -56,6 +66,10 @@ extern const char bdevs[][4];
 extern const int nbdevs;
 extern u_int cnvmem, extmem; /* XXX global pass memprobe()->machdep_start() */
 extern int ps2model;
+
+extern struct i386_boot_probes probe_list[];
+extern int nibprobes;
+extern void (*devboot_p)(dev_t, char *);
 
 /* diskprobe.c */
 extern bios_diskinfo_t bios_diskinfo[];

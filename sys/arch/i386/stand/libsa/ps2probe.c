@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps2probe.h,v 1.3 2003/06/03 20:22:12 mickey Exp $	*/
+/*	$OpenBSD: ps2probe.c,v 1.1 2004/03/19 13:48:18 tom Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -26,7 +26,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static __inline void
+#include "libsa.h"
+
+int ps2model;
+
+void
 ps2probe(void)
 {
 	char *p;

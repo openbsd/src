@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.25 2004/03/09 19:12:13 tom Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.26 2004/03/19 13:48:18 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -171,7 +171,6 @@ diskprobe(void)
 	bios_diskinfo_t *bios_diskinfo;
 
 	/* Init stuff */
-	printf("disk:");
 	TAILQ_INIT(&disklist);
 
 	/* Do probes */
@@ -203,8 +202,6 @@ diskprobe(void)
 	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
 	addbootarg(BOOTARG_DISKINFO, i * sizeof(bios_diskinfo_t),
 	    bios_diskinfo);
-
-	printf("\n");
 }
 
 
