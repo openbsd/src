@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2001/12/01 18:41:48 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2001/12/04 21:42:32 lebel Exp $
 #
 # PPC GENERIC config file
 #
@@ -140,6 +140,8 @@ umass*		at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus*	at umass?
 kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
 aue*		at uhub? port ?			# USB EtherNet 
+uplcom* 	at uhub? port ?            # I/O DATA USB-RSAQ2 serial adapter
+ucom*   	at uplcom? portno ?
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ?
