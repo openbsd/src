@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.25 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.26 2004/07/01 21:03:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -208,7 +208,8 @@ void fpu_exit(void);
 void ficache(pa_space_t sp, vaddr_t va, vsize_t size);
 void fdcache(pa_space_t sp, vaddr_t va, vsize_t size);
 void pdcache(pa_space_t sp, vaddr_t va, vsize_t size);
-void fcacheall(void);
+void ficacheall(void);
+void fdcacheall(void);
 void ptlball(void);
 int btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *lenp, u_int prot);
 hppa_hpa_t cpu_gethpa(int n);

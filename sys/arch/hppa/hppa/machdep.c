@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.131 2004/06/30 18:18:54 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.132 2004/07/01 21:03:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -347,7 +347,8 @@ hppa_init(start)
 
 	cpuid();
 	ptlball();
-	fcacheall();
+	ficacheall();
+	fdcacheall();
 
 	avail_end = trunc_page(PAGE0->imm_max_mem);
 	/*if (avail_end > 32*1024*1024)
@@ -418,7 +419,8 @@ hppa_init(start)
 #ifdef DDB
 	ddb_init();
 #endif
-	fcacheall();
+	ficacheall();
+	fdcacheall();
 }
 
 void
@@ -788,7 +790,7 @@ fall(c_base, c_count, c_loop, c_stride, data)
 }
 
 void
-fcacheall(void)
+ficacheall(void)
 {
 	/*
 	 * Flush the instruction, then data cache.
@@ -796,6 +798,11 @@ fcacheall(void)
 	fall(pdc_cache.ic_base, pdc_cache.ic_count, pdc_cache.ic_loop,
 	    pdc_cache.ic_stride, 0);
 	sync_caches();
+}
+
+void
+fdcacheall(void)
+{
 	fall(pdc_cache.dc_base, pdc_cache.dc_count, pdc_cache.dc_loop,
 	    pdc_cache.dc_stride, 1);
 	sync_caches();
