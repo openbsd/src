@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.11 2002/08/22 23:28:19 deraadt Exp $	*/
+/*	$OpenBSD: region.c,v 1.12 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *		Region based commands.
@@ -18,8 +18,7 @@ static	int	setsize(REGION *, RSIZE);
  */
 /* ARGSUSED */
 int
-killregion(f, n)
-	int f, n;
+killregion(int f, int n)
 {
 	int	s;
 	REGION	region;
@@ -41,8 +40,7 @@ killregion(f, n)
  */
 /* ARGSUSED */
 int
-copyregion(f, n)
-	int f, n;
+copyregion(int f, int n)
 {
 	LINE	*linep;
 	REGION	 region;
@@ -86,8 +84,7 @@ copyregion(f, n)
  */
 /* ARGSUSED */
 int
-lowerregion(f, n)
-	int f, n;
+lowerregion(int f, int n)
 {
 	LINE	*linep;
 	REGION	 region;
@@ -128,8 +125,7 @@ lowerregion(f, n)
  */
 /* ARGSUSED */
 int
-upperregion(f, n)
-	int f, n;
+upperregion(int f, int n)
 {
 	LINE	 *linep;
 	REGION	  region;
@@ -173,8 +169,7 @@ upperregion(f, n)
  * because I might add a "if regions is big, ask before clobberring" flag.
  */
 static int
-getregion(rp)
-	REGION *rp;
+getregion(REGION *rp)
 {
 	LINE	*flp, *blp;
 	long	 fsize, bsize;
@@ -230,9 +225,7 @@ getregion(rp)
  * Set size, and check for overflow.
  */
 static int
-setsize(rp, size)
-	REGION *rp;
-	RSIZE   size;
+setsize(REGION *rp, RSIZE size)
 {
 	rp->r_size = size;
 	if (rp->r_size != size) {
@@ -261,8 +254,7 @@ static char	prefix_string[PREFIXLENGTH] = {'>', '\0'};
  */
 /* ARGSUSED */
 int
-prefixregion(f, n)
-	int f, n;
+prefixregion(int f, int n)
 {
 	LINE	*first, *last;
 	REGION	 region;
@@ -305,8 +297,7 @@ prefixregion(f, n)
  */
 /* ARGSUSED */
 int
-setprefix(f, n)
-	int f, n;
+setprefix(int f, int n)
 {
 	char	buf[PREFIXLENGTH];
 	int	s;

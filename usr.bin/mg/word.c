@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.7 2002/05/29 12:44:59 vincent Exp $	*/
+/*	$OpenBSD: word.c,v 1.8 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *		Word mode commands.
@@ -14,8 +14,7 @@
  */
 /* ARGSUSED */
 int
-backword(f, n)
-	int f, n;
+backword(int f, int n)
 {
 	if (n < 0)
 		return forwword(f | FFRAND, -n);
@@ -40,8 +39,7 @@ backword(f, n)
  */
 /* ARGSUSED */
 int
-forwword(f, n)
-	int f, n;
+forwword(int f, int n)
 {
 	if (n < 0)
 		return backword(f | FFRAND, -n);
@@ -64,8 +62,7 @@ forwword(f, n)
  */
 /* ARGSUSED */
 int
-upperword(f, n)
-	int f, n;
+upperword(int f, int n)
 {
 	int	c;
 
@@ -101,8 +98,7 @@ upperword(f, n)
  */
 /* ARGSUSED */
 int
-lowerword(f, n)
-	int f, n;
+lowerword(int f, int n)
 {
 	int	c;
 
@@ -139,8 +135,7 @@ lowerword(f, n)
  */
 /* ARGSUSED */
 int
-capword(f, n)
-	int f, n;
+capword(int f, int n)
 {
 	int	c;
 
@@ -185,8 +180,7 @@ capword(f, n)
  */
 /* ARGSUSED */
 int
-delfword(f, n)
-	int f, n;
+delfword(int f, int n)
 {
 	RSIZE	 size;
 	LINE	*dotp;
@@ -239,8 +233,7 @@ out:
  */
 /* ARGSUSED */
 int
-delbword(f, n)
-	int f, n;
+delbword(int f, int n)
 {
 	RSIZE	size;
 
@@ -290,7 +283,7 @@ out:
  * part of a word. The word character list is hard coded. Should be setable.
  */
 int
-inword()
+inword(void)
 {
 	/* can't use lgetc in ISWORD due to bug in OSK cpp */
 	return curwp->w_doto != llength(curwp->w_dotp) &&

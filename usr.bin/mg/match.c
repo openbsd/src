@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.8 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: match.c,v 1.9 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *	Limited parenthesis matching routines
@@ -49,8 +49,7 @@ static struct balance {
  * character, if any.  Bound to "blink-matching-paren-command".
  */
 int
-showmatch(f, n)
-	int f, n;
+showmatch(int f, int n)
 {
 	int	i, s;
 
@@ -75,7 +74,7 @@ showmatch(f, n)
  */
 
 static int
-balance()
+balance(void)
 {
 	LINE	*clp;
 	int	 cbo;
@@ -146,9 +145,7 @@ balance()
  */
 
 static void
-displaymatch(clp, cbo)
-	LINE *clp;
-	int cbo;
+displaymatch(LINE *clp, int cbo)
 {
 	LINE	*tlp;
 	int	 tbo;

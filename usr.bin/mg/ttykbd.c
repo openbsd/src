@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.10 2002/02/21 04:16:23 deraadt Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.11 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -29,7 +29,7 @@ char	*keystrings[] = {NULL};
  * file is, depending on what startupfile() does on your system.
  */
 void
-ttykeymapinit()
+ttykeymapinit(void)
 {
 	char	*cp;
 
@@ -70,7 +70,7 @@ ttykeymapinit()
  * Clean up the keyboard -- called by tttidy()
  */
 void
-ttykeymaptidy()
+ttykeymaptidy(void)
 {
 	if (keypad_local)
 		/* turn off keypad */

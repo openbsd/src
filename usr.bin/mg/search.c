@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.9 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: search.c,v 1.10 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *		Search commands.
@@ -52,8 +52,7 @@ int		srch_lastdir = SRCH_NOPR;	/* Last search flags.	 */
  */
 /* ARGSUSED */
 int
-forwsearch(f, n)
-	int f, n;
+forwsearch(int f, int n)
 {
 	int	s;
 
@@ -75,8 +74,7 @@ forwsearch(f, n)
  */
 /* ARGSUSED */
 int
-backsearch(f, n)
-	int f, n;
+backsearch(int f, int n)
 {
 	int	s;
 
@@ -97,8 +95,7 @@ backsearch(f, n)
  */
 /* ARGSUSED */
 int
-searchagain(f, n)
-	int f, n;
+searchagain(int f, int n)
 {
 	if (srch_lastdir == SRCH_FORW) {
 		if (forwsrch() == FALSE) {
@@ -124,8 +121,7 @@ searchagain(f, n)
  */
 /* ARGSUSED */
 int
-forwisearch(f, n)
-	int f, n;
+forwisearch(int f, int n)
 {
 	return isearch(SRCH_FORW);
 }
@@ -136,8 +132,7 @@ forwisearch(f, n)
  */
 /* ARGSUSED */
 int
-backisearch(f, n)
-	int f, n;
+backisearch(int f, int n)
 {
 	return isearch(SRCH_BACK);
 }
@@ -154,8 +149,7 @@ backisearch(f, n)
  *	else	accumulate into search string
  */
 static int
-isearch(dir)
-	int dir;
+isearch(int dir)
 {
 	LINE	*clp;
 
@@ -315,8 +309,7 @@ isearch(dir)
 }
 
 static void
-is_cpush(cmd)
-	int cmd;
+is_cpush(int cmd)
 {
 	if (++cip >= NSRCH)
 		cip = 0;
@@ -324,7 +317,7 @@ is_cpush(cmd)
 }
 
 static void
-is_lpush()
+is_lpush(void)
 {
 	int	ctp;
 
@@ -337,7 +330,7 @@ is_lpush()
 }
 
 static void
-is_pop()
+is_pop(void)
 {
 	if (cmds[cip].s_code != SRCH_NOPR) {
 		curwp->w_doto = cmds[cip].s_doto;
@@ -350,15 +343,14 @@ is_pop()
 }
 
 static int
-is_peek()
+is_peek(void)
 {
 	return cmds[cip].s_code;
 }
 
 /* this used to always return TRUE (the return value was checked) */
 static void
-is_undo(pptr, dir)
-	int *pptr, *dir;
+is_undo(int *pptr, int *dir)
 {
 	int	redo = FALSE;
 
@@ -390,8 +382,7 @@ is_undo(pptr, dir)
 }
 
 static int
-is_find(dir)
-	int	dir;
+is_find(int dir)
 {
 	int	 plen, odoto;
 	LINE	*odotp;
@@ -431,8 +422,7 @@ is_find(dir)
  * status, so I just made the checking vanish.
  */
 static void
-is_prompt(dir, flag, success)
-	int dir, flag, success;
+is_prompt(int dir, int flag, int success)
 {
 	if (dir == SRCH_FORW) {
 		if (success != FALSE)
@@ -453,9 +443,7 @@ is_prompt(dir, flag, success)
  * a string. The "flag" determines whether pat should be printed.
  */
 static void
-is_dspl(prompt, flag)
-	char *prompt;
-	int flag;
+is_dspl(char *prompt, int flag)
 {
 	if (flag != FALSE)
 		ewprintf("%s: ", prompt);
@@ -469,8 +457,7 @@ is_dspl(prompt, flag)
  */
 /* ARGSUSED */
 int
-queryrepl(f, n)
-	int f, n;
+queryrepl(int f, int n)
 {
 	int	s;
 	int	rcnt = 0;		/* replacements made so far	*/
@@ -552,7 +539,7 @@ stopsearch:
  * FALSE is returned.
  */
 int
-forwsrch()
+forwsrch(void)
 {
 	LINE	*clp, *tlp;
 	int	 cbo, tbo, c;
@@ -601,7 +588,7 @@ fail:		;
  * string isn't found, FALSE is returned.
  */
 int
-backsrch()
+backsrch(void)
 {
 	LINE	*clp, *tlp;
 	int	 cbo, tbo, c;
@@ -654,8 +641,7 @@ fail:		;
  * folded out. The "pc" is from the pattern.
  */
 static int
-eq(bc, pc)
-	int bc, pc;
+eq(int bc, int pc)
 {
 	bc = CHARMASK(bc);
 	pc = CHARMASK(pc);
@@ -676,8 +662,7 @@ eq(bc, pc)
  * expansion.
  */
 int
-readpattern(prompt)
-	char *prompt;
+readpattern(char *prompt)
 {
 	int	s;
 	char	tpat[NPAT];
@@ -695,3 +680,4 @@ readpattern(prompt)
 		s = TRUE;
 	return s;
 }
+

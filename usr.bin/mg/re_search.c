@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.11 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.12 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *	regular expression search commands for Mg
@@ -47,8 +47,7 @@ static int	 countmatches(int);
  */
 /* ARGSUSED */
 int
-re_forwsearch(f, n)
-	int f, n;
+re_forwsearch(int f, int n)
 {
 	int	s;
 
@@ -71,8 +70,7 @@ re_forwsearch(f, n)
  */
 /* ARGSUSED */
 int
-re_backsearch(f, n)
-	int f, n;
+re_backsearch(int f, int n)
 {
 	int	s;
 
@@ -96,8 +94,7 @@ re_backsearch(f, n)
  */
 /* ARGSUSED */
 int
-re_searchagain(f, n)
-	int f, n;
+re_searchagain(int f, int n)
 {
 	if (re_srch_lastdir == SRCH_NOPR) {
 		ewprintf("No last search");
@@ -129,8 +126,7 @@ static regmatch_t	re_match[RE_NMATCH];
  */
 /* ARGSUSED */
 int
-re_queryrepl(f, n)
-	int f, n;
+re_queryrepl(int f, int n)
 {
 	int	s;
 	int	rcnt = 0;	/* replacements made so far	*/
@@ -213,12 +209,12 @@ stopsearch:
 /*
  * Routine re_doreplace calls lreplace to make replacements needed by
  * re_query replace.  Its reason for existence is to deal with \1, \2. etc.
+ *  plen: length to remove
+ *  st:   replacement string
+ *  f:    case hack disable
  */
 static int
-re_doreplace(plen, st, f)
-	RSIZE	plen;	/* length to remove	*/
-	char	*st;	/* replacement string	*/
-	int	f;	/* case hack disable	*/
+re_doreplace(RSIZE plen, char *st, int f)
 {
 	int	 j, k, s, more, num, state;
 	LINE	*clp;
@@ -308,7 +304,7 @@ re_doreplace(plen, st, f)
  * string isn't found, FALSE is returned.
  */
 static int
-re_forwsrch()
+re_forwsrch(void)
 {
 	int	 tbo, error;
 	LINE	*clp;
@@ -355,7 +351,7 @@ re_forwsrch()
  * found, FALSE is returned.
  */
 static int
-re_backsrch()
+re_backsrch(void)
 {
 	LINE		*clp;
 	int		 tbo;
@@ -416,8 +412,7 @@ re_backsrch()
  * some do-it-yourself control expansion.
  */
 static int
-re_readpattern(prompt)
-	char *prompt;
+re_readpattern(char *prompt)
 {
 	int		s, flags, error;
 	char		tpat[NPAT];
@@ -457,8 +452,7 @@ re_readpattern(prompt)
  * with argument cause case to matter.
  */
 int
-setcasefold(f, n)
-	int f, n;
+setcasefold(int f, int n)
 {
 	if (f & FFARG) {
 		casefoldsearch = FALSE;
@@ -481,8 +475,7 @@ setcasefold(f, n)
  * Delete all lines after dot that contain a string matching regex
  */
 int
-delmatchlines(f, n)
-	int f, n;
+delmatchlines(int f, int n)
 {
 	int	s;
 
@@ -498,8 +491,7 @@ delmatchlines(f, n)
  * Delete all lines after dot that don't contain a string matching regex
  */
 int
-delnonmatchlines(f, n)
-	int f, n;
+delnonmatchlines(int f, int n)
 {
 	int	s;
 
@@ -515,8 +507,7 @@ delnonmatchlines(f, n)
  * This function does the work of deleting matching lines
  */
 static int
-killmatches(cond)
-	int	cond;
+killmatches(int cond)
 {
 	int	 s, error;
 	int	 count = 0;
@@ -559,8 +550,7 @@ killmatches(cond)
  * Count lines matching regex
  */
 int
-cntmatchlines(f, n)
-	int f, n;
+cntmatchlines(int f, int n)
 {
 	int	s;
 
@@ -574,8 +564,7 @@ cntmatchlines(f, n)
  * Count lines that fail to match regex
  */
 int
-cntnonmatchlines(f, n)
-	int f, n;
+cntnonmatchlines(int f, int n)
 {
 	int	s;
 
@@ -591,8 +580,7 @@ cntnonmatchlines(f, n)
  * This function does the work of counting matching lines.
  */
 int
-countmatches(cond)
-	int cond;
+countmatches(int cond)
 {
 	int	 error;
 	int	 count = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.7 2002/02/14 14:24:21 deraadt Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.8 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  * Code for dealing with paragraphs and filling. Adapted from MicroEMACS 3.6
@@ -18,8 +18,7 @@ static int	fillcol = 70;
  */
 /* ARGSUSED */
 int
-gotobop(f, n)
-	int f, n;
+gotobop(int f, int n)
 {
 	/* the other way... */
 	if (n < 0)
@@ -72,8 +71,7 @@ gotobop(f, n)
  */
 /* ARGSUSED */
 int
-gotoeop(f, n)
-	int f, n;
+gotoeop(int f, int n)
 {
 	/* the other way... */
 	if (n < 0)
@@ -116,8 +114,7 @@ gotoeop(f, n)
  */
 /* ARGSUSED */
 int
-fillpara(f, n)
-	int f, n;
+fillpara(int f, int n)
 {
 	int	 c;		/* current char durring scan		*/
 	int	 wordlen;	/* length of current word		*/
@@ -238,8 +235,7 @@ fillpara(f, n)
  */
 /* ARGSUSED */
 int
-killpara(f, n)
-	int f, n;
+killpara(int f, int n)
 {
 	int	status;		/* returned status of functions */
 
@@ -275,8 +271,7 @@ killpara(f, n)
  */
 /* ARGSUSED */
 int
-fillword(f, n)
-	int f, n;
+fillword(int f, int n)
 {
 	char	c;
 	int	col, i, nce;
@@ -327,8 +322,7 @@ fillword(f, n)
  * Set fill column to n for justify.
  */
 int
-setfillcol(f, n)
-	int f, n;
+setfillcol(int f, int n)
 {
 	fillcol = ((f & FFARG) ? n : getcolpos());
 	ewprintf("Fill column set to %d", fillcol);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.10 2002/02/20 23:57:52 deraadt Exp $	*/
+/*	$OpenBSD: window.c,v 1.11 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *		Window handling.
@@ -16,8 +16,7 @@
  */
 /* ARGSUSED */
 int
-reposition(f, n)
-	int f, n;
+reposition(int f, int n)
 {
 #ifndef GOSREC
 	curwp->w_force = (f & FFARG) ? (n >= 0 ? n + 1 : n) : 0;
@@ -42,8 +41,7 @@ reposition(f, n)
  */
 /* ARGSUSED */
 int
-refresh(f, n)
-	int f, n;
+refresh(int f, int n)
 {
 	MGWIN	*wp;
 	int	 oldnrow;
@@ -79,8 +77,7 @@ refresh(f, n)
  */
 /* ARGSUSED */
 int
-nextwind(f, n)
-	int f, n;
+nextwind(int f, int n)
 {
 	MGWIN	*wp;
 
@@ -99,8 +96,7 @@ nextwind(f, n)
  */
 /* ARGSUSED */
 int
-prevwind(f, n)
-	int f, n;
+prevwind(int f, int n)
 {
 	MGWIN	*wp1, *wp2;
 
@@ -124,8 +120,7 @@ prevwind(f, n)
  */
 /* ARGSUSED */
 int
-onlywind(f, n)
-	int f, n;
+onlywind(int f, int n)
 {
 	MGWIN	*wp;
 	LINE	*lp;
@@ -175,8 +170,7 @@ onlywind(f, n)
  */
 /* ARGSUSED */
 int
-splitwind(f, n)
-	int f, n;
+splitwind(int f, int n)
 {
 	MGWIN	*wp, *wp1, *wp2;
 	LINE	*lp;
@@ -261,8 +255,7 @@ splitwind(f, n)
  */
 /* ARGSUSED */
 int
-enlargewind(f, n)
-	int f, n;
+enlargewind(int f, int n)
 {
 	MGWIN	*adjwp;
 	LINE	*lp;
@@ -311,8 +304,7 @@ enlargewind(f, n)
  * window descriptions. Ask the redisplay to do all the hard work.
  */
 int
-shrinkwind(f, n)
-	int f, n;
+shrinkwind(int f, int n)
 {
 	MGWIN	*adjwp;
 	LINE	*lp;
@@ -366,8 +358,7 @@ shrinkwind(f, n)
  */
 /* ARGSUSED */
 int
-delwind(f, n)
-	int f, n;
+delwind(int f, int n)
 {
 	MGWIN	*wp, *nwp;
 
@@ -404,7 +395,7 @@ delwind(f, n)
  * might be better. Return a pointer, or NULL on error.
  */
 MGWIN *
-wpopup()
+wpopup(void)
 {
 	MGWIN	*wp;
 

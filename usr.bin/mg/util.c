@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2003/05/16 19:28:59 vincent Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2003/05/20 03:08:55 cloder Exp $	*/
 
 /*
  *		Assorted commands.
@@ -20,8 +20,7 @@
  */
 /* ARGSUSED */
 int
-showcpos(f, n)
-	int f, n;
+showcpos(int f, int n)
 {
 	LINE	*clp;
 	long	 nchar;
@@ -112,8 +111,7 @@ getcolpos(void)
  */
 /* ARGSUSED */
 int
-twiddle(f, n)
-	int f, n;
+twiddle(int f, int n)
 {
 	LINE	*dotp;
 	int	 doto, cr;
@@ -143,8 +141,7 @@ twiddle(f, n)
  */
 /* ARGSUSED */
 int
-openline(f, n)
-	int f, n;
+openline(int f, int n)
 {
 	int	i;
 	int	s;
@@ -176,8 +173,7 @@ openline(f, n)
  */
 /* ARGSUSED */
 int
-newline(f, n)
-	int f, n;
+newline(int f, int n)
 {
 	LINE	*lp;
 	int	 s;
@@ -211,8 +207,7 @@ newline(f, n)
  */
 /* ARGSUSED */
 int
-deblank(f, n)
-	int f, n;
+deblank(int f, int n)
 {
 	LINE	*lp1, *lp2;
 	RSIZE	 nld;
@@ -235,8 +230,7 @@ deblank(f, n)
  * Delete any whitespace around dot, then insert a space.
  */
 int
-justone(f, n)
-	int f, n;
+justone(int f, int n)
 {
 	(void)delwhite(f, n);
 	return linsert(1, ' ');
@@ -247,8 +241,7 @@ justone(f, n)
  */
 /* ARGSUSED */
 int
-delwhite(f, n)
-	int f, n;
+delwhite(int f, int n)
 {
 	int	col, c, s;
 
@@ -282,8 +275,7 @@ delwhite(f, n)
  */
 /* ARGSUSED */
 int
-indent(f, n)
-	int f, n;
+indent(int f, int n)
 {
 	int	nicol;
 	int	c;
@@ -321,8 +313,7 @@ indent(f, n)
  */
 /* ARGSUSED */
 int
-forwdel(f, n)
-	int f, n;
+forwdel(int f, int n)
 {
 	if (n < 0)
 		return backdel(f | FFRAND, -n);
@@ -344,8 +335,7 @@ forwdel(f, n)
  */
 /* ARGSUSED */
 int
-backdel(f, n)
-	int f, n;
+backdel(int f, int n)
 {
 	int	s;
 
@@ -375,8 +365,7 @@ backdel(f, n)
  */
 /* ARGSUSED */
 int
-killline(f, n)
-	int f, n;
+killline(int f, int n)
 {
 	LINE	*nextp;
 	RSIZE	 chunk;
@@ -439,8 +428,7 @@ killline(f, n)
  */
 /* ARGSUSED */
 int
-yank(f, n)
-	int f, n;
+yank(int f, int n)
 {
 	LINE	*lp;
 	int	 c, i, nline;
@@ -484,8 +472,7 @@ yank(f, n)
 #ifdef	NOTAB
 /* ARGSUSED */
 int
-space_to_tabstop(f, n)
-	int f, n;
+space_to_tabstop(int f, int n)
 {
 	if (n < 0)
 		return FALSE;
