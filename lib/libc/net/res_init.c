@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.11 1997/03/13 19:07:38 downsj Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.12 1997/04/03 05:53:46 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.11 1997/03/13 19:07:38 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.12 1997/04/03 05:53:46 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -269,7 +269,7 @@ res_init()
 		    continue;
 		}
 		/* lookup types */
-		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
+		if (MATCH(buf, "lookup")) {
 		    char *sp = NULL;
 
 		    bzero(_res.lookups, sizeof _res.lookups);
