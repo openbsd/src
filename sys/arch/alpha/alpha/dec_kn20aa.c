@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn20aa.c,v 1.10 2000/11/08 21:48:45 art Exp $ */
+/* $OpenBSD: dec_kn20aa.c,v 1.11 2000/11/16 23:32:20 ericj Exp $ */
 /* $NetBSD: dec_kn20aa.c,v 1.42 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -48,9 +48,8 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#if 0
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
-#endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -60,9 +59,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#if 0
 #include "pckbd.h"
-#endif
 
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
@@ -133,13 +130,14 @@ dec_kn20aa_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(ccp->cc_iot, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
+			isa_display_console(ccp->cc_iot, ccp->cc_memt);
 		else
-			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
+			pci_display_console(ccp->cc_iot, ccp->cc_memt,
 			    &ccp->cc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
 			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
 #else

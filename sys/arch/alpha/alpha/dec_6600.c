@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.1 2000/11/16 04:50:17 ericj Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.2 2000/11/16 23:32:20 ericj Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -56,9 +56,7 @@
 #include <scsi/scsiconf.h>
 #include <dev/ata/atavar.h>
 
-#if 0
 #include "pckbd.h"
-#endif
 
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
@@ -130,17 +128,17 @@ dec_6600_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&tsp->pc_iot, IO_KBD, KBCMDP,
+		(void) pckbc_cnattach(tsp->pc_iot, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctbslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(&tsp->pc_iot, &tsp->pc_memt);
+			isa_display_console(tsp->pc_iot, tsp->pc_memt);
 		else {
 			/* The display PCI might be different */
 			tsp_console_hose = CTB_TURBOSLOT_HOSE(ctbslot);
 			tsp = tsp_init(0, tsp_console_hose);
-			pci_display_console(&tsp->pc_iot, &tsp->pc_memt,
+			pci_display_console(tsp->pc_iot, tsp->pc_memt,
 			    &tsp->pc_pc, CTB_TURBOSLOT_BUS(ctbslot),
 			    CTB_TURBOSLOT_SLOT(ctbslot), 0);
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.3 2000/11/08 21:48:43 art Exp $ */
+/* $OpenBSD: dec_550.c,v 1.4 2000/11/16 23:32:20 ericj Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -49,9 +49,8 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042reg.h>
-#ifdef notyet
+
 #include <dev/ic/pckbcvar.h>
-#endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -134,14 +133,14 @@ dec_550_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
+		(void) pckbc_cnattach(ccp->cc_iot, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
+			isa_display_console(ccp->cc_iot, ccp->cc_memt);
 		else
-			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
+			pci_display_console(ccp->cc_iot, ccp->cc_memt,
 			    &ccp->cc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
 			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
 #else
