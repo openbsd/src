@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.16 2001/03/16 22:46:26 hugh Exp $	*/
+/*	$OpenBSD: locore.c,v 1.17 2001/04/01 17:15:22 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -174,6 +174,9 @@ start()
 	case VAX_BTYP_1303:	
 		dep_call = &ka53_calls;
 		switch((vax_siedata >> 8) & 0xFF) {
+		case VAX_STYP_50:
+			strcpy(cpu_model, "MicroVAX 3100 model 85 or 90");
+			break;
 		case VAX_STYP_51:
 			strcpy(cpu_model, "MicroVAX 3100 model 90 or 95");
 			break;
@@ -183,7 +186,6 @@ start()
 		case VAX_STYP_53:
 			strcpy(cpu_model, "VAX 4000 105A");
 			break;
-		case VAX_STYP_50:
 		default:
 			strcpy(cpu_model, "VAX - Unknown Cheetah Class");
 		}
