@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.51 2003/04/11 15:13:34 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.52 2003/04/11 15:18:33 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -56,6 +56,9 @@
 
 TAILQ_HEAD(altqs, pf_altq) altqs = TAILQ_HEAD_INITIALIZER(altqs);
 LIST_HEAD(gen_sc, segment) rtsc, lssc;
+
+struct pf_altq	*qname_to_pfaltq(const char *, const char *);
+u_int32_t	 qname_to_qid(const char *);
 
 static int	eval_pfqueue_cbq(struct pfctl *, struct pf_altq *);
 static int	cbq_compute_idletime(struct pfctl *, struct pf_altq *);
