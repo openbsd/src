@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 1997/07/11 20:46:50 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 1997/07/23 04:31:59 denny Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -980,6 +980,7 @@ badladdr(addr)
 
 void arpintr __P((void));
 void ipintr __P((void));
+void atintr __P((void));
 void nsintr __P((void));
 void clnlintr __P((void));
 void pppintr __P((void));
@@ -998,6 +999,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
