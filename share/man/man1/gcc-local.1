@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.6 2005/01/03 16:03:29 miod Exp $
+.\" $OpenBSD: gcc-local.1,v 1.7 2005/01/11 02:45:37 espie Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -142,7 +142,13 @@ comes with the
 stack protection extension, which is enabled by default.
 This extension reorders local variable declarations and adds stack consistency
 checks at run time, in order to detect stack overflows, and will attempt to
-report the problem in the system logs, and abort the faulting process.
+report the problem in the system logs by calling 
+.Xr syslog 2
+with a
+.Dv LOG_CRIT
+priority message:
+.Dq stack overflow in function XXX ,
+and abort the faulting process.
 It can be turned off using the
 .Fl fno-stack-protector
 commandline option.
@@ -188,6 +194,12 @@ on other systems is to perform this action, which can be restored for
 .Ox
 with
 .Fl fzero-initialized-in-bss .
+.It
+On
+.Ox ,
+.Nm gcc
+does not warn for cast expressions used as lvalues outside of
+.Fl pedantic .
 .El
 .Sh ATTRIBUTES
 The
