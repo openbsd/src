@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.5 2004/07/28 11:18:01 jfb Exp $	*/
+/*	$OpenBSD: client.c,v 1.6 2004/07/29 18:32:03 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,12 +51,8 @@ extern int   cvs_trace;
 extern int   cvs_nolog;
 extern int   cvs_readonly;
 
-extern struct cvsroot *cvs_root;
 
-
-
-
-static int  cvs_client_sendinfo (void);
+static int  cvs_client_sendinfo (struct cvsroot *);
 static int  cvs_client_initlog  (void);
 
 
@@ -169,7 +165,7 @@ cvs_client_connect(struct cvsroot *root)
 
 	cvs_client_initlog();
 
-	cvs_client_sendinfo();
+	cvs_client_sendinfo(root);
 
 #ifdef CVS_ZLIB
 	/* if compression was requested, initialize it */
@@ -392,7 +388,7 @@ cvs_client_getln(char *lbuf, size_t len)
  */
 
 static int
-cvs_client_sendinfo(void)
+cvs_client_sendinfo(struct cvsroot *root)
 {
 	char *vresp;
 	/*
@@ -415,6 +411,10 @@ cvs_client_sendinfo(void)
 		return (-1);
 	}
 
+	/* not sure why, but we have to send this */
+	if (cvs_client_sendreq(CVS_REQ_USEUNCHANGED, NULL, 0) < 0)
+		return (-1);
+
 	/* now share our global options with the server */
 	if (verbosity == 1)
 		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-q", 0);
@@ -429,11 +429,7 @@ cvs_client_sendinfo(void)
 		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-t", 0);
 
 	/* now send the CVSROOT to the server */
-	if (cvs_client_sendreq(CVS_REQ_ROOT, cvs_root->cr_dir, 0) < 0)
-		return (-1);
-
-	/* not sure why, but we have to send this */
-	if (cvs_client_sendreq(CVS_REQ_USEUNCHANGED, NULL, 0) < 0)
+	if (cvs_client_sendreq(CVS_REQ_ROOT, root->cr_dir, 0) < 0)
 		return (-1);
 
 	return (0);
