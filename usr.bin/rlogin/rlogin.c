@@ -213,7 +213,7 @@ main(argc, argv)
 #ifdef KERBEROS
 		case 'x':
 			doencrypt = 1;
-			des_set_key(&cred.session, schedule);
+			desrw_set_key(&cred.session, schedule);
 			break;
 #endif
 		case '?':
