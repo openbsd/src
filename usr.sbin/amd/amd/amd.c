@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.2 2001/03/02 06:22:21 deraadt Exp $
+ *	$Id: amd.c,v 1.3 2002/05/25 07:33:36 deraadt Exp $
  */
 
 #ifndef lint
@@ -347,7 +347,7 @@ char *argv[];
 	 */
 	error = mount_automounter(ppid);
 	if (error && ppid)
-		kill(SIGALRM, ppid);
+		kill(ppid, SIGALRM);
 	going_down(error);
 
 	abort();
