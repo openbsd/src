@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.40 2001/01/14 23:09:11 angelos Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.135 2000/10/16 18:16:59 provos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.41 2001/01/26 11:08:43 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -446,7 +446,6 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   int group_desc = -1, new_group_desc;
   struct ipsec_sa *isa = msg->isakmp_sa->data;
   struct hash *hash = hash_get (isa->hash);
-
   struct sockaddr *src;
   socklen_t srclen;
 
@@ -705,7 +704,10 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  protocol_num = constant_value (ipsec_proto_cst, protocol_id);
 	  spi = doi->get_spi (&spi_sz, protocol_num, msg);
 	  if (spi_sz && !spi)
-	    goto bail_out;
+	    {
+	      log_print ("initiator_send_HASH_SA_NONCE: doi->get_spi failed");
+	      goto bail_out;
+	    }
 
 	  proposal_len = ISAKMP_PROP_SPI_OFF + spi_sz;
 	  proposals_len += proposal_len + transforms_len[prop_no];
