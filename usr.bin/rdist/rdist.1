@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.14 2002/05/10 02:01:32 millert Exp $
+.\"	$OpenBSD: rdist.1,v 1.15 2003/01/15 15:05:36 deraadt Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nd remote file distribution client program
 .Sh SYNOPSIS
 .Nm rdist
+.Bk -words
 .Op Fl DFn
 .Op Fl A Ar num
 .Op Fl a Ar num
@@ -56,6 +57,7 @@
 .Op Fl p Ar <rdistd-path>
 .Op Fl P Ar <rsh-path>
 .Op Ar name ...
+.Ek
 .Pp
 .Nm rdist
 .Fl DFn
@@ -154,7 +156,7 @@ where
 .Em host
 is the name of the target host,
 .Em remuser
-is the name of the user to make the connection as and,
+is the name of the user to make the connection as, and
 .Em rdistd
 is the rdist server command on the target host as shown below.
 .Pp
@@ -362,7 +364,7 @@ Use the numeric user ID (UID) to check user ownership instead of
 the user name.
 .It Sy savetargets
 Save files that are updated instead of removing them.
-Any target file that is updates is first rename from
+Any target file that is updated is first renamed from
 .Pa file
 to
 .Pa file.OLD .

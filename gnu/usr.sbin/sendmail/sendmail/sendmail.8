@@ -63,7 +63,7 @@ then the letter will also be delivered to `john'.
 .Ss Parameters
 .Bl -tag -width Fl
 .\" XXX - how to prevent Ac from being interpreted as angle close quote?
-.It Fl A Ns c
+.It Fl \&Ac
 Use submit.cf even if the operation mode does not indicate
 an initial mail submission.
 .It Fl Am
@@ -72,7 +72,7 @@ an initial mail submission.
 .It Fl B Ns Ar type
 Set the body type to
 .Ar type .
-Current legal values
+Current legal values are
 .Li 7BIT
 or
 .Li 8BITMIME .
@@ -88,7 +88,7 @@ fields are examined for the name of the sender.
 .It Fl bd
 Run as a daemon.
 .Nm Sendmail
-will fork and run in background
+will fork and run in the background
 listening on socket 25 for incoming
 .Tn SMTP
 connections.
@@ -247,7 +247,7 @@ or
 would both set the timeout to one hour thirty minutes.
 By default,
 .Nm sendmail
-will run in background.
+will run in the background.
 This option can be used safely with
 .Fl bd .
 .It Fl qp Ns Op Ar time
@@ -259,15 +259,15 @@ that alternates between processing the queue and sleeping.
 The sleep time is given as the argument; it defaults to 1 second.
 The process will always sleep at least 5 seconds if the queue was
 empty in the previous queue run.
-.It Fl q Ns f
+.It Fl qf
 Process saved messages in the queue once and do not fork(),
 but run in the foreground.
-.It Fl q Ns G Ar name
+.It Fl qG Ar name
 Process jobs in queue group called
 .Ar name
 only.
 .It Xo Fl q Ns Op Ar ! Ns
-.No I Ar substr
+.Cm I Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
@@ -275,7 +275,7 @@ as a substring of the queue id or not when
 .Em !
 is specified.
 .It Xo Fl q Ns Op Ar ! Ns
-.No R Ar substr
+.Cm R Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
@@ -283,7 +283,7 @@ as a substring of one of the recipients or not when
 .Em !
 is specified.
 .It Xo Fl q Ns Op Ar ! Ns
-.No S Ar substr
+.Cm S Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
@@ -406,7 +406,7 @@ in the sender's home directory.
 Save
 .Tn UNIX Ns \-style
 From lines at the front of messages.
-.It Li MaxHopCount= Ar N
+.It Li MaxHopCount= Ns Ar N
 The maximum number of times a message is allowed to ``hop''
 before we decide it is in a loop.
 .It Li IgnoreDots

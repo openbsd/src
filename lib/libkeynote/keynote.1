@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.22 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: keynote.1,v 1.23 2003/01/15 15:05:35 deraadt Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -85,7 +85,7 @@ Similarly, the resulting private key is stored in file
 .Fa PrivateKeyFile .
 Either of the filenames can be specified to be
 .Dq \- ,
-in which case the corresponding key(s) will be printed in standard output.
+in which case the corresponding key(s) will be printed to standard output.
 .Pp
 The optional parameters
 .Fa print-offset
@@ -133,7 +133,7 @@ identifiers are:
 .El
 .Pp
 Notice that the trailing colon is required.
-The resulting signature is printed in standard output.
+The resulting signature is printed to standard output.
 This can then be added (via cut-and-paste or some script) at the end of the
 assertion, in the
 .Fa Signature
@@ -240,7 +240,7 @@ in the action authorizers.
 .Pp
 Exactly one
 .Fl r
-and least one of each
+and at least one of each
 .Fl e ,
 .Fl l ,
 and

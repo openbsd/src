@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.13 2000/11/09 17:52:30 aaron Exp $
+.\"	$OpenBSD: pr.1,v 1.14 2003/01/15 15:05:35 deraadt Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -111,18 +111,18 @@ A 5-line trailer consisting of blank lines.
 Optionally, the trailer can be replaced by a
 .Em <form-feed>
 where this is more appropriate for the output device being used and
-.Em <tab>s
+.Em <tab> Ns s
 can be expanded to input relative
-.Em <spaces>s
+.Em <spaces> Ns s
 or
-.Em <space>s
-can contracted to output relative
-.Em <tab>s .
+.Em <space> Ns s
+can be contracted to output relative
+.Em <tab> Ns s .
 The
 .Nm pr
 utility also interprets
-.Em <form-feed>s
-in the input as logical end of pages.
+.Em <form-feed> Ns s
+in the input as the logical end of pages.
 .Pp
 When multiple column output is specified,
 text columns are of equal width.
@@ -155,7 +155,7 @@ Begin output at page number
 of the formatted input.
 .It Fl Ar column
 Produce output that is
-.Ar columns
+.Ar column Ns s
 wide (default is 1) that is written vertically
 down each column in the order in which the text
 is received from the input file.
@@ -171,13 +171,13 @@ When used with
 the minimum number of lines is used to display the output.
 .It Fl a
 Modify the effect of the
-.Fl column
+.Fl Ar column
 option so that the columns are filled across the page in a round-robin order
 (e.g., when column is 2, the first input line heads column
 1, the second heads column 2, the third is the second line
 in column 1, etc.).
 This option requires the use of the
-.Fl column
+.Fl Ar column
 option.
 .It Fl d
 Produce output that is double spaced.
@@ -202,7 +202,7 @@ All
 .Em <tab>
 characters in the input are expanded into the appropriate
 number of
-.Em <space>s .
+.Em <space> Ns s.
 If any nondigit character,
 .Ar char ,
 is specified, it is used as the input tab character.
@@ -226,12 +226,12 @@ to replace the
 in the header line.
 .It Fl i Ar \&[char\&]\&[gap\&]
 In output, replace multiple
-.Em <space>s
+.Em <space> Ns s
 with
-.Em <tab>s
+.Em <tab> Ns s
 whenever two or more
 adjacent
-.Em <space>s
+.Em <space> Ns s
 reach column positions
 .Ar gap+1 ,
 .Ar 2*gap+1 ,
@@ -298,7 +298,7 @@ columns are truncated.
 .It Fl o Ar offset
 Each line of output is preceded by
 .Ar offset
-.Em <spaces>s .
+.Em <spaces> Ns s.
 If the
 .Fl o
 option is not specified, the default is zero.
@@ -309,7 +309,7 @@ Write no diagnostic reports on failure to open a file.
 Separate text columns by the single character
 .Ar char
 instead of by the appropriate number of
-.Em <space>s
+.Em <space> Ns s
 (default for
 .Ar char
 is the
@@ -377,9 +377,9 @@ process (if output is redirected) or after all successful
 file printing is complete (when printing to a terminal).
 .Sh NOTES
 The interpretation of
-.Em <form-feed>s
+.Em <form-feed> Ns s
 in the input stream is that they are special
-.Em <newline>s
+.Em <newline> Ns s
 which have the side effect of causing a page break.
 While this works
 correctly for all cases, strict interpretation also implies that the
@@ -434,7 +434,7 @@ ignored in the default single column mode.
 Using the
 .Fl m
 option with one column provides a way to truncate single column output but
-there's no way to wrap long times to a fixed line width.
+there's no way to wrap long lines to a fixed line width.
 .Pp
 The default of
 .Em <tab>

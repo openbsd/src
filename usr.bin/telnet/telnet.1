@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.30 2002/05/06 23:34:33 millert Exp $
+.\"	$OpenBSD: telnet.1,v 1.31 2003/01/15 15:05:36 deraadt Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -44,6 +44,7 @@
 protocol
 .Sh SYNOPSIS
 .Nm telnet
+.Bk -words
 .Op Fl 8EFKLacdfrx
 .Op Fl X Ar authtype
 .Op Fl b Ar hostalias
@@ -55,6 +56,7 @@ protocol
 .Ar host
 .Op Ar port
 .Oc
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -1021,7 +1023,7 @@ If
 .Nm
 is operating in
 .Dv LINEMODE
-or old line by line'' mode, then this character is taken to
+or ``old line by line'' mode, then this character is taken to
 be the terminal's
 .Ic reprint
 character.
@@ -1261,7 +1263,7 @@ attempts to use it to perform automatic authentication.
 If the
 .Dv AUTHENTICATION
 option is not supported, the user's login
-name are propagated through the
+name is propagated through the
 .Dv TELNET ENVIRON
 option.
 This command is the same as specifying
@@ -1318,7 +1320,7 @@ then carriage returns will be sent as
 .Li <CR><LF> .
 If this is
 .Dv FALSE ,
-then carriage returns will be send as
+then carriage returns will be sent as
 .Li <CR><NUL> .
 The initial value for this toggle is
 .Dv FALSE .

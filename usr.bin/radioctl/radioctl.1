@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radioctl.1,v 1.5 2002/11/14 02:57:28 deraadt Exp $
+.\"	$OpenBSD: radioctl.1,v 1.6 2003/01/15 15:05:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -90,7 +90,7 @@ indicates what part of the tuner the control affects.
 .Pp
 Write only controls:
 .Bl -tag -width search
-.It search
+.It Ar search
 Only for cards that allow hardware search. Can be
 .Ql up
 or
@@ -99,27 +99,27 @@ or
 .Pp
 Read-write controls:
 .Bl -tag -width volume
-.It frequency
+.It Ar frequency
 Float value from 87.5 to 108.0.
-.It volume
+.It Ar volume
 Integer value from 0 to 255.
-.It mute
+.It Ar mute
 Mutes the card (volume is not affected),
 .Ql on
 or
 .Ql off .
-.It mono
+.It Ar mono
 Forces card output to mono,
 .Ql on
 or
 .Ql off .
 Only for cards that allow forced mono.
-.It reference
+.It Ar reference
 Reference frequency. Can be 25 kHz, 50 kHz and 100 kHz. Not all cards allow
-to change the reference frequency.
-.It sensitivity
+the reference frequency to be changed.
+.It Ar sensitivity
 Station locking sensitivity. Can be 5 mkV, 10 mkV, 30 mkV and 150 mkV. Not all
-cards allow to change the station locking sensitivity.
+cards allow the station locking sensitivity to be changed.
 .El
 .Pp
 All the remaining controls (signal, stereo and card capabilities) are read-only
