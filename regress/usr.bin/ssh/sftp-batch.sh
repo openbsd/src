@@ -1,4 +1,4 @@
-#	$OpenBSD: sftp-batch.sh,v 1.1 2003/01/08 23:54:22 djm Exp $
+#	$OpenBSD: sftp-batch.sh,v 1.2 2003/01/10 07:52:41 djm Exp $
 #	Placed in the Public Domain.
 
 tid="sftp batchfile"
@@ -7,7 +7,7 @@ DATA=/bin/ls
 COPY=${OBJ}/copy
 BATCH=${OBJ}/sftp-batch
 
-rm -rf ${COPY} ${COPY}.* ${BATCH}.*
+rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd ${BATCH}.*
 
 cat << EOF > ${BATCH}.pass.1
 	get $DATA $COPY
@@ -37,17 +37,21 @@ cat << EOF > ${BATCH}.fail.2
 EOF
 
 verbose "$tid: good commands"
-${SFTP} -b ${BATCH}.pass.1 -P ${SFTPSERVER} || fail "good commands failed"
+${SFTP} -b ${BATCH}.pass.1 -P ${SFTPSERVER} >/dev/null 2>&1 \
+	|| fail "good commands failed"
 
 verbose "$tid: bad commands"
-${SFTP} -b ${BATCH}.fail.1 -P ${SFTPSERVER} && fail "bad commands succeeded"
+${SFTP} -b ${BATCH}.fail.1 -P ${SFTPSERVER} >/dev/null 2>&1 \
+	&& fail "bad commands succeeded"
 
 verbose "$tid: comments and blanks"
-${SFTP} -b ${BATCH}.pass.2 -P ${SFTPSERVER} || fail "comments & blanks failed"
+${SFTP} -b ${BATCH}.pass.2 -P ${SFTPSERVER} >/dev/null 2>&1 \
+	|| fail "comments & blanks failed"
 
 verbose "$tid: junk command"
-${SFTP} -b ${BATCH}.fail.2 -P ${SFTPSERVER} && fail "junk command succeeded"
+${SFTP} -b ${BATCH}.fail.2 -P ${SFTPSERVER} >/dev/null 2>&1 \
+	&& fail "junk command succeeded"
 
-rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd 
+rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd ${BATCH}.*
 
 
