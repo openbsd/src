@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.23 2000/04/15 02:15:14 aaron Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.24 2000/04/16 17:26:16 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -489,15 +489,15 @@ ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah \e\
 .Pp
 Setup an inbound SA:
 .Bd -literal
-ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
-	-src 169.20.12.2 \e\
-	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e\
+ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\ 
+	-src 169.20.12.2 \e\ 
+	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e\ 
 	-authkey 12349876432167890192837465098273
 .Ed
 .Pp
 Setup an ingress flow on for the inbound SA:
 .Bd -literal
-ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\
+ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
 	-dst 10.10.32.1 -spi 1002 -proto esp -ingress
 .Ed
 .Pp
