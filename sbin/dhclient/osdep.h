@@ -1,4 +1,4 @@
-/*	$OpenBSD: osdep.h,v 1.8 2004/02/23 18:26:43 henning Exp $	*/
+/*	$OpenBSD: osdep.h,v 1.9 2004/02/23 18:33:57 henning Exp $	*/
 
 /* Operating system dependencies... */
 
@@ -69,7 +69,7 @@ extern int h_errno;
 #define TIME time_t
 #define GET_TIME(x)	time ((x))
 
-#if defined(__alpha__) || (defined(__sparc64__) && defined(__arch64__))
+#if defined(__alpha__) || defined(__sparc64__) || defined(__amd64__)
 #define PTRSIZE_64BIT
 #endif
 
