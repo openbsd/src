@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.5 1999/11/25 07:01:47 d Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.6 2000/01/06 07:23:24 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -77,7 +77,8 @@ write(int fd, const void *buf, size_t nbytes)
 		 */
 		while (ret == 0) {
 			/* Perform a non-blocking write syscall: */
-			n = _thread_sys_write(fd, buf + num, nbytes - num);
+			n = _thread_sys_write(fd, (caddr_t)buf + num, 
+			    nbytes - num);
 
 			/* Check if one or more bytes were written: */
 			if (n > 0)
