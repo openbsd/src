@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.4 2002/07/28 01:30:08 miod Exp $ */
+/*	$OpenBSD: rasops.h,v 1.5 2002/08/12 02:31:01 jason Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -109,6 +109,7 @@ struct rasops_info {
 
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
+	void	(*ri_updatecursor)(struct rasops_info *);
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.7 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.8 2002/08/12 02:31:01 jason Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -258,6 +258,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_ops.eraserows = rasops_eraserows;
 	ri->ri_ops.cursor = rasops_cursor;
 	ri->ri_do_cursor = rasops_do_cursor;
+	ri->ri_updatecursor = NULL;
 
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
@@ -596,6 +597,9 @@ rasops_cursor(cookie, on, row, col)
 #endif
 	ri->ri_crow = row;
 	ri->ri_ccol = col;
+
+	if (ri->ri_updatecursor != NULL)
+		ri->ri_updatecursor(ri);
 
 	if (on) {
 		ri->ri_flg |= RI_CURSOR;
