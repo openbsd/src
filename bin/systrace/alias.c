@@ -1,4 +1,4 @@
-/*	$OpenBSD: alias.c,v 1.4 2002/07/30 05:55:08 itojun Exp $	*/
+/*	$OpenBSD: alias.c,v 1.5 2002/09/06 22:56:21 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -74,11 +74,11 @@ revcompare(struct systrace_revalias *a, struct systrace_revalias *b)
 	return (strcmp(a->name, b->name));
 }
 
-SPLAY_PROTOTYPE(alitr, systrace_alias, node, aliascompare);
-SPLAY_GENERATE(alitr, systrace_alias, node, aliascompare);
+SPLAY_PROTOTYPE(alitr, systrace_alias, node, aliascompare)
+SPLAY_GENERATE(alitr, systrace_alias, node, aliascompare)
 
-SPLAY_PROTOTYPE(revtr, systrace_revalias, node, revcompare);
-SPLAY_GENERATE(revtr, systrace_revalias, node, revcompare);
+SPLAY_PROTOTYPE(revtr, systrace_revalias, node, revcompare)
+SPLAY_GENERATE(revtr, systrace_revalias, node, revcompare)
 
 int
 systrace_initalias(void)

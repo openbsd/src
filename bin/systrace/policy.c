@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.16 2002/08/30 17:09:21 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.17 2002/09/06 22:56:21 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -63,8 +63,8 @@ psccompare(struct policy_syscall *a, struct policy_syscall *b)
 	return (strcmp(a->name, b->name));
 }
 
-SPLAY_PROTOTYPE(syscalltree, policy_syscall, node, psccompare);
-SPLAY_GENERATE(syscalltree, policy_syscall, node, psccompare);
+SPLAY_PROTOTYPE(syscalltree, policy_syscall, node, psccompare)
+SPLAY_GENERATE(syscalltree, policy_syscall, node, psccompare)
 
 static SPLAY_HEAD(policytree, policy) policyroot;
 static SPLAY_HEAD(polnrtree, policy) polnrroot;
@@ -87,11 +87,11 @@ polnrcompare(struct policy *a, struct policy *b)
 	return (-1);
 }
 
-SPLAY_PROTOTYPE(policytree, policy, node, policycompare);
-SPLAY_GENERATE(policytree, policy, node, policycompare);
+SPLAY_PROTOTYPE(policytree, policy, node, policycompare)
+SPLAY_GENERATE(policytree, policy, node, policycompare)
 
-SPLAY_PROTOTYPE(polnrtree, policy, nrnode, polnrcompare);
-SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare);
+SPLAY_PROTOTYPE(polnrtree, policy, nrnode, polnrcompare)
+SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare)
 
 extern int userpolicy;
 
