@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.6 2003/09/28 19:15:53 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.7 2003/09/30 18:27:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.6 2003/09/28 19:15:53 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.7 2003/09/30 18:27:01 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -452,9 +452,11 @@ pop_print(void)
 		case BCODE_NUMBER:
 			normalize(value->u.num, 0);
 			print_ascii(stdout, value->u.num);
+			fflush(stdout);
 			break;
 		case BCODE_STRING:
-			printf("%s", value->u.string);
+			fputs(value->u.string, stdout);
+			fflush(stdout);
 			break;
 		}
 		stack_free_value(value);
