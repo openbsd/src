@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 1996/06/23 14:21:52 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 1996/08/02 12:10:39 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.3 1996/06/23 14:21:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.4 1996/08/02 12:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,13 +248,12 @@ ccval(p, c)
 	static char buf[5];
 	char *bp;
 
-	if (c == _POSIX_VDISABLE)
-		return ("<undef>");
-
 	if (p->sub == VMIN || p->sub == VTIME) {
 		(void)snprintf(buf, sizeof(buf), "%d", c);
 		return (buf);
 	}
+	if (c == _POSIX_VDISABLE)
+		return ("<undef>");
 	bp = buf;
 	if (c & 0200) {
 		*bp++ = 'M';
