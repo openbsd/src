@@ -2014,6 +2014,8 @@ gotswap:
 			 */
 			nswapdev = dumpdev = NODEV;
 		}
+		if (nswapdev == rootdev)
+			nswapdev = NODEV;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
 
