@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.14 2005/02/28 17:03:33 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.15 2005/02/28 17:49:22 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -132,6 +132,7 @@ void		ral_update_plcp(struct ral_softc *);
 void		ral_update_led(struct ral_softc *, int, int);
 void		ral_set_bssid(struct ral_softc *, uint8_t *);
 void		ral_set_macaddr(struct ral_softc *, uint8_t *);
+void		ral_update_promisc(struct ral_softc *);
 int		ral_read_eeprom(struct ral_softc *);
 int		ral_bbp_init(struct ral_softc *);
 int		ral_init(struct ifnet *);
@@ -411,9 +412,6 @@ ral_attach(struct ral_softc *sc)
 		    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
-
-	/* IBSS channel undefined for now */
-	ic->ic_ibss_chan = &ic->ic_channels[0];
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1217,15 +1215,39 @@ ral_decryption_intr(struct ral_softc *sc)
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 
-		/* get timestamp (high and low 32 bits) */
-		RAL_READ(sc, RAL_CSR17);
-		RAL_READ(sc, RAL_CSR16);
-
 		/* finalize mbuf */
 		m = data->m;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len =
 		    (letoh32(desc->flags) >> 16) & 0xfff;
+
+#if NBPFILTER > 0
+		if (sc->sc_drvbpf != NULL) {
+			struct mbuf mb;
+			struct ral_rx_radiotap_header *tap = &sc->sc_rxtap;
+			uint32_t tsf_lo, tsf_hi;
+
+			/* get timestamp (low and high 32 bits) */
+			tsf_lo = RAL_READ(sc, RAL_CSR16);
+			tsf_hi = RAL_READ(sc, RAL_CSR17);
+
+			tap->wr_tsf_lo = htole32(tsf_lo);
+			tap->wr_tsf_hi = htole32(tsf_hi);
+			tap->wr_flags = 0;
+			tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+			tap->wr_chan_flags =
+			    htole16(ic->ic_ibss_chan->ic_flags);
+			tap->wr_antenna = sc->rx_ant;
+			tap->wr_antsignal = desc->rssi;
+
+			M_DUP_PKTHDR(&mb, m);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = sc->sc_txtap_len;
+			mb.m_next = m;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_drvbpf, &mb);
+		}
+#endif
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
@@ -1539,6 +1561,26 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		return error;
 	}
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct ral_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = 4;
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_antenna = sc->tx_ant;
+
+		M_DUP_PKTHDR(&mb, m0);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb);
+	}
+#endif
+
 	data->m = m0;
 	data->ni = ni;
 
@@ -1710,6 +1752,26 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		}
 	}
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct ral_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_antenna = sc->tx_ant;
+
+		M_DUP_PKTHDR(&mb, m0);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb);
+	}
+#endif
+
 	data->m = m0;
 	data->ni = ni;
 
@@ -1867,7 +1929,9 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				ral_update_promisc(sc);
+			else
 				ral_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -2152,6 +2216,24 @@ ral_set_macaddr(struct ral_softc *sc, uint8_t *addr)
 	DPRINTFN(10, ("setting MAC address to %s\n", ether_sprintf(addr)));
 }
 
+void
+ral_update_promisc(struct ral_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	uint32_t tmp;
+
+	tmp = RAL_READ(sc, RAL_RXCSR0);
+
+	tmp &= ~RAL_RXCSR0_DROP_NOT_TO_ME;
+	if (!(ifp->if_flags & IFF_PROMISC))
+		tmp |= RAL_RXCSR0_DROP_NOT_TO_ME;
+
+	RAL_WRITE(sc, RAL_RXCSR0, tmp);
+
+	DPRINTF(("%s promiscuous mode\n", (ifp->if_flags & IFF_PROMISC) ?
+	    "entering" : "leaving"));
+}
+
 int
 ral_read_eeprom(struct ral_softc *sc)
 {
@@ -2302,17 +2384,18 @@ ral_init(struct ifnet *ifp)
 	}
 
 	/* set default BSS channel */
-	ic->ic_bss->ni_chan = &ic->ic_channels[1];
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	ral_set_chan(sc, ic->ic_bss->ni_chan);
 
 	/* kick Rx */
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		RAL_WRITE(sc, RAL_RXCSR0,
-		    RAL_RXCSR0_DROP_CRC | RAL_RXCSR0_DROP_PHY |
-		    RAL_RXCSR0_DROP_CTL | RAL_RXCSR0_DROP_NOT_TO_ME |
-		    RAL_RXCSR0_DROP_TODS | RAL_RXCSR0_DROP_BAD_VERSION);
-	else
-		RAL_WRITE(sc, RAL_RXCSR0, 0);
+	tmp = RAL_RXCSR0_DROP_PHY | RAL_RXCSR0_DROP_CRC;
+	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+		tmp |= RAL_RXCSR0_DROP_CTL | RAL_RXCSR0_DROP_TODS |
+		    RAL_RXCSR0_DROP_BAD_VERSION;
+		if (!(ifp->if_flags & IFF_PROMISC))
+			tmp |= RAL_RXCSR0_DROP_NOT_TO_ME;
+	}
+	RAL_WRITE(sc, RAL_RXCSR0, tmp);
 
 	/* clear old FCS and Rx FIFO errors */
 	RAL_READ(sc, RAL_CNT0);
