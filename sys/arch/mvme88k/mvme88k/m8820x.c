@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.30 2004/01/19 16:57:06 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.31 2004/01/20 14:35:54 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -272,6 +272,8 @@ struct cmmu_strategy {
 	{ CMMU_SPLIT_ADDRESS,  CMMU_SPLIT_ADDRESS}	/* CPU 3 */
 };
 
+unsigned int cmmu_shift;
+
 #ifdef MVME188
 /*
  * The following list describes the different MVME188 configurations
@@ -379,7 +381,7 @@ m8820x_setup_board_config()
 #endif /* MVME188 */
 	}
 
-	cpu_cmmu_ratio = max_cmmus / max_cpus;
+	cmmu_shift = ff1(max_cmmus / max_cpus);
 
 #ifdef MVME188
 	if (bd_config[vme188_config].ncpus > 0) {
@@ -425,23 +427,23 @@ m8820x_setup_board_config()
 	for (num = 0; num < max_cpus; num++) {
 		int i, type;
 
-		for (i = 0; i < cpu_cmmu_ratio; i++) {
+		for (i = 0; i < (1 << cmmu_shift); i++) {
 			dprintf(("cmmu_init: testing CMMU %d for CPU %d\n",
-			    num * cpu_cmmu_ratio + i, num));
+			    (num << cmmu_shift) | i, num));
 #ifdef DIAGNOSTIC
-			if (m8820x_cmmu[num * cpu_cmmu_ratio + i].cmmu_alive == CMMU_DEAD) {
+			if (m8820x_cmmu[(num << cmmu_shift) | i].cmmu_alive == CMMU_DEAD) {
 				printf("CMMU %d attached to CPU %d is not working\n",
-				    num * cpu_cmmu_ratio + i, num);
+				    (num << cmmu_shift) | i, num);
 				continue;	/* will probably die quickly */
 			}
 #endif
 		}
 		cpu_sets[num] = 1;   /* This cpu installed... */
-		type = CMMU_TYPE(m8820x_cmmu[num * cpu_cmmu_ratio].
+		type = CMMU_TYPE(m8820x_cmmu[num << cmmu_shift].
 		    cmmu_regs[CMMU_IDR]);
 
 		printf("CPU%d is attached with %d MC%x CMMUs\n",
-		    num, cpu_cmmu_ratio, type == M88204_ID ? 0x88204 : 0x88200);
+		    num, 1 << cmmu_shift, type == M88204_ID ? 0x88204 : 0x88200);
 	}
 
 	for (num = 0; num < max_cpus; num++) {
@@ -525,7 +527,7 @@ m8820x_setup_board_config()
 		/*
 		 * We don't set up anything for the hardwired configurations.
 		 */
-		if (cpu_cmmu_ratio == 2) {
+		if (cmmu_shift == 1) {
 			m8820x_cmmu[cmmu_num].cmmu_addr = 0;
 			m8820x_cmmu[cmmu_num].cmmu_addr_mask = 0;
 			m8820x_cmmu[cmmu_num].cmmu_addr_match = 1;
@@ -574,7 +576,7 @@ m8820x_setup_board_config()
 		 * For MVME188 single processors, we've got to look at A14.
 		 * This bit splits the CMMUs independent of the enabled strategy
 		 */
-		if (cpu_cmmu_ratio >= 4) {	/* XXX only handles 1P128!!! */
+		if (cmmu_shift >= 2) {
 			m8820x_cmmu[cmmu_num].cmmu_addr |=
 			    ((cmmu_num & 0x4) ^ 0x4) << 12;
 			m8820x_cmmu[cmmu_num].cmmu_addr_mask |= CMMU_A14_MASK;
@@ -666,8 +668,8 @@ m8820x_cmmu_set(reg, val, flags, num, mode, access, addr)
 	 * We scan all CMMUs to find the matching ones and store the
 	 * values there.
 	 */
-	for (mmu = num * cpu_cmmu_ratio;
-	    mmu < (num + 1) * cpu_cmmu_ratio; mmu++) {
+	for (mmu = num << cmmu_shift;
+	    mmu < (num + 1) << cmmu_shift; mmu++) {
 		if (((flags & MODE_VAL)) &&
 		    (m8820x_cmmu[mmu].cmmu_type != mode))
 			continue;
@@ -698,8 +700,8 @@ m8820x_cmmu_wait(int cpu)
 	/*
 	 * We scan all related CMMUs and read their status register.
 	 */
-	for (mmu = cpu * cpu_cmmu_ratio;
-	    mmu < (cpu + 1) * cpu_cmmu_ratio; mmu++) {
+	for (mmu = cpu << cmmu_shift;
+	    mmu < (cpu + 1) << cmmu_shift; mmu++) {
 #ifdef DEBUG
 		if (m8820x_cmmu[mmu].cmmu_regs[CMMU_SSR] & CMMU_SSR_BE) {
 			panic("cache flush failed!");
@@ -758,15 +760,15 @@ m8820x_cpu_configuration_print(master)
 		printf(", %s", master ? "master" : "slave");
 #endif
 #endif
-	printf(", %d CMMU", cpu_cmmu_ratio);
+	printf(", %d CMMU", 1 << cmmu_shift);
 
-	for (mmu = cpu * cpu_cmmu_ratio; mmu < (cpu + 1) * cpu_cmmu_ratio;
+	for (mmu = cpu << cmmu_shift; mmu < (cpu + 1) << cmmu_shift;
 	    mmu++) {
 		int idr = m8820x_cmmu[mmu].cmmu_regs[CMMU_IDR];
 		int mmuid = CMMU_TYPE(idr);
 		int access = m8820x_cmmu[mmu].cmmu_access;
 
-		if ((mmu - cpu * cpu_cmmu_ratio) % 2 == 0)
+		if (mmu % 2 == 0)
 			printf("\ncpu%d: ", cpu);
 		else
 			printf(", ");

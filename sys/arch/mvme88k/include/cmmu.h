@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.17 2004/01/09 00:23:04 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.18 2004/01/20 14:35:52 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -35,7 +35,6 @@
  * Prototypes and stuff for cmmu.c.
  */
 extern unsigned cpu_sets[MAX_CPUS];
-extern int cpu_cmmu_ratio;
 extern unsigned master_cpu;
 extern int max_cpus, max_cmmus;
 
