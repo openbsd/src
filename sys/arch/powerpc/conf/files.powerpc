@@ -45,6 +45,10 @@ file    arch/powerpc/powerpc/db_trace.c                 ddb
 
 file    arch/powerpc/powerpc/ofwreal.S
 
+#
+# Openfirmware support
+#
+
 define	mainbus {}
 device	mainbus
 attach	mainbus at root
@@ -54,34 +58,32 @@ device	cpu
 attach	cpu at mainbus
 file	arch/powerpc/powerpc/cpu.c
 
+include "../../../dev/ofw/files.ofw"
+file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk
+major	{ ofdisk = 4 }
+
 pseudo-device rd
 file dev/ramdisk.c			rd needs-flag
 file arch/powerpc/powerpc/rd_root.c	ramdisk_hooks
 major   {rd = 17}
+
+include	"../../../dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
 file	arch/powerpc/pci/mpcpcibus.c	mpcpcibr
 
 device	isabr {} : isabus
-attach	isabr at mainbus
+attach	isabr at mainbus, pci
 file	arch/powerpc/isa/isabus.c	isabr
 include "../../../scsi/files.scsi"
 major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
 major	{cd = 3}
 
 define	pcmcia {}			# XXX dummy decl...
-include	"../../../dev/pci/files.pci"
 include	"../../../dev/isa/files.isa"
 major	{ wd = 5 }		# Not even in bdevsw XXX
 
 include "../../../dev/isa/files.isapnp"
 file    arch/arc/isa/isapnp_machdep.c   isapnp   
 
-#
-# Openfirmware support
-#
-
-include "../../../dev/ofw/files.ofw"
-file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk
-major	{ ofdisk = 4 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1998/05/29 04:15:39 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1998/08/22 18:31:57 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -823,4 +823,46 @@ do_pending_int()
 	if (pending_int_f != NULL) {
 		(*pending_int_f)();
 	}
+}
+
+/*
+ * set system type from string
+ */
+void
+systype(char *name)
+{
+	if (strncmp (name, "MOT,", 4) == 0) {
+		system_type = PWRSTK;
+		printf("recognized system type of %s as PWRSTK\n", name);
+	}
+}
+/* 
+ * one attempt at interrupt stuff..
+ *
+ */
+#include <dev/pci/pcivar.h>
+typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
+            int, int (*func)(void *), void *, char *));
+typedef void     (intr_disestablish_t) __P((void *, void *));
+
+void *
+ppc_intr_establish(lcv, ih, level, func, arg, name)
+	void *lcv;
+	pci_intr_handle_t ih;
+	int level;
+	int (*func) __P((void *));
+	void *arg;
+	char *name;
+{
+	panic("ppc_intr_establish called before interrupt controller configured: driver %s\n", name);
+}
+
+intr_establish_t *intr_establish_func = ppc_intr_establish;;
+intr_disestablish_t *intr_disestablish_func;
+
+void
+ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
+{
+	intr_establish_func = establish;
+	intr_disestablish_func = disestablish;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 1998/03/04 10:58:16 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 1998/08/22 18:32:00 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1318,3 +1318,31 @@ pmap_page_protect(pa, prot)
 	}
 	splx(s);
 }
+/*
+ * this code to manipulate the BAT tables was added here
+ * because it is closely related to the vm system.
+ * --dsr
+ */
+
+#include <machine/bat.h>
+
+/* one major problem of mapping IO with bats, is that it
+ * is not possible to use caching on any level of granularity 
+ * that is reasonable.
+ * This is just enhancing an existing design (that should be
+ * replaced in my opinion).
+ *
+ * Current design only allow mapping of 256 MB block. (normally 1-1)
+ * but not necessarily (in the case of PCI io at 0xf0000000 where
+ * it might be desireable to map it elsewhere because that is
+ * where the stack is?)
+ */
+void
+addbatmap(u_int32_t vaddr, u_int32_t raddr, u_int32_t wimg)
+{
+	u_int32_t segment;
+	segment = vaddr >> (32 - 4);
+	battable[segment].batu = BATU(vaddr);
+	battable[segment].batl = BATL(raddr, wimg);
+}
+

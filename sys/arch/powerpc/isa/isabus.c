@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.2 1998/05/29 04:15:35 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.3 1998/08/22 18:31:48 rahnds Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -102,6 +102,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
@@ -151,16 +153,25 @@ isabrmatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a ISABR. */
-        if (strcmp(ca->ca_name, isabr_cd.cd_name) != 0)
-                return (0);
+        if (strcmp(ca->ca_name, isabr_cd.cd_name) == 0)
+                return (1);
+	{
+	        struct pci_attach_args *pa = aux;
 
-	return (1);
+		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO)
+			return (1);
+
+	}
+
+	return (0);
 }
 
 typedef void (void_f) (void);
 extern void_f *pending_int_f;
 void isa_do_pending_int();
 
+struct evcnt evirq[ICU_LEN];
 void
 isabrattach(parent, self, aux)
 	struct device *parent;
@@ -170,6 +181,9 @@ isabrattach(parent, self, aux)
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 	struct isabus_attach_args iba;
 
+	/* notyet -dsr
+	ppc_intr_setup( isabr_intr_establish, isabr_intr_disestablish);
+	*/
 	pending_int_f = isa_do_pending_int;
 
 	printf("\n");
@@ -190,6 +204,12 @@ isabrattach(parent, self, aux)
 	iba.iba_iot = (bus_space_tag_t)&p4e_isa_io;
 	iba.iba_memt = (bus_space_tag_t)&p4e_isa_mem;
 	iba.iba_ic = &sc->p4e_isa_cs;
+	{
+		int i;
+		for (i = 0; i < ICU_LEN; i++) {
+			evcnt_attach(self,"intr",&evirq[i]);
+		}
+	}
 	config_found(self, &iba, isabrprint);
 }
 
@@ -402,23 +422,24 @@ static int processing;
 		vector = ffs(hwpend) - 1;
 		hwpend &= ~(1L << vector);
 		ih = intrhand[vector];
+		evirq[vector].ev_count++;
 		while(ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
 	}
-	if(ipending & SINT_CLOCK) {
+	if((ipending & SINT_CLOCK)& ~pcpl) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 	}
-	if(ipending & SINT_NET) {
+	if((ipending & SINT_NET)& ~pcpl){
 		extern int netisr;
 		int pisr = netisr;
 		netisr = 0;
 		ipending &= ~SINT_NET;
 		softnet(pisr);
 	}
-	ipending &= pcpl;
+	ipending &= ~hwpend;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	__asm__ volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
