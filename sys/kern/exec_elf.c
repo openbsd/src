@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.4 1996/04/18 15:58:33 niklas Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.5 1996/04/18 17:15:52 niklas Exp $	*/
 /*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ exec_elf_makecmds(p, epp)
 	} else
 		epp->ep_entry = eh->e_entry;
 
-#ifdef COMPAT_SVR4_MAP_PAGE_ZERO
+#ifdef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, NBPG, 0, epp->ep_vp, 0,
 	    VM_PROT_READ);
