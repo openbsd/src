@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.8 2002/05/22 14:44:20 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.9 2002/05/22 21:30:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -160,13 +160,11 @@ creator_attach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args waa;
 	long defattr;
 	extern int fbnode;
-	int i, btype, console;
+	int i, btype, console, nregs;
 
 	sc->sc_bt = ma->ma_bustag;
-	if (ma->ma_nreg < FFB_NREGS) {
-		printf(": expected %d regs, got %d\n", FFB_NREGS, ma->ma_nreg);
-		goto fail;
-	}
+
+	nregs = min(ma->ma_nreg, FFB_NREGS);
 
 	printf(":");
 
@@ -178,17 +176,22 @@ creator_attach(parent, self, aux)
 
 	printf("\n");
 
+	if (nregs < FFB_REG_DFB32) {
+		printf(": no dfb32 regs found\n");
+		goto fail;
+	}
+
 	if (bus_space_map2(sc->sc_bt, 0, ma->ma_reg[FFB_REG_DFB32].ur_paddr,
 	    ma->ma_reg[FFB_REG_DFB32].ur_len, 0, NULL, &sc->sc_pixel_h)) {
 		printf("%s: failed to map dfb32\n", sc->sc_dv.dv_xname);
 		goto fail;
 	}
 
-	for (i = 0; i < FFB_NREGS; i++) {
+	for (i = 0; i < nregs; i++) {
 		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
 		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
 	}
-	sc->sc_nreg = ma->ma_nreg;
+	sc->sc_nreg = nregs;
 
 	console = (fbnode == ma->ma_node);
 
@@ -257,7 +260,7 @@ creator_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNFFB;
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
