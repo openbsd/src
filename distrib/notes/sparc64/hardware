@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.43 2002/12/25 10:28:41 henning Exp $
+dnl	$OpenBSD: hardware,v 1.44 2002/12/26 11:54:54 henning Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -74,65 +74,63 @@ Supported devices {:-include-:}:
 
 	Wireless Ethernet Adapters
 		Compact Flash Adapters (will show up as PCMCIA adapters)
-		    Buffalo AirStation CF [A] [B] [C]
-		    ELSA XI800 CF [A] [B] [C]
+		    Buffalo AirStation CF [A]
+		    ELSA XI800 CF [A]
 		PCMCIA Adapters
-		    3Com AirConnect 3CRWE737A PCMCIA [A] [B] [C]
-		    ACTIONTEC HWC01170 PCMCIA [A] [B] [C]
-		    Addtron AWP-100 PCMCIA [A] [B] [C]
-		    Agere Orinoco PCMCIA [A] [B] [C]
-		    BUFFALO AirStation PCMCIA [A] [B] [C]
-		    Cabletron RoamAbout PCMCIA [A] [B] [C]
-		    Compaq Agency NC5004 PCMCIA [A] [B] [C]
-		    Contec FLEXLAN/FX-DS110-PCC PCMCIA [A] [B] [C]
-		    Corega PCC-11 PCMCIA [A] [B] [C]
-		    Corega PCCA-11 PCMCIA [A] [B] [C]
-		    Corega PCCB-11 PCMCIA [A] [B] [C]
-		    Corega CGWLPCIA11 PCMCIA [A] [B] [C]
-		    Dlink DWL650 PCMCIA [A] [B] [C]
-		    ELSA XI300 PCMCIA [A] [B] [C]
-		    ELSA XI325 PCMCIA [A] [B] [C]
-		    ELSA XI325H PCMCIA [A] [B] [C]
-		    EMTAC A2424i PCMCIA [A] [B] [C]
-		    Ericsson Wireless LAN CARD C11 PCMCIA [A] [B] [C]
-		    Gemtek WL-311 PCMCIA [A] [B] [C]
-		    Hawking Technology WE110P PCMCIA [A] [B] [C]
-		    I-O DATA WN-B11/PCM PCMCIA [A] [B] [C]
-		    Intel PRO/Wireless 2011 PCMCIA [A] [B] [C]
-		    Intersil Prism II PCMCIA [A] [B] [C]
-		    Linksys Instant Wireless WPC11 PCMCIA [A] [B] [C]
-		    Linksys Instant Wireless WPC11 2.5 PCMCIA
-		      [A] [B] [C]
-		    Linksys Instant Wireless WPC11 3.0 PCMCIA
-		      [A] [B] [C]
-		    Lucent WaveLAN PCMCIA [A] [B] [C]
-		    NANOSPEED ROOT-RZ2000 PCMCIA [A] [B] [C]
-		    NEC CMZ-RT-WP PCMCIA [A] [B] [C]
-		    Netgear MA401 PCMCIA [A] [B] [C]
-		    Netgear MA401RA PCMCIA [A] [B] [C]
-		    Nokia C020 Wireless LAN PCMCIA [A] [B] [C]
-		    Nokia C110/C111 Wireless LAN PCMCIA [A] [B] [C]
-		    NTT-ME 11Mbps Wireless LAN PCMCIA [A] [B] [C]
-		    Proxim Harmony PCMCIA [A] [B] [C]
-		    Proxim RangeLAN-DS PCMCIA [A] [B] [C]
-		    Samsung MagicLAN SWL-2000N PCMCIA [A] [B] [C]
-		    SMC 2632 EZ Connect PCMCIA [A] [B] [C]
-		    Symbol Spectrum24 PCMCIA [A] [B] [C]
-		    TDK LAK-CD011WL PCMCIA [A] [B] [C]
-		    US Robotics 2410 PCMCIA [A] [B] [C]
-		    US Robotics 2445 PCMCIA [A] [B] [C]
+		    3Com AirConnect 3CRWE737A PCMCIA [A]
+		    ACTIONTEC HWC01170 PCMCIA [A]
+		    Addtron AWP-100 PCMCIA [A]
+		    Agere Orinoco PCMCIA [A]
+		    BUFFALO AirStation PCMCIA [A]
+		    Cabletron RoamAbout PCMCIA [A]
+		    Compaq Agency NC5004 PCMCIA [A]
+		    Contec FLEXLAN/FX-DS110-PCC PCMCIA [A]
+		    Corega PCC-11 PCMCIA [A]
+		    Corega PCCA-11 PCMCIA [A]
+		    Corega PCCB-11 PCMCIA [A]
+		    Corega CGWLPCIA11 PCMCIA [A]
+		    Dlink DWL650 PCMCIA [A]
+		    ELSA XI300 PCMCIA [A]
+		    ELSA XI325 PCMCIA [A]
+		    ELSA XI325H PCMCIA [A]
+		    EMTAC A2424i PCMCIA [A]
+		    Ericsson Wireless LAN CARD C11 PCMCIA [A]
+		    Gemtek WL-311 PCMCIA [A]
+		    Hawking Technology WE110P PCMCIA [A]
+		    I-O DATA WN-B11/PCM PCMCIA [A]
+		    Intel PRO/Wireless 2011 PCMCIA [A]
+		    Intersil Prism II PCMCIA [A]
+		    Linksys Instant Wireless WPC11 PCMCIA [A]
+		    Linksys Instant Wireless WPC11 2.5 PCMCIA [A]
+		    Linksys Instant Wireless WPC11 3.0 PCMCIA [A]
+		    Lucent WaveLAN PCMCIA [A]
+		    NANOSPEED ROOT-RZ2000 PCMCIA [A]
+		    NEC CMZ-RT-WP PCMCIA [A]
+		    Netgear MA401 PCMCIA [A]
+		    Netgear MA401RA PCMCIA [A]
+		    Nokia C020 Wireless LAN PCMCIA [A]
+		    Nokia C110/C111 Wireless LAN PCMCIA [A]
+		    NTT-ME 11Mbps Wireless LAN PCMCIA [A]
+		    Proxim Harmony PCMCIA [A]
+		    Proxim RangeLAN-DS PCMCIA [A]
+		    Samsung MagicLAN SWL-2000N PCMCIA [A]
+		    SMC 2632 EZ Connect PCMCIA [A]
+		    Symbol Spectrum24 PCMCIA [A]
+		    TDK LAK-CD011WL PCMCIA [A]
+		    US Robotics 2410 PCMCIA [A]
+		    US Robotics 2445 PCMCIA [A]
 		PCI Adapters
-		    3Com AirConnect 3CRWE777A PCI
-		    Belkin F5D6000 PCI (a rebadged WL11000P)
-		    Eumitcom WL11000P PCI
-		    Dlink DWL520 PCI
-		    Global Sun Technology GL24110P PCI (untested)
-		    Global Sun Technology GL24110P02 PCI
-		    Intersil Mini-PCI
-		    LinkSys WDT11 PCI (a rebadged GL24110P02)
-		    NDC/Sohoware NCP130 PCI
-		    Netgear MA301 PCI
-		    US Robotics 2415 PCI (rebadged WL11000P)
+		    3Com AirConnect 3CRWE777A PCI [A]
+		    Belkin F5D6000 PCI (a rebadged WL11000P) [A]
+		    Eumitcom WL11000P PCI [A]
+		    Dlink DWL520 PCI [A]
+		    Global Sun Technology GL24110P PCI (untested) [A]
+		    Global Sun Technology GL24110P02 PCI [A]
+		    Intersil Mini-PCI [A]
+		    LinkSys WDT11 PCI (a rebadged GL24110P02) [A]
+		    NDC/Sohoware NCP130 PCI [A]
+		    Netgear MA301 PCI [A]
+		    US Robotics 2415 PCI (rebadged WL11000P) [A]
 
 	Serial ports:
 		onboard SBUS Zilog 8530 (zs)
@@ -185,6 +183,8 @@ Supported devices {:-include-:}:
 	Miscellaneous devices:
 		EBus beeper (beeper)
 		performance counters/system controller (uperf)
+
+Drivers for hardware marked with [A] are not included in the ramdisk.
 
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines.
