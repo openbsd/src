@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.1 1996/08/14 22:31:48 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.2 1996/08/16 00:02:35 dm Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -82,7 +82,7 @@ struct ctrfn p6fn[] = {
    "Number of store buffer blocks."},
   {0x04, 0, "SB_DRAINS",
    "Number of store buffer drain cycles."},
-  {0x04, 0, "MISALIGN_MEM_REF",
+  {0x05, 0, "MISALIGN_MEM_REF",
    "Number of misaligned data memory references."},
   {0x06, 0, "SEGMENT_REG_LOADS",
    "Number of segment register loads."},
@@ -127,7 +127,7 @@ struct ctrfn p6fn[] = {
    "Number of M state lines allocated in the DCU."},
   {0x47, 0, "DCU_M_LINES_OUT",
    "Number of M state lines evicted from the DCU.  "
-   "This includes evictions via snoop HITM, interfention or replacement"},
+   "This includes evictions via snoop HITM, intervention or replacement"},
   {0x48, 0, "DCU_MISS_OUTSTANDING",
    "Weighted number of cycles while a DCU miss is outstanding."},
   {0x60, 0, "BUS_REQ_OUTSTANDING",
@@ -364,10 +364,6 @@ readst (void)
   }
   close (fd);
 
-  if (cpufamily == 6) {
-    st.pctr_hwc[0] = rdpmc (0);
-    st.pctr_hwc[1] = rdpmc (1);
-  }
   for (i = 0; i < PCTR_NUM; i++)
     printf (" ctr%d = %16qd  [%s]\n", i, st.pctr_hwc[i],
 	    fn2str (cpufamily, st.pctr_fn[i]));

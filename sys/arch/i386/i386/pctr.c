@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.5 1996/08/14 22:03:15 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.6 1996/08/16 00:02:36 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -182,7 +182,7 @@ pctrioctl (dev_t dev, int cmd, caddr_t data, int fflag, struct proc *p)
       return p6ctrsel (fflag, cmd, *(u_int *) data);
     if (usep5ctr)
       return p5ctrsel (fflag, cmd, *(u_int *) data);
-    return EINVAL;
+    return ENODEV;
   default:
     return EINVAL;
   }
