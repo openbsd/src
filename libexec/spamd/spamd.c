@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.8 2003/01/24 23:39:28 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.9 2003/01/30 09:47:16 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -327,23 +327,6 @@ main(int argc, char *argv[])
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
 
-	pw = getpwnam("_spamd");
-	if (!pw)
-		pw = getpwnam("nobody");
-
-	if (chroot("/var/empty") == -1 || chdir("/") == -1) {
-		syslog(LOG_ERR, "cannot chdir to /var/empty.");
-		exit(1);
-	}
-
-	if (pw) {
-		setgroups(1, &pw->pw_gid);
-		setegid(pw->pw_gid);
-		setgid(pw->pw_gid);
-		seteuid(pw->pw_uid);
-		setuid(pw->pw_uid);
-	}
-
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
@@ -404,6 +387,23 @@ main(int argc, char *argv[])
 
 	if (bind(s, (struct sockaddr *)&sin, sizeof sin) == -1)
 		err(1, "bind");
+
+	pw = getpwnam("_spamd");
+	if (!pw)
+		pw = getpwnam("nobody");
+
+	if (chroot("/var/empty") == -1 || chdir("/") == -1) {
+		syslog(LOG_ERR, "cannot chdir to /var/empty.");
+		exit(1);
+	}
+
+	if (pw) {
+		setgroups(1, &pw->pw_gid);
+		setegid(pw->pw_gid);
+		setgid(pw->pw_gid);
+		seteuid(pw->pw_uid);
+		setuid(pw->pw_uid);
+	}
 
 	if (listen(s, 10) == -1)
 		err(1, "listen");
