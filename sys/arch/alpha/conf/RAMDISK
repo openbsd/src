@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.39 2001/02/13 14:50:33 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.40 2001/04/09 06:29:29 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -14,7 +14,7 @@ option		DEC_KN20AA	# KN20AA:	AlphaStation 600
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
-option          DEC_550		# Miata:	Digital Personal Workstation
+option		DEC_550		# Miata:	Digital Personal Workstation
 
 # Enable the hooks used for initializing the ram-disk.
 option		RAMDISK_HOOKS
@@ -57,7 +57,7 @@ pci*	at	ppb?
 # PCI devices
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
-fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
+#fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 #ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
@@ -74,7 +74,7 @@ isp*	at	pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
-inphy*	at mii? phy ?				# Intel 82555 PHYs
+#inphy*	at mii? phy ?				# Intel 82555 PHYs
 #icsphy*	at mii? phy ?			# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
