@@ -4939,6 +4939,7 @@
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/radio.0
 ./usr/share/man/cat9/random.0
+./usr/share/man/cat9/rasops.0
 ./usr/share/man/cat9/ratecheck.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/resettodr.0
