@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.6 2001/07/17 16:57:17 rees Exp $ */
+/* $Id: sectok.c,v 1.7 2001/07/26 22:15:04 rees Exp $ */
 
 /*
 copyright 2000
@@ -460,9 +460,15 @@ sectok_apdu(int fd, int cla, int ins, int p1, int p2,
 }
 
 void
-sectok_fmt_fid(char *fname, int f0, int f1)
+sectok_fmt_fid(char *fname, unsigned char *fid)
 {
-    if (myisprint(f0) && myisprint(f1))
+    int f0 = fid[0], f1 = fid[1];
+
+    if (f0 == 0x3f && f1 == 0)
+	sprintf(fname, "/");
+    else if (myisprint(f0) && f1 == 0)
+	sprintf(fname, "%c", f0);
+    else if (myisprint(f0) && myisprint(f1))
 	sprintf(fname, "%c%c", f0, f1);
     else
 	sprintf(fname, "%02x%02x", f0, f1);

@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.7 2001/07/02 20:07:07 rees Exp $ */
+/* $Id: cyberflex.c,v 1.8 2001/07/26 22:15:04 rees Exp $ */
 
 /*
 copyright 2000
@@ -57,9 +57,8 @@ such damages.
 #define BLOCK_SIZE 8
 
 int
-cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype, int *swp)
+cyberflex_create_file_acl(int fd, int cla, unsigned char *fid, int size, int ftype, unsigned char *acl, int *swp)
 {
-    int i;
     unsigned char data[16];
 
     size += 16;
@@ -71,15 +70,23 @@ cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype, 
     data[4] = ftype;
     data[5] = 0x01;		/* status = 1 */
     data[6] = data[7] = 0x00;	/* record related */
-    data[8] = 0xff;		/* ACL can do everything with AUT0 */
-    for (i = 9; i < 16; i++ )
-	data[i] = 0x00;		/* ACL : cannot do anything without AUT0 */
+    memmove(&data[8], acl, 8);
 
     sectok_apdu(fd, cla, 0xe0, 0, 0, 0x10, data, 0, NULL, swp);
     if (!sectok_swOK(*swp))
 	return -1;
 
     return sectok_selectfile(fd, cla, fid, swp);
+}
+
+/* Create a file with default acl "world: r w x/a inval rehab dec inc" */
+
+int
+cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype, int *swp)
+{
+    static unsigned char acl[] = {0xff, 0, 0, 0, 0, 0, 0, 0};
+
+    return cyberflex_create_file_acl(fd, cla, fid, size, ftype, acl, swp);
 }
 
 int
@@ -96,11 +103,13 @@ int
 cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
 		       int key_len, unsigned char *key_data, int *swp)
 {
+    static unsigned char acl[] = {0x1, 0, 0, 0xb, 0, 0, 0, 0};
+
     if (sectok_selectfile(fd, cla, root_fid, swp) < 0)
 	return -1;
 
     if (sectok_selectfile(fd, cla, key_fid, swp) < 0 && *swp == STENOFILE) {
-	if (cyberflex_create_file(fd, cla, key_fid, key_len, 3, swp) < 0)
+	if (cyberflex_create_file_acl(fd, cla, key_fid, key_len, 3, acl, swp) < 0)
 	    return -1;
     }
 
@@ -120,6 +129,7 @@ cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 {
     int i, j, offset = 0, size;
     unsigned char data[MAX_KEY_FILE_SIZE];
+    static unsigned char acl[] = {0, 0, 0, 0xa, 0, 0, 0, 0}; /* AUT0: w inval */
     static unsigned char key_file_header[KEY_FILE_HEADER_SIZE] =
     {0xC2, 0x06, 0xC1, 0x08, 0x13, 0x00, 0x00, 0x05};
     static unsigned char key_header[3] = {0xC2, 0x41, 0x00};
@@ -131,7 +141,7 @@ cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
     /* select 00.12 */
     if (sectok_selectfile(fd, cla, key_fid, swp) < 0 && *swp == STENOFILE) {
 	/* rv != 0, 00.12 does not exist.  create it. */
-	if (cyberflex_create_file(fd, cla, key_fid, PRV_KEY_SIZE, 3, swp) < 0)
+	if (cyberflex_create_file_acl(fd, cla, key_fid, PRV_KEY_SIZE, 3, acl, swp) < 0)
 	    return -1;
     }
 

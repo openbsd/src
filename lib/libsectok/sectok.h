@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.12 2001/07/20 15:51:45 rees Exp $ */
+/* $Id: sectok.h,v 1.13 2001/07/26 22:15:04 rees Exp $ */
 
 /*
 copyright 2001
@@ -79,7 +79,7 @@ int sectok_close(int fd);
 int sectok_selectfile(int fd, int cla, unsigned char *fid, int *swp);
 
 /* Convenience functions */
-void sectok_fmt_fid(char *fname, int f0, int f1);
+void sectok_fmt_fid(char *fname, unsigned char *fid);
 int sectok_parse_atr(int fd, int flags, unsigned char *atr, int len, struct scparam *param);
 void sectok_parse_fname(char *buf, unsigned char *fid);
 int sectok_parse_input(char *ibuf, unsigned char *obuf, int olen);
@@ -94,6 +94,7 @@ char *sectok_get_ins(int ins);
 
 /* Cyberflex functions */
 int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype, int *swp);
+int cyberflex_create_file_acl(int fd, int cla, unsigned char *fid, int size, int ftype, unsigned char *acl, int *swp);
 int cyberflex_delete_file(int fd, int cla, unsigned char *fid, int *swp);
 int cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
 			   int key_len, unsigned char *key_data, int *swp);
