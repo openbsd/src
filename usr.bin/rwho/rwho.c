@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.10 1998/04/26 17:01:02 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.11 2001/01/31 20:12:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.10 1998/04/26 17:01:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.11 2001/01/31 20:12:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: rwho.c,v 1.10 1998/04/26 17:01:02 deraadt Exp $
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <utmp.h>
 #include <vis.h>
 #include <err.h>
 
@@ -171,12 +172,12 @@ main(argc, argv)
 	}
 	mp = myutmp;
 	for (i = 0; i < nusers; i++) {
-		char buf[BUFSIZ], vis_user[4*8];
+		char buf[BUFSIZ], vis_user[4*UT_NAMESIZE];
 		(void)snprintf(buf, sizeof buf, "%s:%s", mp->myhost,
 		    mp->myutmp.out_line);
 		strvis(vis_user, mp->myutmp.out_name, VIS_CSTYLE);
-		printf("%-8.8s %-*s %.12s",
-		   vis_user,
+		printf("%-*.*s %-*s %.12s",
+		   UT_NAMESIZE, UT_NAMESIZE, vis_user,
 		   width,
 		   buf,
 		   ctime((time_t *)&mp->myutmp.out_time)+4);
