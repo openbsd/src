@@ -29,7 +29,7 @@
 /	current player.
 /	Also update user count.
 /
-/************************************************************************/
+*************************************************************************/
 
 checkbattle()
 {
@@ -106,7 +106,7 @@ long	foeloc = 0L;		/* location in file of person to fight */
 /	    p_1scratch:
 /		set to total damage inflicted so far; changes to indicate action
 /
-/************************************************************************/
+*************************************************************************/
 
 battleplayer(foeplace)
 long	foeplace;
@@ -361,7 +361,7 @@ LEAVE:
 /	Take action action against foe, and decide who is master
 /	for next iteration.
 /
-/************************************************************************/
+*************************************************************************/
 
 myturn()
 {
@@ -469,7 +469,7 @@ HIT:
 /	Check for energy voids, holy grail, and tampering by other
 /	players.
 /
-/************************************************************************/
+*************************************************************************/
 
 checktampered()
 {
@@ -530,7 +530,7 @@ long	loc = 0L;		/* location in energy void file */
 /	Take care of energy voids, holy grail, decree and intervention
 /	action on current player.
 /
-/************************************************************************/
+*************************************************************************/
 
 tampered(what, arg1, arg2)
 int	what;
@@ -727,7 +727,7 @@ long	loc;			/* location in file of other players */
 /	The valar has no coordinates, and is completely invisible if
 /	cloaked.
 /
-/************************************************************************/
+*************************************************************************/
 
 userlist(ingameflag)
 bool	ingameflag;
@@ -822,7 +822,7 @@ register int	numusers = 0;	/* number of users on file */
 /	Clear energy voids with new king.
 /	Print 'decree' prompt.
 /
-/************************************************************************/
+*************************************************************************/
 
 throneroom()
 {
@@ -904,7 +904,7 @@ long	loc = 0L;		/* location of old king in player file */
 / DESCRIPTION:
 /	Tamper with other players.  Handle king/valar specific options.
 /
-/************************************************************************/
+*************************************************************************/
 
 dotampered()
 {
@@ -1156,7 +1156,7 @@ FILE	*fp;				/* for opening gold file */
 / DESCRIPTION:
 /	Write out energy void structure at specified location.
 /
-/************************************************************************/
+*************************************************************************/
 
 writevoid(vp, loc)
 register struct energyvoid	*vp;
@@ -1192,7 +1192,7 @@ long	loc;
 /	location.
 /	If no inactive ones are found, return one more than last location.
 /
-/************************************************************************/
+*************************************************************************/
 
 long
 allocvoid()

@@ -39,7 +39,7 @@
 /
 /	'mx' is assumed to be at least 2.
 /
-/************************************************************************/
+*************************************************************************/
 
 getstring(cp, mx)
 register char	*cp;
@@ -115,7 +115,7 @@ int	ch;			/* input */
 / DESCRIPTION:
 /	Print a message, and wait for a space character.
 /
-/************************************************************************/
+*************************************************************************/
 
 more(where)
 int	where;
@@ -147,7 +147,7 @@ int	where;
 /	number.
 /	If no valid number is found, return 0.0.
 /
-/************************************************************************/
+*************************************************************************/
 
 double
 infloat()
@@ -185,7 +185,7 @@ double	result;		/* return value */
 /	Refresh screen, and get a single character option from player.
 /	Return a random value if player's ring has gone bad.
 /
-/************************************************************************/
+*************************************************************************/
 
 inputoption()
 {
@@ -228,7 +228,7 @@ inputoption()
 /	If the player wants to quit while in battle, he/she automatically
 /	dies.
 /
-/************************************************************************/
+*************************************************************************/
 
 interrupt()
 {
@@ -318,7 +318,7 @@ unsigned	savealarm;	/* to save alarm value */
 /	list of choices.
 /	Give up after 3 tries.
 /
-/************************************************************************/
+*************************************************************************/
 
 getanswer(choices, def)
 char	*choices;
@@ -429,7 +429,7 @@ YELL:		mvprintw(oldy + 1, 0, "Please choose one of : [%s]\n", choices);
 /	Come here when the alarm expires while waiting for input.
 /	Simply longjmp() into getanswer().
 /
-/************************************************************************/
+*************************************************************************/
 
 void
 catchalarm()
