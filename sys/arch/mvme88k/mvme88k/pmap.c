@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2001/02/12 08:16:25 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2001/03/07 23:52:33 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -389,8 +389,8 @@ extern vm_offset_t obiova;
  *	are spcified by 'users', using the function 'flush'.
  *
  * Parameters:
- *	users	bit paterns of the CPUs which may hold the TLB shoule be
- *		flushed
+ *	users	bit patterns of the CPUs which may hold the TLB, and
+ *		should be flushed
  *	va	virtual address that should be flushed
  *	flush	pointer to the function actually flushes the TLB
  *
@@ -406,7 +406,7 @@ flush_atc_entry(long users, vm_offset_t va, int kernel)
 	long tusers = users;
 
 #ifdef DIAGNOSTIC
-	if (ff1(tusers) > 4) { /* can't be more than 4 */
+	if ((tusers != 0) && (ff1(tusers) >= MAX_CPUS)) {
 		printf("ff1 users = %d!\n", ff1(tusers));
 		panic("bogus amount of users!!!");
 	}
@@ -606,7 +606,9 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 	unsigned	cmode;
 	pt_entry_t	*pte;
 	pte_template_t	template;
+#ifdef MVME197
 	static unsigned	i = 0;
+#endif
 	/*
 	 * cache mode is passed in the top 16 bits.
 	 * extract it from there. And clear the top
@@ -970,14 +972,12 @@ pmap_bootstrap(vm_offset_t load_start, /* IN */
 			kpdt_phys,
 			s_text,
 			e_text,
-			kernel_pmap_size,
-			etherpa;
+			kernel_pmap_size;
 	apr_template_t	apr_data;
 	pt_entry_t	*pte;
 	int		i;
 	pmap_table_t	ptable;
 	extern char	*kernelstart, *etext;
-	extern char	*kernel_sdt;
 	extern void	cmmu_go_virt(void);
 
 #ifdef DEBUG 
@@ -1686,13 +1686,9 @@ pmap_pinit(pmap_t p)
 {
 	pmap_statistics_t stats;
 	sdt_entry_t *segdt;
-	int i, spl;
+	int i;
 	unsigned int s;
 	vm_offset_t addr;
-	sdt_entry_t *sdt;
-	pt_entry_t  *pte;
-	pte_template_t    template;
-	int        aprot;
 	
 	/*
 	 * Allocate memory for *actual* segment table and *shadow* table.
@@ -3460,7 +3456,11 @@ void
 pmap_activate(struct proc *p)
 {
 	apr_template_t   apr_data;
+#ifdef notyet
+#ifdef OMRON_PMAP
 	int     n;
+#endif
+#endif
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int my_cpu = cpu_number();  
 
