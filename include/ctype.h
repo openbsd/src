@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.15 2004/01/13 15:47:24 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.16 2004/01/15 20:01:27 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ extern const short	*_toupper_tab_;
 #define	__CTYPE_INLINE	static inline
 #endif
 
-#if defined(__GNUC__) || defined(_ANSI_LIBRARY)
+#if defined(__GNUC__) || defined(_ANSI_LIBRARY) || defined(lint)
 int	isalnum(int);
 int	isalpha(int);
 int	iscntrl(int);
@@ -86,9 +86,9 @@ int	_tolower(int);
 int	_toupper(int);
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
-#endif /* __GNUC__ || _ANSI_LIBRARY */
+#endif /* __GNUC__ || _ANSI_LIBRARY || lint */
 
-#ifndef _ANSI_LIBRARY
+#if !defined(_ANSI_LIBRARY) && !defined(lint)
 
 __CTYPE_INLINE int isalnum(int c)
 {
@@ -186,7 +186,7 @@ __CTYPE_INLINE int _toupper(int c)
 }
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
-#endif /* !_ANSI_LIBRARY */
+#endif /* !_ANSI_LIBRARY && !lint */
 
 __END_DECLS
 
