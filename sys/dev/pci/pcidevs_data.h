@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.330 2000/10/12 16:52:39 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.331 2000/10/12 17:40:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3573,9 +3573,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GeForce256 DDR",
 	},
 	{
-	    PCI_VENDOR_NVIDOA, PCI_PRODUCT_NVIDOA_GEFORCE2GTS,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GTS,
 	    0,
-	    "",
+	    "Nvidia",
 	    "GeForce2 GTS",
 	},
 	{
