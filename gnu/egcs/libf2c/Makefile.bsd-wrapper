@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2003/11/24 17:12:55 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2004/09/18 20:54:45 deraadt Exp $
+
+NOLINT=
 
 LIBIBERTY_INCLUDES=$(.CURDIR)/../../lib/libiberty/include
 EGCS_DIR= $(.CURDIR)/..

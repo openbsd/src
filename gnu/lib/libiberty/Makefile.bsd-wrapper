@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2004/08/30 22:33:10 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2004/09/18 20:55:16 deraadt Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/include -I$(.OBJDIR)
+
+NOLINT=
 
 HOST_FILES!=	cat $(.OBJDIR)/needed-list 2>/dev/null||true
 
