@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.12 1997/12/18 10:12:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.13 1998/07/14 18:19:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -293,6 +293,8 @@ char *s;
 }
 #endif
 
+static int __getpwent_has_yppw = -1;
+
 struct passwd *
 getpwent()
 {
@@ -301,17 +303,17 @@ getpwent()
 #ifdef YP
 	static char *name = (char *)NULL;
 	const char *user, *host, *dom;
-	int has_yppw;
 #endif
 
 	if (!_pw_db && !__initdb())
 		return((struct passwd *)NULL);
 
 #ifdef YP
-	has_yppw = __has_yppw();
+	if (__getpwent_has_yppw == -1)
+		__getpwent_has_yppw = __has_yppw();
 
 again:
-	if(has_yppw && (__ypmode != YPMODE_NONE)) {
+	if(__getpwent_has_yppw && (__ypmode != YPMODE_NONE)) {
 		char *key, *data;
 		int keylen, datalen;
 		int r, s;
@@ -421,7 +423,7 @@ again:
 	if(__hashpw(&key)) {
 #ifdef YP
 		/* if we don't have YP at all, don't bother. */
-		if(has_yppw) {
+		if (__getpwent_has_yppw) {
 			if(_pw_passwd.pw_name[0] == '+') {
 				/* set the mode */
 				switch(_pw_passwd.pw_name[1]) {
@@ -942,6 +944,7 @@ __initdb()
 
 #ifdef YP
 	__ypmode = YPMODE_NONE;
+	__getpwent_has_yppw = -1;
 #endif
 	p = (geteuid()) ? _PATH_MP_DB : _PATH_SMP_DB;
 	_pw_db = dbopen(p, O_RDONLY, 0, DB_HASH, NULL);
