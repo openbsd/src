@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.41 2000/03/28 20:31:25 markus Exp $");
+RCSID("$Id: channels.c,v 1.42 2000/03/28 20:33:50 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -237,8 +237,10 @@ channel_free(int id)
 	if (c == NULL)
 		packet_disconnect("channel free: bad local channel %d", id);
 	debug("channel_free: channel %d: status: %s", id, channel_open_message());
-	if (compat13)
+	if (c->sock =! -1) {
 		shutdown(c->sock, SHUT_RDWR);
+		close(c->sock);
+	}
 	buffer_free(&c->input);
 	buffer_free(&c->output);
 	buffer_free(&c->extended);
@@ -658,7 +660,8 @@ channel_handler(chan_fn *ftab[], fd_set * readset, fd_set * writeset)
 		if (ftab[c->type] == NULL)
 			continue;
 		(*ftab[c->type])(c, readset, writeset);
-		chan_delete_if_full_closed(c);
+		if (!compat13)
+			chan_delete_if_full_closed(c);
 	}
 }
 
