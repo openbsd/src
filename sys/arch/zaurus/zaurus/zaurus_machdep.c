@@ -471,13 +471,14 @@ green_on(int virt)
 	/* clobber green led p */
 	volatile u_int16_t *p;
 	if (virt)
-		p = (u_int16_t *)(LUBBOCK_AGPIO_VBASE+24);
+		p = (u_int16_t *)(LUBBOCK_AGPIO_VBASE+0x24);
 	else
 		p = (u_int16_t *)0x10800024;
 
 	*p = *p | 2;
 }
 
+#if 0
 void sysprobe(void);
 void
 sysprobe(void)
@@ -502,6 +503,7 @@ sysprobe(void)
 	p = (void *)0x4800003C; /* MCIOx */
 	printf("MCIO1 %x\n", *p); 
 }
+#endif
 
 /*
  * u_int initarm(...)
@@ -656,7 +658,6 @@ initarm(void *arg)
 
 
 	consinit();
-	sysprobe();
 	LEDSTEP();
 #ifdef KGDB
 	kgdb_port_init();
