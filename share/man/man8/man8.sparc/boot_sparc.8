@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.8 2003/07/10 08:30:36 jmc Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.9 2003/09/04 22:14:42 jmc Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ incantation in new-mode to force the ROM to always start in new-mode:
 .Pp
 .Em \	ok
 setenv
-.Em sunmon-compat?
+.Em sunmon-compat?\&
 false
 .Ss Old-style PROM operation
 By default, the old ROM will poll for boot devices, unless the eeprom settings
@@ -112,7 +112,7 @@ for more information.
 .Ss OpenBoot PROM version 1 operation
 Older OpenBOOT PROM, as well as hybrid (dual-mode) versions operating in
 compatibility mode (with the variable
-.Em version2?
+.Em version2?\&
 set to false) will look for a bootloader and kernel filename as specified
 by the
 .Em boot-from
@@ -131,7 +131,7 @@ Replace
 with the appropriate boot device if necessary.
 .Pp
 Autoboot is enabled by setting the
-.Em auto-boot?
+.Em auto-boot?\&
 variable to
 .Dq true ,
 and is the factory default.
@@ -155,7 +155,7 @@ set-default
 .Em boot-file
 .Pp
 Autoboot is enabled by setting the
-.Em auto-boot?
+.Em auto-boot?\&
 variable to
 .Dq true ,
 and is the factory default.
