@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.24 1999/06/08 16:05:22 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.25 1999/06/08 17:13:08 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -845,11 +845,14 @@ sys_pipe(p, v, retval)
 		syscallarg(int *) fdp;
 	} */ *uap = v;
 	int error;
+	int fds[2];
 
 	if ((error = sys_opipe(p, v, retval)) == -1)
 		return (error);
 	
-	error = copyout((caddr_t)retval, (caddr_t)SCARG(uap, fdp),
+	fds[0] = retval[0];
+	fds[1] = retval[0];
+	error = copyout((caddr_t)fds, (caddr_t)SCARG(uap, fdp),
 	    2 * sizeof (int));
 	if (error) {
 		fdrelease(p, retval[0]);
