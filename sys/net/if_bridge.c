@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.47 2001/02/01 01:32:51 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.48 2001/02/02 06:01:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1161,7 +1161,7 @@ bridge_input(ifp, eh, m)
 				if (ifl->ifp->if_type == IFT_ETHER)
 					break;
 			}
-			if (ifl == LIST_END(&sc->sc_iflist)) {
+			if (ifl != LIST_END(&sc->sc_iflist)) {
 				m->m_flags |= M_PROTO1;
 				m->m_pkthdr.rcvif = ifl->ifp;
 				ether_input(ifl->ifp, eh, m);
