@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.7 2002/09/05 18:34:47 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.8 2002/10/24 19:28:20 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -37,12 +37,8 @@
 #define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_PARISC   
 
-#define _NLIST_DO_AOUT
 #define _NLIST_DO_ELF
-#define _NLIST_DO_SOM
-
 #define	_KERN_DO_ELF
-#define	_KERN_DO_SOM
 
 /*
  * the following MD ELF values defenitions are from the:
