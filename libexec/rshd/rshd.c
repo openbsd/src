@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.44 2002/03/16 18:38:19 millert Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.45 2002/05/22 06:35:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.44 2002/03/16 18:38:19 millert Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.45 2002/05/22 06:35:44 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -443,7 +443,7 @@ doit(fromp)
 		kdata = (AUTH_DAT *) authbuf;
 		ticket = (KTEXT) tickbuf;
 		authopts = 0L;
-		strcpy(instance, "*");
+		strlcpy(instance, "*", sizeof instance);
 		version[VERSION_SIZE - 1] = '\0';
 #ifdef CRYPT
 		if (doencrypt) {

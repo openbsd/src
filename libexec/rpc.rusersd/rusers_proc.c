@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.13 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.14 2002/05/22 06:35:44 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.13 2002/02/16 21:27:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.14 2002/05/22 06:35:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ getidle(tty, display)
 		mouse_idle = getidle("mouse", NULL);
 		idle = (kbd_idle < mouse_idle) ? kbd_idle : mouse_idle;
 	} else {
-		sprintf(devname, "%s/%s", _PATH_DEV, tty);
+		snprintf(devname, sizeof devname, "%s/%s", _PATH_DEV, tty);
 		if (stat(devname, &st) < 0) {
 #ifdef DEBUG
 			printf("%s: %m\n", devname);

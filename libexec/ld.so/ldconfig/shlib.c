@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.3 2001/12/07 18:45:32 mpech Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.4 2002/05/22 06:35:44 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -275,13 +275,11 @@ int	do_dot_a;
 			int	n;
 
 			if (do_dot_a && path == NULL &&
-					dp->d_namlen == len + 2 &&
-					strncmp(dp->d_name, lname, len) == 0 &&
-					(dp->d_name+len)[0] == '.' &&
-					(dp->d_name+len)[1] == 'a') {
-
+			    dp->d_namlen == len + 2 &&
+			    strncmp(dp->d_name, lname, len) == 0 &&
+			    (dp->d_name+len)[0] == '.' &&
+			    (dp->d_name+len)[1] == 'a')
 				path = concat(search_dirs[i], "/", dp->d_name);
-			}
 
 			if (dp->d_namlen < len + 4)
 				continue;

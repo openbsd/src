@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.7 2001/12/07 23:29:06 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.8 2002/05/22 06:35:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -221,10 +221,12 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	if (auth_port == 0)
 		auth_port = (int)getppid();
 	if (strcmp(style, "radius") != 0) {
-		userstyle = malloc(strlen(username) + strlen(style) + 2);
+		int len = strlen(username) + strlen(style) + 2;
+
+		userstyle = malloc(len);
 		if (userstyle == NULL)
 			err(1, NULL);
-		sprintf(userstyle, "%s:%s", username, style);
+		snprintf(userstyle, len, "%s:%s", username, style);
 	} else
 		userstyle = username;
 
@@ -483,7 +485,7 @@ getsecret(void)
 	size_t len;
 
 	snprintf(buffer, sizeof(buffer), "%s/%s",
-		radius_dir, RADIUS_SERVERS);
+	    radius_dir, RADIUS_SERVERS);
 
 	if ((servfd = fopen(buffer, "r")) == NULL) {
 		syslog(LOG_ERR, "%s: %m", buffer);

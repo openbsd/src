@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.21 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.21 2002/02/16 21:27:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -306,7 +306,7 @@ struct sockaddr_in *sin;
 	wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 	if (wtmp >= 0) {
 		/* hack, but must be unique and no tty line */
-		(void) sprintf(line, "uucp%.4d", getpid());
+		(void) snprintf(line, sizeof line, "uucp%.4d", getpid());
 		SCPYN(utmp.ut_line, line);
 		SCPYN(utmp.ut_name, pw->pw_name);
 		SCPYN(utmp.ut_host, remotehost);

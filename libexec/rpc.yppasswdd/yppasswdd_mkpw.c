@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.21 2001/08/17 14:04:36 espie Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.21 2001/08/17 14:04:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -207,8 +207,8 @@ make_passwd(argp)
 		if (*p == '&')
 			n = n + strlen(pw.pw_name) - 1;
 	if (strlen(pw.pw_name) + 1 + strlen(pw.pw_passwd) + 1 +
-	    strlen((sprintf(buf, "%u", pw.pw_uid), buf)) + 1 +
-	    strlen((sprintf(buf, "%u", pw.pw_gid), buf)) + 1 +
+	    strlen((snprintf(buf, sizeof buf, "%u", pw.pw_uid), buf)) + 1 +
+	    strlen((snprintf(buf, sizeof buf, "%u", pw.pw_gid), buf)) + 1 +
 	    strlen(pw.pw_gecos) + n + 1 + strlen(pw.pw_dir) + 1 +
 	    strlen(pw.pw_shell) >= 1023)
 		goto fail;

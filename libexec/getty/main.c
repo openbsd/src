@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2002/03/29 20:35:55 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2002/05/22 06:35:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.22 2002/03/29 20:35:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.23 2002/05/22 06:35:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -187,7 +187,7 @@ main(argc, argv)
 	openlog("getty", LOG_ODELAY|LOG_CONS|LOG_PID, LOG_AUTH);
 	gethostname(hostname, sizeof(hostname));
 	if (hostname[0] == '\0')
-		strcpy(hostname, "Amnesiac");
+		strlcpy(hostname, "Amnesiac", sizeof hostname);
 	uname(&kerninfo);
 
 	/*

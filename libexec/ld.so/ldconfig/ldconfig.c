@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.8 2002/05/22 06:35:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -197,7 +197,7 @@ int	silent;
 			continue;
 
 		/* Copy the entry minus prefix */
-		(void)strcpy(name, dp->d_name + 3);
+		(void)strlcpy(name, dp->d_name + 3, sizeof name);
 		n = strlen(name);
 		if (n < 4)
 			continue;
