@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.5 2004/02/07 11:35:59 henning Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.6 2004/02/24 13:08:26 henning Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -89,7 +89,7 @@ get_char(FILE *cfile)
 {
 	int c = getc(cfile);
 	if (!ugflag) {
-		if (c == EOL) {
+		if (c == '\n') {
 			if (cur_line == line1) {
 				cur_line = line2;
 				prev_line = line1;
@@ -216,7 +216,7 @@ skip_to_eol(FILE *cfile)
 		c = get_char(cfile);
 		if (c == EOF)
 			return;
-		if (c == EOL)
+		if (c == '\n')
 			return;
 	} while (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.13 2004/02/24 12:41:28 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.14 2004/02/24 13:08:26 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -94,6 +94,10 @@ struct sockaddr_in sockaddr_broadcast;
  * assert (state_is == state_shouldbe).
  */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
+
+#if !defined (TIME_MAX)
+#define TIME_MAX 2147483647
+#endif
 
 u_int16_t	local_port;
 u_int16_t	remote_port;

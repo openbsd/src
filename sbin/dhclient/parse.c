@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.6 2004/02/23 20:09:02 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.7 2004/02/24 13:08:26 henning Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -78,7 +78,7 @@ skip_to_semi(FILE *cfile)
 		} else if (token == SEMI && !brace_count) {
 			token = next_token(&val, cfile);
 			return;
-		} else if (token == EOL) {
+		} else if (token == '\n') {
 			/*
 			 * EOL only happens when parsing
 			 * /etc/resolv.conf, and we treat it like a

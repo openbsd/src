@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.6 2004/02/23 18:21:15 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.7 2004/02/24 13:08:26 henning Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -49,6 +49,8 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>
+
+#define BPF_FORMAT "/dev/bpf%d"
 
 /*
  * Reinitializes the specified interface after an address change.   This

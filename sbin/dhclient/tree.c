@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.7 2004/02/24 00:34:40 henning Exp $	*/
+/*	$OpenBSD: tree.c,v 1.8 2004/02/24 13:08:26 henning Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -41,6 +41,8 @@
  */
 
 #include "dhcpd.h"
+
+extern int h_errno;
 
 static time_t tree_evaluate_recurse(
     int *, unsigned char **, int *, struct tree *);
