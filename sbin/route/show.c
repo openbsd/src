@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.35 2004/09/21 02:45:52 jaredy Exp $	*/
+/*	$OpenBSD: show.c,v 1.36 2004/09/22 01:07:10 jaredy Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.35 2004/09/21 02:45:52 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.36 2004/09/22 01:07:10 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,12 +95,11 @@ static const struct bits bits[] = {
 	{ RTF_PROTO2,	'2' },
 	{ RTF_PROTO3,	'3' },
 	{ RTF_CLONED,	'c' },
-	{ RTF_SOURCE,	's' },
 	{ 0 }
 };
 
-void	 pr_rthdr(int, int, int);
-void	 p_rtentry(struct rt_msghdr *, int, int);
+void	 pr_rthdr(int, int);
+void	 p_rtentry(struct rt_msghdr *, int);
 void	 pr_family(int);
 void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_flags(int, char *);
@@ -114,7 +113,7 @@ char	*any_ntoa(const struct sockaddr *);
  * Print routing tables.
  */
 void
-p_rttables(int af, int Aflag, int Sflag)
+p_rttables(int af, int Aflag)
 {
 	struct rt_msghdr *rtm;
 	char *buf = NULL, *next, *lim = NULL;
@@ -152,7 +151,7 @@ p_rttables(int af, int Aflag, int Sflag)
 			sa = (struct sockaddr *)(rtm + 1);
 			if (af != AF_UNSPEC && sa->sa_family != af)
 				continue;
-			p_rtentry(rtm, Aflag, Sflag);
+			p_rtentry(rtm, Aflag);
 		}
 		free(buf);
 	}
@@ -179,23 +178,15 @@ p_rttables(int af, int Aflag, int Sflag)
  * Print header for routing table columns.
  */
 void
-pr_rthdr(int af, int Aflag, int Sflag)
+pr_rthdr(int af, int Aflag)
 {
 	if (Aflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
 	if (af != PF_KEY)
-		if (af == AF_INET && Sflag)
-			printf("%-*.*s %-*.*s %-*.*s %-6.6s "
-			    "%6.6s %8.8s %6.6s  %s\n",
-			    WID_DST(af), WID_DST(af), "Source",
-			    WID_DST(af), WID_DST(af), "Destination",
-			    WID_GW(af), WID_GW(af), "Gateway",
-			    "Flags", "Refs", "Use", "Mtu", "Interface");
-		else
-			printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
-			    WID_DST(af), WID_DST(af), "Destination",
-			    WID_GW(af), WID_GW(af), "Gateway",
-			    "Flags", "Refs", "Use", "Mtu", "Interface");
+		printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
+		    WID_DST(af), WID_DST(af), "Destination",
+		    WID_GW(af), WID_GW(af), "Gateway",
+		    "Flags", "Refs", "Use", "Mtu", "Interface");
 	else
 		printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
 		    "Source", "Port", "Destination",
@@ -221,9 +212,9 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
  * Print a routing table entry.
  */
 void
-p_rtentry(rtm, Aflag, Sflag)
+p_rtentry(rtm, Aflag)
 	struct rt_msghdr *rtm;
-	int		  Aflag, Sflag;
+	int		  Aflag;
 {
 	static int	 old_af = -1;
 	struct sockaddr	*sa = (struct sockaddr *)(rtm + 1);
@@ -234,7 +225,7 @@ p_rtentry(rtm, Aflag, Sflag)
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
 		pr_family(sa->sa_family);
-		pr_rthdr(sa->sa_family, Aflag, Sflag);
+		pr_rthdr(sa->sa_family, Aflag);
 	}
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
@@ -242,16 +233,6 @@ p_rtentry(rtm, Aflag, Sflag)
 	if ((sa = rti_info[RTAX_DST]) == NULL)
 		return;
 	
-	if (old_af == AF_INET && Sflag) {
-		if (rti_info[RTAX_SRC] != NULL)
-			p_sockaddr(rti_info[RTAX_SRC],
-			    rti_info[RTAX_SRCMASK],
-			    rti_info[RTAX_SRCMASK] ? 0 : RTF_HOST,
-			    WID_DST(sa->sa_family));
-		else
-			printf("%-*s ", WID_DST(AF_INET), "default");
-	}
-
 	p_sockaddr(sa, mask, rtm->rtm_flags, WID_DST(sa->sa_family));
 	p_sockaddr(rti_info[RTAX_GATEWAY], 0, RTF_HOST, WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
