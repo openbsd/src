@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.2 2003/11/03 05:06:22 david Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.3 2003/11/14 20:14:32 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -222,7 +222,14 @@ pciaddr_resource_manage(struct pcibr_softc *sc, pci_chipset_tag_t pc,
 			continue;
 
 		/* reservation/allocation phase */
-		error += (*func) (sc, pc, tag, mapreg, ex, type, &addr, size);
+
+		/*
+		 * pegasos host bridge has register for isa space
+		 * which is not in PCI XXX ??? 
+		 */
+		if (addr != 0xffc00000)
+			error += (*func) (sc, pc, tag, mapreg, ex, type,
+			    &addr, size);
 
 		PCIBIOS_PRINTV(("\t%02xh %s 0x%08x 0x%08x\n", 
 				mapreg, type ? "port" : "mem ", 

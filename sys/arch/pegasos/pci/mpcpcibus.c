@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.2 2003/11/03 05:06:22 david Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.3 2003/11/14 20:14:32 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -308,8 +308,8 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
-	pci_addr_fixup(sc, &lcp->lc_pc, 32);
 	*/
+	pci_addr_fixup(sc, &lcp->lc_pc, 32);
 
 	pba.pba_dmat = &pci_bus_dma_tag;
 
