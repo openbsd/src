@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.88 2001/09/28 22:58:56 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.89 2001/10/09 21:20:20 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -154,6 +154,8 @@ ep*	at pci? dev ? function ?	# 3COM 3c59x
 xl*	at pci? dev ? function ?	# 3COM 3c9xx
 txp*	at pci? dev ? function ?	# 3COM 3CR990
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI cards
+wx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
+bge*	at pci? dev ? function ?	# Broadcom BCM570x (aka Tigon3)
 
 #UNTESTED:  the vollowing section of drivers is untested on alpha.
 en*	at pci? dev ? function ?	# ENI PCI ATM (untested)
@@ -169,7 +171,6 @@ dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?	# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
-wx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 
 #BROKEN:  The following two drivers have 64-bit issues
