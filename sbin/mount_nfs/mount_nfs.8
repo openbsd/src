@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.3 1996/06/10 06:39:40 deraadt Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.4 1996/11/02 00:40:48 millert Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -135,7 +135,9 @@ where the filesystem mount is not critical to multiuser operation.
 For UDP mount points, do not do a
 .Xr connect 2 .
 This must be used for servers that do not reply to requests from the
-standard NFS port number 2049.
+standard NFS port number 2049.  It may also be required for servers
+with more than one IP address (only necesary if replies come from
+an address other than the one specified in the the mount request).
 .It Fl d
 Turn off the dynamic retransmit timeout estimator.
 This may be useful for UDP mounts that exhibit high retry rates,
