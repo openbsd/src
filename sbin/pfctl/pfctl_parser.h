@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.59 2003/04/30 12:30:27 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.60 2003/05/10 00:45:24 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -123,6 +123,8 @@ struct node_queue_opt {
 	}			 data;
 };
 
+int	pfctl_rules(int, char *, int, char *, char *);
+
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
@@ -135,6 +137,7 @@ int	pfctl_set_logif(struct pfctl *, char *);
 
 int	parse_rules(FILE *, struct pfctl *);
 int	parse_flags(char *);
+int	pfctl_load_anchors(int, int);
 
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_rule(struct pf_rule *, int);

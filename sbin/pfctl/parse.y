@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.372 2003/05/03 16:50:38 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.373 2003/05/10 00:45:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -262,6 +262,15 @@ void	 remove_invalid_hosts(struct node_host **, sa_family_t *);
 int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 
+TAILQ_HEAD(loadanchorshead, loadanchors)	 loadanchorshead =
+   TAILQ_HEAD_INITIALIZER(loadanchorshead);
+struct loadanchors {
+	TAILQ_ENTRY(loadanchors)	 entries;
+	char				*anchorname;
+	char				*rulesetname;
+	char				*filename;
+};
+
 typedef struct {
 	union {
 		u_int32_t		 number;
@@ -354,6 +363,7 @@ typedef struct {
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT
+%token	LOAD
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
@@ -406,6 +416,7 @@ ruleset		: /* empty */
 		| ruleset binatrule '\n'
 		| ruleset pfrule '\n'
 		| ruleset anchorrule '\n'
+		| ruleset loadrule '\n'
 		| ruleset altqif '\n'
 		| ruleset queuespec '\n'
 		| ruleset varset '\n'
@@ -581,6 +592,43 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			pfctl_add_rule(pf, &r);
 		}
 		;
+
+loadrule	: LOAD ANCHOR string FROM string	{
+			char			*t;
+			struct loadanchors	*loadanchor;
+
+			t = strsep(&$3, ":");
+			if (*t == '\0' || *$3 == '\0') {
+				yyerror("anchor '%s' invalid\n", $3);
+				YYERROR;
+			}
+			if (strlen(t) >= PF_ANCHOR_NAME_SIZE) {
+				yyerror("anchorname %s too long, max %u\n",
+				    t, PF_ANCHOR_NAME_SIZE - 1);
+				YYERROR;
+			}
+			if (strlen($3) >= PF_RULESET_NAME_SIZE) {
+				yyerror("rulesetname %s too long, max %u\n",
+				    $3, PF_RULESET_NAME_SIZE - 1);
+				YYERROR;
+			}
+
+			loadanchor = calloc(1, sizeof(struct loadanchors));
+			if (loadanchor == NULL)
+				err(1, "loadrule: calloc");
+			if ((loadanchor->anchorname = strdup(t)) == NULL)
+				err(1, "loadrule: strdup");
+			if ((loadanchor->rulesetname = strdup($3)) == NULL)
+				err(1, "loadrule: strdup");
+			if ((loadanchor->filename = strdup($5)) == NULL)
+				err(1, "loadrule: strdup");
+
+			TAILQ_INSERT_TAIL(&loadanchorshead, loadanchor,
+			    entries);
+
+			free(t); /* not $3 */
+			free($5);
+		};
 
 scrubrule	: SCRUB dir logquick interface af fromto scrub_opts
 		{
@@ -3586,6 +3634,7 @@ lookup(char *s)
 		{ "label",		LABEL},
 		{ "limit",		LIMIT},
 		{ "linkshare",		LINKSHARE},
+		{ "load",		LOAD},
 		{ "log",		LOG},
 		{ "log-all",		LOGALL},
 		{ "loginterface",	LOGINTERFACE},
@@ -3873,15 +3922,24 @@ parse_rules(FILE *input, struct pfctl *xpf)
 	lineno = 1;
 	errors = 0;
 	rulestate = PFCTL_STATE_NONE;
+	returnicmpdefault = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
+	returnicmp6default =
+	    (ICMP6_DST_UNREACH << 8) | ICMP6_DST_UNREACH_NOPORT;
+	blockpolicy = PFRULE_DROP;
+	require_order = 1;
+
 	yyparse();
 
-	/* Check which macros have not been used. */
-	if (pf->opts & PF_OPT_VERBOSE2)
-		for (sym = TAILQ_FIRST(&symhead); sym;
-		    sym = TAILQ_NEXT(sym, entries))
-			if (!sym->used)
-				fprintf(stderr, "warning: macro '%s' not "
-				    "used\n", sym->nam);
+	/* Free macros and check which have not been used. */
+	TAILQ_FOREACH(sym, &symhead, entries) {
+		if ((pf->opts & PF_OPT_VERBOSE2) && !sym->used)
+			fprintf(stderr, "warning: macro '%s' not "
+			    "used\n", sym->nam);
+		free(sym->nam);
+		free(sym->val);
+		TAILQ_REMOVE(&symhead, sym, entries);
+	}
+
 	return (errors ? -1 : 0);
 }
 
@@ -4106,3 +4164,21 @@ parseicmpspec(char *w, sa_family_t af)
 	}
 	return (icmptype << 8 | ulval);
 }
+
+int
+pfctl_load_anchors(int dev, int opts)
+{
+	struct loadanchors	*la;
+
+	TAILQ_FOREACH(la, &loadanchorshead, entries) {
+		if (opts & PF_OPT_VERBOSE)
+			fprintf(stderr, "\nLoading anchor %s:%s from %s\n",
+			    la->anchorname, la->rulesetname, la->filename);
+		if (pfctl_rules(dev, la->filename, opts, la->anchorname,
+		    la->rulesetname) == -1)
+			return (-1);
+	}
+
+	return (0);
+}
+

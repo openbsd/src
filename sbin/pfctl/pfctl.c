@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.169 2003/04/30 13:22:26 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.170 2003/05/10 00:45:24 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -72,7 +72,6 @@ int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_show_timeouts(int);
 int	 pfctl_show_limits(int);
-int	 pfctl_rules(int, char *, int, char *, char *);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_test_altqsupport(int, int);
@@ -1026,6 +1025,12 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	}
 	if (fin != stdin)
 		fclose(fin);
+
+	/* process "load anchor" directives */
+	if (!anchorname[0] && !rulesetname[0])
+		if (pfctl_load_anchors(dev, opts) == -1)
+			return (-1);
+
 	return (0);
 }
 
