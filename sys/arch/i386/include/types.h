@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.12 1995/12/24 01:08:03 mycroft Exp $	*/
-/*	$OpenBSD: types.h,v 1.15 2004/06/28 01:41:53 aaron Exp $	*/
+/*	$OpenBSD: types.h,v 1.16 2004/07/20 20:16:44 art Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,5 +74,6 @@ typedef int32_t			register_t;
 #define __HAVE_NWSCONS
 #define __HAVE_EVCOUNT
 #define __HAVE_CPUINFO
+#define __HAVE_MUTEX
 
 #endif	/* _MACHTYPES_H_ */

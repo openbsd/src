@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.79 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.80 2004/07/20 20:16:44 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2301,3 +2301,5 @@ ENTRY(i686_pagezero)
 #if NLAPIC > 0 
 #include <i386/i386/apicvec.s>
 #endif
+
+#include <i386/i386/mutex.S>

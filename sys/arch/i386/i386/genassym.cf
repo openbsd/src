@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.17 2004/07/02 16:29:55 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.18 2004/07/20 20:16:44 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -44,6 +44,7 @@ include <uvm/uvm_extern.h>
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
+include <machine/mutex.h>
 
 if COMPAT_SVR4 > 0
 include <compat/svr4/svr4_ucontext.h>
@@ -165,6 +166,12 @@ member	IH_COUNT		ih_count.ec_count
 member	ih_next
 endif
 
+struct mutex
+member	mtx_lock
+member	mtx_wantipl
+member	mtx_oldipl
+member	mtx_owner
+
 define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
@@ -187,3 +194,4 @@ define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
+
