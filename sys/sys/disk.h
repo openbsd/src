@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.5 2000/04/09 19:26:35 csapuntz Exp $	*/
+/*	$OpenBSD: disk.h,v 1.6 2001/01/25 03:50:53 todd Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct disk {
 	int		dk_busy;	/* busy counter */
 	u_int64_t	dk_xfer;	/* total number of transfers */
 	u_int64_t	dk_seek;	/* total independent seek operations */
-	u_int64_t	dk_bytes;	/* total bytes transfered */
+	u_int64_t	dk_bytes;	/* total bytes transferred */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */

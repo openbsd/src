@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.5 2000/07/04 11:44:21 fgsch Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.6 2001/01/25 03:50:52 todd Exp $ */
 /*	$NetBSD: if_cue.c,v 1.21 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -48,7 +48,7 @@
  * RX filter uses a 512-bit multicast hash table, single perfect entry
  * for the station address, and promiscuous mode. Unlike the ADMtek
  * and KLSI chips, the CATC ASIC supports read and write combining
- * mode where multiple packets can be transfered using a single bulk
+ * mode where multiple packets can be transferred using a single bulk
  * transaction, which helps performance a great deal.
  */
 

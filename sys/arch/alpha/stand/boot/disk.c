@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.8 1998/09/04 16:59:06 millert Exp $	*/
+/*	$OpenBSD: disk.c,v 1.9 2001/01/25 03:50:46 todd Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ diskstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 	daddr_t bn;
 	size_t reqcnt;
 	void *addrvoid;
-	size_t *cnt;	/* out: number of bytes transfered */
+	size_t *cnt;	/* out: number of bytes transferred */
 {
 	char *addr = addrvoid;
 	struct disk_softc *sc;

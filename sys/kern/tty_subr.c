@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.9 2000/09/27 16:13:46 mickey Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.10 2001/01/25 03:50:53 todd Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -376,7 +376,7 @@ clrbits(cp, off, len)
 
 /*
  * Copy buffer to clist.
- * Return number of bytes not transfered.
+ * Return number of bytes not transferred.
  */
 int
 b_to_q(cp, count, clp)

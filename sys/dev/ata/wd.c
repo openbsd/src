@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.13 2000/06/30 06:56:24 art Exp $ */
+/*	$OpenBSD: wd.c,v 1.14 2001/01/25 03:50:50 todd Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -137,7 +137,7 @@ struct wd_softc {
 	struct buf sc_q;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
-	struct buf *sc_bp; /* buf being transfered */
+	struct buf *sc_bp; /* buf being transferred */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
 	int openings;
 	struct ataparams sc_params;/* drive characteistics found */

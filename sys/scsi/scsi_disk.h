@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.8 1999/08/24 01:20:22 csapuntz Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.9 2001/01/25 03:50:53 todd Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ struct scsi_format_unit {
 };
 
 /*
- * If the FmtData bit is set, a FORMAT UNIT parameter list is transfered
+ * If the FmtData bit is set, a FORMAT UNIT parameter list is transferred
  * to the target during the DATA OUT phase.  The parameter list includes
  *
  *	Defect list header

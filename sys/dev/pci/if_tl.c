@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.14 2000/11/14 03:56:32 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.15 2001/01/25 03:50:51 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -118,7 +118,7 @@
  * To transmit frames, the driver again sets up lists and fragment
  * descriptors, only this time the buffers contain frame data that
  * is to be DMA'ed into the chip instead of out of it. Once the chip
- * has transfered the data into its on-board SRAM, it will trigger a
+ * has transferred the data into its on-board SRAM, it will trigger a
  * TX 'end of frame' interrupt. It will also generate an 'end of channel'
  * interrupt when it reaches the end of the list.
  */

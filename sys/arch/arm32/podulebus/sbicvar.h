@@ -132,7 +132,7 @@ struct	sbic_softc {
 	u_char	sc_stat[2];
 	u_char	sc_msg[7];
 	u_long	sc_clkfreq;
-	u_long	sc_tcnt;		/* number of bytes transfered */
+	u_long	sc_tcnt;		/* number of bytes transferred */
 	u_short sc_dmacmd;		/* used by dma drivers */
 	u_short	sc_dmatimo;		/* dma timeout */
 	u_long	sc_dmamask;		/* dma valid mem mask */

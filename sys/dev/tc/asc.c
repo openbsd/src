@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.15 2000/09/10 01:11:52 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.16 2001/01/25 03:50:52 todd Exp $	*/
 /*	$NetBSD: asc.c,v 1.46 1998/05/08 15:39:01 mhitch Exp $	*/
 
 /*-
@@ -584,7 +584,7 @@ asc_start(scsicmd)
 	}
 	asc->cmd[sdp->sd_drive] = scsicmd;
 	/*
-	 * Kludge: use a 60 second timeout if data is being transfered,
+	 * Kludge: use a 60 second timeout if data is being transferred,
 	 * otherwise use a 30 minute timeout.
 	 */
 	timeout(asc_timeout, scsicmd, hz * (scsicmd->buflen == 0 ?

@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.7 2000/05/28 02:34:13 art Exp $  */
+/*    $OpenBSD: sfas.c,v 1.8 2001/01/25 03:50:46 todd Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -1327,12 +1327,12 @@ sfas_midaction(dev, rp, nexus)
 
 	case SFAS_NS_DATA_IN:
 	case SFAS_NS_DATA_OUT:
-		/* We have transfered data. */
+		/* We have transferred data. */
 		if (dev->sc_dma_len)
 			if (dev->sc_cur_link < dev->sc_max_link) {
 				/*
 				 * Clean up dma and at the same time get how
-				 * many bytes that were NOT transfered.
+				 * many bytes that were NOT transferred.
 				 */
 			  left = dev->sc_setup_dma(dev, 0, 0, SFAS_DMA_CLEAR);
 			  len  = dev->sc_dma_len;
@@ -1359,7 +1359,7 @@ sfas_midaction(dev, rp, nexus)
 			  }
 
 			  /*
-			   * Update pointers/length to reflect the transfered
+			   * Update pointers/length to reflect the transferred
 			   * data.
 			   */
 			  dev->sc_len -= len-left;

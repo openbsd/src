@@ -1,4 +1,4 @@
-/*	$OpenBSD: rz.c,v 1.19 1999/08/20 16:22:04 maja Exp $	*/
+/*	$OpenBSD: rz.c,v 1.20 2001/01/25 03:50:48 todd Exp $	*/
 /*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
 
 /*
@@ -733,7 +733,7 @@ void
 rzdone(unit, error, resid, status)
 	register int unit;
 	int error;		/* error number from errno.h */
-	int resid;		/* amount not transfered */
+	int resid;		/* amount not transferred */
 	int status;		/* SCSI status byte */
 {
 	register struct rz_softc *sc = &rz_softc[unit];

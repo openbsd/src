@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.3 2001/01/14 20:25:22 smurph Exp $ */
+/*	$OpenBSD: vx.c,v 1.4 2001/01/25 03:50:48 todd Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -612,7 +612,7 @@ int port;
    rwp.device_number = port;
    
    /*
-    * Do not wait.  Characters will be transfered
+    * Do not wait.  Characters will be transferred
     * to (*linesw[tp->t_line].l_rint)(c,tp); by 
     * vx_intr()  (IPC will notify via interrupt)
     */

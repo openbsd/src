@@ -379,7 +379,7 @@ void
 tzdone(unit, error, resid, status)
 	int unit;
 	int error;		/* error number from errno.h */
-	int resid;		/* amount not transfered */
+	int resid;		/* amount not transferred */
 	int status;		/* SCSI status byte */
 {
 	register struct tz_softc *sc = &tz_softc[unit];

@@ -732,7 +732,7 @@ again:
 			printf("%s: Parity error!!\n", sc->sc_dev.dv_xname);
 			goto abort;
 		}
-		/* dmalen = amount left to transfer, i = amount transfered */
+		/* dmalen = amount left to transfer, i = amount transferred */
 		i = state->dmalen;
 		state->dmalen = 0;
 		state->dmaCurPhase = -1;
@@ -998,7 +998,7 @@ again:
 #endif
 			}
 
-			/* read amount transfered if DMA didn't finish */
+			/* read amount transferred if DMA didn't finish */
 			if (state->dmalen > 0) {
 				i = state->dmalen - regs->dmlotc;
 				state->dmalen = 0;

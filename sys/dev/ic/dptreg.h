@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptreg.h,v 1.1 1999/11/30 07:55:56 cmetz Exp $	*/
+/*	$OpenBSD: dptreg.h,v 1.2 2001/01/25 03:50:50 todd Exp $	*/
 /*	$NetBSD: dptreg.h,v 1.4 1999/10/19 20:16:48 ad Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ struct eata_sp {
 	u_int8_t	sp_hba_status;		/* host adapter status */
 	u_int8_t	sp_scsi_status;		/* SCSI bus status */
 	u_int8_t	sp_reserved[2];		/* reserved */
-	u_int32_t	sp_inv_residue;		/* bytes not transfered */
+	u_int32_t	sp_inv_residue;		/* bytes not transferred */
 	u_int32_t	sp_ccbid;		/* ID of software CCB */
 	u_int8_t	sp_id_message;
 	u_int8_t	sp_que_message;

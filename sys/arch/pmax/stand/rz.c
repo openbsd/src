@@ -60,7 +60,7 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	daddr_t bn;
 	u_int reqcnt;
 	char *addr;
-	u_int *cnt;	/* out: number of bytes transfered */
+	u_int *cnt;	/* out: number of bytes transferred */
 {
 	register struct rz_softc *sc = (struct rz_softc *)devdata;
 	register int part = sc->sc_part;

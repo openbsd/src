@@ -1444,7 +1444,7 @@ sw_reg_strategy(sdp, bp, bn)
 	 * our buffer.
 	 */
 	error = 0;
-	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
+	bp->b_resid = bp->b_bcount;	/* nothing transferred yet! */
 	addr = bp->b_data;		/* current position in buffer */
 	byteoff = dbtob(bn);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.3 1997/07/21 11:26:09 pefo Exp $	*/
+/*	$OpenBSD: asc.c,v 1.4 2001/01/25 03:50:49 todd Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -385,7 +385,7 @@ typedef struct scsi_state {
 	int	statusByte;	/* status byte returned during STATUS_PHASE */
 	u_int	dmaBufSize;	/* DMA buffer size */
 	int	dmalen;		/* amount to transfer in this chunk */
-	int	dmaresid;	/* amount not transfered if chunk suspended */
+	int	dmaresid;	/* amount not transferred if chunk suspended */
 	int	cmdlen;		/* length of command in cmd */
 	int	buflen;		/* total remaining amount of data to transfer */
 	vm_offset_t buf;	/* current pointer within scsicmd->buf */
@@ -1024,7 +1024,7 @@ asc_intr(sc)
 
 		/*
 		 * OK, message coming in clean up whatever is going on.
-		 * Get number of bytes left to transfered from byte counter
+		 * Get number of bytes left to transferred from byte counter
 		 * counter decrements when data is trf on the SCSI bus
 		 */
 		ASC_TC_GET(regs, len);

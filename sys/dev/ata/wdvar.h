@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.2 2000/04/10 07:06:16 csapuntz Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.3 2001/01/25 03:50:50 todd Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ struct ata_bio {
     int multi; /* number of blocks to transfer in multi-mode */
     struct disklabel *lp; /* pointer to drive's label info */
     daddr_t blkno; /* block addr */
-    daddr_t blkdone; /* number of blks transfered */
+    daddr_t blkdone; /* number of blks transferred */
     daddr_t nblks; /* number of block currently transfering */
     int     nbytes; /* number of bytes currently transfering */
     long    bcount; /* total number of bytes */

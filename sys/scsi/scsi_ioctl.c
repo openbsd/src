@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.10 1999/08/24 01:20:22 csapuntz Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.11 2001/01/25 03:50:53 todd Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ scsi_user_done(xs)
 
 /* Pseudo strategy function
  * Called by scsi_do_ioctl() via physio/physstrat if there is to
- * be data transfered, and directly if there is no data transfer.
+ * be data transferred, and directly if there is no data transfer.
  * 
  * Should I reorganize this so it returns to physio instead
  * of sleeping in scsiio_scsi_cmd?  Is there any advantage, other

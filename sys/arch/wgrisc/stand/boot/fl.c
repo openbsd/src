@@ -1,4 +1,4 @@
-/*	$OpenBSD: fl.c,v 1.1 1997/07/21 06:58:13 pefo Exp $ */
+/*	$OpenBSD: fl.c,v 1.2 2001/01/25 03:50:49 todd Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -52,7 +52,7 @@ flstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	daddr_t bn;
 	u_int reqcnt;
 	char *addr;
-	u_int *cnt;	/* out: number of bytes transfered */
+	u_int *cnt;	/* out: number of bytes transferred */
 {
 	struct fl_softc *sc = (struct fl_softc *)devdata;
 	int s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicvar.h,v 1.3 1996/04/28 11:24:47 deraadt Exp $ */
+/*	$OpenBSD: sbicvar.h,v 1.4 2001/01/25 03:50:48 todd Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,7 +120,7 @@ struct  sbic_softc {
     u_char                  sc_stat[2];
     u_char                  sc_msg[7];
     u_long                  sc_clkfreq;
-    u_long                  sc_tcnt;    /* number of bytes transfered */
+    u_long                  sc_tcnt;    /* number of bytes transferred */
     u_short                 sc_dmacmd;  /* used by dma drivers */
     u_long                  sc_dmamask; /* dma valid mem mask */
 #ifdef DEBUG
