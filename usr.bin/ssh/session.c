@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.26 2000/08/20 18:25:53 millert Exp $");
+RCSID("$OpenBSD: session.c,v 1.27 2000/08/20 18:30:59 millert Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -728,7 +728,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	const char *shell, *hostname, *cp = NULL;
 	char buf[256];
 	char cmd[1024];
-	FILE *f;
+	FILE *f = NULL;
 	unsigned int envsize, i;
 	char **env;
 	extern char **environ;
@@ -739,14 +739,16 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	if (options.use_login && command != NULL)
 		options.use_login = 0;
 
-	f = fopen("/etc/nologin", "r");
-	if (f) {
-		/* /etc/nologin exists.  Print its contents and exit. */
-		while (fgets(buf, sizeof(buf), f))
-			fputs(buf, stderr);
-		fclose(f);
-		if (pw->pw_uid != 0)
+	if (!options.use_login) {
+		if (pw->pw_uid)
+			f = fopen(_PATH_NOLOGIN, "r");
+		if (f) {
+			/* /etc/nologin exists.  Print its contents and exit. */
+			while (fgets(buf, sizeof(buf), f))
+				fputs(buf, stderr);
+			fclose(f);
 			exit(254);
+		}
 	}
 	/* Set login name in the kernel. */
 	if (setlogin(pw->pw_name) < 0)
