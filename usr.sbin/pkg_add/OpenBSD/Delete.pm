@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.19 2004/12/21 18:12:05 espie Exp $
+# $OpenBSD: Delete.pm,v 1.20 2004/12/29 14:10:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -81,6 +81,7 @@ sub remove_packing_info
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
+	OpenBSD::ProgressMeter::message("reading plist");
 	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    Fatal "Bad package";
 	if (!defined $plist->pkgname()) {
@@ -310,6 +311,7 @@ sub delete
 		$state->print("File $realname is not a file\n");
 		return;
 	}
+
 	if (!defined $orig->{md5}) {
 		$state->print("Couldn't delete $realname (no md5)\n");
 		return;

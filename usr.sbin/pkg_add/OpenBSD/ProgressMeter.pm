@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.4 2004/12/29 01:11:13 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.5 2004/12/29 14:10:27 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -85,10 +85,25 @@ sub set_header
 	return $isatty;
 }
 
+sub message
+{
+	return unless $isatty;
+	my $message = shift;
+	my $d;
+	if ($playfield) {
+		$d = "$header|".substr($message, 0, $playfield);
+	} else {
+		$d = $header;
+	}
+	return if $d eq $lastdisplay;
+	$lastdisplay=$d;
+	print STDERR $d, "\r";
+}
+
 sub show
 {
-	my ($current, $total) = @_;
 	return unless $isatty;
+	my ($current, $total) = @_;
 	my $d;
 
 	if ($playfield) {
