@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 1997/04/25 18:51:28 deraadt Exp $
+#	$OpenBSD: list,v 1.7 1997/05/03 07:48:12 tholo Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -17,6 +17,7 @@ LINK	instbin			bin/mv
 LINK	instbin			bin/pwd
 LINK	instbin			bin/rm
 LINK	instbin			bin/sh
+LINK	instbin			bin/sleep
 LINK	instbin			bin/stty
 LINK	instbin			bin/sync
 LINK	instbin			bin/tar
@@ -46,14 +47,19 @@ LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/awk
+SYMLINK	/bin/cat		usr/bin/cut
 SYMLINK	/bin/cat		usr/bin/chgrp
+SYMLINK	/bin/cat		usr/bin/egrep
+SYMLINK	/bin/cat		usr/bin/fgrep
 SYMLINK	/bin/cat		usr/bin/ftp
+SYMLINK	/bin/cat		usr/bin/grep
 SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/gunzip
 SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/rsh
 SYMLINK	/bin/cat		usr/bin/sed
+SYMLINK	/bin/cat		usr/bin/sort
 SYMLINK	/bin/cat		usr/bin/strings
 SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/sbin/bad144
