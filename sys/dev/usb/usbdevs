@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.73 2003/11/27 12:28:47 henning Exp $
+$OpenBSD: usbdevs,v 1.74 2003/12/08 15:22:10 henning Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -710,6 +710,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial converter
+product	FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 USB LCD
 
 /* Fuji photo products */
