@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.9 2001/12/07 07:57:35 pvalchev Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.10 2001/12/07 09:18:08 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 2001/12/07 07:57:35 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2001/12/07 09:18:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -51,36 +51,36 @@ static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 2001/12/07 07:57:35 pvalchev Exp $
 
 void
 command(cmd)
-        char *cmd;
+	char *cmd;
 {
-        struct cmdtab *p;
-        char *cp;
+	struct cmdtab *p;
+	char *cp;
 	int interval;
 	sigset_t mask, omask;
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGALRM);
 	sigprocmask(SIG_BLOCK, &mask, &omask);
-        for (cp = cmd; *cp && !isspace(*cp); cp++)
-                ;
-        if (*cp)
-                *cp++ = '\0';
+	for (cp = cmd; *cp && !isspace(*cp); cp++)
+		;
+	if (*cp)
+		*cp++ = '\0';
 	if (*cmd == '\0')
 		return;
 	for (; *cp && isspace(*cp); cp++)
 		;
-        if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0)
-                die(0);
+	if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0)
+		die();
 	if (strcmp(cmd, "load") == 0) {
 		load();
 		goto done;
 	}
-        if (strcmp(cmd, "stop") == 0) {
-                alarm(0);
-                mvaddstr(CMDLINE, 0, "Refresh disabled.");
-                clrtoeol();
+	if (strcmp(cmd, "stop") == 0) {
+		alarm(0);
+		mvaddstr(CMDLINE, 0, "Refresh disabled.");
+		clrtoeol();
 		goto done;
-        }
+	}
 	if (strcmp(cmd, "help") == 0) {
 		int col, len;
 
@@ -97,30 +97,30 @@ command(cmd)
 		goto done;
 	}
 	interval = atoi(cmd);
-        if (interval <= 0 &&
+	if (interval <= 0 &&
 	    (strcmp(cmd, "start") == 0 || strcmp(cmd, "interval") == 0)) {
 		interval = *cp ? atoi(cp) : naptime;
-                if (interval <= 0) {
+		if (interval <= 0) {
 			error("%d: bad interval.", interval);
 			goto done;
-                }
+		}
 	}
 	if (interval > 0) {
-                alarm(0);
-                naptime = interval;
-                display(0);
-                status();
+		alarm(0);
+		naptime = interval;
+		display();
+		status();
 		goto done;
-        }
+	}
 	p = lookup(cmd);
 	if (p == (struct cmdtab *)-1) {
 		error("%s: Ambiguous command.", cmd);
 		goto done;
 	}
-        if (p) {
-                if (curcmd == p)
+	if (p) {
+		if (curcmd == p)
 			goto done;
-                alarm(0);
+		alarm(0);
 		(*curcmd->c_close)(wnd);
 		wnd = (*p->c_open)();
 		if (wnd == 0) {
@@ -138,12 +138,12 @@ command(cmd)
 			else
 				goto done;
 		}
-                curcmd = p;
+		curcmd = p;
 		labels();
-                display(0);
-                status();
+		display();
+		status();
 		goto done;
-        }
+	}
 	if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
 		error("%s: Unknown command.", cmd);
 done:
@@ -183,19 +183,19 @@ void
 status()
 {
 
-        error("Showing %s, refresh every %d seconds.",
-          curcmd->c_name, naptime);
+	error("Showing %s, refresh every %d seconds.",
+	    curcmd->c_name, naptime);
 }
 
 int
 prefix(s1, s2)
-        char *s1, *s2;
+	char *s1, *s2;
 {
 
-        while (*s1 == *s2) {
-                if (*s1 == '\0')
-                        return (1);
-                s1++, s2++;
-        }
-        return (*s1 == '\0');
+	while (*s1 == *s2) {
+		if (*s1 == '\0')
+			return (1);
+		s1++, s2++;
+	}
+	return (*s1 == '\0');
 }

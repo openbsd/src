@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.15 2001/12/07 07:57:35 pvalchev Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.16 2001/12/07 09:18:08 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.15 2001/12/07 07:57:35 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.16 2001/12/07 09:18:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,6 @@ static char rcsid[] = "$OpenBSD: iostat.c,v 1.15 2001/12/07 07:57:35 pvalchev Ex
 
 #include <string.h>
 #include <stdlib.h>
-#include <nlist.h>
 #include <paths.h>
 #include "systat.h"
 #include "extern.h"
@@ -210,7 +209,7 @@ showiostat()
 
 	/*
 	 * Interrupt CPU state not calculated yet.
-	 */ 
+	 */
 	for (i = 0; i < CPUSTATES; i++)
 		stat1(row++, i);
 
