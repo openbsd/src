@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.1 2004/11/11 12:29:58 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.2 2004/11/13 23:13:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,7 @@ sub collision_report($$)
 				$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
 				push(@{$bypkg->{$pkg}}, $name);
 				delete $todo{$name};
-				last LOOP if !%todo;
+				last BIGLOOP if !%todo;
 			}
 		}
 	}
