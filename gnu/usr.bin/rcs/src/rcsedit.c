@@ -36,6 +36,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsedit.c,v $
+ * Revision 1.2  1996/08/15 12:15:45  millert
+ * Use relative path for RCSLOCALID (like $Id)
+ *
  * Revision 1.1  1996/08/12 04:08:16  millert
  * rcs 5.7 + OpenBSD changes
  *
@@ -205,7 +208,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(editId, "$Id: rcsedit.c,v 1.1 1996/08/12 04:08:16 millert Exp $")
+libId(editId, "$Id: rcsedit.c,v 1.2 1996/08/15 12:15:45 millert Exp $")
 
 static void editEndsPrematurely P((void)) exiting;
 static void editLineNumberOverflow P((void)) exiting;
@@ -1056,7 +1059,7 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
 	    case LocalId:
 	    case Header:
 		escape_string(out,
-			marker==Id || RCSv<VERSION(4)
+			marker!=Header || RCSv<VERSION(4)
 			? basefilename(RCSname)
 			: getfullRCSname()
 		);
