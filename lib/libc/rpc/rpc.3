@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.11 1998/08/29 18:57:18 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.12 1998/12/21 08:21:59 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -168,7 +168,9 @@
 .Fn svcfd_create "int fd" "u_int sendsize" "u_int recvsize"
 .Ft SVCXPRT *
 .Fn svcudp_bufcreate "int sock"
+.Ft bool_t
 .Fn xdr_accepted_reply "XDR *xdrs" "struct accepted_reply *ar"
+.Ft bool_t
 .Fn xdr_authunix_parms "XDR *xdrs" "struct authunix_parms *aupp"
 .Ft void
 .Fn xdr_callhdr "XDR *xdrs" "struct rpc_msg *chdr"
