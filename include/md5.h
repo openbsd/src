@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.h,v 1.12 2004/04/28 16:46:02 millert Exp $	*/
+/*	$OpenBSD: md5.h,v 1.13 2004/04/28 16:52:08 millert Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -15,10 +15,14 @@
 #ifndef _MD5_H_
 #define _MD5_H_
 
+#define	MD5_BLOCK_LENGTH		64
+#define	MD5_DIGEST_LENGTH		16
+#define	MD5_DIGEST_STRING_LENGTH	(MD5_DIGEST_LENGTH * 2 + 1)
+
 typedef struct MD5Context {
-	u_int32_t buf[4];			/* state */
-	u_int32_t bits[2];			/* number of bits, mod 2^64 */
-	unsigned char in[64];	/* input buffer */
+	u_int32_t state[4];			/* state */
+	u_int64_t count;			/* number of bits, mod 2^64 */
+	u_int8_t buffer[MD5_BLOCK_LENGTH];	/* input buffer */
 } MD5_CTX;
 
 #include <sys/cdefs.h>
@@ -27,18 +31,18 @@ __BEGIN_DECLS
 void	 MD5Init(MD5_CTX *);
 void	 MD5Update(MD5_CTX *, const u_int8_t *, size_t)
 		__attribute__((__bounded__(__string__,2,3)));
-void	 MD5Final(u_int8_t [16], MD5_CTX *)
-		__attribute__((__bounded__(__minbytes__,1,16)));
-void	 MD5Transform(u_int32_t [4], const u_int8_t [64])
+void	 MD5Final(u_int8_t [MD5_DIGEST_LENGTH], MD5_CTX *)
+		__attribute__((__bounded__(__minbytes__,1,MD5_DIGEST_LENGTH)));
+void	 MD5Transform(u_int32_t [4], const u_int8_t [MD5_BLOCK_LENGTH])
 		__attribute__((__bounded__(__minbytes__,1,4)))
-		__attribute__((__bounded__(__minbytes__,2,64)));
-char	*MD5End(MD5_CTX *, char [33])
-		__attribute__((__bounded__(__minbytes__,2,33)));
-char	*MD5File(char *, char [33])
-		__attribute__((__bounded__(__minbytes__,2,33)));
-char	*MD5Data(const u_int8_t *, size_t, char [33])
+		__attribute__((__bounded__(__minbytes__,2,MD5_BLOCK_LENGTH)));
+char	*MD5End(MD5_CTX *, char [MD5_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,MD5_DIGEST_STRING_LENGTH)));
+char	*MD5File(char *, char [MD5_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,MD5_DIGEST_STRING_LENGTH)));
+char	*MD5Data(const u_int8_t *, size_t, char [MD5_DIGEST_STRING_LENGTH])
 		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,3,33)));
+		__attribute__((__bounded__(__minbytes__,3,MD5_DIGEST_STRING_LENGTH)));
 __END_DECLS
 
 #endif /* _MD5_H_ */
