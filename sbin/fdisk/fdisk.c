@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.4 1996/09/25 11:24:13 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.5 1996/09/27 14:32:07 deraadt Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.4 1996/09/25 11:24:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.5 1996/09/27 14:32:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -294,10 +294,10 @@ init_sector0(start)
 
 	f = fopen(mbrname, "r");
 	if (!f)
-		errx(1, mbrname);
+		err(1, "cannot open %s", mbrname);
 
 	if (fread(mboot.bootinst, sizeof mboot.bootinst, 1, f) != 1)
-		errx(1, "fread");
+		err(1, "reading %s", mbrname);
 	fclose(f);
 
 	mboot.signature = BOOT_MAGIC;
