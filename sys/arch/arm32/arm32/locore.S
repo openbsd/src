@@ -68,6 +68,8 @@ pc	.req	r15
 .text
 	.align	0
 	.global	start
+	.global _C_LABEL(kernel_text)
+	_C_LABEL(kernel_text) = start
 start:
 	add	r1, pc, #(Lstart - . - 8)
 	ldmia	r1, { r1, r2, r13 }		/* Set initial stack and */

@@ -168,6 +168,8 @@
 #define START_FRAME	((4 * 4) + 4 + 4)
 
 	.globl	start
+	.globl	_C_LABEL(kernel_text)
+	_C_LABEL(kernel_text) = start
 start:
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	li	t1, MACH_CACHED_MEMORY_ADDR	# invalid address

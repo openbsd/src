@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 1996/11/23 23:19:29 kstailey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 1997/02/15 17:40:21 mickey Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.7 1996/11/23 23:19:29 kstailey Exp $
+ *	$Id: locore.S,v 1.8 1997/02/15 17:40:21 mickey Exp $
  */
 
 /*
@@ -78,6 +78,8 @@
 #define START_FRAME	((4 * 4) + 4 + 4)
 
 	.globl	start
+	.globl	_C_LABEL(kernel_start)
+	_C_LABEL(kernel_start) = start
 start:
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	mtc0	zero, COP_0_CAUSE_REG	# Clear soft interrupts

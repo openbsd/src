@@ -70,6 +70,7 @@ def	_INCLUDE_VERSION, INCLUDE_VERSION
  ***********************************************************************/
 	text
 
+LABEL(_kernel_text)
 LABEL(_kernelstart)
 LABEL(_start)
 LABEL(start)
