@@ -249,7 +249,7 @@ yyerror(char *err)
 {
 	extern char *lineptr;
 
-	perr(err);
+	perr("%s", err);
 	longjmp(synerrjmp, 1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $ */
+/*	$OpenBSD: exec_aout.c,v 1.2 2000/09/30 16:06:34 aaron Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.2 2000/09/30 16:06:34 aaron Exp $";
 #endif
 
 #include <err.h>
@@ -98,7 +98,7 @@ aout_loadkernel(file)
 	off_t cur,end;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
-		err(1, file, errno);
+		err(1, "%s", file);
 	  
 	if (read(fd, (char *)&aout_ex, sizeof(aout_ex)) != sizeof(aout_ex))
 		errx(1, "can't read a.out header");
@@ -136,7 +136,7 @@ aout_savekernel(outfile)
 	int fd;
 
 	if ((fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0755)) < 0)
-		err(1, outfile, errno);
+		err(1, "%s", outfile);
 
 	if (write(fd, aout_p, aout_psz) != aout_psz)
 		errx(1, "can't write a.out text and data");

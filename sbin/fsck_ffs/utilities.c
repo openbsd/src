@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.7 1999/03/01 07:45:18 d Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.8 2000/09/30 16:06:34 aaron Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.7 1999/03/01 07:45:18 d Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.8 2000/09/30 16:06:34 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -530,7 +530,7 @@ dofix(idesc, msg)
 		if (idesc->id_type == DATA)
 			direrror(idesc->id_number, msg);
 		else
-			pwarn(msg);
+			pwarn("%s", msg);
 		if (preen) {
 			printf(" (SALVAGED)\n");
 			idesc->id_fix = FIX;

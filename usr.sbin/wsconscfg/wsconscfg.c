@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.1 2000/07/02 01:25:24 mickey Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.2 2000/09/30 16:06:35 aaron Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -120,7 +120,7 @@ main(argc, argv)
 
 	wsfd = open(wsdev, O_RDWR, 0);
 	if (wsfd < 0)
-		err(2, wsdev);
+		err(2, "%s", wsdev);
 
 	if (kbd) {
 		if (mux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.2 2000/09/30 16:06:34 aaron Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.2 2000/09/30 16:06:34 aaron Exp $";
 #endif
 
 #include <err.h>
@@ -130,7 +130,7 @@ elf_loadkernel(file)
 	Elf32_Shdr *s;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
-		err(1, file, errno);
+		err(1, "%s", file);
 	  
 	if (read(fd, (char *)&elf_ex, sizeof(elf_ex)) != sizeof(elf_ex))
 		errx(1, "can't read elf header");
@@ -164,7 +164,7 @@ elf_savekernel(outfile)
 	int fd;
 
 	if ((fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0755)) < 0)
-		err(1, outfile, errno);
+		err(1, "%s", outfile);
 
 	if (write(fd, elf_total, elf_size) != elf_size)
 		errx(1, "can't write file %s", outfile);
