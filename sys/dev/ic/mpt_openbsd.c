@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.10 2004/04/25 03:55:25 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.11 2004/04/28 01:45:48 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
 		sizeof(scsi_cmd), (u_char *)&inqbuf, scsi_cmd.length, 0, 10000, NULL,
 		SCSI_DATA_IN);
 	if (error) {
-		mpt_prt(mpt, "Invalid INQUIRY on target: %d\n", sc_link->target);
+		mpt_prt(mpt, "Invalid INQUIRY on target: %d", sc_link->target);
 		return 0;
 	}
 
@@ -364,7 +364,8 @@ mpt_run_ppr(mpt_softc_t *mpt)
 	u_int16_t buswidth;
 
 	/* walk device list */
-	for (dev = TAILQ_FIRST(&alldevs); dev != NULL; dev = TAILQ_NEXT(dev, dv_list)) {
+	for (dev = TAILQ_FIRST(&alldevs); dev != NULL;
+	    dev = TAILQ_NEXT(dev, dv_list)) {
 		if (dev->dv_parent == (struct device *)mpt) {
 			/* found scsibus softc */
 			buswidth = ((struct scsi_link *)&mpt->sc_link)->adapter_buswidth;
@@ -511,8 +512,8 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamem_alloc(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt),
 	    PAGE_SIZE, 0, &request_seg, 1, &request_rseg, 0);
 	if (error) {
-		printf("%s: unable to allocate request area, "
-		    "error = %d\n", mpt->mpt_dev.dv_xname, error);
+		printf("%s: unable to allocate request area, error = %d\n",
+		    mpt->mpt_dev.dv_xname, error);
 		goto fail_4;
 	}
 
@@ -527,8 +528,8 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamap_create(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt), 1,
 	    MPT_REQ_MEM_SIZE(mpt), 0, 0, &mpt->request_dmap);
 	if (error) {
-		printf("%s: unable to create request DMA map, "
-		    "error = %d\n", mpt->mpt_dev.dv_xname, error);
+		printf("%s: unable to create request DMA map, error = %d\n",
+		    mpt->mpt_dev.dv_xname, error);
 		goto fail_6;
 	}
 
@@ -562,8 +563,8 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 		error = bus_dmamap_create(mpt->sc_dmat, MAXPHYS,
 		    MPT_SGL_MAX, MAXPHYS, 0, 0, &req->dmap);
 		if (error) {
-			printf("%s: unable to create req %d DMA map, "
-			    "error = %d\n", mpt->mpt_dev.dv_xname, i, error);
+			printf("%s: unable to create req %d DMA map, error = ",
+			    "%d", mpt->mpt_dev.dv_xname, i, error);
 			goto fail_8;
 		}
 	}
@@ -683,7 +684,7 @@ mpt_timeout(void *arg)
 	uint32_t oseq;
 	int s, index;
 
-	mpt_prt(mpt, "command timeout\n");
+	mpt_prt(mpt, "command timeout");
 	sc_print_addr(linkp);
 
 	s = splbio();
@@ -916,7 +917,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 			break;
 		default:
 			sc_print_addr(linkp);
-			printf("invalid status code %d\n", xs->status);
+			mpt_prt(mpt, "invalid status code %d", xs->status);
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
@@ -1555,21 +1556,21 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 	error = bus_dmamem_alloc(mpt->sc_dmat, img_sz, PAGE_SIZE, 0,
 		&mpt->fw_seg, maxsgl, &mpt->fw_rseg, 0);
 	if (error) {
-	mpt_prt(mpt, "unable to allocate fw memory, error = %d\n", error);
+	mpt_prt(mpt, "unable to allocate fw memory, error = %d", error);
 		goto fw_fail0;
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg, img_sz,
 		(caddr_t *)&mpt->fw, BUS_DMA_COHERENT);
 	if (error) {
-		mpt_prt(mpt, "unable to map fw area, error = %d\n", error);
+		mpt_prt(mpt, "unable to map fw area, error = %d", error);
 		goto fw_fail1;
 	}
 
 	error = bus_dmamap_create(mpt->sc_dmat, img_sz, maxsgl, img_sz,
 		0, 0, &mpt->fw_dmap);
 	if (error) {
-		mpt_prt(mpt, "unable to create request DMA map, error = %d\n",
+		mpt_prt(mpt, "unable to create request DMA map, error = %d",
 			error);
 		goto fw_fail2;
 	}
@@ -1577,7 +1578,7 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 	error = bus_dmamap_load(mpt->sc_dmat, mpt->fw_dmap, mpt->fw, img_sz,
 		NULL, 0);
 	if (error) {
-	mpt_prt(mpt, "unable to load request DMA map, error = %d\n", error);
+	mpt_prt(mpt, "unable to load request DMA map, error = %d", error);
 		goto fw_fail3;
 	}
 

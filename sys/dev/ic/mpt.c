@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.5 2004/04/04 03:24:32 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.6 2004/04/28 01:45:48 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ mpt_hard_reset(mpt_softc_t *mpt)
 		/* wait for the adapter to finish the reset */
 		for (count = 0; count < 30; count++) {
 			diag0 = mpt_read(mpt, MPI_DIAGNOSTIC_OFFSET);
-			mpt_prt(mpt, "diag0=%08x\n", diag0);
+			mpt_prt(mpt, "diag0=%08x", diag0);
 			if (!(diag0 & MPI_DIAG_RESET_ADAPTER)) {
 				break;
 			}
@@ -233,8 +233,7 @@ mpt_hard_reset(mpt_softc_t *mpt)
 		}
 		count = mpt_downloadboot(mpt);
 		if (count < 0) {
-			panic("firmware downloadboot failure (%d)!\n",
-			    count);
+			panic("firmware downloadboot failure (%d)!", count);
 		}
 	}
 }
@@ -270,7 +269,7 @@ void
 mpt_free_request(mpt_softc_t *mpt, request_t *req)
 {
 	if (req == NULL || req != &mpt->request_pool[req->index]) {
-		panic("mpt_free_request bad req ptr\n");
+		panic("mpt_free_request bad req ptr");
 		return;
 	}
 	if (req->debug == REQ_FREE) {
@@ -278,7 +277,7 @@ mpt_free_request(mpt_softc_t *mpt, request_t *req)
 		 * XXX MU this should not happen but do not corrupt the free
 		 * list if it does
 		 */
-		mpt_prt(mpt, "request %d already free\n", req->index);
+		mpt_prt(mpt, "request %d already free", req->index);
 		return;
 	}
 	req->sequence = 0;
@@ -292,7 +291,7 @@ void
 mpt_init_request(mpt_softc_t *mpt, request_t *req)
 {
 	if (req == NULL || req != &mpt->request_pool[req->index]) {
-		panic("mpt_init_request bad req ptr\n");
+		panic("mpt_init_request bad req ptr");
 		return;
 	}
 	req->sequence = 0;
@@ -308,10 +307,11 @@ mpt_get_request(mpt_softc_t *mpt)
 	req = SLIST_FIRST(&mpt->request_free_list);
 	if (req != NULL) {
 		if (req != &mpt->request_pool[req->index]) {
-			panic("mpt_get_request: corrupted request free list\n");
+			panic("mpt_get_request: corrupted request free list");
 		}
 		if (req->xfer != NULL) {
-			panic("mpt_get_request: corrupted request free list (xfer)\n");
+			panic("mpt_get_request: corrupted request free list "
+			    "(xfer)");
 		}
 		SLIST_REMOVE_HEAD(&mpt->request_free_list, link);
 		req->debug = REQ_IN_PROGRESS;
@@ -1158,7 +1158,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		if (mpt->verbose > 1) {
 			mpt_prt(mpt,
 			    "IOCFACTS: GlobalCredits=%d BlockSize=%u "
-			    "Request Frame Size %u\n", facts.GlobalCredits,
+			    "Request Frame Size %u", facts.GlobalCredits,
 			    facts.BlockSize, facts.RequestFrameSize);
 		}
 		mpt->mpt_global_credits = facts.GlobalCredits;
@@ -1177,7 +1177,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 
 		if (mpt->verbose > 1) {
 			mpt_prt(mpt,
-			    "PORTFACTS: Type %x PFlags %x IID %d MaxDev %d\n",
+			    "PORTFACTS: Type %x PFlags %x IID %d MaxDev %d",
 			    pfp.PortType, pfp.ProtocolFlags, pfp.PortSCSIID,
 			    pfp.MaxDevices);
 		}
@@ -1237,7 +1237,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 
 			if (mpt_do_upload(mpt)) {
 				/* XXX MP should we panic? */
-				mpt_prt(mpt, "firmware upload failure!\n");
+				mpt_prt(mpt, "firmware upload failure!");
 			}
 			/* continue; */
 		}
@@ -1326,12 +1326,12 @@ mpt_do_upload(mpt_softc_t *mpt)
 
 	error = mpt_alloc_fw_mem(mpt, mpt->fw_image_size, maxsgl);
 	if (error) {
-		mpt_prt(mpt,"mpt_alloc_fw_mem error: %d\n", error);
+		mpt_prt(mpt,"mpt_alloc_fw_mem error: %d", error);
 		return error;
 	}
 
 	if (mpt->fw_dmap->dm_nsegs > maxsgl) {
-		mpt_prt(mpt,"nsegs > maxsgl\n");
+		mpt_prt(mpt,"nsegs > maxsgl");
 		return 1; /* XXX */
 	}
 
@@ -1415,7 +1415,7 @@ mpt_do_upload(mpt_softc_t *mpt)
 		mpt->upload_fw = 0;
 	}
 	else {
-		mpt_prt(mpt, "freeing image memory\n");
+		mpt_prt(mpt, "freeing image memory");
 		mpt_free_fw_mem(mpt);
 		mpt->fw = NULL;
 	}
@@ -1447,19 +1447,19 @@ mpt_downloadboot(mpt_softc_t *mpt)
 	diag0 = mpt_read(mpt, MPT_OFFSET_DIAGNOSTIC);
 	if (mpt->mpt2)
 		diag1 = mpt_read(mpt->mpt2, MPT_OFFSET_DIAGNOSTIC);
-	mpt_prt(mpt, "diag0=%08x, diag1=%08x\n", diag0, diag1);
+	mpt_prt(mpt, "diag0=%08x, diag1=%08x", diag0, diag1);
 #endif
-	mpt_prt(mpt, "fw size 0x%x, ioc FW ptr %p\n",
-			mpt->fw_image_size, mpt->fw);
+	mpt_prt(mpt, "fw size 0x%x, ioc FW ptr %p", mpt->fw_image_size,
+	    mpt->fw);
 	if (mpt->mpt2)
-		mpt_prt(mpt->mpt2, "ioc FW ptr %p\n", mpt->mpt2->fw);
+		mpt_prt(mpt->mpt2, "ioc FW ptr %p", mpt->mpt2->fw);
 
 	fw_size = mpt->fw_image_size;
 
 	if (fw_size == 0)
 		return -1;
 
-	mpt_prt(mpt, "FW Image @ %p\n", mpt->fw);
+	mpt_prt(mpt, "FW Image @ %p", mpt->fw);
 
 	if (!mpt->fw)
 		return -2;
@@ -1482,7 +1482,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 
 		count++;
 		if (count > 20) {
-			mpt_prt(mpt, "enable diagnostic mode FAILED! (%02xh)\n",
+			mpt_prt(mpt, "enable diagnostic mode FAILED! (%02xh)",
 			    diag0);
 			return -EFAULT;
 		}
@@ -1491,9 +1491,9 @@ mpt_downloadboot(mpt_softc_t *mpt)
 #ifdef MPT_DEBUG
 		if (mpt->mpt2)
 			diag1 = mpt_read(mpt->mpt2, MPT_OFFSET_DIAGNOSTIC);
-		mpt_prt(mpt, "diag0=%08x, diag1=%08x\n", diag0, diag1);
+		mpt_prt(mpt, "diag0=%08x, diag1=%08x", diag0, diag1);
 #endif
-		mpt_prt(mpt, "wrote magic DiagWriteEn sequence (%x)\n", diag0);
+		mpt_prt(mpt, "wrote magic DiagWriteEn sequence (%x)", diag0);
 	}
 
 	/* Set the DiagRwEn and Disable ARM bits */
@@ -1503,7 +1503,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 #ifdef MPT_DEBUG
 	if (mpt->mpt2)
 		diag1 = mpt_read(mpt->mpt2, MPT_OFFSET_DIAGNOSTIC);
-	mpt_prt(mpt, "diag0=%08x, diag1=%08x\n", diag0, diag1);
+	mpt_prt(mpt, "diag0=%08x, diag1=%08x", diag0, diag1);
 #endif
 
 	fwhdr = (MpiFwHeader_t *) mpt->fw;
@@ -1517,8 +1517,8 @@ mpt_downloadboot(mpt_softc_t *mpt)
 	 */
 	mpt_write(mpt, MPT_OFFSET_RWADDR, fwhdr->LoadStartAddress);
 
-	mpt_prt(mpt, "LoadStart addr written 0x%x \n", fwhdr->LoadStartAddress);
-	mpt_prt(mpt, "writing file image: 0x%x u32's @ %p\n", count, ptr);
+	mpt_prt(mpt, "LoadStart addr written 0x%x", fwhdr->LoadStartAddress);
+	mpt_prt(mpt, "writing file image: 0x%x u32's @ %p", count, ptr);
 
 	while (count--) {
 		mpt_write(mpt, MPT_OFFSET_RWDATA, *ptr);
@@ -1532,7 +1532,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 		nextimg = exthdr->NextImageHeaderOffset;
 		load_addr = exthdr->LoadStartAddress;
 
-		mpt_prt(mpt, "write ext image: 0x%x u32's @ %p\n", count, ptr);
+		mpt_prt(mpt, "write ext image: 0x%x u32's @ %p", count, ptr);
 
 		mpt_write(mpt, MPT_OFFSET_RWADDR, load_addr);
 
@@ -1543,11 +1543,11 @@ mpt_downloadboot(mpt_softc_t *mpt)
 	}
 
 	/* write the IopResetVectorRegAddr */
-	mpt_prt(mpt, "write IopResetVector addr!\n");
+	mpt_prt(mpt, "write IopResetVector addr!");
 	mpt_write(mpt, MPT_OFFSET_RWADDR, fwhdr->IopResetRegAddr);
 
 	/* write the IopResetVectorValue */
-	mpt_prt(mpt, "write IopResetVector value!\n");
+	mpt_prt(mpt, "write IopResetVector value!");
 	mpt_write(mpt, MPT_OFFSET_RWDATA, fwhdr->IopResetVectorValue);
 
 	/*
