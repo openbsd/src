@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.22 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: termios.4,v 1.23 2003/06/26 19:36:29 jmc Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -180,7 +180,7 @@ signal, or if the process group of the reading process is orphaned, the
 returns -1 with
 .Va errno
 set to
-.Er Dv EIO
+.Er EIO
 and no
 signal is sent.
 The default action of the
@@ -215,7 +215,7 @@ the
 returns -1 with
 .Va errno
 set to
-.Er Dv EIO
+.Er EIO
 and no signal is sent.
 .Pp
 Certain calls that set terminal parameters are treated in the same
