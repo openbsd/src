@@ -1,4 +1,5 @@
-/*	$NetBSD: db_trace.c,v 1.12 1995/05/24 20:23:34 gwr Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 1996/03/21 00:12:55 niklas Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 1996/02/13 17:34:46 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,7 +29,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <setjmp.h>
 
 #include <machine/db_machdep.h>
 
@@ -36,7 +36,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-jmp_buf	*db_recover;
+extern label_t	*db_recover;
 
 /*
  * Register list
@@ -263,10 +263,12 @@ findentry(sp)
 	register	instruc;
 	register	val;
 	db_addr_t	addr, calladdr, nextword;
-	jmp_buf		db_jmpbuf;
-	jmp_buf		*savejmp = db_recover;
+	label_t		db_jmpbuf;
+	label_t		*savejmp;
 
-	if (setjmp(*(db_recover = &db_jmpbuf))) {
+	savejmp = db_recover;
+	db_recover = &db_jmpbuf;
+	if (setjmp(&db_jmpbuf)) {
 		/* oops -- we touched something we ought not to have */
 		/* cannot trace caller of "start" */
 		sp->k_entry = MAXINT;
