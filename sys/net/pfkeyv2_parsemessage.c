@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.37 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.38 2004/03/31 10:24:00 henning Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -599,6 +599,10 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				break;
 #endif /* INET6 */
 			default:
+				if (sadb_msg->sadb_msg_satype ==
+				    SADB_X_SATYPE_TCPSIGNATURE &&
+				    sa->sa_family == 0)
+					break;
 				DPRINTF(("pfkeyv2_parsemessage: unknown "
 				    "address family %d in ADDRESS extension "
 				    "header %d\n",
