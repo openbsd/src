@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.1 2000/11/21 00:51:16 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.2 2001/06/03 19:55:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -311,7 +311,7 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 			*dot = '.';
 		}
 	}
-	if (pwd == NULL || (lc = login_getclass(pwd->pw_class)) == NULL)
+	if ((lc = login_getclass(pwd ? pwd->pw_class : NULL)) == NULL)
 		return (NULL);
 
 	if ((style = login_getstyle(lc, style, type)) == NULL) {
@@ -329,7 +329,7 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 		auth_setdata(as, password, strlen(password) + 1);
 	} else
 		as = NULL;
-	as = auth_verify(as, style, name, pwd->pw_class, NULL);
+	as = auth_verify(as, style, name, lc->lc_class, NULL);
 	login_close(lc);
 	return (as);
 }
@@ -375,7 +375,7 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 			*dot = '.';
 		}
 	}
-	if (pwd == NULL || (lc = login_getclass(pwd->pw_class)) == NULL)
+	if ((lc = login_getclass(pwd ? pwd->pw_class : NULL)) == NULL)
 		return (NULL);
 
 	if ((style = login_getstyle(lc, style, type)) == NULL ||
@@ -385,7 +385,7 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 	}
 	if (auth_setitem(as, AUTHV_STYLE, style) < 0 ||
 	    auth_setitem(as, AUTHV_NAME, name) < 0 ||
-	    auth_setitem(as, AUTHV_CLASS, pwd->pw_class) < 0) {
+	    auth_setitem(as, AUTHV_CLASS, lc->lc_class) < 0) {
 		auth_close(as);
 		login_close(lc);
 		return (NULL);
