@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi.h,v 1.5 1996/08/06 22:41:02 downsj Exp $	*/
+/*	$OpenBSD: atapi.h,v 1.6 1997/07/07 19:48:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -389,7 +389,7 @@ struct atapi_mode_data {
 
 
 int	atapi_exec_cmd __P((struct at_dev_link *, void *, int,
-	    void *, int, long, int));
+	    void *, int, int, int));
 int	atapi_exec_io __P((struct at_dev_link *, void *, int,
 	    struct buf *, int));
 int	atapi_test_unit_ready __P((struct at_dev_link *, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.25 1997/06/24 05:29:53 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.26 1997/07/07 19:48:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -101,7 +101,7 @@ struct acd_softc {
 
 	struct	cd_parms {
 		int	blksize;
-		u_long	disksize;	/* total number sectors */
+		u_int32_t disksize;	/* total number sectors */
 	} params;
 	struct	buf buf_queue;
 };
@@ -123,7 +123,7 @@ void	acdstrategy __P((struct buf *));
 void	acdstart __P((void *));
 int	acd_pause __P((struct acd_softc *, int));
 void	acdminphys __P((struct buf*));
-u_long	acd_size __P((struct acd_softc*, int));
+u_int32_t acd_size __P((struct acd_softc*, int));
 int	acddone __P((void *));
 int	acdlock __P((struct acd_softc *));
 void	acdunlock __P((struct acd_softc *));
@@ -1094,7 +1094,7 @@ done:
 /*
  * Find out from the device what it's capacity is
  */
-u_long
+u_int32_t
 acd_size(acd, flags)
 	struct acd_softc *acd;
 	int flags;

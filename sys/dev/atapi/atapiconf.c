@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.15 1997/06/24 05:29:54 downsj Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.16 1997/07/07 19:48:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -294,7 +294,7 @@ atapi_exec_cmd(ad_link, cmd, cmd_size, databuf, datalen, rw, flags)
 	int cmd_size;
 	void *databuf;
 	int datalen;
-	long rw;
+	int rw;
 	int flags;
 {
 	struct atapi_command_packet *pkt;
