@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.22 2000/06/18 19:11:17 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.23 2000/06/18 19:56:55 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.22 2000/06/18 19:11:17 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.23 2000/06/18 19:56:55 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -203,13 +203,19 @@ rip6_input(mp, offp, proto)
 {
 	struct mbuf *m = *mp;
 	/* Will have been pulled up by ipv6_input(). */
-	register struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	register struct ip6_hdr *ip6;
 	register struct inpcb *inp;
 	int nexthdr, icmp6type;
 	int foundone = 0;
 	struct mbuf *m2 = NULL, *opts = NULL;
 	struct sockaddr_in6 srcsa;
 	int extra = *offp;
+
+#ifdef DIAGNOSTIC
+	if (m->m_len < sizeof(*ip6))
+		panic("too short mbuf to rip6_input");
+#endif
+	ip6 = mtod(m, struct ip6_hdr *);
 
 	/* Be proactive about malicious use of IPv4 mapped address */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
@@ -227,14 +233,11 @@ rip6_input(mp, offp, proto)
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&srcsa, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
-#if 0
-	/* Will be done already by the previous input functions */
-	if (m->m_len < extra)) {
+	if (m->m_len < extra) {
 		if (!(m = m_pullup2(m, extra)))
-			return;
+			return IPPROTO_DONE;
 		ip6 = mtod(m, struct ip6_hdr *);
 	}
-#endif /* 0 */
 
 	if ((nexthdr = ipv6_findnexthdr(m, extra)) < 0)
 		goto ret;
