@@ -49,6 +49,11 @@ OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 boot:	${OBJS}
 	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS}
 	cp boot boot.sym
+	@if [ `size boot | awk 'BEGIN {getline} {print $$1+$$2}'` -gt 7680 ];\
+	then \
+		echo BOOT BLOCKS ARE TOO BIG;\
+		fail;\
+	fi
 	@strip boot
 	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
 	@mv -f boot.tmp boot
