@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.21 2003/07/07 21:36:52 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.22 2004/03/02 20:49:41 tedu Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.21 2003/07/07 21:36:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.22 2004/03/02 20:49:41 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 
 	interval = 0;
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:w:sc")) != -1)
+	while ((ch = getopt(argc, argv, "cM:N:sw:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -418,8 +418,9 @@ void
 usage(void)
 {
 	extern char *__progname;
+
 	fprintf(stderr,
-	    "usage: %s [-M core] [-N system] [-s] [-c] [-w interval]\n",
+	    "usage: %s [-cs] [-M core] [-N system] [-w interval]\n",
 	    __progname);
 	exit(1);
 }
