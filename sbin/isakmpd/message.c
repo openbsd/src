@@ -1,8 +1,8 @@
-/*	$OpenBSD: message.c,v 1.12 1999/03/31 01:52:00 niklas Exp $	*/
-/*	$EOM: message.c,v 1.110 1999/03/31 01:31:36 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.13 1999/04/02 01:09:22 niklas Exp $	*/
+/*	$EOM: message.c,v 1.112 1999/04/02 00:58:19 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -964,10 +964,7 @@ message_recv (struct message *msg)
    */
   if (GET_ISAKMP_HDR_NEXT_PAYLOAD (buf) != ISAKMP_PAYLOAD_NONE
       && message_sort_payloads (msg, GET_ISAKMP_HDR_NEXT_PAYLOAD (buf)))
-    {
-      message_free (msg);
-      return -1;
-    }
+    return -1;
 
   /*
    * Run generic payload tests now.  If anything fails these checks, the
