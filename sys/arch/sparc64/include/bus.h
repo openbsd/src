@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2001/08/30 19:50:26 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2001/09/06 14:04:35 art Exp $	*/
 /*	$NetBSD: bus.h,v 1.28 2001/07/19 15:32:19 thorpej Exp $	*/
 
 /*-
@@ -1372,6 +1372,7 @@ bus_space_copy_region_stream_8(t, h1, o1, h2, o2, c)
 
 /* OpenBSD "raw" wrappers around the NetBSD "stream" methods. */
 /* XXXART - I'm lazy so I'll only implement the ones I need. */
+#define BUS_DMA_RAW	BUS_DMA_STREAMING
 #define bus_space_read_raw_multi_2(t, h, o, a, c) \
 	bus_space_read_multi_stream_2(t, h, o, (u_int8_t *)(a), c/2)
 #define bus_space_write_raw_multi_2(t, h, o, a, c) \
