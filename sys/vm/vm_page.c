@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_page.c,v 1.7 1997/09/22 20:44:52 niklas Exp $    */
+/*    $OpenBSD: vm_page.c,v 1.8 1997/09/25 07:06:27 niklas Exp $    */
 /*	$NetBSD: vm_page.c,v 1.31 1997/06/06 23:10:23 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -443,6 +443,11 @@ pmap_steal_memory(size)
 	vm_size_t	size;
 {
 	vm_offset_t	addr, vaddr, paddr;
+
+#ifdef i386	/* XXX i386 calls pmap_steal_memory before vm_mem_init() */
+	if (cnt.v_page_size == 0)		/* XXX */
+		vm_set_page_size();
+#endif
 
 	/*
 	 * We round the size to an integer multiple.
