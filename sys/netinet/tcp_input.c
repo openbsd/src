@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.182 2005/02/27 13:22:56 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.183 2005/03/04 13:21:42 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -126,6 +126,10 @@ struct timeval tcp_ackdrop_ppslim_last;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
+
+/* for TCP SACK comparisons */
+#define	SEQ_MIN(a,b)	(SEQ_LT(a,b) ? (a) : (b))
+#define	SEQ_MAX(a,b)	(SEQ_GT(a,b) ? (a) : (b))
 
 /*
  * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
@@ -2265,8 +2269,7 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 				tp->t_flags |= TF_SACK_PERMIT;
 			break;
 		case TCPOPT_SACK:
-			if (tcp_sack_option(tp, th, cp, optlen))
-				continue;
+			tcp_sack_option(tp, th, cp, optlen);
 			break;
 #endif
 #ifdef TCP_SIGNATURE
@@ -2460,11 +2463,10 @@ tcp_update_sack_list(tp)
 }
 
 /*
- * Process the TCP SACK option.  Returns 1 if tcp_dooptions() should continue,
- * and 0 otherwise, if the option was fine.  tp->snd_holes is an ordered list
+ * Process the TCP SACK option.  tp->snd_holes is an ordered list
  * of holes (oldest to newest, in terms of the sequence space).
  */
-int
+void
 tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 {
 	int tmp_olen;
@@ -2472,11 +2474,18 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	struct sackhole *cur, *p, *temp;
 
 	if (!tp->sack_enable)
-		return (1);
-
+		return;
+	/* SACK without ACK doesn't make sense. */
+	if ((th->th_flags & TH_ACK) == 0)
+	       return;
+	/* Make sure the ACK on this segment is in [snd_una, snd_max]. */
+	if (SEQ_LT(th->th_ack, tp->snd_una) ||
+	    SEQ_GT(th->th_ack, tp->snd_max))
+		return;
 	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
 	if (optlen <= 2 || (optlen - 2) % TCPOLEN_SACK != 0)
-		return (1);
+		return;
+	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
 	tmp_cp = cp + 2;
 	tmp_olen = optlen - 2;
 	if (tp->snd_numholes < 0)
@@ -2513,7 +2522,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (tp->snd_holes == NULL) {
 				/* ENOBUFS, so ignore SACKed block for now*/
-				continue;
+				goto done;
 			}
 			cur = tp->snd_holes;
 			cur->start = th->th_ack;
@@ -2577,7 +2586,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				}
 				/* otherwise, move start of hole forward */
 				cur->start = sack.end;
-				cur->rxmit = max (cur->rxmit, cur->start);
+				cur->rxmit = SEQ_MAX(cur->rxmit, cur->start);
 				p = cur;
 				cur = cur->next;
 				continue;
@@ -2591,7 +2600,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 					    sack.start);
 #endif /* TCP_FACK */
 				cur->end = sack.start;
-				cur->rxmit = min(cur->rxmit, cur->end);
+				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
 				cur->dups++;
 				if (((sack.end - cur->end)/tp->t_maxseg) >=
 				    tcprexmtthresh)
@@ -2609,7 +2618,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				temp = (struct sackhole *)
 				    pool_get(&sackhl_pool, PR_NOWAIT);
 				if (temp == NULL)
-					continue; /* ENOBUFS */
+					goto done; /* ENOBUFS */
 #if defined(TCP_SACK) && defined(TCP_FACK)
 				if (SEQ_GT(cur->rxmit, sack.end))
 					tp->retran_data -=
@@ -2624,9 +2633,9 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				temp->start = sack.end;
 				temp->end = cur->end;
 				temp->dups = cur->dups;
-				temp->rxmit = max(cur->rxmit, temp->start);
+				temp->rxmit = SEQ_MAX(cur->rxmit, temp->start);
 				cur->end = sack.start;
-				cur->rxmit = min(cur->rxmit, cur->end);
+				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
 				cur->dups++;
 				if (((sack.end - cur->end)/tp->t_maxseg) >=
 					tcprexmtthresh)
@@ -2646,7 +2655,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			temp = (struct sackhole *)
 			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (temp == NULL)
-				continue; /* ENOBUFS */
+				goto done; /* ENOBUFS */
 			temp->start = tp->rcv_lastsack;
 			temp->end = sack.start;
 			temp->dups = min(tcprexmtthresh,
@@ -2660,6 +2669,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			tp->snd_numholes++;
 		}
 	}
+done:
 #if defined(TCP_SACK) && defined(TCP_FACK)
 	/*
 	 * Update retran_data and snd_awnd.  Go through the list of
@@ -2675,7 +2685,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	    tp->retran_data;
 #endif /* TCP_FACK */
 
-	return (0);
+	return;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.88 2005/02/22 17:28:49 mcbride Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.89 2005/03/04 13:21:42 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -945,6 +945,20 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			tcp_reass_limit = nval;
 		}
 		return (0);
+#ifdef TCP_SACK
+	case TCPCTL_SACKHOLE_LIMIT:
+		nval = tcp_sackhole_limit;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
+		if (error)
+			return (error);
+		if (nval != tcp_sackhole_limit) {
+			error = pool_sethardlimit(&sackhl_pool, nval, NULL, 0);
+			if (error)
+				return (error);
+			tcp_sackhole_limit = nval;
+		}
+		return (0);
+#endif
 	default:
 		if (name[0] < TCPCTL_MAXID)
 			return (sysctl_int_arr(tcpctl_vars, name, namelen,

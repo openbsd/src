@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.70 2005/02/27 13:22:56 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.71 2005/03/04 13:21:42 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -472,7 +472,8 @@ struct	tcpstat {
 #define	TCPCTL_RFC3390	       17 /* enable/disable RFC3390 increased cwnd */
 #define	TCPCTL_REASS_LIMIT     18 /* max entries for tcp reass queues */
 #define	TCPCTL_DROP	       19 /* drop tcp connection */
-#define	TCPCTL_MAXID	       20
+#define	TCPCTL_SACKHOLE_LIMIT  20 /* max entries for tcp sack queues */
+#define	TCPCTL_MAXID	       21
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -495,6 +496,7 @@ struct	tcpstat {
 	{ "rfc3390", 	CTLTYPE_INT }, \
 	{ "reasslimit", 	CTLTYPE_INT }, \
 	{ "drop", 	CTLTYPE_STRUCT }, \
+	{ "sackholelimit", 	CTLTYPE_INT }, \
 }
 
 #define	TCPCTL_VARS { \
@@ -517,6 +519,7 @@ struct	tcpstat {
 	&tcp_syn_bucket_limit, \
 	&tcp_do_rfc3390, \
 	NULL, \
+	NULL, \
 	NULL \
 }
 
@@ -535,6 +538,7 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 #ifdef TCP_SACK
 extern	int tcp_do_sack;	/* SACK enabled/disabled */
 extern	struct pool sackhl_pool;
+extern	int tcp_sackhole_limit;	/* max entries for tcp sack queues */
 #endif
 extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
 extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
@@ -607,7 +611,7 @@ int	 tcp_usrreq(struct socket *,
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 #ifdef TCP_SACK
-int	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
+void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
 void	 tcp_update_sack_list(struct tcpcb *tp);
 void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
 void	 tcp_clean_sackreport(struct tcpcb *tp);
