@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.h,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt.h,v 1.2 2004/03/17 00:47:06 krw Exp $	*/
 /*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
@@ -176,6 +176,11 @@ void mpt_check_doorbell(mpt_softc_t *);
 
 int mpt_read_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 int mpt_write_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
+
+/* FW Download Boot */
+int mpt_do_upload(mpt_softc_t *);
+int mpt_alloc_fw_mem(mpt_softc_t *, uint32_t , int);
+void mpt_free_fw_mem(mpt_softc_t *);
 
 /* mpt_debug.c functions */
 void mpt_print_reply(void *);

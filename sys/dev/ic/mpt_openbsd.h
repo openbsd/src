@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.3 2004/03/14 23:14:36 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.4 2004/03/17 00:47:06 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -202,6 +202,8 @@ typedef struct mpt_softc {
 	uint16_t	request_frame_size;
 	uint8_t		mpt_max_devices;
 	uint8_t		mpt_max_buses;
+	uint8_t         fw_download_boot;
+	uint32_t        fw_image_size;
 
 	/* Port facts */
 	uint16_t	mpt_ini_id;
@@ -263,6 +265,13 @@ typedef struct mpt_softc {
 	uint32_t		timeouts;	/* timeout count */
 	uint32_t		success;	/* success after timeout */
 
+	uint8_t                 upload_fw;      /* If set, do a fw upload */
+	/* Firmware memory */
+	bus_dmamap_t            fw_dmap;
+	int                     fw_rseg;
+	bus_dma_segment_t       fw_seg;
+	char                    *fw;
+
 	/* Companion part in a 929 or 1030, or NULL. */
 	struct mpt_softc	*mpt2;
 
@@ -284,6 +293,7 @@ void	mpt_attach(mpt_softc_t *);
 int	mpt_dma_mem_alloc(mpt_softc_t *);
 int	mpt_intr(void *);
 void	mpt_prt(mpt_softc_t *, const char *, ...);
+
 
 #define	mpt_set_config_regs(mpt)				\
 do {								\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.2 2004/03/17 00:47:06 krw Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -517,6 +517,26 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
 	init.MaxBuses = 1;
 	init.ReplyFrameSize = MPT_REPLY_SIZE;
 	init.MsgContext = 0x12071941;
+
+	/*
+	 * If we are in a recovery mode and we uploaded the FW image,
+	 * then the fw pointer is not NULL. Skip the upload a second time
+	 * Set this flag if fw set for IOC.
+	 */
+	mpt->upload_fw = 0;
+
+	if (mpt->fw_download_boot) {
+		if (mpt->fw) {
+			init.Flags = MPI_IOCINIT_FLAGS_DISCARD_FW_IMAGE;
+		}
+		else {
+			mpt->upload_fw = 1;
+		}
+	}
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "flags %d, upload_fw %d", init.Flags,
+			mpt->upload_fw);
+	}
 
 	if ((error = mpt_send_handshake_cmd(mpt, sizeof init, &init)) != 0) {
 		return(error);
@@ -1108,6 +1128,11 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		mpt->mpt_global_credits = facts.GlobalCredits;
 		mpt->request_frame_size = facts.RequestFrameSize;
 
+		/* save the firmware upload required flag */
+		mpt->fw_download_boot = facts.Flags
+			& MPI_IOCFACTS_FLAGS_FW_DOWNLOAD_BOOT;
+		mpt->fw_image_size = facts.FWImageSize;
+
 		if (mpt_get_portfacts(mpt, &pfp) != MPT_OK) {
 			mpt_prt(mpt, "mpt_get_portfacts failed");
 			continue;
@@ -1167,6 +1192,19 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 				break;
 		}
 
+		/* XXX MU correct place the call to fw_upload? */
+		if (mpt->upload_fw) {
+			mpt_prt(mpt, "firmware upload required.");
+			if (mpt_do_upload(mpt)) {
+				/* XXX MP should we panic? */
+				mpt_prt(mpt, "firmware upload failure!\n");
+			}
+			/* continue; */
+		}
+		else {
+			mpt_prt(mpt, "firmware upload not required.");
+		}
+
 		/*
 		 * Enable asynchronous event reporting
 		 */
@@ -1215,3 +1253,131 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	mpt_enable_ints(mpt);
 	return (0);
 }
+
+/*
+ * mpt_do_upload - create and send FWUpload request to MPT adapter port.
+ *
+ * Returns 0 for success, error for failure
+ */
+int
+mpt_do_upload(mpt_softc_t *mpt)
+{
+	u_int8_t        request[MPT_RQSL(mpt)];
+	FWUploadReply_t reply;
+	FWUpload_t      *prequest;
+	FWUploadReply_t *preply;
+	FWUploadTCSGE_t *ptcsge = NULL;
+	SGE_SIMPLE32    *se;
+	int             maxsgl;
+	int             sgeoffset;
+	int             i, error;
+	uint32_t        flags;
+
+	if (mpt->fw_image_size == 0 || mpt->fw != NULL) {
+		return 0;
+	}
+
+	/* compute the maximum number of elements in the SG list */
+	maxsgl = (MPT_RQSL(mpt) - sizeof(MSG_FW_UPLOAD) +
+		sizeof(SGE_MPI_UNION) - sizeof(FWUploadTCSGE_t))
+		/ sizeof(SGE_SIMPLE32);
+
+	error = mpt_alloc_fw_mem(mpt, mpt->fw_image_size, maxsgl);
+	if (error) {
+		mpt_prt(mpt,"mpt_alloc_fw_mem error: %d\n", error);
+		return error;
+	}
+
+	if (mpt->fw_dmap->dm_nsegs > maxsgl) {
+		mpt_prt(mpt,"nsegs > maxsgl\n");
+		return 1; /* XXX */
+	}
+
+	prequest = (FWUpload_t *)&request;
+	preply = (FWUploadReply_t *)&reply;
+
+	memset(prequest, 0, MPT_RQSL(mpt));
+	memset(preply, 0, sizeof(reply));
+
+	prequest->ImageType = MPI_FW_UPLOAD_ITYPE_FW_IOC_MEM;
+	prequest->Function = MPI_FUNCTION_FW_UPLOAD;
+	prequest->MsgContext = 0; /* XXX MU ok? */
+
+	ptcsge = (FWUploadTCSGE_t *) &prequest->SGL;
+	ptcsge->Reserved = 0;
+	ptcsge->ContextSize = 0;
+	ptcsge->DetailsLength = 12;
+	ptcsge->Flags = MPI_SGE_FLAGS_TRANSACTION_ELEMENT;
+	ptcsge->Reserved1 = 0;
+	ptcsge->ImageOffset = 0;
+	ptcsge->ImageSize = mpt->fw_image_size; /* XXX MU check endianess */
+
+	sgeoffset = sizeof(FWUpload_t) - sizeof(SGE_MPI_UNION) +
+		sizeof(FWUploadTCSGE_t);
+
+	se = (SGE_SIMPLE32 *) &request[sgeoffset];
+
+	flags = MPI_SGE_FLAGS_SIMPLE_ELEMENT;
+
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "assembling SG list (%d entries)",
+			mpt->fw_dmap->dm_nsegs);
+	}
+
+	for (i = 0; i < mpt->fw_dmap->dm_nsegs; i++, se++) {
+		if (i == mpt->fw_dmap->dm_nsegs - 1) {
+			/* XXX MU okay? */
+			flags |= MPI_SGE_FLAGS_LAST_ELEMENT |
+				MPI_SGE_FLAGS_END_OF_BUFFER |
+				MPI_SGE_FLAGS_END_OF_LIST;
+		}
+
+		se->Address = mpt->fw_dmap->dm_segs[i].ds_addr;
+		MPI_pSGE_SET_LENGTH(se, mpt->fw_dmap->dm_segs[i].ds_len);
+		MPI_pSGE_SET_FLAGS(se, flags);
+		sgeoffset += sizeof(*se);
+	}
+
+	mpt_prt(mpt, "sending FW Upload request to IOC (size: %d, "
+		"img size: %d)", sgeoffset, mpt->fw_image_size);
+
+	if ((error = mpt_send_handshake_cmd(mpt, sgeoffset, prequest)) != 0) {
+		return(error);
+	}
+
+	error = mpt_recv_handshake_reply(mpt, sizeof(reply), &reply);
+
+	if (error == 0) {
+		/* 
+		 * Handshake transfer was complete and successfull.
+		 * Check the Reply Frame
+		 */
+		int status, transfer_sz;
+
+		status = preply->IOCStatus;
+		if (mpt->verbose > 1) {
+			mpt_prt(mpt, "fw_upload reply status %d", status);
+		}
+
+		if (status == MPI_IOCSTATUS_SUCCESS) {
+			transfer_sz = preply->ActualImageSize;
+			if (transfer_sz != mpt->fw_image_size)
+				error = EFAULT;
+			}
+			else {
+				error = EFAULT;
+			}
+	}
+
+	if (error == 0) {
+		mpt->upload_fw = 0;
+	}
+	else {
+		mpt_prt(mpt, "freeing image memory\n");
+		mpt_free_fw_mem(mpt);
+		mpt->fw = NULL;
+	}
+
+	return error;
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.5 2004/03/15 09:53:33 deraadt Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.6 2004/03/17 00:47:06 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -388,12 +388,8 @@ void
 mpt_attach(mpt_softc_t *mpt)
 {
 	struct scsi_link *lptr = &mpt->sc_link;
-	int maxq;
 
 	mpt->bus = 0;		/* XXX ?? */
-
-	maxq = (mpt->mpt_global_credits < MPT_MAX_REQUESTS(mpt)) ?
-	    mpt->mpt_global_credits : MPT_MAX_REQUESTS(mpt);
 
 	/* Fill in the scsi_adapter. */
 	mpt->sc_adapter.scsi_cmd = mpt_action;
@@ -403,16 +399,17 @@ mpt_attach(mpt_softc_t *mpt)
 	lptr->adapter_softc = mpt;
 	lptr->device = &mpt_dev;
 	lptr->adapter = &mpt->sc_adapter;
-	lptr->openings = maxq;
 	lptr->flags = 0;
 	lptr->luns = 8;
 
 	if (mpt->is_fc) {
 		lptr->adapter_buswidth = 256;
 		lptr->adapter_target = 256;
+		lptr->openings = 4; /* 1024 requests / 256 targets = 4 each */
 	} else {
 		lptr->adapter_buswidth = 16;
 		lptr->adapter_target = mpt->mpt_ini_id;
+		lptr->openings = 16; /* 1024 requests / 16 targets = 16 each */
 	}
 
 #ifdef MPT_DEBUG
@@ -678,8 +675,10 @@ mpt_timeout(void *arg)
 		mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
 
 	for(index = 0; index < MPT_MAX_REQUESTS(mpt); index++)
-		if (req == &mpt->request_pool[index])
+		if (req == &mpt->request_pool[index]) {
+			req->debug = REQ_TIMEOUT;
 			break;
+		}
 
 	mpt_done(mpt, index);
 
@@ -809,7 +808,12 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		bus_dmamap_unload(mpt->sc_dmat, req->dmap);
 	}
 
-	if (mpt_reply == NULL) {
+	if (req->debug == REQ_TIMEOUT) {
+		xs->error = XS_TIMEOUT;
+		xs->status = SCSI_OK;
+		xs->resid = 0;
+		goto done;
+	} else if (mpt_reply == NULL) {
 		/*
 		 * Context reply; report that the command was
 		 * successful!
@@ -826,10 +830,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		xs->error = XS_NOERROR;
 		xs->status = SCSI_OK;
 		xs->resid = 0;
-		mpt_free_request(mpt, req);
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return;
+		goto done;
 	}
 
 	xs->status = mpt_reply->SCSIStatus;
@@ -1500,4 +1501,67 @@ mpt_minphys(struct buf *bp)
 	if (bp->b_bcount > MPT_MAX_XFER)
 		bp->b_bcount = MPT_MAX_XFER;
 	minphys(bp);
+}
+
+/*
+ * Allocate DMA resources for FW image
+ *
+ * img_sz : size of image
+ * maxsgl : maximum number of DMA segments
+ */
+int
+mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
+{
+	int error;
+
+	error = bus_dmamem_alloc(mpt->sc_dmat, img_sz, PAGE_SIZE, 0,
+		&mpt->fw_seg, maxsgl, &mpt->fw_rseg, 0);
+	if (error) {
+	mpt_prt(mpt, "unable to allocate fw memory, error = %d\n", error);
+		goto fw_fail0;
+	}
+
+	error = bus_dmamem_map(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg, img_sz,
+		(caddr_t *)&mpt->fw, BUS_DMA_COHERENT);
+	if (error) {
+		mpt_prt(mpt, "unable to map fw area, error = %d\n", error);
+		goto fw_fail1;
+	}
+
+	error = bus_dmamap_create(mpt->sc_dmat, img_sz, maxsgl, img_sz,
+		0, 0, &mpt->fw_dmap);
+	if (error) {
+		mpt_prt(mpt, "unable to create request DMA map, error = %d\n",
+			error);
+		goto fw_fail2;
+	}
+
+	error = bus_dmamap_load(mpt->sc_dmat, mpt->fw_dmap, mpt->fw, img_sz,
+		NULL, 0);
+	if (error) {
+	mpt_prt(mpt, "unable to load request DMA map, error = %d\n", error);
+		goto fw_fail3;
+	}
+
+	return(error);
+fw_fail3:
+	bus_dmamap_unload(mpt->sc_dmat, mpt->fw_dmap);
+fw_fail2:
+	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
+fw_fail1:
+	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, img_sz);
+fw_fail0:
+	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
+ 
+	mpt->fw = NULL;
+	return (error);
+}
+
+void
+mpt_free_fw_mem(mpt_softc_t *mpt)
+{
+	bus_dmamap_unload(mpt->sc_dmat, mpt->fw_dmap);
+	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
+	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);
+	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
 }
