@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.1 2001/01/28 16:31:24 aaron Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.2 2001/02/20 13:43:29 ho Exp $	*/
 /*	$NetBSD$	*/
 
 /*
@@ -607,8 +607,10 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	DPRINTFN(10, ("usscanner_sensecmd_cb status=%d\n", status));
 
 #ifdef USSCANNER_DEBUG
+#ifdef notyet
 	if (usscannerdebug > 15)
 		xs->sc_link->flags |= DEBUGLEVEL;
+#endif
 
 	if (sc->sc_state != UAS_SENSECMD) {
 		printf("%s: !UAS_SENSECMD\n", USBDEVNAME(sc->sc_dev));
@@ -653,8 +655,10 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	DPRINTFN(10, ("usscanner_cmd_cb status=%d\n", status));
 
 #ifdef USSCANNER_DEBUG
+#ifdef notyet
 	if (usscannerdebug > 15)
 		xs->sc_link->flags |= DEBUGLEVEL;
+#endif
 
 	if (sc->sc_state != UAS_CMD) {
 		printf("%s: !UAS_CMD\n", USBDEVNAME(sc->sc_dev));
@@ -712,12 +716,14 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 	struct usscanner_softc *sc = sc_link->adapter_softc;
 	usbd_status err;
 
+#ifdef notyet
 	DPRINTFN(8, ("%s: usscanner_scsi_cmd: %d:%d "
 	    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
 	    USBDEVNAME(sc->sc_dev),
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun,
 	    xs, xs->cmd->opcode, xs->datalen,
 	    sc_link->quirks, xs->xs_control & XS_CTL_POLL));
+#endif
 
 	if (sc->sc_dying) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -725,12 +731,14 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 	}
 
 #ifdef USSCANNER_DEBUG
+#ifdef notyet
 	if (sc_link->scsipi_scsi.target != USSCANNER_SCSIID_DEVICE) {
 		DPRINTF(("%s: wrong SCSI ID %d\n", USBDEVNAME(sc->sc_dev),
 		    sc_link->scsipi_scsi.target));
 		xs->error = XS_DRIVER_STUFFUP;
 		goto done;
 	}
+#endif
 	if (sc->sc_state != UAS_IDLE) {
 		printf("%s: !UAS_IDLE\n", USBDEVNAME(sc->sc_dev));
 		xs->error = XS_DRIVER_STUFFUP;
