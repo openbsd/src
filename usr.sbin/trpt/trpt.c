@@ -1,6 +1,45 @@
-/*
- * Copyright (c) 1983, 1988 Regents of the University of California.
+/*	$OpenBSD: trpt.c,v 1.6 1997/09/08 09:23:15 deraadt Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,24 +72,16 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+"@(#) Copyright (c) 1983, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)trpt.c	5.14 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: trpt.c,v 1.5 1997/01/15 23:44:26 millert Exp $";
+static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>
-#if BSD >= 199103
-#define NEWVM
-#endif
-#ifndef NEWVM
-#include <machine/pte.h>
-#include <sys/vmmac.h>
-#endif
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #define PRUREQUESTS
@@ -78,44 +109,51 @@ static char rcsid[] = "$Id: trpt.c,v 1.5 1997/01/15 23:44:26 millert Exp $";
 
 #include <arpa/inet.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <errno.h>
+#include <kvm.h>
 #include <nlist.h>
 #include <paths.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 struct nlist nl[] = {
 #define	N_TCP_DEBUG	0
 	{ "_tcp_debug" },
 #define	N_TCP_DEBX	1
 	{ "_tcp_debx" },
-#ifndef NEWVM
-#define	N_SYSMAP	2
-	{ "_Sysmap" },
-#define	N_SYSSIZE	3
-	{ "_Syssize" },
-#endif
-	{ "" },
+	{ NULL },
 };
 
-#ifndef NEWVM
-static struct pte *Sysmap;
-#endif
 static caddr_t tcp_pcbs[TCP_NDEBUG];
 static n_time ntime;
-static int aflag, kflag, memf, follow, sflag, tflag;
+static int aflag, follow, sflag, tflag;
 
+extern	char *__progname;
+
+int	main __P((int, char *[]));
+void	dotrace __P((caddr_t));
+void	tcp_trace __P((short, short, struct tcpcb *, struct tcpcb *,
+	    struct tcpiphdr *, int));
+int	numeric __P((const void *, const void *));
+void	usage __P((void));
+
+kvm_t	*kd;
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	int ch, i, jflag, npcbs, numeric();
-	char *system, *core, *malloc();
-	off_t lseek();
+	int ch, i, jflag, npcbs;
+	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
+
+	system = core = NULL;
 
 	jflag = npcbs = 0;
-	while ((ch = getopt(argc, argv, "afjp:st")) != -1)
+	while ((ch = getopt(argc, argv, "afjp:st")) != -1) {
 		switch (ch) {
 		case 'a':
 			++aflag;
@@ -128,12 +166,12 @@ main(argc, argv)
 			++jflag;
 			break;
 		case 'p':
-			if (npcbs >= TCP_NDEBUG) {
-				fputs("trpt: too many pcb's specified\n",
-				    stderr);
-				exit(1);
-			}
-			(void)sscanf(optarg, "%x", (int *)&tcp_pcbs[npcbs++]);
+			if (npcbs >= TCP_NDEBUG)
+				errx(1, "too many pcbs specified");
+			errno = 0;
+			tcp_pcbs[npcbs++] = (caddr_t)strtoul(optarg, &cp, 16);
+			if (*cp != '\0' || errno == ERANGE)
+				errx(1, "invalid address: %s", optarg);
 			break;
 		case 's':
 			++sflag;
@@ -141,86 +179,58 @@ main(argc, argv)
 		case 't':
 			++tflag;
 			break;
+		case 'N':
+			system = optarg;
+			break;
+		case 'M':
+			core = optarg;
+			break;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-"usage: trpt [-afjst] [-p hex-address] [system [core]]\n");
-			exit(1);
+			usage();
+			/* NOTREACHED */
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
-	core = _PATH_KMEM;
-	if (argc > 0) {
-		system = *argv;
-		argc--, argv++;
-		if (argc > 0) {
-			core = *argv;
-			argc--, argv++;
-			++kflag;
-		}
-	}
-	else
-		system = _PATH_UNIX;
+	if (argc)
+		usage();
 
 	/*
-	 * Discard setgid priviledges if not the running kernel so that bad
+	 * Discard setgid privileged if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (!strcmp(core, _PATH_KMEM) || !strcmp(system, _PATH_UNIX)) {
+	if (core != NULL || system != NULL) {
 		setegid(getgid());
 		setgid(getgid());
 	}
 
-	if (nlist(system, nl) < 0 || !nl[0].n_value) {
-		fprintf(stderr, "trpt: %s: no namelist\n", system);
-		exit(1);
-	}
-	if ((memf = open(core, O_RDONLY)) < 0) {
-		perror(core);
-		exit(2);
-	}
-	if (kflag) {
-#ifdef NEWVM
-		fputs("trpt: can't do core files yet\n", stderr);
-		exit(1);
-#else
-		off_t off;
+	kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
+	if (kd == NULL)
+		errx(1, "can't open kmem: %s", errbuf);
 
-		Sysmap = (struct pte *)
-		   malloc((u_int)(nl[N_SYSSIZE].n_value * sizeof(struct pte)));
-		if (!Sysmap) {
-			fputs("trpt: can't get memory for Sysmap.\n", stderr);
-			exit(1);
-		}
-		off = nl[N_SYSMAP].n_value & ~KERNBASE;
-		(void)lseek(memf, off, L_SET);
-		(void)read(memf, (char *)Sysmap,
-		    (int)(nl[N_SYSSIZE].n_value * sizeof(struct pte)));
-#endif
-	}
-	(void)klseek(memf, (off_t)nl[N_TCP_DEBX].n_value, L_SET);
-	if (read(memf, (char *)&tcp_debx, sizeof(tcp_debx)) !=
-	    sizeof(tcp_debx)) {
-		perror("trpt: tcp_debx");
-		exit(3);
-	}
-	(void)klseek(memf, (off_t)nl[N_TCP_DEBUG].n_value, L_SET);
-	if (read(memf, (char *)tcp_debug, sizeof(tcp_debug)) !=
-	    sizeof(tcp_debug)) {
-		perror("trpt: tcp_debug");
-		exit(3);
-	}
+	if (kvm_nlist(kd, nl))
+		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
+
+	if (kvm_read(kd, nl[N_TCP_DEBX].n_value, (char *)&tcp_debx,
+	    sizeof(tcp_debx)) != sizeof(tcp_debx))
+		errx(3, "tcp_debx: %s", kvm_geterr(kd));
+
+	if (kvm_read(kd, nl[N_TCP_DEBUG].n_value, (char *)tcp_debug,
+	    sizeof(tcp_debug)) != sizeof(tcp_debug))
+		errx(3, "tcp_debug: %s", kvm_geterr(kd));
+
 	/*
 	 * If no control blocks have been specified, figure
 	 * out how many distinct one we have and summarize
 	 * them in tcp_pcbs for sorting the trace records
 	 * below.
 	 */
-	if (!npcbs) {
+	if (npcbs == 0) {
 		for (i = 0; i < TCP_NDEBUG; i++) {
-			register struct tcp_debug *td = &tcp_debug[i];
-			register int j;
+			struct tcp_debug *td = &tcp_debug[i];
+			int j;
 
 			if (td->td_tcb == 0)
 				continue;
@@ -230,7 +240,7 @@ main(argc, argv)
 			if (j >= npcbs)
 				tcp_pcbs[npcbs++] = td->td_tcb;
 		}
-		if (!npcbs)
+		if (npcbs == 0)
 			exit(0);
 	}
 	qsort(tcp_pcbs, npcbs, sizeof(caddr_t), numeric);
@@ -242,30 +252,34 @@ main(argc, argv)
 			fputs(", ", stdout);
 		}
 		putchar('\n');
-	}
-	else for (i = 0; i < npcbs; i++) {
-		printf("\n%lx:\n", (long)tcp_pcbs[i]);
-		dotrace(tcp_pcbs[i]);
+	} else {
+		for (i = 0; i < npcbs; i++) {
+			printf("\n%lx:\n", (long)tcp_pcbs[i]);
+			dotrace(tcp_pcbs[i]);
+		}
 	}
 	exit(0);
 }
 
+void
 dotrace(tcpcb)
-	register caddr_t tcpcb;
+	caddr_t tcpcb;
 {
-	register struct tcp_debug *td;
-	register int i;
+	struct tcp_debug *td;
 	int prev_debx = tcp_debx;
+	int i;
 
-again:	if (--tcp_debx < 0)
+ again:
+	if (--tcp_debx < 0)
 		tcp_debx = TCP_NDEBUG - 1;
 	for (i = prev_debx % TCP_NDEBUG; i < TCP_NDEBUG; i++) {
 		td = &tcp_debug[i];
 		if (tcpcb && td->td_tcb != tcpcb)
 			continue;
 		ntime = ntohl(td->td_time);
-		tcp_trace(td->td_act, td->td_ostate, td->td_tcb, &td->td_cb,
-		    &td->td_ti, td->td_req);
+		tcp_trace(td->td_act, td->td_ostate,
+		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
+		    td->td_req);
 		if (i == tcp_debx)
 			goto done;
 	}
@@ -274,28 +288,27 @@ again:	if (--tcp_debx < 0)
 		if (tcpcb && td->td_tcb != tcpcb)
 			continue;
 		ntime = ntohl(td->td_time);
-		tcp_trace(td->td_act, td->td_ostate, td->td_tcb, &td->td_cb,
-		    &td->td_ti, td->td_req);
+		tcp_trace(td->td_act, td->td_ostate,
+		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
+		    td->td_req);
 	}
-done:	if (follow) {
+ done:
+	if (follow) {
 		prev_debx = tcp_debx + 1;
 		if (prev_debx >= TCP_NDEBUG)
 			prev_debx = 0;
 		do {
 			sleep(1);
-			(void)klseek(memf, (off_t)nl[N_TCP_DEBX].n_value, L_SET);
-			if (read(memf, (char *)&tcp_debx, sizeof(tcp_debx)) !=
-			    sizeof(tcp_debx)) {
-				perror("trpt: tcp_debx");
-				exit(3);
-			}
+			if (kvm_read(kd, nl[N_TCP_DEBX].n_value,
+			    (char *)&tcp_debx, sizeof(tcp_debx)) !=
+			    sizeof(tcp_debx))
+				errx(3, "tcp_debx: %s", kvm_geterr(kd));
 		} while (tcp_debx == prev_debx);
-		(void)klseek(memf, (off_t)nl[N_TCP_DEBUG].n_value, L_SET);
-		if (read(memf, (char *)tcp_debug, sizeof(tcp_debug)) !=
-		    sizeof(tcp_debug)) {
-			perror("trpt: tcp_debug");
-			exit(3);
-		}
+
+		if (kvm_read(kd, nl[N_TCP_DEBUG].n_value, (char *)tcp_debug,
+		    sizeof(tcp_debug)) != sizeof(tcp_debug))
+			errx(3, "tcp_debug: %s", kvm_geterr(kd));
+
 		goto again;
 	}
 }
@@ -304,6 +317,7 @@ done:	if (follow) {
  * Tcp debug routines
  */
 /*ARGSUSED*/
+void
 tcp_trace(act, ostate, atp, tp, ti, req)
 	short act, ostate;
 	struct tcpcb *atp, *tp;
@@ -313,7 +327,7 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 	tcp_seq seq, ack;
 	int flags, len, win, timer;
 
-	printf("%03ld %s:%s ",(ntime/10) % 1000, tcpstates[ostate],
+	printf("%03d %s:%s ", (ntime/10) % 1000, tcpstates[ostate],
 	    tanames[act]);
 	switch (act) {
 	case TA_INPUT:
@@ -330,18 +344,18 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 		len = ti->ti_len;
 		win = ti->ti_win;
 		if (act == TA_OUTPUT) {
-			seq = ntohl(seq);
-			ack = ntohl(ack);
-			len = ntohs(len);
-			win = ntohs(win);
+			NTOHL(seq);
+			NTOHL(ack);
+			NTOHS(len);
+			NTOHS(win);
 		}
 		if (act == TA_OUTPUT)
 			len -= sizeof(struct tcphdr);
 		if (len)
-			printf("[%lx..%lx)", seq, seq + len);
+			printf("[%x..%x)", seq, seq + len);
 		else
-			printf("%lx", seq);
-		printf("@%lx", ack);
+			printf("%x", seq);
+		printf("@%x", ack);
 		if (win)
 			printf("(win=%x)", win);
 		flags = ti->ti_flags;
@@ -374,10 +388,10 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 	/* print out internal state of tp !?! */
 	printf("\n");
 	if (sflag) {
-		printf("\trcv_nxt %lx rcv_wnd %x snd_una %lx snd_nxt %lx snd_max %lx\n",
+		printf("\trcv_nxt %x rcv_wnd %lx snd_una %x snd_nxt %x snd_max %x\n",
 		    tp->rcv_nxt, tp->rcv_wnd, tp->snd_una, tp->snd_nxt,
 		    tp->snd_max);
-		printf("\tsnd_wl1 %lx snd_wl2 %lx snd_wnd %x\n", tp->snd_wl1,
+		printf("\tsnd_wl1 %x snd_wl2 %x snd_wnd %lx\n", tp->snd_wl1,
 		    tp->snd_wl2, tp->snd_wnd);
 	}
 	/* print out timers? */
@@ -398,23 +412,29 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 	}
 }
 
-numeric(c1, c2)
-	caddr_t *c1, *c2;
+int
+numeric(v1, v2)
+	const void *v1, *v2;
 {
-	return(*c1 - *c2);
+	const caddr_t *c1 = v1;
+	const caddr_t *c2 = v2;
+	int rv;
+
+	if (*c1 < *c2)
+		rv = -1;
+	else if (*c1 > *c2)
+		rv = 1;
+	else
+		rv = 0;
+
+	return (rv);
 }
 
-klseek(fd, base, off)
-	int fd, off;
-	off_t base;
+void
+usage()
 {
-	off_t lseek();
 
-#ifndef NEWVM
-	if (kflag) {	/* get kernel pte */
-		base &= ~KERNBASE;
-		base = ctob(Sysmap[btop(base)].pg_pfnum) + (base & PGOFSET);
-	}
-#endif
-	(void)lseek(fd, base, off);
+	(void) fprintf(stderr, "usage: %s [-afjst] [-p hex-address]"
+	    " [-N system] [-M core]\n", __progname);
+	exit(1);
 }

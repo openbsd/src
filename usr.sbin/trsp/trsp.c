@@ -1,6 +1,45 @@
-/*
- * Copyright (c) 1985 Regents of the University of California.
+/*	$OpenBSD: trsp.c,v 1.5 1997/09/08 09:23:17 deraadt Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,13 +72,12 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1985 Regents of the University of California.\n\
- All rights reserved.\n";
+"@(#) Copyright (c) 1985, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)trsp.c	6.8 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: trsp.c,v 1.4 1996/12/22 03:29:12 deraadt Exp $";
+static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -68,142 +106,142 @@ static char rcsid[] = "$Id: trsp.c,v 1.4 1996/12/22 03:29:12 deraadt Exp $";
 #define SANAMES
 #include <netns/spp_debug.h>
 
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <kvm.h>
 #include <nlist.h>
 #include <paths.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-unsigned long	ntime;
+u_int32_t ntime;
 int	sflag;
 int	tflag;
 int	jflag;
 int	aflag;
 int	zflag;
-int	numeric();
 struct	nlist nl[] = {
+#define	N_SPP_DEBUG	0
 	{ "_spp_debug" },
+#define	N_SPP_DEBX	1
 	{ "_spp_debx" },
-	0
+	{ NULL },
 };
+
 struct	spp_debug spp_debug[SPP_NDEBUG];
 caddr_t	spp_pcbs[SPP_NDEBUG];
 int	spp_debx;
 
+kvm_t	*kd;
+
+extern	char *__progname;
+
+int	main __P((int, char *[]));
+void	dotrace __P((caddr_t));
+int	numeric __P((const void *, const void *));
+void	spp_trace __P((short, short, struct sppcb *, struct sppcb *,
+	    struct spidp *, int));
+void	usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	int i, mask = 0, npcbs = 0;
-	char *system, *core;
+	int ch, i, npcbs = 0;
+	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
 
-	system = _PATH_UNIX;
-	core = _PATH_KMEM;
+	system = core = NULL;
 
-	argc--, argv++;
-again:
-	if (argc > 0 && !strcmp(*argv, "-a")) {
-		aflag++, argc--, argv++;
-		goto again;
-	}
-	if (argc > 0 && !strcmp(*argv, "-z")) {
-		zflag++, argc--, argv++;
-		goto again;
-	}
-	if (argc > 0 && !strcmp(*argv, "-s")) {
-		sflag++, argc--, argv++;
-		goto again;
-	}
-	if (argc > 0 && !strcmp(*argv, "-t")) {
-		tflag++, argc--, argv++;
-		goto again;
-	}
-	if (argc > 0 && !strcmp(*argv, "-j")) {
-		jflag++, argc--, argv++;
-		goto again;
-	}
-	if (argc > 0 && !strcmp(*argv, "-p")) {
-		argc--, argv++;
-		if (argc < 1) {
-			fprintf(stderr, "-p: missing sppcb address\n");
-			exit(1);
+	while ((ch = getopt(argc, argv, "azstjp:N:M:")) != -1) {
+		switch (ch) {
+		case 'a':
+			++aflag;
+			break;
+		case 'z':
+			++zflag;
+			break;
+		case 's':
+			++sflag;
+			break;
+		case 't':
+			++tflag;
+			break;
+		case 'j':
+			++jflag;
+			break;
+		case 'p':
+			if (npcbs >= SPP_NDEBUG)
+				errx(1, "too many pcbs specified");
+			errno = 0;
+			spp_pcbs[npcbs++] = (caddr_t)strtoul(optarg, &cp, 16);
+			if (*cp != '\0' || errno == ERANGE)
+				errx(1, "invalid address: %s", optarg);
+			break;
+		case 'N':
+			system = optarg;
+			break;
+		case 'M':
+			core = optarg;
+			break;
+		default:
+			usage();
 		}
-		if (npcbs >= SPP_NDEBUG) {
-			fprintf(stderr, "-p: too many pcb's specified\n");
-			exit(1);
-		}
-		sscanf(*argv, "%x", &spp_pcbs[npcbs++]);
-		argc--, argv++;
-		goto again;
 	}
-	if (argc > 0) {
-		system = *argv;
-		argc--, argv++;
-		mask++;
-	}
-	if (argc > 0) {
-		core = *argv;
-		argc--, argv++;
-		mask++;
-	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc)
+		usage();
+
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (!strcmp(system, _PATH_UNIX) || !strcmp(core, _PATH_KMEM)) {
+	if (core != NULL || system != NULL) {
 		setegid(getgid());
 		setgid(getgid());
 	}
 
-	(void) nlist(system, nl);
-	if (nl[0].n_value == 0) {
-		fprintf(stderr, "trsp: %s: no namelist\n", system);
-		exit(1);
-	}
-	(void) close(0);
-	if (open(core, 0) < 0) {
-		fprintf(stderr, "trsp: "); perror(core);
-		exit(2);
-	}
-	if (mask) {
-		nl[0].n_value &= 0x7fffffff;
-		nl[1].n_value &= 0x7fffffff;
-	}
-	(void) lseek(0, nl[1].n_value, 0);
-	if (read(0, &spp_debx, sizeof (spp_debx)) != sizeof (spp_debx)) {
-		fprintf(stderr, "trsp: "); perror("spp_debx");
-		exit(3);
-	}
+	kd = kvm_openfiles(system, core, NULL, zflag ? O_RDWR : O_RDONLY,
+	    errbuf);
+	if (kd == NULL)
+		errx(1, "can't open kmem: %s", errbuf);
+
+	if (kvm_nlist(kd, nl))
+		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
+
+	if (kvm_read(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
+	    sizeof(spp_debx)) != sizeof(spp_debx))
+		errx(3, "spp_debx: %s", kvm_geterr(kd));
 	printf("spp_debx=%d\n", spp_debx);
-	(void) lseek(0, nl[0].n_value, 0);
-	if (read(0, spp_debug, sizeof (spp_debug)) != sizeof (spp_debug)) {
-		fprintf(stderr, "trsp: "); perror("spp_debug");
-		exit(3);
-	}
+
+	if (kvm_read(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
+	    sizeof(spp_debug)) != sizeof(spp_debug))
+		errx(3, "spp_debug: %s", kvm_geterr(kd));
+
 	/*
 	 * Here, we just want to clear out the old trace data and start over.
 	 */
 	if (zflag) {
-		char *cp = (char *) spp_debug,
-		     *cplim = cp + sizeof(spp_debug);
-		(void) close(0);
-		if (open(core, 2) < 0) {
-			fprintf(stderr, "trsp: "); perror(core);
-			exit(2);
-		}
-		while(cp < cplim) *cp++ = 0;
-		(void) lseek(0, nl[0].n_value, 0);
-		if (write(0, spp_debug, sizeof (spp_debug)) != sizeof (spp_debug)) {
-			fprintf(stderr, "trsp: "); perror("spp_debug");
-			exit(3);
-		}
-		(void) lseek(0, nl[1].n_value, 0);
 		spp_debx = 0;
-		if (write(0, &spp_debx, sizeof (spp_debx)) != sizeof (spp_debx)) {
-			fprintf(stderr, "trsp: "); perror("spp_debx");
-			exit(3);
-		}
+		(void) memset(spp_debug, 0, sizeof(spp_debug));
+
+		if (kvm_write(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
+		    sizeof(spp_debx)) != sizeof(spp_debx))
+			errx(4, "write spp_debx: %s\n", kvm_geterr(kd));
+		
+		if (kvm_write(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
+		    sizeof(spp_debug)) != sizeof(spp_debug))
+			errx(4, "write spp_debug: %s\n", kvm_geterr(kd));
+
 		exit(0);
 	}
+
 	/*
 	 * If no control blocks have been specified, figure
 	 * out how many distinct one we have and summarize
@@ -212,8 +250,8 @@ again:
 	 */
 	if (npcbs == 0) {
 		for (i = 0; i < SPP_NDEBUG; i++) {
-			register int j;
-			register struct spp_debug *sd = &spp_debug[i];
+			struct spp_debug *sd = &spp_debug[i];
+			int j;
 
 			if (sd->sd_cb == 0)
 				continue;
@@ -226,76 +264,84 @@ again:
 	}
 	qsort(spp_pcbs, npcbs, sizeof (caddr_t), numeric);
 	if (jflag) {
-		char *cp = "";
+		cp = "";
 
 		for (i = 0; i < npcbs; i++) {
-			printf("%s%x", cp, spp_pcbs[i]);
+			printf("%s%lx", cp, (long)spp_pcbs[i]);
 			cp = ", ";
 		}
 		if (*cp)
 			putchar('\n');
-		exit(0);
-	}
-	for (i = 0; i < npcbs; i++) {
-		printf("\n%x:\n", spp_pcbs[i]);
-		dotrace(spp_pcbs[i]);
+	} else {
+		for (i = 0; i < npcbs; i++) {
+			printf("\n%lx:\n", (long)spp_pcbs[i]);
+			dotrace(spp_pcbs[i]);
+		}
 	}
 	exit(0);
 }
 
+void
 dotrace(sppcb)
-	register caddr_t sppcb;
+	caddr_t sppcb;
 {
-	register int i;
-	register struct spp_debug *sd;
+	struct spp_debug *sd;
+	int i;
 
 	for (i = spp_debx % SPP_NDEBUG; i < SPP_NDEBUG; i++) {
 		sd = &spp_debug[i];
 		if (sppcb && sd->sd_cb != sppcb)
 			continue;
 		ntime = ntohl(sd->sd_time);
-		spp_trace(sd->sd_act, sd->sd_ostate, sd->sd_cb, &sd->sd_sp,
-		    &sd->sd_si, sd->sd_req);
+		spp_trace(sd->sd_act, sd->sd_ostate, (struct sppcb *)sd->sd_cb,
+		    &sd->sd_sp, &sd->sd_si, sd->sd_req);
 	}
 	for (i = 0; i < spp_debx % SPP_NDEBUG; i++) {
 		sd = &spp_debug[i];
 		if (sppcb && sd->sd_cb != sppcb)
 			continue;
 		ntime = ntohl(sd->sd_time);
-		spp_trace(sd->sd_act, sd->sd_ostate, sd->sd_cb, &sd->sd_sp,
-		    &sd->sd_si, sd->sd_req);
+		spp_trace(sd->sd_act, sd->sd_ostate, (struct sppcb *)sd->sd_cb,
+		    &sd->sd_sp, &sd->sd_si, sd->sd_req);
 	}
 }
 
-ptime(ms)
-	int ms;
+int
+numeric(v1, v2)
+	const void *v1, *v2;
 {
+	const caddr_t *c1 = v1;
+	const caddr_t *c2 = v2;
+	int rv;
 
-	printf("%03d ", (ms/10) % 1000);
+	if (*c1 < *c2)
+		rv = -1;
+	else if (*c1 > *c2)
+		rv = 1;
+	else
+		rv = 0;
+
+	return (rv);
 }
 
-numeric(c1, c2)
-	caddr_t *c1, *c2;
-{
-	
-	return (*c1 - *c2);
-}
-
+void
 spp_trace(act, ostate, asp, sp, si, req)
 	short act, ostate;
 	struct sppcb *asp, *sp;
 	struct spidp *si;
 	int req;
 {
-	u_short seq, ack, len, alo;
-	int flags, timer;
+	u_int16_t seq, ack, len, alo;
+	int flags;
 	char *cp;
 
-	if(ostate >= TCP_NSTATES) ostate = 0;
-	if(act > SA_DROP) act = SA_DROP;
+	if (ostate >= TCP_NSTATES)
+		ostate = 0;
+	if (act > SA_DROP)
+		act = SA_DROP;
 	printf("\n");
-	ptime(ntime);
-	printf("%s:%s", tcpstates[ostate], sanames[act]);
+	printf("%03d %s:%s", (ntime/10) % 1000, tcpstates[ostate],
+	    sanames[act]);
 
 	if (si != 0) {
 		seq = si->si_seq;
@@ -305,22 +351,19 @@ spp_trace(act, ostate, asp, sp, si, req)
 		switch (act) {
 		case SA_RESPOND:
 		case SA_OUTPUT:
-				seq = ntohs(seq);
-				ack = ntohs(ack);
-				alo = ntohs(alo);
-				len = ntohs(len);
+				NTOHS(seq);
+				NTOHS(ack);
+				NTOHS(alo);
+				NTOHS(len);
 		case SA_INPUT:
 		case SA_DROP:
-			if (aflag) {
-				printf("\n\tsna=");
-				ns_printhost(&si->si_sna);
-				printf("\tdna=");
-				ns_printhost(&si->si_dna);
-			}
+			if (aflag)
+				printf("\n\tsna=%s\tdna=%s",
+				    ns_ntoa(si->si_sna), ns_ntoa(si->si_dna));
 			printf("\n\t");
 #define p1(name, f) { \
 	printf("%s = %x, ", name, f); \
- }
+}
 			p1("seq", seq);
 			p1("ack", ack);
 			p1("alo", alo);
@@ -334,7 +377,7 @@ spp_trace(act, ostate, asp, sp, si, req)
 	} \
 }
 			if (flags) {
-				char *cp = "<";
+				cp = "<";
 				pf("SP_SP", SP_SP);
 				pf("SP_SA", SP_SA);
 				pf("SP_OB", SP_OB);
@@ -348,10 +391,8 @@ spp_trace(act, ostate, asp, sp, si, req)
 			p2("sid", si->si_sid);
 			p2("did", si->si_did);
 			p2("dt", si->si_dt);
-			printf("\n\tsna=");
-			ns_printhost(&si->si_sna);
-			printf("\tdna=");
-			ns_printhost(&si->si_dna);
+			printf("\n\tsna=%s\tdna=%s", ns_ntoa(si->si_sna),
+			    ns_ntoa(si->si_dna));
 		}
 	}
 	if(act == SA_USER) {
@@ -384,7 +425,7 @@ spp_trace(act, ostate, asp, sp, si, req)
 }
 		flags = sp->s_flags;
 		if (flags || sp->s_oobflags) {
-			char *cp = "<";
+			cp = "<";
 			pf("ACKNOW", SF_ACKNOW);
 			pf("DELACK", SF_DELACK);
 			pf("HI", SF_HI);
@@ -401,8 +442,9 @@ spp_trace(act, ostate, asp, sp, si, req)
 	}
 	/* print out timers? */
 	if (tflag) {
-		char *cp = "\t";
-		register int i;
+		int i;
+
+		cp = "\t";
 
 		printf("\n\tTIMERS: ");
 		p3("idle", sp->s_idle);
@@ -421,17 +463,11 @@ spp_trace(act, ostate, asp, sp, si, req)
 	}
 }
 
-ns_printhost(p)
-register struct ns_addr *p;
+void
+usage()
 {
 
-	printf("<net:%x%x,host:%4.4x%4.4x%4.4x,port:%x>",
-			p->x_net.s_net[0],
-			p->x_net.s_net[1],
-			p->x_host.s_host[0],
-			p->x_host.s_host[1],
-			p->x_host.s_host[2],
-			p->x_port);
-
+	fprintf(stderr, "usage: %s [-azstj] [-p hex-address]"
+	    " [-N system] [-M core]\n", __progname);
+	exit(1);
 }
-

@@ -1,5 +1,7 @@
-.\" Copyright (c) 1985, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: trsp.8,v 1.4 1997/09/08 09:23:16 deraadt Exp $
+.\"
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,27 +31,26 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)trsp.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: trsp.8,v 1.3 1997/01/30 08:23:35 deraadt Exp $
+.\"     @(#)trsp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 16, 1991
+.Dd June 6, 1993
 .Dt TRSP 8
-.Os BSD 4.2
+.Os BSD 4.3
 .Sh NAME
 .Nm trsp
 .Nd transliterate sequenced packet protocol trace
 .Sh SYNOPSIS
 .Nm trsp
 .Op Fl a
-.Op Fl s
-.Op Fl t
 .Op Fl j
 .Op Fl p Ar hex-address
-.Oo
-.Ar system Op Ar core
-.Oc
+.Op Fl s
+.Op Fl t
+.Op Fl z
+.Op Fl N Ar system
+.Op Fl M Ar core
 .Sh DESCRIPTION
-.Xr Trpt
+.Nm Trsp
 interrogates the buffer of
 .Tn SPP
 trace records created
@@ -78,16 +79,28 @@ Just give a list of the protocol control block
 addresses for which there are trace records.
 .It Fl p
 Show only trace records associated with the protocol
-control block at the given address,
+control block at the given address
 .Ar hex-address .
 .It Fl s
-in addition to the normal output,
+In addition to the normal output,
 print a detailed description of the packet
 sequencing information.
 .It Fl t
-in addition to the normal output,
+In addition to the normal output,
 print the values for all timers at each
-point in the trace,
+point in the trace.
+.It Fl z
+Clear the in-kernel debugging buffers.
+.It Fl M Ar core
+Extract values associated with the name list from
+.Pa core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N Ar system
+Extract the name list from
+.Pa system
+instead of the default
+.Pa /bsd .
 .El
 .Pp
 The recommended use of
@@ -111,10 +124,6 @@ many sockets using the debugging option, the
 option may be useful in checking to see if
 any trace records are present for the socket in
 question.
-.Pp
-If debugging is being performed on a system or
-core file other than the default, the last two
-arguments may be used to supplant the defaults.
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /dev/kmem
@@ -124,13 +133,15 @@ default system namelist
 .El
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr setsockopt 2
+.Xr setsockopt 2 ,
+.Xr trpt 8
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy no namelist
 When the system image doesn't
 contain the proper symbols to find the trace buffer;
 others which should be self explanatory.
+.El
 .Sh BUGS
 Should also print the data for each input or output,
 but this is not saved in the trace record.

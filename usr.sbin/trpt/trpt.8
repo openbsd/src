@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: trpt.8,v 1.5 1997/09/08 09:23:14 deraadt Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)trpt.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: trpt.8,v 1.4 1997/01/30 08:23:34 deraadt Exp $
+.\"     @(#)trpt.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 16, 1991
+.Dd December 11, 1993
 .Dt TRPT 8
 .Os BSD 4.2
 .Sh NAME
@@ -46,9 +47,8 @@
 .Op Fl p Ar hex-address
 .Op Fl s
 .Op Fl t
-.Oo
-.Ar system Op Ar core
-.Oc
+.Op Fl N Ar system
+.Op Fl M Ar core
 .Sh DESCRIPTION
 .Nm Trpt
 interrogates the buffer of
@@ -92,6 +92,16 @@ sequencing information.
 in addition to the normal output,
 print the values for all timers at each
 point in the trace.
+.It Fl M Ar core
+Extract values associated with the name list from
+.Pa core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N Ar system
+Extract the name list from
+.Pa system
+instead of the default
+.Pa /bsd .
 .El
 .Pp
 The recommended use of
@@ -119,10 +129,6 @@ many sockets using the debugging option, the
 option may be useful in checking to see if
 any trace records are present for the socket in
 question.
-.Pp
-If debugging is being performed on a system or
-core file other than the default, the last two
-arguments may be used to supplant the defaults.
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /dev/kmem
