@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: bwtwo.4,v 1.3 94/02/03 20:42:13 leres Exp
 .\"     from: @(#)bwtwo.4	8.2 (Berkeley) 2/16/94
-.\"	$Id: bwtwo.4,v 1.2 1998/03/08 01:06:52 johns Exp $
+.\"	$Id: bwtwo.4,v 1.3 1998/07/03 20:34:59 jason Exp $
 .\"
 .Dd February 16, 1994
 .Dt BWTWO 4 sparc
@@ -44,12 +44,16 @@
 .Nm bwtwo
 .Nd monochromatic frame buffer
 .Sh SYNOPSIS
-.Cd "bwtwo* at sbus? slot ? offset ?"
+.Cd "bwtwo* at sbus? slot ? offset ?" Pq "sun4c and sun4m"
+.Cd "bwtwo0 at obio0 addr 0xfd000000 level 4" Pq sun4/200
+.Cd "bwtwo0 at obio0 addr 0xfb300000 level 4" Pq "sun4/300 in P4 slot"
+.Cd "bwtwo0 at obio0 addr 0x0b300000 level 4" Pq "sun4/100 in P4 slot"
 .Sh DESCRIPTION
 The 
 .Nm
 is a memory based black and white frame buffer.
-It supports the minimal ioctl's needed to run X11.
+It supports the minimal ioctl's needed to run
+.Xr X 1 .
 .Sh SEE ALSO
 .Xr cgtwo 4 ,
 .Xr cgthree 4 ,
