@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_glue.c,v 1.16 1996/05/28 12:16:32 deraadt Exp $    */
-/*	$NetBSD: vm_glue.c,v 1.55 1996/05/19 10:00:38 ragge Exp $	*/
+/*	$OpenBSD: vm_glue.c,v 1.17 1996/06/20 10:51:08 deraadt Exp $    */
+/*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -357,6 +357,7 @@ swapin(p)
 	p->p_flag |= P_INMEM;
 	splx(s);
 	p->p_swtime = 0;
+	++cnt.v_swpin;
 }
 
 /*
@@ -545,6 +546,7 @@ swapout(p)
 		remrq(p);
 	splx(s);
 	p->p_swtime = 0;
+	++cnt.v_swpout;
 }
 
 /*
