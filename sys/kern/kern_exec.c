@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.25 1998/09/24 18:49:31 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.26 1999/02/26 05:05:38 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -59,6 +59,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -275,7 +279,11 @@ sys_execve(p, v, retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
+#if defined(UVM)
+	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
+#else
 	argp = (char *)kmem_alloc_wait(exec_map, NCARGS);
+#endif
 #ifdef DIAGNOSTIC
 	if (argp == (vm_offset_t) 0)
 		panic("execve: argp == NULL");
@@ -365,6 +373,9 @@ sys_execve(p, v, retval)
 	/* adjust "active stack depth" for process VSZ */
 	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
 
+#if defined(UVM)
+	uvmspace_exec(p);
+#else
 	/* Unmap old program */
 #ifdef sparc
 	kill_user_windows(p);		/* before stack addresses go away */
@@ -376,6 +387,7 @@ sys_execve(p, v, retval)
 #endif
 	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 	    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+#endif
 
 	/* Now map address space */
 	vm->vm_taddr = (char *)pack.ep_taddr;
@@ -530,7 +542,11 @@ sys_execve(p, v, retval)
 		splx(s);
 	}
 
+#if defined(UVM)
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+#else
 	kmem_free_wakeup(exec_map, (vm_offset_t)argp, NCARGS);
+#endif
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
@@ -567,7 +583,11 @@ bad:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+#if defined(UVM)
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+#else
 	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+#endif
 
 freehdr:
 	FREE(pack.ep_hdr, M_EXEC);
@@ -579,14 +599,23 @@ exec_abort:
 	 * get rid of the (new) address space we have created, if any, get rid
 	 * of our namei data and vnode, and exit noting failure
 	 */
+#if defined(UVM)
+	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
+		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+#else
 	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+#endif
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
+#if defined(UVM)
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+#else
 	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+#endif
 
 free_pack_abort:
 	FREE(pack.ep_hdr, M_EXEC);
