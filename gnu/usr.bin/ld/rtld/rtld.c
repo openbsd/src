@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.38 2003/08/15 23:13:06 deraadt Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.39 2004/11/08 20:47:07 miod Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -166,7 +166,7 @@ static char		us[] = "/usr/libexec/ld.so";
 
 char			**environ;
 char			*__progname = us;
-int			errno;
+/* int			errno; */
 
 static int		careful;
 static int		anon_fd = -1;
@@ -1119,7 +1119,7 @@ restart:
 			continue;
 
 		if (np->nz_type == N_UNDF+N_EXT && np->nz_value != 0) {
-			if (np->nz_other == AUX_FUNC) {
+			if (N_AUX(&np->nlist) == AUX_FUNC) {
 				/* It's a weak function definition */
 				if (strong)
 					continue;
@@ -1130,14 +1130,15 @@ restart:
 				continue;
 			}
 		}
+		if (N_BIND(&np->nlist) != BIND_WEAK) {
+			*src_map = smp;
+			return np;
+		}
 		if (N_BIND(&np->nlist) == BIND_WEAK && weak_np == 0) {
 			weak_np = np;
 			weak_smp = smp;
 			continue;
 		}
-
-		*src_map = smp;
-		return np;
 	}
 
 	if (weak_np) {
