@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.17 2001/06/29 04:52:17 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.18 2001/06/29 05:28:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -146,12 +146,12 @@ db_hang(tries, word, abc)
 {
 	register const char	*p;
 
-	for(p=hangpic; *p; p++)
-		cnputc((*p>='0' && *p<='9') ? ((tries<=(*p)-'0') ?
-		    substchar[(*p)-'0'] : ' ') : *p);
+	for(p = hangpic; *p; p++)
+		cnputc((*p >= '0' && *p <= '9') ? ((tries <= (*p) - '0') ?
+		    substchar[(*p) - '0'] : ' ') : *p);
 
 	for (p = word; *p; p++)
-		cnputc(ISALPHA(*p) && abc[TOLOWER(*p) - 'a'] == '-'?'-':*p);
+		cnputc(ISALPHA(*p) && abc[TOLOWER(*p) - 'a'] == '-'? '-' : *p);
 
 	db_printf(" (");
 
@@ -222,9 +222,8 @@ db_hangon(void)
 				abc[TOLOWER(*p) - 'a'] = *p;
 	}
 	db_hang(tries, word, abc);
-	cnputc('\n');
+	db_printf("\nScore: %lu/%lu\n", db_plays, ++db_guesses);
 	word = NULL;
-	db_guesses++;
 
 	return (!tries);
 }
