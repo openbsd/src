@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.26 2001/06/25 09:23:30 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.27 2001/06/25 09:31:07 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -75,8 +75,8 @@ struct pf_tree_node {
  */
 
 struct pf_rule		*pf_rulehead;
-struct nat		*nathead;
-struct rdr		*rdrhead;
+struct pf_nat		*pf_nathead;
+struct pf_rdr		*pf_rdrhead;
 struct pf_state		*pfstatehead;
 struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
 struct timeval		 pftv;
@@ -125,8 +125,8 @@ void		 send_reset(int, struct ifnet *, struct ip *, int,
 		    struct tcphdr *);
 int		 match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
 int		 match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
-struct nat	*get_nat(struct ifnet *, u_int8_t, u_int32_t);
-struct rdr	*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
+struct pf_nat	*get_nat(struct ifnet *, u_int8_t, u_int32_t);
+struct pf_rdr	*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
 int		 pf_test_tcp(int, struct ifnet *, int, struct ip *,
 		    struct tcphdr *);
 int		 pf_test_udp(int, struct ifnet *, int, struct ip *,
@@ -478,9 +478,9 @@ pfattach(int num)
                 0, NULL, NULL, 0);
         pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
                 0, NULL, NULL, 0);
-        pool_init(&pf_nat_pl, sizeof(struct nat), 0, 0, 0, "pfnatpl",
+        pool_init(&pf_nat_pl, sizeof(struct pf_nat), 0, 0, 0, "pfnatpl",
                 0, NULL, NULL, 0);
-        pool_init(&pf_rdr_pl, sizeof(struct rdr), 0, 0, 0, "pfrdrpl",
+        pool_init(&pf_rdr_pl, sizeof(struct pf_rdr), 0, 0, 0, "pfrdrpl",
                 0, NULL, NULL, 0);
         pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
                 0, NULL, NULL, 0);
@@ -608,41 +608,41 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETNAT: {
-		struct nat *nats = (struct nat *)kb;
+		struct pf_nat *nats = (struct pf_nat *)kb;
 		u_int16_t n;
-		while (nathead != NULL) {
-			struct nat *next = nathead->next;
+		while (pf_nathead != NULL) {
+			struct pf_nat *next = pf_nathead->next;
 
-			pool_put(&pf_nat_pl, nathead);
-			nathead = next;
+			pool_put(&pf_nat_pl, pf_nathead);
+			pf_nathead = next;
 		}
 		for (n = 0; n < ub->entries; ++n) {
-			struct nat *nat;
+			struct pf_nat *nat;
 
 			nat = pool_get(&pf_nat_pl, PR_NOWAIT);
 			if (nat == NULL) {
 				error = ENOMEM;
 				goto done;
 			}
-			bcopy(nats + n, nat, sizeof(struct nat));
+			bcopy(nats + n, nat, sizeof(struct pf_nat));
 			nat->ifp = ifunit(nat->ifname);
 			if (nat->ifp == NULL) {
 				pool_put(&pf_nat_pl, nat);
 				error = EINVAL;
 				goto done;
 			}
-			nat->next = nathead;
-			nathead = nat;
+			nat->next = pf_nathead;
+			pf_nathead = nat;
 		}
 		break;
 	}
 
 	case DIOCGETNAT: {
-		struct nat *nats = (struct nat *)kb;
-		struct nat *nat = nathead;
+		struct pf_nat *nats = (struct pf_nat *)kb;
+		struct pf_nat *nat = pf_nathead;
 		u_int16_t n = 0;
 		while ((nat != NULL) && (n < ub->entries)) {
-			bcopy(nat, nats + n, sizeof(struct nat));
+			bcopy(nat, nats + n, sizeof(struct pf_nat));
 			n++;
 			nat = nat->next;
 		}
@@ -651,41 +651,41 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETRDR: {
-		struct rdr *rdrs = (struct rdr *)kb;
+		struct pf_rdr *rdrs = (struct pf_rdr *)kb;
 		u_int16_t n;
-		while (rdrhead != NULL) {
-			struct rdr *next = rdrhead->next;
+		while (pf_rdrhead != NULL) {
+			struct pf_rdr *next = pf_rdrhead->next;
 
-			pool_put(&pf_rdr_pl, rdrhead);
-			rdrhead = next;
+			pool_put(&pf_rdr_pl, pf_rdrhead);
+			pf_rdrhead = next;
 		}
 		for (n = 0; n < ub->entries; ++n) {
-			struct rdr *rdr;
+			struct pf_rdr *rdr;
 
 			rdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
 			if (rdr == NULL) {
 				error = ENOMEM;
 				goto done;
 			}
-			bcopy(rdrs + n, rdr, sizeof(struct rdr));
+			bcopy(rdrs + n, rdr, sizeof(struct pf_rdr));
 			rdr->ifp = ifunit(rdr->ifname);
 			if (rdr->ifp == NULL) {
 				pool_put(&pf_rdr_pl, rdr);
 				error = EINVAL;
 				goto done;
 			}
-			rdr->next = rdrhead;
-			rdrhead = rdr;
+			rdr->next = pf_rdrhead;
+			pf_rdrhead = rdr;
 		}
 		break;
 	}
 
 	case DIOCGETRDR: {
-		struct rdr *rdrs = (struct rdr *)kb;
-		struct rdr *rdr = rdrhead;
+		struct pf_rdr *rdrs = (struct pf_rdr *)kb;
+		struct pf_rdr *rdr = pf_rdrhead;
 		u_int16_t n = 0;
 		while ((rdr != NULL) && (n < ub->entries)) {
-			bcopy(rdr, rdrs + n, sizeof(struct rdr));
+			bcopy(rdr, rdrs + n, sizeof(struct pf_rdr));
 			n++;
 			rdr = rdr->next;
 		}
@@ -926,10 +926,10 @@ match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 	return (0); /* never reached */
 }
 
-struct nat *
+struct pf_nat *
 get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 {
-	struct nat *n = nathead, *nm = NULL;
+	struct pf_nat *n = pf_nathead, *nm = NULL;
 
 	while (n && nm == NULL) {
 		if (n->ifp == ifp &&
@@ -942,10 +942,10 @@ get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 	return (nm);
 }
 
-struct rdr *
+struct pf_rdr *
 get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 {
-	struct rdr *r = rdrhead, *rm = NULL;
+	struct pf_rdr *r = pf_rdrhead, *rm = NULL;
 	while (r && rm == NULL) {
 		if (r->ifp == ifp &&
 		    (!r->proto || r->proto == proto) &&
@@ -962,8 +962,8 @@ int
 pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
     struct tcphdr *th)
 {
-	struct nat *nat = NULL;
-	struct rdr *rdr = NULL;
+	struct pf_nat *nat = NULL;
+	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
 	struct pf_rule *r = pf_rulehead, *rm = NULL;
@@ -1106,8 +1106,8 @@ int
 pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
     struct udphdr *uh)
 {
-	struct nat *nat = NULL;
-	struct rdr *rdr = NULL;
+	struct pf_nat *nat = NULL;
+	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
 	struct pf_rule *r = pf_rulehead, *rm = NULL;
@@ -1228,7 +1228,7 @@ int
 pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
     struct icmp *ih)
 {
-	struct nat *nat = NULL;
+	struct pf_nat *nat = NULL;
 	u_int32_t baddr;
 	struct pf_rule *r = pf_rulehead, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;

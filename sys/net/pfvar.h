@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.7 2001/06/25 09:23:32 art Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.8 2001/06/25 09:31:07 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -93,10 +93,10 @@ struct pf_state {
 	u_int8_t	 direction;
 };
 
-struct nat {
+struct pf_nat {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
-	struct nat	*next;
+	struct pf_nat	*next;
 	u_int32_t	 saddr;
 	u_int32_t	 smask;
 	u_int32_t	 daddr;
@@ -104,10 +104,10 @@ struct nat {
 	u_int8_t	 not;
 };
 
-struct rdr {
+struct pf_rdr {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
-	struct rdr	*next;
+	struct pf_rdr	*next;
 	u_int32_t	 daddr;
 	u_int32_t	 dmask;
 	u_int32_t	 raddr;
