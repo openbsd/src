@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.1 1996/11/28 23:27:42 niklas Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.2 1997/04/13 20:22:38 mickey Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -52,6 +52,10 @@
 
 #define	UHA_EISA_SLOT_OFFSET	0xc80
 #define	UHA_EISA_IOSIZE		0x020
+
+#ifndef DDB
+#define	Debugger() panic("should call debugger here (uha_eisa.c)")
+#endif
 
 int	uha_eisa_match __P((struct device *, void *, void *));
 void	uha_eisa_attach __P((struct device *, struct device *, void *));

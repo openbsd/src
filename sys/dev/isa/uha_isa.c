@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_isa.c,v 1.1 1996/11/29 23:51:14 niklas Exp $	*/
+/*	$OpenBSD: uha_isa.c,v 1.2 1997/04/13 20:22:42 mickey Exp $	*/
 /*	$NetBSD: uha_isa.c,v 1.5 1996/10/21 22:41:21 thorpej Exp $	*/
 
 /*
@@ -51,6 +51,10 @@
 #include <dev/ic/uhavar.h>
 
 #define	UHA_ISA_IOSIZE	16
+
+#ifndef DDB
+#define	Debugger() panic("should call debugger here (uha_isa.c)")
+#endif
 
 int	uha_isa_probe __P((struct device *, void *, void *));
 void	uha_isa_attach __P((struct device *, struct device *, void *));
