@@ -1,4 +1,4 @@
-.\" $OpenBSD: keyconv.8,v 1.5 2001/12/21 11:41:50 mpech Exp $
+.\" $OpenBSD: keyconv.8,v 1.6 2002/11/09 00:57:20 fgsch Exp $
 .\"
 .\" Copyright (c) 2001 Hakan Olsson.  All rights reserved.
 .\"
@@ -91,8 +91,8 @@ $ openssl genrsa -out testkey.ssl 1024
 $ keyconv -d testkey.ssl testkey.dns
 .Ed
 .Sh SEE ALSO
-.Xr isakmpd 8 ,
-.Xr openssl 1
+.Xr openssl 1 ,
+.Xr isakmpd 8
 .Sh HISTORY
 This command first appeared in
 .Ox 3.0 .
