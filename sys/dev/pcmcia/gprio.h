@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprio.h,v 1.2 2002/06/17 20:41:51 fgsch Exp $	*/
+/*	$OpenBSD: gprio.h,v 1.3 2002/09/25 19:09:02 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -13,9 +13,9 @@
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
- * 3. Neither the name of the Federico G. Schwindt nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 3. Neither the name of the author nor the names of its contributors
+ *    may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
