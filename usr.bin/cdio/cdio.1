@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.12 1998/09/01 16:38:23 deraadt Exp $
+.\" $OpenBSD: cdio.1,v 1.13 1998/09/23 04:32:36 aaron Exp $
 .Dd July 3, 1995
 .Dt CDIO 1
 .Os OpenBSD 2.0
@@ -9,67 +9,76 @@
 .Nm cdio
 .Op Fl s
 .Op Fl v
-.Op Fl f Ar discname
-.Op Ar command args...
+.Op Fl f Ar device
+.Op Ar command args ...
 .Sh DESCRIPTION
+The
 .Nm cdio
-is a program to control audio features of a CD drive. The device is a name such
-as cd0, acd0, or mcd0 
+program controls audio features of a CD drive. The
+.Ar device
+is a name such
+as ``cd0'', ``acd0'', or ``mcd0''. 
 .Pp
-If the device is not specified, the environment variable 
+If a
+.Ar device
+is not specified, the environment variable 
 .Ev DISC
-will be used to find the cd device.
+will be used to find the CD device.
 .Pp
-If no command is given, then
+If no command is given,
 .Nm cdio
 enters an interactive mode, reading commands from the standard input.
 .Pp
 The following options are available:
 .Bl -tag -width flag
 .It Fl s
-Silent mode - do not print table headers and human readable comments.
+Silent mode. Do not print table headers or human-readable comments.
 .It Fl v
-Verbose mode - print as much information as possible.
-.It Fl f Ar discname
-Specifies a device name, such as /dev/rcd0d or mcd0.
-Both absolute path and relative to /dev filename are possible.
+Verbose mode. Print as much information as possible.
+.It Fl f Ar device
+Specifies a device name such as
+.Pa /dev/rcd0d
+or
+.Pa mcd0 .
+Both absolute and relative paths to
+.Pa /dev
+filenames are possible.
 The raw partition name is added if needed.
 .El
 .Pp
 The available commands are listed below.  Only as many
 characters as are required to uniquely identify a command
-need be specified. Word
-.Nm play
-can be omitted.
+need be specified. The word
+.Cm play
+may be omitted.
 .Bl -tag -width Cm
 .It Cm play Ar first_track Op Ar last_track
 Play from track 
 .Nm first_track
 to track
 .Nm last_track. 
-The first track has number 1.
-can be ommited in all cases.
+The first track has number 1 and may be omitted in all cases.
 .It Cm play Ar start_m:start_s.start_f Op Ar end_m:end_s.end_f
 Play from the absolute address
 (MSF) defined by 
-.Nm start_m
+.Ar start_m
 in minutes, 
-.Nm start_s,
+.Ar start_s,
 in seconds and 
-.Nm start_f
+.Ar start_f
 (frame number) to the absolute address defined by
-.Nm end_m
+.Ar end_m
 in minutes, 
-.Nm end_s,
+.Ar end_s,
 in seconds and 
-.Nm end_f
+.Ar end_f
 (frame number). Minutes are in the range 0-99. Seconds are in the range 0-59.
 Frame numbers are in the range 0-74.
 .It Cm play Op Ar #start_block Op length
 Play starting from the logical block
-.Nm start_block
+.Ar start_block
 using
-.Nm length
+.Ar length
 logical blocks.
 .It Cm pause
 Stop playing. Do not stop the disc.
@@ -90,10 +99,10 @@ Eject the disc.
 .It Cm close
 Inject the disc.
 .It Cm volume Ar left_channel Ar right_channel
-Set the volume of left channel to 
-.Nm left_channel
-and the volume of right channel to 
-.Nm right_channel. 
+Set the volume of the left channel to 
+.Ar left_channel
+and the volume of the right channel to 
+.Ar right_channel . 
 Allowed values are in the range 0-255. 
 .It Cm volume Ar mute
 Turn the sound off.
@@ -108,7 +117,7 @@ Play the right subtrack on both left and right channels.
 .It Cm info
 Print the table of contents.
 .It Cm status
-Print the information about the disc:
+Print information about the disc:
 the current playing status and position,
 the current media catalog status,
 the current values of the volume for left and right channels.
@@ -147,4 +156,4 @@ The
 .Nm cdio
 command is based on
 .Nm cdcontrol ,
-which first appeared in FreeBSD 2.1
+which first appeared in FreeBSD 2.1.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.7 1998/06/22 21:33:56 millert Exp $
+.\"	$OpenBSD: du.1,v 1.8 1998/09/23 04:32:38 aaron Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -49,7 +49,9 @@
 .Sh DESCRIPTION
 The
 .Nm du
-utility displays the file system block usage for each file argument
+utility displays the file system block usage for each
+.Ar file
+argument
 and for each directory in the file hierarchy rooted in each directory
 argument.  Note that the system block usage is usually greater than
 the actual size of the file.
@@ -91,7 +93,7 @@ This option exists solely for conformance with
 Filesystem mount points are not traversed.
 .El
 .Pp
-.Nm Du
+.Nm du
 counts the storage used by symbolic links and not the files they
 reference unless the
 .Fl H

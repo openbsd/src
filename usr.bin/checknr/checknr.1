@@ -1,4 +1,4 @@
-.\"	$OpenBSD: checknr.1,v 1.3 1997/07/17 07:39:53 deraadt Exp $
+.\"	$OpenBSD: checknr.1,v 1.4 1998/09/23 04:32:36 aaron Exp $
 .\"	$NetBSD: checknr.1,v 1.5 1995/03/26 04:10:14 glass Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -48,7 +48,7 @@
 .Op Fl f
 .Ar file
 .Sh DESCRIPTION
-.Nm Checknr
+.Nm checknr
 checks a list of
 .Xr nroff 1
 or
@@ -99,7 +99,7 @@ Macros that come in open ... close forms, for example,
 the .TS and .TE macros which must always come in pairs.
 .El
 .Pp
-.Nm Checknr
+.Nm checknr
 is intended for use on documents that are prepared with
 .Nm checknr
 in mind, much the same as
@@ -131,7 +131,7 @@ forms anyway,
 you should think of this as a contribution to your document
 preparation style.
 .Pp
-.Nm Checknr
+.Nm checknr
 knows about the
 .Xr ms 7
 and
@@ -140,8 +140,8 @@ macro packages.
 .Sh SEE ALSO
 .Xr nroff 1 ,
 .Xr troff 1 ,
-.Xr ms 7 ,
-.Xr me 7
+.Xr me 7 ,
+.Xr ms 7
 .Sh DIAGNOSTICS
 .Bd -ragged -compact
 Complaints about unmatched delimiters.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.6 1998/05/13 10:33:24 deraadt Exp $
+.\"	$OpenBSD: apply.1,v 1.7 1998/09/23 04:32:33 aaron Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -44,9 +44,10 @@
 .Nm apply
 .Op Fl a Ns Ar c
 .Op Fl Ns Ar #
-.Ar command argument ...
+.Ar command argument
+.Op Ar ...
 .Sh DESCRIPTION
-.Nm Apply
+.Nm apply
 runs the named
 .Ar command
 on each
@@ -59,7 +60,7 @@ Character sequences of the form
 in
 .Ar command ,
 where
-.Dq Li d
+.Sq Li d
 is a digit from 1 to 9, are replaced by the
 .Li d Ns \'th
 following unused
@@ -82,12 +83,14 @@ is run, without arguments, once for each
 .Pp
 If any sequences of
 .Dq Li \&%d
-occur in command, the
+occur in
+.Ar command ,
+the
 .Fl #
 option is ignored.
 .It Fl a Ns Ar c
 The use of the character
-.Dq Li %
+.Sq Li %
 as a magic character may be changed with the
 .Fl a
 option.
@@ -115,10 +118,10 @@ runs
 links all files in the current directory to the directory
 .Pa /usr/joe .
 .El
-.Sh Files
+.Sh FILES
 .Bl -tag -width /bin/sh -compact
 .It Pa /bin/sh
-Default shell
+default shell
 .El
 .Sh AUTHOR
 Rob Pike

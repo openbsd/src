@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asa.1,v 1.4 1998/09/07 16:44:33 aaron Exp $
+.\"	$OpenBSD: asa.1,v 1.5 1998/09/23 04:32:34 aaron Exp $
 .\"	$NetBSD: asa.1,v 1.4 1995/03/26 02:25:05 glass Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
@@ -37,7 +37,9 @@
 .Nm fpr
 .Nd interpret carriage-control characters.
 .Sh SYNOPSIS
-.Nm asa|fpr
+.Nm asa
+.Op Ar
+.Nm fpr
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -48,21 +50,27 @@ carriage-control characters to line-printer control sequences,
 and writes them to the standard output.
 .Pp
 The first character of each line is interpreted as a carriage-control
-character.  The following characters are interpreted as follows:
+character.  Additionally, the following characters are interpreted as shown:
 .Bl -tag -width indent
 .It <space>
 Output the rest of the line without change.
 .It 0
-Output a <newline> character before printing the rest of the line.
+Output a newline
+.Pq Sq \en
+character before printing the rest of the line.
 .It 1
 Output a <formfeed> character before printing the rest of the line.
 .It +
-The trailing <newline> of the previous line is replaced by a <carriage-return>
+The trailing newline
+.Pq Sq \en
+of the previous line is replaced by a carriage-return
+.Pq Sq \er
 before printing the rest of the line.
 .El
 .Pp
 Lines beginning with characters other than the above are treated as if they
-begin with <space>.
+begin with a space
+.Pq Sq \  .
 .Sh EXAMPLES
 To view a file containing the output of a
 .Tn FORTRAN program:
@@ -75,7 +83,7 @@ program and redirect it to a line-printer.
 .Sh DIAGNOSTICS
 The
 .Nm
-utility exit 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr f77 1
 .Sh STANDARDS

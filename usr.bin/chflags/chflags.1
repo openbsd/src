@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.3 1997/02/14 21:08:38 deraadt Exp $
+.\"	$OpenBSD: chflags.1,v 1.4 1998/09/23 04:32:36 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -50,7 +50,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Ar flags
-.Ar file ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm chflags
@@ -121,7 +121,7 @@ You can use "ls -lo" to see the flags of existing files.
 .Pp
 The
 .Nm chflags
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr ls 1 ,
 .Xr chflags 2 ,

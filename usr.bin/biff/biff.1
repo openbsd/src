@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biff.1,v 1.3 1996/08/07 06:16:34 deraadt Exp $
+.\"	$OpenBSD: biff.1,v 1.4 1998/09/23 04:32:35 aaron Exp $
 .\"	$NetBSD: biff.1,v 1.3 1995/03/26 02:34:21 glass Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -44,16 +44,16 @@
 .Nm biff
 .Op Cm ny
 .Sh DESCRIPTION
-.Nm Biff
+.Nm biff
 informs the system whether you want to be notified when mail arrives
 during the current terminal session.
 .Pp
 Options supported by
 .Nm biff :
 .Bl -tag -width 4n
-.It Cm n
+.It Fl n
 Disables notification.
-.It Cm y
+.It Fl y
 Enables notification.
 .El
 .Pp
@@ -67,14 +67,14 @@ or
 .Pa \&.profile
 to be executed at each login.
 .Pp
-.Nm Biff
+.Nm biff
 operates asynchronously.
 For synchronous notification use the
-.Ar MAIL
+.Ev MAIL
 variable of
 .Xr sh 1
 or the
-.Ar mail
+.Ev mail
 variable of
 .Xr csh 1 .
 .Sh SEE ALSO
@@ -87,4 +87,5 @@ The
 .Nm
 command appeared in 
 .Bx 4.0 .
-Biff was Heidi Stettner's dog. He died in August 1993, at 15.
+.Nm biff
+was Heidi Stettner's dog. He died in August 1993, at 15.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.7 1998/09/05 17:41:47 deraadt Exp $
+.\"	$OpenBSD: encrypt.1,v 1.8 1998/09/23 04:32:39 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -68,7 +68,7 @@ is specified,
 .Nm encrypt
 reads one string per line from standard input, encrypting each one
 with the chosen algorithm from above. In case that no specific algorithm
-was given as command line option, the default will be looked up from
+was given as a command line option, the default will be looked up from
 .Ar passwd.conf(5) .
 .Pp
 For MD5 and Blowfish a new random salt is automatically generated for each
@@ -84,8 +84,8 @@ standard input is more secure.
 .El
 .Sh SEE ALSO
 .Xr crypt 3 ,
-.Xr passwd.conf 5 ,
-.Xr pw_getconf 3
+.Xr pw_getconf 3 ,
+.Xr passwd.conf 5
 .Sh HISTORY
 .Nm encrypt
 first appeared in

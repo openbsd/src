@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.8 1998/06/14 18:12:23 deraadt Exp $
+.\"	$OpenBSD: chpass.1,v 1.9 1998/09/23 04:32:36 aaron Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -44,12 +44,12 @@
 .Nm chpass
 .Op Fl a Ar list
 .Op Fl s Ar newshell
-.Op user
+.Op Ar user
 .Sh DESCRIPTION
-.Nm Chpass
+.Nm chpass
 allows editing of the user database information associated
 with
-.Ar user
+.Ar user ,
 or, by default, the current user.
 The information is formatted and supplied to an editor for changes.
 .Pp
@@ -62,12 +62,12 @@ The super-user is allowed to directly supply a user database
 entry, in the format specified by
 .Xr passwd 5 ,
 as an argument.
-This argument must be a colon (``:'') separated list of all the
+This argument must be a colon
+.Pq Sq \&:
+separated list of all the
 user database fields, although they may be empty.
 .It Fl s Ar newshell
-The
-.Fl s
-option attempts to change the user's shell to
+Attempts to change the user's shell to
 .Ar newshell .
 .El
 .Pp
@@ -119,7 +119,7 @@ Both of these fields should be unique across the system (and often
 across a group of systems) as they control file access.
 .Pp
 While it is possible to have multiple entries with identical login names
-and/or identical user id's, it is usually a mistake to do so.  Routines
+and/or identical user IDs, it is usually a mistake to do so.  Routines
 that manipulate these files will often return only one of the multiple
 entries, and that one by random selection.
 .Pp
@@ -127,7 +127,7 @@ The
 .Ar group
 field is the group that the user will be placed in at login.
 Since BSD supports multiple groups (see
-.Xr groups 1 )
+.Xr groups 1 ),
 this field currently has little special meaning.
 This field may be filled in with either a number or a group name (see
 .Xr group 5 ) .
@@ -169,8 +169,8 @@ The
 field is the command interpreter the user prefers.
 If the
 .Ar shell
-field is empty, the Bourne shell,
-.Pa /bin/sh ,
+field is empty, the Bourne shell
+.Pq Pa /bin/sh
 is assumed.
 When altering a login shell, and not the super-user, the user
 may not change from a non-standard shell or to a non-standard
@@ -203,17 +203,17 @@ update the user database itself.
 Only the user, or the super-user, may edit the information associated
 with the user.
 .Sh FILES
-.Bl -tag -width /etc/master.passwd -compact
+.Bl -tag -width /var/tmp/pw.XXXXXXXX -compact
 .It Pa /etc/master.passwd
-The user database
+user database
 .It Pa /etc/passwd
-A Version 7 format password file
+a Version 7 format password file
 .It Pa /etc/ptmp
-Lock file for the passwd database
+lock file for the passwd database
 .It Pa /var/tmp/pw.XXXXXXXX
-Temporary copy of the user passwd information
+temporary copy of the user passwd information
 .It Pa /etc/shells
-The list of approved shells
+list of approved shells
 .El
 .Sh SEE ALSO
 .Xr login 1 ,

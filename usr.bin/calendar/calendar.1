@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.4 1997/08/26 23:37:20 millert Exp $
+.\"	$OpenBSD: calendar.1,v 1.5 1998/09/23 04:32:36 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 The
 .Nm calendar
 utility checks the current directory or the directory specified by the
-.Dq Ev CALENDAR_DIR
+.Ev CALENDAR_DIR
 environment variable for a file named
 .Pa calendar
 and displays lines that begin with either today's date
@@ -64,25 +64,25 @@ Process the ``calendar'' files of all users and mail the results
 to them.
 This requires super-user privileges.
 .It Fl A Ar num
-print lines from today and next
+Print lines from today and next
 .Ar num
-days (forward, future)
+days (forward, future).
 .It Fl B Ar num
-print lines from today and previous
+Print lines from today and previous
 .Ar num
-days (backward, past)
+days (backward, past).
 .It Fl f Pa calendarfile
-use
+Use
 .Pa calendarfile
-as default calendar file.
+as the default calendar file.
 .It Fl t Ar [[[yy]yy][mm]]dd
-act like the specified value is ``today'' instead of using the current date.
+Act like the specified value is ``today'' instead of using the current date.
 .El
 .Pp
 To handle calendars in your national code table you can specify
 .Dq LANG=<locale_name>
 in the calendar file as early as possible. To handle national Easter
-names in the calendars
+names in the calendars,
 .Dq Easter=<national_name>
 (for Catholic Easter) or
 .Dq Paskha=<national_name>
@@ -93,26 +93,28 @@ They may be entered in almost any format, either numeric or as character
 strings.
 If proper locale is set, national months and weekdays
 names can be used.
-A single asterisk (``*'') matches every month.
+A single asterisk (`*') matches every month.
 A day without a month matches that day of every week.
 A month without a day matches the first of that month.
 Two numbers default to the month followed by the day.
 Lines with leading tabs default to the last entered date, allowing
 multiple line specifications for a single date.
-``Easter'', may be followed by an positive or negative integer, is
+``Easter'' (may be followed by a positive or negative integer) is
 Easter for this year.
-``Paskha'', may be followed by an positive or negative integer, is
+``Paskha'' (may be followed by a positive or negative integer) is
 Orthodox Easter for this year.
 Weekdays may be followed by ``-4'' ... ``+5'' (aliases
 last, first, second, third, fourth) for moving events like
-``the last Monday in April''
+``the last Monday in April''.
 .Pp
-By convention, dates followed by an asterisk are not fixed, i.e., change
+By convention, dates followed by an asterisk
+.Pq Sq *
+are not fixed, i.e., change
 from year to year.
 .Pp
-Day description	start after the	first <tab> character in the line;
-if the line not	contains <tab> character, it isn't printed out.
-If the first character in the line is a	<tab> character, it is treated as
+Day descriptions start after the first <tab> character in the line;
+if the line does not contain a <tab> character, it isn't printed out.
+If the first character in the line is a <tab> character, it is treated as
 continue of previous description.
 .Pp
 The ``calendar'' file is preprocessed by
@@ -128,8 +130,8 @@ Empty lines and lines protected by the C commenting syntax
 .Pq Li /* ... */
 are ignored.
 .Pp
-Some possible calendar entries (<tab> characters highlighted by
-\fB\et\fR sequence)
+Some possible calendar entries (<tab> characters are highlighted by a
+\fB\et\fR sequence):
 .Bd -unfilled -offset indent
 LANG=C
 Easter=Ostern
@@ -152,71 +154,50 @@ Ostern-2\fB\et\fRGood Friday (2	days before Easter)
 Paskha\fB\et\fROrthodox	Easter
 .Ed
 .Sh FILES
-.Pp
-.Bl -tag -width calendar.christian -compact
+.Bl -tag -width ~/.calendar/calendar -compact
 .It Pa calendar
 file in current directory
-
 .It Pa ~/.calendar
-.Pa calendar
-HOME directory.
+file in home directory (which
 .Nm calendar
-does a chdir into this directory if it exists.
-
+.Xr chdir 1 's
+into if it exists)
 .It Pa ~/.calendar/calendar
-calendar file to use if no calendar file exists in the current directory.
-
+file to use if no calendar file exists in the current directory
 .It Pa ~/.calendar/nomail
-do not send mail if this file exists.
-.El
-
-The following default calendar files are provided:
-.Pp
-.Bl -tag -width calendar.christian -compact
+.Nm calendar
+will not send mail if this file exists
 .It Pa calendar.birthday
-Births and deaths of famous (and not-so-famous) people.
-
+births and deaths of famous (and not-so-famous) people
 .It Pa calendar.christian
-Christian holidays.
-This calendar should be updated yearly by the local system administrator
-so that roving holidays are set correctly for the current year.
-
+christian holidays (should be updated yearly by the local system administrator
+so that roving holidays are set correctly for the current year)
 .It Pa calendar.computer
-Days of special significance to computer people.
-
+days of special significance to computer people
 .It Pa calendar.history
-Everything  else,  mostly  U. S. historical events.
-
+everything else, mostly U.S. historical events
 .It Pa calendar.holiday
-Other  holidays,  including  the  not-well-known,  obscure, and
+other holidays (including the not-well-known, obscure, and
 .Em really
-obscure.
-
+obscure)
 .It Pa calendar.judaic
-Jewish holidays.
-This calendar should be updated yearly by the local system administrator
-so that roving holidays are set correctly for the current year.
-
+Jewish holidays (should be updated yearly by the local system administrator
+so that roving holidays are set correctly for the current year)
 .It Pa calendar.music
-Musical events, births, and deaths.
-Strongly oriented toward rock 'n' roll.
-
+musical events, births, and deaths (strongly oriented toward rock n' roll)
 .It Pa calendar.usholiday
-U.S. holidays.
-This calendar should be updated yearly by the local system administrator
-so that roving holidays are set correctly for the current year.
-
+U.S. holidays (should be updated yearly by the local system administrator
+so that roving holidays are set correctly for the current year)
 .It Pa calendar.german
-German calendar.
-
+German calendar
 .It Pa calendar.russian
-Russian calendar.
+Russian calendar
 .El
 .Sh SEE ALSO
 .Xr at 1 ,
 .Xr cpp 1 ,
-.Xr cron 8 ,
-.Xr mail 1
+.Xr mail 1 ,
+.Xr cron 8
 .Sh COMPATIBILITY
 The
 .Nm calendar
@@ -230,5 +211,5 @@ A
 command appeared in
 .At v7 .
 .Sh BUGS
-.Nm Calendar
-doesn't handle Jewish holidays and moon phases.
+.Nm calendar
+doesn't handle Jewish holidays or moon phases.

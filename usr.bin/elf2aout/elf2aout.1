@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2aout.1,v 1.3 1998/06/12 12:09:44 d Exp $
+.\"	$OpenBSD: elf2aout.1,v 1.4 1998/09/23 04:32:38 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\" 
@@ -40,15 +40,15 @@
 .Nm elf2aout
 .Op Ar elfexec
 .Oo
-.Ar ecoffexec
+.Ar aoutexec
 .Oc
 .Sh DESCRIPTION
 .Nm elf2aout
-reads and convert the file specified as
+reads and converts the file specified as
 .Ar elfexec
 to a.out format, into file
-.Ar aoutexec
-, suitable for bootstrapping certain
+.Ar aoutexec ,
+suitable for bootstrapping certain
 .Nm MIPS
 systems.
 The systems currently requiring this

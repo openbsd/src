@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.4 1998/04/30 13:46:16 provos Exp $
+.\" $OpenBSD: audioctl.1,v 1.5 1998/09/23 04:32:34 aaron Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,18 +48,20 @@
 .Nm
 .Op Fl f Ar file
 .Op Fl n
-.Ar name ...
+.Ar name
+.Op Ar ...
 .br
 .Nm
 .Op Fl f Ar file
 .Op Fl n
 .Fl w
-.Ar name=value ...
+.Ar name=value
+.Op Ar ...
 .Sh DESCRIPTION
 The 
 .Nm
 command displays or sets various audio system driver variables.
-If a list of variables is present on the command line, then
+If a list of variables is present on the command line,
 .Nm
 prints the current value of those variables for the specified device.
 If the 
@@ -67,13 +69,13 @@ If the
 flag is specified, all variables for the device are printed.
 If the
 .Fl w
-flag is specified
+flag is specified,
 .Nm
 attempts to set the specified variables to the given values.
 .Pp
 The
 .Fl f
-flag can be used to give an alternative audio control device, the default is
+flag can be used to give an alternative audio control device. The default is
 .Pa /dev/audioctl .
 .Pp
 The
@@ -97,8 +99,8 @@ audio control device
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
-.It Pa AUDIOCTLDEVICE
-the audio control device to use.
+.It Ev AUDIOCTLDEVICE
+The audio control device to use.
 .Sh SEE ALSO
 .Xr mixerctl 1 ,
 .Xr audio 4 ,

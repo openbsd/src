@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.5,v 1.3 1998/06/15 17:56:06 mickey Exp $
+.\"	$OpenBSD: ar.5,v 1.4 1998/09/23 04:32:34 aaron Exp $
 .\"	$NetBSD: ar.5,v 1.2 1995/03/25 06:39:38 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -63,7 +63,7 @@ The header is made up of six variable length
 fields, followed by a
 two character trailer.
 The fields are the object name (16 characters), the file last modification
-time (12 characters), the user and group id's (each 6 characters), the file
+time (12 characters), the user and group IDs (each 6 characters), the file
 mode (8 characters) and the file size (10 characters).
 All numeric fields are in decimal, except for the file mode which is in
 octal.
@@ -74,7 +74,7 @@ field, i.e.,
 .Dv CUT
 seconds since
 the epoch.
-The user and group id's are the file
+The user and group IDs are the file
 .Fa st_uid
 and
 .Fa st_gid
@@ -103,7 +103,7 @@ If any fields are their particular maximum number of characters in
 length, there will be no separation between the fields.
 .Pp
 Objects in the archive are always an even number of bytes long; files
-which are an odd number of bytes long are padded with a newline (``\en'')
+which are an odd number of bytes long are padded with a newline (`\en')
 character, although the size in the header does not reflect this.
 .Sh SEE ALSO
 .Xr ar 1 ,
@@ -117,7 +117,7 @@ type int).
 These archives were almost certainly created on a 16-bit machine, and
 contain headers made up of five fields.
 The fields are the object name (8 characters), the file last modification
-time (type long), the user id (type char), the file mode (type char) and
+time (type long), the user ID (type char), the file mode (type char) and
 the file size (type unsigned int).
 Files were padded to an even number of bytes.
 .Pp
@@ -126,7 +126,7 @@ type int).
 These archives may have been created on either 16 or 32-bit machines, and
 contain headers made up of six fields.
 The fields are the object name (14 characters), the file last modification
-time (type long), the user and group id's (each type char), the file mode
+time (type long), the user and group IDs (each type char), the file mode
 (type int) and the file size (type long).
 Files were padded to an even number of bytes.
 For more information on converting from this format see

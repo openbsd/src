@@ -1,10 +1,10 @@
-.\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
+.\" $OpenBSD: at.1,v 1.7 1998/09/23 04:32:34 aaron Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
-.Dt "AT" 1
+.Dt AT 1
 .Os
 .Sh NAME
-.Nm at, batch, atq, atrm
+.Nm at, atq, atrm, batch
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
@@ -13,21 +13,17 @@
 .Op Fl f Ar file
 .Op Fl mldbv
 .Ar time
-.Pp
 .Nm at
 .Op Fl V
 .Fl c Ar job Op Ar job ...
-.Pp
 .Nm atq
 .Op Fl V
 .Op Fl q Ar queue
 .Op Fl v
-.Pp
 .Nm atrm
 .Op Fl V
 .Ar job
 .Op Ar job ...
-.Pp
 .Nm batch
 .Op Fl V
 .Op Fl q Ar queue
@@ -35,7 +31,7 @@
 .Op Fl mv
 .Op Ar time
 .Sh DESCRIPTION
-.Nm At
+.Nm at
 and
 .Nm batch
 read commands from standard input or a specified file which
@@ -46,7 +42,7 @@ are to be executed at a later time, using
 Executes commands at a specified time.
 .It Nm atq
 Lists the user's pending jobs, unless the user is the superuser.
-In that case, everybody's jobs are listed.
+In that case, all users' jobs are listed.
 .It Nm atrm
 Deletes jobs.
 .It Nm batch
@@ -55,7 +51,7 @@ the load average drops below 1.5, or the value specified in the invocation of
 .Nm atrun .
 .El
 .Pp
-.Nm At
+.Nm at
 allows some moderately complex
 .Ar time
 specifications.  It accepts times of the form
@@ -81,8 +77,7 @@ by giving a date in the form
 with an optional
 .Ar year ,
 or giving a date of the form
-.Ar MMDDYY
-or
+.Ar MMDDYY ,
 .Ar MM/DD/YY
 or
 .Ar DD.MM.YY .
@@ -105,10 +100,10 @@ and to run the job tomorrow by suffixing the time with
 .Nm tomorrow.
 .Pp
 For example, to run a job at 4pm three days from now, you would do
-.Nm at 4pm + 3 days ,
-to run a job at 10:00am on July 31, you would do
-.Nm at 10am Jul 31
-and to run a job at 1am tomorrow, you would do
+.Nm at 4pm + 3 days .
+To run a job at 10:00am on July 31, you would do
+.Nm at 10am Jul 31 .
+To run a job at 1am tomorrow, you would do
 .Nm at 1am tomorrow.
 .Pp
 For both
@@ -120,11 +115,11 @@ with the
 .Fl f
 option and executed.
 The working directory, the environment (except for the variables
-.Nm TERM ,
-.Nm TERMCAP ,
-.Nm DISPLAY
+.Ev TERM ,
+.Ev TERMCAP ,
+.Ev DISPLAY ,
 and
-.Nm _ )
+.Ev _ )
 and the
 .Ar umask
 are retained from the time of invocation.
@@ -134,7 +129,7 @@ or
 .Nm batch
 command invoked from a 
 .Xr su 1
-shell will retain the current userid.
+shell will retain the current user ID.
 The user will be mailed standard error and standard output from his
 commands, if any. Mail will be sent using the command
 .Xr sendmail 8 .
@@ -159,7 +154,7 @@ If
 .Pa /var/at/at.allow
 does not exist,
 .Pa /var/at/at.deny
-is checked, every username not mentioned in it is then allowed
+is checked. Every username not mentioned in it is then allowed
 to use
 .Nm at .
 .Pp
@@ -200,7 +195,7 @@ If
 .Nm atq
 is given a specific queue, it will only show jobs pending in that queue.
 .It Fl m
-Send mail to the user when the job has completed even if there was no
+Send mail to the user when the job has completed, even if there was no
 output.
 .It Fl f Ar file
 Reads the job from
@@ -208,55 +203,54 @@ Reads the job from
 rather than standard input.
 .It Fl l
 Is an alias for
-.Nm atq.
+.Nm atq .
 .It Fl d
 Is an alias for
-.Nm atrm.
+.Nm atrm .
 .It Fl b
 Is an alias for
-.Nm batch.
+.Nm batch .
 .It Fl v
 For
 .Nm atq ,
 shows completed but not yet deleted jobs in the queue.  Otherwise
 shows the time the job will be executed.
 .It Fl c
-Cats the jobs listed on the command line to standard output.
+Prints the jobs listed on the command line to standard output.
 .Sh FILES
 .Bl -tag -width /var/at/.lockfile -compact
 .It Pa /var/at/jobs
-Directory containing job files
+directory containing job files
 .It Pa /var/at/spool
-Directory containing output spool files
+directory containing output spool files
 .It Pa /var/run/utmp
-Login records
+login records
 .It Pa /var/at/at.allow
-Allow permission control
+allow permission control
 .It Pa /var/at/at.deny
-Deny permission control
+deny permission control
 .It Pa /var/at/.lockfile
-Job-creation lock file.
+job-creation lock file
 .Sh SEE ALSO
-.Xr cron 8 ,
 .Xr nice 1 ,
-.Xr umask 2 ,
 .Xr sh 1 ,
-.Xr sendmail 8 ,
-.Xr atrun 8 .
+.Xr umask 2 ,
+.Xr atrun 8 ,
+.Xr cron 8 ,
+.Xr sendmail 8
 .El
 .Sh BUGS
-.Pp
 If the file
 .Pa /var/run/utmp
 is not available or corrupted, or if the user is not logged on at the
 time 
 .Nm at
-is invoked, the mail is sent to the userid found
+is invoked, the mail is sent to the user ID found
 in the environment variable
-.Nm LOGNAME .
-If that is undefined or empty, the current userid is assumed.
+.Ev LOGNAME .
+If that is undefined or empty, the current user ID is assumed.
 .Pp
-.Nm At
+.Nm at
 and
 .Nm batch
 as presently implemented are not suitable when users are competing for
@@ -265,5 +259,6 @@ If this is the case for your site, you might want to consider another
 batch system, such as
 .Nm nqs .
 .Sh AUTHORS
-At was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
+.Nm at
+was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
 The time parsing routines are by David Parsons <orc@pell.chi.il.us>.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2ecoff.1,v 1.1 1996/10/02 21:52:32 pefo Exp $
+.\"	$OpenBSD: elf2ecoff.1,v 1.2 1998/09/23 04:32:39 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\" 
@@ -44,16 +44,16 @@
 .Oc
 .Sh DESCRIPTION
 .Nm elf2ecoff
-reads and convert the file specified as
+reads and converts the file specified as
 .Ar elfexec
 to ecoff format, into file
-.Ar ecoffexec
-, suitable for bootstrapping certain
+.Ar ecoffexec ,
+suitable for bootstrapping certain
 .Nm MIPS
-systems. Systems requiering this
-conversion is the
+systems. Systems requiring this
+conversion are the
 .Nm arc
 and
-.Nm pmax.
+.Nm pmax .
 .Sh DIAGNOSTICS
 If the conversion fails a diagnostic message is printed to explain the cause.

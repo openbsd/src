@@ -1,4 +1,4 @@
-.\"	$OpenBSD: basename.1,v 1.4 1998/07/04 08:52:32 deraadt Exp $
+.\"	$OpenBSD: basename.1,v 1.5 1998/09/23 04:32:35 aaron Exp $
 .\"	$NetBSD: basename.1,v 1.9 1995/03/25 18:17:45 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -48,9 +48,9 @@
 .Ar string
 .Op Ar suffix
 .Sh DESCRIPTION
-.Nm Basename
+.Nm basename
 deletes any prefix ending with the last slash
-.Ql \&/
+.Pq Sq \&/
 character present in
 .Ar string ,
 and a
@@ -71,10 +71,10 @@ to
 The
 .Nm basename
 utility
-exit 0 on success, and >0 if an error occurs.
+exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
-.Xr dirname 1 ,
 .Xr csh 1 ,
+.Xr dirname 1 ,
 .Xr sh 1
 .Sh STANDARDS
 The

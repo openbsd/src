@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dirname.1,v 1.1 1998/07/04 08:53:03 deraadt Exp $
+.\"	$OpenBSD: dirname.1,v 1.2 1998/09/23 04:32:35 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,10 +46,10 @@
 .Nm dirname
 .Ar string
 .Sh DESCRIPTION
-.Nm Dirname
+.Nm dirname
 deletes the filename portion, beginning
 with the last slash
-.Ql \&/
+.Pq Sq \&/
 character to the end of
 .Ar string , 
 and writes the result to the standard output.
@@ -57,7 +57,7 @@ and writes the result to the standard output.
 The following line sets the shell variable
 .Ev FOO
 to
-.Pa /usr/bin .
+.Pa /usr/bin :
 .Pp
 .Dl FOO=`dirname /usr/bin/trail`
 .Pp
@@ -65,7 +65,7 @@ to
 The
 .Nm dirname
 utility
-exit 0 on success, and >0 if an error occurs.
+exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr basename 1 ,
 .Xr csh 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.5 1997/08/19 06:33:37 denny Exp $
+.\"	$OpenBSD: compress.1,v 1.6 1998/09/23 04:32:38 aaron Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -60,7 +60,7 @@
 .\".Nm zcat
 .\".Op Ar
 .Sh DESCRIPTION
-.Nm Compress
+.Nm compress
 reduces the size of the named files using adaptive Lempel-Ziv coding.
 Each
 .Ar file
@@ -73,7 +73,7 @@ If compression would not reduce the size of a
 .Ar file ,
 the file is ignored.
 .Pp
-.Nm Uncompress
+.Nm uncompress
 restores the compressed files to their original form, renaming the
 files by deleting the
 .Dq .Z
@@ -97,7 +97,7 @@ not removed, and the attributes of the input file are not retained.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b
+.It Fl b Ar bits
 Specify the
 .Ar bits
 code limit (see below).
@@ -112,20 +112,20 @@ Force compression of
 even if it is not actually reduced in size.
 Additionally, files are overwritten without prompting for confirmation.
 .It Fl g
-Use deflate scheme wich reported to provide better compression rates.
+Use deflate scheme which reportedly provides better compression rates.
 .It Fl O
 Use old compression method (default is based on the program name).
-.It Fl o
+.It Fl o Ar filename
 Set the output file name.
 .It Fl t
-Test the entefrity of each file leaving any files intact.
+Test the integrity of each file leaving any files intact.
 .It Fl q
-Be quite, suppress any messages.
+Be quiet, suppress any messages.
 .It Fl v
 Print the percentage reduction of each file.
 .El
 .Pp
-.Nm Compress
+.Nm compress
 uses a modified Lempel-Ziv algorithm.
 Common substrings in the file are first replaced by 9-bit codes 257 and up.
 When code 512 is reached, the algorithm switches to 10-bit codes and
@@ -133,7 +133,7 @@ continues to use more bits until the
 limit specified by the
 .Fl b
 flag is reached (the default is 16).
-.Ar Bits
+.Ar bits
 must be between 9 and 16.
 .Pp
 After the
@@ -173,9 +173,11 @@ time to compute.
 .Pp
 The
 .Nm compress
-utility exits 0 on success, 1 if an error occurs, and 2 if one or
+utility exits 0 on success, 1 if an error occurred, or 2 if one or
 more files were not compressed because they would have grown in
-size (and -f was not specifed).
+size (and
+.Fl f
+was not specifed).
 .Sh SEE ALSO
 .Rs
 .%A Welch, Terry A.
@@ -196,5 +198,5 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
-The deflate compression support added in
+The deflate compression support was added in
 .Ox 2.1 .

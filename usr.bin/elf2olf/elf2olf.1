@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2olf.1,v 1.4 1998/03/10 04:51:00 millert Exp $
+.\"	$OpenBSD: elf2olf.1,v 1.5 1998/09/23 04:32:39 aaron Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Erik Theisen.
 .\"	All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"     @(#)$Id: elf2olf.1,v 1.4 1998/03/10 04:51:00 millert Exp $
+.\"     @(#)$Id: elf2olf.1,v 1.5 1998/09/23 04:32:39 aaron Exp $
 .\"
 .Dd May 5, 1997
 .Dt ELF2OLF 1
@@ -38,10 +38,10 @@
 .Nm elf2olf
 .Op Fl v
 .Op Fl o Ar opsys
-.Ar module ...
+.Ar module Op Ar ...
 .Nm olf2elf
 .Op Fl v
-.Ar file ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm elf2olf
@@ -86,7 +86,7 @@ The
 .Nm elf2olf
 and
 .Nm olf2elf
-utilities exit 0 on success, and >0 if an error occurs.
+utilities exit 0 on success or >0 if an error occurred.
 .Sh BUGS
 The 
 .Em ELF
@@ -109,5 +109,5 @@ The
 .Nm elf2olf
 and
 .Nm olf2elf
-utility first appeared in
+utilities first appeared in
 .Ox 2.1 .
