@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.53 1999/04/10 04:38:30 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.54 1999/07/19 00:57:46 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -607,6 +607,9 @@ echo "1,s@^root::@root:${_encr}:@
 w
 q" | ed /mnt/etc/master.passwd 2> /dev/null
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
+
+dd if=/mnt/dev/urandom of=/mnt/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
+chmod 600 /mnt/var/db/host.random >/dev/null 2>&1
 
 unmount_fs /tmp/fstab.shadow
 
