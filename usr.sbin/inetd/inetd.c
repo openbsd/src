@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.29 1997/06/17 05:41:19 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.30 1997/06/23 09:35:04 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.29 1997/06/17 05:41:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.30 1997/06/23 09:35:04 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -625,7 +625,7 @@ config(sig)
 	int sig;
 {
 	register struct servtab *sep, *cp, **sepp;
-	long omask;
+	int omask;
 	int n;
 
 	if (!setconfig()) {
@@ -988,7 +988,7 @@ enter(cp)
 	struct servtab *cp;
 {
 	register struct servtab *sep;
-	long omask;
+	int omask;
 
 	sep = (struct servtab *)malloc(sizeof (*sep));
 	if (sep == (struct servtab *)0) {
