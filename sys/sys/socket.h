@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.22 1999/02/15 19:04:15 millert Exp $	*/
+/*	$OpenBSD: socket.h,v 1.23 1999/02/15 19:15:38 millert Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -287,13 +287,13 @@ struct sockcred {
  * Used value-result for recvmsg, value only for sendmsg.
  */
 struct msghdr {
-	caddr_t	msg_name;		/* optional address */
-	u_int	msg_namelen;		/* size of address */
-	struct	iovec *msg_iov;		/* scatter/gather array */
-	u_int	msg_iovlen;		/* # elements in msg_iov */
-	caddr_t	msg_control;		/* ancillary data, see below */
-	u_int	msg_controllen;		/* ancillary data buffer len */
-	int	msg_flags;		/* flags on received message */
+	caddr_t		msg_name;	/* optional address */
+	msg_namelen	msg_namelen;	/* size of address */
+	struct		iovec *msg_iov;	/* scatter/gather array */
+	u_int		msg_iovlen;	/* # elements in msg_iov */
+	caddr_t		msg_control;	/* ancillary data, see below */
+	msg_namelen	msg_controllen;	/* ancillary data buffer len */
+	int		msg_flags;	/* flags on received message */
 };
 
 #define	MSG_OOB		0x1		/* process out-of-band data */
@@ -314,9 +314,9 @@ struct msghdr {
  * of message elements headed by cmsghdr structures.
  */
 struct cmsghdr {
-	u_int	cmsg_len;		/* data byte count, including hdr */
-	int	cmsg_level;		/* originating protocol */
-	int	cmsg_type;		/* protocol-specific type */
+	socklen_t	cmsg_len;	/* data byte count, including hdr */
+	int		cmsg_level;	/* originating protocol */
+	int		cmsg_type;	/* protocol-specific type */
 /* followed by	u_char  cmsg_data[]; */
 };
 
