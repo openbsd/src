@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.65 2002/11/21 12:09:20 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.66 2003/05/12 21:43:22 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -535,8 +535,12 @@ report_proto (FILE *fd, struct proto *proto)
 	  fprintf (fd, "3DES\n");
 	  break;
 
-	case IPSEC_ESP_AES:
-	  fprintf (fd, "Rijndael-128/AES\n");
+	case IPSEC_ESP_AES_128_CBC:
+	  fprintf (fd, "AES-128 (CBC)\n");
+	  break;
+
+	case IPSEC_ESP_AES_128_CTR:
+	  fprintf (fd, "AES-128 (CTR)\n");
 	  break;
 
 	case IPSEC_ESP_CAST:
