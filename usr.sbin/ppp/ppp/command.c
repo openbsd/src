@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.48 2000/08/16 09:07:27 brian Exp $
+ * $OpenBSD: command.c,v 1.49 2000/08/18 00:02:02 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -2622,6 +2622,16 @@ static int
 RunListCommand(struct cmdargs const *arg)
 {
   const char *cmd = arg->argc ? arg->argv[arg->argc - 1] : "???";
+
+#ifndef NONAT
+  if (arg->cmd->args == NatCommands &&
+      tolower(*arg->argv[arg->argn - 1]) == 'a') {
+    if (arg->prompt)
+      prompt_Printf(arg->prompt, "The alias command is depricated\n");
+    else
+      log_Printf(LogWARN, "The alias command is depricated\n");
+  }
+#endif
 
   if (arg->argc > arg->argn)
     FindExec(arg->bundle, arg->cmd->args, arg->argc, arg->argn, arg->argv,
