@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.73 2001/07/01 05:16:03 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.74 2001/07/01 18:27:37 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1997,8 +1997,9 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
 
     case IPSEC_ID_IPV4_ADDR: /* XXX CONNECTION ? */
       if (inet_ntop (AF_INET, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
-		     addrbuf, ADDRESS_MAX) != NULL)
-	*reslen = strlen (addrbuf) + 4;
+		     addrbuf, ADDRESS_MAX) == NULL)
+	return 0;
+      *reslen = strlen (addrbuf) + 3;
       strcat (addrbuf, "/32");
       res = strdup (addrbuf);
       if (!res)
@@ -2008,8 +2009,9 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
 
     case IPSEC_ID_IPV6_ADDR: /* XXX CONNECTION ? */
       if (inet_ntop (AF_INET6, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
-		     addrbuf, ADDRESS_MAX) != NULL)
-	*reslen = strlen (addrbuf) + 5;
+		     addrbuf, ADDRESS_MAX) == NULL)
+	return 0;
+      *reslen = strlen (addrbuf) + 4;
       strcat (addrbuf, "/128");
       res = strdup (addrbuf);
       if (!res)
@@ -2019,11 +2021,12 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
 
     case IPSEC_ID_IPV4_ADDR_SUBNET: /* XXX PREFIX */
       addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
-      if (inet_ntop (AF_INET, addr, addrbuf, ADDRESS_MAX) != NULL)
-	*reslen = strlen (addrbuf) + 4;
+      if (inet_ntop (AF_INET, addr, addrbuf, ADDRESS_MAX) == NULL)
+	return 0;
       sprintf (addrbuf + strlen (addrbuf), "/%d", 
 	       pf_key_v2_mask_to_bits ((u_int32_t)*(addr + 
 						    sizeof (struct in_addr))));
+      *reslen = strlen(addrbuf);
       res = strdup (addrbuf);
       if (!res)
 	return 0;
@@ -2032,10 +2035,11 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
 
     case IPSEC_ID_IPV6_ADDR_SUBNET: /* XXX PREFIX */
       addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
-      if (inet_ntop (AF_INET6, addr, addrbuf, ADDRESS_MAX) != NULL)
-	*reslen = strlen (addrbuf) + 5;
+      if (inet_ntop (AF_INET6, addr, addrbuf, ADDRESS_MAX) == NULL)
+	return 0;
       sprintf (addrbuf + strlen (addrbuf), "/%d", 
 	       pf_key_v2_mask6_to_bits (addr + sizeof (struct in6_addr)));
+      *reslen = strlen (addrbuf);
       res = strdup (addrbuf);
       if (!res)
 	return 0;
