@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.h,v 1.3 1997/12/10 01:51:24 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.h,v 1.4 1997/12/14 20:51:16 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.h,v 1.3 1995/05/28 10:16:34 mycroft Exp $	*/
 
 /*
@@ -90,8 +90,9 @@
  * Options vor [gs]etsockopt(2), IP level.
  */
 
-#define LINUX_IP_TOS		1
-#define LINUX_IP_TTL		2
+#define	LINUX_IP_TOS		1
+#define	LINUX_IP_TTL		2
+#define	LINUX_IP_HDRINCL	3
 #define	LINUX_IP_MULTICAST_IF	32
 #define	LINUX_IP_MULTICAST_TTL	33
 #define	LINUX_IP_MULTICAST_LOOP	34

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.8 1997/12/10 12:44:38 provos Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.9 1997/12/14 20:51:16 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -571,6 +571,8 @@ linux_to_bsd_ip_sockopt(lopt)
 		return IP_ADD_MEMBERSHIP;
 	case LINUX_IP_DROP_MEMBERSHIP:
 		return IP_DROP_MEMBERSHIP;
+	case LINUX_IP_HDRINCL:
+		return IP_HDRINCL;
 	default:
 		return -1;
 	}
