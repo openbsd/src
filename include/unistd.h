@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.39 2002/06/07 03:11:31 miod Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.40 2002/08/30 08:24:55 espie Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -66,9 +66,12 @@ size_t	 confstr(int, char *, size_t);
 char	*cuserid(char *);
 int	 dup(int);
 int	 dup2(int, int);
-int	 execl(const char *, const char *, ...);
-int	 execle(const char *, const char *, ...);
-int	 execlp(const char *, const char *, ...);
+int	 execl(const char *, const char *, ...) 
+	    __attribute__((sentinel));
+int	 execle(const char *, const char *, ...) 
+	    __attribute__((sentinel));
+int	 execlp(const char *, const char *, ...) 
+	    __attribute__((sentinel));
 int	 execv(const char *, char * const *);
 int	 execve(const char *, char * const *, char * const *);
 int	 execvp(const char *, char * const *);
