@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.25 2002/03/31 19:12:32 stevesk Exp $
+.\"	$OpenBSD: traceroute.8,v 1.26 2002/08/11 01:34:31 stevesk Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -108,9 +108,9 @@ This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
 Set the max time-to-live (max number of hops) used in outgoing probe
 packets.
-The default is 64 hops (the same default used for
-.Tn TCP
-connections).
+The default is the value of the system's
+.Cm net.inet.ip.ttl
+MIB variable, which defaults to 64.
 .It Fl n
 Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each gateway found on the
