@@ -1,38 +1,56 @@
-OpenBSD/mac68k 2.0 runs on several of the older Macintosh computers.
-4MB of RAM should be sufficient to boot and the system can probably
-be squeezed onto a 40MB hard disk by leaving off a package or two.
+OpenBSD/mac68k 2.1 runs on several of the older Macintosh computers.
+6MB of RAM should be sufficient to boot and the system can probably
+be squeezed onto a 60MB hard disk by leaving off a package or two.
 To actually do much compiling or anything more interesting than
 booting, at least 8MB of RAM and more disk space is recommended.
-About 50MB will be necessary to install all of the OpenBSD 2.0 binary
+About 80MB will be necessary to install all of the OpenBSD 2.1 binary
 distribution (note that this does not count swap space!).  Much more
 disk space is required to install the source and objects as well (about
 another 105MB).
 
-Supported models:
+OpenBSD/mac68k 2.1 now runs on most 680x0 Macintoshes.  Specifically, it
+should work on:
+	68020 with 68851 PMMU and 68881 FPU
+	68030 with 68882 FPU (most Macs have this)
+	68040 (not including the 68LC040)
+
+The following Macintosh models are "fully" supported.  This means that at
+least the SCSI controller, ADB (keyboard and mouse), and some sort of
+display will function on these models.  On some of these machines, a PMMU
+and/or FPU are required if they are not provided by default with the
+machine.
 	Mac II, Mac IIx, Mac IIcx, Mac IIci, Mac SE/30,
-	Mac IIsi, Mac IIvx, Mac IIvi, Performa 600
+	Mac IIsi, Mac IIvx, Mac IIvi, Performa 600, Centris 650,
+	Color Classic, Classic II, LC520, LC550, Mac LCIII, Performa 4xx, 
+	LCII, LCIII, MacTV, Quadra 610, Quadra 650, Quadra 840, Quadra
+	840AV, Quadra 800, Quadra 700, Duo Series,
+	Powerbook 180 and 180c, PB140, PB145, PB145B, PB160, PB170, PB165,
+	PB165c
+
 
 Supported devices on all of the above systems include:
 	Internal SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 	Internal sound--enough to beep on some machines, anyway
-	Most basic NuBUS video cards (there have been some
+	Most NuBus video cards (there have been some
 		problems with some 24-bit color cards)
 	Both internal serial ports
 	ADB keyboards and mice
 	Ethernet cards based on the Natl. Semiconductor 8390
-		(Asante, Apple, and a few others)  [problems
-		reported on the Performa 600, though].
+		(Asante, Apple, and a few others)
+	Some ethernet cards based on the SONIC chip including internal
+		Ethernet on many of Apple's Quadras.
 	
 Some systems will boot and are usable from an external terminal
 (serial tty or SL/IP):
-	LC III
-	Performa 550
+	LC475, Performa 475, Quadra 605
 	possibly others
 
 What isn't supported, but often asked about:
-	68040-based Macs.  Work is in progress on getting a Quadra 700
-		running.  This requires a new scsi driver and a new
-		ethernet driver.
 	PowerPC-based Macs.  Work will begin on this, sometime soon.
 		It will be separate from this port, though.  The PowerPC
 		is a much different processor.
+	Machines based on Apple's IOP technology including the Mac IIfx.
+	Machines based on the 68LC040 processor.  Unfortunately, the chip
+		itself contains a major bug which is presently being worked
+		on.  However, machiens such as the Centris 605 don't work
+		right now.
