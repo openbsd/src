@@ -1,5 +1,5 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.9 1996/05/14 22:41:32 deraadt Exp $	*/
-/*	$NetBSD: nfs_vfsops.c,v 1.46 1996/03/24 23:58:10 fvdl Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.10 1996/05/28 13:44:08 deraadt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -591,6 +591,12 @@ nfs_mount(mp, path, data, ndp, p)
 
 		if (nmp == NULL)
 			return (EIO);
+		/*
+		 * When doing an update, we can't change from or to
+		 * v3 and/or nqnfs.
+		 */
+		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_NQNFS)) |
+		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_NQNFS));
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
@@ -711,7 +717,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
-	VOP_GETATTR(*vpp, &attrs, curproc->p_ucred, curproc);
+	VOP_GETATTR(*vpp, &attrs, curproc->p_ucred, curproc);	/* XXX */
 
 	return (0);
 bad:
@@ -807,6 +813,7 @@ nfs_root(mp, vpp)
 	struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
+	struct vattr attrs;
 
 	nmp = VFSTONFS(mp);
 	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);

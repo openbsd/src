@@ -1,5 +1,5 @@
-/*	$OpenBSD: nfs_bio.c,v 1.6 1996/04/21 22:30:18 deraadt Exp $	*/
-/*	$NetBSD: nfs_bio.c,v 1.25 1996/02/29 20:26:16 fvdl Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.7 1996/05/28 13:44:07 deraadt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.25.4.1 1996/05/25 22:40:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -175,7 +175,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 		}
 	    }
 	    /*
-	     * Don't cache magic amd symlinks.
+	     * Don't cache symlinks.
 	     */
 	    if (np->n_flag & NQNFSNONCACHE
 		|| ((vp->v_flag & VROOT) && vp->v_type == VLNK)) {
