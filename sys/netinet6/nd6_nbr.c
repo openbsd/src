@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.31 2003/06/24 07:55:12 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.32 2003/06/27 22:47:32 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -652,12 +652,13 @@ nd6_na_input(m, off, icmp6len)
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-			if (ln->ln_expire)
-				ln->ln_expire = time.tv_sec +
-				    ND_IFINFO(rt->rt_ifp)->reachable;
+			if (!ND6_LLINFO_PERMANENT(ln)) {
+				nd6_llinfo_settimer(ln,
+				    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
+			}
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
-			ln->ln_expire = time.tv_sec + nd6_gctimer;
+			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 		}
 		if ((ln->ln_router = is_router) != 0) {
 			/*
@@ -711,7 +712,7 @@ nd6_na_input(m, off, icmp6len)
 			 */
 			if (ln->ln_state == ND6_LLINFO_REACHABLE) {
 				ln->ln_state = ND6_LLINFO_STALE;
-				ln->ln_expire = time.tv_sec + nd6_gctimer;
+				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			}
 			goto freeit;
 		} else if (is_override				   /* (2a) */
@@ -733,14 +734,15 @@ nd6_na_input(m, off, icmp6len)
 			if (is_solicited) {
 				ln->ln_state = ND6_LLINFO_REACHABLE;
 				ln->ln_byhint = 0;
-				if (ln->ln_expire) {
-					ln->ln_expire = time.tv_sec +
-					    ND_IFINFO(ifp)->reachable;
+				if (!ND6_LLINFO_PERMANENT(ln)) {
+					nd6_llinfo_settimer(ln,
+					    (long)ND_IFINFO(ifp)->reachable * hz);
 				}
 			} else {
 				if (lladdr && llchange) {
 					ln->ln_state = ND6_LLINFO_STALE;
-					ln->ln_expire = time.tv_sec + nd6_gctimer;
+					nd6_llinfo_settimer(ln,
+					    (long)nd6_gctimer * hz);
 				}
 			}
 		}
@@ -1115,7 +1117,7 @@ nd6_dad_start(ifa, tick)
 	if (tick == NULL) {
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp,
-		    ND6_RETRANS_SEC(ND_IFINFO(ifa->ifa_ifp)->retrans) * hz);
+		    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
 	} else {
 		int ntick;
 
@@ -1207,7 +1209,7 @@ nd6_dad_timer(ifa)
 		 */
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp,
-		    ND6_RETRANS_SEC(ND_IFINFO(ifa->ifa_ifp)->retrans) * hz);
+		    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.

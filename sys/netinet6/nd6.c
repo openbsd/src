@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.64 2003/06/24 07:55:12 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.65 2003/06/27 22:47:32 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ static struct sockaddr_in6 all1_sa;
 static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
 static struct llinfo_nd6 *nd6_free(struct rtentry *, int);
+static void nd6_llinfo_timer(void *);
 
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_timer_ch;
@@ -365,6 +366,144 @@ skip1:
 }
 
 /*
+ * ND6 timer routine to handle ND6 entries
+ */
+void
+nd6_llinfo_settimer(struct llinfo_nd6 *ln, long tick)
+{
+	int s;
+
+	s = splsoftnet();
+
+	if (tick < 0) {
+		ln->ln_expire = 0;
+		ln->ln_ntick = 0;
+		timeout_del(&ln->ln_timer_ch);
+	} else {
+		ln->ln_expire = time.tv_sec + tick / hz;
+		if (tick > INT_MAX) {
+			ln->ln_ntick = tick - INT_MAX;
+			timeout_add(&ln->ln_timer_ch, INT_MAX);
+		} else {
+			ln->ln_ntick = 0;
+			timeout_add(&ln->ln_timer_ch, tick);
+		}
+	}
+
+	splx(s);
+}
+
+static void
+nd6_llinfo_timer(void *arg)
+{
+	int s;
+	struct llinfo_nd6 *ln;
+	struct rtentry *rt;
+	struct sockaddr_in6 *dst;
+	struct ifnet *ifp;
+	struct nd_ifinfo *ndi = NULL;
+
+	s = splsoftnet();
+
+	ln = (struct llinfo_nd6 *)arg;
+
+	if (ln->ln_ntick > 0) {
+		if (ln->ln_ntick > INT_MAX) {
+			ln->ln_ntick -= INT_MAX;
+			nd6_llinfo_settimer(ln, INT_MAX);
+		} else {
+			ln->ln_ntick = 0;
+			nd6_llinfo_settimer(ln, ln->ln_ntick);
+		}
+		splx(s);
+		return;
+	}
+
+	if ((rt = ln->ln_rt) == NULL)
+		panic("ln->ln_rt == NULL");
+	if ((ifp = rt->rt_ifp) == NULL)
+		panic("ln->ln_rt->rt_ifp == NULL");
+	ndi = ND_IFINFO(ifp);
+	dst = (struct sockaddr_in6 *)rt_key(rt);
+
+	/* sanity check */
+	if (rt->rt_llinfo && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
+		panic("rt_llinfo(%p) is not equal to ln(%p)",
+		      rt->rt_llinfo, ln);
+	if (!dst)
+		panic("dst=0 in nd6_timer(ln=%p)", ln);
+
+	switch (ln->ln_state) {
+	case ND6_LLINFO_INCOMPLETE:
+		if (ln->ln_asked < nd6_mmaxtries) {
+			ln->ln_asked++;
+			nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
+			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
+		} else {
+			struct mbuf *m = ln->ln_hold;
+			if (m) {
+				ln->ln_hold = NULL;
+				/*
+				 * Fake rcvif to make the ICMP error
+				 * more helpful in diagnosing for the
+				 * receiver.
+				 * XXX: should we consider
+				 * older rcvif?
+				 */
+				m->m_pkthdr.rcvif = rt->rt_ifp;
+
+				icmp6_error(m, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_ADDR, 0);
+			}
+			(void)nd6_free(rt, 0);
+			ln = NULL;
+		}
+		break;
+	case ND6_LLINFO_REACHABLE:
+		if (!ND6_LLINFO_PERMANENT(ln)) {
+			ln->ln_state = ND6_LLINFO_STALE;
+			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+		}
+		break;
+
+	case ND6_LLINFO_STALE:
+		/* Garbage Collection(RFC 2461 5.3) */
+		if (!ND6_LLINFO_PERMANENT(ln)) {
+			(void)nd6_free(rt, 1);
+			ln = NULL;
+		}
+		break;
+
+	case ND6_LLINFO_DELAY:
+		if (ndi && (ndi->flags & ND6_IFF_PERFORMNUD) != 0) {
+			/* We need NUD */
+			ln->ln_asked = 1;
+			ln->ln_state = ND6_LLINFO_PROBE;
+			nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
+			nd6_ns_output(ifp, &dst->sin6_addr,
+			    &dst->sin6_addr, ln, 0);
+		} else {
+			ln->ln_state = ND6_LLINFO_STALE; /* XXX */
+			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+		}
+		break;
+	case ND6_LLINFO_PROBE:
+		if (ln->ln_asked < nd6_umaxtries) {
+			ln->ln_asked++;
+			nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
+			nd6_ns_output(ifp, &dst->sin6_addr,
+			    &dst->sin6_addr, ln, 0);
+		} else {
+			(void)nd6_free(rt, 0);
+			ln = NULL;
+		}
+		break;
+	}
+
+	splx(s);
+}
+
+/*
  * ND6 timer routine to expire default route list and prefix list
  */
 void
@@ -372,118 +511,14 @@ nd6_timer(ignored_arg)
 	void	*ignored_arg;
 {
 	int s;
-	struct llinfo_nd6 *ln;
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
-	struct ifnet *ifp;
 	struct in6_ifaddr *ia6, *nia6;
 	struct in6_addrlifetime *lt6;
 
 	s = splsoftnet();
 	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
 	timeout_add(&nd6_timer_ch, nd6_prune * hz);
-
-	ln = llinfo_nd6.ln_next;
-	while (ln && ln != &llinfo_nd6) {
-		struct rtentry *rt;
-		struct sockaddr_in6 *dst;
-		struct llinfo_nd6 *next = ln->ln_next;
-		/* XXX: used for the DELAY case only: */
-		struct nd_ifinfo *ndi = NULL;
-
-		if ((rt = ln->ln_rt) == NULL) {
-			ln = next;
-			continue;
-		}
-		if ((ifp = rt->rt_ifp) == NULL) {
-			ln = next;
-			continue;
-		}
-		ndi = ND_IFINFO(ifp);
-		dst = (struct sockaddr_in6 *)rt_key(rt);
-
-		if (ln->ln_expire > time.tv_sec) {
-			ln = next;
-			continue;
-		}
-
-		/* sanity check */
-		if (!rt)
-			panic("rt=0 in nd6_timer(ln=%p)", ln);
-		if (rt->rt_llinfo && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
-			panic("rt_llinfo(%p) is not equal to ln(%p)",
-			      rt->rt_llinfo, ln);
-		if (!dst)
-			panic("dst=0 in nd6_timer(ln=%p)", ln);
-
-		switch (ln->ln_state) {
-		case ND6_LLINFO_INCOMPLETE:
-			if (ln->ln_asked < nd6_mmaxtries) {
-				ln->ln_asked++;
-				ln->ln_expire = time.tv_sec +
-				    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
-				nd6_ns_output(ifp, NULL, &dst->sin6_addr,
-				    ln, 0);
-			} else {
-				struct mbuf *m = ln->ln_hold;
-				if (m) {
-					ln->ln_hold = NULL;
-					/*
-					 * Fake rcvif to make the ICMP error
-					 * more helpful in diagnosing for the
-					 * receiver.
-					 * XXX: should we consider
-					 * older rcvif?
-					 */
-					m->m_pkthdr.rcvif = rt->rt_ifp;
-
-					icmp6_error(m, ICMP6_DST_UNREACH,
-						    ICMP6_DST_UNREACH_ADDR, 0);
-				}
-				next = nd6_free(rt, 0);
-			}
-			break;
-		case ND6_LLINFO_REACHABLE:
-			if (ln->ln_expire) {
-				ln->ln_state = ND6_LLINFO_STALE;
-				ln->ln_expire = time.tv_sec + nd6_gctimer;
-			}
-			break;
-
-		case ND6_LLINFO_STALE:
-			/* Garbage Collection(RFC 2461 5.3) */
-			if (ln->ln_expire)
-				next = nd6_free(rt, 1);
-			break;
-
-		case ND6_LLINFO_DELAY:
-			if (ndi && (ndi->flags & ND6_IFF_PERFORMNUD) != 0) {
-				/* We need NUD */
-				ln->ln_asked = 1;
-				ln->ln_state = ND6_LLINFO_PROBE;
-				ln->ln_expire = time.tv_sec +
-					ND6_RETRANS_SEC(ndi->retrans);
-				nd6_ns_output(ifp, &dst->sin6_addr,
-				    &dst->sin6_addr, ln, 0);
-			} else {
-				ln->ln_state = ND6_LLINFO_STALE; /* XXX */
-				ln->ln_expire = time.tv_sec + nd6_gctimer;
-			}
-			break;
-		case ND6_LLINFO_PROBE:
-			if (ln->ln_asked < nd6_umaxtries) {
-				ln->ln_asked++;
-				ln->ln_expire = time.tv_sec +
-				    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
-				nd6_ns_output(ifp, &dst->sin6_addr,
-				    &dst->sin6_addr, ln, 0);
-			} else {
-				next = nd6_free(rt, 0);
-			}
-			break;
-		}
-		ln = next;
-	}
 
 	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
@@ -828,7 +863,11 @@ nd6_free(rt, gc)
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			ln->ln_expire = dr->expire;
+			if (dr->expire > time.tv_sec * hz) {
+				nd6_llinfo_settimer(ln,
+				    dr->expire - time.tv_sec * hz);
+			} else
+				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);
 			return (ln->ln_next);
 		}
@@ -940,8 +979,10 @@ nd6_nud_hint(rt, dst6, force)
 	}
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
-	if (ln->ln_expire)
-		ln->ln_expire = time.tv_sec + ND_IFINFO(rt->rt_ifp)->reachable;
+	if (!ND6_LLINFO_PERMANENT(ln)) {
+		nd6_llinfo_settimer(ln,
+		    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
+	}
 }
 
 void
@@ -1015,17 +1056,7 @@ nd6_rtrequest(req, rt, info)
 			SDL(gate)->sdl_type = ifp->if_type;
 			SDL(gate)->sdl_index = ifp->if_index;
 			if (ln)
-				ln->ln_expire = time.tv_sec;
-#if 1
-			if (ln && ln->ln_expire == 0) {
-				/* kludge for desktops */
-#if 0
-				printf("nd6_rtrequest: time.tv_sec is zero; "
-				       "treat it as 1\n");
-#endif
-				ln->ln_expire = 1;
-			}
-#endif
+				nd6_llinfo_settimer(ln, 0);
 			if ((rt->rt_flags & RTF_CLONING) != 0)
 				break;
 		}
@@ -1089,6 +1120,7 @@ nd6_rtrequest(req, rt, info)
 		nd6_allocated++;
 		Bzero(ln, sizeof(*ln));
 		ln->ln_rt = rt;
+		timeout_set(&ln->ln_timer_ch, nd6_llinfo_timer, ln);
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
 		        /*
@@ -1104,7 +1136,7 @@ nd6_rtrequest(req, rt, info)
 			 * initialized in rtrequest(), so rt_expire is 0.
 			 */
 			ln->ln_state = ND6_LLINFO_NOSTATE;
-			ln->ln_expire = time.tv_sec;
+			nd6_llinfo_settimer(ln, 0);
 		}
 		rt->rt_flags |= RTF_LLINFO;
 		ln->ln_next = llinfo_nd6.ln_next;
@@ -1120,7 +1152,7 @@ nd6_rtrequest(req, rt, info)
 		    &SIN6(rt_key(rt))->sin6_addr);
 		if (ifa) {
 			caddr_t macp = nd6_ifptomac(ifp);
-			ln->ln_expire = 0;
+			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 			mine = 1;
@@ -1145,7 +1177,7 @@ nd6_rtrequest(req, rt, info)
 				}
 			}
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
-			ln->ln_expire = 0;
+			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 
@@ -1194,6 +1226,7 @@ nd6_rtrequest(req, rt, info)
 		ln->ln_next->ln_prev = ln->ln_prev;
 		ln->ln_prev->ln_next = ln->ln_next;
 		ln->ln_prev = NULL;
+		nd6_llinfo_settimer(ln, -1);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (ln->ln_hold)
@@ -1545,7 +1578,7 @@ fail:
 			 * we must set the timer now, although it is actually
 			 * meaningless.
 			 */
-			ln->ln_expire = time.tv_sec + nd6_gctimer;
+			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 
 			if (ln->ln_hold) {
 				/*
@@ -1558,7 +1591,7 @@ fail:
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
-			ln->ln_expire = time.tv_sec;
+			nd6_llinfo_settimer((void *)ln, 0);
 		}
 	}
 
@@ -1791,7 +1824,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
 	    ln->ln_state < ND6_LLINFO_REACHABLE) {
 		ln->ln_state = ND6_LLINFO_STALE;
-		ln->ln_expire = time.tv_sec + nd6_gctimer;
+		nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 	}
 
 	/*
@@ -1804,7 +1837,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if (ln->ln_state == ND6_LLINFO_STALE) {
 		ln->ln_asked = 0;
 		ln->ln_state = ND6_LLINFO_DELAY;
-		ln->ln_expire = time.tv_sec + nd6_delay;
+		nd6_llinfo_settimer(ln, nd6_delay * hz);
 	}
 
 	/*
@@ -1828,17 +1861,11 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	/*
 	 * If there has been no NS for the neighbor after entering the
 	 * INCOMPLETE state, send the first solicitation.
-	 * Technically this can be against the rate-limiting rule described in
-	 * Section 7.2.2 of RFC 2461 because the interval to the next scheduled
-	 * solicitation issued in nd6_timer() may be less than the specified
-	 * retransmission time.  This should not be a problem from a practical
-	 * point of view, because we'll typically see an immediate response
-	 * from the neighbor, which suppresses the succeeding solicitations.
 	 */
-	if (ln->ln_expire && ln->ln_asked == 0) {
+	if (!ND6_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
 		ln->ln_asked++;
-		ln->ln_expire = time.tv_sec +
-		    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
+		nd6_llinfo_settimer(ln,
+		    (long)ND_IFINFO(ifp)->retrans * hz / 1000);
 		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 	}
 	return (0);
@@ -1863,7 +1890,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		}
 #endif /* IPSEC */
 		return ((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
-					 rt));
+		    rt));
 	}
 #ifdef IPSEC
 	if (mtag != NULL &&
