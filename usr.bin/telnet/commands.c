@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.29 2000/08/02 04:10:49 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.30 2000/08/13 08:37:07 niklas Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2423,7 +2423,7 @@ tn(argc, argv)
 		freeaddrinfo(ares);
 		continue;
 	    }
-	    if (bind(net, res->ai_addr, res->ai_addrlen) < 0) {
+	    if (bind(net, ares->ai_addr, ares->ai_addrlen) < 0) {
                 perror(aliasp);
                 (void) close(net);   /* dump descriptor */
 		freeaddrinfo(ares);
