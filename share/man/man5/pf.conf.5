@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.220 2003/04/01 12:23:44 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.221 2003/04/01 12:29:28 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2023,7 +2023,7 @@ unary-op       = [ = | != | < | <= | > | >= ]
 binary-op      = number ( <> | >< | : ) number
 op-list        = ( unary-op | binary-op ) [ [ , ] op-list ]
 
-flags          = flags ( flag-set / flag-set | / flag-set )
+flags          = flags [ flag-set ] / flag-set
 flag-set       = [ F ] [ S ] [ R ] [ P ] [ A ] [ U ] [ E ] [ W ]
 
 icmp-type      = icmp-type ( icmp-type-code | { icmp-list } )
