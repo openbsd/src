@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.9 1996/06/10 00:48:59 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.10 1996/06/10 03:39:06 deraadt Exp $	*/
 /*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ extern char *syscallnames[];
 #endif
 
 struct emul emul_elf = {
-	"nativelf",
+	"native",
 	NULL,
 	sendsig,
 	SYS_syscall,
