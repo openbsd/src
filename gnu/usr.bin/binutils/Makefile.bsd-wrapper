@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.48 2002/08/11 22:51:48 art Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.49 2003/02/02 15:20:11 espie Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa sparc64 sparc
 
@@ -42,6 +42,7 @@ all:	config.status
 	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
+	    BSDSRCDIR=${BSDSRCDIR} \
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_X11_MODULES="${ALL_X11_MODULES}" all info
 	cd ${.OBJDIR}/binutils && \
@@ -79,6 +80,7 @@ install: maninstall
 	    INSTALL_MAN= \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
+	    BSDSRCDIR=${BSDSRCDIR} \
 	    INSTALL_MODULES='${INSTALL_MODULES}' install install-info
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
