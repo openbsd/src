@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.44 2001/09/05 22:59:01 art Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.45 2002/04/02 21:56:33 fgsch Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa sparc64
 
@@ -16,7 +16,7 @@ MANDIR=${PREFIX}/share/man/cat
 
 MAN=		binutils/objdump.1
 
-.if (${MACHINE_ARCH} != "unknown") && (${MACHINE_ARCH} != "sparc64")
+.if (${MACHINE_ARCH} != "unknown")
 SUBDIRS+=	gdb mmalloc
 MAN+=		gdb/gdb.1
 ALL_X11_MODULES+=all-gdb
