@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.7 2001/06/27 03:49:52 angelos Exp $	*/
+/*	$OpenBSD: awi.c,v 1.8 2001/06/27 04:09:14 angelos Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -1164,12 +1164,13 @@ awi_fix_rxhdr(sc, m0)
 		/* XXX: we loose to estimate the type of encapsulation */
 		struct mbuf *n, *n0, **np;
 		caddr_t newdata;
-		int off;
+		int off, oldmlen;
 
 		n0 = NULL;
 		np = &n0;
 		off = 0;
-		while (m0->m_pkthdr.len > off) {
+		oldmlen = m0->m_pkthdr.len;
+		while (oldmlen > off) {
 			if (n0 == NULL) {
 				MGETHDR(n, M_DONTWAIT, MT_DATA);
 				if (n == NULL) {
@@ -1187,7 +1188,7 @@ awi_fix_rxhdr(sc, m0)
 				}
 				n->m_len = MLEN;
 			}
-			if (m0->m_pkthdr.len - off >= MINCLSIZE) {
+			if (oldmlen - off >= MINCLSIZE) {
 				MCLGET(n, M_DONTWAIT);
 				if (n->m_flags & M_EXT)
 					n->m_len = n->m_ext.ext_size;
@@ -1200,8 +1201,8 @@ awi_fix_rxhdr(sc, m0)
 				n->m_len -= newdata - n->m_data;
 				n->m_data = newdata;
 			}
-			if (n->m_len > m0->m_pkthdr.len - off)
-				n->m_len = m0->m_pkthdr.len - off;
+			if (n->m_len > oldmlen - off)
+				n->m_len = oldmlen - off;
 			m_copydata(m0, off, n->m_len, mtod(n, caddr_t));
 			off += n->m_len;
 			*np = n;
