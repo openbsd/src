@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.4 1999/09/17 22:14:09 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.5 1999/09/22 01:35:01 kstailey Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
+#include <sys/pipe.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -203,6 +204,12 @@ netbsd_sys___fstat13(p, v, retval)
 	case DTYPE_SOCKET:
 		error = soo_stat((struct socket *)fp->f_data, &sb);
 		break;
+
+#ifndef OLD_PIPE
+	case DTYPE_PIPE:
+		error = pipe_stat((struct pipe *)fp->f_data, &sb);
+		break;
+#endif
 
 	default:
 		panic("fstat");
