@@ -12,6 +12,7 @@ struct keytab keywords[] = {
 	{"cloning", K_CLONING},
 	{"delete", K_DELETE},
 	{"dst", K_DST},
+	{"encap", K_ENCAP},
 	{"expire", K_EXPIRE},
 	{"flush", K_FLUSH},
 	{"gateway", K_GATEWAY},
@@ -51,7 +52,6 @@ struct keytab keywords[] = {
 	{"x25", K_X25},
 	{"xns", K_XNS},
 	{"xresolve", K_XRESOLVE},
-	{"encap", K_ENCAP}, 
 	{0, 0}
 };
 
