@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.15 1999/03/11 01:35:03 pjanzen Exp $
+.\"	$Id: mail.local.8,v 1.16 1999/07/04 19:25:20 aaron Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -148,7 +148,7 @@ to attempt redelivery later.  That means that some users will keep getting
 the same message every time
 .Xr sendmail 8
 runs its queue.
-.br
+.Pp
 If you are running with disk quotas on
 .Pa /var/mail
 it is imperative that you unset the

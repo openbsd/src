@@ -1,4 +1,4 @@
-.\" $OpenBSD: atrun.8,v 1.5 1999/05/16 19:56:07 alex Exp $
+.\" $OpenBSD: atrun.8,v 1.6 1999/07/04 19:25:20 aaron Exp $
 .\" $FreeBSD: atrun.man,v 1.3 1997/02/22 14:20:55 peter Exp $
 .Dd April 12, 1995
 .Dt ATRUN 8
@@ -17,11 +17,10 @@ runs jobs queued by
 Root's
 .Xr crontab 5
 must contain the line:
-.nf
-
+.Bd -literal -offset indent
 */10     *       *       *       *       root    /usr/libexec/atrun
-
-.fi
+.Ed
+.Pp
 so that
 .Xr atrun 8
 gets called every ten minutes.

@@ -44,12 +44,12 @@
 .Op Ar argument ...
 .Oc
 .Sh DESCRIPTION
-.Nm lpc
+.Nm
 is used by the system administrator to control the
 operation of the line printer system.
 For each line printer configured in
 .Pa /etc/printcap ,
-.Nm lpc
+.Nm
 may be used to:
 .Bl -bullet -offset indent
 .It
@@ -64,14 +64,14 @@ spooling queues and printer daemons.
 .El
 .Pp
 Without any arguments,
-.Nm lpc
+.Nm
 will prompt for commands from the standard input.
 If arguments are supplied,
-.Nm lpc
+.Nm
 interprets the first argument as a command and the remaining
 arguments as parameters to the command.  The standard input
 may be redirected causing
-.Nm lpc
+.Nm
 to read commands from file.
 Commands may be abbreviated;
 the following is the list of recognized commands.
@@ -118,8 +118,8 @@ to put new jobs in the spool queue.
 .Pp
 .It Ic exit
 .It Ic quit
-Exit from lpc.
-.ne 1i
+Exit from
+.Nm lpc .
 .Pp
 .It Ic restart  No {\ all\ |\ printer\ }
 Attempt to start a new printer daemon.
