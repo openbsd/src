@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.1 1996/07/27 10:40:01 maja Exp $	*/
+/*	$OpenBSD: md.h,v 1.2 1996/09/30 22:29:32 deraadt Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1995/10/19 13:10:20 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -38,13 +38,13 @@
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
-#ifdef NetBSD
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define PAGSIZ			__LDPGSZ
 #else
 #define PAGSIZ			1024
 #endif
 
-#if defined(NetBSD) || defined(CROSS_LINKER)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(CROSS_LINKER)
 
 #define N_SET_FLAG(ex,f)	(oldmagic || N_GETMAGIC(ex)==QMAGIC ? (0) : \
 					N_SETMAGIC(ex,			\

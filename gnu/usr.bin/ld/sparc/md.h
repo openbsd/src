@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.1.1.1 1995/10/18 08:40:58 deraadt Exp $
+ *	$Id: md.h,v 1.2 1996/09/30 22:29:31 deraadt Exp $
  */
 
 /*
@@ -37,7 +37,7 @@
 
 #define	MAX_ALIGNMENT	(sizeof (double))
 
-#ifdef NetBSD
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define PAGSIZ			__LDPGSZ
 
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), \
@@ -65,7 +65,7 @@
 #undef  relocation_info
 #define relocation_info	                reloc_info_sparc
 #define r_symbolnum			r_index
-#endif /* NetBSD */
+#endif /* __NetBSD__ || __OpenBSD__ */
 
 #define N_BADMID(ex) \
 	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE && \

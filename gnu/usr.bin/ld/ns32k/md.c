@@ -443,7 +443,7 @@ void
 md_swapout_exec_hdr(h)
 struct exec *h;
 {
-	/* NetBSD: Always leave magic alone */
+	/* NetBSD/OpenBSD: Always leave magic alone */
 	int skip = 1;
 #if 0
 	if (N_GETMAGIC(*h) == OMAGIC)

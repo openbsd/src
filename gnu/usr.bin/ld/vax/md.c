@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.c,v 1.1 1996/07/27 10:40:00 maja Exp $	*/
+/*	$OpenBSD: md.c,v 1.2 1996/09/30 22:29:32 deraadt Exp $	*/
 /*	$NetBSD: md.c,v 1.1 1995/10/19 13:10:19 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -245,7 +245,7 @@ md_init_header(hp, magic, flags)
 struct exec	*hp;
 int		magic, flags;
 {
-#ifdef NetBSD
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (oldmagic || magic == QMAGIC)
 		hp->a_midmag = magic;
 	else
@@ -288,7 +288,7 @@ void
 md_swapout_exec_hdr(h)
 struct exec *h;
 {
-	/* NetBSD: Always leave magic alone */
+	/* NetBSD/OpenBSD: Always leave magic alone */
 	int skip = 1;
 #if 0
 	if (N_GETMAGIC(*h) == OMAGIC)
