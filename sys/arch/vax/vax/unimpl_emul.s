@@ -1,4 +1,4 @@
-/*	$OpenBSD: unimpl_emul.s,v 1.3 2001/01/07 04:39:11 bjc Exp $	*/
+/*	$OpenBSD: unimpl_emul.s,v 1.4 2001/03/22 11:24:52 bjc Exp $	*/
 /*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
 
 /*
@@ -58,6 +58,14 @@
 #define	S_PC	60(fp)
 #define	S_PSL	64(fp)
 
+# The condition codes.
+
+#define PSL_C	1
+#define PSL_V	2
+#define PSL_Z	4
+#define PSL_N	8
+#define PSL_Q  15		# all four
+				
 #
 # Emulation of instruction trapped via SCB vector 0x18. (reserved op)
 #
@@ -445,6 +453,9 @@ die:	pushl	r1
 # XXX just EMODD for now
 emodd:	bsbw	touser
 
+	/* Clear the condition codes; we will set them as needed later. */
+	bicl2 $(PSL_C|PSL_V|PSL_Z|PSL_N), S_PSL
+
 	/* 
 	 * We temporarily appropriate ap for the use of TMPFRAC*.
 	 */
@@ -469,8 +480,16 @@ emodd:	bsbw	touser
 	 * easier to work with.  They will be in TMPFRAC1 and 
 	 * TMPFRAC2 when done.
 	 */
-
 	bsbw getval_dfloat 	# get operand into r0 and r1
+
+	/* Check for sign = 0 and exp = 0; if it is, zeroexit. */
+	bicl3 $0x7f, r0, r4
+	cmpl r4, $0x0
+	bneq 1f
+	bsbw getval_byte	# get multiplier extension operand
+	bsbw getval_dfloat	# get target operand
+	jmp zeroexit
+1:
 
 	/* Check for sign = 1 and exp = 0; if it is, do a resopflt. */
 	cmpw r0, $0x8000
@@ -491,6 +510,14 @@ emodd:	bsbw	touser
 
 	bsbw getval_dfloat 	# get operand into r0 and r1
 
+	/* Check for sign = 0 and exp = 0; if it is, zeroexit. */
+	bicl3 $0x7f, r0, r4
+	cmpl r4, $0x0
+	bneq 1f
+	bsbw getval_byte	# get multiplier extension operand
+	bsbw getval_dfloat	# get target operand
+	jmp zeroexit
+1:
 	/* Check for sign = 1 and exp = 0; if it is, do a resopflt. */
 	cmpw r0, $0x8000
 	bneq 1f
@@ -519,13 +546,9 @@ emodd:	bsbw	touser
 
 	pushab TMPFRAC1
 	calls $0x1, bitcnt
-	cmpl r0, $0xffffffff		/* check if TMPFRAC1 == 0 */
-	jeql zeroexit
 	movl r0, r1			/* r1 = bitcount of TMPFRAC1 */
 	pushab TMPFRAC2
 	calls $0x1, bitcnt
-	cmpl r0, $0xffffffff		/* check if TMPFRAC2 == 0 */
-	jeql zeroexit
 	movl r0, r2			/* r2 = bitcount of TMPFRAC2 */
 
 	/*
@@ -624,29 +647,112 @@ emodd:	bsbw	touser
 	bisl2 r6, TMPFRACTGT	# set the sign
 
 	/*
-	 * Now we need to separate this.  CVTDL makes this easy.
-     */
-	cvtdl TMPFRACTGT, r4
+	 * Now we need to separate.  CVT* won't work in the case of a
+	 * >32-bit integer, so we count the integer bits and use ASHQ to
+	 * shift them away.
+	 */
+	cmpl $0x80, r9
+	bgtr 8f		/* if we are less than 1.0, we can avoid this */
+	subl3 $0x80, r9, r8
+
+	movq TMPFRACTGT, TMPFRAC1
+	/*
+	 * Check for integer overflow by comparing the integer bit count.
+	 * If this is the case, set V in PSL.
+	 */
+	cmpl r8, $0x20
+	blss 3f
+	bisl2 $PSL_V, S_PSL
+3:
+	cmpl r8, $0x38
+	blss 1f
+	/*
+	 * In the case where we have more than 55 bits in the integer,
+	 * there aren't any bits left for the fraction.  Therefore we're
+	 * done here;  TMPFRAC1 is equal to TMPFRACTGT and TMPFRAC2 is 0.
+	 */
+	movq $0f0.0, TMPFRAC2
+	jmp 9f		/* we're done, move on */
+1:	
+	/*
+	 * We do the mod by using ASHQ to shift and truncate the bits.
+	 * Before that happens, we have to arrange the bits in a quadword such
+	 * that the significance increases from start to finish.
+	 */
+
+	movab TMPFRACTGT, r0
+	movab TMPFRAC1, r1
+	movb (r0), 7(r1)
+	bisb2 $0x80, 7(r1)
+	movw 2(r0), 5(r1)
+	movw 4(r0), 3(r1)
+	movb 7(r0), 2(r1)
+	movb 6(r0), 1(r1)
+
+	/* Calculate exactly how many bits to shift. */
+	subl3 r8, $0x40, r7
+	mnegl r7, r6
+	ashq r6, TMPFRAC1, r0			# shift right
+	ashq r7, r0, TMPFRAC2			# shift left
+
+	/* Now put it back into a D_. */
+	movab TMPFRAC2, r0
+	movab TMPFRAC1, r1
+ 	extv $0x18, $0x7, 4(r0), (r1)
+	extzv $0x7, $0x9, TMPFRACTGT, r2
+	insv r2, $0x7, $0x9, (r1)
+
+	movw 5(r0), 2(r1)
+	movw 3(r0), 4(r1)
+	movw 1(r0), 6(r1)
+
+	# we have the integer in TMPFRAC1, now get the fraction in TMPFRAC2
+	subd3 TMPFRAC1, TMPFRACTGT, TMPFRAC2
+	jmp 9f
+
+8:	
+	/*
+	 * We are less than 1.0; TMPFRAC1 should be 0, and TMPFRAC2 should
+	 * be equal to TMPFRACTGT.
+	 */
+	movd $0f0.0, TMPFRAC1
+	movd TMPFRACTGT, TMPFRAC2
+9:			
+	/*
+	 * We're done. We can use CVTDL here, since EMODD is supposed to
+	 * truncate.
+	 */
+	cvtdl TMPFRAC1, r4
 	bsbw getaddr_byte
 	movl r4, (r0)
-
-	cvtld r4, TMPFRAC1
-	subd2 TMPFRAC1, TMPFRACTGT
+	
 	bsbw getaddr_byte
-	movq TMPFRACTGT, (r0)
+	movq TMPFRAC2, (r0)
+	movd TMPFRAC2, r0		/* move this here so we can test it later */
 
 	/* Clean up sp. */
 
 	addl2 $0x74, sp	
 	movl (sp)+, ap
-	brw goback
 
-zeroexit:	
+	/*
+	 * Now set condition codes.  We know Z == 0; C is always 0; and V
+	 * is set above as necessary.  Check to see if TMPFRAC2 is
+	 * negative; if it is, set N.
+	 */
+	tstd r0
+	bgeq 1f /* branch if N == 0 */
+	bisl2 $PSL_N, S_PSL
+1:
+	brw goback
+zeroexit:
+	/* Z == 1, everything else has been cleared already */
+	bisl2 $PSL_Z, S_PSL
 	bsbw getaddr_byte
 	movl $0x0, (r0)
 	bsbw getaddr_byte
-	movd $0, (r0)
-	ret
+	movd $0f0, (r0)
+	brw goback
 
 
 
