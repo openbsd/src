@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.h,v 1.15 1999/12/09 08:55:37 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.h,v 1.16 1999/12/09 09:02:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -51,6 +51,7 @@ struct ip4stat
     u_int32_t	ip4s_pdrops;		/* packet dropped due to policy */
     u_int32_t	ip4s_spoof;		/* IP spoofing attempts */
     u_int32_t   ip4s_family;		/* Protocol family mismatch */
+    u_int32_t   ip4s_unspec;            /* Missing tunnel endpoint address */
 };
 
 #define IP4_DEFAULT_TTL    0
