@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetent.3,v 1.12 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: getnetent.3,v 1.13 2004/02/01 19:45:00 nordin Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Ft struct netent *
 .Fn getnetent "void"
 .Ft struct netent *
-.Fn getnetbyname "char *name"
+.Fn getnetbyname "const char *name"
 .Ft struct netent *
 .Fn getnetbyaddr "in_addr_t net" "int type"
 .Ft void

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getprotoent.3,v 1.9 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: getprotoent.3,v 1.10 2004/02/01 19:45:00 nordin Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Ft struct protoent *
 .Fn getprotoent "void"
 .Ft struct protoent *
-.Fn getprotobyname "char *name"
+.Fn getprotobyname "const char *name"
 .Ft struct protoent *
 .Fn getprotobynumber "int proto"
 .Ft void
