@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2001/12/05 03:08:58 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.30 2002/01/31 11:49:02 hugh Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -13,9 +13,9 @@ include "../../../conf/GENERIC"
 #option		VAX750		# 11/750
 option		VAX630		# MV II
 option		VAX650		# MV III, 3300, 3600, 3800, 3900
-option		VAX660		# VAX 4000/200
-option		VAX670		# VAX 4000/300
-option		VAX680		# VAX 4000/[45]00
+option		VAX660		# VAX 4000 200
+option		VAX670		# VAX 4000 300
+option		VAX680		# VAX 4000 {4,5,6,7}0{0,5}{,A}
 option		VAX410		# VS 2000, 3100/{30,}
 option		VAX43		# VS 3100/76
 option		VAX46		# VS 4000/60
