@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.8 1996/08/25 12:19:57 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.9 1997/01/15 23:00:00 kstailey Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -99,6 +99,10 @@
 #include <nfs/nfs.h>
 
 #include <vm/vm.h>
+
+#ifdef sun3
+# include <machine/machdep.h>	/* for prototype of reboot2() */
+#endif
 
 static int sunstatfs __P((struct statfs *, caddr_t));
 
