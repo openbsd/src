@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.9 1999/02/16 21:27:37 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.10 1999/02/26 05:12:18 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -215,6 +215,12 @@ void
 pipespace(cpipe)
 	struct pipe *cpipe;
 {
+#if defined(UVM)
+	cpipe->pipe_buffer.buffer = (caddr_t) uvm_km_valloc(kernel_map,
+						cpipe->pipe_buffer.size);
+	if (cpipe->pipe_buffer.buffer == NULL)
+		panic("pipespace: out of kvm");
+#else
 	int npages, error;
 
 	npages = round_page(cpipe->pipe_buffer.size)/PAGE_SIZE;
@@ -248,6 +254,7 @@ pipespace(cpipe)
 
 	if (error != KERN_SUCCESS)
 		panic("pipeinit: cannot allocate pipe -- out of kvm -- code = %d", error);
+#endif
 	amountpipekva += cpipe->pipe_buffer.size;
 }
 
@@ -739,9 +746,15 @@ pipe_write(fp, uio, cred)
 
 		if (wpipe->pipe_buffer.buffer) {
 			amountpipekva -= wpipe->pipe_buffer.size;
+#if defined(UVM)
+			uvm_km_free(kernel_map,
+				(vm_offset_t)wpipe->pipe_buffer.buffer,
+				wpipe->pipe_buffer.size);
+#else
 			kmem_free(kernel_map,
 				(vm_offset_t)wpipe->pipe_buffer.buffer,
 				wpipe->pipe_buffer.size);
+#endif
 		}
 
 #ifndef PIPE_NODIRECT
@@ -770,7 +783,7 @@ pipe_write(fp, uio, cred)
 	}
 		
 
-	if( wpipe->pipe_buffer.buffer == NULL) {
+	if (wpipe->pipe_buffer.buffer == NULL) {
 		if ((error = pipelock(wpipe,1)) == 0) {
 			pipespace(wpipe);
 			pipeunlock(wpipe);
@@ -1113,9 +1126,15 @@ pipeclose(cpipe)
 			if (cpipe->pipe_buffer.size > PIPE_SIZE)
 				--nbigpipe;
 			amountpipekva -= cpipe->pipe_buffer.size;
+#if defined(UVM)
+			uvm_km_free(kernel_map,
+				(vm_offset_t)cpipe->pipe_buffer.buffer,
+				cpipe->pipe_buffer.size);
+#else
 			kmem_free(kernel_map,
 				(vm_offset_t)cpipe->pipe_buffer.buffer,
 				cpipe->pipe_buffer.size);
+#endif
 		}
 #ifndef PIPE_NODIRECT
 		if (cpipe->pipe_map.kva) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.6 1998/06/27 07:32:13 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.7 1999/02/26 05:12:18 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -63,6 +63,11 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/reg.h>
 
