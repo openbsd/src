@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.8 2004/11/02 02:45:37 reyk Exp $
+#	$OpenBSD: files.cardbus,v 1.9 2004/11/20 03:11:41 brad Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -65,12 +65,6 @@ file	dev/cardbus/if_ath_cardbus.c		ath_cardbus
 #
 attach	atw at cardbus with atw_cardbus
 file	dev/cardbus/if_atw_cardbus.c		atw_cardbus
-
-#
-# DECchip 21143 and clones.
-#
-#attach	tlp at cardbus with tlp_cardbus
-#file	dev/cardbus/if_tlp_cardbus.c		tlp_cardbus
 
 #
 # OHCI USB controller
