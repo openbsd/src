@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.51 2002/01/09 11:30:53 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.52 2002/02/26 07:25:33 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <err.h>
+#include <limits.h>
 
 #include "pfctl_parser.h"
 
@@ -65,6 +66,9 @@ int	 pfctl_log(int, char *, int);
 int	 pfctl_timeout(int, char *, int);
 int	 pfctl_gettimeout(int, const char *);
 int	 pfctl_settimeout(int, const char *, int);
+int	 pfctl_limit(int, char *, int);
+int	 pfctl_getlimit(int, const char *);
+int	 pfctl_setlimit(int, const char *, unsigned);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 
@@ -76,6 +80,7 @@ char	*natopt;
 char	*rulesopt;
 char	*showopt;
 char	*timeoutopt;
+char	*limitopt;
 char	*debugopt;
 
 char	*infile;
@@ -101,6 +106,14 @@ static const struct {
 	{ "frag",		PFTM_FRAG },
 	{ "interval",		PFTM_INTERVAL },
 	{ NULL,			0 }};
+
+static const struct {
+	const char	*name;
+	int		index;
+} pf_limits[] = {
+	{ "states",	PF_LIMIT_STATES },
+	{ "frags",	PF_LIMIT_FRAGS },
+	{ NULL,		0 }};
 
 struct pf_hint {
 	const char	*name;
@@ -578,6 +591,100 @@ pfctl_hint(int dev, const char *opt, int opts)
 }
 
 int
+pfctl_limit(int dev, char *opt, int opts)
+{
+	char *arg, *serr = NULL;
+	unsigned limit;
+
+	arg = index(opt, '=');
+	if (arg == NULL)
+		return pfctl_getlimit(dev, opt);
+	else {
+		if (*arg)
+			*arg++ = 0;
+		if (strcasecmp(arg, "inf") == 0)
+			limit = UINT_MAX;
+		else {
+			limit = strtol(arg, &serr, 10);
+			if (*serr || !*arg) {
+				warnx("Bad limit argument.  "
+				    "Format -m name=limit");
+				return (1);
+			}
+		}
+		return pfctl_setlimit(dev, opt, limit);
+	}
+}
+
+int
+pfctl_getlimit(int dev, const char *opt)
+{
+	struct pfioc_limit pl;
+	int i, found = 0;
+
+	for (i = 0; pf_limits[i].name; i++) {
+		if (strcmp(opt, "all") == 0 ||
+		    strcasecmp(opt, pf_limits[i].name) == 0) {
+			found = 1;
+			pl.index = i;
+			if (ioctl(dev, DIOCGETLIMIT, &pl))
+				err(1, "DIOCGETLIMIT");
+			printf("%-10s ", pf_limits[i].name);
+			if (pl.limit == UINT_MAX)
+				printf("unlimited\n");
+			else
+				printf("hard limit %6u\n", pl.limit);
+		}
+	}
+	if (found == 0) {
+		warnx("Bad pool name.  Format -m name[=<limit>]");
+		return (1);
+	}
+	return (0);
+}
+
+int
+pfctl_setlimit(int dev, const char *opt, unsigned limit)
+{
+	struct pfioc_limit pl;
+	int i;
+
+	for (i = 0; pf_limits[i].name; i++) {
+		if (strcasecmp(opt, pf_limits[i].name) == 0) {
+			pl.index = i;
+			pl.limit = limit;
+			if (ioctl(dev, DIOCSETLIMIT, &pl)) {
+				if (errno == EBUSY) {
+					warnx("Current pool size exceeds "
+					    "requested hard limit");
+					return (1);
+				} else
+					err(1, "DIOCSETLIMIT");
+			}
+			if ((opts & PF_OPT_QUIET) == 0) {
+				printf("%s ", pf_limits[i].name);
+				if (pl.limit == UINT_MAX)
+					printf("unlimited");
+				else
+					printf("hard limit %u", pl.limit);
+				printf(" -> ");
+				if (limit == UINT_MAX)
+					printf("unlimited");
+				else
+					printf("hard limit %u", limit);
+				printf("\n");
+			}
+			break;
+		}
+	}
+	if (pf_limits[i].name == NULL) {
+		warnx("Bad pool name.  Format -m name[=<limit>]");
+		return (1);
+	}
+	return (0);
+}
+
+int
 pfctl_timeout(int dev, char *opt, int opts)
 {
 	char *seconds, *serr = NULL;
@@ -592,7 +699,7 @@ pfctl_timeout(int dev, char *opt, int opts)
 			*seconds++ = '\0';	/* Eat '=' */
 		setval = strtol(seconds, &serr, 10);
 		if (*serr != '\0' || *seconds == '\0' || setval < 0) {
-			warnx("Bad timeout arguement.  Format -t name=seconds");
+			warnx("Bad timeout argument.  Format -t name=seconds");
 			return 1;
 		}
 		return pfctl_settimeout(dev, opt, setval);
@@ -709,7 +816,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:nN:O:R:s:t:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:m:nN:O:R:s:t:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -728,6 +835,10 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			logopt = optarg;
+			mode = O_RDWR;
+			break;
+		case 'm':
+			limitopt = optarg;
 			mode = O_RDWR;
 			break;
 		case 'n':
@@ -865,6 +976,10 @@ main(int argc, char *argv[])
 
 	if (timeoutopt != NULL)
 		if (pfctl_timeout(dev, timeoutopt, opts))
+			error = 1;
+
+	if (limitopt != NULL)
+		if (pfctl_limit(dev, limitopt, opts))
 			error = 1;
 
 	if (opts & PF_OPT_ENABLE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.192 2002/02/23 00:03:58 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.193 2002/02/26 07:25:33 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -172,6 +172,12 @@ int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
 struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl;
+
+struct pf_pool_limit {
+	void		*pp;
+	unsigned	 limit;
+} pf_pool_limits[PF_LIMIT_MAX] = { { &pf_state_pl, UINT_MAX },
+				   { &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
 
 int			 pf_tree_key_compare(struct pf_tree_key *,
 			    struct pf_tree_key *);
@@ -1060,9 +1066,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETSTATES:
 		case DIOCGETTIMEOUT:
 		case DIOCCLRRULECTRS:
+		case DIOCGETLIMIT:
 			break;
 		default:
-			return EPERM;
+			return (EPERM);
 		}
 
 	if (!(flags & FWRITE))
@@ -1079,6 +1086,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETTIMEOUT:
 		case DIOCGETBINATS:
 		case DIOCGETBINAT:
+		case DIOCGETLIMIT:
 			break;
 		default:
 			return (EACCES);
@@ -2161,6 +2169,36 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			goto fail;
 		}
 		pt->seconds = *pftm_timeouts[pt->timeout];
+		break;
+	}
+
+	case DIOCGETLIMIT: {
+		struct pfioc_limit *pl = (struct pfioc_limit *)addr;
+
+		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
+			error = EINVAL;
+			goto fail;
+		}
+		pl->limit = pf_pool_limits[pl->index].limit;
+		break;
+	}
+
+	case DIOCSETLIMIT: {
+		struct pfioc_limit *pl = (struct pfioc_limit *)addr;
+		int old_limit;
+
+		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
+			error = EINVAL;
+			goto fail;
+		}
+		if (pool_sethardlimit(pf_pool_limits[pl->index].pp,
+		    pl->limit, NULL, 0) != 0) {
+			error = EBUSY;
+			goto fail;
+		}
+		old_limit = pf_pool_limits[pl->index].limit;
+		pf_pool_limits[pl->index].limit = pl->limit;
+		pl->limit = old_limit;
 		break;
 	}
 

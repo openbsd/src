@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.19 2002/02/25 00:29:07 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.20 2002/02/26 07:25:33 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -89,9 +89,6 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
-
-#define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
-#define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
 
 #define DPFPRINTF(x)		if (pf_status.debug) printf x
 

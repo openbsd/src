@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.63 2002/02/14 23:53:32 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.64 2002/02/26 07:25:33 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,6 +51,7 @@ enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_OTHER_FIRST_PACKET=11, PFTM_OTHER_SINGLE=12,
 	  PFTM_OTHER_MULTIPLE=13, PFTM_FRAG=14, PFTM_INTERVAL=15, PFTM_MAX=16 };
 enum	{ PF_FASTROUTE=1, PF_ROUTETO=2, PF_DUPTO=3 };
+enum	{ PF_LIMIT_STATES=0, PF_LIMIT_FRAGS=1, PF_LIMIT_MAX=2 };
 
 struct pf_addr {
 	union {
@@ -420,6 +421,9 @@ struct pf_status {
 	u_int32_t	debug;
 };
 
+#define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */  
+#define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
+
 /*
  * ioctl parameter structures
  */
@@ -510,6 +514,11 @@ struct pfioc_tm {
 	int		 seconds;
 };
 
+struct pfioc_limit {
+	int		 index;
+	unsigned	 limit;
+};
+
 /*
  * ioctl operations
  */
@@ -552,6 +561,8 @@ struct pfioc_tm {
 #define DIOCCHANGEBINAT	_IOWR('D', 36, struct pfioc_changebinat)
 #define DIOCADDSTATE	_IOWR('D', 37, struct pfioc_state)
 #define DIOCCLRRULECTRS	_IO  ('D', 38)
+#define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
+#define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
 
 #ifdef _KERNEL
 
@@ -583,6 +594,8 @@ void	pf_purge_expired_fragments(void);
 
 extern struct pf_rulequeue *pf_rules_active;
 extern struct pf_status pf_status;
+extern struct pool pf_frent_pl, pf_frag_pl;
+
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_H_ */
