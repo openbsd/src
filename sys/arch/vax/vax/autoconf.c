@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.18 2002/06/11 09:36:24 hugh Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.19 2002/09/17 02:37:20 hugh Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -230,7 +230,8 @@ device_register(struct device *dev, void *aux)
 
 	while (*dp) {
 		if ((*dp)(dev, aux)) {
-			bootdv = dev;
+			if (bootdv == NULL)
+				bootdv = dev;
 			break;
 		}
 		dp++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.13 2002/06/11 10:12:46 hugh Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.14 2002/09/17 02:37:20 hugh Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ struct  ngcconf {
 
 int	findblkmajor(struct device *);
 
-struct device *bootdv;
+struct device *bootdv = NULL;
 int booted_partition;	/* defaults to 0 (aka 'a' partition */
 
 extern dev_t rootdev, dumpdev;
