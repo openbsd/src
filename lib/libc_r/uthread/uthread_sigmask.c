@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigmask.c,v 1.4 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sigmask.c,v 1.5 2002/02/21 20:57:41 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -42,6 +42,7 @@ int
 pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 {
 	struct pthread	*curthread = _get_curthread();
+	sigset_t	sigset;
 	int ret = 0;
 
 	/* Check if the existing signal process mask is to be returned: */
@@ -79,11 +80,22 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			break;
 		}
 
+		/* Increment the sequence number: */
+		curthread->sigmask_seqno++;
+
 		/*
-		 * Dispatch signals to the running thread that are pending
-		 * and now unblocked:
+		 * Check  if there are pending signals for the running
+		 * thread or process that aren't blocked:
 		 */
-		_dispatch_signals();
+		sigset = curthread->sigpend;
+		sigset |= _process_sigpending;
+		sigset &= ~curthread->sigmask;
+		if (sigset != 0)
+			/*
+			 * Call the kernel scheduler which will safely
+			 * install a signal frame for the running thread:
+			 */
+			_thread_kern_sched_sig();
 	}
 
 	/* Return the completion status: */

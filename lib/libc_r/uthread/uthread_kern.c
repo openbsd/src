@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.20 2002/01/04 03:39:09 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.21 2002/02/21 20:57:41 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -64,6 +64,15 @@ thread_run_switch_hook(pthread_t thread_out, pthread_t thread_in);
 static int	last_tick = 0;
 
 void
+_thread_kern_sched_sig(void)
+{
+	struct pthread	*curthread = _get_curthread();
+
+	curthread->check_pending = 1;
+	_thread_kern_sched(NULL);
+}
+
+void
 _thread_kern_sched(struct sigcontext * scp)
 {
 	struct timespec	ts;
@@ -83,6 +92,15 @@ _thread_kern_sched(struct sigcontext * scp)
 
 	/* Check if this function was called from the signal handler: */
 	if (scp != NULL) {
+		/*
+		 * The signal handler should have saved the state of
+		 * the current thread. Restore the process signal
+		 * mask.
+		 */
+		if (_thread_sys_sigprocmask(SIG_SETMASK,
+		    &_process_sigmask, NULL) != 0)
+			PANIC("Unable to restore process mask after signal");
+
 		/*
 		 * Copy the signal context to the current thread's jump
 		 * buffer:

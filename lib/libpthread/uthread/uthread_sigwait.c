@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigwait.c,v 1.9 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sigwait.c,v 1.10 2002/02/21 20:57:41 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -47,7 +47,6 @@ sigwait(const sigset_t * set, int *sig)
 	sigset_t	tempset, waitset;
 	struct sigaction act;
 	
-	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	/*
@@ -55,10 +54,9 @@ sigwait(const sigset_t * set, int *sig)
 	 */
 	act.sa_handler = (void (*) ()) _thread_sig_handler;
 	act.sa_flags = SA_RESTART;
-	act.sa_mask = *set;
 
-	/* Ensure the scheduling signal is masked: */
-	sigaddset(&act.sa_mask, _SCHED_SIGNAL);
+	/* Ensure the signal handler cannot be interrupted by other signals: */
+	sigfillset(&act.sa_mask);
 
 	/*
 	 * Initialize the set of signals that will be waited on:
@@ -73,24 +71,34 @@ sigwait(const sigset_t * set, int *sig)
 	sigdelset(&waitset, SIGINFO);
 
 	/* Check to see if a pending signal is in the wait mask. */
-	if ((tempset = (curthread->sigpend & waitset)) != 0) {
+	tempset = curthread->sigpend;
+	tempset |= _process_sigpending;
+	tempset &= waitset;
+	if (tempset != 0) {
 		/* Enter a loop to find a pending signal: */
 		for (i = 1; i < NSIG; i++) {
-			if (sigismember (&tempset, i))
+			if (sigismember(&tempset, i))
 				break;
 		}
 
 		/* Clear the pending signal: */
-		sigdelset(&curthread->sigpend,i);
+		if (sigismember(&curthread->sigpend, i))
+			sigdelset(&curthread->sigpend, i);
+		else
+			sigdelset(&_process_sigpending, i);
 
 		/* Return the signal number to the caller: */
 		*sig = i;
 
-		/* No longer in a cancellation point: */
 		_thread_leave_cancellation_point();
-
 		return (0);
 	}
+
+	/*
+	 * Access the _thread_dfl_count array under the protection of signal
+	 * deferral.
+	 */
+	_thread_kern_sig_defer();
 
 	/*
 	 * Enter a loop to find the signals that are SIG_DFL.  For
@@ -102,15 +110,23 @@ sigwait(const sigset_t * set, int *sig)
 	 * mask because a subsequent sigaction could enable an
 	 * ignored signal.
 	 */
+	sigemptyset(&tempset);
 	for (i = 1; i < NSIG; i++) {
 		if (sigismember(&waitset, i) &&
 		    (_thread_sigact[i - 1].sa_handler == SIG_DFL)) {
-			if (_thread_sys_sigaction(i,&act,NULL) != 0)
-				ret = -1;
+			_thread_dfl_count[i]++;
+			sigaddset(&tempset, i);
+			if (_thread_dfl_count[i] == 1) {
+				if (_thread_sys_sigaction(i, &act, NULL) != 0)
+					ret = -1;
+			}
 		}
 	}
-	if (ret == 0) {
 
+	/* Done accessing _thread_dfl_count for now. */
+	_thread_kern_sig_undefer();
+
+	if (ret == 0) {
 		/*
 		 * Save the wait signal mask.  The wait signal
 		 * mask is independent of the threads signal mask
@@ -131,17 +147,28 @@ sigwait(const sigset_t * set, int *sig)
 		curthread->data.sigwait = NULL;
 	}
 
+	/*
+	 * Access the _thread_dfl_count array under the protection of signal 
+	 * deferral.
+	 */
+	_thread_kern_sig_defer();
+
 	/* Restore the sigactions: */
 	act.sa_handler = SIG_DFL;
 	for (i = 1; i < NSIG; i++) {
-		if (sigismember(&waitset, i) &&
-		    (_thread_sigact[i - 1].sa_handler == SIG_DFL)) {
-			if (_thread_sys_sigaction(i,&act,NULL) != 0)
-				ret = -1;
+		if (sigismember(&tempset, i)) {
+			_thread_dfl_count[i]--;
+			if ((_thread_sigact[i - 1].sa_handler == SIG_DFL) &&
+			    (_thread_dfl_count[i] == 0)) {
+				if (_thread_sys_sigaction(i, &act, NULL) != 0)
+					ret = -1;
+			}
 		}
 	}
 
-	/* No longer in a cancellation point: */
+	/* Done accessing _thread_dfl_count. */
+	_thread_kern_sig_undefer();
+
 	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */

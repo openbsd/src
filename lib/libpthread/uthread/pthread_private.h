@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.34 2002/01/19 23:49:32 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.35 2002/02/21 20:57:41 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -997,6 +997,16 @@ SCLASS struct  sigaction _thread_sigact[NSIG];
 SCLASS int	_thread_dfl_count[NSIG];
 
 /*
+ * Pending signals and mask for this process:
+ */
+SCLASS sigset_t		_process_sigpending;
+SCLASS sigset_t		_process_sigmask
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0
+#endif
+;
+
+/*
  * Scheduling queues:
  */
 SCLASS pq_queue_t		_readyq;
@@ -1098,6 +1108,7 @@ void    _thread_cleanupspecific(void);
 void    _thread_dump_info(void);
 void    _thread_init(void);
 void    _thread_kern_sched(struct sigcontext *);
+void    _thread_kern_sched_sig(void);
 void    _thread_kern_sched_state(enum pthread_state,char *fname,int lineno);
 void	_thread_kern_sched_state_unlock(enum pthread_state state,
 	    spinlock_t *lock, char *fname, int lineno);

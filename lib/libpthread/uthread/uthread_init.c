@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.20 2002/01/17 23:12:09 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.21 2002/02/21 20:57:41 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -224,6 +224,9 @@ _thread_init(void)
 		act.sa_handler = (void (*) ()) _thread_sig_handler;
 		act.sa_flags = 0;
 
+		/* Clear pending signals for the process: */
+		sigemptyset(&_process_sigpending);
+
 		/* Initialize signal handling: */
 		_thread_sig_init();
 
@@ -260,6 +263,9 @@ _thread_init(void)
 			 */
 			PANIC("Cannot initialize signal handler");
 		}
+
+		/* Get the process signal mask: */
+		_thread_sys_sigprocmask(SIG_SETMASK, NULL, &_process_sigmask);
 
 		/* Get the kernel clockrate: */
 		mib[0] = CTL_KERN;
