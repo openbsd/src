@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1996/10/16 13:49:59 mickey Exp $ */
+/*	$OpenBSD: clock.c,v 1.5 1997/01/29 07:58:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,7 @@ chiptotime(sec, min, hour, day, mon, year)
  * Set up the system's time, given a `reasonable' time value.
  */
 u_long 
-time()
+ttime()
 {
 	register struct clockreg *cl = clockreg;
 	int     sec, min, hour, day, mon, year;

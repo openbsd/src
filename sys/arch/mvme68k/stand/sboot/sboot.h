@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.4 1996/10/16 13:50:02 mickey Exp $ */
+/*	$OpenBSD: sboot.h,v 1.5 1997/01/29 07:58:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -66,7 +66,7 @@ int do_get_file __P((void));
 void tftp_file __P((char *, u_long));
 
 /* clock */
-u_long time __P((void));
+u_long ttime __P((void));
 
 /* checksum */
 u_long oc_cksum __P((void *, u_long, u_long));
