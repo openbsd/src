@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.7 2000/12/21 15:34:51 aaron Exp $	*/
+/*	$OpenBSD: jot.c,v 1.8 2001/03/08 01:39:17 pjanzen Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.7 2000/12/21 15:34:51 aaron Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.8 2001/03/08 01:39:17 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: jot.c,v 1.7 2000/12/21 15:34:51 aaron Exp $";
 #define	ENDER_DEF	100
 #define	STEP_DEF	1
 
-#define	isdefault(s)	(strcmp((s), "-") == 0)
+#define	is_default(s)	(strcmp((s), "-") == 0)
 
 double	begin;
 double	ender;
@@ -95,36 +95,15 @@ main(argc, argv)
 {
 	double	xd, yd;
 	long	id;
-	register double	*x = &xd;
-	register double	*y = &yd;
-	register long	*i = &id;
+	double	*x = &xd;
+	double	*y = &yd;
+	long	*i = &id;
+	unsigned int	mask = 0;
+	int	n = 0;
+	int	ch;
 
-	getargs(argc, argv);
-	if (randomize) {
-		*x = (ender - begin) * (ender > begin ? 1 : -1);
-		for (*i = 1; *i <= reps || infinity; (*i)++) {
-			*y = (double) arc4random() / ULONG_MAX;
-			putdata(*y * *x + begin, reps - *i);
-		}
-	}
-	else
-		for (*i = 1, *x = begin; *i <= reps || infinity; (*i)++, *x += s)
-			putdata(*x, reps - *i);
-	if (!nofinalnl)
-		putchar('\n');
-	exit(0);
-}
-
-void
-getargs(ac, av)
-	int ac;
-	char *av[];
-{
-	register unsigned int	mask = 0;
-	register int		n = 0;
-
-	while (--ac && **++av == '-' && !isdefault(*av))
-		switch ((*av)[1]) {
+	while ((ch = getopt(argc, argv, "rb:w:cs:np:")) != -1)
+		switch((char)ch) {
 		case 'r':
 			randomize = 1;
 			break;
@@ -136,82 +115,68 @@ getargs(ac, av)
 			break;
 		case 'b':
 			boring = 1;
+			if (strlcpy(format, optarg, sizeof(format)) >=
+			    sizeof(format))
+				errx(1, "-b word too long");
+			break;
 		case 'w':
-			if ((*av)[2]) {
-				if (strlcpy(format, *av + 2, sizeof(format)) >=
-				    sizeof(format))
-					errx(1, "-w word too long");
-			} else if (!--ac)
-				errx(1, "Need context word after -w or -b");
-			else {
-				if (strlcpy(format, *++av, sizeof(format)) >=
-				    sizeof(format))
-					errx(1, "-w word too long");
-			}
+			if (strlcpy(format, optarg, sizeof(format)) >=
+			    sizeof(format))
+				errx(1, "-w word too long");
 			break;
 		case 's':
-			if ((*av)[2]) {
-				if (strlcpy(sepstring, *av + 2, sizeof(sepstring)) >=
-				    sizeof(sepstring))
-					errx(1, "-s word too long");
-			} else if (!--ac)
-				errx(1, "Need string after -s");
-			else {
-				if (strlcpy(sepstring, *++av, sizeof(sepstring)) >=
-				    sizeof(sepstring))
-					errx(1, "-s word too long");
-			}
+			if (strlcpy(sepstring, optarg, sizeof(sepstring)) >=
+			    sizeof(sepstring))
+				errx(1, "-s word too long");
 			break;
 		case 'p':
-			if ((*av)[2])
-				prec = atoi(*av + 2);
-			else if (!--ac)
-				errx(1, "Need number after -p");
-			else
-				prec = atoi(*++av);
+			prec = atoi(optarg);
 			if (prec <= 0)
-				errx(1, "Bad precision value");
+				errx(1, "bad precision value");
 			break;
 		default:
 			usage();
 		}
+	argc -= optind;
+	argv += optind;
 
-	switch (ac) {	/* examine args right to left, falling thru cases */
+	switch (argc) {	/* examine args right to left, falling thru cases */
 	case 4:
-		if (!isdefault(av[3])) {
-			if (!sscanf(av[3], "%lf", &s))
-				errx(1, "Bad s value:  %s", av[3]);
+		if (!is_default(argv[3])) {
+			if (!sscanf(argv[3], "%lf", &s))
+				errx(1, "Bad s value:  %s", argv[3]);
 			mask |= 01;
 		}
 	case 3:
-		if (!isdefault(av[2])) {
-			if (!sscanf(av[2], "%lf", &ender))
-				ender = av[2][strlen(av[2])-1];
+		if (!is_default(argv[2])) {
+			if (!sscanf(argv[2], "%lf", &ender))
+				ender = argv[2][strlen(argv[2])-1];
 			mask |= 02;
 			if (!prec)
-				n = getprec(av[2]);
+				n = getprec(argv[2]);
 		}
 	case 2:
-		if (!isdefault(av[1])) {
-			if (!sscanf(av[1], "%lf", &begin))
-				begin = av[1][strlen(av[1])-1];
+		if (!is_default(argv[1])) {
+			if (!sscanf(argv[1], "%lf", &begin))
+				begin = argv[1][strlen(argv[1])-1];
 			mask |= 04;
 			if (!prec)
-				prec = getprec(av[1]);
+				prec = getprec(argv[1]);
 			if (n > prec)		/* maximum precision */
 				prec = n;
 		}
 	case 1:
-		if (!isdefault(av[0])) {
-			if (!sscanf(av[0], "%ld", &reps))
-				errx(1, "Bad reps value:  %s", av[0]);
+		if (!is_default(argv[0])) {
+			if (!sscanf(argv[0], "%ld", &reps))
+				errx(1, "Bad reps value:  %s", argv[0]);
 			mask |= 010;
 		}
 		break;
 	case 0:
-		errx(1, "jot - print sequential or random data");
+		usage();
+		break;
 	default:
-		errx(1, "Too many arguments.  What do you mean by %s?", av[4]);
+		errx(1, "Too many arguments.  What do you mean by %s?", argv[4]);
 	}
 	getformat();
 	while (mask)	/* 4 bit mask has 1's where last 4 args were given */
@@ -309,10 +274,23 @@ getargs(ac, av)
 			mask = 0;
 			break;
 		default:
-			errx(1, "Bad mask");
+			errx(1, "bad mask");
 		}
 	if (reps == 0)
 		infinity = 1;
+	if (randomize) {
+		*x = (ender - begin) * (ender > begin ? 1 : -1);
+		for (*i = 1; *i <= reps || infinity; (*i)++) {
+			*y = (double) arc4random() / ULONG_MAX;
+			putdata(*y * *x + begin, reps - *i);
+		}
+	}
+	else
+		for (*i = 1, *x = begin; *i <= reps || infinity; (*i)++, *x += s)
+			putdata(*x, reps - *i);
+	if (!nofinalnl)
+		putchar('\n');
+	exit(0);
 }
 
 void
@@ -321,7 +299,7 @@ putdata(x, notlast)
 	long notlast;
 {
 	long		d = x;
-	register long	*dp = &d;
+	long	*dp = &d;
 
 	if (boring)				/* repeated word */
 		printf("%s", format);
@@ -345,8 +323,8 @@ int
 getprec(s)
 	char *s;
 {
-	register char	*p;
-	register char	*q;
+	char	*p;
+	char	*q;
 
 	for (p = s; *p; p++)
 		if (*p == '.')
@@ -362,35 +340,60 @@ getprec(s)
 void
 getformat()
 {
-	register char	*p;
+	char	*p;
+	size_t sz;
 
 	if (boring)				/* no need to bother */
 		return;
 	for (p = format; *p; p++)		/* look for '%' */
-		if (*p == '%' && *(p+1) != '%')	/* leave %% alone */
-			break;
-	if (!*p && !chardata)
-		sprintf(p, "%%.%df", prec);
-	else if (!*p && chardata) {
-		strcpy(p, "%c");
+		if (*p == '%') {
+			if (*(p+1) != '%')
+				break;
+			p++;		/* leave %% alone */
+		}
+	sz = sizeof(format) - strlen(format) - 1;
+	if (!*p && !chardata) {
+		if (snprintf(p, sz, "%%.%df", prec) >= (int)sz)
+			errx(1, "-w word too long");
+	} else if (!*p && chardata) {
+		if (strlcpy(p, "%c", sz) >= sz)
+			errx(1, "-w word too long");
 		dox = 1;
-	}
-	else if (!*(p+1))
+	} else if (!*(p+1)) {
+		if (sz <= 0)
+			errx(1, "-w word too long");
 		strcat(format, "%");		/* cannot end in single '%' */
-	else {
-		while (!isalpha(*p))
+	} else {
+		for (; *p && !isalpha(*p); p++)
+			/* Certain nonalphanumerics we can't allow */
+			if (*p == '$' || *p == '*')
+				break;
+		/* Allow 'l' prefix, but no other. */
+		if (*p == 'l')
 			p++;
 		switch (*p) {
 		case 'f': case 'e': case 'g': case '%':
+		case 'E': case 'G':
 			break;
 		case 's':
-			errx(1, "Cannot convert numeric data to strings");
+			errx(1, "cannot convert numeric data to strings");
 			break;
-		/* case 'd': case 'o': case 'x': case 'D': case 'O': case 'X':
-		case 'c': case 'u': */
-		default:
+		case 'd': case 'o': case 'x': case 'u':
+		case 'D': case 'O': case 'X': case 'U':
+		case 'c': case 'i':
 			dox = 1;
 			break;
+		default:
+			errx(1, "unknown or invalid format `%s'", format);
 		}
+		/* Need to check for trailing stuff to print */
+		for (; *p; p++)		/* look for '%' */
+			if (*p == '%') {
+				if (*(p+1) != '%')
+					break;
+				p++;		/* leave %% alone */
+			}
+		if (*p)
+			errx(1, "unknown or invalid format `%s'", format);
 	}
 }
