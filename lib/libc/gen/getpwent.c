@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.19 2000/04/25 19:11:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.20 2001/01/31 17:42:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,7 +41,6 @@ static char rcsid[] = "$OpenBSD: getpwent.c,v 1.19 2000/04/25 19:11:48 deraadt E
 #include <db.h>
 #include <syslog.h>
 #include <pwd.h>
-#include <utmp.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -496,7 +495,7 @@ __has_yppw()
 	DBT key, data;
 	DBT pkey, pdata;
 	int len;
-	char bf[UT_NAMESIZE];
+	char bf[_PW_NAME_LEN];
 
 	key.data = (u_char *)_PW_YPTOKEN;
 	key.size = strlen(_PW_YPTOKEN);
@@ -504,9 +503,9 @@ __has_yppw()
 	/* Pre-token database support. */
 	bf[0] = _PW_KEYBYNAME;
 	len = strlen("+");
-	bcopy("+", bf + 1, MIN(len, UT_NAMESIZE));
+	bcopy("+", bf + 1, MIN(len, _PW_NAME_LEN));
 	pkey.data = (u_char *)bf;
-	pkey.size = MIN(len, UT_NAMESIZE) + 1;
+	pkey.size = MIN(len, _PW_NAME_LEN) + 1;
 
 	if ((_pw_db->get)(_pw_db, &key, &data, 0)
 	    && (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
@@ -572,7 +571,7 @@ getpwnam(name)
 {
 	DBT key;
 	int len, rval;
-	char bf[UT_NAMESIZE + 1];
+	char bf[_PW_NAME_LEN + 1];
 
 	if (!_pw_db && !__initdb())
 		return ((struct passwd *)NULL);
@@ -728,12 +727,12 @@ pwnam_netgrp:
 
 	bf[0] = _PW_KEYBYNAME;
 	len = strlen(name);
-	if (len > UT_NAMESIZE)
+	if (len > _PW_NAME_LEN)
 		rval = 0;
 	else {
-		bcopy(name, bf + 1, MIN(len, UT_NAMESIZE));
+		bcopy(name, bf + 1, MIN(len, _PW_NAME_LEN));
 		key.data = (u_char *)bf;
-		key.size = MIN(len, UT_NAMESIZE) + 1;
+		key.size = MIN(len, _PW_NAME_LEN) + 1;
 		rval = __hashpw(&key);
 	}
 

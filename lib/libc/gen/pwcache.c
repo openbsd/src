@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pwcache.c,v 1.3 1997/07/09 00:28:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: pwcache.c,v 1.4 2001/01/31 17:42:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,6 @@ static char rcsid[] = "$OpenBSD: pwcache.c,v 1.3 1997/07/09 00:28:23 millert Exp
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
-#include <utmp.h>
 
 #define	NCACHE	64			/* power of 2 */
 #define	MASK	(NCACHE - 1)		/* bits to store with */
@@ -53,7 +52,7 @@ user_from_uid(uid, nouser)
 {
 	static struct ncache {
 		uid_t	uid;
-		char	name[UT_NAMESIZE + 1];
+		char	name[_PW_NAME_LEN + 1];
 	} c_uid[NCACHE];
 	static int pwopen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
@@ -73,8 +72,8 @@ user_from_uid(uid, nouser)
 			return (nbuf);
 		}
 		cp->uid = uid;
-		(void)strncpy(cp->name, pw->pw_name, UT_NAMESIZE);
-		cp->name[UT_NAMESIZE] = '\0';
+		(void)strncpy(cp->name, pw->pw_name, _PW_NAME_LEN);
+		cp->name[_PW_NAME_LEN] = '\0';
 	}
 	return (cp->name);
 }
@@ -86,7 +85,7 @@ group_from_gid(gid, nogroup)
 {
 	static struct ncache {
 		gid_t	gid;
-		char	name[UT_NAMESIZE + 1];
+		char	name[_PW_NAME_LEN + 1];
 	} c_gid[NCACHE];
 	static int gropen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
@@ -106,8 +105,8 @@ group_from_gid(gid, nogroup)
 			return (nbuf);
 		}
 		cp->gid = gid;
-		(void)strncpy(cp->name, gr->gr_name, UT_NAMESIZE);
-		cp->name[UT_NAMESIZE] = '\0';
+		(void)strncpy(cp->name, gr->gr_name, _PW_NAME_LEN);
+		cp->name[_PW_NAME_LEN] = '\0';
 	}
 	return (cp->name);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.31 2000/12/23 02:07:49 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.32 2001/01/31 17:42:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.31 2000/12/23 02:07:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.32 2001/01/31 17:42:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,9 @@ int		nflag = 1;	/* true if -n flag: don't convert addrs */
 int		sortidle;	/* sort bu idle time */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN];
+
+#define	NAME_WIDTH	8
+#define HOST_WIDTH	16
 
 /*
  * One of these per active utmp entry.
@@ -337,10 +340,10 @@ main(argc, argv)
 			p = buf;
 		}
 		(void)printf("%-*.*s %-2.2s %-*.*s ",
-		    UT_NAMESIZE, UT_NAMESIZE, ep->utmp.ut_name,
+		    NAME_WIDTH, UT_NAMESIZE, ep->utmp.ut_name,
 		    strncmp(ep->utmp.ut_line, "tty", 3) ?
 		    ep->utmp.ut_line : ep->utmp.ut_line + 3,
-		    UT_HOSTSIZE, UT_HOSTSIZE, *p ? p : "-");
+		    HOST_WIDTH, HOST_WIDTH, *p ? p : "-");
 		pr_attime(&ep->utmp.ut_time, &now);
 		pr_idle(ep->idle);
 		pr_args(ep->kp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.9 2000/03/22 17:07:37 millert Exp $	*/
+/*	$OpenBSD: who.c,v 1.10 2001/01/31 17:42:26 deraadt Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.9 2000/03/22 17:07:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.10 2001/01/31 17:42:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,6 +74,9 @@ int show_term;			/* show term state */
 int show_idle;			/* show idle time */
 int show_labels;		/* show column labels */
 int show_quick;			/* quick, names only */
+
+#define NAME_WIDTH	8
+#define HOST_WIDTH	32
 
 int
 main(argc, argv)
@@ -131,7 +134,7 @@ main(argc, argv)
 	
 			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1) {
 				if (*usr.ut_name && *usr.ut_line) {
-					(void)printf("%-*.*s ", UT_NAMESIZE,
+					(void)printf("%-*.*s ", NAME_WIDTH,
 						UT_NAMESIZE, usr.ut_name);
 					if ((++count % 8) == 0)
 						(void) printf("\n");
@@ -157,7 +160,7 @@ main(argc, argv)
 
 			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1) {
 				if (*usr.ut_name && *usr.ut_line) {
-					(void)printf("%-*.*s ", UT_NAMESIZE,
+					(void)printf("%-*.*s ", NAME_WIDTH,
 						UT_NAMESIZE, usr.ut_name);
 					if ((++count % 8) == 0)
 						(void) printf("\n");
@@ -241,7 +244,7 @@ output(up)
 		
 	}
 
-	(void)printf("%-*.*s ", UT_NAMESIZE, UT_NAMESIZE, up->ut_name);
+	(void)printf("%-*.*s ", NAME_WIDTH, UT_NAMESIZE, up->ut_name);
 
 	if (show_term) {
 		(void)printf("%c ", state);
@@ -262,14 +265,14 @@ output(up)
 	}
 	
 	if (*up->ut_host)
-		printf("\t(%.*s)", UT_HOSTSIZE, up->ut_host);
+		printf("  (%.*s)", HOST_WIDTH, up->ut_host);
 	(void)putchar('\n');
 }
 
 void
 output_labels()
 {
-	(void)printf("%-*.*s ", UT_NAMESIZE, UT_NAMESIZE, "USER");
+	(void)printf("%-*.*s ", NAME_WIDTH, UT_NAMESIZE, "USER");
 
 	if (show_term)
 		(void)printf("S ");
@@ -280,7 +283,7 @@ output_labels()
 	if (show_idle)
 		(void)printf("IDLE  ");
 
-	(void)printf("\t%.*s", UT_HOSTSIZE, "FROM");
+	(void)printf("  %.*s", HOST_WIDTH, "FROM");
 
 	(void)putchar('\n');
 }

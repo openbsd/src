@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.9 2000/11/21 00:49:59 millert Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.10 2001/01/31 17:42:25 deraadt Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 #define	_PASSWORD_EFMT1		'_'	/* extended encryption format */
 
 #define	_PASSWORD_LEN		128	/* max length, not counting NULL */
+#define	_PW_NAME_LEN		32	/* max length, not counting NULL */
 
 #define _PASSWORD_NOUID		0x01	/* flag for no specified uid. */
 #define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
