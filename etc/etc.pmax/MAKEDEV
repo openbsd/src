@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.36 2001/05/30 02:11:23 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.37 2001/06/24 23:36:07 kjell Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -113,7 +113,7 @@ all)
 	sh $this rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
 	sh $this pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 #	sh $this tun0 tun1 tun2 tun3
-	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pf
 #	sh $this lkm local
 	sh $this xfs0
 	sh $this fb0 fb1 fb2
@@ -170,6 +170,13 @@ tz*)
 		;;
 	esac
 	umask 77
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 bpf*)

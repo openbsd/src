@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.48 2001/06/24 04:23:51 matthieu Exp $
+#	$OpenBSD: MAKEDEV,v 1.49 2001/06/24 23:36:08 kjell Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -157,7 +157,7 @@ all)
 	sh $this ttyC0 ttyCcfg
 	sh $this tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this tun0 tun1 tun2 tun3
+	sh $this pf tun0 tun1 tun2 tun3
 	sh $this audio0
 	sh $this random uk0 uk1 ss0 ss1
 	sh $this wscons
@@ -524,6 +524,13 @@ bpf*)
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
 	chown root.wheel bpf${unit}
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 tun*)

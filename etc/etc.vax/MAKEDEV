@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.28 2001/05/30 02:11:27 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.29 2001/06/24 23:36:11 kjell Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -72,7 +72,7 @@ case $i in
 
 all)
 	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random
-	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 tun0 tun1
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 pf tun0 tun1
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0 vt0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 hd0 hd1 hd2
 	sh $0 dz0 dl0 dhu0 rx0 rx1 raid0 raid1 raid2 raid3
@@ -589,6 +589,13 @@ qd*)
 	rm -f qd$unit
 	mknod qc$unit c 40 $(($unit * 4))
 	mknod qd$unit c 40 $(($unit * 4 + 2))
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 tun*)

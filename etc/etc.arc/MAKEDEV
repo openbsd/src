@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.35 2001/05/30 02:11:13 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.36 2001/06/24 23:35:58 kjell Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -122,7 +122,7 @@ all)
 	sh $this ccd0 ccd1 ccd2 xfs0
 	sh $this vnd0 vnd1 vnd2 vnd3 tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this tun0 tun1 tun2
+	sh $this pf tun0 tun1 tun2
 	sh $this ttyC0 lpt0 pms0 random uk0 uk1 local joy0 joy1
 	;;
 
@@ -234,6 +234,13 @@ bpf*|tun*)
 	rm -f $name$unit
 	mknod $name$unit c $chr $unit
 	chown root.wheel $name$unit
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 rd*)

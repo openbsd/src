@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.21 2001/01/28 23:31:28 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.22 2001/06/24 23:36:00 kjell Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/27 14:27:53 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@ all)
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 random uk0 uk1 ss0 local
+	sh MAKEDEV pf tun0 tun1 lkm ser02 mdm02 lpt0 random uk0 uk1 ss0 local
 	;;
 
 floppy)
@@ -449,6 +449,13 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 19 $unit
 	chown root.wheel bpf$unit
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 tun*)

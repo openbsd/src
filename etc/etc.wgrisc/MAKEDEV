@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.10 2000/03/22 07:34:30 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 2001/06/24 23:36:12 kjell Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -44,7 +44,7 @@ case $i in
 
 all)        
 	sh MAKEDEV std fd sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
-	sh MAKEEDV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh MAKEEDV pf bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV pms0 random local
 	;;
 
@@ -98,6 +98,13 @@ st*)
 		;;
 	esac
 	umask 77
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 bpf*|tun*)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 2000/03/22 07:34:28 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 2001/06/24 23:35:59 kjell Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/04/26 20:10:24 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@ all)
 	sh $this st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0 xfs0
 	sh $this ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this lpa0 lpt0 tun0 tun1 tun2 random
+	sh $this lpa0 lpt0 pf tun0 tun1 tun2 random
 	sh $this beep lkm quadmouse local cpu0 cpu1 cpu2 cpu3 cpu4 cpu5
 	;;
 
@@ -358,6 +358,13 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 32 $unit
 	chown root.wheel bpf$unit
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 73 0
+	chown root.wheel pf
+	chmod 600 pf
 	;;
 
 tun*)
