@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 1999/07/23 22:19:43 niklas Exp $
+#	$OpenBSD: Makefile,v 1.29 1999/08/04 22:09:52 deraadt Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
@@ -9,7 +9,8 @@ MAN+=	eg.4 el.4 ie.4 joy.4 le.4 wt.4
 MAN+=	gus.4 pss.4 sb.4 wi.4 wss.4 xe.4
 MAN+=	xf86.4
 
-MLINKS=	mem.4 kmem.4
+MLINKS+= speaker.4 spkr.4
+MLINKS+= mem.4 kmem.4
 MLINKS+= pms.4 psm.4
 MLINKS+= com.4 pccom.4
 MANSUBDIR=/i386
