@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.33 2002/12/05 14:10:45 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.34 2002/12/17 12:36:59 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,20 +57,14 @@
 struct pfctl {
 	int dev;
 	int opts;
-	u_int16_t rule_nr;
+	u_int32_t rule_nr;
 	struct pfioc_pooladdr paddr;
 	struct pfioc_rule *prule;
-	struct pfioc_nat *pnat;
-	struct pfioc_binat *pbinat;
-	struct pfioc_rdr *prdr;
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
 };
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
-int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
-int	pfctl_add_binat(struct pfctl *, struct pf_binat *);
-int	pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
 int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 
 int	pfctl_set_timeout(struct pfctl *, const char *, int);
@@ -81,11 +75,12 @@ int	pfctl_set_logif(struct pfctl *, char *);
 int	parse_rules(FILE *, struct pfctl *, int);
 int	parse_flags(char *);
 
-void	print_rule(struct pf_rule *, int);
+void	print_filter(struct pf_rule *, int);
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
-void	print_nat(struct pf_nat *);
-void	print_binat(struct pf_binat *);
-void	print_rdr(struct pf_rdr *);
+void	print_rule(struct pf_rule *, int);
+void	print_nat(struct pf_rule *);
+void	print_binat(struct pf_rule *);
+void	print_rdr(struct pf_rule *);
 void	print_status(struct pf_status *);
 
 struct icmptypeent {

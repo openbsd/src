@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.121 2002/12/13 21:51:25 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.122 2002/12/17 12:36:59 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -396,6 +396,31 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 }
 
 void
+print_rule(struct pf_rule *r, int verbose)
+{
+	switch (r->action) {
+	case PF_NAT:
+	case PF_NONAT:
+		print_nat(r);
+		break;
+	case PF_BINAT:
+	case PF_NOBINAT:
+		print_binat(r);
+		break;
+	case PF_RDR:
+	case PF_NORDR:
+		print_rdr(r);
+		break;
+	default:
+	case PF_PASS:
+	case PF_DROP:
+	case PF_SCRUB:
+		print_filter(r, verbose);
+		break;
+	}
+}
+
+void
 print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
     sa_family_t af, int id)
 {
@@ -406,18 +431,21 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		printf("{ ");
 	TAILQ_FOREACH(pooladdr, &pool->list, entries){
 		switch (id) {
-		case PF_POOL_NAT_R:
-		case PF_POOL_RDR_R:
-			print_addr(&pooladdr->addr, af);
+		case PF_NAT:
+		case PF_RDR:
+		case PF_BINAT:
+			print_addr(&pooladdr->addr.addr, af);
 			break;
-		case PF_POOL_RULE_RT:
-			if (PF_AZERO(&pooladdr->addr.addr, af))
+		case PF_PASS:
+			if (PF_AZERO(&pooladdr->addr.addr.addr, af))
 				printf("%s", pooladdr->ifname);
 			else {
 				printf("(%s ", pooladdr->ifname);
-				print_addr(&pooladdr->addr, af);
+				print_addr(&pooladdr->addr.addr, af);
 				printf(")");
 			}
+			break;
+		default:
 			break;
 		}
 		if (TAILQ_NEXT(pooladdr, entries) != NULL)
@@ -426,7 +454,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 			printf(" }");
 	}
 	switch (id) {
-	case PF_POOL_NAT_R:
+	case PF_NAT:
 		if (p1 != PF_NAT_PROXY_PORT_LOW ||
 		    p2 != PF_NAT_PROXY_PORT_HIGH) {
 			if (p1 == p2)
@@ -435,14 +463,13 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 				printf(" port %u:%u", p1, p2);
 		}
 		break;
-	case PF_POOL_RDR_R:
+	case PF_RDR:
 		if (p1) {
 			printf(" port %u", ntohs(p1));
-			if (p2 & PF_RPORT_RANGE)
+			if (p2 & PF_OP_RRG)
 				printf(":*");
 		}
 		break;
-	case PF_POOL_RULE_RT:
 	default:
 		break;
 	}
@@ -469,12 +496,12 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 }
 
 void
-print_nat(struct pf_nat *n)
+print_nat(struct pf_rule *n)
 {
 	if (n->anchorname[0])
 		printf("nat-anchor %s ", n->anchorname);
 	else {
-		if (n->no)
+		if (n->action == PF_NONAT)
 			printf("no ");
 		printf("nat ");
 	}
@@ -499,21 +526,21 @@ print_nat(struct pf_nat *n)
 			printf("proto %u ", n->proto);
 	}
 	print_fromto(&n->src, &n->dst, n->af, n->proto);
-	if (!n->anchorname[0] && !n->no) {
+	if (!n->anchorname[0] && (n->action == PF_NAT)) {
 		printf("-> ");
-		print_pool(&n->rpool, n->proxy_port[0], n->proxy_port[1],
-		    n->af, PF_POOL_NAT_R);
+		print_pool(&n->rpool, n->rpool.proxy_port[0],
+		    n->rpool.proxy_port[1], n->af, PF_NAT);
 	}
 	printf("\n");
 }
 
 void
-print_binat(struct pf_binat *b)
+print_binat(struct pf_rule *b)
 {
 	if (b->anchorname[0])
 		printf("binat-anchor %s ", b->anchorname);
 	else {
-		if (b->no)
+		if (b->action == PF_NOBINAT)
 			printf("no ");
 		printf("binat ");
 	}
@@ -536,35 +563,35 @@ print_binat(struct pf_binat *b)
 			printf("proto %u ", b->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&b->saddr.addr, b->af) ||
-	    !PF_AZERO(&b->saddr.mask, b->af)) {
-		print_addr(&b->saddr, b->af);
+	if (!PF_AZERO(&b->src.addr.addr, b->af) ||
+	    !PF_AZERO(&b->src.addr.mask, b->af)) {
+		print_addr(&b->src.addr, b->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&b->daddr.addr, b->af) ||
-	    !PF_AZERO(&b->daddr.mask, b->af)) {
-		if (b->dnot)
+	if (!PF_AZERO(&b->dst.addr.addr, b->af) ||
+	    !PF_AZERO(&b->dst.addr.mask, b->af)) {
+		if (b->dst.not)
 			printf("! ");
-		print_addr(&b->daddr, b->af);
+		print_addr(&b->dst.addr, b->af);
 		printf(" ");
 	} else
 		printf("any ");
-	if (!b->anchorname[0] && !b->no) {
+	if (!b->anchorname[0] && (b->action == PF_BINAT)) {
 		printf("-> ");
-		print_addr(&b->raddr, b->af);
+		print_pool(&b->rpool, 0, 0, b->af, PF_BINAT);
 	}
 	printf("\n");
 }
 
 void
-print_rdr(struct pf_rdr *r)
+print_rdr(struct pf_rule *r)
 {
 	if (r->anchorname[0])
 		printf("rdr-anchor %s ", r->anchorname);
 	else {
-		if (r->no)
+		if (r->action == PF_NORDR)
 			printf("no ");
 		printf("rdr ");
 	}
@@ -589,32 +616,33 @@ print_rdr(struct pf_rdr *r)
 			printf("proto %u ", r->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&r->saddr.addr, r->af) ||
-	    !PF_AZERO(&r->saddr.mask, r->af)) {
-		if (r->snot)
+	if (!PF_AZERO(&r->src.addr.addr, r->af) ||
+	    !PF_AZERO(&r->src.addr.mask, r->af)) {
+		if (r->src.not)
 			printf("! ");
-		print_addr(&r->saddr, r->af);
+		print_addr(&r->src.addr, r->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&r->daddr.addr, r->af) ||
-	    !PF_AZERO(&r->daddr.mask, r->af)) {
-		if (r->dnot)
+	if (!PF_AZERO(&r->dst.addr.addr, r->af) ||
+	    !PF_AZERO(&r->dst.addr.mask, r->af)) {
+		if (r->dst.not)
 			printf("! ");
-		print_addr(&r->daddr, r->af);
+		print_addr(&r->dst.addr, r->af);
 		printf(" ");
 	} else
 		printf("any ");
-	if (r->dport) {
-		printf("port %u", ntohs(r->dport));
-		if (r->opts & PF_DPORT_RANGE)
-			printf(":%u", ntohs(r->dport2));
+	if (r->dst.port[0]) {
+		printf("port %u", ntohs(r->dst.port[0]));
+		if (r->rpool.port_op & PF_OP_RRG)
+			printf(":%u", ntohs(r->dst.port[1]));
 		printf(" ");
 	}
-	if (!r->anchorname[0] && !r->no) {
+	if (!r->anchorname[0] && (r->action == PF_RDR)) {
 		printf("-> ");
-		print_pool(&r->rpool, r->rport, r->opts, r->af, PF_POOL_RDR_R);
+		print_pool(&r->rpool, r->rpool.proxy_port[0],
+		    r->rpool.port_op, r->af, PF_RDR);
 	}
 	printf("\n");
 }
@@ -703,7 +731,7 @@ print_status(struct pf_status *s)
 }
 
 void
-print_rule(struct pf_rule *r, int verbose)
+print_filter(struct pf_rule *r, int verbose)
 {
 	int i, opts;
 
@@ -787,7 +815,7 @@ print_rule(struct pf_rule *r, int verbose)
 		else if (r->rt == PF_FASTROUTE)
 			printf("fastroute ");
 		if (r->rt != PF_FASTROUTE) {
-			print_pool(&r->rt_pool, 0, 0, r->af, PF_POOL_RULE_RT);
+			print_pool(&r->rpool, 0, 0, r->af, PF_PASS);
 			printf(" ");
 		}
 	}

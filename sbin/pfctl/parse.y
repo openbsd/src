@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.259 2002/12/17 12:05:58 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.260 2002/12/17 12:36:59 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -239,13 +239,13 @@ struct queue_opts {
 
 int	yyerror(char *, ...);
 int	rule_consistent(struct pf_rule *);
-int	nat_consistent(struct pf_nat *);
-int	rdr_consistent(struct pf_rdr *);
+int	nat_consistent(struct pf_rule *);
+int	rdr_consistent(struct pf_rule *);
 int	yyparse(void);
 void	set_ipmask(struct node_host *, u_int8_t);
-void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
+void	expand_rdr(struct pf_rule *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_host *, struct node_host *);
-void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *,
+void	expand_nat(struct pf_rule *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_port *,
 	    struct node_host *, struct node_port *, struct node_host *);
 void	expand_label_if(const char *, char *, const char *);
@@ -529,8 +529,9 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			    0, 0, 0);
 		}
 		| NATANCHOR string interface af proto fromto {
-			struct pf_nat r;
+			struct pf_rule r;
 
+			r.action = PF_NAT;
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
@@ -545,8 +546,10 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			    $6.dst.host, $6.dst.port, NULL);
 		}
 		| RDRANCHOR string interface af proto fromto {
-			struct pf_rdr r;
+			struct pf_rule r;
 
+			r.action = PF_RDR;
+			if (check_rulestate(PFCTL_STATE_NAT))
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
@@ -560,8 +563,9 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			expand_rdr(&r, $3, $5, $6.src.host, $6.dst.host, NULL);
 		}
 		| BINATANCHOR string interface af proto fromto {
-			struct pf_binat r;
+			struct pf_rule r;
 
+			r.action = PF_NAT;
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
@@ -572,7 +576,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
 
-			pfctl_add_binat(pf, &r);
+			pfctl_add_rule(pf, &r);
 		}
 		;
 
@@ -1036,7 +1040,7 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			if ($5.rt) {
 				r.rt = $5.rt;
-				r.rt_pool.opts = $5.pool_opts;
+				r.rpool.opts = $5.pool_opts;
 			}
 			if (r.rt && r.rt != PF_FASTROUTE) {
 
@@ -1047,10 +1051,10 @@ pfrule		: action dir logquick interface route af proto fromto
 					YYERROR;
 				}
 				if ($5.host->next != NULL) {
-					if (r.rt_pool.opts == PF_POOL_NONE)
-						r.rt_pool.opts =
+					if (r.rpool.opts == PF_POOL_NONE)
+						r.rpool.opts =
 						    PF_POOL_ROUNDROBIN;
-					if (r.rt_pool.opts !=
+					if (r.rpool.opts !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("r.rt_pool.opts must "
 						    "be PF_POOL_ROUNDROBIN");
@@ -1918,13 +1922,13 @@ rport		: STRING			{
 				if (($$.a = getservice($1)) == -1)
 					YYERROR;
 				$$.b = 0;
-				$$.t = PF_RPORT_RANGE;
+				$$.t = PF_OP_RRG;
 			} else {
 				*p++ = 0;
 				if (($$.a = getservice($1)) == -1 ||
 				    ($$.b = getservice(p)) == -1)
 					YYERROR;
-				$$.t = PF_RPORT_RANGE;
+				$$.t = PF_OP_RRG;
 			}
 		}
 		;
@@ -2039,14 +2043,17 @@ redirection	: /* empty */			{ $$ = NULL; }
 
 natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 		{
-			struct pf_nat	nat;
+			struct pf_rule	nat;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
 			memset(&nat, 0, sizeof(nat));
 
-			nat.no = $1;
+			if ($1)
+				nat.action = PF_NONAT;
+			else
+				nat.action = PF_NAT;
 			nat.af = $4;
 
 			if (!nat.af) {
@@ -2058,7 +2065,7 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 					nat.af = $6.dst.host->af;
 			}
 
-			if (nat.no) {
+			if (nat.action == PF_NONAT) {
 				if ($7 != NULL) {
 					yyerror("'no nat' rule does not need "
 					    "'->'");
@@ -2076,16 +2083,17 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 				remove_invalid_hosts(&$7->host, &nat.af);
 				if ($7->host == NULL)
 					YYERROR;
-				nat.proxy_port[0] = ntohs($7->rport.a);
-				nat.proxy_port[1] = ntohs($7->rport.b);
-				if (!nat.proxy_port[0] && !nat.proxy_port[1]) {
-					nat.proxy_port[0] =
+				nat.rpool.proxy_port[0] = ntohs($7->rport.a);
+				nat.rpool.proxy_port[1] = ntohs($7->rport.b);
+				if (!nat.rpool.proxy_port[0] &&
+				    !nat.rpool.proxy_port[1]) {
+					nat.rpool.proxy_port[0] =
 					    PF_NAT_PROXY_PORT_LOW;
-					nat.proxy_port[1] =
+					nat.rpool.proxy_port[1] =
 					    PF_NAT_PROXY_PORT_HIGH;
-				} else if (!nat.proxy_port[1])
-					nat.proxy_port[1] = nat.proxy_port[0];
-
+				} else if (!nat.rpool.proxy_port[1])
+					nat.rpool.proxy_port[1] =
+					    nat.rpool.proxy_port[0];
 				if ($7->host->next) {
 					nat.rpool.opts = $8.type;
 					if (nat.rpool.opts == PF_POOL_NONE)
@@ -2130,14 +2138,20 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 
 binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 		{
-			struct pf_binat	binat;
+			struct pf_rule		binat;
+			struct pf_pooladdr	*pa;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
 			memset(&binat, 0, sizeof(binat));
 
-			binat.no = $1;
+			if ($1)
+				binat.action = PF_NOBINAT;
+			else
+				binat.action = PF_BINAT;
+			binat.af = $4;
+
 			if ($3 != NULL) {
 				memcpy(binat.ifname, $3->ifname,
 				    sizeof(binat.ifname));
@@ -2170,10 +2184,10 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = $7->af;
-				memcpy(&binat.saddr.addr, &$7->addr.addr,
-				    sizeof(binat.saddr.addr));
-				memcpy(&binat.saddr.mask, &$7->addr.mask,
-				    sizeof(binat.saddr.mask));
+				memcpy(&binat.src.addr.addr, &$7->addr.addr,
+				    sizeof(binat.src.addr.addr));
+				memcpy(&binat.src.addr.mask, &$7->addr.mask,
+				    sizeof(binat.src.addr.mask));
 				free($7);
 			}
 			if ($9 != NULL) {
@@ -2194,15 +2208,15 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = $9->af;
-				memcpy(&binat.daddr.addr, &$9->addr.addr,
-				    sizeof(binat.daddr.addr));
-				memcpy(&binat.daddr.mask, &$9->addr.mask,
-				    sizeof(binat.daddr.mask));
-				binat.dnot  = $9->not;
+				memcpy(&binat.dst.addr.addr, &$9->addr.addr,
+				    sizeof(binat.dst.addr.addr));
+				memcpy(&binat.dst.addr.mask, &$9->addr.mask,
+				    sizeof(binat.dst.addr.mask));
+				binat.dst.not  = $9->not;
 				free($9);
 			}
 
-			if (binat.no) {
+			if (binat.action == PF_NOBINAT) {
 				if ($10 != NULL) {
 					yyerror("'no binat' rule does not need"
 					    " '->'");
@@ -2223,64 +2237,78 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					    "address");
 					YYERROR;
 				}
-				memcpy(&binat.raddr.addr, &$10->host->addr.addr,
-				    sizeof(binat.raddr.addr));
-				memcpy(&binat.raddr.mask, &$10->host->addr.mask,
-				    sizeof(binat.raddr.mask));
-				if (!PF_AZERO(&binat.saddr.mask, binat.af) &&
-				    !PF_AEQ(&binat.saddr.mask,
-				    &binat.raddr.mask, binat.af)) {
+
+				if (!PF_AZERO(&binat.src.addr.mask, binat.af) &&
+				    !PF_AEQ(&binat.src.addr.mask,
+				    &$10->host->addr.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
 				}
+
+				TAILQ_INIT(&binat.rpool.list);
+				pa = calloc(1, sizeof(struct pf_pooladdr));
+				if (pa == NULL) {
+					yyerror("calloc");
+					YYERROR;
+				}
+				pa->addr.addr = $10->host->addr;
+				pa->ifname[0] = 0;
+				TAILQ_INSERT_TAIL(&binat.rpool.list,
+				    pa, entries);
+
 				free($10);
 			}
 
-			pfctl_add_binat(pf, &binat);
+			pfctl_add_rule(pf, &binat);
 		}
 		;
 
 rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool pooltype
 		{
-			struct pf_rdr	rdr;
+			struct pf_rule	rdr;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
 			memset(&rdr, 0, sizeof(rdr));
 
-			rdr.no = $1;
+			if ($1)
+				rdr.action = PF_NORDR;
+			else
+				rdr.action = PF_RDR;
 			rdr.af = $4;
+
+			rdr.action = PF_RDR;
 			if ($7 != NULL) {
-				memcpy(&rdr.saddr.addr, &$7->addr.addr,
-				    sizeof(rdr.saddr.addr));
-				memcpy(&rdr.saddr.mask, &$7->addr.mask,
-				    sizeof(rdr.saddr.mask));
-				rdr.snot  = $7->not;
+				memcpy(&rdr.src.addr.addr, &$7->addr.addr,
+				    sizeof(rdr.src.addr.addr));
+				memcpy(&rdr.src.addr.mask, &$7->addr.mask,
+				    sizeof(rdr.src.addr.mask));
+				rdr.src.not  = $7->not;
 				if (!rdr.af && !$7->ifindex)
 					rdr.af = $7->af;
 			}
 			if ($9 != NULL) {
-				memcpy(&rdr.daddr.addr, &$9->addr.addr,
-				    sizeof(rdr.daddr.addr));
-				memcpy(&rdr.daddr.mask, &$9->addr.mask,
-				    sizeof(rdr.daddr.mask));
-				rdr.dnot  = $9->not;
+				memcpy(&rdr.dst.addr.addr, &$9->addr.addr,
+				    sizeof(rdr.dst.addr.addr));
+				memcpy(&rdr.dst.addr.mask, &$9->addr.mask,
+				    sizeof(rdr.dst.addr.mask));
+				rdr.dst.not  = $9->not;
 				if (!rdr.af && !$9->ifindex)
 					rdr.af = $9->af;
 			}
 
-			rdr.dport  = $10.a;
-			rdr.dport2 = $10.b;
-			rdr.opts  |= $10.t;
+			rdr.dst.port[0] = $10.a;
+			rdr.dst.port[1] = $10.b;
+			rdr.dst.port_op |= $10.t;
 
 			if ($12.type == PF_POOL_NONE)
 				rdr.rpool.opts = PF_POOL_RANDOM;
 			else
 				rdr.rpool.opts = $12.type;
 
-			if (rdr.no) {
+			if (rdr.action == PF_NORDR) {
 				if ($11 != NULL) {
 					yyerror("'no rdr' rule does not need '->'");
 					YYERROR;
@@ -2297,8 +2325,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 				remove_invalid_hosts(&$11->host, &rdr.af);
 				if ($11->host == NULL)
 					YYERROR;
-				rdr.rport  = $11->rport.a;
-				rdr.opts  |= $11->rport.t;
+				rdr.rpool.proxy_port[0]  = $11->rport.a;
+				rdr.rpool.port_op  |= $11->rport.t;
 
 				if ($11->host->next) {
 					rdr.rpool.opts = $12.type;
@@ -2350,13 +2378,14 @@ dport		: /* empty */			{
 			if (p == NULL) {
 				if (($$.a = getservice($2)) == -1)
 					YYERROR;
-				$$.b = $$.t = 0;
+				$$.b = 0;
+				$$.t = PF_OP_EQ;
 			} else {
 				*p++ = 0;
 				if (($$.a = getservice($2)) == -1 ||
 				    ($$.b = getservice(p)) == -1)
 					YYERROR;
-				$$.t = PF_DPORT_RANGE;
+				$$.t = PF_OP_RRG;
 			}
 		}
 		;
@@ -2550,14 +2579,14 @@ rule_consistent(struct pf_rule *r)
 }
 
 int
-nat_consistent(struct pf_nat *r)
+nat_consistent(struct pf_rule *r)
 {
 	int			 problems = 0;
 	struct pf_pooladdr	*pa;
 
 	if (!r->af) {
 		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-			if (pa->addr.addr_dyn != NULL) {
+			if (pa->addr.addr.addr_dyn != NULL) {
 				yyerror("dynamic addresses require "
 				    "address family (inet/inet6)");
 				problems++;
@@ -2569,24 +2598,25 @@ nat_consistent(struct pf_nat *r)
 }
 
 int
-rdr_consistent(struct pf_rdr *r)
+rdr_consistent(struct pf_rule *r)
 {
 	int			 problems = 0;
 	struct pf_pooladdr	*pa;
 
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
-	    (r->dport || r->dport2 || r->rport)) {
+	    (r->dst.port[0] || r->dst.port[1] || r->rpool.proxy_port[0])) {
 		yyerror("port only applies to tcp/udp");
 		problems++;
 	}
 	if (!r->af) {
-		if (r->saddr.addr_dyn != NULL || r->daddr.addr_dyn != NULL) {
+		if (r->src.addr.addr_dyn != NULL ||
+		    r->dst.addr.addr_dyn != NULL) {
 			yyerror("dynamic addresses require address family "
 			    "(inet/inet6)");
 			problems++;
 		} else {
 			TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-				if (pa->addr.addr_dyn != NULL) {
+				if (pa->addr.addr.addr_dyn != NULL) {
 					yyerror("dynamic addresses require "
 					    "address family (inet/inet6)");
 					problems++;
@@ -2925,7 +2955,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 
 void
 expand_rule(struct pf_rule *r,
-    struct node_if *interfaces, struct node_host *rt_pool_hosts,
+    struct node_if *interfaces, struct node_host *rpool_hosts,
     struct node_proto *protos, struct node_host *src_hosts,
     struct node_port *src_ports, struct node_host *dst_hosts,
     struct node_port *dst_ports, struct node_uid *uids,
@@ -3017,19 +3047,19 @@ expand_rule(struct pf_rule *r,
 			error++;
 		}
 
-		TAILQ_INIT(&r->rt_pool.list);
-		for (h = rt_pool_hosts; h != NULL; h = h->next) {
+		TAILQ_INIT(&r->rpool.list);
+		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
 				yyerror("calloc");
 				error++;
 			}
-			pa->addr = h->addr;
+			pa->addr.addr = h->addr;
 			if (h->ifname != NULL)
 				strlcpy(pa->ifname, h->ifname, IFNAMSIZ);
 			else
 				pa->ifname[0] = 0;
-			TAILQ_INSERT_TAIL(&r->rt_pool.list, pa, entries);
+			TAILQ_INSERT_TAIL(&r->rpool.list, pa, entries);
 		}
 
 		if (rule_consistent(r) < 0 || error)
@@ -3051,14 +3081,14 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_uid, uids);
 	FREE_LIST(struct node_gid, gids);
 	FREE_LIST(struct node_icmp, icmp_types);
-	FREE_LIST(struct node_host, rt_pool_hosts);
+	FREE_LIST(struct node_host, rpool_hosts);
 
 	if (!added)
 		yyerror("rule expands to no valid combination");
 }
 
 void
-expand_nat(struct pf_nat *n,
+expand_nat(struct pf_rule *n,
     struct node_if *interfaces, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
@@ -3124,7 +3154,7 @@ expand_nat(struct pf_nat *n,
 				yyerror("calloc");
 				error++;
 			}
-			pa->addr = h->addr;
+			pa->addr.addr = h->addr;
 			pa->ifname[0] = 0;
 			TAILQ_INSERT_TAIL(&n->rpool.list, pa, entries);
 		}
@@ -3132,7 +3162,7 @@ expand_nat(struct pf_nat *n,
 		if (nat_consistent(n) < 0 || error)
 			yyerror("skipping nat rule due to errors");
 		else {
-			pfctl_add_nat(pf, n);
+			pfctl_add_rule(pf, n);
 			added++;
 		}
 
@@ -3151,7 +3181,7 @@ expand_nat(struct pf_nat *n,
 }
 
 void
-expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
+expand_rdr(struct pf_rule *r, struct node_if *interfaces,
     struct node_proto *protos, struct node_host *src_hosts,
     struct node_host *dst_hosts, struct node_host *rpool_hosts)
 {
@@ -3191,10 +3221,14 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		else
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 
-		r->proto = proto->proto;
 		r->ifnot = interface->not;
-		r->saddr = src_host->addr;
-		r->daddr = dst_host->addr;
+		r->proto = proto->proto;
+		r->src.addr = src_host->addr;
+		r->src.noroute = src_host->noroute;
+		r->src.not = src_host->not;
+		r->dst.addr = dst_host->addr;
+		r->dst.noroute = dst_host->noroute;
+		r->dst.not = dst_host->not;
 
 		TAILQ_INIT(&r->rpool.list);
 		for (h = rpool_hosts; h != NULL; h = h->next) {
@@ -3203,7 +3237,7 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 				yyerror("calloc");
 				error++;
 			}
-			pa->addr = h->addr;
+			pa->addr.addr = h->addr;
 			pa->ifname[0] = 0;
 			TAILQ_INSERT_TAIL(&r->rpool.list, pa, entries);
 		}
@@ -3211,7 +3245,7 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		if (rdr_consistent(r) < 0 || error)
 			yyerror("skipping rdr rule due to errors");
 		else {
-			pfctl_add_rdr(pf, r);
+			pfctl_add_rule(pf, r);
 			added++;
 		}
 
