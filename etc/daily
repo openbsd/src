@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.44 2003/06/03 22:56:56 mickey Exp $
+#	$OpenBSD: daily,v 1.45 2003/06/30 23:47:14 avsm Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -12,8 +12,8 @@ if [ -f /etc/daily.local ]; then
 	. /etc/daily.local
 fi
 
-TMP=`mktemp /tmp/_daily.XXXXXX` || exit 1
-OUT=`mktemp /tmp/_security.XXXXXX` || {
+TMP=`mktemp /tmp/_daily.XXXXXXXXXX` || exit 1
+OUT=`mktemp /tmp/_security.XXXXXXXXXX` || {
 	rm -f ${TMP}
 	exit 1
 }

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.59 2003/06/15 22:12:32 grange Exp $
+#	$OpenBSD: security,v 1.60 2003/06/30 23:47:14 avsm Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -8,7 +8,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
 umask 077
 
-DIR=`mktemp -d /tmp/_secure.XXXXXX` || exit 1
+DIR=`mktemp -d /tmp/_secure.XXXXXXXXXX` || exit 1
 ERR=$DIR/_secure1
 TMP1=$DIR/_secure2
 TMP2=$DIR/_secure3
