@@ -1,0 +1,6 @@
+# enforce yacc...
+BISON=yacc
+# and we want our libiberty too
+# There is a linker bug on i386 that prevents cc1 from linking correctly
+# with a dynamic library
+#LIBIBERTY=-liberty

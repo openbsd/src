@@ -527,6 +527,7 @@ changequote([,])dnl
 	*-*-openbsd*)
 		tm_file=${cpu_type}/openbsd.h
 		tmake_file="t-libc-ok t-openbsd"
+		xmake_file=x-openbsd
 		# avoid surprises, always provide an xm-openbsd file 
 		xm_file=${cpu_type}/xm-openbsd.h
 		# don't depend on processor x-fragments as well
