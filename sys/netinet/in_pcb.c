@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.16 1997/04/17 02:02:26 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.17 1997/07/27 08:11:10 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
 
+static int baddynamic __P((u_int16_t));
+
 void
 in_pcbinit(table, hashsize)
 	struct inpcbtable *table;
@@ -86,6 +88,30 @@ in_pcbinit(table, hashsize)
 	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_hashtbl = hashinit(hashsize, M_PCB, &table->inpt_hash);
 	table->inpt_lastport = 0;
+}
+
+/*
+ * List of standard locked-down reserved ports.
+ * XXX need to be able to modify this from userland. 
+ */
+static u_int16_t baddynamicports[] = {
+	765, 749, 750, 751, 760, 761, 871,
+	0	/* terminator */
+};
+
+/*
+ * Check if the specified port is invalid for dynamic allocation.
+ */
+static int
+baddynamic(port)
+	u_int16_t port;
+{
+	int i;
+
+	for (i = 0; baddynamicports[i] != 0; i++)
+		if (baddynamicports[i] == port)
+			return (1);
+	return (0);
 }
 
 int
@@ -237,7 +263,8 @@ portloop:
 				if (*lastport > first || *lastport < last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (in_pcblookup(table, zeroin_addr, 0,
+			} while (baddynamic(*lastport) ||
+			    in_pcblookup(table, zeroin_addr, 0,
 			    inp->inp_laddr, lport, wild));
 		} else {
 			/*
@@ -263,7 +290,8 @@ portloop:
 				if (*lastport < first || *lastport > last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (in_pcblookup(table, zeroin_addr, 0,
+			} while (baddynamic(*lastport) ||
+			    in_pcblookup(table, zeroin_addr, 0,
 			    inp->inp_laddr, lport, wild));
 		}
 	}
