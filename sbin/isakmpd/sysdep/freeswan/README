@@ -1,0 +1,16 @@
+$OpenBSD: README,v 1.1 2003/05/14 20:49:37 ho Exp $
+
+Currently, you have to manually configure any IPsec interfaces and do the
+association betweent these and the physical ones.  This is done like
+this in FreeS/WAN:
+
+ipsec tncfg --attach --virtual ipsec0 --physical eth0
+ifconfig ipsec0 A.B.C.D netmask E.F.G.H
+
+Then there is one special configuration option in the IPsec-connection
+sections for Phase 2 of the configuration file, named Next-hop, which
+should be set to the next hop's IP address along the way to the peer:
+
+Next-hop=	I.J.K.L
+
+This is specific to the way FreeS/WAN works.

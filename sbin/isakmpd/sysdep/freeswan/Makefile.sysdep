@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.3 2002/06/10 18:08:59 ho Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.1 2003/05/14 20:49:37 ho Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
