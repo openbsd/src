@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.12 2002/12/20 15:29:54 millert Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.13 2003/03/08 21:29:45 deraadt Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ initarg(struct arglist *al)
 	al->argc = 0;
 	al->maxc = 10;
 	if ((al->argv = malloc(al->maxc * sizeof(char *))) == NULL)
-		err(1, "mailwrapper");
+		err(1, "malloc");
 }
 
 static void
@@ -77,14 +77,14 @@ addarg(struct arglist *al, const char *arg, int copy)
 			if (al->argv)
 				free(al->argv);
 			al->argv = NULL;
-			err(1, "mailwrapper");
+			err(1, "realloc");
 		} else {
 			al->argv = argv2;
 		}
 	}
 	if (copy) {
 		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
-			err(1, "mailwrapper");
+			err(1, "strdup");
 	} else
 		al->argv[al->argc++] = (char *)arg;
 }
@@ -104,20 +104,19 @@ main(int argc, char *argv[], char *envp[])
 	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL) {
 		addarg(&al, NULL, 0);
 		openlog("mailwrapper", LOG_PID, LOG_MAIL);
-		syslog(LOG_INFO, "can't open %s, using %s as default MTA",
+		syslog(LOG_INFO, "cannot open %s, using %s as default MTA",
 		    _PATH_MAILERCONF, _PATH_DEFAULTMTA);
 		closelog();
 		execve(_PATH_DEFAULTMTA, al.argv, envp);
-		err(1, "mailwrapper: execing %s", _PATH_DEFAULTMTA);
+		err(1, "executing %s", _PATH_DEFAULTMTA);
 		/*NOTREACHED*/
 	}
 
 	for (;;) {
 		if ((line = fparseln(config, &len, &lineno, NULL, 0)) == NULL) {
 			if (feof(config))
-				errx(1, "mailwrapper: no mapping in %s",
-				    _PATH_MAILERCONF);
-			err(1, "mailwrapper");
+				errx(1, "no mapping in %s", _PATH_MAILERCONF);
+			err(1, "fparseln");
 		}
 
 #define	WS	" \t\n"
@@ -154,10 +153,10 @@ main(int argc, char *argv[], char *envp[])
 	addarg(&al, NULL, 0);
 
 	execve(to, al.argv, envp);
-	err(1, "mailwrapper: execing %s", to);
+	err(1, "executing %s", to);
 	/*NOTREACHED*/
 parse_error:
-	errx(1, "mailwrapper: parse error in %s at line %lu",
+	errx(1, "parse error in %s at line %lu",
 	    _PATH_MAILERCONF, (u_long)lineno);
 	/*NOTREACHED*/
 }
