@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.36 2001/01/11 18:56:50 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.37 2001/01/29 00:39:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -87,6 +87,9 @@ int	ubsec_process __P((struct cryptop *));
 void	ubsec_callback __P((struct ubsec_q *));
 int	ubsec_feed __P((struct ubsec_softc *));
 void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
+void	ubsec_callback2 __P((struct ubsec_q2 *));
+int	ubsec_feed2 __P((struct ubsec_softc *));
+void	ubsec_rng __P((void *));
 
 #define	READ_REG(sc,r) \
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
@@ -131,13 +134,18 @@ ubsec_attach(parent, self, aux)
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
+	SIMPLEQ_INIT(&sc->sc_queue2);
+	SIMPLEQ_INIT(&sc->sc_qchip2);
 
+	sc->sc_statmask = BS_STAT_MCR1_DONE | BS_STAT_DMAERR;
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) ||
 	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)) {
+		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 		sc->sc_5601 = 1;
-
+	}
+	
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -190,6 +198,11 @@ ubsec_attach(parent, self, aux)
 	    READ_REG(sc, BS_CTRL) | BS_CTRL_MCR1INT | BS_CTRL_DMAERR |
 	    (sc->sc_5601 ? BS_CTRL_MCR2INT : 0));
 
+	if (sc->sc_5601) {
+		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
+		timeout_add(&sc->sc_rngto, hz);
+	}
+
 	printf(": %s\n", intrstr);
 }
 
@@ -200,12 +213,13 @@ ubsec_intr(arg)
 	struct ubsec_softc *sc = arg;
 	volatile u_int32_t stat, a;
 	struct ubsec_q *q;
+	struct ubsec_q2 *q2;
 	struct ubsec_mcr *mcr;
 	int npkts = 0, i;
 
 	stat = READ_REG(sc, BS_STAT);
 
-	stat &= (BS_STAT_MCR1_DONE | BS_STAT_MCR2_DONE | BS_STAT_DMAERR);
+	stat &= sc->sc_statmask;
 	if (stat == 0)
 		return (0);
 
@@ -259,6 +273,19 @@ ubsec_intr(arg)
 		if (npkts > 1)
 			printf("intr: %d pkts\n", npkts);
 #endif
+		ubsec_feed(sc);
+	}
+
+	if (sc->sc_5601 && (stat & BS_STAT_MCR2_DONE)) {
+		while (!SIMPLEQ_EMPTY(&sc->sc_qchip2)) {
+			q2 = SIMPLEQ_FIRST(&sc->sc_qchip2);
+
+			if ((q2->q_mcr->mcr_flags & UBS_MCR_DONE) == 0)
+				break;
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip2, q2, q_next);
+			ubsec_callback2(q2);
+			ubsec_feed2(sc);
+		}
 	}
 
 	if (stat & BS_STAT_DMAERR) {
@@ -266,10 +293,8 @@ ubsec_intr(arg)
 		printf("%s: dmaerr %s@%08x\n", sc->sc_dv.dv_xname,
 		    (a & BS_ERR_READ) ? "read" : "write",
 		    a & ~BS_ERR_READ);
-		panic("to let theo see things");
 	}
 
-	ubsec_feed(sc);
 	return (1);
 }
 
@@ -549,7 +574,7 @@ ubsec_process(crp)
 	sc = ubsec_cd.cd_devs[card];
 
 	s = splnet();
-	if (sc->sc_nqueue == UBS_MAX_NQUEUE) {
+	if (sc->sc_nqueue >= UBS_MAX_NQUEUE) {
 		splx(s);
 		err = ENOMEM;
 		goto errout;
@@ -1018,4 +1043,102 @@ ubsec_mcopy(srcm, dstm, hoffset, toffset)
 			dlen = dstm->m_len;
 		}
 	}
+}
+
+/*
+ * feed the key generator, must be called at splnet() or higher.
+ */
+int
+ubsec_feed2(sc)
+	struct ubsec_softc *sc;
+{
+	struct ubsec_q2 *q;
+
+	while (!SIMPLEQ_EMPTY(&sc->sc_queue2)) {
+		if (READ_REG(sc, BS_STAT) & BS_STAT_MCR2_FULL)
+			break;
+		q = SIMPLEQ_FIRST(&sc->sc_queue2);
+		WRITE_REG(sc, BS_MCR2, (u_int32_t)vtophys(q->q_mcr));
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue2, q, q_next);
+		--sc->sc_nqueue2;
+		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip2, q, q_next);
+	}
+	return (0);
+}
+
+void
+ubsec_callback2(q)
+	struct ubsec_q2 *q;
+{
+	struct ubsec_keyctx *ctx = q->q_ctx;
+
+	switch (ctx->ctx_op) {
+	case UBS_CTXOP_RNGBYPASS: {
+		struct ubsec_rng *rng = q->q_private;
+		volatile u_int32_t *dat;
+		int i;
+
+		dat = rng->rng_buf;
+		for (i = 0; i < UBS_RNGBUFSZ; i++, dat++)
+			add_true_randomness(*dat);
+		free(rng, M_DEVBUF);
+		free(q, M_DEVBUF);
+		break;
+	}
+	default:
+		printf("%s: unknown ctx op: %x\n", ctx->ctx_op);
+		break;
+	}
+}
+
+void
+ubsec_rng(vsc)
+	void *vsc;
+{
+	struct ubsec_softc *sc = vsc;
+	struct ubsec_q2 *q;
+	struct ubsec_rng *rng;
+	int s;
+
+	s = splnet();
+	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE) {
+		splx(s);
+		goto out;
+	}
+	splx(s);
+	
+	q = (struct ubsec_q2 *)malloc(sizeof(struct ubsec_q2), M_DEVBUF, M_NOWAIT);
+	if (q == NULL)
+		goto out;
+
+	rng = (struct ubsec_rng *)malloc(sizeof(struct ubsec_rng),
+	    M_DEVBUF, M_NOWAIT);
+	if (rng == NULL) {
+		free(q, M_DEVBUF);
+		goto out;
+	}
+
+	q->q_mcr = &rng->rng_mcr;
+	q->q_ctx = &rng->rng_ctx;
+	q->q_private = rng;
+	q->q_sc = sc;
+
+	bzero(rng, sizeof(*rng));
+
+	rng->rng_mcr.mcr_pkts = 1;
+	rng->rng_mcr.mcr_cmdctxp = (u_int32_t)vtophys(&rng->rng_ctx);
+	rng->rng_ctx.rbp_len = sizeof(struct ubsec_rngbypass_ctx);
+	rng->rng_ctx.rbp_op = UBS_CTXOP_RNGBYPASS;
+	rng->rng_mcr.mcr_opktbuf.pb_addr = (u_int32_t)vtophys(&rng->rng_buf[0]);
+	rng->rng_mcr.mcr_opktbuf.pb_len = ((sizeof(u_int32_t) * UBS_RNGBUFSZ))
+	    & UBS_PKTBUF_LEN;
+
+	s = splnet();
+	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, q, q_next);
+	sc->sc_nqueue2++;
+	ubsec_feed2(sc);
+	splx(s);
+
+out:
+	timeout_add(&sc->sc_rngto, hz);
 }
