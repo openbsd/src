@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.12 2000/04/19 07:27:42 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.13 2000/04/19 07:52:45 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ void	pcic_queue_event __P((struct pcic_handle *, int));
 void	pcic_wait_ready __P((struct pcic_handle *));
 
 u_int8_t st_pcic_read __P((struct pcic_handle *, int));
-void st_pcic_write __P((struct pcic_handle *, int, int));
+void	st_pcic_write __P((struct pcic_handle *, int, int));
 
 struct cfdriver pcic_cd = {
 	NULL, "pcic", DV_DULL
@@ -461,7 +461,8 @@ pcic_event_thread(arg)
 			}
 			splx(s);
 				
-			DPRINTF(("%s: insertion event\n", h->ph_parent->dv_xname));
+			DPRINTF(("%s: insertion event\n",
+			    h->ph_parent->dv_xname));
 			pcic_attach_card(h);
 			break;
 
@@ -487,7 +488,8 @@ pcic_event_thread(arg)
 			}
 			splx(s);
 
-			DPRINTF(("%s: removal event\n", h->ph_parent->dv_xname));
+			DPRINTF(("%s: removal event\n",
+			    h->ph_parent->dv_xname));
 			pcic_detach_card(h, DETACH_FORCE);
 			break;
 
@@ -716,10 +718,12 @@ pcic_intr_socket(h)
 		/* shouldn't happen */
 	}
 	if (cscreg & PCIC_CSC_BATTWARN) {
-		DPRINTF(("%s: %02x BATTWARN\n", h->ph_parent->dv_xname, h->sock));
+		DPRINTF(("%s: %02x BATTWARN\n", h->ph_parent->dv_xname,
+		    h->sock));
 	}
 	if (cscreg & PCIC_CSC_BATTDEAD) {
-		DPRINTF(("%s: %02x BATTDEAD\n", h->ph_parent->dv_xname, h->sock));
+		DPRINTF(("%s: %02x BATTDEAD\n", h->ph_parent->dv_xname,
+		    h->sock));
 	}
 	return (cscreg ? 1 : 0);
 }
