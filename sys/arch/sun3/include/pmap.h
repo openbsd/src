@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.6 1997/01/16 04:04:09 kstailey Exp $	*/
-/*	$NetBSD: pmap.h,v 1.15 1996/11/20 18:57:16 gwr Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 1997/02/19 00:03:34 kstailey Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 1997/01/27 19:41:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -27,8 +27,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -56,22 +56,17 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
-struct pmap	kernel_pmap_store;
-struct pcb;
-void pmap_activate   __P((pmap_t pmap, struct pcb *pcbp));
-void pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
-
+extern struct pmap	kernel_pmap_store;
 #define	pmap_kernel()			(&kernel_pmap_store)
 
-#define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
-	pmap_activate(pmap, pcbp)
-#define PMAP_DEACTIVATE(pmap, pcbp) \
-	pmap_deactivate(pmap, pcbp)
+/* This is called from locore.s:cpu_switch() */
+void pmap_activate   __P((pmap_t pmap));
 
+/* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vm_offset_t, vm_offset_t *);
 #define PMAP_PREFER(fo, ap) pmap_prefer((fo), (ap))
 
-/* XXX - Need a (silly) #define get code in kern_sysctl.c */
+/* This needs to be a macro to get code in kern_sysctl.c */
 extern segsz_t pmap_resident_pages(pmap_t);
 #define	pmap_resident_count(pmap)	pmap_resident_pages(pmap)
 

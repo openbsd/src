@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.14 1997/02/14 23:50:20 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.15 1997/02/19 00:03:35 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -661,8 +661,8 @@ __isr_clock:
 	jra	rei
 
 | Handler for all vectored interrupts (i.e. VME interrupts)
-	.globl	_isr_vectored
-	.globl	__isr_vectored
+	.align	2
+	.globl	__isr_vectored, _isr_vectored
 __isr_vectored:
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
@@ -1076,10 +1076,9 @@ Lswnofpsave:
 | Important note:  We MUST call pmap_activate to set the
 | MMU context register (like setting a root table pointer).
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
-	pea	a1@			| push pcb (at p_addr)
 	pea	a0@			| push pmap
-	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
-	addql	#8,sp
+	jbsr	_pmap_activate		| pmap_activate(pmap)
+	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
 
 | XXX - Should do this in pmap_activeate only if context reg changed.
