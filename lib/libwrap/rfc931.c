@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.6 2001/11/17 20:03:54 deraadt Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.7 2002/04/25 10:58:39 mpech Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.6 2001/11/17 20:03:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.7 2002/04/25 10:58:39 mpech Exp $";
 #endif
 
 #include <stdio.h>
@@ -97,10 +97,12 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 		salen = sizeof(struct sockaddr_in);
 		rmt_portp = &(((struct sockaddr_in *)rmt_sin)->sin_port);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		salen = sizeof(struct sockaddr_in6);
 		rmt_portp = &(((struct sockaddr_in6 *)rmt_sin)->sin6_port);
 		break;
+#endif
 	default:
 		goto out1;
 	}
@@ -108,9 +110,11 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 	case AF_INET:
 		our_portp = &(((struct sockaddr_in *)our_sin)->sin_port);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		our_portp = &(((struct sockaddr_in6 *)our_sin)->sin6_port);
 		break;
+#endif
 	default:
 		goto out1;
 	}
@@ -148,9 +152,11 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 	case AF_INET:
 		((struct sockaddr_in *)&our_query_sin)->sin_port = htons(0);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		((struct sockaddr_in6 *)&our_query_sin)->sin6_port = htons(0);
 		break;
+#endif
 	}
 	memcpy(&rmt_query_sin, rmt_sin, salen);
 	switch (rmt_query_sin.ss_family) {
@@ -158,10 +164,12 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 		((struct sockaddr_in *)&rmt_query_sin)->sin_port =
 		    htons(IDENT_PORT);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		((struct sockaddr_in6 *)&rmt_query_sin)->sin6_port =
 		    htons(IDENT_PORT);
 		break;
+#endif
 	}
 	
 	if (bind(s, (struct sockaddr *) & our_query_sin, salen) == -1)
