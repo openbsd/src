@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.24 2000/03/09 15:03:29 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.25 2000/11/10 17:46:08 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -255,9 +255,8 @@ doit(f, fromp)
 			hints.ai_family = fromp->sa_family;
 			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_flags = AI_CANONNAME;
+			res0 = NULL;
 			gaierror = getaddrinfo(hostname, "0", &hints, &res0);
-			if (gaierror)
-				res0 = NULL;
 			for (res = res0; good == 0 && res; res = res->ai_next) {
 				if (res->ai_family != fromp->sa_family)
 					continue;
