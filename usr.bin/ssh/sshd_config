@@ -1,4 +1,4 @@
-#	$OpenBSD: sshd_config,v 1.41 2001/06/22 21:55:50 markus Exp $
+#	$OpenBSD: sshd_config,v 1.42 2001/09/20 20:57:51 mouring Exp $
 
 # This is the sshd server system-wide configuration file.  See sshd(8)
 # for more information.
@@ -65,7 +65,6 @@ X11DisplayOffset 10
 PrintMotd yes
 #PrintLastLog no
 KeepAlive yes
-#CheckMail yes
 #UseLogin no
 
 #MaxStartups 10:30:60
