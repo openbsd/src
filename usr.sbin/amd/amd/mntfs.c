@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mntfs.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mntfs.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $";
+static char *rcsid = "$Id: mntfs.c,v 1.2 1997/06/24 07:48:40 deraadt Exp $";
 #endif /* not lint */
 
 
@@ -234,7 +234,6 @@ static void uninit_mntfs(mf, rmd)
 mntfs *mf;
 int rmd;
 {
-	if (mf->mf_mount) free((voidp) mf->mf_mount);
 	if (mf->mf_auto) free((voidp) mf->mf_auto);
 	if (mf->mf_mopts) free((voidp) mf->mf_mopts);
 	if (mf->mf_remopts) free((voidp) mf->mf_remopts);
@@ -246,6 +245,7 @@ int rmd;
 	 */
 	if (rmd && (mf->mf_flags & MFF_MKMNT))
 		rmdirs(mf->mf_mount);
+	if (mf->mf_mount) free((voidp) mf->mf_mount);
 
 	/*
 	 * Clean up the file server
