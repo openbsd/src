@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: bootparams.5,v 1.1.1.1 1995/10/18 08:48:05 deraadt Exp $
+.\"	$Id: bootparams.5,v 1.2 1996/06/18 16:56:46 deraadt Exp $
 .\"
 .Dd October 2, 1994
 .Dt BOOTPARAMS 5
@@ -57,9 +57,9 @@ and may be continued onto multiple lines with a backslash.
 .Pp
 For example:
 .Bd -literal -offset indent
-dummy	root=/export/dummy/root \\
-	swap=/export/dummy/swap \\
-	dump=/export/dummy/swap
+dummy	root=server:/export/dummy/root \\
+	swap=server:/export/dummy/swap \\
+	dump=server:/export/dummy/swap
 .Ed
 .Pp
 When the client named "dummy" requests the pathname for
