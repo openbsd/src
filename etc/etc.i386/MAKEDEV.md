@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.24 2004/05/30 08:17:18 grange Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.25 2004/06/03 18:36:59 grange Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -71,6 +71,7 @@ _DEV(bktr, 49)
 _DEV(bpf, 23)
 _DEV(cry, 70)
 _DEV(fdesc, 22)
+_DEV(gpio, 83)
 _DEV(gpr, 80)
 _DEV(hotplug, 82)
 _DEV(iop, 75)
@@ -126,6 +127,7 @@ target(all, sd, 0, 1, 2, 3, 4)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 target(all, bktr, 0)dnl
+target(all, gpio, 0, 1, 2)dnl
 target(ramd, tty0, 0, 1, 2, 3)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
 target(ramd, wt, 0)dnl

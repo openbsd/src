@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.9 2004/05/30 08:17:17 grange Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -550,4 +550,6 @@ __devitem(gpr, gpr*, GPR400 smartcard reader)dnl
 _mcdev(gpr, gpr*, gpr, {-major_gpr_c-})dnl
 __devitem(hotplug, hotplug, devices hot plugging)dnl
 _mkdev(hotplug, hotplug, {-M hotplug c major_hotplug_c $U 400-})dnl
+__devitem(gpio, gpio*, General Purpose Input/Output)dnl
+_mcdev(gpio, gpio*, gpio, {-major_gpio_c-}, 600)dnl
 _mkdev(local, local, {-test -s $T.local && sh $T.local-})dnl
