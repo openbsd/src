@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.30 2004/01/29 01:25:13 mcbride Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.31 2004/02/10 22:26:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,7 +58,7 @@ int	 pfr_clr_addrs(struct pfr_table *, int *, int);
 int	 pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *, int);
 int	 pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *, int);
 int	 pfr_set_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
-	     int *, int *, int *, int);
+	    int *, int *, int *, int);
 int	 pfr_get_addrs(struct pfr_table *, struct pfr_addr *, int *, int);
 int	 pfr_get_astats(struct pfr_table *, struct pfr_astats *, int *, int);
 int	 pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *, int);
@@ -75,8 +75,8 @@ int	 pfr_buf_grow(struct pfr_buffer *, int);
 int	 pfr_buf_load(struct pfr_buffer *, char *, int,
 	    int (*)(struct pfr_buffer *, char *, int));
 char	*pfr_strerror(int);
-int      pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
-int      pfi_clr_istats(const char *, int *, int);
+int	 pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
+int	 pfi_clr_istats(const char *, int *, int);
 
 void	 pfctl_print_title(char *);
 int	 pfctl_clear_tables(const char *, const char *, int);

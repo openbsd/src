@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.80 2004/02/10 17:53:37 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.81 2004/02/10 22:26:56 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -723,7 +723,7 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 		/* if the class has a real-time service curve, add it. */
 		if (opts->rtsc_m2 != 0 && altq->pq_u.hfsc_opts.rtsc_m2 != 0) {
 			sc.m1 = altq->pq_u.hfsc_opts.rtsc_m1;
-			sc.d  = altq->pq_u.hfsc_opts.rtsc_d;
+			sc.d = altq->pq_u.hfsc_opts.rtsc_d;
 			sc.m2 = altq->pq_u.hfsc_opts.rtsc_m2;
 			gsc_add_sc(&rtsc, &sc);
 		}
@@ -734,7 +734,7 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 		/* if the class has a link-sharing service curve, add it. */
 		if (opts->lssc_m2 != 0 && altq->pq_u.hfsc_opts.lssc_m2 != 0) {
 			sc.m1 = altq->pq_u.hfsc_opts.lssc_m1;
-			sc.d  = altq->pq_u.hfsc_opts.lssc_d;
+			sc.d = altq->pq_u.hfsc_opts.lssc_d;
 			sc.m2 = altq->pq_u.hfsc_opts.lssc_m2;
 			gsc_add_sc(&lssc, &sc);
 		}
@@ -743,7 +743,7 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 	/* check the real-time service curve.  reserve 20% of interface bw */
 	if (opts->rtsc_m2 != 0) {
 		sc.m1 = 0;
-		sc.d  = 0;
+		sc.d = 0;
 		sc.m2 = pa->ifbandwidth / 100 * 80;
 		if (!is_gsc_under_sc(&rtsc, &sc)) {
 			warnx("real-time sc exceeds the interface bandwidth");
@@ -754,7 +754,7 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 	/* check the link-sharing service curve. */
 	if (opts->lssc_m2 != 0) {
 		sc.m1 = parent->pq_u.hfsc_opts.lssc_m1;
-		sc.d  = parent->pq_u.hfsc_opts.lssc_d;
+		sc.d = parent->pq_u.hfsc_opts.lssc_d;
 		sc.m2 = parent->pq_u.hfsc_opts.lssc_m2;
 		if (!is_gsc_under_sc(&lssc, &sc)) {
 			warnx("link-sharing sc exceeds parent's sc");
@@ -1012,7 +1012,7 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 	else
 		x2 = x + d;
 	start = gsc_getentry(gsc, x);
-	end   = gsc_getentry(gsc, x2);
+	end = gsc_getentry(gsc, x2);
 	if (start == NULL || end == NULL)
 		return (-1);
 

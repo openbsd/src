@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.54 2004/02/10 18:29:30 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.55 2004/02/10 22:26:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -122,12 +122,12 @@ int
 pfctl_table(int argc, char *argv[], char *tname, const char *command,
     char *file, const char *anchor, const char *ruleset, int opts)
 {
-	struct pfr_table  table;
-	struct pfr_buffer b, b2;
-	struct pfr_addr	 *a, *a2;
-	int		  nadd = 0, ndel = 0, nchange = 0, nzero = 0;
-	int		  rv = 0, flags = 0, nmatch = 0;
-	void		 *p;
+	struct pfr_table	 table;
+	struct pfr_buffer	 b, b2;
+	struct pfr_addr		*a, *a2;
+	int			 nadd = 0, ndel = 0, nchange = 0, nzero = 0;
+	int			 rv = 0, flags = 0, nmatch = 0;
+	void			*p;
 
 	if (command == NULL)
 		usage();

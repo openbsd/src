@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.6 2004/02/10 17:53:37 henning Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.7 2004/02/10 22:26:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -830,7 +830,7 @@ get_int(char **line, size_t *len, int *var, int *mod,
 	}
 
 	for (; i < fieldlen; i++) {
-		if (field[i] < '0'  || field[i] > '9') {
+		if (field[i] < '0' || field[i] > '9') {
 			fprintf(stderr, "%s:%d non-digit character in %s\n",
 			    filename, lineno, name);
 			return (1);

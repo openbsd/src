@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.201 2004/02/10 17:53:37 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.202 2004/02/10 22:26:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -65,7 +65,7 @@ int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
-	     char *, char *);
+	    char *, char *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, int, int, char *, char *);
 int	 pfctl_show_nat(int, int, char *, char *);
@@ -1022,12 +1022,12 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 #define ERR(x) do { warn(x); goto _error; } while(0)
 #define ERRX(x) do { warnx(x); goto _error; } while(0)
 
-	FILE *fin;
-	struct pfr_buffer      *t, buf;
-	struct pfioc_altq	pa;
-	struct pfctl		pf;
-	struct pfr_table	trs;
-	int			osize;
+	FILE			*fin;
+	struct pfr_buffer	*t, buf;
+	struct pfioc_altq	 pa;
+	struct pfctl		 pf;
+	struct pfr_table	 trs;
+	int			 osize;
 
 	if (trans == NULL) {
 	    bzero(&buf, sizeof(buf));
