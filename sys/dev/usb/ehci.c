@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.28 2004/10/31 09:16:22 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.29 2004/10/31 09:26:57 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2057,7 +2057,6 @@ ehci_root_ctrl_close(usbd_pipe_handle pipe)
 void
 ehci_root_intr_done(usbd_xfer_handle xfer)
 {
-	xfer->hcpriv = NULL;
 }
 
 Static usbd_status
@@ -2118,7 +2117,6 @@ ehci_root_intr_close(usbd_pipe_handle pipe)
 void
 ehci_root_ctrl_done(usbd_xfer_handle xfer)
 {
-	xfer->hcpriv = NULL;
 }
 
 /************************/
