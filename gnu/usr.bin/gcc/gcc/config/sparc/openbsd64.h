@@ -107,11 +107,6 @@ Boston, MA 02111-1307, USA.  */
 #define DBX_REGISTER_NUMBER(REGNO) \
   (TARGET_FLAT && (REGNO) == HARD_FRAME_POINTER_REGNUM ? 31 : REGNO)
 
-/* We use stabs-in-elf by default, because that is what the native
-   toolchain uses.  */
-#undef PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
 /* The Solaris 2 assembler uses .skip, not .zero, so put this back.  */
 #undef ASM_OUTPUT_SKIP
 #define ASM_OUTPUT_SKIP(FILE,SIZE)  \
