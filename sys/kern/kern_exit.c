@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.25 2000/06/05 11:02:50 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.26 2000/06/05 14:55:16 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ loop:
 				return (0);
 			}
 
-			scheduler_wait_hook(curproc, p);
+			scheduler_wait_hook(q, p);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			FREE(p->p_ru, M_ZOMBIE);
