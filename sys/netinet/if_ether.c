@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.26 2001/01/19 06:37:37 itojun Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.27 2001/02/05 15:22:11 jason Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ arpintr()
 {
 	register struct mbuf *m;
 	register struct arphdr *ar;
-	int s;
+	int s, len;
 
 	while (arpintrq.ifq_head) {
 		s = splimp();
@@ -411,18 +411,25 @@ arpintr()
 		splx(s);
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
-		if (m->m_len >= sizeof(struct arphdr) &&
-		    (ar = mtod(m, struct arphdr *)) &&
-		    ntohs(ar->ar_hrd) == ARPHRD_ETHER &&
-		    m->m_len >=
-		      sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
-			switch (ntohs(ar->ar_pro)) {
 
-			case ETHERTYPE_IP:
-			case ETHERTYPE_IPTRAILERS:
-				in_arpinput(m);
-				continue;
-			}
+		len = sizeof(struct arphdr);
+		if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+			continue;
+
+		ar = mtod(m, struct arphdr *);
+		if (ntohs(ar->ar_hrd) != ARPHRD_ETHER)
+			continue;
+
+		len += 2 * (ar->ar_hln + ar->ar_pln);
+		if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+			continue;
+
+		switch (ntohs(ar->ar_pro)) {
+		case ETHERTYPE_IP:
+		case ETHERTYPE_IPTRAILERS:
+			in_arpinput(m);
+			continue;
+		}
 		m_freem(m);
 	}
 }
