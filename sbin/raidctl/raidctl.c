@@ -1,5 +1,5 @@
-/*	$OpenBSD: raidctl.c,v 1.4 2000/01/07 14:51:41 peter Exp $	*/
-/*      $NetBSD: raidctl.c,v 1.10 2000/01/05 03:02:41 oster Exp $   */
+/*	$OpenBSD: raidctl.c,v 1.5 2000/01/11 18:03:45 peter Exp $	*/
+/*      $NetBSD: raidctl.c,v 1.11 2000/01/09 03:06:35 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -329,7 +329,6 @@ do_ioctl(fd, command, arg, ioctl_name)
 {
 	if (ioctl(fd, command, arg) < 0) {
 		warn("ioctl (%s) failed", ioctl_name);
-		printf("ioctl (%s) failed", ioctl_name);
 		exit(1);
 	}
 }
