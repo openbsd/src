@@ -1,4 +1,4 @@
-.\" $OpenBSD: ahd.4,v 1.4 2004/07/05 23:29:37 jmc Exp $
+.\" $OpenBSD: ahd.4,v 1.5 2004/07/05 23:36:35 deraadt Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -81,6 +81,7 @@ support
 .El
 .Pp
 To compile in debugging code:
+.Pp
 .Bd -ragged -offset indent -compact
 .Cd options AHD_DEBUG
 .Cd options AHD_DEBUG_OPTS=<bitmask of options>
@@ -88,6 +89,7 @@ To compile in debugging code:
 .Ed
 .Pp
 To configure one or more controllers to assume the target role:
+.Pp
 .Bd -ragged -offset indent -compact
 .Cd options AHD_TMODE_ENABLE=<bitmask of units>
 .Ed
