@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1998/03/01 10:14:13 johns Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1998/05/11 05:42:31 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -682,7 +682,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		v = pc;
 	if (VA_INHOLE(v))
 		goto fault;
-	ftype = ser & SER_WRITE ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+	ftype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
@@ -811,7 +811,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	register struct vmspace *vm;
 	register vm_offset_t va;
 	register int rv;
-	vm_prot_t ftype, vftype;
+	vm_prot_t ftype;
 	int onfault;
 	u_quad_t sticks;
 	union sigval sv;
@@ -923,8 +923,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 
 	/* Now munch on protections... */
 
-	ftype = sfsr & SFSR_AT_STORE ? VM_PROT_READ|VM_PROT_WRITE:VM_PROT_READ;
-	vftype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE:VM_PROT_READ;
+	ftype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ;
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
@@ -1000,7 +999,7 @@ kfault:
 		}
 
 		sv.sival_int = sfva;
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, ftype, SEGV_MAPERR, sv);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
