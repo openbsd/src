@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.35 1999/02/17 23:51:12 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.36 1999/02/19 19:50:43 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -120,6 +120,37 @@ struct	ifqueue ipintrq;
 int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int,
 			  struct mbuf **));
 #endif
+
+int	ipq_locked;
+static __inline int ipq_lock_try __P((void));
+static __inline void ipq_unlock __P((void));
+
+static __inline int
+ipq_lock_try()
+{
+	int s;
+
+	s = splimp();
+	if (ipq_locked) {
+		splx(s);
+		return (0);
+	}
+	ipq_locked = 1;
+	splx(s);
+	return (1);
+}
+
+#define ipq_lock() ipq_lock_try()
+
+static __inline void
+ipq_unlock()
+{
+	int s;
+
+	s = splimp();
+	ipq_locked = 0;
+	splx(s);
+}
 
 char *
 inet_ntoa(ina)
@@ -396,10 +427,12 @@ ours:
 			}
 			ip = mtod(m, struct ip *);
 		}
+
 		/*
 		 * Look for queue of fragments
 		 * of this datagram.
 		 */
+		ipq_lock();
 		for (fp = ipq.lh_first; fp != NULL; fp = fp->ipq_q.le_next)
 			if (ip->ip_id == fp->ipq_id &&
 			    ip->ip_src.s_addr == fp->ipq_src.s_addr &&
@@ -423,6 +456,7 @@ found:
 			 */
 			if (ip->ip_len == 0 || (ip->ip_len & 0x7) != 0) {
 				ipstat.ips_badfrags++;
+				ipq_unlock();
 				goto bad;
 			}
 		}
@@ -438,6 +472,7 @@ found:
 			if (ip_frags + 1 > ip_maxqueue) {
 				ip_flush();
 				ipstat.ips_rcvmemdrop++;
+				ipq_unlock();
 				goto bad;
 			}
 			    
@@ -445,20 +480,24 @@ found:
 			    M_IPQ, M_NOWAIT);
 			if (ipqe == NULL) {
 				ipstat.ips_rcvmemdrop++;
+				ipq_unlock();
 				goto bad;
 			}
 			ip_frags++;
 			ipqe->ipqe_mff = mff;
 			ipqe->ipqe_ip = ip;
 			ip = ip_reass(ipqe, fp);
-			if (ip == 0)
+			if (ip == 0) {
+				ipq_unlock();
 				goto next;
+			}
 			ipstat.ips_reassembled++;
 			m = dtom(ip);
 			hlen = ip->ip_hl << 2;
 		} else
 			if (fp)
 				ip_freef(fp);
+		ipq_unlock();
 	} else
 		ip->ip_len -= hlen;
 
@@ -701,6 +740,7 @@ ip_slowtimo()
 	register struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
+	ipq_lock();
 	for (fp = ipq.lh_first; fp != NULL; fp = nfp) {
 		nfp = fp->ipq_q.le_next;
 		if (--fp->ipq_ttl == 0) {
@@ -708,6 +748,7 @@ ip_slowtimo()
 			ip_freef(fp);
 		}
 	}
+	ipq_unlock();
 	splx(s);
 }
 
@@ -718,10 +759,13 @@ void
 ip_drain()
 {
 
+	if (ipq_lock_try() == 0)
+		return;
 	while (ipq.lh_first != NULL) {
 		ipstat.ips_fragdropped++;
 		ip_freef(ipq.lh_first);
 	}
+	ipq_unlock();
 }
 
 /*
@@ -730,8 +774,10 @@ ip_drain()
 void
 ip_flush()
 {
+	int max = 50;
 
-	while (ipq.lh_first != NULL && ip_frags > ip_maxqueue * 3 / 4) {
+	/* ipq already locked */
+	while (ipq.lh_first != NULL && ip_frags > ip_maxqueue * 3 / 4 && --max) {
 		ipstat.ips_fragdropped++;
 		ip_freef(ipq.lh_first);
 	}
