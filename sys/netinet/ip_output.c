@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.103 2001/06/14 18:00:02 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.104 2001/06/19 18:49:53 jasoni Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -806,6 +806,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	register struct mbuf *m = *mp;
 	register int optval = 0;
 #ifdef IPSEC
+	struct proc *p = curproc; /* XXX */
 	struct ipsec_ref *ipr;
 	u_int16_t opt16val;
 #endif
@@ -925,7 +926,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 			        if (optval < ipsec_auth_default_level &&
-				    (so->so_state & SS_PRIV)) {
+				    suser(p->p_ucred, &p->p_acflag)) {
 					error = EACCES;
 					break;
 				}
@@ -934,7 +935,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_ESP_TRANS_LEVEL:
 			        if (optval < ipsec_esp_trans_default_level &&
-				    (so->so_state & SS_PRIV)) {
+				    suser(p->p_ucred, &p->p_acflag)) {
 					error = EACCES;
 					break;
 				}
@@ -943,7 +944,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_ESP_NETWORK_LEVEL:
 			        if (optval < ipsec_esp_network_default_level &&
-				    (so->so_state & SS_PRIV)) {
+				    suser(p->p_ucred, &p->p_acflag)) {
 					error = EACCES;
 					break;
 				}
