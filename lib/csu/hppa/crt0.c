@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 2002/02/16 21:27:20 millert Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2002/11/10 22:49:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -35,7 +35,7 @@ int	global __asm ("$global$") = 0;
 int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.3 2002/02/16 21:27:20 millert Exp $";
+static const char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2002/11/10 22:49:54 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -61,10 +61,10 @@ extern void	__fini(void);
 #ifdef MCRT0
 extern void	monstartup(u_long, u_long);
 extern void	_mcleanup(void);
-extern u_int etext, eprol;
 #endif /* MCRT0 */
 
 void __start(char **, void (*)(void), const Obj_Entry *);
+static char *__strrchr(const char *p, char ch);
 
 void
 __start(sp, cleanup, obj)
@@ -93,13 +93,24 @@ __start(sp, cleanup, obj)
 	monstartup((u_long)&eprol, (u_long)&etext);
 #endif
 
+	__init();
+
 	exit(main(arginfo->ps_nargvstr, argv, environ));
 }
 
-void __main() {}
+static char *
+__strrchr(const char *p, char ch)
+{
+	char *save;
 
-#include "common.c"
+	for (save = NULL;; ++p) {
+		if (*p == ch)
+			save = (char *)p;
+		if (!*p)
+			return(save);
+	}
+}
 
 #ifdef MCRT0
-__asm __volatile(".export eprol, entry\neprol");
+__asm (".export eprol, entry\neprol");
 #endif
