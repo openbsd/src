@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.9 2002/07/10 21:41:51 mickey Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.10 2002/07/12 12:03:51 todd Exp $ */
 /*	$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $	*/
 
 /*
@@ -165,6 +165,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E3002 }, 0 },
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_9600 }, 0 },
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_600U }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_6200 }, 0 },
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_19200 }, 0 },
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_1200U }, 0 },
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G600 }, 0 },
