@@ -250,6 +250,7 @@ espattach(parent, self, aux)
 		espr->espr_cfg3 = ESPCFG3_CDB | ESPCFG3_FCLK;
 		if (espr->espr_cfg3 != (ESPCFG3_CDB | ESPCFG3_FCLK)) {
 			printf(": ESP100A");
+			/* XXX sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_FE; */
 			sc->sc_rev = ESP100A;
 		} else {
 			espr->espr_cfg3 = 0;
