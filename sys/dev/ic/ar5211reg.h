@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211reg.h,v 1.1 2005/02/25 22:25:30 reyk Exp $	*/
+/*	$OpenBSD: ar5211reg.h,v 1.2 2005/03/10 08:30:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -549,6 +549,7 @@ typedef enum {
  */
 #define AR5K_AR5211_SCR			0x4004
 #define AR5K_AR5211_SCR_SLDUR		0x0000ffff
+#define AR5K_AR5211_SCR_SLDUR_S		0
 #define AR5K_AR5211_SCR_SLE		0x00030000
 #define AR5K_AR5211_SCR_SLE_S		16
 #define AR5K_AR5211_SCR_SLE_WAKE	0x00000000

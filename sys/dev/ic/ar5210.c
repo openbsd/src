@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.13 2005/02/17 23:52:05 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.14 2005/03/10 08:30:55 reyk Exp $        */
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -207,7 +207,7 @@ ar5k_ar5210_attach(device, sc, st, sh, status)
 	hal->ah_radio = AR5K_AR5110;
 	hal->ah_phy = AR5K_AR5210_PHY(0);
 
-	memset(&mac, 0xff, sizeof(mac));
+	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
 	ar5k_ar5210_writeAssocid(hal, mac, 0, 0);
 	ar5k_ar5210_getMacAddress(hal, mac);
 	ar5k_ar5210_setPCUConfig(hal);
@@ -484,8 +484,8 @@ ar5k_ar5210_setPCUConfig(hal)
 	/*
 	 * Set PCU and BCR registers
 	 */
-	memcpy(&low_id, &(hal->ah_sta_id[0]), 4);
-	memcpy(&high_id, &(hal->ah_sta_id[4]), 2);
+	bcopy(&(hal->ah_sta_id[0]), &low_id, 4);
+	bcopy(&(hal->ah_sta_id[4]), &high_id, 2);
 	AR5K_REG_WRITE(AR5K_AR5210_STA_ID0, low_id);
 	AR5K_REG_WRITE(AR5K_AR5210_STA_ID1, pcu_reg | high_id);
 	AR5K_REG_WRITE(AR5K_AR5210_BCR, beacon_reg);
@@ -1087,7 +1087,7 @@ ar5k_ar5210_fillTxDesc(hal, desc, segment_length, first_segment, last_segment)
 	tx_desc = (struct ar5k_ar5210_tx_desc*)&desc->ds_ctl0;
 
 	/* Clear status descriptor */
-	desc->ds_hw[0] = desc->ds_hw[1] = 0;
+	bzero(desc->ds_hw, sizeof(desc->ds_hw));
 
 	/* Validate segment length and initialize the descriptor */
 	if ((tx_desc->buf_len = segment_length) != segment_length)
@@ -1519,7 +1519,7 @@ ar5k_ar5210_getMacAddress(hal, mac)
 	struct ath_hal *hal;
 	u_int8_t *mac;
 {
-	memcpy(mac, hal->ah_sta_id, IEEE80211_ADDR_LEN);
+	bcopy(hal->ah_sta_id, mac, IEEE80211_ADDR_LEN);
 }
 
 HAL_BOOL
@@ -1530,10 +1530,10 @@ ar5k_ar5210_setMacAddress(hal, mac)
 	u_int32_t low_id, high_id;
 
 	/* Set new station ID */
-	memcpy(hal->ah_sta_id, mac, IEEE80211_ADDR_LEN);
+	bcopy(mac, hal->ah_sta_id, IEEE80211_ADDR_LEN);
 
-	memcpy(&low_id, mac, 4);
-	memcpy(&high_id, mac + 4, 2);
+	bcopy(mac, &low_id, 4);
+	bcopy(mac + 4, &high_id, 2);
 	high_id = 0x0000ffff & htole32(high_id);
 
 	AR5K_REG_WRITE(AR5K_AR5210_STA_ID0, htole32(low_id));
@@ -1609,12 +1609,12 @@ ar5k_ar5210_writeAssocid(hal, bssid, assoc_id, tim_offset)
 	/*
 	 * Set BSSID which triggers the "SME Join" operation
 	 */
-	memcpy(&low_id, bssid, 4);
-	memcpy(&high_id, bssid + 4, 2);
-	memcpy(&hal->ah_bssid, bssid, IEEE80211_ADDR_LEN);
+	bcopy(bssid, &low_id, 4);
+	bcopy(bssid + 4, &high_id, 2);
 	AR5K_REG_WRITE(AR5K_AR5210_BSS_ID0, htole32(low_id));
 	AR5K_REG_WRITE(AR5K_AR5210_BSS_ID1, htole32(high_id) |
 	    ((assoc_id & 0x3fff) << AR5K_AR5210_BSS_ID1_AID_S));
+	bcopy(bssid, &hal->ah_bssid, IEEE80211_ADDR_LEN);
 
 	if (assoc_id == 0) {
 		ar5k_ar5210_disablePSPoll(hal);

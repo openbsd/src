@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.16 2005/03/03 16:39:54 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.17 2005/03/10 08:30:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -202,6 +202,10 @@ ath_hal_attach(device, sc, st, sh, status)
 
 	if (attach(device, hal, st, sh, status) == NULL)
 		goto failed;
+
+#ifdef AR5K_DEBUG
+	hal->ah_dumpState(hal);
+#endif
 
 	/*
 	 * Get card capabilities, values, ...
@@ -492,7 +496,7 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	}
 
  done:
-	memcpy(channels, &all_channels, sizeof(all_channels));
+	bcopy(all_channels, channels, sizeof(all_channels));
 	*channels_size = c;
 
 	return (AH_TRUE);
@@ -612,9 +616,9 @@ ar5k_rt_copy(dst, src)
 	HAL_RATE_TABLE *dst;
 	HAL_RATE_TABLE *src;
 {
-	memset(dst, 0, sizeof(HAL_RATE_TABLE));
+	bzero(dst, sizeof(HAL_RATE_TABLE));
 	dst->rateCount = src->rateCount;
-	memcpy(&dst->info, &src->info, sizeof(dst->info));
+	bcopy(src->info, dst->info, sizeof(dst->info));
 }
 
 HAL_BOOL
@@ -1031,7 +1035,7 @@ ar5k_eeprom_read_mac(hal, mac)
 		octet += 2;
 	}
 
-	memcpy(mac, &mac_d, IEEE80211_ADDR_LEN);
+	bcopy(mac_d, mac, IEEE80211_ADDR_LEN);
 
 	if ((!total) || total == (3 * 0xffff))
 		return (EINVAL);
@@ -1078,7 +1082,6 @@ ar5k_channel(hal, channel)
 	HAL_CHANNEL *channel;
 {
 	HAL_BOOL ret;
-	AR5K_TRACE;
 
 	/*
 	 * Check bounds supported by the PHY

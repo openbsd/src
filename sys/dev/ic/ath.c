@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.12 2005/03/10 03:12:30 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.13 2005/03/10 08:30:56 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ void    ath_mcastfilter_compute(struct ath_softc *, u_int32_t (*)[2]);
 u_int32_t ath_calcrxfilter(struct ath_softc *);
 void	ath_mode_init(struct ath_softc *);
 int	ath_beacon_alloc(struct ath_softc *, struct ieee80211_node *);
-void	ath_beacon_proc(struct ath_softc *, int);
+void	ath_beacon_proc(void *, int);
 void	ath_beacon_free(struct ath_softc *);
 void	ath_beacon_config(struct ath_softc *);
 int	ath_desc_alloc(struct ath_softc *);
@@ -308,6 +308,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ATH_TASK_INIT(&sc->sc_rxorntask, ath_rxorn_proc, sc);
 	ATH_TASK_INIT(&sc->sc_fataltask, ath_fatal_proc, sc);
 	ATH_TASK_INIT(&sc->sc_bmisstask, ath_bmiss_proc, sc);
+	ATH_TASK_INIT(&sc->sc_swbatask, ath_beacon_proc, sc);
 
 	/*
 	 * For now just pre-allocate one data queue and one
@@ -593,14 +594,8 @@ ath_intr1(struct ath_softc *sc)
 			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_rxtask);
 		if (status & HAL_INT_TX)
 			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_txtask);
-		if (status & HAL_INT_SWBA) {
-			/*
-			 * Handle beacon transmission directly; deferring
-			 * this is too slow to meet timing constraints
-			 * under load.
-			 */
-			ath_beacon_proc(sc, 0);
-		}
+		if (status & HAL_INT_SWBA)
+			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_swbatask);
 		if (status & HAL_INT_BMISS) {
 			sc->sc_stats.ast_bmiss++;
 			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_bmisstask);
@@ -1355,8 +1350,9 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 }
 
 void
-ath_beacon_proc(struct ath_softc *sc, int pending)
+ath_beacon_proc(void *arg, int pending)
 {
+	struct ath_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_buf *bf = sc->sc_bcbuf;
 	struct ath_hal *ah = sc->sc_ah;
@@ -1372,7 +1368,6 @@ ath_beacon_proc(struct ath_softc *sc, int pending)
 	if (!ath_hal_stoptxdma(ah, sc->sc_bhalq)) {
 		DPRINTF(ATH_DEBUG_ANY, ("%s: beacon queue %u did not stop?\n",
 		    __func__, sc->sc_bhalq));
-		/* NB: the HAL still stops DMA, so proceed */
 	}
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, 0,
 	    bf->bf_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);

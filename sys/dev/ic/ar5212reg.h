@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212reg.h,v 1.1 2005/02/19 16:58:00 reyk Exp $	*/
+/*	$OpenBSD: ar5212reg.h,v 1.2 2005/03/10 08:30:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -932,29 +932,29 @@ typedef enum {
  * First enhanced sleep register
  */
 #define AR5K_AR5212_SLEEP0		0x80d4
-#define AR5K_AR5212_SLEEP0_NEXT_DTIM_M	0x0007ffff
+#define AR5K_AR5212_SLEEP0_NEXT_DTIM	0x0007ffff
 #define AR5K_AR5212_SLEEP0_NEXT_DTIM_S	0
 #define AR5K_AR5212_SLEEP0_ASSUME_DTIM	0x00080000
 #define AR5K_AR5212_SLEEP0_ENH_SLEEP_EN	0x00100000
-#define AR5K_AR5212_SLEEP0_CAPTO_M	0xff000000
-#define AR5K_AR5212_SLEEP0_CAPTO_S	24
+#define AR5K_AR5212_SLEEP0_CABTO	0xff000000
+#define AR5K_AR5212_SLEEP0_CABTO_S	24
 
 /*
  * Second enhanced sleep register
  */
 #define AR5K_AR5212_SLEEP1		0x80d8
-#define AR5K_AR5212_SLEEP1_NEXT_TIM_M	0x0007ffff
+#define AR5K_AR5212_SLEEP1_NEXT_TIM	0x0007ffff
 #define AR5K_AR5212_SLEEP1_NEXT_TIM_S	0
-#define AR5K_AR5212_SLEEP1_BEACON_TO_M	0xff000000
+#define AR5K_AR5212_SLEEP1_BEACON_TO	0xff000000
 #define AR5K_AR5212_SLEEP1_BEACON_TO_S	24
 
 /*
  * Third enhanced sleep register
  */
 #define AR5K_AR5212_SLEEP2		0x80dc
-#define AR5K_AR5212_SLEEP2_TIM_PER_M	0x0000ffff
+#define AR5K_AR5212_SLEEP2_TIM_PER	0x0000ffff
 #define AR5K_AR5212_SLEEP2_TIM_PER_S	0
-#define AR5K_AR5212_SLEEP2_DTIM_PER_M	0xffff0000
+#define AR5K_AR5212_SLEEP2_DTIM_PER	0xffff0000
 #define AR5K_AR5212_SLEEP2_DTIM_PER_S	16
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.4 2005/03/03 16:39:54 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.5 2005/03/10 08:30:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -214,7 +214,7 @@ ar5k_ar5212_attach(device, sc, st, sh, status)
 	    AR5K_AR5111 : AR5K_AR5112;
 	hal->ah_phy = AR5K_AR5212_PHY(0);
 
-	memset(&mac, 0xff, sizeof(mac));
+	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
 	ar5k_ar5212_writeAssocid(hal, mac, 0, 0);
 	ar5k_ar5212_getMacAddress(hal, mac);
 	ar5k_ar5212_setPCUConfig(hal);
@@ -621,7 +621,7 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	}
 
 	/* Misc */
-	memset(&mac, 0xff, sizeof(mac));
+	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
 	ar5k_ar5212_writeAssocid(hal, mac, 0, 0);
 	ar5k_ar5212_setPCUConfig(hal);
 	AR5K_REG_WRITE(AR5K_AR5212_PISR, 0xffffffff);
@@ -738,8 +738,8 @@ ar5k_ar5212_setPCUConfig(hal)
 	/*
 	 * Set PCU registers
 	 */
-	memcpy(&low_id, &(hal->ah_sta_id[0]), 4);
-	memcpy(&high_id, &(hal->ah_sta_id[4]), 2);
+	bcopy(&(hal->ah_sta_id[0]), &low_id, 4);
+	bcopy(&(hal->ah_sta_id[4]), &high_id, 2);
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID0, low_id);
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID1, pcu_reg | high_id);
 
@@ -1154,13 +1154,17 @@ ar5k_ar5212_stopTxDma(hal, queue)
 	 */
 	AR5K_REG_WRITE_Q(AR5K_AR5212_QCU_TXD, queue);
 
-	ret = ar5k_register_timeout(hal, AR5K_AR5212_QCU_STS(queue),
-	    AR5K_AR5212_QCU_STS_FRMPENDCNT, 0, AH_FALSE);
+	ret = ar5k_register_timeout(hal,
+	    AR5K_AR5212_QCU_STS(queue), AR5K_AR5212_QCU_STS_FRMPENDCNT,
+	    0, AH_FALSE);
 
 	/* Clear register */
 	AR5K_REG_WRITE(AR5K_AR5212_QCU_TXD, 0);
 
-	return (AH_TRUE);
+	if (AR5K_REG_READ_Q(AR5K_AR5212_QCU_TXE, queue))
+		return (AH_FALSE);
+
+	return (ret);
 }
 
 HAL_BOOL
@@ -1250,7 +1254,7 @@ ar5k_ar5212_fillTxDesc(hal, desc, segment_length, first_segment, last_segment)
 	tx_desc = (struct ar5k_ar5212_tx_desc*)&desc->ds_ctl0;
 
 	/* Clear status descriptor */
-	desc->ds_hw[0] = desc->ds_hw[1] = 0;
+	bzero(desc->ds_hw, sizeof(desc->ds_hw));
 
 	/* Validate segment length and initialize the descriptor */
 	if ((tx_desc->buf_len = segment_length) != segment_length)
@@ -1478,7 +1482,7 @@ ar5k_ar5212_getRxFilter(hal)
 
 	if (data & AR5K_AR5212_PHY_ERR_FIL_RADAR)
 		filter |= HAL_RX_FILTER_PHYRADAR;
-	if (data & (AR5K_AR5212_PHY_ERR_FIL_OFDM |
+	if (data & (AR5K_AR5212_PHY_ERR_FIL_OFDM|
 		AR5K_AR5212_PHY_ERR_FIL_CCK))
 		filter |= HAL_RX_FILTER_PHYERR;
 
@@ -1699,6 +1703,9 @@ ar5k_ar5212_dumpState(hal)
 	AR5K_PRINT_REGISTER(PHY_CHIP_ID);
 	AR5K_PRINT_REGISTER(PHY_AGCCTL);
 	AR5K_PRINT_REGISTER(PHY_NF);
+	AR5K_PRINT_REGISTER(PHY_SCR);
+	AR5K_PRINT_REGISTER(PHY_SLMT);
+	AR5K_PRINT_REGISTER(PHY_SCAL);
 	AR5K_PRINT_REGISTER(PHY_RX_DELAY);
 	AR5K_PRINT_REGISTER(PHY_IQ);
 	AR5K_PRINT_REGISTER(PHY_PAPD_PROBE);
@@ -1732,7 +1739,7 @@ ar5k_ar5212_getMacAddress(hal, mac)
 	struct ath_hal *hal;
 	u_int8_t *mac;
 {
-	memcpy(mac, hal->ah_sta_id, IEEE80211_ADDR_LEN);
+	bcopy(hal->ah_sta_id, mac, IEEE80211_ADDR_LEN);
 }
 
 HAL_BOOL
@@ -1743,10 +1750,10 @@ ar5k_ar5212_setMacAddress(hal, mac)
 	u_int32_t low_id, high_id;
 
 	/* Set new station ID */
-	memcpy(hal->ah_sta_id, mac, IEEE80211_ADDR_LEN);
+	bcopy(mac, hal->ah_sta_id, IEEE80211_ADDR_LEN);
 
-	memcpy(&low_id, mac, 4);
-	memcpy(&high_id, mac + 4, 2);
+	bcopy(mac, &low_id, 4);
+	bcopy(mac + 4, &high_id, 2);
 	high_id = 0x0000ffff & htole32(high_id);
 
 	AR5K_REG_WRITE(AR5K_AR5212_STA_ID0, htole32(low_id));
@@ -1835,12 +1842,12 @@ ar5k_ar5212_writeAssocid(hal, bssid, assoc_id, tim_offset)
 	/*
 	 * Set BSSID which triggers the "SME Join" operation
 	 */
-	memcpy(&low_id, bssid, 4);
-	memcpy(&high_id, bssid + 4, 2);
+	bcopy(bssid, &low_id, 4);
+	bcopy(bssid + 4, &high_id, 2);
 	AR5K_REG_WRITE(AR5K_AR5212_BSS_ID0, htole32(low_id));
 	AR5K_REG_WRITE(AR5K_AR5212_BSS_ID1, htole32(high_id) |
 	    ((assoc_id & 0x3fff) << AR5K_AR5212_BSS_ID1_AID_S));
-	memcpy(&hal->ah_bssid, bssid, IEEE80211_ADDR_LEN);
+	bcopy(bssid, &hal->ah_bssid, IEEE80211_ADDR_LEN);
 
 	if (assoc_id == 0) {
 		ar5k_ar5212_disablePSPoll(hal);
@@ -2398,11 +2405,14 @@ ar5k_ar5212_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 	u_int32_t cfp_count;
 
 {
-	u_int32_t cfp_period, next_cfp;
+	u_int32_t cfp_period, next_cfp, dtim, interval, next_beacon;
 
 	/* Return on an invalid beacon state */
 	if (state->bs_interval < 1)
 		return;
+
+	interval = state->bs_intval;
+	dtim = state->bs_dtimperiod;
 
 	/*
 	 * PCF support?
@@ -2414,8 +2424,7 @@ ar5k_ar5212_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 		next_cfp = (cfp_count * state->bs_dtim_period + dtim_count) *
 		    state->bs_interval;
 
-		AR5K_REG_DISABLE_BITS(AR5K_AR5212_STA_ID1,
-		    AR5K_AR5212_STA_ID1_DEFAULT_ANTENNA |
+		AR5K_REG_ENABLE_BITS(AR5K_AR5212_STA_ID1,
 		    AR5K_AR5212_STA_ID1_PCF);
 		AR5K_REG_WRITE(AR5K_AR5212_CFP_PERIOD, cfp_period);
 		AR5K_REG_WRITE(AR5K_AR5212_CFP_DUR, state->bs_cfp_max_duration);
@@ -2424,7 +2433,6 @@ ar5k_ar5212_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 	} else {
 		/* Disable PCF mode */
 		AR5K_REG_DISABLE_BITS(AR5K_AR5212_STA_ID1,
-		    AR5K_AR5212_STA_ID1_DEFAULT_ANTENNA |
 		    AR5K_AR5212_STA_ID1_PCF);
 	}
 
@@ -2446,12 +2454,45 @@ ar5k_ar5212_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 	/*
 	 * Write new beacon miss threshold, if it appears to be valid
 	 */
-	if ((state->bs_bmiss_threshold > (AR5K_AR5212_RSSI_THR_BMISS >>
-	    AR5K_AR5212_RSSI_THR_BMISS_S)) &&
-	    (state->bs_bmiss_threshold & 0x00007) != 0) {
-		AR5K_REG_WRITE_BITS(AR5K_AR5212_RSSI_THR_M,
-		    AR5K_AR5212_RSSI_THR_BMISS, state->bs_bmiss_threshold);
-	}
+	if ((AR5K_AR5212_RSSI_THR_BMISS >> AR5K_AR5212_RSSI_THR_BMISS_S) <
+	    state->bs_bmiss_threshold)
+		return;
+
+	AR5K_REG_WRITE_BITS(AR5K_AR5212_RSSI_THR_M,
+	    AR5K_AR5212_RSSI_THR_BMISS, state->bs_bmiss_threshold);
+
+	/*
+	 * Set sleep registers
+	 */
+	if ((state->bs_sleepduration > state->bs_interval) &&
+	    (roundup(state->bs_sleepduration, interval) ==
+	    state->bs_sleepduration))
+		interval = state->bs_sleepduration;
+
+	if (state->bs_sleepduration > dtim &&
+	    (dtim == 0 || roundup(state->bs_sleepduration, dtim) ==
+	    state->bs_sleepduration))
+		dtim = state->bs_sleepduration;
+
+	if (interval > dtim)
+		return;
+
+	next_beacon = interval == dtim ?
+	    state->bs_nextdtim: state->bs_nexttbtt;
+
+	AR5K_REG_WRITE(AR5K_AR5212_SLEEP0,
+	    AR5K_REG_SM((state->bs_nextdtim - 3) << 3,
+	    AR5K_AR5212_SLEEP0_NEXT_DTIM) |
+	    AR5K_REG_SM(10, AR5K_AR5212_SLEEP0_CABTO) |
+	    AR5K_AR5212_SLEEP0_ENH_SLEEP_EN |
+	    AR5K_AR5212_SLEEP0_ASSUME_DTIM);
+	AR5K_REG_WRITE(AR5K_AR5212_SLEEP1,
+	    AR5K_REG_SM((next_beacon - 3) << 3,
+	    AR5K_AR5212_SLEEP1_NEXT_TIM) |
+	    AR5K_REG_SM(10, AR5K_AR5212_SLEEP1_BEACON_TO));
+	AR5K_REG_WRITE(AR5K_AR5212_SLEEP2,
+	    AR5K_REG_SM(interval, AR5K_AR5212_SLEEP2_TIM_PER) |
+	    AR5K_REG_SM(dtim, AR5K_AR5212_SLEEP2_DTIM_PER));
 }
 
 void
@@ -2482,8 +2523,11 @@ ar5k_ar5212_waitForBeaconDone(hal, phys_addr)
 	 * Wait for beaconn queue to be done
 	 */
 	ret = ar5k_register_timeout(hal,
-	    AR5K_AR5212_QCU_STS(HAL_TX_QUEUE_BEACON),
+	    AR5K_AR5212_QCU_STS(HAL_TX_QUEUE_ID_BEACON),
 	    AR5K_AR5212_QCU_STS_FRMPENDCNT, 0, AH_FALSE);
+
+	if (AR5K_REG_READ_Q(AR5K_AR5212_QCU_TXE, HAL_TX_QUEUE_ID_BEACON))
+		return (AH_FALSE);
 
 	return (ret);
 }
@@ -2813,3 +2857,4 @@ ar5k_ar5212_txpower(hal, channel, txpower)
 
 	return (AH_TRUE);
 }
+
