@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.108 2004/09/16 17:36:29 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.109 2004/09/23 01:55:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -300,10 +300,14 @@ main(int argc, char *argv[])
 
 		if (sigchld) {
 			sigchld = 0;
-			if (check_child(io_pid, "session engine"))
+			if (check_child(io_pid, "session engine")) {
 				quit = 1;
-			if (check_child(rde_pid, "route decision engine"))
+				io_pid = 0;
+			}
+			if (check_child(rde_pid, "route decision engine")) {
 				quit = 1;
+				rde_pid = 0;
+			}
 		}
 
 		if (mrtdump == 1) {
