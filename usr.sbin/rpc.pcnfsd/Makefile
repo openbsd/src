@@ -8,8 +8,10 @@ CFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
 SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 	pcnfsd_cache.c pcnfsd_print.c pcnfsd_svc.c pcnfsd_xdr.c
 
+#DPADD=	${LIBRPCSVC} ${LIBCRYPT}
 DPADD=	${LIBRPCSVC}
-LDADD=	-lrpcsvc -lcrypt
+#LDADD=	-lrpcsvc -lcrypt
+LDADD=	-lrpcsvc
 
 pcnfsd_svc.c: pcnfsd.x
 	rpcgen -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
