@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1996/11/23 21:45:03 kstailey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1997/01/04 12:40:31 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38.4.1 1996/05/26 16:23:26 is Exp $	*/
 
 /*
@@ -329,12 +329,12 @@ setroot()
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
+	majdev = B_TYPE(bootdev);
 	if (majdev > sizeof(devname) / sizeof(devname[0]))
 		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
+	adaptor = B_ADAPTOR(bootdev);
+	part = B_PARTITION(bootdev);
+	unit = B_UNIT(bootdev);
 	orootdev = rootdev;
 	rootdev = MAKEDISKDEV(majdev, unit, part);
 	/*
