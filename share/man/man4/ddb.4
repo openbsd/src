@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.18 2000/04/15 11:45:51 aaron Exp $
+.\"	$OpenBSD: ddb.4,v 1.19 2000/06/07 09:44:27 art Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -600,6 +600,9 @@ If the
 .Cm /f
 modifieris specified the
 complete map is printed.
+.\" --------------------
+.It Ic show malloc
+Prints malloc debugging information if available.
 .\" --------------------
 .It Xo
 .Ic show object
