@@ -1,7 +1,7 @@
-/*	$OpenBSD: strlcpy.S,v 1.1 2000/12/29 19:04:41 mickey Exp $	*/
+/*	$OpenBSD: strlcpy.S,v 1.2 2001/03/28 18:20:45 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strlcpy.S,v 1.1 2000/12/29 19:04:41 mickey Exp $"
+	.asciz "$OpenBSD: strlcpy.S,v 1.2 2001/03/28 18:20:45 mickey Exp $"
 	.align	4
 #endif
 
@@ -44,8 +44,8 @@
  */
 ENTRY(strlcpy)
 
-	addi	arg1, 1, ret0
-	subi	arg2, 1, t2
+	addi	1, arg1, ret0
+	subi	1, arg2, t2
 
 $strlcpy_loop
 	ldbs,ma	1(arg1), t1
@@ -64,3 +64,5 @@ $strlcpy_nzero
 	sub	arg1, ret0, ret0
 
 EXIT(strlcpy)
+
+	.end
