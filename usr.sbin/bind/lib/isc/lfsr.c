@@ -74,7 +74,7 @@ lfsr_generate(isc_lfsr_t *lfsr)
 	}
 
 	if (lfsr->state & 0x01) {
-		lfsr->state = ((lfsr->state ^ lfsr->tap) >> 1) | highbit;
+		lfsr->state = (lfsr->state >> 1) ^ lfsr->tap;
 		return (1);
 	} else {
 		lfsr->state >>= 1;
