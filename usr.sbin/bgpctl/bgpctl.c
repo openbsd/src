@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.19 2004/01/06 19:24:37 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.20 2004/01/06 23:23:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,10 @@ enum actions {
 	RELOAD,
 	FIB,
 	FIB_COUPLE,
-	FIB_DECOUPLE
+	FIB_DECOUPLE,
+	NEIGHBOR,
+	NEIGHBOR_UP,
+	NEIGHBOR_DOWN
 };
 
 enum neighbor_views {
@@ -52,7 +55,8 @@ struct keywords {
 static const struct keywords keywords_main[] = {
 	{ "reload",	RELOAD},
 	{ "show",	SHOW},
-	{ "fib",	FIB}
+	{ "fib",	FIB},
+	{ "neighbor",	NEIGHBOR}
 };
 
 static const struct keywords keywords_show[] = {
@@ -60,7 +64,7 @@ static const struct keywords keywords_show[] = {
 	{ "summary",	SHOW_SUMMARY}
 };
 
-static const struct keywords keywords_neighbor[] = {
+static const struct keywords keywords_show_neighbor[] = {
 	{ "timers",	SHOW_NEIGHBOR_TIMERS},
 	{ "messages",	SHOW_NEIGHBOR}
 };
@@ -68,6 +72,11 @@ static const struct keywords keywords_neighbor[] = {
 static const struct keywords keywords_fib[] = {
 	{ "couple",	FIB_COUPLE},
 	{ "decouple",	FIB_DECOUPLE}
+};
+
+static const struct keywords keywords_neighbor[] = {
+	{ "up",		NEIGHBOR_UP},
+	{ "down",	NEIGHBOR_DOWN}
 };
 
 int		 main(int, char *[]);
@@ -140,9 +149,9 @@ again:
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
 
 		if (argc >= 5)
-			action = match_keyword(argv[4], keywords_neighbor,
-			    sizeof(keywords_neighbor)/
-			    sizeof(keywords_neighbor[0]));
+			action = match_keyword(argv[4], keywords_show_neighbor,
+			    sizeof(keywords_show_neighbor)/
+			    sizeof(keywords_show_neighbor[0]));
 		break;
 	case RELOAD:
 		if (argc >= 3)
@@ -173,6 +182,28 @@ again:
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
+	case NEIGHBOR:
+		if (argc < 4)
+			errx(1, "usage: neighbor address command");
+		if (!parse_addr(argv[2], &addr))
+			errx(1, "%s: not an IP address", argv[2]);
+		action = match_keyword(argv[3], keywords_neighbor,
+			    sizeof(keywords_neighbor)/
+			    sizeof(keywords_neighbor[0]));
+		goto again;
+		break;
+	case NEIGHBOR_UP:
+		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_UP, 0,
+		    &addr, sizeof(addr));
+		printf("request sent.\n");
+		done = 1;
+		break;
+	case NEIGHBOR_DOWN:
+		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0,
+		    &addr, sizeof(addr));
+		printf("request sent.\n");
+		done = 1;
+		break;
 	}
 
 	while (!done) {
@@ -201,6 +232,9 @@ again:
 			case FIB:
 			case FIB_COUPLE:
 			case FIB_DECOUPLE:
+			case NEIGHBOR:
+			case NEIGHBOR_UP:
+			case NEIGHBOR_DOWN:
 				break;
 			}
 			imsg_free(&imsg);

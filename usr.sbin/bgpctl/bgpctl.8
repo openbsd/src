@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.7 2004/01/06 16:48:06 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.8 2004/01/06 23:23:49 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -54,6 +54,10 @@ routing table.
 .It Li fib decouple
 Remove the learned routes into the Forward Information Base aka the kernel
 routing table.
+.It Li neighbor Ar address up
+Take the bgp session to the specified neighbor up.
+.It Li neighbor Ar address down
+Take the bgp session to the specified neighbor down.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
