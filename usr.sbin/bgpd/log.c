@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.10 2003/12/26 18:07:32 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.11 2003/12/26 20:06:01 jakob Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -109,10 +109,10 @@ static const char *procnames[] = {
 
 int	debug;
 
-char	*log_fmt_peer(struct peer *);
+char	*log_fmt_peer(const struct peer *);
 
 char *
-log_fmt_peer(struct peer *peer)
+log_fmt_peer(const struct peer *peer)
 {
 	char		*ip;
 	char		*pfmt;
@@ -160,7 +160,7 @@ vlog(int pri, const char *fmt, va_list ap)
 
 
 void
-log_peer_err(struct peer *peer, const char *emsg, ...)
+log_peer_err(const struct peer *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
 	va_list	 ap;
@@ -181,7 +181,7 @@ log_peer_err(struct peer *peer, const char *emsg, ...)
 }
 
 void
-log_peer_errx(struct peer *peer, const char *emsg, ...)
+log_peer_errx(const struct peer *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
 	va_list	 ap;
@@ -257,7 +257,7 @@ fatal_ensure(const char *file, int line, const char *cond)
 }
 
 void
-log_statechange(struct peer *peer, enum session_state nstate,
+log_statechange(const struct peer *peer, enum session_state nstate,
     enum session_events event)
 {
 	char	*p;
@@ -269,7 +269,7 @@ log_statechange(struct peer *peer, enum session_state nstate,
 }
 
 void
-log_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
+log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
     u_char *data, u_int16_t datalen)
 {
 	char		*p;
@@ -324,7 +324,7 @@ log_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 }
 
 void
-log_conn_attempt(struct peer *peer, struct in_addr remote)
+log_conn_attempt(const struct peer *peer, struct in_addr remote)
 {
 	char *p;
 
