@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 1996/09/29 23:52:34 millert Exp $
+#	$OpenBSD: Makefile,v 1.26 1996/10/06 19:59:52 pefo Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -23,6 +23,10 @@ FILES+=	dlfcn.h link.h
 
 MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
+
+.if (${MACHINE_ARCH} == "mips")
+MFILES+= link.h dlfcn.h
+.endif
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns netipx nfs sys ufs vm ddb scsi
