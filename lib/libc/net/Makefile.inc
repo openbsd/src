@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 1999/07/03 19:56:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 1999/07/03 20:22:21 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -27,7 +27,13 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
 	getservent.3 inet.3 inet_net.3 iso_addr.3 link_addr.3 ns.3 ipx.3 \
-	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3
+	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3 \
+	getnameinfo.3 getaddrinfo.3 if_indextoname.3
+
+MLINKS+= getnameinfo.3 freeaddrinfo.3
+MLINKS+= getnameinfo.3 gai_strerror.3
+MLINKS+= if_indextoname.3 if_nametoindex.3
+MLINKS+= if_indextoname.3 if_nameindex.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
