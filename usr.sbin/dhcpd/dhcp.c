@@ -740,8 +740,12 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			/*
 			 * Don't let the client ask for a longer lease than
 			 * is supported for this subnet or host.
+			 *
+			 * time_t is signed, so really large numbers come
+			 * back as negative.  Don't allow lease_time of 0,
+			 * either.
 			 */
-			if (lease_time > max_lease_time)
+			if (lease_time < 1 || lease_time > max_lease_time)
 				lease_time = max_lease_time;
 		} else
 			lease_time = default_lease_time;
