@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.29 2002/10/25 21:55:01 mickey Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.30 2002/11/30 15:35:13 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.29 2002/10/25 21:55:01 mickey Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.30 2002/11/30 15:35:13 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -423,13 +423,29 @@ __elf_knlist(fd, db, ksyms)
 		/* XXX type conversion is pretty rude... */
 		switch(ELF_ST_TYPE(sbuf.st_info)) {
 		case STT_NOTYPE:
-			nbuf.n_type = N_UNDF;
+			switch (sbuf.st_shndx) {
+			case SHN_UNDEF:
+				nbuf.n_type = N_UNDF;
+				break;
+			case SHN_ABS:
+				nbuf.n_type = N_ABS;
+				break;
+			case SHN_COMMON:
+				nbuf.n_type = N_COMM;
+				break;
+			default:
+				nbuf.n_type = N_COMM | N_EXT;
+				break;
+			}
 			break;
 		case STT_FUNC:
 			nbuf.n_type = N_TEXT;
 			break;
 		case STT_OBJECT:
 			nbuf.n_type = N_DATA;
+			break;
+		case STT_FILE:
+			nbuf.n_type = N_FN;
 			break;
 		}
 		if(ELF_ST_BIND(sbuf.st_info) == STB_LOCAL)
