@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.10 1998/03/11 18:55:40 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.11 1998/08/29 18:57:18 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -111,7 +111,7 @@
 .Ft "enum clnt_stat"
 .Fn pmap_rmtcall "struct sockaddr_in *" "u_long prog, vers, proc" "xdrproc_t inp" "char *in" "xdrproc_t outp" "char *out" "struct timeval tv" "u_long *portp"
 .Ft int
-.Fn pmap_set "u_long prognum" "u_long versnum" "u_long protocol" "u_short port"
+.Fn pmap_set "u_long prognum" "u_long versnum" "u_int protocol" "u_short port"
 .Ft int
 .Fn pmap_unset "u_long prognum" "u_long versnum"
 .Ft int
