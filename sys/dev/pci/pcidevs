@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.761 2004/09/20 18:50:05 mickey Exp $
+$OpenBSD: pcidevs,v 1.762 2004/09/20 20:45:54 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -167,7 +167,7 @@ vendor	PINNACLE	0x11bd	Pinnacle Systems
 vendor	LUCENT		0x11c1	AT&T/Lucent
 vendor	DOLPHIN		0x11c8	Dolphin
 vendor	MRTMAGMA	0x11c9	Mesa Ridge (MAGMA)
-vendor	IRE		0x11d4	IRE
+vendor	AD		0x11d4	Analog Devices
 vendor	ZORAN		0x11de	Zoran
 vendor	PIJNENBURG	0x11e3	Pijnenburg
 vendor	COMPEX		0x11f6	Compex
@@ -559,6 +559,11 @@ product AMD 8111_ACA		0x746d	8111 AC97
 product AMI MEGARAID		0x1960	MegaRAID
 product AMI MEGARAID428		0x9010	MegaRAID Series 428
 product AMI MEGARAID434		0x9060	MegaRAID Series 434
+
+/* Analog Devices */
+product AD SP21535		0x1535	ADSP 21535 DSP
+product AD 1889			0x1889	AD1889 Audio
+product AD SP2141		0x2f44	SafeNet ADSP 2141
 
 /* Antares Microsystems products */
 product ANTARES TC9021		0x1021	Antares Gigabit
@@ -1440,9 +1445,6 @@ product INVERTEX AEON		0x0005	AEON
 /* I. T. T. products */
 product ITT AGX016		0x0001	AGX016
 product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
-
-/* IRE */
-product IRE ADSP2141		0x2f44	ADSP 2141
 
 /* ITExpress */
 product ITEXPRESS IT8212F	0x8212	IT8212F
