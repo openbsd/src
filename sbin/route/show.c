@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.29 2004/06/15 16:55:38 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.30 2004/06/15 17:10:32 millert Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.29 2004/06/15 16:55:38 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.30 2004/06/15 17:10:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -511,14 +511,15 @@ routename6(struct sockaddr_in6 *sin6)
  * The address is assumed to be that of a net or subnet, not a host.
  */
 char *
-netname4(in_addr_t in, in_addr_t mask)
+netname4(in_addr_t in, struct sockaddr_in *maskp)
 {
 	char *cp = NULL;
 	struct netent *np = NULL;
+	in_addr_t mask;
 	int mbits;
 
 	in = ntohl(in);
-	mask = ntohl(mask);
+	mask = maskp ? ntohl(maskp->sin_addr.s_addr) : 0;
 	if (!nflag && in != INADDR_ANY) {
 		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
 			cp = np->n_name;
@@ -654,11 +655,11 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
-		    mask ? ((struct sockaddr_in *)mask)->sin_addr.s_addr : NULL);
+		    (struct sockaddr_in *)mask);
 #ifdef INET6
 	case AF_INET6:
 		return netname6((struct sockaddr_in6 *)sa,
-		    mask ? (struct sockaddr_in6 *)mask : NULL);
+		    (struct sockaddr_in6 *)mask);
 #endif
 
 	case AF_NS:
