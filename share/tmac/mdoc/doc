@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.3 1997/11/30 05:00:07 deraadt Exp $
+.\"	$OpenBSD: doc,v 1.4 1999/11/15 03:21:30 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2254,18 +2254,16 @@
 .		ie \\n(C\\n(aP>2 .y\\n(C\\n(aP
 .		el \{\
 .			as b1 \&\\*(xR\\*(A\\n(aP\fP\s0
-.			if \\n(aC>\\n(aP \{\
-.				nr aP \\n(aP+1
+.			nr aP \\n(aP+1
+.			if \\n(aC>=\\n(aP \{\
 .				if \\n(C\\n(aP==2 \{\
 .					as b1 \&(\\*(A\\n(aP)
 .					nr aP \\n(aP+1
 .				\}
-.				if \\n(aC>=\\n(aP \{\
-.					c\\n(C\\n(aP
-.				\}
 .			\}
+.			ie \\n(aC>=\\n(aP .c\\n(C\\n(aP
+.			el .aZ
 .		\}
-.		aZ
 .       \}
 .\}
 ..
