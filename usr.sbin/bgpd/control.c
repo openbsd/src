@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.22 2004/02/26 16:16:41 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.23 2004/02/29 21:49:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,7 @@ control_init(void)
 
 	umask(old_umask);
 
+	session_socket_blockmode(fd, BM_NONBLOCK);
 	control_state.fd = fd;
 
 	return (fd);
@@ -121,6 +122,8 @@ control_accept(int listenfd)
 		else
 			log_warn("session_control_accept");
 	}
+
+	session_socket_blockmode(connfd, BM_NONBLOCK);
 
 	if (getpeereid(connfd, &uid, &gid) == -1) {
 		log_warn("session_control_accept");
