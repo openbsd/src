@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.4 2004/01/12 02:38:03 drahn Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.5 2004/01/14 16:37:24 miod Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -392,7 +392,7 @@ snapper_defer(struct device *dev)
 		return;
 	}
 	
-	/* XXX If i2c was failed to attach, what should we do? */
+	/* XXX If i2c has failed to attach, what should we do? */
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
 
@@ -824,10 +824,10 @@ snapper_query_devinfo(h, dip)
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 2;
 		strlcpy(dip->un.s.member[0].label.name, AudioNspeaker,
-		    strlen(dip->un.s.member[0].label.name));
+		    sizeof(dip->un.s.member[0].label.name));
 		dip->un.s.member[0].mask = 1 << 0;
 		strlcpy(dip->un.s.member[1].label.name, AudioNheadphone,
-		    strlen(dip->un.s.member[1].label.name));
+		    sizeof(dip->un.s.member[1].label.name));
 		dip->un.s.member[1].mask = 1 << 1;
 		return 0;
 
@@ -838,7 +838,7 @@ snapper_query_devinfo(h, dip)
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
 		strlcpy(dip->un.v.units.name, AudioNvolume,
-		strlen(dip->un.v.units.name));
+		    sizeof(dip->un.v.units.name));
 		return 0;
 
 	case SNAPPER_INPUT_SELECT:
@@ -979,7 +979,7 @@ snapper_trigger_input(h, start, end, bsize, intr, arg, param)
 	void *arg;
 	struct audio_params *param;
 {
-	printf("snapper_trigger_input called\n");
+	DPRINTF(("snapper_trigger_input called\n"));
 
 	return 1;
 }
@@ -1354,7 +1354,7 @@ noreset:
 
 	return 0;
 err:
-	printf("tas3004_init: error\n");
+	printf("%s: tas3004_init failed\n", sc->sc_dev.dv_xname);
 	return -1;
 }
 
