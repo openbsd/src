@@ -44,9 +44,10 @@ Supported devices {:-include-:}:
 			Future Domain TMC-885
 			Future Domain TMC-950
 	RAID controllers:
+		3ware Escalade 3W-5x00, 3W-6x00
 		DPT SmartCache III/IV PCI/EISA adapters 
 		ICP-Vortex GDT 6XXXRP series
-		3ware Escalade 3W-5x00, 3W-6x00
+		Adaptec FSA-based
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters OpenBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
