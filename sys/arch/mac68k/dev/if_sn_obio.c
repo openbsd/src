@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_obio.c,v 1.18 2002/03/14 01:26:35 millert Exp $    */
+/*    $OpenBSD: if_sn_obio.c,v 1.19 2002/04/22 20:15:55 miod Exp $    */
 /*    $NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $    */
 
 /*
@@ -47,9 +47,9 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include "obiovar.h"
-#include "if_snreg.h"
-#include "if_snvar.h"
+#include <mac68k/dev/obiovar.h>
+#include <mac68k/dev/if_snreg.h>
+#include <mac68k/dev/if_snvar.h>
 
 #define SONIC_REG_BASE	0x50F0A000
 #define SONIC_PROM_BASE	0x50F08000
@@ -69,10 +69,23 @@ sn_obio_match(parent, cf, aux)
 	void *cf;
 	void *aux;
 {
-	if (mac68k_machine.sonic)
-		return 1;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	bus_space_handle_t bsh;
+	int found = 0;
 
-	return 0;
+	if (!mac68k_machine.sonic)
+		return 0;
+
+	if (bus_space_map(oa->oa_tag,
+	    SONIC_REG_BASE, SN_REGSIZE, 0, &bsh))
+		return 0;
+
+	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 4))
+		found = 1;
+
+	bus_space_unmap(oa->oa_tag, bsh, SN_REGSIZE);
+
+	return found;
 }
 
 /*
@@ -91,6 +104,8 @@ sn_obio_attach(parent, self, aux)
 	sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 	sc->snr_dcr2 = 0;
 
+	sc->slotno = 9;
+
 	switch (current_mac_model->machineid) {
 	case MACH_MACC610:
 	case MACH_MACC650:
@@ -102,6 +117,11 @@ sn_obio_attach(parent, self, aux)
 	case MACH_MACQ950:
 		sc->snr_dcr |= DCR_EXBUS;
 		sc->bitmode = 1;
+		break;
+
+	case MACH_MACLC575:
+	case MACH_MACP580:
+	case MACH_MACQ630:
 		break;
 
 	case MACH_MACPB500:
@@ -122,11 +142,28 @@ sn_obio_attach(parent, self, aux)
 		return;
 	}
 
-	sc->slotno = 9;
-
 	/* regs are addressed as words, big-endian. */
 	for (i = 0; i < SN_NREGS; i++) {
 		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + 2);
+	}
+
+	/*
+	 * Kind of kludge this.  Comm-slot cards do not really
+	 * have a visible type, as far as I can tell at this time,
+	 * so assume that MacOS had it properly configured and use
+	 * that configuration.
+	 */
+	switch (current_mac_model->machineid) {
+	case MACH_MACLC575:
+	case MACH_MACP580:
+	case MACH_MACQ630:
+		NIC_PUT(sc, SNR_CR, CR_RST);	wbflush();
+		i = NIC_GET(sc, SNR_DCR);
+		sc->snr_dcr |= (i & 0xfff0);
+		sc->bitmode = (i & DCR_DW) ? 1 : 0;
+		break;
+	default:
+		break;
 	}
 
 	if (sn_obio_getaddr(sc, myaddr) &&
@@ -135,6 +172,8 @@ sn_obio_attach(parent, self, aux)
 		bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
 		return;
 	}
+
+	printf(": integrated ethernet adapter, ");
 
 	/* snsetup returns 1 if something fails */
 	if (snsetup(sc, myaddr)) {

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_nubus.c,v 1.14 2002/03/14 01:26:35 millert Exp $  */
+/*    $OpenBSD: if_sn_nubus.c,v 1.15 2002/04/22 20:15:55 miod Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -48,9 +48,11 @@
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
-#include "if_snreg.h"
-#include "if_snvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/if_snreg.h>
+#include <mac68k/dev/if_snvar.h>
+
+#define	INTERFACE_NAME_LEN	32
 
 static int	sn_nubus_match(struct device *, void *, void *);
 static void	sn_nubus_attach(struct device *, struct device *, void *);
@@ -85,8 +87,9 @@ sn_nubus_match(parent, cf, aux)
 			break;
 
 		case SN_VENDOR_APPLE:
-		case SN_VENDOR_DAYNA:
 		case SN_VENDOR_APPLE16:
+		case SN_VENDOR_ASANTELC:
+		case SN_VENDOR_DAYNA:
 			rv = 1;
 			break;
 		}
@@ -111,6 +114,7 @@ sn_nubus_attach(parent, self, aux)
 	bus_space_tag_t	bst;
 	bus_space_handle_t bsh, tmp_bsh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+	char cardtype[INTERFACE_NAME_LEN];	/* type string */
 
 	(void)(&offset);	/* Work around lame gcc initialization bug */
 
@@ -121,6 +125,9 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	sc->sc_regt = bst;
+
+	strncpy(cardtype, nubus_get_card_name(na->fmt),
+	    INTERFACE_NAME_LEN);
 
 	success = 0;
 
@@ -199,6 +206,30 @@ sn_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
+	case SN_VENDOR_ASANTELC: /* Macintosh LC Ethernet Adapter */
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 |
+			DCR_DMABLOCK | DCR_PO1 | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
+		sc->bitmode = 0; /* 16 bit card */
+
+		if (bus_space_subregion(bst, bsh,
+		    0x0, SN_REGSIZE, &sc->sc_regh)) {
+			printf(": failed to map register space.\n");
+			break;
+		}
+
+		if (bus_space_subregion(bst, bsh,
+		    0x400000, ETHER_ADDR_LEN, &tmp_bsh)) {
+			printf(": failed to map ROM space.\n");
+			break;
+		}
+
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
+
+		offset = 0;
+		success = 1;
+		break;
+
 	default:
 		/*
 		 * You can't actually get this default, the snmatch
@@ -223,6 +254,8 @@ sn_nubus_attach(parent, self, aux)
 		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + offset);
 	}
 
+	printf(": %s, ", cardtype);
+
 	/* snsetup returns 1 if something fails */
 	if (snsetup(sc, myaddr)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
@@ -230,8 +263,6 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	add_nubus_intr(sc->slotno, snintr, (void *)sc);
-
-	return;
 }
 
 static int
@@ -244,12 +275,17 @@ sn_nb_card_vendor(bst, bsh, na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
-		if (na->drhw == NUBUS_DRHW_APPLE_SN)
+		if (na->drhw == NUBUS_DRHW_APPLE_SNT)
 			vendor = SN_VENDOR_APPLE;
-		else if (na->drhw == NUBUS_DRHW_APPLE_SNT)
+		else if (na->drhw == NUBUS_DRHW_APPLE_SN)
 			vendor = SN_VENDOR_APPLE16;
 		break;
 	case NUBUS_DRSW_APPLE:
+		if (na->drhw == NUBUS_DRHW_ASANTE_LC)
+			vendor = SN_VENDOR_ASANTELC;
+		else
+			vendor = SN_VENDOR_APPLE;
+		break;
 	case NUBUS_DRSW_TECHWORKS:
 		vendor = SN_VENDOR_APPLE;
 		break;

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_snvar.h,v 1.10 2002/03/14 01:26:35 millert Exp $      */
+/*    $OpenBSD: if_snvar.h,v 1.11 2002/04/22 20:15:55 miod Exp $      */
 /*    $NetBSD: if_snvar.h,v 1.8 1997/04/25 03:40:09 briggs Exp $      */
 
 /*
@@ -18,6 +18,7 @@
 #define	SN_VENDOR_APPLE		0x00	/* Apple Computer/compatible */
 #define	SN_VENDOR_DAYNA		0x01	/* Dayna/Kinetics EtherPort */
 #define	SN_VENDOR_APPLE16	0x02	/* Apple Twisted Pair Ether NB */
+#define	SN_VENDOR_ASANTELC	0x09	/* Asante Macintosh LC Ethernet */
 
 /*
  * Memory access macros. Since we handle SONIC in 16 bit mode (PB5X0)
@@ -63,10 +64,10 @@ extern int	kvtop(caddr_t addr);
  * total space in page 0 = NTDA * 92 + NRRA * 16 + NRDA * 28 + 68
  */
 
-#define NRBA    8		/* # receive buffers < NRRA */
+#define NRBA    32		/* # receive buffers < NRRA */
 #define RBAMASK (NRBA-1)
-#define NTDA    8		/* # transmit descriptors */
-#define NRRA    16		/* # receive resource descriptors */
+#define NTDA    16		/* # transmit descriptors */
+#define NRRA    64		/* # receive resource descriptors */
 #define RRAMASK (NRRA-1)	/* the reason why NRRA must be power of two */
 
 #define FCSSIZE 4		/* size of FCS appended to packets */

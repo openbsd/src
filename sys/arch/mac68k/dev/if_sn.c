@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.31 2002/03/14 01:26:35 millert Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.32 2002/04/22 20:15:55 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -237,7 +237,7 @@ snsetup(sc, lladdr)
 #ifdef SNDEBUG
 	camdump(sc);
 #endif
-	printf(" address %s\n", ether_sprintf(lladdr));
+	printf("address %s\n", ether_sprintf(lladdr));
 
 #ifdef SNDEBUG
 	printf("%s: buffers: rra=%p cda=%p rda=%p tda=%p\n",
@@ -430,7 +430,7 @@ sninit(sc)
 
 	s = splnet();
 
-	NIC_PUT(sc, SNR_CR, CR_RST);	/* DCR only accessable in reset mode! */
+	NIC_PUT(sc, SNR_CR, CR_RST);	/* DCR only accessible in reset mode! */
 
 	/* config it */
 	NIC_PUT(sc, SNR_DCR, (sc->snr_dcr |
@@ -1171,7 +1171,7 @@ sonic_get(sc, eh, datalen)
 				if (top) m_freem(top);
 				return (0);
 			}
-			len = MLEN;
+			len = MCLBYTES;
 		}
 		m->m_len = len = min(datalen, len);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.17 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.18 2002/04/22 20:15:55 miod Exp $	*/
 /*	$NetBSD: nubus.h,v 1.25 1997/05/02 00:54:28 briggs Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
+#define    NUBUS_DRHW_ASANTE_LC	0x010F
 #define    NUBUS_DRHW_SONIC	0x0110
 #define    NUBUS_DRHW_APPLE_SNT	0x0118
 #define    NUBUS_DRHW_APPLE_SN	0x0119
