@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.17 1997/08/17 22:00:04 millert Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.18 1997/08/19 19:04:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -105,6 +105,9 @@ struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
 	/* NEC 273 */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "NEC                 CD-ROM DRIVE:273", "4.21", AQUIRK_NOTUR},
+	/* Sanyo 4x */
+	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
+	 "SANYO CRD-254P", "1.02", AQUIRK_NOCAPACITY},
 	/* Sanyo 6x */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "SANYO CRD-256P", "1.02", AQUIRK_NOCAPACITY},
