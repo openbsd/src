@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.5 1997/02/11 17:41:13 kstailey Exp $
+# $OpenBSD: COYOTE,v 1.6 1997/05/04 01:17:11 kstailey Exp $
 #
 
 #
@@ -28,12 +28,15 @@ options 	DDB
 # Filesystem options
 options 	NFSCLIENT			# nfs client support
 #
+options		FFS		# fast filesystem
+options		MFS		# memory-based filesystem
 #options 	FDESC		# /dev/fd/* (depreciated)
 options 	FIFO		# FIFOs; RECOMMENDED
 options 	KERNFS		# /kern
 #options 	NULLFS		# loopback file system
 options 	PROCFS		# /proc
-#options 	UNION		# union file system
+#options 	UNION		# union file system (merged directories)
+#options 	PORTAL		# union file system (run programs via open(2))
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -57,7 +60,8 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	EXEC_DEBUG
 options 	DIAGNOSTIC
 
-config		bsd root on nfs swap on nfs
+#config		bsd root on nfs swap on nfs
+config		bsd root on sd0 swap on sd0 dumps on sd0
 
 #
 # Serial ports
@@ -74,6 +78,27 @@ ms0    at zsc0 channel 1	# mouse
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr   0x120000 level 3
+
+# Sun3 "si" SCSI controller (NCR 5380)
+# This driver has several flags which may be enabled by OR'ing
+# the values and using the "flags" directive.  (PR#1929)
+# Valid flags are:
+#
+#	0x01		Use DMA (may be polled)
+#	0x02		Use DMA completion interrupts
+#	0x04		Allow disconnect/reselect
+#
+# E.g. "flags 0x07" would enable DMA, interrupts, and reselect.
+# Note: these values are quite a bit paranoid...
+si0 at obio0 addr   0x140000 level 2 flags 0
+
+#
+# SCSI infrastructure
+#
+scsibus* at scsi?
+
+# Sun incompatible scsi device mappings
+sd* at scsibus? target ? lun ?
 
 #
 # Frame buffer devices
