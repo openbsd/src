@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.20 2003/09/21 02:11:42 krw Exp $
+#       $OpenBSD: install.md,v 1.21 2003/10/12 13:18:37 krw Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -81,9 +81,7 @@ md_checkfordisklabel() {
 
 	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
 
-	if grep "no OpenBSD or MacOS disk label" /tmp/checkfordisklabel; then
-		rval=1
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
+	if grep "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
 	elif grep " HFS " /tmp/checkfordisklabel; then
 		rval=3
@@ -94,27 +92,23 @@ md_checkfordisklabel() {
 }
 
 md_prep_disklabel() {
-	local _disk=$1
-	local _wflag="-W"
+	local _disk=$1 _wflag="-W"
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)	;;
-	1)	echo WARNING: Disk $_disk has no label. You will be creating a new one.
-		echo
-	;;
-	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
-		echo
-	;;
-	3)	echo WARNING: This disk has been set up under Mac OS. For safety reasons, you
-		echo will not be allowed to save any disklabel changes from OpenBSD.
-		echo
+	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
+		;;
+	3)	cat <<__EOT
+WARNING: This disk has been set up under Mac OS. For safety reasons, you
+	 will not be allowed to save any disklabel changes from OpenBSD.
+
+__EOT
 		_wflag="-N"
-	;;
+		;;
 	esac
 
-	disklabel ${_wflag} ${_disk}
-	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	disklabel $_wflag $_disk >/dev/null 2>&1
+	disklabel -f /tmp/fstab.$_disk -E $_disk
 }
 
 md_congrats() {

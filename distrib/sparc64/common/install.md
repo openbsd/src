@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.17 2003/09/21 02:11:42 krw Exp $
+#	$OpenBSD: install.md,v 1.18 2003/10/12 13:18:37 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -82,9 +82,7 @@ md_checkfordisklabel() {
 
 	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
 
-	if grep "no disk label" /tmp/checkfordisklabel; then
-		rval=1
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
+	if grep "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
 	fi >/dev/null 2>&1
 
@@ -92,23 +90,17 @@ md_checkfordisklabel() {
 	return $rval
 }
 
-md_prep_disklabel()
-{
+md_prep_disklabel() {
 	local _disk=$1
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)	;;
-	1)	echo WARNING: Disk $_disk has no label. You will be creating a new one.
-		echo
-		;;
-	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
-		echo
+	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
 		;;
 	esac
 
-	disklabel -W ${_disk}
-	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	disklabel -W $_disk >/dev/null 2>&1
+	disklabel -f /tmp/fstab.$_disk -E $_disk
 }
 
 md_congrats() {
