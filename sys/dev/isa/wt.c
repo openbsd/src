@@ -1,4 +1,4 @@
-/*	$OpenBSD: wt.c,v 1.10 1996/05/26 00:27:33 deraadt Exp $	*/
+/*	$OpenBSD: wt.c,v 1.11 1996/09/01 16:42:24 deraadt Exp $	*/
 /*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
@@ -486,6 +486,7 @@ wtioctl(dev, cmd, addr, flag, p)
 		((struct mtget*)addr)->mt_resid = 0;
 		((struct mtget*)addr)->mt_fileno = 0;		/* file */
 		((struct mtget*)addr)->mt_blkno = 0;		/* block */
+		((struct mtget*)addr)->mt_density = sc->dens;	/* density */
 		return 0;
 	case MTIOCTOP:
 		break;
@@ -721,6 +722,7 @@ wtintr(arg)
 	if (sc->dmacount > sc->dmatotal)	/* short last block */
 		sc->dmacount = sc->dmatotal;
 	/* Wake up user level. */
+	untimeout(wttimer, sc);
 	wakeup((caddr_t)sc);
 	WTDBPRINT(("i/o finished, %d\n", sc->dmacount));
 	return 1;
