@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.10 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: sab.c,v 1.11 2003/05/13 23:55:54 henric Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -122,6 +122,8 @@ struct sabtty_softc *sabtty_cons_output;
     bus_space_read_1((sc)->sc_bt, (sc)->sc_bh, (r))
 #define	SAB_WRITE(sc,r,v)	\
     bus_space_write_1((sc)->sc_bt, (sc)->sc_bh, (r), (v))
+#define	SAB_WRITE_BLOCK(sc,r,p,c)	\
+    bus_space_write_region_1((sc)->sc_bt, (sc)->sc_bh, (r), (p), (c))
 
 int sab_match(struct device *, void *, void *);
 void sab_attach(struct device *, struct device *, void *);
@@ -139,8 +141,8 @@ int sabtty_param(struct tty *, struct termios *);
 int sabtty_intr(struct sabtty_softc *, int *);
 void sabtty_softintr(struct sabtty_softc *);
 int sabtty_mdmctrl(struct sabtty_softc *, int, int);
-void sabtty_cec_wait(struct sabtty_softc *);
-void sabtty_tec_wait(struct sabtty_softc *);
+int sabtty_cec_wait(struct sabtty_softc *);
+int sabtty_tec_wait(struct sabtty_softc *);
 void sabtty_reset(struct sabtty_softc *);
 void sabtty_flush(struct sabtty_softc *);
 int sabtty_speed(int);
@@ -284,6 +286,9 @@ sab_attach(parent, self, aux)
 		break;
 	}
 	printf("\n");
+
+	/* Let current output drain */
+	DELAY(100000);
 
 	/* Set all pins, except DTR pins to be inputs */
 	SAB_WRITE(sc, SAB_PCR, ~(SAB_PVR_DTR_A | SAB_PVR_DTR_B));
@@ -431,9 +436,6 @@ sabtty_attach(parent, self, aux)
 			break;
 		}
 
-		/* Let current output drain */
-		DELAY(100000);
-
 		t.c_ispeed= 0;
 		t.c_ospeed = 9600;
 		t.c_cflag = CREAD | CS8 | HUPCL;
@@ -524,7 +526,41 @@ sabtty_intr(sc, needsoftp)
 	if (isr1 & SAB_ISR1_BRKT)
 		sabtty_abort(sc);
 
-	if (isr1 & SAB_ISR1_ALLS) {
+	if (isr1 & (SAB_ISR1_XPR | SAB_ISR1_ALLS)) {
+		if ((SAB_READ(sc, SAB_STAR) & SAB_STAR_XFW) &&
+		    (sc->sc_flags & SABTTYF_STOP) == 0) {
+			if (sc->sc_txc < 32)
+				len = sc->sc_txc;
+			else
+				len = 32;
+
+			if (len > 0) {
+				SAB_WRITE_BLOCK(sc, SAB_XFIFO, sc->sc_txp, len);
+				sc->sc_txp += len; 
+				sc->sc_txc -= len;
+
+				sabtty_cec_wait(sc);
+				SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_XF);
+
+				/*
+				 * Prevent the false end of xmit from
+				 * confusing things below.
+				 */
+				isr1 &= ~SAB_ISR1_ALLS;
+			}
+		}
+
+		if ((sc->sc_txc == 0) || (sc->sc_flags & SABTTYF_STOP)) {
+			if ((sc->sc_imr1 & SAB_IMR1_XPR) == 0) {
+				sc->sc_imr1 |= SAB_IMR1_XPR;
+				sc->sc_imr1 &= ~SAB_IMR1_ALLS;
+				SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
+			}
+		}
+	}
+
+	if ((isr1 & SAB_ISR1_ALLS) && ((sc->sc_txc == 0) ||
+	    (sc->sc_flags & SABTTYF_STOP))) {
 		if (sc->sc_flags & SABTTYF_TXDRAIN)
 			wakeup(sc);
 		sc->sc_flags &= ~SABTTYF_STOP;
@@ -532,31 +568,6 @@ sabtty_intr(sc, needsoftp)
 		sc->sc_imr1 |= SAB_IMR1_ALLS;
 		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
 		needsoft = 1;
-	}
-
-	if (isr1 & SAB_ISR1_XPR) {
-		r = 1;
-		if ((sc->sc_flags & SABTTYF_STOP) == 0) {
-			if (sc->sc_txc < 32)
-				len = sc->sc_txc;
-			else
-				len = 32;
-			for (i = 0; i < len; i++) {
-				SAB_WRITE(sc, SAB_XFIFO + i, *sc->sc_txp);
-				sc->sc_txp++;
-				sc->sc_txc--;
-			}
-			if (i != 0) {
-				sabtty_cec_wait(sc);
-				SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_XF);
-			}
-		}
-
-		if ((sc->sc_txc == 0) || (sc->sc_flags & SABTTYF_STOP)) {
-			sc->sc_imr1 |= SAB_IMR1_XPR;
-			sc->sc_imr1 &= ~SAB_IMR1_ALLS;
-			SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
-		}
 	}
 
 	if (needsoft)
@@ -1093,14 +1104,14 @@ sabtty_start(tp)
 			sc->sc_txc = ndqb(&tp->t_outq, 0);
 			sc->sc_txp = tp->t_outq.c_cf;
 			tp->t_state |= TS_BUSY;
-			sc->sc_imr1 &= ~SAB_IMR1_XPR;
+			sc->sc_imr1 &= ~(SAB_ISR1_XPR | SAB_ISR1_ALLS);
 			SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
 		}
 	}
 	splx(s);
 }
 
-void
+int
 sabtty_cec_wait(sc)
 	struct sabtty_softc *sc;
 {
@@ -1108,14 +1119,14 @@ sabtty_cec_wait(sc)
 
 	for (;;) {
 		if ((SAB_READ(sc, SAB_STAR) & SAB_STAR_CEC) == 0)
-			return;
+			return (0);
 		if (--i == 0)
-			break;
+			return (1);
 		DELAY(1);
 	}
 }
 
-void
+int
 sabtty_tec_wait(sc)
 	struct sabtty_softc *sc;
 {
@@ -1123,9 +1134,9 @@ sabtty_tec_wait(sc)
 
 	for (;;) {
 		if ((SAB_READ(sc, SAB_STAR) & SAB_STAR_TEC) == 0)
-			return;
+			return (0);
 		if (--i == 0)
-			break;
+			return (1);
 		DELAY(1);
 	}
 }
