@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.10 1999/01/12 04:24:10 millert Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.11 1999/01/22 21:15:21 art Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -171,10 +171,9 @@ mfs_strategy(v)
 	struct vnode *vp;
 	struct proc *p = curproc;		/* XXX */
 
-#ifdef DIAGNOSTIC
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
-#endif
+
 	mfsp = VTOMFS(vp);
 	/* check for mini-root access */
 	if (mfsp->mfs_pid == 0) {
