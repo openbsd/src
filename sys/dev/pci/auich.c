@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.30 2003/01/21 13:04:59 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.31 2003/03/19 20:15:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -227,6 +227,7 @@ static const struct auich_devtype {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82440MX_ACA,	0, "440MX" },
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7012_ACA,	0, "SiS7012" },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE_ACA,	0, "nForce" },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE2_ACA,	0, "nForce2" },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_ACA,	0, "AMD768" },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_8111_ACA,	0, "AMD8111" },
 };
