@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1999/01/03 18:42:50 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 1999/01/20 19:29:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -221,7 +221,7 @@ static __inline struct pv_entry *pmap_alloc_pv __P((void));
 static __inline void pmap_free_pv __P((struct pv_entry *));
 static __inline struct pv_entry *pmap_find_pv __P((vm_offset_t));
 static __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int, u_int,
-					u_int, struct pv_entry *));
+					struct pv_entry *));
 static __inline void pmap_remove_pv __P((pmap_t, vm_offset_t,
 					 struct pv_entry *));
 static __inline void pmap_clear_pv __P((vm_offset_t, struct pv_entry *));
@@ -476,10 +476,10 @@ pmap_collect_pv()
 #endif
 
 static __inline void
-pmap_enter_pv(pmap, va, tlbprot, tlbpage, tlbsw, pv)
+pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv)
 	register pmap_t pmap;
 	vm_offset_t va;
-	u_int tlbprot, tlbpage, tlbsw;
+	u_int tlbprot, tlbpage;
 	register struct pv_entry *pv;
 {	
 	register struct pv_entry *npv, *hpv;
@@ -532,7 +532,6 @@ pmap_enter_pv(pmap, va, tlbprot, tlbpage, tlbsw, pv)
 	pv->pv_space = pmap->pmap_space;
 	pv->pv_tlbprot = tlbprot;
 	pv->pv_tlbpage = tlbpage;
-	pv->pv_tlbsw = tlbsw;
 	pv->pv_next = npv;
 	if (hpv)
 		hpv->pv_next = pv;
@@ -616,14 +615,12 @@ pmap_clear_pv(pa, cpv)
 		/*
 		 * have to clear the icache first since fic uses the dtlb.
 		 */
-		if (pv->pv_tlbsw & TLB_ICACHE)
-			ficache(pv->pv_space, pv->pv_va, NBPG);
+		ficache(pv->pv_space, pv->pv_va, NBPG);
 		pitlb(pv->pv_space, pv->pv_va);
-		if (pv->pv_tlbsw & TLB_DCACHE)
-			fdcache(pv->pv_space, pv->pv_va, NBPG);
+
+		fdcache(pv->pv_space, pv->pv_va, NBPG);
 		pdtlb(pv->pv_space, pv->pv_va);
 
-		pv->pv_tlbsw &= ~(TLB_ICACHE|TLB_DCACHE);
 		pmap_clear_va(pv->pv_space, pv->pv_va);
 	}
 	splx(s);
@@ -1069,7 +1066,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: new mapping\n");
 #endif
-		pmap_enter_pv(pmap, va, tlbprot, tlbpage, 0, pv);
+		pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv);
 		pmap->pmap_stats.resident_count++;
 	}
 	else {
@@ -1082,7 +1079,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 			tlbprot = ppv->pv_tlbprot;
 			pmap_remove_pv(pmap, va, ppv);
-			pmap_enter_pv(pmap, va, tlbprot, tlbpage, 0, pv);
+			pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv);
 		} else {
 			/* We are just changing the protection.  */
 #ifdef PMAPDEBUG

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.5 1999/01/03 04:01:35 mickey Exp $ */
+/* $OpenBSD: pmap.h,v 1.6 1999/01/20 19:29:51 mickey Exp $ */
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -106,7 +106,7 @@ struct pv_entry {
 	u_int		pv_va;		/* virtual page number */
 	u_int		pv_tlbprot;	/* TLB format protection */
 	u_int		pv_tlbpage;	/* physical page (for TLB load) */
-	u_int		pv_tlbsw;
+	u_int		pv_pad;		/* pad to 32 bytes */
 };
 
 #define NPVPPG (NBPG/32-1)
