@@ -1,0 +1,73 @@
+#
+# Makefile for libevent
+#
+# Dug Song <dugsong@monkey.org>
+#
+# $Id: Makefile.in,v 1.1.1.1 2002/06/15 18:01:39 provos Exp $
+
+srcdir          = @srcdir@
+VPATH           = @srcdir@
+
+install_prefix  =
+prefix          = @prefix@
+exec_prefix	= @exec_prefix@
+libdir		= @libdir@
+mandir		= @mandir@
+includedir	= @includedir@
+
+CC	= @CC@
+RANLIB	= @RANLIB@
+DEFS	= @DEFS@
+CFLAGS	= @CFLAGS@ $(DEFS) -Wall -I/usr/include -I$(srcdir) -I$(srcdir)/..
+LDFLAGS	= @LDFLAGS@ -L.. -levent
+
+INSTALL	= @INSTALL@
+INSTALL_DATA	= @INSTALL_DATA@
+LN_S = @LN_S@
+
+TARGET	= test-eof test-weof test-time
+.c.o:
+	$(CC) $(CFLAGS) -c $(srcdir)/$*.c
+
+test: $(TARGET)
+	@echo "Running tests:"
+	@echo -n " test-eof: "
+	@if ./test-eof >/dev/null ; \
+	then \
+		echo OKAY ; \
+	else \
+		echo FAILED ; \
+	fi
+	@echo -n " test-weof: "
+	@if ./test-weof >/dev/null ; \
+	then \
+		echo OKAY ; \
+	else \
+		echo FAILED ; \
+	fi
+	@echo -n " test-time: "
+	@if ./test-time >/dev/null ; \
+	then \
+		echo OKAY ; \
+	else \
+		echo FAILED ; \
+	fi
+
+test-eof: test-eof.o
+	$(CC) $(CFLAGS)	$(INCS) -o $@ test-eof.o $(LDFLAGS)
+
+test-weof: test-weof.o
+	$(CC) $(CFLAGS)	$(INCS) -o $@ test-weof.o $(LDFLAGS)
+
+test-time: test-time.o
+	$(CC) $(CFLAGS)	$(INCS) -o $@ test-time.o $(LDFLAGS)
+
+install:
+
+clean:
+	rm -f *.o *~ $(TARGET)
+
+distclean: clean
+	rm -f Makefile
+
+# EOF
