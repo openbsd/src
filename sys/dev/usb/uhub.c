@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.27 2004/12/09 11:49:55 dlg Exp $ */
+/*	$OpenBSD: uhub.c,v 1.28 2004/12/12 05:17:40 dlg Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -295,6 +295,7 @@ USB_ATTACH(uhub)
 		else
 			up->power = USB_MIN_POWER;
 		up->restartcnt = 0;
+		up->reattach = 0;
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -412,7 +413,7 @@ uhub_explore(usbd_device_handle dev)
 	usbd_status err;
 	int speed;
 	int port;
-	int change, status;
+	int change, status, reconnect;
 
 	DPRINTFN(10, ("uhub_explore dev=%p addr=%d\n", dev, dev->address));
 
@@ -425,6 +426,8 @@ uhub_explore(usbd_device_handle dev)
 
 	for(port = 1; port <= hd->bNbrPorts; port++) {
 		up = &dev->hub->ports[port-1];
+		reconnect = up->reattach;
+		up->reattach = 0;
 		err = usbd_get_port_status(dev, port, &up->status);
 		if (err) {
 			DPRINTF(("uhub_explore: get port status failed, "
@@ -459,7 +462,7 @@ uhub_explore(usbd_device_handle dev)
 					       USBDEVNAME(sc->sc_dev), port);
 			}
 		}
-		if (!(change & UPS_C_CONNECT_STATUS)) {
+		if (!reconnect && !(change & UPS_C_CONNECT_STATUS)) {
 			DPRINTFN(3,("uhub_explore: port=%d !C_CONNECT_"
 				    "STATUS\n", port));
 			/* No status change, just do recursive explore. */

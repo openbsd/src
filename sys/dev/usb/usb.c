@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.29 2004/07/08 22:18:44 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.30 2004/12/12 05:17:40 dlg Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -668,6 +668,15 @@ void
 usb_needs_explore(usbd_device_handle dev)
 {
 	DPRINTFN(2,("usb_needs_explore\n"));
+	dev->bus->needs_explore = 1;
+	wakeup(&dev->bus->needs_explore);
+}
+
+void
+usb_needs_reattach(usbd_device_handle dev)
+{
+	DPRINTFN(2,("usb_needs_reattach\n"));
+	dev->powersrc->reattach = 1;
 	dev->bus->needs_explore = 1;
 	wakeup(&dev->bus->needs_explore);
 }
