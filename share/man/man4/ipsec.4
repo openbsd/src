@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.17 1999/02/24 23:35:43 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.18 1999/03/02 15:40:37 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -337,7 +337,7 @@ kernel.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EINVAL]
-.It Bq Er EACESS
+.It Bq Er EACCES
 when an attempt is made to lower the security level below the system default
 by a non-privileged process.
 .It Bq Er EINVAL
