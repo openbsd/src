@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2000/06/08 22:25:19 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/03/29 00:17:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -190,7 +190,7 @@ cpu_fork(p1, p2, stack, stacksize)
 {
 	register struct pcb *pcbp;
 	register struct trapframe *tf;
-	register_t sp;
+	register_t sp, osp;
 
 #ifdef DIAGNOSTIC
 	if (round_page(sizeof(struct user)) > NBPG)
@@ -246,11 +246,12 @@ cpu_fork(p1, p2, stack, stacksize)
 	/*
 	 * Build a stack frame for the cpu_switch & co.
 	 */
+	osp = sp;
 	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
 	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(child_return);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)p2;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = sp;
+	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
 	*(register_t*)(sp + HPPA_FRAME_CRP) =
 		(register_t)switch_trampoline;
 	tf->tf_sp = sp;
@@ -263,14 +264,15 @@ cpu_set_kpc(p, pc, arg)
 	void (*pc) __P((void *));
 	void *arg;
 {
-	register struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = p->p_md.md_regs;
+	register_t sp = tf->tf_sp;
 
 	/*
 	 * Overwrite normally stashed there &child_return(p)
 	 */
-	*HPPA_FRAME_CARG(1, tf->tf_sp) = (register_t)pc;
-	*HPPA_FRAME_CARG(2, tf->tf_sp) = (register_t)arg;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)tf->tf_sp, HPPA_FRAME_SIZE);
+	*HPPA_FRAME_CARG(1, sp) = (register_t)pc;
+	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)sp, HPPA_FRAME_SIZE);
 }
 
 void
@@ -303,27 +305,57 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t faddr, taddr, off;
+	vaddr_t addr, kva;
 	paddr_t pa;
+	vsize_t size, off;
+	int npf;
 	struct proc *p;
+	struct vm_map *map;
 
+#ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
+#endif
 	p = bp->b_proc;
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vaddr_t)bp->b_data - faddr;
-	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
-	bp->b_data = (caddr_t)(taddr + off);
-	len = atop(len);
-	while (len--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
+	map = &p->p_vmspace->vm_map;
+	bp->b_saveaddr = bp->b_data;
+	addr = (vaddr_t)bp->b_saveaddr;
+	off = addr & PGOFSET;
+	size = round_page(bp->b_bcount + off);
+
+	/*
+	 * Note that this is an expanded version of:
+	 *   kva = uvm_km_valloc_wait(kernel_map, size);
+	 * We do it on our own here to be able to specify an offset to uvm_map
+	 * so that we can get all benefits of PMAP_PREFER.
+	 * - art@
+	 */
+	while (1) {
+		kva = vm_map_min(phys_map);
+		if (uvm_map(phys_map, &kva, size, NULL, addr,
+		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == KERN_SUCCESS)
+			break;
+		tsleep(phys_map, PVM, "vallocwait", 0);
+	}
+
+	bp->b_data = (caddr_t)(kva + off);
+	addr = trunc_page(addr);
+	npf = btoc(size);
+	while (npf--) {
+		/* not needed, thanks to PMAP_PREFER() */
+		/* fdcache(vm_map_pmap(map)->pmap_space, addr, PAGE_SIZE); */
+
+		pa = pmap_extract(vm_map_pmap(map), addr);
+#ifdef DIAGNOSTIC
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
-		faddr += PAGE_SIZE;
-		taddr += PAGE_SIZE;
+#endif
+		pmap_enter(vm_map_pmap(phys_map), kva, pa,
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+
+		addr += PAGE_SIZE;
+		kva += PAGE_SIZE;
 	}
 }
 
@@ -337,13 +369,14 @@ vunmapbuf(bp, len)
 {
 	vaddr_t addr, off;
 
+#ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
+#endif
 	addr = trunc_page(bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-
 }
