@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.16 1998/01/24 18:21:39 mickey Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.17 1998/02/25 03:45:15 angelos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ tcp_usrreq(so, req, m, nam, control)
 	int req;
 	struct mbuf *m, *nam, *control;
 {
+	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 	register struct inpcb *inp;
 	register struct tcpcb *tp = NULL;
 	int s;
@@ -189,6 +190,13 @@ tcp_usrreq(so, req, m, nam, control)
 	 * Send initial segment on connection.
 	 */
 	case PRU_CONNECT:
+		/* Trying to connect to some broadcast address */
+		if (in_broadcast(sin->sin_addr, NULL))
+		{
+			error = EINVAL;
+			break;
+		}
+
 		if (inp->inp_lport == 0) {
 			error = in_pcbbind(inp, NULL);
 			if (error)
@@ -197,6 +205,7 @@ tcp_usrreq(so, req, m, nam, control)
 		error = in_pcbconnect(inp, nam);
 		if (error)
 			break;
+
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
 			in_pcbdisconnect(inp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.3 1996/09/12 06:04:47 tholo Exp $	*/
+/*	$OpenBSD: in.c,v 1.4 1998/02/25 03:45:14 angelos Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -431,19 +431,35 @@ in_broadcast(in, ifp)
 	struct in_addr in;
 	struct ifnet *ifp;
 {
+	struct ifnet *ifn, *if_first, *if_target;
 	register struct ifaddr *ifa;
 
 	if (in.s_addr == INADDR_BROADCAST ||
 	    in.s_addr == INADDR_ANY)
 		return 1;
-	if ((ifp->if_flags & IFF_BROADCAST) == 0)
+	if (ifp && ((ifp->if_flags & IFF_BROADCAST) == 0))
 		return 0;
+
+	if (ifp == NULL)
+	{
+	  	if_first = ifnet.tqh_first;
+		if_target = 0;
+	}
+	else
+	{
+		if_first = ifp;
+		if_target = ifp->if_list.tqe_next;
+	}
+
+#define ia (ifatoia(ifa))
 	/*
 	 * Look through the list of addresses for a match
 	 * with a broadcast address.
+	 * If ifp is NULL, check against all the local interfaces.
 	 */
-#define ia (ifatoia(ifa))
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
+        for (ifn = if_first; ifn != if_target; ifn = ifn->if_list.tqe_next)
+	  for (ifa = ifp->if_addrlist.tqh_first; ifa;
+	       ifa = ifa->ifa_list.tqe_next)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
 		    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
 		     in.s_addr == ia->ia_netbroadcast.s_addr ||
