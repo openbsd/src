@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.9 2000/01/11 02:14:07 fgsch Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.10 2000/01/11 19:45:01 fgsch Exp $	*/
 
 /*-
  *
@@ -45,12 +45,9 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/errno.h>
 
-#include <net/if.h>
 #include <net/route.h>
 #include <netinet/tcp_fsm.h>
 
@@ -91,7 +88,7 @@ spx_init()
 	spx_iss = 1; /* WRONG !! should fish it out of TODR */
 }
 
-/*ARGSUSED*/
+/* ARGSUSED */
 void
 spx_input(struct mbuf *m, ...)
 {
