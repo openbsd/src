@@ -35,13 +35,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gets.c,v 1.3 1996/12/28 02:30:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gets.c,v 1.4 1997/01/19 22:32:21 graichen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 
+#ifndef NO_WARN_REFERENCES
 __warn_references(gets,
     "warning: gets() is very unsafe; consider using fgets()");
+#endif
 
 char *
 gets(buf)
