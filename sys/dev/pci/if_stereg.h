@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stereg.h,v 1.4 2001/02/03 05:56:14 mickey Exp $ */
+/*	$OpenBSD: if_stereg.h,v 1.5 2003/06/29 17:20:03 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -507,7 +507,6 @@ struct ste_softc {
 	mii_data_t		sc_mii;
 	bus_space_tag_t		ste_btag;
 	bus_space_handle_t	ste_bhandle;
-	int			ste_unit;
 	int			ste_tx_thresh;
 	u_int8_t		ste_link;
 	int			ste_if_flags;

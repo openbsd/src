@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.19 2003/06/29 13:23:48 avsm Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.20 2003/06/29 17:20:03 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -427,7 +427,7 @@ void ste_wait(sc)
 	}
 
 	if (i == STE_TIMEOUT)
-		printf("ste%d: command never completed!\n", sc->ste_unit);
+		printf("%s: command never completed!\n", sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -451,7 +451,7 @@ int ste_eeprom_wait(sc)
 	}
 
 	if (i == 100) {
-		printf("ste%d: eeprom failed to come ready\n", sc->ste_unit);
+		printf("%s: eeprom failed to come ready\n", sc->sc_dev.dv_xname);
 		return(1);
 	}
 
@@ -648,8 +648,8 @@ again:
 		 * If not, something truly strange has happened.
 		 */
 		if (!(rxstat & STE_RXSTAT_DMADONE)) {
-			printf("ste%d: bad receive status -- packet dropped",
-							sc->ste_unit);
+			printf("%s: bad receive status -- packet dropped",
+				sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
 			cur_rx->ste_ptr->ste_status = 0;
 			continue;
@@ -725,8 +725,8 @@ void ste_txeoc(sc)
 		    txstat & STE_TXSTATUS_EXCESSCOLLS ||
 		    txstat & STE_TXSTATUS_RECLAIMERR) {
 			ifp->if_oerrors++;
-			printf("ste%d: transmission error: %x\n",
-			    sc->ste_unit, txstat);
+			printf("%s: transmission error: %x\n",
+			    sc->sc_dev.dv_xname, txstat);
 
 			ste_reset(sc);
 			ste_init(sc);
@@ -734,9 +734,9 @@ void ste_txeoc(sc)
 			if (txstat & STE_TXSTATUS_UNDERRUN &&
 			    sc->ste_tx_thresh < STE_PACKET_SIZE) {
 				sc->ste_tx_thresh += STE_MIN_FRAMELEN;
-				printf("ste%d: tx underrun, increasing tx"
+				printf("%s: tx underrun, increasing tx"
 				    " start threshold to %d bytes\n",
-				    sc->ste_unit, sc->ste_tx_thresh);
+				    sc->sc_dev.dv_xname, sc->ste_tx_thresh);
 			}
 			CSR_WRITE_2(sc, STE_TX_STARTTHRESH, sc->ste_tx_thresh);
 			CSR_WRITE_2(sc, STE_TX_RECLAIM_THRESH,
@@ -864,7 +864,6 @@ void ste_attach(parent, self, aux)
 	bus_size_t		iosize;
 
 	s = splimp();
-	sc->ste_unit = sc->sc_dev.dv_unit;
 
 	/*
 	 * Handle power management nonsense.
@@ -882,8 +881,8 @@ void ste_attach(parent, self, aux)
 			irq = pci_conf_read(pc, pa->pa_tag, STE_PCI_INTLINE);
 
 			/* Reset the power state. */
-			printf("ste%d: chip is in D%d power mode "
-			"-- setting to D0\n", sc->ste_unit, command & STE_PSTATE_MASK);
+			printf("%s: chip is in D%d power mode -- setting to D0\n",
+				sc->sc_dev.dv_xname, command & STE_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, STE_PCI_PWRMGMTCTRL, command);
 
@@ -963,7 +962,7 @@ void ste_attach(parent, self, aux)
 	sc->ste_ldata_ptr = malloc(sizeof(struct ste_list_data) + 8,
 				M_DEVBUF, M_NOWAIT);
 	if (sc->ste_ldata_ptr == NULL) {
-		printf("ste%d: no memory for list buffers!\n", sc->ste_unit);
+		printf("%s: no memory for list buffers!\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -1019,14 +1018,14 @@ int ste_newbuf(sc, c, m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("ste%d: no memory for rx list -- "
-			    "packet dropped\n", sc->ste_unit);
+			printf("%s: no memory for rx list -- "
+			    "packet dropped\n", sc->sc_dev.dv_xname);
 			return(ENOBUFS);
 		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("ste%d: no memory for rx list -- "
-			    "packet dropped\n", sc->ste_unit);
+			printf("%s: no memory for rx list -- "
+			    "packet dropped\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -1137,8 +1136,8 @@ void ste_init(xsc)
 
 	/* Init RX list */
 	if (ste_init_rx_list(sc) == ENOBUFS) {
-		printf("ste%d: initialization failed: no "
-		    "memory for RX buffers\n", sc->ste_unit);
+		printf("%s: initialization failed: no "
+		    "memory for RX buffers\n", sc->sc_dev.dv_xname);
 		ste_stop(sc);
 		splx(s);
 		return;
@@ -1279,7 +1278,7 @@ void ste_reset(sc)
 	}
 
 	if (i == STE_TIMEOUT)
-		printf("ste%d: global reset never completed\n", sc->ste_unit);
+		printf("%s: global reset never completed\n", sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -1474,7 +1473,7 @@ void ste_watchdog(ifp)
 	sc = ifp->if_softc;
 
 	ifp->if_oerrors++;
-	printf("ste%d: watchdog timeout\n", sc->ste_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	ste_txeoc(sc);
 	ste_txeof(sc);
