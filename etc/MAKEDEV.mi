@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.24 2002/02/09 16:59:50 deraadt Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.25 2002/02/09 19:34:40 drahn Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -430,8 +430,9 @@ target(ramd,ttye,0)dnl
 twrget(ramd,mac_tty0,tty0,0,1)dnl
 target(ramd,pty,0)dnl
 -})dnl
-ifelse(MACHINE,macppc,{-
+ifelse(MACHINE,macppc,{-dnl
 target(ramd,sd,0,1,2,3,4)dnl
+target(ramd,wd,0,1,2,3,4)dnl
 target(ramd,st,0,1)dnl
 target(ramd,cd,0,1)dnl)dnl
 target(ramd,rd,0)dnl
