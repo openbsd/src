@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.4 2001/02/06 22:06:21 djm Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.5 2001/02/06 23:53:54 djm Exp $");
 
 /* XXX: commandline mode */
 /* XXX: copy between two remote hosts (commandline) */
@@ -153,6 +153,7 @@ main(int argc, char **argv)
 			debug_level = MIN(3, debug_level + 1);
 			break;
 		case 'o':
+			make_ssh_args("-o");
 			make_ssh_args(optarg);
 			break;
 		case 'h':
