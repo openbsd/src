@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.27 2000/04/24 19:43:35 niklas Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.28 2000/04/25 04:48:49 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_PLANET_SMARTCOM2000,
-      0, 0xff0, { 0x00, 0x00, 0xe8 } },
+      0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_DLINK_DE660,
@@ -128,11 +128,11 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SVEC_LANCARD,
-      0, 0x7f0, { 0x00, 0xc0, 0x6c } },
+      0, 0x07f0, { 0x00, 0xc0, 0x6c } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
       PCMCIA_CIS_EPSON_EEN10B,
-      0, 0xff0, { 0x00, 0x00, 0x48 } },
+      0, 0x0ff0, { 0x00, 0x00, 0x48 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_EDIMAX_NE2000,
@@ -365,9 +365,6 @@ struct ne2000dev {
     { "NDC Instant-Link",
       0x0000, 0x0000, NULL, NULL, 0,
       0x003a, { 0x00, 0x80, 0xc6 } },
-    { "NE2000 Compatible",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0xa0, 0x0c } },
     { "Network General Sniffer",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0x00, 0x00, 0x65 } },
