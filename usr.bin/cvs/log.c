@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2004/07/27 16:19:41 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2004/08/05 13:32:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,8 +35,10 @@
 #include <syslog.h>
 
 #include "log.h"
+#include "cvs.h"
 
 extern char *__progname;
+
 
 #ifdef unused
 static char *cvs_log_levels[] = {
@@ -222,7 +224,16 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	if (level == LP_ERRNO)
 		ecp = errno;
 
-	strlcpy(prefix, __progname, sizeof(prefix));
+#ifdef CVS
+	/* The cvs program appends the command name to the program name */
+	if (cvs_command != NULL) {
+		snprintf(prefix, sizeof(prefix), "%s %s", __progname,
+		    cvs_command);
+	}
+	else /* just use the standard strlcpy */
+#endif
+		strlcpy(prefix, __progname, sizeof(prefix));
+
 	if (cvs_log_flags & LF_PID) {
 		snprintf(buf, sizeof(buf), "[%d]", (int)getpid());
 		strlcat(prefix, buf, sizeof(prefix));
@@ -239,6 +250,16 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 			out = stdout;
 		else
 			out = stderr;
+
+#ifdef CVS
+		if (cvs_cmdop == CVS_OP_SERVER) {
+			if (out == stdout)
+				putc('M', out);
+			else
+				putc('E', out);
+			putc(' ', out);
+		}
+#endif
 
 		fprintf(out, "%s: %s\n", prefix, buf);
 	}
