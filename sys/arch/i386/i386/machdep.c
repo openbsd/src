@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.249 2003/11/14 07:15:53 kevlo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.250 2003/11/15 19:27:50 henning Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1714,6 +1714,7 @@ void
 identifycpu()
 {
 	extern char cpu_vendor[];
+	extern char cpu_brandstr[];
 	extern int cpu_id;
 	extern int cpu_feature;
 	extern int cpu_ecxfeature;
@@ -1728,6 +1729,8 @@ identifycpu()
 	int family, model, step, modif, cachesize;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	void (*cpu_setup)(const char *, int, int);
+	char *brandstr_from, *brandstr_to;
+	int skipspace;
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -1833,16 +1836,35 @@ identifycpu()
 			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
 	}
 
+	/* Remove leading and duplicated spaces from cpu_brandstr */
+	brandstr_from = brandstr_to = cpu_brandstr;
+	skipspace = 1;
+	while (*brandstr_from != '\0') {
+		if (!skipspace || *brandstr_from != ' ') {
+			skipspace = 0;
+			*(brandstr_to++) = *brandstr_from;
+		}
+		if (*brandstr_from == ' ')
+			skipspace = 1;
+		brandstr_from++;
+	}
+	*brandstr_to = '\0';
+
+	if (cpu_brandstr[0] == '\0') {
+		snprintf(cpu_brandstr, 48 /* sizeof(cpu_brandstr) */,
+		    "%s %s%s", vendorname, modifier, name);
+	}
+
 	if (cachesize > -1) {
 		snprintf(cpu_model, sizeof(cpu_model),
-		    "%s %s%s (%s%s%s%s-class, %dKB L2 cache)",
-		    vendorname, modifier, name,
+		    "%s (%s%s%s%s-class, %dKB L2 cache)",
+		    cpu_brandstr,
 		    ((*token) ? "\"" : ""), ((*token) ? token : ""),
 		    ((*token) ? "\" " : ""), classnames[class], cachesize);
 	} else {
 		snprintf(cpu_model, sizeof(cpu_model),
-		    "%s %s%s (%s%s%s%s-class)",
-		    vendorname, modifier, name,
+		    "%s (%s%s%s%s-class)",
+		    cpu_brandstr,
 		    ((*token) ? "\"" : ""), ((*token) ? token : ""),
 		    ((*token) ? "\" " : ""), classnames[class]);
 	}
@@ -1862,11 +1884,11 @@ identifycpu()
 			ghz = (pentium_mhz + 9) / 1000;
 			fr = ((pentium_mhz + 9) / 10 ) % 100;
 			if (fr)
-				printf(" %d.%02d GHz", ghz, fr);
+				printf(" @%d.%02d GHz", ghz, fr);
 			else
-				printf(" %d GHz", ghz);
+				printf(" @%d GHz", ghz);
 		} else
-			printf(" %d MHz", pentium_mhz);
+			printf(" @%d MHz", pentium_mhz);
 	}
 #endif
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.73 2003/07/29 18:24:36 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.74 2003/11/15 19:27:50 henning Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -138,6 +138,7 @@
 	.data
 
 	.globl	_C_LABEL(cpu), _C_LABEL(cpu_id), _C_LABEL(cpu_vendor)
+	.globl	_C_LABEL(cpu_brandstr)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(cpu_feature), _C_LABEL(cpu_ecxfeature)
 	.globl	_C_LABEL(cpu_cache_eax), _C_LABEL(cpu_cache_ebx)
@@ -158,6 +159,7 @@ _C_LABEL(cpu_cache_ebx):.long	0
 _C_LABEL(cpu_cache_ecx):.long	0
 _C_LABEL(cpu_cache_edx):.long	0
 _C_LABEL(cpu_vendor): .space 16	# vendor string returned by 'cpuid' instruction
+_C_LABEL(cpu_brandstr):	.space 48 # brand string returned by 'cpuid'
 _C_LABEL(cold):		.long	1	# cold till we are not
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(boothowto):	.long	0	# boot flags
@@ -394,6 +396,32 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%edx,RELOC(_C_LABEL(cpu_cache_edx))
 
 2:
+	/* Check if brand identification string is supported */
+	movl	$0x80000000,%eax
+	cpuid
+	cmpl	$0x80000000,%eax
+	jbe	3f
+	movl	$0x80000002,%eax
+	cpuid
+	movl	%eax,RELOC(_C_LABEL(cpu_brandstr))
+	movl	%ebx,RELOC(_C_LABEL(cpu_brandstr))+4
+	movl	%ecx,RELOC(_C_LABEL(cpu_brandstr))+8
+	movl	%edx,RELOC(_C_LABEL(cpu_brandstr))+12
+	movl	$0x80000003,%eax
+	cpuid
+	movl	%eax,RELOC(_C_LABEL(cpu_brandstr))+16
+	movl	%ebx,RELOC(_C_LABEL(cpu_brandstr))+20
+	movl	%ecx,RELOC(_C_LABEL(cpu_brandstr))+24
+	movl	%edx,RELOC(_C_LABEL(cpu_brandstr))+28
+	movl	$0x80000004,%eax
+	cpuid
+	movl	%eax,RELOC(_C_LABEL(cpu_brandstr))+32
+	movl	%ebx,RELOC(_C_LABEL(cpu_brandstr))+36
+	movl	%ecx,RELOC(_C_LABEL(cpu_brandstr))+40
+	andl	$0x00ffffff,%edx	/* Shouldn't be necessary */
+	movl	%edx,RELOC(_C_LABEL(cpu_brandstr))+44
+
+3:
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
 	 * can trace this code without having to worry about the trace trap
