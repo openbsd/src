@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.251 2000/04/24 22:21:17 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.252 2000/04/28 23:32:55 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -478,6 +478,7 @@ vendor LSISYS		0x11ca	LSI Systems
 vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
+vendor IRE		0x11d4	IRE
 vendor ZORAN		0x11de	Zoran
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
@@ -1065,6 +1066,9 @@ product INVERTEX AEON		0x0005	AEON
 /* I. T. T. products */
 product ITT AGX016		0x0001	AGX016
 product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
+
+/* IRE */
+product	IRE ADSP2141		0x2f44	ADSP 2141
 
 /* KTI */
 product KTI KTIE		0x3000	KTI
