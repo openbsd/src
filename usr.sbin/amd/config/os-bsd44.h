@@ -1,4 +1,4 @@
-/*	$OpenBSD: os-bsd44.h,v 1.5 1996/08/22 00:34:28 deraadt Exp $	*/
+/*	$OpenBSD: os-bsd44.h,v 1.6 1996/11/29 22:59:42 imp Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -124,7 +124,7 @@
  * Byte ordering
  */
 #ifndef BYTE_ORDER
-#include <machine/endian.h>
+#include <sys/types.h>
 #endif /* BYTE_ORDER */
 
 #undef ARCH_ENDIAN
