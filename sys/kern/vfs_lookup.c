@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.20 2002/07/02 04:23:25 ericj Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.21 2002/08/27 16:04:42 mickey Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -115,11 +115,6 @@ namei(ndp)
 		error = copyinstr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
 
-#ifdef KTRACE
-	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
-#endif
-
 	/*
 	 * Fail on null pathnames
 	 */
@@ -131,6 +126,11 @@ namei(ndp)
 		ndp->ni_vp = NULL;
 		return (error);
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
+		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
+#endif
 
 	/*
 	 *  Strip trailing slashes, as requested
