@@ -3,18 +3,16 @@ The sun3-specific portion of the OpenBSD 2.0 release is found in the
 out as follows:
 
 .../2.0/sun3/
-			INSTALL.txt	Installation notes; this file.
+		INSTALL.sun3	Installation notes; this file.
 
-			install/	Boot programs, a GENERIC kernel,
-					a stand-alone RAMDISK kernel,
-					and a miniroot filesystem image.
-					see below.
+		install/	Boot programs, a GENERIC kernel,
+				a stand-alone RAMDISK kernel,
+				and a miniroot filesystem image.
+				see below.
 
-			binary/		sun3 binary distribution sets;
-					see below.
+		binary/		sun3 binary distribution sets;
+				see below.
 
-			security/	sun3 security distribution;
-					see below.
 
 The OpenBSD/sun3 "install" distribution contains files that can be
 used to install OpenBSD onto a completely "bare" sun3.  The files

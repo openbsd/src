@@ -3,6 +3,8 @@ The amiga-specific portion of the OpenBSD 2.0 release is found in the
 out as follows:
 
 .../2.0/amiga/
+		INSTALL.amiga	This file.
+
 		bins/		amiga binary distribution sets;
 				see below.
 		miniroot/	amiga installation and upgrade

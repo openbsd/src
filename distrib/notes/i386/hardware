@@ -111,13 +111,11 @@ about:
 		Adaptec AHA-274x, AHA-284x families).
 	NCR 5380-based SCSI host adapters.
 	APM power management -- if your system supports it, turn it off!
-	PCMCIA ("PC Card") devices, including some miniature "IDE" hard disks.
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
 	WD-7000 SCSI host adapters.
 	PCI-PCI bridges and cards which include them, such as the AHA-394x
 		SCSI host adapter and some DC21x4x-based multi-Ethernet cards.
-	3Com 3c59x series PCI Ethernet and Fast Ethernet adapters.
 	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
 		run fine using one processor only.)
 	Intel EtherExpress 100 Fast Ethernet adapters.
@@ -140,8 +138,9 @@ Parallel ports	lpt0	0x378	7		[interrupt-driven or polling]
 		lpt1	0x278			[polling only]
 		lpt2	0x3bc			[polling only]
 
-MFM/ESDI/IDE/RLL hard disk controller
+MFM/ESDI/IDE/RLL hard disk controllers
 		wdc0	0x1f0	14		[supports two disks or atapi]
+		wdc1	0x170	15		[supports two disks or atapi]
 
 Floppy controller
 		fdc0	0x3f0	6	2	[supports two disks]
@@ -181,7 +180,7 @@ Novell NE1000, or NE2000 Ethernet boards
 		ed1	0x250	2		iomem 0xd8000
 		ed2	0x300	10		iomem 0xcc000
 
-3COM 3c509 or 3COM 3c579 Ethernet boards
+3COM 3c509, 3c579, 3c595 Ethernet boards (the 3c590 has problems)
 		ep0	any	any
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards

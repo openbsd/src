@@ -3,9 +3,10 @@ The mac68k-specific portion of the OpenBSD 2.0 release is found in the
 out as follows:
 
 .../2.0/mac68k/
-		bins/	mac68k binary distribution sets;
-			see below.
-		inst/	The mac68k installation utilities.
+		INSTALL.mac68k	This file
+		bins/		mac68k binary distribution sets;
+				see below.
+		inst/		The mac68k installation utilities.
 
 The OpenBSD/mac68k binary distribution sets contain the binaries which
 comprise the OpenBSD 2.0 release for the mac68k.  There are eight binary

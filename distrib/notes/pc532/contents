@@ -4,8 +4,7 @@ the files as follows:
 
 .../2.0/pc532/
 
-	INSTALL			Installation notes; this file.
-	CKSUM			output of "cksum *.gz"
+	INSTALL.pc532		Installation notes; this file.
 	inst-20.fs.gz		Installation file system.
 	download.c.gz		Source for a pc532 ROM compat download pgm
 	bsd.default.gz		Upgrade kernel

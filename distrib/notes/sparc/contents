@@ -3,10 +3,11 @@ The sparc-specific portion of the OpenBSD RELEASE release is found in the
 out as follows:
 
 .../2.0/sparc/
-		bins/	sparc binary distribution sets;
-			see below.
-		inst/	Base GENERIC kernels, tools,
-			and installation script.
+		INSTALL.sparc	this document
+		bins/		sparc binary distribution sets;
+				see below.
+		inst/		Base GENERIC kernels, tools,
+				and installation script.
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
 comprise the OpenBSD RELEASE release for the sparc.  There are seven binary

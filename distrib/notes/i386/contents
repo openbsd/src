@@ -3,7 +3,7 @@ The i386-specific portion of the OpenBSD 2.0 release is found in the
 out as follows:
 
 .../2.0/i386/
-		INSTALL		Installation notes; this file.
+		INSTALL.i386	Installation notes; this file.
 
 		bins/		i386 binary distribution sets;
 				see below.

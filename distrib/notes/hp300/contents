@@ -3,6 +3,8 @@ The hp300-specific portion of the OpenBSD 2.0 release is found in the
 out as follows:
 
 .../2.0/hp300/
+		INSTALL.hp300	This file
+
 		bins/		hp300 binary distribution sets;
 				see below.
 
