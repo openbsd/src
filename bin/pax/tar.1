@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.37 2002/05/24 21:45:32 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.38 2002/05/25 10:03:33 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.37 2002/05/24 21:45:32 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.38 2002/05/25 10:03:33 deraadt Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -239,7 +239,7 @@ and
 .Pp
 Outputs a 
 .Xr gzip 1
-compressed archive as of the files
+compressed archive containing the files
 .Pa bonvole 
 and
 .Pa sekve
@@ -260,8 +260,8 @@ function
 Verbosely lists, but does not extract, all files ending in 
 .Pa .jpeg
 from an compressed archive named
-.Pa backup.tar.gz
-.Note that the glob pattern has been quoted to avoid expansion by the shell
+.Pa backup.tar.gz .
+Note that the glob pattern has been quoted to avoid expansion by the shell.
 .Pp
 For more detailed examples, see 
 .Xr pax 1
