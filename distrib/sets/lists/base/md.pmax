@@ -3,9 +3,9 @@
 ./usr/bin/ldd
 ./usr/include/mips
 ./usr/include/readline
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.2
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.2/include
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.95.2
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.95.2/include
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.24.4
 ./usr/lib/libc_r.so.2.1
@@ -680,10 +680,10 @@
 ./usr/local/libdata/perl5/site_perl/mips-openbsd
 ./usr/mdec/bootrz
 ./usr/mdec/rzboot
-./usr/mipsel-unknown-openbsd2.6
-./usr/mipsel-unknown-openbsd2.6/bin
-./usr/mipsel-unknown-openbsd2.6/lib
-./usr/mipsel-unknown-openbsd2.6/lib/ldscripts
+./usr/mipsel-unknown-openbsd2.7
+./usr/mipsel-unknown-openbsd2.7/bin
+./usr/mipsel-unknown-openbsd2.7/lib
+./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
 ./usr/share/info/as.info
 ./usr/share/info/as.info-1
 ./usr/share/info/as.info-2

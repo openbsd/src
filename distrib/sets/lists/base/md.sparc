@@ -29,9 +29,9 @@
 ./usr/lib/apache/modules/mod_unique_id.so
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.6
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.2
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.2/include
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.7
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.7/2.95.2
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.7/2.95.2/include
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.24.4
 ./usr/lib/libc_r.so.2.1

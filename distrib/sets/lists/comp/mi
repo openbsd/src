@@ -290,7 +290,6 @@
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/pci/if_wxreg.h
 ./usr/include/dev/pci/if_wxvar.h
-./usr/include/dev/pci/if_xlreg.h
 ./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/pcidevs.h
 ./usr/include/dev/pci/pcidevs_data.h
@@ -3775,3 +3774,10 @@
 ./usr/include/dev/ic/anvar.h
 ./usr/share/man/cat3/srandomdev.0
 ./usr/include/dev/usb/ucomvar.h
+./usr/include/dev/cardbus/cardbus_exrom.h
+./usr/include/dev/cardbus/cardbusvar.h
+./usr/include/dev/cardbus/cardslotvar.h
+./usr/include/dev/cardbus/rbus.h
+./usr/include/dev/ic/xlreg.h
+./usr/include/dev/pci/pccbbreg.h
+./usr/include/dev/pci/pccbbvar.h

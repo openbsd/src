@@ -673,10 +673,10 @@
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
-./usr/powerpc-unknown-openbsd2.6
-./usr/powerpc-unknown-openbsd2.6/bin
-./usr/powerpc-unknown-openbsd2.6/lib
-./usr/powerpc-unknown-openbsd2.6/lib/ldscripts
+./usr/powerpc-unknown-openbsd2.7
+./usr/powerpc-unknown-openbsd2.7/bin
+./usr/powerpc-unknown-openbsd2.7/lib
+./usr/powerpc-unknown-openbsd2.7/lib/ldscripts
 ./usr/share/info/as.info
 ./usr/share/info/as.info-1
 ./usr/share/info/as.info-2

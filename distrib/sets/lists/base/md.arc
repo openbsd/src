@@ -24,10 +24,10 @@
 ./usr/lib/apache/modules/mod_unique_id.so
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.8.1
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.8.1/include
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.8.1/include/objc
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.24.4
 ./usr/lib/libcrypto.so.2.2
@@ -443,7 +443,7 @@
 ./usr/libexec/ld.so
 ./usr/mdec/mbr
 ./usr/mdec/msdos5mb.gz
-./usr/mipsel-unknown-openbsd2.6
-./usr/mipsel-unknown-openbsd2.6/bin
-./usr/mipsel-unknown-openbsd2.6/lib
-./usr/mipsel-unknown-openbsd2.6/lib/ldscripts
+./usr/mipsel-unknown-openbsd2.7
+./usr/mipsel-unknown-openbsd2.7/bin
+./usr/mipsel-unknown-openbsd2.7/lib
+./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
