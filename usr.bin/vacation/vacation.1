@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vacation.1,v 1.6 1999/05/16 19:58:06 alex Exp $
+.\"	$OpenBSD: vacation.1,v 1.7 1999/06/03 20:20:25 marc Exp $
 .\"	$NetBSD: vacation.1,v 1.5 1995/08/31 21:57:08 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
@@ -140,6 +140,14 @@ I am on vacation until July 22.  If you have something urgent,
 please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 --eric
 .Ed
+.Pp
+Any occurance of the string
+.Li $SUBJECT
+in 
+.Pa .vacation.msg
+will be replaced by the subject of the message that triggered the
+.Nm vacation
+program.
 .Pp
 .Nm vacation
 reads the incoming message from standard input, checking the message

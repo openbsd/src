@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.11 1999/02/12 01:21:07 marc Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.12 1999/06/03 20:20:26 marc Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.11 1999/02/12 01:21:07 marc Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.12 1999/06/03 20:20:26 marc Exp $";
 #endif /* not lint */
 
 /*
@@ -90,6 +90,7 @@ ALIAS *names;
 
 DB *db;
 char from[MAXLINE];
+char subj[MAXLINE];
 
 int junkmail __P((void));
 int nsearch __P((char *, char *));
@@ -219,7 +220,8 @@ readheaders()
 		case 'F':		/* "From " */
 			cont = 0;
 			if (!strncmp(buf, "From ", 5)) {
-				for (p = buf + 5; *p && *p != ' '; ++p);
+				for (p = buf + 5; *p && *p != ' '; ++p)
+					;
 				*p = '\0';
 				(void)strcpy(from, buf + 5);
 				if (p = strchr(from, '\n'))
@@ -234,7 +236,8 @@ readheaders()
 					sizeof("Return-Path:")-1) ||
 			    buf[12] != ' ' && buf[12] != '\t')
 				break;
-			for (p = buf + 12; *p && isspace(*p); ++p);
+			for (p = buf + 12; *p && isspace(*p); ++p)
+				;
 			if (strlcpy(from, p, sizeof from ) > sizeof from) {
 				syslog(LOG_NOTICE,
 				       "Return-Path %s exceeds limits", p);
@@ -259,6 +262,22 @@ readheaders()
 			    !strncasecmp(p, "bulk", 4) ||
 			    !strncasecmp(p, "list", 4))
 				exit(0);
+			break;
+		case 'S':		/* Subject: */
+			cont = 0;
+			if (strncasecmp(buf, "Subject:",
+					sizeof("Subject:")-1) ||
+			    buf[8] != ' ' && buf[8] != '\t')
+				break;
+			for (p = buf + 8; *p && isspace(*p); ++p)
+				;
+			if (strlcpy(subj, p, sizeof subj ) > sizeof subj) {
+				syslog(LOG_NOTICE,
+				       "Subject %s exceeds limits", p);
+				exit(1);
+			}
+			if (p = strchr(subj, '\n'))
+				*p = '\0';
 			break;
 		case 'C':		/* "Cc:" */
 			if (strncmp(buf, "Cc:", 3))
@@ -334,7 +353,8 @@ junkmail()
 				++p;
 			else
 				p = from;
-			for (; *p; ++p);
+			for (; *p; ++p)
+				;
 		}
 	len = p - from;
 	for (cur = ignore; cur->name; ++cur)
@@ -452,8 +472,17 @@ sendmessage(myname)
 	close(pvect[0]);
 	sfp = fdopen(pvect[1], "w");
 	fprintf(sfp, "To: %s\n", from);
-	while (fgets(buf, sizeof buf, mfp))
-		fputs(buf, sfp);
+	while (fgets(buf, sizeof buf, mfp)) {
+		char *s = strstr(buf, "$SUBJECT");
+		if ( s ) {
+			*s = 0;
+			fputs(buf, sfp);
+			fputs(subj, sfp);
+			fputs(s+8, sfp);
+		} else {
+			fputs(buf, sfp);
+		}
+	}
 	fclose(mfp);
 	fclose(sfp);
 }
