@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.11 2001/06/23 22:54:17 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.12 2001/06/25 18:04:22 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.11 2001/06/23 22:54:17 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.12 2001/06/25 18:04:22 drahn Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -597,7 +597,7 @@ wi_read_record(sc, ltv)
 	struct wi_softc		*sc;
 	struct wi_ltv_gen	*ltv;
 {
-	u_int16_t		*ptr;
+	u_int8_t		*ptr;
 	int			i, len, code;
 	struct wi_ltv_gen	*oltv, p2ltv;
 
@@ -641,9 +641,10 @@ wi_read_record(sc, ltv)
 	ltv->wi_type = code;
 
 	/* Now read the data. */
-	ptr = &ltv->wi_val;
-	for (i = 0; i < ltv->wi_len - 1; i++)
-		ptr[i] = CSR_READ_2(sc, WI_DATA1);
+	ptr = (u_int8_t *)&ltv->wi_val;
+	if (ltv->wi_len > 1) {
+		CSR_READ_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1)*2);
+	}
 
 	if (sc->sc_prism2) {
 		int v;
@@ -695,7 +696,7 @@ wi_write_record(sc, ltv)
 	struct wi_softc		*sc;
 	struct wi_ltv_gen	*ltv;
 {
-	u_int16_t		*ptr;
+	u_int8_t		*ptr;
 	int			i;
 	struct wi_ltv_gen	p2ltv;
 
@@ -769,9 +770,10 @@ wi_write_record(sc, ltv)
 	CSR_WRITE_2(sc, WI_DATA1, ltv->wi_len);
 	CSR_WRITE_2(sc, WI_DATA1, ltv->wi_type);
 
-	ptr = &ltv->wi_val;
-	for (i = 0; i < ltv->wi_len - 1; i++)
-		CSR_WRITE_2(sc, WI_DATA1, ptr[i]);
+	ptr = (u_int8_t *)&ltv->wi_val;
+	if (ltv->wi_len > 1)  {
+		CSR_WRITE_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1) *2);
+	}
 
 	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type))
 		return(EIO);
@@ -822,15 +824,13 @@ wi_read_data(sc, id, off, buf, len)
 	caddr_t			buf;
 	int			len;
 {
-	int			i;
-	u_int16_t		*ptr;
+	u_int8_t		*ptr;
 
 	if (wi_seek(sc, id, off, WI_BAP1))
 		return(EIO);
 
-	ptr = (u_int16_t *)buf;
-	for (i = 0; i < len / 2; i++)
-		ptr[i] = CSR_READ_2(sc, WI_DATA1);
+	ptr = (u_int8_t *)buf;
+	CSR_READ_RAW_2(sc, WI_DATA1, ptr, len);
 
 	return(0);
 }
@@ -854,8 +854,7 @@ wi_write_data(sc, id, off, buf, len)
 	caddr_t			buf;
 	int			len;
 {
-	int			i;
-	u_int16_t		*ptr;
+	u_int8_t		*ptr;
 
 #ifdef WI_HERMES_AUTOINC_WAR
 again:
@@ -864,9 +863,8 @@ again:
 	if (wi_seek(sc, id, off, WI_BAP0))
 		return(EIO);
 
-	ptr = (u_int16_t *)buf;
-	for (i = 0; i < (len / 2); i++)
-		CSR_WRITE_2(sc, WI_DATA0, ptr[i]);
+	ptr = (u_int8_t *)buf;
+	CSR_WRITE_RAW_2(sc, WI_DATA0, ptr, len);
 
 #ifdef WI_HERMES_AUTOINC_WAR
 	CSR_WRITE_2(sc, WI_DATA0, 0x1234);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.4 2001/06/07 18:51:59 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.5 2001/06/25 18:04:23 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -90,6 +90,13 @@
 	bus_space_read_2(sc->wi_btag, sc->wi_bhandle, reg)
 #define CSR_READ_1(sc, reg)		\
 	bus_space_read_1(sc->wi_btag, sc->wi_bhandle, reg)
+
+#define CSR_READ_RAW_2(sc, ba, dst, sz) \
+	bus_space_read_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, (ba), \
+		(dst), (sz))
+#define CSR_WRITE_RAW_2(sc, ba, dst, sz) \
+	bus_space_write_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, (ba), \
+		(dst), (sz))
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent
@@ -283,7 +290,7 @@ struct wi_ltv_str {
 						\
 		g.wi_len = 2;			\
 		g.wi_type = recno;		\
-		g.wi_val = val;			\
+		g.wi_val = htole16(val);	\
 		wi_write_record(sc, &g);	\
 	} while (0)
 
@@ -296,7 +303,7 @@ struct wi_ltv_str {
 		bzero((char *)&s, sizeof(s));			\
 		s.wi_len = (l / 2) + 2;				\
 		s.wi_type = recno;				\
-		s.wi_str[0] = strlen(str);			\
+		s.wi_str[0] = htole16(strlen(str));		\
 		bcopy(str, (char *)&s.wi_str[1], strlen(str));	\
 		wi_write_record(sc, (struct wi_ltv_gen *)&s);	\
 	} while (0)
