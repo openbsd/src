@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.61 1999/04/07 07:50:59 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.62 1999/04/07 08:17:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.61 1999/04/07 07:50:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.62 1999/04/07 08:17:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1694,9 +1694,9 @@ find_bounds(lp, bios_lp, whole_mode)
 	 * unless we are in whole disk mode (in which case we ignore the MBR).
 	 */
 	if (dosdp) {
-	    if (!whole_mode && (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
-		    dosdp->dp_typ == DOSPTYP_NETBSD)) {
+	    if (dosdp->dp_typ == DOSPTYP_OPENBSD ||
+		dosdp->dp_typ == DOSPTYP_FREEBSD ||
+		dosdp->dp_typ == DOSPTYP_NETBSD) {
 			u_int32_t i, new_end;
 
 			/* Set start and end based on fdisk partition bounds */
