@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.6 2004/01/03 20:39:51 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.7 2004/01/03 22:27:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,8 @@ main(int argc, char *argv[])
 void
 summary_head(void)
 {
-	printf("%-15s %-5s %s\n", "Neighbor", "AS", "State");
+	printf("%-15s %-5s %-10s %-10s %s\n", "Neighbor", "AS", "MsgRcvd",
+	    "MsgSent", "State");
 }
 
 int
@@ -114,9 +115,10 @@ summary_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		printf("%-15s %5u %s\n",
+		printf("%-15s %5u %10llu %10llu %s\n",
 		    inet_ntoa(p->conf.remote_addr.sin_addr),
-		    p->conf.remote_as, statenames[p->state]);
+		    p->conf.remote_as, p->stats.msg_rcvd,
+		    p->stats.msg_send, statenames[p->state]);
 		break;
 	case IMSG_CTL_END:
 		return (1);
