@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2001/08/16 11:46:56 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2001/08/19 16:16:41 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -53,22 +53,42 @@ static int lineno = 1;
 static int errors = 0;
 static int natmode = 0;
 
-static int proto = 0;	/* this is a synthesized attribute */
+struct node_proto {
+	u_int8_t		 proto;
+	struct node_proto	*next;
+};
+
+struct node_host {
+	u_int32_t		 addr;
+	u_int32_t		 mask;
+	u_int8_t		 not;
+	struct node_host	*next;
+};
+
+struct node_port {
+	u_int16_t		 port[2];
+	u_int8_t		 op;
+	struct node_port	*next;
+};
+
+struct peer {
+	struct node_host	*host;
+	struct node_port	*port;
+};
 
 int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
 struct pf_rule_addr	*new_addr(void);
 u_int32_t		 ipmask(u_int8_t);
+void			 expand_rule(struct pf_rule *, struct node_proto *,
+			    struct node_host *, struct node_port *,
+			    struct node_host *, struct node_port *);
 
 typedef struct {
 	union {
 		u_int32_t		number;
 		int			i;
 		char			*string;
-		struct pf_rule_addr	*addr;
-		struct {
-			struct pf_rule_addr	*src, *dst;
-		}			addr2;
 		struct {
 			char		*string;
 			int		not;
@@ -83,6 +103,13 @@ typedef struct {
 			int		b;
 			int		t;
 		}			range;
+		struct node_proto	*proto;
+		struct node_host	*host;
+		struct node_port	*port;
+		struct peer		peer;
+		struct {
+			struct peer	src, dst;
+		}			fromto;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -95,13 +122,16 @@ typedef struct {
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
-%type	<v.addr>	ipportspec ipspec host portspec
-%type	<v.addr2>	fromto
 %type	<v.iface> iface natiface
-%type	<v.number> address port icmptype minttl
-%type	<v.i>	direction log quick keep proto nodf
+%type	<v.number> port icmptype minttl
+%type	<v.i>	direction log quick keep nodf
 %type	<v.b>	action icmpspec flag flags blockspec
 %type	<v.range>	dport rport
+%type	<v.proto>	proto proto_list proto_item
+%type	<v.fromto>	fromto
+%type	<v.peer>	ipportspec
+%type	<v.host>	ipspec host address host_list
+%type	<v.port>	portspec port_list port_item
 %%
 
 ruleset:	/* empty */
@@ -132,13 +162,6 @@ pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf 
 			r.quick = $4;
 			if ($5.string)
 				memcpy(r.ifname, $5.string, sizeof(r.ifname));
-			r.proto = $6;
-			proto = 0;	/* reset synthesized attribute */
-
-			memcpy(&r.src, $7.src, sizeof(r.src));
-			free($7.src);
-			memcpy(&r.dst, $7.dst, sizeof(r.dst));
-			free($7.dst);
 
 			r.flags = $8.b1;
 			r.flagset = $8.b2;
@@ -151,10 +174,8 @@ pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf 
 			if ($12)
 				r.min_ttl = $12;
 
-			if (rule_consistent(&r) < 0)
-				yyerror("skipping rule due to errors");
-			else
-				pfctl_add_rule(pf, &r);
+			expand_rule(&r, $6, $7.src.host, $7.src.port,
+			    $7.dst.host, $7.dst.port);
 		}
 		;
 
@@ -203,67 +224,77 @@ iface:					{ $$.string = NULL; }
 		| ON STRING		{ $$.string = strdup($2); }
 		;
 
-proto:					{ $$ = proto; }
-		| PROTO NUMBER		{
+proto:						{ $$ = NULL; }
+		| PROTO proto_item		{ $$ = $2; }
+		| PROTO '{' proto_list '}'	{ $$ = $3; }
+		;
+
+proto_list:	proto_item			{ $$ = $1; }
+		| proto_list ',' proto_item	{ $3->next = $1; $$ = $3; }
+		;
+
+proto_item:	NUMBER			{
 			struct protoent *p;
 
-			if ((p = getprotobynumber($2)) == NULL) {
-				yyerror("unknown protocol %d", $2);
+			if ((p = getprotobynumber($1)) == NULL) {
+				yyerror("unknown protocol %d", $1);
 				YYERROR;
 			}
-			proto = $$ = p->p_proto;
+			$$ = malloc(sizeof(struct node_proto));
+			$$->proto = p->p_proto;
+			$$->next = NULL;
 		}
-		| PROTO STRING		{
+		| STRING		{
 			struct protoent *p;
 
-			if ((p = getprotobyname($2)) == NULL) {
-				yyerror("unknown protocol %s", $2);
+			if ((p = getprotobyname($1)) == NULL) {
+				yyerror("unknown protocol %s", $1);
 				YYERROR;
 			}
-			proto = $$ = p->p_proto;
+			$$ = malloc(sizeof(struct node_proto));
+			$$->proto = p->p_proto;
+			$$->next = NULL;
 		}
 		;
 
 fromto:		ALL			{
-			$$.src = new_addr();
-			$$.dst = new_addr();
+			$$.src.host = NULL;
+			$$.src.port = NULL;
+			$$.dst.host = NULL;
+			$$.dst.port = NULL;
 		}
-		| FROM ipportspec TO ipportspec {
+		| FROM ipportspec TO ipportspec	{
 			$$.src = $2;
 			$$.dst = $4;
 		}
 		;
 
-ipportspec:	ipspec			{ $$ = $1; }
-		| ipspec portspec		{
-			$$ = $1;
-			if ($2) {
-				$$->port[0] = $2->port[0];
-				$$->port[1] = $2->port[1];
-				$$->port_op = $2->port_op;
-				free($2);
-			}
+ipportspec:	ipspec			{ $$.host = $1; $$.port = NULL; }
+		| ipspec PORT portspec	{
+			$$.host = $1;
+			$$.port = $3;
 		}
 		;
 
-ipspec:		ANY			{ $$ = new_addr(); }
+ipspec:		ANY			{ $$ = NULL; }
 		| '!' host		{ $$ = $2; $$->not = 1; }
-		| host			{ $$ = $1; }
+		| host			{ $$ = $1; $$->not = 0; }
+		| '{' host_list '}'	{ $$ = $2; }
 		;
 
-host:		address		{
-			$$ = new_addr();
-			$$->addr = $1;
+host_list:	host			{ $$ = $1; }
+		| host_list ',' host	{ $3->next = $1; $$ = $3; }
+
+host:		address			{
+			$$ = $1;
 			$$->mask = 0xffffffff;
 		}
-		|
-		address '/' NUMBER	{
+		| address '/' NUMBER	{
 			if ($3 < 0 || $3 > 32) {
 				yyerror("illegal netmask value %d", $3);
 				YYERROR;
 			}
-			$$ = new_addr();
-			$$->addr = $1;
+			$$ = $1;
 			$$->mask = ipmask($3);
 		}
 		;
@@ -271,13 +302,12 @@ host:		address		{
 address:	STRING {
 			struct hostent *hp;
 
-			if (inet_pton(AF_INET, $1, &$$) != 1) {
-				if ((hp = gethostbyname($1)) == NULL) {
-					yyerror("cannot resolve %s", $1);
-					YYERROR;
-				}
-				memcpy(&$$, hp->h_addr, sizeof(u_int32_t));
+			if ((hp = gethostbyname($1)) == NULL) {
+				yyerror("cannot resolve %s", $1);
+				YYERROR;
 			}
+			$$ = malloc(sizeof(struct node_host));
+			memcpy(&$$->addr, hp->h_addr, sizeof(u_int32_t));
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
 			if ($1 < 0 || $3 < 0 || $5 < 0 || $7 < 0 ||
@@ -286,25 +316,40 @@ address:	STRING {
 				    $1, $3, $5, $7);
 				YYERROR;
 			}
-			$$ = (htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7));
+			$$ = malloc(sizeof(struct node_host));
+			$$->addr = htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7);
 		}
 		;
 
-portspec:	PORT PORTUNARY port	{
-			$$ = new_addr();
-			$$->port_op = $2;
-			$$->port[0] = $3;
-			$$->port[1] = $3;
+portspec:	port_item			{ $$ = $1; }
+		| '{' port_list '}'		{ $$ = $2; }
+		;
+
+port_list:	port_item			{ $$ = $1; }
+		| port_list ',' port_item	{ $3->next = $1; $$ = $3; }
+		;
+
+port_item:	port				{
+			$$ = malloc(sizeof(struct node_port));
+			$$->port[0] = $1;
+			$$->port[1] = $1;
+			$$->op = PF_OP_EQ;
 		}
-		| PORT port PORTBINARY port	{
-			$$ = new_addr();
+		| PORTUNARY port		{
+			$$ = malloc(sizeof(struct node_port));
 			$$->port[0] = $2;
-			$$->port_op = $3;
-			$$->port[1] = $4;
+			$$->port[1] = $2;
+			$$->op = $1;
+		}
+		| port PORTBINARY port		{
+			$$ = malloc(sizeof(struct node_port));
+			$$->port[0] = $1;
+			$$->port[1] = $3;
+			$$->op = $2;
 		}
 		;
 
-port:		NUMBER			{
+port:		NUMBER				{
 			if (0 > $1 || $1 > 65535) {
 				yyerror("illegal port value %d", $1);
 				YYERROR;
@@ -314,18 +359,14 @@ port:		NUMBER			{
 		| STRING		{
 			struct servent *s = NULL;
 
-			/* use synthesized attribute */
-			if (proto) {
-				s = getservbyname($1,
-				    proto == IPPROTO_TCP ? "tcp" : "udp");
-				if (s == NULL) {
-					yyerror("unknown protocol %s", $1);
-					YYERROR;
-				}
-				$$ = s->s_port;
-			} else {
-				$$ = 0;
+			s = getservbyname($1, "tcp");
+			if (s == NULL)
+				s = getservbyname($1, "udp");
+			if (s == NULL) {
+				yyerror("unknown protocol %s", $1);
+				YYERROR;
 			}
+			$$ = s->s_port;
 		}
 		;
 
@@ -421,26 +462,35 @@ natrule:	NAT natiface proto FROM ipspec TO ipspec ARROW address
 				    sizeof(nat.ifname));
 				nat.ifnot = $2.not;
 			}
-			nat.proto = $3;
-			proto = 0;	/* reset synthesized attribute */
+			if ($3 != NULL) {
+				nat.proto = $3->proto;
+				free($3);
+			}
+			if ($5 != NULL) {
+				nat.saddr = $5->addr;
+				nat.smask = $5->mask;
+				nat.snot  = $5->not;
+				free($5);
+			}
+			if ($7 != NULL) {
+				nat.daddr = $7->addr;
+				nat.dmask = $7->mask;
+				nat.dnot  = $7->not;
+				free($7);
+			}
 
-			nat.saddr = $5->addr;
-			nat.smask = $5->mask;
-			nat.snot  = $5->not;
-			free($5);
-
-			nat.daddr = $7->addr;
-			nat.dmask = $7->mask;
-			nat.dnot  = $7->not;
-			free($7);
-
-			nat.raddr = $9;
+			if ($9 == NULL) {
+				yyerror("nat rule requires redirection address");
+				YYERROR;
+			}
+			nat.raddr = $9->addr;
+			free($9);
 
 			pfctl_add_nat(pf, &nat);
 		}
 		;
 
-rdrrule:	RDR { proto = IPPROTO_TCP; } natiface proto FROM ipspec TO ipspec dport ARROW address rport
+rdrrule:	RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
 		{
 			struct pf_rdr rdr;
 
@@ -451,32 +501,41 @@ rdrrule:	RDR { proto = IPPROTO_TCP; } natiface proto FROM ipspec TO ipspec dport
 
 			memset(&rdr, 0, sizeof(rdr));
 
-			if ($3.string) {
-				memcpy(rdr.ifname, $3.string,
+			if ($2.string) {
+				memcpy(rdr.ifname, $2.string,
 				    sizeof(rdr.ifname));
-				rdr.ifnot = $3.not;
+				rdr.ifnot = $2.not;
 			}
-			rdr.proto = $4;
-			proto = 0;	/* reset synthesized attribute */
+			if ($3 != NULL) {
+				rdr.proto = $3->proto;
+				free($3);
+			}
+			if ($5 != NULL) {
+				rdr.saddr = $5->addr;
+				rdr.smask = $5->mask;
+				rdr.snot  = $5->not;
+				free($5);
+			}
+			if ($7 != NULL) {
+				rdr.daddr = $7->addr;
+				rdr.dmask = $7->mask;
+				rdr.dnot  = $7->not;
+				free($7);
+			}
 
-			rdr.saddr = $6->addr;
-			rdr.smask = $6->mask;
-			rdr.snot  = $6->not;
-			free($6);
+			rdr.dport  = $8.a;
+			rdr.dport2 = $8.b;
+			rdr.opts  |= $8.t;
 
-			rdr.daddr = $8->addr;
-			rdr.dmask = $8->mask;
-			rdr.dnot  = $8->not;
-			free($8);
+			if ($10 == NULL) {
+				yyerror("rdr rule requires redirection address");
+				YYERROR;
+			}
+			rdr.raddr = $10->addr;
+			free($10);
 
-			rdr.dport  = $9.a;
-			rdr.dport2 = $9.b;
-			rdr.opts  |= $9.t;
-
-			rdr.raddr = $11;
-
-			rdr.rport  = $12.a;
-			rdr.opts  |= $12.t;
+			rdr.rport  = $11.a;
+			rdr.opts  |= $11.t;
 
 			pfctl_add_rdr(pf, &rdr);
 		}
@@ -568,6 +627,88 @@ rule_consistent(struct pf_rule *r)
 	}
 	return (-problems);
 }
+
+#define CHECK_ROOT(T,r) \
+	do { \
+		if (r == NULL) { \
+			r = malloc(sizeof(T)); \
+			memset(r, 0, sizeof(T)); \
+		} \
+	} while (0)
+
+#define FREE_LIST(T,r) \
+	do { \
+		T *p, *n = r; \
+		while (n != NULL) { \
+			p = n; \
+			n = n->next; \
+			free(p); \
+		} \
+	} while (0)
+
+void
+expand_rule(struct pf_rule *r, struct node_proto *protos,
+    struct node_host *src_hosts, struct node_port *src_ports,
+    struct node_host *dst_hosts, struct node_port *dst_ports)
+{
+	struct node_proto *proto;
+	struct node_host *src_host, *dst_host;
+	struct node_port *src_port, *dst_port;
+
+	CHECK_ROOT(struct node_proto, protos);
+	CHECK_ROOT(struct node_host, src_hosts);
+	CHECK_ROOT(struct node_port, src_ports);
+	CHECK_ROOT(struct node_host, dst_hosts);
+	CHECK_ROOT(struct node_port, dst_ports);
+
+	proto = protos;
+	while (proto != NULL) {
+		src_host = src_hosts;
+		while (src_host != NULL) {
+			src_port = src_ports;
+			while (src_port != NULL) {
+				dst_host = dst_hosts;
+				while (dst_host != NULL) {
+					dst_port = dst_ports;
+					while (dst_port != NULL) {
+						r->proto = proto->proto;
+						r->src.addr = src_host->addr;
+						r->src.mask = src_host->mask;
+						r->src.not = src_host->not;
+						r->src.port[0] = src_port->port[0];
+						r->src.port[1] = src_port->port[1];
+						r->src.port_op = src_port->op;
+						r->dst.addr = dst_host->addr;
+						r->dst.mask = dst_host->mask;
+						r->dst.not = dst_host->not;
+						r->dst.port[0] = dst_port->port[0];
+						r->dst.port[1] = dst_port->port[1];
+						r->dst.port_op = dst_port->op;
+						if (rule_consistent(r) < 0)
+							yyerror("skipping rule "
+							    "due to errors");
+						else
+							pfctl_add_rule(pf, r);
+						dst_port = dst_port->next;
+					}
+					dst_host = dst_host->next;
+				}
+				src_port = src_port->next;
+			}
+			src_host = src_host->next;
+		}
+		proto = proto->next;
+	}
+
+	FREE_LIST(struct node_proto, protos);
+	FREE_LIST(struct node_host, src_hosts);
+	FREE_LIST(struct node_port, src_ports);
+	FREE_LIST(struct node_host, dst_hosts);
+	FREE_LIST(struct node_port, dst_ports);
+}
+
+#undef FREE_LIST
+#undef CHECK_ROOT
 
 int
 lookup(char *s)
@@ -717,7 +858,7 @@ yylex(void)
 
 #define allowed_in_string(x) \
 	isalnum(x) || (ispunct(x) && x != '(' && x != ')' && x != '<' \
-	&& x != '>' && x != '!' && x != '=' && x != '/' && x != '#')
+	&& x != '>' && x != '!' && x != '=' && x != '/' && x != '#' && x != ',')
 
 	if (isalnum(c)) {
 		p = buf;
