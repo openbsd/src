@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.5 2003/02/04 08:01:50 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.6 2003/02/05 04:39:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -55,11 +55,9 @@ void check_encoding_stereo(int, audio_encoding_t *);
 void enc_ulaw_8(int, audio_encoding_t *, int);
 void enc_alaw_8(int, audio_encoding_t *, int);
 void enc_ulinear_8(int, audio_encoding_t *, int);
-void enc_ulinear_be_16(int, audio_encoding_t *, int);
-void enc_ulinear_le_16(int, audio_encoding_t *, int);
+void enc_ulinear_16(int, audio_encoding_t *, int, int);
 void enc_slinear_8(int, audio_encoding_t *, int);
-void enc_slinear_be_16(int, audio_encoding_t *, int);
-void enc_slinear_le_16(int, audio_encoding_t *, int);
+void enc_slinear_16(int, audio_encoding_t *, int, int);
 void enc_adpcm_8(int, audio_encoding_t *, int);
 void audio_wait(int);
 
@@ -124,125 +122,117 @@ check_encoding(int fd, audio_encoding_t *enc)
 }
 
 void
-check_encoding_stereo(int fd, audio_encoding_t *enc)
+check_encoding_mono(int fd, audio_encoding_t *enc)
 {
-	printf("...stereo");
+	int skipped = 0;
+
+	printf("...mono");
 	fflush(stdout);
-	switch (enc->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		if (enc->precision == 8) {
-			enc_ulaw_8(fd, enc, 2);
+
+	if (enc->precision == 8) {
+		switch (enc->encoding) {
+		case AUDIO_ENCODING_ULAW:
+			enc_ulaw_8(fd, enc, 1);
+			break;
+		case AUDIO_ENCODING_ALAW:
+			enc_alaw_8(fd, enc, 1);
+			break;
+		case AUDIO_ENCODING_ULINEAR:
+		case AUDIO_ENCODING_ULINEAR_LE:
+		case AUDIO_ENCODING_ULINEAR_BE:
+			enc_ulinear_8(fd, enc, 1);
+			break;
+		case AUDIO_ENCODING_SLINEAR:
+		case AUDIO_ENCODING_SLINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_BE:
+			enc_slinear_8(fd, enc, 1);
+			break;
+		case AUDIO_ENCODING_ADPCM:
+			enc_adpcm_8(fd, enc, 1);
+			break;
+		default:
+			skipped = 1;
 		}
-		break;
-	case AUDIO_ENCODING_ALAW:
-		if (enc->precision == 8) {
-			enc_alaw_8(fd, enc, 2);
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-		if (enc->precision == 8) {
-			enc_ulinear_8(fd, enc, 2);
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (enc->precision == 8)
-			enc_ulinear_8(fd, enc, 2);
-		else if (enc->precision == 16)
-			enc_ulinear_le_16(fd, enc, 2);
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (enc->precision == 8)
-			enc_ulinear_8(fd, enc, 2);
-		else if (enc->precision == 16)
-			enc_ulinear_be_16(fd, enc, 2);
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		if (enc->precision == 8) {
-			enc_slinear_8(fd, enc, 2);
-		}
-		break;
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (enc->precision == 8)
-			enc_slinear_8(fd, enc, 2);
-		else if (enc->precision == 16)
-			enc_slinear_le_16(fd, enc, 2);
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (enc->precision == 8)
-			enc_slinear_8(fd, enc, 2);
-		else if (enc->precision == 16)
-			enc_slinear_be_16(fd, enc, 2);
-		break;
-#ifdef USE_ADPCM
-	case AUDIO_ENCODING_ADPCM:
-		if (enc->precision == 8)
-			enc_adpcm_8(fd, enc, 2);
-		break;
-#endif
-	default:
-		printf("[skip]");
 	}
+
+	if (enc->precision == 16) {
+		switch (enc->encoding) {
+		case AUDIO_ENCODING_ULINEAR_LE:
+			enc_ulinear_16(fd, enc, 1, LITTLE_ENDIAN);
+			break;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			enc_ulinear_16(fd, enc, 1, BIG_ENDIAN);
+			break;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			enc_slinear_16(fd, enc, 1, LITTLE_ENDIAN);
+			break;
+		case AUDIO_ENCODING_SLINEAR_BE:
+			enc_slinear_16(fd, enc, 1, BIG_ENDIAN);
+			break;
+		default:
+			skipped = 1;
+		}
+	}
+
+	if (skipped)
+		printf("[skip]");
 }
 
 void
-check_encoding_mono(int fd, audio_encoding_t *enc)
+check_encoding_stereo(int fd, audio_encoding_t *enc)
 {
-	printf("...mono");
+	int skipped = 0;
+
+	printf("...stereo");
 	fflush(stdout);
-	switch (enc->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		if (enc->precision == 8) {
-			enc_ulaw_8(fd, enc, 1);
+
+	if (enc->precision == 8) {
+		switch (enc->encoding) {
+		case AUDIO_ENCODING_ULAW:
+			enc_ulaw_8(fd, enc, 2);
+			break;
+		case AUDIO_ENCODING_ALAW:
+			enc_alaw_8(fd, enc, 2);
+			break;
+		case AUDIO_ENCODING_ULINEAR:
+		case AUDIO_ENCODING_ULINEAR_LE:
+		case AUDIO_ENCODING_ULINEAR_BE:
+			enc_ulinear_8(fd, enc, 2);
+			break;
+		case AUDIO_ENCODING_SLINEAR:
+		case AUDIO_ENCODING_SLINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_BE:
+			enc_slinear_8(fd, enc, 2);
+			break;
+		case AUDIO_ENCODING_ADPCM:
+			enc_adpcm_8(fd, enc, 2);
+			break;
+		default:
+			skipped = 1;
 		}
-		break;
-	case AUDIO_ENCODING_ALAW:
-		if (enc->precision == 8) {
-			enc_alaw_8(fd, enc, 1);
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-		if (enc->precision == 8) {
-			enc_ulinear_8(fd, enc, 1);
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (enc->precision == 8)
-			enc_ulinear_8(fd, enc, 1);
-		else if (enc->precision == 16)
-			enc_ulinear_le_16(fd, enc, 1);
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (enc->precision == 8)
-			enc_ulinear_8(fd, enc, 1);
-		else if (enc->precision == 16)
-			enc_ulinear_be_16(fd, enc, 1);
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		if (enc->precision == 8) {
-			enc_slinear_8(fd, enc, 1);
-		}
-		break;
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (enc->precision == 8)
-			enc_slinear_8(fd, enc, 1);
-		else if (enc->precision == 16)
-			enc_slinear_le_16(fd, enc, 1);
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (enc->precision == 8)
-			enc_slinear_8(fd, enc, 1);
-		else if (enc->precision == 16)
-			enc_slinear_be_16(fd, enc, 1);
-		break;
-#ifdef USE_ADPCM
-	case AUDIO_ENCODING_ADPCM:
-		if (enc->precision == 8)
-			enc_adpcm_8(fd, enc, 1);
-		break;
-#endif
-	default:
-		printf("[skip]");
 	}
+
+	if (enc->precision == 16) {
+		switch (enc->encoding) {
+		case AUDIO_ENCODING_ULINEAR_LE:
+			enc_ulinear_16(fd, enc, 2, LITTLE_ENDIAN);
+			break;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			enc_ulinear_16(fd, enc, 2, BIG_ENDIAN);
+			break;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			enc_slinear_16(fd, enc, 2, LITTLE_ENDIAN);
+			break;
+		case AUDIO_ENCODING_SLINEAR_BE:
+			enc_slinear_16(fd, enc, 2, BIG_ENDIAN);
+			break;
+		default:
+			skipped = 1;
+		}
+	}
+
+	if (skipped)
+		printf("[skip]");
 }
 
 void
@@ -350,7 +340,7 @@ out:
 }
 
 void
-enc_slinear_be_16(int fd, audio_encoding_t *enc, int chans)
+enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 {
 	audio_info_t inf;
 	u_int8_t *samples = NULL, *p;
@@ -387,10 +377,17 @@ enc_slinear_be_16(int fd, audio_encoding_t *enc, int chans)
 		v = d;
 
 		for (j = 0; j < chans; j++) {
-			*p = (v & 0xff00) >> 8;
-			p++;
-			*p = (v & 0x00ff) >> 0;
-			p++;
+			if (order == LITTLE_ENDIAN) {
+				*p = (v & 0x00ff) >> 0;
+				p++;
+				*p = (v & 0xff00) >> 8;
+				p++;
+			} else {
+				*p = (v & 0xff00) >> 8;
+				p++;
+				*p = (v & 0x00ff) >> 0;
+				p++;
+			}
 		}
 	}
 
@@ -404,61 +401,7 @@ out:
 }
 
 void
-enc_slinear_le_16(int fd, audio_encoding_t *enc, int chans)
-{
-	audio_info_t inf;
-	u_int8_t *samples = NULL, *p;
-	int i, j;
-
-	AUDIO_INITINFO(&inf);
-	inf.play.precision = enc->precision;
-	inf.play.encoding = enc->encoding;
-	inf.play.channels = chans;
-
-	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
-		goto out;
-	}
-
-	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
-		goto out;
-	}
-
-	samples = (int8_t *)malloc(inf.play.sample_rate * chans * 2);
-	if (samples == NULL) {
-		warn("malloc");
-		goto out;
-	}
-
-	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		float d;
-		int16_t v;
-
-		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
-		d = rintf(d);
-		v = d;
-
-		for (j = 0; j < chans; j++) {
-			*p = (v & 0x00ff) >> 0;
-			p++;
-			*p = (v & 0xff00) >> 8;
-			p++;
-		}
-	}
-
-	for (i = 0; i < PLAYSECS; i++)
-		write(fd, samples, inf.play.sample_rate * chans * 2);
-	audio_wait(fd);
-
-out:
-	if (samples != NULL)
-		free(samples);
-}
-
-void
-enc_ulinear_le_16(int fd, audio_encoding_t *enc, int chans)
+enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 {
 	audio_info_t inf;
 	u_int8_t *samples = NULL, *p;
@@ -495,64 +438,17 @@ enc_ulinear_le_16(int fd, audio_encoding_t *enc, int chans)
 		v = d;
 
 		for (j = 0; j < chans; j++) {
-			*p = (v >> 0) & 0xff;
-			p++;
-			*p = (v >> 8) & 0xff;
-			p++;
-		}
-	}
-
-	for (i = 0; i < PLAYSECS; i++)
-		write(fd, samples, inf.play.sample_rate * chans * 2);
-	audio_wait(fd);
-
-out:
-	if (samples != NULL)
-		free(samples);
-}
-
-void
-enc_ulinear_be_16(int fd, audio_encoding_t *enc, int chans)
-{
-	audio_info_t inf;
-	u_int8_t *samples = NULL, *p;
-	int i, j;
-
-	AUDIO_INITINFO(&inf);
-	inf.play.precision = enc->precision;
-	inf.play.encoding = enc->encoding;
-	inf.play.channels = chans;
-
-	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
-		goto out;
-	}
-
-	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
-		goto out;
-	}
-
-	samples = (u_int8_t *)malloc(inf.play.sample_rate * chans * 2);
-	if (samples == NULL) {
-		warn("malloc");
-		goto out;
-	}
-
-	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		float d;
-		u_int16_t v;
-
-		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
-		d = rintf(d + 32767.0);
-		v = d;
-
-		for (j = 0; j < chans; j++) {
-			*p = (v >> 8) & 0xff;
-			p++;
-			*p = (v >> 0) & 0xff;
-			p++;
+			if (order == LITTLE_ENDIAN) {
+				*p = (v >> 0) & 0xff;
+				p++;
+				*p = (v >> 8) & 0xff;
+				p++;
+			} else {
+				*p = (v >> 8) & 0xff;
+				p++;
+				*p = (v >> 0) & 0xff;
+				p++;
+			}
 		}
 	}
 
