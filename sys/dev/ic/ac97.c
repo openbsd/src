@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.21 2001/06/20 18:08:53 deraadt Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.22 2001/09/15 17:27:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -321,7 +321,6 @@ const struct ac97_codecid {
 	{ 0x30,	0xf8, 7, 0,	"CS4299" },
 }, ac97_ns[] = {
 	{ 0x31,	0xff, 0, 0,	"LM4549" },
-	{ 0x00, 0x00 }
 }, ac97_sl[] = {
 	{ 0x22,	0xff, 0, 0,	"Si3036" },
 	{ 0x23,	0xff, 0, 0,	"Si3038" },
@@ -362,6 +361,7 @@ const struct ac97_vendorid {
 	{ 0x574d4c00, "Wolfson",		cl(ac97_wo) },
 	{ 0x83847600, "SigmaTel",		cl(ac97_st) },
 };
+#undef cl
 
 const char * const ac97enhancement[] = {
 	"No 3D Stereo",
@@ -648,7 +648,7 @@ ac97_attach(host_if)
 				if (codec->mask)
 					printf(" %s", codec->name);
 				else
-					printf(" <%2x>", id & codec->mask);
+					printf(" <%02x>", id & 0xff);
 				if (codec->rev)
 					printf(" rev %d", id & codec->rev);
 				printf(")");
