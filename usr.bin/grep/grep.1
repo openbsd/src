@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.29 2004/10/04 21:34:17 jmc Exp $
+.\"	$OpenBSD: grep.1,v 1.30 2005/01/06 00:28:53 jmc Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -110,6 +110,14 @@ and
 options.
 .It Fl a
 Treat all files as ASCII text.
+Normally
+.Nm
+will simply print
+.Dq Binary file ... matches
+if files contain binary characters.
+Use of this option forces
+.Nm
+to output lines matching the specified pattern.
 .It Fl B Ar num
 Print
 .Ar num
