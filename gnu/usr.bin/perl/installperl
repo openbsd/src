@@ -1,5 +1,5 @@
 #!./perl
-#	$OpenBSD: installperl,v 1.9 1999/04/29 22:56:02 millert Exp $
+#	$OpenBSD: installperl,v 1.10 1999/11/23 05:17:20 millert Exp $
 #
 # This is hacked up, in order to support DESTDIR and INSTALL_STRIP.
 #
@@ -333,7 +333,8 @@ if ($Config{installusrbinperl} eq 'define' &&
 
 if (!$versiononly && ! samepath($installbin, 'x2p')) {
     safe_unlink("$installbin/a2p$exe_ext");
-    copy("x2p/a2p$exe_ext", "$installbin/a2p$exe_ext");
+    #copy("x2p/a2p$exe_ext", "$installbin/a2p$exe_ext");
+    cmd("$installcmd x2p/a2p$exe_ext $installbin/a2p$exe_ext");
     chmod(0755, "$installbin/a2p$exe_ext");
 }
 
