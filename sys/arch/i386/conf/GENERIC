@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.154 2000/01/09 22:00:20 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.155 2000/01/13 16:33:43 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -61,6 +61,7 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges (do nothing)
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
