@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1996/11/14 16:11:56 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/02/22 16:17:48 kstailey Exp $
 #	$NetBSD: Makefile,v 1.9.4.1 1996/06/26 20:16:58 jtc Exp $
 
 LIB=sa
@@ -15,7 +15,7 @@ SRC_net= nfs.c rpc.c net.c ether.c arp.c in_cksum.c \
 	 bootparam.c rarp.c
 
 SRC_sa = alloc.c close.c getfile.c memcmp.c memcpy.c memset.c open.c \
-	 printf.c read.c strerror.c ufs.c 
+	 printf.c read.c strerror.c strncpy.c ufs.c 
 
 SRC_kern= ashrdi3.c strcmp.c strlen.c
 
