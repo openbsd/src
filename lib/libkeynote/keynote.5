@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.12 2003/01/19 21:02:14 deraadt Exp $
+.\" $OpenBSD: keynote.5,v 1.13 2003/07/08 11:02:23 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -47,7 +47,7 @@ KeyNote assertions are divided into sections, called
 that serve various semantic functions.
 Each field starts with an
 identifying label at the beginning of a line, followed by the
-.Qq \:
+.Qq \&:
 character and the field's contents.
 There can be at most one field per line.
 .Pp
@@ -112,15 +112,15 @@ inside string literals.
 .Pp
 A similar escape mechanism is also used to represent non-printable
 characters.
-.Qq \e Ns n
+.Qq \en
 represents the newline character (ASCII character 10
 decimal),
-.Qq \e Ns r
+.Qq \er
 represents the carriage-return character (ASCII
 character 13 decimal),
-.Qq \e Ns t
+.Qq \et
 represents the tab character (ASCII character 9 decimal), and
-.Qq \e Ns f
+.Qq \ef
 represents the form-feed character (ASCII character 12 decimal).
 A backslash character followed by a newline suppresses all subsequent
 whitespace (including the newline) up to the next non-whitespace character
@@ -128,26 +128,26 @@ whitespace (including the newline) up to the next non-whitespace character
 Un-escaped newline and return characters are illegal inside string literals.
 .Pp
 The constructs
-.Qq \e Ns 0o ,
-.Qq \e Ns 0oo ,
+.Qq \e0o ,
+.Qq \e0oo ,
 and
-.Qq \e Ns ooo
+.Qq \eooo
 (where o represents any octal digit) may be used to represent any non-NUL
 ASCII characters with their corresponding octal values (thus,
-.Qq \e Ns 012
+.Qq \e012
 is the same as
-.Qq \e Ns n ,
-.Qq \e Ns 101
+.Qq \en ,
+.Qq \e101
 is
 .Qq A ,
 and
-.Qq \e Ns 377
+.Qq \e377
 is the ASCII character 255 decimal).
 However, the NUL character cannot be encoded in this manner;
-.Qq \e Ns 0 ,
-.Qq \e Ns 00 ,
+.Qq \e0 ,
+.Qq \e00 ,
 and
-.Qq \e Ns 000
+.Qq \e000
 are converted to the strings
 .Qq 0 ,
 .Qq 00 ,
@@ -156,7 +156,7 @@ and
 respectively.
 Similarly, all other escaped characters have the
 leading backslash removed (e.g.,
-.Qq \e Ns a
+.Qq \ea
 becomes
 .Qq a ,
 and
@@ -208,7 +208,7 @@ Attributes are dereferenced as strings by default.
 When required,
 dereferenced attributes can be converted to integers or floating point
 numbers with the type conversion operators
-.Qq \@
+.Qq @
 and
 .Qq & .
 Thus, an attribute named
@@ -298,29 +298,26 @@ Principal Identifiers that are used by KeyNote only as labels are
 said to be
 .Sq opaque .
 Opaque identifiers are encoded in assertions as strings (as defined above):
-.Bd -literal
-       <OpaqueID>:: <StrEx> ;
-.Ed
+.Pp
+.Dl <OpaqueID>:: <StrEx>\ \&;
 .Pp
 Opaque identifier strings should not contain the
-.Qq \:
+.Qq \&:
 character.
 .Sh CRYPTOGRAPHIC PRINCIPAL IDENTIFIERS
 Principal Identifiers that are used by KeyNote as keys, e.g., to
 verify credential signatures, are said to be
 .Sq cryptographic .
 Cryptographic identifiers are also lexically encoded as strings:
-.Bd -literal
-       <KeyID>:: <StrEx> ;
-.Ed
+.Pp
+.Dl <KeyID>:: <StrEx>\ \&;
 .Pp
 Unlike Opaque Identifiers, however, Cryptographic Identifier strings
 have a special form.
 To be interpreted by KeyNote (for signature
 verification), an identifier string should be of the form:
-.Bd -literal
-      <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
-.Ed
+.Pp
+.Dl <IDString>:: <ALGORITHM>":"<ENCODEDBITS>\ \&;
 .Pp
 .Qq ALGORITHM
 is an ASCII substring that describes the algorithms to be
@@ -563,7 +560,7 @@ regular expression syntax and semantics (see
 Any string expression (or attribute) containing the ASCII
 representation of a numeric value can be converted to an integer or
 float with the use of the
-.Qq \@
+.Qq @
 and
 .Qq &
 operators, respectively.
@@ -576,9 +573,8 @@ to be zero.
 The Comment field allows assertions to be annotated with information
 describing their purpose.
 It is of the form:
-.Bd -literal
-       <CommentField>:: "Comment:" <text> ;
-.Ed
+.Pp
+.Dl <CommentField>:: \&"Comment:\&" <text>\ \&;
 .Pp
 No interpretation of the contents of this field is performed by
 KeyNote.
@@ -598,9 +594,8 @@ The Signature field is of the form:
 .Ed
 .Pp
 The <Signature> string should be of the form:
-.Bd -literal
-       <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
-.Ed
+.Pp
+.Dl <IDString>:: <ALGORITHM>":"<ENCODEDBITS>\ \&;
 .Pp
 The formats of the
 .Qq ALGORITHM
@@ -696,13 +691,10 @@ the interest of readability.
 .%D 1998
 .Re
 .Sh AUTHORS
-Angelos D. Keromytis
-.Aq angelos@dsl.cis.upenn.edu
+.An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu
 .Sh WEB PAGE
 .Pa http://www.cis.upenn.edu/~keynote
 .Sh BUGS
 None that we know of.
 If you find any, please report them at
-.Bd -literal -offset indent -compact
-keynote@research.att.com
-.Ed
+.Dl Aq keynote@research.att.com

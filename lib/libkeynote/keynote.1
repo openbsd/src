@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.24 2003/04/08 01:21:11 david Exp $
+.\" $OpenBSD: keynote.1,v 1.25 2003/07/08 11:02:23 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -69,7 +69,7 @@ Supported
 .Fa AlgorithmName
 identifiers are:
 .Pp
-.Bl -tag -width -offset indent -compact
+.Bl -tag -width Dq -offset indent -compact
 .It Dq dsa-hex:
 .It Dq dsa-base64:
 .It Dq rsa-hex:
@@ -121,7 +121,7 @@ Valid
 .Fa AlgorithmName
 identifiers are:
 .Pp
-.Bl -tag -width indent -compact
+.Bl -tag -width Dq -offset indent -compact
 .It Dq sig-dsa-sha1-hex:
 .It Dq sig-dsa-sha1-base64:
 .It Dq sig-rsa-sha1-hex:
@@ -216,9 +216,8 @@ Files given with the
 .Fl e
 flag are assumed to contain environment variables and their values,
 in the format:
-.Bd -literal -offset indent
- varname = "value"
-.Ed
+.Pp
+.Dl  varname = \&"value\&"
 .Pp
 .Fa varname
 can begin with any letter (upper or lower case) or number,
@@ -229,7 +228,7 @@ is a quoted string, and can contain any character, and escape
 RFC.
 .Pp
 The remaining options are:
-.Bl -tag -width indent
+.Bl -tag -width "-k file"
 .It Fl h
 Print a usage message and exit.
 .It Fl k Ar file
@@ -281,13 +280,10 @@ exits with code \-1 if there was an error, and 0 on success.
 .%D 1998
 .Re
 .Sh AUTHORS
-Angelos D. Keromytis
-.Aq angelos@dsl.cis.upenn.edu
+.An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu
 .Sh WEB PAGE
 .Pa http://www.cis.upenn.edu/~keynote
 .Sh BUGS
 None that we know of.
 If you find any, please report them at
-.Bd -literal -offset indent -compact
-keynote@research.att.com
-.Ed
+.Dl Aq keynote@research.att.com

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.24 2003/06/02 09:47:15 jmc Exp $
+.\" $OpenBSD: keynote.4,v 1.25 2003/07/08 11:02:23 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -523,14 +523,12 @@ expression that evaluates to one value from the ordered set of
 compliance values given with the query.
 If the value subclause is missing, it is considered to be _MAX_TRUST.
 That is, the clause
-.Bd -literal
-       foo=="bar";
-.Ed
+.Pp
+.Dl foo==\&"bar\&";
 .Pp
 is equivalent to
-.Bd -literal
-       foo=="bar" -> _MAX_TRUST;
-.Ed
+.Pp
+.Dl foo==\&"bar\&" -> _MAX_TRUST;
 .Pp
 If the value component of a clause is present, in the simplest case it
 contains a string expression representing a possible compliance value.
@@ -559,12 +557,10 @@ the possible compliance value set would contain the values
 (by clause (4)).
 If the ordered set of compliance values
 given in the query (in ascending order) is
-.Pf { Ns Qo no_access
-.Qc ,
+.Pf { Ns Qo no_access Qc ,
 .Qq guest_access ,
 .Qq user_access ,
-.Qo full_access
-.No Qc Ns },
+.Qo full_access Qc Ns } ,
 the Conditions Compliance Value of the assertion would be
 .Qq full_access
 (because
@@ -676,7 +672,7 @@ expression has the higher-order (maximum) of its two subexpression values.
 A
 .Qo
 .Ao K
-.No Ac Ns -of Ns Po Aq List
+.Ac Ns -of Ns Po Aq List
 .Pc
 .Qc
 expression has the K-th highest order compliance value listed in
@@ -688,9 +684,8 @@ order 2.
 .El
 .Pp
 For example, consider the following Licensees field:
-.Bd -literal
-        Licensees: ("alice" && "bob") || "eve"
-.Ed
+.Pp
+.Dl Licensees: (\&"alice\&" && \&"bob\&") || \&"eve\&"
 .Pp
 If the Principal Compliance Value is
 .Qq yes
@@ -830,11 +825,9 @@ A log entry is made if the amount is at least 100.
 .Ed
 .Pp
 Assume a query in which the ordered set of Compliance Values is
-.Pf { Ns Qo Reject
-.Qc ,
+.Pf { Ns Qo Reject Qc ,
 .Qq ApproveAndLog ,
-.Qo Approve
-.No Qc Ns }.
+.Qo Approve Qc Ns } .
 Under policies E and G, and
 credentials F and H, the Policy Compliance Value is
 .Qq Approve
@@ -900,13 +893,10 @@ However, the following return "Reject" (_MIN_TRUST):
 .%D 1998
 .Re
 .Sh AUTHORS
-Angelos D. Keromytis
-.Aq angelos@dsl.cis.upenn.edu
+.An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu
 .Sh WEB PAGE
 .Pa http://www.cis.upenn.edu/~keynote
 .Sh BUGS
 None that we know of.
 If you find any, please report them at
-.Bd -literal -offset indent -compact
-keynote@research.att.com
-.Ed
+.Dl Aq keynote@research.att.com
