@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.2 2003/11/03 13:58:38 miod Exp $
+dnl	$OpenBSD: install,v 1.3 2003/11/03 14:05:15 miod Exp $
 OpenBSDInstallShortPrelude
 
 Currently only MBR partitioning is supported, RDB support may be added
@@ -12,7 +12,7 @@ OpenBSDInstallPart2
 	the bootloader and kernel from a MorphOS(?) partition.
 
 	OpenBSD can be booted directly from the FFS filesystem.
-	the MSDOS partition is not required.
+	An MSDOS partition is not required.
 
 	
 OpenBSDBootMsgs

@@ -1,11 +1,11 @@
-dnl	$OpenBSD: prep,v 1.2 2003/11/03 13:58:38 miod Exp $
+dnl	$OpenBSD: prep,v 1.3 2003/11/03 14:05:15 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
 and diagnostics are performed but before control is handed to the
 operating system.
 
-XXX
+dnl XXX Replace with Pegasos-specific details
 
 Important Open Firmware command examples:
 
@@ -63,7 +63,7 @@ installed on it, in MBR format.  It is not necessary to specify '/bsd'
 on the boot line or in the boot-device variable, since it is the
 default.
 
-XXX
+dnl XXX
 
 Sharing a disk with MorphOS:
 It is not currently possible to share a disk with MorphOS, Amiga labeled
