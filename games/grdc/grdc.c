@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.5 1998/03/19 11:41:51 pjanzen Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.6 2000/01/20 12:31:33 d Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -15,6 +15,7 @@
 #ifndef NONPOSIX
 #include <unistd.h>
 #endif
+#include <sys/time.h>
 
 #define YBASE	10
 #define XBASE	10
@@ -22,7 +23,7 @@
 #define YDEPTH  7
 
 /* it won't be */
-time_t now; /* yeah! */
+struct timespec now; /* yeah! */
 struct tm *tm;
 
 short disp[11] = {
@@ -55,6 +56,8 @@ main(argc, argv)
 	long t, a;
 	int i, j, s, k;
 	int n = 0;
+	struct timeval nowtv;
+	struct timespec delay;
 
 	/* revoke privs */
 	setegid(getgid());
@@ -107,10 +110,11 @@ main(argc, argv)
 
 		attrset(COLOR_PAIR(2));
 	}
+	gettimeofday(&nowtv, NULL);
+	TIMEVAL_TO_TIMESPEC(&nowtv, &now);
 	do {
 		mask = 0;
-		time(&now);
-		tm = localtime(&now);
+		tm = localtime(&now.tv_sec);
 		set(tm->tm_sec%10, 0);
 		set(tm->tm_sec/10, 4);
 		set(tm->tm_min%10, 10);
@@ -151,7 +155,13 @@ main(argc, argv)
 		}
 		movto(6, 0);
 		refresh();
-		sleep(1);
+		gettimeofday(&nowtv, NULL);
+		TIMEVAL_TO_TIMESPEC(&nowtv, &now);
+		delay.tv_sec = 0;
+		delay.tv_nsec = (1000000000 - now.tv_nsec);
+		nanosleep(&delay, NULL);
+		now.tv_sec++;
+
 		if (sigtermed) {
 			standend();
 			clear();
