@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.46 1998/10/05 05:13:34 form Exp $
+#	$OpenBSD: bsd.port.mk,v 1.47 1998/11/05 10:36:14 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -154,6 +154,8 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # USE_PERL5		- Says that the port uses perl5 for building and running.
 # USE_IMAKE		- Says that the port uses imake.
 # USE_X11		- Says that the port uses X11 (i.e., installs in ${X11BASE}).
+# USE_EGCC		- Says that the port needs the egcs C compiler
+# USE_EGXX		- Says that the port needs the egcs C++ compiler
 # NO_INSTALL_MANPAGES - For imake ports that don't like the install.man
 #						target.
 # HAS_CONFIGURE	- Says that the port has its own configure script.
@@ -422,6 +424,14 @@ MAKE_PROGRAM=		${GMAKE}
 .else
 MAKE_PROGRAM=		${MAKE}
 .endif
+.if defined(USE_EGCC)
+BUILD_DEPENDS+= 	${EGCC}:${PORTSDIR}/devel/egcs-stable
+CC=${EGCC}
+.endif
+.if defined(USE_EGXX)
+BUILD_DEPENDS+= 	${EGXX}:${PORTSDIR}/devel/egcs-stable
+CXX=${EGXX}
+.endif
 
 # OpenBSD has perl5 in-tree
 #
@@ -446,6 +456,8 @@ PACKAGE_COOKIE?=	${WRKDIR}/.package_done
 
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
+EGCC?=			egcc
+EGXX?=			eg++
 XMKMF?=			xmkmf -a
 .if exists(/sbin/md5)
 MD5?=			/sbin/md5
@@ -1242,6 +1254,7 @@ do-configure:
 	fi
 .if defined(HAS_CONFIGURE)
 	@(cd ${WRKSRC} && CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
+		CXX="${CXX}" ac_cv_path_CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" \
 	    INSTALL="/usr/bin/install -c -o ${BINOWN} -g ${BINGRP}" \
 	    INSTALL_PROGRAM="${INSTALL_PROGRAM}" \
 	    ${CONFIGURE_ENV} ./${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
