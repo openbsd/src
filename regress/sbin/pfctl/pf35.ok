@@ -10,9 +10,9 @@ queue mail bandwidth 1000.00Kb priority 0 cbq( red ecn borrow )
 queue ssh bandwidth 2.00Mb cbq( borrow ) { ssh_interactive ssh_bulk }
 queue ssh_interactive bandwidth 2.00Mb priority 7 
 queue ssh_bulk bandwidth 2.00Mb priority 0 qlimit 60 
-@0 block return out on lo0 inet all queue std
-@1 pass out on lo0 inet proto tcp from 10.0.0.0/24 to any port = www keep state queue developers
-@2 pass out on lo0 inet proto tcp from 10.0.1.0/24 to any port = www keep state queue employees
-@3 pass out on lo0 inet proto tcp from any to any port = ssh tos 0x10 keep state queue ssh_interactive
-@4 pass out on lo0 inet proto tcp from any to any port = ssh tos 0x08 keep state queue ssh_bulk
-@5 pass out on lo0 inet proto tcp from any to any port = smtp keep state queue mail
+block return out on lo0 inet all queue std
+pass out on lo0 inet proto tcp from 10.0.0.0/24 to any port = www keep state queue developers
+pass out on lo0 inet proto tcp from 10.0.1.0/24 to any port = www keep state queue employees
+pass out on lo0 inet proto tcp from any to any port = ssh tos 0x10 keep state queue ssh_interactive
+pass out on lo0 inet proto tcp from any to any port = ssh tos 0x08 keep state queue ssh_bulk
+pass out on lo0 inet proto tcp from any to any port = smtp keep state queue mail

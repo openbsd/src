@@ -1,18 +1,18 @@
-@0 pass in inet proto icmp all icmp-type echorep 
-@1 pass in inet proto icmp all icmp-type echorep code 0 
-@2 pass in inet proto icmp all icmp-type 1 
-@3 pass in inet proto icmp all icmp-type 1 code 1 
-@4 pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
-@5 pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
-@6 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
-@7 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
-@8 block in inet proto icmp all icmp-type echorep 
-@9 block in inet proto icmp all icmp-type echorep code 0 
-@10 block in inet proto icmp all icmp-type 1 
-@11 block in inet proto icmp all icmp-type 1 code 1 
-@12 block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
-@13 block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
-@14 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
-@15 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
-@16 pass in inet proto icmp all icmp-type unreach code needfrag 
-@17 pass in inet6 proto ipv6-icmp all ipv6-icmp-type timex code reassemb 
+pass in inet proto icmp all icmp-type echorep 
+pass in inet proto icmp all icmp-type echorep code 0 
+pass in inet proto icmp all icmp-type 1 
+pass in inet proto icmp all icmp-type 1 code 1 
+pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
+pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
+pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
+pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
+block in inet proto icmp all icmp-type echorep 
+block in inet proto icmp all icmp-type echorep code 0 
+block in inet proto icmp all icmp-type 1 
+block in inet proto icmp all icmp-type 1 code 1 
+block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
+block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
+block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
+block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
+pass in inet proto icmp all icmp-type unreach code needfrag 
+pass in inet6 proto ipv6-icmp all ipv6-icmp-type timex code reassemb 

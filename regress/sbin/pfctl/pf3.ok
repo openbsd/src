@@ -1,9 +1,9 @@
-@0 pass in all 
-@1 pass in all 
-@2 block in proto tcp all flags FPUEW/FSRPAUEW 
-@3 block in proto tcp all flags FS/FSRA 
-@4 block in proto tcp all flags /FSRAW 
-@5 pass in proto udp all 
-@6 pass in proto icmp all 
-@7 pass in proto tcp all flags S/SA 
-@8 pass in all flags S/SA 
+pass in all 
+pass in all 
+block in proto tcp all flags FPUEW/FSRPAUEW 
+block in proto tcp all flags FS/FSRA 
+block in proto tcp all flags /FSRAW 
+pass in proto udp all 
+pass in proto icmp all 
+pass in proto tcp all flags S/SA 
+pass in all flags S/SA 

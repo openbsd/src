@@ -1,2 +1,2 @@
-@0 pass in inet from any to 127.0.0.1 
-@1 pass in inet6 from any to 2000::1 
+pass in inet from any to 127.0.0.1 
+pass in inet6 from any to 2000::1 

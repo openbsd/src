@@ -1,6 +1,6 @@
-@0 pass in quick on lo0 inet6 from fe80::1 to fe80::1 
-@1 pass in quick on lo0 inet6 from fe80::1 to fe80::1 
-@2 pass in quick on lo0 inet6 from fe80::1 to any 
-@3 pass in quick on lo0 inet6 from any to fe80::1 
-@4 pass in quick on lo0 inet6 from fe80::1 to any 
-@5 pass in quick on lo0 inet6 from any to fe80::1 
+pass in quick on lo0 inet6 from fe80::1 to fe80::1 
+pass in quick on lo0 inet6 from fe80::1 to fe80::1 
+pass in quick on lo0 inet6 from fe80::1 to any 
+pass in quick on lo0 inet6 from any to fe80::1 
+pass in quick on lo0 inet6 from fe80::1 to any 
+pass in quick on lo0 inet6 from any to fe80::1 

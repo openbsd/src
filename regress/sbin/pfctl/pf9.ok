@@ -1,3 +1,3 @@
 interfaces = "{ enc0, tun0 }"
-@0 block in on enc0 all 
-@1 block in on tun0 all 
+block in on enc0 all 
+block in on tun0 all 

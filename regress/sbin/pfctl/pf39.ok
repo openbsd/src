@@ -12,12 +12,12 @@ o_fragment = "fragment "
 o_allowopts = "allow-opts "
 o_label = "label blah"
 o_qname = "queue blah"
-@0 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label blah 
-@1 pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-@2 pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-@3 pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-@4 pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-@5 pass in log quick on lo0 inet proto tcp all keep state 
-@6 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label blah queue blah
-@7 pass in log quick on lo0 inet proto icmp all icmp-type echorep code 0 tos 0x08 
-@8 pass in log quick on lo0 inet proto tcp all flags S/SA allow-opts 
+pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label blah 
+pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
+pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
+pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
+pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
+pass in log quick on lo0 inet proto tcp all keep state 
+pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label blah queue blah
+pass in log quick on lo0 inet proto icmp all icmp-type echorep code 0 tos 0x08 
+pass in log quick on lo0 inet proto tcp all flags S/SA allow-opts 

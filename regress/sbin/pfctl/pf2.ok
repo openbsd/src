@@ -1,22 +1,22 @@
-@0 block out log on tun0 all 
-@1 block in log on tun0 all 
-@2 block return-rst out log on tun0 proto tcp all 
-@3 block return-rst in log on tun0 proto tcp all 
-@4 block return-icmp(port-unr, port-unr) out log on tun0 proto udp all 
-@5 block return-icmp(port-unr, port-unr) in log on tun0 proto udp all 
-@6 block out log quick on tun0 inet from ! 157.161.48.183 to any 
-@7 block in quick on tun0 inet from any to 255.255.255.255 
-@8 block in log quick on tun0 inet from 10.0.0.0/8 to any 
-@9 block in log quick on tun0 inet from 172.16.0.0/12 to any 
-@10 block in log quick on tun0 inet from 192.168.0.0/16 to any 
-@11 block in log quick on tun0 inet from 255.255.255.255 to any 
-@12 block in log quick from no-route to any 
-@13 pass out on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
-@14 pass in on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
-@15 pass out on tun0 proto udp all keep state 
-@16 pass in on tun0 proto udp from any to any port = domain keep state 
-@17 pass out on tun0 proto tcp all keep state 
-@18 pass in on tun0 proto tcp from any to any port = ssh keep state 
-@19 pass in on tun0 proto tcp from any to any port = smtp keep state 
-@20 pass in on tun0 proto tcp from any to any port = domain keep state 
-@21 pass in on tun0 proto tcp from any to any port = auth keep state 
+block out log on tun0 all 
+block in log on tun0 all 
+block return-rst out log on tun0 proto tcp all 
+block return-rst in log on tun0 proto tcp all 
+block return-icmp(port-unr, port-unr) out log on tun0 proto udp all 
+block return-icmp(port-unr, port-unr) in log on tun0 proto udp all 
+block out log quick on tun0 inet from ! 157.161.48.183 to any 
+block in quick on tun0 inet from any to 255.255.255.255 
+block in log quick on tun0 inet from 10.0.0.0/8 to any 
+block in log quick on tun0 inet from 172.16.0.0/12 to any 
+block in log quick on tun0 inet from 192.168.0.0/16 to any 
+block in log quick on tun0 inet from 255.255.255.255 to any 
+block in log quick from no-route to any 
+pass out on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
+pass in on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
+pass out on tun0 proto udp all keep state 
+pass in on tun0 proto udp from any to any port = domain keep state 
+pass out on tun0 proto tcp all keep state 
+pass in on tun0 proto tcp from any to any port = ssh keep state 
+pass in on tun0 proto tcp from any to any port = smtp keep state 
+pass in on tun0 proto tcp from any to any port = domain keep state 
+pass in on tun0 proto tcp from any to any port = auth keep state 

@@ -1,8 +1,8 @@
-@0 pass in all 
-@1 pass in all 
-@2 pass in proto tcp from any port <= 1024 to any label foo_bar 
-@3 pass in proto tcp from any to any port = smtp 
-@4 pass in inet proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != ssh 
-@5 pass in inet proto igmp from 10.0.0.0/8 to 10.1.1.1 allow-opts 
-@6 pass in inet proto tcp from 1.2.3.4 to any label 6:tcp:1.2.3.4::any: 
-@7 pass in inet proto tcp from 1.2.3.5 to any label 7:tcp:1.2.3.5::any: 
+pass in all 
+pass in all 
+pass in proto tcp from any port <= 1024 to any label foo_bar 
+pass in proto tcp from any to any port = smtp 
+pass in inet proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != ssh 
+pass in inet proto igmp from 10.0.0.0/8 to 10.1.1.1 allow-opts 
+pass in inet proto tcp from 1.2.3.4 to any label 6:tcp:1.2.3.4::any: 
+pass in inet proto tcp from 1.2.3.5 to any label 7:tcp:1.2.3.5::any: 

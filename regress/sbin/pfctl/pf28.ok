@@ -1,6 +1,6 @@
-@0 block in log-all quick on lo0 all 
-@1 block in log quick on lo0 all 
-@2 block in log-all quick on lo0 all 
-@3 block in log quick on lo0 all 
-@4 block in log on lo0 all 
-@5 block in log-all on lo0 all 
+block in log-all quick on lo0 all 
+block in log quick on lo0 all 
+block in log-all quick on lo0 all 
+block in log quick on lo0 all 
+block in log on lo0 all 
+block in log-all on lo0 all 

@@ -1,5 +1,5 @@
-@0 scrub in on lo0 all fragment reassemble 
+scrub in on lo0 all fragment reassemble 
 nat on lo0 inet from 192.168.1.1 to any -> 10.0.0.1
 rdr on lo0 inet proto tcp from any to 1.2.3.4 port 2222 -> 10.0.0.10 port 22
 binat on lo0 inet from 192.168.1.1 to any -> 10.0.0.1
-@1 pass in on lo1 all 
+pass in on lo1 all 
