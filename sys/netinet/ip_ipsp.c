@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.53 1999/08/10 11:35:26 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.54 1999/09/03 13:52:34 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1355,9 +1355,9 @@ inet_ntoa4(struct in_addr ina)
 {
     static char buf[4][4 * sizeof "123"];
     unsigned char *ucp = (unsigned char *) &ina;
-    static int i = 1;
+    static int i = 3;
  
-    i = (i + 1) % 2;
+    i = (i + 1) % 4;
     sprintf(buf[i], "%d.%d.%d.%d", ucp[0] & 0xff, ucp[1] & 0xff,
             ucp[2] & 0xff, ucp[3] & 0xff);
     return (buf[i]);
