@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_extern.h,v 1.3 1996/07/14 09:14:13 downsj Exp $	*/
+/*	$OpenBSD: ext2_extern.h,v 1.4 1996/11/09 08:38:34 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -93,6 +93,8 @@ void	ext2_free_inode (struct inode * inode);
 void	ext2_ei2di __P((struct ext2_inode *ei, struct dinode *di));
 void	ext2_di2ei __P((struct dinode *di, struct ext2_inode *ei));
 void	mark_buffer_dirty __P((struct buf *bh));
+
+int	ext2fs_mountroot __P((void));
 
 /*
  * This macro allows the ufs code to distinguish between an EXT2 and a

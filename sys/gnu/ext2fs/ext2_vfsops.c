@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.13 1996/11/01 08:31:58 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.14 1996/11/09 08:38:34 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -118,7 +118,6 @@ static int	compute_sb_data __P((struct vnode * devvp,
 				     struct ext2_super_block * es,
 				     struct ext2_sb_info * fs));
 
-#ifdef notdef
 /*
  * Called by main() when ext2fs is going to be mounted as root.
  *
@@ -126,8 +125,8 @@ static int	compute_sb_data __P((struct vnode * devvp,
  */
 #define ROOTNAME	"root_device"
 
-static int
-ext2_mountroot()
+int
+ext2fs_mountroot()
 {
 	extern struct vnode *rootvp;
 	register struct ext2_sb_info *fs;
@@ -141,7 +140,7 @@ ext2_mountroot()
 	 * Get vnodes for swapdev and rootdev.
 	 */
 	if (bdevvp(swapdev, &swapdev_vp) || bdevvp(rootdev, &rootvp))
-		panic("ext2_mountroot: can't setup bdevvp's");
+		panic("ext2fs_mountroot: can't setup bdevvp's");
 
 	mp = bsd_malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
@@ -171,7 +170,6 @@ ext2_mountroot()
 	inittodr(fs->s_es->s_wtime);		/* this helps to set the time */
 	return (0);
 }
-#endif
 
 /*
  * VFS Operations.
