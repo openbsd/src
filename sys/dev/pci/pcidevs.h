@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.486 2002/02/08 22:29:42 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.487 2002/02/16 17:24:19 krw Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1931,6 +1931,7 @@
 
 /* Tekram Technology products(2) */
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
+#define	PCI_PRODUCT_TEKRAM2_DC3X5U	0x0391		/* DC-3x5U */
 
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */

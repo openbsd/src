@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.486 2002/02/08 22:29:42 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.487 2002/02/16 17:24:19 krw Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4153,6 +4153,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC690C,
 	    "DC-690C",
+	},
+	{
+	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC3X5U,
+	    "DC-3x5U",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN,
