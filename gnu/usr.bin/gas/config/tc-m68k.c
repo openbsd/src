@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m68k.c,v 1.3 1996/04/23 00:16:02 niklas Exp $	*/
+/*	$OpenBSD: tc-m68k.c,v 1.4 1996/06/17 00:24:29 deraadt Exp $	*/
 
 /* tc-m68k.c  All the m68020 specific stuff in one convenient, huge,
    slow to compile, easy to find file.
@@ -3883,6 +3883,9 @@ char ***vecP;
 			current_architecture |= m68030 | MAYBE_FLOAT_TOO;
 			
 		} else if (!strcmp(*argP, "68040")) { 
+			current_architecture |= m68040 | MAYBE_FLOAT_TOO;
+
+		} else if (!strcmp(*argP, "68060")) { 
 			current_architecture |= m68040 | MAYBE_FLOAT_TOO;
 			
 #ifndef NO_68881
