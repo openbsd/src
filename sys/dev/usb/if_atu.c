@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.9 2004/11/11 22:47:56 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.10 2004/11/11 22:48:24 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1817,7 +1817,7 @@ USB_DETACH(atu)
 
 	atu_stop(sc);
 
-	ieee80211_ifdetach(ifp);
+	ether_ifdetach(ifp);
 	if_detach(ifp);
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL)
