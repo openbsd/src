@@ -1,3 +1,4 @@
+/*	$OpenBSD: termcap.c,v 1.9 1997/12/16 04:11:59 millert Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.9 1997/12/16 04:11:59 millert Exp $";
 #endif
 #endif /* not lint */
 
