@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.16 2005/03/02 03:05:02 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.17 2005/03/29 15:06:01 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -59,6 +59,7 @@ cvs_commit(int argc, char **argv)
 	int i, ch, flags;
 	char *mfile;
 	struct cvs_flist cl;
+	CVSFILE *cfp;
 	struct cvsroot *root;
 
 	flags = CF_RECURSE|CF_IGNORE|CF_SORT;
@@ -115,12 +116,18 @@ cvs_commit(int argc, char **argv)
 	if (TAILQ_EMPTY(&cl))
 		return (0);
 
-	if (cvs_msg == NULL) {
+	if (cvs_msg == NULL)
 		cvs_msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files),
 		    NULL, &cl, NULL);
-		if (cvs_msg == NULL)
-			return (1);
+
+	while (!TAILQ_EMPTY(&cl)) {
+		cfp = TAILQ_FIRST(&cl);
+		TAILQ_REMOVE(&cl, cfp, cf_list);
+		cvs_file_free(cfp);
 	}
+
+	if (cvs_msg == NULL)
+		return (1);
 
 	root = CVS_DIR_ROOT(cvs_files);
 	if (root == NULL) {
