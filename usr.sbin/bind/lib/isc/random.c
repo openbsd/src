@@ -33,7 +33,9 @@ static isc_once_t once = ISC_ONCE_INIT;
 static void
 initialize_rand(void)
 {
+#ifndef HAVE_ARC4RANDOM
 	srand(time(NULL));
+#endif
 }
 
 static void
@@ -47,7 +49,11 @@ isc_random_seed(isc_uint32_t seed)
 {
 	initialize();
 
+#ifndef HAVE_ARC4RANDOM
 	srand(seed);
+#else
+	arc4random_addrandom((u_char *) &seed, sizeof(isc_uint32_t));
+#endif
 }
 
 void
@@ -57,7 +63,11 @@ isc_random_get(isc_uint32_t *val)
 
 	initialize();
 
+#ifndef HAVE_ARC4RANDOM
 	*val = rand();
+#else
+	*val = arc4random();
+#endif
 }
 
 isc_uint32_t
@@ -66,5 +76,9 @@ isc_random_jitter(isc_uint32_t max, isc_uint32_t jitter) {
 	if (jitter == 0)
 		return (max);
 	else
+#ifndef HAVE_ARC4RANDOM
 		return (max - rand() % jitter);
+#else
+		return (max - arc4random() % jitter);
+#endif
 }
