@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_mouse.c,v 1.2 2000/09/04 17:59:50 aaron Exp $ */
+/*	$OpenBSD: pcvt_mouse.c,v 1.3 2000/09/22 17:39:05 aaron Exp $ */
 
 /*
  * Copyright (c) 2000 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -269,6 +269,77 @@ skip_spc_left(void)
 }
 
 /* 
+ * Class of characters 
+ * Stolen from xterm sources of the Xfree project (see cvs tag below)
+ * $TOG: button.c /main/76 1997/07/30 16:56:19 kaleb $ 
+ */
+
+static int charClass[256] = {
+/* NUL  SOH  STX  ETX  EOT  ENQ  ACK  BEL */
+    32,   1,   1,   1,   1,   1,   1,   1,
+/*  BS   HT   NL   VT   NP   CR   SO   SI */
+     1,  32,   1,   1,   1,   1,   1,   1,
+/* DLE  DC1  DC2  DC3  DC4  NAK  SYN  ETB */
+     1,   1,   1,   1,   1,   1,   1,   1,
+/* CAN   EM  SUB  ESC   FS   GS   RS   US */
+     1,   1,   1,   1,   1,   1,   1,   1,
+/*  SP    !    "    #    $    %    &    ' */
+    32,  33,  34,  35,  36,  37,  38,  39,
+/*   (    )    *    +    ,    -    .    / */
+    40,  41,  42,  43,  44,  45,  46,  47,
+/*   0    1    2    3    4    5    6    7 */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*   8    9    :    ;    <    =    >    ? */
+    48,  48,  58,  59,  60,  61,  62,  63,
+/*   @    A    B    C    D    E    F    G */
+    64,  48,  48,  48,  48,  48,  48,  48,
+/*   H    I    J    K    L    M    N    O */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*   P    Q    R    S    T    U    V    W */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*   X    Y    Z    [    \    ]    ^    _ */
+    48,  48,  48,  91,  92,  93,  94,  48,
+/*   `    a    b    c    d    e    f    g */
+    96,  48,  48,  48,  48,  48,  48,  48,
+/*   h    i    j    k    l    m    n    o */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*   p    q    r    s    t    u    v    w */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*   x    y    z    {    |    }    ~  DEL */
+    48,  48,  48, 123, 124, 125, 126,   1,
+/* x80  x81  x82  x83  IND  NEL  SSA  ESA */
+     1,   1,   1,   1,   1,   1,   1,   1,
+/* HTS  HTJ  VTS  PLD  PLU   RI  SS2  SS3 */
+     1,   1,   1,   1,   1,   1,   1,   1,
+/* DCS  PU1  PU2  STS  CCH   MW  SPA  EPA */
+     1,   1,   1,   1,   1,   1,   1,   1,
+/* x98  x99  x9A  CSI   ST  OSC   PM  APC */
+     1,   1,   1,   1,   1,   1,   1,   1,
+/*   -    i   c/    L   ox   Y-    |   So */
+   160, 161, 162, 163, 164, 165, 166, 167,
+/*  ..   c0   ip   <<    _        R0    - */
+   168, 169, 170, 171, 172, 173, 174, 175,
+/*   o   +-    2    3    '    u   q|    . */
+   176, 177, 178, 179, 180, 181, 182, 183,
+/*   ,    1    2   >>  1/4  1/2  3/4    ? */
+   184, 185, 186, 187, 188, 189, 190, 191,
+/*  A`   A'   A^   A~   A:   Ao   AE   C, */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*  E`   E'   E^   E:   I`   I'   I^   I: */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*  D-   N~   O`   O'   O^   O~   O:    X */
+    48,  48,  48,  48,  48,  48,  48, 216,
+/*  O/   U`   U'   U^   U:   Y'    P    B */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*  a`   a'   a^   a~   a:   ao   ae   c, */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*  e`   e'   e^   e:    i`  i'   i^   i: */
+    48,  48,  48,  48,  48,  48,  48,  48,
+/*   d   n~   o`   o'   o^   o~   o:   -: */
+    48,  48,  48,  48,  48,  48,  48,  248,
+/*  o/   u`   u'   u^   u:   y'    P   y: */
+    48,  48,  48,  48,  48,  48,  48,  48};
+/* 
  * Function which find the first blank beginning after the current cursor
  * position
  */
@@ -278,12 +349,13 @@ skip_char_right(void)
 {
 	unsigned short *current;	
 	unsigned short *limit;
-	unsigned char mouse_col = (vsp->mouse % vsp->maxcol);
 	unsigned char res = 0;
-		
+	unsigned char class;	
+	
 	current = vsp->Crtat + vsp->cpy_end;
-	limit = current + (vsp->maxcol - mouse_col - 1); 
-	while (((*current & 0x00ff) != ' ') && (current <= limit)) {
+	class = charClass[(*current & 0x00ff)];
+	limit = current + (vsp->maxcol - (vsp->mouse % vsp->maxcol) - 1); 
+	while ((charClass[(*current & 0x00ff)] == class) && (current <= limit)){
 		current++;
 		res++;
 	}
@@ -301,12 +373,13 @@ skip_char_left(void)
 {
 	unsigned short *current;	
 	unsigned short *limit;
-	unsigned char mouse_col = (vsp->mouse % vsp->maxcol);
 	unsigned char res = 0;
+	unsigned char class;
 	
 	current = vsp->Crtat + vsp->cpy_start;
-	limit = current - mouse_col;
-	while (((*current & 0x00ff) != ' ') && (current >= limit)) {
+	class = charClass[(*current & 0x00ff)];
+	limit = current - (vsp->mouse % vsp->maxcol);
+	while ((charClass[(*current & 0x00ff)] == class) && (current >= limit)){
 		current--;
 		res++;
 	}
@@ -366,10 +439,6 @@ mouse_copy_word()
 	
 	if (IS_SEL_EXISTS(vsp))
 		remove_selection();
-	
-	if (IS_SEL_IN_PROGRESS(vsp))
-		vsp->mouse_flags &= ~SEL_IN_PROGRESS;
-	
 	if (IS_MOUSE_VISIBLE(vsp))
 		inverse_char(vsp->mouse);
 	
@@ -389,9 +458,16 @@ mouse_copy_word()
 	vsp->cpy_end += right;
 	vsp->cpy_orig = vsp->cpy_start;
 	inverse_region(vsp->cpy_start, vsp->cpy_end);
+	
+	vsp->mouse_flags |= SEL_IN_PROGRESS;
 	vsp->mouse_flags |= SEL_EXISTS;
 	
+	/* mouse cursor is in the selection. Moving the cursor inside the 
+	   selection won't modify (extend or reduce) it */
+	vsp->mouse_flags |= IN_SELECTION;
+	
 	/* mouse cursor hidden in the selection */
+	vsp->mouse_flags &= ~BLANK_TO_EOL;
 	vsp->mouse_flags &= ~MOUSE_VISIBLE;
 }
 
@@ -406,10 +482,6 @@ mouse_copy_line(void)
 	
 	if (IS_SEL_EXISTS(vsp))
 		remove_selection();
-	
-	if (IS_SEL_IN_PROGRESS(vsp))
-		vsp->mouse_flags &= ~(SEL_IN_PROGRESS);
-	
 	if (IS_MOUSE_VISIBLE(vsp))
 		inverse_char(vsp->mouse);
 	
@@ -418,7 +490,15 @@ mouse_copy_line(void)
 	vsp->cpy_orig = vsp->cpy_start;
 	inverse_region(vsp->cpy_start, vsp->cpy_end);
 	
+	vsp->mouse_flags |= SEL_IN_PROGRESS;
 	vsp->mouse_flags |= SEL_EXISTS;
+	
+	/* mouse cursor is in the selection. Moving the cursor inside the 
+	   selection won't modify (extend or reduce) it */
+	vsp->mouse_flags |= IN_SELECTION;
+	
+	/* mouse cursor hidden in the selection */
+	vsp->mouse_flags &= ~BLANK_TO_EOL;
 	vsp->mouse_flags &= ~MOUSE_VISIBLE;
 }
 
@@ -500,22 +580,33 @@ mouse_copy_extend()
 		
 		if (vsp->mouse >= vsp->cpy_orig) {
 			/* lower part of the screen */
-			if (vsp->mouse > vsp->cpy_end) 
+			if (vsp->mouse > vsp->cpy_end) {
 				/* extending selection */
+				if (IS_IN_SELECTION(vsp))
+					vsp->mouse_flags &= ~ IN_SELECTION;
 				inverse_region(vsp->cpy_end + 1,vsp->mouse);
-			else
-				/* reducing selection */
-				inverse_region(vsp->mouse + 1,vsp->cpy_end);
-			vsp->cpy_end = vsp->mouse;
+			}
+			else {
+				/* reducing selection, if the cursor is not
+				   inside a word or line selection */
+				if (!IS_IN_SELECTION(vsp)) 
+					inverse_region(vsp->mouse + 1,vsp->cpy_end);
+			}
+			if (!IS_IN_SELECTION(vsp)) 
+				vsp->cpy_end = vsp->mouse;
 		}
 		else {
 			/* upper part of the screen */
-			if (vsp->mouse < vsp->cpy_start) 
+			if (vsp->mouse < vsp->cpy_start) {
 				/* extending selection */
+				if (IS_IN_SELECTION(vsp))
+					vsp->mouse_flags &= ~ IN_SELECTION;
 				inverse_region(vsp->mouse,vsp->cpy_start - 1);
-			else
+			}
+			else {
 				/* reducing selection */
 				inverse_region(vsp->cpy_start,vsp->mouse - 1);
+			}
 			vsp->cpy_start = vsp->mouse;
 		}
 	}
@@ -548,11 +639,17 @@ remove_selection()
 uid_t
 current_uid(void)
 {
-	pid_t pg; /* process group id */
-	struct proc *owner_proc;
+	pid_t pg = 0; /* process group id */
+	struct proc *owner_proc = 0;
 	
-	pg = vsp->vs_tty->t_pgrp->pg_id;
-	owner_proc = pfind(pg);
+	if (vsp->vs_tty && vsp->vs_tty->t_pgrp)
+			pg = vsp->vs_tty->t_pgrp->pg_id;
+	else
+		return (0); /* the uid of root, just to be sure */
+	
+	if (pg) 
+		owner_proc = pfind(pg);
+	
 	if (!owner_proc) {
 		Paste_avail = 0; /* this selection will never be available
 				    because the process doesn't exist... */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.31 2000/09/01 05:46:01 aaron Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.32 2000/09/22 17:39:05 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -294,6 +294,10 @@ pcclose(Dev_t dev, int flag, int mode, struct proc *p)
 
 	reset_usl_modes(vsx);
 
+	/* remove the selection at logout */
+	bzero(Copybuffer, (vs[0].maxcol + 1) * vs[0].screen_rows);
+	Paste_avail = 0;	
+	
 	return(0);
 }
 
