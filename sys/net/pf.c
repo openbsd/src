@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.72 2001/06/27 03:39:11 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.73 2001/06/27 03:47:01 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1599,7 +1599,7 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 	
 	if (rm != NULL) {
 		u_short reason;
-		ACTION_SET(&reason, PFRES_MATCH);
+		REASON_SET(&reason, PFRES_MATCH);
 		
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
