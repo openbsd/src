@@ -40,7 +40,7 @@
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipmon.c,v 1.4 1996/07/18 04:58:47 dm Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.5 1996/09/30 17:52:41 deraadt Exp $";
 #endif
 
 #include "ip_fil.h"
@@ -151,7 +151,8 @@ int	opts;
 			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
 		t += strlen(t);
 	}
-#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
+    (defined(OpenBSD) && (OpenBSD >= 199606))
 	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %s @%hd ",
 		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
 		lp->ifname, lp->rule);
