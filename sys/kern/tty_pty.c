@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.7 1997/11/30 21:41:03 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.8 2001/07/19 18:52:05 mickey Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
  */
-#include "pty.h"		/* XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,17 +49,11 @@
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
-
-
-
-#if NPTY == 1
-#undef NPTY
-#define	NPTY	32		/* crude XXX */
-#endif
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
@@ -74,8 +67,8 @@ struct	pt_softc {
 	struct	selinfo pt_selr, pt_selw;
 	u_char	pt_send;
 	u_char	pt_ucntl;
-} pt_softc[NPTY];		/* XXX */
-int	npty = NPTY;		/* for pstat -t */
+} *pt_softc;
+int	npty;
 
 #define	PF_PKT		0x08		/* packet mode */
 #define	PF_STOPPED	0x10		/* user told stopped */
@@ -95,15 +88,14 @@ void
 ptyattach(n)
 	int n;
 {
-#ifdef notyet
 #define	DEFAULT_NPTY	32
 
 	/* maybe should allow 0 => none? */
 	if (n <= 1)
 		n = DEFAULT_NPTY;
 	pt_softc = malloc(n * sizeof(struct pt_softc), M_DEVBUF, M_WAITOK);
+	bzero(pt_softc, n * sizeof(struct pt_softc));
 	npty = n;
-#endif
 }
 
 /*ARGSUSED*/
