@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.9 1997/04/20 07:01:12 downsj Exp $	*/
+/*	$OpenBSD: st.c,v 1.10 1998/08/04 23:28:06 millert Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -1054,7 +1054,7 @@ stintr(arg, stat)
 	}
 #ifdef DEBUG
 	if ((st_debug & ST_BRESID) && bp->b_resid != 0)
-		printf("b_resid %ld b_flags 0x%lx b_error 0x%x\n", 
+		printf("b_resid %u b_flags 0x%lx b_error 0x%x\n", 
 		       bp->b_resid, bp->b_flags, bp->b_error);
 #endif
 	/* asked for more filemarks then on tape */
