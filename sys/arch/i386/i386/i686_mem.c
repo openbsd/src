@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.5 2002/10/14 21:01:01 matthieu Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.6 2003/05/04 04:29:03 tedu Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -173,7 +173,8 @@ i686_mrfetch(sc)
 					i686_mtrr2mrt(msrv & 0xff) |
 					MDF_ACTIVE;
 				if (mrd->mr_owner[0] == 0)
-					strcpy(mrd->mr_owner, mem_owner_bios);
+					strlcpy(mrd->mr_owner, mem_owner_bios,
+					    sizeof(mrd->mr_owner));
 				msrv = msrv >> 8;
 			}
 		}
@@ -185,7 +186,8 @@ i686_mrfetch(sc)
 					i686_mtrr2mrt(msrv & 0xff) |
 					MDF_ACTIVE;
 				if (mrd->mr_owner[0] == 0)
-					strcpy(mrd->mr_owner, mem_owner_bios);
+					strlcpy(mrd->mr_owner, mem_owner_bios,
+					    sizeof(mrd->mr_owner));
 				msrv = msrv >> 8;
 			}
 		}
@@ -197,7 +199,8 @@ i686_mrfetch(sc)
 					i686_mtrr2mrt(msrv & 0xff) |
 					MDF_ACTIVE;
 				if (mrd->mr_owner[0] == 0)
-					strcpy(mrd->mr_owner, mem_owner_bios);
+					strlcpy(mrd->mr_owner, mem_owner_bios,
+					    sizeof(mrd->mr_owner));
 				msrv = msrv >> 8;
 			}
 		}
@@ -220,7 +223,8 @@ i686_mrfetch(sc)
 			mrd->mr_flags |= MDF_BOGUS;
 		/* If unclaimed and active, must be the BIOS */
 		if ((mrd->mr_flags & MDF_ACTIVE) && (mrd->mr_owner[0] == 0))
-			strcpy(mrd->mr_owner, mem_owner_bios);
+			strlcpy(mrd->mr_owner, mem_owner_bios,
+			    sizeof(mrd->mr_owner));
 	}
 }
 
