@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.156 2002/10/05 22:25:33 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.157 2002/10/06 16:22:10 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1823,16 +1823,6 @@ struct keywords {
 
 /* macro gore, but you should've seen the prior indentation nightmare... */
 
-#define CHECK_ROOT(T,r) \
-	do { \
-		if (r == NULL) { \
-			r = malloc(sizeof(T)); \
-			if (r == NULL) \
-				err(1, "malloc"); \
-			memset(r, 0, sizeof(T)); \
-		} \
-	} while (0)
-
 #define FREE_LIST(T,r) \
 	do { \
 		T *p, *n = r; \
@@ -1845,7 +1835,14 @@ struct keywords {
 
 #define LOOP_THROUGH(T,n,r,C) \
 	do { \
-		T *n = r; \
+		T *n; \
+		if (r == NULL) { \
+			r = calloc(1, sizeof(T)); \
+			if (r == NULL) \
+				err(1, "LOOP: calloc"); \
+			r->next = NULL; \
+		} \
+		n = r; \
 		while (n != NULL) { \
 			do { \
 				C; \
@@ -2002,16 +1999,6 @@ expand_rule(struct pf_rule *r,
 	flags = r->flags;
 	flagset = r->flagset;
 
-	CHECK_ROOT(struct node_if, interfaces);
-	CHECK_ROOT(struct node_proto, protos);
-	CHECK_ROOT(struct node_host, src_hosts);
-	CHECK_ROOT(struct node_port, src_ports);
-	CHECK_ROOT(struct node_host, dst_hosts);
-	CHECK_ROOT(struct node_port, dst_ports);
-	CHECK_ROOT(struct node_uid, uids);
-	CHECK_ROOT(struct node_gid, gids);
-	CHECK_ROOT(struct node_icmp, icmp_types);
-
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
 	LOOP_THROUGH(struct node_icmp, icmp_type, icmp_types,
@@ -2120,13 +2107,6 @@ expand_nat(struct pf_nat *n,
 	char ifname[IF_NAMESIZE];
 	int af = n->af, added = 0;
 
-	CHECK_ROOT(struct node_if, interfaces);
-	CHECK_ROOT(struct node_proto, protos);
-	CHECK_ROOT(struct node_host, src_hosts);
-	CHECK_ROOT(struct node_port, src_ports);
-	CHECK_ROOT(struct node_host, dst_hosts);
-	CHECK_ROOT(struct node_port, dst_ports);
-
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
@@ -2209,11 +2189,6 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 	int af = r->af, added = 0;
 	char ifname[IF_NAMESIZE];
 
-	CHECK_ROOT(struct node_if, interfaces);
-	CHECK_ROOT(struct node_proto, protos);
-	CHECK_ROOT(struct node_host, src_hosts);
-	CHECK_ROOT(struct node_host, dst_hosts);
-
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
@@ -2275,7 +2250,6 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 }
 
 #undef FREE_LIST
-#undef CHECK_ROOT
 #undef LOOP_THROUGH
 
 int
