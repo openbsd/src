@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.18 2004/11/11 12:57:19 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.19 2004/11/11 12:58:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -312,12 +312,20 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 Static void
 axe_miibus_statchg(device_ptr_t dev)
 {
-#ifdef notdef
 	struct axe_softc	*sc = USBGETSOFTC(dev);
 	struct mii_data		*mii = GET_MII(sc);
-#endif
-	/* doesn't seem to be necessary */
-	return;
+	int			val, err;
+
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+		val = AXE_MEDIA_FULL_DUPLEX;
+	else
+		val = 0;
+	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
+	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
+	if (err) {
+		printf("%s: media change failed\n", USBDEVNAME(sc->axe_dev));
+		return;
+	}
 }
 
 /*
