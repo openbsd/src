@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.24 2005/01/13 23:39:42 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.25 2005/01/14 17:02:56 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -282,8 +282,55 @@ Print out history information for a module.
 Add a symbolic link to a module.
 .It Ic server
 Server mode.
-.It Ic status
-Display status information on checked out files.
+.It Xo Ic status
+.Op Fl lRv
+.Op Ar file ...
+.Xc
+The
+.Ic status
+command is used to display the state of checked out files.
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
+The
+.Fl v
+flag causes the symbolic tags for the file to be displayed.
+.Pp
+The following are the different possible states:
+.Bl -tag -width "Unresolved ConflictXX"
+.It Cm Locally Added
+The file has been added with the
+.Ic add
+command, but has not been committed to the repository with the
+.Ic commit
+command.
+.It Cm Locally Modified
+The file is up to date, but has been locally modified since then.
+.It Cm Locally Removed
+The file has been removed with the
+.Ic remove
+command, but has not been committed to the repository with the
+.Ic commit
+command.
+.It Cm Needs Checkout
+The file has not been modified; a new version is available.
+.It Cm Needs Merge
+The file has been modified and a newer version is available.
+A merge is necessary.
+.It Cm Needs Patch
+Same as
+.Ic Needs Checkout
+but, in client-server mode, only the differences are sent to save
+network resources.
+.It Cm Unresolved Conflict
+A merge has been done, but unresolved conflicts still remain.
+.It Cm Up-to-date
+The file is up to date.
+.El
 .Pp
 Aliases:
 .Ic st ,
