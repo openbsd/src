@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.8,v 1.2 1998/03/07 22:18:15 millert Exp $
+.\" $OpenBSD: photurisd.8,v 1.3 1998/05/13 12:28:01 niklas Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -186,7 +186,7 @@ The keywords
 .Nm port ,
 .Nm options ,
 .Nm tsrc ,
-.Nm tdsr ,
+.Nm tdst ,
 .Nm exchange_lifetime ,
 .Nm spi_lifetime
 and
@@ -207,11 +207,27 @@ The options to be used in the exchange. Possible values are
 and
 .Nm auth .
 .It tsrc
-The source address with netmask from which packets are accepted
-for the tunnel to be created.
+If both
+.Nm tsrc
+and
+.Nm tdst
+(see below) are specified, a tunnel (IP over IP) is setup.  The
+.Nm tsrc
+option is a network address with netmask used for matching the source
+IP address of a packet.  When both the source and the destination
+addresses match their respective options the packet will be routed into the
+tunnel.
 .It tdst
-The destination address with netmask for which packets are
-accepted for the tunnel being created.
+If both
+.Nm tsrc
+(see above) and
+.Nm tdst
+are specified, a tunnel (IP over IP) is setup.  The
+.Nm tdst
+option is a network address with netmask used for matching the destination
+IP address of a packet.  When both the source and the destination
+addresses match their respective options the packet will be routed into the
+tunnel.
 .It exchange_lifetime
 Determines the lifetime of the exchange. After an exchange expires
 no new SPIs are created.
@@ -241,3 +257,4 @@ The photuris keymanagement protocol is described in the internet draft
 by the authors Phil Karn and William Allen Simpson.
 This implementation was done 1997 by Niels Provos and appeared in 
 .Ox 2.1 .
+

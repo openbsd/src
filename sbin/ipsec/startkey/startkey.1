@@ -1,4 +1,4 @@
-.\" $OpenBSD: startkey.1,v 1.4 1998/03/05 09:30:56 provos Exp $
+.\" $OpenBSD: startkey.1,v 1.5 1998/05/13 12:29:36 niklas Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -61,7 +61,7 @@ The options
 .Nm port ,
 .Nm options ,
 .Nm tsrc ,
-.Nm tdsr ,
+.Nm tdst ,
 .Nm exchange_lifetime ,
 .Nm spi_lifetime
 and
@@ -81,11 +81,27 @@ The options to be used in the exchange. Possible values are
 and
 .Nm auth .
 .It tsrc
-The source address with netmask from which packets are accepted
-for the tunnel to be created.
+If both
+.Nm tsrc
+and
+.Nm tdst
+(see below) are specified, a tunnel (IP over IP) is setup.  The
+.Nm tsrc
+option is a network address with netmask used for matching the source
+IP address of a packet.  When both the source and the destination
+addresses match their respective options the packet will be routed into the
+tunnel.
 .It tdst
-The destination address with netmask for which packets are
-accepted for the tunnel being created.
+If both
+.Nm tsrc
+(see above) and
+.Nm tdst
+are specified, a tunnel (IP over IP) is setup.  The
+.Nm tdst
+option is a network address with netmask used for matching the destination
+IP address of a packet.  When both the source and the destination
+addresses match their respective options the packet will be routed into the
+tunnel.
 .It exchange_lifetime
 Determines the lifetime of the exchange. After an exchange expires
 no new SPIs are created.
