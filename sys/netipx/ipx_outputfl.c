@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_outputfl.c,v 1.3 2000/01/11 20:54:13 fgsch Exp $	*/
+/*	$OpenBSD: ipx_outputfl.c,v 1.4 2000/01/15 18:00:47 fgsch Exp $	*/
 
 /*-
  *
@@ -56,10 +56,7 @@
 #include <netipx/ipx_if.h>
 #include <netipx/ipx_var.h>
 
-int ipx_hold_output = 0;
 int ipx_copy_output = 0;
-int ipx_outputfl_cnt = 0;
-struct mbuf *ipx_lastout;
 
 int
 ipx_outputfl(m0, ro, flags)
@@ -68,28 +65,22 @@ ipx_outputfl(m0, ro, flags)
 	int flags;
 {
 	register struct ipx *ipx = mtod(m0, struct ipx *);
-	register struct ifnet *ifp = 0;
+	register struct ifnet *ifp = NULL;
 	int error = 0;
 	struct sockaddr_ipx *dst;
 	struct route ipxroute;
 
-	if (ipx_hold_output) {
-		if (ipx_lastout) {
-			(void)m_free(ipx_lastout);
-		}
-		ipx_lastout = m_copy(m0, 0, (int)M_COPYALL);
-	}
 	/*
 	 * Route packet.
 	 */
-	if (ro == 0) {
+	if (ro == NULL) {
 		ro = &ipxroute;
-		bzero((caddr_t)ro, sizeof (*ro));
+		bzero((caddr_t)ro, sizeof(*ro));
 	}
 	dst = (struct sockaddr_ipx *)&ro->ro_dst;
-	if (ro->ro_rt == 0) {
+	if (ro->ro_rt == NULL) {
 		dst->sipx_family = AF_IPX;
-		dst->sipx_len = sizeof (*dst);
+		dst->sipx_len = sizeof(*dst);
 		dst->sipx_addr = ipx->ipx_dna;
 		dst->sipx_addr.ipx_port = 0;
 		/*
@@ -99,7 +90,8 @@ ipx_outputfl(m0, ro, flags)
 		if (flags & IPX_ROUTETOIF) {
 			struct ipx_ifaddr *ia = ipx_iaonnetof(&ipx->ipx_dna);
 
-			if (ia == 0) {
+			if (ia == NULL) {
+				ipxstat.ipxs_noroute++;
 				error = ENETUNREACH;
 				goto bad;
 			}
@@ -115,7 +107,8 @@ ipx_outputfl(m0, ro, flags)
 		ro->ro_rt = NULL;
 		rtalloc(ro);
 	}
-	if (ro->ro_rt == 0 || (ifp = ro->ro_rt->rt_ifp) == 0) {
+	if (ro->ro_rt == NULL || (ifp = ro->ro_rt->rt_ifp) == NULL) {
+		ipxstat.ipxs_noroute++;
 		error = ENETUNREACH;
 		goto bad;
 	}
@@ -128,7 +121,7 @@ gotif:
 	 * verify user is allowed to send
 	 * such a packet.
 	 */
-	if (dst->sipx_addr.ipx_host.c_host[0]&1) {
+	if (dst->sipx_addr.ipx_host.c_host[0] & 1) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EADDRNOTAVAIL;
 			goto bad;
@@ -137,17 +130,21 @@ gotif:
 			error = EACCES;
 			goto bad;
 		}
+		m0->m_flags |= M_BCAST;
 	}
 
 	if (htons(ipx->ipx_len) <= ifp->if_mtu) {
-		ipx_outputfl_cnt++;
+		ipxstat.ipxs_localout++;
 		if (ipx_copy_output) {
 			ipx_watch_output(m0, ifp);
 		}
 		error = (*ifp->if_output)(ifp, m0,
 					(struct sockaddr *)dst, ro->ro_rt);
 		goto done;
-	} else error = EMSGSIZE;
+	} else {
+		ipxstat.ipxs_mtutoosmall++;
+		error = EMSGSIZE;
+	}
 bad:
 	if (ipx_copy_output) {
 		ipx_watch_output(m0, ifp);
@@ -156,7 +153,7 @@ bad:
 done:
 	if (ro == &ipxroute && (flags & IPX_ROUTETOIF) == 0 && ro->ro_rt) {
 		RTFREE(ro->ro_rt);
-		ro->ro_rt = 0;
+		ro->ro_rt = NULL;
 	}
 	return (error);
 }
