@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisavar.h,v 1.8 1998/01/20 18:40:26 niklas Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.9 1998/10/29 22:45:30 mickey Exp $	*/
 /*	$NetBSD: eisavar.h,v 1.11 1997/06/06 23:30:07 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct eisabus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (alpha + i386 + arc != 1)
+#if (alpha + i386 + arc + hppa != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if alpha
@@ -65,6 +65,9 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if arc
 #include <arc/eisa/eisa_machdep.h>
+#endif
+#if hppa
+#include <hppa/eisa/eisa_machdep.h>
 #endif
 
 typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
