@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math_private.h,v 1.2 1995/10/28 00:57:20 deraadt Exp $
+ * $Id: math_private.h,v 1.3 1996/05/24 10:57:43 deraadt Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -34,7 +34,12 @@
 /* A union which permits us to convert between a double and two 32 bit
    ints.  */
 
-#if BYTE_ORDER == BIG_ENDIAN
+/*
+ * The arm32 port is little endian except for the FP word order which is
+ * big endian.
+ */
+
+#if (BYTE_ORDER == BIG_ENDIAN) || defined(arm32)
 
 typedef union 
 {
@@ -48,7 +53,7 @@ typedef union
 
 #endif
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(arm32)
 
 typedef union 
 {
