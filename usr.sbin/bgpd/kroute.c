@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.77 2004/01/22 20:34:56 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.78 2004/01/23 21:18:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -503,7 +503,7 @@ knexthop_insert(struct knexthop_node *kn)
 {
 	if (RB_INSERT(knexthop_tree, &knt, kn) != NULL) {
 		log_warnx("knexthop_tree insert failed for %s",
-			    log_ntoa(kn->nexthop.v4.s_addr));
+			    log_addr(&kn->nexthop));
 		free(kn);
 		return (-1);
 	}
@@ -520,7 +520,7 @@ knexthop_remove(struct knexthop_node *kn)
 
 	if (RB_REMOVE(knexthop_tree, &knt, kn) == NULL) {
 		log_warnx("knexthop_remove failed for %s",
-		    log_ntoa(kn->nexthop.v4.s_addr));
+		    log_addr(&kn->nexthop));
 		return (-1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.71 2004/01/22 20:34:55 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.72 2004/01/23 21:18:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -480,19 +480,16 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 void
 send_nexthop_update(struct kroute_nexthop *msg)
 {
-	char	*gw = NULL, *nh = NULL;
+	char	*gw = NULL;
 
-	if (msg->gateway.af == AF_INET)
+	if (msg->gateway.af)
 		if (asprintf(&gw, ": via %s",
-		    log_ntoa(msg->gateway.v4.s_addr)) == -1) {
+		    log_addr(&msg->gateway)) == -1) {
 			log_warn("send_nexthop_update");
 			quit = 1;
 		}
 
-	if (msg->nexthop.af == AF_INET)
-		nh = log_ntoa(msg->nexthop.v4.s_addr);
-
-	log_info("nexthop %s now %s%s%s", nh,
+	log_info("nexthop %s now %s%s%s", log_addr(&msg->nexthop),
 	    msg->valid ? "valid" : "invalid",
 	    msg->connected ? ": directly connected" : "",
 	    msg->gateway.af ? gw : "");
