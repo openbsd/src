@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2001/10/24 05:38:21 maja Exp $
+#	$OpenBSD: Makefile,v 1.13 2002/02/19 01:49:57 maja Exp $
 
 PROG=	kbd
 MAN=	kbd.8
@@ -9,7 +9,8 @@ CFLAGS+=-I${.CURDIR}
 .if (${MACHINE} == "arc")
 SRCS+=	kbd_i386.c
 .elif (${MACHINE} == "i386") || (${MACHINE} == "macppc")  || \
-      (${MACHINE} == "vax") || (${MACHINE} == "alpha")
+      (${MACHINE} == "vax") || (${MACHINE} == "alpha") || \
+      (${MACHINE} == "sparc64")
 SRCS+=	kbd_wscons.c
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
