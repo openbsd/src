@@ -1,40 +1,37 @@
-NetBSD/hp300 1.0 will run on most HP 9000/300 series machines.
+NetBSD/hp300 1.1 will run on most HP 9000/300- and 400-series machines.
 The lowest amount of RAM that has been tested is 7.5M, though it
 may run with less.  Certainly, if you wish to run X, more RAM is
-recommended.  Until you reach 16M, more RAM is more important than
-a faster CPU.
+recommended.
 
 Here is a table of recommended HD partition sizes for a full install:
-	partition:	advise	needed
-	root (/)	15M	15M	(see note below)
-	user (/usr)	80M	45M
-	swap		----- 2M for every 1M of RAM -----
-	local (/local)	up to you
+	partition:	advise		needed
+	root (/)	15M		10M
+	user (/usr)	80M		45M
+	swap		(2 or 3 * RAM)	 6M	(see note below)
+	Anything else is up to you!
 
-NOTE:  Because of the nature of the hp300 bootstrap procedure, the root
-filesystem is a _fixed_size_!  You may want to consider placing /var and
-/tmp on their own partitions.  This, of course is up to you and your
-judgement.  Also, note that the recommended size of /usr is 15M greater
-than the needed size.  This is to allow room for kernel source and
-compile areas, as you may want to compile your own kernel.
+NOTE:  The hp300 installation procedure utilizes a `miniroot' filesystem
+which is placed into the swap area of the disk.  The swap are must be
+at least large enough to hold this miniroot image.
 
 The following HP hardware is supported:
 
 	CPUs:
 		68020-based: 318, 319, 320, 330, and 350.
-		68030-based: 340, 345, 360, 370, 375, and 400.
-		68040-based: 380, 425, and 433.
+		68030-based: 340, 345, 360, 370, 375, and 400(*).
+		68040-based: 380, 425(*), and 433(*).
 
 	Disks:
 		HP-IB/CS80: 7912, 7914, 7933, 7936, 7937, 7945, 7957,
 			    7958, 7959, 2200, and 2203.
-		SCSI-I, including magneto-optical and CD-ROM.  SCSI-II
-		drives should work if they can talk SCSI-I.
+		SCSI-I(**), including magneto-optical and CD-ROM.
 
 	Tape drives:
-		Low-density CS80 cartridge: 7914, 7946, 9144.
-		High-density CS80 cartridge: 9145.
-		SCSI: HP DAT and Exabyte.
+		Low-density HP-IB/CS80 cartridge: 7914, 7946, and 9144.
+		High-density HP-IB/CS80 cartridge: 9145.
+		HP-IB/CS80 1/2": 7974A, 7978A/B, 7979A, 7980A, and 7980XC.
+		SCSI: HP DAT, Exabyte, and SCSI QIC drives such as
+		      the Archive Viper.
 
 	RS232 interfaces:
 		98644 built-in single port (dca).
@@ -54,13 +51,23 @@ The following HP hardware is supported:
 
 	Input devices:
 		General interface supporting all HIL devices: keyboard,
-		2 and 3 button mice, and ID module.
+		2 and 3 button mice(***), and ID module.
 
 	Miscellaneous:
 		Battery-backed real-time clock.
-		98625A and 98625B built-in HP-IB interface.
-		98658A built-in SCSI interface.
+		98624 built-in HP-IB interface.
+		98625A and 98625B `fast' HP-IB interface.
+		98658A built-in and add-on SCSI interface.
 		Printers and plotters on RS232 and HP-IB.
 		SCSI autochanger.
 
-If it's not on this list, there is no support for it in this release.
+(*) 400-series machines configured for Domain/OS are not fully supported,
+    notably, the keyboard doesn't work and the ROMs must be in `HP-UX mode'.
+
+(**) SCSI-II drives are known to work, though this may require changing a
+     jumper on some drives.  See your disk's documentation for details.
+
+(***) Serial mice connected to a `HIL to quad' converter are also known
+      to work.
+
+If it's not on this list, there is no official support for it in this release.

@@ -1,125 +1,164 @@
-NOTE:  These instructions are explicitly for installing NetBSD
-from an HP-UX system, version 7 or later.  It has not been
-tested with HP-UX versions earlier than 7, and has also not
-been tested with HP-UX 8, although it is presumed to work.
-For the creative, similar steps may be taken from a system such
-as Utah's 4.3BSD release for the hp300, although bootstrapping
-from such a system has not been tested.
+Currently, only installing the miniroot from the network is supported.
+This may change in a future release.
 
-Bootstrapping the hp300 is a complicated process, but it's a lot
-easier than it used to be.  For this process you need the
-following items from the install/ directory:
+You will need information about your disk's geometry, based on 512-byte
+sectors.  You must have this information before proceeding.  The
+file `.../install/HP-IB.geometry' has geometry inforomation for several
+HP-IB disks, but may be incomplete.  Geometry may be calculated from an
+HP-UX `/etc/disktab' entry, but note that HP-UX geometry is based on
+1024 byte sectors, while NetBSD's is based on 512 byte sectors.
 
-	boot		NetBSD/hp300 boot block for
-			HP-IB and SCSI disks
+QUICK NOTE ABOUT PARTITIONS:  Since the target disk will become the boot
+disk for your new NetBSD/hp300 installation, you will need to treat the
+`a' and `c' partitions in a special manner.  Due to the size of the
+NetBSD/hp300 boot program (it spills into the area after the disklabel),
+it is necessary to offset the `a' partition one cylinder from the beginning
+of the disk.  Later, the `c' partition will be marked with the type
+`FS_BOOT' and may not be used for a filesystem.  (For those unfamiliar
+with historic BSD partition conventions, the `c' partition is defined
+as `the entire disk', or the `raw partition'.)
 
-	rootimage.gz	bootstrap root filesystem
-			image
+A QUICK NOTE ABOUT DISK NUMBERS:  While in the SYS_INST program, you
+may use different unit numbers for the disks than when the NetBSD
+kernel is running.  The unit number for a disk while in SYS_INST is
+calculated with the following formula:
 
-	label		prototype disk label
+	unit = (controller * 8) + slave
 
-	makedisk	a program for HP-UX that will
-			write a NetBSD disk label,
-			boot block, and root filesystem
-			image to the target disk
-			(NOTE:  This is an HP-UX 7.x binary.
-			while it will work under HP-UX 9.x,
-			you may want to compile this yourself.
-			The source may be found in makedisk.tar.gz)
+Controllers are numbered 0, 1, ... starting with the lowest select code.
+SCSI controllers and HP-IB controllers are counted separately.  Therefore,
+if you had a system with an internal HP-IB interface at select code 7,
+a fast HP-IB interface at select code 14, and a SCSI interface at select
+code 16, unit numers might be something like the following:
 
-VERY IMPORTANT NOTE: This procedure will destroy all data on the
-target disk.  Because NetBSD uses a different filesystem format than
-HP-UX, your old data will be useless.  If you wish to save anything,
-use tar(1) instead of dump(1M), again because of filesystem differences.
+	Location			Unit
+	--------			----
+	HP-IB at 7, slave 2		2	(disk: rd2)
+	HP-IB at 14, slave 5		13	(disk: rd13)
+	SCSI at 16, slave 0		0	(disk: sd0)
 
-First of all, you must have a second disk on which to install NetBSD.
-If possible, this disk should first be prepared with mediainit(1M).
-Once this disk is spotless, you should generate a disk label for it.
-Using the prototype label provided, fill in all of the necessary
-information.  Remember, if you derive geometry information from an
-HP-UX disktab, your partition size will be off.  This is because HP-UX
-uses a 1024-byte sector size, while NetBSD uses a 512-byte sector size.
-To avoid the problem, you may simply double the number of cylinders.
-(That's what I do...works great.  -- JRT)
 
-IMPORTANT:  Partition 'a' must be offset one cylinder.  Since
-partition information is expressed in sectors, the offset of
-partition 'a' must be the value of `sectors/cylinder'.  This is
-to leave room for the boot block.
+                   Miniroot installation via network
+	           ---------------------------------
+NOTE:  BOOTING SYS_INST VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
+IS `REV. C' OR LATER.
 
-When you create your disklabel, be sure to specify whether or not
-the disk is HP-IB or SCSI in the `type:' field.
+In order to complete this process, you will need the following from the
+`.../install' directory of the distribution:
 
-Below is an example of what a disk label should look like.  This
-is an example only!  Do not attempt this at home!
+	SYS_INST	The standalone disklabel and miniroot
+			installation tool
 
-
+	inst-11.fs.gz	A gzipped miniroot filesystem image.  This image
+			must be un-gzipped before copying to disk.
 
-# Sample disklabel for example only.  This is a comment.
-type: HP-IB
-disk: 
-label: INSTALL-1_0
-flags:
-bytes/sector: 512
-sectors/track: 36
-tracks/cylinder: 7
-sectors/cylinder: 252
-cylinders: 1013
-rpm: 3600
-interleave: 1
-trackskew: 0
-cylinderskew: 0
-headswitch: 0		# milliseconds
-track-to-track seek: 0	# milliseconds
-drivedata: 0 
+To boot SYS_INST via the network, you will need a system capable of handling
+boot requests for an HP workstation.  If you will use this method, see the
+special note below.
 
-7 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    30744      252    4.2BSD     1024  8192    16 	# (Cyl.    1 - 122)
-  b:    32760    30996      swap                    	# (Cyl.  123 - 252)
-  c:   255276        0      boot                    	# (Cyl.    0 - 1012)
-  e:    20412    63756    4.2BSD     1024  4096    16 	# (Cyl.  253 - 333)
-  f:    40824    84168    4.2BSD     1024  8192    16 	# (Cyl.  334 - 495)
-  g:   130284   124992    4.2BSD     1024  8192    16 	# (Cyl.  496 - 1012)
+To boot SYS_INST from tape, you need only place SYS_INST on the tape as
+the first file.
 
-NOTE:  Due to the nature of the bootstrapping procedure, your 'a'
-partition must be at least 30744 sectors long.  Increase the size of
-your 'a' partition just enough to make it end on a cylinder boundary.
-If you make it any larger, you will just be wasting space, as the
-filesystem ends after 30744 sectors.
+-- The following section is specific for loading SYS_INST via the network. --
 
-Remember to write down the names of the partitions and what you
-will be using them for (i.e. 'a - root, b - swap, e - /usr, etc.')
-as you will need this information later on in the installation
-process.
+If you wish to load the SYS_INST program via the network, you may need
+the following from the `.../install' directory in addition to the items
+listed above:
 
-Once you are satisfied with your disklabel, you can write the
-root filesystem image to the target disk.  Use the `makedisk'
-program for this.  So, under HP-UX, do:
+	rbootd.tar.gz	Source code for the rbootd program included with
+			NetBSD.  It requires that the server have a
+			Berkeley Packet Filter (bpf).  You will need to
+			compile this version of rbootd if your server
+			system does not have this utility already.
 
-	./makedisk /dev/rdsk/c7d0s0 mylabel boot rootimage.gz
+First of all, configure your rbootd to handle boot requests from the
+client.  NOTE: NetBSD's `rbootd' is slightly different from HP-UX's.
+To configure NetBSD's `rbootd', create a file called `/etc/rbootd.conf'
+and place in it an entry like the following:
 
-where:
-	/dev/rdsk/c7d0s0	raw flavor of target disk device
+	08:00:09:04:AA:33	SYS_INST	# thunder-egg
 
-	mylabel			disk label you just wrote
+The first column is the ethernet address of the client's network interface.
+The second column is the program to send to the client, and anything after
+the `#' is a comment.  Once you have rbootd running, copy the SYS_INST
+program to the /usr/mdec/rbootd directory on your server.  If this
+directory doesn't exist already, you will need to create it.
 
-	boot			supplied boot block
+For information on configuring rbootd under HP-UX, see the rbootd(1M)
+manual page on your server system.
 
-	rootimage.gz		gzipped root filesystem image
-				NOTE: This requires that gzip be
-				installed on your HP-UX system.
-				If it is not, a gzip binary is
-				provided in the install/ directory.
-				Source for gzip may be found in the
-				gsrc10 distribution set.  Again, this
-				gzip is an HP-UX 7.x binary.
+Once `rbootd' is configured and running, you will be ready to continue.
 
-If you wish to label any additional disks, you will have to do this
-from NetBSD, although you will not have an editor at your disposal.
-To do this, simply generate the labels now, and then grab them at
-the same time and by the same method you use to grab the distrubtion
-sets.
+------------------ End of network boot-specific section ----------------------
 
-Once this is done, you should be ready to boot NetBSD from the target
-disk.
+Make sure that the miniroot filesystem image has been un-gzipped, and
+that it resides in a filesystem what is exported to the client.  See the
+manual pages on your server system if you need more information about
+exporting filesystems.
+
+You are now ready to SYS_INST.  During the client's self-test cycle, press
+the space bar a few times.  Shortly, you should see a menu of possible boot
+options appear.  Select the option corresponding to SYS_INST.  SYS_INST will
+load and prompt you for a command.
+
+If this is a new NetBSD installation, you will need to place a disklabel
+on the disk.
+
+	sys_inst> disklabel
+
+NOTE: it may be worth selecting the `zap' option initially to ensure that
+the disklabel area is clear.  This may be especially important if an
+HP-UX boot block had been previously installed on the disk.
+
+Select the `edit' option, and answer the questions about your disk.
+There may be several questions which you may not be sure of the answers
+to.  Listed below are guidelines for SCSI and HP-IB disks:
+
+	Bad sectoring?		NO
+	Ecc?			NO
+	Interleave?		1
+	Trackskew?		0
+	Cylinderskew?		0
+	Headswitch?		0
+	Track-to-track?		0
+	Drivedata 0-4?		0 (for all Drivedata values)
+
+Next, you will be asked to fill out the partition map.  You must provide
+responses for all 8 partitions.  Remember, you must allocate at least 6M
+for the `b' partition, or else the miniroot will not fit.  Set the size and
+offset of any unused partition to 0.  Note that sizes and offsets are
+expressed in `n sectors', assuming 512 byte sectors.  Care should be taken
+to ensure that partitions begin and end on cylinder boundaries (i.e. size
+and offset is an even multiple of the number of sectors per cylinder).
+While this is not technically necessary, it is generally encouraged.  Note
+that you cannot enter partition types at this time.  You will be given an
+oppotinuty to `clean up' the disklabel later on in the installation procedure.
+
+Once you have edited the label, select the `show' option to verify that
+it is correct.  If so, select `write' and `done'.  Otherwise, you may
+re-edit the label.
+
+The next step is to copy the miniroot image onto the target disk.
+
+	sys_inst> miniroot
+
+You will be prompted for the target disk and the source of the miniroot
+filesytem image.
+
+Enter the filename of the miniroot image.  Note that this file _must_ reside
+in the server directory being mounted.  Next you will be asked for the
+client's IP address, netmask, and default router, the server's IP address,
+and the directory on the server to mount.  Once you have entered this
+information, SYS_INST will attempt to mount the NFS server and begin copying
+the miniroot filesystem to the `b' partition of the target disk.
+
+Is is worth noting that this copy may take a while.  It might be worth
+grabbing a cup of coffee at this point.
+
+Once the miniroot filesystem image has been copied onto the target disk,
+you may boot from the miniroot filesystem.
+
+	sys_inst> boot
+
+Enter the disk from which to boot.  The kernel in the miniroot filesystem
+will be booted into single-user mode.

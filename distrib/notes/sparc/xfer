@@ -11,10 +11,10 @@ To prepare for installing via an NFS partition:
 
 	Since the current NetBSD/sparc installation program uses
 	a diskless setup for your workstation, you will already
-	have prepared an NFS directory for use as a remote
-	root filesystem (see the `install' document for details).
-	The easiest way is to put the NetBSD filesets in this
-	root filesystem on the server where the install program
+	have to prepare an NFS directory for use as a remote
+	root filesystem (see the section `Installing the NetBSD System'
+	below for details). The easiest way is to put the NetBSD filesets
+	in this root filesystem on the server where the install program
 	will find them.
 
 	However, you have the option to put the filesets in

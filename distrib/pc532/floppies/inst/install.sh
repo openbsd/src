@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.1.1.1 1995/10/18 08:37:43 deraadt Exp $
+#	$Id: install.sh,v 1.2 1995/11/16 14:20:06 deraadt Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -440,19 +440,19 @@ $DONTDOIT gzip -d /mnt/netbsd.gz
 echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
-if [ "$dname" != "" ]; then
+if [ "$dname" != "" -a "$dname" != "NO" ]; then
 	echo /dev/${drivename}d /$dname ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
-if [ "$ename" != "" ]; then
+if [ "$ename" != "" -a "$ename" != "NO" ]; then
 	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
-if [ "$fname" != "" ]; then
+if [ "$fname" != "" -a "$fname" != "NO" ]; then
 	echo /dev/${drivename}f /$fname ffs rw 1 3 | sed -e s,//,/, >> $FSTAB
 fi
-if [ "$gname" != "" ]; then
+if [ "$gname" != "" -a "$gname" != "NO" ]; then
 	echo /dev/${drivename}g /$gname ffs rw 1 4 | sed -e s,//,/, >> $FSTAB
 fi
-if [ "$hname" != "" ]; then
+if [ "$hname" != "" -a "$hname" != "NO" ]; then
 	echo /dev/${drivename}h /$hname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
 fi
 sync

@@ -67,7 +67,7 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		[ 0.8M gzipped, 3.1M uncompressed ]
 
 The sparc security distribution set is named "secr11" and can be found
-in the "sparc/security" subdirectory of the NetBSD 1.0 distribution
+in the "sparc/security" subdirectory of the NetBSD 1.1 distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it.  It can only be found
 on those sites which carry the complete NetBSD distribution and that

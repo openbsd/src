@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1.2.7 1995/11/16 07:30:54 thorpej Exp $
+#	$NetBSD: upgrade.sh,v 1.1.2.1 1995/11/14 09:59:58 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -38,8 +38,6 @@
 VERSION=1.1
 export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
-FILESYSTEMS="/tmp/filesystems"		# used thoughout
-FQDN=""					# domain name
 
 trap "umount /tmp > /dev/null 2>&1" 0
 
@@ -58,17 +56,6 @@ isin() {
 		shift
 	done
 	return 1
-}
-
-rmel() {
-# remove first argument from list formed by the remaining arguments
-	_a=$1; shift
-	while [ $# != 0 ]; do
-		if [ "$_a" != "$1" ]; then
-			echo "$1";
-		fi
-		shift
-	done
 }
 
 twiddle() {
@@ -95,11 +82,6 @@ md_get_cddevs() {
 	dmesg | grep "sd.*:*CD-ROM" | awk -F: '{print $1}' | sort -u
 }
 
-md_get_ifdevs() {
-	# return available network interfaces
-	dmesg | grep "^le.*:" | awk -F: '{print $1}' | sort -u
-}
-
 md_installboot() {
 	# $1 is the root disk
 
@@ -110,8 +92,6 @@ md_installboot() {
 }
 
 md_checkfordisklabel() {
-	# $1 is the disk to check
-
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval="1"
@@ -124,269 +104,6 @@ md_checkfordisklabel() {
 	rm -f /tmp/checkfordisklabel
 }
 
-hp300_init_label_scsi_disk() {
-	# $1 is the disk to label
-
-	# Name the disks we install in the temporary fstab.
-	if [ "X${_disk_instance}" = "X" ]; then
-		_disk_instance="0"
-	else
-		_disk_instance=`expr $_disk_instance + 1`
-	fi
-	_cur_disk_name="install-disk-${_disk_instance}"
-
-	# Get geometry information from the user.
-	more << \__scsi_label_1
-
-You will need to provide some information about your disk's geometry.
-Geometry info for SCSI disks was printed at boot time.  If that information
-is not available, use the information provided in your disk's manual.
-Please note that the geometry printed at boot time is preferred.
-
-IMPORTANT NOTE: due to a limitation in the disklabel(8) program, the
-number of cylinders on the disk will be increased by 1 so that the initial
-label can be placed on disk for editing.  When the disklabel editor appears,
-make absolutely certain you subtract 1 from the total number of cylinders,
-and adjust the size of partition 'c' such that:
-
-	size = (sectors per track) * (tracks per cyl) * (total cylinders)
-
-Note that the disklabel editor will be run twice; once to set the size of
-partition 'c' and correct the geometry, and again so that you may correctly
-edit the partition map.  This is to work around the afore mentioned
-limitation in disklabel(8).  Apologies offered in advance.
-
-__scsi_label_1
-
-	# Give the opportunity to review the boot messages.
-	echo -n	"Review boot messages now? [y] "
-	getresp "y"
-	case "$resp" in
-		y*|Y*)
-			(echo ""; dmesg; echo "") | more
-			;;
-
-		*)
-			;;
-	esac
-
-	echo	""
-	echo -n	"Number of bytes per disk sector? [512] "
-	getresp "512"
-	_secsize="$resp"
-
-	resp=""		# force one iteration
-	while [ "X${resp}" = "X" ]; do
-		echo -n	"Number of cylinders? "
-		getresp ""
-	done
-	_cylinders="$resp"
-	_fudge_cyl=`expr $_cylinders + 1`
-
-	resp=""		# force one iteration
-	while [ "X${resp}" = "X" ]; do
-		echo -n	"Number of tracks (heads)? "
-		getresp ""
-	done
-	_tracks_per_cyl="$resp"
-
-	resp=""		# force one iteration
-	while [ "X${resp}" = "X" ]; do
-		echo -n	"Number of disk sectors (blocks)? "
-		getresp ""
-	done
-	_nsectors="$resp"
-
-	# Calculate some values we need.
-	_sec_per_cyl=`expr $_nsectors / $_cylinders`
-	_sec_per_track=`expr $_sec_per_cyl / $_tracks_per_cyl`
-	_new_c_size=`expr $_sec_per_track \* $_tracks_per_cyl \* $_cylinders`
-
-	# Emit a disktab entry, suitable for getting started.
-	# What we have is a `c' partition with the total number of
-	# blocks, and an `a' partition with 1 sector; just large enough
-	# to open.  Don't ask.
-	echo	"" >> /etc/disktab
-	echo	"# Created by install" >> /etc/disktab
-	echo	"${_cur_disk_name}:\\" >> /etc/disktab
-	echo -n	"	:ty=winchester:ns#${_sec_per_track}:" >> /etc/disktab
-	echo	"nt#${_tracks_per_cyl}:nc#${_fudge_cyl}:\\" >> /etc/disktab
-	echo	"	:pa#1:\\" >> /etc/disktab
-	echo	"	:pc#${_nsectors}:" >> /etc/disktab
-
-	# Ok, here's what we need to do.  First of all, we install
-	# this initial label by opening the `c' partition of the disk
-	# and using the `-r' flag for disklabel(8).  However, because
-	# of limitations in disklabel(8), we've had to fudge the number
-	# of cylinders up 1 so that disklabel(8) doesn't complain about
-	# `c' running past the end of the disk, which can be quite
-	# common even with OEM HP drives!  So, we've given ourselves
-	# an `a' partition, which is the minimum needed to open the disk
-	# so that we can perform the DIOCWDLABEL ioctl.  So, once the
-	# initial label is installed, we open the `a' partition so that
-	# we can fix up the number of cylinders and make the size of
-	# `c' come out to (ncyl * ntracks_per_cyl * nsec_per_track).
-	# After that's done, we re-open `c' and let the user actually
-	# edit the partition table.  It's horrible, I know.  Bleh.
-
-	disklabel -W ${1}
-	if ! disklabel -w -r ${1} ${_cur_disk_name}; then
-		echo ""
-		echo "ERROR: can't bootstrap disklabel!"
-		rval="1"
-		return
-	fi
-
-	echo ""
-	echo "The disklabel editor will now start.  During this phase, you"
-	echo "must reset the 'cylinders' value to ${_cylinders}, and adjust"
-	echo "the size of partition 'c' to ${_new_c_size}.  Do not modify"
-	echo "the partition map at this time.  You will have the opportunity"
-	echo "to do so in a moment."
-	echo ""
-	echo -n	"Press <return> to continue. "
-	getresp ""
-
-	disklabel -W ${1}
-	if ! disklabel -e /dev/r${1}a; then
-		echo ""
-		echo "ERROR: can't fixup geometry!"
-		rval="1"
-		return
-	fi
-
-	cat << \__explain_motives_2
-
-Now that you have corrected the geometry of your disk, you may edit the
-partition map.  Don't forget to fill in the fsize (frag size), bsize
-(filesystem block size), and cpg (cylinders per group) values.  If you
-are unsure what these should be, use:
-
-	fsize: 1024
-	bsize: 4096
-	cpg: 16
-
-__explain_motives_2
-	echo -n	"Press <return> to continue. "
-	getresp ""
-
-	rval="0"
-	return
-}
-
-hp300_init_label_hpib_disk() {
-	# $1 is the disk to label
-
-	# We look though the boot messages attempting to find
-	# the model number for the provided disk.
-	_hpib_disktype=""
-	if dmesg | grep "${1}: " > /dev/null 2>&1; then
-		_hpib_disktype=HP`dmesg | grep "${1}: " | sort -u | \
-		    awk '{print $2}'`
-	fi
-	if [ "X${_hpib_disktype}" = "X" ]; then
-		echo ""
-		echo "ERROR: $1 doesn't appear to exist?!"
-		rval="1"
-		return
-	fi
-
-	# Peer through /etc/disktab to see if the disk has a "default"
-	# layout.  If it doesn't, we have to treat it like a SCSI disk;
-	# i.e. prompt for geometry, and create a default to place
-	# on the disk.
-	if ! grep "${_hpib_disktype}[:|]" /etc/disktab > /dev/null \
-	    2>&1; then
-		echo ""
-		echo "WARNING: can't find defaults for $1 ($_hpib_disktype)"
-		echo ""
-		hp300_init_label_scsi_disk $1
-		return
-	fi
-
-	# We've found the defaults.  Now use them to place an initial
-	# disklabel on the disk.
-	# XXX What kind of ugliness to we have to deal with to get around
-	# XXX stupidity on the part of disklabel semantics?
-	disklabel -W ${1}
-	if ! disklabel -r -w ${1} $_hpib_disktype; then
-		# Error message displayed by disklabel(8)
-		echo ""
-		echo "ERROR: can't install default label!"
-		echo ""
-		echo -n	"Try a different method? [y] "
-		getresp "y"
-		case "$resp" in
-			y*|Y*)
-				hp300_init_label_scsi_disk $1
-				return
-				;;
-
-			*)
-				rval="1"
-				return
-				;;
-		esac
-	fi
-
-	rval="0"
-	return
-}
-
-md_labeldisk() {
-	# $1 is the disk to label
-
-	# Check to see if there is a disklabel present on the device.
-	# If so, we can just edit it.  If not, we must first install
-	# a default label.
-	md_checkfordisklabel $1
-	case "$rval" in
-		0)
-			# Go ahead and just edit the disklabel.
-			disklabel -W $1
-			disklabel -e $1
-			;;
-
-		*)
-		echo -n "No disklabel present, installing a default for type: "
-			case "$1" in
-				rd*)
-					echo "HP-IB"
-					hp300_init_label_hpib_disk $1
-					;;
-
-				sd*)
-					echo "SCSI"
-					hp300_init_label_scsi_disk $1
-					;;
-
-				*)
-					# Shouldn't happen, but...
-					echo "unknown?!  Giving up."
-					return;
-					;;
-			esac
-
-			# Check to see if installing the default was
-			# successful.  If so, go ahead and pop into the
-			# disklabel editor.
-			if [ "X${rval}" != X"0" ]; then
-				echo "Sorry, can't label this disk."
-				echo ""
-				return;
-			fi
-
-			# We have some defaults installed.  Pop into
-			# the disklabel editor.
-			disklabel -W $1
-			if ! disklabel -e $1; then
-				echo ""
-				echo "ERROR: couldn't set partition map for $1"
-				echo ""
-			fi
-	esac
-}
-
 	# Note, while they might not seem machine-dependent, the
 	# welcome banner and the punt message may contain information
 	# and/or instructions specific to the type of machine.
@@ -394,22 +111,16 @@ md_labeldisk() {
 md_welcome_banner() {
 (
 	echo	""
-	echo	"Welcome to the NetBSD/hp300 ${VERSION} installation program."
+	echo	"Welcome to the NetBSD/hp300 ${VERSION} upgrade program."
 	cat << \__welcome_banner_1
 
-This program is designed to help you install NetBSD on your system in a
-simple and rational way.  You'll be asked several questions, and it would
-probably be useful to have your disk's hardware manual, the installation
-notes, and a calculator handy.
+This program is designed to help you upgrade your NetBSD system in a
+simple and rational way.
 
-In particular, you will need to know some reasonably detailed
-information about your disk's geometry.  This program can determine
-some limited information about certain specific types of HP-IB disks.
-If you have SCSI disks, however, prior knowledge of disk geometry
-is absolutely essential.  The kernel will attempt to display geometry
-information for SCSI disks during boot, if possible.  If you did not
-make it note of it before, you may wish to reboot and jot down your
-disk's geometry before proceeding.
+As a reminder, installing the `etc' binary set is NOT recommended.
+Once the rest of your system has been upgraded, you should manually
+merge any changes to files in the `etc' set into those files which
+already exist on your system.
 
 As with anything which modifies your hard disk's contents, this
 program can cause SIGNIFICANT data loss, and you are advised
@@ -437,7 +148,7 @@ __not_going_to_install_1
 md_congrats() {
 	cat << \__congratulations_1
 
-CONGRATULATIONS!  You have successfully installed NetBSD!  To boot the
+CONGRATULATIONS!  You have successfully upgraded NetBSD!  To boot the
 installed system, enter halt at the command prompt.  Once the system has
 halted, power-cycle the machine in order to load new boot code.  Make sure
 you boot from the root disk.
@@ -488,130 +199,6 @@ __getrootdisk_1
 		echo "The disk $resp does not exist."
 		ROOTDISK=""
 	fi
-}
-
-labelmoredisks() {
-	cat << \__labelmoredisks_1
-
-You may label the following disks:
-
-__labelmoredisks_1
-	echo "$_DKDEVS"
-	echo	""
-	echo -n	"Label which disk? [done] "
-	getresp "done"
-	case "$resp" in
-		done)
-			;;
-
-		*)
-			if echo "$_DKDEVS" | grep "^$resp" > /dev/null ; then
-				md_labeldisk $resp
-			else
-				echo ""
-				echo "The disk $resp does not exist."
-			fi
-			;;
-	esac
-}
-
-addhostent() {
-	# $1 - IP address
-	# $2 - symbolic name
-
-	# Create an entry in the hosts table.  If no host table
-	# exists, create one.  If the IP address already exists,
-	# replace it's entry.
-	if [ ! -f /tmp/hosts ]; then
-		echo "127.0.0.1 localhost" > /tmp/hosts
-	fi
-
-	if grep "^$1 " /tmp/hosts > /dev/null; then
-		grep -v "^$1 " /tmp/hosts > /tmp/hosts.new
-		mv /tmp/hosts.new /tmp/hosts
-	fi
-
-	echo "$1 $2 $2.$FQDN" >> /tmp/hosts
-}
-
-addifconfig() {
-	# $1 - interface name
-	# $2 - interface symbolic name
-	# $3 - interface IP address
-	# $4 - interface netmask
-
-	# Create a hostname.* file for the interface.
-	echo "inet $2 $4" > /tmp/hostname.$1
-
-	addhostent $3 $2
-}
-
-configurenetwork() {
-	cat << \__configurenetwork_1
-
-You may configure the following network interfaces:
-
-__configurenetwork_1
-
-	_IFS=`md_get_ifdevs`
-	echo	$_IFS
-	echo	""
-	echo -n	"Configure which interface? [done] "
-	getresp "done"
-	case "$resp" in
-		done)
-			;;
-
-		*)
-			if isin $resp $_IFS ; then
-				_interface_name=$resp
-
-				# Keep in the list in case it's misconfigured
-				# and the user want's to re-do it.
-
-				# Get IP address
-				resp=""		# force one iteration
-				while [ "X${resp}" = X"" ]; do
-					echo -n "IP address? "
-					getresp ""
-					_interface_ip=$resp
-				done
-
-				# Get symbolic name
-				resp=""		# force one iteration
-				while [ "X${resp}" = X"" ]; do
-					echo -n "Symbolic (host) name? "
-					getresp ""
-					_interface_symname=$resp
-				done
-
-				# Get netmask
-				resp=""		# force one iteration
-				while [ "X${resp}" = X"" ]; do
-					echo -n "Netmask? "
-					getresp ""
-					_interface_mask=$resp
-				done
-
-				# Configure the interface.  If it
-				# succeeds, add it to the permanent
-				# network configuration info.
-				ifconfig ${_interface_name} down
-				if ifconfig ${_interface_name} inet \
-				    ${_interface_ip} \
-				    netmask ${_interface_mask} up ; then
-					addifconfig \
-					    ${_interface_name} \
-					    ${_interface_symname} \
-					    ${_interface_ip} \
-					    ${_interface_mask}
-				fi
-			else
-				echo ""
-				echo "The interface $resp does not exist."
-			fi
-			;;
-	esac
 }
 
 install_ftp() {
@@ -978,9 +565,91 @@ __get_timezone_1
 	export TZ
 }
 
+# Much of this is gratuitously stolen from /etc/netstart.
+enable_network() {
+
+	# Set up the hostname.
+	if [ ! -f /mnt/etc/myname ]; then
+		echo "ERROR: no /etc/myname!"
+		return 1
+	fi
+	hostname=`cat /mnt/etc/myname`
+	hostname $hostname
+
+	# configure all the interfaces which we know about.
+(
+	tmp="$IFS"
+	IFS="$IFS."
+	set -- `echo /mnt/etc/hostname*`
+	IFS=$tmp
+	unset tmp
+
+	while [ $# -ge 2 ] ; do
+		shift		# get rid of "hostname"
+		(
+			read af name mask bcaddr extras
+			read dt dtaddr
+
+			if [ ! -n "$name" ]; then
+		    echo "/etc/hostname.$1: invalid network configuration file"
+				exit
+			fi
+
+			cmd="ifconfig $1 $af $name "
+			if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
+			if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
+			if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+				cmd="$cmd broadcast $bcaddr";
+			fi
+			cmd="$cmd $extras"
+
+			$cmd
+		) < /mnt/etc/hostname.$1
+		shift
+	done
+)
+
+	# set the address for the loopback interface
+	ifconfig lo0 inet localhost
+
+	# use loopback, not the wire
+	route add $hostname localhost
+
+	# /etc/mygate, if it exists, contains the name of my gateway host
+	# that name must be in /etc/hosts.
+	if [ -f /mnt/etc/mygate ]; then
+		route delete default > /dev/null 2>&1
+		route add default `cat /mnt/etc/mygate`
+	fi
+
+	# enable the resolver, if appropriate.
+	if [ -f /mnt/etc/resolv.conf ]; then
+		_resolver_enabled="TRUE"
+		cp /mnt/etc/resolv.conf /tmp/resolv.conf.shadow
+	fi
+
+	# Display results...
+	echo	"Network interface configuration:"
+	ifconfig -a
+
+	echo	""
+
+	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
+		netstat -r
+		echo	""
+		echo	"Resolver enabled."
+	else
+		netstat -rn
+		echo	""
+		echo	"Resolver not enabled."
+	fi
+
+	return 0
+}
+
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
-echo -n "Proceed with installation? [n] "
+echo -n "Proceed with upgrade? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
@@ -998,10 +667,6 @@ ls -l /dev > /dev/null 2>&1
 # We don't like it, but it sure makes a few things a lot easier.
 do_mfs_mount "/tmp" "2048"
 
-# Install the shadowed disktab file; lets us write to it for temporary
-# purposes without mounting the miniroot read-write.
-cp /etc/disktab.shadow /tmp/disktab.shadow
-
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
 done
@@ -1009,7 +674,7 @@ done
 # Make sure there's a disklabel there.  If there isn't, puke after
 # disklabel prints the error message.
 md_checkfordisklabel ${ROOTDISK}
-case "$resp" in
+case $rval in
 	1)
 		cat << \__disklabel_not_present_1
 
@@ -1034,202 +699,62 @@ __disklabel_corrupted_1
 		;;
 esac
 
-# Give the user the opportinuty to edit the root disklabel.
-cat << \__disklabel_notice_1
-
-You have already placed a disklabel onto the target root disk.
-However, due to the limitations of the standalone program used
-you may want to edit that label to change partition type information.
-You will be given the opporunity to do that now.  Note that you may
-not change the size or location of any presently open partition.
-
-__disklabel_notice_1
-echo -n	"Do you wish to edit the root disklabel? [y] "
-getresp "y"
-case "$resp" in
-	y*|Y*)
-		disklabel -W ${ROOTDISK}
-		disklabel -e ${ROOTDISK}
-		;;
-
-	*)
-		;;
-esac
-
-cat << \__disklabel_notice_2
-
-You will now be given the opportunity to place disklabels on any additional
-disks on your system.
-__disklabel_notice_2
-
-_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
-	labelmoredisks
+# Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
+# this with the user.  Check and mount the root filesystem.
+resp=""			# force one iteration
+while [ "X${resp}" = "X" ]; do
+	echo -n	"Root filesystem? [${ROOTDISK}a] "
+	getresp "${ROOTDISK}a"
+	_root_filesystem="/dev/`basename $resp`"
+	if [ ! -b ${_root_filesystem} ]; then
+		echo "Sorry, ${resp} is not a block device."
+		resp=""	# force loop to repeat
+	fi
 done
 
-# Assume partition 'a' of $ROOTDISK is for the root filesystem.  Loop and
-# get the rest.
-# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
-cat << \__get_filesystems_1
+echo	"Checking root filesystem..."
+if ! fsck -pf ${_root_filesystem}; then
+	echo	"ERROR: can't check root filesystem!"
+	exit 1
+fi
 
-You will now have the opportunity to enter filesystem information.
-You will be prompted for device name and mount point (full path,
-including the prepending '/' character).
+echo	"Mounting root filesystem..."
+if ! mount -o ro ${_root_filesystem} /mnt; then
+	echo	"ERROR: can't mount root filesystem!"
+	exit 1
+fi
 
-Note that these do not have to be in any particular order.  You will
-be given the opportunity to edit the resulting 'fstab' file before
-any of the filesystems are mounted.  At that time you will be able
-to resolve any filesystem order dependencies.
+# Grab the fstab so we can munge it for our own use.
+if [ ! -f /mnt/etc/fstab ]; then
+	echo	"ERROR: no /etc/fstab!"
+	exit 1
+fi
+cp /mnt/etc/fstab /tmp/fstab
 
-__get_filesystems_1
+# Grab the hosts table so we can use it.
+if [ ! -f /mnt/etc/hosts ]; then
+	echo	"ERROR: no /etc/hosts!"
+	exit 1
+fi
+cp /mnt/etc/hosts /tmp/hosts
 
-echo	"The following will be used for the root filesystem:"
-echo	"	${ROOTDISK}a	/"
-
-echo	"${ROOTDISK}a	/" > ${FILESYSTEMS}
-
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
-	echo	""
-	echo -n	"Device name? [done] "
-	getresp "done"
-	case "$resp" in
-		done)
-			;;
-
-		*)
-			_device_name=`basename $resp`
-
-			# force at least one iteration
-			_first_char="X"
-			while [ "X${_first_char}" != X"/" ]; do
-				echo -n "Mount point? "
-				getresp ""
-				_mount_point=$resp
-				if [ "X${_mount_point}" = X"/" ]; then
-					# Invalid response; no multiple roots
-					_first_char="X"
-				else
-					_first_char=`echo ${_mount_point} | \
-					    cut -c 1`
-				fi
-			done
-			echo "${_device_name}	${_mount_point}" >> \
-			    ${FILESYSTEMS}
-			resp="X"	# force loop to repeat
-			;;
-	esac
-done
-
-echo	""
-echo	"You have configured the following devices and mount points:"
-echo	""
-cat ${FILESYSTEMS}
-echo	""
-echo	"Filesystems will now be created on these devices.  If you made any"
-echo -n	"mistakes, you may edit this now.  Edit? [n] "
-getresp "n"
-case "$resp" in
-	y*|Y*)
-		vi ${FILESYSTEMS}
-		;;
-	*)
-		;;
-esac
-
-# Loop though the file, place filesystems on each device.
-echo	"Creating filesystems..."
-(
-	while read line; do
-		_device_name=`echo $line | awk '{print $1}'`
-		newfs /dev/r${_device_name}
-		echo ""
-	done
-) < ${FILESYSTEMS}
-
-# Get network configuration information, and store it for placement in the
-# root filesystem later.
+# Start up the network in same/similar configuration as the installed system
+# uses.
 cat << \__network_config_1
-You will now be given the opportunity to configure the network.  This will
-be useful if you need to transfer the installation sets via FTP or NFS.
-Even if you choose not to transfer installation sets that way, this
-information will be preserved and copied into the new root filesystem.
 
-Note, enter all symbolic host names WITHOUT the domain name appended.
-I.e. use 'hostname' NOT 'hostname.domain.name'.
+The upgrade program would now like to enable the network.  It will use the
+configuration already stored on the root filesystem.  This is required
+if you wish to use the network installation capabilities of this program.
 
 __network_config_1
-echo -n	"Configure the network? [y] "
+echo -n	"Enable network? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		echo -n "Enter system hostname: "
-		resp=""		# force at least one iteration
-		while [ "X${resp}" = X"" ]; do
-			getresp ""
-		done
-		hostname $resp
-		echo $resp > /tmp/myname
-
-		echo -n "Enter DNS domain name: "
-		resp=""		# force at least one iteration
-		while [ "X${resp}" = X"" ]; do
-			getresp ""
-		done
-		FQDN=$resp
-
-		resp=""		# force at least one iteration
-		while [ "X${resp}" != X"done" ]; do
-			configurenetwork
-		done
-
-		echo -n "Enter IP address of default route: [none] "
-		getresp "none"
-		if [ "X${resp}" != X"none" ]; then
-			route delete default > /dev/null 2>&1
-			if route add default $resp > /dev/null ; then
-				echo $resp > /tmp/mygate
-			fi
+		if ! enable_network; then
+			echo "ERROR: can't enable network!"
+			exit 1
 		fi
-
-		echo -n	"Enter IP address of primary nameserver: [none] "
-		getresp "none"
-		if [ "X${resp}" != X"none" ]; then
-			echo "domain $FQDN" > /tmp/resolv.conf
-			echo "nameserver $resp" >> /tmp/resolv.conf
-			echo "search $FQDN" >> /tmp/resolv.conf
-
-			echo -n "Would you like to use the nameserver now? [y] "
-			getresp "y"
-			case "$resp" in
-				y*|Y*)
-					cp /tmp/resolv.conf \
-					    /tmp/resolv.conf.shadow
-					;;
-
-				*)
-					;;
-			esac
-		fi
-
-		echo ""
-		echo "The host table is as follows:"
-		echo ""
-		cat /tmp/hosts
-		echo ""
-		echo "You may want to edit the host table in the event that"
-		echo "you need to mount an NFS server."
-		echo -n "Would you like to edit the host table? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				vi /tmp/hosts
-				;;
-
-			*)
-				;;
-		esac
 
 		cat << \__network_config_2
 
@@ -1237,20 +762,13 @@ You will now be given the opportunity to escape to the command shell to
 do any additional network configuration you may need.  This may include
 adding additional routes, if needed.  In addition, you might take this
 opportunity to redo the default route in the event that it failed above.
-If you do change the default route, and wish for that change to carry over
-to the installed system, execute the following command at the shell
-prompt:
-
-	echo <ip_address_of_gateway> > /tmp/mygate
-
-where <ip_address_of_gateway> is the IP address of the default router.
 
 __network_config_2
 		echo -n "Escape to shell? [n] "
 		getresp "n"
 		case "$resp" in
 			y*|Y*)
-				echo "Type 'exit' to return to install."
+				echo "Type 'exit' to return to upgrade."
 				sh
 				;;
 
@@ -1263,13 +781,27 @@ __network_config_2
 esac
 
 # Now that the network has been configured, it is safe to configure the
-# fstab.
-awk '{
-	if ($2 == "/")
-		printf("/dev/%s %s ffs rw 1 1\n", $1, $2)
-	else
-		printf("/dev/%s %s ffs rw 1 2\n", $1, $2)
-}' < ${FILESYSTEMS} > /tmp/fstab
+# fstab.  We remove all but ufs/ffs/nfs.
+(
+	rm -f /tmp/fstab.new
+	while read line; do
+		_fstype=`echo $line | awk '{print $3}'`
+		if [ "X${_fstype}" = X"ufs" -o \
+		    "X${_fstype}" = X"ffs" -o \
+		    "X${_fstype}" = X"nfs" ]; then
+			echo $line >> /tmp/fstab.new
+		fi
+	done
+) < /tmp/fstab
+
+if [ ! -f /tmp/fstab.new ]; then
+	echo	"ERROR: strange fstab!"
+	exit 1
+fi
+
+# Convert ufs to ffs.
+sed -e 's/ufs/ffs/' < /tmp/fstab.new > /tmp/fstab
+rm -f /tmp/fstab.new
 
 echo	"The fstab is configured as follows:"
 echo	""
@@ -1277,10 +809,9 @@ cat /tmp/fstab
 cat << \__fstab_config_1
 
 You may wish to edit the fstab.  For example, you may need to resolve
-dependencies in the order which the filesystems are mounted.  You may
-also wish to take this opportunity to place NFS mounts in the fstab.
-This would be especially useful if you plan to keep '/usr' on an NFS
-server.
+dependencies in the order which the filesystems are mounted.  Note that
+this fstab is only for installation purposes, and will not be copied into
+the root filesystem.
 
 __fstab_config_1
 echo -n	"Edit the fstab? [n] "
@@ -1308,6 +839,18 @@ echo	""
 
 # Must mount filesystems manually, one at a time, so we can make sure the
 # mount points exist.
+if ! umount /mnt; then
+	echo	"ERROR: can't unmount previously mounted root!"
+	exit 1
+fi
+
+# Check all of the filesystems.
+echo	"Checking filesystems..."
+if ! fsck -pf; then
+	echo	"ERROR: can't check filesystems!"
+	exit 1
+fi
+
 (
 	while read line; do
 		_dev=`echo $line | awk '{print $1}'`
@@ -1335,7 +878,7 @@ if [ "X${?}" != X"0" ]; then
 	cat << \__mount_filesystems_1
 
 FATAL ERROR:  Cannot mount filesystems.  Double-check your configuration
-and restart the installation process.
+and restart the upgrade process.
 
 __mount_filesystems_1
 	exit
@@ -1429,10 +972,25 @@ done
 # Get timezone info
 get_timezone
 
+# Fix up the fstab.
+echo -n	"Converting ufs to ffs in /etc/fstab..."
+sed -e 's/ufs/ffs/' < /mnt/etc/fstab > /tmp/fstab
+echo	"done."
+echo -n	"Would you like to edit the resulting fstab? [y] "
+getresp "y"
+case "$resp" in
+	y*|Y*)
+		vi /tmp/fstab
+		;;
+
+	*)
+		;;
+esac
+
 # Copy in configuration information and make devices in target root.
 (
 	cd /tmp
-	for file in fstab hostname.* hosts myname mygate resolv.conf; do
+	for file in fstab; do
 		if [ -f $file ]; then
 			echo -n "Copying $file..."
 			cp $file /mnt/etc/$file

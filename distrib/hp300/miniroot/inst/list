@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1995/10/03 22:48:01 thorpej Exp $
+#	$NetBSD: list,v 1.1.2.1 1995/11/14 01:36:10 thorpej Exp $
 
 # copy the kernel
 COPY	${CURDIR}/../../../../sys/arch/hp300/compile/GENERIC/netbsd	netbsd
@@ -6,4 +6,5 @@ COPY	${CURDIR}/../../../../sys/arch/hp300/compile/GENERIC/netbsd	netbsd
 # and the installation tools
 COPY	dot.profile			.profile
 COPY	install.sh			install
-SPECIAL	chmod 755 install
+COPY	upgrade.sh			upgrade
+SPECIAL	chmod 755 install upgrade

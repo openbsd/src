@@ -34,7 +34,6 @@
 ./bin/test
 ./dev
 ./dev/MAKEDEV
-./dev/MAKEDEV.local
 ./dev/fd
 ./etc
 ./etc/disklabels

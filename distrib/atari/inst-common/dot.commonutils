@@ -1,5 +1,5 @@
 #
-#	$NetBSD: dot.commonutils,v 1.2 1995/05/28 10:50:13 leo Exp $
+#	$NetBSD: dot.commonutils,v 1.2.2.1 1995/11/15 22:01:35 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -34,11 +34,17 @@
 # the hard disk.  These are meant to be invoked from the shell prompt,
 # by people installing NetBSD.
 
+# we know that /etc/fstab is only generated on the hard drive
+dest_dir=/
+if [ ! -f /etc/fstab ]; then
+	dest_dir=/mnt/
+fi
+
 Set_tmp_dir()
 {
 	def_tmp_dir=`pwd`
 	if [ "$def_tmp_dir" = "/" -o "$def_tmp_dir" = "/mnt" ]; then
-		def_tmp_dir=/mnt/usr/distrib
+		def_tmp_dir="$dest_dir"usr/distrib
 	fi
 
 	echo -n	"What directory should be used to find and/or store "
@@ -122,8 +128,10 @@ Extract()
 	esac
 	if [ $snapshot = n ]
 	then
-		cat "$1".??? | gunzip | (cd / ; tar xfp$tarverbose -)
+		cat "$1".??? | gunzip |
+			(cd $dest_dir ; tar --unlink -xp"$tarverbose"f -)
 	else
-		cat "$1".tar.gz | gunzip | (cd /mnt ; tar xfp$tarverbose -)
+		cat "$1".tar.gz | gunzip |
+			(cd $dest_dir ; tar --unlink -xp"$tarverbose"f -)
 	fi
 }

@@ -1,10 +1,10 @@
-The upgrade to NetBSD 1.0 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 1.0 sources, and
+The upgrade to NetBSD 1.1 is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the 1.1 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  
 
 To do the upgrade, you must have at least base.tar.gz on disk and
-a copy of the proper netbsd.sdx.yyyy.  It will require quite a bit
+a copy of the proper netbsd.default.  It will require quite a bit
 of disk space to do the upgrade.
 
 Since upgrading involves replacing the kernel, and most of the system
@@ -31,25 +31,15 @@ To upgrade your system, follow the following instructions:
 	work at upgrading /etc.  There may be changes to file formats
 	depending on what version of NetBSD/pc532 you are running.
 
-	BE CAREFUL IF YOU ARE RUNNING WITH SECURITY.  The distribution
-	binaries don't support it.  It would be reasonable to save a
-	copy of master.passwd and remove all passwords until after
-	you upgrade to the new security level.
+	BE CAREFUL IF YOU ARE NOT RUNNING WITH SECURITY.  The 
+	1.1 distribution does contain support for password encription.
+	It would be reasonable to save a copy of master.passwd and
+	remove all passwords until after you upgrade. 
 
-	Place the proper netbsd.sdX.YYYY in / as the file netbsd.
+	Place netbsd.default in / as the file netbsd.
 
-	Reboot.
+	Reboot.  (Remember, detbsd.default is a 9600 console line
+	kernel.  Read the last part of the new installation part of
+	these notes to find out how to change your default speed.)
 
 	After reboot, you should make sure you check your new file systems.
-	Also, you may wish to upgrade your file systems to the new file
-	system format.  After the install process is complete,
-	use "fsck -c 2" to upgrade the file systems. Read the fsck(8)
-	manual page for more details.
-
-	If you upgrade your file systems, you will want to make sure
-	you have the most recent ufs boot program if you use the
-	NetBSD boot program to read the kernel off a ufs file system.
-	Use bim(8) to remove your old boot program and install the
-	newest one if you are using the autoboot monitor.
-
-

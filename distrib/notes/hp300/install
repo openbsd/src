@@ -1,222 +1,38 @@
-NOTE:  In the following examples you will see references to
-disk devices.  For those not familiar with NetBSD, the following
-prefixes are used to denote drive types:
+The miniroot's install program is very simple to use.  It will guide
+you through the entire process, and is well automated.  Additional
+improvements are planned for future releases.
 
-	sd	SCSI disk
-	rd	HP-IB disk
+The miniroot's install program will:
 
-In the examples that follow, `rd' will be used.  The steps are
-exactly the same for `sd' disks.  Only the names have changed
-to protect the innocent.
+	* Allow you to place disklabels on additional disks.
+	  Note that partition sizes and offsets are expressed
+	  in sectors.
 
-Assuming you have read this document thoroughly and kept good notes
-about your partitions, the rest should be fairly straight forward.
+	* Create filesystems on target partitions.
 
-Before you begin, you must have already prepared the target disk
-as detailed in the section on preparing your system for install.
+	* Allow you to set up your system's network configuration.
+	  Remember to specify host names without the domain name
+	  appended to the end.  For example use `foo' instead of
+	  `foo.bar.org'.  If, during the process of configuring
+	  the network interfaces, you make a mistake, you will
+	  be able to re-configure that interface by simply selecting
+	  it for configuration again.
 
-The following is a walk-through of the steps necessary to finish
-what the preparation process has already begun.  You may choose to
-stop the process at any time, but if you do, it's recommended that
-you start over from scratch.
+	* Mount target filesystems.  You will be given the opportunity
+	  to manually edit the resulting /etc/fstab.
 
-	First you need to boot off of the target disk which
-	you have made in the preparation process.  To do this,
-	halt HP-UX, power-cycle your machine, and hit the space
-	bar during the boot ROM's probing/testing sequence.
-	You should eventually be presented with a list of systems
-	from which to boot.  You want the one called `SYS_PBOOT'.
+	* Extract binary sets from the media of your choice.
 
-	After selecting `SYS_PBOOT', your system should load the
-	NetBSD boot block and ask you for a kernel to load.
-	Enter the following to boot NetBSD into single-user mode.
-	(Note: it will come into single-user anyway, as there is
-	not yet an fstab, but this makes it happen more gracefully.)
+	* Copy configuration information gathered during the
+	  installation process to your root filesystem.
 
-		netbsd -s
+	* Make device nodes in your root filesystem.
 
-	The kernel will now load, and configure your hardware.
-	Make a note of the device it lists when mounting the
-	root filesystem.  It should look something like this:
+	* Copy a new kernel onto your root partition.
 
-		Changing root device to rd0a
+	* Install a new boot block.
 
-	The message above is an example only.  Your message may
-	be different.
+	* Check your filesystems for integrity.
 
-	Check the root filesystem.  Use the raw flavor of the
-	device listed during the `Changing root device...'
-	message.  Example:
-
-		fsck -p /dev/rrd0a
-
-	Mount the root filesystem:
-
-		mount /dev/rd0a /
-
-	It's now time to newfs all of the other partitions you
-	listed in your disk label.  So, for example, if rd0e and
-	rd0f were to have filesystems put on them, you would
-	do the following:
-
-		newfs /dev/rrd0e
-		newfs /dev/rrd0f
-
-	Ensure that the mount-points for these filesystems are clean.
-	If these filesystems are to be /var and /usr, respectively,
-	just check that there are no files in those directories.
-	There shouldn't be.  Once you've made sure, go ahead and
-	mount those filesystems.
-
-	It's now time to get the distribution sets onto the root
-	or other filesystem.  There are several programs in /ibin
-	to help you with this.  At your disposal, you have:
-
-		ftp
-		gzip
-		tar
-		extract
-
-	Except for extract, which is just a script to help the
-	process along, these are statically-linked versions of
-	themselves, which normally appear in /usr/bin.
-
-	If you placed the distribution sets on tape, go to the
-	directory where you wish to temporarily place them and
-	extract them from tape, using /dev/nrstX for SCSI tapes
-	or /dev/nrctX for HP-IB cartridge tapes, where X is the
-	unit number of the tape, probably 0.
-
-		tar xvf /dev/nrst0
-
-	If this extracts the sets directly into your current
-	directory, terrific.  Otherwise, go to the directory in
-	which they live.  Skip on to extracting the sets.
-
-	If you will be grabbing the sets off of the network somehow,
-	configure your network interface:
-
-		ifconfig le0 inet <ipaddr> <netmask> <broadcast>
-		route add default <addr-of-default-router>
-
-	If you will be ftp'ing the sets from one of the NetBSD ftp
-	sites, go to the directory where you wish to temporarily
-	place them and download them from the ftp site of your choice.
-	Since you haven't yet created a resolv.conf, you'll need to
-	use the IP address.
-
-		/ibin/ftp <ftp_ipaddr>
-
-	If you will be getting the sets from an NFS server, mount
-	the filesystem on the server which has the sets, and go
-	to the directory that has them.  Again, you'll need to use
-	the IP address of the server.
-
-		mount -t nfs <serv_ipaddr>:<server_dir> <mount_point>
-
-	At this point, you have everything necessary to label any
-	additional disks that you wish to label.  If you created
-	additional labels in the preparation phase, and have
-	access to them now, go ahead and label the disks they
-	correspond to:
-
-		disklabel -W rd1
-		disklabel -r -R rd1 rd1.label
-	where:
-		rd1		additional disk you wish to label
-		rd1.label	file containing disk label information
-
-	You may check these labels once they are on the disk:
-
-		disklabel -r rd1
-	where:
-		rd1		additional disk you wish to label
-
-	A problem with a partition (such as overlaps or not falling
-	on a cylinder boundary) will be noted with a `*'.  If you see
-	these, re-edit your label by the method of your choice (on
-	another machine, perhaps, or with ed(1), for the brave),
-	transfer it to a place that's usable (if necessary) and
-	label the disk again.
-
-	Once these disks have been labeled, you may newfs the
-	partitions that are to contain filesystems and mount them.
-
-	You should now be ready to extract the filesets.  The program
-	/ibin/extract should help you with this.  For example:
-
-		/ibin/extract base
-	-or-	/ibin/extract base.tar.gz
-
-	Do this for all of the filesets you wish to extract.  As your disk
-	fills up, you may wish to remove the sets once you have extracted
-	them.
-
-	You should have everything necessary to use an editor by now.
-	Set your TERM environment variable:
-
-		setenv TERM hp300h	(csh)
-	-or-	export TERM=hp300h	(sh)
-
-	hp300h is the terminal type for the HP 9000/300 ITE console.
-	If you are using a serial console, change the TERM variable
-	appropriately.  Now, initialize the terminal:
-
-		tset
-
-	You should be able to use vi now.
-
-	Create an /etc/fstab.  Example fstabs are provided in
-	/etc/fstab.sd and /etc/fstab.rd.
-
-	Edit your host table, /etc/hosts.  In it, place the IP
-	address of this host and the IP address of your default
-	router.
-
-	Edit the file /etc/myname.  In it, place the symbolic name
-	of your machine.
-
-	Edit the file /etc/defaultdomain.  In it, place the name
-	of your YP domain.  If you will not be using YP, simply
-	enter the domain name of your site.
-
-	Edit the file /etc/mygate.  In it, place the name of
-	your default router, as your listed it in /etc/hosts.
-
-	Edit the file /etc/hostname.le0.  In it, place the following
-	information:
-
-		inet <myname.my.domain> <netmask> <broadcast>
-
-	where:
-		<myname.my.domain> is the name corresponsing to
-		the IP address for that interface, as you listed in
-		/etc/hosts.
-
-		<netmask> is the netmask for your network.
-
-		<broadcast> is the broadcast address for your network.
-
-	Repeat this step for any additional network interfaces you
-	may have.
-
-	Edit the file /etc/ttys.  Make sure that the entries are
-	correct for whichever console type you have.  /dev/console
-	is correct for ITE, /dev/tty0 for console on dca, and
-	/dev/tty00 for console on dcm.  You may get more information
-	about /etc/ttys by doing `man ttys', providing you have
-	installed the system manual set.
-
-	Ok, cross your fingers and reboot:
-
-		sync; sync; sync; reboot
-
-	Providing you entered all information correctly, your
-	machine will boot into multi-user mode.  Your system
-	will need a few tweaks here and there (like /etc/sendmail.cf
-	and /etc/netstart, perhaps), but that's the easy stuff.
-
-	CONGRATULATIONS!  You have successfully installed NetBSD
-	onto your hp300!  Pat yourself on the back.  This might also
-	be a good time to remove /ibin, as you will no longer need
-	it, and it is provided solely for bootstrapping purposes.
+First-time installation on a system through a method other than the
+installation program is possible, but strongly discouraged.

@@ -46,8 +46,10 @@ The Install Procedure:
 	these settings. The monitor's baud rate can be changed with
 	"baud d'9600".
 
-  b) Get inst-11.fs.
-	If you have a 1.44 meg SCSI floppy drive, you can put this
+  b) Get inst-11.fs and boot the kernel.
+
+	From Floppy: (and using the autoboot monitor)
+	If you have a 1.44 meg SCSI floppy drive, you can put inst-11.fs
 	onto a 3.5" floppy disk. Insert the disk into your floppy
 	drive and use the monitor's boot command to boot the default
 	image from the floppy. The image booted will ask you for a
@@ -55,11 +57,22 @@ The Install Procedure:
 		sdXa:/netbsd
 	Replace X with your drive number. For KLONDIKE X would be "2".
 
-	If you don't have a floppy drive, you will have to
+	Tape:
+	You will need to load a copy of inst-11.fs into RAM.
 		- load the inst-11.fs at 0x288000
-		- run at 0x3EB820
+		- run at 0x3E8820
 	The boot program will ask you now for a kernel to load. Answer
 		rd0a:/netbsd
+
+	Serial line:
+	Provided with the distribution is source for program called 
+	download.  (download.c)  This program when used as
+	"download file" will read the contents of the file and
+	output to standard output a byte sequence used by the pc532
+	ROM monitor to download a binary file into RAM.  Using this
+	program on a computer connected to the pc532, one can
+	load a copy of inst-11.fs into RAM at 0x288000.  The boot
+	sequence is now the same as with tape.
 
   c) Choose a disk geometry.  For me, the reported geometry left
 	some sectors "unallocated".  That is, the autoconfig message
@@ -87,7 +100,7 @@ The Install Procedure:
 	steelhead[5]$ echo "2 * 997"|bc
 	1994
 
-	Now I the number of tracks:
+	Now I need the number of tracks (or cylinders):
 	steelhead[5]$ echo "2 * 5 * 103"|bc
 	1030
 
@@ -103,9 +116,9 @@ The Install Procedure:
 	partitions, it will ask for a mount point.  The mount point will
 	be "relative to /" and should not include the leading "/".  Also,
 	IF you do not want the partition to have newfs run on it (that is
-	it might be the last one and have a copy of ram.root and your
-	kernels) enter "NO" to the mount point and it will not run newfs
-	on the partition.  It will enter the partition into the disklabel.
+	it might be the last one and have a copy of inst-11.fs) enter "NO"
+	to the mount point and it will not run newfs on the partition.
+	It will enter the partition into the disklabel.
 
   e) look around, if you want ... and then halt NetBSD.
 
@@ -125,6 +138,8 @@ The Install Procedure:
 		use nfs...
 		Plip is only an option if you have installed a
 		centronics port in your pc532.
+		You do have access to vi to edit your network
+		files. (/etc/resolv.conf, ...)
 
 	b) floppy disk
 
@@ -132,7 +147,12 @@ The Install Procedure:
 
 	d) cdrom (If you have a CD with NetBSD/532 ...)
 
-	e) using kermit. (See the notes at the end of this file.)
+	e) Use the ROM compatable "download" program.  The program
+	   download is included in the initial installation and
+           can be used as the receive end of the download by 
+	   using it as "download -r file_to_write".  If the CRC is
+	   correct, the file is retained.  If the CRC is not 
+	   correct, the file is deleted.
 
 	f) some other method? (Let me know about it.)
 
@@ -149,8 +169,8 @@ The Install Procedure:
 	- tar -xpzf /gz.files/base.tar.gz --unlink
 
 	Add v to the flags if you want a verbose extract.
-	The --unlink is to make sure that the "ram.root" versions
-	of sh, init, ... are replaced by their full featured versons
+	The --unlink is to make sure that the install versions
+	of sh, init, ... are replaced by their proper versons
 	in base.tar.gz.  I think it is wise to include the --unlink
 	for other things.
 
@@ -179,42 +199,14 @@ The Install Procedure:
 		gdb -w /netbsd
 		set scndefaultrate = YOUR_BAUD_RATE
 		quit
+	where YOUR_BAUD_RATE is the actual value, 19200, 38400 or
+	something slower than 9600.
 	If you set scndefaultrate to something bogus, you'll probably
 	not be able to reboot... So be carefull!
+	
 
   l) Reboot the machine and it should come up in multi-user mode *IF*
 	you got it configured correctly.
 
   m) Enjoy!  And help fix bugs and improve NetBSD/pc532!
-
-
-For those who choose to use kermit to help in getting NetBSD/pc532
-installed:
-
-	The following is the Kermit copyright:
-
-	Copyright (C) 1985, 1994, Trustees of Columbia University in the
-	City of New York.  The C-Kermit software may not be, in whole or
-	in part, licensed or sold for profit as a software product
-	itself, nor may it be included in or distributed with commercial
-	products or otherwise distributed by commercial concerns to their
-	clients or customers without written permission of the Office of
-	Kermit Development and Distribution, Columbia University.  This
-	copyright notice must not be removed, altered, or obscured.
-
-	Due to this copyright, we can not include kermit with the standard
-	NetBSD/pc532 distribution.  
-
-	The Office of Kermit Development and Distribution of Columbia
-	University in the City of New York has given permission for
-	us to distribute a NetBSD/pc532 binary.  It is available primarily
-	for bootstrapping purposes and therefore is not a complete package,
-	lacking source code, various supporting text files, and the user
-	manual. Users who wish to use C-Kermit after the bootstrapping
-	process should obtain the full package, including the manual
-	"Using C-Kermit", from Columbia University.
-
-	The NetBSD/pc532 binary is available via ftp from 
-	iceberg.cs.wwu.edu in the directory pub/NetBSD/pc532 as the file
-	kermitbin.tar.gz.
 
