@@ -1,0 +1,133 @@
+#
+# powerpc-specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+file	dev/cons.c
+file	dev/cninit.c
+file    arch/mvmeppc/ddb/setjmp.S                   ddb
+file    arch/mvmeppc/ddb/db_memrw.c                 ddb
+file    arch/mvmeppc/ddb/db_disasm.c                ddb
+file    arch/mvmeppc/ddb/db_interface.c             ddb
+file    arch/mvmeppc/ddb/db_trace.c                 ddb
+
+file    arch/mvmeppc/dev/bugio.c
+file	arch/mvmeppc/dev/clock.c
+file	arch/mvmeppc/dev/mem.c
+
+file	arch/powerpc/powerpc/Locore.c
+file	arch/mvmeppc/mvmeppc/autoconf.c
+file	arch/powerpc/powerpc/bcopy.c
+file	arch/mvmeppc/mvmeppc/conf.c
+file	arch/powerpc/powerpc/copyinstr.c
+file	arch/powerpc/powerpc/copyoutstr.c
+file	arch/powerpc/powerpc/copystr.c
+file	arch/mvmeppc/mvmeppc/disksubr.c		disk
+file	arch/powerpc/powerpc/fpu.c
+file	arch/powerpc/powerpc/fubyte.c
+file	arch/powerpc/powerpc/fuswintr.c
+file	arch/powerpc/powerpc/in_cksum.c
+file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
+file	arch/mvmeppc/mvmeppc/machdep.c
+#file	arch/powerpc/powerpc/wscons_machdep.c
+file	arch/mvmeppc/mvmeppc/bus_space.c
+file	arch/mvmeppc/mvmeppc/bus_dma.c
+file	arch/mvmeppc/mvmeppc/pmap.c
+file	arch/mvmeppc/mvmeppc/ppc1_machdep.c
+file	arch/mvmeppc/mvmeppc/process_machdep.c
+file	arch/powerpc/powerpc/subyte.c
+file	arch/powerpc/powerpc/suword.c
+file	arch/powerpc/powerpc/suswintr.c
+file	arch/mvmeppc/mvmeppc/sys_machdep.c
+file	arch/mvmeppc/mvmeppc/trap.c
+file	arch/mvmeppc/mvmeppc/vm_machdep.c
+
+#
+# Media Indepedent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
+
+define	mainbus {}
+device	mainbus
+attach	mainbus at root
+file	arch/mvmeppc/dev/mainbus.c	mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/mvmeppc/dev/cpu.c
+
+device	raven {}
+attach	raven at mainbus
+file	arch/mvmeppc/dev/raven.c
+
+device	openpic
+attach	openpic at raven
+file	arch/mvmeppc/dev/openpic.c
+
+major   {rd = 17}
+
+# PCI bus support
+# XXX Dummy bus needed for some multi-homed devices specified in files.isa
+define	pcmcia {}
+include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
+
+# Ethernet driver for DC21140A-based SBCs
+device	vde: ether, ifnet, ifmedia
+attach	vde at pci
+file	arch/mvmeppc/pci/if_vde.c	vde
+
+device	mpcpcibr {} : pcibus
+attach	mpcpcibr at raven
+file	arch/mvmeppc/pci/mpcpcibr.c	mpcpcibr
+
+# PCI-Host bridge chipsets
+device	pchb:	pcibus
+attach	pchb at pci
+file	arch/mvmeppc/pci/pchb.c		pchb
+
+#
+# ISA Bus devices
+#
+include "dev/isa/files.isa"
+include "dev/isa/files.isapnp"
+file	arch/mvmeppc/isa/isa_machdep.c	isa
+
+# PCI-ISA bridge chipsets
+device	pcib:	isabus
+attach	pcib at pci
+file	arch/mvmeppc/pci/pcib.c		pcib
+
+include "dev/pckbc/files.pckbc"
+
+major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
+major	{cd = 3}
+include "../../../scsi/files.scsi"
+
+#
+# "workstation console" routines
+#
+
+#include "dev/wscons/files.wscons"
+
+# Machine-independent ATAPI drivers
+
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
+
+# MAC periph ??? XXX smurph
+
+#device zsc {channel = -1}
+#attach zsc at obio
+#file arch/powerpc/mac/zs.c			zsc needs-flag
+#file dev/ic/z8530sc.c				zsc
+
+#device zstty: tty
+#attach zstty at zsc
+#file dev/ic/z8530tty.c				zstty needs-flag
+
+device bugtty: tty
+attach bugtty at mainbus
+file arch/mvmeppc/dev/bugtty.c			bugtty needs-flag
+
