@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2003/10/13 18:45:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2003/10/16 23:04:09 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -254,7 +254,6 @@ boolean_t pmap_testbit(struct vm_page *, int);
  * quick PTE field checking macros
  */
 #define	pmap_pte_w(pte)		(*(pte) & PG_W)
-#define	pmap_pte_m(pte)		(*(pte) & PG_M)
 #define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)
 
 #define	pmap_pte_w_chg(pte, nw)		((nw) ^ pmap_pte_w(pte))
@@ -1400,6 +1399,15 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 	u_int users;
 	boolean_t kflush;
 
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM)) {
+		if (pmap == kernel_pmap)
+			printf("(pmap_remove: %x) pmap kernel s %x e %x\n", curproc, s, e);
+		else
+			printf("(pmap_remove: %x) pmap %x s %x e %x\n", curproc, pmap, s, e);
+	}
+#endif
+
 	/*
 	 * pmap has been locked by the caller.
 	 */
@@ -1532,11 +1540,6 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
 	if (pmap == PMAP_NULL)
 		return;
 
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM))
-		printf("(pmap_remove: %x) map %x s %x e %x\n", curproc, pmap, s, e);
-#endif
-
 #ifdef DIAGNOSTIC
 	if (s >= e)
 		panic("pmap_remove: start greater than end address");
@@ -1597,6 +1600,11 @@ pmap_remove_all(struct vm_page *pg)
 #endif
 		return;
 	}
+
+#ifdef DEBUG
+	if (pmap_con_dbg & CD_RMAL)
+		printf("(pmap_remove_all: %x) va %x\n", curproc, pg, pg_to_pvh(pg)->pv_va);
+#endif
 
 	SPLVM(spl);
 	/*
@@ -1948,6 +1956,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 *	at this address.
 	 */
 	old_pa = ptoa(PG_PFNUM(*pte));
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM))
+		printf("(pmap_enter) old_pa %x pte %x\n", old_pa, *pte);
+#endif
 	if (old_pa == pa) {
 		if (pmap == kernel_pmap) {
 			kflush = TRUE;
@@ -1985,6 +1997,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			template |= (invalidate_pte(pte) & (PG_M | PG_U));
 			*pte = template | ap | trunc_page(pa);
 			flush_atc_entry(users, va, kflush);
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM))
+		printf("(pmap_enter) update pte to %x\n", *pte);
+#endif
 		}
 
 	} else { /* if ( pa == old_pa) */
@@ -2088,6 +2104,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			template |= PG_U;
 
 		*pte = template | ap | trunc_page(pa);
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM))
+		printf("(pmap_enter) set pte to %x\n", *pte);
+#endif
 
 	} /* if (pa == old_pa) ... else */
 
