@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.21 2001/03/24 19:21:33 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.22 2001/03/24 19:24:07 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -1115,6 +1115,8 @@ usermgmt_usage(char *prog)
 	} else if (strcmp(prog, "groupinfo") == 0) {
 		(void) fprintf(stderr, "usage: %s [-e] [-v] group\n", prog);
 #endif
+	} else {
+		(void) fprintf(stderr, "This program must be called as user{info,mod,del} or group{info,mod,del},\n%s is not an understood name.\n", prog);
 	}
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.3 2000/04/26 06:25:45 jakob Exp $ */
+/* $OpenBSD: main.c,v 1.4 2001/03/24 19:24:07 jakob Exp $ */
 /* $NetBSD: main.c,v 1.1 1999/12/24 09:08:50 agc Exp $ */
 
 /*
@@ -95,7 +95,7 @@ main(int argc, char **argv)
 				}
 			}
 		}
-		if (matched == cmdp->c_wc) {
+		if (matched == cmdp->c_wc && cmdp->c_func != NULL) {
 			return (*cmdp->c_func)(argc - (matched - 1), argv + (matched - 1));
 		}
 	}
