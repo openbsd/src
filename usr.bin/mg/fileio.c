@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.23 2002/02/14 22:58:20 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.24 2002/02/22 00:18:37 deraadt Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -45,16 +45,29 @@ ffwopen(fn, bp)
 	char   *fn;
 	BUFFER *bp;
 {
+	int fd;
+	mode_t mode = DEFFILEMODE;
 
-	if ((ffp = fopen(fn, "w")) == NULL) {
+	if (bp && bp->b_fi.fi_mode)
+		mode = bp->b_fi.fi_mode & 07777;
+
+	fd = open(fn, O_RDWR | O_CREAT | O_TRUNC, mode);
+	if (fd == -1) {
+		ffp = NULL;
 		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		return (FIOERR);
+	}		
+
+	if ((ffp = fdopen(fd, "w")) == NULL) {
+		ewprintf("Cannot open file for writing : %s", strerror(errno));
+		close(fd);
+		return (FIOERR);	
 	}
 
 	/*
 	 * If we have file information, use it.  We don't bother to check for
 	 * errors, because there's no a lot we can do about it.  Certainly
-	 * trying to change ownership will fail if we aren' root.  That's
+	 * trying to change ownership will fail if we aren't root.  That's
 	 * probably OK.  If we don't have info, no need to get it, since any
 	 * future writes will do the same thing.
 	 */
