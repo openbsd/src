@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.15 2002/12/11 16:58:31 deraadt Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.16 2003/04/17 15:08:49 drahn Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -132,8 +132,8 @@ emitopt(nv)
 {
 	struct nvlist *option;
 	char new_contents[BUFSIZ], buf[BUFSIZ];
-	char fname[BUFSIZ], totlen;
-	int nlines;
+	char fname[BUFSIZ];
+	int totlen, nlines;
 	FILE *fp;
 
 	/*
