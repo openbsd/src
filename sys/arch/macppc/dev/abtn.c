@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.5 2002/06/19 06:31:23 miod Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.6 2003/07/02 22:00:29 drahn Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -119,6 +119,7 @@ abtn_adbcomplete(buffer, data, adb_command)
 		of_setbrightness(brightness);
 		break;
 
+#define DEBUG
 #ifdef DEBUG
 	case 0x08:	/* mute */
 	case 0x01:	/* mute, AV hardware */
@@ -126,17 +127,24 @@ abtn_adbcomplete(buffer, data, adb_command)
 	case 0x02:	/* decrease volume, AV hardware */
 	case 0x06:	/* increase volume */
 	case 0x03:	/* increase volume, AV hardware */
+		/* Need callback to do something with these */
+		break;
+
+	case 0x0c:	/* mirror display key */
+		/* Need callback to do something with this */
 		break;
 
 	case 0x0b:	/* eject tray */
+		/* Need callback to do something with this */
 		break;
 
 	case 0x7f:	/* numlock */
+		/* Need callback to do something with this */
 		break;
 
 	default:
 		if ((cmd & ~0x7f) == 0)
-			printf("unknown ADB button %d\n", cmd);
+			printf("unknown ADB button 0x%x\n", cmd);
 		break;
 #endif
 	}
