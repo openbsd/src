@@ -37,7 +37,6 @@ int	sm_wsetup __P((SM_FILE_T *));
 int	sm_flags __P((int));
 SM_FILE_T	*sm_fp __P((const SM_FILE_T *, const int, SM_FILE_T *));
 int	sm_vprintf __P((int, char const *, va_list));
-int	sm_vfscanf __P((SM_FILE_T *, int, char const *, va_list));
 
 /* std io functions */
 ssize_t	sm_stdread __P((SM_FILE_T *, char *, size_t));
