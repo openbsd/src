@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.394 2004/12/29 14:44:09 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.395 2004/12/31 00:27:47 jsg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -441,8 +441,8 @@ an*	at pcmcia?			# Aironet IEEE 802.11DS
 ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
 ipw*	at pci?				# Intel PRO/Wireless 2100
 iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
-#rtw*	at pci?				# Realtek 8180
-#rtw*	at cardbus?			# Realtek 8180
+rtw*	at pci?				# Realtek 8180
+rtw*	at cardbus?			# Realtek 8180
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
