@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.16 2001/04/13 17:50:30 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.17 2001/04/13 20:13:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -110,7 +110,7 @@ int txp_download_fw_section __P((struct txp_softc *,
     struct txp_fw_section_header *, int));
 int txp_alloc_rings __P((struct txp_softc *));
 void txp_dma_free __P((struct txp_softc *, struct txp_dma_alloc *));
-int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *));
+int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *, int));
 void txp_set_filter __P((struct txp_softc *));
 
 int txp_cmd_desc_numfree __P((struct txp_softc *));
@@ -124,7 +124,7 @@ void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
 void txp_show_descriptor __P((void *));
 void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *));
-void txp_rxbuf_claim __P((struct txp_softc *));
+void txp_rxbuf_reclaim __P((struct txp_softc *));
 void txp_rx_reclaim __P((struct txp_softc *, struct txp_rx_ring *));
 
 struct cfattach txp_ca = {
@@ -230,6 +230,8 @@ txp_attach(parent, self, aux)
 	if (txp_command(sc, TXP_CMD_STATION_ADDRESS_READ, 0, 0, 0,
 	    &p1, &p2, NULL, 1))
 		return;
+
+	txp_set_filter(sc);
 
 	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
 	sc->sc_arpcom.ac_enaddr[1] = ((u_int8_t *)&p1)[0];
@@ -471,7 +473,7 @@ txp_download_fw_section(sc, sect, sectnum)
 	}
 
 	/* map a buffer, copy segment to it, get physaddr */
-	if (txp_dma_malloc(sc, sect->nbytes, &dma)) {
+	if (txp_dma_malloc(sc, sect->nbytes, &dma, 0)) {
 		printf(": fw dma malloc failed, section %d\n", sectnum);
 		return (-1);
 	}
@@ -541,7 +543,7 @@ txp_intr(vsc)
 
 		txp_rx_reclaim(sc, &sc->sc_rxhir);
 		txp_rx_reclaim(sc, &sc->sc_rxlor);
-		txp_rxbuf_claim(sc);
+		txp_rxbuf_reclaim(sc);
 		txp_tx_reclaim(sc, &sc->sc_txhir);
 		txp_tx_reclaim(sc, &sc->sc_txlor);
 
@@ -565,15 +567,13 @@ txp_rx_reclaim(sc, r)
 	struct txp_rx_desc *rxd;
 	struct ether_header *eh;
 	struct mbuf *m;
-	u_int32_t i, end;
+	u_int32_t ridx, widx;
 
-	i = (*r->r_roff) / sizeof(struct txp_rx_desc);
-	end = (*r->r_woff) / sizeof(struct txp_rx_desc);
+	ridx = (*r->r_roff) / sizeof(struct txp_rx_desc);
+	widx = (*r->r_woff) / sizeof(struct txp_rx_desc);
 
-	while (i != end) {
-		printf("%s: rxd %u\n", sc->sc_dev.dv_xname, i);
-
-		rxd = &r->r_desc[i];
+	while (ridx != widx) {
+		rxd = &r->r_desc[ridx];
 
 		if (rxd->rx_flags & RX_FLAGS_ERROR) {
 			printf("%s: error 0x%x\n", sc->sc_dev.dv_xname,
@@ -583,8 +583,7 @@ txp_rx_reclaim(sc, r)
 		}
 
 		m = (struct mbuf *)rxd->rx_vaddrlo;
-		m->m_len = rxd->rx_len;
-
+		m->m_pkthdr.len = m->m_len = rxd->rx_len;
 
 		eh = mtod(m, struct ether_header *);
 		ifp->if_ipackets++;
@@ -611,20 +610,26 @@ txp_rx_reclaim(sc, r)
 			goto next;
 		}
 
-
 		ether_input(ifp, eh, m);
 
 next:
-		*r->r_roff = i * sizeof(struct txp_rx_desc);
 
-		if (++i == RX_ENTRIES)
-			i = 0;
+		if (++ridx == RX_ENTRIES)
+			ridx = 0;
+
+		widx = (*r->r_woff) / sizeof(struct txp_rx_desc);
 	}
 
+	ridx = (*r->r_roff) / sizeof(struct txp_rx_desc);
+	while (ridx != widx) {
+		if (++ridx == RX_ENTRIES)
+			ridx = 0;
+		*r->r_roff = ridx * sizeof(struct txp_rx_desc);
+	}
 }
 
 void
-txp_rxbuf_claim(sc)
+txp_rxbuf_reclaim(sc)
 	struct txp_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -659,7 +664,7 @@ txp_rxbuf_claim(sc)
 
 		rbd->rb_vaddrlo = (u_int32_t)m;
 		rbd->rb_vaddrhi = 0;
-		rbd->rb_paddrlo = vtophys(m->m_data + 2);
+		rbd->rb_paddrlo = vtophys(m->m_data);
 		rbd->rb_paddrhi = 0;
 
 		hv->hv_rx_buf_write_idx = TXP_IDX2OFFSET(i);
@@ -733,7 +738,8 @@ txp_alloc_rings(sc)
 	int i;
 
 	/* boot record */
-	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma)) {
+	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma,
+	    BUS_DMA_COHERENT)) {
 		printf(": can't allocate boot record\n");
 		return (-1);
 	}
@@ -742,7 +748,8 @@ txp_alloc_rings(sc)
 	sc->sc_boot = boot;
 
 	/* host variables */
-	if (txp_dma_malloc(sc, sizeof(struct txp_hostvar), &sc->sc_host_dma)) {
+	if (txp_dma_malloc(sc, sizeof(struct txp_hostvar), &sc->sc_host_dma,
+	    BUS_DMA_COHERENT)) {
 		printf(": can't allocate host ring\n");
 		goto bail_boot;
 	}
@@ -753,7 +760,7 @@ txp_alloc_rings(sc)
 
 	/* high priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
-	    &sc->sc_txhiring_dma)) {
+	    &sc->sc_txhiring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate high tx ring\n");
 		goto bail_host;
 	}
@@ -768,7 +775,7 @@ txp_alloc_rings(sc)
 
 	/* low priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
-	    &sc->sc_txloring_dma)) {
+	    &sc->sc_txloring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate low tx ring\n");
 		goto bail_txhiring;
 	}
@@ -783,7 +790,7 @@ txp_alloc_rings(sc)
 
 	/* high priority rx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
-	    &sc->sc_rxhiring_dma)) {
+	    &sc->sc_rxhiring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate high rx ring\n");
 		goto bail_txloring;
 	}
@@ -796,9 +803,9 @@ txp_alloc_rings(sc)
 	sc->sc_rxhir.r_roff = &sc->sc_hostvar->hv_rx_hi_read_idx;
 	sc->sc_rxhir.r_woff = &sc->sc_hostvar->hv_rx_hi_write_idx;
 
-	/* low priority rx ring */
+	/* low priority ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
-	    &sc->sc_rxloring_dma)) {
+	    &sc->sc_rxloring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate low rx ring\n");
 		goto bail_rxhiring;
 	}
@@ -813,7 +820,7 @@ txp_alloc_rings(sc)
 
 	/* command ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_cmd_desc) * CMD_ENTRIES,
-	    &sc->sc_cmdring_dma)) {
+	    &sc->sc_cmdring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate command ring\n");
 		goto bail_rxloring;
 	}
@@ -827,7 +834,7 @@ txp_alloc_rings(sc)
 
 	/* response ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rsp_desc) * RSP_ENTRIES,
-	    &sc->sc_rspring_dma)) {
+	    &sc->sc_rspring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate response ring\n");
 		goto bail_cmdring;
 	}
@@ -841,7 +848,7 @@ txp_alloc_rings(sc)
 
 	/* receive buffer ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES,
-	    &sc->sc_rxbufring_dma)) {
+	    &sc->sc_rxbufring_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate rx buffer ring\n");
 		goto bail_rspring;
 	}
@@ -867,14 +874,15 @@ txp_alloc_rings(sc)
 		m->m_pkthdr.rcvif = ifp;
 		sc->sc_rxbufs[i].rb_vaddrlo = (u_int32_t)m;
 		sc->sc_rxbufs[i].rb_vaddrhi = 0;
-		sc->sc_rxbufs[i].rb_paddrlo = vtophys(m->m_data + 2);
+		sc->sc_rxbufs[i].rb_paddrlo = vtophys(m->m_data);
 		sc->sc_rxbufs[i].rb_paddrhi = 0;
 	}
 	sc->sc_hostvar->hv_rx_buf_write_idx = (RXBUF_ENTRIES - 1) *
 	    sizeof(struct txp_rxbuf_desc);
 
 	/* zero dma */
-	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma)) {
+	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma,
+	    BUS_DMA_COHERENT)) {
 		printf(": can't allocate response ring\n");
 		goto bail_rxbufring;
 	}
@@ -941,10 +949,11 @@ bail_boot:
 }
 
 int
-txp_dma_malloc(sc, size, dma)
+txp_dma_malloc(sc, size, dma, mapflags)
 	struct txp_softc *sc;
 	bus_size_t size;
 	struct txp_dma_alloc *dma;
+	int mapflags;
 {
         int r;
 
@@ -958,7 +967,7 @@ txp_dma_malloc(sc, size, dma)
 	}
 	   
 	if ((r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg,
-	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT)) != 0) {
+	    size, &dma->dma_vaddr, mapflags | BUS_DMA_NOWAIT)) != 0) {
 		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 		return (r);
 	}
@@ -1085,12 +1094,10 @@ txp_init(sc)
 
 	s = splimp();
 
-	txp_command(sc, TXP_CMD_XCVR_SELECT, sc->sc_xcvr, 0, 0,
-	    NULL, NULL, NULL, 0);
+	txp_set_filter(sc);
+
 	txp_command(sc, TXP_CMD_TX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
 	txp_command(sc, TXP_CMD_RX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
-
-	txp_set_filter(sc);
 
 	WRITE_REG(sc, TXP_IER, TXP_INT_RESERVED | TXP_INT_SELF |
 	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
@@ -1580,5 +1587,5 @@ again:
 	}
 
 	txp_command(sc, TXP_CMD_RX_FILTER_WRITE, filter, 0, 0,
-	    NULL, NULL, NULL, 0);
+	    NULL, NULL, NULL, 1);
 }
