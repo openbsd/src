@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.113 2002/12/31 01:39:46 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.114 2002/12/31 19:27:08 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -239,6 +239,11 @@ pfctl_clear_rules(int dev, int opts)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	pr.rule.action = PF_SCRUB;
+	if (ioctl(dev, DIOCBEGINRULES, &pr))
+		err(1, "DIOCBEGINRULES");
+	else if (ioctl(dev, DIOCCOMMITRULES, &pr))
+		err(1, "DIOCCOMMITRULES");
 	pr.rule.action = PF_PASS;
 	if (ioctl(dev, DIOCBEGINRULES, &pr))
 		err(1, "DIOCBEGINRULES");
@@ -518,6 +523,42 @@ pfctl_show_rules(int dev, int opts, int format)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	pr.rule.action = PF_SCRUB;
+	if (ioctl(dev, DIOCGETRULES, &pr)) {
+		warn("DIOCGETRULES");
+		return (-1);
+	}
+	mnr = pr.nr;
+	for (nr = 0; nr < mnr; ++nr) {
+		pr.nr = nr;
+		if (ioctl(dev, DIOCGETRULE, &pr)) {
+			warn("DIOCGETRULE");
+			return (-1);
+		}
+
+		if (pfctl_get_pool(dev, &pr.rule.rpool,
+		    nr, pr.ticket, PF_SCRUB) != 0)
+			return (-1);
+
+		switch (format) {
+		case 1:
+			if (pr.rule.label[0]) {
+				if (opts & PF_OPT_VERBOSE)
+					print_rule(&pr.rule,
+					    opts & PF_OPT_VERBOSE2);
+				else
+					printf("%s ", pr.rule.label);
+				printf("%llu %llu %llu\n",
+				    pr.rule.evaluations, pr.rule.packets,
+				    pr.rule.bytes);
+			}
+			break;
+		default:
+			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
+			pfctl_print_rule_counters(&pr.rule, opts);
+		}
+		pfctl_clear_pool(&pr.rule.rpool);
+	}
 	pr.rule.action = PF_PASS;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
 		warn("DIOCGETRULES");
@@ -805,11 +846,15 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 
 	switch (r->action) {
 	case PF_SCRUB:
+		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) == 0)
+			return (0);
+		rs_num = PF_RULESET_SCRUB;
+		break;
 	case PF_DROP:
 	case PF_PASS:
 		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) == 0)
 			return (0);
-		rs_num = PF_RULESET_RULE;
+		rs_num = PF_RULESET_FILTER;
 		break;
 	case PF_NAT:
 	case PF_NONAT:
@@ -834,20 +879,18 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		break;
 	}
 
-	if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (pfctl_add_pool(pf, &r->rpool, r->af))
 			return (1);
-		if ((pf->opts & PF_OPT_NOACTION) == 0) {
-			memcpy(&pf->prule[rs_num]->rule, r,
-			    sizeof(pf->prule[rs_num]->rule));
-			pf->prule[rs_num]->pool_ticket = pf->paddr.ticket;
-			if (ioctl(pf->dev, DIOCADDRULE, pf->prule[rs_num]))
-				err(1, "DIOCADDRULE");
-		}
-		if (pf->opts & PF_OPT_VERBOSE)
-			print_rule(r, pf->opts & PF_OPT_VERBOSE2);
-		pfctl_clear_pool(&r->rpool);
+		memcpy(&pf->prule[rs_num]->rule, r,
+		    sizeof(pf->prule[rs_num]->rule));
+		pf->prule[rs_num]->pool_ticket = pf->paddr.ticket;
+		if (ioctl(pf->dev, DIOCADDRULE, pf->prule[rs_num]))
+			err(1, "DIOCADDRULE");
 	}
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_rule(r, pf->opts & PF_OPT_VERBOSE2);
+	pfctl_clear_pool(&r->rpool);
 	return (0);
 }
 
@@ -918,10 +961,15 @@ pfctl_rules(int dev, char *filename, int opts)
 		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket)) {
 			err(1, "DIOCBEGINALTQS");
 		}
-		pr[PF_RULESET_RULE].rule.action = PF_PASS;
-		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_RULE]))
-			err(1, "DIOCBEGINRULES");
+		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
+			pr[PF_RULESET_SCRUB].rule.action = PF_SCRUB;
+		    	if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_SCRUB]))
+				err(1, "DIOCBEGINRULES");
+			pr[PF_RULESET_FILTER].rule.action = PF_PASS;
+		    	if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_FILTER]))
+				err(1, "DIOCBEGINRULES");
+		}
+
 	}
 	/* fill in callback data */
 	pf.dev = dev;
@@ -952,10 +1000,14 @@ pfctl_rules(int dev, char *filename, int opts)
 		    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
 		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
 			err(1, "DIOCCOMMITALTQS");
-		pr[PF_RULESET_RULE].rule.action = PF_PASS;
-		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_RULE]))
-			err(1, "DIOCCOMMITRULES");
+		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
+			pr[PF_RULESET_SCRUB].rule.action = PF_SCRUB;
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_SCRUB]))
+				err(1, "DIOCCOMMITRULES");
+			pr[PF_RULESET_FILTER].rule.action = PF_PASS;
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_FILTER]))
+				err(1, "DIOCCOMMITRULES");
+		}
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
 			fprintf(stderr, "%u nat entries loaded\n", n);
