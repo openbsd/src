@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.4 2000/05/19 13:11:34 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.5 2000/07/13 14:44:17 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.24 2000/05/19 07:37:05 jinmei Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct mrt6stat	mrt6stat;
 
 struct mf6c	*mf6ctable[MF6CTBLSIZ];
 u_char		nexpire[MF6CTBLSIZ];
-static struct mif6 mif6table[MAXMIFS];
+struct mif6 mif6table[MAXMIFS];
 #ifdef MRT6DEBUG
 u_int		mrt6debug = 0;	  /* debug level 	*/
 #define		DEBUG_MFC	0x02
