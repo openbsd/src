@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeon.c,v 1.5 1999/12/15 00:30:44 jason Exp $	*/
+/*	$OpenBSD: aeon.c,v 1.6 2000/01/10 02:22:50 jason Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -98,6 +98,9 @@ aeon_probe(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INVERTEX &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INVERTEX_AEON)
+		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751)
 		return (1);
 	return (0);
 }

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.208 2000/01/03 23:38:25 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.209 2000/01/10 02:21:05 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -515,6 +515,7 @@
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
@@ -922,6 +923,9 @@
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
+
+/* Hi/Fn products */
+#define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_0x0002	0x0002		/* MCA */

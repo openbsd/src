@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.208 2000/01/03 23:38:25 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.209 2000/01/10 02:21:05 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1567,6 +1567,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "J2585A",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
+	    0,
+	    "Hi/Fn",
+	    "7751",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
@@ -7044,6 +7050,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_HIFN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Hi/Fn",
 	    NULL,
 	},
 	{
