@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.8 1997/06/06 21:12:10 kstailey Exp $
+.\"	$OpenBSD: ctime.3,v 1.9 1998/07/05 19:36:54 millert Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -32,7 +32,7 @@ asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to 
 .fi
 .SH DESCRIPTION
 .I Ctime\^
-converts a long integer, pointed to by
+converts a time_t, pointed to by
 .IR clock ,
 representing the time in seconds since
 00:00:00 UTC, 1970-01-01,
