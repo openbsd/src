@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.4 1997/04/04 09:07:05 deraadt Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.5 1997/04/13 21:29:43 provos Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.4 1997/04/04 09:07:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.5 1997/04/13 21:29:43 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1687,11 +1687,11 @@ net_mask(in)
 }
 
 /*
- * These are here in case we ever want to get more clever, like perhaps
- * using a bitmap to keep track of outstanding queries and a random
- * allocation scheme to make it a little harder to predict them.  Note
- * that the resolver will need the same protection so the cleverness
- * should be put there rather than here; this is just an interface layer.
+ * This just an interface layer to the random number generator
+ * used in the resolver.
+ * A special random number generator is used to create non predictable
+ * and non repeating ids over a long period. It also avoids reuse
+ * by switching between two distinct number cycles.
  */
 
 void
@@ -1703,10 +1703,7 @@ nsid_init()
 u_int16_t
 nsid_next()
 {
-	if (nsid_state == 65535)
-		nsid_state = 0;
-	else
-		nsid_state++;
+        nsid_state = res_randomid();
 	return (nsid_state);
 }
 
