@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4,v 1.5 2004/04/16 21:23:08 jmc Exp $
+.\" $OpenBSD: intro.4,v 1.6 2004/08/29 07:37:34 mickey Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -208,7 +208,7 @@ The devices listed below are supported in this incarnation of
 the system.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
-.Bl -tag -width le/lebuffer
+.Bl -tag -width phantomasXXX
 .It Xr asp 4
 The ASP I/O controller; found in most of the older machines which
 don't have LASI or WAX.
@@ -257,6 +257,8 @@ bus controller on most of the older 700 machines.
 .It Xr pdc 4
 The PROM interface, allows to call the routines in the machine's
 PROM for things like initial console output and such.
+.It Xr phantomas 4
+Phantom PseudoBC GSC+ Port.
 .It Xr power 4
 The power button interface allowing graceful shutdown of the
 system should being depressed on the running system.
@@ -274,7 +276,8 @@ implementations for add-on devices.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
-.Xr config 8
+.Xr config 8 ,
+.Xr io 4
 .Sh HISTORY
 The
 hppa
