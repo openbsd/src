@@ -1,3 +1,5 @@
+/* $OpenBSD: http_main.c,v 1.15 2002/07/15 09:40:49 henning Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -4340,7 +4342,9 @@ static void child_main(int child_num_arg)
     signal(SIGURG, timeout);
 #endif
 #endif
-    signal(SIGALRM, alrm_handler);
+    if (signal(SIGALRM, alrm_handler) == SIG_ERR) {
+	   fprintf(stderr, "installing signal handler for SIGALRM failed, errno %u\n", errno);
+	}
 #ifdef TPF
     signal(SIGHUP, just_die);
     signal(SIGTERM, just_die);
@@ -5140,46 +5144,57 @@ static void standalone_main(int argc, char **argv)
 	server_conf = ap_read_config(pconf, ptrans, ap_server_confname);
 	setup_listeners(pconf);
 	ap_clear_pool(plog);
-	ap_open_logs(server_conf, plog);
-	ap_log_pid(pconf, ap_pid_fname);
+
+	/* 
+	 * we cannot reopen the logfiles once we dropped permissions, 
+	 * we cannot write the pidfile (pointless anyway), and we can't
+	 * reload & reinit the modules.
+	 */
+
+	if (!is_chrooted) {
+	    ap_open_logs(server_conf, plog);
+	    ap_log_pid(pconf, ap_pid_fname);
+	}
 	ap_set_version();	/* create our server_version string */
 	ap_init_modules(pconf, server_conf);
 	version_locked++;	/* no more changes to server_version */
 
-	if(!is_graceful && ap_server_chroot) {
-
-	    /* initialize /dev/crypto, XXX check for -DSSL option */
-	    OpenSSL_add_all_algorithms();
-
-	    if (geteuid()) {
-		ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
-		   "can't run in secure mode if not started with root privs.");
-		exit(1);
-	    }
-
-	    if (chroot(ap_server_root) < 0) {
-		ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
-		    "unable to chroot into %s!", ap_server_root);
-		exit(1);
-	    }
-	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
-		"chrooted in %s", ap_server_root);
-	    chdir("/");
-	    is_chrooted = 1;
-	    setproctitle("parent [chroot %s]", ap_server_root);
-
-	    if (setgroups(1, &ap_group_id) || setegid(ap_group_id) ||
-		setgid(ap_group_id) || seteuid(ap_user_id) || 
-		setuid(ap_user_id)) {
-		    ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
-			"can't drop priviliges!");
+	if(!is_graceful)
+	    if (ap_server_chroot) {
+		if (geteuid()) {
+		    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+			"can't run in secure mode if not started with "
+			"root privs.");
 		    exit(1);
-	    } else
-		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
-		    server_conf, "changed to uid %ld, gid %ld",
-		    (long)ap_user_id, (long)ap_group_id);
-	} else
-	    setproctitle("parent");
+		}
+
+		/* initialize /dev/crypto, XXX check for -DSSL option */
+		OpenSSL_add_all_algorithms();
+
+		if (chroot(ap_server_root) < 0) {
+		    ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
+			"unable to chroot into %s!", ap_server_root);
+		    exit(1);
+		}
+		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, 
+		    server_conf, "chrooted in %s", ap_server_root);
+		chdir("/");
+		is_chrooted = 1;
+		setproctitle("parent [chroot %s]", ap_server_root);
+
+		if (setgroups(1, &ap_group_id) || setegid(ap_group_id) ||
+		    setgid(ap_group_id) || seteuid(ap_user_id) || 
+		    setuid(ap_user_id)) {
+			ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
+			    "can't drop priviliges!");
+			exit(1);
+		} else
+		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
+			server_conf, "changed to uid %ld, gid %ld",
+			(long)ap_user_id, (long)ap_group_id);
+		} else
+		    setproctitle("parent");
+
 
 	SAFE_ACCEPT(accept_mutex_init(pconf));
 	if (!is_graceful) {
@@ -8023,5 +8038,10 @@ API_EXPORT(int) ap_server_strip_chroot(char *src, int force)
 	    strlcpy(src, buf, strlen(src));
 	} 
     }
+}
+
+API_EXPORT(int) ap_server_is_chrooted()
+{
+    return(is_chrooted);
 }
 

@@ -1,3 +1,5 @@
+/* $OpenBSD: http_config.c,v 1.10 2002/07/15 09:40:49 henning Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -1264,6 +1266,9 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 
     fname = ap_server_root_relative(p, fname);
 
+    /* if we are already chrooted here, it's a restart. strip chroot then. */
+    ap_server_strip_chroot(fname, 0);
+
     if (!(strcmp(fname, ap_server_root_relative(p, RESOURCE_CONFIG_FILE))) ||
 	!(strcmp(fname, ap_server_root_relative(p, ACCESS_CONFIG_FILE)))) {
 	if (stat(fname, &finfo) == -1)
@@ -1554,8 +1559,11 @@ static void init_config_globals(pool *p)
 
     ap_standalone = 1;
     ap_user_name = DEFAULT_USER;
-    ap_user_id = ap_uname2id(DEFAULT_USER);
-    ap_group_id = ap_gname2id(DEFAULT_GROUP);
+    if (!ap_server_is_chrooted()) { 
+	/* can't work, just keep old setting */
+	ap_user_id = ap_uname2id(DEFAULT_USER);
+	ap_group_id = ap_gname2id(DEFAULT_GROUP);
+    }
     ap_daemons_to_start = DEFAULT_START_DAEMON;
     ap_daemons_min_free = DEFAULT_MIN_FREE_DAEMON;
     ap_daemons_max_free = DEFAULT_MAX_FREE_DAEMON;

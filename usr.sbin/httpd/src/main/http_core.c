@@ -1,3 +1,5 @@
+/* $OpenBSD: http_core.c,v 1.11 2002/07/15 09:40:49 henning Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -2098,13 +2100,29 @@ static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
         return err;
     }
 
+    /*
+     * This is, again, tricky. on restarts, we cannot use uname2id.
+     * keep the old settings for the main server.
+     * barf out on user directives in <VirtualHost> sections.
+     */ 
+
     if (!cmd->server->is_virtual) {
-	ap_user_name = arg;
-	cmd->server->server_uid = ap_user_id = ap_uname2id(arg);
+	if (!ap_server_is_chrooted()) {
+	    ap_user_name = arg;
+	    ap_user_id = ap_uname2id(arg);
+	}
+	cmd->server->server_uid = ap_user_id;
     }
     else {
         if (ap_suexec_enabled) {
-	    cmd->server->server_uid = ap_uname2id(arg);
+	    if (ap_server_is_chrooted()) {
+		fprintf(stderr, "cannot look up uids once chrooted. Thus, User "
+		    "directives inside <VirtualHost> and restarts aren't "
+		    "possible together. Please stop httpd and start a new "
+		    "one\n");
+		exit(1);
+	    } else
+		cmd->server->server_uid = ap_uname2id(arg);
 	}
 	else {
 	    cmd->server->server_uid = ap_user_id;
@@ -2141,11 +2159,21 @@ static const char *set_group(cmd_parms *cmd, void *dummy, char *arg)
     }
 
     if (!cmd->server->is_virtual) {
-	cmd->server->server_gid = ap_group_id = ap_gname2id(arg);
+	if (!ap_server_is_chrooted()) {
+	    ap_group_id = ap_gname2id(arg);
+	}
+	cmd->server->server_gid = ap_group_id;
     }
     else {
         if (ap_suexec_enabled) {
-	    cmd->server->server_gid = ap_gname2id(arg);
+	    if (ap_server_is_chrooted()) {
+		fprintf(stderr, "cannot look up gids once chrooted. Thus, Group"
+		    " directives inside <VirtualHost> and restarts aren't "
+		    "possible together. Please stop httpd and start a new "
+		    "one\n");
+		exit(1);
+	    } else
+		cmd->server->server_gid = ap_gname2id(arg);
 	}
 	else {
 	    cmd->server->server_gid = ap_group_id;
@@ -2168,14 +2196,26 @@ static const char *set_server_root(cmd_parms *cmd, void *dummy, char *arg)
 
     arg = ap_os_canonical_filename(cmd->pool, arg);
 
-    if (!ap_is_directory(arg)) {
-        return "ServerRoot must be a valid directory";
+    /*
+     * This is a bit tricky. On startup we are not chrooted here.
+     * On restarts (graceful or not) we are (unless we're in unsecure mode).
+     * if we would strip off the chroot prefix, nothing (not even "/")
+     * would last.
+     * it's pointless to test wether ServerRoot is a directory if we are
+     * already chrooted into that. 
+     * Of course it's impossible to change ServerRoot without a full restart.
+     * should we abort with an error if ap_server_root != arg?
+     */
+
+    if (!ap_server_is_chrooted()) {
+	if (!ap_is_directory(arg)) {
+	    return "ServerRoot must be a valid directory";
+	}
+	/* ServerRoot is never '/' terminated */
+	while (strlen(ap_server_root) > 1 && ap_server_root[strlen(ap_server_root)-1] == '/')
+	    ap_server_root[strlen(ap_server_root)-1] = '\0';
+	ap_cpystrn(ap_server_root, arg, sizeof(ap_server_root));
     }
-    /* ServerRoot is never '/' terminated */
-    while (strlen(ap_server_root) > 1 && ap_server_root[strlen(ap_server_root)-1] == '/')
-        ap_server_root[strlen(ap_server_root)-1] = '\0';
-    ap_cpystrn(ap_server_root, arg,
-	       sizeof(ap_server_root));
     return NULL;
 }
 

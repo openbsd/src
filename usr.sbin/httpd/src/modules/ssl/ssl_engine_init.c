@@ -1,3 +1,5 @@
+/* $OpenBSD: ssl_engine_init.c,v 1.18 2002/07/15 09:40:49 henning Exp $ */
+
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
 ** | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
@@ -164,7 +166,8 @@ void ssl_init_Module(server_rec *s, pool *p)
             sc->nPassPhraseDialogType = SSL_PPTYPE_BUILTIN;
 
         /* Open the dedicated SSL logfile */
-        ssl_log_open(s, s2, p);
+        if (!ap_server_is_chrooted())
+            ssl_log_open(s, s2, p);
     }
 
     /*
@@ -1116,4 +1119,3 @@ void ssl_init_ModuleKill(void *data)
 
     return;
 }
-
