@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.24 2000/01/04 16:57:16 markus Exp $");
+RCSID("$Id: scp.c,v 1.25 2000/01/24 22:11:20 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -1006,7 +1006,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.24 2000/01/04 16:57:16 markus Exp $
+ *	$Id: scp.c,v 1.25 2000/01/24 22:11:20 markus Exp $
  */
 
 char *
@@ -1060,12 +1060,12 @@ okname(cp0)
 		c = *cp;
 		if (c & 0200)
 			goto bad;
-		if (!isalpha(c) && !isdigit(c) && c != '_' && c != '-')
+		if (!isalpha(c) && !isdigit(c) && c != '_' && c != '-' && c != '.')
 			goto bad;
 	} while (*++cp);
 	return (1);
 
-bad:	fprintf(stderr, "%s: invalid user name", cp0);
+bad:	fprintf(stderr, "%s: invalid user name\n", cp0);
 	return (0);
 }
 
