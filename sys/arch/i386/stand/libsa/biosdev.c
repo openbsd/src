@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.33 1997/09/03 13:56:11 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.34 1997/09/17 17:50:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -60,7 +60,7 @@ struct biosdisk {
 u_int32_t
 biosdinfo(int dev)
 {
-	int f, rv;
+	u_int f, rv;
 	__asm __volatile (DOINT(0x13) "; setc %b0\n\t"
 			  /* form a word with ntrack/nhead/nsect packed */
 			  "shll	$16, %1; movw %%cx, %w1"
