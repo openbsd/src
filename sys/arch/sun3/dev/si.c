@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.10 2000/06/06 20:51:41 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.11 2000/08/28 22:01:40 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.31 1996/11/20 18:56:59 gwr Exp $	*/
 
 /*-
@@ -104,14 +104,8 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
-#include "sireg.h"
-#include "sivar.h"
-
-/*
- * Transfers smaller than this are done using PIO
- * (on assumption they're not worth DMA overhead)
- */
-#define	MIN_DMA_LEN 128
+#include <sun3/dev/sireg.h>
+#include <sun3/dev/sivar.h>
 
 int si_debug = 0;
 #ifdef	DEBUG
@@ -281,6 +275,8 @@ si_intr(void *arg)
 			}
 		}
 #endif
+		/* claim the interrupt anyways */
+		claimed = 1;
 	}
 
 	return (claimed);
