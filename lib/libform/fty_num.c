@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_num.c,v 1.6 2001/01/22 18:02:17 millert Exp $	*/
+/*	$OpenBSD: fty_num.c,v 1.7 2003/04/05 13:41:43 espie Exp $	*/
 
 
 /*
@@ -143,7 +143,7 @@ static bool Check_Numeric_Field(FIELD * field, const void * argp)
 	    {
 	      if (val<low || val>high) return FALSE;
 	    }
-	  sprintf(buf,"%.*f",(prec>0?prec:0),val);
+	  snprintf(buf, sizeof(buf), "%.*f",(prec>0?prec:0),val);
 	  set_field_buffer(field,0,buf);
 	  return TRUE;
 	}
