@@ -1,4 +1,4 @@
-#	$Id: FILIPPA,v 1.1 1996/02/06 09:17:41 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.2 1996/02/26 23:07:41 niklas Exp $
 
 #
 # GENERIC AMIGA
@@ -99,6 +99,7 @@ options		DDB		# Kernel debugger
 #options	SCSIDEBUG	# Add SCSI debugging statements
 #options	KGDB		# Kernel debugger (KGDB) support
 #options	PANICBUTTON	# Forced crash via keypress (???)
+makeoptions	DEBUG="-g"	# Build a debugging kernel
 
 #
 # Amiga specific options
@@ -205,10 +206,40 @@ st*	at scsibus? target ? lun ?	# scsi tapes
 cd0	at scsibus0 target 6 lun ?	# scsi cd's
 cd*	at scsibus? target ? lun ?	# scsi cd's
 
+ggbus0	at zbus0			# Goldengate bridge
+isa*	at ggbus0
+
+cross0	at zbus0			# CrossLink bridge
+isa*	at cross0
+
+com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+com3	at isa? port 0x2e8 irq 9
+
+#com0   at isa? port 0x0f0 irq 11	# Crosslink builtin ports
+#com1	at isa? port 0x0f8 irq 10
+
+ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+#com*	at ast? slave ? flags 1
+com4	at ast? slave ? flags 1
+com5	at ast? slave ? flags 1
+com6	at ast? slave ? flags 1
+com7	at ast? slave ? flags 1
+
+lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
+lpt1	at isa? port 0x278
+lpt2	at isa? port 0x3bc
+
+# XXX should be ed0
+isaed0	at isa? port 0x300 iomem 0xcc000 irq 10	# WD/SMC, 3C503, and NE[12]000
+						#   ethernetcards
+fd*	at fdc0 unit ?
+
 pseudo-device	sl			# slip
 pseudo-device	ppp			# ppp
 pseudo-device	view	10		# views
-pseudo-device	pty	16		# pseudo terminals
+pseudo-device	pty	32		# pseudo terminals
 pseudo-device	loop			# network loopback
 pseudo-device	vnd	4
 pseudo-device	bpfilter	2	# berkeley packet filters
