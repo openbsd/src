@@ -25,36 +25,47 @@ static char *cvs_password = NULL;
 char *
 construct_cvspass_filename ()
 {
-  char *homedir;
-  char *passfile;
+    char *homedir;
+    char *passfile;
 
-  /* Environment should override file. */
-  if ((passfile = getenv ("CVS_PASSFILE")) != NULL)
-    return xstrdup (passfile);
+    /* Environment should override file. */
+    if ((passfile = getenv ("CVS_PASSFILE")) != NULL)
+	return xstrdup (passfile);
 
-  /* Construct absolute pathname to user's password file. */
-  /* todo: does this work under OS/2 ? */
-  homedir = get_homedir ();
-  if (! homedir)
+    /* Construct absolute pathname to user's password file. */
+    /* todo: does this work under OS/2 ? */
+    homedir = get_homedir ();
+    if (! homedir)
     {
-      error (1, errno, "could not find out home directory");
-      return (char *) NULL;
+	error (1, errno, "could not find out home directory");
+	return (char *) NULL;
     }
-  
-  passfile =
-    (char *) xmalloc (strlen (homedir) + strlen (CVS_PASSWORD_FILE) + 3);
-  strcpy (passfile, homedir);
-  strcat (passfile, "/");
-  strcat (passfile, CVS_PASSWORD_FILE);
-  
-  /* Safety first and last, Scouts. */
-  if (isfile (passfile))
-    /* xchmod() is too polite. */
-    chmod (passfile, 0600);
 
-  return passfile;
+    passfile =
+	(char *) xmalloc (strlen (homedir) + strlen (CVS_PASSWORD_FILE) + 3);
+    strcpy (passfile, homedir);
+#ifndef NO_SLASH_AFTER_HOME
+    /* NO_SLASH_AFTER_HOME is defined for VMS, where foo:[bar]/.cvspass is not
+       a legal filename but foo:[bar].cvspass is.  A more clean solution would
+       be something more along the lines of a "join a directory to a filename"
+       kind of thing....  */
+    strcat (passfile, "/");
+#endif
+    strcat (passfile, CVS_PASSWORD_FILE);
+
+    /* Safety first and last, Scouts. */
+    if (isfile (passfile))
+	/* xchmod() is too polite. */
+	chmod (passfile, 0600);
+
+    return passfile;
 }
 
+static const char *const login_usage[] =
+{
+    "Usage: %s %s\n",
+    NULL
+};
 
 /* Prompt for a password, and store it in the file "CVS/.cvspass".
  *
@@ -84,219 +95,164 @@ login (argc, argv)
     int argc;
     char **argv;
 {
-  char *passfile;
-  FILE *fp;
-  char *typed_password, *found_password;
-  char *linebuf = (char *) NULL;
-  size_t linebuf_len;
-  int root_len, already_entered = 0;
+    char *passfile;
+    FILE *fp;
+    char *typed_password, *found_password;
+    char *linebuf = (char *) NULL;
+    size_t linebuf_len;
+    int root_len, already_entered = 0;
 
-  /* Make this a "fully-qualified" CVSroot if necessary. */
-  if (! strchr (CVSroot, '@'))
+    if (argc < 0)
+	usage (login_usage);
+
+    if (CVSroot_method != pserver_method)
     {
-      /* We need to prepend "user@host:". */
-      char *tmp;
-
-      printf ("Repository \"%s\" not fully-qualified.\n", CVSroot);
-      printf ("Please enter \"user@host:/path\": ");
-      fflush (stdout);
-      getline (&linebuf, &linebuf_len, stdin);
-
-      tmp = xmalloc (strlen (linebuf) + 1);
-
-      /* Give it some permanent storage. */
-      strcpy (tmp, linebuf);
-      tmp[strlen (linebuf) - 1] = '\0';
-      CVSroot = tmp;
-
-      /* Reset. */
-      free (linebuf);
-      linebuf = (char *) NULL;
+	error (0, 0, "can only use pserver method with `login' command");
+	error (1, 0, "CVSROOT: %s", CVSroot_original);
+    }
+    
+    if (! CVSroot_username)
+    {
+	error (0, 0, "CVSROOT \"%s\" is not fully-qualified.",
+	       CVSroot_original);
+	error (1, 0, "Please make sure to specify \"user@host\"!");
     }
 
-  if (CVSroot[0] != ':')
-    {
-      /* Then we need to prepend ":pserver:". */
-      char *tmp;
-
-      tmp = xmalloc (strlen (":pserver:") + strlen (CVSroot) + 1);
-      strcpy (tmp, ":pserver:");
-      strcat (tmp, CVSroot);
-      CVSroot = tmp;
-    }
-
-  /* Check to make sure it's fully-qualified before going on. 
-   * Fully qualified in this context means it has both a user and a
-   * host:repos portion.
-   */
-  {
-    char *r;
-
-    /* After confirming that CVSroot is non-NULL, we skip past the
-       initial ":pserver:" to test the rest of it. */
-
-    if (! CVSroot)
-      error (1, 0, "CVSroot is NULL");
-    else if (! strchr ((r = (CVSroot + strlen (":pserver:"))), '@'))
-      goto not_fqrn;
-    else if (! strchr (r, ':'))
-      goto not_fqrn;
-    
-    if (0)        /* Lovely. */
-      {
-      not_fqrn:
-        error (0, 0, "CVSroot not fully-qualified: %s", CVSroot);
-        error (1, 0, "should be format user@host:/path/to/repository");
-      }
-  }
-    
-  /* CVSroot is now fully qualified and has ":pserver:" prepended.
-     We'll print out most of it so user knows exactly what is being
-     dealt with here. */
-  {
-    char *s;
-    s = strchr (CVSroot, ':');
-    s++;
-    s = strchr (s, ':');
-    s++;
-
-    if (s == NULL)
-      error (1, 0, "NULL CVSroot");
-
-    printf ("(Logging in to %s)\n", s);
+    printf ("(Logging in to %s@%s)\n", CVSroot_username, CVSroot_hostname);
     fflush (stdout);
-  }
 
-  passfile = construct_cvspass_filename ();
-  typed_password = getpass ("CVS password: ");
-  typed_password = scramble (typed_password);
+    passfile = construct_cvspass_filename ();
+    typed_password = getpass ("CVS password: ");
+    typed_password = scramble (typed_password);
 
-  /* Force get_cvs_password() to use this one (when the client
-   * confirms the new password with the server), instead of consulting
-   * the file.  We make a new copy because cvs_password will get
-   * zeroed by connect_to_server().
-   */
-  cvs_password = xstrdup (typed_password);
+    /* Force get_cvs_password() to use this one (when the client
+     * confirms the new password with the server), instead of
+     * consulting the file.  We make a new copy because cvs_password
+     * will get zeroed by connect_to_server().  */
 
-  if (connect_to_pserver (NULL, NULL, 1) == 0)
+    cvs_password = xstrdup (typed_password);
+
+    if (connect_to_pserver (NULL, NULL, 1) == 0)
     {
-      /* The password is wrong, according to the server. */
-      error (1, 0, "incorrect password");
+	/* The password is wrong, according to the server. */
+	error (1, 0, "incorrect password");
     }
 
-  /* IF we have a password for this "[user@]host:/path" already
-   *  THEN
-   *    IF it's the same as the password we read from the prompt
-   *     THEN 
-   *       do nothing
-   *     ELSE
-   *       replace the old password with the new one
-   *  ELSE
-   *    append new entry to the end of the file.
-   */
+    /* IF we have a password for this "[user@]host:/path" already
+     *  THEN
+     *    IF it's the same as the password we read from the prompt
+     *     THEN 
+     *       do nothing
+     *     ELSE
+     *       replace the old password with the new one
+     *  ELSE
+     *    append new entry to the end of the file.
+     */
 
-  root_len = strlen (CVSroot);
+    root_len = strlen (CVSroot_original);
 
-  /* Yes, the method below reads the user's password file twice.  It's
-     inefficient, but we're not talking about a gig of data here. */
+    /* Yes, the method below reads the user's password file twice.  It's
+       inefficient, but we're not talking about a gig of data here. */
 
-  fp = fopen (passfile, "r");
-  /* FIXME: should be printing a message if fp == NULL and not
-     existence_error (errno).  */
-  if (fp != NULL)
+    fp = CVS_FOPEN (passfile, "r");
+    /* FIXME: should be printing a message if fp == NULL and not
+       existence_error (errno).  */
+    if (fp != NULL)
     {
-      /* Check each line to see if we have this entry already. */
-      while (getline (&linebuf, &linebuf_len, fp) >= 0)
+	/* Check each line to see if we have this entry already. */
+	while (getline (&linebuf, &linebuf_len, fp) >= 0)
         {
-          if (strncmp (CVSroot, linebuf, root_len) == 0)
+          if (strncmp (CVSroot_original, linebuf, root_len) == 0)
             {
-              already_entered = 1;
-              break;
+		already_entered = 1;
+		break;
             }
-          else
+	    else
             {
-              free (linebuf);
-              linebuf = (char *) NULL;
+		free (linebuf);
+		linebuf = (char *) NULL;
             }
         }
-      fclose (fp);
+	fclose (fp);
     }
-      
-  if (already_entered)
+
+    if (already_entered)
     {
-      /* This user/host has a password in the file already. */
+	/* This user/host has a password in the file already. */
 
-      strtok (linebuf, " ");
-      found_password = strtok (NULL, "\n");
-      if (strcmp (found_password, typed_password))
+	strtok (linebuf, " ");
+	found_password = strtok (NULL, "\n");
+	if (strcmp (found_password, typed_password))
         {
-          /* typed_password and found_password don't match, so we'll
-           * have to update passfile.  We replace the old password
-           * with the new one by writing a tmp file whose contents are
-           * exactly the same as passfile except that this one entry
-           * gets typed_password instead of found_password.  Then we
-           * rename the tmp file on top of passfile.
-           */
-          char *tmp_name;
-          FILE *tmp_fp;
+	    /* typed_password and found_password don't match, so we'll
+	     * have to update passfile.  We replace the old password
+	     * with the new one by writing a tmp file whose contents are
+	     * exactly the same as passfile except that this one entry
+	     * gets typed_password instead of found_password.  Then we
+	     * rename the tmp file on top of passfile.
+	     */
+	    char *tmp_name;
+	    FILE *tmp_fp;
 
-          tmp_name = tmpnam (NULL);
-          if ((tmp_fp = fopen (tmp_name, "w")) == NULL)
+	    tmp_name = cvs_temp_name ();
+	    if ((tmp_fp = CVS_FOPEN (tmp_name, "w")) == NULL)
             {
-              error (1, errno, "unable to open temp file %s", tmp_name);
-              return 1;
+		error (1, errno, "unable to open temp file %s", tmp_name);
+		return 1;
             }
-          chmod (tmp_name, 0600);
+	    chmod (tmp_name, 0600);
 
-          fp = fopen (passfile, "r");
-          if (fp == NULL)
+	    fp = CVS_FOPEN (passfile, "r");
+	    if (fp == NULL)
             {
-              error (1, errno, "unable to open %s", passfile);
-              return 1;
+		error (1, errno, "unable to open %s", passfile);
+		return 1;
             }
-          /* I'm not paranoid, they really ARE out to get me: */
-          chmod (passfile, 0600);
+	    /* I'm not paranoid, they really ARE out to get me: */
+	    chmod (passfile, 0600);
 
-          free (linebuf);
-          linebuf = (char *) NULL;
-          while (getline (&linebuf, &linebuf_len, fp) >= 0)
+	    free (linebuf);
+	    linebuf = (char *) NULL;
+	    while (getline (&linebuf, &linebuf_len, fp) >= 0)
             {
-              if (strncmp (CVSroot, linebuf, root_len))
+              if (strncmp (CVSroot_original, linebuf, root_len))
                 fprintf (tmp_fp, "%s", linebuf);
               else
-                fprintf (tmp_fp, "%s %s\n", CVSroot, typed_password);
+                fprintf (tmp_fp, "%s %s\n", CVSroot_original, typed_password);
 
-              free (linebuf);
-              linebuf = (char *) NULL;
+		free (linebuf);
+		linebuf = (char *) NULL;
             }
-          fclose (tmp_fp);
-          fclose (fp);
-          rename_file (tmp_name, passfile);
-          chmod (passfile, 0600);
+	    fclose (tmp_fp);
+	    fclose (fp);
+	    copy_file (tmp_name, passfile);
+	    unlink_file (tmp_name);
+	    chmod (passfile, 0600);
+	    free (tmp_name);
         }
     }
-  else
+    else
     {
-      if ((fp = fopen (passfile, "a")) == NULL)
+	if ((fp = CVS_FOPEN (passfile, "a")) == NULL)
         {
-          error (1, errno, "could not open %s", passfile);
-          free (passfile);
-          return 1;
+	    error (1, errno, "could not open %s", passfile);
+	    free (passfile);
+	    return 1;
         }
 
-      fprintf (fp, "%s %s\n", CVSroot, typed_password);
+      fprintf (fp, "%s %s\n", CVSroot_original, typed_password);
       fclose (fp);
     }
 
-  /* Utter, total, raving paranoia, I know. */
-  chmod (passfile, 0600);
-  memset (typed_password, 0, strlen (typed_password));
-  free (typed_password);
+    /* Utter, total, raving paranoia, I know. */
+    chmod (passfile, 0600);
+    memset (typed_password, 0, strlen (typed_password));
+    free (typed_password);
 
-  free (passfile);
-  free (cvs_password);
-  cvs_password = NULL;
-  return 0;
+    free (passfile);
+    free (cvs_password);
+    cvs_password = NULL;
+    return 0;
 }
 
 /* todo: "cvs logout" could erase an entry from the file.
@@ -334,9 +290,23 @@ get_cvs_password ()
       return p;
     }
 
-  /* Else get it from the file. */
+  /* Else get it from the file.  First make sure that the CVSROOT
+   * variable has the appropriate fields filled in. */
+
+  if (CVSroot_method != pserver_method)
+    {
+      error (0, 0, "can only call GET_CVS_PASSWORD  with pserver method");
+      error (1, 0, "CVSROOT: %s", CVSroot_original);
+    }
+    
+  if (! CVSroot_username)
+    {
+      error (0, 0, "CVSROOT \"%s\" is not fully-qualified.", CVSroot_original);
+      error (1, 0, "Please make sure to specify \"user@host\"!");
+    }
+
   passfile = construct_cvspass_filename ();
-  fp = fopen (passfile, "r");
+  fp = CVS_FOPEN (passfile, "r");
   if (fp == NULL)
     {
       error (0, errno, "could not open %s", passfile);
@@ -344,12 +314,12 @@ get_cvs_password ()
       error (1, 0, "use \"cvs login\" to log in first");
     }
 
-  root_len = strlen (CVSroot);
+  root_len = strlen (CVSroot_original);
 
   /* Check each line to see if we have this entry already. */
   while (getline (&linebuf, &linebuf_len, fp) >= 0)
     {
-      if (strncmp (CVSroot, linebuf, root_len) == 0)
+      if (strncmp (CVSroot_original, linebuf, root_len) == 0)
         {
           /* This is it!  So break out and deal with linebuf. */
           found_it = 1;

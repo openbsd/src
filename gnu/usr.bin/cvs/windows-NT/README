@@ -5,10 +5,8 @@
 Check the ../INSTALL file for information on the most recent version
 of CVS which has been known to be tested with NT.
 
-The port implements the full set of CVS commands, but is client only,
-not server or local ("local" meaning accessing repositories on a
-filesystem mounted on the local machine).  The repository must live on
-another machine (a Unix box, say) which runs a complete port of CVS.
+This port implements the full set of CVS commands, both local and
+client.  It does not provide a CVS server for NT.
 
 We don't distribute a .ZIP source distribution partly because, as far
 as I can tell, PKZIP insists on munging long file names, which would
@@ -20,27 +18,63 @@ the sources get extracted without carriage returns and you must add
 carriage returns to the end of every line in cvsnt.mak.  I also had to
 add them to src/server.c.  It doesn't seem to be necessary to add them
 to any other file.  This makefile was generated with Visual C++ 2.1.
-As far as is known, it should work with Visual C++ 4,0 also.
+As far as is known, it should work with Visual C++ 4.0 also.
 
 Send bug reports to bug-cvs@prep.ai.mit.edu.
 
-As of August 20, 1995, this port passed the test in src/sanity.sh.
-(We ran the checks by hand, since we couldn't find a port of the
-Bourne shell good enough to execute the script).  Sanity.sh provides
-pretty minimal feature coverage, but still gives me some confidence it
-isn't totally broken.
+This port passes all of the tests in src/sanity.sh, save the one that
+deals with reserved all-upper-case tags (BASE and HEAD), due to a
+limitation in the NT command shell.  sanity.sh provides pretty minimal
+feature coverage, but still gives me some confidence it isn't totally
+broken.
 
-You will also need GNU patch installed on your system.  GZIP is useful
-but not required.  The Congruent ports of these packages to Windows
-NT, binary and source, are available in:
+To operate in client mode, you will need GNU patch.  gzip is useful
+but not required.
 
-	ftp://microlib.cc.utexas.edu/microlib/nt/gnu
+To operate in local mode, you will need GNU patch, GNU diffutils, a
+version of grep, and rcs version 5.7 installed on your system.  Make
+sure NOT to get a version of rcs less than 5.7 (gr564bnt.zip was
+particularly bad), because those versions insist on putting their
+files in their own directory structure, making them incompatible with
+CVS.
 
-If you'd like to finish off the port of local CVS, Morten Hindsholm's
-port of CVS 1.4A2 to Windows NT might be helpful; it is available as
+Noel Cragg, who did the latest mods to the Windows NT port, used the
+following packages:
+
+	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/grep15.zip
+	  ** use grepb.exe and egrepb.exe, but install as
+	  ** grep.exe and egrep.exe respectively)
+	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/patch212.zip
+	ftp://ftp.netcom.com/pub/al/alexande/rcs57nt.zip
+	ftp://ftp.netcom.com/pub/al/alexande/diff57nt.zip
+
+If you want to try other versions of these utilities, you might have
+luck with the Congruent ports of these packages to Windows NT, binary
+and source:
+
+	ftp://microlib.cc.utexas.edu/microlib/nt/gnu/
+
+The CYGWIN32 package is a port of various GNU tools for NT, providing
+bash as the shell and gcc as the compiler.  The tools are still in
+development, but they are useful for running a modified version of
+sanity.sh:
+
+	http://www.cygnus.com/misc/gnu-win32/
+
+Morten Hindsholm's port of CVS 1.4A2 to Windows NT may be useful if
+you're modifying CVS itself:
 
 	ftp://ftp.digex.net/pub/access/schueman/cvs/cvsnt14b.zip
 
+Mark A. Solinski <markso@www.mcs.net> has ported CVS 1.7 to Windows
+95.  You can find his source code at:
+
+	http://www.mcs.net/~markso/cvs/cvs95.html
+
+Here are some other things which may be of interest for unix junkies:
+
+	http://www.halcyon.com/gvr/vim/       (VI clone)
+	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/less177.zip
 
 The following harmless warnings are known:
 
@@ -50,3 +84,9 @@ The following harmless warnings are known:
 .\lib\getdate.c(760) : warning C4013: 'getdate_yyparse' undefined; assuming extern returning int
 .\lib\getdate.c(1612) : warning C4102: 'yyerrlab' : unreferenced label
 .\lib\getdate.c(1612) : warning C4102: 'yynewstate' : unreferenced label
+
+If you want to browse/edit the sources using Visual C++, we recommend
+setting tab stops to 8 spaces, since that is what the CVS sources
+expect.  The tab stop setting is in the "Editor" section of the "Options..."
+dialog which is in the "Tools..." menu.
+

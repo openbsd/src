@@ -19,19 +19,6 @@ static void addlist PROTO((List ** listp, char *key));
 static int unroll_files_proc PROTO((Node *p, void *closure));
 static void addfile PROTO((List **listp, char *dir, char *file));
 
-
-/*
- * Local static versions eliminates the need for globals
- */
-static FILEPROC fileproc;
-static FILESDONEPROC filesdoneproc;
-static DIRENTPROC direntproc;
-static DIRLEAVEPROC dirleaveproc;
-static int which;
-static Dtype flags;
-static int aflag;
-static int readlock;
-static int dosrcs;
 static char update_dir[PATH_MAX];
 static char *repository = NULL;
 static List *filelist = NULL; /* holds list of files on which to operate */
@@ -42,6 +29,7 @@ struct recursion_frame {
   FILESDONEPROC filesdoneproc;
   DIRENTPROC direntproc;
   DIRLEAVEPROC dirleaveproc;
+  void *callerdat;
   Dtype flags;
   int which;
   int aflag;
@@ -49,37 +37,88 @@ struct recursion_frame {
   int dosrcs;
 };
 
-/*
- * Called to start a recursive command.
- *
- * Command line arguments dictate the directories and files on which
- * we operate.  In the special case of no arguments, we default to
- * ".".
- *
- * The general algorithm is as follows.
- */
+static int do_recursion PROTO ((struct recursion_frame *frame));
+
+/* I am half tempted to shove a struct file_info * into the struct
+   recursion_frame (but then we would need to modify or create a
+   recursion_frame for each file), or shove a struct recursion_frame *
+   into the struct file_info (more tempting, although it isn't completely
+   clear that the struct file_info should contain info about recursion
+   processor internals).  So instead use this struct.  */
+
+struct frame_and_file {
+    struct recursion_frame *frame;
+    struct file_info *finfo;
+};
+
+/* Similarly, we need to pass the entries list to do_dir_proc.  */
+
+struct frame_and_entries {
+    struct recursion_frame *frame;
+    List *entries;
+};
+
+/* Start a recursive command.
+
+   Command line arguments (ARGC, ARGV) dictate the directories and
+   files on which we operate.  In the special case of no arguments, we
+   default to ".".  */
 int
-start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
+start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 		 argc, argv, local, which, aflag, readlock,
-		 update_preload, dosrcs, wd_is_repos)
+		 update_preload, dosrcs)
     FILEPROC fileproc;
     FILESDONEPROC filesdoneproc;
     DIRENTPROC 	direntproc;
     DIRLEAVEPROC dirleaveproc;
+    void *callerdat;
+
     int argc;
     char **argv;
     int local;
+
+    /* This specifies the kind of recursion.  There are several cases:
+
+       1.  W_LOCAL is not set but W_REPOS or W_ATTIC is.  The current
+       directory when we are called must be the repository and
+       recursion proceeds according to what exists in the repository.
+
+       2a.  W_LOCAL is set but W_REPOS and W_ATTIC are not.  The
+       current directory when we are called must be the working
+       directory.  Recursion proceeds according to what exists in the
+       working directory, never (I think) consulting any part of the
+       repository which does not correspond to the working directory
+       ("correspond" == Name_Repository).
+
+       2b.  W_LOCAL is set and so is W_REPOS or W_ATTIC.  This is the
+       weird one.  The current directory when we are called must be
+       the working directory.  We recurse through working directories,
+       but we recurse into a directory if it is exists in the working
+       directory *or* it exists in the repository.  If a directory
+       does not exist in the working directory, the direntproc must
+       either tell us to skip it (R_SKIP_ALL), or must create it (I
+       think those are the only two cases).  */
     int which;
+
     int aflag;
     int readlock;
     char *update_preload;
     int dosrcs;
-    int wd_is_repos;	/* Set if caller has already cd'd to the repository */
 {
     int i, err = 0;
-    Dtype flags;
     List *files_by_dir = NULL;
     struct recursion_frame frame;
+
+    frame.fileproc = fileproc;
+    frame.filesdoneproc = filesdoneproc;
+    frame.direntproc = direntproc;
+    frame.dirleaveproc = dirleaveproc;
+    frame.callerdat = callerdat;
+    frame.flags = local ? R_SKIP_DIRS : R_PROCESS;
+    frame.which = which;
+    frame.aflag = aflag;
+    frame.readlock = readlock;
+    frame.dosrcs = dosrcs;
 
     expand_wild (argc, argv, &argc, &argv);
 
@@ -87,11 +126,6 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 	update_dir[0] = '\0';
     else
 	(void) strcpy (update_dir, update_preload);
-
-    if (local)
-	flags = R_SKIP_DIRS;
-    else
-	flags = R_PROCESS;
 
     /* clean up from any previous calls to start_recursion */
     if (repository)
@@ -116,13 +150,11 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 	 * called with the list of sub-dirs of the current dir as args
 	 */
 	if ((which & W_LOCAL) && !isdir (CVSADM))
-	    dirlist = Find_Directories ((char *) NULL, W_LOCAL);
+	    dirlist = Find_Directories ((char *) NULL, W_LOCAL, (List *) NULL);
 	else
 	    addlist (&dirlist, ".");
 
-	err += do_recursion (fileproc, filesdoneproc, direntproc,
-			    dirleaveproc, flags, which, aflag,
-			    readlock, dosrcs);
+	err += do_recursion (&frame);
 	return(err);
     }
 
@@ -174,20 +206,20 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 	    /* if this argument exists as a file in the current
 	       working directory tree, then add it to the files list.  */
 
-	    if (wd_is_repos)
+	    if (!(which & W_LOCAL))
 	    {
 		/* If doing rtag, we've done a chdir to the repository. */
 		sprintf (tmp, "%s%s", argv[i], RCSEXT);
 		file_to_try = tmp;
 	    }
 	    else
-	      file_to_try = argv[i];
+		file_to_try = argv[i];
 
 	    if(isfile(file_to_try))
 		addfile (&files_by_dir, dir, comp);
 	    else if (isdir (dir))
 	    {
-		if (isdir (CVSADM))
+		if ((which & W_LOCAL) && isdir (CVSADM))
 		{
 		    /* otherwise, look for it in the repository. */
 		    char *save_update_dir;
@@ -229,23 +261,11 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
        a coupla lists.  Now we unroll the lists, setting up and
        calling do_recursion. */
 
-    frame.fileproc = fileproc;
-    frame.filesdoneproc = filesdoneproc;
-    frame.direntproc = direntproc;
-    frame.dirleaveproc = dirleaveproc;
-    frame.flags = flags;
-    frame.which = which;
-    frame.aflag = aflag;
-    frame.readlock = readlock;
-    frame.dosrcs = dosrcs;
     err += walklist (files_by_dir, unroll_files_proc, (void *) &frame);
 
     /* then do_recursion on the dirlist. */
     if (dirlist != NULL)
-	err += do_recursion (frame.fileproc, frame.filesdoneproc,
-			     frame.direntproc, frame.dirleaveproc,
-			     frame.flags, frame.which, frame.aflag,
-			     frame.readlock, frame.dosrcs);
+	err += do_recursion (&frame);
 
     /* Free the data which expand_wild allocated.  */
     for (i = 0; i < argc; ++i)
@@ -259,38 +279,21 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
  * Implement the recursive policies on the local directory.  This may be
  * called directly, or may be called by start_recursion
  */
-int
-do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
-	      xflags, xwhich, xaflag, xreadlock, xdosrcs)
-    FILEPROC xfileproc;
-    FILESDONEPROC xfilesdoneproc;
-    DIRENTPROC xdirentproc;
-    DIRLEAVEPROC xdirleaveproc;
-    Dtype xflags;
-    int xwhich;
-    int xaflag;
-    int xreadlock;
-    int xdosrcs;
+static int
+do_recursion (frame)
+    struct recursion_frame *frame;
 {
     int err = 0;
     int dodoneproc = 1;
     char *srepository;
     List *entries = NULL;
+    int should_readlock;
 
     /* do nothing if told */
-    if (xflags == R_SKIP_ALL)
+    if (frame->flags == R_SKIP_ALL)
 	return (0);
 
-    /* set up the static vars */
-    fileproc = xfileproc;
-    filesdoneproc = xfilesdoneproc;
-    direntproc = xdirentproc;
-    dirleaveproc = xdirleaveproc;
-    flags = xflags;
-    which = xwhich;
-    aflag = xaflag;
-    readlock = noexec ? 0 : xreadlock;
-    dosrcs = xdosrcs;
+    should_readlock = noexec ? 0 : frame->readlock;
 
     /* The fact that locks are not active here is what makes us fail to have
        the
@@ -332,14 +335,14 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
      */
     if (server_active
 	/* If there are writelocks around, we cannot pause here.  */
-	&& (readlock || noexec))
+	&& (should_readlock || noexec))
 	server_pause_check();
 #endif
 
     /*
      * Fill in repository with the current repository
      */
-    if (which & W_LOCAL)
+    if (frame->which & W_LOCAL)
     {
 	if (isdir (CVSADM))
 	    repository = Name_Repository ((char *) NULL, update_dir);
@@ -373,41 +376,52 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
     if (filelist == NULL && dirlist == NULL)
     {
 	/* both lists were NULL, so start from scratch */
-	if (fileproc != NULL && flags != R_SKIP_FILES)
+	if (frame->fileproc != NULL && frame->flags != R_SKIP_FILES)
 	{
-	    int lwhich = which;
+	    int lwhich = frame->which;
 
 	    /* be sure to look in the attic if we have sticky tags/date */
 	    if ((lwhich & W_ATTIC) == 0)
 		if (isreadable (CVSADM_TAG))
 		    lwhich |= W_ATTIC;
 
+	    /* In the !(which & W_LOCAL) case, we filled in repository
+	       earlier in the function.  In the (which & W_LOCAL) case,
+	       the Find_Names function is going to look through the
+	       Entries file.  If we do not have a repository, that
+	       does not make sense, so we insist upon having a
+	       repository at this point.  Name_Repository will give a
+	       reasonable error message.  */
+	    if (repository == NULL)
+		repository = Name_Repository ((char *) NULL, update_dir);
+
 	    /* find the files and fill in entries if appropriate */
-	    filelist = Find_Names (repository, lwhich, aflag, &entries);
+	    filelist = Find_Names (repository, lwhich, frame->aflag, &entries);
 	}
 
 	/* find sub-directories if we will recurse */
-	if (flags != R_SKIP_DIRS)
-	    dirlist = Find_Directories (repository, which);
+	if (frame->flags != R_SKIP_DIRS)
+	    dirlist = Find_Directories (repository, frame->which, entries);
     }
     else
     {
 	/* something was passed on the command line */
-	if (filelist != NULL && fileproc != NULL)
+	if (filelist != NULL && frame->fileproc != NULL)
 	{
 	    /* we will process files, so pre-parse entries */
-	    if (which & W_LOCAL)
-		entries = Entries_Open (aflag);
+	    if (frame->which & W_LOCAL)
+		entries = Entries_Open (frame->aflag);
 	}
     }
 
     /* process the files (if any) */
-    if (filelist != NULL && fileproc)
+    if (filelist != NULL && frame->fileproc)
     {
 	struct file_info finfo_struct;
+	struct frame_and_file frfile;
 
 	/* read lock it if necessary */
-	if (readlock && repository && Reader_Lock (repository) != 0)
+	if (should_readlock && repository && Reader_Lock (repository) != 0)
 	    error (1, 0, "read lock failed - giving up");
 
 #ifdef CLIENT_SUPPORT
@@ -424,38 +438,49 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 	finfo_struct.entries = entries;
 	/* do_file_proc will fill in finfo_struct.file.  */
 
+	frfile.finfo = &finfo_struct;
+	frfile.frame = frame;
+
 	/* process the files */
-	err += walklist (filelist, do_file_proc, &finfo_struct);
+	err += walklist (filelist, do_file_proc, &frfile);
 
 	/* unlock it */
-	if (readlock)
+	if (should_readlock)
 	    Lock_Cleanup ();
 
 	/* clean up */
 	dellist (&filelist);
     }
 
-    if (entries) 
-    {
-	Entries_Close (entries);
-	entries = NULL;
-    }
-
     /* call-back files done proc (if any) */
-    if (dodoneproc && filesdoneproc != NULL)
-	err = filesdoneproc (err, repository, update_dir[0] ? update_dir : ".");
+    if (dodoneproc && frame->filesdoneproc != NULL)
+	err = frame->filesdoneproc (frame->callerdat, err, repository,
+				    update_dir[0] ? update_dir : ".",
+				    entries);
 
     fileattr_write ();
     fileattr_free ();
 
     /* process the directories (if necessary) */
     if (dirlist != NULL)
-	err += walklist (dirlist, do_dir_proc, NULL);
-#ifdef notdef
-    else if (dirleaveproc != NULL)
-	err += dirleaveproc(".", err, ".");
+    {
+	struct frame_and_entries frent;
+
+	frent.frame = frame;
+	frent.entries = entries;
+	err += walklist (dirlist, do_dir_proc, (void *) &frent);
+    }
+#if 0
+    else if (frame->dirleaveproc != NULL)
+	err += frame->dirleaveproc (frame->callerdat, ".", err, ".");
 #endif
     dellist (&dirlist);
+
+    if (entries) 
+    {
+	Entries_Close (entries);
+	entries = NULL;
+    }
 
     /* free the saved copy of the pointer if necessary */
     if (srepository)
@@ -475,7 +500,8 @@ do_file_proc (p, closure)
     Node *p;
     void *closure;
 {
-    struct file_info *finfo = (struct file_info *)closure;
+    struct frame_and_file *frfile = (struct frame_and_file *)closure;
+    struct file_info *finfo = frfile->finfo;
     int ret;
 
     finfo->file = p->key;
@@ -490,11 +516,11 @@ do_file_proc (p, closure)
     }
     strcat (finfo->fullname, finfo->file);
 
-    if (dosrcs && repository)
+    if (frfile->frame->dosrcs && repository)
 	finfo->rcs = RCS_parse (finfo->file, repository);
     else 
         finfo->rcs = (RCSNode *) NULL;
-    ret = fileproc (finfo);
+    ret = frfile->frame->fileproc (frfile->frame->callerdat, finfo);
 
     freercsnode(&finfo->rcs);
     free (finfo->fullname);
@@ -510,6 +536,9 @@ do_dir_proc (p, closure)
     Node *p;
     void *closure;
 {
+    struct frame_and_entries *frent = (struct frame_and_entries *) closure;
+    struct recursion_frame *frame = frent->frame;
+    struct recursion_frame xframe;
     char *dir = p->key;
     char newrepos[PATH_MAX];
     List *sdirlist;
@@ -555,8 +584,9 @@ do_dir_proc (p, closure)
     }
 
     /* call-back dir entry proc (if any) */
-    if (direntproc != NULL)
-	dir_return = direntproc (dir, newrepos, update_dir);
+    if (frame->direntproc != NULL)
+	dir_return = frame->direntproc (frame->callerdat, dir, newrepos,
+					update_dir, frent->entries);
 
     /* only process the dir if the return code was 0 */
     if (dir_return != R_SKIP_ALL)
@@ -569,11 +599,11 @@ do_dir_proc (p, closure)
 	dirlist = NULL;
 
 	/* cd to the sub-directory */
-	if (chdir (dir) < 0)
+	if ( CVS_CHDIR (dir) < 0)
 	    error (1, errno, "could not chdir to %s", dir);
 
 	/* honor the global SKIP_DIRS (a.k.a. local) */
-	if (flags == R_SKIP_DIRS)
+	if (frame->flags == R_SKIP_DIRS)
 	    dir_return = R_SKIP_DIRS;
 
 	/* remember if the `.' will be stripped for subsequent dirs */
@@ -584,16 +614,18 @@ do_dir_proc (p, closure)
 	}
 
 	/* make the recursive call */
-	err += do_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
-			    dir_return, which, aflag, readlock, dosrcs);
+	xframe = *frame;
+	xframe.flags = dir_return;
+	err += do_recursion (&xframe);
 
 	/* put the `.' back if necessary */
 	if (stripped_dot)
 	    (void) strcpy (update_dir, ".");
 
 	/* call-back dir leave proc (if any) */
-	if (dirleaveproc != NULL)
-	    err = dirleaveproc (dir, err, update_dir);
+	if (frame->dirleaveproc != NULL)
+	    err = frame->dirleaveproc (frame->callerdat, dir, err, update_dir,
+				       frent->entries);
 
 	/* get back to where we started and restore state vars */
 	if (restore_cwd (&cwd, NULL))
@@ -682,7 +714,7 @@ unroll_files_proc (p, closure)
     {
         if (save_cwd (&cwd))
 	    exit (EXIT_FAILURE);
-	if (chdir (p->key) < 0)
+	if ( CVS_CHDIR (p->key) < 0)
 	    error (1, errno, "could not chdir to %s", p->key);
 
 	save_update_dir = xstrdup (update_dir);
@@ -693,10 +725,7 @@ unroll_files_proc (p, closure)
 	(void) strcat (update_dir, p->key);
     }
 
-    err += do_recursion (frame->fileproc, frame->filesdoneproc,
-			 frame->direntproc, frame->dirleaveproc,
-			 frame->flags, frame->which, frame->aflag,
-			 frame->readlock, frame->dosrcs);
+    err += do_recursion (frame);
 
     if (save_update_dir != NULL)
     {

@@ -31,7 +31,7 @@ mydbm_open (file, flags, mode)
     FILE *fp;
     DBM *db;
 
-    fp = fopen (file, FOPEN_BINARY_READ);
+    fp = CVS_FOPEN (file, FOPEN_BINARY_READ);
     if (fp == NULL && !(existence_error (errno) && (flags & O_CREAT)))
 	return ((DBM *) 0);
 
@@ -71,7 +71,7 @@ mydbm_close (db)
     if (db->modified)
     {
 	FILE *fp;
-	fp = fopen (db->name, FOPEN_BINARY_WRITE);
+	fp = CVS_FOPEN (db->name, FOPEN_BINARY_WRITE);
 	if (fp == NULL)
 	    error (1, errno, "cannot write %s", db->name);
 	walklist (db->dbm_list, write_item, (void *)fp);

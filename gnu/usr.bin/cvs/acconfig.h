@@ -10,3 +10,6 @@
 
 /* Define if you want to use the password authenticated server.  */
 #undef AUTH_SERVER_SUPPORT
+
+/* Define if you want encryption support.  */
+#undef ENCRYPTION

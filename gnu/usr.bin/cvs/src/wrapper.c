@@ -22,6 +22,7 @@
   -f		from cvs filter		value: path to filter
   -t		to cvs filter		value: path to filter
   -m		update methodology	value: MERGE or COPY
+  -k		default -k rcs option to use on import or add
 
   and value is a single-quote delimited value.
 
@@ -34,7 +35,7 @@ typedef struct {
     char *wildCard;
     char *tocvsFilter;
     char *fromcvsFilter;
-    char *conflictHook;
+    char *rcsOption;
     WrapMergeMethod mergeMethod;
 } WrapperEntry;
 
@@ -44,7 +45,16 @@ static WrapperEntry **wrap_saved_list=NULL;
 static int wrap_size=0;
 static int wrap_count=0;
 static int wrap_tempcount=0;
+
+/* FIXME: wrap_saved_count is never set to any non-zero value.
+   wrap_name_has and wrap_matching_entry should be using
+   wrap_tempcount instead.  I believe the consequence of this is that
+   .cvswrappers files are ignored (that was my own experience when I
+   tried to use one).  If this bug is fixed, would be nice to write a
+   sanity.sh testcase for .cvswrappers files.  */
+
 static int wrap_saved_count=0;
+
 static int wrap_saved_tempcount=0;
 
 #define WRAPPER_GROW	8
@@ -61,23 +71,67 @@ void wrap_setup()
     char file[PATH_MAX];
     struct passwd *pw;
 
-	/* Then add entries found in repository, if it exists */
-    (void) sprintf (file, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_WRAPPER);
-    if (isfile (file)){
-	wrap_add_file(file,0);
+#ifdef CLIENT_SUPPORT
+    if (!client_active)
+#endif
+    {
+	/* Then add entries found in repository, if it exists.  */
+	(void) sprintf (file, "%s/%s/%s", CVSroot_directory, CVSROOTADM,
+			CVSROOTADM_WRAPPER);
+	if (isfile (file))
+	{
+	    wrap_add_file(file,0);
+	}
     }
 
-	/* Then add entries found in home dir, (if user has one) and file exists */
-    if ((pw = (struct passwd *) getpwuid (getuid ())) && pw->pw_dir){
+    /* Then add entries found in home dir, (if user has one) and file
+       exists.  (FIXME: I think this probably should be using
+       get_homedir, i.e. $HOME).  */
+    if ((pw = (struct passwd *) getpwuid (getuid ())) && pw->pw_dir)
+    {
 	(void) sprintf (file, "%s/%s", pw->pw_dir, CVSDOTWRAPPER);
-	if (isfile (file)){
+	if (isfile (file))
+	{
 	    wrap_add_file (file, 0);
 	}
     }
 
-	/* Then add entries found in CVSWRAPPERS environment variable. */
+    /* Then add entries found in CVSWRAPPERS environment variable. */
     wrap_add (getenv (WRAPPER_ENV), 0);
 }
+
+#ifdef CLIENT_SUPPORT
+/* Send -W arguments for the wrappers to the server.  The command must
+   be one that accepts them (e.g. update, import).  */
+void
+wrap_send ()
+{
+    int i;
+
+    for (i = 0; i < wrap_count + wrap_tempcount; ++i)
+    {
+	if (wrap_list[i]->tocvsFilter != NULL
+	    || wrap_list[i]->fromcvsFilter != NULL)
+	    /* For greater studliness we would print the offending option
+	       and (more importantly) where we found it.  */
+	    error (0, 0, "\
+-t and -f wrapper options are not supported remotely; ignored");
+	if (wrap_list[i]->mergeMethod == WRAP_COPY)
+	    /* For greater studliness we would print the offending option
+	       and (more importantly) where we found it.  */
+	    error (0, 0, "\
+-m wrapper option is not supported remotely; ignored");
+	if (wrap_list[i]->rcsOption != NULL)
+	{
+	    send_to_server ("Argument -W\012Argument ", 0);
+	    send_to_server (wrap_list[i]->wildCard, 0);
+	    send_to_server (" -k '", 0);
+	    send_to_server (wrap_list[i]->rcsOption, 0);
+	    send_to_server ("'\012", 0);
+	}
+    }
+}
+#endif /* CLIENT_SUPPORT */
 
 /*
  * Open a file and read lines, feeding each line to a line parser. Arrange
@@ -96,7 +150,7 @@ wrap_add_file (file, temp)
     wrap_kill_temp();
 
 	/* load the file */
-    if (!(fp = fopen (file, "r")))
+    if (!(fp = CVS_FOPEN (file, "r")))
 	return;
     while (fgets (line, sizeof (line), fp))
 	wrap_add (line, temp);
@@ -132,13 +186,13 @@ void
 wrap_free_entry_internal(e)
     WrapperEntry *e;
 {
-    free(e->wildCard);
-    if(e->tocvsFilter)
-	free(e->tocvsFilter);
-    if(e->fromcvsFilter)
-	free(e->fromcvsFilter);
-    if(e->conflictHook)
-	free(e->conflictHook);
+    free (e->wildCard);
+    if (e->tocvsFilter)
+	free (e->tocvsFilter);
+    if (e->fromcvsFilter)
+	free (e->fromcvsFilter);
+    if (e->rcsOption)
+	free (e->rcsOption);
 }
 
 void
@@ -208,7 +262,15 @@ wrap_add (line, isTemp)
 	for(temp=++line;*line && (*line!='\'' || line[-1]=='\\');++line)
 	    ;
 
-	if(line==temp+1)
+	/* This used to "break;" (ignore the option) if there was a
+	   single character between the single quotes (I'm guessing
+	   that was accidental).  Now it "break;"s if there are no
+	   characters.  I'm not sure either behavior is particularly
+	   necessary--the current options might not require ''
+	   arguments, but surely some future option legitimately
+	   might.  Also I'm not sure that ignoring the option is a
+	   swift way to handle syntax errors in general.  */
+	if (line==temp)
 	    break;
 
 	ctemp=*line;
@@ -232,20 +294,18 @@ wrap_add (line, isTemp)
             if (!e.tocvsFilter)
 		error (1, 0, "Correct above errors first");
 	    break;
-	case 'c':
-	    if(e.conflictHook)
-		free(e.conflictHook);
-	    /* FIXME: error message should say where the bad value
-	       came from.  */
-	    e.conflictHook=expand_path (temp, "<wrapper>", 0);
-            if (!e.conflictHook)
-		error (1, 0, "Correct above errors first");
-	    break;
 	case 'm':
+	    /* FIXME: look into whether this option is still relevant given
+	       the 24 Jun 96 change to merge_file.  */
 	    if(*temp=='C' || *temp=='c')
 		e.mergeMethod=WRAP_COPY;
 	    else
 		e.mergeMethod=WRAP_MERGE;
+	    break;
+	case 'k':
+	    if (e.rcsOption)
+		free (e.rcsOption);
+	    e.rcsOption = xstrdup (temp);
 	    break;
 	default:
 	    break;
@@ -281,8 +341,8 @@ wrap_add_entry(e, temp)
     wrap_list[x]->wildCard=e->wildCard;
     wrap_list[x]->fromcvsFilter=e->fromcvsFilter;
     wrap_list[x]->tocvsFilter=e->tocvsFilter;
-    wrap_list[x]->conflictHook=e->conflictHook;
     wrap_list[x]->mergeMethod=e->mergeMethod;
+    wrap_list[x]->rcsOption = e->rcsOption;
 }
 
 /* Return 1 if the given filename is a wrapper filename */
@@ -303,8 +363,8 @@ wrap_name_has (name,has)
 	    case WRAP_FROMCVS:
 		temp=wrap_list[x]->fromcvsFilter;
 		break;
-	    case WRAP_CONFLICT:
-		temp=wrap_list[x]->conflictHook;
+	    case WRAP_RCSOPTION:
+		temp = wrap_list[x]->rcsOption;
 		break;
 	    default:
 	        abort ();
@@ -329,17 +389,46 @@ wrap_matching_entry (name)
     return (WrapperEntry *)NULL;
 }
 
+/* Return the RCS options for FILENAME in a newly malloc'd string.  If
+   ASFLAG, then include "-k" at the beginning (e.g. "-kb"), otherwise
+   just give the option itself (e.g. "b").  */
+char *
+wrap_rcsoption (filename, asflag)
+    const char *filename;
+    int asflag;
+{
+    WrapperEntry *e = wrap_matching_entry (filename);
+    char *buf;
+
+    if (e == NULL || e->rcsOption == NULL || (*e->rcsOption == '\0'))
+	return NULL;
+
+    buf = xmalloc (strlen (e->rcsOption) + 3);
+    if (asflag)
+    {
+	strcpy (buf, "-k");
+	strcat (buf, e->rcsOption);
+    }
+    else
+    {
+	strcpy (buf, e->rcsOption);
+    }
+    return buf;
+}
+
 char *
 wrap_tocvs_process_file(fileName)
     const char *fileName;
 {
     WrapperEntry *e=wrap_matching_entry(fileName);
-    static char buf[L_tmpnam+1];
+    static char *buf = NULL;
 
     if(e==NULL || e->tocvsFilter==NULL)
 	return NULL;
 
-    tmpnam(buf);
+    if (buf != NULL)
+	free (buf);
+    buf = cvs_temp_name ();
 
     run_setup(e->tocvsFilter,fileName,buf);
     run_exec(RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY );

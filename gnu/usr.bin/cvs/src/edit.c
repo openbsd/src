@@ -29,23 +29,26 @@ static int setting_tedit;
 static int setting_tunedit;
 static int setting_tcommit;
 
-static int onoff_fileproc PROTO ((struct file_info *finfo));
+static int onoff_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 static int
-onoff_fileproc (finfo)
+onoff_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     fileattr_set (finfo->file, "_watched", turning_on ? "" : NULL);
     return 0;
 }
 
-static int onoff_filesdoneproc PROTO ((int, char *, char *));
+static int onoff_filesdoneproc PROTO ((void *, int, char *, char *, List *));
 
 static int
-onoff_filesdoneproc (err, repository, update_dir)
+onoff_filesdoneproc (callerdat, err, repository, update_dir, entries)
+    void *callerdat;
     int err;
     char *repository;
     char *update_dir;
+    List *entries;
 {
     if (setting_default)
 	fileattr_set (NULL, "_watched", turning_on ? "" : NULL);
@@ -102,9 +105,9 @@ watch_onoff (argc, argv)
     lock_tree_for_write (argc, argv, local, 0);
 
     err = start_recursion (onoff_fileproc, onoff_filesdoneproc,
-			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-			   0, 0);
+			   0);
 
     lock_tree_cleanup ();
     return err;
@@ -128,10 +131,11 @@ watch_off (argc, argv)
     return watch_onoff (argc, argv);
 }
 
-static int dummy_fileproc PROTO ((struct file_info *finfo));
+static int dummy_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 static int
-dummy_fileproc (finfo)
+dummy_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     /* This is a pretty hideous hack, but the gist of it is that recurse.c
@@ -140,7 +144,7 @@ dummy_fileproc (finfo)
     return 0;
 }
 
-static int ncheck_fileproc PROTO ((struct file_info *finfo));
+static int ncheck_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 /* Check for and process notifications.  Local only.  I think that doing
    this as a fileproc is the only way to catch all the
@@ -149,7 +153,8 @@ static int ncheck_fileproc PROTO ((struct file_info *finfo));
    processed the directory.  */
 
 static int
-ncheck_fileproc (finfo)
+ncheck_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     int notif_type;
@@ -165,7 +170,7 @@ ncheck_fileproc (finfo)
     /* We send notifications even if noexec.  I'm not sure which behavior
        is most sensible.  */
 
-    fp = fopen (CVSADM_NOTIFY, "r");
+    fp = CVS_FOPEN (CVSADM_NOTIFY, "r");
     if (fp == NULL)
     {
 	if (!existence_error (errno))
@@ -212,7 +217,7 @@ ncheck_fileproc (finfo)
     if (fclose (fp) < 0)
 	error (0, errno, "cannot close %s", CVSADM_NOTIFY);
 
-    if (unlink (CVSADM_NOTIFY) < 0)
+    if ( CVS_UNLINK (CVSADM_NOTIFY) < 0)
 	error (0, errno, "cannot remove %s", CVSADM_NOTIFY);
 
     return 0;
@@ -243,9 +248,9 @@ send_notifications (argc, argv, local)
 	}
 
 	err += start_recursion (dummy_fileproc, (FILESDONEPROC) NULL,
-				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 				argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-				0, 0);
+				0);
 
 	send_to_server ("noop\012", 0);
 	if (strcmp (command_name, "release") == 0)
@@ -260,18 +265,19 @@ send_notifications (argc, argv, local)
 
 	lock_tree_for_write (argc, argv, local, 0);
 	err += start_recursion (ncheck_fileproc, (FILESDONEPROC) NULL,
-				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 				argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-				0, 0);
+				0);
 	lock_tree_cleanup ();
     }
     return err;
 }
 
-static int edit_fileproc PROTO ((struct file_info *finfo));
+static int edit_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 static int
-edit_fileproc (finfo)
+edit_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     FILE *fp;
@@ -313,19 +319,10 @@ edit_fileproc (finfo)
        copy so that if the user removes the working file, then restores it
        with "cvs update" (which clears _editors but does not update
        CVSADM_BASE), then a future "cvs edit" can still win.  */
-    /* Could save a system call by only calling mkdir if trying to create
-       the output file fails.  But copy_file isn't set up to facilitate
-       that.  */
-    if (CVS_MKDIR (CVSADM_BASE, 0777) < 0)
-    {
-		if (errno != EEXIST
-#ifdef EACCESS
-		    /* OS/2; see longer comment in client.c.  */
-		    && errno != EACCESS
-#endif
-		    )
-	    error (1, errno, "cannot mkdir %s", CVSADM_BASE);
-    }
+    /* Could save a system call by only calling mkdir_if_needed if
+       trying to create the output file fails.  But copy_file isn't
+       set up to facilitate that.  */
+    mkdir_if_needed (CVSADM_BASE);
     basefilename = xmalloc (10 + sizeof CVSADM_BASE + strlen (finfo->file));
     strcpy (basefilename, CVSADM_BASE);
     strcat (basefilename, "/");
@@ -412,19 +409,20 @@ edit (argc, argv)
     /* No need to readlock since we aren't doing anything to the
        repository.  */
     err = start_recursion (edit_fileproc, (FILESDONEPROC) NULL,
-			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-			   0, 0);
+			   0);
 
     err += send_notifications (argc, argv, local);
 
     return err;
 }
 
-static int unedit_fileproc PROTO ((struct file_info *finfo));
+static int unedit_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 static int
-unedit_fileproc (finfo)
+unedit_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     FILE *fp;
@@ -513,9 +511,9 @@ unedit (argc, argv)
     /* No need to readlock since we aren't doing anything to the
        repository.  */
     err = start_recursion (unedit_fileproc, (FILESDONEPROC) NULL,
-			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-			   0, 0);
+			   0);
 
     err += send_notifications (argc, argv, local);
 
@@ -768,16 +766,16 @@ notify_do (type, filename, who, val, watches, repository)
 	    size_t line_len = 0;
 
 	    args.notifyee = NULL;
-	    usersname = xmalloc (strlen (CVSroot)
+	    usersname = xmalloc (strlen (CVSroot_directory)
 				 + sizeof CVSROOTADM
 				 + sizeof CVSROOTADM_USERS
 				 + 20);
-	    strcpy (usersname, CVSroot);
+	    strcpy (usersname, CVSroot_directory);
 	    strcat (usersname, "/");
 	    strcat (usersname, CVSROOTADM);
 	    strcat (usersname, "/");
 	    strcat (usersname, CVSROOTADM_USERS);
-	    fp = fopen (usersname, "r");
+	    fp = CVS_FOPEN (usersname, "r");
 	    if (fp == NULL && !existence_error (errno))
 		error (0, errno, "cannot read %s", usersname);
 	    if (fp != NULL)
@@ -871,7 +869,7 @@ notify_check (repository, update_dir)
     /* We send notifications even if noexec.  I'm not sure which behavior
        is most sensible.  */
 
-    fp = fopen (CVSADM_NOTIFY, "r");
+    fp = CVS_FOPEN (CVSADM_NOTIFY, "r");
     if (fp == NULL)
     {
 	if (!existence_error (errno))
@@ -915,10 +913,11 @@ static const char *const editors_usage[] =
     NULL
 };
 
-static int editors_fileproc PROTO ((struct file_info *finfo));
+static int editors_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 static int
-editors_fileproc (finfo)
+editors_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     char *them;
@@ -1014,7 +1013,7 @@ editors (argc, argv)
 #endif /* CLIENT_SUPPORT */
 
     return start_recursion (editors_fileproc, (FILESDONEPROC) NULL,
-			    (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+			    (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 			    argc, argv, local, W_LOCAL, 0, 1, (char *)NULL,
-			    0, 0);
+			    0);
 }

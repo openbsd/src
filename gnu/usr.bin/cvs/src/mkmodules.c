@@ -40,12 +40,11 @@ struct admin_file {
 };
 
 static const char *const loginfo_contents[] = {
-    "# The \"loginfo\" file is used to control where \"cvs commit\" log information\n",
-    "# is sent.  The first entry on a line is a regular expression which is tested\n",
+    "# The \"loginfo\" file is used to control where \"cvs commit\" log information is\n",
+    "# sent.  The first entry on a line is a regular expression which is tested\n",
     "# against the directory that the change is being made to, relative to the\n",
-    "# $CVSROOT.  For the first match that is found, then the remainder of the\n",
-    "# line is a filter program that should expect log information on its standard\n",
-    "# input.\n",
+    "# $CVSROOT.  For the first match that is found, the remainder of the line is a\n",
+    "# filter program that should expect log information on its standard input\n",
     "#\n",
     "# If the repository name does not match any of the regular expressions in the\n",
     "# first field of this file, the \"DEFAULT\" line is used, if it is specified.\n",
@@ -59,7 +58,7 @@ static const char *const loginfo_contents[] = {
     "# name and listing the modified file names.\n",
     "#\n",
     "# For example:\n",
-    "#DEFAULT		(echo \"\"; who am i; date; cat) >> $CVSROOT/CVSROOT/commitlog\n",
+    "#DEFAULT		(echo \"\"; who am i; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog\n",
     NULL
 };
 
@@ -99,8 +98,8 @@ static const char *const editinfo_contents[] = {
     "# Actions such as mailing a copy of the report to each reviewer are\n",
     "# better handled by an entry in the loginfo file.\n",
     "#\n",
-    "# One thing that should be noted  is the the ALL keyword is not\n",
-    "# supported. There can be only one entry that matches a given\n",
+    "# One thing that should be noted is the the ALL keyword is not\n",
+    "# supported.  There can be only one entry that matches a given\n",
     "# repository.\n",
     NULL
 };
@@ -222,6 +221,9 @@ static const char *const modules_contents[] = {
     "#	-d dir		Place module in directory \"dir\" instead of module name.\n",
     "#	-l		Top-level directory only -- do not recurse.\n",
     "#\n",
+    "# NOTE:  If you change any of the \"Run\" options above, you'll have to\n",
+    "# release and re-checkout any working directories of these modules.\n",
+    "#\n",
     "# And \"directory\" is a path to a directory relative to $CVSROOT.\n",
     "#\n",
     "# The \"-a\" option specifies an alias.  An alias is interpreted as if\n",
@@ -289,7 +291,7 @@ mkmodules (dir)
     if (save_cwd (&cwd))
 	exit (EXIT_FAILURE);
 
-    if (chdir (dir) < 0)
+    if ( CVS_CHDIR (dir) < 0)
 	error (1, errno, "cannot chdir to %s", dir);
 
     /*
@@ -347,7 +349,7 @@ mkmodules (dir)
     }
 
     /* Use 'fopen' instead of 'open_file' because we want to ignore error */
-    fp = fopen (CVSROOTADM_CHECKOUTLIST, "r");
+    fp = CVS_FOPEN (CVSROOTADM_CHECKOUTLIST, "r");
     if (fp)
     {
 	/*
@@ -412,7 +414,7 @@ make_tempfile (temp)
     while (1)
     {
 	(void) sprintf (temp, "%s%d", BAKPREFIX, seed++);
-	if ((fd = open (temp, O_CREAT|O_EXCL|O_RDWR, 0666)) != -1)
+	if ((fd = CVS_OPEN (temp, O_CREAT|O_EXCL|O_RDWR, 0666)) != -1)
 	    break;
 	if (errno != EEXIST)
 	    error (1, errno, "cannot create temporary file %s", temp);
@@ -568,12 +570,12 @@ rename_dbmfile (temp)
     (void) unlink_file (bakdir);	/* rm .#modules.dir .#modules.pag */
     (void) unlink_file (bakpag);
     (void) unlink_file (bakdb);
-    (void) rename (dotdir, bakdir);	/* mv modules.dir .#modules.dir */
-    (void) rename (dotpag, bakpag);	/* mv modules.pag .#modules.pag */
-    (void) rename (dotdb, bakdb);	/* mv modules.db .#modules.db */
-    (void) rename (newdir, dotdir);	/* mv "temp".dir modules.dir */
-    (void) rename (newpag, dotpag);	/* mv "temp".pag modules.pag */
-    (void) rename (newdb, dotdb);	/* mv "temp".db modules.db */
+    (void) CVS_RENAME (dotdir, bakdir);	/* mv modules.dir .#modules.dir */
+    (void) CVS_RENAME (dotpag, bakpag);	/* mv modules.pag .#modules.pag */
+    (void) CVS_RENAME (dotdb, bakdb);	/* mv modules.db .#modules.db */
+    (void) CVS_RENAME (newdir, dotdir);	/* mv "temp".dir modules.dir */
+    (void) CVS_RENAME (newpag, dotpag);	/* mv "temp".pag modules.pag */
+    (void) CVS_RENAME (newdb, dotdb);	/* mv "temp".db modules.db */
 
     /* OK -- make my day */
     SIG_endCrSect ();
@@ -593,40 +595,20 @@ rename_rcsfile (temp, real)
     /* Set "x" bits if set in original. */
     (void) sprintf (rcs, "%s%s", real, RCSEXT);
     statbuf.st_mode = 0; /* in case rcs file doesn't exist, but it should... */
-    (void) stat (rcs, &statbuf);
+    (void) CVS_STAT (rcs, &statbuf);
 
     if (chmod (temp, 0444 | (statbuf.st_mode & 0111)) < 0)
 	error (0, errno, "warning: cannot chmod %s", temp);
     (void) sprintf (bak, "%s%s", BAKPREFIX, real);
     (void) unlink_file (bak);		/* rm .#loginfo */
-    (void) rename (real, bak);		/* mv loginfo .#loginfo */
-    (void) rename (temp, real);		/* mv "temp" loginfo */
+    (void) CVS_RENAME (real, bak);		/* mv loginfo .#loginfo */
+    (void) CVS_RENAME (temp, real);		/* mv "temp" loginfo */
 }
 
 const char *const init_usage[] = {
     "Usage: %s %s\n",
     NULL
 };
-
-/* Create directory NAME if it does not already exist; fatal error for
-   other errors.  FIXME: This should be in filesubr.c or thereabouts,
-   probably.  Perhaps it should be further abstracted, though (for example
-   to handle CVSUMASK where appropriate?).  */
-static void
-mkdir_if_needed (name)
-    char *name;
-{
-    if (CVS_MKDIR (name, 0777) < 0)
-    {
-	if (errno != EEXIST
-#ifdef EACCESS
-	    /* OS/2; see longer comment in client.c.  */
-	    && errno != EACCESS
-#endif
-	    )
-	    error (1, errno, "cannot mkdir %s", name);
-    }
-}
 
 int
 init (argc, argv)
@@ -644,9 +626,10 @@ init (argc, argv)
 
     umask (cvsumask);
 
-    if (argc > 1)
+    if (argc == -1 || argc > 1)
 	usage (init_usage);
 
+#ifdef CLIENT_SUPPORT
     if (client_active)
     {
 	start_server ();
@@ -655,21 +638,22 @@ init (argc, argv)
 	send_init_command ();
 	return get_responses_and_close ();
     }
+#endif /* CLIENT_SUPPORT */
 
     /* Note: we do *not* create parent directories as needed like the
        old cvsinit.sh script did.  Few utilities do that, and a
        non-existent parent directory is as likely to be a typo as something
        which needs to be created.  */
-    mkdir_if_needed (CVSroot);
+    mkdir_if_needed (CVSroot_directory);
 
-    adm = xmalloc (strlen (CVSroot) + sizeof (CVSROOTADM) + 10);
-    strcpy (adm, CVSroot);
+    adm = xmalloc (strlen (CVSroot_directory) + sizeof (CVSROOTADM) + 10);
+    strcpy (adm, CVSroot_directory);
     strcat (adm, "/");
     strcat (adm, CVSROOTADM);
     mkdir_if_needed (adm);
 
     /* This is needed by the call to "ci" below.  */
-    if (chdir (adm) < 0)
+    if ( CVS_CHDIR (adm) < 0)
 	error (1, errno, "cannot change to directory %s", adm);
 
     /* 80 is long enough for all the administrative file names, plus

@@ -39,6 +39,9 @@ all:
 .PHONY: all install uninstall
 all install uninstall:
 
+installdirs:
+.PHONY: installdirs
+
 .PHONY: tags TAGS
 tags TAGS:
 

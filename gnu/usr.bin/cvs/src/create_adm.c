@@ -53,12 +53,12 @@ Create_Admin (dir, update_dir, repository, tag, date)
 
     /* record the current cvs root for later use */
 
-    Create_Root (dir, CVSroot);
+    Create_Root (dir, CVSroot_original);
     if (dir != NULL)
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
     else
 	(void) strcpy (tmp, CVSADM_REP);
-    fout = fopen (tmp, "w+");
+    fout = CVS_FOPEN (tmp, "w+");
     if (fout == NULL)
     {
 	if (update_dir[0] == '\0')
@@ -74,11 +74,11 @@ Create_Admin (dir, update_dir, repository, tag, date)
      * If the Repository file is to hold a relative path, try to strip off
      * the leading CVSroot argument.
      */
-    if (CVSroot != NULL)
+    if (CVSroot_directory != NULL)
     {
 	char path[PATH_MAX];
 
-	(void) sprintf (path, "%s/", CVSroot);
+	(void) sprintf (path, "%s/", CVSroot_directory);
 	if (strncmp (repository, path, strlen (path)) == 0)
 	    cp = repository + strlen (path);
     }
@@ -104,7 +104,7 @@ Create_Admin (dir, update_dir, repository, tag, date)
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_ENT);
     else
 	(void) strcpy (tmp, CVSADM_ENT);
-    fout = fopen (tmp, "w+");
+    fout = CVS_FOPEN (tmp, "w+");
     if (fout == NULL)
     {
 	if (update_dir[0] == '\0')

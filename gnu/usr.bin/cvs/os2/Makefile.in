@@ -6,10 +6,9 @@
 project: cvs.exe
 # .SUFFIXES .c .obj .exe
 
-# path slash
-# Maintainers: always leave this set to "/", because `make dist' has
-# to work on Unix systems.  See os2/README to find out why we have
-# this var.
+# path slash.  This was introduced so that it can be set to \
+# instead of / for linking, but now that the cvs.exe rule uses
+# subst to produce \, it should be possible to nuke SL.
 SL = /
 
 # Directory in which to install executables.
@@ -24,6 +23,8 @@ top_srcdir = @top_srcdir@
 lib_dir     = @top_srcdir@${SL}lib
 cvs_srcdir = @top_srcdir@${SL}src
 
+zlib_dir = ${top_srcdir}/zlib
+
 # Do we need these?
 # prefix = /usr/local
 # exec_prefix = ${prefix}
@@ -34,7 +35,7 @@ CINC = -Is:${SL}ibmcpp${SL}include -Is:${SL}toolkt21${SL}c${SL}os2h
 # This says we are building an object file, not a full executable.
 OBJ_CFLAGS = -C+
 CFLAGS = -W3 -Wpro+rea+tru+use+ -Ti+ -Ss+ -Gd+ -Gm+ -G4 -Q+ -Sm ${CINC} \
-  -I${srcdir} -I${lib_dir} -I${cvs_srcdir} \
+  -I${srcdir} -I${lib_dir} -I${cvs_srcdir} -I${zlib_dir} \
   -DIBM_CPP -DHAVE_CONFIG_H \
   -DTCPIP_IBM -Is:${SL}ibmtcpip${SL}include
 
@@ -88,9 +89,11 @@ OS2_SOURCES = \
        ${srcdir}${SL}getpass.c
 
 # sources we use from the common src dir, ..${SL}src
+# FIXME: Is this used anywhere?  I don't think it is.
 COMMON_SOURCES = \
        ${cvs_srcdir}${SL}add.c \
        ${cvs_srcdir}${SL}admin.c \
+       ${cvs_srcdir}${SL}buffer.c \
        ${cvs_srcdir}${SL}checkin.c \
        ${cvs_srcdir}${SL}checkout.c \
        ${cvs_srcdir}${SL}classify.c \
@@ -141,6 +144,7 @@ COMMON_SOURCES = \
 # end of $COMMON_SOURCES
 
 # sources from ..${SL}lib
+# FIXME: Is this used anywhere?  I don't think it is.
 LIB_SOURCES = \
        ${lib_dir}${SL}getopt.c \
        ${lib_dir}${SL}getopt1.c \
@@ -175,6 +179,7 @@ OS2_OBJECTS = \
 COMMON_OBJECTS = \
        ${cvs_srcdir}${SL}add.obj \
        ${cvs_srcdir}${SL}admin.obj \
+       ${cvs_srcdir}${SL}buffer.obj \
        ${cvs_srcdir}${SL}checkin.obj \
        ${cvs_srcdir}${SL}checkout.obj \
        ${cvs_srcdir}${SL}classify.obj \
@@ -221,7 +226,8 @@ COMMON_OBJECTS = \
        ${cvs_srcdir}${SL}watch.obj \
        ${cvs_srcdir}${SL}wrapper.obj \
        ${cvs_srcdir}${SL}vers_ts.obj \
-       ${cvs_srcdir}${SL}version.obj
+       ${cvs_srcdir}${SL}version.obj \
+       ${cvs_srcdir}/zlib.obj
 # end of $COMMON_OBJECTS
 
 # objects from ..${SL}lib
@@ -237,11 +243,26 @@ LIB_OBJECTS = \
        ${lib_dir}${SL}xgetwd.obj \
        ${lib_dir}${SL}md5.obj \
        ${lib_dir}${SL}fnmatch.obj \
-       ${lib_dir}${SL}regex.obj
+       ${lib_dir}${SL}regex.obj \
+       ${lib_dir}/valloc.obj
+
+ZLIB_OBJECTS = ${zlib_dir}/adler32.obj \
+       ${zlib_dir}/compress.obj \
+       ${zlib_dir}/crc32.obj \
+       ${zlib_dir}/uncompr.obj \
+       ${zlib_dir}/deflate.obj \
+       ${zlib_dir}/trees.obj \
+       ${zlib_dir}/zutil.obj \
+       ${zlib_dir}/inflate.obj \
+       ${zlib_dir}/infblock.obj \
+       ${zlib_dir}/inftrees.obj \
+       ${zlib_dir}/infcodes.obj \
+       ${zlib_dir}/infutil.obj \
+       ${zlib_dir}/inffast.obj
 
 SOURCES = ${COMMON_SOURCES} ${LIB_SOURCES} ${OS2_SOURCES}
 HEADERS = ${COMMON_HEADERS} ${OS2_HEADERS}
-OBJECTS = ${COMMON_OBJECTS} ${LIB_OBJECTS} ${OS2_OBJECTS}
+OBJECTS = ${COMMON_OBJECTS} ${LIB_OBJECTS} ${OS2_OBJECTS} ${ZLIB_OBJECTS}
 
 DISTFILES = ${OS2_HEADERS} ${OS2_SOURCES} \
   ${srcdir}${SL}README ${srcdir}${SL}ChangeLog \
@@ -252,6 +273,9 @@ all:
 
 .PHONY: all install uninstall
 all install uninstall:
+
+installdirs:
+.PHONY: installdirs
 
 .PHONY: tags TAGS
 tags TAGS:
@@ -289,16 +313,24 @@ install-cvs: cvs.exe
 
 # There seems to be no ICC option for specifying library locations, so
 # we must `set' the path in the compilation environment.  Urgkle. 
+#
+#         I'm having some weird problem with "\" vs. "/".  If I build
+# with "\" as the path separator in the makefile, the compiler dumps
+# core.  Go figure.  If I build with "/" as the path separator, the
+# object files compile fine but the linker thinks the "/" is indicating
+# options and gets all confused (though at least it doesn't dump core).
+# So, use subst to compile with "/" and link with "\".
 cvs.exe: ${OBJECTS}
 	echo Creating icc.in...
 	echo -Q+ -Ti+ -Fe$@ -B"/batch" -B"/NOE" > icc.in
-	echo ${OS2_OBJECTS}                    >> icc.in
-	echo ${LIB_OBJECTS}                    >> icc.in
-	echo ${COMMON_OBJECTS}                 >> icc.in
-	echo ${TCPIPLIB}                       >> icc.in
-	echo ${ARGVLIB}                        >> icc.in
+	echo $(subst /,\,$(OS2_OBJECTS))       >> icc.in
+	echo $(subst /,\,$(LIB_OBJECTS))       >> icc.in
+	echo $(subst /,\,$(COMMON_OBJECTS))    >> icc.in
+	echo $(subst /,\,$(ZLIB_OBJECTS))      >> icc.in
+	echo $(subst /,\,$(TCPIPLIB))          >> icc.in
+	echo $(subst /,\,$(ARGVLIB))           >> icc.in
 	echo Creating icc.in... done.
-	set LIB=${LIB} & icc @icc.in
+	set LIB=$(subst /,\,$(LIB)) & icc @icc.in
 
 # cvs.obj: ${OBJECTS} ${SOURCES} ${HEADERS}
 

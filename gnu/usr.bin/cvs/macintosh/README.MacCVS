@@ -1,21 +1,21 @@
-NOTE: this port is still in progress and should not be considered a
-      finished product.  Use at your own risk.
-
 __________________________________
 MacOS / Concurrent Versions System (CVS)
-Current Mac port version: d5
+
+CVS version: 1.8.6
+Mac port version: 2.31
 
 Mike Ladwig <mike@twinpeaks.prc.com>
 __________________________________
 
-This is a port of the CVS client (1.6.5 ) to MacOS.
+This is a port of the CVS client to MacOS.
 
 1. Setup
 
 In order to use this, you must be willing to consider the Macintosh 
-a trusted host to the UN*X box where the CVS 1.6.3 server resides.
-This is a really dumb thing to do if you have any security concerns.
-I don't, so I can live with the problem.
+a trusted host to the UN*X box where the CVS server resides.
+This is a really dumb thing to do if you have security concerns.
+I don't, so I can live with the problem.  Until there is reasonably
+trustworthy security in MacOS, there is not a good solution.
 
 For the following example, "twinpeaks" is the repository host, and
 "cicily" is the Macintosh client.  "maggie" is the login account on
@@ -29,58 +29,67 @@ the line 'cicily joel'.
 to have "Owner Name" set to "joel" and "Macintosh Name" set to
 'cicily'.
 
-* 'cicily' must have the 'services' file (included) located in
-the "Preferences" folder.  You must rename this file to be
-'sys/services'.
+If (and *only* if) you want to use a non-standard port for the shell
+connection (the normal port for such connections is 514), then you
+must copy the included 'services' file to the "Preferences" folder in
+your System Folder.  You must rename this file to '/etc/services'.
 
 
 2. Usage
 
-Well, the interface is about as ugly as it could be.  When you launch
-MacCVS, it allows you to enter the command line and redirect the
-output of CVS to the screen or to a file.  If you send it to the screen,
-you can choose to save it to a file when you quit.
+MacCVS can either be launched from the finder or via AppleEvents.
 
-I've been keeping the basic command line
-("-d maggie@twinpeaks:/projects/repository/eM2") in the Mac Note
-Pad, and just cut-n-pasting it into MacCVS, then adding the command
--specific ("checkout commonFiles") stuff manually.
+Do Command: Execute a CVS command
+	Do Command  string  -- Command to execute
+		[Mode  AE/File]  -- Mode (AE, File).
+		[Environment  string]  -- Environment variables.
+		[Filename  string]  -- Output file path.
+		[Pathway  string]  -- Starting pathway.
+		[NoLineBuffer  boolean]  -- if true, send each result line as separate AE.
 
-On "checkin" or "commit" operations, use the '-m <log message>'
-command line option.
+The enclosed MacPerl script (AE_example.pl) provides all the information
+necessary to roll your own MacCVS front end.  In order to test code in the
+AE_example.pl script, you must have MacPerl 5.0.7r1m and
+MacPerlToolbox_10Apr96 (or later).  The fragments make use of the new
+Toolbox interface, and plain MacPerl will not work.
+
+The AE support in MacCVS does not (yet) provide for getting user input (e.g. log
+messages).  Make sure you provide that info via a file directive or "-m".
+
+If you launch MacCVS from the finder, it allows you to enter the command
+line and redirect the output of CVS to the screen or to a file.  If you send it
+to the screen, you can choose to save it to a file when you quit.
 
 Due to the strange way it is implemented in CVS, the 'release'
 command does not work.  Tell me if fixing this should be a priority.
 
+Gzip compression works if the server supports 'Gzip-stream'.  This support was
+added to the CVS source on July 12, so you need cvs-1.8.6 from that date or newer.
+
+Due to the braindead way I worked around a problem in the CodeWarrier ANSI library,
+you can't have file names on the Macintosh longer than 21 characters.  If I don't see
+a fix from MetroWerks soon, I'll devise a better workaround.
+
 To change the file type and creator of files that MacCVS creates, you
-need ResEdit 2.1.3.   Edit the MacCVS file, and open the GUZ(sp)I resource
+need ResEdit 2.1.3.   Edit the MacCVS application, and open the GUZI resource
 and make the changes you want.
 
 
 3. Building MacCVS
 
-I have included the the two MacCVS project files as a binhex stuffit
-archive ('maccvs.projects.sit.hqx').  You will also have to extract the
-MacCVS resource file (maccvs.rsrc.sit.hqx).
+I have included the MacCVS CW project files as a binhex stuffit archive ('maccvs.projects.sit.hqx').
 
-**** Note for the intrim release (pre- cvs baseline integration):  You must apply
-**** the maccvs-165.patch file to the base cvs 1.6.5 distribution with GNU patch.
-**** Hopefully this patch will be applied and part of the base distribution soon,
-**** it has not yet been accepted by the cvs maintainers.
+I have a "Projects" folder, where I keep the cvs folder and the CWGUSI folder. If
+you have a different arrangement, you will need to modify the access paths in
+"preferences" in order to find GUSI include and library files.
 
-If you are building MacCVS for an Open Transport system, you will need to
-work around a problem between OT and GUSI:
+You will need CodeWarrier 9 and GUSI 1.7.2.  I have a report of a successful build
+under MPW, but don't support it directly.
 
-Open the project file for GUSI (GUSI.PPC.µ).  In the file "GUSITCP.cp", find the ~TCPSocket (destructor) method.  Change the line:
-
-        pb->csCode                    = TCPClose;
-to:
-        pb->csCode                    = TCPAbort; 
-
-Recompile GUSI.
-
-You may also have to fiddle with the access paths.  I have a "Projects" folder,
-where I have the cvs-x.y.z folder and the CWGUSI folder.
+There are problems with the CodeWarrier Plum-Hall ANSI libraries and CW9
+compilers that I have worked around.  Certain failure and exit modes (most nobably,
+exiting after help and usage commands) trigger the problem, which manifests itself as
+the DONE flag not being set in result AppleEvents, and loss of the last data packet.  Metrowerks has reproduced the problems, and hopefully will have a fix soon.
 
 
 4. Feedback
@@ -88,38 +97,3 @@ where I have the cvs-x.y.z folder and the CWGUSI folder.
 Please tell me how this works for you (criticism, praise, flames, etc.).
 Any ideas for improvements, stuff for the 'README.MacOS' file, or
 anything else would be appreciated.
-
-
-5. Pre mainstream distribution MacCVS History
-
-Wed Jan 10 11:40:32 1995  Mike Ladwig  <mike@twinpeaks.prc.com>
-
-	* CVS Code base updated to cvs-1.6.5 1/8/95 snapshot
-
-Fri Dec 27 14:20:12 1995  Mike Ladwig  <mike@twinpeaks.prc.com>
-
-	* Cleanup of rcmd code, removing inappropriate tests
-	* CVS Code base updated to cvs-1.6.3 12/27/95 snapshot
-	* Again fixed(?) binary/text file handling.
-	* OT problem traced to GUSI - OT bug.  Corresponding with Matthias.
-
-Fri Dec 08 12:39:22 1995  Mike Ladwig  <mike@twinpeaks.prc.com>
-
-	* Fixed problem with 'stat' emulation
-	* Used better GUSI resource template so file type/creator was available
-
-Thurs Dec 07 16:13:09 1995  Mike Ladwig  <mike@twinpeaks.prc.com>
-
-	* Port cleanup for inclusion into main cvs distribution
-	* Fixed(?) binary file handling
-	* Better SIOUX feedback
-	* Updates only via whole files (no '-u' to update)
-
-Wed Nov  29 09:33:16 1995  Mike Ladwig  <mike@twinpeaks.prc.com>
-
-	* Initial port of CVS 1.6.1 snapshot 11/14/95
-	* Requires CW GUSI 1.6.4 and CodeWarrier 7
-	* 68k version is essentially untested, due to lack of a 68k machine
-	* 'release' doesn't work, due to cvs implementation approach
-	* Tons of obvious "TODOs", but at least the heavy stuff is done 
-

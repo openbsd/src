@@ -211,6 +211,14 @@ run_exec (stin, stout, sterr, flags)
 	run_print (stderr);
 	(void) fprintf (stderr, ")\n");
     }
+
+    /* Flush standard output and standard error, or otherwise we end
+       up with strange interleavings of stuff called from CYGWIN
+       vs. CMD.  */
+
+    fflush (stderr);
+    fflush (stdout);
+
     if (noexec && (flags & RUN_REALLY) == 0) /* if in noexec mode */
 	return (0);
 
@@ -306,6 +314,13 @@ run_exec (stin, stout, sterr, flags)
       (void) dup2( saerr, 2);	/* re-connect stderr */
       (void) close( saerr);
     }
+
+    /* Flush standard output and standard error, or otherwise we end
+       up with strange interleavings of stuff called from CYGWIN
+       vs. CMD.  */
+
+    fflush (stderr);
+    fflush (stdout);
 
     /* Recognize the return code for an interrupted subprocess.  */
     if (rval == CONTROL_C_EXIT)

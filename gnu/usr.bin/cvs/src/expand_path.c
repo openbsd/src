@@ -81,10 +81,12 @@ variable_set (nameval)
 }
 
 /* This routine will expand the pathname to account for ~ and $
-    characters as described above.  If an error occurs, an error
-    message is printed via error() and NULL is returned.  FILE and
-    LINE are the filename and linenumber to include in the error
-    message.  */
+   characters as described above.  Returns a pointer to a newly
+   malloc'd string.  If an error occurs, an error message is printed
+   via error() and NULL is returned.  FILE and LINE are the filename
+   and linenumber to include in the error message.  FILE must point
+   to something; LINE can be zero to indicate the line number is not
+   known.  */
 char *
 expand_path (name, file, line)
     char *name;
@@ -181,7 +183,7 @@ expand_variable (name, file, line)
     int line;
 {
     if (strcmp (name, CVSROOT_ENV) == 0)
-	return CVSroot;
+	return CVSroot_original;
     else if (strcmp (name, RCSBIN_ENV)  == 0)
 	return Rcsbin;
     else if (strcmp (name, EDITOR1_ENV) == 0)
@@ -231,10 +233,10 @@ expand_variable (name, file, line)
 	   that various crazy syntaxes might be invented for inserting
 	   information about revisions, branches, etc.  */
 	if (line != 0)
-	    error (0, 0, "%s:%d: unrecognized varaible syntax %s",
+	    error (0, 0, "%s:%d: unrecognized variable syntax %s",
 		   file, line, name);
 	else
-	    error (0, 0, "%s: unrecognized varaible syntax %s",
+	    error (0, 0, "%s: unrecognized variable syntax %s",
 		   file, name);
 	return NULL;
     }

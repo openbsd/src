@@ -27,7 +27,7 @@
 #include "cvs.h"
 #include "savecwd.h"
 
-static int add_directory PROTO((char *repository, char *dir));
+static int add_directory PROTO((char *repository, List *, char *dir));
 static int build_entry PROTO((char *repository, char *user, char *options,
 		        char *message, List * entries, char *tag));
 
@@ -115,6 +115,8 @@ add (argc, argv)
 
 	      sprintf (rcsdir, "%s/%s", repository, argv[i]);
 
+	      strip_trailing_slashes (argv[i]);
+
 	      Create_Admin (argv[i], argv[i], rcsdir, tag, date);
 
 	      if (tag)
@@ -122,6 +124,19 @@ add (argc, argv)
 	      if (date)
 		free (date);
 	      free (rcsdir);
+
+	      if (strchr (argv[i], '/') == NULL)
+		  Subdir_Register ((List *) NULL, (char *) NULL, argv[i]);
+	      else
+	      {
+		  char *cp, *b;
+
+		  cp = xstrdup (argv[i]);
+		  b = strrchr (cp, '/');
+		  *b++ = '\0';
+		  Subdir_Register ((List *) NULL, cp, b);
+		  free (cp);
+	      }
 	    }
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_files (argc, argv, 0, 0);
@@ -137,6 +152,7 @@ add (argc, argv)
     {
 	int begin_err = err;
 	int begin_added_files = added_files;
+	struct file_info finfo;
 
 	user = argv[i];
 	strip_trailing_slashes (user);
@@ -148,8 +164,19 @@ add (argc, argv)
 	    continue;
 	}
 
-	vers = Version_TS (repository, options, (char *) NULL, (char *) NULL,
-			   user, 0, 0, entries, (RCSNode *) NULL);
+	memset (&finfo, 0, sizeof finfo);
+	finfo.file = user;
+	finfo.update_dir = "";
+	finfo.fullname = user;
+	finfo.repository = repository;
+	finfo.entries = entries;
+	finfo.rcs = NULL;
+
+	/* We pass force_tag_match as 1.  If the directory has a
+           sticky branch tag, and there is already an RCS file which
+           does not have that tag, then the head revision is
+           meaningless to us.  */
+	vers = Version_TS (&finfo, options, NULL, NULL, 1, 0);
 	if (vers->vn_user == NULL)
 	{
 	    /* No entry available, ts_rcs is invalid */
@@ -180,11 +207,25 @@ add (argc, argv)
 			error (1, 0, "illegal filename overlap");
 		    }
 
+		    if (vers->options == NULL || *vers->options == '\0')
+		    {
+			/* No options specified on command line (or in
+			   rcs file if it existed, e.g. the file exists
+			   on another branch).  Check for a value from
+			   the wrapper stuff.  */
+			if (wrap_name_has (user, WRAP_RCSOPTION))
+			{
+			    if (vers->options)
+				free (vers->options);
+			    vers->options = wrap_rcsoption (user, 1);
+			}
+		    }
+
 		    /* There is a user file, so build the entry for it */
 		    if (build_entry (repository, user, vers->options,
 				     message, entries, vers->tag) != 0)
 			err++;
-		    else 
+		    else
 		    {
 			added_files++;
 			if (!quiet)
@@ -219,8 +260,12 @@ scheduling %s `%s' for addition on branch `%s'",
 			error (0, 0, "file `%s' will be added on branch `%s' from version %s",
 			       user, vers->tag, vers->vn_rcs);
 		    else
-			error (0, 0, "version %s of `%s' will be resurrected",
-			       vers->vn_rcs, user);
+			/* I'm not sure that mentioning vers->vn_rcs makes
+			   any sense here; I can't think of a way to word the
+			   message which is not confusing.  */
+			error (0, 0, "\
+re-adding file %s (in place of dead revision %s)",
+			       user, vers->vn_rcs);
 		    Register (entries, user, "0", vers->ts_user, NULL,
 			      vers->tag, NULL, NULL);
 		    ++added_files;
@@ -316,7 +361,7 @@ scheduling %s `%s' for addition on branch `%s'",
 	    && isdir (user)
 	    && !wrap_name_has (user, WRAP_TOCVS))
 	{
-	    err += add_directory (repository, user);
+	    err += add_directory (repository, entries, user);
 	    continue;
 	}
 #ifdef SERVER_SUPPORT
@@ -344,8 +389,9 @@ scheduling %s `%s' for addition on branch `%s'",
  * Returns 1 on failure, 0 on success.
  */
 static int
-add_directory (repository, dir)
+add_directory (repository, entries, dir)
     char *repository;
+    List *entries;
     char *dir;
 {
     char rcsdir[PATH_MAX];
@@ -371,7 +417,7 @@ add_directory (repository, dir)
     /* now, remember where we were, so we can get back */
     if (save_cwd (&cwd))
 	return (1);
-    if (chdir (dir) < 0)
+    if ( CVS_CHDIR (dir) < 0)
     {
 	error (0, errno, "cannot chdir to %s", dir);
 	return (1);
@@ -413,6 +459,7 @@ add_directory (repository, dir)
 	mode_t omask;
 	Node *p;
 	List *ulist;
+	struct logfile_info *li;
 
 #if 0
 	char line[MAXLINELEN];
@@ -429,14 +476,17 @@ add_directory (repository, dir)
 	}
 #endif
 
-	omask = umask (cvsumask);
-	if (CVS_MKDIR (rcsdir, 0777) < 0)
+	if (!noexec)
 	{
-	    error (0, errno, "cannot mkdir %s", rcsdir);
+	    omask = umask (cvsumask);
+	    if (CVS_MKDIR (rcsdir, 0777) < 0)
+	    {
+		error (0, errno, "cannot mkdir %s", rcsdir);
+		(void) umask (omask);
+		goto out;
+	    }
 	    (void) umask (omask);
-	    goto out;
 	}
-	(void) umask (omask);
 
 	/*
 	 * Set up an update list with a single title node for Update_Logfile
@@ -446,9 +496,12 @@ add_directory (repository, dir)
 	p->type = UPDATE;
 	p->delproc = update_delproc;
 	p->key = xstrdup ("- New directory");
-	p->data = (char *) T_TITLE;
+	li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+	li->type = T_TITLE;
+	li->tag = xstrdup (tag);
+	p->data = (char *) li;
 	(void) addnode (ulist, p);
-	Update_Logfile (rcsdir, message, (char *) NULL, (FILE *) NULL, ulist);
+	Update_Logfile (rcsdir, message, (FILE *) NULL, ulist);
 	dellist (&ulist);
     }
 
@@ -463,7 +516,16 @@ add_directory (repository, dir)
     if (date)
 	free (date);
 
+    if (restore_cwd (&cwd, NULL))
+	exit (EXIT_FAILURE);
+    free_cwd (&cwd);
+
+    Subdir_Register (entries, (char *) NULL, dir);
+
     (void) printf ("%s", message);
+
+    return (0);
+
 out:
     if (restore_cwd (&cwd, NULL))
       exit (EXIT_FAILURE);

@@ -17,8 +17,10 @@
 
 #include "cvs.h"
 
-static int remove_fileproc PROTO((struct file_info *finfo));
-static Dtype remove_dirproc PROTO((char *dir, char *repos, char *update_dir));
+static int remove_fileproc PROTO ((void *callerdat, struct file_info *finfo));
+static Dtype remove_dirproc PROTO ((void *callerdat, char *dir,
+				    char *repos, char *update_dir,
+				    List *entries));
 
 static int force;
 static int local;
@@ -71,11 +73,34 @@ cvsremove (argc, argv)
 
 #ifdef CLIENT_SUPPORT
     if (client_active) {
+	/* Call expand_wild so that the local removal of files will
+           work.  It's ok to do it always because we have to send the
+           file names expanded anyway.  */
+	expand_wild (argc, argv, &argc, &argv);
+	
+	if (force)
+	{
+	    if (!noexec)
+	    {
+		int i;
+
+		for (i = 0; i < argc; i++)
+		{
+		    if ( CVS_UNLINK (argv[i]) < 0 && ! existence_error (errno))
+		    {
+			error (0, errno, "unable to remove %s", argv[i]);
+		    }
+		}
+	    }
+	    /* else FIXME should probably act as if the file doesn't exist
+	       in doing the following checks.  */
+	}
+
 	start_server ();
 	ign_setup ();
 	if (local)
 	    send_arg("-l");
-	send_file_names (argc, argv, SEND_EXPAND_WILD);
+	send_file_names (argc, argv, 0);
 	send_files (argc, argv, local, 0);
 	send_to_server ("remove\012", 0);
         return get_responses_and_close ();
@@ -84,8 +109,9 @@ cvsremove (argc, argv)
 
     /* start the recursion processor */
     err = start_recursion (remove_fileproc, (FILESDONEPROC) NULL,
-                           remove_dirproc, (DIRLEAVEPROC) NULL, argc, argv,
-                           local, W_LOCAL, 0, 1, (char *) NULL, 1, 0);
+                           remove_dirproc, (DIRLEAVEPROC) NULL, NULL,
+			   argc, argv,
+                           local, W_LOCAL, 0, 1, (char *) NULL, 1);
 
     if (removed_files)
 	error (0, 0, "use '%s commit' to remove %s permanently", program_name,
@@ -106,7 +132,8 @@ cvsremove (argc, argv)
  */
 /* ARGSUSED */
 static int
-remove_fileproc (finfo)
+remove_fileproc (callerdat, finfo)
+    void *callerdat;
     struct file_info *finfo;
 {
     char fname[PATH_MAX];
@@ -116,7 +143,7 @@ remove_fileproc (finfo)
     {
 	if (!noexec)
 	{
-	    if (unlink (finfo->file) < 0 && ! existence_error (errno))
+	    if ( CVS_UNLINK (finfo->file) < 0 && ! existence_error (errno))
 	    {
 		error (0, errno, "unable to remove %s", finfo->fullname);
 	    }
@@ -125,8 +152,7 @@ remove_fileproc (finfo)
 	   in doing the following checks.  */
     }
 
-    vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL, (char *) NULL,
-		       finfo->file, 0, 0, finfo->entries, finfo->rcs);
+    vers = Version_TS (finfo, NULL, NULL, NULL, 0, 0);
 
     if (vers->ts_user != NULL)
     {
@@ -189,10 +215,12 @@ remove_fileproc (finfo)
  */
 /* ARGSUSED */
 static Dtype
-remove_dirproc (dir, repos, update_dir)
+remove_dirproc (callerdat, dir, repos, update_dir, entries)
+    void *callerdat;
     char *dir;
     char *repos;
     char *update_dir;
+    List *entries;
 {
     if (!quiet)
 	error (0, 0, "Removing %s", update_dir);

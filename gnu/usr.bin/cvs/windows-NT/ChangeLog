@@ -1,3 +1,123 @@
+Wed Sep 25 14:31:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (TMPDIR_DFLT): Change from c:\temp to c:\\temp.
+
+Tue Sep 24 14:37:29 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Add TMPDIR_DFLT.
+
+Tue Sep 10 19:20:25 1996  Mark A. Solinski  <markso@mcs.com>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	This is said to be the last set of changes needed for Win95:
+	* rcmd.c: Include cvs.h.
+	(rcmd_authenticate): Use send/recv instead of read/write.
+	(rcmd): Don't call _open_osfhandle; just return the socket.
+	* options.h: Move NO_SOCKET_TO_FD from here...
+	* config.h: ...to here.  Update comment.
+	* config.h (START_SERVER_RETURNS_SOCKET, SEND_NEVER_PARTIAL):
+	Define.
+	* startserver.c (shutdown_fd): Remove; it is unused.
+	(wnt_start_server): Don't dup the file descriptor; instead set
+	both *tofd and *fromfd to read_fd.
+	(wnt_shutdown_server): Don't call _get_osfhandle; just use the
+	argument as the socket.
+
+Wed Sep  4 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* filesubr.c (mkdir_if_needed): mkdir on NT only takes one,
+	not two, arguments.
+
+Thu Aug 29 09:47:33 1996  Mark A. Solinski  <markso@mcs.com>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (deep_remove_dir, unlink_file_dir): ENOENT can also
+	mean that we tried to unlink a directory (Win95).
+
+Mon Aug 26 12:47:58 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (mkdir_if_needed): Added.
+
+Thu Aug 22 19:12:17 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	The following changes are said to be necessary (but not
+	sufficient) for Win95:
+	* config.h (sleep): Use "unsigned int" not just "unsigned".
+	* filesubr.c (deep_remove_dir): Treat EACCES as well as ENOTEMPTY
+	as an indication that we need to remove the directory.
+
+Fri Aug 16 16:06:22 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in (installdirs): new (empty) target
+
+Mon Aug 12 14:45:16 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove CLIENT_ONLY; it is nowhere used.
+
+Mon Jul 15 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* README: Add note about tab stop setting.
+
+Fri Jun  7 13:07:37 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Change INITIALIZE_SOCKET_SUBSYSTEM to
+	SYSTEM_INITIALIZE to reflect change in ../src/main.c.
+
+Mon Jun 03 01:00:08 1996  noel  <noel@BOAT_ANCHOR>
+
+	* sanity.sh: include new tests from ../src/sanity.sh.
+
+	* filesubr.c (copy_file): use open with O_CREAT instead of creat
+ 	so we can also use O_BINARY -- we don't want to do any LF -> CR/LF
+ 	translations when we copy files.
+
+Fri May 17 11:53:13 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: In a few places it used to say "server" when it meant
+	"client".  Fix it.  Say explicitly that there is no server on NT.
+	Fix typos (4,0 -> 4.0; CVS.system -> CVS).
+
+Thu May 16 16:52:45 1996  Noel Cragg  <noel@gargle.rain.org>
+
+	* README: explain which utilities are required for client support
+ 	and local support in separate paragraphs.
+
+	* filesubr.c (expand_wild): rename max to cvs_max to avoid
+ 	conflicts with other already-defined routines.
+	(get_homedir): rename min to cvs_min.
+
+Thu May 16 01:18:22 1996  noel  <noel@BOAT_ANCHOR>
+
+	* sanity.sh: Hacked version of src/sanity.sh for use under
+ 	CYGWIN32.
+
+	* filesubr.c (expand_wild): Since FindFirstFile and FindNextFile
+ 	don't return the pathname of a file, we need to keep track of it
+ 	ourselves.
+
+	* options.h: Fix defines for DIFF and GREP. 
+
+	* run.c (run_exec): Flush stdout and stderr so we end up with the
+ 	correct interleaving of output for sanity.sh.  This can be removed
+ 	later, if desired.
+
+Wed May 15 23:51:49 1996  Noel Cragg  <noel@gargle.rain.org>
+
+	* README: mention that grep is mandatory.
+
+Tue May 14 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* filesubr.c (cvs_temp_name): Call _tempnam not tmpnam.
+
+Tue May 14 13:38:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (cvs_temp_name): New function..
+
+Wed May 01 01:28:41 1996  noel  <noel@BOAT_ANCHOR>
+
+	* filesubr.c (get_homedir): use both HOMEDRIVE and HOMEPATH to
+ 	construct the user's home directory.
+
 Tue Apr  9 20:56:14 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README: Mention CRLF for src/server.c.

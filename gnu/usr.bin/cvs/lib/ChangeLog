@@ -1,3 +1,63 @@
+Wed Oct  2 10:43:35 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* getdate.y: removed CVSid variable
+
+	* getdate.c: regenerated (using byacc 1.9)
+
+Wed Sep 25 10:25:00 1996  Larry Jones  <larry.jones@sdrc.com>
+
+	* vasprintf.c: Fix type clashes in calls to strtoul.
+
+Wed Sep 11 15:55:31 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* build_lib.com: Add valloc.c.
+
+Tue Sep 10 23:04:34 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (DISTFILES): Add build_lib.com.
+
+Fri Aug 16 16:01:57 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in (installdirs): new (empty) target
+
+Mon Aug 12 11:03:43 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* system.h: Don't use #elif.  It is said to cause problems with
+	one of the HP compilers on HPUX 9.01.
+
+Sun Jul  7 23:25:46 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* memmove.c: Removed.  The memove function was used by a very old
+	version of the CVS server for nefarious purposes and it has been
+	long gone.
+	* Makefile.in (SOURCES): Remove memmove.c.
+
+Thu Jun  6 15:12:59 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* vasprintf.c: If STDC_HEADERS, include stdlib.h rather than
+	declaring its functions ourself.
+
+Wed Jun 05 10:14:29 1996  Mike Ladwig  <mike@twinpeaks.prc.com>
+			  and Jim Kingdon  <kingdon@cyclic.com>
+
+	* system.h: If ERRNO_H_MISSING is defined, don't include errno.h.
+
+Wed Jun 05 10:14:29 1996  Mike Ladwig  <mike@twinpeaks.prc.com>
+
+	* regex.c: Don't define MAX and MIN if already defined.
+
+Sun May 12 09:40:08 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getdate.y: Replace alloca.h include with a comment explaining
+	why we avoid alloca and the consequences of that.
+	* getdate.c: Regenerated.
+
+Wed May  8 09:31:03 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getdate.c: Regenerate with the version of byacc in Red Hat 3.0.3
+	(which I believe is byacc 1.9).  byacc, unlike bison, does not
+	require alloca in the generated parser.
+
 Thu Apr 25 18:26:34 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* getdate.y (get_date): Set Start from nowtime, not now->time,

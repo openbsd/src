@@ -1,3 +1,63 @@
+Thu Sep 26 14:15:55 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* filesubr.c (mkdir_if_needed): mkdir only takes one
+	argument on OS/2.
+
+Wed Sep 25 14:31:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (TMPDIR_DFLT): Change from c:\temp to c:\\temp.
+
+Tue Sep 24 14:39:40 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Add TMPDIR_DFLT.
+
+Mon Aug 26 12:31:10 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (mkdir_if_needed): Added.
+
+Fri Aug 16 16:05:29 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in (installdirs): new (empty) target
+
+Mon Aug 12 22:59:40 1996  Jim Kingdon  (unknown@beezley)
+
+	* filesubr.c (fncmp): Fix typo (n1 -> n2) which had caused the
+	function to always return 0.
+
+	* Makefile.in (COMMON_OBJECTS): Add buffer.obj.
+	(COMMON_SOURCES): Add buffer.c.
+	(zlib_srcdir,ZLIB_OBJECTS): Added.
+	(cvs.exe): Also link with ZLIB_OBJECTS.
+	(OBJECTS): Add ZLIB_OBJECTS.
+	(LIB_OBJECTS): Add valloc.obj.
+	(COMMON_OBJECTS): Add zlib.obj.
+
+Mon Aug 12 16:25:32 1996  Steffen Siebert <siebert@susan.logware.de>
+                          and Jim Kingdon  (unknown@beezley)
+
+	* Makefile.in (cvs.exe): Use subst so that we link with \
+	and compile with / without needing to mess with SL.
+	* README: Adjust accordingly.
+
+Mon Jul 15 22:32:13 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove EXECUTE_PERMISSION_LOSES; it is no longer used
+	anywhere (superceded by CHMOD_BROKEN).
+
+Fri Jun  7 13:07:37 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Change INITIALIZE_SOCKET_SUBSYSTEM to
+	SYSTEM_INITIALIZE to reflect change in ../src/main.c.
+
+Tue May 14 13:38:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (cvs_temp_name): New function.
+
+Tue May  7 10:50:13 MET DST 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* filesubr.c (expand_wild): Real implementation (like
+	Windows-NT) for expanding.
+
 Thu Apr 25 09:28:10 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README: Add note about LF vs. CRLF in makefile.

@@ -2,88 +2,69 @@
  * macos_filesys.c
  * Filesystem handling stuff for macos
  *
- * Some of this stuff is not "regular", but there are a number of weird
- * conditions that a plain filepath translation didn't seem to handle.
- * For now, this seems to work.
- *
- * Michael Ladwig <mike@twinpeaks.prc.com> --- November 1995
+ * Michael Ladwig <mike@twinpeaks.prc.com> --- November 1995 (Initial version)
+ *														 --- May 1996 (Handled relative paths better)
+ *														 --- June 1996 (Have open look absolute and relative)
  */
 
-#include <cvs.h>
+#include "mac_config.h"
+#include <config.h>
+#include <system.h>
 
+#ifdef MSL_LIBRARY
+#include <errno.h>
+#else
+#include <sys/errno.h>
+#endif
+
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static char *macos_fixpath (const char *path);
-static char scratchPath[1024];
+char *macos_fixpath (const char *path);
+char scratchPath[1024];
 
 int
 macos_mkdir( const char *path, int oflag )
 {
-	char macPath[1024], *sepCh;
-
-	strcpy( macPath, ":" );
-	strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
-	
-	return mkdir(macPath);
+	return mkdir( macos_fixpath(path) );
 }
 
 int
 macos_open( const char *path, int oflag, ... )
 {
-	char macPath[1024], *sepCh;
+	int	r;
+	char	*macPath;
 	
-	strcpy( macPath, ":" );
-	strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
+	macPath = macos_fixpath(path);
 
-	return open(macPath, oflag);
+	r = open( macPath, oflag );
+	if( r < 0 ) return open( macPath+1, oflag );
+
+	return r;
 }
 
 int
 macos_chmod( const char *path, mode_t mode )
 {
-	char macPath[1024], *sepCh;
-	
-	strcpy( macPath, ":" );
-	strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
-
-	return chmod(macPath, mode);
+	return chmod(macos_fixpath(path), mode);
 }
 
 int
 macos_creat( const char *path, mode_t mode )
 {
-	char macPath[1024], *sepCh;
-	
-	strcpy( macPath, ":" );
-	strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
-
-	return creat(macPath);
+	return creat( macos_fixpath(path) );
 }
 
 FILE *
 macos_fopen( const char *path, const char *mode )
 {
 	FILE	*fp;
-	char	macPath[1024], *sepCh;
-	
-	strcpy( macPath, ":" );
-	strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
 		
-	fp = fopen(macPath, mode);
+	fp = fopen(macos_fixpath(path), mode);
 	
-	/* Don't know why I'm getting ENOTDIR, but it should be ENOENT */
+	/* I'm getting ENOTDIR, CVS expects ENOENT */
 	
 	if( (fp == NULL) && (errno == ENOTDIR) ) errno = ENOENT;
 	
@@ -93,17 +74,13 @@ macos_fopen( const char *path, const char *mode )
 int
 macos_chdir( const char *path )
 {
-	char	macPath[1024], *sepCh;
 	int	r;
+	char	*macPath;
 	
-	strcpy( macPath, ":" );
-	strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
+	macPath = macos_fixpath(path);
 
 	r = chdir(macPath+1);
-	if( r < 0 )
-		return chdir(macPath);
+	if( r < 0 ) return chdir(macPath);
 
 	return r;
 }
@@ -117,17 +94,7 @@ macos_access(const char *path, int amode)
 DIR *
 macos_opendir(const char *path)
 {
-	FILE	*fp;
-	char	macPath[1024], *sepCh;
-
-	strcpy( macPath, ":" );
-	
-	if( strcmp(path, ".") != 0 )
-		strcat( macPath, path );
-	while( (sepCh = strchr(macPath, '/')) != NULL )
-		*sepCh = ':';
-
-	return opendir( macPath );
+	return opendir( macos_fixpath(path) );
 }
 
 int
@@ -148,6 +115,12 @@ macos_rename (const char *path, const char *newpath)
 }
 
 int
+macos_rmdir (const char *path)
+{
+	return rmdir( macos_fixpath(path) );
+}
+
+int
 macos_unlink (const char *path)
 {
 	return unlink( macos_fixpath(path) );
@@ -163,16 +136,25 @@ macos_fixpath (const char *path)
 	if( (*path == '.') && (*(path+1) == '/') )
 		strcat( scratchPath, path+2 );
 	else
-		strcat( scratchPath, path );
+	{
+		if( strcmp(path, ".") != 0 )
+			strcat( scratchPath, path );
+	}
 	while( (sepCh = strchr(scratchPath, '/')) != NULL )
 		*sepCh = ':';
+		
+	//fprintf(stderr,"MacOS fixpath <%s>", path);
+	//fprintf(stderr," -> <%s>\n", scratchPath);
 		
 	return scratchPath;
 }
 
-/* Shamelessly stolen from the OS2 port.  Oddly, only the fopen calls
-	seem to respect the binary-text distinction, so I have rewritten
-	the code to use fopen, fread, fwrite, and fclose instead of open.	*/
+/*
+ * I intended to shamelessly steal from the OS2 port.  Oddly, only the
+ * fopen calls seem to respect the binary-text distinction, so I have
+ * rewritten the code to use fopen, fread, fwrite, and fclose instead of
+ * open, read, write, and close
+ */
 	
 void
 convert_file (char *infile,  int inflags,
@@ -182,7 +164,7 @@ convert_file (char *infile,  int inflags,
     char buf[8192];
     int len;
     char iflags[10], oflags[10];
-    
+
     if( inflags & OPEN_BINARY )
     	strcpy( iflags, "rb" );
     else
@@ -192,7 +174,7 @@ convert_file (char *infile,  int inflags,
     	strcpy( oflags, "wb" );
     else
     	strcpy( oflags, "w" );
-    	
+
     if ((infd = CVS_FOPEN (infile, iflags)) == NULL)
         error (1, errno, "couldn't read %s", infile);
     if ((outfd = CVS_FOPEN (outfile, oflags)) == NULL)
@@ -209,3 +191,4 @@ convert_file (char *infile,  int inflags,
     if (fclose (infd) < 0)
         error (0, errno, "warning: couldn't close %s", infile);
 }
+

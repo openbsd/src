@@ -1,7 +1,11 @@
-#ifdef __POWERPC__
-#include <MacHeadersPPC>
+#ifdef powerc
+  #pragma precompile_target "cvspch.PPC"
 #else
-#include <MacHeaders68K>
+  #pragma precompile_target "cvspch.68K"
 #endif
 
-#define HAVE_CONFIG_H
+#define __dest_os	__mac_os		// Necessary for MSL
+
+#define HAVE_CONFIG_H			// Tells CVS source to look at config.h
+
+#define MACOS						// Necessary for Z Library

@@ -290,6 +290,22 @@ make_directories (name)
     (void) mkdir (name, 0777);
 }
 
+/* Create directory NAME if it does not already exist; fatal error for
+   other errors.  Returns 0 if directory was created; 1 if it already
+   existed.  */
+int
+mkdir_if_needed (name)
+    char *name;
+{
+    if (mkdir (name, 0777) < 0)
+    {
+	if (errno != EEXIST)
+	    error (1, errno, "cannot make directory %s", name);
+	return 1;
+    }
+    return 0;
+}
+
 /*
  * Change the mode of a file, either adding write permissions, or removing
  * all write permissions.  Either change honors the current umask setting.
@@ -596,24 +612,42 @@ xcmp (file1, file2)
     (void) close (fd2);
     return (ret);
 }
-
-#ifdef LOSING_TMPNAM_FUNCTION
-char *tmpnam(char *s)
-{
-    static char value[L_tmpnam+1];
-
-    if (s){
-       strcpy(s,"/tmp/cvsXXXXXX");
-       mktemp(s);
-       return s;
-    }else{
-       strcpy(value,"/tmp/cvsXXXXXX");
-       mktemp(s);
-       return value;
-    }
-}
+
+/* Just in case this implementation does not define this.  */
+#ifndef L_tmpnam
+#define	L_tmpnam 50
 #endif
 
+#ifdef LOSING_TMPNAM_FUNCTION
+char *
+cvs_temp_name ()
+{
+    char value[L_tmpnam + 1];
+
+    /* FIXME: Should be using TMPDIR.  */
+    strcpy (value, "/tmp/cvsXXXXXX");
+    mktemp (value);
+    return xstrdup (value);
+}
+#else
+/* Generate a unique temporary filename.  Returns a pointer to a newly
+   malloc'd string containing the name.  Returns successfully or not at
+   all.  */
+char *
+cvs_temp_name ()
+{
+    char value[L_tmpnam + 1];
+    char *retval;
+
+    /* FIXME: should be using TMPDIR, perhaps by using tempnam on systems
+       which have it.  */
+    retval = tmpnam (value);
+    if (retval == NULL)
+	error (1, errno, "cannot generate temporary filename");
+    return xstrdup (retval);
+}
+#endif
+
 /* Return non-zero iff FILENAME is absolute.
    Trivial under Unix, but more complicated under other systems.  */
 int
@@ -642,7 +676,19 @@ last_component (path)
 char *
 get_homedir ()
 {
-    return getenv ("HOME");
+    static char home[PATH_MAX];
+    char *env = getenv ("HOME");
+    struct passwd *pw;
+
+    if (env)
+	strcpy (home, env);
+    else if ((pw = (struct passwd *) getpwuid (getuid ()))
+	     && pw->pw_dir)
+	strcpy (home, pw->pw_dir);
+    else
+	return 0;
+
+    return home;
 }
 
 /* See cvs.h for description.  On unix this does nothing, because the

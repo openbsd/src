@@ -31,14 +31,17 @@ Cambridge, MA 02139, USA.  */
 #include <varargs.h>
 #endif
 
-extern int abs ();
-
 #ifdef TEST
 int global_total_width;
 #endif
 
-unsigned long strtoul ();
-char *malloc ();
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#else
+extern int abs ();
+extern unsigned long strtoul ();
+extern char *malloc ();
+#endif
 
 static int
 int_vasprintf (result, format, args)
@@ -66,7 +69,7 @@ int_vasprintf (result, format, args)
 	      total_width += abs (va_arg (ap, int));
 	    }
 	  else
-	    total_width += strtoul (p, &p, 10);
+	    total_width += strtoul (p, (char **)&p, 10);
 	  if (*p == '.')
 	    {
 	      ++p;
@@ -76,7 +79,7 @@ int_vasprintf (result, format, args)
 		  total_width += abs (va_arg (ap, int));
 		}
 	      else
-	      total_width += strtoul (p, &p, 10);
+	      total_width += strtoul (p, (char **)&p, 10);
 	    }
 	  while (strchr ("hlL", *p))
 	    ++p;

@@ -34,13 +34,12 @@ SOURCES = \
 	ftruncate.c \
 	getdate.c \
 	getdate.y \
-    	getline.c \
+	getline.c \
 	getopt.c \
 	getopt1.c \
 	getwd.c \
 	hostname.c \
 	md5.c \
-	memmove.c \
 	mkdir.c \
 	regex.c \
 	rename.c \
@@ -77,7 +76,7 @@ OBJECTS = \
 
 DISTFILES = \
 	.cvsignore ChangeLog ChangeLog.fsf Makefile.in \
-	${SOURCES} ${HEADERS}
+	${SOURCES} ${HEADERS} build_lib.com
 
 DEFS = @DEFS@
 RANLIB = @RANLIB@
@@ -97,6 +96,9 @@ all: libcvs.a
 
 install: all
 .PHONY: install
+
+installdirs:
+.PHONY: installdirs
 
 tags: $(DISTFILES)
 	ctags `for i in $(DISTFILES); do echo $(srcdir)/$$i; done`

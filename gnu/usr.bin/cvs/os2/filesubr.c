@@ -22,16 +22,11 @@
    file system semantics.  */
 
 #include <io.h>
+#define INCL_DOSFILEMGR   /* File Manager values */
+#define INCL_DOSERRORS
+#include <os2.h>
 
 #include "cvs.h"
-
-/*
- * I don't know of a convenient way to test this at configure time, or else
- * I'd certainly do it there.  -JimB
- */
-#if defined(NeXT)
-#define LOSING_TMPNAM_FUNCTION
-#endif
 
 static int deep_remove_dir PROTO((const char *path));
 
@@ -264,6 +259,41 @@ make_directories (name)
     if (*cp == '\0')
 	return;
     (void) mkdir (name);
+}
+
+/* Create directory NAME if it does not already exist; fatal error for
+   other errors.  Returns 0 if directory was created; 1 if it already
+   existed.  */
+int
+mkdir_if_needed (name)
+    char *name;
+{
+    if (mkdir (name) < 0)
+    {
+	/* Now, let me get this straight.  In IBM C/C++
+	   under OS/2, the error string for EEXIST is:
+
+	       "The file already exists",
+
+	   and the error string for EACCESS is:
+
+	       "The file or directory specified is read-only".
+
+	   Nonetheless, mkdir() will set EACCESS if the
+	   directory *exists*, according both to the
+	   documentation and its actual behavior.
+
+	   I'm sure that this made sense, to someone,
+	   somewhere, sometime.  Just not me, here, now.  */
+	if (errno != EEXIST
+#ifdef EACCESS
+	    && errno != EACCESS
+#endif
+	    )
+	    error (1, errno, "cannot make directory %s", name);
+	return 1;
+    }
+    return 0;
 }
 
 /*
@@ -656,7 +686,7 @@ fncmp (const char *n1, const char *n2)
 	       == OS2_filename_classes[(unsigned char) *n2]))
         n1++, n2++;
     return (OS2_filename_classes[(unsigned char) *n1]
-            - OS2_filename_classes[(unsigned char) *n1]);
+            - OS2_filename_classes[(unsigned char) *n2]);
 }
 
 /* Fold characters in FILENAME to their canonical forms.  
@@ -672,7 +702,23 @@ fnfold (char *filename)
     }
 }
 
+
+/* Generate a unique temporary filename.  Returns a pointer to a newly
+   malloc'd string containing the name.  Returns successfully or not at
+   all.  */
+char *
+cvs_temp_name ()
+{
+    char value[L_tmpnam + 1];
+    char *retval;
 
+    /* FIXME: Does OS/2 have some equivalent to TMPDIR?  */
+    retval = tmpnam (value);
+    if (retval == NULL)
+	error (1, errno, "cannot generate temporary filename");
+    return xstrdup (retval);
+}
+
 /* Return non-zero iff FILENAME is absolute.
    Trivial under Unix, but more complicated under other systems.  */
 int
@@ -739,8 +785,7 @@ get_homedir ()
     return getenv ("HOME");
 }
 
-/* See cvs.h for description.  On OS/2 this does nothing, but it probably
-   should be expanding wildcards like on NT.  */
+/* See cvs.h for description.  */
 void
 expand_wild (argc, argv, pargc, pargv)
     int argc;
@@ -749,8 +794,87 @@ expand_wild (argc, argv, pargc, pargv)
     char ***pargv;
 {
     int i;
-    *pargc = argc;
-    *pargv = (char **) xmalloc (argc * sizeof (char *));
+    int new_argc;
+    char **new_argv;
+    /* Allocated size of new_argv.  We arrange it so there is always room for
+	   one more element.  */
+    int max_new_argc;
+
+    new_argc = 0;
+    /* Add one so this is never zero.  */
+    max_new_argc = argc + 1;
+    new_argv = (char **) xmalloc (max_new_argc * sizeof (char *));
     for (i = 0; i < argc; ++i)
-	(*pargv)[i] = xstrdup (argv[i]);
+    {
+	HDIR          FindHandle = 0x0001;
+	FILEFINDBUF3  FindBuffer;
+	ULONG         FindCount = 1;
+	APIRET        rc;          /* Return code */
+#define ALL_FILES (FILE_ARCHIVED|FILE_DIRECTORY|FILE_SYSTEM|FILE_HIDDEN|FILE_READONLY) 
+ 
+	rc = DosFindFirst(argv[i],               /* File pattern */
+			  &FindHandle,           /* Directory search handle */
+			  ALL_FILES,             /* Search attribute */
+			  (PVOID) &FindBuffer,   /* Result buffer */
+			  sizeof(FindBuffer),    /* Result buffer length */
+			  &FindCount,            /* Number of entries to find */
+			  FIL_STANDARD);	 /* Return level 1 file info */
+ 
+	if (rc != 0)
+	{
+	    if (rc == ERROR_FILE_NOT_FOUND)
+	    {
+		/* No match.  The file specified didn't contain a wildcard (in which case
+		   we clearly should return it unchanged), or it contained a wildcard which
+		   didn't match (in which case it might be better for it to be an error,
+		   but we don't try to do that).  */
+		new_argv [new_argc++] = xstrdup (argv[i]);
+		if (new_argc == max_new_argc)
+		{
+		    max_new_argc *= 2;
+		    new_argv = xrealloc (new_argv, max_new_argc * sizeof (char *));
+		}
+	    }
+	    else
+	    {
+		error (1, rc, "cannot find %s", argv[i]);
+	    }
+	}
+	else
+	{
+	    while (1)
+	    {
+		/*
+		 * Don't match ".", "..", and files starting with '.'
+		 * (unless pattern also starts with '.').  This is
+		 * (more or less) what standard Unix globbing does.
+		 */
+		if ((strcmp(FindBuffer.achName, ".") != 0) &&
+		    (strcmp(FindBuffer.achName, "..") != 0) &&
+		    ((argv[i][0] == '.') || (FindBuffer.achName[0] != '.')))
+		{
+		    new_argv [new_argc++] = xstrdup (FindBuffer.achName);
+		    if (new_argc == max_new_argc)
+		    {
+			max_new_argc *= 2;
+			new_argv = xrealloc (new_argv, max_new_argc * sizeof (char *));
+		    }
+		}
+		
+		rc = DosFindNext(FindHandle,
+                     (PVOID) &FindBuffer,
+                     sizeof(FindBuffer),
+                     &FindCount);
+		if (rc == ERROR_NO_MORE_FILES)
+		    break;
+		else if (rc != NO_ERROR)
+		    error (1, rc, "cannot find %s", argv[i]);
+	    }
+	    rc = DosFindClose(FindHandle);
+	    if (rc != 0)
+		error (1, rc, "cannot close %s", argv[i]);
+	}
+    }
+    *pargc = new_argc;
+    *pargv = new_argv;
 }

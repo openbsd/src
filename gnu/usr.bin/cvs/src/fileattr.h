@@ -66,11 +66,12 @@ extern void fileattr_startdir PROTO ((char *repos));
    by '\0' or ';'.  Return NULL if said file lacks said attribute.
    If FILENAME is NULL, return default attributes (attributes for
    files created in the future).  */
-extern char *fileattr_get PROTO ((char *filename, char *attrname));
+extern char *fileattr_get PROTO ((const char *filename, const char *attrname));
 
 /* Like fileattr_get, but return a pointer to a newly malloc'd string
    terminated by '\0' (or NULL if said file lacks said attribute).  */
-extern char *fileattr_get0 PROTO ((char *filename, char *attrname));
+extern char *fileattr_get0 PROTO ((const char *filename,
+				   const char *attrname));
 
 /* This is just a string manipulation function; it does not manipulate
    file attributes as such.  
@@ -100,20 +101,20 @@ extern char *fileattr_get0 PROTO ((char *filename, char *attrname));
      => "abc=v1;def=val;ghi=v3"
 */
 
-extern char *fileattr_modify PROTO ((char *list, char *attrname,
-				     char *attrval, int namevalsep,
+extern char *fileattr_modify PROTO ((char *list, const char *attrname,
+				     const char *attrval, int namevalsep,
 				     int entsep));
 
 /* Set attribute ATTRNAME for file FILENAME to ATTRVAL.  If ATTRVAL is NULL,
    the attribute is removed.  Changes are not written to disk until the
    next call to fileattr_write.  If FILENAME is NULL, set attributes for
    files created in the future.  If ATTRVAL is NULL, remove that attribute.  */
-extern void fileattr_set PROTO ((char *filename, char *attrname,
-				 char *attrval));
+extern void fileattr_set PROTO ((const char *filename, const char *attrname,
+				 const char *attrval));
 
 /* Set the attributes for file FILENAME in whatever manner is appropriate
    for a newly created file.  */
-extern void fileattr_newfile PROTO ((char *filename));
+extern void fileattr_newfile PROTO ((const char *filename));
 
 /* Write out all modified attributes.  */
 extern void fileattr_write PROTO ((void));

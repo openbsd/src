@@ -1,3 +1,40 @@
+Sun Sep 29 19:45:19 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* README: add entry for patch-2.1-.new-fix.
+	
+	* README: re-write the top section a bit.
+
+	* patch-2.1-.new-fix: re-generated using fixed "cvs patch" command.
+
+	* patch-2.1-.new-fix: new file.
+
+Sun Sep 29 14:25:28 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* rcs2log.sh (month_data):  Make default date format acceptable to
+ 	CVS post v1.8 as well as earlier CVSs and RCS.
+	Message-Id: <199609291546.QAA25531@mserv1.dl.ac.uk>
+	To: bug-gnu-emacs@prep.ai.mit.edu
+
+Thu Aug 29 11:58:03 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* rcs2log: Update FSF address.
+
+	* rcs2log: Be more aggressive about finding the author's full
+	name; try nismatch and ypmatch.
+
+	* rcs2log: If the hostname appears not to be fully qualified, see
+ 	if domainname provides any useful information.
+
+Fri Aug 16 16:02:36 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in (installdirs): support this target
+
+Mon May  6 13:04:57 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (install): Don't tell user to run cvsinit.  It isn't
+	called cvsinit anymore, and it isn't necessary (repositories are,
+	and need to be, compatible between cvs versions).
+
 Sun Apr 14 11:30:36 1996  Karl Fogel  <kfogel@floss.red-bean.com>
 
         * Removed pcl-cvs/ subdir; see tools/ subdir in the top-level from

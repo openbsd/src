@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include "mac_config.h"
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
@@ -58,7 +59,6 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $";
 #include <netdb.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -234,12 +234,14 @@ rresvport(alport)
 			return (s);
 		if (errno != EADDRINUSE) {
 			(void)close(s);
+			(void)fprintf(stderr, "rresvport: bind failed with %d\n", errno);
 			return (-1);
 		}
 		(*alport)--;
 		if (*alport == IPPORT_RESERVED/2) {
 			(void)close(s);
 			errno = EDEADLK;		/* close */
+			(void)fprintf(stderr, "rresvport: bind failed with EDEADLCK\n");
 			return (-1);
 		}
 	}

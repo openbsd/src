@@ -12,8 +12,7 @@
 static int find_type PROTO((Node * p, void *closure));
 static int fmt_proc PROTO((Node * p, void *closure));
 static int logfile_write PROTO((char *repository, char *filter, char *title,
-			  char *message, char *revision, FILE * logfp,
-			  List * changes));
+			  char *message, FILE * logfp, List * changes));
 static int rcsinfo_proc PROTO((char *repository, char *template));
 static int title_proc PROTO((Node * p, void *closure));
 static int update_logfile_proc PROTO((char *repository, char *filter));
@@ -31,6 +30,7 @@ static Ctype type;
  * and removed files are included (if any) and formatted to look pretty. */
 static char *prefix;
 static int col;
+static char *tag;
 static void
 setup_tmpfile (xfp, xprefix, changes)
     FILE *xfp;
@@ -45,28 +45,40 @@ setup_tmpfile (xfp, xprefix, changes)
     if (walklist (changes, find_type, NULL) != 0)
     {
 	(void) fprintf (fp, "%sModified Files:\n", prefix);
-	(void) fprintf (fp, "%s\t", prefix);
-	col = 8;
+	col = 0;
 	(void) walklist (changes, fmt_proc, NULL);
 	(void) fprintf (fp, "\n");
+	if (tag != NULL)
+	{
+	    free (tag);
+	    tag = NULL;
+	}
     }
     type = T_ADDED;
     if (walklist (changes, find_type, NULL) != 0)
     {
 	(void) fprintf (fp, "%sAdded Files:\n", prefix);
-	(void) fprintf (fp, "%s\t", prefix);
-	col = 8;
+	col = 0;
 	(void) walklist (changes, fmt_proc, NULL);
 	(void) fprintf (fp, "\n");
+	if (tag != NULL)
+	{
+	    free (tag);
+	    tag = NULL;
+	}
     }
     type = T_REMOVED;
     if (walklist (changes, find_type, NULL) != 0)
     {
 	(void) fprintf (fp, "%sRemoved Files:\n", prefix);
-	(void) fprintf (fp, "%s\t", prefix);
-	col = 8;
+	col = 0;
 	(void) walklist (changes, fmt_proc, NULL);
 	(void) fprintf (fp, "\n");
+	if (tag != NULL)
+	{
+	    free (tag);
+	    tag = NULL;
+	}
     }
 }
 
@@ -78,7 +90,10 @@ find_type (p, closure)
     Node *p;
     void *closure;
 {
-    if (p->data == (char *) type)
+    struct logfile_info *li;
+
+    li = (struct logfile_info *) p->data;
+    if (li->type == type)
 	return (1);
     else
 	return (0);
@@ -94,9 +109,44 @@ fmt_proc (p, closure)
     Node *p;
     void *closure;
 {
-    if (p->data == (char *) type)
+    struct logfile_info *li;
+
+    li = (struct logfile_info *) p->data;
+    if (li->type == type)
     {
-	if ((col + (int) strlen (p->key)) > 70)
+        if (li->tag == NULL
+	    ? tag != NULL
+	    : tag == NULL || strcmp (tag, li->tag) != 0)
+	{
+	    if (col > 0)
+	        (void) fprintf (fp, "\n");
+	    (void) fprintf (fp, "%s", prefix);
+	    col = strlen (prefix);
+	    while (col < 6)
+	    {
+	        (void) fprintf (fp, " ");
+		++col;
+	    }
+
+	    if (li->tag == NULL)
+	        (void) fprintf (fp, "No tag");
+	    else
+	        (void) fprintf (fp, "Tag: %s", li->tag);
+
+	    if (tag != NULL)
+	        free (tag);
+	    tag = xstrdup (li->tag);
+
+	    /* Force a new line.  */
+	    col = 70;
+	}
+
+	if (col == 0)
+	{
+	    (void) fprintf (fp, "%s\t", prefix);
+	    col = 8;
+	}
+	else if (col > 8 && (col + (int) strlen (p->key)) > 70)
 	{
 	    (void) fprintf (fp, "\n%s\t", prefix);
 	    col = 8;
@@ -126,7 +176,7 @@ do_editor (dir, messagep, repository, changes)
     char *line;
     int line_length;
     size_t line_chars_allocated;
-    char fname[L_tmpnam+1];
+    char *fname;
     struct stat pre_stbuf, post_stbuf;
     int retcode = 0;
     char *p;
@@ -139,9 +189,9 @@ do_editor (dir, messagep, repository, changes)
 	error(1, 0, "no editor defined, must use -e or -m");
 
     /* Create a temporary file */
-    (void) tmpnam (fname);
+    fname = cvs_temp_name ();
   again:
-    if ((fp = fopen (fname, "w+")) == NULL)
+    if ((fp = CVS_FOPEN (fname, "w+")) == NULL)
 	error (1, 0, "cannot create temporary file %s", fname);
 
     if (*messagep)
@@ -166,7 +216,7 @@ do_editor (dir, messagep, repository, changes)
 	size_t nwrite;
 
 	/* Why "b"?  */
-	tfp = fopen (CVSADM_TEMPLATE, "rb");
+	tfp = CVS_FOPEN (CVSADM_TEMPLATE, "rb");
 	if (tfp == NULL)
 	{
 	    if (!existence_error (errno))
@@ -211,7 +261,7 @@ do_editor (dir, messagep, repository, changes)
     /* finish off the temp file */
     if (fclose (fp) == EOF)
         error (1, errno, "%s", fname);
-    if (stat (fname, &pre_stbuf) == -1)
+    if ( CVS_STAT (fname, &pre_stbuf) == -1)
 	pre_stbuf.st_mtime = 0;
 
     if (editinfo_editor)
@@ -236,7 +286,7 @@ do_editor (dir, messagep, repository, changes)
     if (*messagep)
 	free (*messagep);
 
-    if (stat (fname, &post_stbuf) != 0)
+    if ( CVS_STAT (fname, &post_stbuf) != 0)
 	    error (1, errno, "cannot find size of temp file %s", fname);
 
     if (post_stbuf.st_size == 0)
@@ -288,7 +338,11 @@ do_editor (dir, messagep, repository, changes)
 		    || *line == '\n' || *line == 'c' || *line == 'C')
 		break;
 	    if (*line == 'a' || *line == 'A')
-		error (1, 0, "aborted by user");
+		{
+		    if (unlink_file (fname) < 0)
+			error (0, errno, "warning: cannot remove temp file %s", fname);
+		    error (1, 0, "aborted by user");
+		}
 	    if (*line == 'e' || *line == 'E')
 		goto again;
 	    if (*line == '!')
@@ -303,6 +357,7 @@ do_editor (dir, messagep, repository, changes)
 	free (line);
     if (unlink_file (fname) < 0)
 	error (0, errno, "warning: cannot remove temp file %s", fname);
+    free (fname);
 }
 
 /*
@@ -326,7 +381,7 @@ rcsinfo_proc (repository, template)
 	free (last_template);
     last_template = xstrdup (template);
 
-    if ((tfp = fopen (template, "r")) != NULL)
+    if ((tfp = CVS_FOPEN (template, "r")) != NULL)
     {
 	char *line = NULL;
 	size_t line_chars_allocated = 0;
@@ -357,14 +412,12 @@ rcsinfo_proc (repository, template)
 static char *title;
 static FILE *logfp;
 static char *message;
-static char *revision;
 static List *changes;
 
 void
-Update_Logfile (repository, xmessage, xrevision, xlogfp, xchanges)
+Update_Logfile (repository, xmessage, xlogfp, xchanges)
     char *repository;
     char *xmessage;
-    char *xrevision;
     FILE *xlogfp;
     List *xchanges;
 {
@@ -376,7 +429,6 @@ Update_Logfile (repository, xmessage, xrevision, xlogfp, xchanges)
 
     /* set up static vars for update_logfile_proc */
     message = xmessage;
-    revision = xrevision;
     logfp = xlogfp;
     changes = xchanges;
 
@@ -418,8 +470,8 @@ update_logfile_proc (repository, filter)
     char *repository;
     char *filter;
 {
-    return (logfile_write (repository, filter, title, message, revision,
-			   logfp, changes));
+    return (logfile_write (repository, filter, title, message, logfp,
+			   changes));
 }
 
 /*
@@ -430,7 +482,10 @@ title_proc (p, closure)
     Node *p;
     void *closure;
 {
-    if (p->data == (char *) type)
+    struct logfile_info *li;
+
+    li = (struct logfile_info *) p->data;
+    if (li->type == type)
     {
 	(void) strcat (str_list, " ");
 	(void) strcat (str_list, p->key);
@@ -450,12 +505,11 @@ title_proc (p, closure)
  * filter program.
  */
 static int
-logfile_write (repository, filter, title, message, revision, logfp, changes)
+logfile_write (repository, filter, title, message, logfp, changes)
     char *repository;
     char *filter;
     char *title;
     char *message;
-    char *revision;
     FILE *logfp;
     List *changes;
 {
@@ -480,8 +534,6 @@ logfile_write (repository, filter, title, message, revision, logfp, changes)
     (void) fprintf (pipefp, "Update of %s\n", repository);
     (void) fprintf (pipefp, "In directory %s:%s\n\n", hostname,
 		    ((cp = getwd (cwd)) != NULL) ? cp : cwd);
-    if (revision && *revision)
-	(void) fprintf (pipefp, "Revision/Branch: %s\n\n", revision);
     setup_tmpfile (pipefp, "", changes);
     (void) fprintf (pipefp, "Log Message:\n%s\n", message);
     if (logfp != (FILE *) 0)

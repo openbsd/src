@@ -16,12 +16,6 @@
    We just want to avoid a redefinition error message.  */
 #undef _ALL_SOURCE
 
-/* Define if type char is unsigned and you are not using gcc.  */
-/* We wrote a little test program whose output suggests that char is
-   signed on this system.  Go back and check the verdict when CVS
-   is configured on floss...  */
-#undef __CHAR_UNSIGNED__
-
 /* Define to empty if the keyword does not work.  */
 /* Const is working.  */
 #undef const
@@ -47,10 +41,6 @@
 /* Define if utime(file, NULL) sets file's timestamp to the present.  */
 /* Documentation says yup; haven't verified experimentally. */
 #define HAVE_UTIME_NULL 1
-
-/* We don't appear to have inline functions, so just expand "inline"
-   to "". */
-#define inline 
 
 /* Define if on MINIX.  */
 /* Hah.  */
@@ -322,13 +312,11 @@ extern void convert_file (char *INFILE,  int INFLAGS,
 #define RSH_NEEDS_BINARY_FLAG 1
 
 /* OS/2 doesn't really have user/group permissions, at least not
-   according to the C library manual pages.  So we'll make decoys. */
+   according to the C library manual pages.  So we'll make decoys.
+   (This was partly introduced for an obsolete reason, now taken care
+   of by CHMOD_BROKEN, but I haven't carefully looked at every case
+   (in particular mode_to_string), so it might still be needed).  */
 #define NEED_DECOY_PERMISSIONS 1     /* see system.h */
-
-/* See client.c.  Setting execute bits with chmod seems to lose under
-   OS/2, although in some places the documentation grudgingly admits
-   to the existence of execute bits. */
-#define EXECUTE_PERMISSION_LOSES 1
 
 
 
@@ -345,7 +333,7 @@ extern void convert_file (char *INFILE,  int INFLAGS,
 /* So "tcpip.h" gets included in lib/system.h: */
 #define USE_OWN_TCPIP_H 1
 /* The IBM TCP/IP library gets initialized in main(): */
-#define INITIALIZE_SOCKET_SUBSYSTEM init_sockets
+#define SYSTEM_INITIALIZE(pargc,pargv) init_sockets()
 extern void init_sockets();
 
 /* Under OS/2, we have our own popen() and pclose()... */

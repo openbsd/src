@@ -1,0 +1,185 @@
+                             CVS port to VMS
+
+DISCLAIMER: This port must be considered experimental.  Although
+previous versions have been in use at one large site since about
+October, 1995, and the port is believed to be quite usable, various
+VMS-specific quirks are known and the port cannot be considered as
+mature as the ports to, say, Windows NT or unix.  As always, future
+progress of this port will depend on volunteer and customer interest.
+
+This port is of the CVS client only.  Or in other words, the port
+implements the full set of CVS commands, but cannot access
+repositories located on the local machine.  The repository must live
+on another machine (a Unix box) which runs a complete port of CVS.
+
+Most (all?) work to date has been done on OpenVMS/AXP 6.2.  Other VMS
+variants might work too.
+
+You will also need GNU patch installed on your system.  Here's a list
+of ftp servers which have VMS GNU resources, taken from
+
+    ftp://prep.ai.mit.edu/pub/gnu/vms.README
+
+    mvb.saic.com
+    wuarchive.wustl.edu
+    ftp.wku.edu
+    ftp.spc.edu
+    ftp.stacken.kth.se
+
+Please send bug reports to bug-cvs@prep.ai.mit.edu.
+
+As of CVS 1.5.something, this port passed most of the tests in
+[.src]sanity.sh.  I say "most" because some tests to not apply to the
+CVS client.  The tests were run by hand because the VMS POSIX shell
+was incapable of running the script.  The tests that sanity.sh
+provides are not conclusive but at least provides some assurance that
+the client is usable.
+
+To compile, you will need DEC C (CC), DEC UCX, and of course DCL
+installed on your machine.  Just type "@build" in the top level
+directory.  This will build the sources in each subdirectory, and link
+the executable [.src]cvs.exe
+
+Copy the executable to an appropriate directory, and define the symbol "CVS"
+in a .COM file which everyone running CVS will need to run.  Here's an example
+of what needs to be done.
+
+$ CVS :== $YOUR_DEVICE:[YOUR.DIRECTORY.CVS]CVS.EXE
+
+Accessing a remote repository can happen in several ways.
+
+0. pserver
+1. Direct TCP using a listener process running on the CVS server.
+   (unprivileged)
+2. rsh - privileged (default)
+3. rsh - unprivileged (on VMS side)
+
+Here's how to do each of the above:
+
+-------------------------------------------------------------------------------
+0.  pserver.  This is the preferred way.  It works just as it is
+documented in the CVS manual (see the README file in the CVS
+distribution for more information on the manual).
+
+1.  Using direct TCP to communicate with a CVS server.  This method is
+broken in the current version of CVS; the following text is included
+for historical information but will be removed once we have verified
+that the so-called "direct TCP" is not worth resurrecting.
+
+Compile the file contrib/listener.c on the machine which will be the CVS
+server.  For each developer using the CVS client, choose a unique TCP port
+number.  This listener program is run on the server after defining a pair of
+environment variables, and acts as a proxy for the VMS client, which is
+authenticated only by reverse address resolution of hostname.
+
+Commits to the repository on a particular port will seen by the repository
+as being from the same user.
+
+On the VMS side, you will need to define the logical CVS_CLIENT_PORT.  Here's
+an example:
+
+$ DEFINE CVS_CLIENT_PORT 3050
+
+This will direct CVS to expect a direct connection to the CVS server on
+TCP port 3050 on whatever host is defined as the respository (whether through
+CVSROOT or the "-d" command option.
+
+The repository must have a full (client/server) CVS installed.  Choose a
+TCP port number (say 3050) [with coordination of your network administrator]
+for YOUR CVS transactions.  Each user of CVS under this arrangement will
+require a separate port.   Again, commits to the same port from the same
+host are all attributed to the user running the listener.  Invoke listener 
+as follows (asuming csh syntax)
+
+% setenv SERVER_PORT 3050
+% setenv SERVER_ALLOW my.vms.host.com
+% listener /my_cvs_path/cvs server &
+
+This will set up the CVS server to listen for connections on port 3050
+(instead of running through rsh, inetd, etc.).  It will immediately
+terminate the connection if the IP address of the connection does not
+resolve to "my.vms.host.com".  This at least gives some measure of the
+host control access afforded by rsh.  If the connection is not
+terminated, then the command "/my_cvs_path/cvs server" is invoked and
+it's stdin/stdout is redirected through the port.  Listener is used as
+a "poor man's (unprivileged) inetd".
+
+-------------------------------------------------------------------------------
+2. Using CVS internal rsh support (privileged)
+
+VMS's RSH is unusable for CVS's purposes (that is, the one in UCX.
+Don't know about Multinet).  However, there is code within CVS to
+emulate RSH for purposes of contacting a CVS server "in the usual way"
+via rshd.  Unfortunately, this requires the VMS CVS client to be
+installed with OPER privilege, by your system administrator.
+
+RSH uses privileged ports and trusted software/hosts to determine
+which user on the client side is trying to connect.  Part of this
+security is due to the fact that on VMS or UNIX, a non privileged
+process is not permitted to bind a socket to a privileged port.
+
+If rshd receives a connection on a non-privileged port, the connection is
+immediately aborted.  Only connections arriving from a privileged port will
+be authenticated and served.  The CVS client will therefore need privileges
+under VMS to produce such a connection.
+
+*** Please note that no careful examination has been done of the security
+    implications of installing CVS with the OPER privilege.  If some hole
+    exists, then by doing so, you will enable users who are already on
+    your system to gain unauthorized privileges ***
+
+-------------------------------------------------------------------------------
+3. Using CVS internal rsh support (non-privileged)
+
+There is a workaround, but this is one case where I think the cure is worse
+than the disease.  If you patch an rshd to not care that the RSH originating
+port is "non-privileged", the CVS VMS client will allow you to define the
+logical CVS_RCMD_PORT to the port number where this patched rshd will be
+listening.  I leave the talk of patching rshd to the gentle reader and his/her
+friendly system administrator.
+
+If I put an entry in my /etc/services file:
+
+cvs_rcmd            4381/tcp        cvs_rcmd
+
+And add a line to /etc/inetd.conf, then restart inetd via "kill -1"
+
+cvs_rcmd  stream  tcp  nowait root /usr/sbin/tcpd  /usr/local/sbin/cvs_rcmd
+
+On the VMS side, you will have to do this:
+
+$ define CVS_RCMD_PORT 4381
+
+Then run CVS in the "usual way".
+
+Note that the patched rshd will need to be invoked via inetd as root, so it can
+authenticate and _become_ the intended user, the same as the regular rshd.
+
+***Please note that you will be installing a security hole by doing this.***
+
+Please also note that this security hole is no larger than allowing a
+Macintosh, PC (OS/2, NT, etc.) to have it's hostname in any .rhosts file,
+as any user can create a privileged socket without authentication, under these
+environments.  In fact, existing ports of CVS to these environment use this
+to their advantage.
+
+-------------------------------------------------------------------------------
+Wildcard expansion is not yet implemented (i.e. CVS COMMIT *.c won't
+work.)  I have found GPL'd routine which does shell globbing, but I
+have not tried to put it in yet.
+
+Log messages must be entered on the command line using -m.  I wanted to start
+up TPU for editing log messages, but apparently SYS$SYSTEM:TPU.EXE requires
+some command table parsing through DCL, and cannot be directly invoked using C
+within CVS.  [I did get LSEDIT to launch, but it wasn't interested in argv at
+all.]
+
+You can use -e or define the logical EDITOR to cause CVS to try other editors
+if you want to test what's available on your system.  I haven't tested this,
+but if you install vi or emacs, chances are it will probably work.  Just make
+sure the .EXE files are in a directory listed in VAXC$PATH.
+
+Credits:
+
+Initial VMS port by Benjamin J. Lee <benjamin@cyclic.com>, Cyclic
+Software, October 1, 1995 (Update March 1, 1996).

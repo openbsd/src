@@ -3,26 +3,10 @@ You'll need to edit the makefile to reflect your system's paths
 (unless you're our customer for this port, in which case the paths
 are correct because we did the port on your machine. :-) ).
 
-        I'm having some weird problem with "\" vs. "/".  If I build
-with "\" as the path separator in the makefile, the compiler dumps
-core.  Go figure.  If I build with "/" as the path separator, the
-object files compile fine but the linker thinks the "/" is indicating
-options and gets all confused (though at least it doesn't dump core).
-
-        Right now the solution is to have a makefile variable called
-SL, which must be set to "/" for the first invocation of make and "\"
-for the second (the first pass will successfully build the object
-files, but you can expect it do die with "unknown options" errors at
-link time).
-
-        $SL is defined near the top of the makefile.  If you're going
-to set $SL in the makefile itself, make sure to quote it ("\\").  On
-the command line (i.e., "make SL=\"), I believe just one will do.
-
-        That should be all -- edit the makefile, do "make" twice
-(changing $SL the second time), and get os2\cvs.exe.  Assuming you
-have edited the `install_dir' variable in the Makefile, you may type
-"make install-cvs" to put cvs.exe in the right place.
+        That should be all -- edit the makefile, do "make" and get
+os2\cvs.exe.  Assuming you have edited the `install_dir' variable in
+the Makefile, you may type "make install-cvs" to put cvs.exe in the
+right place.
 
         If the makefile has linefeeds only at the end of lines, make
 (at least the port of GNU make that I have) will interpret it

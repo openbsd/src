@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "cvs.h"
 #include "rcmd.h"
 
 void
@@ -151,17 +152,17 @@ rcmd_authenticate (int fd, char *locuser, char *remuser, char *command)
        server first, but that doesn't seem to work.  Transmitting the
        client username first does.  Go figure.  The Linux man pages
        get it right --- hee hee.  */
-    if (write (fd, "0\0", 2) < 0
-	|| write (fd, locuser, strlen (locuser) + 1) < 0
-        || write (fd, remuser, strlen (remuser) + 1) < 0
-	|| write (fd, command, strlen (command) + 1) < 0)
+    if ((send (fd, "0\0", 2, 0) == SOCKET_ERROR)
+	|| (send (fd, locuser, strlen (locuser) + 1, 0) == SOCKET_ERROR)
+	|| (send (fd, remuser, strlen (remuser) + 1, 0) == SOCKET_ERROR)
+	|| (send (fd, command, strlen (command) + 1, 0) == SOCKET_ERROR))
 	return -1;
 
     /* They sniff our butt, and send us a '\0' character if they
        like us.  */
     {
         char c;
-        if (read (fd, &c, 1) <= 0
+	if (recv (fd, &c, 1, 0) == SOCKET_ERROR
 	    || c != '\0')
 	{
 	    errno = EPERM;
@@ -182,7 +183,6 @@ rcmd (const char **ahost,
 {
     struct sockaddr_in sai;
     SOCKET s;
-    int fd;
 
     assert (fd2p == 0);
 
@@ -206,14 +206,8 @@ rcmd (const char **ahost,
         return -1;
 #endif
 
-    /* When using WinSock under Windows NT, sockets are low-level Windows
-       NT handles.  Turn the socket we've made into a Unix-like file
-       descriptor.  */
-    if ((fd = _open_osfhandle (s, _O_BINARY)) < 0)
+    if (rcmd_authenticate (s, locuser, remuser, cmd) < 0)
         return -1;
 
-    if (rcmd_authenticate (fd, locuser, remuser, cmd) < 0)
-        return -1;
-
-    return fd;
+    return s;
 }

@@ -21,34 +21,23 @@ static void sticky_ck PROTO((char *file, int aflag, Vers_TS * vers, List * entri
  * Classify the state of a file
  */
 Ctype
-Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
-	       entries, rcsnode, versp, update_dir, pipeout)
-    char *file;
+Classify_File (finfo, tag, date, options, force_tag_match, aflag, versp,
+	       pipeout)
+    struct file_info *finfo;
     char *tag;
     char *date;
     char *options;
     int force_tag_match;
     int aflag;
-    char *repository;
-    List *entries;
-    RCSNode *rcsnode;
     Vers_TS **versp;
-    char *update_dir;
     int pipeout;
 {
     Vers_TS *vers;
     Ctype ret;
-    char *fullname;
-
-    fullname = xmalloc (strlen (update_dir) + strlen (file) + 10);
-    if (update_dir[0] == '\0')
-	strcpy (fullname, file);
-    else
-	sprintf (fullname, "%s/%s", update_dir, file);
 
     /* get all kinds of good data about the file */
-    vers = Version_TS (repository, options, tag, date, file,
-		       force_tag_match, 0, entries, rcsnode);
+    vers = Version_TS (finfo, options, tag, date,
+		       force_tag_match, 0);
 
     if (vers->vn_user == NULL)
     {
@@ -61,7 +50,7 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
 		/* there is no user file */
 		if (!force_tag_match || !(vers->tag || vers->date))
 		    if (!really_quiet)
-			error (0, 0, "nothing known about %s", fullname);
+			error (0, 0, "nothing known about %s", finfo->fullname);
 		ret = T_UNKNOWN;
 	    }
 	    else
@@ -70,24 +59,18 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
 		if (!force_tag_match || !(vers->tag || vers->date))
 		    if (!really_quiet)
 			error (0, 0, "use `cvs add' to create an entry for %s",
-			       fullname);
+			       finfo->fullname);
 		ret = T_UNKNOWN;
 	    }
 	}
 	else if (RCS_isdead (vers->srcfile, vers->vn_rcs))
 	{
 	    if (vers->ts_user == NULL)
-		/*
-		 * Logically seems to me this should be T_UPTODATE.
-		 * But the joining code in update.c seems to expect
-		 * T_CHECKOUT, and that is what has traditionally been
-		 * returned for this case.
-		 */
-		ret = T_CHECKOUT;
+		ret = T_UPTODATE;
 	    else
 	    {
 		error (0, 0, "use `cvs add' to create an entry for %s",
-		       fullname);
+		       finfo->fullname);
 		ret = T_UNKNOWN;
 	    }
 	}
@@ -115,13 +98,12 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
 		 * conflict list, only if it is indeed different from what we
 		 * plan to extract
 		 */
-		else if (No_Difference (file, vers, entries,
-					repository, update_dir))
+		else if (No_Difference (finfo, vers))
 		{
 		    /* the files were different so it is a conflict */
 		    if (!really_quiet)
 			error (0, 0, "move away %s; it is in the way",
-			       fullname);
+			       finfo->fullname);
 		    ret = T_CONFLICT;
 		}
 		else
@@ -141,7 +123,7 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
 	     * entry
 	     */
 	    if (!really_quiet)
-		error (0, 0, "warning: new-born %s has disappeared", fullname);
+		error (0, 0, "warning: new-born %s has disappeared", finfo->fullname);
 	    ret = T_REMOVE_ENTRY;
 	}
 	else
@@ -166,7 +148,7 @@ Classify_File (file, tag, date, options, force_tag_match, aflag, repository,
 			error (0, 0,
 			       "\
 conflict: %s has been added, but already exists",
-			       fullname);
+			       finfo->fullname);
 		}
 		else
 		{
@@ -178,7 +160,7 @@ conflict: %s has been added, but already exists",
 			error (0, 0,
 			       "\
 conflict: %s created independently by second party",
-			       fullname);
+			       finfo->fullname);
 		}
 		ret = T_CONFLICT;
 	    }
@@ -196,7 +178,8 @@ conflict: %s created independently by second party",
 
 	    (void) sprintf (tmp, "-%s", vers->vn_rcs ? vers->vn_rcs : "");
 
-	    if (vers->vn_rcs == NULL)
+	    if (vers->vn_rcs == NULL
+		|| RCS_isdead (vers->srcfile, vers->vn_rcs))
 	    {
 
 		/*
@@ -222,7 +205,7 @@ conflict: %s created independently by second party",
 		if (!really_quiet)
 		    error (0, 0,
 			   "conflict: removed %s was modified by second party",
-			   fullname);
+			   finfo->fullname);
 		ret = T_CONFLICT;
 	    }
 	}
@@ -231,7 +214,7 @@ conflict: %s created independently by second party",
 	    /* The user file shouldn't be there */
 	    if (!really_quiet)
 		error (0, 0, "%s should be removed and is still there",
-		       fullname);
+		       finfo->fullname);
 	    ret = T_REMOVED;
 	}
     }
@@ -247,7 +230,7 @@ conflict: %s created independently by second party",
 		/* There is no user file, so just remove the entry */
 		if (!really_quiet)
 		    error (0, 0, "warning: %s is not (any longer) pertinent",
-			   fullname);
+			   finfo->fullname);
 		ret = T_REMOVE_ENTRY;
 	    }
 	    else if (strcmp (vers->ts_user, vers->ts_rcs) == 0)
@@ -259,7 +242,7 @@ conflict: %s created independently by second party",
 		 */
 		if (!really_quiet)
 		    error (0, 0, "%s is no longer in the repository",
-			   fullname);
+			   finfo->fullname);
 		ret = T_REMOVE_ENTRY;
 	    }
 	    else
@@ -268,14 +251,13 @@ conflict: %s created independently by second party",
 		 * The user file has been modified and since it is no longer
 		 * in the repository, a conflict is raised
 		 */
-		if (No_Difference (file, vers, entries,
-				   repository, update_dir))
+		if (No_Difference (finfo, vers))
 		{
 		    /* they are different -> conflict */
 		    if (!really_quiet)
 			error (0, 0,
 	       "conflict: %s is modified but no longer in the repository",
-			   fullname);
+			   finfo->fullname);
 		    ret = T_CONFLICT;
 		}
 		else
@@ -284,7 +266,7 @@ conflict: %s created independently by second party",
 		    if (!really_quiet)
 			error (0, 0,
 			       "warning: %s is not (any longer) pertinent",
-			       fullname);
+			       finfo->fullname);
 		    ret = T_REMOVE_ENTRY;
 		}
 	    }
@@ -302,7 +284,7 @@ conflict: %s created independently by second party",
 		 */
 		if (strcmp (command_name, "update") == 0)
 		    if (!really_quiet)
-			error (0, 0, "warning: %s was lost", fullname);
+			error (0, 0, "warning: %s was lost", finfo->fullname);
 		ret = T_CHECKOUT;
 	    }
 	    else if (strcmp (vers->ts_user, vers->ts_rcs) == 0)
@@ -320,10 +302,10 @@ conflict: %s created independently by second party",
 		else
 		{
 #ifdef SERVER_SUPPORT
-		    sticky_ck (file, aflag, vers, entries,
-			       repository, update_dir);
+		    sticky_ck (finfo->file, aflag, vers, finfo->entries,
+			       finfo->repository, finfo->update_dir);
 #else
-		    sticky_ck (file, aflag, vers, entries);
+		    sticky_ck (finfo->file, aflag, vers, finfo->entries);
 #endif
 		    ret = T_UPTODATE;
 		}
@@ -335,8 +317,7 @@ conflict: %s created independently by second party",
 		 * The user file appears to have been modified, but we call
 		 * No_Difference to verify that it really has been modified
 		 */
-		if (No_Difference (file, vers, entries,
-				   repository, update_dir))
+		if (No_Difference (finfo, vers))
 		{
 
 		    /*
@@ -352,10 +333,10 @@ conflict: %s created independently by second party",
 #else
 		    ret = T_MODIFIED;
 #ifdef SERVER_SUPPORT
-		    sticky_ck (file, aflag, vers, entries,
-			       repository, update_dir);
+		    sticky_ck (finfo->file, aflag, vers, finfo->entries,
+			       finfo->repository, finfo->update_dir);
 #else
-		    sticky_ck (file, aflag, vers, entries);
+		    sticky_ck (finfo->file, aflag, vers, finfo->entries);
 #endif /* SERVER_SUPPORT */
 #endif
 		}
@@ -390,7 +371,7 @@ conflict: %s created independently by second party",
 
 		if (strcmp (command_name, "update") == 0)
 		    if (!really_quiet)
-			error (0, 0, "warning: %s was lost", fullname);
+			error (0, 0, "warning: %s was lost", finfo->fullname);
 		ret = T_CHECKOUT;
 	    }
 	    else if (strcmp (vers->ts_user, vers->ts_rcs) == 0)
@@ -413,8 +394,7 @@ conflict: %s created independently by second party",
 	    }
 	    else
 	    {
-		if (No_Difference (file, vers, entries,
-				   repository, update_dir))
+		if (No_Difference (finfo, vers))
 		    /* really modified, needs to merge */
 		    ret = T_NEEDS_MERGE;
 #ifdef SERVER_SUPPORT
@@ -441,8 +421,6 @@ conflict: %s created independently by second party",
 	*versp = vers;
     else
 	freevers_ts (&vers);
-
-    free (fullname);
 
     /* return the status of the file */
     return (ret);

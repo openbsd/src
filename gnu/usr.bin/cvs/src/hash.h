@@ -20,7 +20,7 @@ enum ntype
 {
     UNKNOWN, HEADER, ENTRIES, FILES, LIST, RCSNODE,
     RCSVERS, DIRS, UPDATE, LOCK, NDBMNODE, FILEATTR,
-    VARIABLE
+    VARIABLE, RCSFIELD
 };
 typedef enum ntype Ntype;
 

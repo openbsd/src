@@ -43,11 +43,17 @@ the person checking in such a patch should reindent it.
 
 * Portability
 
-If it is in ANSI C and it is in SunOS4 (using /bin/cc), generally it
-is OK to use it without ifdefs (for example, assert() and void * as
-long as you add more casts to and from void * than ANSI requires.  But
-not function prototypes).  Such constructs are generally portable
-enough, including to NT, OS/2, VMS, etc.
+The general rule for portability is that it is only worth including
+portability cruft for systems on which people are actually testing and
+using new CVS releases.  Without testing, CVS will fail to be portable
+for any number of unanticipated reasons.
+
+The current consequence of that general rule seems to be that if it
+is in ANSI C and it is in SunOS4 (using /bin/cc), generally it is OK
+to use it without ifdefs (for example, assert() and void * as long as
+you add more casts to and from void * than ANSI requires.  But not
+function prototypes).  Such constructs are generally portable enough,
+including to NT, OS/2, VMS, etc.
 
 * Run-time behaviors
 
@@ -58,12 +64,32 @@ but we want to fix that code.  Of course, bad input data, a corrupt
 repository, bad options, etc., should always print a real error
 message instead.
 
+We realize that CVS contains many arbitrary limits (such as PATH_MAX).
+Do not do this in new code; we are trying to *fix* those arbitrary
+limits.  In particular, it should be possible to pass very long
+arguments (e.g. from a WWW cgi script) to CVS without having it
+overrun any buffers (which might create a security hole in the WWW
+example).
+
+Although this is a long-term goal, it also would be nice to move CVS
+in the direction of reentrancy.  This reduces the size of the data
+segment and will allow a multi-threaded server if that is desirable.
+It is also useful to write the code so that it can be easily be made
+reentrant later.  For example, if you need to pass data from a
+Parse_Info caller to its callproc, you need a static variable.  But
+use a single pointer so that when Parse_Info is fixed to pass along a
+void * argument, then the code can easily use that argument.
+
 * Coding standards in general
 
 Generally speaking the GNU coding standards are mostly used by CVS
 (but see the exceptions mentioned above, such as indentation style,
 and perhaps an exception or two we haven't mentioned).  This is the
 file standards.text at the GNU FTP sites.
+
+Filenames for .c and .h files may contain _ but should not contain -
+(the latter causes Visual C++ 2.1 to create makefiles which Visual C++
+4.0 cannot use).
 
 * Submitting patches
 
@@ -74,7 +100,7 @@ the code are appropriate for this, but not always)--patches should not
 be checked in unless there is some reason for them, and the
 description may be helpful if there is a better way to solve the
 problem.  In addition to the ChangeLog entry, there should be a change
-to the NEWS file in the case of a new feature.
+to the NEWS file and cvs.texinfo in the case of a user-visible change.
 
 If you solve several unrelated problems, submit a separate
 patch for each one.  Patches should be tested before submission.  Use

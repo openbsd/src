@@ -65,7 +65,7 @@
  */
 
 #ifndef DIFF
-#define	DIFF	"@gdiff_path@"
+#define	DIFF	"diff"
 #endif
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #ifndef GREP
-#define GREP "@ggrep_path@"
+#define GREP "grep"
 #endif
 
 /*
@@ -116,6 +116,17 @@
  */
 #ifndef RCSBIN_DFLT
 #define	RCSBIN_DFLT	""
+#endif
+
+/*
+ * The password-authenticating server creates a temporary checkout of
+ * the affected files.  The variable TMPDIR_DFLT (or even better, the
+ * command-line option "-T" in the line for CVS in /etc/inetd.conf)
+ * can be used to specify the used directory.  This directory will
+ * also be used for other temporary files.
+ */
+#ifndef TMPDIR_DFLT
+#define	TMPDIR_DFLT	"c:\\temp"
 #endif
 
 /*
@@ -231,16 +242,6 @@
  * Yes, we can do the authenticated client.
  */
 #define AUTH_CLIENT_SUPPORT 1
-
-/*
- * This tells the client that it must use send()/recv() to talk to the
- * server if it is connected to the server via a socket; Win95 is said to
- * need it because _open_osfhandle doesn't work.  This is only
- * implemented for pserver, not rsh.  Furthermore, NT doesn't seem to have send()
- * and recv(), or maybe one has to link against a different library or something,
- * I don't know.  So this is commented out.
- */
-#define NO_SOCKET_TO_FD 1
 
 /* End of CVS configuration section */
 

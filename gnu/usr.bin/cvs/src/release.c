@@ -93,7 +93,7 @@ release (argc, argv)
      */
     /* Construct the update command. */
     sprintf (update_cmd, "%s -n -q -d %s update",
-             program_path, CVSroot);
+             program_path, CVSroot_original);
 
 #ifdef CLIENT_SUPPORT
     /* Start the server; we'll close it after looping. */
@@ -137,7 +137,7 @@ release (argc, argv)
          */
         if (isdir (thisarg))
         {
-          if (chdir (thisarg) < 0)
+          if ( CVS_CHDIR (thisarg) < 0)
           {
             if (!really_quiet)
               error (0, 0, "can't chdir to: %s", thisarg);
@@ -267,10 +267,10 @@ release_delete (dir)
     struct stat st;
     ino_t ino;
 
-    (void) stat (".", &st);
+    (void) CVS_STAT (".", &st);
     ino = st.st_ino;
-    (void) chdir ("..");
-    (void) stat (dir, &st);
+    (void) CVS_CHDIR ("..");
+    (void) CVS_STAT (dir, &st);
     if (ino != st.st_ino)
     {
 	error (0, 0,

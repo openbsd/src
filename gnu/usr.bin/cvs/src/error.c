@@ -61,7 +61,9 @@ void exit ();
 #endif /* __STDC__ */
 #endif /* STDC_HEADERS */
 
+#ifndef strerror
 extern char *strerror ();
+#endif
 
 extern int vasprintf ();
 
@@ -95,19 +97,9 @@ error (status, errnum, message, va_alist)
     va_dcl
 #endif
 {
-    FILE *out = stderr;
-#ifdef HAVE_VPRINTF
-    va_list args;
-#endif
-
-    if (error_use_protocol)
-    {
-	out = stdout;
-	printf ("E ");
-    }
-
 #ifdef HAVE_VPRINTF
     {
+	va_list args;
 	char *mess = NULL;
 	char *entire;
 	size_t len;
@@ -157,10 +149,7 @@ error (status, errnum, message, va_alist)
 		free (mess);
 	    }
 	}
-	if (error_use_protocol)
-	    fputs (entire ? entire : "out of memory", out);
-	else
-	    cvs_outerr (entire ? entire : "out of memory", 0);
+	cvs_outerr (entire ? entire : "out of memory", 0);
 	if (entire != NULL)
 	    free (entire);
     }
@@ -169,38 +158,49 @@ error (status, errnum, message, va_alist)
     /* I think that all relevant systems have vprintf these days.  But
        just in case, I'm leaving this code here.  */
 
-    if (command_name && *command_name)
     {
-	if (status)
-	    fprintf (out, "%s [%s aborted]: ", program_name, command_name);
+	FILE *out = stderr;
+
+	if (error_use_protocol)
+	{
+	    out = stdout;
+	    printf ("E ");
+	}
+
+	if (command_name && *command_name)
+	{
+	    if (status)
+		fprintf (out, "%s [%s aborted]: ", program_name, command_name);
+	    else
+		fprintf (out, "%s %s: ", program_name, command_name);
+	}
 	else
-	    fprintf (out, "%s %s: ", program_name, command_name);
-    }
-    else
-	fprintf (out, "%s: ", program_name);
+	    fprintf (out, "%s: ", program_name);
 
 #ifdef HAVE_VPRINTF
-    VA_START (args, message);
-    vfprintf (out, message, args);
-    va_end (args);
+	VA_START (args, message);
+	vfprintf (out, message, args);
+	va_end (args);
 #else
 #ifdef HAVE_DOPRNT
-    _doprnt (message, &args, out);
+	_doprnt (message, &args, out);
 #else
-    fprintf (out, message, a1, a2, a3, a4, a5, a6, a7, a8);
+	fprintf (out, message, a1, a2, a3, a4, a5, a6, a7, a8);
 #endif
 #endif
-    if (errnum)
-	fprintf (out, ": %s", strerror (errnum));
-    putc ('\n', out);
+	if (errnum)
+	    fprintf (out, ": %s", strerror (errnum));
+	putc ('\n', out);
+
+	/* In the error_use_protocol case, this probably does
+	   something useful.  In most other cases, I suspect it is a
+	   noop (either stderr is line buffered or we haven't written
+	   anything to stderr) or unnecessary (if stderr is not line
+	   buffered, maybe there is a reason....).  */
+	fflush (out);
+    }
 
 #endif /* No HAVE_VPRINTF */
-
-    /* In the error_use_protocol case, this probably does something useful.
-       In most other cases, I suspect it is a noop (either stderr is line
-       buffered or we haven't written anything to stderr) or unnecessary
-       (if stderr is not line buffered, maybe there is a reason....).  */
-    fflush (out);
 
     if (status)
     {
@@ -216,7 +216,7 @@ error (status, errnum, message, va_alist)
    Exit with status EXIT_FAILURE if STATUS is nonzero.  */
 /* VARARGS */
 void
-#if defined (HAVE_VPRINTF) && __STDC__
+#if defined (HAVE_VPRINTF) && ((__STDC__ - 0) > 0)
 fperror (FILE *fp, int status, int errnum, char *message, ...)
 #else
 fperror (fp, status, errnum, message, va_alist)

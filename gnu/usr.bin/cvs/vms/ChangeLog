@@ -1,0 +1,86 @@
+Wed Sep 25 15:09:53 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Define TMPDIR_DFLT to sys$scratch not sys$login.
+
+Tue Sep 24 14:11:30 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Add TMPDIR_DFLT.
+
+	* Makefile.in (DISTFILES): Add getpass.c.
+
+Thu Sep 12 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* config.h: Define ARGV0_NOT_PROGRAM_NAME.
+
+Thu Sep 12 14:56:42 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h, filesubr.c: Add FOLD_FN_CHAR, VMS_filename_classes,
+	fncmp, and fnfold.  This is copied from the NT port except various
+	comments were changed and '/' is not considered the same as '\'.
+
+Wed Sep 11 15:53:18 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Define NO_SLASH_AFTER_HOME.
+
+	* options.h: Define AUTH_CLIENT_SUPPORT.
+	* build_vms.com: Add getpass.c.
+	* getpass.c: New file.
+
+	* config.h: Define getopt, optind, optopt, optarg, and opterr to
+	avoid name conflicts with system libraries.
+
+	* filesubr.c (expand_wild): Added.
+
+Wed Sep 11 11:12:01 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (DISTFILES): Omit filesubr.c.rej.
+
+Tue Sep 10 19:15:47 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: New file.
+
+	* config.h (START_SERVER_RETURNS_SOCKET, SEND_NEVER_PARTIAL):
+	Define.  This just preserves the behavior the VMS port has had all
+	along.
+
+Mon Aug 26 12:51:52 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (mkdir_if_needed): Added.
+
+Tue May 14 13:38:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (cvs_temp_name): New function.
+
+Tue Mar 19 17:49:16 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* startserver.c (vms_start_server): Added support for
+	  CVS_RCMD_PORT (and thus made consistent with WindowsNT and Mac)
+
+Fri Mar  1 00:10:06 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* startserver.c, rcmd.c: Made privileged/non-privileged
+	rsh communication more adaptive.  Removed USE_PRIVILEGED_RCMD.
+
+Wed Feb 28 11:08:06 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove comment about automatic generation from
+	options.h.in.
+
+	* options.h: Remove AUTH_SERVER_SUPPORT; no longer should be
+	defined in options.h.
+
+	* options.h: Remove RM and SORT; no longer used.
+
+	* config.h: Remove C_ALLOCA, CRAY_STACKSEG_END, HAVE_ALLOCA,
+	HAVE_ALLOCA_H, and STACK_DIRECTION to reflect alloca removal.
+
+	* vms.h: Remove DEATH_SUPPORT; it was removed from CVS Feb 9.
+
+	* alloca.c: Removed.
+	* build_vms.com: Remove alloca.
+	* startserver.c (vms_start_server): Use xmalloc/free, not alloca.
+
+Wed Feb 28 03:38:42 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* VMS support files added.
+

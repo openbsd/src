@@ -11,12 +11,6 @@
    We just want to avoid a redefinition error message.  */
 #undef _ALL_SOURCE
 
-/* Define if type char is unsigned and you are not using gcc.  */
-/* We wrote a little test program whose output suggests that char is
-   signed on this system.  Go back and check the verdict when CVS
-   is configured on floss...  */
-#undef __CHAR_UNSIGNED__
-
 /* Define to empty if the keyword does not work.  */
 /* Const is working.  */
 #undef const
@@ -39,11 +33,6 @@
 /* Experimentation says yes.  Wish I had the full documentation, but
    I have neither the CD-ROM nor a CD-ROM drive to put it in.  */
 #define HAVE_UTIME_NULL 1
-
-/* Define as __inline if that's what the C compiler calls it.  */
-/* We apparently do have inline functions.  The 'inline' keyword is only
-   available from C++, though.  You have to use '__inline' in C code.  */
-#define inline __inline
 
 /* Define if on MINIX.  */
 /* Hah.  */
@@ -274,7 +263,7 @@ extern pid_t getpid (void);
 #define USE_PROTOTYPES 1
 
 /* This is just a call to the Win32 Sleep function.  */
-unsigned sleep (unsigned);
+unsigned int sleep (unsigned int);
 
 /* Don't worry, Microsoft, it's okay for these functions to
    be in our namespace.  */
@@ -316,12 +305,6 @@ extern void convert_file (char *INFILE,  int INFLAGS,
 /* This is where old bits go to die under Windows NT.  */
 #define DEVNULL "nul"
 
-/* Make sure that we don't try to perform operations on RCS files on the
-   local machine.  I think I neglected to apply some changes from
-   MHI's port in that area of code, or found some issues I didn't want
-   to deal with.  */
-#define CLIENT_ONLY
-
 /* Don't use an rsh subprocess to connect to the server, because
    the rsh does inappropriate translations on the data (CR-LF/LF).  */
 #define RSH_NOT_TRANSPARENT 1
@@ -334,7 +317,24 @@ extern void wnt_shutdown_server (int fd);
 #define START_SERVER wnt_start_server
 #define SHUTDOWN_SERVER wnt_shutdown_server
 
-#define INITIALIZE_SOCKET_SUBSYSTEM init_winsock
+#define SYSTEM_INITIALIZE(pargc,pargv) init_winsock()
 extern void init_winsock();
 
 #define HAVE_WINSOCK_H
+
+/* This tells the client that it must use send()/recv() to talk to the
+   server if it is connected to the server via a socket; Win95 needs
+   it because _open_osfhandle doesn't work.  */
+#define NO_SOCKET_TO_FD 1
+
+/* The internal rsh client uses sockets not file descriptors.  Note
+   that as the code stands now, it often takes values from a SOCKET and
+   puts them in an int.  This is ugly but it seems like sizeof
+   (SOCKET) <= sizeof (int) on win32, even the 64-bit variants.  */
+#define START_SERVER_RETURNS_SOCKET 1
+
+/* Is this true on NT?  Seems like I remember reports that NT 3.51 has
+   problems with 200K writes (of course, the issue of large writes is
+   moot since the use of buffer.c ensures that writes will only be as big
+   as the buffers).  */
+#define SEND_NEVER_PARTIAL 1

@@ -1,0 +1,85 @@
+#### Under VMS, we use *.COM to build, not
+#### this makefile.  However, we need this file in order for 'make
+#### dist' to work properly on Unix machines.
+
+srcdir     = @srcdir@
+top_srcdir = @top_srcdir@
+cvs_srcdir = @top_srcdir@/src
+VPATH      = @srcdir@
+
+SHELL = /bin/sh
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+DISTFILES = \
+    ChangeLog \
+    Makefile.in \
+    build_vms.com \
+    config.h \
+    dir.h \
+    filesubr.c \
+    filutils.c \
+    filutils.h \
+    getpass.c \
+    getwd.c \
+    misc.c \
+    misc.h \
+    ndir.c \
+    ndir.h \
+    options.h \
+    pathnames.h \
+    pc.c \
+    pipe.c \
+    pipe.h \
+    piped_child.c \
+    pwd.c \
+    pwd.h \
+    rcmd.c \
+    readlink.c \
+    rmdir.c \
+    startserver.c \
+    stat.c \
+    unlink.c \
+    utime.c \
+    vms-types.h \
+    vms.h \
+    vmsmunch.c \
+    vmsmunch.h \
+    vmsmunch_private.h \
+    waitpid.c
+
+all:
+
+.PHONY: all install uninstall
+all install uninstall:
+
+installdirs:
+.PHONY: installdirs
+
+.PHONY: tags TAGS
+tags TAGS:
+
+.PHONY: ls
+ls:
+	@echo ${DISTFILES}
+
+.PHONY: clean distclean realclean mostlyclean
+clean distclean realclean mostlyclean:
+
+.PHONY: lint
+lint:
+
+.PHONY: dist-dir
+dist-dir:
+	mkdir ${DISTDIR}
+	for i in ${DISTFILES}; do \
+		ln $(srcdir)/$${i} ${DISTDIR}; \
+	done
+
+clean:
+	@echo make clean does nothing in vms subdir
+
+subdir = vms
+Makefile: ../config.status Makefile.in
+	cd .. && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status

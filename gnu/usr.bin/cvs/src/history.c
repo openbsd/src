@@ -424,7 +424,7 @@ history (argc, argv)
 		if (strlen (optarg) >= sizeof (backto))
 		{
 		    error (0, 0, "backto truncated to %d bytes",
-			   sizeof (backto) - 1);
+			   (int) sizeof (backto) - 1);
 		    optarg[sizeof (backto) - 1] = '\0';
 		}
 		(void) strcpy (backto, optarg);
@@ -564,9 +564,9 @@ history (argc, argv)
 	    send_arg("-m");
 	for (mod = mod_list; mod < &mod_list[mod_count]; ++mod)
 	    option_with_arg ("-n", *mod);
-	if (since_rev != NULL)
+	if (*since_rev)
 	    option_with_arg ("-r", since_rev);
-	if (since_tag != NULL)
+	if (*since_tag)
 	    option_with_arg ("-t", since_tag);
 	for (mod = user_list; mod < &user_list[user_count]; ++mod)
 	    option_with_arg ("-u", *mod);
@@ -649,7 +649,7 @@ history (argc, argv)
     if (histfile)
 	(void) strcpy (fname, histfile);
     else
-	(void) sprintf (fname, "%s/%s/%s", CVSroot,
+	(void) sprintf (fname, "%s/%s/%s", CVSroot_directory,
 			CVSROOTADM, CVSROOTADM_HISTORY);
 
     read_hrecs (fname);
@@ -678,7 +678,8 @@ history_write (type, update_dir, revs, name, repository)
 
     if (logoff)			/* History is turned off by cmd line switch */
 	return;
-    (void) sprintf (fname, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_HISTORY);
+    (void) sprintf (fname, "%s/%s/%s", CVSroot_directory,
+		    CVSROOTADM, CVSROOTADM_HISTORY);
 
     /* turn off history logging if the history file does not exist */
     if (!isfile (fname))
@@ -696,7 +697,7 @@ history_write (type, update_dir, revs, name, repository)
 #endif
     if (noexec)
 	return;
-    fd = open (fname, O_WRONLY | O_APPEND | O_CREAT | OPEN_BINARY, 0666);
+    fd = CVS_OPEN (fname, O_WRONLY | O_APPEND | O_CREAT | OPEN_BINARY, 0666);
     if (fd < 0)
 	error (1, errno, "cannot open history file: %s", fname);
 
@@ -722,11 +723,11 @@ history_write (type, update_dir, revs, name, repository)
 		/* Try harder to find a "homedir" */
 		if (!getwd (workdir))
 		    error (1, errno, "can't getwd in history");
-		if (chdir (pwdir) < 0)
+		if ( CVS_CHDIR (pwdir) < 0)
 		    error (1, errno, "can't chdir(%s)", pwdir);
 		if (!getwd (homedir))
 		    error (1, errno, "can't getwd in %s", pwdir);
-		(void) chdir (workdir);
+		(void) CVS_CHDIR (workdir);
 
 		i = strlen (homedir);
 		if (!strncmp (CurDir, homedir, i))
@@ -994,7 +995,7 @@ read_hrecs (fname)
     struct hrec *hr;
     struct stat st_buf;
 
-    if ((fd = open (fname, O_RDONLY | OPEN_BINARY)) < 0)
+    if ((fd = CVS_OPEN (fname, O_RDONLY | OPEN_BINARY)) < 0)
 	error (1, errno, "cannot open history file: %s", fname);
 
     if (fstat (fd, &st_buf) < 0)
@@ -1134,9 +1135,19 @@ select_hrec (hr)
     {
 	Vers_TS *vers;
 	time_t t;
+	struct file_info finfo;
 
-	vers = Version_TS (hr->repos, (char *) NULL, since_rev, (char *) NULL,
-			   hr->file, 1, 0, (List *) NULL, (RCSNode *) NULL);
+	memset (&finfo, 0, sizeof finfo);
+	finfo.file = hr->file;
+	/* Not used, so don't worry about it.  */
+	finfo.update_dir = NULL;
+	finfo.fullname = finfo.file;
+	finfo.repository = hr->repos;
+	finfo.entries = NULL;
+	finfo.rcs = NULL;
+
+	vers = Version_TS (&finfo, (char *) NULL, since_rev, (char *) NULL,
+			   1, 0);
 	if (vers->vn_rcs)
 	{
 	    if ((t = RCS_getrevtime (vers->srcfile, vers->vn_rcs, (char *) 0, 0))
@@ -1399,7 +1410,8 @@ report_hrecs ()
 		if (lr->rev && *(lr->rev))
 		    (void) printf (" [%s]", lr->rev);
 		(void) printf (" %-*s =%s%-*s %s", repos_len, repos, lr->mod,
-			       mod_len + 1 - strlen (lr->mod), "=", workdir);
+			       mod_len + 1 - (int) strlen (lr->mod),
+			       "=", workdir);
 		break;
 	    case 'W':
 	    case 'U':

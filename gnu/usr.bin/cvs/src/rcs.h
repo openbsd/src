@@ -13,7 +13,6 @@
 #define	RCS		"rcs"
 #define	RCS_CI		"ci"
 #define	RCS_CO		"co"
-#define	RCS_RLOG	"rlog"
 #define	RCS_DIFF	"rcsdiff"
 #define	RCS_RCSMERGE	"rcsmerge"
 #define	RCS_MERGE_PAT	"^>>>>>>> "	/* runs "grep" with this pattern */
@@ -41,6 +40,7 @@
 #define VALID	0x1			/* flags field contains valid data */
 #define	INATTIC	0x2			/* RCS file is located in the Attic */
 #define PARTIAL 0x4			/* RCS file not completly parsed */
+#define NODELTA 0x8			/* delta_pos no longer valid */
 
 struct rcsnode
 {
@@ -53,6 +53,8 @@ struct rcsnode
     char *expand;
     List *symbols;
     List *versions;
+    long delta_pos;
+    List *other;
 };
 
 typedef struct rcsnode RCSNode;
@@ -65,6 +67,7 @@ struct rcsversnode
     char *next;
     int dead;
     List *branches;
+    List *other;
 };
 typedef struct rcsversnode RCSVers;
 
@@ -82,12 +85,13 @@ typedef struct rcsversnode RCSVers;
  */
 RCSNode *RCS_parse PROTO((const char *file, const char *repos));
 RCSNode *RCS_parsercsfile PROTO((char *rcsfile));
+void RCS_fully_parse PROTO((RCSNode *));
 char *RCS_check_kflag PROTO((const char *arg));
 char *RCS_getdate PROTO((RCSNode * rcs, char *date, int force_tag_match));
 char *RCS_gettag PROTO((RCSNode * rcs, char *symtag, int force_tag_match,
-			int return_both));
+			int *simple_tag));
 char *RCS_getversion PROTO((RCSNode * rcs, char *tag, char *date,
-		      int force_tag_match, int return_both));
+		      int force_tag_match, int *simple_tag));
 char *RCS_magicrev PROTO((RCSNode *rcs, char *rev));
 int RCS_isbranch PROTO((RCSNode *rcs, const char *rev));
 int RCS_nodeisbranch PROTO((RCSNode *rcs, const char *tag));
@@ -102,3 +106,9 @@ char *RCS_getbranch PROTO((RCSNode * rcs, char *tag, int force_tag_match));
 
 int RCS_isdead PROTO((RCSNode *, const char *));
 char *RCS_getexpand PROTO ((RCSNode *));
+int RCS_checkout PROTO ((RCSNode *, char *, char *, char *, char *, char *));
+int RCS_settag PROTO ((RCSNode *, const char *, const char *));
+int RCS_deltag PROTO ((RCSNode *, const char *, int));
+int RCS_setbranch PROTO((RCSNode *, const char *));
+int RCS_lock PROTO ((RCSNode *, const char *, int));
+int RCS_unlock PROTO ((RCSNode *, const char *, int));

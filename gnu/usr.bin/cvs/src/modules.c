@@ -56,14 +56,15 @@ open_module ()
 {
     char mfile[PATH_MAX];
 
-    if (CVSroot == NULL)
+    if (CVSroot_original == NULL)
     {
 	(void) fprintf (stderr, 
 			"%s: must set the CVSROOT environment variable\n",
 			program_name);
 	error (1, 0, "or specify the '-d' option to %s", program_name);
     }
-    (void) sprintf (mfile, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_MODULES);
+    (void) sprintf (mfile, "%s/%s/%s", CVSroot_directory,
+		    CVSROOTADM, CVSROOTADM_MODULES);
     return (dbm_open (mfile, O_RDONLY, 0666));
 }
 
@@ -121,13 +122,24 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 
 #ifdef SERVER_SUPPORT
     if (trace)
-      {
-	fprintf (stderr, "%s%c-> do_module (%s, %s, %s, %s)\n",
-		 error_use_protocol ? "E " : "",
+    {
+	char *buf;
+
+	/* We use cvs_outerr, rather than fprintf to stderr, because
+	   this may be called by server code with error_use_protocol
+	   set.  */
+	buf = xmalloc (100
+		       + strlen (mname)
+		       + strlen (msg)
+		       + (where ? strlen (where) : 0)
+		       + (extra_arg ? strlen (extra_arg) : 0));
+	sprintf (buf, "%c-> do_module (%s, %s, %s, %s)\n",
 		 (server_active) ? 'S' : ' ',
 		 mname, msg, where ? where : "",
 		 extra_arg ? extra_arg : "");
-      }
+	cvs_outerr (buf, 0);
+	free (buf);
+    }
 #endif
 
     /* if this is a directory to ignore, add it to that list */
@@ -188,17 +200,17 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 
 	/* check to see if mname is a directory or file */
 
-	(void) sprintf (file, "%s/%s", CVSroot, mname);
+	(void) sprintf (file, "%s/%s", CVSroot_directory, mname);
 	if ((acp = strrchr (mname, '/')) != NULL)
 	{
 	    *acp = '\0';
-	    (void) sprintf (attic_file, "%s/%s/%s/%s%s", CVSroot, mname,
-			    CVSATTIC, acp + 1, RCSEXT);
+	    (void) sprintf (attic_file, "%s/%s/%s/%s%s", CVSroot_directory,
+			    mname, CVSATTIC, acp + 1, RCSEXT);
 	    *acp = '/';
 	}
 	else
-	    (void) sprintf (attic_file, "%s/%s/%s%s", CVSroot, CVSATTIC,
-			    mname, RCSEXT);
+	    (void) sprintf (attic_file, "%s/%s/%s%s", CVSroot_directory,
+			    CVSATTIC, mname, RCSEXT);
 
 	if (isdir (file))
 	{
@@ -343,7 +355,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	    /* XXX - think about making null repositories at each dir here
 		     instead of just at the bottom */
 	    make_directories (dir);
-	    if (chdir (dir) < 0)
+	    if ( CVS_CHDIR (dir) < 0)
 	    {
 		error (0, errno, "cannot chdir to %s", dir);
 		spec_opt = NULL;
@@ -354,7 +366,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	    {
 		char nullrepos[PATH_MAX];
 
-		(void) sprintf (nullrepos, "%s/%s/%s", CVSroot,
+		(void) sprintf (nullrepos, "%s/%s/%s", CVSroot_directory,
 				CVSROOTADM, CVSNULLREPOS);
 		if (!isfile (nullrepos))
 		{
@@ -592,6 +604,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	    char *prog = (m_type == TAG ? tag_prog :
 			  (m_type == CHECKOUT ? checkout_prog : export_prog));
 	    char *real_where = (where != NULL ? where : mwhere);
+	    char *expanded_path;
 
 	    if ((*prog != '/') && (*prog != '.'))
 	    {
@@ -600,18 +613,25 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		    prog = real_prog;
 	    }
 
-	    run_setup ("%s %s", prog, real_where);
-	    if (extra_arg)
-		run_arg (extra_arg);
-
-	    if (!quiet)
+	    /* XXX can we determine the line number for this entry??? */
+	    expanded_path = expand_path (prog, "modules", 0);
+	    if (expanded_path != NULL)
 	    {
-		(void) printf ("%s %s: Executing '", program_name,
-			       command_name);
-		run_print (stdout);
-		(void) printf ("'\n");
+		run_setup ("%s %s", expanded_path, real_where);
+
+		if (extra_arg)
+		    run_arg (extra_arg);
+
+		if (!quiet)
+		{
+		    (void) printf ("%s %s: Executing '", program_name,
+				   command_name);
+		    run_print (stdout);
+		    (void) printf ("'\n");
+		}
+		err += run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
+		free (expanded_path);
 	    }
-	    err += run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
 	}
     }
 
@@ -776,22 +796,6 @@ cat_module (status)
     char *cp, *cp2, **argv;
     char *line;
     char *moduleargv[MAXFILEPERDIR];
-
-#ifdef sun
-#ifdef TIOCGSIZE
-    struct ttysize ts;
-
-    (void) ioctl (0, TIOCGSIZE, &ts);
-    cols = ts.ts_cols;
-#endif
-#else
-#ifdef TIOCGWINSZ
-    struct winsize ws;
-
-    (void) ioctl (0, TIOCGWINSZ, &ws);
-    cols = ws.ws_col;
-#endif
-#endif
 
     Status = status;
 

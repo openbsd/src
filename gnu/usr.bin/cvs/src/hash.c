@@ -400,6 +400,7 @@ nodetypestring (type)
     case NDBMNODE:	return("NDBMNODE");
     case FILEATTR:	return("FILEATTR");
     case VARIABLE:	return("VARIABLE");
+    case RCSFIELD:	return("RCSFIELD");
     }
 
     return("<trash>");

@@ -110,7 +110,7 @@ read_cvsrc (argc, argv, cmdname)
 	/* skip over command in the options line */
 	optstart = strtok (line + command_len, "\t \n");
 
-	do
+	while (optstart)
 	{
 	    new_argv [new_argc] = xstrdup (optstart);
 	    new_argv [new_argc+1] = NULL;
@@ -126,9 +126,8 @@ read_cvsrc (argc, argv, cmdname)
 		free(new_argv);
 		new_argv = tmp_argv;
 	    }
-	  
+	    optstart = strtok (NULL, "\t \n");
 	}
-	while ((optstart = strtok (NULL, "\t \n")) != NULL);
     }
 
     if (line != NULL)

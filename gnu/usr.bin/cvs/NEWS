@@ -1,4 +1,81 @@
-Changes since 1.7:
+Changes since 1.8:
+
+* Windows NT client should now work on Windows 95 as well.
+
+* New option "--help-synonyms" prints a list of all recognized command
+synonyms.
+
+* The "log" command is now implemented internally rather than via the
+RCS "rlog" program.  The main user-visible consequence is that
+symbolic branch names now work (for example "cvs log -rbranch1").
+Also, the date formats accepted by -d have changed.  They previously
+had been a bewildering variety of poorly-documented date formats.  Now
+they are the same as the date formats accepted by the -D options to
+the other CVS commands, which is also a (different) bewildering
+variety of poorly-documented date formats, but at least we are
+consistently bewildering :-).
+
+* Encryption is now supported over a Kerberos client/server
+connection.  The new "-x" global option requests it.  You must
+configure with the --enable-encryption option in order to enable
+encryption.
+
+* The format of the CVS commit message has changed slightly when
+committing changes on a branch.  The tag on which the commit is
+ocurring is now reported correctly in all cases.
+
+* New flag -k in wrappers allows you to specify the keyword expansion
+mode for added files based on their name.  For example, you can
+specify that files whose name matches *.exe are binary by default.
+See the Wrappers section of cvs.texinfo for more details.
+
+* Remote CVS with the "-z" option now uses the zlib library (included
+with CVS) to compress all communication between the client and the
+server, rather than invoking gzip on each file separately.  This means
+that compression is better and there is no need for an external gzip
+program (except to interoperate with older version of CVS).
+
+* The "cvs rlog" command is deprecated and running it will print a
+warning; use the synonymous "cvs log" command instead.  It is
+confusing for rlog to mean the same as log because some other CVS
+commands are in pairs consisting of a plain command which operates on
+a working directory and an "r" command which does not (diff/rdiff;
+tag/rtag).
+
+* "cvs diff" has a bunch of new options, mostly long options.  Most of
+these work only if rcsdiff and diff support them, and are named the
+same as the corresponding options to diff.
+
+* The -q and -Q command options to "cvs diff" were removed (use the
+global options instead).  This brings "cvs diff" into line with the
+rest of the CVS commands.
+
+* The "annotate" command can now be used to annotate a revision other
+than the head revision on the trunk (see the -r, -D, and -f options in
+the annotate node of cvs.texinfo for details).
+
+* The "tag" command has a new option "-c" which checks that all files
+  are not locally modified before tagging.
+
+* The -d command line option now overrides the cvsroot setting stored
+in the CVS/Root file in each working directory, and specifying -d will
+cause CVS/Root to be updated.
+
+* Local (non-client/server) CVS now runs on Windows NT.  See
+windows-NT/README for details.
+
+* The CVSROOT variable specification has changed to support more
+access methods.  In addition to "pserver," "server" (internal rsh
+client), "ext" (external rsh client), "kserver" (kerberos), and
+"local" (local filesystem access) can now be specified.  For more
+details on each method, see cvs.texinfo (there is an index entry for
+:local: and each of the other access methods).
+
+* The "login" command no longer prompts the user for username and
+hostname, since one will have to provide that information via the `-d'
+flag or by setting CVSROOT.
+
+Changes from 1.7 to 1.8:
 
 * New "cvs annotate" command to display the last modification for each
 line of a file, with the revision number, user checking in the

@@ -42,6 +42,9 @@ install: all
 	@echo "pcl-cvs not installed"
 .PHONY: install
 
+installdirs:
+.PHONY: installdirs
+
 tags:
 .PHONY: tags
 

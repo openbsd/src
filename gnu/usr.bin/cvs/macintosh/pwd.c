@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Header: /home/cvs/src/gnu/usr.bin/cvs/macintosh/Attic/pwd.c,v 1.1.1.1 1996/01/30 00:19:39 tholo Exp $
+    $Header: /home/cvs/src/gnu/usr.bin/cvs/macintosh/Attic/pwd.c,v 1.1.1.2 1996/10/18 03:37:01 tholo Exp $
 */
 
 /* This 'implementation' is conjectured from the use of this functions in
@@ -25,8 +25,8 @@
    
 /* Stripped out stuff - MDLadwig <mike@twinpeaks.prc.com> --- Nov 1995 */
 
-#include <cvs.h>
-
+#include "mac_config.h"
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,10 +35,7 @@ static char *home_dir = ".";	/* we feel (no|every)where at home */
 static struct passwd pw;	/* should we return a malloc()'d structure   */
 static struct group gr;		/* instead of pointers to static structures? */
 
-#if !__POWERPC__
 pid_t getpid( void ) { return 0; }					/* getpid */
-#endif
-
 pid_t waitpid(pid_t, int *, int) { return 0; }	/* waitpid */
 
 mode_t	umask(mode_t) { return 0; }				/* Umask */

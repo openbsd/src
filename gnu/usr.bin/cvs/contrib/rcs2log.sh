@@ -12,7 +12,7 @@
 
 # Author: Paul Eggert <eggert@twinsun.com>
 
-# $Id: rcs2log.sh,v 1.1.1.1 1995/12/19 09:21:40 deraadt Exp $
+# $Id: rcs2log.sh,v 1.1.1.2 1996/10/18 03:36:19 tholo Exp $
 
 # Copyright 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
@@ -27,8 +27,9 @@
 # GNU General Public License for more details.
 # 
 # You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+# along with this program; see the file COPYING.  If not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
 
 tab='	'
 nl='
@@ -122,7 +123,7 @@ month_data='
 # log the revisions checked in since the first ChangeLog entry.
 case $rlog_options in
 '')
-	date=1970
+	date=1970-01-01
 	if test -s ChangeLog
 	then
 		# Add 1 to seconds to avoid duplicating most recent log.
@@ -364,7 +365,13 @@ EOF
 	'
 
 	initialize_fullname=`
-		(cat /etc/passwd; ypmatch $authors passwd) 2>/dev/null |
+		(
+			cat /etc/passwd
+			for author in $authors
+			do nismatch $author passwd.org_dir
+			done
+			ypmatch $authors passwd
+		) 2>/dev/null |
 		$AWK -F: "$awkscript"
 	`$initialize_fullname
 esac
@@ -414,6 +421,15 @@ case $hostname in
 		echo >&2 "$0: cannot deduce hostname"
 		exit 1
 	}
+
+	case $hostname in
+	*.*) ;;
+	*)
+		domainname=`(domainname) 2>/dev/null` &&
+		case $domainname in
+		*.*) hostname=$hostname.$domainname
+		esac
+	esac
 esac
 
 

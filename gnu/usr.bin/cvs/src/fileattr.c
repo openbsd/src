@@ -84,7 +84,7 @@ fileattr_read ()
     strcat (fname, CVSREP_FILEATTR);
 
     attr_read_attempted = 1;
-    fp = fopen (fname, FOPEN_BINARY_READ);
+    fp = CVS_FOPEN (fname, FOPEN_BINARY_READ);
     if (fp == NULL)
     {
 	if (!existence_error (errno))
@@ -137,8 +137,8 @@ fileattr_read ()
 
 char *
 fileattr_get (filename, attrname)
-    char *filename;
-    char *attrname;
+    const char *filename;
+    const char *attrname;
 {
     Node *node;
     size_t attrname_len = strlen (attrname);
@@ -180,8 +180,8 @@ fileattr_get (filename, attrname)
 
 char *
 fileattr_get0 (filename, attrname)
-    char *filename;
-    char *attrname;
+    const char *filename;
+    const char *attrname;
 {
     char *cp;
     char *cpend;
@@ -202,8 +202,8 @@ fileattr_get0 (filename, attrname)
 char *
 fileattr_modify (list, attrname, attrval, namevalsep, entsep)
     char *list;
-    char *attrname;
-    char *attrval;
+    const char *attrname;
+    const char *attrval;
     int namevalsep;
     int entsep;
 {
@@ -298,9 +298,9 @@ fileattr_modify (list, attrname, attrval, namevalsep, entsep)
 
 void
 fileattr_set (filename, attrname, attrval)
-    char *filename;
-    char *attrname;
-    char *attrval;
+    const char *filename;
+    const char *attrname;
+    const char *attrval;
 {
     Node *node;
     char *p;
@@ -346,17 +346,18 @@ fileattr_set (filename, attrname, attrval)
     }
 
     p = fileattr_modify (node->data, attrname, attrval, '=', ';');
-    free (node->data);
-    node->data = NULL;
     if (p == NULL)
 	delnode (node);
     else
+    {
+	free (node->data);
 	node->data = p;
+    }
 }
 
 void
 fileattr_newfile (filename)
-    char *filename;
+    const char *filename;
 {
     Node *node;
 
@@ -440,7 +441,7 @@ fileattr_write ()
 	strcpy (fname, fileattr_stored_repos);
 	strcat (fname, "/");
 	strcat (fname, CVSREP);
-	if (rmdir (fname) < 0)
+	if (CVS_RMDIR (fname) < 0)
 	{
 	    if (errno != ENOTEMPTY
 
@@ -456,7 +457,7 @@ fileattr_write ()
     }
 
     omask = umask (cvsumask);
-    fp = fopen (fname, FOPEN_BINARY_WRITE);
+    fp = CVS_FOPEN (fname, FOPEN_BINARY_WRITE);
     if (fp == NULL)
     {
 	if (existence_error (errno))
@@ -481,7 +482,7 @@ fileattr_write ()
 	    }
 	    free (repname);
 
-	    fp = fopen (fname, FOPEN_BINARY_WRITE);
+	    fp = CVS_FOPEN (fname, FOPEN_BINARY_WRITE);
 	}
 	if (fp == NULL)
 	{
