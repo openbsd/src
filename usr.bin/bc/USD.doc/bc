@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.5 2003/11/09 19:27:27 otto Exp $
+.\"	$OpenBSD: bc,v 1.6 2003/11/11 09:21:48 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -784,6 +784,7 @@ The following are reserved keywords:
 	while	quit
 	for	continue
 	else	last
+	print
 .fi
 .ft
 .NH 2
@@ -1097,7 +1098,7 @@ If-else statements
 .PP
 The first substatement is executed if the relation is true, the second
 substatement if the relation is false.
-The if-else statement is a non-portable extension.
+The \fBif-else\fR statement is a non-portable extension.
 .NH 2
 While statements
 .sp .5
@@ -1111,7 +1112,7 @@ For statements
 .sp .5
 \fBfor\|(\|\fIexpression\fB; \fIrelation\fB; \fIexpression\fB\|)\|\fIstatement\fR
 .PP
-The for statement is the same as
+The \fBfor\fR statement is the same as
 .nf
 .ft I
 	first-expression
@@ -1147,7 +1148,7 @@ Auto statements
 .sp .5
 \fBauto \fIidentifier\fR\|[\|\fB,\fIidentifier\fR\|]
 .PP
-The auto statement causes the values of the identifiers to be pushed down.
+The \fBauto\fR statement causes the values of the identifiers to be pushed down.
 The identifiers can be ordinary identifiers or array identifiers.
 Array identifiers are specified by following the array name by empty square
 brackets.
@@ -1161,7 +1162,7 @@ Define statements
 	statements\|\fB}\fR
 .fi
 .PP
-The define statement defines a function.
+The \fBdefine\fR statement defines a function.
 The parameters may
 be ordinary identifiers or array names.
 Array names must be followed by empty square brackets.
@@ -1172,16 +1173,44 @@ Return statements
 .sp .5
 \fBreturn(\fI\|expression\|\fB)\fR
 .PP
-The return statement causes termination of a function,
+The \fBreturn\fR statement causes termination of a function,
 popping of its auto variables, and
 specifies the result of the function.
 The first form is equivalent to \fBreturn(0)\fR.
 The result of the function is the result of the expression
 in parentheses.
 .NH 2
+Print
+.PP
+The \fBprint\fR statement takes a list of comma-separated expressions.
+Each expression in the list is evaluated and the computed
+value is printed and assigned to the variable `last'.
+No trailing newline is printed.
+The expression may also be a string enclosed in double quotes.
+Within these strings the following escape sequences may be used:
+\ea 
+for bell (alert),
+`\eb'
+for backspace,
+`\ef'
+for formfeed,
+`\en'
+for newline,   
+`\er'
+for carriage return,
+`\et'
+`for tab,
+`\eq'
+for double quote and
+`\e\e'
+for backslash.
+Any other character following a backslash will be ignored.
+Strings will not be assigned to `last'.
+The \fBprint\fR statement is a non-portable extension.
+.NH 2
 Quit
 .PP
-The quit statement stops execution of a BC program and returns
+The \fBquit\fR statement stops execution of a BC program and returns
 control to UNIX when it is first encountered.
 Because it is not treated as an executable statement,
 it cannot be used
