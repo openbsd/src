@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.4 2003/10/31 18:42:51 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.5 2003/11/06 17:59:23 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -94,7 +94,7 @@ sub open
 {
 	my ($self, $name) = @_;
 	my $fullname = $self->{location}.$name;
-	open(my $fh, '-|', "gzip -d -c -q 2>/dev/null $fullname") or return undef;
+	open(my $fh, '-|', "gzip -d -c -q -f 2>/dev/null $fullname") or return undef;
 	return $fh;
 }
 
@@ -200,6 +200,13 @@ sub find
 {
 	my $class = shift;
 	local $_ = shift;
+
+	if ($_ eq '-') {
+		my $location = OpenBSD::PackageLocation->new('-');
+		my $package = openAbsolute($location, '');
+		bless $package, $class;
+		return $package;
+	}
 	$_.=".tgz" unless m/\.tgz$/;
 	if (exists $packages{$_}) {
 		return $packages{$_};

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.4 2003/10/26 11:09:27 espie Exp $
+# $OpenBSD: pkg_add,v 1.5 2003/11/06 17:59:23 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -107,22 +107,35 @@ for my $pkg (installed_packages()) {
 	$conflict_list->{$plist->pkgname()} = OpenBSD::PkgCfl->make_conflict_list($plist);
 }
 
+sub can_install($)
+{
+	my $pkgname = shift;
 
+	if (is_installed $pkgname) {
+		print "package $pkgname is already installed\n";
+		return undef;
+	}
+
+	while (my ($name, $l) = each %$conflict_list) {
+		if ($l->conflicts_with($pkgname)) {
+			print "package $pkgname conflicts with installed package $name\n";
+			return undef;
+		}
+	}
+
+	return 1;
+}
 
 # This does pre_add a package: finding it and reading its package information
 sub pre_add
 {
 	my $pkg = shift;
-	my $pkgname1 = OpenBSD::PackageName->new($pkg);
-	if (is_installed $pkgname1->{pkgname}) {
-		print "package $pkg is already installed\n";
-		return undef;
-	}
-	while (my ($name, $l) = each %$conflict_list) {
-		if ($l->conflicts_with($pkgname1->{pkgname})) {
-			print "package $pkg conflicts with installed package $name\n";
-			return undef;
-		}
+	my $pkgname1;
+	
+	if ($pkg ne '-') {
+		print "Adding $pkg\n";
+		$pkgname1 = OpenBSD::PackageName->new($pkg);
+		return undef unless can_install($pkgname1->{pkgname});
 	}
 	my $handle = OpenBSD::PackageLocator->find($pkg);
 	if (!$handle) {
@@ -137,9 +150,14 @@ sub pre_add
 		return undef;
 	}
 	my $pkgname = OpenBSD::PackageName->new($plist->pkgname());
-	if ($pkgname->{pkgname} ne $pkgname1->{pkgname}) {
-		print "Package name is not consistent ???\n";
-		return undef;
+	if (defined $pkgname1) {
+		if ($pkgname->{pkgname} ne $pkgname1->{pkgname}) {
+			print "Package name is not consistent ???\n";
+			return undef;
+		}
+	} else {
+		print "Adding ",$pkgname->{pkgname}, "\n";
+		return undef unless can_install($pkgname->{pkgname});
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
