@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.2 1998/11/15 00:44:01 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.3 1998/11/15 01:11:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -363,6 +363,7 @@ message_validate_cert_req (struct message *msg, struct payload *p)
    * Check the certificate types we support and if an acceptable authority
    * is included in the payload check if it can be decoded
    */
+#if 0
   if ((cert = cert_get (GET_ISAKMP_CERTREQ_TYPE (p->p))) == NULL ||
       (len && !cert->certreq_validate (p->p + ISAKMP_CERTREQ_AUTHORITY_OFF,
 				       len)))
@@ -370,6 +371,7 @@ message_validate_cert_req (struct message *msg, struct payload *p)
       message_drop (msg, ISAKMP_NOTIFY_CERT_TYPE_UNSUPPORTED, 0, 0, 1);
       return -1;
     }
+#endif
   return 0;
 }
 

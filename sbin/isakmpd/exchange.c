@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.2 1998/11/15 00:43:52 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.3 1998/11/15 01:11:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -863,6 +863,7 @@ exchange_save_certreq (struct message *msg)
   for ( ; cp; cp = TAILQ_NEXT (cp, link))
     {
       cp->flags |= PL_MARK;
+#if 0
       tmp = certreq_decode (GET_ISAKMP_CERTREQ_TYPE (cp->p),
 			    cp->p + ISAKMP_CERTREQ_AUTHORITY_OFF,
 			    GET_ISAKMP_GEN_LENGTH (cp->p) - 
@@ -870,6 +871,7 @@ exchange_save_certreq (struct message *msg)
       if (tmp == NULL)
 	continue;
       TAILQ_INSERT_TAIL (&exchange->aca_list, tmp, link);
+#endif
     }
 
   return 0;
