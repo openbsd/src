@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.13 2001/01/22 22:57:31 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -368,12 +368,14 @@ pdccnlookc(dev, cp)
 	int *cp;
 {
 	int err, l;
+	int s = splhigh();
 
 	err = pdc_call(pdc_kbdiodc, 0, pz_kbd->pz_hpa, IODC_IO_CONSIN,
 	    pz_kbd->pz_spa, pz_kbd->pz_layers, pdcret, 0, pdc_consbuf, 1, 0);
 
 	l = pdcret[0];
 	*cp = pdc_consbuf[0];
+	splx(s);
 #ifdef DEBUG
 	if (err < 0)
 		printf("pdccnlookc: input error: %d\n", err);
@@ -403,16 +405,18 @@ pdccnputc(dev, c)
 	int c;
 {
 	register int err;
+	int s = splhigh();
 
 	*pdc_consbuf = c;
-	if ((err = pdc_call(pdc_cniodc, 0, pz_cons->pz_hpa, IODC_IO_CONSOUT,
-	    pz_cons->pz_spa, pz_cons->pz_layers,
-	    pdcret, 0, pdc_consbuf, 1, 0)) < 0) {
+	err = pdc_call(pdc_cniodc, 0, pz_cons->pz_hpa, IODC_IO_CONSOUT,
+	    pz_cons->pz_spa, pz_cons->pz_layers, pdcret, 0, pdc_consbuf, 1, 0);
+	splx(s);
+
+	if (err < 0) {
 #ifdef DEBUG
 		printf("pdccnputc: output error: %d\n", err);
 #endif
 	}
-
 }
 
 void
