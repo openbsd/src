@@ -5,7 +5,7 @@
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S reboot.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
 
@@ -29,8 +29,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	munlock.o munmap.o nfssvc.o \
 	ntp_gettime.o ntp_adjtime.o \
 	open.o pathconf.o poll.o profil.o quotactl.o \
-	read.o readlink.o readv.o recvfrom.o recvmsg.o rename.o revoke.o \
-	rfork.o \
+	read.o readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o \
+	revoke.o rfork.o \
 	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setpgid.o \
 	setpriority.o setrlimit.o setsid.o setsockopt.o settimeofday.o \
