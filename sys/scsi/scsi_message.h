@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_message.h,v 1.6 2004/05/20 02:02:11 marco Exp $	*/
+/*	$OpenBSD: scsi_message.h,v 1.7 2004/10/17 05:36:43 krw Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -48,6 +48,11 @@
 #define MSG_EXT_PPR		0x04
 #define MSG_EXT_PPR_LEN		0x06
 
+#define	MSG_EXT_PPR_PCOMP_EN	0x80
+#define	MSG_EXT_PPR_RTI		0x40
+#define	MSG_EXT_PPR_RD_STRM	0x20
+#define	MSG_EXT_PPR_WR_FLOW	0x10
+#define	MSG_EXT_PPR_HOLD_MCS	0x08
 #define MSG_EXT_PPR_PROT_QAS	0x04
 #define MSG_EXT_PPR_PROT_DT	0x02
 #define MSG_EXT_PPR_PROT_IUS	0x01
