@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.5 2001/06/30 15:41:51 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.6 2001/07/15 21:32:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -79,7 +79,7 @@
 
 #define	AUTH_ALLOW	(AUTH_OKAY | AUTH_ROOTOKAY | AUTH_SECURE)
 
-typedef struct {
+typedef struct login_cap {
 	char	*lc_class;
 	char	*lc_cap;
 	char	*lc_style;
