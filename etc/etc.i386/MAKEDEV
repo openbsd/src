@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.63 1998/09/12 06:34:36 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.64 1998/09/15 10:15:31 pattonme Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -471,11 +471,12 @@ bpf*|tun[0-9]*)
 	;;
 
 ipl)
-	rm -f ipl ipnat ipstate 
+	rm -f ipl ipnat ipstate ipauth
 	mknod ipl c 44 0
 	mknod ipnat c 44 1
 	mknod ipstate c 44 2
-	chown root.wheel ipl ipnat ipstate 
+	mknod ipauth c 44 3
+	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 speaker)					# (XXX - installed)
