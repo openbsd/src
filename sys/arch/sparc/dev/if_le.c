@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 1998/09/19 15:11:50 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.12 1998/09/28 05:15:57 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -303,12 +303,16 @@ lehwreset(sc)
 	 * Reset DMA channel.
 	 */
 	if (CPU_ISSUN4M && lesc->sc_dma) {
+		u_int32_t aui;
+
+		aui = lesc->sc_dma->sc_regs->csr & DE_AUI_TP;
 		DMA_RESET(lesc->sc_dma);
 		lesc->sc_dma->sc_regs->en_bar = lesc->sc_laddr & 0xff000000;
 		DMA_ENINTR(lesc->sc_dma);
 #define D_DSBL_WRINVAL D_DSBL_SCSI_DRN	/* XXX: fix dmareg.h */
 		/* Disable E-cache invalidates on chip writes */
-		lesc->sc_dma->sc_regs->csr |= D_DSBL_WRINVAL;
+		lesc->sc_dma->sc_regs->csr |= D_DSBL_WRINVAL | aui;
+		delay(20000);	/* must not touch le for 20ms */
 	}
 #endif
 }
