@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.3 1996/06/26 05:37:26 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.4 1996/08/06 18:35:09 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.3 1996/06/26 05:37:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.4 1996/08/06 18:35:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -392,7 +392,9 @@ p_sockaddr(sa, flags, width)
 
 			cplim = "";
 			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
-				cp += sprintf(cp, "%s%x", cplim, *lla);
+				cp += snprintf(cp,
+				    workbuf + sizeof (workbuf) - cp,
+				    "%s%x", cplim, *lla);
 				cplim = ":";
 			}
 			cp = workbuf;
@@ -413,9 +415,12 @@ p_sockaddr(sa, flags, width)
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += sprintf(cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
-			cp += sprintf(cp, " %02x", *s++);
+			cp += snprintf(cp, workbuf + sizeof (workbuf) - cp,
+			    " %02x", *s++);
 			if (s < slim)
-			    cp += sprintf(cp, "%02x", *s++);
+				cp += snprintf(cp,
+				    workbuf + sizeof (workbuf) - cp,
+				    "%02x", *s++);
 		}
 		cp = workbuf;
 	    }
