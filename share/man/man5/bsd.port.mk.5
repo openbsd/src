@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.115 2003/07/28 17:37:10 sturm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.116 2003/07/28 20:02:44 sturm Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -710,7 +710,7 @@ Distinct from
 to avoid confusing
 .Ar update-patches .
 .It Ev DIST_SUBDIR
-Optional subdirectory of ${DISTDIR} where the current port's distribution 
+Optional subdirectory of ${DISTDIR} where the current port's distribution
 files and patchfiles will be located.
 See target
 .Ar fetch .
@@ -944,7 +944,7 @@ The make program that is used for building the port.
 Set to ${MAKE} or ${GMAKE} depending on USE_GMAKE.
 Read-only.
 .It Ev MASTER_SITES
-List of primary location from which distribution files and patchfiles are 
+List of primary location from which distribution files and patchfiles are
 retrieved.
 See the
 .Ar fetch
@@ -953,7 +953,7 @@ See
 .Xr ports 7
 for user configuration.
 .It Ev MASTER_SITES0 , ... , MASTER_SITES9
-Supplementary locations from which distribution files and patchfiles are 
+Supplementary locations from which distribution files and patchfiles are
 retrieved.
 .It Ev MESSAGE
 File recorded in the package and displayed during installation.
@@ -1016,7 +1016,7 @@ User settings.
 If set to
 .Sq Yes ,
 avoid ignoring a port for the usual reasons.
-Use, for instance, for fetching all distribution files, or for fixing a 
+Use, for instance, for fetching all distribution files, or for fixing a
 broken port.
 See also
 .Ev IGNORE .
@@ -1304,7 +1304,7 @@ Supplementary files that need to be retrieved under some specific
 circumstances.
 For instance, a port might need architecture-specific files.
 .Ev SUPDISTFILES
-should hold a list of all distribution files and patchfiles that are not 
+should hold a list of all distribution files and patchfiles that are not
 always needed, so that a mirror will be able to grab all files, or that
 .Ar makesum
 will work.
@@ -1703,7 +1703,7 @@ MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
 Set to
 .Sq Yes
-if package or distribution files can be allowed on ftp sites or cdrom without 
+if package or distribution files can be allowed on ftp sites or cdrom without
 legal issues.
 Set to reason not to otherwise.
 PERMIT_* lines in the Makefile should be preceded with a comment explaining
