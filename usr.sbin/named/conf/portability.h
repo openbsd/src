@@ -190,7 +190,7 @@
 
 #if defined(_POSIX_SOURCE) || defined(__sgi) || defined(__ultrix) || \
 	defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || \
-	defined(sun) || defined(__m88k__)
+	defined(sun) || (defined(__m88k__) && !defined(__OpenBSD__))
 # define USE_POSIX
 #endif
 
@@ -602,7 +602,7 @@ extern u_long htonl __P((u_long)), ntohl __P((u_long));
 /*
  * Some systems need _res to be linked into text rather than bss.
  */
-#if defined(__m88k__)
+#if defined(__m88k__) && !defined(__OpenBSD__)
 # define __BIND_RES_TEXT
 #endif
 
@@ -611,7 +611,7 @@ extern u_long htonl __P((u_long)), ntohl __P((u_long));
  * get/settimeofday as only one argument seems to be accepted
  * by the compiler. NULL generates compile errors
  */
-#if defined(__m88k__) && defined(__unix__)
+#if defined(__m88k__) && defined(__unix__) && !defined(__OpenBSD__)
 # define gettimeofday(tp, tzp) gettimeofday(tp)
 # define settimeofday(tp, tzp) settimeofday(tp)
 #endif
