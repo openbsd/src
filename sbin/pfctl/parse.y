@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2001/07/18 01:08:43 mickey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2001/07/18 08:48:15 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -523,7 +523,7 @@ yyerror(char *s)
 {
 	errors = 1;
 	warnx("%s near line %d", s, lineno);
-	return 0;
+	return (0);
 }
 
 int
@@ -571,7 +571,7 @@ rule_consistent(struct pf_rule *r)
 		warnx("icmp-type/code does only apply to icmp");
 		problems++;
 	}
-	return -problems;
+	return (-problems);
 }
 
 int
@@ -617,12 +617,12 @@ lookup(char *s)
 			if (debug > 1)
 				fprintf(stderr, "%s: %d\n", s,
 				    keywords[i].k_val);
-			return keywords[i].k_val;
+			return (keywords[i].k_val);
 		}
 	}
 	if (debug > 1)
 		fprintf(stderr, "string: %s\n", s);
-	return STRING;
+	return (STRING);
 }
 
 int
@@ -640,18 +640,18 @@ yylex(void)
 	if (c == '-') {
 		next = getc(fin);
 		if (next == '>')
-			return ARROW;
+			return (ARROW);
 		ungetc(next, fin);
 	}
 	switch (c) {
 	case '=':
 		yylval.i = PF_OP_EQ;
-		return PORTUNARY;
+		return (PORTUNARY);
 	case '!':
 		next = getc(fin);
 		if (next == '=') {
 			yylval.i = PF_OP_NE;
-			return PORTUNARY;
+			return (PORTUNARY);
 		}
 		ungetc(next, fin);
 		break;
@@ -659,27 +659,27 @@ yylex(void)
 		next = getc(fin);
 		if (next == '>') {
 			yylval.i = PF_OP_GL;
-			return PORTBINARY;
+			return (PORTBINARY);
 		} else  if (next == '=') {
 			yylval.i = PF_OP_LE;
 		} else {
 			yylval.i = PF_OP_LT;
 			ungetc(next, fin);
 		}
-		return PORTUNARY;
+		return (PORTUNARY);
 		break;
 	case '>':
 		next = getc(fin);
 		if (next == '<') {
 			yylval.i = PF_OP_GL;
-			return PORTBINARY;
+			return (PORTBINARY);
 		} else  if (next == '=') {
 			yylval.i = PF_OP_GE;
 		} else {
 			yylval.i = PF_OP_GT;
 			ungetc(next, fin);
 		}
-		return PORTUNARY;
+		return (PORTUNARY);
 		break;
 	}
 	if (isdigit(c)) {
@@ -720,13 +720,13 @@ yylex(void)
 		*p = '\0';
 		token = lookup(buf);
 		yylval.string = strdup(buf);
-		return token;
+		return (token);
 	}
 	if (c == '\n')
 		lineno++;
 	if (c == EOF)
-		return 0;
-	return c;
+		return (0);
+	return (c);
 }
 
 int
