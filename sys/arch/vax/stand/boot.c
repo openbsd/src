@@ -63,7 +63,7 @@ main()
 	if ((howto & RB_ASKNAME) == 0) {
 		type = (devtype >> B_TYPESHIFT) & B_TYPEMASK;
 		if ((unsigned)type < ndevs && devsw[type].dv_name)
-			strcpy(line, "/netbsd");
+			strcpy(line, "/bsd");
 		else
 			howto |= RB_SINGLE|RB_ASKNAME;
 	}
@@ -75,7 +75,7 @@ main()
 			printf(": ");
 			gets(line);
 			if (line[0] == 0) {
-				strcpy(line, "/netbsd");
+				strcpy(line, "/bsd");
 				printf(": %s\n", line);
 			}
 		} else
