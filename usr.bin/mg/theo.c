@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.64 2004/06/28 02:33:25 mcbride Exp $	*/
+/*	$OpenBSD: theo.c,v 1.65 2004/06/28 02:35:52 mcbride Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -148,7 +148,7 @@ static const char *talk[] = {
 	"#ifdef is for emacs developers.",
 	"Many well known people become net-kooks in their later life, because they lose touch with reality.",
 	"You're not allowed to have an opinion.",
-	"tweep tweep tweep".
+	"tweep tweep tweep"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
