@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.65 2002/06/09 08:13:06 todd Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.66 2002/08/02 13:27:22 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -740,6 +740,7 @@ Credential-directory=	/etc/isakmpd/keynote/
 [X509-certificates]
 CA-directory=           /etc/isakmpd/ca/
 Cert-directory=         /etc/isakmpd/certs/
+CRL-file=		/etc/isakmpd/crl.pem
 Private-key=		/etc/isakmpd/private/local.key
 
 # Main mode transforms
