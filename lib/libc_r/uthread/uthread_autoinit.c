@@ -1,7 +1,7 @@
 /*
  * David Leonard, 1998. Public Domain. <david.leonard@csee.uq.edu.au>
  *
- * $OpenBSD: uthread_autoinit.c,v 1.4 1999/01/10 23:07:59 d Exp $
+ * $OpenBSD: uthread_autoinit.c,v 1.5 1999/02/02 01:36:00 imp Exp $
  */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ _thread_dot_init()
  * found in the .dynamic section into the _INIT field. This then gets
  * automatically run by GNU ELF's ld.so.
  */
-#ifdef mips
+#ifdef pmax
 extern int _init() __attribute__((constructor,section (".dynamic")));
 int 
 _init()

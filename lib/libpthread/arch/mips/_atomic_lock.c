@@ -1,8 +1,9 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.5 1999/01/10 23:00:02 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.6 1999/02/02 01:36:00 imp Exp $	*/
 /*
  * Atomic lock for mips
  */
 
+#include "pthread.h"
 #include "pthread_private.h"
 #include "spinlock.h"
 #include <signal.h>
