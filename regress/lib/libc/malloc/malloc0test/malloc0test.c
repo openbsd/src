@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc0test.c,v 1.3 2004/02/11 08:16:00 deraadt Exp $	*/
+/*	$OpenBSD: malloc0test.c,v 1.4 2004/08/04 12:02:57 otto Exp $	*/
 /*
  * Public domain.  2001, Theo de Raadt
  */
@@ -58,10 +58,8 @@ char *prot_table[] = {
 int
 main(int argc, char *argv[])
 {
-	caddr_t rblob = malloc(1);
-	caddr_t zblob = malloc(0);
-	caddr_t *blobp, blob;
-	int size, rsize, tsize;
+	caddr_t blob;
+	int size, tsize;
 	int prot;
 	int rval = 0, fuckup = 0;
 	long limit = 200000, count;
@@ -101,32 +99,21 @@ usage:
 			exit(rval);
 		}
 
-		if (size == 0) {
-			blobp = &zblob;
-			tsize = 16;
-		} else {
-			blobp = &rblob;
-			tsize = size;
-		}
-
-		rsize = blob - *blobp;
-		fuckup = SIZE < 16 && size >= rsize;
+		tsize = size == 0 ? 16 : size;
+		fuckup = 0;
 		prot = test(blob, tsize);
 
-		if (size == 0 && rsize < 16)
-			fuckup = 1;
 		if (size == 0 && prot < 2)
 			fuckup = 1;
 
 		if (fuckup) {
-			printf("%8p %6d %6d %20s %10s\n", blob, size, rsize,
+			printf("%8p %6d %20s %10s\n", blob, size,
 			    prot_table[prot], fuckup ? "fuckup" : "");
 			rval = 1;
 		}
-		*blobp = blob;
 
 		if (!silent && count % 100000 == 0 && count != 0)
-			fprintf(stderr, "count = %d\n", count);
+			fprintf(stderr, "count = %ld\n", count);
 	}
 
 	return rval;
