@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.5 1997/05/29 14:57:31 kstailey Exp $	*/
+/*	$OpenBSD: forward.c,v 1.6 1997/05/30 19:33:44 millert Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.5 1997/05/29 14:57:31 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.6 1997/05/30 19:33:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,6 +91,7 @@ forward(fp, style, off, sbp)
 	struct stat *sbp;
 {
 	register int ch;
+	struct stat nsb;
 
 	switch(style) {
 	case FBYTES:
@@ -164,7 +165,7 @@ forward(fp, style, off, sbp)
 	}
 
 	for (;;) {
-		while ((ch = getc(fp)) != EOF)
+		while (!feof(fp) && (ch = getc(fp)) != EOF)
 			if (putchar(ch) == EOF)
 				oerr();
 		if (ferror(fp)) {
@@ -176,6 +177,22 @@ forward(fp, style, off, sbp)
 			break;
 		sleep(1);
 		clearerr(fp);
+
+		if (stat(fname, &nsb) != 0)
+			continue;
+		/* Reopen file if the inode changes or file was truncated */
+		if (nsb.st_ino != sbp->st_ino) {
+			warnx("%s has been replaced, reopening.", fname);
+			if ((fp = freopen(fname, "r", fp)) == NULL) {
+				ierr();
+				return;
+			}
+			(void)memcpy(sbp, &nsb, sizeof(nsb));
+		} else if (nsb.st_size < sbp->st_size) {
+			warnx("%s has been truncated, resetting.", fname);
+			rewind(fp);
+			(void)memcpy(sbp, &nsb, sizeof(nsb));
+		}
 	}
 }
 

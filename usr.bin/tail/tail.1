@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tail.1,v 1.2 1996/06/26 05:40:17 deraadt Exp $
+.\"	$OpenBSD: tail.1,v 1.3 1997/05/30 19:33:45 millert Exp $
 .\"	$NetBSD: tail.1,v 1.4 1994/11/23 07:42:13 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
@@ -44,7 +44,7 @@
 .Nm tail
 .Nd display the last part of a file
 .Sh SYNOPSIS
-.Nm tail
+.Nm
 .Op Fl f Li | Fl r
 .Oo
 .Fl b Ar number |
@@ -54,7 +54,7 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm tail
+.Nm
 utility displays the contents of
 .Ar file
 or, by default, its standard input, to the standard output.
@@ -88,9 +88,16 @@ bytes.
 The
 .Fl f
 option causes
-.Nm tail
+.Nm
 to not stop when end of file is reached, but rather to wait for additional
-data to be appended to the input.
+data to be appended to the input.  If the file is is replaced (ie. the
+inode number changes),
+.Nm
+will reopen the file and continue.  If the file is truncated,
+.Nm
+will reset its position back to the beginning.  This makes
+.Nm
+more useful for watching log files that may get rotated.
 The
 .Fl f
 option is ignored if the standard input is a pipe, but not if it is a FIFO.
@@ -126,7 +133,7 @@ where
 is the name of the file.
 .Pp
 The
-.Nm tail
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr cat 1 ,
@@ -134,7 +141,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .Xr sed 1
 .Sh STANDARDS
 The
-.Nm tail
+.Nm
 utility is expected to be a superset of the 
 .St -p1003.2-92 
 specification.
@@ -145,7 +152,7 @@ and
 options are extensions to that standard.
 .Pp
 The historic command line syntax of
-.Nm tail
+.Nm
 is supported by this implementation.
 The only difference between this implementation and historic versions
 of
@@ -164,6 +171,6 @@ would ignore the
 option and display the last 4 lines of the input.
 .Sh HISTORY
 A
-.Nm tail
+.Nm
 command appeared in
 .At v7 .
