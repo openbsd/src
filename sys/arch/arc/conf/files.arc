@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.6 1996/09/17 18:31:59 pefo Exp $
+#	$OpenBSD: files.arc,v 1.7 1996/09/19 00:30:37 imp Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -119,7 +119,7 @@ file	arch/arc/dev/lpr.c		lpr & (lpr_isa | lpr_pica) needs-flag
 # BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device  btl: scsi
 attach  btl at isa
-file    arch/dti/isa/btl.c                    btl needs-count
+file    arch/arc/dti/btl.c                    btl needs-count
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.3 1996/09/14 15:58:27 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.4 1996/09/19 00:30:39 imp Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -177,6 +177,9 @@ isabrattach(parent, self, aux)
 		set_intr(INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
+		set_intr(INT_MASK_2, isabr_iointr, 2);
+		break;
+	case DESKSTATION_RPC44:
 		set_intr(INT_MASK_2, isabr_iointr, 2);
 		break;
 	default:
@@ -391,6 +394,18 @@ isabr_iointr(mask, cf)
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 		break;
 	case DESKSTATION_TYNE:
+		isa_outb(IO_ICU1, 0x0f);	/* Poll */
+		vector = isa_inb(IO_ICU1);
+		if(vector > 0 || (isa_vector = vector & 7) == 2) { 
+			isa_outb(IO_ICU2, 0x0f);
+			vector = isa_inb(IO_ICU2);
+			if(vector > 0) {
+				printf("isa: spurious interrupt.\n");
+				return(~0);
+			}
+			isa_vector = (vector & 7) | 8;
+		}
+	case DESKSTATION_RPC44:
 		isa_outb(IO_ICU1, 0x0f);	/* Poll */
 		vector = isa_inb(IO_ICU1);
 		if(vector > 0 || (isa_vector = vector & 7) == 2) { 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 1996/09/14 15:58:16 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1996/09/19 00:30:36 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.12 1996/09/14 15:58:16 pefo Exp $
+ *      $Id: machdep.c,v 1.13 1996/09/19 00:30:36 imp Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -217,8 +217,8 @@ mips_init(argc, argv, code)
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-		isa_io_base = TYNE_V_ISA_IO;		/*XXX*/
-		isa_mem_base = TYNE_V_ISA_MEM;		/*XXX*/
+		isa_io_base = 0xb0000000;		/*XXX*/
+		isa_mem_base = 0xa0000000;		/*XXX*/
 		break;
 
 	case DESKSTATION_TYNE:
@@ -303,6 +303,9 @@ mips_init(argc, argv, code)
 	case DESKSTATION_TYNE:
 		tlb_init_tyne();
 		break;
+
+	case DESKSTATION_RPC44:
+        break;
 	}
 
 	/*
@@ -520,7 +523,7 @@ consinit()
 		return;
 	initted = 1;
 	cninit();
-mdbpanic();
+/* mdbpanic(); */
 }
 
 /*

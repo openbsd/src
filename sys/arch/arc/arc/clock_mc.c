@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_mc.c,v 1.3 1996/09/14 15:58:13 pefo Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.4 1996/09/19 00:30:35 imp Exp $	*/
 /*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ mcclock_attach(parent, self, aux)
 		mcclockdata_tyne.mc_addr = BUS_CVTADDR(ca);
 		break;
 
+	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
 		csc->sc_init = mcclock_init_tyne;
 		csc->sc_data = &mcclockdata_tyne;

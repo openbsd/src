@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.7 1996/09/14 15:58:22 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.8 1996/09/19 00:30:38 imp Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -513,6 +513,7 @@ pcattach(parent, self, aux)
 	case ACER_PICA_61:
 		BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
 		break;
+	case DESKSTATION_RPC44:                     /* XXX ick */
 	case DESKSTATION_TYNE:
 		isa_intr_establish(ia->ia_ic, ia->ia_irq, 1,
 			2, pcintr, sc, sc->sc_dev.dv_xname);	/*XXX ick */
@@ -820,6 +821,16 @@ pccninit(cp)
 		kbd_datap = TYNE_V_ISA_IO + 0x60;
 		outb(TYNE_V_ISA_IO + 0x3ce, 6);		/* Correct video mode */
 		outb(TYNE_V_ISA_IO + 0x3cf, inb(TYNE_V_ISA_IO + 0x3cf) | 0xc);
+		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
+		break;
+
+	case DESKSTATION_RPC44:
+		mono_base += isa_io_base;
+		mono_buf += isa_mem_base;
+		cga_base += isa_io_base;
+		cga_buf = isa_mem_base + 0xa0000;
+		kbd_cmdp = isa_io_base + 0x64;
+		kbd_datap = isa_io_base + 0x60;
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 	}
