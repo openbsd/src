@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.79 2003/02/21 20:50:58 tedu Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.80 2003/02/28 21:42:56 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -455,7 +455,7 @@ int
 esp_input_cb(void *op)
 {
 	u_int8_t lastthree[3], aalg[AH_HMAC_HASHLEN];
-	int hlen, roff, skip, protoff, error;
+	int s, hlen, roff, skip, protoff, error;
 	struct mbuf *m1, *mo, *m;
 	struct auth_hash *esph;
 	struct tdb_crypto *tc;
@@ -463,7 +463,6 @@ esp_input_cb(void *op)
 	struct m_tag *mtag;
 	struct tdb *tdb;
 	u_int32_t btsx;
-	int s, err = 0;
 	caddr_t ptr;
 
 	crp = (struct cryptop *) op;
@@ -481,6 +480,7 @@ esp_input_cb(void *op)
 		FREE(tc, M_XDATA);
 		espstat.esps_notdb++;
 		DPRINTF(("esp_input_cb(): TDB is expired while in crypto"));
+		error = EPERM;
 		goto baddone;
 	}
 
@@ -667,9 +667,9 @@ esp_input_cb(void *op)
 	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2);
 
 	/* Back to generic IPsec input processing */
-	err = ipsec_common_input_cb(m, tdb, skip, protoff, mtag);
+	error = ipsec_common_input_cb(m, tdb, skip, protoff, mtag);
 	splx(s);
-	return err;
+	return (error);
 
  baddone:
 	splx(s);
@@ -679,7 +679,7 @@ esp_input_cb(void *op)
 
 	crypto_freereq(crp);
 
-	return error;
+	return (error);
 }
 
 /*
@@ -988,6 +988,7 @@ esp_output_cb(void *op)
 		FREE(tc, M_XDATA);
 		espstat.esps_notdb++;
 		DPRINTF(("esp_output_cb(): TDB is expired while in crypto\n"));
+		error = EPERM;
 		goto baddone;
 	}
 

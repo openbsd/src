@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.71 2003/02/12 14:41:07 jason Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.72 2003/02/28 21:42:56 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -684,7 +684,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 int
 ah_input_cb(void *op)
 {
-	int roff, rplen, error, skip, protoff;
+	int s, roff, rplen, error, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m1, *m0, *m;
 	struct cryptodesc *crd;
@@ -696,7 +696,6 @@ ah_input_cb(void *op)
 	u_int32_t btsx;
 	u_int8_t prot;
 	caddr_t ptr;
-	int s, err;
 
 	crp = (struct cryptop *) op;
 	crd = crp->crp_desc;
@@ -714,6 +713,7 @@ ah_input_cb(void *op)
 		FREE(tc, M_XDATA);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_input_cb(): TDB is expired while in crypto"));
+		error = EPERM;
 		goto baddone;
 	}
 
@@ -903,9 +903,9 @@ ah_input_cb(void *op)
 			m->m_pkthdr.len -= rplen + ahx->authsize;
 		}
 
-	err = ipsec_common_input_cb(m, tdb, skip, protoff, mtag);
+	error = ipsec_common_input_cb(m, tdb, skip, protoff, mtag);
 	splx(s);
-	return err;
+	return (error);
 
  baddone:
 	splx(s);
@@ -916,7 +916,7 @@ ah_input_cb(void *op)
 	if (crp != NULL)
 		crypto_freereq(crp);
 
-	return error;
+	return (error);
 }
 
 /*
@@ -1238,6 +1238,7 @@ ah_output_cb(void *op)
 		FREE(tc, M_XDATA);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_output_cb(): TDB is expired while in crypto\n"));
+		error = EPERM;
 		goto baddone;
 	}
 
