@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.51 2001/06/16 22:17:13 deraadt Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.52 2001/06/26 19:56:52 dugsong Exp $	*/
 
 /*
  * System call switch table.
@@ -707,5 +707,7 @@ struct sysent sysent[] = {
 	    sys_mlockall },			/* 271 = mlockall */
 	{ 0, 0,
 	    sys_munlockall },			/* 272 = munlockall */
+	{ 3, s(struct sys_getpeereid_args),
+	    sys_getpeereid },			/* 273 = getpeereid */
 };
 

@@ -1,5 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.15 2001/06/26 19:56:52 dugsong Exp $
-.\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
+.\"	$OpenBSD: getpeereid.2,v 1.1 2001/06/26 19:56:52 dugsong Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,103 +30,55 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"     @(#)getsockname.2	8.1 (Berkeley) 6/4/93
-.\"
-.Dd July 17, 1999
-.Dt GETSOCKNAME 2
+.Dd June 26, 2001
+.Dt GETPEEREID 2
 .Os
 .Sh NAME
-.Nm getsockname
-.Nd get socket name
+.Nm getpeereid
+.Nd get effective user and group identification of locally-connected peer
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn getsockname "int s" "struct sockaddr *name" "socklen_t *namelen"
+.Fn getpeereid "int s" "uid_t *euid" "gid_t *egid"
 .Sh DESCRIPTION
-.Fn getsockname
-returns the locally bound address information for a specified socket.
+.Fn getpeereid
+returns the effective user ID and group ID of the peer connected to
+the UNIX domain socket
+.Fa s .
+
+One common use is for UNIX domain servers to determine the credentials
+of clients that have connected to it.
 .Pp
-Common uses of this function are as follows:
-.Bl -bullet
-.It
-When
-.Xr bind 2
-is called with a port number of 0 (indicating the kernel should pick
-an ephemeral port)
-.Fn getsockname
-is used to retrieve the kernel-assigned port number.
-.It
-When a process calls
-.Xr bind 2
-on a wildcard IP address,
-.Fn getsockname
-is used to retrieve the local IP address for the connection.
-.It
-When a function wishes to know the address family of a socket,
-.Fn getsockname
-can be used.
-.El
-.Pp
-.Fn getsockname
+.Fn getpeereid
 takes three parameters:
 .Pp
-.Fa s ,
-Contains the file desriptor for the socket to be looked up.
+.Fa s
+Contains the file descriptor of the socket whose peer credentials
+should be looked up.
 .Pp
-.Fa name
-points to a
-.Li sockaddr
-structure which will hold the resulting address information.
-Normal use requires one to use a structure
-specific to the protocol family in use, such as
-.Li sockaddr_in
-(IPv4) or
-.Li sockaddr_in6
-(IPv6), cast to a (struct sockaddr *).
+.Fa euid
+Points to a
+.Li uid_t
+variable into which the effective user ID for the connected peer will
+be stored.
 .Pp
-For greater portability (such as newer protocol families) the new
-structure sockaddr_storage exists.
-.Li sockaddr_storage
-is large enough to hold any of the other sockaddr_* variants.
-On return, it should be cast to the correct sockaddr type,
-according to the current protocol family.
-.Pp
-.Fa namelen
-Indicates the amount of space pointed to by
-.Fa name ,
-in bytes.
-Upon return,
-.Fa namelen
-is set to the actual size of the returned address information.
-.Pp
-If the address of the destination socket for a given socket connection is
-needed, the
-.Xr getpeername 2
-function should be used instead.
-.Pp
-If
-.Fa name
-does not point to enough space to hold the entire socket address, the
-result will be truncated to
-.Fa namelen
-bytes.
-.Pp
+.Fa guid
+Points to a
+.Li gid_t
+variable into which the effective group ID for the connected peer will
+be stored.
 .Sh RETURN VALUES
-On success,
-.Fn getsockname
-returns a 0, and
-.Fa namelen
-is set to the actual size of the socket address returned in
-.Fa name .
+If the call succeeds, a 0 is returned and
+.Fa euid
+and
+.Fa egid
+are set to the effective user ID and group ID of the connected peer.
 Otherwise,
 .Va errno
-is set, and a value of \-1 is returned.
+is set and a value of \-1 is returned.
 .Sh ERRORS
-If
-.Fn getsockname
-fails,
+On failure,
 .Va errno
 is set to one of the following:
 .Bl -tag -width Er
@@ -139,27 +90,29 @@ is not a valid descriptor.
 The argument
 .Fa s
 is a file, not a socket.
+.It Bq Er EOPNOTSUPP
+The socket is not in the UNIX domain.
+.It Bq Er ENOTCONN
+The socket is not connected.
 .It Bq Er ENOBUFS
 Insufficient resources were available in the system
 to perform the operation.
 .It Bq Er EFAULT
 The
-.Fa name
-parameter points to memory not in a valid part of the
+.Fa euid
+or
+.Fa egid
+parameters point to memory not in a valid part of the
 process address space.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr bind 2 ,
+.Xr getsockname 2 ,
 .Xr getpeername 2 ,
-.Xr getpeereid 2 ,
 .Xr socket 2
-.Sh BUGS
-Names bound to sockets in the UNIX domain are inaccessible;
-.Nm getsockname
-returns a zero length name.
 .Sh HISTORY
 The
-.Fn getsockname
+.Fn getpeereid
 function call appeared in
-.Bx 4.2 .
+.Ox 3.0 .

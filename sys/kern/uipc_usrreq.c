@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.12 2001/04/06 04:42:07 csapuntz Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.13 2001/06/26 19:56:52 dugsong Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -290,6 +290,15 @@ uipc_usrreq(so, req, m, nam, control)
 			nam->m_len = 0;
 		break;
 
+	case PRU_PEEREID:
+		if (unp->unp_flags & UNP_FEIDS) {
+			nam->m_len = sizeof(struct unpcbid);
+			bcopy((caddr_t)(&(unp->unp_connid)),
+			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+		} else
+			nam->m_len = 0;
+		break;
+
 	case PRU_SLOWTIMO:
 		break;
 
@@ -484,7 +493,10 @@ unp_connect(so, nam, p)
 		unp3 = sotounpcb(so3);
 		if (unp2->unp_addr)
 			unp3->unp_addr =
-				  m_copy(unp2->unp_addr, 0, (int)M_COPYALL);
+			    m_copy(unp2->unp_addr, 0, (int)M_COPYALL);
+		unp3->unp_connid.unp_euid = p->p_ucred->cr_uid;
+		unp3->unp_connid.unp_egid = p->p_ucred->cr_gid;
+		unp3->unp_flags |= UNP_FEIDS;
 		so2 = so3;
 	}
 	error = unp_connect2(so, so2);

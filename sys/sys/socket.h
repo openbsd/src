@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.37 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.38 2001/06/26 19:56:51 dugsong Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -408,6 +408,7 @@ __BEGIN_DECLS
 int	accept __P((int, struct sockaddr *, socklen_t *));
 int	bind __P((int, const struct sockaddr *, socklen_t));
 int	connect __P((int, const struct sockaddr *, socklen_t));
+int	getpeereid __P((int, uid_t *, gid_t *));
 int	getpeername __P((int, struct sockaddr *, socklen_t *));
 int	getsockname __P((int, struct sockaddr *, socklen_t *));
 int	getsockopt __P((int, int, int, void *, socklen_t *));

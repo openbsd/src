@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.39 2001/06/22 14:14:10 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.40 2001/06/26 19:56:52 dugsong Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
+#include <sys/unpcb.h>
 #include <sys/un.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -966,6 +967,51 @@ sys_getpeername(p, v, retval)
 	if (error == 0)
 		error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen),
 		    sizeof (len));
+bad:
+	m_freem(m);
+	return (error);
+}
+
+/*
+ * Get eid of peer for connected socket.
+ */
+/* ARGSUSED */
+int
+sys_getpeereid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_getpeereid_args /* {
+		syscallarg(int) fdes;
+		syscallarg(uid_t *) euid;
+		syscallarg(gid_t *) egid;
+	} */ *uap = v;
+	struct file *fp;
+	register struct socket *so;
+	struct mbuf *m;
+	struct unpcbid *id;
+	int error;
+
+	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
+		return (error);
+	so = (struct socket *)fp->f_data;
+	if (so->so_proto != pffindtype(AF_LOCAL, SOCK_STREAM))
+		return (EOPNOTSUPP);
+	m = m_getclr(M_WAIT, MT_SONAME);
+	if (m == NULL)
+		return (ENOBUFS);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_PEEREID, 0, m, 0);
+	if (!error && m->m_len != sizeof(struct unpcbid))
+		error = EOPNOTSUPP;
+	if (error)
+		goto bad;
+	id = mtod(m, struct unpcbid *);
+	error = copyout((caddr_t)&(id->unp_euid),
+		(caddr_t)SCARG(uap, euid), sizeof(uid_t));
+	if (error == 0)
+		error = copyout((caddr_t)&(id->unp_egid),
+		    (caddr_t)SCARG(uap, egid), sizeof(gid_t));
 bad:
 	m_freem(m);
 	return (error);

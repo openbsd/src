@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.46 2001/06/16 22:16:23 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.47 2001/06/26 19:56:52 dugsong Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -533,4 +533,5 @@
 			    const struct timespec *timeout); }
 271	STD		{ int sys_mlockall(int flags); }
 272	STD		{ int sys_munlockall(void); }
+273	STD		{ int sys_getpeereid(int fdes, uid_t *euid, gid_t *egid); }
 

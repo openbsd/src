@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.43 2001/03/14 04:01:59 aaron Exp $
+#	$OpenBSD: Makefile.inc,v 1.44 2001/06/26 19:56:52 dugsong Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -37,7 +37,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	fchflags.o fchmod.o fchown.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o getdirentries.o getegid.o geteuid.o \
-	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o \
+	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o getpeereid.o \
+	getpeername.o \
 	getpgid.o \
 	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
 	getsid.o \

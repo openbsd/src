@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.50 2001/06/16 22:17:12 deraadt Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.51 2001/06/26 19:56:51 dugsong Exp $	*/
 
 /*
  * System call numbers.
@@ -636,4 +636,7 @@
 /* syscall: "munlockall" ret: "int" args: */
 #define	SYS_munlockall	272
 
-#define	SYS_MAXSYSCALL	273
+/* syscall: "getpeereid" ret: "int" args: "int" "uid_t *" "gid_t *" */
+#define	SYS_getpeereid	273
+
+#define	SYS_MAXSYSCALL	274

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.51 2001/06/16 22:17:13 deraadt Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.52 2001/06/26 19:56:52 dugsong Exp $	*/
 
 /*
  * System call names.
@@ -359,4 +359,5 @@ char *syscallnames[] = {
 	"kevent",			/* 270 = kevent */
 	"mlockall",			/* 271 = mlockall */
 	"munlockall",			/* 272 = munlockall */
+	"getpeereid",			/* 273 = getpeereid */
 };
