@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.465 2001/11/20 20:14:17 jason Exp 
+ *		OpenBSD: pcidevs,v 1.466 2001/11/21 13:09:50 lebel Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -863,7 +863,7 @@
 #define	PCI_PRODUCT_ATI_MOBILITY_1	0x4c4d		/* Mobility 1 */
 #define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
 #define	PCI_PRODUCT_ATI_RAGE_PM	0x4c52		/* Rage P/M */
-#define	PCI_PRODUCT_ATI_RADEON_M	0x4c59		/* Radeon Mobility */
+#define	PCI_PRODUCT_ATI_RADEON_M6LY	0x4c59		/* Radeon Mobility M6 LY */
 #define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury */
 #define	PCI_PRODUCT_ATI_RAGE128_PK	0x5052		/* Rage 128 PK */
 #define	PCI_PRODUCT_ATI_RADEON_AIW	0x5144		/* AIW Radeon */
