@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 1997/01/16 09:23:29 niklas Exp $	*/
-/*	$NetBSD: sys_machdep.c,v 1.15 1996/05/25 21:54:28 is Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 1997/09/09 11:11:23 niklas Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 1997/05/19 10:14:47 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -154,8 +154,9 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(&curproc->p_vmspace->vm_pmap,
-						  (vm_offset_t)addr);
+				pa = pmap_extract(
+				    curproc->p_vmspace->vm_map.pmap,
+				    (vm_offset_t)addr);
 				if (pa == 0)
 					doall = 1;
 			}
