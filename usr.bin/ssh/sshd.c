@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.28 1999/10/11 21:48:29 markus Exp $");
+RCSID("$Id: sshd.c,v 1.29 1999/10/12 05:45:43 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1697,6 +1697,11 @@ void do_exec_no_pty(const char *command, struct passwd *pw,
       log_init(av0, debug_flag && !inetd_flag, debug_flag, 
 	       options.quiet_mode, options.log_facility);
 
+      /* Create a new session and process group since the 4.4BSD setlogin()
+	 affects the entire process group. */
+      if (setsid() < 0)
+	error("setsid failed: %.100s", strerror(errno));
+
 #ifdef USE_PIPES
       /* Redirect stdin.  We close the parent side of the socket pair,
          and make the child side the standard input. */
@@ -2068,7 +2073,8 @@ void do_child(const char *command, struct passwd *pw, const char *term,
     }
 
   /* Set login name in the kernel. */
-  setlogin(pw->pw_name);
+  if (setlogin(pw->pw_name) < 0)
+    error("setlogin failed: %s", strerror(errno));
 
   /* Set uid, gid, and groups. */
   /* Login(1) does this as well, and it needs uid 0 for the "-h" switch,
