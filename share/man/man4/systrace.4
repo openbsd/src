@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.11 2004/10/04 08:56:51 marius Exp $
+.\"	$OpenBSD: systrace.4,v 1.12 2004/10/04 21:14:38 jmc Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -132,11 +132,12 @@ during the execution of a system call.
 This is sent whenever the kernel frees the policy identified by
 .Va msg_policy .
 .It SYSTR_MSG_EXECVE
-This message is sent whenever, before a call to 
+This message is sent whenever, before a call to
 .Xr execve 2
 a process is privileged (technically, the process has the P_SUGID or
-P_SUGIDEXEC flag set), but after the call, these priveliges have been
-dropped.  The new image name is specified in the
+P_SUGIDEXEC flag set),
+but after the call these privileges have been dropped.
+The new image name is specified in the
 .Va path
 argument.
 .El
