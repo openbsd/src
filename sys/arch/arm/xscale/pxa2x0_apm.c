@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.10 2005/03/30 14:24:39 dlg Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.11 2005/04/06 01:31:05 pascoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -78,7 +78,7 @@ int	apm_userstandbys;
 int	apm_suspends;
 int	apm_battlow;
 
-/* battery percentage at where we get verbose in our warnings.  This
+/* battery percentage at which we get verbose in our warnings.  This
    value can be changed using sysctl(8), value machdep.apmwarn.
    Setting it to zero kills all warnings */
 int	cpu_apmwarn = 10;
@@ -118,7 +118,7 @@ struct filterops apmread_filtops =
 #define	SCFLAG_OWRITE	(1 << 1)
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
-/* This structure must be keept in sync with pxa2x0_apm_asm.S. */
+/* This structure must be kept in sync with pxa2x0_apm_asm.S. */
 struct pxa2x0_memcfg {
 	/* SDRAM refresh */
 	u_int32_t mdrefr_high;		/* 0x00 */
@@ -331,7 +331,7 @@ apm_get_event(struct pxa2x0_apm_softc *sc, u_long *event_type)
 {
 	struct	apm_power_info power;
 
-	/* Periodic callbacks could be replaced with a machine-dependant
+	/* Periodic callbacks could be replaced with a machine-dependent
 	   get_event function. */
 	if (sc->sc_periodic_check != NULL)
 		sc->sc_periodic_check(sc);
@@ -1269,7 +1269,7 @@ pxa2x0_pi2c_print(struct pxa2x0_apm_softc *sc)
 
 	(void)pxa2x0_pi2c_getvoltage(sc->sc_iot, sc->sc_pm_ioh, &value);
 	printf("xscale core voltage: %s\n", value == PI2C_VOLTAGE_HIGH ?
-	    "high" : (value == PI2C_VOLTAGE_LOW ? "low" : "unkown"));
+	    "high" : (value == PI2C_VOLTAGE_LOW ? "low" : "unknown"));
 }
 #endif
 

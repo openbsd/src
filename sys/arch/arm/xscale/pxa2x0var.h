@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0var.h,v 1.3 2005/01/12 17:14:37 uwe Exp $ */
+/*	$OpenBSD: pxa2x0var.h,v 1.4 2005/04/06 01:31:06 pascoe Exp $ */
 /* $NetBSD: pxa2x0var.h,v 1.2 2003/06/05 13:48:28 scw Exp $ */
 
 /*
@@ -72,8 +72,8 @@ extern void pxa2x0_turbo_mode(int);
 extern int pxa2x0_i2c_master_tx( int, uint8_t *, int );
 
 /*
- * Probe the memory controller to deterimine which SDRAM are
- * populated, and what size of SDRAM is present in each bank.
+ * Probe the memory controller to determine which SDRAM banks
+ * are populated, and what size SDRAM is present in each bank.
  *
  * This routine should be called from a port's initarm()
  * function, with the first parameter set to the address

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.h,v 1.7 2005/01/21 16:22:34 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.h,v 1.8 2005/04/06 01:31:05 pascoe Exp $ */
 /* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -40,14 +40,14 @@
 #include <dev/rasops/rasops.h>
 #include <machine/bus.h>
 
-/* LCD Contoroller */
+/* LCD Controller */
 
 struct	lcd_dma_descriptor {
 	uint32_t	fdadr;	/* next frame descriptor */
 	uint32_t	fsadr;	/* frame start address */
 	uint32_t	fidr;	/* frame ID */
 	uint32_t	ldcmd;	/* DMA command */
-#define	LDCMD_PAL	(1U<<26)	/* Pallet buffer */
+#define	LDCMD_PAL	(1U<<26)	/* Palette buffer */
 #define LDCMD_SOFINT	(1U<<22)	/* Start of Frame interrupt */
 #define LDCMD_EOFINT	(1U<<21)	/* End of Frame interrupt */
 };
@@ -110,7 +110,7 @@ struct lcd_panel_geometry {
 	short pixel_clock_div;		/* pixel clock divider */
 	short ac_bias;			/* AC bias pin frequency */
 
-	short hsync_pulse_width;	/* Horizontao sync pulse width */
+	short hsync_pulse_width;	/* Horizontal sync pulse width */
 	short beg_line_wait;		/* beginning of line wait (BLW) */
 	short end_line_wait;		/* end of line pxel wait (ELW) */
 

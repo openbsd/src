@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.9 2005/02/28 22:10:01 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.10 2005/04/06 01:31:05 pascoe Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ pxa2x0_irq_handler(void *arg)
 	irqbits = read_icu(SAIPIC_IP);
 
 	while ((irqno = find_first_bit(irqbits)) >= 0) {
-		/* XXX: Shuould we handle IRQs in priority order? */
+		/* XXX: Should we handle IRQs in priority order? */
 
 		/* raise spl to stop interrupts of lower priorities */
 		if (saved_spl_level < extirq_level[irqno])
@@ -262,10 +262,10 @@ pxa2x0_update_intr_masks(int irqno, int level)
 		pxa2x0_imask[i] |= mask; /* Enable interrupt at lower level */
 
 	for( ; i < NIPL-1; ++i)
-		pxa2x0_imask[i] &= ~mask; /* Disable itnerrupt at upper level */
+		pxa2x0_imask[i] &= ~mask; /* Disable interrupt at upper level */
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
@@ -491,7 +491,7 @@ pxa2x0_intr_disestablish(void *cookie)
 }
 
 /*
- * Glue for drivers of sa11x0 compatible integrated logics.
+ * Glue for drivers of sa11x0 compatible integrated logic.
  */
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
@@ -527,7 +527,7 @@ pxa2x0_splx(int new)
 	pxa2x0_setipl(new);
 	restore_interrupts(psw);
 
-	/* If there are software interrupts to process, do it. */
+	/* If there are pending software interrupts, process them. */
 	if (softint_pending & pxa2x0_imask[current_spl_level])
 		pxa2x0_do_pending();
 }

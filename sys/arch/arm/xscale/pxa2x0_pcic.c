@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.11 2005/03/09 22:11:10 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.12 2005/04/06 01:31:05 pascoe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -77,7 +77,7 @@ void	pxapcic_detach_card(struct pxapcic_socket *h, int flags);
 
 int pxapcic_intr_detect(void *arg);
 
-/* DONT CONFIGURE CF slot 1 for now */
+/* DON'T CONFIGURE CF slot 1 for now */
 #define NUM_CF_CARDS 2
 
 struct cfattach pxapcic_ca = {
@@ -117,7 +117,7 @@ pxapcic_mem_alloc(pch, size, pmh)
 {
 	struct pxapcic_socket *so = pch;
 
-	/* All we need is bus space tag */
+	/* All we need is the bus space tag */
 	memset(pmh, 0, sizeof(*pmh));
 	pmh->memt = so->sc->sc_iot;
 	return (0);
@@ -441,7 +441,7 @@ pxapcic_event_thread(void *arg)
 
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
 
-		/* sleep .25s to avoid chatterling interrupts */
+		/* sleep .25s to avoid chattering interrupts */
 		(void) tsleep((caddr_t)sock, PWAIT,
 		    "pxapcicss", hz/4);
 
@@ -530,7 +530,7 @@ pxapcic_create_event_thread(void *arg)
 
 	csr = bus_space_read_2(sc->sc_iot, sock->scooph, SCOOP_REG_CSR);
 
-	/* if there's a card there, then attach it  */
+	/* if there's a card there, attach it  */
 
 	switch (csr & SCP_CSR_MISSING) {
 	case 0: /* PRESENT */
@@ -627,7 +627,7 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		}
 		error = bus_space_map(iot, pa, size, 0, &scooph);
 		if (error) {
-			printf ("%s%d:failed to map memory %x for scoop\n",
+			printf ("%s%d: failed to map memory %x for scoop\n",
 			    sc->sc_dev.dv_xname, i, pa);
 			    continue;
 		}

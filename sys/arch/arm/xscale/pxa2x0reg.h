@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.15 2005/04/05 13:12:05 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.16 2005/04/06 01:31:05 pascoe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -304,7 +304,7 @@ struct pxa2x0_dma_desc {
 #define  CCCR_RUN_X16	 (16<<0) /* 208Mhz, 104/208Mhz mem, 104Mhz LCD */
 
 #define CLKMAN_CKEN	0x04	/* Clock Enable Register */
-#define CLKMAN_OSCC	0x08	/* Osillcator Configuration Register */
+#define CLKMAN_OSCC	0x08	/* Oscillator Configuration Register */
 
 #define CCCR_N_SHIFT	7
 #define CCCR_N_MASK	(0x07<<CCCR_N_SHIFT)
@@ -464,9 +464,9 @@ struct pxa2x0_dma_desc {
 #define  MDREFR_K1FREE	(1<<24)	/* SDCLK1 free run */
 #define  MDREFR_K2FREE	(1<<25)	/* SDCLK2 free run */
 
-#define MEMCTL_MSC0	0x08	/* Asychronous Statis memory Control CS[01] */
-#define MEMCTL_MSC1	0x0c	/* Asychronous Statis memory Control CS[23] */
-#define MEMCTL_MSC2	0x10	/* Asychronous Statis memory Control CS[45] */
+#define MEMCTL_MSC0	0x08	/* Asynchronous Static memory Control CS[01] */
+#define MEMCTL_MSC1	0x0c	/* Asynchronous Static memory Control CS[23] */
+#define MEMCTL_MSC2	0x10	/* Asynchronous Static memory Control CS[45] */
 #define  MSC_RBUFF_SHIFT 15	/* return data buffer */
 #define  MSC_RBUFF	(1<<MSC_RBUFF_SHIFT)
 #define  MSC_RRR_SHIFT   12  	/* recovery time */
@@ -524,7 +524,7 @@ struct pxa2x0_dma_desc {
 #define  LCCR0_RDSTM	(1U<<23) /* Read Status Interrupt Mask */
 #define  LCCR0_CMDIM	(1U<<24) /* Command Interrupt Mask */
 #define  LCCR0_OUC	(1U<<25) /* Overlay Underlay Control */
-#define  LCCR0_LDDALT	(1U<<26) /* LDD Alernate Mapping Control Bit */
+#define  LCCR0_LDDALT	(1U<<26) /* LDD Alternate Mapping Control Bit */
 
 #define  LCCR0_IMASK	(LCCR0_LDM|LCCR0_SFM|LCCR0_IUM|LCCR0_EFM|LCCR0_QDM|LCCR0_BM|LCCR0_OUM)
 
@@ -594,7 +594,7 @@ struct pxa2x0_dma_desc {
 #define  CMDAT_WRITE		(1<<3) /* 1=write 0=read operation */
 #define  CMDAT_STREAM_BLOCK	(1<<4) /* stream mode */
 #define  CMDAT_BUSY		(1<<5) /* busy signal is expected */
-#define  CMDAT_INIT		(1<<6) /* preceede command with 80 clocks */
+#define  CMDAT_INIT		(1<<6) /* precede command with 80 clocks */
 #define  CMDAT_MMC_DMA_EN	(1<<7) /* DMA enable */
 #define MMC_RESTO	0x14	/* expected response time out */
 #define MMC_RDTO 	0x18	/* expected data read time out */
@@ -674,13 +674,13 @@ struct pxa2x0_dma_desc {
 
 /* address to access codec registers */
 #define AC97_PRIAUDIO	0x0200	/* Primary audio codec */
-#define AC97_SECAUDIO	0x0300	/* Secondary autio codec */
+#define AC97_SECAUDIO	0x0300	/* Secondary audio codec */
 #define AC97_PRIMODEM	0x0400	/* Primary modem codec */
 #define AC97_SECMODEM	0x0500	/* Secondary modem codec */
 #define	AC97_CODEC_BASE(c)	(AC97_PRIAUDIO + ((c) * 0x100))
 
 /*
- * USB device controller differs between pxa255 and pxa27x, defined seperately
+ * USB device controller differs between pxa255 and pxa27x, defined separately
  */
 
 /*
@@ -688,7 +688,7 @@ struct pxa2x0_dma_desc {
  */
 #define USBHC_STAT	0x0060	/* UHC Status Register */
 #define  USBHC_STAT_RWUE	(1<<7)	/* HCI Remote Wake-Up Event */
-#define  USBHC_STAT_HBA		(1<<8)	/* HCI Buffer Acrive */
+#define  USBHC_STAT_HBA		(1<<8)	/* HCI Buffer Active */
 #define  USBHC_STAT_HTA		(1<<10)	/* HCI Transfer Abort */
 #define  USBHC_STAT_UPS1	(1<<11)	/* USB Power Sense Port 1 */
 #define  USBHC_STAT_UPS2	(1<<12)	/* USB Power Sense Port 2 */
