@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.14 1997/06/08 17:38:29 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.15 1997/06/09 09:41:08 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -384,11 +384,14 @@ vndstrategy(bp)
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	bp->b_resid = bp->b_bcount;
-	if (bn < 0 || bn + sz > vnd->sc_size) {
-		if (bn != vnd->sc_size) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-		}
+	if (bn < 0) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		return;
+	}
+	if (DISKPART(bp->b_dev) != RAW_PART &&
+	    bounds_check_with_label(bp, vnd->sc_dk.dk_label, 1) == 0) {
 		biodone(bp);
 		return;
 	}
@@ -416,11 +419,14 @@ vndstrategy(bp)
 
 		/* Loop until all queued requests are handled.  */
 		for (;;) {
+			int part = DISKPART(bp->b_dev);
+			int off = vnd->sc_dk.dk_label->d_partitions[part].p_offset;
+
 			aiov.iov_base = bp->b_data;
 			auio.uio_resid = aiov.iov_len = bp->b_bcount;
 			auio.uio_iov = &aiov;
 			auio.uio_iovcnt = 1;
-			auio.uio_offset = dbtob(bp->b_blkno);
+			auio.uio_offset = dbtob(bp->b_blkno + off);
 			auio.uio_segflg = UIO_SYSSPACE;
 			auio.uio_procp = NULL;
 
@@ -459,6 +465,7 @@ vndstrategy(bp)
 	}
 
 	/* The old-style buffercache bypassing method.  */
+	bn += vnd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bn = dbtob(bn);
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
