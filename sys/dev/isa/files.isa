@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.13 1996/05/02 13:38:09 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.14 1996/05/04 13:29:31 deraadt Exp $
 #	$NetBSD: files.isa,v 1.18 1996/04/25 02:15:42 thorpej Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -209,6 +209,13 @@ file	dev/isa/sbdsp.c			sbdsp
 device	sb: audio, isadma, sbdsp, mulaw, opti
 attach	sb at isa
 file	dev/isa/sb.c			sb needs-flag
+
+# Soundcards based on Sierra's Aria chipset.
+# Such as the Prometheus Aria 16 or the Diamond
+# sonic sound.
+device	aria: audio, mulaw
+attach	aria at isa
+file	dev/isa/aria.c			aria needs-flag
 
 # ProAudio Spectrum
 device	pas: audio, isadma, sbdsp, mulaw

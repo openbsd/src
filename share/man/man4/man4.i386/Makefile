@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 1996/04/19 05:48:09 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/05/04 13:29:44 deraadt Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
-MAN=	intro.4 aha.4 ahb.4 aic.4 ast.4 autoconf.4 boca.4 bt.4
+MAN=	intro.4 aha.4 ahb.4 aic.4 aria.4 ast.4 autoconf.4 boca.4 bt.4
 MAN+=	com.4 cy.4 ed.4 ep.4 lms.4 lpt.4 mcd.4 mem.4 mms.4 ncr.4 npx.4 pms.4 
 MAN+=	rtfps.4 scd.4 sea.4 speaker.4 uha.4 wd.4
 MAN+=	eg.4 el.4 ie.4 joy.4 le.4 wt.4
