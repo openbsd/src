@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: server.c,v 1.2 1999/02/06 03:22:47 brian Exp $
+ *	$Id: server.c,v 1.3 1999/03/07 11:55:27 brian Exp $
  */
 
 #include <sys/types.h>
@@ -191,6 +191,7 @@ server_LocalOpen(struct bundle *bundle, const char *name, mode_t mask)
     return 0;
   }
 
+  server_Close(bundle);
   memset(&server.ifsun, '\0', sizeof server.ifsun);
   server.ifsun.sun_len = strlen(name);
   if (server.ifsun.sun_len > sizeof server.ifsun.sun_path - 1) {
@@ -223,7 +224,6 @@ server_LocalOpen(struct bundle *bundle, const char *name, mode_t mask)
     ID0unlink(name);
     return 5;
   }
-  server_Close(bundle);
   server.fd = s;
   server.rm = server.ifsun.sun_path;
   log_Printf(LogPHASE, "Listening at local socket %s.\n", name);
