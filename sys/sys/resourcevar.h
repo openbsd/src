@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.11 1995/03/26 20:24:37 jtc Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -53,9 +53,9 @@ struct pstats {
 
 	struct uprof {			/* profile arguments */
 		caddr_t	pr_base;	/* buffer base */
-		u_long	pr_size;	/* buffer size */
+		size_t  pr_size;	/* buffer size */
 		u_long	pr_off;		/* pc offset */
-		u_long	pr_scale;	/* pc scaling */
+		u_int   pr_scale;	/* pc scaling */
 		u_long	pr_addr;	/* temp storage for addr until AST */
 		u_long	pr_ticks;	/* temp storage for ticks until AST */
 	} p_prof;
