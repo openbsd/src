@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2004/07/11 23:46:17 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2004/07/19 12:14:08 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 			const char *errstr;
 
 			lval = strtonum(&argv[i][1], INT_MIN, INT_MAX, &errstr);
-			if (argv[i][1] == '\0' || *errstr != '\0')
+			if (argv[i][1] == '\0' || errstr != NULL)
 				goto notnum;
 			startrow = lval;
 		} else {
