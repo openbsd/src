@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.8 2000/03/19 00:35:10 aaron Exp $
+.\"	$OpenBSD: brconfig.8,v 1.9 2000/03/26 17:36:33 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -207,7 +207,7 @@ and means that bogus MAC addresses seen by the xl0 side of the bridge
 will not be propagated to the rest of the network.
 Also, no packets will be sent on xl0 segment by the bridge unless they are
 broadcast packets or are for 8:0:20:1e:2f:2b.
-.It Cm "brconfig bridge0 rule pass in on fxp0 8:0:1:2:3:4:5 dst 5:4:3:2:1:0"
+.It Cm "brconfig bridge0 rule pass in on fxp0 src 0:1:2:3:4:5 dst 5:4:3:2:1:0"
 .It Cm "brconfig bridge0 rule pass out on fxp0 src 5:4:3:2:1:0 dst 0:1:2:3:4:5"
 .It Cm brconfig bridge0 rule block in on fxp0
 .It Cm brconfig bridge0 rule block out on fxp0
