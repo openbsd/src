@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.2 1999/08/16 10:20:07 downsj Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.3 1999/08/18 17:13:19 downsj Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -64,6 +64,9 @@ extern	const char version[];
  */
 char *name;
 char *names[] = {
+#ifdef OSREV
+	OSREV "/hp300/bsd.rd",
+#endif
 	"bsd.rd", "bsd", "obsd", "bsd.old"
 };
 #define NUMNAMES	(sizeof(names) / sizeof(char *))

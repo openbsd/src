@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1999/08/16 09:43:08 downsj Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/08/18 17:13:19 downsj Exp $
 
 PROG=	cdboot
 
@@ -6,7 +6,7 @@ NOMAN=
 
 .PATH:	${.CURDIR}/../uboot
 
-CFLAGS= -O2 -msoft-float -I${.CURDIR}/../include \
+CFLAGS= -O2 -DOSREV=\"${OSREV}\" -msoft-float -I${.CURDIR}/../include \
 	-I${.CURDIR}/../libsa -I${.CURDIR}/../.. -I${.CURDIR}/../../.. \
 	-I${.CURDIR}/../../../..
 
@@ -33,5 +33,7 @@ cdboot:	${OBJS} ${LIBS}
 install:	cdboot.lif cdboot.raw ${MKBOOT_PROG}
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 cdboot.lif \
 	    ${DESTDIR}/usr/mdec
+
+cdboot.o:	Makefile
 
 .include <bsd.prog.mk>
