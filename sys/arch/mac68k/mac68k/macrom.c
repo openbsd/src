@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.6 1996/10/30 05:26:29 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.7 1997/01/19 03:58:08 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.26 1996/08/05 23:20:46 briggs Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ mrg_Delay()
 
 	u_int32_t ticks;
 
-	asm("	movl	a0, %0"		/* get arguments */
+	__asm("	movl	a0, %0"		/* get arguments */
 		:
 		: "g" (ticks)
 		: "a0" );
@@ -179,7 +179,7 @@ mrg_VBLQueue()
 printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
 			   *((u_int32_t *)(vbltask + vblAddr)), vbltask);
 #endif	      
-		    asm("   movml	#0xfffe, sp@-
+		    __asm("   movml	#0xfffe, sp@-
 			    movl	%0, a0
 			    movl	%1, a1
 			    jbsr	a1@
@@ -214,9 +214,9 @@ printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
 void
 mrg_init_stub_1()
 {
-  	asm("movml #0xffff, sp@-");
+  	__asm("movml #0xffff, sp@-");
 	printf("mrg: hit mrg_init_stub_1\n");
-  	asm("movml sp@+, #0xffff");
+  	__asm("movml sp@+, #0xffff");
 }
 
 void
@@ -358,7 +358,7 @@ mrg_adbintr()	/* Call ROM ADB Interrupt */
 
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
-		asm("
+		__asm("
 			movml	#0xffff, sp@-
 			movl	%0, a0
 			movl	_VIA, a1
@@ -387,7 +387,7 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
-		asm("
+		__asm("
 			movml	#0xffff, sp@-
 			movl	%0, a0
 			movl	_VIA, a1
@@ -427,7 +427,7 @@ mrg_NewPtr()
 	u_int32_t trapword;
 	caddr_t ptr;
 
-	asm("	movl	d1, %0
+	__asm("	movl	d1, %0
 		movl	d0, %1"
 		: "=g" (trapword), "=g" (numbytes) : : "d0", "d1");
 
@@ -456,7 +456,7 @@ mrg_NewPtr()
 		bzero(ptr, numbytes); /* NewPtr, Clear ! */
 	}
 
-	asm("	movl	%0, a0" :  : "g" (ptr) : "a0");
+	__asm("	movl	%0, a0" :  : "g" (ptr) : "a0");
 	return(result);
 }
 
@@ -466,7 +466,7 @@ mrg_DisposPtr()
 	int result = noErr;
 	caddr_t ptr;
 
-	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
+	__asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
 	printf("mrg: DisposPtr(%x)\n", ptr);
@@ -486,7 +486,7 @@ mrg_GetPtrSize()
 {
 	caddr_t ptr;
 
-	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
+	__asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
 	printf("mrg: GetPtrSize(%x)\n", ptr);
@@ -504,7 +504,7 @@ mrg_SetPtrSize()
 	caddr_t ptr;
 	int newbytes;
 
-	asm("	movl	a1, %0
+	__asm("	movl	a1, %0
 		movl	d0, %1"
 		: "=g" (ptr), "=g" (newbytes) : : "d0", "a1");
 
@@ -533,7 +533,7 @@ mrg_SetTrapAddress()
         caddr_t ptr;
         int trap_num;
 
-        asm("   movl a0, %0
+        __asm("   movl a0, %0
                 movl d0, %1"
                 : "=g" (ptr), "=g" (trap_num) : : "d0", "a0");
 
@@ -665,7 +665,7 @@ mrg_aline_super(struct frame *frame)
 /* 	store a0 in d0bucket */
 /* This will change a1,d1,d0,a0 and possibly a6 */
 
-	asm("
+	__asm("
 		movl	%2, a1
 		movw	%3, d1
 		movl	%4, d0
@@ -774,13 +774,13 @@ mrg_init()
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
         printf("mrg: testing CountResources\n");
-        asm("   clrl    sp@-
+        __asm("   clrl    sp@-
                 clrl    sp@-
                 .word   0xa99c
                 movw    sp@+, %0"
                 : "=g" (rcnt));
         printf("mrg: found %d resources in ROM\n", rcnt);
-        asm("   clrl    sp@-
+        __asm("   clrl    sp@-
                 movl    #0x44525652, sp@-
                 .word   0xa99c
                 movw    sp@+, %0"
@@ -793,7 +793,7 @@ mrg_init()
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
         printf("mrg: testing GetIndResource\n");
-        asm("   clrl    sp@-
+        __asm("   clrl    sp@-
                 movl    #0x44525652, sp@-
                 movw    #0x01, sp@-
                 .word   0xa99d
@@ -804,7 +804,7 @@ mrg_init()
             (long)Get_Ind_Resource(0x44525652, 1),
 	    (long)*Get_Ind_Resource(0x44525652, 1),
                (long) *((u_int32_t *) *Get_Ind_Resource(0x44525652, 1)));
-        asm("   clrl    sp@-
+        __asm("   clrl    sp@-
                 movl    #0x44525652, sp@-
                 movw    #0x02, sp@-
                 .word   0xa99d
@@ -988,7 +988,7 @@ setup_egret(void)
 
 	/* This initializes ADBState (mrg_ADBStore2) and
 	   enables interrupts */
-		asm("	movml	a0-a2, sp@-
+		__asm("	movml	a0-a2, sp@-
 			movl	%1, a0		/* ADBState, mrg_adbstore2 */
 			movl	%0, a1
 			jbsr	a1@
@@ -1235,7 +1235,7 @@ ADBAlternateInit(void)
 	if (0 == mrg_ADBAlternateInit){
 		ADBReInit();
 	} else {
- 		asm("
+ 		__asm("
 			movml	a0-a6/d0-d7, sp@-
 			movl	%0, a1
 			movl	%1, a3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 1996/10/23 04:49:49 briggs Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 1997/01/19 03:58:09 briggs Exp $	*/
 /*	$NetBSD: trap.c,v 1.41 1996/10/17 06:42:44 scottr Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ int mmupid = -1;
 void	trap __P((int, unsigned, register unsigned, struct frame));
 void	syscall __P((register_t, struct frame));
 
-static inline void userret __P((register struct proc *,
+static __inline void userret __P((register struct proc *,
 				register struct frame *,
 				u_quad_t, u_int, int));
 
@@ -148,7 +148,7 @@ static int	dumpssw __P((register u_short));
  * Trap and syscall both need the following work done before returning
  * to user mode.
  */
-static inline void
+static __inline void
 userret(p, fp, oticks, faultaddr, fromtrap)
 	register struct proc *p;
 	register struct frame *fp;

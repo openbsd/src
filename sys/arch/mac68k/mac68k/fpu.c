@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.5 1996/10/14 01:15:52 briggs Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.6 1997/01/19 03:58:05 briggs Exp $	*/
 /*	$NetBSD: fpu.c,v 1.16 1996/06/11 02:56:22 scottr Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ fpu_probe()
 	 * state, so we can determine which we have by
 	 * examining the size of the FP state frame
 	 */
-	asm("fnop");
+	__asm("fnop");
 
 	nofault = (int *) 0;
 
@@ -141,7 +141,7 @@ fpu_probe()
 	 * have if this will.  We save the state in order to get the
 	 * size of the frame.
 	 */
-	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
+	__asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
 
 	b = *((u_char *) fpframe + 1);
 

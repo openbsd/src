@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1997/01/16 20:43:36 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1997/01/19 03:58:06 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.122 1996/10/15 06:40:39 scottr Exp $	*/
 
 /*
@@ -2589,10 +2589,10 @@ gray_bar()
    	3) restore regs
 */
 
-	asm("movl a0, sp@-");
-	asm("movl a1, sp@-");
-	asm("movl d0, sp@-");
-	asm("movl d1, sp@-");
+	__asm("movl a0, sp@-");
+	__asm("movl a1, sp@-");
+	__asm("movl d0, sp@-");
+	__asm("movl d1, sp@-");
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
@@ -2603,10 +2603,10 @@ gray_bar()
 		for (i = 0; i < 2 * videorowbytes / 4; i++)
 			((u_long *) videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
-	asm("movl sp@+, d1");
-	asm("movl sp@+, d0");
-	asm("movl sp@+, a1");
-	asm("movl sp@+, a0");
+	__asm("movl sp@+, d1");
+	__asm("movl sp@+, d0");
+	__asm("movl sp@+, a1");
+	__asm("movl sp@+, a0");
 }
 #endif
 
@@ -2872,15 +2872,15 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	asm("movl a0, sp@-");
-	asm("movl a1, sp@-");
-	asm("movl d0, sp@-");
-	asm("movl d1, sp@-");
+	__asm("movl a0, sp@-");
+	__asm("movl a1, sp@-");
+	__asm("movl d0, sp@-");
+	__asm("movl d1, sp@-");
 
 	/* printf("*"); */
 
-	asm("movl sp@+, d1");
-	asm("movl sp@+, d0");
-	asm("movl sp@+, a1");
-	asm("movl sp@+, a0");
+	__asm("movl sp@+, d1");
+	__asm("movl sp@+, d0");
+	__asm("movl sp@+, a1");
+	__asm("movl sp@+, a0");
 }
