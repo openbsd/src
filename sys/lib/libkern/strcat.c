@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcat.c,v 1.5 2003/05/10 21:44:53 deraadt Exp $	*/
+/*	$OpenBSD: strcat.c,v 1.6 2003/05/12 17:09:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strcat.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$OpenBSD: strcat.c,v 1.5 2003/05/10 21:44:53 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strcat.c,v 1.6 2003/05/12 17:09:18 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -44,7 +44,7 @@ static char *rcsid = "$OpenBSD: strcat.c,v 1.5 2003/05/10 21:44:53 deraadt Exp $
 #include <lib/libkern/libkern.h>
 #endif
 
-__warn_references(sprintf, "warning: strcat() is often misused, please use strlcpy()");
+__warn_references(strcat, "warning: strcat() is often misused, please use strlcpy()");
 
 char *
 strcat(s, append)
