@@ -1,4 +1,4 @@
-/*	$OpenBSD: h4.h,v 1.1 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: h4.h,v 1.2 2005/01/17 18:12:49 mickey Exp $	*/
 
 /*
  * ng_h4.h
@@ -27,7 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: h4.h,v 1.1 2005/01/14 12:04:02 grange Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_h4.h,v 1.4 2004/05/10 02:24:55 emax Exp $
  * 
  * Based on:

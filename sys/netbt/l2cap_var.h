@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_var.h,v 1.1 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: l2cap_var.h,v 1.2 2005/01/17 18:12:49 mickey Exp $	*/
 
 /*
  * ng_btsocket_l2cap.h
@@ -27,7 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap_var.h,v 1.1 2005/01/14 12:04:02 grange Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_l2cap.h,v 1.3 2003/11/14 03:45:29 emax Exp $
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.h,v 1.1 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: hci.h,v 1.2 2005/01/17 18:12:49 mickey Exp $	*/
 
 /*
  * ng_hci.h
@@ -27,7 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.1 2005/01/14 12:04:02 grange Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.4 2004/08/10 00:38:50 emax Exp $
  */
 

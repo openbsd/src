@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_raw.c,v 1.2 2005/01/14 20:22:54 grange Exp $	*/
+/*	$OpenBSD: hci_raw.c,v 1.3 2005/01/17 18:12:49 mickey Exp $	*/
 
 /*
  * ng_btsocket_hci_raw.c
@@ -27,7 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci_raw.c,v 1.2 2005/01/14 20:22:54 grange Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/socket/ng_btsocket_hci_raw.c,v 1.16 2004/10/18 22:19:42 rwatson Exp $
  */
 
