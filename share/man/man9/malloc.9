@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.11 2000/06/07 10:02:56 art Exp $
+.\"	$OpenBSD: malloc.9,v 1.12 2000/06/25 13:46:06 pjanzen Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -400,8 +400,8 @@ variables.
 .Va malloc_deb_type
 should be set to the memory type and
 .Va malloc_deb_size
-should be set to the memory size you want to debug. 0 can be used as a
-wildcard.
+should be set to the memory size you want to debug.
+0 can be used as a wildcard.
 .Pp
 Every call to
 .Fn malloc
@@ -433,6 +433,6 @@ you have gotten an access to freed memory.
 .Pp
 You have to be very careful when using the
 .Cm MALLOC_DEBUG
-option, the memory consumption can run away pretty quickly and there is
+option:  the memory consumption can run away pretty quickly and there is
 a severe performance degradation when allocating and freeing debugged memory
 types.
