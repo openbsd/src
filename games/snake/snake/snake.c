@@ -65,6 +65,7 @@ static char rcsid[] = "$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $"
 #include <pwd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "snake.h"
 #include "pathnames.h"
@@ -479,7 +480,7 @@ post(iscore, flag)
 int	iscore, flag;
 {
 	short	score = iscore;
-	short	uid;
+	uid_t	uid;
 	short	oldbest=0;
 	short	allbwho=0, allbscore=0;
 	struct	passwd *p;

@@ -52,13 +52,14 @@ static char rcsid[] = "$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 char *recfile = _PATH_RAWSCORES;
 #define MAXPLAYERS 256
 
 struct	player	{
-	short	uids;
+	uit_d	uids;
 	short	scores;
 	char	*name;
 } players[MAXPLAYERS], temp;
@@ -66,7 +67,8 @@ struct	player	{
 int
 main()
 {
-	short	uid, score;
+	uid_t	uid;
+	short	score;
 	FILE	*fd;
 	int	noplayers;
 	int	i, j, notsorted;
