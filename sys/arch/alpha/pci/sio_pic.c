@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.2 1995/11/23 02:38:19 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.3 1995/12/24 02:29:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -57,8 +57,7 @@
  * Private functions and variables.
  */
 static void	*sio_intr_establish __P((void *, isa_irq_t,
-		    isa_intrsharetype_t, isa_intrlevel_t,
-		    int (*)(void *), void *));
+		    int, int, int (*)(void *), void *));
 static void	sio_intr_disestablish __P((void *, void *));
 static void	sio_strayintr __P((isa_irq_t));
 
@@ -89,7 +88,7 @@ struct intrhand {
 #define	ICU_LEN		16		/* number of ISA IRQs */
 
 static struct intrhand *sio_intrhand[ICU_LEN];
-static isa_intrsharetype_t sio_intrsharetype[ICU_LEN];
+static int sio_intrsharetype[ICU_LEN];
 static u_long sio_strayintrcnt[ICU_LEN];
 #ifdef EVCNT_COUNTERS
 struct evcnt sio_intr_evcnt;
@@ -126,7 +125,7 @@ u_int8_t initial_elcr[2];
 void
 sio_setirqstat(irq, enabled, type)
 	int irq, enabled;
-	isa_intrsharetype_t type;
+	int type;
 {
 	u_int8_t ocw1[2], elcr[2];
 	int icu, bit;
@@ -157,7 +156,7 @@ sio_setirqstat(irq, enabled, type)
 	/*
 	 * interrupt type select: set bit to get level-triggered.
 	 */
-	if (type == ISA_IST_LEVEL)
+	if (type == IST_LEVEL)
 		elcr[icu] |= 1 << bit;
 	else
 		elcr[icu] &= ~(1 << bit);
@@ -235,7 +234,7 @@ sio_intr_setup(ipf, ipfa)
 			 */
 			if (INITIALLY_LEVEL_TRIGGERED(i))
 				printf("sio_intr_setup: %d LT!\n", i);
-			sio_setirqstat(i, INITIALLY_ENABLED(i), ISA_IST_EDGE);
+			sio_setirqstat(i, INITIALLY_ENABLED(i), IST_EDGE);
 			break;
 
 		case 2:
@@ -247,7 +246,7 @@ sio_intr_setup(ipf, ipfa)
 				printf("sio_intr_setup: %d LT!\n", i);
 			if (!INITIALLY_ENABLED(i))
 				printf("sio_intr_setup: %d not enabled!\n", i);
-			sio_setirqstat(i, 1, ISA_IST_EDGE);
+			sio_setirqstat(i, 1, IST_EDGE);
 			break;
 
 		default:
@@ -256,8 +255,8 @@ sio_intr_setup(ipf, ipfa)
 			 * type to (effectively) "unknown."
 			 */
 			sio_setirqstat(i, INITIALLY_ENABLED(i),
-			    INITIALLY_LEVEL_TRIGGERED(i) ? ISA_IST_LEVEL :
-				ISA_IST_NONE);
+			    INITIALLY_LEVEL_TRIGGERED(i) ? IST_LEVEL :
+				IST_NONE);
 			break;
 		}
 	}
@@ -267,8 +266,8 @@ void *
 sio_intr_establish(siifa, irq, type, level, ih_fun, ih_arg)
 	void *siifa;
         isa_irq_t irq;
-        isa_intrsharetype_t type;
-        isa_intrlevel_t level;
+        int type;
+        int level;
         int (*ih_fun)(void *);
         void *ih_arg;
 {
@@ -280,16 +279,16 @@ sio_intr_establish(siifa, irq, type, level, ih_fun, ih_arg)
 	if (ih == NULL)
 		panic("sio_intr_establish: can't malloc handler info");
 
-	if (irq > ICU_LEN || type == ISA_IST_NONE)
+	if (irq > ICU_LEN || type == IST_NONE)
 		panic("sio_intr_establish: bogus irq or type");
 
 	switch (sio_intrsharetype[irq]) {
-	case ISA_IST_EDGE:
-	case ISA_IST_LEVEL:
+	case IST_EDGE:
+	case IST_LEVEL:
 		if (type == sio_intrsharetype[irq])
 			break;
-	case ISA_IST_PULSE:
-		if (type != ISA_IST_NONE)
+	case IST_PULSE:
+		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
 			    isa_intrsharetype_name(sio_intrsharetype[irq]),
 			    isa_intrsharetype_name(type));

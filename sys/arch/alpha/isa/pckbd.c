@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.2 1995/11/23 02:37:06 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.3 1995/12/24 02:29:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -348,7 +348,7 @@ pckbdattach(parent, self, aux)
 	pckbd_pio_arg = ida->ida_pioarg;			/* XXX */
 	
 	sc->sc_ih = ISA_INTR_ESTABLISH(pckbd_intr_fns, pckbd_intr_arg,
-	    ida->ida_irq[0], ISA_IST_EDGE, ISA_IPL_TTY, pckbdintr, sc);
+	    ida->ida_irq[0], IST_EDGE, IPL_TTY, pckbdintr, sc);
 #if NWSC
 	printf("\n");
 	wscattach_input(self, self, pccngetc, pccnpollc);

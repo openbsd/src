@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_2100_a50.c,v 1.3 1995/11/23 02:37:49 cgd Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.4 1995/12/24 02:29:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -47,7 +47,7 @@
 #include "sio.h"
 
 void    *dec_2100_a50_pci_map_int __P((void *, pci_conftag_t,
-	    pci_intr_pin_t, pci_intr_line_t, pci_intrlevel_t,
+	    pci_intr_pin_t, pci_intr_line_t, int,
 	    int (*func)(void *), void *));
 void    dec_2100_a50_pci_unmap_int __P((void *, void *));
 
@@ -62,7 +62,7 @@ dec_2100_a50_pci_map_int(acv, tag, pin, line, level, func, arg)
         pci_conftag_t tag;
 	pci_intr_pin_t pin;
 	pci_intr_line_t line;
-        pci_intrlevel_t level;
+        int level;
         int (*func) __P((void *));
         void *arg;
 {
@@ -151,8 +151,7 @@ dec_2100_a50_pci_map_int(acv, tag, pin, line, level, func, arg)
 
 #if NSIO
 	return ISA_INTR_ESTABLISH(&sio_isa_intr_fns, NULL,	/* XXX */
-	    pirqline, ISA_IST_LEVEL, pci_intrlevel_to_isa(level),
-	    func, arg);
+	    pirqline, IST_LEVEL, level, func, arg);
 #else
 	panic("dec_2100_a50_pci_map_int: no sio!");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 1995/07/27 21:39:59 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18 1995/12/24 02:30:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -59,8 +59,6 @@
 #include <dev/pci/pcireg.h>
 
 int pci_mode = -1;
-
-static isa_intrlevel	pcilevel_to_isa __P((pci_intrlevel level));
 
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
@@ -377,7 +375,7 @@ pci_map_mem(tag, reg, vap, pap)
 void *
 pci_map_int(tag, level, func, arg)
 	pcitag_t tag;
-	pci_intrlevel level;
+	int level;
 	int (*func) __P((void *));
 	void *arg;
 {
@@ -431,32 +429,5 @@ pci_map_int(tag, level, func, arg)
 	printf("pci_map_int: pin %c mapped to line %d\n", '@' + pin, line);
 #endif
 
-	return isa_intr_establish(line, ISA_IST_LEVEL, pcilevel_to_isa(level),
-	    func, arg);
-}
-
-static isa_intrlevel
-pcilevel_to_isa(level)
-	pci_intrlevel level;
-{
-
-	switch (level) {
-	case PCI_IPL_NONE:
-		return (ISA_IPL_NONE);
-
-	case PCI_IPL_BIO:
-		return (ISA_IPL_BIO);
-
-	case PCI_IPL_NET:
-		return (ISA_IPL_NET);
-
-	case PCI_IPL_TTY:
-		return (ISA_IPL_TTY);
-
-	case PCI_IPL_CLOCK:
-		return (ISA_IPL_CLOCK);
-
-	default:
-		panic("pcilevel_to_isa: unknown level %d\n", level);
-	}
+	return isa_intr_establish(line, IST_LEVEL, level, func, arg);
 }

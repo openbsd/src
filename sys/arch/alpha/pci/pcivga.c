@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivga.c,v 1.3 1995/11/23 02:38:11 cgd Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.4 1995/12/24 02:29:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -180,8 +180,7 @@ pcivgaattach(parent, self, aux)
 #if 0
 	pci_intrdata = pci_conf_read(sc->sc_pcitag, PCI_INTERRUPT_REG);
 	if (PCI_INTERRUPT_PIN(pci_intrdata) != PCI_INTERRUPT_PIN_NONE) {
-		sc->sc_intr = pci_map_int(sc->sc_pcitag, PCI_IPL_TTY,
-		    tgaintr, sc);
+		sc->sc_intr = pci_map_int(sc->sc_pcitag, IPL_TTY, tgaintr, sc);
 		if (sc->sc_intr == NULL)
 			printf("%s: WARNING: couldn't map interrupt\n",
 			    sc->sc_dev.dv_xname);

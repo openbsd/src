@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.1 1995/11/23 02:38:00 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.2 1995/12/24 02:29:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -56,7 +56,7 @@
 #endif
 
 void	*kn20aa_pci_map_int __P((void *, pci_conftag_t, pci_intr_pin_t,
-	    pci_intr_line_t, pci_intrlevel_t, int (*func)(void *), void *));
+	    pci_intr_line_t, int, int (*func)(void *), void *));
 void	kn20aa_pci_unmap_int __P((void *, void *));
 
 __const struct pci_intr_fns kn20aa_pci_intr_fns = {
@@ -87,7 +87,7 @@ void	kn20aa_pci_strayintr __P((int irq));
 void	kn20aa_iointr __P((void *framep, int vec));
 void	kn20aa_enable_intr __P((int irq));
 struct kn20aa_intrhand *kn20aa_attach_intr __P((struct kn20aa_intrchain *,
-			    pci_intrlevel_t, int (*) (void *), void *));
+			    int, int (*) (void *), void *));
 
 void
 pci_kn20aa_pickintr(pcf, pcfa, ppf, ppfa, pifp, pifap)
@@ -127,7 +127,7 @@ kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg)
         pci_conftag_t tag;
 	pci_intr_pin_t pin;
 	pci_intr_line_t line;
-        pci_intrlevel_t level;
+        int level;
         int (*func) __P((void *));
         void *arg;
 {
@@ -275,7 +275,7 @@ kn20aa_enable_intr(irq)
 struct kn20aa_intrhand *
 kn20aa_attach_intr(chain, level, func, arg)
 	struct kn20aa_intrchain *chain;
-	pci_intrlevel_t level;
+	int level;
 	int (*func) __P((void *));
 	void *arg;
 {
