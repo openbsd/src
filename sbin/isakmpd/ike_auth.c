@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.7 1998/11/17 11:10:12 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.20 1998/08/26 14:25:34 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.8 1998/11/20 23:42:29 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.21 1998/11/20 23:34:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,6 +35,8 @@
  */
 
 #include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -52,6 +54,8 @@
 #include "message.h"
 #include "pkcs.h"
 #include "prf.h"
+#include "transport.h"
+#include "util.h"
 
 static u_int8_t *enc_gen_skeyid (struct exchange *, size_t *);
 static u_int8_t *pre_shared_gen_skeyid (struct exchange *, size_t *);
@@ -95,14 +99,53 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   struct ipsec_exch *ie = exchange->data;
   u_int8_t *skeyid;
   u_int8_t *key;
+  struct transport *t = exchange->last_received->transport;
+  struct sockaddr *dst;
+  int dst_len;
+  u_int8_t *buf = 0;
+  size_t keylen;
 
   /*
-   * Get the default pre-shared key.
-   * XXX This will be per-IP configurable too later, and representable in
-   * hex too.
+   * Get the pre-shared key for our peer's IP address, or if that does not
+   * exist, the default.
    */
-  key = conf_get_str ("pre_shared", "key");
-  prf = prf_alloc (ie->prf_type, ie->hash->type, key, strlen (key));
+  t->vtbl->get_dst (t, &dst, &dst_len);
+  key = conf_get_str ("pre_shared",
+		      inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
+  if (!key)
+    {
+      key = conf_get_str ("pre_shared", "default");
+      if (!key)
+	{
+	  log_print ("pre_shared_gen_skeyid: no key found");
+	  return 0;
+	}
+    }
+
+  /* If the key starts with 0x it is in hex format.  */
+  if (strncasecmp (key, "0x", 2) == 0)
+    {
+      keylen = (strlen (key) - 1) / 2;
+      buf = malloc (keylen);
+      if (!buf)
+	{
+	  log_print ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
+	  return 0;
+	}
+      if (hex2raw (key + 2, buf, keylen))
+	{
+	  free (buf);
+	  log_print ("pre_shared_gen_skeyid: invalid hex key");
+	  return 0;
+	}
+      key = buf;
+    }
+  else
+    keylen = strlen (key);
+
+  prf = prf_alloc (ie->prf_type, ie->hash->type, key, keylen);
+  if (buf)
+    free (buf);
   if (!prf)
     return 0;
 

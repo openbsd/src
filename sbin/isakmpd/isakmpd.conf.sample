@@ -1,5 +1,5 @@
-#	$OpenBSD: isakmpd.conf.sample,v 1.4 1998/11/20 07:33:34 niklas Exp $
-#	$EOM: isakmpd.conf.sample,v 1.16 1998/11/20 07:12:35 niklas Exp $
+#	$OpenBSD: isakmpd.conf.sample,v 1.5 1998/11/20 23:42:29 niklas Exp $
+#	$EOM: isakmpd.conf.sample,v 1.17 1998/11/20 23:34:57 niklas Exp $
 
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
@@ -94,8 +94,9 @@ ENCAPSULATION_MODE=	TUNNEL
 Life=			LIFE_600_SECS,LIFE_32_MB
 
 [PRE_SHARED]
-# A general pre-shared key used for everyone.  XXX Should be per-peer later.
-KEY=			mekmitasdigoat
+127.0.0.1=		my_key_to_myself
+# A general pre-shared key used for everyone.
+Default=		mekmitasdigoat
 
 [RSA_SIG]
 CERT=			/etc/isakmpd_cert
