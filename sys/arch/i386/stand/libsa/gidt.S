@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.19 1998/02/24 22:06:52 weingart Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.20 1998/02/25 12:28:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -422,13 +422,13 @@ ENTRY(bootbuf)
 	popl	%eax		/* Don't need return address */
 	popl	%esi		/* Buffer */
 	popl	%edx		/* Device */
-	prot2real			/* Switch */
+	prot2real		/* Switch */
 
 	/* Set up stack */
 	cli
-	xorl	%eax, %eax
-	pushl	%ax
-	popl	%ss
+	xorl	%ax, %ax
+	movl	%ax, %ss
+	data32
 	movl	$0xfffc, %esp
 	sti
 
