@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.118 2003/08/04 14:03:17 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.119 2003/08/11 20:14:35 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -263,6 +263,14 @@ Verify that the
 hold all shared libraries used for the port.
 See
 .Xr library-specs 7 .
+.It Ar licence-check
+Check that
+.Ev PERMIT_PACKAGE_*
+settings match: 
+if any dependency has a more restrictive setting, warn about it.
+This warning is advisory, because the automated license checking cannot
+figure out which ports were used only for building and did not taint
+the current port.
 .It Ar link-categories
 Create symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
