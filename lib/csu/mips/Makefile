@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
-#	$Id: Makefile,v 1.5 1996/09/02 10:04:11 pefo Exp $
+#	$Id: Makefile,v 1.6 1996/09/02 11:29:09 pefo Exp $
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}
 OBJS=		crt0.o gcrt0.o scrt0.o crtn.o
@@ -10,12 +10,6 @@ DEPS=
 all: ${OBJS}
 
 crt0.o: ${SRCS} ${DEPS}
-	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-crtn.o: ${SRCS} ${DEPS}
 	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}"
 	@${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
