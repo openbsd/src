@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.33 2004/06/22 23:17:01 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.34 2004/06/24 22:01:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "ensure.h"
 #include "rde.h"
 
 /* attribute specific functions */
@@ -1012,28 +1011,30 @@ community_match(void *data, u_int16_t len, int as, int type)
 int
 community_set(struct attr *attr, int as, int type)
 {
-	u_int32_t *cdata = (u_int32_t*)attr->data;
+	u_int8_t *p = attr->data;
 	unsigned int i, ncommunities = attr->len;
 
-	ENSURE((as & ~0xffff) == 0);
-	ENSURE((type & ~0xffff) == 0);
-	ENSURE((ncommunities & 0x3) == 0);
 	ncommunities >>= 2; /* divide by four */
 
 	for (i = 0; i < ncommunities; i++) {
-		if ((ntohl(cdata[i]) & 0xffff0000) == (unsigned)as << 16)
+		if (as >> 8 == p[0] && (as & 0xff) == p[1])
 			break;
+		p += 4;
 	}
 
 	if (i >= ncommunities) {
-		if (attr->len + 4 > 0xffff) /* overflow */
+		if (attr->len > 0xffff - 4) /* overflow */
 			return (0);
 		attr->len += 4;
-		if ((cdata = realloc(attr->data, attr->len)) == NULL)
+		if ((p = realloc(attr->data, attr->len)) == NULL)
 			return (0);
-		attr->data = (void*)cdata;
+		attr->data = p;
+		p = attr->data + attr->len - 4;
 	}
-	cdata[i] = htonl(as << 16 | type);
+	p[0] = as >> 8;
+	p[1] = as & 0xff;
+	p[2] = type >> 8;
+	p[3] = type & 0xff;
 
 	return (1);
 }
