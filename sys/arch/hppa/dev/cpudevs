@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.23 2003/02/01 00:31:59 miod Exp $
+$OpenBSD: cpudevs,v 1.24 2003/05/25 18:30:07 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -134,7 +134,7 @@ board	HP778_B132LP	0x503	778/B132L+ (Merlin L2+ 132)
 board	HP778_B180L	0x504	778/B180L+ (Merlin L2+ 180)
 board	HP779_C132L	0x505	779/C132L (Raven L2 132)
 board	HP779_C160L	0x506	779/C160L (Raven L2 160)
-board	HP779_C180L	0x507	779/C160L (Raven L2 180)
+board	HP779_C180L	0x507	779/C180L (Raven L2 180)
 board	HP779_C160L1	0x508	779/C160L (Raven L2 160)
 board	HP712_132L2	0x509	712/132 (L2 Upgrade)
 board	HP712_160L2	0x50a	712/160 (L2 Upgrade)
