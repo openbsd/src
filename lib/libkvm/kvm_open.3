@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.9 2003/06/02 20:18:41 millert Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.10 2004/09/14 22:39:56 deraadt Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 .Ft kvm_t *
 .Fn kvm_open "const char *execfile" "const char *corefile" "char *swapfile" "int flags" "const char *errstr"
 .Ft kvm_t *
-.Fn kvm_openfiles "const char *execfile" "const char *corefile" "char *swapfile" "int flags" "char *errbuf"
+.Fn kvm_openfiles "const char *execfile" "const char *corefile" "char *swapfile" "unsigned int flags" "char *errbuf"
 .Ft int
 .Fn kvm_close "kvm_t *kd"
 .Sh DESCRIPTION
