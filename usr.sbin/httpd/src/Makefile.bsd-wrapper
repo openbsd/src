@@ -1,0 +1,48 @@
+
+.include <bsd.own.mk>
+
+PROG=httpd
+BINDIR=/usr/sbin
+BINOWN=root
+BINGRP=daemon
+
+all: Makefile
+	${MAKE}
+
+.FORCE:	.IGNORE
+
+helpers/GuessOS: 
+	lndir -e Makefile.bsd-wrapper -e obj ${.CURDIR} ${.OBJDIR}
+
+config:	.FORCE
+	sh ${.CURDIR}/Configure -file ${.CURDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
+
+Makefile: helpers/GuessOS
+	sh ${.CURDIR}/Configure -file ${.CURDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
+
+# apache has no man pages in the dist
+
+maninistall:
+	@echo No man pages for apache
+
+install: maninistall
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${PROG} ${BINDIR} 
+
+clean cleandir:
+.if 	exists(${.OBJDIR}/Makefile)
+		 ${MAKE} clean 
+.endif
+	/bin/rm -f Makefile
+	/bin/rm -f modules/Makefile
+	/bin/rm -f Makefile.config
+	/bin/rm -f modules.c
+
+depend:
+	# Nothing here yet
+lint:
+	#Nothing here yet
+tags:
+	#Nothing here yet
+
+.include<bsd.obj.mk>
+.include<bsd.subdir.mk>
