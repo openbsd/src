@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.12 2000/01/13 06:23:59 fgsch Exp $
+.\"	$OpenBSD: socket.2,v 1.13 2000/01/22 12:05:49 aaron Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -156,9 +156,8 @@ within a reasonable length of time, then
 the connection is considered broken and calls
 will indicate an error with
 \-1 returns and with
-.Dv ETIMEDOUT
-as the specific code
-in the global variable
+.Er ETIMEDOUT
+as the specific code in the global variable
 .Va errno .
 The protocols optionally keep sockets
 .Dq warm

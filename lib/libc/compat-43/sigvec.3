@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.15 1999/09/23 04:11:59 alex Exp $
+.\"	$OpenBSD: sigvec.3,v 1.16 2000/01/22 12:05:48 aaron Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 3
@@ -178,7 +178,7 @@ the call may be restarted,
 the call may return with a data transfer shorter than requested,
 or the call may forced to terminate
 with the error
-.Dv EINTR .
+.Er EINTR .
 Interrupting of pending calls is requested
 by setting the
 .Dv SV_INTERRUPT

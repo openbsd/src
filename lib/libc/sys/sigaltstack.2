@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.9 1999/06/29 14:10:21 aaron Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.10 2000/01/22 12:05:49 aaron Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -87,7 +87,7 @@ Trying to disable an active stack will cause
 to return \-1 with
 .Va errno
 set to
-.Dv EINVAL .
+.Er EINVAL .
 A disabled stack will cause all signals to be
 taken on the regular user stack.
 If the stack is later re-enabled then all signals that were specified
