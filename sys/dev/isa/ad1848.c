@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.10 1998/04/26 21:02:38 provos Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.11 1998/05/08 18:37:18 csapuntz Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -138,8 +138,8 @@ static int ad1848_init_values[] = {
     0,			/* unused */
     0,			/* IRQ status */
     0,			/* unused */
-			/* Mono input (mic) Control */
-    MONO_INPUT_MUTE|ATTEN_6,		/* mute mic by default */
+			/* Mono input (a.k.a speaker) (mic) Control */
+    MONO_INPUT_MUTE|ATTEN_6,		/* mute speaker by default */
     0,			/* unused */
     0,			/* record format */
     0,			/* Crystal Clock Select */
@@ -566,16 +566,16 @@ ad1848_attach(sc)
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
-    (void) ad1848_set_out_gain(sc, &vol_mid);
-    (void) ad1848_set_mon_gain(sc, &vol_0);
-    (void) ad1848_set_aux1_gain(sc, &vol_mid);	/* CD volume */
+    (void) ad1848_set_channel_gain(sc, AD1848_DAC_CHANNEL, &vol_mid);
+    (void) ad1848_set_channel_gain(sc, AD1848_MONITOR_CHANNEL, &vol_0);
+    (void) ad1848_set_channel_gain(sc, AD1848_AUX1_CHANNEL, &vol_mid);	/* CD volume */
     if (sc->mode == 2) {
-	/* aux1 was really the DAC output */
-	(void) ad1848_set_aux2_gain(sc, &vol_mid); /* CD volume */
-	(void) cs4231_set_linein_gain(sc, &vol_mid);
-	(void) cs4231_set_mono_gain(sc, &vol_0); /* mic */
+	(void) ad1848_set_channel_gain(sc, AD1848_AUX2_CHANNEL, &vol_mid); /* CD volume */
+	(void) ad1848_set_channel_gain(sc, AD1848_LINE_CHANNEL, &vol_mid);
+	(void) ad1848_set_channel_gain(sc, AD1848_MONO_CHANNEL, &vol_0);
+	sc->mute[AD1848_MONO_CHANNEL] = MUTE_ALL;
     } else
-	(void) ad1848_set_aux2_gain(sc, &vol_0);
+	(void) ad1848_set_channel_gain(sc, AD1848_AUX2_CHANNEL, &vol_0);
 
     /* Set default port */
     (void) ad1848_set_rec_port(sc, MIC_IN_PORT);
@@ -587,6 +587,120 @@ ad1848_attach(sc)
 /*
  * Various routines to interface to higher level audio driver
  */
+struct ad1848_mixerinfo {
+  int  left_reg;
+  int  right_reg;
+  int  atten_bits;
+  int  atten_mask;
+} mixer_channel_info[] = 
+{ { SP_LEFT_AUX2_CONTROL, SP_RIGHT_AUX2_CONTROL, AUX_INPUT_ATTEN_BITS,
+    AUX_INPUT_ATTEN_MASK },
+  { SP_LEFT_AUX1_CONTROL, SP_RIGHT_AUX1_CONTROL, AUX_INPUT_ATTEN_BITS,
+    AUX_INPUT_ATTEN_MASK },
+  { SP_LEFT_OUTPUT_CONTROL, SP_RIGHT_OUTPUT_CONTROL, 
+    OUTPUT_ATTEN_BITS, OUTPUT_ATTEN_MASK }, 
+  { CS_LEFT_LINE_CONTROL, CS_RIGHT_LINE_CONTROL, LINE_INPUT_ATTEN_BITS,
+    LINE_INPUT_ATTEN_MASK },
+  { CS_MONO_IO_CONTROL, 0, MONO_INPUT_ATTEN_BITS, MONO_INPUT_ATTEN_MASK },
+  { SP_DIGITAL_MIX, 0, OUTPUT_ATTEN_BITS, MIX_ATTEN_MASK }
+};
+
+/*
+ *  This function doesn't set the mute flags but does use them.
+ *  The mute flags reflect the mutes that have been applied by the user.
+ *  However, the driver occasionally wants to mute devices (e.g. when chaing
+ *  sampling rate). These operations should not affect the mute flags.
+ */
+
+void 
+ad1848_mute_channel(sc, device, mute) 
+	struct ad1848_softc *sc;
+	int device;
+	int mute;
+{
+  u_char reg;
+
+  reg = ad_read(sc, mixer_channel_info[device].left_reg);
+
+  if (mute & MUTE_LEFT) {
+    if (device == AD1848_MONITOR_CHANNEL)
+        ad_write(sc, mixer_channel_info[device].left_reg, reg & 0xFE);
+    else
+        ad_write(sc, mixer_channel_info[device].left_reg, reg | 0x80);
+  } else if (!(sc->mute[device] & MUTE_LEFT)) {
+    if (device == AD1848_MONITOR_CHANNEL)
+        ad_write(sc, mixer_channel_info[device].left_reg, reg | 0x01);
+    else
+        ad_write(sc, mixer_channel_info[device].left_reg, reg & ~0x80);
+  }
+
+  if (!mixer_channel_info[device].right_reg) {
+    return;
+  }
+
+  reg = ad_read(sc, mixer_channel_info[device].right_reg);
+
+  if (mute & MUTE_RIGHT)
+    ad_write(sc, mixer_channel_info[device].right_reg, reg | 0x80);
+  else if (!(sc->mute[device] & MUTE_RIGHT)) {
+    ad_write(sc, mixer_channel_info[device].right_reg, reg & ~0x80);
+  }
+}
+
+
+int
+ad1848_set_channel_gain(sc, device, gp)
+    struct ad1848_softc *sc;
+    int device;
+    struct ad1848_volume *gp;
+{
+    struct ad1848_mixerinfo *info = &mixer_channel_info[device];
+    u_char reg;
+    u_int atten;
+
+    sc->gains[device] = *gp;
+
+    atten = ((AUDIO_MAX_GAIN - gp->left) * info->atten_bits)/AUDIO_MAX_GAIN;
+
+    reg = ad_read(sc, info->left_reg) & (info->atten_mask);
+    if (device == AD1848_MONITOR_CHANNEL)
+      reg |= ((atten & info->atten_bits) << 2);
+    else
+      reg |= ((atten & info->atten_bits));
+
+    ad_write(sc, info->left_reg, reg);
+
+    if (!info->right_reg)
+      return (0);
+
+    atten = ((AUDIO_MAX_GAIN - gp->right) * info->atten_bits)/AUDIO_MAX_GAIN;
+    reg = ad_read(sc, info->right_reg);
+    reg &= (info->atten_mask);
+    ad_write(sc, info->right_reg, (atten& info->atten_bits)|reg);
+
+    return(0);
+}
+
+
+int
+ad1848_get_device_gain(sc, device, gp)
+    struct ad1848_softc *sc;
+    int device;
+    struct ad1848_volume *gp;
+{
+    *gp = sc->gains[device];
+    return(0);
+}
+
+int
+ad1848_get_rec_gain(sc, gp)
+    struct ad1848_softc *sc;
+    struct ad1848_volume *gp;
+{
+    *gp = sc->rec_gain;
+    return(0);
+}
+
 int
 ad1848_set_rec_gain(sc, gp)
     struct ad1848_softc *sc;
@@ -611,104 +725,23 @@ ad1848_set_rec_gain(sc, gp)
     return(0);
 }
 
-int
-ad1848_get_rec_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
+
+void
+ad1848_mute_monitor(addr, mute)
+	void *addr;
+	int mute;
 {
-    *gp = sc->rec_gain;
-    return(0);
-}
+	struct ad1848_softc *sc = addr;
 
-int
-ad1848_set_out_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    u_char reg;
-    u_int atten;
-    
-    DPRINTF(("ad1848_set_out_gain: %d:%d\n", gp->left, gp->right));
-
-    sc->out_gain = *gp;
-
-    atten = ((AUDIO_MAX_GAIN - gp->left) * OUTPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_LEFT_OUTPUT_CONTROL);
-    reg &= OUTPUT_ATTEN_MASK;
-    ad_write(sc, SP_LEFT_OUTPUT_CONTROL, (atten&0x3f)|reg);
-
-    atten = ((AUDIO_MAX_GAIN - gp->right) * OUTPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_RIGHT_OUTPUT_CONTROL);
-    reg &= OUTPUT_ATTEN_MASK;
-    ad_write(sc, SP_RIGHT_OUTPUT_CONTROL, (atten&0x3f)|reg);
-
-    return(0);
-}
-
-int
-ad1848_get_out_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    *gp = sc->out_gain;
-    return(0);
-}
-
-int
-ad1848_set_mon_gain(sc, gp)		/* monitor gain */
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    u_char reg;
-    u_int atten;
-    
-    DPRINTF(("ad1848_set_mon_gain: %d\n", gp->left));
-
-    sc->mon_gain = *gp;
-
-    atten = ((AUDIO_MAX_GAIN - gp->left) * OUTPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_DIGITAL_MIX);
-    reg &= MIX_ATTEN_MASK;
-    ad_write(sc, SP_DIGITAL_MIX, (atten&OUTPUT_ATTEN_BITS)|reg);
-    return(0);
-}
-
-int
-ad1848_get_mon_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    *gp = sc->mon_gain;
-    return(0);
-}
-
-int
-cs4231_set_mono_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    u_char reg, oreg;
-    u_int atten;
-    
-    DPRINTF(("cs4231_set_mono_gain: %d\n", gp->left));
-
-    sc->mono_gain = *gp;
-
-    atten = ((AUDIO_MAX_GAIN - gp->left) * MONO_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    oreg = reg = ad_read(sc, CS_MONO_IO_CONTROL);
-    reg &= MONO_INPUT_ATTEN_MASK;
-    ad_write(sc, CS_MONO_IO_CONTROL, (atten&MONO_INPUT_ATTEN_BITS)|reg);
-    DPRINTF(("cs4231_set_mono_gain: was:%x\n", oreg));
-    return(0);
-}
-
-int
-cs4231_get_mono_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    *gp = sc->mono_gain;
-    return(0);
+	DPRINTF(("ad1848_mute_monitor: %smuting\n", mute ? "" : "un"));
+	if (sc->mode == 2) {
+	        ad1848_mute_channel(sc, AD1848_DAC_CHANNEL, mute ? MUTE_ALL : 0);
+		ad1848_mute_channel(sc, AD1848_MONO_CHANNEL, mute ? MUTE_MONO : 0);
+		ad1848_mute_channel(sc, AD1848_LINE_CHANNEL, mute ? MUTE_ALL : 0);
+	}
+		
+	ad1848_mute_channel(sc, AD1848_AUX2_CHANNEL, mute ? MUTE_ALL : 0);
+	ad1848_mute_channel(sc, AD1848_AUX1_CHANNEL, mute ? MUTE_ALL : 0);
 }
 
 int
@@ -745,227 +778,169 @@ ad1848_get_mic_gain(sc, gp)
 	return(0);
 }
 
-void
-ad1848_mute_monitor(addr, mute)
-	void *addr;
-	int mute;
-{
-	struct ad1848_softc *sc = addr;
 
-	DPRINTF(("ad1848_mute_monitor: %smuting\n", mute ? "" : "un"));
-	if (sc->mode == 2) {
-		cs4231_mute_monitor(sc, mute);
-		cs4231_mute_mono(sc, mute);
-		cs4231_mute_line(sc, mute);
-	}
-		
-	ad1848_mute_aux1(sc, mute);
-	ad1848_mute_aux2(sc, mute);
+static ad1848_devmap_t *ad1848_mixer_find_dev __P((ad1848_devmap_t *, int, mixer_ctrl_t *));
+
+static ad1848_devmap_t *
+ad1848_mixer_find_dev(map, cnt, cp)
+  ad1848_devmap_t *map;
+  int cnt;
+  mixer_ctrl_t *cp;
+
+{
+  int idx;
+
+  for (idx = 0; idx < cnt; idx++) {
+    if (map[idx].id == cp->dev) {
+      return (&map[idx]);
+    }
+  }
+  return (NULL);
 }
 
-void
-cs4231_mute_monitor(sc, mute)
-	struct ad1848_softc *sc;
-	int mute;
+int     
+ad1848_mixer_get_port(ac, map, cnt, cp)
+  struct ad1848_softc *ac;
+  struct ad1848_devmap *map;
+  int cnt;
+  mixer_ctrl_t *cp;
 {
-	u_char reg;
-	if (mute) {
-		DPRINTF(("cs4231_mute_monitor: muting\n"));
-		reg = ad_read(sc, SP_LEFT_OUTPUT_CONTROL);
-		ad_write(sc, SP_LEFT_OUTPUT_CONTROL, OUTPUT_MUTE|reg);
-		reg = ad_read(sc, SP_RIGHT_OUTPUT_CONTROL);
-		ad_write(sc, SP_RIGHT_OUTPUT_CONTROL, OUTPUT_MUTE|reg);
-	} else if (!sc->mon_mute) {
-		DPRINTF(("cs4231_mute_monitor: unmuting\n"));
-		reg = ad_read(sc, SP_LEFT_OUTPUT_CONTROL);
-		ad_write(sc, SP_LEFT_OUTPUT_CONTROL, reg & ~OUTPUT_MUTE);
-		reg = ad_read(sc, SP_RIGHT_OUTPUT_CONTROL);
-		ad_write(sc, SP_RIGHT_OUTPUT_CONTROL, reg & ~OUTPUT_MUTE);
-	}
+  ad1848_devmap_t *entry;
+  struct ad1848_volume vol;
+  int error = EINVAL;
+  int dev;
+
+  if (!(entry = ad1848_mixer_find_dev(map, cnt, cp)))
+    return (ENXIO);
+
+  dev = entry->dev;
+
+  switch (entry->kind) {
+  case AD1848_KIND_LVL:
+    if (cp->type != AUDIO_MIXER_VALUE)
+      break;
+
+    if (dev < AD1848_AUX2_CHANNEL ||
+	dev > AD1848_MONITOR_CHANNEL)
+      break;
+
+    if (cp->un.value.num_channels != 1 &&
+        mixer_channel_info[dev].right_reg == 0) 
+      break;
+
+    error = ad1848_get_device_gain(ac, dev, &vol);
+    if (!error)
+      ad1848_from_vol(cp, &vol);
+
+    break;
+
+  case AD1848_KIND_MUTE:
+    if (cp->type != AUDIO_MIXER_ENUM) break;
+
+    cp->un.ord = ac->mute[dev] ? 1 : 0;
+    error = 0;
+    break;
+
+  case AD1848_KIND_RECORDGAIN:
+    if (cp->type != AUDIO_MIXER_VALUE) break;
+
+    error = ad1848_get_rec_gain(ac, &vol);
+    if (!error)
+      ad1848_from_vol(cp, &vol);
+
+    break;
+
+  case AD1848_KIND_MICGAIN:
+    if (cp->type != AUDIO_MIXER_VALUE) break;
+
+    error = ad1848_get_mic_gain(ac, &vol);
+    if (!error)
+      ad1848_from_vol(cp, &vol);
+
+    break;
+
+  case AD1848_KIND_RECORDSOURCE:
+    if (cp->type != AUDIO_MIXER_ENUM) break;
+    cp->un.ord = ad1848_get_rec_port(ac);
+    error = 0;
+    break;
+  default:
+    printf ("Invalid kind\n");
+    break;
+  }
+
+  return (error);
 }
 
-void
-cs4231_mute_mono(sc, mute)
-    struct ad1848_softc *sc;
-    int mute;
+int     
+ad1848_mixer_set_port(ac, map, cnt, cp)
+  struct ad1848_softc *ac;
+  struct ad1848_devmap *map;
+  int cnt;
+  mixer_ctrl_t *cp;
 {
-	u_char reg;
-	if (mute) {
-		DPRINTF(("cs4231_mute_mono: muting\n"));
-		reg = ad_read(sc, CS_MONO_IO_CONTROL);
-		ad_write(sc, CS_MONO_IO_CONTROL, MONO_INPUT_MUTE|reg);
-	} else if (!sc->mono_mute) {
-		DPRINTF(("cs4231_mute_mono: unmuting\n"));
-		reg = ad_read(sc, CS_MONO_IO_CONTROL);
-		ad_write(sc, CS_MONO_IO_CONTROL, reg & ~MONO_INPUT_MUTE);
-	}
-}
+  ad1848_devmap_t *entry;
+  struct ad1848_volume vol;
+  int error = EINVAL;
+  int dev;
 
-void
-cs4231_mute_line(sc, mute)
-    struct ad1848_softc *sc;
-    int mute;
-{
-	u_char reg;
-	if (mute) {
-		DPRINTF(("cs4231_mute_line: muting\n"));
-		reg = ad_read(sc, CS_LEFT_LINE_CONTROL);
-		ad_write(sc, CS_LEFT_LINE_CONTROL, LINE_INPUT_MUTE|reg);
-		reg = ad_read(sc, CS_RIGHT_LINE_CONTROL);
-		ad_write(sc, CS_RIGHT_LINE_CONTROL, LINE_INPUT_MUTE|reg);
-	} else if (!sc->line_mute) {
-		DPRINTF(("cs4231_mute_line: unmuting\n"));
-		reg = ad_read(sc, CS_LEFT_LINE_CONTROL);
-		ad_write(sc, CS_LEFT_LINE_CONTROL, reg & ~LINE_INPUT_MUTE);
-		reg = ad_read(sc, CS_RIGHT_LINE_CONTROL);
-		ad_write(sc, CS_RIGHT_LINE_CONTROL, reg & ~LINE_INPUT_MUTE);
-	}
-}
+  if (!(entry = ad1848_mixer_find_dev(map, cnt, cp)))
+    return (ENXIO);
 
-void
-ad1848_mute_aux1(sc, mute)
-    struct ad1848_softc *sc;
-    int mute;
-{
-	u_char reg;
-	if (mute) {
-		DPRINTF(("ad1848_mute_aux1: muting\n"));
-		reg = ad_read(sc, SP_LEFT_AUX1_CONTROL);
-		ad_write(sc, SP_LEFT_AUX1_CONTROL, AUX_INPUT_MUTE|reg);
-		reg = ad_read(sc, SP_RIGHT_AUX1_CONTROL);
-		ad_write(sc, SP_RIGHT_AUX1_CONTROL, AUX_INPUT_MUTE|reg);
-	} else if (!sc->aux1_mute) {
-		DPRINTF(("ad1848_mute_aux1: unmuting\n"));
-		reg = ad_read(sc, SP_LEFT_AUX1_CONTROL);
-		ad_write(sc, SP_LEFT_AUX1_CONTROL, reg & ~AUX_INPUT_MUTE);
-		reg = ad_read(sc, SP_RIGHT_AUX1_CONTROL);
-		ad_write(sc, SP_RIGHT_AUX1_CONTROL, reg & ~AUX_INPUT_MUTE);
-	}
-}
+  dev = entry->dev;
 
-void
-ad1848_mute_aux2(sc, mute)
-    struct ad1848_softc *sc;
-    int mute;
-{
-	u_char reg;
-	if (mute) {
-		DPRINTF(("ad1848_mute_aux2: muting\n"));
-		reg = ad_read(sc, SP_LEFT_AUX2_CONTROL);
-		ad_write(sc, SP_LEFT_AUX2_CONTROL, AUX_INPUT_MUTE|reg);
-		reg = ad_read(sc, SP_RIGHT_AUX2_CONTROL);
-		ad_write(sc, SP_RIGHT_AUX2_CONTROL, AUX_INPUT_MUTE|reg);
-	} else if (!sc->aux2_mute) {
-		DPRINTF(("ad1848_mute_aux2: unmuting\n"));
-		reg = ad_read(sc, SP_LEFT_AUX2_CONTROL);
-		ad_write(sc, SP_LEFT_AUX2_CONTROL, reg & ~AUX_INPUT_MUTE);
-		reg = ad_read(sc, SP_RIGHT_AUX2_CONTROL);
-		ad_write(sc, SP_RIGHT_AUX2_CONTROL, reg & ~AUX_INPUT_MUTE);
-	}
-}
+  switch (entry->kind) {
+  case AD1848_KIND_LVL:
+    if (cp->type != AUDIO_MIXER_VALUE)
+      break;
 
-int
-ad1848_set_aux1_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    u_char reg;
-    u_int atten;
+    if (dev < AD1848_AUX2_CHANNEL ||
+	dev > AD1848_MONITOR_CHANNEL)
+      break;
+
+    if (cp->un.value.num_channels != 1 &&
+        mixer_channel_info[dev].right_reg == 0) 
+      break;
     
-    DPRINTF(("ad1848_set_aux1_gain: %d:%d\n", gp->left, gp->right));
-	
-    sc->aux1_gain = *gp;
+    ad1848_to_vol(cp, &vol);
+    error = ad1848_set_channel_gain(ac, dev, &vol);
+    break;
 
-    atten = ((AUDIO_MAX_GAIN - gp->left) * AUX_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_LEFT_AUX1_CONTROL);
-    reg &= ~(AUX_INPUT_ATTEN_BITS);
-    ad_write(sc, SP_LEFT_AUX1_CONTROL, (atten&0x1f)|reg);
-
-    atten = ((AUDIO_MAX_GAIN - gp->right) * AUX_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_RIGHT_AUX1_CONTROL);
-    reg &= ~(AUX_INPUT_ATTEN_BITS);
-    ad_write(sc, SP_RIGHT_AUX1_CONTROL, (atten&0x1f)|reg);
-
-    return(0);
-}
-
-int
-ad1848_get_aux1_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    *gp = sc->aux1_gain;
-    return(0);
-}
-
-int
-cs4231_set_linein_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    u_char reg, oregl, oregr;
-    u_int atten;
+  case AD1848_KIND_MUTE:
+    if (cp->type != AUDIO_MIXER_ENUM) break;
     
-    DPRINTF(("ad1848_set_linein_gain: %d:%d\n", gp->left, gp->right));
-	
-    sc->line_gain = *gp;
+    ac->mute[dev] = (cp->un.ord ? MUTE_ALL : 0);
+    ad1848_mute_channel(ac, dev, ac->mute[dev]);
+    error = 0;
+    break;
 
-    atten = ((AUDIO_MAX_GAIN - gp->left) * LINE_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    oregl = reg = ad_read(sc, CS_LEFT_LINE_CONTROL);
-    reg &= ~(LINE_INPUT_ATTEN_BITS);
-    ad_write(sc, CS_LEFT_LINE_CONTROL, (atten&LINE_INPUT_ATTEN_BITS)|reg);
+  case AD1848_KIND_RECORDGAIN:
+    if (cp->type != AUDIO_MIXER_VALUE) break;
 
-    atten = ((AUDIO_MAX_GAIN - gp->right) * LINE_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    oregr = reg = ad_read(sc, CS_RIGHT_LINE_CONTROL);
-    reg &= ~(LINE_INPUT_ATTEN_BITS);
-    ad_write(sc, CS_RIGHT_LINE_CONTROL, (atten&LINE_INPUT_ATTEN_BITS)|reg);
+    ad1848_to_vol(cp, &vol);
+    error = ad1848_set_rec_gain(ac, &vol);
+    break;
 
-    DPRINTF(("ad1848_set_linein_gain: was %x:%x\n", oregl, oregr));
-    return(0);
+  case AD1848_KIND_MICGAIN:
+    if (cp->type != AUDIO_MIXER_VALUE) break;
+
+    ad1848_to_vol(cp, &vol);
+    error = ad1848_set_mic_gain(ac, &vol);
+    break;
+
+  case AD1848_KIND_RECORDSOURCE:
+    if (cp->type != AUDIO_MIXER_ENUM) break;
+
+    error = ad1848_set_rec_port(ac,  cp->un.ord);
+    break;
+  default:
+    printf ("Invalid kind\n");
+    break;
+  }
+
+  return (error);
 }
 
-int
-cs4231_get_linein_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    *gp = sc->line_gain;
-    return(0);
-}
-
-int
-ad1848_set_aux2_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    u_char reg;
-    u_int atten;
-    
-    DPRINTF(("ad1848_set_aux2_gain: %d:%d\n", gp->left, gp->right));
-	
-    sc->aux2_gain = *gp;
-
-    atten = ((AUDIO_MAX_GAIN - gp->left) * AUX_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_LEFT_AUX2_CONTROL);
-    reg &= ~(AUX_INPUT_ATTEN_BITS);
-    ad_write(sc, SP_LEFT_AUX2_CONTROL, (atten&0x1f)|reg);
-
-    atten = ((AUDIO_MAX_GAIN - gp->right) * AUX_INPUT_ATTEN_BITS)/AUDIO_MAX_GAIN;
-    reg = ad_read(sc, SP_RIGHT_AUX2_CONTROL);
-    reg &= ~(AUX_INPUT_ATTEN_BITS);
-    ad_write(sc, SP_RIGHT_AUX2_CONTROL, (atten&0x1f)|reg);
-
-    return(0);
-}
-
-int
-ad1848_get_aux2_gain(sc, gp)
-    struct ad1848_softc *sc;
-    struct ad1848_volume *gp;
-{
-    *gp = sc->aux2_gain;
-    return 0;
-}
 
 int
 ad1848_query_encoding(addr, fp)

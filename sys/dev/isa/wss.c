@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.15 1998/04/26 21:03:03 provos Exp $	*/
+/*	$OpenBSD: wss.c,v 1.16 1998/05/08 18:37:24 csapuntz Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -81,9 +81,6 @@ int	wss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	wss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
 
-static int wss_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
-static int wss_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
-
 /*
  * Define our interface to the higher level audio driver.
  */
@@ -157,40 +154,6 @@ wssattach(sc)
     audio_attach_mi(&wss_hw_if, 0, &sc->sc_ad1848, &sc->sc_dev);
 }
 
-static int
-wss_to_vol(cp, vol)
-    mixer_ctrl_t *cp;
-    struct ad1848_volume *vol;
-{
-    if (cp->un.value.num_channels == 1) {
-	vol->left = vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-	return(1);
-    }
-    else if (cp->un.value.num_channels == 2) {
-	vol->left  = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-	vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-	return(1);
-    }
-    return(0);
-}
-
-static int
-wss_from_vol(cp, vol)
-    mixer_ctrl_t *cp;
-    struct ad1848_volume *vol;
-{
-    if (cp->un.value.num_channels == 1) {
-	cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = vol->left;
-	return(1);
-    }
-    else if (cp->un.value.num_channels == 2) {
-	cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = vol->left;
-	cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = vol->right;
-	return(1);
-    }
-    return(0);
-}
-
 int
 wss_getdev(addr, retp)
     void *addr;
@@ -200,90 +163,28 @@ wss_getdev(addr, retp)
     return 0;
 }
 
+static ad1848_devmap_t mappings[] = {
+{ WSS_MIC_IN_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
+{ WSS_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
+{ WSS_DAC_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
+{ WSS_MON_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
+{ WSS_MIC_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
+{ WSS_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
+{ WSS_DAC_MUTE, AD1848_KIND_MUTE, AD1848_DAC_CHANNEL },
+{ WSS_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
+{ WSS_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1}
+};
+
+static int nummap = sizeof(mappings) / sizeof(mappings[0]);
+
 int
 wss_mixer_set_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
     struct ad1848_softc *ac = addr;
-    struct wss_softc *sc = ac->parent;
-    struct ad1848_volume vol;
-    int error = EINVAL;
-    
-    DPRINTF(("wss_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
 
-    switch (cp->dev) {
-    case WSS_MIC_IN_LVL:	/* Microphone */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    if (wss_to_vol(cp, &vol))
-		error = ad1848_set_aux2_gain(ac, &vol);
-	}
-	break;
-	
-    case WSS_MIC_IN_MUTE:	/* Microphone */
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    sc->mic_mute = cp->un.ord;
-	    DPRINTF(("mic mute %d\n", cp->un.ord));
-	    error = 0;
-	}
-	break;
-
-    case WSS_LINE_IN_LVL:	/* linein/CD */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    if (wss_to_vol(cp, &vol))
-		error = ad1848_set_aux1_gain(ac, &vol);
-	}
-	break;
-	
-    case WSS_LINE_IN_MUTE:	/* linein/CD */
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    sc->cd_mute = cp->un.ord;
-	    DPRINTF(("CD mute %d\n", cp->un.ord));
-	    error = 0;
-	}
-	break;
-
-    case WSS_DAC_LVL:		/* dac out */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    if (wss_to_vol(cp, &vol))
-		error = ad1848_set_out_gain(ac, &vol);
-	}
-	break;
-	
-    case WSS_DAC_MUTE:		/* dac out */
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    sc->dac_mute = cp->un.ord;
-	    DPRINTF(("DAC mute %d\n", cp->un.ord));
-	    error = 0;
-	}
-	break;
-
-    case WSS_REC_LVL:		/* record level */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    if (wss_to_vol(cp, &vol))
-		error = ad1848_set_rec_gain(ac, &vol);
-	}
-	break;
-	
-    case WSS_RECORD_SOURCE:
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    error = ad1848_set_rec_port(ac, cp->un.ord);
-	}
-	break;
-
-    case WSS_MON_LVL:
-	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1) {
-	    vol.left  = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-	    error = ad1848_set_mon_gain(ac, &vol);
-	}
-	break;
-
-    default:
-	    return ENXIO;
-	    /*NOTREACHED*/
-    }
-    
-    return 0;
+    return (ad1848_mixer_set_port(ac, mappings, nummap, cp));
 }
 
 int
@@ -292,87 +193,8 @@ wss_mixer_get_port(addr, cp)
     mixer_ctrl_t *cp;
 {
     struct ad1848_softc *ac = addr;
-    struct wss_softc *sc = ac->parent;
-    struct ad1848_volume vol;
-    int error = EINVAL;
-    
-    DPRINTF(("wss_mixer_get_port: port=%d\n", cp->dev));
 
-    switch (cp->dev) {
-    case WSS_MIC_IN_LVL:	/* Microphone */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    error = ad1848_get_aux2_gain(ac, &vol);
-	    if (!error)
-		wss_from_vol(cp, &vol);
-	}
-	break;
-
-    case WSS_MIC_IN_MUTE:
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    cp->un.ord = sc->mic_mute;
-	    error = 0;
-	}
-	break;
-
-    case WSS_LINE_IN_LVL:	/* linein/CD */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    error = ad1848_get_aux1_gain(ac, &vol);
-	    if (!error)
-		wss_from_vol(cp, &vol);
-	}
-	break;
-
-    case WSS_LINE_IN_MUTE:
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    cp->un.ord = sc->cd_mute;
-	    error = 0;
-	}
-	break;
-
-    case WSS_DAC_LVL:		/* dac out */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    error = ad1848_get_out_gain(ac, &vol);
-	    if (!error)
-		wss_from_vol(cp, &vol);
-	}
-	break;
-
-    case WSS_DAC_MUTE:
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    cp->un.ord = sc->dac_mute;
-	    error = 0;
-	}
-	break;
-
-    case WSS_REC_LVL:		/* record level */
-	if (cp->type == AUDIO_MIXER_VALUE) {
-	    error = ad1848_get_rec_gain(ac, &vol);
-	    if (!error)
-		wss_from_vol(cp, &vol);
-	}
-	break;
-
-    case WSS_RECORD_SOURCE:
-	if (cp->type == AUDIO_MIXER_ENUM) {
-	    cp->un.ord = ad1848_get_rec_port(ac);
-	    error = 0;
-	}
-	break;
-
-    case WSS_MON_LVL:		/* monitor level */
-	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1) {
-	    error = ad1848_get_mon_gain(ac, &vol);
-	    if (!error)
-		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = vol.left;
-	}
-	break;
-
-    default:
-	error = ENXIO;
-	break;
-    }
-
-    return(error);
+    return (ad1848_mixer_get_port(ac, mappings, nummap, cp));
 }
 
 int
