@@ -333,7 +333,6 @@ bounds_check_with_label(bp, lp, wlabel)
 			bp->b_resid = bp->b_bcount;
 			return(0);
 		}
-		sz = maxsz - bp->b_blkno;
 		if (sz < 0) {
 			bp->b_error = EINVAL;
 			goto bad;
