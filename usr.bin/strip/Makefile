@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.4 1997/02/11 17:42:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/02/13 00:12:07 deraadt Exp $
 
 PROG=	strip
 .if ${HOSTCC} != ${CC}
 STRIP=./hoststrip
 
-realinstall:: hoststrip
+realinstall: hoststrip
 
 hoststrip: strip.c
-	${HOSTCC} strip.c -o hoststrip
+	${HOSTCC} ${.CURDIR}/strip.c -o hoststrip
 .else
 STRIP=./strip
 .endif
