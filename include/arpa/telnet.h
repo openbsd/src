@@ -235,7 +235,7 @@ extern char *slc_names[];
 #define	SLC_NAMES SLC_NAMELIST
 #endif
 
-#define	SLC_NAME_OK(x)	((unsigned int)(x) <= NSLC)
+#define	SLC_NAME_OK(x)	((unsigned)(x) > 0 && (unsigned)(x) <= NSLC)
 #define SLC_NAME(x)	slc_names[x]
 
 #define	SLC_NOSUPPORT	0
