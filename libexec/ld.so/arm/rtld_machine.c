@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2004/02/09 02:33:48 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2004/02/09 21:09:31 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -167,7 +167,9 @@ _dl_bcopy(const void *src, void *dest, int size)
 
 void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_Rel *rel);
 
-#define LD_PROTECT_TEXT
+/*
+#define LD_ALLOW_WRITEABLE_TEXT
+*/
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
@@ -176,7 +178,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	long	fails = 0;
 	Elf_Addr loff;
 	Elf_Rel *rels;
-#ifndef LD_PROTECT_TEXT
+#ifdef LD_ALLOW_WRITEABLE_TEXT
 	struct load_list *llist;
 #endif
 
@@ -187,12 +189,14 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	if (rels == NULL)
 		return(0);
 
-#ifndef LD_PROTECT_TEXT
+#ifdef LD_ALLOW_WRITEABLE_TEXT
 	/*
 	 * unprotect some segments if we need it.
 	 */
 	if ((rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+		for (llist = object->load_list;
+		    llist != NULL;
+		    llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
 				    llist->prot|PROT_WRITE);
@@ -318,16 +322,18 @@ resolve_failed:
 		}
 	}
 
-#ifndef LD_PROTECT_TEXT
+#ifdef LD_ALLOW_WRITEABLE_TEXT
 	/* reprotect the unprotected segments */
 	if ((rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+		for (llist = object->load_list;
+		    llist != NULL;
+		    llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
 				    llist->prot);
 		}
 	}
-	#endif
+#endif
 
 	return (fails);
 }
@@ -340,13 +346,11 @@ resolve_failed:
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-#define DISABLE_LAZY
-#ifndef DISABLE_LAZY
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-#endif
 	Elf_Addr ooff;
-	Elf_Addr plt_addr;
 	const Elf_Sym *this;
+	int i, num;
+	Elf_Rel *rel;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_REL)
 		return;
@@ -365,13 +369,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
-	plt_addr = 0;
-	object->plt_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
-	if (this != NULL)
-		plt_addr = ooff + this->st_value;
+	object->plt_size = 0;	/* Text PLT on ARM */
 
 	if (object->got_addr == NULL)
 		object->got_start = NULL;
@@ -380,29 +378,23 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->got_size += object->got_addr - object->got_start;
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
-#if 1
 	object->plt_start = NULL;
-#else
-	if (plt_addr == NULL)
-		object->plt_start = NULL;
-	else {
-		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
-		object->plt_size += plt_addr - object->plt_start;
-		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
-	}
-#endif
 
-#define DISABLE_LAZY
-#ifndef DISABLE_LAZY
 	if (!lazy) {
-#endif
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-#ifndef DISABLE_LAZY
 	} else {
+		rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
+		num = (object->Dyn.info[DT_PLTRELSZ]);
+
+		for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
+			Elf_Addr *where;
+			where = (Elf_Addr *)(rel->r_offset + object->load_offs);
+			*where += object->load_offs;
+		}
+
 		pltgot[1] = (Elf_Addr)object;
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
-#endif
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
 		    PROT_READ);
@@ -412,17 +404,19 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 }
 
 Elf_Addr
-_dl_bind(elf_object_t *object, int reloff)
+_dl_bind(elf_object_t *object, int relidx)
 {
+	Elf_Rel *rel;
+	Elf_Word *addr;
 	const Elf_Sym *sym, *this;
-	Elf_Addr *r_addr, ooff, newval;
 	const char *symn;
-	Elf_Rel *rels;
+	Elf_Addr ooff, newval;
+	sigset_t omask, nmask;
 
-	rels = ((Elf_Rel *)object->Dyn.info[DT_JMPREL]) + (reloff>>2);
+	rel = ((Elf_Rel *)object->Dyn.info[DT_JMPREL]) + (relidx);
 
 	sym = object->dyn.symtab;
-	sym += ELF_R_SYM(rels->r_info);
+	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
 	ooff = _dl_find_symbol(symn, _dl_objects, &this,
@@ -432,12 +426,25 @@ _dl_bind(elf_object_t *object, int reloff)
 		*((int *)0) = 0;	/* XXX */
 	}
 
-	r_addr = (Elf_Addr *)(object->load_offs + rels->r_offset);
+	addr = (Elf_Addr *)(object->load_offs + rel->r_offset);
 	newval = ooff + this->st_value;
 
-	if (*r_addr != newval)
-		*r_addr = newval;
+	/* if GOT is protected, allow the write */
+	if (object->got_size != 0) {
+		sigfillset(&nmask);
+		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
+		_dl_mprotect((void*)object->got_start, object->got_size,
+		    PROT_READ|PROT_WRITE);
+	}
+
+	if (*addr != newval)
+		*addr = newval;
 		
+	/* put the GOT back to RO */
+	if (object->got_size != 0) {
+		_dl_mprotect((void*)object->got_start, object->got_size,
+		    PROT_READ);
+		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+	}
 	return newval;
 }
-

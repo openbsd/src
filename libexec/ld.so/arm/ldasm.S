@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2004/02/09 16:47:19 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2004/02/09 21:09:31 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -59,6 +59,22 @@ ENTRY(_dl_start)
 
 
 ENTRY(_dl_bind_start)
+	/*
+	 * ip is pointer to got entry for this relocation
+	 * lr is pointer to pltgot[2], which is entry -1 of got plt reloc.
+	 * return address is on stack
+	 */
+	stmdb	sp!, {r0-r4,sl,fp}
+
+	sub	r1, ip, lr		/* r1 = 4 * (n + 1) */
+	sub	r1, r1, #4		/* r1 = 4 * n */
+	mov     r1, r1, lsr #2		/* r1 = n */
+
+	ldr	r0, [lr, #-4]
+	bl	_dl_bind
+	mov	ip, r0
+	ldmia	sp!, {r0-r4,sl,fp,lr}
+	mov	pc, ip
 
 	/* STUB */
 
