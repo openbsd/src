@@ -25,7 +25,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include   <_G_config.h>
 
-#if defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#if (defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)) && !defined(NCURSES_VERSION)
 #define _begx begx
 #define _begy begy
 #define _maxx maxx
@@ -57,11 +57,20 @@ inline int (addstr)(const char * str)  { return addstr((char*)str); }
 inline int (clear)()  { return clear(); }
 #undef clear
 #endif
+#ifdef NCURSES_VERSION
+#ifdef clearok
+inline int (clearok)(WINDOW* win, bool bf)  { return clearok(win, bf); }
+#undef clearok
+#else
+extern "C" int clearok(WINDOW*, bool);
+#endif
+#else
 #ifdef clearok
 inline int (clearok)(WINDOW* win, int bf)  { return clearok(win, bf); }
 #undef clearok
 #else
 extern "C" int clearok(WINDOW*, int);
+#endif
 #endif
 #ifdef clrtobot
 inline int (clrtobot)()  { return clrtobot(); }
@@ -102,22 +111,39 @@ inline void (getyx)(WINDOW* win, int& y, int& x) { getyx(win, y, x); }
 #undef getyx
 #endif
 #ifdef inch
+#ifdef NCURSES_VERSION
+inline chtype (inch)()  { return inch(); }
+#else
 inline int (inch)()  { return inch(); }
+#endif
 #undef inch
 #endif
 #ifdef insch
+#ifdef NCURSES_VERSION
+inline int (insch)(chtype c)  { return insch(c); }
+#else
 inline int (insch)(char c)  { return insch(c); }
+#endif
 #undef insch
 #endif
 #ifdef insertln
 inline int (insertln)()  { return insertln(); }
 #undef insertln
 #endif
+#ifdef NCURSES_VERSION
+#ifdef leaveok
+inline int (leaveok)(WINDOW* win, bool bf)  { return leaveok(win, bf); }
+#undef leaveok
+#else
+extern "C" int leaveok(WINDOW* win, bool bf);
+#endif
+#else
 #ifdef leaveok
 inline int (leaveok)(WINDOW* win, int bf)  { return leaveok(win, bf); }
 #undef leaveok
 #else
 extern "C" int leaveok(WINDOW* win, int bf);
+#endif
 #endif
 #ifdef move
 inline int (move)(int x, int y)  { return move(x, y); }
@@ -127,6 +153,14 @@ inline int (move)(int x, int y)  { return move(x, y); }
 inline int (rfresh)()  { return refresh(); }
 #undef refresh
 #endif
+#ifdef NCURSES_VERSION
+#ifdef scrollok
+inline int (scrollok)(WINDOW* win, bool bf)  { return scrollok(win, bf); }
+#undef scrollok
+#else
+extern "C" int scrollok(WINDOW*, bool);
+#endif
+#else
 #ifdef scrollok
 inline int (scrollok)(WINDOW* win, int bf)  { return scrollok(win, bf); }
 #undef scrollok
@@ -135,6 +169,7 @@ inline int (scrollok)(WINDOW* win, int bf)  { return scrollok(win, bf); }
 extern "C" int scrollok(WINDOW*, int);
 #else
 extern "C" int scrollok(WINDOW*, char);
+#endif
 #endif
 #endif
 #ifdef standend
@@ -154,7 +189,11 @@ inline int (wstandout)(WINDOW *win)  { return wstandout(win); }
 #undef wstandout
 #endif
 #ifdef winch
+#ifdef NCURSES_VERSION
+inline chtype (winch)(WINDOW* win) { return winch(win); }
+#else
 inline int (winch)(WINDOW* win) { return winch(win); }
+#endif
 #undef winch
 #endif
 
@@ -197,7 +236,11 @@ inline int (mvwgetstr)(WINDOW *win, int y, int x, char *str)
 #undef mvwgetstr
 #endif
 #ifdef mvwinch
+#ifdef NCURSES_VERSION
+inline chtype (mvwinch)(WINDOW *win, int y, int x) { return mvwinch(win, y, x);}
+#else
 inline int (mvwinch)(WINDOW *win, int y, int x) { return mvwinch(win, y, x);}
+#endif
 #undef mvwinch
 #endif
 #ifdef mvwinsch
@@ -229,12 +272,19 @@ inline int (mvgetstr)(int y, int x, char *str) {return mvgetstr(y, x, str);}
 #undef mvgetstr
 #endif
 #ifdef mvinch
+#ifdef NCURSES_VERSION
+inline chtype (mvinch)(int y, int x) { return mvinch(y, x);}
+#else
 inline int (mvinch)(int y, int x) { return mvinch(y, x);}
+#endif
 #undef mvinch
 #endif
 #ifdef mvinsch
-inline int (mvinsch)(int y, int x, char c)
-{ return mvinsch(y, x, c); }
+#ifdef NCURSES_VERSION
+inline chtype (mvinsch)(int y, int x, char c) { return mvinsch(y, x, c); }
+#else
+inline int (mvinsch)(int y, int x, char c) { return mvinsch(y, x, c); }
+#endif
 #undef mvinsch
 #endif
 
