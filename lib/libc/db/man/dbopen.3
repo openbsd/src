@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.9 1999/05/25 13:06:44 aaron Exp $
+.\"	$OpenBSD: dbopen.3,v 1.10 1999/05/27 20:49:31 aaron Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -115,7 +115,9 @@ is not possible.)
 .Pp
 The
 .Fa type
-argument is of type DBTYPE (as defined in the <db.h> include file) and
+argument is of type
+.Fa DBTYPE
+(as defined in the <db.h> include file) and
 may be set to
 .Dv DB_BTREE ,
 .Dv DB_HASH
@@ -167,7 +169,7 @@ int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
 These elements describe a database type and a set of functions performing
 various actions.
 These functions take a pointer to a structure as returned by
-.Nm ,
+.Nm dbopen ,
 and sometimes one or more pointers to key/data structures and a flag value.
 .Pp
 .Bl -tag -width XXXXX -offset indent
@@ -383,6 +385,7 @@ manual page for more information.)
 routines return -1 on error (setting
 .Va errno )
 and 0 on success.
+.El
 .Sh KEY/DATA PAIRS
 Access to all file types is based on key/data pairs.
 Both keys and data are represented by the following data structure:

@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.13 1999/05/23 14:11:03 aaron Exp $
+.\"	$OpenBSD: malloc.3,v 1.14 1999/05/27 20:49:35 aaron Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -164,36 +164,36 @@ Flags are single letters, uppercase means on, lowercase means off.
 This is a very handy debugging aid, since the core file will represent the
 time of failure,
 rather than when the NULL pointer was accessed.
-
+.Pp
 .It D
 ``dump'' malloc will dump statistics in a file called ``malloc.out'' at exit.
 This option requires the library to have been compiled with -DMALLOC_STATS in
 order to have any effect.
-
+.Pp
 .It J
 ``junk'' fill some junk into the area allocated.
 Currently junk is bytes of 0xd0, this is pronounced ``Duh'' :-)
-
+.Pp
 .It H
 ``hint'' pass a hint to the kernel about pages we don't use.  If the
 machine is paging a lot this may help a bit.
-
+.Pp
 .It N
 Do not output warning messages when encountering possible corruption
 or bad pointers.
-
+.Pp
 .It R
 ``realloc'' always reallocate when
 .Fn realloc
 is called, even if the initial allocation was big enough.
 This can substantially aid in compacting memory.
-
+.Pp
 .It U
 ``utrace'' generate entries for
 .Xr ktrace 1
 for all operations.
 Consult the source for this one.
-
+.Pp
 .It X
 ``xmalloc'' 
 rather than return failure,
@@ -205,14 +205,14 @@ including in the source:
 extern char *malloc_options;
 malloc_options = "X";
 .Ed
-
+.Pp
 .It Z
 ``zero'' fill some junk into the area allocated (see ``J''),
 except for the exact length the user asked for, which is zeroed.
-
+.Pp
 .It <
 ``Half the cache size'' Reduce the size of the cache by a factor of two.
-
+.Pp
 .It >
 ``Double the cache size'' Double the size of the cache by a factor of two.
 .El
@@ -323,6 +323,7 @@ we found something we didn't understand.
 .Bl -tag -width "/etc/malloc.conf"
 .It Pa /etc/malloc.conf
 symbolic link to file containing option flags
+.El
 .Sh SEE ALSO
 .Xr brk 2 ,
 .Xr alloca 3 ,

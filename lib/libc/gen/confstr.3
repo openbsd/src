@@ -1,4 +1,4 @@
-.\"	$OpenBSD: confstr.3,v 1.5 1999/05/23 14:10:59 aaron Exp $
+.\"	$OpenBSD: confstr.3,v 1.6 1999/05/27 20:49:33 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,7 +85,7 @@ environment variable that finds all the standard utilities.
 .El
 .Sh RETURN VALUES
 If the call to
-.Nm confstr
+.Nm
 is not successful, \-1 is returned and
 .Va errno
 is set appropriately.
@@ -102,7 +102,7 @@ the string in
 was truncated.
 .Sh ERRORS
 The
-.Nm confstr
+.Nm
 function may fail and set
 .Va error
 for any of the errors specified for the library functions
@@ -116,15 +116,16 @@ In addition, the following errors may be reported:
 The value of the
 .Fa name
 argument is invalid.
+.El
 .Sh SEE ALSO
 .Xr sysctl 3
 .Sh HISTORY
 The
-.Nm confstr
+.Nm
 function first appeared in
 .Bx 4.4 .
 .Sh STANDARDS
 The
-.Nm confstr
+.Nm
 function conforms to
 .St -p1003.2-92 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.12 1999/05/27 16:21:00 aaron Exp $
+.\"	$OpenBSD: msync.2,v 1.13 1999/05/27 20:49:36 aaron Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -111,6 +111,7 @@ for the address space of the process, or specify one or more pages
 which are unmapped.
 .It Bq Er EIO
 An I/O error occurred while writing.
+.El
 .Sh BUGS
 Writes are currently done synchronously even if the
 .Dv MS_ASYNC
