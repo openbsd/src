@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.135 2002/12/03 15:49:31 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.136 2002/12/05 12:28:02 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -341,10 +341,13 @@ For example,
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
 control.
-At least two rules are required to configure queues, and later
-any packet filtering or rule can reference the defined
-queues by name.
-The last referenced queue name is where any packets from
+At least two declarations are required to configure queues, and later
+any packet filtering rule can reference the defined queues by name.
+During the filtering component of
+.Nm pf.conf ,
+the last referenced
+.Pa queue
+name is where any packets from
 .Pa pass
 rules will be queued, while for
 .Pa block
@@ -354,48 +357,69 @@ or
 .Pa TCP RST
 packets should be queued.
 .Pp
+The interfaces on which queuing should be activated are declared using
+the
 .Pa altq on
-specifies on which interface queues will be set up.
+declaration.
 The
 .Pa scheduler
-type is required where currently only CBQ is supported. (XXX)
+type is required but currently only
+.Pa cbq
+is supported.
+The maximum rate for all queues on this interface is specified using the 
 .Pa bandwidth
-is optional and specifies the maximum rate for all queues on this interface.
-If no value is given here, the interface's bandwidth is used.
+directive; if not specified the interface's bandwidth is used.
 The value must not exceed the interface bandwidth and can be specified
-in absolute and percentage values, where the latter ones are relative to the
+in absolute and percentage values, where the latter is relative to the
 interface bandwidth.
+The maximum number of packets in this queue is specified using the
 .Pa qlimit
-is optional and specifies the maximum number of packets in this queue.
+directive.
+Token bucket regulator size may be adjusted using the
 .Pa tbrsize
-is optional and specifies the token bucket regulator size. If not given,
-heuristics based on the interface bandwidth are used.
-All queues for this interface have to be listed after
-.Pa queue .
+directive.
+If not given, heuristics based on the interface bandwidth are used.
+All sub-queues for this interface have to be listed after the
+.Pa queue
+directive.
 .Pp
 In the following example, the interface
 .Pa dc0
-should queue up to 5 Mbit/s in four queues using CBQ.
+should queue up to 5 Mbit/s in four second-level queues using CBQ.
+Those four queues will be shown in a later example.
 .Bd -literal
     altq on dc0 scheduler cbq bandwidth 5Mb queue { std, http, mail, ssh }
 .Ed
 .Pp
-Parameters for the queues are specified in
-.Pa queue
-rules. The queue name must match the definition in the
+Once interfaces are activated for queueing using the
 .Pa altq
-rule.
+directive, a sequence (actually, a tree) of
+.Pa queue
+directives may be defined.
+The name associated with a
+.Pa queue
+must match a listed rule in the
+.Pa altq
+directive (e.g. mail) or in a parent
+.Pa queue
+declaration.
+The maximum bitrate to be processed by this queue is established using a
 .Pa bandwidth
-sets the maximum bitrate to be processed by this queue.
-This value must not exceed the value of the parent queue and can be specified
-as an absolute value or a percentage of the parent's bandwidth.
+keyword.
+This value must not exceed the value of the parent
+.Pa queue
+and can be specified as an absolute value or a percentage of the
+parent's bandwidth.
 Between queues a
 .Pa priority
-level can be set.
-For CBQ, the range is 0..7 with a default of 1.
-Queues with a higher priority level are preferred in the case of overload. (XXX)
+level can also be set.
+For
+.Pa cbq ,
+the range is 0..7 with a default of 1.
+Queues with a higher priority level are preferred in the case of overload.
+The maximum number of packets in a queue can be limited using the
 .Pa qlimit
-specifies the maximum number of packets in this queue.
+keyword.
 The scheduler can get additional parameters with
 .Pa cbq( <parameters> No ) .
 Parameters are as follows:
@@ -421,9 +445,10 @@ Enables ECN (Explicit Congestion Notification) on this queue.
 ECN implies RED.
 .El
 .Pp
-Furthermore child queues can be specified as in an
+Furthermore, child queues can be specified as in an
 .Pa altq
-rule.
+declaration, thus building a tree of queues using a part of
+their parent's bandwidth.
 .Pp
 To continue the previous example, the examples below would specify the 
 four referenced
@@ -462,9 +487,6 @@ below).
     pass out on dc0 inet proto tcp from any to any port 25 \\
 	keep state queue mail
 .Ed
-.Pp
-Child queues must not exceed the bandwidth definition of the parent.
-Relative values are calculated against the bandwidth of the parent queue.
 .Pp
 .Sh TRANSLATION
 Translation rules modify either the source or destination address of the
@@ -515,9 +537,9 @@ rules can optionally specify port ranges instead of single ports.
 .Pp
 In addition to modifying the address, some translation rules may modify
 source or destination ports for
-.Xr tcp
+.Xr tcp 4
 or
-.Xr udp
+.Xr udp 4
 connections; implicitly in the case of
 .Pa nat
 rules and explicitly in the case of
@@ -570,7 +592,7 @@ and layer 3 (see
 .Xr icmp 4 ,
 and
 .Xr icmp6 4 Ns ) 
-headers. 
+headbers. 
 In addition, packets may also be 
 assigned to queues for the purpose of bandwidth control.
 .Pp
@@ -592,19 +614,23 @@ explicit either globally, by setting the
 .Pa block-policy
 option, or on a per-rule basis with one of the following options:
 .Pp
-.Bl -tag -width xxxx -compact -offset indent
+.Bl -tag -width xxxx -compact
 .It Em  drop
-the packet is silently dropped.
+The packet is silently dropped.
 .It Em return-rst
-applies only to tcp packets, and issues a TCP RST which closes the
+This applies only to
+.Xr tcp 4
+packets, and issues a TCP RST which closes the
 connection.
 .It Em return-icmp
 .It Em return-icmp6
-return ICMP messages for packets which match the rule.
+This causes ICMP messages to be returned for packets which match the rule.
 By default this is an ICMP UNREACHABLE message, however the this
 can be overridden by specifying a message as a code or number.
 .It Em return
-returns a TCP RST for tcp packets, an ICMP UNREACHABLE for UDP packets,
+This causes a TCP RST to be returned for
+.Xr tcp 4
+packets, an ICMP UNREACHABLE for UDP packets,
 and silently drops all other packets.
 .El
 .It Em pass
@@ -680,7 +706,12 @@ The rule applies only to packets of this address family.
 Supported values are inet and inet6.
 .It Pa proto No <protocol>
 The rule applies only to packets of this protocol.
-Common protocols are tcp, udp, icmp and ipv6-icmp.
+Common protocols are
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr icmp 4 ,
+and
+.Xr icmp6 .
 .It Pa from <source> port <source> to <dest> port <dest>
 The rule applies only to packets with the specified source and destination
 addresses and ports.
@@ -690,9 +721,9 @@ symbolic host names or interface names, or as any of the following keywords:
 .Pp
 .Bl -tag -width no-route -compact
 .It Em any
-means any address;
+Means any address.
 .It Em no-route
-means any address which is not currently routable.
+Means any address which is not currently routable.
 .El
 .Pp
 Host name resolution and interface to address translation are done at
@@ -859,7 +890,9 @@ expands to
 	label "1.2.3.5:>1023"
 .Ed
 .Pp
-Variable expansion takes place at configuration file parse time.
+The macro expasion for the
+.Pa label
+directive occurs only at configuration file parse time, not during runtime.
 .It Pa queue <string>
 Packets matching this rule will be assigned to the specified queue.
 See QUEUE RULES for setup details.
@@ -967,11 +1000,13 @@ from modifying the source port on tcp and udp packets.
 is a stateful packet filter, which means it can track the state of
 a connection.
 Instead of passing all traffic to port 25, for instance, one can pass
-only the initial packet and keep state.
+only the initial packet, and then begin to keep state.  Subsequent
+traffic will flow because the filter is aware of the connection.
 .Pp
-If a packet matches a pass ... keep state rule, the filter creates
-a state for this connection and automatically lets pass all following
-packets of that connection.
+If a packet matches a
+.Pa pass ... keep state
+rule, the filter creates a state for this connection and automatically
+lets pass all following packets of that connection.
 .Pp
 Before any rules are evaluated, the filter checks whether the packet
 matches any state.
@@ -983,7 +1018,7 @@ This has several advantages.
 Comparing a packet to a state involves checking its sequence numbers.
 If the sequence numbers are outside the narrow windows of expected
 values, the packet is dropped.
-This prevents spoofing attacks, where the attacker sends packets with
+This prevents spoofing attacks, such as when an attacker sends packets with
 a fake source address/port but does not know the connection's sequence
 numbers.
 .Pp
