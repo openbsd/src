@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.634 2003/06/07 11:31:03 grange Exp $
+	$OpenBSD: pcidevs,v 1.635 2003/06/07 11:38:08 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -663,6 +663,7 @@ product 3DFX VOODOO		0x0001	Voodoo
 product 3DFX VOODOO2		0x0002	Voodoo2
 product 3DFX BANSHEE		0x0003	Banshee
 product 3DFX VOODOO3		0x0005	Voodoo3
+product 3DFX VOODOO5		0x0009	Voodoo5
 
 /* 3D Labs products */
 product 3DLABS 300SX		0x0001	300SX
@@ -2389,6 +2390,7 @@ product TI TSB12LV23		0x8019	TSB12LV23 FireWire
 product TI TSB12LV26		0x8020	TSB12LV26 FireWire
 product TI TSB43AA22		0x8021	TSB43AA22 FireWire
 product TI TSB43AB22		0x8023	TSB43AB22 FireWire
+product TI TSB43AB23		0x8024	TSB43AB23 FireWire
 product TI TSB43AB21		0x8026	TSB43AB21 FireWire
 product TI PCI4451_FW		0x8027	PCI4451 FireWire
 product TI DWL520P		0x8400	DWL-520+
