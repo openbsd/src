@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.28 2001/06/26 18:56:30 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.29 2001/06/26 19:01:27 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -55,7 +55,9 @@
 #endif
 
 struct pool ipsec_policy_pool;
+struct pool ipsec_acquire_pool;
 int ipsec_policy_pool_initialized = 0;
+int ipsec_acquire_pool_initialized = 0;
 
 /*
  * Lookup at the SPD based on the headers contained on the mbuf. The second
@@ -654,7 +656,7 @@ ipsp_delete_acquire(void *v)
 	TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
 	if (ipa->ipa_packet)
 		m_freem(ipa->ipa_packet);
-	FREE(ipa, M_IPSEC_POLICY);
+	pool_put(&ipsec_acquire_pool, ipa);
 }
 
 /*
@@ -777,8 +779,7 @@ ipsp_pending_acquire(union sockaddr_union *gw)
  */
 int
 ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
-		union sockaddr_union *laddr, struct sockaddr_encap *ddst,
-		struct mbuf *m)
+    union sockaddr_union *laddr, struct sockaddr_encap *ddst, struct mbuf *m)
 {
 	struct ipsec_acquire *ipa;
 #ifdef INET6
@@ -796,9 +797,15 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		return 0;
 	}
 
-	/* Add request in cache and proceed */
-	MALLOC(ipa, struct ipsec_acquire *, sizeof(struct ipsec_acquire),
-	    M_IPSEC_POLICY, M_DONTWAIT);
+	/* Add request in cache and proceed. */
+	if (ipsec_acquire_pool_initialized == 0) {
+		ipsec_acquire_pool_initialized = 1;
+		pool_init(&ipsec_acquire_pool, sizeof(struct ipsec_acquire),
+		    0, 0, PR_FREEHEADER, "ipsec acquire", 0, NULL,
+		    NULL, M_IPSEC_POLICY);		
+	}
+
+	ipa = pool_get(&ipsec_acquire_pool, 0);
 	if (ipa == NULL)
 		return ENOMEM;
 
@@ -809,7 +816,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
 	ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
 
-	/* Just copy the right information */
+	/* Just copy the right information. */
 	switch (ipo->ipo_addr.sen_type) {
 #ifdef INET
 	case SENT_IP4:
@@ -897,7 +904,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 #endif /* INET6 */
 
 	default:
-		FREE(ipa, M_IPSEC_POLICY);
+		pool_put(&ipsec_acquire_pool, ipa);
 		return 0;
 	}
 
@@ -905,13 +912,13 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	 * Store the packet for eventual retransmission -- failure is not
 	 * catastrophic.
 	 */
-	if (m)
+	if (m != NULL)
 		ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
 
 	timeout_add(&ipa->ipa_timeout, ipsec_expire_acquire * hz);
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 
-	/* PF_KEYv2 notification message */
+	/* PF_KEYv2 notification message. */
 	return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
 }
 
@@ -940,7 +947,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
     struct tdb *tdbp, struct inpcb *inp, struct ipsec_policy *ipo)
 {
 	/* XXX */
-	if (ipo)
+	if (ipo != NULL)
 		return ipo->ipo_tdb;
 	else
 		return NULL;
