@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.21 2002/10/06 22:39:25 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.22 2002/10/07 23:31:42 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -149,10 +149,6 @@ exec_process_vmcmds(struct proc *p, struct exec_package *epp)
 		}
 		error = (*vcp->ev_proc)(p, vcp);
 		if (vcp->ev_flags & VMCMD_BASE) {
-#ifdef DIAGNOSTIC
-			if (base_vc != NULL)
-				panic("exec_process_vmcmds: multiple BASE");
-#endif
 			base_vc = vcp;
 		}
 	}
