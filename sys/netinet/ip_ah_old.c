@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.12 1998/02/22 01:23:31 niklas Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.13 1998/03/18 10:16:27 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -333,7 +333,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     
     
     xd->amx_hash->Update(&ctx, (unsigned char *) ah, AH_OLD_FLENGTH);
-    xd->amx_hash->Update(&ctx, ipseczeroes, AH_MD5_ALEN);
+    xd->amx_hash->Update(&ctx, ipseczeroes, alen);
 
     /*
      * Code shamelessly stolen from m_copydata

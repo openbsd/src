@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.7 1997/02/20 01:07:46 deraadt Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.8 1998/03/18 10:16:25 provos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ struct protosw inetsw[] = {
 },
 #elif defined(IPSEC)
 { SOCK_RAW,     &inetdomain,    IPPROTO_IPIP,   PR_ATOMIC|PR_ADDR,
-  ipe4_input,   rip_output,     0,              rip_ctloutput,
+  ip4_input,    rip_output,     0,              rip_ctloutput,
   rip_usrreq,   /* XXX */
   0,            0,              0,              0,
 },
