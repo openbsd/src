@@ -1,4 +1,4 @@
-/*	$OpenBSD: cputypes.h,v 1.8 2002/03/24 00:21:23 deraadt Exp $	*/
+/*	$OpenBSD: cputypes.h,v 1.9 2002/03/30 09:42:28 mickey Exp $	*/
 /*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #define CPUVENDOR_RISE		5
 #define CPUVENDOR_TRANSMETA	6
 #define CPUVENDOR_NS		7
+#define CPUVENDOR_VIA		8
 
 /*
  * Some other defines, dealing with values returned by cpuid.

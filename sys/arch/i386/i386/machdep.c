@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.203 2002/03/24 00:21:23 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.204 2002/03/30 09:42:28 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -323,6 +323,7 @@ void	cyrix6x86_cpu_setup(const char *, int, int);
 void	intel586_cpu_setup(const char *, int, int);
 void	intel686_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
+char *	cyrix3_cpu_name(int, int);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -858,9 +859,10 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, "VIA Cyrix III", 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				"VIA Cyrix III"		/* Default */
+				0, 0, 0, 0, 0, 0, "C3 Samuel 1",
+				"C3 Samule 2/Ezra",
+				"C3 Ezra-T", 0, 0, 0, 0, 0, 0, 0,
+				"C3"		/* Default */
 			},
 			cyrix3_cpu_setup
 		} }
@@ -1018,7 +1020,9 @@ cyrix3_cpu_setup(cpu_device, model, step)
 	unsigned int val;
 
 	switch (model) {
-	case 6: /* VIA Cyrix III */
+	case 6: /* C3 Samuel 1 */
+	case 7: /* C3 Samuel 2 or C3 Ezra */
+	case 8: /* C3 Ezra-T */
 		__asm __volatile("cpuid"
 		    : "=d" (val) : "a" (0x80000001) : "ebx", "ecx");
 		if (val & (1U << 31)) {
@@ -1156,6 +1160,27 @@ intel686_cpu_name(model)
 	return (ret);
 }
 
+char *
+cyrix3_cpu_name(model, step)
+	int model, step;
+{
+	char	*name = NULL;
+
+	switch (model) {
+	case 7:
+		if (step < 8)
+			name = "C3 Samuel 2";
+		else
+			name = "C3 Ezra";
+		break;
+	case 8:
+		if (step < 8)
+			name = "C3 Ezra-T";
+		break;
+	}
+	return name;
+}
+
 void
 identifycpu()
 {
@@ -1232,6 +1257,11 @@ identifycpu()
 			token = cpup->cpu_id;
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
+			/* Special hack for the VIA C3 series. */
+			if (vendor == CPUVENDOR_IDT && family >= 6) {
+				vendor = CPUVENDOR_VIA;
+				vendorname = "VIA";
+			}
 			modifier = modifiers[modif];
 			if (family > CPU_MAXFAMILY) {
 				family = CPU_MAXFAMILY;
@@ -1244,6 +1274,10 @@ identifycpu()
 			if (vendor == CPUVENDOR_INTEL && family == 6 &&
 			    (model == 5 || model == 7)) {
 				name = intel686_cpu_name(model);
+			/* Special hack for the VIA C3 series. */
+			} else if (vendor == CPUVENDOR_VIA && family == 6 &&
+				   model >= 7 && model <= 8) {
+				name = cyrix3_cpu_name(model, step);
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
 			if (name == NULL) {
