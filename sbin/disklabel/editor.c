@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.35 1998/05/07 06:22:20 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.36 1998/05/07 06:27:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.35 1998/05/07 06:22:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.36 1998/05/07 06:27:34 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,12 +146,6 @@ editor(lp, f)
 	puts("This platform requires that partition offsets/sizes be on cylinder boundaries.\nPartition offsets/sizes will be rounded to the nearest cylinder automatically.");
 #endif
 
-#if defined(OLD_SCSI)
-	/* Some ports use the old scsi system that doesn't get the geom right */
-	if (strcmp(label.d_packname, "fictitious") == 0)
-		puts("Warning, driver-generated label.  Disk parameters may be "
-		    "incorrect.");
-#endif
 	/* Set d_bbsize and d_sbsize as neccesary */
 	if (strcmp(label.d_packname, "fictitious") == 0) {
 		if (label.d_bbsize == 0)

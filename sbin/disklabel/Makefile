@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 1998/04/25 07:04:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 1998/05/07 06:27:32 millert Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -14,10 +14,6 @@ manual.c:	disklabel.cat8
 
 .if (${MACHINE} == "amiga")
 CFLAGS+= -D${MACHINE}
-.endif
-
-.if (${MACHINE} == "hp300") || (${MACHINE} == "pmax")
-CFLAGS+= -DOLD_SCSI
 .endif
 
 .if (${MACHINE} == "i386")
