@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.10 2001/01/20 18:24:55 deraadt Exp $	*/
+/*	$OpenBSD: cons.c,v 1.11 2001/03/03 23:36:05 provos Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1997/07/07 23:30:23 pk Exp $	*/
 
 /*
@@ -436,6 +436,16 @@ cnselect(dev, which, p)
 {
 
 	return (ttselect(makedev(major(dev), 0), which, p));
+}
+
+int
+cnkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	if (cdevsw[major(dev)].d_type & D_KQFILTER)
+		return ((*cdevsw[major(dev)].d_kqfilter)(makedev(major(dev), 0), kn));
+	return (1);
 }
 
 /*
