@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.1 2000/01/08 01:55:33 hugh Exp $
+.\"     $OpenBSD: securelevel.7,v 1.2 2000/01/10 07:18:50 hugh Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -34,20 +34,31 @@ The
 .Ox
 kernel provides four levels of system security:
 .Bl -tag -width flag
-.It -1 Em "Permanently insecure mode" .
-.Xr init 8
-will not attempt to raise the securelevel. May be set via
-.Xr sysctl 8
-while the system is insecure, or by building a kernel with
-.Dq option INSECURE
-in the config file.
-.It 0 Em "Insecure mode" .
-Used during bootstrapping and while the system is single user.
-System file flags may be cleared, and all devices may be read or
-written subject to their permissions.
-.It 1 Em "Secure mode" .
-Default mode when system is multiuser:
+.It -1 Em Permanently insecure mode
 .Bl -hyphen -compact
+.It
+.Xr init 8
+will not attempt to raise the securelevel
+.It
+otherwise identical to securelevel 0
+.It
+may only be set with
+.Xr sysctl 8
+while the system is insecure
+.El
+.It \ 0 Em Insecure mode
+.Bl -hyphen -compact
+.It
+used during bootstrapping and while the system is single-user
+.It
+all devices may be read or written subject to their permissions
+.It
+system file flags may be cleared
+.El
+.It \ 1 Em Secure mode
+.Bl -hyphen -compact
+.It
+default mode when system is multi-user
 .It
 securelevel may no longer be lowered except by init
 .It
@@ -60,11 +71,12 @@ may not be written to
 .It
 kernel modules may not be loaded or unloaded
 .El
-.It 2 Em "Highly secure mode" .
-All effects of securelevel 1, plus:
+.It \ 2 Em Highly secure mode
 .Bl -hyphen -compact
 .It
-disk devices are always read-only whether mounted or not
+all effects of securelevel 1
+.It
+raw disk devices are always read-only whether mounted or not
 .It
 .Xr settimeofday 2
 may not set the time backwards
@@ -72,11 +84,11 @@ may not set the time backwards
 .Xr ipf 8
 and
 .Xr ipnat 8
-rulesets may not be changed
+rules may not be altered
 .El
 .El
 .Sh DESCRIPTION
-Securelevel provides controlled means of
+Securelevel provides convenient means of
 .Dq locking down
 a system to a degree suited to its environment. It is normally set at
 boot via the
@@ -86,19 +98,20 @@ script, or the superuser may raise securelevel at any time by modifying the
 .Xr sysctl 8
 variable. However, only
 .Xr init 8
-may lower it once the system has entered secure mode.
+may lower it once the system has entered secure mode. A kernel built with
+.Dq option INSECURE
+in the config file will default to permanently insecure mode.
 .Pp
-.Em Highly secure mode
-may seem Draconian, but is intended as a last line of defence should the
-superuser account be compromised. Its effects preclude circumvention of
-file flags by direct modification of a raw disk device, or erasure of a
-filesystem by means of
+Highly secure mode may seem Draconian, but is intended as a last line of
+defence should the superuser account be compromised. Its effects preclude
+circumvention of file flags by direct modification of a raw disk device,
+or erasure of a filesystem by means of
 .Xr newfs 8 . 
 Further, it can limit the potential damage of a compromised
 .Dq firewall
 by prohibiting the modification of packet filter rules. Preventing
 the system clock from being set backwards aids in post-mortem analysis
-and helps ensure the intergrity of logs. Precision timekeeping is not
+and helps ensure the integrity of logs. Precision timekeeping is not
 affected because the clock may still be slowed.
 .Sh FILES
 .Bl -tag -compact
