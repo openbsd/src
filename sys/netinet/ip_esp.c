@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.83 2003/05/03 01:43:07 itojun Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.84 2003/07/09 18:21:16 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -597,30 +597,30 @@ esp_input_cb(void *op)
 		if (!(m1->m_flags & M_PKTHDR))
 			m->m_pkthdr.len -= hlen;
 	} else if (roff + hlen >= m1->m_len) {
-			/*
-			 * Part or all of the ESP header is at the end of this mbuf, so
-			 * first let's remove the remainder of the ESP header from the
-			 * beginning of the remainder of the mbuf chain, if any.
-			 */
-			if (roff + hlen > m1->m_len) {
-				/* Adjust the next mbuf by the remainder */
-				m_adj(m1->m_next, roff + hlen - m1->m_len);
+		/*
+		 * Part or all of the ESP header is at the end of this mbuf, so
+		 * first let's remove the remainder of the ESP header from the
+		 * beginning of the remainder of the mbuf chain, if any.
+		 */
+		if (roff + hlen > m1->m_len) {
+			/* Adjust the next mbuf by the remainder */
+			m_adj(m1->m_next, roff + hlen - m1->m_len);
 
-				/* The second mbuf is guaranteed not to have a pkthdr... */
-				m->m_pkthdr.len -= (roff + hlen - m1->m_len);
-			}
+			/* The second mbuf is guaranteed not to have a pkthdr... */
+			m->m_pkthdr.len -= (roff + hlen - m1->m_len);
+		}
 
-			/* Now, let's unlink the mbuf chain for a second...*/
-			mo = m1->m_next;
-			m1->m_next = NULL;
+		/* Now, let's unlink the mbuf chain for a second...*/
+		mo = m1->m_next;
+		m1->m_next = NULL;
 
-			/* ...and trim the end of the first part of the chain...sick */
-			m_adj(m1, -(m1->m_len - roff));
-			if (!(m1->m_flags & M_PKTHDR))
-				m->m_pkthdr.len -= (m1->m_len - roff);
+		/* ...and trim the end of the first part of the chain...sick */
+		m_adj(m1, -(m1->m_len - roff));
+		if (!(m1->m_flags & M_PKTHDR))
+			m->m_pkthdr.len -= (m1->m_len - roff);
 
-			/* Finally, let's relink */
-			m1->m_next = mo;
+		/* Finally, let's relink */
+		m1->m_next = mo;
 	} else {
 		/*
 		 * The ESP header lies in the "middle" of the mbuf...do an
