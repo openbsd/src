@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.6 1997/04/30 20:25:36 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.7 1997/04/30 23:56:06 grr Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,11 +59,27 @@ if [ X$EDITOR = X ]; then
 	fi
 fi
 
+# get a reponse with default[s]
 getresp() {
-	read resp
-	if [ "X$resp" = "X" ]; then
-		resp=$1
-	fi
+	valid="false"
+	while [ "X$valid" = "Xfalse" ]; do
+		read resp
+		if [ "X$resp" = "X" ]; then
+			resp=$1
+		fi
+		if [ $# -gt 1 ]; then
+			for i in $@; do
+				if [ "X$resp" = "X$i" ]; then
+					valid="true"
+				fi
+			done
+		else
+			valid="true"
+		fi
+		if [ "X$valid" = "Xfalse" ]; then
+			echo "Try again: Enter one of [$@]"
+		fi
+	done	
 }
 
 isin() {
@@ -356,6 +372,7 @@ configure_ifs() {
 	local _interface_mask
 	local _interface_symname
 	local _interface_extra
+	local _hostname
 
 	_interface_name=$1
 
@@ -381,10 +398,11 @@ configure_ifs() {
 	done
 
 	# Get symbolic name
+	_hostname=`hostname`
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Symbolic (host) name? "
-		getresp ""
+		echo -n "Symbolic (host) name? [$_hostname] "
+		getresp "$_hostname"
 		_interface_symname=$resp
 	done
 
@@ -589,6 +607,23 @@ __install_ftp_2
 
 	echo "quit" >> /tmp/ftp-script.sh
 	echo "__end_commands" >> /tmp/ftp-script.sh
+
+	cat << \__install_ftp_3
+
+Fetching the files via ftp may take a long time, especially over a slow
+network connection.  You may want to review/edit the fetch script to make
+sure that you haven't made any errors in the file names.
+__install_ftp_3
+	echo -n "edit ftp fetch script? [n] "
+	getresp "n"
+	case "$resp" in
+	y*|Y*)
+		$EDITOR /tmp/ftp-script.sh
+		;;
+	*)
+		;;
+	esac
+	
 
 	sh /tmp/ftp-script.sh
 	rm -f /tmp/ftp-script.sh

@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.3 1997/04/30 18:56:02 niklas Exp $
+#	$OpenBSD: dot.profile,v 1.4 1997/04/30 23:56:07 grr Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -37,13 +37,6 @@ export PATH
 TERM=sun
 export TERM
 
-if [ -e /usr/bin/vim ]; then
-	EDITOR=vim
-else
-	EDITOR=ed
-fi
-export EDITOR
-	
 umask 022
 
 if [ "X${DONEPROFILE}" = "X" ]; then
@@ -53,9 +46,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
 
-	# run update, so that installed software is written as it goes.
-	update
-
 	# get the terminal type
 	_forceloop=""
 	while [ "X${_forceloop}" = X"" ]; do
@@ -64,6 +54,31 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 			_forceloop="done"
 		fi
 	done
+	export TERM
+
+	# get the editor preference
+	EDITOR=vi
+	_forceloop=""
+	while [ "X${_forceloop}" = X"" ]; do
+		echo -n "text editor - vi or ed? [$EDITOR] "
+		read _forceloop
+		case "$_forceloop" in
+			vi|"")
+				EDITOR=vi
+				_forceloop=$EDITOR
+				;;
+
+			ed)
+				EDITOR=ed
+				;;
+
+			*)
+				echo "sorry, no $_forceloop available"
+				_forceloop=""
+				;;
+		esac
+	done
+	export EDITOR
 
 	# Installing or upgrading?
 	_forceloop=""

@@ -151,22 +151,36 @@ md_prep_disklabel()
 
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units. Make sure these size/offset
-pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
+are in sector (most likely 512 bytes) units.
+
+Make sure these size/offset pairs are on cylinder boundaries (the number
+of sector per cylinder is given in the `sectors/cylinder' entry.
+
+If this disk is previously un-labeled, only the "c" partition will show up
+in the editor and you will have to enter lines similar to those shown in the
+example for the other paritions.  If you are uncertain about the syntax or
+space requirements, this is a good time to review the installation notes.
 
 Do not change any parameters except the partition layout and the label name.
 It's probably also wisest not to touch the `16 partitions:' line, even
 in case you have defined less than sixteen partitions.
 
-[Example]
+[** EXAMPLE **]
+disk: p4200s
+bytes/sector: 512
+sectors/track: 40
+tracks/cylinder: 8
+sectors/cylinder: 320
+cylinders: 1280
+total sectors: 409600
+
 16 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
-[End of example]
+  a:    51200        0    4.2BSD     1024  8192    16 	# (Cyl.    0 - 159)
+  b:    51200    51200      swap                    	# (Cyl.  160 - 319)
+  c:   409600        0    unused        0     0       	# (Cyl.    0 - 1279)
+  d:   307200   102400    4.2BSD     1024  8192    16 	# (Cyl.  320 - 1279)
+[End of **EXAMPLE**]
 
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "

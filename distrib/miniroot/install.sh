@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.4 1997/04/30 18:52:43 niklas Exp $
+#	$OpenBSD: install.sh,v 1.5 1997/04/30 23:56:05 grr Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ __get_filesystems_1
 echo	"The following will be used for the root filesystem:"
 echo	"	${ROOTDISK}a	/"
 
-echo	"${ROOTDISK}a	/" > ${FILESYSTEMS}
+echo	"${ROOTDISK}a /" > ${FILESYSTEMS}
 
 resp="X"	# force at least one iteration
 while [ "X$resp" != X"done" ]; do
@@ -154,14 +154,16 @@ while [ "X$resp" != X"done" ]; do
 			echo -n "Mount point? "
 			getresp ""
 			_mount_point=$resp
-			if [ "X${_mount_point}" = X"/" ]; then
-				# Invalid response; no multiple roots
-				_first_char="X"
-			else
-				_first_char=`firstchar ${_mount_point}`
+			_first_char=`firstchar ${_mount_point}`
+			if [ "X${_first_char}" != X"/" ]; then
+				echo "mount point must be an absolute path!"
 			fi
 		done
-		echo "${_device_name}	${_mount_point}" >> ${FILESYSTEMS}
+		if [ "X${_mount_point}" = X"/" ]; then
+			echo "root mount point is already taken care of!"
+		else
+			echo "${_device_name} ${_mount_point}" >> ${FILESYSTEMS}
+		fi
 		resp="X"	# force loop to repeat
 		;;
 	esac
@@ -180,6 +182,25 @@ case "$resp" in
 		${EDITOR} ${FILESYSTEMS}
 		;;
 	*)
+		;;
+esac
+echo 	""
+echo	 "The next step *WILL* overwrite any existing data on:"
+(
+	while read _device_name _junk; do
+		echo ${_device_name}
+	done
+) < ${FILESYSTEMS}
+echo	""
+
+echo -n	"Are you *SURE* that you're ready to proceed? [n] "
+getresp "n"
+case "$resp" in
+	y*|Y*)
+		;;
+	*)
+		echo "ok, try again later..."
+		exit
 		;;
 esac
 
@@ -212,17 +233,17 @@ case "$resp" in
 		if [ -f /etc/myname ]; then
 			resp=`cat /etc/myname`
 		fi
-		echo -n "Enter system hostname: [$resp] "
 		while [ "X${resp}" = X"" ]; do
+			echo -n "Enter system hostname: [$resp] "
 			getresp "$resp"
 		done
 		hostname $resp
 		echo $resp > /tmp/myname
 
-		echo -n "Enter DNS domain name: "
 		resp=""		# force at least one iteration
 		while [ "X${resp}" = X"" ]; do
-			getresp ""
+			echo -n "Enter DNS domain name: [$FQDN]"
+			getresp "$FQDN"
 		done
 		FQDN=$resp
 
@@ -263,7 +284,9 @@ case "$resp" in
 		cat /tmp/hosts
 		echo ""
 		echo "You may want to edit the host table in the event that"
-		echo "you need to mount an NFS server."
+		echo "you are doing an NFS installation or an FTP installation"
+		echo "without a name server and want to refer to the server by"
+		echo "name rather than by its numeric ip address."
 		echo -n "Would you like to edit the host table? [n] "
 		getresp "n"
 		case "$resp" in
