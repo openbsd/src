@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.11 1999/12/17 19:22:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.12 2000/01/24 02:24:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,9 @@ bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	return bindresvport_af(sd, (struct sockaddr *)sin, AF_INET);
+	if (sin)
+		return bindresvport_af(sd, (struct sockaddr *)sin, sin->sin_family);
+	return bindresvport_af(sd, NULL, AF_INET);
 }
 
 /*
