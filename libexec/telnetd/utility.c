@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.5 1996/12/06 15:33:31 deraadt Exp $	*/
+/*	$OpenBSD: utility.c,v 1.6 1996/12/23 13:10:10 robin Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.5 1996/12/06 15:33:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.6 1996/12/23 13:10:10 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -934,7 +934,6 @@ printsub(direction, pointer, length)
 			    break;
 
 			default:
-			def_case:
 			    if (isprint(pointer[i]) && pointer[i] != '"') {
 				if (noquote) {
 				    *nfrontp++ = '"';
