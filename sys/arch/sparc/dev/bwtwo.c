@@ -65,6 +65,8 @@
 #include <machine/fbvar.h>
 #if defined(SUN4)
 #include <machine/eeprom.h>
+#include <machine/ctlreg.h>
+#include <sparc/sparc/asm.h>
 #endif
 
 #include <sparc/dev/bwtworeg.h>
@@ -78,6 +80,7 @@ struct bwtwo_softc {
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	volatile struct bwtworeg *sc_reg;/* control registers */
 	caddr_t	sc_phys;		/* display RAM (phys addr) */
+	int	sc_bustype;
 };
 
 /* autoconfiguration driver */
@@ -98,6 +101,9 @@ struct cfdriver bwtwocd = {
 static struct fbdriver bwtwofbdriver = {
 	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwommap
 };
+
+static void	bwtwoenable __P((struct bwtwo_softc *, int));
+static int	bwtwostatus __P((struct bwtwo_softc *));
 
 extern int fbnode;
 extern struct tty *fbconstty;
@@ -145,6 +151,7 @@ bwtwoattach(parent, self, args)
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2BW;
 
+	sc->sc_bustype = ca->ca_bustype;
 	switch (ca->ca_bustype) {
 #if defined(SUN4)
 	case BUS_PFOUR:
@@ -213,7 +220,7 @@ bwtwoattach(parent, self, args)
 	sc->sc_phys = p->ba_ram;
 
 	/* Insure video is enabled */
-	sc->sc_reg->bw_ctl |= CTL_VE;
+	bwtwoenable(sc, 1);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -274,14 +281,11 @@ bwtwoioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGVIDEO:
-		*(int *)data = (sc->sc_reg->bw_ctl & CTL_VE) != 0;
+		bwtwostatus(sc);
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
-			sc->sc_reg->bw_ctl |= CTL_VE;
-		else
-			sc->sc_reg->bw_ctl &= ~CTL_VE;
+		bwtwoenable(sc, *(int *)data);
 		break;
 
 	default:
@@ -296,7 +300,7 @@ bwtwounblank(dev)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
 
-	sc->sc_reg->bw_ctl |= CTL_VE;
+	bwtwoenable(sc, 1);
 }
 
 /*
@@ -319,4 +323,44 @@ bwtwommap(dev, off, prot)
 	 * getting horribly broken behaviour with it on.
 	 */
 	return ((int)sc->sc_phys + off + PMAP_OBIO + PMAP_NC);
+}
+
+
+int
+bwtwostatus(sc)
+	struct bwtwo_softc *sc;
+{
+	int on;
+
+#ifdef SUN4
+	if (cputyp == CPU_SUN4 && sc->sc_bustype == BUS_OBIO)
+		on = lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO;
+	else
+#endif
+		on = sc->sc_reg->bw_ctl & CTL_VE;
+	return (on);
+}
+
+void
+bwtwoenable(sc, on)
+	struct bwtwo_softc *sc;
+	int on;
+{
+	if (on) {
+#ifdef SUN4
+		if (cputyp == CPU_SUN4 && sc->sc_bustype == BUS_OBIO)
+			stba(AC_SYSENABLE, ASI_CONTROL,
+			    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);
+		else
+#endif
+			sc->sc_reg->bw_ctl |= CTL_VE;
+	} else {
+#ifdef SUN4
+		if (cputyp == CPU_SUN4 && sc->sc_bustype == BUS_OBIO)
+			stba(AC_SYSENABLE, ASI_CONTROL,
+			    lduba(AC_SYSENABLE, ASI_CONTROL) & ~SYSEN_VIDEO);
+		else
+#endif
+			sc->sc_reg->bw_ctl &= ~CTL_VE;
+	}
 }
