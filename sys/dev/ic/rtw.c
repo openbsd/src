@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.14 2005/02/06 21:57:06 pedro Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.15 2005/02/08 11:08:56 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -2212,9 +2212,8 @@ rtw_set_nettype(struct rtw_softc *sc, enum ieee80211_opmode opmode)
 	rtw_set_access(&sc->sc_regs, RTW_ACCESS_NONE);
 }
 
-/* XXX is the endianness correct? test. */
 #define	rtw_calchash(addr) \
-	(ether_crc32_le((addr), IEEE80211_ADDR_LEN) & BITS(5, 0))
+	(ether_crc32_be((addr), IEEE80211_ADDR_LEN) >> 26)
 
 void
 rtw_pktfilt_load(struct rtw_softc *sc)
@@ -2230,30 +2229,33 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 
 	/* XXX might be necessary to stop Rx/Tx engines while setting filters */
 
-#define RTW_RCR_MONITOR (RTW_RCR_ACRC32|RTW_RCR_APM|RTW_RCR_AAP|RTW_RCR_AB|RTW_RCR_ACF | RTW_RCR_AICV | RTW_RCR_ACRC32)
+	sc->sc_rcr &= ~RTW_RCR_PKTFILTER_MASK;
+	sc->sc_rcr &= ~(RTW_RCR_MXDMA_MASK | RTW_RCR_RXFTH_MASK);
 
-	if (ic->ic_opmode == IEEE80211_M_MONITOR)
-		sc->sc_rcr |= RTW_RCR_MONITOR;
-	else
-		sc->sc_rcr &= ~RTW_RCR_MONITOR;
-
-	/* XXX reference sources BEGIN */
+	sc->sc_rcr |= RTW_RCR_PKTFILTER_DEFAULT;
+	/* MAC auto-reset PHY (huh?) */
 	sc->sc_rcr |= RTW_RCR_ENMARP;
-	sc->sc_rcr |= RTW_RCR_AB | RTW_RCR_AM | RTW_RCR_APM;
-#if 0
-	/* receive broadcasts in our BSS */
-	sc->sc_rcr |= RTW_RCR_ADD3;
-#endif
-	/* XXX reference sources END */
+	/* DMA whole Rx packets, only.  Set Tx DMA burst size to 1024 bytes. */
+	sc->sc_rcr |= RTW_RCR_MXDMA_1024 | RTW_RCR_RXFTH_WHOLE;
 
-	/* receive pwrmgmt frames. */
-	sc->sc_rcr |= RTW_RCR_APWRMGT;
-	/* receive mgmt/ctrl/data frames. */
-	sc->sc_rcr |= RTW_RCR_ADF | RTW_RCR_AMF;
-	/* initialize Rx DMA threshold, Tx DMA burst size */
-	sc->sc_rcr |= RTW_RCR_RXFTH_WHOLE | RTW_RCR_MXDMA_1024;
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_MONITOR:
+		sc->sc_rcr |= RTW_RCR_MONITOR;
+		break;
+	case IEEE80211_M_AHDEMO:
+	case IEEE80211_M_IBSS:
+		/* receive broadcasts in our BSS */
+		sc->sc_rcr |= RTW_RCR_ADD3;
+		break;
+	default:
+		break;
+	}
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/* XXX accept all broadcast if scanning */
+	if ((ifp->if_flags & IFF_BROADCAST) != 0)
+		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
@@ -2273,13 +2275,9 @@ allmulti:
 			goto allmulti;
 
 		hash = rtw_calchash(enm->enm_addrlo);
-		hashes[hash >> 5] |= 1 << (hash & 0x1f);
+		hashes[hash >> 5] |= (1 << (hash & 0x1f));
+		sc->sc_rcr |= RTW_RCR_AM;
 		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	if (ifp->if_flags & IFF_BROADCAST) {
-		hash = rtw_calchash(etherbroadcastaddr);
-		hashes[hash >> 5] |= 1 << (hash & 0x1f);
 	}
 
 	/* all bits set => hash is useless */
@@ -2287,13 +2285,10 @@ allmulti:
 		goto allmulti;
 
  setit:
-	if (ifp->if_flags & IFF_ALLMULTI)
+	if (ifp->if_flags & IFF_ALLMULTI) {
 		sc->sc_rcr |= RTW_RCR_AM;	/* accept all multicast */
-
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
-
-	hashes[0] = hashes[1] = 0xffffffff;
+		hashes[0] = hashes[1] = 0xffffffff;
+	}
 
 	RTW_WRITE(regs, RTW_MAR0, hashes[0]);
 	RTW_WRITE(regs, RTW_MAR1, hashes[1]);
@@ -2415,7 +2410,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			if (0 && (sc->sc_flags & RTW_F_ENABLED) != 0) {
+			if ((sc->sc_flags & RTW_F_ENABLED) != 0) {
 				rtw_pktfilt_load(sc);
 			} else
 				rc = rtw_init(ifp);
@@ -2947,24 +2942,19 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		break;
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode == IEEE80211_M_STA)
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_AHDEMO:
+		case IEEE80211_M_HOSTAP:
+		case IEEE80211_M_IBSS:
+			rtw_join_bss(sc, ic->ic_bss->ni_bssid, ic->ic_opmode,
+			    ic->ic_bss->ni_intval);
 			break;
-		/*FALLTHROUGH*/
+		case IEEE80211_M_MONITOR:
+		case IEEE80211_M_STA:
+			break;
+		}
+		break;
 	case IEEE80211_S_AUTH:
-#if 0
-		rtw_write_bcn_thresh(sc);
-		rtw_write_ssid(sc);
-		rtw_write_sup_rates(sc);
-#endif
-		if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
-		    ic->ic_opmode == IEEE80211_M_MONITOR)
-			break;
-
-		/* TBD set listen interval */
-
-#if 0
-		rtw_tsf(sc);
-#endif
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwreg.h,v 1.3 2005/01/22 10:14:25 jsg Exp $	*/
+/*	$OpenBSD: rtwreg.h,v 1.4 2005/02/08 11:08:56 jsg Exp $	*/
 /*	$NetBSD: rtwreg.h,v 1.4 2004/12/21 09:07:23 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -304,6 +304,37 @@
 /* accept physical match frames. XXX means PLCP header ok? */
 #define RTW_RCR_APM		BIT(1)
 #define RTW_RCR_AAP		BIT(0)	/* accept frames w/ destination */
+
+/* Additional bits to set in monitor mode. */
+#define RTW_RCR_MONITOR (		\
+    RTW_RCR_AAP |			\
+    RTW_RCR_ACF |			\
+    RTW_RCR_ACRC32 |			\
+    RTW_RCR_AICV |			\
+    0)
+
+/* The packet filter bits. */
+#define	RTW_RCR_PKTFILTER_MASK (\
+    RTW_RCR_AAP |		\
+    RTW_RCR_AB |		\
+    RTW_RCR_ACF |		\
+    RTW_RCR_ACRC32 |		\
+    RTW_RCR_ADD3 |		\
+    RTW_RCR_ADF |		\
+    RTW_RCR_AICV |		\
+    RTW_RCR_AM |		\
+    RTW_RCR_AMF |		\
+    RTW_RCR_APM |		\
+    RTW_RCR_APWRMGT |		\
+    0)
+
+/* Receive power-management frames and mgmt/ctrl/data frames. */
+#define	RTW_RCR_PKTFILTER_DEFAULT	(	\
+    RTW_RCR_ADF |				\
+    RTW_RCR_AMF |				\
+    RTW_RCR_APM |				\
+    RTW_RCR_APWRMGT |				\
+    0)
 
 #define RTW_TINT	0x48	/* Timer Interrupt Register, 32b */
 #define	RTW_TBDA	0x4c	/* Transmit Beacon Descriptor Start Address,
