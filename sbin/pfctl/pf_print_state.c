@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.24 2003/04/03 15:52:24 cedric Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.25 2003/04/09 15:38:46 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -240,6 +240,8 @@ print_state(struct pf_state *s, int opts)
 		s->expire /= 60;
 		printf(", expires in %.2u:%.2u:%.2u", s->expire, min, sec);
 		printf(", %u pkts, %u bytes", s->packets, s->bytes);
+		if (s->anchor.nr != -1)
+			printf(", anchor %u", s->anchor.nr);
 		if (s->rule.nr != -1)
 			printf(", rule %u", s->rule.nr);
 		printf("\n");
