@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.9 2002/12/15 13:16:12 henning Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -86,7 +86,7 @@ struct ctrfn p5fn[] = {
 	{0x24, 0, "Breakpoint 1 match", NULL},
 	{0x25, 0, "Breakpoint 2 match", NULL},
 	{0x26, 0, "Breakpoint 3 match", NULL},
-	{0x27, 0, "Hardware interupts", NULL},
+	{0x27, 0, "Hardware interrupts", NULL},
 	{0x28, 0, "Data read or data write", NULL},
 	{0x29, 0, "Data read miss or data write miss", NULL},
 	{0x0, 0, NULL, NULL},
