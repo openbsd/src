@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2001/12/07 19:11:26 jason Exp $
+#	$OpenBSD: GENERIC,v 1.32 2001/12/07 22:15:32 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -30,8 +30,19 @@ ebus*	at pci?
 hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
 dc*	at pci? dev ? function ?
+
 siop*	at pci? dev ? function ?
 scsibus* at siop?
+
+# USB bridges
+ohci*	at pci? dev ? function ?
+usb*	at ohci?
+
+# USB devices
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ?
+uhid*	at uhub? port ? configuration ?
+ugen*	at uhub? port ? configuration ?
 
 #### Standard system devices -- all required for a given architecture
 
