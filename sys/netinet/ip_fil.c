@@ -1,4 +1,4 @@
-/*    $OpenBSD: ip_fil.c,v 1.16 1998/01/26 04:10:39 dgregor Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.17 1998/03/04 23:20:41 dgregor Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.16 1998/01/26 04:10:39 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.17 1998/03/04 23:20:41 dgregor Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -267,7 +267,7 @@ ipl_enable()
 	else
 		defpass = "no-match -> block";
 
-#ifdef __OpenBSD__	/* don't print this message */ 
+#ifndef __OpenBSD__	/* don't print this message */ 
 	printf("IP Filter: initialized.  Default = %s all, Logging = %s\n",
 		defpass,
 # ifdef	IPFILTER_LOG
