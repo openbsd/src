@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/09/18 15:29:22 jason Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/09/19 16:05:42 jason Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -70,7 +70,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${BSD_RD} cd${REV}.fs ${DESTDIR}/snapshot/
+	cp ${BSD_RD} ${DESTDIR}/snapshot/
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -89,7 +89,7 @@ clean cleandir:
 	elfrdsetroot
 
 beforeinstall:
-	cp ${BSD.RD} cd${REV}.fs ${DESTDIR}/snapshot
+	cp ${BSD.RD} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
