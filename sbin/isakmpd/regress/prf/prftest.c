@@ -1,4 +1,4 @@
-/*	$OpenBSD: prftest.c,v 1.4 2001/07/01 19:28:12 niklas Exp $	*/
+/*	$OpenBSD: prftest.c,v 1.5 2001/08/17 14:11:05 niklas Exp $	*/
 /*	$EOM: prftest.c,v 1.2 1998/10/07 16:40:50 niklas Exp $	*/
 
 /*
@@ -70,6 +70,11 @@ main (void)
   test_prf ("PRF SHA1 Test Case 2",  HASH_SHA1,
 	    "Jefe", 4, "what do ya want for nothing?", 28, 
 	    "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79");
+  test_prf ("PRF SHA1 Test Case 3",  HASH_SHA1,
+	    "Bloody long key, this one, eben longer than the blocksize "
+	    "of ordinary keyed HMAC functions", 90,
+	    "what do ya want for nothing?", 28, 
+	    "52ca5fbcd7d4821bc6bf8b6e95e131109dff901b");
   
   return 0;
 }
