@@ -1,18 +1,18 @@
-#	$OpenBSD: Makefile,v 1.4 1997/03/31 23:06:25 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/04/01 04:52:44 mickey Exp $
 
 
 LIB=	sa
 
-CFLAGS+=$(SACFLAGS) -D__INTERNAL_LIBSA_CREAD
-CFLAGS+=-DHEAP_START=$(HEAP_START) -DHEAP_LIMIT=$(HEAP_LIMIT)
-CFLAGS+=${DEBUGFLAGS} -I${.CURDIR} -I${.CURDIR}/..
-CFLAGS+=-I${.CURDIR}/../../../..  -I${.CURDIR}/../../../../lib/libsa
-AS+=	-R
-#AS+=	-Wa,-a
-
 S=${.CURDIR}/../../../..
 DIR_SA=	$S/lib/libsa
 DIR_KERN=$S/lib/libkern
+
+CFLAGS+=$(SACFLAGS) -D__INTERNAL_LIBSA_CREAD
+CFLAGS+=-DHEAP_START=$(HEAP_START) -DHEAP_LIMIT=$(HEAP_LIMIT)
+CFLAGS+=${DEBUGFLAGS} -I${.CURDIR} -I${.CURDIR}/..
+CFLAGS+=-I$(S)/lib/libsa -I$(S)
+AS+=	-R
+#AS+=	-Wa,-a
 
 # stand routines
 SRCS=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
@@ -33,6 +33,9 @@ SRCS+=	bootp.c bootparam.c rarp.c
 
 # boot filesystems
 SRCS+=	ufs.c nfs.c cd9660.c
+
+# debugger
+SRCS+=	debug.c debug_aout.c debug_i386.S
 
 # i386 stuff
 SRCS+=	asm.S bioscom.S biosdev.c biosdisk.S bioskbd.S biostime.S biosmem.S \
