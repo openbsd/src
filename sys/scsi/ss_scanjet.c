@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.12 1996/11/23 05:55:58 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.13 1996/11/23 06:05:02 kstailey Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -364,18 +364,12 @@ scanjet_set_window(ss, flags)
 
 	p = escape_codes;
 
-	sprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
-	p += strlen(p);
-	sprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
-	p += strlen(p);
-	sprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
-	p += strlen(p);
-	sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
-	p += strlen(p);
-	sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
-	p += strlen(p);
-	sprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
-	p += strlen(p);
+	p += sprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
+	p += sprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
+	p += sprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
+	p += sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
+	p += sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
+	p += sprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
      
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
@@ -419,12 +413,9 @@ scanjet_set_window(ss, flags)
 		break;
 	}
 
-	sprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
-	p += strlen(p);
-	sprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
-	p += strlen(p);
-	sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
-	p += strlen(p);
+	p += sprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
+	p += sprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
+	p += sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
 
 	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, flags));
 }
