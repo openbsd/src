@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.69 2001/06/27 02:10:17 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.70 2001/06/27 02:13:43 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -125,7 +125,6 @@ struct pf_state	*find_state(struct pf_tree_node *, struct pf_tree_key *);
 void		 insert_state(struct pf_state *);
 void		 purge_expired_states(void);
 
-void		 print_ip(struct ifnet *, struct ip *);
 void		 print_host(u_int32_t, u_int16_t);
 void		 print_state(int, struct pf_state *);
 void		 print_flags(u_int8_t);
@@ -481,26 +480,6 @@ purge_expired_states(void)
 			pf_status.states--;
 		}
 	}
-}
-
-void
-print_ip(struct ifnet *ifp, struct ip *h)
-{
-	u_int32_t a;
-	printf(" %s:", ifp->if_xname);
-	a = ntohl(h->ip_src.s_addr);
-	printf(" %u.%u.%u.%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255);
-	a = ntohl(h->ip_dst.s_addr);
-	printf(" -> %u.%u.%u.%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255);
-	printf(" hl=%u len=%u id=%u", h->ip_hl << 2, h->ip_len - (h->ip_hl << 2),
-	 h->ip_id);
-	if (h->ip_off & IP_RF)
-		printf(" RF");
-	if (h->ip_off & IP_DF)
-		printf(" DF");
-	if (h->ip_off & IP_MF)
-		printf(" MF");
-	printf(" off=%u proto=%u\n", (h->ip_off & IP_OFFMASK) << 3, h->ip_p);
 }
 
 void
