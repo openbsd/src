@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.7 1997/04/14 04:25:02 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.8 1997/08/04 10:34:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.7 1997/04/14 04:25:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.8 1997/08/04 10:34:48 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -250,7 +250,7 @@ getnetbyaddr(net, net_type)
 	querybuf buf;
 	char qbuf[MAXDNAME];
 	in_addr_t net2;
-	struct netent *net_entry;
+	struct netent *net_entry = NULL;
 	char lookups[MAXDNSLUS];
 	int i;
 
@@ -333,7 +333,7 @@ getnetbyname(net)
 	int anslen;
 	querybuf buf;
 	char qbuf[MAXDNAME];
-	struct netent *net_entry;
+	struct netent *net_entry = NULL;
 	char lookups[MAXDNSLUS];
 	int i;
 
