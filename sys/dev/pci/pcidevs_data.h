@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.244 2000/04/13 00:07:06 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.245 2000/04/13 04:25:08 smurph Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -511,6 +511,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec(2)",
 	    "AHA-2940U2 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930U2,
+	    0,
+	    "Adaptec(2)",
+	    "AHA-2930U2 Ultra2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890,

@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.244 2000/04/13 00:07:06 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.245 2000/04/13 04:25:08 smurph Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -653,6 +653,7 @@ product ADP AIC6915		0x6915	AIC-6915
 product ADP 7895		0x7895	AIC-7895
 
 product ADP2 2940U2		0x0010	AHA-2940U2 Ultra2
+product ADP2 2930U2		0x0011	AHA-2930U2 Ultra2
 product ADP2 AIC7890		0x001f	AIC-7890/1 Ultra2
 product ADP2 AIC7892		0x008F	AIC-7892 Ultra160
 product ADP2 29160		0x0080	AHA-29160 Ultra160

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.15 2000/04/06 18:21:42 aaron Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.16 2000/04/13 04:25:10 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -312,6 +312,7 @@ void *aux;
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ADP2_AIC7890:
 		case PCI_PRODUCT_ADP2_2940U2:
+		case PCI_PRODUCT_ADP2_2930U2:
 			ahc_c |= AHC_AIC7890;
 			ahc_f = AHC_AIC7890_FE;
 			ahc_flags |= AHC_NEWEEPROM_FMT;
