@@ -832,7 +832,7 @@ prstat()
 	fd = open(line, O_RDONLY);
 	if (fd < 0 || flock(fd, LOCK_SH|LOCK_NB) == 0) {
 		(void) close(fd);	/* unlocks as well */
-		printf("\tno daemon present\n");
+		printf("\tprinter idle\n");
 		return;
 	}
 	(void) close(fd);
