@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.56 2001/09/20 16:07:21 peter Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.57 2001/09/20 18:55:55 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1046,6 +1046,11 @@ ether_ifattach(ifp)
 		((struct arpcom *)ifp)->ac_enaddr[2] = 0xe1;
 		((struct arpcom *)ifp)->ac_enaddr[3] = 0xba;
 		((struct arpcom *)ifp)->ac_enaddr[4] = 0xd0;
+		/*
+		 * XXX use of random() by anything except the scheduler is
+		 * normally invalid, but this is boot time, so pre-scheduler,
+		 * and the random subsystem is not alive yet
+		 */
 		((struct arpcom *)ifp)->ac_enaddr[5] = (u_char)random() & 0xff;
 	}
 		
