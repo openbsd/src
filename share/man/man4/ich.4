@@ -1,4 +1,4 @@
-.\" $OpenBSD: ich.4,v 1.1 2000/05/30 17:02:49 mickey Exp $
+.\" $OpenBSD: ich.4,v 1.2 2000/05/31 02:18:14 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff
 .\" All rights reserved
@@ -39,12 +39,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for AC'97 audio present on Intel 82801AA/AB
-I/O Controller hub and 82440MX chipset.
-DMA engine supports full duplex operation and separate DMA channels
-for line input and microphone. Although similtaneous recording
-from both line and microphone inputs is not supported, due
-to current
+driver provides support for AC'97 audio present on the Intel 82801AA/AB
+I/O controller hub and 82440MX chipset.
+Its DMA engine supports full-duplex operation and has separate DMA channels
+for line input and microphone.
+Unfortunately, simultaneous recording from both line and microphone inputs
+is not supported due to the current
 .Xr ac97 4
 design.
 .Sh SEE ALSO
@@ -55,7 +55,7 @@ design.
 The
 .Nm
 device driver appeared in
-.Ox 2.7 .
+.Ox 2.8 .
 .Sh BUGS
 This chipset supports only 48KHz rate for both DAC and ADC operation,
 unfortunately some audio applications have poor support for this rate
