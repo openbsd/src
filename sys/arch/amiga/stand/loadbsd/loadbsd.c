@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.11 1998/03/29 22:24:52 espie Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.12 1998/08/13 21:08:15 espie Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ void warnx __P((const char *, ...));
 
 extern const char _version[];
 extern void open_libraries(void);
+extern void ensure_no_poolmem(void);
 
 /*
  *	Version history:
@@ -130,6 +131,7 @@ extern void open_libraries(void);
  *      2.15.2  03/30/98 ME - generic dust-off for amigaos compilation,
  *              turn on -Wall, clean up warnings. Be sensical about 
  *              ixemul/libnix issues.
+ *      2.15.3  07/18/98 ME - poolmem awareness
  */
 
 /*
@@ -158,7 +160,6 @@ struct boot_memlist {
 struct boot_memlist memlist;
 struct boot_memlist *kmemlist;
 
-
 void get_mem_config __P((void **, u_long *, u_long *));
 void get_cpuid __P((void));
 void get_eclock __P((void));
@@ -170,6 +171,7 @@ void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
 		int, int, u_long, u_long, int));
 void startit_end __P((void));
 
+extern void ensure_no_poolmem(void);
 extern struct ExecBase *SysBase;
 extern char *optarg;
 extern int optind;
@@ -294,6 +296,7 @@ main(argc, argv)
 	for (cd = 0, ncd = 0; ( cd = FindConfigDev(cd, -1, -1) ); ncd++)
 		;
 	get_cpuid();
+	ensure_no_poolmem();
 	get_mem_config(&fmem, &fmemsz, &cmemsz);
 	get_eclock();
 	get_AGA();
