@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.13 1996/08/12 18:54:05 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.14 1997/06/25 13:01:00 downsj Exp $	*/
 /*	$NetBSD: zs.c,v 1.37.4.1 1996/06/02 09:07:55 mrg Exp $ */
 
 /*
@@ -775,7 +775,6 @@ zshard(intrarg)
 	void *intrarg;
 {
 	register struct zs_chanstate *a;
-	struct zs_softc *sc;
 #define	b (a + 1)
 	register volatile struct zschan *zc;
 	register int rr3, intflags = 0, v, i, ringmask;
