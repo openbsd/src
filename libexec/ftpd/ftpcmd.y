@@ -152,6 +152,7 @@ cmd
 	| PASS SP password CRLF
 		{
 			pass($3);
+			memset($3, 0, strlen($3));
 			free($3);
 		}
 	| PORT SP host_port CRLF

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.17 1996/08/27 10:08:37 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.18 1996/09/04 14:41:29 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1555,7 +1555,7 @@ yyerror(s)
 
 	if (cp = strchr(cbuf,'\n'))
 		*cp = '\0';
-	reply(500, "'%s': command not understood.", cbuf);
+	reply(500, "'%s': command not understood: %s.", cbuf, s);
 }
 
 void
