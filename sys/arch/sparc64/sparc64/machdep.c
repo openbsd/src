@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 2003/06/06 11:17:48 henric Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.64 2003/06/16 20:46:14 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -788,9 +788,7 @@ boot(howto)
 		goto haltsys;
 	}
 
-#if NFB > 0
 	fb_unblank();
-#endif
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
