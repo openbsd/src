@@ -1,6 +1,5 @@
-.\"	$OpenBSD: raidctl.8,v 1.8 1999/09/23 04:12:02 alex Exp $
-.\"
-.\"     $NetBSD: raidctl.8,v 1.8 1999/03/24 06:18:30 mycroft Exp $
+.\"	$OpenBSD: raidctl.8,v 1.9 2000/01/07 14:51:41 peter Exp $
+.\"     $NetBSD: raidctl.8,v 1.11 2000/01/05 03:02:41 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,32 +69,52 @@
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
 .Nm raidctl
+.Op Fl v
 .Op Fl a Ar component Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl B Ar dev 
 .Nm raidctl
+.Op Fl v
 .Op Fl c Ar config_file Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl C Ar config_file Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl f Ar component Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl F Ar component Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl g Ar component Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl i Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl I Ar serial_number Ar dev
 .Nm raidctl
+.Op Fl v
+.Op Fl p Ar dev
+.Nm raidctl
+.Op Fl v
+.Op Fl P Ar dev
+.Nm raidctl
+.Op Fl v
 .Op Fl r Ar component Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl R Ar component Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl s Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl S Ar dev
 .Nm raidctl
+.Op Fl v
 .Op Fl u Ar dev
 .Sh DESCRIPTION
 .Nm
@@ -155,8 +174,8 @@ Initialize (re-write) the parity on the device.  This
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
 a system crash (and before a
-.Xr fsck 8 ) Ns
-to ensure the integrity of the parity.
+.Xr fsck 8
+) to ensure the integrity of the parity.
 .It Fl I Ar serial_number Ar dev
 Initialize the component labels on each component of the device.  
 .Ar serial_number 
@@ -164,6 +183,12 @@ is used as one of the keys in determining whether a
 particular set of components belong to the same RAID set.  While not
 strictly enforced, different serial numbers should be used for
 different RAID sets.
+.It Fl p Ar dev
+Check the status of the parity on the RAID set.  Displays a status
+message, and returns successfully if the parity is up-to-date.
+.It Fl P Ar dev
+Check the status of the parity on the RAID set, and initialize
+(re-write) the parity if the parity is not known to be up-to-date.
 .It Fl r Ar component Ar dev
 Remove the spare disk specified by 
 .Ar component 
@@ -183,6 +208,9 @@ Check the status of component reconstruction.  The output indicates
 the amount of progress achieved in reconstructing a failed component.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
+.It Fl v 
+Be more verbose.  For operations such as reconstructions, parity
+re-writing, and copybacks, provide a progress indicator.
 .El
 .Pp
 The device used by
@@ -461,6 +489,24 @@ or
 .Xr fsck 8
 on the device or its filesystems, and then to mount the filesystems
 for use.
+.Pp
+After the parity has been initialized for the first time, the command:
+.Bd -unfilled -offset indent
+raidctl -p raid0
+.Ed
+.Pp
+can be used to check the current status of the parity.  To check the
+parity and rebuild it if necessary the command:
+.Bd -unfilled -offset indent
+raidctl -P raid0
+.Ed
+.Pp
+is used.  Note that re-writing the parity can be done while
+other operations on the RAID set are taking place (e.g. while doing a
+.Xr fsck 8
+on a filesystem on the RAID set).  However: for maximum effectiveness
+of the RAID set, the parity should be known to be correct before any
+data on the set is modified.
 .Pp
 To see how the RAID set is doing, the following command can be used to
 show the RAID set's status:

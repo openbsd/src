@@ -1,5 +1,5 @@
-/*	$OpenBSD: raidctl.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
-/*      $NetBSD: raidctl.c,v 1.6 1999/03/02 03:13:59 oster Exp $   */
+/*	$OpenBSD: raidctl.c,v 1.4 2000/01/07 14:51:41 peter Exp $	*/
+/*      $NetBSD: raidctl.c,v 1.10 2000/01/05 03:02:41 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,7 +69,7 @@
 extern  char *__progname;
 
 int     main __P((int, char *[]));
-static  void do_ioctl __P((int, unsigned long, void *, char *));
+void do_ioctl __P((int, unsigned long, void *, char *));
 static  void rf_configure __P((int, char*, int));
 static  char *device_status __P((RF_DiskStatus_t));
 static  void rf_get_device_status __P((int));
@@ -82,6 +82,13 @@ static  void init_component_labels __P((int, int));
 static  void add_hot_spare __P((int, char *));
 static  void remove_hot_spare __P((int, char *));
 static  void rebuild_in_place __P((int, char *));
+static  void check_status __P((int));
+static  void check_parity __P((int,int,char *));
+static  void do_meter __P((int, int));
+static  void get_bar __P((char *, double, int));
+static  void get_time_string __P((char *, int));
+
+int verbose = 0;
 
 int
 main(argc,argv)
@@ -98,9 +105,10 @@ main(argc,argv)
 	char name[PATH_MAX];
 	char component[PATH_MAX];
 	int do_recon;
+	int do_rewrite;
+	int is_clean;
 	int raidID;
 	int rawpart;
-	int recon_percent_done;
 	int serial_number;
  	struct stat st;
  	int fd;
@@ -109,9 +117,11 @@ main(argc,argv)
 	num_options = 0;
 	action = 0;
 	do_recon = 0;
+	do_rewrite = 0;
+	is_clean = 0;
 	force = 0;
 
-	while ((ch = getopt(argc, argv, "a:Bc:C:f:F:g:iI:l:r:R:sSu")) != -1)
+	while ((ch = getopt(argc, argv, "a:Bc:C:f:F:g:iI:l:r:R:sSpPuv")) != -1)
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
@@ -180,12 +190,27 @@ main(argc,argv)
 			num_options++;
 			break;
 		case 'S':
-			action = RAIDFRAME_CHECKRECON;
+			action = RAIDFRAME_CHECK_RECON_STATUS;
+			num_options++;
+			break;
+		case 'p':
+			action = RAIDFRAME_CHECK_PARITY;
+			num_options++;
+			break;
+		case 'P':
+			action = RAIDFRAME_CHECK_PARITY;
+			do_rewrite = 1;
 			num_options++;
 			break;
 		case 'u':
 			action = RAIDFRAME_SHUTDOWN;
 			num_options++;
+			break;
+		case 'v':
+			verbose = 1;
+			/* Don't bump num_options, as '-v' is not 
+			   an option like the others */
+			/* num_options++; */
 			break;
 		default:
 			usage();
@@ -244,6 +269,11 @@ main(argc,argv)
 	case RAIDFRAME_COPYBACK:
 		printf("Copyback.\n");
 		do_ioctl(fd, RAIDFRAME_COPYBACK, NULL, "RAIDFRAME_COPYBACK");
+		if (verbose) {
+			sleep(3); /* XXX give the copyback a chance to start */
+			printf("Copyback status:\n");
+			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+		}
 		break;
 	case RAIDFRAME_FAIL_DISK:
 		rf_fail_disk(fd,component,do_recon);
@@ -261,18 +291,23 @@ main(argc,argv)
 		printf("Initiating re-write of parity\n");
 		do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
 			 "RAIDFRAME_REWRITEPARITY");
+		if (verbose) {
+			sleep(3); /* XXX give it time to get started */
+			printf("Parity Re-write status:\n");
+			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+		}
 		break;
-	case RAIDFRAME_CHECKRECON:
-		do_ioctl(fd, RAIDFRAME_CHECKRECON, &recon_percent_done, 
-			 "RAIDFRAME_CHECKRECON");
-		printf("Reconstruction is %d%% complete.\n",
-		       recon_percent_done);
+	case RAIDFRAME_CHECK_RECON_STATUS:
+		check_status(fd);
 		break;
 	case RAIDFRAME_GET_INFO:
 		rf_get_device_status(fd);
 		break;
 	case RAIDFRAME_REBUILD_IN_PLACE:
 		rebuild_in_place(fd,component);
+		break;
+	case RAIDFRAME_CHECK_PARITY:
+		check_parity(fd,do_rewrite,dev_name);
 		break;
 	case RAIDFRAME_SHUTDOWN:
 		do_ioctl(fd, RAIDFRAME_SHUTDOWN, NULL, "RAIDFRAME_SHUTDOWN");
@@ -285,7 +320,7 @@ main(argc,argv)
 	exit(0);
 }
 
-static void
+void
 do_ioctl(fd, command, arg, ioctl_name)
 	int fd;
 	unsigned long command;
@@ -294,6 +329,7 @@ do_ioctl(fd, command, arg, ioctl_name)
 {
 	if (ioctl(fd, command, arg) < 0) {
 		warn("ioctl (%s) failed", ioctl_name);
+		printf("ioctl (%s) failed", ioctl_name);
 		exit(1);
 	}
 }
@@ -308,7 +344,7 @@ rf_configure(fd,config_file,force)
 	void *generic;
 	RF_Config_t cfg;
 
-	if (rf_MakeConfig( config_file, &cfg ) < 0) {
+	if (rf_MakeConfig( config_file, &cfg ) != 0) {
 		fprintf(stderr,"%s: unable to create RAIDframe %s\n",
 			__progname, "configuration structure\n");
 		exit(1);
@@ -369,6 +405,7 @@ rf_get_device_status(fd)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
+	int is_clean;
 	int i;
 
 	cfg_ptr = &device_config;
@@ -390,6 +427,14 @@ rf_get_device_status(fd)
 	} else {
 		printf("No spares.\n");
 	}
+	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
+		 "RAIDFRAME_CHECK_PARITY");
+	if (is_clean) {
+		printf("Parity status: clean\n");
+	} else {
+		printf("Parity status: DIRTY\n");
+	}
+	check_status(fd);
 
 }
 
@@ -450,6 +495,11 @@ rf_fail_disk(fd, component_to_fail, do_recon)
 	}
 	do_ioctl(fd, RAIDFRAME_FAIL_DISK, &recon_request, 
 		 "RAIDFRAME_FAIL_DISK");
+	if (do_recon && verbose) {
+		printf("Reconstruction status:\n");
+		sleep(3); /* XXX give reconstruction a chance to start */
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+	}
 }
 
 static void
@@ -587,26 +637,292 @@ rebuild_in_place( fd, component )
 	
 	do_ioctl( fd, RAIDFRAME_REBUILD_IN_PLACE, &comp,
 		  "RAIDFRAME_REBUILD_IN_PLACE");
+
+	if (verbose) {
+		printf("Reconstruction status:\n");
+		sleep(3); /* XXX give reconstruction a chance to start */
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+	}
+
+}
+
+static void
+check_parity( fd, do_rewrite, dev_name )
+	int fd;
+	int do_rewrite;
+	char *dev_name;
+{
+	int is_clean;
+	int percent_done;
+
+	is_clean = 0;
+	percent_done = 0;
+	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
+		 "RAIDFRAME_CHECK_PARITY");
+	if (is_clean) {
+		printf("%s: Parity status: clean\n",dev_name);
+	} else {
+		printf("%s: Parity status: DIRTY\n",dev_name);
+		if (do_rewrite) {
+			printf("%s: Initiating re-write of parity\n",
+			       dev_name);
+			do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
+				 "RAIDFRAME_REWRITEPARITY");
+			sleep(3); /* XXX give it time to
+				     get started. */
+			if (verbose) {
+				printf("Parity Re-write status:\n");
+				do_meter(fd,
+					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+			} else {
+				do_ioctl(fd, 
+					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
+					 &percent_done, 
+					 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS"
+					 );
+				while( percent_done < 100 ) {
+					do_ioctl(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
+						 &percent_done, "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
+				}
+
+			}
+			       printf("%s: Parity Re-write complete\n",
+				      dev_name);
+		} else {
+			/* parity is wrong, and is not being fixed.
+			   Exit w/ an error. */
+			exit(1);
+		}
+	}
 }
 
 
 static void
+check_status( fd )
+	int fd;
+{
+	int recon_percent_done = 0;
+	int parity_percent_done = 0;
+	int copyback_percent_done = 0;
+
+	do_ioctl(fd, RAIDFRAME_CHECK_RECON_STATUS, &recon_percent_done, 
+		 "RAIDFRAME_CHECK_RECON_STATUS");
+	printf("Reconstruction is %d%% complete.\n", recon_percent_done);
+	do_ioctl(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
+		 &parity_percent_done, 
+		 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
+	printf("Parity Re-write is %d%% complete.\n", parity_percent_done);
+	do_ioctl(fd, RAIDFRAME_CHECK_COPYBACK_STATUS, &copyback_percent_done, 
+		 "RAIDFRAME_CHECK_COPYBACK_STATUS");
+	printf("Copyback is %d%% complete.\n", copyback_percent_done);
+
+	/* These 3 should be mutually exclusive at this point */
+	if (recon_percent_done < 100) {
+		printf("Reconstruction status:\n");
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+	} else if (parity_percent_done < 100) {
+		printf("Parity Re-write status:\n");
+		do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+	} else if (copyback_percent_done < 100) {
+		printf("Copyback status:\n");
+		do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+	}
+}
+
+char *tbits = "|/-\\";
+
+static void
+do_meter( fd, option )
+	int fd;
+	int option;
+{
+	int percent_done;
+	int last_percent;
+	int start_percent;
+	struct timeval start_time;
+	struct timeval last_time;
+	struct timeval current_time;
+	double elapsed;
+	int elapsed_sec;
+	int elapsed_usec;
+	int simple_eta,last_eta;
+	double rate;
+	int amount;
+	int tbit_value;
+	int wait_for_more_data;
+	char buffer[1024];
+	char bar_buffer[1024];
+	char eta_buffer[1024];
+
+	if (gettimeofday(&start_time,NULL)) {
+		fprintf(stderr,"%s: gettimeofday failed!?!?\n",__progname);
+		exit(errno);
+	}
+	percent_done = 0;
+	do_ioctl( fd, option, &percent_done, "");
+	last_percent = percent_done;
+	start_percent = percent_done;
+	last_time = start_time;
+	current_time = start_time;
+	
+	wait_for_more_data = 0;
+	tbit_value = 0;
+
+	while(percent_done < 100) {
+
+		get_bar(bar_buffer, percent_done, 40);
+		
+		elapsed_sec = current_time.tv_sec - last_time.tv_sec;
+		
+		elapsed_usec = current_time.tv_usec - last_time.tv_usec;
+		
+		if (elapsed_usec < 0) {
+			elapsed_usec-=1000000;
+			elapsed_sec++;
+		}
+		
+		elapsed = (double) elapsed_sec + 
+			(double) elapsed_usec / 1000000.0;
+		if (elapsed <= 0.0) {
+			elapsed = 0.0001; /* XXX */
+		}
+		
+		amount = percent_done - last_percent;
+		if (amount <= 0) { /* we don't do negatives (yet?) */
+			amount = 0;
+			wait_for_more_data = 1;
+		} else {
+			wait_for_more_data = 0;
+		}
+		rate = amount / elapsed;
+
+
+		if (rate > 0.0) {
+			simple_eta = (int) ((100.0 - (double) last_percent ) / rate);
+		} else {
+			simple_eta = -1;
+		}
+		if (simple_eta <=0) { 
+			simple_eta = last_eta;
+		} else {
+			last_eta = simple_eta;
+		}
+
+		get_time_string(eta_buffer, simple_eta);
+
+		snprintf(buffer,1024,"\r%3d%% |%s| ETA: %s %c",
+			 percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
+
+		write(fileno(stdout),buffer,strlen(buffer));
+		fflush(stdout);
+
+		/* resolution wasn't high enough... wait until we get another
+		   timestamp and perhaps more "work" done. */
+
+		if (!wait_for_more_data) {
+			last_time = current_time;
+			last_percent = percent_done;
+		}
+
+		if (++tbit_value>3) 
+			tbit_value = 0;
+
+		sleep(2);
+
+		if (gettimeofday(&current_time,NULL)) {
+			fprintf(stderr,"%s: gettimeofday failed!?!?\n",
+				__progname);
+			exit(errno);
+		}
+
+		do_ioctl( fd, option, &percent_done, "");
+		
+
+	}
+	printf("\n");
+}
+/* 40 '*''s per line, then 40 ' ''s line. */
+/* If you've got a screen wider than 160 characters, "tough" */
+
+#define STAR_MIDPOINT 4*40
+const char stars[] = "****************************************"
+                     "****************************************"
+                     "****************************************"
+                     "****************************************"
+                     "                                        "
+                     "                                        "
+                     "                                        "
+                     "                                        "
+                     "                                        ";
+
+static void
+get_bar(string,percent,max_strlen)
+	char *string;
+	double percent;
+	int max_strlen;
+{
+	int offset;
+
+	if (max_strlen > STAR_MIDPOINT) {
+		max_strlen = STAR_MIDPOINT;
+	}
+	offset = STAR_MIDPOINT - 
+		(int)((percent * max_strlen)/ 100);
+	if (offset < 0)
+		offset = 0;
+	snprintf(string,max_strlen,"%s",&stars[offset]);
+}
+
+static void
+get_time_string(string,simple_time)
+	char *string;
+	int simple_time;
+{
+	int minutes, seconds, hours;
+	char hours_buffer[5];
+	char minutes_buffer[5];
+	char seconds_buffer[5];
+
+	if (simple_time >= 0) {
+
+		minutes = (int) simple_time / 60;
+		seconds = ((int)simple_time - 60*minutes);
+		hours = minutes / 60;
+		minutes = minutes - 60*hours;
+		
+		if (hours > 0) {
+			snprintf(hours_buffer,5,"%02d:",hours);
+		} else {
+			snprintf(hours_buffer,5,"   ");
+		}
+		
+		snprintf(minutes_buffer,5,"%02d:",minutes);
+		snprintf(seconds_buffer,5,"%02d",seconds);
+		snprintf(string,1024,"%s%s%s",
+			 hours_buffer, minutes_buffer, seconds_buffer);
+	} else {
+		snprintf(string,1024,"   --:--");
+	}
+	
+}
+
+static void
 usage()
 {
-	fprintf(stderr, "usage: %s -a component dev\n", __progname);
-	fprintf(stderr, "       %s -B dev\n", __progname);
-	fprintf(stderr, "       %s -c config_file dev\n", __progname);
-	fprintf(stderr, "       %s -C config_file dev\n", __progname);
-	fprintf(stderr, "       %s -f component dev\n", __progname);
-	fprintf(stderr, "       %s -F component dev\n", __progname);
-	fprintf(stderr, "       %s -g component dev\n", __progname);
-	fprintf(stderr, "       %s -i dev\n", __progname);
-	fprintf(stderr, "       %s -I serial_number dev\n", __progname);
-	fprintf(stderr, "       %s -r component dev\n", __progname); 
-	fprintf(stderr, "       %s -R component dev\n", __progname);
-	fprintf(stderr, "       %s -s dev\n", __progname);
-	fprintf(stderr, "       %s -S dev\n", __progname);
-	fprintf(stderr, "       %s -u dev\n", __progname);
+	fprintf(stderr, "usage: %s [-v] -a component dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -B dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -c config_file dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -C config_file dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -f component dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -F component dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -g component dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -i dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -I serial_number dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -r component dev\n", __progname); 
+	fprintf(stderr, "       %s [-v] -R component dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -s dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -S dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -u dev\n", __progname);
 #if 0
 	fprintf(stderr, "usage: %s %s\n", __progname, 
 		"-a | -f | -F | -g | -r | -R component dev");
