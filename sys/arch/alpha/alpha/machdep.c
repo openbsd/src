@@ -770,6 +770,12 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+
+		/* protect against curproc->p_stats.foo refs in sync   XXX */
+		if (curproc == NULL)
+			curproc = &proc0;
+
 		waittime = 0;
 		vfs_shutdown();
 		/*

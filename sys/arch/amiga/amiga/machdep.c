@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 1996/05/04 13:38:33 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 1996/05/08 01:30:40 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.65 1996/05/01 09:56:22 veego Exp $	*/
 
 /*
@@ -977,8 +977,13 @@ bootsync(void)
 		/*
 		 * unmount filesystems
 		 */
-		if (panicstr == 0)
+		if (panicstr == 0) {
+			extern struct proc proc0;
+			if (curproc == NULL)
+				curproc = &proc0;
+
 			vfs_unmountall();
+		}
 
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
