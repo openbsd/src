@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 1997/09/16 02:14:10 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 1997/09/16 03:02:59 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,7 +94,7 @@ all)
 	sh MAKEDEV adb asc0 grf0 grf1 grf2 grf3 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh MAKEDEV bpf8 bpf9 bpfa bpfb ipl
+	sh MAKEDEV bpf8 bpf9 ipl
 	sh MAKEDEV tun0 tun1 tun2 tun3
 	sh MAKEDEV lkm
 	sh MAKEDEV random
@@ -366,6 +366,7 @@ bpf*)
 	;;
 
 ipl)
+	rm -f ipl
 	mknod ipl c 35 0
 	chown root.wheel ipl
 	;;

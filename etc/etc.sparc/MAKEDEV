@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.32 1997/09/07 20:29:15 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.33 1997/09/16 03:03:03 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -166,7 +166,7 @@ all)
 	sh ${this} ss0 ss1
 	sh ${this} pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh ${this} ccd0 ccd1 ccd2 ccd3
-	sh ${this} bpf0 bpf1 bpf2 bpf3
+	sh ${this} bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh ${this} ipl
 	sh ${this} bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh ${this} cgeight0 cgfourteen0 tcx0
