@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.31 2001/06/25 10:07:14 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.32 2001/06/25 16:53:20 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1020,7 +1020,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 
 		printf("pf: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass",
-		    direction ? "in" : "out");
+		    direction ? "out" : "in");
 		printf(" on %s proto tcp", ifp->if_xname);
 		printf(" from ");
 		print_host(h->ip_src.s_addr, th->th_sport);
@@ -1158,8 +1158,8 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 
 	if (rm != NULL && rm->log) {
 		printf("pf: @%u", mnr);
-		printf(" %s %s", rm->action ? "block" : "pass", direction ? "in" :
-		    "out");
+		printf(" %s %s", rm->action ? "block" : "pass", direction ? "out" :
+		    "in");
 		printf(" on %s proto udp", ifp->if_xname);
 		printf(" from ");
 		print_host(h->ip_src.s_addr, uh->uh_sport);
