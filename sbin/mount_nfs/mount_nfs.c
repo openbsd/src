@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.40 2004/07/16 00:11:10 henning Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.41 2004/08/20 07:12:00 otto Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -255,6 +255,80 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			options = optarg;
+			while (options != NULL) {
+				switch (getmntopt(&options, &value, mopts,
+				    &mntflags)) {
+				case ALTF_BG:
+					opflags |= BGRND;
+					break;
+				case ALTF_NOCONN:
+					nfsargsp->flags |= NFSMNT_NOCONN;
+					break;
+				case ALTF_DUMBTIMR:
+					nfsargsp->flags |= NFSMNT_DUMBTIMR;
+					break;
+				case ALTF_INTR:
+					nfsargsp->flags |= NFSMNT_INT;
+					break;
+				case ALTF_NFSV3:
+					if (force2)
+						errx(1,
+						    "conflicting version options");
+					force3 = 1;
+					break;
+				case ALTF_NFSV2:
+					if (force3)
+						errx(1,
+						    "conflicting version options");
+					force2 = 1;
+					nfsargsp->flags &= ~NFSMNT_NFSV3;
+					break;
+				case ALTF_RDIRPLUS:
+					nfsargsp->flags |= NFSMNT_RDIRPLUS;
+					break;
+				case ALTF_MNTUDP:
+					mnttcp_ok = 0;
+					break;
+				case ALTF_RESVPORT:
+					nfsargsp->flags |= NFSMNT_RESVPORT;
+					break;
+				case ALTF_SOFT:
+					nfsargsp->flags |= NFSMNT_SOFT;
+					break;
+				case ALTF_TCP:
+					nfsargsp->sotype = SOCK_STREAM;
+					nfsproto = IPPROTO_TCP;
+					break;
+				case ALTF_PORT:
+					port_no = value.ival;
+					break;
+				case ALTF_NOAC:
+					nfsargsp->flags |= (NFSMNT_ACREGMIN |
+					    NFSMNT_ACREGMAX | NFSMNT_ACDIRMIN |
+					    NFSMNT_ACDIRMAX);
+					nfsargsp->acregmin = 0;
+					nfsargsp->acregmax = 0;
+					nfsargsp->acdirmin = 0;
+					nfsargsp->acdirmax = 0;
+					break;
+				case ALTF_ACREGMIN:
+					nfsargsp->flags |= NFSMNT_ACREGMIN;
+					nfsargsp->acregmin = value.ival;
+					break;
+				case ALTF_ACREGMAX:
+					nfsargsp->flags |= NFSMNT_ACREGMAX;
+					nfsargsp->acregmax = value.ival;
+					break;
+				case ALTF_ACDIRMIN:
+					nfsargsp->flags |= NFSMNT_ACDIRMIN;
+					nfsargsp->acdirmin = value.ival;
+					break;
+				case ALTF_ACDIRMAX:
+					nfsargsp->flags |= NFSMNT_ACDIRMAX;
+					nfsargsp->acdirmax = value.ival;
+					break;
+				}
+			}
 			break;
 		case 'P':
 			nfsargsp->flags |= NFSMNT_RESVPORT;
@@ -312,81 +386,6 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 		usage();
-
-	/* parse -o options */
-	while (options != NULL) {
-		switch (getmntopt(&options, &value, mopts, &mntflags)) {
-		case ALTF_BG:
-			opflags |= BGRND;
-			break;
-		case ALTF_NOCONN:
-			nfsargsp->flags |= NFSMNT_NOCONN;
-			break;
-		case ALTF_DUMBTIMR:
-			nfsargsp->flags |= NFSMNT_DUMBTIMR;
-			break;
-		case ALTF_INTR:
-			nfsargsp->flags |= NFSMNT_INT;
-			break;
-		case ALTF_NFSV3:
-			if (force2)
-				errx(1,
-				    "conflicting version options");
-			force3 = 1;
-			break;
-		case ALTF_NFSV2:
-			if (force3)
-				errx(1,
-				    "conflicting version options");
-			force2 = 1;
-			nfsargsp->flags &= ~NFSMNT_NFSV3;
-			break;
-		case ALTF_RDIRPLUS:
-			nfsargsp->flags |= NFSMNT_RDIRPLUS;
-			break;
-		case ALTF_MNTUDP:
-			mnttcp_ok = 0;
-			break;
-		case ALTF_RESVPORT:
-			nfsargsp->flags |= NFSMNT_RESVPORT;
-			break;
-		case ALTF_SOFT:
-			nfsargsp->flags |= NFSMNT_SOFT;
-			break;
-		case ALTF_TCP:
-			nfsargsp->sotype = SOCK_STREAM;
-			nfsproto = IPPROTO_TCP;
-			break;
-		case ALTF_PORT:
-			port_no = value.ival;
-			break;
-		case ALTF_NOAC:
-			nfsargsp->flags |= (NFSMNT_ACREGMIN |
-			    NFSMNT_ACREGMAX | NFSMNT_ACDIRMIN |
-			    NFSMNT_ACDIRMAX);
-			nfsargsp->acregmin = 0;
-			nfsargsp->acregmax = 0;
-			nfsargsp->acdirmin = 0;
-			nfsargsp->acdirmax = 0;
-			break;
-		case ALTF_ACREGMIN:
-			nfsargsp->flags |= NFSMNT_ACREGMIN;
-			nfsargsp->acregmin = value.ival;
-			break;
-		case ALTF_ACREGMAX:
-			nfsargsp->flags |= NFSMNT_ACREGMAX;
-			nfsargsp->acregmax = value.ival;
-			break;
-		case ALTF_ACDIRMIN:
-			nfsargsp->flags |= NFSMNT_ACDIRMIN;
-			nfsargsp->acdirmin = value.ival;
-			break;
-		case ALTF_ACDIRMAX:
-			nfsargsp->flags |= NFSMNT_ACDIRMAX;
-			nfsargsp->acdirmax = value.ival;
-			break;
-		}
-	}
 
 	spec = *argv++;
 	if (realpath(*argv, name) == NULL)
