@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.5 1997/07/08 18:32:27 millert Exp $	*/
+/*	$OpenBSD: units.c,v 1.6 1999/06/13 16:34:21 pjanzen Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ usage()
 {
 	fprintf(stderr, "units [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
 	fprintf(stderr, "    -f specify units file\n");
-	fprintf(stderr, "    -q supress prompting (quiet)\n");
+	fprintf(stderr, "    -q suppress prompting (quiet)\n");
 	fprintf(stderr, "    -v print version number\n");
 	exit(3);
 }
