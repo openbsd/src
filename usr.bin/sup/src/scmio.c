@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.11 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.12 2002/08/03 08:55:35 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -123,7 +123,7 @@
  *	Added crosspatch support.
  *
  * 28-Jun-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
- *	Found error in debuging code for readint().
+ *	Found error in debugging code for readint().
  *
  * 01-Apr-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added code to readdata to "push" data back into the data buffer.

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.21 2002/07/01 00:00:31 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.22 2002/08/03 08:55:35 pvalchev Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.21 2002/07/01 00:00:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.22 2002/08/03 08:55:35 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -1476,7 +1476,7 @@ setdumpflg()
 }
 
 /*
-** Turn on or off debuging by open or closeing the debug file
+** Turn on or off debugging by open or closeing the debug file
 */
 
 static void
@@ -1518,7 +1518,7 @@ setdebug(code)
 /*
 ** Catch a special signal and set debug level.
 **
-**  If debuging is off then turn on debuging else increment the level.
+**  If debugging is off then turn on debugging else increment the level.
 **
 ** Handy for looking in on long running name servers.
 */

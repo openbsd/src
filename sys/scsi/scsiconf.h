@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.34 2002/05/27 23:42:40 tdeval Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.35 2002/08/03 08:55:35 pvalchev Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ struct scsi_link {
 #define	SDEV_MEDIA_LOADED 	0x0002	/* device figures are still valid */
 #define	SDEV_WAITING	 	0x0004	/* a process is waiting for this */
 #define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
-#define	SDEV_DBX		0x00f0	/* debuging flags (scsi_debug.h) */
+#define	SDEV_DBX		0x00f0	/* debugging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
 #define	SDEV_ATAPI		0x0200	/* device is ATAPI */
 #define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */

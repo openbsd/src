@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 2002/01/23 19:16:09 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.40 2002/08/03 08:55:35 pvalchev Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -52,7 +52,7 @@ option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
 option		GENERIC		# Mini-root boot support
 
 #
-# Misc. debuging options
+# Misc. debugging options
 #
 #option		DEBUG		# Add debugging statements
 #option		SYSCALL_DEBUG	# debug all syscalls.
