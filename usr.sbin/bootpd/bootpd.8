@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootpd.8,v 1.4 1997/05/30 00:05:05 deraadt Exp $
+.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootpd.8,v 1.5 1998/06/03 05:58:36 deraadt Exp $
 .\"
 .TH BOOTPD 8 "November 06, 1993" "Carnegie Mellon University"
 .SH NAME
@@ -112,7 +112,7 @@ value (in minutes) that a
 or
 .I bootpgw
 process will wait for a BOOTP packet before exiting.
-If no packets are recieved for
+If no packets are received for
 .I timeout
 minutes, then the program will exit.
 A timeout value of zero means "run forever".
@@ -227,7 +227,7 @@ or the dumpfile specified as a command line parameter.
 During initialization, both programs
 determine the UDP port numbers to be used by calling
 .I getservbyname
-(which nomally uses
+(which normally uses
 .IR /etc/services).
 Two service names (and port numbers) are used:
 .IP
