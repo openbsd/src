@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.18 1999/04/23 08:21:05 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.19 2000/05/29 18:04:08 aaron Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -71,6 +71,9 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>

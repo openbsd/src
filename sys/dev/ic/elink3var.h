@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3var.h,v 1.13 2000/02/02 18:47:01 deraadt Exp $	*/
+/*	$OpenBSD: elink3var.h,v 1.14 2000/05/29 18:04:07 aaron Exp $	*/
 /*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
@@ -38,12 +38,8 @@ struct ep_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-#ifdef __NetBSD__
-	struct ethercom sc_ethercom;	/* Ethernet common part		*/
-#else
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
-#endif
-	struct ifmedia sc_media;	/* media control		*/
+	struct mii_data sc_mii;		/* MII/media control		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
 	u_int	ep_connectors;		/* Connectors on this card.	*/
@@ -78,6 +74,7 @@ struct ep_softc {
 #define EP_CHIPSET_VORTEX		0x02	/* 100mbit, single-pkt dma */
 #define EP_CHIPSET_BOOMERANG		0x03	/* Saner dma plus PIO */
 #define EP_CHIPSET_BOOMERANG2		0x04	/* Saner dma, no PIO */
+#define EP_CHIPSET_ROADRUNNER		0x05	/* Like Boomerang, but PCMCIA */
 
 	u_char	bustype;
 #define EP_BUS_ISA	  	0x0

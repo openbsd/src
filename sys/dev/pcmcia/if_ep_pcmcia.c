@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.23 2000/04/24 19:43:35 niklas Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.24 2000/05/29 18:04:07 aaron Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -107,6 +107,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
@@ -161,13 +164,11 @@ struct ep_pcmcia_product {
 	{ PCMCIA_PRODUCT_3COM_3C1,	EP_CHIPSET_3C509,
 	  0,				0 },
 
-#ifdef notyet
-	{ PCMCIA_PRODUCT_3COM_3CCFEM556BI, EP_CHIPSET_BOOMERANG,
+	{ PCMCIA_PRODUCT_3COM_3CCFEM556BI, EP_CHIPSET_ROADRUNNER,
 	  EP_FLAGS_MII,			0 },
 
-	{ PCMCIA_PRODUCT_3COM_3C574,	EP_CHIPSET_BOOMERANG,
+	{ PCMCIA_PRODUCT_3COM_3C574,	EP_CHIPSET_ROADRUNNER,
 	  EP_FLAGS_MII,			0 }
-#endif
 };
 
 struct ep_pcmcia_product *ep_pcmcia_lookup __P((struct pcmcia_attach_args *));
@@ -361,6 +362,8 @@ ep_pcmcia_attach(parent, self, aux)
 	epp = ep_pcmcia_lookup(pa);
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
+
+	sc->ep_flags = epp->epp_flags;
 
 #ifdef notyet
 	sc->enable = ep_pcmcia_enable;

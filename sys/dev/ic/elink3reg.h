@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3reg.h,v 1.11 1999/12/27 21:39:07 fgsch Exp $	*/
+/*	$OpenBSD: elink3reg.h,v 1.12 2000/05/29 18:04:07 aaron Exp $	*/
 /*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
 
 /*
@@ -86,6 +86,12 @@
 #define EP_W1_RX_PIO_RD_2	0x02
 #define EP_W1_RX_PIO_RD_1	0x00
 
+/* Special registers used by the RoadRunner.  These are used to program
+ * a FIFO buffer to reduce the PCMCIA->PCI bridge latency during PIO.
+ */
+#define EP_W1_RUNNER_RDCTL	0x16
+#define EP_W1_RUNNER_WRCTL	0x1c
+
 /*
  * Window 2 registers. Station Address Setup/Read
  */
@@ -121,6 +127,15 @@
 #define EP_W4_FIFO_DIAG		0x04
 #define EP_W4_HOST_DIAG		0x02
 #define EP_W4_TX_DIAG		0x00
+
+/*
+ * Window 4 offset 8 is the PHY Management register on the
+ * 3c90x.
+ */
+#define EP_W4_BOOM_PHYSMGMT	0x08
+#define PHYSMGMT_CLK		0x0001
+#define PHYSMGMT_DATA		0x0002
+#define PHYSMGMT_DIR		0x0004
 
 /*
  * Window 5 Registers.  Results and Internal status.
@@ -375,6 +390,11 @@
 #define	CONFIG_MEDIAMASK	(u_short) 0x0070
 #define	CONFIG_MEDIAMASK_SHIFT	(u_short)      4
 
+/*
+ * MAC_CONTROL (Window 3)
+ */
+#define MAC_CONTROL_FDX		0x20	/* full-duplex mode */
+
 /* Active media in EP_W3_RESET_OPTIONS mediamask bits */
 
 #define EPMEDIA_10BASE_T		(u_short)   0x00
@@ -405,6 +425,9 @@
 #define EP_PCI_AUI 			(1<<5)
 #define EP_PCI_100BASE_MII		(1<<6)
 #define EP_PCI_INTERNAL_VCO		(1<<8)
+
+#define EP_RUNNER_MII_RESET		0x4000
+#define EP_RUNNER_ENABLE_MII		0x8000
 
 /*
  * FIFO Status (Window 4)
@@ -457,6 +480,11 @@
 #define EEPROM_BUSY			(1<<15)
 #define EEPROM_TST_MODE			(1<<14)
 #define READ_EEPROM			(1<<7)
+
+/* For the RoadRunner chips... */
+#define WRITE_EEPROM_RR			0x100
+#define READ_EEPROM_RR			0x200
+#define ERASE_EEPROM_RR			0x300
 
 /* window 4, MEDIA_STATUS bits */
 #define SQE_ENABLE			0x08	/* Enables SQE on AUI ports */
