@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 1997/05/18 13:45:21 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.17 1997/05/21 18:31:31 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.16 1997/05/18 13:45:21 pefo Exp $
+ *      $Id: conf.c,v 1.17 1997/05/21 18:31:31 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
-	cdev_notdef(),			/* 23: */
+	cdev_disk_init(NCCD,ccd),       /* 23: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
 	cdev_notdef(),			/* 25: */
 	cdev_notdef(),			/* 26: */
