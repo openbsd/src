@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.52 2001/02/04 01:14:27 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.53 2001/02/04 01:19:53 brian Exp $
  */
 
 #include <sys/param.h>
@@ -130,7 +130,9 @@ bundle_NewPhase(struct bundle *bundle, u_int new)
   switch (new) {
   case PHASE_DEAD:
     bundle->phase = new;
+#ifdef HAVE_DES
     MPPE_MasterKeyValid = 0;
+#endif
     log_DisplayPrompts();
     break;
 
