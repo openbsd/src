@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.8 2001/06/24 21:50:29 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.9 2001/06/24 22:12:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -59,32 +59,32 @@
 
 struct tree_node {
 	struct tree_key {
-		u_int8_t	 proto;
 		u_int32_t	 addr[2];
 		u_int16_t	 port[2];
+		u_int8_t	 proto;
 	}			 key;
 	struct state		*state;
 	signed char		 balance;
-	struct tree_node	*left,
-				*right;
+	struct tree_node	*left;
+	struct tree_node	*right;
 };
 
 /*
  * Global variables
  */
 
-struct rule		*rulehead = NULL;
-struct nat		*nathead = NULL;
-struct rdr		*rdrhead = NULL;
-struct state		*statehead = NULL;
-struct tree_node	*tree_lan_ext = NULL,
-			*tree_ext_gwy = NULL;
-struct timeval		 tv;
+struct rule		*rulehead;
+struct nat		*nathead;
+struct rdr		*rdrhead;
+struct state		*statehead;
+struct tree_node	*tree_lan_ext, *tree_ext_gwy;
+struct timeval		 pftv;
 struct status		 status;
-struct ifnet		*status_ifp = NULL;
+struct ifnet		*status_ifp;
+
 u_int32_t		 last_purge = 0;
-u_int16_t		 next_port_tcp = 50001,
-			 next_port_udp = 50001;
+u_int16_t		 next_port_tcp = 50001;
+u_int16_t		 next_port_udp = 50001;
 
 /*
  * Prototypes
@@ -138,8 +138,6 @@ void		*pull_hdr (struct ifnet *ifp, struct mbuf **m, struct ip *h,
 		    int off, int *action, u_int8_t len);
 int		 pf_test (int direction, struct ifnet *ifp, struct mbuf **m);
 
-/* ------------------------------------------------------------------------ */
-
 inline signed char
 tree_key_compare(struct tree_key *a, struct tree_key *b)
 {
@@ -174,6 +172,7 @@ inline void
 tree_rotate_left(struct tree_node **p)
 {
 	struct tree_node *q = *p;
+
 	*p = (*p)->right;
 	q->right = (*p)->left;
 	(*p)->left = q;
@@ -189,6 +188,7 @@ inline void
 tree_rotate_right(struct tree_node **p)
 {
 	struct tree_node *q = *p;
+
 	*p = (*p)->left;
 	q->left = (*p)->right;
 	(*p)->right = q;
@@ -204,6 +204,7 @@ int
 tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
 {
 	int deltaH = 0;
+
 	if (*p == NULL) {
 		*p = malloc(sizeof(struct tree_node), M_DEVBUF, M_NOWAIT);
 		if (*p == NULL) {
@@ -246,6 +247,7 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 {
 	int deltaH = 0;
 	signed char c;
+
 	if (*p == NULL)
 		return 0;
 	c = tree_key_compare(key, &(*p)->key);
@@ -365,8 +367,9 @@ purge_expired_states(void)
 {
 	struct tree_key key;
 	struct state *cur = statehead, *prev = NULL;
+
 	while (cur != NULL) {
-		if (cur->expire <= tv.tv_sec) {
+		if (cur->expire <= pftv.tv_sec) {
 			key.proto = cur->proto;
 			key.addr[0] = cur->lan.addr;
 			key.port[0] = cur->lan.port;
@@ -400,8 +403,6 @@ purge_expired_states(void)
 	}
 }
 
-/* ------------------------------------------------------------------------ */
-
 inline void
 print_ip(struct ifnet *ifp, struct ip *h)
 {
@@ -413,9 +414,12 @@ print_ip(struct ifnet *ifp, struct ip *h)
 	printf(" -> %u.%u.%u.%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255);
 	printf(" hl=%u len=%u id=%u", h->ip_hl << 2, h->ip_len - (h->ip_hl << 2),
 	 h->ip_id);
-	if (h->ip_off & IP_RF) printf(" RF");
-	if (h->ip_off & IP_DF) printf(" DF");
-	if (h->ip_off & IP_MF) printf(" MF");
+	if (h->ip_off & IP_RF)
+		printf(" RF");
+	if (h->ip_off & IP_DF)
+		printf(" DF");
+	if (h->ip_off & IP_MF)
+		printf(" MF");
 	printf(" off=%u proto=%u\n", (h->ip_off & IP_OFFMASK) << 3, h->ip_p);
 }
 
@@ -443,16 +447,21 @@ print_state(int direction, struct state *s)
 void
 print_flags(u_int8_t f)
 {
-	if (f) printf(" ");
-	if (f & TH_FIN ) printf("F");
-	if (f & TH_SYN ) printf("S");
-	if (f & TH_RST ) printf("R");
-	if (f & TH_PUSH) printf("P");
-	if (f & TH_ACK ) printf("A");
-	if (f & TH_URG ) printf("U");
+	if (f)
+		printf(" ");
+	if (f & TH_FIN)
+		printf("F");
+	if (f & TH_SYN)
+		printf("S");
+	if (f & TH_RST)
+		printf("R");
+	if (f & TH_PUSH)
+		printf("P");
+	if (f & TH_ACK)
+		printf("A");
+	if (f & TH_URG)
+		printf("U");
 }
-
-/* ------------------------------------------------------------------------ */
 
 void
 pfattach(int num)
@@ -460,8 +469,6 @@ pfattach(int num)
 	memset(&status, 0, sizeof(struct status));
 	printf("packetfilter: attached\n");
 }
-
-/* ------------------------------------------------------------------------ */
 
 int
 pfopen(dev_t dev, int flags, int fmt, struct proc *p)
@@ -471,8 +478,6 @@ pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 	return NO_ERROR;
 }
 
-/* ------------------------------------------------------------------------ */
-
 int
 pfclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
@@ -480,8 +485,6 @@ pfclose(dev_t dev, int flags, int fmt, struct proc *p)
 		return ENXIO;
 	return NO_ERROR;
 }
-
-/* ------------------------------------------------------------------------ */
 
 int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
@@ -509,10 +512,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	s = splsoftnet();
 
-	microtime(&tv);
-	if (tv.tv_sec - last_purge >= 10) {
+	microtime(&pftv);
+	if (pftv.tv_sec - last_purge >= 10) {
 		purge_expired_states();
-		last_purge = tv.tv_sec;
+		last_purge = pftv.tv_sec;
 	}
 
 	switch (cmd) {
@@ -525,7 +528,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			memset(&status, 0, sizeof(struct status));
 			status.running = 1;
 			status.states = states;
-			status.since = tv.tv_sec;
+			status.since = pftv.tv_sec;
 			printf("packetfilter: started\n");
 		}
 		break;
@@ -686,11 +689,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state = statehead;
 		while ((state != NULL) && (n < ub->entries)) {
 			memcpy(states + n, state, sizeof(struct state));
-			states[n].creation = tv.tv_sec - states[n].creation;
-			if (states[n].expire <= tv.tv_sec)
+			states[n].creation = pftv.tv_sec - states[n].creation;
+			if (states[n].expire <= pftv.tv_sec)
 				states[n].expire = 0;
 			else
-				states[n].expire -= tv.tv_sec;
+				states[n].expire -= pftv.tv_sec;
 			n++;
 			state = state->next;
 		}
@@ -713,12 +716,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int8_t running = status.running;
 		u_int32_t states = status.states;
 		memcpy(st, &status, sizeof(struct status));
-		st->since = st->since ? tv.tv_sec - st->since : 0;
+		st->since = st->since ? pftv.tv_sec - st->since : 0;
 		ub->entries = 1;
 		memset(&status, 0, sizeof(struct status));
 		status.running = running;
 		status.states = states;
-		status.since = tv.tv_sec;
+		status.since = pftv.tv_sec;
 		break;
 	}
 
@@ -736,8 +739,6 @@ done:
 	}
 	return error;
 }
-
-/* ------------------------------------------------------------------------ */
 
 inline u_short
 fix(u_short cksum, u_short old, u_short new)
@@ -789,8 +790,6 @@ change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 	*oa = na;
 	*hc = fix(fix(*hc, ooa / 65536, *oa / 65536), ooa % 65536, *oa % 65536);
 }
-
-/* ------------------------------------------------------------------------ */
 
 void
 send_reset(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
@@ -877,8 +876,6 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 	return;
 }
 
-/* ------------------------------------------------------------------------ */
-
 inline int
 match_addr(u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b)
 {
@@ -906,8 +903,6 @@ match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 	}
 	return 0; /* never reached */
 }
-
-/* ------------------------------------------------------------------------ */
 
 struct nat *
 get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
@@ -939,8 +934,6 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 	}
 	return rm;
 }
-
-/* ------------------------------------------------------------------------ */
 
 int
 pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
@@ -1007,7 +1000,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 		print_flags(th->th_flags);
 		if (len || (th->th_flags & (TH_SYN | TH_FIN | TH_RST)))
 			printf(" %lu:%lu(%u)", seq, seq + len, len);
-		if (th->th_ack) printf(" ack=%lu", ntohl(th->th_ack));
+		if (th->th_ack)
+			printf(" ack=%lu", ntohl(th->th_ack));
 		printf("\n");
 	}
 
@@ -1070,8 +1064,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 		s->dst.seqlo	= 0;
 		s->dst.seqhi	= 0;
 		s->dst.state	= 0;
-		s->creation	= tv.tv_sec;
-		s->expire	= tv.tv_sec + 60;
+		s->creation	= pftv.tv_sec;
+		s->expire	= pftv.tv_sec + 60;
 		s->packets	= 1;
 		s->bytes	= len;
 		insert_state(s);
@@ -1148,7 +1142,9 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
 		u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
-		struct state *s = malloc(sizeof(struct state), M_DEVBUF, M_NOWAIT);
+		struct state *s = malloc(sizeof(struct state),
+		    M_DEVBUF, M_NOWAIT);
+
 		if (s == NULL) {
 			printf("packetfilter: malloc() failed\n");
 			return PF_DROP;
@@ -1189,8 +1185,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 		s->dst.seqlo	= 0;
 		s->dst.seqhi	= 0;
 		s->dst.state	= 0;
-		s->creation	= tv.tv_sec;
-		s->expire	= tv.tv_sec + 30;
+		s->creation	= pftv.tv_sec;
+		s->expire	= pftv.tv_sec + 30;
 		s->packets	= 1;
 		s->bytes	= len;
 		insert_state(s);
@@ -1282,8 +1278,8 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 		s->dst.seqlo	= 0;
 		s->dst.seqhi	= 0;
 		s->dst.state	= 0;
-		s->creation	= tv.tv_sec;
-		s->expire	= tv.tv_sec + 20;
+		s->creation	= pftv.tv_sec;
+		s->expire	= pftv.tv_sec + 20;
 		s->packets	= 1;
 		s->bytes	= len;
 		insert_state(s);
@@ -1291,8 +1287,6 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 
 	return PF_PASS;
 }
-
-/* ------------------------------------------------------------------------ */
 
 struct state *
 pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
@@ -1363,13 +1357,13 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 
 			/* update expire time */
 			if ((src->state >= 4) && (dst->state >= 4))
-				s->expire = tv.tv_sec + 5;
+				s->expire = pftv.tv_sec + 5;
 			else if ((src->state >= 3) || (dst->state >= 3))
-				s->expire = tv.tv_sec + 300;
+				s->expire = pftv.tv_sec + 300;
 			else if ((src->state < 2) || (dst->state < 2))
-				s->expire = tv.tv_sec + 30;
+				s->expire = pftv.tv_sec + 30;
 			else
-				s->expire = tv.tv_sec + 24*60*60;
+				s->expire = pftv.tv_sec + 24*60*60;
 
 			/* translate source/destination address, if necessary */
 			if ((s->lan.addr != s->gwy.addr)
@@ -1435,9 +1429,9 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr 
 
 		/* update expire time */
 		if ((src->state == 2) && (dst->state == 2))
-			s->expire = tv.tv_sec + 60;
+			s->expire = pftv.tv_sec + 60;
 		else
-			s->expire = tv.tv_sec + 20;
+			s->expire = pftv.tv_sec + 20;
 
 		/* translate source/destination address, if necessary */
 		if ((s->lan.addr != s->gwy.addr)
@@ -1488,7 +1482,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 
 			s->packets++;
 			s->bytes += len;
-			s->expire = tv.tv_sec + 10;
+			s->expire = pftv.tv_sec + 10;
 
 			/* translate source/destination address, if necessary */
 			if (s->lan.addr != s->gwy.addr) {
@@ -1610,8 +1604,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 	}
 }
 
-/* ------------------------------------------------------------------------ */
-
 inline void *
 pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off, int *action,
     u_int8_t len)
@@ -1666,10 +1658,10 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 #endif
 
 	/* purge expire states, at most once every 10 seconds */
-	microtime(&tv);
-	if ((tv.tv_sec - last_purge) >= 10) {
+	microtime(&pftv);
+	if ((pftv.tv_sec - last_purge) >= 10) {
 		purge_expired_states();
-		last_purge = tv.tv_sec;
+		last_purge = pftv.tv_sec;
 	}
 
 	off = h->ip_hl << 2;
@@ -1687,6 +1679,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	case IPPROTO_TCP: {
 		struct tcphdr *th = pull_hdr(ifp, m, h, off, &action,
 		    sizeof(*th));
+
 		if (th == NULL)
 			goto done;
 		if (pf_test_state_tcp(direction, ifp, h, th))
@@ -1699,6 +1692,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	case IPPROTO_UDP: {
 		struct udphdr *uh = pull_hdr(ifp, m, h, off, &action,
 		    sizeof(*uh));
+
 		if (uh == NULL)
 			goto done;
 		if (pf_test_state_udp(direction, ifp, h, uh))
@@ -1711,6 +1705,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	case IPPROTO_ICMP: {
 		struct icmp *ih = pull_hdr(ifp, m, h, off, &action,
 		    sizeof(*ih));
+
 		if (ih == NULL)
 			goto done;
 		if (pf_test_state_icmp(direction, ifp, h, ih))
@@ -1734,6 +1729,3 @@ done:
 	}
 	return action;
 }
-
-/* ------------------------------------------------------------------------ */
-
