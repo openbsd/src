@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.25 2003/05/03 17:21:04 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.26 2003/05/06 00:10:40 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.25 2003/05/03 17:21:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.26 2003/05/06 00:10:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,9 +160,9 @@ mkfs(pp, fsys, fi, fo)
 	char tmpbuf[100];	/* XXX this will break in about 2,500 years */
 
 	if ((fsun = (union fs_u *)calloc(1, sizeof (union fs_u))) == 0 ||
-	    (cgun = (union cg_u *)malloc(sizeof (union cg_u))) == 0 ||
-	    (zino = (struct dinode *)malloc(MAXBSIZE)) == 0 ||
-	    (buf = (char *)malloc(MAXBSIZE)) == 0) {
+	    (cgun = (union cg_u *)calloc(1, sizeof (union cg_u))) == 0 ||
+	    (zino = (struct dinode *)calloc(1, MAXBSIZE)) == 0 ||
+	    (buf = (char *)calloc(1, MAXBSIZE)) == 0) {
 		printf("buffer malloc failed\n");
 		exit(1);
 	}
