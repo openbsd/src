@@ -313,7 +313,7 @@ as appropriate.
 If you plan on using the extra serial ports on 4/300 systems, 
 you'll need to make sure you have device nodes for them e.g.:
   mknod /dev/ttyc c 12 4
-  mknod /dev/ttyc d 12 5
+  mknod /dev/ttyd c 12 5
 To use these ports for terminals etc, you will want to add them to
 /etc/ttys.
 
