@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.3 2001/07/04 07:41:19 niklas Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.4 2001/07/25 15:18:14 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -331,10 +331,10 @@ responder_send_ATTR (struct message *msg)
       attrlen += ISAKMP_ATTR_SZ + attr->length;
     }
 
-  attrp = malloc (attrlen);
+  attrp = calloc (1, attrlen);
   if (!attrp)
     {
-      log_error ("responder_send_ATTR: malloc (%d) failed", attrlen);
+      log_error ("responder_send_ATTR: calloc (1, %d) failed", attrlen);
       return -1;
     }
 
@@ -352,7 +352,6 @@ responder_send_ATTR (struct message *msg)
        off += ISAKMP_ATTR_SZ + attr->length, attr = LIST_NEXT (attr, link))
     {
       SET_ISAKMP_ATTR_TYPE (attrp + off, attr->type);
-      SET_ISAKMP_ATTR_LENGTH_VALUE (attrp + off, attr->length);
       switch (attr->type)
 	{
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
@@ -360,15 +359,21 @@ responder_send_ATTR (struct message *msg)
 	  /* XXX The section should be tagged off the peer somehow.  */
 	  sa = conf_get_address ("ISAKMP-cfg", "Address");
 	  if (!sa)
-	    /* XXX What to do?  */
-	    continue;
+	    {
+	      /* XXX What to do?  */
+	      attr->length = 0;
+	      break;
+	    }
 	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
 	       && sa->sa_family != AF_INET)
 	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
 		  && sa->sa_family != AF_INET6))
-	    /* XXX What to do?  */
-	    free (sa);
-	    continue;
+	    {
+	      /* XXX What to do?  */
+	      free (sa);
+	      attr->length = 0;
+	      break;
+	    }
 
 	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
 		  attr->length);
@@ -392,15 +397,21 @@ responder_send_ATTR (struct message *msg)
 	  /* XXX The section should be tagged off the peer somehow.  */
 	  sa = conf_get_address ("ISAKMP-cfg", "Nameserver");
 	  if (!sa)
-	    /* XXX What to do?  */
-	    continue;
-	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
+	    {
+	      /* XXX What to do?  */
+	      attr->length = 0;
+	      break;
+	    }
+	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS
 	       && sa->sa_family != AF_INET)
-	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
+	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS
 		  && sa->sa_family != AF_INET6))
-	    /* XXX What to do?  */
-	    free (sa);
-	  continue;
+	    {
+	      /* XXX What to do?  */
+	      attr->length = 0;
+	      free (sa);
+	      break;
+	    }
 
 	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
 		  attr->length);
@@ -412,15 +423,21 @@ responder_send_ATTR (struct message *msg)
 	  /* XXX The section should be tagged off the peer somehow.  */
 	  sa = conf_get_address ("ISAKMP-cfg", "WINS-server");
 	  if (!sa)
-	    /* XXX What to do?  */
-	    continue;
-	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
+	    {
+	      /* XXX What to do?  */
+	      attr->length = 0;
+	      break;
+	    }
+	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS
 	       && sa->sa_family != AF_INET)
-	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
+	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS
 		  && sa->sa_family != AF_INET6))
-	    /* XXX What to do?  */
-	    free (sa);
-	  continue;
+	    {
+	      /* XXX What to do?  */
+	      attr->length = 0;
+	      free (sa);
+	      break;
+	    }
 
 	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
 		  attr->length);
@@ -442,6 +459,7 @@ responder_send_ATTR (struct message *msg)
 
 	default:
 	}
+      SET_ISAKMP_ATTR_LENGTH_VALUE (attrp + off, attr->length);
     }
 
   if (exchange->phase == 2)
