@@ -34,7 +34,7 @@ Installing applications from the CD-ROM package collection:
 
 	To install one or more of these packages you must
 	1) become the superuser (root)
-	2) mount the appropriage CD-ROM
+	2) mount the appropriate CD-ROM
 	3) use the ``pkg_add'' command to install the software
 
 	Example (in which we use su(1) to get superuser privileges, thus

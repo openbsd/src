@@ -67,7 +67,7 @@ Here is a summary of what this thing does:
    data to determine the drive being booted from and the location
    of the partition on the disk.
 
-   If no active partition table enty is found, ROM BASIC is
+   If no active partition table entry is found, ROM BASIC is
    entered via INT 18.  All other errors cause a system hang, see
    label HANG.
 

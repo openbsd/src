@@ -103,7 +103,7 @@ ATA-3
 
 !  There is much discussion going on concerning merging ATA-3
    with ATAPI.  This will require some kind of "command overlap"
-   capability.  The details of this are consumming much of the
+   capability.  The details of this are consuming much of the
    meeting time.
 
 ATAPI or ATA Packet Interface
@@ -553,7 +553,7 @@ Basic Questions
    general it is impossible for an ATA-1 host adapter to violate
    the specifications of an ATA-2 device.  It is possible for an
    ATA-2 host adapter to violate the timing specifications of an
-   ATA-1 device but this is not common.  Hoever, host adapter
+   ATA-1 device but this is not common.  However, host adapter
    hardware design errors or software driver bugs can cause such
    a problem.  The result will be corrupted data read or written
    to the ATA-1 device.
@@ -733,7 +733,7 @@ Basic Questions
 
    Be careful when looking at the table below -- the data rate is
    the data transfer rate achieved while transfering the sector
-   or block or sectors.  It is an "instantanous" data rate.  The
+   or block or sectors.  It is an "instantaneous" data rate.  The
    overall data transfer rate for a command includes many time
    consuming events such as the amount of time the host requires
    to process an interrupt.  Note that on many fast ATA drives
@@ -741,7 +741,7 @@ Basic Questions
    frequently greater than the time required to transfer the
    sector of block of sectors for that interrupt!  It is not
    uncommon for the host overhead to reduce the data rate to 1/2
-   or 1/3 of the instantanous rate shown here.
+   or 1/3 of the instantaneous rate shown here.
 
    The ATA PIO modes are defined as follows:
 

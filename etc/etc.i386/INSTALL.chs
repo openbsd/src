@@ -42,13 +42,13 @@ problem".
 Read this so that you understand the possible data integrity
 problem that a WD EIDE type BIOS creates.  Any BIOS that has a
 "LBA mode" in the BIOS setup could be a WD EIDE BIOS.  Be very
-careful and NEVER chage the "LBA mode" setting after you have
+careful and NEVER change the "LBA mode" setting after you have
 partitioned and installed your software.
 
 History
 -------
 
-Changes between this version and the preceeding version are
+Changes between this version and the preceding version are
 marked by "!" at left margin of the first line of a changed
 or new paragraph.
 
@@ -67,7 +67,7 @@ Version 1 -- First attempt to classify the BIOS types and
 Definitions
 -----------
 
-* 528MB - The maximun drive capacity that is supported by 1024
+* 528MB - The maximum drive capacity that is supported by 1024
    cylinders, 16 heads and 63 sectors (1024x16x63x512).  This
    is the limit for CHS addressing in the original IBM PC/XT
    and IBM PC/AT INT 13H BIOS.
@@ -295,7 +295,7 @@ must support.
                 +--> to  -----------------+---> device
                      LBA                        (LBA)
 
-* A really new BIOS may also support the AH=4xH in addtion to
+* A really new BIOS may also support the AH=4xH in addition to
    the older AH\0xH calls.  This BIOS must support all possible
    combinations of CHS and LBA at both the INT 13H and ATA
    interfaces:
@@ -332,7 +332,7 @@ The following explains what is widely accepted as the
 
 An ATA disk must implement both CHS and LBA addressing and
 must at any given time support only one P-CHS at the device
-interface.  And, the drive must maintain a strick relationship
+interface.  And, the drive must maintain a strict relationship
 between the sector addressing in CHS mode and LBA mode.  Quoting
 the ATA-2 document:
 
@@ -694,11 +694,10 @@ BIOS Type 6
    such as host adapter addresses, DMA support, LBA support, etc,
    in the Phoenix defined "FDPT Extension" table.
 
-   Phoenix says this this BIOS need not support the INT 13H
-   AH=4xH read/write calls but this BIOS is really an
-   extension/enhancement of the original IBM/MS BIOS so most
-   implementations will probably support the full set of INT 13H
-   AH=4xH calls.
+   Phoenix says this BIOS need not support the INT 13H AH=4xH
+   read/write calls but this BIOS is really an extension/enhancement
+   of the original IBM/MS BIOS so most implementations will probably
+   support the full set of INT 13H AH=4xH calls.
 
    Support issues:  Currently undefined is how such a BIOS should
    respond to INT 13H AH=08H calls for a drive that is >8GB.

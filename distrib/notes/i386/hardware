@@ -364,7 +364,7 @@ Elite Ultra locations, comprising of port 0x300, irq 10, and memory location
 0xcc000.  This matches a hard coded jumper on the board as well a common
 soft config setting.
 
-Unfortunately, the kernel's autconfiguration process (specifically, some
+Unfortunately, the kernel's autoconfiguration process (specifically, some
 of the devices it probes for) cause conflicts with the SMC Elite Ultra, and
 very often cause it to lose its configuration and fail its own probe.
 If this happens, you must boot the computer into DOS, and run the EzSetup

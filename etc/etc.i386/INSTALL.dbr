@@ -22,7 +22,7 @@ DOS FLOPPY DISK BOOT SECTOR
 This article is a disassembly of a floppy disk boot sector for a
 DOS floppy.  The boot sector of a floppy disk is located at
 cylinder 0, head 0, sector 1. This sector is created by a floppy
-disk formating program, such as the DOS FORMAT program.  The boot
+disk formatting program, such as the DOS FORMAT program.  The boot
 sector of a FAT hard disk partition has a similar layout and
 function.  Basically a bootable FAT hard disk partition looks
 like a big floppy during the early stages of the system's boot
@@ -246,11 +246,11 @@ Now pay attention here...
 0000:7C70 CD13        INT     13                   do diskette reset call
 0000:7C72 7279        JB      TALK                 jmp if any error
 
-                              Detemine the starting sector address of
+                              Determine the starting sector address of
                               the root directory as an LBA.
 
 0000:7C74 33C0        XOR     AX,AX                AX is now zero
-0000:7C76 3906137C    CMP     [7C13],AX            number sectros zero?
+0000:7C76 3906137C    CMP     [7C13],AX            number sectors zero?
 0000:7C7A 7408        JZ      SMALL_DISK           yes
 0000:7C7C 8B0E137C    MOV     CX,[7C13]            number of sectors
 0000:7C80 890E207C    MOV     [7C20],CX            save in huge num sects
@@ -388,7 +388,7 @@ Now pay attention here...
 0000:7D53 0AC0        OR      AL,AL                end of message?
 0000:7D55 7429        JZ      RETURN               jmp if yes
 0000:7D57 B40E        MOV     AH,0E                display one character
-0000:7D59 BB0700      MOV     BX,0007              video attrbiutes
+0000:7D59 BB0700      MOV     BX,0007              video attributes
 0000:7D5C CD10        INT     10                   display one character
 0000:7D5E EBF2        JMP     MSG_LOOP             do again
 

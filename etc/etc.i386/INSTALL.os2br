@@ -429,7 +429,7 @@ Additional data areas.
 0000:7D84 F7260B00    MUL     WORD PTR [000B]      multiply by sector size
 0000:7D88 03F8        ADD     DI,AX                add to memory address
 0000:7D8A 5A          POP     DX                   restore upper part of LBA
-0000:7D8B 58          POP     AX                   resotre lower part of LBA
+0000:7D8B 58          POP     AX                   restore lower part of LBA
 0000:7D8C 03C3        ADD     AX,BX                add number of sector just
 0000:7D8E 83D200      ADC     DX,+00                  read to LBA
 0000:7D91 2ACB        SUB     CL,BL                decr requested num of sect

@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.8 2000/05/17 09:51:28 espie Exp $
+$OpenBSD: INSTALL.linux,v 1.9 2001/04/17 20:11:20 aaron Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -26,7 +26,7 @@ If you want to grab space from a Windows/DOS partition, use fips.
 Fips20 knows all about FAT32, so windows 95 is no longer a problem.
 
 Other sources of information, especially concerning other BSD systems,
-must be taken with a healthy does of scepticism. OpenBSD definitely
+must be taken with a healthy does of skepticism. OpenBSD definitely
 differs:
 - disklabels can hold up to 16 partitions,
 - type is A6, not A5,
@@ -132,7 +132,7 @@ Older flavors of linux fdisk won't recognize a6 as OpenBSD.
 
 As you can see, my linux setup is very small. I have enough to check how
 things such as gcc work on linux, but my machine is definitely an
-OpenBSD developper's box.
+OpenBSD developer's box.
 
 Get the display to sectors with u, and jot down the corresponding
 information as well:
@@ -395,7 +395,7 @@ hda15 >
 - the disklabel is detected early, but handled later.
 - disklabel handling should remove duplicates: all partitions that are present
 as both MBR and disklabel partition should get removed silently. (this does
-not seem to work as advertized presently).
+not seem to work as advertised presently).
 - the remaining partitions are checked for consistency.
 
 and here is my linux fstab:
@@ -435,7 +435,7 @@ netscape to tell it was run from a Linux box, when it is used under
 OpenBSD.
 
 Some programs, for instance maple, do depend on uname answering `Linux'.
-For maple, this is straigthforward: you just have to fudge
+For maple, this is straightforward: you just have to fudge
 /usr/local/maple/bin/maple.system.type to check OpenBSD in the same
 class with Linux.
 
