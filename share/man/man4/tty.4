@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.6 1998/02/16 20:31:59 deraadt Exp $
+.\"	$OpenBSD: tty.4,v 1.7 1998/03/12 09:16:54 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -47,8 +47,11 @@ This section describes the interface to the terminal drivers
 in the system.
 .Ss Terminal Special Files
 Each hardware terminal port on the system usually has a terminal special device
-file associated with it in the directory ``/dev/'' (for
-example, ``/dev/tty03'').
+file associated with it in the directory
+.Pa /dev/
+(for
+example,
+.Pa /dev/tty03 ).
 When a user logs into
 the system on one of these hardware terminal ports, the system has already
 opened the associated device and prepared the line for normal interactive
@@ -71,12 +74,18 @@ how these lines are opened or used.
 .Pp
 For hardware terminal ports, dial-out is supported through matching
 device nodes called calling units.  For instance, the terminal called
-``/dev/tty03'' would have a matching calling unit called ``/dev/cua03''.
+.Pa /dev/tty03
+would have a matching calling unit called
+.Pa /dev/cua03 .
 These two devices are normally differentiated by creating the calling
 unit device node with a minor number 128 greater than the dial-in
-device device node.  Whereas the dial-in device (the ``tty'') normally
+device device node.  Whereas the dial-in device (the
+.Em tty )
+normally
 requires a hardware signal to indicate to the system that it is active,
-the dial-out device (``cua'') does not, and hence can communicate unimpeded
+the dial-out device (the
+.Em cua )
+does not, and hence can communicate unimpeded
 with a device such as a modem.  This means that a process like
 .Xr getty 8
 will wait on a dial-in device until a connection is established.
