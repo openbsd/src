@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.5 2002/06/28 18:31:29 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.6 2002/06/28 18:34:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -430,7 +430,13 @@ noct_pkh_init(sc)
 	noct_pkh_disable(sc);
 	noct_pkh_enable(sc);
 
+#if 0
+	/*
+	 * XXX MODEXP is implemented as MODMUL for debugging, don't
+	 * XXX actually register.
+	 */
 	crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, noct_kprocess);
+#endif
 
 	return;
 
