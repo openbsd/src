@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.15 2003/06/03 03:01:42 millert Exp $	*/
+/*	$OpenBSD: worms.c,v 1.16 2004/01/08 20:38:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.15 2003/06/03 03:01:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.16 2004/01/08 20:38:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ static char rcsid[] = "$OpenBSD: worms.c,v 1.15 2003/06/03 03:01:42 millert Exp 
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
 #include <unistd.h>
 
 static const struct options {
@@ -193,7 +194,14 @@ main(argc, argv)
 	int CO, LI, last, bottom, ch, length, number, trail;
 	short **ref;
 	const char *field;
+	struct termios term;
+	speed_t speed;
 	u_int delay = 0;
+
+	/* set default delay based on terminal baud rate */
+	if (tcgetattr(STDOUT_FILENO, &term) == 0 &&
+	    (speed = cfgetospeed(&term)) > B9600)
+		delay = (speed / B9600) - 1;
 
 	length = 16;
 	number = 3;
