@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.4 2005/03/27 14:50:09 robert Exp $
+.\"	$OpenBSD: pkill.1,v 1.5 2005/03/27 20:56:47 robert Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 .Nd find or signal processes by name
 .Sh SYNOPSIS
 .Nm pgrep
-.Op Fl filnvx
+.Op Fl flnvx
 .Op Fl G Ar gid
 .Op Fl P Ar ppid
 .Op Fl U Ar uid
@@ -55,7 +55,7 @@
 .Op Ar pattern Op ...
 .Nm pkill
 .Op Fl signal
-.Op Fl finvx
+.Op Fl fnvx
 .Op Fl G Ar gid
 .Op Fl P Ar ppid
 .Op Fl U Ar uid
@@ -108,8 +108,6 @@ The value zero is taken to mean the process group ID of the running
 or
 .Nm pkill
 command.
-.It Fl i
-Ignore case distinctions in both the process table and the supplied pattern.
 .It Fl l
 Long output.
 Print the process name in addition to the process ID for each matching

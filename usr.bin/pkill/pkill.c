@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.10 2005/03/27 14:50:09 robert Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.11 2005/03/27 20:56:47 robert Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.10 2005/03/27 14:50:09 robert Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.11 2005/03/27 20:56:47 robert Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -94,7 +94,6 @@ int	inverse;
 int	longfmt;
 int	matchargs;
 int	fullmatch;
-int	cflags = REG_EXTENDED;
 kvm_t	*kd;
 pid_t	mypid;
 
@@ -159,7 +158,7 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilns:t:u:vx")) != -1)
+	while ((ch = getopt(argc, argv, "G:P:U:d:fg:lns:t:u:vx")) != -1)
 		switch (ch) {
 		case 'G':
 			makelist(&rgidlist, LT_GROUP, optarg);
@@ -184,9 +183,6 @@ main(int argc, char **argv)
 		case 'g':
 			makelist(&pgrplist, LT_PGRP, optarg);
 			criteria = 1;
-			break;
-		case 'i':
-			cflags |= REG_ICASE;
 			break;
 		case 'l':
 			if (!pgrep)
@@ -252,7 +248,7 @@ main(int argc, char **argv)
 	 * Refine the selection.
 	 */
 	for (; *argv != NULL; argv++) {
-		if ((rv = regcomp(&reg, *argv, cflags)) != 0) {
+		if ((rv = regcomp(&reg, *argv, REG_EXTENDED)) != 0) {
 			regerror(rv, &reg, buf, sizeof(buf));
 			errx(STATUS_BADUSAGE, "bad expression: %s", buf);
 		}
@@ -419,9 +415,9 @@ usage(void)
 	const char *ustr;
 
 	if (pgrep)
-		ustr = "[-filnvx] [-d delim]";
+		ustr = "[-flnvx] [-d delim]";
 	else
-		ustr = "[-signal] [-finvx]";
+		ustr = "[-signal] [-fnvx]";
 
 	fprintf(stderr, "usage: %s %s [-G gid] [-P ppid] [-U uid] [-g pgrp] "
 	    "[-s sid] [-t tty] [-u euid] pattern ...\n", __progname, ustr);
