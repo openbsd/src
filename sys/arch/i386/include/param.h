@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 1999/09/20 17:06:00 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 1999/11/27 16:25:32 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -68,6 +68,11 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
+
+#define PAGE_SHIFT	12
+#define PAGE_SIZE	(1 << PAGE_SHIFT)
+#define PAGE_MASK	(PAGE_SIZE - 1)
+
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	KERNBASE	0xe0000000		/* start of kernel virtual space */
