@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.12 1995/09/29 21:58:59 cgd Exp $	*/
+/*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: keyword.c,v 1.12 1995/09/29 21:58:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -354,6 +354,7 @@ findvar(p)
 	if (!v) {
 		warnx("%s: keyword not found", p);
 		eval = 1;
+		return ((VAR *)NULL);
 	}
 	if (hp)
 		v->header = hp;
