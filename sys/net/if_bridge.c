@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.100 2002/07/01 22:24:44 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.101 2002/07/02 23:36:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2262,7 +2262,7 @@ bridge_ipsec(dir, af, hlen, m)
 }
 #endif /* IPSEC */
 
-#if NPF > 0 || defined(IPSEC)
+#if NPF > 0
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
