@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.24 2003/05/12 20:53:22 pjanzen Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.25 2003/05/13 19:57:02 pjanzen Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.24 2003/05/12 20:53:22 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.25 2003/05/13 19:57:02 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,8 @@ displayq(int format)
 		    win.ws_col > 0)
 			termwidth = win.ws_col;
 	}
+	if (termwidth < 60)
+		termwidth = 60;
 
 	lflag = format;
 	totsize = 0;
