@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.4 1996/08/27 03:53:16 tholo Exp $	*/
+/*	$OpenBSD: tables.c,v 1.5 1996/12/24 03:44:13 tholo Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.4 1996/08/27 03:53:16 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.5 1996/12/24 03:44:13 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -377,16 +377,15 @@ ftime_start()
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	if ((pt = tempnam((char *)NULL, (char *)NULL)) == NULL)
-		return(-1);
-	(void)unlink(pt);
-
-	if ((ffd = open(pt, O_RDWR | O_CREAT,  S_IRWXU)) < 0) {
-		syswarn(1, errno, "Unable to open temporary file: %s", pt);
+	pt = strdup("/tmp/paxXXXXXX");
+	if ((ffd = mkstemp(pt)) < 0) {
+		syswarn(1, errno, "Unable to create temporary file: %s", pt);
+		free(pt);
 		return(-1);
 	}
-
 	(void)unlink(pt);
+	free(pt);
+
 	return(0);
 }
 
@@ -1218,18 +1217,18 @@ dir_start()
 
 	if (dirfd != -1)
 		return(0);
-	if ((pt = tempnam((char *)NULL, (char *)NULL)) == NULL)
-		return(-1);
 
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	(void)unlink(pt);
-	if ((dirfd = open(pt, O_RDWR|O_CREAT, 0600)) >= 0) {
+	pt = strdup("/tmp/paxXXXXXX");
+	if ((dirfd = mkstemp(pt)) >= 0) {
 		(void)unlink(pt);
+		free(pt);
 		return(0);
 	}
 	paxwarn(1, "Unable to create temporary file for directory times: %s", pt);
+	free(pt);
 	return(-1);
 }
 
