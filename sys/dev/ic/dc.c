@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.22 2001/02/09 03:45:53 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.23 2001/02/09 05:14:08 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2708,6 +2708,7 @@ void dc_init(xsc)
 		ifr.ifr_media = sc->dc_srm_media;
 		ifmedia_ioctl(ifp, &ifr, &mii->mii_media, SIOCSIFMEDIA);
 		sc->dc_srm_media = 0;
+	}
 #endif
 
 	return;
