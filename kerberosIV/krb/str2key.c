@@ -56,7 +56,7 @@ afs_cmu_StringToKey (str, cell, key)
 
     /* crypt only considers the first 8 characters of password but for some
        reason returns eleven characters of result (plus the two salt chars). */
-    strncpy((void *)key, (char *)crypt(password, "#~") + 2, sizeof(des_cblock));
+    strncpy((void *)key, (char *)des_crypt(password, "#~") + 2, sizeof(des_cblock));
 
     /* parity is inserted into the LSB so leftshift each byte up one bit.  This
        allows ascii characters with a zero MSB to retain as much significance

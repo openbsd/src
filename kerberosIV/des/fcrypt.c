@@ -532,24 +532,12 @@ static unsigned const char cov_2char[64]={
 };
 
 #ifdef _DES_PROTO
-#if defined(PERL5) || defined(lint)
 char *des_crypt(char *buf,char *salt);
 #else
-char *crypt(char *buf,char *salt);
-#endif
-#else
-#ifdef PERL5
 char *des_crypt();
-#else
-char *crypt();
-#endif
 #endif
 
-#if defined(PERL5) || defined(lint)
 char *des_crypt(buf,salt)
-#else
-char *crypt(buf,salt)
-#endif
 char *buf;
 char *salt;
 	{
@@ -564,7 +552,7 @@ char *salt;
 	unsigned char c,u;
 
 	/* eay 25/08/92
-	 * If you call crypt("pwd","*") as often happens when you
+	 * If you call des_crypt("pwd","*") as often happens when you
 	 * have * as the pwd field in /etc/passwd, the function
 	 * returns *\0XXXXXXXXX
 	 * The \0 makes the string look like * so the pwd "*" would
