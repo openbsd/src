@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.8,v 1.14 1999/10/17 19:35:23 aaron Exp $
-.\" $EOM: isakmpd.8,v 1.17 1999/09/20 19:57:50 angelos Exp $
+.\" $OpenBSD: isakmpd.8,v 1.15 2000/01/26 15:22:30 niklas Exp $
+.\" $EOM: isakmpd.8,v 1.18 1999/10/10 21:46:50 angelos Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -64,10 +64,14 @@ socket for kernel requests.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar config-file
-Specifies an alternate configuration file instead of the default
+If given, the
+.Fl c
+option specifies an alternate configuration file instead of
 .Pa /etc/isakmpd/isakmpd.conf .
 .It Fl d
-Cause the daemon run in the foreground, logging to stderr.
+The
+.Fl d
+option is used to make the daemon run in the foreground, logging to stderr.
 .It Xo Fl D
 .Ar debug-class Ns No = Ns Ar level
 .Xc
@@ -86,11 +90,12 @@ the level you want that debugging class to
 limit debug printouts at (i.e., all debug printouts above the level specified
 will not output anything). If
 .Ar class
-is set to
-.Sq A ,
+is set to 'A',
 then all debugging classes are set to the specified level.
 .It Fl f Ar fifo
-Specifies the
+The
+.Fl f
+option specifies the
 .Tn FIFO
 (a.k.a. named pipe) where the daemon listens for
 user requests.  If the path given is a dash
@@ -98,13 +103,15 @@ user requests.  If the path given is a dash
 .Nm
 will listen to stdin instead.
 .It Fl n
-Cause the kernel to not take part in the negotiations.
+When the
+.Fl n
+option is given, the kernel will not take part in the negotiations.
 This is a non-destructive mode so to say, in that it won't alter any
-SAs in the IPsec stack.
+SAs in the IPSEC stack.
 .It Fl p Ar listen-port
-Specifies the port
-.Nm
-will bind to.
+The
+.Fl p
+option specifies the listen port the daemon will bind to.
 .It Fl P Ar local-port
 On the other hand, the port specified to capital
 .Fl P
@@ -129,18 +136,19 @@ The
 .Fl P
 flag does not do what we document, rather it does nothing.
 .Sh FILES
-.Bl -tag -width /etc/isakmpd/isakmpd.conf -compact
+.Bl -tag -width /var/run/isakmpd.report
 .It Pa /etc/isakmpd/isakmpd.conf
-configuration file
+The configuration file
 .It Pa /var/run/isakmpd.fifo
-FIFO used to manually control
+The FIFO used to manually control
 .Nm isakmpd
 .It Pa /var/run/isakmpd.report
-report file
+The report file
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
+.Xr isakmpd.policy 5 ,
 .Xr photurisd 8
 .Sh HISTORY
 The ISAKMP/Oakley key management protocol is described in the RFCs
