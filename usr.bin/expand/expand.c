@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.7 2003/07/03 03:09:39 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.8 2004/07/01 19:15:56 mickey Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -31,22 +31,23 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
+static const char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: expand.c,v 1.7 2003/07/03 03:09:39 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: expand.c,v 1.8 2004/07/01 19:15:56 mickey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <err.h>
 
 /*
  * expand - expand tabs to equivalent spaces
@@ -85,10 +86,8 @@ main(int argc, char *argv[])
 
 	do {
 		if (argc > 0) {
-			if (freopen(argv[0], "r", stdin) == NULL) {
-				perror(argv[0]);
-				exit(1);
-			}
+			if (freopen(argv[0], "r", stdin) == NULL)
+				err(1, argv[0]);
 			argc--, argv++;
 		}
 		column = 0;
@@ -157,8 +156,7 @@ getstops(char *cp)
 			i = i * 10 + *cp++ - '0';
 		if (i <= 0 || i > 256) {
 bad:
-			fprintf(stderr, "Bad tab stop spec\n");
-			exit(1);
+			errx(1, "Bad tab stop spec");
 		}
 		if (nstops > 0 && i <= tabstops[nstops-1])
 			goto bad;
@@ -174,6 +172,7 @@ bad:
 static void
 usage(void)
 {
-	(void)fprintf (stderr, "usage: expand [-t tablist] [file ...]\n");
+	extern char *__progname;
+	fprintf (stderr, "usage: %s [-t tablist] [file ...]\n", __progname);
 	exit(1);
 }
