@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2001/09/30 13:08:45 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2001/12/05 23:58:41 tdeval Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ static struct device *parsedisk __P((char *str, int len, int defpart,
 				     dev_t *devp));
 static struct device *getdisk __P((char *str, int len, int defpart,
 				   dev_t *devp));
-static int findblkmajor __P((struct device *dv));
-static char *findblkname __P((int));
+int findblkmajor __P((struct device *dv));
+char *findblkname __P((int));
 static int getstr __P((char *cp, int size));
 
 /*
@@ -145,6 +145,7 @@ struct nam2blk {
 	{ "rd",		6 },
 	{ "sd",		8 },
 	{ "wd",		0 },
+	{ "raid",	16 },
 #if 0
 	{ "fd",		XXX },
 #endif
@@ -154,25 +155,25 @@ struct nam2blk {
 static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
 #endif
 
-static int
+int
 findblkmajor(dv)
 	struct device *dv;
 {
 	char *name = dv->dv_xname;
-	register int i;
+	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name))
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name))
 		    == 0)
 			return (nam2blk[i].maj);
 	return (-1);
 }
 
-static char *
+char *
 findblkname(maj)
 	int maj;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
 		if (maj == nam2blk[i].maj)
@@ -276,7 +277,7 @@ setroot()
 {
 	struct swdevt *swp;
 	struct device *dv;
-        register int len;
+        int len;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128], *rootdevname;
 	dev_t temp;
@@ -293,6 +294,22 @@ setroot()
 	bootdv = booted_device;
 	bootpartition = booted_partition;
 #endif
+
+	/*
+	 * (raid) device auto-configuration could have returned
+	 * the root device's id in rootdev.  Check this case.
+	 */
+	if (rootdev != NODEV) {
+		majdev = major(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+
+		len = sprintf(buf, "%s%d", findblkname(majdev), unit);
+		if (len >= sizeof(buf))
+			panic("setroot: device name too long");
+
+		bootdv = getdisk(buf, len, part, &rootdev);
+	}
 
 	/*
 	 * If 'swap generic' and we couldn't determine root device,

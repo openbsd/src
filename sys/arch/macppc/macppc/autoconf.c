@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2001/09/01 15:44:20 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2001/12/05 23:58:41 tdeval Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.1 2001/09/01 15:44:20 drahn Exp $
+ *      $Id: autoconf.c,v 1.2 2001/12/05 23:58:41 tdeval Exp $
  */
 
 /*
@@ -66,7 +66,8 @@ struct  device *parsedisk __P((char *, int, int, dev_t *));
 void    setroot __P((void));
 void	swapconf __P((void));
 extern void	dumpconf __P((void));
-static int findblkmajor __P((struct device *));
+int findblkmajor __P((struct device *));
+char *findblkname __P((int));
 static struct device * getdisk __P((char *, int, int, dev_t *));
 struct device * getdevunit __P((char *, int));
 static struct devmap * findtype __P((char **));
@@ -214,19 +215,32 @@ static	struct nam2blk {
 	{ "wd",		0 },	/* 0 = wd */
 	{ "sd",		2 },	/* 2 = sd */
 	{ "ofdisk",	4 },	/* 4 = ofdisk */
+	{ "raid",	19 },	/* 19 = raid */
 };
 
-static int
+int
 findblkmajor(dv)
 	struct device *dv;
 {
 	char *name = dv->dv_xname;
-	register int i;
+	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0)
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)) == 0)
 			return (nam2blk[i].maj);
 	 return (-1);
+}
+
+char *
+findblkname(maj)
+	int maj;
+{
+	int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
+		if (nam2blk[i].maj == maj)
+			return (nam2blk[i].name);
+	 return (NULL);
 }
 
 static struct device *
@@ -318,6 +332,22 @@ printf("bootpath: '%s'\n", bootpath);
 	makebootdev(bootpath);
 	if(boothowto & RB_DFLTROOT)
 		return;		/* Boot compiled in */
+
+	/*
+	 * (raid) device auto-configuration could have returned
+	 * the root device's id in rootdev.  Check this case.
+	 */
+	if (rootdev != NODEV) {
+		majdev = major(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+
+		len = sprintf(buf, "%s%d", findblkname(majdev), unit);
+		if (len >= sizeof(buf))
+			panic("setroot: device name too long");
+
+		bootdv = getdisk(buf, len, part, &rootdev);
+	}
 
 	/* Lookup boot device from boot if not set by configuration */
 	if(bootdv == NULL) {

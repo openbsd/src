@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2001/11/06 23:46:05 drahn Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 2001/12/05 23:58:41 tdeval Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -296,6 +296,43 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	17,
+	/* 18 */	NODEV,
+	/* 19 */	NODEV,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	19,
 };
 
 /*

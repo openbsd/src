@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.43 2001/11/22 09:45:42 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.44 2001/12/05 23:58:41 tdeval Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -109,7 +109,8 @@ static	int rootnode;
 void	setroot __P((void));
 static	char *str2hex __P((char *, int *));
 static	int getstr __P((char *, int));
-static	int findblkmajor __P((struct device *));
+int	findblkmajor __P((struct device *));
+char	*findblkname __P((int));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
 static	int mbprint __P((void *, const char *));
 static	void crazymap __P((char *, int *));
@@ -1749,26 +1750,39 @@ struct nam2blk {
 	char *name;
 	int maj;
 } nam2blk[] = {
-	{ "xy",		3 },
-	{ "sd",		7 },
+	{ "xy",		 3 },
+	{ "sd",		 7 },
 	{ "xd",		10 },
 	{ "st",		11 },
 	{ "fd",		16 },
 	{ "rd",		17 },
 	{ "cd",		18 },
+	{ "raid",	25 },
 };
 
-static int
+int
 findblkmajor(dv)
 	struct device *dv;
 {
 	char *name = dv->dv_xname;
-	register int i;
+	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0)
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)) == 0)
 			return (nam2blk[i].maj);
 	return (-1);
+}
+
+char *
+findblkname(maj)
+	int maj;
+{
+	int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
+		if (nam2blk[i].maj == maj)
+			return (nam2blk[i].name);
+	return (NULL);
 }
 
 static struct device *
@@ -1883,6 +1897,22 @@ setroot()
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = (bp == NULL) ? NULL : bp->dev;
+
+	/*
+	 * (raid) device auto-configuration could have returned
+	 * the root device's id in rootdev.  Check this case.
+	 */
+	if (rootdev != NODEV) {
+		majdev = major(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+
+		len = sprintf(buf, "%s%d", findblkname(majdev), unit);
+		if (len >= sizeof(buf))
+			panic("setroot: device name too long");
+
+		bootdv = getdisk(buf, len, part, &rootdev);
+	}
 
 	/*
 	 * If `swap generic' and we couldn't determine boot device,

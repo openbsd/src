@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.82 2001/11/06 23:46:05 drahn Exp $	*/
+/*	$OpenBSD: conf.c,v 1.83 2001/12/05 23:58:41 tdeval Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -446,6 +446,13 @@ static int chrtoblktbl[] = {
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
 	/* 47 */	17,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	19,
 };
 
 /*
@@ -492,33 +499,26 @@ blktochr(dev)
  * disk driver name -> bdev major number table, which follows.
  * Note: floppies are not included as those are differentiated by the BIOS.
  */
-static struct {
-	char *name;
-	int maj;
-} disk_maj[] = {
-	{ "wd", 0 },
-	{ "sd", 4 },
-#if 0
-	/* XXX It's not clear at all that recognizing these will help us */
-	{ "cd", 6 },
-	{ "mcd", 7 },		/* XXX I wonder if any BIOSes support this */
-	{ "scd", 15 }		/* 	-	   "		-	   */
-#endif
-};
-
+int findblkmajor __P((struct device *dv));
 dev_t dev_rawpart __P((struct device *));	/* XXX */
 
 dev_t
 dev_rawpart(dv)
 	struct device *dv;
 {
-	int i;
+	int majdev;
 
-	for (i = 0; i < sizeof disk_maj / sizeof disk_maj[0]; i++)
-		if (strcmp(dv->dv_cfdata->cf_driver->cd_name,
-		    disk_maj[i].name) == 0)
-			return (MAKEDISKDEV(disk_maj[i].maj, dv->dv_unit,
-			    RAW_PART));
+	majdev = findblkmajor(dv);
+
+	switch (majdev) {
+	/* add here any device you want to be checksummed on boot */
+	case 0:		/* wd */
+	case 4:		/* sd */
+		return (MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART));
+		break;
+	default:
+	}
+
 	return (NODEV);
 }
 
