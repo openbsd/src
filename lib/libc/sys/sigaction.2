@@ -256,7 +256,7 @@ call (formerly
 .Dv SIGIOT )
 .It Dv SIGEMT No "	create core image" "	emulate instruction executed"
 .It Dv SIGFPE No "	create core image" "	floating-point exception"
-.It Dv SIGKILL No "	terminate process" "	kill program"
+.It Dv SIGKILL No "	terminate process" "	kill program (cannot be caught or ignored)"
 .It Dv SIGBUS No "	create core image" "	bus error"
 .It Dv SIGSEGV No "	create core image" "	segmentation violation"
 .It Dv SIGSYS No "	create core image" "	system call given invalid argument"
@@ -352,8 +352,8 @@ or
 .El
 .Sh STANDARDS
 The
-.Nm sigaction
-function is defined by
+.Fn sigaction
+function conforms to
 .St -p1003.1-88 .
 The
 .Dv SA_ONSTACK
@@ -381,7 +381,6 @@ systems.
 .Xr kill 1 ,
 .Xr ptrace 2 ,
 .Xr kill 2 ,
-.Xr sigaction 2 ,
 .Xr sigprocmask 2 ,
 .Xr sigsuspend 2 ,
 .Xr sigblock 2 ,
