@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.8 2005/03/19 00:56:05 uwe Exp $
+dnl	$OpenBSD: install,v 1.9 2005/03/19 01:01:14 uwe Exp $
 OpenBSDInstallPrelude
 
 	openbsd{:--:}OSrev{:--:}_arm.ipk
@@ -24,10 +24,10 @@ filesystems as ext2 on OpenBSD.)
 4. Press the yellow switch icon in the lower right corner to
    bring up the "Package Servers" dialog.
 5. Press the left button, which is labeled "New" if your zaurus
-   is in English, enter the HTTP URL of the nearest OpenBSD, and
-   change the field above the URL into a name for that server.
-   Press the "OK" button in the upper right corner to return to
-   the "Package Manager" dialog.
+   is in English, enter the HTTP URL of the nearest OpenBSD
+   mirror, and change the field above the URL into a name for
+   that server.  Press the "OK" button in the upper right corner
+   to return to the "Package Manager" dialog.
 6. Press the "Upgrade" button in the lower left corner to update
    the package index if that was not done automatically.  A
    package named "openbsd" should appear in the package list.
