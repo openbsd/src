@@ -167,15 +167,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
    This is the case on some Ultrix versions. */
 /* #undef NEED_SYS_SYSLOG_H */
 
-/* Define this to include IDEA encryption. */
-/* #undef WITH_IDEA */
-
-/* Define this to include RC4 encryption. */
-/* #undef WITH_RC4 */
-
-/* Define this to include Blowfish encryption. */
-#define WITH_BLOWFISH 1
-
 /* Define this to include libwrap (tcp_wrappers) support. */
 /* #undef LIBWRAP */
 

@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.2 1999/09/26 21:02:15 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.3 1999/09/26 22:53:25 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -71,7 +71,6 @@ SSH_3CBC_DECRYPT(des_key_schedule ks1,
   /* memcpy(&iv1, iv2, 8); */	/* Note how iv1 == iv2 on entry and exit. */
 }
 
-#ifdef WITH_BLOWFISH
 /*
  * SSH uses a variation on Blowfish, all bytes must be swapped before
  * and after encryption/decryption. Thus the swap_bytes stuff (yuk).
@@ -104,7 +103,6 @@ swap_bytes(const unsigned char *src, unsigned char *dst_, int n)
       *dst++ = t.i;
     }
 }
-#endif /* WITH_BLOWFISH */
 
 void (*cipher_attack_detected)(const char *fmt, ...) = fatal;
 
@@ -136,11 +134,7 @@ static char *cipher_names[] =
 #else
   "no rc4",
 #endif
-#ifdef WITH_BLOWFISH
   "blowfish"
-#else
-  "no blowfish"
-#endif
 };
 
 /* Returns a bit mask indicating which ciphers are supported by this
@@ -158,9 +152,7 @@ unsigned int cipher_mask()
 #ifdef WITH_RC4
   mask |= 1 << SSH_CIPHER_RC4;
 #endif
-#ifdef WITH_BLOWFISH
   mask |= 1 << SSH_CIPHER_BLOWFISH;
-#endif
   return mask;
 }
 
@@ -259,12 +251,10 @@ void cipher_set_key(CipherContext *context, int cipher,
       break;
 #endif /* WITH_RC4 */
 
-#ifdef WITH_BLOWFISH
     case SSH_CIPHER_BLOWFISH:
       BF_set_key(&context->u.bf.key, keylen, padded);
       memset(context->u.bf.iv, 0, 8);
       break;
-#endif /* WITH_BLOWFISH */
 
     default:
       fatal("cipher_set_key: unknown cipher: %d", cipher);
@@ -306,14 +296,12 @@ void cipher_encrypt(CipherContext *context, unsigned char *dest,
       break;
 #endif /* WITH_RC4 */
 
-#ifdef WITH_BLOWFISH
     case SSH_CIPHER_BLOWFISH:
       swap_bytes(src, dest, len);
       BF_cbc_encrypt(dest, dest, len,
 		     &context->u.bf.key, context->u.bf.iv, BF_ENCRYPT);
       swap_bytes(dest, dest, len);
       break;
-#endif /* WITH_BLOWFISH */
 
     default:
       fatal("cipher_encrypt: unknown cipher: %d", context->type);
@@ -357,7 +345,6 @@ void cipher_decrypt(CipherContext *context, unsigned char *dest,
       break;
 #endif /* WITH_RC4 */
 
-#ifdef WITH_BLOWFISH
     case SSH_CIPHER_BLOWFISH:
       detect_cbc_attack(src, len);
       swap_bytes(src, dest, len);
@@ -365,7 +352,6 @@ void cipher_decrypt(CipherContext *context, unsigned char *dest,
 		     &context->u.bf.key, context->u.bf.iv, BF_DECRYPT);
       swap_bytes(dest, dest, len);
       break;
-#endif /* WITH_BLOWFISH */
 
     default:
       fatal("cipher_decrypt: unknown cipher: %d", context->type);

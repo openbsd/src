@@ -11,7 +11,7 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 
 */
 
-/* RCSID("$Id: cipher.h,v 1.2 1999/09/26 21:02:15 deraadt Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.3 1999/09/26 22:53:25 deraadt Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
@@ -20,9 +20,7 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 #ifdef WITH_RC4
 #include "rc4.h"
 #endif
-#ifdef WITH_BLOWFISH
 #include "blowfish.h"
-#endif
 
 /* Cipher types.  New types can be added, but old types should not be removed
    for compatibility.  The maximum allowed value is 31. */
@@ -54,12 +52,10 @@ typedef struct {
 #ifdef WITH_RC4
     RC4Context rc4;
 #endif
-#ifdef WITH_BLOWFISH
     struct {
       struct bf_key_st key;
       unsigned char iv[8];
     } bf;
-#endif /* WITH_BLOWFISH */
   } u;
 } CipherContext;
 
