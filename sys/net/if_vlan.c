@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.18 2001/06/22 14:28:58 deraadt Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.19 2001/06/23 04:01:19 aaron Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -170,8 +170,8 @@ vlanattach(void *dummy)
 		ether_ifattach(ifp);
 
 		/* Now undo some of the damage... */
-		ifp->if_data.ifi_type = IFT_8021_VLAN;
-		ifp->if_data.ifi_hdrlen = EVL_ENCAPLEN;
+		ifp->if_type = IFT_8021_VLAN;
+		ifp->if_hdrlen = EVL_ENCAPLEN;
 	}
 }
 
@@ -407,7 +407,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 	struct ifaddr *ifa1, *ifa2;
 	struct sockaddr_dl *sdl1, *sdl2;
 
-	if (p->if_data.ifi_type != IFT_ETHER)
+	if (p->if_type != IFT_ETHER)
 		return EPROTONOSUPPORT;
 	if (ifv->ifv_p)
 		return EBUSY;
