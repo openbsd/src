@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.125 2004/06/22 09:47:01 mickey Exp $
+#	$OpenBSD: files.i386,v 1.126 2004/07/14 05:34:14 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -34,6 +34,7 @@ file	arch/i386/i386/ns_cksum.c	ns
 file	arch/i386/i386/p4tcc.c		!small_kernel & i686_cpu
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/powernow.c	!small_kernel
+file	arch/i386/i386/powernow-k7.c	!small_kernel
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/random.s
