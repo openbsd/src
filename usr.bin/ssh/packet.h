@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: packet.h,v 1.8 2000/01/04 00:07:59 markus Exp $"); */
+/* RCSID("$Id: packet.h,v 1.9 2000/01/04 16:54:58 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -191,7 +191,8 @@ do { \
   } \
 } while (0)
 
-/* remote host is connected via a socket */
+/* remote host is connected via a socket/ipv4 */
 int	packet_connection_is_on_socket(void);
+int	packet_connection_is_ipv4(void);
 
 #endif				/* PACKET_H */
