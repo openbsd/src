@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.10 2001/03/07 23:34:39 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.11 2001/03/15 23:59:14 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -47,9 +47,9 @@ LINKFLAGS=	-Ttext 0x10000 -e start
 STRIPFLAGS=	-d
 TOUCHFLAGS=	-f -c
 
-HOSTCC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
+HOSTCC?=	${CC}
+HOSTED_CPPFLAGS?=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS?=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -123,9 +123,13 @@ LINKFLAGS+=	-x
 assym.s: genassym
 	./genassym >assym.s
 
-genassym:
-	${HOSTCC} -static ${INCLUDES} -I$S/sys ${IDENT} ${PARAM} \
-	  -Dmvme88k -Dm88k -o genassym ${MVME88K}/mvme88k/genassym.c
+genassym: genassym.o
+	${HOSTCC} -o $@ genassym.o
+
+genassym.o: ${MVME88K}/mvme88k/genassym.c
+	${HOSTED_C}
+#	${HOSTCC} -static ${INCLUDES} -I$S/sys ${IDENT} ${PARAM} \
+#	  -Dmvme88k -Dm88k -o genassym ${MVME88K}/mvme88k/genassym.c
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -143,7 +147,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-		[Ee]rrs linterrs makelinks assym.s genassym
+		[Ee]rrs linterrs makelinks assym.s genassym genassym.o
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -169,6 +173,8 @@ depend:: .depend
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	    ${MVME88K}/mvme88k/genassym.c
 
 
 # depend on root or device configuration
