@@ -30,25 +30,30 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.12 1997/02/18 23:38:58 provos Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.13 1997/06/17 10:13:14 niklas Exp $";
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yppasswd.h>
+#include <db.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <util.h>
+#include <string.h>
+#include <syslog.h>
 
 extern int noshell;
 extern int nogecos;
 extern int nopw;
 extern int make;
 extern char make_arg[];
+extern char *dir;
 
 int
 badchars(base)
@@ -71,27 +76,96 @@ badchars(base)
 }
 
 int
+subst(s, from, to)
+	char *s;
+	char from, to;
+{
+	int	n = 0;
+
+	while (*s) {
+		if (*s == from) {
+			*s = to;
+			n++;
+		}
+		s++;
+	}
+	return (n);
+}
+
+int
 make_passwd(argp)
 	yppasswd *argp;
 {
-	struct passwd *pw;
+	struct passwd pw;
 	int     pfd, tfd;
-	char	buf[10], *p;
-	int	alen;
+	char	buf[10], *bp = NULL, *p, *t;
+	int	n;
+	ssize_t cnt;
+	size_t	resid;
+	struct stat st;
+	char *master;
 
-	pw = getpwnam(argp->newpw.pw_name);
-	if (!pw)
+	pw_init();
+	if (dir)
+		pw_setdir(dir);
+	master = pw_file(_PATH_MASTERPASSWD);
+	if (!master)
 		return (1);
+	pfd = open(master, O_RDONLY);
+	if (pfd < 0)
+		goto fail;
+	if (fstat(pfd, &st))
+		goto fail;
+	p = bp = malloc((resid = st.st_size) + 1);
+	do {
+		cnt = read(pfd, p, resid);
+		if (cnt < 0)
+			goto fail;
+		p += cnt;
+		resid -= cnt;
+	} while (resid > 0);
+	close(pfd);
+	pfd = -1;
+	*p = '\0';		/* Buf oflow prevention */
 
-	if (strcmp(crypt(argp->oldpass, pw->pw_passwd), pw->pw_passwd) != 0)
-		return (1);
+	p = bp;
+	subst(p, '\n', '\0');
+	for (n = 1; p < bp + st.st_size; n++, p = t) {
+		t = strchr(p, '\0') + 1;
+		cnt = subst(p, ':', '\0');
+		if (cnt != 9) {
+			syslog(LOG_WARNING, "bad entry at line %d of %s", n,
+			    master);
+			continue;
+		}
+
+		if (strcmp(p, argp->newpw.pw_name) == 0)
+			break;
+	}
+	if (p >= bp + st.st_size)
+		goto fail;
+
+#define	EXPAND(e)	e = p; while (*p++);
+	EXPAND(pw.pw_name);
+	EXPAND(pw.pw_passwd);
+	pw.pw_uid = atoi(p); EXPAND(t);
+	pw.pw_gid = atoi(p); EXPAND(t);
+	EXPAND(pw.pw_class);
+	pw.pw_change = (time_t)atol(p); EXPAND(t);
+	pw.pw_expire = (time_t)atol(p); EXPAND(t);
+	EXPAND(pw.pw_gecos);
+	EXPAND(pw.pw_dir);
+	EXPAND(pw.pw_shell);
+
+	if (strcmp(crypt(argp->oldpass, pw.pw_passwd), pw.pw_passwd) != 0)
+		goto fail;
 
 	if (!nopw && badchars(argp->newpw.pw_passwd))
-		return (1);
+		goto fail;
 	if (!nogecos && badchars(argp->newpw.pw_gecos))
-		return (1);
+		goto fail;
 	if (!nogecos && badchars(argp->newpw.pw_shell))
-		return (1);
+		goto fail;
 
 	/*
 	 * Get the new password.  Reset passwd change time to zero; when
@@ -99,64 +173,48 @@ make_passwd(argp)
 	 * class and reset the timer.
 	 */
 	if (!nopw) {
-		pw->pw_passwd = argp->newpw.pw_passwd;
-		pw->pw_change = 0;
+		pw.pw_passwd = argp->newpw.pw_passwd;
+		pw.pw_change = 0;
 	}
 	if (!nogecos)
-		pw->pw_gecos = argp->newpw.pw_gecos;
+		pw.pw_gecos = argp->newpw.pw_gecos;
 	if (!noshell)
-		pw->pw_shell = argp->newpw.pw_shell;
+		pw.pw_shell = argp->newpw.pw_shell;
 
-	for (alen = 0, p = pw->pw_gecos; *p; p++)
+	for (n = 0, p = pw.pw_gecos; *p; p++)
 		if (*p == '&')
-			alen = alen + strlen(pw->pw_name) - 1;
-	if (strlen(pw->pw_name) + 1 + strlen(pw->pw_passwd) + 1 +
-	    strlen((sprintf(buf, "%d", pw->pw_uid), buf)) + 1 +
-	    strlen((sprintf(buf, "%d", pw->pw_gid), buf)) + 1 +
-	    strlen(pw->pw_gecos) + alen + 1 + strlen(pw->pw_dir) + 1 +
-	    strlen(pw->pw_shell) >= 1023) {
-		return (1);
+			n = n + strlen(pw.pw_name) - 1;
+	if (strlen(pw.pw_name) + 1 + strlen(pw.pw_passwd) + 1 +
+	    strlen((sprintf(buf, "%d", pw.pw_uid), buf)) + 1 +
+	    strlen((sprintf(buf, "%d", pw.pw_gid), buf)) + 1 +
+	    strlen(pw.pw_gecos) + n + 1 + strlen(pw.pw_dir) + 1 +
+	    strlen(pw.pw_shell) >= 1023)
+		goto fail;
+
+	pfd = open(master, O_RDONLY, 0);
+	if (pfd < 0) {
+		syslog(LOG_ERR, "cannot open %s", master);
+		goto fail;
 	}
 
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
-		pw_error(_PATH_MASTERPASSWD, 1, 1);
-
-	pw_init();
 	tfd = pw_lock(0);
-
-	pw_copy(pfd, tfd, pw);
+	pw_copy(pfd, tfd, &pw);
 	pw_mkdb();
+	free(bp);
 
 	if (fork() == 0) {
 		chdir("/var/yp");
-		(void) umask(022);
+		(void)umask(022);
 		system(make_arg);
 		exit(0);
 	}
 	return (0);
-}
 
-/*
-int
-do_mkdb()
-{
-	int pstat;
-	pid_t pid;
-
-	(void)printf("%s: rebuilding the database...\n", progname);
-	(void)fflush(stdout);
-	if (!(pid = vfork())) {
-		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", tempname, NULL);
-		warn(_PATH_PWD_MKDB);
-		warnx("%s: unchanged", _PATH_MASTERPASSWD);
-		pw_abort();
-		_exit(1);
-	}
-	pid = waitpid(pid, &pstat, 0);
-	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
-		return(0);
-	(void)printf("%s: done\n", progname);
-	return(1);
+fail:
+	if (bp)
+		free(bp);
+	if (pfd >= 0)
+		close(pfd);
+	free(master);
+	return (1);
 }
-*/

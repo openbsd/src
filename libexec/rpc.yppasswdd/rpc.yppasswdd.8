@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rpc.yppasswdd.8,v 1.5 1996/10/23 18:55:31 deraadt Exp $
+.\"	$Id: rpc.yppasswdd.8,v 1.6 1997/06/17 10:13:12 niklas Exp $
 .\"
 .Dd July 3, 1994
 .Dt RPC.YPPASSWDD 8
@@ -37,6 +37,7 @@
 .Nd YP update password file daemon
 .Sh SYNOPSIS
 .Nm rpc.yppasswdd
+.Op Fl d Ar directory
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
@@ -47,7 +48,7 @@ must be running on the YP master server to allow users to change information
 in the password file. If the user needs to change his password this is
 normally done with a program called
 .Nm yppasswd .
-This program doesn't exists in OpenBSD but is integrated into
+This program doesn't exist in OpenBSD but is integrated into
 .Xr passwd 1 .
 .Nm passwd
 will automatically determine which password database should
@@ -64,6 +65,9 @@ exists then messages will be written to the file.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl d Ar directory
+Use the specified directory to get at the password-related files instead
+of /etc.
 .It Fl noshell
 Don't allow changes of the shell field in the passwd file.
 .It Fl nogecos
