@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.6 2002/01/04 22:07:44 jason Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -292,10 +292,14 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
 	cacheinfo.ic_l2linesize = i;
-	cacheinfo.ic_totalsize = l *
-		getpropint(node, "icache-nlines", 64) *
-		getpropint(node, "icache-associativity", 1);
-	
+	cacheinfo.ic_totalsize =
+	    getpropint(node, "icache-size", 0) *
+	    getpropint(node, "icache-associativity", 1);
+	if (cacheinfo.ic_totalsize == 0)
+		cacheinfo.ic_totalsize = l *
+		    getpropint(node, "icache-nlines", 64) *
+		    getpropint(node, "icache-associativity", 1);
+
 	cacheinfo.dc_linesize = l =
 		getpropint(node, "dcache-line-size",0);
 	for (i = 0; (1 << i) < l && l; i++)
@@ -303,9 +307,13 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
 	cacheinfo.dc_l2linesize = i;
-	cacheinfo.dc_totalsize = l *
-		getpropint(node, "dcache-nlines", 128) *
-		getpropint(node, "dcache-associativity", 1);
+	cacheinfo.dc_totalsize =
+	    getpropint(node, "dcache-size", 0) *
+	    getpropint(node, "dcache-associativity", 1);
+	if (cacheinfo.dc_totalsize == 0)
+		cacheinfo.dc_totalsize = l *
+		    getpropint(node, "dcache-nlines", 128) *
+		    getpropint(node, "dcache-associativity", 1);
 	
 	cacheinfo.ec_linesize = l =
 		getpropint(node, "ecache-line-size", 0);
@@ -314,9 +322,13 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
 	cacheinfo.ec_l2linesize = i;
-	cacheinfo.ec_totalsize = l *
-		getpropint(node, "ecache-nlines", 32768) *
+	cacheinfo.ec_totalsize =
+		getpropint(node, "ecache-size", 0) *
 		getpropint(node, "ecache-associativity", 1);
+	if (cacheinfo.ec_totalsize == 0)
+		cacheinfo.ec_totalsize = l *
+		    getpropint(node, "ecache-nlines", 32768) *
+		    getpropint(node, "ecache-associativity", 1);
 	
 	/*
 	 * XXX - The following will have to do until
@@ -354,7 +366,7 @@ cpu_attach(parent, dev, aux)
 		       (long)cacheinfo.ec_totalsize/1024,
 		       (long)cacheinfo.ec_linesize);
 	}
-	printf(" \n");
+	printf("\n");
 	cache_enable();
 }
 
