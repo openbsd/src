@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.20 2000/04/29 14:03:02 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.21 2000/06/17 19:42:18 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.20 2000/04/29 14:03:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.21 2000/06/17 19:42:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ extern  int transflag;
 extern  char tmpline[];
 extern	int portcheck;
 extern	union sockunion his_addr;
+extern	int umaskchange;
 
 off_t	restart_point;
 
@@ -609,6 +610,9 @@ cmd
 			if ($4) {
 				if (($6 == -1) || ($6 > 0777)) {
 					reply(501, "Bad UMASK value");
+				} else if (!umaskchange) {
+					reply(550,
+					    "No permission to change umask.");
 				} else {
 					oldmask = umask($6);
 					reply(200,
@@ -622,11 +626,17 @@ cmd
 			if ($4 && ($8 != NULL)) {
 				if ($6 > 0777)
 					reply(501,
-				"CHMOD: Mode value must be between 0 and 0777");
+					    "CHMOD: Mode value must be between "
+					    "0 and 0777");
+				else if (!umaskchange)
+					reply(550,
+					    "No permission to change mode of %s.",
+					    $8);
 				else if (chmod($8, $6) < 0)
 					perror_reply(550, $8);
 				else
-					reply(200, "CHMOD command successful.");
+					reply(200,
+					    "CHMOD command successful.");
 			}
 			if ($8 != NULL)
 				free($8);
@@ -643,13 +653,14 @@ cmd
 			if ($3) {
 				if ($6 < 30 || $6 > maxtimeout) {
 				reply(501,
-	       		 "Maximum IDLE time must be between 30 and %d seconds",
+				    "Maximum IDLE time must be between "
+				    "30 and %d seconds",
 				    maxtimeout);
 				} else {
 					timeout = $6;
 					(void) alarm((unsigned) timeout);
 					reply(200,
-					 "Maximum IDLE time set to %d seconds",
+					    "Maximum IDLE time set to %d seconds",
 					    timeout);
 				}
 			}

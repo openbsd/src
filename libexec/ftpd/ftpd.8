@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.29 2000/04/15 11:46:05 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.30 2000/06/17 19:42:18 deraadt Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -140,8 +140,9 @@ The inactivity timeout period is set to
 .Ar timeout
 seconds (the default is 15 minutes).
 .It Fl u Ar mask
-Change the default umask from 027 to
+Force the umask to
 .Ar mask .
+instead of the default 027.  Also disallows chmod.
 .El
 .Pp
 The file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.73 2000/06/14 15:15:06 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.74 2000/06/17 19:42:18 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ off_t	byte_count;
 #define CMASK 027
 #endif
 int	defumask = CMASK;		/* default umask value */
+int	umaskchange = 1;		/* allow user to change umask value. */
 char	tmpline[7];
 char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
@@ -347,6 +348,7 @@ main(argc, argv, envp)
 		    {
 			long val = 0;
 			char *p;
+			umaskchange = 0;
 
 			val = strtol(optarg, &p, 8);
 			if (*p != '\0' || val < 0 || (val & ~ACCESSPERMS)) {
