@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.9 2004/08/02 22:45:57 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.10 2004/08/27 15:40:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -36,6 +36,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "proto.h"
 
 
 extern char *cvs_rootstr;
@@ -104,6 +105,11 @@ cvsroot_parse(const char *str)
 	memset(root, 0, sizeof(*root));
 	root->cr_ref = 2;
 	root->cr_method = CVS_METHOD_NONE;
+	CVS_RSTVR(root);
+
+	/* enable the most basic commands at least */
+	CVS_SETVR(root, CVS_REQ_VALIDREQ);
+	CVS_SETVR(root, CVS_REQ_VALIDRESP);
 
 	root->cr_str = strdup(str);
 	if (root->cr_str == NULL) {
