@@ -57,7 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define lo_minor	sod_minor
 #define lo_next		sod_next
 
-#define link_map	so_map
 #define l_addr		som_addr
 #define l_name		som_path
 #define l_next		som_next

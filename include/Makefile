@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.108 2002/06/07 03:00:01 art Exp $
+#	$OpenBSD: Makefile,v 1.109 2002/06/07 17:46:55 drahn Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -20,9 +20,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
 	strings.h struct.h sysexits.h tar.h time.h ttyent.h tzfile.h \
 	unistd.h utime.h utmp.h vis.h
 
-.if (${MACHINE_ARCH} != "powerpc")
 FILES+=	link.h link_aout.h link_elf.h
-.endif
 
 .if (${MACHINE_ARCH} != "vax")
 FILES+= ieeefp.h
@@ -30,10 +28,6 @@ FILES+= ieeefp.h
 
 MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
-
-.if (${MACHINE_ARCH} == "powerpc")
-MFILES+= link.h
-.endif
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	crypto ddb dev isofs miscfs net netatalk netccitt netinet altq \
