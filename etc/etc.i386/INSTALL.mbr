@@ -192,7 +192,7 @@ it immediately relocates itself to 0000:0600.
 
 0000:065B EBFE        JMP     HANG              sit and stay!
 
-           READ_BOOT:                        READ ACTIVE PARITION BOOT RECORD
+           READ_BOOT:                        READ ACTIVE PARTITION BOOT RECORD
 
 0000:065D BF0500      MOV     DI,0005           INT 13 retry count
 

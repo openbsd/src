@@ -571,7 +571,7 @@ BIOS Type 2
    boot code must be within first 1024 cylinders.  The FDISK
    program of an OS that supports such partitions uses an OS
    specific partition table entry format to identify these
-   paritions.  There does not appear to be a standard (de facto
+   partitions.  There does not appear to be a standard (de facto
    or otherwise) for this unusual partition table entry.
    Apparently one method is to place -1 into the CHS fields and
    use the LBA fields to describe the location of the partition.
