@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.9 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: gre.4,v 1.10 2002/03/25 21:18:03 angelos Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -182,6 +182,11 @@ The kernel must be set to forward datagrams by including option
 ``GATEWAY'' in the kernel config file and issuing the appropriate
 option to
 .Xr sysctl 8 .
+.Pp
+The GRE interface will accept WCCPv1-style GRE encapsulated packets
+from a Cisco router.  Some magic with the packet filter configuration
+and a caching proxy like squid are needed to do anything useful with
+these packets.
 .Sh SEE ALSO
 .Xr atalk 4 ,
 .Xr inet 4 ,
@@ -195,6 +200,10 @@ option to
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 .Pp
 A description of MOBILE encapsulation can be found in RFC 2004.
+.Pp
+A description of WCCPv1 can be found in draft-ietf-wrec-web-pro-00.txt,
+and WCCPv2 in draft-wilson-wrec-wccp-v2-00.txt.  Both of these documents
+can be found at http://www.wrec.org/ (at the time of this writing).
 .Sh BUGS
 The compute_route() code in net/if_gre.c toggles the last bit of the
 IP-address to provoke the search for a less specific route than the
@@ -209,5 +218,9 @@ the greX interface itself.
 .Pp
 GRE RFC not yet fully implemented (no GRE options), no other protocols
 yet than IP over IP.
+.Pp
+For the WCCP GRE encapsulated packets we can only reliably accept
+WCCPv1 format; WCCPv2 formatted packets add another header which will
+skew the decode, and results are not defined (i.e. don't do WCCPv2).
 .Sh AUTHORS
 Heiko W.Rupp <hwr@pilhuhn.de>
