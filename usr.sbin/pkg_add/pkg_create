@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.26 2004/12/01 12:17:40 espie Exp $
+# $OpenBSD: pkg_create,v 1.27 2004/12/02 18:32:37 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -106,7 +106,7 @@ sub compute_checksum
 			$self->{size} = $size;
 		}
 	} else {
-		print STDERR "Error in package: $base/$fname does not exist\n";
+		print STDERR "Error in package: \"$base/$fname\" does not exist\n";
 		$main::errors++;
 	}
 }
