@@ -1,4 +1,4 @@
-/*	$OpenBSD: include.h,v 1.4 1998/09/21 07:36:05 pjanzen Exp $	*/
+/*	$OpenBSD: include.h,v 1.5 2001/02/04 02:15:28 pjanzen Exp $	*/
 /*	$NetBSD: include.h,v 1.5 1995/04/27 21:22:23 mycroft Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/utsname.h>

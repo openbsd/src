@@ -1,4 +1,4 @@
-/*	$OpenBSD: struct.h,v 1.2 1998/09/21 07:36:07 pjanzen Exp $	*/
+/*	$OpenBSD: struct.h,v 1.3 2001/02/04 02:15:28 pjanzen Exp $	*/
 /*	$NetBSD: struct.h,v 1.3 1995/03/21 15:04:31 cgd Exp $	*/
 
 /*-
@@ -100,8 +100,7 @@ typedef struct {
 } LIST;
 
 typedef struct {
-	char	name[10];
-	char	host[256];
+	char	name[MAXLOGNAME];
 	char	game[256];
 	int	planes;
 	int	time;

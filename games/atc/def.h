@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.3 1999/03/22 05:36:57 pjanzen Exp $	*/
+/*	$OpenBSD: def.h,v 1.4 2001/02/04 02:15:28 pjanzen Exp $	*/
 /*	$NetBSD: def.h,v 1.3 1995/03/21 15:03:47 cgd Exp $	*/
 
 /*-
@@ -83,3 +83,12 @@
 
 #define INPUT_LINES	3
 #define PLANE_COLS	20
+
+
+/*
+ * NUM_SCORES - Number of scores that are kept track of.
+ * Keep this greater than 0.
+ * 4 lines are printed above the score, one below + your prompt, so
+ * to prevent scrolling: 6 + NUM_SCORES <= 24 (lines on an average terminal).
+ */
+#define	NUM_SCORES 	18

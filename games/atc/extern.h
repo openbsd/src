@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1999/09/01 00:27:07 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2001/02/04 02:15:28 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/04/27 21:22:22 mycroft Exp $	*/
 
 /*-
@@ -62,8 +62,6 @@ extern LIST		air, ground;
 extern struct termios	tty_start, tty_new;
 
 extern DISPLACEMENT	displacement[MAXDIR];
-
-extern int		NUM_SCORES;
 
 int		addplane __P((void));
 void		append __P((LIST *, PLANE *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 1999/09/01 00:27:08 pjanzen Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2001/02/04 02:15:28 pjanzen Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: log.c,v 1.6 1999/09/01 00:27:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.7 2001/02/04 02:15:28 pjanzen Exp $";
 #endif
 #endif not lint
 
@@ -80,7 +80,7 @@ compar(va, vb)
 #define SECADAY		(SECAHOUR * HOURADAY)
 #define DAY(t)		((t) / SECADAY)
 #define HOUR(t)		(((t) % SECADAY) / SECAHOUR)
-#define MIN(t)		(((t) % SECAHOUR) / SECAMIN)
+#define MINUTES(t)		(((t) % SECAHOUR) / SECAMIN)
 #define SEC(t)		((t) % SECAMIN)
 
 const char	*
@@ -92,9 +92,9 @@ timestr(t)
 	if (DAY(t) > 0)
 		(void)sprintf(s, "%dd+%02dhrs", DAY(t), HOUR(t));
 	else if (HOUR(t) > 0)
-		(void)sprintf(s, "%d:%02d:%02d", HOUR(t), MIN(t), SEC(t));
-	else if (MIN(t) > 0)
-		(void)sprintf(s, "%d:%02d", MIN(t), SEC(t));
+		(void)sprintf(s, "%d:%02d:%02d", HOUR(t), MINUTES(t), SEC(t));
+	else if (MINUTES(t) > 0)
+		(void)sprintf(s, "%d:%02d", MINUTES(t), SEC(t));
 	else if (SEC(t) > 0)
 		(void)sprintf(s, ":%02d", SEC(t));
 	else
@@ -130,12 +130,12 @@ open_score_file()
 
 int
 log_score(list_em)
+	int list_em;
 {
 	int		i, num_scores = 0, good, changed = 0, found = 0;
 	struct passwd	*pw;
 	char		*cp;
-	SCORE		score[100], thisscore;
-	struct utsname	name;
+	SCORE		score[NUM_SCORES], thisscore;
 
 	if (score_fp == NULL)
 		return (-1);
@@ -150,14 +150,13 @@ log_score(list_em)
 		return (-1);
 	}
 	for (;;) {
-		good = fscanf(score_fp, "%s %s %s %d %d %d",
+		good = fscanf(score_fp, "%s %s %d %d %d",
 			score[num_scores].name, 
-			score[num_scores].host, 
 			score[num_scores].game,
 			&score[num_scores].planes, 
 			&score[num_scores].time,
 			&score[num_scores].real_time);
-		if (good != 6 || ++num_scores >= NUM_SCORES)
+		if (good != 5 || ++num_scores >= NUM_SCORES)
 			break;
 	}
 	if (!test_mode && !list_em) {
@@ -167,17 +166,15 @@ log_score(list_em)
 				getuid());
 			return (-1);
 		}
-		strcpy(thisscore.name, pw->pw_name);
-		uname(&name);
-		strcpy(thisscore.host, name.nodename);
+		strlcpy(thisscore.name, pw->pw_name, sizeof(thisscore.name));
 
 		cp = strrchr(file, '/');
 		if (cp == NULL) {
-			fprintf(stderr, "log: where's the '/' in %s?\n", file);
+			warnx("log: where's the '/' in %s?", file);
 			return (-1);
 		}
 		cp++;
-		strcpy(thisscore.game, cp);
+		strlcpy(thisscore.game, cp, sizeof(thisscore.game));
 
 		thisscore.time = clck;
 		thisscore.planes = safe_planes;
@@ -185,7 +182,6 @@ log_score(list_em)
 
 		for (i = 0; i < num_scores; i++) {
 			if (strcmp(thisscore.name, score[i].name) == 0 &&
-			    strcmp(thisscore.host, score[i].host) == 0 &&
 			    strcmp(thisscore.game, score[i].game) == 0) {
 				if (thisscore.time > score[i].time) {
 					score[i].time = thisscore.time;
@@ -228,8 +224,8 @@ log_score(list_em)
 			qsort(score, num_scores, sizeof (*score), compar);
 			rewind(score_fp);
 			for (i = 0; i < num_scores; i++)
-				fprintf(score_fp, "%s %s %s %d %d %d\n",
-					score[i].name, score[i].host, 
+				fprintf(score_fp, "%s %s %d %d %d\n",
+					score[i].name,
 					score[i].game, score[i].planes,
 					score[i].time, score[i].real_time);
 		} else {
@@ -253,15 +249,12 @@ log_score(list_em)
 	fsync(fileno(score_fp));
 	rewind(score_fp);
 #endif
-	printf("%2s:  %-8s  %-8s  %-18s  %4s  %9s  %4s\n", "#", "name", "host", 
-		"game", "time", "real time", "planes safe");
+	printf("%2s:  %-31s  %-18s  %4s  %9s  %4s\n", "#", "name",
+		"game", "time", "real time", "safe");
 	puts("-------------------------------------------------------------------------------");
 	for (i = 0; i < num_scores; i++) {
-		cp = strchr(score[i].host, '.');
-		if (cp != NULL)
-			*cp = '\0';
-		printf("%2d:  %-8s  %-8s  %-18s  %4d  %9s  %4d\n", i + 1,
-			score[i].name, score[i].host, score[i].game,
+		printf("%2d:  %-31s  %-18s  %4d  %9s  %4d\n", i + 1,
+			score[i].name, score[i].game,
 			score[i].time, timestr(score[i].real_time),
 			score[i].planes);
 	}
