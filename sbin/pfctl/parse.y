@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.327 2003/02/21 10:34:52 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.328 2003/02/21 10:54:57 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -431,7 +431,7 @@ option		: SET OPTIMIZATION STRING		{
 		| SET LOGINTERFACE STRING		{
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
-			if (ifa_exists($3) == NULL) {
+			if ((ifa_exists($3) == NULL) && strcmp($3, "none")) {
 				yyerror("interface %s doesn't exist", $3);
 				YYERROR;
 			}
