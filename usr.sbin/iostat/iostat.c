@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.20 2004/08/01 18:32:19 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.21 2004/08/08 00:19:16 pedro Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -264,10 +264,11 @@ disk_stats(double etime)
 
 		/* average Kbytes per transfer. */
 		if (cur.dk_rxfer[dn] + cur.dk_wxfer[dn])
-			mbps = ((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) /
+			mbps = ((cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) /
 			    (1024.0)) / (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]);
 		else
 			mbps = 0.0;
+
 		(void)printf(" %5.2f", mbps);
 
 		/* average transfers per second. */
