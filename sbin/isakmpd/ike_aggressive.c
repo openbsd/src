@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_aggressive.c,v 1.2 1999/04/27 21:11:53 niklas Exp $	*/
-/*	$EOM: ike_aggressive.c,v 1.2 1999/04/25 22:12:33 niklas Exp $	*/
+/*	$OpenBSD: ike_aggressive.c,v 1.3 1999/08/26 22:28:54 niklas Exp $	*/
+/*	$EOM: ike_aggressive.c,v 1.3 1999/08/19 01:14:04 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -138,10 +138,10 @@ responder_recv_SA_KE_NONCE_ID (struct message *msg)
   if (ike_phase_1_responder_recv_SA (msg))
     return -1;
 
-  if (ike_phase_1_recv_KE_NONCE (msg))
+  if (ike_phase_1_recv_ID (msg))
     return -1;
 
-  return ike_phase_1_recv_ID (msg);
+  return ike_phase_1_recv_KE_NONCE (msg);
 }
 
 /*
