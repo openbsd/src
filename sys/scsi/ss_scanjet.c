@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.7 1996/07/30 11:04:10 deraadt Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.8 1996/10/31 01:14:13 niklas Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ scanjet_ctl_write(ss, buf, size, flags)
 	_lto3b(size, cmd.len);
 	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_OUT));
+	    flags | SCSI_DATA_OUT | SCSI_POLL));
 }
 
 
@@ -333,7 +333,7 @@ scanjet_ctl_read(ss, buf, size, flags)
 	_lto3b(size, cmd.len);
 	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_IN));
+	    flags | SCSI_DATA_IN | SCSI_POLL));
 }
 
 
