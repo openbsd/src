@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.6 1998/12/15 01:20:17 aaron Exp $
+.\"	$OpenBSD: cp.1,v 1.7 1999/03/03 02:58:48 aaron Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -75,21 +75,21 @@ If
 .Nm
 detects an attempt to copy a file to itself, the copy will fail.
 .Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width flag
 .It Fl H
 If the
 .Fl R
-option is specified, symbolic links on the command line are followed.
+option is also specified, symbolic links on the command-line are followed.
 (Symbolic links encountered in the tree traversal are not followed.)
 .It Fl L
 If the
 .Fl R
-option is specified, all symbolic links are followed.
+option is also specified, all symbolic links are followed.
 .It Fl P
 If the
 .Fl R
-option is specified, no symbolic links are followed.
+option is also specified, no symbolic links are followed.
 .It Fl R
 If
 .Ar source_file
@@ -97,32 +97,23 @@ designates a directory,
 .Nm
 copies the directory and the entire subtree connected at that point.
 This option also causes symbolic links to be copied, rather than
-indirected through, and for
-.Nm
-to create special files rather than copying them as normal files.
+followed, and
+special files to be created, rather than being copied as normal files.
 Created directories have the same mode as the corresponding source
 directory, unmodified by the process's umask.
 .It Fl f
 For each existing destination pathname, remove it and
 create a new file, without prompting for confirmation,
-regardless of its permissions.
-(The
-.Fl i
-option is ignored if the
-.Fl f
-option is specified.)
+regardless of its permissions. This option overrides any use of
+.Fl i .
 .It Fl i
-Causes
-.Nm
-to write a prompt to the standard error output before copying a file
+Write a prompt to the standard error output before copying a file
 that would overwrite an existing file.
 If the response from the standard input begins with the character
 .Sq Li y ,
 the file copy is attempted.
 .It Fl p
-Causes
-.Nm
-to preserve in the copy as many of the modification time, access time,
+Preserve in the copy as many of the modification time, access time,
 file flags, file mode, user ID, and group ID as allowed by permissions.
 .Pp
 If the user ID and group ID cannot be preserved, no error message
