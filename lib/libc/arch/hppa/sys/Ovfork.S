@@ -1,7 +1,7 @@
-/*	$OpenBSD: Ovfork.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.8 2002/07/25 04:58:57 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999,2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,12 +35,24 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.7 2001/06/04 23:14:04 mickey Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.8 2002/07/25 04:58:57 mickey Exp $"
 	.align	4
 #endif
 
 ENTRY(vfork,0)
-	SYSCALL(vfork)
+	.import errno, data
+	copy	rp, t4
+	ldil	L%SYSCALLGATE, r1
+	ble	4(sr7, r1)
+	ldi	__CONCAT(SYS_,vfork), t1
+	copy	t4, rp
+	comb,=,n r0, t1, __CONCAT(x,$noerr)
+	ldil	L%errno, r1
+	stw	t1, R%errno(r1)
+	ldi	-1, ret0
+	bv	r0(rp)
+	ldi	-1, ret1
+	.label	__CONCAT(x,$noerr)
 	addi	-1, ret1, ret1
 	bv	r0(rp)
 	and	ret1, ret0, ret0
