@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.8 2001/06/24 18:28:10 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.9 2001/06/24 22:00:01 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -1368,6 +1368,7 @@ siop_scsicmd(xs)
 				    && (xs->sc_link->lun == 0)
 				    && (xs->error == XS_NOERROR)) {
 					inqdata = (struct scsi_inquiry_data *)xs->data;
+
 					if (inqdata->flags & SID_CmdQue) {
 						sc->targets[target]->flags |= TARF_TAG;
 						xs->sc_link->openings += SIOP_NTAG - SIOP_OPENINGS;
@@ -1383,14 +1384,11 @@ siop_scsicmd(xs)
 					    && (inqdata->flags2 & (SID_CLOCKING | SID_QAS | SID_IUS)))
 						sc->targets[target]->flags |= TARF_PPR;
 
+					sc->targets[target]->status = TARST_ASYNC;
+					
 					if (sc->targets[target]->flags
 					    & (TARF_WIDE | TARF_SYNC | TARF_PPR)) {
-						sc->targets[target]->status = TARST_ASYNC;
 						siop_add_dev(sc, target, lun);
-					}
-					else {
-						sc->targets[target]->status = TARST_OK;
-						siop_print_info(xs->sc_link);
 					}
 				}
 				break;
