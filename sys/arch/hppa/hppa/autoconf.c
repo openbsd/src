@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 1999/06/22 23:45:04 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 1999/08/14 03:17:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -67,6 +67,7 @@ void	dumpconf __P((void));
 
 static int findblkmajor __P((struct device *dv));
 
+void (*cold_hook) __P((void)); /* see below */
 
 /*
  * configure:
@@ -80,13 +81,17 @@ configure()
 	splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
+	/* in spl*() we trust */
 	spl0();
-
+	__asm __volatile("nop\n\tnop\n\tssm %0, %%r0\n\tnop\n\tnop\n\tnop"
+			 :: "i" (PSW_I));
 
 	setroot();
 	swapconf();
 	dumpconf();
 	cold = 0;
+	if (cold_hook)
+		(*cold_hook)();
 }
 
 /*
