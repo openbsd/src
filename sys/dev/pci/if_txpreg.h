@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.11 2001/04/10 19:52:38 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.12 2001/04/10 22:10:09 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -430,8 +430,8 @@ struct txp_hostvar {
 #define	STAT_SLEEPING			0x00000011
 #define	STAT_HALTED			0x00000014
 
-#define	TX_ENTRIES			128
-#define	RX_ENTRIES			128
+#define	TX_ENTRIES			256
+#define	RX_ENTRIES			256
 #define	CMD_ENTRIES			32
 #define	RSP_ENTRIES			32
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.10 2001/04/10 19:52:37 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.11 2001/04/10 22:10:09 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -508,14 +508,21 @@ txp_intr(vsc)
 	return (claimed);
 }
 
-
 void
 txp_shutdown(vsc)
 	void *vsc;
 {
 	struct txp_softc *sc = (struct txp_softc *)vsc;
 
-	txp_stop(sc);
+	/* mask all interrupts */
+	WRITE_REG(sc, TXP_IMR,
+	    TXP_INT_SELF | TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_LATCH);
+
+	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
+	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
+	txp_command(sc, TXP_CMD_HALT, 0, 0, 0, NULL, NULL, NULL, 0);
 }
 
 int
@@ -688,7 +695,7 @@ txp_dma_malloc(sc, size, dma)
 	bus_size_t size;
 	struct txp_dma_alloc *dma;
 {
-	int r;
+        int r;
 
 	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
 	    &dma->dma_seg, 1, &dma->dma_nseg, BUS_DMA_NOWAIT)) != 0) {
@@ -698,7 +705,7 @@ txp_dma_malloc(sc, size, dma)
 		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 		return (-1);
 	}
-
+	   
 	if ((r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg,
 	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT)) != 0) {
 		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
@@ -798,7 +805,7 @@ txp_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			/* XXX TODO: set multicast list */
+			txp_set_filter(sc);
 			error = 0;
 		}
 		break;
@@ -820,6 +827,9 @@ void
 txp_init(sc)
 	struct txp_softc *sc;
 {
+#if 0
+	txp_set_filter(sc);
+#endif
 }
 
 void
