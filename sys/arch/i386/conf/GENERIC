@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.324 2002/11/30 19:15:09 nate Exp $
+#	$OpenBSD: GENERIC,v 1.325 2002/11/30 19:29:29 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -99,6 +99,8 @@ uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
 #uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
 #ucom*	at uvscom? portno ?
+ubsa*	at uhub? port ?			# Belkin serial adapter
+ucom*	at ubsa? portno ?
 uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
