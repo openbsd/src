@@ -7,7 +7,7 @@
 #	OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.1 2002/01/04 09:25:35 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.27 2002/01/04 16:00:23 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 2002/01/04 16:15:01 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -56,6 +56,7 @@
 #	console	PROM console
 # Pointing devices:
 #	mouse	mouse (provides events, for X11)
+#	wsmouse*	wscons mice
 # Terminal ports:
 #	tty[a-z]*	Zilog 8530 Serial Port
 #	cua[a-z]*	Zilog 8530 Serial Port
@@ -401,6 +402,10 @@ tty[a-z])
 	M tty$u c 12 $n 660 dialer uucp
 	;;
 
+wsmouse*)
+	M wsmouse$U c 80 $U 600
+	;;
+
 mouse)
 	M mouse c 30 0 666 
 	;;
@@ -416,6 +421,7 @@ wskbd*)
 
 wscons)
 	R ttyCcfg wsmux wskbd0 wskbd1 wskbd2 wskbd3
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	;;
 
 rd*)
@@ -486,7 +492,7 @@ all)
 	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H ttya ttyb ttyc ttyd
 	R cuaa cuab cuac cuad lkm random ses0 uk0 uk1 ss0 ss1
-	R tty00 tty01 tty02 tty03 xfs0 audio0 usbs
+	R tty00 tty01 tty02 tty03 xfs0 audio0 usbs wscons
 	;;
 
 sd*|ccd*|raid*|wd*)
