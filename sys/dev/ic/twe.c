@@ -1,7 +1,7 @@
-/*	$OpenBSD: twe.c,v 1.9 2001/03/14 02:21:32 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.10 2001/05/10 20:07:35 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
+ * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
  *
  * The SCSI emulation layer is derived from gdt(4) driver,
  * Copyright (c) 1999, 2000 Niklas Hallqvist. All rights reserved.
@@ -33,7 +33,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef	TWE_DEBUG
+#define	TWE_DEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,13 +114,16 @@ twe_dispose(sc)
 	struct twe_softc *sc;
 {
 	register struct twe_ccb *ccb;
-	/* TODO: traverse the ccbs and destroy the maps */
-	for (ccb = &sc->sc_ccbs[TWE_MAXCMDS - 1]; ccb >= sc->sc_ccbs; ccb--)
-		if (ccb->ccb_dmamap)
-			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
-	if (sc->sc_cmdmap != NULL)
+	if (sc->sc_cmdmap != NULL) {
 		bus_dmamap_destroy(sc->dmat, sc->sc_cmdmap);
-	bus_dmamem_free(sc->dmat, &sc->sc_cmdseg, 1);
+		/* traverse the ccbs and destroy the maps */
+		for (ccb = &sc->sc_ccbs[TWE_MAXCMDS - 1]; ccb >= sc->sc_ccbs; ccb--)
+			if (ccb->ccb_dmamap)
+				bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
+	}
+	bus_dmamem_unmap(sc->dmat, sc->sc_cmds, 
+	    sizeof(struct twe_cmd) * TWE_MAXCMDS);
+	bus_dmamem_free(sc->dmat, sc->sc_cmdseg, 1);
 }
 
 int
@@ -137,19 +140,21 @@ twe_attach(sc)
 	u_int32_t	status;
 	int		error, i, retry, nunits, nseg;
 	const char	*errstr;
+	twe_lock_t	lock;
 
 	error = bus_dmamem_alloc(sc->dmat, sizeof(struct twe_cmd) * TWE_MAXCMDS,
-	    PAGE_SIZE, 0, &sc->sc_cmdseg, 1, &nseg, BUS_DMA_NOWAIT);
+	    PAGE_SIZE, 0, sc->sc_cmdseg, 1, &nseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf(": cannot allocate commands (%d)\n", error);
 		return (1);
 	}
 
-	error = bus_dmamem_map(sc->dmat, &sc->sc_cmdseg, nseg,
+	error = bus_dmamem_map(sc->dmat, sc->sc_cmdseg, nseg,
 	    sizeof(struct twe_cmd) * TWE_MAXCMDS,
 	    (caddr_t *)&sc->sc_cmds, BUS_DMA_NOWAIT);
 	if (error) {
 		printf(": cannot map commands (%d)\n", error);
+		bus_dmamem_free(sc->dmat, sc->sc_cmdseg, 1);
 		return (1);
 	}
 
@@ -349,11 +354,14 @@ twe_attach(sc)
 		cap->table_id = TWE_PARAM_UI + i;
 		cap->param_id = 4;
 		cap->param_size = 4;	/* 4 bytes */
+		lock = TWE_LOCK_TWE(sc);
 		if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
+			TWE_UNLOCK_TWE(sc, lock);
 			printf("%s: error fetching capacity for unit %d\n",
 			    sc->sc_dev.dv_xname, i);
 			continue;
 		}
+		TWE_UNLOCK_TWE(sc, lock);
 
 		nunits++;
 		sc->sc_hdr[i].hd_present = 1;
@@ -402,24 +410,26 @@ twe_cmd(ccb, flags, wait)
 	bus_dmamap_t dmap;
 	struct twe_cmd *cmd;
 	struct twe_segs *sgp;
-	int error, i, nseg;
+	int error, i;
 
 	if (ccb->ccb_data && ((u_long)ccb->ccb_data & (TWE_ALIGN - 1))) {
 		TWE_DPRINTF(TWE_D_DMA, ("data=%p is unaligned ",ccb->ccb_data));
 		ccb->ccb_realdata = ccb->ccb_data;
 
-		error = bus_dmamem_alloc(sc->dmat, ccb->ccb_length,
-		    PAGE_SIZE, 0, &ccb->ccb_2bseg, 1, &nseg, BUS_DMA_NOWAIT);
+		error = bus_dmamem_alloc(sc->dmat, ccb->ccb_length, PAGE_SIZE,
+		    0, ccb->ccb_2bseg, TWE_MAXOFFSETS, &ccb->ccb_2nseg,
+		    BUS_DMA_NOWAIT);
 		if (error) {
-			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed "));
+			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed(%d) ", error));
 			twe_put_ccb(ccb);
 			return (ENOMEM);
 		}
 
-		error = bus_dmamem_map(sc->dmat, &ccb->ccb_2bseg, nseg,
+		error = bus_dmamem_map(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg,
 		    ccb->ccb_length, (caddr_t *)&ccb->ccb_data, BUS_DMA_NOWAIT);
 		if (error) {
-			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed "));
+			TWE_DPRINTF(TWE_D_DMA, ("2buf map failed(%d) ", error));
+			bus_dmamem_free(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg);
 			twe_put_ccb(ccb);
 			return (ENOMEM);
 		}
@@ -440,6 +450,12 @@ twe_cmd(ccb, flags, wait)
 			else
 				printf("error %d loading dma map\n", error);
 
+			if (ccb->ccb_realdata) {
+				bus_dmamem_unmap(sc->dmat, ccb->ccb_data,
+				    ccb->ccb_length);
+				bus_dmamem_free(sc->dmat, ccb->ccb_2bseg,
+				    ccb->ccb_2nseg);
+			}
 			twe_put_ccb(ccb);
 			return error;
 		}
@@ -483,8 +499,14 @@ twe_cmd(ccb, flags, wait)
 
 	if ((error = twe_start(ccb, wait))) {
 		bus_dmamap_unload(sc->dmat, dmap);
+		if (ccb->ccb_realdata) {
+			bus_dmamem_unmap(sc->dmat, ccb->ccb_data,
+			    ccb->ccb_length);
+			bus_dmamem_free(sc->dmat, ccb->ccb_2bseg,
+			    ccb->ccb_2nseg);
+		}
 		twe_put_ccb(ccb);
-		return error;
+		return (error);
 	}
 
 	return wait? twe_complete(ccb) : 0;
@@ -544,10 +566,11 @@ twe_complete(ccb)
 	struct twe_ccb *ccb;
 {
 	struct twe_softc *sc = ccb->ccb_sc;
+	struct scsi_xfer *xs = ccb->ccb_xs;
 	u_int32_t	status;
 	int i;
 
-	for (i = 100000; i--; DELAY(10)) {
+	for (i = 100 * (xs? xs->timeout : 35000); i--; DELAY(10)) {
 		status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
 		/* TWE_DPRINTF(TWE_D_CMD,  ("twe_intr stat=%b ",
 		    status & TWE_STAT_FLAGS, TWE_STAT_BITS)); */
@@ -583,6 +606,7 @@ twe_done(sc, idx)
 	struct twe_ccb *ccb = &sc->sc_ccbs[idx];
 	struct twe_cmd *cmd = ccb->ccb_cmd;
 	struct scsi_xfer *xs = ccb->ccb_xs;
+	bus_dmamap_t	dmap;
 	twe_lock_t	lock;
 
 	TWE_DPRINTF(TWE_D_CMD, ("done(%d) ", idx));
@@ -593,28 +617,26 @@ twe_done(sc, idx)
 		return 1;
 	}
 
+	dmap = ccb->ccb_dmamap;
 	if (xs) {
 		if (xs->cmd->opcode != PREVENT_ALLOW &&
 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
+			bus_dmamap_sync(sc->dmat, dmap,
 			    (xs->flags & SCSI_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->dmat, dmap);
 		}
 	} else {
-		switch (cmd->cmd_op) {
+		switch (letoh16(cmd->cmd_op)) {
 		case TWE_CMD_GPARAM:
 		case TWE_CMD_READ:
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
-			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+			bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->dmat, dmap);
 			break;
 		case TWE_CMD_SPARAM:
 		case TWE_CMD_WRITE:
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+			bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->dmat, dmap);
 			break;
 		default:
 			/* no data */
@@ -623,9 +645,8 @@ twe_done(sc, idx)
 
 	if (ccb->ccb_realdata) {
 		bcopy(ccb->ccb_data, ccb->ccb_realdata, ccb->ccb_length);
-		bus_dmamem_free(sc->dmat, &ccb->ccb_2bseg, 1);
-		ccb->ccb_data = ccb->ccb_realdata;
-		ccb->ccb_realdata = NULL;
+		bus_dmamem_unmap(sc->dmat, ccb->ccb_data, ccb->ccb_length);
+		bus_dmamem_free(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg);
 	}
 
 	lock = TWE_LOCK_TWE(sc);
@@ -848,7 +869,7 @@ twe_scsi_cmd(xs)
 		cmd->cmd_op = op;
 		cmd->cmd_flags = flags;
 		cmd->cmd_io.count = htole16(blockcnt);
-		cmd->cmd_io.lba = blockno;
+		cmd->cmd_io.lba = htole32(blockno);
 
 		if ((error = twe_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
 		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
@@ -958,9 +979,10 @@ twe_intr(v)
 		u_int16_t aen;
 
 		/*
-		 * we no attentions of interest right now.
+		 * we know no attentions of interest right now.
 		 * one of those would be mirror degradation i think.
-		 * or, what else exist in there? maybe 3ware can answer that.
+		 * or, what else exists in there?
+		 * maybe 3ware can answer that?
 		 */
 		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
 		    TWE_CTRL_CATTNI);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: twevar.h,v 1.2 2001/02/19 20:48:02 mickey Exp $	*/
+/*	$OpenBSD: twevar.h,v 1.3 2001/05/10 20:07:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -46,7 +46,8 @@ struct twe_ccb {
 	void			*ccb_data;
 	void			*ccb_realdata;
 	bus_dmamap_t		ccb_dmamap;
-	bus_dma_segment_t	ccb_2bseg;
+	bus_dma_segment_t	ccb_2bseg[TWE_MAXOFFSETS];
+	int			ccb_2nseg;
 };
 
 typedef TAILQ_HEAD(twe_queue_head, twe_ccb)	twe_queue_head;
@@ -62,7 +63,7 @@ struct twe_softc {
 
 	void *sc_cmds;
 	bus_dmamap_t	sc_cmdmap;
-	bus_dma_segment_t sc_cmdseg;
+	bus_dma_segment_t sc_cmdseg[1];
 	struct twe_ccb	sc_ccbs[TWE_MAXCMDS];
 	twe_queue_head	sc_free_ccb;
 	twe_queue_head	sc_ccbq;
@@ -88,5 +89,3 @@ typedef int twe_lock_t;
 void	tweminphys __P((struct buf *bp));
 int	twe_attach __P((struct twe_softc *));
 int	twe_intr __P((void *));
-
-
