@@ -1,10 +1,7 @@
-#	$OpenBSD: CRASH,v 1.4 1996/09/20 06:44:54 deraadt Exp $
-#	$NetBSD: GENERIC,v 1.56 1996/04/30 17:40:34 is Exp $
+#	$OpenBSD: CRASH,v 1.5 1996/10/04 15:01:29 niklas Exp $
 
 #
 # The first OpenBSD/Amiga "user" Neil Brewitt's GG2 + NE2000 equipped A3000
-#
-# This configuration file contains all possible options
 #
 
 include "std.amiga"
@@ -17,75 +14,75 @@ options		TIMEZONE=300, DST=1
 #
 # processors this kernel should support
 #
-options		"M68040"	# support for 040
-options		FPSP		# MC68040 floating point support
-options		"M68030"	# support for 030
-options		"M68020"	# support for 020/851
-options		FPCOPROC	# Support for MC6888[12] (Required)
+#option		"M68040"	# support for 040
+#option		FPSP		# MC68040 floating point support
+option		"M68030"	# support for 030
+#option		"M68020"	# support for 020/851
+option		FPCOPROC	# Support for MC6888[12] (Required)
 
-options		SWAPPAGER	# Pager for processes (Required)
-options		DEVPAGER	# Pager for devices (Required)
+option		SWAPPAGER	# Pager for processes (Required)
+option		VNODEPAGER	# Pager for vnodes (Required)
+option		DEVPAGER	# Pager for devices (Required)
 
 #
 # Networking options
 #
-options		INET		# IP networking support (Required)
-options		GATEWAY		# Packet forwarding
-#options	DIRECTED_BROADCAST	# Broadcast across subnets
-#options	MROUTING	# Multicast routing
-#options	NS		# XNS
-#options	ISO,TPIP	# OSI
-#options	EON		# OSI tunneling over IP
-#options	CCITT,LLC,HDLC	# X.25
-#options	PPP_BSDCOMP,PPP_DEFLATE	# BSD compression for PPP
+option		INET		# IP networking support (Required)
+option		GATEWAY		# Packet forwarding
+#option		DIRECTED_BROADCAST	# Broadcast across subnets
+#option		MROUTING	# Multicast routing
+#option		NS		# XNS
+#option		ISO,TPIP	# OSI
+#option		EON		# OSI tunneling over IP
+#option		CCITT,LLC,HDLC	# X.25
+#option		PPP_BSDCOMP,PPP_DEFLATE	# BSD compression for PPP
 
 #
 # File systems
 #
-options		FFS		# Berkeley fast file system
-options		QUOTA		# UFS quotas
-#options	LFS		# log-structured filesystem
-options		MFS		# Memory based filesystem
+option		FFS		# Berkeley fast file system
+option		QUOTA		# UFS quotas
+#option		LFS		# log-structured filesystem
+option		MFS		# Memory based filesystem
 
-options		NFSSERVER	# Network File System server side code
-options		NFSCLIENT	# Network File System client side code
+#option		NFSSERVER	# Network File System server side code
+#option		NFSCLIENT	# Network File System client side code
 
-options		ADOSFS		# AmigaDOS file system
-options		CD9660		# ISO 9660 + Rock Ridge file system
-options		MSDOSFS		# MS-DOS file system [does not work]
-options		FDESC		# /dev/fd
-options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		NULLFS		# loopback file system
-#options	PORTAL		# Portal Filesystem
-options		PROCFS		# /proc
-options		UMAPFS		# NULLFS + uid and gid remapping
-options		UNION		# union file system
+option		ADOSFS		# AmigaDOS file system
+option		CD9660		# ISO 9660 + Rock Ridge file system
+option		MSDOSFS		# MS-DOS file system [does not work]
+#option		FDESC		# /dev/fd
+option		FIFO		# FIFOs; RECOMMENDED
+#option		KERNFS		# /kern
+#option		NULLFS		# loopback file system
+#option		PORTAL		# Portal Filesystem
+#option		PROCFS		# /proc
+#option		UMAPFS		# NULLFS + uid and gid remapping
+#option		UNION		# union file system
 
 
 #
 # Compatability options for various existing systems
 #
-options		"COMPAT_10"	# compatability with older NetBSD release
-options		"COMPAT_09"	# compatability with older NetBSD release
-options		"COMPAT_43"	# 4.3 BSD compatible system calls
-options		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-#options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
-options		"COMPAT_NOMID"	# allow nonvalid machine id executables
-#options	COMPAT_HPUX	# HP300 compatability
+option		"COMPAT_10"	# compatability with older NetBSD release
+option		"COMPAT_09"	# compatability with older NetBSD release
+option		"COMPAT_43"	# 4.3 BSD compatible system calls
+#option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
+option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+option		"COMPAT_NOMID"	# allow nonvalid machine id executables
+#option	COMPAT_HPUX	# HP300 compatability
 
 #
 # Support for System V IPC facilities.
 #
-options		SYSVSHM		# System V-like shared memory
-options		SYSVMSG		# System V-like messages
-options		SYSVSEM		# System V-like semaphores
+#option		SYSVSHM		# System V-like shared memory
+#option		SYSVMSG		# System V-like messages
+#option		SYSVSEM		# System V-like semaphores
 
 #
 # Support for various kernel options
 #
 
-options		UCONSOLE	# anyone can redirect a virtual console
 #options	INSECURE	# allow, among other insecure stuff, LKM 
 				# loading in multi-user mode.
 
@@ -96,56 +93,56 @@ options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 #
 # Misc. debuging options
 #
-options		DDB		# Kernel debugger
-options		DIAGNOSTIC	# Add additional error checking code
-options		KTRACE		# Add kernel tracing system call
-#options	DEBUG		# Add debugging statements
-#options	SYSCALL_DEBUG	# debug all syscalls.
-#options	SCSIDEBUG	# Add SCSI debugging statements
-#options	KGDB		# Kernel debugger (KGDB) support
-#options	PANICBUTTON	# Forced crash via keypress (???)
+option		DDB		# Kernel debugger
+option		DIAGNOSTIC	# Add additional error checking code
+option		KTRACE		# Add kernel tracing system call
+#option		DEBUG		# Add debugging statements
+#option		SYSCALL_DEBUG	# debug all syscalls.
+#option		SCSIDEBUG	# Add SCSI debugging statements
+#option		KGDB		# Kernel debugger (KGDB) support
+#option		PANICBUTTON	# Forced crash via keypress (???)
 
 #
 # Amiga specific options
 #
-options		MACHINE_NONCONTIG # Non-contiguous memory support
-#options	KBDRESET	# sync on Ctrl-Amiga-Amiga
+option		MACHINE_NONCONTIG # Non-contiguous memory support
+#option	KBDRESET	# sync on Ctrl-Amiga-Amiga
 
 # These options improve performance with the built-in serial port
 # on slower Amigas.  Try the larger buffers first then lev6_defer.
-#options	"SERIBUF_SIZE=4096"
-#options	"SEROBUF_SIZE=32"
-#options	LEV6_DEFER	# defers l6 to l4 (below serial l5)
+#option		"SERIBUF_SIZE=4096"
+#option		"SEROBUF_SIZE=32"
+#option		LEV6_DEFER	# defers l6 to l4 (below serial l5)
 
-options		RETINACONSOLE	# enable code to allow retina to be console
-options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
-options		CL5426CONSOLE	# Cirrus console
-options		CV64CONSOLE	# CyberVision console
+#option		RETINACONSOLE	# enable code to allow retina to be console
+#option		ULOWELLCONSOLE	# enable code to allow a2410 to be console
+#option		CL5426CONSOLE	# Cirrus console
+#option		CV64CONSOLE	# CyberVision console
 
-options		GRF_ECS		# Enhanced Chip Set
-options		GRF_NTSC	# NTSC
-options		GRF_PAL		# PAL
-options		"GRF_A2024"	# Support for the A2024
-options		GRF_AGA		# AGA Chip Set
-options		GRF_CL5426	# Cirrus board support
-#options	"KFONT_8X11"	# 8x11 font
-options		IPL_REMAP_1	# Remap level 6 ints version 1
+option		GRF_ECS		# Enhanced Chip Set
+option		GRF_NTSC	# NTSC
+option		GRF_PAL		# PAL
+#option		"GRF_A2024"	# Support for the A2024
+#option		GRF_AGA		# AGA Chip Set
+#option		GRF_CL5426	# Cirrus board support
+#option		"KFONT_8X11"	# 8x11 font
+option		IPL_REMAP_1	# Remap level 6 ints version 1
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and don't need option setting
-#options	"ULOWELL_OSC1=36000000"
-#options	"ULOWELL_OSC2=66667000"
+#option	"ULOWELL_OSC1=36000000"
+#option	"ULOWELL_OSC2=66667000"
 
 # This is how you specify the blitting speed, higher values may speed up blits
 # a littel bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
-#options	RH_MEMCLK 61000000
+#option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work
 # for quite a few people.  E.g. The cursor sprite will turn to a block
 # when moved to the top of the screen in X.
-#options	RH_64BIT_SPRITE
+#option		RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
-#options	RETINA_SPEED_HACK
+#option		RETINA_SPEED_HACK
 
 grfcc0		at mainbus0		# custom chips
 #grfrt0		at zbus0		# retina II
@@ -225,7 +222,6 @@ scsibus*	at ahsc0
 # each hard drive from low target to high
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
-
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
 ss*	at scsibus? target ? lun ?	# scsi scanners
