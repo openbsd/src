@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.37 1998/10/03 21:19:00 millert Exp $	*/
+/*	$OpenBSD: wd.c,v 1.38 1998/10/04 01:46:42 millert Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -92,7 +92,8 @@ struct cfdriver wd_cd = {
 	NULL, "wd", DV_DISK
 };
 
-void	wdgetdisklabel	__P((dev_t, struct wd_softc *));
+void	wdgetdisklabel __P((dev_t, struct wd_softc *, struct disklabel *,
+			    struct cpu_disklabel *, int));
 int	wd_get_parms	__P((struct wd_softc *));
 void	wdstrategy	__P((struct buf *));
 
@@ -451,7 +452,8 @@ wdopen(dev, flag, fmt, p)
 			}
 
 			/* Load the partition info if not already loaded. */
-			wdgetdisklabel(dev, wd);
+			wdgetdisklabel(dev, wd, wd->sc_dk.dk_label,
+			    wd->sc_dk.dk_cpulabel, 0);
 		}
 	}
 
@@ -526,18 +528,20 @@ wdclose(dev, flag, fmt, p)
  * Fabricate a default disk label, and try to read the correct one.
  */
 void
-wdgetdisklabel(dev, wd)
+wdgetdisklabel(dev, wd, lp, clp, spoofonly)
 	dev_t dev;
 	struct wd_softc *wd;
+	struct disklabel *lp;
+	struct cpu_disklabel *clp;
+	int spoofonly;
 {
-	struct disklabel *lp = wd->sc_dk.dk_label;
 	struct wd_link *d_link = wd->d_link;
 	char *errstring;
 
 	WDDEBUG_PRINT(("wdgetdisklabel\n"));
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = d_link->sc_params.wdp_heads;
@@ -576,8 +580,12 @@ wdgetdisklabel(dev, wd)
 
 	if (d_link->sc_state > RECAL)
 		d_link->sc_state = RECAL;
-	errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp,
-	    wd->sc_dk.dk_cpulabel, 0);
+
+	/*
+	 * Call the generic disklabel extraction routine
+	 */
+	errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp, clp,
+	    spoofonly);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -587,8 +595,8 @@ wdgetdisklabel(dev, wd)
 		 */
 		if (d_link->sc_state > GEOMETRY)
 			d_link->sc_state = GEOMETRY;
-		errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp,
-		    wd->sc_dk.dk_cpulabel, 0);
+		errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp, clp,
+		    spoofonly);
 	}
 	if (errstring) {
 		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
@@ -602,7 +610,6 @@ wdgetdisklabel(dev, wd)
 		bad144intern(wd);
 #endif
 }
-
 
 /*
  * Tell the drive what geometry to use.
@@ -656,6 +663,13 @@ wdioctl(dev, xfer, addr, flag, p)
 		return 0;
 #endif
 
+	case DIOCGPDINFO: {
+			struct cpu_disklabel osdep;
+
+			wdgetdisklabel(dev, wd, (struct disklabel *)addr,
+			    &osdep, 1);
+			return 0;
+		}
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
 		return 0;
