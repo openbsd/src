@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.37 2001/07/09 07:04:50 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.38 2001/11/16 23:49:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.37 2001/07/09 07:04:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.38 2001/11/16 23:49:07 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -123,6 +123,7 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.37 2001/07/09 07:04:50 deraadt 
 #include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
+#include <errno.h>
 #include <unistd.h>
 #include <err.h>
 
@@ -921,8 +922,10 @@ void
 child_killer(signum)
 	int signum;
 {
+	int save_errno = errno;
 	int status;
 
 	while (waitpid(-1, &status, WNOHANG) > 0)
 		;
+	errno = save_errno;
 }
