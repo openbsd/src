@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1996/12/08 15:15:44 niklas Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/02/06 02:56:44 downsj Exp $
 #	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
 
 LIB=	sa
@@ -16,6 +16,10 @@ CFLAGS+=${XCFLAGS} -D_STANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/..
 CFLAGS+=$(EXTRACFLAGS)
 CPPFLAGS+=${XCPPFLAGS}
 
+.if defined(SA_ZLIB)
+CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
+.endif
+
 .if ${MACHINE_ARCH}=="i386"
 .PATH: ${DIR}/../../arch/${MACHINE_ARCH}/stand
 .include "${DIR}/../../arch/${MACHINE_ARCH}/stand/Makefile.inc"
@@ -28,6 +32,9 @@ SRCS+=	alloc.c memcpy.c exit.c exec.c getfile.c gets.c globals.c \
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
 	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c
+.if defined(SA_ZLIB)
+SRCS+=	cread.c
+.endif
 
 .if !defined(NO_NET)
 # network routines

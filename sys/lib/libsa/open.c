@@ -1,4 +1,4 @@
-/*	$OpenBSD: open.c,v 1.5 1996/12/08 15:15:54 niklas Exp $	*/
+/*	$OpenBSD: open.c,v 1.6 1997/02/06 02:56:46 downsj Exp $	*/
 /*	$NetBSD: open.c,v 1.12 1996/09/30 16:01:21 ws Exp $	*/
 
 /*-
@@ -74,7 +74,11 @@ struct open_file files[SOPEN_MAX];
  */
 
 int
+#ifndef __INTERNAL_LIBSA_CREAD
 open(fname, mode)
+#else
+oopen(fname, mode)
+#endif
 	const char *fname;
 	int mode;
 {
