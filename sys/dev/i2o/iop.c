@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.18 2001/07/27 09:55:08 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.19 2001/10/27 20:54:24 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -400,22 +400,23 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	    sc->sc_maxob, letoh32(sc->sc_status.maxoutboundmframes));
 #endif
 
-	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", hz * 30, 0);
+	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", 0, 0);
 
 	startuphook_establish((void (*)(void *))iop_config_interrupts, sc);
 	kthread_create_deferred(iop_create_reconf_thread, sc);
 	return;
 
  bail_out:
-	if (state > 3)
+	if (state > 4)
 		free(im, M_DEVBUF);
-	if (state > 2)
+	if (state > 3)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
-	if (state > 1)
+	if (state > 2)
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-	if (state > 0)
+	if (state > 1)
 		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
+	if (state > 0)
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 }
 
 /*
