@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.110 2002/12/13 21:48:31 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.111 2002/12/16 08:49:22 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -627,13 +627,23 @@ struct cbq_opts {
 	int		flags;
 };
 
+struct priq_opts {
+	int		flags;
+};
+
 struct hfsc_opts {
-	u_int		rt_m1;
-	u_int		rt_d;
-	u_int		rt_m2;
-	u_int		ls_m1;
-	u_int		ls_d;
-	u_int		ls_m2;
+	/* real-time service curve */
+	u_int		rtsc_m1;	/* slope of the 1st segment in bps */
+	u_int		rtsc_d;		/* the x-projection of m1 in msec */
+	u_int		rtsc_m2;	/* slope of the 2nd segment in bps */
+	/* link-sharing service curve */
+	u_int		lssc_m1;
+	u_int		lssc_d;
+	u_int		lssc_m2;
+	/* upper-limit service curve */
+	u_int		ulsc_m1;
+	u_int		ulsc_d;
+	u_int		ulsc_m2;
 	int		flags;
 };
 
@@ -658,8 +668,8 @@ struct pf_altq {
 	u_int16_t		 flags;		/* misc flags */
 	union {
 		struct cbq_opts		 cbq_opts;
+		struct priq_opts	 priq_opts;
 		struct hfsc_opts	 hfsc_opts;
-		/* and other discipline specific options */
 	} pq_u;
 
 	u_int32_t		 qid;		/* return value */
