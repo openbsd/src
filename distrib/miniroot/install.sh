@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.56 1999/08/15 09:53:36 millert Exp $
+#	$OpenBSD: install.sh,v 1.57 1999/09/03 18:54:03 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -260,18 +260,6 @@ __get_filesystems_1
 	echo	"You have configured the following devices and mount points:"
 	echo
 	cat ${FILESYSTEMS}
-	echo
-	echo	"Filesystems will now be created on these devices."
-	echo 	"If you made any mistakes, you may edit this now."
-	echo -n	"Edit using ${EDITOR}? [n] "
-	getresp "n"
-	case "$resp" in
-		y*|Y*)
-			${EDITOR} ${FILESYSTEMS}
-			;;
-		*)
-			;;
-	esac
 	echo
 	echo "============================================================"
 	echo "The next step will overwrite any existing data on:"
