@@ -3,7 +3,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: s_floor.c,v 1.1 2002/05/22 21:34:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: s_floor.c,v 1.2 2002/09/11 15:16:52 mickey Exp $";
 #endif
 
 #include <sys/types.h>
@@ -11,7 +11,7 @@ static char rcsid[] = "$OpenBSD: s_floor.c,v 1.1 2002/05/22 21:34:56 mickey Exp 
 #include "math.h"
 
 double
-__ieee754_floor(double x)
+floor(double x)
 {
 	u_int32_t ofpsr, fpsr;
 
