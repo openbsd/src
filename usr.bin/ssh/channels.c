@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.14 1999/10/16 20:47:13 markus Exp $");
+RCSID("$Id: channels.c,v 1.15 1999/10/16 21:19:00 deraadt Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -378,7 +378,7 @@ void channel_after_select(fd_set *readset, fd_set *writeset)
 		  break;
 		}
 	      remote_hostname = get_remote_hostname(newsock);
-	      sprintf(buf, "X11 connection from %.200s port %d",
+	      snprintf(buf, sizeof buf, "X11 connection from %.200s port %d",
 		      remote_hostname, get_peer_port(newsock));
 	      xfree(remote_hostname);
 	      newch = channel_allocate(SSH_CHANNEL_OPENING, newsock, 
@@ -406,7 +406,7 @@ void channel_after_select(fd_set *readset, fd_set *writeset)
 		  break;
 		}
 	      remote_hostname = get_remote_hostname(newsock);
-	      sprintf(buf, "port %d, connection from %.200s port %d",
+	      snprintf(buf, sizeof buf, "port %d, connection from %.200s port %d",
 		      ch->listening_port, remote_hostname,
 		      get_peer_port(newsock));
 	      xfree(remote_hostname);
@@ -818,7 +818,7 @@ char *channel_open_message()
   char buf[512], *cp;
 
   buffer_init(&buffer);
-  sprintf(buf, "The following connections are open:\r\n");
+  snprintf(buf, sizeof buf, "The following connections are open:\r\n");
   buffer_append(&buffer, buf, strlen(buf));
   for (i = 0; i < channels_alloc; i++){
     Channel *c=&channels[i];
@@ -1165,7 +1165,7 @@ connect_local_xsocket(unsigned dnr)
 	error("socket: %.100s", strerror(errno));
       memset(&addr, 0, sizeof(addr));
       addr.sun_family = AF_UNIX;
-      sprintf(addr.sun_path, *path, dnr);
+      snprintf(addr.sun_path, sizeof addr.sun_path, *path, dnr);
       if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0)
 	return sock;
       close(sock);
