@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.492 2002/03/15 00:06:06 millert Exp $
+	$OpenBSD: pcidevs,v 1.493 2002/03/19 14:27:00 nate Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -553,6 +553,7 @@ vendor SYBA		0x1592	Syba
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor GLOBALSUN	0x16ab	Global Sun
+vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
 vendor SYMPHONY2	0x1c1c	Symphony Labs
 vendor TEKRAM2		0x1de1	Tekram Technology
@@ -771,6 +772,9 @@ product ALTEON ACENIC		0x0001	Acenic
 product ALTEON ACENICT		0x0002	Acenic Copper
 product ALTEON BCM5700		0x0003	BCM5700 (Broadcom)
 product ALTEON BCM5701		0x0004	BCM5701 (Broadcom)
+
+/* Altima products */
+product ALTIMA AC100X		0x03e8	AC100X
 
 /* AMD products */
 product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
