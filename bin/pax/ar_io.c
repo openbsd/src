@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.8 1996/12/09 12:00:13 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.9 1997/02/16 07:51:12 tholo Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.8 1996/12/09 12:00:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.9 1997/02/16 07:51:12 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$OpenBSD: ar_io.c,v 1.8 1996/12/09 12:00:13 deraadt Exp $
 #include <stdlib.h>
 #include <err.h>
 #include "pax.h"
+#include "options.h"
 #include "extern.h"
 
 /*
@@ -401,13 +402,14 @@ ar_close()
 		return;
 	}
 
-	(void)fprintf(outf,
+	if (strcmp(NM_TAR, argv0) != 0)
+		(void)fprintf(outf,
 #	ifdef NET2_STAT
-	    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
+		    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
 #	else
-	    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
+		    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
 #	endif
-	    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
+		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
 	(void)fflush(outf);
 	flcnt = 0;
 }
