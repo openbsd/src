@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2005/01/10 22:16:08 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2005/01/13 16:11:02 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -105,6 +105,20 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
+umodem*		at uhub?		# USB Modems/Serial
+ucom*		at umodem?
+uvisor*		at uhub?		# Handspring Visor
+ucom*		at uvisor?
+uvscom*		at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*		at uvscom?
+ubsa*		at uhub?		# Belkin serial adapter
+ucom*		at ubsa?
+uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
+ucom*		at uftdi?
+uplcom*	 at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*		at uplcom?
+umct*		at uhub?		# MCT USB-RS232 serial adapter
+ucom*		at umct?
 
 sd*		at scsibus?
 #st*		at scsibus?
