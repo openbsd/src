@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.c,v 1.3 1998/11/17 11:10:12 niklas Exp $	*/
-/*	$EOM: if.c,v 1.6 1998/08/14 20:31:41 niklas Exp $	*/
+/*	$OpenBSD: if.c,v 1.4 1999/02/26 03:37:08 niklas Exp $	*/
+/*	$EOM: if.c,v 1.7 1999/02/25 11:39:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,8 @@
 #include <net/if.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "sysdep.h"
 
 #include "if.h"
 
