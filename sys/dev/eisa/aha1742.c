@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.14 1996/11/28 23:27:36 niklas Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.15 2001/02/03 07:24:49 mickey Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 typedef u_long physaddr;
 typedef u_long physlen;
 
-#define KVTOPHYS(x)	vtophys(x)
+#define KVTOPHYS(x)	kvtop((caddr_t)x)
 
 #define AHB_ECB_MAX	32	/* store up to 32 ECBs at one time */
 #define	ECB_HASH_SIZE	32	/* hash table size for phystokv */
@@ -213,9 +213,9 @@ struct ahb_ecb_status {
 struct ahb_ecb {
 	u_char  opcode;
 #define	ECB_SCSI_OP	0x01
-	        u_char:4;
+		u_char:4;
 	u_char  options:3;
-	        u_char:1;
+		u_char:1;
 	short   opt1;
 #define	ECB_CNE	0x0001
 #define	ECB_DI	0x0080
@@ -609,7 +609,7 @@ ahbintr(arg)
 			if ((ahb_debug & AHB_SHOWECBS) && ecb)
 				printf("<int ecb(%x)>", ecb);
 #endif /*AHBDEBUG */
-			untimeout(ahb_timeout, ecb);
+			timeout_del(&ecb->xs->stimeout);
 			ahb_done(sc, ecb);
 		}
 
@@ -968,6 +968,7 @@ ahb_scsi_cmd(xs)
 		return TRY_AGAIN_LATER;
 	}
 	ecb->xs = xs;
+	timeout_set(&ecb->xs->stimeout, ahb_timeout, ecb);
 
 	/*
 	 * If it's a reset, we need to do an 'immediate'
@@ -986,8 +987,8 @@ ahb_scsi_cmd(xs)
 		ahb_send_immed(sc, sc_link->target, AHB_TARG_RESET);
 
 		if ((flags & SCSI_POLL) == 0) {
-			timeout(ahb_timeout, ecb, (xs->timeout * hz) / 1000);
 			splx(s);
+			timeout_add(&ecb->xs->stimeout, (xs->timeout * hz) / 1000);
 			return SUCCESSFULLY_QUEUED;
 		}
 
@@ -1122,8 +1123,8 @@ ahb_scsi_cmd(xs)
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	if ((flags & SCSI_POLL) == 0) {
-		timeout(ahb_timeout, ecb, (xs->timeout * hz) / 1000);
 		splx(s);
+		timeout_add(&ecb->xs->stimeout, (xs->timeout * hz) / 1000);
 		return SUCCESSFULLY_QUEUED;
 	}
 
@@ -1182,7 +1183,7 @@ ahb_timeout(arg)
 		ahb_send_mbox(sc, OP_ABORT_ECB, ecb);
 		/* 2 secs for the abort */
 		if ((xs->flags & SCSI_POLL) == 0)
-			timeout(ahb_timeout, ecb, 2 * hz);
+			timeout_add(&ecb->xs->stimeout, 2 * hz);
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.2 1997/04/13 20:10:29 mickey Exp $	*/
+/*	$OpenBSD: uha.c,v 1.3 2001/02/03 07:29:29 mickey Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -381,6 +381,7 @@ uha_scsi_cmd(xs)
 	}
 	mscp->xs = xs;
 	mscp->timeout = xs->timeout;
+	timeout_set(&xs->stimeout, uha_timeout, xs);
 
 	/*
 	 * Put all the arguments for the xfer in the mscp

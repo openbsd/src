@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.2 1997/04/13 20:22:38 mickey Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.3 2001/02/03 07:29:29 mickey Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ u24_start_mbox(sc, mscp)
 	bus_space_write_1(iot, ioh, U24_LINT, U24_OGMFULL);
 
 	if ((mscp->xs->flags & SCSI_POLL) == 0)
-		timeout(uha_timeout, mscp, (mscp->timeout * hz) / 1000);
+		timeout_add(&mscp->xs->stimeout, (mscp->timeout * hz) / 1000);
 }
 
 int
@@ -315,7 +315,7 @@ u24_intr(arg)
 			    sc->sc_dev.dv_xname);
 			continue;	/* whatever it was, it'll timeout */
 		}
-		untimeout(uha_timeout, mscp);
+		timeout_del(&mscp->xs->stimeout);
 		uha_done(sc, mscp);
 
 		if ((bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP) == 0)
