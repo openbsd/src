@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.10 2001/06/27 05:11:16 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.11 2001/07/04 05:58:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -31,17 +31,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	LOFN_BAR0	0x10
+#define	LOFN_BAR0		0x0010		/* base address register */
 
-#define	LOFN_WIN_0	0x0000
-#define	LOFN_WIN_1	0x2000
-#define	LOFN_WIN_2	0x4000
-#define	LOFN_WIN_3	0x6000
-
-#define	LOFN_REG_MASK		0x0f80		/* Register number mask */
-#define	LOFN_REG_SHIFT		7
-#define	LOFN_WORD_MASK		0x007c		/* Word index mask */
-#define	LOFN_WORD_SHIFT		2
+#define	LOFN_WIN_0		0x0000		/* 0 - rev byte, norm word */
+#define	LOFN_WIN_1		0x2000		/* 1 - rev byte, rev word */
+#define	LOFN_WIN_2		0x4000		/* 2 - norm byte, norm word */
+#define	LOFN_WIN_3		0x6000		/* 3 - norm byte, rev word */
 
 /* Bignum registers */
 #define	LOFN_REL_DATA		0x0000		/* Data registers */
@@ -64,19 +59,30 @@
 #define	LOFN_REL_CFG2		0x1fe8		/* Config2 */
 #define	LOFN_REL_CHIPID		0x1fec		/* Chip ID */
 
+/* Data register access */
+#define	LOFN_REG_MASK		0x0f80		/* Register number mask */
+#define	LOFN_REG_SHIFT		7
+#define	LOFN_WORD_MASK		0x007c		/* Word index mask */
+#define	LOFN_WORD_SHIFT		2
+
+/* Command address register (LOFN_REL_CR) */
 #define	LOFN_CR_ADDR_MASK	0x0000003f	/* Instruction addr offset */
 
+/* Status register (LOFN_REL_SR) */
 #define	LOFN_SR_CARRY		0x00000008	/* Carry from operation */
 #define	LOFN_SR_RNG_UF		0x00001000	/* RNG underflow */
 #define	LOFN_SR_RNG_RDY		0x00004000	/* RNG ready */
 #define	LOFN_SR_DONE		0x00008000	/* Operation done */
 
+/* Interrupt enable register (LOFN_REL_IER) */
 #define	LOFN_IER_RDY		0x00004000	/* RNG ready */
 #define	LOFN_IER_DONE		0x00008000	/* Operation done */
 
+/* Random number configuration (LOFN_REL_RNC) */
 #define	LOFN_RNC_OUTSCALE	0x00000080	/* Output prescalar */
 #define	LOFN_RNC_1STSCALE	0x00000f00	/* First prescalar */
 
+/* Config register 1 (LOFN_REL_CFG1) */
 #define	LOFN_CFG1_RESET		0x00000001	/* Reset */
 #define	LOFN_CFG1_MULTI		0x00000038	/* PLL multiple */
 #define	LOFN_CFG1_MULTI_BYP	0x00000000	/*  PLL bypass */
@@ -88,9 +94,11 @@
 #define	LOFN_CFG1_MULTI_4X	0x00000030	/*  4x CLK */
 #define	LOFN_CFG1_CLOCK		0x00000040	/* Clock select */
 
+/* Config register 2 (LOFN_REL_CFG2) */
 #define	LOFN_CFG2_RNGENA	0x00000001	/* RNG enable */
 #define	LOFN_CFG2_PRCENA	0x00000002	/* Processor enable */
 
+/* Chip identification (LOFN_REL_CHIPID) */
 #define	LOFN_CHIPID_MASK	0x0000ffff	/* Chip ID */
 
 #define	LOFN_REGADDR(win,r,idx) 			\
@@ -118,7 +126,8 @@
 #define	OP_CODE_SR		0x28000000	/*  shift right */
 #define	OP_CODE_SL		0x2c000000	/*  shift left */
 #define	OP_CODE_INC		0x30000000	/*  increment */
-#define	OP_CODE_DEC		0x34000000	/*  set length tag */
+#define	OP_CODE_DEC		0x34000000	/*  decrement */
+#define	OP_CODE_TAG		0x38000000	/*  set length tag */
 #define	OP_CODE_NOP		0x7c000000	/*  nop */
 
 #define	OP_RD_SHIFT		21
