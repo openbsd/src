@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.14 1998/03/03 05:16:19 ryker Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.15 1998/03/03 05:43:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -544,8 +544,7 @@ userconf_help()
 		}
 		switch (*userconf_cmds[j+1]) {
 		case 'L':
-			printf("[count]             %s",
-			    "number of lines before more");
+			printf("[count]             number of lines before more");
 			break;
 		case 'a':
 			printf("dev                 add a device");
@@ -554,32 +553,32 @@ userconf_help()
 			printf("8|10|16             base on large numbers");
 			break;
 		case 'c':
-			printf("devno|dev           %s devices","change");
+			printf("devno|dev           change devices");
 			break;
 		case 'd':
-			printf("attr val|devno|dev  %s devices","disable");
+			printf("attr val|devno|dev  disable devices");
 			break;
 		case 'e':
-			printf("attr val|devno|dev  %s devices","enable");
+			printf("attr val|devno|dev  enable devices");
 			break;
 		case 'f':
-			printf("devno|dev           %s devices","find");
+			printf("devno|dev           find devices");
 			break;
 		case 'h':
-			printf("                    %s","this message");
+			printf("                    this message");
 			break;
 		case 'l':
-			printf("                    %s","list configuration");
+			printf("                    list configuration");
 			break;
 		case 'q':
-			printf("                    %s","leave UKC");
+			printf("                    leave UKC");
 			break;
 		case 's':
 			printf("[attr [val]]        %s",
 			   "show attributes (or devices with an attribute)");
 			break;
 		default:
-			printf("                    %s","don't know");
+			printf("                    don't know");
 			break;
 		}
 		printf("\n");
