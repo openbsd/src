@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.51 1999/11/11 23:36:53 markus Exp $");
+RCSID("$Id: sshd.c,v 1.52 1999/11/14 23:20:09 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -114,8 +114,10 @@ int received_sighup = 0;
 RSA *public_key;
 
 /* Prototypes for various functions defined later in this file. */
-void do_connection(int privileged_port);
-void do_authentication(char *user, int privileged_port);
+void do_connection();
+void do_authentication(char *user);
+void do_authloop(struct passwd *pw);
+void do_fake_authloop(char *user);
 void do_authenticated(struct passwd *pw);
 void do_exec_pty(const char *command, int ptyfd, int ttyfd, 
 		 const char *ttyname, struct passwd *pw, const char *term,
@@ -233,6 +235,7 @@ main(int ac, char **av)
   struct sockaddr_in sin;
   char buf[100]; /* Must not be larger than remote_version. */
   char remote_version[100]; /* Must be at least as big as buf. */
+  int remote_port;
   char *comment;
   FILE *f;
   struct linger linger;
@@ -600,6 +603,8 @@ main(int ac, char **av)
      have a key. */
   packet_set_connection(sock_in, sock_out);
 
+  remote_port = get_remote_port();
+
   /* Check whether logins are denied from this host. */
 #ifdef LIBWRAP
   {
@@ -613,13 +618,11 @@ main(int ac, char **av)
       close(sock_out);
       refuse(&req);
     }
-    log("Connection from %.500s port %d",
-	eval_client(&req), get_remote_port());
+    log("Connection from %.500s port %d", eval_client(&req), remote_port);
   }
 #else
   /* Log the connection. */
-  log("Connection from %.100s port %d", 
-      get_remote_ipaddr(), get_remote_port());
+  log("Connection from %.100s port %d", get_remote_ipaddr(), remote_port);
 #endif /* LIBWRAP */
 
   /* We don\'t want to listen forever unless the other side successfully
@@ -692,11 +695,23 @@ main(int ac, char **av)
     }
   }
 
+  /* Check that the connection comes from a privileged port.
+     Rhosts- and Rhosts-RSA-Authentication only make sense
+     from priviledged programs.
+     Of course, if the intruder has root access on his local machine,
+     he can connect from any port.  So do not use these authentication
+     methods from machines that you do not trust. */
+  if (remote_port >= IPPORT_RESERVED ||
+      remote_port <  IPPORT_RESERVED / 2)
+    {
+      options.rhosts_authentication = 0;
+      options.rhosts_rsa_authentication = 0;
+    }
+
   packet_set_nonblocking();
   
-  /* Handle the connection.   We pass as argument whether the connection
-     came from a privileged port. */
-  do_connection(get_remote_port() < IPPORT_RESERVED);
+  /* Handle the connection. */
+  do_connection();
 
 #ifdef KRB4
   /* Cleanup user's ticket cache file. */
@@ -717,7 +732,8 @@ main(int ac, char **av)
    been exchanged.  This sends server key and performs the key exchange.
    Server and host keys will no longer be needed after this functions. */
 
-void do_connection(int privileged_port)
+void
+do_connection()
 {
   int i, len;
   BIGNUM *session_key_int;
@@ -909,7 +925,7 @@ void do_connection(int privileged_port)
 
   setproctitle("%s", user);
   /* Do the authentication. */
-  do_authentication(user, privileged_port);
+  do_authentication(user);
 }
 
 /* Check if the user is allowed to log in via ssh. If user is listed in
@@ -992,23 +1008,13 @@ allowed_user(struct passwd *pw)
 
 /* Performs authentication of an incoming connection.  Session key has already
    been exchanged and encryption is enabled.  User is the user name to log
-   in as (received from the clinet).  Privileged_port is true if the
-   connection comes from a privileged port (used for .rhosts authentication).*/
-
-#define MAX_AUTH_FAILURES 5
+   in as (received from the client). */
 
 void
-do_authentication(char *user, int privileged_port)
+do_authentication(char *user)
 {
-  int type;
-  int authenticated = 0;
-  int authentication_failures = 0;
-  char *password;
   struct passwd *pw, pwcopy;
-  char *client_user;
-  unsigned int client_host_key_bits;
-  BIGNUM *client_host_key_e, *client_host_key_n;
-			 
+
 #ifdef AFS
   /* If machine has AFS, set process authentication group. */
   if (k_hasafs()) {
@@ -1020,47 +1026,7 @@ do_authentication(char *user, int privileged_port)
   /* Verify that the user is a valid user. */
   pw = getpwnam(user);
   if (!pw || !allowed_user(pw))
-    {
-      /* The user does not exist or access is denied,
-         but fake indication that authentication is needed. */
-      packet_start(SSH_SMSG_FAILURE);
-      packet_send();
-      packet_write_wait();
-
-      /* Keep reading packets, and always respond with a failure.  This is to
-	 avoid disclosing whether such a user really exists. */
-      for (;;)
-	{
-	  /* Read a packet.  This will not return if the client disconnects. */
-	  int plen;
-	  int type = packet_read(&plen);
-#ifdef SKEY
-	  int passw_len;
-	  char *password, *skeyinfo;
-	  if (options.password_authentication &&
-	     options.skey_authentication == 1 &&
-	     type == SSH_CMSG_AUTH_PASSWORD &&
-	     (password = packet_get_string(&passw_len)) != NULL &&
-	     passw_len == 5 &&
-	     strncasecmp(password, "s/key", 5) == 0 &&
-	     (skeyinfo = skey_fake_keyinfo(user)) != NULL ){
-	    /* Send a fake s/key challenge. */
-	    packet_send_debug(skeyinfo);
-          }
-#endif
-          if (++authentication_failures >= MAX_AUTH_FAILURES) {
-	    packet_disconnect("Too many authentication failures for %.100s from %.200s", 
-            		       user, get_canonical_hostname());
-          }
-	  /* Send failure.  This should be indistinguishable from a failed
-	     authentication. */
-	  packet_start(SSH_SMSG_FAILURE);
-	  packet_send();
-	  packet_write_wait();
-	}
-      /*NOTREACHED*/
-      abort();
-    }
+    do_fake_authloop(user);
   
   /* Take a copy of the returned structure. */
   memset(&pwcopy, 0, sizeof(pwcopy));
@@ -1088,275 +1054,13 @@ do_authentication(char *user, int privileged_port)
     {
       /* Authentication with empty password succeeded. */
       debug("Login for user %.100s accepted without authentication.", user);
-      /* authentication_type = SSH_AUTH_PASSWORD; */
-      authenticated = 1;
-      /* Success packet will be sent after loop below. */
-    }
-  else
-    {
-      /* Indicate that authentication is needed. */
-      packet_start(SSH_SMSG_FAILURE);
-      packet_send();
-      packet_write_wait();
+    } else {
+      /* Loop until the user has been authenticated or the connection is closed,
+         do_authloop() returns only if authentication is successfull */
+      do_authloop(pw);
     }
 
-  /* Loop until the user has been authenticated or the connection is closed. */
-  while (!authenticated)
-    {
-      int plen;
-      /* Get a packet from the client. */
-      type = packet_read(&plen);
-      
-      /* Process the packet. */
-      switch (type)
-	{
-
-#ifdef AFS
-	case SSH_CMSG_HAVE_KERBEROS_TGT:
-	  if (!options.kerberos_tgt_passing)
-	    {
-	      /* packet_get_all(); */
-	      log("Kerberos tgt passing disabled.");
-	      break;
-	    }
-	  else {
-	    /* Accept Kerberos tgt. */
-	    int dlen;
-	    char *tgt = packet_get_string(&dlen);
-	    packet_integrity_check(plen, 4 + dlen, type);
-	    if (!auth_kerberos_tgt(pw, tgt))
-	      debug("Kerberos tgt REFUSED for %s", user);
-	    xfree(tgt);
-	  }
-	  continue;
-
-	case SSH_CMSG_HAVE_AFS_TOKEN:
-	  if (!options.afs_token_passing || !k_hasafs()) {
-	    /* packet_get_all(); */
-	    log("AFS token passing disabled.");
-	    break;
-	  }
-	  else {
-	    /* Accept AFS token. */
-	    int dlen;
-	    char *token_string = packet_get_string(&dlen);
-	    packet_integrity_check(plen, 4 + dlen, type);
-	    if (!auth_afs_token(pw, token_string))
-	      debug("AFS token REFUSED for %s", user);
-	    xfree(token_string);
-	    continue;
-	  }
-#endif /* AFS */
-	  
-#ifdef KRB4
-	case SSH_CMSG_AUTH_KERBEROS:
-	  if (!options.kerberos_authentication)
-	    {
-	      /* packet_get_all(); */
-	      log("Kerberos authentication disabled.");
-	      break;
-	    }
-	  else {
-	    /* Try Kerberos v4 authentication. */
-	    KTEXT_ST auth;
-	    char *tkt_user = NULL;
-	    char *kdata = packet_get_string((unsigned int *)&auth.length);
-	    packet_integrity_check(plen, 4 + auth.length, type);
-
-	    if (auth.length < MAX_KTXT_LEN)
-	      memcpy(auth.dat, kdata, auth.length);
-	    xfree(kdata);
-	    
-	    if (auth_krb4(user, &auth, &tkt_user)) {
-	      /* Client has successfully authenticated to us. */
-	      log("Kerberos authentication accepted %s for account "
-		  "%s from %s", tkt_user, user, get_canonical_hostname());
-	      /* authentication_type = SSH_AUTH_KERBEROS; */
-	      authenticated = 1;
-	      xfree(tkt_user);
-	    }
-	    else {
-	      log("Kerberos authentication failed for account "
-		  "%s from %s", user, get_canonical_hostname());
-	    }
-	  }
-	  break;
-#endif /* KRB4 */
-	  
-	case SSH_CMSG_AUTH_RHOSTS:
-	  if (!options.rhosts_authentication)
-	    {
-	      log("Rhosts authentication disabled.");
-	      break;
-	    }
-
-	  /* Rhosts authentication (also uses /etc/hosts.equiv). */
-	  if (!privileged_port)
-	    {
-	      log("Rhosts authentication not available for connections from unprivileged port.");
-	      break;
-	    }
-
-	  /* Get client user name.  Note that we just have to trust the client;
-	     this is one reason why rhosts authentication is insecure. 
-	     (Another is IP-spoofing on a local network.) */
-	  {
-	    int dlen;
-	    client_user = packet_get_string(&dlen);
-	    packet_integrity_check(plen, 4 + dlen, type);
-	  }
-
-	  /* Try to authenticate using /etc/hosts.equiv and .rhosts. */
-	  if (auth_rhosts(pw, client_user))
-	    {
-	      /* Authentication accepted. */
-	      log("Rhosts authentication accepted for %.100s, remote %.100s on %.700s.",
-		  user, client_user, get_canonical_hostname());
-	      authenticated = 1;
-	      xfree(client_user);
-	      break;
-	    }
-	  log("Rhosts authentication failed for %.100s, remote %.100s.",
-		user, client_user);
-	  xfree(client_user);
-	  break;
-
-	case SSH_CMSG_AUTH_RHOSTS_RSA:
-	  if (!options.rhosts_rsa_authentication)
-	    {
-	      log("Rhosts with RSA authentication disabled.");
-	      break;
-	    }
-
-	  /* Rhosts authentication (also uses /etc/hosts.equiv) with RSA
-	     host authentication. */
-	  if (!privileged_port)
-	    {
-	      log("Rhosts authentication not available for connections from unprivileged port.");
-	      break;
-	    }
-
-	  {
-	    int ulen, elen, nlen;
-	    /* Get client user name.  Note that we just have to trust
-	       the client; root on the client machine can claim to be
-	       any user. */
-	    client_user = packet_get_string(&ulen);
-
-	    /* Get the client host key. */
-	    client_host_key_e = BN_new();
-	    client_host_key_n = BN_new();
-	    client_host_key_bits = packet_get_int();
-	    packet_get_bignum(client_host_key_e, &elen);
-	    packet_get_bignum(client_host_key_n, &nlen);
-
-	    packet_integrity_check(plen, (4 + ulen) + 4 + elen + nlen, type);
-	  }
-
-	  if (auth_rhosts_rsa(pw, client_user,
-			      client_host_key_bits, client_host_key_e, client_host_key_n))
-	    {
-	      /* Authentication accepted. */
-	      authenticated = 1;
-	      xfree(client_user);
-	      BN_clear_free(client_host_key_e);
-	      BN_clear_free(client_host_key_n);
-	      break;
-	    }
-	  log("Rhosts authentication failed for %.100s, remote %.100s.",
-		user, client_user);
-	  xfree(client_user);
-	  BN_clear_free(client_host_key_e);
-	  BN_clear_free(client_host_key_n);
-	  break;
-	  
-	case SSH_CMSG_AUTH_RSA:
-	  if (!options.rsa_authentication)
-	    {
-	      log("RSA authentication disabled.");
-	      break;
-	    }
-
-	  /* RSA authentication requested. */
-	  {
-	    int nlen;
-	    BIGNUM *n;
-	    n = BN_new();
-	    packet_get_bignum(n, &nlen);
-
-	    packet_integrity_check(plen, nlen, type);
-	    
-	    if (auth_rsa(pw, n))
-	      { 
-		/* Successful authentication. */
-		BN_clear_free(n);
-		log("RSA authentication for %.100s accepted.", user);
-		authenticated = 1;
-		break;
-	      }
-	    BN_clear_free(n);
-	    log("RSA authentication for %.100s failed.", user);
-	  }
-	  break;
-
-	case SSH_CMSG_AUTH_PASSWORD:
-	  if (!options.password_authentication)
-	    {
-	      log("Password authentication disabled.");
-	      break;
-	    }
-
-	  /* Password authentication requested. */
-	  /* Read user password.  It is in plain text, but was transmitted
-	     over the encrypted channel so it is not visible to an outside
-	     observer. */
-	  {
-	    int passw_len;
-	    password = packet_get_string(&passw_len);
-	    packet_integrity_check(plen, 4 + passw_len, type);
-	  }
-
-	  /* Try authentication with the password. */
-	  if (auth_password(pw, password))
-	    {
-	      /* Successful authentication. */
-	      /* Clear the password from memory. */
-	      memset(password, 0, strlen(password));
-	      xfree(password);
-	      log("Password authentication for %.100s accepted.", user);
-	      authenticated = 1;
-	      break;
-	    }
-	  log("Password authentication for %.100s failed.", user);
-	  memset(password, 0, strlen(password));
-	  xfree(password);
-	  break;
-
-	case SSH_CMSG_AUTH_TIS:
-	  /* TIS Authentication is unsupported */
-	  log("TIS authentication disabled.");
-	  break;
-
-	default:
-	  /* Any unknown messages will be ignored (and failure returned)
-	     during authentication. */
-	  log("Unknown message during authentication: type %d", type);
-	  break; /* Respond with a failure message. */
-	}
-      /* If successfully authenticated, break out of loop. */
-      if (authenticated)
-	break;
-
-      if (++authentication_failures >= MAX_AUTH_FAILURES) {
-	packet_disconnect("Too many authentication failures for %.100s from %.200s", 
-          pw->pw_name, get_canonical_hostname());
-      }
-      /* Send a message indicating that the authentication attempt failed. */
-      packet_start(SSH_SMSG_FAILURE);
-      packet_send();
-      packet_write_wait();
-
-    }
+  /* XXX log unified auth message */
 
   /* Check if the user is logging in as root and root logins are disallowed. */
   if (pw->pw_uid == 0 && !options.permit_root_login)
@@ -1376,6 +1080,262 @@ do_authentication(char *user, int privileged_port)
   /* Perform session preparation. */
   do_authenticated(pw);
 }
+
+#define MAX_AUTH_FAILURES 5
+
+/* read packets and try to authenticate local user *pw.
+   return if authentication is successfull */
+void
+do_authloop(struct passwd *pw)
+{
+  int authentication_failures = 0;
+  unsigned int client_host_key_bits;
+  BIGNUM *client_host_key_e, *client_host_key_n;
+  BIGNUM *n;
+  char *client_user, *password;
+  int plen, dlen, nlen, ulen, elen;
+
+  /* Indicate that authentication is needed. */
+  packet_start(SSH_SMSG_FAILURE);
+  packet_send();
+  packet_write_wait();
+
+  for (;;) {
+    int authenticated = 0;
+
+    /* Get a packet from the client. */
+    int type = packet_read(&plen);
+  
+    /* Process the packet. */
+    switch (type)
+      {
+#ifdef AFS
+      case SSH_CMSG_HAVE_KERBEROS_TGT:
+	if (!options.kerberos_tgt_passing)
+	  {
+	    /* packet_get_all(); */
+	    log("Kerberos tgt passing disabled.");
+	    break;
+	  }
+	else {
+	  /* Accept Kerberos tgt. */
+	  char *tgt = packet_get_string(&dlen);
+	  packet_integrity_check(plen, 4 + dlen, type);
+	  if (!auth_kerberos_tgt(pw, tgt))
+	    debug("Kerberos tgt REFUSED for %s", pw->pw_name);
+	  xfree(tgt);
+	}
+	continue;
+  
+      case SSH_CMSG_HAVE_AFS_TOKEN:
+	if (!options.afs_token_passing || !k_hasafs()) {
+	  /* packet_get_all(); */
+	  log("AFS token passing disabled.");
+	  break;
+	}
+	else {
+	  /* Accept AFS token. */
+	  char *token_string = packet_get_string(&dlen);
+	  packet_integrity_check(plen, 4 + dlen, type);
+	  if (!auth_afs_token(pw, token_string))
+	    debug("AFS token REFUSED for %s", pw->pw_name);
+	  xfree(token_string);
+	}
+	continue;
+#endif /* AFS */
+	    
+#ifdef KRB4
+      case SSH_CMSG_AUTH_KERBEROS:
+	if (!options.kerberos_authentication)
+	  {
+	    /* packet_get_all(); */
+	    log("Kerberos authentication disabled.");
+	    break;
+	  }
+	else {
+	  /* Try Kerberos v4 authentication. */
+	  KTEXT_ST auth;
+	  char *tkt_user = NULL;
+	  char *kdata = packet_get_string((unsigned int *)&auth.length);
+	  packet_integrity_check(plen, 4 + auth.length, type);
+  
+	  if (auth.length < MAX_KTXT_LEN)
+	    memcpy(auth.dat, kdata, auth.length);
+	  xfree(kdata);
+	  
+	  authenticated = auth_krb4(pw->pw_name, &auth, &tkt_user);
+
+	  log("Kerberos authentication %s%s for account %s from %s", 
+	      authenticated ? "accepted " : "failed",
+	      tkt_user != NULL ? tkt_user : "",
+	      pw->pw_name, get_canonical_hostname());
+          if (authenticated)
+	    xfree(tkt_user);
+	}
+	break;
+#endif /* KRB4 */
+	   
+      case SSH_CMSG_AUTH_RHOSTS:
+	if (!options.rhosts_authentication)
+	  {
+	    log("Rhosts authentication disabled.");
+	    break;
+	  }
+  
+	/* Get client user name.  Note that we just have to trust the client;
+	   this is one reason why rhosts authentication is insecure. 
+	   (Another is IP-spoofing on a local network.) */
+	client_user = packet_get_string(&dlen);
+	packet_integrity_check(plen, 4 + dlen, type);
+  
+	/* Try to authenticate using /etc/hosts.equiv and .rhosts. */
+	authenticated = auth_rhosts(pw, client_user);
+
+	log("Rhosts authentication %s for %.100s, remote %.100s on %.700s.",
+	     authenticated ? "accepted" : "failed",
+	     pw->pw_name, client_user, get_canonical_hostname());
+	xfree(client_user);
+	break;
+  
+      case SSH_CMSG_AUTH_RHOSTS_RSA:
+	if (!options.rhosts_rsa_authentication)
+	  {
+	    log("Rhosts with RSA authentication disabled.");
+	    break;
+	  }
+  
+	/* Get client user name.  Note that we just have to trust
+	   the client; root on the client machine can claim to be
+	   any user. */
+	client_user = packet_get_string(&ulen);
+  
+	/* Get the client host key. */
+	client_host_key_e = BN_new();
+	client_host_key_n = BN_new();
+	client_host_key_bits = packet_get_int();
+	packet_get_bignum(client_host_key_e, &elen);
+	packet_get_bignum(client_host_key_n, &nlen);
+  
+	packet_integrity_check(plen, (4 + ulen) + 4 + elen + nlen, type);
+  
+	authenticated = auth_rhosts_rsa(pw, client_user, client_host_key_bits,
+					client_host_key_e, client_host_key_n);
+	log("Rhosts authentication %s for %.100s, remote %.100s.",
+	     authenticated ? "accepted" : "failed",
+	     pw->pw_name, client_user);
+	xfree(client_user);
+	BN_clear_free(client_host_key_e);
+	BN_clear_free(client_host_key_n);
+	break;
+	
+      case SSH_CMSG_AUTH_RSA:
+	if (!options.rsa_authentication)
+	  {
+	    log("RSA authentication disabled.");
+	    break;
+	  }
+  
+	/* RSA authentication requested. */
+	n = BN_new();
+	packet_get_bignum(n, &nlen);
+	packet_integrity_check(plen, nlen, type);
+	authenticated = auth_rsa(pw, n);
+	BN_clear_free(n);
+	log("RSA authentication %s for %.100s failed.",
+	    authenticated ? "accepted" : "failed",
+	    pw->pw_name);
+	break;
+  
+      case SSH_CMSG_AUTH_PASSWORD:
+	if (!options.password_authentication)
+	  {
+	    log("Password authentication disabled.");
+	    break;
+	  }
+  
+	/* Read user password.  It is in plain text, but was transmitted
+	   over the encrypted channel so it is not visible to an outside
+	   observer. */
+	password = packet_get_string(&dlen);
+	packet_integrity_check(plen, 4 + dlen, type);
+  
+	/* Try authentication with the password. */
+	authenticated = auth_password(pw, password);
+
+	memset(password, 0, strlen(password));
+	xfree(password);
+	break;
+  
+      case SSH_CMSG_AUTH_TIS:
+	/* TIS Authentication is unsupported */
+	log("TIS authentication disabled.");
+	break;
+  
+      default:
+	/* Any unknown messages will be ignored (and failure returned)
+	   during authentication. */
+	log("Unknown message during authentication: type %d", type);
+	break; /* Respond with a failure message. */
+      }
+
+    if (authenticated)
+      break;
+    if (++authentication_failures >= MAX_AUTH_FAILURES)
+      packet_disconnect("Too many authentication failures for %.100s from %.200s", 
+			 pw->pw_name, get_canonical_hostname());
+    /* Send a message indicating that the authentication attempt failed. */
+    packet_start(SSH_SMSG_FAILURE);
+    packet_send();
+    packet_write_wait();
+  }
+}
+
+/* The user does not exist or access is denied,
+   but fake indication that authentication is needed. */
+void
+do_fake_authloop(char *user)
+{
+  int authentication_failures = 0;
+
+  /* Indicate that authentication is needed. */
+  packet_start(SSH_SMSG_FAILURE);
+  packet_send();
+  packet_write_wait();
+
+  /* Keep reading packets, and always respond with a failure.  This is to
+     avoid disclosing whether such a user really exists. */
+  for (;;)
+    {
+      /* Read a packet.  This will not return if the client disconnects. */
+      int plen;
+      int type = packet_read(&plen);
+#ifdef SKEY
+      int passw_len;
+      char *password, *skeyinfo;
+      if (options.password_authentication &&
+         options.skey_authentication == 1 &&
+         type == SSH_CMSG_AUTH_PASSWORD &&
+         (password = packet_get_string(&passw_len)) != NULL &&
+         passw_len == 5 &&
+         strncasecmp(password, "s/key", 5) == 0 &&
+         (skeyinfo = skey_fake_keyinfo(user)) != NULL ){
+        /* Send a fake s/key challenge. */
+        packet_send_debug(skeyinfo);
+      }
+#endif
+      if (++authentication_failures >= MAX_AUTH_FAILURES)
+        packet_disconnect("Too many authentication failures for %.100s from %.200s", 
+                          user, get_canonical_hostname());
+      /* Send failure.  This should be indistinguishable from a failed
+         authentication. */
+      packet_start(SSH_SMSG_FAILURE);
+      packet_send();
+      packet_write_wait();
+    }
+  /*NOTREACHED*/
+  abort();
+}
+
 
 /* Remove local Xauthority file. */
 static void
