@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.65 2000/08/01 19:02:05 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.66 2000/08/01 19:05:23 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.65 2000/08/01 19:02:05 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.66 2000/08/01 19:05:23 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -618,9 +618,7 @@ dg_badinput(sa)
 	struct in6_addr *in6;
 #endif
 	u_int16_t port;
-	int i, bad;
-
-	bad = 0;
+	int i;
 
 	switch (sa->sa_family) {
 	case AF_INET:
