@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.42 2004/08/11 04:01:41 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.43 2004/08/11 04:03:15 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1127,7 +1127,7 @@ ohci_intr1(ohci_softc_t *sc)
 			intrs |= OREAD4(sc, OHCI_INTERRUPT_STATUS);
 		sc->sc_hcca->hcca_done_head = 0;
 	} else
-		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS);
+		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & ~OHCI_WDH;
 
 	if (!intrs)
 		return (0);
@@ -2066,7 +2066,7 @@ ohci_open(usbd_pipe_handle pipe)
 		}
 		sed->ed.ed_flags = htole32(
 			OHCI_ED_SET_FA(addr) |
-			OHCI_ED_SET_EN(ed->bEndpointAddress) |
+			OHCI_ED_SET_EN(UE_GET_ADDR(ed->bEndpointAddress)) |
 			(dev->speed == USB_SPEED_LOW ? OHCI_ED_SPEED : 0) |
 			fmt | OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
 		sed->ed.ed_headp = sed->ed.ed_tailp = htole32(tdphys);
