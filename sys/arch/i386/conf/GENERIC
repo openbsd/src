@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.260 2001/05/14 03:00:52 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.261 2001/06/06 18:55:40 millert Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -328,6 +328,7 @@ wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 
 # Wireless network cards
+wi*	at pci? function ?			# WaveLAN IEEE 802.11DS
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia? function ?			# Bay Networks IEEE 802.11FH
 an*	at pci? dev ? function ?		# Aironet IEEE 802.11DS
