@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.20 2001/07/25 13:25:33 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.21 2001/07/31 13:30:17 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.36 1999/11/13 00:24:39 thorpej Exp $	*/
 
 /* 
@@ -145,7 +145,7 @@ void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
 #if defined(PMAP_STEAL_MEMORY)
-vaddr_t		 pmap_steal_memory __P((vsize_t, paddr_t *, paddr_t *));
+vaddr_t		 pmap_steal_memory __P((vsize_t, vaddr_t *, vaddr_t *));
 #else
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #endif
