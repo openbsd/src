@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.17 1999/10/14 18:17:42 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.18 1999/10/14 20:03:44 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1458,6 +1458,8 @@ void ssh_login(int host_key_valid,
       if (options->cipher == SSH_CIPHER_NONE)
 	log("WARNING: Encryption is disabled! Password will be transmitted in clear text.");
       for (i = 0; i < options->number_of_password_prompts; i++) {
+        if (i != 0)
+	  error("Permission denied, please try again.");
 	password = read_passphrase(prompt, 0);
 	packet_start(SSH_CMSG_AUTH_PASSWORD);
 	packet_put_string(password, strlen(password));
