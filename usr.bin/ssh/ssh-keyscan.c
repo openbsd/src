@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.18 2001/03/03 06:53:12 deraadt Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.19 2001/03/03 21:19:41 millert Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -37,7 +37,8 @@ int maxfd;
 #define MAXCON (maxfd - 10)
 
 extern char *__progname;
-fd_set read_wait;
+fd_set *read_wait;
+size_t read_wait_size;
 int ncon;
 
 /*
@@ -341,7 +342,7 @@ conalloc(char *iname, char *oname)
 	gettimeofday(&fdcon[s].c_tv, NULL);
 	fdcon[s].c_tv.tv_sec += timeout;
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
-	FD_SET(s, &read_wait);
+	FD_SET(s, read_wait);
 	ncon++;
 	return (s);
 }
@@ -358,7 +359,7 @@ confree(int s)
 		xfree(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
-	FD_CLR(s, &read_wait);
+	FD_CLR(s, read_wait);
 	ncon--;
 }
 
@@ -461,7 +462,7 @@ conread(int s)
 void
 conloop(void)
 {
-	fd_set r, e;
+	fd_set *r, *e;
 	struct timeval seltime, now;
 	int i;
 	con *c;
@@ -481,18 +482,24 @@ conloop(void)
 	} else
 		seltime.tv_sec = seltime.tv_usec = 0;
 
-	r = e = read_wait;
-	while (select(maxfd, &r, NULL, &e, &seltime) == -1 &&
+	r = xmalloc(read_wait_size);
+	memcpy(r, read_wait, read_wait_size);
+	e = xmalloc(read_wait_size);
+	memcpy(e, read_wait, read_wait_size);
+
+	while (select(maxfd, r, NULL, e, &seltime) == -1 &&
 	    (errno == EAGAIN || errno == EINTR))
 		;
 
 	for (i = 0; i < maxfd; i++) {
-		if (FD_ISSET(i, &e)) {
+		if (FD_ISSET(i, e)) {
 			error("%s: exception!", fdcon[i].c_name);
 			confree(i);
-		} else if (FD_ISSET(i, &r))
+		} else if (FD_ISSET(i, r))
 			conread(i);
 	}
+	xfree(r);
+	xfree(e);
 
 	c = tq.tqh_first;
 	while (c && (c->c_tv.tv_sec < now.tv_sec ||
@@ -590,6 +597,10 @@ main(int argc, char **argv)
 		fdlim_set(maxfd);
 	fdcon = xmalloc(maxfd * sizeof(con));
 	memset(fdcon, 0, maxfd * sizeof(con));
+
+	read_wait_size = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
+	read_wait = xmalloc(read_wait_size);
+	memset(read_wait, 0, read_wait_size);
 
 	do {
 		while (ncon < MAXCON) {
