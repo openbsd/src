@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.15 2005/01/09 23:49:35 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.16 2005/01/11 00:11:05 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -93,6 +93,7 @@ struct cfdriver hil_cd = {
 };
 
 void	hilconfig(struct hil_softc *);
+void	hilempty(struct hil_softc *);
 int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
 int	hil_process_poll(struct hil_softc *, u_int8_t, u_int8_t);
@@ -194,6 +195,8 @@ hil_attach_deferred(void *v)
 	int tries;
 	u_int8_t db;
 
+	sc->sc_status = HIL_STATUS_BUSY;
+
 	/*
 	 * Initialize the loop: reconfigure, don't report errors,
 	 * put keyboard in cooked mode, and enable autopolling.
@@ -238,10 +241,19 @@ hil_attach_deferred(void *v)
 	}
 
 	/*
-	 * At this point, the loop should have reconfigured.
-	 * The reconfiguration interrupt has already called hilconfig().
+	 * Enable loop interrupts.
 	 */
 	send_hil_cmd(sc, HIL_INTON, NULL, 0, NULL);
+
+	/*
+	 * Reconfigure if necessary
+	 */
+	sc->sc_status = HIL_STATUS_READY;
+	if (sc->sc_pending == HIL_PENDING_RECONFIG) {
+		sc->sc_pending = 0;
+		hilconfig(sc);
+	} else
+		sc->sc_pending = 0;
 }
 
 /*
@@ -275,8 +287,20 @@ hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 	case HIL_STATUS:
 		if (c & HIL_ERROR) {
 		  	sc->sc_cmddone = 1;
-			if (c == HIL_RECONFIG)
-				hilconfig(sc);
+			switch (c) {
+			case HIL_RECONFIG:
+				if (sc->sc_status == HIL_STATUS_BUSY)
+					sc->sc_pending = HIL_PENDING_RECONFIG;
+				else
+					hilconfig(sc);
+				break;
+			case HIL_UNPLUGGED:
+				if (sc->sc_status == HIL_STATUS_BUSY)
+					sc->sc_pending = HIL_PENDING_UNPLUGGED;
+				else
+					hilempty(sc);
+				break;
+			}
 			break;
 		}
 		if (c & HIL_COMMAND) {
@@ -332,13 +356,14 @@ hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 	case HIL_STATUS:
 		if (c & HIL_ERROR) {
 		  	sc->sc_cmddone = 1;
-			if (c == HIL_RECONFIG) {
+			switch (c) {
+			case HIL_RECONFIG:
 				/*
 				 * Remember that a configuration event
 				 * occurred; it will be processed upon
 				 * leaving polled mode...
 				 */
-				sc->sc_cpending = 1;
+				sc->sc_pending = HIL_PENDING_RECONFIG;
 				/*
 				 * However, the keyboard will come back as
 				 * cooked, and we rely on it being in raw
@@ -348,6 +373,15 @@ hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 				db = 0;
 				send_hil_cmd(sc, HIL_WRITEKBDSADR, &db,
 				    1, NULL);
+				break;
+			case HIL_UNPLUGGED:
+				/*
+				 * Remember that an unplugged event
+				 * occured; it will be processed upon
+				 * leaving polled mode...
+				 */
+				sc->sc_pending = HIL_PENDING_UNPLUGGED;
+				break;
 			}
 			break;
 		}
@@ -490,6 +524,47 @@ hilconfig(struct hil_softc *sc)
 
 	/*
 	 * Detach remaining devices, if they have been removed
+	 */
+	for (id = sc->sc_maxdev + 1; id < NHILD; id++) {
+		if (sc->sc_devices[id] != NULL)
+			config_detach((struct device *)sc->sc_devices[id],
+			    DETACH_FORCE);
+		sc->sc_devices[id] = NULL;
+	}
+
+	sc->sc_cmdbp = sc->sc_cmdbuf;
+
+	splx(s);
+}
+
+/*
+ * Called after the loop has been unplugged. We simply force detach of
+ * all our children.
+ */
+void
+hilempty(struct hil_softc *sc)
+{
+	u_int8_t db;
+	int id, s;
+
+	s = splhil();
+
+	/*
+	 * Check that the loop is really empty.
+	 */
+	db = 0;
+	send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db);
+	sc->sc_maxdev = db & LPS_DEVMASK;
+
+	if (sc->sc_maxdev != 0) {
+		printf("%s: unplugged loop finds %d devices???\n",
+		    sc->sc_dev.dv_xname, sc->sc_maxdev);
+		hilconfig(sc);
+		return;
+	}
+
+	/*
+	 * Now detach all hil devices.
 	 */
 	for (id = sc->sc_maxdev + 1; id < NHILD; id++) {
 		if (sc->sc_devices[id] != NULL)
@@ -725,9 +800,15 @@ hil_set_poll(struct hil_softc *sc, int on)
 	if (on) {
 		pollon(sc);
 	} else {
-		if (sc->sc_cpending) {
-			sc->sc_cpending = 0;
+		switch (sc->sc_pending) {
+		case HIL_PENDING_RECONFIG:
+			sc->sc_pending = 0;
 			hilconfig(sc);
+			break;
+		case HIL_PENDING_UNPLUGGED:
+			sc->sc_pending = 0;
+			hilempty(sc);
+			break;
 		}
 		send_hil_cmd(sc, HIL_INTON, NULL, 0, NULL);
 	}

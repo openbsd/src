@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.7 2005/01/09 23:49:36 miod Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.8 2005/01/11 00:11:05 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -83,7 +83,12 @@ struct hil_softc {
 	u_int8_t	*sc_pollbp;	/* pointer into sc_pollbuf */
 	u_int8_t	*sc_cmdbp;	/* pointer into sc_cmdbuf */
 
-	int		sc_cpending;	/* reconfiguration in progress */
+	int		sc_status;	/* initialization status */
+#define	HIL_STATUS_BUSY		0x00
+#define	HIL_STATUS_READY	0x01
+	int		sc_pending;	/* reconfiguration events in progress */
+#define	HIL_PENDING_RECONFIG	0x01
+#define	HIL_PENDING_UNPLUGGED	0x02
 	u_int		sc_maxdev;	/* number of devices on loop */
 	struct hildev_softc *sc_devices[NHILD];	/* interrupt dispatcher */
 };

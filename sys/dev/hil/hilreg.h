@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilreg.h,v 1.4 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: hilreg.h,v 1.5 2005/01/11 00:11:05 miod Exp $	*/
 /*	$NetBSD: hilreg.h,v 1.6 1997/02/02 09:39:21 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,9 @@
 #define	HIL_POLLDATA	0x10		/* HIL poll data follows */
 #define	HIL_COMMAND	0x08		/* Start of original command */
 #define	HIL_ERROR	0x80		/* HIL error */
+
 #define	HIL_RECONFIG	0x80		/* HIL has reconfigured */
+#define	HIL_UNPLUGGED	0x84		/* HIL cable unplugged */
 
 #define	HIL_SSHIFT	4		/* Bits to shift status over */
 #define	HIL_SMASK	0x0f		/* Service request status mask */
