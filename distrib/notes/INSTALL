@@ -14,7 +14,7 @@ status.  This means that an OpenBSD user should feel safe that their
 newly installed machine will not be compromised.  This 'secure by
 default' goal is achieved by taking a proactive stance on security.
 
-Since security flaws are esentially mistakes in design or implement-
+Since security flaws are essentially mistakes in design or implement-
 ation, the OpenBSD team puts as much importance on finding and fixing
 existing design flaws and implementation bugs as it does writing new
 code.  This means that an OpenBSD system will not only be more secure,
@@ -28,7 +28,7 @@ provided as well as support for common protocols such as SSL and SSH.
 Network filtering and monitoring tools such as ipf, ipnat, and
 bridging are also standard.  For high performance demands, support for
 hardware cryptography has also been added to the base system.  Because
-security is often seen as a tradeoff with useability, OpenBSD provides
+security is often seen as a tradeoff with usability, OpenBSD provides
 as many security options as possible to allow the user to enjoy secure
 computing without feeling burdened by it.
 
