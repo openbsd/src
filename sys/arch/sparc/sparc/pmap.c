@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.85 2001/05/10 12:52:35 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.86 2001/06/10 01:45:04 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -545,7 +545,7 @@ void		(*pmap_clear_reference_p) __P((paddr_t pa));
 void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 				     boolean_t, vm_prot_t));
-paddr_t		(*pmap_extract_p) __P((pmap_t, vaddr_t));
+boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 #ifdef PMAP_NEW
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
@@ -5704,10 +5704,11 @@ pmap_unwire(pm, va)
  */
 
 #if defined(SUN4) || defined(SUN4C)
-paddr_t
-pmap_extract4_4c(pm, va)
+boolean_t
+pmap_extract4_4c(pm, va, pa)
 	struct pmap *pm;
 	vaddr_t va;
+	paddr_t *pa;
 {
 	int tpte;
 	int vr, vs;
@@ -5719,7 +5720,7 @@ pmap_extract4_4c(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: null pmap\n");
 #endif
-		return (0);
+		return (FALSE);
 	}
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -5729,7 +5730,7 @@ pmap_extract4_4c(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid segment (%d)\n", vr);
 #endif
-		return (0);
+		return (FALSE);
 	}
 	sp = &rp->rg_segmap[vs];
 
@@ -5755,7 +5756,7 @@ pmap_extract4_4c(pm, va)
 			if (pmapdebug & PDB_FOLLOW)
 				printf("pmap_extract: invalid segment\n");
 #endif
-			return (0);
+			return (FALSE);
 		}
 		tpte = pte[VA_VPG(va)];
 	}
@@ -5764,11 +5765,12 @@ pmap_extract4_4c(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid pte\n");
 #endif
-		return (0);
+		return (FALSE);
 	}
 	tpte &= PG_PFNUM;
 	tpte = tpte;
-	return ((tpte << PGSHIFT) | (va & PGOFSET));
+	*pa = ((tpte << PGSHIFT) | (va & PGOFSET));
+	return (TRUE);
 }
 #endif /*4,4c*/
 
@@ -5778,10 +5780,11 @@ pmap_extract4_4c(pm, va)
  * with the given map/virtual_address pair.
  * GRR, the vm code knows; we should not have to do this!
  */
-paddr_t
-pmap_extract4m(pm, va)
+boolean_t
+pmap_extract4m(pm, va, pa)
 	struct pmap *pm;
 	vaddr_t va;
+	paddr_t *pa;
 {
 	struct regmap *rm;
 	struct segmap *sm;
@@ -5792,7 +5795,7 @@ pmap_extract4m(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: null pmap\n");
 #endif
-		return (0);
+		return (FALSE);
 	}
 
 	if ((rm = pm->pm_regmap) == NULL) {
@@ -5800,7 +5803,7 @@ pmap_extract4m(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no regmap entry");
 #endif
-		return (0);
+		return (FALSE);
 	}
 
 	rm += VA_VREG(va);
@@ -5809,7 +5812,7 @@ pmap_extract4m(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no segmap");
 #endif
-		return (0);
+		return (FALSE);
 	}
 
 	sm += VA_VSEG(va);
@@ -5818,7 +5821,7 @@ pmap_extract4m(pm, va)
 		if (pmapdebug & PDB_FOLLOW)
 			panic("pmap_extract: no ptes");
 #endif
-		return 0;
+		return FALSE;
 	}
 
 	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
@@ -5828,10 +5831,11 @@ pmap_extract4m(pm, va)
 			printf("pmap_extract: invalid pte of type %d\n",
 			       pte & SRMMU_TETYPE);
 #endif
-		return (0);
+		return (FALSE);
 	}
 
-	return (ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) | VA_OFF(va));
+	*pa = (ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) | VA_OFF(va));
+	return (TRUE);
 }
 #endif /* sun4m */
 

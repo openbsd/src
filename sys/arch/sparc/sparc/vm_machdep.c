@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/06/08 08:09:28 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/06/10 01:45:04 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -79,7 +79,7 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register paddr_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if ((size & PAGE_MASK) != 0 ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.18 2001/06/08 08:09:26 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.19 2001/06/10 01:45:03 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -326,7 +326,7 @@ void		pmap_clear_reference4_4c __P((paddr_t pa));
 void		pmap_copy_page4_4c __P((paddr_t, paddr_t));
 void		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 				    boolean_t, vm_prot_t));
-paddr_t		pmap_extract4_4c __P((pmap_t, vaddr_t));
+boolean_t	pmap_extract4_4c __P((pmap_t, vaddr_t, paddr_t *));
 #ifdef PMAP_NEW
 boolean_t	pmap_is_modified4_4c __P((struct vm_page *));
 boolean_t	pmap_is_referenced4_4c __P((struct vm_page *));
@@ -357,7 +357,7 @@ void		pmap_clear_reference4m __P((paddr_t pa));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
 void		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 				  boolean_t, vm_prot_t));
-paddr_t		pmap_extract4m __P((pmap_t, vaddr_t));
+boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
 #ifdef PMAP_NEW
 boolean_t	pmap_is_modified4m __P((struct vm_page *));
 boolean_t	pmap_is_referenced4m __P((struct vm_page *));
