@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.6 1998/02/24 12:58:09 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.7 1998/02/25 11:46:51 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -134,6 +134,10 @@
 .Fn svc_destroy "SVCXPRT *xprt"
 .Ft fd_set
 .Fa svc_fdset ;
+.Ft fd_set
+.Fa *__svc_fdset ;
+.Ft int
+.Fa __svc_fdsetsize ;
 .Ft int
 .Fa svc_fds ;
 .Ft int
@@ -765,7 +769,6 @@ transport; see
 .Fn svcudp_create
 for restrictions.
 .Pp
-.Ft struct rpc_createerr
 .Fa rpc_createerr
 is a global variable whose value is set by any
 .Tn RPC
@@ -786,12 +789,41 @@ itself.  Use of
 .Fa xprt
 is undefined after calling this routine.
 .Pp
-.Ft fd_set
-.Fa svc_fdset
-is a global variable reflecting the
+.Fa __svc_fdset
+and
+.Fa __svc_fdsetsize
+are global variables reflecting the
 .Tn RPC
 service side's
-read file descriptor bit mask.
+read file descriptor bit mask.  This can expand to the full size that
+.Xr select 2
+can support and hence exceed
+.Fa FD_SETSIZE
+if required.
+These variables are only of interest
+if service implementors do not call
+.Fn svc_run ,
+but rather do their own asynchronous event processing.
+This variable is read-only, and it may change after calls
+to svc_getreqset() or any creation routines.
+Do not pass its address to
+.Xr select 2 !
+Instead, pass the address of a copy.
+.br
+As well, note that if the process has descriptor limits
+which are extended beyond
+.Fa FD_SETSIZE ,
+this variable will only be usable for the first
+.Fa FD_SETSIZE
+descriptors.
+.Pp
+.Fa svc_fdset
+is similar to
+.Fa __svc_fdset
+but limited to
+.Fa FD_SETSIZE
+descriptors.
+This is the preferred interface for portability though.
 This is only of interest
 if service implementors do not call
 .Fn svc_run ,
@@ -809,7 +841,6 @@ this variable will only be usable for the first
 .Fa FD_SETSIZE
 descriptors.
 .Pp
-.Ft int
 .Fa svc_fds
 is similar to
 .Fa svc_fedset ,
