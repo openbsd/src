@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.741 2004/06/05 22:11:58 brad Exp $
+$OpenBSD: pcidevs,v 1.742 2004/06/16 20:50:59 matthieu Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1838,7 +1838,8 @@ product NVIDIA GEFORCE4TI4400	0x0251	GeForce4 Ti 4400
 product NVIDIA GEFORCE4TI4200	0x0253	GeForce4 Ti 4200
 product NVIDIA QUADRO4900XGL	0x0258	Quadro4 900 XGL
 product NVIDIA QUADRO4750XGL	0x0259	Quadro4 750 XGL
-product NVIDIA QUADRO4700XGL	0x025B	Qaudro4 700 XGL
+product NVIDIA QUADRO4700XGL	0x025B	Quadro4 700 XGL
+product NVIDIA GEFORCE4TI4200GO 0x286	GeForce4 Ti 4200 Go
 product NVIDIA GEFORCEFX5200	0x0322	GeForce FX 5200
 
 /* Oak Technologies products */
