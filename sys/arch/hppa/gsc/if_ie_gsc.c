@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.4 1999/11/16 17:14:25 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.5 1999/11/26 17:47:42 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -68,10 +68,6 @@
 struct ie_gsc_regs {
 	u_int32_t	ie_reset;
 	u_int32_t	ie_port;
-#define	IE_PORT_RESET	0
-#define	IE_PORT_TEST	1
-#define	IE_PORT_SCP	2
-#define	IE_PORT_DUMP	3
 	u_int32_t	ie_attn;
 };
 
@@ -92,6 +88,7 @@ static int ie_gsc_media[] = {
 void ie_gsc_reset __P((struct ie_softc *sc, int what));
 void ie_gsc_attend __P((struct ie_softc *sc));
 void ie_gsc_run __P((struct ie_softc *sc));
+void ie_gsc_port __P((struct ie_softc *sc, u_int));
 #ifdef USELEDS
 int ie_gsc_intrhook __P((struct ie_softc *sc, int what));
 #endif
@@ -107,16 +104,15 @@ ie_gsc_reset(sc, what)
 	struct ie_softc *sc;
 	int what;
 {
-	register volatile struct ie_gsc_regs *r = sc->sc_reg;
-	register u_int32_t a;
+	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 	register int i;
 	
 	switch (what) {
-	case CHIP_PROBE:
+	case IE_CHIP_PROBE:
 		r->ie_reset = 0;
 		break;
 
-	case CARD_RESET:
+	case IE_CARD_RESET:
 		r->ie_reset = 0;
 
 		/*
@@ -131,20 +127,7 @@ ie_gsc_reset(sc, what)
 		 * inform i825[89]6 about new SCP address,
 		 * maddr must be at least 16-byte aligned
 		 */
-		a = ((u_int32_t)sc->sc_maddr + sc->scp) | IE_PORT_SCP;
-		if (sc->sc_flags & IEGSC_GECKO) {
-			register volatile struct ie_gsc_regs *r = sc->sc_reg;
-			r->ie_port = a & 0xffff;
-			DELAY(1000);
-			r->ie_port = a >> 16;
-			DELAY(1000);
-		} else {
-			register volatile struct ie_gsc_regs *r = sc->sc_reg;
-			r->ie_port = a >> 16;
-			DELAY(1000);
-			r->ie_port = a & 0xffff;
-			DELAY(1000);
-		}
+		ie_gsc_port(sc, IE_PORT_SCP);
 		ie_gsc_attend(sc);
 
 		for (i = 9000; i-- && ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp));
@@ -166,7 +149,7 @@ void
 ie_gsc_attend(sc)
 	struct ie_softc *sc;
 {
-	register volatile struct ie_gsc_regs *r = sc->sc_reg;
+	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 
 	r->ie_attn = 0;
 }
@@ -177,6 +160,41 @@ ie_gsc_run(sc)
 {
 }
 
+void
+ie_gsc_port(sc, cmd)
+	struct ie_softc *sc;
+	u_int cmd;
+{
+	switch (cmd) {
+	case IE_PORT_RESET:
+		cmd = 0;
+		break;
+	case IE_PORT_TEST:
+		cmd = ((u_int)sc->sc_maddr + sc->scp) | 1;
+		break;
+	case IE_PORT_SCP:
+		cmd = ((u_int)sc->sc_maddr + sc->scp) | 2;
+		break;
+	case IE_PORT_DUMP:
+		cmd = 3;
+		break;
+	}
+
+	if (sc->sc_flags & IEGSC_GECKO) {
+		register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
+		r->ie_port = cmd & 0xffff;
+		DELAY(1000);
+		r->ie_port = cmd >> 16;
+		DELAY(1000);
+	} else {
+		register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
+		r->ie_port = cmd >> 16;
+		DELAY(1000);
+		r->ie_port = cmd & 0xffff;
+		DELAY(1000);
+	}
+}
+
 #ifdef USELEDS
 int
 ie_gsc_intrhook(sc, where)
@@ -184,13 +202,13 @@ ie_gsc_intrhook(sc, where)
 	int where;
 {
 	switch (where) {
-	case INTR_ENTER:
+	case IE_INTR_ENTER:
 		/* turn it on */
 		break;
-	case INTR_LOOP:
+	case IE_INTR_LOOP:
 		/* quick drop and raise */
 		break;
-	case INTR_EXIT:
+	case IE_INTR_EXIT:
 		/* drop it */
 		break;
 	}
@@ -269,10 +287,9 @@ ie_gsc_attach(parent, self, aux)
 	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 	register struct ie_softc *sc = (struct ie_softc *)self;
 	register struct gsc_attach_args *ga = aux;
-	register u_int32_t a;
-	register int i;
 	bus_dma_segment_t seg;
 	int rseg;
+	int rv;
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -281,29 +298,6 @@ ie_gsc_attach(parent, self, aux)
 
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		sc->sc_flags |= IEGSC_GECKO;
-
-	if ((i = pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
-			  PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa)) < 0)
-		bcopy ((void *)ASP_PROM, sc->sc_arpcom.ac_enaddr,
-		       ETHER_ADDR_LEN);
-	else
-		bcopy (pdc_mac.addr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-
-	sc->bt = ga->ga_iot;
-	sc->sc_reg = (struct ie_gsc_regs *)ga->ga_hpa;
-	sc->hwreset = ie_gsc_reset;
-	sc->chan_attn = ie_gsc_attend;
-	sc->hwinit = ie_gsc_run;
-#ifdef USELEDS
-	sc->intrhook = ie_gsc_intrhook;
-#else
-	sc->intrhook = NULL;
-#endif
-	sc->memcopyout = ie_gsc_memcopyout;
-	sc->memcopyin = ie_gsc_memcopyin;
-	sc->ie_bus_read16 = ie_gsc_read16;
-	sc->ie_bus_write16 = ie_gsc_write16;
-	sc->ie_bus_write24 = ie_gsc_write24;
 
 	sc->sc_msize = IE_SIZE;
 	if (bus_dmamem_alloc(ga->ga_dmatag, sc->sc_msize, NBPG, 0,
@@ -322,59 +316,59 @@ ie_gsc_attach(parent, self, aux)
 	bzero((void *)sc->bh, sc->sc_msize);
 	sc->sc_maddr = kvtop((caddr_t)sc->bh);
 
-	printf (": mem %x[%p]/%x", sc->bh, sc->sc_maddr, sc->sc_msize);
+	sc->sysbus = 0x40 | IE_SYSBUS_82586 |
+		       IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE;
+
+	sc->iot = sc->bt = ga->ga_iot;
+	sc->ioh = ga->ga_hpa;
+	sc->hwreset = ie_gsc_reset;
+	sc->chan_attn = ie_gsc_attend;
+	sc->port = ie_gsc_port;
+	sc->hwinit = ie_gsc_run;
+	sc->memcopyout = ie_gsc_memcopyout;
+	sc->memcopyin = ie_gsc_memcopyin;
+	sc->ie_bus_read16 = ie_gsc_read16;
+	sc->ie_bus_write16 = ie_gsc_write16;
+	sc->ie_bus_write24 = ie_gsc_write24;
+#ifdef USELEDS
+	sc->intrhook = ie_gsc_intrhook;
+#else
+	sc->intrhook = NULL;
+#endif
+
+	rv = i82596_probe(sc);
+	if (!rv) {
+		bus_dmamem_free(ga->ga_dmatag, &seg, sc->sc_msize);
+	}
+#ifdef PMAPDEBUG
+	pmapdebug = opmapdebug;
+#endif
+	if (!rv)
+		return;
+
+	if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
+		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) < 0)
+		bcopy((void *)ASP_PROM, sc->sc_arpcom.ac_enaddr,
+		      ETHER_ADDR_LEN);
+	else
+		bcopy(pdc_mac.addr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+
+#ifdef I82596_DEBUG
+	printf(" mem %x[%p]/%x", sc->bh, sc->sc_maddr, sc->sc_msize);
+	sc->sc_debug = IED_ALL;
+#endif
+	printf(": ");
 
 	sc->iscp = 0;
 	sc->scp = sc->iscp + IE_ISCP_SZ;
 	sc->scb = sc->scp + IE_SCP_SZ;
 	sc->buf_area = sc->scb + IE_SCB_SZ;
 	sc->buf_area_sz = sc->sc_msize - sc->buf_area;
-
-	a = ((u_int32_t)sc->sc_maddr + sc->scp) | IE_PORT_TEST;
-	*(volatile int32_t *)(sc->bh + IE_SCP_TEST(sc->scp)) = -1;
-	if (sc->sc_flags & IEGSC_GECKO) {
-		register volatile struct ie_gsc_regs *r = sc->sc_reg;
-		r->ie_port = a & 0xffff;
-		DELAY(1000);
-		r->ie_port = a >> 16;
-		DELAY(1000);
-	} else {
-		register volatile struct ie_gsc_regs *r = sc->sc_reg;
-		r->ie_port = a >> 16;
-		DELAY(1000);
-		r->ie_port = a & 0xffff;
-		DELAY(1000);
-	}
-	for (i = 9000; i-- && *(volatile int32_t *)
-		     (sc->bh + IE_SCP_TEST(sc->scp));
-	     DELAY(100));
-
-#ifdef I82596_DEBUG
-	printf ("test %x:%x ", *((volatile int32_t *)(sc->bh + sc->scp)),
-		*(int32_t *)(sc->bh + IE_SCP_TEST(sc->scp)));
-
-	sc->sc_debug = IED_ALL;
-#endif
-
-	ie_gsc_write16(sc, IE_ISCP_BUSY(sc->iscp), 1);
-	ie_gsc_write16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
-	ie_gsc_write24(sc, IE_ISCP_BASE(sc->iscp), sc->sc_maddr);
-
-	ie_gsc_write24(sc, IE_SCP_ISCP(sc->scp), sc->sc_maddr + sc->iscp);
-	ie_gsc_write16(sc, IE_SCP_BUS_USE(sc->scp), 0x40 | IE_SYSBUS_82586 |
-		       IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE);
-
-	ie_gsc_reset(sc, CARD_RESET);
-	ie_gsc_attend(sc);
-	delay(100);
-
 	sc->sc_type = sc->sc_flags & IEGSC_GECKO? "LASI/i82596CA" : "i82596DX";
+	sc->sc_vers = ga->ga_type.iodc_model * 10 + ga->ga_type.iodc_sv_rev;
 	i82596_attach(sc, sc->sc_type, (char *)sc->sc_arpcom.ac_enaddr,
 		      ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_NET,
 				       ga->ga_irq, i82596_intr,sc,&sc->sc_dev);
-#ifdef PMAPDEBUG
-	pmapdebug = opmapdebug;
-#endif
 }
