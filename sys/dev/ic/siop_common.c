@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.16 2003/07/01 17:15:06 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.17 2003/09/29 18:52:53 mickey Exp $ */
 /*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
@@ -314,6 +314,8 @@ siop_setuptables(siop_cmd)
 
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) ||
 	    siop_cmd->status == CMDST_SENSE) {
+		bzero(siop_cmd->siop_tables->data,
+		    sizeof(siop_cmd->siop_tables->data));
 		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
 			siop_cmd->siop_tables->data[i].count =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.28 2003/07/01 17:15:06 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.29 2003/09/29 18:52:53 mickey Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -53,8 +53,8 @@
 #include <dev/ic/siopvar_common.h>
 #include <dev/ic/siopvar.h>
 
-#ifndef DEBUG
-#undef DEBUG
+#ifndef SIOP_DEBUG
+#undef SIOP_DEBUG
 #endif
 #undef SIOP_DEBUG
 #undef SIOP_DEBUG_DR
@@ -465,9 +465,7 @@ siop_intr(v)
 		    SIOP_SSTAT1);
 #ifdef SIOP_DEBUG_INTR
 		printf("scsi interrupt, sist=0x%x sstat1=0x%x "
-		    "DSA=0x%x DSP=0x%lx\n", sist,
-		    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
-			SIOP_SSTAT1),
+		    "DSA=0x%x DSP=0x%lx\n", sist, sstat1,
 		    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA),
 		    (u_long)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 			SIOP_DSP) -
@@ -603,9 +601,8 @@ siop_intr(v)
 		}
 		/* Else it's an unhandled exeption (for now). */
 		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
-		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname, sist,
-		    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
-			SIOP_SSTAT1),
+		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname,
+		    sist, sstat1,
 		    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA),
 		    (int)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 			SIOP_DSP) - sc->sc_c.sc_scriptaddr));
@@ -1656,24 +1653,21 @@ siop_timeout(v)
 	struct siop_softc *sc = (struct siop_softc *)siop_cmd->cmd_c.siop_sc;
 	int s;
 
+	/* deactivate callout */
+	timeout_del(&siop_cmd->cmd_c.xs->stimeout);
+
 	sc_print_addr(siop_cmd->cmd_c.xs->sc_link);
-	printf("timeout on SCSI command 0x%x\n", siop_cmd->cmd_c.xs->cmd->opcode);
+	printf("timeout on SCSI command 0x%x\n",
+	    siop_cmd->cmd_c.xs->cmd->opcode);
 
 	s = splbio();
 	/* reset the scsi bus */
 	siop_resetbus(&sc->sc_c);
-
-	/* deactivate callout */
-	timeout_del(&siop_cmd->cmd_c.xs->stimeout);
-	/*
-	 * mark command has being timed out and just return;
-	 * the bus reset will generate an interrupt,
-	 * it will be handled in siop_intr()
-	 */
 	siop_cmd->cmd_c.flags |= CMDFL_TIMEOUT;
+	siop_handle_reset(sc);
 	splx(s);
-	return;
 
+	return;
 }
 
 void
@@ -1745,14 +1739,14 @@ siop_morecbd(sc)
 		    sc->sc_c.sc_dev.dv_xname, error);
 		goto bad1;
 	}
-	error = bus_dmamap_load(sc->sc_c.sc_dmat, newcbd->xferdma, newcbd->xfers,
-	    PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_raw(sc->sc_c.sc_dmat, newcbd->xferdma, &seg,
+	    rseg, PAGE_SIZE, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load cbd DMA map, error = %d\n",
 		    sc->sc_c.sc_dev.dv_xname, error);
 		goto bad0;
 	}
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 	printf("%s: alloc newcdb at PHY addr 0x%lx\n", sc->sc_c.sc_dev.dv_xname,
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
@@ -1985,7 +1979,7 @@ siop_add_dev(sc, target, lun)
 		 * can't extend this slot. Probably not worth trying to deal
 		 * with this case
 		 */
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 		printf("%s:%d:%d: can't allocate a lun sw slot\n",
 		    sc->sc_c.sc_dev.dv_xname, target, lun);
 #endif
@@ -2009,7 +2003,7 @@ siop_add_dev(sc, target, lun)
 		 * not enough space, probably not worth dealing with it.
 		 * We can hold 13 tagged-queuing capable devices in the 4k RAM.
 		 */
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 		printf("%s:%d:%d: not enough memory for a lun sw slot\n",
 		    sc->sc_c.sc_dev.dv_xname, target, lun);
 #endif
