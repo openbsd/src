@@ -376,6 +376,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/vis.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/stivar.ph
@@ -416,6 +417,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/memrange.ph

@@ -419,6 +419,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/bm.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/cpio.ph
@@ -1302,6 +1303,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/keymaps.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/readline.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/resolv.ph

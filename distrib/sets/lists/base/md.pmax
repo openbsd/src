@@ -9,8 +9,8 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.95.3
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.95.3/include
 ./usr/lib/libacl.so.5.0
-./usr/lib/libc.so.25.3
-./usr/lib/libc_r.so.3.2
+./usr/lib/libc.so.25.4
+./usr/lib/libc_r.so.3.3
 ./usr/lib/libcrypto.so.2.4
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -398,6 +398,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/bm.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/cpio.ph
@@ -1380,6 +1381,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/readline/keymaps.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/readline/readline.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/resolv.ph

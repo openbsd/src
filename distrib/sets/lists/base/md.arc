@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.25.3
+./usr/lib/libc.so.25.4
 ./usr/lib/libcrypto.so.2.4
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.0
@@ -423,6 +423,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/zlib.ph
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/site_perl/mips-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/bt463reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/bt463var.ph
@@ -475,6 +476,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/mips-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph

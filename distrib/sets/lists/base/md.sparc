@@ -32,8 +32,8 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.8/2.95.3
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.8/2.95.3/include
 ./usr/lib/libacl.so.5.0
-./usr/lib/libc.so.25.3
-./usr/lib/libc_r.so.3.2
+./usr/lib/libc.so.25.4
+./usr/lib/libc_r.so.3.3
 ./usr/lib/libcrypto.so.2.4
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -81,6 +81,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bm.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/cpio.ph
@@ -966,6 +967,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline/keymaps.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline/readline.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/resolv.ph

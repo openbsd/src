@@ -24,6 +24,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/bm.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/cast.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/cpio.ph
@@ -908,6 +909,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/keymaps.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/readline.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/regex.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/resolv.ph
