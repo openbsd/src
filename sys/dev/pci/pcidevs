@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.506 2002/05/02 16:09:44 jason Exp $
+	$OpenBSD: pcidevs,v 1.507 2002/05/10 21:40:03 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -555,6 +555,7 @@ vendor NETSEC		0x1660	NetSec
 vendor ATHEROS		0x168c	Atheros
 vendor GLOBALSUN	0x16ab	Global Sun
 vendor USR2		0x16ec	US Robotics
+vendor NETOCTAVE	0x170b	Netoctave
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
 vendor SYMPHONY2	0x1c1c	Symphony Labs
@@ -1591,6 +1592,9 @@ product CMI CMI8338B		0x0101	CMI8338B Audio
 product CMI CMI8738		0x0111	CMI8738/C3DX Audio
 product CMI CMI8738B		0x0112  CMI8738B Audio
 product CMI HSP56		0x0211	HSP56 AMR
+
+/* Netoctave */
+product NETOCTAVE NSP2K		0x0100	NSP2K
 
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
