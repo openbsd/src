@@ -1,0 +1,98 @@
+.\"
+.\" Copyright (c) 2003 Ted Unangst
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 9, 2003
+.Dt VOP 9
+.Os
+.Sh NAME
+.Nm VOP functions
+.Nd vnode operations
+.Sh SYNOPSIS
+.Fd #include <sys/vnode.h>
+.Ft int
+.Fo VOP_LOOKUP
+.Fa "struct vnode *dvp"
+.Fa "struct vnode **vpp"
+.Fa "struct componentname *cnp"
+.Fc
+.\" and many more
+.Sh DESCRIPTION
+The
+.Nm
+functions implement a generic way to perform operations on vnodes.
+The VOP function called passes the arguments to the correct file system
+specific function.
+Not all file systems implement all operations, in which case a generic
+method will be used.
+These functions exist to provide an abstract method to invoke vnode 
+operations without needing to know anything about the underlying file system.
+.Pp
+The arguments for each VOP
+function consist of one or more vnode pointers along with other data
+needed to perform the operation.
+Care must be taken to obey the vnode locking discipline when using
+VOP functions.
+The locking discipline for all currently defined VOP
+functions is described in the file
+.Pa sys/kern/vnode_if.src .
+.Sh VOP_LOOKUP
+.Nm VOP_LOOKUP
+finds the file corresponding to the name
+.Ar cnp
+in the directory
+.Ar dvp
+and returns a vnode in
+.Ar vpp .
+.Ar dvp
+is locked on entry and exit, and
+.Ar vpp
+is locked upon a succesful return.
+.Ar vpp
+will be NULL on error, and cnp->cn_flags will be set to PDIRUNLOCK
+if
+.Ar dvp
+has been unlocked for an unsuccessful return.
+.Sh RETURN VALUES
+The
+.Nm
+functions return 0 to indicate success and a non zero error code
+to indicate failure.
+.Sh FILES
+.Bl -tag -width sys/kern/vnode_if.src
+.It Pa sys/kern/vnode_if.src
+source file containing
+.Nm
+definitions
+.It Pa sys/kern/vnode_if.c
+C file with implementations of each
+.Nm
+stub call
+.El
+.Sh SEE ALSO
+.Xr errno 2 ,
+.Xr vn_lock 9 ,
+.Xr vnode 9
+.Sh BUGS
+The locking discipline is too complex.  Refer to
+.Xr vn_lock 9 .
