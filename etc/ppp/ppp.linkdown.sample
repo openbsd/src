@@ -12,7 +12,7 @@
 #  3) If no label has been found, use MYADDR if it exists.
 #
 #
-# $OpenBSD: ppp.linkdown.sample,v 1.3 1998/09/23 07:30:58 todd Exp $
+# $OpenBSD: ppp.linkdown.sample,v 1.4 1998/11/05 23:13:43 brian Exp $
 #
 #########################################################################
 
@@ -24,3 +24,11 @@
 #
 MYADDR:
  !bg /usr/X11R6/bin/auplay /etc/ppp/linkdown.au
+
+# If you're running ``ppp -auto -alias dynamic-alias-auto'', and are
+# assigned a dynamic IP number by the peer, this may be worth while
+# to keep the interface aliases to a minimum (see ``enable iface-alias''
+# in the man page):
+#
+dynamic-alias-auto:
+ iface clear
