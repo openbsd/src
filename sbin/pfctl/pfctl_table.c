@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.58 2004/02/26 11:57:19 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.59 2004/03/15 15:25:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -359,12 +359,14 @@ print_tstats(struct pfr_tstats *ts, int debug)
 	    ts->pfrts_refcnt[PFR_REFCNT_ANCHOR],
 	    ts->pfrts_refcnt[PFR_REFCNT_RULE]);
 	printf("\tEvaluations: [ NoMatch: %-18llu Match: %-18llu ]\n",
-	    ts->pfrts_nomatch, ts->pfrts_match);
+	    (unsigned long long)ts->pfrts_nomatch,
+	    (unsigned long long)ts->pfrts_match);
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
 		for (op = 0; op < PFR_OP_TABLE_MAX; op++)
 			printf("\t%-12s [ Packets: %-18llu Bytes: %-18llu ]\n",
-			    stats_text[dir][op], ts->pfrts_packets[dir][op],
-			    ts->pfrts_bytes[dir][op]);
+			    stats_text[dir][op],
+			    (unsigned long long)ts->pfrts_packets[dir][op],
+			    (unsigned long long)ts->pfrts_bytes[dir][op]);
 }
 
 int
@@ -440,8 +442,9 @@ print_astats(struct pfr_astats *as, int dns)
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
 		for (op = 0; op < PFR_OP_ADDR_MAX; op++)
 			printf("\t%-12s [ Packets: %-18llu Bytes: %-18llu ]\n",
-			    stats_text[dir][op], as->pfras_packets[dir][op],
-			    as->pfras_bytes[dir][op]);
+			    stats_text[dir][op],
+			    (unsigned long long)as->pfras_packets[dir][op],
+			    (unsigned long long)as->pfras_bytes[dir][op]);
 }
 
 void
@@ -589,8 +592,9 @@ print_iface(struct pfi_if *p, int opts)
 		dir = (i>>1) &1;
 		act = i & 1;
 		printf("\t%-12s [ Packets: %-18llu Bytes: %-18llu ]\n",
-		    istats_text[af][dir][act], p->pfif_packets[af][dir][act],
-		    p->pfif_bytes[af][dir][act]);
+		    istats_text[af][dir][act],
+		    (unsigned long long)p->pfif_packets[af][dir][act],
+		    (unsigned long long)p->pfif_bytes[af][dir][act]);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.28 2004/02/19 21:37:01 cedric Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.29 2004/03/15 15:25:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -290,10 +290,10 @@ print_cbqstats(struct queue_stats cur)
 {
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
-	    cur.data.cbq_stats.xmit_cnt.packets,
-	    cur.data.cbq_stats.xmit_cnt.bytes,
-	    cur.data.cbq_stats.drop_cnt.packets,
-	    cur.data.cbq_stats.drop_cnt.bytes);
+	    (unsigned long long)cur.data.cbq_stats.xmit_cnt.packets,
+	    (unsigned long long)cur.data.cbq_stats.xmit_cnt.bytes,
+	    (unsigned long long)cur.data.cbq_stats.drop_cnt.packets,
+	    (unsigned long long)cur.data.cbq_stats.drop_cnt.bytes);
 	printf("  [ qlength: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
 	    cur.data.cbq_stats.qcnt, cur.data.cbq_stats.qmax,
 	    cur.data.cbq_stats.borrows, cur.data.cbq_stats.delays);
@@ -311,10 +311,10 @@ print_priqstats(struct queue_stats cur)
 {
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
-	    cur.data.priq_stats.xmitcnt.packets,
-	    cur.data.priq_stats.xmitcnt.bytes,
-	    cur.data.priq_stats.dropcnt.packets,
-	    cur.data.priq_stats.dropcnt.bytes);
+	    (unsigned long long)cur.data.priq_stats.xmitcnt.packets,
+	    (unsigned long long)cur.data.priq_stats.xmitcnt.bytes,
+	    (unsigned long long)cur.data.priq_stats.dropcnt.packets,
+	    (unsigned long long)cur.data.priq_stats.dropcnt.bytes);
 	printf("  [ qlength: %3d/%3d ]\n",
 	    cur.data.priq_stats.qlength, cur.data.priq_stats.qlimit);
 
@@ -331,10 +331,10 @@ print_hfscstats(struct queue_stats cur)
 {
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
-	    cur.data.hfsc_stats.xmit_cnt.packets,
-	    cur.data.hfsc_stats.xmit_cnt.bytes,
-	    cur.data.hfsc_stats.drop_cnt.packets,
-	    cur.data.hfsc_stats.drop_cnt.bytes);
+	    (unsigned long long)cur.data.hfsc_stats.xmit_cnt.packets,
+	    (unsigned long long)cur.data.hfsc_stats.xmit_cnt.bytes,
+	    (unsigned long long)cur.data.hfsc_stats.drop_cnt.packets,
+	    (unsigned long long)cur.data.hfsc_stats.drop_cnt.bytes);
 	printf("  [ qlength: %3d/%3d ]\n",
 	    cur.data.hfsc_stats.qlength, cur.data.hfsc_stats.qlimit);
 

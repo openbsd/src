@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.211 2004/03/03 02:00:23 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.212 2004/03/15 15:25:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -563,8 +563,9 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 	if (opts & PF_OPT_VERBOSE)
 		printf("  [ Evaluations: %-8llu  Packets: %-8llu  "
 			    "Bytes: %-10llu  States: %-6u]\n",
-			    rule->evaluations, rule->packets,
-			    rule->bytes, rule->states);
+			    (unsigned long long)rule->evaluations,
+			    (unsigned long long)rule->packets,
+			    (unsigned long long)rule->bytes, rule->states);
 }
 
 void
@@ -652,8 +653,9 @@ pfctl_show_rules(int dev, int opts, int format, char *anchorname,
 			if (pr.rule.label[0]) {
 				printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
-				    pr.rule.evaluations, pr.rule.packets,
-				    pr.rule.bytes);
+				    (unsigned long long)pr.rule.evaluations,
+				    (unsigned long long)pr.rule.packets,
+				    (unsigned long long)pr.rule.bytes);
 			}
 			break;
 		default:
@@ -686,8 +688,9 @@ pfctl_show_rules(int dev, int opts, int format, char *anchorname,
 			if (pr.rule.label[0]) {
 				printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
-				    pr.rule.evaluations, pr.rule.packets,
-				    pr.rule.bytes);
+				    (unsigned long long)pr.rule.evaluations,
+				    (unsigned long long)pr.rule.packets,
+				    (unsigned long long)pr.rule.bytes);
 			}
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.193 2004/03/10 17:48:48 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.194 2004/03/15 15:25:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -515,23 +515,25 @@ print_status(struct pf_status *s, int opts)
 		printf("Interface Stats for %-16s %5s %16s\n",
 		    s->ifname, "IPv4", "IPv6");
 		printf("  %-25s %14llu %16llu\n", "Bytes In",
-		    s->bcounters[0][0], s->bcounters[1][0]);
+		    (unsigned long long)s->bcounters[0][0],
+		    (unsigned long long)s->bcounters[1][0]);
 		printf("  %-25s %14llu %16llu\n", "Bytes Out",
-		    s->bcounters[0][1], s->bcounters[1][1]);
+		    (unsigned long long)s->bcounters[0][1],
+		    (unsigned long long)s->bcounters[1][1]);
 		printf("  Packets In\n");
 		printf("    %-23s %14llu %16llu\n", "Passed",
-		    s->pcounters[0][0][PF_PASS],
-		    s->pcounters[1][0][PF_PASS]);
+		    (unsigned long long)s->pcounters[0][0][PF_PASS],
+		    (unsigned long long)s->pcounters[1][0][PF_PASS]);
 		printf("    %-23s %14llu %16llu\n", "Blocked",
-		    s->pcounters[0][0][PF_DROP],
-		    s->pcounters[1][0][PF_DROP]);
+		    (unsigned long long)s->pcounters[0][0][PF_DROP],
+		    (unsigned long long)s->pcounters[1][0][PF_DROP]);
 		printf("  Packets Out\n");
 		printf("    %-23s %14llu %16llu\n", "Passed",
-		    s->pcounters[0][1][PF_PASS],
-		    s->pcounters[1][1][PF_PASS]);
+		    (unsigned long long)s->pcounters[0][1][PF_PASS],
+		    (unsigned long long)s->pcounters[1][1][PF_PASS]);
 		printf("    %-23s %14llu %16llu\n\n", "Blocked",
-		    s->pcounters[0][1][PF_DROP],
-		    s->pcounters[1][1][PF_DROP]);
+		    (unsigned long long)s->pcounters[0][1][PF_DROP],
+		    (unsigned long long)s->pcounters[1][1][PF_DROP]);
 	}
 	printf("%-27s %14s %16s\n", "State Table", "Total", "Rate");
 	printf("  %-25s %14u %14s\n", "current entries", s->states, "");
