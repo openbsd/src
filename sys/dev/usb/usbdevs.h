@@ -1,10 +1,10 @@
-/*	$OpenBSD: usbdevs.h,v 1.8 1999/11/07 21:25:52 fgsch Exp $	*/
+/*	$OpenBSD: usbdevs.h,v 1.9 1999/11/07 21:40:02 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	/*	OpenBSD: usbdevs,v 1.9 1999/11/07 21:24:49 fgsch Exp 	*/
+ *		OpenBSD: usbdevs,v 1.10 1999/11/07 21:38:25 fgsch Exp 
  */
 /*	$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $	*/
 
