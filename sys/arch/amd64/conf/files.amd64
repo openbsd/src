@@ -1,0 +1,145 @@
+#	$OpenBSD: files.amd64,v 1.1 2004/01/28 01:39:39 mickey Exp $
+
+maxpartitions 16
+maxusers 2 16 128
+
+file	arch/amd64/amd64/autoconf.c
+file	arch/amd64/amd64/conf.c
+file	arch/amd64/amd64/disksubr.c	disk
+file	arch/amd64/amd64/gdt.c
+file	arch/amd64/amd64/machdep.c
+file	arch/amd64/amd64/identcpu.c
+file	arch/amd64/amd64/mem.c
+file	arch/amd64/amd64/pmap.c
+file	arch/amd64/amd64/process_machdep.c
+file	arch/amd64/amd64/sys_machdep.c
+file	arch/amd64/amd64/syscall.c
+file	arch/amd64/amd64/trap.c
+file	arch/amd64/amd64/vm_machdep.c
+file	arch/amd64/amd64/fpu.c
+file	arch/amd64/amd64/Locore.c
+file	arch/amd64/amd64/softintr.c
+file	arch/amd64/amd64/i8259.c
+file	arch/amd64/amd64/cacheinfo.c
+
+file	arch/amd64/amd64/intr.c
+file	arch/amd64/amd64/bus_space.c
+file	arch/amd64/amd64/bus_dma.c
+
+file	arch/amd64/amd64/consinit.c
+file	dev/cons.c
+file	dev/cninit.c
+
+file	arch/amd64/amd64/db_disasm.c		ddb
+file	arch/amd64/amd64/db_interface.c		ddb
+file	arch/amd64/amd64/db_memrw.c		ddb
+file	arch/amd64/amd64/db_trace.c		ddb
+
+file	netinet/in_cksum.c			inet
+
+# Basic clock - required
+file	arch/amd64/isa/clock.c
+file	dev/clock_subr.c
+
+
+include	"dev/mii/files.mii"
+
+include "scsi/files.scsi"
+
+include "dev/i2o/files.i2o"
+
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
+
+define mainbus { }
+device	mainbus: isabus, pcibus, mainbus
+attach	mainbus at root
+file	arch/amd64/amd64/mainbus.c	mainbus
+
+define	cpu { [apid = -1] }
+device	cpu
+attach	cpu at mainbus
+file	arch/amd64/amd64/cpu.c	cpu
+
+
+define	lapic
+file	arch/amd64/amd64/lapic.c	lapic needs-flag
+
+device	ioapic: lapic
+attach	ioapic at mainbus
+file	arch/amd64/amd64/ioapic.c	ioapic needs-flag
+
+#
+# PCI drivers
+#
+
+include "dev/pci/files.pci"
+file	arch/amd64/pci/pci_machdep.c	pci
+file	arch/amd64/pci/pciide_machdep.c	pciide
+
+# PCI Host bridge chipsets
+device	pchb: pcibus
+attach	pchb at pci
+file	arch/amd64/pci/pchb.c		pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/amd64/pci/pcib.c		pcib
+
+device	aapic
+attach	aapic at pci
+file	arch/amd64/pci/aapic.c		aapic
+
+#
+# ISA drivers
+#
+
+include "dev/isa/files.isa"
+include "dev/isa/files.isapnp"
+file	arch/amd64/isa/isa_machdep.c	isa
+
+# attribute used to represent the "keyboard controller"
+# XXX should be a real device
+define	pckbcport { [irq = -1], [port = -1] }
+
+include "dev/wscons/files.wscons"
+include "dev/pckbc/files.pckbc"
+
+file    arch/amd64/amd64/wscons_machdep.c wsdisplay
+
+device	sysbeep
+attach	sysbeep at pcppi
+
+# Floppy disk controller
+device	fdc { drive = - 1 }
+attach	fdc at isa
+file	dev/isa/fdc.c			fdc needs-flag
+
+device	fd: disk, isa_dma
+attach	fd at fdc
+file	dev/isa/fd.c			fd needs-flag
+
+#
+# USB
+#
+include "dev/usb/files.usb"
+
+#
+# FireWire
+#
+include "dev/ieee1394/files.ieee1394"
+
+#
+# device major numbers
+#
+
+major	{ccd = 16}
+major	{vnd = 14}
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
+major	{rd = 17}
+major	{wd = 0}
+major	{wt = 3}
+major	{fd = 2}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.33 2003/12/12 22:56:46 hshoexer Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.34 2004/01/28 01:39:40 mickey Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct pcibus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (__alpha__ + __atari__ + __i386__ + __arc__ + __powerpc__ + __galileo__ + __sparc64__ + __hppa__ != 1)
+#if (__alpha__ + __atari__ + __i386__ + __arc__ + __powerpc__ + __galileo__ + __sparc64__ + __hppa__ +__amd64__ != 1)
 #error COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if __alpha__
@@ -80,6 +80,9 @@ struct pcibus_attach_args;
 #endif
 #if __sparc64__
 #include <sparc64/include/pci_machdep.h>
+#endif
+#if __amd64__
+#include <amd64/include/pci_machdep.h>
 #endif
 
 /*

@@ -1,0 +1,73 @@
+#	$OpenBSD: GENERIC,v 1.1 2004/01/28 01:39:39 mickey Exp $
+
+machine		amd64
+
+include "../../../conf/GENERIC"
+
+maxusers	32
+
+config		bsd	swap generic
+option		DEBUG
+option		SYSCALL_DEBUG
+
+mainbus0	at root
+cpu*		at mainbus?
+
+isa0		at mainbus0
+pci*		at mainbus0 bus ?
+
+option		PCIVERBOSE
+pchb*		at pci? dev ? function ?
+ppb*		at pci? dev ? function ?
+pci*		at ppb? bus ?
+pci*		at pchb? bus ?
+
+pckbc0		at isa?
+pckbd*		at pckbc?
+
+com0  at isa? port 0x3f8 irq 4        # standard PC serial ports
+com1  at isa? port 0x2f8 irq 3
+
+#vga0		at isa?
+vga*		at pci? dev ? function ?
+wsdisplay*	at vga? console ?
+wskbd*		at pckbd? console ?
+
+skc*	at pci? dev ? function ?
+sk*	at skc?
+fxp*	at pci? dev ? function ?
+eephy*	at mii? phy ?
+inphy*	at mii? phy ?
+iophy*	at mii? phy ?
+nsphy*	at mii? phy ?
+ukphy*	at mii? phy ?
+
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
+
+pciide*		at pci? dev ? function ?
+wd*		at pciide? channel ? drive ? flags 0x0000
+
+# PCI USB Controllers
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at uhci?
+usb*	at ohci?
+
+uhub*	at usb?				# USB Hubs
+uhub*	at uhub? port ? configuration ?	# USB Hubs
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+uhidev*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+uhid*	at uhidev? reportid ?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
+pseudo-device	crypto		1

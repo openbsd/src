@@ -1,0 +1,122 @@
+#	$OpenBSD: genassym.cf,v 1.1 2004/01/28 01:39:38 mickey Exp $
+
+#	Written by Artur Grabowski art@openbsd.org, Public Domain
+
+include <sys/param.h>
+include <sys/proc.h>
+include <sys/resourcevar.h>
+include <sys/device.h>
+include <sys/user.h>
+
+include <uvm/uvm.h>
+
+include <machine/trap.h>
+include <machine/pmap.h>
+include <machine/vmparam.h>
+include <machine/intr.h>
+
+export	SRUN
+
+define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
+define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
+define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
+
+export	VM_MAXUSER_ADDRESS
+export	VM_MIN_KERNEL_ADDRESS
+
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
+
+struct	proc
+member	p_addr
+member	p_back
+member	p_forw
+member	p_priority
+member	p_stat
+member	p_wchan
+member	P_MD_TSS_SEL	p_md.md_tss_sel
+member	P_MD_REGS	p_md.md_regs
+member	P_MD_FLAGS	p_md.md_flags
+member	P_MD_SYSCALL	p_md.md_syscall
+member	P_MD_ASTPENDING	p_md.md_astpending
+member	p_flag
+
+export	P_SYSTEM
+
+export	MDP_IRET
+
+struct	uvmexp		V_
+member	INTR		intrs
+
+struct	trapframe
+member	tf_rdi
+member	tf_rsi
+member	tf_rdx
+member	tf_rcx
+member	tf_r8
+member	tf_r9
+member	tf_r10
+member	tf_r11
+member	tf_r12
+member	tf_r13
+member	tf_r14
+member	tf_r15
+member	tf_rbp
+member	tf_rbx
+member	tf_rax
+member	tf_gs
+member	tf_fs
+member	tf_es
+member	tf_ds
+member	tf_trapno
+member	tf_err
+member	tf_rip
+member	tf_cs
+member	tf_rflags
+member	tf_rsp
+member	tf_ss
+
+define  FRAMESIZE               sizeof(struct trapframe)
+
+struct pcb
+member	pcb_cr3
+member	pcb_rbp
+member	pcb_rsp
+member	pcb_usersp
+member	PCB_RSP0	pcb_tss.tss_rsp0
+member	pcb_cr0
+member	pcb_ldt_sel
+member	pcb_onfault
+member	pcb_fpcpu
+
+struct	cpu_info
+member	CPU_INFO_SCRATCH	ci_scratch
+member  CPU_INFO_SELF		ci_self
+member  CPU_INFO_RESCHED	ci_want_resched
+member  CPU_INFO_CURPROC	ci_curproc
+member  CPU_INFO_CURPCB		ci_curpcb
+member  CPU_INFO_IDLE_PCB	ci_idle_pcb
+member  CPU_INFO_IDLE_TSS_SEL	ci_idle_tss_sel
+member  CPU_INFO_ASTPENDING	ci_astpending
+member	CPU_INFO_ILEVEL		ci_ilevel
+member	CPU_INFO_IDEPTH		ci_idepth
+member	CPU_INFO_ISOURCES	ci_isources
+member	CPU_INFO_IPENDING	ci_ipending
+member	CPU_INFO_IUNMASK	ci_iunmask
+
+struct	intrsource
+member	is_recurse
+member	is_resume
+member	is_evcnt
+member	is_handlers
+member	is_pic
+member	is_flags
+member	is_pin
+member	is_type
+member	is_maxlevel
+
+struct	intrhand
+member	ih_fun
+member	ih_arg
+member	ih_next
+member	ih_level
+
