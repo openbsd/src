@@ -102,7 +102,7 @@ struct execsw execsw[] = {
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
 #ifdef EXEC_ELF
-	{ ELF_HDR_SIZE, exec_elf_makecmds, },	/* elf binaries */
+	{ sizeof(Elf32_Ehdr), exec_elf_makecmds, },	/* elf binaries */
 #endif
 #ifdef COMPAT_LINUX
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, }, /* linux a.out */
