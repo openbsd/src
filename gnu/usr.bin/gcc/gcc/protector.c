@@ -1731,7 +1731,7 @@ change_arg_use_in_operand (x, orig, new, size)
 	    }
 	}
       break;
-
+#ifdef TARGET_ARM
     case PARALLEL:
       for (i = 0, j = 0; j < XVECLEN (x, 0); j++)
 	{
@@ -1749,7 +1749,7 @@ change_arg_use_in_operand (x, orig, new, size)
 	}
       PUT_NUM_ELEM (XVEC (x, 0), i);
       return;
-
+#endif
     default:
       break;
     }
