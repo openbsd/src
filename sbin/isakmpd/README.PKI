@@ -1,5 +1,5 @@
-$OpenBSD: README.PKI,v 1.2 1999/07/17 22:00:19 niklas Exp $
-$EOM: README.PKI,v 1.2 1999/07/17 21:29:47 niklas Exp $
+$OpenBSD: README.PKI,v 1.3 1999/07/18 09:33:33 niklas Exp $
+$EOM: README.PKI,v 1.3 1999/07/18 09:25:33 niklas Exp $
 
 1	Create your own CA as root.
 
@@ -55,6 +55,4 @@ $EOM: README.PKI,v 1.2 1999/07/17 21:29:47 niklas Exp $
 	[X509-certificates]
 	CA-directory=		/etc/isakmpd/ca/
 	Cert-directory=		/etc/isakmpd/certs/
-
-	[RSA_SIG]
-	PRIVKEY=		/etc/isakmpd/private/local.key
+	Private-key=		/etc/isakmpd/private/local.key

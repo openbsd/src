@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.22 1999/07/17 21:54:39 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.27 1999/07/17 20:44:11 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.23 1999/07/18 09:33:33 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.28 1999/07/18 09:25:33 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -143,6 +143,10 @@ are required to have a SubjectAltName extension.
 If this tag is defined, whatever the value is, certificates that
 do not originate from a trusted CA but are self-signed will be
 accepted.
+.It Em Private-key
+The private key matching the public key of our certificate (which should be
+in the "Cert-directory", and have a subjectAltName matching our ID, so far
+that is our IP-address).
 .El
 .El
 .Ss Referred-to sections
@@ -351,7 +355,7 @@ An example of a configuration file:
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
 [General]
-Policy-File=		/etc/isakmpd.policy
+Policy-File=		/etc/isakmpd/policy
 Retransmits=		5
 Exchange-max-time=	120
 Listen-on=		10.1.0.2
@@ -407,6 +411,7 @@ Transforms=		3DES-SHA
 [X509-certificates]
 CA-directory=           /etc/isakmpd/ca/
 Cert-directory=         /etc/isakmpd/certs/
+Private-key=		/etc/isakmpd/private/local.key
 
 # Main mode transforms
 ######################
@@ -661,9 +666,6 @@ LIFE_DURATION=		32768,16384:65536
 [LIFE_4.5_GB]
 LIFE_TYPE=		KILOBYTES
 LIFE_DURATION=		4608000,4096000:8192000
-
-[RSA_SIG]
-PRIVKEY=		/etc/isakmpd/private/local.key
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.15 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.32 1999/07/17 20:44:10 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.16 1999/07/18 09:33:33 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.33 1999/07/18 09:25:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -154,7 +154,7 @@ ike_auth_get_key (int type, char *id, size_t *keylen)
       break;
 
     case IKE_AUTH_RSA_SIG:
-      keyfile = conf_get_str ("RSA_sig", "privkey");
+      keyfile = conf_get_str ("X509-certificates", "Private-key");
 
       if ((keyh = BIO_new (BIO_s_file ())) == NULL)
 	{
