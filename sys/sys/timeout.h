@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.9 2001/08/23 12:02:04 art Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.10 2001/08/23 12:06:30 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -67,7 +67,6 @@ struct timeout {
 /*
  * flags in the to_flags field.
  */
-#define TIMEOUT_STATIC		1	/* allocated from static pool */
 #define TIMEOUT_ONQUEUE		2	/* timeout is on the todo queue */
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
 #define TIMEOUT_TRIGGERED       8       /* timeout is running or ran */
