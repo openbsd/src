@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.46 2003/08/27 17:16:00 mickey Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.47 2004/01/30 23:14:32 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -436,9 +436,9 @@ __elf_fdnlist(fd, list)
 
 				/*
 				 * First we check for the symbol as it was
-				 * provided by the user. If that fails,
-				 * skip the first char if it's an '_' and
-				 * try again.
+				 * provided by the user. If that fails
+				 * and the first char is an '_', skip over
+				 * the '_' and try again.
 				 * XXX - What do we do when the user really
 				 *       wants '_foo' and the are symbols
 				 *       for both 'foo' and '_foo' in the
@@ -446,7 +446,7 @@ __elf_fdnlist(fd, list)
 				 */
 				sym = p->n_un.n_name;
 				if (strcmp(&strtab[soff], sym) != 0 &&
-				    ((sym[0] == '_') &&
+				    (sym[0] != '_' ||
 				     strcmp(&strtab[soff], sym + 1) != 0))
 					continue;
 
