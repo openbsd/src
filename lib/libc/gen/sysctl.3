@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.67 2001/05/11 06:39:37 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.68 2001/05/14 07:13:32 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -227,8 +227,9 @@ privileges may change the value.
 .It Dv HW_PHYSMEM No "	integer	no"
 .It Dv HW_USERMEM No "	integer	no"
 .It Dv HW_PAGESIZE No "	integer	no"
-.\".It Dv HW_DISKNAMES No "	integer	no"
-.\".It Dv HW_DISKSTATS No "	integer	no"
+.It Dv HW_DISKNAMES No "	string	no"
+.It Dv HW_DISKSTATS No "	struct	no"
+.It Dv HW_DISKCOUNT No "	integer	no"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -246,8 +247,14 @@ The bytes of physical memory.
 The bytes of non-kernel memory.
 .It Dv HW_PAGESIZE
 The software page size.
-.\".It Dv HW_DISKNAMES
-.\".It Dv HW_DISKSTATS
+.It Dv HW_DISKNAMES
+A comma-separated list of disk names.
+.It Dv HW_DISKSTATS
+An array of
+.Li struct disk
+structures containing disk statistics.
+.It Dv HW_DISKCOUNT
+The number of disks currently attached to the system.
 .El
 .Ss CTL_KERN
 The string and integer information available for the
@@ -264,8 +271,8 @@ information.
 .It Dv KERN_ARGMAX No "	integer	no"
 .It Dv KERN_ARND No "	integer	no"
 .It Dv KERN_BOOTTIME No "	struct timeval	no"
-.It Dv KERN_CHOWN_RESTRICTED No "	integer	no"
 .It Dv KERN_CLOCKRATE No "	struct clockinfo	no"
+.It Dv KERN_CPTIME No "	long[CPUSTATES]	no"
 .It Dv KERN_DOMAINNAME No "	string	yes"
 .It Dv KERN_FILE No "	struct file	no"
 .It Dv KERN_FSYNC No "	integer	no"
@@ -273,25 +280,20 @@ information.
 .It Dv KERN_HOSTID No "	integer	yes"
 .It Dv KERN_HOSTNAME No "	string	yes"
 .It Dv KERN_JOB_CONTROL No "	integer	no"
-.It Dv KERN_LINK_MAX No "	integer	no"
 .It Dv KERN_MALLOCSTATS No "	node	no"
 .It Dv KERN_MAXFILES No "	integer	yes"
 .It Dv KERN_MAXPARTITIONS No "	integer	no"
 .It Dv KERN_MAXPROC No "	integer	yes"
 .It Dv KERN_MAXVNODES No "	integer	yes"
-.It Dv KERN_MAX_CANON No "	integer	no"
-.It Dv KERN_MAX_INPUT No "	integer	no"
-.It Dv KERN_NAME_MAX No "	integer	no"
+.It Dv KERN_MSGBUFSIZE No "	integer	no"
 .It Dv KERN_NCHSTATS No "	struct nchstats	no"
 .It Dv KERN_NGROUPS No "	integer	no"
-.It Dv KERN_NO_TRUNC No "	integer	no"
 .It Dv KERN_NSELCOLL No "	integer	no"
+.It Dv KERN_NTPTIME No "	struct ntptimeval	no"
 .It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
 .It Dv KERN_OSRELEASE No "	string	no"
 .It Dv KERN_OSREV No "	integer	no"
 .It Dv KERN_OSTYPE No "	string	no"
-.It Dv KERN_PATH_MAX No "	integer	no"
-.It Dv KERN_PIPE_BUF No "	integer	no"
 .It Dv KERN_POSIX1 No "	integer	no"
 .It Dv KERN_PROC No "	struct proc	no"
 .It Dv KERN_PROF No "	node	not applicable"
@@ -299,10 +301,13 @@ information.
 .It Dv KERN_RND No "	struct rndstats	no"
 .It Dv KERN_SAVED_IDS No "	integer	no"
 .It Dv KERN_SECURELVL No "	integer	raise only"
+.It Dv KERN_SOMINCONN No "	integer	yes"
+.It Dv KERN_SOMAXCONN No "	integer	yes"
 .It Dv KERN_SYSVMSG No "	integer	no"
 .It Dv KERN_SYSVSEM No "	integer	no"
 .It Dv KERN_SYSVSHM No "	integer	no"
-.It Dv KERN_VDISABLE No "	integer	no"
+.It Dv KERN_TTY No "	node	not applicable"
+.It Dv KERN_USERMOUNT No "	integer	yes"
 .It Dv KERN_VERSION No "	string	no"
 .It Dv KERN_VNODE No "	struct vnode	no"
 .El
@@ -324,10 +329,6 @@ A
 .Li struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
-.It Dv KERN_CHOWN_RESTRICTED
-Return 1 if appropriate privileges are required for the
-.Xr chown 2
-system call, otherwise 0.
 .It Dv KERN_CLOCKRATE
 A
 .Li struct clockinfo
@@ -335,6 +336,12 @@ structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
+.It Dv KERN_CPTIME
+An array of longs, of size
+.Li CPUSTATES
+is returned, containing statistics about the number of ticks spent by
+the system in interrupt processing, user processes (niced or normal),
+system processing, or idling.
 .It Dv KERN_DOMAINNAME
 Get or set the YP domain name.
 .It Dv KERN_FILE
@@ -363,8 +370,6 @@ Get or set the host ID.
 Get or set the hostname.
 .It Dv KERN_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise 0.
-.It Dv KERN_LINK_MAX
-The maximum file link count.
 .It Dv KERN_MAXFILES
 The maximum number of open files that may be open in the system.
 .It Dv KERN_MAXPARTITIONS
@@ -373,13 +378,8 @@ The maximum number of partitions allowed per disk.
 The maximum number of simultaneous processes the system will allow.
 .It Dv KERN_MAXVNODES
 The maximum number of vnodes available on the system.
-.It Dv KERN_MAX_CANON
-The maximum number of bytes in terminal canonical input line.
-.It Dv KERN_MAX_INPUT
-The minimum maximum number of bytes for which space is available in
-a terminal input queue.
-.It Dv KERN_NAME_MAX
-The maximum number of bytes in a file name.
+.It Dv KERN_MSGBUFSIZE
+The size of the kernel message buffer.
 .It Dv KERN_NCHSTATS
 A
 .Li struct nchstats
@@ -390,26 +390,22 @@ filename to
 mapping cache.
 .It Dv KERN_NGROUPS
 The maximum number of supplemental groups.
-.It Dv KERN_NO_TRUNC
-Return 1 if file names longer than
-.Dv KERN_NAME_MAX
-are truncated.
 .It Dv KERN_NOSUIDCOREDUMP
 Programs with their set-user-ID bit set will not dump core when this is set.
 .It Dv KERN_NSELCOLL
 Number of
 .Xr select 2
 collisions.
+.It Dv KERN_NTPTIME
+Returns a
+.Li strct ntptimeval ,
+containing kernel precision timekeeping information.
 .It Dv KERN_OSRELEASE
 The system release string.
 .It Dv KERN_OSREV
 The system revision number.
 .It Dv KERN_OSTYPE
 The system type string.
-.It Dv KERN_PATH_MAX
-The maximum number of bytes in a pathname.
-.It Dv KERN_PIPE_BUF
-The maximum number of bytes which will be written atomically to a pipe.
 .It Dv KERN_POSIX1
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
@@ -521,6 +517,16 @@ Returns 1 if saved set-group-ID and saved set-user-ID are available.
 The system security level.
 This level may be raised by processes with appropriate privileges.
 It may only be lowered by process 1.
+.It Dv KERN_SOMAXCONN
+Upper bound on the number of half-open connections a process can allow
+to be associated with a socket, using
+.Xr listen 2 .
+The default value is 128.
+.It Dv KERN_SOMINCONN
+Lower bound on the number of half-open connections a process can allow
+to be associated with a socket, using
+.Xr listen 2 .
+The default value is 80.
 .It Dv KERN_SYSVMSG
 Returns 1 if System V style message queue functionality is available on this
 system, otherwise 0.
@@ -530,8 +536,37 @@ system, otherwise 0.
 .It Dv KERN_SYSVSHM
 Returns 1 if System V style share memory functionality is available on this
 system, otherwise 0.
-.It Dv KERN_VDISABLE
-Returns the terminal character disabling value.
+.It Dv KERN_TTY
+Return statistics information about tty input/output.
+The third level names information is detailed below.
+The changeable column shows whether a process with appropriate
+privileges may change the value.
+.Bl -column "KERN_TTY_TKRAWCCXXX" "int64_tXX" -offset indent
+.It Sy Third level name	Type	Changeable
+.It Dv KERN_TTY_TKNIN No "	int64_t	no"
+.It Dv KERN_TTY_TKNOUT No "	int64_t	no"
+.It Dv KERN_TTY_TKRAWCC No "	int64_t	no"
+.It Dv KERN_TTY_TKCANCC No "	int64_t	no"
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_TTY_TKNIN
+Returns the number of input characters from a
+.Xr tty 4 .
+.It Dv KERN_TTY_TKNOUT
+Returns the number of output characters on a
+.Xr tty 4 .
+.It Dv KERN_TTY_TKRAWCC
+Return the number of input characters in raw mode.
+.It Dv KERN_TTY_TKCANCC
+Return the number of input characters in canonical mode.
+.El
+.It Dv KERN_USERMOUNT
+Return non-zero if regular users can issue
+.Xr mount 2
+requests.
+The default value is 0.
 .It Dv KERN_VERSION
 The system version string.
 .It Dv KERN_VNODE
@@ -1245,6 +1280,7 @@ privileges may change the value.
 .It Dv VM_METER No "	struct vmtotal	no"
 .It Dv VM_SWAPENCRYPT No "	swap encrypt values	yes"
 .It Dv VM_UVMEXP No "	struct uvmexp	no"
+.It Dv VM_VMMETER No "	struct vmtotal	no"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -1287,6 +1323,9 @@ Encryption keys are deleted when their reference counter reaches zero.
 .El
 .It Dv VM_UVMEXP
 Contains statistics about the UVM memory management system.
+.It Dv VM_METER:
+Contains statistics about the memory management system, using the old
+VM format.
 .El
 .Ss CTL_VFS
 The string and integer information available for the
