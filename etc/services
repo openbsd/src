@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.6 1996/12/06 08:52:41 downsj Exp $
+#	$OpenBSD: services,v 1.7 1996/12/06 13:25:52 deraadt Exp $
 #
 # Network services, Internet style
 #
@@ -159,6 +159,8 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
+nfsd		2049/udp	nfs	# NFS server
+nfsd		2049/tcp	nfs	# NFS server
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
 #
