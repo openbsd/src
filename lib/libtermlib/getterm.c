@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.5 1996/06/21 04:34:34 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.6 1996/07/22 03:13:54 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.5 1996/06/21 04:34:34 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.6 1996/07/22 03:13:54 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -69,7 +69,7 @@ static int _ti_use_env = TRUE;
  * library depends on the termcap entry being kept
  */
 int
-_ti_getterm(name)
+_ti_gettermcap(name)
      const char *name;
 {
     register char *p;
@@ -82,9 +82,6 @@ _ti_getterm(name)
     char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
     char  *termpath;
     long   num;
-#ifdef TIOCGWINSZ
-    struct winsize winsz;
-#endif
 
     fname = pathvec;
     p = pathbuf;
@@ -109,7 +106,7 @@ _ti_getterm(name)
 		strcpy(pathbuf, home);	/* $HOME first */
 		*p++ = '/';
 	    }	/* if no $HOME look in current directory */
-	    strncpy(p, _PATH_DEF, MAXPATHLEN - (p - pathbuf));
+	    strncpy(p, _PATH_CAPDEF, MAXPATHLEN - (p - pathbuf));
 	}
     }
     else					/* user-defined name in TERMCAP */
@@ -182,7 +179,6 @@ _ti_getterm(name)
 		    break;
 	    }
 	}
-	_ti_fillcap(cur_term);
 	if (_ti_buf) {
 	    strncpy(_ti_buf, dummy, 1023);
 	    _ti_buf[1023] = '\0';
@@ -190,10 +186,184 @@ _ti_getterm(name)
 		if (cp[1] != '\0')
 		    cp[1] = '\0';
 	}
+	i = 0;
+    }
+
+    /* We are done with the returned termcap buffer now; free it */
+    if (dummy)
+	free(dummy);
+
+    /* we found a "tc" reference loop, return error */
+    if (i == -3)
+	return (-1);
+
+    return (i + 1);
+}
+
+/*
+ * Internal routine to read in a terminal description.
+ * Currently supports reading from termcap files and databases
+ * only; should be extended to also support reading from binary
+ * terminfo files
+ *
+ * Will also set up global variables for compatibility with old
+ * termcap routines, as well as populate cur_term's capability
+ * variables.  If called from the termcap tgetent() compatibility
+ * routine, it will copy the termcap entry into the buffer
+ * provided to that routine.  Note that no other code in this
+ * library depends on the termcap entry being kept
+ */
+int
+_ti_getterminfo(name)
+     const char *name;
+{
+    register char *p;
+    register char *cp;
+    char  *dummy;
+    char **fname;
+    char  *home;
+    int    i;
+    char   pathbuf[MAXPATHLEN];	/* holds raw path of filenames */
+    char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
+    char  *termpath;
+    long   num;
+
+    fname = pathvec;
+    p = pathbuf;
+    /*
+     * TERMCAP can have one of two things in it. It can be the
+     * name of a file to use instead of /etc/termcap. In this
+     * case it better start with a "/". Or it can be an entry to
+     * use so we don't have to read the file. In this case it
+     * has to already have the newlines crunched out.  If TERMCAP
+     * does not hold a file name then a path of names is searched
+     * instead.  The path is found in the TERMPATH variable, or
+     * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
+     */
+    if ((termpath = getenv("TERMPATH")) != NULL)
+	strncpy(pathbuf, termpath, MAXPATHLEN);
+    else {
+	if ((home = getenv("HOME")) != NULL) {
+	    /* set up default */
+	    p += strlen(home);	/* path, looking in */
+	    strcpy(pathbuf, home);	/* $HOME first */
+	    *p++ = '/';
+	}	/* if no $HOME look in current directory */
+	strncpy(p, _PATH_INFODEF, MAXPATHLEN - (p - pathbuf));
+    }
+
+    *fname++ = pathbuf;	/* tokenize path into vector of names */
+    while (*++p)
+	if (*p == ' ' || *p == ':') {
+	    *p = '\0';
+	    while (*++p)
+		if (*p != ' ' && *p != ':')
+		    break;
+	    if (*p == '\0')
+		break;
+	    *fname++ = p;
+	    if (fname >= pathvec + PVECSIZ) {
+		fname--;
+		break;
+	    }
+	}
+    *fname = (char *) 0;			/* mark end of vector */
+    (void) cgetset(NULL);
+
+    dummy = NULL;
+    i = cgetent(&dummy, pathvec, (char *)name);      
+	
+    if (i == 0) {
+	char *s;
+
+	if ((s = home = strchr(dummy, ':')) == NULL) {
+	    cur_term->name = strdup(name);
+	    strncpy(ttytype, name, MAXSIZE - 1);
+	    ttytype[MAXSIZE - 1] = '\0';
+	}
+	else {
+	    strncpy(ttytype, dummy + (dummy[2] == '|' ? 3 : 0),
+		    MIN(MAXSIZE - 1, s - dummy));
+	    ttytype[MAXSIZE - 1] = '\0';
+	    *home = '\0';
+	    while (s > dummy && *s != '|')
+		s--;
+	    if (s > dummy)
+		s++;
+	    cur_term->name = strdup(s);
+	    *home = ':';
+	}
+	for (i = 0 ; i < _tBoolCnt ; i++) {
+	    if (cgetcap(dummy, (char *)boolcodes[i], ':') == NULL)
+		cur_term->bools[i] = 0;
+	    else
+		cur_term->bools[i] = 1;
+	}
+	for (i = 0 ; i < _tNumCnt ; i++) {
+	    if (cgetnum(dummy, (char *)numcodes[i], &num) < 0)
+		cur_term->nums[i] = 0;
+	    else
+		cur_term->nums[i] = (int)num;
+	}
+	for (i = 0 ; i < _tStrCnt ; i++) {
+	    if (cgetstr(dummy, (char *)strcodes[i], &s) < 0)
+		cur_term->strs[i] = NULL;
+	    else
+		cur_term->strs[i] = s;
+	}
+	if (_ti_buf) {
+	    strncpy(_ti_buf, dummy, 1023);
+	    _ti_buf[1023] = '\0';
+	    if ((cp = strrchr(_ti_buf, ':')) != NULL)
+		if (cp[1] != '\0')
+		    cp[1] = '\0';
+	}
+	i = 0;
+    }
+
+    /* We are done with the returned termcap buffer now; free it */
+    if (dummy)
+	free(dummy);
+
+    /* we found a "tc" reference loop, return error */
+    if (i == -3)
+	return (-1);
+
+    return (i + 1);
+}
+
+int
+_ti_getterm(name)
+     const char *name;
+{
+#ifdef TIOCGWINSZ
+    struct winsize winsz;
+#endif
+    int ret = 1;
+    char *s;
+
+    if (_ti_buf) {
+	if (_ti_gettermcap(name) != 1) {
+	    del_curterm(cur_term);
+	    if ((cur_term = calloc(sizeof(TERMINAL), 1)) == NULL)
+		errx(1, "No memory for terminal description");
+	    ret = _ti_getterminfo(name);
+	}
+    }
+    else {
+	if (_ti_getterminfo(name) != 1) {
+	    del_curterm(cur_term);
+	    if ((cur_term = calloc(sizeof(TERMINAL), 1)) == NULL)
+		errx(1, "No memory for terminal description");
+	    ret = _ti_gettermcap(name);
+	}
+    }
+
+    if (ret == 1) {
+	_ti_fillcap(cur_term);
 	UP = cursor_up;
 	BC = backspace_if_not_bs;
 	PC = pad_char ? pad_char[0] : '\0';
-	i = 0;
 
 	LINES = lines;
 	COLS = columns;
@@ -225,16 +395,7 @@ _ti_getterm(name)
 	lines = LINES;
 	columns = COLS;
     }
-
-    /* We are done with the returned termcap buffer now; free it */
-    if (dummy)
-	free(dummy);
-
-    /* we found a "tc" reference loop, return error */
-    if (i == -3)
-	return (-1);
-
-    return (i + 1);
+    return ret;
 }
 
 /*

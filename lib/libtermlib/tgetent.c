@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgetent.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: tgetent.c,v 1.2 1996/07/22 03:13:55 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tgetent.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tgetent.c,v 1.2 1996/07/22 03:13:55 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -50,7 +50,6 @@ tgetent(bp, name)
     _ti_buf = bp;
     if (cur_term != NULL)
 	del_curterm(cur_term);
-    cur_term = calloc(sizeof(TERMINAL), 1);
     if ((cur_term = calloc(sizeof(TERMINAL), 1)) == NULL)
 	errx(1, "No memory for terminal description");
     if (isatty(STDOUT_FILENO))
