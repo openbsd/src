@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.11 2003/05/07 18:26:09 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.12 2003/05/19 09:32:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -59,6 +59,9 @@
 #define	STI_ROMSIZE	0x30000
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
+#define	STI_INEG_REV	0x60
+#define	STI_INEG_PROM	0xf0011000
+
 int sti_sgc_probe(struct device *, void *, void *);
 void sti_sgc_attach(struct device *, struct device *, void *);
 
@@ -104,9 +107,13 @@ sti_sgc_probe(parent, match, aux)
 	 * On some machines it may not be part of the HPA space.
 	 */
 	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN) {
-		rom = ca->ca_hpa;
-		romh = ioh;
-		romunmapped++;
+		if (ca->ca_type.iodc_revision == STI_INEG_REV)
+			rom = STI_INEG_PROM;
+		else {
+			rom = ca->ca_hpa;
+			romh = ioh;
+			romunmapped++;
+		}
 	} else
 		rom = PAGE0->pd_resv2[1];
 
@@ -182,7 +189,10 @@ sti_sgc_attach(parent, self, aux)
 	int rv;
 
 	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN)
-		addr = ca->ca_hpa;
+		if (ca->ca_type.iodc_revision == STI_INEG_REV)
+			addr = STI_INEG_PROM;
+		else
+			addr = ca->ca_hpa;
 	else
 		addr = PAGE0->pd_resv2[1];
 
