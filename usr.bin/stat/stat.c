@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.4 2005/04/02 19:17:26 otto Exp $ */
+/*	$OpenBSD: stat.c,v 1.5 2005/04/03 18:31:00 deraadt Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.4 2005/04/02 19:17:26 otto Exp $";
+    "$OpenBSD: stat.c,v 1.5 2005/04/03 18:31:00 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -103,12 +103,12 @@ static const char rccs_id[] =
 #define FMT_ZERO	'0'
 #define FMT_MINUS	'-'
 
-#define FMT_DECIMAL 	'D'
-#define FMT_OCTAL 	'O'
-#define FMT_UNSIGNED 	'U'
-#define FMT_HEX 	'X'
-#define FMT_FLOAT 	'F'
-#define FMT_STRING 	'S'
+#define FMT_DECIMAL	'D'
+#define FMT_OCTAL	'O'
+#define FMT_UNSIGNED	'U'
+#define FMT_HEX		'X'
+#define FMT_FLOAT	'F'
+#define FMT_STRING	'S'
 
 #define FMTF_DECIMAL	0x01
 #define FMTF_OCTAL	0x02
@@ -282,8 +282,7 @@ main(int argc, char *argv[])
 			    errno == ENOENT &&
 			    (rc = lstat(argv[0], &st)) == -1)
 				errno = ENOENT;
-		}
-		else
+		} else
 			rc = lstat(argv[0], &st);
 
 		if (rc == -1) {
@@ -292,8 +291,7 @@ main(int argc, char *argv[])
 			if (!quiet)
 				warn("%s: stat",
 				    argc == 0 ? "(stdin)" : argv[0]);
-		}
-		else
+		} else
 			output(&st, argv[0], statfmt, fn, nonl, quiet);
 
 		argv++;
@@ -312,7 +310,7 @@ usage(const char *synopsis)
 	exit(1);
 }
 
-/* 
+/*
  * Parses a format string.
  */
 void
@@ -394,7 +392,7 @@ output(const struct stat *st, const char *file,
 		 */
 		flags = 0;
 		do {
-			if      (*statfmt == FMT_POUND)
+			if (*statfmt == FMT_POUND)
 				flags |= FLAG_POUND;
 			else if (*statfmt == FMT_SPACE)
 				flags |= FLAG_SPACE;
@@ -483,11 +481,8 @@ output(const struct stat *st, const char *file,
 #undef fmtcasef
 #undef fmtcase
 
-		t = format1(st,
-		     file,
-		     subfmt, statfmt - subfmt,
-		     buf, sizeof(buf),
-		     flags, size, prec, ofmt, hilo, what);
+		t = format1(st, file, subfmt, statfmt - subfmt, buf,
+		    sizeof(buf), flags, size, prec, ofmt, hilo, what);
 
 		for (i = 0; i < t && i < sizeof(buf); i++)
 			addchar(stdout, buf[i], &nl);
@@ -542,7 +537,7 @@ format1(const struct stat *st,
 		data = (what == SHOW_st_dev) ? st->st_dev : st->st_rdev;
 		sdata = (what == SHOW_st_dev) ?
 		    devname(st->st_dev, S_IFBLK) :
-		    devname(st->st_rdev, 
+		    devname(st->st_rdev,
 		    S_ISCHR(st->st_mode) ? S_IFCHR :
 		    S_ISBLK(st->st_mode) ? S_IFBLK :
 		    0U);
@@ -551,8 +546,7 @@ format1(const struct stat *st,
 		if (hilo == HIGH_PIECE) {
 			data = major(data);
 			hilo = 0;
-		}
-		else if (hilo == LOW_PIECE) {
+		} else if (hilo == LOW_PIECE) {
 			data = minor((unsigned)data);
 			hilo = 0;
 		}
@@ -582,14 +576,12 @@ format1(const struct stat *st,
 			sdata += 1;
 			sdata[3] = '\0';
 			hilo = 0;
-		}
-		else if (hilo == MIDDLE_PIECE) {
+		} else if (hilo == MIDDLE_PIECE) {
 			data = (data >> 9) & 07;
 			sdata += 4;
 			sdata[3] = '\0';
 			hilo = 0;
-		}
-		else if (hilo == LOW_PIECE) {
+		} else if (hilo == LOW_PIECE) {
 			data &= 0777;
 			sdata += 7;
 			sdata[3] = '\0';
@@ -725,8 +717,7 @@ format1(const struct stat *st,
 			}
 			path[l + 4] = '\0';
 			sdata = path + (ofmt == FMTF_STRING ? 0 : 4);
-		}
-		else {
+		} else {
 			linkfail = 1;
 			sdata = "";
 		}
@@ -763,8 +754,7 @@ format1(const struct stat *st,
 				break;
 			}
 			hilo = 0;
-		}
-		else if (hilo == HIGH_PIECE) {
+		} else if (hilo == HIGH_PIECE) {
 			switch (st->st_mode & S_IFMT) {
 			case S_IFIFO:	sdata = "Fifo File";		break;
 			case S_IFCHR:	sdata = "Character Device";	break;
@@ -799,28 +789,17 @@ format1(const struct stat *st,
 			char majdev[20], mindev[20];
 			int l1, l2;
 
-			l1 = format1(st,
-			    file,
-			    fmt, flen,
-			    majdev, sizeof(majdev),
-			    flags, size, prec,
+			l1 = format1(st, file, fmt, flen,
+			    majdev, sizeof(majdev), flags, size, prec,
 			    ofmt, HIGH_PIECE, SHOW_st_rdev);
-			l2 = format1(st,
-			    file,
-			    fmt, flen,
-			    mindev, sizeof(mindev),
-			    flags, size, prec,
+			l2 = format1(st, file, fmt, flen,
+			    mindev, sizeof(mindev), flags, size, prec,
 			    ofmt, LOW_PIECE, SHOW_st_rdev);
 			return (snprintf(buf, blen, "%.*s,%.*s",
 			    l1, majdev, l2, mindev));
-		}
-		else {
-			return (format1(st,
-			    file,
-			    fmt, flen,
-			    buf, blen,
-			    flags, size, prec,
-			    ofmt, 0, SHOW_st_size));
+		} else {
+			return (format1(st, file, fmt, flen, buf, blen,
+			    flags, size, prec, ofmt, 0, SHOW_st_size));
 		}
 		/*NOTREACHED*/
 	default:
@@ -853,7 +832,7 @@ format1(const struct stat *st,
 	/*
 	 * Only the timespecs support the FLOAT output format, and that
 	 * requires work that differs from the other formats.
-	 */ 
+	 */
 	if (ofmt == FMTF_FLOAT) {
 		/*
 		 * Nothing after the decimal point, so just print seconds.
