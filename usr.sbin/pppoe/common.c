@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.11 2003/06/28 20:37:29 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.12 2004/05/06 20:29:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -52,12 +52,8 @@
 
 #define PPP_PROG	"/usr/sbin/ppp"
 
-void debugv(char *, struct iovec *, int);
-
 int
-runppp(bpffd, sysname)
-	int bpffd;
-	u_int8_t *sysname;
+runppp(int bpffd, u_int8_t *sysname)
 {
 	int socks[2], fdm, fds, closeit;
 	pid_t pid;
@@ -115,10 +111,7 @@ runppp(bpffd, sysname)
 }
 
 int
-bpf_to_ppp(pppfd, len, pkt)
-	int pppfd;
-	u_long len;
-	u_int8_t *pkt;
+bpf_to_ppp(int pppfd, u_long len, u_int8_t *pkt)
 {
 	int r;
 	u_int8_t hdr[2] = { PPP_ALLSTATIONS, PPP_UI };
@@ -179,57 +172,6 @@ ppp_to_bpf(int bfd, int pppfd, struct ether_addr *myea,
 	r = writev(bfd, iov, 5);
 
 	return (r == -1 && errno == ENOBUFS ? 0 : r);
-}
-
-void
-debugv(s, iov, cnt)
-	char *s;
-	struct iovec *iov;
-	int cnt;
-{
-	int i, j;
-	u_int8_t *p;
-
-	printf("%s", s);
-	for (i = 0; i < cnt; i++)
-		for (j = 0; j < iov[i].iov_len; j++) {
-			p = (u_int8_t *)iov[i].iov_base;
-			printf("%02x:", p[j]);
-		}
-	printf("\n\n");
-}
-
-void
-recv_debug(bpffd, ea, eh, ph, pktlen, pktbuf)
-	int bpffd;
-	struct ether_addr *ea;
-	struct ether_header *eh;
-	struct pppoe_header *ph;
-	u_long pktlen;
-	u_int8_t *pktbuf;
-{
-	struct tag_list tl;
-
-	printf("dst %02x:%02x:%02x:%02x:%02x:%02x, "
-	    "src %02x:%02x:%02x:%02x:%02x:%02x, type %04x\n",
-	    eh->ether_dhost[0], eh->ether_dhost[1], eh->ether_dhost[2],
-	    eh->ether_dhost[3], eh->ether_dhost[4], eh->ether_dhost[5],
-	    eh->ether_shost[0], eh->ether_shost[1], eh->ether_shost[2],
-	    eh->ether_shost[3], eh->ether_shost[4], eh->ether_shost[5],
-	    eh->ether_type);
-	printf("\tver %d, type %d, code %02x, id %04x, len %d\n",
-	    PPPOE_VER(ph->vertype), PPPOE_TYPE(ph->vertype),
-	    ph->code, ph->sessionid, ph->len);
-
-	tag_init(&tl);
-	if (tag_pkt(&tl, pktlen, pktbuf) < 0) {
-		printf("bad tag pkt\n");
-		goto out;
-	}
-
-	tag_show(&tl);
-out:
-	tag_destroy(&tl);
 }
 
 int

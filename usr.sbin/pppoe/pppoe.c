@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.12 2004/05/06 17:49:08 canacar Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.13 2004/05/06 20:29:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -65,7 +65,8 @@ int signal_init(void);
 void drop_privs(struct passwd *pw);
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
 	char *ifname = NULL;
 	u_int8_t *sysname = NULL, *srvname = NULL;
 	char ifnambuf[IFNAMSIZ];
@@ -144,10 +145,7 @@ main(int argc, char **argv) {
 
 /* bpf read filter */
 int
-setup_rfilter(insns, ea, server_mode)
-	struct bpf_insn *insns;
-	struct ether_addr *ea;
-	int server_mode;
+setup_rfilter(struct bpf_insn *insns, struct ether_addr *ea, int server_mode)
 {
 	u_int8_t *ep = (u_int8_t *)ea;
 	int idx = 0;
@@ -259,9 +257,7 @@ setup_rfilter(insns, ea, server_mode)
 
 /* bpf write filter */
 int
-setup_wfilter(insns, server_mode)
-	struct bpf_insn *insns;
-	int server_mode;
+setup_wfilter(struct bpf_insn *insns, int server_mode)
 {
 	int idx = 0;
 
@@ -338,10 +334,7 @@ setup_wfilter(insns, server_mode)
 }
 
 int
-setupfilter(ifn, ea, server_mode)
-	char *ifn;
-	struct ether_addr *ea;
-	int server_mode;
+setupfilter(char *ifn, struct ether_addr *ea, int server_mode)
 {
 	char device[sizeof "/dev/bpf0000000000"];
 	int fd, idx = 0;
@@ -417,9 +410,7 @@ setupfilter(ifn, ea, server_mode)
 }
 
 int
-getifhwaddr(ifnhint, ifnambuf, ea)
-	char *ifnhint, *ifnambuf;
-	struct ether_addr *ea;
+getifhwaddr(char *ifnhint, char *ifnambuf, struct ether_addr *ea)
 {
 	struct sockaddr_dl *dl;
 	struct ifaddrs *ifap, *ifa;
@@ -476,8 +467,7 @@ usage(void)
 }
 
 void
-child_handler(sig)
-	int sig;
+child_handler(int sig)
 {
 	int save_errno = errno;
 	int status;

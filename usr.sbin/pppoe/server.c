@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.11 2003/06/28 20:37:29 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.12 2004/05/06 20:29:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -73,10 +73,8 @@ static u_int8_t *key_make(u_int8_t *, int, u_int8_t *, int);
 static int key_cmp(u_int8_t *, int, u_int8_t *, int, u_int8_t *, int);
 
 void
-server_mode(bpffd, sysname, srvname, ea)
-	int bpffd;
-	u_int8_t *sysname, *srvname;
-	struct ether_addr *ea;
+server_mode(int bpffd, u_int8_t *sysname, u_int8_t *srvname,
+    struct ether_addr *ea)
 {
 	struct pppoe_session *ses;
 	fd_set *fdsp = NULL;
@@ -156,9 +154,7 @@ key_gen(void)
 }
 
 u_int8_t *
-key_make(in1, in1len, in2, in2len)
-	u_int8_t *in1, *in2;
-	int in1len, in2len;
+key_make(u_int8_t *in1, int in1len, u_int8_t *in2, int in2len)
 {
 	u_int8_t *p;
 	MD5_CTX ctx;
@@ -175,9 +171,8 @@ key_make(in1, in1len, in2, in2len)
 }
 
 int
-key_cmp(k, klen, in1, in1len, in2, in2len)
-	u_int8_t *k, *in1, *in2;
-	int klen, in1len, in2len;
+key_cmp(u_int8_t *k, int klen, u_int8_t *in1, int in1len,
+    u_int8_t *in2, int in2len)
 {
 	u_int8_t *p;
 	int r;
@@ -195,18 +190,15 @@ key_cmp(k, klen, in1, in1len, in2, in2len)
 }
 
 static void
-getpackets(bpffd, sysname, ea)
-	int bpffd;
-	u_int8_t *sysname;
-	struct ether_addr *ea;
+getpackets(int bpffd, u_int8_t *sysname, struct ether_addr *ea)
 {
 	static u_int8_t *pktbuf;
 	u_int8_t *mpkt, *pkt, *epkt;
 	struct ether_header eh;
 	struct pppoe_header ph;
 	struct bpf_hdr *bh;
-	int rlen;
 	u_long len;
+	int rlen;
 
 	if (pktbuf == NULL) {
 		pktbuf = (u_int8_t *)malloc(PPPOE_BPF_BUFSIZ);
@@ -282,13 +274,8 @@ next:
 }
 
 static void
-recv_padi(bpffd, ea, eh, ph, pktlen, pktbuf)
-	int bpffd;
-	struct ether_addr *ea;
-	struct ether_header *eh;
-	struct pppoe_header *ph;
-	u_long pktlen;
-	u_int8_t *pktbuf;
+recv_padi(int bpffd, struct ether_addr *ea, struct ether_header *eh,
+    struct pppoe_header *ph, u_long pktlen, u_int8_t *pktbuf)
 {
 	struct tag_list tl;
 
@@ -311,13 +298,8 @@ out:
 }
 
 static void
-send_pado(bpffd, ea, eh, ph, pktlen, pktbuf)
-	int bpffd;
-	struct ether_addr *ea;
-	struct ether_header *eh;
-	struct pppoe_header *ph;
-	u_long pktlen;
-	u_int8_t *pktbuf;
+send_pado(int bpffd, struct ether_addr *ea, struct ether_header *eh,
+    struct pppoe_header *ph, u_long pktlen, u_int8_t *pktbuf)
 {
 	struct pppoe_tag ktag, htag;
 	u_int8_t hn[MAXHOSTNAMELEN];
@@ -370,14 +352,9 @@ send_pado(bpffd, ea, eh, ph, pktlen, pktbuf)
 }
 
 static void
-recv_padr(bpffd, sysname, ea, eh, ph, pktlen, pktbuf)
-	int bpffd;
-	u_int8_t *sysname;
-	struct ether_addr *ea;
-	struct ether_header *eh;
-	struct pppoe_header *ph;
-	u_long pktlen;
-	u_int8_t *pktbuf;
+recv_padr(int bpffd, u_int8_t *sysname, struct ether_addr *ea,
+    struct ether_header *eh, struct pppoe_header *ph,
+    u_long pktlen, u_int8_t *pktbuf)
 {
 	struct tag_list tl;
 	struct tag_node *n;
@@ -402,14 +379,9 @@ recv_padr(bpffd, sysname, ea, eh, ph, pktlen, pktbuf)
 }
 
 static void
-send_pads(bpffd, sysname, ea, eh, ph, pktlen, pktbuf)
-	int bpffd;
-	u_int8_t *sysname;
-	struct ether_addr *ea;
-	struct ether_header *eh;
-	struct pppoe_header *ph;
-	u_long pktlen;
-	u_int8_t *pktbuf;
+send_pads(int bpffd, u_int8_t *sysname, struct ether_addr *ea,
+    struct ether_header *eh, struct pppoe_header *ph,
+    u_long pktlen, u_int8_t *pktbuf)
 {
 	u_int8_t hn[MAXHOSTNAMELEN];
 	struct iovec v[16];
@@ -456,13 +428,8 @@ send_pads(bpffd, sysname, ea, eh, ph, pktlen, pktbuf)
 }
 
 static void
-recv_padt(bpffd, ea, eh, ph, pktlen, pktbuf)
-	int bpffd;
-	struct ether_addr *ea;
-	struct ether_header *eh;
-	struct pppoe_header *ph;
-	u_long pktlen;
-	u_int8_t *pktbuf;
+recv_padt(int bpffd, struct ether_addr *ea, struct ether_header *eh,
+    struct pppoe_header *ph, u_long pktlen, u_int8_t *pktbuf)
 {
 	struct pppoe_session *s;
 	struct tag_list tl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.2 2003/06/04 04:46:13 jason Exp $	*/
+/*	$OpenBSD: session.c,v 1.3 2004/05/06 20:29:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -48,13 +48,6 @@
 #include "pppoe.h"
 
 struct pppoe_session_master session_master;
-
-void
-session_init(void)
-{
-	LIST_INIT(&session_master.sm_sessions);
-	session_master.sm_nsessions = 0;
-}
 
 void
 session_destroy(struct pppoe_session *s)
@@ -113,19 +106,6 @@ session_find_eaid(struct ether_addr *ea, u_int16_t id)
 	s = LIST_FIRST(&session_master.sm_sessions);
 	while (s) {
 		if (memcmp(ea, &s->s_ea, ETHER_ADDR_LEN) == 0 && s->s_id == id)
-			return (s);
-		s = LIST_NEXT(s, s_next);
-	}
-	return (NULL);
-}
-
-struct pppoe_session *
-session_find_fd(int fd)
-{
-	struct pppoe_session *s;
-	s = LIST_FIRST(&session_master.sm_sessions);
-	while (s) {
-		if (s->s_fd == fd)
 			return (s);
 		s = LIST_NEXT(s, s_next);
 	}
