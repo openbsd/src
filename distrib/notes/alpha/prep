@@ -58,3 +58,23 @@ Using the SRM console:
 			boot this needs to be set to "-a".
     To see a list of all variables on your machine use the "show"
     command with no arguments.
+
+Alpha-related URL's:
+    ftp://ftp.digital.com/pub/Digital/Alpha/
+	Alpha related documents, software and firmware upgrades.
+
+    http://www.digital.com/info/semiconductor/alpha.htm
+	Alpha processor and support chip information.
+
+    http://www.brouhaha.com/~eric/computers/udb-man.ps.gz
+	The Multia Service manual, in postscript form.
+
+    http://www.azstarnet.com/~axplinux/
+	Alpha linux notes with a good introduction to Alpha chips/systems.
+
+    http://www.redhat.com/support/mailing-lists/
+	The linux axp-list mailing list is probably the best source of
+	alpha hardware related info, there's a searchable archive too.
+
+    http://www.netbsd.org/Ports/alpha/
+	Pointers to documentation and supported systems.
