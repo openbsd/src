@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.8 1997/01/16 09:25:16 niklas Exp $	*/
+/*	$OpenBSD: sbic.c,v 1.9 1998/03/01 12:52:27 niklas Exp $	*/
 /*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
 
 /*
@@ -2334,21 +2334,19 @@ sbicnextstate(dev, csr, asr)
 				goto abort;
 			}
 			wait = sbic_data_wait;
-			if( sbicxfstart(regs,
-					acb->sc_kv.dc_count,
-					SBIC_PHASE(csr), wait))
-				if( SBIC_PHASE(csr) == DATA_IN_PHASE )
+			if (sbicxfstart(regs, acb->sc_kv.dc_count,
+			    SBIC_PHASE(csr), wait)) {
+				if (SBIC_PHASE(csr) == DATA_IN_PHASE)
 					/* data in? */
-					i=sbicxfin(regs,
-						   acb->sc_kv.dc_count,
-						   acb->sc_kv.dc_addr);
+					i = sbicxfin(regs, acb->sc_kv.dc_count,
+					    acb->sc_kv.dc_addr);
 				else
-					i=sbicxfout(regs,
-						    acb->sc_kv.dc_count,
-						    acb->sc_kv.dc_addr,
-						    SBIC_PHASE(csr));
-			acb->sc_kv.dc_addr +=
-				(acb->sc_kv.dc_count - i);
+					i = sbicxfout(regs,
+					    acb->sc_kv.dc_count,
+					    acb->sc_kv.dc_addr,
+					    SBIC_PHASE(csr));
+			}
+			acb->sc_kv.dc_addr += (acb->sc_kv.dc_count - i);
 			acb->sc_kv.dc_count = i;
 		} else {
 			if (acb->sc_kv.dc_count <= 0) {
