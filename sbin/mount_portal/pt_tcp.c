@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_tcp.c,v 1.9 2004/03/01 22:36:32 tedu Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.10 2004/03/02 00:43:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Pedro Martelletto <pbastos@rdc.puc-rio.br>
@@ -40,6 +40,9 @@ portal_tcp(struct portal_cred *pcr, char *key, char **v, int ks, int *fdp)
 	int priv, s, tc, n;
 	struct addrinfo aih, *ai, *ail;
 
+	if (!strlen(key) || key[strlen(key) - 1] == '/')
+		return (EINVAL);
+
 	tc = 0;
 	for (tp = tokens; tp < &tokens[5] &&
 	    (*tp = strsep(&key, "/")) != NULL;)
@@ -55,25 +58,31 @@ portal_tcp(struct portal_cred *pcr, char *key, char **v, int ks, int *fdp)
 	aih.ai_socktype = SOCK_STREAM;
 	aih.ai_family = PF_UNSPEC;
 
+	priv = 0;
 	tp = tokens;
 	if (tc > 3) {
 		if (!strcmp(tokens[1], "4"))
 			aih.ai_family = PF_INET;
 		else if (!strcmp(tokens[1], "6"))
 			aih.ai_family = PF_INET6;
-		else
+
+		if (aih.ai_family != PF_UNSPEC) {
+			tp++;
+			tc--;
+		}
+
+		if (tc > 4)
 			return (EINVAL);
-
-		tp++;
-		tc--;
-	}
-
-	priv = 0;
-	if (!strcmp(tp[tc - 1], "priv")) {
-		if (pcr->pcr_uid == 0)
-			priv = 1;
-		else
-			return (EPERM);
+	
+		if (tc > 3) {
+			if (!strcmp(tp[tc - 1], "priv")) {
+				if (pcr->pcr_uid == 0)
+					priv = 1;
+				else
+					return (EPERM);
+			} else
+				return (EINVAL);
+		}
 	}
 
 	n = getaddrinfo(tp[1], tp[2], &aih, &ail);
@@ -96,13 +105,12 @@ portal_tcp(struct portal_cred *pcr, char *key, char **v, int ks, int *fdp)
 		}
 
 		n = connect(s, ai->ai_addr, ai->ai_addrlen);
-		if (n) {
-			syslog(LOG_ERR, "connect: %m");
-			close(s);
-			s = -1;
-			continue;
-		} else
+		if (!n)
 			break;
+
+		syslog(LOG_ERR, "connect: %m");
+		close(s);
+		s = -1;
 	}
 
 	freeaddrinfo(ail);
