@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atanh.3,v 1.8 2003/02/27 01:07:43 jason Exp $
+.\"	$OpenBSD: atanh.3,v 1.9 2003/02/27 04:28:57 jason Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,9 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn atanh
-and
-.Fn atanhf
-functions compute the inverse hyperbolic tangent
+function computes the inverse hyperbolic tangent
 of the real
 argument
 .Ar x .
@@ -63,7 +61,7 @@ If |x|>=1,
 .Fn atanh "x"
 and
 .Fn atanhf "x"
-return +inf, -inf or NaN, and sets the global variable
+return +inf, -inf or NaN, and set the global variable
 .Va errno
 to EDOM.
 .Sh SEE ALSO
