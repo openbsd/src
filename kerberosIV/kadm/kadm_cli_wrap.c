@@ -1,4 +1,4 @@
-/*	$OpenBSD: kadm_cli_wrap.c,v 1.6 1998/08/16 02:42:05 art Exp $	*/
+/*	$OpenBSD: kadm_cli_wrap.c,v 1.7 1999/03/03 08:41:27 csapuntz Exp $	*/
 /*	$KTH: kadm_cli_wrap.c,v 1.22 1997/08/17 07:30:04 assar Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
 	RET_N_FREE(retdat);
     free(act_st);
     act_st = NULL;
-#define RET_N_FREE2(r) {free(*ret_dat); *ret_dat = NULL; clear_secrets(); return(r);}
+#define RET_N_FREE2(r) {free(*ret_dat); *ret_dat = NULL; *ret_siz = 0; clear_secrets(); return(r);}
 
     /* first see if it's a YOULOUSE */
     if ((*ret_siz >= KADM_VERSIZE) &&
