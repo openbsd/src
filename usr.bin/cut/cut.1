@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.5 1999/07/04 11:53:52 aaron Exp $
+.\"	$OpenBSD: cut.1,v 1.6 2000/03/05 20:09:21 aaron Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -60,7 +60,7 @@
 The
 .Nm
 utility selects portions of each line (as specified by
-.Ar list  )
+.Ar list )
 from each
 .Ar file
 (or the standard input by default), and writes them to the
@@ -68,7 +68,8 @@ standard output.
 The items specified by
 .Ar list
 can be in terms of column position or in terms of fields delimited
-by a special character. Column numbering starts from 1.
+by a special character.
+Column numbering starts from 1.
 .Pp
 .Ar list
 is a comma or whitespace separated set of increasing numbers and/or
@@ -76,7 +77,7 @@ number ranges.
 Number ranges consist of a number, a dash
 .Pq Sq \- ,
 and a second number
-and select the fields or columns from the first number to the second,
+which select the fields or columns from the first number to the second,
 inclusive.
 Numbers or number ranges may be preceded by a dash, which selects all
 fields or columns from 1 to the first number.

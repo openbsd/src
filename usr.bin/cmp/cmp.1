@@ -1,4 +1,4 @@
-.\"     $OpenBSD: cmp.1,v 1.7 2000/03/05 00:28:52 aaron Exp $
+.\"     $OpenBSD: cmp.1,v 1.8 2000/03/05 20:09:21 aaron Exp $
 .\"     $NetBSD: cmp.1,v 1.4 1995/09/08 03:22:55 tls Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -80,7 +80,10 @@ and
 .Ar file2 ,
 respectively, where the comparison will begin.
 The offset is decimal by default, but may be expressed as a hexadecimal
-or octal value by preceding it with a leading ``0x'' or ``0''.
+or octal value by preceding it with a leading
+.Dq 0x
+or
+.Dq 0 .
 .Pp
 The
 .Nm
@@ -96,7 +99,9 @@ In the latter case, if the
 .Fl s
 option has not been specified,
 .Nm
-writes to standard error that EOF was reached in the shorter
+writes to standard error that
+.Dv EOF
+was reached in the shorter
 file (before any differences were found).
 .It >1
 An error occurred.
@@ -110,3 +115,8 @@ The
 utility is expected to be
 .St -p1003.2
 compatible.
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v1 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.10 1999/07/04 11:53:53 aaron Exp $
+.\"	$OpenBSD: du.1,v 1.11 2000/03/05 20:09:22 aaron Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -90,7 +90,7 @@ that cannot be opened, and so on.  This is the default case.
 This option exists solely for conformance with
 .St -xpg4 .
 .It Fl x
-Filesystem mount points are not traversed.
+File system mount points are not traversed.
 .El
 .Pp
 .Nm
@@ -120,13 +120,13 @@ time per
 execution.
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
+The following environment variables affect the execution of
+.Nm du :
+.Pp
 .It Ev BLOCKSIZE
-If the environment variable
-.Ev BLOCKSIZE
-is set, and the
+Block counts will be displayed in units of this size block, unless the
 .Fl k
-option is not specified, the block counts will be displayed in units of that
-size block.
+option is also specified.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,

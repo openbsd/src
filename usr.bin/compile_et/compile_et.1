@@ -1,8 +1,8 @@
 .\" Copyright (c) 1988 Massachusetts Institute of Technology,
 .\" Student Information Processing Board.  All rights reserved.
 .\"
-.\" $OpenBSD: compile_et.1,v 1.8 2000/02/19 12:07:18 hin Exp $
-.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.8 2000/02/19 12:07:18 hin Exp $
+.\" $OpenBSD: compile_et.1,v 1.9 2000/03/05 20:09:21 aaron Exp $
+.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.9 2000/03/05 20:09:21 aaron Exp $
 .\"
 .Dd	November 22, 1988
 .Dt COMPILE_ET 1
@@ -20,42 +20,38 @@ a C source file suitable for use with the
 .Xr com_err 3
 library.
 .Pp
-The source file name must end with a suffix of ``.et''; the file
+The source file name must end with a suffix of
+.Dq .et ;
+the file
 consists of headers and declarations supplying the name (up to four characters
 long) of the error-code table.
-
+.Pp
 The file may have these declarations:
-
-.Em id string
-
-where string is a revision control system tag.
-
-.Em prefix string
-
-where string is prepended to all error codes specified in the file.
-
-.Em error_table name
-
-which specifies the name of the error table.
-
-.Em index number
-
-sets the assigned error number for the next entry.
-
-.Em error_code name ,
-"
-.Em string
-"
-
-declares an error code called name with description name. Upto
-256 error codes are allowed.
-
-and a final
-
-.Em end
-
-to indicate the end of the table.
-
+.Bl -tag -width Ds
+.It Sy id Ar string
+Specify
+.Ar string
+as a revision control system tag.
+.It Sy prefix Ar string
+Prepends
+.Ar string
+to all error codes specified in the file.
+.It Sy error_table Ar name
+Specifies the name of the error table.
+.It Sy index Ar number
+Sets the assigned error number for the next entry.
+.It Xo Sy error_code
+.Ar name ,
+.Qq Ar string
+.Xc
+Declares an error code called
+.Ar name
+with description
+.Ar string ;
+up to 256 error codes are allowed.
+.It Sy end
+Indicates the end of the table.
+.El
 .Pp
 The name of the table is used to construct the name of a subroutine
 .Em initialize_XXXX_error_table
@@ -77,10 +73,17 @@ A C source file is also generated which should be compiled and linked
 with the object files which reference these error codes; it contains
 the text of the messages and the initialization subroutine.  Both C
 files have names derived from that of the original source file, with
-the ``.et'' suffix replaced by ``.c'' and ``.h''.
+the
+.Dq .et
+suffix replaced by
+.Dq \&.c
+and
+.Dq \&.h .
 .Pp
-A ``#'' in the source file is treated as a comment character, and all
-remaining text to the end of the source line will be ignored.
+A hash mark
+.Pq Ql #
+in the source file is treated as a comment character; subsequent
+characters to the end of the source line will be ignored.
 .Sh BUGS
 Since
 .Nm
@@ -90,6 +93,8 @@ its error recovery leaves much to be desired.
 .Sh SEE ALSO
 .Xr yacc 1 ,
 .Xr com_err 3
+.\" XXX - use .br here to work-around apparent bug in mdoc
+.br
 .Pp
 .Rs
 .%A Ken Raeburn

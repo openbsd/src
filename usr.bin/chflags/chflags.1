@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.9 1999/12/15 16:08:23 aaron Exp $
+.\"	$OpenBSD: chflags.1,v 1.10 2000/03/05 20:09:20 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -139,7 +139,9 @@ command's actions are determined by the last one specified.
 Only the super-user can change the user flags on block and
 character devices.
 .Pp
-You can use "ls -lo" to see the flags of existing files.
+You can use
+.Ic ls -lo
+to see the flags of existing files.
 .Pp
 The
 .Nm
@@ -150,3 +152,8 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr symlink 7
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Bx 4.4 .

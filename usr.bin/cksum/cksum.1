@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.10 1999/07/21 01:25:42 deraadt Exp $
+.\"	$OpenBSD: cksum.1,v 1.11 2000/03/05 20:09:20 aaron Exp $
 .\"	$NetBSD: cksum.1,v 1.8 1995/09/02 05:45:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm
+.Nm cksum
 utility writes to the standard output three whitespace separated
 fields for each input file.
 These fields are a checksum
@@ -64,7 +64,7 @@ is written.
 The
 .Nm sum
 utility is identical to the
-.Nm
+.Nm cksum
 utility, except that it defaults to using historic algorithm 1, as
 described below.
 It is provided for compatibility only.
@@ -154,18 +154,19 @@ The bit sequence is complemented and the result is the CRC.
 .Ed
 .Pp
 The
-.Nm
+.Nm cksum
 and
 .Nm sum
 utilities exit 0 on success or >0 if an error occurred.
 .Sh WARNING
 Do not use
-.Nm sum
+.Nm cksum
 or
-.Nm
-to detect hostile binary modifications.  An attacker
-can trivially produce backdoored daemons which have the same CRC as the
-standard versions.  Use a cryptographic checksum (such as MD5) instead.
+.Nm sum
+to detect hostile binary modifications.
+An attacker can trivially produce backdoored daemons which have the same
+CRC as the standard versions.
+Use a cryptographic checksum (such as MD5) instead.
 .Sh SEE ALSO
 .Xr md5 1 ,
 .Xr rmd160 1 ,
@@ -183,19 +184,12 @@ article.
 .Re
 .Sh STANDARDS
 The
-.Nm
+.Nm cksum
 utility is compliant with the
 .St -p1003.2-92
 specification.
 .Sh HISTORY
 The
-.Nm
+.Nm cksum
 utility appeared in
 .Bx 4.4 .
-.\" .Pp
-.\" The
-.\" .Nm sum
-.\" utility appeared in
-.\" .Bx ?.?
-.\" and
-.\" .At V .
