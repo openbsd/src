@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.95 1998/12/28 06:58:30 deraadt Exp $
+#	$OpenBSD: rc,v 1.96 1999/04/21 20:18:02 alex Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -88,6 +88,9 @@ rm -f /etc/nologin
 rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
+
+# save a copy of the boot messages
+dmesg >/var/run/dmesg.boot
 
 echo 'starting system logger'
 rm -f /dev/log
