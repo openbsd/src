@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipnat.5,v 1.17 2001/01/20 20:16:10 fgsch Exp $
+.\"	$OpenBSD: ipnat.5,v 1.18 2001/03/09 18:16:44 marc Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -201,6 +201,7 @@ own.  As opposed to the above use of \fBmap\fP, if for some reason the user
 of (say) 172.192.0.2 wanted 260 simultaneous connections going out, they would
 be limited to 252 with \fBmap-block\fP but would just \fImove on\fP to the next
 IP address with the \fBmap\fP command.
+.SH FILES
 /dev/ipnat
 .br
 /etc/services
