@@ -2644,30 +2644,11 @@ Parse_File(name, stream)
 void
 Parse_Init ()
 {
-	char *cp = NULL, *start;
-					/* avoid faults on read-only strings */
-	static char syspath[] = _PATH_DEFSYSPATH;
-    
     mainNode = NILGNODE;
     parseIncPath = Lst_Init (FALSE);
     sysIncPath = Lst_Init (FALSE);
     includes = Lst_Init (FALSE);
     targCmds = Lst_Init (FALSE);
-
-    /*
-     * Add the directories from the DEFSYSPATH (more than one may be given
-     * as dir1:...:dirn) to the system include path.
-     */
-    for (start = syspath; *start != '\0'; start = cp) {
-	for (cp = start; *cp != '\0' && *cp != ':'; cp++) 
-	    continue;
-	if (*cp == '\0') {
-	    Dir_AddDir(sysIncPath, start);
-	} else {
-	    *cp++ = '\0';
-	    Dir_AddDir(sysIncPath, start);
-	}
-    }
 }
 
 void

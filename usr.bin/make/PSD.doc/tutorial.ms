@@ -1271,6 +1271,15 @@ administrator. If locking is on,
 will turn it off, and vice versa. Note that this locking will not
 prevent \fIyou\fP from invoking PMake twice in the same place \*- if
 you own the lock file, PMake will warn you about it but continue to execute.
+.IP "\fB\-m\fP \fIdirectory\fP"
+.Ix 0 def flags -m
+Tells PMake another place to search for included makefiles via the <...>
+style.  Several
+.B \-m
+options can be given to form a search path.  If this construct is used the
+default system makefile search path is completely overridden.
+To be explained in chapter 3, section 3.2.
+.Rm 2 3.2
 .IP \fB\-n\fP
 .Ix 0 def flags -n
 This flag tells PMake not to execute the commands needed to update the
@@ -1911,11 +1920,15 @@ or this
 .DE
 The difference between the two is where PMake searches for the file:
 the first way, PMake will look for
-the file only in the system makefile directory (to find out what that
-directory is, give PMake the
+the file only in the system makefile directory (or directories)
+(to find out what that directory is, give PMake the
 .B \-h
 flag).
 .Ix 0 ref flags -h
+The system makefile directory search path can be overridden via the
+.B \-m
+option.
+.Ix 0 ref flags -m
 For files in double-quotes, the search is more complex:
 .RS
 .IP 1)

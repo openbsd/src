@@ -326,6 +326,8 @@ extern time_t 	now;	    	/* The time at the start of this whole
 
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
 
+extern Lst	sysIncPath;	/* The system include path. */
+
 /*
  * debug control:
  *	There is one bit per module.  It is up to the module what debug

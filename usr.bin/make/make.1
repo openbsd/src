@@ -47,6 +47,7 @@
 .Op Fl I Ar directory
 .Bk -words
 .Op Fl j Ar max_jobs
+.Op Fl m Ar directory
 .Ek
 .Op Ar variable=value
 .Op Ar target ...
@@ -130,8 +131,9 @@ standard input is read.
 Multiple makefile's may be specified, and are read in the order specified.
 .It Fl I Ar directory
 Specify a directory in which to search for makefiles and included makefiles.
-The system makefile directory is automatically included as part of this
-list.
+The system makefile directory (or directories, see the
+.Fl m
+option) is automatically included as part of this list.
 .It Fl i
 Ignore non-zero exit of shell commands in the makefile.
 Equivalent to specifying
@@ -146,6 +148,14 @@ flag is also specified.
 .It Fl k
 Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
+.It Fl m Ar directory
+Specify a directory in which to search for sys.mk and makefiles included
+via the <...> style.  Multiple directories can be added to form a search path.
+This path will override the default system include path: /usr/share/mk.
+Furthermore the system include path will be appended to the search path used
+for "..."-style inclusions (see the
+.Fl I
+option).
 .It Fl n
 Display the commands that would have been executed, but do not actually
 execute them.

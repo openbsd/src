@@ -161,9 +161,9 @@ MainParseArgs(argc, argv)
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
-# define OPTFLAGS "BD:I:L:PSd:ef:ij:knqrst"
+# define OPTFLAGS "BD:I:L:PSd:ef:ij:km:nqrst"
 #else
-# define OPTFLAGS "BD:I:PSd:ef:ij:knqrst"
+# define OPTFLAGS "BD:I:PSd:ef:ij:km:nqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 		switch(c) {
@@ -273,6 +273,11 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 		case 'k':
 			keepgoing = TRUE;
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
+			break;
+		case 'm':
+			Dir_AddDir(sysIncPath, optarg);
+			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'n':
 			noExecute = TRUE;
@@ -399,6 +404,10 @@ main(argc, argv)
 	char cdpath[MAXPATHLEN + 1];
 	struct utsname utsname;
     	char *machine = getenv("MACHINE");
+	Lst sysMkPath;			/* Path of sys.mk */
+	char *cp = NULL, *start;
+					/* avoid faults on read-only strings */
+	static char syspath[] = _PATH_DEFSYSPATH;
 
 #ifdef RLIMIT_NOFILE
 	/*
@@ -601,13 +610,41 @@ main(argc, argv)
 	} else
 		Var_Set(".TARGETS", "", VAR_GLOBAL);
 
+
 	/*
-	 * Read in the built-in rules first, followed by the specified makefile,
-	 * if it was (makefile != (char *) NULL), or the default Makefile and
-	 * makefile, in that order, if it wasn't.
+	 * If no user-supplied system path was given (through the -m option)
+	 * add the directories from the DEFSYSPATH (more than one may be given
+	 * as dir1:...:dirn) to the system include path.
 	 */
-	 if (!noBuiltins && !ReadMakefile(_PATH_DEFSYSMK))
-		Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
+	if (Lst_IsEmpty(sysIncPath)) {
+		for (start = syspath; *start != '\0'; start = cp) {
+			for (cp = start; *cp != '\0' && *cp != ':'; cp++) 
+				continue;
+			if (*cp == '\0') {
+				Dir_AddDir(sysIncPath, start);
+			} else {
+				*cp++ = '\0';
+				Dir_AddDir(sysIncPath, start);
+			}
+		}
+	}
+
+	/*
+	 * Read in the built-in rules first, followed by the specified
+	 * makefile, if it was (makefile != (char *) NULL), or the default
+	 * Makefile and makefile, in that order, if it wasn't.
+	 */
+	if (!noBuiltins) {
+		LstNode ln;
+
+		sysMkPath = Lst_Init (FALSE);
+		Dir_Expand (_PATH_DEFSYSMK, sysIncPath, sysMkPath);
+		if (Lst_IsEmpty(sysMkPath))
+			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
+		ln = Lst_Find(sysMkPath, (ClientData)NULL, ReadMakefile);
+		if (ln != NILLNODE)
+			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
+	}
 
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
@@ -745,7 +782,7 @@ static Boolean
 ReadMakefile(fname)
 	char *fname;		/* makefile to read */
 {
-	extern Lst parseIncPath, sysIncPath;
+	extern Lst parseIncPath;
 	FILE *stream;
 	char *name, path[MAXPATHLEN + 1];
 
@@ -990,7 +1027,7 @@ usage()
 {
 	(void)fprintf(stderr,
 "usage: make [-eiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
-            [-I directory] [-j max_jobs] [variable=value]\n");
+            [-I directory] [-j max_jobs] [-m directory] [variable=value]\n");
 	exit(2);
 }
 
