@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.5 2002/06/11 17:05:13 ho Exp $ */
+/* $OpenBSD: ike.h,v 1.6 2003/12/18 09:14:18 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -109,6 +109,8 @@
 #define PAYLOAD_DELETE		12
 #define PAYLOAD_VENDOR		13
 #define PAYLOAD_ATTRIBUTE	14
+#define PAYLOAD_NAT_D		15
+#define PAYLOAD_NAT_OA		16
 
 #define IKE_PAYLOAD_TYPES_INITIALIZER			\
 	{ "NONE",		/*  0 */		\
@@ -126,6 +128,8 @@
 	  "DELETE",		/* 12 */		\
 	  "VENDOR",		/* 13 */		\
 	  "ATTRIBUTE",		/* 14 (ikecfg) */	\
+	  "NAT-D",		/* 15 */		\
+	  "NAT-OA",		/* 16 */		\
 	}
 
 /* Exchange types */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.15 2002/09/23 04:10:14 millert Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.16 2003/12/18 09:14:18 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.15 2002/09/23 04:10:14 millert Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.16 2003/12/18 09:14:18 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -684,6 +684,10 @@ ike_pl_print (u_char type, u_char *buf, u_char doi)
 
 	case PAYLOAD_ATTRIBUTE:
 		ike_pl_attribute_print(buf+4, this_len);
+		break;
+
+	case PAYLOAD_NAT_D:
+	case PAYLOAD_NAT_OA:
 		break;
 
 	default:
