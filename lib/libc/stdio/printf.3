@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.29 2000/07/07 00:09:10 aaron Exp $
+.\"	$OpenBSD: printf.3,v 1.30 2000/07/16 22:44:57 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -686,10 +686,19 @@ systems and the
 .Fn asprintf
 interface is not portable.
 .Pp
-Never print a user-supplied string directly as a format without using
-.Cm %s ,
-as an attacker can put format specifiers in that string to mangle
-your stack.
+It is important to never pass a string with user-supplied data as a
+format without using %s.
+An attacker can put format specifiers in the string to mangle your stack,
+leading to a possible security hole.
+This holds true even if you have built the string
+.Dq by hand
+using a function like
+.Fn snprintf ,
+as the attacker can escape the percent sign
+.Pq Sq %
+for later interpolation by
+.Fn printf .
+.Pp
 Be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 snprintf(buffer, sizeof(buffer), "%s", string);
