@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.339 2003/05/20 04:22:17 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.340 2003/05/20 20:28:34 grange Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -67,6 +67,8 @@ lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
 
+it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
+					# monitors
 viaenv*	at pci? dev ? function ?	# VIA VT82C686A hardware monitor
 
 # ISA PCMCIA controllers
