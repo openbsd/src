@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.19 1999/01/11 21:55:27 niklas Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.20 1999/02/15 22:50:25 niklas Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -149,6 +149,7 @@
 #define M_FRAGQ		94	/* IPv6 fragq */
 #define M_SECA		95	/* Sec Assoc */
 #define M_I6IFP		96	/* IPv6 if info */
+#define	M_RAIDFRAME	97	/* Raidframe data */
 
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
@@ -252,7 +253,8 @@
 	"IPv6 fragq",	/* 94 M_FRAGQ */ \
 	"Sec Assoc",	/* 95 M_SECA */ \
 	"IPv6 if info",	/* 96 M_I6IFP */ \
-	NULL, NULL, NULL, NULL, NULL, \
+	"RaidFrame data", /* 97 M_RAIDFRAME */ \
+	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
