@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.nat.5,v 1.2 2001/06/26 00:54:57 ian Exp $
+.\"	$OpenBSD: pf.nat.5,v 1.3 2001/06/26 04:46:21 chris Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -77,7 +77,7 @@ for this purpose in RFC 1918. These netblocks are:
 .Bd -literal
 10.0.0.0    - 10.255.255.255.255 (all of net 10, i.e., 10/8)
 172.16.0.0  - 172.31.255.255 (i.e, 172.16/12)
-192.168.1.0 - 192.168.255.255 (i.e., 192.168/16)
+192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
 .Ed
 .Sh EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
