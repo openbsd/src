@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.10 1996/06/20 11:33:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.11 1996/06/21 15:29:56 chuck Exp 
  */
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
@@ -463,6 +463,9 @@
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
+
+/* ENI products */
+#define	PCI_PRODUCT_EFFICIENTNETS_ENI155P	0x0002		/* ENI-155P ATM */
 
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB PCI-EISA Bridge */

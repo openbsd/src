@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.10 1996/06/20 11:33:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.11 1996/06/21 15:29:56 chuck Exp 
  */
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
@@ -187,6 +187,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200",
+	},
+	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155P,
+	    0,
+	    "Efficent Networks",
+	    "ENI-155P ATM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
