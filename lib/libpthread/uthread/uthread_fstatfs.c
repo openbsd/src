@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_fstatfs.c,v 1.2 1999/01/10 23:10:25 d Exp $
  */
 #include <signal.h>
 #include <errno.h>
