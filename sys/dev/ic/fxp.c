@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.16 2001/05/26 19:40:37 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.17 2001/05/27 01:32:21 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -316,6 +316,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->cbl_base == NULL)
 		goto fail;
+	memset(sc->cbl_base, 0, sizeof(struct fxp_cb_tx) * FXP_NTXCB);
 
 	sc->fxp_stats = malloc(sizeof(struct fxp_stats), M_DEVBUF, M_NOWAIT);
 	if (sc->fxp_stats == NULL)
@@ -995,10 +996,11 @@ fxp_stop(sc, drain)
 	/*
 	 * Release any xmit buffers.
 	 */
-	for (txp = sc->cbl_first; txp != NULL && txp->mb_head != NULL;
-	    txp = txp->next) {
-		m_freem(txp->mb_head);
-		txp->mb_head = NULL;
+	txp = sc->cbl_base;
+	for (i = 0; i < FXP_NTXCB; i++) {
+		if (txp[i].mb_head != NULL)
+			m_freem(txp[i].mb_head);
+		txp[i].mb_head = NULL;
 	}
 	sc->tx_queued = 0;
 
