@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.265 2002/12/18 18:01:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.266 2002/12/19 10:58:21 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2342,7 +2342,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 				rdr.action = PF_RDR;
 			rdr.af = $4;
 
-			rdr.action = PF_RDR;
 			if ($7 != NULL) {
 				memcpy(&rdr.src.addr.addr, &$7->addr.addr,
 				    sizeof(rdr.src.addr.addr));
