@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.2 1999/07/20 03:23:05 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.3 1999/07/22 04:00:42 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -1240,7 +1240,7 @@ void
 bad144intern(wd)
 	struct wd_softc *wd;
 {
-	struct dkbad *bt = &wd->sc_dk.dk_cpulabel->bad;
+	struct dkbad *bt = &DKBAD(wd->sc_dk.dk_cpulabel);
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	int i = 0;
 
