@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.15 2001/10/28 00:58:29 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.16 2001/11/20 23:55:20 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -29,6 +29,7 @@
 #ifndef __MACHINE_M88K_ASM_MACRO_H__
 #define __MACHINE_M88K_ASM_MACRO_H__
 
+#include <machine/asm.h>
 /*
  * Various compiler macros used for speed and efficiency.
  * Anyone can include.
