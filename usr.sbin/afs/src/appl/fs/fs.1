@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fs.1,v 1.4 2002/06/07 04:28:42 hin Exp $
+.\"     $OpenBSD: fs.1,v 1.5 2002/06/07 15:33:43 hin Exp $
 .\"	$KTH: fs.1,v 1.2.2.1 2001/03/04 04:35:56 lha Exp $
 .Dd March 29, 2000
 .Dt FS 1
@@ -352,7 +352,7 @@ command.
 .Bd -filled -offset indent -compact
 List cells that the cache handler can communicate with.
 These are the cells listed in the file
-.Pa /usr/arla/etc/CellServDB .
+.Pa /etc/afs/CellServDB .
 .Ed
 .Pp
 .Ic fs listquota
@@ -403,15 +403,15 @@ If
 is given, a mountpoint to the readwrite volume is created.
 .Pp
 Note that the there must not exist a directory named as
-the mount point you are creating.
+the mount point created.
 .Ed
 .Pp
 .Ic fs connect
 .Op Ar mode
 .Bd -filled -offset indent -compact
 Set or get connected mode, if a mode is specified, the cache manager will be
-set to that mode.
-If not, the current mode will be printed.
+set to that mode. If not, the current mode will be printed.
+.Pp
 Valid modes are:
 .Bl -tag -width -Fl -compact
 .It Cm connected
@@ -441,7 +441,7 @@ Not implemented yet.
 Add a new cell to the running configuration of the cache manager, or update
 already existing information.
 This information should also be entered in the file
-.Pa /usr/arla/etc/CellServDB .
+.Pa /etc/afs/CellServDB .
 .Ed
 .Pp
 .Ic fs nop
@@ -659,9 +659,9 @@ Tweek xfs-debugging flags
 Make xfs print debug info.
 .Ed
 .Sh SEE ALSO
-.Xr afsd 8 ,
 .Xr pts 1 ,
-.Xr vos 8
+.Xr vos 1 ,
+.Xr afsd 8
 .Sh STANDARDS
 The Arla authors are trying to mimic the behaviour of the original AFS
 utilities.
