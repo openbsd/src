@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.31 1999/02/19 19:21:40 art Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.32 1999/06/23 09:44:29 art Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -228,7 +228,7 @@ vm_fork(p1, p2)
 
 #ifdef SYSVSHM
 	if (p1->p_vmspace->vm_shm)
-		shmfork(p1, p2);
+		shmfork(p1->p_vmspace, p2->p_vmspace);
 #endif
 
 	vm_map_pageable(kernel_map, (vm_offset_t)up,

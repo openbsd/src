@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.7 1998/06/11 19:21:30 deraadt Exp $	*/
+/*	$OpenBSD: shm.h,v 1.8 1999/06/23 09:44:28 art Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -96,9 +96,11 @@ struct shminfo {
 struct shminfo shminfo;
 struct shmid_ds *shmsegs;
 
+struct vmspace;
+
 void shminit __P((void));
-void shmfork __P((struct proc *, struct proc *));
-void shmexit __P((struct proc *));
+void shmfork __P((struct vmspace *, struct vmspace *));
+void shmexit __P((struct vmspace *));
 void shmid_n2o __P((struct shmid_ds *, struct oshmid_ds *));
 
 #else /* !_KERNEL */
