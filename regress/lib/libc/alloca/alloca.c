@@ -1,4 +1,4 @@
-/*	$OpeBSD$	*/
+/*	$OpenBSD: alloca.c,v 1.2 2003/06/26 17:15:27 david Exp $	*/
 
 /*	Copyright (c) 2003 Michael Shalayeff. Public Domain.	*/
 
