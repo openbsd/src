@@ -102,3 +102,12 @@
 ./usr/share/man/cat2/i386_iopl.0
 ./usr/share/man/cat2/i386_set_ioperm.0
 ./usr/share/man/cat2/i386_set_ldt.0
+./usr/include/machine/vm86.h
+./usr/lib/libm_i387.a
+./usr/lib/libm_i387_p.a
+./usr/lib/libm_i387_pic.a
+./usr/lib/libkeycap.a
+./usr/lib/libkeycap_p.a
+./usr/lib/libkeycap_pic.a
+./usr/share/man/cat2/i386_vm86.0
+./usr/share/man/cat3/keycap.0

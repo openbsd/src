@@ -117,7 +117,6 @@
 ./usr/share/man/cat1/csh.0
 ./usr/share/man/cat1/ctags.0
 ./usr/share/man/cat1/cu.0
-./usr/share/man/cat1/cursor.0
 ./usr/share/man/cat1/cut.0
 ./usr/share/man/cat1/cvs.0
 ./usr/share/man/cat1/date.0
@@ -143,8 +142,6 @@
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
 ./usr/share/man/cat1/false.0
-./usr/share/man/cat1/fdformat.0
-./usr/share/man/cat1/fed.0
 ./usr/share/man/cat1/fg.0
 ./usr/share/man/cat1/fgrep.0
 ./usr/share/man/cat1/file.0
@@ -153,7 +150,6 @@
 ./usr/share/man/cat1/finger.0
 ./usr/share/man/cat1/fmt.0
 ./usr/share/man/cat1/fold.0
-./usr/share/man/cat1/fontedit.0
 ./usr/share/man/cat1/foreach.0
 ./usr/share/man/cat1/from.0
 ./usr/share/man/cat1/fsplit.0
@@ -191,7 +187,6 @@
 ./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
 ./usr/share/man/cat1/jot.0
-./usr/share/man/cat1/kcon.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kdump.0
 ./usr/share/man/cat1/kerberos.0
@@ -211,7 +206,6 @@
 ./usr/share/man/cat1/limit.0
 ./usr/share/man/cat1/ln.0
 ./usr/share/man/cat1/lndir.0
-./usr/share/man/cat1/loadfont.0
 ./usr/share/man/cat1/locate.0
 ./usr/share/man/cat1/lock.0
 ./usr/share/man/cat1/logger.0
@@ -230,7 +224,6 @@
 ./usr/share/man/cat1/mailx.0
 ./usr/share/man/cat1/make.0
 ./usr/share/man/cat1/man.0
-./usr/share/man/cat1/mcon.0
 ./usr/share/man/cat1/md5.0
 ./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
@@ -264,7 +257,6 @@
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pax.0
-./usr/share/man/cat1/pcmcia_cntrl.0
 ./usr/share/man/cat1/perl.0
 ./usr/share/man/cat1/perlbook.0
 ./usr/share/man/cat1/perlbot.0
@@ -337,7 +329,6 @@
 ./usr/share/man/cat1/rwall.0
 ./usr/share/man/cat1/rwho.0
 ./usr/share/man/cat1/s2p.0
-./usr/share/man/cat1/scon.0
 ./usr/share/man/cat1/script.0
 ./usr/share/man/cat1/sdiff.0
 ./usr/share/man/cat1/sed.0
@@ -399,8 +390,6 @@
 ./usr/share/man/cat1/view.0
 ./usr/share/man/cat1/vim.0
 ./usr/share/man/cat1/vis.0
-./usr/share/man/cat1/vt220keys.0
-./usr/share/man/cat1/vttest.0
 ./usr/share/man/cat1/w.0
 ./usr/share/man/cat1/wait.0
 ./usr/share/man/cat1/wall.0
@@ -462,7 +451,6 @@
 ./usr/share/man/cat4/i386/iy.0
 ./usr/share/man/cat4/i386/joy.0
 ./usr/share/man/cat4/i386/pctr.0
-./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/scd.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/idp.0
@@ -531,7 +519,6 @@
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/ipf.0
 ./usr/share/man/cat5/ipnat.0
-./usr/share/man/cat5/keycap.0
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
@@ -583,8 +570,6 @@
 ./usr/share/man/cat8/adduser_proc.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amq.0
-./usr/share/man/cat8/apm.0
-./usr/share/man/cat8/apmd.0
 ./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
@@ -640,7 +625,6 @@
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipfstat.0
 ./usr/share/man/cat8/ipmon.0
-./usr/share/man/cat8/ispcvt.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kbd.0
@@ -714,7 +698,6 @@
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/pac.0
-./usr/share/man/cat8/pcmciad.0
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
@@ -815,7 +798,6 @@
 ./usr/share/man/cat8/ypxfr.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
-./usr/share/man/cat8/zzz.0
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/mvme88k

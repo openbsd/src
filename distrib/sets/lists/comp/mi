@@ -534,7 +534,6 @@
 ./usr/include/limits.h
 ./usr/include/link.h
 ./usr/include/locale.h
-./usr/include/machine/vm86.h
 ./usr/include/malloc.h
 ./usr/include/math.h
 ./usr/include/md2.h
@@ -962,9 +961,6 @@
 ./usr/lib/libkdb.a
 ./usr/lib/libkdb_p.a
 ./usr/lib/libkdb_pic.a
-./usr/lib/libkeycap.a
-./usr/lib/libkeycap_p.a
-./usr/lib/libkeycap_pic.a
 ./usr/lib/libkrb.a
 ./usr/lib/libkrb_p.a
 ./usr/lib/libkrb_pic.a
@@ -973,9 +969,6 @@
 ./usr/lib/libl.a
 ./usr/lib/libl_p.a
 ./usr/lib/libm.a
-./usr/lib/libm_i387.a
-./usr/lib/libm_i387_p.a
-./usr/lib/libm_i387_pic.a
 ./usr/lib/libm_p.a
 ./usr/lib/libmenu.a
 ./usr/lib/libmenu_p.a
@@ -1113,7 +1106,6 @@
 ./usr/share/man/cat2/getsockopt.0
 ./usr/share/man/cat2/gettimeofday.0
 ./usr/share/man/cat2/getuid.0
-./usr/share/man/cat2/i386_vm86.0
 ./usr/share/man/cat2/intro.0
 ./usr/share/man/cat2/ioctl.0
 ./usr/share/man/cat2/issetugid.0
@@ -1621,7 +1613,6 @@
 ./usr/share/man/cat3/jn.0
 ./usr/share/man/cat3/jrand48.0
 ./usr/share/man/cat3/kerberos.0
-./usr/share/man/cat3/keycap.0
 ./usr/share/man/cat3/killpg.0
 ./usr/share/man/cat3/krb_ck_repl.0
 ./usr/share/man/cat3/krb_get_admhst.0

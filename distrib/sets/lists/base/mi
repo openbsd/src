@@ -765,7 +765,6 @@
 ./usr/lib/perl5/shellwords.pl
 ./usr/lib/perl5/sigtrap.pm
 ./usr/lib/perl5/site_perl
-./usr/lib/perl5/site_perl/i386-openbsd
 ./usr/lib/perl5/splain
 ./usr/lib/perl5/stat.pl
 ./usr/lib/perl5/strict.pm
@@ -878,9 +877,7 @@
 ./usr/sbin/ipresend
 ./usr/sbin/ipsend
 ./usr/sbin/iptest
-./usr/sbin/ispcvt
 ./usr/sbin/kadmin
-./usr/sbin/kcon
 ./usr/sbin/kdb_destroy
 ./usr/sbin/kdb_edit
 ./usr/sbin/kdb_init
@@ -1190,7 +1187,6 @@
 ./usr/share/misc/ascii
 ./usr/share/misc/birthtoken
 ./usr/share/misc/inter.phone
-./usr/share/misc/keycap.pcvt
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
 ./usr/share/misc/map3270
@@ -1810,4 +1806,3 @@
 ./usr/bin/skeyprune
 ./usr/sbin/adduser
 ./usr/share/man/cat8/adduser.0
-./usr/lib/perl5/i386-openbsd/5.003/skey.ph
