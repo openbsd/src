@@ -1627,6 +1627,11 @@ em_free_transmit_structures(struct em_softc* sc)
 			if (tx_buffer->m_head != NULL)
 				m_freem(tx_buffer->m_head);
 			tx_buffer->m_head = NULL;
+
+			bus_dmamap_unload(sc->osdep.em_pa.pa_dmat,
+			    tx_buffer->dmamap);
+			bus_dmamap_destroy(sc->osdep.em_pa.pa_dmat,
+			    tx_buffer->dmamap);
 		}
 	}
 	if (sc->tx_buffer_area != NULL) {
@@ -1965,6 +1970,11 @@ em_free_receive_structures(struct em_softc * sc)
 			if (rx_buffer->m_head != NULL)
 				m_freem(rx_buffer->m_head);
 			rx_buffer->m_head = NULL;
+
+			bus_dmamap_unload(sc->osdep.em_pa.pa_dmat,
+			    rx_buffer->dmamap);
+			bus_dmamap_destroy(sc->osdep.em_pa.pa_dmat,
+			    rx_buffer->dmamap);
 		}
 	}
 	if (sc->rx_buffer_area != NULL) {
