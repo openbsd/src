@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.18 1999/08/16 06:49:29 fgsch Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.19 1999/08/16 07:41:29 fgsch Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -364,6 +364,8 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL)
 		printf(", couldn't establish interrupt");
+
+	printf(":");
 
 	epconfig(sc, epp->epp_chipset, enaddr);
 

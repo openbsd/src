@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.19 1999/08/14 05:47:41 fgsch Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.20 1999/08/16 07:41:29 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -115,20 +115,13 @@
 #define	com_lcr		com_cfcr
 #define	SET(t, f)	(t) |= (f)
 
-struct com_dev {
+/* Devices that we need to match by CIS strings */
+struct com_pcmcia_product {
 	char *name;
 	char *cis1_info[4];
+} com_pcmcia_prod[] = {
+	{ PCMCIA_STR_MEGAHERTZ_XJ2288, PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
-
-/* Devices that we need to match by CIS strings */
-static struct com_dev com_devs[] = {
-	{ PCMCIA_STR_MEGAHERTZ_XJ2288,
-	  PCMCIA_CIS_MEGAHERTZ_XJ2288 },
-};
-
-
-static int com_devs_size = sizeof(com_devs) / sizeof(com_devs[0]);
-static struct com_dev *com_dev_match __P((struct pcmcia_card *));
 
 int com_pcmcia_match __P((struct device *, void *, void *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -164,35 +157,14 @@ struct cfattach pccom_pcmcia_ca = {
 };
 #endif
 
-/* Look for pcmcia cards with particular CIS strings */
-static struct com_dev *
-com_dev_match(card)
-	struct pcmcia_card *card;
-{
-	int i, j;
-
-	for (i = 0; i < com_devs_size; i++) {
-		for (j = 0; j < 4; j++)
-			if (com_devs[i].cis1_info[j] &&
-			    strcmp(com_devs[i].cis1_info[j],
-				   card->cis1_info[j]))
-				break;
-		if (j == 4)
-			return &com_devs[i];
-	}
-
-	return NULL;
-}
-
-
 int
 com_pcmcia_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	int comportmask;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	int i, j, comportmask;
 
 	/* 1. Does it claim to be a serial device? */
 	if (pa->pf->function == PCMCIA_FUNCTION_SERIAL)
@@ -222,8 +194,16 @@ com_pcmcia_match(parent, match, aux)
 		return 1;
 
 	/* 3. Is this a card we know about? */
-	if (com_dev_match(pa->card) != NULL)
-		return 1;
+	for (i = 0; i < sizeof(com_pcmcia_prod)/sizeof(com_pcmcia_prod[0]);
+	    i++) {
+		for (j = 0; j < 4; j++)
+			if (com_pcmcia_prod[i].cis1_info[j] &&
+			    strcmp(com_pcmcia_prod[i].cis1_info[j],
+			    pa->card->cis1_info[j]))
+				break;
+		if (j == 4)
+			return 1;
+	}
 
 	return 0;
 }
