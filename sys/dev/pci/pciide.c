@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.184 2005/01/31 04:25:44 martin Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.185 2005/02/01 21:53:55 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1827,7 +1827,9 @@ chansetup:
 
 		/* SATA setup */
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA) {
 			if (pciide_chansetup(sc, channel, interface) == 0)
 				continue;
 			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
