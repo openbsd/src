@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.394 2003/10/10 15:26:40 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.395 2003/10/25 20:27:07 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -213,9 +213,9 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 #define STATE_LOOKUP()							\
 	do {								\
 		if (direction == PF_IN)					\
-			*state = pf_find_state(&tree_ext_gwy, &key);	\
+			*state = pf_find_state(&key, PF_EXT_GWY);	\
 		else							\
-			*state = pf_find_state(&tree_lan_ext, &key);	\
+			*state = pf_find_state(&key, PF_LAN_EXT);	\
 		if (*state == NULL)					\
 			return (PF_DROP);				\
 		if (direction == PF_OUT &&				\
@@ -236,14 +236,21 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 	(s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-static __inline int pf_state_compare(struct pf_tree_node *,
-			struct pf_tree_node *);
+static __inline int pf_state_compare_lan_ext(struct pf_state *,
+			struct pf_state *);
+static __inline int pf_state_compare_ext_gwy(struct pf_state *,
+			struct pf_state *);
 
-struct pf_state_tree tree_lan_ext, tree_ext_gwy;
-RB_GENERATE(pf_state_tree, pf_tree_node, entry, pf_state_compare);
+struct pf_state_tree_lan_ext tree_lan_ext;
+struct pf_state_tree_ext_gwy tree_ext_gwy;
+
+RB_GENERATE(pf_state_tree_lan_ext, pf_state,
+    entry_lan_ext, pf_state_compare_lan_ext);
+RB_GENERATE(pf_state_tree_ext_gwy, pf_state,
+    entry_ext_gwy, pf_state_compare_ext_gwy);
 
 static __inline int
-pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
+pf_state_compare_lan_ext(struct pf_state *a, struct pf_state *b)
 {
 	int	diff;
 
@@ -254,57 +261,125 @@ pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
 	switch (a->af) {
 #ifdef INET
 	case AF_INET:
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
+		if (a->lan.addr.addr32[0] > b->lan.addr.addr32[0])
 			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
+		if (a->lan.addr.addr32[0] < b->lan.addr.addr32[0])
 			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
+		if (a->ext.addr.addr32[0] > b->ext.addr.addr32[0])
 			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
+		if (a->ext.addr.addr32[0] < b->ext.addr.addr32[0])
 			return (-1);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (a->addr[0].addr32[3] > b->addr[0].addr32[3])
+		if (a->lan.addr.addr32[3] > b->lan.addr.addr32[3])
 			return (1);
-		if (a->addr[0].addr32[3] < b->addr[0].addr32[3])
+		if (a->lan.addr.addr32[3] < b->lan.addr.addr32[3])
 			return (-1);
-		if (a->addr[1].addr32[3] > b->addr[1].addr32[3])
+		if (a->ext.addr.addr32[3] > b->ext.addr.addr32[3])
 			return (1);
-		if (a->addr[1].addr32[3] < b->addr[1].addr32[3])
+		if (a->ext.addr.addr32[3] < b->ext.addr.addr32[3])
 			return (-1);
-		if (a->addr[0].addr32[2] > b->addr[0].addr32[2])
+		if (a->lan.addr.addr32[2] > b->lan.addr.addr32[2])
 			return (1);
-		if (a->addr[0].addr32[2] < b->addr[0].addr32[2])
+		if (a->lan.addr.addr32[2] < b->lan.addr.addr32[2])
 			return (-1);
-		if (a->addr[1].addr32[2] > b->addr[1].addr32[2])
+		if (a->ext.addr.addr32[2] > b->ext.addr.addr32[2])
 			return (1);
-		if (a->addr[1].addr32[2] < b->addr[1].addr32[2])
+		if (a->ext.addr.addr32[2] < b->ext.addr.addr32[2])
 			return (-1);
-		if (a->addr[0].addr32[1] > b->addr[0].addr32[1])
+		if (a->lan.addr.addr32[1] > b->lan.addr.addr32[1])
 			return (1);
-		if (a->addr[0].addr32[1] < b->addr[0].addr32[1])
+		if (a->lan.addr.addr32[1] < b->lan.addr.addr32[1])
 			return (-1);
-		if (a->addr[1].addr32[1] > b->addr[1].addr32[1])
+		if (a->ext.addr.addr32[1] > b->ext.addr.addr32[1])
 			return (1);
-		if (a->addr[1].addr32[1] < b->addr[1].addr32[1])
+		if (a->ext.addr.addr32[1] < b->ext.addr.addr32[1])
 			return (-1);
-		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
+		if (a->lan.addr.addr32[0] > b->lan.addr.addr32[0])
 			return (1);
-		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
+		if (a->lan.addr.addr32[0] < b->lan.addr.addr32[0])
 			return (-1);
-		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
+		if (a->ext.addr.addr32[0] > b->ext.addr.addr32[0])
 			return (1);
-		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
+		if (a->ext.addr.addr32[0] < b->ext.addr.addr32[0])
 			return (-1);
 		break;
 #endif /* INET6 */
 	}
 
-	if ((diff = a->port[0] - b->port[0]) != 0)
+	if ((diff = a->lan.port - b->lan.port) != 0)
 		return (diff);
-	if ((diff = a->port[1] - b->port[1]) != 0)
+	if ((diff = a->ext.port - b->ext.port) != 0)
+		return (diff);
+
+	return (0);
+}
+
+static __inline int
+pf_state_compare_ext_gwy(struct pf_state *a, struct pf_state *b)
+{
+	int	diff;
+
+	if ((diff = a->proto - b->proto) != 0)
+		return (diff);
+	if ((diff = a->af - b->af) != 0)
+		return (diff);
+	switch (a->af) {
+#ifdef INET
+	case AF_INET:
+		if (a->ext.addr.addr32[0] > b->ext.addr.addr32[0])
+			return (1);
+		if (a->ext.addr.addr32[0] < b->ext.addr.addr32[0])
+			return (-1);
+		if (a->gwy.addr.addr32[0] > b->gwy.addr.addr32[0])
+			return (1);
+		if (a->gwy.addr.addr32[0] < b->gwy.addr.addr32[0])
+			return (-1);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		if (a->ext.addr.addr32[3] > b->ext.addr.addr32[3])
+			return (1);
+		if (a->ext.addr.addr32[3] < b->ext.addr.addr32[3])
+			return (-1);
+		if (a->gwy.addr.addr32[3] > b->gwy.addr.addr32[3])
+			return (1);
+		if (a->gwy.addr.addr32[3] < b->gwy.addr.addr32[3])
+			return (-1);
+		if (a->ext.addr.addr32[2] > b->ext.addr.addr32[2])
+			return (1);
+		if (a->ext.addr.addr32[2] < b->ext.addr.addr32[2])
+			return (-1);
+		if (a->gwy.addr.addr32[2] > b->gwy.addr.addr32[2])
+			return (1);
+		if (a->gwy.addr.addr32[2] < b->gwy.addr.addr32[2])
+			return (-1);
+		if (a->ext.addr.addr32[1] > b->ext.addr.addr32[1])
+			return (1);
+		if (a->ext.addr.addr32[1] < b->ext.addr.addr32[1])
+			return (-1);
+		if (a->gwy.addr.addr32[1] > b->gwy.addr.addr32[1])
+			return (1);
+		if (a->gwy.addr.addr32[1] < b->gwy.addr.addr32[1])
+			return (-1);
+		if (a->ext.addr.addr32[0] > b->ext.addr.addr32[0])
+			return (1);
+		if (a->ext.addr.addr32[0] < b->ext.addr.addr32[0])
+			return (-1);
+		if (a->gwy.addr.addr32[0] > b->gwy.addr.addr32[0])
+			return (1);
+		if (a->gwy.addr.addr32[0] < b->gwy.addr.addr32[0])
+			return (-1);
+		break;
+#endif /* INET6 */
+	}
+
+	if ((diff = a->ext.port - b->ext.port) != 0)
+		return (diff);
+	if ((diff = a->gwy.port - b->gwy.port) != 0)
 		return (diff);
 
 	return (0);
@@ -331,36 +406,33 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 #endif
 
 struct pf_state *
-pf_find_state(struct pf_state_tree *tree, struct pf_tree_node *key)
+pf_find_state(struct pf_state *key, u_int8_t tree)
 {
-	struct pf_tree_node	*k;
+	struct pf_state	*s;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
-	k = RB_FIND(pf_state_tree, tree, key);
-	if (k)
-		return (k->state);
-	else
-		return (NULL);
+
+	switch (tree) {
+	case PF_LAN_EXT:
+		s = RB_FIND(pf_state_tree_lan_ext, &tree_lan_ext, key);
+		break;
+	case PF_EXT_GWY:
+		s = RB_FIND(pf_state_tree_ext_gwy, &tree_ext_gwy, key);
+		break;
+	default:
+		/* XXX should we just return NULL? */
+		panic("pf_find_state");
+		break;
+	}
+
+	return (s);
 }
 
 int
 pf_insert_state(struct pf_state *state)
 {
-	struct pf_tree_node	*keya, *keyb;
-
-	keya = pool_get(&pf_tree_pl, PR_NOWAIT);
-	if (keya == NULL)
-		return (-1);
-	keya->state = state;
-	keya->proto = state->proto;
-	keya->af = state->af;
-	PF_ACPY(&keya->addr[0], &state->lan.addr, state->af);
-	keya->port[0] = state->lan.port;
-	PF_ACPY(&keya->addr[1], &state->ext.addr, state->af);
-	keya->port[1] = state->ext.port;
-
 	/* Thou MUST NOT insert multiple duplicate keys */
-	if (RB_INSERT(pf_state_tree, &tree_lan_ext, keya) != NULL) {
+	if (RB_INSERT(pf_state_tree_lan_ext, &tree_lan_ext, state)) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			printf("pf: state insert failed: tree_lan_ext");
 			printf(" lan: ");
@@ -374,26 +446,10 @@ pf_insert_state(struct pf_state *state)
 			    state->af);
 			printf("\n");
 		}
-		pool_put(&pf_tree_pl, keya);
 		return (-1);
 	}
 
-	keyb = pool_get(&pf_tree_pl, PR_NOWAIT);
-	if (keyb == NULL) {
-		/* Need to pull out the other state */
-		RB_REMOVE(pf_state_tree, &tree_lan_ext, keya);
-		pool_put(&pf_tree_pl, keya);
-		return (-1);
-	}
-	keyb->state = state;
-	keyb->proto = state->proto;
-	keyb->af = state->af;
-	PF_ACPY(&keyb->addr[0], &state->ext.addr, state->af);
-	keyb->port[0] = state->ext.port;
-	PF_ACPY(&keyb->addr[1], &state->gwy.addr, state->af);
-	keyb->port[1] = state->gwy.port;
-
-	if (RB_INSERT(pf_state_tree, &tree_ext_gwy, keyb) != NULL) {
+	if (RB_INSERT(pf_state_tree_ext_gwy, &tree_ext_gwy, state) != NULL) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			printf("pf: state insert failed: tree_ext_gwy");
 			printf(" lan: ");
@@ -407,9 +463,7 @@ pf_insert_state(struct pf_state *state)
 			    state->af);
 			printf("\n");
 		}
-		RB_REMOVE(pf_state_tree, &tree_lan_ext, keya);
-		pool_put(&pf_tree_pl, keya);
-		pool_put(&pf_tree_pl, keyb);
+		RB_REMOVE(pf_state_tree_lan_ext, &tree_lan_ext, state);
 		return (-1);
 	}
 
@@ -474,59 +528,34 @@ pf_state_expires(const struct pf_state *state)
 void
 pf_purge_expired_states(void)
 {
-	struct pf_tree_node	*cur, *peer, *next;
-	struct pf_tree_node	 key;
+	struct pf_state		*cur, *next;
 
-	for (cur = RB_MIN(pf_state_tree, &tree_ext_gwy); cur; cur = next) {
-		next = RB_NEXT(pf_state_tree, &tree_ext_gwy, cur);
+	for (cur = RB_MIN(pf_state_tree_ext_gwy, &tree_ext_gwy); cur; cur = next) {
+		next = RB_NEXT(pf_state_tree_ext_gwy, &tree_ext_gwy, cur);
 
-		if (pf_state_expires(cur->state) <= time.tv_sec) {
-			if (cur->state->src.state == PF_TCPS_PROXY_DST)
-				pf_send_tcp(cur->state->rule.ptr,
-				    cur->state->af,
-				    &cur->state->ext.addr,
-				    &cur->state->lan.addr,
-				    cur->state->ext.port,
-				    cur->state->lan.port,
-				    cur->state->src.seqhi,
-				    cur->state->src.seqlo + 1,
-					0,
+		if (pf_state_expires(cur) <= time.tv_sec) {
+			if (cur->src.state == PF_TCPS_PROXY_DST)
+				pf_send_tcp(cur->rule.ptr, cur->af,
+				    &cur->ext.addr, &cur->lan.addr,
+				    cur->ext.port, cur->lan.port,
+				    cur->src.seqhi, cur->src.seqlo + 1, 0,
 				    TH_RST|TH_ACK, 0, 0);
-			RB_REMOVE(pf_state_tree, &tree_ext_gwy, cur);
-
-			/* Need this key's peer (in the other tree) */
-			key.state = cur->state;
-			key.proto = cur->state->proto;
-			key.af = cur->state->af;
-			PF_ACPY(&key.addr[0], &cur->state->lan.addr,
-			    cur->state->af);
-			key.port[0] = cur->state->lan.port;
-			PF_ACPY(&key.addr[1], &cur->state->ext.addr,
-			    cur->state->af);
-			key.port[1] = cur->state->ext.port;
-
-			peer = RB_FIND(pf_state_tree, &tree_lan_ext, &key);
-			KASSERT(peer);
-			KASSERT(peer->state == cur->state);
-			RB_REMOVE(pf_state_tree, &tree_lan_ext, peer);
+			RB_REMOVE(pf_state_tree_ext_gwy, &tree_ext_gwy, cur);
+			RB_REMOVE(pf_state_tree_lan_ext, &tree_lan_ext, cur);
 
 #if NPFSYNC
-			pfsync_delete_state(cur->state);
+			pfsync_delete_state(cur);
 #endif
-			if (--cur->state->rule.ptr->states <= 0)
-				pf_rm_rule(NULL, cur->state->rule.ptr);
-			if (cur->state->nat_rule.ptr != NULL)
-				if (--cur->state->nat_rule.ptr->states <= 0)
-					pf_rm_rule(NULL,
-					    cur->state->nat_rule.ptr);
-			if (cur->state->anchor.ptr != NULL)
-				if (--cur->state->anchor.ptr->states <= 0)
-					pf_rm_rule(NULL,
-					    cur->state->anchor.ptr);
-			pf_normalize_tcp_cleanup(cur->state);
-			pool_put(&pf_state_pl, cur->state);
-			pool_put(&pf_tree_pl, cur);
-			pool_put(&pf_tree_pl, peer);
+			if (--cur->rule.ptr->states <= 0)
+				pf_rm_rule(NULL, cur->rule.ptr);
+			if (cur->nat_rule.ptr != NULL)
+				if (--cur->nat_rule.ptr->states <= 0)
+					pf_rm_rule(NULL, cur->nat_rule.ptr);
+			if (cur->anchor.ptr != NULL)
+				if (--cur->anchor.ptr->states <= 0)
+					pf_rm_rule(NULL, cur->anchor.ptr);
+			pf_normalize_tcp_cleanup(cur);
+			pool_put(&pf_state_pl, cur);
 			pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 			pf_status.states--;
 		}
@@ -1687,7 +1716,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
     struct pf_addr *saddr, struct pf_addr *daddr, u_int16_t dport,
     struct pf_addr *naddr, u_int16_t *nport, u_int16_t low, u_int16_t high)
 {
-	struct pf_tree_node	key;
+	struct pf_state		key;
 	struct pf_addr		init_addr;
 	u_int16_t		cut;
 
@@ -1698,26 +1727,26 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
 	do {
 		key.af = af;
 		key.proto = proto;
-		PF_ACPY(&key.addr[0], daddr, key.af);
-		PF_ACPY(&key.addr[1], naddr, key.af);
-		key.port[0] = dport;
+		PF_ACPY(&key.ext.addr, daddr, key.af);
+		PF_ACPY(&key.gwy.addr, naddr, key.af);
+		key.ext.port = dport;
 
 		/*
 		 * port search; start random, step;
 		 * similar 2 portloop in in_pcbbind
 		 */
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP)) {
-			key.port[1] = 0;
-			if (pf_find_state(&tree_ext_gwy, &key) == NULL)
+			key.gwy.port = 0;
+			if (pf_find_state(&key, PF_EXT_GWY) == NULL)
 				return (0);
 		} else if (low == 0 && high == 0) {
-			key.port[1] = *nport;
-			if (pf_find_state(&tree_ext_gwy, &key) == NULL) {
+			key.gwy.port = *nport;
+			if (pf_find_state(&key, PF_EXT_GWY) == NULL) {
 				return (0);
 			}
 		} else if (low == high) {
-			key.port[1] = htons(low);
-			if (pf_find_state(&tree_ext_gwy, &key) == NULL) {
+			key.gwy.port = htons(low);
+			if (pf_find_state(&key, PF_EXT_GWY) == NULL) {
 				*nport = htons(low);
 				return (0);
 			}
@@ -1733,16 +1762,16 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
 			cut = arc4random() % (1 + high - low) + low;
 			/* low <= cut <= high */
 			for (tmp = cut; tmp <= high; ++(tmp)) {
-				key.port[1] = htons(tmp);
-				if (pf_find_state(&tree_ext_gwy, &key) ==
+				key.gwy.port = htons(tmp);
+				if (pf_find_state(&key, PF_EXT_GWY) ==
 				    NULL) {
 					*nport = htons(tmp);
 					return (0);
 				}
 			}
 			for (tmp = cut - 1; tmp >= low; --(tmp)) {
-				key.port[1] = htons(tmp);
-				if (pf_find_state(&tree_ext_gwy, &key) ==
+				key.gwy.port = htons(tmp);
+				if (pf_find_state(&key, PF_EXT_GWY) ==
 				    NULL) {
 					*nport = htons(tmp);
 					return (0);
@@ -3234,7 +3263,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
     struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd,
     u_short *reason)
 {
-	struct pf_tree_node	 key;
+	struct pf_state		 key;
 	struct tcphdr		*th = pd->hdr.tcp;
 	u_int16_t		 win = ntohs(th->th_win);
 	u_int32_t		 ack, end, seq;
@@ -3245,10 +3274,17 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	key.af = pd->af;
 	key.proto = IPPROTO_TCP;
-	PF_ACPY(&key.addr[0], pd->src, key.af);
-	PF_ACPY(&key.addr[1], pd->dst, key.af);
-	key.port[0] = th->th_sport;
-	key.port[1] = th->th_dport;
+	if (direction == PF_IN)	{
+		PF_ACPY(&key.ext.addr, pd->src, key.af);
+		PF_ACPY(&key.gwy.addr, pd->dst, key.af);
+		key.ext.port = th->th_sport;
+		key.gwy.port = th->th_dport;
+	} else {
+		PF_ACPY(&key.lan.addr, pd->src, key.af);
+		PF_ACPY(&key.ext.addr, pd->dst, key.af);
+		key.lan.port = th->th_sport;
+		key.ext.port = th->th_dport;
+	}
 
 	STATE_LOOKUP();
 
@@ -3635,15 +3671,22 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
     struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
-	struct pf_tree_node	 key;
+	struct pf_state		 key;
 	struct udphdr		*uh = pd->hdr.udp;
 
 	key.af = pd->af;
 	key.proto = IPPROTO_UDP;
-	PF_ACPY(&key.addr[0], pd->src, key.af);
-	PF_ACPY(&key.addr[1], pd->dst, key.af);
-	key.port[0] = uh->uh_sport;
-	key.port[1] = uh->uh_dport;
+	if (direction == PF_IN)	{
+		PF_ACPY(&key.ext.addr, pd->src, key.af);
+		PF_ACPY(&key.gwy.addr, pd->dst, key.af);
+		key.ext.port = uh->uh_sport;
+		key.gwy.port = uh->uh_dport;
+	} else {
+		PF_ACPY(&key.lan.addr, pd->src, key.af);
+		PF_ACPY(&key.ext.addr, pd->dst, key.af);
+		key.lan.port = uh->uh_sport;
+		key.ext.port = uh->uh_dport;
+	}
 
 	STATE_LOOKUP();
 
@@ -3729,14 +3772,21 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 * ICMP query/reply message not related to a TCP/UDP packet.
 		 * Search for an ICMP state.
 		 */
-		struct pf_tree_node	key;
+		struct pf_state		key;
 
 		key.af = pd->af;
 		key.proto = pd->proto;
-		PF_ACPY(&key.addr[0], saddr, key.af);
-		PF_ACPY(&key.addr[1], daddr, key.af);
-		key.port[0] = icmpid;
-		key.port[1] = icmpid;
+		if (direction == PF_IN)	{
+			PF_ACPY(&key.ext.addr, pd->src, key.af);
+			PF_ACPY(&key.gwy.addr, pd->dst, key.af);
+			key.ext.port = icmpid;
+			key.gwy.port = icmpid;
+		} else {
+			PF_ACPY(&key.lan.addr, pd->src, key.af);
+			PF_ACPY(&key.ext.addr, pd->dst, key.af);
+			key.lan.port = icmpid;
+			key.ext.port = icmpid;
+		}
 
 		STATE_LOOKUP();
 
@@ -3895,7 +3945,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		case IPPROTO_TCP: {
 			struct tcphdr		 th;
 			u_int32_t		 seq;
-			struct pf_tree_node	 key;
+			struct pf_state		 key;
 			struct pf_state_peer	*src, *dst;
 			u_int8_t		 dws;
 
@@ -3913,10 +3963,17 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 			key.af = pd2.af;
 			key.proto = IPPROTO_TCP;
-			PF_ACPY(&key.addr[0], pd2.dst, pd2.af);
-			key.port[0] = th.th_dport;
-			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
-			key.port[1] = th.th_sport;
+			if (direction == PF_IN)	{
+				PF_ACPY(&key.ext.addr, pd2.dst, key.af);
+				PF_ACPY(&key.gwy.addr, pd2.src, key.af);
+				key.ext.port = th.th_dport;
+				key.gwy.port = th.th_sport;
+			} else {
+				PF_ACPY(&key.lan.addr, pd2.dst, key.af);
+				PF_ACPY(&key.ext.addr, pd2.src, key.af);
+				key.lan.port = th.th_dport;
+				key.ext.port = th.th_sport;
+			}
 
 			STATE_LOOKUP();
 
@@ -3997,7 +4054,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		}
 		case IPPROTO_UDP: {
 			struct udphdr		uh;
-			struct pf_tree_node	key;
+			struct pf_state		key;
 
 			if (!pf_pull_hdr(m, off2, &uh, sizeof(uh),
 			    NULL, NULL, pd2.af)) {
@@ -4009,10 +4066,17 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 			key.af = pd2.af;
 			key.proto = IPPROTO_UDP;
-			PF_ACPY(&key.addr[0], pd2.dst, pd2.af);
-			key.port[0] = uh.uh_dport;
-			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
-			key.port[1] = uh.uh_sport;
+			if (direction == PF_IN)	{
+				PF_ACPY(&key.ext.addr, pd2.dst, key.af);
+				PF_ACPY(&key.gwy.addr, pd2.src, key.af);
+				key.ext.port = uh.uh_dport;
+				key.gwy.port = uh.uh_sport;
+			} else {
+				PF_ACPY(&key.lan.addr, pd2.dst, key.af);
+				PF_ACPY(&key.ext.addr, pd2.src, key.af);
+				key.lan.port = uh.uh_dport;
+				key.ext.port = uh.uh_sport;
+			}
 
 			STATE_LOOKUP();
 
@@ -4057,7 +4121,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 #ifdef INET
 		case IPPROTO_ICMP: {
 			struct icmp		iih;
-			struct pf_tree_node	key;
+			struct pf_state		key;
 
 			if (!pf_pull_hdr(m, off2, &iih, ICMP_MINLEN,
 			    NULL, NULL, pd2.af)) {
@@ -4069,10 +4133,17 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 			key.af = pd2.af;
 			key.proto = IPPROTO_ICMP;
-			PF_ACPY(&key.addr[0], pd2.dst, pd2.af);
-			key.port[0] = iih.icmp_id;
-			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
-			key.port[1] = iih.icmp_id;
+			if (direction == PF_IN)	{
+				PF_ACPY(&key.ext.addr, pd2.dst, key.af);
+				PF_ACPY(&key.gwy.addr, pd2.src, key.af);
+				key.ext.port = iih.icmp_id;
+				key.gwy.port = iih.icmp_id;
+			} else {
+				PF_ACPY(&key.lan.addr, pd2.dst, key.af);
+				PF_ACPY(&key.ext.addr, pd2.src, key.af);
+				key.lan.port = iih.icmp_id;
+				key.ext.port = iih.icmp_id;
+			}
 
 			STATE_LOOKUP();
 
@@ -4102,7 +4173,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 #ifdef INET6
 		case IPPROTO_ICMPV6: {
 			struct icmp6_hdr	iih;
-			struct pf_tree_node	key;
+			struct pf_state		key;
 
 			if (!pf_pull_hdr(m, off2, &iih,
 			    sizeof(struct icmp6_hdr), NULL, NULL, pd2.af)) {
@@ -4114,10 +4185,17 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 			key.af = pd2.af;
 			key.proto = IPPROTO_ICMPV6;
-			PF_ACPY(&key.addr[0], pd2.dst, pd2.af);
-			key.port[0] = iih.icmp6_id;
-			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
-			key.port[1] = iih.icmp6_id;
+			if (direction == PF_IN)	{
+				PF_ACPY(&key.ext.addr, pd2.dst, key.af);
+				PF_ACPY(&key.gwy.addr, pd2.src, key.af);
+				key.ext.port = iih.icmp6_id;
+				key.gwy.port = iih.icmp6_id;
+			} else {
+				PF_ACPY(&key.lan.addr, pd2.dst, key.af);
+				PF_ACPY(&key.ext.addr, pd2.src, key.af);
+				key.lan.port = iih.icmp6_id;
+				key.ext.port = iih.icmp6_id;
+			}
 
 			STATE_LOOKUP();
 
@@ -4147,14 +4225,21 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		}
 #endif /* INET6 */
 		default: {
-			struct pf_tree_node	key;
+			struct pf_state		key;
 
 			key.af = pd2.af;
 			key.proto = pd2.proto;
-			PF_ACPY(&key.addr[0], pd2.dst, pd2.af);
-			key.port[0] = 0;
-			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
-			key.port[1] = 0;
+			if (direction == PF_IN)	{
+				PF_ACPY(&key.ext.addr, pd2.dst, key.af);
+				PF_ACPY(&key.gwy.addr, pd2.src, key.af);
+				key.ext.port = 0;
+				key.gwy.port = 0;
+			} else {
+				PF_ACPY(&key.lan.addr, pd2.dst, key.af);
+				PF_ACPY(&key.ext.addr, pd2.src, key.af);
+				key.lan.port = 0;
+				key.ext.port = 0;
+			}
 
 			STATE_LOOKUP();
 
@@ -4204,14 +4289,21 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
     struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
-	struct pf_tree_node	 key;
+	struct pf_state		 key;
 
 	key.af = pd->af;
 	key.proto = pd->proto;
-	PF_ACPY(&key.addr[0], pd->src, key.af);
-	PF_ACPY(&key.addr[1], pd->dst, key.af);
-	key.port[0] = 0;
-	key.port[1] = 0;
+	if (direction == PF_IN)	{
+		PF_ACPY(&key.ext.addr, pd->src, key.af);
+		PF_ACPY(&key.gwy.addr, pd->dst, key.af);
+		key.ext.port = 0;
+		key.gwy.port = 0;
+	} else {
+		PF_ACPY(&key.lan.addr, pd->src, key.af);
+		PF_ACPY(&key.ext.addr, pd->dst, key.af);
+		key.lan.port = 0;
+		key.ext.port = 0;
+	}
 
 	STATE_LOOKUP();
 

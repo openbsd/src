@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.171 2003/09/26 21:44:09 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.172 2003/10/25 20:27:07 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -47,6 +47,7 @@ struct ip;
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
+enum	{ PF_LAN_EXT, PF_EXT_GWY };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
 enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
@@ -553,6 +554,8 @@ struct pf_state_peer {
 };
 
 struct pf_state {
+	RB_ENTRY(pf_state) entry_lan_ext;
+	RB_ENTRY(pf_state) entry_ext_gwy;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
@@ -574,15 +577,6 @@ struct pf_state {
 	u_int8_t	 allow_opts;
 	u_int8_t	 timeout;
 	u_int8_t	 pad[2];
-};
-
-struct pf_tree_node {
-	RB_ENTRY(pf_tree_node) entry;
-	struct pf_state	*state;
-	struct pf_addr	 addr[2];
-	u_int16_t	 port[2];
-	sa_family_t	 af;
-	u_int8_t	 proto;
 };
 
 TAILQ_HEAD(pf_rulequeue, pf_rule);
@@ -1121,9 +1115,15 @@ struct pfioc_table {
 
 
 #ifdef _KERNEL
-RB_HEAD(pf_state_tree, pf_tree_node);
-RB_PROTOTYPE(pf_state_tree, pf_tree_node, entry, pf_state_compare);
-extern struct pf_state_tree tree_lan_ext, tree_ext_gwy;
+RB_HEAD(pf_state_tree_lan_ext, pf_state);
+RB_PROTOTYPE(pf_state_tree_lan_ext, pf_state,
+    entry_lan_ext, pf_state_compare_lan_ext);
+extern struct pf_state_tree_lan_ext tree_lan_ext;
+
+RB_HEAD(pf_state_tree_ext_gwy, pf_state);
+RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state,
+    entry_ext_gwy, pf_state_compare_ext_gwy);
+extern struct pf_state_tree_ext_gwy tree_ext_gwy;
 
 extern struct pf_anchorqueue		 pf_anchors;
 extern struct pf_ruleset		 pf_main_ruleset;
@@ -1136,7 +1136,7 @@ extern struct pf_palist			 pf_pabuf;
 
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
-extern int			 altqs_inactive_open;	
+extern int			 altqs_inactive_open;
 extern u_int32_t		 ticket_pabuf;
 extern struct pf_altqqueue	*pf_altqs_active;
 extern struct pf_altqqueue	*pf_altqs_inactive;
@@ -1160,8 +1160,7 @@ extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_timeout(void *);
 extern void			 pf_purge_expired_states(void);
 extern int			 pf_insert_state(struct pf_state *);
-extern struct pf_state		*pf_find_state(struct pf_state_tree *,
-				    struct pf_tree_node *);
+extern struct pf_state		*pf_find_state(struct pf_state *, u_int8_t);
 extern struct pf_anchor		*pf_find_anchor(const char *);
 extern struct pf_ruleset	*pf_find_ruleset(char *, char *);
 extern struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *);

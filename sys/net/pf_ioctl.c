@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.85 2003/10/19 06:50:07 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.86 2003/10/25 20:27:07 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -102,8 +102,6 @@ pfattach(int num)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
 
-	pool_init(&pf_tree_pl, sizeof(struct pf_tree_node), 0, 0, 0, "pftrpl",
-	    NULL);
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
 	    &pool_allocator_nointr);
 	pool_init(&pf_addr_pl, sizeof(struct pf_addr_dyn), 0, 0, 0, "pfaddrpl",
@@ -1178,11 +1176,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_tree_node	*n;
+		struct pf_state	*state;
 
 		s = splsoftnet();
-		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
-			n->state->timeout = PFTM_PURGE;
+		RB_FOREACH(state, pf_state_tree_ext_gwy, &tree_ext_gwy)
+			state->timeout = PFTM_PURGE;
 		pf_purge_expired_states();
 		pf_status.states = 0;
 		splx(s);
@@ -1190,33 +1188,31 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCKILLSTATES: {
-		struct pf_tree_node	*n;
-		struct pf_state		*st;
+		struct pf_state		*state;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
 		int			 killed = 0;
 
 		s = splsoftnet();
-		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
-			st = n->state;
-			if ((!psk->psk_af || st->af == psk->psk_af) &&
-			    (!psk->psk_proto || psk->psk_proto == st->proto) &&
+		RB_FOREACH(state, pf_state_tree_ext_gwy, &tree_ext_gwy) {
+			if ((!psk->psk_af || state->af == psk->psk_af) &&
+			    (!psk->psk_proto || psk->psk_proto == state->proto) &&
 			    PF_MATCHA(psk->psk_src.not,
 			    &psk->psk_src.addr.v.a.addr,
-			    &psk->psk_src.addr.v.a.mask, &st->lan.addr,
-			    st->af) &&
+			    &psk->psk_src.addr.v.a.mask, &state->lan.addr,
+			    state->af) &&
 			    PF_MATCHA(psk->psk_dst.not,
 			    &psk->psk_dst.addr.v.a.addr,
-			    &psk->psk_dst.addr.v.a.mask, &st->ext.addr,
-			    st->af) &&
+			    &psk->psk_dst.addr.v.a.mask, &state->ext.addr,
+			    state->af) &&
 			    (psk->psk_src.port_op == 0 ||
 			    pf_match_port(psk->psk_src.port_op,
 			    psk->psk_src.port[0], psk->psk_src.port[1],
-			    st->lan.port)) &&
+			    state->lan.port)) &&
 			    (psk->psk_dst.port_op == 0 ||
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
-			    st->ext.port))) {
-				st->timeout = PFTM_PURGE;
+			    state->ext.port))) {
+				state->timeout = PFTM_PURGE;
 				killed++;
 			}
 		}
@@ -1259,29 +1255,29 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
-		struct pf_tree_node	*n;
+		struct pf_state		*state;
 		u_int32_t		 nr;
 
 		nr = 0;
 		s = splsoftnet();
-		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
+		RB_FOREACH(state, pf_state_tree_ext_gwy, &tree_ext_gwy) {
 			if (nr >= ps->nr)
 				break;
 			nr++;
 		}
-		if (n == NULL) {
+		if (state == NULL) {
 			error = EBUSY;
 			splx(s);
 			break;
 		}
-		bcopy(n->state, &ps->state, sizeof(struct pf_state));
-		ps->state.rule.nr = n->state->rule.ptr->nr;
-		ps->state.nat_rule.nr = (n->state->nat_rule.ptr == NULL) ?
-		    -1 : n->state->nat_rule.ptr->nr;
-		ps->state.anchor.nr = (n->state->anchor.ptr == NULL) ?
-		    -1 : n->state->anchor.ptr->nr;
+		bcopy(state, &ps->state, sizeof(struct pf_state));
+		ps->state.rule.nr = state->rule.ptr->nr;
+		ps->state.nat_rule.nr = (state->nat_rule.ptr == NULL) ?
+		    -1 : state->nat_rule.ptr->nr;
+		ps->state.anchor.nr = (state->anchor.ptr == NULL) ?
+		    -1 : state->anchor.ptr->nr;
 		splx(s);
-		ps->state.expire = pf_state_expires(n->state);
+		ps->state.expire = pf_state_expires(state);
 		if (ps->state.expire > time.tv_sec)
 			ps->state.expire -= time.tv_sec;
 		else
@@ -1291,14 +1287,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETSTATES: {
 		struct pfioc_states	*ps = (struct pfioc_states *)addr;
-		struct pf_tree_node	*n;
+		struct pf_state		*state;
 		struct pf_state		*p, pstore;
 		u_int32_t		 nr = 0;
 		int			 space = ps->ps_len;
 
 		if (space == 0) {
 			s = splsoftnet();
-			RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
+			RB_FOREACH(state, pf_state_tree_ext_gwy, &tree_ext_gwy)
 				nr++;
 			splx(s);
 			ps->ps_len = sizeof(struct pf_state) * nr;
@@ -1307,20 +1303,20 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		s = splsoftnet();
 		p = ps->ps_states;
-		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
+		RB_FOREACH(state, pf_state_tree_ext_gwy, &tree_ext_gwy) {
 			int	secs = time.tv_sec;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)ps->ps_len)
 				break;
 
-			bcopy(n->state, &pstore, sizeof(pstore));
-			pstore.rule.nr = n->state->rule.ptr->nr;
-			pstore.nat_rule.nr = (n->state->nat_rule.ptr == NULL) ?
-			    -1 : n->state->nat_rule.ptr->nr;
-			pstore.anchor.nr = (n->state->anchor.ptr == NULL) ?
-			    -1 : n->state->anchor.ptr->nr;
+			bcopy(state, &pstore, sizeof(pstore));
+			pstore.rule.nr = state->rule.ptr->nr;
+			pstore.nat_rule.nr = (state->nat_rule.ptr == NULL) ?
+			    -1 : state->nat_rule.ptr->nr;
+			pstore.anchor.nr = (state->anchor.ptr == NULL) ?
+			    -1 : state->anchor.ptr->nr;
 			pstore.creation = secs - pstore.creation;
-			pstore.expire = pf_state_expires(n->state);
+			pstore.expire = pf_state_expires(state);
 			if (pstore.expire > secs)
 				pstore.expire -= secs;
 			else
@@ -1381,22 +1377,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCNATLOOK: {
 		struct pfioc_natlook	*pnl = (struct pfioc_natlook *)addr;
-		struct pf_state		*st;
-		struct pf_tree_node	 key;
+		struct pf_state		*state;
+		struct pf_state		 key;
 		int			 direction = pnl->direction;
 
 		key.af = pnl->af;
 		key.proto = pnl->proto;
-
-		/*
-		 * userland gives us source and dest of connection, reverse
-		 * the lookup so we ask for what happens with the return
-		 * traffic, enabling us to find it in the state tree.
-		 */
-		PF_ACPY(&key.addr[1], &pnl->saddr, pnl->af);
-		key.port[1] = pnl->sport;
-		PF_ACPY(&key.addr[0], &pnl->daddr, pnl->af);
-		key.port[0] = pnl->dport;
 
 		if (!pnl->proto ||
 		    PF_AZERO(&pnl->saddr, pnl->af) ||
@@ -1405,22 +1391,38 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		else {
 			s = splsoftnet();
-			if (direction == PF_IN)
-				st = pf_find_state(&tree_ext_gwy, &key);
-			else
-				st = pf_find_state(&tree_lan_ext, &key);
-			if (st != NULL) {
+
+			/*
+			 * userland gives us source and dest of connection,
+			 * reverse the lookup so we ask for what happens with
+			 * the return traffic, enabling us to find it in the
+			 * state tree.
+			 */
+			if (direction == PF_IN) {
+				PF_ACPY(&key.ext.addr, &pnl->daddr, pnl->af);
+				key.ext.port = pnl->dport;
+				PF_ACPY(&key.gwy.addr, &pnl->saddr, pnl->af);
+				key.gwy.port = pnl->sport;
+				state = pf_find_state(&key, PF_EXT_GWY);
+			} else {
+				PF_ACPY(&key.lan.addr, &pnl->daddr, pnl->af);
+				key.lan.port = pnl->dport;
+				PF_ACPY(&key.ext.addr, &pnl->saddr, pnl->af);
+				key.ext.port = pnl->sport;
+				state = pf_find_state(&key, PF_LAN_EXT);
+			}
+			if (state != NULL) {
 				if (direction == PF_IN) {
-					PF_ACPY(&pnl->rsaddr, &st->lan.addr,
-					    st->af);
-					pnl->rsport = st->lan.port;
+					PF_ACPY(&pnl->rsaddr, &state->lan.addr,
+					    state->af);
+					pnl->rsport = state->lan.port;
 					PF_ACPY(&pnl->rdaddr, &pnl->daddr,
 					    pnl->af);
 					pnl->rdport = pnl->dport;
 				} else {
-					PF_ACPY(&pnl->rdaddr, &st->gwy.addr,
-					    st->af);
-					pnl->rdport = st->gwy.port;
+					PF_ACPY(&pnl->rdaddr, &state->gwy.addr,
+					    state->af);
+					pnl->rdport = state->gwy.port;
 					PF_ACPY(&pnl->rsaddr, &pnl->saddr,
 					    pnl->af);
 					pnl->rsport = pnl->sport;
