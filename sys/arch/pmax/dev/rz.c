@@ -1,5 +1,5 @@
-/*	$OpenBSD: rz.c,v 1.12 1998/05/10 04:01:16 millert Exp $	*/
-/*	$NetBSD: rz.c,v 1.37 1998/03/02 23:17:19 thorpej Exp $	*/
+/*	$OpenBSD: rz.c,v 1.13 1998/05/11 04:23:06 millert Exp $	*/
+/*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -453,6 +453,9 @@ rzprobe(xxxsd)
 	case SCSI_ROM_TYPE:		/* CD-ROM */
 	case SCSI_OPTICAL_MEM_TYPE:	/* Magneto-optical */
 		break;
+
+	SCSI_TAPE_TYPE:			/* tape, handled by tz driver */
+		goto bad;
 
 	default:			/* not a disk */
 		printf("rz%d: unknown media code 0x%x\n",
