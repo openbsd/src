@@ -1,0 +1,3 @@
+stdin:3: proto list expansion not supported in binat-anchor
+stdin:4: fromto parameter not supported in binat-anchor
+pfctl: Syntax error in file: pf rules not loaded

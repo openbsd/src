@@ -1,0 +1,4 @@
+# binat-anchor limits
+
+binat-anchor foo proto { tcp udp } all
+binat-anchor foo from 10/8
