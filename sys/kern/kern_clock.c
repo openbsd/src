@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.19 1998/08/27 00:44:41 mickey Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.20 1998/08/27 05:00:17 deraadt Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -40,8 +40,6 @@
  *
  *	@(#)kern_clock.c	8.5 (Berkeley) 1/21/94
  */
-
-#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
