@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.8 1996/12/14 15:36:50 deraadt Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.9 1997/01/28 18:50:21 niklas Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -3302,6 +3302,7 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 {
 	struct vattr vattr;
 	int error;
+
 	if (flags & VWRITE) {
 		/* Just vn_writechk() changed to check rdonly */
 		/*
@@ -3333,6 +3334,7 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 	 * on files that are already open).
 	 */
 	if (override && (error == EPERM || error == EACCES) &&
+	    VOP_GETATTR(vp, &vattr, cred, p) == 0 &&
 	    cred->cr_uid == vattr.va_uid)
 		error = 0;
 	return error;
