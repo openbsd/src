@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: spinlock.h,v 1.1 1998/12/21 07:58:55 d Exp $
- * $OpenBSD: spinlock.h,v 1.1 1998/12/21 07:58:55 d Exp $
+ * $Id: spinlock.h,v 1.2 1999/01/08 08:25:37 d Exp $
+ * $OpenBSD: spinlock.h,v 1.2 1999/01/08 08:25:37 d Exp $
  *
  * Lock definitions used in both libc and libpthread.
  *
@@ -40,14 +40,14 @@
 #define _SPINLOCK_H_
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include "_spinlock.h"
+#include <machine/spinlock.h>
 
 /*
  * Lock structure with room for debugging information.
  */
 typedef struct {
 	volatile _spinlock_lock_t access_lock;
-	volatile long	lock_owner;
+	volatile void *	lock_owner;
 	volatile const char * fname;
 	volatile int	lineno;
 } spinlock_t;
