@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.8 2003/10/23 18:31:34 jmc Exp $
+.\"	$OpenBSD: namei.9,v 1.9 2004/03/09 18:31:15 tedu Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ flags defines whether the name in
 .Em ndp-\*[Gt]ni_dirp
 is an address in kernel space (UIO_SYSSPACE) or an address in user
 space (UIO_USERSPACE).
-The locked vnode for the pathname is returned in
+The locked vnode for the pathname is referenced and returned in
 .Em ndp-\*[Gt]ni_vp .
 .Pp
 If
