@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_termios.c,v 1.6 1996/04/21 22:18:38 deraadt Exp $	 */
+/*	$OpenBSD: svr4_termios.c,v 1.7 1996/04/23 09:20:56 niklas Exp $	 */
 /*	$NetBSD: svr4_termios.c,v 1.9 1996/04/11 12:53:48 christos Exp $	 */
 
 /*
@@ -584,7 +584,7 @@ svr4_term_ioctl(fp, p, retval, fd, cmd, data)
 			error = (*ctl)(fp, TIOCGWINSZ, (caddr_t) &ws, p);
 			if (error)
 				return error;
-			return copyout(&st, data, sizeof(st));
+			return copyout(&ws, data, sizeof(ws));
 		}
 
 	case SVR4_TIOCSWINSZ:
