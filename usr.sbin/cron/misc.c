@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.26 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.27 2003/04/15 08:08:45 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.26 2003/02/20 20:38:08 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.27 2003/04/15 08:08:45 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -52,7 +52,7 @@ static int syslog_open = FALSE;
 
 /*
  * glue_strings is the overflow-safe equivalent of
- *		sprintf(buffer, "%s%c%s", a, separator, b);
+ *	snprintf(buffer, buffer_size, "%s%c%s", a, separator, b);
  *
  * returns 1 on success, 0 on failure.  'buffer' MUST NOT be used if
  * glue_strings fails.
@@ -530,8 +530,6 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
 		(long)pid, event, detail);
 
-	/* we have to run strlen() because sprintf() returns (char*) on old BSD
-	 */
 	if (LogFD < OK || write(LogFD, msg, strlen(msg)) < OK) {
 		if (LogFD >= OK)
 			perror(LOG_FILE);
