@@ -1,4 +1,4 @@
-.\" $OpenBSD: form_field_validation.3,v 1.7 1999/01/22 03:30:53 millert Exp $
+.\" $OpenBSD: form_field_validation.3,v 1.8 2003/05/16 08:48:27 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -58,27 +58,29 @@ case-sensitivity; and a fifth \fBint\fR flag argument specifying whether a parti
 match must be a unique one (if this flag is off, a prefix matches the first
 of any set of more than one list elements with that prefix). Please notice
 that the string list is not copied, only a reference to it is stored in the
-field. So you should avoid to use a list that lives in automatic variables
+field. So you should avoid using a list that lives in automatic variables
 on the stack.
 .TP 5
 TYPE_INTEGER
 Integer data, parsable to an integer by \fBatoi(3)\fR.  Requires a third
 \fBint\fR argument controlling the precision, a fourth \fBlong\fR argument
 constraining minimum value, and a fifth \fBlong\fR constraining maximum value.
-If the maximum value is less or equal the minimum value, the range is simply
-ignored. On return the field buffer is formatted according to the \fBprintf\fR
-format specification ".*ld", where the '*' is replaced by the precision argument.
+If the maximum value is less than or equal to the minimum value, the range is
+simply ignored. On return the field buffer is formatted according to the
+\fBprintf\fR format specification ".*ld", where the '*' is replaced by the
+precision argument.
 For details of the precision handling see \fBprintf's\fR man-page.
 .TP 5
 TYPE_NUMERIC
 Numeric data (may have a decimal-point part). Requires a third
 \fBint\fR argument controlling the precision, a fourth \fBdouble\fR
 argument constraining minimum value, and a fifth \fBdouble\fR constraining
-maximum value. If your system supports locale's, the decimal point character
+maximum value. If your system supports locales, the decimal point character
 to be used must be the one specified by your locale.
-If the maximum value is less or equal the minimum value, the range is simply
-ignored. On return the field buffer is formatted according to the \fBprintf\fR
-format specification ".*f", where the '*' is replaced by the precision argument.
+If the maximum value is less than or equal to the minimum value, the range is
+simply ignored. On return the field buffer is formatted according to the
+\fBprintf\fR format specification ".*f", where the '*' is replaced by the
+precision argument.
 For details of the precision handling see \fBprintf's\fR man-page.
 .TP 5
 TYPE_REGEXP
