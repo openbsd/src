@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.37 2001/01/27 12:03:36 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.38 2001/02/24 04:42:48 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -58,6 +58,10 @@
 #include "util.h"
 #include "cert.h"
 #include "policy.h"
+
+#ifndef SA_LEN
+#define SA_LEN(x)		(x)->sa_len
+#endif
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -223,8 +227,8 @@ isakmp_sa_check (struct sa *sa, void *v_arg)
   /* verify address is either src or dst for this sa */
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
-  if (memcmp (src, arg->dst, src->sa_len) &&
-      memcmp (dst, arg->dst, dst->sa_len))
+  if (memcmp (src, arg->dst, SA_LEN(src)) &&
+      memcmp (dst, arg->dst, SA_LEN(dst)))
     return 0;
 
   /* match icookie+rcookie against spi */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2001/01/27 12:03:31 niklas Exp $
+#	$OpenBSD: Makefile,v 1.32 2001/02/24 04:42:47 angelos Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -51,9 +51,9 @@ OS=		openbsd
 #OS=		linux
 
 # Compile-time configuration of otherwise optional features
-#FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug gmp
+#FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug gmp
 #FEATURES+=	dnssec
-FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug
+FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug
 #FEATURES=
 
 .PATH:		${.CURDIR}/sysdep/${OS}

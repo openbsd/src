@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.10 2000/03/08 08:41:41 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.11 2001/02/24 04:42:48 angelos Exp $	*/
 /*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
@@ -58,11 +58,13 @@ void cast1_encrypt (struct keystate *, u_int8_t *, u_int16_t);
 void cast1_decrypt (struct keystate *, u_int8_t *, u_int16_t);
 
 struct crypto_xf transforms[] = {
+#ifdef USE_DES
   {
     DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8, BLOCKSIZE, 0,
     des1_init,
     des1_encrypt, des1_decrypt
   },
+#endif
 #ifdef USE_TRIPLEDES
   {
     TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24, BLOCKSIZE, 0,

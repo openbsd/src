@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.2 2001/01/28 22:38:49 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.3 2001/02/24 04:42:49 angelos Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -33,7 +33,7 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-FEATURES+=	gmp
+FEATURES+=	gmp tripledes des
 
 IPSEC_SRCS=	pf_encap.c
 

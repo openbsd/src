@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.c,v 1.3 2001/02/24 03:59:57 angelos Exp $	*/
+/*	$OpenBSD: klips.c,v 1.4 2001/02/24 04:42:49 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -241,30 +241,12 @@ klips_set_spi (struct sa *sa, struct proto *proto, int incoming)
       /* Funny expression due to I just want one switch.  */
       switch (proto->id | (iproto->auth << 8))
 	{
-	case IPSEC_ESP_DES:
-	case IPSEC_ESP_DES_IV32:
-	case IPSEC_ESP_DES_IV64:
-	  emsg->em_alg = XF_ESPDES;
-	  break;
-
 	case IPSEC_ESP_3DES:
 	  emsg->em_alg = XF_ESP3DES;
 	  break;
 
-	case IPSEC_ESP_DES | (IPSEC_AUTH_HMAC_MD5 << 8):
-	case IPSEC_ESP_DES_IV32 | (IPSEC_AUTH_HMAC_MD5 << 8):
-	case IPSEC_ESP_DES_IV64 | (IPSEC_AUTH_HMAC_MD5 << 8):
-	  emsg->em_alg = XF_ESPDESMD596;
-	  break;
-
 	case IPSEC_ESP_3DES | (IPSEC_AUTH_HMAC_MD5 << 8):
 	  emsg->em_alg = XF_ESP3DESMD596;
-	  break;
-
-	case IPSEC_ESP_DES | (IPSEC_AUTH_HMAC_SHA << 8):
-	case IPSEC_ESP_DES_IV32 | (IPSEC_AUTH_HMAC_SHA << 8):
-	case IPSEC_ESP_DES_IV64 | (IPSEC_AUTH_HMAC_SHA << 8):
-	  emsg->em_alg = XF_ESPDESSHA196;
 	  break;
 
 	case IPSEC_ESP_3DES | (IPSEC_AUTH_HMAC_SHA << 8):
