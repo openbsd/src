@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.16 2004/10/11 10:30:33 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.17 2004/10/13 18:44:09 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -311,6 +311,17 @@ Expansion of special
 .Cm \&%
 sequences is the same as for
 .Cm @exec .
+.It Cm @sysctl Ar var=val
+.It Cm @sysctl Ar var>=val
+During
+.Xr pkg_add 1 ,
+check that
+.Xr sysctl 8
+variable 
+.Ar var
+is set to exactly/at least a given value
+.Ar val .
+Adjust it otherwise.
 .It Cm @mode Ar mode
 Set default permission for all subsequently extracted files to
 .Ar mode .
