@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.66 2000/10/13 04:21:14 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.67 2000/12/31 00:15:22 angelos Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -87,7 +87,7 @@ pseudo-device	sl	2	# CSLIP
 pseudo-device	ppp	2	# PPP
 pseudo-device	sppp		# Sync PPP/HDLC
 pseudo-device	tun	2	# network tunneling over tty
-pseudo-device	enc	4	# IPSEC needs the encapsulation interface
+pseudo-device	enc	1	# IPSEC needs the encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
 
 pseudo-device	pty	64	# pseudo-terminals
