@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.1 1998/11/14 23:37:20 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.2 1999/02/13 00:19:48 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -118,6 +118,11 @@ x2i(char *s)
 	ss[1] = s[1];
 	ss[2] = 0;
 
+	if (!isxdigit(s[0]) || !isxdigit(s[1])) {
+		fprintf(stderr,
+			"Keys and IVs should be specified in hex digits.\n");
+		exit(-1);
+	}
 	return strtoul(ss, NULL, 16);
 }
 
