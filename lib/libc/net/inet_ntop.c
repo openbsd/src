@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.4 2002/08/19 03:01:54 itojun Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.5 2002/08/23 16:27:31 itojun Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "$From: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.4 2002/08/19 03:01:54 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.5 2002/08/23 16:27:31 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,8 +88,10 @@ inet_ntop4(src, dst, size)
 {
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
+	int l;
 
-	if (snprintf(tmp, size, fmt, src[0], src[1], src[2], src[3]) >= size) {
+	l = snprintf(tmp, size, fmt, src[0], src[1], src[2], src[3]);
+	if (l <= 0 || l >= size) {
 		errno = ENOSPC;
 		return (NULL);
 	}
