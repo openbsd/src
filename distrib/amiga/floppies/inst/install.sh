@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.3 1996/04/25 21:27:30 niklas Exp $
+#	$OpenBSD: install.sh,v 1.4 1996/10/10 06:38:49 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -36,7 +36,7 @@
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT==echo
 
-VERSION=1.1
+VERSION=2.0
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {

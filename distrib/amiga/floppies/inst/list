@@ -1,10 +1,10 @@
-#	$OpenBSD: list,v 1.5 1996/04/25 21:27:32 niklas Exp $
+#	$OpenBSD: list,v 1.6 1996/10/10 06:38:49 niklas Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc
 
 # copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/amiga/compile/INSTALL/bsd	bsd
+COPY	${CURDIR}/../../../../sys/arch/amiga/compile/GENERIC/bsd	bsd
 
 # and the installation tools
 COPY	dot.profile			.profile
