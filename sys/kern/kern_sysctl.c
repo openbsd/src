@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.79 2003/01/21 16:59:23 markus Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.80 2003/04/25 20:06:41 grange Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #include <sys/namei.h>
 #include <sys/exec.h>
 #include <sys/mbuf.h>
+#include <sys/sensors.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -94,6 +95,7 @@ extern  long numvnodes;
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
+int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -506,8 +508,8 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern char machine[], cpu_model[];
 	int err;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
+	/* all sysctl names at this level except sensors are terminal */
+	if (name[0] != HW_SENSORS && namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -543,6 +545,9 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    disk_count * sizeof(struct diskstats)));
 	case HW_DISKCOUNT:
 		return (sysctl_rdint(oldp, oldlenp, newp, disk_count));
+	case HW_SENSORS:
+		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1488,4 +1493,28 @@ sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 	default:
 		return (EOPNOTSUPP);
 	}
+}
+
+int nsensors = 0;
+struct sensors_head sensors = SLIST_HEAD_INITIALIZER(&sensors);
+
+int
+sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	struct sensor *s = NULL;
+	int num;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	num = name[0];
+	if (num >= nsensors)
+		return (ENXIO);
+
+	SLIST_FOREACH(s, &sensors, list)
+		if (s->num == num)
+			break;
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp, s, sizeof(struct sensor)));
 }
