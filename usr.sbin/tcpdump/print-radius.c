@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.5 2001/08/21 06:21:29 jakob Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.6 2001/10/24 12:05:11 ho Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -171,7 +171,7 @@ static void r_print_att(int code, int len, const u_char *data) {
 	fprintf(stdout, " %s =", atp->name);
 
 	if(atp->encoding == RD_INT && *atp->values) {
-		int k = ntohl((*(int *)data));
+		u_int32_t k = ntohl((*(int *)data));
 
 		for(i = 0; atp->values[i] != NULL; i++) 
 			/* SHOOT ME */ ;
