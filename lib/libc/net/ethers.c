@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.6 1998/03/17 06:20:25 millert Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.7 1998/03/17 06:22:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.6 1998/03/17 06:20:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.7 1998/03/17 06:22:00 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,8 +67,10 @@ ether_ntoa(e)
 
 	if (e->ether_addr_octet[0] > 0xFF || e->ether_addr_octet[1] > 0xFF ||
 	    e->ether_addr_octet[2] > 0xFF || e->ether_addr_octet[3] > 0xFF ||
-	    e->ether_addr_octet[4] > 0xFF || e->ether_addr_octet[5] > 0xFF)
+	    e->ether_addr_octet[4] > 0xFF || e->ether_addr_octet[5] > 0xFF) {
+		errno = EINVAL;
 		return (NULL);
+	}
 
 	(void)sprintf(a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
