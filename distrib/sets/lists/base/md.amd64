@@ -1409,7 +1409,6 @@
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/x86_64-openbsd/sys/device.ph

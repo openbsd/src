@@ -1916,7 +1916,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/device.ph

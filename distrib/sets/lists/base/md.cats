@@ -1970,7 +1970,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/device.ph

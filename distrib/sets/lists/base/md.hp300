@@ -1929,7 +1929,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/device.ph

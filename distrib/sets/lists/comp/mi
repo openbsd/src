@@ -1212,7 +1212,6 @@
 ./usr/include/sys/cdefs.h
 ./usr/include/sys/cdio.h
 ./usr/include/sys/chio.h
-./usr/include/sys/clist.h
 ./usr/include/sys/conf.h
 ./usr/include/sys/core.h
 ./usr/include/sys/device.h

@@ -1290,7 +1290,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/device.ph

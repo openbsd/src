@@ -1834,7 +1834,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/device.ph

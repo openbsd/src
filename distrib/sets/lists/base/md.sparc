@@ -1404,7 +1404,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/chio.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/clist.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/conf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/core.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/device.ph
