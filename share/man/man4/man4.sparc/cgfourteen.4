@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgfourteen.4,v 1.12 2002/08/12 10:48:21 miod Exp $
+.\"	$OpenBSD: cgfourteen.4,v 1.13 2002/08/21 22:18:27 miod Exp $
 .\"	$NetBSD: cgfourteen.4,v 1.3 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright (c) 1996 The President and Fellows of Harvard College.
@@ -48,7 +48,8 @@
 .Nm cgfourteen
 .Nd accelerated 8/24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgfourteen0 at obio0" Pq "SS10-M and SS20"
+.Cd "cgfourteen0 at obio0 addr 0x9c000000" Pq "SS10SX and SS20"
+.Cd "cgfourteen1 at obio0 addr 0x90000000" Pq "SS10SX and SS20
 .Cd "wsdisplay* at cgfourteen?"
 .Sh DESCRIPTION
 The
