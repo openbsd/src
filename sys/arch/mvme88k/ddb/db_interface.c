@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2001/08/24 22:45:42 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2001/08/26 02:37:00 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -67,6 +67,18 @@ void db_putc __P((int c));
 int db_getc __P((void));
 void cpu_interrupt_to_db __P((int cpu_no));
 char *db_task_name __P((void));
+int m88k_dmx_print __P((unsigned, unsigned, unsigned, unsigned));
+void m88k_db_pause __P((unsigned));
+void m88k_db_print_frame __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_where __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_frame_search __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_iflush __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_dflush __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_peek __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_noise __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_translate __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_cmmucfg __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 int 	db_active = 0;
 int 	db_noisy = 0;
@@ -174,7 +186,7 @@ void
 m88k_db_print_frame(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
-	int count;
+	db_expr_t count;
 	char *modif;
 {
 	struct m88100_saved_state *s = (struct m88100_saved_state *)addr;
@@ -784,7 +796,11 @@ void cpu_interrupt_to_db(cpu_no)
 }
 
 void
-m88k_db_prom_cmd(void)
+m88k_db_prom_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
 {
 	doboot();
 }

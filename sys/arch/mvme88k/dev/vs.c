@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.8 2001/06/25 00:43:14 mickey Exp $ */
+/*	$OpenBSD: vs.c,v 1.9 2001/08/26 02:37:07 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -58,14 +58,14 @@
 #include <machine/param.h>
 
 #if defined(mvme88k)
-   #include <mvme88k/dev/vsreg.h>
-   #include <mvme88k/dev/vsvar.h>
-   #include <mvme88k/dev/vme.h>		/* vme_findvec() */
-   #include <machine/mmu.h>		/* DMA_CACHE_SYNC, etc... */
+#include <mvme88k/dev/vsreg.h>
+#include <mvme88k/dev/vsvar.h>
+#include <mvme88k/dev/vme.h>		/* vme_findvec() */
+#include <machine/mmu.h>		/* DMA_CACHE_SYNC, etc... */
 #else
-   #include <mvme68k/dev/vsreg.h>
-   #include <mvme68k/dev/vsvar.h>
-   #include <mvme68k/dev/vme.h>		/* vme_findvec() */
+#include <mvme68k/dev/vsreg.h>
+#include <mvme68k/dev/vsvar.h>
+#include <mvme68k/dev/vme.h>		/* vme_findvec() */
 #endif /* mvme88k */
 
 int  vs_checkintr        __P((struct vs_softc *, struct scsi_xfer *, int *));
@@ -79,10 +79,14 @@ int  vs_poll             __P((struct vs_softc *, struct scsi_xfer *));
 void vs_scsidone         __P((struct vs_softc *, struct scsi_xfer *, int));
 M328_CQE  * vs_getcqe    __P((struct vs_softc *));
 M328_IOPB * vs_getiopb   __P((struct vs_softc *));
+void vs_copy __P((void *, void *, unsigned short));
+void vs_zero __P((void *, u_long));
+int do_vspoll __P((struct vs_softc *, int));
+void thaw_queue __P((struct vs_softc *, u_int8_t));
+void vs_link_sg_element __P((sg_list_element_t *, vm_offset_t, int));
+void vs_link_sg_list __P((sg_list_element_t *, vm_offset_t, int));
 
 static __inline__ void vs_clear_return_info __P((struct vs_softc *));
-
-extern u_int   kvtop();
 
 /* 
  * 16 bit 's' memory functions.  MVME328 is a D16 board.
@@ -425,7 +429,7 @@ vs_chksense(xs)
 	miopb->iopb_EVCT = (u_char)sc->sc_evec;
 	miopb->iopb_LEVEL = 0; /*sc->sc_ipl;*/
 	miopb->iopb_ADDR = ADDR_MOD;
-	LV(miopb->iopb_BUFF, kvtop(&xs->sense));
+	LV(miopb->iopb_BUFF, kvtop((vm_offset_t)&xs->sense));
 	LV(miopb->iopb_LENGTH, sizeof(struct scsi_sense_data));
 
 	vs_zero(mc, sizeof(M328_CQE));
@@ -999,7 +1003,7 @@ vs_build_memory_structure(xs, iopb)
 
 	level = 0;
 	virt = starting_point_virt = (vm_offset_t)xs->data;
-	point1_phys = starting_point_phys = kvtop(xs->data);
+	point1_phys = starting_point_phys = kvtop((vm_offset_t)xs->data);
 	len = xs->datalen;
 	/*
 	 * Check if we need scatter/gather

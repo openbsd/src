@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.5 2001/03/09 05:44:39 smurph Exp $ */
+/*	$OpenBSD: sclock.c,v 1.6 2001/08/26 02:37:07 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -117,12 +117,13 @@ struct simplelock cio_lock;
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 
-static int	sclockmatch	__P((struct device *, void *, void *));
-static void	sclockattach	__P((struct device *, struct device *, void *));
+int	sclockmatch	__P((struct device *, void *, void *));
+void	sclockattach	__P((struct device *, struct device *, void *));
 
 void	sbc_initstatclock	__P((void));
 void	m188_initstatclock	__P((void));
 void	m188_cio_init		__P((unsigned));
+u_char	read_cio		__P((unsigned));
 void	write_cio		__P((unsigned, unsigned));
 
 struct sclocksoftc {
@@ -369,7 +370,7 @@ write_cio(reg, val)
 }
 
 /* Read CIO register */
-static u_char
+u_char
 read_cio(reg)
 	unsigned reg;
 {

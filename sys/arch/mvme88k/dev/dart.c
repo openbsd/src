@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.9 2001/08/24 19:32:06 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.10 2001/08/26 02:37:07 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -98,6 +98,14 @@ int dartcnprobe __P((struct consdev *cp));
 int dartcninit __P((struct consdev *cp));
 int dartcngetc __P((dev_t dev));
 void dartcnputc __P((dev_t dev, char c));
+int dart_speed __P((int));
+struct tty* darttty __P((dev_t));
+void dartstart __P((struct tty *));
+int dartmctl __P((dev_t, int, int));
+int dartparam __P((struct tty *, struct termios *));
+void dartmodemtrans __P((struct dartsoftc *, unsigned int, unsigned int));
+void dartrint __P((struct dartsoftc *, int));
+void dartxint __P((struct dartsoftc *, int));
 
 int dartopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int dartclose __P((dev_t dev, int flag, int mode, struct proc *p));
@@ -180,7 +188,7 @@ dartmatch(parent, vcf, args)
 	if (cputyp != CPU_188) return (0);
 	ca->ca_vaddr = ca->ca_paddr; /* 1:1 */
 	addr = (union dartreg *)ca->ca_vaddr;
-	if (badvaddr(addr, 2) <= 0) {
+	if (badvaddr((vaddr_t)addr, 2) <= 0) {
 		printf("==> dart: failed address check.\n");
 		return (0);
 	}
@@ -1233,7 +1241,10 @@ dartcngetc(dev)
 	int c;		/* received character */
 	int s;
 	int port;
+#if 1
+#else
 	m88k_psr_type psr;
+#endif
 	char buf[] = "char x";
 
 	port = DART_PORT(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.11 2001/08/24 19:34:21 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.12 2001/08/26 02:37:07 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -44,10 +44,12 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include "machine/autoconf.h"
-#include "machine/cpu.h"
-#include "machine/frame.h"
-#include "machine/pmap.h"
+
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+#include <machine/frame.h>
+#include <machine/locore.h>
+#include <machine/pmap.h>
 
 #include "pcctwo.h"
 #include "syscon.h"
@@ -60,14 +62,18 @@
 int  vmematch __P((struct device *, void *, void *));
 void vmeattach __P((struct device *, struct device *, void *));
 
-void vme2chip_init __P((struct vmesoftc *sc));
-u_long vme2chip_map __P((u_long base, int len, int dwidth));
+void vme2chip_init __P((struct vmesoftc *));
+u_long vme2chip_map __P((u_long, int, int));
 int vme2abort __P((void *));
 int sysconabort __P((void *));
-int     intr_findvec __P((int start, int end));
+void * vmemap __P((struct vmesoftc *, void *, int, int));
+void vmeunmap __P((void *, int));
+int vmeprint __P((void *, const char *));
 
-static int vmebustype;
-static int vmevecbase;
+void vmesyscon_init __P((struct vmesoftc *));
+
+int vmebustype;
+int vmevecbase;
 
 struct vme2reg *sys_vme2 = NULL;
 

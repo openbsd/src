@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vevar.h,v 1.1 1999/05/29 04:41:43 smurph Exp $	*/
+/*	$OpenBSD: if_vevar.h,v 1.2 2001/08/26 02:37:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -30,14 +30,6 @@
  */
 
 #define LEDEBUG 1
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
 
 /*
  * Ethernet software status per device.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.8 2001/06/27 05:44:49 nate Exp $ */
+/*	$OpenBSD: vx.c,v 1.9 2001/08/26 02:37:07 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -39,22 +39,26 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/syslog.h>
+
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+
 #include <dev/cons.h>
+
 #include <mvme88k/dev/vxreg.h>
-#include <sys/syslog.h>
+
 #include "pcctwo.h"
 #if NPCCTWO > 0
-   #include <mvme88k/dev/pcctworeg.h>
-   #include <mvme88k/dev/vme.h>
+#include <mvme88k/dev/pcctworeg.h>
+#include <mvme88k/dev/vme.h>
 #endif
 
 #include <machine/psl.h>
 #define splvx()	spltty()
 
 #ifdef DEBUG
-   #undef DEBUG
+#undef DEBUG
 #endif
 #define DEBUG_KERN 1
 
@@ -139,7 +143,19 @@ int  vxioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
 void vxstart __P((struct tty *tp));
 int  vxstop  __P((struct tty *tp, int flag));
 
-static void   vxputc __P((struct vxsoftc *sc, int port, u_char c));
+void   vxputc __P((struct vxsoftc *sc, int port, u_char c));
+
+struct tty * vxtty __P((dev_t));
+short dtr_ctl __P((struct vxsoftc *, int, int));
+short rts_ctl __P((struct vxsoftc *, int, int));
+short flush_ctl __P((struct vxsoftc *, int, int));
+u_short vxtspeed __P((int));
+void read_chars __P((struct vxsoftc *, int));
+void ccode __P((struct vxsoftc *, int, char));
+void wzero __P((void *, size_t));
+int create_free_queue __P((struct vxsoftc *));
+void print_dump __P((struct vxsoftc *));
+struct envelope *get_cmd_tail __P((struct vxsoftc *));
 
 struct cfattach vx_ca = {       
 	sizeof(struct vxsoftc), vxmatch, vxattach
@@ -152,7 +168,6 @@ struct cfdriver vx_cd = {
 #define VX_UNIT(x) (int)(minor(x) / 9)
 #define VX_PORT(x) (int)(minor(x) % 9)
 
-extern int cputyp;
 struct envelope *bpp_wait;
 unsigned int board_addr;
 
@@ -267,9 +282,9 @@ dtr_ctl(sc, port, on)
 
 short
 rts_ctl(sc, port, on)
-struct vxsoftc *sc;
-int port;
-int on;
+	struct vxsoftc *sc;
+	int port;
+	int on;
 {
 	struct packet pkt;
 	bzero(&pkt, sizeof(struct packet));
@@ -289,9 +304,9 @@ int on;
 
 short
 flush_ctl(sc, port, which)
-struct vxsoftc *sc;
-int port;
-int which;
+	struct vxsoftc *sc;
+	int port;
+	int which;
 {
 	struct packet pkt;
 	bzero(&pkt, sizeof(struct packet));
@@ -809,7 +824,7 @@ vxstop(tp, flag)
 	return 0;
 }
 
-static void
+void
 vxputc(sc, port, c)
 	struct vxsoftc *sc;
 	int port;
@@ -823,7 +838,8 @@ vxputc(sc, port, c)
 	return;
 }
 
-u_short vxtspeed(speed)
+u_short
+vxtspeed(speed)
 	int speed;
 {
 	switch (speed) {
@@ -1323,7 +1339,7 @@ wzero(void *addr, size_t size)
 
 int
 create_free_queue(sc)
-struct vxsoftc *sc;
+	struct vxsoftc *sc;
 {
 	int i;
 	struct envelope *envp;
@@ -1711,4 +1727,3 @@ vx_init(sc)
 		return 0;
 	}
 }
-

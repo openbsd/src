@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.12 2001/08/24 22:46:57 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.13 2001/08/26 02:37:07 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -64,6 +64,8 @@
 #define CL_RXMASK	0x87 
 #define CL_TXINTR	0x02
 #define CL_RXINTR	0x02
+
+#define	CLCD_DO_POLLED_INPUT
 
 #ifdef DEBUG
 #undef DEBUG
@@ -148,8 +150,10 @@ struct {
 /* prototypes */
 int clcnprobe __P((struct consdev *cp));
 int clcninit __P((struct consdev *cp));
+int cl_instat __P((struct clsoftc *sc));
 int clcngetc __P((dev_t dev));
 int clcnputc __P((dev_t dev, u_char c));
+void clcnpollc __P((dev_t, int));
 u_char cl_clkdiv __P((int speed));
 u_char cl_clknum __P((int speed));
 u_char cl_clkrxtimeout __P((int speed));
@@ -166,7 +170,9 @@ void cl_parity __P((struct clsoftc *sc, int channel));
 void cl_frame __P((struct clsoftc *sc, int channel));
 void cl_break __P(( struct clsoftc *sc, int channel));
 int clmctl __P((dev_t dev, int bits, int how));
+#ifdef DEBUG
 void cl_dumpport __P((int channel));
+#endif
 
 int	clprobe __P((struct device *parent, void *self, void *aux));
 void	clattach __P((struct device *parent, struct device *self, void *aux));
@@ -183,6 +189,9 @@ void clputc __P((struct clsoftc *sc, int unit, u_char c));
 u_char clgetc __P((struct clsoftc *sc, int *channel));
 #if 0
 void cloutput __P( (struct tty *tp));
+#endif
+#ifdef	CLCD_DO_POLLED_INPUT
+void cl_chkinput __P((void));
 #endif
 
 struct cfattach cl_ca = {       
@@ -1128,10 +1137,7 @@ if (unit == 0) {
 	return;
 }
 
-/*
 #ifdef CLCD_DO_POLLED_INPUT
-*/
-#if 1
 void
 cl_chkinput()
 {
