@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.18 1998/02/05 16:49:09 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.19 1998/02/05 16:57:49 deraadt Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -68,6 +68,9 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/conf.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
