@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.1,v 1.11 2003/02/14 17:33:15 millert Exp $
+.\"	$OpenBSD: sha1.1,v 1.12 2003/02/19 17:52:18 millert Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -33,9 +33,7 @@
 .Nm sha1
 .Oo
 .Fl p | Fl t | Fl x |
-.Fl s Ar string |
-.Fl c Ar [ file ... ] |
-.Ar file ...
+.Fl s Ar string | Ar file ...
 .Oc
 .Sh DESCRIPTION
 .Nm
@@ -58,16 +56,6 @@ The options are as follows:
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .
-.It Fl c Ar [ file ... ]
-Compares all checksums in the
-.Ar file
-with new computed checksums for the files mentioned in the
-.Ar file .
-Output consists of which digest was used, the file name,
-and an OK or FAILED for the result of the comparison.  This will
-validate any of the supported checksums in the
-.Ar file
-including MD5 and RMD-160.  If no file is given, stdin is used.
 .It Fl p
 Echos stdin to stdout and appends the
 .Em SHA-1
