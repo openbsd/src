@@ -32,7 +32,7 @@
  */
 
 #include "rsh_locl.h"
-RCSID("$KTH: rshd.c,v 1.41 2001/02/20 01:44:48 assar Exp $");
+RCSID("$KTH: rshd.c,v 1.43 2001/07/31 09:05:45 joda Exp $");
 
 int
 login_access( struct passwd *user, char *from);
@@ -58,11 +58,13 @@ static char tkfile[MAXPATHLEN] = "";
 
 static int do_inetd = 1;
 static char *port_str;
-static int do_rhosts;
+static int do_rhosts = 1;
 static int do_kerberos = 0;
 static int do_vacuous = 0;
 static int do_log = 1;
 static int do_newpag = 1;
+static int do_addr_verify = 0;
+static int do_keepalive = 1;
 static int do_version;
 static int do_help = 0;
 
@@ -102,6 +104,7 @@ fatal (int sock, const char *m, ...)
     *buf = 1;
     va_start(args, m);
     len = vsnprintf (buf + 1, sizeof(buf) - 1, m, args);
+    len = min(len, sizeof(buf) - 1);
     va_end(args);
     syslog (LOG_ERR, "%s", buf + 1);
     net_write (sock, buf, len + 1);
@@ -841,14 +844,16 @@ doit (int do_kerberos, int check_rhosts)
 }
 
 struct getargs args[] = {
+    { NULL,		'a',	arg_flag,	&do_addr_verify },
+    { "keepalive",	'n',	arg_negative_flag,	&do_keepalive },
     { "inetd",		'i',	arg_negative_flag,	&do_inetd,
       "Not started from inetd" },
     { "kerberos",	'k',	arg_flag,	&do_kerberos,
       "Implement kerberised services" },
     { "encrypt",	'x',	arg_flag,		&do_encrypt,
       "Implement encrypted service" },
-    { "rhosts",		'l',	arg_flag, &do_rhosts,
-      "Check users .rhosts" },
+    { "rhosts",		'l',	arg_negative_flag, &do_rhosts,
+      "Don't check users .rhosts" },
     { "port",		'p',	arg_string,	&port_str,	"Use this port",
       "port" },
     { "vacuous",	'v',	arg_flag, &do_vacuous,

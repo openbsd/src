@@ -1,3 +1,4 @@
+/************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
 * files may be covered by other copyrights.
 *
@@ -24,7 +25,7 @@
 
 #include "login_locl.h"
 
-RCSID("$KTH: login_access.c,v 1.1 1999/05/17 22:40:05 assar Exp $");
+RCSID("$KTH: login_access.c,v 1.2 2001/06/04 14:09:45 assar Exp $");
 
  /* Delimiters for fields and for lists of users, ttys or hosts. */
 

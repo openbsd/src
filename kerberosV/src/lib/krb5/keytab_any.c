@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: keytab_any.c,v 1.2 2001/05/14 06:14:48 assar Exp $");
+RCSID("$KTH: keytab_any.c,v 1.4 2001/06/24 02:22:33 assar Exp $");
 
 struct any_data {
     krb5_keytab kt;
@@ -68,7 +68,7 @@ any_resolve(krb5_context context, const char *name, krb5_keytab id)
 	}
 	if (a0 == NULL) {
 	    a0 = a;
-	    a->name = strdup(name);
+	    a->name = strdup(buf);
 	    if (a->name == NULL) {
 		krb5_set_error_string(context, "malloc: out of memory");
 		ret = ENOMEM;
@@ -141,8 +141,7 @@ any_start_seq_get(krb5_context context,
     if (ret) {
 	free (c->data);
 	c->data = NULL;
-	krb5_set_error_string (context, "malloc: out of memory");
-	return ENOMEM;
+	return ret;
     }
     return 0;
 }
@@ -165,14 +164,15 @@ any_next_entry (krb5_context context,
 	    ret2 = krb5_kt_end_seq_get (context, ed->a->kt, &ed->cursor);
 	    if (ret2)
 		return ret2;
-	    ed->a = ed->a->next;
+	    while ((ed->a = ed->a->next) != NULL) {
+		ret2 = krb5_kt_start_seq_get(context, ed->a->kt, &ed->cursor);
+		if (ret2 == 0)
+		    break;
+	    }
 	    if (ed->a == NULL) {
 		krb5_clear_error_string (context);
 		return KRB5_CC_END;
 	    }
-	    ret2 = krb5_kt_start_seq_get(context, ed->a->kt, &ed->cursor);
-	    if (ret2)
-		return ret2;
 	} else
 	    return ret;
     } while (ret == KRB5_CC_END);

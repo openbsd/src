@@ -38,7 +38,7 @@
 #endif
 #include "getarg.h"
 
-RCSID("$KTH: ftpd.c,v 1.157 2001/04/19 14:41:29 joda Exp $");
+RCSID("$KTH: ftpd.c,v 1.159 2001/08/28 19:02:09 nectar Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -68,6 +68,7 @@ struct	passwd *pw;
 int	debug = 0;
 int	ftpd_timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
+int	restricted_data_ports = 1;
 int	logging;
 int	guest;
 int	dochroot;
@@ -217,6 +218,7 @@ struct getargs args[] = {
     { NULL, 't', arg_integer, &ftpd_timeout, "initial timeout" },
     { NULL, 'T', arg_integer, &maxtimeout, "max timeout" },
     { NULL, 'u', arg_string, &umask_string, "umask for user logins" },
+    { NULL, 'U', arg_negative_flag, &restricted_data_ports, "don't use high data ports" },
     { NULL, 'd', arg_flag, &debug, "enable debugging" },
     { NULL, 'v', arg_flag, &debug, "enable debugging" },
     { "builtin-ls", 'B', arg_flag, &use_builtin_ls, "use built-in ls to list files" },
@@ -1951,6 +1953,8 @@ pasv(void)
 	socket_set_address_and_port (pasv_addr,
 				     socket_get_address (ctrl_addr),
 				     0);
+	socket_set_portrange(pdata, restricted_data_ports, 
+	    pasv_addr->sa_family); 
 	seteuid(0);
 	if (bind(pdata, pasv_addr, socket_sockaddr_size (pasv_addr)) < 0) {
 		seteuid(pw->pw_uid);
@@ -1993,6 +1997,8 @@ epsv(char *proto)
 	socket_set_address_and_port (pasv_addr,
 				     socket_get_address (ctrl_addr),
 				     0);
+	socket_set_portrange(pdata, restricted_data_ports, 
+	    pasv_addr->sa_family); 
 	seteuid(0);
 	if (bind(pdata, pasv_addr, socket_sockaddr_size (pasv_addr)) < 0) {
 		seteuid(pw->pw_uid);
@@ -2165,7 +2171,13 @@ send_file_list(char *whichf)
   char buf[MaxPathLen];
 
   if (strpbrk(whichf, "~{[*?") != NULL) {
-    int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT;
+    int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|
+#ifdef GLOB_MAXPATH
+	GLOB_MAXPATH
+#else
+	GLOB_LIMIT
+#endif
+	;
 
     memset(&gl, 0, sizeof(gl));
     freeglob = 1;

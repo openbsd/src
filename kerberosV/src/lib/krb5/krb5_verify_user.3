@@ -1,6 +1,6 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_verify_user.3,v 1.1 2001/06/24 19:05:37 hin Exp $
-.Dd Jun 24, 2001
+.\" $KTH: krb5_verify_user.3,v 1.1 2001/06/27 17:08:04 assar Exp $
+.Dd June 27, 2001
 .Dt KRB5_VERIFY_USER 3
 .Os HEIMDAL
 .Sh NAME
@@ -16,51 +16,37 @@
 .Sh DESCRIPTION
 The
 .Nm krb5_verify_user
-function verify user 
-.Fa principal
-with
-.Fa password .
-If the flag
-.Fa secure
-is given the password is verified against
-.Fa service .
-As a side effect, fresh tickets are obtained and stored in
-.Fa ccache .
-If
-.Fa password
-is
-NULL, a password is asked. If
+function verifies the password supplied by a user. 
+The principal whose
+password will be verified is specified in
+.Fa principal .
+New tickets will be obtained as a side-effect and stored in
 .Fa ccache
-is NULL, the default credential-cache is used.
+(if NULL, the default ccache is used).
+If the password is not supplied in
+.Fa password
+(and is given as
+.Dv NULL )
+the user will be prompted for it.
+If
+.Fa secure
+the ticket will be verified against the locally stored service key
+.Fa service
+(by default
+.Ql host
+if given as
+.Dv NULL
+).
 .Pp
 The
-.Fa service
-is the service part service principal.
-.Nm krb5_verify_user
-take the
-.Fa service
-and appends the host's name and uses that a the service principal. If
-.Fa service
-is NULL, the service 
-.Ql host
-is used.
-.Pp
 .Nm krb5_verify_user_lrealm
-works the same way as 
-.Nm krb5_verify_user,
-with the exception that the realm of
+function does the same, except that it ignores the realm in
 .Fa principal
-is ignored and all local realms in 
-.Xr krb5.conf 5
-are tried.
-.Sh BUGS
-Not setting
-.Fa secure
-should be considered a bug since the answer from the KDC isn't
-verified. The answer could be faked answer from malicious computer.
+and tries all the local realms (see
+.Xr krb5.conf 5).
 .Sh EXAMPLE
-Here is a example program that verify a password. If uses the
-.Q1 host/`hostname`
+Here is a example program that verifies a password. it uses the
+.Ql host/`hostname`
 service principal in
 .Pa krb5.keytab .
 .Bd -literal
@@ -72,27 +58,28 @@ main(int argc, char **argv)
     char *user;
     krb5_error_code error;
     krb5_principal princ;
-    krb5_context c;
+    krb5_context context;
 
     if (argc != 2)
 	errx(1, "usage: verify_passwd <principal-name>");
 
     user = argv[1];
 
-    if (krb5_init_context(&c) < 0)
+    if (krb5_init_context(&context) < 0)
 	errx(1, "krb5_init_context");
 
-    if ((error = krb5_parse_name(c, user, &princ)) != 0)
-	krb5_err(c, 1, error, "krb5_parse_name");
+    if ((error = krb5_parse_name(context, user, &princ)) != 0)
+	krb5_err(context, 1, error, "krb5_parse_name");
 
-    error = krb5_verify_user(c, princ, NULL, NULL, TRUE, NULL);
+    error = krb5_verify_user(context, princ, NULL, NULL, TRUE, NULL);
     if (error)
-        krb5_err(c, 1, error, "krb5_verify_user");
+        krb5_err(context, 1, error, "krb5_verify_user");
 	
     return 0;
 }
 .Ed
 .Sh SEE ALSO
+.Xr krb5_kt_default 3 ,
 .Xr krb5_init_context 3 ,
 .Xr krb5_err 3 ,
 .Xr krb5.conf 5

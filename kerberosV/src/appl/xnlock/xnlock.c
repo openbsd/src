@@ -8,7 +8,7 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: xnlock.c,v 1.85 2001/03/15 17:13:13 joda Exp $");
+RCSID("$KTH: xnlock.c,v 1.87 2001/06/23 22:20:04 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -574,7 +574,6 @@ verify_krb5(const char *password)
 				 NULL)) {
 	    CREDENTIALS c;
 	    krb5_creds mcred, cred;
-	    char krb4tkfile[MAXPATHLEN];
 
 	    krb5_make_principal(context, &mcred.server,
 				client->realm,
@@ -583,7 +582,7 @@ verify_krb5(const char *password)
 				NULL);
 	    ret = krb5_cc_retrieve_cred(context, id, 0, &mcred, &cred);
 	    if(ret == 0) {
-		ret = krb524_convert_creds_kdc(context, id, &cred, &c);
+		ret = krb524_convert_creds_kdc_ccache(context, id, &cred, &c);
 		if(ret == 0) 
 		    tf_setup(&c, c.pname, c.pinst);
 		memset(&c, 0, sizeof(c));

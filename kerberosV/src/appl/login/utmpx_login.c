@@ -1,3 +1,4 @@
+/************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
 * files may be covered by other copyrights.
 *
@@ -17,7 +18,7 @@
 
 #include "login_locl.h"
 
-RCSID("$KTH: utmpx_login.c,v 1.25 2001/02/08 16:08:47 assar Exp $");
+RCSID("$KTH: utmpx_login.c,v 1.26 2001/06/04 14:10:19 assar Exp $");
 
 /* utmpx_login - update utmp and wtmp after login */
 
