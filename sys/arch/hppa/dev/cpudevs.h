@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.11 1999/06/22 23:48:15 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.12 1999/07/18 18:53:40 mickey Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
@@ -162,10 +162,10 @@
 #define	HPPA_BUS_MERCED	16
 #define	HPPA_CPU_SOFTEMU	0x01
 #define	HPPA_CPU_TORNADO	0x0b
-#define	HPPA_CPU_PCXL	0x0d
-#define	HPPA_CPU_PCXU	0x0e
+#define	HPPA_CPU_PCXT1	0x0d
+#define	HPPA_CPU_PCXUP	0x0e
 #define	HPPA_CPU_PCXL2	0x0f
-#define	HPPA_CPU_PCXUP	0x10
+#define	HPPA_CPU_PCXUP1	0x10
 #define	HPPA_CPU_PCXW	0x11
 #define	HPPA_FPU_SOFTEMU	0x01
 #define	HPPA_FPU_INDIGO	0x02

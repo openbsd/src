@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.11 1999/06/22 23:48:15 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.12 1999/07/18 18:53:40 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
@@ -143,11 +143,11 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_BUS,	HPPA_BUS_MERCED,	"Merced" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_SOFTEMU,	"Software Emulation" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_TORNADO,	"Tornado" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_PCXL,	"PCX-L" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_PCXU,	"PCX-U" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_PCXL2,	"PCX-L2" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_PCXUP,	"PCX-U+" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_PCXW,	"0cx-W" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXT1,	"PA7100LC" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXUP,	"PA8000" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXL2,	"PA7300LC" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXUP1,	"PA8200" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXW,	"PA8500" },
 	{HPPA_TYPE_FPU,	HPPA_FPU_SOFTEMU,	"Software Emulation" },
 	{HPPA_TYPE_FPU,	HPPA_FPU_INDIGO,	"Indigo" },
 	{HPPA_TYPE_FPU,	HPPA_FPU_TYCO,	"Sterling I MIU (TYCO)" },
