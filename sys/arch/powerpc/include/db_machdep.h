@@ -1,29 +1,29 @@
-/*	$OpenBSD: db_machdep.h,v 1.9 2001/07/08 23:23:53 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.10 2001/07/09 02:07:05 mickey Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
@@ -97,8 +97,9 @@ db_regs_t	ddb_regs;		/* register state */
 
 void	kdb_kintr __P((void *));
 int	kdb_trap __P((int, void *));
-void db_save_regs(struct trapframe *frame);
-void ddb_trap __P((void));
+void	db_save_regs(struct trapframe *frame);
+void	ddb_trap __P((void));
+db_expr_t db_dumpframe __P((u_int32_t pframe));
 
 #endif /* _KERNEL */
 

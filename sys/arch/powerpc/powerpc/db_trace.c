@@ -1,33 +1,34 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2001/06/25 23:30:02 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2001/07/09 02:07:05 mickey Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>
@@ -36,8 +37,10 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
 
-struct db_variable db_regs[] = { 
+struct db_variable db_regs[] = {
 	{ "r0",  (long *)&(DDB_REGS->tf.fixreg[0]),	FCN_NULL },
 	{ "r1",  (long *)&(DDB_REGS->tf.fixreg[1]),	FCN_NULL },
 	{ "r2",  (long *)&(DDB_REGS->tf.fixreg[2]),	FCN_NULL },
@@ -92,7 +95,7 @@ db_save_regs(struct trapframe *frame)
 
 
 db_expr_t
-db_dumpframe (u_int32_t pframe)
+db_dumpframe(u_int32_t pframe)
 {
 	u_int32_t nextframe;
 	u_int32_t lr;
