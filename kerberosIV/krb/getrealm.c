@@ -28,6 +28,7 @@ or implied warranty.
   */
 
 #include "krb_locl.h"
+#include <netdb.h>
 
 #define MATCH_SUBDOMAINS        0
 
@@ -64,7 +65,11 @@ krb_realmofhost(host)
 	FILE *trans_file;
 	char trans_host[MAXHOSTNAMELEN+1];
 	char trans_realm[REALM_SZ+1];
+	struct hostent *hp;
 	int retval;
+
+	if ((hp = gethostbyname(host)) != NULL)
+		host = hp->h_name;
 
 	domain = strchr(host, '.');
 
