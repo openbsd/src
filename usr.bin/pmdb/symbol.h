@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbol.h,v 1.3 2002/03/15 17:49:51 art Exp $	*/
+/*	$OpenBSD: symbol.h,v 1.4 2002/03/15 18:04:41 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -60,3 +60,5 @@ int sym_check_elf(const char *, struct pstate *);
 #ifdef PMDB_AOUT
 int sym_check_aout(const char *, struct pstate *);
 #endif
+
+int cmd_sym_load(int, char **, void *);

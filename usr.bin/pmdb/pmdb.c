@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.3 2002/03/15 18:04:41 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -64,6 +64,9 @@ struct clit cmds[] = {
 	/* breakpoints */
 	{ "break", "set breakpoint", 1, 1, cmd_bkpt_add, (void *)-1 },
 	{ "step", "single step one insn", 0, 0, cmd_sstep, (void *)-1 },
+
+	/* symbols */
+	{ "sym_load", "load symbol table", 2, 2, cmd_sym_load, (void *)-1 },
 
 	/* misc commands. */
 	{ "help", "print help", 0, 1, cmd_help, NULL },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbol.c,v 1.3 2002/03/15 17:49:51 art Exp $	*/
+/*	$OpenBSD: symbol.c,v 1.4 2002/03/15 18:04:41 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <err.h>
+#include <errno.h>
 
 #include "pmdb.h"
 #include "symbol.h"
@@ -149,7 +150,7 @@ st_open(struct pstate *ps, const char *name, reg offs)
 			return (st);
 	}
 
-	warnx("Loading symbols from %s", name);
+	warnx("Loading symbols from %s at 0x%lx", name, offs);
 
 	if ((st = (*ps->ps_sops->sop_open)(name)) != NULL) {
 		TAILQ_INSERT_TAIL(&ps->ps_syms, st, st_list);
@@ -161,3 +162,27 @@ st_open(struct pstate *ps, const char *name, reg offs)
 	return (st);
 }
 
+/*
+ * Load a symbol table from file argv[1] at offset argv[2].
+ */
+int
+cmd_sym_load(int argc, char **argv, void *arg)
+{
+	struct pstate *ps = arg;
+	char *fname, *ep;
+	reg offs;
+
+	fname = argv[1];
+	errno = 0;
+	offs = strtol(argv[2], &ep, 0);
+	if (argv[2][0] == '\0' || *ep != '\0' || errno == ERANGE) {
+		fprintf(stderr, "%s is not a valid offset\n", argv[2]);
+		return (0);
+	}
+
+	if (st_open(ps, fname, offs) == NULL) {
+		warnx("symbol loading failed");
+	}
+
+	return (0);
+}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmdb.1,v 1.4 2002/03/15 17:07:05 art Exp $
+.\"	$OpenBSD: pmdb.1,v 1.5 2002/03/15 18:04:41 art Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -103,6 +103,11 @@ Resumes execution just like
 .Ic continue ,
 but stops it again as soon as possible after executing at least
 one instruction.
+.It sym_load Ar fname Ar offs
+Loads a symbol table from the file
+.Ar fname
+at the offset
+.Ar offs .
 .It help
 Shows a short help.
 .It quit
