@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.61 2005/03/06 23:32:07 jsg Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.62 2005/03/13 04:34:43 dlg Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -433,7 +433,9 @@ wi_pcmcia_attach(parent, self, aux)
 	if (wi_attach(sc, &wi_func_io) == 0)
 		return;
 
+	/* wi_attach() failed, do some cleanup */
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	sc->sc_ih = NULL;
 
 bad:
 	if (state > 2)
@@ -494,7 +496,8 @@ wi_pcmcia_activate(dev, act)
 		if (ifp->if_flags & IFF_RUNNING)
 			wi_stop(sc);
 		sc->wi_flags &= ~WI_FLAGS_INITIALIZED;
-		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih != NULL)
+			pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 		pcmcia_function_disable(psc->sc_pf);
 		break;
 	}
