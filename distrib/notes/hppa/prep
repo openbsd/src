@@ -1,14 +1,14 @@
-dnl	$OpenBSD: prep,v 1.2 2004/09/08 21:36:55 mickey Exp $
+dnl	$OpenBSD: prep,v 1.3 2004/09/10 19:14:35 miod Exp $
 
 The MACHINE computers do not generally need any specific preparation.
 
 You might want to check that the console ``path'' in the PDC firmware
 points to the device you plan to use, and change it if necessary. Most
-models will allow to select console path from BOOT_ADMIN> prompt. To get
-to the prompt -- terminate the autoboot process and if prompted so select
-"Enter Boot Administration mode."
+MACHINE machines will allow to select console path from the BOOT_ADMIN>
+prompt. To reach this prompt, abort the autoboot process and if a menu
+appears, enter ``a'' to select the "Boot Administration mode."
 
-To select first serial port as console type:
+To select the first serial port as console, type:
 
 	BOOT_ADMIN> path console rs232_a.9600.8.none
 
@@ -20,34 +20,41 @@ or
 	BOOT_ADMIN> path console graphics
 	BOOT_ADMIN> path keyboard ps2
 
-On some models, such as 712, PDC firmware does not allow changing the
-console path. In this case boot into the boot> prompt (assuming booting
-from bootp/tftp or otherwise substitute your boot device for lan):
+depending upon your keyboard type.
 
-	BOOT_ADMIN> boot lan isl
-
-and then at the boot> prompt:
+On a few models, such as the 9000/712, the PDC firmware will not allow
+the console path to be changed. In this case, it is possible to change
+it from the OpenBSD boot loader. After booting OpenBSD in interactive
+mode (for example, if booting over the network, by entering ``boot lan
+isl''), enter the following at the ``boot>'' prompt:
 
 	boot> machine console rs232.9600.8.none
 
+dnl I hope I'll never write ``been there, done that'' here. Rest
+dnl assured I have added a lot of safeguards in this console code
+dnl to prevent people from rendering their 712s unusable.
+dnl At least mine is still alive, and I have played a lot with its
+dnl console path... -- miod
 WARNING!
-Make sure you have typed the console path correctly or 712 can
-go comatose and will require a special "dagger" board to be revived.
+   Make sure to type the console path correctly or the 9000/712 can
+   become unusable, and will require a special ``dagger'' board to
+   be revived.
 
-After changing the console path machine has to be power cycled
-for changes to take effect.
+After changing the console path, the machine has to be power cycled
+for the changes to take effect.
 
-In most case the primary boot device path is already set to the right
-value. In those cases it has to be changed use:
+In most cases the primary boot device path is already set to the right
+value. If not, it is advised to run:
 
 	BOOT_ADMIN> search
 
-to display the list of all bootable devices and then:
+to display the list of all bootable devices before choosing one with:
 
 	BOOT_ADMIN> path primary SCSI.TARGET.LUN
 
-Substitute FWSCSI or SESCSI for SCSI if it is displayed so in the path list
-above and use TARGET and LUN of the device listed or just simply copy
-over the string.
+Substitute FWSCSI or SESCSI for SCSI if it is displayed as such in the
+path list obtained from ``seacch'', and use the TARGET and LUN values
+matching the device intended as the boot device.
 
-Also consult the boot(8) page for more information on boot commands.
+Please refer to the boot(8) manual page for more information on PDC
+settings and boot commands.
