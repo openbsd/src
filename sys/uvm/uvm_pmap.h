@@ -147,10 +147,9 @@ void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
+void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #if defined(PMAP_STEAL_MEMORY)
 vaddr_t		 pmap_steal_memory __P((vsize_t, vaddr_t *, vaddr_t *));
-#else
-void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #endif
 
 #if defined(PMAP_FORK)

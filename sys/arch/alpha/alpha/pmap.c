@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.26 2001/11/28 14:13:06 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.27 2001/11/28 14:20:16 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1035,6 +1035,13 @@ pmap_uses_prom_console(void)
 #endif /* NEW_SCC_DRIVER */
 }
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
+
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+	*vstartp = VM_MIN_KERNEL_ADDRESS;
+	*vendp = VM_MAX_KERNEL_ADDRESS;
+}
 
 /*
  * pmap_steal_memory:		[ INTERFACE ]

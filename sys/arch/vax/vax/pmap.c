@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2001/11/28 14:13:07 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.27 2001/11/28 14:20:16 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -272,6 +272,13 @@ pmap_bootstrap()
 	    VM_FREELIST_DEFAULT);
 	mtpr(sysptsize, PR_SLR);
 	mtpr(1, PR_MAPEN);
+}
+
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+	*vstartp = virtual_avail;
+	*vendp = virtual_end;
 }
 
 /*

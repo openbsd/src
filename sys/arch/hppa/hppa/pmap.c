@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2001/11/28 14:13:06 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.50 2001/11/28 14:20:16 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -761,6 +761,13 @@ pmap_bootstrap(vstart, vend)
 
 	/* here will be a hole due to the kernel memory alignment
 	   and we use it for pmap_steal_memory */
+}
+
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+	*vstartp = virtual_avail;
+	*vendp = virtual_end;
 }
 
 /*
