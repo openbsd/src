@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.3 1998/11/17 11:10:13 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.57 1998/11/14 13:20:09 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.4 1998/11/20 07:37:44 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.58 1998/11/20 07:18:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -123,7 +123,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
     }
     
   /* Get the list of protocol suites.  */
-  suite_conf = conf_get_list ("Quick mode initiator", "Offered-suites");
+  suite_conf = conf_get_list ("Quick mode", "Offered-suites");
   if (!suite_conf)
     return -1;
 
@@ -832,7 +832,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       return -1;
     }
 
-  if (message_negotiate_sa (msg))
+  if (message_negotiate_sa (msg, 0))
     return -1;
 
   kep = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
