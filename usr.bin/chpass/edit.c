@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.10 1996/09/01 13:06:51 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.11 1996/09/23 09:41:02 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.10 1996/09/01 13:06:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.11 1996/09/23 09:41:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ verify(tempname, pw)
 	char *p;
 	struct stat sb;
 	FILE *fp;
-	int len, alen;
+	int len, alen, line;
 	static char buf[LINE_MAX];
 
 	if (!(fp = fopen(tempname, "r")))
@@ -159,17 +159,19 @@ verify(tempname, pw)
 		warnx("corrupted temporary file");
 		goto bad;
 	}
+	line = 0;
 	while (fgets(buf, sizeof(buf), fp)) {
+		line++;
 		if (!buf[0] || buf[0] == '#')
 			continue;
 		if (!(p = strchr(buf, '\n'))) {
-			warnx("line too long");
+			warnx("line %d too long", line);
 			goto bad;
 		}
 		*p = '\0';
 		for (ep = list;; ++ep) {
 			if (!ep->prompt) {
-				warnx("unrecognized field");
+				warnx("unrecognized field on line %d", line);
 				goto bad;
 			}
 			if (!strncasecmp(buf, ep->prompt, ep->len)) {
@@ -180,7 +182,7 @@ verify(tempname, pw)
 					goto bad;
 				}
 				if (!(p = strchr(buf, ':'))) {
-					warnx("line corrupted");
+					warnx("line %d corrupted", line);
 					goto bad;
 				}
 				while (isspace(*++p));
