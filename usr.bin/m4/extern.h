@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.36 2003/06/30 22:10:21 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.37 2003/06/30 22:11:38 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -70,10 +70,11 @@ extern void 	setup_builtin(const char *, unsigned int);
 extern void 	macro_for_all(void (*)(const char *, struct macro_definition *));
 extern const char *macro_name(ndptr);
 extern struct macro_definition *macro_getdef(ndptr);
+extern ndptr macro_getbuiltin(const char *);
+extern int macro_builtin_type(ndptr);
 
 /* main.c */
 extern void outputstr(const char *);
-extern int builtin_type(const char *);
 extern void do_emit_synchline(void);
 #define emit_synchline() do { if (synch_lines) do_emit_synchline(); } while(0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2003/06/30 22:10:21 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2003/06/30 22:11:38 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.61 2003/06/30 22:10:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.62 2003/06/30 22:11:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -591,18 +591,6 @@ initkwds(void)
 			type |= NEEDARGS;
 		setup_builtin(keywrds[i].knam, type);
 	}
-}
-
-/* Look up a builtin type, even if overridden by the user */
-int 
-builtin_type(const char *key)
-{
-	int i;
-
-	for (i = 0; i != MAXKEYS; i++)
-		if (STREQ(keywrds[i].knam, key))
-			return keywrds[i].ktyp;
-	return -1;
 }
 
 static void

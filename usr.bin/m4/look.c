@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.13 2003/06/30 22:10:21 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.14 2003/06/30 22:11:38 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #include "extern.h"
 
 struct ndblock {			/* hashtable structure         */
+	unsigned int 		builtin_type;
 	struct macro_definition *d;
 	char		name[1];	/* entry name..               */
 };
@@ -99,13 +100,11 @@ lookup_macro_definition(const char *name)
 static void 
 setup_definition(struct macro_definition *d, const char *defn, const char *name)
 {
-	int n;
+	ndptr p;
 
 	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0 &&
-	    (n = builtin_type(defn+sizeof(BUILTIN_MARKER)-1)) != -1) {
-		d->type = n & TYPEMASK;
-		if ((n & NOARGS) == 0)
-			d->type |= NEEDARGS;
+	    (p = macro_getbuiltin(defn+sizeof(BUILTIN_MARKER)-1)) != NULL) {
+		d->type = macro_builtin_type(p);
 		d->defn = xstrdup(defn+sizeof(BUILTIN_MARKER)-1);
 	} else {
 		if (!*defn)
@@ -130,6 +129,7 @@ create_entry(const char *name)
 	if (n == NULL) {
 		n = ohash_create_entry(&macro_info, name, &end);
 		ohash_insert(&macros, i, n);
+		n->builtin_type = MACRTYPE;
 		n->d = NULL;
 	}
 	return n;
@@ -212,6 +212,7 @@ setup_builtin(const char *name, unsigned int type)
 	ndptr n;
 
 	n = create_entry(name);
+	n->builtin_type = type;
 	n->d = xalloc(sizeof(struct macro_definition));
 	n->d->defn = xstrdup(name);
 	n->d->type = type;
@@ -229,3 +230,22 @@ macro_getdef(ndptr p)
 {
 	return p->d;
 }
+
+ndptr 
+macro_getbuiltin(const char *name)
+{
+	ndptr p;
+
+	p = lookup(name);
+	if (p == NULL || p->builtin_type == MACRTYPE)
+		return NULL;
+	else
+		return p;
+}
+
+int
+macro_builtin_type(ndptr p)
+{
+	return p->builtin_type;
+}
+
