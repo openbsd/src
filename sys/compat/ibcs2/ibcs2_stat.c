@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_stat.c,v 1.11 2002/08/23 15:39:31 art Exp $	*/
+/*	$OpenBSD: ibcs2_stat.c,v 1.12 2003/10/01 08:03:01 itojun Exp $	*/
 /*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ ibcs2_sys_utssys(p, v, retval)
 		bcopy(hostname, sut.nodename, sizeof(sut.nodename));
 		sut.nodename[sizeof(sut.nodename)-1] = '\0';
 		bcopy(osrelease, sut.release, sizeof(sut.release) - 1);
-		bcopy("1", sut.version, sizeof(sut.version) - 1);
+		strlcpy(sut.version, "1", sizeof(sut.version));
 		bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
 
 		return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, a1),
