@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.39 2003/08/08 07:37:28 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.40 2003/08/15 21:17:27 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -299,18 +299,18 @@ loadprotoblocks(char *fname, long *size)
 
 	/* program load header */
 	if (eh.e_phnum != 1) {
-		errx(1, "%s: only supports one ELF load section\n", boot);
+		errx(1, "%s: only supports one ELF load section", boot);
 	}
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = malloc(phsize);
 	if (ph == NULL) {
-		errx(1, "%s: unable to allocate program header space\n",
+		errx(1, "%s: unable to allocate program header space",
 		    boot);
 	}
-	lseek(fd,  eh.e_phoff, SEEK_SET);
+	lseek(fd, eh.e_phoff, SEEK_SET);
 
 	if (read(fd, ph, phsize) != phsize) {
-		errx(1, "%s: unable to read program header space\n", boot);
+		errx(1, "%s: unable to read program header space", boot);
 	}
 
 	tdsize = ph->p_filesz;
