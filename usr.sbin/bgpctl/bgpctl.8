@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.21 2004/07/16 20:23:41 jaredy Exp $
+.\" $OpenBSD: bgpctl.8,v 1.22 2004/08/20 15:51:53 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -48,6 +48,8 @@ routing table.
 Take the BGP session to the specified neighbor up.
 .It Cm neighbor Ar address Cm down
 Take the BGP session to the specified neighbor down.
+.It Cm neighbor Ar address Cm clear
+Stop and restart the BGP session to the specified neighbor.
 .It Cm network add Ar prefix
 Add the specified prefix to the list of announced networks.
 .It Cm network delete Ar prefix
