@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.h,v 1.6 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$OpenBSD: cert.h,v 1.7 2001/05/31 20:20:26 angelos Exp $	*/
 /*	$EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -50,6 +50,12 @@
  * cert_validate - validated a certificate, if it returns != 0 we can use it.
  * cert_insert - inserts cert into memory storage, we can retrieve with
  *               cert_obtain.
+ * cert_dup - duplicate a certificate
+ * cert_serialize - convert to a "serialized" form; KeyNote stays the same,
+ *                  X509 is converted to the ASN1 notation.
+ * cert_printable - for X509, the hex representation of the serialized form;
+ *                  for KeyNote, itself.
+ * cert_from_printable - the reverse of cert_printable
  */
 
 struct cert_handler {
@@ -65,6 +71,10 @@ struct cert_handler {
   int (*cert_obtain) (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
   int (*cert_get_key) (void *, void *);
   int (*cert_get_subjects) (void *, int *, u_int8_t ***, u_int32_t **);
+  void *(*cert_dup) (void *);
+  void (*cert_serialize) (void *, u_int8_t **, u_int32_t *);
+  char *(*cert_printable) (void *);
+  void *(*cert_from_printable) (char *);
 };
 
 /* the acceptable authority of cert request */
