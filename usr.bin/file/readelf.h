@@ -1,16 +1,7 @@
-/*	$NetBSD: readelf.h,v 1.9 2002/05/18 07:00:47 pooka Exp $	*/
-
+/*	$OpenBSD: readelf.h,v 1.5 2004/05/19 02:32:36 tedu Exp $ */
 /*
- * readelf.h 
- * @(#)Id: readelf.h,v 1.9 2002/05/16 18:45:56 christos Exp 
- *
- * Provide elf data structures for non-elf machines, allowing file
- * non-elf hosts to determine if an elf binary is stripped.
- * Note: cobbled from the linux header file, with modifications
- *
- * Copyright (c) Ian F. Darwin 1986-1995.
- * Software written by Ian F. Darwin and others;
- * maintained 1995-present by Christos Zoulas and others.
+ * Copyright (c) Christos Zoulas 2003.
+ * All Rights Reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,6 +12,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *  
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,7 +27,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+/*
+ * @(#)Id: readelf.h,v 1.9 2002/05/16 18:45:56 christos Exp
+ *
+ * Provide elf data structures for non-elf machines, allowing file
+ * non-elf hosts to determine if an elf binary is stripped.
+ * Note: cobbled from the linux header file, with modifications
+ */
 #ifndef __fake_elf_h__
 #define __fake_elf_h__
 

@@ -4,7 +4,7 @@
  * but can still carefully import stuff from Christos' version.
  *
  * This file is in the public domain. Original Author Ian F. Darwin.
- * $OpenBSD: config.h,v 1.1 2003/03/03 23:06:46 ian Exp $
+ * $OpenBSD: config.h,v 1.2 2004/05/19 02:32:35 tedu Exp $
  */
 
 /* header file issues. */
@@ -14,6 +14,7 @@
 #define HAVE_LOCALE_H 1
 #define HAVE_SYS_STAT_H 1
 #define	HAVE_INTTYPES_H 1
+#define HAVE_GETOPT_H 1
 /* #define	HAVE_LIBZ 1  DO NOT ENABLE YET -- ian */
 
 /* Compiler issues */
@@ -26,7 +27,8 @@
 /* Library issues */
 #define HAVE_GETOPT_LONG 1	/* in-tree as of 3.2 */
 #define HAVE_MKSTEMP 1
+#define HAVE_ST_RDEV 1
 
 /* ELF support */
 #define BUILTIN_ELF 1
-#define ELF_CORE 1
+#define ELFCORE 1

@@ -1,8 +1,5 @@
-/*	$OpenBSD: file.c,v 1.13 2003/07/02 21:04:09 deraadt Exp $	*/
-
+/*	$OpenBSD: file.c,v 1.14 2004/05/19 02:32:35 tedu Exp $ */
 /*
- * file - find type of a file or files - main program.
- *
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
  * maintained 1995-present by Christos Zoulas and others.
@@ -29,66 +26,96 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/*
+ * file - find type of a file or files - main program.
+ */
 
-#ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.13 2003/07/02 21:04:09 deraadt Exp $";
-#endif	/* lint */
+#include "file.h"
+#include "magic.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
 #include <fcntl.h>	/* for open() */
-#if (__COHERENT__ >= 0x420)
-# include <sys/utime.h>
-#else
-# ifdef USE_UTIMES
-#  include <sys/time.h>
+#ifdef RESTORE_TIME
+# if (__COHERENT__ >= 0x420)
+#  include <sys/utime.h>
 # else
-#  include <utime.h>
+#  ifdef USE_UTIMES
+#   include <sys/time.h>
+#  else
+#   include <utime.h>
+#  endif
 # endif
 #endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* for read() */
-#include <err.h>
+#endif
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
+#endif
+#ifdef HAVE_WCHAR_H
+#include <wchar.h>
+#endif
+
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>	/* for long options (is this portable?)*/
+#else
+#undef HAVE_GETOPT_LONG
+#endif
 
 #include <netinet/in.h>		/* for byte swapping */
 
 #include "patchlevel.h"
-#include "file.h"
+
+#ifndef	lint
+FILE_RCSID("@(#)$Id: file.c,v 1.14 2004/05/19 02:32:35 tedu Exp $")
+#endif	/* lint */
+
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-vbczL] [-f namefile] [-m magicfiles] file...\n"
+#define SYMLINKFLAG "L"
 #else
-# define USAGE  "Usage: %s [-vbcz] [-f namefile] [-m magicfiles] file...\n"
+#define SYMLINKFLAG ""
 #endif
 
-#ifndef MAGIC
-# define MAGIC "/etc/magic"
+# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
+
+#ifndef MAXPATHLEN
+#define	MAXPATHLEN	512
 #endif
 
-int 			/* Global command-line options 		*/
-	debug = 0, 	/* debugging 				*/
-	bflag = 0,	/* Don't print filename			*/
-	lflag = 0,	/* follow Symlinks (BSD only) 		*/
-	zflag = 0;	/* follow (uncompress) compressed files */
+private int 		/* Global command-line options 		*/
+	bflag = 0,	/* brief output format	 		*/
+	nopad = 0,	/* Don't pad output			*/
+	nobuffer = 0;   /* Do not buffer stdout 		*/
 
-int			/* Misc globals				*/
-	nmagic = 0;	/* number of valid magic[]s 		*/
+private const char *magicfile = 0;	/* where the magic is	*/
+private const char *default_magicfile = MAGIC;
+private char *separator = ":";	/* Default field separator	*/
 
-struct  magic *magic;	/* array of magic entries		*/
+private char *progname;		/* used throughout 		*/
 
-char *magicfile;	/* where magic be found 		*/
+private struct magic_set *magic;
 
-int lineno;		/* line number in the magic file	*/
-
-
-static void	unwrap(char *fn);
+private void unwrap(char *);
+private void usage(void);
+#ifdef HAVE_GETOPT_LONG
+private void help(void);
+#endif
 #if 0
-static int	byteconv4(int, int, int);
-static short	byteconv2(int, int, int);
+private int byteconv4(int, int, int);
+private short byteconv2(int, int, int);
 #endif
+
+int main(int, char *[]);
+private void process(const char *, int);
+private void load(const char *, int);
+
 
 /*
  * main - parse arguments and handle options
@@ -97,48 +124,146 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
-	extern char *__progname;
+	int action = 0, didsomefiles = 0, errflg = 0;
+	int flags = 0;
+	char *home, *usermagic;
+	struct stat sb;
+#define OPTSTRING	"bcCdf:F:ikLm:nNprsvz"
+#ifdef HAVE_GETOPT_LONG
+	int longindex;
+	private struct option long_options[] =
+	{
+		{"version", 0, 0, 'v'},
+		{"help", 0, 0, 0},
+		{"brief", 0, 0, 'b'},
+		{"checking-printout", 0, 0, 'c'},
+		{"debug", 0, 0, 'd'},
+		{"files-from", 1, 0, 'f'},
+		{"separator", 1, 0, 'F'},
+		{"mime", 0, 0, 'i'},
+		{"keep-going", 0, 0, 'k'},
+#ifdef S_IFLNK
+		{"dereference", 0, 0, 'L'},
+#endif
+		{"magic-file", 1, 0, 'm'},
+#if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
+		{"preserve-date", 0, 0, 'p'},
+#endif
+		{"uncompress", 0, 0, 'z'},
+		{"raw", 0, 0, 'r'},
+		{"no-buffer", 0, 0, 'n'},
+		{"no-pad", 0, 0, 'N'},
+		{"special-files", 0, 0, 's'},
+		{"compile", 0, 0, 'C'},
+		{0, 0, 0, 0},
+	};
+#endif
 
-	if (!(magicfile = getenv("MAGIC")))
-		magicfile = MAGIC;
+#ifdef LC_CTYPE
+	setlocale(LC_CTYPE, ""); /* makes islower etc work for other langs */
+#endif
 
-	while ((c = getopt(argc, argv, "bvcdf:Lm:z")) != -1)
+#ifdef __EMX__
+	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
+	_wildcard(&argc, &argv);
+#endif
+
+	if ((progname = strrchr(argv[0], '/')) != NULL)
+		progname++;
+	else
+		progname = argv[0];
+
+	magicfile = default_magicfile;
+	if ((usermagic = getenv("MAGIC")) != NULL)
+		magicfile = usermagic;
+	else
+		if ((home = getenv("HOME")) != NULL) {
+			size_t len = strlen(home) + 8;
+			if ((usermagic = malloc(len)) != NULL) {
+				(void)strlcpy(usermagic, home, len);
+				(void)strlcat(usermagic, "/.magic", len);
+				if (stat(usermagic, &sb)<0) 
+					free(usermagic);
+				else
+					magicfile = usermagic;
+			}
+		}
+
+#ifndef HAVE_GETOPT_LONG
+	while ((c = getopt(argc, argv, OPTSTRING)) != -1)
+#else
+	while ((c = getopt_long(argc, argv, OPTSTRING, long_options,
+	    &longindex)) != -1)
+#endif
 		switch (c) {
-		case 'v':
-			(void) printf("%s-%d.%d\n", __progname,
-				       FILE_VERSION_MAJOR, patchlevel);
-			return 1;
+#ifdef HAVE_GETOPT_LONG
+		case 0 :
+			if (longindex == 1)
+				help();
+			break;
+#endif
 		case 'b':
 			++bflag;
 			break;
 		case 'c':
-			++check;
+			action = FILE_CHECK;
+			break;
+		case 'C':
+			action = FILE_COMPILE;
 			break;
 		case 'd':
-			++debug;
+			flags |= MAGIC_DEBUG|MAGIC_CHECK;
 			break;
 		case 'f':
-			if (!app) {
-				ret = apprentice(magicfile, check);
-				if (check)
-					exit(ret);
-				app = 1;
-			}
+			if(action)
+				usage();
+			load(magicfile, flags);
 			unwrap(optarg);
 			++didsomefiles;
 			break;
-#ifdef S_IFLNK
-		case 'L':
-			++lflag;
+		case 'F':
+			separator = optarg;
 			break;
-#endif
+		case 'i':
+			flags |= MAGIC_MIME;
+			break;
+		case 'k':
+			flags |= MAGIC_CONTINUE;
+			break;
 		case 'm':
 			magicfile = optarg;
 			break;
-		case 'z':
-			zflag++;
+		case 'n':
+			++nobuffer;
 			break;
+		case 'N':
+			++nopad;
+			break;
+#if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
+		case 'p':
+			flags |= MAGIC_PRESERVE_ATIME;
+			break;
+#endif
+		case 'r':
+			flags |= MAGIC_RAW;
+			break;
+		case 's':
+			flags |= MAGIC_DEVICES;
+			break;
+		case 'v':
+			(void) fprintf(stdout, "%s-%d.%.2d\n", progname,
+				       FILE_VERSION_MAJOR, patchlevel);
+			(void) fprintf(stdout, "magic file from %s\n",
+				       magicfile);
+			return 1;
+		case 'z':
+			flags |= MAGIC_COMPRESS;
+			break;
+#ifdef S_IFLNK
+		case 'L':
+			flags |= MAGIC_SYMLINK;
+			break;
+#endif
 		case '?':
 		default:
 			errflg++;
@@ -146,26 +271,40 @@ main(int argc, char *argv[])
 		}
 
 	if (errflg) {
-		(void) fprintf(stderr, USAGE, __progname);
-		exit(2);
+		usage();
 	}
 
-	if (!app) {
-		ret = apprentice(magicfile, check);
-		if (check)
-			exit(ret);
-		app = 1;
+	switch(action) {
+	case FILE_CHECK:
+	case FILE_COMPILE:
+		magic = magic_open(flags|MAGIC_CHECK);
+		if (magic == NULL) {
+			(void)fprintf(stderr, "%s: %s\n", progname,
+			    strerror(errno));
+			return 1;
+		}
+		c = action == FILE_CHECK ? magic_check(magic, magicfile) :
+		    magic_compile(magic, magicfile);
+		if (c == -1) {
+			(void)fprintf(stderr, "%s: %s\n", progname,
+			    magic_error(magic));
+			return -1;
+		}
+		return 0;
+	default:
+		load(magicfile, flags);
+		break;
 	}
 
 	if (optind == argc) {
 		if (!didsomefiles) {
-			fprintf(stderr, USAGE, __progname);
-			exit(2);
+			usage();
 		}
-	} else {
+	}
+	else {
 		int i, wid, nw;
 		for (wid = 0, i = optind; i < argc; i++) {
-			nw = strlen(argv[i]);
+			nw = file_mbswidth(argv[i]);
 			if (nw > wid)
 				wid = nw;
 		}
@@ -177,12 +316,28 @@ main(int argc, char *argv[])
 }
 
 
+private void
+load(const char *m, int flags)
+{
+	if (magic)
+		return;
+	magic = magic_open(flags);
+	if (magic == NULL) {
+		(void)fprintf(stderr, "%s: %s\n", progname, strerror(errno));
+		exit(1);
+	}
+	if (magic_load(magic, magicfile) == -1) {
+		(void)fprintf(stderr, "%s: %s\n",
+		    progname, magic_error(magic));
+		exit(1);
+	}
+}
+
 /*
  * unwrap -- read a file of filenames, do each one.
  */
-static void
-unwrap(fn)
-char *fn;
+private void
+unwrap(char *fn)
 {
 	char buf[MAXPATHLEN];
 	FILE *f;
@@ -193,12 +348,13 @@ char *fn;
 		wid = 1;
 	} else {
 		if ((f = fopen(fn, "r")) == NULL) {
-			err(1, "Cannot open `%s'", fn);
-			/*NOTREACHED*/
+			(void)fprintf(stderr, "%s: Cannot open `%s' (%s).\n",
+			    progname, fn, strerror(errno));
+			exit(1);
 		}
 
-		while (fgets(buf, sizeof(buf), f) != NULL) {
-			cwid = strlen(buf) - 1;
+		while (fgets(buf, MAXPATHLEN, f) != NULL) {
+			cwid = file_mbswidth(buf) - 1;
 			if (cwid > wid)
 				wid = cwid;
 		}
@@ -206,12 +362,31 @@ char *fn;
 		rewind(f);
 	}
 
-	while (fgets(buf, sizeof(buf), f) != NULL) {
-		buf[strlen(buf)-1] = '\0';
+	while (fgets(buf, MAXPATHLEN, f) != NULL) {
+		buf[file_mbswidth(buf)-1] = '\0';
 		process(buf, wid);
+		if(nobuffer)
+			(void) fflush(stdout);
 	}
 
 	(void) fclose(f);
+}
+
+private void
+process(const char *inname, int wid)
+{
+	const char *type;
+	int std_in = strcmp(inname, "-") == 0;
+
+	if (wid > 0 && !bflag)
+		(void) printf("%s%s%*s ", std_in ? "/dev/stdin" : inname,
+		    separator, (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
+
+	type = magic_file(magic, std_in ? NULL : inname);
+	if (type == NULL)
+		printf("ERROR: %s\n", magic_error(magic));
+	else
+		printf("%s\n", type);
 }
 
 
@@ -223,177 +398,128 @@ char *fn;
  *	same		whether to perform byte swapping
  *	big_endian	whether we are a big endian host
  */
-static int
-byteconv4(from, same, big_endian)
-    int from;
-    int same;
-    int big_endian;
+private int
+byteconv4(int from, int same, int big_endian)
 {
-  if (same)
-    return from;
-  else if (big_endian)		/* lsb -> msb conversion on msb */
-  {
-    union {
-      int i;
-      char c[4];
-    } retval, tmpval;
+	if (same)
+		return from;
+	else if (big_endian) {		/* lsb -> msb conversion on msb */
+		union {
+			int i;
+			char c[4];
+		} retval, tmpval;
 
-    tmpval.i = from;
-    retval.c[0] = tmpval.c[3];
-    retval.c[1] = tmpval.c[2];
-    retval.c[2] = tmpval.c[1];
-    retval.c[3] = tmpval.c[0];
+		tmpval.i = from;
+		retval.c[0] = tmpval.c[3];
+		retval.c[1] = tmpval.c[2];
+		retval.c[2] = tmpval.c[1];
+		retval.c[3] = tmpval.c[0];
 
-    return retval.i;
-  }
-  else
-    return ntohl(from);		/* msb -> lsb conversion on lsb */
+		return retval.i;
+	}
+	else
+		return ntohl(from);	/* msb -> lsb conversion on lsb */
 }
 
 /*
  * byteconv2
  * Same as byteconv4, but for shorts
  */
-static short
-byteconv2(from, same, big_endian)
-	int from;
-	int same;
-	int big_endian;
+private short
+byteconv2(int from, int same, int big_endian)
 {
-  if (same)
-    return from;
-  else if (big_endian)		/* lsb -> msb conversion on msb */
-  {
-    union {
-      short s;
-      char c[2];
-    } retval, tmpval;
+	if (same)
+		return from;
+	else if (big_endian) {		/* lsb -> msb conversion on msb */
+		union {
+			short s;
+			char c[2];
+		} retval, tmpval;
 
-    tmpval.s = (short) from;
-    retval.c[0] = tmpval.c[1];
-    retval.c[1] = tmpval.c[0];
+		tmpval.s = (short) from;
+		retval.c[0] = tmpval.c[1];
+		retval.c[1] = tmpval.c[0];
 
-    return retval.s;
-  }
-  else
-    return ntohs(from);		/* msb -> lsb conversion on lsb */
+		return retval.s;
+	}
+	else
+		return ntohs(from);	/* msb -> lsb conversion on lsb */
 }
 #endif
 
-/*
- * process - process input file
- */
-void
-process(inname, wid)
-const char	*inname;
-int wid;
+size_t
+file_mbswidth(const char *s)
 {
-	int	fd = 0;
-	static  const char stdname[] = "standard input";
-	unsigned char	buf[HOWMANY+1];	/* one extra for terminating '\0' */
-	struct stat	sb;
-	int nbytes = 0;	/* number of bytes read from a datafile */
-	char match = '\0';
+#ifdef HAVE_WCHAR_H
+	size_t bytesconsumed, old_n, n, width = 0;
+	mbstate_t state;
+	wchar_t nextchar;
+	(void)memset(&state, 0, sizeof(mbstate_t));
+	old_n = n = strlen(s);
 
-	if (strcmp("-", inname) == 0) {
-		if (fstat(0, &sb)<0) {
-			err(1, "cannot fstat `%s'", stdname);
-			/*NOTREACHED*/
+	while (n > 0) {
+		bytesconsumed = mbrtowc(&nextchar, s, n, &state);
+		if (bytesconsumed == (size_t)(-1) ||
+		    bytesconsumed == (size_t)(-2)) {
+			/* Something went wrong, return something reasonable */
+			return old_n;
 		}
-		inname = stdname;
+		if (s[0] == '\n') {
+			/*
+			 * do what strlen() would do, so that caller
+			 * is always right
+			 */
+			width++;
+		} else
+			width += wcwidth(nextchar);
+
+		s += bytesconsumed, n -= bytesconsumed;
 	}
-
-	if (wid > 0 && !bflag)
-	     (void) printf("%s:%*s ", inname, 
-			   (int) (wid - strlen(inname)), "");
-
-	if (inname != stdname) {
-	    /*
-	     * first try judging the file based on its filesystem status
-	     */
-	    if (fsmagic(inname, &sb) != 0) {
-		    putchar('\n');
-		    return;
-	    }
-
-	    if ((fd = open(inname, O_RDONLY)) < 0) {
-		    /* We can't open it, but we were able to stat it. */
-		    if (sb.st_mode & 0002) ckfputs("writable, ", stdout);
-		    if (sb.st_mode & 0111) ckfputs("executable, ", stdout);
-		    ckfprintf(stdout, "can't read `%s' (%s).\n",
-			inname, strerror(errno));
-		    return;
-	    }
-	}
-
-
-	/*
-	 * try looking at the first HOWMANY bytes
-	 */
-	if ((nbytes = read(fd, (char *)buf, HOWMANY)) == -1) {
-		err(1, "read failed");
-		/*NOTREACHED*/
-	}
-
-	if (nbytes == 0)
-		ckfputs("empty", stdout);
-	else {
-		buf[nbytes++] = '\0';	/* null-terminate it */
-		match = tryit(buf, nbytes, zflag);
-	}
-
-#ifdef BUILTIN_ELF
-	if (match == 's' && nbytes > 5)
-		tryelf(fd, buf, nbytes);
+	return width;
+#else
+	return strlen(s);
 #endif
-
-	if (inname != stdname) {
-#ifdef RESTORE_TIME
-		/*
-		 * Try to restore access, modification times if read it.
-		 */
-# ifdef USE_UTIMES
-		struct timeval  utsbuf[2];
-		utsbuf[0].tv_sec = sb.st_atime;
-		utsbuf[1].tv_sec = sb.st_mtime;
-
-		(void) utimes(inname, utsbuf); /* don't care if loses */
-# else
-		struct utimbuf  utbuf;
-
-		utbuf.actime = sb.st_atime;
-		utbuf.modtime = sb.st_mtime;
-		(void) utime(inname, &utbuf); /* don't care if loses */
-# endif
-#endif
-		(void) close(fd);
-	}
-	(void) putchar('\n');
 }
 
-
-int
-tryit(buf, nb, zflag)
-unsigned char *buf;
-int nb, zflag;
+private void
+usage(void)
 {
-	/* try compression stuff */
-	if (zflag && zmagic(buf, nb))
-		return 'z';
-
-	/* try tests in /etc/magic (or surrogate magic file) */
-	if (softmagic(buf, nb))
-		return 's';
-
-	/* try known keywords, check whether it is ASCII */
-	if (ascmagic(buf, nb))
-		return 'a';
-
-	/* see if it's international language text */
-	if (internatmagic(buf, nb))
-		return 'i';
-
-	/* abandon hope, all ye who remain here */
-	ckfputs("data", stdout);
-		return '\0';
+	(void)fprintf(stderr, USAGE, progname, progname);
+#ifdef HAVE_GETOPT_LONG
+	(void)fputs("Try `file --help' for more information.\n", stderr);
+#endif
+	exit(1);
 }
+
+#ifdef HAVE_GETOPT_LONG
+private void
+help(void)
+{
+	puts(
+"Usage: file [OPTION]... [FILE]...\n"
+"Determine file type of FILEs.\n"
+"\n"
+"  -m, --magic-file LIST      use LIST as a colon-separated list of magic\n"
+"                               number files\n"
+"  -z, --uncompress           try to look inside compressed files\n"
+"  -b, --brief                do not prepend filenames to output lines\n"
+"  -c, --checking-printout    print the parsed form of the magic file, use in\n"
+"                               conjunction with -m to debug a new magic file\n"
+"                               before installing it\n"
+"  -f, --files-from FILE      read the filenames to be examined from FILE\n"
+"  -F, --separator string     use string as separator instead of `:'\n"
+"  -i, --mime                 output mime type strings\n"
+"  -k, --keep-going           don't stop at the first match\n"
+"  -L, --dereference          causes symlinks to be followed\n"
+"  -n, --no-buffer            do not buffer output\n"
+"  -N, --no-pad               do not pad output\n"
+"  -p, --preserve-date        preserve access times on files\n"
+"  -r, --raw                  don't translate unprintable chars to \\ooo\n"
+"  -s, --special-files        treat special (block/char devices) files as\n"
+"                             ordinary ones\n"
+"      --help                 display this help and exit\n"
+"      --version              output version information and exit\n"
+);
+	exit(0);
+}
+#endif

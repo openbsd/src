@@ -1,12 +1,5 @@
-/*	$OpenBSD: compress.c,v 1.10 2003/07/02 00:21:16 avsm Exp $	*/
-
+/*	$OpenBSD: compress.c,v 1.11 2004/05/19 02:32:35 tedu Exp $ */
 /*
- * compress routines:
- *	zmagic() - returns 0 if not recognized, uncompresses and prints
- *		   information if recognized
- *	uncompress(method, old, n, newch) - uncompress old into new, 
- *					    using method, return sizeof new
- *
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
  * maintained 1995-present by Christos Zoulas and others.
@@ -33,77 +26,106 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+/*
+ * compress routines:
+ *	zmagic() - returns 0 if not recognized, uncompresses and prints
+ *		   information if recognized
+ *	uncompress(method, old, n, newch) - uncompress old into new, 
+ *					    using method, return sizeof new
+ */
 #include "file.h"
+#include "magic.h"
+#include <stdio.h>
 #include <stdlib.h>
-#ifdef	HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
-#ifdef	HAVE_SYS_WAIT_H
+#include <errno.h>
+#include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <err.h>
-#ifdef	HAVE_LIBZ
+#undef HAVE_LIBZ
+#ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
 
-static struct {
-   const char *magic;
-   int   maglen;
-   const char *const argv[3];
-   int	 silent;
+#ifndef lint
+FILE_RCSID("@(#)$Id: compress.c,v 1.11 2004/05/19 02:32:35 tedu Exp $")
+#endif
+
+
+private struct {
+	const char *magic;
+	size_t maglen;
+	const char *const argv[3];
+	int silent;
 } compr[] = {
-    { "\037\235", 2, { "uncompress", "-c", NULL }, 0 },	/* compressed */
-    { "\037\213", 2, { "gzip", "-cdq", NULL }, 1 },	/* gzipped */
-    { "\037\236", 2, { "gzip", "-cdq", NULL }, 1 },	/* frozen */
-    { "\037\240", 2, { "gzip", "-cdq", NULL }, 1 },	/* SCO LZH */
-    /* the standard pack utilities do not accept standard input */
-    { "\037\036", 2, { "gzip", "-cdq", NULL }, 0 },	/* packed */
+	{ "\037\235", 2, { "gzip", "-cdq", NULL }, 1 },		/* compressed */
+	/* Uncompress can get stuck; so use gzip first if we have it
+	 * Idea from Damien Clark, thanks! */
+	{ "\037\235", 2, { "uncompress", "-c", NULL }, 1 },	/* compressed */
+	{ "\037\213", 2, { "gzip", "-cdq", NULL }, 1 },		/* gzipped */
+	{ "\037\236", 2, { "gzip", "-cdq", NULL }, 1 },		/* frozen */
+	{ "\037\240", 2, { "gzip", "-cdq", NULL }, 1 },		/* SCO LZH */
+	/* the standard pack utilities do not accept standard input */
+	{ "\037\036", 2, { "gzip", "-cdq", NULL }, 0 },		/* packed */
+	{ "BZh",      3, { "bzip2", "-cd", NULL }, 1 },		/* bzip2-ed */
 };
 
-static int ncompr = sizeof(compr) / sizeof(compr[0]);
+private int ncompr = sizeof(compr) / sizeof(compr[0]);
 
 
-static int swrite(int, const void *, size_t);
-static int sread(int, void *, size_t);
-static int uncompress(int, const unsigned char *, unsigned char **, int);
+private ssize_t swrite(int, const void *, size_t);
+private ssize_t sread(int, void *, size_t);
+private size_t uncompressbuf(struct magic_set *, size_t, const unsigned char *,
+    unsigned char **, size_t);
+#ifdef HAVE_LIBZ
+private size_t uncompressgzipped(struct magic_set *, const unsigned char *,
+    unsigned char **, size_t);
+#endif
 
-int
-zmagic(buf, nbytes)
-unsigned char *buf;
-int nbytes;
+protected int
+file_zmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 {
-	unsigned char *newbuf;
-	int newsize;
-	int i;
+	unsigned char *newbuf = NULL;
+	size_t i, nsz;
+	int rv = 0;
+
+	if ((ms->flags & MAGIC_COMPRESS) == 0)
+		return 0;
 
 	for (i = 0; i < ncompr; i++) {
 		if (nbytes < compr[i].maglen)
 			continue;
-		if (memcmp(buf, compr[i].magic,  compr[i].maglen) == 0)
+		if (memcmp(buf, compr[i].magic, compr[i].maglen) == 0 &&
+		    (nsz = uncompressbuf(ms, i, buf, &newbuf, nbytes)) != 0) {
+			ms->flags &= ~MAGIC_COMPRESS;
+			rv = -1;
+			if (file_buffer(ms, newbuf, nsz) == -1)
+				goto error;
+			if (file_printf(ms, " (") == -1)
+				goto error;
+			if (file_buffer(ms, buf, nbytes) == -1)
+				goto error;
+			if (file_printf(ms, ")") == -1)
+				goto error;
+			rv = 1;
 			break;
+		}
 	}
-
-	if (i == ncompr)
-		return 0;
-
-	if ((newsize = uncompress(i, buf, &newbuf, nbytes)) != 0) {
-		tryit(newbuf, newsize, 1);
+error:
+	if (newbuf)
 		free(newbuf);
-		printf(" (");
-		tryit(buf, nbytes, 0);
-		printf(")");
-	}
-	return 1;
+	ms->flags |= MAGIC_COMPRESS;
+	return rv;
 }
 
 /*
  * `safe' write for sockets and pipes.
  */
-static int
+private ssize_t
 swrite(int fd, const void *buf, size_t n)
 {
 	int rv;
@@ -124,10 +146,11 @@ swrite(int fd, const void *buf, size_t n)
 	return rn;
 }
 
+
 /*
  * `safe' read for sockets and pipes.
  */
-static int
+private ssize_t
 sread(int fd, void *buf, size_t n)
 {
 	int rv;
@@ -150,13 +173,14 @@ sread(int fd, void *buf, size_t n)
 	return rn;
 }
 
-int
-pipe2file(int fd, void *startbuf, size_t nbytes)
+protected int
+file_pipe2file(struct magic_set *ms, int fd, const void *startbuf,
+    size_t nbytes)
 {
 	char buf[4096];
 	int r, tfd;
 
-	(void)strlcpy(buf, "/tmp/file.XXXXXXXXXX", sizeof buf);
+	(void)strlcpy(buf, "/tmp/file.XXXXXX", sizeof buf);
 #ifndef HAVE_MKSTEMP
 	{
 		char *ptr = mktemp(buf);
@@ -172,30 +196,28 @@ pipe2file(int fd, void *startbuf, size_t nbytes)
 	errno = r;
 #endif
 	if (tfd == -1) {
-		error("Can't create temporary file for pipe copy (%s)\n",
-		    strerror(errno));
-		/*NOTREACHED*/
+		file_error(ms, errno,
+		    "cannot create temporary file for pipe copy");
+		return -1;
 	}
 
-	if (swrite(tfd, startbuf, nbytes) != nbytes)
+	if (swrite(tfd, startbuf, nbytes) != (ssize_t)nbytes)
 		r = 1;
 	else {
 		while ((r = sread(fd, buf, sizeof(buf))) > 0)
-			if (swrite(tfd, buf, r) != r)
+			if (swrite(tfd, buf, (size_t)r) != r)
 				break;
 	}
 
 	switch (r) {
 	case -1:
-		error("Error copying from pipe to temp file (%s)\n",
-		    strerror(errno));
-		/*NOTREACHED*/
+		file_error(ms, errno, "error copying from pipe to temp file");
+		return -1;
 	case 0:
 		break;
 	default:
-		error("Error while writing to temp file (%s)\n",
-		    strerror(errno));
-		/*NOTREACHED*/
+		file_error(ms, errno, "error while writing to temp file");
+		return -1;
 	}
 
 	/*
@@ -204,30 +226,107 @@ pipe2file(int fd, void *startbuf, size_t nbytes)
 	 * can still access the phantom inode.
 	 */
 	if ((fd = dup2(tfd, fd)) == -1) {
-		error("Couldn't dup destcriptor for temp file(%s)\n",
-		    strerror(errno));
-		/*NOTREACHED*/
+		file_error(ms, errno, "could not dup descriptor for temp file");
+		return -1;
 	}
 	(void)close(tfd);
 	if (lseek(fd, (off_t)0, SEEK_SET) == (off_t)-1) {
-		error("Couldn't seek on temp file (%s)\n", strerror(errno));
-		/*NOTREACHED*/
+		file_badseek(ms);
+		return -1;
 	}
 	return fd;
 }
 
-static int
-uncompress(method, old, newch, n)
-int method;
-const unsigned char *old;
-unsigned char **newch;
-int n;
+#ifdef HAVE_LIBZ
+
+#define FHCRC		(1 << 1)
+#define FEXTRA		(1 << 2)
+#define FNAME		(1 << 3)
+#define FCOMMENT	(1 << 4)
+
+private size_t
+uncompressgzipped(struct magic_set *ms, const unsigned char *old,
+    unsigned char **newch, size_t n)
+{
+	unsigned char flg = old[3];
+	size_t data_start = 10;
+	z_stream z;
+	int rc;
+
+	if (flg & FEXTRA) {
+		if (data_start+1 >= n)
+			return 0;
+		data_start += 2 + old[data_start] + old[data_start + 1] * 256;
+	}
+	if (flg & FNAME) {
+		while(data_start < n && old[data_start])
+			data_start++;
+		data_start++;
+	}
+	if(flg & FCOMMENT) {
+		while(data_start < n && old[data_start])
+			data_start++;
+		data_start++;
+	}
+	if(flg & FHCRC)
+		data_start += 2;
+
+	if (data_start >= n)
+		return 0;
+	if ((*newch = (unsigned char *)malloc(HOWMANY + 1)) == NULL) {
+		return 0;
+	}
+	
+	/* XXX: const castaway, via strchr */
+	z.next_in = (Bytef *)strchr((const char *)old + data_start,
+	    old[data_start]);
+	z.avail_in = n - data_start;
+	z.next_out = *newch;
+	z.avail_out = HOWMANY;
+	z.zalloc = Z_NULL;
+	z.zfree = Z_NULL;
+	z.opaque = Z_NULL;
+
+	rc = inflateInit2(&z, -15);
+	if (rc != Z_OK) {
+		file_error(ms, 0, "zlib: %s", z.msg);
+		return 0;
+	}
+
+	rc = inflate(&z, Z_SYNC_FLUSH);
+	if (rc != Z_OK && rc != Z_STREAM_END) {
+		file_error(ms, 0, "zlib: %s", z.msg);
+		return 0;
+	}
+
+	n = (size_t)z.total_out;
+	inflateEnd(&z);
+	
+	/* let's keep the nul-terminate tradition */
+	(*newch)[n++] = '\0';
+
+	return n;
+}
+#endif
+
+private size_t
+uncompressbuf(struct magic_set *ms, size_t method, const unsigned char *old,
+    unsigned char **newch, size_t n)
 {
 	int fdin[2], fdout[2];
+	int r;
+
+	/* The buffer is NUL terminated, and we don't need that. */
+	n--;
+	 
+#ifdef HAVE_LIBZ
+	if (method == 2)
+		return uncompressgzipped(ms, old, newch, n);
+#endif
 
 	if (pipe(fdin) == -1 || pipe(fdout) == -1) {
-		err(1, "cannot create pipe");	
-		/*NOTREACHED*/
+		file_error(ms, errno, "cannot create pipe");	
+		return 0;
 	}
 	switch (fork()) {
 	case 0:	/* child */
@@ -241,34 +340,61 @@ int n;
 		(void) close(fdout[0]);
 		(void) close(fdout[1]);
 		if (compr[method].silent)
-		    (void) close(2);
+			(void) close(2);
 
-		execvp(compr[method].argv[0], (char *const *)compr[method].argv);
-		err(1, "could not execute `%s'", compr[method].argv[0]);
+		execvp(compr[method].argv[0],
+		       (char *const *)compr[method].argv);
+		exit(1);
 		/*NOTREACHED*/
 	case -1:
-		err(1, "could not fork");
-		/*NOTREACHED*/
+		file_error(ms, errno, "could not fork");
+		return 0;
 
 	default: /* parent */
 		(void) close(fdin[0]);
 		(void) close(fdout[1]);
-		if (write(fdin[1], old, n) != n) {
-			err(1, "write failed");
+		/* fork again, to avoid blocking because both pipes filled */
+		switch (fork()) {
+		case 0: /* child */
+			(void)close(fdout[0]);
+			if (swrite(fdin[1], old, n) != n)
+				exit(1);
+			exit(0);
 			/*NOTREACHED*/
+
+		case -1:
+			exit(1);
+			/*NOTREACHED*/
+
+		default:  /* parent */
+			break;
 		}
 		(void) close(fdin[1]);
-		if ((*newch = (unsigned char *) malloc(n)) == NULL) {
-			err(1, "malloc");
-			/*NOTREACHED*/
+		fdin[1] = -1;
+		if ((*newch = (unsigned char *) malloc(HOWMANY + 1)) == NULL) {
+			n = 0;
+			goto err;
 		}
-		if ((n = read(fdout[0], *newch, n)) <= 0) {
+		if ((r = sread(fdout[0], *newch, HOWMANY)) <= 0) {
 			free(*newch);
-			err(1, "read failed");
-			/*NOTREACHED*/
+			n = 0;
+			newch[0] = '\0';
+			goto err;
+		} else {
+			n = r;
 		}
+ 		/* NUL terminate, as every buffer is handled here. */
+ 		(*newch)[n++] = '\0';
+err:
+		if (fdin[1] != -1)
+			(void) close(fdin[1]);
 		(void) close(fdout[0]);
-		(void) wait(NULL);
+#ifdef WNOHANG
+		while (waitpid(-1, NULL, WNOHANG) != -1)
+			continue;
+#else
+		(void)wait(NULL);
+#endif
 		return n;
 	}
 }
