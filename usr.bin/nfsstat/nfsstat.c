@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.24 2004/09/14 23:53:22 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.25 2004/12/14 12:21:04 pedro Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.24 2004/09/14 23:53:22 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.25 2004/12/14 12:21:04 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -280,8 +280,12 @@ intpr(u_int display)
 		printf(" %9d %9d\n",
 		    nfsstats.direofcache_hits, nfsstats.direofcache_misses);
 	}
+
+	if (display == SHOW_ALL)
+		printf("\n");
+
 	if (display & SHOW_SERVER) {
-		printf("\nServer Info:\n");
+		printf("Server Info:\n");
 		printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
 		    "Getattr", "Setattr", "Lookup", "Readlink", "Read",
 		    "Write", "Create", "Remove");
