@@ -37,6 +37,13 @@
 #define ENCMTU		(1024+512)
 #define ENC_HDRLEN	12
 
+struct enc_softc {
+        struct ifnet		sc_if;  /* the interface */
+        union sockaddr_union	sc_dst;
+        u_int32_t		sc_spi;
+        u_int32_t		sc_sproto;
+};
+
 struct enchdr {
 	u_int32_t af;
 	u_int32_t spi;
