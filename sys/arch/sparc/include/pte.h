@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 1997/09/17 06:47:14 downsj Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 1999/09/07 08:30:52 art Exp $	*/
 /*	$NetBSD: pte.h,v 1.19 1997/08/05 11:00:10 pk Exp $ */
 
 /*
@@ -157,8 +157,8 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
  * 		if (usermode && PTE_PROT_LEVEL(pte) > 0x5) TRAP();
  *		if (writing && !PTE_PROT_LEVEL_ALLOWS_WRITING(pte)) TRAP();
  *		if (!(pte & SRMMU_PG_C)) DO_NOT_USE_CACHE_FOR_THIS_ACCESS();
- *		pte |= SRMMU_PG_U;
- * 		if (writing) pte |= PG_M;
+ *		pte |= SRMMU_PG_R;
+ * 		if (writing) pte |= SRMMU_PG_M;
  * 		physaddr = ((pte & SRMMU_PG_PFNUM) << SRMMU_PGSHIFT)|va.va_off;
  *		return;
  *	if (mmu_3l)
