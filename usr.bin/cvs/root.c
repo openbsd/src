@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.2 2004/07/14 04:12:43 vincent Exp $	*/
+/*	$OpenBSD: root.c,v 1.3 2004/07/14 04:24:46 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -251,8 +251,8 @@ cvsroot_get(const char *dir)
 		(void)fclose(fp);
 		return (NULL);
 	}
-	memcpy(rootstr, line, len);
-	rootstr[len] = '\0';
+	memcpy(rootstr, line, len - 1);
+	rootstr[len - 1] = '\0';
 	rp = cvsroot_parse(rootstr);
 
 	(void)fclose(fp);
