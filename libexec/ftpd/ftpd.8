@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.35 2000/09/08 18:03:27 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.36 2000/12/02 18:01:11 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -153,7 +153,9 @@ seconds (the default is 15 minutes).
 .It Fl u Ar mask
 Force the umask to
 .Ar mask .
-instead of the default 027.
+instead of the default specified in
+.Pa /etc/login.conf
+(usually 022).
 Also disallows chmod.
 .El
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.82 2000/11/26 19:52:56 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.83 2000/12/02 18:01:11 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ off_t	file_size;
 off_t	byte_count;
 #if !defined(CMASK) || CMASK == 0
 #undef CMASK
-#define CMASK 027
+#define CMASK 022
 #endif
 int	defumask = CMASK;		/* default umask value */
 int	umaskchange = 1;		/* allow user to change umask value. */
@@ -838,6 +838,7 @@ end_login()
 			logout(utmp.ut_line);
 	}
 	pw = NULL;
+	/* umask is restored in ftpcmd.y */
 	setusercontext(NULL, getpwuid(0), (uid_t)0,
 	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
 	logged_in = 0;
@@ -849,7 +850,7 @@ void
 pass(passwd)
 	char *passwd;
 {
-	int rval;
+	int rval, flags;
 	FILE *fp;
 	static char homedir[MAXPATHLEN];
 	char *dir, rootdir[MAXPATHLEN];
@@ -922,9 +923,13 @@ skip:
 		reply(550, "Can't set gid.");
 		return;
 	}
-	(void) umask(defumask);
-	setusercontext(lc, pw, (uid_t)0,
-	    LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
+	/* set umask via setusercontext() unless -u flag was given. */
+	flags = LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES;
+	if (umaskchange)
+		flags |= LOGIN_SETUMASK;
+	else
+		(void) umask(defumask);
+	setusercontext(lc, pw, (uid_t)0, flags);
 
 	/* open wtmp before chroot */
 	ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
