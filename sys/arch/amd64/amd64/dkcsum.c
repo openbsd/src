@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.3 2004/12/25 23:02:23 miod Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.4 2005/01/01 03:07:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -67,6 +67,9 @@ dkcsumattach(void)
 	if (bios_diskinfo == NULL || bios_cksumlen * DEV_BSIZE > MAXBSIZE)
 		return;
 
+#ifdef DEBUG
+	printf("dkcsum: bootdev=0x%x\n", bootdev);
+#endif
 	pribootdev = altbootdev = 0;
 
 	/*
@@ -185,6 +188,10 @@ dkcsumattach(void)
 			part = B_PARTITION(bootdev);
 
 			pribootdev = MAKEBOOTDEV(type, ctrl, adap, unit, part);
+#ifdef DEBUG
+			printf("dkcsum: setting %s as primary boot disk\n",
+			    dv->dv_xname);
+#endif
 		}
 		/* B_TYPE independent hd unit counting bootblocks */
 		if (B_UNIT(bootdev) == (hit->bios_number & 0x7F)) {
@@ -197,6 +204,10 @@ dkcsumattach(void)
 			part = B_PARTITION(bootdev);
 
 			altbootdev = MAKEBOOTDEV(type, ctrl, adap, unit, part);
+#ifdef DEBUG
+			printf("dkcsum: setting %s as alternate boot disk\n",
+			    dv->dv_xname);
+#endif
 		}
 
 		/* This will overwrite /boot's guess, just so you remember */
