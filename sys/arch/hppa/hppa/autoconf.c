@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2003/07/30 22:29:45 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2003/10/15 17:42:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -132,19 +132,21 @@ heartbeat(v)
 	void *v;
 {
 	static u_int hbcnt = 0, ocp_total, ocp_idle;
-	int toggle, cp_mask, cp_total;
+	int toggle, cp_mask, cp_total, cp_idle;
 
 	timeout_add(&heartbeat_tmo, hz / 16);
 
+	cp_idle = cp_time[CP_IDLE];
 	cp_total = cp_time[CP_USER] + cp_time[CP_NICE] + cp_time[CP_SYS] +
 	    cp_time[CP_INTR] + cp_time[CP_IDLE];
-	if (!cp_total)
-		cp_total = 1;
-	cp_mask = 0xf0 >> (cp_time[CP_IDLE] - ocp_idle) * 4 /
-	    (cp_total - ocp_total);
+	if (cp_total == ocp_total)
+		cp_total = ocp_total + 1;
+	if (cp_idle == ocp_idle)
+		cp_idle = ocp_idle + 1;
+	cp_mask = 0xf0 >> (cp_idle - ocp_idle) * 4 / (cp_total - ocp_total);
 	cp_mask &= 0xf0;
 	ocp_total = cp_total;
-	ocp_idle = cp_time[CP_IDLE];
+	ocp_idle = cp_idle;
 	/*
 	 * do this:
 	 *
