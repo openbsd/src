@@ -165,7 +165,7 @@ hd:	/**** load sector 0 into the BOOTSEG ****/
 	data32
 	jb	read_error
 
-	/***# find the first 386BSD partition *****/
+	/***# find the first OpenBSD partition *****/
 	data32
 	movl	$PARTSTART, %ebx
 	data32
@@ -180,6 +180,12 @@ again:
 	addl	$PARTSZ, %ebx
 	data32
 	loop	again
+
+	/***# find the first 386/Net/FreeBSD partition *****/
+	data32
+	movl	$PARTSTART, %ebx
+	data32
+	movl	$NUMPART, %ecx
 again2:
 	addr32
 	movb    %es:4(%ebx), %al
