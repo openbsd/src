@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.19 2004/04/18 04:15:00 henric Exp $ */
+/* $OpenBSD: if_em.c,v 1.20 2004/04/26 07:27:52 deraadt Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -513,8 +513,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 #endif /* __FreeBSD__ */
 
 	/* Parameters (to be read from user) */
-	sc->num_tx_desc = EM_MAX_TXD;
-	sc->num_rx_desc = EM_MAX_RXD;
+	sc->num_tx_desc = EM_MIN_TXD;
+	sc->num_rx_desc = EM_MIN_RXD;
 	sc->hw.autoneg = DO_AUTO_NEG;
 	sc->hw.wait_autoneg_complete = WAIT_FOR_AUTO_NEG_DEFAULT;
 	sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
@@ -1003,13 +1003,22 @@ em_watchdog(struct ifnet *ifp)
 void
 em_init_locked(struct em_softc *sc)
 {
-	struct ifnet   *ifp;
+	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
 	INIT_DEBUGOUT("em_init: begin");
 
         mtx_assert(&sc->mtx, MA_OWNED);
 
 	em_stop(sc);
+
+	if (ifp->if_flags & IFF_UP) {
+		sc->num_tx_desc = EM_MAX_TXD;
+		sc->num_rx_desc = EM_MAX_RXD;
+	} else {
+		sc->num_tx_desc = EM_MIN_TXD;
+		sc->num_rx_desc = EM_MIN_RXD;
+	}
+
 
 #ifdef __FreeBSD__
         /* Get the latest mac address, User can use a LAA */
@@ -1050,7 +1059,6 @@ em_init_locked(struct em_softc *sc)
         /* Don't loose promiscuous settings */
         em_set_promisc(sc);
 
-	ifp = &sc->interface_data.ac_if;
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 

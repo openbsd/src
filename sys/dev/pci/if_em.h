@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.h,v 1.24 2003/11/14 18:02:24 pdeuskar Exp $*/
-/* $OpenBSD: if_em.h,v 1.3 2004/04/18 04:15:00 henric Exp $ */
+/* $OpenBSD: if_em.h,v 1.4 2004/04/26 07:27:52 deraadt Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -50,7 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
  *   Increasing this value allows the driver to queue more transmits. Each
  *   descriptor is 16 bytes.
  */
-#define EM_MAX_TXD                      256
+#define EM_MIN_TXD                      12
+#define EM_MAX_TXD                      512
 
 /*
  * EM_MAX_RXD - Maximum number of receive Descriptors
@@ -63,7 +64,8 @@ POSSIBILITY OF SUCH DAMAGE.
  *   descriptor. The maximum MTU size is 16110.
  *
  */
-#define EM_MAX_RXD                      256
+#define EM_MIN_RXD                      12
+#define EM_MAX_RXD                      512
 
 /*
  * EM_TIDV - Transmit Interrupt Delay Value
