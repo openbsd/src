@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.8 2004/11/11 15:35:10 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.9 2004/12/17 11:26:22 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -163,10 +163,14 @@ sub account_for($$)
 	return $e;
 }
 
-sub add($$)
+sub add($$;$)
 {
-	my ($name, $size) = @_;
-	$virtual->{$name} = 1;
+	my ($name, $size, $value) = @_;
+	if (defined $value) {
+		$virtual->{$name} = $value;
+	} else {
+		$virtual->{$name} = 1;
+	}
 	my $d = dirname($name);
 	$virtual_dir->{$d} = [] unless defined $virtual_dir->{$d};
 	push(@{$virtual_dir->{$d}}, $name);

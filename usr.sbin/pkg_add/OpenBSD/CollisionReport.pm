@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.6 2004/12/16 11:18:44 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.7 2004/12/17 11:26:22 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package OpenBSD::CollisionReport;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
+use OpenBSD::Vstat;
 
 
 sub collision_report($$)
@@ -29,23 +30,34 @@ sub collision_report($$)
 	my $bypkg = {};
 	my $clueless_bat = 0;
 	
-
-	BIGLOOP: {
-	for my $pkg (installed_packages()) {
-		print "Looking for collisions in $pkg\n" if $state->{verbose};
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
-		    \&OpenBSD::PackingList::FilesOnly);
-		for my $item (@{$plist->{items}}) {
-			next unless $item->IsFile();
-			my $name = $item->fullname();
-			if (defined $todo{$name}) {
-				$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
-				push(@{$bypkg->{$pkg}}, $name);
-				delete $todo{$name};
-				last BIGLOOP if !%todo;
-			}
+	for my $name (keys %todo) {
+		my $p = OpenBSD::Vstat::vexists $name;
+		if (ref $p) {
+			my $pkg = $$p;
+			$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
+			push(@{$bypkg->{$pkg}}, $name);
+			delete $todo{$name};
 		}
 	}
+
+	if (%todo) {
+		BIGLOOP: {
+		for my $pkg (installed_packages()) {
+			print "Looking for collisions in $pkg\n" if $state->{verbose};
+			my $plist = OpenBSD::PackingList->from_installation($pkg, 
+			    \&OpenBSD::PackingList::FilesOnly);
+			for my $item (@{$plist->{items}}) {
+				next unless $item->IsFile();
+				my $name = $item->fullname();
+				if (defined $todo{$name}) {
+					$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
+					push(@{$bypkg->{$pkg}}, $name);
+					delete $todo{$name};
+					last BIGLOOP if !%todo;
+				}
+			}
+		}
+		}
 	}
 	print "Collision: the following files already exist\n";
 	for my $pkg (sort keys %$bypkg) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.25 2004/12/16 11:07:33 espie Exp $
+# $OpenBSD: Add.pm,v 1.26 2004/12/17 11:26:21 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -81,9 +81,10 @@ sub validate_plist($$)
 		if (OpenBSD::Vstat::vexists($fname)) {
 			push(@$colliding, $item);
 			$problems++;
+			next;
 		}
 		$totsize += $item->{size} if defined $item->{size};
-		my $s = OpenBSD::Vstat::add($fname, $item->{size});
+		my $s = OpenBSD::Vstat::add($fname, $item->{size}, \$pkgname);
 		next unless defined $s;
 		if ($s->{ro}) {
 			Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
