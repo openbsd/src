@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.167 2004/12/17 08:04:45 jsg Exp $
+#	$OpenBSD: files.pci,v 1.168 2004/12/19 16:06:23 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -110,7 +110,7 @@ attach	autri at pci
 file	dev/pci/autri.c			autri
 
 # CS4280 CrystalClear Audio
-device	clcs: audio, auconv, mulaw, ac97
+device	clcs: audio, auconv, mulaw, ac97, firmload
 attach	clcs at pci
 file	dev/pci/cs4280.c		clcs
 
@@ -263,7 +263,7 @@ attach	tl at pci
 file	dev/pci/if_tl.c			tl
 
 # 3Com 3c990
-device	txp: ether, ifnet, ifmedia
+device	txp: ether, ifnet, ifmedia, firmload
 attach	txp at pci
 file	dev/pci/if_txp.c		txp
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: clcs.4,v 1.4 2004/09/30 19:59:24 mickey Exp $
+.\" $OpenBSD: clcs.4,v 1.5 2004/12/19 16:06:21 deraadt Exp $
 .\" $NetBSD: clcs.4,v 1.1 1999/12/11 23:10:15 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,6 +49,13 @@ The
 .Nm
 driver provides support for the Cirrus Logic CS4280 chip, as well as
 for CS461x.
+.Sh FILES
+The driver need a firmware file,
+which is loaded on demand when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/cs4280
+.El
 .Sh SEE ALSO
 .Xr ac97 4 ,
 .Xr audio 4 ,

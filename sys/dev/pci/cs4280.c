@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.20 2004/01/08 22:38:20 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.21 2004/12/19 16:06:22 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ int cs4280debug = 0;
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/cs4280reg.h>
-#include <dev/microcode/cirruslogic/cs4280_image.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -170,6 +169,7 @@ struct cs4280_softc {
 
 int	cs4280_match(struct device *, void *, void *);
 void	cs4280_attach(struct device *, struct device *, void *);
+void	cs4280_attachhook(void *xsc);
 int	cs4280_intr(void *);
 void	cs4280_reset(void *);
 int	cs4280_download_image(struct cs4280_softc *);
@@ -194,6 +194,7 @@ struct cfattach clcs_ca = {
 };
 
 int	cs4280_init(struct cs4280_softc *, int);
+int	cs4280_init2(struct cs4280_softc *, int);
 int	cs4280_open(void *, int);
 void	cs4280_close(void *);
 
@@ -553,6 +554,43 @@ cs4280_set_dac_rate(sc, rate)
 }
 
 void
+cs4280_attachhook(void *xsc)
+{
+	struct cs4280_softc *sc = xsc;
+	mixer_ctrl_t ctl;
+
+	/* Initialization */
+	if (cs4280_init2(sc, 1) != 0)
+		return;
+
+	printf("%s: firmware loaded\n", sc->sc_dev.dv_xname);
+
+	/* Turn mute off of DAC, CD and master volumes by default */
+	ctl.type = AUDIO_MIXER_ENUM;
+	ctl.un.ord = 0;	 /* off */
+
+	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCoutputs,
+					     AudioNmaster, AudioNmute);
+	cs4280_mixer_set_port(sc, &ctl);
+
+	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
+					     AudioNdac, AudioNmute);
+	cs4280_mixer_set_port(sc, &ctl);
+
+	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
+					     AudioNcd, AudioNmute);
+	cs4280_mixer_set_port(sc, &ctl);
+	
+	audio_attach_mi(&cs4280_hw_if, sc, &sc->sc_dev);
+
+#if NMIDI > 0
+	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
+#endif
+	sc->sc_suspend = PWR_RESUME;
+	sc->sc_powerhook = powerhook_establish(cs4280_power, sc);
+}
+
+void
 cs4280_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -563,7 +601,6 @@ cs4280_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	mixer_ctrl_t ctl;
 	u_int32_t mem;
     
 	/* Map I/O register */
@@ -614,8 +651,10 @@ cs4280_attach(parent, self, aux)
 	printf(": %s\n", intrstr);
 
 	/* Initialization */
-	if(cs4280_init(sc, 1) != 0)
+	if (cs4280_init(sc, 1) != 0)
 		return;
+
+	mountroothook_establish(cs4280_attachhook, sc);
 
 	/* AC 97 attachement */
 	sc->host_if.arg = sc;
@@ -628,30 +667,6 @@ cs4280_attach(parent, self, aux)
 		printf("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
-
-	/* Turn mute off of DAC, CD and master volumes by default */
-	ctl.type = AUDIO_MIXER_ENUM;
-	ctl.un.ord = 0;	 /* off */
-
-	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCoutputs,
-					     AudioNmaster, AudioNmute);
-	cs4280_mixer_set_port(sc, &ctl);
-
-	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
-					     AudioNdac, AudioNmute);
-	cs4280_mixer_set_port(sc, &ctl);
-
-	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
-					     AudioNcd, AudioNmute);
-	cs4280_mixer_set_port(sc, &ctl);
-	
-	audio_attach_mi(&cs4280_hw_if, sc, &sc->sc_dev);
-
-#if NMIDI > 0
-	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
-#endif
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(cs4280_power, sc);
 }
 
 int
@@ -856,25 +871,37 @@ cs4280_download(sc, src, offset, len)
 	return (0);
 }
 
+struct BA1struct *BA1Struct;
+
 int
 cs4280_download_image(sc)
 	struct cs4280_softc *sc;
 {
 	int idx, err;
 	u_int32_t offset = 0;
+	static u_char *cs4280_firmware;
+	static size_t cs4280_firmwarelen;
 
 	err = 0;
 
+	if (cs4280_firmware == NULL) {
+		err = loadfirmware("cs4280", &cs4280_firmware,
+		    &cs4280_firmwarelen);
+		if (err)
+			return (err);
+	}
+
+	BA1Struct = (struct BA1struct *)cs4280_firmware;
+
 	for (idx = 0; idx < BA1_MEMORY_COUNT; ++idx) {
-		err = cs4280_download(sc, &BA1Struct.map[offset],
-				  BA1Struct.memory[idx].offset,
-				  BA1Struct.memory[idx].size);
+		err = cs4280_download(sc, &BA1Struct->map[offset],
+		    BA1Struct->memory[idx].offset, BA1Struct->memory[idx].size);
 		if (err != 0) {
 			printf("%s: load_image failed at %d\n",
 			       sc->sc_dev.dv_xname, idx);
 			return (-1);
 		}
-		offset += BA1Struct.memory[idx].size / sizeof(u_int32_t);
+		offset += BA1Struct->memory[idx].size / sizeof(u_int32_t);
 	}
 	return (err);
 }
@@ -918,14 +945,14 @@ cs4280_check_images(sc)
 	err = 0;
 	/*for (idx=0; idx < BA1_MEMORY_COUNT; ++idx) { */
 	for (idx = 0; idx < 1; ++idx) {
-		err = cs4280_checkimage(sc, &BA1Struct.map[offset],
-				      BA1Struct.memory[idx].offset,
-				      BA1Struct.memory[idx].size);
+		err = cs4280_checkimage(sc, &BA1Struct->map[offset],
+		    BA1Struct->memory[idx].offset,
+		    BA1Struct->memory[idx].size);
 		if (err != 0) {
 			printf("%s: check_image failed at %d\n",
 			       sc->sc_dev.dv_xname, idx);
 		}
-		offset += BA1Struct.memory[idx].size / sizeof(u_int32_t);
+		offset += BA1Struct->memory[idx].size / sizeof(u_int32_t);
 	}
 	return (err);
 }
@@ -1701,6 +1728,16 @@ cs4280_init(sc, init)
 
 	/* reset the processor */
 	cs4280_reset(sc);
+	return (0);
+}
+
+int
+cs4280_init2(sc, init)
+	struct cs4280_softc *sc;
+	int init;
+{
+	int n;
+	u_int32_t mem;
 
 	/* Download the image to the processor */
 	if (cs4280_download_image(sc) != 0) {
@@ -1809,6 +1846,7 @@ cs4280_power(why, v)
 		}
 		sc->sc_suspend = why;
 		cs4280_init(sc, 0);
+		cs4280_init2(sc, 0);
 		cs4280_reset_codec(sc);
 
 		/* restore ac97 registers */
