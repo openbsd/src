@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.7 1998/02/08 22:41:49 tholo Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.8 1999/12/05 08:30:38 art Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ void  softdep_setup_allocindir_page __P((struct inode *, ufs_lbn_t,
 void  softdep_disk_io_initiation __P((struct buf *));
 void  softdep_disk_write_complete __P((struct buf *));
 int   softdep_sync_metadata __P((struct vop_fsync_args *));
-
+void  softdep_fsync_mountdev __P((struct vnode *));
 __END_DECLS
 
 extern int (**ffs_vnodeop_p) __P((void *));
