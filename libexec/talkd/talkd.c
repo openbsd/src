@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.15 2002/09/25 03:43:20 itojun Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.16 2002/10/08 02:53:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.15 2002/09/25 03:43:20 itojun Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.16 2002/10/08 02:53:54 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ main(argc, argv)
 		request.r_tty[sizeof(request.r_tty) - 1] = '\0';
 
 		memcpy(&ctl_addr, &request.ctl_addr, sizeof(ctl_addr));
-		ctl_addr.sa_family = request.ctl_addr.sa_family;
+		ctl_addr.sa_family = ntohs(request.ctl_addr.sa_family);
 		ctl_addr.sa_len = sizeof(ctl_addr);
 		if (ctl_addr.sa_family != AF_INET)
 			continue;
