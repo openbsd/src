@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.33 1995/10/07 06:28:44 mycroft Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.34 1995/12/09 04:12:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -55,7 +55,7 @@
  *
  * shminit(void);		           initialization
  * shmexit(struct proc *)                  cleanup
- * shmfork(struct proc *, struct proc *, int) fork handling
+ * shmfork(struct proc *, struct proc *)   fork handling
  * shmsys(arg1, arg2, arg3, arg4);         shm{at,ctl,dt,get}(arg2, arg3, arg4)
  *
  * Structures:
@@ -461,9 +461,8 @@ sys_shmget(p, v, retval)
 }
 
 void
-shmfork(p1, p2, isvfork)
+shmfork(p1, p2)
 	struct proc *p1, *p2;
-	int isvfork;
 {
 	struct shmmap_state *shmmap_s;
 	size_t size;
