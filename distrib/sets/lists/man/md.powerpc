@@ -1,4 +1,3 @@
-./usr/share/info/cpio.info
 ./usr/share/man/cat3/dlclose.0
 ./usr/share/man/cat3/dlctl.0
 ./usr/share/man/cat3/dlerror.0
@@ -9,5 +8,4 @@
 ./usr/share/man/cat3/kvm_dump_inval.0
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
-./usr/share/man/cat4/i386/ncr.0
 ./usr/share/man/cat8/fdisk.0
