@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.28 2004/09/28 21:08:47 jmc Exp $
+.\"	$OpenBSD: grep.1,v 1.29 2004/10/04 21:34:17 jmc Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -64,17 +64,14 @@ to the standard output.
 .Pp
 .Nm grep
 is used for simple patterns and
-.Xr ex 1 -
-or
-.Xr ed 1 -style
-regular expressions.
+basic regular expressions
+.Pq BREs ;
 .Nm egrep
-can handle extended regular expressions;
-for a discussion of extended regular expressions, see
-.Xr re_format 7 ;
-for a list of extended regular expression special characters, see
-.Sx EXTENDED REGULAR EXPRESSIONS ,
-below.
+can handle extended regular expressions
+.Pq EREs .
+See
+.Xr re_format 7
+for more information on regular expressions.
 .Nm fgrep
 is quicker than both
 .Nm grep
@@ -306,35 +303,6 @@ No lines were selected.
 .It Li \*(Gt1
 An error occurred.
 .El
-.Sh EXTENDED REGULAR EXPRESSIONS
-The following characters are interpreted by
-.Nm egrep :
-.Pp
-.Bl -tag -width flag -compact
-.It Cm ^
-Align the match from the beginning of the line.
-.It Cm $
-Align the match from the end of the line.
-.It Cm \&|
-Add another pattern (see example below).
-.It Cm \&.
-Match any single character.
-.It Cm \&?
-Match 1 or less sequential repetitions of the pattern.
-.It Cm +
-Match 1 or more sequential repetitions of the pattern.
-.It Cm *
-Match 0 or more sequential repetitions of the pattern.
-.It Cm {}
-Match specified number of sequential repetitions of the pattern.
-.It Cm []
-Match any characters enclosed in the brackets.
-.It Cm ()
-Delimits a subexpression.
-.It Cm \e
-Escape special characters which have meaning to
-.Nm egrep .
-.El
 .Sh EXAMPLES
 To find all occurrences of the word
 .Sq patricia
@@ -379,7 +347,6 @@ looking for either 19, 20, or 25.
 .Xr ex 1 ,
 .Xr gzip 1 ,
 .Xr sed 1 ,
-.Xr regex 3 ,
 .Xr re_format 7
 .Sh STANDARDS
 The
