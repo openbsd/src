@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.7 1999/02/17 03:04:19 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.8 1999/02/17 03:21:43 mickey Exp 
  */
 
 static const struct hppa_board_info hppa_knownboards[] = {

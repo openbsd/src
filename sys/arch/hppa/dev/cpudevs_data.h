@@ -1,11 +1,11 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.7 1999/02/17 03:04:19 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.8 1999/02/17 03:21:43 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
-	{HPPA_TYPE_CPU,	HPPA_CPU_HPPA11,	"PA-RISC 1.0" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_HPPA10,	"PA-RISC 1.0" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_HPPA11,	"PA-RISC 1.1" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_HPPA20,	"PA-RISC 2.0" },
 	{HPPA_TYPE_MEMORY,	HPPA_MEMORY_ARCH,	"architected memory module" },
