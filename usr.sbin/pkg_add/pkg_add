@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.131 2004/11/27 16:38:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.132 2004/12/02 00:04:38 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -540,9 +540,16 @@ sub install_package
 
 	my $plist = $handle->{plist};
 
-	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed} && !OpenBSD::Update::is_needed($plist, $state)) {
-		$handle->close();
-		return ();
+	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
+		if ($state->{replace}) {
+			if (!OpenBSD::Update::is_needed($plist, $state)) {
+				$handle->close();
+				return ();
+			}
+		} else {
+			$handle->close();
+			return ();
+		}
 	}
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
