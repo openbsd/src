@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 1999/06/12 17:36:16 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.10 1999/06/12 17:40:01 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -190,9 +190,6 @@ member	pcb_space
 
 struct	user
 member	u_pcb
-
-struct	vmspace
-member	vm_pmap
 
 # interrupt/fault metering
 #define	V_INTR			offsetof(struct vmmeter, v_intr)
