@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.5 1996/12/23 07:44:59 downsj Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.6 1997/02/28 00:47:44 millert Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@ static char rcsid[] = "$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $"
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 
 #include <err.h>
@@ -97,6 +98,15 @@ main(argc, argv)
 	int i, rval = 0;
 	char *vfstype = NULL;
 	char globopt[3];
+	struct rlimit rl;
+
+	/* Increase our data size to the max */
+	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+		rl.rlim_cur = rl.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+			warn("Can't get resource limit to max data size");
+	} else
+		warn("Can't get resource limit for data size");
 
 	globopt[0] = '-';
 	globopt[2] = '\0';
