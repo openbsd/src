@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.116 1999/02/03 08:55:34 downsj Exp $
+$OpenBSD: pcidevs,v 1.117 1999/02/08 18:17:20 millert Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -765,7 +765,7 @@ product COMPEX COMPEXE		0x1401	Ethernet
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB
-product CONTAQ SIO		0xc693	CY82C693U PCI-ISA
+product CONTAQ 82C693		0xc693	CY82C693U PCI-ISA
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI

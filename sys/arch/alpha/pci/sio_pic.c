@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.13 1999/01/11 05:11:03 millert Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.14 1999/02/08 18:17:21 millert Exp $	*/
 /*	$NetBSD: sio_pic.c,v 1.16 1996/11/17 02:05:26 cgd Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ cy82c693_setup_elcr()
 			continue;
 
 		if (PCI_VENDOR(id) != PCI_VENDOR_CONTAQ ||
-		    PCI_PRODUCT(id) != PCI_PRODUCT_CONTAQ_SIO)
+		    PCI_PRODUCT(id) != PCI_PRODUCT_CONTAQ_82C693)
 			continue;
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.14 1998/06/29 05:32:54 downsj Exp $	*/
+/*	$OpenBSD: sio.c,v 1.15 1999/02/08 18:17:21 millert Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ siomatch(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CONTAQ &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_SIO &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_82C693 &&
 	    pa->pa_function == 0)
 		return (1);
 
