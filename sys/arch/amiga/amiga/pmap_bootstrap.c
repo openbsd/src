@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.1 2001/11/30 23:14:28 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.2 2001/12/14 21:44:02 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -103,10 +103,8 @@ extern st_entry_t *Sysseg;
 #if defined(M68040) || defined(M68060)
 extern int protostfree;
 #endif
-extern int protection_codes[];
 
 extern vaddr_t reserve_dumppages __P((vaddr_t));
-void amiga_protection_init __P((void));
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -198,11 +196,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
-	 * Initialize protection array.
-	 */
-	amiga_protection_init();
-
-	/*
 	 * Kernel page/segment table allocated in locore,
 	 * just initialize pointers.
 	 */
@@ -253,30 +246,3 @@ pmap_init_md()
 				UVM_FLAG_FIXED)))
 		panic("pmap_init: bogons in the VM system!\n");
 }
-
-void
-amiga_protection_init()
-{
-	int *kp, prot;
-
-	kp = protection_codes;
-	for (prot = 0; prot < 8; prot++) {
-		switch (prot) {
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE:
-			*kp++ = 0;
-			break;
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE:
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE:
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE:
-			*kp++ = PG_RO;
-			break;
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			*kp++ = PG_RW;
-			break;
-		}
-	}
-}
-

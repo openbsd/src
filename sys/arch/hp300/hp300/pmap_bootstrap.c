@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.12 2001/11/30 20:58:18 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.13 2001/12/14 21:44:04 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -68,7 +68,6 @@ extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
 extern vsize_t mem_size;
-extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
@@ -446,25 +445,6 @@ pmap_bootstrap(nextpa, firstpa)
 			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
 	}
 #endif
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		int *kp;
-
-		kp = &RELOC(protection_codes, int);
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
 
 	/*
 	 * Kernel page/segment table allocated in locore,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.9 2001/12/12 18:36:21 millert Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.10 2001/12/14 21:44:04 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@
 
 #include <machine/pte.h>
 
+/* #define UVM_PAGE_INLINE */
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
@@ -249,8 +250,7 @@ int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
  * Given a map and a machine independent protection code,
  * convert to an m68k protection code.
  */
-#define pte_prot(m, p)	(protection_codes[p])
-int	protection_codes[8];
+#define pte_prot(p)	((p) & VM_PROT_WRITE ? PG_RW : PG_RO)
 
 /*
  * Kernel page table page management.
@@ -338,8 +338,8 @@ void pmap_check_wiring	__P((char *, vaddr_t));
 #define	PRM_CFLUSH	2
 #define	PRM_KEEPPTPAGE	4
 
-#define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
-				 vm_physseg_find(atop((pa)), NULL) != -1)
+#define	PAGE_IS_MANAGED(pa) \
+	(pmap_initialized && IS_VM_PHYSADDR(pa))
 
 #define	pa_to_pvh(pa)							\
 ({									\
@@ -1087,7 +1087,7 @@ pmap_protect(pmap, sva, eva, prot)
 		return;
 	}
 
-	isro = pte_prot(pmap, prot);
+	isro = pte_prot(prot);
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
 	while (sva < eva) {
@@ -1382,7 +1382,7 @@ validate:
 	/*
 	 * Build the new PTE.
 	 */
-	npte = pa | pte_prot(pmap, prot) | (*pte & (PG_M|PG_U)) | PG_V;
+	npte = pa | pte_prot(prot) | (*pte & (PG_M|PG_U)) | PG_V;
 	if (wired)
 		npte |= PG_W;
 
@@ -1486,7 +1486,7 @@ pmap_kenter_pa(va, pa, prot)
 	 * Build the new PTE.
 	 */
 
-	npte = pa | pte_prot(pmap, prot) | PG_V | PG_W;
+	npte = pa | pte_prot(prot) | PG_V | PG_W;
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040 && (npte & (PG_PROT)) == PG_RW)
 		npte |= PG_CCB;
