@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.37 2000/01/20 09:30:02 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.38 2000/01/24 22:44:58 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -234,6 +234,9 @@ sys_execve(p, v, retval)
 	char * const *cpp, *dp, *sp;
 	long argc, envc;
 	size_t len;
+#ifdef MACHINE_STACK_GROWS_UP
+	size_t slen;
+#endif
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm = p->p_vmspace;
@@ -427,6 +430,7 @@ sys_execve(p, v, retval)
 
 #ifdef MACHINE_STACK_GROWS_UP
 	stack = (char *)USRSTACK;
+	slen = len;
 #else
 	stack = (char *)(USRSTACK - len);
 #endif
@@ -590,7 +594,7 @@ sys_execve(p, v, retval)
 			goto free_pack_abort;
 	}
 #ifdef MACHINE_STACK_GROWS_UP
-	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack + len, retval);
+	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack + slen, retval);
 #else
 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack, retval);
 #endif
