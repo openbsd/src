@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@ void ar_close(void);
 void ar_drain(void);
 int ar_set_wr(void);
 int ar_app_ok(void);
-int ar_read(register char *, register int);
-int ar_write(register char *, register int);
+int ar_read(char *, int);
+int ar_write(char *, int);
 int ar_rdsync(void);
 int ar_fow(off_t, off_t *);
 int ar_rev(off_t );
@@ -91,14 +91,14 @@ int rd_sync(void);
 void pback(char *, int);
 int rd_skip(off_t);
 void wr_fin(void);
-int wr_rdbuf(register char *, register int);
-int rd_wrbuf(register char *, register int);
+int wr_rdbuf(char *, int);
+int rd_wrbuf(char *, int);
 int wr_skip(off_t);
 int wr_rdfile(ARCHD *, int, off_t *);
 int rd_wrfile(ARCHD *, int, off_t *);
 void cp_file(ARCHD *, int, int);
 int buf_fill(void);
-int buf_flush(register int);
+int buf_flush(int);
 
 /*
  * cache.c
@@ -116,65 +116,65 @@ int gid_name(char *, gid_t *);
  * cpio.c
  */
 int cpio_strd(void);
-int cpio_trail(register ARCHD *);
+int cpio_trail(ARCHD *);
 int cpio_endwr(void);
 int cpio_id(char *, int);
-int cpio_rd(register ARCHD *, register char *);
+int cpio_rd(ARCHD *, char *);
 off_t cpio_endrd(void);
 int cpio_stwr(void);
-int cpio_wr(register ARCHD *);
+int cpio_wr(ARCHD *);
 int vcpio_id(char *, int);
 int crc_id(char *, int);
 int crc_strd(void);
-int vcpio_rd(register ARCHD *, register char *);
+int vcpio_rd(ARCHD *, char *);
 off_t vcpio_endrd(void);
 int crc_stwr(void);
-int vcpio_wr(register ARCHD *);
+int vcpio_wr(ARCHD *);
 int bcpio_id(char *, int);
-int bcpio_rd(register ARCHD *, register char *);
+int bcpio_rd(ARCHD *, char *);
 off_t bcpio_endrd(void);
-int bcpio_wr(register ARCHD *);
+int bcpio_wr(ARCHD *);
 
 /*
  * file_subs.c
  */
-int file_creat(register ARCHD *);
-void file_close(register ARCHD *, int);
-int lnk_creat(register ARCHD *);
-int cross_lnk(register ARCHD *);
-int chk_same(register ARCHD *);
-int node_creat(register ARCHD *);
-int unlnk_exist(register char *, register int);
-int chk_path(register char *, uid_t, gid_t);
+int file_creat(ARCHD *);
+void file_close(ARCHD *, int);
+int lnk_creat(ARCHD *);
+int cross_lnk(ARCHD *);
+int chk_same(ARCHD *);
+int node_creat(ARCHD *);
+int unlnk_exist(char *, int);
+int chk_path(char *, uid_t, gid_t);
 void set_ftime(char *fnm, time_t mtime, time_t atime, int frc);
 int set_ids(char *, uid_t, gid_t);
 int set_lids(char *, uid_t, gid_t);
 void set_pmode(char *, mode_t);
-int file_write(int, char *, register int, int *, int *, int, char *);
+int file_write(int, char *, int, int *, int *, int, char *);
 void file_flush(int, char *, int);
-void rdfile_close(register ARCHD *, register int *);
-int set_crc(register ARCHD *, register int);
+void rdfile_close(ARCHD *, int *);
+int set_crc(ARCHD *, int);
 
 /*
  * ftree.c
  */
 int ftree_start(void);
-int ftree_add(register char *, int);
-void ftree_sel(register ARCHD *);
+int ftree_add(char *, int);
+void ftree_sel(ARCHD *);
 void ftree_chk(void);
-int next_file(register ARCHD *);
+int next_file(ARCHD *);
 
 /*
  * gen_subs.c
  */
-void ls_list(register ARCHD *, time_t, FILE *);
-void ls_tty(register ARCHD *);
+void ls_list(ARCHD *, time_t, FILE *);
+void ls_tty(ARCHD *);
 void safe_print(char *, FILE *);
-u_long asc_ul(register char *, int, register int);
-int ul_asc(u_long, register char *, register int, register int);
+u_long asc_ul(char *, int, int);
+int ul_asc(u_long, char *, int, int);
 #ifndef LONG_OFF_T
-u_quad_t asc_uqd(register char *, int, register int);
-int uqd_asc(u_quad_t, register char *, register int, register int);
+u_quad_t asc_uqd(char *, int, int);
+int uqd_asc(u_quad_t, char *, int, int);
 #endif
 
 /*
@@ -187,22 +187,22 @@ int getoldopt(int, char **, char *);
  */
 extern FSUB fsub[];
 extern int ford[];
-void options(register int, register char **);
+void options(int, char **);
 OPLIST * opt_next(void);
-int opt_add(register char *);
+int opt_add(char *);
 int bad_opt(void);
 char *chdname;
 
 /*
  * pat_rep.c
  */
-int rep_add(register char *);
+int rep_add(char *);
 int pat_add(char *, char *);
 void pat_chk(void);
-int pat_sel(register ARCHD *);
-int pat_match(register ARCHD *);
-int mod_name(register ARCHD *);
-int set_dest(register ARCHD *, char *, int);
+int pat_sel(ARCHD *);
+int pat_match(ARCHD *);
+int mod_name(ARCHD *);
+int set_dest(ARCHD *, char *, int);
 
 /*
  * pax.c
@@ -247,26 +247,26 @@ void sig_cleanup(int);
 /*
  * sel_subs.c
  */
-int sel_chk(register ARCHD *);
-int grp_add(register char *);
-int usr_add(register char *);
-int trng_add(register char *);
+int sel_chk(ARCHD *);
+int grp_add(char *);
+int usr_add(char *);
+int trng_add(char *);
 
 /*
  * tables.c
  */
 int lnk_start(void);
-int chk_lnk(register ARCHD *);
-void purg_lnk(register ARCHD *);
+int chk_lnk(ARCHD *);
+void purg_lnk(ARCHD *);
 void lnk_end(void);
 int ftime_start(void);
-int chk_ftime(register ARCHD *);
+int chk_ftime(ARCHD *);
 int name_start(void);
-int add_name(register char *, int, char *);
-void sub_name(register char *, int *, size_t);
+int add_name(char *, int, char *);
+void sub_name(char *, int *, size_t);
 int dev_start(void);
-int add_dev(register ARCHD *);
-int map_dev(register ARCHD *, u_long, u_long);
+int add_dev(ARCHD *);
+int map_dev(ARCHD *, u_long, u_long);
 int atdir_start(void);
 void atdir_end(void);
 void add_atdir(char *, dev_t, ino_t, time_t, time_t);
@@ -281,16 +281,16 @@ u_int st_hash(char *, int, int);
  */
 int tar_endwr(void);
 off_t tar_endrd(void);
-int tar_trail(register char *, register int, register int *);
-int tar_id(register char *, int);
+int tar_trail(char *, int, int *);
+int tar_id(char *, int);
 int tar_opt(void);
-int tar_rd(register ARCHD *, register char *);
-int tar_wr(register ARCHD *);
+int tar_rd(ARCHD *, char *);
+int tar_wr(ARCHD *);
 int ustar_strd(void);
 int ustar_stwr(void);
 int ustar_id(char *, int);
-int ustar_rd(register ARCHD *, register char *);
-int ustar_wr(register ARCHD *);
+int ustar_rd(ARCHD *, char *);
+int ustar_wr(ARCHD *);
 
 /*
  * tty_subs.c

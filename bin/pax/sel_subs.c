@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.12 2002/10/16 15:56:42 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.13 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.12 2002/10/16 15:56:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.13 2002/10/16 17:43:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,10 +62,10 @@ static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.12 2002/10/16 15:56:42 millert E
 #include "sel_subs.h"
 #include "extern.h"
 
-static int str_sec(register char *, time_t *);
-static int usr_match(register ARCHD *);
-static int grp_match(register ARCHD *);
-static int trng_match(register ARCHD *);
+static int str_sec(char *, time_t *);
+static int usr_match(ARCHD *);
+static int grp_match(ARCHD *);
+static int trng_match(ARCHD *);
 
 static TIME_RNG *trhead = NULL;		/* time range list head */
 static TIME_RNG *trtail = NULL;		/* time range list tail */
@@ -84,7 +84,7 @@ static GRPT **grptb = NULL;		/* group selection table */
  */
 
 int
-sel_chk(register ARCHD *arcn)
+sel_chk(ARCHD *arcn)
 {
 	if (((usrtb != NULL) && usr_match(arcn)) ||
 	    ((grptb != NULL) && grp_match(arcn)) ||
@@ -109,12 +109,12 @@ sel_chk(register ARCHD *arcn)
  */
 
 int
-usr_add(register char *str)
+usr_add(char *str)
 {
-	register u_int indx;
-	register USRT *pt;
-	register struct passwd *pw;
-	register uid_t uid;
+	u_int indx;
+	USRT *pt;
+	struct passwd *pw;
+	uid_t uid;
 
 	/*
 	 * create the table if it doesn't exist
@@ -178,9 +178,9 @@ usr_add(register char *str)
  */
 
 static int
-usr_match(register ARCHD *arcn)
+usr_match(ARCHD *arcn)
 {
-	register USRT *pt;
+	USRT *pt;
 
 	/*
 	 * hash and look for it in the table
@@ -206,12 +206,12 @@ usr_match(register ARCHD *arcn)
  */
 
 int
-grp_add(register char *str)
+grp_add(char *str)
 {
-	register u_int indx;
-	register GRPT *pt;
-	register struct group *gr;
-	register gid_t gid;
+	u_int indx;
+	GRPT *pt;
+	struct group *gr;
+	gid_t gid;
 
 	/*
 	 * create the table if it doesn't exist
@@ -275,9 +275,9 @@ grp_add(register char *str)
  */
 
 static int
-grp_match(register ARCHD *arcn)
+grp_match(ARCHD *arcn)
 {
-	register GRPT *pt;
+	GRPT *pt;
 
 	/*
 	 * hash and look for it in the table
@@ -325,13 +325,13 @@ grp_match(register ARCHD *arcn)
  */
 
 int
-trng_add(register char *str)
+trng_add(char *str)
 {
-	register TIME_RNG *pt;
-	register char *up_pt = NULL;
-	register char *stpt;
-	register char *flgpt;
-	register int dot = 0;
+	TIME_RNG *pt;
+	char *up_pt = NULL;
+	char *stpt;
+	char *flgpt;
+	int dot = 0;
 
 	/*
 	 * throw out the badly formed time ranges
@@ -465,9 +465,9 @@ trng_add(register char *str)
  */
 
 static int
-trng_match(register ARCHD *arcn)
+trng_match(ARCHD *arcn)
 {
-	register TIME_RNG *pt;
+	TIME_RNG *pt;
 
 	/*
 	 * have to search down the list one at a time looking for a match.
@@ -534,10 +534,10 @@ trng_match(register ARCHD *arcn)
  */
 
 static int
-str_sec(register char *p, time_t *tval)
+str_sec(char *p, time_t *tval)
 {
-	register struct tm *lt;
-	register char *dot, *t;
+	struct tm *lt;
+	char *dot, *t;
 	int bigyear;
 	int yearset = 0;
 

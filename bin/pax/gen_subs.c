@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.13 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.14 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.13 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.14 2002/10/16 17:43:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,9 @@ static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.13 2002/02/19 19:39:35 millert E
  */
 
 void
-ls_list(register ARCHD *arcn, time_t now, FILE *fp)
+ls_list(ARCHD *arcn, time_t now, FILE *fp)
 {
-	register struct stat *sbp;
+	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
 	char *timefrmt;
@@ -166,7 +166,7 @@ ls_list(register ARCHD *arcn, time_t now, FILE *fp)
  */
 
 void
-ls_tty(register ARCHD *arcn)
+ls_tty(ARCHD *arcn)
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
@@ -224,9 +224,9 @@ safe_print(char *str, FILE *fp)
  */
 
 u_long
-asc_ul(register char *str, int len, register int base)
+asc_ul(char *str, int len, int base)
 {
-	register char *stop;
+	char *stop;
 	u_long tval = 0;
 
 	stop = str + len;
@@ -267,9 +267,9 @@ asc_ul(register char *str, int len, register int base)
  */
 
 int
-ul_asc(u_long val, register char *str, register int len, register int base)
+ul_asc(u_long val, char *str, int len, int base)
 {
-	register char *pt;
+	char *pt;
 	u_long digit;
 
 	/*
@@ -321,9 +321,9 @@ ul_asc(u_long val, register char *str, register int len, register int base)
  */
 
 u_quad_t
-asc_uqd(register char *str, int len, register int base)
+asc_uqd(char *str, int len, int base)
 {
-	register char *stop;
+	char *stop;
 	u_quad_t tval = 0;
 
 	stop = str + len;
@@ -364,9 +364,9 @@ asc_uqd(register char *str, int len, register int base)
  */
 
 int
-uqd_asc(u_quad_t val, register char *str, register int len, register int base)
+uqd_asc(u_quad_t val, char *str, int len, int base)
 {
-	register char *pt;
+	char *pt;
 	u_quad_t digit;
 
 	/*

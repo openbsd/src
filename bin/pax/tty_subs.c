@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.8 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.9 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.8 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.9 2002/10/16 17:43:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ tty_prnt(char *fmt, ...)
 int
 tty_read(char *str, int len)
 {
-	register char *pt;
+	char *pt;
 
 	if ((--len <= 0) || (ttyinf == NULL) || (fgets(str,len,ttyinf) == NULL))
 		return(-1);

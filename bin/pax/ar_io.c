@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.26 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.27 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.26 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.27 2002/10/16 17:43:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,7 @@ ar_close(void)
 void
 ar_drain(void)
 {
-	register int res;
+	int res;
 	char drbuf[MAXBLK];
 
 	/*
@@ -514,9 +514,9 @@ ar_app_ok(void)
  */
 
 int
-ar_read(register char *buf, register int cnt)
+ar_read(char *buf, int cnt)
 {
-	register int res = 0;
+	int res = 0;
 
 	/*
 	 * if last i/o was in error, no more reads until reset or new volume
@@ -597,9 +597,9 @@ ar_read(register char *buf, register int cnt)
  */
 
 int
-ar_write(register char *buf, register int bsz)
+ar_write(char *buf, int bsz)
 {
-	register int res;
+	int res;
 	off_t cpos;
 
 	/*
@@ -864,7 +864,7 @@ ar_rev(off_t sksz)
 {
 	off_t cpos;
 	struct mtop mb;
-	register int phyblk;
+	int phyblk;
 
 	/*
 	 * make sure we do not have try to reverse on a flawed archive
@@ -994,9 +994,9 @@ ar_rev(off_t sksz)
 static int
 get_phys(void)
 {
-	register int padsz = 0;
-	register int res;
-	register int phyblk;
+	int padsz = 0;
+	int res;
+	int phyblk;
 	struct mtop mb;
 	char scbuf[MAXBLK];
 

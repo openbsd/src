@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.10 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: cache.c,v 1.11 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.10 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: cache.c,v 1.11 2002/10/16 17:43:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,8 +181,8 @@ grptb_start(void)
 char *
 name_uid(uid_t uid, int frc)
 {
-	register struct passwd *pw;
-	register UIDC *ptr;
+	struct passwd *pw;
+	UIDC *ptr;
 
 	if ((uidtb == NULL) && (uidtb_start() < 0))
 		return("");
@@ -247,8 +247,8 @@ name_uid(uid_t uid, int frc)
 char *
 name_gid(gid_t gid, int frc)
 {
-	register struct group *gr;
-	register GIDC *ptr;
+	struct group *gr;
+	GIDC *ptr;
 
 	if ((gidtb == NULL) && (gidtb_start() < 0))
 		return("");
@@ -312,9 +312,9 @@ name_gid(gid_t gid, int frc)
 int
 uid_name(char *name, uid_t *uid)
 {
-	register struct passwd *pw;
-	register UIDC *ptr;
-	register int namelen;
+	struct passwd *pw;
+	UIDC *ptr;
+	int namelen;
 
 	/*
 	 * return -1 for mangled names
@@ -375,9 +375,9 @@ uid_name(char *name, uid_t *uid)
 int
 gid_name(char *name, gid_t *gid)
 {
-	register struct group *gr;
-	register GIDC *ptr;
-	register int namelen;
+	struct group *gr;
+	GIDC *ptr;
+	int namelen;
 
 	/*
 	 * return -1 for mangled names

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.51 2002/09/06 18:17:30 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.52 2002/10/16 17:43:10 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.51 2002/09/06 18:17:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.52 2002/10/16 17:43:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,11 +77,11 @@ static void printflg(unsigned int);
 static int c_frmt(const void *, const void *);
 static off_t str_offt(char *);
 static char *getline(FILE *fp);
-static void pax_options(register int, register char **);
+static void pax_options(int, char **);
 static void pax_usage(void);
-static void tar_options(register int, register char **);
+static void tar_options(int, char **);
 static void tar_usage(void);
-static void cpio_options(register int, register char **);
+static void cpio_options(int, char **);
 static void cpio_usage(void);
 
 /* errors from getline */
@@ -154,7 +154,7 @@ int ford[] = {5, 4, 3, 2, 1, 0, -1 };
  */
 
 void
-options(register int argc, register char **argv)
+options(int argc, char **argv)
 {
 
 	/*
@@ -186,13 +186,13 @@ options(register int argc, register char **argv)
  */
 
 static void
-pax_options(register int argc, register char **argv)
+pax_options(int argc, char **argv)
 {
-	register int c;
-	register int i;
+	int c;
+	int i;
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
-	register char *pt;
+	char *pt;
 	FSUB tmp;
 
 	/*
@@ -584,9 +584,9 @@ pax_options(register int argc, register char **argv)
  */
 
 static void
-tar_options(register int argc, register char **argv)
+tar_options(int argc, char **argv)
 {
-	register int c;
+	int c;
 	int fstdin = 0;
 	int Oflag = 0;
 	int nincfiles = 0;
@@ -974,7 +974,7 @@ mkpath(path)
 	char *path;
 {
 	struct stat sb;
-	register char *slash;
+	char *slash;
 	int done = 0;
 
 	slash = path;
@@ -1009,9 +1009,9 @@ mkpath(path)
  */
 
 static void
-cpio_options(register int argc, register char **argv)
+cpio_options(int argc, char **argv)
 {
-	register int c, i;
+	int c, i;
 	char *str;
 	FSUB tmp;
 	FILE *fp;
@@ -1322,7 +1322,7 @@ opt_next(void)
 int
 bad_opt(void)
 {
-	register OPLIST *opt;
+	OPLIST *opt;
 
 	if (ophead == NULL)
 		return(0);
@@ -1346,12 +1346,12 @@ bad_opt(void)
  */
 
 int
-opt_add(register char *str)
+opt_add(char *str)
 {
-	register OPLIST *opt;
-	register char *frpt;
-	register char *pt;
-	register char *endpt;
+	OPLIST *opt;
+	char *frpt;
+	char *pt;
+	char *endpt;
 
 	if ((str == NULL) || (*str == '\0')) {
 		paxwarn(0, "Invalid option name");
