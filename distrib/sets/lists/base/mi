@@ -82,6 +82,7 @@
 ./sbin/modunload
 ./sbin/mount
 ./sbin/mount_ados
+./sbin/mount_afs
 ./sbin/mount_cd9660
 ./sbin/mount_ext2fs
 ./sbin/mount_fdesc
@@ -96,6 +97,7 @@
 ./sbin/mount_ufs
 ./sbin/mount_umap
 ./sbin/mount_union
+./sbin/mount_xfs
 ./sbin/mountd
 ./sbin/ncheck
 ./sbin/ncheck_ffs
