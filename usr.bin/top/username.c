@@ -1,4 +1,4 @@
-/*	$OpenBSD: username.c,v 1.7 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: username.c,v 1.8 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -75,8 +75,8 @@ static int get_user(uid_t);
 /* We depend on that for hash_table and YOUR compiler had BETTER do it! */
 struct hash_el hash_table[Table_size];
 
-void init_hash()
-
+void
+init_hash(void)
 {
     /*
      *  There used to be some steps we had to take to initialize things.
@@ -85,10 +85,8 @@ void init_hash()
      */
 }
 
-char *username(uid)
-
-uid_t uid;
-
+char *
+username(uid_t uid)
 {
     int hashindex;
 
@@ -101,10 +99,8 @@ uid_t uid;
     return(hash_table[hashindex].name);
 }
 
-uid_t userid(username)
-
-char *username;
-
+uid_t
+userid(char *username)
 {
     struct passwd *pwd;
 
@@ -124,12 +120,9 @@ char *username;
     return(pwd->pw_uid);
 }
 
-static int enter_user(uid, name, wecare)
-
-uid_t  uid;
-char *name;
-int wecare;		/* 1 = enter it always, 0 = nice to have */
-
+/* wecare: 1 = enter it always, 0 = nice to have */
+static int
+enter_user(uid_t uid, char *name, int wecare)
 {
     int hashindex;
 
@@ -161,10 +154,8 @@ int wecare;		/* 1 = enter it always, 0 = nice to have */
  * and cache any entries we pass over while looking.
  */
 
-static int get_user(uid)
-
-uid_t uid;
-
+static int
+get_user(uid_t uid)
 {
     struct passwd *pwd;
 

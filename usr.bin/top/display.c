@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.11 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.12 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -105,8 +105,8 @@ static int string_count();
 static void summary_format();
 static void line_update();
 
-int display_resize()
-
+int
+display_resize(void)
 {
     int display_lines;
 
@@ -142,10 +142,8 @@ int display_resize()
     return(smart_terminal ? display_lines : Largest);
 }
 
-int display_init(statics)
-
-struct statics *statics;
-
+int
+display_init(struct statics *statics)
 {
     int display_lines;
     char **pp;
@@ -190,11 +188,8 @@ struct statics *statics;
     return(display_lines);
 }
 
-void i_loadave(mpid, avenrun)
-
-pid_t mpid;
-double *avenrun;
-
+void
+i_loadave(pid_t mpid, double *avenrun)
 {
     int i;
 
@@ -218,11 +213,8 @@ double *avenrun;
     lmpid = mpid;
 }
 
-void u_loadave(mpid, avenrun)
-
-pid_t mpid;
-double *avenrun;
-
+void
+u_loadave(pid_t mpid, double *avenrun)
 {
     int i;
 
@@ -257,10 +249,8 @@ double *avenrun;
     }
 }
 
-void i_timeofday(tod)
-
-time_t *tod;
-
+void
+i_timeofday(time_t *tod)
 {
     /*
      *  Display the current time.
@@ -304,11 +294,8 @@ static char procstates_buffer[128];
  *		  lastline is valid
  */
 
-void i_procstates(total, brkdn)
-
-int total;
-int *brkdn;
-
+void
+i_procstates(int total, int *brkdn)
 {
     int i;
 
@@ -333,11 +320,8 @@ int *brkdn;
     memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
 }
 
-void u_procstates(total, brkdn)
-
-int total;
-int *brkdn;
-
+void
+u_procstates(int total, int *brkdn)
 {
     static char new[128];
     int i;
@@ -393,8 +377,8 @@ static int cpustates_column;
 
 /* cpustates_tag() calculates the correct tag to use to label the line */
 
-static char *cpustates_tag()
-
+static char *
+cpustates_tag(void)
 {
     char *use;
 
@@ -417,10 +401,8 @@ static char *cpustates_tag()
     return(use);
 }
 
-void i_cpustates(states)
-
-int *states;
-
+void
+i_cpustates(int *states)
 {
     int i = 0;
     int value;
@@ -451,10 +433,8 @@ int *states;
     memcpy(lcpustates, states, num_cpustates * sizeof(int));
 }
 
-void u_cpustates(states)
-
-int *states;
-
+void
+u_cpustates(int *states)
 {
     int value;
     char **names = cpustate_names;
@@ -498,8 +478,8 @@ int *states;
     }
 }
 
-void z_cpustates()
-
+void
+z_cpustates(void)
 {
     int i = 0;
     char **names = cpustate_names;
@@ -536,10 +516,8 @@ void z_cpustates()
 
 static char memory_buffer[MAX_COLS];
 
-void i_memory(stats)
-
-int *stats;
-
+void
+i_memory(int *stats)
 {
     if (fputs("\nMemory: ", stdout) == EOF)
 	exit(1);
@@ -551,10 +529,8 @@ int *stats;
 	exit(1);
 }
 
-void u_memory(stats)
-
-int *stats;
-
+void
+u_memory(int *stats)
 {
     static char new[MAX_COLS];
 
@@ -582,8 +558,8 @@ static int msglen = 0;
 /* Invariant: msglen is always the length of the message currently displayed
    on the screen (even when next_msg doesn't contain that message). */
 
-void i_message()
-
+void
+i_message(void)
 {
     while (lastline < y_message)
     {
@@ -604,8 +580,8 @@ void i_message()
     }
 }
 
-void u_message()
-
+void
+u_message(void)
 {
     i_message();
 }
@@ -618,10 +594,8 @@ static int header_length;
  *  Assumptions:  cursor is on the previous line and lastline is consistent
  */
 
-void i_header(text)
-
-char *text;
-
+void
+i_header(char *text)
 {
     header_length = strlen(text);
     if (header_status == ON)
@@ -639,10 +613,8 @@ char *text;
 }
 
 /*ARGSUSED*/
-void u_header(text)
-
-char *text;		/* ignored */
-
+void
+u_header(char *text)
 {
     if (header_status == ERASE)
     {
@@ -660,11 +632,8 @@ char *text;		/* ignored */
  *  Assumptions:  lastline is consistent
  */
 
-void i_process(line, thisline)
-
-int line;
-char *thisline;
-
+void
+i_process(int line, char *thisline)
 {
     char *p;
     char *base;
@@ -692,11 +661,8 @@ char *thisline;
     memset(p, 0, display_width - (p - base));
 }
 
-void u_process(linenum, linebuf)
-
-int linenum;
-char *linebuf;
-
+void
+u_process(int linenum, char *linebuf)
 {
     char *optr;
     int screen_line = linenum + Header_lines;
@@ -741,10 +707,8 @@ char *linebuf;
     }
 }
 
-void u_endscreen(hi)
-
-int hi;
-
+void
+u_endscreen(int hi)
 {
     int screen_line = hi + Header_lines;
     int i;
@@ -804,10 +768,8 @@ int hi;
     }
 }
 
-void display_header(t)
-
-int t;
-
+void
+display_header(int t)
 {
     if (t)
     {
@@ -820,12 +782,8 @@ int t;
 }
 
 /*VARARGS2*/
-void new_message(type, msgfmt, a1, a2, a3)
-
-int type;
-char *msgfmt;
-caddr_t a1, a2, a3;
-
+void
+new_message(int type, char *msgfmt, caddr_t a1, caddr_t a2, caddr_t a3)
 {
     int i;
 
@@ -869,8 +827,8 @@ caddr_t a1, a2, a3;
     }
 }
 
-void clear_message()
-
+void
+clear_message(void)
 {
     if (clear_eol(msglen) == 1)
     {
@@ -879,12 +837,8 @@ void clear_message()
     }
 }
 
-int readline(buffer, size, numeric)
-
-char *buffer;
-int  size;
-int  numeric;
-
+int
+readline(char *buffer, int size, int numeric)
 {
     char *ptr = buffer;
     char ch;
@@ -972,10 +926,8 @@ int  numeric;
 
 /* internal support routines */
 
-static int string_count(pp)
-
-char **pp;
-
+static int
+string_count(char **pp)
 {
     int cnt;
 
@@ -987,12 +939,8 @@ char **pp;
     return(cnt);
 }
 
-static void summary_format(str, numbers, names)
-
-char *str;
-int *numbers;
-char **names;
-
+static void
+summary_format(char *str, int *numbers, char **names)
 {
     char *p;
     int num;
@@ -1038,13 +986,8 @@ char **names;
     }
 }
 
-static void line_update(old, new, start, line)
-
-char *old;
-char *new;
-int start;
-int line;
-
+static void
+line_update(char *old, char *new, int start, int line)
 {
     int ch;
     int diff;
@@ -1168,10 +1111,8 @@ int line;
  *	to the original buffer is returned.
  */
 
-char *printable(str)
-
-char *str;
-
+char *
+printable(char *str)
 {
     char *ptr;
     char ch;

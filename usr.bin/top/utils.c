@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.8 2003/04/25 23:58:36 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.9 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -40,10 +40,8 @@
 
 #include "top.h"
 
-int atoiwi(str)
-
-char *str;
-
+int
+atoiwi(char *str)
 {
     int len;
 
@@ -81,10 +79,8 @@ char *str;
 				 * digits.
 				 */
 
-char *itoa(val)
-
-int val;
-
+char *
+itoa(int val)
 {
     char *ptr;
     static char buffer[16];	/* result is built here */
@@ -112,10 +108,8 @@ int val;
  *	a front end to a more general routine for efficiency.
  */
 
-char *itoa7(val)
-
-int val;
-
+char *
+itoa7(int val)
 {
     char *ptr;
     static char buffer[25];	/* result is built here */
@@ -143,10 +137,8 @@ int val;
  *	positive numbers.  If val <= 0 then digits(val) == 0.
  */
 
-int digits(val)
-
-int val;
-
+int
+digits(int val)
 {
     int cnt = 0;
 
@@ -163,11 +155,8 @@ int val;
  *	to the END of the string "to".
  */
 
-char *strecpy(to, from)
-
-char *to;
-char *from;
-
+char *
+strecpy(char *to, char *from)
 {
     while ((*to++ = *from++) != '\0');
     return(--to);
@@ -177,11 +166,8 @@ char *from;
  * string_index(string, array) - find string in array and return index
  */
 
-int string_index(string, array)
-
-char *string;
-char **array;
-
+int
+string_index(char *string, char **array)
 {
     int i = 0;
 
@@ -204,11 +190,8 @@ char **array;
  *	squat about quotes.
  */
 
-char **argparse(line, cntp)
-
-char *line;
-int *cntp;
-
+char **
+argparse(char *line, int *cntp)
 {
     char *from;
     char *to;
@@ -289,14 +272,8 @@ int *cntp;
  *	useful on BSD mchines for calculating cpu state percentages.
  */
 
-int percentages(cnt, out, new, old, diffs)
-
-int cnt;
-int *out;
-long *new;
-long *old;
-long *diffs;
-
+int
+percentages(int cnt, int *out, long *new, long *old, long *diffs)
 {
     int i;
     long change;
@@ -353,10 +330,8 @@ long *diffs;
    exceed 9999.9, we use "???".
  */
 
-char *format_time(seconds)
-
-time_t seconds;
-
+char *
+format_time(time_t seconds)
 {
     static char result[10];
 
@@ -412,10 +387,8 @@ time_t seconds;
 
 #define NUM_STRINGS 8
 
-char *format_k(amt)
-
-int amt;
-
+char *
+format_k(int amt)
 {
     static char retarray[NUM_STRINGS][16];
     static int index = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.18 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.19 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -116,11 +116,8 @@ void (*d_header)() = i_header;
 void (*d_process)() = i_process;
 
 
-int main(argc, argv)
-
-int  argc;
-char *argv[];
-
+int
+main(int argc, char *argv[])
 {
     int i;
     int active_procs;
@@ -953,8 +950,8 @@ restart:
  *	screen will get redrawn.
  */
 
-static void reset_display()
-
+static void
+reset_display(void)
 {
     d_loadave    = i_loadave;
     d_procstates = i_procstates;
@@ -969,46 +966,36 @@ static void reset_display()
  *  signal handlers
  */
 
-void leave(unused)	/* exit under normal conditions -- INT handler */
-
-int unused;
-
+void
+leave(int unused)	/* exit under normal conditions -- INT handler */
 {
     leaveflag = 1;
 }
 
-void tstop(i)	/* SIGTSTP handler */
-
-int i;
-
+void
+tstop(int i)	/* SIGTSTP handler */
 {
     tstopflag = 1;
 }
 
 #ifdef SIGWINCH
-void winch(i)		/* SIGWINCH handler */
-
-int i;
-
+void
+winch(int i)		/* SIGWINCH handler */
 {
     winchflag = 1;
 }
 #endif
 
-void quit(status)		/* exit under duress */
-
-int status;
-
+void
+quit(int status)		/* exit under duress */
 {
     end_screen();
     exit(status);
     /*NOTREACHED*/
 }
 
-void onalrm(unused)	/* SIGALRM handler */
-
-int unused;
-
+void
+onalrm(int unused)	/* SIGALRM handler */
 {
     /* this is only used in batch mode to break out of the pause() */
     /* return; */

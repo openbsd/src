@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.7 2003/04/06 20:39:20 tdeval Exp $	*/
+/*	$OpenBSD: commands.c,v 1.8 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -66,8 +66,7 @@ static int err_compar(const void *, const void *);
  */
 
 void
-show_help()
-
+show_help(void)
 {
     printf("Top version %s, %s\n", version_string(), copyright);
     fputs("\n\n\
@@ -112,10 +111,8 @@ u       - display processes for only one user (+ selects all users)\n\
  *  Utility routines that help with some of the commands.
  */
 
-static char *next_field(str)
-
-char *str;
-
+static char *
+next_field(char *str)
 {
     if ((str = strchr(str, ' ')) == NULL)
     {
@@ -126,14 +123,10 @@ char *str;
 
     /* if there is nothing left of the string, return NULL */
     /* This fix is dedicated to Greg Earle */
-    return(*str == '\0' ? NULL : str);
+    return (*str == '\0' ? NULL : str);
 }
 
-static int scanint(str, intp)
-
-char *str;
-int  *intp;
-
+static int scanint(char *str, int *intp)
 {
     int val = 0;
     char ch;
@@ -208,8 +201,8 @@ static char *err_listem =
 
 #define STRMAX 80
 
-static char *err_string()
-
+static char *
+err_string(void)
 {
     struct errs *errp;
     int  cnt = 0;
@@ -270,19 +263,17 @@ static char *err_string()
  *	the string "str".
  */
 
-static size_t str_adderr(str, len, err)
-
-char *str;
-size_t len;
-int err;
-
+static size_t
+str_adderr(char *str, size_t len, int err)
 {
     char *msg;
     size_t msglen;
 
     msg = err == 0 ? "Not a number" : strerror(err);
+
     if ((msglen = strlcat(str, ": ", len)) >= len)
 	return(msglen);
+
     return(strlcat(str, msg, len));
 }
 
@@ -292,13 +283,8 @@ int err;
  *	is set (indicating that a comma should NOT be added to the front).
  */
 
-static size_t str_addarg(str, len, arg, first)
-
-char *str;
-size_t len;
-char *arg;
-int  first;
-
+static size_t
+str_addarg(char *str, size_t len, char *arg, int first)
 {
     size_t msglen;
 
@@ -307,7 +293,8 @@ int  first;
 	if ((msglen = strlcat(str, ", ", len)) >= len)
 	    return(msglen);
     }
-    return(strlcat(str, arg, len));
+
+    return (strlcat(str, arg, len));
 }
 
 /*
@@ -315,10 +302,8 @@ int  first;
  *	for sorting errors.
  */
 
-static int err_compar(e1, e2)
-
-const void *e1, *e2;
-
+static int
+err_compar(const void *e1, const void *e2)
 {
     const struct errs *p1 = (struct errs *)e1;
     const struct errs *p2 = (struct errs *)e2;
@@ -335,8 +320,8 @@ const void *e1, *e2;
  *  error_count() - return the number of errors currently logged.
  */
 
-int error_count()
-
+int
+error_count(void)
 {
     return(errcnt);
 }
@@ -345,8 +330,8 @@ int error_count()
  *  show_errors() - display on stdout the current log of errors.
  */
 
-void show_errors()
-
+void
+show_errors(void)
 {
     int cnt = 0;
     struct errs *errp = errs;
@@ -365,10 +350,8 @@ void show_errors()
  *		command does; invoked in response to 'k'.
  */
 
-char *kill_procs(str)
-
-char *str;
-
+char *
+kill_procs(char *str)
 {
     char *nptr;
     int signum = SIGTERM;	/* default */
@@ -455,10 +438,8 @@ char *str;
  *		"renice" command does; invoked in response to 'r'.
  */
 
-char *renice_procs(str)
-
-char *str;
-
+char *
+renice_procs(char *str)
 {
     char negate;
     int prio;
@@ -520,4 +501,3 @@ char *str;
     /* return appropriate error string */
     return(err_string());
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.h,v 1.4 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: display.h,v 1.5 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -55,7 +55,7 @@ extern void i_process(int, char *);
 extern void u_process(int, char *);
 extern void u_endscreen(int);
 extern void display_header(int);
-extern void new_message();	/* XXX */
+extern void new_message(); /* XXX */
 extern void clear_message(void);
 extern int readline(char *, int, int);
 extern char *printable(char *);

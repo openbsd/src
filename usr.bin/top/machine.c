@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.28 2002/07/02 03:05:47 tholo Exp $	*/
+/*	$OpenBSD: machine.c,v 1.29 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -170,7 +170,7 @@ static int pageshift;		/* log base 2 of the pagesize */
 int maxslp;
 
 int
-getstathz()
+getstathz(void)
 {
 	struct clockinfo cinf;
 	size_t  size = sizeof(cinf);
@@ -184,8 +184,7 @@ getstathz()
 }
 
 int
-machine_init(statics)
-	struct statics *statics;
+machine_init(struct statics *statics)
 {
 	int pagesize;
 
@@ -221,8 +220,7 @@ machine_init(statics)
 }
 
 char *
-format_header(uname_field)
-	char   *uname_field;
+format_header(char *uname_field)
 {
 	char *ptr;
 
@@ -293,9 +291,7 @@ get_system_info(si)
 static struct handle handle;
 
 struct kinfo_proc *
-getprocs(op, arg, cnt)
-	int op, arg;
-	int *cnt;
+getprocs(int op, int arg, int *cnt)
 {
 	size_t size = sizeof(int);
 	int mib[4] = {CTL_KERN, KERN_PROC, op, arg};
@@ -336,11 +332,8 @@ getprocs(op, arg, cnt)
 }
 
 caddr_t 
-get_process_info(si, sel, compare)
-	struct system_info *si;
-	struct process_select *sel;
-	int (*compare)(const void *, const void *);
-
+get_process_info(struct system_info *si, struct process_select *sel,
+    int (*compare)(const void *, const void *))
 {
 	int show_idle, show_system, show_uid, show_command;
 	int total_procs, active_procs, i;
@@ -409,10 +402,7 @@ get_process_info(si, sel, compare)
 char    fmt[MAX_COLS];		/* static area where result is built */
 
 char *
-format_next_process(handle, get_userid)
-	caddr_t handle;
-	char *(*get_userid)();
-
+format_next_process(caddr_t handle, char *(*get_userid)())
 {
 	char waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
 	struct kinfo_proc *pp;
@@ -520,8 +510,7 @@ static unsigned char sorted_state[] =
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 int
-compare_cpu(v1, v2)
-	const void *v1, *v2;
+compare_cpu(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
@@ -546,8 +535,7 @@ compare_cpu(v1, v2)
 
 /* compare_size - the comparison function for sorting by total memory usage */
 int
-compare_size(v1, v2)
-	const void *v1, *v2;
+compare_size(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
@@ -572,8 +560,7 @@ compare_size(v1, v2)
 
 /* compare_res - the comparison function for sorting by resident set size */
 int
-compare_res(v1, v2)
-	const void *v1, *v2;
+compare_res(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
@@ -598,8 +585,7 @@ compare_res(v1, v2)
 
 /* compare_time - the comparison function for sorting by CPU time */
 int
-compare_time(v1, v2)
-	const void *v1, *v2;
+compare_time(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
@@ -624,8 +610,7 @@ compare_time(v1, v2)
 
 /* compare_prio - the comparison function for sorting by CPU time */
 int
-compare_prio(v1, v2)
-	const void *v1, *v2;
+compare_prio(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
@@ -668,8 +653,7 @@ int     (*proc_compares[]) () = {
  *  	reflects this ordering.
  */
 int
-proc_compare(v1, v2)
-	const void *v1, *v2;
+proc_compare(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
@@ -720,8 +704,7 @@ proc_compare(v1, v2)
  *		and "renice" commands.
  */
 int 
-proc_owner(pid)
-	pid_t   pid;
+proc_owner(pid_t pid)
 {
 	struct kinfo_proc **prefp, *pp;
 	int cnt;
@@ -742,9 +725,7 @@ proc_owner(pid)
  * to be based on the new swapctl(2) system call.
  */
 static int
-swapmode(used, total)
-	int    *used;
-	int    *total;
+swapmode(int *used, int *total)
 {
 	int     nswap, rnswap, i;
 	struct swapent *swdev;

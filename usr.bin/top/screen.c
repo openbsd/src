@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.8 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: screen.c,v 1.9 2003/06/12 22:30:23 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -77,10 +77,8 @@ static struct termios new_settings;
 
 static char is_a_terminal = No;
 
-void init_termcap(interactive)
-
-int interactive;
-
+void
+init_termcap(int interactive)
 {
     char *bufptr;
     char *PCptr;
@@ -201,8 +199,8 @@ int interactive;
     }
 }
 
-void init_screen()
-
+void
+init_screen(void)
 {
     /* get the old settings for safe keeping */
     if (tcgetattr(STDOUT_FILENO, &old_settings) != -1)
@@ -235,8 +233,8 @@ void init_screen()
     }
 }
 
-void end_screen()
-
+void
+end_screen(void)
 {
     /* move to the lower left, clear the line and send "te" */
     if (smart_terminal)
@@ -254,8 +252,8 @@ void end_screen()
     }
 }
 
-void reinit_screen()
-
+void
+reinit_screen(void)
 {
     /* install our settings if it is a terminal */
     if (is_a_terminal)
@@ -270,8 +268,8 @@ void reinit_screen()
     }
 }
 
-void get_screensize()
-
+void
+get_screensize(void)
 {
     struct winsize ws;
 
@@ -292,10 +290,8 @@ void get_screensize()
     lower_left[sizeof(lower_left) -1] = 0;
 }
 
-void standout(msg)
-
-char *msg;
-
+void
+standout(char *msg)
 {
     if (smart_terminal)
     {
@@ -320,10 +316,8 @@ void clear()
     }
 }
 
-int clear_eol(len)
-
-int len;
-
+int
+clear_eol(int len)
 {
     if (smart_terminal && !overstrike && len > 0)
     {
@@ -345,8 +339,8 @@ int len;
     return(-1);
 }
 
-void go_home()
-
+void
+go_home(void)
 {
     if (smart_terminal)
     {
@@ -356,10 +350,8 @@ void go_home()
 
 /* This has to be defined as a subroutine for tputs (instead of a macro) */
 
-int putstdout(ch)
-
-int ch;
-
+int
+putstdout(int ch)
 {
     int ret;
 
@@ -368,4 +360,3 @@ int ch;
 	exit(1);
     return (ret);
 }
-
