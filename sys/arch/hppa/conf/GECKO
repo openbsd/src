@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.1 1998/12/04 01:32:44 mickey Exp $
+#	$OpenBSD: GECKO,v 1.2 1998/12/29 22:53:49 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -35,12 +35,24 @@ cpu0	at mainbus0
 pdc0	at mainbus0
 
 sti*	at mainbus0	# STI graphics
+wscons*	at sti?
 
 lasi*	at mainbus0	# LASI host adapter (LSI ???)
 gsc*	at lasi?	# internal i/o space
 
-siop*	at gsc?		# NCR 53C710
+com0	at gsc? irq 5	# serial ports
+com1	at gsc?	irq 6	# serial ports
+lpt*	at gsc?	irq 7	# LPT centronics iface
+ie*	at gsc?	irq 8	# 82C596 ether
+siop*	at gsc?	irq 9	# NCR 53C710
 scsibus* at siop?
+#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4216)
+#pcppi*	at gsc? irq 27	# PS/2 kbd and mouse
+#pckbd*	at pcppi?	# PS/2 keyboard
+#pms*	at pcppi?	# PS/2 mouse
+fdc0	at gsc?	irq ?	# PC floppy controller (WD37C65C)
+option	FD_DEBUG
+fd0	at fdc0	drive 0	# floppy drives
 
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
@@ -48,14 +60,4 @@ cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 ss*	at scsibus? target ? lun ?
 uk*	at scsibus? target ? lun ?
-
-ie*	at gsc?		# 82C596 ether
-com*	at gsc?		# serial ports
-lpt*	at gsc?		# LPT centronics iface
-#atwo*	at gsc?		# Audio Type 2 (CS4216)
-#pckbd*	at gsc?		# PC keyboard
-#pms*	at gsc?		# PC mouse
-fdc0	at gsc?		# PC floppy controller (WD37C65C)
-option	FD_DEBUG
-fd0	at fdc0	drive 0	# floppy drives
 
