@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2001/03/22 23:42:52 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/04/01 06:13:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -163,8 +163,7 @@ trap(type, frame)
 	union sigval sv;
 	int s, si;
 	const char *tts;
-extern db_regs_t ddb_regs;
-ddb_regs = *frame;
+
 	opcode = frame->tf_iir;
 	if (type == T_ITLBMISS || type == T_ITLBMISSNA) {
 		va = frame->tf_iioq_head;
