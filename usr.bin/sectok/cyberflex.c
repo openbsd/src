@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.11 2001/07/20 15:52:54 rees Exp $ */
+/* $Id: cyberflex.c,v 1.12 2001/07/26 16:10:01 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -55,6 +55,8 @@ such damages.
 #define NUM_RSA_KEY_ELEMENTS 5
 #define RSA_BIT_LEN 1024
 #define KEY_FILE_HEADER_SIZE 8
+
+#define myisprint(x) ((x) >= '!' && (x) <= 'z')
 
 static unsigned char key_fid[] = {0x00, 0x11};
 static unsigned char DFLTATR[] = {0x81, 0x10, 0x06, 0x01};
@@ -197,7 +199,7 @@ int jatr(int ac, char *av[])
     buf[n++] = 0x94;		/* TA1 */
     buf[n++] = 0x40;		/* TD1 */
     buf[n++] = 0x28;		/* TC2 (WWT=4sec) */
-    if (ac > optind) {
+    if (ac > 1) {
 	/* set historical bytes from command line */
 	n += sectok_parse_input(av[1], &buf[n], 15);
     } else {
@@ -226,6 +228,12 @@ int jdata(int ac, char *av[])
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
+
+    cla = cyberflex_inq_class(fd);
+    if (cla < 0) {
+	printf("can't determine Cyberflex application class\n");
+	return -1;
+    }
 
     sectok_apdu(fd, cla, 0xca, 0, 1, 0, NULL, 0x16, buf, &sw);
     if (sectok_swOK(sw)) {
@@ -315,11 +323,30 @@ print_acl(int isdir, unsigned char *acl)
     }
 }
 
+void
+sectok_fmt_aidname(char *aidname, int aidlen, unsigned char *aid)
+{
+    int i, istext = 1;
+
+    for (i = 0; i < aidlen; i++)
+	if (!myisprint(aid[i])) {
+	    istext = 0;
+	    break;
+	}
+    if (istext) {
+	memmove(aidname, aid, aidlen);
+	aidname[aidlen] = '\0';
+    } else {
+	for (i = 0; i < aidlen; i++)
+	    sprintf(&aidname[i * 2], "%02x", aid[i]);
+    }
+}
+
 int ls(int ac, char *av[])
 {
-    int i, p2, f0, f1, lflag = 0, sw;
+    int i, p2, f0, f1, lflag = 0, buflen, sw;
     int isdir, fsize;
-    char ftype[32], fname[6];
+    char ftype[32], fname[6], aidname[34];
     unsigned char buf[JDIRSIZE];
 
     optind = optreset = 1;
@@ -336,7 +363,7 @@ int ls(int ac, char *av[])
 	return -1;
 
     for (p2 = 0; ; p2++) {
-	sectok_apdu(fd, cla, 0xa8, 0, p2, 0, NULL, JDIRSIZE, buf, &sw);
+	buflen = sectok_apdu(fd, cla, 0xa8, 0, p2, 0, NULL, JDIRSIZE, buf, &sw);
 	if (!sectok_swOK(sw))
 	    break;
 	f0 = buf[4];
@@ -352,15 +379,21 @@ int ls(int ac, char *av[])
 
 	/* Format file type */
 	isdir = 0;
+	aidname[0] = '\0';
 	if (buf[6] == 1) {
 	    /* root */
 	    sprintf(ftype, "root");
 	    isdir = 1;
 	} else if (buf[6] == 2) {
 	    /* DF */
-	    if (buf[12] == 27)
+	    if (buf[12] == 27) {
+		/* application */
 		sprintf(ftype, "%s %s", appstat[buf[10]], apptype[buf[9]]);
-	    else
+		if (buflen > 23 && buf[23]) {
+		    aidname[0] = ' ';
+		    sectok_fmt_aidname(&aidname[1], buf[23], &buf[24]);
+		}
+	    } else
 		sprintf(ftype, "directory");
 	    isdir = 1;
 	} else if (buf[6] == 4) {
@@ -371,7 +404,7 @@ int ls(int ac, char *av[])
 	if (!lflag)
 	    printf("%-4s\n", fname);
 	else
-	    printf("%-4s %5d %s\n", fname, fsize, ftype);
+	    printf("%-4s %5d %s%s\n", fname, fsize, ftype, aidname);
     }
     return 0;
 }
@@ -509,8 +542,6 @@ void load_default_options()
 {
     memmove(progID, "ww", 2);
     memmove(contID, "wx", 2);
-    cont_size = 1152;
-    inst_size = 1024;
     memset(aid, 'w', sizeof aid);
     aid_len = 5;
 }
@@ -525,6 +556,8 @@ int jload(int ac, char *av[])
     des_key_schedule schedule;
 
     load_default_options();
+    cont_size = 1152;
+    inst_size = 1024;
 
     optind = optreset = 1;
 
@@ -778,73 +811,6 @@ int junload(int ac, char *av[])
     /* delete data container */
     if (cyberflex_delete_file(fd, cla, contID, &sw) < 0)
 	printf("delete_file %s: %s\n", contname, sectok_get_sw(sw));
-
-    return 0;
-}
-
-int jselect(int ac, char *av[])
-{
-    int i, vflag = 0, sw;
-
-    load_default_options();
-
-    optind = optreset = 1;
-
-    while ((i = getopt(ac, av, "dp:c:s:i:a:v")) != -1) {
-	switch (i) {
-	case 'd':
-	    aid_len = 0;
-	    break;
-	case 'p':
-	    sectok_parse_input(optarg, progID, 2);
-	    break;
-	case 'c':
-	    sectok_parse_input(optarg, contID, 2);
-	    break;
-	case 's':
-	    sscanf(optarg, "%d", &cont_size);
-	    break;
-	case 'i':
-	    sscanf(optarg, "%d", &inst_size);
-	    break;
-	case 'a':
-	    aid_len = sectok_parse_input(optarg, aid, sizeof aid);
-	    break;
-	case 'v':
-	    vflag = 1;
-	    break;
-	default:
-	    printf ("unknown option.  command aborted.\n");
-	    return -1;
-	}
-    }
-
-    if (fd < 0 && reset(0, NULL) < 0)
-	return -1;
-
-    if (vflag && aid_len) {
-	printf ("select applet\n");
-	printf ("AID                     ");
-	for (i = 0 ; i < aid_len ; i ++ )
-	    printf ("%02x", (int) aid[i]);
-	printf ("\n");
-    }
-
-    sectok_apdu(fd, cla, 0xa4, 0x04, 0, aid_len, aid, 0, NULL, &sw);
-    if (!sectok_swOK(sw)) {
-	/* even with F0 card, select applet APDU (00 a4 04)
-	   only accepts class byte 00 (not f0) */
-	sectok_apdu(fd, 0, 0xa4, 0x04, 0, aid_len, aid, 0, NULL, &sw);
-    }
-    if (!sectok_swOK(sw)) {
-	/* error */
-	printf ("selecting the cardlet: ");
-	for (i = 0 ; i < aid_len ; i ++ )
-	    printf ("%02x", aid[i]);
-	printf("\n");
-	sectok_print_sw(sw);
-	return -1;
-    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.11 2001/07/20 15:52:54 rees Exp $ */
+/* $Id: cmds.c,v 1.12 2001/07/26 16:10:01 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -60,7 +60,7 @@ struct {
 
     /* 7816-4 commands */
     { "apdu", "[ -c class ] ins p1 p2 p3 data ...", apdu },
-    { "fid", "[ -v ] fid", selfid },
+    { "fid", "[ -v ] fid/aid", selfid },
     { "isearch", "", isearch },
     { "class", "[ class ]", class },
     { "read", "[ -x ] filesize", dread },
@@ -78,7 +78,6 @@ struct {
     { "jaut", "", jaut },
     { "jload", "[ -p progID ] [ -c contID ] [ -s cont_size ] [ -i inst_size ] [ -a aid ] [ -v ] filename", jload },
     { "junload", "[ -p progID ] [ -c contID ]", junload },
-    { "jselect", "[ -a aid ] [ -d ]", jselect },
     { "setpass", "[ -d ] [ -x hex-aut0 ]", jsetpass },
     { NULL, NULL, NULL }
 };
@@ -133,13 +132,13 @@ int reset(int ac, char *av[])
 
     optind = optreset = 1;
 
-    while ((i = getopt(ac, av, "1234ivf")) != -1) {
+    while ((i = getopt(ac, av, "0123ivf")) != -1) {
 	switch (i) {
+	case '0':
 	case '1':
 	case '2':
 	case '3':
-	case '4':
-	    port = i - '1';
+	    port = i - '0';
 	    break;
 	case 'i':
 	    oflags |= STONOWAIT;
@@ -234,32 +233,54 @@ int apdu(int ac, char *av[])
 
 int selfid(int ac, char *av[])
 {
-    unsigned char fid[2], obuf[256];
-    int i, n, olen = 0, sw;
+    unsigned char fid[16], obuf[256];
+    char *fname;
+    int i, n, sel, fidlen, olen = 0, sw;
 
     optind = optreset = 1;
 
     while ((i = getopt(ac, av, "v")) != -1) {
 	switch (i) {
 	case 'v':
-	    olen = sizeof obuf;
+	    olen = 256;
 	    break;
 	}
     }
 
-    if (ac - optind != 1) {
-	printf("usage: f [ -v ] fid\n");
-	return -1;
+    if (ac - optind == 0) {
+	/* No fid/aid given; select null aid (default loader for Cyberflex) */
+	sel = 4;
+	fidlen = 0;
+    } else {
+	fname = av[optind++];
+	if (!strcmp(fname, "..")) {
+	    /* Special case ".." means parent */
+	    sel = 3;
+	    fidlen = 0;
+	} else if (strlen(fname) < 5) {
+	    /* fid */
+	    sel = 0;
+	    fidlen = 2;
+	    sectok_parse_fname(fname, fid);
+	} else {
+	    /* aid */
+	    sel = 4;
+	    fidlen = sectok_parse_input(fname, fid, sizeof fid);
+	}
     }
-    sectok_parse_fname(av[optind++], fid);
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
-    n = sectok_apdu(fd, cla, 0xa4, 0, 0, 2, fid, olen, obuf, &sw);
+    n = sectok_apdu(fd, cla, 0xa4, sel, 0, fidlen, fid, olen, obuf, &sw);
     if (!sectok_swOK(sw)) {
 	printf("Select %02x%02x: %s\n", fid[0], fid[1], sectok_get_sw(sw));
 	return -1;
+    }
+
+    if (olen && !n && sectok_r1(sw) == 0x61 && sectok_r2(sw)) {
+	/* The card has out data but we must explicitly ask for it */
+	n = sectok_apdu(fd, cla, 0xc0, 0, 0, 0, NULL, sectok_r2(sw), obuf, &sw);
     }
 
     if (olen)
