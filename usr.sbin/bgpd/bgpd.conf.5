@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.27 2004/05/23 23:05:31 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.28 2004/05/24 08:45:04 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -210,13 +210,13 @@ the route selection process is turned off.
 The default is
 .Em no .
 .It Ar router-id
-Set the router id to the given IP address which must be local to the
+Set the router ID to the given IP address which must be local to the
 machine.
 .Bd -literal -offset indent
 router-id 10.0.0.1
 .Ed
 .Pp
-If not given the bgp id is determined as the biggest IP address assigned
+If not given, the bgp ID is determined as the biggest IP address assigned
 to the local machine.
 .El
 .Sh NEIGHBORS AND GROUPS
@@ -417,7 +417,7 @@ Do not attempt to actively open a TCP connection to the neighbor system.
 Set the AS number of the remote system.
 .It Ar route-reflector
 Act as an RFC 2796 route-reflector for this neighbor.
-An optional cluster id can be specified; otherwise the bgp id will be used.
+An optional cluster ID can be specified; otherwise the bgp ID will be used.
 .It Ar set
 Set the
 .Em AS path attributes
