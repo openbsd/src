@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.19 2000/01/22 12:00:42 aaron Exp $
+.\"	$OpenBSD: mktemp.3,v 1.20 2000/01/27 04:42:48 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,8 +184,8 @@ For
 there is an obvious race between file name selection and file
 creation and deletion: the program is typically written to call
 .Xr tmpnam 3 ,
-.Xr tempnam 3 , or Ns
-.Fn mktemp .
+.Xr tempnam 3 , or
+.Ns Fn mktemp .
 Subsequently, the program calls
 .Xr open 2
 or
