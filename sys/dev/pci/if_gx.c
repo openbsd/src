@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gx.c,v 1.4 2002/04/26 04:36:38 nate Exp $ */
+/* $OpenBSD: if_gx.c,v 1.5 2002/04/28 20:46:38 nate Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -1710,7 +1710,6 @@ gx_encap(struct gx_softc *gx, struct mbuf *m_head)
 #ifdef notyet
 	struct gx_tx_desc_ctx *tctx;
 #endif
-	struct mbuf *m;
 	bus_dmamap_t txmap;
 	int i = 0;
 	int idx, cnt, /*csumopts, */ txcontext;
@@ -1784,10 +1783,7 @@ context_done:
 	if (bus_dmamap_load_mbuf(gx->gx_dmatag, txmap, m_head, BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
-	for (m = m_head; m != NULL; m = m->m_next) {
-		if (m->m_len == 0)
-			continue;
-
+	for (i = 0; i < txmap->dm_nsegs; i++) {
 		if (cnt == GX_TX_RING_CNT) {
 			printf("%s: overflow(2): %d, %d\n", cnt,
 			       GX_TX_RING_CNT, gx->gx_dev.dv_xname);
@@ -1795,9 +1791,9 @@ context_done:
 		}
 
 		tx = (struct gx_tx_desc_data *)&gx->gx_rdata->gx_tx_ring[idx];
-		tx->tx_addr = txmap->dm_segs[i++].ds_addr;
+		tx->tx_addr = txmap->dm_segs[i].ds_addr;
 		tx->tx_status = 0;
-		tx->tx_len = m->m_len;
+		tx->tx_len = txmap->dm_segs[i].ds_len;
 #ifdef notyet
 		if (gx->arpcom.ac_if.if_hwassist) {
 			tx->tx_type = 1;
