@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: infocmp.1tbl,v 1.1 1999/01/22 04:51:31 millert Exp $
+.\" $OpenBSD: infocmp.1tbl,v 1.2 1999/01/22 04:56:00 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -327,10 +327,8 @@ options are not supported in SVr4 curses.
 The \fB-r\fR option's notion of `termcap' capabilities is System V Release 4's.
 Actual BSD curses versions will have a more restricted set.  To see only the
 4.4BSD set, use -r -RBSD.
-.SH BUGS
-The -F option of \fBinfocmp\fR(1) should be a \fBtoe\fR(1) mode.
 .SH SEE ALSO
-\fBcaptoinfo\fR(1), \fBtic\fR(1), \fBtoe\fR(1),
+\fBcaptoinfo\fR(1), \fBtic\fR(1),
 \fBcurses\fR(3), \fBterminfo\fR(\*n).
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com>
