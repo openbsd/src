@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.14 2001/05/12 19:12:44 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.15 2001/05/12 21:01:53 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -668,7 +668,6 @@ pci_intr_fixup(sc, pc, iot)
 	struct pcibios_pir_header *pirh = &pcibios_pir_header;
 	const struct pciintr_icu_table *piit = NULL;
 	pcitag_t icutag;
-	pcireg_t icuid;
 
 	/*
 	 * Attempt to initialize our PCI interrupt router.  If
@@ -676,22 +675,33 @@ pci_intr_fixup(sc, pc, iot)
 	 * specified by the PIR Table, and use the compat ID,
 	 * if present.  Otherwise, we have to look for the router
 	 * ourselves (the PCI-ISA bridge).
+	 *
+	 * A number of buggy BIOS implementations leave the router
+	 * entry as 000:00:0, which is typically not the correct
+	 * device/function.  If the router device address is set to
+	 * this value, and the compatible router entry is undefined
+	 * (zero is the correct value to indicate undefined), then we
+	 * work on the basis it is most likely an error, and search
+	 * the entire device-space of bus 0 (but obviously starting
+	 * with 000:00:0, in case that really is the right one).
 	 */
-	if (pirh->signature != 0) {
-		icutag = pci_make_tag(pc, pirh->router_bus,
-		    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
-		    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc));
-		icuid = pirh->compat_router;
-		if (icuid == 0 ||
-		    (piit = pciintr_icu_lookup(icuid)) == NULL) {
+	if (pirh->signature != 0 && (pirh->router_bus != 0 ||
+	    pirh->router_devfunc != 0 || pirh->compat_router != 0)) {
+
+		if (pirh->compat_router == 0 ||
+		    (piit = pciintr_icu_lookup(pirh->compat_router)) == NULL) {
 			/*
 			 * No compat ID, or don't know the compat ID?  Read
 			 * it from the configuration header.
 			 */
-			icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
+			pirh->compat_router = pci_conf_read(pc,
+			    pci_make_tag(pc, pirh->router_bus,
+			    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
+			    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc)),
+			    PCI_ID_REG);
 		}
 		if (piit == NULL)
-			piit = pciintr_icu_lookup(icuid);
+			piit = pciintr_icu_lookup(pirh->compat_router);
 	} else {
 		int device, maxdevs = pci_bus_maxdevs(pc, 0);
 
@@ -700,6 +710,11 @@ pci_intr_fixup(sc, pc, iot)
 		 * router.
 		 */
 		for (device = 0; device < maxdevs; device++) {
+			const struct pci_quirkdata *qd;
+			int function, nfuncs;
+			pcireg_t icuid;
+			pcireg_t bhlcr;
+
 			icutag = pci_make_tag(pc, 0, device, 0);
 			icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
 
@@ -710,21 +725,47 @@ pci_intr_fixup(sc, pc, iot)
 			if (PCI_VENDOR(icuid) == 0)
 				continue;
 
-			if ((piit = pciintr_icu_lookup(icuid))) {
-				pirh->compat_router = icuid;
-				pirh->router_bus = 0;
-				pirh->router_devfunc =
-				    PIR_DEVFUNC_COMPOSE(device, 0);
-				break;
+			qd = pci_lookup_quirkdata(PCI_VENDOR(icuid),
+			    PCI_PRODUCT(icuid));
+
+			bhlcr = pci_conf_read(pc, icutag, PCI_BHLC_REG);
+			if (PCI_HDRTYPE_MULTIFN(bhlcr) || (qd != NULL &&
+			    (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+				nfuncs = 8;
+			else
+				nfuncs = 1;
+
+			for (function = 0; function < nfuncs; function++) {
+				icutag = pci_make_tag(pc, 0, device, function);
+				icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
+
+				/* Invalid vendor ID value? */
+				if (PCI_VENDOR(icuid) == PCI_VENDOR_INVALID)
+					continue;
+				/* Not invalid, but we've done this ~forever. */
+				if (PCI_VENDOR(icuid) == 0)
+					continue;
+
+				if ((piit = pciintr_icu_lookup(icuid))) {
+					pirh->compat_router = icuid;
+					pirh->router_bus = 0;
+					pirh->router_devfunc =
+					    PIR_DEVFUNC_COMPOSE(device, 0);
+					break;
+				}
 			}
+
+			if (piit != NULL)
+				break;
 		}
 	}
 
 	if (piit == NULL) {
 		printf("%s: no compatible PCI ICU found", sc->sc_dev.dv_xname);
-		if (pirh->signature != 0 && icuid != 0)
+		if (pirh->signature != 0 && pirh->compat_router != 0)
 			printf(": ICU vendor 0x%04x product 0x%04x",
-			    PCI_VENDOR(icuid), PCI_PRODUCT(icuid));
+			    PCI_VENDOR(pirh->compat_router),
+			    PCI_PRODUCT(pirh->compat_router));
 		printf("\n");
 		if (!(pcibios_flags & PCIBIOS_INTR_GUESS)) {
 			if (pciintr_link_init(pc))
