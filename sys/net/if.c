@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.33 2000/06/17 20:36:36 provos Exp $	*/
+/*	$OpenBSD: if.c,v 1.34 2000/06/18 00:14:27 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ if_mark_ignore(rn, vifp)
 	struct rtentry *rt = (struct rtentry *)rn;
 
 	if (rt->rt_ifp == ifp)
-	  rn->rn_flags |= RNF_IGNORE;
+		rn->rn_flags |= RNF_IGNORE;
 
 	return (0);
 }
@@ -307,7 +307,7 @@ if_mark_unignore(rn, vifp)
 	struct rtentry *rt = (struct rtentry *)rn;
 
 	if (rt->rt_ifp == ifp)
-	  rn->rn_flags &= ~RNF_IGNORE;
+		rn->rn_flags &= ~RNF_IGNORE;
 
 	return (0);
 }
@@ -839,9 +839,8 @@ ifioctl(so, cmd, data, p)
 			cmd = SIOCGIFNETMASK;
 		}
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-						    (struct mbuf *) cmd,
-						    (struct mbuf *) data,
-						    (struct mbuf *) ifp));
+		    (struct mbuf *) cmd, (struct mbuf *) data,
+		    (struct mbuf *) ifp));
 		switch (ocmd) {
 
 		case OSIOCGIFADDR:
