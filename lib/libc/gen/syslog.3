@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.19 2002/07/05 04:21:06 deraadt Exp $
+.\"	$OpenBSD: syslog.3,v 1.20 2003/01/19 23:13:04 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -221,6 +221,9 @@ immediately.
 Normally the open is delayed until the first message is logged.
 Useful for programs that need to manage the order in which file
 descriptors are allocated.
+This option must be used in programs that call
+.Xr chroot 2
+where the new root does not have its own log socket.
 .It Dv LOG_PERROR
 Write the message to standard error output as well to the system log.
 .It Dv LOG_PID
