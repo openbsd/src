@@ -51,6 +51,7 @@
 .Op Fl m Ar max_ttl
 .Op Fl n
 .Op Fl p Ar port
+.Op Fl P Ar proto
 .Op Fl q Ar nqueries
 .Op Fl r
 .Bk -words
@@ -100,6 +101,11 @@ connections).
 Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each gateway found on the
 path).
+.It Fl P Ar proto
+Change the protocol being used from
+.Tn UDP
+to a numeric protocol or a name as specified in
+.Pa /etc/protocols .
 .It Fl p Ar port
 Set the base
 .Tn UDP

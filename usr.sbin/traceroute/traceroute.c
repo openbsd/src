@@ -1,5 +1,5 @@
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
-/*	$OpenBSD: traceroute.c,v 1.17 1997/06/09 00:21:16 denny Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.18 1997/06/09 21:31:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -288,6 +288,7 @@ int nprobes = 3;
 int max_ttl = 30;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
+u_char	proto = IPPROTO_UDP;
 int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
@@ -322,7 +323,7 @@ main(argc, argv)
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:vl")) != -1)
+	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:vlP:")) != -1)
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -358,6 +359,16 @@ main(argc, argv)
 			port = atoi(optarg);
 			if (port < 1)
 				errx(1, "port must be >0.");
+			break;
+		case 'P':
+			proto = atoi(optarg);
+			if (proto <= 1) {
+				struct protoent *pent;
+				pent = getprotobyname(optarg);
+				if (pent)
+					proto = pent->p_proto;
+				errx(1, "proto must be >=0, or a name.");
+			}
 			break;
 		case 'q':
 			nprobes = atoi(optarg);
@@ -439,7 +450,7 @@ main(argc, argv)
 		ip->ip_dst = to.sin_addr;
 	ip->ip_off = htons(0);
 	ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
-	ip->ip_p = IPPROTO_UDP;
+	ip->ip_p = proto;
 	ip->ip_v = IPVERSION;
 	ip->ip_tos = tos;
 
@@ -756,7 +767,7 @@ packet_ok(buf, cc, from, seq)
 		hip = &icp->icmp_ip;
 		hlen = hip->ip_hl << 2;
 		up = (struct udphdr *)((u_char *)hip + hlen);
-		if (hlen + 12 <= cc && hip->ip_p == IPPROTO_UDP &&
+		if (hlen + 12 <= cc && hip->ip_p == proto &&
 		    up->uh_sport == htons(ident) &&
 		    up->uh_dport == htons(port+seq))
 			return (type == ICMP_TIMXCEED? -1 : code+1);
