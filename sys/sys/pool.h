@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.17 2004/07/20 23:47:08 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.18 2004/07/29 09:18:17 mickey Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ struct pool {
 	unsigned int	pr_itemoffset;	/* Align this offset in item */
 	unsigned int	pr_minitems;	/* minimum # of items to keep */
 	unsigned int	pr_minpages;	/* same in page units */
-	unsigned int	pr_maxpages;	/* maximum # of pages to keep */
+	unsigned int	pr_maxpages;	/* maximum # of idle pages to keep */
 	unsigned int	pr_npages;	/* # of pages allocated */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
 	unsigned int	pr_slack;	/* unused space in a page */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.44 2004/07/20 23:47:08 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.45 2004/07/29 09:18:17 mickey Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -961,7 +961,7 @@ pool_do_put(struct pool *pp, void *v)
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
-		if (pp->pr_npages > pp->pr_maxpages ||
+		if (pp->pr_nidle > pp->pr_maxpages ||
 		    (pp->pr_alloc->pa_flags & PA_WANT) != 0) {
 			pr_rmpage(pp, ph, NULL);
 		} else {
