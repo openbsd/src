@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 1997/05/12 11:21:06 graichen Exp $
+#	$OpenBSD: install.md,v 1.2 1997/05/13 14:30:08 graichen Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -75,21 +75,7 @@ md_makerootwritable() {
 
 	# Bleh.  Give mount_mfs a chance to DTRT.
 #	sleep 2
-# TTT this has to move elsewhere at the very beginning (before the . md)
-	#echo "" > /tmp/test_read_write_root
-	#if [ "X$?" != X"0" ]; then
-	#	echo "Please mount your rootfilesystem read/write - for"
-	#	echo "instance - if the disk you booted from is rz0 do"
-	#	echo "the following:"
-	#	echo ""
-	#	echo "  mount /dev/rz0a /"
-	#	echo ""
-	#	echo "Then you can restart the installation"
-	#	echo ""
-	#	exit
-	#else
-	#	rm -f /tmp/test_read_write_root
-	#fi
+	
 	md_mountkernfs
 }
 
@@ -98,7 +84,9 @@ md_mountkernfs() {
         then
                 return
         fi
-	mkdir /kern
+	if [ ! -d /kern ]; then
+		mkdir /kern
+	fi
         if ! mount -t kernfs /kern /kern
         then
                 cat << \__kernfs_failed_1
