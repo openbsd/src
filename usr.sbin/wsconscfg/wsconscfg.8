@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsconscfg.8,v 1.16 2004/04/03 21:53:15 jmc Exp $
+.\"	$OpenBSD: wsconscfg.8,v 1.17 2004/07/30 23:13:48 jmc Exp $
 .\"	$NetBSD: wsconscfg.8,v 1.5 1999/05/15 14:45:06 drochner Exp $
 .\"
 .\" Copyright (c) 1999
@@ -33,27 +33,29 @@
 .Nd configure virtual terminals on a wscons display
 .Sh SYNOPSIS
 .Nm wsconscfg
-.Op Fl f Ar <ctldev>
-.Op Fl d Op Fl F
-.Op Fl k
-.Op Fl m
-.Op Fl t Ar <type>
-.Op Fl e Ar <emul>
+.Op Fl dFkm
+.Op Fl e Ar emul
+.Op Fl f Ar ctldev
+.Op Fl t Ar type
 .Ar index
 .Sh DESCRIPTION
 The
 .Nm
-tool allows the creation and removal of virtual terminals on display devices
-controlled by the wscons terminal framework, as long as the underlying display
-hardware driver supports multiple screens.
-Further, it controls the assignment of keyboards to displays.
+tool allows for the creation and removal of virtual terminals
+on display devices controlled by the wscons terminal framework,
+as long as the underlying display hardware driver supports multiple screens.
+Furthermore, it controls the assignment of keyboards to displays.
 .Pp
 The
 .Ar index
 argument specifies which virtual terminal is to be configured.
-The allowed numbers are from 0 to an implementation-specified value
+Valid numbers range from 0 to an implementation-specified value
 (currently 7, allowing for 8 virtual terminals on a display).
-In keyboard configuration mode, it specifies the
+In keyboard configuration mode
+(see
+.Fl k ,
+below),
+it specifies the
 .Xr wskbd 4
 device to attach or detach.
 Without further option arguments, a virtual terminal is created with
@@ -62,10 +64,6 @@ selected at kernel compile time.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl f Ar ctldev
-Specify the control device of the wscons display to operate on.
-Default is
-.Pa /dev/ttyCcfg .
 .It Fl d
 Delete the specified terminal.
 Any specified terminal that is currently open by a program will not be deleted
@@ -77,21 +75,32 @@ cannot be deleted.
 With the
 .Fl k
 flag, the keyboard specified by
-.Dq index
+.Ar index
 will be detached from the wscons display.
 With the
 .Fl m
 flag, the multiplexor specified by
-.Dq index
+.Ar index
 will be detached from the wscons display.
+.It Fl e Ar emul
+Specify the terminal emulation to use for the virtual terminal.
+The set of available terminal emulations is determined at kernel compile time.
+See
+.Xr wscons 4
+for details.
 .It Fl F
-Force deleting of a terminal even if it is in use by a user space program.
+Force deletion of a terminal, keyboard, or multiplexor,
+even if it is in use by a userspace program.
+.It Fl f Ar ctldev
+Specify the control device of the wscons display to operate on.
+The default is
+.Pa /dev/ttyCcfg .
 .It Fl k
 Do keyboard related operations instead of virtual screen configuration.
 Without other flags, a keyboard will be attached to the display device.
 The
-.Dq index
-argument can be omitted, in this case the first free keyboard will be used.
+.Ar index
+argument can be omitted: in that case the first free keyboard will be used.
 .It Fl m
 Do multiplexor related operations instead of virtual screen configuration.
 Without other flags, a multiplexor will be attached to the display device.
@@ -102,12 +111,6 @@ display properties.
 Valid
 .Ar type
 arguments are defined by the underlying display device driver.
-.It Fl e Ar emul
-Specify the terminal emulation to use for the virtual terminal.
-The set of available terminal emulations is determined at kernel compile time.
-See
-.Xr wscons 4
-for details.
 .El
 .\" .Pp
 .\" Typically, the
@@ -118,8 +121,6 @@ for details.
 .\" .Pa /etc/wscons.conf
 .\" configuration file.
 .Sh EXAMPLES
-.Li # wsconscfg -t 80x50 -e vt100 1
-.Pp
 Configure screen 1 (i.e., the second) for type
 .Dq 80x50
 and VT100 terminal emulation.
@@ -133,9 +134,11 @@ screen useful.
 See
 .Xr wsfontload 8 . )
 .Pp
-.Li # wsconscfg -k
+.D1 # wsconscfg -t 80x50 -e vt100 1
 .Pp
-Connect the first unconnected keyboard to the display.
+Connect the first unconnected keyboard to the display:
+.Pp
+.Dl # wsconscfg -k
 .\" .Sh FILES
 .\" .Bl -tag -width /etc/wscons.conf -compact
 .\" .It Pa /etc/wscons.conf
@@ -149,7 +152,7 @@ Connect the first unconnected keyboard to the display.
 .Sh HISTORY
 The
 .Nm
-program appeared in
+program first appeared in
 .Ox 2.8 .
 .Sh BUGS
 There should be an easy way to get a list of the screen types available
