@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp $
+.\" $OpenBSD: strlcpy.3,v 1.12 2001/05/07 15:51:54 millert Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -118,6 +118,25 @@ the length of
 .Fa src .
 While this may seem somewhat confusing it was done to make
 truncation detection simple.
+.Pp
+Note however, that if
+.Fn strlcat
+traverses
+.Fa size
+characters without finding a NUL, the length of the string is considered
+to be
+.Fa size .
+This keeps
+.Fn strlcat
+from running off the end of a string.
+In practice this should not happen (as it means that either
+.Fa size
+is incorrect or that
+.Fa dst
+is not a proper
+.Dq C
+string).
+The check exists to prevent potential security problems in incorrect code.
 .Sh EXAMPLES
 The following code fragment illustrates the simple case:
 .Bd -literal -offset indent
