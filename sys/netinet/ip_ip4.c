@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.31 1999/05/16 22:31:40 niklas Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.32 1999/10/29 01:50:34 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -94,7 +94,7 @@ struct ip4stat ip4stat;
  * ip4_input gets called when we receive an encapsulated packet,
  * either because we got it at a real interface, or because AH or ESP
  * were being used in tunnel mode (in which case the rcvif element will 
- * contain the address of the encapX interface associated with the tunnel.
+ * contain the address of the encX interface associated with the tunnel.
  */
 
 void
@@ -246,7 +246,7 @@ ip4_input(m, va_alist)
     /*
      * Interface pointer stays the same; if no IPsec processing has
      * been done (or will be done), this will point to a normal 
-     * interface. Otherwise, it'll point to an encap interface, which
+     * interface. Otherwise, it'll point to an enc interface, which
      * will allow a packet filter to distinguish between secure and
      * untrusted packets.
      */
@@ -288,7 +288,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	return EINVAL;
     }
 
-    /* Check that the destination address is AF_INET */
+    /* Check that the destination address are AF_INET */
     if (tdb->tdb_dst.sa.sa_family != AF_INET)
     {
 	DPRINTF(("ipe4_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_dst.sa.sa_family));
@@ -308,7 +308,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     }
 
     ipo = mtod(m, struct ip *);
-	
+
     ipo->ip_v = IPVERSION;
     ipo->ip_hl = 5;
     ipo->ip_tos = ipi->ip_tos;
@@ -318,10 +318,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo->ip_id = ip_randomid();
     HTONS(ipo->ip_id);
 
-    /*
-     * XXX We should be keeping tunnel soft-state and send back ICMPs
-     * if needed
-     */
+    /* We should be keeping tunnel soft-state and send back ICMPs if needed. */
     ipo->ip_off = ipi->ip_off & ~(IP_DF | IP_MF | IP_OFFMASK);
 
     ipo->ip_sum = 0;
