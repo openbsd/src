@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_cy693_reg.h,v 1.1 1999/07/18 21:25:20 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_cy693_reg.h,v 1.2 1999/10/04 22:54:18 deraadt Exp $	*/
 /*	$NetBSD: pciide_cy693_reg.h,v 1.2 1998/12/03 14:06:16 bouyer Exp $	*/
 
 /*
@@ -71,3 +71,21 @@ static int8_t cy_pio_rec[] =   {9, 7, 4, 2, 0};
 static int8_t cy_dma_pulse[] = {7, 2, 2};
 static int8_t cy_dma_rec[] =   {7, 1, 0};
 #endif
+
+/*
+ * The cypress is quite weird: it uses 8-bit ISA registers to control
+ * DMA modes. 
+ */
+
+#define CY_DMA_ADDR 0x22
+#define CY_DMA_SIZE 0x2
+
+#define CY_DMA_IDX 0x00
+#define CY_DMA_IDX_PRIMARY     0x30
+#define CY_DMA_IDX_SECONDARY   0x31
+#define CY_DMA_IDX_TIMEOUT     0x32
+
+#define CY_DMA_DATA 0x01
+/* Multiword DMA transfer, for CY_DMA_IDX_PRIMARY or CY_DMA_IDX_SECONDARY */
+#define CY_DMA_DATA_MODE_MASK  0x03
+#define CY_DMA_DATA_SINGLE     0x04

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.1 1999/07/18 21:25:20 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.2 1999/10/04 22:54:18 deraadt Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.2 1998/10/12 16:09:21 bouyer Exp $	*/
 
 /*
@@ -35,11 +35,11 @@
  */
 
 /*
- * Registers definitions for Intel's PIIX serie PCI IDE controllers.
+ * Registers definitions for Intel's PIIX series PCI IDE controllers.
  * See Intel's
  * "82371FB (PIIX) and 82371SB (PIIX3) PCI ISA IDE XCELERATOR" and
  * "82371AB PCI-TO-ISA / IDE XCELERATOR (PIIX4)"
- * available from http://www.intel.com/
+ * available from http://developers.intel.com/
  */
 
 /*
@@ -98,6 +98,16 @@
 #define PIIX_UDMATIM_SHIFT 16
 #define PIIX_UDMATIM_SET(x, channel, drive) \
 	(((x) << ((channel * 8) + (drive * 4))) << PIIX_UDMATIM_SHIFT)
+
+/*
+ * IDE config register (ICH/ICH0 only)
+ */
+#define PIIX_CONFIG	0x54
+#define PIIX_CONFIG_PINGPONG	0x0400
+/* The following are only for 82801AA (ICH) */
+#define PIIX_CONFIG_CR(channel, drive) (0x0010 << ((channel) * 2 + (drive)))
+#define PIIX_CONFIG_UDMA66(channel, drive) (0x0001 << ((channel) * 2 + (drive)))
+
 /*
  * these tables define the differents values to upload to the
  * ISP and RTC registers for the various PIO and DMA mode
@@ -107,4 +117,5 @@ static int8_t piix_isp_pio[] = {0x00, 0x00, 0x01, 0x02, 0x02};
 static int8_t piix_rtc_pio[] = {0x00, 0x00, 0x00, 0x01, 0x03};
 static int8_t piix_isp_dma[] = {0x00, 0x02, 0x02};
 static int8_t piix_rtc_dma[] = {0x00, 0x02, 0x03};
-static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02};
+static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02, 0x01, 0x02};
+

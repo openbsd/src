@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_acer_reg.h,v 1.1 1999/07/18 21:25:19 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_acer_reg.h,v 1.2 1999/10/04 22:54:18 deraadt Exp $	*/
 /*	$NetBSD: pciide_acer_reg.h,v 1.1 1999/02/02 16:13:59 bouyer Exp $	*/
 
 /*
@@ -69,6 +69,11 @@
 
 /* drives timings setup (1 byte) */
 #define ACER_IDETIM(chan, drv) (0x5a + (drv) + (chan) * 4)
+
+/* IRQ and drive select status */
+#define ACER_CHIDS			0x75
+#define ACER_CHIDS_DRV(channel)	((0x4) << (channel))
+#define ACER_CHIDS_INT(channel)	((0x1) << (channel))
 
 /*
  * IDE bus frequency (1 byte)
