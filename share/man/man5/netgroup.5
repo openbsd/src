@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netgroup.5,v 1.12 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: netgroup.5,v 1.13 2004/07/22 17:55:07 jaredy Exp $
 .\"	$NetBSD: netgroup.5,v 1.3 1995/03/18 14:58:34 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 .Nm netgroup
 .Nd defines network groups
 .Sh SYNOPSIS
-.Nm netgroup
+.Nm /etc/netgroup
 .Sh DESCRIPTION
 The
 .Nm
@@ -97,6 +97,8 @@ Lines that begin with a
 are treated as comments.
 .Sh FILES
 .Bl -tag -width /etc/netgroup.db -compact
+.It Pa /etc/netgroup
+default netgroup list
 .It Pa /etc/netgroup.db
 netgroup database
 .El
