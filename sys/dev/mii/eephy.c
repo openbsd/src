@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.14 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.15 2005/02/05 19:11:34 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -55,7 +55,6 @@
 
 #include <dev/mii/eephyreg.h>
 
-
 int	eephy_service(struct mii_softc *, struct mii_data *, int);
 void	eephy_status(struct mii_softc *);
 int	eephymatch(struct device *, void *, void *);
@@ -79,24 +78,36 @@ const struct mii_phy_funcs eephy_funcs = {
 	eephy_service, eephy_status, eephy_reset,
 };
 
+static const struct mii_phydesc eephys[] = {
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_3,
+	  MII_STR_xxMARVELL_E1000_3 },
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_5,
+	  MII_STR_xxMARVELL_E1000_5 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000,
+	  MII_STR_MARVELL_E1000 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1011,
+	  MII_STR_MARVELL_E1011 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_3,
+	  MII_STR_MARVELL_E1000_3 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_4,
+	  MII_STR_MARVELL_E1000_4 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_5,
+	  MII_STR_MARVELL_E1000_5 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_6,
+	  MII_STR_MARVELL_E1000_6 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_7,
+	  MII_STR_MARVELL_E1000_7 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 eephymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxMARVELL &&
-	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxMARVELL_E1000_3 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxMARVELL_E1000_5 ))
-		return (10);
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
-	    (MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_4 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_5 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_6 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_7))
+	if(mii_phy_match(ma, eephys) != NULL)
 		return (10);
 
 	return(0);
@@ -108,10 +119,10 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	char *sep;
+	const struct mii_phydesc *mpd;
 
-	sep = "";
-	printf(": %s\n", MII_STR_MARVELL_E1000);
+	mpd = mii_phy_match(ma, eephys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

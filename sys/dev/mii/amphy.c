@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.10 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.11 2005/02/05 19:11:34 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,25 +74,28 @@ const struct mii_phy_funcs amphy_funcs = {
 	amphy_service, amphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc amphys[] = {
+	{ MII_OUI_xxAMD,		MII_MODEL_xxAMD_79C873,
+	  MII_STR_xxAMD_79C873 },
+	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
+	  MII_STR_xxDAVICOM_DM9101 },
+	{ MII_OUI_DAVICOM,		MII_MODEL_DAVICOM_DM9102,
+	  MII_STR_DAVICOM_DM9102 },
+	{ MII_OUI_DAVICOM,		MII_MODEL_DAVICOM_DM9601,
+	  MII_STR_DAVICOM_DM9601 },
+	{ MII_OUI_xxALTIMA,		MII_MODEL_AMD_79C875phy,
+	  MII_STR_AMD_79C875phy },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 amphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxAMD &&
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxAMD_79C873)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxDAVICOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxDAVICOM_DM9101)
-		return(10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_DAVICOM_DM9102)
-		return(10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_DAVICOM_DM9601)
-		return(10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&	/*XXX*/
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_AMD_79C875phy)
+	if(mii_phy_match(ma, amphys) != NULL)
 		return(10);
 
 	return(0);
@@ -104,15 +107,10 @@ amphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&	/*XXX*/
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_AMD_79C875phy)) {
-		printf(": %s, rev. %d\n", MII_STR_AMD_79C875phy,
-		    MII_REV(ma->mii_id2));
-	} else {
-		printf(": %s, rev. %d\n", MII_STR_xxAMD_79C873,
-		    MII_REV(ma->mii_id2));
-	}
+	mpd = mii_phy_match(ma, amphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.20 2005/01/24 02:27:12 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.21 2005/02/05 19:11:34 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -89,21 +89,36 @@ const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, brgphy_reset,          
 };
 
+static const struct mii_phydesc brgphys[] = {
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5400,
+	  MII_STR_xxBROADCOM_BCM5400 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5401,
+	  MII_STR_xxBROADCOM_BCM5401 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5411,
+	  MII_STR_xxBROADCOM_BCM5411 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5421S,
+	  MII_STR_xxBROADCOM_BCM5421S },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5701,
+	  MII_STR_xxBROADCOM_BCM5701 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5703,
+	  MII_STR_xxBROADCOM_BCM5703 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5704,
+	  MII_STR_xxBROADCOM_BCM5704 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5705,
+	  MII_STR_xxBROADCOM_BCM5705 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5750,
+	  MII_STR_xxBROADCOM_BCM5750 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 brgphy_probe(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxBROADCOM &&
-	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5400 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5401 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5411 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5421S ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5703 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5704 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5705 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5750))
+	if(mii_phy_match(ma, brgphys) != NULL)
 		return(10);
 
 	return(0);
@@ -115,29 +130,10 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	char *model;
+	const struct mii_phydesc *mpd;
 
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5400 ||
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5400)
-		model = MII_STR_BROADCOM_BCM5400;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5401)
-		model = MII_STR_BROADCOM_BCM5401;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5411)
-		model = MII_STR_BROADCOM_BCM5411;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5421S)
-		model = MII_STR_xxBROADCOM_BCM5421S;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701)
-		model = MII_STR_xxBROADCOM_BCM5701;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5703)
-		model = MII_STR_xxBROADCOM_BCM5703;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5704)
-		model = MII_STR_xxBROADCOM_BCM5704;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5705)
-		model = MII_STR_xxBROADCOM_BCM5705;
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5750)
-		model = MII_STR_xxBROADCOM_BCM5750;
-
-	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, brgphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
