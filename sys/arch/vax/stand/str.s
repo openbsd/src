@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.s,v 1.3 1998/02/03 11:48:29 maja Exp $ */
+/*	$OpenBSD: str.s,v 1.4 1998/05/11 07:37:39 niklas Exp $ */
 /*	$NetBSD: str.s,v 1.3 1997/03/15 13:04:30 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -106,6 +106,7 @@ ENTRY(strlen, 0);
 	subl2	4(ap), r0
 	ret
 
+#if 0
 ENTRY(strncmp, 0)
 	movl	12(ap), r3
 	brb	5f
@@ -129,3 +130,4 @@ ENTRY(strcmp, 0)
 1:	bgtr	3f
 	mnegl	r0, r0
 3:	ret
+#endif
