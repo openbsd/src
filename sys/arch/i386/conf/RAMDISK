@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.43 1998/09/22 18:58:04 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.44 1998/09/24 21:24:24 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -131,7 +131,7 @@ uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
-wds1	at isa? port 0x358 irq 11 drq 5
+#wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives

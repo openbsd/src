@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.85 1998/09/23 08:22:49 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.86 1998/09/24 21:20:16 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -125,7 +125,7 @@ uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
-wds1	at isa? port 0x358 irq 11 drq 5
+#wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
