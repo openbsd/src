@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.11 1996/08/21 22:27:57 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.12 1996/09/05 23:07:00 dm Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -1269,7 +1269,7 @@ static	void	ncr_complete	(ncb_p np, ccb_p cp);
 static	int	ncr_delta	(struct timeval * from, struct timeval * to);
 static	void	ncr_exception	(ncb_p np);
 static	void	ncr_free_ccb	(ncb_p np, ccb_p cp, int flags);
-static	void	ncr_getclock	(ncb_p np);
+static	void	ncr_getclock	(ncb_p np, u_char scntl3);
 static	ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
 static	void	ncr_init	(ncb_p np, char * msg, u_long code);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -3540,7 +3540,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	**	Find the right value for scntl3.
 	*/
 
-	ncr_getclock (np);
+	ncr_getclock (np, INB(nc_scntl3));
 
 	/*
 	**	Reset chip.
@@ -6963,16 +6963,16 @@ static u_long ncr_lookup(char * id)
 #endif /* NCR_CLOCK */
 
 
-static void ncr_getclock (ncb_p np)
+static void ncr_getclock (ncb_p np, u_char scntl3)
 {
-	u_char	tbl[5] = {6,2,3,4,6};
+	u_char	tbl[6] = {6,2,3,4,6,8};
 	u_char	f;
 	u_char	ns_clock = (1000/NCR_CLOCK);
 
 	/*
 	**	Compute the best value for scntl3.
 	*/
-
+/*
 	f = (2 * MIN_SYNC_PD - 1) / ns_clock;
 	if (!f ) f=1;
 	if (f>4) f=4;
@@ -6987,6 +6987,24 @@ static void ncr_getclock (ncb_p np)
 	if (DEBUG_FLAGS & DEBUG_TIMING)
 		printf ("%s: sclk=%d async=%d sync=%d (ns) scntl3=0x%x\n",
 		ncr_name (np), ns_clock, np->ns_async, np->ns_sync, np->rv_scntl3);
+*/
+
+	/*
+	 *	For now just preserve the BIOS setting ...
+	 */
+
+	if ((scntl3 & 7) == 0) {
+		scntl3 = 3; /* assume 40MHz if no value supplied by BIOS */
+	}
+
+	np->ns_sync   = 25;
+	np->ns_async  = 50;
+	np->rv_scntl3 = ((scntl3 & 0x7) << 4) -0x20 + (scntl3 & 0x7);
+
+	if (bootverbose) {
+		printf ("\tinitial value of SCNTL3 = %02x, final = %02x\n",
+			scntl3, np->rv_scntl3);
+	}
 }
 
 /*=========================================================================*/
