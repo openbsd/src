@@ -104,7 +104,7 @@ e.g.
 for the definition of
 .Em etext ) .
 .Sh RETURN VALUES
-.Nm Brk
+.Nm brk
 returns a pointer to the new end of memory if successful;
 otherwise -1 with
 .Va errno
@@ -116,7 +116,7 @@ otherwise -1 with
 .Va errno
 set to indicate why the allocation failed.
 .Sh ERRORS
-.Nm Sbrk
+.Nm sbrk
 will fail and no additional memory will be allocated if
 one of the following are true:
 .Bl -tag -width Er

@@ -50,7 +50,7 @@
 .Fn FD_ISSET fd &fdset
 .Fn FD_ZERO &fdset
 .Sh DESCRIPTION
-.Fn Select
+.Fn select
 examines the I/O descriptor sets whose addresses are passed in
 .Fa readfds ,
 .Fa writefds ,
@@ -70,7 +70,7 @@ On return,
 replaces the given descriptor sets
 with subsets consisting of those descriptors that are ready
 for the requested operation.
-.Fn Select
+.Fn select
 returns the total number of ready descriptors in all the sets.
 .Pp
 The descriptor sets are stored as bit fields in arrays of integers.
@@ -123,7 +123,7 @@ and
 .Fa exceptfds
 may be given as nil pointers if no descriptors are of interest.
 .Sh RETURN VALUES
-.Fn Select
+.Fn select
 returns the number of ready descriptors that are contained in
 the descriptor sets,
 or -1 if an error occurred.
@@ -184,7 +184,7 @@ a larger definition of
 before the inclusion of
 .Aq Pa sys/types.h .
 .Pp
-.Fn Select
+.Fn select
 should probably have been designed to return the time remaining from the
 original timeout, if any, by modifying the time value in place.
 However, it is unlikely this semantic will ever be implemented, as the
