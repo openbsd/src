@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.12 1996/11/24 00:42:04 kstailey Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.13 1996/11/24 04:29:48 niklas Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -716,7 +716,7 @@ bitmask_snprintf(ul, p, buf, buflen)
 	size_t left;
 	register int n;
 	int ch, tmp;
-	char snbuf[KSNPRINTN_BUFSIZE];
+	/* char snbuf[KSNPRINTN_BUFSIZE]; */
 
 	bp = buf;
 	bzero(buf, buflen);
