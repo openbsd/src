@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.1 1995/06/28 02:24:56 cgd Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.3 1995/12/11 19:48:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@ void lereset __P((struct le_softc *));
 void lesetladrf __P((struct arpcom *, u_int16_t *));
 void lestart __P((struct ifnet *));
 void lestop __P((struct le_softc *));
-void lewatchdog __P((/* short */));
+void lewatchdog __P((int));
 
 integrate u_int16_t lerdcsr __P((/* struct le_softc *, u_int16_t */));
 integrate void lewrcsr __P((/* struct le_softc *, u_int16_t, u_int16_t */));
@@ -55,9 +55,24 @@ integrate int leput __P((struct le_softc *, int, struct mbuf *));
 integrate struct mbuf *leget __P((struct le_softc *, int, int));
 integrate void leread __P((struct le_softc *, int, int));
 
-void copytodesc_contig(), copyfromdesc_contig();
-void copytobuf_contig(), copyfrombuf_contig(), zerobuf_contig();
-#ifdef 0
-void copytobuf_gap2(), copyfrombuf_gap2(), zerobuf_gap2();
-void copytobuf_gap16(), copyfrombuf_gap16(), zerobuf_gap16();
-#endif
+/*
+ * The following functions are only useful on certain cpu/bus
+ * combinations.  They should be written in assembly language for
+ * maximum efficiency, but machine-independent versions are provided
+ * for drivers that have not yet been optimized.
+ */
+#ifdef LE_NEED_BUF_CONTIG
+integrate void copytobuf_contig __P((struct le_softc *, void *, int, int));
+integrate void copyfrombuf_contig __P((struct le_softc *, void *, int, int));
+integrate void zerobuf_contig __P((struct le_softc *, int, int));
+#endif /* LE_NEED_BUF_CONTIG */
+#ifdef LE_NEED_BUF_GAP2
+integrate void copytobuf_gap2 __P((struct le_softc *, void *, int, int));
+integrate void copyfrombuf_gap2 __P((struct le_softc *, void *, int, int));
+integrate void zerobuf_gap2 __P((struct le_softc *, int, int));
+#endif /* LE_NEED_BUF_GAP2 */
+#ifdef LE_NEED_BUF_GAP16
+integrate void copytobuf_gap16 __P((struct le_softc *, void *, int, int));
+integrate void copyfrombuf_gap16 __P((struct le_softc *, void *, int, int));
+integrate void zerobuf_gap16 __P((struct le_softc *, int, int));
+#endif /* LE_NEED_BUF_GAP16 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.3 1995/07/24 04:34:51 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.8 1995/12/11 19:48:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -69,11 +69,12 @@ void recv_print __P((struct le_softc *, int));
 void xmit_print __P((struct le_softc *, int));
 #endif
 
+#define	ifp	(&sc->sc_arpcom.ac_if)
+
 void
 leconfig(sc)
 	struct le_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int mem;
 
 	/* Make sure the chip is stopped. */
@@ -86,6 +87,9 @@ leconfig(sc)
 	ifp->if_watchdog = lewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+#ifdef LANCE_REVC_BUG
+	ifp->if_flags &= ~IFF_MULTICAST;
+#endif
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -116,9 +120,9 @@ leconfig(sc)
 		panic("leconfig: weird memory size");
 	}
 
-	printf(": address %s, %d receive buffers, %d transmit buffers\n",
+	printf(": address %s\n%s: %d receive buffers, %d transmit buffers\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
-	    sc->sc_nrbuf, sc->sc_ntbuf);
+	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	mem = 0;
 	sc->sc_initaddr = mem;
@@ -150,12 +154,12 @@ lereset(sc)
 
 void
 lewatchdog(unit)
-	short unit;
+	int unit;
 {
 	struct le_softc *sc = LE_SOFTC(unit);
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	lereset(sc);
 }
@@ -167,7 +171,6 @@ void
 lememinit(sc)
 	register struct le_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_long a;
 	int bix;
 	struct leinit init;
@@ -246,7 +249,6 @@ void
 leinit(sc)
 	register struct le_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register int timo;
 	u_long a;
 
@@ -333,7 +335,7 @@ leget(sc, boff, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
@@ -374,14 +376,15 @@ leread(sc, boff, len)
 	register struct le_softc *sc;
 	int boff, len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
+#ifdef LEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
+#endif
 		ifp->if_ierrors++;
 		return;
 	}
@@ -406,6 +409,7 @@ leread(sc, boff, len)
 	if (ifp->if_bpf) {
 		bpf_mtap(ifp->if_bpf, m);
 
+#ifndef LANCE_REVC_BUG
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
@@ -418,6 +422,17 @@ leread(sc, boff, len)
 			m_freem(m);
 			return;
 		}
+#endif
+	}
+#endif
+
+#ifdef LANCE_REVC_BUG
+	if (bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    sizeof(eh->ether_dhost)) != 0 &&
+	    bcmp(eh->ether_dhost, etherbroadcastaddr,
+		    sizeof(eh->ether_dhost)) != 0) {
+		m_freem(m);
+		return;
 	}
 #endif
 
@@ -446,6 +461,7 @@ lerint(sc)
 
 		if (rmd.rmd1_bits & LE_R1_ERR) {
 			if (rmd.rmd1_bits & LE_R1_ENP) {
+#ifdef LEDEBUG
 				if ((rmd.rmd1_bits & LE_R1_OFLO) == 0) {
 					if (rmd.rmd1_bits & LE_R1_FRAM)
 						printf("%s: framing error\n",
@@ -454,6 +470,7 @@ lerint(sc)
 						printf("%s: crc mismatch\n",
 						    sc->sc_dev.dv_xname);
 				}
+#endif
 			} else {
 				if (rmd.rmd1_bits & LE_R1_OFLO)
 					printf("%s: overflow\n",
@@ -462,10 +479,12 @@ lerint(sc)
 			if (rmd.rmd1_bits & LE_R1_BUFF)
 				printf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
+			ifp->if_ierrors++;
 		} else if (rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
+			ifp->if_ierrors++;
 		} else {
 #ifdef LEDEBUG
 			if (sc->sc_debug)
@@ -496,7 +515,6 @@ integrate void
 letint(sc)
 	register struct le_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register int bix;
 	struct letmd tmd;
 
@@ -593,17 +611,23 @@ leintr(arg)
 		   LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
+#ifdef LEDEBUG
 			printf("%s: babble\n", sc->sc_dev.dv_xname);
-			sc->sc_arpcom.ac_if.if_oerrors++;
+#endif
+			ifp->if_oerrors++;
 		}
 #if 0
 		if (isr & LE_C0_CERR) {
 			printf("%s: collision error\n", sc->sc_dev.dv_xname);
-			sc->sc_arpcom.ac_if.if_collisions++;
+			ifp->if_collisions++;
 		}
 #endif
-		if (isr & LE_C0_MISS)
-			sc->sc_arpcom.ac_if.if_ierrors++;
+		if (isr & LE_C0_MISS) {
+#ifdef LEDEBUG
+			printf("%s: missed packet\n", sc->sc_dev.dv_xname);
+#endif
+			ifp->if_ierrors++;
+		}
 		if (isr & LE_C0_MERR) {
 			printf("%s: memory error\n", sc->sc_dev.dv_xname);
 			lereset(sc);
@@ -613,13 +637,13 @@ leintr(arg)
 
 	if ((isr & LE_C0_RXON) == 0) {
 		printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		ifp->if_ierrors++;
 		lereset(sc);
 		return (1);
 	}
 	if ((isr & LE_C0_TXON) == 0) {
 		printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_oerrors++;
+		ifp->if_oerrors++;
 		lereset(sc);
 		return (1);
 	}
@@ -631,6 +655,8 @@ leintr(arg)
 
 	return (1);
 }
+
+#undef	ifp
 
 /*
  * Setup output on interface.
@@ -960,49 +986,27 @@ allmulti:
 }
 
 
-#if 0	/* USE OF THE FOLLOWING IS MACHINE-SPECIFIC */
 /*
- * Routines for accessing the transmit and receive buffers. Unfortunately,
- * CPU addressing of these buffers is done in one of 3 ways:
- * - contiguous (for the 3max and turbochannel option card)
- * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
- *   spaces (for the pmax)
- * - gap16, which means 16bytes interspersed with 16byte spaces
- *   for buffers which must begin on a 32byte boundary (for 3min and maxine)
- * The buffer offset is the logical byte offset, assuming contiguous storage.
+ * Routines for accessing the transmit and receive buffers.
+ * The various CPU and adapter configurations supported by this
+ * driver require three different access methods for buffers
+ * and descriptors:
+ *	(1) contig (contiguous data; no padding),
+ *	(2) gap2 (two bytes of data followed by two bytes of padding),
+ *	(3) gap16 (16 bytes of data followed by 16 bytes of padding).
  */
-void
-copytodesc_contig(sc, from, boff, len)
-	struct le_softc *sc;
-	caddr_t from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
 
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(from, buf + boff, len);
-}
+#ifdef LE_NEED_BUF_CONTIG
+/*
+ * contig: contiguous data with no padding.
+ *
+ * Buffers may have any alignment.
+ */
 
-void
-copyfromdesc_contig(sc, to, boff, len)
-	struct le_softc *sc;
-	caddr_t to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(buf + boff, to, len);
-}
-
-void
+integrate void
 copytobuf_contig(sc, from, boff, len)
 	struct le_softc *sc;
-	caddr_t from;
+	void *from;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
@@ -1013,10 +1017,10 @@ copytobuf_contig(sc, from, boff, len)
 	bcopy(from, buf + boff, len);
 }
 
-void
+integrate void
 copyfrombuf_contig(sc, to, boff, len)
 	struct le_softc *sc;
-	caddr_t to;
+	void *to;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
@@ -1027,7 +1031,7 @@ copyfrombuf_contig(sc, to, boff, len)
 	bcopy(buf + boff, to, len);
 }
 
-void
+integrate void
 zerobuf_contig(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
@@ -1039,123 +1043,116 @@ zerobuf_contig(sc, boff, len)
 	 */
 	bzero(buf + boff, len);
 }
+#endif /* LE_NEED_BUF_CONTIG */
 
+#ifdef LE_NEED_BUF_GAP2
 /*
- * For the pmax the buffer consists of shorts (2 bytes) interspersed with
- * short (2 byte) spaces and must be accessed with halfword load/stores.
- * (don't worry about doing an extra byte)
+ * gap2: two bytes of data followed by two bytes of pad.
+ *
+ * Buffers must be 4-byte aligned.  The code doesn't worry about
+ * doing an extra byte.
  */
-void
-copytobuf_gap2(sc, from, boff, len)
+
+integrate void
+copytobuf_gap2(sc, fromv, boff, len)
 	struct le_softc *sc;
-	register caddr_t from;
+	void *fromv;
 	int boff;
 	register int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_short *bptr;
+	register caddr_t from = fromv;
+	register volatile u_int16_t *bptr;
 	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_short *)buf) + (boff - 1);
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_short *)buf) + boff;
-	if ((unsigned)from & 0x1) {
-		while (len > 1) {
-			*bptr = (from[1] << 8) | (from[0] & 0xff);
-			bptr += 2;
-			from += 2;
-			len -= 2;
-		}
-	} else {
-		/* optimize for aligned transfers */
-		xfer = (int)((unsigned)len & ~0x1);
-		CopyToBuffer((u_short *)from, bptr, xfer);
-		bptr += xfer;
-		from += xfer;
-		len -= xfer;
+		bptr = ((volatile u_int16_t *)buf) + boff;
+	while (len > 1) {
+		*bptr = (from[1] << 8) | (from[0] & 0xff);
+		bptr += 2;
+		from += 2;
+		len -= 2;
 	}
 	if (len == 1)
-		*bptr = (u_short)*from;
+		*bptr = (u_int16_t)*from;
 }
 
-void
-copyfrombuf_gap2(sc, to, boff, len)
+integrate void
+copyfrombuf_gap2(sc, tov, boff, len)
 	struct le_softc *sc;
-	register caddr_t to;
+	void *tov;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_short *bptr;
-	register u_short tmp;
+	register caddr_t to = tov;
+	register volatile u_int16_t *bptr;
+	register u_int16_t tmp;
 	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_short *)buf) + (boff - 1);
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*to++ = (*bptr >> 8) & 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_short *)buf) + boff;
-	if ((unsigned)to & 0x1) {
-		while (len > 1) {
-			tmp = *bptr;
-			*to++ = tmp & 0xff;
-			*to++ = (tmp >> 8) & 0xff;
-			bptr += 2;
-			len -= 2;
-		}
-	} else {
-		/* optimize for aligned transfers */
-		xfer = (int)((unsigned)len & ~0x1);
-		CopyFromBuffer(bptr, to, xfer);
-		bptr += xfer;
-		to += xfer;
-		len -= xfer;
+		bptr = ((volatile u_int16_t *)buf) + boff;
+	while (len > 1) {
+		tmp = *bptr;
+		*to++ = tmp & 0xff;
+		*to++ = (tmp >> 8) & 0xff;
+		bptr += 2;
+		len -= 2;
 	}
 	if (len == 1)
 		*to = *bptr & 0xff;
 }
 
-void
+integrate void
 zerobuf_gap2(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_short *bptr;
+	register volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
-		bptr = ((volatile u_short *)buf) + (boff - 1);
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr &= 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_short *)buf) + boff;
+		bptr = ((volatile u_int16_t *)buf) + boff;
 	while (len > 0) {
 		*bptr = 0;
 		bptr += 2;
 		len -= 2;
 	}
 }
+#endif /* LE_NEED_BUF_GAP2 */
 
+#ifdef LE_NEED_BUF_GAP16
 /*
- * For the 3min and maxine, the buffers are in main memory filled in with
- * 16byte blocks interspersed with 16byte spaces.
+ * gap16: 16 bytes of data followed by 16 bytes of pad.
+ *
+ * Buffers must be 32-byte aligned.
  */
-void
-copytobuf_gap16(sc, from, boff, len)
+
+integrate void
+copytobuf_gap16(sc, fromv, boff, len)
 	struct le_softc *sc;
-	register caddr_t from;
+	void *fromv;
 	int boff;
 	register int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t from = fromv;
 	register caddr_t bptr;
 	register int xfer;
 
@@ -1172,13 +1169,14 @@ copytobuf_gap16(sc, from, boff, len)
 	}
 }
 
-void
-copyfrombuf_gap16(sc, to, boff, len)
+integrate void
+copyfrombuf_gap16(sc, tov, boff, len)
 	struct le_softc *sc;
-	register caddr_t to;
+	void *tov;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t to = tov;
 	register caddr_t bptr;
 	register int xfer;
 
@@ -1195,7 +1193,7 @@ copyfrombuf_gap16(sc, to, boff, len)
 	}
 }
 
-void
+integrate void
 zerobuf_gap16(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
@@ -1215,4 +1213,4 @@ zerobuf_gap16(sc, boff, len)
 		xfer = min(len, 16);
 	}
 }
-#endif
+#endif /* LE_NEED_BUF_GAP16 */
