@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 1999/12/06 22:24:31 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 1999/12/06 22:28:44 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 1999/12/06 22:24:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 1999/12/06 22:28:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,8 +397,8 @@ Main_ParseArgLine(line)
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
 	char *args;			/* Space used by the args */
-	char *buf, *p1;
-	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
+	char *buf;
+	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL);
 
 	if (line == NULL)
 		return;
@@ -409,7 +409,6 @@ Main_ParseArgLine(line)
 
 	buf = emalloc(strlen(line) + strlen(argv0) + 2);
 	(void)sprintf(buf, "%s %s", argv0, line);
-	efree(p1);
 
 	argv = brk_string(buf, &argc, TRUE, &args);
 	free(buf);
@@ -472,7 +471,7 @@ main(argc, argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
-	char *p, *p1, *path, *pathp, *pwd;
+	char *p, *path, *pathp, *pwd;
 	char mdpath[MAXPATHLEN + 1];
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
@@ -731,17 +730,15 @@ main(argc, argv)
 
 	(void)ReadMakefile(".depend", NULL);
 
-	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
-	efree(p1);
+	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL), VAR_GLOBAL);
 
 	/* Install all the flags into the MAKE envariable. */
-	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1)) != NULL) && *p)
+	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL)) != NULL) && *p)
 #ifdef POSIX
 		setenv("MAKEFLAGS", p, 1);
 #else
 		setenv("MAKE", p, 1);
 #endif
-	efree(p1);
 
 	/*
 	 * For compatibility, look at the directories in the VPATH variable
@@ -792,10 +789,9 @@ main(argc, argv)
 		for (ln = Lst_First(variables); ln != NILLNODE;
 		    ln = Lst_Succ(ln)) {
 			char *value = Var_Value((char *)Lst_Datum(ln),
-					  VAR_GLOBAL, &p1);
+					  VAR_GLOBAL);
 
 			printf("%s\n", value ? value : "");
-			efree(p1);
 		}
 	}
 

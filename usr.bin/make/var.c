@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.17 1999/12/06 22:27:37 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.18 1999/12/06 22:28:44 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.17 1999/12/06 22:27:37 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.18 1999/12/06 22:28:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -591,15 +591,13 @@ Var_Exists(name, ctxt)
  *-----------------------------------------------------------------------
  */
 char *
-Var_Value (name, ctxt, frp)
+Var_Value(name, ctxt)
     char           *name;	/* name to find */
     GNode          *ctxt;	/* context in which to search for it */
-    char	   **frp;
 {
     Var            *v;
 
     v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-    *frp = NULL;
     if (v != (Var *) NIL) {
 	char *p = Buf_GetAll(v->val, NULL);
 	return p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.14 1999/11/11 11:35:17 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.15 1999/12/06 22:28:44 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.14 1999/11/11 11:35:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.15 1999/12/06 22:28:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1102,7 +1102,6 @@ Job_CheckCommands(gn, abortProc)
 	 * commands
 	 */
 	if ((DEFAULT != NILGNODE) && !Lst_IsEmpty(DEFAULT->commands)) {
-	    char *p1;
 	    /*
 	     * Make only looks for a .DEFAULT if the node was never the
 	     * target of an operator, so that's what we do too. If
@@ -1113,8 +1112,7 @@ Job_CheckCommands(gn, abortProc)
 	     * .DEFAULT itself.
 	     */
 	    Make_HandleUse(DEFAULT, gn);
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
-	    efree(p1);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn), gn);
 	} else if (Dir_MTime(gn) == 0) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT

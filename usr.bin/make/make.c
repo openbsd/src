@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.7 1998/12/05 00:06:28 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.8 1999/12/06 22:28:44 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.7 1998/12/05 00:06:28 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.8 1999/12/06 22:28:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -411,10 +411,8 @@ Make_Update (cgn)
     register GNode 	*pgn;	/* the parent node */
     register char  	*cname;	/* the child's name */
     register LstNode	ln; 	/* Element in parents and iParents lists */
-    char *p1;
 
-    cname = Var_Value (TARGET, cgn, &p1);
-    efree(p1);
+    cname = Var_Value(TARGET, cgn);
 
     /*
      * If the child was actually made, see what its modification time is
@@ -533,8 +531,7 @@ Make_Update (cgn)
      * of this node.
      */
     if (Lst_Open (cgn->iParents) == SUCCESS) {
-	char    *p1;
-	char	*cpref = Var_Value(PREFIX, cgn, &p1);
+	char	*cpref = Var_Value(PREFIX, cgn);
 
 	while ((ln = Lst_Next (cgn->iParents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
@@ -543,7 +540,6 @@ Make_Update (cgn)
 		Var_Set (PREFIX, cpref, pgn);
 	    }
 	}
-	efree(p1);
 	Lst_Close (cgn->iParents);
     }
 }
@@ -578,10 +574,9 @@ MakeAddAllSrc (cgnp, pgnp)
     GNode	*pgn = (GNode *) pgnp;
     if ((cgn->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
 	char *child;
-	char *p1 = NULL;
 
 	if (OP_NOP(cgn->type) ||
-	    (child = Var_Value(TARGET, cgn, &p1)) == NULL) {
+	    (child = Var_Value(TARGET, cgn)) == NULL) {
 	    /*
 	     * this node is only source; use the specific pathname for it
 	     */
@@ -614,7 +609,6 @@ MakeAddAllSrc (cgnp, pgnp)
 	     */
 	    Var_Append(OODATE, child, pgn);
 	}
-	efree(p1);
     }
     return (0);
 }
@@ -654,11 +648,8 @@ Make_DoAllVar (gn)
 	Var_Set (ALLSRC, "", gn);
     }
 
-    if (gn->type & OP_JOIN) {
-	char *p1;
-	Var_Set (TARGET, Var_Value (ALLSRC, gn, &p1), gn);
-	efree(p1);
-    }
+    if (gn->type & OP_JOIN)
+	Var_Set(TARGET, Var_Value(ALLSRC, gn), gn);
 }
 
 /*-

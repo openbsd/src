@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.14 1999/11/14 18:16:22 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.15 1999/12/06 22:28:44 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.14 1999/11/14 18:16:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.15 1999/12/06 22:28:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,13 +111,11 @@ CompatInterrupt (signo)
     GNode   *gn;
 
     if ((curTarg != NILGNODE) && !Targ_Precious (curTarg)) {
-	char	  *p1;
-	char 	  *file = Var_Value (TARGET, curTarg, &p1);
+	char 	  *file = Var_Value(TARGET, curTarg);
 
 	if (!noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed\n", file);
 	}
-	efree(p1);
 
 	/*
 	 * Run .INTERRUPT only if hit with interrupt signal
@@ -468,9 +466,7 @@ CompatMake (gnp, pgnp)
 	}
 
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
-	    char *p1;
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
-	    efree(p1);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn), pgn);
 	}
 
 	/*
@@ -607,10 +603,7 @@ CompatMake (gnp, pgnp)
 	} else if (keepgoing) {
 	    pgn->make = FALSE;
 	} else {
-	    char *p1;
-
-	    printf ("\n\nStop in %s.\n", Var_Value(".CURDIR", gn, &p1));
-	    efree(p1);
+	    printf ("\n\nStop in %s.\n", Var_Value(".CURDIR", gn));
 	    exit (1);
 	}
     } else if (gn->made == ERROR) {
@@ -620,11 +613,8 @@ CompatMake (gnp, pgnp)
 	 */
 	pgn->make = FALSE;
     } else {
-	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
-	    char *p1;
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
-	    efree(p1);
-	}
+	if (Lst_Member (gn->iParents, pgn) != NILLNODE)
+	    Var_Set (IMPSRC, Var_Value(TARGET, gn), pgn);
 	switch(gn->made) {
 	    case BEINGMADE:
 		Error("Graph cycles through %s\n", gn->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.16 1999/10/05 22:06:23 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.17 1999/12/06 22:28:43 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.16 1999/10/05 22:06:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.17 1999/12/06 22:28:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -941,13 +941,10 @@ Arch_Touch (gn)
 {
     FILE *	  arch;	  /* Stream open to archive, positioned properly */
     struct ar_hdr arh;	  /* Current header describing member */
-    char *p1, *p2;
 
-    arch = ArchFindMember(Var_Value (ARCHIVE, gn, &p1),
-			  Var_Value (MEMBER, gn, &p2),
+    arch = ArchFindMember(Var_Value(ARCHIVE, gn),
+			  Var_Value(MEMBER, gn),
 			  &arh, "r+");
-    efree(p1);
-    efree(p2);
     sprintf(arh.ar_date, "%-12ld", (long) now);
 
     if (arch != NULL) {
@@ -1013,14 +1010,10 @@ Arch_MTime (gn)
 {
     struct ar_hdr *arhPtr;    /* Header of desired member */
     time_t	  modTime;    /* Modification time as an integer */
-    char *p1, *p2;
 
-    arhPtr = ArchStatMember (Var_Value (ARCHIVE, gn, &p1),
-			     Var_Value (MEMBER, gn, &p2),
+    arhPtr = ArchStatMember (Var_Value(ARCHIVE, gn),
+			     Var_Value(MEMBER, gn),
 			     TRUE);
-    efree(p1);
-    efree(p2);
-
     if (arhPtr != NULL) {
 	modTime = (time_t) strtol(arhPtr->ar_date, NULL, 10);
     } else {
