@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-timed.c,v 1.2 2004/01/09 19:47:17 otto Exp $	*/
+/*	$OpenBSD: print-timed.c,v 1.3 2004/01/10 11:58:37 otto Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -27,7 +27,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-timed.c,v 1.2 2004/01/09 19:47:17 otto Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-timed.c,v 1.3 2004/01/10 11:58:37 otto Exp $";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -41,7 +41,6 @@ static const char rcsid[] =
 
 #include <protocols/timed.h>
 
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -61,43 +60,28 @@ timed_print(register const u_char *bp, u_int length)
 #define endof(x) ((u_char *)&(x) + sizeof (x))
 	struct tsp *tsp = (struct tsp *)bp;
 	long sec, usec;
-	const u_char *end, *p;
+	const u_char *end;
 
-	if (endof(tsp->tsp_type) > snapend) {
-		fputs("[|timed]", stdout);
-		return;
-	}
+	TCHECK(tsp->tsp_type);
 	if (tsp->tsp_type < TSPTYPENUMBER)
 		printf("TSP_%s", tsptype[tsp->tsp_type]);
 	else
 		printf("(tsp_type %#x)", tsp->tsp_type);
 
-	if (endof(tsp->tsp_vers) > snapend) {
-		fputs(" [|timed]", stdout);
-		return;
-	}
+	TCHECK(tsp->tsp_vers);
 	printf(" vers %d", tsp->tsp_vers);
 
-	if (endof(tsp->tsp_seq) > snapend) {
-		fputs(" [|timed]", stdout);
-		return;
-	}
+	TCHECK(tsp->tsp_seq);
 	printf(" seq %d", tsp->tsp_seq);
 
 	if (tsp->tsp_type == TSP_LOOP) {
-		if (endof(tsp->tsp_hopcnt) > snapend) {
-			fputs(" [|timed]", stdout);
-			return;
-		}
+		TCHECK(tsp->tsp_hopcnt);
 		printf(" hopcnt %d", tsp->tsp_hopcnt);
 	} else if (tsp->tsp_type == TSP_SETTIME ||
 	    tsp->tsp_type == TSP_ADJTIME ||
 	    tsp->tsp_type == TSP_SETDATE ||
 	    tsp->tsp_type == TSP_SETDATEREQ) {
-		if (endof(tsp->tsp_time) > snapend) {
-			fputs(" [|timed]", stdout);
-			return;
-		}
+		TCHECK(tsp->tsp_time);
 		sec = EXTRACT_32BITS(&tsp->tsp_time.tv_sec);
 		usec = EXTRACT_32BITS(&tsp->tsp_time.tv_usec);
 		if (usec < 0)
@@ -113,12 +97,11 @@ timed_print(register const u_char *bp, u_int length)
 		printf("%ld.%06ld", sec, usec);
 	}
 
-	end = memchr(tsp->tsp_name, '\0', snapend - (u_char *)tsp->tsp_name);
-	if (end == NULL)
-		fputs(" [|timed]", stdout);
-	else {
-		fputs(" name ", stdout);
-		for (p = tsp->tsp_name; p < end; p++)
-			putchar(isprint(*p) ? *p : '?');
-	}
+	end = endof(tsp->tsp_name) > snapend ? snapend : endof(tsp->tsp_name);
+	fputs(" name ", stdout);
+	if (fn_print(tsp->tsp_name, end))
+		goto trunc;
+	return;
+trunc:
+	fputs(" [|timed]", stdout);
 }
