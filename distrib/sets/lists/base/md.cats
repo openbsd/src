@@ -753,6 +753,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atavar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/wdvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/audio_if.ph
@@ -760,8 +761,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/biovar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardbus_exrom.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardbusdevs.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardbusdevs_data.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardbusvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardslotvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/rbus.ph
@@ -1343,6 +1342,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_cdcereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_kuereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_wi_usb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ohcireg.ph
