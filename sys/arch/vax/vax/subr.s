@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.11 2001/02/11 12:59:40 bjc Exp $     */
+/*	$OpenBSD: subr.s,v 1.12 2001/03/16 03:11:00 bjc Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -131,7 +131,7 @@ _cmn_idsptch:
         popr    $0x3f
         rei
 
-ENTRY(badaddr,0)			# Called with addr,b/w/l
+ENTRY(badaddr,R2|R3)			# Called with addr,b/w/l
 		mfpr	$0x12,r0
 		mtpr	$0x1f,$0x12
 		movl	4(ap),r2	# First argument, the address
@@ -162,18 +162,36 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 
 # Have bcopy and bzero here to be sure that system files that not gets
 # macros.h included will not complain.
-ENTRY(bcopy,R2)
+ENTRY(bcopy,R2|R3|R4|R5|R6)
 	movl	4(ap), r0
 	movl	8(ap), r1
-	movl	0xc(ap), r2
-	movc3	r2, (r0), (r1)
-	ret
+	movzwl	12(ap), r2
+	movzwl	14(ap), r6
 
-ENTRY(bzero,0)
+	movc3	r2, (r0), (r1)
+	
+	tstl	r6
+	bleq	1f
+0:	movb	(r1)+, (r3)+
+	movc3	$0xffff, (r1), (r3)
+	sobgtr	r6, 0b
+	
+1:	ret	
+
+ENTRY(bzero,R2|R3|R4|R5|R6)
 	movl	4(ap), r0
-	movl	8(ap), r1
+	movzwl	8(ap), r1
+	movzwl	10(ap), r6
+	
 	movc5	$0, (r0), $0, r1, (r0)
-	ret
+	
+	tstl	r6
+	bleq	1f
+0:	clrb	(r3)+
+	movc5	$0, (r3), $0, $0xffff, (r3)
+	sobgtr	r6, 0b
+	
+1:	ret
 
 # cmpc3 is sometimes emulated; we cannot use it
 ENTRY(bcmp, R2);
@@ -319,25 +337,54 @@ ENTRY(cpu_exit,0)
 #
 # copy/fetch/store routines. 
 #
-
-	.globl	_copyin, _copyout
-_copyout:
-_copyin:.word 0
+	.align 2,1
+ALTENTRY(copyin)
+ENTRY(copyout, R2|R3|R4|R5|R6)
 	movab	1f,*pcbtrap
-	movl	4(ap),r1
-	movl	8(ap),r2
-	movc3	12(ap),(r1), (r2)
+	movl	4(ap), r0
+	movl	8(ap), r1
+	movzwl	12(ap), r2
+	movzwl	14(ap), r6
+
+	movc3	r2, (r0), (r1)
+	
+	tstl	r6
+	bleq	1f
+0:	movb	(r1)+, (r3)+
+	movc3	$0xffff, (r1), (r3)
+	sobgtr	r6,0b
+	
 1:	clrl	*pcbtrap
 	ret
 
-ENTRY(kcopy,0)
+/* kcopy:  just like bcopy, except return -1 upon failure */	
+ENTRY(kcopy,R2|R3|R4|R5|R6)
 	movl	*pcbtrap,-(sp)
-	movab	1f,*pcbtrap
-	movl	4(ap),r1
-	movl	8(ap),r2
-	movc3	12(ap),(r1), (r2)
-	clrl	r1
-1:	movl	(sp)+,*pcbtrap
+	movab	2f,*pcbtrap
+	movl	4(ap), r0
+	movl	8(ap), r1
+	movzwl	12(ap), r2
+	movzwl	14(ap), r6
+
+	movc3	r2, (r0), (r1)
+	
+	tstl	r6
+	bleq	1f
+0:	movb	(r1)+, (r3)+
+	movc3	$0xffff, (r1), (r3)
+	sobgtr	r6, 0b
+	
+	/* 
+	 * If there is a failure, trap.c will set r1 to -1, and jump
+	 * to the following 2.  If not, we return 0.  We duplicate a 
+	 * miniscule amount of code in the interest of speed; movc3
+	 * sets r0 to 0 anyway.
+	 */
+1:
+	movl	(sp)+,*pcbtrap
+	ret
+	
+2:	movl	(sp)+,*pcbtrap
 	movl	r1,r0
 	ret
 
@@ -445,7 +492,7 @@ _bootdev:	.long 0; .globl _bootdev
 /*
  * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
  */
-ENTRY(blkcpy,R6)
+ENTRY(blkcpy,R2|R3|R4|R5|R6)
 	movl	4(ap),r1
 	movl	8(ap),r3
 	movl	12(ap),r6
@@ -458,7 +505,7 @@ ENTRY(blkcpy,R6)
 	movc3	r6,(r1),(r3)
 	ret
 
-ENTRY(blkclr,R6)
+ENTRY(blkclr,R2|R3|R4|R5|R6)
 	movl	4(ap), r3
 	movl	8(ap), r6
 	jbr	2f
