@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpd.8,v 1.15 2003/03/06 20:19:52 jmc Exp $
+.\"	$OpenBSD: tcpd.8,v 1.16 2003/06/02 14:33:47 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -132,6 +132,15 @@ This will succeed only if the client host runs an RFC 931-compliant daemon.
 Client user name lookups will not work for datagram-oriented
 connections, and may cause noticeable delays in the case of connections
 from PCs.
+.Sh FILES
+The default locations of the host access control tables are:
+.Pp
+.Bl -tag -width /etc/hosts.allow -compact
+.It Pa /etc/hosts.allow
+Access control table (allow list)
+.It Pa /etc/hosts.deny
+Access control table (deny list)
+.El
 .\" .Sh EXAMPLES
 .\" The details of using
 .\" .Nm tcpd
@@ -210,15 +219,6 @@ For example:
 Only the last component
 .Pf ( Nm ntalkd )
 of the pathname will be used for access control and logging.
-.Sh FILES
-The default locations of the host access control tables are:
-.Pp
-.Bl -tag -width /etc/hosts.allow -compact
-.It Pa /etc/hosts.allow
-Access control table (allow list)
-.It Pa /etc/hosts.deny
-Access control table (deny list)
-.El
 .Sh SEE ALSO
 .Xr hosts_access 5 ,
 .Xr inetd.conf 5 ,

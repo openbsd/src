@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdmatch.8,v 1.11 2002/02/13 08:33:46 mpech Exp $
+.\"	$OpenBSD: tcpdmatch.8,v 1.12 2003/06/02 14:33:47 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -138,6 +138,17 @@ Typically, a login name or a numeric user ID.
 The default user name is
 .Dq unknown .
 .El
+.Sh FILES
+The default locations of the
+.Xr tcpd 8
+access control tables are:
+.Pp
+.Bl -tag -width /etc/hosts.allow -compact
+.It Pa /etc/hosts.allow
+access control table (allow list)
+.It Pa /etc/hosts.deny
+access control table (deny list)
+.El
 .Sh EXAMPLES
 To predict how
 .Xr tcpd 8
@@ -164,17 +175,6 @@ $ tcpdmatch telnetd paranoid
 .\" On some systems, daemon names have no `in.' prefix, or
 .\" .Nm tcpdmatch\
 .\" may need some help to locate the inetd configuration file.
-.Sh FILES
-The default locations of the
-.Xr tcpd 8
-access control tables are:
-.Pp
-.Bl -tag -width /etc/hosts.allow -compact
-.It Pa /etc/hosts.allow
-access control table (allow list)
-.It Pa /etc/hosts.deny
-access control table (deny list)
-.El
 .Sh SEE ALSO
 .Xr hosts_access 5 ,
 .Xr hosts_options 5 ,
