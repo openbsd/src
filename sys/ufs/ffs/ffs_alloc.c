@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.49 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.50 2004/09/18 22:01:18 tedu Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ static int      ffs_checkblk(struct inode *, daddr_t, long);
  *   3) allocate a block in the same cylinder group.
  *   4) quadradically rehash into other cylinder groups, until an
  *      available block is located.
- * If no block preference is given the following heirarchy is used
+ * If no block preference is given the following hierarchy is used
  * to allocate a block:
  *   1) allocate a block in the cylinder group that contains the
  *      inode for the file.
@@ -558,7 +558,7 @@ fail:
  *   2) allocate an inode in the same cylinder group.
  *   3) quadradically rehash into other cylinder groups, until an
  *      available inode is located.
- * If no inode preference is given the following heirarchy is used
+ * If no inode preference is given the following hierarchy is used
  * to allocate an inode:
  *   1) allocate an inode in cylinder group 0.
  *   2) quadradically rehash into other cylinder groups, until an

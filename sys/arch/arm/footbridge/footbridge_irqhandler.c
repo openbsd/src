@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_irqhandler.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
+/*	$OpenBSD: footbridge_irqhandler.c,v 1.5 2004/09/18 22:01:18 tedu Exp $	*/
 /*	$NetBSD: footbridge_irqhandler.c,v 1.9 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ footbridge_intr_calculate_masks(void)
 	footbridge_imask[IPL_SOFTNET] |= footbridge_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
