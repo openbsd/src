@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.70 2000/11/09 02:55:42 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.71 2000/11/21 07:23:24 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.70 2000/11/09 02:55:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.71 2000/11/21 07:23:24 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -238,10 +238,6 @@ struct	servtab {
 	int	se_max;			/* max # of instances of this service */
 	int	se_count;		/* number started since se_time */
 	struct	timeval se_time;	/* start of se_count */
-#ifdef MULOG
-	int	se_log;
-#define MULOG_RFC931	0x40000000
-#endif
 	struct	servtab *se_next;
 } *servtab;
 
@@ -580,10 +576,6 @@ main(argc, argv, envp)
 				if (debug)
 					fprintf(stderr, "%d execl %s\n",
 					    getpid(), sep->se_server);
-#ifdef MULOG
-				if (sep->se_log)
-					dolog(sep, ctrl);
-#endif
 				dup2(ctrl, 0);
 				close(ctrl);
 				dup2(0, 1);
@@ -1223,38 +1215,8 @@ getconfigent()
 more:
 	freeconfig(sep);
 	
-#ifdef MULOG
-	while ((cp = nextline(fconfig)) && *cp == '#') {
-		/* Avoid use of `skip' if there is a danger of it looking
-		 * at continuation lines.
-		 */
-		do {
-			cp++;
-		} while (*cp == ' ' || *cp == '\t');
-		if (*cp == '\0')
-			continue;
-		if ((arg = skip(&cp, 0)) == NULL)
-			continue;
-		if (strcmp(arg, "DOMAIN"))
-			continue;
-		if (curdom)
-			free(curdom);
-		curdom = NULL;
-		while (*cp == ' ' || *cp == '\t')
-			cp++;
-		if (*cp == '\0')
-			continue;
-		arg = cp;
-		while (*cp && *cp != ' ' && *cp != '\t')
-			cp++;
-		if (*cp != '\0')
-			*cp++ = '\0';
-		curdom = newstr(arg);
-	}
-#else
 	while ((cp = nextline(fconfig)) && *cp == '#')
 		;
-#endif
 	if (cp == NULL) {
 		free(sep);
 		return (NULL);
@@ -1394,36 +1356,6 @@ more:
 		sep->se_bi = NULL;
 	argc = 0;
 	for (arg = skip(&cp, 0); cp; arg = skip(&cp, 0)) {
-#if MULOG
-		char *colon;
-
-		if (argc == 0 && (colon = strrchr(arg, ':'))) {
-			while (arg < colon) {
-				int	x;
-				char	*ccp;
-
-				switch (*arg++) {
-				case 'l':
-					x = 1;
-					if (isdigit(*arg)) {
-						x = strtol(arg, &ccp, 0);
-						if (ccp == arg)
-							break;
-						arg = ccp;
-					}
-					sep->se_log &= ~MULOG_RFC931;
-					sep->se_log |= x;
-					break;
-				case 'a':
-					sep->se_log |= MULOG_RFC931;
-					break;
-				default:
-					break;
-				}
-			}
-			arg = colon + 1;
-		}
-#endif
 		if (argc < MAXARGV)
 			sep->se_argv[argc++] = newstr(arg);
 	}
@@ -1673,10 +1605,6 @@ dupconfig(sep)
 		newtab->se_argv[argc] = sep->se_argv[argc] ?
 		    newstr(sep->se_argv[argc]) : NULL;
 	newtab->se_max = sep->se_max;
-
-#ifdef MULOG
-	newtab->se_log = sep->se_log;
-#endif
 
 	return (newtab);
 }
@@ -2028,193 +1956,3 @@ print_service(action, sep)
 	    sep->se_group ? sep->se_group : "wheel",
 	    (long)sep->se_bi, sep->se_server);
 }
-
-#ifdef MULOG
-char	*rfc931_name __P((struct sockaddr_in *, int));
-
-dolog(sep, ctrl)
-	struct servtab *sep;
-	int		ctrl;
-{
-	struct sockaddr		sa;
-	struct sockaddr_in	*sin = (struct sockaddr_in *)&sa;
-	int			len = sizeof(sa);
-	struct hostent		*hp;
-	char			*host, *dp, buf[BUFSIZ];
-	int			connected = 1;
-
-	if (sep->se_family != AF_INET)
-		return;
-
-	if (getpeername(ctrl, &sa, &len) < 0) {
-		if (errno != ENOTCONN) {
-			syslog(LOG_ERR, "getpeername: %m");
-			return;
-		}
-		if (recvfrom(ctrl, buf, sizeof(buf), MSG_PEEK, &sa, &len) < 0) {
-			syslog(LOG_ERR, "recvfrom: %m");
-			return;
-		}
-		connected = 0;
-	}
-	if (sa.sa_family != AF_INET) {
-		syslog(LOG_ERR, "unexpected address family %u", sa.sa_family);
-		return;
-	}
-
-	hp = gethostbyaddr((char *) &sin->sin_addr.s_addr,
-	    sizeof (sin->sin_addr.s_addr), AF_INET);
-
-	host = hp?hp->h_name:inet_ntoa(sin->sin_addr);
-
-	switch (sep->se_log & ~MULOG_RFC931) {
-	case 0:
-		return;
-	case 1:
-		if (curdom == NULL || *curdom == '\0')
-			break;
-		dp = host + strlen(host) - strlen(curdom);
-		if (dp < host)
-			break;
-		if (debug)
-			fprintf(stderr, "check \"%s\" against curdom \"%s\"\n",
-			    host, curdom);
-		if (strcasecmp(dp, curdom) == 0)
-			return;
-		break;
-	case 2:
-	default:
-		break;
-	}
-
-	openlog("", LOG_NOWAIT, MULOG);
-
-	if (connected && (sep->se_log & MULOG_RFC931))
-		syslog(LOG_INFO, "%s@%s wants %s", rfc931_name(sin, ctrl),
-		    host, sep->se_service);
-	else
-		syslog(LOG_INFO, "%s wants %s", host, sep->se_service);
-}
-/*
- * From tcp_log by
- *  Wietse Venema, Eindhoven University of Technology, The Netherlands.
- */
-#if 0
-static char sccsid[] = "@(#) rfc931.c 1.3 92/08/31 22:54:46";
-#endif
-
-#include <setjmp.h>
-
-#define	RFC931_PORT	113		/* Semi-well-known port */
-#define	TIMEOUT		4
-#define	TIMEOUT2	10
-
-static jmp_buf timebuf;
-
-/* timeout - handle timeouts */
-static void
-timeout(sig)
-	int	sig;
-{
-	longjmp(timebuf, sig);
-}
-
-/* rfc931_name - return remote user name */
-char *
-rfc931_name(there, ctrl)
-struct sockaddr_in *there;		/* remote link information */
-int	ctrl;
-{
-	struct sockaddr_in here;	/* local link information */
-	struct sockaddr_in sin;		/* for talking to RFC931 daemon */
-	int		length;
-	int		s;
-	unsigned	remote;
-	unsigned	local;
-	static char	user[256];		/* XXX */
-	char		buf[256];
-	char		*cp;
-	char		*result = "USER_UNKNOWN";
-	int		len;
-
-	/* Find out local port number of our stdin. */
-
-	length = sizeof(here);
-	if (getsockname(ctrl, (struct sockaddr *) &here, &length) == -1) {
-		syslog(LOG_ERR, "getsockname: %m");
-		return (result);
-	}
-	/* Set up timer so we won't get stuck. */
-
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		syslog(LOG_ERR, "socket: %m");
-		return (result);
-	}
-
-	sin = here;
-	sin.sin_port = htons(0);
-	if (bind(s, (struct sockaddr *) &sin, sizeof(sin)) == -1) {
-		syslog(LOG_ERR, "bind: %m");
-		return (result);
-	}
-
-	signal(SIGALRM, timeout);
-	if (setjmp(timebuf)) {
-		close(s);			/* not: fclose(fp) */
-		return (result);
-	}
-	alarm(TIMEOUT);
-
-	/* Connect to the RFC931 daemon. */
-	sin = *there;
-	sin.sin_port = htons(RFC931_PORT);
-	if (connect(s, (struct sockaddr *) &sin, sizeof(sin)) == -1) {
-		close(s);
-		alarm(0);
-		return (result);
-	}
-
-	/* Query the RFC 931 server. Would 13-byte writes ever be broken up? */
-	sprintf(buf, "%u,%u\r\n", ntohs(there->sin_port), ntohs(here.sin_port));
-
-	for (len = 0, cp = buf; len < strlen(buf); ) {
-		int n;
-
-		if ((n = write(s, cp, strlen(buf) - len)) == -1) {
-			close(s);
-			alarm(0);
-			return (result);
-		}
-		cp += n;
-		len += n;
-	}
-
-	/* Read response */
-	for (cp = buf; cp < buf + sizeof(buf) - 1; ) {
-		char	c;
-		if (read(s, &c, 1) != 1) {
-			close(s);
-			alarm(0);
-			return (result);
-		}
-		if (c == '\n')
-			break;
-		*cp++ = c;
-	}
-	*cp = '\0';
-
-	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote,
-	    &local, user) == 3 && ntohs(there->sin_port) == remote &&
-	    ntohs(here.sin_port) == local) {
-
-		/* Strip trailing carriage return. */
-		if (cp = strchr(user, '\r'))
-			*cp = 0;
-		result = user;
-	}
-
-	alarm(0);
-	close(s);
-	return (result);
-}
-#endif
