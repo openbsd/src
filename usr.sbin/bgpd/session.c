@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.116 2004/02/17 23:21:21 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.117 2004/02/17 23:55:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -623,9 +623,8 @@ session_close_connection(struct peer *peer)
 	if (peer->sock != -1) {
 		shutdown(peer->sock, SHUT_RDWR);
 		close(peer->sock);
-		peer->sock = -1;
-		peer->wbuf.sock = -1;
 	}
+	peer->sock = peer->wbuf.sock = -1;
 }
 
 void
@@ -1077,10 +1076,9 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 				/* error occurred */
 				len = sizeof(error);
 				if (getsockopt(pfd->fd, SOL_SOCKET, SO_ERROR,
-				    &error, &len) == -1)
-					log_warnx("unknown socket error");
-				else {
-					errno = error;
+				    &error, &len) == -1 || error) {
+					if (error)
+						errno = error;
 					log_peer_warn(&p->conf, "socket error");
 				}
 				bgp_fsm(p, EVNT_CON_OPENFAIL);
