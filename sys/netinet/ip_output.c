@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.49 1999/07/15 14:15:41 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.50 1999/10/29 02:04:02 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ ip_output(m0, va_alist)
 				 * checksum in their output routines.
 				 */
 				ip->ip_sum = in_cksum(m, hlen);
-				error = ipe4_output(m, gw, tdb, &mp);
+				error = ipe4_output(m, tdb, &mp);
 				if (mp == NULL)
 					error = EFAULT;
 				if (error) {
