@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.6 2005/01/18 16:26:36 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.7 2005/01/27 17:03:23 millert Exp $ */
 /*
  * Copyright (c) Dale Rahn <drahn@openbsd.org>
  *
@@ -54,6 +54,7 @@ void	pxapcic_io_unmap(pcmcia_chipset_handle_t, int);
 void	*pxapcic_intr_establish(pcmcia_chipset_handle_t,
     struct pcmcia_function *, int, int (*)(void *), void *, char *);
 void	pxapcic_intr_disestablish(pcmcia_chipset_handle_t, void *);
+const char *pxapcic_intr_string(pcmcia_chipset_handle_t, void *);
 void	pxapcic_socket_enable(pcmcia_chipset_handle_t);
 void	pxapcic_socket_disable(pcmcia_chipset_handle_t);
 
@@ -99,6 +100,7 @@ struct pcmcia_chip_functions pxapcic_pcmcia_functions = {
  
 	pxapcic_intr_establish,
 	pxapcic_intr_disestablish,
+	pxapcic_intr_string,
 
 	pxapcic_socket_enable,
 	pxapcic_socket_disable,
@@ -261,6 +263,21 @@ pxapcic_intr_disestablish(pch, ih)
         void *ih;
 {
 	pxa2x0_gpio_intr_disestablish(ih);
+}
+
+const char *
+pxapcic_intr_string(pch, ih)
+        pcmcia_chipset_handle_t pch;
+        void *ih;
+{
+	struct pxapcic_socket *so = pch;
+	static char irqstr[64];
+
+	if (ih == NULL)
+		snprintf(irqstr, sizeof(irqstr), "couldn't establish interrupt");
+	else
+		snprintf(irqstr, sizeof(irqstr), "irq %d", so->irqpin);
+	return (irqstr);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.19 2005/01/27 17:01:31 millert Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.20 2005/01/27 17:03:23 millert Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -232,6 +232,21 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	reg = pcic_read(h, PCIC_INTR);
 	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, reg);
+}
+
+const char *
+pcic_isa_chip_intr_string(pch, ih)
+	pcmcia_chipset_handle_t pch;
+	void *ih;
+{
+	struct pcic_handle *h = (struct pcic_handle *)pch;
+	static char irqstr[64];
+
+	if (ih == NULL)
+		snprintf(irqstr, sizeof(irqstr), "couldn't establish interrupt");
+	else
+		snprintf(irqstr, sizeof(irqstr), "irq %d", h->ih_irq);
+	return (irqstr);
 }
 
 int

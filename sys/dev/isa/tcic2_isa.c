@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2_isa.c,v 1.6 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: tcic2_isa.c,v 1.7 2005/01/27 17:03:23 millert Exp $	*/
 /*	$NetBSD: tcic2_isa.c,v 1.2 1999/04/08 16:14:29 bad Exp $	*/
 
 #undef	TCICISADEBUG
@@ -112,6 +112,7 @@ void	tcic_isa_attach(struct device *, struct device *, void *);
 void	*tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
 	    struct pcmcia_function *, int, int (*) (void *), void *, char *);
 void	tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
+const char *tcic_isa_chip_intr_string(pcmcia_chipset_handle_t, void *);
 
 struct cfattach tcic_isa_ca = {
 	sizeof(struct tcic_softc), tcic_isa_probe, tcic_isa_attach
@@ -130,6 +131,7 @@ static struct pcmcia_chip_functions tcic_isa_functions = {
 
 	tcic_isa_chip_intr_establish,
 	tcic_isa_chip_intr_disestablish,
+	tcic_isa_chip_intr_string,
 
 	tcic_chip_socket_enable,
 	tcic_chip_socket_disable,
@@ -218,7 +220,7 @@ tcic_isa_attach(parent, self, aux)
 	sc->memsize2 = tcic_log2((u_int)ia->ia_msize);
 
 	sc->intr_est = ic;
-	sc->pct = (pcmcia_chipset_tag_t) & tcic_isa_functions;
+	sc->pct = (pcmcia_chipset_tag_t) &tcic_isa_functions;
 
 	sc->iot = iot;
 	sc->ioh = ioh;
@@ -371,4 +373,19 @@ tcic_isa_chip_intr_disestablish(pch, ih)
 	tcic_write_ind_2(h, reg, val);
 
 	isa_intr_disestablish(h->sc->intr_est, ih);
+}
+
+const char *
+tcic_isa_chip_intr_string(pch, ih)
+	pcmcia_chipset_handle_t pch;
+	void *ih;
+{
+	struct tcic_handle *h = (struct tcic_handle *) pch;
+	static char irqstr[64];
+
+	if (ih == NULL)
+		snprintf(irqstr, sizeof(irqstr), "couldn't establish interrupt");
+	else
+		snprintf(irqstr, sizeof(irqstr), "irq %d", h->ih_irq);
+	return (irqstr);
 }

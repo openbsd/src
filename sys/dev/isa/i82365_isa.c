@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.18 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.19 2005/01/27 17:03:23 millert Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -61,10 +61,6 @@
 int	pcic_isa_probe(struct device *, void *, void *);
 void	pcic_isa_attach(struct device *, struct device *, void *);
 
-void	*pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *, char *);
-void	pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
-
 struct cfattach pcic_isa_ca = {
 	sizeof(struct pcic_softc), pcic_isa_probe, pcic_isa_attach
 };
@@ -82,6 +78,7 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 
 	pcic_isa_chip_intr_establish,
 	pcic_isa_chip_intr_disestablish,
+	pcic_isa_chip_intr_string,
 
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,

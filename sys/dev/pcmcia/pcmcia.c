@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.33 2002/11/19 18:36:18 jason Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.34 2005/01/27 17:03:23 millert Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -867,6 +867,14 @@ pcmcia_intr_disestablish(pf, ih)
 		}
 	} else
 		pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch, ih);
+}
+
+const char *
+pcmcia_intr_string(pf, ih)
+	struct pcmcia_function *pf;
+	void *ih;
+{
+	return pcmcia_chip_intr_string(pf->sc->pct, pf->sc->pch, ih);
 }
 
 int 

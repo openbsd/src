@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciachip.h,v 1.6 2002/03/14 03:16:07 millert Exp $ */
+/*	$OpenBSD: pcmciachip.h,v 1.7 2005/01/27 17:03:23 millert Exp $ */
 /*	$NetBSD: pcmciachip.h,v 1.5 2000/01/13 08:58:51 joda Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ struct pcmcia_chip_functions {
 	void	*(*intr_establish)(pcmcia_chipset_handle_t,
 		    struct pcmcia_function *, int, int (*)(void *), void *, char *);
 	void	(*intr_disestablish)(pcmcia_chipset_handle_t, void *);
+	const char *(*intr_string)(pcmcia_chipset_handle_t, void *);
 
 	/* card enable/disable */
 	void	(*socket_enable)(pcmcia_chipset_handle_t);
@@ -130,6 +131,9 @@ struct pcmcia_chip_functions {
 
 #define pcmcia_chip_intr_disestablish(tag, handle, ih)			\
 	((*(tag)->intr_disestablish)((handle), (ih)))
+
+#define pcmcia_chip_intr_string(tag, handle, ih)			\
+	((*(tag)->intr_string)((handle), (ih)))
 
 /* Socket functions. */
 #define	pcmcia_chip_socket_enable(tag, handle)				\

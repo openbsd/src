@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.12 2004/03/03 21:47:39 miod Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.13 2005/01/27 17:03:24 millert Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ void	stp4020_chip_socket_disable(pcmcia_chipset_handle_t);
 void	*stp4020_chip_intr_establish(pcmcia_chipset_handle_t,
 	    struct pcmcia_function *, int, int (*) (void *), void *, char *);
 void	stp4020_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
+const char *stp4020_chip_intr_string(pcmcia_chipset_handle_t, void *);
 
 /* Our PCMCIA chipset methods */
 static struct pcmcia_chip_functions stp4020_functions = {
@@ -135,6 +136,7 @@ static struct pcmcia_chip_functions stp4020_functions = {
 
 	stp4020_chip_intr_establish,
 	stp4020_chip_intr_disestablish,
+	stp4020_chip_intr_string,
 
 	stp4020_chip_socket_enable,
 	stp4020_chip_socket_disable
@@ -832,6 +834,17 @@ stp4020_chip_intr_disestablish(pch, ih)
 
 	h->intrhandler = NULL;
 	h->intrarg = NULL;
+}
+
+const char *
+stp4020_chip_intr_string(pch, ih)
+	pcmcia_chipset_handle_t pch;
+	void *ih;
+{
+	if (ih == NULL)
+		return ("couldn't establish interrupt");
+	else
+		return ("");	/* nothing for now */
 }
 
 /*

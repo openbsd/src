@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.7 2002/11/19 18:40:17 jason Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.8 2005/01/27 17:03:23 millert Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 	/* XXX */
 	pcic_isa_chip_intr_establish,
 	pcic_isa_chip_intr_disestablish,
+	pcic_isa_chip_intr_string,
 
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,

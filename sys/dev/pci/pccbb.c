@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.34 2004/07/14 21:54:18 mickey Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.35 2005/01/27 17:03:23 millert Exp $ */
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -153,8 +153,8 @@ int	pccbb_pcmcia_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
 void	pccbb_pcmcia_io_unmap(pcmcia_chipset_handle_t, int);
 void   *pccbb_pcmcia_intr_establish(pcmcia_chipset_handle_t,
     struct pcmcia_function *, int, int (*)(void *), void *, char *);
-void	pccbb_pcmcia_intr_disestablish(pcmcia_chipset_handle_t,
-    void *);
+void	pccbb_pcmcia_intr_disestablish(pcmcia_chipset_handle_t, void *);
+const char *pccbb_pcmcia_intr_string(pcmcia_chipset_handle_t, void *);
 void	pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t);
 void	pccbb_pcmcia_socket_disable(pcmcia_chipset_handle_t);
 int	pccbb_pcmcia_card_detect(pcmcia_chipset_handle_t pch);
@@ -214,6 +214,7 @@ static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_io_unmap,
 	pccbb_pcmcia_intr_establish,
 	pccbb_pcmcia_intr_disestablish,
+	pccbb_pcmcia_intr_string,
 	pccbb_pcmcia_socket_enable,
 	pccbb_pcmcia_socket_disable,
 	pccbb_pcmcia_card_detect
@@ -2850,6 +2851,17 @@ pccbb_pcmcia_intr_disestablish(pch, ih)
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;
 
 	pccbb_intr_disestablish(sc, ih);
+}
+
+const char *
+pccbb_pcmcia_intr_string(pch, ih)
+	pcmcia_chipset_handle_t pch;
+	void *ih;
+{
+	if (ih == NULL)
+		return "couldn't establish interrupt";
+	else
+		return "";	/* card shares interrupt of the bridge */
 }
 
 #if rbus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.13 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -139,6 +139,7 @@ int	tslot_intr(void *);
 void	tslot_intr_disestablish(pcmcia_chipset_handle_t, void *);
 void	*tslot_intr_establish(pcmcia_chipset_handle_t, struct pcmcia_function *,
     int, int (*)(void *), void *, char *);
+const char *tslot_intr_string(pcmcia_chipset_handle_t, void *);
 int	tslot_io_alloc(pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
     bus_size_t, struct pcmcia_io_handle *);
 void	tslot_io_free(pcmcia_chipset_handle_t, struct pcmcia_io_handle *);
@@ -183,6 +184,7 @@ struct	pcmcia_chip_functions tslot_functions = {
 
 	tslot_intr_establish,
 	tslot_intr_disestablish,
+	tslot_intr_string,
 
 	tslot_slot_enable,
 	tslot_slot_disable
@@ -777,6 +779,16 @@ tslot_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	td->td_intr = NULL;
 	td->td_intrarg = NULL;
 }
+
+const char *
+tslot_intr_string(pcmcia_chipset_handle_t pch, void *ih)
+{
+	if (ih == NULL)
+		return ("couldn't establish interrupt");
+	else
+		return ("");	/* nothing for now */
+}
+
 
 void *
 tslot_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
