@@ -1,7 +1,7 @@
-/*	$OpenBSD: route6d.c,v 1.2 1999/12/11 10:41:46 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.3 2000/01/02 04:57:27 itojun Exp $	*/
 
 /*
-* KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.c,v 1.6 1999/09/10 08:20:59 itojun Exp
+ * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp
  */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef	lint
-static char _rcsid[] = "KAME Id: route6d.c,v 1.6 1999/09/10 08:20:59 itojun Exp";
+static char _rcsid[] = "KAME Id: route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp";
 #endif
 
 #include <stdio.h>
@@ -546,8 +546,15 @@ init()
 		fatal("rip IPV6_MULTICAST_LOOP");
 #ifdef ADVAPI
 	i = 1;
-	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_PKTINFO, &i, sizeof(i)) < 0)
+#ifdef IPV6_RECVPKTINFO
+	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &i,
+		       sizeof(i)) < 0)
+		fatal("rip IPV6_RECVPKTINFO");
+#else  /* old adv. API */
+	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_PKTINFO, &i,
+		       sizeof(i)) < 0)
 		fatal("rip IPV6_PKTINFO");
+#endif 
 #endif /*ADVAPI*/
 
 	memset(&hints, 0, sizeof(hints));
@@ -1232,6 +1239,8 @@ ifconfig()
 		fatal("ioctl: SIOCGIFCONF");
 	i = ifconf.ifc_len;
 	while (1) {
+		char *newbuf;
+
 		ifconf.ifc_buf = buf;
 		ifconf.ifc_len = bufsiz;
 		if (ioctl(s, SIOCGIFCONF, (char *)&ifconf) < 0)
@@ -1240,8 +1249,11 @@ ifconfig()
 			break;
 		i = ifconf.ifc_len;
 		bufsiz *= 2;
-		if ((buf = (char *)realloc(buf, bufsiz)) == NULL)
+		if ((newbuf = (char *)realloc(buf, bufsiz)) == NULL) {
+			free(buf);
 			fatal("realloc");
+		}
+		buf = newbuf;
 	}
 	for (i = 0; i < ifconf.ifc_len; ) {
 		ifrp = (struct ifreq *)(buf + i);
