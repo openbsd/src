@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.2 1999/05/24 00:51:25 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -40,8 +40,6 @@
 
 #define SIG_PRINT_OFFSET      12
 #define SIG_PRINT_LENGTH      50
-
-extern struct assertion *asp;
 
 void
 usage(void)
