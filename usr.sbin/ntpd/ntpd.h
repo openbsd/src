@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.31 2004/07/29 11:01:48 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.32 2004/08/10 12:41:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -207,8 +207,9 @@ int	 parse_config(char *, struct ntpd_conf *);
 int	 cmdline_symset(char *);
 
 /* config.c */
-int	 host(const char *, struct ntp_addr **);
-int	 host_dns(const char *, struct ntp_addr **);
+int		 host(const char *, struct ntp_addr **);
+int		 host_dns(const char *, struct ntp_addr **);
+struct ntp_peer	*new_peer(void);
 
 /* ntp_msg.c */
 int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);

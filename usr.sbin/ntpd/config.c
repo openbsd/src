@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2004/07/28 16:38:43 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.10 2004/08/10 12:41:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,7 +20,11 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+
 #include <errno.h>
+#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -29,6 +33,8 @@
 
 struct ntp_addr	*host_v4(const char *);
 struct ntp_addr	*host_v6(const char *);
+
+static u_int32_t		 maxid = 0;
 
 int
 host(const char *s, struct ntp_addr **hn)
@@ -115,9 +121,9 @@ host_dns(const char *s, struct ntp_addr **hn)
 	struct sockaddr_in6	*sa_in6;
 	struct ntp_addr		*h, *hh = NULL;
 
-	memset(&hints, 0, sizeof(hints));
+	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
+	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 	error = getaddrinfo(s, NULL, &hints, &res0);
 	if (error) {
 		log_warnx("could not parse \"%s\": %s", s,
@@ -155,4 +161,16 @@ host_dns(const char *s, struct ntp_addr **hn)
 
 	*hn = hh;
 	return (cnt);
+}
+
+struct ntp_peer *
+new_peer(void)
+{
+	struct ntp_peer	*p;
+
+	if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
+		fatal("conf_main server calloc");
+	p->id = ++maxid;
+
+	return (p);
 }
