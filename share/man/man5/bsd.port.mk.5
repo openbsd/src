@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.102 2003/07/12 16:09:10 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.103 2003/07/12 16:17:11 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -149,16 +149,11 @@ Prints a one-line index entry of the port, suitable for
 Short-hand for make clean=dist.
 .It Ar distpatch
 Apply distribution patches only.
-.It Ar do-patch
-Override for the default behavior of
-.Ar patch .
-It is usually better to override
-.Ar post-patch ,
-as
+See
 .Ar patch
-needs to invoke
-.Ar distpatch
-directly for historical reasons.
+and
+.Ev PATCH_CASES
+for details.
 .It Ar extract
 Extract the distfiles under
 .Pa ${WRKDIST}
@@ -251,17 +246,21 @@ and
 .Ar post-patch ,
 but the default
 .Ar do-patch
-target recurses through
-.Ar distpatch
+target invokes
+.Ar distpatch 
+directly.
 So, if the
 .Ar do-patch
 target is overridden, it should still begin by calling
 make distpatch, before applying
 .Ox
 specific patches.
-See
-.Ar distpatch
-for the distribution patches-specific description.
+Accordingly, the exact sequence of hooks is:
+.Ar pre-patch ,
+.Ar do-distpatch ,
+.Ar post-distpatch ,
+.Ar do-patch ,
+.Ar post-patch .
 If
 .Pa ${PATCHDIR}
 exists, the files described under
