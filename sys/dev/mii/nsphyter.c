@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.10 2005/02/05 22:20:42 brad Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.11 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -108,10 +108,10 @@ const struct mii_phy_funcs nsphyter_funcs = {
 };
 
 static const struct mii_phydesc nsphyterphys[] = {
-	{ MII_OUI_NATSEMI,	MII_MODEL_NATSEMI_DP83843,
-	  MII_STR_NATSEMI_DP83843 },
-	{ MII_OUI_NATSEMI,	MII_MODEL_NATSEMI_DP83815,
+	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83815,
 	  MII_STR_NATSEMI_DP83815 },
+	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83843,
+	  MII_STR_NATSEMI_DP83843 },
 
 	{ 0,			0,
 	  NULL },

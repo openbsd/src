@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.10 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.11 2005/02/19 06:00:04 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -78,12 +78,19 @@ const struct mii_phy_funcs xmphy_funcs = {
 	xmphy_service, xmphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc xmphys[] = {
+	{ MII_OUI_xxXAQTI,	MII_MODEL_XAQTI_XMACII,
+	  MII_STR_XAQTI_XMACII },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int xmphy_probe(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxXAQTI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_XAQTI_XMACII)
+	if (mii_phy_match(ma, xmphys) != NULL)
 		return(10);
 
 	return(0);
@@ -95,8 +102,10 @@ xmphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_XAQTI_XMACII, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, xmphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

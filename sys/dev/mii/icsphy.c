@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.16 2005/02/05 22:20:42 brad Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.17 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -109,11 +109,11 @@ const struct mii_phy_funcs icsphy_funcs = {
 };
 
 static const struct mii_phydesc icsphys[] = {
-	{ MII_OUI_xxICS,	MII_MODEL_xxICS_1890,
+	{ MII_OUI_xxICS,		MII_MODEL_xxICS_1890,
 	  MII_STR_xxICS_1890 },
-	{ MII_OUI_xxICS,	MII_MODEL_xxICS_1892,
+	{ MII_OUI_xxICS,		MII_MODEL_xxICS_1892,
 	  MII_STR_xxICS_1892 },
-	{ MII_OUI_xxICS,	MII_MODEL_xxICS_1893,
+	{ MII_OUI_xxICS,		MII_MODEL_xxICS_1893,
 	  MII_STR_xxICS_1893 },
 
 	{ 0,			0,

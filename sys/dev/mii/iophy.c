@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.11 2005/02/05 22:20:42 brad Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.12 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -106,9 +106,9 @@ const struct mii_phy_funcs iophy_funcs = {
 };
 
 static const struct mii_phydesc iophys[] = {
-	{ MII_OUI_xxINTEL,	MII_MODEL_xxINTEL_I82553,
+	{ MII_OUI_xxINTEL,		MII_MODEL_xxINTEL_I82553,
 	  MII_STR_xxINTEL_I82553 },
-	{ MII_OUI_INTEL,	MII_MODEL_INTEL_I82553,
+	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82553,
 	  MII_STR_INTEL_I82553 },
 
 	{ 0,			0,

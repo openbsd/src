@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.12 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.13 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -107,13 +107,20 @@ const struct mii_phy_funcs qsphy_funcs = {
 	qsphy_service, qsphy_status, qsphy_reset,
 };
 
+static const struct mii_phydesc qsphys[] = {
+	{ MII_OUI_QUALSEMI,		MII_MODEL_QUALSEMI_QS6612,
+	  MII_STR_QUALSEMI_QS6612 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 qsphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_QUALSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_QUALSEMI_QS6612)
+	if (mii_phy_match(ma, qsphys) != NULL)
 		return (10);
 
 	return (0);
@@ -125,9 +132,10 @@ qsphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_QUALSEMI_QS6612,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, qsphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

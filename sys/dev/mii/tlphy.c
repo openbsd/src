@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.16 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -123,13 +123,20 @@ const struct mii_phy_funcs tlphy_funcs = {
 	tlphy_service, tlphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc tlphys[] = {
+	{ MII_OUI_xxTI,			MII_MODEL_xxTI_TLAN10T,
+	  MII_STR_xxTI_TLAN10T },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 tlphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxTI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxTI_TLAN10T)
+	if (mii_phy_match(ma, tlphys) != NULL)
 		return (10);
 
 	return (0);
@@ -142,9 +149,10 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 	struct tl_softc *tlsc = (struct tl_softc *)self->dv_parent;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_xxTI_TLAN10T,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, tlphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;

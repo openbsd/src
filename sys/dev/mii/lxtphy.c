@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.13 2005/02/05 22:20:42 brad Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.14 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -113,9 +113,9 @@ const struct mii_phy_funcs lxtphy971_funcs = {
 };
 
 static const struct mii_phydesc lxtphys[] = {
-	{ MII_OUI_xxLEVEL1,	MII_MODEL_xxLEVEL1_LXT970,
+	{ MII_OUI_xxLEVEL1,		MII_MODEL_xxLEVEL1_LXT970,
 	  MII_STR_xxLEVEL1_LXT970 },
-	{ MII_OUI_xxLEVEL1a,	MII_MODEL_xxLEVEL1a_LXT971,
+	{ MII_OUI_xxLEVEL1a,		MII_MODEL_xxLEVEL1a_LXT971,
 	  MII_STR_xxLEVEL1a_LXT971 },
 
 	{ 0,			0,

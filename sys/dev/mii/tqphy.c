@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.9 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.10 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -108,17 +108,21 @@ const struct mii_phy_funcs tqphy_funcs = {
 	tqphy_service, tqphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc tqphys[] = {
+	{ MII_OUI_TSC,		MII_MODEL_TSC_78Q2120,
+	  MII_STR_TSC_78Q2120 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 tqphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TSC)
-		switch MII_MODEL(ma->mii_id2) {
-		case MII_MODEL_TSC_78Q2120:
-		/* case MII_MODEL_TSC_78Q2121: */
-			return (10);
-	}
+	if (mii_phy_match(ma, tqphys) != NULL)
+		return (10);
 
 	return (0);
 }
@@ -129,9 +133,10 @@ tqphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_TSC_78Q2120,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, tqphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

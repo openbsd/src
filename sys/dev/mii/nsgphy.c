@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.13 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.14 2005/02/19 06:00:04 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -84,14 +84,22 @@ const struct mii_phy_funcs nsgphy_funcs = {
 	nsgphy_service, nsgphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc nsgphys[] = {
+	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83861,
+	  MII_STR_NATSEMI_DP83861 },
+	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83891,
+	  MII_STR_NATSEMI_DP83891 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 nsgphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI &&
-	    (MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83891 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83861))
+	if (mii_phy_match(ma, nsgphys) != NULL)
 		return (10);
 
 	return (0);
@@ -103,18 +111,10 @@ nsgphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	switch(MII_MODEL(ma->mii_id2)) {
-	case MII_MODEL_NATSEMI_DP83861:
-	  printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83861,
-		 MII_REV(ma->mii_id2));
-	  break;
-
-	case MII_MODEL_NATSEMI_DP83891:
-	  printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83891,
-		 MII_REV(ma->mii_id2));
-	  break;
-	}
+	mpd = mii_phy_match(ma, nsgphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

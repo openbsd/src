@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphy.c,v 1.9 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: txphy.c,v 1.10 2005/02/19 06:00:04 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -62,14 +62,22 @@ const struct mii_phy_funcs txphy_funcs = {
 	txphy_service, ukphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc txphys[] = {
+	{ MII_OUI_xxTI,	MII_MODEL_xxTI_TNETE2101,
+	  MII_STR_xxTI_TNETE2101 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 txphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxTI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxTI_TNETE2101)
+	if (mii_phy_match(ma, txphys) != NULL)
 		return (10);
+
 	return (0);
 }
 
@@ -79,9 +87,10 @@ txphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_xxTI_TNETE2101,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, txphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

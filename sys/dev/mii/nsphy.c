@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.17 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.18 2005/02/19 06:00:04 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -108,13 +108,20 @@ const struct mii_phy_funcs nsphy_funcs = {
 	nsphy_service, nsphy_status, nsphy_reset,
 };
 
+static const struct mii_phydesc nsphys[] = {
+	{ MII_OUI_NATSEMI,		MII_MODEL_NATSEMI_DP83840,
+	  MII_STR_NATSEMI_DP83840 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 nsphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83840)
+	if (mii_phy_match(ma, nsphys) != NULL)
 		return (10);
 
 	return (0);
@@ -126,9 +133,10 @@ nsphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83840,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, nsphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

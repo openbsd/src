@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphy.c,v 1.11 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.12 2005/02/19 06:00:04 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -63,13 +63,20 @@ const struct mii_phy_funcs mtdphy_funcs = {
 	mtdphy_service, ukphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc mtdphys[] = {
+	{ MII_OUI_MYSON,		MII_MODEL_MYSON_MTD972,
+	  MII_STR_MYSON_MTD972 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 mtdphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MYSON &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_MYSON_MTD972)
+	if (mii_phy_match(ma, mtdphys) != NULL)
 		return (10);
 
 	return (0);
@@ -81,8 +88,10 @@ mtdphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_MYSON_MTD972, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, mtdphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

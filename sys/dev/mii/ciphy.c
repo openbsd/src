@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.3 2005/02/05 22:20:42 brad Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.4 2005/02/19 06:00:03 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -86,11 +86,11 @@ const struct mii_phy_funcs ciphy_funcs = {
 };
 
 static const struct mii_phydesc ciphys[] = {
-	{ MII_OUI_CICADA,	MII_MODEL_CICADA_CS8201,
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201,
 	  MII_STR_CICADA_CS8201 },
-	{ MII_OUI_CICADA,	MII_MODEL_CICADA_CS8201A,
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201A,
 	  MII_STR_CICADA_CS8201A },
-	{ MII_OUI_CICADA,	MII_MODEL_CICADA_CS8201B,
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201B,
 	  MII_STR_CICADA_CS8201B },
 
 	{ 0,			0,
