@@ -1,4 +1,5 @@
-/*	$Id: pcmcia.c,v 1.8 1996/11/28 23:28:16 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.9 1997/04/17 08:21:12 niklas Exp $	*/
+
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -31,14 +32,18 @@
  *
  */
 
-/* XXX - these next two lines are just "glue" until the confusion over
-   pcmcia vs pcmciabus between the framework and sys/conf/files
-   gets resolved */
+/*
+ * XXX - these next two lines are just "glue" until the confusion over
+ * pcmcia vs pcmciabus between the framework and sys/conf/files
+ * gets resolved
+ */
 #define pcmciabus_cd pcmcia_cd
 #define pcmciabus_ca pcmcia_ca
 
-/* derived from scsiconf.c writte by Julian Elischer et al */
-/* TODO add modload support and loadable lists of devices */
+/*
+ * derived from scsiconf.c writte by Julian Elischer et al
+ * TODO add modload support and loadable lists of devices
+ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +80,8 @@ static int      ndeldevs = 0;
 								(void *) d,e))
 #define PCMCIA_MAP_IO(a,b,c,d,e)    ((a)->chip_link->pcmcia_map_io(b,c,d,e))
 #define PCMCIA_MAP_INTR(a,b,c,d)    ((a)->chip_link->pcmcia_map_intr(b,c,d))
-/* XXX
+/*
+ * XXX
  * this is quite broken in the face of various bus mapping stuff...
  * drivers need to cooperate with the pcmcia framework to deal with
  * bus mapped memory.  Whee.
@@ -323,7 +329,8 @@ pcmcia_probe_link(link)
 	CLR(link->flags, PCMCIA_ATTACH_TYPE);
 	SET(link->flags, PCMCIA_ATTACH);
 
-	/* Run the config matching routines to find us a good match.
+	/*
+	 * Run the config matching routines to find us a good match.
 	 * match routines will flag on "matchonly" and fill in stuff
 	 * into the link structure, but not return any match.
 	 */
@@ -893,7 +900,7 @@ error:
 #define PCMCIABUS_SLOT(a)    (a&0x3)	/* per-controller */
 #define PCMCIABUS_SLOTID(a)  (a&0xf)	/* system-wide assignment */
 #define PCMCIABUS_CHIPNO(a)  ((a&0xf)>>2)
-#define PCMCIABUS_CHIPID(a) (a&0x3)
+#define PCMCIABUS_CHIPID(a)  (a&0x3)
 #define PCMCIABUS_CHIP       0x40
 #define PCMCIABUS_BUS        0x80
 #define PCMCIABUS_BUSID(a)   (a&0x3)
@@ -1348,7 +1355,8 @@ pcmcia_submatch(parent, match, aux)
 #endif
 
 	if (cf->cf_loc[6] != -1 && link->slot != cf->cf_loc[6]) {
-		printf("slot mismatch: %d cf_loc %d\n", link->slot, cf->cf_loc[6]);
+		printf("slot mismatch: %d cf_loc %d\n", link->slot,
+		    cf->cf_loc[6]);
 		return 0;
 	}
 
