@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.6 2002/02/17 19:42:25 millert Exp $	*/
+/*	$OpenBSD: term.c,v 1.7 2002/11/29 20:13:39 deraadt Exp $	*/
 /*	$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: term.c,v 1.6 2002/02/17 19:42:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.7 2002/11/29 20:13:39 deraadt Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -542,7 +542,7 @@ mc_again:
     if (where > (el->el_term.t_size.h + 1)) {
 #ifdef DEBUG_SCREEN
 	(void)fprintf(el->el_errfile, 
-		"term_move_to_char: where is riduculous: %d\r\n", where);
+		"term_move_to_char: where is ridiculous: %d\r\n", where);
 #endif /* DEBUG_SCREEN */
 	return;
     }
@@ -615,7 +615,7 @@ term_overwrite(el, cp, n)
 
     if (n > (el->el_term.t_size.h + 1)) {
 #ifdef DEBUG_SCREEN
-	(void)fprintf(el->el_errfile, "term_overwrite: n is riduculous: %d\r\n", n);
+	(void)fprintf(el->el_errfile, "term_overwrite: n is ridiculous: %d\r\n", n);
 #endif /* DEBUG_SCREEN */
 	return;
     }
@@ -648,7 +648,7 @@ term_deletechars(el, num)
     if (num > el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
 	(void)fprintf(el->el_errfile, 
-		"term_deletechars: num is riduculous: %d\r\n", num);
+		"term_deletechars: num is ridiculous: %d\r\n", num);
 #endif /* DEBUG_SCREEN */
 	return;
     }
@@ -692,7 +692,7 @@ term_insertwrite(el, cp, num)
 
     if (num > el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
-	(void)fprintf(el->el_errfile, "StartInsert: num is riduculous: %d\r\n", num);
+	(void)fprintf(el->el_errfile, "StartInsert: num is ridiculous: %d\r\n", num);
 #endif /* DEBUG_SCREEN */
 	return;
     }
