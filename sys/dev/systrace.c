@@ -892,10 +892,10 @@ int
 systrace_processready(struct str_process *strp)
 {
 	if (ISSET(strp->flags, STR_PROC_ONQUEUE))
-		return (EINVAL);
+		return (EBUSY);
 
 	if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
-		return (EINVAL);
+		return (EBUSY);
 
 	if (strp->proc->p_stat != SSLEEP)
 		return (EBUSY);
