@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.3 1996/12/05 06:04:37 millert Exp $
+.\"	$OpenBSD: calendar.1,v 1.4 1997/08/26 23:37:20 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -44,11 +44,7 @@
 .Op Fl a
 .Op Fl A Ar num
 .Op Fl B Ar num
-.Oo Fl t Ar dd
-.Sm off
-.Op . Ar mm Op . Ar year
-.Sm on
-.Oc
+.Op Fl t Ar [[[yy]yy][mm]]dd
 .Op Fl f Ar calendarfile
 .Sh DESCRIPTION
 The
@@ -79,13 +75,8 @@ days (backward, past)
 use
 .Pa calendarfile
 as default calendar file.
-.It Xo Fl t
-.Sm off
-.Ar dd
-.Op . Ar mm Op . Ar year
-.Sm on
-.Xc
-for test purposes only:	set date directly to argument values.
+.It Fl t Ar [[[yy]yy][mm]]dd
+act like the specified value is ``today'' instead of using the current date.
 .El
 .Pp
 To handle calendars in your national code table you can specify

@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.1 1996/12/05 06:04:39 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.2 1997/08/26 23:37:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.1 1996/12/05 06:04:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.2 1997/08/26 23:37:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,13 +173,14 @@ settime(now)
 	setnnames();
 }
 
-/* convert Day[/Month][/Year] into unix time (since 1970)
- * Day: two digits, Month: two digits, Year: digits
+/* convert [Year][Month]Day into unix time (since 1970)
+ * Year: two or four digits, Month: two digits, Day: two digits
  */
 time_t Mktime (date)
     char *date;
 {
     time_t t;
+    char save;
     int len;
     struct tm tm;
 
@@ -187,6 +188,8 @@ time_t Mktime (date)
     tp = localtime(&t);
 
     len = strlen(date);
+    if (len < 2)
+	return((time_t)-1);
     tm.tm_sec = 0;
     tm.tm_min = 0;
     tm.tm_hour = 0;
@@ -195,20 +198,19 @@ time_t Mktime (date)
     tm.tm_mon = tp->tm_mon;
     tm.tm_year = tp->tm_year;
 
+    /* Day */
+    tm.tm_mday = atoi(date + len - 2);
 
-    /* day */
-    *(date+2) = NULL;
-    tm.tm_mday = atoi(date);
-
-    /* month */
+    /* Month */
     if (len >= 4) {
-	*(date+5) = NULL;
-	tm.tm_mon = atoi(date+3) - 1;
+	*(date + len - 2) = '\0';
+	tm.tm_mon = atoi(date + len - 4) - 1;
     }
 
     /* Year */
     if (len >= 7) {
-	tm.tm_year = atoi(date+6);
+	*(date + len - 4) = '\0';
+	tm.tm_year = atoi(date);
 
 	/* tm_year up 1900 ... */
 	if (tm.tm_year > 1900)
