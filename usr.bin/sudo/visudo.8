@@ -1,7 +1,10 @@
 .rn '' }`
-''' $RCSfile: visudo.8,v $$Revision: 1.3 $$Date: 2000/03/27 03:44:39 $
+''' $RCSfile: visudo.8,v $$Revision: 1.4 $$Date: 2001/09/17 23:49:21 $
 '''
 ''' $Log: visudo.8,v $
+''' Revision 1.4  2001/09/17 23:49:21  pjanzen
+''' Typo and grammar fixes, one from PR/2058 (Dennis Schwarz); ok millert@
+'''
 ''' Revision 1.3  2000/03/27 03:44:39  millert
 ''' sudo 1.6.3; see http://www.courtesan.com/sudo/current.html for a list
 ''' of changes.
@@ -92,7 +95,7 @@
 .\"		Ip	Item
 .\"		X<>	Xref  (embedded
 .\"	Of course, you have to process the output yourself
-.\"	in some meaninful fashion.
+.\"	in some meaningful fashion.
 .if \nF \{
 .de IX
 .tm Index:\\$1\t\\n%\t"\\$2"
@@ -205,25 +208,25 @@ simultaneous edits, provides basic sanity checks, and checks
 for parse errors.  If the \fIsudoers\fR file is currently being
 edited you will receive a message to try again later.  In the
 default configuration, the \fIvi\fR\|(1) editor is used, but there is
-a compile time option to allow use of whatever editor the
+a compile-time option to allow use of whatever editor the
 environment variables \f(CWEDITOR\fR or \f(CWVISUAL\fR are set to.
 .PP
 \fBvisudo\fR parses the \fIsudoers\fR file after the edit and will
 not save the changes if there is a syntax error.  Upon finding
-an error, a message will be printed stating the line \fInumber\fR\|(s)
+an error, \fBvisudo\fR will print a message stating the line \fInumber\fR\|(s)
 that the error occurred on and the user will receive the
 \*(L"What now?\*(R" prompt.  At this point the user may enter \*(L"e\*(R"
-to re-edit the \fIsudoers\fR file, enter \*(L"x\*(R" to exit without
+to re-edit the \fIsudoers\fR file, \*(L"x\*(R" to exit without
 saving the changes, or \*(L"Q\*(R" to quit and save changes.  The
 \*(L"Q\*(R" option should be used with extreme care because if \fBvisudo\fR
 believes there to be a parse error, so will \fBsudo\fR and no one
-will be able to execute \fBsudo\fR again until the error is fixed.
+will be able to use \fBsudo\fR again until the error is fixed.
 Any other command at this prompt will print a short help message.
-When editing the \fIsudoers\fR file after a parse error has been
-detected the cursor will be placed on the line where the error
+If \*(L"e\*(R" is typed to edit the \fIsudoers\fR file after a parse error
+has been detected, the cursor will be placed on the line where the error
 occurred (if the editor supports this feature).
 .SH "OPTIONS"
-\fBvisudo\fR accepts the following command line option:
+\fBvisudo\fR accepts the following command line options:
 .Ip "-s" 4
 Enable \fBstrict\fR checking of the \fIsudoers\fR file.  If an alias is
 used before it is defined, \fBvisudo\fR will consider this a parse
@@ -231,7 +234,7 @@ error.  Note that it is not possible to differentiate between an
 alias and a hostname or username that consists solely of upper case
 letters, digits, and the underscore ('_') character.
 .Ip "-V" 4
-The \f(CW-V\fR (version) option causes \fBvisudo\fR to print the version number
+The \f(CW-V\fR (version) option causes \fBvisudo\fR to print its version number
 and exit.
 .SH "ERRORS"
 .Ip "sudoers file busy, try again later." 4
@@ -246,14 +249,14 @@ defining it or you have a user or hostname listed that
 consists solely of upper case letters, digits, and the
 underscore ('_') character.  If the latter, you can ignore
 the warnings (\fBsudo\fR will not complain).  In \fB\-s\fR (strict)
-mode these are errors not warnings.
+mode these are errors, not warnings.
 .SH "ENVIRONMENT"
 The following environment variables are used only if \fBvisudo\fR
 was configured with the \fI--with-env-editor\fR option:
 .PP
 .Vb 2
-\& EDITOR                 Used by visudo as the editor to use
-\& VISUAL                 Used by visudo if EDITOR is not set
+\& EDITOR                 Invoked by visudo as the editor
+\& VISUAL                 Invoked by visudo if EDITOR is not set
 .Ve
 .SH "FILES"
 .PP
@@ -262,7 +265,7 @@ was configured with the \fI--with-env-editor\fR option:
 \& /etc/sudoers.tmp       Lock file for visudo
 .Ve
 .SH "AUTHOR"
-Many people have worked on \fIsudo\fR over the years, this version of
+Many people have worked on \fIsudo\fR over the years.  This version of
 \fBvisudo\fR was written by:
 .PP
 .Vb 1

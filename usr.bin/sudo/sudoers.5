@@ -1,7 +1,10 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.6 $$Date: 2001/01/09 18:15:31 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.7 $$Date: 2001/09/17 23:49:21 $
 '''
 ''' $Log: sudoers.5,v $
+''' Revision 1.7  2001/09/17 23:49:21  pjanzen
+''' Typo and grammar fixes, one from PR/2058 (Dennis Schwarz); ok millert@
+'''
 ''' Revision 1.6  2001/01/09 18:15:31  krw
 ''' Typos: 'eg.' -> 'e.g.'
 '''
@@ -95,7 +98,7 @@
 .\"		Ip	Item
 .\"		X<>	Xref  (embedded
 .\"	Of course, you have to process the output yourself
-.\"	in some meaninful fashion.
+.\"	in some meaningful fashion.
 .if \nF \{
 .de IX
 .tm Index:\\$1\t\\n%\t"\\$2"
@@ -200,15 +203,15 @@
 .SH "NAME"
 sudoers \- list of which users may execute what
 .SH "DESCRIPTION"
-The \fIsudoers\fR file is composed two types of entries:
+The \fIsudoers\fR file is composed of two types of entries:
 aliases (basically variables) and user specifications
 (which specify who may run what).  The grammar of \fIsudoers\fR
 will be described below in Extended Backus-Naur Form (EBNF).
-Don't despair if you don't know what EBNF is, it is fairly
-simple and the definitions below are annotated.
+Don't despair if you don't know what EBNF is; it is fairly
+simple, and the definitions below are annotated.
 .Sh "Quick guide to \s-1EBNF\s0"
 \s-1EBNF\s0 is a concise and exact way of describing the grammar of a language.
-Each \s-1EBNF\s0 definition is made up of \fIproduction rules\fR.  Eg.
+Each \s-1EBNF\s0 definition is made up of \fIproduction rules\fR.  E.g.,
 .PP
 .Vb 1
 \& symbol ::= definition | alternate1 | alternate2 ...
@@ -232,7 +235,7 @@ Parentheses may be used to group symbols together.  For clarity,
 we will use single quotes ('') to designate what is a verbatim character
 string (as opposed to a symbol name).
 .Sh "Aliases"
-There are four kinds of aliases: the \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR,
+There are four kinds of aliases: \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR,
 \f(CWHost_Alias\fR and \f(CWCmnd_Alias\fR.
 .PP
 .Vb 4
@@ -262,10 +265,10 @@ Each \fIalias\fR definition is of the form
 \& Alias_Type NAME = item1, item2, ...
 .Ve
 where \fIAlias_Type\fR is one of \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR, \f(CWHost_Alias\fR,
-or \f(CWCmnd_Alias\fR.  A \f(CWNAME\fR is a string of upper case letters, numbers,
+or \f(CWCmnd_Alias\fR.  A \f(CWNAME\fR is a string of uppercase letters, numbers,
 and the underscore characters ('_').  A \f(CWNAME\fR \fBmust\fR start with an
-upper case letter.  It is possible to put several alias definitions
-of the same type on a single line, joined by a semicolon (':').  Eg.
+uppercase letter.  It is possible to put several alias definitions
+of the same type on a single line, joined by a semicolon (':').  E.g.,
 .PP
 .Vb 1
 \& Alias_Type NAME = item1, item2, item3 : NAME = item4, item5
@@ -287,7 +290,7 @@ A \f(CWUser_List\fR is made up of one or more usernames, uids
 (prefixed with \*(L'#'), System groups (prefixed with \*(L'%'),
 netgroups (prefixed with \*(L'+') and other aliases.  Each list
 item may be prefixed with one or more \*(L'!\*(R' operators.  An odd number
-of \*(L'!\*(R' operators negates the value of the item; an even number
+of \*(L'!\*(R' operators negate the value of the item; an even number
 just cancel each other out.
 .PP
 .Vb 2
@@ -454,7 +457,7 @@ will tell the user that they are not allowed to run it, which can
 be confusing.  This flag is off by default.
 .Ip "fqdn" 12
 Set this flag if you want to put fully qualified hostnames in the
-\fIsudoers\fR file.  Ie: instead of myhost you would use myhost.mydomain.edu.
+\fIsudoers\fR file.  I.e.: instead of myhost you would use myhost.mydomain.edu.
 You may still use the short form if you wish (and even mix the two).
 Beware that turning on \fIfqdn\fR requires \fBsudo\fR to make \s-1DNS\s0 lookups
 which may make \fBsudo\fR unusable if \s-1DNS\s0 stops working (for example
@@ -511,7 +514,7 @@ effect on the syslog log file, only the file log.  The default is
 80 (use 0 or negate to disable word wrap).
 .Ip "timestamp_timeout" 12
 Number of minutes that can elapse before \fBsudo\fR will ask for a passwd
-again.  The default is 5, set this to 0 to always prompt for a password.
+again.  The default is 5.  Set this to 0 to always prompt for a password.
 .Ip "passwd_timeout" 12
 Number of minutes before the \fBsudo\fR password prompt times out.
 The default is 5, set this to 0 for no password timeout.
@@ -551,7 +554,7 @@ to vi on your system.
 \fBStrings that can be used in a boolean context\fR:
 .Ip "logfile" 12
 Path to the \fBsudo\fR log file (not the syslog log file).  Setting a path
-turns on logging to a file, negating this option turns it off.
+turns on logging to a file; negating this option turns it off.
 .Ip "syslog" 12
 Syslog facility if syslog is being used for logging (negate to
 disable syslog logging).  Defaults to \*(L"local2\*(R".
@@ -561,7 +564,7 @@ Defaults to the path to sendmail found at configure time.
 .Ip "mailerflags" 12
 Flags to use when invoking mailer. Defaults to \f(CW-t\fR.
 .Ip "mailto" 12
-Address to send warning and erorr mail to.  Defaults to \*(L"root\*(R".
+Address to send warning and error mail to.  Defaults to \*(L"root\*(R".
 .Ip "exempt_group" 12
 Users in this group are exempt from password and \s-1PATH\s0 requirements.
 This is not set by default.
@@ -572,7 +575,7 @@ want to use this.  Another use is if you want to have the \*(L"root path\*(R"
 be separate from the \*(L"user path.\*(R"  This is not set by default.
 .Ip "verifypw" 12
 This option controls when a password will be required when a
-user runs \fBsudo\fR with the \fB\-v\fR.  It has the following possible values:
+user runs \fBsudo\fR with \fB\-v\fR.  It has the following possible values:
 .Sp
 .Vb 3
 \&    all         All the user's I<sudoers> entries for the
@@ -643,7 +646,7 @@ syslog priorities are supported: \fBalert\fR, \fBcrit\fR, \fBdebug\fR, \fBemerg\
 .Ve
 A \fBuser specification\fR determines which commands a user may run
 (and as what user) on specified hosts.  By default, commands are
-run as \fBroot\fR but this can be changed on a per-command basis.
+run as \fBroot\fR, but this can be changed on a per-command basis.
 .PP
 Let's break that down into its constituent parts:
 .Sh "Runas_Spec"
@@ -657,7 +660,7 @@ commands that follow it.  What this means is that for the entry:
 \& dgb    boulder = (operator) /bin/ls, /bin/kill, /usr/bin/who
 .Ve
 The user \fBdgb\fR may run \fI/bin/ls\fR, \fI/bin/kill\fR, and
-\fI/usr/bin/lprm\fR -- but only as \fBoperator\fR.  Eg.
+\fI/usr/bin/lprm\fR -- but only as \fBoperator\fR.  E.g.,
 .PP
 .Vb 1
 \&    sudo -u operator /bin/ls.
@@ -689,7 +692,7 @@ run \fI/bin/kill\fR without a password the entry would be:
 .Vb 1
 \& ray    rushmore = NOPASSWD: /bin/kill, PASSWD: /bin/ls, /usr/bin/lprm
 .Ve
-Note however, that the \f(CWPASSWD\fR tag has no effect on users who are
+Note, however, that the \f(CWPASSWD\fR tag has no effect on users who are
 in the group specified by the exempt_group option.
 .PP
 By default, if the \f(CWNOPASSWD\fR tag is applied to any of the entries
@@ -755,7 +758,7 @@ run \*(L"all but a few\*(R" commands rarely works as intended (see \s-1SECURITY\
 Long lines can be continued with a backslash (\*(R'\e') as the last
 character on the line.
 .PP
-Whitespace between elements in a list as well as specicial syntactic
+Whitespace between elements in a list as well as special syntactic
 characters in a \fIUser Specification\fR ('=\*(R', \*(L':\*(R', \*(L'(\*(R', \*(L')') is optional.
 .PP
 The following characters must be escaped with a backslash (\*(R'\e') when
@@ -945,7 +948,7 @@ web pages) or simply \fIsu\fR\|(1) to www.
 .Ve
 Any user may mount or unmount a CD\-ROM on the machines in the CDROM
 \f(CWHost_Alias\fR (orion, perseus, hercules) without entering a password.
-This is a bit tedious for users to type, so it is a prime candiate
+This is a bit tedious for users to type, so it is a prime candidate
 for encapsulating in a shell script.
 .SH "SECURITY NOTES"
 It is generally not effective to \*(L"subtract\*(R" commands from \f(CWALL\fR

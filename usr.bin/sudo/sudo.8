@@ -1,7 +1,10 @@
 .rn '' }`
-''' $RCSfile: sudo.8,v $$Revision: 1.5 $$Date: 2000/11/21 17:58:44 $
+''' $RCSfile: sudo.8,v $$Revision: 1.6 $$Date: 2001/09/17 23:49:21 $
 '''
 ''' $Log: sudo.8,v $
+''' Revision 1.6  2001/09/17 23:49:21  pjanzen
+''' Typo and grammar fixes, one from PR/2058 (Dennis Schwarz); ok millert@
+'''
 ''' Revision 1.5  2000/11/21 17:58:44  millert
 ''' A few updates from the sudo developement tree:
 ''' - Add bsd authentication support (currently disabled)
@@ -101,7 +104,7 @@
 .\"		Ip	Item
 .\"		X<>	Xref  (embedded
 .\"	Of course, you have to process the output yourself
-.\"	in some meaninful fashion.
+.\"	in some meaningful fashion.
 .if \nF \{
 .de IX
 .tm Index:\\$1\t\\n%\t"\\$2"
@@ -236,7 +239,7 @@ mail will not be sent if an unauthorized user tries to run sudo
 with the \f(CW-l\fR or \f(CW-v\fR flags.  This allows users to determine
 for themselves whether or not they are allowed to use \fBsudo\fR.
 .PP
-\fBsudo\fR can log both successful an unsuccessful attempts (as well
+\fBsudo\fR can log both successful and unsuccessful attempts (as well
 as errors) to \fIsyslog\fR\|(3), a log file, or both.  By default \fBsudo\fR
 will log via \fIsyslog\fR\|(3) but this is changeable at configure time.
 .SH "OPTIONS"
@@ -285,7 +288,7 @@ with resources limited by the specified login class.  The \fIclass\fR
 argument can be either a class name as defined in /etc/login.conf,
 or a single '\-' character.  Specifying a \fIclass\fR of \f(CW\*(C`\-\*(C'\fR indicates
 that the command should be run restricted by the default login
-capibilities for the user the command is run as.  If the \fIclass\fR
+capabilities for the user the command is run as.  If the \fIclass\fR
 argument specifies an existing user class, the command must be run
 as root, or the \fBsudo\fR command must be run from a shell that is already
 root.  This option is only available on systems with \s-1BSD\s0 login classes
@@ -355,7 +358,7 @@ behavior or link \fBsudo\fR statically.
 (\fI/var/run/sudo\fR by default) and ignore the directory's contents if
 it is not owned by root and only writable by root.  On systems that
 allow non-root users to give away files via \fIchown\fR\|(2), if the timestamp
-directory is located in a directory writable by anyone (eg: \fI/tmp\fR),
+directory is located in a directory writable by anyone (e.g.: \fI/tmp\fR),
 it is possible for a user to create the timestamp directory before
 \fBsudo\fR is run.  However, because \fBsudo\fR checks the ownership and
 mode of the directory and its contents, the only damage that can
@@ -429,7 +432,7 @@ to make the \f(CWcd\fR and file redirection work.
 \& /var/run/sudo              Directory containing timestamps
 .Ve
 .SH "AUTHORS"
-Many people have worked on \fBsudo\fR over the years, this
+Many people have worked on \fBsudo\fR over the years.  This
 version consists of code written primarily by:
 .PP
 .Vb 2
