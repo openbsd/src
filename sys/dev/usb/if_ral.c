@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.19 2005/03/23 15:15:11 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.20 2005/04/01 10:00:56 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1088,7 +1088,6 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ural_tx_desc *desc;
 	usbd_xfer_handle xfer;
 	usbd_status error;
-	uint32_t flags = 0;
 	uint8_t cmd = 0;
 	uint8_t *buf;
 	int xferlen, rate;
@@ -1099,7 +1098,10 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if (xfer == NULL)
 		return ENOMEM;
 
-	buf = usbd_alloc_buffer(xfer, RAL_TX_DESC_SIZE + m0->m_pkthdr.len);
+	/* xfer length needs to be a multiple of two! */
+	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+
+	buf = usbd_alloc_buffer(xfer, xferlen);
 	if (buf == NULL) {
 		usbd_free_xfer(xfer);
 		return ENOMEM;
@@ -1117,10 +1119,8 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = (struct ural_tx_desc *)buf;
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, buf + RAL_TX_DESC_SIZE);
-	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
-
-	/* xfer length needs to be a multiple of two! */
-	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+	ural_setup_tx_desc(sc, desc, RAL_TX_IFS_NEW_BACKOFF |
+	    RAL_TX_INSERT_TIMESTAMP, m0->m_pkthdr.len, rate);
 
 	DPRINTFN(10, ("sending beacon frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
