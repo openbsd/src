@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 1996/09/03 09:35:31 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1996/12/22 02:57:52 tholo Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.3 1996/09/03 09:35:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.4 1996/12/22 02:57:52 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ susystem(s, userid)
 		return (127);
 	
 	case 0:
+		(void)seteuid(userid);
 		(void)setuid(userid);
 		execl(_PATH_BSHELL, "sh", "-c", s, NULL);
 		_exit(127);

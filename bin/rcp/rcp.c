@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.7 1996/12/14 12:18:13 mickey Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.8 1996/12/22 02:57:51 tholo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -189,12 +189,14 @@ main(argc, argv)
 
 	if (fflag) {			/* Follow "protocol", send data. */
 		(void)response();
+		(void)seteuid(userid);
 		(void)setuid(userid);
 		source(argc, argv);
 		exit(errs);
 	}
 
 	if (tflag) {			/* Receive data. */
+		(void)seteuid(userid);
 		(void)setuid(userid);
 		sink(argc, argv);
 		exit(errs);
@@ -313,6 +315,7 @@ toremote(targ, argc, argv)
 				if (response() < 0)
 					exit(1);
 				(void)free(bp);
+				(void)seteuid(userid);
 				(void)setuid(userid);
 			}
 			source(1, argv+i);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1996/08/19 20:08:57 downsj Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1996/12/22 02:57:49 tholo Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -308,7 +308,9 @@ change_flag(f, what, newval)
 #ifdef OS2
 		;
 #else /* OS2 */
+		seteuid(getuid());
 		setuid(getuid());
+		setegid(getgid());
 		setgid(getgid());
 #endif /* OS2 */
 	} else if (f == FPOSIX && newval) {
