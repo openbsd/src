@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.32 2000/04/13 22:34:08 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.33 2000/04/19 00:10:35 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -88,7 +88,6 @@ int	hifn_checkramaddr __P((struct hifn_softc *, int));
 void	hifn_sessions __P((struct hifn_softc *));
 int	hifn_intr __P((void *));
 u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
-int	hifn_mbuf __P((struct mbuf *, int *, long *, int *, int, int *));
 u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int32_t));
@@ -757,74 +756,6 @@ hifn_write_command(cmd, buf)
 	return (buf_pos - buf);
 }
 
-int
-hifn_mbuf(m, np, pp, lp, maxp, nicep)
-	struct mbuf *m;
-	int *np;
-	long *pp;
-	int *lp;
-	int maxp;
-	int *nicep;
-{
-	struct	mbuf *m0;
-	int npa = 0, tlen = 0;
-
-	/* generate a [pa,len] array from an mbuf */
-	for (m0 = m; m; m = m->m_next) {
-		void *va;
-		long pg, npg;
-		int len, off;
-
-		if (m->m_len == 0)
-			continue;
-		len = m->m_len;
-		tlen += len;
-		va = m->m_data;
-
-		lp[npa] = len;
-		pp[npa] = vtophys(va);
-		pg = pp[npa] & ~PAGE_MASK;
-		off = (long)va & PAGE_MASK;
-
-		while (len + off > PAGE_SIZE) {
-			va = va + PAGE_SIZE - off;
-			npg = vtophys(va);
-			if (npg != pg) {
-				/* FUCKED UP condition */
-				if (++npa > maxp)
-					return (0);
-				continue;
-			}
-			lp[npa] = PAGE_SIZE - off;
-			off = 0;
-
-			if (++npa > maxp)
-				return (0);
-
-			lp[npa] = len - (PAGE_SIZE - off);
-			len -= lp[npa];
-			pp[npa] = vtophys(va);
-		} 
-
-		if (++npa == maxp)
-			return (0);
-	}
-
-	if (nicep) {
-		int nice = 1;
-		int i;
-
-		/* see if each [pa,len] entry is long-word aligned */
-		for (i = 0; i < npa; i++)
-			if ((lp[i] & 3) || (pp[i] & 3))
-				nice = 0;
-		*nicep = nice;
-	}
-
-	*np = npa;
-	return (tlen);
-}
-
 int 
 hifn_crypto(sc, cmd)
 	struct hifn_softc *sc;
@@ -836,7 +767,7 @@ hifn_crypto(sc, cmd)
 	int     s, i;
 
 	if (cmd->src_npa == 0 && cmd->src_m)
-		cmd->src_l = hifn_mbuf(cmd->src_m, &cmd->src_npa,
+		cmd->src_l = mbuf2pages(cmd->src_m, &cmd->src_npa,
 		    cmd->src_packp, cmd->src_packl, MAX_SCATTER, &nicealign);
 	if (cmd->src_l == 0)
 		return (-1);
@@ -883,7 +814,7 @@ hifn_crypto(sc, cmd)
 	else
 		cmd->dst_m = cmd->src_m;
 
-	cmd->dst_l = hifn_mbuf(cmd->dst_m, &cmd->dst_npa,
+	cmd->dst_l = mbuf2pages(cmd->dst_m, &cmd->dst_npa,
 	    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
 	if (cmd->dst_l == 0)
 		return (-1);
