@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2002/12/31 16:22:24 miod Exp $
+#	$OpenBSD: Makefile,v 1.19 2003/09/05 20:02:03 miod Exp $
 
 NOPROG=
 NOMAN=
@@ -23,7 +23,7 @@ $(TARG): $(DEP)
 	m4 -DOSREV=$(OSREV) -DOSrev=$(OSrev) -DINCLUDE=$(.CURDIR)/$M \
 	-DMACHINE=$M -Uunix $(SRC) > $@
 
-clean cleandir:
+clean:
 	-/bin/rm -f INSTALL.*
 
 beforeinstall:
