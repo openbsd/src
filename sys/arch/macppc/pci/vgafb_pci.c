@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.10 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.11 2002/09/17 02:59:34 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -225,11 +225,13 @@ vgafb_pci_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+#ifdef SUPPORTS_NON_CONSOLE
 	u_int32_t memaddr, memsize, cacheable;
 	u_int32_t ioaddr, iosize;
 	u_int32_t mmioaddr, mmiosize;
-	int potential;
 	int retval;
+#endif
+	int potential;
 	static int id = 0;
 	int myid;
 
@@ -271,6 +273,12 @@ vgafb_pci_match(parent, match, aux)
 	}
 #endif
 
+#ifdef SUPPORTS_NON_CONSOLE
+	/* ALL non-console vga support removed for now.
+	 * when the problems with it are resolved,
+	 * it can be reenabled.
+	 */
+
 	memaddr=0xb8000; /* default to isa addresses? */
 	ioaddr = 0; 	 /* default to isa addresses? */
 
@@ -292,6 +300,8 @@ vgafb_pci_match(parent, match, aux)
 	id++;
 
 	return (1);
+#endif
+	return (0);
 }
 
 void
