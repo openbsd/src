@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.50 2001/06/05 10:14:56 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.51 2001/06/27 00:48:21 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1339,6 +1339,7 @@ exchange_finalize (struct message *msg)
 	    }
 	}
 
+      sa->seq = exchange->seq;
       sa->exch_type = exchange->type;
     }
 

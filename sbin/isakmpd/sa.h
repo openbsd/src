@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.23 2001/06/12 21:50:36 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.24 2001/06/27 00:48:21 angelos Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -178,6 +178,9 @@ struct sa {
   /* Lifetime data.  */
   u_int64_t seconds;
   u_int64_t kilobytes;
+
+  /* ACQUIRE sequence number */
+  u_int32_t seq;
 
   /* The events that will occur when an SA has timed out.  */
   struct event *soft_death;

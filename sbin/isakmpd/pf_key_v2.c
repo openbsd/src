@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.65 2001/06/07 07:50:29 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.66 2001/06/27 00:48:21 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -915,7 +915,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 				       dst, dstlen)
        : 0);
 #else
-  msg.sadb_msg_seq = 0;
+  msg.sadb_msg_seq = sa->seq;
 #endif
   update = pf_key_v2_msg_new (&msg, 0);
   if (!update)
