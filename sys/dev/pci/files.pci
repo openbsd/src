@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.59 1999/12/08 22:35:34 aaron Exp $
+#	$OpenBSD: files.pci,v 1.60 1999/12/09 15:28:35 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -214,9 +214,9 @@ attach	ste at pci
 file	dev/pci/if_ste.c		ste
 
 # DEC/Intel 21143 and "tulip" clone ethernet
-#device	dc: ether, ifnet, mii, ifmedia
-#attach	dc at pci
-#file	dev/pci/if_dc.c			dc
+device	dc: ether, ifnet, mii, ifmedia
+attach	dc at pci
+file	dev/pci/if_dc.c			dc
 
 # Industrial Computer Source WDT-50x
 device	wdt: pcibus
