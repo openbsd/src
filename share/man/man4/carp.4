@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.12 2004/08/17 00:24:40 jaredy Exp $
+.\"	$OpenBSD: carp.4,v 1.13 2004/11/15 12:14:10 henning Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -72,13 +72,78 @@ or through the
 ioctl.
 .Pp
 Additionally, there are a number of global parameters which can be set using
-.Xr sysctl 8 .
+.Xr sysctl 8 :
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxxxxxxx
+.It net.inet.carp.allow
+Accept incoming
+.Nm
+packets.
+Enabled by default.
+.It net.inet.carp.preempt
+Allow virtual hosts to preempt each other.
+It is also used to failover
+.Nm
+interfaces as a group.
+When the option is enabled and one of the
+.Nm
+enabled physical interfaces
+goes down, advskew is changed to 240 on all
+.Nm
+interfaces.
+See also the first example.
+Disabled by default.
+.It net.inet.carp.log
+Log bad
+.Nm
+packets.
+Disabled by default.
+.It net.inet.carp.arpbalance
+Balance local traffic using ARP.
+Disabled by default.
 .Sh EXAMPLES
+For firewalls and routers with multiple interfaces, it is desirable to
+failover all of the
+.Nm
+interfaces together, when one of the physical interfaces goes down.
+This is achieved by the preempt option.
+Enable it on both host A and B:
+.Pp
+.Dl # sysctl net.inet.carp.preempt=1
+.Pp
+Assume that host A is the preferred master and 192.168.1.x/24 is
+configured on one physical interface and 192.168.2.y/24 on another.
+This is the setup for host A:
+.Bd -literal -offset indent
+# ifconfig carp0 create
+# ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.1 \e
+	255.255.255.0
+# ifconfig carp1 create
+# ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.2.1 \e
+	255.255.255.0
+.Ed
+.Pp
+The setup for host B is identical, but it has a higher advskew:
+.Bd -literal -offset indent
+# ifconfig carp0 create
+# ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat \e
+	192.168.1.1 255.255.255.0
+# ifconfig carp1 create
+# ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat \e
+	192.168.2.1 255.255.255.0
+.Ed
+.Pp
+Because of the preempt option, when one of the physical interfaces of
+host A fails, advskew is adjusted to 240 on all its
+.Nm
+interfaces.
+This will cause host B to preempt on both interfaces instead of
+just the failed one.
+.Pp
 In order to set up an ARP balanced virtual host, it is necessary to configure
-one virtual host for each physical host which would respond to ARP
-requests and thus handle the traffic.
-In the following example, 2 hosts are configured to provide balancing and
-failover for the IP address 192.168.1.10.
+one virtual host for each physical host which would respond to ARP requests
+and thus handle the traffic.
+In the following example, two virtual hosts are configured on two hosts to
+provide balancing and failover for the IP address 192.168.1.10.
 .Pp
 First the
 .Nm
@@ -111,22 +176,19 @@ Finally, the ARP balancing feature must be enabled on both hosts:
 .Pp
 .Dl # sysctl net.inet.carp.arpbalance=1
 .Pp
-When the hosts receive an ARP request for 192.168.1.10, they both select
-one of the virtual hosts based on the source IP address in the request.
-The host which is master of that virtual host will reply to the request, the
-other will ignore it.
+When the hosts receive an ARP request for 192.168.1.10, the source IP address
+of the request is used to compute which virtual host should answer the request.
+The host which is master of the selected virtual host will reply to the
+request, the other(s) will ignore it.
 .Pp
-Because the host which advertises most often will tend to be the master, the
-result of this is that Host A will tend to be the master for the virtual host
-with ID 1, while Host B will tend to be the master for the virtual host with ID
-2, and therefore arp requests and subsequent IP traffic are balanced across the
-two hosts.
+This way, locally connected systems will receive different ARP replies and
+subsequent IP traffic will be balanced among the hosts.
 If one of the hosts fails, the other will take over the virtual MAC address,
 and begin answering ARP requests on its behalf.
 .Pp
 Note: ARP balancing only works on the local network segment.
-Connections which cross a router to arrive on the local network segment
-will all appear to come from that router and be balanced to the same host.
+It cannot balance traffic that crosses a router, because the router
+itself will always be balanced to the same virtual host.
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr inet 4 ,
